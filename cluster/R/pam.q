@@ -62,7 +62,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	      dys = dv,
 	      jdyss = as.integer(diss),
 	      if(mdata)valmd else double(1),
-	      if(mdata) jtmd else integer(1),
+	      if(mdata) jtmd else integer(jp),
 	      as.integer(ndyst),
 	      integer(n),		# nsend[]
 	      logical(n),		# nrepr[]
