@@ -1,4 +1,4 @@
-#### CLARA := Clustering LARge Applications
+#### CLARA := Clustering LARge Applications-- $Id$
 ####
 #### Note that the algorithm is O(n), but O(ns^2) where ns == sampsize
 
@@ -21,10 +21,8 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	       rep(1 + cumsum(0:(n - 2)), (n - 1):1))
     }
     ## check type of input matrix and values of input numbers
-    if((!is.data.frame(x) && !is.numeric(x)) ||
-       (!all(sapply(x, data.class) == "numeric")))
-	stop(message = "x is not a numeric dataframe or matrix.")
     x <- data.matrix(x)
+    if(!is.numeric(x)) stop("x is not a numeric dataframe or matrix.")
     n <- nrow(x)
     if((k <- as.integer(k)) < 1 || k > n - 1)
 	stop("The number of cluster should be at least 1 and at most n-1." )
