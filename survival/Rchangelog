@@ -1,3 +1,8 @@
+2.13	stop segfault when frailty estimation breaks down.
+	(Christian Lederer)
+	
+2.12	make clogit work with predict(,type="terms") 
+
 2.11-6 fix memory leak in survival4 (BDR+valgrind)
 
 	Put dimnames on vcov.coxph (David Firth)
