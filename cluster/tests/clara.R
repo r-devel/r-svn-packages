@@ -9,7 +9,6 @@ x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
 isEq <- function(x,y, epsF = 100)
     is.logical(r <- all.equal(x,y, tol = epsF * .Machine$double.eps)) && r
 
-
 .proctime00 <- proc.time()
 
 ## full size sample {should be = pam()}:
@@ -55,6 +54,7 @@ clara(x5, 5, samples = 1001)
 
 clara(x5, 5, samples = 2000)#full sample
 
+example(clara)## quite a few more
 
 ##  small example(s):
 data(ruspini)
