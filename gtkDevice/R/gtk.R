@@ -9,7 +9,8 @@ GTK <- gtk
 
 asGtkDevice <- function(widget, width = 300, height = 300, pointsize = 12)
 {
-    require("RGtk")
+    if (!require("RGtk"))
+       stop("asGtkDevice requires the RGtk package")
     if(!inherits(widget, "GtkDrawingArea")) {
         stop("Widget being used as a Gtk Device must be or extend the GtkDrawingWidget class")
     }
