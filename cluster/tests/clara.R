@@ -1,8 +1,7 @@
 library(cluster)
 
 ## generate 1500 objects, divided into 2 clusters.
-if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
-set.seed(264)
+set.seed(144)
 x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
            cbind(rnorm(800,50,8), rnorm(800,10,8)))
 
@@ -68,6 +67,9 @@ plot(clx3)
 
 ###--- End version of example(clara) -------
 
+## around here (with 1.9.0-alpha),
+## MM gets segmentation faults on the AMD 64 Opteron;
+## once with   "free(): invalid pointer 0x28e07f0!"
 
 
 ##  small example(s):
