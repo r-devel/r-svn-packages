@@ -1,4 +1,5 @@
-agnes <- function(x, diss = FALSE, metric = "euclidean",-- $Id$
+#### $Id$
+agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
                   stand = FALSE, method = "average")
 {
     if(diss) {
