@@ -59,12 +59,18 @@ ru5 <- rus[c(1:2,21,    45),]
 daisy(ru5, "manhattan")
 ## Dissimilarities :  11 118 143 107 132  89
 
-## >> reproducible
+## >> reproducible {not anymore, since 2002-12-28}:
 c5 <- clara(ru5, k=3, met="manhattan", sampsize=3,trace=2)
 c5[c("objective", "medoids", "clusinfo")]
 
+daisy(ru4, "manhattan")
+## this one gives that too, from ss = 6 on ___ still after 2002-12-28 ___ :
+for(ss in 4:nrow(ru4)){
+    cat("---\n\nsample size = ",ss,"\n")
+    print(r <- clara(ru4,k=3,met="manhattan",sampsize=ss))
+}
 
 ## Last Line:
 cat('Time elapsed: ', proc.time() - .proctime00,'\n')
 ## Lynne (P IV, 1.6 GHz):  7.5
-## nb-mm (P III,700 MHz): 12.4
+## nb-mm (P III,700 MHz):  9.02
