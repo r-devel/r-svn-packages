@@ -34,6 +34,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <Rgraphics.h>
+#include <Rdevices.h>
 #include <R_ext/GraphicsDevice.h>
 #include <R_ext/GraphicsEngine.h>
 
@@ -428,7 +429,7 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 			event->area.width, event->area.height);
     }
     else {
-	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(devNumber((DevDesc*)dd)));
+	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*)dd)));
     }
 
     return FALSE;
@@ -441,7 +442,7 @@ static gint delete_event(GtkWidget *widget, GdkEvent *event, gpointer data)
     dd = (NewDevDesc *) data;
     g_return_val_if_fail(dd != NULL, FALSE);
 
-    Rf_KillDevice((DevDesc*) Rf_GetDevice(devNumber((DevDesc*) dd)));
+    Rf_KillDevice((DevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*) dd)));
 
     return TRUE;
 }
@@ -454,7 +455,7 @@ static void tb_activate_cb(GtkWidget *widget, gpointer data)
     dd = (NewDevDesc *) data;
     g_return_if_fail(dd != NULL);
 
-    selectDevice(devNumber((DevDesc*)dd));
+    selectDevice(Rf_devNumber((DevDesc*)dd));
 }
 
 static void tb_close_cb(GtkWidget *widget, gpointer data)
@@ -464,7 +465,7 @@ static void tb_close_cb(GtkWidget *widget, gpointer data)
     dd = (NewDevDesc *) data;
     g_return_if_fail(dd != NULL);
 
-    Rf_KillDevice((DevDesc*) Rf_GetDevice(devNumber((DevDesc*) dd)));
+    Rf_KillDevice((DevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*) dd)));
 }
 */
 
@@ -659,7 +660,7 @@ static void GTK_resize(NewDevDesc *dd)
 				   gtkd->windowWidth, gtkd->windowHeight);
 	    }
 	}
-	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(devNumber((DevDesc*)dd)));
+	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*)dd)));
     }
 }
 
@@ -721,7 +722,7 @@ static void GTK_Activate(NewDevDesc *dd)
     if(!gtkd->window)
 	return;
 
-    devnum = devNumber((DevDesc*)dd) + 1;
+    devnum = Rf_devNumber((DevDesc*)dd) + 1;
 
     title_text = g_strdup_printf(title_text_active, devnum);
 
@@ -741,7 +742,7 @@ static void GTK_Deactivate(NewDevDesc *dd)
     if(!gtkd->window)
 	return;
 
-    devnum = devNumber((DevDesc*)dd) + 1;
+    devnum = Rf_devNumber((DevDesc*)dd) + 1;
 
     title_text = g_strdup_printf(title_text_inactive, devnum);
 
