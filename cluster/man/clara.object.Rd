@@ -22,12 +22,9 @@
   \item{medoids}{
     the medoids or representative objects of the clusters.
     It is a matrix with in each row the coordinates of one medoid.}
-  \item{clustering}{
-    the clustering vector.  A vector with length equal to the number of
-    observations, giving the number of the cluster to which each
-    observation belongs.}
-  \item{objective}{
-    the objective function for the final clustering of the entire dataset.}
+  \item{clustering}{the clustering vector, see \code{\link{partition.object}}.}
+  \item{objective}{the objective function for the final clustering of
+    the entire dataset.}
   \item{clusinfo}{
     matrix, each row gives numerical information for one cluster. These
     are the cardinality of the cluster (number of observations), the
@@ -39,25 +36,12 @@
     cluster's medoid and the medoid of any other cluster. If this ratio
     is small, the cluster is well-separated from the other clusters.
   }
-  \item{silinfo}{
-    list with all information necessary to construct a silhouette plot of the
-    clustering of the best sample. This list is only available when the
-    number of clusters is non-trivial, i.e., \eqn{1 < k < n}.
-    The first component is a matrix, with for each observation i in the best
-    sample, the cluster to which i belongs,
-    as well as the neighbor cluster of i (the cluster, not containing
-    i, for which the average dissimilarity between its observations and i is
-    minimal), and the silhouette width of i.
-    The other two components give the average silhouette width per cluster and
-    the average silhouette width for the best sample.
-    See \code{\link{plot.partition}} for more information.
-  }
-  \item{diss}{
-    an object of class \code{"dissimilarity"}, representing the total
-    dissimilarity matrix of the dataset.}
-  \item{data}{if not \code{NULL} (when \code{keepdata} was FALSE in the call),
-    a matrix containing the original or standardized measurements, depending
-    on the \code{stand} argument of \code{clara()}.}
+  \item{diss}{dissimilarity (maybe NULL), see \code{\link{partition.object}}.}
+  \item{silinfo}{list with silhouette width information for the best sample, see
+    \code{\link{partition.object}}.}
+  \item{call}{generating call, see \code{\link{partition.object}}.}
+  \item{data}{matrix, possibibly standardized, or NULL, see
+    \code{\link{partition.object}}.}
 }
 \seealso{
   \code{\link{clara}}, \code{\link{dissimilarity.object}},

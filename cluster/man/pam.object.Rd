@@ -25,9 +25,8 @@
     given, else \code{medoids} is a matrix with in each row the
     coordinates of one medoid.}
   \item{clustering}{the clustering vector, see \code{\link{partition.object}}.}
-  \item{objective}{
-    the objective function after the first and second step of the \code{pam}
-    algorithm.}
+  \item{objective}{the objective function after the first and second
+    step of the \code{pam} algorithm.}
   \item{isolation}{
     vector with length equal to the number of clusters, specifying which
     clusters are isolated clusters (L- or L*-clusters) and which clusters are
@@ -49,6 +48,11 @@
     the separation of the cluster (minimal dissimilarity between an
     observation of the cluster and an observation of another cluster).
   }
+  \item{silinfo}{list with silhouette width information, see
+    \code{\link{partition.object}}.}
+  \item{diss}{dissimilarity (maybe NULL), see \code{\link{partition.object}}.}
+  \item{call}{generating call, see \code{\link{partition.object}}.}
+  \item{data}{(possibibly standardized) see \code{\link{partition.object}}.}
 }
 \seealso{
   \code{\link{pam}}, \code{\link{dissimilarity.object}},
