@@ -20,7 +20,7 @@ try( clara(x, k=2, metric="manhattan", sampsize=10, trace = 3) )
 ## ref.count didn't point to a valid arena (0x0), while calling subroutine clara
 
 ## The large example from  clara.R -- made small enough to still provoke
-## the    "** dysta2() ...  OUT"  problem :
+## the    "** dysta2() ...  OUT"  problem  {no longer!}
 x <- matrix(c(0, 3, -4, 62, 1, 3, -7, 45, 36, 46, 45, 54, -10,
               51, 49, -5, 13, -6, 49, 52, 57, 39, -1, 55, 68, -3, 51, 11, NA,
               9, -3, 50, NA, 58, 9, 52, 12, NA, 47, -12, -6, -9, 5, 30, 38,
@@ -39,6 +39,5 @@ try(clara(x, 2, samples = 20, trace = 3))# 2nd sample did show dysta2() problem
 try(clara(rbind(NA,x), 2))
 
 x <- x[-33,]
-## still ** dysta2() .. OUT" problem:
-try(clara(x, 2, samples = 12, trace = 3))# 2nd sample did show dysta2() problem
-
+## still had the ** dysta2() .. OUT" problem {no longer!}
+clara(x, 2, samples = 12, trace = 3)
