@@ -6,14 +6,18 @@
   Compute points on the ellipsoid boundary, mostly for drawing.
 }
 \usage{
+%  method *and* stand alone:
+predict.ellipsoid(object, n.out=201, \dots)
 \method{predict}{ellipsoid}(object, n.out=201, \dots)
 ellipsoidPoints(A, d2, loc, n=201)
 }
 \arguments{
   \item{object}{an object of class \code{ellipsoid}, typically from
-    \code{\link{ellipsoidhull}()}.}
+    \code{\link{ellipsoidhull}()}; alternatively any list-like object
+    with proper components, see details below.}
   \item{n.out,n}{the number of points to create.}
-  \item{A, d2, loc}{arguments of the auxilary \code{ellipsoidPoints}, see below.}
+  \item{A, d2, loc}{arguments of the auxilary \code{ellipsoidPoints},
+    see below.}
   \item{\dots}{passed to and from methods.}
 }
 \details{
