@@ -4,14 +4,10 @@
 ####
 #### Note that the algorithm is O(n), but O(ns^2) where ns == sampsize
 
-### FIXME :
-##  should not necessarily keep data in result, because "large" !
-##  OTOH, data is used for clusplot.partition() :
-## Note:  ./plotpart.q	is also working with clara() objects
-
 clara <- function(x, k, metric = "euclidean", stand = FALSE,
 		  samples = 5, sampsize = 40 + 2 * k,
-		  trace = 0, keepdata = TRUE)
+		  trace = 0, keep.data = TRUE, keepdata,
+                  rngR = FALSE)
 {
     ## check type of input matrix and values of input numbers
     x <- data.matrix(x)
@@ -29,6 +25,12 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     if((samples <- as.integer(samples)) < 1)
 	stop("'samples' should be at least 1")
 
+    ## `keepdata' is just for back-compatibility; "keep.*" is R-like
+    if(!missing(keepdata) && missing(keep.data)) {
+        warning("argument name `keepdata' is deprecated;",
+                " use `keep.data' instead")
+        keep.data <- keepdata
+    }
     namx <- dimnames(x)[[1]]
     ## standardize, if necessary
     data <- x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
@@ -48,7 +50,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	      n,
 	      jp,
 	      k,
-	      clu = as.double(t(x2)),# transposing LARGE x[n,jp] ..fixme?..
+	      clu = as.double(x2),
 	      nran  = samples,
 	      nsam  = sampsize,
 	      dis   = double(1 + (sampsize * (sampsize - 1))/2),
@@ -56,6 +58,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	      valmd = if(mdata) rep(valmisdat, jp) else -1.,
 	      jtmd  = if(mdata) jtmd else integer(1),
 	      ndyst = as.integer(if(metric == "manhattan") 2 else 1),
+              as.logical(rngR),
 	      integer(sampsize),# = nrepr
 	      integer(sampsize),# = nsel
 	      sample= integer(sampsize),# = nbest
@@ -91,14 +94,13 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     disv <- res$dis[-1]
     disv[disv == -1] <- NA
     disv <- disv[upper.to.lower.tri.inds(sampsize)]
-    class(disv) <- "dissimilarity"
+    class(disv) <- .__dClass
     attr(disv, "Size") <- sampsize
     attr(disv, "Metric") <- metric
     attr(disv, "Labels") <- namx[res$sample]
     ## add labels to C output
     res$med <- x[res$med, , drop = FALSE]
-    ## 1st column:  matrix(res$clu, nrow= n, ncol= jp, byrow= TRUE)[, 1])
-    res$clu <- as.integer(res$clu[1+ (0:(n-1))*jp])
+    res$clu <- as.integer(res$clu[1:n])
     if(!is.null(namx)) {
 	sildim <- namx[sildim]
 	res$sample <- namx[res$sample]
@@ -117,7 +119,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 			  clus.avg.widths = res$avsil,
 			  avg.width = res$ttsil)
     }
-    if(keepdata) r$data <- data
+    if(keep.data) r$data <- data
     class(r) <- c("clara", "partition")
     r
 }
