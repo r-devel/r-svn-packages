@@ -8,5 +8,5 @@ x <- cbind(c(0.05, -0.76, -4.4, -2.77, 0.12,  NA,  -5.48,  0.27, 2.01,
              2.66, 9.54, 12.85, 8.54,  NA,  NA, 8.93, 13.1))
 x
 ## call this repeatedly -> seg.fault (at "17" on lynne)
-for(N in 1:20){ cat(N,":\n"); cc <- clara(x, 2, sampsize=10)}
+for(N in 1:20){ cat(N,":\n"); cc <- clara(x, k=2, samples=2, sampsize=10)}
 
