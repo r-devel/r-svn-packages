@@ -1,3 +1,27 @@
+2005-01-31 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/dbf.R
+	* R/octave.R
+	* R/read.dta.R
+	* R/read.epiinfo.R
+	* R/read.ssd.R
+	* R/Sread.R
+	* R/writeForeignCode.R
+	* src/file-handle.c
+	* src/foreign.h
+	* src/format.c
+	* src/minitab.c
+	* src/pfm-read.c
+	* src/R_systat.c
+	* src/Rdbfread.c
+	* src/Rdbfwrite.c
+	* src/SASxport.c
+	* src/sfm-read.c
+	* src/spss.c
+	* src/stataread.c
+	* tests/stata.Rout.save
+	mark error messages for gettext, improve messages.
+
 2004-12-27  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.8-4.
@@ -26,6 +50,7 @@
 
 	* tests/S3.R: add verbose=TRUE
 
+	* DESCRIPTION: New version is 0.8-3.
 	* DESCRIPTION (Imports): stats, methods
 
 	* R/Sread.R (data.restore): handle "logical"s (with NAs!)
