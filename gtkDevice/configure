@@ -12,7 +12,7 @@ ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
 ac_help="$ac_help
---with-gtk-config  use Gtk config and not pkg-config"
+--with-gtk Version of GTK+ to use"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -524,21 +524,22 @@ fi
 
 
 
-# Check whether --with-gtk-config or --without-gtk-config was given.
-if test "${with_gtk_config+set}" = set; then
-  withval="$with_gtk_config"
-  USE_GTK_CONFIG="${withval}"
+# Check whether --with-gtk or --without-gtk was given.
+if test "${with_gtk+set}" = set; then
+  withval="$with_gtk"
+  GTK_VERSION="${withval}"
 else
-  USE_GTK_CONFIG="yes"
+  GTK_VERSION="1.2"
 fi
 
 
-for ac_prog in pkg-config
+if test -z ${GTK_VERSION##2.0}; then
+   for ac_prog in pkg-config
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:542: checking for $ac_word" >&5
+echo "configure:543: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -566,26 +567,27 @@ fi
 
 test -n "$PKG_CONFIG" && break
 done
-
-
-echo "Use gtk-config? ${USE_GTK_CONFIG-no}"
-
-if test -z "${USE_GTK_CONFIG}" && test -n "${PKG_CONFIG}"; then
-   if (${PKG_CONFIG} --exists gtk+-2.0); then
-      GTK_CPPFLAGS=`pkg-config --cflags gtk+-2.0`
-      GTK_LIBS=`pkg-config --libs gtk+-2.0`
-      # GTK_CPPFLAGS=${GTK_CPPFLAGS}" -DGDK_DISABLE_DEPRECATED"
-   elif (${PKG_CONFIG} --exists gtk+); then
-      GTK_CPPFLAGS=`pkg-config --cflags gtk+`
-      GTK_LIBS=`pkg-config --libs gtk+`
+   
+   if test -n "${PKG_CONFIG}"; then
+      if (${PKG_CONFIG} --exists gtk+-2.0); then
+         GTK_CPPFLAGS=`pkg-config --cflags gtk+-2.0`
+         GTK_LIBS=`pkg-config --libs gtk+-2.0`
+         GTK_CPPFLAGS=${GTK_CPPFLAGS}" -DGTK2"
+      else
+         echo "ERROR: gtk+2.0 not found by pkg-config."
+         exit 1
+      fi
+   else
+      echo "ERROR: Cannot find pkg-config."
+      exit 1
    fi
-else
-  for ac_prog in gtk-config
+elif test -z ${GTK_VERSION##1.2}; then
+   for ac_prog in gtk-config
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:589: checking for $ac_word" >&5
+echo "configure:591: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -614,26 +616,20 @@ fi
 test -n "$GTK_CONFIG" && break
 done
 
-
-  if test -n "${GTK_CONFIG}"; then
-     GTK_CPPFLAGS=`gtk-config --cflags`
-     GTK_LIBS=`gtk-config --libs`
-  else
-     echo "*****************************************************************"
-     echo "ERROR: Cannot find gtk-config or pkg-config"
-     echo ""
-     echo "These executables give compilation and linking information for"
-     echo "gtk+ applications.  If you are using gtk+ 1.x you should have"
-     echo "gtk-config in your PATH.  If you are using gtk+ 2.x you should"
-     echo "have pkg-config in your PATH."
-     echo ""
-     echo "Please find the directory in which the relevant executable is"
-     echo "located, add it to your PATH environment variable and then re-run"
-     echo "the installation command"
-     echo "*****************************************************************"
-     exit 1
-  fi
+   if test -n "${GTK_CONFIG}"; then
+      GTK_CPPFLAGS=`gtk-config --cflags`
+      GTK_LIBS=`gtk-config --libs`
+   else
+       echo "ERROR: Cannot find gtk-config." 
+      exit 1
+   fi
+else
+   echo "Only versions 1.2 and 2.0 of gtk+ are supported."
+   exit 1
 fi
+
+## Allow user to set extra preprocessor flags (e.g. -Wall)
+GTK_CPPFLAGS=${PKG_CPPFLAGS}" "${GTK_CPPFLAGS}
 
 
 
@@ -891,4 +887,5 @@ EOF
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
+
 

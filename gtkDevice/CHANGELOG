@@ -1,3 +1,6 @@
+0.5
+- Porting to gtk+ 2.0
+
 0.4
 - renamed package from gtk to gtkDevice
 - configure script modified to use pkg-config (when available)

@@ -18,9 +18,17 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <gdk/gdk.h>
-#include <math.h>
+#include <gtk/gtk.h>
 
+#ifdef GTK2
+#include <pango/pango.h>
+void gdk_draw_layout_rot (GdkDrawable  *drawable,
+			  GdkGC	       *gc,
+			  int		x,
+			  int		y,
+			  PangoLayout   *layout,
+			  double        angle);
+#else
 void gdk_draw_text_rot	 (GdkDrawable  *drawable,
 			  GdkFont      *font,
 			  GdkGC	       *gc,
@@ -31,3 +39,4 @@ void gdk_draw_text_rot	 (GdkDrawable  *drawable,
 			  const gchar  *text,
 			  gint		text_length,
 			  double        angle);
+#endif
