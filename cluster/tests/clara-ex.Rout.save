@@ -1,0 +1,60 @@
+
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 1.9.0 alpha (2004-03-11), ISBN 3-900051-00-3
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #### These are *NOT* compared with output in the released version of
+> ###  `cluster'  currently
+> 
+> library(cluster)
+> 
+> data(xclara)
+> ## Try 100 times *different* random samples -- for reliability:
+> if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
+Warning message: 
+Buggy version of Kinderman-Ramage generator used. in: RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") 
+> 
+> nSim <- 100
+> nCl <- 3 # = no.classes
+> set.seed(421)# (reproducibility)
+> ## unknown problem: this is still platform dependent to some extent:
+> cl <- matrix(NA,nrow(xclara), nSim)
+> for(i in 1:nSim) cl[,i] <- clara(xclara, nCl, rngR = TRUE)$cluster
+> tcl <- apply(cl,1, tabulate, nbins = nCl)
+> ## those that are not always in same cluster (5 out of 3000 for this seed):
+> (iDoubt <- which(apply(tcl,2, function(n) all(n < nSim))))
+ [1]  243  245  309  610  708  727 1038 1081 1120 1248 1289 1610 1644 1922 2821
+> if(length(iDoubt)) { # (not for all seeds)
++   tabD <- tcl[,iDoubt, drop=FALSE]
++   dimnames(tabD) <- list(cluster = paste(1:nCl), obs = format(iDoubt))
++   t(tabD) # how many times in which clusters
++ }
+      cluster
+obs     1  2  3
+   243 98  0  2
+   245 89  0 11
+   309 99  0  1
+   610 83 17  0
+   708 88 12  0
+   727 87  0 13
+  1038 77 23  0
+  1081 49 51  0
+  1120  3 97  0
+  1248 18 82  0
+  1289  2 98  0
+  1610 62 38  0
+  1644 18 82  0
+  1922  6 94  0
+  2821  2  0 98
+> 
