@@ -88,20 +88,29 @@ agnes(x, diss = inherits(x, "dist"),
 }
 \section{BACKGROUND}{
   Cluster analysis divides a dataset into groups (clusters) of
-  observations that are similar to each other. Hierarchical methods like
-  \code{agnes}, \code{diana}, and \code{mona} construct a hierarchy of
-  clusterings, with the number of clusters ranging from one to the
-  number of observations. Partitioning methods like \code{pam},
-  \code{clara}, and \code{fanny} require that the number of clusters be
-  given by the user.
+  observations that are similar to each other.
+  \describe{
+    \item{Hierarchical methods}{like
+      \code{agnes}, \code{\link{diana}}, and \code{\link{mona}}
+      construct a hierarchy of clusterings, with the number of clusters
+      ranging from one to the number of observations.}
+    \item{Partitioning methods}{like
+      \code{\link{pam}}, \code{\link{clara}}, and \code{\link{fanny}}
+      require that the number of clusters be given by the user.}
+    }
 }
 \references{
-  Kaufman, L. and Rousseeuw, P.J. (1990)
-  \emph{Finding Groups in Data: An Introduction to Cluster Analysis.}
+  Kaufman, L. and Rousseeuw, P.J. (1990).
+  \emph{Finding Groups in Data: An Introduction to Cluster Analysis}.
   Wiley, New York.
 
-  Struyf, A., Hubert, M. and Rousseeuw, P.J. (1997)
-  Integrating Robust Clustering Techniques in S-PLUS,
+  Anja Struyf, Mia Hubert & Peter J. Rousseeuw (1996):
+  Clustering in an Object-Oriented Environment.
+  \emph{Journal of Statistical Software}, \bold{1}.
+  \url{http://www.stat.ucla.edu/journals/jss/}
+
+  Struyf, A., Hubert, M. and Rousseeuw, P.J. (1997). Integrating
+  Robust Clustering Techniques in S-PLUS,
   \emph{Computational Statistics and Data Analysis}, \bold{26}, 17--37.
 }
 \seealso{
