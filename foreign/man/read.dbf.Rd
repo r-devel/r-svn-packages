@@ -46,7 +46,7 @@ read.dbf(file)
   \code{\link{write.dbf}}
 }
 \examples{
-x <- read,dbf(system.file("files/sids.dbf", package="foreign")[1])
+x <- read.dbf(system.file("files/sids.dbf", package="foreign")[1])
 str(x)
 summary(x)
 }
