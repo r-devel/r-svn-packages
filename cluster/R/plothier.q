@@ -12,17 +12,10 @@ pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
     }
     x <- list(order = x$order, height = sort(x$height), merge = x$merge)
 
-    if( sapply(R.version[c("major","minor")], as.numeric) %*% c(10,1) >= 12 ) {
-        if(is.null(labels))
-             plot.hclust(x,                  main = main, ylab = "Height", ...)
-        else plot.hclust(x, labels = labels, main = main, ylab = "Height", ...)
-    }
-    else { ## R <= 1.1
-        if(is.null(labels))
-             plot.hclust(x,                , ylab = "Height", ...)
-        else plot.hclust(x, labels = labels, ylab = "Height", ...)
-        title(main = main, ...)
-    }
+    ## this clause needed for R versions <= 1.4.1:
+    if(is.null(labels))
+         plot.hclust(x,                  main = main, ylab = "Height", ...)
+    else plot.hclust(x, labels = labels, main = main, ylab = "Height", ...)
     invisible()
 }
 
