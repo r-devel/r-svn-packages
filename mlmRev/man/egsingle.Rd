@@ -41,11 +41,8 @@
     models in R}, (submitted).
 }
 \examples{
-data(egsingle)
 str(egsingle)
-fm1 <- lme(math~year*size+female, egsingle,
-           random = ~1|schoolid/childid,
-           control = list(EMv = TRUE, msV = TRUE))
-summary(fm1)
+(fm1 <- lmer(math~year*size+female+(1|childid)+(1|schoolid), egsingle,
+           control = list(EMv = 1, msV = 1)))
 }
 \keyword{datasets}

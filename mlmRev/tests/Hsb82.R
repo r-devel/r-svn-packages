@@ -1,5 +1,4 @@
 library(mlmRev)
-lme(mAch ~ meanses*cses + sector*cses,
-    data = Hsb82, random = ~ cses|school)
+options(show.signif.stars = FALSE)
 lmer(mAch ~ meanses*cses + sector*cses + (cses|school), Hsb82)
 q("no")

@@ -34,15 +34,9 @@
 data(Contraception)
 str(Contraception)
 summary(Contraception)
-fm1 <- GLMM(use ~ urban+age+livch, family = binomial,
-            data = Contraception, random = ~ 1|district)
-summary(fm1)
-fm2 <- GLMM(use ~ urban+age+livch, family = binomial,
-            data = Contraception, random = ~ 1|district,
-            method = "Laplace")
-summary(fm2)
-fm3 <- GLMM(use ~ urban+age+livch, family = binomial,
-            data = Contraception, random = ~ urban|district)
-summary(fm3)
+(fm1 <- lmer(use ~ urban+age+livch+(1|district), Contraception, binomial))
+##(fm2 <- lmer(use ~ urban+age+livch+(1|district), Contraception, family = binomial,
+##             method = "Laplace"))
+(fm3 <- lmer(use ~ urban+age+livch+(urban|district), Contraception, binomial))
 }
 \keyword{datasets}

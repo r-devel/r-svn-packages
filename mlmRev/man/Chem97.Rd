@@ -35,12 +35,9 @@
   models for examination grades (submitted to \emph{Statistical Modelling}).
 }
 \examples{
-data(Chem97)
 str(Chem97)
 summary(Chem97)
-fm1 <- lme(score ~ 1, data = Chem97, random = ~ 1 | lea/school)
-summary(fm1)
-fm2 <- lme(score ~ gcsecnt, data = Chem97, random = ~ 1 | lea/school)
-summary(fm2)
+(fm1 <- lmer(score ~ (1|school) + (1|lea), Chem97))
+(fm2 <- lmer(score ~ gcsecnt + (1|school) + (1|lea), Chem97))
 }
 \keyword{datasets}

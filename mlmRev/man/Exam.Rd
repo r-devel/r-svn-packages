@@ -35,17 +35,10 @@
   school examination results. \emph{Oxford Review of Education} 19: 425-433 
 }
 \examples{
-data(Exam)
 str(Exam)
 summary(Exam)
-fm1 <- lme(normexam ~ standLRT + sex + schgend,
-           data = Exam, random = ~ 1|school)
-summary(fm1)
-fm2 <- lme(normexam ~ standLRT*sex + schgend,
-           data = Exam, random = ~ 1|school)
-summary(fm2)
-fm3 <- lme(normexam ~ standLRT*sex + schgend,
-          data = Exam, random = ~ standLRT|school)
-summary(fm3)
+(fm1 <- lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam))
+(fm2 <- lmer(normexam ~ standLRT*sex + schgend + (1|school), Exam))
+(fm3 <- lmer(normexam ~ standLRT*sex + schgend + (1|school), Exam))
 }
 \keyword{datasets}

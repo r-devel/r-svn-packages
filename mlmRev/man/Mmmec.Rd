@@ -32,12 +32,8 @@
   community. \emph{Statistics in Medicine} 17: 41-58.
 }
 \examples{
-data(Mmmec)
 str(Mmmec)
 summary(Mmmec)
-fm1 <- GLMM(deaths ~ offset(log(expected)) + uvb,
- family = poisson, data = Mmmec, random = ~ 1 | region,
- niter = 25)
-summary(fm1)
+(fm1 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region), Mmmec, poisson))
 }
 \keyword{datasets}

@@ -14,32 +14,14 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for a HTML browser interface to help.
 Type 'q()' to quit R.
 
+WARNING: UTF-8 locales are not currently supported
+
 > library(mlmRev)
 Loading required package: lme4 
 Loading required package: Matrix 
 Loading required package: latticeExtra 
+> options(show.signif.stars = FALSE)
 > Early$tos <- Early$age - 0.5
-> lme(cog ~ tos * trt, Early, ~ tos | id)
-Linear mixed-effects model
-Fixed: cog ~ tos * trt 
- Data: Early 
- log-restricted-likelihood:  -1179.372 
-Random effects:
- Groups   Name        Variance Std.Dev. Corr   
- id       (Intercept) 167.383  12.9377         
-          tos          10.618   3.2586  -1.000 
- Residual              75.334   8.6795         
-# of obs: 309, groups: id, 103
-
-Fixed effects:
-            Estimate Std. Error  DF  t value Pr(>|t|)
-(Intercept) 118.4074     2.7615 305  42.8780   <2e-16
-tos         -21.1333     1.8932 305 -11.1628   <2e-16
-trtY          4.2190     3.6800 305   1.1465   0.2525
-tos:trtY      5.2713     2.5229 305   2.0894   0.0375
-Warning message: 
-optim returned message ERROR: ABNORMAL_TERMINATION_IN_LNSRCH 
- in: "LMEoptimize<-"(`*tmp*`, value = list(maxIter = 50, msMaxIter = 50,  
 > lmer(cog ~ tos * trt + (tos|id), Early)
 Linear mixed-effects model fit by REML
 Formula: cog ~ tos * trt + (tos | id) 
@@ -54,13 +36,11 @@ Random effects:
 # of obs: 309, groups: id, 103
 
 Fixed effects:
-            Estimate Std. Error  DF  t value Pr(>|t|)    
-(Intercept) 118.4074     2.7587 305  42.9220  < 2e-16 ***
-tos         -21.1333     1.8946 305 -11.1544  < 2e-16 ***
-trtY          4.2190     3.6762 305   1.1476  0.25201    
-tos:trtY      5.2713     2.5248 305   2.0878  0.03765 *  
----
-Signif. codes:  0 `***' 0.001 `**' 0.01 `*' 0.05 `.' 0.1 ` ' 1 
+            Estimate Std. Error  DF  t value Pr(>|t|)
+(Intercept) 118.4074     2.7587 305  42.9220  < 2e-16
+tos         -21.1333     1.8946 305 -11.1544  < 2e-16
+trtY          4.2190     3.6762 305   1.1476  0.25201
+tos:trtY      5.2713     2.5248 305   2.0878  0.03765
 Warning message: 
 optim returned message ERROR: ABNORMAL_TERMINATION_IN_LNSRCH 
  in: "LMEoptimize<-"(`*tmp*`, value = list(maxIter = 50, msMaxIter = 50,  
