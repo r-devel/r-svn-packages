@@ -4,6 +4,8 @@
 
 	summary.survfit was broken for stratified 
 	counting process data
+
+	change default for survival.print.mean to FALSE.
 	
 2.13-1	Kurt's fixes based on better .Rd checking
 
