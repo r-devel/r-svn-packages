@@ -83,7 +83,8 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	      PACKAGE = "cluster")
     ## give a warning when errors occured
     if(res$jstop == 1)
-	stop("For each sample at least one object was found which\n",
+	stop("For each of the ", samples,
+             " samples, at least one object was found which\n",
 	     " could not be assigned to a cluster (because of missing values).")
     if(res$jstop == 2)
 	stop("Each of the random samples contains objects between which\n",
