@@ -1,4 +1,4 @@
-diana <- function(x, diss = FALSE, metric = "euclidean", stand = FALSE)
+diana <- function(x, diss = FALSE, metric = "euclidean", stand = FALSE)-- $Id$
 {
     meanabsdev <- function(y)
 	mean(abs(y - mean(y, na.rm = TRUE)), na.rm = TRUE)
@@ -47,12 +47,10 @@ diana <- function(x, diss = FALSE, metric = "euclidean", stand = FALSE)
 	dv2 <- double(1 + (n * (n - 1))/2)
     }
     else {
-	##check type of input matrix
-	if((!is.data.frame(x) && !is.numeric(x)) ||
-	   (!all(sapply(x, data.class) == "numeric")))
-	    stop("x is not a numeric dataframe or matrix.")
-	x <- data.matrix(x) # standardize, if necessary
-	x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
+        ## check input matrix and standardize, if necessary
+	x <- data.matrix(x)
+	if(!is.numeric(x)) stop("x is not a numeric dataframe or matrix.")
+        x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
 	ndyst <- if(metric == "manhattan") 2 else 1
 	n <- nrow(x2)
 	jp <- ncol(x2)
