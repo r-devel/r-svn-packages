@@ -1,5 +1,5 @@
 /**
- * $Id: stataread.c,v 1.12 2003/12/20 07:24:28 hornik Exp $
+ * $Id: stataread.c,v 1.13 2004/04/22 21:27:09 tlumley Exp $
   Read  Stata version 8.0, 7.0, 7/SE, 6.0 and 5.0 .dta files, write version 7.0, 6.0.
   
   (c) 1999, 2000, 2001, 2002 Thomas Lumley. 
@@ -119,13 +119,17 @@ static void InStringBinary(FILE * fp, int nchar, char* buffer)
 	error("a binary read error occured");
 }
 
+/** now optional and done at R level **/
 static char* nameMangle(char *stataname, int len){
+  return stataname;
+}
+/**static char* nameMangle(char *stataname, int len){
     int i;
     for(i=0;i<len;i++)
       if (stataname[i]=='_') stataname[i]='.';
     return stataname;
 }
-
+**/
 
 /*****
       Turn a .dta file into a data frame

@@ -1,20 +1,23 @@
 
-R : Copyright 2003, The R Development Core Team
-Version 1.8.0 Under development (unstable) (2003-05-20)
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 2.0.0 Under development (unstable) (2004-04-20), ISBN 3-900051-00-3
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-Type `license()' or `licence()' for distribution details.
+Type 'license()' or 'licence()' for distribution details.
 
 R is a collaborative project with many contributors.
-Type `contributors()' for more information.
+Type 'contributors()' for more information and
+'citation()' on how to cite R in publications.
 
-Type `demo()' for some demos, `help()' for on-line help, or
-`help.start()' for a HTML browser interface to help.
-Type `q()' to quit R.
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
 
 > library(foreign)
 > pc5 <- read.dta("pc5.dta")
+Warning message: 
+Can't read factor labels from Stata 5 files. in: read.dta("pc5.dta") 
 > summary(pc5)
       age             alb           alkphos         ascites      
  Min.   :26.28   Min.   :1.960   Min.   :   -9   Min.   :-9.000  
@@ -232,8 +235,18 @@ Abbreviating variable names in: write.dta(esoph, esophile, convert.factors = "co
 5    black      5
 6    white      6
 7    black      7
+> v8<-read.dta("stata8mac.dta")
+> print(v8)
+      race number
+1    white      2
+2    asian      5
+3 hispanic      5
+4    white      4
+5    black      5
+6    white      6
+7    black      7
 > 
-> stata8<-read.dta("auto8.dta",missing=TRUE)
+> stata8<-read.dta("auto8.dta",missing=TRUE,convert.underscore=FALSE)
 > str(stata8)
 `data.frame':	74 obs. of  13 variables:
  $ make        : chr  "AMC Concord" "AMC Pacer" "AMC Spirit" "Buick Century" ...
@@ -246,7 +259,7 @@ Abbreviating variable names in: write.dta(esoph, esophile, convert.factors = "co
  $ length      : int  186 173 168 196 222 218 170 200 207 200 ...
  $ turn        : int  40 40 35 40 43 43 34 42 43 42 ...
  $ displacement: int  121 258 121 196 350 231 304 196 231 231 ...
- $ gear.ratio  : num  3.58 2.53 3.08 2.93 2.41 ...
+ $ gear_ratio  : num  3.58 2.53 3.08 2.93 2.41 ...
  $ foreign     : Factor w/ 2 levels "Domestic","Fore..": 1 1 1 1 1 1 1 1 1 1 ...
  $ testmiss    : num  NA NA NA NA NA NA NA NA NA NA ...
  - attr(*, "datalabel")= chr "1978 Automobile Data"
@@ -282,7 +295,7 @@ Abbreviating variable names in: write.dta(esoph, esophile, convert.factors = "co
   ..$ length      : num  NA NA NA NA NA NA NA NA NA NA ...
   ..$ turn        : num  NA NA NA NA NA NA NA NA NA NA ...
   ..$ displacement: num  NA NA NA NA NA NA NA NA NA NA ...
-  ..$ gear.ratio  : num  NA NA NA NA NA NA NA NA NA NA ...
+  ..$ gear_ratio  : num  NA NA NA NA NA NA NA NA NA NA ...
   ..$ foreign     : num  NA NA NA NA NA NA NA NA NA NA ...
   ..$ testmiss    : num  18 18 18 18 18 18 18 18 18 18 ...
 > 
