@@ -94,7 +94,7 @@ c Check arguments; fail w/ code '3' or '4'
       relerr=one
       funcls=0
       ifail=3
-      if(ndim.lt.2.or.ndim.gt.20) goto 990
+      if(ndim.lt.2 .or. ndim.gt.20) goto 990
       ifail=4
       if(minpts.gt.maxpts) goto 990
       ifail=5
@@ -102,14 +102,16 @@ c
 c*****	initialisation of subroutine
 c
       half=one/two
-      rgnstr =2*ndim+3
+      rgnstr = 2*ndim+3
       errmin = zero
       maxcls = 2**ndim + 2*ndim**2 + 6*ndim+1
       maxcls = min0(maxcls,maxpts)
       divaxo=0
 c
 c*****	end subroutine initialisation
+
       if(minpts.lt.0) then
+c	on re-entry {with intact  lenwrk, wrkstr(1:lenwrk)} :
          sbrgns=wrkstr(lenwrk-1)
          goto 280
       endif
@@ -132,18 +134,19 @@ C-- REPEAT --- (outermost loop) -------
 c
 c*****	place results of basic rule into partially ordered list
 c*****	according to subregion error
+
       if(divflg .eq. 0) then
 c
-c*****	when divflg=0 start at top of list and move down list tree to
-c     find correct position for results from first half of recently
-c     divided subregion
+c   ***	when divflg=0 start at top of list and move down list tree to
+c       find correct position for results from first half of recently
+c       divided subregion
  200	 subtmp=2*subrgn
 	 if(subtmp.le.sbrgns) then
 	    if(subtmp.ne.sbrgns) then
 	       sbtmpp=subtmp+rgnstr
 	       if(wrkstr(subtmp).lt.wrkstr(sbtmpp)) subtmp=sbtmpp
 	    endif
- 210	    if(rgnerr.lt.wrkstr(subtmp)) then
+	    if(rgnerr.lt.wrkstr(subtmp)) then
 	       do 220 k=1,rgnstr
 		  index1=subrgn-k+1
 		  index2=subtmp-k+1
@@ -157,9 +160,9 @@ c     divided subregion
 
       else
 c
-c*****when divflg=1 start at bottom right branch and move up list
-c     tree to find correct position for results from second half of
-c     recently divided subregion
+c   *** when divflg=1 start at bottom right branch and move up list
+c       tree to find correct position for results from second half of
+c       recently divided subregion
  230	 subtmp=(subrgn/(rgnstr*2))*rgnstr
 	 if(subtmp.ge.rgnstr) then
 	    if(rgnerr.gt.wrkstr(subtmp)) then
@@ -174,7 +177,8 @@ c     recently divided subregion
 	 endif
       endif
 
-c*****	store results of basic rule in correct position in list
+c**** store results (length= 2*ndim+3) of basic rule
+c     in correct position in list:
   250 wrkstr(subrgn)=rgnerr
       wrkstr(subrgn-1)=rgnval
       wrkstr(subrgn-2)=divaxn
@@ -183,6 +187,7 @@ c*****	store results of basic rule in correct position in list
 	wrkstr(subtmp+1)=center(j)
 	wrkstr(subtmp)=width(j)
  260  continue
+
       if(divflg .eq. 0) then
 c***  when divflg=0 prepare for second application of basic rule
 	 center(divaxo)=center(divaxo)+two*width(divaxo)
@@ -201,7 +206,11 @@ c
       if(dabs(finest).ne.zero) relerr=wrkstr(lenwrk)/dabs(finest)
       if(relerr.gt.one) relerr=one
 
-      if(sbrgns+rgnstr.gt.lenwrk-2) ifail=2
+      if(sbrgns+rgnstr .gt. lenwrk-2) ifail=2
+c     MM: Note that rgnstr = 2*ndim+3, and lenwrk
+c     --  lenwrk = (2*ndim + 3)* (1 + maxpts/rulcls)/2
+c         where rulcls = 2^ndim + 2*ndim^2 + 6*ndim + 1
+c         and   maxpts increases (for each .C() call from R)
       if(funcls+funcls*rgnstr/sbrgns.gt.maxpts) ifail=1
       if(relerr.lt.eps.and.funcls.ge.minpts) ifail=0
       if(ifail.lt.3) goto 990
