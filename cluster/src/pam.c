@@ -55,7 +55,7 @@ void pam(int *nn, int *jpp, int *kk, double *x, double *dys,
     if(all_stats) {
 	for (k = 0; k < *kk; ++k) {
 	    clusinf[k]=		(double)       nrepr[k];
-	    clusinf[k + clusinf_dim1]        = radus[k];
+	    clusinf[k + clusinf_dim1]	     = radus[k];
 	    clusinf[k + (clusinf_dim1 << 1)] = ttd  [k];
 	    clusinf[k + clusinf_dim1 * 3]    = damer[k];
 	    clusinf[k + (clusinf_dim1 << 2)] = separ[k];
@@ -115,7 +115,7 @@ void bswap(int *kk, int *nn, int *nrepr,
 	ammax = 0.;
 	for (i = 1; i <= *nn; ++i) {
 	    if (nrepr[i] == 0 && ammax <= beter[i]) {
-/*		    does < (instead of <= ) work too? -- NO! */
+		/*  does < (instead of <= ) work too? -- NO! */
 		ammax = beter[i];
 		nmax = i;
 	    }
@@ -155,31 +155,26 @@ L60:
 	    }
 	}
 	dzsky = 1.;
-	for (k = 1; k <= *nn; ++k) {
-	    if (nrepr[k] == 0) {
-		for (i = 1; i <= *nn; ++i) {
-		    if (nrepr[i] == 1) {
-			dz = 0.;
-			for (j = 1; j <= *nn; ++j) {
-			    ij = F77_CALL(meet)(&i, &j);
-			    kj = F77_CALL(meet)(&k, &j);
-			    if (dys[ij] == dysma[j]) {
-				small = dysmb[j];
-				if (small > dys[kj])
-				    small = dys[kj];
-				dz = dz - dysma[j] + small;
-			    } else {
-				if (dys[kj] < dysma[j]) {
-				    dz = dz - dysma[j] + dys[kj];
-				}
-			    }
-			}
-			if (dz < dzsky) {
-			    dzsky = dz;
-			    kbest = k;
-			    nbest = i;
-			}
+	for (k = 1; k <= *nn; ++k) if (nrepr[k] == 0) {
+	    for (i = 1; i <= *nn; ++i) if (nrepr[i] == 1) {
+		dz = 0.;
+		for (j = 1; j <= *nn; ++j) {
+		    ij = F77_CALL(meet)(&i, &j);
+		    kj = F77_CALL(meet)(&k, &j);
+		    if (dys[ij] == dysma[j]) {
+			small = dysmb[j];
+			if (small > dys[kj])
+			    small = dys[kj];
+			dz += (- dysma[j] + small);
+		    } else {
+			if (dys[kj] < dysma[j])
+			    dz += (- dysma[j] + dys[kj]);
 		    }
+		}
+		if (dzsky > dz) {
+		    dzsky = dz;
+		    kbest = k;
+		    nbest = i;
 		}
 	    }
 	}
@@ -202,7 +197,7 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 {
     Rboolean kand;
     int j, k, m, ja, jb, jk, jndz, ksmal = -1/* -Wall */;
-    int numcl, mevj, njaj, nel, njm, nvn, ntt, nvna, numl, nplac;
+    int mevj, njaj, nel, njm, nvn, ntt, nvna, numl, nplac;
     double aja, ajb, dam, dsmal, sep, ttt;
 
     /* Parameter adjustments */
@@ -259,23 +254,23 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 
     if(all_stats) { /*     analysis of the clustering. */
 
-	for (numcl = 1; numcl <= *kk; ++numcl) {
+	for (k = 1; k <= *kk; ++k) {
 	    ntt = 0;
-	    radus[numcl] = -1.;
+	    radus[k] = -1.;
 	    ttt = 0.;
 	    for (j = 1; j <= *nn; ++j) {
-		if (ncluv[j] == numcl) {
+		if (ncluv[j] == k) {
 		    ++ntt;
 		    m = nsend[j];
 		    nelem[ntt] = j;
 		    njm = F77_CALL(meet)(&j, &m);
 		    ttt += dys[njm];
-		    if (radus[numcl] < dys[njm])
-			radus[numcl] = dys[njm];
+		    if (radus[k] < dys[njm])
+			radus[k] = dys[njm];
 		}
 	    }
-	    ttd[numcl] = ttt / ntt;
-	    med[numcl] = m;
+	    ttd[k] = ttt / ntt;
+	    med[k] = m;
 	}
 	if (*kk == 1) {
 	    damer[1] = *s;
@@ -290,7 +285,7 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 	    /*
 	      identification of cluster k:
 	      nel  = number of objects
-	      nelem= vector of objects */
+	      nelem= vector of object indices */
 
 	    nel = 0;
 	    for (j = 1; j <= *nn; ++j) {
@@ -355,6 +350,7 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 		    continue /* k */;
 		}
 	    }
+	    /* nel = 1 or (!kand) : */
 	    nisol[k] = 0;
 
 	}/* for(k) */
@@ -375,7 +371,7 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
     int sylinf_dim1, sylinf_offset;
 
     /* Local variables */
-    int j, l, lang=-1 /*Wall*/, lplac, nclu, nj, nl, nbb, ntt, numcl, nsylr;
+    int j, k, l, lang=-1 /*Wall*/, lplac, k_, nj, nl, nbb, ntt, nsylr;
     double db, dysa, dysb, symax;
 
 /* Parameter adjustments */
@@ -384,9 +380,7 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
     sylinf -= sylinf_offset;
     --avsyl;
     --srank;
-    --syl;
-    --negbr;
-    --nelem;
+
     --nsend;
     --ncluv;
     --dys;
@@ -394,24 +388,24 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
     /* Function Body */
     nsylr = 0;
     *ttsyl = 0.;
-    for (numcl = 1; numcl <= *kk; ++numcl) {
+    for (k = 1; k <= *kk; ++k) {
 	ntt = 0;
 	for (j = 1; j <= *nn; ++j) {
-	    if (ncluv[j] == numcl) {
-		++ntt;
+	    if (ncluv[j] == k) {
 		nelem[ntt] = j;
+		++ntt;
 	    }
 	}
-	for (j = 1; j <= ntt; ++j) {
+	for (j = 0; j < ntt; ++j) {/* (j+1)-th obs. in cluster k */
 	    nj = nelem[j];
 	    dysb = *s * 1.1f + 1.;
 	    negbr[j] = -1;
-	    for (nclu = 1; nclu <= *kk; ++nclu) {
-		if (nclu != numcl) {
+	    for (k_ = 1; k_ <= *kk; ++k_) {
+		if (k_ != k) {
 		    nbb = 0;
 		    db = 0.;
 		    for (l = 1; l <= *nn; ++l) {
-			if (ncluv[l] == nclu) {
+			if (ncluv[l] == k_) {
 			    ++nbb;
 			    if (l != nj)
 				db += dys[F77_CALL(meet)(&nj, &l)];
@@ -420,13 +414,13 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 		    db /= nbb;
 		    if (dysb > db) {
 			dysb = db;
-			negbr[j] = nclu;
+			negbr[j] = k_;
 		    }
 		}
 	    }
 	    if (ntt > 1) {
 		dysa = 0.;
-		for (l = 1; l <= ntt; ++l) {
+		for (l = 0; l < ntt; ++l) {
 		    nl = nelem[l];
 		    if (nj != nl)
 			dysa += dys[F77_CALL(meet)(&nj, &nl)];
@@ -458,11 +452,11 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 	    else { /*     ntt == 1: */
 		syl[j] = 0.;
 	    }
-	}
-	avsyl[numcl] = 0.;
+	} /* for( j ) */
+	avsyl[k] = 0.;
 	for (j = 1; j <= ntt; ++j) {
 	    symax = -2.;
-	    for (l = 1; l <= ntt; ++l) {
+	    for (l = 0; l < ntt; ++l) {
 		if (symax < syl[l]) {
 		    symax = syl[l];
 		    lang = l;
@@ -470,22 +464,22 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 	    }
 	    nsend[j] = lang;
 	    srank[j] = syl[lang];
-	    avsyl[numcl] += srank[j];
+	    avsyl[k] += srank[j];
 	    syl[lang] = -3.;
 	}
-	*ttsyl += avsyl[numcl];
-	avsyl[numcl] /= ntt;
+	*ttsyl += avsyl[k];
+	avsyl[k] /= ntt;
 	if (ntt < 2) {
 	    ++nsylr;
-	    sylinf[nsylr + sylinf_dim1] = (double) numcl;
-	    sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[1];
+	    sylinf[nsylr + sylinf_dim1] = (double) k;
+	    sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[0];
 	    sylinf[nsylr + sylinf_dim1 * 3] = 0.;
-	    sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[1];
+	    sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[0];
 	} else {
 	    for (l = 1; l <= ntt; ++l) {
 		++nsylr;
 		lplac = nsend[l];
-		sylinf[nsylr + sylinf_dim1] = (double) numcl;
+		sylinf[nsylr + sylinf_dim1] = (double) k;
 		sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[lplac];
 		sylinf[nsylr + sylinf_dim1 * 3] = srank[l];
 		sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[lplac];
