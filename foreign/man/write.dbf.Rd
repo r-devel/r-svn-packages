@@ -1,20 +1,21 @@
-\name{dbf.write}
-\alias{dbf.write}
+\name{write.dbf}
+\alias{write.dbf}
 \title{Write a DBF File}
 \description{
   The function tries to write a data frame to a DBF file.
 }
 \usage{
-dbf.write(dataframe, filename, factor2char = TRUE)
+write.dbf(dataframe, file, factor2char = TRUE)
 }
 \arguments{
-  \item{dataframe}{a data frame object}
-  \item{filename}{a file name to be written to}
-  \item{factor2char}{logical, default TRUE, convert factor columns to character}
+  \item{dataframe}{a data frame object.}
+  \item{file}{a file name to be written to.}
+  \item{factor2char}{logical, default TRUE, convert factor columns to
+    character.}
 }
 \details{
-  The function calls code from shapelib to write a DBF format. At
-  present, NAs will cause an error and no file will be written. If
+  The function calls code from shapelib to write a DBF format.  At
+  present, NAs will cause an error and no file will be written.  If
   factors should be represented as character fields, the data frame must
   either be pre-processed to convert those colums using
   \code{I(as.character())}, or the \code{factor2char} argument set to
@@ -34,18 +35,18 @@ dbf.write(dataframe, filename, factor2char = TRUE)
 }
 
 \seealso{
-  \code{\link{dbf.read}}
+  \code{\link{read.dbf}}
 }
 \examples{
 data(warpbreaks)
 str(warpbreaks)
-try1 <- paste(tempfile(), ".dbf", sep="")
-dbf.write(warpbreaks, try1, factor2char=FALSE)
-in1 <- dbf.read(try1)
+try1 <- paste(tempfile(), ".dbf", sep = "")
+write,dbf(warpbreaks, try1, factor2char = FALSE)
+in1 <- read.dbf(try1)
 str(in1)
-try2 <- paste(tempfile(), ".dbf", sep="")
-dbf.write(warpbreaks, try2, factor2char=TRUE)
-in2 <- dbf.read(try2)
+try2 <- paste(tempfile(), ".dbf", sep = "")
+write.dbf(warpbreaks, try2, factor2char = TRUE)
+in2 <- read.dbf(try2)
 str(in2)
 }
 \keyword{file}

@@ -4,7 +4,7 @@
 
 	* Added read.systat contributed by Roger Bivand
 
-	* Added dbf.read, dbf.write from package 'maptools'.
+	* Added read.dbf, write.dbf based on functions from package 'maptools'.
 
 2004-09-02 Thomas Lumley <tlumley@u.washington.edu>
 
