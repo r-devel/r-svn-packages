@@ -1,7 +1,7 @@
 ### $Id$
 plot.partition <-
 function(x, ask = FALSE, which.plots = NULL,
-         nmax.lab = 40, max.strlen = 5,
+         nmax.lab = 40, max.strlen = 5, data = x$data,
          cor = TRUE, stand = FALSE, lines = 2,
          shade = FALSE, color = FALSE, labels = 0, plotchar = TRUE,
          span = TRUE, xlim = NULL, ylim = NULL, ...)
@@ -24,8 +24,14 @@ function(x, ask = FALSE, which.plots = NULL,
               round(x$ silinfo$avg.width, digits = 2)), adj = 0)
     }
 
+    if(is.null(x$data))# data not kept
+        x$data <- data
     if(is.null(which.plots) && !ask)
-        which.plots <- 1:2
+        which.plots <- { ## Default: no clusplot if data not kept nor specified:
+            if(inherits(x, "clara") && is.null(x$data))
+                2
+            else 1:2
+        }
     if(ask && is.null(which.plots)) { ## Use `menu' ..
         tmenu <- paste("plot ", ## choices :
                        c("All", "Clusplot", "Silhouette Plot"))
