@@ -10,15 +10,15 @@ Returns a list representing a fuzzy clustering of the data into \code{k}
 clusters.
 }
 \usage{
-fanny(x, k, diss = F, metric = "euclidean", stand = F)
+fanny(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 }
 \arguments{
 \item{x}{
-data matrix or dataframe, or dissimilarity matrix, depending on the
+data matrix or data frame, or dissimilarity matrix, depending on the
 value of the \code{diss} argument.
 
 
-In case of a matrix or dataframe, each row corresponds to an observation,
+In case of a matrix or data frame, each row corresponds to an observation,
 and each column corresponds to a variable. All variables must be numeric.
 Missing values (NAs) are allowed.
 
@@ -132,6 +132,5 @@ data(ruspini)
 ## Plot similar to Figure 6 in Stryuf et al (1996)
 plot(fanny(ruspini, 5))
 }
-\keyword{libcluster}
 \keyword{cluster}
 % Converted by Sd2Rd version 0.3-2.

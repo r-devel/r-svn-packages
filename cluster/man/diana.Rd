@@ -10,17 +10,17 @@ Returns a list representing a divisive hierarchical clustering of
 the dataset.
 }
 \usage{
-diana(x, diss = F, metric = "euclidean", stand = F)
+diana(x, diss = FALSE, metric = "euclidean", stand = FALSE)
 
 
 }
 \arguments{
 \item{x}{
-data matrix or dataframe, or dissimilarity matrix, depending on the
+data matrix or data frame, or dissimilarity matrix, depending on the
 value of the \code{diss} argument.
 
 
-In case of a matrix or dataframe, each row corresponds to an observation,
+In case of a matrix or data frame, each row corresponds to an observation,
 and each column corresponds to a variable. All variables must be numeric.
 Missing values (NAs) are allowed.
 
@@ -128,6 +128,5 @@ data(agriculture)
 \dontrun{plot(diana(agriculture), ask = TRUE)}
 \testonly{plot(diana(agriculture))}
 }
-\keyword{libcluster}
 \keyword{cluster}
 % Converted by Sd2Rd version 0.3-2.

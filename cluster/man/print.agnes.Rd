@@ -12,7 +12,7 @@
 \method{print}{agnes}(x, \dots)
 }
 \arguments{
-  \item{x}{a dissimilarity object.}
+  \item{x}{an agnes object.}
   \item{\dots}{potential further arguments (require by generic).}
 }
 \seealso{
