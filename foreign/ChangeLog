@@ -1,10 +1,10 @@
-2002-03-04 Brian Ripley  <ripley@stats.ox.ac.uk>
+2002-03-08 Brian Ripley  <ripley@stats.ox.ac.uk>
 
 	* DESCRIPTION (Version): New version is 0.4-10.
 
 	* minitab.c, pfm-read.c, spss.c: add casts as required.
 
-	* add swap_bytes.h, var.h to allow no-intervention
+	* add configure.win to allow no-intervention
 	  installation on Windows.
 
 2002-01-24  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
