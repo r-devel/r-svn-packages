@@ -18,7 +18,7 @@ function(x, ask = FALSE, which.plots = NULL,
                 xlim = c(min(0, min(s)), 1), horiz = TRUE,
                 mgp = c(2.5, 1, 0), ...)
         title(main = paste("Silhouette plot of ",
-              deparse(attr(x, "Call"))),
+              deparse(x$call)),
               sub = paste("Average silhouette width : ",
               round(x$ silinfo$avg.width, digits = 2)), adj = 0)
     }
