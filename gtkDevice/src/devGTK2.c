@@ -112,7 +112,6 @@ static char *fixedname = "fixed";
 
 static PangoStyle  slant[] = {PANGO_STYLE_NORMAL, PANGO_STYLE_OBLIQUE};
 static PangoWeight weight[] = {PANGO_WEIGHT_NORMAL, PANGO_WEIGHT_BOLD};
-static PangoFontDescription *fontdesc;
 
 struct _FontMetricCache {
     gint ascent[255];
@@ -426,10 +425,10 @@ static gint expose_event (GtkWidget *widget,
 	GTK_resize (dd); 
     }
     else if(gtkd->pixmap) {
-	gdk_draw_pixmap (gtkd->drawing->window, gtkd->wgc, gtkd->pixmap,
-			 event->area.x, event->area.y,
-			 event->area.x, event->area.y,
-			 event->area.width, event->area.height);
+	gdk_draw_drawable (gtkd->drawing->window, gtkd->wgc, gtkd->pixmap,
+			   event->area.x, event->area.y,
+			   event->area.x, event->area.y,
+			   event->area.width, event->area.height);
     }
     else {
 	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*)dd)));
@@ -479,8 +478,7 @@ static Rboolean GTK_Open(NewDevDesc *dd, gtkDesc *gtkd, char *dsp, double w,
     gtkd->windowHeight = ih = h / pixelHeight();
 
     gtkd->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
-    gtk_window_set_policy(GTK_WINDOW(gtkd->window), TRUE, TRUE, FALSE);
+    gtk_window_set_resizable (GTK_WINDOW (gtkd->window), TRUE);
     gtk_widget_realize(gtkd->window);
 
     /* create drawingarea */
@@ -489,11 +487,11 @@ static Rboolean GTK_Open(NewDevDesc *dd, gtkDesc *gtkd, char *dsp, double w,
 			  GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
 
     /* connect to signal handlers, etc */
-    gtk_signal_connect(GTK_OBJECT(gtkd->drawing), "realize",
-		       (GtkSignalFunc) realize_event, (gpointer) dd);
+    g_signal_connect(G_OBJECT (gtkd->drawing), "realize",
+		     G_CALLBACK (realize_event), dd);
 
     /* drawingarea properties */
-    gtk_widget_set_usize(gtkd->drawing, iw, ih);
+    gtk_widget_set_size_request(gtkd->drawing, iw, ih);
 
     /* setup background color */
     /* FIXME: There should be a canvas argument to gtk() which is
@@ -560,17 +558,13 @@ static void GTK_MetricInfo (int c, int font, double cex, double ps,
 			    double* width, NewDevDesc *dd)
 {
     gint size;
-    gint lbearing, rbearing, iascent, idescent, iwidth;
+    gint iascent, idescent, iwidth;
     gint maxwidth;
     gchar text[2];
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
     PangoFontMetrics *font_metrics;
     gchar *lang;
 
-    /* 
-       FIXME: lbearing rbearing unused
-       FIXME: Get language right
-    */
     lang = setlocale(LC_MESSAGES, NULL);
     font_metrics = pango_font_get_metrics(gtkd->font, 
 					  pango_language_from_string(lang));
@@ -646,7 +640,7 @@ static void GTK_resize(NewDevDesc *dd)
 	gtkd->resize = 0;
 
 	if(gtkd->pixmap)
-	    gdk_pixmap_unref(gtkd->pixmap);
+	    g_object_unref(gtkd->pixmap);
 	if(gtkd->windowWidth > 0 && gtkd->windowHeight > 0) {
 	    gtkd->pixmap = gdk_pixmap_new(gtkd->drawing->window,
 					  gtkd->windowWidth, gtkd->windowHeight,
@@ -971,11 +965,12 @@ static void GTK_Text(double x, double y, char *str,
 {
     PangoContext *context;
     PangoLayout *layout;
-
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
     GdkColor gcol_fill;
     gint size;
     double rrot = DEG2RAD * rot;
+    gsize bytes_read, bytes_written;
+    char *utf8;
 
     if(!gtkd->drawing->window)
 	return;
@@ -984,10 +979,8 @@ static void GTK_Text(double x, double y, char *str,
 
     context = gtk_widget_get_pango_context(gtkd->drawing);
     layout = pango_layout_new(context);
-    /* FIXME String should be UTF-8 */
-    pango_layout_set_text(layout, str, -1);
-
-    /* gdk_gc_set_font(gtkd->wgc, gtkd->font); */
+    utf8 = g_locale_to_utf8(str, -1, &bytes_read, &bytes_written, NULL);
+    pango_layout_set_text(layout, utf8, -1);
 
     if (R_OPAQUE(col)) {
 	SetColor(&gcol_fill, col);
@@ -1006,6 +999,7 @@ static void GTK_Text(double x, double y, char *str,
 			    layout, 
 			    rrot);
     }
+    g_free(utf8);
 }
 
 typedef struct _GTK_locator_info GTK_locator_info;
@@ -1048,9 +1042,10 @@ static Rboolean GTK_Locator(double *x, double *y, NewDevDesc *dd)
 	gtk_main_iteration();
 
     /* connect signal */
-    handler_id = gtk_signal_connect(GTK_OBJECT(gtkd->drawing), "button-press-event",
-				    (GtkSignalFunc) locator_button_press, (gpointer) info);
-
+    handler_id = g_signal_connect(G_OBJECT(gtkd->drawing),
+				  "button-press-event",
+				  G_CALLBACK (locator_button_press), info);
+    
     /* run the handler */
     gtk_main();
 
@@ -1059,7 +1054,7 @@ static Rboolean GTK_Locator(double *x, double *y, NewDevDesc *dd)
     button1 = info->button1;
 
     /* clean up */
-    gtk_signal_disconnect(GTK_OBJECT(gtkd->drawing), handler_id);
+    g_signal_handler_disconnect(G_OBJECT(gtkd->drawing), handler_id);
     g_free(info);
 
     if(button1)
@@ -1091,12 +1086,11 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     NewDevDesc *dd;
     int ps;
     gchar tmp[2];
-    gint cumwidth, c, rbearing, lbearing, ascent, descent;
-    /* fixme lbearing rbearing unused */
-    double max_rbearing, min_lbearing;
+    gint cumwidth, c, ascent, descent;
+    gint max_rbearing, min_lbearing;
     PangoFontMetrics *font_metrics;
     gtkDesc *gtkd;
-
+    gchar *lang;
     dd = (NewDevDesc*) odd;
 
     if(!(gtkd = (gtkDesc *) malloc(sizeof(gtkDesc))))
@@ -1166,13 +1160,14 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
 	if(irbearing > max_rbearing || c == 0)
 	    max_rbearing = irbearing;
     }
-    font_metrics = pango_font_get_metrics(gtkd->font, /* FIXME: language */
-					  pango_language_from_string("en"));
+    lang = setlocale(LC_MESSAGES, NULL);
+    font_metrics = pango_font_get_metrics(gtkd->font,
+					  pango_language_from_string(lang));
     ascent = pango_font_metrics_get_ascent(font_metrics);
     descent = pango_font_metrics_get_descent(font_metrics);
     dd->cra[1] = PANGO_PIXELS(ascent) + PANGO_PIXELS(descent);
     pango_font_metrics_unref(font_metrics);
-    /* dd->cra[0] ??? */
+    dd->cra[0] = max_rbearing - min_lbearing;
 
     /* character addressing offsets */
     dd->xCharOffset = 0.4900;
@@ -1212,11 +1207,11 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     gint iw, ih, w, h;
     GtkWidget *drawing = (GtkWidget *) widget;
     gtkDesc *gtkd;
+    gchar *lang;
 
     gchar tmp[2];
-    /* FIXME: lbearing, rbearing unused */
-    gint cumwidth, c, rbearing, lbearing, ascent, descent;
-    double max_rbearing, min_lbearing;
+    gint cumwidth, c, ascent, descent;
+    gint max_rbearing, min_lbearing;
     PangoFontMetrics *font_metrics;
 
     GTK_DRAWING_AREA(drawing);
@@ -1267,35 +1262,27 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
 	else
 	    gtk_widget_set_events(gtkd->drawing,
 				  GDK_EXPOSURE_MASK | GDK_BUTTON_PRESS_MASK);
-	gdk_rgb_init();
-	gtk_widget_push_visual(gdk_rgb_get_visual());
-	gtk_widget_push_colormap(gdk_rgb_get_cmap());
 
 	gtkd->windowWidth = iw = w / pixelWidth();
 	gtkd->windowHeight = ih = h / pixelHeight();
 	/* connect to signal handlers, etc */
-	gtk_signal_connect(GTK_OBJECT(gtkd->drawing), "realize",
+	g_signal_connect(GTK_OBJECT(gtkd->drawing), "realize",
 			   (GtkSignalFunc) realize_event, (gpointer) dd);
 
 
 	SetColor(&gtkd->gcol_bg, R_RGB(255, 255, 255)); /*FIXME canvas color*/
 
 	/* connect to signal handlers, etc */
-	gtk_signal_connect(GTK_OBJECT(gtkd->drawing), "configure_event",
-			   (GtkSignalFunc) configure_event, (gpointer) dd);
-	gtk_signal_connect(GTK_OBJECT(gtkd->drawing), "expose_event",
-			   (GtkSignalFunc) expose_event, (gpointer) dd);
+	g_signal_connect (G_OBJECT (gtkd->drawing), "configure_event",
+			  G_CALLBACK (configure_event), dd);
+	g_signal_connect (G_OBJECT(gtkd->drawing), "expose_event",
+			  G_CALLBACK (expose_event), dd);
 
 	dd->deviceSpecific = (void *) gtkd;
 
 	/* initialise line params */
 	gtkd->lty = -1;
 	gtkd->lwd = -1;
-
-
-	/* let other widgets use the default colour settings */
-	gtk_widget_pop_visual();
-	gtk_widget_pop_colormap();
 
 	/* Set base font */
 	if(!SetBaseFont(gtkd)) {
@@ -1344,34 +1331,17 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
 		     &ilbearing, &irbearing, 0, 0, 0);
 	if(ilbearing < min_lbearing || c == 0)
 	    min_lbearing = ilbearing;
-	if(irbearing > max_rbearing || c == 0)
+	if(irbearing > max_rbearing)
 	    max_rbearing = irbearing;
     }
-    font_metrics = pango_font_get_metrics(gtkd->font, /* FIXME: language */
-					  pango_language_from_string("en"));
+    lang = setlocale(LC_MESSAGES, NULL);
+    font_metrics = pango_font_get_metrics(gtkd->font, 
+					  pango_language_from_string(lang));
     ascent = pango_font_metrics_get_ascent(font_metrics);
     descent = pango_font_metrics_get_descent(font_metrics);
     dd->cra[1] = PANGO_PIXELS(ascent) + PANGO_PIXELS(descent);
     pango_font_metrics_unref(font_metrics);
-    /* FIXME cra[0]; */
-
-    /*
-    max_rbearing = 0;
-    min_lbearing = 10000;
-    for(c = 0; c <= 255; c++) {
-	g_snprintf(tmp, 2, "%c", (gchar) c);
-	gdk_string_extents(gtkd->font, tmp,
-			   &lbearing, &rbearing,
-			   NULL, NULL, NULL);
-	if(lbearing < min_lbearing || c == 0)
-	    min_lbearing = lbearing;
-	if(rbearing > max_rbearing)
-	    max_rbearing = rbearing;
-    }
-
     dd->cra[0] = max_rbearing - min_lbearing;
-    dd->cra[1] = (double) gtkd->font->ascent + (double) gtkd->font->descent;
-    */
 
     /* character addressing offsets */
     dd->xCharOffset = 0.4900;

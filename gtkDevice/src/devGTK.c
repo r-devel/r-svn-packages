@@ -217,7 +217,7 @@ static GdkFont* RGTKLoadFont (gint face, gint size)
     if(tmp_font) {
 	g_hash_table_insert(font_htab, (gpointer) g_strdup(fontname),
 			    (gpointer) tmp_font);
-	if (fabs( (pixelsize - size)/(double)size ) > 0.1)
+	if (fabs( (pixelsize - size)/(double)size ) > 0.2)
 	    warning("GTK used font size %d when %d was requested",
 		    pixelsize, size);
     }

@@ -130,9 +130,8 @@ static void repaint_pixbuf (GdkPixbuf *pixbuf, guchar red, guchar green,
        the foreground cover of the graphics context gc */
 {
     int i, j;
-    GdkGCValues values, values2;
+    GdkGCValues values;
     GdkColormap *colormap;
-    GdkColor fgcolor;
     guchar *pixels;
     int width, height, rowstride, nchan, index;
 
@@ -203,7 +202,6 @@ void gdk_draw_layout_rot(GdkDrawable *drawable,
 	PangoRectangle rect;
 	GdkPixmap *pixmap;
 	GdkPixbuf *pixbuf, *tpixbuf, *rpixbuf;
-	double xpivot, ypivot;
 
 	/* Render layout to a bitmap and then copy it to a pixbuf */
 	pango_layout_get_pixel_extents(layout, NULL, &rect);
