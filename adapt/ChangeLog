@@ -1,0 +1,20 @@
+2002-03-13  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.0-2
+
+	* man/adapt.Rd: indentation, using \code{.}, etc;
+	  example also tries p=5 dimensions
+
+	* R/adapt.R: clean up (spaces)
+
+2002-01-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/adapt.R: do not use .Alias anymore
+
+2001-06-29  Thomas Lumley <tlumley@u.washington.edu>
+
+	* move (improved!) integrate() into base, using .Call() etc.
+
+----------
+
+see ./README-R for older changes

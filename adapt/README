@@ -1,0 +1,20 @@
+[from Statlib's original  http://lib.stat.cmu.edu/S/adapt ]
+
+This code contains an S function and supporting C and Fortran code for
+adaptive quadrature.  The underlyling fortran code is purported to
+work in from 2 to 20 dimensions.  The code is set up to dynamically
+load from a central library area.  If you can not do dynamic loading,
+you may need to build a staticly loaded version.  The adapt S function
+calls load.if.needed to do the dynamic loading.  You will have to
+change the functions used here (probably to call library.dynam).
+
+To install the source, type
+	make
+in this directory.
+Move the resulting sadapt.o into (say ~s/library/cmu ).  Read the file
+adapt.SS into S.  Two functions (adapt, and load.if.needed) will be
+created.  Move these into ~/library/cmu/.Data.  Finally move
+./.Data/.Help/adapt into ~s/library/cmu/.Data/.Help/adapt.
+
+S code written by Michael Meyer (mikem@andrew.cmu.edu).
+October, 1989.

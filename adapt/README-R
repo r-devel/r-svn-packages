@@ -1,0 +1,49 @@
+This is an R modification by Thomas Lumley
+of S code by Mike Meyer
+that calls an adaptive quadrature routine by Alan Genz.
+Original  http://lib.stat.cmu.edu/S/adapt  [dated Oct 17 1989]
+-------
+June 2001
+
+Removed one-dimensional integration: R 1.3.0 has a quadpack-based function
+in base.
+
+
+-------
+June 1999
+
+Deleted Makefile -- R now does better without one.
+
+Redid function passing to use eval() rather than call_R.
+
+Added option to keep doubling static storage allocation until precision
+achieved or R crashes :)
+
+Thomas Lumley
+----				   
+
+January 1999:
+
+The Fortran code works without problems
+on Solaris 2.5.1 [f77 SC4.2; g77]  and	Linux (Debian 2.0).
+There's no reason to keep the f2c-translated C code.
+
+adapt() and hence integrate() now return a class "integrate" object
+having a simple print method.
+
+Martin Maechler, ETH Zurich
+
+----
+
+July 1997:
+
+I recommend using the C code (converted with f2c) as I'm not sure about
+the correct linking for the FORTRAN.  If you use g77 to compile the
+FORTRAN you must specify the -O flag, as otherwise bsrl.f activates a
+known bug in g77 causing it to generate invalid assembly language.
+
+In any case, make sure that the test examples work.
+
+Thomas Lumley
+thomas@biostat.washington.edu
+
