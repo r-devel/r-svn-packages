@@ -34,7 +34,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 	n <- nrow(x2)
 	jp <- ncol(x2)
 	jtmd <- as.integer(ifelse(is.na(rep(1, n) %*% x2), -1, 1))
-	valmisdat <- min(x2, na.rm = TRUE) - 0.5# double!
+	valmisdat <- min(x2, na.rm=TRUE) - 0.5 #(double) VALue for MISsing DATa
 	x2[is.na(x2)] <- valmisdat
 	valmd <- rep(valmisdat, jp)
 	dv <- double(1 + (n * (n - 1))/2)

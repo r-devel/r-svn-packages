@@ -1,4 +1,5 @@
-daisy <--- $Id$
+#### $Id$
+daisy <-
 function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
 {
     ## check type of input matrix
