@@ -10,7 +10,7 @@
 
 #include "cluster.h"
 
-void sweep_(double *, int *, int *, int *, double *);
+void sweep(double *, int *, int *, int *, double *);
 
 /* Table of constant values */
 
@@ -30,53 +30,52 @@ void spannel_(int *ncas, /* = number of objects */
 	      int *ierr)
 {
     /* System generated locals */
-    int dat_dim1, dat_offset, cov_dim1, cov_offset, i__1, i__2, i__3;
-    double d__1;
-
-    /* Builtin functions */
-    double sqrt(double);
+    int dat_dim1, dat_offset, cov_dim1;
 
     /* Local variables */
-    double scal, dmax__, aver, dist;
-    int loop, i__, j, k;
-    double p, deter, tempo;
+    int loop, i, j, k;
+    double scal, dmax, aver, dist, p, deter, tempo;
+
+#define COV(i,j) cov[i + j * cov_dim1]
+    cov_dim1 = *ndep + 1;
 
     /* Parameter adjustments */
     --prob;
     --dstopt;
     --varss;
     --varsum;
-    cov_dim1 = *ndep - 0 + 1;
-    cov_offset = 0 + cov_dim1 * 0;
-    cov -= cov_offset;
+
     dat_dim1 = *ncas;
     dat_offset = 1 + dat_dim1 * 0;
     dat -= dat_offset;
 
     /* Function Body */
-    for (j = 1; j <= *ndep; ++j) { /* f2c-clean: s {i__1} {*ndep} */
+
+/* (in clusplot's call,)  dat[i,0] are all  == 1
+ *
+ * Scale Data dat[i,j] to mean = 0 and var{1/n} = 1  -- for j= 1:ndep (not j=0!)
+ */
+    for (j = 1; j <= *ndep; ++j) {
 	varsum[j] = 0.;
 	varss[j] = 0.;
     }
-    for (i__ = 1; i__ <= *ncas; ++i__) {
+    for (i = 1; i <= *ncas; ++i) {
 	for (j = 1; j <= *ndep; ++j) {
-	    varsum[j] += dat[i__ + j * dat_dim1];
-/* Computing 2nd power */
-	    d__1 = dat[i__ + j * dat_dim1];
-	    varss[j] += d__1 * d__1;
+	    p = dat[i + j * dat_dim1];
+	    varsum[j] += p;
+	    varss [j] += p * p;
 	}
     }
     for (j = 1; j <= *ndep; ++j) {
 	aver = varsum[j] / *ncas;
 	scal = sqrt(varss[j] / *ncas - aver * aver);
-	for (i__ = 1; i__ <= *ncas; ++i__) {
-	    dat[i__ + j * dat_dim1] = (dat[i__ + j * dat_dim1] - aver) / scal;
+	for (i = 1; i <= *ncas; ++i) {
+	    dat[i + j * dat_dim1] = (dat[i + j * dat_dim1] - aver) / scal;
 	}
     }
-    p = 1.f / (double) (*ncas);
-    for (i__ = 1; i__ <= *ncas; ++i__)
-	prob[i__] = p;
-    }
+    p = 1. / (double) (*ncas);
+    for (i = 1; i <= *ncas; ++i)
+	prob[i] = p;
     *ierr = 0;
     p = (double) (*ndep);
 /* ---- Repeat { ... up to `maxit' times ] */
@@ -84,113 +83,90 @@ void spannel_(int *ncas, /* = number of objects */
 L160:
     ++loop;
 /*     Cov[,] = weighted covariance of dat[,]  {weights = prob[]} */
-    for (j = 0; j <= *ndep; ++j) { /* f2c-clean: s {i__1} {*ndep} */
-	for (k = 0; k <= j; ++k) { /* f2c-clean: s {i__2} {j} */
-	    cov[k + j * cov_dim1] = 0.f;
+    for (j = 0; j <= *ndep; ++j) {
+	for (k = 0; k <= j; ++k)
+	    COV(k,j) = 0.;
+    }
+    for (i = 1; i <= *ncas; ++i) {
+	for (j = 0; j <= *ndep; ++j) {
+	    work[j] = dat[i + j * dat_dim1];
+	    tempo = prob[i] * work[j];
+	    for (k = 0; k <= j; ++k)
+		COV(k,j) += tempo * work[k];
 	}
     }
-    for (i__ = 1; i__ <= *ncas; ++i__) { /* f2c-clean: s {i__2} {*ncas} */
-	for (j = 0; j <= *ndep; ++j) { /* f2c-clean: s {i__1} {*ndep} */
-	    work[j] = dat[i__ + j * dat_dim1];
-	    tempo = prob[i__] * work[j];
-	    for (k = 0; k <= j; ++k) { /* f2c-clean: s {i__3} {j} */
-		cov[k + j * cov_dim1] += tempo * work[k];
-	    }
-	}
+    for (j = 0; j <= *ndep; ++j)
+	for (k = 0; k <= j; ++k)
+	    COV(j,k) = COV(k,j);
+
+    deter = 1.;
+    for (i = 0; i <= *ndep; ++i) {
+	if (deter <= 0.) { *ierr = 2; return; }
+	sweep(cov, ndep, &c__0, &i, &deter);
     }
-    for (j = 0; j <= *ndep; ++j) { /* f2c-clean: s {i__2} {*ndep} */
-	for (k = 0; k <= j; ++k) { /* f2c-clean: s {i__3} {j} */
-	    cov[j + k * cov_dim1] = cov[k + j * cov_dim1];
-	}
-    }
-    deter = 1.f;
-    for (i__ = 0; i__ <= *ndep; ++i__) { /* f2c-clean: s {i__3} {*ndep} */
-	if (deter <= 0.f) {
-	    *ierr = 2;
-	    return;
-	}
-	sweep_(&cov[cov_offset], ndep, &c__0, &i__, &deter);
-    }
-    dmax__ = 0.f;
-    for (i__ = 1; i__ <= *ncas; ++i__) {
-	dist = -1.f;
+    dmax = 0.;
+    for (i = 1; i <= *ncas; ++i) {
+	dist = -1.;
 	for (j = 0; j <= *ndep; ++j) {
 	    work[j] = 0.;
 	    for (k = 0; k <= *ndep; ++k)
-		work[j] -= cov[j + k * cov_dim1] * dat[i__ + k * dat_dim1];
+		work[j] -= COV(j,k) * dat[i + k * dat_dim1];
 
 /*          work(j) = - sum_{k=0}^p  dat(i,k) * cov(k,j) { = cov(j,k) },
      i.e.,  work_j = - X[i,] %*% COV[,j] */
-	    dist += work[j] * dat[i__ + j * dat_dim1];
+	    dist += work[j] * dat[i + j * dat_dim1];
 	}
-	dstopt[i__] = dist;
+	dstopt[i] = dist;
 /*        Dist{opt}_i = -1 - t(X[i,]) %*% COV %*% X[i,] */
-	if (dist > dmax__) {
-	    dmax__ = dist;
-	}
-    }
-/*     dmax = max{ dstopt[i] } */
-    if (dmax__ > p + *eps) {
-/*     not yet converged */
-	for (i__ = 1; i__ <= *ncas; ++i__) { /* f2c-clean: s {i__3} {*ncas} */
-	    prob[i__] = prob[i__] * dstopt[i__] / p;
-	}
+	if (dmax < dist)
+	    dmax = dist;
+    }/*     dmax = max{ dstopt[i] } */
+
+    if (dmax > p + *eps) { /*     not yet converged */
+	for (i = 1; i <= *ncas; ++i)
+	    prob[i] *= (dstopt[i] / p);
 	if (loop < *maxit) {
 	    goto L160;
 	}
     }
     *maxit = loop;
-    return 0;
-} /* spannel_ 
+    return;
+} /* spannel_ */
 
- Subroutine */ int sweep_(double *cov, int *nord, int *ixlo,
-
-	int *nel, double *deter)
+/* This is currently also called from R : ../tests/sweep-ex.R
+ * ==> keep pointers !*/
+void sweep(double *cov, int *nord, int *ixlo, int *nel, double *deter)
 {
     /* System generated locals */
-    int cov_dim1, cov_offset, i__1, i__2;
+    int cov_dim1;
 
     /* Local variables */
     double temp;
-    int i__, j;
+    int i, j;
+    cov_dim1 = *nord + 1;
 
-
-
-    /* Parameter adjustments */
-    cov_dim1 = *nord - 0 + 1;
-    cov_offset = 0 + cov_dim1 * 0;
-    cov -= cov_offset;
-
-    /* Function Body */
-    temp = cov[*nel + *nel * cov_dim1];
+    temp = COV(*nel,*nel);
     *deter *= temp;
     if (*nord <= 1) {
-	cov[cov_dim1 + 1] = 1.f / temp;
-	return 0;
+	COV(1,1) = 1. / temp;
     }
-/* else : nord > 1 */
-    for (i__ = *ixlo; i__ <= *nord; ++i__) { /* f2c-clean: s {i__1} {*nord} */
-	if (i__ == *nel) {
-	    goto L30;
-	}
-	for (j = *ixlo; j <= i__; ++j) { /* f2c-clean: s {i__2} {i__} */
-	    if (j == *nel) {
-		goto L20;
+    else { /* nord > 1 */
+	for (i = *ixlo; i <= *nord; ++i) {
+	    if (i != *nel) {
+		for (j = *ixlo; j <= i; ++j) {
+		    if (j != *nel) {
+			COV(j,i) = COV(i,j) - COV(i,*nel) * COV(*nel,j) / temp;
+			COV(i,j) = COV(j,i);
+		    }
+		}
 	    }
-	    cov[j + i__ * cov_dim1] = cov[i__ + j * cov_dim1] - cov[i__ + *
-		    nel * cov_dim1] * cov[*nel + j * cov_dim1] / temp;
-	    cov[i__ + j * cov_dim1] = cov[j + i__ * cov_dim1];
-L20:
-	    ;
 	}
-L30:
-	;
+	COV(*nel,*nel) = 1.;
+	for (i = *ixlo; i <= *nord; ++i) {
+	    COV(*nel,i) = -COV(i,*nel) / temp;
+	    COV(i,*nel) = COV(*nel,i);
+	}
     }
-    cov[*nel + *nel * cov_dim1] = 1.f;
-    for (i__ = *ixlo; i__ <= *nord; ++i__) { /* f2c-clean: s {i__1} {*nord} */
-	cov[*nel + i__ * cov_dim1] = -cov[i__ + *nel * cov_dim1] / temp;
-	cov[i__ + *nel * cov_dim1] = cov[*nel + i__ * cov_dim1];
-    }
-    return 0;
-} /* sweep_ */
+    return;
+} /* sweep */
 
