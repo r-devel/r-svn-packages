@@ -1,3 +1,9 @@
+2001-11-13 Thomas Lumley <tlumley@u.washington.edu>
+	revised factor reading in src/stataread.c,
+	added factor writing for Stata,
+	long names now abbreviate()d not truncated.
+	Fixed various idiocies in writing strings.
+
 2001-11-12 Thomas Lumley <tlumley@u.washington.edu>
 	* src/stataread.c, R/read.dta.R, man/*.dta.Rd,
 	tests/datefactor.dta, tests/stata.R: read factors,
