@@ -258,6 +258,9 @@ static gint SetBaseFont(gtkDesc *gtkd)
 
     gtkd->font = RGTKLoadFont (gtkd->fontface, gtkd->fontsize);
 
+    if(gtkd->wgc == NULL)
+	    return(1);
+
     if(gtkd->font != NULL) {
 	gdk_gc_set_font(gtkd->wgc, gtkd->font);
 	return 1;
