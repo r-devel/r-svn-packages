@@ -29,33 +29,36 @@ mona <- function(x)
                     lava = integer(n),
                     integer(jp),
                     PACKAGE = "cluster")
-    ##give a warning when errors occured
-    if(res$error == 1)
-        stop("No clustering performed, an object was found with all values missing." )
-    if(res$error == 2)
-        stop("No clustering performed, a variable was found with at least 50% missing values." )
-    if(res$error == 3)
-        stop(message = "No clustering performed, a variable was found with all non missing values identical." )
-    if(res$error == 4)
-        stop("No clustering performed, all variables have at least one missing value." )
+    ## give a warning when errors occured
+    if(res$error != 0) {
+        ch <- "No clustering performed,"
+        switch(res$error,
+               ## 1 :
+               stop(paste(ch,"an object was found with all values missing.")),
+               ## 2 :
+               stop(paste(ch,"a variable was found with at least 50% missing values.")),
+               ## 3 :
+               stop(paste(ch,"a variable was found with all non missing values identical.")),
+               ## 4 :
+               stop(paste(ch,"all variables have at least one missing value."))
+               )
+    }
     res$x2 <- matrix(as.numeric(substring(res$x2,
                                           1:nchar(res$x2), 1:nchar(res$x2))),
                      n, jp)
-    dimnames(res$x2) <- dimnames(x)
-    ##add labels to Fortran output
-    if(length(dimnames(x)[[1]]) != 0)
-        order.lab <- dimnames(x)[[1]][res$ner]
-    if(length(dimnames(x)[[2]]) != 0) {
+    dimnames(res$x2) <- dnx <- dimnames(x)
+    ## add labels to Fortran output
+    if(length(dnx[[2]]) != 0) {
         lava <- as.character(res$lava)
-        lava[lava != "0"] <- dimnames(x)[[2]][res$lava]
+        lava[lava != "0"] <- dnx[[2]][res$lava]
         lava[lava == "0"] <- "NULL"
         res$lava <- lava
     }
-    ##construct S object
+    ## construct "mona" object
     clustering <- list(data = res$x2, order = res$ner,
                        variable = res$lava[ -1 ], step = res$nban[-1])
-    if(exists("order.lab"))
-        clustering$order.lab <- order.lab
+    if(length(dnx[[1]]) != 0)
+        clustering$order.lab <- dnx[[1]][res$ner]
     class(clustering) <- "mona"
     attr(clustering, "Call") <- sys.call()
     clustering
