@@ -204,7 +204,7 @@ void clara(int *n,  /* = number of objects */
 	    if (lrg_sam) {
 		/* have indices for smaller _nonsampled_ half; revert this: */
 		for (j = 1, jk = 0, js = 0; j <= *n; j++) {
-		    if (nsel[jk] == j)
+		    if (jk < n_sam && nsel[jk] == j)
 			++jk;
 		    else
 			nrepr[js++] = j;
