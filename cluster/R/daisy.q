@@ -77,29 +77,27 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
     type3 <- match(type2, typeCodes)# integer
     if(any(ina <- is.na(type3)))
         stop("invalid type", type2[ina],"  for column numbers", which(is.na))
-    ## put info about NAs in arguments for the Fortran call
-    jtmd <- ifelse(is.na(rep(1, n) %*% x), -1, 1)
-    jtmd[type3 <= 2] <- 0# for the binary ones -- new in 1.5-1 (May 2002)!
-    valmisdat <- min(x, na.rm = TRUE) - 0.5
-    x[is.na(x)] <- valmisdat
-    valmd <- rep(valmisdat, p)
+    if((mdata <- any(inax <- is.na(x)))) { # TRUE if x[] has any NAs
+        jtmd <- as.integer(ifelse(apply(x, 2, function(c)any(is.na(c))), -1, 1))
+        ## VALue for MISsing DATa
+        valmisdat <- 1.1* max(abs(range(x, na.rm=TRUE)))
+        x[inax] <- valmisdat
+        valmd <- rep(valmisdat, p)
+    }
     ## call Fortran routine
     storage.mode(x) <- "double"
-    storage.mode(valmd) <- "double"
-    storage.mode(jtmd) <- "integer"
-
     disv <- .Fortran("daisy",
                      n,
                      p,
                      x,
-                     valmd,
-                     jtmd,
+                     if(mdata)valmd else double(1),
+                     if(mdata) jtmd else integer(1),
                      as.integer(jdat),
                      type3,             # vtype
                      as.integer(ndyst),
-                     dis = double(1 + (n * (n - 1))/2),
+                     dis = double((n * (n - 1))/2),
                      DUP = FALSE,
-                     PACKAGE = "cluster")$dis[-1]
+                     PACKAGE = "cluster")$dis
     ## adapt Fortran output to S:
     ## convert lower matrix, read by rows, to upper matrix, read by rows.
     disv[disv == -1] <- NA
@@ -107,7 +105,7 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
     full[!lower.tri(full, diag = TRUE)] <- disv
     disv <- t(full)[lower.tri(full)]
     ## give warning if some dissimilarities are missimg
-    if(is.na(min(disv))) attr(disv, "NA.message") <-
+    if(any(is.na(disv))) attr(disv, "NA.message") <-
         "NA-values in the dissimilarity matrix !"
     ## construct S object -- "dist" methods are *there* !
     class(disv) <- c("dissimilarity", "dist")
@@ -135,14 +133,15 @@ print.dissimilarity <- function(x, ...)
 summary.dissimilarity <- function(object, ...)
 {
     sx <- summary(as.vector(object), ...)
-    r <- c(list(summ = sx), attributes(object))
+    at <- attributes(object)
+    r <- c(list(summ = sx, n = length(object)), at[names(at) != "class"])
     class(r) <- "summary.dissimilarity"
     r
 }
 
 print.summary.dissimilarity <- function(x, ...)
 {
-    cat(length(x$summ), "dissimilarities, summarized :\n")
+    cat(x$n, "dissimilarities, summarized :\n")
     print(x$summ, ...)
     cat("Metric : ", x $ Metric,
         if(!is.null(aT <- x $ Types))
