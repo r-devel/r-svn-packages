@@ -1,6 +1,7 @@
 #### PAM : Partitioning Around Medoids
 #### --- $Id$
-pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
+pam <- function(x, k, diss = inherits(x, "dist"),
+                metric = "euclidean", stand = FALSE)
 {
     if(diss) {
 	## check type of input vector
@@ -17,8 +18,8 @@ pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 	## adapt S dissimilarities to Fortran:
 	## convert upper matrix, read by rows, to lower matrix, read by rows.
 	n <- attr(x, "Size")
-	if((k < 1) || (k > n - 1))
-	    stop("The number of cluster should be at least 1 and at most n-1.")
+	if(k < 1 || k >= n)
+	    stop("The number of clusters `k' must be in {1,2, .., n-1}.")
 	dv <- x[lower.to.upper.tri.inds(n)]
 	## prepare arguments for the Fortran call
 	dv <- c(0, dv)
