@@ -1,6 +1,6 @@
 Title: adapt -- multidimensional numerical integration
 Package: adapt
-Version: 1.0-2
+Version: 1.0-3
 Author: FORTRAN by Alan Genz, S by Mike Meyer, R by Thomas Lumley and Martin Maechler
 Description: Adaptive Quadrature in up to 20 dimensions
 Depends:

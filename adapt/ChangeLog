@@ -1,3 +1,12 @@
+2002-03-14  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.0-3 --> CRAN
+
+	* R/adapt.R (adapt): use defaults for minpts, maxpts, eps;
+	  more logical maxpts default (for ndim >= 7) using rulcls
+
+	* man/adapt.Rd: extended example
+
 2002-03-13  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 1.0-2
