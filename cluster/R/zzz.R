@@ -1,4 +1,4 @@
-## no S4 methodology here; speedup :
+## -*- R -*-  no S4 methodology here; speedup :
 .noGenerics <- TRUE
 
 .First.lib <- function(lib, pkg) {
