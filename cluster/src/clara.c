@@ -361,47 +361,37 @@ void bswap2(int *kk, int *nsam, int *nrepr,
 	nrepr[j] = 0;
 	dysma[j] = *s * 1.1 + 1.;
     }
-/* -- LOOP --------------------- */
-L20:
-    for (ja = 1; ja <= *nsam; ++ja) {
-	if (nrepr[ja] != 0) {
-	    goto L22;
+    /* --- Loop --- */
+    do {
+	for (ja = 1; ja <= *nsam; ++ja) {
+	    if (nrepr[ja] == 0) {
+		beter[ja] = 0.;
+		for (j = 1; j <= *nsam; ++j) {
+		    njaj = meet_(&ja, &j);
+		    cmd = dysma[j] - dys[njaj];
+		    if (cmd > 0.)
+			beter[ja] += cmd;
+		}
+	    }
 	}
-	beter[ja] = 0.;
+	ammax = 0.;
+	for (ja = 1; ja <= *nsam; ++ja) {
+	    if (nrepr[ja] == 0 && ammax <= beter[ja]) {
+		ammax = beter[ja];
+		nmax = ja;
+	    }
+	}
+	nrepr[nmax] = 1;
+	++nny;
 	for (j = 1; j <= *nsam; ++j) {
-	    njaj = meet_(&ja, &j);
-	    cmd = dysma[j] - dys[njaj];
-	    if (cmd > 0.)
-		beter[ja] += cmd;
+	    njn = meet_(&nmax, &j);
+	    if (dys[njn] < dysma[j]) {
+		dysma[j] = dys[njn];
+	    }
 	}
-L22:
-	;
-    }
-    ammax = 0.;
-    for (ja = 1; ja <= *nsam; ++ja) {
-	if (nrepr[ja] != 0) {
-	    goto L31;
-	}
-	if (beter[ja] < ammax) {
-	    goto L31;
-	}
-	ammax = beter[ja];
-	nmax = ja;
-L31:
-	;
-    }
-    nrepr[nmax] = 1;
-    ++nny;
-    for (j = 1; j <= *nsam; ++j) {
-	njn = meet_(&nmax, &j);
-	if (dys[njn] < dysma[j]) {
-	    dysma[j] = dys[njn];
-	}
-    }
-    if (nny != *kk) {
-	goto L20;
-    }
-/* -- */
+    } while (nny != *kk);
+    /* --- */
+
     *sky = 0.;
     for (j = 1; j <= *nsam; ++j)
 	*sky += dysma[j];
@@ -475,7 +465,7 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
 	   double *valmd, int *nrepr, int *nsel, double *dys,
 	   double *x, int *nr, /*logical*/int *nafs, double *ttd,
 	   double *radus, double *ratt, int *nrnew, int *nsnew,
-	   int *npnew, int *ns, int *np, int *new__,
+	   int *npnew, int *ns, int *np, int *new,
 	   double *ttnew, double *rdnew)
 {
 /* nafs = .true. if a distance cannot be calculated */
@@ -497,7 +487,7 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
     --jtmd;
     --rdnew;
     --ttnew;
-    --new__;
+    --new;
     --np;
     --ns;
     --npnew;
@@ -532,114 +522,106 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
     pp = (double) (*jpp);
     newf = 0;
     jn = 0;
-L15:
-    ++jn;
-    if (*mdata == 0) {
-	for (jk = 1; jk <= *kk; ++jk) {
-	    dsum = 0.;
-	    nrjk = nr[jk];
-	    if (nrjk != jn) {
-		for (jp = 1; jp <= *jpp; ++jp) {
-		    na = (nrjk - 1) * *jpp + jp;
-		    nb = (jn - 1) * *jpp + jp;
-		    tra = fabs(x[na] - x[nb]);
-		    if (*ndyst == 1) {
-			tra *= tra;
+/* L15:
+ *     ++jn;
+ */
+    do { jn++;
+	if (*mdata == 0) {
+	    for (jk = 1; jk <= *kk; ++jk) {
+		dsum = 0.;
+		nrjk = nr[jk];
+		if (nrjk != jn) {
+		    for (jp = 1; jp <= *jpp; ++jp) {
+			na = (nrjk - 1) * *jpp + jp;
+			nb = (jn - 1) * *jpp + jp;
+			tra = fabs(x[na] - x[nb]);
+			if (*ndyst == 1) {
+			    tra *= tra;
+			}
+			dsum += tra;
 		    }
-		    dsum += tra;
+		    if (jk != 1 && dsum >= dnull)
+			continue /* next jk */;
 		}
-		if (jk != 1) {
-		    if (dsum >= dnull) {
-			goto L30;
-		    }
-		}
+		dnull = dsum;
+		jkabc = jk;
 	    }
-	    dnull = dsum;
-	    jkabc = jk;
-L30:
-	    ;
 	}
-    } else {
-	pres = 0.;
-	for (jk = 1; jk <= *kk; ++jk) {
-	    dsum = 0.;
-	    nrjk = nr[jk];
-	    if (nrjk != jn) {
-		abc = 0.;
-		for (jp = 1; jp <= *jpp; ++jp) {
-		    na = (nrjk - 1) * *jpp + jp;
-		    nb = (jn - 1) * *jpp + jp;
-		    if (jtmd[jp] < 0) {
-			if (x[na] == valmd[jp]) {
-			    goto L50;
+	else {
+	    pres = 0.;
+	    for (jk = 1; jk <= *kk; ++jk) {
+		dsum = 0.;
+		nrjk = nr[jk];
+		if (nrjk != jn) {
+		    abc = 0.;
+		    for (jp = 1; jp <= *jpp; ++jp) {
+			na = (nrjk - 1) * *jpp + jp;
+			nb = (jn   - 1) * *jpp + jp;
+			if (jtmd[jp] < 0) {
+			    if (x[na] == valmd[jp]) {
+				continue /* next jp */;
+			    }
+			    if (x[nb] == valmd[jp]) {
+				continue /* next jp */;
+			    }
 			}
-			if (x[nb] == valmd[jp]) {
-			    goto L50;
+			abc += 1.;
+			tra = fabs(x[na] - x[nb]);
+			if (*ndyst == 1) {
+			    tra *= tra;
 			}
+			dsum += tra;
 		    }
-		    abc += 1.;
-		    tra = fabs(x[na] - x[nb]);
-		    if (*ndyst == 1) {
-			tra *= tra;
+		    if (abc < 0.5) {
+			continue /* next jk */;
 		    }
-		    dsum += tra;
-L50:
-		    ;
+		    dsum = dsum * abc / pp;
 		}
-		if (abc < 0.5) {
-		    goto L70;
-		}
-		dsum = dsum * abc / pp;
-	    }
+		if (pres <= 0.5)
+		    pres = 1.;
+		else if (dsum >= dnull)
+		    continue /* next jk */;
+
+		dnull = dsum;
+		jkabc = jk;
+	    }/* for(jk ..) */
+
 	    if (pres <= 0.5) {
-		pres = 1.;
-	    } else {
-		if (dsum >= dnull) {
-		    goto L70;
+		*nafs = (1);
+		return;
+	    }
+	} /* if (*mdata..) else */
+
+	if (*ndyst == 1)
+	    dnull = sqrt(dnull);
+
+	*zb += dnull;
+	ttd[jkabc] += dnull;
+	if (radus[jkabc] < dnull)
+	    radus[jkabc] = dnull;
+
+	++ns[jkabc];
+	if (newf < *kk) {
+	    if (newf != 0) {
+		for (jnew = 1; jnew <= newf; ++jnew) {
+		    if (jkabc == new[jnew]) {
+			goto L90;/* next jn */
+		    }
 		}
 	    }
-	    dnull = dsum;
-	    jkabc = jk;
-L70:
-	    ;
+	    ++newf;
+	    new[newf] = jkabc;
 	}
-	if (pres > 0.5) {
-	    goto L80;
-	}
-	*nafs = (1);
-	return;
-    }
-L80:
-    if (*ndyst == 1) {
-	dnull = sqrt(dnull);
-    }
-    *zb += dnull;
-    ttd[jkabc] += dnull;
-    if (dnull > radus[jkabc]) {
-	radus[jkabc] = dnull;
-    }
-    ++ns[jkabc];
-    if (newf < *kk) {
-	if (newf != 0) {
-	    for (jnew = 1; jnew <= newf; ++jnew) {
-		if (jkabc == new__[jnew]) {
-		    goto L90;
-		}
-	    }
-	}
-	++newf;
-	new__[newf] = jkabc;
-    }
-L90:
-    if (jn < *nn) {
-	goto L15;
-    }
+    L90:
+	;
+    } while(jn < *nn);
+
 
 /*     a permutation is carried out on vectors nr,ns,np,ttd,radus
      using the information in vector new. */
 
     for (jk = 1; jk <= *kk; ++jk) {
-	njk = new__[jk];
+	njk = new[jk];
 	nrnew[jk] = nr[njk];
 	nsnew[jk] = ns[njk];
 	npnew[jk] = np[njk];
@@ -657,42 +639,36 @@ L90:
 	rns = (double) ns[j];
 	ttd[j] /= rns;
     }
-    if (*kk == 1) {
-	goto L150;
-    }
 
-/*     computation of minimal distance of medoid ka to any
-     other medoid for comparison with the radius of cluster ka. */
+    if (*kk > 1) {
 
-    for (ka = 1; ka <= *kk; ++ka) {
-	nstrt = 0;
-	npa = np[ka];
-	for (kb = 1; kb <= *kk; ++kb) {
-	    if (kb == ka) {
-		goto L110;
+	/* computation of minimal distance of medoid ka to any
+	   other medoid for comparison with the radius of cluster ka. */
+
+	for (ka = 1; ka <= *kk; ++ka) {
+	    nstrt = 0;
+	    npa = np[ka];
+	    for (kb = 1; kb <= *kk; ++kb) {
+		if (kb == ka)
+		    continue /* next kb */;
+
+		npb = np[kb];
+		npab = meet_(&npa, &npb);
+		if (nstrt == 0)
+		    nstrt = 1;
+		else if (dys[npab] >= ratt[ka])
+		    continue /* next kb */;
+
+		ratt[ka] = dys[npab];
+		if (ratt[ka] != 0.)
+		    continue /* next kb */;
+
+		ratt[ka] = -1.;
 	    }
-	    npb = np[kb];
-	    npab = meet_(&npa, &npb);
-	    if (nstrt == 0) {
-		nstrt = 1;
-	    } else {
-		if (dys[npab] >= ratt[ka]) {
-		    goto L110;
-		}
-	    }
-	    ratt[ka] = dys[npab];
-	    if (ratt[ka] != 0.) {
-		goto L110;
-	    }
-	    ratt[ka] = -1.;
-L110:
-	    ;
-	}
-	if (ratt[ka] > -0.5) {
-	    ratt[ka] = radus[ka] / ratt[ka];
+	    if (ratt[ka] > -0.5)
+		ratt[ka] = radus[ka] / ratt[ka];
 	}
     }
-L150:
     return;
 } /* End selec() -----------------------------------------------------------*/
 
@@ -747,13 +723,10 @@ L100:
 	if (jk == 1) {
 	    dnull = dsum + .1f;
 	}
-	if (dsum >= dnull) {
-	    goto L160;
+	if (dnull > dsum) {
+	    dnull = dsum;
+	    jksky = jk;
 	}
-	dnull = dsum;
-	jksky = jk;
-L160:
-	;
     }
     goto L200;
 L170:
@@ -800,6 +773,7 @@ L190:
     }
 L200:
     x[jna] = (double) jksky;
+
 L220:
     if (jn < *nn) {
 	goto L100;
