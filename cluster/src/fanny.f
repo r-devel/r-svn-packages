@@ -229,21 +229,23 @@ C
 C
       subroutine caddy(nn,p,k,ktrue,nfuzz,ncluv,rdraw,nelem)
 
-c Args
+c     Args
       integer nn, k, ktrue
       integer nfuzz(k), ncluv(nn), nelem(nn)
       double precision p(nn,k), rdraw(k)
 C
-c VARs
-      integer l,m, nbest, jstay, ktry, knext, kwalk, kleft, ksup, lfuzz
+c     VARs
+      integer l,m, nbest, ktry, kwalk, kleft, lfuzz
+      logical stay
       double precision pbest
 
       pbest=p(1,1)
       nbest=1
       do 10 l=2,k
-	 if(p(1,l).le.pbest)go to 10
-	 pbest=p(1,l)
-	 nbest=l
+	 if(pbest .lt. p(1,l)) then
+            pbest=p(1,l)
+            nbest=l
+         endif
  10   continue
       nfuzz(1)=nbest
       ncluv(1)=1
@@ -252,37 +254,40 @@ c VARs
 	 pbest=p(m,1)
 	 nbest=1
 	 do 30 l=2,k
-	    if(p(m,l).le.pbest)go to 30
-	    pbest=p(m,l)
-	    nbest=l
+            if(pbest .lt. p(m,l)) then
+               pbest=p(m,l)
+               nbest=l
+            endif
  30	 continue
-	 jstay=0
+	 stay= .FALSE.
 	 do 40 ktry=1,ktrue
-	    if(nfuzz(ktry).ne.nbest)go to 40
-	    ncluv(m)=ktry
-	    jstay=1
+	    if(nfuzz(ktry).eq. nbest) then
+               stay=.TRUE.
+               ncluv(m)=ktry
+            endif
  40	 continue
-	 if(jstay.eq.1)go to 20
-	 ktrue=ktrue+1
-	 nfuzz(ktrue)=nbest
-	 ncluv(m)=ktrue
+	 if(.not. stay) then
+            ktrue=ktrue+1
+            nfuzz(ktrue)=nbest
+            ncluv(m)=ktrue
+         endif
  20   continue
-      if(ktrue.ge.k)go to 100
-      knext=ktrue+1
-      do 60 kwalk=knext,k
-	 do 70 kleft=1,k
-	    jstay=0
-	    ksup=kwalk-1
-	    do 80 ktry=1,ksup
-	       if(nfuzz(ktry).ne.kleft)go to 80
-	       jstay=1
- 80	    continue
-	    if(jstay.eq.1)go to 70
-	    nfuzz(kwalk)=kleft
-	    go to 60
- 70	 continue
- 60   continue
- 100  do 110 m=1,nn
+      if(ktrue .lt. k) then
+         do 60 kwalk=ktrue+1, k
+            do 70 kleft=1,k
+               stay=.FALSE.
+               do 80 ktry=1,kwalk-1
+                  if(nfuzz(ktry).eq.kleft) stay=.TRUE.
+ 80            continue
+               if(.not. stay) then
+                  nfuzz(kwalk)=kleft
+                  go to 60
+               endif
+ 70         continue
+ 60      continue
+      endif
+
+      do 110 m=1,nn
 	 do 120 l=1,k
 	    lfuzz=nfuzz(l)
 	    rdraw(l)=p(m,lfuzz)
@@ -292,8 +297,13 @@ c VARs
  130	 continue
  110  continue
       end
-C
-C
+c----------------------------------------------------------------------------
+c
+c Compute Silhouette Information :
+c
+c CLEANUP: this is almost identical to  black() in  pam.f()
+c   -- only difference : different  dys() indexing !
+c
       subroutine fygur(ktrue,nn,kk,hh,ncluv,nsend,nelem,
      1	   negbr,syl,srank,avsyl,ttsyl,dss,s,sylinf)
 c     Args
