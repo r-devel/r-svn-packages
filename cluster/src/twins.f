@@ -238,14 +238,18 @@ c VARs
 	 if(ban(k).gt.sup) sup=ban(k)
  70   continue
       cf=0.0
+cd      call intpr("bncoef(nn=", -1, nn,1)
       do 80 k=1,nn
 	 kearl=k
 	 if(k.eq.1)kearl=2
 	 kafte=k+1
 	 if(k.eq.nn)kafte=nn
+c       syze:= min( ban[kearl], bank[kafte] )
 	 syze=ban(kearl)
 	 if(ban(kafte).lt.syze) syze=ban(kafte)
-	 cf=cf+1.0-(syze/sup)
+	 cf=cf+ 1. - syze/sup
+cd         call dblepr("(", -1, syze,1)
+cd         call dblepr(",", -1, cf,1)
  80   continue
       rnn=nn
       cf=cf/rnn
