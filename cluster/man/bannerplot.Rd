@@ -8,8 +8,9 @@
 }
 \usage{
 bannerplot(x, w = rev(x$height), fromLeft = TRUE,
-           main, sub, xlab = "Height", col = c(2, 0), adj = 0,
-           axes = TRUE, rev.xax = !fromLeft, xax.pretty = TRUE,
+           main, sub, xlab = "Height",  adj = 0,
+           col = c(2, 0), border = 0, axes = TRUE, frame.plot = axes,
+           rev.xax = !fromLeft, xax.pretty = TRUE,
            nmax.lab = 35, max.strlen = 5,
            yax.do = axes && length(x$order) < nmax.lab,
            yaxRight = fromLeft, y.mar = 2.4 + max.strlen/2.5, \dots)
@@ -21,9 +22,12 @@ bannerplot(x, w = rev(x$height), fromLeft = TRUE,
   \item{fromLeft}{logical, indicating if the banner is from the left or not.}
   \item{main,sub}{main and sub titles, see \code{\link{title}}.}
   \item{xlab}{x axis label (with `correct' default e.g. for \code{plot.agnes}).}
-  \item{col}{vector of length 2, for two horizontal segments.}
   \item{adj}{passed to \code{\link{title}(main,sub)} for string adjustment.}
+  \item{col}{vector of length 2, for two horizontal segments.}
+  \item{border}{color for bar border; now defaults to background (no border).}
   \item{axes}{logical indicating if axes (and labels) should be drawn at all.}
+  \item{frame.plot}{logical indicating the banner should be framed;
+    mainly used when \code{border = 0} (as per default).}
   \item{rev.xax}{logical indicating if the x axis should be reversed (as
     in \code{plot.diana}).}
   \item{xax.pretty}{logical or integer indicating if
