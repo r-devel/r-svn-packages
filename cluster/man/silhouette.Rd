@@ -2,74 +2,102 @@
 \alias{silhouette}
 \alias{silhouette.default}
 \alias{silhouette.partition}
+\alias{sortSilhouette}
+\alias{summary.silhouette}
+\alias{print.summary.silhouette}
+\alias{plot.silhouette}
 \title{Compute or Extract Silhouette Information from Clustering}
 \description{
-  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Compute silhouette information according to a given clustering in
+  \eqn{k} clusters.
 }
 \usage{
 silhouette(x, \dots)
 silhouette.default  (x, dist, \dots)
 silhouette.partition(x, \dots)
+
+sortSilhouette(object, \dots)
+\method{summary}{silhouette}(object, FUN = mean, \dots)
+\method{plot}{silhouette}(x, nmax.lab = 40, max.strlen = 5,
+     main = NULL, sub = NULL, xlab = expression("Silhouette width "* s[i]),
+     col = heat.colors(n), cex.names = par("cex.axis"),
+     do.n.k = TRUE, do.clus.stat = TRUE, \dots)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{
-  \item{x}{a (clustering) \R objects.}
-  \item{dist}{ ~~Describe \code{dist} here~~ }
-  \item{\dots}{ ~~Describe \code{\dots} here~~ }
+  \item{x}{an object of appropriate class; for the \code{default}
+    method an integer vector with cluster codes in \code{1:k} or a list
+    with such an \code{x$clustering} component.}
+  \item{dist}{a dissimilarity object inheriting from class
+    \code{\link{dist}} or coercible to one.}
+  \item{object}{an object of class \code{silhouette}.}
+  \item{\dots}{further arguments passed to and from methods.}
+  \item{FUN}{function used summarize silhouette widths.}
+  \item{nmax.lab}{integer indicating the number of labels which is
+    considered too large for single-name labeling the silhouette plot.}
+  \item{max.strlen}{positive integer giving the length to which
+    strings are truncated in silhouette plot labeling.}
+  \item{main, sub, xlab}{arguments to \code{\link{title}}; have a
+    sensible non-NULL default here.}
+  \item{col, cex.names}{arguments passed \code{\link{barplot}()}.}
+  \item{do.n.k}{logical indicating if \eqn{n} and \eqn{k} ``title text''
+    should be written.}
+  \item{do.clus.stat}{logical indicating if cluster size and averages
+    should be written right to the silhouettes.}
 }
-\details{
-  ~~ If necessary, more details than the __description__  above ~~
+% \details{
+%
+% }
+\note{
+  While \code{silhouette()} is \emph{intrinsic} to the
+  \code{\link{partition}} clusterings, and hence has a (trivial) method
+  for these, it is straightforward to get silhouettes from hierarchical
+  clusterings from \code{silhouette.default()} with
+  \code{\link{cutree}()} and distance as input.
 }
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of `comp1'}
-  \item{comp2 }{Description of `comp2'}
-  ...
+  \code{silhouette()} returns an object, \code{sil}, of class
+  \code{silhouette} which is an [n x 3] matrix with attributes.  For
+  each observation i, \code{sil[i,]} contains the cluster to which i
+  belongs as well as the neighbor cluster of i (the cluster, not
+  containing i, for which the average dissimilarity between its
+  observations and i is minimal), and the silhouette width \eqn{s(i)} of
+  the observation.  The \code{\link{colnames}} correspondingly are
+  \code{c("cluster", "neighbor", "sil_width")}.
+
+  \code{sortSilhouette(sil)} orders the rows of \code{sil} as in the
+  silhouette plot, by cluster (increasingly) and decreasing silhouette
+  width \eqn{s(i)}.
+  \cr
+  \code{attr(sil, "Ordered")} is a logical indicating if \code{sil} \emph{is}
+  ordered as by \code{sortSilhouette()}. In that case,
+  \code{rownames(sil)} will contain case labels or numbers.
 }
-\references{ ~put references to the literature/web site here ~ }
+\references{
+  Rousseeuw, P.J. (1987)
+  Silhouettes: A graphical aid to the interpretation and validation of
+  cluster analysis. \emph{J. Comput. Appl. Math.}, \bold{20}, 53--65.
+
+  chapter 2 of  Kaufman, L. and Rousseeuw, P.J. (1990), see
+  the references in \code{\link{plot.agnes}}.
+}
 \seealso{\code{\link{partition.object}}, \code{\link{plot.partition}}.
 }
-
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	     or do  help(data=index)  for the standard data sets.
+ data(ruspini)
+ pr4 <- pam(ruspini, 4)
+ str(si <- silhouette(pr4))
+ (ssi <- summary(si))
+ plot(si) # silhouette plot
 
-## The function is currently defined as
-function(x, dist, ...) {
-    if(missing(dist)) stop("Need a dissimilarity (as 2nd argument)")
-    dist <- as.dist(dist) # hopefully
-    if(!is.null(cl <- x$clustering)) x <- cl
-    n <- length(x)
-    if(n != attr(dist, "Size"))
-        stop("clustering `x' and dissimilarity `dist' are incompatible")
-    if(!all(x == round(x))) stop("`x' must only have integer codes")
-    k <- length(clid <- sort(unique(x)))
-    if(k <= 1 || k >= n)
-        return(NA)
-    dmat <- as.matrix(dist)
-    wds <- matrix(NA,n,3)
-    nms <- character(n)
-    c.avg <- numeric(k)
-    iw <- 0
-    for(j in 1:k) {
-        Nj <- sum(iC <- x == clid[j])
-        a.i <- colSums(dmat[iC, iC])/(Nj - 1)
-        diC <- apply(dmat[!iC, iC], 2, function(r) tapply(r, x[!iC], mean))
-        minC <- max.col(-t(diC))
-        b.i <- diC[cbind(minC, seq(minC))]
-        s.i <- (b.i - a.i) / pmax(b.i, a.i)
-        ii <- sort.list(s.i, decreasing = TRUE)
-        wds[iw + 1:Nj, ] <- cbind(j, clid[-j][minC], s.i)[ ii, ]
-        nms[iw + 1:Nj] <- names(x[iC])[ii]
-        iw <- iw + Nj
-        c.avg[j] <- mean(s.i)
-    }
-    dimnames(wds) <- list(nms, c("cluster","neighbor","sil_width"))
-    list(widths = wds, clus.avg.widths = c.avg,
-         avg.width = mean(wds[,"sil_width"]))
-  }
+ si2 <- silhouette(pr4$clustering, dist(ruspini, "canberra"))
+ summary(si2) # has small values: "canberra"'s fault
+ plot(si2, nmax= 80, cex.names=0.6)
+
+ ## Silhouette for a hierarchical clustering:
+ ar <- agnes(ruspini)
+ si3 <- silhouette(cutree(ar, k = 5), # k = 4 gave the same as pam() above
+     	           daisy(ruspini))
+ plot(si3, nmax = 80, cex.names = 0.5)
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{cluster}
+
