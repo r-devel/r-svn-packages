@@ -2,10 +2,10 @@ if(FALSE)
     library(cluster, lib.loc="/u/maechler/R/Pkgs/cluster.Rcheck")
 library(cluster)
 
-set.seed(47)
-x <- round(rbind(cbind(rnorm(17, 0,3), rnorm(17, 0,3)),
-                 cbind(rnorm( 8,50,3), rnorm( 8,10,3))), 2)
-x[c(7, 13, 25, 35, 38, 46, 47, 50)] <- NA
+x <- cbind(c(0.05, -0.76, -4.4, -2.77, 0.12,  NA,  -5.48,  0.27, 2.01,
+             -0.24, 52.66, 50, 47.92, 50.78, 51.52, 51.69, 50.18),
+           c(-0.98, -2.67, NA, -6.97, -5.9, NA, 1.45, 0.43, -3.6,
+             2.66, 9.54, 12.85, 8.54,  NA,  NA, 8.93, 13.1))
 x
 ## call this repeatedly -> seg.fault (at "17" on lynne)
 for(N in 1:20){ cat(N,":\n"); cc <- clara(x, 2, sampsize=10)}
