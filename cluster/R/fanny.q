@@ -107,23 +107,22 @@ fanny <- function(x, k, diss = inherits(x, "dist"),
     res$coeff <- c(res$eda, res$edb)
     names(res$coeff) <- c("dunn_coeff", "normalized")
 
-    clustering <- list(membership = res$p, coeff = res$coeff,
+    r <- list(membership = res$p, coeff = res$coeff,
 		       clustering = res$clu, objective = res$obj,
 		       diss = disv, call = match.call())
     if(k != 1) {
 	dimnames(res$silinf) <- list(sildim,
 				     c("cluster", "neighbor", "sil_width", ""))
-	clustering <- c(clustering,
-			list(silinfo = list(widths = res$silinf[, -4],
-			     clus.avg.widths = res$avsil[1:k],
-			     avg.width = res$ttsil)))
+	r$silinfo <- list(widths = res$silinf[, -4],
+                          clus.avg.widths = res$avsil[1:k],
+                          avg.width = res$ttsil)
     }
     if(!diss) {
 	if(mdata) x2[x2 == valmisdat] <- NA
-	clustering$data <- x2
+	r$data <- x2
     }
-    class(clustering) <- c("fanny", "partition")
-    clustering
+    class(r) <- c("fanny", "partition")
+    r
 }
 
 print.fanny <- function(x, ...)
