@@ -24,6 +24,12 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_RINT
+#define R_rint(x) rint(x)
+#else
+#define R_rint(x) ((int) x + 0.5)
+#endif
+
 #include <gtk/gtk.h>
 #include <R.h>
 #include <Rinternals.h>
@@ -34,9 +40,17 @@
 #include "devGTK.h"
 #include "gdkrotated.h"
 
+/*
+#define DEBUG_GTK
+*/
+
 #define CURSOR		GDK_CROSSHAIR		/* Default cursor */
 #define MM_PER_INCH	25.4			/* mm -> inch conversion */
 
+#define IS_100DPI ((int) (1./pixelHeight() + 0.5) == 100)
+
+static unsigned int adobe_sizes = 0x0403165D;
+#define ADOBE_SIZE(I) ((I) > 7 && (I) < 35 && (adobe_sizes & (1<<((I)-8))))
 
 /* routines from here */
 
@@ -101,14 +115,12 @@ static double pixelHeight(void)
 
 /* font stuff */
 
-static char *fontname_R6 = "-adobe-helvetica-%s-%s-*-*-*-%d-*-*-*-*-*-*";
-static char *symbolname = "-adobe-symbol-*-*-*-*-*-%d-*-*-*-*-*-*";
-static char *fixedname = "fixed";
+static char *fontname_R6 = "-*-helvetica-%s-%s-*-*-%d-*-*-*-*-*-*-*";
+static char *symbolname	 = "-adobe-symbol-*-*-*-*-%d-*-*-*-*-*-*-*";
 
 static char *slant[] = {"r", "o"};
 static char *weight[] = {"medium", "bold"};
 
-static char *fontname;
 static GHashTable *font_htab = NULL;
 
 struct _FontMetricCache {
@@ -120,22 +132,117 @@ struct _FontMetricCache {
     gint max_width;
 };
 
-static GdkFont *RGTKLoadFont(char *font)
+#define SMALLEST 2
+
+static GdkFont* RGTKLoadFont (gint face, gint size)
 {
+    gchar *fontname;
     GdkFont *tmp_font;
+    gint pixelsize;
 
-    tmp_font = g_hash_table_lookup(font_htab, (gpointer) font);
+    if (face < 1 || face > 5)
+	face = 1;
 
-    if(tmp_font == NULL) {
-        tmp_font = gdk_font_load(font);
+    if (size < SMALLEST) size = SMALLEST;
 
-        if(tmp_font != NULL) {
-            g_hash_table_insert(font_htab, (gpointer) g_strdup(font),
-				(gpointer) tmp_font);
-        }
+    /* Here's a 1st class fudge: make sure that the Adobe design sizes
+       8, 10, 11, 12, 14, 17, 18, 20, 24, 25, 34 can be obtained via
+       an integer "size" at 100 dpi, namely 6, 7, 8, 9, 10, 12, 13,
+       14, 17, 18, 24 points. It's almost y = x * 100/72, but not
+       quite. The constants were found using lm(). --pd */
+    if (IS_100DPI) size = R_rint (size * 1.43 - 0.4);
+
+    /* 'size' is the requested size, 'pixelsize' the size of the
+       actually allocated font*/
+    pixelsize = size;
+
+    if(face == 5)
+	fontname = g_strdup_printf(symbolname, pixelsize);
+    else
+	fontname = g_strdup_printf(fontname_R6,
+				   weight[(face-1)%2],
+				   slant[((face-1)/2)%2],
+				   pixelsize);
+#ifdef DEBUG_GTK
+    Rprintf("loading:\n%s\n", fontname);
+#endif
+    tmp_font = gdk_font_load(fontname);
+#ifdef DEBUG_GTK
+    if (tmp_font) Rprintf("success\n"); else Rprintf("failure\n");
+#endif
+
+    if (!tmp_font) {
+	static int near[]=
+	{14,14,14,17,17,18,20,20,20,20,24,24,24,25,25,25,25};
+	/* 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29  */
+	
+	/* If ADOBE_SIZE(pixelsize) is true at this point then
+	   the user's system does not have the standard ADOBE font set
+	   so we just have to use a "fixed" font.
+	   If we can't find a "fixed" font then something is seriously
+	   wrong */
+	if (ADOBE_SIZE (pixelsize)) {
+	    tmp_font = gdk_font_load ("fixed");
+	    if (!tmp_font)
+		error("Could not find any X11 fonts\nCheck that the Font Path is correct.");
+	}
+	
+	if (pixelsize < 8)
+	    pixelsize = 8;
+	else if (pixelsize == 9)
+	    pixelsize = 8;
+	else if (pixelsize >= 13 && pixelsize < 30) 
+	    pixelsize = near[size-13];
+	else
+	    pixelsize = 34;
+	
+	g_free(fontname);
+	if(face == 5)
+	    fontname = g_strdup_printf(symbolname, pixelsize);
+	else
+	    fontname = g_strdup_printf(fontname_R6,
+				       weight[(face-1)%2],
+				       slant[((face-1)/2)%2],
+				       pixelsize);	    
+#ifdef DEBUG_GTK
+	Rprintf("loading:\n%s\n", fontname);
+#endif
+	tmp_font = gdk_font_load (fontname);
+#ifdef DEBUG_GTK
+	if (tmp_font) Rprintf("success\n"); else Rprintf("failure\n");
+#endif
+    }
+    
+    if(tmp_font) {
+	g_hash_table_insert(font_htab, (gpointer) g_strdup(fontname),
+			    (gpointer) tmp_font);
+	if (fabs( (pixelsize - size)/(double)size ) > 0.1)
+	    warning("GTK used font size %d when %d was requested",
+		    pixelsize, size);
     }
 
+    g_free(fontname);
     return tmp_font;
+}
+
+static void SetFont(NewDevDesc *dd, gint face, gint size)
+{
+    GdkFont *tmp_font;
+    gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
+
+    if (face < 1 || face > 5) face = 1;
+
+    if (!gtkd->usefixed &&
+	(size != gtkd->fontsize	|| face != gtkd->fontface)) {
+	tmp_font = RGTKLoadFont(face, size);
+	if(tmp_font) {
+	    gtkd->font = tmp_font;
+	    gtkd->fontface = face;
+	    gtkd->fontsize = size;
+	    gdk_gc_set_font(gtkd->wgc, tmp_font);
+	} else 
+	    error("X11 font at size %d could not be loaded", size);
+    }
 }
 
 static gint SetBaseFont(gtkDesc *gtkd)
@@ -145,62 +252,25 @@ static gint SetBaseFont(gtkDesc *gtkd)
     gtkd->usefixed = 0;
 
     if(font_htab == NULL) {
-	font_htab = g_hash_table_new(g_str_hash, g_str_equal);
+	font_htab = g_hash_table_new (g_str_hash, g_str_equal);
     }
 
-    fontname = g_strdup_printf(fontname_R6, weight[0], slant[0], 
-			       gtkd->fontsize * 10);
-    gtkd->font = RGTKLoadFont(fontname);
-    g_free(fontname);
+    gtkd->font = RGTKLoadFont (gtkd->fontface, gtkd->fontsize);
 
-    if(gtkd->font != NULL)
+    if(gtkd->font != NULL) {
+	gdk_gc_set_font(gtkd->wgc, gtkd->font);
 	return 1;
+    }
 
     gtkd->usefixed = 1;
-    gtkd->font = RGTKLoadFont(fixedname);
+    gtkd->font = gdk_font_load ("fixed");
 
-    if(gtkd->font != NULL)
+    if(gtkd->font != NULL) {
+	gdk_gc_set_font(gtkd->wgc, gtkd->font);
 	return 1;
+    }
 
     return 0;
-}
-
-#define SMALLEST 8
-#define LARGEST 24
-
-static void SetFont(NewDevDesc *dd, gint face, gint size)
-{
-    GdkFont *tmp_font;
-    gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
-
-    if(face < 1 || face > 5)
-	face = 1;
-
-    size = 2 * size / 2;
-    if(size < SMALLEST)
-	size = SMALLEST;
-    else if(size > LARGEST)
-	size = LARGEST;
-
-    gtkd->fontface = face;
-    gtkd->fontsize = size;
-
-    if(gtkd->usefixed == 0){
-	if(face == 5)
-	    fontname = g_strdup_printf(symbolname, 10 * size);
-	else
-	    fontname = g_strdup_printf(fontname_R6,
-				       weight[(face-1)%2],
-				       slant[((face-1)/2)%2],
-				       10 * size);
-
-	tmp_font = RGTKLoadFont(fontname);
-	g_free(fontname);
-
-	if(tmp_font != NULL) {
-	    gtkd->font = tmp_font;
-	}
-    }
 }
 
 
@@ -349,17 +419,17 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 
     if(gtkd->wgc == NULL)
 	realize_event(gtkd->drawing, dd);
-
-    if(gtkd->resize != 0) {
+    else if(gtkd->resize != 0) {
 	GTK_resize(dd); 
     }
-
-    if(gtkd->pixmap)  
+    else if (gtkd->pixmap) {
 	gdk_draw_pixmap(gtkd->drawing->window, gtkd->wgc, gtkd->pixmap,
 			event->area.x, event->area.y, event->area.x, event->area.y,
 			event->area.width, event->area.height);
-
-    GEplayDisplayList((GEDevDesc*) Rf_GetDevice(devNumber((DevDesc*)dd)));
+    }
+    else {
+	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(devNumber((DevDesc*)dd)));
+    }
 
     return FALSE;
 }
@@ -585,6 +655,7 @@ static void GTK_resize(NewDevDesc *dd)
 				   gtkd->windowWidth, gtkd->windowHeight);
 	    }
 	}
+	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(devNumber((DevDesc*)dd)));
     }
 }
 
