@@ -92,7 +92,7 @@ plot(pam(x, 2))
 
 ## Save space not keeping data in clus.object, and still clusplot() it:
 data(xclara)
-cx <- clara(xclara, 3, keepdata = FALSE)
+cx <- clara(xclara, 3, keep.data = FALSE)
 cx$data # is NULL
 plot(cx, data = xclara)
 }

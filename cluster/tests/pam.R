@@ -22,7 +22,17 @@ x <- rbind(cbind(rnorm(120, 0,8), rnorm(120, 0,8)),
 .proctime00 <- proc.time()
 
 summary(px2 <- pam(x, 2))
-all.equal(px2[nms], pam(dist(x), 2)[nms], tol = 1e-12) ## TRUE
+pdx <- pam(dist(x), 2)
+all.equal(px2[nms], pdx[nms], tol = 1e-12) ## TRUE
+
+spdx <- silhouette(pdx)
+summary(spdx)
+spdx
+plot(spdx)# the silhouette
+
+## new `dist'
+plot(pdx, dist=dist(x))
+clusplot(pdx, dist=dist(x))# failed in 1.7.0 (because of empty `diss')
 
 data(ruspini)
 summary(pr4 <- pam(ruspini, 4))
