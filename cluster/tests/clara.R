@@ -86,5 +86,5 @@ for(ss in 4:nrow(ru3)){
 
 ## Last Line:
 cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-## Lynne (P IV, 1.6 GHz):  7.5
-## nb-mm (P III,700 MHz): 29.2
+## Lynne (P IV, 1.6 GHz): 18.81
+## nb-mm (P III,700 MHz): 27.97
