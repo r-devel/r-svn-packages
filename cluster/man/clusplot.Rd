@@ -2,24 +2,19 @@
 % %Z%%Q%
 \name{clusplot}
 \alias{clusplot}
-\title{
-Clusplot - Generic Function
-}
+\title{Cluster Plot - Generic Function}}
 \description{
-Creates a  2-dimensional clusplot on the current graphics device.
+Creates a 2-dimensional ``clusplot'' on the current graphics device.
 This is a generic function.
-Functions with names beginning in \code{clusplot.} will be
-methods for this function.
+Functions with names beginning in \code{clusplot.} will be methods for this function.
 \code{partition}.
 }
 \usage{
 clusplot(x, \dots)
 }
 \arguments{
-\item{x}{
-an S-PLUS object.
-}
-\item{...}{
+  \item{x}{an \R object.}
+  \item{...}{
 methods may have additional arguments.
 Graphical parameters (see \code{\link{par}}) may also
 be supplied as arguments to this function.
