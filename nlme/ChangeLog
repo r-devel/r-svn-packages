@@ -1,7 +1,6 @@
 2005-03-02  Douglas Bates  <bates@bates1-home>
 
-	* src/nlmefit.c (gls_loglik): Added check for rank deficiency
-	(detected and fixed by Duncan Murdoch and Harold Doran).
+	* src/nlmefit.c (gls_loglik): Replaced rnkm1 by p.
 
 	* po/,inst/po/: Added localization support.
 
