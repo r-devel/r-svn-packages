@@ -1,8 +1,14 @@
+2001-04-03  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* src/SASxport.c (next_xport_info): fixed computation of
+	tailpad when restOfCard != 0. The earlier method used ftell which
+	can give wrong results for long files.
+
 2001-03-31  Brian Ripley <ripley@stats.ox.ac.uk>
 
 	* R/read.S.R, man/read.S.Rd:
 	New files adapted from package Rstreams to read S3 objects and dumps.
-	
+
 2001-02-22  Saikat DebRoy  <saikat@stat.wisc.edu>
 
 	* /home/CVS/src/Rlibs/foreign/src/pfm-read.c:
