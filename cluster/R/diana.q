@@ -109,14 +109,13 @@ diana <- function(x, diss = FALSE, metric = "euclidean", stand = FALSE)
 	    order.lab <- attr(x, "Labels")[res$ner]
     }
     clustering <- list(order = res$ner, height = res$ban[-1], dc = res$dc,
-		       merge = res$merge, diss = disv)
+		       merge = res$merge, diss = disv, call = match.call())
     if(exists("order.lab"))
 	clustering$order.lab <- order.lab
     if(!diss) {
 	x2[x2 == valmisdat] <- NA
 	clustering$data <- x2
     }
-    attr(clustering, "Call") <- sys.call()
     class(clustering) <- c("diana", "twins")
     clustering
 }
