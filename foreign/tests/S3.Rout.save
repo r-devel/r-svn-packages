@@ -28,9 +28,17 @@ Type 'q()' to quit R.
 1      a   NA    1.1  TRUE
 2     bc    2    1.2    NA
 3    def    3    1.3 FALSE
-> data.restore("tsdumpdata", print = TRUE)
+> data.restore("tsdumpdata", print = TRUE, verbose = TRUE)
 "sunspot": structure
+  sunspot structure 3 
+    .Data numeric 37 
+    .Tsp numeric 3 
+    class character 2 
 "carbon.dioxide": structure
+  carbon.dioxide structure 3 
+    .Data numeric 384 
+    .Tsp numeric 3 
+    class character 2 
 [1] "tsdumpdata"
 > sunspot
 Time Series:
