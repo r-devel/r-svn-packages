@@ -125,24 +125,6 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         }
     }## cmdscale() -- if R version < 1.5
 
-    ellipse <- function(A, dist, loc, n = 201)
-    {
-        ## Return (x[i],y[i]) points, i = 1:n, on boundary of ellipse, given
-        ## by 2 x 2 matrix A[], origin `loc' and d(xy, loc) = `dist'
-        if(verbose)
-            cat("ellipse( A= (", format(A[1,]),"*",format(A[2,2]),"),\n\t",
-                "dist=",format(dist),", loc[]=",format(loc),")\n")
-        detA <- A[1, 1] * A[2, 2] - A[1, 2]^2
-        yl2 <- A[2, 2] * dist^2
-        y <- seq( - sqrt(yl2), sqrt(yl2), leng = n)
-        sqrt.discr <- sqrt(detA * pmax(0, yl2 - y^2))/A[2, 2]
-        sqrt.discr[c(1, n)] <- 0
-        b <- loc[1] + A[1, 2]/A[2, 2] * y
-        y <- loc[2] + y
-        return(rbind(cbind(    b - sqrt.discr,      y),
-                     cbind(rev(b + sqrt.discr), rev(y))))
-    }
-
     clas.snijpunt <- function(x, loc, m, n, p)
     {
         if(     loc[n, m] <= x[1, m] && x[1, m] <= loc[p, m]) x[1, ]
@@ -151,8 +133,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     }
     coord.snijp1 <- function(x, gemid)
         x[2, 2] - 2 * x[1, 2] * gemid + x[1, 1] * gemid^2
-    coord.snijp2 <- function(x, dist, y)
-        ((x[1, 1] * x[2, 2] - x[1, 2]^2) * dist^2)/y
+    coord.snijp2 <- function(x, d2, y)
+        ((x[1, 1] * x[2, 2] - x[1, 2]^2) * d2)/y
     coord.snijp3 <- function(xx, y, gemid)
     {
         sy <- sqrt(y)
@@ -270,27 +252,25 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     n <- length(levclus) # the number of clusters
     z <- A <- vector("list", n)
     maxima <- loc <- matrix(0, nrow = n, ncol = 2)
-    dist <- verhoud <- numeric(n)
+    d2 <- verhoud <- numeric(n)
     verhouding <- 0
     ## num1 .. num6 : all used only once -- there are more constants anyway
     num3 <- 90
     num6 <- 70
 
     for(i in 1:n) { ##-------------  i-th cluster  --------------
-        x <- x1[clus == levclus[i], ]
-        cov <-
-            if(is.vector(x)) {
-                if(verbose)
-                    cat("cluster",i," has only one observation ..\n")
-                x <- matrix(x, ncol = 2, byrow = TRUE)
-                var(rbind(x, c(0, 0)))
-            } else var(x)
+	x <- x1[clus == levclus[i],, drop = FALSE ]
         aantal <- nrow(x) # number of observations in cluster [i]
+        cov <- var(if(aantal == 1) {
+                     if(verbose)
+                         cat("cluster",i," has only one observation ..\n")
+                     rbind(x, c(0, 0))
+                   } else x)
         x.1 <- range(x[, 1])
         y.1 <- range(x[, 2])
         notrank2 <- qr(cov, tol = 0.001)$rank != 2
         if(!span && notrank2) {
-            dist[i] <- 1
+            d2[i] <- 1
             if((abs(diff(x.1)) > (diff(rangx)/70)) ||
                (abs(diff(y.1)) > (diff(rangy)/50))) {
                 loc[i, ] <- c(x.1[1] + diff(x.1)/2, y.1[1] + diff(y.1)/2)
@@ -330,7 +310,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
             oppervlak <- pi * a * b
         }
         else if(span && notrank2) {
-            dist[i] <- 1
+            d2[i] <- 1
             if(sum(x[, 1] != x[1, 1]) != 0 ||
                sum(x[, 2] != x[1, 2]) != 0) {
                 loc[i, ] <- c(x.1[1] + diff(x.1)/2,
@@ -366,8 +346,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         else { ## rank2
             if(!span) {
                 loc[i, ] <- apply(x, 2, mean)
-                dist[i] <- sqrt(max(mahalanobis(x, loc[i, ], cov)))
-                dist[i] <- dist[i] + 0.01 * dist[i]
+                d2[i] <- (1+ 0.01)^2 * ## < factor for back-compatibility
+                    max(mahalanobis(x, loc[i, ], cov))
             }
             else { ## span and rank2
                 if(verbose)
@@ -396,15 +376,19 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 loc[i, ] <- cov$center
                 ## NB: cov.wt() in R has extra wt[] scaling; revert here:
                 cov <- cov$cov * (1 - sum(cov$wt^2))
-                dist[i] <- sqrt(weighted.mean(res$sqdist, res$prob))
+                d2[i] <- weighted.mean(res$sqdist, res$prob)
+
+                if(verbose)
+                    cat("ellipse( A= (", format(cov[1,]),"*", format(cov[2,2]),
+                        "),\n\td2=", format(d2[i]),
+                        ", loc[]=", format(loc[i, ]), ")\n")
             }
             A[[i]] <- cov
             ## oppervlak (flam.)  =  area (Engl.)
-            oppervlak <- pi * dist[i]^2 *
-                sqrt(cov[1, 1] * cov[2, 2] - cov[1, 2]^2)
+            oppervlak <- pi * d2[i] * sqrt(cov[1, 1] * cov[2, 2] - cov[1, 2]^2)
         }
 
-        z[[i]] <- ellipse(A[[i]], dist[i], loc[i, ])
+        z[[i]] <- ellipsePoints(A[[i]], d2[i], loc[i, ], n= 201)
         maxima[i, ] <- z[[i]][201, ]
         rx <- range(z[[i]][, 1])
         ry <- range(z[[i]][, 2])
@@ -485,10 +469,10 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
             for(j in (i + 1):n) {
                 gemid <- (loc[j, 2] - loc[i, 2])/(loc[j, 1] - loc[i, 1])
                 s0 <- coord.snijp1(A[[i]], gemid)
-                b0 <- coord.snijp2(A[[i]], dist[i], s0)
+                b0 <- coord.snijp2(A[[i]], d2[i], s0)
                 snijp.1 <- coord.snijp3(loc[i,], y=b0, gemid)
                 s1 <- coord.snijp1(A[[j]], gemid)
-                b1 <- coord.snijp2(A[[j]], dist[j], s1)
+                b1 <- coord.snijp2(A[[j]], d2[j], s1)
                 snijp.2 <- coord.snijp3(loc[j,], y=b1, gemid)
                 if(loc[i, 1] != loc[j, 1]) {
                     if(loc[i, 1] < loc[j, 1]) {
@@ -526,7 +510,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                     segments(loc[i, 1], loc[i, 2],
                              loc[j, 1], loc[j, 2], col = 6, ...)
                 }
-                else {
+                else { ## lines == 2
                     afstand[i, j] <- sqrt((punt.1[1] - punt.2[1])^2 +
                                           (punt.1[2] - punt.2[2])^2)
                     segments(punt.1[1], punt.1[2],
