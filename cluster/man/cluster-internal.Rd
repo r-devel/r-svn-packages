@@ -1,11 +1,11 @@
-\name{ts-internal}
-\alias{arma0f}
-\title{Internal ts functions}
+\name{cluster-internal}
+\alias{meanabsdev}
+\title{Internal cluster functions}
 \description{
-  Internal ts functions.
+  Internal cluster functions.
 }
 \usage{
-arma0f(p)
+meanabsdev(y)
 }
 \details{
   These are not to be called by the user.
