@@ -120,39 +120,36 @@ c     -Wall:
 c
 c     first algorithm: build.
 c
-      nny=0
       do 17 j=1,nn
 	 nrepr(j)=0
 	 dysma(j)=1.1*s+1.0
  17   continue
 
-C--   Loop 1:
- 20   do 22 ja=1,nn
-	 if(nrepr(ja).eq.0) then
-	    beter(ja)=0.
-	    do 21 j=1,nn
-	       njaj=meet(ja,j)
-	       cmd=dysma(j)-dys(njaj)
-	       if(cmd.gt.0.0) beter(ja)=beter(ja)+cmd
- 21	    continue
-	 endif
- 22   continue
-      ammax=0.
-      do 31 ja=1,nn
-	 if(nrepr(ja).eq.0 .and. ammax .le. beter(ja)) then
-c does .lt. (instead of .le.) work too?
-	    ammax=beter(ja)
-	    nmax=ja
-	 endif
- 31   continue
-      nrepr(nmax)=1
-      nny=nny+1
-      do 41 j=1,nn
-	 njn=meet(nmax,j)
-	 if(dys(njn).lt.dysma(j))dysma(j)=dys(njn)
- 41   continue
-      if(nny.ne.kk)go to 20
-C--   End Loop 1
+      do 20 nny=1,kk
+	 do 22 ja=1,nn
+	    if(nrepr(ja).eq.0) then
+	       beter(ja)=0.
+	       do 21 j=1,nn
+		  njaj=meet(ja,j)
+		  cmd=dysma(j)-dys(njaj)
+		  if(cmd.gt.0.0) beter(ja)=beter(ja)+cmd
+ 21	       continue
+	    endif
+ 22	 continue
+	 ammax=0.
+	 do 31 ja=1,nn
+	    if(nrepr(ja).eq.0 .and. ammax .le. beter(ja)) then
+c		    does .lt. (instead of .le.) work too? -- NO!
+	       ammax=beter(ja)
+	       nmax=ja
+	    endif
+ 31	 continue
+	 nrepr(nmax)=1
+	 do 41 j=1,nn
+	    njn=meet(nmax,j)
+	    if(dysma(j).gt.dys(njn)) dysma(j)=dys(njn)
+ 41	 continue
+ 20   continue
 
       sky=0.
       do 51 j=1,nn
@@ -175,7 +172,7 @@ C--   Loop :
 		     dysmb(j)=dysma(j)
 		     dysma(j)=dys(njaj)
 		  else
- 61		     if(dys(njaj).lt.dysmb(j)) dysmb(j)=dys(njaj)
+		     if(dys(njaj).lt.dysmb(j)) dysmb(j)=dys(njaj)
 		  endif
 	       endif
  62	    continue
@@ -191,7 +188,7 @@ C--   Loop :
 			nkj=meet(k,j)
 			if(dys(njaj).eq.dysma(j))then
 			   small=dysmb(j)
-			   if(dys(nkj).lt.small)small=dys(nkj)
+			   if(small.gt.dys(nkj)) small=dys(nkj)
 			   dz=dz-dysma(j)+small
 			else
  70			   if(dys(nkj).lt.dysma(j))
@@ -233,8 +230,9 @@ c function called
       integer meet
       external meet
 c
+      logical kand
       integer j,k,m,ja,jb,jk, njaj, ksmal,nplac,numcl,numl,nel,njm,
-     +	   nvn,ntt,mevj,kand,nvna,jndz
+     +	   nvn,ntt,mevj,nvna,jndz
       double precision dsmal, ttt,rtt,rnn,dam,sep,aja,ajb
 
       do 130 j=1,nn
@@ -330,15 +328,15 @@ c
  250	    continue
 c
 c Is cluster k
-c	1) an l-cluster	 or
-c	2) an l*-cluster ?
+c	1) an L-cluster	 or
+c	2) an L*-cluster ?
 	    if(separ(k).eq. 0.) numl=numl+1
 
 	 else
-c     nel != 1 :
+c	       nel != 1 :
 	    dam=-1.
 	    sep=1.1*s+1.0
-	    kand=1
+	    kand=.TRUE.
 	    do 26 ja=1,nel
 	       nvna=nelem(ja)
 	       aja=-1.
@@ -351,29 +349,30 @@ c     nel != 1 :
 		     if(dys(jndz).lt.ajb) ajb=dys(jndz)
 		  endif
  25	       continue
-	       if(aja.ge.ajb) kand=0
+	       if(kand .and. aja.ge.ajb) kand=.FALSE.
 	       if(dam.lt.aja) dam=aja
 	       if(sep.gt.ajb) sep=ajb
  26	    continue
 	    separ(k)=sep
 	    damer(k)=dam
-	    if(kand.eq.0)go to 35
-	    numl=numl+1
-	    if(dam.ge.sep) then
-c	       l-cluster
-	       nisol(k)=1
-	    else
-c	       l*-cluster
- 27	       nisol(k)=2
-	    endif
+	    if(kand) then
+	       numl=numl+1
+	       if(dam.ge.sep) then
+c		  L-cluster
+		  nisol(k)=1
+	       else
+c		  L*-cluster
+ 27		  nisol(k)=2
+	       endif
 	       go to 40
+	    endif
 	 endif
- 35	 nisol(k)=0
+	 nisol(k)=0
  40   continue
  300  end
 c     -----------------------------------------------------------
 c
-c Compute Silhouette Information :
+c     Compute Silhouette Information :
 c
       subroutine dark(kk,nn,hh,ncluv,nsend,nelem,negbr,
      f	   syl,srank,avsyl,ttsyl,dys,s,sylinf)
@@ -382,7 +381,7 @@ c
       integer ncluv(nn),nsend(nn),nelem(nn),negbr(nn)
       double precision syl(nn),srank(nn),avsyl(nn),dys(hh),sylinf(nn,4)
       double precision ttsyl, s
-c function called
+c     function called
       integer meet
       external meet
 c
@@ -442,7 +441,7 @@ c
 		     else if(dysb.lt.dysa) then
 			syl(j)=dysb/dysa-1.0
 		     else
-c			dysb == dysa:
+c     dysb == dysa:
 			syl(j)=0.0
 		     endif
 		     if(syl(j).le. -1.0) syl(j)=-1.0
@@ -456,7 +455,7 @@ c			dysb == dysa:
 		  syl(j)=0.0
 	       endif
 	    else
-c	       ntt == 1:
+c     ntt == 1:
 	       syl(j)=0.0
 	    endif
  40	 continue
@@ -464,9 +463,10 @@ c	       ntt == 1:
 	 do 60 j=1,ntt
 	    symax=-2.0
 	    do 70 l=1,ntt
-	       if(syl(l).le.symax)go to 70
-	       symax=syl(l)
-	       lang=l
+	       if(symax .lt. syl(l)) then
+		  symax=syl(l)
+		  lang=l
+	       endif
  70	    continue
 	    nsend(j)=lang
 	    srank(j)=syl(lang)
@@ -477,22 +477,23 @@ c	       ntt == 1:
 	 rtt=ntt
 	 avsyl(numcl)=avsyl(numcl)/rtt
 
-	 if(ntt.ge.2)goto 75
-	 nsylr=nsylr+1
-	 sylinf(nsylr,1)=numcl
-	 sylinf(nsylr,2)=negbr(1)
-	 sylinf(nsylr,3)=0.0
-	 sylinf(nsylr,4)=nelem(1)
-	 goto 100
- 75	 do 80 l=1,ntt
+	 if(ntt.lt.2) then
 	    nsylr=nsylr+1
-	    lplac=nsend(l)
 	    sylinf(nsylr,1)=numcl
-	    sylinf(nsylr,2)=negbr(lplac)
-	    sylinf(nsylr,3)=srank(l)
-	    sylinf(nsylr,4)=nelem(lplac)
- 80	 continue
+	    sylinf(nsylr,2)=negbr(1)
+	    sylinf(nsylr,3)=0.0
+	    sylinf(nsylr,4)=nelem(1)
+	 else
+	    do 80 l=1,ntt
+	       nsylr=nsylr+1
+	       lplac=nsend(l)
+	       sylinf(nsylr,1)=numcl
+	       sylinf(nsylr,2)=negbr(lplac)
+	       sylinf(nsylr,3)=srank(l)
+	       sylinf(nsylr,4)=nelem(lplac)
+ 80	    continue
+	 endif
  100  continue
       rnn=nn
       ttsyl=ttsyl/rnn
- 96   end
+      end
