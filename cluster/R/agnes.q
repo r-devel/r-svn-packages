@@ -18,7 +18,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	    if(!is.numeric(x) || is.na(sizeDiss(x)))
 		stop("x is not and cannot be converted to class dissimilarity")
 	    ## convert input vector to class "dissimilarity"
-	    class(x) <- "dissimilarity"
+	    class(x) <- .__dClass
 	    attr(x, "Size") <- sizeDiss(x)
 	    attr(x, "Metric") <- "unspecified"
 	}
@@ -70,6 +70,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    ban = double(n),
 		    ac = as.double(0),
 		    merge = matrix(0:0, n - 1, 2), # integer
+                    DUP = FALSE,
 		    PACKAGE = "cluster")
     if(!diss) {
 	##give warning if some dissimilarities are missing.
@@ -81,7 +82,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
             disv <- res$dis[-1]
             disv[disv == -1] <- NA
             disv <- disv[upper.to.lower.tri.inds(n)]
-            class(disv) <- "dissimilarity"
+            class(disv) <- .__dClass
             attr(disv, "Size") <- nrow(x)
             attr(disv, "Metric") <- metric
             attr(disv, "Labels") <- dimnames(x)[[1]]
