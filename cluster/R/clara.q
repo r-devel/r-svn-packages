@@ -82,20 +82,32 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	      DUP = FALSE,
 	      PACKAGE = "cluster")
     ## give a warning when errors occured
-    if(res$jstop == 1)
-	stop("For each of the ", samples,
-             " samples, at least one object was found which\n",
-	     " could not be assigned to a cluster (because of missing values).")
-    if(res$jstop == 2)
-	stop("Each of the random samples contains objects between which\n",
-	     " no distance can be computed.")
+    if(res$jstop) {
+	if(mdata && any(aNA <- apply(inax,1, all))) {
+	    i <- which(aNA)
+	    stop("Observation",
+		 if(length(i) > 1)
+		 paste("s  c(",paste(i, collapse=","),")  have", sep='')
+		 else paste("", i, "has"),
+		 " *only* NAs --> omit for clustering")
+	} ## else
+	if(res$jstop == 1)
+	    stop("Each of the random samples contains objects between which\n",
+		 " no distance can be computed.")
+	if(res$jstop == 2)
+	    stop("For each of the ", samples,
+		 " samples, at least one object was found which\n could not",
+		 " be assigned to a cluster (because of missing values).")
+	## else {cannot happen}
+	stop("invalid 'jstop' from .C(\"clara\",.): ", res$jstop)
+    }
     sildim <- res$silinf[, 4]
     ## adapt C output to S:
     ## convert lower matrix, read by rows, to upper matrix, read by rows.
     disv <- res$dis[-1]
     disv[disv == -1] <- NA
     disv <- disv[upper.to.lower.tri.inds(sampsize)]
-    class(disv) <- ..dClass
+    class(disv) <- dissiCl
     attr(disv, "Size") <- sampsize
     attr(disv, "Metric") <- metric
     attr(disv, "Labels") <- namx[res$sample]
