@@ -11,6 +11,8 @@
 ac_help=
 ac_default_prefix=/usr/local
 # Any additions from configure.in:
+ac_help="$ac_help
+--with-gtk-config  use Gtk config and not pkg-config"
 
 # Initialize some variables set by options.
 # The variables have the same names as the options, with
@@ -522,12 +524,21 @@ fi
 
 
 
+# Check whether --with-gtk-config or --without-gtk-config was given.
+if test "${with_gtk_config+set}" = set; then
+  withval="$with_gtk_config"
+  USE_GTK_CONFIG="${withval}"
+else
+  USE_GTK_CONFIG="yes"
+fi
+
+
 for ac_prog in pkg-config
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:531: checking for $ac_word" >&5
+echo "configure:542: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_PKG_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -557,7 +568,9 @@ test -n "$PKG_CONFIG" && break
 done
 
 
-if test -n "${PKG_CONFIG}"; then
+echo "Use gtk-config? ${USE_GTK_CONFIG-no}"
+
+if test -z "${USE_GTK_CONFIG}" && test -n "${PKG_CONFIG}"; then
    if (${PKG_CONFIG} --exists gtk+-2.0); then
       GTK_CPPFLAGS=`pkg-config --cflags gtk+-2.0`
       GTK_LIBS=`pkg-config --libs gtk+-2.0`
@@ -572,7 +585,7 @@ do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:576: checking for $ac_word" >&5
+echo "configure:589: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else

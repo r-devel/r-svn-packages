@@ -1,8 +1,12 @@
 AC_INIT(src/devices.c)
 
+AC_ARG_WITH(gtk-config, [--with-gtk-config  use Gtk config and not pkg-config], USE_GTK_CONFIG="${withval}",USE_GTK_CONFIG="yes")
+
 AC_CHECK_PROGS(PKG_CONFIG, pkg-config)
 
-if test -n "${PKG_CONFIG}"; then
+echo "Use gtk-config? ${USE_GTK_CONFIG-no}"
+
+if test -z "${USE_GTK_CONFIG}" && test -n "${PKG_CONFIG}"; then
    if (${PKG_CONFIG} --exists gtk+-2.0); then
       GTK_CPPFLAGS=`pkg-config --cflags gtk+-2.0`
       GTK_LIBS=`pkg-config --libs gtk+-2.0`
