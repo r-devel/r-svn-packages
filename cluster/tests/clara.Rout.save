@@ -928,15 +928,15 @@ Number of objects : 4
 > clara(ru5, k=3, met="manhattan", sampsize=3,trace=2)[clIn4]
 calling .C("clara", *):
 C clara(): sample 1 [ntt=1, nunfs=0] -> dysta2()
-. clara(): s:= max dys[l=3 (0-orig)] = 132
+. clara(): s:= max dys[l=3] = 132
 C clara(): sample 2 [ntt=1, nunfs=0] -> dysta2()
-. clara(): s:= max dys[l=3 (0-orig)] = 11
+. clara(): s:= max dys[l=3] = 11
 C clara(): sample 3 [ntt=1, nunfs=0] -> dysta2()
-. clara(): s:= max dys[l=3 (0-orig)] = 132
+. clara(): s:= max dys[l=3] = 132
 C clara(): sample 4 [ntt=1, nunfs=0] -> dysta2()
-. clara(): s:= max dys[l=3 (0-orig)] = 11
+. clara(): s:= max dys[l=3] = 11
 C clara(): sample 5 [ntt=1, nunfs=0] -> dysta2()
-. clara(): s:= max dys[l=3 (0-orig)] = 132
+. clara(): s:= max dys[l=3] = 132
 C clara(): sample _found_ --> dysta2(nbest), resul(), end
 $objective
 [1] 2.75
@@ -1387,7 +1387,7 @@ $sample
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  29.12 0.03 29.66 0 0 
+Time elapsed:  29.11 0.05 29.28 0 0 
 > ## Lynne (P IV, 1.6 GHz):  7.5
-> ## nb-mm (P III,700 MHz): 29.34
+> ## nb-mm (P III,700 MHz): 29.2
 > 
