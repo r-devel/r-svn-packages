@@ -45,7 +45,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	dv <- double(1 + (n * (n - 1))/2)
     }
     if((k <- as.integer(k)) < 1 || k >= n)
-	stop("The number of clusters `k' must be in {1,2, .., n-1}.")
+	stop("Number of clusters `k' must be in {1,2, .., n-1}; hence n >= 2")
     ## call Fortran routine
     storage.mode(dv) <- "double"
     storage.mode(x2) <- "double"
@@ -98,7 +98,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	attr(disv, "Metric") <- metric
 	attr(disv, "Labels") <- dimnames(x)[[1]]
 	## add labels to Fortran output
-	res$med <- x[res$med,  ]
+	res$med <- x[res$med,  , drop =FALSE]
 	if(length((dimnames(x)[[1]])) != 0) {
 	    sildim <- dimnames(x)[[1]][sildim]
 	    names(res$clu) <- dimnames(x)[[1]]
