@@ -57,10 +57,10 @@ asGtkDevice(widget, width=300, height=300, pointsize=12)
 \examples{
 \dontrun{
  library(RGtk)
- win <- gtkWindow(false)
+ win <- gtkWindow(show=FALSE)
  d <- gtkDrawingArea()
- win$Add(d)
  asGtkDevice(d)
+ win$Add(d)
  plot(rnorm(100))
 }
 }
