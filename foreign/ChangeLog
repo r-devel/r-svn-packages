@@ -1,0 +1,57 @@
+2001-02-22  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* /home/CVS/src/Rlibs/foreign/src/pfm-read.c:
+	In read_version_data, added check for date and time with the first
+	character of the field ' '.
+
+	Removed check for second integer field in the Variable Count Record.
+
+	Both of these changes are based on bug report by Akio Sone.
+
+2001-02-06  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* /home/CVS/src/Rlibs/foreign/src/SASxport.c:
+	fixed problem with 8 character names in SAS XPORT format
+
+2001-02-06  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* /home/CVS/src/Rlibs/foreign/src/SASxport.c:
+	fixed problem with 8 character names in SAS XPORT format
+
+2001-01-24  Douglas Bates  <bates@verdi>
+
+	* /home/CVS/src/Rlibs/foreign/src/SASxport.c:
+	Fixing problem with calculation of the number of rows in SAS XPORT data sets when the rows are short
+
+2001-01-24  Douglas Bates  <bates@stat.wisc.edu>
+
+	* src/SASxport.c (next_xport_info): Adding yet another rule to try
+	to detect the number of rows in a SAS data set.
+
+2000-12-14  Douglas Bates  <bates@stat.wisc.edu>
+
+	* cleanup: Added the cleanup script.
+
+	* src/file-handle.h: Added declaration of fh_init_files to keep
+	-Wall happy.
+
+	* src/sfm-read.c (read_header): initialized skip_amt to keep -Wall
+	happy.
+
+	* tests/minitab.Rout.save: Added a missing blank line in this file
+	and in others so they do not produce error reports during R CMD
+	check.
+
+1999-12-15  Douglas Bates  <bates@stat.wisc.edu>
+
+	* src/minitab.c (strtrim): Corrected the character count.
+	(MTB2SEXP): Added the names of the columns, if they are given.
+	
+
+1999-12-16  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION (Package): Created a 0.1-1 release under the package
+	name "foreign".
+	
+	* R/zzz.R: Added the copyright stuff.
+	
