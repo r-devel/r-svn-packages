@@ -3,8 +3,20 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
-o When using a NAMESPACE, can rename `..dClass' in R/0aaa.R
-  Also,  R/agnes.q , R/diana.q  andR/pam.q  have almost identical clause
+o clara():	     Should be possible to "re"start with a GIVEN "best sample"
+o pam() and clara(): Should be possible to "re"start with GIVEN medoids.
+o pam() and clara(): With NA's, medoids "often" contain NAs even when there
+		     are only few NAs. ==> use modified d(.,.) which make
+		     NAs "bad" somehow.
+
+o pamila(): Major smart idea: Do save the d(i,j) i=1,..k  j=1,..n
+	    only between *medoids* and everything else -- speedup(?) -> optional
+
+o Create a new  silhoutte.clara(...., full = FALSE)
+  where "full = TRUE" would compute all the silhouttes, not just those of
+  the "best sample".
+
+o R/agnes.q , R/diana.q  and R/pam.q  have almost identical clause
 
 	if(data.class(x) != "dissimilarity") {
 	    if(!is.numeric(x) || is.na(sizeDiss(x)))
@@ -20,22 +32,11 @@ o When using a NAMESPACE, can rename `..dClass' in R/0aaa.R
   [ agnes() and diana() even more in common --> namespace-local functions!
     see also  "8b)" below!]
 
-o a) pam()$diss  is not a `proper' dissimilarity
-     (class is only "dissimilarity", missing "dist") -> done Mo,17.3.
-  b) as.dist() is not generic and does too much for "dist" objects,
-     and also for "dissimilarity" and the completely wrong thing for the
-     pam()$diss like "dissimilarity"s... (wrong $Size !)
-
 o diana() {divisive hierarchical}: Should allow ---early stopping---
   (for speed and size) -- simultaneously, could think of
   ``diss() on the fly'' instead of diss() matrix,
   but see ./src/NOTES-MM  (and "pamila" below) !
           ~~~~~~~~~~~~~~
-
-o cutree(diana(), h = h0)
-	gives complete non-sense without a warning
-  -- the same as in S-plus ..
-
 
 
 Dec. 2002:
@@ -54,8 +55,8 @@ Dec. 2002:
 	 ==> ~/R/Pkgs/T_F2C-2/cluster/
 
     Fixed most of the above 2002-12-28 _late_ -- still one small problem!
-    but it seems clear this was even in early clara.f (at least finaly
-[    result is the same for that example)  src/clara.c << needs more
+    but it seems clear this was even in early clara.f (at least, final
+    result is the same for that example)  src/clara.c << needs more
 
   o	diana(ruspini) --> ok (again)
 
