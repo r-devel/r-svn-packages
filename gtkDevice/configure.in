@@ -6,8 +6,8 @@ if test -z ${GTK_VERSION##2.0}; then
    AC_CHECK_PROGS(PKG_CONFIG, pkg-config)   
    if test -n "${PKG_CONFIG}"; then
       if (${PKG_CONFIG} --exists gtk+-2.0); then
-         GTK_CPPFLAGS=`pkg-config --cflags gtk+-2.0`
-         GTK_LIBS=`pkg-config --libs gtk+-2.0`
+         GTK_CPPFLAGS=`${PGK_CONFIG} --cflags gtk+-2.0`
+         GTK_LIBS=`${PKG_CONFIG} --libs gtk+-2.0`
          GTK_CPPFLAGS=${GTK_CPPFLAGS}" -DGTK2"
       else
          echo "ERROR: gtk+2.0 not found by pkg-config."
@@ -19,9 +19,12 @@ if test -z ${GTK_VERSION##2.0}; then
    fi
 elif test -z ${GTK_VERSION##1.2}; then
    AC_CHECK_PROGS(GTK_CONFIG, gtk-config)
+   if test -z "${GTK_CONFIG}"; then
+      AC_CHECK_PROGS(GTK_CONFIG, gtk12-config)
+   fi
    if test -n "${GTK_CONFIG}"; then
-      GTK_CPPFLAGS=`gtk-config --cflags`
-      GTK_LIBS=`gtk-config --libs`
+      GTK_CPPFLAGS=`${GTK_CONFIG} --cflags`
+      GTK_LIBS=`${GTK_CONFIG} --libs`
    else
        echo "ERROR: Cannot find gtk-config." 
       exit 1
