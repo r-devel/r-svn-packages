@@ -1,3 +1,7 @@
+2001-12-04  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+
+	* DESCRIPTION (Version): New version is 0.4-8.
+
 2001-11-13 Thomas Lumley <tlumley@u.washington.edu>
 	revised factor reading in src/stataread.c,
 	added factor writing for Stata,
