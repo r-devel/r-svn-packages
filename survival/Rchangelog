@@ -1,0 +1,67 @@
+2.9-13 report an error if model frame has zero rows.
+
+2.9-12  Changed R_ext/Mathlib to Rmath.h
+
+2.9-11	vcov
+
+2.9-10    Tightened convergence tolerances. 
+	  added survSplit.			
+	
+2.9-9 more T/F, remove [.terms, depends 1.7.0
+
+2.9-7 Use pnorm5 instead of erf/erfc
+
+2.9-6 two .C calls missing PACKAGE argument
+
+2.9-5 bug fix for identity link in predict.survreg from Therneau.
+	
+2.9-4 centered= argument was backwards for basehaz (Martyn Plummer);
+	add vcov.coxph, vcov.survreg if vcov exists and they don't,
+	add anova.coxph[list]
+
+2.9-3 Really change T/F to TRUE/FALSE everywhere
+
+2.9-2 Change 14 uses of _ to <-.  Fixed clogit() to allow missing data
+
+2.9-1 Document the mean->rmean change better
+
+2.9 Change T/F to TRUE/FALSE everywhere, fix segfault in coxph with no
+events, make survreg with user-defined distributions actually work and add
+examples. Add option "show.rmean" to print.survfit, currently TRUE by
+default but may become FALSE in future. Fixed bty option in plot.survfit
+
+2.8 survival passes CMD check for the first time ever (though users won't 
+    notice many of the changes). A few little bugs
+    here and there. Some better examples added (eg survexp, plot.survfit)
+
+2.7 More CMD check stuff.  HP-UX compilers don't like even static
+    variables called 'time' (Peter Kleiweg). 
+
+2.6 documentation/code incompatibilities, three more
+sys.frame(sys.parent()) fixes.
+
+2.5 GPL, fixed segfault in frailty
+	model with all coefficients NA, predict.coxph standard errors for
+	type="terms", new name "survival", predict.coxph
+	with newdata but no response <mgri@hal.stat.unipd.it>, bug in
+	basehaz, fold in date package
+
+2.4 fixed bug in coxpenal.fit (<m.carvalho@lancaster.ac.uk>) when a
+    sparse frailty term is specified before a non-sparse one,
+    added clogit(), added Mac makefile (Stefano Iacus), added "Maintainer"
+    field, bug in plot.survfit <markc@nswcc.org.au>, better
+    environment(formula) handling in coxph, a basehaz() function.
+
+2.3 upstream bug fix for stratifed, penalised coxph
+
+2.2 Fixed anova.survreg,anova.survreglist. Some doc fixes. legends for
+    plot.survfit
+
+2.1  options for `n' in print.survfit, [.Surv fixed for R1.1.1.
+
+2.0   New code from Terry Therneau: faster cox regression, bug fixes.
+
+1.1-6 plot.survfit(,fun="cloglog") broke with mark.times=TRUE when the first event was a censoring.
+1.1-5 more documentation fixes, added data(stanford2), modified frailty()
+   to avoid bug in new save()/load() code.	
+1.1-4  documentation and data fixes, particularly survreg.distributions
