@@ -1,3 +1,15 @@
+2001-06-18  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+
+	* DESCRIPTION (Version): New version is 0.4-5.
+
+	* src/pfm-read.c (pfm_read_dictionary): Use Calloc() instead of
+	R_alloc().
+
+	* src/sfm-read.c (sfm_read_dictionary): Use Calloc() instead of
+	R_alloc().
+
+	* src/spss.c (do_read_SPSS): Check for null file pointer.
+
 2001-06-09  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
 
 	* tests/*.R, tests/*.Rout.save:  Remove `gctorture(TRUE)'.
