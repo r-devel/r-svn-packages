@@ -1,3 +1,6 @@
+2.14	separate out print.summary.coxph from summary.coxph
+	
+	
 2.13-2  Update the Depends: clause to the new meanings.
 
 	Edit .Rd files for lazy data.
