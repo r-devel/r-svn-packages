@@ -13,6 +13,8 @@ For R 1.7.0 :
     ./R/plothier.q   ===> NOT DONE -- rather tell people {on the help()} to
     use the two underlying plot functions separately !
 
+o Robert G:  " silhouette.default() is wrong "
+  --> ok, I found this was on R-help, Feb.7 and fixed in my sources subsequently
 
 Oct. 2002 {for "banner"; silhouette was earlier}:
 
