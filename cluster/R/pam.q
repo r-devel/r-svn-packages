@@ -137,27 +137,23 @@ pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 					  "diameter", "separation"))
     ## construct S object
     clustering <-
-        if(k != 1) {
-            dimnames(res$silinf) <-
-                list(sildim, c("cluster", "neighbor", "sil_width", ""))
-            list(medoids = res$med, clustering = res$clu,
-                 objective = res$obj, isolation = res$isol,
-                 clusinfo = res$clusinf,
-                 silinfo =
+        list(medoids = res$med, clustering = res$clu,
+             objective = res$obj, isolation = res$isol,
+             clusinfo = res$clusinf,
+             silinfo = if(k != 1) {
+                 dimnames(res$silinf) <-
+                     list(sildim, c("cluster", "neighbor", "sil_width", ""))
                  list(widths = res$silinf[, -4],
                       clus.avg.widths = res$avsil[1:k],
-                      avg.width = res$ttsil),
-                 diss = disv)
-        }
-        else list(medoids = res$med, clustering = res$clu,
-                  objective = res$obj, isolation = res$isol,
-                  clusinfo = res$clusinf, diss = disv)
+                      avg.width = res$ttsil)
+             },
+             diss = disv,
+             call = match.call())
     if(!diss) {
 	x2[x2 == valmisdat] <- NA
 	clustering$data <- x2
     }
     class(clustering) <- c("pam", "partition")
-    attr(clustering, "Call") <- sys.call()
     clustering
 }
 
