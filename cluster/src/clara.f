@@ -1,4 +1,6 @@
-c     Clustering LARge Applications-- $Id$
+C $Id$
+
+c     Clustering LARge Applications
 c     ~          ~~~   ~
 c     Clustering program based upon the k-medoid approach,
 c     and suitable for data sets of at least 100 objects.
