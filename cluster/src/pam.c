@@ -343,9 +343,9 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 		damer[k] = dam;
 		if (kand) {
 		    ++numl;
-		    if (dam >= sep) /* L-cluster */
+		    if (dam >= sep) /*	L-cluster */
 			nisol[k] = 1;
-		    else/*		   L*-cluster */
+		    else/*		L*-cluster */
 			nisol[k] = 2;
 		    continue /* k */;
 		}
@@ -367,25 +367,19 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 	  double *syl, double *srank, double *avsyl, double *ttsyl,
 	  double *dys, double *s, double *sylinf)
 {
-    /* System generated locals */
-    int sylinf_dim1, sylinf_offset;
-
-    /* Local variables */
+    int sylinf_dim1 = *nn; /* sylinf[*nn, 4] */
     int j, k, l, lang=-1 /*Wall*/, lplac, k_, nj, nl, nbb, ntt, nsylr;
     double db, dysa, dysb, symax;
-
-/* Parameter adjustments */
-    sylinf_dim1 = *nn;
-    sylinf_offset = 1 + sylinf_dim1;
-    sylinf -= sylinf_offset;
+    /* pointers to sylinf[] columns:*/
+    double *sylinf_2, *sylinf_3, *sylinf_4;
+    sylinf_2 = sylinf	+ sylinf_dim1;
+    sylinf_3 = sylinf_2 + sylinf_dim1;
+    sylinf_4 = sylinf_3 + sylinf_dim1;
+    /* Parameter adjustments */
     --avsyl;
-    --srank;
-
-    --nsend;
     --ncluv;
     --dys;
 
-    /* Function Body */
     nsylr = 0;
     *ttsyl = 0.;
     for (k = 1; k <= *kk; ++k) {
@@ -400,22 +394,18 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 	    nj = nelem[j];
 	    dysb = *s * 1.1f + 1.;
 	    negbr[j] = -1;
-	    for (k_ = 1; k_ <= *kk; ++k_) {
-		if (k_ != k) {
-		    nbb = 0;
-		    db = 0.;
-		    for (l = 1; l <= *nn; ++l) {
-			if (ncluv[l] == k_) {
-			    ++nbb;
-			    if (l != nj)
-				db += dys[F77_CALL(meet)(&nj, &l)];
-			}
-		    }
-		    db /= nbb;
-		    if (dysb > db) {
-			dysb = db;
-			negbr[j] = k_;
-		    }
+	    for (k_ = 1; k_ <= *kk; ++k_) if (k_ != k) {
+		nbb = 0;
+		db = 0.;
+		for (l = 1; l <= *nn; ++l) if (ncluv[l] == k_) {
+		    ++nbb;
+		    if (l != nj)
+			db += dys[F77_CALL(meet)(&nj, &l)];
+		}
+		db /= nbb;
+		if (dysb > db) {
+		    dysb = db;
+		    negbr[j] = k_;
 		}
 	    }
 	    if (ntt > 1) {
@@ -444,17 +434,17 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 			syl[j] = -1.;
 		    }
 		}
-		else if (dysb > 0.)
+		else /* dysa == 0 */ if (dysb > 0.)
 		    syl[j] = 1.;
 		else
 		    syl[j] = 0.;
 	    }
-	    else { /*     ntt == 1: */
+	    else { /*	  ntt == 1: */
 		syl[j] = 0.;
 	    }
 	} /* for( j ) */
 	avsyl[k] = 0.;
-	for (j = 1; j <= ntt; ++j) {
+	for (j = 0; j < ntt; ++j) {
 	    symax = -2.;
 	    for (l = 0; l < ntt; ++l) {
 		if (symax < syl[l]) {
@@ -463,28 +453,28 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 		}
 	    }
 	    nsend[j] = lang;
-	    srank[j] = syl[lang];
+	    srank[j] = symax; /* = syl[lang] */
 	    avsyl[k] += srank[j];
 	    syl[lang] = -3.;
 	}
 	*ttsyl += avsyl[k];
 	avsyl[k] /= ntt;
 	if (ntt < 2) {
+	    sylinf  [nsylr] = (double) k;
+	    sylinf_2[nsylr] = (double) negbr[0];
+	    sylinf_3[nsylr] = 0.;
+	    sylinf_4[nsylr] = (double) nelem[0];
 	    ++nsylr;
-	    sylinf[nsylr + sylinf_dim1] = (double) k;
-	    sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[0];
-	    sylinf[nsylr + sylinf_dim1 * 3] = 0.;
-	    sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[0];
 	} else {
-	    for (l = 1; l <= ntt; ++l) {
+	    for (j = 0; j < ntt; ++j) {
+		lplac = nsend[j];
+		sylinf	[nsylr] = (double) k;
+		sylinf_2[nsylr] = (double) negbr[lplac];
+		sylinf_3[nsylr] = srank[j];
+		sylinf_4[nsylr] = (double) nelem[lplac];
 		++nsylr;
-		lplac = nsend[l];
-		sylinf[nsylr + sylinf_dim1] = (double) k;
-		sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[lplac];
-		sylinf[nsylr + sylinf_dim1 * 3] = srank[l];
-		sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[lplac];
 	    }
 	}
-    }
+    } /* for (k) */
     *ttsyl /= *nn;
 } /* dark */
