@@ -1,6 +1,6 @@
 
 R : Copyright 2004, The R Foundation for Statistical Computing
-Version 1.9.0 alpha (2004-03-18), ISBN 3-900051-00-3
+Version 2.0.0 Under development (unstable) (2004-08-12), ISBN 3-900051-00-3
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -20,11 +20,10 @@ Type 'q()' to quit R.
 > #dyn.load("../loadmod.o")
 > #attach("../.Data")
 > library(survival)
-> if (R.version$minor<3 && R.version$major==1){
-+     options(na.action="na.omit")
-+ }else{
-+     options(na.action="na.exclude")
-+ }
+Loading required package: splines 
+> 
+> options(na.action="na.exclude")
+> 
 > #
 > # Compute some answers "by hand"
 > #     For test1 and test2 data
@@ -381,6 +380,29 @@ Call: survfit.coxph(object = fit)
     7      4       1    0.277   0.188       0.0729        1.000
     8      4       1    0.214   0.156       0.0514        0.894
     9      5       2    0.143   0.112       0.0308        0.667
+> 
+> sfit.km <- survfit(Surv(start, stop, event)~ x, data=test2)
+> sfit.km
+Call: survfit(formula = Surv(start, stop, event) ~ x, data = test2)
+
+    n events rmean se(rmean) median 0.95LCL 0.95UCL
+x=0 0      3     5      1.46    4.5       3     Inf
+x=1 0      4     2      0.00    2.0     Inf     Inf
+> summary(sfit.km)
+Call: survfit(formula = Surv(start, stop, event) ~ x, data = test2)
+
+                x=0 
+ time n.risk n.event survival std.err lower 95% CI upper 95% CI
+    3      2       1     0.50   0.354       0.1250            1
+    6      2       1     0.25   0.250       0.0352            1
+    8      1       1     0.00      NA           NA           NA
+
+                x=1 
+ time n.risk n.event survival std.err lower 95% CI upper 95% CI
+    2      1       1        0      NA           NA           NA
+    7      3       1        0      NA           NA           NA
+    9      3       2        0      NA           NA           NA
+
 > 
 > # make a doubled data set
 > temp <- rbind(test2, test2)
@@ -751,7 +773,7 @@ Likelihood ratio test=3.38  on 1 df, p=0.0658  n= 23
 > x2 <- coxph(Surv(rep(0,23),time, status) ~x, aml, method='efron')
 > x1$coef - x2$coef
 xNonmaintained 
-  1.110223e-16 
+ -1.110223e-16 
 > 
 > rm(x1, x2, atime, denom, deaths, chaz,cvar, tfit, sfit, temp, temp2, fit)
 > #
@@ -1957,7 +1979,7 @@ Call: survfit.coxph(object = sfit.1, newdata = data, individual = T)
 + 			rep(age,2)*strata(ss) + I(rep(age,2)^2*ss) )
 > fit$coef[1] - fit3$coef
   rep(age, 2) 
--1.040834e-17 
+-3.469447e-18 
 > s4 <- survfit(fit, c(fit3$means, 0,0))
 > all.equal(s4$surv[1:(s4$strata[1])],  s3$surv)
 [1] TRUE

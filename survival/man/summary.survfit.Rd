@@ -79,6 +79,8 @@ passed through from \code{fit}, if present.
 \code{\link{survfit}}, \code{\link{print.summary.survfit}}.}
 \examples{
 summary( survfit( Surv(futime, fustat),data=ovarian))
+summary( survfit( Surv(futime, fustat)~rx,data=ovarian))
+
 }
 \keyword{survival}
 % Converted by Sd2Rd version 0.3-2.
