@@ -85,7 +85,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	if(mdata && any(aNA <- apply(inax,1, all))) {
 	    i <- which(aNA)
 	    stop(ngettext(length(i),
-                          sprintf("Observation %d has", i),
+                          sprintf("Observation %d has", i[1]),
                           sprintf("Observations %s have", paste(i, collapse=","))),
 		 " *only* NAs --> omit for clustering")
 	} ## else
