@@ -80,8 +80,8 @@ void bswap(int *kk, int *nn, int *nrepr,
 	   double *dysma, double *dysmb, double *beter,
 	   double *dys, double *sky, double *s, double *obj)
 {
-    int i, j, ij, k, kj, kbest = -1, nbest = -1, njn, nmax = -1;/* init: -Wall*/
-    double ammax, small, cmd, dz, dzsky;
+    int i, j, ij, k, kj, kbest = -1, nbest = -1;/* init: -Wall*/
+    double small, dz, dzsky;
 
     double tmp1 = *s * 1.1f + 1.;
 
@@ -103,11 +103,11 @@ void bswap(int *kk, int *nn, int *nrepr,
 	dysma[i] = tmp1;
     }
     for (k = 1; k <= *kk; ++k) {
+
 	/* compute beter[i] for all non-representatives:
 	 * also find ammax := max_{..} and nmax := argmax_i{beter[i]} ... */
-
-/*FIXME: declare quite a few variables only here!
- *-----*/
+	int njn, nmax; /* no more? = -1;  init: -Wall*/
+	double ammax, cmd;
 	ammax = 0.;
 	for (i = 1; i <= *nn; ++i) {
 	    if (nrepr[i] == 0) {
