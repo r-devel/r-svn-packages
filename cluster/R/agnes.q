@@ -126,7 +126,7 @@ agnes <- function(x, diss = FALSE, metric = "euclidean",
             order.lab <- attr(x, "Labels")[res$ner]
     }
     clustering <- list(order = res$ner, height = res$ban[-1], ac = res$ac,
-                       merge = res$merge, diss = disv)
+                       merge = res$merge, diss = disv, call = match.call())
     if(exists("order.lab"))
         clustering$order.lab <- order.lab
     if(!diss) {
@@ -134,7 +134,6 @@ agnes <- function(x, diss = FALSE, metric = "euclidean",
         clustering$data <- x2
     }
     class(clustering) <- c("agnes", "twins")
-    attr(clustering, "Call") <- sys.call()
     clustering
 }
 
