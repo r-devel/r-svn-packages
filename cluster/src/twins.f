@@ -24,7 +24,7 @@ C VARs
          jpp=1
       else
          jhalt=0
-         call dysta4(nn,jpp,x,dys,ndyst,jtmd,valmd,jhalt)
+         call dysta(nn,jpp,x,dys,ndyst,jtmd,valmd,jhalt)
          if(jhalt.ne.0) then
             jdyss=-1
             return
@@ -42,47 +42,6 @@ C VARs
          call splyt(nn,kwan,ner,ban,dys,merge)
          call bandy(nn,ban,ner,coef)
       endif
-      end
-c     -----------------------------------------------------------
-c
-      subroutine dysta4(nn,jpp,x,dys,ndyst,jtmd,valmd,jhalt)
-
-      integer nn,jpp, ndyst, jtmd(jpp), jhalt
-      double precision x(nn,jpp), dys(1+nn*(nn-1)/2), valmd(jpp)
-c VARs
-      integer j,k,l,lsubt,nlk,npres
-      double precision pp,clk,rpres
-
-      pp=jpp
-      nlk=1
-      dys(1)=0.0
-      do 100 l=2,nn
-         lsubt=l-1
-         do 20 k=1,lsubt
-            clk=0.0
-            nlk=nlk+1
-            npres=0
-            do 30 j=1,jpp
-               if(jtmd(j).ge.0)goto 40
-               if(x(l,j).eq.valmd(j))goto 30
-               if(x(k,j).eq.valmd(j))goto 30
- 40            npres=npres+1
-               if(ndyst.ne.1)goto 50
-               clk=clk+(x(l,j)-x(k,j))*(x(l,j)-x(k,j))
-               goto 30
- 50            clk=clk+dabs(x(l,j)-x(k,j))
- 30         continue
-            rpres=npres
-            if(npres.ne.0)goto 60
-            jhalt=1
-            dys(nlk)=-1.0
-            goto 20
- 60         if(ndyst.ne.1)goto 70
-            dys(nlk)=dsqrt(clk*(pp/rpres))
-            goto 20
- 70         dys(nlk)=clk*(pp/rpres)
- 20      continue
- 100  continue
       end
 c     -----------------------------------------------------------
 c
