@@ -2,7 +2,6 @@
 c     c
 c     c	 Calculating dissimilarities between objects or variables
 c     c
-      implicit double precision(a-h,o-z)
 
       integer nn, jpp
 c     c		 nn  = number of objects
@@ -10,10 +9,10 @@ c     c		 jpp = number of variables used for the calculations
 
 c     c	 The following vectors and matrices must be dimensioned in the
 c     c	 main program :
-      double precision x(nn,jpp), disv(1+nn*(nn-1)/2)
-      double precision valmd(jpp)
-      integer jtmd(jpp), jdat
-      integer vtype(jpp)
+      double precision x(nn,jpp), valmd(jpp)
+      double precision disv(1+nn*(nn-1)/2)
+      integer jtmd(jpp), jdat, vtype(jpp), ndyst
+
 c	vtype was character originally
 c	vtype(j) is the type of variable j:
 c	       = 1 (A) for an Asymmetric binary variable
@@ -22,12 +21,14 @@ c	       = 3 (N) for a  Nominal  variable
 c	       = 4 (O) for an Ordinal  variable
 c	       = 5 (I) for an Interval variable (additive)
 c	       = 6 (T) for a  raTio    variable (log transformed)
-c
+
 c	vector jtmd is only read if there are missing values
 c	jtmd(j) =  0 if variable j is binary
 c		= -1 if variable j is not binary and has missing values
 c		= +1 if variable j is not binary and has no missing values
-
+c VAR
+      double precision clk,dlk, pp,ppa, rpres
+      integer j,k,l,la, lsubt, nlk, nbad, npres
 
 c
 c	  calculation of the dissimilarities
