@@ -1,5 +1,5 @@
 /*
- *  $Id: SASxport.c,v 1.11 2003/05/21 18:38:26 pd Exp $
+ *  $Id: SASxport.c,v 1.12 2004/05/22 06:44:29 hornik Exp $
  *
  *  Read SAS transport data set format
  *
@@ -486,9 +486,11 @@ xport_info(SEXP xportFile)
     PROTECT(char_numeric   = mkChar("numeric"));
     PROTECT(char_character = mkChar("character"));
 
+    if(!isValidString(xportFile))
+	error("first argument must be a file name\n");
     fp = fopen(R_ExpandFileName(CHAR(STRING_ELT(xportFile, 0))), "rb");
     if (!fp)
-	error( "unable to open file");
+	error("unable to open file");
     namestrLength = init_xport_info(fp);
 
     ansLength = 0;
@@ -577,9 +579,11 @@ xport_read(SEXP xportFile, SEXP xportInfo)
     names = getAttrib(xportInfo, R_NamesSymbol);
     setAttrib(ans, R_NamesSymbol, names);
 
+    if(!isValidString(xportFile))
+	error("first argument must be a file name\n");
     fp = fopen(R_ExpandFileName(CHAR(STRING_ELT(xportFile, 0))), "rb");
     if (!fp)
-	error( "unable to open file");
+	error("unable to open file");
     if (fseek(fp, 240, SEEK_SET) != 0)
 	error("problem reading SAS XPORT file %s",
 	      CHAR(STRING_ELT(xportFile, 0)));
