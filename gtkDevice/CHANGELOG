@@ -1,0 +1,13 @@
+0.4
+- renamed package from gtk to gtkDevice
+- configure script modified to use pkg-config (when available)
+  now exits abnormally if it cannot find pkg-config or gtk-config
+- asGTKdevice requres() RGtk
+- man page for gtk corrected to describe new behaviour
+- loadGTK renamed to loadGTKdevice
+- Formatting changes
+- Removal of obsolete ptr_GTKDeviceDriver from loadGTK.c
+
+0.3 
+- Man pages included
+- R_gtk_setEventHandler called automatically in .First.lib

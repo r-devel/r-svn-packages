@@ -1,0 +1,21 @@
+A simple way to get the event loop working is
+
+library(gtk)
+.C("R_gtk_setEventHandler")
+
+Then 
+gtk()
+plot(1:10)
+
+and resizes, expose events, etc. will be handled.
+
+If using the RGtk package, one can use the asGTKDevice() function
+easily. The devices.S file in the examples/ directory can be used
+to show a notebook containing multiple pages of different configurations
+of devices. These include
+  a) a scrolled device
+  b) a dynamic paned layout containing devices and grips with which one
+     can adjust the size allocated for a device. This is like an interactive,
+     re-sizeable version of layout().
+  c) a regular device in its own page.
+  

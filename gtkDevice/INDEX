@@ -1,0 +1,3 @@
+asGtkDevice             Use Gtk drawing area widget as new R graphics
+                        device
+gtk                     GTK+ Graphics Device

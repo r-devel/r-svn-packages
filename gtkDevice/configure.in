@@ -1,0 +1,39 @@
+AC_INIT(src/devices.c)
+
+AC_CHECK_PROGS(PKG_CONFIG, pkg-config)
+
+if test -n "${PKG_CONFIG}"; then
+   if (${PKG_CONFIG} --exists gtk+-2.0); then
+      GTK_CPPFLAGS=`pkg-config --cflags gtk+-2.0`
+      GTK_LIBS=`pkg-config --libs gtk+-2.0`
+      # GTK_CPPFLAGS=${GTK_CPPFLAGS}" -DGDK_DISABLE_DEPRECATED"
+   elif (${PKG_CONFIG} --exists gtk+); then
+      GTK_CPPFLAGS=`pkg-config --cflags gtk+`
+      GTK_LIBS=`pkg-config --libs gtk+`
+   fi
+else
+  AC_CHECK_PROGS(GTK_CONFIG, gtk-config)
+
+  if test -n "${GTK_CONFIG}"; then
+     GTK_CPPFLAGS=`gtk-config --cflags`
+     GTK_LIBS=`gtk-config --libs`
+  else
+     echo "*****************************************************************"
+     echo "ERROR: Cannot find gtk-config or pkg-config"
+     echo ""
+     echo "These executables give compilation and linking information for"
+     echo "gtk+ applications.  If you are using gtk+ 1.x you should have"
+     echo "gtk-config in your PATH.  If you are using gtk+ 2.x you should"
+     echo "have pkg-config in your PATH."
+     echo ""
+     echo "Please find the directory in which the relevant executable is"
+     echo "located, add it to your PATH environment variable and then re-run"
+     echo "the installation command"
+     echo "*****************************************************************"
+     exit 1
+  fi
+fi
+
+AC_SUBST(GTK_CPPFLAGS)
+AC_SUBST(GTK_LIBS)
+AC_OUTPUT(src/Makevars)
