@@ -86,7 +86,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	stop("Each of the random samples contains objects between which\n",
 	     " no distance can be computed.")
     sildim <- res$silinf[, 4]
-    ## adapt Fortran output to S:
+    ## adapt C output to S:
     ## convert lower matrix, read by rows, to upper matrix, read by rows.
     disv <- res$dis[-1]
     disv[disv == -1] <- NA
@@ -95,15 +95,16 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     attr(disv, "Size") <- sampsize
     attr(disv, "Metric") <- metric
     attr(disv, "Labels") <- namx[res$sample]
-    ## add labels to Fortran output
+    ## add labels to C output
     res$med <- x[res$med, , drop = FALSE]
-    res$clu <- as.integer(matrix(res$clu, nrow= n, ncol= jp, byrow= TRUE)[, 1])
+    ## 1st column:  matrix(res$clu, nrow= n, ncol= jp, byrow= TRUE)[, 1])
+    res$clu <- as.integer(res$clu[1+ (0:(n-1))*jp])
     if(!is.null(namx)) {
 	sildim <- namx[sildim]
 	res$sample <- namx[res$sample]
 	names(res$clu) <- namx
     }
-    ## add dimnames to Fortran output
+    ## add dimnames to C output
     r <- list(sample = res$sample, medoids = res$med,
 	      clustering = res$clu, objective = res$obj,
 	      clusinfo = cbind(size = res$size, "max_diss" = res$maxdis,
