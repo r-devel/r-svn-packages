@@ -93,8 +93,9 @@ pam(x, k, diss = inherits(x, "dist"), metric = "euclidean",
   of the dissimilarities of the observations to their closest
   representative object.
   \cr
-  The algorithm first looks for a good initial set of medoids (this is
-  called the \bold{build} phase).  Then it finds a local minimum for the
+  By default, when \code{medoids} are not specified, the algorithm first
+  looks for a good initial set of medoids (this is called the
+  \bold{build} phase).  Then it finds a local minimum for the
   objective function, that is, a solution such that there is no single
   switch of an observation with a medoid that will decrease the
   objective (this is called the \bold{swap} phase).
