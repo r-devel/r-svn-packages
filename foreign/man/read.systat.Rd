@@ -7,17 +7,17 @@
   \code{*.syd} files.
 }
 \usage{
-read.systat(file, to.data.frame=TRUE)
+read.systat(file, to.data.frame = TRUE)
 }
 \arguments{
   \item{file}{character variable with the name of the file to read}
-  \item{to.data.frame}{return a data frame?}
+  \item{to.data.frame}{return a data frame (otherwise a list)?}
 }
 \details{
   The function only reads those Systat files that are rectangular data
   files (\code{mtype = 1}), and warns when files have non-standard
   variable name codings.  The function will at present only work on files
-  created on little-endian machines, typically Intel.
+  created on little-endian machines, typically Windows on Intel PCs.
 
   The C code was originally written for an add-on module for Systat
   described in Bivand (1992 paper).  Variable names retain the trailing

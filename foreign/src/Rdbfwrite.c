@@ -1,3 +1,13 @@
+/* Based on code in the shapelib.maptools.org library whose copyright
+ * is included below.
+ *
+ * First version for R's maptools package appears to be
+ * Copyright 2000-2001 (c) Nicholas Lewin-Koh
+ *
+ * Changes for the foreign package Copyright (C) 2004 the R Code
+ * Development Team
+ */
+
 /******************************************************************************
  *
  * Project:  Shapelib
