@@ -38,14 +38,14 @@ C VARs
       if(jalg.ne.2) then
 c	AGNES
 	 call averl(nn,kwan,ner,ban,dys,method,merge)
-	 call banag(nn,ban,ner,coef)
       else
 c	DIANA
 	 call splyt(nn,kwan,ner,ban,dys,merge)
-	 call bandy(nn,ban,ner,coef)
       endif
+      call bncoef(nn,ban,ner,coef)
       end
 c     -----------------------------------------------------------
+c     AGNES agglomeration
 c
       subroutine averl(nn,kwan,ner,ban,dys,method,merge)
 
@@ -56,7 +56,7 @@ c Function (defined in ./meet.f ):
 c VARs
       integer j,l,la,lb,l1,l2,lq, lka, lenda, lendb
       integer lfyrs, llast, lmuch, lnext, lput, lnum
-      integer naq, nbq, nab, nej,nlj, nns, nclu,nmerge
+      integer naq, nbq, nab,  nlj, nns, nclu,nmerge
       double precision akb, d, dnew, fa,fb,fc, smald, ta,tb,tq
 c
 c
@@ -71,10 +71,10 @@ c     find closest clusters
 c
       nmerge=1
  100  j=1
+
  80   j=j+1
       if(kwan(j).eq.0)goto 80
-      nej=meet(1,j)
-      smald=dys(nej)*1.1+1.0
+      smald=dys(meet(1,j))*1.1+1.0
       nns=nn-1
       do 120 l=1,nns
 	 if(kwan(l).eq.0)go to 120
@@ -105,8 +105,8 @@ c
 c     determine lfyrs and llast
 c
       do 200 l=1,nn
-	 if(ner(l).eq.la)lfyrs=l
-	 if(ner(l).eq.lb)llast=l
+	 if(ner(l).eq.la) lfyrs=l
+	 if(ner(l).eq.lb) llast=l
  200  continue
       ban(llast)=smald
 c
@@ -144,24 +144,24 @@ c
 	 if(method.eq.3)go to 310
 	 if(method.eq.4)go to 320
 	 if(method.eq.5)go to 330
-c     group average method
+c     1: group average method
 	 ta=kwan(la)
 	 tb=kwan(lb)
 	 fa=ta/(ta+tb)
 	 fb=tb/(ta+tb)
 	 dys(naq)=fa*dys(naq)+fb*dys(nbq)
 	 go to 240
-c     single linkage
+c     2: single linkage
  300	 dnew=dys(naq)
 	 if(dys(nbq).lt.dnew)dnew=dys(nbq)
 	 dys(naq)=dnew
 	 go to 240
-c     complete linkage
+c     3: complete linkage
  310	 dnew=dys(naq)
 	 if(dnew.lt.dys(nbq))dnew=dys(nbq)
 	 dys(naq)=dnew
 	 go to 240
-c     ward's method
+c     4: ward's method
  320	 ta=kwan(la)
 	 tb=kwan(lb)
 	 tq=kwan(lq)
@@ -173,7 +173,7 @@ c     ward's method
 	 d=d+fc*dys(nab)*dys(nab)
 	 dys(naq)=sqrt(d)
 	 go to 240
-c     weighted average linkage
+c     5: weighted average linkage
  330	 dys(naq)=(dys(naq)+dys(nbq))/2.d0
  240  continue
  250  kwan(la)=kwan(la)+kwan(lb)
@@ -183,10 +183,13 @@ c     weighted average linkage
       end
 c     -----------------------------------------------------------
 c
-      subroutine banag(nn,ban,ner,ac)
+c	cf = ac := "Agglomerative Coefficient" from AGNES banner
+c  or	cf = dc := "Divisive Coefficient"      from DIANA banner
+
+      subroutine bncoef(nn,ban,ner,cf)
 
       integer nn, ner(nn)
-      double precision ban(nn), ac
+      double precision ban(nn), cf
 c VARs
       integer k,kearl,kafte
       double precision sup,syze,rnn
@@ -195,20 +198,21 @@ c VARs
       do 70 k=2,nn
 	 if(ban(k).gt.sup)sup=ban(k)
  70   continue
-      ac=0.0
+      cf=0.0
       do 80 k=1,nn
 	 kearl=k
 	 if(k.eq.1)kearl=2
 	 kafte=k+1
 	 if(k.eq.nn)kafte=nn
 	 syze=ban(kearl)
-	 if(ban(kafte).lt.syze)syze=ban(kafte)
-	 ac=ac+1.0-(syze/sup)
+	 if(ban(kafte).lt.syze) syze=ban(kafte)
+	 cf=cf+1.0-(syze/sup)
  80   continue
       rnn=nn
-      ac=ac/rnn
+      cf=cf/rnn
       end
 c     -----------------------------------------------------------
+c	DIANA "splitting"
 c
       subroutine splyt(nn,kwan,ner,ban,dys,merge)
 
@@ -238,7 +242,7 @@ c
       kwan(1)=nn
       ja=1
 c
-c     computation of diameter of data set
+c     cs :=  diameter of data set
 c
       cs=0.0
       k=0
@@ -387,6 +391,7 @@ c
  430  ja=1
       if(kwan(ja).eq.1)go to 420
       go to 30
+
 c
 c     merge-structure for plotting tree in S
 c
@@ -410,6 +415,7 @@ c
  550  continue
       end
 c     -----------------------------------------------------------
+c     used in splyt() above
 c
       subroutine supcl(dys,kka,kkb,arest,nn,ner)
 
@@ -433,31 +439,3 @@ c VARs
  20   continue
       return
       end
-c     -----------------------------------------------------------
-c
-      subroutine bandy(nn,ban,ner,dc)
-c Arguments
-      integer nn,ner(nn)
-      double precision ban(nn), dc
-c VARs
-      integer k, kearl, kafte
-      double precision sup, syze, rnn
-
-      sup=0.0
-      do 70 k=2,nn
-	 if(ban(k).gt.sup)sup=ban(k)
- 70   continue
-      dc=0.0
-      do 80 k=1,nn
-	 kearl=k
-	 if(k.eq.1)kearl=2
-	 kafte=k+1
-	 if(k.eq.nn)kafte=nn
-	 syze=ban(kearl)
-	 if(ban(kafte).lt.syze)syze=ban(kafte)
-	 dc=dc+1.0-(syze/sup)
- 80   continue
-      rnn=nn
-      dc=dc/rnn
-      end
-
