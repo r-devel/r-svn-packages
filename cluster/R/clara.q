@@ -5,7 +5,7 @@
 #### Note that the algorithm is O(n), but O(ns^2) where ns == sampsize
 
 clara <- function(x, k, metric = "euclidean", stand = FALSE,
-		  samples = 5, sampsize = 40 + 2 * k,
+		  samples = 5, sampsize = min(n, 40 + 2 * k),
 		  trace = 0, keep.data = TRUE, keepdata,
                   rngR = FALSE)
 {
