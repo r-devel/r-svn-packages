@@ -1,7 +1,11 @@
+2004-12-01  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/Sread.R (data.restore): handle `ts()' objects properly
+
 2004-11-24 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: New version is 0.8-2.
-	
+
 	* src/SASxport.c Definition of numerical missing values was
 	applied to character fields. (PR#7389)
 
@@ -14,10 +18,10 @@
 2004-11-8 Thomas Lumley <tlumley@u.washington.edu>
 
 	* spss.R:  Trim trailing spaces from SPSS value labels
-	  
+
          Don't create a factor when there are fewer labels than
 	 non-missing levels
-	  
+
 	* read.spss.Rd: Mention the apparently harmless warning given for
 	 recent versions of SPSS files.
 
@@ -40,7 +44,7 @@
 	* Add write.foreign for writing to foreign packages
 
 	* use Date rather than POSIXt for read.dta
-	
+
 	* Update tests/stata.Rout.save for using Date rather than POSIXt
 
 	* DESCRIPTION: New version is 0.7
@@ -48,11 +52,11 @@
 2004-07-29  Thomas Lumley <tlumley@u.washington.edu>
 
 	* DESCRIPTION: New version is 0.6-11
-	
+
 	* Fix US-style dates in read.epiinfo
 
 	* Add option to turn off some warnings in read.dta
-	
+
 2004-07-15  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.6-10.
@@ -72,9 +76,9 @@
 2004-04-28 Thomas Lumley <tlumley@u.washington.edu>
 
 	* DESCRIPTION: version 0.6-8
-	
+
 	* read.dta: 1-byte type was coming through unsigned
-	
+
 	* tests/: test file with 1-byte type
 
 2004-04-22 Thomas Lumley <tlumley@u.washington.edu>
@@ -133,9 +137,9 @@
 	* man/read.epiinfo.Rd: Codoc mismatch.
 
 2003-08-28  Thomas Lumley <tlumley@u.washington.edu>
-	
+
 	* read.spss.Rd: note that strings are padded on the right with
-	spaces. 
+	spaces.
 
 	* version is 0.6-2
 
@@ -145,7 +149,7 @@
 	but doesn't.
 
 	* version is 0.6-2
-	
+
 2003-05-21  Peter Dalgaard BSA  <p.dalgaard@biostat.ku.dk>
 
 	* lookup.xport return SAS variable label and format. Slight change
@@ -155,7 +159,7 @@
 	* version is 0.6-1
 
 2003-05-20 Thomas Lumley <tlumley@u.washington.edu>
-	
+
 	* read.dta/write.dta handle Stata 8.0
 
 	* version is 0.6
@@ -182,7 +186,7 @@
 	* DESCRIPTION: version is 0.5-8
 
 2002-11-02 Thomas Lumley <tlumley@u.washington.edu>
-	
+
 	* Fixed src/stataread.c for version 7/SE (thanks to examples sent
 	by Jason Liao)
 
@@ -197,14 +201,14 @@
 
 2002-05-17 Thomas Lumley <tlumley@u.washington.edu>
 
-	* Stata short ints were coming through unsigned 
+	* Stata short ints were coming through unsigned
 
         * updated SPSS output in tests to follow 2002-04-29 changes
 
 	* version is 0.5-5
 
 2002-05-14 Thomas Lumley <tlumley@u.washington.edu>
-   
+
 	* Mark Myatt's fixes and extensions for read.epiinfo
 
 2002-05-01  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
@@ -258,7 +262,7 @@
 2002-01-11 Thomas Lumley <tlumley@u.washington.edu>
 	read.spss reads factor levels, optionally coerces to data.frame
 
-2001-12-13  Thomas Lumley  <tlumley@u.washington.edu>. 
+2001-12-13  Thomas Lumley  <tlumley@u.washington.edu>.
 	Typo in Stata date-handling provoked by gctorture()
 
 2001-12-13  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
@@ -281,8 +285,8 @@
 	read and write dates in Stata.
 
 2001-10-11 Thomas Lumley <tlumley@u.washington.edu>
-	
-	* src/stataread.c: use strlen(), not the field width, as the 
+
+	* src/stataread.c: use strlen(), not the field width, as the
 	argument to allocString().
 
 2001-07-23  Saikat DebRoy  <saikat@stat.wisc.edu>
@@ -403,12 +407,12 @@
 
 	* src/minitab.c (strtrim): Corrected the character count.
 	(MTB2SEXP): Added the names of the columns, if they are given.
-	
+
 
 1999-12-16  Douglas Bates  <bates@stat.wisc.edu>
 
 	* DESCRIPTION (Package): Created a 0.1-1 release under the package
 	name "foreign".
-	
+
 	* R/zzz.R: Added the copyright stuff.
-	
+
