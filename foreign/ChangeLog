@@ -1,3 +1,8 @@
+2001-11-12 Thomas Lumley <tlumley@u.washington.edu>
+	* src/stataread.c, R/read.dta.R, man/*.dta.Rd,
+	tests/datefactor.dta, tests/stata.R: read factors,
+	read and write dates in Stata.
+
 2001-10-11 Thomas Lumley <tlumley@u.washington.edu>
 	
 	* src/stataread.c: use strlen(), not the field width, as the 

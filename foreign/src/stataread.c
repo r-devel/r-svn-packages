@@ -1,9 +1,9 @@
 /**
- * $Id: stataread.c,v 1.3 2001/05/16 17:39:24 saikat Exp $
-  Read  Stata version 6.0 and 5.0 .dta files, write version 6.0.
+ * $Id: stataread.c,v 1.4 2001/11/12 23:29:08 tlumley Exp $
+  Read  Stata version 7.0, 6.0 and 5.0 .dta files, write version 7.0, 6.0.
   
-  (c) 1999, 2000 Thomas Lumley. 
-            2000 Saikat DebRoy
+  (c) 1999, 2000, 2001 Thomas Lumley. 
+  2000 Saikat DebRoy
 
   The format of Stata files is documented under 'file formats' 
   in the Stata manual.
@@ -44,6 +44,7 @@
 #define STATA_FLOAT_NA pow(2.0, 127)
 #define STATA_DOUBLE_NA pow(2.0, 1023)
 static int stata_endian;
+
 
 /** Low-level input **/
 
@@ -126,11 +127,14 @@ static char* nameMangle(char *stataname, int len){
 
 SEXP R_LoadStataData(FILE *fp)
 {
-    int i,j,nvar,nobs,charlen, version,swapends,varnamelength;
+    int i,j,nvar,nobs,charlen, version,swapends,varnamelength,nlabels,totlen;
     unsigned char abyte;
     char datalabel[81], timestamp[18], aname[33];
-    SEXP df,names,tmp,varlabels,types,row_names;
-   
+    SEXP df,names,tmp,tmp1,varlabels,types,row_names;
+    SEXP levels, labels,labeltable;
+    char stringbuffer[129], *txt;   
+    int *off;
+      
     
     /** first read the header **/
     
@@ -234,7 +238,7 @@ SEXP R_LoadStataData(FILE *fp)
     
     /** format list
 	passed back to R as attributes.
-	Useful to identify date variables.
+	Used to identify date variables.
     **/
 
     PROTECT(tmp=allocVector(STRSXP,nvar));
@@ -246,12 +250,18 @@ SEXP R_LoadStataData(FILE *fp)
     UNPROTECT(1);
 
     /** value labels.  These are stored as the names of label formats, 
-	which are themselves stored later in the file.  Not implemented**/
+	which are themselves stored later in the file. **/
  
+    PROTECT(tmp=allocVector(STRSXP,nvar));
     for(i=0;i<nvar;i++){
         InStringBinary(fp,varnamelength+1,aname);
+	PROTECT(tmp1=allocString(strlen(aname)));
+	strcpy(CHAR(tmp1),aname);
+	SET_STRING_ELT(tmp,i,tmp1);
+	UNPROTECT(1);
     }
-	
+    setAttrib(df,install("val.labels"),tmp);
+    UNPROTECT(1); /*tmp*/	
 
     /** Variable Labels **/
     
@@ -318,13 +328,52 @@ SEXP R_LoadStataData(FILE *fp)
 	        charlen=INTEGER(types)[j]-STATA_STRINGOFFSET;
 	        PROTECT(tmp=allocString(charlen+1));
 		InStringBinary(fp,charlen,CHAR(tmp));
-		CHAR(tmp)[charlen]=0;
+		stringbuffer[charlen]=0;
+	        PROTECT(tmp=allocString(strlen(stringbuffer)));
+		strcpy(CHAR(tmp),stringbuffer); /*we know strcpy is safe here*/
 		SET_STRING_ELT(VECTOR_ELT(df,j),i,tmp);
 		UNPROTECT(1);
 	      break;
 	    }
 	}
     }  
+
+    /** value labels **/
+    if (version>5){
+	    PROTECT(labeltable=allocVector(VECSXP, nvar));
+	    PROTECT(tmp=allocVector(STRSXP,nvar));
+	    for(j=0;j<nvar;j++){
+		    /* first int not needed, use fread directly to trigger EOF */
+		    fread((int *) aname,sizeof(int),1,fp);
+		    if (feof(fp)) 
+			    break;
+		    InStringBinary(fp,varnamelength+1,aname);
+		    SET_STRING_ELT(tmp,j,mkChar(aname));
+		    InByteBinary(fp,1);InByteBinary(fp,1);InByteBinary(fp,1); /*padding*/
+		    nlabels=InIntegerBinary(fp,1,swapends);
+		    totlen=InIntegerBinary(fp,1,swapends);
+		    off=(int *) R_alloc((long) nlabels+1,sizeof(int));
+		    PROTECT(levels=allocVector(REALSXP,nlabels));
+		    PROTECT(labels=allocVector(STRSXP,nlabels));
+		    for(i=0;i<nlabels;i++)
+			    off[i]=InIntegerBinary(fp,1,swapends);
+		    off[nlabels]=totlen;
+		    for(i=0;i<nlabels;i++)
+			    REAL(levels)[i]=(double) InIntegerBinary(fp,0,swapends);
+		    for(i=0;i<nlabels;i++){
+			    InStringBinary(fp,off[i+1]-off[i],stringbuffer);
+			    SET_STRING_ELT(labels,i,mkChar(stringbuffer));
+		    }
+		    namesgets(levels,labels);
+		    SET_VECTOR_ELT(labeltable,j,levels);
+		    UNPROTECT(2);/* levels, labels */
+	    }
+	    namesgets(labeltable,tmp);
+	    UNPROTECT(1); /*tmp*/
+    }
+
+    /** tidy up **/
+
     PROTECT(tmp = mkString("data.frame"));
     setAttrib(df, R_ClassSymbol, tmp);
     UNPROTECT(1);
@@ -336,6 +385,10 @@ SEXP R_LoadStataData(FILE *fp)
     setAttrib(df, R_RowNamesSymbol, row_names);
     UNPROTECT(1);     
 
+    if (version>5){
+	    setAttrib(df, install("label.table"), labeltable);
+	    UNPROTECT(1); /*labeltable*/;
+    }
     UNPROTECT(2); /* types, df */
 
     return(df);
