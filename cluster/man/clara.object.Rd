@@ -23,7 +23,7 @@
     the medoids or representative objects of the clusters.
     It is a matrix with in each row the coordinates of one medoid.}
   \item{clustering}{
-    the clustering vector.  A vector with length equal to the number of 
+    the clustering vector.  A vector with length equal to the number of
     observations, giving the number of the cluster to which each
     observation belongs.}
   \item{objective}{
@@ -42,7 +42,7 @@
     list with all information necessary to construct a silhouette plot of the
     clustering of the best sample. This list is only available when
     \eqn{1 < k < n}.
-    The first component is a matrix, with for each observation i in the best 
+    The first component is a matrix, with for each observation i in the best
     sample, the cluster to which i belongs,
     as well as the neighbor cluster of i (the cluster, not containing
     i, for which the average dissimilarity between its observations and i is
@@ -54,9 +54,9 @@
   \item{diss}{
     an object of class \code{"dissimilarity"}, representing the total
     dissimilarity matrix of the dataset.}
-  \item{data}{
-    a matrix containing the original or standardized measurements, depending 
-    on the \code{stand} option of the function \code{clara}.}
+  \item{data}{if not \code{NULL} (when \code{keepdata} was FALSE in the call),
+    a matrix containing the original or standardized measurements, depending
+    on the \code{stand} argument of \code{clara()}.}
 }
 \seealso{
   \code{\link{clara}}, \code{\link{dissimilarity.object}},
