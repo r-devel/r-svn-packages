@@ -551,7 +551,7 @@ clusplot.partition <- function(x, main = NULL, dist = NULL, ...)
         clusplot.default(x$diss, x$clustering, diss = TRUE, main = main, ...)
     else { ## try to find "x$diss" by looking at the pam() call:
         if(!is.null(x$call)) {
-            xD <- try(eval(x$call[[2]]))
+            xD <- try(eval(x$call[[2]], envir = parent.frame()))
             if(inherits(xD, "try-error") || !inherits(xD, "dist"))
                 stop("no diss nor data found, nor the original argument of ",
                      deparse(x$call))
