@@ -209,7 +209,7 @@ clusplot(votes.diss, votes.clus, diss = TRUE, span = FALSE)# simple ellipses
 
 if(interactive()) { #  uses identify() *interactively* :
   clusplot(votes.diss, votes.clus, diss = TRUE, shade = TRUE, labels = 1)
-  clusplot(votes.diss, votes.clus, labels = 5)# ident. only points
+  clusplot(votes.diss, votes.clus, diss = TRUE, labels = 5)# ident. only points
 }
 
 ## plotting iris (data frame) in a 2-dimensional plot and partitioning
@@ -226,4 +226,4 @@ box(col="orange",lwd=2); mtext("sub region", font = 4, cex = 2)
 }
 \keyword{cluster}
 \keyword{hplot}
-% Converted by Sd2Rd version 0.3-2.
+
