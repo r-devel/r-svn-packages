@@ -1,5 +1,5 @@
 /*
- *  $Id: spss.c,v 1.2 2001/06/18 17:54:38 hornik Exp $
+ *  $Id: spss.c,v 1.3 2001/07/17 12:57:34 ripley Exp $
  *
  *  Read SPSS files saved by SAVE and EXPORT commands
  *
@@ -406,7 +406,7 @@ SEXP
 do_read_SPSS(SEXP file)
 {
     char *filename = CHAR(PROTECT(asChar(file)));
-    FILE *fp = fopen(R_ExpandFileName(filename), "r");
+    FILE *fp = fopen(R_ExpandFileName(filename), "rb");
     char buf[5];
     SEXP ans;
 
