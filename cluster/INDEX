@@ -26,18 +26,19 @@ plot.partition           Plot of a Partition of the Data Set
 pltree                   Clustering Trees - Generic Function
 pltree.twins             Clustering Tree of a Hierarchical Clustering
 print.agnes              Use `print()' on an `agnes' object
-print.clara              Use `print()' on a `clara' object
-print.diana              Use `print()' on a `diana' object
-print.dissimilarity      Print and Summary Methods for Dissimilarity Objects
-print.fanny              Use `print()' on a `fanny' object
-print.mona               Use `print()' on a `mona' object
-print.pam                Use `print()' on a `pam' object
-print.summary.agnes      Use `print()' on a `summary.agnes' object
-print.summary.clara      Use `print()' on a `summary.clara' object
-print.summary.diana      Use `print()' on a `summary.diana' object
-print.summary.fanny      Use `print()' on a `summary.fanny' object
-print.summary.mona       Use `print()' on a `summary.mona' object
-print.summary.pam        Use `print()' on a `summary.pam' object
+print.clara              Print Method for CLARA Objects
+print.diana              Print Method for DIANA Objects
+print.dissimilarity      Print and Summary Methods for Dissimilarity
+                         Objects
+print.fanny              Print Method for FANNY Objects
+print.mona               Print Method for MONA Objects
+print.pam                Print Method for PAM Objects
+print.summary.agnes      Print Method for Summary.AGNES Objects
+print.summary.clara      Print Method for Summary.CLARA Objects
+print.summary.diana      Print Method for Summary.DIANA Objects
+print.summary.fanny      Print Method for Summary.FANNY Objects
+print.summary.mona       Print Method for Summary.MONA Objects
+print.summary.pam        Print Method for Summary.PAM Objects
 ruspini                  Ruspini Data
 summary.agnes            Summary method for `agnes' objects
 summary.clara            Summary method for `clara' objects
