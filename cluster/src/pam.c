@@ -1,80 +1,38 @@
-/* Produced by
+/* -*- mode: c; kept-new-versions: 25; kept-old-versions: 20 -*- */
+
+/*
+ * PAM := Partitioning Around Medoids
+ *
  * $Id$
+ * original Id: pam.f,v 1.16 2003/06/03 13:40:56 maechler translated by
+ * f2c (version 20031025) and run through f2c-clean,v 1.10 2002/03/28
  */
-/* pam.f -- translated by f2c (version 20031025).
-   You must link the resulting object file with libf2c:
-	on Microsoft Windows system, link with libf2c.lib;
-	on Linux or Unix systems, link with .../path/to/libf2c.a -lm
-	or, if you install libf2c.a in a standard place, with -lf2c -lm
-	-- in that order, at the end of the command line, as in
-		cc *.o -lf2c -lm
-	Source for libf2c is in /netlib/f2c/libf2c.zip, e.g.,
 
-		http://www.netlib.org/f2c/libf2c.zip
+#include <R_ext/Print.h>/* for diagnostics */
 
+#include "cluster.h"
 
--- be brave, try without >>>
- * #include "f2c.h" /* <<<<< ------*/
-#include <math.h>
-#ifndef max
-# define	max(a, b) 		((a) < (b) ? (b) : (a))
-#endif
-#ifndef min
-# define	min(a, b)		((a) > (b) ? (b) : (a))
-#endif
-#ifndef abs
-# define	abs(x)			((x) >= 0 ? (x) : -(x))
-#endif
-
-
-/* $Id$
-
- PAM := Partitioning Around Medoids
-
- Subroutine */ int pam_(int *nn, int *jpp, int *kk, double *
-	x, double *dys, int *jdyss, double *valmd, int *jtmd,
-
-	int *ndyst, int *nsend, int *nrepr, int *nelem,
-
-	double *radus, double *damer, double *ttd, double *
-	separ, double *ttsyl, int *med, double *obj, int *
-	ncluv, double *clusinf, double *sylinf, int *nisol)
+void pam(int *nn, int *jpp, int *kk,
+	 double *x, double *dys, int *jdyss, double *valmd, int *jtmd,
+	 int *ndyst, int *nsend, int *nrepr, int *nelem,
+	 double *radus, double *damer, double *ttd, double *separ,
+	 double *ttsyl, int *med, double *obj, int *ncluv,
+	 double *clusinf, double *sylinf, int *nisol)
 {
     /* System generated locals */
     int x_dim1, x_offset, clusinf_dim1, clusinf_offset, sylinf_dim1,
-
-	    sylinf_offset, i__1;
+	sylinf_offset;
 
     /* Local variables */
     static int k, l;
     static double s, sky;
-    extern /* Subroutine */ int dark_(int *, int *, int *,
-
-	    int *, int *, int *, int *, double *,
-
-	    double *, double *, double *, double *,
-
-	    double *, double *);
     static int nhalf, jhalt;
-    extern /* Subroutine */ int bswap_(int *, int *, int *,
-
-	    double *, double *, double *, int *, double *,
-	     double *, double *, double *), cstat_(int *,
-
-	    int *, int *, int *, double *, double *,
-
-	    double *, double *, double *, double *, int *,
-	     double *, int *, int *, int *, int *),
-
-	    dysta_(int *, int *, double *, double *, int *
-	    , int *, double *, int *);
-
 
 /*     carries out a clustering using the k-medoid approach.
 
 
  jdyss = 0 : compute distances from x
- 	= 1 : distances provided  in x
+	= 1 : distances provided  in x
      Parameter adjustments */
     sylinf_dim1 = *nn;
     sylinf_offset = 1 + sylinf_dim1;
@@ -103,31 +61,30 @@
     /* Function Body */
     if (*jdyss != 1) {
 	jhalt = 0;
-	dysta_(nn, jpp, &x[x_offset], &dys[1], ndyst, &jtmd[1], &valmd[1], &
-		jhalt);
+	F77_CALL(dysta)(nn, jpp, &x[x_offset], &dys[1], ndyst,
+			&jtmd[1], &valmd[1], &jhalt);
 	if (jhalt != 0) {
 	    *jdyss = -1;
-	    return 0;
+	    return;
 	}
     }
 /*     nhalf := #{distances}+1 = length(dys) */
     nhalf = *nn * (*nn - 1) / 2 + 1;
 /*     s := max( dys[.] ), the largest distance */
-    s = 0.f;
-    for (l = 2; l <= nhalf; ++l) { /* f2c-clean: s {i__1} {nhalf} */
-	if (s < dys[l]) {
+    s = 0.;
+    for (l = 2; l <= nhalf; ++l)
+	if (s < dys[l])
 	    s = dys[l];
-	}
-    }
-/*     Build + Swap : */
-    bswap_(kk, nn, &nrepr[1], &radus[1], &damer[1], &ttd[1], &nhalf, &dys[1],
 
-	    &sky, &s, &obj[1]);
+/*     Build + Swap : */
+    bswap(kk, nn, &nrepr[1], &radus[1], &damer[1], &ttd[1], &nhalf, &dys[1],
+	   &sky, &s, &obj[1]);
+
 /*     Compute STATs : */
-    cstat_(kk, nn, &nsend[1], &nrepr[1], &radus[1], &damer[1], &ttd[1], &
-	    separ[1], &sky, &s, &nhalf, &dys[1], &ncluv[1], &nelem[1], &med[1]
-	    , &nisol[1]);
-    for (k = 1; k <= *kk; ++k) { /* f2c-clean: s {i__1} {*kk} */
+    cstat(kk, nn, &nsend[1], &nrepr[1], &radus[1], &damer[1], &ttd[1],
+	  &separ[1], &sky, &s, &nhalf, &dys[1], &ncluv[1], &nelem[1], &med[1],
+	  &nisol[1]);
+    for (k = 1; k <= *kk; ++k) {
 	clusinf[k + clusinf_dim1] = (double) nrepr[k];
 	clusinf[k + (clusinf_dim1 << 1)] = radus[k];
 	clusinf[k + clusinf_dim1 * 3] = ttd[k];
@@ -135,124 +92,29 @@
 	clusinf[k + clusinf_dim1 * 5] = separ[k];
     }
     if (1 < *kk && *kk < *nn) {
-/* 	 Compute Silhouette info : */
-	dark_(kk, nn, &nhalf, &ncluv[1], &nsend[1], &nelem[1], &nrepr[1], &
+/*	 Compute Silhouette info : */
+	dark(kk, nn, &nhalf, &ncluv[1], &nsend[1], &nelem[1], &nrepr[1], &
 		radus[1], &damer[1], &ttd[1], ttsyl, &dys[1], &s, &sylinf[
 		sylinf_offset]);
     }
-    return 0;
-} /* pam_
+} /* pam */
 
-     -----------------------------------------------------------
-     Compute Distances from X matrix {also for agnes() and diana()}:
+/* NOTE: dysta() is *kept* in Fortran for now --> ./dysta.f */
 
- Subroutine */ int dysta_(int *nn, int *jpp, double *x,
-
-	double *dys, int *ndyst, int *jtmd, double *valmd,
-
-	int *jhalt)
-{
-    /* System generated locals */
-    int x_dim1, x_offset, i__1, i__2, i__3;
-    double d__1;
-
-    /* Builtin functions */
-    double sqrt(double);
-
-    /* Local variables */
-    static int j, k, l;
-    static double pp, clk;
-    static int nlk, npres, lsubt;
-    static double rpres;
-
-/* ndyst = 1 : euclidean
- "else"    : manhattan
- VARs
-     Parameter adjustments */
-    --dys;
-    --valmd;
-    --jtmd;
-    x_dim1 = *nn;
-    x_offset = 1 + x_dim1;
-    x -= x_offset;
-
-    /* Function Body */
-    nlk = 1;
-    dys[1] = 0.f;
-    pp = (double) (*jpp);
-    for (l = 2; l <= *nn; ++l) { /* f2c-clean: s {i__1} {*nn} */
-	lsubt = l - 1;
-	for (k = 1; k <= lsubt; ++k) { /* f2c-clean: s {i__2} {lsubt} */
-	    clk = 0.f;
-	    ++nlk;
-	    npres = 0;
-	    for (j = 1; j <= *jpp; ++j) { /* f2c-clean: s {i__3} {*jpp} */
-		if (jtmd[j] < 0) {
-		    if (x[l + j * x_dim1] == valmd[j]) {
-			goto L30;
-		    }
-		    if (x[k + j * x_dim1] == valmd[j]) {
-			goto L30;
-		    }
-		}
-		++npres;
-		if (*ndyst == 1) {
-		    clk += (x[l + j * x_dim1] - x[k + j * x_dim1]) * (x[l + j
-
-			    * x_dim1] - x[k + j * x_dim1]);
-		} else {
-		    clk += (d__1 = x[l + j * x_dim1] - x[k + j * x_dim1], abs(
-			    d__1));
-		}
-L30:
-		;
-	    }
-	    rpres = (double) npres;
-	    if (npres == 0) {
-		*jhalt = 1;
-		dys[nlk] = -1.f;
-	    } else {
-		if (*ndyst == 1) {
-		    dys[nlk] = sqrt(clk * (pp / rpres));
-		} else {
-		    dys[nlk] = clk * (pp / rpres);
-		}
-	    }
-	}
-    }
-    return 0;
-} /* dysta_
-
-     -----------------------------------------------------------
+/* -----------------------------------------------------------
 
      bswap(): the clustering algorithm in 2 parts:  I. build,	II. swap
-
- Subroutine */ int bswap_(int *kk, int *nn, int *nrepr,
-
-	double *dysma, double *dysmb, double *beter, int *hh,
-
-	double *dys, double *sky, double *s, double *obj)
+*/
+void bswap(int *kk, int *nn, int *nrepr,
+	   double *dysma, double *dysmb, double *beter, int *hh,
+	   double *dys, double *sky, double *s, double *obj)
 {
-    /* System generated locals */
-    int i__1, i__2, i__3;
+    int i__, j, ij, k, kj, kbest, nbest, njn, nmax;
+    double ammax, small, cmd, dz, dzsky;
 
-    /* Local variables */
-    static int i__, j, k, ij, kj;
-    static double dz, cmd;
-    static int njn;
-    extern int meet_(int *, int *);
-    static int nmax;
-    static double ammax;
-    static int kbest;
-    static double small;
-    static int nbest;
-    static double dzsky;
+/* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */
 
-/*     nrepr[]: here is boolean (0/1): 1 = "is representative object"
-     function called
-
-     -Wall:
-     Parameter adjustments */
+     /* Parameter adjustments */
     --beter;
     --dysmb;
     --dysma;
@@ -260,48 +122,47 @@ L30:
     --dys;
     --obj;
 
-    /* Function Body */
+    /* -Wall: */
     nbest = -1;
     kbest = -1;
 
 /*     first algorithm: build. */
 
-    for (i__ = 1; i__ <= *nn; ++i__) { /* f2c-clean: s {i__1} {*nn} */
+    for (i__ = 1; i__ <= *nn; ++i__) {
 	nrepr[i__] = 0;
-	dysma[i__] = *s * 1.1f + 1.f;
+	dysma[i__] = *s * 1.1f + 1.;
     }
-    for (k = 1; k <= *kk; ++k) { /* f2c-clean: s {i__1} {*kk} */
-	for (i__ = 1; i__ <= *nn; ++i__) { /* f2c-clean: s {i__2} {*nn} */
+    for (k = 1; k <= *kk; ++k) {
+	for (i__ = 1; i__ <= *nn; ++i__) {
 	    if (nrepr[i__] == 0) {
-		beter[i__] = 0.f;
-		for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__3} {*nn} */
-		    ij = meet_(&i__, &j);
+		beter[i__] = 0.;
+		for (j = 1; j <= *nn; ++j) {
+		    ij = F77_CALL(meet)(&i__, &j);
 		    cmd = dysma[j] - dys[ij];
-		    if (cmd > 0.f) {
+		    if (cmd > 0.) {
 			beter[i__] += cmd;
 		    }
 		}
 	    }
 	}
-	ammax = 0.f;
-	for (i__ = 1; i__ <= *nn; ++i__) { /* f2c-clean: s {i__2} {*nn} */
+	ammax = 0.;
+	for (i__ = 1; i__ <= *nn; ++i__) {
 	    if (nrepr[i__] == 0 && ammax <= beter[i__]) {
-/* 		    does < (instead of <= ) work too? -- NO! */
+/*		    does < (instead of <= ) work too? -- NO! */
 		ammax = beter[i__];
 		nmax = i__;
 	    }
 	}
-	nrepr[nmax] = 1;
-/* = .true. : *is* a representative */
-	for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__2} {*nn} */
-	    njn = meet_(&nmax, &j);
+	nrepr[nmax] = 1;/* = .true. : *is* a representative */
+	for (j = 1; j <= *nn; ++j) {
+	    njn = F77_CALL(meet)(&nmax, &j);
 	    if (dysma[j] > dys[njn]) {
 		dysma[j] = dys[njn];
 	    }
 	}
     }
-    *sky = 0.f;
-    for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__1} {*nn} */
+    *sky = 0.;
+    for (j = 1; j <= *nn; ++j) {
 	*sky += dysma[j];
     }
     obj[1] = *sky / *nn;
@@ -311,12 +172,12 @@ L30:
 
  --   Loop : */
 L60:
-	for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__1} {*nn} */
-	    dysma[j] = *s * 1.1f + 1.f;
-	    dysmb[j] = *s * 1.1f + 1.f;
-	    for (i__ = 1; i__ <= *nn; ++i__) { /* f2c-clean: s {i__2} {*nn} */
+	for (j = 1; j <= *nn; ++j) {
+	    dysma[j] = *s * 1.1f + 1.;
+	    dysmb[j] = *s * 1.1f + 1.;
+	    for (i__ = 1; i__ <= *nn; ++i__) {
 		if (nrepr[i__] == 1) {
-		    ij = meet_(&i__, &j);
+		    ij = F77_CALL(meet)(&i__, &j);
 		    if (dys[ij] < dysma[j]) {
 			dysmb[j] = dysma[j];
 			dysma[j] = dys[ij];
@@ -328,15 +189,15 @@ L60:
 		}
 	    }
 	}
-	dzsky = 1.f;
-	for (k = 1; k <= *nn; ++k) { /* f2c-clean: s {i__1} {*nn} */
+	dzsky = 1.;
+	for (k = 1; k <= *nn; ++k) {
 	    if (nrepr[k] == 0) {
-		for (i__ = 1; i__ <= *nn; ++i__) { /* f2c-clean: s {i__2} {*nn} */
+		for (i__ = 1; i__ <= *nn; ++i__) {
 		    if (nrepr[i__] == 1) {
-			dz = 0.f;
-			for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__3} {*nn} */
-			    ij = meet_(&i__, &j);
-			    kj = meet_(&k, &j);
+			dz = 0.;
+			for (j = 1; j <= *nn; ++j) {
+			    ij = F77_CALL(meet)(&i__, &j);
+			    kj = F77_CALL(meet)(&k, &j);
 			    if (dys[ij] == dysma[j]) {
 				small = dysmb[j];
 				if (small > dys[kj]) {
@@ -358,7 +219,7 @@ L60:
 		}
 	    }
 	}
-	if (dzsky < 0.f) {
+	if (dzsky < 0.) {
 	    nrepr[kbest] = 1;
 	    nrepr[nbest] = 0;
 	    *sky += dzsky;
@@ -366,44 +227,22 @@ L60:
 	}
     }
     obj[2] = *sky / *nn;
-    return 0;
-} /* bswap_
+} /* bswap */
 
-     -----------------------------------------------------------
-
- cstat():
- Compute STATistics (numerical output) concerning each partition
-
- Subroutine */ int cstat_(int *kk, int *nn, int *nsend, int
-
-	*nrepr, double *radus, double *damer, double *ttd,
-
-	double *separ, double *z__, double *s, int *hh,
-
-	double *dys, int *ncluv, int *nelem, int *med,
-
-	int *nisol)
+/* -----------------------------------------------------------
+ cstat(): Compute STATistics (numerical output) concerning each partition
+*/
+void cstat(int *kk, int *nn, int *nsend, int *nrepr,
+	   double *radus, double *damer, double *ttd,
+	   double *separ, double *z__, double *s, int *hh,
+	   double *dys, int *ncluv, int *nelem, int *med, int *nisol)
 {
-    /* System generated locals */
-    int i__1, i__2, i__3;
+    /*logical*/int kand;
+    int j, k, m, ja, jb, jk, jndz;
+    int ksmal, numcl, mevj, njaj, nel, njm, nvn, ntt, nvna, numl, nplac;
+    double aja, ajb, dam, dsmal, sep, rnn, rtt, ttt;
 
-    /* Local variables */
-    static int j, k, m, ja, jb, jk;
-    static double aja, ajb, dam;
-    static int nel, njm;
-    static double sep, rnn;
-    static int nvn, ntt;
-    static double rtt, ttt;
-    static /*logical*/int kand;
-    static int njaj;
-    extern int meet_(int *, int *);
-    static int mevj, nvna, jndz, numl, nplac;
-    static double dsmal;
-    static int ksmal, numcl;
-
-/* function called
-
-     Parameter adjustments */
+    /* Parameter adjustments */
     --nisol;
     --med;
     --nelem;
@@ -417,12 +256,12 @@ L60:
     --dys;
 
     /* Function Body */
-    for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__1} {*nn} */
+    for (j = 1; j <= *nn; ++j) {
 	if (nrepr[j] == 0) {
-	    dsmal = *s * 1.1f + 1.f;
-	    for (k = 1; k <= *nn; ++k) { /* f2c-clean: s {i__2} {*nn} */
+	    dsmal = *s * 1.1f + 1.;
+	    for (k = 1; k <= *nn; ++k) {
 		if (nrepr[k] == 1) {
-		    njaj = meet_(&k, &j);
+		    njaj = F77_CALL(meet)(&k, &j);
 		    if (dys[njaj] < dsmal) {
 			dsmal = dys[njaj];
 			ksmal = k;
@@ -436,17 +275,17 @@ L60:
     }
     jk = 1;
     nplac = nsend[1];
-    for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__1} {*nn} */
+    for (j = 1; j <= *nn; ++j) {
 	ncluv[j] = 0;
 	if (nsend[j] == nplac) {
 	    ncluv[j] = 1;
 	}
     }
-    for (ja = 2; ja <= *nn; ++ja) { /* f2c-clean: s {i__1} {*nn} */
+    for (ja = 2; ja <= *nn; ++ja) {
 	nplac = nsend[ja];
 	if (ncluv[nplac] == 0) {
 	    ++jk;
-	    for (j = 2; j <= *nn; ++j) { /* f2c-clean: s {i__2} {*nn} */
+	    for (j = 2; j <= *nn; ++j) {
 		if (nsend[j] == nplac) {
 		    ncluv[j] = jk;
 		}
@@ -460,16 +299,16 @@ L60:
 /*     analysis of the clustering. */
 
 L148:
-    for (numcl = 1; numcl <= *kk; ++numcl) { /* f2c-clean: s {i__1} {*kk} */
+    for (numcl = 1; numcl <= *kk; ++numcl) {
 	ntt = 0;
-	radus[numcl] = -1.f;
-	ttt = 0.f;
-	for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__2} {*nn} */
+	radus[numcl] = -1.;
+	ttt = 0.;
+	for (j = 1; j <= *nn; ++j) {
 	    if (ncluv[j] == numcl) {
 		++ntt;
 		m = nsend[j];
 		nelem[ntt] = j;
-		njm = meet_(&j, &m);
+		njm = F77_CALL(meet)(&j, &m);
 		ttt += dys[njm];
 		if (dys[njm] > radus[numcl]) {
 		    radus[numcl] = dys[njm];
@@ -484,21 +323,21 @@ L148:
     if (*kk == 1) {
 	damer[1] = *s;
 	nrepr[1] = *nn;
-	return 0;
+	return;
     }
 /*  ELSE	  kk > 1 :
 
      numl = number of l-clusters. */
 
     numl = 0;
-    for (k = 1; k <= *kk; ++k) { /* f2c-clean: s {i__1} {*kk}
-
-     identification of cluster k:
-     nel  = number of objects
-     nelem= vector of objects */
+    for (k = 1; k <= *kk; ++k) {
+	/*
+	  identification of cluster k:
+	  nel  = number of objects
+	  nelem= vector of objects */
 
 	nel = 0;
-	for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__2} {*nn} */
+	for (j = 1; j <= *nn; ++j) {
 	    if (ncluv[j] == k) {
 		++nel;
 		nelem[nel] = j;
@@ -507,11 +346,11 @@ L148:
 	nrepr[k] = nel;
 	if (nel == 1) {
 	    nvn = nelem[1];
-	    damer[k] = 0.f;
-	    separ[k] = *s * 1.1f + 1.f;
-	    for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__2} {*nn} */
+	    damer[k] = 0.;
+	    separ[k] = *s * 1.1f + 1.;
+	    for (j = 1; j <= *nn; ++j) {
 		if (j != nvn) {
-		    mevj = meet_(&nvn, &j);
+		    mevj = F77_CALL(meet)(&nvn, &j);
 		    if (separ[k] > dys[mevj]) {
 			separ[k] = dys[mevj];
 		    }
@@ -519,22 +358,22 @@ L148:
 	    }
 
 /* Is cluster k
- 	1) an L-cluster	 or
- 	2) an L*-cluster ? */
-	    if (separ[k] == 0.f) {
+	1) an L-cluster	 or
+	2) an L*-cluster ? */
+	    if (separ[k] == 0.) {
 		++numl;
 	    }
 	} else {
-/* 	       nel != 1 : */
-	    dam = -1.f;
-	    sep = *s * 1.1f + 1.f;
+/*	       nel != 1 : */
+	    dam = -1.;
+	    sep = *s * 1.1f + 1.;
 	    kand = (1);
-	    for (ja = 1; ja <= nel; ++ja) { /* f2c-clean: s {i__2} {nel} */
+	    for (ja = 1; ja <= nel; ++ja) {
 		nvna = nelem[ja];
-		aja = -1.f;
-		ajb = *s * 1.1f + 1.f;
-		for (jb = 1; jb <= *nn; ++jb) { /* f2c-clean: s {i__3} {*nn} */
-		    jndz = meet_(&nvna, &jb);
+		aja = -1.;
+		ajb = *s * 1.1f + 1.;
+		for (jb = 1; jb <= *nn; ++jb) {
+		    jndz = F77_CALL(meet)(&nvna, &jb);
 		    if (ncluv[jb] == k) {
 			if (dys[jndz] > aja) {
 			    aja = dys[jndz];
@@ -560,10 +399,10 @@ L148:
 	    if (kand) {
 		++numl;
 		if (dam >= sep) {
-/* 		  L-cluster */
+/*		  L-cluster */
 		    nisol[k] = 1;
 		} else {
-/* 		  L*-cluster */
+/*		  L*-cluster */
 		    nisol[k] = 2;
 		}
 		goto L40;
@@ -573,41 +412,24 @@ L148:
 L40:
 	;
     }
-    return 0;
-} /* cstat_
+} /* cstat */
 
-     -----------------------------------------------------------
-
+/* -----------------------------------------------------------
      Compute Silhouette Information :
-
- Subroutine */ int dark_(int *kk, int *nn, int *hh, int *
-	ncluv, int *nsend, int *nelem, int *negbr, double *
-	syl, double *srank, double *avsyl, double *ttsyl,
-
-	double *dys, double *s, double *sylinf)
+ */
+void dark(int *kk, int *nn, int *hh, int *ncluv,
+	  int *nsend, int *nelem, int *negbr,
+	  double *syl, double *srank, double *avsyl, double *ttsyl,
+	  double *dys, double *s, double *sylinf)
 {
     /* System generated locals */
-    int sylinf_dim1, sylinf_offset, i__1, i__2, i__3, i__4;
+    int sylinf_dim1, sylinf_offset;
 
     /* Local variables */
-    static int j, l;
-    static double db;
-    static int nj, nl, nbb, mjl, njl;
-    static double btt;
-    static int ntt;
-    static double rtt;
-    static int lang;
-    extern int meet_(int *, int *);
-    static double dysa;
-    static int nclu;
-    static double dysb;
-    static int lplac, numcl;
-    static double symax;
-    static int nsylr;
+    int j, l, lang, lplac, nclu, nj, nl, nbb, mjl, njl, ntt, numcl, nsylr;
+    double db, btt, rtt, dysa, dysb, symax;
 
-/*     function called
-
-     Parameter adjustments */
+/* Parameter adjustments */
     sylinf_dim1 = *nn;
     sylinf_offset = 1 + sylinf_dim1;
     sylinf -= sylinf_offset;
@@ -622,28 +444,28 @@ L40:
 
     /* Function Body */
     nsylr = 0;
-    *ttsyl = 0.f;
-    for (numcl = 1; numcl <= *kk; ++numcl) { /* f2c-clean: s {i__1} {*kk} */
+    *ttsyl = 0.;
+    for (numcl = 1; numcl <= *kk; ++numcl) {
 	ntt = 0;
-	for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__2} {*nn} */
+	for (j = 1; j <= *nn; ++j) {
 	    if (ncluv[j] == numcl) {
 		++ntt;
 		nelem[ntt] = j;
 	    }
 	}
-	for (j = 1; j <= ntt; ++j) { /* f2c-clean: s {i__2} {ntt} */
+	for (j = 1; j <= ntt; ++j) {
 	    nj = nelem[j];
-	    dysb = *s * 1.1f + 1.f;
+	    dysb = *s * 1.1f + 1.;
 	    negbr[j] = -1;
-	    for (nclu = 1; nclu <= *kk; ++nclu) { /* f2c-clean: s {i__3} {*kk} */
+	    for (nclu = 1; nclu <= *kk; ++nclu) {
 		if (nclu != numcl) {
 		    nbb = 0;
-		    db = 0.f;
-		    for (l = 1; l <= *nn; ++l) { /* f2c-clean: s {i__4} {*nn} */
+		    db = 0.;
+		    for (l = 1; l <= *nn; ++l) {
 			if (ncluv[l] == nclu) {
 			    ++nbb;
 			    if (l != nj) {
-				mjl = meet_(&nj, &l);
+				mjl = F77_CALL(meet)(&nj, &l);
 				db += dys[mjl];
 			    }
 			}
@@ -657,48 +479,47 @@ L40:
 		}
 	    }
 	    if (ntt > 1) {
-		dysa = 0.f;
-		for (l = 1; l <= ntt; ++l) { /* f2c-clean: s {i__3} {ntt} */
+		dysa = 0.;
+		for (l = 1; l <= ntt; ++l) {
 		    nl = nelem[l];
 		    if (nj != nl) {
-			njl = meet_(&nj, &nl);
+			njl = F77_CALL(meet)(&nj, &nl);
 			dysa += dys[njl];
 		    }
 		}
 		dysa /= ntt - 1;
-		if (dysa > 0.f) {
-		    if (dysb > 0.f) {
+		if (dysa > 0.) {
+		    if (dysb > 0.) {
 			if (dysb > dysa) {
-			    syl[j] = 1.f - dysa / dysb;
+			    syl[j] = 1. - dysa / dysb;
 			} else if (dysb < dysa) {
-			    syl[j] = dysb / dysa - 1.f;
-			} else {
-/*     dysb == dysa: */
-			    syl[j] = 0.f;
+			    syl[j] = dysb / dysa - 1.;
+			} else { /* dysb == dysa: */
+			    syl[j] = 0.;
 			}
-			if (syl[j] <= -1.f) {
-			    syl[j] = -1.f;
+			if (syl[j] <= -1.) {
+			    syl[j] = -1.;
 			}
-			if (syl[j] >= 1.f) {
-			    syl[j] = 1.f;
+			if (syl[j] >= 1.) {
+			    syl[j] = 1.;
 			}
 		    } else {
-			syl[j] = -1.f;
+			syl[j] = -1.;
 		    }
-		} else if (dysb > 0.f) {
-		    syl[j] = 1.f;
+		} else if (dysb > 0.) {
+		    syl[j] = 1.;
 		} else {
-		    syl[j] = 0.f;
+		    syl[j] = 0.;
 		}
 	    } else {
 /*     ntt == 1: */
-		syl[j] = 0.f;
+		syl[j] = 0.;
 	    }
 	}
-	avsyl[numcl] = 0.f;
-	for (j = 1; j <= ntt; ++j) { /* f2c-clean: s {i__2} {ntt} */
-	    symax = -2.f;
-	    for (l = 1; l <= ntt; ++l) { /* f2c-clean: s {i__3} {ntt} */
+	avsyl[numcl] = 0.;
+	for (j = 1; j <= ntt; ++j) {
+	    symax = -2.;
+	    for (l = 1; l <= ntt; ++l) {
 		if (symax < syl[l]) {
 		    symax = syl[l];
 		    lang = l;
@@ -707,7 +528,7 @@ L40:
 	    nsend[j] = lang;
 	    srank[j] = syl[lang];
 	    avsyl[numcl] += srank[j];
-	    syl[lang] = -3.f;
+	    syl[lang] = -3.;
 	}
 	*ttsyl += avsyl[numcl];
 	rtt = (double) ntt;
@@ -716,22 +537,19 @@ L40:
 	    ++nsylr;
 	    sylinf[nsylr + sylinf_dim1] = (double) numcl;
 	    sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[1];
-	    sylinf[nsylr + sylinf_dim1 * 3] = 0.f;
+	    sylinf[nsylr + sylinf_dim1 * 3] = 0.;
 	    sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[1];
 	} else {
-	    for (l = 1; l <= ntt; ++l) { /* f2c-clean: s {i__2} {ntt} */
+	    for (l = 1; l <= ntt; ++l) {
 		++nsylr;
 		lplac = nsend[l];
 		sylinf[nsylr + sylinf_dim1] = (double) numcl;
-		sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[lplac]
-			;
+		sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[lplac];
 		sylinf[nsylr + sylinf_dim1 * 3] = srank[l];
-		sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[lplac]
-			;
+		sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[lplac];
 	    }
 	}
     }
     *ttsyl /= *nn;
-    return 0;
-} /* dark_ */
+} /* dark */
 
