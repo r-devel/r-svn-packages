@@ -37,8 +37,8 @@ void clara(int *n,  /* = number of objects */
 			 *	      1 : use R's RNG (and seed) */
 	   int *nrepr,
 	   int *nsel,
-	   int *nbest,/* x[nbest[j]] will be the j-th obs in the final sample */
-	   int *nr, int *nrx,
+	   int *nbest,/* x[nbest[j],] : the j-th obs in the final sample */
+	   int *nr, int *nrx,/* prov. and final "medoids" aka representatives */
 	   double *radus, double *ttd, double *ratt,
 	   double *ttbes, double *rdbes, double *rabes,
 	   int *mtt, double *obj,
@@ -69,6 +69,7 @@ void clara(int *n,  /* = number of objects */
 
     *jstop = 0;
     rnn = (double) (*n);
+
     /* n_dys := size of distance array dys[] */
     n_dys = *nsam * (*nsam - 1) / 2 + 1;/* >= 1 */
     full_sample = (*n == *nsam);/* only one sub sample == full data */
@@ -84,15 +85,35 @@ void clara(int *n,  /* = number of objects */
     else /* << initialize `random seed' of the very simple randm() below */
 	nrun = 0;
 
+#define SET_kran_trace_print(_nr_)					\
+	kran= 1+ (int)(rnn* ((*rng_R)? unif_rand(): randm(&nrun)));	\
+	if (kran > *n) {/* should never happen */			\
+	    REprintf("** C clara(): random k=%d > n **\n", kran);	\
+	    kran = *n;							\
+	}								\
+	if(*trace_lev >= 4) {						\
+	    Rprintf("... {" #_nr_ "}");					\
+	    if(*rng_R) Rprintf("R unif_rand()");			\
+	    else       Rprintf("nrun=%5d", nrun);			\
+	    Rprintf(" -> k{ran}=%d\n", kran);				\
+	}
+
+
 /* __LOOP__ :  random subsamples are drawn and partitioned into kk clusters */
 
-    nunfs = 0; kall = FALSE; dyst_toomany_NA = FALSE;
+    kall = FALSE; /* kall becomes TRUE iff we've found a "valid sample",
+		     i.e. one for which all d(j,k) can be computed */
+    nunfs = 0;
+    dyst_toomany_NA = FALSE;
     for (jran = 1; jran <= *nran; ++jran) {
 	if(*trace_lev) Rprintf("C clara(): sample %d ", jran);
 	if (!full_sample) {/* `real' case: sample size < n */
 	    ntt = 0;
-	    if (kall/*was jran != 1 */ && nunfs != jran && !lrg_sam) {
-		/* nsel[] := sort(nrx[])   for the first j=1:k	?? */
+	    if (kall && nunfs+1 != jran && !lrg_sam) {
+		/* Have had (at least) one valid sample; use its representatives
+		 * nrx[] :  nsel[] := sort(nrx[])  for the first j=1:k */
+		if(*trace_lev >= 2) Rprintf(" if (kall && nunfs...): \n");
+
 		for (jk = 0; jk < *kk; ++jk)
 		    nsel[jk] = nrx[jk];
 		for (jk = 0; jk < *kk-1; ++jk) {
@@ -109,18 +130,16 @@ void clara(int *n,  /* = number of objects */
 		    nsel[jk] = nsm;
 		}
 		ntt = *kk;
+
 	    }
-	    else {
+	    else { /* no valid sample  _OR_  lrg_sam */
+		if(*trace_lev >= 2) Rprintf(" else: new k{ran}: \n");
+
 		/* Loop finding random index `kran' not yet in nrx[] : */
 	    L180:
-		kran = 1 + (int)(rnn * ((*rng_R)? unif_rand(): randm(&nrun)));
-		if(*trace_lev >= 3) {
-		    if(*rng_R)
-			Rprintf("... R unif_rand() -> k{ran}=%d\n", kran);
-		    else
-			Rprintf("... {180} nrun=%d -> k{ran}=%d\n", nrun,kran);
-		}
-		if (kall/*jran != 1*/) {
+		SET_kran_trace_print(180)
+
+		if (kall) {
 		    for (jk = 0; jk < *kk; ++jk)
 			if (kran == nrx[jk])
 			    goto L180;
@@ -133,28 +152,25 @@ void clara(int *n,  /* = number of objects */
 	    }
 
 	    if(*trace_lev >= 2) {
-		Rprintf(".. kall(T/F)=%d , nsel[ntt=%d] = %d\n",
-			kall, ntt, nsel[ntt]);
-		if(*trace_lev >= 3) {
-		    Rprintf("... nrx[0:%d]= ",*kk-1);
-		    for (jk = 0; jk < *kk; jk++)
-			Rprintf("%d ",nrx[jk]); Rprintf("\n");
-		    Rprintf("... nsel[1:%d]= ",ntt);
-		    for (jk = 1; jk <= ntt; jk++)
-			Rprintf("%d ",nsel[jk]); Rprintf("\n");
+		Rprintf(".. kall: %s, ", (kall) ? "T" : "FALSE");
+		if(*trace_lev == 2) {
+		    Rprintf("nsel[ntt=%d] = %d\n", ntt, nsel[ntt]);
+		} else { /* trace_lev >= 3 */
+		    Rprintf("\n... nrx [0:%d]= ",*kk-1);
+		    for (jk = 0; jk < *kk; jk++) Rprintf("%d ",nrx[jk]);
+		    Rprintf("\n... nsel[1:%d]= ",ntt);
+		    for (jk = 1; jk <= ntt; jk++) Rprintf("%d ",nsel[jk]);
+		    Rprintf("\n");
 		}
 	    }
 
 	    do {
-	    L210:
-		/* find `kran', a random `k' in {1:n},
+		/* Loop finding random index 'kran' in {1:n},
 		 * not in nrx[0:(k-1)] nor nsel[1:ntt] : */
-		kran = (int) (rnn * randm(&nrun) + 1.);
-		if(*trace_lev >= 3)
-		    Rprintf("... {210} nrun=%d -> k{ran}=%d\n", nrun,kran);
-		if (kran > *n) kran = *n;
+	    L210:
+		SET_kran_trace_print(210)
 
-		if (kall/*jran != 1*/ && lrg_sam) {
+		if (kall && lrg_sam) {
 		    for (jk = 0; jk < *kk; ++jk) {
 			if (kran == nrx[jk])
 			    goto L210;
@@ -235,8 +251,8 @@ void clara(int *n,  /* = number of objects */
 	    if(*trace_lev >= 2)
 		Rprintf(" selec() -> 'NAfs'");
 	}
-	else if(!kall /*jran == 1*/ || zba > zb) {
-	    /* 1st proper sample  or  new best */
+	else if(!kall || zba > zb) { /* 1st proper sample  or  new best */
+	    kall = TRUE;
 	    if(*trace_lev >= 2)
 		Rprintf(" 1st proper or new best: zb= %g", zb);
 	    zba = zb;
@@ -252,8 +268,6 @@ void clara(int *n,  /* = number of objects */
 	}
 	if(*trace_lev >= 2) Rprintf("\n");
 
-	kall = TRUE;
-
 	if(full_sample) break; /* out of resampling */
     }
 /* --- end random sampling loop */
@@ -261,7 +275,7 @@ void clara(int *n,  /* = number of objects */
 	PutRNGstate();
 
     if (nunfs >= *nran) { *jstop = 1; return; }
-
+    /* else */
     if (!kall) { *jstop = 2; return; }
 
     if(*trace_lev) {
