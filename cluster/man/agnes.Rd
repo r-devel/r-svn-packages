@@ -1,6 +1,7 @@
 \name{agnes}
 \alias{agnes}
-\title{Agglomerative Nesting}
+\title{Agglomerative Nesting (Hierarchical Clustering)}
+\concept{UPGMA clustering}
 \description{
   Computes agglomerative hierarchical clustering of the dataset.
 }
@@ -50,11 +51,11 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
   }
   \item{method}{
     character string defining the clustering method.  The six methods
-    implemented are "average" (group average method), "single" (single
-    linkage), "complete" (complete linkage), "ward" (Ward's method),
-    "weighted" (weighted average linkage) and its generalization
-    \code{"flexible"} which uses (a constant version of) the
-    Lance-Williams formula and the \code{par.method} argument.  Default
+    implemented are "average" ([unweighted pair-]group average method, UPGMA),
+    "single" (single linkage), "complete" (complete linkage),
+    "ward" (Ward's method), "weighted" (weighted average linkage) and
+    its generalization \code{"flexible"} which uses (a constant version of)
+    the Lance-Williams formula and the \code{par.method} argument.  Default
     is "average".
   }
   \item{par.method}{if \code{method == "flexible"}, numeric vector of
