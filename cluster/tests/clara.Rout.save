@@ -1,6 +1,6 @@
 
-R : Copyright 2002, The R Development Core Team
-Version 1.6.2 beta (2002-12-28)
+R : Copyright 2003, The R Development Core Team
+Version 1.7.0 Under development (unstable) (2003-03-25)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -14,7 +14,6 @@ Type `demo()' for some demos, `help()' for on-line help, or
 Type `q()' to quit R.
 
 > library(cluster)
-Loading required package: mva 
 > 
 > ## generate 1500 objects, divided into 2 clusters.
 > if(paste(R.version$major, R.version$minor, sep=".") >= 1.7)  RNGversion(1.6)
@@ -24,7 +23,6 @@ Loading required package: mva
 > 
 > isEq <- function(x,y, epsF = 100)
 +     is.logical(r <- all.equal(x,y, tol = epsF * .Machine$double.eps)) && r
-> 
 > 
 > .proctime00 <- proc.time()
 > 
@@ -888,6 +886,83 @@ Available components:
 [1] "sample"     "medoids"    "clustering" "objective"  "clusinfo"  
 [6] "diss"       "call"       "silinfo"    "data"      
 > 
+> example(clara)## quite a few more
+
+clara> x <- rbind(cbind(rnorm(200, 0, 8), rnorm(200, 0, 8)), 
+    cbind(rnorm(300, 50, 8), rnorm(300, 50, 8)))
+
+clara> clarax <- clara(x, 2)
+
+clara> clarax
+Call:	 clara(x = x, k = 2) 
+Medoids:
+          [,1]       [,2]
+[1,] -2.923369  0.8196363
+[2,] 47.683111 49.6695137
+Objective function:	 10.03223
+Clustering vector: 	 int [1:500] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
+Cluster sizes:	    	 200 300 
+Best sample:
+ [1]   6  45  51  67  75  85  90  94  97 105 110 111 160 170 181 201 219 249 260
+[20] 264 275 296 304 317 319 323 337 361 362 369 370 374 379 397 398 402 411 420
+[39] 422 424 436 448 465 489
+
+Available components:
+[1] "sample"     "medoids"    "clustering" "objective"  "clusinfo"  
+[6] "diss"       "call"       "silinfo"    "data"      
+
+clara> clarax$clusinfo
+     size max_diss  av_diss isolation
+[1,]  200 26.25312 10.07914 0.3732464
+[2,]  300 28.01238 10.00095 0.3982582
+
+clara> plot(clarax)
+
+clara> data(xclara)
+
+clara> (clx3 <- clara(xclara, 3))
+Call:	 clara(x = xclara, k = 3) 
+Medoids:
+            V1        V2
+450   5.553391 13.306260
+1791 43.198760 60.360720
+2797 74.591890 -6.969018
+Objective function:	 13.22500
+Clustering vector: 	 Named int [1:3000] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
+ - attr(*, "names")= chr [1:3000] "1" "2" "3" "4" "5" "6" "7" ...
+Cluster sizes:	    	 900 1148 952 
+Best sample:
+ [1] 20   30   46   91   92   169  179  187  209  223  382  450  555  971  1004
+[16] 1025 1058 1277 1281 1302 1319 1361 1362 1513 1591 1623 1628 1729 1752 1791
+[31] 1907 1917 1946 2064 2089 2498 2527 2537 2545 2591 2672 2722 2729 2790 2797
+[46] 2852
+
+Available components:
+[1] "sample"     "medoids"    "clustering" "objective"  "clusinfo"  
+[6] "diss"       "call"       "silinfo"    "data"      
+
+clara> plot(clx3)
+
+clara> set.seed(421)
+
+clara> cl <- matrix(NA, nrow(xclara), 100)
+
+clara> for (i in 1:100) cl[, i] <- clara(xclara, 3, rngR = TRUE)$cluster
+
+clara> rcl <- apply(cl, 1, range)
+
+clara> (iDoubt <- which(rcl[1, ] != rcl[2, ]))
+[1] 1081 1248 1644
+
+clara> if (length(iDoubt)) {
+    tabD <- apply(cl[iDoubt, ], 1, table)
+    colnames(tabD) <- format(iDoubt)
+    t(tabD)
+}
+      1  2
+1081 99  1
+1248  3 97
+1644  1 99
 > 
 > ##  small example(s):
 > data(ruspini)
@@ -1388,7 +1463,7 @@ $sample
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  29.11 0.05 29.28 0 0 
+Time elapsed:  18.81 0.07 20.92 0 0 
 > ## Lynne (P IV, 1.6 GHz):  7.5
 > ## nb-mm (P III,700 MHz): 29.2
 > 
