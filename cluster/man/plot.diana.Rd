@@ -64,6 +64,16 @@ A branch splits up at the diameter of the cluster being splitted.
   \code{\link{diana}}, \code{\link{diana.object}},
   \code{\link{twins.object}}, \code{\link{par}}.
 }
+\examples{
+example(diana)# -> dv <- diana(....)
+
+plot(dv, which = 1, nmax.lab = 100)
+
+## wider labels :
+op <- par(mar = par("mar") + c(0, 2, 0,0))
+plot(dv, which = 1, nmax.lab = 100, max.strlen = 12)
+par(op)
+}
 \keyword{cluster}
 \keyword{hplot}
-% Converted by Sd2Rd version 0.3-2.
+
