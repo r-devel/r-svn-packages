@@ -24,9 +24,7 @@ function(x, ask = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                }
                ,{
                    if(length(x$silinfo) == 0)
-                       stop(message = 
-                            "No silhouette plot available when the number of clusters equals 1."
-                            )
+                       stop("No silhouette plot available when the number of clusters equals 1." )
                    s <- rev(x$silinfo[[1]][, 3])
                    space <- c(0, rev(diff(x$silinfo[[1]][, 1])))
                    space[space != 0] <- 0.5
@@ -133,7 +131,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                  x[n, 2] + gemid * sqrt(y),
                  x[n, 2] - gemid * sqrt(y)), ncol = 2)
     }
-    ## BEGIN
+
+    ## BEGIN ----
     
     namx <- deparse(substitute(x))
     if(is.data.frame(x))
@@ -200,49 +199,42 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
             y1 <- apply(y, 1, sum)
             y2 <- apply(y, 2, sum)
             if((sum(y1 == ncol(x)) != 0) && (sum(y2 == nrow(x)) != 0))
-                stop(message = 
-                     "some objects and some variables contain only missing values"
+                stop("some objects and some variables contain only missing values"
                      )
             if(sum(y1 == nrow(x)) != 0)
-                stop(message = 
-                     "one or more objects contain only missing values"
-                     )
+                stop("one or more objects contain only missing values")
             if(sum(y2 == nrow(x)) != 0)
-                stop(message = 
-                     "one or more variables contain only missing values"
-                     )
+                stop("one or more variables contain only missing values")
             print("There were missing values and they were displaced by the median of the corresponding variable(s)"
                   )
             x <- apply(x, 2, notavail)
         }
-        if(!is.matrix(x)) {
-            stop(message = "x is not allowed")
+        if(!is.matrix(x))
+            stop("x is not allowed")
+        ## ELSE
+        labels1 <- 
+            if(length(dimnames(x)[[1]]) == 0) 1:nrow(x)
+            else dimnames(x)[[1]]
+        
+        if(ncol(x) == 1) {
+            hulp <- rep(0, length(x))
+            x1 <- matrix(c(t(x), hulp), ncol = 2)
+            var.dec <- 1
         }
         else {
-            labels1 <- 
-                if(length(dimnames(x)[[1]]) == 0) 1:nrow(x)
-                else dimnames(x)[[1]]
-
-            if(ncol(x) == 1) {
-                hulp <- rep(0, length(x))
-                x1 <- matrix(c(t(x), hulp), ncol = 2)
-                var.dec <- 1
-            }
-            else {
-                prim.pr <- princomp(x, scores = TRUE, cor = ncol(x) != 2)
-                x1 <- prim.pr$scores
-
-                var.dec <- cumsum(prim.pr$sdev^2/sum(prim.pr$ sdev^2))[2]
-                x1 <- cbind(x1[, 1], x1[, 2])
-            }
+            prim.pr <- princomp(x, scores = TRUE, cor = ncol(x) != 2)
+            x1 <- prim.pr$scores
+            
+            var.dec <- cumsum(prim.pr$sdev^2/sum(prim.pr$ sdev^2))[2]
+            x1 <- cbind(x1[, 1], x1[, 2])
         }
     }
     clus <- as.vector(clus)
     if(length(clus) != length(x1[, 1]))
-        stop(message = "The clustering vector has not the good length")
+        stop("The clustering vector has not the good length")
     clus <- as.factor(clus)
     if(sum(is.na(clus)) != 0)
-        stop(message = "NA-values are not allowed in clustering vector")
+        stop("NA-values are not allowed in clustering vector")
     if(stand)
         x1 <- scale(x1)
 
@@ -267,13 +259,12 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 
     for(i in 1:n) {
         x <- x1[clus == levclus[i], ]
-        if(is.vector(x)) {
+        cov <-
+          if(is.vector(x)) {
             x <- matrix(x, ncol = 2, byrow = TRUE)
-            cov <- var(rbind(x, c(0, 0)))
-        }
-        else {
-            cov <- var(x)
-        }
+            var(rbind(x, c(0, 0)))
+          }
+          else var(x)
         aantal <- nrow(x)
         x.1 <- range(x[, 1])
         y.1 <- range(x[, 2])
@@ -288,8 +279,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 if(abs(diff(x.1)) > (diff(rangx)/70)) {
                     ind1 <- (1:aantal)[x[,1]==max(x[,1])][1]
                     ind2 <- (1:aantal)[x[,1]==min(x[,1])][1]
-                    q <- atan((x[ind1, 2] - x[ind2, 2])/(x[ind1, 1] -
-                                                         x[ind2, 1]))
+                    q <- atan((x[ind1, 2] - x[ind2, 2])/
+                              (x[ind1, 1] - x[ind2, 1]))
                     b <-
                         if(diff(rangy) == 0)
                             1
@@ -333,7 +324,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 else {
                     q <- pi/2
                 }
-                b <- 9.9999999999999995e-08
+                b <- 1e-7
                 D <- diag(c(a^2, b^2))
                 R <- cbind(c(  cos(q), sin(q)),
                            c(- sin(q), cos(q)))
@@ -366,16 +357,17 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 storage.mode(x2) <- "double"
                 res <- .Fortran("spannel",
                                 as.integer(aantal),
-                                as.integer(2),
-                                x2,
-                                as.double(0.01),
+                                ndep= as.integer(2),
+                                dat = x2,
+                                eps = as.double(0.01),
                                 sqdist = sqdist,
                                 l1,
                                 double(2),
                                 double(2),
                                 prob = prob,
                                 double(3),
-                                ierr = as.integer(0))
+                                ierr = as.integer(0),
+                                PACKAGE = "cluster")
                 if(res$ierr != 0)
                     print("Error in Fortran routine computing the MVE-ellipsoid, please use the option exactmve=F"
                           )
@@ -395,7 +387,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         miny <- min(miny, rang[3])
         maxy <- max(maxy, rang[4])
         verhoud[i] <- aantal/oppervlak
-        if(verhoud[i] < 10000000)
+        if(verhoud[i] < 1e7)
             verhouding <- verhouding + verhoud[i]
     }
     if(verhouding == 0)
@@ -491,30 +483,27 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                         punt.2 <- clas.snijpunt(snijp.2, loc, 2, j, i)
                     }
                 }
-                if((punt.1[1] == "NA") || (punt.2[1] == "NA")) {
+                if((punt.1[1] == "NA") || (punt.2[1] == "NA") ||
+                   (sqrt((punt.1[1] - loc[i, 1])^2 +
+                         (punt.1[2] - loc[i, 2])^2) +
+                    sqrt((punt.2[1] - loc[j, 1])^2 +
+                         (punt.2[2] - loc[j, 2])^2)) > 
+                   sqrt((loc[j, 1] - loc[i, 1])^2 +
+                        (loc[j, 2] - loc[i, 2])^2))
+                {
                     afstand[i, j] <- NA
                 }
-                else if((sqrt((punt.1[1] - loc[i, 1])^2 +
-                              (punt.1[2] - loc[i, 2])^2) +
-                         sqrt((punt.2[1] - loc[j, 1])^2 +
-                              (punt.2[2] - loc[j, 2])^2)) > 
-                        sqrt((loc[j, 1] - loc[i, 1])^2 +
-                             (loc[j, 2] - loc[i, 2])^2)) {
-                    afstand[i, j] <- NA
+                else if(lines == 1) {
+                    afstand[i, j] <- sqrt((loc[i, 1] - loc[j, 1])^2 +
+                                          (loc[i, 2] - loc[j, 2])^2)
+                    segments(loc[i, 1], loc[i, 2],
+                             loc[j, 1], loc[j, 2], col = 6, ...)
                 }
                 else {
-                    if(lines == 1) {
-                        afstand[i, j] <- sqrt((loc[i, 1] - loc[j, 1])^2 +
-                                              (loc[i, 2] - loc[j, 2])^2)
-                        segments(loc[i, 1], loc[i, 2],
-                                 loc[j, 1], loc[j, 2], col = 6, ...)
-                    }
-                    else {
-                        afstand[i, j] <- sqrt((punt.1[1] - punt.2[1])^2 +
-                                              (punt.1[2] - punt.2[2])^2)
-                        segments(punt.1[1], punt.1[2],
-                                 punt.2[1], punt.2[2], col = 6, ...)
-                    }
+                    afstand[i, j] <- sqrt((punt.1[1] - punt.2[1])^2 +
+                                          (punt.1[2] - punt.2[2])^2)
+                    segments(punt.1[1], punt.1[2],
+                             punt.2[1], punt.2[2], col = 6, ...)
                 }
             }
         }
@@ -553,17 +542,9 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 
 clusplot.partition <- function(x, ...)
 {
-    if(length(x$data) != 0) 
-        if(!is.na(min(x$data)))
-            invisible(clusplot.default(x$data, x$clustering, 
-                                       diss = FALSE, ...))
-        else {
-            if(data.class(x) == "clara")
-                invisible(clusplot.default(x$data, 
-                                           x$clustering, diss = FALSE, ...))
-            else invisible(clusplot.default(x$diss, x$clustering, 
-                                            diss = TRUE, ...))
-        }
+    if(length(x$data) != 0 && 
+       (!is.na(min(x$data)) || data.class(x) == "clara"))
+         invisible(clusplot.default(x$data, x$clustering, diss = FALSE, ...))
     else invisible(clusplot.default(x$diss, x$clustering, diss = TRUE, ...))
 }
 
