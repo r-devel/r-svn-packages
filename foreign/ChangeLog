@@ -1,3 +1,7 @@
+2001-12-13  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+
+	* src/sfm-read.c (bufread): Do not read in 0 bytes [fix by PD].
+
 2001-12-04  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.4-8.
