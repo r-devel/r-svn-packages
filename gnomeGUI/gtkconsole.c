@@ -640,7 +640,7 @@ gtk_console_set_font (GtkConsole * console, gchar const *font)
 
   new_style = gtk_style_copy(gtk_widget_get_style(GTK_WIDGET(console)));
   gdk_font_unref(new_style->font);
-  new_style->font = gdk_font_load(font);
+  new_style->font = gdk_fontset_load(font);
   gtk_widget_set_style(GTK_WIDGET(console), new_style);
 }
 

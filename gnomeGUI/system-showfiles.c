@@ -169,15 +169,15 @@ void pager_set_style()
 
   textstyle = gtk_style_copy(gtk_widget_get_style(pager_data->text));
   gdk_font_unref(textstyle->font);
-  textstyle->font = gdk_font_load(prefs_get_pager_text_font());
+  textstyle->font = gdk_fontset_load(prefs_get_pager_text_font());
   textstyle->text[GTK_STATE_NORMAL] = prefs_get_pager_text_textcolor();
   textstyle->base[GTK_STATE_NORMAL] = prefs_get_pager_text_bgcolor();
   gtk_widget_set_style(pager_data->text, textstyle);
 
 
   // load title and em font here
-  titlefont = gdk_font_load(prefs_get_pager_title_font());
-  emfont = gdk_font_load(prefs_get_pager_em_font());
+  titlefont = gdk_fontset_load(prefs_get_pager_title_font());
+  emfont = gdk_fontset_load(prefs_get_pager_em_font());
 
   // set width to 80 columns here
   charw = gdk_char_width(pager_data->text->style->font, 'w');
@@ -296,14 +296,14 @@ int Rgnome_ShowFiles(int nfile, char **file, char **title, char *wtitle,
 
   /* set text font here */
   textstyle = gtk_style_copy(gtk_widget_get_style(pager_data->text));
-  textstyle->font = gdk_font_load(prefs_get_pager_text_font());
+  textstyle->font = gdk_fontset_load(prefs_get_pager_text_font());
   textstyle->text[GTK_STATE_NORMAL] = prefs_get_pager_text_textcolor();
   textstyle->base[GTK_STATE_NORMAL] = prefs_get_pager_text_bgcolor();
   gtk_widget_set_style(pager_data->text, textstyle);
 
   /* load title and em font here */
-  titlefont = gdk_font_load(prefs_get_pager_title_font());
-  emfont = gdk_font_load(prefs_get_pager_em_font());
+  titlefont = gdk_fontset_load(prefs_get_pager_title_font());
+  emfont = gdk_fontset_load(prefs_get_pager_em_font());
 
   /* set width to 80 columns here */
   charw = gdk_char_width(pager_data->text->style->font, 'w');
