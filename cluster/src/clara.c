@@ -37,7 +37,8 @@ void clara(int *n,  /* = number of objects */
 	   double *radus, double *ttd, double *ratt,
 	   double *ttbes, double *rdbes, double *rabes,
 	   int *mtt, double *obj,
-	   double *avsyl, double *ttsyl, double *sylinf, int *jstop,
+	   double *avsyl, double *ttsyl, double *sylinf,
+	   int *jstop, int *trace_lev,
 	   double *tmp, /* = double [ 3 * nsam ] */
 	   int *itmp	/* = integer[ 6 * nsam ] */
     )
@@ -53,7 +54,6 @@ void clara(int *n,  /* = number of objects */
 #define ntmp5 &itmp[2*nsamb]
 #define ntmp6 &itmp[2*nsamb+ *nsam]
 
-
     /* Local variables */
 
     Rboolean nafs, kall, full_sample, has_NA = *mdata;
@@ -65,7 +65,6 @@ void clara(int *n,  /* = number of objects */
 
     /* Parameter adjustments */
     --nsel;
-
 
     *jstop = 0;
     rnn = (double) (*n);
@@ -111,12 +110,13 @@ void clara(int *n,  /* = number of objects */
 	    }
 	    else {
 
+		/* Find random index `kran' not yet in nrx[] : */
+
 		/* Loop 1 -- */
 	    L180:
 		kran = (int) (rnn * randm(&nrun) + 1.);
-		if (kran > *n) {
-		    kran = *n;
-		}
+		if (kran > *n) kran = *n;
+
 		if (jran != 1) {
 		    for (jk = 0; jk < *kk; ++jk) {
 			if (kran == nrx[jk])
@@ -133,9 +133,8 @@ void clara(int *n,  /* = number of objects */
 	    do {
 	    L210:
 		kran = (int) (rnn * randm(&nrun) + 1.);
-		if (kran > *n) {
-		    kran = *n;
-		}
+		if (kran > *n) kran = *n;
+
 		if (jran != 1 && *n < nsamb) {
 		    for (jk = 0; jk < *kk; ++jk) {
 			if (kran == nrx[jk])
@@ -181,13 +180,19 @@ void clara(int *n,  /* = number of objects */
 		nsel[j] = j;
 	}
 
-	Rprintf("C clara(): r.sample %d --> dysta2()\n", jran);
-	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
-	if (jhalt == 1)
+	if(*trace_lev)
+	    Rprintf("C clara(): sample %d [ntt=%d] --> dysta2()\n", jran, ntt);
+
+	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *diss_kind,
+	       jtmd, valmd, &jhalt);
+	if (jhalt == 1) {
+	    if(*trace_lev)
+		Rprintf("  dysta2() gave jhalt = 1 --> new sample\n");
 	    continue;/* random sample*/
+	}
 
 	s = 0.;
-	l = 0;/* dys[0] is not used */
+	l = 0;/* dys[0] is not used here */
 	do {
 	    ++l;
 	    if (s < dys[l])
@@ -231,6 +236,8 @@ void clara(int *n,  /* = number of objects */
 
     if (!kall) { *jstop = 2; return; }
 
+    if(*trace_lev)
+	Rprintf("C clara(): sample found. --> dysta2(nbest), resul(), finis\n");
     *obj = zba / rnn;
     dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
 
@@ -258,17 +265,18 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    double *x, int n, double *dys, int diss_kind,
 	    int *jtmd, double *valmd, int *jhalt)
 {
+/* Compute Dissimilarities for the selected sub-sample  ---> dys[,] */
 
     /* Local variables */
     int j, k, kj, l, lj, ksel, lsel, nlk, npres;
     double clk, d1;
 
     nlk = 0;
-    dys[nlk] = 0.;
+    dys[0] = 0.;/* very first index; *is* used in ?? (it is, not in R!) */
     for (l = 1; l < nsam; ++l) {
 	lsel = nsel[l];
 	if(lsel <= 0 || lsel > n)
-	    REprintf("C dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
+	    REprintf("  ** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
 	for (k = 0; k < l; ++k) {
 	    ksel = nsel[k];
 	    clk = 0.;
