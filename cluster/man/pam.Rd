@@ -58,7 +58,8 @@ the following features: (a) it also accepts a dissimilarity matrix;
 (b) it is more robust because it minimizes a sum of dissimilarities
 instead of a sum of squared euclidean distances; (c) it provides a novel
 graphical display, the silhouette plot (see \code{plot.partition})
-which also allows to select the number of clusters.
+(d) it allows to select the number of clusters (from component
+\code{silinfo} of the return value, see \code{\link{pam.object}}).
 
 The \code{pam}-algorithm is based on the search for \code{k} representative objects or
 medoids among the observations of the dataset. These observations should
