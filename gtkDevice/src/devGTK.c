@@ -611,11 +611,13 @@ static void GTK_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
 {
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
 
-    gtkd->clip.x = MIN(x0, x1);
-    gtkd->clip.width = abs(x0 - x1);
+    gtkd->clip.x = dd->clipLeft = (int) MIN(x0, x1);
+    gtkd->clip.width = abs( (int) x0 - (int) x1) + 1;
+    dd->clipRight = dd->clipLeft + gtkd->clip.width;
 
-    gtkd->clip.y = MIN(y0, y1);
-    gtkd->clip.height = abs(y0 - y1);
+    gtkd->clip.y = dd->clipBottom = (int) MIN(y0, y1);
+    gtkd->clip.height = abs( (int) y0 - (int) y1) + 1;
+    dd->clipTop = dd->clipBottom + gtkd->clip.height;
 
     gdk_gc_set_clip_rectangle(gtkd->wgc, &gtkd->clip);
 }
@@ -1162,7 +1164,7 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     dd->canChangeFont= FALSE;
     dd->canRotateText= TRUE;
     dd->canResizeText= TRUE;
-    dd->canClip = FALSE;/* FIXME: really? */
+    dd->canClip = TRUE;
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
 
@@ -1336,7 +1338,7 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     dd->canChangeFont= FALSE;
     dd->canRotateText= TRUE;
     dd->canResizeText= TRUE;
-    dd->canClip = FALSE;/* FIXME: really? */
+    dd->canClip = TRUE;
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
 
