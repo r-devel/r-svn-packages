@@ -68,7 +68,6 @@ void clara(int *n,  /* = number of objects */
     rnn = (double) (*n);
     /* n_dys := size of distance array dys[] */
     n_dys = *nsam * (*nsam - 1) / 2 + 1;/* >= 1 */
-
     full_sample = (*n == *nsam);/* only one sub sample == full data */
     nsamb = *nsam * 2;
     lrg_sam = (*n < nsamb);/* sample more than *n/2 */
@@ -302,8 +301,8 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    ++nlk;
 	    npres = 0;
 	    for (j = 0; j < jpp; ++j) {
-		lj = (lsel - 1) * jpp + j;
-		kj = (ksel - 1) * jpp + j;
+		lj = lsel-1 + j * n;
+		kj = ksel-1 + j * n;
 		if (jtmd[j] < 0) {
 		    /* in the following line (Fortran!), x[-2] ==> seg.fault
 		       {BDR to R-core, Sat, 3 Aug 2002} */
@@ -522,8 +521,8 @@ void selec(int kk, int n, int jpp, int diss_kind,
 		nrjk = nr[jk];
 		if (nrjk != jj) {
 		    for (jp = 0; jp < jpp; ++jp) {
-			na = (nrjk - 1) * jpp + jp;
-			nb = (jj   - 1) * jpp + jp;
+			na = (nrjk - 1) + jp * n;
+			nb = (jj   - 1) + jp * n;
 			tra = fabs(x[na] - x[nb]);
 			if (diss_kind == 1)
 			    tra *= tra;
@@ -545,8 +544,8 @@ void selec(int kk, int n, int jpp, int diss_kind,
 		if (nrjk != jj) {
 		    nobs = 0;
 		    for (jp = 0; jp < jpp; ++jp) {
-			na = (nrjk - 1) * jpp + jp;
-			nb = (jj   - 1) * jpp + jp;
+			na = (nrjk - 1) + jp * n;
+			nb = (jj   - 1) + jp * n;
 			if (jtmd[jp] < 0) {
 			    if (x[na] == valmd[jp] || x[nb] == valmd[jp])
 				continue /* next jp */;
@@ -672,16 +671,14 @@ void resul(int kk, int n, int jpp, int diss_kind, Rboolean has_NA,
 	    if (nrx[jk] == jj + 1)/* 1-indexing */
 		goto L220; /* continue next jj (i.e., outer loop) */
 	}
-	njnb = jj * jpp;
+	njnb = jj;
 
 	if (!has_NA) {
 	    for (jk = 0; jk < kk; ++jk) {
 		dsum = 0.;
-		nrjk = (nrx[jk] - 1) * jpp;
+		nrjk = (nrx[jk] - 1);
 		for (j = 0; j < jpp; ++j) {
-		    na = nrjk + j;
-		    nb = njnb + j;
-		    tra = fabs(x[na] - x[nb]);
+		    tra = fabs(x[nrjk + j * n] - x[njnb + j * n]);
 		    if (diss_kind == 1)
 			tra *= tra;
 		    dsum += tra;
@@ -699,11 +696,11 @@ void resul(int kk, int n, int jpp, int diss_kind, Rboolean has_NA,
 	else { /* _has_ missing data */
 	    for (jk = 0; jk < kk; ++jk) {
 		dsum = 0.;
-		nrjk = (nrx[jk] - 1) * jpp;
+		nrjk = (nrx[jk] - 1);
 		abc = 0.;
 		for (j = 0; j < jpp; ++j) {
-		    na = nrjk + j;
-		    nb = njnb + j;
+		    na = nrjk + j * n;
+		    nb = njnb + j * n;
 		    if (jtmd[j] < 0) {
 			if (x[na] == valmd[j] || x[nb] == valmd[j])
 			    continue /* next j */;
@@ -730,16 +727,17 @@ void resul(int kk, int n, int jpp, int diss_kind, Rboolean has_NA,
 
     L220:
 	;
-    } /* for(jj)  while (jj < n);*/
+    } /* for(jj = 0; jj < n ..)*/
 
-    for (jk = 0; jk < kk; ++jk) {
-	nrjk = nrx[jk];
-	x[(nrjk - 1) * jpp] = (double) jk + 1;/* 1-indexing */
-    }
+
+    for (jk = 0; jk < kk; ++jk)
+	x[nrx[jk] - 1] = (double) jk + 1;/* 1-indexing */
+
+    /* mtt[k] := size(k-th cluster) : */
     for (ka = 0; ka < kk; ++ka) {
 	mtt[ka] = 0;
 	for(j = 0; j < n; j++) {
-	    if (((int) (x[j * jpp] + .1f)) == ka + 1)/* 1-indexing */
+	    if (((int) x[j]) == ka + 1)/* 1-indexing */
 		++mtt[ka];
 	}
     }
@@ -788,7 +786,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
     /* Function Body */
     for (l = 1; l <= nsam; ++l) {
 	ncase = nbest[l];
-	ncluv[l] = (int) (x[(ncase - 1) * jpp] + .1f);
+	ncluv[l] = (int) x[ncase - 1];
     }
 
 /*     drawing of the silhouettes */
