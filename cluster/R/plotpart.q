@@ -330,20 +330,20 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 if(verbose)
                     cat("span & rank2 : calling \"spannel\" ..\n")
                 k <- as.integer(2)
-                res <- .Fortran("spannel",
-                                aantal,
-                                ndep= k,
-                                dat = cbind(1., x),
-                                sqdist = double(aantal),
-                                l1 = double((k+1) ^ 2),
-                                double(k),
-                                double(k),
-                                prob = double(aantal),
-                                double(k+1),
-                                eps = as.double(0.01),## convergence tol.
-                                maxit = as.integer(5000),
-                                ierr = as.integer(0),
-                                PACKAGE = "cluster")
+		res <- .C("spannel",
+			  aantal,
+			  ndep= k,
+			  dat = cbind(1., x),
+			  sqdist = double(aantal),
+			  l1 = double((k+1) ^ 2),
+			  double(k),
+			  double(k),
+			  prob = double(aantal),
+			  double(k+1),
+			  eps = (0.01),## convergence tol.
+			  maxit = as.integer(5000),
+			  ierr = integer(1),
+			  PACKAGE = "cluster")
                 if(res$ierr != 0)
                     ## MM : exactmve not available here !
                     cat("Error in Fortran routine for the spanning ellipsoid,",
@@ -393,20 +393,13 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
             maxy <- x1[1, 2] + 1
         }
     }
-    if(!is.null(xlim)) {
-        if(xlim[1] > minx) minx <- xlim[1]
-        if(xlim[2] < maxx) maxx <- xlim[2]
-    }
-    if(!is.null(ylim)) {
-        if(ylim[1] > miny) miny <- ylim[1]
-        if(ylim[2] < maxy) maxy <- ylim[2]
-    }
-
+    if(is.null(xlim)) xlim <- c(minx,maxx)
+    if(is.null(ylim)) ylim <- c(miny,maxy)
     if(length(col.p) < n) col.p <- rep(col.p, length= n)
 
     ## --- Now plotting starts ---
 
-    plot(x1[, 1], x1[, 2], xlim = c(minx, maxx), ylim = c(miny, maxy),
+    plot(x1[, 1], x1[, 2], xlim = xlim, ylim = ylim,
          xlab = "Component 1", ylab = "Component 2",
          main = main,
          type = if(plotchar) "n" else "p", # if(plotchar) add points later
@@ -538,6 +531,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         }
         else {
             Stext <- function(xy, labs, ...) {
+                ## FIXME: these displacements are not quite ok!
                 xy[, 1] <- xy[, 1] + (maxx - minx)/130
                 xy[, 2] <- xy[, 2] + (maxy - miny)/50
                 text(xy, labels = labs, ...)
@@ -562,5 +556,4 @@ clusplot.partition <- function(x, main = NULL, ...)
        (!any(is.na(x$data)) || data.class(x) == "clara"))
 	clusplot.default(x$data, x$clustering, diss = FALSE, main = main, ...)
     else clusplot.default(x$diss, x$clustering, diss = TRUE, main = main, ...)
-
 }
