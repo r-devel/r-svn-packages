@@ -12,13 +12,13 @@
 }
 \usage{
   \method{print}{dissimilarity}(x, \dots)
-\method{summary}{dissimilarity}(x, \dots)
+\method{summary}{dissimilarity}(object, \dots)
 }
 \seealso{
   \code{\link{daisy}}, \code{\link{dissimilarity.object}},
-  \code{\link{print}}, \code{\link{print.default}}. 
+  \code{\link{print}}, \code{\link{print.default}}.
 }
 \keyword{cluster}
 \keyword{print}
 
- 
+
