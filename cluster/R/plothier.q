@@ -1,7 +1,7 @@
 pltree <- function(x, ...) UseMethod("pltree")
 
-pltree.twins <- function(x,
-                         main = paste("Dendrogram of ", deparse(call)), ...)
+pltree.twins <-
+  function(x, main = paste("Dendrogram of ", deparse(call)), ...)
 {
     call <- attr(x, "Call")
     labels <- NULL
@@ -28,7 +28,7 @@ pltree.twins <- function(x,
 ##  just the bannerplot differs a bit ....
 
 plot.agnes <- function(x, ask = FALSE, which.plots = NULL, 
-                       main = paste("Banner of ", deparse(attr(x, "Call"))),
+                       main = NULL,
                        sub = paste("Agglomerative Coefficient = ",
                                    round(x$ac, digits = 2)),
                        adj = 0, nmax.lab = 35, max.strlen = 5, ...)
@@ -41,7 +41,7 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
         barplot(w, xlab = "Height", horiz = TRUE, inside = FALSE,
                 space = 0, axes = FALSE, col = c(0, 2),
                 mgp = c(2.5, 1, 0), ...)
-        title(main = main, sub = sub, adj = adj)
+        title(main = main1, sub = sub, adj = adj)
         flrm <- floor(m)
         at.vals <- c(seq(0, flrm, length = 11), m)
         lab.vals<- c(seq(0, flrm, length = 11), round(m, digits = 2))
@@ -55,6 +55,16 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
         } 
     }
 
+    if(is.null(main)) {
+        ## Different default for banner & pltree:
+        cl <- deparse(attr(x, "Call"))
+        main1 <- paste("Banner of ", cl)
+        main2 <- paste("Dendrogram of ", cl)
+    }
+    else { # same title for both
+        main1 <- .Alias(main)
+        main2 <- .Alias(main)
+    }
     if(is.null(which.plots)) { ## Use `menu' ..
 
         choices <- c("All", "Banner", "Clustering Tree")
@@ -70,7 +80,7 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
                    return(invisible(x)),
                    ask.now <- FALSE,
                    bannerplot(x, ...),
-                   pltree(x, main = main, sub = sub, ...)
+                   pltree(x, main = main2, sub = sub, ...)
                    )
             if(!ask.now)
                 pick <- pick + 1
@@ -80,8 +90,8 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
     }
     else for(i in which.plots)
         switch(i,
-               bannerplot(x, ...),# i = 1
-               pltree    (x, main = main, sub = sub, ...) # i = 2
+               bannerplot(x, ...),
+               pltree    (x, main = main2, sub = sub, ...)
                )
     invisible()
 }
@@ -100,7 +110,7 @@ function(x, ask = FALSE, which.plots = NULL,
         barplot(w, xlab = "Height", horiz = TRUE, inside = FALSE,
                 space = 0, axes = FALSE, col = c(2, 0),
                 mgp = c(2.5, 1, 0), ...)
-        title(main = main, sub = sub, adj = adj)
+        title(main = main1, sub = sub, adj = adj)
         flrm <- floor(m)
         at.vals <- c(0, seq(0, flrm, length = 11) + m - flrm)
         lab.vals <- c(round(m, digits = 2),
@@ -115,6 +125,16 @@ function(x, ask = FALSE, which.plots = NULL,
         }
     }
 
+    if(is.null(main)) {
+        ## Different default for banner & pltree:
+        cl <- deparse(attr(x, "Call"))
+        main1 <- paste("Banner of ", cl)
+        main2 <- paste("Dendrogram of ", cl)
+    }
+    else { # same title for both
+        main1 <- .Alias(main)
+        main2 <- .Alias(main)
+    }
     if(is.null(which.plots)) { ## Use `menu' ..
         choices <- c("All", "Banner", "Clustering Tree")
         tmenu <- paste("plot:", choices)
@@ -128,7 +148,7 @@ function(x, ask = FALSE, which.plots = NULL,
                    return(invisible(x)),
                    ask.now <- FALSE,
                    bannerplot(x, ...),
-                       pltree(x, main = main, sub = sub, ...)
+                       pltree(x, main = main2, sub = sub, ...)
                    )
             if(!ask.now)
                 pick <- pick + 1
@@ -139,7 +159,7 @@ function(x, ask = FALSE, which.plots = NULL,
     else for(i in which.plots)
         switch(i,
                bannerplot(x, ...),# i = 1
-               pltree    (x, main = main, sub = sub, ...) # i = 2
+               pltree    (x, main = main2, sub = sub, ...) # i = 2
                )
     invisible()
 }
