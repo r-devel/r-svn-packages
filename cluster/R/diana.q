@@ -44,7 +44,7 @@ diana <- function(x, diss = inherits(x, "dist"),
     res <- .Fortran("twins",
 		    n,
 		    jp,
-		    x2,
+		    as.double(x2),
 		    dv,
 		    dis = double(1 + (n * (n - 1))/2),
 		    ok = as.integer(diss), # = jdyss
