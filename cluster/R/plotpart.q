@@ -6,24 +6,6 @@ function(x, ask = FALSE, which.plots = NULL,
          shade = FALSE, color = FALSE, labels = 0, plotchar = TRUE,
          span = TRUE, xlim = NULL, ylim = NULL, ...)
 {
-    silhouPlot <- function(x, nmax.lab, max.strlen) {
-        if(length(x$silinfo) == 0)
-            stop("No silhouette plot available when the number of clusters equals 1." )
-        s <- rev(x$silinfo[[1]][, 3])
-        space <- c(0, rev(diff(x$silinfo[[1]][, 1])))
-        space[space != 0] <- 0.5
-        names <- if(length(s) < nmax.lab)
-            substring(rev(dimnames(x$silinfo[[1]])[[1]]), 1, max.strlen)
-        barplot(s, space = space, names = names,
-                xlab = "Silhouette width",
-                xlim = c(min(0, min(s)), 1), horiz = TRUE,
-                mgp = c(2.5, 1, 0), ...)
-        title(main = paste("Silhouette plot of ",
-              deparse(x$call)),
-              sub = paste("Average silhouette width : ",
-              round(x$ silinfo$avg.width, digits = 2)), adj = 0)
-    }
-
     if(is.null(x$data))# data not kept
         x$data <- data
     if(is.null(which.plots) && !ask)
@@ -50,7 +32,7 @@ function(x, ask = FALSE, which.plots = NULL,
                             plotchar = plotchar, span = span,
                             xlim = xlim, ylim = ylim, ...)
                    ,
-                   silhouPlot(x, nmax.lab, max.strlen)
+                   plot(silhouette(x), nmax.lab, max.strlen)
                    )
             if(do.all) { pick <- pick + 1; do.all <- pick <= length(tmenu) + 1}
         }
@@ -65,7 +47,7 @@ function(x, ask = FALSE, which.plots = NULL,
                         plotchar = plotchar, span = span,
                         xlim = xlim, ylim = ylim, ...)
                ,
-               silhouPlot(x, nmax.lab, max.strlen)
+               plot(silhouette(x), nmax.lab, max.strlen)
                )
     }
     invisible()
@@ -84,7 +66,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
          ...)
 {
     if(paste(R.version$major, R.version$minor, sep=".") < 1.5) {
-        ## a simplified (add = T) version of R 1.5's cmdscale():
+        ## a simplified (add = T) version of R 1.5's cmdscale(), s/La.eigen/eigen/
         cmdscale <- function (d, k = 2, add = TRUE, ...) {
             if (any(is.na(d)))
                 stop("NA values not allowed in d")
@@ -112,13 +94,13 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 Z[cbind(i2,i)] <- -1
                 Z[ i, i2] <- -x
                 Z[i2, i2] <- .C("dblcen", x= 2*d, as.integer(n),PACKAGE="mva")$x
-                e <- La.eigen(Z,symmetric = FALSE, only.val = TRUE)$values
+                e <- eigen(Z,symmetric = FALSE, only.val = TRUE)$values
                 add.c <- max(Re(e))
                 x <- matrix(double(n*n), n, n)
                 non.diag <- row(d) != col(d)
                 x[non.diag] <- (d[non.diag] + add.c)^2
             }
-            e <- La.eigen(-x/2, symmetric = TRUE)
+            e <- eigen(-x/2, symmetric = TRUE)
             ev <- e$values[1:k]
             points <- e$vectors[, 1:k] %*% diag(sqrt(ev), k)
             rn <- if(is.matrix(d)) rownames(d) else names(d)
