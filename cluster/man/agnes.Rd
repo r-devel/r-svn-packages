@@ -73,7 +73,7 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
   \code{agnes} is fully described in chapter 5 of Kaufman and Rousseeuw (1990).
   Compared to other agglomerative clustering methods such as \code{hclust},
   \code{agnes} has the following features: (a) it yields the
-  agglomerative coefficient (see \code{agnes.object})
+  agglomerative coefficient (see \code{\link{agnes.object}})
   which measures the amount of clustering structure found; and (b)
   apart from the usual tree it also provides the banner, a novel
   graphical display (see \code{\link{plot.agnes}}).
