@@ -78,7 +78,6 @@ passed through from \code{fit}, if present.
 \seealso{
 \code{\link{survfit}}, \code{\link{print.summary.survfit}}.}
 \examples{
-data(ovarian)
 summary( survfit( Surv(futime, fustat),data=ovarian))
 }
 \keyword{survival}

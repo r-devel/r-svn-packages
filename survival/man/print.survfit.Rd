@@ -71,7 +71,7 @@ number at risk. The initial default is \code{"start"}.
 }
 \examples{
 ##effect of print.n and show.rmean
-data(heart)
+
 a<-coxph(Surv(start,stop,event)~age+strata(transplant),data=heart)
 b<-survfit(a)
 print(b,print.n="none")

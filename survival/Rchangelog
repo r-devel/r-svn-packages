@@ -1,3 +1,9 @@
+2.13-2  Update the Depends: clause to new meanings.
+
+	Edit .Rd files for lazy data.
+
+2.13-1	Kurt's fixes based on better .Rd checking
+
 2.13	stop segfault when frailty estimation breaks down.
 	(Christian Lederer)
 	
