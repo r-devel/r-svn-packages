@@ -1,5 +1,5 @@
 /*
- *  $Id: SASxport.c,v 1.1 2001/03/23 16:15:26 bates Exp $
+ *  $Id: SASxport.c,v 1.2 2001/04/03 19:14:02 saikat Exp $
  *
  *  Read SAS transport data set format
  *
@@ -258,7 +258,7 @@ next_xport_info(FILE *fp, int namestr_length, int nvars, int *headpad,
 {
     char *tmp;
     char record[81];
-    int i, n, nbytes, totwidth, nlength;
+    int i, n, nbytes, totwidth, nlength, restOfCard;
     int *nname_len;
     struct SAS_XPORT_namestr *nam_head;
 
@@ -311,11 +311,12 @@ next_xport_info(FILE *fp, int namestr_length, int nvars, int *headpad,
     nbytes = 0;
     nlength = 0;
     tmp = R_alloc(totwidth+1, sizeof (char));
+    restOfCard = 0;
     while(!feof(fp)) {
-	int restOfCard = 80 - (ftell(fp) % 80);
 	int allSpace = 1;
 	fpos_t currentPos;
 
+/*  	restOfCard = 80 - (ftell(fp) % 80); */
 	if (fgetpos(fp, &currentPos))
 	    error("problem accessing SAS XPORT file");
 
@@ -351,6 +352,9 @@ next_xport_info(FILE *fp, int namestr_length, int nvars, int *headpad,
 	    *tailpad = n;
 	    break;
 	}
+	restOfCard = (restOfCard >= totwidth)?
+	    (restOfCard - totwidth):
+	    (80 - (totwidth - restOfCard)%80);
 	nlength++;
     }
     *length = nlength;
