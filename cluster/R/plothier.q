@@ -1,4 +1,4 @@
-pltree <- function(x, ...) UseMethod("pltree")
+pltree <- function(x, ...) UseMethod("pltree")-- $Id$
 
 pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
 {
@@ -68,17 +68,20 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
     if(is.null(which.plots) && !ask)
         which.plots <- 1:2
     if(ask && is.null(which.plots)) { ## Use `menu' ..
-        tmenu <- paste("plot:", ## choices :
+        tmenu <- paste("plot ", ## choices :
                        c("All", "Banner", "Clustering Tree"))
-        pick <- 0
-        while(pick <= length(tmenu) + 1) {
-            pick <- menu(tmenu, title =
-                         "\nMake a plot selection (or 0 to exit):\n") + 1
+        do.all <- FALSE
+        repeat {
+            if(!do.all)
+                pick <- menu(tmenu, title =
+                             "\nMake a plot selection (or 0 to exit):\n") + 1
             switch(pick,
-                   return(invisible()),
-                   bannerplot(x, ...),
+                   return(invisible()), # 0 -> exit loop
+                   do.all <- TRUE,# 1 : All
+                   bannerplot(x, ...),# 2
                    pltree(x, main = main2, sub = sub, ...)
                    )
+            if(do.all) { pick <- pick + 1; do.all <- pick <= length(tmenu) + 1}
         }
     }
     else {
@@ -136,17 +139,20 @@ function(x, ask = FALSE, which.plots = NULL, main = NULL,
     if(is.null(which.plots) && !ask)
         which.plots <- 1:2
     if(ask && is.null(which.plots)) { ## Use `menu' ..
-        tmenu <- paste("plot:", ## choices :
+        tmenu <- paste("plot ", ## choices :
                        c("All", "Banner", "Clustering Tree"))
-        pick <- 0
-        while(pick <= length(tmenu) + 1) {
-            pick <- menu(tmenu, title =
-                         "\nMake a plot selection (or 0 to exit):\n") + 1
+        do.all <- FALSE
+        repeat {
+            if(!do.all)
+                pick <- menu(tmenu, title =
+                             "\nMake a plot selection (or 0 to exit):\n") + 1
             switch(pick,
-                   return(invisible()),
-                   bannerplot(x, ...),
+                   return(invisible()), # 0 -> exit loop
+                   do.all <- TRUE,# 1 : All
+                   bannerplot(x, ...),# 2
                    pltree(x, main = main2, sub = sub, ...)
                    )
+            if(do.all) { pick <- pick + 1; do.all <- pick <= length(tmenu) + 1}
         }
     }
     else {
