@@ -2,10 +2,12 @@ agnes                   Agglomerative Nesting
 agnes.object            Agglomerative Nesting (AGNES) Object
 agriculture             European Union Agricultural Workforces
 animals                 Attributes of Animals
+bannerplot              Plot Banner (of Hierarchical Clustering)
 clara                   Clustering Large Applications
 clara.object            Clustering Large Applications (CLARA) Object
 clusplot                Cluster Plot - Generic Function
-clusplot.default        Bivariate Cluster Plot (clusplot) Default Method
+clusplot.default        Bivariate Cluster Plot (clusplot) Default
+                        Method
 clusplot.partition      Bivariate Clusplot of a Partitioning Object
 cluster-internal        Internal cluster functions
 daisy                   Dissimilarity Matrix Calculation
@@ -19,9 +21,10 @@ fanny.object            Fuzzy Analysis (FANNY) Object
 flower                  Flower Characteristics
 lower.to.upper.tri.inds
                         Permute Indices for Triangular Matrices
-mona                    MONothetic Analysis Clustering of Binary Variables
+mona                    MONothetic Analysis Clustering of Binary
+                        Variables
 mona.object             Monothetic Analysis (MONA) Object
-pam                     Partitioning Around Medoids (PAM)
+pam                     Partitioning Around Medoids
 pam.object              Partitioning Around Medoids (PAM) Object
 partition.object        Partitioning Object
 plot.agnes              Plots of an Agglomerative Hierarchical
@@ -46,11 +49,11 @@ ruspini                 Ruspini Data
 silhouette              Compute or Extract Silhouette Information from
                         Clustering
 sizeDiss                Sample Size of Dissimilarity Like Object
-summary.agnes           Summary method for `agnes' objects
-summary.clara           Summary method for `clara' objects
+summary.agnes           Summary Method for `agnes' Objects
+summary.clara           Summary Method for `clara' Objects
 summary.diana           Summary Method for `diana' Objects
-summary.fanny           Summary method for `fanny' objects
-summary.mona            Summary method for `mona' objects
+summary.fanny           Summary Method for `fanny' Objects
+summary.mona            Summary Method for `mona' Objects
 summary.pam             Summary Method for PAM Objects
 twins.object            Hierarchical Clustering Object
 volume.ellipsoid        Compute the Volume of Planar Object
