@@ -346,8 +346,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         else { ## rank2
             if(!span) {
                 loc[i, ] <- apply(x, 2, mean)
-                d2[i] <- (1+ 0.01)^2 * ## < factor for back-compatibility
-                    max(mahalanobis(x, loc[i, ], cov))
+                d2[i] <- max(mahalanobis(x, loc[i, ], cov))
+                ## * (1+ 0.01)^2  --- dropped factor for back-compatibility
             }
             else { ## span and rank2
                 if(verbose)
@@ -369,8 +369,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                                 PACKAGE = "cluster")
                 if(res$ierr != 0)
                     ## MM : exactmve not available here !
-                    cat("Error in Fortran routine computing the MVE-ellipsoid,",
-                        "\nplease use the option exactmve=F\n", sep="")
+                    cat("Error in Fortran routine for the spanning ellipsoid,",
+                        "\n rank problem??\n", sep="")
 
                 cov <- cov.wt(x, res$prob)
                 loc[i, ] <- cov$center
@@ -388,7 +388,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
             oppervlak <- pi * d2[i] * sqrt(cov[1, 1] * cov[2, 2] - cov[1, 2]^2)
         }
 
-        z[[i]] <- ellipsePoints(A[[i]], d2[i], loc[i, ], n= 201)
+        z[[i]] <- ellipsoidPoints(A[[i]], d2[i], loc[i, ], n= 201)
         maxima[i, ] <- z[[i]][201, ]
         rx <- range(z[[i]][, 1])
         ry <- range(z[[i]][, 2])
