@@ -1,5 +1,5 @@
 /*
- *  $Id: SASxport.c,v 1.3 2001/04/09 18:43:36 saikat Exp $
+ *  $Id: SASxport.c,v 1.4 2001/05/15 16:07:56 saikat Exp $
  *
  *  Read SAS transport data set format
  *
@@ -263,7 +263,6 @@ next_xport_info(FILE *fp, int namestr_length, int nvars, int *headpad,
 		int *tailpad, int *length, int *ntype, int *nlng,
 		int *nvar0, SEXP nname, int *npos)
 {
-    SEXP stmp;
     char *tmp;
     char record[81];
     int i, n, nbytes, totwidth, nlength, restOfCard;
@@ -444,7 +443,7 @@ xport_info(SEXP xportFile)
     FILE *fp;
     int i, namestrLength, memLength, ansLength;
     char dsname[9];
-    SEXP ans, ansNames, newAns, newAnsNames, varInfoNames, varInfo;
+    SEXP ans, ansNames, varInfoNames, varInfo;
     SEXP char_numeric, char_character;
 
     PROTECT(varInfoNames = allocVector(STRSXP, VAR_INFO_LENGTH));
