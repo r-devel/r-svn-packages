@@ -1,37 +1,33 @@
-/* Produced by
- * $Id$
+/* Compute the SPANNing ELlipsoid --
+ --------------- for clusplot.default(*, span = TRUE)
+*/
+
+/* Original spannel.f -- translated by f2c (version 20010821).
+ * and f2c-clean,v 1.10 2002/03/28 16:37:27 maechler
  */
-/* spannel.f -- translated by f2c (version 20010821).
-   You must link the resulting object file with the libraries:
-	-lf2c -lm   (in that order)
 
-
--- be brave, try without >>>
- * #include "f2c.h" /* <<<<< ------*/
 #include <math.h>
-#ifndef max
-# define	max(a, b) 		((a) < (b) ? (b) : (a))
-#endif
-#ifndef min
-# define	min(a, b)		((a) > (b) ? (b) : (a))
-#endif
-#ifndef abs
-# define	abs(x)			((x) >= 0 ? (x) : -(x))
-#endif
 
+#include "cluster.h"
+
+void sweep_(double *, int *, int *, int *, double *);
 
 /* Table of constant values */
 
 static int c__0 = 0;
 
-/* Compute the SPANNing ELlipsoid -- 
- --------------- for clusplot.default(*, span = TRUE) 
-
- Subroutine */ int spannel_(int *ncas, int *ndep, double *dat,
-
-	double *dstopt, double *cov, double *varsum, double *
-	varss, double *prob, double *work, double *eps, int *
-	maxit, int *ierr)
+void spannel_(int *ncas, /* = number of objects */
+	      int *ndep, /* = number of variables */
+	      double *dat,/* [ncas, 0:ndep] */
+	      double *dstopt, /* = squared distances [1:ncas] */
+	      double *cov,/* matrix [0:ndep, 0:ndep] */
+	      double *varsum,	/* [1:ndep] */
+	      double *varss,	/* [1:ndep] */
+	      double *prob, 	/* [1:ncas] */
+	      double *work, 	/* [0:ndep] */
+	      double *eps,
+	      int *maxit, /* = maximal # iterations (and returns #{iter.})*/
+	      int *ierr)
 {
     /* System generated locals */
     int dat_dim1, dat_offset, cov_dim1, cov_offset, i__1, i__2, i__3;
@@ -43,21 +39,9 @@ static int c__0 = 0;
     /* Local variables */
     double scal, dmax__, aver, dist;
     int loop, i__, j, k;
-    double p, deter;
-    extern /* Subroutine */ int sweep_(double *, int *, int *,
+    double p, deter, tempo;
 
-	    int *, double *);
-    double tempo;
-
-
-/*    ncas = number of objects. 
-    ndep = number of variables. 
-    maxit= maximal # iterations (and returns #{iter.}) 
-    dstopt = squared distances 
- Local Variables 
- (in clusplot's call,)  dat[i,0] are all  == 1 
- Scale Data dat[i,j] to mean = 0 and var{1/n} = 1  -- for j= 1:ndep (not j=0!) 
-     Parameter adjustments */
+    /* Parameter adjustments */
     --prob;
     --dstopt;
     --varss;
@@ -74,23 +58,23 @@ static int c__0 = 0;
 	varsum[j] = 0.;
 	varss[j] = 0.;
     }
-    for (i__ = 1; i__ <= *ncas; ++i__) { /* f2c-clean: s {i__1} {*ncas} */
-	for (j = 1; j <= *ndep; ++j) { /* f2c-clean: s {i__2} {*ndep} */
+    for (i__ = 1; i__ <= *ncas; ++i__) {
+	for (j = 1; j <= *ndep; ++j) {
 	    varsum[j] += dat[i__ + j * dat_dim1];
 /* Computing 2nd power */
 	    d__1 = dat[i__ + j * dat_dim1];
 	    varss[j] += d__1 * d__1;
 	}
     }
-    for (j = 1; j <= *ndep; ++j) { /* f2c-clean: s {i__2} {*ndep} */
+    for (j = 1; j <= *ndep; ++j) {
 	aver = varsum[j] / *ncas;
 	scal = sqrt(varss[j] / *ncas - aver * aver);
-	for (i__ = 1; i__ <= *ncas; ++i__) { /* f2c-clean: s {i__1} {*ncas} */
+	for (i__ = 1; i__ <= *ncas; ++i__) {
 	    dat[i__ + j * dat_dim1] = (dat[i__ + j * dat_dim1] - aver) / scal;
 	}
     }
     p = 1.f / (double) (*ncas);
-    for (i__ = 1; i__ <= *ncas; ++i__) { /* f2c-clean: s {i__1} {*ncas} */
+    for (i__ = 1; i__ <= *ncas; ++i__)
 	prob[i__] = p;
     }
     *ierr = 0;
@@ -123,20 +107,20 @@ L160:
     for (i__ = 0; i__ <= *ndep; ++i__) { /* f2c-clean: s {i__3} {*ndep} */
 	if (deter <= 0.f) {
 	    *ierr = 2;
-	    return 0;
+	    return;
 	}
 	sweep_(&cov[cov_offset], ndep, &c__0, &i__, &deter);
     }
     dmax__ = 0.f;
-    for (i__ = 1; i__ <= *ncas; ++i__) { /* f2c-clean: s {i__3} {*ncas} */
+    for (i__ = 1; i__ <= *ncas; ++i__) {
 	dist = -1.f;
-	for (j = 0; j <= *ndep; ++j) { /* f2c-clean: s {i__2} {*ndep} */
+	for (j = 0; j <= *ndep; ++j) {
 	    work[j] = 0.;
-	    for (k = 0; k <= *ndep; ++k) { /* f2c-clean: s {i__1} {*ndep} */
+	    for (k = 0; k <= *ndep; ++k)
 		work[j] -= cov[j + k * cov_dim1] * dat[i__ + k * dat_dim1];
-	    }
-/*           work(j) = - sum_{k=0}^p  dat(i,k) * cov(k,j) { = cov(j,k) }, 
-     i.e., work_j = - X[i,] %*% COV[,j] */
+
+/*          work(j) = - sum_{k=0}^p  dat(i,k) * cov(k,j) { = cov(j,k) },
+     i.e.,  work_j = - X[i,] %*% COV[,j] */
 	    dist += work[j] * dat[i__ + j * dat_dim1];
 	}
 	dstopt[i__] = dist;
