@@ -4,11 +4,11 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 {
     if(diss) {
         ## check type of input vector
-        if(is.na(min(x)))
+        if(any(is.na(x)))
             stop("NA-values in the dissimilarity matrix not allowed." )
         if(data.class(x) != "dissimilarity") {
             if(!is.numeric(x) || is.na(sizeDiss(x)))
-                stop("x is not of class dissimilarity and can not be converted to this class." )
+                stop("x is not and cannot be converted to class dissimilarity")
             ## convert input vector to class "dissimilarity"
             class(x) <- "dissimilarity"
             attr(x, "Size") <- sizeDiss(x)
@@ -112,36 +112,28 @@ summary.agnes <- function(object, ...)
 
 print.agnes <- function(x, ...)
 {
-    cat("Merge:\n")
-    print(x$merge, ...)
-    cat("Order of objects:\n")
+    cat("Call:	", deparse(x$call),
+	"\nAgglomerative coefficient: ", format(x$ac, ...),
+	"\nOrder of objects:\n")
     print(if(length(x$order.lab) != 0) x$order.lab else x$order,
-          quote = FALSE, ...)
-    cat("Height:\n")
-    print(x$height, ...)
-    cat("Agglomerative coefficient:\n")
-    print(x$ac, ...)
-    cat("\nAvailable components:\n")
-    print(names(x), ...)
+	  quote = FALSE, ...)
+    cat("Height (summary):\n");		print(summary(x$height), ...)
+    cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }
 
 print.summary.agnes <- function(x, ...)
 {
-    cat("Merge:\n")
-    print(x$merge, ...)
-    cat("Order of objects:\n")
+    ## a bit more than print.agnes() ..
+    cat("Object of class `clara' from call:\n", deparse(x$call),
+        "\nAgglomerative coefficient: ", format(x$ac, ...),
+        "\nOrder of objects:\n")
     print(if(length(x$order.lab) != 0) x$order.lab else x$order,
           quote = FALSE, ...)
-    cat("Height:\n")
-    print(x$height, ...)
-    cat("Agglomerative coefficient:\n")
-    print(x$ac, ...)
-    cat("\n")
-    ## only extra  compared to print.agnes:
-    print(x$diss, ...)
-    cat("\nAvailable components:\n")
-    print(names(x), ...)
+    cat("Merge:\n");			print(x$merge, ...)
+    cat("Height:\n");			print(x$height, ...)
+    cat("\n");				print(x$diss, ...)
+    cat("\nAvailable components:\n");   print(names(x), ...)
     invisible(x)
 }
 
