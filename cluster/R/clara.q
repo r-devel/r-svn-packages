@@ -50,7 +50,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 		    nsam  = sampsize,
 		    dis	  = double(1 + (sampsize * (sampsize - 1))/2),
 		    mdata = as.integer(mdata),
-		    valmd = rep(as.double(valmisdat), jp),
+		    valmd = rep(valmisdat, jp),
 		    jtmd  = as.integer(jtmd),
 		    ndyst = as.integer(if(metric == "manhattan") 2 else 1),
 		    integer(sampsize),
@@ -97,8 +97,8 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     attr(disv, "Labels") <- namx[res$sample]
     ## add labels to Fortran output
     res$med <- x[res$med, ]
-    res$clu <- matrix(res$clu, nrow = n, ncol = jp, byrow = TRUE)[, 1]
-    if(length(namx) != 0) {
+    res$clu <- as.integer(matrix(res$clu, nrow= n, ncol= jp, byrow= TRUE)[, 1])
+    if(!is.null(namx)) {
 	sildim <- namx[sildim]
 	res$sample <- namx[res$sample]
 	names(res$clu) <- namx
@@ -126,10 +126,12 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 
 print.clara <- function(x, ...)
 {
-    cat("Best sample:\n");		print(x$sample, quote = FALSE, ...)
-    cat("Medoids:\n");			print(x$medoids, ...)
-    cat("Clustering vector:\n");	print(x$clustering, ...)
-    cat("Objective function:\n");	print(x$objective, ...)
+    cat("Call:	", deparse(x$call),
+	"\nMedoids:\n");		print(x$medoids, ...)
+    cat("Objective function:\t ", format(x$objective, ...),"\n",
+	"Clustering vector: \t", sep=""); str(x$clustering, vec.len = 7)
+    cat("Cluster sizes:	    \t", x$clusinfo[,1],
+        "\nBest sample:\n");		print(x$sample, quote = FALSE, ...)
     cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }
@@ -142,19 +144,22 @@ summary.clara <- function(object, ...)
 
 print.summary.clara <- function(x, ...)
 {
-    cat("Best sample:\n");		print(x$sample, quote = FALSE, ...)
-    cat("Medoids:\n");			print(x$medoids, ...)
-    cat("Clustering vector:\n");	print(x$clustering, ...)
-    cat("Objective function:\n");	print(x$objective, ...)
-    cat("\nNumerical information per cluster:\n")
+    cat("Object of class `clara' from call:\n", deparse(x$call),
+	"\nMedoids:\n");		print(x$medoids, ...)
+    cat("Objective function:\t ", format(x$objective, ...),
+        "\nNumerical information per cluster:\n")
     print(x$clusinfo, ...)
-    if(length(x$silinfo) != 0) {
-	cat("\nSilhouette plot information for best sample:\n")
-	print(x$silinfo[[1]], ...)
+    if(has.sil <- !is.null(x$silinfo)) {
 	cat("Average silhouette width per cluster:\n")
 	print(x$silinfo[[2]], ...)
-	cat("Average silhouette width of best sample:\n")
-	print(x$silinfo[[3]], ...)
+	cat("Average silhouette width of best sample:",
+            format(x$silinfo[[3]], ...), "\n")
+    }
+    cat("\nBest sample:\n");		print(x$sample, quote = FALSE, ...)
+    cat("Clustering vector: \t",sep="");print(x$clustering, ...)
+    if(has.sil) {
+	cat("\nSilhouette plot information for best sample:\n")
+	print(x$silinfo[[1]], ...)
     }
     cat("\n")
     print(x$diss, ...)
