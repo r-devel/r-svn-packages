@@ -112,7 +112,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     if(k > 1) {
 	dimnames(res$silinf) <- list(sildim,
 				     c("cluster", "neighbor", "sil_width", ""))
-	r$silinfo <- list(width = res$silinf[, -4],
+	r$silinfo <- list(widths = res$silinf[, -4],
 			  clus.avg.widths = res$avsil,
 			  avg.width = res$ttsil)
     }
