@@ -1,49 +1,38 @@
 \name{lower.to.upper.tri.inds}
 \alias{lower.to.upper.tri.inds}
-%- Also NEED an `\alias' for EACH other topic documented here.
-\title{ ~~function to do ... ~~ }
+\alias{upper.to.lower.tri.inds}
+\title{Permute Indices for Triangular Matrices}
 \description{
-  ~~ A concise (1-5 lines) description of what the function does. ~~
+  Compute index vectors for extracting or reordering of lower or upper
+  triangular matrices that are stored as contiguous vectors.
 }
 \usage{
 lower.to.upper.tri.inds(n)
+upper.to.lower.tri.inds(n)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{
-  \item{n}{ ~~Describe \code{n} here~~ }
-}
-\details{
-  ~~ If necessary, more details than the __description__  above ~~
+  \item{n}{integer larger than 1.}
 }
 \value{
-  ~Describe the value returned
-  If it is a LIST, use
-  \item{comp1 }{Description of `comp1'}
-  \item{comp2 }{Description of `comp2'}
-  ...
+  integer vector containing a permutation of \code{1:N} where
+  \eqn{N = n(n-1)/2}.
 }
-\references{ ~put references to the literature/web site here ~ }
-\author{ ~~who you are~~ }
-\note{ ~~further notes~~ }
-
- ~Make other sections like WARNING with \section{WARNING }{....} ~
-
-\seealso{ ~~objects to SEE ALSO as \code{\link{~~fun~~}}, ~~~ }
-
+\note{
+  these functions are mainly for internal use in the cluster package,
+  and may not remain available (unless we see a good reason).
+}
+\seealso{\code{\link{upper.tri}}, \code{\link{lower.tri}} with a related
+  purpose.}
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	     or do  help(data=index)  for the standard data sets.
+m5 <- matrix(NA,5,5)
+m <- m5; m[lower.tri(m)] <- upper.to.lower.tri.inds(5); m
+m <- m5; m[upper.tri(m)] <- lower.to.upper.tri.inds(5); m
 
-## The function is currently defined as
-function(n)
-{
-    n1 <- as.integer(n - 1)
-    if(n1 < 1) stop("`n' must be >= 2")
-    else if(n1 == 1) 1:1
-    else rep(1:n1, 1:n1) +
-        c(0, unlist(lapply(2:n1, function(k) cumsum(c(0, (n - 2):(n - k))))))
-  }
+stopifnot(lower.to.upper.tri.inds(2) == 1,
+          lower.to.upper.tri.inds(3) == 1:3,
+          upper.to.lower.tri.inds(3) == 1:3,
+     sort(upper.to.lower.tri.inds(5)) == 1:10,
+     sort(lower.to.upper.tri.inds(6)) == 1:15)
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
+\keyword{array}
+\keyword{utilities}
