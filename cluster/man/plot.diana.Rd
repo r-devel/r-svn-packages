@@ -1,5 +1,3 @@
-% %Z%%M% version %I% created %G%
-% %Z%%Q%
 \name{plot.diana}
 \alias{plot.diana}
 \title{Plots of a Divisive Hierarchical Clustering}
@@ -7,7 +5,10 @@
   Creates plots for visualizing a \code{diana} object.
 }
 \usage{
-plot.diana(x, ask=FALSE, \dots)
+plot.diana(x, ask = FALSE, which.plots = NULL,
+         main = paste("Banner of ", deparse(attr(x, "Call"))),
+         sub  = paste("Divisive Coefficient = ", round(x$dc, digits = 2)),
+         adj = 0, nmax.lab = 35, max.strlen = 5, \dots)
 }
 \arguments{
   \item{x}{an object of class \code{"diana"}, created by the function
@@ -67,7 +68,6 @@ Clustering Techniques in S-PLUS,
   \code{\link{diana}}, \code{\link{diana.object}},
   \code{\link{twins.object}}, \code{\link{par}}. 
 }
-\keyword{libcluster}
 \keyword{cluster}
 \keyword{hplot}
 % Converted by Sd2Rd version 0.3-2.
