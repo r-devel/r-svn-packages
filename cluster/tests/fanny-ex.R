@@ -25,5 +25,3 @@ summary(fanny(ruspini, 5), digits = 9)
 
 ## Last Line:
 cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-## Lynne (P IV, 1.6 GHz):  7.5
-## nb-mm (P III,700 MHz): 12.4
