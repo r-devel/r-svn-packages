@@ -64,9 +64,6 @@ void clara(int *n,  /* = number of objects */
     int n_dys, nsamb, nunfs;
     double rnn, sky, zb, s, sx = -1., zba = -1.;/* Wall */
 
-    /* Parameter adjustments */
-    --nsel;
-
     *jstop = 0;
     rnn = (double) (*n);
     /* n_dys := size of distance array dys[] */
@@ -93,11 +90,12 @@ void clara(int *n,  /* = number of objects */
 	    if (kall/*was jran != 1 */ && nunfs != jran && !lrg_sam) {
 		/* nsel[] := sort(nrx[])   for the first j=1:k	?? */
 		for (jk = 0; jk < *kk; ++jk)
-		    nsel[jk+1] = nrx[jk];
-		for (jk = 1; jk < *kk; ++jk) {
+		    nsel[jk] = nrx[jk];
+		for (jk = 0; jk < *kk-1; ++jk) {
+		    /* FIXME: nsel[] is 0-indexed, but *contains* 1-indices*/
 		    nsm = nsel[jk];
 		    jsm = jk;
-		    for (jkk = jk + 1; jkk <= *kk; ++jkk) {
+		    for (jkk = jk + 1; jkk < *kk; ++jkk) {
 			if (nsel[jkk] < nsm) {
 			    nsm = nsel[jkk];
 			    jsm = jkk;
@@ -122,8 +120,8 @@ void clara(int *n,  /* = number of objects */
 			    goto L180;
 		}
 		/* end Loop */
-		nsel[++ntt] = kran;
-		if (ntt == n_sam)
+		nsel[ntt] = kran;
+		if (++ntt == n_sam)
 		    goto L295;
 	    }
 
@@ -156,20 +154,20 @@ void clara(int *n,  /* = number of objects */
 		    }
 		}
 		/* insert kran into nsel[1:ntt] or after  and increase ntt : */
-		for (kans = 1; kans <= ntt; ++kans)
+		for (kans = 0; kans < ntt; ++kans)
 		    if (nsel[kans] >= kran) {
 			if (nsel[kans] == kran)
 			    goto L210;
 			else {
 			    for (nad = kans; nad <= ntt; ++nad) {
 				nadv = ntt - nad + kans;
-				nsel[nadv + 1] = nsel[nadv];
+				nsel[nadv] = nsel[nadv-1];
 			    }
 			    nsel[kans] = kran;
 			    /* continue _outer_ loop */ goto L290;
 			}
 		    }
-		nsel[ntt+1] = kran;
+		nsel[ntt] = kran;
 
 	    L290:
 		++ntt;
@@ -178,25 +176,25 @@ void clara(int *n,  /* = number of objects */
 	L295:
 	    if (lrg_sam) {
 		/* have indices for smaller _nonsampled_ half; revert this: */
-		for (j = 1, nexap = 1, nexbp = 0; j <= *n; j++) {
+		for (j = 1, nexap = 0, nexbp = 0; j <= *n; j++) {
 		    if (nsel[nexap] == j)
 			++nexap;
 		    else
 			nrepr[nexbp++] = j;
 		}
 		for (j = 0; j < *nsam; ++j)
-		    nsel[j+1] = nrepr[j];
+		    nsel[j] = nrepr[j];
 	    }
 	    if(*trace_lev)
 		Rprintf("C clara(): sample %d [ntt=%d, nunfs=%d] -> dysta2()\n",
 			jran, ntt, nunfs);
 	}
 	else { /* full_sample : *n = *nsam -- one sample is enough ! */
-	    for (j = 1; j <= *nsam; ++j)
-		nsel[j] = j;
+	    for (j = 0; j < *nsam; ++j)
+		nsel[j] = j+1;/* <- still uses 1-indices for its *values*! */
 	}
 
-	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *diss_kind,
+	dysta2(*nsam, *jpp, nsel, x, *n, dys, *diss_kind,
 	       jtmd, valmd, &jhalt);
 	if (jhalt == 1) {
 	    if(*trace_lev)
@@ -220,7 +218,7 @@ void clara(int *n,  /* = number of objects */
 	       /* beter[], only used here */&tmp[nsamb]);
 
 	selec(*kk, *n, *jpp, *diss_kind, &zb, *nsam, has_NA, jtmd, valmd,
-	      nrepr, &nsel[1], dys, x, nr, &nafs, ttd, radus, ratt,
+	      nrepr, nsel, dys, x, nr, &nafs, ttd, radus, ratt,
 	      ntmp1, ntmp2, ntmp3, ntmp4, ntmp5, ntmp6, tmp1, tmp2);
 
 	if (nafs) {
@@ -236,7 +234,7 @@ void clara(int *n,  /* = number of objects */
 		nrx  [jk] = nr	 [jk];
 	    }
 	    for (js = 0; js < *nsam; ++js)
-		nbest[js] = nsel[js+1];
+		nbest[js] = nsel[js];
 	    sx = s;
 	}
 
