@@ -31,6 +31,8 @@ TODO {see ./DONE-MM for things done}
 
  3) daisy() for the case of mixed variables should allow
     a weight vector (of length p = #vars) for up- or downweighing variables.
+    daisy() really should accept the other methods mva's dist() does _and_
+    it should use dist's C API -- but we have no C API for package code, ARRGH!
 
  4) Eliminate the many Fortran (g77 -Wall) warnings of the form
     >> mona.f:101: warning: `jma' might be used uninitialized in this function
