@@ -56,7 +56,7 @@ c Args
       double precision x(nn,jpp), dss(1+nn*(nn-1)/2), valmd(jpp)
       integer ndyst, jtmd(jpp), jhalt
 c VARs
-      double precision pp
+      double precision pp, clk, rpres
       integer j,k,l,lplus, nlk, nnsub, npres
 
       pp=jpp
@@ -93,17 +93,22 @@ c VARs
 C
 C
       subroutine fuzzy(nn,hh,p,dp,pt,dss,esp,ef,eda,edb,k,obj,eps)
-      implicit double precision (a-h,o-z)
-      integer hh
-      dimension p(nn,k),dp(nn,k),dss(hh)
-      dimension pt(k),esp(k),ef(k),obj(2)
+
+c Args
+      integer nn,hh, k
+      double precision p(nn,k),dp(nn,k),pt(k), dss(hh)
+      double precision esp(k),ef(k), eda,edb, obj(2), eps
 C
+c VARs
+      integer kaunt, j,j1,j2,l,lx,m, nd,ndk, nyt, nnsub
+      double precision ann,crt,cryt,dt,ddd, r, reen, rvers,rkme, xx, zk
 C     r	  is the exponent, strictly larger than 1.0
 C     eps is the precision for the iterations
 C     nyt is the maximal number of iterations
 C
       r=2.0
       nyt=500
+
 C
 C   initial fuzzy clustering
 C
@@ -219,9 +224,16 @@ C
 C
 C
       subroutine caddy(nn,p,k,ktrue,nfuzz,ncluv,rdraw,nelem)
-      implicit double precision (a-h,o-z)
-      dimension ncluv(nn),nelem(nn),p(nn,k)
-      dimension nfuzz(k),rdraw(k)
+
+c Args
+      integer nn, k, ktrue
+      integer nfuzz(k), ncluv(nn), nelem(nn)
+      double precision p(nn,k), rdraw(k)
+C
+c VARs
+      integer l,m, nbest, jstay, ktry, knext, kwalk, kleft, ksup, lfuzz
+      double precision pbest
+
       pbest=p(1,1)
       nbest=1
       do 10 l=2,k
@@ -280,11 +292,16 @@ C
 C
       subroutine fygur(ktrue,nn,kk,hh,ncluv,nsend,nelem,
      1	   negbr,syl,srank,avsyl,ttsyl,dss,s,sylinf)
-      implicit double precision (a-h,o-z)
-      integer hh
-      dimension ncluv(nn),nsend(nn),nelem(nn),negbr(nn)
-      dimension syl(nn),srank(nn),avsyl(kk),dss(hh)
-      dimension sylinf(nn,4)
+c Args
+      integer ktrue,nn,kk,hh
+      integer ncluv(nn), nsend(nn), nelem(nn), negbr(nn)
+      double precision syl(nn),srank(nn),avsyl(kk),ttsyl,dss(hh)
+      double precision s, sylinf(nn,4)
+c VARs
+      integer j,l, lang, lplac, mjl
+      integer nsylr, ntt, nj, numcl, nclu, nbb, nl, njl
+      double precision db,dysa,dysb, att,btt, rtt, rnn, symax
+
       nsylr=0
       ttsyl=0.0
       do 100 numcl=1,ktrue
