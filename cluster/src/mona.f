@@ -19,7 +19,7 @@ CC          JPP = NUMBER OF VARIABLES
 CC
       DIMENSION NBAN(NN),NER(NN),KWAN(NN),LAVA(NN)
       DIMENSION JLACK(JPP)
-      CHARACTER KX(NN,JPP),NZF
+      INTEGER KX(NN,JPP),NZF
 CC
       LACK=0
       JHALT=0 
@@ -29,8 +29,8 @@ CC
       DO 70 L=1,NN
       MYSCA=0 
       DO 60 J=1,JPP 
-      IF(KX(L,J).EQ.'0')GO TO 60
-      IF(KX(L,J).EQ.'1')GO TO 60
+      IF(KX(L,J).EQ.0)GO TO 60
+      IF(KX(L,J).EQ.1)GO TO 60
       MYSCA=MYSCA+1 
    60 CONTINUE
       MYST=MYST+MYSCA 
@@ -45,8 +45,8 @@ CC   ALL VARIABLES MISSING FOR THIS OBJECT
       JNUL=0
       JEEN=0
       DO 80 L=1,NN
-      IF(KX(L,J).EQ.'0')JNUL=JNUL+1
-      IF(KX(L,J).EQ.'1')JEEN=JEEN+1
+      IF(KX(L,J).EQ.0)JNUL=JNUL+1
+      IF(KX(L,J).EQ.1)JEEN=JEEN+1
    80 CONTINUE
       JLACK(J)=NN-JNUL-JEEN 
       IF(JLACK(J).NE.0)LACK=LACK+1
@@ -82,12 +82,12 @@ CC
       JVC=0 
       JVD=0 
       DO 230 K=1,NN 
-      IF(KX(K,J).EQ.'1')GO TO 220
-      IF(KX(K,JA).EQ.'0')JVA=JVA+1
-      IF(KX(K,JA).EQ.'1')JVB=JVB+1
+      IF(KX(K,J).EQ.1)GO TO 220
+      IF(KX(K,JA).EQ.0)JVA=JVA+1
+      IF(KX(K,JA).EQ.1)JVB=JVB+1
       GO TO 230
-  220 IF(KX(K,JA).EQ.'0')JVC=JVC+1
-      IF(KX(K,JA).EQ.'1')JVD=JVD+1
+  220 IF(KX(K,JA).EQ.0)JVC=JVC+1
+      IF(KX(K,JA).EQ.1)JVD=JVD+1
   230 CONTINUE
       KAL=JVA*JVD-JVB*JVC
       KALF=KAB(KAL)
@@ -97,13 +97,13 @@ CC
       IF(KAL.LT.0)NSYN=-1
   240 CONTINUE
       DO 250 L=1,NN 
-      IF(KX(L,J).EQ.'0')GO TO 250
-      IF(KX(L,J).EQ.'1')GO TO 250
+      IF(KX(L,J).EQ.0)GO TO 250
+      IF(KX(L,J).EQ.1)GO TO 250
       IF(NSYN.EQ.1)THEN
          KX(L,J)=KX(L,JMA)
       ELSE
-         IF(KX(L,JMA).EQ.'1')KX(L,J)='0'
-         IF(KX(L,JMA).EQ.'0')KX(L,J)='1'
+         IF(KX(L,JMA).EQ.1)KX(L,J)=0
+         IF(KX(L,JMA).EQ.0)KX(L,J)=1
       ENDIF
   250 CONTINUE
   260 CONTINUE
@@ -131,8 +131,8 @@ CC
       JEEN=0
       DO 325 L=KA,KB
       NEL=NER(L)
-      IF(KX(NEL,J).EQ.'0')JNUL=JNUL+1
-      IF(KX(NEL,J).EQ.'1')JEEN=JEEN+1
+      IF(KX(NEL,J).EQ.0)JNUL=JNUL+1
+      IF(KX(NEL,J).EQ.1)JEEN=JEEN+1
   325 CONTINUE
       IF(JEEN.EQ.0)GO TO 370
       IF(JNUL.EQ.0)GO TO 370
@@ -146,12 +146,12 @@ CC
       KVD=0 
       DO 350 L=KA,KB
       NEL=NER(L)
-      IF(KX(NEL,J).EQ.'1')GO TO 340
-      IF(KX(NEL,JB).EQ.'0')KVA=KVA+1
-      IF(KX(NEL,JB).EQ.'1')KVB=KVB+1
+      IF(KX(NEL,J).EQ.1)GO TO 340
+      IF(KX(NEL,JB).EQ.0)KVA=KVA+1
+      IF(KX(NEL,JB).EQ.1)KVB=KVB+1
       GO TO 350
-  340 IF(KX(NEL,JB).EQ.'0')KVC=KVC+1
-      IF(KX(NEL,JB).EQ.'1')KVD=KVD+1
+  340 IF(KX(NEL,JB).EQ.0)KVC=KVC+1
+      IF(KX(NEL,JB).EQ.1)KVD=KVD+1
   350 CONTINUE
       LAMS=LAMS+KAB(KVA*KVD-KVB*KVC)
   360 CONTINUE
@@ -168,11 +168,11 @@ CC
 CC    SPLITTING 
 CC
   375 NEL=NER(KA)
-      IF(KX(NEL,JMA).EQ.'1')THEN
-      NZF='0'
+      IF(KX(NEL,JMA).EQ.1)THEN
+      NZF=0
       JTEL2=JTEL
       ELSE
-      NZF='1'
+      NZF=1
       JTEL2=JTELZ
       ENDIF
       JRES=KB-KA+1-JTEL2
