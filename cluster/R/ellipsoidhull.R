@@ -33,11 +33,13 @@ ellipsoidhull <-
               double(p+1),
               eps = as.double(tol),
               maxit = as.integer(maxit),
-              ierr = integer(1),
+              ierr = integer(1),# 0 or non-zero
               PACKAGE = "cluster")
     if(res$ierr != 0)
         cat("Error in Fortran routine computing the spanning ellipsoid,",
             "\n probably collinear data\n", sep="")
+    if(any(res$prob < 0) || all(res$prob == 0))
+        stop("computed some negative or all 0 `prob'abilities")
     conv <- res$maxit  < maxit
     if(!conv)
         warning("possibly not converged in ", maxit, " iterations")
@@ -72,6 +74,11 @@ print.ellipsoid <- function(x, digits = max(1, getOption("digits") - 2), ...)
     print(x$cov, digits = digits, ...)
     cat("  hence,",if(d==2)"area" else "volume"," = ",
         format(volume(x), digits=digits),"\n")
+    if(!x$conv) {
+        cat("\n** Warning: ** the algorithm did not terminate reliably!\n  ",
+            if(x$ierr) "most probably because of collinear data"
+            else "(in the available number of iterations)", "\n")
+    }
     invisible(x)
 }
 
