@@ -3,14 +3,28 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
+o When using a NAMESPACE, can rename `..dClass' in R/0aaa.R
+  Also,  R/agnes.q , R/diana.q  andR/pam.q  have almost identical clause
+
+	if(data.class(x) != "dissimilarity") {
+	    if(!is.numeric(x) || is.na(sizeDiss(x)))
+		stop("x is not of class dissimilarity and can not be converted to this class." )
+	    ## convert input vector to class "dissimilarity"
+	    class(x) <- ..dClass
+	    attr(x, "Size") <- sizeDiss(x)
+	    attr(x, "Metric") <- "unspecified"
+	}
+
+  which can be modularized out into a NAMESPACE-local fixupDiss() function
+
+  [ agnes() and diana() even more in common --> namespace-local functions!
+    see also  "8b)" below!]
+
 o a) pam()$diss  is not a `proper' dissimilarity
      (class is only "dissimilarity", missing "dist") -> done Mo,17.3.
   b) as.dist() is not generic and does too much for "dist" objects,
      and also for "dissimilarity" and the completely wrong thing for the
      pam()$diss like "dissimilarity"s... (wrong $Size !)
-
-o Robert G:  " silhouette.default() is wrong "
-  --> ok, I found this was on R-help, Feb.7 and fixed in my sources subsequently
 
 o diana() {divisive hierarchical}: Should allow ---early stopping---
   (for speed and size) -- simultaneously, could think of
@@ -21,18 +35,6 @@ o diana() {divisive hierarchical}: Should allow ---early stopping---
 o cutree(diana(), h = h0)
 	gives complete non-sense without a warning
   -- the same as in S-plus ..
-
-For R 1.7.0 :
-
-o agnes(), diana() and pam() have a new argument  `keep.diss'
-  with a smart default.  If FALSE, the new behavior is  *NOT* to keep the
-  dissimilarities !
-   --> save space in result object
-   --> somewhat changed summary/print output , i.e. minor NON-compatibility!
-
-o plot(ylab / xlab) -- for agnes -> bannerplot() & pltree()
-  ./R/plothier.q   ===> NOT DONE -- rather tell people {on the help()} to
-  use the two underlying plot functions separately !
 
 
 
