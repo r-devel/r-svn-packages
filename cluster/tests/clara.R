@@ -54,7 +54,21 @@ clara(x5, 5, samples = 1001)
 
 clara(x5, 5, samples = 2000)#full sample
 
-example(clara)## quite a few more
+###--- Start a version of  example(clara) -------
+
+## xclara : artificial data with 3 clusters of 1000 bivariate objects each.
+data(xclara)
+(clx3 <- clara(xclara, 3))
+## Plot similar to Figure 5 in Struyf et al (1996)
+plot(clx3)
+
+## The  rngR = TRUE case is currently in the non-strict tests
+## ./clara-ex.R
+## ~~~~~~~~~~~~
+
+###--- End version of example(clara) -------
+
+
 
 ##  small example(s):
 data(ruspini)
