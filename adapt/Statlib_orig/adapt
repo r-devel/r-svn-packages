@@ -1,0 +1,904 @@
+#! /bin/sh
+# This is a shell archive.  Remove anything before this line, then unpack
+# it by saving it into a file and typing "sh file".  To overwrite existing
+# files, type "sh file -c".  You can also feed this as standard input via
+# unshar, or by typing "sh <file", e.g..  If this archive is complete, you
+# will see the following message at the end:
+#		"End of shell archive."
+# Contents:  Makefile README adapt.SS adapt.f adphlp.c bsrl.f cadapt.c
+#   flfm.f nxprt.f summary symrl.f wht.f .Data .Data/.Help
+#   .Data/.Help/adapt.d
+# Wrapped by mikem@temper.stat.cmu.edu on Tue Oct 17 11:49:38 1989
+PATH=/bin:/usr/bin:/usr/ucb ; export PATH
+if test -f Makefile -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"Makefile\"
+else
+echo shar: Extracting \"Makefile\" \(312 characters\)
+sed "s/^X//" >Makefile <<'END_OF_Makefile'
+XFFLAGS = -G 0
+XCFLAGS = -G 0
+XLDFLAGS = -G 0
+XLIBS = 
+X
+XTARGET = sadapt.o
+X
+XOBJS = cadapt.o adapt.o adphlp.o bsrl.o flfm.o symrl.o wht.o nxprt.o
+X
+Xall:$(TARGET)
+X
+X$(TARGET):$(OBJS) 
+X	   ld $(LDFLAGS) -r -d -o $(TARGET) $(OBJS) $(LIBS)
+Xclean:
+X	rm $(OBJS)
+X
+Xshar:
+X	shar * .Data .Data/.Help .Data/.Help/* > /tmp/adapt.shar
+END_OF_Makefile
+if test 312 -ne `wc -c <Makefile`; then
+    echo shar: \"Makefile\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f README -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"README\"
+else
+echo shar: Extracting \"README\" \(863 characters\)
+sed "s/^X//" >README <<'END_OF_README'
+XThis code contains an S function and supporting C and Fortran code for
+Xadaptive quadrature.  The underlyling fortran code is purported to
+Xwork in from 2 to 20 dimensions.  The code is set up to dynamically
+Xload from a central library area.  If you can not do dynamic loading,
+Xyou may need to build a staticly loaded version.  The adapt S function
+Xcalls load.if.needed to do the dynamic loading.  You will have to
+Xchange the functions used here (probably to call library.dynam).
+X
+XTo install the source, type
+X	make
+Xin this directory.
+XMove the resulting sadapt.o into (say ~s/library/cmu ).  Read the file
+Xadapt.SS into S.  Two functions (adapt, and load.if.needed) will be
+Xcreated.  Move these into ~/library/cmu/.Data.  Finally move
+X./.Data/.Help/adapt into ~s/library/cmu/.Data/.Help/adapt.
+X
+XS code written by Michael Meyer (mikem@andrew.cmu.edu).
+XOctober, 1989.
+END_OF_README
+if test 863 -ne `wc -c <README`; then
+    echo shar: \"README\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f adapt.SS -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"adapt.SS\"
+else
+echo shar: Extracting \"adapt.SS\" \(2561 characters\)
+sed "s/^X//" >adapt.SS <<'END_OF_adapt.SS'
+Xload.if.needed<-function(name) {
+X	if(exists(name, frame = 0)) return()
+X	library.dynam2("cmu",name)
+X	assign(name, 1, frame=0);
+X}
+X
+Xadapt _ function(ndim,lower,upper,minpts,maxpts,functn,eps)
+X{
+Xload.if.needed("sadapt.o")
+X# This function has way too many comments and checks. It is written so
+X# that someone other than me can use it as a template for future functions.
+X
+X# Check to make sure that upper and lower are reasonable lengths
+X# Both the upper and lower limits should be at least of length ndim
+X#
+X  if( length(lower) < ndim || length(upper) < ndim) {
+X     cat("The lower and upper vectors need to have at least ndim elements\n")
+X     cat("Your parameters are,  ndim ",ndim, " length(lower) ",length(lower),
+X         "length(upper) ",length(upper), "\n")
+X     return()
+X     }
+X
+X# Evaluate functn at (upper+lower)/2.
+X# We need to result to be numeric and single precision.
+X#
+X  if( ! is.single(functn((upper+lower)/2))){
+X   cat("Your function is bad, it either does not return single\n")
+X   cat("precision answers, or does not evaluate on the middle of the region\n")
+X   return()
+X}
+X
+X# rulcls and lenwrk are mandated in the adapt source
+X#
+X  rulcls <-  2**ndim+2*ndim**2+6*ndim+1
+X  lenwrk <- (2*ndim+3)*(1+maxpts/rulcls)/2
+X
+X  if( minpts > maxpts ){
+X	cat("maxpts must be > minpts. Maxpts has be increased to\n")
+X	cat("minpts + 1\n")
+X	maxpts <- minpts + 1
+X	}
+X# maxpts should be large enough.  Prefer 10*rulclc, but use 2*rulclc.
+X#
+X  if ( maxpts < 2*rulcls) {
+X	cat("You have maxpts (= ", maxpts, " too small\n")
+X	cat("It needs to be at least 2 times 2**ndim+2*ndim**2+6*ndim+1\n")
+X	cat("It has been reset to ", 2*rulcls,"\n")
+X	maxpts <- 2*rulcls
+X	}
+X  relerr <- finest <- 0.0
+X  ifail <- 0
+X
+X# Force some storage modes
+X# The next three vbles are returned
+X  storage.mode(relerr) <- "single"
+X  storage.mode(finest) <- "single"
+X  storage.mode(ifail) <- "integer"
+X# These two vbles are vectors.
+X  storage.mode(lower) <- "single"
+X  storage.mode(upper) <- "single"
+X
+X  answ _ .C("cadapt", as.integer(ndim), lower, upper,
+X            minpts=as.integer(minpts), as.integer(maxpts),list(functn),
+X            as.single(eps),relerr = relerr, as.integer(lenwrk),
+X	    finest = finest,ifail=ifail)
+X			  # Finest is the value of the function.
+X  switch( answ$ifail,
+X          cat("Ifail is 1, maxpts was too small. Check the returned relerr\n"),
+X          cat("Ifail is 2, lenwrk was too small. Check the returned relerr\n"),
+X          cat("Ifail is 3, This should not happen\n")
+X	 )
+X   result <- list(finest=answ$finest,relerr=answ$relerr,minpts=answ$minpts,
+X		 ifail=answ$ifail)
+X  }
+END_OF_adapt.SS
+if test 2561 -ne `wc -c <adapt.SS`; then
+    echo shar: \"adapt.SS\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f adapt.f -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"adapt.f\"
+else
+echo shar: Extracting \"adapt.f\" \(7668 characters\)
+sed "s/^X//" >adapt.f <<'END_OF_adapt.f'
+XCmm This is the original adapt code with one modification.
+XCmm Instead of calling the external function "FUNCTN", a fixed
+XCmm external routine adphlp is always called, and passed a pointer
+XCmm to the external S function.
+XCmm     Michael Meyer, October 1989.
+X
+X      SUBROUTINE ADAPT(NDIM,A,B,MINPTS,MAXPTS,FUNCTN,EPS,RELERR,LENWRK,
+X     * WRKSTR,FINEST,IFAIL)
+XC***BEGIN PROLOGUE ADAPT
+XC  ADAPTIVE MULTIDIMENSIONAL INTEGRATION SUBROUTINE
+XC           AUTHOR: A. C. GENZ, Washington State University
+XC                    19 March 1984
+XC**************  PARAMETERS FOR ADAPT  ********************************
+XC***** INPUT PARAMETERS
+XC  NDIM    NUMBER OF VARIABLES, MUST EXCEED 1, BUT NOT EXCEED 20
+XC  A       REAL ARRAY OF LOWER LIMITS, WITH DIMENSION NDIM
+XC  B       REAL ARRAY OF UPPER LIMITS, WITH DIMENSION NDIM
+XC  MINPTS  MINIMUM NUMBER OF FUNCTION EVALUATIONS TO BE ALLOWED.
+XC          ON THE FIRST CALL TO ADAPT MINPTS SHOULD BE SET TO A
+XC          NON NEGATIVE VALUE. (CAUTION... MINPTS IS ALTERED BY ADAPT)
+XC          IT IS POSSIBLE TO CONTINUE A CALCULATION TO GREATER ACCURACY
+XC          BY CALLING ADAPT AGAIN BY DECREASING EPS (DESCRIBED BELOW)
+XC          AND RESETTING MINPTS TO ANY NEGATIVE VALUE.
+XC          MINPTS MUST NOT EXCEED MAXPTS.
+XC  MAXPTS  MAXIMUM NUMBER OF FUNCTION EVALUATIONS TO BE ALLOWED,
+XC          WHICH MUST BE AT LEAST RULCLS, WHERE
+XC          RULCLS =  2**NDIM+2*NDIM**2+6*NDIM+1
+XC
+XC            FOR NDIM =  2   3   4   5   6   7   8   9   10
+XC            MAXPTS >=  25  45  73 113 173 269 433 729 1285
+XC         A suggested value for MAXPTS is 100 times the above values.
+XC
+XC  FUNCTN  EXTERNALLY DECLARED USER DEFINED FUNCTION TO BE INTEGRATED.
+XC          IT MUST HAVE PARAMETERS (NDIM,Z), WHERE Z IS A REAL ARRAY
+XC          OF DIMENSION NDIM.
+XC  EPS     REQUIRED RELATIVE ACCURACY
+XC  LENWRK  LENGTH OF ARRAY WRKSTR OF WORKING STORAGE, THE ROUTINE
+XC          NEEDS (2*NDIM+3)*(1+MAXPTS/RULCLS)/2 FOR LENWRK IF
+XC          MAXPTS FUNCTION CALLS ARE USED.
+XC          FOR GUIDANCE, IF YOU SET MAXPTS TO 100*RULCLS (SEE TABLE
+XC          ABOVE) THEN ACCEPTABLE VALUES FOR LENWRK ARE
+XC
+XC            FOR NDIM = 2    3    4    5    6    7    8     9
+XC            LENWRK =  357  561  1785 3417 6681 13209 26265 52377
+XC
+XC***** OUTPUT PARAMETERS
+XC  MINPTS  ACTUAL NUMBER OF FUNCTION EVALUATIONS USED BY ADAPT
+XC  WRKSTR  REAL ARRAY OF WORKING STORAGE OF DIMENSION (LENWRK).
+XC  RELERR  ESTIMATED RELATIVE ACCURACY OF FINEST
+XC  FINEST  ESTIMATED VALUE OF INTEGRAL
+XC  IFAIL   IFAIL=0 FOR NORMAL EXIT, WHEN ESTIMATED RELATIVE ACCURACY
+XC                  RELERR IS LESS THAN EPS WITH MAXPTS OR LESS FUNCTION
+XC                  CALLS MADE.
+XC          IFAIL=1 IF MAXPTS WAS TOO SMALL FOR ADAPT TO OBTAIN THE
+XC                  REQUIRED RELATIVE ACCURACY EPS.  IN THIS CASE ADAPT
+XC                  RETURNS A VALUE OF FINEST WITH ESTIMATED RELATIVE
+XC                  ACCURACY RELERR.
+XC          IFAIL=2 IF LENWRK TOO SMALL FOR MAXPTS FUNCTION CALLS.  IN
+XC                  THIS CASE ADAPT RETURNS A VALUE OF FINEST WITH
+XC                  ESTIMATED ACCURACY RELERR USING THE WORKING STORAGE
+XC                  AVAILABLE, BUT RELERR WILL BE GREATER THAN EPS.
+XC          IFAIL=3 IF NDIM ) 2, NDIM \ 20, MINPTS \ MAXPTS,
+XC                  OR MAXPTS ) RULCLS.
+XC***********************************************************************
+XC***END PROLOGUE ADAPT
+Xcmmmc      EXTERNAL FUNCTN
+X	Real functn
+Xcmmmc
+XC*****  FOR DOUBLE PRECISION CHANGE REAL TO DOUBLE PRECISION IN THE
+XC        NEXT STATEMENT.
+X      REAL A(NDIM), B(NDIM), CENTER(20),
+X     * DIFMAX, EPS, ERRMIN, FINEST, HALF,
+X     * ONE, RELERR, RGNERR, RGNVAL,
+X     * TWO, WIDTH(20), WRKSTR(LENWRK), ZERO
+X      INTEGER DIVAXO, DIVAXN, DIVFLG, FUNCLS, IFAIL, INDEX1,
+X     * INDEX2, J, K, LENWRK, MAXCLS, MAXPTS, MINPTS, NDIM,
+X     * RGNSTR, RULCLS, SBRGNS, SBTMPP, SUBRGN, SUBTMP
+X      IFAIL=3
+X      RELERR=1
+X      FUNCLS=0
+X      IF(NDIM.LT.2.OR.NDIM.GT.20) GOTO 300
+X      IF(MINPTS.GT.MAXPTS) GOTO 300
+XC
+XC*****  INITIALISATION OF SUBROUTINE
+XC
+X      ZERO=0
+X      ONE=1
+X      TWO=2
+X      HALF=ONE/TWO
+X      RGNSTR=2*NDIM+3
+X      ERRMIN = ZERO
+X      MAXCLS =  2**NDIM+2*NDIM**2+6*NDIM+1
+X      MAXCLS = MIN0(MAXCLS,MAXPTS)
+X      DIVAXO=0
+XC
+XC*****  END SUBROUTINE INITIALISATION
+X      IF(MINPTS.LT.0) SBRGNS=WRKSTR(LENWRK-1)
+X      IF(MINPTS.LT.0) GOTO 280
+X      DO 30 J=1,NDIM
+X        WIDTH(J)=(B(J)-A(J))*HALF
+X   30   CENTER(J)=A(J)+WIDTH(J)
+X      FINEST=ZERO
+X      WRKSTR(LENWRK)=ZERO
+X      DIVFLG=1
+X      SUBRGN=RGNSTR
+X      SBRGNS=RGNSTR
+X   40 CALL BSRL(NDIM,CENTER,WIDTH,FUNCTN,MAXCLS,RULCLS,
+X     *            ERRMIN,RGNERR,RGNVAL,DIVAXO,DIVAXN)
+X      FINEST=FINEST+RGNVAL
+X      WRKSTR(LENWRK)=WRKSTR(LENWRK)+RGNERR
+X      FUNCLS = FUNCLS + RULCLS
+XC
+XC*****  PLACE RESULTS OF BASIC RULE INTO PARTIALLY ORDERED LIST
+XC*****  ACCORDING TO SUBREGION ERROR
+X      IF(DIVFLG.EQ.1) GO TO 230
+XC
+XC*****  WHEN DIVFLG=0 START AT TOP OF LIST AND MOVE DOWN LIST TREE TO
+XC       FIND CORRECT POSITION FOR RESULTS FROM FIRST HALF OF RECENTLY
+XC       DIVIDED SUBREGION
+X  200 SUBTMP=2*SUBRGN
+X      IF(SUBTMP.GT.SBRGNS) GO TO 250
+X       IF(SUBTMP.EQ.SBRGNS) GO TO 210
+X       SBTMPP=SUBTMP+RGNSTR
+X       IF(WRKSTR(SUBTMP).LT.WRKSTR(SBTMPP)) SUBTMP=SBTMPP
+X  210  IF(RGNERR.GE.WRKSTR(SUBTMP)) GO TO 250
+X        DO 220 K=1,RGNSTR
+X          INDEX1=SUBRGN-K+1
+X          INDEX2=SUBTMP-K+1
+X  220     WRKSTR(INDEX1)=WRKSTR(INDEX2)
+X        SUBRGN=SUBTMP
+X      GOTO 200
+XC
+XC*****  WHEN DIVFLG=1 START AT BOTTOM RIGHT BRANCH AND MOVE UP LIST
+XC       TREE TO FIND CORRECT POSITION FOR RESULTS FROM SECOND HALF OF
+XC       RECENTLY DIVIDED SUBREGION
+X  230 SUBTMP=(SUBRGN/(RGNSTR*2))*RGNSTR
+X      IF(SUBTMP.LT.RGNSTR) GO TO 250
+X      IF(RGNERR.LE.WRKSTR(SUBTMP)) GO TO 250
+X       DO 240 K=1,RGNSTR
+X         INDEX1=SUBRGN-K+1
+X         INDEX2=SUBTMP-K+1
+X  240    WRKSTR(INDEX1)=WRKSTR(INDEX2)
+X       SUBRGN=SUBTMP
+X      GOTO 230
+XC*****  STORE RESULTS OF BASIC RULE IN CORRECT POSITION IN LIST
+X  250 WRKSTR(SUBRGN)=RGNERR
+X      WRKSTR(SUBRGN-1)=RGNVAL
+X      WRKSTR(SUBRGN-2)=DIVAXN
+X      DO 260 J=1,NDIM
+X        SUBTMP=SUBRGN-2*(J+1)
+X        WRKSTR(SUBTMP+1)=CENTER(J)
+X  260   WRKSTR(SUBTMP)=WIDTH(J)
+X      IF(DIVFLG.EQ.1) GO TO 270
+XC*****  WHEN DIVFLG=0 PREPARE FOR SECOND APPLICATION OF BASIC RULE
+X      CENTER(DIVAXO)=CENTER(DIVAXO)+TWO*WIDTH(DIVAXO)
+X      SBRGNS=SBRGNS+RGNSTR
+X      SUBRGN=SBRGNS
+X      DIVFLG=1
+XC*****  LOOP BACK TO APPLY BASIC RULE TO OTHER HALF OF SUBREGION
+X      GO TO 40
+XC
+XC*****  END ORDERING AND STORAGE OF BASIC RULE RESULTS
+XC*****  MAKE CHECKS FOR POSSIBLE TERMINATION OF ROUTINE
+XC
+XC******  FOR DOUBLE PRECISION CHANGE ABS TO DABS IN THE NEXT STATEMENT
+X  270 RELERR=ONE
+X      IF(WRKSTR(LENWRK).LE.ZERO) WRKSTR(LENWRK)=ZERO
+X      IF(ABS(FINEST).NE.ZERO) RELERR=WRKSTR(LENWRK)/ABS(FINEST)
+X      IF(RELERR.GT.ONE) RELERR=ONE
+X      IF(SBRGNS+RGNSTR.GT.LENWRK-2) IFAIL=2
+X      IF(FUNCLS+FUNCLS*RGNSTR/SBRGNS.GT.MAXPTS) IFAIL=1
+X      IF(RELERR.LT.EPS.AND.FUNCLS.GE.MINPTS) IFAIL=0
+X      IF(IFAIL.LT.3) GOTO 300
+XC
+XC*****  PREPARE TO USE BASIC RULE ON EACH HALF OF SUBREGION WITH LARGEST
+XC       ERROR
+X  280 DIVFLG=0
+X      SUBRGN=RGNSTR
+X      SUBTMP = 2*SBRGNS/RGNSTR
+X      MAXCLS = MAXPTS/SUBTMP
+X      ERRMIN = ABS(FINEST)*EPS/FLOAT(SUBTMP)
+X      WRKSTR(LENWRK)=WRKSTR(LENWRK)-WRKSTR(SUBRGN)
+X      FINEST=FINEST-WRKSTR(SUBRGN-1)
+X      DIVAXO=WRKSTR(SUBRGN-2)
+X      DO 290 J=1,NDIM
+X        SUBTMP=SUBRGN-2*(J+1)
+X        CENTER(J)=WRKSTR(SUBTMP+1)
+X  290   WIDTH(J)=WRKSTR(SUBTMP)
+X      WIDTH(DIVAXO)=WIDTH(DIVAXO)*HALF
+X      CENTER(DIVAXO)=CENTER(DIVAXO)-WIDTH(DIVAXO)
+XC
+XC*****  LOOP BACK TO APPLY BASIC RULE
+XC
+X      GOTO 40
+XC
+XC*****  TERMINATION POINT
+XC
+X  300 MINPTS=FUNCLS
+X      WRKSTR(LENWRK-1)=SBRGNS
+X      RETURN
+X      END
+END_OF_adapt.f
+if test 7668 -ne `wc -c <adapt.f`; then
+    echo shar: \"adapt.f\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f adphlp.c -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"adphlp.c\"
+else
+echo shar: Extracting \"adphlp.c\" \(399 characters\)
+sed "s/^X//" >adphlp.c <<'END_OF_adphlp.c'
+X/* This is the fixed routine called by adapt */
+Xfloat adphlp_(f, ndim,z)
+Xchar **f; int *ndim; float *z;
+X{  char *func;
+X   char *args[1]; char *result[1];
+X   char *mode[1]; long length[1];
+X   mode[0] = "single"; length[0] = *ndim; /* Need a real length here */
+X   args[0] = (char *) z;
+X   func = f[0];
+X   call_S( func, 1L, args, mode, length, 0, 1L, result);
+X   return( *( (float *) result[0] ));
+X }
+END_OF_adphlp.c
+if test 399 -ne `wc -c <adphlp.c`; then
+    echo shar: \"adphlp.c\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f bsrl.f -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"bsrl.f\"
+else
+echo shar: Extracting \"bsrl.f\" \(1884 characters\)
+sed "s/^X//" >bsrl.f <<'END_OF_bsrl.f'
+X      SUBROUTINE BSRL(S,CENTER,HWIDTH,F,MAXVLS,FUNCLS,
+X     *                  ERRMIN,ERREST,BASEST,DIVAXO,DIVAXN)
+Xcmmmc      EXTERNAL F
+X	real f
+Xcmmmc
+X      INTEGER S, DIVAXN, DIVAXO, FUNCLS, INTCLS, I, MINDEG, MAXDEG,
+X     * MAXORD, MINORD, MAXCLS
+X      REAL ONE, TWO, THREE, FIVE, TEN, DIF, ERRORM, ERRMIN,
+X     * CENTER(S), HWIDTH(S), SUM0, SUM1, SUM2, DIFMAX, X1, X2,
+X     * INTVLS(20), Z(20), FULSMS(200), WEGHTS(200), ERREST, BASEST
+X      MAXDEG = 12
+X      MINDEG = 4
+X      MINORD = 0
+X      ZERO = 0
+X      ONE = 1
+X      TWO = 2
+X      THREE = 3
+X      FIVE = 5
+X      TEN = 10
+X      DO 10 MAXORD = MINDEG,MAXDEG
+X        CALL SYMRL(S, CENTER, HWIDTH, F, MINORD, MAXORD, INTVLS,
+X     *   INTCLS, 200, WEGHTS, FULSMS, IFAIL)
+X        IF (IFAIL.EQ.2) GOTO 20
+X        ERREST = ABS(INTVLS(MAXORD)-INTVLS(MAXORD-1))
+X        ERRORM = ABS(INTVLS(MAXORD-1)-INTVLS(MAXORD-2))
+X        IF (ERREST.NE.ZERO)
+X     *  ERREST = ERREST*AMAX1(ONE/TEN,ERREST/AMAX1(ERREST/TWO,ERRORM))
+X        IF (ERRORM.LE.FIVE*ERREST) GOTO 20
+X        IF (2*INTCLS.GT.MAXVLS) GOTO 20
+X        IF (ERREST.LT.ERRMIN) GOTO 20
+X   10   CONTINUE
+X   20 DIFMAX = -1
+X      X1 = ONE/TWO**2
+X      X2 = THREE*X1
+X      DO 30 I = 1,S
+X       Z(I) = CENTER(I)
+X   30  CONTINUE
+Xcmmm
+X      SUM0 = adphlp(f,S,Z)
+X      DO 40 I = 1,S
+X       Z(I) = CENTER(I) - X1*HWIDTH(I)
+Xcmmm
+X       SUM1 = adphlp(f,S,Z)
+X       Z(I) = CENTER(I) + X1*HWIDTH(I)
+X       SUM1 = SUM1 + adphlp(f,S,Z)
+X       Z(I) = CENTER(I) - X2*HWIDTH(I)
+X       SUM2 = adphlp(f,S,Z)
+X       Z(I) = CENTER(I) + X2*HWIDTH(I)
+X       SUM2 = SUM2 + adphlp(f,S,Z)
+X       Z(I) = CENTER(I)
+X       DIF = ABS((SUM1-TWO*SUM0) - (X1/X2)**2*(SUM2-TWO*SUM0))
+X       IF (DIF.LT.DIFMAX) GOTO 40
+X        DIFMAX = DIF
+X        DIVAXN = I
+X   40  CONTINUE
+X       IF (SUM0.EQ.SUM0+DIFMAX/TWO) DIVAXN = MOD(DIVAXO,S) + 1
+X      BASEST = INTVLS(MINORD)
+X      FUNCLS = INTCLS + 4*S
+X      RETURN
+X      END
+END_OF_bsrl.f
+if test 1884 -ne `wc -c <bsrl.f`; then
+    echo shar: \"bsrl.f\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f cadapt.c -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"cadapt.c\"
+else
+echo shar: Extracting \"cadapt.c\" \(637 characters\)
+sed "s/^X//" >cadapt.c <<'END_OF_cadapt.c'
+Xextern char *S_alloc();
+X#include <math.h>
+X/* All this routine does is call the approriate fortran
+X   function.  We need this so as to properly pass the S function */
+X
+Xcadapt(ndim,lower, upper, minpts, maxpts, functn, eps,
+X      relerr,lenwrk,finest,ifail)  /* Don't export a general function */
+Xint *ndim, *minpts, *maxpts, *lenwrk, *ifail;
+Xvoid **functn; 
+Xfloat *lower, *upper, *eps, *relerr,*finest;
+X{
+X  float *wrkstr, rulcls;
+X
+X  printf("Allocating a work space of size %d\n", *lenwrk);
+X  wrkstr = (float *) S_alloc(*lenwrk, sizeof(float));
+X  adapt_(ndim,lower,upper,minpts,maxpts,functn,eps,relerr,lenwrk,
+X	 wrkstr,finest,ifail);  
+X}
+END_OF_cadapt.c
+if test 637 -ne `wc -c <cadapt.c`; then
+    echo shar: \"cadapt.c\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f flfm.f -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"flfm.f\"
+else
+echo shar: Extracting \"flfm.f\" \(1789 characters\)
+sed "s/^X//" >flfm.f <<'END_OF_flfm.f'
+X      REAL FUNCTION FLSM(S,CENTER,HWIDTH,X,M,MP,MAXORD,G,F,SUMCLS)
+XC
+XC***  FUNCTION TO COMPUTE FULLY SYMMETRIC BASIC RULE SUM
+XC
+X      INTEGER S, M(S), MP(S), MAXORD, SUMCLS, IXCHNG, LXCHNG, I, L,
+X     * IHALF, MPI, MPL
+X      REAL G(MAXORD), X(S), INTWGT, ZERO, ONE, TWO, INTSUM,
+X     * CENTER(S), HWIDTH(S)
+X      ZERO = 0
+X      ONE = 1
+X      TWO = 2
+X      INTWGT = ONE
+X      DO 10 I=1,S
+X        MP(I) = M(I)
+X        IF (M(I).NE.0) INTWGT = INTWGT/TWO
+X        INTWGT = INTWGT*HWIDTH(I)
+X   10 CONTINUE
+X      SUMCLS = 0
+X      FLSM = ZERO
+XC
+XC*******  COMPUTE CENTRALLY SYMMETRIC SUM FOR PERMUTATION MP
+X   20 INTSUM = ZERO
+X      DO 30 I=1,S
+X        MPI = MP(I) + 1
+X        X(I) = CENTER(I) + G(MPI)*HWIDTH(I)
+X   30 CONTINUE
+X   40 SUMCLS = SUMCLS + 1
+XCmmm
+X      INTSUM = INTSUM + adphlp(f,S,X)
+X      DO 50 I=1,S
+X        MPI = MP(I) + 1
+X        IF(G(MPI).NE.ZERO) HWIDTH(I) = -HWIDTH(I)
+X        X(I) = CENTER(I) + G(MPI)*HWIDTH(I)
+X        IF (X(I).LT.CENTER(I)) GO TO 40
+X   50 CONTINUE
+XC*******  END INTEGRATION LOOP FOR MP
+XC
+X      FLSM = FLSM + INTWGT*INTSUM
+X      IF (S.EQ.1) RETURN
+XC
+XC*******  FIND NEXT DISTINCT PERMUTATION OF M AND LOOP BACK
+XC          TO COMPUTE NEXT CENTRALLY SYMMETRIC SUM
+X      DO 80 I=2,S
+X        IF (MP(I-1).LE.MP(I)) GO TO 80
+X        MPI = MP(I)
+X        IXCHNG = I - 1
+X        IF (I.EQ.2) GO TO 70
+X        IHALF = IXCHNG/2
+X        DO 60 L=1,IHALF
+X          MPL = MP(L)
+X          IMNUSL = I - L
+X          MP(L) = MP(IMNUSL)
+X          MP(IMNUSL) = MPL
+X          IF (MPL.LE.MPI) IXCHNG = IXCHNG - 1
+X          IF (MP(L).GT.MPI) LXCHNG = L
+X   60   CONTINUE
+X        IF (MP(IXCHNG).LE.MPI) IXCHNG = LXCHNG
+X   70   MP(I) = MP(IXCHNG)
+X        MP(IXCHNG) = MPI
+X        GO TO 20
+X   80 CONTINUE
+XC*****  END LOOP FOR PERMUTATIONS OF M AND ASSOCIATED SUMS
+XC
+X      RETURN
+X      END
+END_OF_flfm.f
+if test 1789 -ne `wc -c <flfm.f`; then
+    echo shar: \"flfm.f\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f nxprt.f -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"nxprt.f\"
+else
+echo shar: Extracting \"nxprt.f\" \(586 characters\)
+sed "s/^X//" >nxprt.f <<'END_OF_nxprt.f'
+X      SUBROUTINE NXPRT(PRTCNT, S, M)
+XC
+XC***  SUBROUTINE TO COMPUTE THE NEXT S PARTITION
+XC
+X      INTEGER S, M(S), PRTCNT, I, MSUM
+X      IF (PRTCNT.GT.0) GO TO 20
+X      DO 10 I=1,S
+X        M(I) = 0
+X   10 CONTINUE
+X      PRTCNT = 1
+X      RETURN
+X   20 PRTCNT = PRTCNT + 1
+X      MSUM = M(1)
+X      IF (S.EQ.1) GO TO 60
+X      DO 50 I=2,S
+X        MSUM = MSUM + M(I)
+X        IF (M(1).LE.M(I)+1) GO TO 40
+X        M(1) = MSUM - (I-1)*(M(I)+1)
+X        DO 30 L=2,I
+X          M(L) = M(I) + 1
+X   30   CONTINUE
+X        RETURN
+X   40   M(I) = 0
+X   50 CONTINUE
+X   60 M(1) = MSUM + 1
+X      RETURN
+X      END
+END_OF_nxprt.f
+if test 586 -ne `wc -c <nxprt.f`; then
+    echo shar: \"nxprt.f\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f summary -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"summary\"
+else
+echo shar: Extracting \"summary\" \(110 characters\)
+sed "s/^X//" >summary <<'END_OF_summary'
+Xadapt		An S function that call Genz's "adapt" suboutine for
+X		adaptive quadrature in from 2 to 20 dimensions.
+END_OF_summary
+if test 110 -ne `wc -c <summary`; then
+    echo shar: \"summary\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f symrl.f -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"symrl.f\"
+else
+echo shar: Extracting \"symrl.f\" \(6277 characters\)
+sed "s/^X//" >symrl.f <<'END_OF_symrl.f'
+X      SUBROUTINE SYMRL(S, CENTER, HWIDTH, F, MINORD, MAXORD, INTVLS,
+X     * INTCLS, NUMSMS, WEGHTS, FULSMS, FAIL)
+XC  MULTIDIMENSIONAL FULLY SYMMETRIC RULE INTEGRATION SUBROUTINE
+XC
+XC   THIS SUBROUTINE COMPUTES A SEQUENCE OF FULLY SYMMETRIC RULE
+XC   APPROXIMATIONS TO A FULLY SYMMETRIC MULTIPLE INTEGRAL.
+XC   WRITTEN BY A. GENZ, MATHEMATICAL INSTITUTE, UNIVERSITY OF KENT,
+XC   CANTERBURY, KENT CT2 7NF, ENGLAND
+XC
+XC**************  PARAMETERS FOR SYMRL  ********************************
+XC*****INPUT PARAMETERS
+XC  S       INTEGER NUMBER OF VARIABLES, MUST EXCEED 0 BUT NOT EXCEED 20
+XC  F       EXTERNALLY DECLARED USER DEFINED REAL FUNCTION INTEGRAND.
+XC          IT MUST HAVE PARAMETERS (S,X), WHERE X IS A REAL ARRAY
+XC          WITH DIMENSION S.
+XC  MINORD  INTEGER MINIMUM ORDER PARAMETER.  ON ENTRY MINORD SPECIFIES
+XC          THE CURRENT HIGHEST ORDER APPROXIMATION TO THE INTEGRAL,
+XC          AVAILABLE IN THE ARRAY INTVLS.  FOR THE FIRST CALL OF SYMRL
+XC          MINORD SHOULD BE SET TO 0.  OTHERWISE A PREVIOUS CALL IS
+XC          ASSUMED THAT COMPUTED INTVLS(1), ... , INTVLS(MINORD).
+XC          ON EXIT MINORD IS SET TO MAXORD.
+XC  MAXORD  INTEGER MAXIMUM ORDER PARAMETER, MUST BE GREATER THAN MINORD
+XC          AND NOT EXCEED 20. THE SUBROUTINE COMPUTES INTVLS(MINORD+1),
+XC          INTVLS(MINORD+2),..., INTVLS(MAXORD).
+XC  G       REAL ARRAY OF DIMENSION(MAXORD) OF GENERATORS.
+XC          ALL GENERATORS MUST BE DISTINCT AND NONNEGATIVE.
+XC  NUMSMS  INTEGER LENGTH OF ARRAY FULSMS, MUST BE AT LEAST THE SUM OF
+XC          THE NUMBER OF DISTINCT PARTITIONS OF LENGTH AT MOST S
+XC          OF THE INTEGERS 0,1,...,MAXORD-1.  AN UPPER BOUND FOR NUMSMS
+XC          WHEN S+MAXORD IS LESS THAN 19 IS 200
+XC******OUTPUT PARAMETERS
+XC  INTVLS  REAL ARRAY OF DIMENSION(MAXORD).  UPON SUCCESSFUL EXIT
+XC          INTVLS(1), INTVLS(2),..., INTVLS(MAXORD) ARE APPROXIMATIONS
+XC          TO THE INTEGRAL.  INTVLS(D+1) WILL BE AN APPROXIMATION OF
+XC          POLYNOMIAL DEGREE 2D+1.
+XC  INTCLS  INTEGER TOTAL NUMBER OF F VALUES NEEDED FOR INTVLS(MAXORD)
+XC  WEGHTS  REAL WORKING STORAGE ARRAY WITH DIMENSION (NUMSMS). ON EXIT
+XC          WEGHTS(J) CONTAINS THE WEIGHT FOR FULSMS(J).
+XC  FULSMS  REAL WORKING STORAGE ARRAY WITH DIMENSION (NUMSMS). ON EXIT
+XC          FULSMS(J) CONTAINS THE FULLY SYMMETRIC BASIC RULE SUM
+XC          INDEXED BY THE JTH S-PARTITION OF THE INTEGERS
+XC          0,1,...,MAXORD-1.
+XC  FAIL    INTEGER FAILURE OUTPUT PARAMETER
+XC          FAIL=0 FOR SUCCESSFUL TERMINATION OF THE SUBROUTINE
+XC          FAIL=1 WHEN NUMSMS IS TOO SMALL FOR THE SUBROUTINE TO
+XC                  CONTINUE.  IN THIS CASE WEGHTS(1), WEGHTS(2), ...,
+XC                  WEGHTS(NUMSMS), FULSMS(1), FULSMS(2), ...,
+XC                  FULSMS(NUMSMS) AND INTVLS(1), INTVLS(2),...,
+XC                  INTVLS(J) ARE RETURNED, WHERE J IS MAXIMUM VALUE OF
+XC                  MAXORD COMPATIBLE WITH THE GIVEN VALUE OF NUMSMS.
+XC          FAIL=2 WHEN PARAMETERS S,MINORD, MAXORD OR G ARE OUT OF
+XC                  RANGE
+XC***********************************************************************
+Xcmmm      EXTERNAL F
+X	real F
+XC***  FOR DOUBLE PRECISION CHANGE REAL TO DOUBLE PRECISION
+XC      IN THE NEXT STATEMENT
+X      INTEGER D, I, FAIL, K(20), INTCLS, PRTCNT, L, M(20), MAXORD,
+X     * MINORD, MODOFM, NUMSMS, S, SUMCLS
+X      REAL INTVLS(MAXORD), CENTER(S), HWIDTH(S), GISQRD, GLSQRD,
+X     * INTMPA, INTMPB, INTVAL, ONE, FULSMS(NUMSMS), WEGHTS(NUMSMS),
+X     * TWO, MOMTOL, MOMNKN, MOMPRD(20,20), MOMENT(20), ZERO, G(20)
+XC       PATTERSON GENERATORS
+X      DATA G(1), G(2) /0.0000000000000000,0.7745966692414833/
+X      DATA G(3), G(4) /0.9604912687080202,0.4342437493468025/
+X      DATA G(5), G(6) /0.9938319632127549,0.8884592328722569/
+X      DATA G(7), G(8) /0.6211029467372263,0.2233866864289668/
+X      DATA G(9), G(10), G(11), G(12) /0.1, 0.2, 0.3, 0.4/
+XC
+XC***  PARAMETER CHECKING AND INITIALISATION
+X      FAIL = 2
+X      MAXRDM = 20
+X      MAXS = 20
+X      IF (S.GT.MAXS .OR. S.LT.1) RETURN
+X      IF (MINORD.LT.0 .OR. MINORD.GE.MAXORD) RETURN
+X      IF (MAXORD.GT.MAXRDM) RETURN
+X      ZERO = 0
+X      ONE = 1
+X      TWO = 2
+X      MOMTOL = ONE
+X   10 MOMTOL = MOMTOL/TWO
+X      IF (MOMTOL+ONE.GT.ONE) GO TO 10
+X      HUNDRD = 100
+X      MOMTOL = HUNDRD*TWO*MOMTOL
+X      D = MINORD
+X      IF (D.EQ.0) INTCLS = 0
+XC***  CALCULATE MOMENTS AND MODIFIED MOMENTS
+X      DO 20 L=1,MAXORD
+X        FLOATL = L + L - 1
+X        MOMENT(L) = TWO/FLOATL
+X   20 CONTINUE
+X      IF (MAXORD.EQ.1) GO TO 50
+X      DO 40 L=2,MAXORD
+X        INTMPA = MOMENT(L-1)
+X        GLSQRD = G(L-1)**2
+X        DO 30 I=L,MAXORD
+X          INTMPB = MOMENT(I)
+X          MOMENT(I) = MOMENT(I) - GLSQRD*INTMPA
+X          INTMPA = INTMPB
+X   30   CONTINUE
+X        IF (MOMENT(L)**2.LT.(MOMTOL*MOMENT(1))**2) MOMENT(L) = ZERO
+X   40 CONTINUE
+X   50 DO 70 L=1,MAXORD
+X        IF (G(L).LT.ZERO) RETURN
+X        MOMNKN = ONE
+X        MOMPRD(L,1) = MOMENT(1)
+X        IF (MAXORD.EQ.1) GO TO 70
+X        GLSQRD = G(L)**2
+X        DO 60 I=2,MAXORD
+X          IF (I.LE.L) GISQRD = G(I-1)**2
+X          IF (I.GT.L) GISQRD = G(I)**2
+X          IF (GLSQRD.EQ.GISQRD) RETURN
+X          MOMNKN = MOMNKN/(GLSQRD-GISQRD)
+X          MOMPRD(L,I) = MOMNKN*MOMENT(I)
+X   60   CONTINUE
+X   70 CONTINUE
+X      FAIL = 1
+XC
+XC***  BEGIN LOOP FOR EACH D
+XC      FOR EACH D FIND ALL DISTINCT PARTITIONS M WITH MOD(M))=D
+XC
+X   80 PRTCNT = 0
+X      INTVAL = ZERO
+X      MODOFM = 0
+X      CALL NXPRT(PRTCNT, S, M)
+X   90 IF (PRTCNT.GT.NUMSMS) RETURN
+XC
+XC***  CALCULATE WEIGHT FOR PARTITION M AND FULLY SYMMETRIC SUMS
+XC***     WHEN NECESSARY
+XC
+X      IF (D.EQ.MODOFM) WEGHTS(PRTCNT) = ZERO
+X      IF (D.EQ.MODOFM) FULSMS(PRTCNT) = ZERO
+X      FULWGT = WHT(S,MOMENT,M,K,MODOFM,D,MAXRDM,MOMPRD)
+X      SUMCLS = 0
+X      IF (WEGHTS(PRTCNT).EQ.ZERO .AND. FULWGT.NE.ZERO) FULSMS(PRTCNT) =
+X     * FLSM(S, CENTER, HWIDTH, MOMENT, M, K, MAXORD, G, F, SUMCLS)
+X      INTCLS = INTCLS + SUMCLS
+X      INTVAL = INTVAL + FULWGT*FULSMS(PRTCNT)
+X      WEGHTS(PRTCNT) = WEGHTS(PRTCNT) + FULWGT
+X      CALL NXPRT(PRTCNT, S, M)
+X      IF (M(1).GT.MODOFM) MODOFM = MODOFM + 1
+X      IF (MODOFM.LE.D) GO TO 90
+XC
+XC***  END LOOP FOR EACH D
+X      IF (D.GT.0) INTVAL = INTVLS(D) + INTVAL
+X      INTVLS(D+1) = INTVAL
+X      D = D + 1
+X      IF (D.LT.MAXORD) GO TO 80
+XC
+XC***  SET FAILURE PARAMETER AND RETURN
+X      FAIL = 0
+X      MINORD = MAXORD
+X      RETURN
+X      END
+END_OF_symrl.f
+if test 6277 -ne `wc -c <symrl.f`; then
+    echo shar: \"symrl.f\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test -f wht.f -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \"wht.f\"
+else
+echo shar: Extracting \"wht.f\" \(755 characters\)
+sed "s/^X//" >wht.f <<'END_OF_wht.f'
+X      REAL FUNCTION WHT(S, INTRPS, M, K, MODOFM, D, MAXRDM, MOMPRD)
+XC***  SUBROUTINE TO CALCULATE WEIGHT FOR PARTITION M
+XC
+X      INTEGER S, M(S), K(S), D, MAXRDM, MI, KI, M1, K1, MODOFM
+X      REAL INTRPS(S), ZERO, MOMPRD(MAXRDM,MAXRDM)
+X      ZERO = 0
+X      DO 10 I=1,S
+X        INTRPS(I) = ZERO
+X        K(I) = 0
+X   10 CONTINUE
+X      M1 = M(1) + 1
+X      K1 = D - MODOFM + M1
+X   20 INTRPS(1) = MOMPRD(M1,K1)
+X      IF (S.EQ.1) GO TO 40
+X      DO 30 I=2,S
+X        MI = M(I) + 1
+X        KI = K(I) + MI
+X        INTRPS(I) = INTRPS(I) + MOMPRD(MI,KI)*INTRPS(I-1)
+X        INTRPS(I-1) = ZERO
+X        K1 = K1 - 1
+X        K(I) = K(I) + 1
+X        IF (K1.GE.M1) GO TO 20
+X        K1 = K1 + K(I)
+X        K(I) = 0
+X   30 CONTINUE
+X   40 WHT = INTRPS(S)
+X      RETURN
+X      END
+END_OF_wht.f
+if test 755 -ne `wc -c <wht.f`; then
+    echo shar: \"wht.f\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+if test ! -d .Data ; then
+    echo shar: Creating directory \".Data\"
+    mkdir .Data
+fi
+if test ! -d .Data/.Help ; then
+    echo shar: Creating directory \".Data/.Help\"
+    mkdir .Data/.Help
+fi
+if test -f .Data/.Help/adapt.d -a "${1}" != "-c" ; then 
+  echo shar: Will not over-write existing file \".Data/.Help/adapt.d\"
+else
+echo shar: Extracting \".Data/.Help/adapt.d\" \(1690 characters\)
+sed "s/^X//" >.Data/.Help/adapt.d <<'END_OF_.Data/.Help/adapt.d'
+X.BG
+X.FN adapt
+X.TL
+Xadapt: Adaptive quadrature in from 2 to 20 dimensions.
+X.CS
+Xadapt(ndim, lower, upper, minpts, maxpts, functn, eps)
+X.AG ndim
+Xthe number of dimensions of the function/integral
+X.AG lower
+Xvector of at least length ndim of the lower bounds on the integral
+X.AG upper
+Xvector of at least length ndim of the upper bounds on the integral
+X.AG minpts
+Xthe minimum number of function evaluations
+X.AG maxpts
+Xthe maximum number of function evaluations
+X.AG functn
+Xthe name of an S function.  functn should take a single vector
+Xargument and return the function value at that point. functn
+XMUST return a single precision answer, so you may have to coerce
+Xthe result to a single (see the as.single function)
+X.AG eps
+XThe desired accuracy.
+X.RT
+Xstructure containing finest, relerr, minpts and ifail.
+X.RC finest
+Xthe estimated integral
+X.RC relerr
+Xthe estimated relative error
+X.RC minpts
+Xthe actual number of function evaluations
+X.RC ifail
+Xan error indicator.  If ifail is not equal to 0, the function
+Xwarns the user of the error condition.
+X.PP
+XThe adapt function just calls A.C. Genz's fortran ADAPT subroutine
+Xto do all of the calculations.  A work array is allocated with the
+XC/Fortran code.  The function may complain that maxpts is not 
+Xlarge enough, and will automatically make increase maxpts.
+X
+X.EX
+X> fred <- function(z) {
+X+    as.single(0.3989423^length(z) * exp(-0.5 * sum(z * z)))}
+X> adapt(3,c(-2,-2,-2),c(2,2,2),100,500,fred,.01)
+XAllocating a work space of size 54
+X$finest:
+X[1] 0.869198
+X
+X$relerr:
+X[1] 2.579765e-05
+X
+X$minpts:
+X[1] 345
+X
+X$ifail:
+X[1] 0
+X
+X.PP
+XIn this example of a three dimensional spherical normal distribution,
+Xadapt took 345 function evaluations to find the integral.
+X.KW
+X.WR
+END_OF_.Data/.Help/adapt.d
+if test 1690 -ne `wc -c <.Data/.Help/adapt.d`; then
+    echo shar: \".Data/.Help/adapt.d\" unpacked with wrong size!
+fi
+# end of overwriting check
+fi
+echo shar: End of shell archive.
+exit 0
