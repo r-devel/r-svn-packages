@@ -238,6 +238,7 @@ c
                lj=(lsel-1)*jpp+j
                kj=(ksel-1)*jpp+j
                if(jtmd(j).lt.0) then
+c in the following line, x(-1) ==> seg.fault {BDR to R-core, Sat, 3 Aug 2002}
                   if(x(lj).eq.valmd(j))go to 30
                   if(x(kj).eq.valmd(j))go to 30
                endif
