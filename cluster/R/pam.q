@@ -1,4 +1,4 @@
-#### PAM : Partitioning Around Medoids
+#### PAM : Partitioning Around Medoids-- $Id$
 
 pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 {
@@ -50,13 +50,10 @@ pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 	x2 <- double(n)
     }
     else {
-	## check type of input matrix
-	if((!is.data.frame(x) && !is.numeric(x)) ||
-	   !all(sapply(x, data.class) == "numeric"))
-	    stop("x is not a numeric dataframe or matrix.")
+        ## check input matrix and standardize, if necessary
 	x <- data.matrix(x)
-	## standardize, if necessary
-	x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
+	if(!is.numeric(x)) stop("x is not a numeric dataframe or matrix.")
+        x2 <- if(stand) scale(x, scale = apply(x, 2, meanabsdev)) else x
 	## put info about metric, size and NAs in arguments for the Fortran call
 	ndyst <- if(metric == "manhattan") 2 else 1
 	n <- nrow(x2)
