@@ -2,11 +2,11 @@
 
 pltree <- function(x, ...) UseMethod("pltree")
 
-pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
+pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)),
+                         labels = NULL, ...)
 {
     call <- x$call
-    labels <- NULL
-    if(length(x$order.lab) != 0) {
+    if(is.null(labels) && length(x$order.lab) != 0) {
 	names(x$order) <- names(x$order.lab) <- 1:length(x$order)
 	labels <- x$order.lab[names(sort(x$order))]
     }
@@ -21,8 +21,8 @@ pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
 
 bannerplot <-
 function(x, w = rev(x$height), fromLeft = TRUE,
-	 main, sub, xlab = "Height", col = c(2, 0), adj = 0,
-	 axes = TRUE, rev.xax = !fromLeft, xax.pretty = TRUE,
+	 main, sub, xlab = "Height", adj = 0, col = c(2, 0), border = 0,
+	 axes = TRUE, frame.plot = axes, rev.xax = !fromLeft, xax.pretty = TRUE,
 	 nmax.lab = 35, max.strlen = 5,
 	 yax.do = axes && length(x$order) < nmax.lab,
 	 yaxRight = fromLeft, y.mar = 2.4 + max.strlen / 2.5, ...)
@@ -64,8 +64,11 @@ function(x, w = rev(x$height), fromLeft = TRUE,
 	    on.exit(par(op))
 	}
     }
-    barplot(w, xlab = xlab, horiz = TRUE, ##not yet: inside = FALSE,
-	    space = 0, axes = FALSE, col = col, mgp = c(2.5, 1, 0), ...)
+    barplot(w, xlab = xlab, horiz = TRUE, space = 0, axes = FALSE,
+            col = col, border = border, mgp = c(2.5, 1, 0), ...)
+    if(frame.plot && (border == 0 || border == par("bg")))
+        rect(0, 0, m, ncol(w))
+
     title(main = main, sub = sub, adj = adj)
     if(axes) {
 	axis(1, at = at.vals, labels = lab.vals, ...)
