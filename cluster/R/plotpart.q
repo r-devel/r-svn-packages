@@ -279,12 +279,12 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     for(i in 1:n) { ##-------------  i-th cluster  --------------
         x <- x1[clus == levclus[i], ]
         cov <-
-          if(is.vector(x)) {
-              cat("cluster",i," has only one observation ..\n")
-            x <- matrix(x, ncol = 2, byrow = TRUE)
-            var(rbind(x, c(0, 0)))
-          }
-          else var(x)
+            if(is.vector(x)) {
+                if(verbose)
+                    cat("cluster",i," has only one observation ..\n")
+                x <- matrix(x, ncol = 2, byrow = TRUE)
+                var(rbind(x, c(0, 0)))
+            } else var(x)
         aantal <- nrow(x) # number of observations in cluster [i]
         x.1 <- range(x[, 1])
         y.1 <- range(x[, 2])
@@ -388,14 +388,14 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                                 ierr = as.integer(0),
                                 PACKAGE = "cluster")
                 if(res$ierr != 0)
-                    ## MM : exactmve ??
+                    ## MM : exactmve not available here !
                     cat("Error in Fortran routine computing the MVE-ellipsoid,",
                         "\nplease use the option exactmve=F\n", sep="")
 
-                ## NOTA BENE: cov.wt() differs from S-PLUS -- need S+ beh.here!
                 cov <- cov.wt(x, res$prob)
                 loc[i, ] <- cov$center
-                cov <- cov$cov
+                ## NB: cov.wt() in R has extra wt[] scaling; revert here:
+                cov <- cov$cov * (1 - sum(cov$wt^2))
                 dist[i] <- sqrt(weighted.mean(res$sqdist, res$prob))
             }
             A[[i]] <- cov
