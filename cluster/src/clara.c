@@ -61,10 +61,10 @@ void clara(int *n,  /* = number of objects */
 
     /* Local variables */
 
-    Rboolean nafs, kall, full_sample, lrg_sam, has_NA = *mdata;
-    int j, jk, jkk, js, jsm, jhalt, jran, l, n_sam;
-    int nsm, ntt, nad, nadv, kran, kans, nrun, nexap, nexbp;
-    int n_dys, nsamb, nunfs;
+    Rboolean nafs, kall, full_sample, lrg_sam, dyst_toomany_NA,
+	has_NA = *mdata;
+    int j, jk, jkk, js, jsm, jran, l, n_sam;
+    int nsm, ntt, nad, nadv, kran, kans, nrun, n_dys, nsamb, nunfs;
     double rnn, sky, zb, s, sx = -1., zba = -1.;/* Wall */
 
     *jstop = 0;
@@ -78,8 +78,6 @@ void clara(int *n,  /* = number of objects */
 	n_sam = *n - *nsam;
     else
 	n_sam = *nsam;
-    nunfs = 0;
-    kall = FALSE;
 
     if(*rng_R && !full_sample)
 	GetRNGstate();
@@ -88,8 +86,9 @@ void clara(int *n,  /* = number of objects */
 
 /* __LOOP__ :  random subsamples are drawn and partitioned into kk clusters */
 
+    nunfs = 0; kall = FALSE; dyst_toomany_NA = FALSE;
     for (jran = 1; jran <= *nran; ++jran) {
-	jhalt = 0;
+	if(*trace_lev) Rprintf("C clara(): sample %d ", jran);
 	if (!full_sample) {/* `real' case: sample size < n */
 	    ntt = 0;
 	    if (kall/*was jran != 1 */ && nunfs != jran && !lrg_sam) {
@@ -127,6 +126,7 @@ void clara(int *n,  /* = number of objects */
 			    goto L180;
 		}
 		/* end Loop */
+
 		nsel[ntt] = kran;
 		if (++ntt == n_sam)
 		    goto L295;
@@ -181,31 +181,32 @@ void clara(int *n,  /* = number of objects */
 	    } while (ntt < n_sam);
 
 	L295:
+	    if(*trace_lev)
+		Rprintf(" {295} [ntt=%d, nunfs=%d] -> dysta2()\n", ntt, nunfs);
 	    if (lrg_sam) {
 		/* have indices for smaller _nonsampled_ half; revert this: */
-		for (j = 1, nexap = 0, nexbp = 0; j <= *n; j++) {
-		    if (nsel[nexap] == j)
-			++nexap;
+		for (j = 1, jk = 0, js = 0; j <= *n; j++) {
+		    if (nsel[jk] == j)
+			++jk;
 		    else
-			nrepr[nexbp++] = j;
+			nrepr[js++] = j;
 		}
 		for (j = 0; j < *nsam; ++j)
 		    nsel[j] = nrepr[j];
 	    }
-	    if(*trace_lev)
-		Rprintf("C clara(): sample %d [ntt=%d, nunfs=%d] -> dysta2()\n",
-			jran, ntt, nunfs);
 	}
 	else { /* full_sample : *n = *nsam -- one sample is enough ! */
 	    for (j = 0; j < *nsam; ++j)
-		nsel[j] = j+1;/* <- still uses 1-indices for its *values*! */
+		nsel[j] = j+1;/* <- uses 1-indices for its *values*! */
 	}
 
 	dysta2(*nsam, *jpp, nsel, x, *n, dys, *diss_kind,
-	       jtmd, valmd, &jhalt);
-	if (jhalt == 1) {
+	       jtmd, valmd, &dyst_toomany_NA);
+	if(dyst_toomany_NA) {
 	    if(*trace_lev)
-		Rprintf("  dysta2() gave jhalt = 1 --> new sample\n");
+		Rprintf("  dysta2() gave dyst_toomany_NA --> new sample\n");
+	    dyst_toomany_NA = FALSE;
+	    ++nunfs;
 	    continue;/* random sample*/
 	}
 
@@ -218,7 +219,7 @@ void clara(int *n,  /* = number of objects */
 	} while (l+1 < n_dys);
 
 	if(*trace_lev >= 2)
-	    Rprintf(". clara(): s:= max dys[l=%d] = %g\n", l,s);
+	    Rprintf(". clara(): s:= max dys[l=%d] = %g", l,s);
 
 	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
 	       /* dysma */tmp1, /*dysmb*/tmp2,
@@ -228,11 +229,16 @@ void clara(int *n,  /* = number of objects */
 	      nrepr, nsel, dys, x, nr, &nafs, ttd, radus, ratt,
 	      ntmp1, ntmp2, ntmp3, ntmp4, ntmp5, ntmp6, tmp1, tmp2);
 
-	if (nafs) {
+	if (nafs) { /* couldn't assign some observation (to a cluster)
+		     * because of too many NA s */
 	    ++nunfs;
+	    if(*trace_lev >= 2)
+		Rprintf(" selec() -> 'NAfs'");
 	}
 	else if(!kall /*jran == 1*/ || zba > zb) {
 	    /* 1st proper sample  or  new best */
+	    if(*trace_lev >= 2)
+		Rprintf(" 1st proper or new best: zb= %g", zb);
 	    zba = zb;
 	    for (jk = 0; jk < *kk; ++jk) {
 		ttbes[jk] = ttd	 [jk];
@@ -244,6 +250,7 @@ void clara(int *n,  /* = number of objects */
 		nbest[js] = nsel[js];
 	    sx = s;
 	}
+	if(*trace_lev >= 2) Rprintf("\n");
 
 	kall = TRUE;
 
@@ -255,32 +262,39 @@ void clara(int *n,  /* = number of objects */
 
     if (nunfs >= *nran) { *jstop = 1; return; }
 
+    if (!kall) { *jstop = 2; return; }
+
+    if(*trace_lev) {
+	Rprintf("C clara(): best sample _found_ ");
+	if(*trace_lev >= 2) {
+	    Rprintf("; nbest[1:%d] =\n c(", *nsam);
+	    for (js = 0; js < *nsam; ++js) {
+		Rprintf("%d", nbest[js]);
+		if(js+1 < *nsam) Rprintf(",");
+	    }
+	    Rprintf(")\n");
+	}
+	Rprintf(" --> dysta2(nbest), resul(), end\n");
+    }
+
 
 /*     for the best subsample, the objects of the entire data set
      are assigned to their clusters */
 
-    if (!kall) { *jstop = 2; return; }
-
-    if(*trace_lev) {
-	Rprintf("C clara(): sample _found_ --> dysta2(nbest), resul(), end");
-	if(*trace_lev >= 2) {
-	    Rprintf("; nbest[1:%d] =\n c(", *nsam);
-	    for (js = 0; js < *nsam; ++js)
-		Rprintf("%g%s", nbest[js], (js+1 < *nsam)? ",": "");
-	    Rprintf(")");
-	}
-	Rprintf("\n");
-    }
     *obj = zba / rnn;
-    dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
-
+    dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd,
+	   &dyst_toomany_NA);
+    if(dyst_toomany_NA) {
+	REprintf(" *** SHOULD NOT HAPPEN: clara() -> dysta2(nbest) gave toomany_NA\n");
+	return;
+    }
     resul(*kk, *n, *jpp, *diss_kind, has_NA, jtmd, valmd, x, nrx, mtt);
 
     if (*kk > 1)
 	black(*kk, *jpp, *nsam, nbest, dys, sx, x,
 	      /* compute --> */
 	      avsyl, ttsyl, sylinf,
-	      ntmp1, ntmp2, ntmp3, ntmp4, tmp1, tmp2);
+	      ntmp1, ntmp2, ntmp3, ntmp4, /* syl[] */ tmp1, tmp2);
     return;
 } /* End clara() ---------------------------------------------------*/
 #undef tmp1
@@ -296,7 +310,7 @@ void clara(int *n,  /* = number of objects */
 
 void dysta2(int nsam, int jpp, int *nsel,
 	    double *x, int n, double *dys, int diss_kind,
-	    int *jtmd, double *valmd, int *jhalt)
+	    int *jtmd, double *valmd, Rboolean *toomany_NA)
 {
 /* Compute Dissimilarities for the selected sub-sample	---> dys[,] */
 
@@ -310,7 +324,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 	lsel = nsel[l];
 	if(lsel <= 0 || lsel > n)
 	    REprintf(" ** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
-	for (k = 0; k < l; ++k) {
+	for (k = 0; k < l; ++k) { /* compute d(nsel[l], nsel[k]) {if possible}*/
 	    ksel = nsel[k];
 	    if(ksel <= 0 || ksel > n)
 		REprintf(" ** dysta2(): nsel[k= %d] = %d is OUT\n", k, ksel);
@@ -320,13 +334,10 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    for (j = 0; j < jpp; ++j) {
 		lj = lsel-1 + j * n;
 		kj = ksel-1 + j * n;
-		if (jtmd[j] < 0) {
+		if (jtmd[j] < 0) { /* x[,j] has some Missing (NA) */
 		    /* in the following line (Fortran!), x[-2] ==> seg.fault
 		       {BDR to R-core, Sat, 3 Aug 2002} */
-		    if (x[lj] == valmd[j]) {
-			continue /* next j */;
-		    }
-		    if (x[kj] == valmd[j]) {
+		    if (x[lj] == valmd[j] || x[kj] == valmd[j]) {
 			continue /* next j */;
 		    }
 		}
@@ -336,15 +347,15 @@ void dysta2(int nsam, int jpp, int *nsel,
 		else
 		    clk += fabs(x[lj] - x[kj]);
 	    }
-	    if (npres == 0) {
-		*jhalt = 1;
+	    if (npres == 0) {/* cannot compute d(.,.) because of too many NA */
+		*toomany_NA = TRUE;
 		dys[nlk] = -1.;
 	    } else {
 		d1 = clk * (((double) (jpp)) / (double) npres);
 		dys[nlk] = (diss_kind == 1) ? sqrt(d1) : d1 ;
 	    }
-	}
-    }
+	} /* for( k ) */
+    } /* for( l ) */
     return;
 } /* End dysta2() -----------------------------------------------------------*/
 
@@ -360,13 +371,31 @@ double randm(int *nrun)
     return ((double) (*nrun) / 65536.);
 } /* randm() */
 
+int ind_2(int l, int j)
+{
+/* Utility, originally FORTRAN,  called "meet"; called from CLARA, PAM & TWINS.
+ * Original code had MEET(), MEET2(), and MEET3() in the 3 source files.
+
+ * ind_2(l,j) returns the *index* of dys() where diss. d(l,j) is stored:
+ *        d(l,j) == dys[ind_2(l,j)]
+ *
+ * MM: changed to work with 0-origin matrices  dys[], but l,j are >= 1
+ */
+    if(l > j)
+	return (l-2)*(l-1)/2 + j;
+    else if(l == j)
+	return 0;/* and the first element, dys[0] is := 0.  permanently! */
+    else /* l < j */
+	return (j-2)*(j-1)/2 + l;
+}
+
 /* bswap2() : called once [per random sample] from clara() : */
 void bswap2(int kk, int nsam, int *nrepr,
 	    double *dys, double *sky, double s,
 	    double *dysma, double *dysmb, double *beter)
 {
-    int j, ja, k, kbest = -1, nbest = -1;/* init for -Wall */
-    int nkj, njn, njaj, nny, nmax;
+    int j, ja, k, kbest = -1, nbest = -1, nmax = -1;/* init for -Wall */
+    int nkj, njn, njaj, nny;
 
     double ammax, small, asky, dzsky, dz, cmd;
 
@@ -374,15 +403,15 @@ void bswap2(int kk, int nsam, int *nrepr,
     --nrepr;
     --beter;
 
-    --dys;/*index via meet() */
     --dysma;	--dysmb;
 
+    s = s * 1.1 + 1.;/* value larger than all dissimilarities */
 
 /* ====== first algorithm: BUILD. ====== */
 
     for (j = 1; j <= nsam; ++j) {
 	nrepr[j] = 0;
-	dysma[j] = s * 1.1 + 1.;
+	dysma[j] = s;
     }
 
     for(nny = 0; nny < kk; nny++) {
@@ -390,8 +419,7 @@ void bswap2(int kk, int nsam, int *nrepr,
 	    if (nrepr[ja] == 0) {
 		beter[ja] = 0.;
 		for (j = 1; j <= nsam; ++j) {
-		    njaj = F77_CALL(meet)(&ja, &j);
-		    cmd = dysma[j] - dys[njaj];
+		    cmd = dysma[j] - dys[ ind_2(ja, j)];
 		    if (cmd > 0.)
 			beter[ja] += cmd;
 		}
@@ -406,7 +434,7 @@ void bswap2(int kk, int nsam, int *nrepr,
 	}
 	nrepr[nmax] = 1;
 	for (j = 1; j <= nsam; ++j) {
-	    njn = F77_CALL(meet)(&nmax, &j);
+	    njn = ind_2(nmax, j);
 	    if (dysma[j] > dys[njn])
 		dysma[j] = dys[njn];
 	}
@@ -427,11 +455,11 @@ void bswap2(int kk, int nsam, int *nrepr,
 L60:
 
     for (j = 1; j <= nsam; ++j) {
-	dysma[j] = s * 1.1 + 1.;
-	dysmb[j] = s * 1.1 + 1.;
+	dysma[j] = s;
+	dysmb[j] = s;
 	for (ja = 1; ja <= nsam; ++ja) {
 	    if (nrepr[ja] != 0) {
-		njaj = F77_CALL(meet)(&ja, &j);
+		njaj = ind_2(ja, j);
 		if (dys[njaj] < dysma[j]) {
 		    dysmb[j] = dysma[j];
 		    dysma[j] = dys[njaj];
@@ -448,8 +476,8 @@ L60:
 		if (nrepr[ja] != 0) {
 		    dz = 0.;
 		    for (j = 1; j <= nsam; ++j) {
-			njaj = F77_CALL(meet)(&ja, &j);
-			nkj  = F77_CALL(meet)(&k, &j);
+			njaj = ind_2(ja, j);
+			nkj  = ind_2(k, j);
 			if (dys[njaj] == dysma[j]) {
 			    small = dysmb[j];
 			    if (small > dys[njaj])
@@ -503,14 +531,10 @@ void selec(int kk, int n, int jpp, int diss_kind,
     --rdnew; --ttnew; --npnew; --nrnew; --nsnew;
     --new;
 
-    --dys;
-
-
-    /* nafs := TRUE  if a distance cannot be calculated*/
+    /* nafs := TRUE  if a distance cannot be calculated (because of NA s)*/
     *nafs = FALSE;
 
-/* identification of representative objects, and initializations */
-
+    /* identification of representative objects, and initializations */
     jk = 0;
     for (j = 1; j <= nsam; ++j) {
 	if (nrepr[j] != 0) {
@@ -652,17 +676,15 @@ void selec(int kk, int n, int jpp, int diss_kind,
 		    continue /* next kb */;
 
 		npb = np[kb];
-		npab = F77_CALL(meet)(&npa, &npb);
+		npab = ind_2(npa, npb);
 		if (nstrt == 0)
 		    nstrt = 1;
 		else if (dys[npab] >= ratt[ka])
 		    continue /* next kb */;
 
 		ratt[ka] = dys[npab];
-		if (ratt[ka] != 0.)
-		    continue /* next kb */;
-
-		ratt[ka] = -1.;
+		if (ratt[ka] == 0.)
+		    ratt[ka] = -1.;
 	    }
 	    if (ratt[ka] > -0.5)
 		ratt[ka] = radus[ka] / ratt[ka];
@@ -766,6 +788,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
 	   double *dys, double s, double *x,
 	   /* --> Output : */
 	   double *avsyl, double *ttsyl, double *sylinf,
+	   /* but the following output vectors are never by clara() : */
 	   int *ncluv, int *nsend, int *nelem, int *negbr,
 	   double *syl, double *srank)
 {
@@ -783,13 +806,9 @@ void black(int kk, int jpp, int nsam, int *nbest,
 /* Parameter adjustments */
     --avsyl;
 
-    --srank;
-    --syl;
-    --negbr;
-    --nelem;
-    --nsend;
+    --srank;    --syl;
+    --negbr; --nelem; --nsend;
     --ncluv;	--nbest;
-    --dys;
 
     sylinf_dim1 = nsam;
     sylinf_offset = 1 + sylinf_dim1 * 1;
@@ -830,7 +849,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
 		    for (l = 1; l <= nsam; ++l) {
 			if (ncluv[l] == nclu) {
 			    ++nbb;
-			    db += dys[F77_CALL(meet)(&nj, &l)];
+			    db += dys[ind_2(nj, l)];
 			}
 		    }
 		    btt = (double) nbb;
@@ -848,7 +867,7 @@ void black(int kk, int jpp, int nsam, int *nbest,
 	    dysa = 0.;
 	    for (l = 1; l <= ntt; ++l) {
 		nl = nelem[l];
-		dysa += dys[F77_CALL(meet)(&nj, &nl)];
+		dysa += dys[ind_2(nj, nl)];
 	    }
 	    att = (double) (ntt - 1);
 	    dysa /= att;
