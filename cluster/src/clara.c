@@ -1,4 +1,4 @@
-/* -*- mode: C; kept-new-versions: 25; kept-old-versions: 20 -*- */
+/* -*- mode: c; kept-new-versions: 25; kept-old-versions: 20 -*- */
 
 /*   Clustering LARge Applications
      ~		~~~   ~
@@ -114,6 +114,8 @@ void clara(int *n,  /* = number of objects */
 		/* Loop find random index `kran' not yet in nrx[] : */
 	    L180:
 		kran = (int) (rnn * randm(&nrun) + 1.);
+		if(*trace_lev >= 3)
+		    Rprintf("... {180} nrun=%d -> k{ran}=%d\n", nrun,kran);
 		if (kran > *n) kran = *n;
 
 		if (kall/*jran != 1*/) {
@@ -128,10 +130,24 @@ void clara(int *n,  /* = number of objects */
 		if (ntt == less)
 		    goto L290;
 	    }
+	    if(*trace_lev >= 2) {
+		Rprintf(".. kall(T/F)=%d , nsel[ntt=%d] = %d\n",
+			kall, ntt, nsel[ntt]);
+		if(*trace_lev >= 3) {
+		    Rprintf("... nrx[0:%d]= ",*kk-1);
+		    for (jk = 0; jk < *kk; jk++)
+			Rprintf("%d ",nrx[jk]); Rprintf("\n");
+		    Rprintf("... nsel[1:%d]= ",*kk);
+		    for (jk = 1; jk <= *kk; jk++)
+			Rprintf("%d ",nsel[jk]); Rprintf("\n");
+		}
+	    }
 
 	    do {
 	    L210:
 		kran = (int) (rnn * randm(&nrun) + 1.);
+		if(*trace_lev >= 3)
+		    Rprintf("... {210} nrun=%d -> k{ran}=%d\n", nrun,kran);
 		if (kran > *n) kran = *n;
 
 		if (kall/*jran != 1*/ && *n < nsamb) {
@@ -198,6 +214,9 @@ void clara(int *n,  /* = number of objects */
 		s = dys[l];
 	} while (l+1 < n_dys);
 
+	if(*trace_lev >= 2)
+	    Rprintf(". clara(): s:= min dys[l=%d] = %g\n", l,s);
+
 	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
 	       /* dysma */tmp1, /*dysmb*/tmp2,
 	       /* beter[], only used here */&tmp[nsamb]);
@@ -236,8 +255,9 @@ void clara(int *n,  /* = number of objects */
 
     if (!kall) { *jstop = 2; return; }
 
-    if(*trace_lev)
-	Rprintf("C clara(): sample found. --> dysta2(nbest), resul(), finis\n");
+    if(*trace_lev) {
+	Rprintf("C clara(): sample _found_ --> dysta2(nbest), resul(), end\n");
+    }
     *obj = zba / rnn;
     dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
 
@@ -276,9 +296,11 @@ void dysta2(int nsam, int jpp, int *nsel,
     for (l = 1; l < nsam; ++l) {
 	lsel = nsel[l];
 	if(lsel <= 0 || lsel > n)
-	    REprintf("	** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
+	    REprintf(" ** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
 	for (k = 0; k < l; ++k) {
 	    ksel = nsel[k];
+	    if(ksel <= 0 || ksel > n)
+		REprintf(" ** dysta2(): nsel[k= %d] = %d is OUT\n", k, ksel);
 	    clk = 0.;
 	    ++nlk;
 	    npres = 0;
@@ -286,7 +308,8 @@ void dysta2(int nsam, int jpp, int *nsel,
 		lj = (lsel - 1) * jpp + j;
 		kj = (ksel - 1) * jpp + j;
 		if (jtmd[j] < 0) {
-/* in the following line, x[-2] ==> seg.fault {BDR to R-core, Sat, 3 Aug 2002} */
+		    /* in the following line (Fortran!), x[-2] ==> seg.fault
+		       {BDR to R-core, Sat, 3 Aug 2002} */
 		    if (x[lj] == valmd[j]) {
 			continue /* next j */;
 		    }
