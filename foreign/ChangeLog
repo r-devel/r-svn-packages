@@ -1,3 +1,10 @@
+2004-11-24 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: New version is 0.8-2.
+	
+	* src/SASxport.c Definition of numerical missing values was
+	applied to character fields. (PR#7389)
+
 2004-11-17 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: New version is 0.8-1.
