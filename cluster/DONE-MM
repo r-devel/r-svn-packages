@@ -22,6 +22,13 @@ For R 1.7.0 :
      --> save space in result object
      --> somewhat changed summary/print output , i.e. minor NON-compatibility!
 
+  o a) pam()$diss  is not a `proper' dissimilarity
+       (class is only "dissimilarity", missing "dist") -> done Mo,17.3.03
+    b) as.dist() is not generic and does too much for "dist" objects,
+       and also for "dissimilarity" {<< these were fixed for R 1.7.0}
+       and the completely wrong thing for the
+       pam()$diss like "dissimilarity"s... (wrong $Size !)
+
   o plot(ylab / xlab) -- for agnes -> bannerplot() & pltree()
     ./R/plothier.q   ===> NOT DONE -- rather tell people {on the help()} to
     use the two underlying plot functions separately !
