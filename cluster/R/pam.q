@@ -1,38 +1,17 @@
-#### PAM : Partitioning Around Medoids-- $Id$
-
+#### PAM : Partitioning Around Medoids
+#### --- $Id$
 pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 {
-    meanabsdev <- function(y) mean(abs(y - mean(y, na.rm=TRUE)), na.rm=TRUE)
-    size <- function(d)
-    {
-	discr <- 1 + 8 * length(d)
-	sqrtdiscr <- round(sqrt(discr))
-	if(round(sqrtdiscr)^2 != discr)
-	    return(0)
-	(1 + sqrtdiscr)/2
-    }
-    lower.to.upper.tri.inds <- function(n)
-    {
-	return(c(0, unlist(lapply(2:(n - 1), function(x, n)
-				  cumsum(c(0, (n - 2):(n - x))), n = n))) +
-	       rep(1:(n - 1), 1:(n - 1)))
-    }
-    upper.to.lower.tri.inds <- function(n)
-    {
-	return(unlist(lapply(0:(n - 2), function(x, n)
-			     cumsum(x:(n - 2)), n = n)) +
-	       rep(1 + cumsum(0:(n - 2)), (n - 1):1))
-    }
     if(diss) {
 	## check type of input vector
 	if(is.na(min(x)))
 	    stop("NA-values in the dissimilarity matrix not allowed.")
 	if(data.class(x) != "dissimilarity") {
-	    if(!is.numeric(x) || size(x) == 0)
+	    if(!is.numeric(x) || is.na(sizeDiss(x)))
 		stop("x is not of class dissimilarity and can not be converted to this class." )
 	    ## convert input vector to class "dissimilarity"
 	    class(x) <- "dissimilarity"
-	    attr(x, "Size") <- size(x)
+	    attr(x, "Size") <- sizeDiss(x)
 	    attr(x, "Metric") <- "unspecified"
 	}
 	## adapt S dissimilarities to Fortran:
