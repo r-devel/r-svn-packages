@@ -1,3 +1,14 @@
+2003-12-20  Brian Ripley  <ripley@stats.ox.ac.uk>
+
+	* DESCRIPTION (Version): New version is 0.6-6.
+
+	* NAMESPACE: New file.
+
+	* man/read.S.R: Do not export nor document SModeNames.
+
+	* src/zzz.R: Define .onLoad as well as .First.lib (the latter left
+	in case NAMESPACE is removed for debugging).
+
 2003-12-20  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.6-5.
