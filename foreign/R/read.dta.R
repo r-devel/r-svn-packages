@@ -1,8 +1,8 @@
-read.dta <- function(file, convert.dates=TRUE,tz="GMT",convert.factors=TRUE){
+ read.dta <- function(file, convert.dates=TRUE,tz="GMT",convert.factors=TRUE){
     rval<-.External("do_readStata", file, PACKAGE = "foreign")
     if (convert.dates){
         ff<-attr(rval,"formats")
-        dates<-grep("%_*d",ff)
+        dates<-grep("%-*d",ff)
         for(v in dates)
             rval[[v]]<-ISOdate(1960,1,1,tz=tz)+24*60*60*rval[[v]]
     }
@@ -29,9 +29,9 @@ write.dta <- function(dataframe, file, version = 6,convert.dates=TRUE,tz="GMT",
     names(dataframe)<-nn
     
     if (convert.dates){
-        dates<-which(sapply(data.frame,function(x) inherits(x,"POSIXt")))
+        dates<-which(sapply(dataframe,function(x) inherits(x,"POSIXt")))
         for( v in dates)
-            dataframe[[v]]<-round(julian(dataframe[[v]],ISOdate(1960,1,1,tz=tz)))
+            dataframe[[v]]<-as.vector(round(julian(dataframe[[v]],ISOdate(1960,1,1,tz=tz))))
     }
     convert.factors<-match.arg(convert.factors)
     factors<-which(sapply(dataframe,is.factor))

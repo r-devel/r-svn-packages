@@ -1,3 +1,5 @@
+2001-12-13  Thomas Lumley  <tlumley@u.washington.edu>. Typo in
+	date-handling provoked by gctorture()
 2001-12-13  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
 
 	* src/sfm-read.c (bufread): Do not read in 0 bytes [fix by PD].
