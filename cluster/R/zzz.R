@@ -1,41 +1,21 @@
-## -*- R -*-  no S4 methodology here; speedup :
+## no S4 methodology here; speedup :
 .noGenerics <- TRUE
 
-.First.lib <- function(lib, pkg) {
-  require(mva)
-  library.dynam("cluster", pkg, lib)
+if(paste(R.version$major, R.version$minor, sep=".") < 2.1) {
+    ## These are substitutes such that newer code still runs in older R
+    gettextf <- function (fmt, ..., domain = NULL)
+        sprintf(gettext(fmt, domain = domain), ...)
+
+    gettext <- function (..., domain = NULL) {
+        args <- lapply(list(...), as.character)
+        ##R 2.1.0: .Internal(gettext(domain, unlist(args)))
+        ## Cheap substitute:
+        unlist(args)
+    }
+
+    ngettext <- function (n, msg1, msg2, domain = NULL) {
+        ##R 2.1.0: .Internal(ngettext(n, msg1, msg2, domain))
+        ## Cheap substitute:
+        if(n == 1) msg1 else msg2
+    }
 }
-
-## for R versions < 1.8:
-if(paste(R.version$major, R.version$minor, sep=".") < 1.8) {
-
-    sQuote <- function(x) {
-        if(length(x) == 0) return(character())
-        paste("'", x, "'", sep = "")
-    }
-    dQuote <- function(x) {
-        if(length(x) == 0) return(character())
-        paste("\"", x, "\"", sep = "")
-    }
-
-    ## for R versions < 1.7:
-    if(paste(R.version$major, R.version$minor, sep=".") < 1.7) {
-
-        force <- function(x) x
-
-        ## for R versions < 1.6:
-        if(paste(R.version$major, R.version$minor, sep=".") < 1.6) {
-            stop <- function (..., call. = TRUE)
-                .Internal(stop(if (nargs() > 0) paste(..., sep = "")))
-
-            ## for R versions < 1.5
-            if(paste(R.version$major, R.version$minor, sep=".") < 1.5)
-                ## cheap substitute, used in silhouette.default()
-                colSums <- function(x) apply(x, 2, sum)
-
-### NOTE: From cluster 1.7.0, we require at least R 1.4
-
-        } # versions < 1.6
-
-    } # versions < 1.7
-} # versions < 1.8
