@@ -96,6 +96,7 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
 		     type3,		# vtype
 		     as.integer(ndyst),
 		     dis = double((n * (n - 1))/2),
+                     NAOK = TRUE,# only to allow "+- Inf"
 		     DUP = FALSE,
 		     PACKAGE = "cluster")$dis
     ## adapt Fortran output to S:
@@ -108,7 +109,7 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
     if(any(is.na(disv))) attr(disv, "NA.message") <-
 	"NA-values in the dissimilarity matrix !"
     ## construct S object -- "dist" methods are *there* !
-    class(disv) <- c("dissimilarity", "dist")
+    class(disv) <- .__dClass
     attr(disv, "Labels") <- dimnames(x)[[1]]
     attr(disv, "Size") <- n
     attr(disv, "Metric") <- ifelse(!ndyst, "mixed", metric)
