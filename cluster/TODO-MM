@@ -65,8 +65,7 @@ Dec. 2002:
         instead --> centralize this info (and keep short ref.s in the man/plot.*
 
   o	agnes() and hclust() should be merged {and based on C, not Fortran}
-	*and* it should be able to use the Lance-William "parametrized"
-	method.
+
 
 July 2002:
 
