@@ -1,6 +1,6 @@
 
 R : Copyright 2002, The R Development Core Team
-Version 1.6.0 Under development (unstable) (2002-08-28)
+Version 1.6.0 Under development (unstable) (2002-09-03)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -150,7 +150,7 @@ Silhouette plot information for best sample:
 74       2        1 0.4973579
 77       2        1 0.4909004
 
-6 dissimilarities, summarized :
+4005 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.3743 10.2200 18.3100 26.9800 46.5000 81.3800 
 Metric :  euclidean 
@@ -274,7 +274,7 @@ Silhouette plot information for best sample:
 805        2        1 0.6304831
 1018       2        1 0.5703118
 
-6 dissimilarities, summarized :
+946 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4388 11.2800 26.1600 32.8900 53.0800 94.2200 
 Metric :  euclidean 
@@ -867,7 +867,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1012,7 +1012,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1157,7 +1157,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1302,7 +1302,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1447,7 +1447,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1592,7 +1592,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1737,7 +1737,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -1882,7 +1882,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2027,7 +2027,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2172,7 +2172,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2317,7 +2317,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2462,7 +2462,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2607,7 +2607,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2752,7 +2752,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -2897,7 +2897,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -3042,7 +3042,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -3187,7 +3187,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -3332,7 +3332,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -3477,7 +3477,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -3622,7 +3622,7 @@ Silhouette plot information for best sample:
 1878       5        3 0.8594032
 1735       5        3 0.8202255
 
-6 dissimilarities, summarized :
+1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
  0.4099 23.9400 39.3300 35.9900 47.5600 82.0900 
 Metric :  euclidean 
@@ -3634,6 +3634,7 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  7.45 0.09 8.18 0 0 
-> 
+Time elapsed:  8.11 0.1 8.86 0 0 
+> ## Lynne (P IV, 1.6 GHz):  7.5
+> ## nb-mm (P III,700 MHz): 12.4
 > 
