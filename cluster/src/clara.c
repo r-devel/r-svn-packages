@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include <R_ext/Print.h>/* for diagnostics */
+#include <R_ext/Random.h>/* when R's RNG is used */
 
 #include "cluster.h"
 
@@ -31,7 +32,9 @@ void clara(int *n,  /* = number of objects */
 	   int *mdata,	/*= {0,1}; 1: min(x) is missing value (NA);  0: no NA */
 	   double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
 	   int *jtmd,	/* [j]= {-1,1};	 -1: x[,j] has NA; 1: no NAs in x[,j] */
-	   int *diss_kind,/* = {1,2};  1 : euclidean;  2 : manhattan*/
+	   int *diss_kind,/*= {1,2};  1 : euclidean;  2 : manhattan*/
+	   int *rng_R,	/*  = {0,1};  0 : use clara's internal weak RNG;
+			 *	      1 : use R's RNG (and seed) */
 	   int *nrepr,
 	   int *nsel,
 	   int *nbest,/* x[nbest[j]] will be the j-th obs in the final sample */
@@ -78,7 +81,10 @@ void clara(int *n,  /* = number of objects */
     nunfs = 0;
     kall = FALSE;
 
-    nrun = 0; /* << initialize `random seed' of the very simple randm() below */
+    if(*rng_R)
+	GetRNGstate();
+    else /* << initialize `random seed' of the very simple randm() below */
+	nrun = 0;
 
 /* __LOOP__ :  random subsamples are drawn and partitioned into kk clusters */
 
@@ -108,11 +114,13 @@ void clara(int *n,  /* = number of objects */
 	    else {
 		/* Loop finding random index `kran' not yet in nrx[] : */
 	    L180:
-		kran = (int) (rnn * randm(&nrun) + 1.);
-		if(*trace_lev >= 3)
-		    Rprintf("... {180} nrun=%d -> k{ran}=%d\n", nrun,kran);
-		if (kran > *n) kran = *n;
-
+		kran = 1 + (int)(rnn * ((*rng_R)? unif_rand(): randm(&nrun)));
+		if(*trace_lev >= 3) {
+		    if(*rng_R)
+			Rprintf("... R unif_rand() -> k{ran}=%d\n", kran);
+		    else
+			Rprintf("... {180} nrun=%d -> k{ran}=%d\n", nrun,kran);
+		}
 		if (kall/*jran != 1*/) {
 		    for (jk = 0; jk < *kk; ++jk)
 			if (kran == nrx[jk])
@@ -242,6 +250,8 @@ void clara(int *n,  /* = number of objects */
 	if(full_sample) break; /* out of resampling */
     }
 /* --- end random sampling loop */
+    if(*rng_R)
+	PutRNGstate();
 
     if (nunfs >= *nran) { *jstop = 1; return; }
 
