@@ -33,6 +33,7 @@ clara(x, 2, samples = 200)[clInd]
 ## Note that this last one is practically identical to the slower  pam() one
 
 x[print(sample(length(x), 20))] <- NA
+## with R-valgrind on lynne: seg.fault already now:
 clara(x, 2, samples = 50)[clInd]
 
 ###-- Larger example: 2000 objects, divided into 5 clusters.
