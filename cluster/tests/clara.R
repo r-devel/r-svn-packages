@@ -1,5 +1,3 @@
-### Note: MM has a version for this in ../../cluster_tests/clara-segfault.R !!
-
 library(cluster)
 
 ## generate 1500 objects, divided into 2 clusters.
@@ -45,6 +43,26 @@ x5 <- cbind(x5, rnorm(nrow(x5)))
 clara(x5, 5)
 for(i in 1:20)
     print(summary(clara(x5, 5, samples = 50)))
+
+
+##  small example(s):
+data(ruspini)
+
+clara(ruspini,4)
+
+rus <- data.matrix(ruspini); storage.mode(rus) <- "double"
+
+ru2 <- rus[c(1:7,21:28, 45:51, 61:69),]
+ru3 <- rus[c(1:4,21:25, 45:48, 61:63),]
+ru4 <- rus[c(1:2,21:22, 45:47),]
+ru5 <- rus[c(1:2,21,    45),]
+daisy(ru5, "manhattan")
+## Dissimilarities :  11 118 143 107 132  89
+
+## >> reproducible
+c5 <- clara(ru5, k=3, met="manhattan", sampsize=3,trace=2)
+c5[c("objective", "medoids", "clusinfo")]
+
 
 ## Last Line:
 cat('Time elapsed: ', proc.time() - .proctime00,'\n')
