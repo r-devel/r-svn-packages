@@ -23,7 +23,7 @@ chosen here.
 man/read.dbf.Rd
 man/write.dbf.Rd
 Nicholas Lewin-Koh and Roger Bivand,
-changes for the foreign package (C) 2004 R Development Core Team
+Changes for the foreign package (C) 2004 R Development Core Team
 
 
 R/R_systat.R
@@ -117,3 +117,7 @@ man/read.systat.Rd
 
 Roger Bivand
 
+
+R/read.epiinfo.R
+(c) 2002-4 Thomas Lumley
+Patches (c) 2002 Mark Myatt
