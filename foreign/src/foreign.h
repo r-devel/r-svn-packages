@@ -1,5 +1,5 @@
 /*
- *  $Id: foreign.h,v 1.2 2002/05/01 14:31:45 ripley Exp $
+ *  $Id: foreign.h,v 1.3 2002/05/01 21:00:11 hornik Exp $
  *
  *  Common header file for the foreign package for R
  *
@@ -27,8 +27,8 @@
 #ifndef FOREIGN_H
 #define FOREIGN_H
 
-#include "R.h"
-#include "Rinternals.h"
+#include <R.h>
+#include <Rinternals.h>
 
 #define CN_TYPE_BIG     1
 #define CN_TYPE_LITTLE  2 
@@ -41,12 +41,12 @@
 #define UNKNOWN 0000
 
 #ifdef WORDS_BIGENDIAN
-#define CN_TYPE_NATIVE CN_TYPE_IEEEB
-#define endian BIG
+# define CN_TYPE_NATIVE CN_TYPE_IEEEB
+# define endian BIG
 #else
-#define CN_TYPE_NATIVE CN_TYPE_IEEEL
-#define endian LITTLE
-#endif /* WORDS_BIGENDIAN */
+# define CN_TYPE_NATIVE CN_TYPE_IEEEL
+# define endian LITTLE
+#endif /* not WORDS_BIGENDIAN */
 
 typedef int int32;
 typedef short int16;
@@ -58,10 +58,10 @@ typedef float flt32;
 #define FPREP FPREP_IEEE754
 
 #ifdef max
-#undef max
+# undef max
 #endif
 #ifdef min
-#undef min
+# undef min
 #endif
 #define max(a,b) ((a) >= (b) ? (a) : (b))
 #define min(a,b) ((a) <= (b) ? (a) : (b))
