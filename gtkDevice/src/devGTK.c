@@ -597,12 +597,10 @@ static void GTK_MetricInfo(int c, int font, double cex, double ps,
 
 	*ascent = (double) iascent;
 	*descent = (double) idescent;
-#ifdef OLD
-	/* This was always returning a width of zero */
 	*width = (double) iwidth;
-#else
+	/* This formula does NOT work for spaces
 	*width = (double) (lbearing+rbearing);
-#endif
+	*/
     }
 }
 
@@ -619,7 +617,11 @@ static void GTK_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
     gtkd->clip.height = abs( (int) y0 - (int) y1) + 1;
     dd->clipTop = dd->clipBottom + gtkd->clip.height;
 
-    gdk_gc_set_clip_rectangle(gtkd->wgc, &gtkd->clip);
+    /* Setting the clipping rectangle works when drawing to a window
+       but not to the backing pixmap. This is a GTK+ bug that is
+       unlikely to be fixed in this version (9 Jul 2002) - MTP
+    */
+    /* gdk_gc_set_clip_rectangle(gtkd->wgc, &gtkd->clip); */
 }
 
 static void GTK_Size(double *left, double *right,
@@ -1164,7 +1166,7 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     dd->canChangeFont= FALSE;
     dd->canRotateText= TRUE;
     dd->canResizeText= TRUE;
-    dd->canClip = TRUE;
+    dd->canClip = FALSE; /* See comment in GTK_Clip */
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
 
@@ -1338,7 +1340,7 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     dd->canChangeFont= FALSE;
     dd->canRotateText= TRUE;
     dd->canResizeText= TRUE;
-    dd->canClip = TRUE;
+    dd->canClip = FALSE; /* See comment in GTK_Clip */
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
 
