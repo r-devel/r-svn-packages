@@ -46,7 +46,7 @@ bannerplot(x, w = rev(x$height), fromLeft = TRUE,
   \item{\dots}{graphical parameters (see \code{\link{par}}) may also
     be supplied as arguments to this function.}
 }
-\author{Martin Maechler}
+\author{Martin Maechler (from original code of Kaufman and Rousseeuw).}
 \note{This is mainly a utility called from \code{\link{plot.agnes}},
   \code{\link{plot.diana}} and \code{\link{plot.mona}}.
 }% also serves as \seealso{*}
