@@ -11,6 +11,7 @@
 #include <R_ext/Print.h>/* for diagnostics */
 
 #include "cluster.h"
+#include "ind_2.h"
 
 /*     carries out a clustering using the k-medoid approach.
  */
@@ -85,18 +86,29 @@ void bswap(int *kk, int *nn, int *nrepr,
     double tmp1 = *s * 1.1f + 1.;
 
      /* Parameter adjustments */
-    --beter;
-    --dysmb;
-    --dysma;
     --nrepr;
+    --beter;
+    --dysma;
+    --dysmb;
 
-/*     first algorithm: build. */
+/* IDEA: when n (= *nn) is large compare to k (= *kk),
+ * ----  rather use a "sparse" representation:
+ * instead of boolean vector nrepr[] , use  ind_repr <- which(nrepr) !!
+ */
+
+/* first algorithm: build :  find  *kk  representatives  aka medoids :  */
 
     for (i = 1; i <= *nn; ++i) {
 	nrepr[i] = 0;
 	dysma[i] = tmp1;
     }
     for (k = 1; k <= *kk; ++k) {
+	/* compute beter[i] for all non-representatives:
+	 * also find ammax := max_{..} and nmax := argmax_i{beter[i]} ... */
+
+/*FIXME: declare quite a few variables only here!
+ *-----*/
+	ammax = 0.;
 	for (i = 1; i <= *nn; ++i) {
 	    if (nrepr[i] == 0) {
 		beter[i] = 0.;
@@ -105,23 +117,24 @@ void bswap(int *kk, int *nn, int *nrepr,
 		    if (cmd > 0.)
 			beter[i] += cmd;
 		}
+		if (ammax <= beter[i]) {
+		    /*  does < (instead of <= ) work too? -- NO! */
+		    ammax = beter[i];
+		    nmax = i;
+		}
 	    }
 	}
-	ammax = 0.;
-	for (i = 1; i <= *nn; ++i) {
-	    if (nrepr[i] == 0 && ammax <= beter[i]) {
-		/*  does < (instead of <= ) work too? -- NO! */
-		ammax = beter[i];
-		nmax = i;
-	    }
-	}
+
 	nrepr[nmax] = 1;/* = .true. : *is* a representative */
+	/* update dysma[]'s :*/
 	for (j = 1; j <= *nn; ++j) {
 	    njn = ind_2(nmax, j);
 	    if (dysma[j] > dys[njn])
 		dysma[j] = dys[njn];
 	}
     }
+    /* output of the above loop:  nrepr[], dysma[], ... */
+
     *sky = 0.;
     for (j = 1; j <= *nn; ++j)
 	*sky += dysma[j];
