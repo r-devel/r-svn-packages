@@ -1,25 +1,28 @@
-      subroutine fanny(nn,jpp,kk,x,dss,jdyss,valmd,jtmd,ndyst,nsend,
-     1	   nelem,negbr,syl,p,dp,pt,nfuzz,esp,ef,dvec,
-     2	   ttsyl,eda,edb,obj,ncluv,sylinf,eps)
 C
 C   program for Fuzzy cluster ANalysis
 C
-      implicit double precision (a-h,o-z)
-C  dimension of nsend,negbr,nelem,ncluv,dvec,syl is maxnn:
-      dimension nsend(nn),negbr(nn),nelem(nn),ncluv(nn)
-      dimension dvec(nn),syl(nn)
-C  dim. x(maxnn,maxpp),p(maxnn,maxkk),dp(maxnn,maxkk),dss(maxhh):
-      dimension x(nn,jpp),p(nn,kk),dp(nn,kk),dss(nn*(nn-1)/2+1)
-C  dim. valmd,jtmd,esp,ef,pt,nfuzz(maxkk):
-      dimension valmd(jpp),jtmd(jpp),obj(2)
-      dimension pt(kk),nfuzz(kk),esp(kk),ef(kk)
-      dimension sylinf(nn,4)
-C
-C   where:
+      subroutine fanny(nn,jpp,kk,x,dss,jdyss,valmd,jtmd,ndyst,
+     1	   nsend,nelem,negbr, syl,p,dp,pt,nfuzz,esp,ef,dvec,
+     2	   ttsyl,eda,edb,obj,ncluv,sylinf,eps)
+c Arguments
+      integer nn,jpp,kk, jdyss, ndyst
 C	  nn   = number of objects
 C	  jpp  = number of variables for clustering
 C	  kk   = number of clusters
-C	  maxhh= (maxnn*(maxnn-1))/2 + 1
+      double precision ttsyl, eda,edb, eps
+      double precision x(nn,jpp),p(nn,kk),dp(nn,kk),dss(nn*(nn-1)/2+1)
+
+C  dimension of nsend,negbr,nelem,ncluv,dvec,syl is maxnn:
+      integer nsend(nn),nelem(nn),negbr(nn),ncluv(nn)
+      double precision dvec(nn),syl(nn), sylinf(nn,4)
+C  dim. valmd,jtmd,esp,ef,pt,nfuzz(maxkk):
+      double precision valmd(jpp), obj(2)
+      integer jtmd(jpp), nfuzz(kk)
+      double precision pt(kk),esp(kk),ef(kk)
+C
+C VARs
+      double precision s
+      integer ktrue, l, jhalt, nhalf
 C
       if(jdyss.ne.1) then
 c	 compute dissimilarities from data
@@ -48,8 +51,14 @@ C     --- fanny
 
 C
       subroutine dysta3(nn,jpp,x,dss,ndyst,jtmd,valmd,jhalt)
-      implicit double precision (a-h,o-z)
-      dimension x(nn,jpp),dss(1+nn*(nn-1)/2),jtmd(jpp),valmd(jpp)
+c Args
+      integer nn,jpp
+      double precision x(nn,jpp), dss(1+nn*(nn-1)/2), valmd(jpp)
+      integer ndyst, jtmd(jpp), jhalt
+c VARs
+      double precision pp
+      integer j,k,l,lplus, nlk, nnsub, npres
+
       pp=jpp
       nnsub=nn-1
       nlk=0
