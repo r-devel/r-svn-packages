@@ -1,3 +1,11 @@
+2002-03-08 Thomas Lumley <tlumley@u.washington.edu>
+
+	* Update stataread.c to read version 7/SE
+
+	* Add support for Epi Info
+
+	* SPSS: convert only some value labels to factor levels
+
 2002-03-08 Brian Ripley  <ripley@stats.ox.ac.uk>
 
 	* DESCRIPTION (Version): New version is 0.4-10.
