@@ -12,90 +12,57 @@
 
 #include "cluster.h"
 
-void pam(int *nn, int *jpp, int *kk,
-	 double *x, double *dys, int *jdyss, double *valmd, int *jtmd,
+/*     carries out a clustering using the k-medoid approach.
+ */
+void pam(int *nn, int *jpp, int *kk, double *x, double *dys,
+	 int *jdyss, /* jdyss = 0 : compute distances from x
+		      *	      = 1 : distances provided	in x */
+	 double *valmd, int *jtmd,
 	 int *ndyst, int *nsend, int *nrepr, int *nelem,
 	 double *radus, double *damer, double *ttd, double *separ,
 	 double *ttsyl, int *med, double *obj, int *ncluv,
 	 double *clusinf, double *sylinf, int *nisol)
 {
-    /* System generated locals */
-    int x_dim1, x_offset, clusinf_dim1, clusinf_offset, sylinf_dim1,
-	sylinf_offset;
+    int clusinf_dim1 = *kk;
 
     /* Local variables */
-    static int k, l;
-    static double s, sky;
-    static int nhalf, jhalt;
-
-/*     carries out a clustering using the k-medoid approach.
-
-
- jdyss = 0 : compute distances from x
-	= 1 : distances provided  in x
-     Parameter adjustments */
-    sylinf_dim1 = *nn;
-    sylinf_offset = 1 + sylinf_dim1;
-    sylinf -= sylinf_offset;
-    --ncluv;
-    --separ;
-    --ttd;
-    --damer;
-    --radus;
-    --nelem;
-    --nrepr;
-    --nsend;
-    --dys;
-    --jtmd;
-    --valmd;
-    x_dim1 = *nn;
-    x_offset = 1 + x_dim1;
-    x -= x_offset;
-    --nisol;
-    clusinf_dim1 = *kk;
-    clusinf_offset = 1 + clusinf_dim1;
-    clusinf -= clusinf_offset;
-    --med;
-    --obj;
+    int k, l, nhalf, jhalt;
+    double s, sky;
 
     /* Function Body */
     if (*jdyss != 1) {
 	jhalt = 0;
-	F77_CALL(dysta)(nn, jpp, &x[x_offset], &dys[1], ndyst,
-			&jtmd[1], &valmd[1], &jhalt);
+	F77_CALL(dysta)(nn, jpp, x, dys, ndyst,
+			jtmd, valmd, &jhalt);
 	if (jhalt != 0) {
-	    *jdyss = -1;
-	    return;
+	    *jdyss = -1; return;
 	}
     }
-/*     nhalf := #{distances}+1 = length(dys) */
-    nhalf = *nn * (*nn - 1) / 2 + 1;
-/*     s := max( dys[.] ), the largest distance */
-    s = 0.;
-    for (l = 2; l <= nhalf; ++l)
+    nhalf = *nn * (*nn - 1) / 2 + 1; /* nhalf := #{distances}+1 = length(dys) */
+
+    /* s := max( dys[.] ), the largest distance */
+    for (l = 1, s = 0.; l < nhalf; ++l) /* dys[0] == 0. is NOT used !*/
 	if (s < dys[l])
 	    s = dys[l];
 
 /*     Build + Swap : */
-    bswap(kk, nn, &nrepr[1], &radus[1], &damer[1], &ttd[1], &nhalf, &dys[1],
-	   &sky, &s, &obj[1]);
+    bswap(kk, nn, nrepr, radus, damer, ttd, &nhalf, dys,
+	  &sky, &s, obj);
 
 /*     Compute STATs : */
-    cstat(kk, nn, &nsend[1], &nrepr[1], &radus[1], &damer[1], &ttd[1],
-	  &separ[1], &sky, &s, &nhalf, &dys[1], &ncluv[1], &nelem[1], &med[1],
-	  &nisol[1]);
-    for (k = 1; k <= *kk; ++k) {
-	clusinf[k + clusinf_dim1] = (double) nrepr[k];
-	clusinf[k + (clusinf_dim1 << 1)] = radus[k];
-	clusinf[k + clusinf_dim1 * 3] = ttd[k];
-	clusinf[k + (clusinf_dim1 << 2)] = damer[k];
-	clusinf[k + clusinf_dim1 * 5] = separ[k];
+    cstat(kk, nn, nsend, nrepr, radus, damer, ttd, separ,
+	  &sky, &s, &nhalf, dys, ncluv, nelem, med, nisol);
+    for (k = 0; k < *kk; ++k) {
+	clusinf[k]= 	(double)           nrepr[k];
+	clusinf[k + clusinf_dim1]        = radus[k];
+	clusinf[k + (clusinf_dim1 << 1)] = ttd  [k];
+	clusinf[k + clusinf_dim1 * 3]    = damer[k];
+	clusinf[k + (clusinf_dim1 << 2)] = separ[k];
     }
     if (1 < *kk && *kk < *nn) {
 /*	 Compute Silhouette info : */
-	dark(kk, nn, &nhalf, &ncluv[1], &nsend[1], &nelem[1], &nrepr[1], &
-		radus[1], &damer[1], &ttd[1], ttsyl, &dys[1], &s, &sylinf[
-		sylinf_offset]);
+	dark(kk, nn, &nhalf, ncluv, nsend, nelem, nrepr,
+	     radus, damer, ttd, ttsyl, dys, &s, sylinf);
     }
 } /* pam */
 
@@ -106,13 +73,12 @@ void pam(int *nn, int *jpp, int *kk,
      bswap(): the clustering algorithm in 2 parts:  I. build,	II. swap
 */
 void bswap(int *kk, int *nn, int *nrepr,
+	   /* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */
 	   double *dysma, double *dysmb, double *beter, int *hh,
 	   double *dys, double *sky, double *s, double *obj)
 {
     int i__, j, ij, k, kj, kbest, nbest, njn, nmax;
     double ammax, small, cmd, dz, dzsky;
-
-/* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */
 
      /* Parameter adjustments */
     --beter;
@@ -120,7 +86,6 @@ void bswap(int *kk, int *nn, int *nrepr,
     --dysma;
     --nrepr;
     --dys;
-    --obj;
 
     /* -Wall: */
     nbest = -1;
@@ -156,21 +121,20 @@ void bswap(int *kk, int *nn, int *nrepr,
 	nrepr[nmax] = 1;/* = .true. : *is* a representative */
 	for (j = 1; j <= *nn; ++j) {
 	    njn = F77_CALL(meet)(&nmax, &j);
-	    if (dysma[j] > dys[njn]) {
+	    if (dysma[j] > dys[njn])
 		dysma[j] = dys[njn];
-	    }
 	}
     }
     *sky = 0.;
-    for (j = 1; j <= *nn; ++j) {
+    for (j = 1; j <= *nn; ++j)
 	*sky += dysma[j];
-    }
-    obj[1] = *sky / *nn;
+    obj[0] = *sky / *nn;
+
     if (*kk > 1) {
 
-/*     second algorithm: swap.
+	/*     second algorithm: swap. */
 
- --   Loop : */
+/*--   Loop : */
 L60:
 	for (j = 1; j <= *nn; ++j) {
 	    dysma[j] = *s * 1.1f + 1.;
@@ -182,9 +146,8 @@ L60:
 			dysmb[j] = dysma[j];
 			dysma[j] = dys[ij];
 		    } else {
-			if (dys[ij] < dysmb[j]) {
+			if (dysmb[j] > dys[ij])
 			    dysmb[j] = dys[ij];
-			}
 		    }
 		}
 	    }
@@ -200,9 +163,8 @@ L60:
 			    kj = F77_CALL(meet)(&k, &j);
 			    if (dys[ij] == dysma[j]) {
 				small = dysmb[j];
-				if (small > dys[kj]) {
+				if (small > dys[kj])
 				    small = dys[kj];
-				}
 				dz = dz - dysma[j] + small;
 			    } else {
 				if (dys[kj] < dysma[j]) {
@@ -226,7 +188,7 @@ L60:
 	    goto L60;
 	}
     }
-    obj[2] = *sky / *nn;
+    obj[1] = *sky / *nn;
 } /* bswap */
 
 /* -----------------------------------------------------------
@@ -238,8 +200,8 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr,
 	   double *dys, int *ncluv, int *nelem, int *med, int *nisol)
 {
     /*logical*/int kand;
-    int j, k, m, ja, jb, jk, jndz;
-    int ksmal, numcl, mevj, njaj, nel, njm, nvn, ntt, nvna, numl, nplac;
+    int j, k, m, ja, jb, jk, jndz, ksmal = -1/* -Wall */;
+    int numcl, mevj, njaj, nel, njm, nvn, ntt, nvna, numl, nplac;
     double aja, ajb, dam, dsmal, sep, rnn, rtt, ttt;
 
     /* Parameter adjustments */
@@ -277,22 +239,19 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr,
     nplac = nsend[1];
     for (j = 1; j <= *nn; ++j) {
 	ncluv[j] = 0;
-	if (nsend[j] == nplac) {
+	if (nsend[j] == nplac)
 	    ncluv[j] = 1;
-	}
     }
     for (ja = 2; ja <= *nn; ++ja) {
 	nplac = nsend[ja];
 	if (ncluv[nplac] == 0) {
 	    ++jk;
 	    for (j = 2; j <= *nn; ++j) {
-		if (nsend[j] == nplac) {
+		if (nsend[j] == nplac)
 		    ncluv[j] = jk;
-		}
 	    }
-	    if (jk == *kk) {
-		goto L148;
-	    }
+	    if (jk == *kk)
+		break;
 	}
     }
 
@@ -351,9 +310,8 @@ L148:
 	    for (j = 1; j <= *nn; ++j) {
 		if (j != nvn) {
 		    mevj = F77_CALL(meet)(&nvn, &j);
-		    if (separ[k] > dys[mevj]) {
+		    if (separ[k] > dys[mevj])
 			separ[k] = dys[mevj];
-		    }
 		}
 	    }
 
@@ -375,43 +333,36 @@ L148:
 		for (jb = 1; jb <= *nn; ++jb) {
 		    jndz = F77_CALL(meet)(&nvna, &jb);
 		    if (ncluv[jb] == k) {
-			if (dys[jndz] > aja) {
+			if (aja < dys[jndz])
 			    aja = dys[jndz];
-			}
 		    } else {
-			if (dys[jndz] < ajb) {
+			if (ajb > dys[jndz])
 			    ajb = dys[jndz];
-			}
 		    }
 		}
-		if (kand && aja >= ajb) {
+		if (kand && aja >= ajb)
 		    kand = (0);
-		}
-		if (dam < aja) {
+		if (dam < aja)
 		    dam = aja;
-		}
-		if (sep > ajb) {
+		if (sep > ajb)
 		    sep = ajb;
-		}
 	    }
 	    separ[k] = sep;
 	    damer[k] = dam;
 	    if (kand) {
 		++numl;
-		if (dam >= sep) {
-/*		  L-cluster */
+		if (dam >= sep) /* L-cluster */
 		    nisol[k] = 1;
-		} else {
-/*		  L*-cluster */
+		else/*		   L*-cluster */
 		    nisol[k] = 2;
-		}
 		goto L40;
 	    }
 	}
 	nisol[k] = 0;
 L40:
 	;
-    }
+    }/* for(k) */
+
 } /* cstat */
 
 /* -----------------------------------------------------------
@@ -497,12 +448,10 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 			} else { /* dysb == dysa: */
 			    syl[j] = 0.;
 			}
-			if (syl[j] <= -1.) {
+			if (syl[j] <= -1.)
 			    syl[j] = -1.;
-			}
-			if (syl[j] >= 1.) {
+			else if (syl[j] >= 1.)
 			    syl[j] = 1.;
-			}
 		    } else {
 			syl[j] = -1.;
 		    }
@@ -511,8 +460,8 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 		} else {
 		    syl[j] = 0.;
 		}
-	    } else {
-/*     ntt == 1: */
+	    }
+	    else { /*     ntt == 1: */
 		syl[j] = 0.;
 	    }
 	}
