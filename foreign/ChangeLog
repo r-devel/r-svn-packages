@@ -1,3 +1,11 @@
+2004-04-28 Thomas Lumley <tlumley@u.washington.edu>
+
+	* DESCRIPTION: version 0.6-8
+	
+	* read.dta: 1-byte type was coming through unsigned
+	
+	* tests/: test file with 1-byte type
+
 2004-04-22 Thomas Lumley <tlumley@u.washington.edu>
 
 	* DESCRIPTION: version 0.6-7
