@@ -7,12 +7,13 @@
   \code{diana}.
 }
 \usage{
-pltree.twins(x, \dots)
+pltree.twins(x, main = paste("Dendrogram of ", deparse(call)), \dots)
 }
 \arguments{
   \item{x}{
     an object of class \code{"twins"}, typically created by either
     \code{\link{agnes}()} or \code{\link{diana}()}.}
+  \item{main}{main title.}
   \item{\dots}{
     Graphical parameters (see \code{\link{par}}) may also
     be supplied as arguments to this function.}
@@ -30,9 +31,8 @@ pltree.twins(x, \dots)
 \seealso{
   \code{\link{agnes}}, \code{\link{agnes.object}}, \code{\link{diana}},
   \code{\link{diana.object}}, \code{\link{hclust}}, \code{\link{par}},
-  \code{\link{plot.agnes}}, \code{\link{plot.diana}}.% \code{\link{plclust}}
+  \code{\link{plot.agnes}}, \code{\link{plot.diana}}.
 }
-\keyword{libcluster}
 \keyword{cluster}
 \keyword{hplot}
 % Converted by Sd2Rd version 0.3-2.
