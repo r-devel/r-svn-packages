@@ -1,8 +1,10 @@
-      subroutine pam(nn,jpp,kk,x,dys,jdyss,valmd,jtmd,ndyst,nsend,-- $Id$
+c $Id$
+c
+c PAM := Partitioning Around Medoids
+c
+      subroutine pam(nn,jpp,kk,x,dys,jdyss,valmd,jtmd,ndyst,nsend,
      f     nrepr,nelem,radus,damer,ttd,separ,ttsyl,med,obj,ncluv,
      f     clusinf,sylinf,nisol)
-c
-c     partitioning around medoids
 c
 c     carries out a clustering using the k-medoid approach.
 c
@@ -31,10 +33,9 @@ c     nhalf := #{distances} = length(dys)
       nhalf=nn*(nn-1)/2+1
 c     s := max( dys[.] ), the largest distance
       s=0.0
-      l=1
- 130  l=l+1
-      if(dys(l).gt.s)s=dys(l)
-      if(l.lt.nhalf)go to 130
+      do 10 l=2,nhalf
+         if(s .lt. dys(l)) s=dys(l)
+ 10   continue
 
       call bswap(kk,nn,      nrepr,radus,damer,ttd, nhalf,dys,sky,s,obj)
       call cstat(kk,nn,nsend,nrepr,radus,damer,ttd, separ,    sky,s,
@@ -67,31 +68,35 @@ c VARs
       nlk=1
       dys(1)=0.0
       do 100 l=2,nn
-         lsubt=l-1
-         do 20 k=1,lsubt
-            clk=0.0
-            nlk=nlk+1
-            npres=0
-            do 30 j=1,jpp
-               if(jtmd(j).ge.0)goto 40
-               if(x(l,j).eq.valmd(j))goto 30
-               if(x(k,j).eq.valmd(j))goto 30
- 40            npres=npres+1
-               if(ndyst.ne.1)goto 50
-               clk=clk+(x(l,j)-x(k,j))*(x(l,j)-x(k,j))
-               goto 30
- 50            clk=clk+dabs(x(l,j)-x(k,j))
- 30         continue
-            rpres=npres
-            if(npres.ne.0)goto 60
-            jhalt=1
-            dys(nlk)=-1.0
-            goto 20
- 60         if(ndyst.ne.1)goto 70
-            dys(nlk)=dsqrt(clk*(pp/rpres))
-            goto 20
- 70         dys(nlk)=clk*(pp/rpres)
- 20      continue
+	 lsubt=l-1
+	 do 20 k=1,lsubt
+	    clk=0.0
+	    nlk=nlk+1
+	    npres=0
+	    do 30 j=1,jpp
+	       if(jtmd(j).lt.0) then
+		  if(x(l,j).eq.valmd(j))goto 30
+		  if(x(k,j).eq.valmd(j))goto 30
+	       endif
+	       npres=npres+1
+	       if(ndyst.eq.1) then
+		  clk=clk+ (x(l,j)-x(k,j))*(x(l,j)-x(k,j))
+	       else
+		  clk=clk+ dabs(x(l,j)-x(k,j))
+	       endif
+ 30	    continue
+	    rpres=npres
+	    if(npres.eq.0) then
+	       jhalt=1
+	       dys(nlk)=-1.0
+	    else
+	       if(ndyst.eq.1) then
+		  dys(nlk)= dsqrt(clk*(pp/rpres))
+	       else
+		  dys(nlk)= clk*(pp/rpres)
+	       endif
+	    endif
+ 20	 continue
  100  continue
       end
 c     -----------------------------------------------------------
