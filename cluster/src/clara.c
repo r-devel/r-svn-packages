@@ -1,77 +1,86 @@
-/* clara.f -- translated by f2c (version 20010821).
- * and run through  f2c-clean,v 1.10 2002/03/28 16:37:27 maechler
- */
-
-#include <math.h>
-#include "cluster.h"
-
-/* $Id$
-     Clustering LARge Applications
+/*   Clustering LARge Applications
      ~		~~~   ~
      Clustering program based upon the k-medoid approach,
      and suitable for data sets of at least 100 objects.
      (for smaller data sets, please use program pam.)
-*/
-void clara_(int *nn, /* = number of objects */
-	    int *jpp,/* = number of variables */
-	    int *kk, /* = number of clusters */
-	    double *x,	/* */
-	    int *nran,	/* = #{random samples} drawn (= `samples' in R)*/
-	    int *nsam,	/* = #{objects} drawn from data set (`sampsize' in R) */
-	    double *dys,/* */
-	    int *mdata,/*= {0,1}; 1: min(x) is missing value (NA);  0: no NA */
-	    double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
-	    int *jtmd,/*[j] = {-1,1};  -1: x[,j] has NA;  1: no NAs in x[,j] */
-	    int *ndyst, /* = {1,2};  1 : euclidean;  2 : manhattan*/
-	    int *nrepr,	/* */
-	    int *nsel, int *nbest, int *nr, int *nrx,
-	    double *radus, double *ttd, double *ratt,
-	    double *ttbes, double *rdbes, double *rabes,
-	    int *mtt, double *obj, double *avsyl, double *ttsyl,
-	    double *sylinf, int *jstop,
-	    double *tmp1, double *tmp2, double *tmp3,
-	    int *ntmp1, int *ntmp2, int *ntmp3, int *ntmp4,
-	    int *ntmp5, int *ntmp6)
+ */
+
+/* $Id$
+ * original Id: clara.f,v 1.10 2002/08/27 15:43:58 maechler translated by
+ * f2c (version 20010821) and run through f2c-clean,v 1.10 2002/03/28
+ */
+
+#include <math.h>
+
+#include <R_ext/Print.h>/* for diagnostics */
+
+#include "cluster.h"
+
+void clara(int *n,  /* = number of objects */
+	   int *jpp,/* = number of variables */
+	   int *kk, /* = number of clusters, 1 <= kk <= n-1 */
+	   double *x,	/* Input:  the data x[n, jpp] _rowwise_ (transposed)
+			 * Output: the first `n' values are the `clustering'
+			 *	   (integers in 1,2,..,kk) */
+	   int *nran,	/* = #{random samples} drawn	   (= `samples' in R)*/
+	   int *nsam,	/* = #{objects} drawn from data set (`sampsize' in R) */
+	   double *dys,/* [1:(1 + (nsam * (nsam - 1))/2)]
+			* Output: to contain the distances */
+	   int *mdata,	/*= {0,1}; 1: min(x) is missing value (NA);  0: no NA */
+	   double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
+	   int *jtmd,	/* [j]= {-1,1};	 -1: x[,j] has NA; 1: no NAs in x[,j] */
+	   int *ndyst,	/* = {1,2};  1 : euclidean;  2 : manhattan*/
+	   int *nrepr,	/* */
+	   int *nsel, /* x[nsel[j]]  will be the j-th obs in the final sample */
+	   int *nbest,
+	   int *nr, int *nrx,
+	   double *radus, double *ttd, double *ratt,
+	   double *ttbes, double *rdbes, double *rabes,
+	   int *mtt, double *obj,
+	   double *avsyl, double *ttsyl, double *sylinf, int *jstop,
+	   double *tmp, /* = double [ 3 * nsam ] */
+	   int *itmp	/* = integer[ 6 * nsam ] */
+    )
 {
+
+#define tmp1 tmp
+#define tmp2 &tmp[*nsam]
+
+#define ntmp1 itmp
+#define ntmp2 &itmp[*nsam]
+#define ntmp3 &itmp[nsamb]
+#define ntmp4 &itmp[nsamb+ *nsam]
+#define ntmp5 &itmp[2*nsamb]
+#define ntmp6 &itmp[2*nsamb+ *nsam]
+
 
     /* Local variables */
 
-    /*logical*/int nafs;
-    int j, jjb, jk, jkk, jn, js, jsm, jhalt;
+    Rboolean nafs, kall, full_sample;
+    int j, jk, jkk, js, jsm, jhalt;
     int kkm, kkp, nsm, ntt;
-    int kall, nadv, jran, kran, kans, nneq, less, nsub, nrun, l;
-    int nhalf, nsamb, nad, nadvp, nexap, nexbp, nunfs;
-    double s, z__, zb, zba, ran, rnn, sx;
+    int nadv, jran, kran, kans, less, nsub, nrun, l;
+    int n_dys, nsamb, nad, nadvp, nexap, nexbp, nunfs;
+    double ran, rnn, sky, zb, zba = -1., s = -1., sx = -1.;/* Wall */
 
-/* Parameter adjustments */
-    --rabes; --rdbes; --ttbes;
-    --ratt;  --radus; --ttd;
-
-    --nrx; --nr;
-
-    --nbest; --nsel;
-
-    --nrepr; --dys;
+    /* Parameter adjustments */
+    --nsel;
 
 
     *jstop = 0;
-    rnn = (double) (*nn);
-    /* nhalf := size of distance array dys[] */
-    nhalf = *nsam * (*nsam - 1) / 2 + 1;
+    rnn = (double) (*n);
+    /* n_dys := size of distance array dys[] */
+    n_dys = *nsam * (*nsam - 1) / 2 + 1;/* >= 1 */
 
-    if (*nn == *nsam)
-	nneq = 1;
-    else
-	nneq = 0;
+    full_sample = (*n == *nsam);/* only one sub sample == full data */
 
     nsamb = *nsam << 1;
-    if (*nn < nsamb) {
-	less = *nn - *nsam;
-    } else {
+    if (*n < nsamb)/* sample more than half */
+	less = *n - *nsam;
+    else
 	less = *nsam;
-    }
     nunfs = 0;
-    kall = 0;
+    kall = FALSE;
     /* nrun : this is the ``random seed'' of the very simple randm() below */
     nrun = 0;
 
@@ -79,161 +88,140 @@ void clara_(int *nn, /* = number of objects */
 
     for (jran = 1; jran <= *nran; ++jran) {
 	jhalt = 0;
-	if (nneq == 0) {
-	    goto L140;
-	}
-	if (nneq == 2)  continue;/* random sample*/
-
-	/* else nneq == 1 when above nn == nsam : */
-	nneq = 2;
-	for (j = 1; j <= *nsam; ++j) {
-	    nsel[j] = j;
-	}
-	goto L320;
-
-/*     nneq = 0 : */
-L140:
-	ntt = 0;
-	if (jran != 1 && nunfs != jran && *nn >= nsamb) {
-	    for (jk = 1; jk <= *kk; ++jk) {
-		nsel[jk] = nrx[jk];
+	if (!full_sample) {/* `real' case: sample size < n */
+	    ntt = 0;
+	    if (jran != 1 && nunfs != jran && *n >= nsamb) {
+		for (jk = 0; jk < *kk; ++jk)
+		    nsel[jk+1] = nrx[jk];
+		kkm = *kk - 1;
+		for (jk = 1; jk <= kkm; ++jk) {
+		    nsm = nsel[jk];
+		    kkp = jk + 1;
+		    jsm = jk;
+		    for (jkk = kkp; jkk <= *kk; ++jkk) {
+			if (nsel[jkk] < nsm) {
+			    nsm = nsel[jkk];
+			    jsm = jkk;
+			}
+		    }
+		    nsel[jsm] = nsel[jk];
+		    nsel[jk] = nsm;
+		}
+		ntt = *kk;
 	    }
-	    kkm = *kk - 1;
-	    for (jk = 1; jk <= kkm; ++jk) {
-		nsm = nsel[jk];
-		kkp = jk + 1;
-		jsm = jk;
-		for (jkk = kkp; jkk <= *kk; ++jkk) {
-		    if (nsel[jkk] < nsm) {
-			nsm = nsel[jkk];
-			jsm = jkk;
+	    else {
+
+		/* Loop 1 -- */
+	    L180:
+		randm(&nrun, &ran);
+		kran = (int) (rnn * ran + 1.);
+		if (kran > *n) {
+		    kran = *n;
+		}
+		if (jran != 1) {
+		    for (jk = 0; jk < *kk; ++jk) {
+			if (kran == nrx[jk])
+			    goto L180;
 		    }
 		}
-		nsel[jsm] = nsel[jk];
-		nsel[jk] = nsm;
+		/* end Loop 1*/
+		++ntt;
+		nsel[ntt] = kran;
+		if (less == ntt)
+		    goto L290;
 	    }
-	    ntt = *kk;
-	}
-	else {
-L180:
-	    randm(&nrun, &ran);
-	    kran = (int) (rnn * ran + 1.);
-	    if (kran > *nn) {
-		kran = *nn;
-	    }
-	    if (jran != 1) {
-		for (jk = 1; jk <= *kk; ++jk) {
-		    if (kran == nrx[jk]) {
-			goto L180;
+
+	    do {
+	    L210:
+		randm(&nrun, &ran);
+		kran = (int) (rnn * ran + 1.);
+		if (kran > *n) {
+		    kran = *n;
+		}
+		if (jran != 1 && *n < nsamb) {
+		    for (jk = 0; jk < *kk; ++jk) {
+			if (kran == nrx[jk])
+			    goto L210;
 		    }
 		}
+
+		for (kans = 1; kans <= ntt; ++kans) {
+		    if (nsel[kans] >= kran) {
+			if (nsel[kans] == kran)
+			    goto L210;
+			else {
+			    for (nad = kans; nad <= ntt; ++nad) {
+				nadv = ntt - nad + kans;
+				nadvp = nadv + 1;
+				nsel[nadvp] = nsel[nadv];
+			    }
+			    ++ntt;
+			    nsel[kans] = kran;
+			    goto L290;
+			}
+		    }
+		}
+		++ntt;
+		nsel[ntt] = kran;
+	    L290:
+		;
+	    } while (ntt < less);
+
+	    if (*n < nsamb) {
+		for (j = 1, nexap = 1, nexbp = 0; j < *n; j++) {
+		    if (nsel[nexap] == j)
+			++nexap;
+		    else
+			nrepr[nexbp++] = j;
+		}
+		for (nsub = 0; nsub < *nsam; ++nsub)
+		    nsel[nsub+1] = nrepr[nsub];
 	    }
-	    ++ntt;
-	    nsel[ntt] = kran;
-	    if (less == ntt) {
-		goto L290;
-	    }
+	}
+	else { /* full_sample : *n = *nsam -- one sample is enough ! */
+	    for (j = 1; j <= *nsam; ++j)
+		nsel[j] = j;
 	}
 
-/* Loop -- */
-L210:
-	randm(&nrun, &ran);
-	kran = (int) (rnn * ran + 1.);
-	if (kran > *nn) {
-	    kran = *nn;
-	}
-	if (jran != 1 && *nn < nsamb) {
-	    for (jk = 1; jk <= *kk; ++jk) {
-		if (kran == nrx[jk])
-		    goto L210;
-	    }
-	}
-
-	for (kans = 1; kans <= ntt; ++kans) {
-	    if (nsel[kans] >= kran) {
-		if (nsel[kans] == kran)
-		    goto L210;
-		else
-		    goto L270;
-	    }
-	}
-	++ntt;
-	nsel[ntt] = kran;
-	goto L290;
-L270:
-	for (nad = kans; nad <= ntt; ++nad) {
-	    nadv = ntt - nad + kans;
-	    nadvp = nadv + 1;
-	    nsel[nadvp] = nsel[nadv];
-	}
-	++ntt;
-	nsel[kans] = kran;
-L290:
-	if (ntt < less) {
-	    goto L210;
-	}
-/* end Loop 210 */
-
-	if (*nn >= nsamb) {
-	    goto L320;
-	}
-	nexap = 1;
-	nexbp = 1;
-/*     do 305  jn=1, nn */
-	jn = 0;
-L300:
-	++jn;
-	if (nsel[nexap] == jn) {
-	    ++nexap;
-	} else {
-	    nrepr[nexbp] = jn;
-	    ++nexbp;
-	}
-	if (jn < *nn) {
-	    goto L300;
-	}
-/*     305  continue */
-	for (nsub = 1; nsub <= *nsam; ++nsub) {
-	    nsel[nsub] = nrepr[nsub];
-	}
-L320:
-	dysta2(nsam, jpp, &nsel[1], x, nn, &dys[1], ndyst, jtmd,
-	       valmd, &jhalt);
+	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *ndyst, jtmd, valmd, &jhalt);
 	if (jhalt == 1)
 	    continue;/* random sample*/
 
-	kall = 1;
 	s = 0.;
-	l = 1;
+	l = 0;/* dys[0] is not used */
 	do {
 	    ++l;
 	    if (s < dys[l])
 		s = dys[l];
-	} while (l < nhalf);
+	} while (l+1 < n_dys);
 
-	bswap2(kk, nsam, &nrepr[1], &dys[1], &z__, &s, tmp1, tmp2, tmp3);
-	selec(kk, nn, jpp, ndyst, &zb, nsam, mdata, jtmd,
-	      valmd, &nrepr[1], &nsel[1], &dys[1], x, &nr[1],
-	      &nafs, &ttd[1], &radus[1], &ratt[1],
+	kall = TRUE;
+
+	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
+	       /* dysma */tmp1, /*dysmb*/tmp2,
+	       /* beter[], only used here */&tmp[nsamb]);
+
+	selec(*kk, *n, *jpp, *ndyst, &zb, *nsam, *mdata, jtmd, valmd,
+	      nrepr, &nsel[1], dys, x, nr, &nafs, ttd, radus, ratt,
 	      ntmp1, ntmp2, ntmp3, ntmp4, ntmp5, ntmp6, tmp1, tmp2);
 
 	if (nafs) {
 	    ++nunfs;
 	}
-	else if (!((jran != 1) && (zb >= zba))) {
+	else if (jran == 1 || zba > zb) {/* 1st time, or new best */
 
 	    zba = zb;
-	    for (jjb = 1; jjb <= *kk; ++jjb) {
-		ttbes[jjb] = ttd  [jjb];
-		rdbes[jjb] = radus[jjb];
-		rabes[jjb] = ratt [jjb];
+	    for (jk = 0; jk < *kk; ++jk) {
+		ttbes[jk] = ttd	 [jk];
+		rdbes[jk] = radus[jk];
+		rabes[jk] = ratt [jk];
+		nrx  [jk] = nr	 [jk];
 	    }
-	    for (jk = 1; jk <= *kk; ++jk)
-		nrx[jk] = nr[jk];
-	    for (js = 1; js <= *nsam; ++js)
-		nbest[js] = nsel[js];
+	    for (js = 0; js < *nsam; ++js)
+		nbest[js] = nsel[js+1];
 	    sx = s;
 	}
+	if(full_sample) break; /* out of resampling */
     }
 /* --- end random sampling loop */
 
@@ -242,53 +230,54 @@ L320:
 /*     for the best subsample, the objects of the entire data set
      are assigned to their clusters */
 
-    if (kall != 1) { *jstop = 2; return; }
+    if (!kall) { *jstop = 2; return; }
 
     *obj = zba / rnn;
-    dysta2(nsam, jpp, &nbest[1], x, nn, &dys[1], ndyst, jtmd,
-	   valmd, &jhalt);
-    resul(kk, nn, jpp, ndyst, mdata, jtmd, valmd, x, &nrx[1], mtt);
-    if (*kk > 1) {
-	black(kk, jpp, nn, nsam, &nbest[1], &dys[1], &sx, x, avsyl,
-	      ttsyl, sylinf, ntmp1, ntmp2, ntmp3, ntmp4, tmp1, tmp2);
-    }
+    dysta2(*nsam, *jpp, nbest, x, *n, dys, *ndyst, jtmd, valmd, &jhalt);
+
+    resul(*kk, *n, *jpp, *ndyst, *mdata, jtmd, valmd, x, nrx, mtt);
+
+    if (*kk > 1)
+	black(*kk, *jpp, *nsam, nbest, dys, sx, x,
+	      /* compute --> */
+	      avsyl, ttsyl, sylinf,
+	      ntmp1, ntmp2, ntmp3, ntmp4, tmp1, tmp2);
     return;
 } /* End clara() ---------------------------------------------------*/
+#undef tmp1
+#undef tmp2
+
+#undef ntmp1
+#undef ntmp2
+#undef ntmp3
+#undef ntmp4
+#undef ntmp5
+#undef ntmp6
 
 
-void dysta2(int *nsam, int *jpp, int *nsel,
-	    double *x, int *nn, double *dys, int *ndyst, int *jtmd,
-	    double *valmd, int *jhalt)
+void dysta2(int nsam, int jpp, int *nsel,
+	    double *x, int n, double *dys, int ndyst,
+	    int *jtmd, double *valmd, int *jhalt)
 {
 
     /* Local variables */
-    int j, k, kj, l, lj, ksel, lsel, nlk, npres, lsubt;
-    double pp, clk, rpres;
+    int j, k, kj, l, lj, ksel, lsel, nlk, npres;
+    double clk, d1;
 
-    /* Parameter adjustments */
-    --dys;
-    --nsel;
-    --valmd;
-    --jtmd;
-    --x;
-
-    /* Function Body */
-    pp = (double) (*jpp);
-    nlk = 1;
-    dys[1] = 0.;
-    for (l = 2; l <= *nsam; ++l) {
-	lsubt = l - 1;
+    nlk = 0;
+    dys[nlk] = 0.;
+    for (l = 1; l < nsam; ++l) {
 	lsel = nsel[l];
-	for (k = 1; k <= lsubt; ++k) {
+	for (k = 0; k < l; ++k) {
 	    ksel = nsel[k];
 	    clk = 0.;
 	    ++nlk;
 	    npres = 0;
-	    for (j = 1; j <= *jpp; ++j) {
-		lj = (lsel - 1) * *jpp + j;
-		kj = (ksel - 1) * *jpp + j;
+	    for (j = 0; j < jpp; ++j) {
+		lj = (lsel - 1) * jpp + j;
+		kj = (ksel - 1) * jpp + j;
 		if (jtmd[j] < 0) {
-/* in the following line, x[-1] ==> seg.fault {BDR to R-core, Sat, 3 Aug 2002} */
+/* in the following line, x[-2] ==> seg.fault {BDR to R-core, Sat, 3 Aug 2002} */
 		    if (x[lj] == valmd[j]) {
 			continue /* next j */;
 		    }
@@ -297,21 +286,17 @@ void dysta2(int *nsam, int *jpp, int *nsel,
 		    }
 		}
 		++npres;
-		if (*ndyst == 1)
+		if (ndyst == 1)
 		    clk += (x[lj] - x[kj]) * (x[lj] - x[kj]);
 		else
 		    clk += fabs(x[lj] - x[kj]);
 	    }
-	    rpres = (double) npres;
 	    if (npres == 0) {
 		*jhalt = 1;
 		dys[nlk] = -1.;
 	    } else {
-		if (*ndyst == 1) {
-		    dys[nlk] = sqrt(clk * (pp / rpres));
-		} else {
-		    dys[nlk] = clk * (pp / rpres);
-		}
+		d1 = clk * (((double) (jpp)) / (double) npres);
+		dys[nlk] = (ndyst == 1) ? sqrt(d1) : d1 ;
 	    }
 	}
     }
@@ -335,38 +320,36 @@ void randm(int *nrun, double *ran)
     return;
 } /* randm() */
 
-void bswap2(int *kk, int *nsam, int *nrepr,
-	    double *dys, double *sky, double *s, double *dysma,
-	    double *dysmb, double *beter)
+/* bswap2() : called once [per random sample] from clara() : */
+void bswap2(int kk, int nsam, int *nrepr,
+	    double *dys, double *sky, double s,
+	    double *dysma, double *dysmb, double *beter)
 {
-
-    int j, ja, k, kbest, nbest;
+    int j, ja, k, kbest = -1, nbest = -1;/* init for -Wall */
     int nkj, njn, njaj, nny, nmax;
 
-    double ammax, rsam, small, asky, dzsky, dz, cmd;
+    double ammax, small, asky, dzsky, dz, cmd;
 
-
-/* ====== first algorithm: build. ====== */
-
-/* Parameter adjustments */
-    --beter;
-    --dysmb;
-    --dysma;
-    --dys;
+    /* Parameter adjustments */
     --nrepr;
+    --beter;
 
-    /* Function Body */
-    nny = 0;
-    for (j = 1; j <= *nsam; ++j) {
+    --dys;/*index via meet_() */
+    --dysma;	--dysmb;
+
+
+/* ====== first algorithm: BUILD. ====== */
+
+    for (j = 1; j <= nsam; ++j) {
 	nrepr[j] = 0;
-	dysma[j] = *s * 1.1 + 1.;
+	dysma[j] = s * 1.1 + 1.;
     }
-    /* --- Loop --- */
-    do {
-	for (ja = 1; ja <= *nsam; ++ja) {
+
+    for(nny = 0; nny < kk; nny++) {
+	for (ja = 1; ja <= nsam; ++ja) {
 	    if (nrepr[ja] == 0) {
 		beter[ja] = 0.;
-		for (j = 1; j <= *nsam; ++j) {
+		for (j = 1; j <= nsam; ++j) {
 		    njaj = meet_(&ja, &j);
 		    cmd = dysma[j] - dys[njaj];
 		    if (cmd > 0.)
@@ -375,42 +358,38 @@ void bswap2(int *kk, int *nsam, int *nrepr,
 	    }
 	}
 	ammax = 0.;
-	for (ja = 1; ja <= *nsam; ++ja) {
+	for (ja = 1; ja <= nsam; ++ja) {
 	    if (nrepr[ja] == 0 && ammax <= beter[ja]) {
 		ammax = beter[ja];
 		nmax = ja;
 	    }
 	}
 	nrepr[nmax] = 1;
-	++nny;
-	for (j = 1; j <= *nsam; ++j) {
+	for (j = 1; j <= nsam; ++j) {
 	    njn = meet_(&nmax, &j);
-	    if (dys[njn] < dysma[j]) {
+	    if (dysma[j] > dys[njn])
 		dysma[j] = dys[njn];
-	    }
 	}
-    } while (nny != *kk);
-    /* --- */
+    }
 
     *sky = 0.;
-    for (j = 1; j <= *nsam; ++j)
+    for (j = 1; j <= nsam; ++j)
 	*sky += dysma[j];
 
-    if (*kk == 1)
+    if (kk == 1)
 	return;
 
-    rsam = (double) (*nsam);
-    asky = *sky / rsam;
+    asky = *sky / ((double) nsam);
 
-/*------- second algorithm: SWAP. -------- */
+/* ====== second algorithm: SWAP. ====== */
 
 /* Big LOOP : */
 L60:
 
-    for (j = 1; j <= *nsam; ++j) {
-	dysma[j] = *s * 1.1 + 1.;
-	dysmb[j] = *s * 1.1 + 1.;
-	for (ja = 1; ja <= *nsam; ++ja) {
+    for (j = 1; j <= nsam; ++j) {
+	dysma[j] = s * 1.1 + 1.;
+	dysmb[j] = s * 1.1 + 1.;
+	for (ja = 1; ja <= nsam; ++ja) {
 	    if (nrepr[ja] != 0) {
 		njaj = meet_(&ja, &j);
 		if (dys[njaj] < dysma[j]) {
@@ -423,14 +402,14 @@ L60:
     }
 
     dzsky = 1.;
-    for (k = 1; k <= *nsam; ++k) {
+    for (k = 1; k <= nsam; ++k) {
 	if (nrepr[k] != 1) {
-	    for (ja = 1; ja <= *nsam; ++ja) {
+	    for (ja = 1; ja <= nsam; ++ja) {
 		if (nrepr[ja] != 0) {
 		    dz = 0.;
-		    for (j = 1; j <= *nsam; ++j) {
+		    for (j = 1; j <= nsam; ++j) {
 			njaj = meet_(&ja, &j);
-			nkj = meet_(&k, &j);
+			nkj  = meet_(&k, &j);
 			if (dys[njaj] == dysma[j]) {
 			    small = dysmb[j];
 			    if (small > dys[njaj])
@@ -460,50 +439,39 @@ L60:
 } /* End of bswap2() -------------------------------------------------- */
 
 /* selec() : called once [per random sample] from clara() */
-void selec(int *kk, int *nn, int *jpp, int *ndyst,
-	   double *zb, int *nsam, int *mdata, int *jtmd,
-	   double *valmd, int *nrepr, int *nsel, double *dys,
-	   double *x, int *nr, /*logical*/int *nafs, double *ttd,
-	   double *radus, double *ratt, int *nrnew, int *nsnew,
-	   int *npnew, int *ns, int *np, int *new,
+void selec(int kk, int n, int jpp, int ndyst,
+	   double *zb, int nsam, int mdata, int *jtmd, double *valmd,
+	   int *nrepr, int *nsel, double *dys, double *x, int *nr,
+	   Rboolean *nafs, /* := TRUE if a distance cannot be calculated */
+	   double *ttd, double *radus, double *ratt,
+	   int *nrnew, int *nsnew, int *npnew, int *ns, int *np, int *new,
 	   double *ttnew, double *rdnew)
 {
-/* nafs = .true. if a distance cannot be calculated */
 
     /* Local variables */
-    int j, jk, jn, jp, jkabc, jnew, ka, kb;
-    int newf, nrjk,  npab, nstrt, na, nb, npa, npb, njk;
+    int j, jk, jj, jp, jnew, ka, kb, jkabc = -1/* -Wall */;
+    int newf, nrjk,  npab, nstrt, na, nb, npa, npb, njk, nobs;
 
-    double abc, dnull, dsum, pres, pp, tra, rns;
-
+    double dsum, pp, tra, rns, dnull = -9./* -Wall */;
 
 /* Parameter adjustments */
+    --nsel;    --nrepr;
+
     --ratt;
-    --radus;
-    --ttd;
-    --nr;
-    --x;
-    --valmd;
-    --jtmd;
-    --rdnew;
-    --ttnew;
+    --radus; --ttd;    --np;	--nr;	 --ns;
+
+    --rdnew; --ttnew; --npnew; --nrnew; --nsnew;
     --new;
-    --np;
-    --ns;
-    --npnew;
-    --nsnew;
-    --nrnew;
+
     --dys;
-    --nsel;
-    --nrepr;
 
     /* Function Body */
-    *nafs = (0);
+    *nafs = FALSE;
 
 /* identification of representative objects, and initializations */
 
     jk = 0;
-    for (j = 1; j <= *nsam; ++j) {
+    for (j = 1; j <= nsam; ++j) {
 	if (nrepr[j] != 0) {
 	    ++jk;
 	    nr	 [jk] = nsel[j];
@@ -514,30 +482,26 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
 	}
     }
 
-/* assignment of the objects of the entire data set to a cluster,
-     computation of some statistics, determination of the
-     new ordering of the clusters */
+/* - assignment of the objects of the entire data set to a cluster,
+ * - computation of some statistics,
+ * - determination of the new ordering of the clusters */
 
     *zb = 0.;
-    pp = (double) (*jpp);
+    pp = (double) (jpp);
     newf = 0;
-    jn = 0;
-/* L15:
- *     ++jn;
- */
-    do { jn++;
-	if (*mdata == 0) {
-	    for (jk = 1; jk <= *kk; ++jk) {
+
+    for(jj = 1; jj <= n; jj++) {
+	if (!mdata) {
+	    for (jk = 1; jk <= kk; ++jk) {
 		dsum = 0.;
 		nrjk = nr[jk];
-		if (nrjk != jn) {
-		    for (jp = 1; jp <= *jpp; ++jp) {
-			na = (nrjk - 1) * *jpp + jp;
-			nb = (jn - 1) * *jpp + jp;
+		if (nrjk != jj) {
+		    for (jp = 0; jp < jpp; ++jp) {
+			na = (nrjk - 1) * jpp + jp;
+			nb = (jj   - 1) * jpp + jp;
 			tra = fabs(x[na] - x[nb]);
-			if (*ndyst == 1) {
+			if (ndyst == 1)
 			    tra *= tra;
-			}
 			dsum += tra;
 		    }
 		    if (jk != 1 && dsum >= dnull)
@@ -547,52 +511,47 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
 		jkabc = jk;
 	    }
 	}
-	else {
-	    pres = 0.;
-	    for (jk = 1; jk <= *kk; ++jk) {
+	else { /* _has_ missing data */
+	    Rboolean pres;
+	    pres = FALSE;
+	    for (jk = 1; jk <= kk; ++jk) {
 		dsum = 0.;
 		nrjk = nr[jk];
-		if (nrjk != jn) {
-		    abc = 0.;
-		    for (jp = 1; jp <= *jpp; ++jp) {
-			na = (nrjk - 1) * *jpp + jp;
-			nb = (jn   - 1) * *jpp + jp;
+		if (nrjk != jj) {
+		    nobs = 0;
+		    for (jp = 0; jp < jpp; ++jp) {
+			na = (nrjk - 1) * jpp + jp;
+			nb = (jj   - 1) * jpp + jp;
 			if (jtmd[jp] < 0) {
-			    if (x[na] == valmd[jp]) {
+			    if (x[na] == valmd[jp] || x[nb] == valmd[jp])
 				continue /* next jp */;
-			    }
-			    if (x[nb] == valmd[jp]) {
-				continue /* next jp */;
-			    }
 			}
-			abc += 1.;
+			nobs++;
 			tra = fabs(x[na] - x[nb]);
-			if (*ndyst == 1) {
+			if (ndyst == 1)
 			    tra *= tra;
-			}
 			dsum += tra;
 		    }
-		    if (abc < 0.5) {
+		    if (nobs == 0) /* all pairs partially missing */
 			continue /* next jk */;
-		    }
-		    dsum = dsum * abc / pp;
+		    dsum *= (nobs / pp);
 		}
-		if (pres <= 0.5)
-		    pres = 1.;
-		else if (dsum >= dnull)
+		if (!pres)
+		    pres = TRUE;
+		else if (dnull <= dsum)
 		    continue /* next jk */;
-
+		/* here : pres was FALSE {i.e. 1st time} or
+		 *	  dnull > dsum	 {i.e. new best} */
 		dnull = dsum;
 		jkabc = jk;
 	    }/* for(jk ..) */
 
-	    if (pres <= 0.5) {
-		*nafs = (1);
-		return;
+	    if (!pres) { /* found nothing */
+		*nafs = TRUE; return;
 	    }
-	} /* if (*mdata..) else */
+	} /* if (mdata..) else */
 
-	if (*ndyst == 1)
+	if (ndyst == 1)
 	    dnull = sqrt(dnull);
 
 	*zb += dnull;
@@ -601,12 +560,11 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
 	    radus[jkabc] = dnull;
 
 	++ns[jkabc];
-	if (newf < *kk) {
+	if (newf < kk) {
 	    if (newf != 0) {
 		for (jnew = 1; jnew <= newf; ++jnew) {
-		    if (jkabc == new[jnew]) {
-			goto L90;/* next jn */
-		    }
+		    if (jkabc == new[jnew])
+			goto L90;/* next jj */
 		}
 	    }
 	    ++newf;
@@ -614,13 +572,13 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
 	}
     L90:
 	;
-    } while(jn < *nn);
+    } /* for( jj = 1..n ) */
 
 
 /*     a permutation is carried out on vectors nr,ns,np,ttd,radus
      using the information in vector new. */
 
-    for (jk = 1; jk <= *kk; ++jk) {
+    for (jk = 1; jk <= kk; ++jk) {
 	njk = new[jk];
 	nrnew[jk] = nr[njk];
 	nsnew[jk] = ns[njk];
@@ -628,27 +586,27 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
 	ttnew[jk] = ttd[njk];
 	rdnew[jk] = radus[njk];
     }
-    for (jk = 1; jk <= *kk; ++jk) {
+    for (jk = 1; jk <= kk; ++jk) {
 	nr[jk] = nrnew[jk];
 	ns[jk] = nsnew[jk];
 	np[jk] = npnew[jk];
 	ttd[jk] = ttnew[jk];
 	radus[jk] = rdnew[jk];
     }
-    for (j = 1; j <= *kk; ++j) {
+    for (j = 1; j <= kk; ++j) {
 	rns = (double) ns[j];
 	ttd[j] /= rns;
     }
 
-    if (*kk > 1) {
+    if (kk > 1) {
 
 	/* computation of minimal distance of medoid ka to any
 	   other medoid for comparison with the radius of cluster ka. */
 
-	for (ka = 1; ka <= *kk; ++ka) {
+	for (ka = 1; ka <= kk; ++ka) {
 	    nstrt = 0;
 	    npa = np[ka];
-	    for (kb = 1; kb <= *kk; ++kb) {
+	    for (kb = 1; kb <= kk; ++kb) {
 		if (kb == ka)
 		    continue /* next kb */;
 
@@ -672,166 +630,130 @@ void selec(int *kk, int *nn, int *jpp, int *ndyst,
     return;
 } /* End selec() -----------------------------------------------------------*/
 
-void resul(int *kk, int *nn, int *jpp, int *ndyst,
-	   int *mdata, int *jtmd, double *valmd,
-	   double *x, int *nrx, int *mtt)
+void resul(int kk, int n, int jpp, int ndyst, int mdata,
+	   int *jtmd, double *valmd, double *x, int *nrx, int *mtt)
 {
     /* Local variables */
-    int j, jksky, ja, jk, jn, jna, ka, na, nb, njnb, nrjka, nxja, nrjk;
-    double pp, abc, dnull, dsum, tra;
+    int j, jk, jj, ka, na, nb, njnb, nrjk, jksky = -1/* Wall */;
+    double pp, abc, dsum, tra, dnull = -9./* Wall */;
 
-/* Parameter adjustments */
-    --mtt;
-    --nrx;
-    --x;
-    --valmd;
-    --jtmd;
+/* clustering vector is incorporated into x, and ``printed''. */
 
-    /* Function Body */
-    pp = (double) (*jpp);
+    pp = (double) (jpp);
 
-/*     clustering vector is incorporated into x, and printed. */
+    for(jj = 0; jj < n; jj++) {
 
-    jn = 0;
-L100:
-    ++jn;
-    njnb = (jn - 1) * *jpp;
-    for (jk = 1; jk <= *kk; ++jk) {
-	if (nrx[jk] == jn) {
-	    goto L220;
+	for (jk = 0; jk < kk; ++jk) {
+	    if (nrx[jk] == jj + 1)/* 1-indexing */
+		goto L220; /* continue next jj (i.e., outer loop) */
 	}
-    }
-    jna = (jn - 1) * *jpp + 1;
-    if (*mdata != 0) {
-	goto L170;
-    }
-    for (jk = 1; jk <= *kk; ++jk) {
-	dsum = 0.;
-	nrjk = (nrx[jk] - 1) * *jpp;
-	for (j = 1; j <= *jpp; ++j) {
-	    na = nrjk + j;
-	    nb = njnb + j;
-	    tra = fabs(x[na] - x[nb]);
-	    if (*ndyst == 1) {
-		tra *= tra;
+	njnb = jj * jpp;
+
+	if (!mdata) {
+	    for (jk = 0; jk < kk; ++jk) {
+		dsum = 0.;
+		nrjk = (nrx[jk] - 1) * jpp;
+		for (j = 0; j < jpp; ++j) {
+		    na = nrjk + j;
+		    nb = njnb + j;
+		    tra = fabs(x[na] - x[nb]);
+		    if (ndyst == 1)
+			tra *= tra;
+		    dsum += tra;
+		}
+		if (ndyst == 1)
+		    dsum = sqrt(dsum);
+		if (jk == 0)
+		    dnull = dsum + .1f;
+		if (dnull > dsum) {
+		    dnull = dsum;
+		    jksky = jk;
+		}
 	    }
-	    dsum += tra;
 	}
-	if (*ndyst == 1) {
-	    dsum = sqrt(dsum);
-	}
-	if (jk == 1) {
-	    dnull = dsum + .1f;
-	}
-	if (dnull > dsum) {
-	    dnull = dsum;
-	    jksky = jk;
-	}
-    }
-    goto L200;
-L170:
-    for (jk = 1; jk <= *kk; ++jk) {
-	dsum = 0.;
-	nrjk = (nrx[jk] - 1) * *jpp;
-	abc = 0.;
-	for (j = 1; j <= *jpp; ++j) {
-	    na = nrjk + j;
-	    nb = njnb + j;
-	    if (jtmd[j] >= 0) {
-		goto L185;
+	else { /* _has_ missing data */
+	    for (jk = 0; jk < kk; ++jk) {
+		dsum = 0.;
+		nrjk = (nrx[jk] - 1) * jpp;
+		abc = 0.;
+		for (j = 0; j < jpp; ++j) {
+		    na = nrjk + j;
+		    nb = njnb + j;
+		    if (jtmd[j] < 0) {
+			if (x[na] == valmd[j] || x[nb] == valmd[j])
+			    continue /* next j */;
+		    }
+		    abc += 1.;
+		    tra = fabs(x[na] - x[nb]);
+		    if (ndyst == 1)
+			tra *= tra;
+		    dsum += tra;
+		}
+		if (ndyst == 1)
+		    dsum = sqrt(dsum);
+		dsum *= (abc / pp);
+		if (jk == 0)
+		    dnull = dsum + .1f;
+
+		if (dnull > dsum) {
+		    dnull = dsum;
+		    jksky = jk;
+		}
 	    }
-	    if (x[na] == valmd[j]) {
-		goto L180;
-	    }
-	    if (x[nb] == valmd[j]) {
-		goto L180;
-	    }
-L185:
-	    abc += 1.;
-	    tra = fabs(x[na] - x[nb]);
-	    if (*ndyst == 1) {
-		tra *= tra;
-	    }
-	    dsum += tra;
-L180:
-	    ;
 	}
-	if (*ndyst == 1) {
-	    dsum = sqrt(dsum);
-	}
-	dsum = dsum * abc / pp;
-	if (jk == 1) {
-	    dnull = dsum + .1f;
-	}
-	if (dsum >= dnull) {
-	    goto L190;
-	}
-	dnull = dsum;
-	jksky = jk;
-L190:
+	x[njnb] = (double) jksky + 1;/* 1-indexing */
+
+    L220:
 	;
-    }
-L200:
-    x[jna] = (double) jksky;
+    } /* for(jj)  while (jj < n);*/
 
-L220:
-    if (jn < *nn) {
-	goto L100;
-    }
-    for (jk = 1; jk <= *kk; ++jk) {
+    for (jk = 0; jk < kk; ++jk) {
 	nrjk = nrx[jk];
-	nrjka = (nrjk - 1) * *jpp + 1;
-	x[nrjka] = (double) jk;
+	x[(nrjk - 1) * jpp] = (double) jk + 1;/* 1-indexing */
     }
-    for (ka = 1; ka <= *kk; ++ka) {
+    for (ka = 0; ka < kk; ++ka) {
 	mtt[ka] = 0;
-	j = 0;
-L325:
-	++j;
-	ja = (j - 1) * *jpp + 1;
-	nxja = (int) (x[ja] + .1f);
-	if (nxja == ka) {
-	    ++mtt[ka];
-	}
-	if (j < *nn) {
-	    goto L325;
+	for(j = 0; j < n; j++) {
+	    if (((int) (x[j * jpp] + .1f)) == ka + 1)/* 1-indexing */
+		++mtt[ka];
 	}
     }
     return;
 } /* end resul() -----------------------------------------------------------*/
 
 
-void black(int *kk, int *jpp, int *nn, int *nsam, int *nbest,
-	   double *dys, double *sx, double *x,
+void black(int kk, int jpp, int nsam, int *nbest,
+	   double *dys, double s, double *x,
+	   /* --> Output : */
 	   double *avsyl, double *ttsyl, double *sylinf,
 	   int *ncluv, int *nsend, int *nelem, int *negbr,
 	   double *syl, double *srank)
 {
-/* Silhouettes computation and "drawing"  --> syl() and sylinf() */
+/* Silhouettes computation and "drawing"  --> syl[] and sylinf[] */
 
     /* System generated locals */
     int sylinf_dim1, sylinf_offset;
 
     /* Local variables */
-    int lang;
 
-    double att, btt, rtt, db, dysa, dysb, rsam, symax;
-    int j, jna, l, lplac, nj, nl, nbb, ncase, nclu, numcl, nsylr, ntt;
+    double att, btt, db, dysa, dysb, symax;
+    int lang = -1/* -Wall */;
+    int j, l, lplac, nj, nl, nbb, ncase, nclu, numcl, nsylr, ntt;
 
 /* Parameter adjustments */
     --avsyl;
-    --x;
+
     --srank;
     --syl;
     --negbr;
     --nelem;
     --nsend;
-    --ncluv;
-    sylinf_dim1 = *nsam;
+    --ncluv;	--nbest;
+    --dys;
+
+    sylinf_dim1 = nsam;
     sylinf_offset = 1 + sylinf_dim1 * 1;
     sylinf -= sylinf_offset;
-    --dys;
-    --nbest;
 
 /*
      construction of clustering vector (ncluv)
@@ -839,19 +761,18 @@ void black(int *kk, int *jpp, int *nn, int *nsam, int *nbest,
 */
 
     /* Function Body */
-    for (l = 1; l <= *nsam; ++l) {
+    for (l = 1; l <= nsam; ++l) {
 	ncase = nbest[l];
-	jna = (ncase - 1) * *jpp + 1;
-	ncluv[l] = (int) (x[jna] + .1f);
+	ncluv[l] = (int) (x[(ncase - 1) * jpp] + .1f);
     }
 
 /*     drawing of the silhouettes */
 
     nsylr = 0;
     *ttsyl = 0.;
-    for (numcl = 1; numcl <= *kk; ++numcl) {
+    for (numcl = 1; numcl <= kk; ++numcl) {
 	ntt = 0;
-	for (j = 1; j <= *nsam; ++j) {
+	for (j = 1; j <= nsam; ++j) {
 	    if (ncluv[j] == numcl) {
 		++ntt;
 		nelem[ntt] = j;
@@ -859,14 +780,14 @@ void black(int *kk, int *jpp, int *nn, int *nsam, int *nbest,
 	}
 	for (j = 1; j <= ntt; ++j) {
 	    nj = nelem[j];
-	    dysb = *sx * 1.1 + 1.;
+	    dysb = s * 1.1 + 1.;
 	    negbr[j] = -1;
 
-	    for (nclu = 1; nclu <= *kk; ++nclu) {
+	    for (nclu = 1; nclu <= kk; ++nclu) {
 		if (nclu != numcl) {
 		    nbb = 0;
 		    db = 0.;
-		    for (l = 1; l <= *nsam; ++l) {
+		    for (l = 1; l <= nsam; ++l) {
 			if (ncluv[l] == nclu) {
 			    ++nbb;
 			    db += dys[meet_(&nj, &l)];
@@ -911,11 +832,12 @@ void black(int *kk, int *jpp, int *nn, int *nsam, int *nbest,
 	    else {
 		syl[j] = -1.;
 	    }
+
 	    if (syl[j] < -1.)
 		syl[j] = -1.;
-
-	    if (syl[j] > 1.)
+	    else if (syl[j] > 1.)
 		syl[j] = 1.;
+
 	} /* for(j ..) */
 
 	avsyl[numcl] = 0.;
@@ -933,8 +855,7 @@ void black(int *kk, int *jpp, int *nn, int *nsam, int *nbest,
 	    syl[lang] = -3.;
 	}
 	*ttsyl += avsyl[numcl];
-	rtt = (double) ntt;
-	avsyl[numcl] /= rtt;
+	avsyl[numcl] /= ntt;
 
 	if (ntt >= 2) {
 	    for (l = 1; l <= ntt; ++l) {
@@ -957,7 +878,6 @@ void black(int *kk, int *jpp, int *nn, int *nsam, int *nbest,
 	}
 
     }
-    rsam = (double) (*nsam);
-    *ttsyl /= rsam;
+    *ttsyl /= (double) (nsam);
     return;
 } /* black */
