@@ -1,5 +1,5 @@
 /*
- *  $Id: SASxport.c,v 1.4 2001/05/15 16:07:56 saikat Exp $
+ *  $Id: SASxport.c,v 1.5 2001/05/16 17:39:24 saikat Exp $
  *
  *  Read SAS transport data set format
  *
@@ -320,7 +320,8 @@ next_xport_info(FILE *fp, int namestr_length, int nvars, int *headpad,
     nbytes = 0;
     nlength = 0;
 /*      tmp = (char *) R_alloc(totwidth+1, sizeof(char)); */
-    tmp = CHAR(PROTECT(allocVector(CHARSXP, (totwidth+1) * sizeof(char))));
+    tmp = CHAR(PROTECT(allocVector(CHARSXP, (totwidth<=80?81:(totwidth+1)) * 
+				   sizeof(char))));
     restOfCard = 0;
     *tailpad = 0;
     while(!feof(fp)) {
@@ -564,7 +565,9 @@ xport_read(SEXP xportFile, SEXP xportInfo)
 	totalWidth = 0;
 	for(j = 0; j < nvar; j++)
 	    totalWidth += dataWidth[j];
-	record = (char *) R_alloc(totalWidth + 1, sizeof (char));
+/* 	record = (char *) R_alloc(totalWidth + 1, sizeof (char)); */
+	record = CHAR(PROTECT(allocVector(CHARSXP,
+					  (totalWidth+1) * sizeof(char))));
 
 	dataHeadPad = asInteger(getListElement(dataInfo, "headpad"));
 	dataTailPad = asInteger(getListElement(dataInfo, "tailpad"));
@@ -596,7 +599,8 @@ xport_read(SEXP xportFile, SEXP xportInfo)
 	}
 
 	fseek(fp, dataTailPad, SEEK_CUR);
-
+	
+	UNPROTECT(1);
     }
     UNPROTECT(1);
     fclose(fp);

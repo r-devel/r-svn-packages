@@ -1,12 +1,12 @@
+2001-05-16  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* src/SASxport.c (next_xport_info): changed size of allocated array
+	tmp - it must be at least 81.
+
 2001-05-14  Saikat DebRoy  <saikat@stat.wisc.edu>
 
 	* R/read.dta.R, src/stataread.c, man/read.dta.Rd, man/write.dta.Rd:
 	Added Stata Version 7 support from Thomas Lumley
-
-2001-05-14  Saikat DebRoy  <saikat@stat.wisc.edu>
-
-	* /home/rdevel/CVS-ARCHIVE/R-packages/foreign/src/stataread.c:
-	Stata Version 7 support from Thomas Lumley
 
 2001-04-09  Saikat DebRoy  <saikat@stat.wisc.edu>
 
