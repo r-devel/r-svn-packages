@@ -1,3 +1,4 @@
+%-*- mode: Rd; kept-old-versions: 12;  kept-new-versions: 20; -*-
 \name{pam}
 \alias{pam}
 \title{Partitioning Around Medoids}
@@ -107,4 +108,3 @@ data(ruspini)
 \testonly{plot(pam(ruspini, 4))}
 }
 \keyword{cluster}
-
