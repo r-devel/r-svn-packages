@@ -1,7 +1,8 @@
+#### PAM : Partitioning Around Medoids
+
 pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 {
-    meanabsdev <- function(y)
-	mean(abs(y - mean(y, na.rm = TRUE)), na.rm = TRUE)
+    meanabsdev <- function(y) mean(abs(y - mean(y, na.rm=TRUE)), na.rm=TRUE)
     size <- function(d)
     {
 	discr <- 1 + 8 * length(d)
@@ -47,7 +48,6 @@ pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 	jtmd <- integer(1)
 	ndyst <- 0
 	x2 <- double(n)
-	jdyss <- 1
     }
     else {
 	## check type of input matrix
@@ -63,25 +63,23 @@ pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
 	if((k < 1) || (k > n - 1))
 	    stop("The number of cluster should be at least 1 and at most n-1.")
 	jp <- ncol(x2)
-	jtmd <- ifelse(is.na(rep(1, n) %*% x2), -1, 1)
+	jtmd <- as.integer(ifelse(is.na(rep(1, n) %*% x2), -1, 1))
 	valmisdat <- min(x2, na.rm = TRUE) - 0.5
 	x2[is.na(x2)] <- valmisdat
 	valmd <- rep(valmisdat, jp)
-	jdyss <- 0
 	dv <- double(1 + (n * (n - 1))/2)
     }
     ## call Fortran routine
     storage.mode(dv) <- "double"
     storage.mode(x2) <- "double"
     storage.mode(valmd) <- "double"
-    storage.mode(jtmd) <- "integer"
     res <- .Fortran("pam",
 		    as.integer(n),
 		    as.integer(jp),
 		    as.integer(k),
 		    x = x2,
 		    dys = dv,
-		    ok = as.integer(jdyss),
+                    jdyss = as.integer(diss),# 0/1
 		    valmd,
 		    jtmd,
 		    as.integer(ndyst),
@@ -112,7 +110,7 @@ pam <- function(x, k, diss = FALSE, metric = "euclidean", stand = FALSE)
     }
     else {
 	## give warning if some dissimilarities are missing.
-	if(res$ok == -1)
+	if(res$jdyss == -1)
 	    stop("No clustering performed, NA-values in the dissimilarity matrix.")	
 	## adapt Fortran output to S:
 	## convert lower matrix, read by rows, to upper matrix, read by rows.
@@ -171,7 +169,7 @@ print.pam <- function(x, ...)
     print(x$clustering, ...)
     cat("Objective function:\n")
     print(x$objective, ...)
-    cat("\nAvailable arguments:\n")
+    cat("\nAvailable components:\n")
     print(names(x), ...)
     invisible(x)
 }
@@ -207,7 +205,7 @@ print.summary.pam <- function(x, ...)
     }
     cat("\n")
     print(x$diss, ...)
-    cat("\nAvailable arguments:\n")
+    cat("\nAvailable components:\n")
     print(names(x), ...)
     invisible(x)
 }
