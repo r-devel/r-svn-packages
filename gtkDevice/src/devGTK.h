@@ -15,7 +15,7 @@ typedef struct {
     double cex;				/* Character expansion */
     double srt;				/* String rotation */
 
-    //gint bg;				/* Background */
+    /* gint bg; */                      /* Background */
     int fill;
     int col;
 

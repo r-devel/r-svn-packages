@@ -220,7 +220,7 @@ static void SetColor(GdkColor *gcol, int color)
 /* set the line type */
 static void SetLineType(NewDevDesc *dd, int newlty, double nlwd)
 {
-    static gchar dashlist[8];
+    static gint8 dashlist[8];
     gint i, j, newlwd;
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
 
@@ -266,7 +266,6 @@ static void SetLineType(NewDevDesc *dd, int newlty, double nlwd)
 static gint realize_event(GtkWidget *widget, gpointer data)
 {
     NewDevDesc *dd;
-    gtkDesc *gtkd;
 
     dd = (NewDevDesc *) data;
     g_return_val_if_fail(dd != NULL, FALSE);
@@ -376,6 +375,7 @@ static gint delete_event(GtkWidget *widget, GdkEvent *event, gpointer data)
     return TRUE;
 }
 
+/*
 static void tb_activate_cb(GtkWidget *widget, gpointer data)
 {
     NewDevDesc *dd;
@@ -395,6 +395,7 @@ static void tb_close_cb(GtkWidget *widget, gpointer data)
 
     Rf_KillDevice((DevDesc*) Rf_GetDevice(devNumber((DevDesc*) dd)));
 }
+*/
 
 /* create window etc */
 static Rboolean GTK_Open(NewDevDesc *dd, gtkDesc *gtkd, char *dsp, double w, double h)
@@ -433,8 +434,8 @@ static Rboolean GTK_Open(NewDevDesc *dd, gtkDesc *gtkd, char *dsp, double w, dou
     gtk_widget_set_usize(gtkd->drawing, iw, ih);
 
     /* setup background color */
-    //gtkd->bg = dd->bg = R_RGB(255, 255, 255);
-    SetColor(&gtkd->gcol_bg, R_RGB(255, 255, 255)); //FIXME canvas color
+    /* gtkd->bg = dd->bg = R_RGB(255, 255, 255); */
+    SetColor(&gtkd->gcol_bg, R_RGB(255, 255, 255)); /* FIXME canvas color */
 
     /* place and realize the drawing area */
     gtk_container_add(GTK_CONTAINER(gtkd->window), gtkd->drawing);
@@ -1001,7 +1002,7 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     NewDevDesc *dd;
     int ps;
     gchar tmp[2];
-    gint cumwidth, c, rbearing, lbearing;
+    gint c, rbearing, lbearing;
     double max_rbearing, min_lbearing;
     gtkDesc *gtkd;
 
@@ -1059,7 +1060,6 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     dd->top = 0;
 
     /* nominal character sizes */
-    cumwidth = 0;
     max_rbearing = 0;
     min_lbearing = 10000; /* just a random big number */
     for(c = 0; c <= 255; c++) {
@@ -1118,7 +1118,7 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     gtkDesc *gtkd;
 
     gchar tmp[2];
-    gint cumwidth, c, rbearing, lbearing;
+    gint  c, rbearing, lbearing;
     double max_rbearing, min_lbearing;
 
     GTK_DRAWING_AREA(drawing);
@@ -1180,7 +1180,7 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
 			   (GtkSignalFunc) realize_event, (gpointer) dd);
 
 
-	SetColor(&gtkd->gcol_bg, R_RGB(255, 255, 255)); //FIXME canvas color
+	SetColor(&gtkd->gcol_bg, R_RGB(255, 255, 255)); /*FIXME canvas color*/
 
 	/* connect to signal handlers, etc */
 	gtk_signal_connect(GTK_OBJECT(gtkd->drawing), "configure_event",

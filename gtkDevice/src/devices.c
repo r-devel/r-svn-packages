@@ -22,7 +22,7 @@ createGtkDevice(char *display, double width, double height, double ps, GtkDevice
     BEGIN_SUSPEND_INTERRUPTS {
 	/* Allocate and initialize the device driver data */
 	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
-	    return;
+	    return NULL;
 	/* Do this for early redraw attempts */
 	dev->displayList = R_NilValue;
 	if (! init_fun ((DevDesc*)dev, display, width, height, ps)) {
@@ -47,7 +47,7 @@ do_GTK(char **dpy, double *in_width, double *in_height, double *in_pointsize)
 {
     char *display, *vmax;
     double height, width, ps;
-    char *s;
+
 /*    gcall = call; */
     vmax = vmaxget();
     display = R_alloc(strlen(dpy[0]) + 1, sizeof(char));
