@@ -1,3 +1,11 @@
+2002-05-01  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+
+	* DESCRIPTION (Version): New version is 0.5-4.
+
+	* src/minitab.c: remove compatibility definitions for pre-1.2.0
+	as otherwise Rversion.h needs to be included explicitly for R
+	1.6.0.
+
 2002-05-01  Brian Ripley  <ripley@stats.ox.ac.uk>
 
 	* src/foreign.h: remove compatibility definitions for pre-1.2.0
