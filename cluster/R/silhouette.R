@@ -1,4 +1,4 @@
-silhouette <- function(x, ...) UseMethod("silhouette")-- $Id$
+silhouette <- function(x, ...) UseMethod("silhouette")
 
 ## Accessor and more:
 silhouette.partition <- function(x, ...) {
