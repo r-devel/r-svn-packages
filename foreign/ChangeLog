@@ -1,3 +1,9 @@
+2002-04-29  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* src/spss.c, R/spss.R, man/read.spss.Rd: read.spss adds a
+	"variable.labels" attribute to the result if any variable labels
+	are present in the SPSS file.
+
 2002-03-27  Douglas Bates  <bates@stat.wisc.edu>
 
 	* src/SASxport.c (IS_SASNA_CHAR): Silly typo (0x4l, not 0x41)
