@@ -1,0 +1,26 @@
+#!/usr/bin/perl -w
+# Resort a ``re-arranged'' INDEX-MM to something close to original "INDEX"
+#
+## Shell : sort INDEX-MM|sed '/^$/d; /^\s*DATASETS *$/d'
+#
+# Real trick: first `wrap around the lines' , at the end unwrap again
+my (@Lin, $l, $opt_d);
+$l = 0;
+while (<>) {
+  chomp;
+  next if /^$/; # drop empty lines
+  if (/^\s+/) { # wrap this to last
+    next if /\bDATASETS\b/;
+    print STDERR "wrapping «$_» to $l ..\n" if $opt_d;
+    $Lin[$l] .= "\n$_";
+  } else {
+    $Lin[$l] = $_;
+    $l++;
+  }
+  print STDERR "$l: $Lin[$l]\n" if $opt_d;
+}
+# Sort the (remaining) lines alphabetically,
+# Write them out, unwrapping `automatically', since there's "\n":
+foreach (sort(@Lin)) {
+  print "$_\n";
+}
