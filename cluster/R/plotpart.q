@@ -1,4 +1,5 @@
-plot.partition <--- $Id$
+### $Id$
+plot.partition <-
 function(x, ask = FALSE, which.plots = NULL,
          nmax.lab = 40, max.strlen = 5,
          cor = TRUE, stand = FALSE, lines = 2,
@@ -71,14 +72,10 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
          shade = FALSE, color = FALSE, labels = 0, plotchar = TRUE,
          col.p = "dark green", # was 5 (= shaded col)
          col.txt = col.p,
-         span = TRUE, xlim = NULL, ylim = NULL, ...)
+         span = TRUE, xlim = NULL, ylim = NULL,
+         main = paste("CLUSPLOT(", deparse(substitute(x)),")"),
+         ...)
 {
-    size <- function(d)
-    {
-        discr <- 1 + 8 * length(d)
-        sqrtdiscr <- round(sqrt(discr))
-        if(round(sqrtdiscr)^2 != discr) 0 else (1 + sqrtdiscr)/2
-    }
     ellipse <- function(A, dist, loc, n = 201)
     {
         ## Return (x,y) points on ellipse boundary
@@ -100,20 +97,14 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         if(n <= 4) {
             for(i in 1:n) {
                 j <- verhoud1[i]
-                polygon(z[[j]], ##not yet density = dens[j],
-                        col = col[i], ...)
+                polygon(z[[j]], density = dens[j], col = col[i], ...)
             }
         }
         else {
-## if(exists("pam", mode = "function") == FALSE) {
-##   print("Looking for function pam in library(cluster) to compute the color effect for more than 4 clusters." )
-##   library(cluster)
-## }
             j <- pam(sort(verhoud), 4)$clustering
             for(i in 1:n) {
                 q <- verhoud1[i]
-                polygon(z[[q]], ##not yet density = dens[q],
-                        col = col[j[i]], ...)
+                polygon(z[[q]], density = dens[q], col = col[j[i]], ...)
             }
         }
     }
@@ -123,24 +114,11 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         else if(loc[n, m] <= x[2, m] && x[2, m] <= loc[p, m]) x[2, ]
         else NA
     }
-    plotje <- function(x, ...)
-    {
-        polygon(x, ##not yet density = 0,
-                col = 5, ...)
-    }
-    notavail <- function(x)
-    {
-        x[x == "NA"] <- median(x, na.rm = TRUE)
-        return(x)
-    }
+    plotje <- function(x, ...) polygon(x, density = 0, col = 5, ...)
     coord.snijp1 <- function(x, gemid)
-    {
         x[2, 2] - 2 * x[1, 2] * gemid + x[1, 1] * gemid^2
-    }
     coord.snijp2 <- function(x, dist, y)
-    {
         ((x[1, 1] * x[2, 2] - x[1, 2]^2) * dist^2)/y
-    }
     coord.snijp3 <- function(x, y, n, gemid)
     {
         matrix(c(x[n, 1] + sqrt(y), x[n, 1] - sqrt(y),
@@ -150,7 +128,6 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 
     ## BEGIN ----
 
-    namx <- deparse(substitute(x))
     if(is.data.frame(x))
         x <- data.matrix(x)
     if(!is.numeric(x))
@@ -161,7 +138,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         if(is.na(min(x)))
             stop(message = "NA-values in x are not allowed.")
         if((data.class(x)) != "dissimilarity") {
-            if((size(x)) == 0) {
+            if(is.na(sizeDiss(x))) {
                 if((n <- nrow(x)) != ncol(x))
                     stop("Distances must be result of dist or a square matrix.")
                 if(all.equal(x, t(x)) != TRUE)
@@ -183,13 +160,13 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                     }
                     else {
                         if(is.null(labels1))
-                            labels1 <- 1:size(x)
-                        attr(x, "Size") <- size(x)
+                            labels1 <- 1:sizeDiss(x)
+                        attr(x, "Size") <- sizeDiss(x)
                     }
                 }
                 else {
-                    attr(x, "Size") <- size(x)
-                    labels1 <- 1:size(x)
+                    attr(x, "Size") <- sizeDiss(x)
+                    labels1 <- 1:sizeDiss(x)
                 }
             }
         }
@@ -202,31 +179,27 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         ##x1 <- cmd(x, k = 2, eig = T, add = T)
         ##if(x1$ac < 0)
         ##	x1 <- cmd(x, k = 2, eig = T)
-        x1 <- cmdscale(x, k = 2, eig = TRUE)
-        var.dec <- sum(x1$eig)/sum(diag(x1$x))
+        x1 <- cmdscale(x, k = 2, eig = TRUE, x.ret = TRUE)
+        var.dec <- sum(x1$eig)/(-.5 * sum(diag(x1$x)))
         if (var.dec < 0) var.dec <- 0
-        if (var.dec > 1) var.dec <- 1
+        else if (var.dec > 1) var.dec <- 1
         x1 <- x1$points
     }
     else { ## Not (diss)
-
-        if(is.na(min(x))) {
+        if(!is.matrix(x)) stop("x is not a data matrix")
+        if(is.na(min(x))) { ## any(is.na(x))
             y <- is.na(x)
             y1 <- apply(y, 1, sum)
             y2 <- apply(y, 2, sum)
-            if((sum(y1 == ncol(x)) != 0) && (sum(y2 == nrow(x)) != 0))
-                stop("some objects and some variables contain only missing values"
-                     )
-            if(sum(y1 == nrow(x)) != 0)
+            if(any(y1 == ncol(x)))
                 stop("one or more objects contain only missing values")
-            if(sum(y2 == nrow(x)) != 0)
+            if(any(y2 == nrow(x)))
                 stop("one or more variables contain only missing values")
-            print("There were missing values and they were displaced by the median of the corresponding variable(s)"
-                  )
-            x <- apply(x, 2, notavail)
+            x <- apply(x, 2, function(x)
+                   { x[is.na(x)] <- median(x, na.rm = TRUE); x } )
+            cat("Missing values were displaced by the median of the corresponding variable(s)\n")
+
         }
-        if(!is.matrix(x))
-            stop("x is not allowed")
         ## ELSE
         labels1 <-
             if(length(dimnames(x)[[1]]) == 0) 1:nrow(x)
@@ -309,8 +282,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                     q <- pi/2
                 }
                 D <- diag(c(a^2, b^2))
-                R <- cbind(c(  cos(q), sin(q)),
-                           c(- sin(q), cos(q)))
+                R <- rbind(c(cos(q), -sin(q)),
+                           c(sin(q),  cos(q)))
                 A[[i]] <- (R %*% D) %*% t(R)
             }
             else {
@@ -342,8 +315,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                 }
                 b <- 1e-7
                 D <- diag(c(a^2, b^2))
-                R <- cbind(c(  cos(q), sin(q)),
-                           c(- sin(q), cos(q)))
+                R <- rbind(c(cos(q), -sin(q)),
+                           c(sin(q),  cos(q)))
                 A[[i]] <- (R %*% D) %*% t(R)
             }
             else {
@@ -385,8 +358,10 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
                                 ierr = as.integer(0),
                                 PACKAGE = "cluster")
                 if(res$ierr != 0)
-                    print("Error in Fortran routine computing the MVE-ellipsoid, please use the option exactmve=F"
-                          )
+                    ## MM : exactmve ??
+                    cat("Error in Fortran routine computing the MVE-ellipsoid,",
+                        "\nplease use the option exactmve=F\n", sep="")
+
                 cov <- cov.wt(x, res$prob)$cov
                 loc[i, ] <- cov.wt(x, res$prob)$center
                 dist[i] <- sqrt(weighted.mean(res$sqdist, res$prob))
@@ -433,7 +408,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 
     plot(x1[, 1], x1[, 2], xlim = c(minx, maxx), ylim = c(miny, maxy),
          xlab = "Component 1", ylab = "Component 2",
-         main = paste("CLUSPLOT(", namx,")"),
+         main = main,
          type = if(plotchar) "n" else "p", # if(plotchar) add points later
          col = col.p, ...)
     title(sub = paste("These two components explain",
@@ -447,8 +422,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     }
     else if(shade) {
         for(i in 1:n)
-            polygon(z[[i]], ##not yet density = density[i],
-                    col = 5, ...)
+            polygon(z[[i]], density = density[i], col = 5, ...)
     }
     else if(color) {
         dens <- vector(mode = "numeric", length = n)
@@ -557,14 +531,13 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     invisible(list(Distances = afstand, Shading = density))
 }
 
-clusplot.partition <- function(x, ...)
+clusplot.partition <- function(x, main = NULL, ...)
 {
+    if(is.null(main) && !is.null(x$call))
+	main <- paste("clusplot(",format(x$call),")", sep="")
     if(length(x$data) != 0 &&
        (!is.na(min(x$data)) || data.class(x) == "clara"))
-         invisible(clusplot.default(x$data, x$clustering, diss = FALSE, ...))
-    else invisible(clusplot.default(x$diss, x$clustering, diss = TRUE, ...))
+	clusplot.default(x$data, x$clustering, diss = FALSE, main = main, ...)
+    else clusplot.default(x$diss, x$clustering, diss = TRUE, main = main, ...)
+
 }
-
-
-
-
