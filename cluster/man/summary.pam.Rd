@@ -7,7 +7,7 @@
   There's a \code{\link{print}} method for the latter.
 }
 \usage{
-summary.pam(x, \dots)
+\method{summary}{pam}(object, \dots)
 \method{print}{summary.pam}(x, \dots)
 }
 \seealso{\code{\link{pam}}, \code{\link{pam.object}}.
