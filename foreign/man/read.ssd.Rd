@@ -28,7 +28,7 @@ read.ssd(libname, sectionnames,
 }
 \author{VJ Carey \email{<stvjc@channing.harvard.edu>}}
 \note{ error handling is primitive }
-\seealso{\code{\link{read.xport}}
+\seealso{\code{\link{read.xport}}}
 \examples{
 # hard to do in any generality.  if there are ssd files on the
 # web we could pull one down to demonstrate in real time, or stick
