@@ -1,6 +1,11 @@
 Things that were on my TODO list and have been accomplished
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+May, 2004:
+
+o New agnes(*, method = "flexible", par.method = *) to allow
+  Lance-Williams formula.
+
 Mar, 2004:
 
 o  When using a NAMESPACE, can rename `..dClass' in R/0aaa.R (and *.q):
