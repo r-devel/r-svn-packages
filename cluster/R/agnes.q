@@ -2,6 +2,13 @@
 agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		  stand = FALSE, method = "average")
 {
+    METHODS <- c("average", "single", "complete", "ward", "weighted")
+    ## hclust has more;  1    2         3           4       5
+    meth <- pmatch(method, METHODS)
+    if(is.na(meth))
+	stop("invalid clustering method")
+    if(meth == -1)
+	stop("ambiguous clustering method")
     if(diss) {
 	## check type of input vector
 	if(any(is.na(x)))
@@ -42,13 +49,6 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	dv <- double(1 + (n * (n - 1))/2)
 	jdyss <- 0
     }
-    meth <-
-	switch(method,
-	       average = 1, # default
-	       single =	 2,
-	       complete= 3,
-	       ward =	 4,
-	       weighted= 5)
     ## call Fortran routine
     storage.mode(x2) <- "double"
     res <- .Fortran("twins",
@@ -125,7 +125,7 @@ print.agnes <- function(x, ...)
 print.summary.agnes <- function(x, ...)
 {
     ## a bit more than print.agnes() ..
-    cat("Object of class `clara' from call:\n", deparse(x$call),
+    cat("Object of class `agnes' from call:\n", deparse(x$call),
 	"\nAgglomerative coefficient: ", format(x$ac, ...),
 	"\nOrder of objects:\n")
     print(if(length(x$order.lab) != 0) x$order.lab else x$order,
