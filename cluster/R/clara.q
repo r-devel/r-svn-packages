@@ -131,7 +131,7 @@ print.clara <- function(x, ...)
     cat("Objective function:\t ", format(x$objective, ...),"\n",
 	"Clustering vector: \t", sep=""); str(x$clustering, vec.len = 7)
     cat("Cluster sizes:	    \t", x$clusinfo[,1],
-        "\nBest sample:\n");		print(x$sample, quote = FALSE, ...)
+	"\nBest sample:\n");		print(x$sample, quote = FALSE, ...)
     cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }
@@ -147,22 +147,23 @@ print.summary.clara <- function(x, ...)
     cat("Object of class `clara' from call:\n", deparse(x$call),
 	"\nMedoids:\n");		print(x$medoids, ...)
     cat("Objective function:\t ", format(x$objective, ...),
-        "\nNumerical information per cluster:\n")
+	"\nNumerical information per cluster:\n")
     print(x$clusinfo, ...)
     if(has.sil <- !is.null(x$silinfo)) {
 	cat("Average silhouette width per cluster:\n")
 	print(x$silinfo[[2]], ...)
 	cat("Average silhouette width of best sample:",
-            format(x$silinfo[[3]], ...), "\n")
+	    format(x$silinfo[[3]], ...), "\n")
     }
     cat("\nBest sample:\n");		print(x$sample, quote = FALSE, ...)
-    cat("Clustering vector: \t",sep="");print(x$clustering, ...)
+    cat("Clustering vector:\n");	print(x$clustering, ...)
     if(has.sil) {
 	cat("\nSilhouette plot information for best sample:\n")
 	print(x$silinfo[[1]], ...)
     }
-    cat("\n")
-    print(x$diss, ...)
+    if(!is.null(x$diss)) { ## Dissimilarities:
+        cat("\n");			print(summary(x$diss, ...))
+    }
     cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }

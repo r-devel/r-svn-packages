@@ -153,18 +153,13 @@ summary.pam <- function(object, ...)
 
 print.summary.pam <- function(x, ...)
 {
-    cat("Medoids:\n")
-    print(x$medoids, ...)
-    cat("Clustering vector:\n")
-    print(x$clustering, ...)
-    cat("Objective function:\n")
-    print(x$objective, ...)
-    cat("\nNumerical information per cluster:\n")
-    print(x$clusinfo, ...)
-    cat("\nIsolated clusters:\n")
-    cat("L-clusters: ")
+    cat("Medoids:\n");			print(x$medoids, ...)
+    cat("Clustering vector:\n");	print(x$clustering, ...)
+    cat("Objective function:\n");	print(x$objective, ...)
+    cat("\nNumerical information per cluster:\n"); print(x$clusinfo, ...)
+    cat("\nIsolated clusters:\n L-clusters: ")
     print(names(x$isolation[x$isolation == "L"]), quote = FALSE, ...)
-    cat("L*-clusters: ")
+    cat(" L*-clusters: ")
     print(names(x$isolation[x$isolation == "L*"]), quote = FALSE, ...)
     if(length(x$silinfo) != 0) {
 	cat("\nSilhouette plot information:\n")
@@ -174,10 +169,10 @@ print.summary.pam <- function(x, ...)
 	cat("Average silhouette width of total data set:\n")
 	print(x$silinfo[[3]], ...)
     }
-    cat("\n")
-    print(x$diss, ...)
-    cat("\nAvailable components:\n")
-    print(names(x), ...)
+    if(!is.null(x$diss)) { ## Dissimilarities:
+        cat("\n");			print(summary(x$diss, ...))
+    }
+    cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }
 

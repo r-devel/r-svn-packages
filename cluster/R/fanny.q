@@ -148,12 +148,9 @@ summary.fanny <- function(object, ...)
 print.summary.fanny <- function(x, ...)
 {
     print(x$objective, ...)
-    cat("Membership coefficients:\n")
-    print(x$membership, ...)
-    cat("Coefficients:\n")
-    print(x$coeff, ...)
-    cat("Closest hard clustering:\n")
-    print(x$clustering, ...)
+    cat("Membership coefficients:\n");	print(x$membership, ...)
+    cat("Coefficients:\n");		print(x$coeff, ...)
+    cat("Closest hard clustering:\n");	print(x$clustering, ...)
     if(length(x$silinfo) != 0) {
 	cat("\nSilhouette plot information:\n")
 	print(x$silinfo[[1]], ...)
@@ -162,10 +159,10 @@ print.summary.fanny <- function(x, ...)
 	cat("Average silhouette width of total data set:\n")
 	print(x$silinfo[[3]], ...)
     }
-    cat("\n")
-    print(x$diss, ...)
-    cat("\nAvailable components:\n")
-    print(names(x), ...)
+    if(!is.null(x$diss)) { ## Dissimilarities:
+	cat("\n");			print(summary(x$diss, ...))
+    }
+    cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }
 

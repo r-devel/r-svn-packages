@@ -126,14 +126,16 @@ print.summary.agnes <- function(x, ...)
 {
     ## a bit more than print.agnes() ..
     cat("Object of class `clara' from call:\n", deparse(x$call),
-        "\nAgglomerative coefficient: ", format(x$ac, ...),
-        "\nOrder of objects:\n")
+	"\nAgglomerative coefficient: ", format(x$ac, ...),
+	"\nOrder of objects:\n")
     print(if(length(x$order.lab) != 0) x$order.lab else x$order,
-          quote = FALSE, ...)
+	  quote = FALSE, ...)
     cat("Merge:\n");			print(x$merge, ...)
     cat("Height:\n");			print(x$height, ...)
-    cat("\n");				print(x$diss, ...)
-    cat("\nAvailable components:\n");   print(names(x), ...)
+    if(!is.null(x$diss)) { ## Dissimilarities:
+	cat("\n");			print(summary(x$diss, ...))
+    }
+    cat("\nAvailable components:\n");	print(names(x), ...)
     invisible(x)
 }
 
