@@ -1,6 +1,7 @@
 ### $Id$
 
-diana <- function(x, diss = FALSE, metric = "euclidean", stand = FALSE)
+diana <- function(x, diss = inherits(x, "dist"),
+                  metric = "euclidean", stand = FALSE)
 {
     if(diss) {
 	## check type of input vector
