@@ -52,7 +52,7 @@ plot.partition(x, ask = FALSE, which.plots = NULL,
   described in Rousseeuw (1987) and in chapter 2 of Kaufman and
   Rousseeuw (1990).
   For each observation i, a bar is drawn, representing its silhouette
-  width s(i), , see \code{\link{partition.object}} for details.
+  width s(i), see \code{\link{silhouette}} for details.
   Observations are grouped per cluster, starting with cluster 1 at the
   top.  Observations with a large s(i) (almost 1) are very well
   clustered, a small s(i) (around 0) means that the observation lies
@@ -64,11 +64,10 @@ plot.partition(x, ask = FALSE, which.plots = NULL,
   average silhouette width.
 }
 \note{
-  In the silhouette plot,
-  observation labels are only printed when the number of observations is
-  limited less than \code{nmax.lab} (35, by default), for readability.
-  Moreover, observation labels are truncated to maximally
-  \code{max.strlen} (5) characters.
+  In the silhouette plot, observation labels are only printed when the
+  number of observations is less than \code{nmax.lab} (40, by default),
+  for readability.  Moreover, observation labels are truncated to
+  maximally \code{max.strlen} (5) characters.
 }
 \references{
   Rousseeuw, P.J. (1987)
