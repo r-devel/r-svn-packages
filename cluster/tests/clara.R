@@ -32,9 +32,13 @@ clara(x, 2, samples = 149)[clInd]
 clara(x, 2, samples = 200)[clInd]
 ## Note that this last one is practically identical to the slower  pam() one
 
-x[print(sample(length(x), 20))] <- NA
-## This was bogous (and lead to seg.faults); now properly gives error:
-try( clara(x, 2, samples = 50)[clInd] )
+(ii <- sample(length(x), 20))
+## This was bogous (and lead to seg.faults); now properly gives error.
+## but for these, now see  ./clara-NAs.R
+if(FALSE) { ##		   ~~~~~~~~~~~~~
+    x[ii] <- NA
+    try( clara(x, 2, samples = 50) )
+}
 
 ###-- Larger example: 2000 objects, divided into 5 clusters.
 x5 <- rbind(cbind(rnorm(400, 0,4), rnorm(400, 0,4)),
@@ -68,11 +72,6 @@ plot(clx3)
 
 ###--- End version of example(clara) -------
 
-## around here (with 1.9.0-alpha),
-## MM gets segmentation faults on the AMD 64 Opteron;
-## once with   "free(): invalid pointer 0x28e07f0!"
-
-
 ##  small example(s):
 data(ruspini)
 
@@ -103,5 +102,5 @@ for(ss in 4:nrow(ru3)){
 
 ## Last Line:
 cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-## Lynne (P IV, 1.6 GHz): 18.81
+## Lynne (P IV, 1.6 GHz): 18.81; then (no NA; R 1.9.0-alpha): 15.07
 ## nb-mm (P III,700 MHz): 27.97
