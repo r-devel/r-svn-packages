@@ -187,7 +187,7 @@
  */
 
 #include "shapefil.h"
-
+#include <R_ext/Arith.h> /* for NA_INTEGER, NA_REAL */
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -623,7 +623,7 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
         return -1;
 
 /* -------------------------------------------------------------------- */
-/*      SfRealloc all the arrays larger to hold the additional field      */
+/*      SfRealloc all the arrays larger to hold the additional field    */
 /*      information.                                                    */
 /* -------------------------------------------------------------------- */
     psDBF->nFields++;
@@ -652,6 +652,8 @@ DBFAddField(DBFHandle psDBF, const char * pszFieldName,
         psDBF->pachFieldType[psDBF->nFields-1] = 'L';
     else if( eType == FTString )
         psDBF->pachFieldType[psDBF->nFields-1] = 'C';
+    else if( eType == FTDate )
+        psDBF->pachFieldType[psDBF->nFields-1] = 'D';
     else
         psDBF->pachFieldType[psDBF->nFields-1] = 'N';
 
@@ -817,7 +819,7 @@ DBFReadIntegerAttribute( DBFHandle psDBF, int iRecord, int iField )
     pdValue = (double *) DBFReadAttribute( psDBF, iRecord, iField, 'N' );
 
     if( pdValue == NULL )
-        return 0;
+        return NA_INTEGER;
     else
         return( (int) *pdValue );
 }
@@ -837,7 +839,7 @@ DBFReadDoubleAttribute( DBFHandle psDBF, int iRecord, int iField )
     pdValue = (double *) DBFReadAttribute( psDBF, iRecord, iField, 'N' );
 
     if( pdValue == NULL )
-        return 0.0;
+        return NA_REAL;
     else
         return( *pdValue );
 }
@@ -889,11 +891,11 @@ DBFIsAttributeNULL( DBFHandle psDBF, int iRecord, int iField )
       case 'N':
       case 'F':
         /* NULL numeric fields have value "****************" */
-        return pszValue[0] == '*';
+        return strlen(pszValue) == 0 || pszValue[0] == '*';
 
       case 'D':
         /* NULL date fields have value "00000000" */
-        return strncmp(pszValue,"00000000",8) == 0;
+        return strlen(pszValue) == 0 || strncmp(pszValue,"00000000",8) == 0;
 
       case 'L':
         /* NULL boolean fields have value "?" */ 
@@ -965,8 +967,8 @@ DBFGetFieldInfo( DBFHandle psDBF, int iField, char * pszFieldName,
 	return( FTLogical);
 
     else if( psDBF->pachFieldType[iField] == 'N' 
-             || psDBF->pachFieldType[iField] == 'F'
-             || psDBF->pachFieldType[iField] == 'D' )
+             || psDBF->pachFieldType[iField] == 'F' )
+	/* || psDBF->pachFieldType[iField] == 'D' ) D is Date */
     {
 	if( psDBF->panFieldDecimals[iField] > 0 )
 	    return( FTDouble );
@@ -1079,7 +1081,7 @@ static int DBFWriteAttribute(DBFHandle psDBF, int hEntity, int iField,
 /* -------------------------------------------------------------------- */
     switch( psDBF->pachFieldType[iField] )
     {
-      case 'D':
+      /* case 'D': is Date */
       case 'N':
       case 'F':
 	if( psDBF->panFieldDecimals[iField] == 0 )

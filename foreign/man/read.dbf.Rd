@@ -6,10 +6,11 @@
   fields to factors, and trying to respect NULL fields.
 }
 \usage{
-read.dbf(file)
+read.dbf(file, as.is = FALSE)
 }
 \arguments{
   \item{file}{name of input file}
+  \item{as.is}{should character vectors not be converted to factors?}
 }
 \details{
   DBF is the extension used for files written for the \sQuote{XBASE}
@@ -22,13 +23,19 @@ read.dbf(file)
 
   \code{read.dbf} is based on C code from
   \url{http://shapelib.maptools.org/} which implements the
-  \sQuote{XBASE} specification.
+  \sQuote{XBASE} specification.  It can convert fields of type
+  \code{"L"} (logical), \code{"N"} and \code{"F"} (numeric and float)
+  and \code{"D"} (dates): all other field types are read as-is as
+  character vectors.  A numeric field are read as an \R integer vector if
+  it is encoded to have no decimals, otherwise as a numeric vector.
 }
 
 \value{
   A data frame of data from the DBF file; note that the field names are
-  adjusted to use in R using \code{\link{make.names}} and so will permit
-  the underscore character.
+  adjusted to use in R using \code{\link{make.names}(unique=TRUE)}.
+
+  There is an attribute \code{"data_type"} giving the single-character
+  dBase types for each field.
 }
 
 \references{
