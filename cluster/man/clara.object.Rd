@@ -29,10 +29,11 @@
   \item{objective}{
     the objective function for the final clustering of the entire dataset.}
   \item{clusinfo}{
-    matrix, each row gives numeric information for one cluster. These
-    are the cardinality of the cluster (number of observations), and the
+    matrix, each row gives numerical information for one cluster. These
+    are the cardinality of the cluster (number of observations), the
     maximal and average dissimilarity between the observations in the
-    cluster and the cluster's medoid. The last column is the maximal
+    cluster and the cluster's medoid.  %% FIXME: Now differs from pam.object.Rd:
+    The last column is the maximal
     dissimilarity between the observations in the cluster and the
     cluster's medoid, divided by the minimal dissimilarity between the
     cluster's medoid and the medoid of any other cluster. If this ratio
@@ -40,8 +41,8 @@
   }
   \item{silinfo}{
     list with all information necessary to construct a silhouette plot of the
-    clustering of the best sample. This list is only available when
-    \eqn{1 < k < n}.
+    clustering of the best sample. This list is only available when the
+    number of clusters is non-trivial, i.e., \eqn{1 < k < n}.
     The first component is a matrix, with for each observation i in the best
     sample, the cluster to which i belongs,
     as well as the neighbor cluster of i (the cluster, not containing
