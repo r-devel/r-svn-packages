@@ -77,28 +77,33 @@ c
       smald=dys(meet(1,j))*1.1+1.0
       nns=nn-1
       do 120 l=1,nns
-	 if(kwan(l).eq.0)go to 120
-	 lmuch=l+1
-	 do 110 j=lmuch,nn
-	    if(kwan(j).eq.0)go to 110
-	    nlj=meet(l,j)
-	    if(dys(nlj).gt.smald)go to 110
-	    smald=dys(nlj)
-	    la=l
-	    lb=j
- 110	 continue
+	 if(kwan(l).gt.0) then
+            lmuch=l+1
+            do 110 j=lmuch,nn
+               if(kwan(j).gt.0) then
+                  nlj=meet(l,j)
+                  if(dys(nlj) .le. smald) then
+c     		MM: note also when "==" !
+                     smald=dys(nlj)
+                     la=l
+                     lb=j
+                  endif
+               endif
+ 110        continue
+         endif
  120  continue
 c
 c     merge-structure for plotting tree in S
 c
       l1=-la
       l2=-lb
-      if(nmerge.eq.1)go to 121
-      do 122 j=1,(nmerge-1)
-	 if((merge(j,1).eq.l1).or.(merge(j,2).eq.l1))l1=j
-	 if((merge(j,1).eq.l2).or.(merge(j,2).eq.l2))l2=j
- 122  continue
- 121  merge(nmerge,1)=l1
+      if(nmerge .gt. 1) then
+         do 122 j=1,(nmerge-1)
+            if((merge(j,1).eq.l1).or.(merge(j,2).eq.l1)) l1=j
+            if((merge(j,1).eq.l2).or.(merge(j,2).eq.l2)) l2=j
+ 122     continue
+      endif
+      merge(nmerge,1)=l1
       merge(nmerge,2)=l2
       nmerge=nmerge+1
 c
@@ -169,8 +174,8 @@ c     4: ward's method
 	 fb=(tb+tq)/(ta+tb+tq)
 	 fc=-tq/(ta+tb+tq)
 	 nab=meet(la,lb)
-	 d=fa*dys(naq)*dys(naq)+fb*dys(nbq)*dys(nbq)
-	 d=d+fc*dys(nab)*dys(nab)
+	 d=fa*dys(naq)*dys(naq) + fb*dys(nbq)*dys(nbq) +
+     +     fc*dys(nab)*dys(nab)
 	 dys(naq)=sqrt(d)
 	 go to 240
 c     5: weighted average linkage
@@ -196,7 +201,7 @@ c VARs
 
       sup=0.0
       do 70 k=2,nn
-	 if(ban(k).gt.sup)sup=ban(k)
+	 if(ban(k).gt.sup) sup=ban(k)
  70   continue
       cf=0.0
       do 80 k=1,nn
