@@ -1,7 +1,14 @@
+2.16	Added cluster() and robust standard errors for survreg.
+
 2.15-1  survSplit works for counting process data
 
-2.15  64-bit clean fixes from BDR
+2.15  export vcov methods (BDR)
 
+	fix lurking longs in survindex2 (BDR)
+
+	document [.survfit (Youyi Fong) and change the name of the first
+	argument
+	
 2.14	separate out print.summary.coxph from summary.coxph
 	
 	
