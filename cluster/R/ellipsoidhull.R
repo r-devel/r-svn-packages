@@ -7,8 +7,8 @@
 ### Author: Martin Maechler, Date: 21 Jan 2002, 15:41
 
 
-ellipsoidhull <- function(x, tol = 0.01, maxit = 5000,
-                        ret.wt = FALSE, ret.sqdist = FALSE)
+ellipsoidhull <-
+    function(x, tol = 0.01, maxit = 5000, ret.wt = FALSE, ret.sqdist = FALSE)
 {
     if(!is.matrix(x) || !is.numeric(x))
         stop("`x' must be numeric  n x p matrix")
@@ -58,12 +58,13 @@ ellipsoidhull <- function(x, tol = 0.01, maxit = 5000,
 print.ellipsoid <- function(x, digits = max(1, getOption("digits") - 2), ...)
 {
     d <- length(x$loc)
-    cat("`ellipsoid' in", d, "dimensions, center = ",
+    cat("`ellipsoid' in", d, "dimensions:\n center = (",
         format(x$loc, digits=digits),
-        "squared average radius d^2 = ", format(x$d2, digits=digits),
+        "); squared ave.radius d^2 = ", format(x$d2, digits=digits),
         "\n and shape matrix =\n")
     print(x$cov, digits = digits, ...)
-    cat("  hence,",if(d==2)"area" else "volume"," = ", format(volume(x)),"\n")
+    cat("  hence,",if(d==2)"area" else "volume"," = ",
+        format(volume(x), digits=digits),"\n")
     invisible(x)
 }
 
@@ -97,5 +98,5 @@ ellipsoidPoints <- function(A, d2, loc, n = 201)
     }
 }
 
-predict.ellipse <- function(object, n.out = 201, ...)
+predict.ellipsoid <- function(object, n.out = 201, ...)
     ellipsoidPoints(object$cov, d2 = object$d2, loc= object$loc, n = n.out)
