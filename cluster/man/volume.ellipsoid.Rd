@@ -17,7 +17,7 @@
 }
 \seealso{\code{\link{ellipsoidhull}} for spanning ellipsoid computation.}
 \examples{
-example(ellipsoidhull) # which defines `ellipsoid' object ...
+example(ellipsoidhull) # which defines `ellipsoid' object <namefoo>
 %% FIXME
 }
 \keyword{utilities}
