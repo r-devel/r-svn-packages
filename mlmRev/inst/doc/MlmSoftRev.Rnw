@@ -1,0 +1,163 @@
+\documentclass[12pt]{article}
+\usepackage{Sweave}
+\usepackage{myVignette}
+\usepackage[authoryear,round]{natbib}
+\bibliographystyle{plainnat}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}
+{formatcom={\vspace{-2.5ex}},fontshape=sl,
+  fontfamily=courier,fontseries=b, fontsize=\scriptsize}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}
+{formatcom={\vspace{-2.5ex}},fontfamily=courier,fontseries=b,%
+  fontsize=\scriptsize}
+%%\VignetteIndexEntry{Examples from Multilevel Software Reviews}
+%%\VignetteDepends{lme4}
+\begin{document}
+\SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,width=5,height=3,strip.white=TRUE}
+\setkeys{Gin}{width=\textwidth}
+\title{Examples from Multilevel Software Comparative Reviews}
+\author{Douglas Bates\\R Development Core Team\\\email{Douglas.Bates@R-project.org}}
+\date{\today}
+\maketitle
+\begin{abstract}
+   The Center for Multilevel Modelling at the Institute of Education,
+   London maintains a web site of ``Software reviews of multilevel
+   modeling packages''.  The data sets discussed in the reviews are
+   available at this web site.  We have incorporated these data sets
+   in the \code{lme4} package for \RR{} and, in this vignette, provide
+   the results of fitting several models to these data sets.
+\end{abstract}
+<<preliminaries,echo=FALSE,print=FALSE>>=
+options(width=75)
+library(Matrix)
+library(lattice)
+library(latticeExtra)
+library(lme4)
+library(mlmRev)
+options(show.signif.stars = FALSE)
+@
+
+\section{Introduction}
+\label{sec:Intro}
+
+
+\section{Two-level normal models}
+\label{sec:TwoLevelNormal}
+
+
+<<Examprep, results=hide,echo=FALSE>>=
+lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam)
+@ 
+
+The \code{Exam} data set is used in fitting examples of two-level
+normal multilevel models.
+
+<<ExamData>>=
+str(Exam)
+system.time(Em1 <- lmer(normexam ~ standLRT + sex + schgend + (1|school),
+                       Exam), gc = TRUE)
+summary(Em1)
+@ 
+
+There are some interesting aspects of data management that show up in
+the analysis of these data.  The \code{student} variable is an
+identifier of the student within the \code{school}.  It would be best
+to combine the indicators of school and student to get a unique
+identifier of the student.
+
+<<ExamIds>>=
+Exam$ids <- with(Exam, school:student)[, drop = TRUE]
+str(Exam)
+@ 
+Notice that there are 4059 observations but only 4055 unique levels of
+student within school.  We can check the ones that are duplicated
+<<dupExamIds>>=
+Exam$ids[which(duplicated(Exam$ids))]
+@ 
+
+One of these duplicated cases is particularly interesting.  One of the
+students with the duplicated student id 86 in school 43 is the only
+male student in this mixed school.  This is probably a case of a
+misrecorded school.
+
+
+
+\section{Three-level Normal Models}
+\label{sec:three-level}
+<<Chem97prep,results=hide,echo=FALSE>>=
+lmer(score ~ gcsecnt + (1|school) + (1|lea), Chem97)
+@ 
+
+These results are from the 1997 A-level Chemistry exam.  The
+\code{school} is nested in \code{lea} (local education authority) and
+has unique levels for each of the 2410 schools.  It is a good practice
+to make the nesting explicit by specifying the grouping factors as the
+`outer' factor, \code{lea} in this case, and the interaction of the
+outer and inner factors, \code{lea:school} or \code{school:lea} in
+this case.  This will ensure unique levels for each \code{school}
+within \code{lea} combination.
+
+To fit the model \code{mC2} we increase the number of EM iterations
+from its default of 20 to 40.  Without this change the current version
+of the \code{optim} function in \RR{} will declare convergence to an
+incorrect optimum.  By increasing the number of EM iterations we are
+able to get closer to the optimum before calling \code{optim} and
+converge to the correct value.  The optim function will be patched so
+this change will not be needed in future versions of \RR{}.
+
+Data from the 1997 A-level Chemistry exam are available as \code{Chem97}.
+
+<<Chem97>>=
+str(Chem97)
+system.time(mC1 <- lmer(score ~ 1+(1|lea:school) + (1|lea), Chem97), gc = TRUE)
+summary(mC1)
+system.time(mC2 <- lmer(score ~ gcsecnt + (1|school) + (1|lea), Chem97,
+                        control = list(niterEM = 40)), gc = TRUE)
+summary(mC2)
+@ 
+
+
+\section{Two-level models for binary data}
+\label{sec:TwolevelBinary}
+
+The data frame \code{Contraception} provides data from the
+Bangladesh fertility survey.
+<<Contraception>>=
+str(Contraception)
+summary(Contraception[,-1])
+system.time(mB1 <- GLMM(use ~ urban+age+livch, binomial,
+                        Contraception, ~ 1|district))
+summary(mB1)
+system.time(mB2 <- GLMM(use ~ urban+age+livch, binomial,
+                        Contraception, ~ 1|district,
+                        method = "Laplace"))
+summary(mB2)
+system.time(mB3 <- GLMM(use ~ urban+age+livch, family = binomial,
+                        data = Contraception,
+                        random = ~ urban|district))
+summary(mB3)
+@ 
+
+
+\section{Growth curve model for repeated measures data}
+\label{sec:GrowthCurve}
+
+<<Oxboys>>=
+str(Oxboys)
+system.time(mX1 <- lmer(height ~ age + I(age^2) + I(age^3) + I(age^4) + (age + I(age^2)|Subject),
+                       Oxboys), gc = TRUE)
+summary(mX1)
+system.time(mX2 <- lmer(height ~ poly(age,4) + (age + I(age^2)|Subject), Oxboys),
+            gc = TRUE)
+summary(mX2)
+@ 
+
+\section{Cross-classification model}
+\label{sec:CrossClassified}
+
+<<ScotsSec>>=
+str(ScotsSec)
+system.time(mS1 <- lmer(attain ~ sex + (1|primary) + (1|second), ScotsSec), gc=TRUE)
+summary(mS1)
+@ 
+
+\end{document}
