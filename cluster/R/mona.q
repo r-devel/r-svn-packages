@@ -8,16 +8,16 @@ mona <- function(x)
     if(!all(sapply(lapply(as.data.frame(x), levs), length) == 2))
         stop(message = "All variables must be binary (factor with 2 levels).")
     n <- nrow(x)
-    jp <- ncol(x)	
+    jp <- ncol(x)
     ##change levels of input matrix
     x2 <- apply(as.matrix(x), 2, factor)
     x2[x2 == "1"] <- "0"
     x2[x2 == "2"] <- "1"
     x2[x2 == "NA"] <- "2"
-    ##	x2 <- paste(x2, collapse = "")	
+    ##	x2 <- paste(x2, collapse = "")
     ##	storage.mode(x2) <- "character"
     ## call Fortran routine
-    storage.mode(x2) <- "integer"        
+    storage.mode(x2) <- "integer"
     res <- .Fortran("mona",
                     as.integer(n),
                     as.integer(jp),
@@ -28,7 +28,7 @@ mona <- function(x)
                     integer(n),
                     lava = integer(n),
                     integer(jp),
-                    PACKAGE = "cluster")	
+                    PACKAGE = "cluster")
     ##give a warning when errors occured
     if(res$error == 1)
         stop("No clustering performed, an object was found with all values missing." )
@@ -41,7 +41,7 @@ mona <- function(x)
     res$x2 <- matrix(as.numeric(substring(res$x2,
                                           1:nchar(res$x2), 1:nchar(res$x2))),
                      n, jp)
-    dimnames(res$x2) <- dimnames(x)	
+    dimnames(res$x2) <- dimnames(x)
     ##add labels to Fortran output
     if(length(dimnames(x)[[1]]) != 0)
         order.lab <- dimnames(x)[[1]][res$ner]
@@ -77,9 +77,8 @@ print.mona <- function(x, ...)
     invisible(x)
 }
 
-summary.mona <- function(x, ...)
+summary.mona <- function(object, ...)
 {
-    object <- x
     class(object) <- "summary.mona"
     object
 }
