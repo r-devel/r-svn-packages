@@ -2,7 +2,7 @@ pltree <- function(x, ...) UseMethod("pltree")
 
 pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
 {
-    call <- attr(x, "Call")
+    call <- x$call
     labels <- NULL
     if(length(x$order.lab) != 0) {
         names(x$order) <- names(x$order.lab) <- 1:length(x$order)
@@ -57,7 +57,7 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
 
     if(is.null(main)) {
         ## Different default for banner & pltree:
-        cl <- deparse(attr(x, "Call"))
+        cl <- deparse(x$call)
         main1 <- paste("Banner of ", cl)
         main2 <- paste("Dendrogram of ", cl)
     }
@@ -125,7 +125,7 @@ function(x, ask = FALSE, which.plots = NULL, main = NULL,
 
     if(is.null(main)) {
         ## Different default for banner & pltree:
-        cl <- deparse(attr(x, "Call"))
+        cl <- deparse(x$call)
         main1 <- paste("Banner of ", cl)
         main2 <- paste("Dendrogram of ", cl)
     }
@@ -164,7 +164,7 @@ function(x, ask = FALSE, which.plots = NULL, main = NULL,
     invisible()
 }
 
-plot.mona <- function(x, main = paste("Banner of ", deparse(attr(x, "Call"))),
+plot.mona <- function(x, main = paste("Banner of ", deparse(x$call)),
                       col = 2, axes = TRUE, adj = 0,
                       nmax.lab = 35, max.strlen = 5, ...)
 {
