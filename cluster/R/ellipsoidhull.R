@@ -38,21 +38,25 @@ ellipsoidhull <-
     if(res$ierr != 0)
         cat("Error in Fortran routine computing the spanning ellipsoid,",
             "\n probably collinear data\n", sep="")
-    if(noconv <- (res$maxit == maxit))
+    conv <- res$maxit  < maxit
+    if(!conv)
         warning("possibly not converged in ", maxit, " iterations")
+    conv <- conv && res$ierr == 0
 
     cov <- cov.wt(x, res$prob)
     ## cov.wt() in R has extra wt[] scaling; revert here
     res <- list(loc = cov$center,
                 cov = cov$cov * (1 - sum(cov$wt^2)),
                 d2  = weighted.mean(res$sqdist, res$prob),
-                sqdist = if(ret.sqdist) res$sqdist,
                 wt  = if(ret.wt) cov$wt,
+                sqdist = if(ret.sqdist) res$sqdist,
                 prob= if(ret.pr) res$prob,
                 tol = tol,
                 eps = max(res$sqdist) - p,
                 it  = res$maxit,
-                noconv = noconv, ierr = res$ierr)
+                maxit= maxit,
+                ierr = res$ierr,
+                conv = conv)
 
     class(res) <- "ellipsoid"
     res
