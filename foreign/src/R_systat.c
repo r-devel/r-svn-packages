@@ -1,18 +1,18 @@
 /* Copyright (C) 1990-1992, 2004 Roger Bivand
-   Patched (C) 2004 B. D. Ripley
+   Patches (C) 2004 B. D. Ripley
  */
 
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
-#define MAXVARS		8192	 /* maximum number of variables */
+#define MAXVARS	      8192	/* maximum number of variables */
 #define MAXLINES	50	/* number of history lines */
 #define SYSLABSIZ	12	/* systat label size */
-#define	LABELSIZ  12	/* length of variable names and string values */
-#define	FORTBUF	 128	/* apparent packet length in .sys files */
-#define	MYBUFSIZ	10*72	/* comment length */
-#define DMIS	-1.0e36	/* missing value */
+#define	LABELSIZ 	12	/* length of variable names and string values */
+#define	FORTBUF	       128	/* apparent packet length in .sys files */
+#define	MYBUFSIZ     10*72	/* comment length */
+#define DMIS	   -1.0e36	/* missing value */
 
 struct SysAction {
 	int	_history;
@@ -67,8 +67,6 @@ static size_t getshort(short *, FILE *);
 static char *getvarnam(int, struct SysFilev3 *);
 static void getdbvar(int, double *, struct SysFilev3 *);
 static void getsvar(FILE *, char *s, short);
-typedef unsigned char uchar;
-
 static int getnv(struct SysFilev3 *use);
 static int getnd(struct SysFilev3 *use);
 static int getnk(struct SysFilev3 *use);

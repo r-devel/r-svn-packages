@@ -11,7 +11,7 @@ read.systat(file, to.data.frame = TRUE)
 }
 \arguments{
   \item{file}{character variable with the name of the file to read}
-  \item{to.data.frame}{return a data frame (otherwise a list)?}
+  \item{to.data.frame}{return a data frame (otherwise a list)}
 }
 \details{
   The function only reads those Systat files that are rectangular data

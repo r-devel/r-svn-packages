@@ -5,8 +5,8 @@ by Nicholas Lewin-Koh and modified by Roger Bivand
 
 R/dbf.R
 
-# Copyright 2000-2001 (c) Nicholas Lewin-Koh
-# Changes of foreign package (C) 2004 R Development Core Team
+Copyright 2000-2001 (c) Nicholas Lewin-Koh
+Changes for the foreign package (C) 2004 R Development Core Team
 
 
 src/Rdbfread.c
@@ -23,7 +23,7 @@ chosen here.
 man/read.dbf.Rd
 man/write.dbf.Rd
 Nicholas Lewin-Koh and Roger Bivand,
-changes for foreign package (C) 2004 R Development Core Team
+changes for the foreign package (C) 2004 R Development Core Team
 
 
 R/R_systat.R
@@ -36,7 +36,7 @@ Changes for the foreign package (C) 2004 R Development Core Team
 src/R_systat.c
 
 Copyright (C) 1990-1992, 2004 Roger Bivand
-Patched (C) 2004 B. D. Ripley
+Patches (C) 2004 B. D. Ripley
 
 
 src/avl.c
