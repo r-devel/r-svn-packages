@@ -1,3 +1,8 @@
+1.9-2
+- gtkDevice now returns an error in the absense of RGtk
+- Added PACKAGE argument to all foreign function calls, conforming to 
+  R CMD check
+
 1.9-1
 _ Graphics engine changes (from Paul Murrell) folded in
 - New naming convention. Match the version number of the package to the
