@@ -53,7 +53,8 @@ c	AGNES
 c	DIANA
 	 call splyt(nn,kwan,ner,ban,dys,       merge)
       endif
-      call bncoef(nn,ban,ner,coef)
+c     Compute agglomerative/divisive coefficient from banner:
+      call bncoef(nn,ban,coef)
       end
 c     -----------------------------------------------------------
 c     AGNES agglomeration
@@ -224,9 +225,9 @@ c
 c	cf = ac := "Agglomerative Coefficient" from AGNES banner
 c  or	cf = dc := "Divisive Coefficient"      from DIANA banner
 
-      subroutine bncoef(nn,ban,ner,cf)
+      subroutine bncoef(nn,ban,cf)
 
-      integer nn, ner(nn)
+      integer nn
       double precision ban(nn), cf
 c VARs
       integer k,kearl,kafte
