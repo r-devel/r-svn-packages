@@ -17,7 +17,11 @@ data(ruspini)
 (fannyx <- fanny(x, 2))
 summary(fannyx)
 str(fannyx)
-summary(fanny(x,3))# one extra
+## Different platforms differ (even gcc 3.0.1 vs 3.2 on same platform)!
+## {70 or 71 iterations}
+## ==> No "fanny-ex.Rout.save" is distributed !
+## --------------------------------------------
+summary(fanny(x,3))# one extra cluster
 
 summary(fanny(ruspini, 3), digits = 9)
 summary(fanny(ruspini, 4), digits = 9)# `correct' #{clusters}
