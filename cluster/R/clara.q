@@ -114,21 +114,17 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     ## add dimnames to Fortran output
     clusinf <- cbind(size = res$size, "max_diss" = res$maxdis,
 		     "av_diss" = res$avdis, isolation = res$ratdis)
+
+    clustering <- list(sample = res$sample, medoids = res$med,
+                       clustering = res$clu, objective = res$obj,
+                       clusinfo = clusinf, diss = disv, call = match.call())
     if(k != 1) {
 	dimnames(res$silinf) <- list(sildim,
 				     c("cluster", "neighbor", "sil_width", ""))
-	clustering <- list(sample = res$sample, medoids = res$med,
-			   clustering = res$clu, objective = res$obj,
-			   clusinfo = clusinf,
-			   silinfo = list(width = res$silinf[, -4],
-			   clus.avg.widths = res$avsil[1:k],
-			   avg.width = res$ttsil),
-			   diss = disv)
-    }
-    else {
-	clustering <- list(sample = res$sample, medoids = res$med,
-			   clustering = res$clu, objective = res$obj,
-			   clusinfo = clusinf, diss = disv, call = match.call())
+	clustering <- c(clustering,
+                        list(silinfo = list(width = res$silinf[, -4],
+                             clus.avg.widths = res$avsil[1:k],
+                             avg.width = res$ttsil))
     }
     x2[x2 == valmisdat] <- NA
     clustering$data <- x2
