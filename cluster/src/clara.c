@@ -1,3 +1,4 @@
+
 /*   Clustering LARge Applications
      ~		~~~   ~
      Clustering program based upon the k-medoid approach,
@@ -57,10 +58,9 @@ void clara(int *n,  /* = number of objects */
     /* Local variables */
 
     Rboolean nafs, kall, full_sample, has_NA = *mdata;
-    int j, jk, jkk, js, jsm, jhalt;
-    int kkm, kkp, nsm, ntt;
-    int nadv, jran, kran, kans, less, nsub, nrun, l;
-    int n_dys, nsamb, nad, nadvp, nexap, nexbp, nunfs;
+    int j, jk, jkk, js, jsm, jhalt, jran, l, less;
+    int nsm, ntt, nad, nadv, kran, kans, nrun, nexap, nexbp;
+    int n_dys, nsamb, nunfs;
     double rnn, sky, zb, zba = -1., s = -1., sx = -1.;/* Wall */
 
     /* Parameter adjustments */
@@ -74,7 +74,8 @@ void clara(int *n,  /* = number of objects */
     full_sample = (*n == *nsam);/* only one sub sample == full data */
 
     nsamb = *nsam << 1;
-    if (*n < nsamb)/* sample more than half */
+    if (*n < nsamb)/* sample more than *n/2 -->
+		    * generate indices for smaller half */
 	less = *n - *nsam;
     else
 	less = *nsam;
@@ -89,15 +90,14 @@ void clara(int *n,  /* = number of objects */
 	jhalt = 0;
 	if (!full_sample) {/* `real' case: sample size < n */
 	    ntt = 0;
-	    if (jran != 1 && nunfs != jran && *n >= nsamb) {
+	    if (kall/*was jran != 1 */ && nunfs != jran && *n >= nsamb) {
+		/* nsel[] := sort(nrx[])   for the first j=1:k	?? */
 		for (jk = 0; jk < *kk; ++jk)
 		    nsel[jk+1] = nrx[jk];
-		kkm = *kk - 1;
-		for (jk = 1; jk <= kkm; ++jk) {
+		for (jk = 1; jk < *kk; ++jk) {
 		    nsm = nsel[jk];
-		    kkp = jk + 1;
 		    jsm = jk;
-		    for (jkk = kkp; jkk <= *kk; ++jkk) {
+		    for (jkk = jk + 1; jkk <= *kk; ++jkk) {
 			if (nsel[jkk] < nsm) {
 			    nsm = nsel[jkk];
 			    jsm = jkk;
@@ -110,23 +110,21 @@ void clara(int *n,  /* = number of objects */
 	    }
 	    else {
 
-		/* Find random index `kran' not yet in nrx[] : */
-
-		/* Loop 1 -- */
+		/* Loop find random index `kran' not yet in nrx[] : */
 	    L180:
 		kran = (int) (rnn * randm(&nrun) + 1.);
 		if (kran > *n) kran = *n;
 
-		if (jran != 1) {
+		if (kall/*jran != 1*/) {
 		    for (jk = 0; jk < *kk; ++jk) {
 			if (kran == nrx[jk])
 			    goto L180;
 		    }
 		}
-		/* end Loop 1*/
+		/* end Loop */
 		++ntt;
 		nsel[ntt] = kran;
-		if (less == ntt)
+		if (ntt == less)
 		    goto L290;
 	    }
 
@@ -135,13 +133,13 @@ void clara(int *n,  /* = number of objects */
 		kran = (int) (rnn * randm(&nrun) + 1.);
 		if (kran > *n) kran = *n;
 
-		if (jran != 1 && *n < nsamb) {
+		if (kall/*jran != 1*/ && *n < nsamb) {
 		    for (jk = 0; jk < *kk; ++jk) {
 			if (kran == nrx[jk])
 			    goto L210;
 		    }
 		}
-
+		/* insert kran into nsel[] :   (?) */
 		for (kans = 1; kans <= ntt; ++kans) {
 		    if (nsel[kans] >= kran) {
 			if (nsel[kans] == kran)
@@ -149,8 +147,7 @@ void clara(int *n,  /* = number of objects */
 			else {
 			    for (nad = kans; nad <= ntt; ++nad) {
 				nadv = ntt - nad + kans;
-				nadvp = nadv + 1;
-				nsel[nadvp] = nsel[nadv];
+				nsel[nadv + 1] = nsel[nadv];
 			    }
 			    ++ntt;
 			    nsel[kans] = kran;
@@ -165,23 +162,24 @@ void clara(int *n,  /* = number of objects */
 	    } while (ntt < less);
 
 	    if (*n < nsamb) {
+		/* have indices for smaller _nonsampled_ half; revert this: */
 		for (j = 1, nexap = 1, nexbp = 0; j < *n; j++) {
 		    if (nsel[nexap] == j)
 			++nexap;
 		    else
 			nrepr[nexbp++] = j;
 		}
-		for (nsub = 0; nsub < *nsam; ++nsub)
-		    nsel[nsub+1] = nrepr[nsub];
+		for (j = 0; j < *nsam; ++j)
+		    nsel[j+1] = nrepr[j];
 	    }
+	    if(*trace_lev)
+		Rprintf("C clara(): sample %d [ntt=%d, nunfs=%d] -> dysta2()\n",
+			jran, ntt, nunfs);
 	}
 	else { /* full_sample : *n = *nsam -- one sample is enough ! */
 	    for (j = 1; j <= *nsam; ++j)
 		nsel[j] = j;
 	}
-
-	if(*trace_lev)
-	    Rprintf("C clara(): sample %d [ntt=%d] --> dysta2()\n", jran, ntt);
 
 	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *diss_kind,
 	       jtmd, valmd, &jhalt);
@@ -199,8 +197,6 @@ void clara(int *n,  /* = number of objects */
 		s = dys[l];
 	} while (l+1 < n_dys);
 
-	kall = TRUE;
-
 	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
 	       /* dysma */tmp1, /*dysmb*/tmp2,
 	       /* beter[], only used here */&tmp[nsamb]);
@@ -212,8 +208,8 @@ void clara(int *n,  /* = number of objects */
 	if (nafs) {
 	    ++nunfs;
 	}
-	else if (jran == 1 || zba > zb) {/* 1st time, or new best */
-
+	else if(!kall /*jran == 1*/ || zba > zb) {
+	    /* 1st proper sample  or  new best */
 	    zba = zb;
 	    for (jk = 0; jk < *kk; ++jk) {
 		ttbes[jk] = ttd	 [jk];
@@ -225,6 +221,9 @@ void clara(int *n,  /* = number of objects */
 		nbest[js] = nsel[js+1];
 	    sx = s;
 	}
+
+	kall = TRUE;
+
 	if(full_sample) break; /* out of resampling */
     }
 /* --- end random sampling loop */
@@ -265,7 +264,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 	    double *x, int n, double *dys, int diss_kind,
 	    int *jtmd, double *valmd, int *jhalt)
 {
-/* Compute Dissimilarities for the selected sub-sample  ---> dys[,] */
+/* Compute Dissimilarities for the selected sub-sample	---> dys[,] */
 
     /* Local variables */
     int j, k, kj, l, lj, ksel, lsel, nlk, npres;
@@ -276,7 +275,7 @@ void dysta2(int nsam, int jpp, int *nsel,
     for (l = 1; l < nsam; ++l) {
 	lsel = nsel[l];
 	if(lsel <= 0 || lsel > n)
-	    REprintf("  ** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
+	    REprintf("	** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
 	for (k = 0; k < l; ++k) {
 	    ksel = nsel[k];
 	    clk = 0.;
@@ -314,18 +313,14 @@ void dysta2(int nsam, int jpp, int *nsel,
 
 double randm(int *nrun)
 {
-    int k;
-    double ry;
-
-/*   we programmed this generator ourselves because we wanted it
+/* we programmed this generator ourselves because we wanted it
    to be machine independent. it should run on most computers
    because the largest int used is less than 2**30 . the period
    is 2**16=65536, which is good enough for our purposes. */
-    *nrun = *nrun * 5761 + 999;
-    k = *nrun / 65536;
-    *nrun -= k << 16;
-    ry = (double) (*nrun);
-    return (ry / 65536.f);
+    /* MM: improved the original speed-wise only: */
+    *nrun = (*nrun * 5761 + 999) & 0177777;
+    /* Masking off all but the last 16 bits is equivalent to  % 65536 */
+    return ((double) (*nrun) / 65536.f);
 } /* randm() */
 
 /* bswap2() : called once [per random sample] from clara() : */
