@@ -29,7 +29,7 @@ void clara(int *n,  /* = number of objects */
 	   int *mdata,	/*= {0,1}; 1: min(x) is missing value (NA);  0: no NA */
 	   double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
 	   int *jtmd,	/* [j]= {-1,1};	 -1: x[,j] has NA; 1: no NAs in x[,j] */
-	   int *ndyst,	/* = {1,2};  1 : euclidean;  2 : manhattan*/
+	   int *diss_kind,/* = {1,2};  1 : euclidean;  2 : manhattan*/
 	   int *nrepr,	/* */
 	   int *nsel, /* x[nsel[j]]  will be the j-th obs in the final sample */
 	   int *nbest,
@@ -56,7 +56,7 @@ void clara(int *n,  /* = number of objects */
 
     /* Local variables */
 
-    Rboolean nafs, kall, full_sample;
+    Rboolean nafs, kall, full_sample, has_NA = *mdata;
     int j, jk, jkk, js, jsm, jhalt;
     int kkm, kkp, nsm, ntt;
     int nadv, jran, kran, kans, less, nsub, nrun, l;
@@ -183,7 +183,7 @@ void clara(int *n,  /* = number of objects */
 		nsel[j] = j;
 	}
 
-	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *ndyst, jtmd, valmd, &jhalt);
+	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
 	if (jhalt == 1)
 	    continue;/* random sample*/
 
@@ -201,7 +201,7 @@ void clara(int *n,  /* = number of objects */
 	       /* dysma */tmp1, /*dysmb*/tmp2,
 	       /* beter[], only used here */&tmp[nsamb]);
 
-	selec(*kk, *n, *jpp, *ndyst, &zb, *nsam, *mdata, jtmd, valmd,
+	selec(*kk, *n, *jpp, *diss_kind, &zb, *nsam, has_NA, jtmd, valmd,
 	      nrepr, &nsel[1], dys, x, nr, &nafs, ttd, radus, ratt,
 	      ntmp1, ntmp2, ntmp3, ntmp4, ntmp5, ntmp6, tmp1, tmp2);
 
@@ -233,9 +233,9 @@ void clara(int *n,  /* = number of objects */
     if (!kall) { *jstop = 2; return; }
 
     *obj = zba / rnn;
-    dysta2(*nsam, *jpp, nbest, x, *n, dys, *ndyst, jtmd, valmd, &jhalt);
+    dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
 
-    resul(*kk, *n, *jpp, *ndyst, *mdata, jtmd, valmd, x, nrx, mtt);
+    resul(*kk, *n, *jpp, *diss_kind, has_NA, jtmd, valmd, x, nrx, mtt);
 
     if (*kk > 1)
 	black(*kk, *jpp, *nsam, nbest, dys, sx, x,
@@ -256,7 +256,7 @@ void clara(int *n,  /* = number of objects */
 
 
 void dysta2(int nsam, int jpp, int *nsel,
-	    double *x, int n, double *dys, int ndyst,
+	    double *x, int n, double *dys, int diss_kind,
 	    int *jtmd, double *valmd, int *jhalt)
 {
 
@@ -286,7 +286,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 		    }
 		}
 		++npres;
-		if (ndyst == 1)
+		if (diss_kind == 1)
 		    clk += (x[lj] - x[kj]) * (x[lj] - x[kj]);
 		else
 		    clk += fabs(x[lj] - x[kj]);
@@ -296,7 +296,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 		dys[nlk] = -1.;
 	    } else {
 		d1 = clk * (((double) (jpp)) / (double) npres);
-		dys[nlk] = (ndyst == 1) ? sqrt(d1) : d1 ;
+		dys[nlk] = (diss_kind == 1) ? sqrt(d1) : d1 ;
 	    }
 	}
     }
@@ -439,8 +439,8 @@ L60:
 } /* End of bswap2() -------------------------------------------------- */
 
 /* selec() : called once [per random sample] from clara() */
-void selec(int kk, int n, int jpp, int ndyst,
-	   double *zb, int nsam, int mdata, int *jtmd, double *valmd,
+void selec(int kk, int n, int jpp, int diss_kind,
+	   double *zb, int nsam, Rboolean has_NA, int *jtmd, double *valmd,
 	   int *nrepr, int *nsel, double *dys, double *x, int *nr,
 	   Rboolean *nafs, /* := TRUE if a distance cannot be calculated */
 	   double *ttd, double *radus, double *ratt,
@@ -491,7 +491,7 @@ void selec(int kk, int n, int jpp, int ndyst,
     newf = 0;
 
     for(jj = 1; jj <= n; jj++) {
-	if (!mdata) {
+	if (!has_NA) {
 	    for (jk = 1; jk <= kk; ++jk) {
 		dsum = 0.;
 		nrjk = nr[jk];
@@ -500,7 +500,7 @@ void selec(int kk, int n, int jpp, int ndyst,
 			na = (nrjk - 1) * jpp + jp;
 			nb = (jj   - 1) * jpp + jp;
 			tra = fabs(x[na] - x[nb]);
-			if (ndyst == 1)
+			if (diss_kind == 1)
 			    tra *= tra;
 			dsum += tra;
 		    }
@@ -528,7 +528,7 @@ void selec(int kk, int n, int jpp, int ndyst,
 			}
 			nobs++;
 			tra = fabs(x[na] - x[nb]);
-			if (ndyst == 1)
+			if (diss_kind == 1)
 			    tra *= tra;
 			dsum += tra;
 		    }
@@ -549,9 +549,9 @@ void selec(int kk, int n, int jpp, int ndyst,
 	    if (!pres) { /* found nothing */
 		*nafs = TRUE; return;
 	    }
-	} /* if (mdata..) else */
+	} /* if (has_NA..) else */
 
-	if (ndyst == 1)
+	if (diss_kind == 1)
 	    dnull = sqrt(dnull);
 
 	*zb += dnull;
@@ -630,7 +630,7 @@ void selec(int kk, int n, int jpp, int ndyst,
     return;
 } /* End selec() -----------------------------------------------------------*/
 
-void resul(int kk, int n, int jpp, int ndyst, int mdata,
+void resul(int kk, int n, int jpp, int diss_kind, Rboolean has_NA,
 	   int *jtmd, double *valmd, double *x, int *nrx, int *mtt)
 {
     /* Local variables */
@@ -649,7 +649,7 @@ void resul(int kk, int n, int jpp, int ndyst, int mdata,
 	}
 	njnb = jj * jpp;
 
-	if (!mdata) {
+	if (!has_NA) {
 	    for (jk = 0; jk < kk; ++jk) {
 		dsum = 0.;
 		nrjk = (nrx[jk] - 1) * jpp;
@@ -657,11 +657,11 @@ void resul(int kk, int n, int jpp, int ndyst, int mdata,
 		    na = nrjk + j;
 		    nb = njnb + j;
 		    tra = fabs(x[na] - x[nb]);
-		    if (ndyst == 1)
+		    if (diss_kind == 1)
 			tra *= tra;
 		    dsum += tra;
 		}
-		if (ndyst == 1)
+		if (diss_kind == 1)
 		    dsum = sqrt(dsum);
 		if (jk == 0)
 		    dnull = dsum + .1f;
@@ -685,11 +685,11 @@ void resul(int kk, int n, int jpp, int ndyst, int mdata,
 		    }
 		    abc += 1.;
 		    tra = fabs(x[na] - x[nb]);
-		    if (ndyst == 1)
+		    if (diss_kind == 1)
 			tra *= tra;
 		    dsum += tra;
 		}
-		if (ndyst == 1)
+		if (diss_kind == 1)
 		    dsum = sqrt(dsum);
 		dsum *= (abc / pp);
 		if (jk == 0)
