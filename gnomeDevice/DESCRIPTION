@@ -1,0 +1,10 @@
+Package: gnome
+Version: 0.1-1
+Date:    2003/03/04
+Title: Loadable gnome canvas device driver for R
+Author:  Lyndon Drake
+	 Packaging and extensions by Martyn Plummer 
+Depends: R (>= 1.6.2)
+Maintainer: Martyn Plummer <plummer@iarc.fr>
+Description: GNOME canvas graphics device driver that may be used independently of the R-GNOME interface.
+License: GPL
