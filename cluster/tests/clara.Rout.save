@@ -1,6 +1,6 @@
 
 R : Copyright 2004, The R Foundation for Statistical Computing
-Version 1.9.0 alpha (2004-03-11), ISBN 3-900051-00-3
+Version 2.0.1  (2004-11-15), ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -8,11 +8,12 @@ Type 'license()' or 'licence()' for distribution details.
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
-'citation()' on how to cite R in publications.
+'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for a HTML browser interface to help.
 Type 'q()' to quit R.
+
 
 > library(cluster)
 > 
@@ -148,8 +149,8 @@ Silhouette plot information for best sample:
 89       2        1 0.4482549
 
 4005 dissimilarities, summarized :
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.1865 11.5900 20.0600 27.8100 45.5800 85.2300 
+    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+ 0.18647 11.58500 20.05800 27.81500 45.57800 85.23200 
 Metric :  euclidean 
 Number of objects : 90
 
@@ -272,8 +273,8 @@ Silhouette plot information for best sample:
 1207       2        1 0.2694097
 
 946 dissimilarities, summarized :
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.4846 12.3200 26.5000 32.2100 52.3900 77.1700 
+    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+ 0.48462 12.32300 26.49900 32.21300 52.39100 77.17500 
 Metric :  euclidean 
 Number of objects : 44
 
@@ -783,8 +784,8 @@ Silhouette plot information for best sample:
 980        5        1 0.4671695
 
 1225 dissimilarities, summarized :
-   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.6968 19.3200 34.0900 33.0700 46.2500 92.2500 
+    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+ 0.69682 19.31600 34.09200 33.07000 46.25400 92.25300 
 Metric :  euclidean 
 Number of objects : 50
 
@@ -941,7 +942,10 @@ Available components:
 > ru5 <- rus[c(1:2,21,    45),]
 > daisy(ru5, "manhattan")
 Dissimilarities :
-[1]  11 118 143 107 132  89
+     1   2  21
+2   11        
+21 118 107    
+45 143 132  89
 
 Metric :  manhattan 
 Number of objects : 4
@@ -956,13 +960,13 @@ C clara(): sample 1  finding 1st... new k{ran}:
 . clara(): s:= max dys[l=3] = 132; 1st proper or new best: zb= 11
 C clara(): sample 2  finding 1st... new k{ran}:
  {295} [ntt=1, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[l=3] = 11; zb= 239
+. clara(): s:= max dys[l=3] = 132; zb= 11
 C clara(): sample 3  finding 1st... new k{ran}:
  {295} [ntt=1, nunfs=0]  -> dysta2()
 . clara(): s:= max dys[l=3] = 132; zb= 11
 C clara(): sample 4  finding 1st... new k{ran}:
  {295} [ntt=1, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[l=3] = 11; zb= 239
+. clara(): s:= max dys[l=3] = 132; zb= 11
 C clara(): sample 5  finding 1st... new k{ran}:
  {295} [ntt=1, nunfs=0]  -> dysta2()
 . clara(): s:= max dys[l=3] = 132; zb= 11
@@ -1012,8 +1016,13 @@ $sample
 > 
 > daisy(ru4, "manhattan")
 Dissimilarities :
- [1]  11 118 124 143 124 115 107 113 132 113 104   6  89 108 103  87 106 101  19
-[20]  28   9
+     1   2  21  22  45  46
+2   11                    
+21 118 107                
+22 124 113   6            
+45 143 132  89  87        
+46 124 113 108 106  19    
+47 115 104 103 101  28   9
 
 Metric :  manhattan 
 Number of objects : 7
@@ -1026,22 +1035,22 @@ Number of objects : 7
 
 sample size =  4 
 $objective
-[1] 6.428571
+[1] 7.714286
 
 $medoids
     x   y
 1   4  53
 22 32 149
-46 85  96
+47 78  94
 
 $clusinfo
      size max_diss  av_diss  isolation
-[1,]    2       11 5.500000 0.08870968
-[2,]    2        6 3.000000 0.05660377
-[3,]    3       19 9.333333 0.17924528
+[1,]    2       11  5.50000 0.09565217
+[2,]    2        6  3.00000 0.05940594
+[3,]    3       28 12.33333 0.27722772
 
 $sample
-[1] "22" "45" "46" "1" 
+[1] "1"  "22" "45" "47"
 
 ---
 
@@ -1067,12 +1076,6 @@ $sample
 ---
 
 sample size =  6 
- ** dysta2(): nsel[l= 2] = 0 is OUT
- ** dysta2(): nsel[k= 2] = 0 is OUT
- ** dysta2(): nsel[l= 4] = 0 is OUT
- ** dysta2(): nsel[k= 2] = 0 is OUT
- ** dysta2(): nsel[k= 2] = 0 is OUT
- ** dysta2(): nsel[k= 4] = 0 is OUT
 $objective
 [1] 6.428571
 
@@ -1419,7 +1422,7 @@ $sample
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  5.59 0.01 5.66 0 0 
+Time elapsed:  14.4 0.03 14.53 0 0 
 > ## Lynne (P IV, 1.6 GHz): 18.81; then (no NA; R 1.9.0-alpha): 15.07
 > ## nb-mm (P III,700 MHz): 27.97
 > 
