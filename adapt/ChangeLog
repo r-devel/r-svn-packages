@@ -1,3 +1,20 @@
+2004-08-02  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.0-4
+
+	* Added to subversion "R-packages"
+
+
+2004-07-29  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/adapt.R (adapt): debugging argument 'xtra.lenwrk'
+	    give more informative warning for "ifail = 2".
+
+	* src/adapt_callback.c (cadapt): return 'sbrgns' via 'eps'
+	    (for above informative warning.
+
+	* src/adapt.f (adapt): cosmetic only
+
 2002-03-14  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 1.0-3 --> CRAN

@@ -22,6 +22,7 @@ void cadapt(int *ndim, double *lower, double *upper,
 
   F77_CALL(adapt)(ndim,lower,upper,minpts,maxpts,eps,relerr,lenwrk,
 		  wrkstr,finest,ifail);
+  *eps = wrkstr[*lenwrk-1 -1];/* = sbrgns - return this to R */
 }
 
 /* This is the fixed routine called by adapt */

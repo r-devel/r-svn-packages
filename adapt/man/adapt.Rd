@@ -36,6 +36,9 @@ adapt(ndim, lower, upper, minpts = 100, maxpts = NULL, functn, eps = 0.01, \dots
   \item{minpts}{the actual number of function evaluations}
   \item{ifail}{an error indicator.  If \code{ifail} is not equal to 0,
     the function warns the user of the error condition.}
+  \item{iter}{the number of \sQuote{outer} iterations in each of which
+    the Fortran ADAPT subroutine is called.  Is alway \eqn{1} when
+    \code{maxpts} has been specified explicitly.}
 }
 \details{This is modified from Mike Meyer's S code. The functions just
   call A.C. Genz's fortran ADAPT subroutine to do all of the
@@ -48,9 +51,10 @@ adapt(ndim, lower, upper, minpts = 100, maxpts = NULL, functn, eps = 0.01, \dots
 
   Setting \code{maxpts} to NULL asks the function to keep doubling
   maxpts (starting at \code{max(minpts,500, r(ndim))}) until the desired
-  precision is achieved or \R runs out of memory.   Note that the necessary number of evaluations typically grows
-  exponentially with the dimension \code{ndim}, and the underlying code
-  requires \code{maxpts >= r(ndim)} where \eqn{r(d) = 2^d + 2 d(d + 3) + 1}.
+  precision is achieved or \R runs out of memory.  Note that the
+  necessary number of evaluations typically grows exponentially with the
+  dimension \code{ndim}, and the underlying code requires
+  \code{maxpts >= r(ndim)} where \eqn{r(d) = 2^d + 2 d(d + 3) + 1}.
 }
 \seealso{\code{\link{integrate}}}
 \examples{
@@ -76,7 +80,7 @@ for(p in c(3,5)) {
   cat("\np = ", p, "\n------\n")
   f.lo <- rep(-2., p)
   f.up <- rep(+2., p)
-  ## not enough evaluations:
+  ## not enough evaluations --> will give warning:
   print(adapt(p, lo=f.lo, up=f.up, max=100*p, functn = fred))
   ## enough evaluations:
   print(adapt(p, lo=f.lo, up=f.up, max=10^p,  functn = fred))
