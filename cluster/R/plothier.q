@@ -1,4 +1,6 @@
-pltree <- function(x, ...) UseMethod("pltree")-- $Id$
+### $Id$
+
+pltree <- function(x, ...) UseMethod("pltree")
 
 pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
 {
@@ -12,13 +14,13 @@ pltree.twins <- function(x, main = paste("Dendrogram of ", deparse(call)), ...)
 
     if( sapply(R.version[c("major","minor")], as.numeric) %*% c(10,1) >= 12 ) {
         if(is.null(labels))
-             plclust(x,                  main = main, ylab = "Height", ...)
-        else plclust(x, labels = labels, main = main, ylab = "Height", ...)
+             plot.hclust(x,                  main = main, ylab = "Height", ...)
+        else plot.hclust(x, labels = labels, main = main, ylab = "Height", ...)
     }
     else { ## R <= 1.1
         if(is.null(labels))
-             plclust(x,                , ylab = "Height", ...)
-        else plclust(x, labels = labels, ylab = "Height", ...)
+             plot.hclust(x,                , ylab = "Height", ...)
+        else plot.hclust(x, labels = labels, ylab = "Height", ...)
         title(main = main, ...)
     }
     invisible()
