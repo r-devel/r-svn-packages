@@ -1,4 +1,4 @@
-library(lme4)
+library(mlmRev)
 Early$tos <- Early$age - 0.5
 lme(cog ~ tos * trt, Early, ~ tos | id)
 lmer(cog ~ tos * trt + (tos|id), Early)

@@ -1,4 +1,4 @@
-library(lme4)
+library(mlmRev)
 options(show.signif.stars = FALSE)
 (fm1 <- lmer(math ~ year + (1|childid) + (1|schoolid), egsingle))
 (fm2 <- lmer(math ~ year + (1|childid) + (year|schoolid), egsingle))

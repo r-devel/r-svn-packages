@@ -1,4 +1,4 @@
-library(lme4)
+library(mlmRev)
 fm <- GLMM(immun ~ kid2p + mom25p + ord + ethn +
            momEd + husEd + momWork + rural + pcInd81,
            data = guImmun, family = binomial,

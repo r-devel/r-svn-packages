@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.1.0 Under development (unstable) (2005-02-15), ISBN 3-900051-07-0
+R : Copyright 2004, The R Foundation for Statistical Computing
+Version 2.0.1  (2004-11-15), ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -14,19 +14,12 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for a HTML browser interface to help.
 Type 'q()' to quit R.
 
-> library(lme4)
-Loading required package: Matrix
-Loading required package: latticeExtra
-
-Attaching package 'lme4':
-
-
-	The following object(s) are masked from package:stats :
-
-	 contr.SAS 
-
-> fm1 <- lme(attain ~ verbal * sex, ScotsSec, ~1|primary+second,
-+            control = list(EMverbose=TRUE, niterEM=40, msVerbose=1))
+> library(mlmRev)
+Loading required package: lme4 
+Loading required package: Matrix 
+Loading required package: latticeExtra 
+> (fm1 <- lme(attain ~ verbal * sex, ScotsSec, ~1|primary+second,
++            control = list(EMverbose=TRUE, niterEM=40, msVerbose=1)))
   EM iterations
   0 14876.878  8.70355  67.7961
   1 14872.858  10.3663  81.3411
@@ -72,13 +65,10 @@ Attaching package 'lme4':
 iter    0 value 14868.329617
 final  value 14868.329617 
 converged
-> summary(fm1)
-Linear mixed-effects model fit by REML
+Linear mixed-effects model
 Fixed: attain ~ verbal * sex 
  Data: ScotsSec 
-      AIC      BIC    logLik
- 14882.33 14925.32 -7434.165
-
+ log-restricted-likelihood:  -7434.165 
 Random effects:
  Groups   Name        Variance Std.Dev.
  primary  (Intercept) 0.275674 0.52505 
@@ -87,24 +77,11 @@ Random effects:
 # of obs: 3435, groups: primary, 148; second, 19
 
 Fixed effects:
-              Estimate Std. Error   DF t value Pr(>|t|)    
-(Intercept) 5.9139e+00 7.7419e-02 3431 76.3890   <2e-16 ***
-verbal      1.5833e-01 3.7874e-03 3431 41.8034   <2e-16 ***
-sexF        1.2159e-01 7.2410e-02 3431  1.6792   0.0932 .  
-verbal:sexF 2.5997e-03 5.3883e-03 3431  0.4825   0.6295    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
-
-Correlation of Fixed Effects:
-            (Intr) verbal sexF  
-verbal       0.176              
-sexF        -0.478 -0.178       
-verbal:sexF -0.121 -0.680  0.161
-> VarCorr(fm1)
- Groups   Name        Variance Std.Dev.
- primary  (Intercept) 0.275674 0.52505 
- second   (Intercept) 0.016416 0.12813 
- Residual             4.252508 2.06216 
+              Estimate Std. Error   DF t value Pr(>|t|)
+(Intercept) 5.9139e+00 7.7419e-02 3431 76.3890   <2e-16
+verbal      1.5833e-01 3.7874e-03 3431 41.8034   <2e-16
+sexF        1.2159e-01 7.2410e-02 3431  1.6792   0.0932
+verbal:sexF 2.5997e-03 5.3883e-03 3431  0.4825   0.6295
 > fixef(fm1)
 (Intercept)      verbal        sexF verbal:sexF 
 5.913934758 0.158325399 0.121593226 0.002599711 
@@ -282,61 +259,49 @@ $second
 15 -0.0104347955
 14  0.0180926773
 
-> fm2 <- lme(attain ~ verbal * sex, ScotsSec, ~1|primary+second,
-+            control = list(EMverbose=TRUE, msVerbose=1))
+> (fm2 <- lme(attain ~ verbal + sex, ScotsSec, ~1|primary+second,
++            control = list(EMverbose=TRUE, msVerbose=1)))
   EM iterations
-  0 14876.878  8.70355  67.7961
-  1 14872.858  10.3663  81.3411
-  2 14870.897  11.6441  94.3742
-  3 14869.872  12.6156  106.565
-  4 14869.309  13.3494  117.823
-  5 14868.984  13.9012  128.164
-  6 14868.788  14.3146  137.651
-  7 14868.665  14.6234  146.360
-  8 14868.585  14.8535  154.371
-  9 14868.530  15.0243  161.758
- 10 14868.491  15.1508  168.588
- 11 14868.462  15.2442  174.920
- 12 14868.440  15.3127  180.806
- 13 14868.423  15.3629  186.290
- 14 14868.409  15.3993  191.412
- 15 14868.397  15.4255  196.206
- 16 14868.388  15.4442  200.701
- 17 14868.380  15.4573  204.924
- 18 14868.373  15.4664  208.896
- 19 14868.368  15.4724  212.639
- 20 14868.363  15.4762  216.171
-iter    0 value 14868.361530
-final  value 14868.833838 
+  0 14868.466  8.70355  67.7961
+  1 14864.468  10.3584  81.4636
+  2 14862.516  11.6295  94.6077
+  3 14861.495  12.5954  106.902
+  4 14860.933  13.3245  118.257
+  5 14860.609  13.8724  128.692
+  6 14860.414  14.2826  138.270
+  7 14860.292  14.5887  147.068
+  8 14860.211  14.8166  155.166
+  9 14860.156  14.9856  162.638
+ 10 14860.117  15.1107  169.553
+ 11 14860.088  15.2028  175.968
+ 12 14860.065  15.2704  181.937
+ 13 14860.048  15.3197  187.503
+ 14 14860.034  15.3555  192.706
+ 15 14860.022  15.3811  197.580
+ 16 14860.012  15.3994  202.154
+ 17 14860.004  15.4122  206.455
+ 18 14859.997  15.4209  210.505
+ 19 14859.991  15.4267  214.324
+ 20 14859.986  15.4303  217.930
+iter    0 value 14859.985198
+final  value 14860.438556 
 converged
-> summary(fm2)
-Linear mixed-effects model fit by REML
-Fixed: attain ~ verbal * sex 
+Linear mixed-effects model
+Fixed: attain ~ verbal + sex 
  Data: ScotsSec 
-      AIC      BIC    logLik
- 14882.83 14925.83 -7434.417
-
+ log-restricted-likelihood:  -7430.22 
 Random effects:
  Groups   Name        Variance   Std.Dev.  
- primary  (Intercept) 2.8280e-01 5.3179e-01
- second   (Intercept) 4.2567e-10 2.0632e-05
- Residual             4.2567e+00 2.0632e+00
+ primary  (Intercept) 2.8353e-01 5.3248e-01
+ second   (Intercept) 4.2554e-10 2.0629e-05
+ Residual             4.2554e+00 2.0629e+00
 # of obs: 3435, groups: primary, 148; second, 19
 
 Fixed effects:
-              Estimate Std. Error   DF t value Pr(>|t|)    
-(Intercept) 5.9229e+00 7.1417e-02 3431 82.9333  < 2e-16 ***
-verbal      1.5865e-01 3.7845e-03 3431 41.9196  < 2e-16 ***
-sexF        1.2126e-01 7.2433e-02 3431  1.6742  0.09419 .  
-verbal:sexF 2.4881e-03 5.3893e-03 3431  0.4617  0.64435    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
-
-Correlation of Fixed Effects:
-            (Intr) verbal sexF  
-verbal       0.187              
-sexF        -0.518 -0.178       
-verbal:sexF -0.131 -0.680  0.161
+              Estimate Std. Error   DF t value Pr(>|t|)
+(Intercept) 5.9271e+00 7.0834e-02 3432 83.6756   <2e-16
+verbal      1.5983e-01 2.7743e-03 3432 57.6101   <2e-16
+sexF        1.1591e-01 7.1483e-02 3432  1.6215    0.105
 > lmer(attain ~ verbal * sex + (1|primary) + (1|second), ScotsSec,
 +      control = list(EMv = 1, msV = 1))
   EM iterations
@@ -383,5 +348,5 @@ verbal      1.5865e-01 3.7845e-03 3431 41.9196  < 2e-16 ***
 sexF        1.2126e-01 7.2433e-02 3431  1.6742  0.09419 .  
 verbal:sexF 2.4881e-03 5.3893e-03 3431  0.4617  0.64435    
 ---
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1 
+Signif. codes:  0 `***' 0.001 `**' 0.01 `*' 0.05 `.' 0.1 ` ' 1 
 > q("no")

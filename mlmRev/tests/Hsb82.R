@@ -1,4 +1,4 @@
-library(lme4)
+library(mlmRev)
 lme(mAch ~ meanses*cses + sector*cses,
     data = Hsb82, random = ~ cses|school)
 lmer(mAch ~ meanses*cses + sector*cses + (cses|school), Hsb82)
