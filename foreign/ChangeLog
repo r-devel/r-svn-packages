@@ -1,3 +1,12 @@
+2004-12-02  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.8-3
+	(Imports): stats, methods
+
+	* R/Sread.R (data.restore): handle "logical"s (with NAs!)
+	correctly; handle NAs better in general, getting rid of extraneous
+	coercion warning.
+
 2004-12-01  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/Sread.R (data.restore): handle `ts()' objects properly
@@ -13,13 +22,13 @@
 
 	* DESCRIPTION: New version is 0.8-1.
 
-        * read.ssd.{R,Rd}: Make work under Windows and tidy up.
+	* read.ssd.{R,Rd}: Make work under Windows and tidy up.
 
 2004-11-8 Thomas Lumley <tlumley@u.washington.edu>
 
 	* spss.R:  Trim trailing spaces from SPSS value labels
 
-         Don't create a factor when there are fewer labels than
+	 Don't create a factor when there are fewer labels than
 	 non-missing levels
 
 	* read.spss.Rd: Mention the apparently harmless warning given for
@@ -27,7 +36,7 @@
 
 2004-10-28 Brian Ripley <Brian.Ripley@R-project.org>
 
-        * DESCRIPTION: Mention read/write .dbf files
+	* DESCRIPTION: Mention read/write .dbf files
 
 2004-10-25 Brian Ripley <Brian.Ripley@R-project.org>
 
@@ -57,14 +66,14 @@
 
 	* Add option to turn off some warnings in read.dta
 
-2004-07-15  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+2004-07-15  Kurt Hornik	 <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.6-10.
 
 	* configure.ac: Protect against possible whitespace in R_HOME when
 	calling R CMD config.
 
-2004-05-22  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+2004-05-22  Kurt Hornik	 <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.6-9.
 
@@ -100,7 +109,7 @@
 	* src/zzz.R: Define .onLoad as well as .First.lib (the latter left
 	in case NAMESPACE is removed for debugging).
 
-2003-12-20  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+2003-12-20  Kurt Hornik	 <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.6-5.
 
@@ -130,7 +139,7 @@
 	when using gcc. Use suitable replacement when using another compiler
 	like icc.
 
-2003-09-25  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+2003-09-25  Kurt Hornik	 <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.6-3.
 
@@ -150,7 +159,7 @@
 
 	* version is 0.6-2
 
-2003-05-21  Peter Dalgaard BSA  <p.dalgaard@biostat.ku.dk>
+2003-05-21  Peter Dalgaard BSA	<p.dalgaard@biostat.ku.dk>
 
 	* lookup.xport return SAS variable label and format. Slight change
 	  of logic for getting variable name (avoid strchr on things that
@@ -166,14 +175,14 @@
 
 2003-05-08 Brian Ripley <ripley@stats.ox.ac.uk>
 
- 	* src/* rename int32, flt64 and comment out int16 and flt32,
+	* src/* rename int32, flt64 and comment out int16 and flt32,
 	  to avoid conflicts on AIX 5.1.
 
 	* DESCRIPTION: version is 0.5-13
 
 2003-04-04 Duncan Murdoch <murdoch@stats.uwo.ca>
 
- 	* bug fix for data.restore (bad error message)
+	* bug fix for data.restore (bad error message)
 
 2003-03-01 Duncan Murdoch <murdoch@stats.uwo.ca>
 
@@ -203,7 +212,7 @@
 
 	* Stata short ints were coming through unsigned
 
-        * updated SPSS output in tests to follow 2002-04-29 changes
+	* updated SPSS output in tests to follow 2002-04-29 changes
 
 	* version is 0.5-5
 
@@ -211,7 +220,7 @@
 
 	* Mark Myatt's fixes and extensions for read.epiinfo
 
-2002-05-01  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+2002-05-01  Kurt Hornik	 <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.5-4.
 
@@ -246,7 +255,7 @@
 
 	* SPSS: convert only some value labels to factor levels
 
-2002-03-08 Brian Ripley  <ripley@stats.ox.ac.uk>
+2002-03-08 Brian Ripley	 <ripley@stats.ox.ac.uk>
 
 	* DESCRIPTION (Version): New version is 0.4-10.
 
@@ -255,7 +264,7 @@
 	* configure.win: added to allow no-intervention
 	  installation on Windows.
 
-2002-01-24  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+2002-01-24  Kurt Hornik	 <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.4-9.
 
@@ -265,11 +274,11 @@
 2001-12-13  Thomas Lumley  <tlumley@u.washington.edu>.
 	Typo in Stata date-handling provoked by gctorture()
 
-2001-12-13  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+2001-12-13  Kurt Hornik	 <Kurt.Hornik@ci.tuwien.ac.at>
 
 	* src/sfm-read.c (bufread): Do not read in 0 bytes [fix by PD].
 
-2001-12-04  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+2001-12-04  Kurt Hornik	 <Kurt.Hornik@ci.tuwien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.4-8.
 
@@ -296,7 +305,7 @@
 	* src/sfmP.h: Don not use the __atribute__ keyword on non-gcc
 	compilers.
 
-2001-07-17 Brian Ripley  <ripley@stats.ox.ac.uk>
+2001-07-17 Brian Ripley	 <ripley@stats.ox.ac.uk>
 
 	* DESCRIPTION (Version): New version is 0.4-6.
 
@@ -304,7 +313,7 @@
 
 	* src/spss.c (do_read_SPSS): Always open in binary mode.
 
-2001-06-18  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+2001-06-18  Kurt Hornik	 <Kurt.Hornik@ci.tuwien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.4-5.
 
@@ -316,9 +325,9 @@
 
 	* src/spss.c (do_read_SPSS): Check for null file pointer.
 
-2001-06-09  Kurt Hornik  <Kurt.Hornik@ci.tuwien.ac.at>
+2001-06-09  Kurt Hornik	 <Kurt.Hornik@ci.tuwien.ac.at>
 
-	* tests/*.R, tests/*.Rout.save:  Remove `gctorture(TRUE)'.
+	* tests/*.R, tests/*.Rout.save:	 Remove `gctorture(TRUE)'.
 
 	* R/*.R: Change name of filename argument to `file'.  Add
 	`PACKAGE' arg in FF calls where missing.  Remove .First.lib() from

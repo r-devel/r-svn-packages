@@ -129,32 +129,29 @@ data.restore <-
 	    cat("\"", name, "\": ", code, "\n", sep="")
 	if (verbose)
 	    cat(prefix, summary(dump)$position, name, code, len, "\n")
-	if (code == "logical") {
-	    value <- as.logical(readLines(dump, len))
-	}
-	else if (code %in% c("numeric","integer","single")) {
-	    value <- as.numeric(readLines(dump, len))
-	}
-	else if (code %in% c("character", "name", "missing")) {
+        ## first decide between atomic and "the rest"
+	if (code %in% c("logical", "numeric","integer","single","double",
+			"character", "name", "missing", "complex")) {
 	    value <- readLines(dump, len)
-	    if (code == "name") {
-		value <- as.name(value)
-	    }
-	    if (code == "missing") {	## Workaround:	should be value <- as.name("")
-		value <- call("stop",
-			      paste("Argument `", name, "' is missing", sep=""))
-	    }
-	}
-	else if (code == "complex") {
-	    value <- as.complex(readLines(dump, len))
+	    value[value == "N"] <- as.character(NA)
+	    if (code != "character")
+		value <-
+		    if (code == "logical")# "0", "1" and <NA> :
+			as.logical(as.integer(value))
+		    else if (code %in% c("integer", "double", "name", "complex"))
+			methods::as(value, code)
+		    else if (code %in% c("numeric","single"))
+			as.numeric(value)
+		    else if (code == "missing")
+			## Workaround:	should be value <- as.name("")
+			call("stop",
+			     paste("Argument `", name, "' is missing", sep=""))
 	}
 	else if (code %in% c("list", "structure", "NULL", SModeNames)) {
 	    value <- list()
-	    if (len > 0) {
-		for (i in 1:len) {
-		    temp <- ReadSdump(FALSE, c(prefix, " "))
-                    value[[nam.or.i(temp$name,i)]] <- temp$value
-		}
+	    for (i in seq(length = len)) {
+		temp <- ReadSdump(FALSE, c(prefix, " "))
+		value[[nam.or.i(temp$name,i)]] <- temp$value
 	    }
 	    if (code == "structure") {
 		thelist <- value
