@@ -1,0 +1,325 @@
+2004-01-14  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/getCovariate.varFunc.Rd: Syntax correction from Kurt.
+
+2003-12-16  Douglas Bates  <bates@stat.wisc.edu>
+
+	* install.R: Create stored image
+
+2003-08-29  Douglas Bates  <bates@stat.wisc.edu>
+
+	* tests/lme.Rout.save (Coefficients): Now consistent with
+	i386-linux result.
+
+	* src/base.h: Replace R_ext/Mathlib.h by Rmath.h
+
+2003-08-09  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/Covariate.varFunc.Rd, man/Matrix.pdMat.Rd, man/Matrix.reStruct.Rd, man/Names.pdMat.Rd, man/Names.reStruct.Rd, man/coef.corStruct.Rd, man/coef.modelStruct.Rd, man/coef.pdMat.Rd, man/coef.reStruct.Rd, man/coef.varFunc.Rd, man/getData.lmList.Rd, man/gnls.Rd:
+	Use \method for replacement method documentation as per Rd changes
+
+	* R/lme.R:
+	Changed check for intercept-like column in getFixDF (PR#2418)
+
+2003-06-12  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION: New release
+
+	* man/ranef.lmList.Rd, man/nlme.Rd: Overdocumented arguments
+
+2003-06-10  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/MathAchSchool.Rd, man/MathAchieve.Rd, ChangeLog, DESCRIPTION, R/groupedData.R, inst/scripts/ch03.R, inst/scripts/ch04.R:
+	Release 3.1-42
+
+	* inst/scripts/ch01.R: Protecting power in formula
+
+2003-06-10  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/groupedData.R: Fixed bug in groupedData constructor when outer
+	is not missing.
+
+2003-05-16  Douglas Bates  <bates@stat.wisc.edu>
+
+	* src/nlmefit.c (internal_EM): Fix by Peter Dalgaard for compound
+	symmetry EM calculations (PR#2985)
+
+2003-05-05  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lmList.R (update.lmList): Changed this and several other
+	update methods.
+
+	* R/groupedData.R: Use eval instead of do.call (Dieter Menne)
+
+2003-04-17  Douglas Bates  <bates@stat.wisc.edu>
+
+	* NAMESPACE: contributed by Brian Ripley
+	
+	* man/print.corStruct.Rd: Removed this and many other redundant
+	documentation files for S3 methods.
+
+	* R/<many files> Remove redundant GPL notices.
+
+2003-03-25  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/nlme.R (nonlinModel): Moved definition from AAA.R to here
+
+	* man/summary.nlsList.Rd: Remove references to summary.nls
+
+	* R/newMethods.R: Remove vestigial definitions of AIC.lm
+
+	* R/zzMethods.R: Remove references to AIC.lm
+
+2003-02-08  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R (lme.formula): Removed hessian=TRUE in calls to optim as
+	suggested by Brian Ripley.
+
+2003-01-30  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R:
+	Incorporate change from Brian Ripley in response to Dieter Menne
+
+	* man/lme.lmList.Rd, man/lme.groupedData.Rd, man/lme.Rd:
+	Documentation of the contrasts argument added (Greg Warnes).
+
+2003-01-30  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R (lme.formula): Incorporate Greg Warnes' changes for
+	the contrasts argument.
+
+	* R/nlsList.R: Correct check for is.null(class(FUN))
+
+2002-12-27  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/newFunc.R (gsummary): Fix comparison in check for varying
+	columns (PR#1775 - bug report with fix provided by Dieter Menne.
+
+2002-12-11  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R (print.lme): Removed one more as.vector()
+
+	* R/varFunc.R (print.summary.varFixed): changed  instances of
+	deparse(as.vector(x)) to deparse(x) here and in many other places.
+
+2002-09-10  Saikat DebRoy  <saikat@stat.wisc.edu>
+
+	* nlsList.R (nlsList.formula): Use "try" instead of "restart".
+
+2002-08-09  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/groupedData.R: Fixed creation of grouped data from a formula
+	only
+
+	* R/newGenerics.R: Renamed the initialize generic and all methods
+	and calls to Initialize so as not to conflict with the methods
+	package.
+
+2002-07-23  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R (update.lme): Fix formula handling in update methods
+	(Brian Ripley).
+
+2002-04-20  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/nlme.R: Bug fix by SDR - convergence criterion was being
+	calculated incorrectly.
+
+2002-04-04  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/getVarCov.Rd: Added an example of the type="marginal"
+	Corrected misplaced brace.
+
+	* R/VarCov.R (getVarCov.lme): Added the getVarCov functions
+	contributed by Mary Lindstrom <lindstro@biostat.wisc.edu>
+
+2002-03-27  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R (anova.lme): Change strvar != "NA" to !is.na(strvar)
+
+2002-03-05  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/ACF.gls.Rd: Changed Jose's email address on this and all the
+	other man pages.
+
+	* R/varFunc.R: Incorporate fix from Thomas Lumley and from Setzer
+	Woodrow for the logic where ifelse(length(el) == 1, is used
+	instead of if(length(el) == 1)
+
+	* R/pdMat.R: Change all vestigial instances of T and F to TRUE and
+	FALSE.
+
+2001-12-18  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/corStruct.R: Finally resolved the print.summary.corSymm
+	controversy so it prints and it prints the correct value.
+
+2001-12-10  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R: unclassed the logLik component of an lme summary before
+	trying to put it into a data frame for printing.	
+
+2001-12-01  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/zzMethods.R: Removed the .Alias calls.
+
+2001-10-30  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/pairs.lme.Rd: Modified many documentation files to pass the
+	codoc checks.
+
+2001-10-23  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/ACF.lme.Rd: Modified many, many method definitions and
+	documentation files to get them to pass the R-1.4.0 (in
+	development) package checking process.
+
+2001-10-08  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lmList.R: Fixed definition of logLik.lmList to work with R
+	(but it is still rather ugly).
+
+	* R/varFunc.R: Changed definition of logLik.varComb to return a
+	logLik object.
+
+2001-10-05  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lmList.R: Fixed selection of id[subscripts] in the panel
+	function of pairs.lmList (and several other functions) so it does
+	not produce a warning from evaluating is.na(NULL).
+
+2001-09-17  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/nlme.R: Incorporated a change from
+	Setzer.Woodrow@epamail.epa.gov for using nested grouping factors
+	in nlme.
+
+2001-06-20  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/varFunc.R: Changes in calling sequences and in documentation
+	so the package passes codoc() checks.  These affect many files in
+	both the R and the man directory.  No changes of substance.
+
+2001-05-29  Martin Maechler <maechler@stat.math.ethz.ch>
+
+	* R/zzMethods.R: Use .Alias() 
+	
+	* R/newGenerics.R:  Generic AIC()
+	* R/newMethods.R:   logLik.lm()   moved to "base R"
+	* man/AIC.Rd,   
+	* man/AIC.logLik.Rd: AIC.logLik() and AIC.lm() as well
+	* man/logLik.lm.Rd: 
+
+2001-03-28  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/simulate.R: Modified simulate.lme for default pdMat class of
+	pdLogChol.
+
+2001-02-24  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/newFunc.R: Removed the old fake xyplot function.  The new work
+	by Murrell and Sarkar will make this superfluous.
+
+	* man/MEestimate.Rd: Added manual pages for MEEM, MEdecomp,
+	MEestimate.
+
+	* R/newMethods.R: Revised assignments in plotting methods to be
+	compatible with the Murrell/Sarkar preliminary trellis package.
+
+	* src/nlmefit.c (internal_decomp): Corrected an error reported by
+	Kathryn Chaloner where Srows >= ZXrows.
+
+2001-01-10  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION (Maintainer): Added Maintainer entry to
+	DESCRIPTION. 
+
+2000-12-09  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R: (Variogram.lme) Coerced n.pairs to numeric and
+	corrected calls to dist.
+
+2000-12-08  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/lme.R: Changed all calls to dist in lme.R, gls.R and
+	corStruct.R to use the argument "method" rather than "metric".
+
+	* R/pdMat.R: Replaced calls to .Fortran("dbksl", ...) with calls
+	to the R function solve() for R-1.2.0 where the S_compat.c file
+	has been removed.
+
+	* inst/scripts/ch01.R: Added the chapter scripts from
+	"Mixed-Effects Models in S and S-PLUS" to the inst directory.
+
+	* man/formula.nlme.Rd: Modified the examples in this and many
+	other .Rd files to use the Loblolly data and the SSasymp
+	self-starting function.  There were many occasions where the
+	Soybean data was being fit to a default formulation of an nlme
+	model just to get things like a formula.  This fit of the Soybean
+	data is difficult and time consuming and not very illuminating.
+
+2000-11-30  Douglas Bates  <bates@stat.wisc.edu>
+
+	* src/matrix.c: Removed dependency on S_compat.h by replacing
+	calls to dqrdca with the equivalent call to dqrdc2.
+	
+2000-07-24  Saikat DebRoy <saikat@stat.wisc.edu>
+
+	* Changed various uses of do.call to eval.  The reason for doing
+	this is to allow calls to the function calling eval from within
+	another function.  It's the old scoping problem again.
+
+2000-07-07  Saikat DebRoy <saikat@stat.wisc.edu>
+
+	* src/nlme.c, src/nlmefit.c: Added mixed_grad in calls to optif9.
+
+	* src/nlmefit.c : Added handling of pdLogChol objects (pdClass =
+	4) in various functions.
+
+	* src/nlmefit.c (mixed_grad): New function giving analytic
+	gradient for mixed-effects log-likelihood.
+
+	* R/nlme.R (nlme.formula): Added updating of the pdFactor in the
+	PNLS step. 
+
+	* R/reStruct.R: Made pdLogChol the default representation for
+	reStruct objects.
+
+	* src/pdMat.c (logChol_pd): new function.
+
+	* R/pdMat.R: Added back the pdLogChol class and associated
+	methods.
+	
+
+2000-07-03  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/corFactor.corStruct.Rd: Added an alias for
+	corFactor.corNatural
+
+	* src/nlmefit.c (internal_loglik): Changed the return value on
+	error from R_NegInf to -DOUBLE_XMAX so the optif[09] optimizers
+	will work properly.
+
+	* src/corStruct.c (corStruct_factList): Provided a correct call to
+	the R version of F77_CALL(chol) here and everywhere else in this
+	source file.
+
+	* R/zzz.R: Removed the deprecated call to provide
+
+2000-03-17  Douglas Bates  <bates@stat.wisc.edu>
+
+	* added many data sets
+
+	* incorporated patches from Brian Ripley to use optim for the
+	optimization rather than nlm
+	
+	* src/nlmefit.c (internal_loglik): Returned R_NegInf instead of
+	generating a error on a singular precision matrix.
+
+	* DESCRIPTION (Depends): Changed Depends to R version 1.0.1
+	because of problem with assigning components of lists.
+
+1999-12-23  Douglas Bates  <bates@stat.wisc.edu>
+
+	* TITLE: Changed the title to nlme
+
