@@ -2,8 +2,7 @@
 ### Changes for foreign package (C) 2004 R Development Core Team
 read.dbf <- function(file, as.is = FALSE)
 {
-    filen <- path.expand(file)
-    df <- .Call("Rdbfread", as.character(file), PACKAGE="foreign")
+    df <- .Call("Rdbfread", as.character(path.expand(file)), PACKAGE="foreign")
     onames <- names(df)
     inames <- make.names(onames, unique = TRUE)
     names(df) <- inames
@@ -70,7 +69,7 @@ write.dbf <- function(dataframe, file, factor2char = TRUE)
             precision[i] <- 19
             rx <- range(x, na.rm = TRUE)
             mrx <- max(ceiling(log10(abs(rx))))
-            scale[i] <- min(precision[i] - ifelse(mrx > 0, mrx+3, 3), 19)
+            scale[i] <- min(precision[i] - ifelse(mrx > 0, mrx+3, 3), 15)
         } else if (is.character(x)) {
             mf <- max(nchar(x[!is.na(x)]))
             precision[i] <- min(max(nlen, mf), 254)
