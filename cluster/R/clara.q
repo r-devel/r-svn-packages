@@ -124,7 +124,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	clustering <- c(clustering,
                         list(silinfo = list(width = res$silinf[, -4],
                              clus.avg.widths = res$avsil[1:k],
-                             avg.width = res$ttsil))
+                             avg.width = res$ttsil)))
     }
     x2[x2 == valmisdat] <- NA
     clustering$data <- x2
