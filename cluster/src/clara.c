@@ -80,6 +80,9 @@ void clara(int *n,  /* = number of objects */
     else
 	n_sam = *nsam;
 
+    if(*trace_lev) Rprintf("C clara(): (nsam,n) = (%d,%d);%s\n", *nsam, *n,
+			   full_sample ? " 'full_sample',":
+			   (lrg_sam ? " 'large_sample',": ""));
     if(*rng_R && !full_sample)
 	GetRNGstate();
     else /* << initialize `random seed' of the very simple randm() below */
@@ -133,7 +136,7 @@ void clara(int *n,  /* = number of objects */
 
 	    }
 	    else { /* no valid sample  _OR_  lrg_sam */
-		if(*trace_lev >= 2) Rprintf(" else: new k{ran}: \n");
+		if(*trace_lev >= 2) Rprintf(" finding 1st... new k{ran}:\n");
 
 		/* Loop finding random index `kran' not yet in nrx[] : */
 	    L180:
@@ -158,8 +161,8 @@ void clara(int *n,  /* = number of objects */
 		} else { /* trace_lev >= 3 */
 		    Rprintf("\n... nrx [0:%d]= ",*kk-1);
 		    for (jk = 0; jk < *kk; jk++) Rprintf("%d ",nrx[jk]);
-		    Rprintf("\n... nsel[1:%d]= ",ntt);
-		    for (jk = 1; jk <= ntt; jk++) Rprintf("%d ",nsel[jk]);
+		    Rprintf("\n... nsel[0:%d]= ",ntt-1);
+		    for (jk = 0; jk < ntt; jk++) Rprintf("%d ",nsel[jk]);
 		    Rprintf("\n");
 		}
 	    }
@@ -197,8 +200,7 @@ void clara(int *n,  /* = number of objects */
 	    } while (ntt < n_sam);
 
 	L295:
-	    if(*trace_lev)
-		Rprintf(" {295} [ntt=%d, nunfs=%d] -> dysta2()\n", ntt, nunfs);
+	    if(*trace_lev) Rprintf(" {295} [ntt=%d, nunfs=%d] ", ntt, nunfs);
 	    if (lrg_sam) {
 		/* have indices for smaller _nonsampled_ half; revert this: */
 		for (j = 1, jk = 0, js = 0; j <= *n; j++) {
@@ -209,7 +211,12 @@ void clara(int *n,  /* = number of objects */
 		}
 		for (j = 0; j < *nsam; ++j)
 		    nsel[j] = nrepr[j];
+		if(*trace_lev >= 3) {
+		    Rprintf(".. nsel[1:%d]= ", *nsam);
+		    for (jk = 0; jk < *nsam; jk++) Rprintf("%d ",nsel[jk]);
+		}
 	    }
+	    if(*trace_lev) Rprintf(" -> dysta2()\n");
 	}
 	else { /* full_sample : *n = *nsam -- one sample is enough ! */
 	    for (j = 0; j < *nsam; ++j)
@@ -235,7 +242,7 @@ void clara(int *n,  /* = number of objects */
 	} while (l+1 < n_dys);
 
 	if(*trace_lev >= 2)
-	    Rprintf(". clara(): s:= max dys[l=%d] = %g", l,s);
+	    Rprintf(". clara(): s:= max dys[l=%d] = %g;", l,s);
 
 	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
 	       /* dysma */tmp1, /*dysmb*/tmp2,
@@ -265,7 +272,7 @@ void clara(int *n,  /* = number of objects */
 	    for (js = 0; js < *nsam; ++js)
 		nbest[js] = nsel[js];
 	    sx = s;
-	}
+	} else if(*trace_lev >= 2) Rprintf(" zb= %g", zb);
 	if(*trace_lev >= 2) Rprintf("\n");
 
 	if(full_sample) break; /* out of resampling */
