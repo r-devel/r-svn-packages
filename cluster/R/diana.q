@@ -16,7 +16,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 		    stop(..msg$error["non.diss"])
 		attr(x, "Size") <- n
 	    }
-	    class(x) <- ..dClass
+	    class(x) <- dissiCl
 	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	n <- as.integer(attr(x, "Size"))
@@ -74,7 +74,7 @@ diana <- function(x, diss = inherits(x, "dist"),
             disv <- res$dis[-1]
             disv[disv == -1] <- NA
             disv <- disv[upper.to.lower.tri.inds(n)]
-            class(disv) <- ..dClass
+            class(disv) <- dissiCl
             attr(disv, "Size") <- nrow(x)
             attr(disv, "Metric") <- metric
             attr(disv, "Labels") <- dimnames(x)[[1]]

@@ -14,7 +14,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"),
 		    stop(..msg$error["non.diss"])
 		attr(x, "Size") <- n
 	    }
-	    class(x) <- ..dClass
+	    class(x) <- dissiCl
 	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	## prepare arguments for the Fortran call
@@ -94,7 +94,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"),
 	    stop("No clustering performed, NA-values in the dissimilarity matrix.")
 	disv <- res$dis[ - (1 + (n * (n - 1))/2)]
 	disv[disv == -1] <- NA
-	class(disv) <- ..dClass
+	class(disv) <- dissiCl
 	attr(disv, "Size") <- nrow(x)
 	attr(disv, "Metric") <- metric
 	attr(disv, "Labels") <- dimnames(x)[[1]]
