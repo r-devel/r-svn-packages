@@ -394,12 +394,12 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
         }
     }
     if(!is.null(xlim)) {
-        if(xlim[1] < minx) minx <- xlim[1]
-        if(xlim[2] > maxx) maxx <- xlim[2]
+        if(xlim[1] > minx) minx <- xlim[1]
+        if(xlim[2] < maxx) maxx <- xlim[2]
     }
     if(!is.null(ylim)) {
-        if(ylim[1] < miny) miny <- ylim[1]
-        if(ylim[2] > maxy) maxy <- ylim[2]
+        if(ylim[1] > miny) miny <- ylim[1]
+        if(ylim[2] < maxy) maxy <- ylim[2]
     }
 
     if(length(col.p) < n) col.p <- rep(col.p, length= n)
