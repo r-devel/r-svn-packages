@@ -39,7 +39,7 @@ When a long bar is drawn between two observations,
 those observations have the same value for each variable.
 See chapter 7 of Kaufman and Rousseeuw (1990).
 }
-\section{NOTE}{
+\note{
 In the banner plot,
 observation labels are only printed when the number of observations is 
 limited to less than 35, for readability.
