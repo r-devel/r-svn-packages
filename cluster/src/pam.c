@@ -213,7 +213,7 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
     --nsend;
     --dys;
 
-    /* nsend[] := ... */
+    /* nsend[j] := i,  where x[i,] is the medoid to which x[j,] belongs */
     for (j = 1; j <= *nn; ++j) {
 	if (nrepr[j] == 0) {
 	    dsmal = *s * 1.1f + 1.;
@@ -231,7 +231,7 @@ void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 	    nsend[j] = j;
 	}
     }
-    /* ncluv[] := ... */
+    /* ncluv[j] := k , the cluster number  (k = 1..*kk) */
     jk = 1;
     nplac = nsend[1];
     for (j = 1; j <= *nn; ++j) {
