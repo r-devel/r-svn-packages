@@ -145,6 +145,7 @@ void clara(int *n,  /* = number of objects */
 
 	    do {
 	    L210:
+		/* find `kran', a random `k' in {1:n}, not in nrx[1:k] nor nsel[1:ntt] : */
 		kran = (int) (rnn * randm(&nrun) + 1.);
 		if(*trace_lev >= 3)
 		    Rprintf("... {210} nrun=%d -> k{ran}=%d\n", nrun,kran);
@@ -156,7 +157,7 @@ void clara(int *n,  /* = number of objects */
 			    goto L210;
 		    }
 		}
-		/* insert kran into nsel[] :   (?) */
+		/* insert kran into nsel[1:ntt] or after  and increase ntt : */
 		for (kans = 1; kans <= ntt; ++kans) {
 		    if (nsel[kans] >= kran) {
 			if (nsel[kans] == kran)
@@ -180,7 +181,7 @@ void clara(int *n,  /* = number of objects */
 
 	    if (*n < nsamb) {
 		/* have indices for smaller _nonsampled_ half; revert this: */
-		for (j = 1, nexap = 1, nexbp = 0; j < *n; j++) {
+		for (j = 1, nexap = 1, nexbp = 0; j <= *n; j++) {
 		    if (nsel[nexap] == j)
 			++nexap;
 		    else
@@ -215,7 +216,7 @@ void clara(int *n,  /* = number of objects */
 	} while (l+1 < n_dys);
 
 	if(*trace_lev >= 2)
-	    Rprintf(". clara(): s:= min dys[l=%d] = %g\n", l,s);
+	    Rprintf(". clara(): s:= max dys[l=%d (0-orig)] = %g\n", l,s);
 
 	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
 	       /* dysma */tmp1, /*dysmb*/tmp2,
@@ -249,6 +250,7 @@ void clara(int *n,  /* = number of objects */
 /* --- end random sampling loop */
 
     if (nunfs >= *nran) { *jstop = 1; return; }
+
 
 /*     for the best subsample, the objects of the entire data set
      are assigned to their clusters */
@@ -492,7 +494,8 @@ void selec(int kk, int n, int jpp, int diss_kind,
 
     --dys;
 
-    /* Function Body */
+
+    /* nafs := TRUE  if a distance cannot be calculated*/
     *nafs = FALSE;
 
 /* identification of representative objects, and initializations */
