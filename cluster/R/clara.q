@@ -128,12 +128,11 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     else {
 	clustering <- list(sample = res$sample, medoids = res$med,
 			   clustering = res$clu, objective = res$obj,
-			   clusinfo = clusinf, diss = disv)
+			   clusinfo = clusinf, diss = disv, call = match.call())
     }
     x2[x2 == valmisdat] <- NA
     clustering$data <- x2
     class(clustering) <- c("clara", "partition")
-    attr(clustering, "Call") <- sys.call()
     clustering
 }
 
