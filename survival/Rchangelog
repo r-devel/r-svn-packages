@@ -1,3 +1,7 @@
+2.15-1  survSplit works for counting process data
+
+2.15  64-bit clean fixes from BDR
+
 2.14	separate out print.summary.coxph from summary.coxph
 	
 	
