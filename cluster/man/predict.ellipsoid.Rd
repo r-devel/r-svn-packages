@@ -7,7 +7,6 @@
 }
 \usage{
 \method{predict}{ellipsoid}(object, n.out=201, \dots)
-predict.ellipsoid}(object, n.out=201, \dots)
 ellipsoidPoints(A, d2, loc, n=201)
 }
 \arguments{
@@ -20,13 +19,12 @@ ellipsoidPoints(A, d2, loc, n=201)
 \details{
    Note \code{ellipsoidPoints} is the workhorse function of
    \code{predict.ellipsoid} a standalone function and method for
-   \code{\link{ellipsoid}} objects, see \code{\link{ellipsoidhull}}.
+   \code{ellipsoid} objects, see \code{\link{ellipsoidhull}}.
    The class of \code{object} is not checked; it must solely have valid
    components \code{loc} (length \eqn{p}), the \eqn{p \times p}{p x p}
    matrix \code{cov} (corresponding to \code{A}) and \code{d2} for the
    center, the shape (``covariance'') matrix and the squared average
    radius or distance.
-
 }
 \value{
   a numeric matrix of dimension \code{n.out} times \eqn{p}.
