@@ -67,7 +67,7 @@ SUBDIRS_WITH_NO_BUILD = glade m4
 
 R_binary = Rgnome
 
-all: Makefile Makedeps R
+all: Makefile Makedeps R install
 
 Makefile: $(srcdir)/Makefile.in \
   $(top_builddir)/config.status \
