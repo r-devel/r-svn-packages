@@ -26,6 +26,8 @@ silh.wid
 #select the number of k clusters with the largest si value :
 (myk <- which.min(silh.wid))
 
+
+
 postscript(file="silhouette-ex.ps")
 ## MM:  plot to see how the decision is made
 plot(silh.wid, type = 'b', col= "blue", xlab = "k")
