@@ -27,7 +27,7 @@
 #if __GNUC__ >= 2
 #define P __attribute__((packed))
 #else
-#define unused
+#define P
 #endif
 #endif
 
