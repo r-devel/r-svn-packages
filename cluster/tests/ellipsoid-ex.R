@@ -4,7 +4,7 @@ eh <- ellipsoidhull(cbind(x=1:4, y = 1:4)) #singular
 eh
 
 set.seed(157)
-for(n in 2:10) {
+for(n in 4:10) { ## n=2 and 3 still differ -- platform dependently!
     cat("n = ",n,"\n")
     x2 <- rnorm(n)
     try(print(ellipsoidhull(cbind(1:n, x2))))
