@@ -3,8 +3,8 @@ c     ~          ~~~   ~
 c     Clustering program based upon the k-medoid approach,
 c     and suitable for data sets of at least 100 objects.
 c     (for smaller data sets, please use program pam.)
-
-      subroutine clara(nn,jpp,kk,x,nran,nsam,dys,valmd,jtmd,mdata,ndyst,
+c     
+      subroutine clara(nn,jpp,kk,x,nran,nsam,dys,mdata,valmd,jtmd,ndyst,
      f     nrepr,nsel,nbest,nr,nrx,radus,ttd,ratt,ttbes,rdbes,rabes,
      f     mtt,obj,avsyl,ttsyl,sylinf,jstop,
      f     tmp1,tmp2,tmp3, ntmp1,ntmp2,ntmp3,ntmp4,ntmp5,ntmp6)
