@@ -81,7 +81,7 @@ void clara(int *n,  /* = number of objects */
     nunfs = 0;
     kall = FALSE;
 
-    if(*rng_R)
+    if(*rng_R && !full_sample)
 	GetRNGstate();
     else /* << initialize `random seed' of the very simple randm() below */
 	nrun = 0;
@@ -250,7 +250,7 @@ void clara(int *n,  /* = number of objects */
 	if(full_sample) break; /* out of resampling */
     }
 /* --- end random sampling loop */
-    if(*rng_R)
+    if(*rng_R && !full_sample)
 	PutRNGstate();
 
     if (nunfs >= *nran) { *jstop = 1; return; }
@@ -262,7 +262,14 @@ void clara(int *n,  /* = number of objects */
     if (!kall) { *jstop = 2; return; }
 
     if(*trace_lev) {
-	Rprintf("C clara(): sample _found_ --> dysta2(nbest), resul(), end\n");
+	Rprintf("C clara(): sample _found_ --> dysta2(nbest), resul(), end");
+	if(*trace_lev >= 2) {
+	    Rprintf("; nbest[1:%d] =\n c(", *nsam);
+	    for (js = 0; js < *nsam; ++js)
+		Rprintf("%g%s", nbest[js], (js+1 < *nsam)? ",": "");
+	    Rprintf(")");
+	}
+	Rprintf("\n");
     }
     *obj = zba / rnn;
     dysta2(*nsam, *jpp, nbest, x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
@@ -583,7 +590,7 @@ void selec(int kk, int n, int jpp, int diss_kind,
 	    if (!pres) { /* found nothing */
 		*nafs = TRUE; return;
 	    }
-	} /* if (has_NA..) else */
+	} /* else: has_NA */
 
 	if (diss_kind == 1)
 	    dnull = sqrt(dnull);
