@@ -1,17 +1,18 @@
 
-R : Copyright 2002, The R Development Core Team
-Version 1.5.0 Under development (unstable) (2002-04-07)
+R : Copyright 2003, The R Foundation for Statistical Computing
+Version 1.9.0 Under development (unstable) (2003-12-23), ISBN 3-900051-00-3
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
-Type `license()' or `licence()' for distribution details.
+Type 'license()' or 'licence()' for distribution details.
 
 R is a collaborative project with many contributors.
-Type `contributors()' for more information.
+Type 'contributors()' for more information and
+'citation()' on how to cite R in publications.
 
-Type `demo()' for some demos, `help()' for on-line help, or
-`help.start()' for a HTML browser interface to help.
-Type `q()' to quit R.
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for a HTML browser interface to help.
+Type 'q()' to quit R.
 
 >  #
 > # Set up for the test
@@ -307,7 +308,7 @@ Likelihood ratio test=19.4  on 4.9 df, p=0.00149  n= 26
 + 	     qchisq( c(.8, .9, .95, .99), sum(fit1$df))), 3)
 + }
        80%   90%   95%    99%
-[1,] 4.290 5.729 7.179 10.301
+[1,] 4.372 5.859 7.300 10.520
 [2,] 4.313 5.874 7.399 10.861
 > # From:	McGilchrist and Aisbett, Biometrics 47, 461-66, 1991
 > # Data on the recurrence times to infection, at the point of insertion of
@@ -344,7 +345,7 @@ Likelihood ratio test=19.4  on 4.9 df, p=0.00149  n= 26
 > rr <- tapply(resid(temp1), kidney$id, sum)
 > temp2 <- log(rr/1 +1)
 > all.equal(temp1$coef, kfit1$coef) ##FAILS in S-PLUS
-[1] "Mean relative  difference: 9.243907e-06"
+[1] "Mean relative  difference: 4.724822e-08"
 > all.equal(temp2, kfit1$frail) ##FAILS in S-PLUS
 [1] "names for target but not for current"                             
 [2] "Attributes: < Modes: list, NULL >"                                
@@ -394,9 +395,9 @@ coxph(formula = Surv(time, status) ~ age + sex + disease, data = kidney)
 
                coef exp(coef) se(coef)      z       p
 age         0.00318     1.003   0.0111  0.285 7.8e-01
-sex        -1.48319     0.227   0.3582 -4.140 3.5e-05
+sex        -1.48314     0.227   0.3582 -4.140 3.5e-05
 diseaseGN   0.08796     1.092   0.4064  0.216 8.3e-01
-diseaseAN   0.35078     1.420   0.3997  0.878 3.8e-01
+diseaseAN   0.35079     1.420   0.3997  0.878 3.8e-01
 diseasePKD -1.43111     0.239   0.6311 -2.268 2.3e-02
 
 Likelihood ratio test=17.6  on 5 df, p=0.00342  n= 76 
@@ -575,8 +576,6 @@ Iterations: 10 outer, 74 Newton-Raphson
      Variance of random effect= 0.824   I-likelihood = -182.6 
 Degrees of freedom for terms=  0.3  0.5 19.1 
 Likelihood ratio test=60  on 19.9 df, p=6.83e-06  n= 76 
-Warning message: 
-Inner loop failed to coverge for iterations 4 in: coxpenal.fit(X, Y, strats, offset, init = init, control, weights = weights,  
 > 
 > coxph(Surv(time, status) ~ age + sex + frailty(id, dist='t', caic=F), kidney)
 Call:
@@ -701,8 +700,6 @@ Likelihood ratio test=248  on 4 df, p=0  n= 1858
 [10,]  7.046096 -1.820316e-05 5141.5307 1404.2792
     new theta= 7.046071 
 
-Warning message: 
-Inner loop failed to coverge for iterations 4 in: coxpenal.fit(X, Y, strats, offset, init = init, control, weights = weights,  
 > fitc2
 Call:
 coxph(formula = Surv(time, status) ~ rx + extent + node4 + frailty(id, 
@@ -790,8 +787,6 @@ Likelihood ratio test=3544  on 730 df, p=0  n= 1858
  [9,]  8.025556 -4455.875 -5347.369
     new theta= 8.028123 
 
-Warning message: 
-Inner loop failed to coverge for iterations 5 6 in: coxpenal.fit(X, Y, strats, offset, init = init, control, weights = weights,  
 > fitc3
 Call:
 coxph(formula = Surv(time, status) ~ rx + extent + node4 + frailty(id, 
@@ -858,8 +853,7 @@ Likelihood ratio test=363  on 33.8 df, p=0  n= 1858
 > tempf <- predict(kfit1, type='terms')[,3]  
 > temp  <- kfit1$frail[match(kidney$id, sort(unique(kidney$id)))]
 >  all.equal(unclass(tempf), unclass(temp))
-[1] "names for target but not for current"
-[2] "TRUE"                                
+[1] TRUE
 >  all.equal(as.vector(tempf), as.vector(temp))
 [1] TRUE
 > 
@@ -1204,7 +1198,7 @@ Likelihood ratio test=33.4  on 13.8 df, p=0.00234  n= 76
 + 	temp2[i] <- temp2[i] + .1
 + 	if (i < nrow(rat2) && rat2$id[i] == rat2$id[i+1]) {
 + 	    temp1[i+1] <- temp1[i+1] + .1
-+ 	    if (temp2[i+1] <= temp1[i+1]) temp2[i+1] _ temp1[i+1]
++ 	    if (temp2[i+1] <= temp1[i+1]) temp2[i+1] <- temp1[i+1]
 + 	    }
 +         }
 +     }
@@ -1223,7 +1217,7 @@ coxph(formula = Surv(start, stop, status) ~ rx + cluster(id),
 
 
      coef exp(coef) se(coef) robust se     z       p
-rx -0.826     0.438    0.151     0.204 -4.04 5.3e-05
+rx -0.827     0.438    0.151     0.204 -4.05 5.2e-05
 
 Likelihood ratio test=32.9  on 1 df, p=9.9e-09  n= 253 
 > r2fitg
@@ -1260,11 +1254,11 @@ Likelihood ratio test=118  on 25.4 df, p=7e-14  n= 253
 > 
 > temp <- coxph(Surv(start, stop, status) ~ rx + offset(r2fitm$frail[id]), rat2)
 > all.equal(temp$coef, r2fitm$coef[1]) ##not quite
-[1] "Mean relative  difference: 0.0005510633"
+[1] TRUE
 > 
 > temp <- coxph(Surv(start, stop, status) ~ rx + offset(r2fitg$frail[id]), rat2)
 > all.equal(temp$coef, r2fitg$coef[1]) ##not quite
-[1] "Mean relative  difference: 0.0005360911"
+[1] TRUE
 > 
 > #
 > # What do I get with AIC
