@@ -52,5 +52,5 @@ void do_gnome(char **dpy, double *width, double *height, double *ps, int *aa)
     if (*width <= 0 || *height <= 0)
         error("invalid width or height for GNOME device");
 
-    createGnomeDevice(display, *width, *height, *ps, *aa); 
+    createGnomeDevice(display, *width, *height, *ps, 0); 
 }

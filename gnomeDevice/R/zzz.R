@@ -1,8 +1,8 @@
 .First.lib <- function(libname, pkgname)
 {
     library.dynam("gnomeDevice", pkgname, libname)
-    .C("loadGNOME")
-    .C("R_gtk_setEventHandler") 
+    .C("loadGNOME", PACKAGE = "gnomeDevice")
+    .C("R_gtk_setEventHandler",  PACKAGE = "gnomeDevice") 
 }
 
 .Last.lib <- function(libname, pkgname)
