@@ -1,0 +1,53 @@
+agnes                    Agglomerative Nesting
+clara                    Clustering Large Applications
+daisy                    Dissimilarity Matrix Calculation
+diana                    Divisive Analysis
+fanny                    Fuzzy Analysis
+mona                     Monothetic Analysis
+pam                      Partitioning Around Medoids
+
+dissimilarity.object     Dissimilarity Matrix Object
+partition.object         Partitioning Object
+twins.object             Hierarchical Clustering Object
+
+agnes.object             Agglomerative Nesting (AGNES) Object
+clara.object             Clustering Large Applications (CLARA) Object
+diana.object             Divisive Analysis (DIANA) Object
+fanny.object             Fuzzy Analysis (FANNY) Object
+mona.object              Monothetic Analysis (MONA) Object
+pam.object               Partitioning Around Medoids (PAM) Object
+
+clusplot                 Cluster Plot - Generic Function
+clusplot.default         Bivariate Cluster Plot (clusplot)
+clusplot.partition       Bivariate clusplot of a partitioning object
+pltree                   Clustering Trees - Generic Function
+pltree.twins             Clustering Tree of a Hierarchical Clustering
+
+plot.agnes               Plots of an Agglomerative Hierarchical Clustering
+plot.diana               Plots of a Divisive Hierarchical Clustering
+plot.mona                Banner of Monothetic Divisive Hierarchical Clusterings
+plot.partition           Plot of a Partition of the Data Set
+print.dissimilarity      Print and Summary Methods for Dissimilarity Objects
+print.agnes              Print Method for AGNES Objects
+print.clara              Print Method for CLARA Objects
+print.diana              Print Method for DIANA Objects
+print.fanny              Print Method for FANNY Objects
+print.mona               Print Method for MONA Objects
+print.pam                Print Method for PAM Objects
+summary.agnes            Summary Method for `agnes' Objects
+summary.clara            Summary Method for `clara' Objects
+summary.diana            Summary method for `diana' Objects
+summary.fanny            Summary Method for `fanny' Objects
+summary.mona             Summary Method for `mona'  Objects
+summary.pam              Summary Method for `pam'   Objects
+
+
+          DATASETS
+
+agriculture              European Union Agricultural Workforces
+animals                  Attributes of Animals
+flower                   Flower Characteristics
+ruspini                  Ruspini Data
+votes.repub              Votes for Republican Candidate in Presidential
+                         Elections
+xclara                   Bivariate Data Set with 3 Clusters
