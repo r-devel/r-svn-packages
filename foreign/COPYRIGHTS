@@ -124,3 +124,6 @@ Roger Bivand
 R/read.epiinfo.R
 (c) 2002-4 Thomas Lumley
 Patches (c) 2002 Mark Myatt
+
+src/minitab.c
+Patches (c) 2004 Rajarshi Guha

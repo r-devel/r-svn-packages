@@ -1,3 +1,8 @@
+2004-12-14  Douglas Bates  <bates@bates1-home>
+
+	* src/minitab.c (read_mtp,MTB2SEXP): code for matrices contributed
+	by Rajarshi Guha <rxg218@psu.edu>.
+
 2004-12-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/dumpdata: enhanced {logical; NA}
