@@ -59,7 +59,7 @@ c
 
       integer nn, jpp, ndyst, jtmd(jpp), jhalt
       double precision x(nn,jpp), dys(1+nn*(nn-1)/2), valmd(jpp)
-
+c VARs
       integer nlk,j,l,k, lsubt, npres
       double precision pp, clk, rpres
 
