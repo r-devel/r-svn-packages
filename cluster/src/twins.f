@@ -12,8 +12,9 @@ c Arguments
       integer nn, jpp
 c	nn  = maximal number of objects
 c	jpp = maximal number of variables used in the analysis
-c
       integer jdyss, jtmd(jpp), ndyst,jalg,method, kwan(nn), ner(nn)
+c	jdyss (in/out): initially, jdyss mod 10 = 1 : <==> diss = TRUE
+c			jdyss < 10 : don't save dissimilarities
       double precision x(nn,jpp), valmd(jpp)
       double precision dys((nn*(nn-1))/2 + 1), dys2((nn*(nn-1))/2 + 1)
 c     dys2(.) can have length 1, if(!keep.diss)
@@ -35,7 +36,7 @@ c     	      ----- in ./pam.f
 	 endif
       endif
 
-      if(jdyss >= 10) then
+      if(jdyss .ge. 10) then
 C        save distances for S
          do 10 i=1,(nn*(nn-1))/2 + 1
             dys2(i)=dys(i)
