@@ -1,7 +1,11 @@
 2004-12-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* DESCRIPTION (Version): 0.8-3
-	(Imports): stats, methods
+	* tests/dumpdata: enhanced {logical; NA}
+	* tests/create-dumpdata.S: new {only internal documentation}
+
+	* tests/S3.R: add verbose=TRUE
+
+	* DESCRIPTION (Imports): stats, methods
 
 	* R/Sread.R (data.restore): handle "logical"s (with NAs!)
 	correctly; handle NAs better in general, getting rid of extraneous
