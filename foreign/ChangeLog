@@ -1,3 +1,7 @@
+2002-05-14 Thomas Lumley <tlumley@u.washington.edu>
+   
+	* Mark Myatt's fixes and extensions for read.epiinfo
+
 2002-05-01  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
 
 	* DESCRIPTION (Version): New version is 0.5-4.
