@@ -511,6 +511,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     }
     else afstand <- NULL
 
+    ## FIXME: The following is *not* elegant..
     if(labels == 1) {
         for(i in 1:n) {
             x1 <- rbind(x1, z[[i]][cumsum(rep(10, 40)), ])
