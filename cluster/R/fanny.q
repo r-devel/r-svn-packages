@@ -2,17 +2,20 @@
 fanny <- function(x, k, diss = inherits(x, "dist"),
 		  metric = "euclidean", stand = FALSE)
 {
-    if(diss) {
+   if((diss <- as.logical(diss))) {
 	## check type of input vector
-	if(any(is.na(x)))
-	    stop("NA-values in the dissimilarity matrix not allowed.")
-	if(data.class(x) != "dissimilarity") {
-	    if(!is.numeric(x) || is.na(sizeDiss(x)))
-		stop("x is not of class dissimilarity and can not be converted to this class." )
-	    ## convert input vector to class "dissimilarity"
+	if(any(is.na(x))) stop(..msg$error["NAdiss"])
+	if(data.class(x) != "dissimilarity") { # try to convert to
+	    if(!is.null(dim(x))) {
+		x <- as.dist(x) # or give an error
+	    } else {
+		## possibly convert input *vector*
+		if(!is.numeric(x) || is.na(n <- sizeDiss(x)))
+		    stop(..msg$error["non.diss"])
+		attr(x, "Size") <- n
+	    }
 	    class(x) <- ..dClass
-	    attr(x, "Size") <- sizeDiss(x)
-	    attr(x, "Metric") <- "unspecified"
+	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	## prepare arguments for the Fortran call
 	n <- attr(x, "Size")

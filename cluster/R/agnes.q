@@ -10,17 +10,20 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	stop("invalid clustering method")
     if(meth == -1)
 	stop("ambiguous clustering method")
-    if(diss) {
+    if((diss <- as.logical(diss))) {
 	## check type of input vector
-	if(any(is.na(x)))
-	    stop("NA-values in the dissimilarity matrix not allowed." )
-	if(data.class(x) != "dissimilarity") {
-	    if(!is.numeric(x) || is.na(sizeDiss(x)))
-		stop("x is not and cannot be converted to class dissimilarity")
-	    ## convert input vector to class "dissimilarity"
+	if(any(is.na(x))) stop(..msg$error["NAdiss"])
+	if(data.class(x) != "dissimilarity") { # try to convert to
+	    if(!is.null(dim(x))) {
+		x <- as.dist(x) # or give an error
+	    } else {
+		## possibly convert input *vector*
+		if(!is.numeric(x) || is.na(n <- sizeDiss(x)))
+		    stop(..msg$error["non.diss"])
+		attr(x, "Size") <- n
+	    }
 	    class(x) <- ..dClass
-	    attr(x, "Size") <- sizeDiss(x)
-	    attr(x, "Metric") <- "unspecified"
+	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	n <- attr(x, "Size")
 	dv <- x[lower.to.upper.tri.inds(n)]

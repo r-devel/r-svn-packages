@@ -1,20 +1,24 @@
 #### PAM : Partitioning Around Medoids
 #### --- $Id$
 pam <- function(x, k, diss = inherits(x, "dist"),
-		metric = "euclidean", stand = FALSE,
-                keep.diss = !diss && n < 100, keep.data = !diss)
+		metric = "euclidean", stand = FALSE, cluster.only = FALSE,
+                keep.diss = !diss && !cluster.only && n < 100,
+                keep.data = !diss && !cluster.only)
 {
-    if(diss <- as.logical(diss)) {
+   if((diss <- as.logical(diss))) {
 	## check type of input vector
-	if(any(is.na(x)))
-	    stop("NA-values in the dissimilarity matrix not allowed.")
-	if(data.class(x) != "dissimilarity") {
-	    if(!is.numeric(x) || is.na(sizeDiss(x)))
-		stop("x is not of class dissimilarity and can not be converted to this class." )
-	    ## convert input vector to class "dissimilarity"
+	if(any(is.na(x))) stop(..msg$error["NAdiss"])
+	if(data.class(x) != "dissimilarity") { # try to convert to
+	    if(!is.null(dim(x))) {
+		x <- as.dist(x) # or give an error
+	    } else {
+		## possibly convert input *vector*
+		if(!is.numeric(x) || is.na(n <- sizeDiss(x)))
+		    stop(..msg$error["non.diss"])
+		attr(x, "Size") <- n
+	    }
 	    class(x) <- ..dClass
-	    attr(x, "Size") <- sizeDiss(x)
-	    attr(x, "Metric") <- "unspecified"
+	    if(is.null(attr(x,"Metric"))) attr(x, "Metric") <- "unspecified"
 	}
 	## adapt S dissimilarities to Fortran:
 	## convert upper matrix, read by rows, to lower matrix, read by rows.
@@ -50,39 +54,46 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     ## call Fortran routine
     storage.mode(dv) <- "double"
     storage.mode(x2) <- "double"
-    res <- .Fortran("pam",
-		    as.integer(n),
-		    as.integer(jp),
-		    k,
-		    x = x2,
-		    dys = dv,
-		    jdyss = as.integer(diss),
-		    if(mdata)valmd else double(1),
-		    if(mdata) jtmd else integer(1),
-		    as.integer(ndyst),
-		    integer(n),# nsend[]
-		    logical(n),# isrepr[]
-		    integer(n),# nelem[]
-		    double(n),#	 radus[]
-		    double(n),#	 damer[]
-		    avsil = double(n),# `ttd'
-		    double(n),#	 separ[]
-		    ttsil = as.double(0),
-		    med = integer(k),
-		    obj = double(2),
-		    clu = integer(n),
-		    clusinf = matrix(0., k, 5),
-		    silinf = matrix(0., n, 4),
-		    isol = integer(k),
-                    DUP = FALSE,# care!!
-		    PACKAGE = "cluster")
+    res <- .C("pam",
+	      as.integer(n),
+	      as.integer(jp),
+	      k,
+	      x = x2,
+	      dys = dv,
+	      jdyss = as.integer(diss),
+	      if(mdata)valmd else double(1),
+	      if(mdata) jtmd else integer(1),
+	      as.integer(ndyst),
+	      integer(n),		# nsend[]
+	      logical(n),		# nrepr[]
+	      integer(if(cluster.only) 1 else n), # nelem[]
+	      double(n),		# radus[]
+	      double(n),		# damer[]
+	      avsil = double(n),	# `ttd'
+	      double(n),		# separ[]
+	      ttsil = as.double(0),
+	      obj = c(as.double(cluster.only), 0.),# in & out!
+	      med = integer(if(cluster.only) 1 else k),
+	      clu = integer(n),
+	      clusinf = if(cluster.only) 0. else matrix(0., k, 5),
+	      silinf  = if(cluster.only) 0. else matrix(0., n, 4),
+	      isol = integer(if(cluster.only) 1 else k),
+	      DUP = FALSE, # care!!
+	      PACKAGE = "cluster")
+
+    xLab <- if(diss) attr(x, "Labels") else dimnames(x)[[1]]
+    if(length(xLab) > 0)
+        names(res$clu) <- xLab
+    if(cluster.only)
+        return(res$clu)
+
+    ## Else, usually
     sildim <- res$silinf[, 4]
     if(diss) {
 	disv <- x
 	## add labels to Fortran output
-	if(length(xLab <- attr(x, "Labels")) > 0) {
+	if(length(xLab) > 0) {
 	    sildim <- xLab[sildim]
-	    names(res$clu) <- xLab
 	    res$med <- xLab[res$med]
 	}
     }
@@ -103,10 +114,8 @@ pam <- function(x, k, diss = inherits(x, "dist"),
         }
 	## add labels to Fortran output
 	res$med <- x[res$med,  , drop =FALSE]
-	if(length((xLab <- dimnames(x)[[1]])) > 0) {
+	if(length(xLab) > 0)
 	    sildim <- xLab[sildim]
-	    names(res$clu) <- xLab
-	}
     }
     ## add dimnames to Fortran output
     names(res$obj) <- c("build", "swap")
@@ -115,7 +124,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     dimnames(res$clusinf) <- list(NULL, c("size", "max_diss", "av_diss",
 					  "diameter", "separation"))
     ## construct S object
-    clustering <-
+    r <-
 	list(medoids = res$med, clustering = res$clu,
 	     objective = res$obj, isolation = res$isol,
 	     clusinfo = res$clusinf,
@@ -130,10 +139,10 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	     call = match.call())
     if(keep.data && !diss) {
 	if(mdata) x2[x2 == valmisdat] <- NA
-	clustering$data <- x2
+	r$data <- x2
     }
-    class(clustering) <- c("pam", "partition")
-    clustering
+    class(r) <- c("pam", "partition")
+    r
 }
 
 print.pam <- function(x, ...)
