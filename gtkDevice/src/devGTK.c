@@ -625,7 +625,7 @@ static void GTK_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
        but not to the backing pixmap. This is a GTK+ bug that is
        unlikely to be fixed in this version (9 Jul 2002) - MTP
     */
-    /* gdk_gc_set_clip_rectangle(gtkd->wgc, &gtkd->clip); */
+     gdk_gc_set_clip_rectangle(gtkd->wgc, &gtkd->clip); 
 }
 
 static void GTK_Size(double *left, double *right,

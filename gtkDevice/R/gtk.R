@@ -1,7 +1,7 @@
 gtk <- function(display = "", width = 7, height = 7, pointsize = 12)
 {
     .C("do_GTK", as.character(display), as.numeric(width),
-       as.numeric(height), as.numeric(pointsize))
+       as.numeric(height), as.numeric(pointsize), PACKAGE="gtkDevice")
     return(invisible(TRUE))
 }
 
@@ -15,7 +15,7 @@ asGtkDevice <- function(widget, width = 300, height = 300, pointsize = 12)
     }
 
     .C("do_asGTKDevice", widget, as.numeric(width), as.numeric(height),
-       as.numeric(pointsize))
+       as.numeric(pointsize), PACKAGE="gtkDevice")
 }
 
 

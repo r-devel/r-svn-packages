@@ -1,3 +1,7 @@
+0.5-4
+- Clipping rectangle setting now uncommented.
+- .C() calls use PACKAGE argument to avoid symbol in base.
+
 0.5
 - Porting to gtk+ 2.0
 
