@@ -30,9 +30,9 @@ void clara(int *n,  /* = number of objects */
 	   double *valmd,/*[j]= missing value code (instead of NA) for x[,j]*/
 	   int *jtmd,	/* [j]= {-1,1};	 -1: x[,j] has NA; 1: no NAs in x[,j] */
 	   int *diss_kind,/* = {1,2};  1 : euclidean;  2 : manhattan*/
-	   int *nrepr,	/* */
-	   int *nsel, /* x[nsel[j]]  will be the j-th obs in the final sample */
-	   int *nbest,
+	   int *nrepr,
+	   int *nsel,
+	   int *nbest,/* x[nbest[j]] will be the j-th obs in the final sample */
 	   int *nr, int *nrx,
 	   double *radus, double *ttd, double *ratt,
 	   double *ttbes, double *rdbes, double *rabes,
@@ -61,7 +61,7 @@ void clara(int *n,  /* = number of objects */
     int kkm, kkp, nsm, ntt;
     int nadv, jran, kran, kans, less, nsub, nrun, l;
     int n_dys, nsamb, nad, nadvp, nexap, nexbp, nunfs;
-    double ran, rnn, sky, zb, zba = -1., s = -1., sx = -1.;/* Wall */
+    double rnn, sky, zb, zba = -1., s = -1., sx = -1.;/* Wall */
 
     /* Parameter adjustments */
     --nsel;
@@ -81,8 +81,8 @@ void clara(int *n,  /* = number of objects */
 	less = *nsam;
     nunfs = 0;
     kall = FALSE;
-    /* nrun : this is the ``random seed'' of the very simple randm() below */
-    nrun = 0;
+
+    nrun = 0; /* << initialize `random seed' of the very simple randm() below */
 
 /* __LOOP__ :  random subsamples are drawn and partitioned into kk clusters */
 
@@ -113,8 +113,7 @@ void clara(int *n,  /* = number of objects */
 
 		/* Loop 1 -- */
 	    L180:
-		randm(&nrun, &ran);
-		kran = (int) (rnn * ran + 1.);
+		kran = (int) (rnn * randm(&nrun) + 1.);
 		if (kran > *n) {
 		    kran = *n;
 		}
@@ -133,8 +132,7 @@ void clara(int *n,  /* = number of objects */
 
 	    do {
 	    L210:
-		randm(&nrun, &ran);
-		kran = (int) (rnn * ran + 1.);
+		kran = (int) (rnn * randm(&nrun) + 1.);
 		if (kran > *n) {
 		    kran = *n;
 		}
@@ -183,6 +181,7 @@ void clara(int *n,  /* = number of objects */
 		nsel[j] = j;
 	}
 
+	Rprintf("C clara(): r.sample %d --> dysta2()\n", jran);
 	dysta2(*nsam, *jpp, &nsel[1], x, *n, dys, *diss_kind, jtmd, valmd, &jhalt);
 	if (jhalt == 1)
 	    continue;/* random sample*/
@@ -268,6 +267,8 @@ void dysta2(int nsam, int jpp, int *nsel,
     dys[nlk] = 0.;
     for (l = 1; l < nsam; ++l) {
 	lsel = nsel[l];
+	if(lsel <= 0 || lsel > n)
+	    REprintf("C dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
 	for (k = 0; k < l; ++k) {
 	    ksel = nsel[k];
 	    clk = 0.;
@@ -303,7 +304,7 @@ void dysta2(int nsam, int jpp, int *nsel,
     return;
 } /* End dysta2() -----------------------------------------------------------*/
 
-void randm(int *nrun, double *ran)
+double randm(int *nrun)
 {
     int k;
     double ry;
@@ -316,8 +317,7 @@ void randm(int *nrun, double *ran)
     k = *nrun / 65536;
     *nrun -= k << 16;
     ry = (double) (*nrun);
-    *ran = ry / 65536.f;
-    return;
+    return (ry / 65536.f);
 } /* randm() */
 
 /* bswap2() : called once [per random sample] from clara() : */
