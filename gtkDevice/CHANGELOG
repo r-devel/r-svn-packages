@@ -1,3 +1,13 @@
+1.9-3
+
+- Updated the code to initialize color correctly (R_RGB(0, 0, 0) rather than 0)
+  so that lines are visible.
+
+- Return immediately from clipping which appears to fix the resizing and
+  "black" polygon problem.
+  This should be fixed entirely, but since canClip is FALSE for this device,
+  it appears an appropriate fix for the present.
+
 1.9-2
 - gtkDevice now returns an error in the absense of RGtk
 - Added PACKAGE argument to all foreign function calls, conforming to 

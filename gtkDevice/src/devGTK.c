@@ -616,6 +616,7 @@ static void GTK_MetricInfo(int c,
 static void GTK_Clip(double x0, double x1, double y0, double y1, NewDevDesc *dd)
 {
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
+    return;
 
     gtkd->clip.x = dd->clipLeft = (int) MIN(x0, x1);
     gtkd->clip.width = abs( (int) x0 - (int) x1) + 1;
@@ -1105,7 +1106,7 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     gtkd->fontsize = -1;
     dd->startfont = 1; 
     dd->startps = ps;
-    dd->startcol = 0;
+    dd->startcol = R_RGB(0, 0, 0);
     dd->startfill = NA_INTEGER;
     dd->startlty = LTY_SOLID; 
     dd->startgamma = 1;
@@ -1226,7 +1227,7 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     gtkd->fontsize = -1;
     dd->startfont = 1; 
     dd->startps = ps;
-    dd->startcol = 0;
+    dd->startcol = R_RGB(0, 0, 0);
     dd->startfill = NA_INTEGER;
     dd->startlty = LTY_SOLID; 
     dd->startgamma = 1;
