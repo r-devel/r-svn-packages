@@ -8,7 +8,8 @@
 
 
 ellipsoidhull <-
-    function(x, tol = 0.01, maxit = 5000, ret.wt = FALSE, ret.sqdist = FALSE)
+    function(x, tol = 0.01, maxit = 5000,
+             ret.wt = FALSE, ret.sqdist = FALSE, ret.pr = FALSE)
 {
     if(!is.matrix(x) || !is.numeric(x))
         stop("`x' must be numeric  n x p matrix")
@@ -20,25 +21,25 @@ ellipsoidhull <-
     if(n == 0) stop("no points without missing values")
     p <- ncol(x)
 
-    res <- .Fortran("spannel",
-                    n,
-                    ndep= p,
-                    dat = cbind(1., x),
-                    sqdist = double(n),
-                    l1 = double((p+1) ^ 2),
-                    double(p),
-                    double(p),
-                    prob = double(n),
-                    double(p+1),
-                    eps = as.double(tol),
-                    maxit = as.integer(maxit),
-                    ierr = as.integer(0),
-                    PACKAGE = "cluster")
+    res <- .C("spannel",
+              n,
+              ndep= p,
+              dat = cbind(1., x),
+              sqdist = double(n),
+              l1 = double((p+1) ^ 2),
+              double(p),
+              double(p),
+              prob = double(n),
+              double(p+1),
+              eps = as.double(tol),
+              maxit = as.integer(maxit),
+              ierr = integer(1),
+              PACKAGE = "cluster")
     if(res$ierr != 0)
         cat("Error in Fortran routine computing the spanning ellipsoid,",
             "\n probably collinear data\n", sep="")
-    if(res$maxit == maxit)
-        warning("possibly not converged in", maxit, "iterations")
+    if(noconv <- (res$maxit == maxit))
+        warning("possibly not converged in ", maxit, " iterations")
 
     cov <- cov.wt(x, res$prob)
     ## cov.wt() in R has extra wt[] scaling; revert here
@@ -47,9 +48,11 @@ ellipsoidhull <-
                 d2  = weighted.mean(res$sqdist, res$prob),
                 sqdist = if(ret.sqdist) res$sqdist,
                 wt  = if(ret.wt) cov$wt,
+                prob= if(ret.pr) res$prob,
                 tol = tol,
                 eps = max(res$sqdist) - p,
-                it  = res$maxit)
+                it  = res$maxit,
+                noconv = noconv, ierr = res$ierr)
 
     class(res) <- "ellipsoid"
     res
