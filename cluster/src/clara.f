@@ -3,31 +3,39 @@ c     ~          ~~~   ~
 c     Clustering program based upon the k-medoid approach,
 c     and suitable for data sets of at least 100 objects.
 c     (for smaller data sets, please use program pam.)
-c     
-      subroutine clara(nn,jpp,kk,x,nran,nsam,dys,mdata,valmd,jtmd,ndyst,
-     f     nrepr,nsel,nbest,nr,nrx,radus,ttd,ratt,ttbes,rdbes,rabes,
-     f     mtt,azba,avsyl,ttsyl,sylinf,jstop,
-     f     tmp1,tmp2,tmp3,ntmp1,ntmp2,ntmp3,ntmp4,ntmp5,ntmp6)
 
-      implicit none
+      subroutine clara(nn,jpp,kk,x,nran,nsam,dys,valmd,jtmd,mdata,ndyst,
+     f     nrepr,nsel,nbest,nr,nrx,radus,ttd,ratt,ttbes,rdbes,rabes,
+     f     mtt,obj,avsyl,ttsyl,sylinf,jstop,
+     f     tmp1,tmp2,tmp3, ntmp1,ntmp2,ntmp3,ntmp4,ntmp5,ntmp6)
+
       integer nn, jpp, kk, nran, nsam, mdata, ndyst, jstop
 c     nn   = number of objects
 c     jpp  = number of variables
 c     kk   = number of clusters
-c     nran = ??
+c     nran = number of random samples drawn (= `samples' in S)
 c     nsam = number of objects drawn from data set
+c
+c     mdata= {0,1};  1 : min(x) is missing value (NA);  0: no NA
+c     ndyst= {1,2};  1 : euclidean;  2 : manhattan
+
+c     valmd[j] = "missing value code" (instead of NA) for x[,j]
+c     jtmd [j] = {-1,1}:  -1 : x[,j] has NA ;  1 : no NAs in x[,j]
+
       double precision x(nn*jpp), dys(1 + nsam*(nsam-1)/2),
      1     valmd(jpp), radus(kk),ttd(kk),ratt(kk), 
-     2     ttbes(kk),rdbes(kk),rabes(kk), azba, avsyl(kk), ttsyl,
+     2     ttbes(kk),rdbes(kk),rabes(kk), obj, avsyl(kk), ttsyl,
      3     sylinf(nsam,4), tmp1(nsam),tmp2(nsam),tmp3(nsam)
       integer jtmd(jpp), nrepr(nsam),nsel(nsam),nbest(nsam),
      1     nr(kk),nrx(kk), mtt(kk),
      2     ntmp1(nsam),ntmp2(nsam),ntmp3(nsam),
      3     ntmp4(nsam),ntmp5(nsam),ntmp6(nsam)
 c Var      
-      integer j,jjb,jk,jkk,jn,js,jsm,jran,jhalt, kall,kans,kkm,kkp,kran,
-     1     l,less, nad,nadv,nadvp,nafs,nexap,nexbp, nhalf, nneq,nnpp,
-     2     nrun,nsamb,nsub, nunfs,nsm,ntt
+      logical nafs
+      integer j,jjb,jk,jkk,jn,js,jsm,jran,jhalt, 
+     1     kall,kans,kkm,kkp,kran,
+     2     l,less, nad,nadv,nadvp,nexap,nexbp, nhalf,
+     3     nneq,nnpp, nrun,nsamb,nsub, nunfs,nsm,ntt
       double precision rnn, ran, zba, s,sx,z,zb
 
       jstop=0
@@ -101,8 +109,7 @@ C     Loop
  210     call randm(nrun,ran)
          kran=rnn*ran+1.
          if(kran.gt.nn)kran=nn
-         if(jran.eq.1)go to 230
-         if(nn.ge.nsamb)go to 230
+         if(jran.eq.1 .or. nn.ge.nsamb) go to 230
          do 220 jk=1,kk
             if(kran.eq.nrx(jk))go to 210
  220     continue
@@ -158,8 +165,10 @@ c     305  continue
          call selec(kk,nn,jpp,ndyst,zb,nsam,mdata,
      f        jtmd,valmd,nrepr,nsel,dys,x,nr,nafs,ttd,radus,ratt,
      f        ntmp1,ntmp2,ntmp3,ntmp4,ntmp5,ntmp6, tmp1,tmp2)
-         nunfs=nunfs+nafs
-         if(nafs.eq.1)go to 400
+         if (nafs) then
+            nunfs = nunfs+1
+            go to 400
+         endif
          if(jran.ne.1) then
             if(zb.ge.zba) go to 400
          endif
@@ -191,7 +200,7 @@ c
          jstop=2
          return
       endif
- 460  azba=zba/rnn
+ 460  obj=zba/rnn
  470  call dysta2(nsam,jpp,nbest,x,nn,dys,ndyst,jtmd,valmd, jhalt)
       call resul(kk,nn,jpp,ndyst,mdata,jtmd,valmd, x,nrx,mtt)
       if(kk.gt.1) then
@@ -199,18 +208,16 @@ c
      +        ntmp1,ntmp2,ntmp3,ntmp4,tmp1,tmp2)
       endif
  500  end
-c     --- of clara() -----------------------------------------------------
+c     --- of clara() ---------------------------------------------------
 c     
 c     
       subroutine dysta2(nsam,jpp,nsel,x,nn,dys,ndyst,jtmd, valmd,jhalt)
-
-      implicit none
 
       integer nsam,jpp, nn, nsel(nsam), ndyst, jtmd(jpp), jhalt
       double precision x(nn*jpp), dys(1+nsam*(nsam-1)/2), valmd(jpp) 
 c
       double precision pp, rpres, clk
-      integer j,k,l, nlk, lsubt,lsel, ksel,numlj,numkj, npres
+      integer j,k,l, nlk, lsubt,lsel, ksel,lj,kj, npres
 c
       pp=jpp
       nlk=1
@@ -224,28 +231,30 @@ c
             nlk=nlk+1
             npres=0
             do 30 j=1,jpp
-               numlj=(lsel-1)*jpp+j
-               numkj=(ksel-1)*jpp+j
+               lj=(lsel-1)*jpp+j
+               kj=(ksel-1)*jpp+j
                if(jtmd(j).lt.0) then
-                  if(x(numlj).eq.valmd(j))go to 30
-                  if(x(numkj).eq.valmd(j))go to 30
+                  if(x(lj).eq.valmd(j))go to 30
+                  if(x(kj).eq.valmd(j))go to 30
                endif
  40            npres=npres+1
                if(ndyst.eq.1)then
-                  clk=clk+(x(numlj)-x(numkj))*(x(numlj)-x(numkj))
+                  clk=clk+(x(lj)-x(kj))*(x(lj)-x(kj))
                else
-                  clk=clk+dabs(x(numlj)-x(numkj))
+                  clk=clk+dabs(x(lj)-x(kj))
                endif
  30         continue
             rpres=npres
-            if(npres.ne.0)go to 60
-            jhalt=1
-            dys(nlk)=-1.0
-            go to 20
- 60         if(ndyst.ne.1)go to 70
-            dys(nlk)=dsqrt(clk*(pp/rpres))
-            go to 20
- 70         dys(nlk)=clk*(pp/rpres)
+            if(npres .eq. 0) then
+               jhalt=1
+               dys(nlk)=-1.0
+            else
+ 60            if(ndyst.eq.1) then
+                  dys(nlk)=dsqrt(clk*(pp/rpres))
+               else
+                  dys(nlk)=clk*(pp/rpres)
+               endif
+            endif
  20      continue
  100  continue
       end
@@ -256,8 +265,6 @@ c   we programmed this generator ourselves because we wanted it
 c   to be machine independent. it should run on most computers
 c   because the largest integer used is less than 2**30 . the period
 c   is 2**16=65536, which is good enough for our purposes.
-
-      implicit none
       integer nrun
       double precision ran
 
@@ -275,7 +282,6 @@ c     -----------------------------------------------------------
 c     
       subroutine bswap2(kk,nsam,nrepr,dys,sky,s,dysma,dysmb,beter)
 
-      implicit none
       integer kk,nsam, nrepr(nsam)
       double precision dys(1+nsam*(nsam-1)/2), sky,s,
      1     dysma(nsam),dysmb(nsam),beter(nsam)
@@ -283,13 +289,127 @@ c
       integer meet
       external meet
 c Var      
+      integer j,k, ja, nny, njn,njaj,nkj,nmax,kbest,nbest
+      double precision ammax, rsam, asky,cmd,dz,dzsky,small
+
+c     
+c     first algorithm: build.
+c     
+      nny=0
+      do 17 j=1,nsam
+         nrepr(j)=0
+         dysma(j)= 1.1*s + 1.0
+ 17   continue
+
+c-- LOOP ---------------------
+ 20   do 22 ja=1,nsam
+         if(nrepr(ja).ne.0)go to 22
+         
+         beter(ja)=0.
+         do 21 j=1,nsam
+            njaj=meet(ja,j)
+            cmd=dysma(j)-dys(njaj)
+            if(cmd.gt.0.0)beter(ja)=beter(ja)+cmd
+ 21      continue
+ 22   continue
+
+      ammax=0.
+      do 31 ja=1,nsam
+         if(nrepr(ja).ne.0)go to 31
+         if(beter(ja).lt.ammax)go to 31
+         ammax=beter(ja)
+         nmax=ja
+ 31   continue
+      nrepr(nmax)=1
+      nny=nny+1
+      do 41 j=1,nsam
+         njn=meet(nmax,j)
+         if(dys(njn).lt.dysma(j))dysma(j)=dys(njn)
+ 41   continue
+      if(nny.ne.kk)go to 20
+C--
+      sky=0.
+      do 51 j=1,nsam
+         sky=sky+dysma(j)
+ 51   continue
+      if(kk.eq.1)return
+      rsam=nsam
+      asky=sky/rsam
+
+c     
+c     second algorithm: swap.
+c     
+C-- LOOP
+ 60   do 63 j=1,nsam
+         dysma(j)=1.1*s+1.0
+         dysmb(j)=1.1*s+1.0
+         do 62 ja=1,nsam
+            if(nrepr(ja).eq.0)go to 62
+            njaj=meet(ja,j)
+            if(dys(njaj).ge.dysma(j))go to 61
+            dysmb(j)=dysma(j)
+            dysma(j)=dys(njaj)
+            go to 62
+ 61         if(dys(njaj).ge.dysmb(j))go to 62
+            dysmb(j)=dys(njaj)
+ 62      continue
+ 63   continue
+      dzsky=1.0
+      do 73 k=1,nsam
+         if(nrepr(k).eq.1)go to 73
+         do 72 ja=1,nsam
+            if(nrepr(ja).eq.0)go to 72
+            dz=0.
+            do 71 j=1,nsam
+               njaj=meet(ja,j)
+               nkj=meet(k,j)
+               if(dys(njaj).ne.dysma(j))go to 70
+               small=dysmb(j)
+               if(dys(njaj).lt.small)small=dys(nkj)
+               dz=dz-dysma(j)+small
+               go to 71
+ 70            if(dys(nkj).lt.dysma(j))dz=dz-dysma(j)+dys(nkj)
+ 71         continue
+            if(dz.ge.dzsky)go to 72
+            dzsky=dz
+            kbest=k
+            nbest=ja
+ 72      continue
+ 73   continue
+      if(dzsky.ge.0.0)return
+      nrepr(kbest)=1
+      nrepr(nbest)=0
+      sky=sky+dzsky
+      go to 60
+      end
+c     --- of bswap2() --------------------------------------------------
+
+c     selec() : called once [per random sample] from clara()
+c     
+      subroutine selec(kk,nn,jpp,ndyst,zb,nsam,mdata,
+     f     jtmd,valmd,nrepr,nsel,dys,x,nr,nafs,ttd,radus,ratt,
+     f     nrnew,nsnew,npnew,ns,np,new,ttnew,rdnew)
+
+      integer kk,nn,jpp,ndyst, nsam,mdata
+      integer jtmd(jpp), nrepr(nsam),nsel(nsam)
+      double precision zb, valmd(jpp), dys(1+nsam*(nsam-1)/2),
+     1     x(nn*jpp)
       logical nafs
-      integer j,jk,jn,jkabc, newf, na,nb,nrjk
-      double precision zb,pp,dsum,dnull, tra, pres, abc
+      integer nr(kk)
+      double precision ttd(kk),radus(kk),ratt(kk),
+     1     ttnew(nsam), rdnew(nsam)
+      integer nrnew(nsam),nsnew(nsam),npnew(nsam), 
+     1     ns(nsam),np(nsam), new(nsam)
+c
+      integer meet
+      external meet
+c Var
+      integer j,jk,jn,jp,jkabc,jnew, ka,kb, newf, 
+     1     na,nb,nrjk, njk,npa,npb,npab,nstrt
+      double precision pp,dsum,dnull, tra, pres, abc, rns
 
 c     
 c     nafs = .true. if a distance cannot be calculated
-c FIXME: nafs is not really used; maybe should really be returned! (MM)
       nafs=.false.
 c     
 c     identification of representative objects, and initializations
@@ -439,11 +559,15 @@ c
       end
 c     -----------------------------------------------------------
 c     
-      subroutine resul(kk,nn,jpp,ndyst,mdata,jtmd,
-     f     valmd,x,nrx,mtt)
+      subroutine resul(kk,nn,jpp,ndyst,mdata,jtmd, valmd,x,nrx,mtt)
 
-      implicit double precision (a-h,o-z)
-      dimension x(nn*jpp),nrx(kk),jtmd(jpp),valmd(jpp),mtt(kk)
+      integer kk,nn,jpp,ndyst,mdata
+      double precision x(nn*jpp), valmd(jpp)
+      integer jtmd(jpp), nrx(kk),mtt(kk)
+c Var
+      integer j,ja,jk,jn,jna,jksky, ka, na,nb,njnb,nrjk,nrjka,nxja
+      double precision pp,dsum,dnull,tra,abc
+
       pp=jpp
 c     
 c     clustering vector is incorporated into x, and printed.
@@ -518,11 +642,18 @@ c
       subroutine black(kk,jpp,nn,nsam,nbest,dys,sx,x,avsyl,ttsyl,sylinf,
      f     ncluv,nsend,nelem,negbr,syl,srank)
 
-      implicit double precision (a-h,o-z)
+      integer kk,jpp,nn, nsam, nbest(nsam)
+      double precision dys(1+nsam*(nsam-1)/2), sx, x(nn*jpp)
+      double precision avsyl(kk), ttsyl, sylinf(nsam,4)
+      integer ncluv(nsam),nsend(nsam),nelem(nsam),negbr(nsam)
+      double precision syl(nsam),srank(nsam)
+c
+      integer meet
+      external meet
+c Var
+      integer j,l,jna, lang,lplac, nbb,ncase,nsylr,numcl,nclu,ntt,nj,nl
+      double precision att,btt,rtt,db,dysa,dysb, rsam,symax
 
-      dimension ncluv(nsam),nsend(nsam),nelem(nsam),negbr(nsam)
-      dimension syl(nsam),srank(nsam),avsyl(kk),nbest(nsam)
-      dimension x(nn*jpp),dys(1+nsam*(nsam-1)/2),sylinf(nsam,4)
 c     
 c     construction of clustering vector (ncluv)
 c     of selected sample (nbest).
