@@ -7,16 +7,12 @@ BIC                     Bayesian Information Criterion
 BIC.logLik              BIC of a logLik Object
 BodyWeight              Rat weight over time for different diets
 Cefamandole             Pharmacokinetics of Cefamandole
-Coef                    Assign Values to Coefficients
-Covariate               Assign Covariate Values
-Covariate.varFunc       Assign varFunc Covariate
 Dialyzer                High-Flux Hemodialyzer
 Dim                     Extract Dimensions from an Object
 Dim.corSpatial          Dimensions of a corSpatial Object
 Dim.corStruct           Dimensions of a corStruct Object
 Dim.pdMat               Dimensions of a pdMat Object
 Earthquake              Earthquake Intensity
-[.pdMat                 Subscript a pdMat Object
 Fatigue                 Cracks caused by metal fatigue
 Gasoline                Refinery yield of gasoline
 Glucose                 Glucose levels over time
@@ -33,9 +29,6 @@ LDEsysMat               Generate system matrix for LDEs
 Machines                Productivity Scores for Machines and Workers
 MathAchSchool           School demographic data for MathAchieve
 MathAchieve             Mathematics achievement scores
-Matrix                  Assign Matrix Values
-Matrix.pdMat            Assign Matrix to a pdMat Object
-Matrix.reStruct         Assign reStruct Matrices
 Meat                    Tenderness of meat
 Milk                    Protein content of cows' milk
 Muscle                  Contraction of heart muscle sections
@@ -79,6 +72,7 @@ Variogram.lme           Calculate Semi-variogram for Residuals from an
 Wafer                   Modeling of Analog MOS Circuits
 Wheat                   Yields by growing conditions
 Wheat2                  Wheat Yield Trials
+[.pdMat                 Subscript a pdMat Object
 allCoef                 Extract Coefficients from a Set of Objects
 anova.gls               Compare Likelihoods of Fitted Objects
 anova.lme               Compare Likelihoods of Fitted Objects
@@ -98,6 +92,7 @@ coef.modelStruct        Extract modelStruct Object Coefficients
 coef.pdMat              pdMat Object Coefficients
 coef.reStruct           reStruct Object Coefficients
 coef.varFunc            varFunc Object Coefficients
+coef<-                  Assign Values to Coefficients
 collapse                Collapse According to Groups
 collapse.groupedData    Collapse a groupedData Object
 compareFits             Compare Fitted Objects
@@ -124,6 +119,8 @@ corRatio                Rational Quadratic Correlation Structure
 corSpatial              Spatial Correlation Structure
 corSpher                Spherical Correlation Structure
 corSymm                 General Correlation Structure
+covariate<-             Assign Covariate Values
+covariate<-.varFunc     Assign varFunc Covariate
 ergoStool               Ergometrics experiment with stool types
 fdHess                  Finite difference Hessian
 fitted.glsStruct        Calculate glsStruct Fitted Values
@@ -200,6 +197,9 @@ logLik.lme              Log-Likelihood of an lme Object
 logLik.lmeStruct        Log-Likelihood of an lmeStruct Object
 logLik.reStruct         Calculate reStruct Log-Likelihood
 logLik.varFunc          Extract varFunc logLik
+matrix<-                Assign Matrix Values
+matrix<-.pdMat          Assign Matrix to a pdMat Object
+matrix<-.reStruct       Assign reStruct Matrices
 model.matrix.reStruct   reStruct Model Matrix
 needUpdate              Check if Update is Needed
 needUpdate.modelStruct
