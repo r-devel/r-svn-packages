@@ -126,6 +126,7 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
 		     as.integer(jdat),
 		     type3,		# vtype
 		     as.integer(ndyst),
+		     as.integer(mdata),
 		     dis = double((n * (n - 1))/2),
                      NAOK = TRUE,# only to allow "+- Inf"
 		     DUP = FALSE,
