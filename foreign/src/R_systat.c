@@ -11,7 +11,7 @@
 #define SYSLABSIZ	12	/* systat label size */
 #define	LABELSIZ  12	/* length of variable names and string values */
 #define	FORTBUF	 128	/* apparent packet length in .sys files */
-#define	MYBUFSIZ	 4096	/* comment length */
+#define	MYBUFSIZ	10*72	/* comment length */
 #define DMIS	-1.0e36	/* missing value */
 
 struct SysAction {
@@ -394,7 +394,7 @@ static void getlab(struct SysFilev3 *u)
     char mes[ERRMES], tmp1[ERRMES], combuf[MYBUFSIZ];
     char label[LABELSIZ+1], tmp[LABELSIZ+1];
     char var[30];
-    int i, j, o, len;
+    int i, j, o, len, isDollar;
 
     strcpy(mes, "getlab: File format unknown");
     u->h.nd = 0;
@@ -429,30 +429,31 @@ static void getlab(struct SysFilev3 *u)
 	/* test changed to accommodate MYSTAT 9/9/91 */
 	len = 0;
 	do {
+	    isDollar = 0;
 	    if(getoctal(&o, u->h.fd) != 1 || o != 0110) {
-		sprintf(tmp1, "getlab: comment byte = %o", o);
+		sprintf(tmp1, "getlab: comment begin byte = %o", o);
 		error(tmp1); }
 	    /* read and throw away
 	       front of package byte=0110, i.e. 72 chars */
-	    for (j = 0; len < MYBUFSIZ && j < 72; j++) {
+	    for (j = 0; j < 72; j++, len++) {
 		if(getoctal(&o, u->h.fd) != 1) {
 		    sprintf(tmp1, "getlab: comment = %c", o);
 		    error(tmp1); }
-		combuf[len++] = o;
+		if(len < MYBUFSIZ) combuf[len] = o;
+		if (j == 0) isDollar = (o == '$');
 	    }
 	    /* read the comment into combuf */
 
 	    if(getoctal(&o, u->h.fd) != 1 || o != 0110) {
-		sprintf(tmp1, "getlab: comment byte2 = %o", o);
+		sprintf(tmp1, "getlab: comment end byte = %o", o);
 		error(tmp1); }
 	    /* read and throw away
 	       end of package byte=0110, i.e. 72 chars */
-
-	} while ((len - 72) >= 0 && combuf[len - 72] != '$');
+	} while (len >= 72 && !isDollar);
 	/* until start of comment line is '$' */
 	if (len > 72) {
-	    combuf[len - 72] = '\0';
-	    u->h.comment = (char *) R_alloc(len - 71, sizeof(char));
+	    combuf[len - 73] = '\0';
+	    u->h.comment = (char *) R_alloc(len - 72, sizeof(char));
 	    strncpy(u->h.comment, combuf, (len - 72));
 	}
 	else u->h.comment = NULL;

@@ -26,10 +26,15 @@ read.systat(file, to.data.frame = TRUE)
   to 12 characters with blanks on the right.  The original function was
   limited to reading Systat files with up to 256 variables (a Systat
   limitation); it will now read up to 8192 variables.
+
+  If there is a user comment in the header this is returned as attribute
+  \code{"comment"}.  Such comments are always a multiple of 72
+  characters (with a maximum of 720 chars returned), normally padded with
+  trailing spaces.
 }
 
 \value{
-  A list (or data frame) with one component for each variable in the
+  A data frame (or list) with one component for each variable in the
   saved data set.
 }
 
