@@ -50,12 +50,12 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
   }
   \item{method}{
     character string defining the clustering method.  The six methods
-    implemented are "average" (group average method),
-    "single" (single linkage), "complete" (complete linkage),
-    "ward" (Ward's method), and "weighted" (weighted average linkage)
-    and the generalization \code{"flexible"} which uses (a constant
-    version of) the Lance-Williams formula and the \code{par.method} argument.
-    Default is "average".
+    implemented are "average" (group average method), "single" (single
+    linkage), "complete" (complete linkage), "ward" (Ward's method),
+    "weighted" (weighted average linkage) and its generalization
+    \code{"flexible"} which uses (a constant version of) the
+    Lance-Williams formula and the \code{par.method} argument.  Default
+    is "average".
   }
   \item{par.method}{if \code{method == "flexible"}, numeric vector of
     length 1, 3, or 4, see in the details section.
