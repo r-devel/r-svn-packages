@@ -12,7 +12,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	    if(!is.numeric(x) || is.na(sizeDiss(x)))
 		stop("x is not of class dissimilarity and can not be converted to this class." )
 	    ## convert input vector to class "dissimilarity"
-	    class(x) <- .__dClass
+	    class(x) <- ..dClass
 	    attr(x, "Size") <- sizeDiss(x)
 	    attr(x, "Metric") <- "unspecified"
 	}
@@ -96,7 +96,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
             disv <- res$dys[-1]
             disv[disv == -1] <- NA
             disv <- disv[upper.to.lower.tri.inds(n)]
-            class(disv) <- .__dClass
+            class(disv) <- ..dClass
             attr(disv, "Size") <- nrow(x)
             attr(disv, "Metric") <- metric
             attr(disv, "Labels") <- dimnames(x)[[1]]

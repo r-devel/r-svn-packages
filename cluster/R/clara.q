@@ -94,7 +94,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     disv <- res$dis[-1]
     disv[disv == -1] <- NA
     disv <- disv[upper.to.lower.tri.inds(sampsize)]
-    class(disv) <- .__dClass
+    class(disv) <- ..dClass
     attr(disv, "Size") <- sampsize
     attr(disv, "Metric") <- metric
     attr(disv, "Labels") <- namx[res$sample]

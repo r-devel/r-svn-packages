@@ -109,7 +109,7 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
     if(any(is.na(disv))) attr(disv, "NA.message") <-
 	"NA-values in the dissimilarity matrix !"
     ## construct S object -- "dist" methods are *there* !
-    class(disv) <- .__dClass
+    class(disv) <- ..dClass
     attr(disv, "Labels") <- dimnames(x)[[1]]
     attr(disv, "Size") <- n
     attr(disv, "Metric") <- ifelse(!ndyst, "mixed", metric)
