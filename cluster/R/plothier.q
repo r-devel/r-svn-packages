@@ -62,8 +62,7 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
         main2 <- paste("Dendrogram of ", cl)
     }
     else { # same title for both
-        main1 <- .Alias(main)
-        main2 <- .Alias(main)
+        main1 <- main2 <- main
     }
 
     if(is.null(which.plots) && !ask)
@@ -98,8 +97,7 @@ plot.agnes <- function(x, ask = FALSE, which.plots = NULL,
 }
 
 plot.diana <-
-function(x, ask = FALSE, which.plots = NULL,
-         main = paste("Banner of ", deparse(attr(x, "Call"))),
+function(x, ask = FALSE, which.plots = NULL, main = NULL,
          sub  = paste("Divisive Coefficient = ", round(x$dc, digits = 2)),
          adj = 0, nmax.lab = 35, max.strlen = 5, ...)
 {
@@ -132,8 +130,7 @@ function(x, ask = FALSE, which.plots = NULL,
         main2 <- paste("Dendrogram of ", cl)
     }
     else { # same title for both
-        main1 <- .Alias(main)
-        main2 <- .Alias(main)
+        main1 <- main2 <- main
     }
 
     if(is.null(which.plots) && !ask)
