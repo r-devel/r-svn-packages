@@ -16,8 +16,9 @@ read.systat(file, to.data.frame = TRUE)
 \details{
   The function only reads those Systat files that are rectangular data
   files (\code{mtype = 1}), and warns when files have non-standard
-  variable name codings.  The function will at present only work on files
-  created on little-endian machines, typically Windows on Intel PCs.
+  variable name codings.  The files tested were produced on MS-DOS and
+  Windows: files for the Mac version of Systat have a completely
+  different format.
 
   The C code was originally written for an add-on module for Systat
   described in Bivand (1992 paper).  Variable names retain the trailing
