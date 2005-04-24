@@ -38,9 +38,9 @@
       Engineering and the Sciences (5th ed)}, Duxbury, Boston, MA.
 }
 \examples{
+options(show.signif.stars = FALSE)
 data(ergoStool)
-fm1 <-
-   lme(effort ~ Type, data = ergoStool, random = ~ 1 | Subject)
-anova( fm1 )
+(fm1 <- lmer(effort ~ Type + (1|Subject), ergoStool))
+anova(fm1)
 }
 \keyword{datasets}

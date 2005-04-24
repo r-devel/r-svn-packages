@@ -1,4 +1,4 @@
 library(MEMSS)
-lme(pixel ~ day + I(day^2), Pixel, list(Dog = ~ day, DS = ~ 1))
+options(show.signif.stars = FALSE)
 lmer(pixel ~ day + I(day^2) + (1|DS) + (day|Dog), Pixel)
 q("no")

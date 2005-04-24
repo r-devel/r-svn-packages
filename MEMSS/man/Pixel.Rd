@@ -36,9 +36,9 @@
 	S and S-PLUS}, Springer.
 }
 \examples{
+options(show.signif.stars = FALSE)
 str(Pixel)
 summary(Pixel)
-summary(fm1 <- lme(pixel ~ day + I(day^2), data = Pixel,
-                   random = list(DS = ~ 1, Dog = ~ day)))
+(fm1 <- lmer(pixel ~ day + I(day^2) + (1|DS) + (day|Dog), Pixel))
 }
 \keyword{datasets}
