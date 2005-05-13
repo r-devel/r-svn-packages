@@ -124,15 +124,18 @@ Bangladesh fertility survey.
 <<Contraception>>=
 str(Contraception)
 summary(Contraception[,-1])
-##system.time(mB1 <- lmer(use ~ urban+age+livch+(1|district),
-##  Contraception, family = binomial))
-##summary(mB1)
-##system.time(mB2 <- lmer(use ~ urban+age+livch+(1|district),
-##  Contraception, family = binomial, method = "Laplace"))
-##summary(mB2)
-##system.time(mB3 <- lmer(use ~ urban+age+livch+(urban|district),
-##  Contraception, family = binomial))
-##summary(mB3)
+system.time(mB1 <- lmer(use ~ urban+age+livch+(1|district),
+                        Contraception, family = binomial))
+summary(mB1)
+system.time(mB2 <- lmer(use ~ urban+age+livch+(1|district),
+                        Contraception, family = binomial, method = "Laplace"))
+summary(mB2)
+system.time(mB3 <- lmer(use ~ urban+age+livch+(urban|district),
+                        Contraception, family = binomial))
+summary(mB3)
+system.time(mB4 <- lmer(use ~ urban+age+livch+(urban|district),
+                        Contraception, family = binomial, method = "Laplace"))
+summary(mB4)
 @ 
 
 

@@ -1,3 +1,9 @@
+2005-05-13  Douglas Bates  <bates@bates1-home>
+
+	* inst/doc/MlmSoftRev.Rnw (section{Two-level models for binary
+	data}): Added examples of generalized linear mixed model fits
+	using both PQL and the Laplacian approximation.
+
 2005-04-21  Douglas Bates  <bates@bates1-home>
 
 	* inst/doc/StarData.pdf: added
