@@ -1,3 +1,8 @@
+2005-05-19  Douglas Bates  <bates@bates1-home>
+
+	* tests/lmerTest.R: Removed defunct tests and updated results of
+	current tests to lme_0.95-8
+
 2005-05-13  Douglas Bates  <bates@bates1-home>
 
 	* inst/doc/MlmSoftRev.Rnw (section{Two-level models for binary
