@@ -421,6 +421,8 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
     nsylr = 0;
     *ttsyl = 0.;
     for (k = 1; k <= *kk; ++k) {
+
+	/* nelem[0:(ntt-1)] := indices (1-based) of obs. in cluster k : */
 	ntt = 0;
 	for (j = 1; j <= *nn; ++j) {
 	    if (ncluv[j] == k) {
@@ -428,10 +430,12 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 		++ntt;
 	    }
 	}
+
 	for (j = 0; j < ntt; ++j) {/* (j+1)-th obs. in cluster k */
 	    nj = nelem[j];
 	    dysb = *s * 1.1f + 1.;
 	    negbr[j] = -1;
+	    /* for all clusters  k_ != k : */
 	    for (k_ = 1; k_ <= *kk; ++k_) if (k_ != k) {
 		nbb = 0;
 		db = 0.;
@@ -440,12 +444,12 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 		    if (l != nj)
 			db += dys[ind_2(nj, l)];
 		}
-		db /= nbb;
+		db /= nbb; /* now  db(k_) := mean( d[j, l]; l in C_{k_} ) */
 		if (dysb > db) {
 		    dysb = db;
 		    negbr[j] = k_;
 		}
-	    }
+	    }/* negbr[j] := arg max_{k_} db(k_) */
 	    if (ntt > 1) {
 		dysa = 0.;
 		for (l = 0; l < ntt; ++l) {
@@ -496,12 +500,13 @@ void dark(int *kk, int *nn, int *hh, int *ncluv,
 	    syl[lang] = -3.;
 	}
 	*ttsyl += avsyl[k];
-	avsyl[k] /= ntt;
+	/* Note that (ntt == 0) can happen when medoids are user-specified !*/
+	if (ntt > 0) avsyl[k] /= ntt;
 	if (ntt < 2) {
 	    sylinf  [nsylr] = (double) k;
-	    sylinf_2[nsylr] = (double) negbr[0];
+	    sylinf_2[nsylr] = (ntt > 0) ? (double) negbr[0] : -1.;
 	    sylinf_3[nsylr] = 0.;
-	    sylinf_4[nsylr] = (double) nelem[0];
+	    sylinf_4[nsylr] = (ntt > 0) ? (double) nelem[0] : -1.;
 	    ++nsylr;
 	} else {
 	    for (j = 0; j < ntt; ++j) {
