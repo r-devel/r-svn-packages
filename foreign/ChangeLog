@@ -1,3 +1,7 @@
+2005-06-08  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/dbfopen.c: suppress a couple of warnings on Solaris.
+
 2005-06-07  Thomas Lumley <tlumley@u.washington.edu>
 	* src/stataread.c: Writes of empty strings gave an error
 
