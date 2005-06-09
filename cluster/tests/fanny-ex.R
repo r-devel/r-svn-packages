@@ -26,6 +26,7 @@ summary(fanny(x,3))# one extra cluster
 (fanny(x,2, memb.exp = 1.1))
 (fanny(x,2, memb.exp = 3))
 
+data(ruspini) # < to run under R 1.9.1
 summary(fanny(ruspini, 3), digits = 9)
 summary(fanny(ruspini, 4), digits = 9)# `correct' #{clusters}
 summary(fanny(ruspini, 5), digits = 9)
