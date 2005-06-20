@@ -3,6 +3,9 @@
 library(cluster)
 
 data(iris)
+
+.proctime00 <- proc.time()
+
 mdist <- as.dist(1 - cor(t(iris[,1:4])))#dissimlarity
 ## this is always the same:
 hc <- diana(mdist, diss = TRUE, stand = FALSE)
@@ -26,6 +29,25 @@ silh.wid
 #select the number of k clusters with the largest si value :
 (myk <- which.min(silh.wid))
 
+postscript(file="silhouette-ex.ps")
+## MM:  plot to see how the decision is made
+plot(silh.wid, type = 'b', col= "blue", xlab = "k")
+axis(1, at=myk, col.axis= "red", font.axis= 2)
+
+##--- PAM()'s silhouette must give same as silh*.default()!
+for(k in 2:40) {
+    cat("\n", k,":\n==\n")
+    p.k <- pam(mdist, k = k)
+    k.gr <- p.k$clustering
+    cat("grouping table: "); print(table(k.gr))
+    si.p <- silhouette(p.k)
+    si.g <- silhouette(k.gr, mdist)
+    si.g[] <- si.g[ rownames(si.p), ]
+    cat("equal silhouette values:",
+        all.equal(si.g[], si.p[]),"\n")
+}
+
+
 ## "pathological" case where a_i == b_i == 0 :
 D6 <- structure(c(0, 0, 0, 0.4, 1, 0.05, 1, 1, 0, 1, 1, 0, 0.25, 1, 1),
                 Labels = LETTERS[1:6], Size = 6, call = as.name("manually"),
@@ -36,9 +58,8 @@ silhouette(kl6, D6)# had one NaN
 summary(silhouette(kl6, D6))
 plot(silhouette(kl6, D6))# gives error in earlier cluster versions
 
-postscript(file="silhouette-ex.ps")
-## MM:  plot to see how the decision is made
-plot(silh.wid, type = 'b', col= "blue", xlab = "k")
-axis(1, at=myk, col.axis= "red", font.axis= 2)
-
 dev.off()
+
+## Last Line:
+cat('Time elapsed: ', proc.time() - .proctime00,'\n')
+
