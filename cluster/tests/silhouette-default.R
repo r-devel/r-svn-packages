@@ -27,26 +27,43 @@ for(k in 2:maxk) {
 # the widths:
 silh.wid
 #select the number of k clusters with the largest si value :
-(myk <- which.min(silh.wid))
+(myk <- which.min(silh.wid)) # -> 8 (here)
 
 postscript(file="silhouette-ex.ps")
 ## MM:  plot to see how the decision is made
 plot(silh.wid, type = 'b', col= "blue", xlab = "k")
 axis(1, at=myk, col.axis= "red", font.axis= 2)
 
-##--- PAM()'s silhouette must give same as silh*.default()!
+##--- PAM()'s silhouette should give same as silh*.default()!
+Eq <- function(x,y, tol = 1e-12) x == y | abs(x - y) < tol * abs((x+y)/2)
+  
 for(k in 2:40) {
     cat("\n", k,":\n==\n")
     p.k <- pam(mdist, k = k)
     k.gr <- p.k$clustering
-    cat("grouping table: "); print(table(k.gr))
     si.p <- silhouette(p.k)
     si.g <- silhouette(k.gr, mdist)
     si.g[] <- si.g[ rownames(si.p), ]
-    cat("equal silhouette values:",
-        all.equal(si.g[], si.p[]),"\n")
+    if(!isTRUE(a.eq <- all.equal(si.g[], si.p[]))) {
+        cat("grouping table: "); print(table(k.gr))
+        cat("silhouette values differ:\n")
+        cbind(si.p[], si.g[,2:3])[ !Eq(si.g[,3], si.p[,3]), ]
+    }
 }
-
+## These k give discrepances:  k = 20, 21, 34, 36, 39
+## after first fix :           k =     21:22,  36:39
+k <- 21
+p.k <- pam(mdist, k = k)
+k.gr <- p.k$clustering
+table(k.gr)
+si.p <- silhouette(p.k)
+si.g <- silhouette(k.gr, mdist) ; si.g[] <- si.g[ rownames(si.p), ]
+all.equal(si.p[,1:2], si.g[,1:2], tol=0)# => difference for k=21
+cbind(si.p, D.sil_width = si.g[,3])
+noquote(cbind(format(cbind(si.p, D.sil_width = si.g[,3])),
+              DD=c("","*")[1+ (abs(si.g[,3] - si.p[,3]) > 1e-7*abs(si.p[,3]))]))
+## the only place they differ :
+## 42    6.   2.    0.00000000  1.00000000 *
 
 ## "pathological" case where a_i == b_i == 0 :
 D6 <- structure(c(0, 0, 0, 0.4, 1, 0.05, 1, 1, 0, 1, 1, 0, 0.25, 1, 1),
