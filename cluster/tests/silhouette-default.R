@@ -1,6 +1,7 @@
 ## This came from a bug report on R-help by ge yreyt <tothri2000@yahoo.ca>
 ## Date: Mon, 9 Jun 2003 16:06:53 -0400 (EDT)
 library(cluster)
+library(cluster, lib="~/R/Pkgs/cluster.Rcheck")
 
 data(iris)
 
@@ -46,10 +47,13 @@ for(k in 2:40) {
     si.g[] <- si.g[ rownames(si.p), ]
     cat("grouping table: "); print(table(k.gr))
     if(!isTRUE(a.eq <- all.equal(si.g[], si.p[]))) {
-        cat("silhouette values differ:\n")
-        cbind(si.p[], si.g[,2:3])[ !Eq(si.g[,3], si.p[,3]), ]
+        cat("silhouettes differ:\n")
+        if(any(neq <- !Eq(si.g[,3], si.p[,3])))
+            cbind(si.p[], si.g[,2:3])[ neq, ]
+        else cat("but not in col.3 !\n")
     }
 }
+
 
 ## "pathological" case where a_i == b_i == 0 :
 D6 <- structure(c(0, 0, 0, 0.4, 1, 0.05, 1, 1, 0, 1, 1, 0, 0.25, 1, 1),
