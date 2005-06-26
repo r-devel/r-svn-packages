@@ -35,8 +35,12 @@ data(Contraception)
 str(Contraception)
 summary(Contraception)
 (fm1 <- lmer(use ~ urban+age+livch+(1|district), Contraception, binomial))
-##(fm2 <- lmer(use ~ urban+age+livch+(1|district), Contraception, family = binomial,
-##             method = "Laplace"))
+(fm2 <- lmer(use ~ urban+age+livch+(1|district), Contraception, family = binomial,
+             method = "Laplace"))
 (fm3 <- lmer(use ~ urban+age+livch+(urban|district), Contraception, binomial))
+\dontrun{ % not until R-2.2.0 is released
+(fm4 <- lmer(use ~ urban+age+livch+(urban|district), Contraception,
+             binomial, method = "Laplace"))
+}
 }
 \keyword{datasets}

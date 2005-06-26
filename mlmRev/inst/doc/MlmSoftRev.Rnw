@@ -119,22 +119,28 @@ summary(mC2)
 \section{Two-level models for binary data}
 \label{sec:TwolevelBinary}
 
+<<Contraceptionprep, results=hide,echo=FALSE>>=
+lmer(use ~ urban+age+livch+(1|district), Contraception, binomial)
+@ 
+
 The data frame \code{Contraception} provides data from the
 Bangladesh fertility survey.
 <<Contraception>>=
 str(Contraception)
 summary(Contraception[,-1])
 system.time(mB1 <- lmer(use ~ urban+age+livch+(1|district),
-                        Contraception, family = binomial))
+                        Contraception, binomial))
 summary(mB1)
 system.time(mB2 <- lmer(use ~ urban+age+livch+(1|district),
-                        Contraception, family = binomial, method = "Laplace"))
+                        Contraception, binomial,
+                        method = "Laplace"))
 summary(mB2)
 system.time(mB3 <- lmer(use ~ urban+age+livch+(urban|district),
-                        Contraception, family = binomial))
+                        Contraception, binomial))
 summary(mB3)
 system.time(mB4 <- lmer(use ~ urban+age+livch+(urban|district),
-                        Contraception, family = binomial, method = "Laplace"))
+                        Contraception, binomial,
+                        method = "Laplace"))
 summary(mB4)
 @ 
 
