@@ -138,11 +138,13 @@ sortSilhouette(object, \dots)
  summary(si2) # has small values: "canberra"'s fault
  plot(si2, nmax= 80, cex.names=0.6)
 
- par(mfrow = c(3,2), oma = c(0,0, 3, 0))
+ op <- par(mfrow= c(3,2), oma= c(0,0, 3, 0),
+           mgp= c(1.6,.8,0), mar= .1+c(4,2,2,2))
  for(k in 2:6)
     plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE)
  mtext("PAM(Ruspini) as in Kaufman & Rousseeuw, p.101",
        outer = TRUE, font = par("font.main"), cex = par("cex.main"))
+ par(op)
 
  ## Silhouette for a hierarchical clustering:
  ar <- agnes(ruspini)
