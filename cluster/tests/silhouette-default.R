@@ -47,10 +47,11 @@ for(k in 2:40) {
     si.g[] <- si.g[ rownames(si.p), ]
     cat("grouping table: "); print(table(k.gr))
     if(!isTRUE(a.eq <- all.equal(si.g[], si.p[]))) {
-        cat("silhouettes differ:\n")
-        if(any(neq <- !Eq(si.g[,3], si.p[,3])))
-            cbind(si.p[], si.g[,2:3])[ neq, ]
-        else cat("but not in col.3 !\n")
+	cat("silhouettes differ:")
+	if(any(neq <- !Eq(si.g[,3], si.p[,3]))) {
+	    cat("\n")
+	    print( cbind(si.p[], si.g[,2:3])[ neq, ] )
+	} else cat(" -- but not in col.3 !\n")
     }
 }
 
