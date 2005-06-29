@@ -39,11 +39,11 @@ silhouette.default <- function(x, dist, dmatrix, ...) {
         ## minimal distances to points in all other clusters:
         diC <- rbind(apply(dmatrix[!iC, iC, drop = FALSE], 2,
                            function(r) tapply(r, x[!iC], mean)))# (k-1) x Nj
-        ## max.col() breaks ties at random; but we do not want random behavior
-        ##  of silhouette, rather "pam" compatible one:
-        ## minC <- max.col(-t(diC))
+        ## max.col() breaks ties at random;  rather do not want random
+        ##   behavior of silhouette, (but rather "pam" compatible one):
+        minC <- apply(diC, 2, which.min)
+        ## FIXME minC <- max.col(-t(diC))
         ## FIXME : extend max.col(*, ties.method = "min") {or similar} !
-        minC <- apply(unname(diC), 2, which.min)
         wds[iC,"neighbor"] <- clid[-j][minC]
         s.i <- if(Nj > 1) {
             a.i <- colSums(dmatrix[iC, iC])/(Nj - 1) # length(a.i)= Nj
@@ -158,8 +158,9 @@ plot.silhouette <-
 	y <- rev(y)
 	for(j in 1:k) {
 	    yj <- mean(y[cli == j])
-	    text(1, yj, paste(j,":  ", nj[j]," | ",
-			      format(smry$clus.avg.widths[j], digits = 2)),
+	    text(1, yj,
+                 paste(j,":  ", nj[j]," | ",
+                       format(smry$clus.avg.widths[j], digits = 1, nsmall = 2)),
 		 xpd = NA, adj = 0.8)
 	}
     }
