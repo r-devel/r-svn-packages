@@ -37,6 +37,8 @@ axis(1, at=myk, col.axis= "red", font.axis= 2)
 
 ##--- PAM()'s silhouette should give same as silh*.default()!
 Eq <- function(x,y, tol = 1e-12) x == y | abs(x - y) < tol * abs((x+y)/2)
+if(paste(R.version$major, R.version$minor, sep=".") < 2.1)
+    isTRUE <- function (x) identical(TRUE, x)
 
 for(k in 2:40) {
     cat("\n", k,":\n==\n")
