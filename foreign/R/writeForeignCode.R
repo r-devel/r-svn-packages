@@ -20,10 +20,10 @@ writeForeignSPSS<-function(df,datafile,codefile,varnames=NULL){
       warning("some variable names were abbreviated")
   }
 
-  cat("DATA LIST FILE=",datafile," free\n",file=codefile)
-  cat("/", varnames,"\n\n",file=codefile,append=TRUE)
+  cat("DATA LIST FILE=",dQuote(datafile)," free\n",file=codefile)
+  cat("/", varnames," .\n\n",file=codefile,append=TRUE)
   cat("VARIABLE LABELS\n",file=codefile,append=TRUE)
-  cat(paste(varnames, dQuote(varlabels),"\n"),file=codefile,append=TRUE)
+  cat(paste(varnames, dQuote(varlabels),"\n"),".\n",file=codefile,append=TRUE)
   factors<-sapply(df,is.factor)
   if (any(factors)){
     cat("\nVALUE LABELS\n",file=codefile,append=TRUE)
@@ -33,6 +33,7 @@ writeForeignSPSS<-function(df,datafile,codefile,varnames=NULL){
       levs<-levels(df[[v]])
       cat(paste(1:length(levs),dQuote(levs),"\n",sep=" "),file=codefile,append=TRUE)
     }
+    cat(".\n",file=codefile,append=TRUE)
   }
   cat("\nEXECUTE.\n",file=codefile,append=TRUE)
 }

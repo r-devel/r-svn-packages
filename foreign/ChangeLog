@@ -1,3 +1,7 @@
+2005-07-05  Thomas Lumley <tlumley@u.washington.edu>
+	
+	* R/writeForeignCode.R: extra punctuation in SPSS code files.
+
 2005-06-08  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/dbfopen.c: suppress a couple of warnings on Solaris.
