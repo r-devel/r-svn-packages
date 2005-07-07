@@ -1,3 +1,7 @@
+2005-07-07 Thomas Lumley <tlumley@u.washington.edu>
+	
+	* R/writeForeignSAS.R: add SAS to write.foreign()
+
 2005-07-05  Thomas Lumley <tlumley@u.washington.edu>
 	
 	* R/writeForeignCode.R: extra punctuation in SPSS code files.

@@ -1,8 +1,8 @@
 
-write.foreign<-function(df, datafile, codefile, package=c("SPSS","Stata"),...){
+write.foreign<-function(df, datafile, codefile, package=c("SPSS","Stata","SAS"),...){
 
   do.call(paste("writeForeign",package,sep=""),
-          list(df=df,datafile=datafile,codefile=codefile),...)
+          c(list(df=df,datafile=datafile,codefile=codefile),...))
 
 }
 
