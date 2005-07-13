@@ -27,7 +27,7 @@ writeForeignSAS<-function(df,datafile,codefile,dataname="rdata"){
         cat("value ",varnames[v],"\n",file=codefile,append=TRUE)
         values<-levels(df[[v]])
         for(i in 1:length(values)){
-          cat("    ",i,"=",dQuote(values[i]),"\n",file=codefile,append=TRUE)
+          cat("    ",i,"=",adQuote(values[i]),"\n",file=codefile,append=TRUE)
         }
         cat(";\n\n",file=codefile,append=TRUE)
       }
@@ -35,7 +35,7 @@ writeForeignSAS<-function(df,datafile,codefile,dataname="rdata"){
   }
 
   cat("DATA ",dataname,";\n",file=codefile,append=TRUE)
-  cat("INFILE ",dQuote(datafile),
+  cat("INFILE ",adQuote(datafile),
       "\n     DELIMITER=','",
       "\n     LRECL=",lrecl,";\n",
       file=codefile,append=TRUE)
@@ -50,7 +50,7 @@ writeForeignSAS<-function(df,datafile,codefile,dataname="rdata"){
 
   for(v in 1:ncol(df)){
     if (abbreviated[v])
-      cat("LABEL ",varnames[v],"=",dQuote(varlabels[v]),";\n",
+      cat("LABEL ",varnames[v],"=",adQuote(varlabels[v]),";\n",
           file=codefile,append=TRUE)
   } 
 

@@ -1,3 +1,9 @@
+2005-07-13  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/writeForeignCode.R:
+	* R/writeForeignSAS.R:
+	  replace use of dQuote() which gave UTF-8 quotes in a UTF-8 locale.
+
 2005-07-07 Thomas Lumley <tlumley@u.washington.edu>
 	
 	* R/writeForeignSAS.R: add SAS to write.foreign()
