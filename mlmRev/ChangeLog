@@ -1,3 +1,7 @@
+2005-07-12  Douglas Bates  <bates@localhost.localdomain>
+
+	* inst/doc/MlmSoftRev.Rnw: Expanded discussion considerably.
+
 2005-05-19  Douglas Bates  <bates@bates1-home>
 
 	* tests/lmerTest.R: Removed defunct tests and updated results of

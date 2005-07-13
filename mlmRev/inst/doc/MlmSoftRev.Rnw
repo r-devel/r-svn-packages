@@ -13,6 +13,7 @@
 %%\VignetteDepends{lme4}
 \begin{document}
 \SweaveOpts{engine=R,eps=FALSE,pdf=TRUE,width=5,height=3,strip.white=TRUE}
+\SweaveOpts{prefix=TRUE,prefix.string=figs/SoftRev,include=FALSE}
 \setkeys{Gin}{width=\textwidth}
 \title{Examples from Multilevel Software Comparative Reviews}
 \author{Douglas Bates\\R Development Core Team\\\email{Douglas.Bates@R-project.org}}
@@ -23,14 +24,13 @@
    London maintains a web site of ``Software reviews of multilevel
    modeling packages''.  The data sets discussed in the reviews are
    available at this web site.  We have incorporated these data sets
-   in the \code{lme4} package for \RR{} and, in this vignette, provide
+   in the \code{mlmRev} package for \RR{} and, in this vignette, provide
    the results of fitting several models to these data sets.
 \end{abstract}
 <<preliminaries,echo=FALSE,print=FALSE>>=
 options(width=75)
 library(Matrix)
 library(lattice)
-library(latticeExtra)
 library(lme4)
 library(mlmRev)
 options(show.signif.stars = FALSE)
@@ -39,25 +39,170 @@ options(show.signif.stars = FALSE)
 \section{Introduction}
 \label{sec:Intro}
 
+\RR{} is an Open Source implementation of the John Chambers' S
+language for data analysis and graphics.  It was initially developed
+by Ross Ihaka and Robert Gentleman of the University of Auckland and
+now is developed and maintained by an international group of experts
+in the field of Statistical Computing.
+
+In addition to being Open Source software, which means that anyone can
+examine the source code to see exactly how the computations are being
+carried out, \RR{} is freely available from a network of archive sites
+on the Internet.  There are precompiled versions for installation on
+the Windows operating system, Mac OS X, and several distributions of
+the Linux operating system.  Because the source code is also available
+those interested in doing so can compile their own version.
+
+\RR{} provides an environment for interactive computing with data and for
+graphical display of data.  Users and developers can extend the
+capabilities of \RR{} by writing their own functions in the language
+and by creating packages of functions and data sets.  Many such
+packages are available on the archive network called CRAN
+(Comprehensive R Archive Network) for which the parent site is
+\url{http://cran.r-project.org}. One such package called \code{lme4}
+(along with a companion package called \code{Matrix}) provides
+functions to fit and display linear mixed models and generalized
+linear mixed models, which are the statisticians' names for the models
+called multilevel models or hierarchical linear models in other
+disciplines.  The \code{lattice} package provides functions to
+generate several high level graphics plots that help with the
+visualization of the types of data to which such models are fit.
+Finally, the \code{mlmRev} package provides the data sets used in the
+``Software Reviews of Multilevel Modeling Packages'' from the
+Multilevel Modeling Group at the Institute of Education in the UK.
+This package also contains several other data sets from the multilevel
+modeling literature.
+
+The software reviews mentioned above were intended to provide
+comparison of the speed and accuracy of many different packages for
+fitting multilevel models.  As such there is a standard set of
+models that fit to each of the data sets in each of the packages that
+were capable of doing the fit.  We will fit these models for
+comparative purposes but we will also do some graphical exploration of
+the data and, in some cases, discuss alternative models.
+
+We follow the general outline of the previous reviews, beginning with
+simpler structures and moving to the more complex structures.  Because
+the previous reviews were performed on older and considerably slower
+computers than the ones on which this vignette will be compiled, the
+timings produced by the \code{system.time} function and shown in the
+text should not be compared with previous timings.  They should be interpreted
 
 \section{Two-level normal models}
 \label{sec:TwoLevelNormal}
 
+In the multilevel modeling literature a two-level model has two levels
+of random variation; the per-observation noise term and random effects
+grouped according to the levels of a factor, which we call a grouping
+factor. If the response is measured on a continuous scale (more or
+less) our initial models are based on a normal distribution for the
+per-observation noise.  Thus such a model is called a ``two-level
+normal model''.
 
+
+\subsection{The Exam data}
+\label{sec:Examdata}
 <<Examprep, results=hide,echo=FALSE>>=
 lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam)
 @ 
 
-The \code{Exam} data set is used in fitting examples of two-level
-normal multilevel models.
-
+The data set called \code{Exam} provide a normalized exam score for
+4,059 students from 65 schools in inner London.  Some of the
+covariates include the school the student attended, the sex of the
+student, the school gender (boys, girls, or mixed) and the student's
+result on the Standardised London Reading test.
 <<ExamData>>=
 str(Exam)
-system.time(Em1 <- lmer(normexam ~ standLRT + sex + schgend + (1|school),
-                       Exam), gc = TRUE)
-summary(Em1)
+summary(Exam)
 @ 
 
+
+\subsection{Model fits and timings}
+\label{sec:ExamFits}
+
+The first model to fit to the Exam data incorporates fixed-effects
+terms for the pretest score, the student's sex and the school gender.
+The only random-effects term is an additive shift associated with the
+school.
+
+<<ExamFit>>=
+(Em1 <- lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam))
+@ 
+
+On modern computers this fit takes only a fraction of a second.
+
+<<Examtime>>=
+system.time(lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam))
+@ 
+
+
+\subsection{Interpreting the fit}
+\label{sec:ExamInterpret}
+
+As can be seen from the output, the default method of fitting a linear
+mixed model is restricted maximum likelihood (REML).  The estimates of
+the variance components correspond to those reported by other packages
+and given on the Multilevel Modelling Group's web site.  The estimates
+of the fixed-effects are different because the terms for \code{sex}
+and \code{schgend} use a different parameterization than in the
+reviews.  Here the reference level of \code{sex} is female and the
+coefficient labelled \code{sexM} represents the difference for males
+compared to females.  Similarly the reference level of \code{schgend}
+is \code{mixed} and the two coefficients represent the change from
+mixed to boys only and the change from mixed to girls only.  The value
+of the coefficient labelled \code{Intercept} is affected by both these
+changes as is the value of the REML criterion.
+
+To reproduce the results obtained from other packages, we must change
+the reference level for each of these factors.
+
+<<ExamRelevel>>=
+Exam$sex <- relevel(Exam$sex, "M")
+Exam$schgend <- relevel(Exam$schgend, "girls")
+(Em1 <- lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam))
+@ 
+
+The coefficients now correspond to those in the tables on the web
+site.  It happens that the REML criterion at the optimum in this fit
+is the same as in the previous fit, but you cannot depend on this
+occuring.  In general the value of the REML criterion at the optimum
+depends on the parameterization used for the fixed effects.
+
+\subsection{Further exploration}
+\label{sec:ExamExplore}
+
+In addition to the pretest score the predictor variables used in this
+model are the student's sex and the school gender, which is coded as
+having three levels.  This is some redundancy in these two variables
+in that all the students in a boys-only school should be male.  For
+graphical exploration we convert from \code{schgend} to \code{type},
+an indicator of whether the school is a mixed-sex school or a
+single-sex school, and plot the response versus the pretest score for
+each combination of sex and school type.
+<<Examplot1,fig=TRUE,echo=FALSE,width=8,height=8,include=FALSE>>=
+print(xyplot(normexam ~ standLRT | sex * type, Exam, 
+             type = c("g", "p", "smooth"), layout = c(2,2),
+             xlab = "Standardized London Reading Test score",
+             ylab = "Normalized exam score"))
+@ 
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{figs/SoftRev-Examplot1}
+  \caption{Normalized exam score versus entry test score on the
+    standardized London Reading test for 4095 students from 65 schools
+    in inner London. The panels on the left show the male students'
+    score; those on the right show the females' scores.  The top row
+    of panels shows the scores of students in single-sex schools and
+    the bottom row shows the scores of students in mixed-sex schools.}
+  \label{fig:Examplot1}
+\end{figure}
+
+Figure~\ref{fig:Examplot1} shows the even after accounting for a
+student's sex, pretest score and school type, there is considerable
+variation in the model.  We may attribute some of this variation to
+differences in schools but the fitted model indicates that this is a
+relatively small component.
+differences in schools.
 There are some interesting aspects of data management that show up in
 the analysis of these data.  The \code{student} variable is an
 identifier of the student within the \code{school}.  It would be best
