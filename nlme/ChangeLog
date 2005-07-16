@@ -1,3 +1,18 @@
+2005-07-12  Douglas Bates  <bates@bates1-home>
+
+	* inst/scripts/ch01.R: Clean up and check these scripts
+
+	* src/nlmefit.c (gls_loglik): re-write contributed by ?? (I
+	accidently deleted the email message).
+
+	* R/lme.R (lme.formula): Use nlminb if available.
+	
+
+2005-06-08  Douglas Bates  <bates@bates1-home>
+
+	* R/lme.R (predict.lme): Fixed bug when using a name for a formula
+	in original fit. (Reported by Arne.Mueller@sanofi-aventis.com)
+
 2005-05-20  Douglas Bates  <bates@bates1-home>
 
 	* man/contr.SAS.Rd: Removed
