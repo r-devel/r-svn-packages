@@ -1,4 +1,4 @@
-\documentclass[]{article}
+\documentclass[12pt]{article}
 \usepackage{Sweave}
 \usepackage{myVignette}
 \usepackage[authoryear,round]{natbib}
@@ -591,14 +591,199 @@ variation by school in the effect of sex.
 \subsection{Multilevel models for the exam data}
 \label{sec:ExamModels}
 
-At this point it is almost anticlimactic to fit a multilevel model
-based on the data exploration that has been done.
+We begin with a model that has a random effects for the intercept by
+school plus additive fixed effects for the pretest score, the
+student's sex and the school type.
 <<Em3>>=
 (Em3 <- lmer(normexam ~ standLRT + sex + type + (1|school), Exam))
-(Em4 <- lmer(normexam ~ standLRT + sex + type + (standLRT|school), Exam))
-(Em5 <- lmer(normexam ~ standLRT + sex + type + (standLRT + sex|school), Exam))
-anova(Em3, Em4, Em5)
 @ 
+Our data exploration indicated that the slope with respect to the
+pretest score may vary by school.  We can fit a model with random
+effects by school for both the slope and the intercept as
+<<Em4>>=
+(Em4 <- lmer(normexam ~ standLRT + sex + type + (standLRT|school), Exam))
+@ 
+and compare this fit to the previous fit with
+<<EmAnova>>=
+anova(Em3, Em4)
+@ 
+There is a strong evidence of a significant random effect for the
+slope by school, whether judged by AIC, BIC or the p-value for the
+likelihood ratio test.
+
+The p-value for the likelihood ratio test is based on a $\chi^2$ distribution
+with degrees of freedom calculated as the difference in the number of
+parameters in the two models.  Because one of the parameters
+eliminated from the full model in the submodel is at its boundary the
+usual asymptotics for the likelihood ratio test do not apply.
+However, it can be shown that the p-value quoted for the test is
+conservative in the sense that it is an upper bound on the 
+p-value that would be calculated say from a parametric bootstrap.
+
+Having an upper bound of $1.9\times 10^{-10}$ on the p-value can be
+regarded as ``highly significant'' evidence of the utility of the
+random effect for the slope by school.
+
+We could also add a random effect for the student's sex by school
+<<Em5>>=
+(Em5 <- lmer(normexam ~ standLRT + sex + type + (standLRT + sex|school), Exam))
+@
+Notice that the estimate of the variance of the \code{sexM} term is
+essentially zero so there is no need to test the significance of this
+variance component.  We proceed with the analysis of \code{Em4}.
+
+
+\subsection{Markov Chain Monte Carlo methods for assessing parameter variation}
+\label{sec:MCMC}
+
+An important part of the analysis of a statistical model is the
+assessment of the precision of parameter estimates, either through
+confidence intervals and confidence regions or through hypothesis
+tests on the parameters.  Sometimes such information is condensed and
+given as the parameter estimate and a standard error of the estimate,
+with the assumption that a confidence interval will be formed as the
+estimate plus/minus some multiple of the standard error.
+
+Summarizing the variability in parameter estimates with such symmetric
+intervals is appropriate if the distribution of the parameters can
+be assumed to be reasonably symmetric but this is not the case for
+variance components.  In general we expect the distribution of a
+variance component to be approximately $\chi^2$ and, depending upon the
+precision with which the component is estimated, such a distribution
+can be quite asymmetric.
+
+To examine the distribution of the parameter estimates we can use a
+parametric bootstrap or adopt a Bayesian approach and generate a
+sample from the posterior distribution of the parameters using a
+technique called Markov Chain Monte Carlo sampling. The
+\code{mcmcsamp} function applied to a fitted \code{lmer} model
+generates such a sample.
+
+<<Es4>>=
+Es4 <- mcmcsamp(Em4, 10000)
+@ 
+
+The parameter estimates in this sample are the fixed effects, the
+variance of the random per-observation noise, $\sigma^2$, the variance
+of the intercept random effect, the variance of the slope random
+effect and their covariance.  A plot of the estimated posterior
+densities of each of the parameters (Figure~\ref{fig:Examplot7})
+<<Examplot7,fig=TRUE,echo=FALSE,width=8,height=5,include=FALSE>>=
+mcmc2frm <- function(obj)
+{
+    nc <- ncol(obj)
+    nr <- nrow(obj)
+    data.frame(vals = c(obj), iter = rep(1:nr, nc),
+               par = factor(rep(1:nc, each = nr), labels =
+               colnames(obj)))
+}
+print(densityplot(~vals | par, mcmc2frm(Es4),
+                  plot = FALSE, ylab = "", xlab = "",
+                  layout = c(4,2),
+                  scales = list(relation = "free",
+                  x = list(axs = "i"))))
+@ 
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{figs/SoftRev-Examplot7}
+  \caption{Plots of the estimated posterior probability densities from
+    a Markov Chain Monte Carlo sample of the parameters in the model
+    \code{Em4}.} 
+  \label{fig:Examplot7}
+\end{figure}
+shows that the posterior densities of the fixed effects are indeed
+quite symmetric and close to a normal (or Gaussian) distribution.  The
+posterior density of $\sigma^2$ and the covariance parameter are
+reasonably symmetric but the posterior densities of the variances of
+the random effects are not.
+
+A better way of assessing possible asymmetry is to use normal
+probability plots of the samples from each of the parameters, as in
+Figure~\ref{fig:Examplot8}.
+<<Examplot8,fig=TRUE,echo=FALSE,width=8,height=5,include=FALSE>>=
+print(qqmath(~vals | par, mcmc2frm(Es4),
+             ylab = "",
+             xlab = "Quantiles of a standard normal distribution",
+             layout = c(4,2),
+             scales = list(y = list(relation = "free"),
+             x = list(axs = "i")), type = c("g", "p"), pch = "."))
+@ 
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{figs/SoftRev-Examplot8}
+  \caption{Normal probability plots of the Markov Chain Monte Carlo
+    samples from the posterior densities of the parameters in the
+    model \code{Em4}.} 
+  \label{fig:Examplot8}
+\end{figure}
+
+We can see from Figure~\ref{fig:Examplot8} that the posterior
+distributions of the fixed effects are remarkably close to the normal
+(or Gaussian) distribution.  Except for a few points in each panel,
+these panels show almost perfect linearity.  The few points that do
+deviate from the straight line in each case represent fewer than
+a dozen samples out of a total of 10,000 and are not a cause for concern.
+
+The posterior distribution of $\sigma^2$ is satisfactorily close to a
+normal distribution.  As we will see, it is not always the case that
+this parameter is close to normally distributed.  It happens that in
+this example $\sigma^2$ is very precisely determined and possible
+asymmetry in the distribution will not be noticeable over such a small
+range of values.
+
+There is noticeable asymmetry in the distribution of the variances of
+the random effects and perhaps some asymmetry in the distribution of
+the covariance of the intercept and slope random effects.
+
+Using this sample we can examine the distribution of functions of
+these parameters.  For example, \citep{box73:_bayes_infer_statis_analy} advocate
+approximating the distribution of the logarithm of a variance rather
+than the variance itself.  For a covariance we first convert it to a
+correlation then apply Fisher's z transformation (the hyperbolic
+arc-tangent) to the correlation.  The density plots and normal
+probability plots of these transformed parameters are shown in
+Figures~\ref{fig:Examplot9} and \ref{fig:Examplot10}.
+
+<<Examplot9,fig=TRUE,echo=FALSE,width=8,height=5,include=FALSE>>=
+Es4a <- Es4[,5:8]
+Es4a[,4] <- atanh(Es4a[,4]/sqrt(Es4a[,2]*Es4a[,3]))
+for (i in 1:3) Es4a[,i] <- log(Es4a[,i])
+print(densityplot(~vals | par, mcmc2frm(Es4a),
+                  plot = FALSE, ylab = "", xlab = "",
+                  layout = c(4,2),
+                  scales = list(relation = "free",
+                  x = list(axs = "i"))))
+@ 
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{figs/SoftRev-Examplot9}
+  \caption{Estimated density plots of the Markov Chain Monte Carlo
+    samples from the posterior densities of the variance and
+    covariance parameters in model \code{Em4}.  The variance
+    parameters are on the log scale and the covariance is expressed as
+    Fisher's z transformation of the correlation.}
+  \label{fig:Examplot9}
+\end{figure}
+
+<<Examplot10,fig=TRUE,echo=FALSE,width=8,height=5,include=FALSE>>=
+print(qqmath(~vals | par, mcmc2frm(Es4a),
+             ylab = "",
+             xlab = "Quantiles of a standard normal distribution",
+             layout = c(2,2),
+             scales = list(y = list(relation = "free"),
+             x = list(axs = "i")), type = c("g", "p"), pch = "."))
+@ 
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{figs/SoftRev-Examplot10}
+  \caption{Normal probability plots of the Markov Chain Monte Carlo
+    samples from the posterior densities of the variance and
+    covariance parameters in model \code{Em4}.  The variance
+    parameters are on the log scale and the covariance is expressed as
+    Fisher's z transformation of the correlation.}
+  \label{fig:Examplot10}
+\end{figure}
+
 
 
 \section{Three-level Normal Models}
@@ -687,4 +872,5 @@ system.time(mS1 <- lmer(attain ~ sex + (1|primary) + (1|second), ScotsSec), gc=T
 summary(mS1)
 @ 
 
+\bibliography{MlmSoftRev}
 \end{document}
