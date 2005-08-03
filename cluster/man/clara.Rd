@@ -88,7 +88,7 @@ clara(x, k, metric = "euclidean", stand = FALSE, samples = 5,
   \code{k}) is about
   \eqn{O(n \times p) + O(j^2)}{O(n * p) + O(j^2)} where
   \eqn{j = \code{sampsize}}, and \eqn{(n,p) = \code{dim(x)}}.
-  The CPU computing time (again neglecting small \code{k}) is about
+  The CPU computing time (again assuming small \code{k}) is about
   \eqn{O(n \times p \times j^2 \times N)}{O(n * p * j^2 * N)}, where
   \eqn{N = \code{samples}}.
 
