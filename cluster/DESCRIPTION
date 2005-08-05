@@ -1,10 +1,15 @@
 Package: cluster
-Version: 1.2-5
-Author: S original by Peter Rousseeuw <rousse@uia.ua.ac.be>, Anja Struyf
-  <Anja.Struyf@uia.ua.ac.be> and Mia Hubert <Mia.Hubert@uia.ua.ac.be>.
-  R port by Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>.
-Maintainer: Kurt Hornik <Kurt.Hornik@ci.tuwien.ac.at>
-Title: Functions for clustering
-Description: Functions for cluster analysis.
-Depends:
-License: May be freely distributed and used with R.
+Version: 1.10.2
+Date: 2005-08-06
+Priority: recommended
+Author: Martin Maechler, based on S original by Peter Rousseeuw <rousse@uia.ua.ac.be>,
+	Anja.Struyf@uia.ua.ac.be and Mia.Hubert@uia.ua.ac.be,
+	and initial R port by Kurt.Hornik@R-project.org
+Maintainer: Martin Maechler <maechler@stat.math.ethz.ch>
+Title: Cluster Analysis Extended Rousseeuw et al.
+Description: Cluster Analysis, extended original from
+  Peter Rousseeuw, Anja Struyf and Mia Hubert.
+Depends: R (>= 1.9), stats, graphics, utils
+LazyLoad: yes
+LazyData: yes
+License: GPL version 2 or later
