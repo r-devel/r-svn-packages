@@ -37,10 +37,10 @@ clara(x, k, metric = "euclidean", stand = FALSE, samples = 5,
     (\code{k}) and at most the number of observations (n = \code{nrow(x)}).}
   \item{trace}{integer indicating a \emph{trace level} for diagnostic
     output during the algorithm.}
-  \item{keep.data,keepdata}{logical indicating if the (\emph{scaled} if
+  \item{keep.data}{logical indicating if the (\emph{scaled} if
     \code{stand} is true) data should be kept in the result.
-    (\code{keepdata} is equivalent to \code{keep.data} where the former
-    is deprecated.)
+%     (\code{keepdata} is equivalent to \code{keep.data} where the former
+%     is deprecated.)
     Setting this to \code{FALSE} saves memory (and hence time), but
     disables \code{\link{clusplot}()}ing of the result.}
   \item{rngR}{logical indicating if \R's random number generator should
