@@ -22,6 +22,9 @@
   \item{medoids}{
     the medoids or representative objects of the clusters.
     It is a matrix with in each row the coordinates of one medoid.}
+  \item{i.med}{
+    the \emph{indices} of the \code{medoids} above: \code{medoids <- x[i.med,]}
+    where \code{x} is the original data matrix in \code{clara(x,*)}.}
   \item{clustering}{the clustering vector, see \code{\link{partition.object}}.}
   \item{objective}{the objective function for the final clustering of
     the entire dataset.}
