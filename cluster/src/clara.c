@@ -1,5 +1,3 @@
-/* -*- mode: c; kept-new-versions: 25; kept-old-versions: 20 -*- */-- $Id$
-
 /*   Clustering LARge Applications
      ~		~~~   ~
      Clustering program based upon the k-medoid approach,
@@ -7,8 +5,7 @@
      (for smaller data sets, please use program pam.)
  */
 
-/* $Id$
- * original Id: clara.f,v 1.10 2002/08/27 15:43:58 maechler translated by
+/* original Id: clara.f,v 1.10 2002/08/27 15:43:58 maechler translated by
  * f2c (version 20010821) and run through f2c-clean,v 1.10 2002/03/28
  */
 
@@ -81,7 +78,8 @@ void clara(int *n,  /* = number of objects */
     else
 	n_sam = *nsam;
 
-    if(*trace_lev) Rprintf("C clara(): (nsam,n) = (%d,%d);%s\n", *nsam, *n,
+    if(*trace_lev) Rprintf("C clara(): (nsam,nran,n) = (%d,%d,%d);%s\n",
+			   *nsam, *nran, *n,
 			   full_sample ? " 'full_sample',":
 			   (lrg_sam ? " 'large_sample',": ""));
     if(*rng_R && !full_sample)
@@ -212,10 +210,10 @@ void clara(int *n,  /* = number of objects */
 		}
 		for (j = 0; j < *nsam; ++j)
 		    nsel[j] = nrepr[j];
-		if(*trace_lev >= 3) {
-		    Rprintf(".. nsel[1:%d]= ", *nsam);
-		    for (jk = 0; jk < *nsam; jk++) Rprintf("%d ",nsel[jk]);
-		}
+	    }
+	    if(*trace_lev >= 3) {
+		Rprintf(".. nsel[1:%d]= ", *nsam);
+		for (jk = 0; jk < *nsam; jk++) Rprintf("%d ",nsel[jk]);
 	    }
 	    if(*trace_lev) Rprintf(" -> dysta2()\n");
 	}
@@ -248,6 +246,8 @@ void clara(int *n,  /* = number of objects */
 	bswap2(*kk, *nsam, nrepr, dys, &sky, s,
 	       /* dysma */tmp1, /*dysmb*/tmp2,
 	       /* beter[], only used here */&tmp[nsamb]);
+
+	if(*trace_lev >= 2) Rprintf(" bs2 ");
 
 	selec(*kk, *n, *jpp, *diss_kind, &zb, *nsam, has_NA, jtmd, valmd,
 	      nrepr, nsel, dys, x, nr, &nafs, ttd, radus, ratt,
