@@ -26,25 +26,28 @@ clIn4 <- c(clInd, "sample")
 ## clara() {as original code} always draws the *same* random samples !!!!
 clara(x, 2, samples = 50)[clInd]
 
-## The for() code below hangs (in some version of R / clara / ...):
+## The for() code below hangs (in some 64-bit versions of R / clara / ...):
 ## try to do things stepwise:
 xx <- x[sample(nrow(x)),]
-ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rda"
-save(xx, file=ff, compress=TRUE)
+if(FALSE) { ## only run manually
+    ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rda"
+    save(xx, file=ff, compress=TRUE)
 
-if(file.exists(ff))
-    load(ff)
-cc <- clara(xx, 2, samples=50, trace = 4)
-##                             ^^^^^^^^^ tons of output before hanging
+    if(file.exists(ff))
+        load(ff)
+}
+print(clara(xx, 2, samples=50, trace = 3)[clInd])
+##                             ^^^^^^^^^ lots of output before hanging
 ## for sample 45
 ## From that output I gather the sample indices nsel[] and all k{ran} are
 ii <- c(194, 1411,
         1430,398,570,72,27,62,1301,368,1390,991,296,431,1019,186,558,258,413,
         647,585,1352,1073,873,377,711,1498,865,1436,1335,189,622,760,226,146,
         145,1349,382,1368,934,204,303,856,1489)
+## Trying
+pp <- pam(x[ii,], k =2) # gives no problem
 
-
-for(i in 1:20)
+for(i in 1:19)
     print(clara(x[sample(nrow(x)),], 2, samples = 50)[clInd])
 
 clara(x, 2, samples = 101)[clInd]
