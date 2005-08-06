@@ -398,10 +398,8 @@ void bswap2(int kk, int nsam, int *nrepr,
 	    double *dys, double *sky, double s,
 	    double *dysma, double *dysmb, double *beter)
 {
-    int j, ja, k, kbest = -1, nbest = -1, nmax = -1;/* init for -Wall */
-    int nkj, njn, njaj, nny;
-
-    double ammax, small, asky, dzsky, dz, cmd;
+    int j, i, k, ij, kj, kbest = -1, nbest = -1;/* init for -Wall */
+    double small, asky, dzsky, dz;
 
     /* Parameter adjustments */
     --nrepr;
@@ -413,34 +411,37 @@ void bswap2(int kk, int nsam, int *nrepr,
 
 /* ====== first algorithm: BUILD. ====== */
 
-    for (j = 1; j <= nsam; ++j) {
-	nrepr[j] = 0;
-	dysma[j] = s;
+    for (i = 1; i <= nsam; ++i) {
+	nrepr[i] = 0;
+	dysma[i] = s;
     }
 
-    for(nny = 0; nny < kk; nny++) {
-	for (ja = 1; ja <= nsam; ++ja) {
-	    if (nrepr[ja] == 0) {
-		beter[ja] = 0.;
+    for(k = 0; k < kk; k++) {
+	int nmax = -1; /* -Wall */
+	double ammax, cmd;
+	ammax = 0.;
+	for (i = 1; i <= nsam; ++i) {
+	    if (nrepr[i] == 0) {
+		beter[i] = 0.;
 		for (j = 1; j <= nsam; ++j) {
-		    cmd = dysma[j] - dys[ ind_2(ja, j)];
+		    cmd = dysma[j] - dys[ ind_2(i, j)];
 		    if (cmd > 0.)
-			beter[ja] += cmd;
+			beter[i] += cmd;
+		}
+		if (ammax <= beter[i]) {
+		    /*	does < (instead of <= ) work too? -- NO! */
+		    ammax = beter[i];
+		    nmax = i;
 		}
 	    }
 	}
-	ammax = 0.;
-	for (ja = 1; ja <= nsam; ++ja) {
-	    if (nrepr[ja] == 0 && ammax <= beter[ja]) {
-		ammax = beter[ja];
-		nmax = ja;
-	    }
-	}
 	nrepr[nmax] = 1;
+
+	/* update dysma[] : dysma[j] = D(j, nearest_representative) */
 	for (j = 1; j <= nsam; ++j) {
-	    njn = ind_2(nmax, j);
-	    if (dysma[j] > dys[njn])
-		dysma[j] = dys[njn];
+	    ij = ind_2(nmax, j);
+	    if (dysma[j] > dys[ij])
+		dysma[j] = dys[ij];
 	}
     }
 
@@ -461,52 +462,50 @@ L60:
     for (j = 1; j <= nsam; ++j) {
 	dysma[j] = s;
 	dysmb[j] = s;
-	for (ja = 1; ja <= nsam; ++ja) {
-	    if (nrepr[ja] != 0) {
-		njaj = ind_2(ja, j);
-		if (dys[njaj] < dysma[j]) {
+	for (i = 1; i <= nsam; ++i) {
+	    if (nrepr[i] != 0) {
+		ij = ind_2(i, j);
+		if (dysma[j] > dys[ij]) {
 		    dysmb[j] = dysma[j];
-		    dysma[j] = dys[njaj];
-		} else if (dys[njaj] < dysmb[j])
-		    dysmb[j] = dys[njaj];
+		    dysma[j] = dys[ij];
+		} else if (dysmb[j] > dys[ij]) {
+		    dysmb[j] = dys[ij];
+		}
 	    }
 	}
     }
 
     dzsky = 1.;
-    for (k = 1; k <= nsam; ++k) {
-	if (nrepr[k] != 1) {
-	    for (ja = 1; ja <= nsam; ++ja) {
-		if (nrepr[ja] != 0) {
-		    dz = 0.;
-		    for (j = 1; j <= nsam; ++j) {
-			njaj = ind_2(ja, j);
-			nkj  = ind_2(k, j);
-			if (dys[njaj] == dysma[j]) {
-			    small = dysmb[j];
-			    if (small > dys[njaj])
-				small = dys[nkj];
-			    dz = dz - dysma[j] + small;
-			}
-			else if (dys[nkj] < dysma[j])
-			    dz = dz - dysma[j] + dys[nkj];
-		    }
-		    if (dz < dzsky) {
-			dzsky = dz;
-			kbest = k;
-			nbest = ja;
-		    }
+    for (k = 1; k <= nsam; ++k) if (nrepr[k] == 0) {
+	for (i = 1; i <= nsam; ++i) if (nrepr[i] != 0) {
+	    dz = 0.;
+	    for (j = 1; j <= nsam; ++j) {
+		ij = ind_2(i, j);
+		kj  = ind_2(k, j);
+		if (dys[ij] == dysma[j]) {
+		    small = dysmb[j];
+		    if (small > dys[ij])
+			small = dys[kj];
+		    dz = dz - dysma[j] + small;
 		}
+		else if (dys[kj] < dysma[j])
+		    dz = dz - dysma[j] + dys[kj];
+	    }
+	    if (dzsky > dz) {
+		dzsky = dz;
+		kbest = k;
+		nbest = i;
 	    }
 	}
     }
-    if (dzsky >= 0.)
-	return;
 
-    nrepr[kbest] = 1;
-    nrepr[nbest] = 0;
-    *sky += dzsky;
-    goto L60;
+
+    if (dzsky < 0.) { /* found an improving swap */
+	nrepr[kbest] = 1;
+	nrepr[nbest] = 0;
+	*sky += dzsky;
+	goto L60;
+    }
 
 } /* End of bswap2() -------------------------------------------------- */
 
