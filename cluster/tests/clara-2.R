@@ -31,10 +31,10 @@ clara(x, 2, samples = 50)[clInd]
 xx <- x[sample(nrow(x)),]
 if(FALSE) { ## only run manually
     ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rda"
-    save(xx, file=ff, compress=TRUE)
-
     if(file.exists(ff))
         load(ff)
+    else
+        save(xx, file=ff, compress=TRUE)
 }
 print(clara(xx, 2, samples=50, trace = 3)[clInd])
 ##                             ^^^^^^^^^ lots of output before hanging
