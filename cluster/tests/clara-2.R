@@ -21,8 +21,8 @@ stopifnot(identical(clara0$clustering, pam0$clustering)
 
 summary(clara2 <- clara(x, 2))
 
-clInd <- c("objective", "medoids", "clusinfo")
-clIn4 <- c(clInd, "sample")
+clInd <- c("objective", "i.med", "medoids", "clusinfo")
+clInS <- c(clInd, "sample")
 ## clara() {as original code} always draws the *same* random samples !!!!
 clara(x, 2, samples = 50)[clInd]
 
