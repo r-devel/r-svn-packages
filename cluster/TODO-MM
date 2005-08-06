@@ -3,13 +3,25 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
+o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
+		  gives a clearly better result
+		  clara(ru4, k=3, met="manhattan", sampsize=4)
+		  than current (later) clara.Rout  files...
+     -> bug since 'Mar 11 2004' (= cluster-1.[89].1 for R 1.[89]) ??
+     FIXME ?!?!?!
+
+
 o need ./CITATION  for getting a nice  citation() !!!!
 
 o plot.silhouette() : if an observation's width is == 0., draw a small stripe
 		     instead of nothing at all
 
+
 o clara():	     Should be possible to "re"start with a GIVEN "best sample"
 o pam() and clara(): Should be possible to "re"start with GIVEN medoids.
+		     now possible for pam(), not for clara();
+		     --> "synchronize src/pam.c and src/clara.c in
+		     particular bswap() vs bswap2() !!
 o pam() and clara(): With NA's, medoids "often" contain NAs even when there
 		     are only few NAs. ==> use modified d(.,.) which make
 		     NAs "bad" somehow.
