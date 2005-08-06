@@ -247,7 +247,7 @@ void clara(int *n,  /* = number of objects */
 	       /* dysma */tmp1, /*dysmb*/tmp2,
 	       /* beter[], only used here */&tmp[nsamb]);
 
-	if(*trace_lev >= 2) Rprintf(" bs2 ");
+	if(*trace_lev >= 2) Rprintf(" bs2");
 
 	selec(*kk, *n, *jpp, *diss_kind, &zb, *nsam, has_NA, jtmd, valmd,
 	      nrepr, nsel, dys, x, nr, &nafs, ttd, radus, ratt,
@@ -261,8 +261,7 @@ void clara(int *n,  /* = number of objects */
 	}
 	else if(!kall || zba > zb) { /* 1st proper sample  or  new best */
 	    kall = TRUE;
-	    if(*trace_lev >= 2)
-		Rprintf(" 1st proper or new best: zb= %g", zb);
+	    if(*trace_lev >= 2) Rprintf(" 1st proper or new best:");
 	    zba = zb;
 	    for (jk = 0; jk < *kk; ++jk) {
 		ttbes[jk] = ttd	 [jk];
@@ -273,8 +272,8 @@ void clara(int *n,  /* = number of objects */
 	    for (js = 0; js < *nsam; ++js)
 		nbest[js] = nsel[js];
 	    sx = s;
-	} else if(*trace_lev >= 2) Rprintf(" zb= %g", zb);
-	if(*trace_lev >= 2) Rprintf("\n");
+	}
+	if(*trace_lev >= 2) Rprintf(" obj= %g\n", zb/rnn);
 
 	if(full_sample) break; /* out of resampling */
     }
