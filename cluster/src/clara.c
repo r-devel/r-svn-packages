@@ -13,6 +13,7 @@
 
 #include <R_ext/Print.h>/* for diagnostics */
 #include <R_ext/Random.h>/* when R's RNG is used */
+#include <R_ext/Utils.h>/* for interrupting */
 
 #include "cluster.h"
 #include "ind_2.h"
@@ -498,6 +499,8 @@ L60:
 	}
     }
 
+    /* once had some 64-bit compiler / data configuration that looped forever*/
+    R_CheckUserInterrupt();
 
     if (dzsky < 0.) { /* found an improving swap */
 	nrepr[kbest] = 1;
