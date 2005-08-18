@@ -27,7 +27,7 @@
    in the \code{mlmRev} package for \RR{} and, in this vignette, provide
    the results of fitting several models to these data sets.
 \end{abstract}
-<<preliminaries,echo=FALSE,print=FALSE,results="hide">>=
+<<preliminaries,echo=FALSE,print=FALSE,results=hide>>=
 options(width=80, show.signif.stars = FALSE,
         lattice.theme = function() canonical.theme("pdf", color = FALSE))
 library(Matrix)
