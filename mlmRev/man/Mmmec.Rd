@@ -34,6 +34,9 @@
 \examples{
 str(Mmmec)
 summary(Mmmec)
-(fm1 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region), Mmmec, poisson))
+(fm1 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region), Mmmec,
+poisson))
+(fm2 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region), Mmmec,
+             poisson, method = "AGQ"))
 }
 \keyword{datasets}
