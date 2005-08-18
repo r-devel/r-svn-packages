@@ -110,7 +110,7 @@ model'' even though it has only one grouping factor for the random effects.
 
 \subsection{The Exam data}
 \label{sec:Examdata}
-<<Examprep, results=hide,echo=FALSE>>=
+<<Examprep,results=hide,echo=FALSE>>=
 lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam)
 @ 
 
