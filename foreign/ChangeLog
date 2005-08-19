@@ -1,3 +1,8 @@
+2005-08-19  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/Rdbfread.c, man/read.dbf.c: read over-wide numeric fields as
+	doubles.
+
 2005-08-15  Thomas Lumley <tlumley@u.washington.edu>
 
 	* R/read.spss.R, read.spss.Rd: reverse the order of factor levels
@@ -5,7 +10,7 @@
 	
 2005-07-13  Thomas Lumley <tlumley@u.washington.edu>
 
-        * DESCRIPTION: version is 0.8-9
+	* DESCRIPTION: version is 0.8-9
 
 2005-07-13  Brian Ripley <Brian.Ripley@R-project.org>
 
