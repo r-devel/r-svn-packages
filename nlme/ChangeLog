@@ -1,3 +1,12 @@
+2005-08-25  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/gls.R: Added option "optimMethod" to gls, gnls, and lme.
+
+2005-07-19  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/gnls.R: Added definition of convIter when using nlminb or when
+	using optim.  Reindented this and other R source files.
+
 2005-07-12  Douglas Bates  <bates@bates1-home>
 
 	* inst/scripts/ch01.R: Clean up and check these scripts
