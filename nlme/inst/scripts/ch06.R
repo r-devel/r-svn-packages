@@ -17,19 +17,16 @@ fm1Indom.nls <- nls(conc ~ SSbiexp(time, A1, lrc1, A2, lrc2),
   data = Indometh)
 summary(fm1Indom.nls)
 plot(fm1Indom.nls, Subject ~ resid(.), abline = 0)
-fm1Indom.lis <- nlsList(conc ~ SSbiexp(time, A1, lrc1, A2, lrc2),
-                        data = Indometh)
-fm1Indom.lis
+(fm1Indom.lis <- nlsList(conc ~ SSbiexp(time, A1, lrc1, A2, lrc2),
+                        data = Indometh))
 plot(intervals(fm1Indom.lis))
-fm1Indom.nlme <- nlme(fm1Indom.lis,
+(fm1Indom.nlme <- nlme(fm1Indom.lis,
                       random = pdDiag(A1 + lrc1 + A2 + lrc2 ~ 1),
-                      control = list(tolerance = 0.0001))
-fm1Indom.nlme
+                      control = list(tolerance = 0.0001)))
 fm2Indom.nlme <- update(fm1Indom.nlme,
                         random = pdDiag(A1 + lrc1 + A2 ~ 1))
 anova(fm1Indom.nlme, fm2Indom.nlme)
-fm3Indom.nlme <- update(fm2Indom.nlme, random = A1+lrc1+A2 ~ 1)
-fm3Indom.nlme
+(fm3Indom.nlme <- update(fm2Indom.nlme, random = A1+lrc1+A2 ~ 1))
 fm4Indom.nlme <-
     update(fm3Indom.nlme,
            random = pdBlocked(list(A1 + lrc1 ~ 1, A2 ~ 1)))
@@ -81,20 +78,20 @@ fm1Pheno.ranef <- ranef(fm1Pheno.nlme, augFrame = TRUE)
 plot(fm1Pheno.ranef, form = lCl ~ Wt + ApgarInd)
 plot(fm1Pheno.ranef, form = lV ~ Wt + ApgarInd)
 options(contrasts = c("contr.treatment", "contr.poly"))
-if (exists("nlminb", mode = "function")) {
-    print(fm2Pheno.nlme <-
-          update(fm1Pheno.nlme,
-                 fixed = list(lCl ~ Wt, lV ~ Wt + ApgarInd),
-                 start = c(-5.0935, 0, 0.34259, 0, 0),
-                 control = list(pnlsTol = 1e-6, maxIter = 500)))
-    ## pnlsTol reduced to prevent convergence problems in PNLS step
-    print(summary(fm2Pheno.nlme))
-    print(fm3Pheno.nlme <-
-          update(fm2Pheno.nlme,
-                 fixed = lCl + lV ~ Wt,
-                 start = fixef(fm2Pheno.nlme)[-5]))
-    print(plot(fm3Pheno.nlme, conc ~ fitted(.), abline = c(0,1)))
-}
+## This fit just ping-pongs
+##fm2Pheno.nlme <-
+##    update(fm1Pheno.nlme,
+##           fixed = list(lCl ~ Wt, lV ~ Wt + ApgarInd),
+##           start = c(-5.0935, 0, 0.34259, 0, 0),
+##           control = list(pnlsTol = 1e-4, maxIter = 500,
+##           msVerbose = TRUE))
+##summary(fm2Pheno.nlme)
+##fm3Pheno.nlme <-
+##    update(fm2Pheno.nlme,
+##           fixed = lCl + lV ~ Wt,
+##           start = fixef(fm2Pheno.nlme)[-5])
+##plot(fm3Pheno.nlme, conc ~ fitted(.), abline = c(0,1))
+
 # cleanup
 
 proc.time()

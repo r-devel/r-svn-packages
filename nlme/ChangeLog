@@ -2,6 +2,17 @@
 
 	* R/gls.R: Added option "optimMethod" to gls, gnls, and lme.
 
+2005-08-24  Douglas Bates  <bates@wisc.edu>
+
+	* R/lme.R (print.intervals.lme): Replace calls to print.matrix by
+	print(as.matrix()).
+
+2005-07-25  Douglas Bates  <bates@bates1-home>
+
+	* inst/scripts/ch08.R: Cleaned up examples in ch04, ch06, ch08.
+
+	* src/matrix.h: Include R_Ext/Linpack.h in addition to R_Ext/Applic.h
+
 2005-07-19  Douglas Bates  <bates@stat.wisc.edu>
 
 	* R/gnls.R: Added definition of convIter when using nlminb or when
