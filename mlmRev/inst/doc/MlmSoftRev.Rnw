@@ -38,6 +38,7 @@ library(lattice)
 library(lme4)
 library(mlmRev)
 library(vcd)
+set.seed(1234321)
 @
 
 \section{Introduction}
@@ -660,7 +661,7 @@ technique called Markov Chain Monte Carlo sampling. The
 generates such a sample.
 
 <<Es4>>=
-Es4 <- mcmcsamp(Em4, 10000)
+Es4 <- mcmcsamp(Em4, 10000, trans = FALSE)
 @ 
 
 The parameter estimates in this sample are the fixed effects, the
@@ -872,6 +873,7 @@ reproduce this fit as
 system.time(Cm1 <- lmer(use ~ age+urban+livch+(1|district),
                         Contraception, binomial))
 Cm1
+if (exists("nlminb", mode = "function")) {
 system.time(Cm2 <- lmer(use ~ age+urban+livch+(1|district),
                         Contraception, binomial,
                         method = "Laplace"))
@@ -880,13 +882,16 @@ system.time(Cm3 <- lmer(use ~ age+urban+livch+(1|district),
                         Contraception, binomial,
                         method = "AGQ"))
 Cm3
+}
 system.time(Cm4 <- lmer(use ~ age+urban+livch+(urban|district),
                         Contraception, binomial))
 Cm4
+if (exists("nlminb", mode = "function")) {
 system.time(Cm5 <- lmer(use ~ age+urban+livch+(urban|district),
                         Contraception, binomial,
                         method = "Laplace"))
 Cm5
+}
 @ 
 
 
@@ -937,9 +942,11 @@ live children and those who don't.
 
 We include a quadratic term in \code{age}
 <<Cm6>>=
+if (exists("nlminb", mode = "function")) {
 (Cm6 <- lmer(use ~ age + I(age^2) + urban + livch + (1|district),
              Contraception, binomial, method = "AGQ"))
 anova(Cm1, Cm6)
+}
 @ 
 and we see that, as indicated by the plots, the quadratic term is highly significant.
 
@@ -948,9 +955,11 @@ primarily the difference between no children and any children by
 fitting a model with the indicator \code{livch == 0} as one of the
 terms in the fixed effects.
 <<Cm7>>=
+if (exists("nlminb", mode = "function")) {
 (Cm7 <- lmer(use ~ age + I(age^2) + urban + (livch == 0) + (1|district),
              Contraception, binomial, method = "AGQ"))
 anova(Cm6, Cm7)
+}
 @ 
 
 Based on the change in the log-likelihood the simpler model is
@@ -961,8 +970,10 @@ Contraception$children <- with(Contraception, factor(ifelse(livch == 0, "N", "Y"
 @ 
 so we can check for an interaction with the \code{urban} factor.
 <<Cm8>>=
+if (exists("nlminb", mode = "function")) {
 (Cm8 <- lmer(use ~ age + I(age^2) + urban * children + (1|district),
              Contraception, binomial, method = "AGQ"))
+}
 @ 
 The interaction is not significant.
 
@@ -970,12 +981,14 @@ We can check if there is significant variation by district in the
 effect of urban versus rural or in the effect of any children versus
 no children by fitting further models
 <<Cm9>>=
+if (exists("nlminb", mode = "function")) {
 (Cm9 <- lmer(use ~ age + I(age^2) + urban + children + (urban|district),
              Contraception, binomial, method = "Laplace"))
 anova(Cm7, Cm9)
 (Cm10 <- lmer(use ~ age + I(age^2) + urban + children + (children|district),
              Contraception, binomial, method = "Laplace"))
 anova(Cm7, Cm10)
+}
 @ 
 
 Variation due to district in the effect of any children versus no
@@ -994,16 +1007,20 @@ model does not allow for random effects of dimension greater than one
 so we produce a sample from the posterior distribution of the
 parameters in model \code{Cm11}
 <<Cm11>>=
+if (exists("nlminb", mode = "function")) {
 (Cm11 <- lmer(use ~ age + I(age^2) + urban + children + (1|district), Contraception, binomial, method = "AGQ"))
-Cs11 <- mcmcsamp(Cm11, 10000)
+Cs11 <- mcmcsamp(Cm11, 10000, trans = FALSE)
+}
 @ 
 Density plots (Figure~\ref{fig:Contra2})
 <<Contra2,fig=TRUE,echo=FALSE,width=8,height=5,include=FALSE>>=
+if (exists("nlminb", mode = "function")) {
 print(densityplot(~vals | par, mcmc2frm(Cs11),
                   plot = FALSE, ylab = "", xlab = "",
                   layout = c(3,2),
                   scales = list(relation = "free",
                   x = list(axs = "i"))))
+}
 @ 
 \begin{figure}[tbp]
   \centering
@@ -1015,6 +1032,7 @@ print(densityplot(~vals | par, mcmc2frm(Cs11),
 \end{figure}
 and normal probability plots (Figure~\ref{fig:Contra3})
 <<Contra3,fig=TRUE,echo=FALSE,width=8,height=5,include=FALSE>>=
+if (exists("nlminb", mode = "function")) {
 print(qqmath(~vals | par, mcmc2frm(Cs11),
              ylab = "",
              xlab = "Quantiles of a standard normal distribution",
@@ -1022,6 +1040,7 @@ print(qqmath(~vals | par, mcmc2frm(Cs11),
              scales = list(y = list(relation = "free"),
              x = list(axs = "i")), type = c("g", "p"),
              pch = ".", cex = 1.5))
+}
 @ 
 \begin{figure}[tbp]
   \centering

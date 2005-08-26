@@ -1,4 +1,9 @@
-2005-07-12  Douglas Bates  <bates@localhost.localdomain>
+2005-08-26  Douglas Bates  <bates@wisc.edu>
+
+	* man/Mmmec.Rd: Added example and then conditionalized the
+	example using AGQ.
+
+2005-07-12  Douglas Bates  <bates@wisc.edu>
 
 	* inst/doc/MlmSoftRev.Rnw: Expanded discussion considerably.
 

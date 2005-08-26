@@ -1,6 +1,6 @@
 
-R : Copyright 2004, The R Foundation for Statistical Computing
-Version 2.0.1  (2004-11-15), ISBN 3-900051-07-0
+R : Copyright 2005, The R Foundation for Statistical Computing
+Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -15,9 +15,10 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(mlmRev)
-Loading required package: lme4 
-Loading required package: Matrix 
-Loading required package: latticeExtra 
+Loading required package: lme4
+Loading required package: Matrix
+Loading required package: lattice
+Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > (fm1 <- lmer(math ~ year + (1|childid) + (1|schoolid), egsingle))
 Linear mixed-effects model fit by REML
@@ -44,16 +45,16 @@ Formula: math ~ year + (1 | childid) + (year | schoolid)
  16496.38 16544.58 -8241.188   16471.87     16482.38
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- childid  (Intercept) 0.672304 0.81994        
- schoolid (Intercept) 0.166812 0.40843        
+ childid  (Intercept) 0.672300 0.81994        
+ schoolid (Intercept) 0.166811 0.40843        
           year        0.011584 0.10763  0.443 
- Residual             0.324516 0.56966        
+ Residual             0.324517 0.56966        
 # of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
                Estimate  Std. Error   DF t value  Pr(>|t|)
-(Intercept)   -0.777091    0.058231 7228 -13.345 < 2.2e-16
-year           0.762961    0.015333 7228  49.760 < 2.2e-16
+(Intercept)   -0.777090    0.058231 7228 -13.345 < 2.2e-16
+year           0.762961    0.015333 7228  49.761 < 2.2e-16
 > (fm3 <- lmer(math ~ year + (year|childid) + (1|schoolid), egsingle))
 Linear mixed-effects model fit by REML
 Formula: math ~ year + (year | childid) + (1 | schoolid) 
@@ -62,33 +63,33 @@ Formula: math ~ year + (year | childid) + (1 | schoolid)
  16531.50 16579.7 -8258.749   16505.29     16517.50
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- childid  (Intercept) 0.648107 0.80505        
+ childid  (Intercept) 0.648105 0.80505        
           year        0.021517 0.14669  0.463 
- schoolid (Intercept) 0.153657 0.39199        
- Residual             0.301197 0.54881        
+ schoolid (Intercept) 0.153678 0.39202        
+ Residual             0.301196 0.54881        
 # of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
                Estimate  Std. Error   DF t value  Pr(>|t|)
-(Intercept) -7.9307e-01  5.6096e-02 7228 -14.138 < 2.2e-16
+(Intercept) -7.9307e-01  5.6099e-02 7228 -14.137 < 2.2e-16
 year         7.4716e-01  6.3566e-03 7228 117.541 < 2.2e-16
 > (fm4 <- lmer(math ~ year+(year|childid)+(year|schoolid), egsingle))
 Linear mixed-effects model fit by REML
 Formula: math ~ year + (year | childid) + (year | schoolid) 
    Data: egsingle 
-      AIC      BIC   logLik MLdeviance REMLdeviance
- 16354.74 16416.72 -8168.37   16326.25     16336.74
+      AIC      BIC    logLik MLdeviance REMLdeviance
+ 16354.74 16416.72 -8168.372   16326.25     16336.74
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- childid  (Intercept) 0.640530 0.80033        
-          year        0.011254 0.10609  0.551 
- schoolid (Intercept) 0.169313 0.41148        
-          year        0.011251 0.10607  0.403 
- Residual             0.301433 0.54903        
+ childid  (Intercept) 0.640699 0.80044        
+          year        0.011251 0.10607  0.550 
+ schoolid (Intercept) 0.168505 0.41049        
+          year        0.011241 0.10603  0.406 
+ Residual             0.301431 0.54903        
 # of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
                Estimate  Std. Error   DF t value  Pr(>|t|)
-(Intercept)   -0.779111    0.058411 7228 -13.338 < 2.2e-16
-year           0.763102    0.015391 7228  49.580 < 2.2e-16
+(Intercept)   -0.779113    0.058294 7228 -13.365 < 2.2e-16
+year           0.763096    0.015386 7228  49.597 < 2.2e-16
 > q("no")

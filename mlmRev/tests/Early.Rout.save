@@ -1,6 +1,6 @@
 
 R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.2.0 Under development (unstable) (2005-05-11), ISBN 3-900051-07-0
+Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -18,54 +18,29 @@ Type 'q()' to quit R.
 Loading required package: lme4
 Loading required package: Matrix
 Loading required package: lattice
+Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > Early$tos <- Early$age - 0.5
-> (fm1 <- lmer(cog ~ tos * trt + (tos|id), Early, con = list(EMv = 1, msV = 1)))
-  EM iterations
-  0 2390.042 ( 1.12500  1.31250  0.00000:    6.65    -19.7    -10.3)
-  1 2380.164 ( 1.06860  1.78653 0.187752:    10.7    -9.33    -5.83)
-  2 2374.945 (0.993828  2.19093 0.324855:    12.6    -5.42    -4.86)
-  3 2371.351 (0.923689  2.55251 0.441255:    13.5    -3.36    -4.76)
-  4 2368.648 (0.867359  2.88422 0.550130:    13.7    -2.06    -4.84)
-  5 2366.568 (0.827087  3.19217 0.656538:    13.4    -1.19    -4.90)
-  6 2364.965 (0.801827  3.47930 0.761691:    12.6   -0.575    -4.84)
-  7 2363.732 (0.789187  3.74722 0.865148:    11.5   -0.156    -4.66)
-  8 2362.785 (0.786467  3.99707 0.965944:    10.3    0.123    -4.40)
-  9 2362.056 (0.791155  4.22987  1.06311:    9.15    0.296    -4.07)
- 10 2361.494 (0.801122  4.44673  1.15591:    8.02    0.395    -3.71)
- 11 2361.059 (0.814671  4.64876  1.24385:    6.98    0.439    -3.35)
- 12 2360.720 (0.830494  4.83714  1.32669:    6.05    0.447    -2.99)
- 13 2360.455 (0.847617  5.01301  1.40439:    5.22    0.431    -2.65)
- 14 2360.247 (0.865334  5.17748  1.47706:    4.50    0.400    -2.34)
- 15 2360.081 (0.883141  5.33162  1.54488:    3.88    0.360    -2.06)
- 16 2359.950 (0.900693  5.47641  1.60812:    3.34    0.316    -1.80)
- 17 2359.844 (0.917761  5.61275  1.66708:    2.87    0.271    -1.57)
- 18 2359.758 (0.934198  5.74148  1.72207:    2.47    0.227    -1.37)
- 19 2359.688 (0.949921  5.86335  1.77338:    2.12    0.185    -1.19)
- 20 2359.631 (0.964889  5.97903  1.82134:    1.82    0.145    -1.02)
-iter    0 value 2359.524668
-iter   10 value 2358.755460
-final  value 2358.742175 
-stopped after 18 iterations
+> (fm1 <- lmer(cog ~ tos * trt + (tos|id), Early))
 Linear mixed-effects model fit by REML
 Formula: cog ~ tos * trt + (tos | id) 
    Data: Early 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 2374.742 2404.609 -1179.371   2369.943     2358.742
+ 2374.743 2404.609 -1179.371   2369.945     2358.743
 Random effects:
  Groups   Name        Variance Std.Dev. Corr   
- id       (Intercept) 166.298  12.8956         
-          tos          10.536   3.2460  -1.000 
- Residual              75.497   8.6889         
+ id       (Intercept) 165.625  12.8695         
+          tos          10.332   3.2144  -1.000 
+ Residual              75.477   8.6878         
 # of obs: 309, groups: id, 103
 
 Fixed effects:
             Estimate Std. Error  DF  t value Pr(>|t|)
-(Intercept) 118.4074     2.7587 305  42.9220  < 2e-16
-tos         -21.1333     1.8946 305 -11.1544  < 2e-16
-trtY          4.2190     3.6762 305   1.1476  0.25201
-tos:trtY      5.2713     2.5248 305   2.0878  0.03765
+(Intercept) 118.4074     2.7558 305  42.9673   <2e-16
+tos         -21.1333     1.8932 305 -11.1629   <2e-16
+trtY          4.2190     3.6724 305   1.1489   0.2515
+tos:trtY      5.2713     2.5229 305   2.0894   0.0375
 Warning message:
-optim returned message ERROR: ABNORMAL_TERMINATION_IN_LNSRCH 
- in: "LMEoptimize<-"(`*tmp*`, value = list(maxIter = 50, msMaxIter = 50,  
+optim or nlminb returned message ERROR: ABNORMAL_TERMINATION_IN_LNSRCH 
+ in: "LMEoptimize<-"(`*tmp*`, value = list(maxIter = 200, tolerance = 1.49011611938477e-08,  
 > q("no")

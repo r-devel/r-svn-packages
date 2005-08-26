@@ -1,6 +1,6 @@
 
-R : Copyright 2004, The R Foundation for Statistical Computing
-Version 2.0.1  (2004-11-15), ISBN 3-900051-07-0
+R : Copyright 2005, The R Foundation for Statistical Computing
+Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -15,9 +15,10 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(mlmRev)
-Loading required package: lme4 
-Loading required package: Matrix 
-Loading required package: latticeExtra 
+Loading required package: lme4
+Loading required package: Matrix
+Loading required package: lattice
+Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > (fm1 <- lmer(langPOST ~ IQ.ver.cen+avg.IQ.ver.cen+(IQ.ver.cen|schoolNR),
 +              bdf))
@@ -28,14 +29,14 @@ Formula: langPOST ~ IQ.ver.cen + avg.IQ.ver.cen + (IQ.ver.cen | schoolNR)
  15231.87 15272.02 -7608.937   15213.55     15217.87
 Random effects:
  Groups   Name        Variance Std.Dev. Corr   
- schoolNR (Intercept)  8.07702 2.84201         
-          IQ.ver.cen   0.20806 0.45614  -0.642 
- Residual             41.34942 6.43035         
+ schoolNR (Intercept)  8.07272 2.84125         
+          IQ.ver.cen   0.20825 0.45635  -0.642 
+ Residual             41.35008 6.43040         
 # of obs: 2287, groups: schoolNR, 131
 
 Fixed effects:
                  Estimate Std. Error   DF  t value  Pr(>|t|)
-(Intercept)      40.74956    0.28810 2284 141.4429 < 2.2e-16
-IQ.ver.cen        2.45983    0.08364 2284  29.4097 < 2.2e-16
-avg.IQ.ver.cen    1.40879    0.32375 2284   4.3515 1.412e-05
+(Intercept)    4.0750e+01 2.8804e-01 2284 141.4714 < 2.2e-16
+IQ.ver.cen     2.4599e+00 8.3651e-02 2284  29.4063 < 2.2e-16
+avg.IQ.ver.cen 1.4087e+00 3.2369e-01 2284   4.3518 1.410e-05
 > q("no")
