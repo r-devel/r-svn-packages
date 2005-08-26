@@ -1,3 +1,9 @@
+2005-08-26  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/pfm-read.c, src/sfm-read.c, src/spss.c: replace the
+	abuse of passing an int as void *, which correctly warned on
+	64-bit platforms.
+
 2005-08-19  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/Rdbfread.c, man/read.dbf.c: read over-wide numeric fields as
