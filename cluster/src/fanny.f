@@ -42,7 +42,7 @@ C
       if(dss(l).gt.s)s=dss(l)
       if(l.lt.nhalf)go to 130
       call fuzzy(nn,nhalf,p,dp,pt,dss,esp,ef,eda,edb,kk,obj,r,tol,maxit)
-      call caddy(nn,p,kk,ktrue,nfuzz,ncluv,pt,nelem)
+      call caddy(nn,p,kk,ktrue,nfuzz,ncluv,pt)
       if(2.le.ktrue .and. ktrue.lt.nn) then
 	 call fygur(ktrue,nn,kk,nhalf,ncluv,nsend,nelem,
      1	      negbr,syl,dvec,pt,ttsyl,dss,s,sylinf)
@@ -205,7 +205,7 @@ C
 C
 C     Convergence check
 C
-      if((crt/cryt-1.) .le. tol) go to 500
+      if(dabs(cryt - crt) .le. tol*cryt) go to 500
       if(it .ge. nit) then
 c        non-convergence
          nit = -1
@@ -232,11 +232,11 @@ C
       end
 C
 C
-      subroutine caddy(nn,p,k,ktrue,nfuzz,ncluv,rdraw,nelem)
+      subroutine caddy(nn,p,k,ktrue,nfuzz,ncluv,rdraw)
 
 c     Args
       integer nn, k, ktrue
-      integer nfuzz(k), ncluv(nn), nelem(nn)
+      integer nfuzz(k), ncluv(nn)
       double precision p(nn,k), rdraw(k)
 C
 c     VARs
