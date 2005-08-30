@@ -27,7 +27,7 @@ function(x, metric = c("euclidean","manhattan"), stand = FALSE, type = list())
 	}
 	tA <- type$asymm
 	tS <- type$symm
-	if((!is.null(tA) || !is.null(tS))) {
+	if(!is.null(tA) || !is.null(tS)) {
 	    ## tA and tS might be character and integer!
 	    d.bin <- cbind(as.data.frame(x[, tA, drop= FALSE]),
 					 x[, tS, drop= FALSE])
