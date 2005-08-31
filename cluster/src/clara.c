@@ -479,17 +479,16 @@ L60:
     for (k = 1; k <= nsam; ++k) if (nrepr[k] == 0) {
 	for (i = 1; i <= nsam; ++i) if (nrepr[i] != 0) {
 	    dz = 0.;
+	    /* dz := T_{ih} := sum_j C_{jih}  [p.104] : */
 	    for (j = 1; j <= nsam; ++j) {
 		ij = ind_2(i, j);
 		kj  = ind_2(k, j);
 		if (dys[ij] == dysma[j]) {
-		    small = dysmb[j];
-		    if (small > dys[ij])
-			small = dys[kj];
-		    dz = dz - dysma[j] + small;
+		    small = dysmb[j] > dys[ij] ? dys[kj] : dysmb[j];
+		    dz += (- dysma[j] + small);
 		}
 		else if (dys[kj] < dysma[j])
-		    dz = dz - dysma[j] + dys[kj];
+		    dz += (- dysma[j] + dys[kj]);
 	    }
 	    if (dzsky > dz) {
 		dzsky = dz;
