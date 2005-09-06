@@ -33,7 +33,7 @@ ellipsoidhull(x, tol=0.01, maxit=5000,
   \code{\link{clusplot.default}}.\cr
   The problem can be seen as a special case of the ``Min.Vol.''
   ellipsoid of which a more more flexible and general implementation is
-  \code{\link[lqs]{cov.mve}} in the \code{lqs} package.
+  \code{\link[MASS]{cov.mve}} in the \code{MASS} package.
 }
 \value{
   an object of class \code{"ellipsoid"}, basically a \code{\link{list}}
@@ -58,7 +58,7 @@ ellipsoidhull(x, tol=0.01, maxit=5000,
   Displaying a Clustering with CLUSPLOT,
   \emph{Computational Statistics and Data Analysis}, \bold{30}, 381--392.\cr
   A version of this is available as technical report from
-  \url{http://win-www.uia.ac.be/u/statis/abstract/Disclu99.htm}
+  \url{http://www.agoras.ua.ac.be/abstract/Disclu99.htm}
 
   D.N. Titterington. (1976)
   Algorithms for computing {D}-optimal design on finite design spaces.  In
