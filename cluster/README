@@ -9,7 +9,7 @@ ORIGINAL README :
 See http://www.stat.ucla.edu/journals/jss/ for the original version.
 
 The current port is based on material from
-	http://win-www.uia.ac.be/u/statis/
+	http://www.agoras.ua.ac.be/
 
 KH <Kurt.Hornik@ci.tuwien.ac.at> 1998/05/21
 
@@ -34,9 +34,7 @@ TODO {see ./DONE-MM for things done}
     from twins, and hence have a pltree() method for plotting the
     hierarchical tree.
 
- 8) Make bannerplot() an (possibly later namespace internal ?)
-    standalone function called from both  plot.agnes() and plot.diana(),
-    possibly even plot.mona()! Think about "merging" of these plot.* methods.
+ 8b) Think about "merging" the plot.agnes and plot.diana methods.
 
 ------------------
 
