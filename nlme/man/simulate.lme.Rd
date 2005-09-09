@@ -1,6 +1,6 @@
 % $Id: simulate.lme.Rd,v 1.6 2002/03/05 14:59:39 bates Exp $
 \name{simulate.lme}
-\title{simulate lme models}
+\title{Simulate results from lme models}
 \usage{
 simulate.lme(object, nsim, seed, m2, method, niterEM, useGen, \dots)
 }
