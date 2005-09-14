@@ -255,7 +255,7 @@ residuals.lmeStruct     Calculate lmeStruct Residuals
 residuals.lmList        Extract lmList Residuals
 residuals.nlmeStruct    Calculate nlmeStruct Residuals
 reStruct                Random Effects Structure
-simulate.lme            simulate lme models
+simulate.lme            Simulate results from lme models
 solve.pdMat             Calculate Inverse of a Positive-Definite Matrix
 solve.reStruct          Apply Solve to an reStruct Object
 Soybean                 Growth of soybean plants
