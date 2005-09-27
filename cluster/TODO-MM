@@ -148,3 +148,9 @@ TODO  (were in ./README_MM which is now eliminated)
 
  4) Eliminate the many Fortran (g77 -Wall) warnings of the form
     >> mona.f:101: warning: `jma' might be used uninitialized in this function
+
+---------
+
+9) man/daisy.Rd  should mention 'Gower (1971)' ;
+   mention that Kaufman & Rousseeuw *generalize* this;
+   and probably show the full formula from Kauf+Rouss p.35
