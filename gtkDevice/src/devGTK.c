@@ -235,7 +235,7 @@ static void SetFont(NewDevDesc *dd, gint face, gint size)
 
     if (face < 1 || face > 5) face = 1;
 
-    if (!gtkd->usefixed &&
+    if (gtkd->wgc && !gtkd->usefixed &&
 	(size != gtkd->fontsize	|| face != gtkd->fontface)) {
 	tmp_font = RGTKLoadFont(face, size);
 	if(tmp_font) {
@@ -727,7 +727,7 @@ static void GTK_Activate(NewDevDesc *dd)
 
     gtkd = (gtkDesc *) dd->deviceSpecific;
     g_return_if_fail(gtkd != NULL);
-    if(!gtkd->window)
+    if(!gtkd->window || !gtkd->wgc)
 	return;
 
     devnum = Rf_devNumber((DevDesc*)dd) + 1;
@@ -747,7 +747,7 @@ static void GTK_Deactivate(NewDevDesc *dd)
 
     gtkd = (gtkDesc *) dd->deviceSpecific;
     g_return_if_fail(gtkd != NULL);
-    if(!gtkd->window)
+    if(!gtkd->window || !gtkd->wgc)
 	return;
 
     devnum = Rf_devNumber((DevDesc*)dd) + 1;
@@ -770,7 +770,7 @@ static void GTK_Rect(double x0, double y0, double x1, double y1,
     GdkColor gcol_fill, gcol_outline;
 
 
-    if(!gtkd->drawing->window)
+    if(!gtkd->drawing->window || !gtkd->wgc)
 	return;
 
     if(x0 > x1) {
@@ -829,7 +829,7 @@ static void GTK_Circle(double x, double y, double r,
     gint ix, iy, ir;
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
 
-    if(!gtkd->drawing->window)
+    if(!gtkd->drawing->window || !gtkd->wgc)
 	return;
 
     ix = x - r;
@@ -874,7 +874,7 @@ static void GTK_Line(double x1, double y1, double x2, double y2,
     GdkColor gcol_fill;
     gint ix1, iy1, ix2, iy2;
 
-    if(!gtkd->drawing->window)
+    if(!gtkd->drawing->window || !gtkd->wgc)
 	return;
 
     ix1 = (gint) x1;  iy1 = (gint) y1;
@@ -902,7 +902,7 @@ static void GTK_Polyline(int n, double *x, double *y,
     GdkPoint *points;
     int i;
 
-    if(!gtkd->drawing->window)
+    if(!gtkd->drawing->window || !gtkd->wgc)
 	return;
 
     points = g_new0(GdkPoint, n);
@@ -936,7 +936,7 @@ static void GTK_Polygon(int n, double *x, double *y,
     GdkPoint *points;
     int i;
  
-    if(!gtkd->drawing->window)
+    if(!gtkd->drawing->window || !gtkd->wgc)
 	return;
 
     points = g_new0(GdkPoint, n + 1);
@@ -980,7 +980,7 @@ static void GTK_Text(double x, double y, char *str,
     gint size;
     double rrot = DEG2RAD * rot;
 
-    if(!gtkd->drawing->window)
+    if(!gtkd->drawing->window || !gtkd->wgc)
 	return;
     size = gc->cex * gc->ps + 0.5;
     SetFont(dd, gc->fontface, size);

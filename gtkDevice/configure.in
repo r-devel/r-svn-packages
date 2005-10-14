@@ -1,6 +1,6 @@
 AC_INIT(src/devices.c)
 
-AC_ARG_WITH(gtk, [--with-gtk Version of GTK+ to use], GTK_VERSION="${withval}",GTK_VERSION="1.2")
+AC_ARG_WITH(gtk, [--with-gtk Version of GTK+ to use], GTK_VERSION="${withval}", GTK_VERSION="1.2")
 
 if test -z ${GTK_VERSION##2.0}; then
    AC_CHECK_PROGS(PKG_CONFIG, pkg-config)   
