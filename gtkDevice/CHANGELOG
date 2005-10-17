@@ -1,3 +1,8 @@
+1.9-4
+
+-  When using an embedded device, messages about the graphics context being NULL
+   when the widget has not yet been realized no longer appear.
+
 1.9-3
 
 - Updated the code to initialize color correctly (R_RGB(0, 0, 0) rather than 0)
