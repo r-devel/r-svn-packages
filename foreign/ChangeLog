@@ -1,4 +1,8 @@
-2005-08-26  Brian Ripley <Brian.Ripley@R-project.org>
+2005-11-16  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/init.c: new file, add symbol registration.
+
+2005-08-26  Brian Ripley Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: version is 0.8-10
 
