@@ -11,15 +11,14 @@ crosscorr               Cross correlations for MCMC output
 crosscorr.plot          Plot image of correlation matrix
 cumuplot                Cumulative quantile plot
 densityplot.mcmc        Trellis plots for mcmc objects
-densplot                Probability density function estimate from
-                        MCMC output
+densplot                Probability density function estimate from MCMC
+                        output
 effectiveSize           Effective sample size for estimating the mean
 gelman.diag             Gelman and Rubin's convergence diagnostic
 gelman.plot             Gelman-Rubin-Brooks plot
 geweke.diag             Geweke's convergence diagnostic
 geweke.plot             Geweke-Brooks plot
-heidel.diag             Heidelberger and Welch's convergence
-                        diagnostic
+heidel.diag             Heidelberger and Welch's convergence diagnostic
 HPDinterval             Highest Posterior Density intervals
 line                    Simple linear regression example
 mcmc                    Markov Chain Monte Carlo Objects
@@ -40,8 +39,8 @@ read.openbugs           Read CODA output files produced by OpenBUGS
 rejectionRate           Rejection Rate for Metropolis-Hastings chains
 spectrum0               Estimate spectral density at zero
 spectrum0.ar            Estimate spectral density at zero
-summary.mcmc            Summary statistics for Markov Chain Monte
-                        Carlo chains
+summary.mcmc            Summary statistics for Markov Chain Monte Carlo
+                        chains
 thin                    Thinning interval
 time.mcmc               Time attributes for mcmc objects
 traceplot               Trace plot of MCMC output
