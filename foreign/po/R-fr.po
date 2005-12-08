@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: foreign 0.8-10\n"
-"Report-Msgid-Bugs-To: bugs@R-project.org\n"
-"POT-Creation-Date: 2005-02-05 20:32+0000\n"
+"Report-Msgid-Bugs-To: bugs@r-project.org\n"
+"POT-Creation-Date: 2005-12-08 20:27\n"
 "PO-Revision-Date: 2005-12-08 00:23+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -41,10 +41,20 @@ msgid "cannot handle matrix/array columns"
 msgstr "impossible de traiter les colonnes de la matrice/du tableau"
 
 msgid "data frame contains columns of unsupported class(es)"
-msgstr "le tableau de données contient des colonnes de classe(s) non supportée(s)"
+msgstr ""
+"le tableau de données contient des colonnes de classe(s) non supportée(s)"
+
+msgid ","
+msgstr ""
 
 msgid "unknown column type in data frame"
 msgstr "type inconnu pour une colonne dans le tableau de données"
+
+msgid "NA in precision"
+msgstr ""
+
+msgid "NA in scale"
+msgstr ""
 
 msgid "cannot handle unknown type"
 msgstr "impossible de traiter un type inconnu"
@@ -56,7 +66,9 @@ msgid "argument tz= is no longer needed and will soon be removed"
 msgstr "l'argument 'tz=' n'est plus nécessaire et sera bientot éliminé"
 
 msgid "cannot read factor labels from Stata 5 files"
-msgstr "impossible de lire les étiquettes des variables facteur depuis les fichiers Stata 5"
+msgstr ""
+"impossible de lire les étiquettes des variables facteur depuis les fichiers "
+"Stata 5"
 
 msgid "value labels ("
 msgstr "les étiquettes de valeur ("
@@ -86,7 +98,9 @@ msgid "argument 'file' must be a character string or connection"
 msgstr "l'argument 'file' doit être une chaîne de caractères ou une connexion"
 
 msgid "file has zero or fewer variables: probably not an EpiInfo file"
-msgstr "le fichier aurait zéro variables ou moins : ce n'est probablement pas un fichier EpiInfo"
+msgstr ""
+"le fichier aurait zéro variables ou moins : ce n'est probablement pas un "
+"fichier EpiInfo"
 
 msgid "no records in file"
 msgstr "aucun enregistrement dans le fichier"
@@ -102,3 +116,9 @@ msgstr "Impossible d'abbréger les noms de variables à huit lettres au maximum"
 
 msgid "some variable names were abbreviated"
 msgstr "quelques noms de variables on été abbrégées"
+
+msgid "Cannot abbreviate the variable names to eight or fewer letters"
+msgstr "Impossible d'abbréger les noms de variables à huit lettres au maximum"
+
+msgid "Some variable names were abbreviated."
+msgstr "Quelques noms de variables on été abbrégées."
