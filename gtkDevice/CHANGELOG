@@ -1,7 +1,7 @@
 1.9-4
 
 -  When using an embedded device, messages about the graphics context being NULL
-   when the widget has not yet been realized no longer appear.
+   when the widget has not yet been realized no longer arise.
 
 1.9-3
 
