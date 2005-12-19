@@ -374,9 +374,9 @@ sfm_read_dictionary (struct file_handle * h, struct sfm_read_info * inf)
 	  {
 	    struct
 	      {
-		R_int32 subtype P;
-		R_int32 size P;
-		R_int32 count P;
+		R_int32 subtype;
+		R_int32 size;
+		R_int32 count;
 	      }
 	    data;
 
