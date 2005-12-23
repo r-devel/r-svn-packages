@@ -1,0 +1,31 @@
+Note that  src/sn.f  and  src/qn.f  are still identically the same
+as the 'sn' and 'qn' files one gets after downloading
+sn.gz and qn.gz  from Antwerpen
+e.g.,  http://www.agoras.ua.ac.be/Robustn.htm
+
+			M.Maechler, November 2005
+---
+
+NOTES:
+
+1) we have had some problems, but they are solved now
+     ---> tests/C-BUG-whimed.R
+
+2) I think its wrong in principle to only work with *integer* weights
+      for 'whimed'.
+      Further note, that *because* of the integer weights, we need type
+      'long long' {because otherwise integer overflow kills everything}.
+
+   --> Change this `everywhere' and make  wgt.himedian() an R function
+
+   NOTE: There is  'weighted.median()' in limma
+   	 and I have generalized it ---> inst/ex-funs.R
+
+3) Currently, I carry both the C and the original Fortran versions;
+   I believe we now have proven they are equivalent;
+   ===> SHOULD hence get rid of them.
+
+>>   BUT: Do this by adding these to the new 'robustbase' package.
+>>   {and make a "CRAN-repository" where 'robustbase' can be got from}
+
+
