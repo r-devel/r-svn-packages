@@ -1,0 +1,91 @@
+KernSmooth/src:
+
+add simple Makefile.
+add LINPACK routines dgefa.f and dgesl.f
+alter blkest.f and cp.f so that the last argument of dqrsl (info)
+ is a varaible not a constant as it if used on output.
+
+KernSmooth/data:
+
+Add dump of `geyser' example from  Azzalini & Bowman.
+
+KernSmooth/R:
+
+Alter .First.lib to R form.
+
+KernSmooth/man:
+
+Quote many S objects.
+Create files via Sd2Rd.
+Add data(geyser) as required.
+
+Version 2.22-5
+==============
+
+R 1.2.0 and later require BLAS_LIBS set.
+
+Add help for geyser (from package MASS).
+
+
+Version 2.22-7
+==============
+
+cp.f was calling dqrdc incorrectly.
+
+
+Version 2.22-8
+==============
+
+Use * for array bounds in Fortran
+
+
+Version 2.22-9
+==============
+
+Remove dataset geyser and get it from MASS
+Use 0.0d0 not dble(0).
+
+
+Version 2.22-10
+===============
+
+Add namespace
+
+
+Version 2.22-11
+===============
+
+Add .onUnload, require R 1.8.0.
+Remove some unused assignments, use sort.list rather than order.
+
+
+Version 2.22-12
+===============
+
+Update Matt Wand's URL.
+Correct default values in help files (and descriptions thereof)
+
+
+Version 2.22-13
+===============
+
+Version for 1.9.0 with re-organized packages.
+
+
+Version 2.22-14
+===============
+
+Use Suggests: in DESCRIPTION
+
+
+Version 2.22-15
+===============
+
+Don't use <<see below>> in help files.
+
+
+Version 2.22-16
+===============
+
+Use stop() for errors.  Add .pot file.
+Use registration mechanism, only usable after svn r36365

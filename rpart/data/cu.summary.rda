@@ -1,0 +1,841 @@
+RDA1
+5 0
+9 row.names
+5 names
+5 class
+6 levels
+10 cu.summary
+2 0 0
+1 0 0
+5
+-1
+19 0 1
+5
+14 0 0
+117
+ 11950
+ 6851
+ 6995
+ 8895
+ 7402
+ 6319
+ 6695
+ 10125
+ 6635
+ 5899
+ 6599
+ 8672
+ 5899
+ 7399
+ 7254
+ 9599
+ 5866
+ 8748
+ 6488
+ 7225
+ 8695
+ 9995
+ 10995
+ 11545
+ 31979
+ 9745
+ 12895
+ 12995
+ 9456
+ 12164
+ 11470
+ 14726
+ 10390
+ 9410
+ 13945
+ 13800
+ 12279
+ 17880
+ 13249
+ 27900
+ 12249
+ 10855
+ 41990
+ 13071
+ 12268
+ 22860
+ 17900
+ 9995
+ 18900
+ 23990
+ 24650
+ 10565
+ 10320
+ 8620
+ 10945
+ 8845
+ 9483
+ 12145
+ 12459
+ 31600
+ 10989
+ 17879
+ 11650
+ 9995
+ 15930
+ 16995
+ 26945
+ 11499
+ 11588
+ 18450
+ 24760
+ 26900
+ 33200
+ 13150
+ 23040
+ 28855
+ 12140
+ 25495
+ 12495
+ 16342
+ 12995
+ 15350
+ 12640
+ 13195
+ 14980
+ 9999
+ 38000
+ 35000
+ 29422
+ 29246
+ 23300
+ 39950
+ 17899
+ 13150
+ 14495
+ 19945
+ 25995
+ 23550
+ 21498
+ 21700
+ 20225
+ 16145
+ 27400
+ 26960
+ 14525
+ 17257
+ 27986
+ 13790
+ 13995
+ 11995
+ 15395
+ 12267
+ 14944
+ 14929
+ 13949
+ 14799
+ 14080
+-1
+
+13 0 1
+117
+ 5
+ 5
+ 10
+ 10
+ 10
+ 7
+ 5
+ 6
+ 6
+ 7
+ 5
+ 8
+ 7
+ 6
+ 7
+ 5
+ 5
+ 6
+ 5
+ 1
+ 8
+ 4
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 5
+ 5
+ 5
+ 5
+ 6
+ 5
+ 5
+ 5
+ 5
+ 10
+ 4
+ 5
+ 5
+ 5
+ 4
+ 8
+ 4
+ 4
+ 4
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 6
+ 6
+ 4
+ 5
+ 5
+ 5
+ 10
+ 3
+ 9
+ 9
+ 6
+ 6
+ 9
+ 5
+ 4
+ 4
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 7
+ 5
+ 5
+ 10
+ 10
+ 5
+ 4
+ 5
+ 10
+ 10
+ 3
+ 9
+ 2
+ 5
+ 9
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 10
+ 5
+ 5
+ 5
+ 5
+ 4
+2 0 0
+1 0 0
+4
+-1
+16 0 0
+10
+ 6 Brazil
+ 7 England
+ 6 France
+ 7 Germany
+ 5 Japan
+ 9 Japan/USA
+ 5 Korea
+ 6 Mexico
+ 6 Sweden
+ 3 USA
+-1
+2 0 0
+1 0 0
+3
+-1
+16 0 0
+1
+ 6 factor
+-1
+-1
+-1
+-1
+
+13 0 1
+117
+ 5
+ NA
+ 1
+ 4
+ 2
+ 4
+ NA
+ 5
+ 5
+ 2
+ 5
+ 4
+ 2
+ 5
+ 1
+ 5
+ NA
+ 5
+ 5
+ NA
+ 3
+ 3
+ 1
+ 1
+ 1
+ 1
+ 1
+ NA
+ 1
+ 1
+ 3
+ 3
+ NA
+ 5
+ 5
+ NA
+ 5
+ 5
+ 3
+ NA
+ 3
+ NA
+ NA
+ NA
+ NA
+ 4
+ NA
+ NA
+ NA
+ NA
+ 4
+ 2
+ 1
+ 1
+ 4
+ 3
+ 2
+ 5
+ 4
+ 3
+ 5
+ 4
+ 5
+ 2
+ NA
+ 2
+ 2
+ 5
+ 5
+ 3
+ 5
+ NA
+ NA
+ 3
+ 3
+ 3
+ NA
+ 3
+ 2
+ 3
+ 3
+ 2
+ 1
+ 3
+ 1
+ NA
+ NA
+ NA
+ 2
+ 1
+ 5
+ 1
+ 5
+ 2
+ NA
+ NA
+ NA
+ NA
+ 3
+ 3
+ 3
+ 3
+ 1
+ 3
+ 1
+ 3
+ 3
+ 1
+ NA
+ 3
+ 3
+ 3
+ 5
+ NA
+ NA
+ NA
+ NA
+2 0 0
+1 0 0
+4
+-1
+16 0 0
+5
+ 10 Much\040worse
+ 5 worse
+ 7 average
+ 6 better
+ 11 Much\040better
+-1
+2 0 0
+1 0 0
+3
+-1
+16 0 0
+2
+ 7 ordered
+ 6 factor
+-1
+-1
+-1
+-1
+
+14 0 0
+117
+ NA
+ NA
+ NA
+ 33
+ 33
+ 37
+ NA
+ NA
+ 32
+ NA
+ 32
+ 26
+ NA
+ 33
+ 28
+ 25
+ 34
+ 29
+ 35
+ NA
+ NA
+ 26
+ NA
+ 20
+ NA
+ 27
+ NA
+ NA
+ NA
+ 19
+ 30
+ NA
+ NA
+ 33
+ 27
+ NA
+ NA
+ NA
+ 24
+ NA
+ NA
+ 26
+ NA
+ 28
+ NA
+ NA
+ NA
+ NA
+ 27
+ NA
+ NA
+ 23
+ 26
+ NA
+ 25
+ NA
+ 24
+ 26
+ 24
+ NA
+ 25
+ 21
+ 21
+ 23
+ 24
+ NA
+ NA
+ 23
+ 27
+ 23
+ 20
+ NA
+ NA
+ 21
+ NA
+ NA
+ NA
+ NA
+ 22
+ 22
+ NA
+ 22
+ NA
+ 22
+ 23
+ 23
+ NA
+ NA
+ NA
+ NA
+ 21
+ NA
+ 22
+ 21
+ 21
+ NA
+ NA
+ NA
+ 23
+ NA
+ NA
+ 23
+ NA
+ NA
+ 18
+ 20
+ NA
+ NA
+ 18
+ NA
+ 18
+ 18
+ 19
+ 20
+ 20
+ 19
+ NA
+-1
+
+13 0 1
+117
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 4
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 5
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 1
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 3
+ 2
+ 2
+ 2
+ 2
+ 2
+ 2
+ 2
+ 6
+ 6
+ 6
+ 6
+ 6
+ 6
+ 6
+ 6
+ 6
+ 6
+2 0 0
+1 0 0
+4
+-1
+16 0 0
+6
+ 7 Compact
+ 5 Large
+ 6 Medium
+ 5 Small
+ 6 Sporty
+ 3 Van
+-1
+2 0 0
+1 0 0
+3
+-1
+16 0 0
+1
+ 6 factor
+-1
+-1
+-1
+-1
+
+2 0 0
+1 0 0
+2
+-1
+16 0 0
+5
+ 5 Price
+ 7 Country
+ 11 Reliability
+ 7 Mileage
+ 4 Type
+-1
+2 0 0
+1 0 0
+3
+-1
+16 0 0
+1
+ 10 data.frame
+-1
+2 0 0
+1 0 0
+1
+-1
+16 0 0
+117
+ 15 Acura\040Integra\0404
+ 12 Dodge\040Colt\0404
+ 12 Dodge\040Omni\0404
+ 14 Eagle\040Summit\0404
+ 15 Ford\040Escort\040\040\0404
+ 14 Ford\040Festiva\0404
+ 12 GEO\040Metro\040\0403
+ 12 GEO\040Prizm\040\0404
+ 13 Honda\040Civic\0404
+ 15 Hyundai\040Excel\0404
+ 15 Mazda\040Protege\0404
+ 16 Mercury\040Tracer\0404
+ 19 Mitsubishi\040Precis\0404
+ 15 Nissan\040Sentra\0404
+ 16 Pontiac\040LeMans\0404
+ 15 Subaru\040Loyale\0404
+ 14 Subaru\040Justy\0403
+ 16 Toyota\040Corolla\0404
+ 15 Toyota\040Tercel\0404
+ 16 Volkswagen\040Fox\0404
+ 17 Volkswagen\040Golf\0404
+ 18 Volkswagen\040Jetta\0404
+ 19 Chevrolet\040Camaro\040V6
+ 19 Chevrolet\040Camaro\040V8
+ 21 Chevrolet\040Corvette\040V8
+ 13 Dodge\040Daytona
+ 21 Dodge\040Daytona\040Turbo\0404
+ 13 Eagle\040Talon\0404
+ 14 Ford\040Mustang\0404
+ 15 Ford\040Mustang\040V8
+ 10 Ford\040Probe
+ 15 Ford\040Probe\040GT\0404
+ 11 GEO\040Storm\0404
+ 20 Honda\040Civic\040CRX\040Si\0404
+ 22 Honda\040Prelude\040Si\0404WS\0404
+ 16 Mazda\040MX-5\040Miata
+ 12 Mazda\040MX-6\0404
+ 10 Mazda\040RX-7
+ 14 Nissan\040240SX\0404
+ 15 Nissan\040300ZX\040V6
+ 21 Nissan\040Pulsar\040NX\040XE\0404
+ 14 Plymouth\040Laser
+ 11 Porsche\040944
+ 11 Subaru\040XT\0404
+ 20 Toyota\040Celica\040GT-S\0404
+ 14 Toyota\040Supra\0406
+ 20 Volkswagen\040Corrado\0404
+ 16 Volkswagen\040GTI\0404
+ 9 Audi\04080\0404
+ 9 Audi\04090\0405
+ 10 BMW\040325i\0406
+ 15 Buick\040Skylark\0404
+ 19 Chevrolet\040Beretta\0404
+ 20 Chevrolet\040Cavalier\0404
+ 20 Chrysler\040Le\040Baron\040V6
+ 20 Dodge\040Shadow\040Turbo\0404
+ 12 Ford\040Tempo\0404
+ 14 Honda\040Accord\0404
+ 11 Mazda\040626\0404
+ 20 Mercedes-Benz\040190E\0406
+ 19 Mitsubishi\040Galant\0404
+ 19 Mitsubishi\040Sigma\040V6
+ 15 Nissan\040Stanza\0404
+ 19 Oldsmobile\040Calais\0404
+ 13 Peugeot\040405\0404
+ 10 Saab\040900\0404
+ 16 Saab\040900\040Turbo\0404
+ 15 Subaru\040Legacy\0404
+ 14 Toyota\040Camry\0404
+ 11 Volvo\040240\0404
+ 15 Acura\040Legend\040V6
+ 10 Audi\040100\0405
+ 10 BMW\040535i\0406
+ 15 Buick\040Century\0404
+ 16 Buick\040Riviera\040V6
+ 20 Cadillac\040Eldorado\040V8
+ 18 Chevrolet\040Lumina\0404
+ 20 Chrysler\040Imperial\040V6
+ 23 Chrysler\040Le\040Baron\040Coupe
+ 22 Chrysler\040New\040Yorker\040V6
+ 15 Dodge\040Dynasty\0404
+ 16 Eagle\040Premier\040V6
+ 13 Ford\040Taurus\0404
+ 14 Ford\040Taurus\040V6
+ 19 Ford\040Thunderbird\040V6
+ 16 Hyundai\040Sonata\0404
+ 15 Infiniti\040Q45\040V8
+ 15 Lexus\040LS\040400\040V8
+ 22 Lincoln\040Continental\040V6
+ 19 Lincoln\040Mark\040VII\040V8
+ 12 Mazda\040929\040V6
+ 20 Mercedes-Benz\040300E\0406
+ 16 Nissan\040Maxima\040V6
+ 26 Oldsmobile\040Cutlass\040Ciera\0404
+ 29 Oldsmobile\040Cutlass\040Supreme\040V6
+ 13 Peugeot\040505\0404
+ 12 Saab\0409000S\0404
+ 15 Sterling\040827\040V6
+ 17 Toyota\040Cressida\0406
+ 14 Volvo\040740\040GL\0404
+ 16 Buick\040Electra\040V6
+ 17 Buick\040Le\040Sabre\040V6
+ 20 Cadillac\040Brougham\040V8
+ 20 Cadillac\040De\040Ville\040V8
+ 20 Chevrolet\040Caprice\040V8
+ 26 Ford\040LTD\040Crown\040Victoria\040V8
+ 19 Lincoln\040Town\040Car\040V8
+ 18 Chevrolet\040Astro\040V6
+ 23 Chevrolet\040Lumina\040APV\040V6
+ 15 Dodge\040Caravan\0404
+ 22 Dodge\040Grand\040Caravan\040V6
+ 16 Ford\040Aerostar\040V6
+ 12 Mazda\040MPV\040V6
+ 18 Mitsubishi\040Wagon\0404
+ 15 Nissan\040Axxess\0404
+ 12 Nissan\040Van\0404
+ 20 Volkswagen\040Vanagon\0404
+-1
+-1
+-1
+-1
+-1
+-1
+-1
