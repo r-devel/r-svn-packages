@@ -32,7 +32,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
 	    strings
     }
 
-    rval <- .Call("do_read_SPSS", file, PACKAGE = "foreign")
+    rval <- .Call(do_read_SPSS, file)
 
     vl <- attr(rval,"label.table")
     has.vl <- which(!sapply(vl,is.null))
