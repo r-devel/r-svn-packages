@@ -11,7 +11,7 @@ o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
      FIXME ?!?!?!
 
 
-o need ./CITATION  for getting a nice  citation() !!!!
+o need ./inst/CITATION  for getting a nice  citation() !!!!
 
 o plot.silhouette() : if an observation's width is == 0., draw a small stripe
 		     instead of nothing at all
