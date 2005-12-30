@@ -82,6 +82,10 @@ sortSilhouette(object, \dots)
   for these, it is straightforward to get silhouettes from hierarchical
   clusterings from \code{silhouette.default()} with
   \code{\link{cutree}()} and distance as input.
+
+  For \code{\link{clara}()} partitions, the silhouette is just for the
+  best random \emph{subset} used.  See the example on how to compute
+  (and plot) the full silhouette.
 }
 \value{
   \code{silhouette()} returns an object, \code{sil}, of class
@@ -145,6 +149,21 @@ sortSilhouette(object, \dots)
  mtext("PAM(Ruspini) as in Kaufman & Rousseeuw, p.101",
        outer = TRUE, font = par("font.main"), cex = par("cex.main"))
  par(op)
+
+%%% FIXME:  By default, clara() saves .$data and attr(.$diss, "Metric")
+%%% -----   use  'full = FALSE' argument and have 'full = TRUE' compute !
+ ## clara(): standard silhouette is just for the best random subset
+ data(xclara)
+ set.seed(7)
+ str(xc1k <- xclara[sample(nrow(xclara), size = 1000) ,])
+ cl3 <- clara(xc1k, 3)
+ plot(silhouette(cl3))# only of the "best" subset of 46
+ ## Instead do the full silhouete -- needs large (36 MB) dist object:
+ s.full <- silhouette(cl3$clustering, daisy(xc1k))
+ plot(s.full)
+ ## color dependent on original "3 groups of each 1000":
+ plot(s.full, col = 2+ as.integer(names(cl3$clustering) ) \%/\% 1000)
+
 
  ## Silhouette for a hierarchical clustering:
  ar <- agnes(ruspini)
