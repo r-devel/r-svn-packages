@@ -1,5 +1,11 @@
 2005-12-31  Brian Ripley  <Brian.Ripley@r-project.org>
 
+	* DESCRIPTION: Version is 3.1-69, require 2.3.0.
+	* NAMESPACE: use registration.
+	* R/*.R: use registered symbols.
+
+2005-12-31  Brian Ripley  <Brian.Ripley@r-project.org>
+
 	* DESCRIPTION: Version is 3.1-68.
 	* src/init.c: new file to register symbols
 	* R/corStruct.R: corrected one use of PACKAGE="base"
