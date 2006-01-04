@@ -8,7 +8,7 @@ weighted.median <- function (x, w, na.rm = FALSE, low = FALSE, high = FALSE)
     ##	Weighted median
     ##	Gordon Smyth
     ##	30 June 2005
-    ##  improved by MMächler: 'low' and 'high' as with 'mad()'; 21 Nov 2005
+    ##  improved by MMaechler: 'low' and 'high' as with 'mad()'; 21 Nov 2005
 
     if (missing(w))
         w <- rep.int(1, length(x))

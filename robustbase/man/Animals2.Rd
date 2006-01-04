@@ -32,12 +32,32 @@ Animals2
   \emph{Modern Applied Statistics with S.} Forth Edition. Springer.
 }
 \note{
-  After loading the \code{MASS} package, the data set is simply constructed by
-  \code{Animals2 <- local({D <- rbind(Animals, mammals); unique(D[order(D$body,D$brain),])})}
+  After loading the \pkg{MASS} package, the data set is simply constructed by
+  \code{Animals2 <- local({D <- rbind(Animals, mammals);
+      unique(D[order(D$body,D$brain),])})}.
+
+  Rousseeuw and Leroy (1987)'s \sQuote{brain} data is the same as
+  \pkg{MASS}'s \code{Animals} (with Rat and Brachiosaurus interchanged,
+  see the example below).
 }
 \examples{
 data(Animals2)
 ## Sensible Plot needs doubly logarithmic scale
 plot(Animals2, log = "xy")
+
+## Regression example plot:
+plotbb <- function(bbdat) {
+  d.name <- deparse(substitute(bbdat))
+  plot(log(brain) ~ log(body), data = bbdat, main = d.name)
+  abline(       lm(log(brain) ~ log(body), data = bbdat))
+  abline(MASS::rlm(log(brain) ~ log(body), data = bbdat), col = 2)
+  legend("bottomright", leg = c("lm", "rlm"), col=1:2, lwd=1, inset = 1/20)
+}
+plotbb(bbdat = Animals2)
+
+## The `same' plot for Rouseeuw's subset:
+data(Animals, package = "MASS")
+brain <- Animals[c(1:24, 26:25, 27:28),]
+plotbb(bbdat = brain)
 }
 \keyword{datasets}

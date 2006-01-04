@@ -1,7 +1,5 @@
 \name{coleman}
 \alias{coleman}
-\alias{coleman.x}
-\alias{coleman.y}
 \docType{data}
 \title{Coleman Data Set}
 \description{
@@ -15,33 +13,28 @@
 \format{
   A data frame with 20 observations on the following 6 variables.
   \describe{
-    \item{\code{X1}}{staff salaries per pupil}
-    \item{\code{X2}}{percent of white-collar fathers}
-    \item{\code{X3}}{socioeconomic status composite deviation: means for
+    \item{\code{salaryP}}{staff salaries per pupil}
+    \item{\code{fatherWc}}{percent of white-collar fathers}
+    \item{\code{sstatus}}{socioeconomic status composite deviation: means for
       family size, family intactness, father's education, mother's
       education, and home items}
-    \item{\code{X4}}{mean teacher's verbal test score}
-    \item{\code{X5}}{mean mother's educational level, one unit is equal
+    \item{\code{teacherSc}}{mean teacher's verbal test score}
+    \item{\code{motherLev}}{mean mother's educational level, one unit is equal
       to two school years}
     \item{\code{Y}}{verbal mean test score (y, all sixth graders)}
   }
-%% MM: I don't think this is a good idea:
-%% --  Simply    coleman.x <- coleman[, 1:6] ; coleman.y <- coleman[,"Y"]
-%%  is good enough :
-  For convenience, the data sets \code{coleman.x}, a matrix with the
-  five (explanatory) variables of the data frame, and \code{coleman.y},
-  the numeric vector giving the sixth (dependent) variable, are provided
-  as well.
 }
 \author{Valentin Todorov}
 \source{
   P. J. Rousseeuw and A. M. Leroy (1987)
-  \emph{Robust Regression and Outlier Detection.} Wiley, p.79, table 2.
+  \emph{Robust Regression and Outlier Detection} Wiley, p.79, table 2.
 }
 \examples{
 data(coleman)
 pairs(coleman)
-%% FIXME: (Cc <- covMcd(coleman.x))
 summary(lm.coleman <- lm(Y ~ . , data = coleman))
+
+coleman.x <- data.matrix(coleman[, 1:6])
+%% (Cc <- covMcd(coleman.x))
 }
 \keyword{datasets}
