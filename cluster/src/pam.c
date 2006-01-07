@@ -1,9 +1,6 @@
-/* -*- mode: c; kept-new-versions: 25; kept-old-versions: 20 -*- */-- $Id$
-
 /*
  * PAM := Partitioning Around Medoids
  *
- * $Id$
  * original Id: pam.f,v 1.16 2003/06/03 13:40:56 maechler translated by
  * f2c (version 20031025) and run through f2c-clean,v 1.10 2002/03/28
  */
@@ -21,7 +18,7 @@ void pam(int *nn, int *jpp, int *kk, double *x, double *dys,
 	 int *jdyss, /* jdyss = 0 : compute distances from x
 		      *	      = 1 : distances provided	in x */
 	 double *valmd, int *jtmd,
-	 int *ndyst, int *nsend, int *nrepr, int *nelem,
+	 int *ndyst, int *nsend, int/*logical*/ *nrepr, int *nelem,
 	 double *radus, double *damer, double *ttd, double *separ,
 	 double *ttsyl, double *obj, int *med, int *ncluv,
 	 double *clusinf, double *sylinf, int *nisol)
