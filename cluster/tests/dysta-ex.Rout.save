@@ -1,0 +1,132 @@
+
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.2.1 Patched (2006-01-01 r36950)
+ISBN 3-900051-07-0
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #### Interface to intermediate level Fortran Routines
+> #### Purpose : explore different versions of  dysta(), dysta3(), .. in
+> ####	       Fortran code.
+> 
+> library(cluster)
+> 
+> dysta <- function(x, kind = c("euclidean","manhattan"), dystaK = "dysta")
++ {
++     ## Purpose:
++     ## -------------------------------------------------------------------------
++     ## Arguments:
++     ## -------------------------------------------------------------------------
++     ## Author: Martin Maechler, Date:  3 Sep 2002, 08:21
++ 
++     kind <- match.arg(kind)
++     n <- nrow(x <- as.matrix(x))
++     p <- ncol(x)
++     storage.mode(x) <- "double"
++     hasNA <- apply(x, 2, function(cl) any(is.na(cl)))
++     if(any(hasNA)) {
++ 	ina <- is.na(x)
++ 	x[ina] <- valmd <- -1.1*max(abs(range(x, na.rm = TRUE)))
++ 	valmd <- rep(valmd, p)
++     } else valmd <- 0.
++ 
++     r <- .Fortran(dystaK,
++ 	     n,
++ 	     jp = p,
++ 	     x,
++ 	     dys=   double(1 + n*(n-1)/2),
++ 	     ndyst= as.integer(kind == "euclidean"),# 1 or 0
++ 	     jtmd=  as.integer(ifelse(hasNA, -1, 1)),
++ 	     valmd= valmd,
++ 	     jhalt= integer(1),
++ 	     PACKAGE = "cluster")[c("dys", "jhalt")]
++     if(r$jhalt) {
++ 	cat("`jhalt' was ", r$jhalt,
++ 	    " -- some dissimilarities will be missing.\n")
++ 	r$dys[r$dys == -1.] <- NA
++     }
++     r$dys
++ }
+> 
+> (x <- cbind(c(0:6,NA), c(1,2,NA,7,NA,8:9,8)))
+     [,1] [,2]
+[1,]    0    1
+[2,]    1    2
+[3,]    2   NA
+[4,]    3    7
+[5,]    4   NA
+[6,]    5    8
+[7,]    6    9
+[8,]   NA    8
+> dysta(x)
+`jhalt' was  1  -- some dissimilarities will be missing.
+ [1]  0.000000  1.414214  2.828427  1.414214  6.708204  5.385165  1.414214
+ [8]  5.656854  4.242641  2.828427  1.414214  8.602325  7.211103  4.242641
+[15]  2.236068  1.414214 10.000000  8.602325  5.656854  3.605551  2.828427
+[22]  1.414214  9.899495  8.485281        NA  1.414214        NA  0.000000
+[29]  1.414214
+> (d1 <- dysta(x, kind = "m"))
+`jhalt' was  1  -- some dissimilarities will be missing.
+ [1]  0  2  4  2  9  7  2  8  6  4  2 12 10  6  3  2 14 12  8  5  4  2 14 12 NA
+[26]  2 NA  0  2
+> (d3 <- dysta(x, kind = "m",dystaK = "dysta3"))
+`jhalt' was  1  -- some dissimilarities will be missing.
+ [1]  2  4  9  8 12 14 14  2  7  6 10 12 12  2  4  6  8 NA  2  3  5  2  2  4 NA
+[26]  2  0  2  0
+> 
+> identical(sort(d1), sort(d3)) # TRUE
+[1] TRUE
+> cbind(d1=d1[-1], d3=d3[-length(d3)],
++       dist=dist(x,"manhattan"), daisy= daisy(x,"manhattan"))
+      d1 d3 dist daisy
+ [1,]  2  2    2     2
+ [2,]  4  4    4     4
+ [3,]  2  9    9     9
+ [4,]  9  8    8     8
+ [5,]  7 12   12    12
+ [6,]  2 14   14    14
+ [7,]  8 14   14    14
+ [8,]  6  2    2     2
+ [9,]  4  7    7     7
+[10,]  2  6    6     6
+[11,] 12 10   10    10
+[12,] 10 12   12    12
+[13,]  6 12   12    12
+[14,]  3  2    2     2
+[15,]  2  4    4     4
+[16,] 14  6    6     6
+[17,] 12  8    8     8
+[18,]  8 NA   NA    NA
+[19,]  5  2    2     2
+[20,]  4  3    3     3
+[21,]  2  5    5     5
+[22,] 14  2    2     2
+[23,] 12  2    2     2
+[24,] NA  4    4     4
+[25,]  2 NA   NA    NA
+[26,] NA  2    2     2
+[27,]  0  0    0     0
+[28,]  2  2    2     2
+> 
+> identical(d3[-length(d3)],
++ 	  c(dist(x,"manhattan")))# !
+[1] TRUE
+> identical(c(daisy(x,"manhattan")), c(dist(x,"manhattan")))
+[1] TRUE
+> identical(c(daisy(x,"euclidean")), c(dist(x,"euclidean")))
+[1] TRUE
+> identical(dysta(x, dystaK="dysta3")[-length(d3)],
++ 	  c(dist(x,"euclidean")))# !
+`jhalt' was  1  -- some dissimilarities will be missing.
+[1] TRUE
+> 
