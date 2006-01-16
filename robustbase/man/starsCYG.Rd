@@ -38,7 +38,7 @@ plot(starsCYG)
 lm.stars <- lm(log.light ~ log.Te, data = starsCYG)
 summary(lm.stars)
 plot(lm.stars)
-% lts.stars<-ltsReg(stars.x, stars.y)
+% lts.stars <- ltsReg(stars.x, stars.y)
 % plot(lts.stars)
 }
 \keyword{datasets}

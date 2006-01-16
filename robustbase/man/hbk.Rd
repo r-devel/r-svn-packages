@@ -16,13 +16,12 @@
 \format{
   A data frame with 75 observations on 4 variables, where the last
   variable is the dependent one.
- \describe{
-   \item{X1}{x[,1]}
-   \item{X2}{x[,2]}
-   \item{X3}{x[,3]}
-   \item{Y}{y}
- }
-
+  \describe{
+    \item{X1}{x[,1]}
+    \item{X2}{x[,2]}
+    \item{X3}{x[,3]}
+    \item{Y}{y}
+  }
 }
 \note{
   This data set is also available in package \pkg{wle} as

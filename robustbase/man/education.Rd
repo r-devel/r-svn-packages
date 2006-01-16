@@ -21,9 +21,6 @@
     \item{\code{Y}}{Per capita expenditure on public education in a
       state, projected for 1975}
   }
- For convenience, the data sets \code{education.x}, a matrix with the
- three (explanatory) variables of the data frame, and \code{education.y},
- the numeric vector giving the dependent variable, are provided as well.
 }
 \source{
   P. J. Rousseeuw and A. M. Leroy (1987)

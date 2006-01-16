@@ -1,7 +1,5 @@
 \name{wood}
 \alias{wood}
-% \alias{wood.x}
-% \alias{wood.y}
 \docType{data}
 \title{Modified Data on Wood Specific Gravity}
 \description{
@@ -19,9 +17,6 @@
       variables.}
     \item{y}{wood specific gravity, the target variable.}
   }
-%  For convenience, the data sets \code{wood.x}, a matrix with the first 5 (independent)
-%  variables of the data frame, and \code{wood.y}, the numeric vector giving the sixth
-%  (dependent) variable, are provided as well.
 }
 \source{
   Draper and Smith (1966, p.227)
@@ -32,9 +27,10 @@
 \examples{
 data(wood)
 plot(wood)
-%%plot(wood.x)
-%%covMcd(wood.x)
 summary( lm.wood <-        lm(y ~ ., data = wood))
 summary(rlm.wood <- MASS::rlm(y ~ ., data = wood))
+
+wood.x <- as.matrix(wood)[,1:5]
+%%covMcd(wood.x)
 }
 \keyword{datasets}

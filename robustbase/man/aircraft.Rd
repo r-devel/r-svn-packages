@@ -19,9 +19,6 @@
     \item{\code{X4}}{Thrust}
     \item{\code{Y}}{Cost}
   }
-%  For convenience, the data sets \code{aircraft.x}, a matrix with
-% the four (independent) variables of the data frame, and \code{aircraft.y},
-% the numeric vector giving the fifth (dependent) variable, are provided as well.
 }
 \source{
   P. J. Rousseeuw and A. M. Leroy (1987)
