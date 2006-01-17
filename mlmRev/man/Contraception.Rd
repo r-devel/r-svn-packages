@@ -31,16 +31,13 @@
     Statistical Society, Series A} (159): 289-299.
 }
 \examples{
-data(Contraception)
 str(Contraception)
 summary(Contraception)
 (fm1 <- lmer(use ~ urban+age+livch+(1|district), Contraception, binomial))
-if (exists("nlminb", mode = "function")) {
-    (fm2 <- lmer(use ~ urban+age+livch+(1|district), Contraception, family = binomial,
-                 method = "AGQ"))
-    (fm3 <- lmer(use ~ urban+age+livch+(urban|district), Contraception, binomial))
-    (fm4 <- lmer(use ~ urban+age+livch+(urban|district), Contraception,
-                 binomial, method = "Laplace"))
-}
+(fm2 <- lmer(use ~ urban+age+livch+(1|district), Contraception, binomial,
+             method = "Laplace")) ## change to "AGQ" when available
+(fm3 <- lmer(use ~ urban+age+livch+(urban|district), Contraception, binomial))
+(fm4 <- lmer(use ~ urban+age+livch+(urban|district), Contraception,
+             binomial, method = "Laplace"))
 }
 \keyword{datasets}

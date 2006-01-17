@@ -28,7 +28,7 @@ The data from the STAR project are available in several different
 forms from the web site \url{http://www.heros-inc.org/data.htm}.  The
 most convenient form for creation of an R data set is the
 tab-delimited text file.  Download and unzip the archive file
-\url{http://www.heros-inc.org/ascii-star.zip} producing two files:
+\url{http://www.heros-inc.org/text-star.zip} producing two files:
 \texttt{readme.txt}, a description of the data, and
 \texttt{webstar.txt}, the data themselves.
 
