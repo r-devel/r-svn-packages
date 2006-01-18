@@ -1,0 +1,14 @@
+2006-01-17  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* NAMESPACE: added name space
+
+	* R/OGK.R (covOGK): added this; even though, the default scale
+		estimate is *not* consistent
+	* tests/tests-OGK.R: minimal 'test'
+
+2006-01-16  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/starsCYG.Rd: clean up of documentation for the Rousseeuw data
+	* man/aircraft.Rd: from Valentin
+	* ....
+
