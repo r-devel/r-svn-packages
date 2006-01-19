@@ -1,0 +1,34 @@
+
+##R 2.3.0 and later: useDynLib(robustbase, .registration=TRUE)
+useDynLib(robustbase)
+
+##no longer: importFrom("MASS", psi.bisquare, psi.hampel, psi.huber)
+
+## MASS has many rlm S3 methods; should we use some of them - for rnls() ?!
+
+## Functions defined in this package
+export(Sn, Qn,
+       wgt.himedian,
+       huberM,
+       covOGK, covGK, hard.rejection, scaleTau2,
+       psiFunc, huberPsi
+## Not yet:
+##     hampelPsi,
+##     tukeyPsi, # = biweight / bisquare
+       )
+
+## S4 Generics {only those defined in this package}:
+export(
+       chgDefaults
+       )
+
+exportClasses(
+              "functionX",   # function(x, <tune_par>): VECTORIZED in 'x'
+              "functionXal", # a functional: function of tuning par.s only
+              "psi_func"     # containing  rho(), psi(), psi'(), ...
+              )
+
+exportMethods(
+              chgDefaults
+              )
+

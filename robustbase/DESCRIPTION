@@ -15,4 +15,5 @@ Description: "Essential" Robust Statistics. The goal is to provide
  statistics where we strive to cover the upcoming book "Robust Statistics,
  Theory and Methods" by Maronna, Martin and Yohai; Wiley 2006.
 Depends: stats, methods
+SaveImage: yes
 License: GPL version 2 or later

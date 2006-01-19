@@ -4,8 +4,8 @@ library(robustbase)
 data(ruspini, package = "cluster")
 
 ### NOTA BENE:  scale.tau2() is *not* consistent {by constant factor}
-rub1 <- covOGK(ruspini, 1, scale.tau2, covGK, hard.rejection)
-rub2 <- covOGK(ruspini, 2, scale.tau2, covGK, hard.rejection)
+rub1 <- covOGK(ruspini, 1, scaleTau2, covGK, hard.rejection)
+rub2 <- covOGK(ruspini, 2, scaleTau2, covGK, hard.rejection)
 
 AE <- function(x,y) all.equal(x,y, tol = 2e-15)
 ## The following test is already fulfilled by Kjell Konis'  original code:

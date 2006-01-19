@@ -67,5 +67,5 @@ str(Hx. <- huberM(x, s = Hx$s), digits = 7) ## should be ~= Hx
 stopifnot(all.equal(Hx, Hx.))
 str(Hx2 <- huberM(x), digits = 7)## somewhat different, since 's' differs
 }
-\keyword{univariate}
+\keyword{univar}
 \keyword{robust}
