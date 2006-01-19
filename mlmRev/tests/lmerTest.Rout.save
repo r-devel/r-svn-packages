@@ -1,6 +1,7 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -11,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > library(mlmRev)
@@ -21,13 +22,12 @@ Loading required package: lattice
 Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > cntr <- list()
-> #cntr <- list(EMverbose = TRUE, msVerbose = 1) # uncomment for verbose output
-> (fm01 <- lmer(langPOST ~ IQ.ver.cen+avg.IQ.ver.cen+(1|schoolNR), bdf, con = cntr))
+> (fm01 <- lmer(langPOST ~ IQ.ver.cen+avg.IQ.ver.cen+(1|schoolNR), bdf))
 Linear mixed-effects model fit by REML
 Formula: langPOST ~ IQ.ver.cen + avg.IQ.ver.cen + (1 | schoolNR) 
    Data: bdf 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 15242.19 15270.87 -7616.096   15227.56     15232.19
+ 15240.19 15263.13 -7616.096   15227.56     15232.19
 Random effects:
  Groups   Name        Variance Std.Dev.
  schoolNR (Intercept)  7.8859  2.8082  
@@ -35,34 +35,44 @@ Random effects:
 # of obs: 2287, groups: schoolNR, 131
 
 Fixed effects:
-                 Estimate Std. Error   DF  t value  Pr(>|t|)
-(Intercept)    4.0741e+01 2.8659e-01 2284 142.1552 < 2.2e-16
-IQ.ver.cen     2.4148e+00 7.1676e-02 2284  33.6900 < 2.2e-16
-avg.IQ.ver.cen 1.5892e+00 3.1477e-01 2284   5.0486 4.802e-07
-> (fm02 <- lmer(langPOST ~ IQ.ver.cen+avg.IQ.ver.cen+(IQ.ver.cen|schoolNR), bdf, con = cntr))
+                Estimate Std. Error t value
+(Intercept)    40.741015   0.286595 142.155
+IQ.ver.cen      2.414772   0.071676  33.690
+avg.IQ.ver.cen  1.589162   0.314772   5.049
+
+Correlation of Fixed Effects:
+            (Intr) IQ.vr.
+IQ.ver.cen   0.000       
+avg.IQ.vr.c  0.077 -0.228
+> (fm02 <- lmer(langPOST ~ IQ.ver.cen+avg.IQ.ver.cen+(IQ.ver.cen|schoolNR), bdf))
 Linear mixed-effects model fit by REML
 Formula: langPOST ~ IQ.ver.cen + avg.IQ.ver.cen + (IQ.ver.cen | schoolNR) 
    Data: bdf 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 15231.87 15272.02 -7608.937   15213.55     15217.87
+ 15229.87 15264.28 -7608.937   15213.55     15217.87
 Random effects:
  Groups   Name        Variance Std.Dev. Corr   
- schoolNR (Intercept)  8.07272 2.84125         
-          IQ.ver.cen   0.20825 0.45635  -0.642 
- Residual             41.35008 6.43040         
+ schoolNR (Intercept)  8.07556 2.84175         
+          IQ.ver.cen   0.20800 0.45608  -0.642 
+ Residual             41.34971 6.43037         
 # of obs: 2287, groups: schoolNR, 131
 
 Fixed effects:
-                 Estimate Std. Error   DF  t value  Pr(>|t|)
-(Intercept)    4.0750e+01 2.8804e-01 2284 141.4714 < 2.2e-16
-IQ.ver.cen     2.4599e+00 8.3651e-02 2284  29.4063 < 2.2e-16
-avg.IQ.ver.cen 1.4087e+00 3.2369e-01 2284   4.3518 1.410e-05
-> (fm03 <- lmer(math ~ year+(1|childid)+(1|schoolid), egsingle, con = cntr))
+                Estimate Std. Error t value
+(Intercept)    40.749580   0.288080 141.452
+IQ.ver.cen      2.459827   0.083638  29.410
+avg.IQ.ver.cen  1.408925   0.323742   4.352
+
+Correlation of Fixed Effects:
+            (Intr) IQ.vr.
+IQ.ver.cen  -0.274       
+avg.IQ.vr.c  0.029 -0.213
+> (fm03 <- lmer(math ~ year+(1|childid)+(1|schoolid), egsingle))
 Linear mixed-effects model fit by REML
 Formula: math ~ year + (1 | childid) + (1 | schoolid) 
    Data: egsingle 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 16769.41 16803.84 -8379.706   16747.05     16759.41
+ 16767.41 16794.96 -8379.706   16747.05     16759.41
 Random effects:
  Groups   Name        Variance Std.Dev.
  childid  (Intercept) 0.66992  0.81849 
@@ -71,33 +81,41 @@ Random effects:
 # of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
-               Estimate  Std. Error   DF t value  Pr(>|t|)
-(Intercept) -7.8048e-01  6.1088e-02 7228 -12.776 < 2.2e-16
-year         7.4612e-01  5.3964e-03 7228 138.264 < 2.2e-16
-> (fm04 <- lmer(math ~ year+(1|childid)+(year|schoolid), egsingle, con = cntr))
+              Estimate Std. Error t value
+(Intercept) -0.7804818  0.0610879 -12.776
+year         0.7461233  0.0053964 138.264
+
+Correlation of Fixed Effects:
+     (Intr)
+year -0.031
+> (fm04 <- lmer(math ~ year+(1|childid)+(year|schoolid), egsingle))
 Linear mixed-effects model fit by REML
 Formula: math ~ year + (1 | childid) + (year | schoolid) 
    Data: egsingle 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 16496.38 16544.58 -8241.188   16471.87     16482.38
+ 16494.38 16535.69 -8241.188   16471.87     16482.38
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- childid  (Intercept) 0.672300 0.81994        
- schoolid (Intercept) 0.166811 0.40843        
+ childid  (Intercept) 0.672304 0.81994        
+ schoolid (Intercept) 0.166813 0.40843        
           year        0.011584 0.10763  0.443 
  Residual             0.324517 0.56966        
 # of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
-               Estimate  Std. Error   DF t value  Pr(>|t|)
-(Intercept)   -0.777090    0.058231 7228 -13.345 < 2.2e-16
-year           0.762961    0.015333 7228  49.761 < 2.2e-16
-> (fm05 <- lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam, con = cntr))
+             Estimate Std. Error t value
+(Intercept) -0.777091   0.058231 -13.345
+year         0.762961   0.015333  49.761
+
+Correlation of Fixed Effects:
+     (Intr)
+year 0.358 
+> (fm05 <- lmer(normexam ~ standLRT + sex + schgend + (1|school), Exam))
 Linear mixed-effects model fit by REML
 Formula: normexam ~ standLRT + sex + schgend + (1 | school) 
    Data: Exam 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 9361.673 9405.834 -4673.837   9325.501     9347.673
+ 9359.673 9397.526 -4673.837   9325.501     9347.673
 Random effects:
  Groups   Name        Variance Std.Dev.
  school   (Intercept) 0.085829 0.29297 
@@ -105,144 +123,144 @@ Random effects:
 # of obs: 4059, groups: school, 65
 
 Fixed effects:
-                Estimate  Std. Error   DF t value  Pr(>|t|)
-(Intercept)  -1.0493e-03  5.5569e-02 4054 -0.0189   0.98494
-standLRT      5.5975e-01  1.2450e-02 4054 44.9601 < 2.2e-16
-sexM         -1.6739e-01  3.4100e-02 4054 -4.9089 9.519e-07
-schgendboys   1.7769e-01  1.1347e-01 4054  1.5659   0.11745
-schgendgirls  1.5900e-01  8.9403e-02 4054  1.7784   0.07541
-> (fm06 <- lmer(score ~ gcsecnt + (1|school) + (1|lea), Chem97, con=cntr))
+               Estimate Std. Error t value
+(Intercept)  -0.0010493  0.0555690  -0.019
+standLRT      0.5597545  0.0124500  44.960
+sexM         -0.1673915  0.0340996  -4.909
+schgendboys   0.1776907  0.1134749   1.566
+schgendgirls  0.1589969  0.0894031   1.778
+
+Correlation of Fixed Effects:
+            (Intr) stnLRT sexM   schgndb
+standLRT    -0.014                      
+sexM        -0.316  0.061               
+schgendboys -0.395 -0.003 -0.145        
+schgendgrls -0.622  0.009  0.197  0.245 
+> (fm06 <- lmer(score ~ gcsecnt + (1|school) + (1|lea), Chem97))
 Linear mixed-effects model fit by REML
 Formula: score ~ gcsecnt + (1 | school) + (1 | lea) 
    Data: Chem97 
     AIC      BIC   logLik MLdeviance REMLdeviance
- 141707 141748.7 -70848.5   141685.6       141697
+ 141705 141738.4 -70848.5   141685.6       141697
 Random effects:
  Groups   Name        Variance Std.Dev.
  school   (Intercept) 1.166197 1.07991 
- lea      (Intercept) 0.014767 0.12152 
- Residual             5.154202 2.27029 
+ lea      (Intercept) 0.014766 0.12151 
+ Residual             5.154203 2.27029 
 # of obs: 31022, groups: school, 2410; lea, 131
 
 Fixed effects:
-              Estimate Std. Error    DF t value  Pr(>|t|)
-(Intercept) 5.6355e+00 3.1235e-02 31020  180.42 < 2.2e-16
-gcsecnt     2.4726e+00 1.6904e-02 31020  146.27 < 2.2e-16
-> (fm06a <- lmer(score ~ gcsecnt + (1|school) + (1|lea), Chem97, con=c(cntr,list(nit=40))))
-Linear mixed-effects model fit by REML
-Formula: score ~ gcsecnt + (1 | school) + (1 | lea) 
-   Data: Chem97 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 141707.2 141748.9 -70848.58   141685.8     141697.2
-Random effects:
- Groups   Name        Variance Std.Dev.
- school   (Intercept) 1.163183 1.07851 
- lea      (Intercept) 0.020849 0.14439 
- Residual             5.153861 2.27021 
-# of obs: 31022, groups: school, 2410; lea, 131
+            Estimate Std. Error t value
+(Intercept) 5.635455   0.031235  180.42
+gcsecnt     2.472557   0.016904  146.27
 
-Fixed effects:
-              Estimate Std. Error    DF t value  Pr(>|t|)
-(Intercept) 5.6377e+00 3.2353e-02 31020  174.26 < 2.2e-16
-gcsecnt     2.4726e+00 1.6907e-02 31020  146.25 < 2.2e-16
+Correlation of Fixed Effects:
+        (Intr)
+gcsecnt 0.058 
 > (fm07 <- lmer(height ~ age + I(age^2) + I(age^3) + I(age^4) + (age + I(age^2)|Subject),
-+                  Oxboys, con = cntr))
++                  Oxboys))
 Linear mixed-effects model fit by REML
 Formula: height ~ age + I(age^2) + I(age^3) + I(age^4) + (age + I(age^2) |      Subject) 
    Data: Oxboys 
-      AIC     BIC    logLik MLdeviance REMLdeviance
- 651.9081 693.372 -313.9541   625.3593     627.9081
+      AIC      BIC    logLik MLdeviance REMLdeviance
+ 649.9081 687.9167 -313.9541   625.3593     627.9081
 Random effects:
  Groups   Name        Variance Std.Dev. Corr        
- Subject  (Intercept) 64.03462 8.00216              
-          age          2.86407 1.69236  0.614       
-          I(age^2)     0.67422 0.82111  0.215 0.658 
- Residual              0.21738 0.46624              
+ Subject  (Intercept) 64.03492 8.00218              
+          age          2.86417 1.69239  0.614       
+          I(age^2)     0.67429 0.82115  0.215 0.658 
+ Residual              0.21737 0.46623              
 # of obs: 234, groups: Subject, 26
 
 Fixed effects:
-             Estimate Std. Error  DF t value  Pr(>|t|)
-(Intercept) 149.01887    1.57036 229 94.8946 < 2.2e-16
-age           6.17418    0.35650 229 17.3190 < 2.2e-16
-I(age^2)      1.12823    0.35144 229  3.2103  0.001516
-I(age^3)      0.45385    0.16246 229  2.7936  0.005653
-I(age^4)     -0.37690    0.30018 229 -1.2556  0.210555
-> (fm08 <- lmer(height ~ poly(age,4) + (age + I(age^2)|Subject), Oxboys, con = cntr))
+             Estimate Std. Error t value
+(Intercept) 149.01887    1.57037  94.894
+age           6.17418    0.35650  17.319
+I(age^2)      1.12823    0.35144   3.210
+I(age^3)      0.45385    0.16246   2.794
+I(age^4)     -0.37690    0.30018  -1.256
+
+Correlation of Fixed Effects:
+         (Intr) age    I(g^2) I(g^3)
+age       0.572                     
+I(age^2)  0.076  0.264              
+I(age^3) -0.001 -0.340  0.025       
+I(age^4)  0.021  0.016 -0.857 -0.021
+> (fm08 <- lmer(height ~ poly(age,4) + (age + I(age^2)|Subject), Oxboys))
 Linear mixed-effects model fit by REML
 Formula: height ~ poly(age, 4) + (age + I(age^2) | Subject) 
    Data: Oxboys 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 640.8686 682.3324 -308.4343   625.3593     616.8686
+ 638.8686 676.8771 -308.4343   625.3593     616.8686
 Random effects:
  Groups   Name        Variance Std.Dev. Corr        
- Subject  (Intercept) 64.03463 8.00216              
-          age          2.86407 1.69236  0.614       
-          I(age^2)     0.67422 0.82111  0.215 0.658 
- Residual              0.21738 0.46624              
+ Subject  (Intercept) 64.03464 8.00217              
+          age          2.86418 1.69239  0.614       
+          I(age^2)     0.67429 0.82115  0.215 0.658 
+ Residual              0.21737 0.46623              
 # of obs: 234, groups: Subject, 26
 
 Fixed effects:
-               Estimate Std. Error  DF t value  Pr(>|t|)
-(Intercept)   149.51976    1.59030 229 94.0196 < 2.2e-16
-poly(age, 4)1  64.54095    3.32780 229 19.3945 < 2.2e-16
-poly(age, 4)2   4.20322    1.02357 229  4.1064 5.593e-05
-poly(age, 4)3   1.29076    0.46628 229  2.7682  0.006098
-poly(age, 4)4  -0.58547    0.46630 229 -1.2556  0.210555
-> (fm09 <- lmer(attain ~ verbal * sex+(1|primary)+(1|second), ScotsSec, con = cntr))
+               Estimate Std. Error t value
+(Intercept)   149.51976    1.59031  94.019
+poly(age, 4)1  64.54095    3.32786  19.394
+poly(age, 4)2   4.20322    1.02361   4.106
+poly(age, 4)3   1.29077    0.46628   2.768
+poly(age, 4)4  -0.58547    0.46630  -1.256
+
+Correlation of Fixed Effects:
+            (Intr) p(,4)1 p(,4)2 p(,4)3
+poly(ag,4)1 0.631                      
+poly(ag,4)2 0.230  0.583               
+poly(ag,4)3 0.000  0.000  0.000        
+poly(ag,4)4 0.000  0.000  0.000  0.000 
+> (fm09 <- lmer(attain ~ verbal * sex+(1|primary)+(1|second), ScotsSec))
 Linear mixed-effects model fit by REML
 Formula: attain ~ verbal * sex + (1 | primary) + (1 | second) 
    Data: ScotsSec 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 14882.32 14925.32 -7434.162   14842.76     14868.32
+ 14880.32 14917.18 -7434.162   14842.76     14868.32
 Random effects:
  Groups   Name        Variance Std.Dev.
- primary  (Intercept) 0.275462 0.52484 
- second   (Intercept) 0.014750 0.12145 
- Residual             4.253110 2.06231 
+ primary  (Intercept) 0.275457 0.52484 
+ second   (Intercept) 0.014747 0.12144 
+ Residual             4.253113 2.06231 
 # of obs: 3435, groups: primary, 148; second, 19
 
 Fixed effects:
-              Estimate Std. Error   DF t value Pr(>|t|)
-(Intercept) 5.9147e+00 7.6796e-02 3431 77.0188  < 2e-16
-verbal      1.5836e-01 3.7872e-03 3431 41.8136  < 2e-16
-sexF        1.2155e-01 7.2413e-02 3431  1.6786  0.09332
-verbal:sexF 2.5929e-03 5.3885e-03 3431  0.4812  0.63041
-> (fm09a <- lmer(attain ~ verbal * sex+(1|primary)+(1|second), ScotsSec, con = c(cntr,list(nit=40))))
-Linear mixed-effects model fit by REML
-Formula: attain ~ verbal * sex + (1 | primary) + (1 | second) 
-   Data: ScotsSec 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 14882.33 14925.32 -7434.165   14842.78     14868.33
-Random effects:
- Groups   Name        Variance Std.Dev.
- primary  (Intercept) 0.275674 0.52505 
- second   (Intercept) 0.016416 0.12813 
- Residual             4.252508 2.06216 
-# of obs: 3435, groups: primary, 148; second, 19
+             Estimate Std. Error t value
+(Intercept) 5.9147134  0.0767945  77.020
+verbal      0.1583555  0.0037872  41.814
+sexF        0.1215530  0.0724133   1.679
+verbal:sexF 0.0025929  0.0053885   0.481
 
-Fixed effects:
-              Estimate Std. Error   DF t value Pr(>|t|)
-(Intercept) 5.9139e+00 7.7419e-02 3431 76.3890   <2e-16
-verbal      1.5833e-01 3.7874e-03 3431 41.8034   <2e-16
-sexF        1.2159e-01 7.2410e-02 3431  1.6792   0.0932
-verbal:sexF 2.5997e-03 5.3883e-03 3431  0.4825   0.6295
-> (fm10 <- lmer(attain ~ verbal+sex+(1|primary)+(sex|second), ScotsSec, con = c(cntr,list(nit=40))))
+Correlation of Fixed Effects:
+            (Intr) verbal sexF  
+verbal       0.177              
+sexF        -0.482 -0.178       
+verbal:sexF -0.122 -0.680  0.161
+> (fm10 <- lmer(attain ~ verbal + sex+(1|primary)+(sex|second), ScotsSec))
 Linear mixed-effects model fit by REML
 Formula: attain ~ verbal + sex + (1 | primary) + (sex | second) 
    Data: ScotsSec 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 14864.30 14913.43 -7424.148   14832.31     14848.30
+ 14862.29 14905.29 -7424.146   14832.29     14848.29
 Random effects:
  Groups   Name        Variance Std.Dev. Corr   
- primary  (Intercept) 0.268587 0.51825         
- second   (Intercept) 0.047996 0.21908         
-          sexF        0.146042 0.38215  -0.790 
- Residual             4.218122 2.05381         
+ primary  (Intercept) 0.268593 0.51826         
+ second   (Intercept) 0.046392 0.21539         
+          sexF        0.145842 0.38189  -0.798 
+ Residual             4.218514 2.05390         
 # of obs: 3435, groups: primary, 148; second, 19
 
 Fixed effects:
-              Estimate Std. Error   DF t value Pr(>|t|)
-(Intercept) 5.9269e+00 8.7122e-02 3432 68.0297   <2e-16
-verbal      1.5957e-01 2.7712e-03 3432 57.5836   <2e-16
-sexF        9.8581e-02 1.1457e-01 3432  0.8605   0.3896
+             Estimate Std. Error t value
+(Intercept) 5.9274076  0.0866039  68.443
+verbal      0.1595905  0.0027709  57.594
+sexF        0.0984477  0.1145195   0.860
+
+Correlation of Fixed Effects:
+       (Intr) verbal
+verbal  0.115       
+sexF   -0.624 -0.060
 > 

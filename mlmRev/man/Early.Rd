@@ -29,7 +29,6 @@
     Longitudinal Data Analysis}, Oxford University Press. (Ch. 3)
 }
 \examples{
-data(Early)
 str(Early)
 }
 \keyword{datasets}

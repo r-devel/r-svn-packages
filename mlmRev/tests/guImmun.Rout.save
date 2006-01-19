@@ -1,6 +1,7 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -11,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > library(mlmRev)
@@ -28,7 +29,7 @@ Formula: immun ~ kid2p + mom25p + ord + ethn + momEd + husEd + momWork +      ru
    Data: guImmun 
  Family: binomial(logit link)
       AIC      BIC    logLik deviance
- 956.9168 1064.787 -459.4584 918.9168
+ 2855.170 2957.364 -1409.585 2819.170
 Random effects:
  Groups Name        Variance Std.Dev.
  mom    (Intercept) 11.4292  3.3807  
@@ -55,4 +56,38 @@ husEdU      -0.033655   0.438497 -0.0768   0.93882
 momWorkY     0.324932   0.246013  1.3208   0.18657
 ruralY      -0.720365   0.364484 -1.9764   0.04811
 pcInd81     -0.905655   0.602031 -1.5043   0.13250
+
+Correlation of Fixed Effects:
+         (Intr) kid2pY mm25pY ord23  ord46  ord7p  ethnN  ethnS  momEdP momEdS
+kid2pY   -0.332                                                               
+mom25pY  -0.078  0.022                                                        
+ord23    -0.326  0.075 -0.179                                                 
+ord46    -0.296  0.053 -0.527  0.616                                          
+ord7p    -0.272  0.078 -0.535  0.491  0.676                                   
+ethnN    -0.066 -0.007  0.008  0.000  0.014  0.009                            
+ethnS    -0.072 -0.003  0.000  0.004  0.021  0.016  0.635                     
+momEdP   -0.331  0.058  0.026  0.027  0.057  0.090  0.181  0.102              
+momEdS   -0.254  0.056 -0.020  0.075  0.111  0.114  0.124  0.134  0.372       
+husEdP   -0.362  0.020  0.018  0.007  0.037  0.070  0.128  0.058 -0.125 -0.041
+husEdS   -0.300 -0.015 -0.002  0.016  0.079  0.088  0.080  0.060 -0.144 -0.422
+husEdU   -0.179 -0.029 -0.008  0.016  0.033  0.029  0.062  0.018  0.027  0.033
+momWorkY -0.254 -0.026 -0.053 -0.030  0.010  0.024  0.136  0.095  0.018 -0.011
+ruralY   -0.541  0.001  0.040  0.031  0.006 -0.013 -0.054  0.043  0.009  0.121
+pcInd81  -0.281 -0.006 -0.004 -0.005 -0.008  0.011 -0.619 -0.636  0.059 -0.010
+         husEdP husEdS husEdU mmWrkY ruralY
+kid2pY                                     
+mom25pY                                    
+ord23                                      
+ord46                                      
+ord7p                                      
+ethnN                                      
+ethnS                                      
+momEdP                                     
+momEdS                                     
+husEdP                                     
+husEdS    0.440                            
+husEdU    0.359  0.201                     
+momWorkY  0.001 -0.030 -0.024              
+ruralY    0.068  0.205  0.004  0.083       
+pcInd81  -0.027 -0.005 -0.030  0.004  0.023
 > q("no")

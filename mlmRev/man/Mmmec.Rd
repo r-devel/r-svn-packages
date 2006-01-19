@@ -36,9 +36,7 @@ str(Mmmec)
 summary(Mmmec)
 (fm1 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region),
              Mmmec, poisson))
-if (exists("nlminb", mode = "function")) {
-    (fm2 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region),
-                 Mmmec, poisson, method = "AGQ"))
-}
+(fm2 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region),
+                 Mmmec, poisson, method = "Laplace")) # change to "AGQ" when available
 }
 \keyword{datasets}

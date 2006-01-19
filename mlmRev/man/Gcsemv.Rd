@@ -28,7 +28,6 @@
   London.
 }
 \examples{
-data(Gcsemv)
 str(Gcsemv)
 }
 \keyword{datasets}

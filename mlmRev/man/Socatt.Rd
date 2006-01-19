@@ -44,7 +44,6 @@
   Research.
 }
 \examples{
-data(Socatt)
 str(Socatt)
 summary(Socatt)
 }

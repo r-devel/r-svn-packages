@@ -25,7 +25,6 @@
   73-89.
 }
 \examples{
-data(s3bby)
 str(s3bby)
 }
 \keyword{datasets}

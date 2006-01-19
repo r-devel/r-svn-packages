@@ -36,7 +36,6 @@
     in Education} \bold{5}: 97-121.
 }
 \examples{
-data(ScotsSec)
 str(ScotsSec)
 }
 \keyword{datasets}

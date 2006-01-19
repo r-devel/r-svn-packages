@@ -1,6 +1,7 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -11,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > library(mlmRev)
@@ -26,21 +27,27 @@ Linear mixed-effects model fit by REML
 Formula: cog ~ tos * trt + (tos | id) 
    Data: Early 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 2374.743 2404.609 -1179.371   2369.945     2358.743
+ 2372.742 2398.876 -1179.371   2369.944     2358.742
 Random effects:
  Groups   Name        Variance Std.Dev. Corr   
- id       (Intercept) 165.625  12.8695         
-          tos          10.332   3.2144  -1.000 
- Residual              75.477   8.6878         
+ id       (Intercept) 165.398  12.8607         
+          tos          10.305   3.2102  -1.000 
+ Residual              75.504   8.6893         
 # of obs: 309, groups: id, 103
 
 Fixed effects:
-            Estimate Std. Error  DF  t value Pr(>|t|)
-(Intercept) 118.4074     2.7558 305  42.9673   <2e-16
-tos         -21.1333     1.8932 305 -11.1629   <2e-16
-trtY          4.2190     3.6724 305   1.1489   0.2515
-tos:trtY      5.2713     2.5229 305   2.0894   0.0375
+            Estimate Std. Error t value
+(Intercept) 118.4074     2.7551  42.978
+tos         -21.1333     1.8933 -11.162
+trtY          4.2190     3.6715   1.149
+tos:trtY      5.2713     2.5231   2.089
+
+Correlation of Fixed Effects:
+         (Intr) tos    trtY  
+tos      -0.819              
+trtY     -0.750  0.615       
+tos:trtY  0.615 -0.750 -0.819
 Warning message:
-optim or nlminb returned message ERROR: ABNORMAL_TERMINATION_IN_LNSRCH 
+nlminb returned message false convergence (8) 
  in: "LMEoptimize<-"(`*tmp*`, value = list(maxIter = 200, tolerance = 1.49011611938477e-08,  
 > q("no")

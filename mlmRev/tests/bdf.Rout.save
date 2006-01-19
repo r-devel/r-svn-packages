@@ -1,6 +1,7 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.1.1  (2005-06-20), ISBN 3-900051-07-0
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -11,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > library(mlmRev)
@@ -26,17 +27,22 @@ Linear mixed-effects model fit by REML
 Formula: langPOST ~ IQ.ver.cen + avg.IQ.ver.cen + (IQ.ver.cen | schoolNR) 
    Data: bdf 
       AIC      BIC    logLik MLdeviance REMLdeviance
- 15231.87 15272.02 -7608.937   15213.55     15217.87
+ 15229.87 15264.28 -7608.937   15213.55     15217.87
 Random effects:
  Groups   Name        Variance Std.Dev. Corr   
- schoolNR (Intercept)  8.07272 2.84125         
-          IQ.ver.cen   0.20825 0.45635  -0.642 
- Residual             41.35008 6.43040         
+ schoolNR (Intercept)  8.07556 2.84175         
+          IQ.ver.cen   0.20800 0.45608  -0.642 
+ Residual             41.34971 6.43037         
 # of obs: 2287, groups: schoolNR, 131
 
 Fixed effects:
-                 Estimate Std. Error   DF  t value  Pr(>|t|)
-(Intercept)    4.0750e+01 2.8804e-01 2284 141.4714 < 2.2e-16
-IQ.ver.cen     2.4599e+00 8.3651e-02 2284  29.4063 < 2.2e-16
-avg.IQ.ver.cen 1.4087e+00 3.2369e-01 2284   4.3518 1.410e-05
+                Estimate Std. Error t value
+(Intercept)    40.749580   0.288080 141.452
+IQ.ver.cen      2.459827   0.083638  29.410
+avg.IQ.ver.cen  1.408925   0.323742   4.352
+
+Correlation of Fixed Effects:
+            (Intr) IQ.vr.
+IQ.ver.cen  -0.274       
+avg.IQ.vr.c  0.029 -0.213
 > q("no")

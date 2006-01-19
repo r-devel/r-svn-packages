@@ -30,7 +30,6 @@ dichotomous data.
   73-89.
 }
 \examples{
-data(s3bbx)
 str(s3bbx)
 }
 \keyword{datasets}
