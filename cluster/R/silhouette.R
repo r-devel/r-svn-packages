@@ -11,6 +11,23 @@ silhouette.partition <- function(x, ...) {
     r
 }
 
+silhouette.clara <- function(x, full = FALSE, ...)
+{
+    if(!full)
+	return(NextMethod()) ##-> silh*.partition()
+
+    ## else : full = TRUE
+    if(is.null(x$data))
+	stop("full silhouette is only available for results of",
+	     " 'clara(*, keep.data = TRUE)'")
+    ## Compute "full" silhouette -- from clustering + full distances:
+    r <- silhouette(x$clustering,
+		    daisy(x$data, metric = attr(x, "Metric")))
+    attr(r, "call") <-
+	substitute(silhouette(CL, full = TRUE), list(CL = x$call))
+    r
+}
+
 silhouette.default <- function(x, dist, dmatrix, ...) {
     cll <- match.call()
     if(!is.null(cl <- x$clustering)) x <- cl
