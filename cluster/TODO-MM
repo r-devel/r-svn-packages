@@ -11,8 +11,6 @@ o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
      FIXME ?!?!?!
 
 
-o need ./inst/CITATION  for getting a nice  citation() !!!!
-
 o plot.silhouette() : if an observation's width is == 0., draw a small stripe
 		     instead of nothing at all
 
@@ -28,11 +26,6 @@ o pam() and clara(): With NA's, medoids "often" contain NAs even when there
 
 o pamila(): Major smart idea: Do save the d(i,j) i=1,..k  j=1,..n
 	    only between *medoids* and everything else -- speedup(?) -> optional
-
-o Create a new  silhoutte.clara(...., full = FALSE)
-  where "full = TRUE" would compute all the silhouttes, not just those of
-  the "best sample".
-
 o R/agnes.q , R/diana.q  and R/pam.q  have almost identical clause
 
 	if(data.class(x) != "dissimilarity") {
