@@ -1,4 +1,4 @@
-/* At least for the things in C */
+/* At least for the things in C */-- $Id$
 
 #include <R.h>
 /* -> Rconfig.h, but also Boolean.h RS.h */
@@ -80,7 +80,6 @@ void black(int kk, int jpp, int nsam, int *nbest,
 /* -------- ./dysta.f --- (was in pam.f) -------------------- */
 int F77_NAME(dysta)(int *nn, int *jpp, double *x, double *dys, int *ndyst,
 		    int *jtmd, double *valmd, int *jhalt);
-
 /* --------- ./pam.c ------------------*/
 
 void pam(int *nn, int *jpp, int *kk, double *x, double *dys,
@@ -139,6 +138,11 @@ int F77_NAME(fanny)(int *nn, int *jpp, int *kk,
 		    double *dvec, double *ttsyl, double *eda, double *edb,
 		    double *obj, int *ncluv, double *sylinf, double *r,
 		    double *tol, int *maxit);
+
+/* only called from ../tests/dysta-ex.R */
+int F77_NAME(dysta3)(int *nn, int *jpp, double *x, double *dys, int *ndyst,
+		     int *jtmd, double *valmd, int *jhalt);
+
 
 /* -------- ./meet.f ---------------------------------- */
 int F77_NAME(meet)(int *l, int *j);
