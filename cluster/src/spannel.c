@@ -1,11 +1,15 @@
-/* Compute the SPANNing ELlipsoid --
- --------------- for clusplot.default(*, span = TRUE)
+/* Compute the SPANNing ELlipsoid ---- $Id$
+ * ------------------------------ for clusplot.default(*, span = TRUE)
 
  * Original spannel.f -- translated by f2c (version 20010821).
  * and f2c-clean,v 1.10 2002/03/28 16:37:27 maechler
  */
 #include <math.h>
 #include "cluster.h"
+
+#ifdef DEBUG_spannel
+# include <R_ext/Print.h>
+#endif
 
 void spannel(int *ncas, /* = number of objects */
 	     int *ndep, /* = number of variables */
@@ -52,6 +56,9 @@ void spannel(int *ncas, /* = number of objects */
     for (j = 1; j <= *ndep; ++j) {
 	aver = varsum[j] / *ncas;
 	scal = sqrt(varss[j] / *ncas - aver * aver);
+#ifdef DEBUG_spannel
+	Rprintf("j= %d, scal = %g\n", j, scal);
+#endif
 	for (i = 0; i < *ncas; ++i)
 	    X(i,j) = (X(i,j) - aver) / scal;
     }
@@ -82,9 +89,12 @@ void spannel(int *ncas, /* = number of objects */
 
 	deter = 1.;
 	for (i = 0; i <= *ndep; ++i) {
-	    if (deter <= 0.) { *ierr = 2; return; }
 	    sweep(cov, ndep, &c__0, &i, &deter);
+	    if (deter <= 0.) { *ierr = 2; return; }
 	}
+#ifdef DEBUG_spannel
+	Rprintf(" it= %d; after all sweep()s : deter = %g\n", it, deter);
+#endif
 	dmax = 0.;
 	for (i = 0; i < *ncas; ++i) {
 	    dist = -1.;
@@ -124,6 +134,7 @@ void sweep(double *cov, int *nord, int *ixlo, int *nel, double *deter)
 
     temp = COV(*nel,*nel);
     *deter *= temp;
+    if (*deter <= 0.) return; /* singular case -- signaled via *deter */
     if (*nord <= 1) {
 	COV(1,1) = 1. / temp;
     }
