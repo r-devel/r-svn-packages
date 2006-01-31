@@ -3,8 +3,8 @@
 \alias{print.ellipsoid}
 \title{Compute the Ellipsoid Hull or Spanning Ellipsoid of a Point Set}
 \description{
-  Compute the ``ellipsoid hull'' or ``spanning ellipsoid'', i.e. the
-  ellipsoid of minimal volume (`area' in 2D) such that all given points
+  Compute the \dQuote{ellipsoid hull} or \dQuote{spanning ellipsoid}, i.e. the
+  ellipsoid of minimal volume (\sQuote{area} in 2D) such that all given points
   lie just inside or on the boundary of the ellipsoid.
 }
 \usage{
@@ -28,10 +28,10 @@ ellipsoidhull(x, tol=0.01, maxit=5000,
   \item{digits,\dots}{the usual arguments to \code{\link{print}} methods.}
 }
 \details{
-  The ``spanning ellipsoid'' algorithm is said to stem from
+  The \dQuote{spanning ellipsoid} algorithm is said to stem from
   Titterington(1976), in Pison et al(1999) who use it for
   \code{\link{clusplot.default}}.\cr
-  The problem can be seen as a special case of the ``Min.Vol.''
+  The problem can be seen as a special case of the \dQuote{Min.Vol.}
   ellipsoid of which a more more flexible and general implementation is
   \code{\link[MASS]{cov.mve}} in the \code{MASS} package.
 }
