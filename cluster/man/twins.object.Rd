@@ -1,8 +1,8 @@
-\name{twins.object}
+\name{twins.object}-- $Id$
 \alias{twins.object}
 \alias{twins}% == class
 \title{Hierarchical Clustering Object}
-}
+
 \description{
   The objects of class \code{"twins"} represent an agglomerative or
   divisive (polythetic) hierarchical clustering of a dataset.
