@@ -1,7 +1,7 @@
-\name{mona}
+\name{mona}-- $Id$
 \alias{mona}
 \title{MONothetic Analysis Clustering of Binary Variables}
-}
+
 \description{
   Returns a list representing a divisive hierarchical clustering of
   a dataset with binary variables only.
