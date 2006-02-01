@@ -1,11 +1,11 @@
-\name{plot.mona}
+\name{plot.mona}-- $Id$
 \alias{plot.mona}
 \title{Banner of Monothetic Divisive Hierarchical Clusterings}
 \description{
   Creates the banner of a \code{mona} object.
 }
 \usage{
-\method{plot}{mona}(x, main = paste("Banner of ", deparse(attr(x, "Call"))),
+\method{plot}{mona}(x, main = paste("Banner of ", deparse(x$call)),
           sub = NULL, xlab = "Separation step",
 	  col = c(2,0), axes = TRUE, adj = 0,
           nmax.lab = 35, max.strlen = 5, \dots)
