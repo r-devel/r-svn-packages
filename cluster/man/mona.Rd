@@ -1,4 +1,4 @@
-\name{mona}-- $Id$
+\name{mona}
 \alias{mona}
 \title{MONothetic Analysis Clustering of Binary Variables}
 

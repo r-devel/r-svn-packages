@@ -1,4 +1,4 @@
-\name{twins.object}-- $Id$
+\name{twins.object}
 \alias{twins.object}
 \alias{twins}% == class
 \title{Hierarchical Clustering Object}

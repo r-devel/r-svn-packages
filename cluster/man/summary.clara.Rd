@@ -1,4 +1,4 @@
-\name{summary.clara}-- $Id$
+\name{summary.clara}
 \alias{summary.clara}
 \alias{print.summary.clara}
 \title{Summary Method for `clara' Objects}

@@ -1,4 +1,4 @@
-\name{silhouette}-- $Id$
+\name{silhouette}
 \alias{silhouette}
 \alias{silhouette.clara}
 \alias{silhouette.default}

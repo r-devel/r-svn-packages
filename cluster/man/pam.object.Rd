@@ -1,4 +1,4 @@
-\name{pam.object}-- $Id$
+\name{pam.object}
 \alias{pam.object}
 \title{Partitioning Around Medoids (PAM) Object}
 \description{

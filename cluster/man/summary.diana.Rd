@@ -1,4 +1,4 @@
-\name{summary.diana}-- $Id$
+\name{summary.diana}
 \alias{summary.diana}
 \alias{print.summary.diana}
 \title{Summary Method for `diana' Objects}

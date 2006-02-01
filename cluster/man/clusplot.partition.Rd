@@ -1,4 +1,4 @@
-\name{clusplot.partition}-- $Id$
+\name{clusplot.partition}
 \alias{clusplot.partition}
 \title{Bivariate Clusplot of a Partitioning Object}
 \description{

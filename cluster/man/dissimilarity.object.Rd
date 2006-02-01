@@ -1,4 +1,4 @@
-\name{dissimilarity.object}-- $Id$
+\name{dissimilarity.object}
 \alias{dissimilarity.object}
 \title{Dissimilarity Matrix Object}
 \description{

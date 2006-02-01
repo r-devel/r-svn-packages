@@ -1,4 +1,4 @@
-\name{clusplot}-- $Id$
+\name{clusplot}
 \alias{clusplot}
 \title{Cluster Plot - Generic Function}
 \description{

@@ -1,4 +1,4 @@
-\name{plot.mona}-- $Id$
+\name{plot.mona}
 \alias{plot.mona}
 \title{Banner of Monothetic Divisive Hierarchical Clusterings}
 \description{

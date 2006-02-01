@@ -1,4 +1,4 @@
-\name{plot.partition}-- $Id$
+\name{plot.partition}
 \alias{plot.partition}
 \title{Plot of a Partition of the Data Set}
 \description{Creates plots for visualizing a \code{partition} object.}

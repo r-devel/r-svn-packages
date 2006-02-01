@@ -1,4 +1,4 @@
-\name{summary.mona}-- $Id$
+\name{summary.mona}
 \alias{summary.mona}
 \alias{print.summary.mona}
 \title{Summary Method for `mona' Objects}

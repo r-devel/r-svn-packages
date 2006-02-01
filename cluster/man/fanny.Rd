@@ -1,4 +1,4 @@
-\name{fanny}-- $Id$
+\name{fanny}
 \alias{fanny}
 \title{Fuzzy Analysis Clustering}
 \description{

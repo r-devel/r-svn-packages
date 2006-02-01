@@ -1,4 +1,4 @@
-\name{summary.pam}-- $Id$
+\name{summary.pam}
 \alias{summary.pam}
 \alias{print.summary.pam}
 \title{Summary Method for PAM Objects}

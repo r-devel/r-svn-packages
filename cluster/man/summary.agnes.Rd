@@ -1,4 +1,4 @@
-\name{summary.agnes}-- $Id$
+\name{summary.agnes}
 \alias{summary.agnes}
 \alias{print.summary.agnes}
 \title{Summary Method for `agnes' Objects}

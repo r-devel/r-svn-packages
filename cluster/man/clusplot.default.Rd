@@ -1,4 +1,4 @@
-\name{clusplot.default}-- $Id$
+\name{clusplot.default}
 \alias{clusplot.default}
 \title{Bivariate Cluster Plot (clusplot) Default Method}
 \description{

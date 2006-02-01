@@ -1,4 +1,4 @@
-\name{plot.diana}-- $Id$
+\name{plot.diana}
 %% almost identical to ./plot.agnes.Rd and quite similar to ./plot.mona.Rd
 \alias{plot.diana}
 \title{Plots of a Divisive Hierarchical Clustering}

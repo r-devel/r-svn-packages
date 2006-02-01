@@ -1,4 +1,4 @@
-\name{partition.object}-- $Id$
+\name{partition.object}
 \alias{partition}% == class
 \alias{partition.object}
 \title{Partitioning Object}
