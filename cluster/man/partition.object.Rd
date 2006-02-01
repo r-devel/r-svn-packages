@@ -1,4 +1,4 @@
-\name{partition.object}
+\name{partition.object}-- $Id$
 \alias{partition}% == class
 \alias{partition.object}
 \title{Partitioning Object}
@@ -28,32 +28,16 @@
     cluster to which it belongs.}
   \item{call}{the matched \code{\link{call}} generating the object.}
   \item{silinfo}{
-    a list with all \emph{silhouette} information:
-    For each observation i, the \emph{silhouette width} \eqn{s(i)} is
-    defined as follows: \cr
-    Put a(i) = average dissimilarity between i and all other points of the
-    cluster to which i belongs.  For all \emph{other} clusters C, put
-    \eqn{d(i,C)} = average dissimilarity of i to all observations of C.  The
-    smallest of these \eqn{d(i,C)} is \eqn{b(i) := \min_C d(i,C)},
-    and can be seen as the dissimilarity between i and its ``neighbor''
-    cluster, i.e., the nearest one to which it does \emph{not} belong.
-    Finally, \deqn{s(i) := \frac{b(i) - a(i) }{max(a(i), b(i))}}{%
-      s(i) := ( b(i) - a(i) ) / max( a(i), b(i) )}.
-
-    Observations with a large \eqn{s(i)} (almost 1) are very well
-    clustered, a small \eqn{s(i)} (around 0) means that the observation
-    lies between two clusters, and observations with a negative
-    \eqn{s(i)} are probably placed in the wrong cluster.
-
-    This \code{silinfo} is only available when the number of clusters
-    is non-trivial, i.e., \eqn{1 < k < n} and then has the following
-    components:
+    a list with all \emph{silhouette} information, only available when
+    the number of clusters is non-trivial, i.e., \eqn{1 < k < n} and
+    then has the following components, see \code{\link{silhouette}}
     \describe{
-      \item{widths}{an (n x 3) matrix, with for each observation i the cluster
-	to which i belongs, as well as the neighbor cluster of i (the cluster,
-	not containing i, for which the average dissimilarity
-	between its observations and i is minimal), and the silhouette width
-	\eqn{s(i)} of the observation.
+      \item{widths}{an (n x 3) matrix, as returned by
+	\code{\link{silhouette}()}, with for each observation i the
+	cluster to which i belongs, as well as the neighbor cluster of i
+	(the cluster, not containing i, for which the average
+	dissimilarity between its observations and i is minimal), and
+	the silhouette width \eqn{s(i)} of the observation.
       }
       \item{clus.avg.widths}{the average silhouette width per cluster.}
       \item{avg.width}{the average silhouette width for the dataset, i.e.,
