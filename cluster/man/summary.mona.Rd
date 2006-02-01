@@ -1,7 +1,7 @@
-\name{summary.mona}
+\name{summary.mona}-- $Id$
 \alias{summary.mona}
 \alias{print.summary.mona}
-\title{Summary method for `mona' objects}
+\title{Summary Method for `mona' Objects}
 \description{Returns (and prints) a summary list for a \code{mona} object.}
 \usage{
 \method{summary}{mona}(object, \dots)
