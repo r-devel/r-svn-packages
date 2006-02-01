@@ -1,8 +1,8 @@
-\name{clusplot}
+\name{clusplot}-- $Id$
 \alias{clusplot}
 \title{Cluster Plot - Generic Function}
 \description{
-  Draws a 2-dimensional ``clusplot'' on the current graphics device.
+  Draws a 2-dimensional \dQuote{clusplot} on the current graphics device.
   This is a generic function with a default and \code{partition} method.
 }
 \usage{
