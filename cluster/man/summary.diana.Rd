@@ -1,4 +1,4 @@
-\name{summary.diana}
+\name{summary.diana}-- $Id$
 \alias{summary.diana}
 \alias{print.summary.diana}
 \title{Summary Method for `diana' Objects}
@@ -6,6 +6,10 @@
 \usage{
 \method{summary}{diana}(object, \dots)
 \method{print}{summary.diana}(x, \dots)
+}
+\arguments{
+  \item{x, object}{a \code{\link{diana}} object.}
+  \item{\dots}{potential further arguments (require by generic).}
 }
 \seealso{\code{\link{diana}}, \code{\link{diana.object}}.}
 \keyword{cluster}
