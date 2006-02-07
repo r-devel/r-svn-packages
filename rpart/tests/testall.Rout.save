@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2005-10-17 r35923)
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-02-06 r37279)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -12,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > # Any necessary setup
@@ -1166,9 +1166,13 @@ Node number 23: 8 observations
 > all.equal(fit2$cptable,    fit2b$cptable)
 [1] TRUE
 > all.equal(fit2$splits[,-1],fit2b$splits[,-1]) #fails
-[1] "Numeric: lengths (196, 192) differ"
+[1] "Attributes: < Component 1: Mean relative  difference: 0.02041 >"
+[2] "Attributes: < Component 2: Component 1: 24 string mismatches >" 
+[3] "Numeric: lengths (196, 192) differ"                             
 > all.equal(fit2$splits[-24,-1],fit2b$splits[-24,-1]) #ok
-[1] "Numeric: lengths (192, 188) differ"
+[1] "Attributes: < Component 1: Mean relative  difference: 0.02083 >"
+[2] "Attributes: < Component 2: Component 1: 24 string mismatches >" 
+[3] "Numeric: lengths (192, 188) differ"                             
 > all.equal(fit2$csplit,    fit2b$csplit)
 [1] TRUE
 > # Line 24 is a surrogate split in a group whose 2 smallest ages are
@@ -1475,7 +1479,8 @@ Node number 13: 20 observations
 > all.equal(fit2$cptable,    fit2b$cptable)
 [1] TRUE
 > all.equal(fit2$splits[,-1],fit2b$splits[,-1]) #fails
-[1] "Mean relative  difference: 0.8952"
+[1] "Attributes: < Component 2: Component 1: 2 string mismatches >"
+[2] "Mean relative  difference: 0.8952"                            
 > all.equal(fit2$csplit,    fit2b$csplit)
 [1] TRUE
 > 
