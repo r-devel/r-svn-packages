@@ -7,8 +7,8 @@
 \title{Orthogonalized Gnanadesikan-Kettenring (OGK) Covariance Matrix Estimation}
 \description{
   Computes the orthogonalized pairwise covariance matrix estimate described in
-  in Maronna and Zamar (2002).  The pairwise proposal was by
-  Gnanadesikan and Kettenring.
+  in Maronna and Zamar (2002).  The pairwise proposal goes back to
+  Gnanadesikan and Kettenring (1972).
 }
 \usage{
 covOGK(X, n.iter, sigmamu, rcov = covGK, weight.fn,
@@ -17,9 +17,8 @@ covOGK(X, n.iter, sigmamu, rcov = covGK, weight.fn,
 \arguments{
   \item{X}{data in something that can be coerced into a numeric matrix.}
   \item{n.iter}{number of orthogonalization iterations.  Usually 1 or 2;
-    values greater than 2 are unlikely to have any
-    significant effect on the estimate (other than
-    increasing the computing time).}
+    values greater than 2 are unlikely to have any significant effect on
+    the estimate (other than increasing the computing time).}
   \item{sigmamu}{a function that computes univariate robust location and
     scale estimates.  By default \code{sigmamu} should return a single
     numeric value containing the robust scale (standard deviation)
@@ -73,8 +72,7 @@ covOGK(X, n.iter, sigmamu, rcov = covGK, weight.fn,
 
 %  ~Make other sections like Warning with \section{Warning }{....} ~
 % }
-\seealso{\code{\link[MASS]{cov.rob}},
-  %% FIXME:  fastMCD() from Valentin -- when it is in *this* package
+\seealso{\code{\link{covMcd}}, \code{\link[MASS]{cov.rob}}.
 }
 \examples{
 data(hbk)
@@ -82,8 +80,11 @@ hbk.x <- data.matrix(hbk[, 1:3])
 
 cO1 <- covOGK(hbk.x, n.iter = 2,
               sigmamu = scaleTau2, weight.fn = hard.rejection)
+%% FIXME: Add this!
 % scaleQn <- function (...)  { .... ; c(Qn, median) }
 % cO2 <- covOGK(hbk.x, n.it = 2, sigmamu = scaleQn, weight.fn = hard.rejection)
+
+%% FIXME: Add time comparison, here or in "vignette", "demo", "...
 }
 \keyword{robust}
 \keyword{multivariate}

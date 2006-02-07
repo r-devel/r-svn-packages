@@ -23,9 +23,11 @@
 \examples{
 data(phosphor)
 plot(phosphor)
-summary(lm.phosphor <- lm(plant ~ ., data =phosphor))
+summary(lm.phosphor <- lm(plant ~ ., data = phosphor))
+summary(lts.phosphor <- ltsReg(plant ~ ., data = phosphor))
 
 phosphor.x <- data.matrix(phosphor[, 1:2])
-%% covMcd(phosphor.x)
+cPh <- covMcd(phosphor.x)
+plot(cPh, "dd")
 }
 \keyword{datasets}

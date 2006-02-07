@@ -59,5 +59,12 @@ plotbb(bbdat = Animals2)
 data(Animals, package = "MASS")
 brain <- Animals[c(1:24, 26:25, 27:28),]
 plotbb(bbdat = brain)
+
+lbrain <- log(brain)
+plot(mahalanobis(lbrain, mean(lbrain), var(lbrain)),
+     main = "Classical Mahalanobis Distances")
+mcd <- covMcd(lbrain)
+plot(mahalanobis(lbrain,mcd$center,mcd$cov),
+     main = "Robust (MCD) Mahalanobis Distances")
 }
 \keyword{datasets}

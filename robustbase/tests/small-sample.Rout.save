@@ -1,6 +1,6 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.2.0 Patched (2005-11-20 r36405)
+R : Copyright 2006, The R Foundation for Statistical Computing
+Version 2.3.0 Under development (unstable) (2006-02-05 r37270)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -12,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > library(robustbase)
@@ -165,11 +165,7 @@ Mean and its. std.err;  Quartiles of Sn(x_1 .. x_n) and Qn(...):
                           25%       50%       75% 
 0.4860477 0.0023965 0.4492734 0.4853898 0.5220596 
 > 
-> (function(){
-+     cat("\nCPU used:\n") ; invisible(print(cpu))
-+ })()
-
-CPU used:
-   2    3    4    5    6    7    8    9   10   11   12   20   50 
-0.82 0.64 0.66 0.60 0.63 0.67 0.72 0.71 0.72 0.78 0.75 0.94 1.89 
+> rbind("Time (CPU) used:" = summary(cpu))
+                 Min. 1st Qu. Median   Mean 3rd Qu. Max.
+Time (CPU) used: 0.63     0.7   0.75 0.8869       1 1.87
 > 

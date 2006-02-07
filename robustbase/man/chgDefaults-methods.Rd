@@ -10,8 +10,8 @@
 }
 \section{Methods}{
   \describe{
-    \item{\code{object = "psi_func"}}{The method is used to change the
-      default values for the tuning parameters, and returns a
+    \item{\code{object = "psi_func"}}{The method is used to change the default
+      values for the tuning parameters, and returns a
       \code{\link{psi_func-class}} object, a copy of input \code{object}
       with the slot \code{tDefs} possibly changed;.
     }

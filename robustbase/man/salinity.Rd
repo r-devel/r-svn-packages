@@ -34,8 +34,10 @@
 data(salinity)
 summary(lm.sali  <-        lm(Y ~ . , data = salinity))
 summary(rlm.sali <- MASS::rlm(Y ~ . , data = salinity))
+summary(lts.sali <-    ltsReg(Y ~ . , data = salinity))
 
 salinity.x <- data.matrix(salinity[, 1:3])
-%% covMcd(salinity.x)
+c_sal <- covMcd(salinity.x)
+plot(c_sal, "tolEllipsePlot")
 }
 \keyword{datasets}

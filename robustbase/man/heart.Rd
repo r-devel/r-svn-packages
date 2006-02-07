@@ -38,7 +38,8 @@ data(heart)
 data(heart)
 heart.x <- data.matrix(heart[, 1:2]) # the X-variables
 plot(heart.x)
-%%covMcd(heart.x)
-summary(lm.heart <- lm(clength ~ . , data = heart))
+covMcd(heart.x)
+summary( lm.heart <-     lm(clength ~ . , data = heart))
+summary(lts.heart <- ltsReg(clength ~ . , data = heart))
 }
 \keyword{datasets}

@@ -32,9 +32,10 @@
 \examples{
 data(coleman)
 pairs(coleman)
-summary(lm.coleman <- lm(Y ~ . , data = coleman))
+summary( lm.coleman <-     lm(Y ~ . , data = coleman))
+summary(lts.coleman <- ltsReg(Y ~ . , data = coleman))
 
 coleman.x <- data.matrix(coleman[, 1:6])
-%% (Cc <- covMcd(coleman.x))
+(Cc <- covMcd(coleman.x))
 }
 \keyword{datasets}

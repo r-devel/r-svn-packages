@@ -30,6 +30,7 @@ data(delivery)
 summary(lm.deli <- lm(delTime ~ ., data = delivery))
 
 delivery.x <- as.matrix(delivery[, 1:2])
-%% covMcd(delivery.x)
+c_deli <- covMcd(delivery.x)
+c_deli
 }
 \keyword{datasets}

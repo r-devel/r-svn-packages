@@ -29,8 +29,10 @@ data(wood)
 plot(wood)
 summary( lm.wood <-        lm(y ~ ., data = wood))
 summary(rlm.wood <- MASS::rlm(y ~ ., data = wood))
+summary(lts.wood <-    ltsReg(y ~ ., data = wood))
 
 wood.x <- as.matrix(wood)[,1:5]
-%%covMcd(wood.x)
+c_wood <- covMcd(wood.x)
+c_wood
 }
 \keyword{datasets}

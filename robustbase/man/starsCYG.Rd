@@ -34,11 +34,11 @@
 \examples{
 data(starsCYG)
 plot(starsCYG)
-%% covMcd(stars)
+cst <- covMcd(starsCYG)
 lm.stars <- lm(log.light ~ log.Te, data = starsCYG)
 summary(lm.stars)
 plot(lm.stars)
-% lts.stars <- with(statsCYG, ltsReg(log.Te, log.light))
-% plot(lts.stars)
+lts.stars <- ltsReg(log.light ~ log.Te, data = starsCYG)
+plot(lts.stars)
 }
 \keyword{datasets}

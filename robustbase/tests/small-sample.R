@@ -31,6 +31,4 @@ for(n in nset) {
     print(c(mean(qn), sd(qn)/sqrt(nS), quantile(qn, p = (1:3)/4)))
 }
 
-(function(){
-    cat("\nCPU used:\n") ; invisible(print(cpu))
-})()
+rbind("Time (CPU) used:" = summary(cpu))

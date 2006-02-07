@@ -1,4 +1,4 @@
-TO DO
+O DO
 ------
 
 o  Generalizing  'wgt.himedian':  We'd want a C API on which R builds.
@@ -20,3 +20,21 @@ o covOGK(): is *inconsistent* (by a constant factor, depending on n)
 
   - Consider making 'hard rejection'  the default though!
   -   "        "    n.iter = 1 or = 2 the default.
+
+o rrcov.control() __ NEEDS  name change ! ______
+   probably use  mcd.control() and lts.control()
+
+   or forget about *control() completely?
+   since there only a few in each ??????/
+
+----
+
+o tolellipse() --> renamed to tolEllipsePlot()
+     - maybe use  cluster::ellipsoidPoints()
+     - allow other percentiles than just  97.5%
+     - maybe *return* something
+
+o summary.mcd() should *return* and object of class "summary.mcd"
+  and then  print.summary.mcd() should print it !!!
+
+o plot(mcd. ) : should show the call !

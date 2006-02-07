@@ -20,3 +20,11 @@ o) we have had some problems, but they are solved now
        -- as part of the loaded data -- but kept a definition
         <foo>.x <- as.matrix(.....)
       in the examples section.	 {MM & VT,  Dec.2005/Jan.2006}
+
+4) covMcd( * ):  replace 'print.it'  by  'trace'  which is more appropriate
+   	         and common in S
+
+5) renamed  tolellipse() to tolEllipsePlot()
+   all these plotting functions may *NOT* set  par(mfrow = c(1,1)) !
+
+6) considerable simplification in the  correction factor computations

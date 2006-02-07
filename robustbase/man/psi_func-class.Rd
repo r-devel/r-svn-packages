@@ -1,8 +1,8 @@
 \name{psi_func-class}
 \docType{class}
 \alias{psi_func-class}
-\alias{huberPsi}
-\title{Class "psi\_func" of Psi Functions for M-Estimation}
+\title{Class of "Psi Functions" for M-Estimation}
+%% Rd Problem:  'psi_func' cannot be used in title!
 %% -> ../R/psi-rho-funs.R
 \description{
   The class \code{"psi_func"} is used to store \eqn{\psi (psi)}{psi}
@@ -18,9 +18,9 @@
 \section{Slots}{
   \describe{
     \item{\code{rho}:}{the \eqn{\rho()}{rho()} function, an object of
-	class \code{"functionX"}. This is used to formulate the
-	objective function; \eqn{\rho()} can be regarded as generalized
-	negative log-likelihood.}
+      class \code{"functionX"}. This is used to formulate the
+      objective function; \eqn{\rho()} can be regarded as generalized
+      negative log-likelihood.}
     \item{\code{psi}:}{\eqn{\psi()}{psi()} is the derivative of \eqn{\rho},
       \eqn{\psi(x) = \frac{d}{dx} \rho(x)}{psi(x) = d/dx rho(x)};
       also of class \code{"functionX"}.}
@@ -30,11 +30,10 @@
       \eqn{Dpsi(x) = psi'(x)}; of class \code{"functionX"}.}
     \item{\code{tDefs}:}{\emph{named} numeric vector of \bold{t}uning
       parameter \bold{Def}ault values.}
-%%% FIXME : Replace these by *methods*
+    %%% FIXME : Replace these by *methods*
     \item{\code{Erho}:}{Object of class \code{"functionXal"} ~~ }
     \item{\code{Epsi2}:}{Object of class \code{"functionXal"} ~~ }
     \item{\code{EDpsi}:}{Object of class \code{"functionXal"} ~~ }
-
 
     \item{\code{xtras}:}{Potentially further information.}
   }
@@ -56,4 +55,3 @@ str(huberPsi, give.attr = FALSE)
 }
 \keyword{classes}
 \keyword{robust}
-

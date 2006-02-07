@@ -9,6 +9,15 @@ useDynLib(robustbase)
 ## Functions defined in this package
 export(Sn, Qn,
        wgt.himedian,
+
+       covMcd,
+       ltsReg,
+       tolEllipsePlot,
+       ## RENAME ?!? :
+       covPlot, ltsPlot,
+       ## NO! ddplot, distplot, chi2qqplot
+       rrcov.control,##  << RENAME --- FIXME
+
        huberM,
        covOGK, covGK, hard.rejection, scaleTau2,
        psiFunc, huberPsi
@@ -16,6 +25,23 @@ export(Sn, Qn,
 ##     hampelPsi,
 ##     tukeyPsi, # = biweight / bisquare
        )
+
+## S3 methods for ``our own'' S3 generics:
+S3method(ltsReg, default)
+S3method(ltsReg, formula)
+
+
+## register all the methods for generics elsewhere in case namespace is
+## loaded but not currently attached.
+S3method(summary, lts)
+S3method(summary, mcd)
+S3method(plot, lts)
+S3method(plot, mcd)
+S3method(print, lts)
+S3method(print, mcd)
+S3method(print, summary.lts)
+##not there: S3method(print, summary.mcd)
+
 
 ## S4 Generics {only those defined in this package}:
 export(

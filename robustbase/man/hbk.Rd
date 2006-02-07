@@ -43,6 +43,6 @@ plot(hbk)
 summary(lm.hbk <- lm(Y ~ ., data = hbk))
 
 hbk.x <- data.matrix(hbk[, 1:3])
-%% covMcd(hbk.x)
+(cHBK <- covMcd(hbk.x))
 }
 \keyword{datasets}
