@@ -1,6 +1,6 @@
 Package: robustbase
-Version: 0.1-0
-Date: 2005-02-06
+Version: 0.1-1
+Date: 2005-02-08
 Title: Basic Robust Statistics
 Author: Original code by many authors, notably
 	Peter Rousseeuw, Christophe Croux, see file 'Copyrights';
@@ -8,17 +8,16 @@ Author: Original code by many authors, notably
 	Andreas Ruckstuhl <rks@zhwin.ch>,
 	Matias Salibian-Barrera <matias@stat.ubc.ca>.
 	adaptions, testing, help files, utilities: by Martin Maechler
-NOTE: >>>>>>>>>>>>> Several parts are still preliminary and          <<<<
-  >>>>>>>>>>>>>>>>> may be changed in the future; this typically     <<<<
-  >>>>>>>>>>>>>>>>> includes argument names; defaults for arguments  <<<<
-  >>>>>>>>>>>>>>>>> and return values                                <<<<
+NOTE: SEVERAL PARTS ARE STILL PRELIMINARY AND MAY BE CHANGED IN THE FUTURE.
+      THIS TYPICALLY INCLUDES ARGUMENT NAMES,
+      DEFAULTS FOR ARGUMENTS AND RETURN VALUES.
 Maintainer: Martin Maechler <maechler@stat.math.ethz.ch>
 Description: "Essential" Robust Statistics. The goal is to provide
  tools allowing to analyze data with robust methods.  This includes
  regression methodology including model selections and multivariate
  statistics where we strive to cover the upcoming book "Robust Statistics,
  Theory and Methods" by Maronna, Martin and Yohai; Wiley 2006.
-Depends: stats, methods
+Depends: stats, methods, MASS
 Suggests: MASS
-SaveImage: yes
+LazyLoad: yes
 License: GPL version 2 or later

@@ -38,3 +38,20 @@ o summary.mcd() should *return* and object of class "summary.mcd"
   and then  print.summary.mcd() should print it !!!
 
 o plot(mcd. ) : should show the call !
+
+---
+
+o glmrob(*, weights.on.x = "robCov")  currently uses  MASS::cov.rob(), i.e.
+  "MVE" and Andreas had a comment that "mcd" is worse.
+  But still, I (MM) strongly believe we should use  covMcd() instead.
+
+o psi.*(....,  rho = FALSE/TRUE)   functions from Andreas
+  should be replaced by using the new  psi_func  objects
+  --> ./R/psi-funs-AR.R  &  ./man/pkg-internal.Rd
+
+o glmrob() -> "glmrob" class needs
+  predict() and probably also residuals(..., type = "*")
+
+o glmrob() needs tests in ./tests/ -- taking from man/glmrob.Rd
+
+o nlrob() needs tests in ./tests/ -- you can take some from man/nlrob.Rd
