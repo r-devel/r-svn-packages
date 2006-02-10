@@ -14,11 +14,10 @@ psiFunc(rho, psi, wgt, Dpsi, Erho = NULL, Epsi2 = NULL, EDpsi = NULL, ...)
 \arguments{
   \item{rho, psi, wgt, Dpsi}{each a \code{\link{function}} of \code{x} and
     tuning parameters typically.}
-  %% FIXME: see ./psi_func-class.Rd
-  \item{Erho}{ ~~Describe \code{Erho} here~~ }
-  \item{Epsi2}{ ~~Describe \code{Epsi2} here~~ }
-  \item{EDpsi}{ ~~Describe \code{EDpsi} here~~ }
-  \item{\dots}{ ~~Describe \code{\dots} here~~ }
+  \item{Erho, Epsi2, EDpsi}{see \code{\link{psi_func-class}}, and note
+    that these may change in the future.}
+  \item{\dots}{potential further arguments for specifying tuning
+    parameter names and defaults.} %% FIXME; give more details
 }
 % \details{
 %   ~~ If necessary, more details than the description above ~~

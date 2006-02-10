@@ -14,7 +14,8 @@ covMcd(x, cor=FALSE, alpha=1/2, nsamp=500, seed=0, print.it=FALSE, control)
 }
 \arguments{
   \item{x}{a matrix or data frame. }
-  \item{cor}{should the returned result include a correlation matrix? Default is \code{cor = FALSE} }.
+  \item{cor}{should the returned result include a correlation matrix?
+    Default is \code{cor = FALSE}}.
   \item{alpha}{numeric parameter controlling the size of the subsets
     over which the determinant is minimized, i.e., \code{alpha*n}
     observations are used for computing the determinant.  Allowed values
@@ -91,9 +92,9 @@ covMcd(x, cor=FALSE, alpha=1/2, nsamp=500, seed=0, print.it=FALSE, control)
   Small Sample Corrections for LTS and MCD,
   \emph{Metrika}, \bold{55}, 111-123.
 }
-
 \seealso{
-%% ADD !
+  \code{\link[MASS]{cov.mcd}} from package \pkg{MASS};
+  \code{\link{covOGK}} as cheaper alternative for larger dimensions.
 }
 \examples{
 data(hbk)

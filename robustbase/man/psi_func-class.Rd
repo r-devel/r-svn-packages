@@ -2,18 +2,17 @@
 \docType{class}
 \alias{psi_func-class}
 \title{Class of "Psi Functions" for M-Estimation}
-%% Rd Problem:  'psi_func' cannot be used in title!
-%% -> ../R/psi-rho-funs.R
+%% 'psi_func' cannot be used in title!
 \description{
-  The class \code{"psi_func"} is used to store \eqn{\psi (psi)}{psi}
+  The class \code{"psi_func"} is used to store \eqn{\psi \ (psi)}{psi}
   functions for M-estimation.  In particular, an object of the class
-  contains \eqn{\rho(x) (rho)}{rho(x)}, its derivative
-  \eqn{\psi(x) (psi)}{psi(x)}, the weight function \eqn{\psi(x)/x}, and
+  contains \eqn{\rho(x) \ (\code{rho})}{rho(x)}, its derivative
+  \eqn{\psi(x) \ (psi)}{psi(x)}, the weight function \eqn{\psi(x)/x}, and
   first derivative of \eqn{\psi}, \code{Dpsi = } \eqn{\psi'(x)}.
 }
 \section{Objects from the Class}{
-  Objects can be created by calls of the form \code{new("psi_func", ...)}.
-  ... FIXME ...
+  Objects can be created by calls of the form \code{new("psi_func", ...)},
+  but preferably by \code{\link{psiFunc}(...)}.
 }
 \section{Slots}{
   \describe{
@@ -46,10 +45,9 @@
 
 %  ~Make other sections like Warning with \section{Warning }{....} ~
 
-% \seealso{
-% 	~~objects to See Also as \code{\link{~~fun~~}}, ~~~
-% 	or \code{\link{CLASSNAME-class}} for links to other classes
-% }
+\seealso{
+  \code{\link{psiFunc}}.
+}
 \examples{
 str(huberPsi, give.attr = FALSE)
 }

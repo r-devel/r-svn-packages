@@ -1,3 +1,16 @@
+2006-02-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.1-2 ready for CRAN "baby release"
+
+	* man/vaso.Rd: fix longstanding typo:  con*s*triction
+
+	* R/glmrob.R (glmrob): Oops! the *.control() function must only
+	have one "." and must be *called*
+
+2006-02-08  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/glmrob.R,......: added 'glmrob' and 'nlrob' from Andreas Ruckstuhl
+
 2006-02-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/covMcd.R: all moved from 'rrcov' after Valentin's

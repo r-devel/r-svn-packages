@@ -15,32 +15,27 @@
   \item{\dots}{further arguments passed to or from other methods.}
 }
 
-\details{
-  \code{\link{summary.nlrob}} tries to be smart about formatting the
-  coefficients, standard errors, etc. and additionally gives
-  "significance stars" if \code{signif.stars} is \code{TRUE}. ???
-}
+% \details{
+%   \code{\link{summary.nlrob}} tries to be smart about formatting the
+%   coefficients, standard errors, etc. and additionally gives
+%   \dQuote{significance stars} if \code{signif.stars} is \code{TRUE}.
+% }
 
 \value{
-  The function \code{\link{summary.nlrob}} computes and returns a list
-  of summary statistics of the robustly fitted linear model given in
-  \code{object}. The following elements are in the list:
-  \item{FixIt}{???}
+  The current implementation is trival and returns the same object.
+  This will change in the future.
+%   The function \code{\link{summary.nlrob}} computes and returns a list
+%   of summary statistics of the robustly fitted linear model given in
+%   \code{object}. The following elements are in the list:
+%   \item{FixIt}{???}
 }
 
 %%\references{ ~put references to the literature/web site here ~ }
 \author{Andreas Ruckstuhl}
-%%\note{ ~~further notes~~ }
-%%
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
-%%\seealso{ ~~objects to See Also as \code{\link{~~fun~~}}, ~~~ }
 
 \examples{
 ## To do
 }
-
-\keyword{models}
 \keyword{regression}
 \keyword{nonlinear}
 \keyword{robust}

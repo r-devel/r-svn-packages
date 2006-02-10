@@ -9,16 +9,11 @@
 }
 \usage{
 %% for glmrob
-print.glmrob(x, digits = max(3, getOption("digits") - 3), ...)
-
-print.summary.glmrob(x, digits = max(3, getOption("digits") - 3),
-                    symbolic.cor = x$symbolic.cor,
-                    signif.stars = getOption("show.signif.stars"), ...)
+\method{print}{glmrob}(x, digits = max(3, getOption("digits") - 3), ...)
 
 glmrobMqle(X, y, weights = rep(1, nobs), start = NULL,
           offset = rep(0, nobs), family, weights.on.x = "none",
           control = glmrobMqle.control(), intercept = TRUE)
-
 glmrobMqleEpsiB     (mu, Vmu, ni, H, K, tcc)
 glmrobMqleEpsiPois  (mu, Vmu, ni, H, K, tcc)
 glmrobMqleEpsiSB    (mu, Vmu, ni, H, K, tcc)

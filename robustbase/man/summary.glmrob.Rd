@@ -1,14 +1,19 @@
 \name{summary.glmrob}
 \alias{summary.glmrob}
-%- Also NEED an '\alias' for EACH other topic documented here.
-\title{Summarizing Robust Fits of Discrete Generalized Linear Models}
+\alias{print.summary.glmrob}
+\title{Summarizing Robust Fits of Generalized Linear Models}
 \description{
-  \code{summary} method for class \code{"glmrob"}.
+  The \code{summary} method for class \code{"\link{glmrob}"}
+  summarizes robust fits of (currently only discrete) generalized linear
+  models.
 }
 \usage{
 \method{summary}{glmrob}(object, correlation = FALSE, symbolic.cor = FALSE, ...)
+
+\method{print}{summary.glmrob}(x, digits = max(3, getOption("digits") - 3),
+      symbolic.cor = x$symbolic.cor,
+      signif.stars = getOption("show.signif.stars"), \dots)
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{object}{an object of class \code{"glmrob"}, usually, a result of
     a call to \code{\link{glmrob}}.}
@@ -17,19 +22,29 @@
   \item{symbolic.cor}{logical. If \code{TRUE}, print the correlations in
     a symbolic form (see \code{\link{symnum}}) rather than as numbers.}
   \item{\dots}{further arguments passed to or from other methods.}
+  \item{x}{an object of class \code{"summary.glrob"}.}
+  \item{digits}{the number of digits to use for printing.}
+  \item{signif.stars}{logical indicating if the P-values should be
+    visualized by so called \dQuote{significance stars}.}
 }
 
 \details{
-  \code{\link{summary.glmrob}} tries to be smart about formatting the
-  coefficients, standard errors, etc. and additionally gives
-  "significance stars" if \code{signif.stars} is \code{TRUE}. ???
+  \code{\link{summary.glmrob}} returns an object of \code{\link{class}}
+  \code{"summary.glmrob"}.
+
+  Its \code{\link{print}()} method tries to be smart about formatting the
+  coefficients, standard errors, etc, and gives
+  \dQuote{significance stars} if \code{signif.stars} is \code{TRUE}
+  (as per default when \code{\link{options}} where not changed).
 }
 
 \value{
   The function \code{\link{summary.glmrob}} computes and returns a list
   of summary statistics of the robustly fitted linear model given in
   \code{object}. The following elements are in the list:
-  \item{FixIt }{???}
+  \item{...}{ FIXME }
+  %% MM thinks that summary should possibly just *add* to the original
+  %% object.
 }
 
 %%\references{ ~put references to the literature/web site here ~ }
@@ -37,14 +52,17 @@
 
 %%\note{ ~~further notes~~ }
 %%
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-%%
-%%\seealso{ ~~objects to See Also as \code{\link{~~fun~~}}, ~~~ }
-
-\examples{
-## To do
+\seealso{\code{\link{glmrob}}; the generic \code{\link{summary}} and
+  also \code{\link[stats]{summary.glm}}.
 }
-\keyword{models}
+\examples{
+data(epilepsy)
+Rmod <- glmrob(Ysum ~ Age10 + Base4*Trt, family = poisson,
+               data = epilepsy, method= "Mqle")
+ss <- summary(Rmod)
+ss ## calls print.summary.glmrob()
+str(ss) ## internal STRucture of summary object
+}
 \keyword{regression}
 \keyword{nonlinear}
 \keyword{robust}

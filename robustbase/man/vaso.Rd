@@ -1,9 +1,9 @@
 \name{vaso}
 \alias{vaso}
 \docType{data}
-\title{Vaso Contriction Data Set}
+\title{Vaso Constriction Data Set}
 \description{
-  Finney's data on vaso contriction in the skin of the digits.
+  Finney's data on vaso constriction in the skin of the digits.
 }
 \usage{data(vaso)}
 \format{
@@ -57,12 +57,8 @@ data(vaso)
 str(vaso)
 pairs(vaso)
 
-Vfit1 <- glm(Y ~ log(Volume) + log(Rate), family=binomial, data=vaso)
-summary(Vfit1)
-
-## Robust Fit : %%>>>>> FIXME <<<<
-% Vfit2 <- robglm(Y ~ log(Volume) + log(Rate), family=binomial, data=vaso,
-%                 method="Mqle", control=robglmMqle.control(tcc=3.5))
-% summary(Vfit2)
+glmV <- glm(Y ~ log(Volume) + log(Rate), family=binomial, data=vaso)
+summary(glmV)
+## -->  example(glmrob)  showing classical & robust GLM
 }
 \keyword{datasets}

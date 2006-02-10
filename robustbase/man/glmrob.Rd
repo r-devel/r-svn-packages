@@ -8,7 +8,7 @@
   methods.  The models are specified by giving a symbolic description of
   the linear predictor and a description of the error distribution.
   Currently, robust methods are implemented only for discrete response
-  distributions.
+  distributions, i.e. \code{\link{family} = binomial} or \code{ = poisson}.
 }
 
 \usage{
@@ -175,7 +175,7 @@ Cfit1 <- glm(cbind(success, total-success) ~ logdose + block,
 summary(Cfit1)
 
 Cfit2 <- glmrob(cbind(success, total-success) ~ logdose + block,
-                family=binomial, data= carrots, method= "Mqle",
+                family = binomial, data = carrots, method= "Mqle",
                 control=glmrobMqle.control(tcc=1.2))
 summary(Cfit2)
 
@@ -192,9 +192,10 @@ Vfit1 <- glm(Y ~ log(Volume) + log(Rate), family=binomial, data=vaso)
 coef(Vfit1)
 
 Vfit2 <- glmrob(Y ~ log(Volume) + log(Rate), family=binomial, data=vaso,
-                method="Mqle", control=glmrobMqle.control(tcc=3.5))
-coef(Vfit2)
-## There are problems with  tcc <= 3
+                method="Mqle", control = glmrobMqle.control(tcc=3.5))
+## Note the problems with  tcc <= 3 %% FIXME algorithm ???
+coef(Vfit2) # c = 3.5 ==> not much different from classical
+
 
 
 ## Poisson response --------------

@@ -1,29 +1,29 @@
 \name{fitted.nlrob}
 \alias{fitted.nlrob}
 
-\title{ Extract Model Fitted Values }
+\title{Extract Fitted Values from "nlrob" Model}
 \description{
-  \code{fitted} is a generic function which extracts fitted values from
+  \code{\link{fitted}} is a generic function which extracts fitted values from
   objects returned by modeling functions. \code{fitted.values} is an
-  alias for it. 
+  alias for it.
 }
-
 \usage{
-fitted.nlrob(object, ...)
+\method{fitted}{nlrob}(object, ...)
 }
 
 \arguments{
-  \item{object}{ nlrob object }
+  \item{object}{object of class \code{\link{nlrob}} }
   \item{\dots}{ additional arguments }
 }
 
-
 \value{
-  Fitted values extracted from \code{object}.
+  A numeric vector of fitted values extracted from \code{object}.
 }
 
 \author{ Andreas Ruckstuhl }
 
-\seealso{ \code{\link[stats]{fitted}}}
+\seealso{\code{\link[stats]{fitted}},
+  \code{\link{nlrob}}
+}
 
 \keyword{ regression }

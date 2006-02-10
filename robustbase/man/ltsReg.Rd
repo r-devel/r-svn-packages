@@ -12,17 +12,19 @@
 ltsReg(x, \dots)
 
 \method{ltsReg}{formula}(formula, data, \dots,
-         model = TRUE, x.ret = FALSE, y.ret = FALSE)
+       model = TRUE, x.ret = FALSE, y.ret = FALSE)
 
-\method{ltsReg}{default}(x, y, intercept=TRUE, alpha=NULL, nsamp=500,
-         adjust=FALSE, mcd=TRUE, qr.out=FALSE, yname=NULL, seed=0, control, \dots)
+\method{ltsReg}{default}(x, y, intercept = TRUE, alpha = NULL, nsamp = 500,
+       adjust = FALSE, mcd = TRUE, qr.out = FALSE, yname = NULL,
+       seed = 0, control, \dots)
 }
 \arguments{
   \item{formula}{a \code{\link{formula}} of the form \code{y ~ x1 + x2 + ...}.}
   \item{data}{data frame from which variables specified in
     \code{formula} are to be taken.}
   \item{model, x.ret, y.ret}{\code{\link{logical}}s indicating if the
-    model frame, the model matrix and the responseare to be returned, respectively.}
+    model frame, the model matrix and the response are to be returned,
+    respectively.}
 
   \item{x}{a matrix or data frame containing the explanatory variables.}
   \item{y}{the response: a vector of length the number of rows of \code{x}.}.
@@ -64,11 +66,11 @@ ltsReg(x, \dots)
 \value{
   The function \code{ltsReg} returns an object of class \code{"lts"}.
   \cr
-  The function \code{\code{\link{summary}}} is used to obtain and print
+  The function \code{\link{summary}} is used to obtain and print
   a summary table of the results.
 
-  The generic accessor functions \code{\code{\link{coefficients}}},
-  \code{\code{\link{fitted.values}}} and \code{\code{\link{residuals}}}
+  The generic accessor functions \code{\link{coefficients}},
+  \code{\link{fitted.values}} and \code{\link{residuals}}
   extract various useful features of the value returned by
   \code{ltsReg}.
 
@@ -84,7 +86,7 @@ ltsReg(x, \dots)
   }
   \item{best}{
     the best subset found and used for computing the raw estimates.  The
-  size of \code{best} is equal to \code{quan}.
+    size of \code{best} is equal to \code{quan}.
   }
   \item{fitted.values}{vector like \code{y} containing the fitted values
     of the response after reweighting.}
