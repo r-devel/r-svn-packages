@@ -19,8 +19,8 @@ function (formula, family = binomial, data, weights, subset,
 	else
 	    stop("Robust fitting method not yet implemented for this family")
     }
-    if(is.null(control))
-	control <- get(paste("glmrob.", method, ".control", sep = ""))
+    if(is.null(control)) # -> use e.g., glmrobMqle.control()
+	control <- get(paste("glmrob", method, ".control", sep = ""))()
     if (missing(data))
 	data <- environment(formula)
     ##
@@ -92,15 +92,15 @@ summary.glmrob <- function (object, correlation=FALSE, symbolic.cor=FALSE, ...)
 
     pvalue <- 2 * pnorm(-abs(zvalue))
     coef.table <- cbind(coefs, s.err, zvalue, pvalue)
-    dimnames(coef.table) <- list(names(coefs), c(dn, "z-value",
-						 "Pr(>|z|)"))
+    dimnames(coef.table) <- list(names(coefs),
+				 c(dn, "z-value", "Pr(>|z|)"))
     ans <- c(object[c("call", "terms", "family", "iter", "method")],
+	     ## MM: maybe we should rather keep the full object?
 	     list(deviance=NULL, df.residual=NULL, null.deviance=NULL,
 		  df.null=NULL, deviance.resid=NULL, coefficients=coef.table,
 		  dispersion=dispersion, df=NULL , cov.unscaled=covmat))
     if (correlation) {
-	dd <- sqrt(diag(covmat))
-	ans$correlation <- covmat/outer(dd, dd)
+	ans$correlation <- cov2cor(covmat)
 	ans$symbolic.cor <- symbolic.cor
     }
     class(ans) <- "summary.glmrob"
@@ -169,4 +169,3 @@ print.summary.glmrob <-
     cat("\n")
     invisible(x)
 }
-
