@@ -1,5 +1,10 @@
-## MM: These function names are *REALLY* too long
-## --  but then, they are hidden in the name space ...
+#### Quasi-Deviance Differences	 --- used for Model Selection
+#### -------------------------------------------------------- ./modsel.glmrob.R
+
+## MM: These function names are really too long
+##     but then, they are hidden in the name space ...
+
+## (Maybe it would be nice to do this as one function with "family" .. )
 
 glmrobMqleDiffQuasiDevB <- function(mu, mu0, y, ni, w.x, tcc)
 {
@@ -10,11 +15,11 @@ glmrobMqleDiffQuasiDevB <- function(mu, mu0, y, ni, w.x, tcc)
 	pr <- u/ni
 	Vmu <- pr * (1 - pr) ## = binomial()$variance
 	residP <- (y-pr)*sqrt(ni/Vmu)
-	nui <- pmax(-tcc,pmin(residP,tcc))
+	nui <- pmax(-tcc, pmin(residP,tcc))
 
 	## Second part: Enui
-	H <- floor(u-tcc*sqrt(ni*Vmu))
-	K <- floor(u+tcc*sqrt(ni*Vmu))
+	H <- floor(u - tcc*sqrt(ni*Vmu))
+	K <- floor(u + tcc*sqrt(ni*Vmu))
 	## Actually, floor is not needed because pbinom() can cope
 	## with noninteger values in the argument q!
 	## what follows is similar to glmrob.Mqle.EpsiB except a
@@ -24,13 +29,12 @@ glmrobMqleDiffQuasiDevB <- function(mu, mu0, y, ni, w.x, tcc)
 	       (pbinom(K-1,1,pr) - pbinom(H-1,ni-1,pr)
 		- pbinom(K,ni,pr) + pbinom(H,ni,pr)) * pr * sqrt(ni/Vmu))
 	## pmax was needed to get numeric returns from pbinom
-	##
+
 	Enui <- (tcc*(1 - pbinom(K,ni,pr) - pbinom(H,ni,pr)) + h1)
 
 	return((nui - Enui) / sqrt(ni*Vmu))
-    }
+    } ## f.cnui()
 
-    ##
     nobs <- length(mu)
     stopifnot(nobs > 0)
     QMi <- numeric(nobs)
@@ -40,9 +44,9 @@ glmrobMqleDiffQuasiDevB <- function(mu, mu0, y, ni, w.x, tcc)
 			    subdivisions = 200,
 			    lower = mu[i]*ni[i], upper = mu0[i]*ni[i])$value
     ## robust quasi-deviance
-    ## -2*(sum(QMi1)-sum(QMi2))	 ## my intrpretation of (4) and (5)
+    ## -2*(sum(QMi1)-sum(QMi2))	   ## Andreas' interpretation of (4) and (5)
     ## -2*(sum(QMi1)-sum(QMi2)/nobs)  ## Eva's interpretation of (4) and (5)
-    ## According to my interpretation
+    ## According to Andreas' interpretation
     -2*sum(QMi*w.x)
 }
 
@@ -57,8 +61,8 @@ glmrobMqleDiffQuasiDevPois <- function(mu, mu0, y, ni, w.x, tcc)
 	nui <- pmax(-tcc,pmin(residP,tcc))
 
 	## Second part: Enui
-	H <- floor(u-tcc*sqrt(Vmu))
-	K <- floor(u+tcc*sqrt(Vmu))
+	H <- floor(u - tcc*sqrt(Vmu))
+	K <- floor(u + tcc*sqrt(Vmu))
 	## what follows is similar to glmrob.Mqle.Epsipois except a
 	## different vectorisation
 	h1 <- u/sqrt(Vmu)*(dpois(H,u)- dpois(K,u))
@@ -67,7 +71,6 @@ glmrobMqleDiffQuasiDevPois <- function(mu, mu0, y, ni, w.x, tcc)
 	return((nui - Enui) / sqrt(Vmu))
     }
 
-    ##
     nobs <- length(mu)
     stopifnot(nobs > 0)
     QMi <- numeric(nobs)
@@ -77,9 +80,9 @@ glmrobMqleDiffQuasiDevPois <- function(mu, mu0, y, ni, w.x, tcc)
 			    lower = mu[i], upper = mu0[i])$value
 
     ## robust quasi-deviance
-    ## -2*(sum(QMi1)-sum(QMi2))	 ## my intrpretation of (4) and (5)
-    ## -2*(sum(QMi1)-sum(QMi2)/nobs)  ## Eva's interpretation of (4) and (5)
-    ## According to my interpretation
+    ## -2*(sum(QMi1)-sum(QMi2))	  ## Andreas' interpretation of (4) and (5)
+    ## -2*(sum(QMi1)-sum(QMi2)/nobs) ## Eva's interpretation of (4) and (5)
+    ## According to Andreas' interpretation
     -2*sum(QMi*w.x)
 }
 
