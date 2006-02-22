@@ -12,18 +12,23 @@
 ##
 ##  You should have received a copy of the GNU General Public License
 ##  along with this program; if not, write to the Free Software
-##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+##  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
 
 print.lts <- function (x, digits = max(3, getOption("digits") - 3), ...)
 {
     if(!is.null(cl <- x$call)) {
-        cat("Call:\n")
-        dput(cl)
-        cat("\n")
+	cat("Call:\n")
+	dput(cl)
+	cat("\n")
     }
-    cat("Coefficients:\n")
-    print.default(format(coef(x), digits = digits), print.gap = 2, quote = FALSE)
-    cat("\nScale estimate", format(x$scale, digits = digits) ,"\n\n")
+    if (length(coef(x))) {
+	cat("Coefficients:\n")
+	print.default(format(coef(x), digits = digits), print.gap = 2, quote = FALSE)
+	cat("\nScale estimate", format(x$scale, digits = digits) ,"\n\n")
+    }
+    else
+	cat("No coefficients\n")
+
     invisible(x)
 }
