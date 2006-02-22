@@ -60,6 +60,7 @@ S3method(summary, lts)
 S3method(summary, mcd)
 S3method(summary, nlrob)
 
+S3method(vcov, glmrob)
 ##not there: S3method(print, summary.mcd)
 
 

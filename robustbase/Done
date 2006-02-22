@@ -28,3 +28,9 @@ o) we have had some problems, but they are solved now
    all these plotting functions may *NOT* set  par(mfrow = c(1,1)) !
 
 6) considerable simplification in the  correction factor computations
+
+7) glmrob(): trailing "..." argument is now passed to glmrob<FOO>control()
+
+8) make tests/wgt-himed-xtra.R an order of magnitude faster (less simulations)!
+
+

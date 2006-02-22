@@ -1,3 +1,48 @@
+2006-02-22  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/MCD-specials.R: new tests
+
+	* tests/huber-etc.R: tests for huberM() moved from pkg 'sfsmisc'
+
+2006-02-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/glmrob.R (summary.glmrob): "Std. Error" (with blank!)
+
+2006-02-18  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/glmrobMqle.R (glmrobMqle): make it work for ncoef == 0
+
+	* tests/glmrob-specials.R: new tests
+
+	* R/glmrob.R (print.summary.glmrob): the same as print.glmrob + more
+
+2006-02-17  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/glmrob.R (vcov.glmrob): added
+	(print.glmrob): fix typo
+
+	* tests/binom-ni-small.R: add from Martin's old "robGLM1" package
+
+	* R/glmrob.R (glmrob): '...' passed to glmrob<METH>.control(...)
+
+2006-02-17  Valentin Todorov  <valentin.todorov@chello.at>
+
+	* FIXED - .fastmcd and .fastlts no more return everything
+
+	* fixed problems in ltsReg in case of location model Y~1 (i.e. x
+	    is missing in ltsReg.default())
+	* ltsReg & covMcd - added options 'best' and 'exact' for nsamp
+
+	* ltsReg & covMcd - added parameter for controlling the small
+	    sample correction factors - use.correction
+
+	* rrcov.control - added parameter for controlling the small sample
+	    correction factors - use.correction
+
+	* ltsReg & covMcd - output of the consistency and the small sample
+	    correction factors
+
+
 2006-02-09  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 0.1-2 ready for CRAN "baby release"

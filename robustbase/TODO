@@ -11,8 +11,11 @@ o  Generalizing  'wgt.himedian':  We'd want a C API on which R builds.
       in /u/maechler/R/MM/STATISTICS/robust/weighted-median.R
 
 o covOGK(): is *inconsistent* (by a constant factor, depending on n)
-  	    as long as it is used with the inconsistent scale.tau2()
+  	    as long as it is used with the inconsistent scaleTau2()
 	    {the one that was proposed in the paper}.
+
+ >>> MUST document scaleTau2() and see if we can easily make it consistent!
+
   The argument name 'weight.fn' is pretty ugly and the default function
   name 'hard.rejection()' is just awful (we need a globally available
   function as 'role model'.
@@ -33,8 +36,13 @@ o tolellipse() --> renamed to tolEllipsePlot()
      - allow other percentiles than just  97.5%
      - maybe *return* something
 
+o covMcd() : 'print.it' should be called 'trace';
+	   but all the if(!print.it) cat(..) statements are *wrong* :
+	   computation should *Not* print anything for trace = FALSE
+	   {unless warnings and errors} !
+
 o summary.mcd() should *return* and object of class "summary.mcd"
-  and then  print.summary.mcd() should print it !!!
+  and then  print.summary.mcd() should print it !
 
 o plot(mcd. ) : should show the call !
 
@@ -59,10 +67,16 @@ o psi.*(....,  rho = FALSE/TRUE)   functions from Andreas
 o glmrob() -> "glmrob" class needs
   predict() and probably also residuals(..., type = "*")
 
-o glmrob() needs tests in ./tests/ -- taking from man/glmrob.Rd
+o glmrob() needs tests in ./tests/   [maybe take from man/glmrob.Rd]
+	   take those from Martin's old 'robGLM1' package (need more!)
+o --> first test already shows that Martin's tests for "huberC == Inf"
+      were *not* yet moved from robGLM1 to glmrob()...
 
 o summary.glmrob() should be better documented;
   we should decide if the current return value is fine.
+
+o Eva's code (and MM's) also computed & returned the "asymptotic efficiency"!
+
 
 --- nlrob ---
 
