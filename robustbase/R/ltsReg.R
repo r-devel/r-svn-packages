@@ -4,22 +4,22 @@
 ####
 #### by Valentin Todorov
 
-###  This program is free software; you can redistribute it and/or modify
-###  it under the terms of the GNU General Public License as published by
-###  the Free Software Foundation; either version 2 of the License, or
-###  (at your option) any later version.
-###
-###  This program is distributed in the hope that it will be useful,
-###  but WITHOUT ANY WARRANTY; without even the implied warranty of
-###  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-###  GNU General Public License for more details.
-###
-###  You should have received a copy of the GNU General Public License
-###  along with this program; if not, write to the Free Software
-### Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-
 ##  I would like to thank Peter Rousseeuw and Katrien van Driessen for
 ##  providing the initial code of this function.
+
+### This program is free software; you can redistribute it and/or modify
+### it under the terms of the GNU General Public License as published by
+### the Free Software Foundation; either version 2 of the License, or
+### (at your option) any later version.
+###
+### This program is distributed in the hope that it will be useful,
+### but WITHOUT ANY WARRANTY; without even the implied warranty of
+### MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+### GNU General Public License for more details.
+###
+### You should have received a copy of the GNU General Public License
+### along with this program; if not, write to the Free Software
+### Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
 ltsReg <- function(x, ...) UseMethod("ltsReg")
@@ -33,22 +33,21 @@ ltsReg.formula <- function(formula, data, ...,
     mf$method <- mf$contrasts <- mf$model <- mf$x.ret <- mf$y.ret <- mf$... <- NULL
     mf[[1]] <- as.name("model.frame")
     mf <- eval.parent(mf)
-
     ##	  if (method == "model.frame") return(mf)
-
     mt <- attr(mf, "terms")
     y <- model.extract(mf, "response")
-    xint <- 0
-    if (is.empty.model(mt))
+
+    if (is.empty.model(mt)) {
         x <- NULL
-    else{
+        xint <- 0
+    }
+    else {
         x <- model.matrix(mt, mf, contrasts)
 
-        ##   Check if there is an Intercept in the model - default.
-        ##   A formula without intercept looks like this: Y~.-1
-        ##   If so, remove the column named Intercept and call ltsReg with intercept=TRUE.
-        ##   Otherwise call ltsReg with intercept=FALSE
-        ##
+        ## Check if there is an intercept in the model.
+        ## A formula without intercept looks like this: Y ~ . -1
+        ## If so, remove the corresponding column and use intercept=TRUE
+        ## in the call to ltsReg.default(); by default, intercept=FALSE.
         xint <- match("(Intercept)", colnames(x), nomatch = 0)
         if(xint) {
             x <- x[, -xint, drop = FALSE]
@@ -73,199 +72,150 @@ ltsReg.formula <- function(formula, data, ...,
     fit
 }
 
-ltsReg.default <- function (x, y,
-                    intercept = TRUE,
-                    alpha = NULL,
-                    nsamp = 500,
-                    adjust = FALSE,
-                    mcd = TRUE,
-                    qr.out = FALSE,
-                    yname = NULL,
-                    seed = 0,
-                    use.correction = TRUE,
-                    control,
-                    ...)
+ltsReg.default <-
+    function (x, y,
+	      intercept = TRUE,
+	      alpha = NULL,
+	      nsamp = 500,
+	      adjust = FALSE,
+	      mcd = TRUE,
+	      qr.out = FALSE,
+	      yname = NULL,
+	      seed = 0,
+	      use.correction = TRUE,
+	      control,
+	      ...)
 {
-
-    ##   Analyze and validate the input parameters ...
+    ##	 Analyze and validate the input parameters ...
 
     ## if a control object was supplied, take the option parameters from it,
     ## but if single parameters were passed (not defaults) they will override the
     ## control object.
     if(!missing(control)) {
-        defcontrol <- rrcov.control()   # default control
-        if(is.null(alpha) && control$alpha != defcontrol$alpha)
-            alpha <- control$alpha
-        if(nsamp == defcontrol$nsamp)
-            nsamp <- control$nsamp
-        if(seed == defcontrol$seed)
-            seed <- control$seed
-        ##        if(print.it == defcontrol$print.it)
-        ##            print.it <- control$print.it
-        if(use.correction == defcontrol$use.correction)
-            use.correction <- control$use.correction
-        if(adjust == defcontrol$adjust)
-            adjust <- control$adjust
+	defcontrol <- rrcov.control()	# default control
+	if(is.null(alpha) && control$alpha != defcontrol$alpha)
+	    alpha <- control$alpha
+	if(nsamp == defcontrol$nsamp)
+	    nsamp <- control$nsamp
+	if(seed == defcontrol$seed)
+	    seed <- control$seed
+	##	  if(print.it == defcontrol$print.it)
+	##	      print.it <- control$print.it
+	if(use.correction == defcontrol$use.correction)
+	    use.correction <- control$use.correction
+	if(adjust == defcontrol$adjust)
+	    adjust <- control$adjust
     }
 
     if(!length(alpha))
-        alpha <- 1/2
+	alpha <- 1/2
     if(alpha < 1/2)
-        stop("alpha is out of range!")
+	stop("alpha is out of range!")
     if(alpha > 1)
-        stop("alpha is greater than 1")
+	stop("alpha is greater than 1")
 
     ## vt::03.02.2006 - raw.cnp2 and cnp2 are vectors of size 2 and  will
-    ##   contain the correction factors (concistency and finite sample)
-    ##   for the raw and reweighted estimates respectively. Set them initially to 1.
-    ##   If use.correction is set to FALSE (default=TRUE), the finite sample correction
-    ##   factor will bot be used (neither for the raw estimates nor for the reweighted)
+    ##	 contain the correction factors (concistency and finite sample)
+    ##	 for the raw and reweighted estimates respectively. Set them initially to 1.
+    ##	 If use.correction is set to FALSE (default=TRUE), the finite sample correction
+    ##	 factor will bot be used (neither for the raw estimates nor for the reweighted)
     raw.cnp2 <- rep(1,2)
     cnp2 <- rep(1,2)
 
-
     ##cat("++++++ Entering ltsReg() ...\n")
-    if (is.vector(y) || (is.matrix(y) && !is.data.frame(y))) {
-	if (!is.numeric(y))
-	    stop("y is not a numeric dataframe or vector.")
+
+    y <- data.matrix(y)
+    if (!is.numeric(y)) stop("y is not a numeric")
+    if (dim(y)[2] != 1) stop("y is not onedimensional")
+
+    oneD <- (missing(x) || is.null(x) || NROW(x) == 0) ## location model - no x
+    if(oneD) {
+	x <- matrix(1, nrow(y), 1)
     }
-    if ((!is.matrix(y) && !is.vector(y)) || is.data.frame(y)) {
-	if ((!is.data.frame(y) && !is.numeric(y)) ||
-            (!all(sapply(y, data.class) == "numeric")))
-	    stop("y is not a numeric dataframe or vector.")
-    }
-
-    y <- as.matrix(y)
-    if (dim(y)[2] != 1)
-	stop("y is not onedimensional.")
-
-    if (missing(x) || is.null(x)) {
-        ## location model - x is missing
-        x <- rep(1, nrow(y))
-        x <- as.matrix(array(x, c(length(x), 1)))
-        dimny <- dimnames(y)
-        dimnx <- dimnames(x)
-        na.x <- !is.finite(x %*% rep(1, ncol(x)))
-        na.y <- !is.finite(y)
-        if (nrow(na.x) != nrow(na.y))
-            stop("Number of observations in x and y not equal")
-        ok <- !(na.x | na.y)
-        y <- y[ok, , drop = FALSE]
-        dy <- nrow(y)
-        rownames <- dimny[[1]]
-        yn <- if (!is.null(yname)) yname else dimny[[2]]
-        if (!length(yn))
-            yn <- "Y"
-        storage.mode(y) <- "double"
-        x <- x[ok, , drop = FALSE]
-        storage.mode(x) <- "double"
-        dx <- dim(x)
-        if (!length(dx))
-            stop("All observations have missing values!")
-        n <- dx[1]
-    } else {
-        ## x is present
-        if (is.vector(x) || (is.matrix(x) && !is.data.frame(x))) {
-            if (!is.numeric(x))
-                stop("x is not a numeric dataframe or matrix.")
-        }
-        if ((!is.matrix(x) && !is.vector(x)) || is.data.frame(x)) {
-            if ((!is.data.frame(x) && !is.numeric(x)) ||
-                (!all(sapply(x, data.class) == "numeric")))
-		stop("x is not a numeric dataframe or matrix.")
-	}
-
-        if(is.data.frame(x))
-            x <- as.matrix(x)
+    else { ## x is present
+	if(is.data.frame(x))
+	    x <- data.matrix(x)
 	else if (!is.matrix(x))
 	    x <- matrix(x, length(x), 1,
-                        dimnames = list(names(x), deparse(substitute(x))))
+			dimnames = list(names(x), deparse(substitute(x))))
+    }
 
-        dimny <- dimnames(y)
-        dimnx <- dimnames(x)
-        na.x <- !is.finite(x %*% rep(1, ncol(x)))
-        na.y <- !is.finite(y)
-        if (nrow(na.x) != nrow(na.y))
-            stop("Number of observations in x and y not equal")
-        ok <- !(na.x | na.y)
-        y <- y[ok, , drop = FALSE]
-        dy <- nrow(y)
-        rownames <- dimny[[1]]
-        yn <- if (!is.null(yname))
-            yname
-        else dimny[[2]]
-        if (!length(yn))
-            yn <- "Y"
-        storage.mode(y) <- "double"
-        x <- x[ok, , drop = FALSE]
-        storage.mode(x) <- "double"
-        dx <- dim(x)
-        if (!length(dx))
-            stop("All observations have missing values!")
-        n <- dx[1]
-        constantcolom <- function(x) {
-            c1 <- range(x)
-            c1[1] == c1[2]
-        }
-        if (sum(apply(x, 2, constantcolom)) > 0)
-            stop("There is at least one constant column. Remove this column and set intercept=T")
+    if (nrow(x) != nrow(y))
+	stop("Number of observations in x and y not equal")
+    dimny <- dimnames(y)
+    na.x <- !is.finite(rowSums(x))
+    na.y <- !is.finite(y)
+    ok <- !(na.x | na.y)
+    x <- x[ok, , drop = FALSE]
+    y <- y[ok, , drop = FALSE]
+    dx <- dim(x)
+    n <- dx[1]
+    if (n == 0)
+	stop("All observations have missing values!")
+    rownames <- dimny[[1]]
+    yn <- if(!is.null(yname))
+	yname else if(!is.null(dimny[[2]])) dimny[[2]] else "Y"
+    storage.mode(y) <- "double"
+    storage.mode(x) <- "double"
+    if (!oneD) {
+	constantcolom <- function(x) {
+	    c1 <- range(x)
+	    c1[1] == c1[2]
+	}
+	if (sum(apply(x, 2, constantcolom)) > 0)
+	    stop("There is at least one constant column. Remove it and set intercept=TRUE")
     }
 
     ##cat("++++++ Prepare: Ready.\n")
 
     dn <- dimnames(x)
-    xn <- dn[[2]]
-    if (!length(xn))
-	if (dx[2] > 1)
-	    xn <- paste("X", 1:dx[2], sep = "")
-	else xn <- "X"
-    X <- x
+    xn <- if(!is.null(dn[[2]])) dn[[2]] else if (dx[2] > 1)
+	paste("X", 1:dx[2], sep = "") else "X"
+    X <- x ## << FIXME? (a full copy of 'x' ??)
     dimnames(X) <- list(NULL, xn)
     y <- as.vector(y)
 
+    if (all(x == 1)) { ## includes 'oneD'
 
-    if (all(x == 1)) {
-
-        quan <- quan.f(alpha, n, dx[2])
+	quan <- quan.f(alpha, n, dx[2])
 	p <- 1
 	xbest <- NULL
 	if (alpha == 1) {
-            scale <- sqrt(cov.wt(as.matrix(y))$cov)
-            center <- as.vector(mean(y))
+	    scale <- sqrt(cov.wt(as.matrix(y))$cov)
+	    center <- as.vector(mean(y))
 	} else {
 	    sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0, seed)
 
-	    y <- as.vector(y)
 	    center <- as.double(sh$initmean)
 	    qalpha <- qchisq(quan/n, 1)
 	    calphainvers <- pgamma(qalpha/2, 1/2 + 1)/(quan/n)
-            raw.cnp2[1] <- calpha <- 1/calphainvers
-            raw.cnp2[2] <- correct <- LTScnp2(1, intercept = intercept, n, alpha)
-            if(!use.correction)         # do not use finite sample correction factor
-                raw.cnp2[2] <- correct <- 1.0
+	    raw.cnp2[1] <- calpha <- 1/calphainvers
+	    raw.cnp2[2] <- correct <- LTScnp2(1, intercept = intercept, n, alpha)
+	    if(!use.correction) # do not use finite sample correction factor
+		raw.cnp2[2] <- correct <- 1.0
 
-            scale <- sqrt(as.double(sh$initcovariance)) * sqrt(calpha) * correct
-            ## xbest <- sort(as.vector(sh$best))  # fastmcd in the univariate case does not return inbest[]
+	    scale <- sqrt(as.double(sh$initcovariance)) * sqrt(calpha) * correct
+	    ## xbest <- sort(as.vector(sh$best))  # fastmcd in the univariate case does not return inbest[]
 
 	}
 	resid <- y - center
-	ans <- list()
-	ans$best <- xbest
-        ans$coefficients <- ans$raw.coefficients <- center
-	ans$alpha <- alpha
-	ans$quan <- quan
-	ans$raw.resid <- resid/scale
-	weights <- rep(NA, n)
+	ans <- list(best = xbest,
+		    coefficients = center,
+		    raw.coefficients = center,
+		    alpha = alpha,
+		    quan  = quan,
+		    raw.resid = resid/scale)
+
 	if (abs(scale) < 1e-07) {
-	    weights <- ifelse(abs(resid) < 1e-07, 1, 0)
+	    weights <- as.numeric(abs(resid) < 1e-07)
 	    ans$scale <- ans$raw.scale <- 0
 	    ans$crit <- 0
 	}
-        else {
+	else {
 	    ans$raw.scale <- scale
 	    quantiel <- qnorm(0.9875)
-	    weights <- ifelse(abs(resid/scale) <= quantiel, 1, 0)
-            reweighting <- cov.wt(as.matrix(y), wt = weights)
+	    weights <- as.numeric(abs(resid/scale) <= quantiel)
+	    reweighting <- cov.wt(as.matrix(y), wt = weights)
 	    ans$coefficients <- reweighting$center
 	    ans$scale <- sqrt(sum(weights)/(sum(weights) - 1) * reweighting$cov)
 	    resid <- y - ans$coefficients
@@ -277,13 +227,13 @@ ltsReg.default <- function (x, y,
 	    else {
 		qdelta.rew <- qchisq(sum(weights)/n, 1)
 		cdeltainvers.rew <- pgamma(qdelta.rew/2, 1/2 + 1)/(sum(weights)/n)
-                cnp2[1] <- cdelta.rew <- sqrt(1/cdeltainvers.rew)
-                cnp2[2] <- correct.rew <- LTScnp2.rew(1, intercept = intercept, n, alpha)
-                if(!use.correction)         # do not use finite sample correction factor
-                    cnp2[2] <- correct.rew <- 1.0
+		cnp2[1] <- cdelta.rew <- sqrt(1/cdeltainvers.rew)
+		cnp2[2] <- correct.rew <- LTScnp2.rew(1, intercept = intercept, n, alpha)
+		if(!use.correction) # do not use finite sample correction factor
+		    cnp2[2] <- correct.rew <- 1.0
 	    }
 	    ans$scale <- ans$scale * cdelta.rew * correct.rew
-	    weights <- ifelse(abs(resid/ans$scale) <= quantiel, 1, 0)
+	    weights <- as.numeric(abs(resid/ans$scale) <= quantiel)
 	}
 	ans$resid <- resid/ans$scale
 	ans$rsquared <- 0
@@ -291,29 +241,27 @@ ltsReg.default <- function (x, y,
 	ans$residuals[ok] <- resid
 	ans$lts.wt <- rep(NA, length(na.y))
 	ans$lts.wt[ok] <- weights
+	ans$fitted.values <- rep(NA, length(na.y))
+	ans$fitted.values[ok] <- ans$coefficients
 	ans$intercept <- intercept
-	ans$method <- paste("Univariate location and scale estimation.")
+	ans$method <- "Univariate location and scale estimation."
 	if (abs(scale) < 1e-07)
 	    ans$method <- paste(ans$method, "\nMore than half of the data are equal!")
-        ans$fitted.values <- rep(NA, length(na.y))
-        ans$fitted.values[ok] <- ans$coefficients
+	names(ans$residuals) <- names(ans$lts.wt) <- rownames
 	names(ans$coefficients) <- names(ans$raw.coefficients) <- yn
 	names(ans$scale) <- names(ans$raw.scale) <- yn
-	names(ans$rsquared) <- yn
-	names(ans$crit) <- yn
-	names(ans$residuals) <- rownames
-	names(ans$lts.wt) <- rownames
+	names(ans$rsquared) <- names(ans$crit) <- yn
 	ans$X <- x
 	ans$Y <- y	# VT:: 01.09.2004 - add y to the result object
-        dimnames(ans$X) <-
-            list((if(length(rownames)) rownames else seq(along = na.x))[ok],
-                 NULL)
+	dimnames(ans$X) <-
+	    list((if(length(rownames)) rownames else seq(along = na.x))[ok],
+		 NULL)
 
-        ans$raw.cnp2 <- raw.cnp2
-        ans$cnp2 <- cnp2
+	ans$raw.cnp2 <- raw.cnp2
+	ans$cnp2 <- cnp2
 	class(ans) <- "lts"
-        ans$call <- match.call()
-        return(ans)
+	ans$call <- match.call()
+	return(ans)
     } ## end {all(x == 1)} --
 
     ans <- list()
@@ -327,266 +275,210 @@ ltsReg.default <- function (x, y,
 	stop("Need more than twice as many observations as variables.")
 
     if(alpha == 1) { ## alpha == 1 -----------------------
-        z <- lsfit(x, y, intercept = FALSE)
+	z <- lsfit(x, y, intercept = FALSE)
+	qrx <- z$qr
+	## VT:: 26.12.2004
+	## Reorder the coeficients,so that the intercept moves to the beginning of the array
+	## Skip this if p == 1 (i.e. p=1 and intercept=FALSE).
+	## Do the same for the names and for ans$coef - see below
+	cf <- z$coef
+	names(cf) <- xn
+	ans$raw.coefficients <-
+	    if(p > 1 && intercept) cf[c(p, 1:(p - 1))] else cf
 
-        ## VT:: 26.12.2004
-        ## Reorder the coeficients,so that the intercept moves to the beginning of the array
-        ## Skip this if p == 1 (i.e. p=1 and intercept=FALSE).
-        ## Do the same for the names and for ans$coef - see below
+	ans$alpha <- alpha
+	ans$quan <- quan <- n
 
-        if(p > 1 && intercept) {
-            ans$raw.coefficients[2:p] <- z$coef[1:(p - 1)]
-            ans$raw.coefficients[1] <- z$coef[p]
-            names(ans$raw.coefficients)[2:p] <- xn[1:(p - 1)]
-            names(ans$raw.coefficients)[1] <- xn[p]
-        } else {
-            ans$raw.coefficients <- z$coef
-            names(ans$raw.coefficients) <- xn
-        }
+	s0 <- sqrt((1/(n - p)) * sum(z$residuals^2))
 
-        ans$alpha <- alpha
-        ans$quan <- quan <- n       # VT:: 01.09.2004 - bug in alpha=1
-        ## (ans$quan was not set)
+	##cat("++++++ B - alpha == 1... - s0=",s0,"\n")
+	if(abs(s0) < 1e-07) {
+	    fitted <- x %*% z$coef
+	    weights <- as.numeric(abs(z$residuals) <= 1e-07)
+	    ans$scale <- ans$raw.scale <- 0
+	    ans$coefficients <- ans$raw.coefficients
+	}
+	else {
+	    ans$raw.scale <- s0
+	    ans$raw.resid <- z$residuals / s0
+	    weights <- as.numeric(abs(ans$raw.resid) <= qnorm(0.9875))
+	    sum.w <- sum(weights)
+	    z <- lsfit(x, y, wt = weights, intercept = FALSE)
 
-        s0 <- sqrt((1/(n - p)) * sum(z$residuals^2))
+	    ## VT:: 26.12.2004
+	    ans$coefficients <-
+		if(p > 1 && intercept) z$coef[c(p, 1:(p - 1))] else z$coef
 
-        ##cat("++++++ B - alpha == 1... - s0=",s0,"\n")
-        if(abs(s0) < 1e-07) {
-            fitted <- x %*% z$coef
-            weights <- ifelse(abs(z$residuals) <= 1e-07, 1, 0)
-            ans$scale <- ans$raw.scale <- 0
-            ans$coefficients <- ans$raw.coefficients
-        }
-        else {
-            ans$raw.scale <- s0
-            ans$raw.resid <- ans$residuals/ans$raw.scale
-            weights <- ifelse(abs(z$residuals/s0) <= qnorm(0.9875), 1, 0)
-
-            ## vt:: weights has to be a vector instead of a matrix -
-            ##	to avoid "Error in x * wtmult : non-conformable arrays"
-            ##
-            weights <- as.vector(weights)
-            sum.w <- sum(weights)
-            z <- lsfit(x, y, wt = weights, intercept = FALSE)
-
-            ## VT:: 26.12.2004
-            ans$coefficients <-
-                if(p > 1 && intercept) z$coef[c(p, 1:(p - 1))] else z$coef
-
-            fitted <- x %*% z$coef
-            ans$scale <- sqrt(sum(weights * z$residuals^2)/(sum.w - 1))
-            if (sum.w == n) {
-                cdelta.rew <- 1
-            }
-            else {
-                qn.w <- qnorm((sum.w + n)/(2 * n))
-                cdelta.rew <- 1/sqrt(1 - (2 * n)/(sum.w/qn.w) * dnorm(qn.w))
-            }
-            ans$scale <- ans$scale * cdelta.rew
-            weights <- ifelse(abs(z$residuals/ans$scale) <= qnorm(0.9875), 1, 0)
-            ans$resid <- z$residuals/ans$scale
-        }
-
-        ## VT:: 26.12.2004
-        names(ans$coefficients) <-
-            if(p > 1 && intercept) xn[c(p, 1:(p - 1))] else xn
-
-        ans$crit <- sum(z$residuals^2)
-        if (intercept) {
-            s1 <- sum(z$residuals^2)
-            center <- mean(y)
-            sh <- sum((y - center)^2)
-        }
-        else {
-            s1 <- sum(z$residuals^2)
-            sh <- sum(y^2)
-        }
-        ans$rsquared <- max(0, min(1, 1 - (s1/sh)))
-        ans$residuals <- rep(NA, length(na.y))
-        ans$residuals[ok] <- z$residuals
-        ans$lts.wt <- matrix(NA, length(na.y))
-        ans$lts.wt[ok] <- weights
-        ans$intercept <- intercept
-        ans$method <- paste("Least Squares Regression.")
-        if (abs(s0) < 1e-07)
-            ans$method <- paste(ans$method, "\nAn exact fit was found!")
-        if (mcd) {
-            ## VT:: changed name of the function from 'cov.mcd.default' to 'covMcd'
-            mcd <- covMcd(X, alpha = 1)
-            if(-(determinant(mcd$cov, log = TRUE)$modulus[1])/p > 50) {
-                ans$RD[1] <- "singularity"
-            } else {
-                ans$RD <- rep(NA, length(na.y))
-                ans$RD[ok] <- sqrt(mahalanobis(X, mcd$center, mcd$cov))
-                names(ans$RD) <- rownames
-            }
-        }
-        names(ans$residuals) <- rownames
-        names(ans$lts.wt) <- rownames
-        names(ans$scale) <- names(ans$raw.scale) <- yn
-        names(ans$rsquared) <- yn
-        names(ans$crit) <- yn
-        ans$X <- x
-        ans$Y <- y	# VT:: 01.09.2004 - add y to the result object
-        if (length(rownames))
-            dimnames(ans$X)[[1]] <- rownames[ok]
-        else {
-            xx <- seq(1, length(na.x))
-            dimnames(ans$X) <- list(NULL, NULL)
-            dimnames(ans$X)[[1]] <- xx[ok]
-        }
-        ans$fitted.values <- rep(NA, length(na.y))
-        ans$fitted.values[ok] <- fitted
-        names(ans$fitted.values) <- rownames
-        if (qr.out)
-            ans$qr <- z$qr
-        ans$raw.cnp2 <- raw.cnp2
-        ans$cnp2 <- cnp2
-        class(ans) <- "lts"
-
-        ans$call <- match.call()
-
-        return(ans)
-    } ## end {alpha == 1} --
-
-    ## alpha < 1
-    coefs <- rep(NA, p)
-    names(coefs) <- xn
-    if(qr.out)
-	qrx <- qr(x)
-    else
-	qrx <- qr(x)[c("rank", "pivot")]
-
-    rk <- qrx$rank
-    if (rk < p) {
-	stop("x is singular")
-    }
-    else
-	piv <- 1:p
-
-    quan <- quan.f(alpha, n, rk)
-
-    z <- .fastlts(x, y, quan, nsamp, intercept, adjust, seed)
-
-    ## vt:: lm.fit.qr == lm.fit(...,method=qr,...)
-    ##	cf <- lm.fit.qr(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
-    cf <- lm.fit(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
-    ans$best <- sort(as.vector(z$inbest))
-    fitted <- x %*% cf
-    resid <- y - fitted
-    coefs[piv] <- cf
-
-    ## VT:: 26.12.2004
-    if(p > 1 && intercept) {
-	ii <- c(p, 1:(p - 1))
-	ans$raw.coefficients <- coefs[ii]
-	names(ans$raw.coefficients) <- names(coefs)[ii] ## < unneeded ?
-    } else {
-	ans$raw.coefficients <- coefs
-	names(ans$raw.coefficients) <- names(coefs) ## < unneeded ?
-    }
-
-    ans$alpha <- alpha
-    ans$quan <- quan
-    raw.cnp2[2] <- correct <- LTScnp2(p, intercept = intercept, n, alpha)
-    if(!use.correction)         # do not use finite sample correction factor
-        raw.cnp2[2] <- correct <- 1.0
-    s0 <- sqrt((1/quan) * sum(sort(resid^2, quan)[1:quan]))
-    sh0 <- s0
-    qn.q <- qnorm((quan + n)/ (2 * n))
-    s0 <- s0 / sqrt(1 - (2 * n)/(quan / qn.q) * dnorm(qn.q)) * correct
-
-    if (abs(s0) < 1e-07) {
-	weights <- ifelse(abs(resid) <= 1e-07, 1, 0)
-	ans$scale <- ans$raw.scale <- 0
-	ans$coefficients <- ans$raw.coefficients
-    }
-    else {
-	ans$raw.scale <- s0
-	ans$raw.resid <- resid/ans$raw.scale
-	quantiel <- qnorm(0.9875)
-	weights <- ifelse(abs(resid/s0) <= quantiel, 1, 0)
-
-	## vt:: weights has to be a vector instead of a matrix -
-	##	to avoid "Error in x * wtmult : non-conformable arrays"
-	##
-	weights <- as.vector(weights)
-	sum.w <- sum(weights)
-
-	z1 <- lsfit(x, y, wt = weights, intercept = FALSE)
+	    fitted <- x %*% z$coef
+	    ans$scale <- sqrt(sum(weights * z$residuals^2)/(sum.w - 1))
+	    if (sum.w == n) {
+		cdelta.rew <- 1
+	    }
+	    else {
+		qn.w <- qnorm((sum.w + n)/(2 * n))
+		cdelta.rew <- 1/sqrt(1 - (2 * n)/(sum.w/qn.w) * dnorm(qn.w))
+		ans$scale <- ans$scale * cdelta.rew
+	    }
+	    ans$resid <- z$residuals/ans$scale
+	    weights <- as.numeric(abs(ans$resid) <= qnorm(0.9875))
+	}
 
 	## VT:: 26.12.2004
-	if(p > 1) {
-	    ans$coefficients[2:p] <- z1$coef[1:(p - 1)]
-	    ans$coefficients[1] <- z1$coef[p]
+	names(ans$coefficients) <-
+	    if(p > 1 && intercept) xn[c(p, 1:(p - 1))] else xn
+
+	s1 <- sum(z$residuals^2)
+	ans$crit <- s1
+	sh <- (if (intercept) y - mean(y) else y) ^ 2
+	ans$rsquared <- max(0, min(1, 1 - (s1/sh)))
+	ans$residuals <- rep(NA, length(na.y))
+	ans$residuals[ok] <- z$residuals
+	ans$lts.wt <- matrix(NA, length(na.y))
+	ans$lts.wt[ok] <- weights
+	ans$intercept <- intercept
+	ans$method <- "Least Squares Regression."
+	if (abs(s0) < 1e-07)
+	    ans$method <- paste(ans$method, "\nAn exact fit was found!")
+	if (mcd) {
+	    mcd <- covMcd(X, alpha = 1)
+	    if(-(determinant(mcd$cov, log = TRUE)$modulus[1])/p > 50) {
+		ans$RD[1] <- "singularity"
+	    } else {
+		ans$RD <- rep(NA, length(na.y))
+		ans$RD[ok] <- sqrt(mahalanobis(X, mcd$center, mcd$cov))
+		names(ans$RD) <- rownames
+	    }
+	}
+    } ## end {alpha == 1} : "classical"
+
+    else { ## alpha < 1 -----------------------------------------------
+	coefs <- rep(NA, p)
+	names(coefs) <- xn
+	if(qr.out)
+	    qrx <- qr(x)
+	else
+	    qrx <- qr(x)[c("rank", "pivot")]
+
+	rk <- qrx$rank
+	if (rk < p) {
+	    stop("x is singular")
+	}
+	else
+	    piv <- 1:p
+
+	quan <- quan.f(alpha, n, rk)
+
+	z <- .fastlts(x, y, quan, nsamp, intercept, adjust, seed)
+
+	## vt:: lm.fit.qr == lm.fit(...,method=qr,...)
+	##	cf <- lm.fit.qr(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
+	cf <- lm.fit(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
+	ans$best <- sort(as.vector(z$inbest))
+	fitted <- x %*% cf
+	resid <- y - fitted
+	coefs[piv] <- cf
+
+	## VT:: 26.12.2004
+	if(p > 1 && intercept) {
+	    ii <- c(p, 1:(p - 1))
+	    ans$raw.coefficients <- coefs[ii]
 	} else {
-	    ans$coefficients <- z1$coef
+	    ans$raw.coefficients <- coefs
 	}
 
-	fitted <- x %*% z1$coef
-	resid <- z1$residuals
-	ans$scale <- sqrt(sum(weights * resid^2)/(sum.w - 1))
-	if (sum.w == n) {
-	    cdelta.rew <- 1
-	    correct.rew <- 1
+	ans$alpha <- alpha
+	ans$quan <- quan
+	raw.cnp2[2] <- correct <- LTScnp2(p, intercept = intercept, n, alpha)
+	if(!use.correction) # do not use finite sample correction factor
+	    raw.cnp2[2] <- correct <- 1.0
+	s0 <- sqrt((1/quan) * sum(sort(resid^2, quan)[1:quan]))
+	sh0 <- s0
+	qn.q <- qnorm((quan + n)/ (2 * n))
+	s0 <- s0 / sqrt(1 - (2 * n)/(quan / qn.q) * dnorm(qn.q)) * correct
+
+	if (abs(s0) < 1e-07) {
+	    weights <- as.numeric(abs(resid) <= 1e-07)
+	    ans$scale <- ans$raw.scale <- 0
+	    ans$coefficients <- ans$raw.coefficients
 	}
 	else {
-	    qn.w <- qnorm((sum.w + n)/(2 * n))
-            cnp2[1] <- cdelta.rew <- 1 / sqrt(1 - (2 * n)/(sum.w / qn.w) * dnorm(qn.w))
-            cnp2[2] <- correct.rew <- LTScnp2.rew(p, intercept = intercept, n, alpha)
-            if(!use.correction)         # do not use finite sample correction factor
-                cnp2[2] <- correct.rew <- 1.0
+	    ans$raw.scale <- s0
+	    ans$raw.resid <- resid/ans$raw.scale
+	    quantiel <- qnorm(0.9875)
+	    weights <- as.numeric(abs(resid/s0) <= quantiel)
+
+	    ## vt:: weights has to be a vector instead of a matrix -
+	    ##	to avoid "Error in x * wtmult : non-conformable arrays"
+	    ##
+	    weights <- as.vector(weights)
+	    sum.w <- sum(weights)
+
+	    z1 <- lsfit(x, y, wt = weights, intercept = FALSE)
+
+	    ## VT:: 26.12.2004
+	    ans$coefficients <-
+		if(p > 1) z1$coef[c(p, 1:(p - 1))] else z1$coef
+
+	    fitted <- x %*% z1$coef
+	    resid <- z1$residuals
+	    ans$scale <- sqrt(sum(weights * resid^2)/(sum.w - 1))
+	    if (sum.w == n) {
+		cdelta.rew <- 1
+		correct.rew <- 1
+	    }
+	    else {
+		qn.w <- qnorm((sum.w + n)/(2 * n))
+		cnp2[1] <- cdelta.rew <- 1 / sqrt(1 - (2 * n)/(sum.w / qn.w) * dnorm(qn.w))
+		correct.rew <-
+		    if (use.correction) ## use finite sample correction
+			LTScnp2.rew(p, intercept = intercept, n, alpha)
+		    else 1
+		cnp2[2] <- correct.rew
+	    }
+	    ans$scale <- ans$scale * cdelta.rew * correct.rew
+	    ans$resid <- resid/ans$scale
+	    quantiel <- qnorm(0.9875)
+	    weights <- as.numeric(abs(resid/ans$scale) <= quantiel)
 	}
-	ans$scale <- ans$scale * cdelta.rew * correct.rew
-	ans$resid <- resid/ans$scale
-	quantiel <- qnorm(0.9875)
-	weights <- ifelse(abs(resid/ans$scale) <= quantiel, 1, 0)
-    }
-    names(ans$coefficients) <- names(ans$raw.coefficients)
-    ans$lts.wt <- matrix(NA, length(na.y))
-    ans$lts.wt[ok] <- weights
-    ans$crit <- z$objfct
-    if (intercept) {
-	sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0, seed)
-	y <- as.vector(y)
-	sh <- as.double(sh$adjustcov)
-	ans$rsquared <- 1 - (sh0/sh)^2
-    }
-    else {
-	s1 <- sum(sort(resid^2, quan)[1:quan])
-	sh <- sum(sort(y^2, quan)[1:quan])
-	ans$rsquared <- 1 - (s1/sh)
-    }
-
-    ## VT:: 03.11.04 - consider the case when sh=0 (i.e. rsquared=NaN or -Inf)
-    if(is.nan(ans$rsquared) || is.infinite(ans$rsquared)) {
-	ans$rsquared <- 0
-    } else if (ans$rsquared > 1) {
-	ans$rsquared <- 1
-    } else if (ans$rsquared < 0) {
-	ans$rsquared <- 0
-    }
-
-    attributes(resid) <- attributes(fitted) <- attributes(y)
-    ans$residuals <- rep(NA, length(na.y))
-    ans$residuals[ok] <- resid
-    ans$intercept <- intercept
-    ans$method <- paste("Least Trimmed Squares Robust Regression.")
-    if(abs(s0) < 1e-07)
-	ans$method <- paste(ans$method, "\nAn exact fit was found!")
-    if (mcd) {
-	mcd <- covMcd(X, alpha = alpha)
-	if(-(determinant(mcd$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-	    ans$RD[1] <- "singularity"
+	names(ans$coefficients) <- names(ans$raw.coefficients)
+	ans$lts.wt <- matrix(NA, length(na.y))
+	ans$lts.wt[ok] <- weights
+	ans$crit <- z$objfct
+	if (intercept) {
+	    sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0, seed)
+	    y <- as.vector(y) ## < ??
+	    sh <- as.double(sh$adjustcov)
+	    iR2 <- (sh0/sh)^2
 	}
 	else {
-	    ans$RD <- rep(NA, length(na.y))
-	    ans$RD[ok] <- sqrt(mahalanobis(X, mcd$center, mcd$cov))
-	    names(ans$RD) <- rownames
+	    s1 <- sum(sort(resid^2, quan)[1:quan])
+	    sh <- sum(sort(y^2, quan)[1:quan])
+	    iR2 <- s1/sh
 	}
-    }
-    names(ans$residuals) <- rownames
-    names(ans$lts.wt) <- rownames
+
+	ans$rsquared <- if(is.finite(iR2)) max(0, min(1, 1 - iR2)) else 0
+
+	attributes(resid) <- attributes(fitted) <- attributes(y)
+	ans$residuals <- rep(NA, length(na.y))
+	ans$residuals[ok] <- resid
+	ans$intercept <- intercept
+	ans$method <- "Least Trimmed Squares Robust Regression."
+	if(abs(s0) < 1e-07)
+	    ans$method <- paste(ans$method, "\nAn exact fit was found!")
+	if (mcd) {
+	    mcd <- covMcd(X, alpha = alpha)
+	    if(-(determinant(mcd$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
+		ans$RD[1] <- "singularity"
+	    }
+	    else {
+		ans$RD <- rep(NA, length(na.y))
+		ans$RD[ok] <- sqrt(mahalanobis(X, mcd$center, mcd$cov))
+		names(ans$RD) <- rownames
+	    }
+	}
+    } ## end { alpha < 1 }
+
+    names(ans$residuals) <- names(ans$lts.wt) <- rownames
     names(ans$scale) <- names(ans$raw.scale) <- yn
     names(ans$rsquared) <- yn
     names(ans$crit) <- yn
@@ -603,7 +495,7 @@ ltsReg.default <- function (x, y,
     ans$fitted.values[ok] <- fitted
     names(ans$fitted.values) <- rownames
     if (qr.out)
-        ans$qr <- qrx
+	ans$qr <- qrx
     ans$raw.cnp2 <- raw.cnp2
     ans$cnp2 <- cnp2
     class(ans) <- "lts"
@@ -939,8 +831,6 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     x1 <- as.matrix(x1)
 
     objfct <- 0
-    interc <- ifelse(intercept, 1, 0)
-    intadjust <- ifelse(adjust, 1, 0)
 
     storage.mode(x1) <- "double"
     storage.mode(n) <- "integer"
@@ -949,8 +839,6 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     storage.mode(nsamp) <- "integer"
     storage.mode(seed) <- "integer"
     storage.mode(objfct) <- "double"
-    storage.mode(interc) <- "integer"
-    storage.mode(intadjust) <- "integer"
 
     inbest <- matrix(10000, nrow = quan, ncol = 1)
 
@@ -1049,8 +937,8 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
              nsamp,
              inbest = inbest,
              objfct = objfct,
-             interc,
-             intadjust,
+             interc = as.integer(intercept),
+             intadjust = as.integer(adjust),
              nvad,
              datt,
              seed,
@@ -1072,4 +960,3 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
              means, bmeans,
              PACKAGE = "robustbase")[ c("inbest", "objfct") ]
 }
-

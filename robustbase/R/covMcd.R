@@ -40,9 +40,9 @@ covMcd <- function(x,
 {
     ##	 Analyze and validate the input parameters ...
 
-    ## if a control object was supplied, take the option parameters from it,
-    ## but if single parameters were passed (not defaults) they will override the
-    ## control object.
+    ## if a control object was supplied, take the option parameters
+    ## from it, but if single parameters were passed (not defaults)
+    ## they will override the control object.
     if(!missing(control)) {
 	defCtrl <- rrcov.control()	# default control
 	if(alpha == defCtrl$alpha)	 alpha <- control$alpha
@@ -50,7 +50,7 @@ covMcd <- function(x,
 	if(seed == defCtrl$seed)	 seed <- control$seed
 	if(print.it == defCtrl$print.it) print.it <- control$print.it
 	if(use.correction == defCtrl$use.correction)
-            use.correction <- control$use.correction
+	    use.correction <- control$use.correction
     }
 
     ##	 vt::03.02.2006 - added options "best" and "exact" for nsamp
@@ -80,7 +80,7 @@ covMcd <- function(x,
     if(n < 2 * p)
 	stop("Need at least 2*(number of variables) observations ")
     jmin <- (n + p + 1) %/% 2
-    if(alpha < 1/2) ## FIXME? shouldn't we rather test  'alpha < jmin/n' ?
+    if(alpha < 1/2) ## FIXME? shouldn't we rather test	'alpha < jmin/n' ?
 	stop("The MCD must cover at least", jmin, "observations")
     else if(alpha > 1)
 	stop("alpha is out of range")
@@ -90,83 +90,86 @@ covMcd <- function(x,
 
     ## vt::03.02.2006 - raw.cnp2 and cnp2 are vectors of size 2 and  will
     ##	 contain the correction factors (concistency and finite sample)
-    ##	 for the raw and reweighted estimates respectively. Set them initially to 1.
-    ##	 If use.correction is set to FALSE (default=TRUE), the finite sample correction
-    ##	 factor will bot be used (neither for the raw estimates nor for the reweighted)
+    ##	 for the raw and reweighted estimates respectively. Set them
+    ##	 initially to 1.  If use.correction is set to FALSE
+    ##	 (default=TRUE), the finite sample correction factor will not
+    ##	 be used (neither for the raw estimates nor for the reweighted)
     raw.cnp2 <- cnp2 <- c(1,1)
-    ans <- list(method = "Minimum Covariance Determinant Estimator.",
-                call = match.call())
 
-    ## alpha=1: Compute the classical estimates
-    if(alpha == 1) {
+    ans <- list(method = "Minimum Covariance Determinant Estimator.",
+		call = match.call())
+
+    if(alpha == 1) { ## alpha=1: Just compute the classical estimates --------
 	mcd <- cov.wt(x)$cov
 	loc <- as.vector(colMeans(x))
 	obj <- determinant(mcd, log = TRUE)$modulus[1]
 	if ( -obj/p > 50 ) {
 	    ans$cov <- mcd
 	    dimnames(ans$cov) <- list(dimn[[2]], dimn[[2]])
+	    if (cor)
+		ans$cor <- cov2cor(ans$cov)
 	    ans$center <- loc
 	    if(length(dimn[[2]]))
 		names(ans$center) <- dimn[[2]]
 	    ans$n.obs <- n
-	    ans$method <- paste(ans$method,
-                                "\nThe classical covariance matrix is singular.")
+	    msg <- "The classical covariance matrix is singular."
+	    ans$method <- paste(ans$method, msg, sep="\n")
 	    if(!print.it)
-		cat("The classical covariance matrix is singular.\n")
+		cat(msg,"\n")
 
-            weights <- 1
+	    weights <- 1
 	}
 	else {
-	    mah <- mahalanobis(x, loc, mcd, tol = tol) # VT:: 01.09.2004 - bug in alpha=1
-	    ## (tol instead of tol.inv as parameter name)
+	    mah <- mahalanobis(x, loc, mcd, tol = tol)
+	    ## VT:: 01.09.2004 - bug in alpha=1
+	    ##	    (tol instead of tol.inv as parameter name)
 	    weights <- as.numeric(mah < quantiel) # 0/1
-            sum.w <- sum(weights)
+	    sum.w <- sum(weights)
 	    ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
 	    ans$cov <- sum.w/(sum.w - 1) * ans$cov
 
 	    ## Consistency factor for reweighted MCD
-	    if(sum.w == n)
-		cdelta.rew <- 1
-	    else {
+	    if(sum.w != n) {
 		qdelta.rew <- qchisq(sum.w/n, p)
 		cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1) / (sum.w/n)
-		cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
+		cnp2[1] <- 1/cdeltainvers.rew
+		ans$cov <- ans$cov * cnp2[1]
 	    }
-	    ans$cov <- ans$cov * cdelta.rew
 	    if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-		ans$method <- paste(ans$method, "\nThe reweighted MCD scatter matrix is singular.")
+		msg <- "The reweighted MCD scatter matrix is singular."
+		ans$method <- paste(ans$method, msg, sep="\n")
 		if(!print.it)
-		    cat("The reweighted MCD scatter matrix is singular.\n")
+		    cat(msg,"\n")
 	    }
 	    else {
 		mah <- mahalanobis(x, ans$center, ans$cov, tol = tol)
-                weights <- as.numeric(mah < quantiel) # 0/1
+		weights <- as.numeric(mah < quantiel) # 0/1
 	    }
 	}
 
-        ans$alpha <- alpha
-        ans$quan <- quan
-        ans$raw.cov <- mcd
-        dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
-        ans$raw.center <- loc
-        if(length(dimn[[2]]))
-            names(ans$raw.center) <- dimn[[2]]
-        ans$crit <- exp(obj)
+	ans$alpha <- alpha
+	ans$quan <- quan
+	ans$raw.cov <- mcd
+	dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
+	ans$raw.center <- loc
+	if(length(dimn[[2]]))
+	    names(ans$raw.center) <- dimn[[2]]
+	ans$crit <- exp(obj)
 	ans$method <- paste(ans$method,
 			    "\nThe minimum covariance determinant estimates based on",
 			    n, "observations \nare equal to the classical estimates.")
-        ans$mcd.wt <- rep(NA, length(na.x))
-        ans$mcd.wt[ok] <- weights
+	ans$mcd.wt <- rep(NA, length(ok))
+	ans$mcd.wt[ok] <- weights
 	if(length(dimn[[1]]))
 	    names(ans$mcd.wt) <- dimn[[1]]
 	ans$wt <- NULL
 	ans$X <- x
-        if(length(dimn[[1]]))
-            dimnames(ans$X)[[1]] <- names(ans$mcd.wt)[ok]
-        else
-            dimnames(ans$X) <- list(seq(along = na.x)[ok], NULL)
-        if(print.it)
-            cat(ans$method, "\n")
+	if(length(dimn[[1]]))
+	    dimnames(ans$X)[[1]] <- names(ans$mcd.wt)[ok]
+	else
+	    dimnames(ans$X) <- list(seq(along = ok)[ok], NULL)
+	if(print.it)
+	    cat(ans$method, "\n")
 	ans$raw.cnp2 <- raw.cnp2
 	ans$cnp2 <- cnp2
 	class(ans) <- "mcd"
@@ -186,7 +189,7 @@ covMcd <- function(x,
 
     if(p == 1) {
 	## ==> Compute univariate location and scale estimates
-        ans$method <- "Univariate location and scale estimation."
+	ans$method <- "Univariate location and scale estimation."
 
 	scale <- sqrt(calpha * correct) * as.double(mcd$initcovariance)
 	center <- as.double(mcd$initmean)
@@ -198,7 +201,7 @@ covMcd <- function(x,
 	    names(ans$center) <- dimn[[2]][1]
 	    ans$n.obs <- n
 	    ans$method <- paste(ans$method,"\nMore than", quan,
-                                "of the observations are identical.")
+				"of the observations are identical.")
 	    ans$alpha <- alpha
 	    ans$quan <- quan
 	    ans$raw.cov <- matrix(0)
@@ -208,209 +211,195 @@ covMcd <- function(x,
 	    ans$crit <- 0
 	    weights <- as.numeric(abs(x - center) < 1e-07) # 0 / 1
 	} ## end { scale ~= 0 }
-        else {
-            ## Compute the weights for the raw MCD in case p=1
-            weights <- as.numeric(((x - center)/scale)^2 < quantiel) # 0/1
-            sum.w <- sum(weights)
-            ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
-            ans$cov <- sum.w/(sum.w - 1) * ans$cov
+	else {
+	    ## Compute the weights for the raw MCD in case p=1
+	    weights <- as.numeric(((x - center)/scale)^2 < quantiel) # 0/1
+	    sum.w <- sum(weights)
+	    ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
+	    ans$cov <- sum.w/(sum.w - 1) * ans$cov
 
-            ## Apply the correction factor for the reweighted cov
-            if(sum.w == n) {
-                cdelta.rew <- 1
-                correct.rew <- 1
-            }
-            else {
-                qdelta.rew <- qchisq(sum.w/n, p)
-                cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-                cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
-                cnp2[2] <- correct.rew <- MCDcnp2.rew(p, n, alpha)
-                if(!use.correction) # do not use finite sample correction factor
-                    cnp2[2] <- correct.rew <- 1.0
-            }
-            ans$cov <- ans$cov * cdelta.rew * correct.rew
-            ans$alpha <- alpha
-            ans$quan <- quan
-            ans$raw.cov <- scale^2
-            names(ans$raw.cov) <- dimn[[2]][1]
-            ans$raw.center <- as.vector(center)
-            names(ans$raw.center) <- dimn[[2]][1]
-            ans$crit <- 1/(quan - 1) * sum(sort((x - as.double(mcd$initmean))^2, quan)[1:quan])
-            center <- ans$center
-            scale <- as.vector(sqrt(ans$cov))
-            weights <- as.numeric(((x - center)/scale)^2 < quantiel)
-        } ## end{ scale > 0 }
+	    ## Apply the correction factor for the reweighted cov
+	    if(sum.w == n) {
+		cdelta.rew <- 1
+		correct.rew <- 1
+	    }
+	    else {
+		qdelta.rew <- qchisq(sum.w/n, p)
+		cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
+		cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
+		cnp2[2] <- correct.rew <- MCDcnp2.rew(p, n, alpha)
+		if(!use.correction) # do not use finite sample correction factor
+		    cnp2[2] <- correct.rew <- 1.0
+	    }
+	    ans$cov <- ans$cov * cdelta.rew * correct.rew
+	    ans$alpha <- alpha
+	    ans$quan <- quan
+	    ans$raw.cov <- scale^2
+	    names(ans$raw.cov) <- dimn[[2]][1]
+	    ans$raw.center <- as.vector(center)
+	    names(ans$raw.center) <- dimn[[2]][1]
+	    ans$crit <- 1/(quan - 1) * sum(sort((x - as.double(mcd$initmean))^2, quan)[1:quan])
+	    center <- ans$center
+	    scale <- as.vector(sqrt(ans$cov))
+	    weights <- as.numeric(((x - center)/scale)^2 < quantiel)
+	} ## end{ scale > 0 }
     } ## end p=1
 
     else { ## p >= 2 : ----------------------------------------------------------
 
-        ## Apply correction factor to the raw estimates and use them to compute weights
-        mcd$initcovariance <- calpha * mcd$initcovariance * correct
-        dim(mcd$initcovariance) <- c(p, p)
+	## Apply correction factor to the raw estimates and use them to compute weights
+	mcd$initcovariance <- calpha * mcd$initcovariance * correct
+	dim(mcd$initcovariance) <- c(p, p)
 
-        ## If not all observations are in general position, i.e. more than
-        ## h observations lie on a hyperplane, the program still yields
-        ## the MCD location and scatter matrix, the latter being singular
-        ## (as it should be), as well as the equation of the hyperplane.
-        if(mcd$exactfit != 0) {
-            dim(mcd$coeff) <- c(5, p)
-            ans$cov <- mcd$initcovariance
-            dimnames(ans$cov) <- list(dimn[[2]], dimn[[2]])
-            ans$center <- as.vector(mcd$initmean)
-            if(length(dimn[[2]]))
-                names(ans$center) <- dimn[[2]]
-            ans$n.obs <- n
-            if(mcd$exactfit == -1) {
-                stop("The program allows for at most ", mcd$kount, " observations.")
-            }
-            if(mcd$exactfit == -2) {
-                stop("The program allows for at most ", mcd$kount, " variables.")
-            }
-            if(mcd$exactfit == 1) {
-                txt <- "The covariance matrix of the data is singular."
-                ans$method <- paste(ans$method, txt, sep = "\n")
-                if(!print.it) {
-                    cat(txt, "\n")
-                }
-            }
-            if(mcd$exactfit == 2) {
-                txt <- paste("The covariance matrix has become singular during",
-                             "the iterations of the MCD algorithm.", collapse="\n")
-                ans$method <- paste(ans$method, txt, sep = "\n")
-                if(!print.it) {
-                    cat(txt, "\n")
-                }
-            }
-            if(p == 2) {
-                ans$method <- paste(ans$method, "\nThere are", mcd$
-                                    kount,
-                                    "observations in the entire dataset of\n", n,
-                                    "observations that lie on the line with equation\n",
-                                    round(mcd$coeff[1, 1], digits = 4), "(x_i1-m_1)+",
-                                    round(mcd$coeff[1, 2], digits = 4),
-                                    "(x_i2-m_2)=0 \nwith (m_1,m_2) the mean of these observations."
-                                    )
-                if(!print.it) {
-                    cat("There are", mcd$kount,
-                        "observations in the entire dataset of\n", n,
-                        "observations that lie on the line with equation\n",
-                        round(mcd$coeff[1, 1], digits = 4), "(x_i1-m_1)+",
-                        round(mcd$coeff[1, 2], digits = 4),
-                        "(x_i2-m_2)=0 \nwith (m_1,m_2) the mean of these observations.\n"
-                        )
-                }
-            }
-            else if(p == 3) {
-                ans$method <- paste(ans$method, "\nThere are", mcd$
-                                    kount,
-                                    "observations in the entire dataset of\n", n,
-                                    "observations that lie on the plane with equation \n",
-                                    round(mcd$coeff[1, 1], digits = 4), "(x_i1-m_1)+",
-                                    round(mcd$coeff[1, 2], digits = 4), "(x_i2-m_2)+",
-                                    round(mcd$coeff[1, 3], digits = 4),
-                                    "(x_i3-m_3)=0 \nwith (m_1,m_2) the mean of these observations."
-                                    )
-                if(!print.it) {
-                    cat("There are", mcd$kount,
-                        "observations in the entire dataset of\n",
-                        n, "observations that lie on the plane with equation \n",
-                        round(mcd$coeff[1, 1], digits = 4), "(x_i1-m_1)+",
-                        round(mcd$coeff[1, 2], digits = 4), "(x_i2-m_2)+",
-                        round(mcd$coeff[1, 3], digits = 4), "(x_i3-m_3)=0\n",
-                        "with (m_1,m_2) the mean of these observations.\n"
-                        )
-                }
-            }
-            else { ##  p > 3 -----------
-                ans$method <-
-                    paste(ans$method, "\nThere are",
-                          mcd$kount, " observations in the entire dataset of\n",
-                          n, "observations that lie on the hyperplane with equation \n",
-                          "a_1*(x_i1-m_1)+...+a_p*(x_ip-m_p)=0 \n",
-                          "with (m_1,...,m_p) the mean\n",
-                          "of these observations and coefficients a_i equal to: \n")
-                if(!print.it) {
-                    cat("There are", mcd$kount,
-                        " observations in the entire dataset of\n", n,
-                        "observations that lie on the hyperplane with equation \na_1*(x_i1-m_1)+...+a_p*(x_ip-m_p)=0 \nwith (m_1,...,m_p) the mean\nof these observations and coefficients a_i equal to: \n"
-                        )
-                }
-                for(i in 1:p) {
-                    ans$method <-
-                        paste(ans$method, round(mcd$coeff[1, i], digits = 4))
-                }
-                if(!print.it)
-                    print(round(mcd$coeff[1,  ], digits = 4))
-            } ## end {p > 3}
+	## If not all observations are in general position, i.e. more than
+	## h observations lie on a hyperplane, the program still yields
+	## the MCD location and scatter matrix, the latter being singular
+	## (as it should be), as well as the equation of the hyperplane.
+	if(mcd$exactfit != 0) {
+	    dim(mcd$coeff) <- c(5, p)
+	    ans$cov <- mcd$initcovariance
+	    dimnames(ans$cov) <- list(dimn[[2]], dimn[[2]])
+	    ans$center <- as.vector(mcd$initmean)
+	    if(length(dimn[[2]]))
+		names(ans$center) <- dimn[[2]]
+	    ans$n.obs <- n
+	    if(mcd$exactfit == -1) {
+		stop("The program allows for at most ", mcd$kount, " observations.")
+	    }
+	    if(mcd$exactfit == -2) {
+		stop("The program allows for at most ", mcd$kount, " variables.")
+	    }
+	    if(mcd$exactfit == 1) {
+		msg <- "The covariance matrix of the data is singular."
+		ans$method <- paste(ans$method, msg, sep = "\n")
+		if(!print.it)
+		    cat(msg, "\n")
+	    }
+	    if(mcd$exactfit == 2) {
+		msg <- paste("The covariance matrix has become singular during",
+			     "the iterations of the MCD algorithm.",
+                             collapse = "\n")
+		ans$method <- paste(ans$method, msg, sep = "\n")
+		if(!print.it)
+		    cat(msg, "\n")
+	    }
+	    if(p == 2) {
+                msg <- paste("There are", mcd$kount,
+                             "observations in the entire dataset of\n", n,
+                             "observations that lie on the line with equation\n",
+                             signif(mcd$coeff[1,1], digits= 5), "(x_i1-m_1) +",
+                             signif(mcd$coeff[1,2], digits= 5), "(x_i2-m_2)=0\n",
+                             "with (m_1,m_2) the mean of these observations.")
+		ans$method <- paste(ans$method, msg, sep = "\n")
+		if(!print.it)
+		    cat(msg, "\n")
+	    }
+	    else if(p == 3) {
+		msg <- paste("There are", mcd$kount,
+                             "observations in the entire dataset of\n", n,
+                             "observations that lie on the plane with equation\n",
+                             signif(mcd$coeff[1,1], digits= 5), "(x_i1-m_1) +",
+                             signif(mcd$coeff[1,2], digits= 5), "(x_i2-m_2) +",
+                             signif(mcd$coeff[1,3], digits= 5), "(x_i3-m_3)=0\n",
+                             "with (m_1,m_2) the mean of these observations."
+                             )
+		ans$method <- paste(ans$method, msg, sep = "\n")
+		if(!print.it)
+		    cat(msg, "\n")
+	    }
+	    else { ##  p > 3 -----------
+                msg <- paste("There are", mcd$kount,
+                             "observations in the entire dataset of\n", n,
+                             "observations that lie on the hyperplane with equation\n",
+                             "a_1*(x_i1-m_1)+...+a_p*(x_ip-m_p)=0 \n",
+                             "with (m_1,...,m_p) the mean\n",
+                             "of these observations and coefficients a_i equal to: \n",
 
-            ans$alpha <- alpha
-            ans$quan <- quan
-            ans$raw.cov <- mcd$initcovariance
-            dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
-            ans$raw.center <- as.vector(mcd$initmean)
-            if(length(dimn[[2]]))
-                names(ans$raw.center) <- dimn[[2]]
-            ans$crit <- 0
-            weights <- mcd$weights
-        } ## end exact fit <==>  (mcd$exactfit != 0)
+                             paste(signif(mcd$coeff[1, ], digits= 5),
+                                   collapse=","))
+		if(!print.it) {
+ 		    cat("There are", mcd$kount,
+			" observations in the entire dataset of\n", n,
+			"observations that lie on the hyperplane with equation \na_1*(x_i1-m_1)+...+a_p*(x_ip-m_p)=0 \nwith (m_1,...,m_p) the mean\nof these observations and coefficients a_i equal to: \n"
+			)
+		}
+		for(i in 1:p) {
+		    ans$method <-
+			paste(ans$method, signif(mcd$coeff[1, i], digits= 5))
+		}
+		if(!print.it)
+		    print(signif(mcd$coeff[1, ], digits= 5))
+	    } ## end {p > 3}
 
-        else { ## exactfit == 0 : have general position -----------------------------
+	    ans$alpha <- alpha
+	    ans$quan <- quan
+	    ans$raw.cov <- mcd$initcovariance
+	    dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
+	    ans$raw.center <- as.vector(mcd$initmean)
+	    if(length(dimn[[2]]))
+		names(ans$raw.center) <- dimn[[2]]
+	    ans$crit <- 0
+	    weights <- mcd$weights
+	} ## end exact fit <==>	 (mcd$exactfit != 0)
 
-            mah <- mahalanobis(x, mcd$initmean, mcd$initcovariance, tol = tol)
-            mcd$weights <- weights <- as.numeric(mah < quantiel)
+	else { ## exactfit == 0 : have general position ------------------------
 
-            ## Compute and apply the consistency correction factor for the reweighted cov
-            if(sum(weights) == n) {
-                cdelta.rew <- 1
-                correct.rew <- 1
-            }
-            else {
-                qdelta.rew <- qchisq(sum(weights)/n, p)
-                cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum(weights)/n)
-                cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
-                cnp2[2] <- correct.rew <- MCDcnp2.rew(p, n, alpha)
-                if(!use.correction) # do not use finite sample correction factor
-                    cnp2[2] <- correct.rew <- 1.0
-            }
+	    mah <- mahalanobis(x, mcd$initmean, mcd$initcovariance, tol = tol)
+	    mcd$weights <- weights <- as.numeric(mah < quantiel)
+	    sum.w <- sum(weights)
 
-            ans <- c(ans, cov.wt(x, wt = weights, cor))
-            ans$cov <- sum(weights)/(sum(weights) - 1) * ans$cov
-            ans$cov <- ans$cov * cdelta.rew * correct.rew
+	    ## Compute and apply the consistency correction factor for
+	    ## the reweighted cov
+	    if(sum.w == n) {
+		cdelta.rew <- 1
+		correct.rew <- 1
+	    }
+	    else {
+		qdelta.rew <- qchisq(sum.w/n, p)
+		cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
+		cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
+		cnp2[2] <- correct.rew <- MCDcnp2.rew(p, n, alpha)
+		if(!use.correction) # do not use finite sample correction factor
+		    cnp2[2] <- correct.rew <- 1.0
+	    }
 
-            ##vt:: add also the best found subsample to the result list
-            ans$best <- sort(as.vector(mcd$best))
+	    ans <- c(ans, cov.wt(x, wt = weights, cor))
+	    ans$cov <- sum.w/(sum.w - 1) * ans$cov
+	    ans$cov <- ans$cov * cdelta.rew * correct.rew
 
-            ans$alpha <- alpha
-            ans$quan <- quan
-            ans$raw.cov <- mcd$initcovariance
-            dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
-            ans$raw.center <- as.vector(mcd$initmean)
-            if(length(dimn[[2]]))
-                names(ans$raw.center) <- dimn[[2]]
-            ans$raw.weights <- weights
-            ans$crit <- mcd$mcdestimate
-            ans$raw.mah <- mahalanobis(x, ans$raw.center, ans$raw.cov, tol = tol)
+	    ##vt:: add also the best found subsample to the result list
+	    ans$best <- sort(as.vector(mcd$best))
 
-            ## Check if the reweighted scatter matrix is singular.
-            if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-                ans$method <-
-                    paste(ans$method,
-                          "\nThe reweighted MCD scatter matrix is singular.")
-                if(!print.it) {
-                    cat("The reweighted MCD scatter matrix is singular.\n")
-                }
-                ans$mah <- ans$raw.mah
-            }
-            else {
-                mah <- mahalanobis(x, ans$center, ans$cov, tol = tol)
-                ans$mah <- mah
-                weights <- as.numeric(mah < quantiel)
-            }
-        } ## end{ not exact fit }
+	    ans$alpha <- alpha
+	    ans$quan <- quan
+	    ans$raw.cov <- mcd$initcovariance
+	    dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
+	    ans$raw.center <- as.vector(mcd$initmean)
+	    if(length(dimn[[2]]))
+		names(ans$raw.center) <- dimn[[2]]
+	    ans$raw.weights <- weights
+	    ans$crit <- mcd$mcdestimate
+	    ans$raw.mah <- mahalanobis(x, ans$raw.center, ans$raw.cov, tol = tol)
+
+	    ## Check if the reweighted scatter matrix is singular.
+	    if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
+
+		msg <- "The reweighted MCD scatter matrix is singular."
+		ans$method <- paste(ans$method, msg, sep="\n")
+		if(!print.it)
+		    cat(msg,"\n")
+		ans$mah <- ans$raw.mah
+	    }
+	    else {
+		mah <- mahalanobis(x, ans$center, ans$cov, tol = tol)
+		ans$mah <- mah
+		weights <- as.numeric(mah < quantiel)
+	    }
+	} ## end{ not exact fit }
 
     } ## end{ p >= 2 }
 
-    ans$mcd.wt <- rep(NA, length(na.x))
+    ans$mcd.wt <- rep(NA, length(ok))
     ans$mcd.wt[ok] <- weights
     if(length(dimn[[1]]))
 	names(ans$mcd.wt) <- dimn[[1]]
@@ -419,7 +408,7 @@ covMcd <- function(x,
     if(length(dimn[[1]]))
 	dimnames(ans$X)[[1]] <- names(ans$mcd.wt)[ok]
     else
-	dimnames(ans$X) <- list(seq(along = na.x)[ok], NULL)
+	dimnames(ans$X) <- list(seq(along = ok)[ok], NULL)
     if(print.it)
 	cat(ans$method, "\n")
     ans$raw.cnp2 <- raw.cnp2

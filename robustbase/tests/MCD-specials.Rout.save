@@ -1,6 +1,6 @@
 
 R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.2.1 Patched (2006-02-18 r37407)
+Version 2.3.0 Under development (unstable) (2006-02-21 r37407)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -196,7 +196,7 @@ Eigenvalues:
 [1]  0
 > ## with alpha = 1
 > (rc1 <- covMcd(rep(1,12), alpha = 1))
-The classical covariance matrix is singular.
+The classical covariance matrix is singular. 
 Call:
 covMcd(x = rep(1, 12), alpha = 1)
 
@@ -213,7 +213,7 @@ Robust Estimate of Covariance:
 rep(1, 12)  0         
 > str(rc1)
 List of 14
- $ method    : chr "Minimum Covariance Determinant Estimator. \nThe classical covariance matrix is singular. \nThe minimum covariance determinant e"| __truncated__
+ $ method    : chr "Minimum Covariance Determinant Estimator.\nThe classical covariance matrix is singular. \nThe minimum covariance determinant es"| __truncated__
  $ call      : language covMcd(x = rep(1, 12), alpha = 1)
  $ cov       : num [1, 1] 0
   ..- attr(*, "dimnames")=List of 2
@@ -312,7 +312,7 @@ Robust Estimate of Location:
 Eigenvalues: 
 [1]  0  0  0  0
 > (rC1 <- covMcd(X, alpha = 1))
-The classical covariance matrix is singular.
+The classical covariance matrix is singular. 
 Call:
 covMcd(x = X, alpha = 1)
 
@@ -351,5 +351,5 @@ Eigenvalues:
 > 
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  1.11 0.09 1.73 0 0 
+Time elapsed:  1.74 0.12 2.19 0 0 
 > 
