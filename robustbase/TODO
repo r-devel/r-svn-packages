@@ -46,6 +46,10 @@ o summary.mcd() should *return* and object of class "summary.mcd"
 
 o plot(mcd. ) : should show the call !
 
+o ltsReg():  has  undocumented '$resid'
+	     in addition to '$residuals' and '$raw.residuals';
+	     drop it or document it !
+
 --- glmrob --
 
 o glmrob(*, weights.on.x = "robCov")  currently uses  MASS::cov.rob(), i.e.

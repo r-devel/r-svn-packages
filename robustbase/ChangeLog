@@ -1,3 +1,12 @@
+2006-02-24  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/print.lts.R: moved to this file (and simplified slightly) to
+	* R/ltsReg.R (ltsReg): more cleanup; fix (y ~ 1) and (y ~ 0) properly
+
+2006-02-23  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/LTS-specials.R: new file
+
 2006-02-22  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/MCD-specials.R: new tests

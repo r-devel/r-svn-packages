@@ -25,7 +25,7 @@
 ltsReg <- function(x, ...) UseMethod("ltsReg")
 
 ltsReg.formula <- function(formula, data, ...,
-	model = TRUE, x.ret = FALSE, y.ret = FALSE)
+			   model = TRUE, x.ret = FALSE, y.ret = FALSE)
 {
     ##	  method <- match.arg(method)
 
@@ -37,26 +37,27 @@ ltsReg.formula <- function(formula, data, ...,
     mt <- attr(mf, "terms")
     y <- model.extract(mf, "response")
 
-    if (is.empty.model(mt)) {
-        x <- NULL
-        xint <- 0
+    if (is.empty.model(mt)) { # "y ~ 0" : no coefficients
+	x <- NULL
+	fit <- list(method = "ltsReg for empty model",
+		    coefficients = numeric(0), residuals = y,
+		    fitted.values = 0 * y, lts.wt = 1 + 0 * y,
+		    rank = 0, intercept = FALSE, df.residual = length(y))
+	## alpha = alpha from "..."
+	class(fit) <- "lts"
     }
     else {
-        x <- model.matrix(mt, mf, contrasts)
+	x <- model.matrix(mt, mf, contrasts)
 
-        ## Check if there is an intercept in the model.
-        ## A formula without intercept looks like this: Y ~ . -1
-        ## If so, remove the corresponding column and use intercept=TRUE
-        ## in the call to ltsReg.default(); by default, intercept=FALSE.
-        xint <- match("(Intercept)", colnames(x), nomatch = 0)
-        if(xint) {
-            x <- x[, -xint, drop = FALSE]
-            if(ncol(x) <= 0)
-                x <- NULL
-        }
+	## Check if there is an intercept in the model.
+	## A formula without intercept looks like this: Y ~ . -1
+	## If so, remove the corresponding column and use intercept=TRUE
+	## in the call to ltsReg.default(); by default, intercept=FALSE.
+	xint <- match("(Intercept)", colnames(x), nomatch = 0)
+	if(xint)
+	    x <- x[, -xint, drop = FALSE]
+	fit <- ltsReg(x, y, intercept = (xint > 0), ...)
     }
-
-    fit <- ltsReg(x, y, intercept = (xint > 0), ...)
 
     fit$terms <- mt
     fit$call <- match.call()
@@ -114,6 +115,8 @@ ltsReg.default <-
     if(alpha > 1)
 	stop("alpha is greater than 1")
 
+    quantiel <- qnorm(0.9875)
+
     ## vt::03.02.2006 - raw.cnp2 and cnp2 are vectors of size 2 and  will
     ##	 contain the correction factors (concistency and finite sample)
     ##	 for the raw and reweighted estimates respectively. Set them initially to 1.
@@ -128,7 +131,7 @@ ltsReg.default <-
     if (!is.numeric(y)) stop("y is not a numeric")
     if (dim(y)[2] != 1) stop("y is not onedimensional")
 
-    oneD <- (missing(x) || is.null(x) || NROW(x) == 0) ## location model - no x
+    oneD <- (missing(x) || is.null(x) || NCOL(x) == 0) ## location model - no x
     if(oneD) {
 	x <- matrix(1, nrow(y), 1)
     }
@@ -142,7 +145,6 @@ ltsReg.default <-
 
     if (nrow(x) != nrow(y))
 	stop("Number of observations in x and y not equal")
-    dimny <- dimnames(y)
     na.x <- !is.finite(rowSums(x))
     na.y <- !is.finite(y)
     ok <- !(na.x | na.y)
@@ -152,6 +154,7 @@ ltsReg.default <-
     n <- dx[1]
     if (n == 0)
 	stop("All observations have missing values!")
+    dimny <- dimnames(y)
     rownames <- dimny[[1]]
     yn <- if(!is.null(yname))
 	yname else if(!is.null(dimny[[2]])) dimny[[2]] else "Y"
@@ -168,21 +171,23 @@ ltsReg.default <-
 
     ##cat("++++++ Prepare: Ready.\n")
 
-    dn <- dimnames(x)
-    xn <- if(!is.null(dn[[2]])) dn[[2]] else if (dx[2] > 1)
-	paste("X", 1:dx[2], sep = "") else "X"
-    X <- x ## << FIXME? (a full copy of 'x' ??)
-    dimnames(X) <- list(NULL, xn)
+    xn <- (dnx <- dimnames(x))[[2]]
+    xn <- if(!is.null(xn)) xn else if (dx[2] > 1)
+	paste("X", 1:dx[2], sep = "") else if (dx[2]) "X" ## else : p = 0
+    dimnames(x) <- list(dnx[[1]], xn) # also works  if(is.null(dnx))
     y <- as.vector(y)
 
-    if (all(x == 1)) { ## includes 'oneD'
-
+    if (all(x == 1)) { ## includes 'oneD' and empty x (p = 0)
+	if(qr.out) {
+	    warning("'qr.out = TRUE' for univariate location is disregarded")
+	    qr.out <- FALSE
+	}
 	quan <- quan.f(alpha, n, dx[2])
 	p <- 1
-	xbest <- NULL
 	if (alpha == 1) {
 	    scale <- sqrt(cov.wt(as.matrix(y))$cov)
 	    center <- as.vector(mean(y))
+	    ## xbest <- NULL
 	} else {
 	    sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0, seed)
 
@@ -196,10 +201,10 @@ ltsReg.default <-
 
 	    scale <- sqrt(as.double(sh$initcovariance)) * sqrt(calpha) * correct
 	    ## xbest <- sort(as.vector(sh$best))  # fastmcd in the univariate case does not return inbest[]
-
 	}
 	resid <- y - center
-	ans <- list(best = xbest,
+	ans <- list(method = "Univariate location and scale estimation.",
+		    best = NULL, # xbest,
 		    coefficients = center,
 		    raw.coefficients = center,
 		    alpha = alpha,
@@ -213,7 +218,6 @@ ltsReg.default <-
 	}
 	else {
 	    ans$raw.scale <- scale
-	    quantiel <- qnorm(0.9875)
 	    weights <- as.numeric(abs(resid/scale) <= quantiel)
 	    reweighting <- cov.wt(as.matrix(y), wt = weights)
 	    ans$coefficients <- reweighting$center
@@ -227,248 +231,205 @@ ltsReg.default <-
 	    else {
 		qdelta.rew <- qchisq(sum(weights)/n, 1)
 		cdeltainvers.rew <- pgamma(qdelta.rew/2, 1/2 + 1)/(sum(weights)/n)
-		cnp2[1] <- cdelta.rew <- sqrt(1/cdeltainvers.rew)
-		cnp2[2] <- correct.rew <- LTScnp2.rew(1, intercept = intercept, n, alpha)
-		if(!use.correction) # do not use finite sample correction factor
-		    cnp2[2] <- correct.rew <- 1.0
+		cdelta.rew <- sqrt(1/cdeltainvers.rew)
+		correct.rew <-
+		    if(use.correction)
+			LTScnp2.rew(1, intercept = intercept, n, alpha) else 1
+		cnp2 <- c(cdelta.rew, correct.rew)
+		ans$scale <- ans$scale * cdelta.rew * correct.rew
 	    }
-	    ans$scale <- ans$scale * cdelta.rew * correct.rew
 	    weights <- as.numeric(abs(resid/ans$scale) <= quantiel)
 	}
-	ans$resid <- resid/ans$scale
-	ans$rsquared <- 0
-	ans$residuals <- rep(NA, length(na.y))
-	ans$residuals[ok] <- resid
-	ans$lts.wt <- rep(NA, length(na.y))
-	ans$lts.wt[ok] <- weights
-	ans$fitted.values <- rep(NA, length(na.y))
-	ans$fitted.values[ok] <- ans$coefficients
-	ans$intercept <- intercept
-	ans$method <- "Univariate location and scale estimation."
 	if (abs(scale) < 1e-07)
 	    ans$method <- paste(ans$method, "\nMore than half of the data are equal!")
-	names(ans$residuals) <- names(ans$lts.wt) <- rownames
+	fitted <- ans$coefficients
+	ans$resid <- resid/ans$scale
+	ans$rsquared <- 0
+	ans$intercept <- intercept
 	names(ans$coefficients) <- names(ans$raw.coefficients) <- yn
-	names(ans$scale) <- names(ans$raw.scale) <- yn
-	names(ans$rsquared) <- names(ans$crit) <- yn
-	ans$X <- x
-	ans$Y <- y	# VT:: 01.09.2004 - add y to the result object
-	dimnames(ans$X) <-
-	    list((if(length(rownames)) rownames else seq(along = na.x))[ok],
-		 NULL)
 
-	ans$raw.cnp2 <- raw.cnp2
-	ans$cnp2 <- cnp2
-	class(ans) <- "lts"
-	ans$call <- match.call()
-	return(ans)
     } ## end {all(x == 1)} --
 
-    ans <- list()
-    if (intercept) {
-	dx <- dx + c(0, 1)
-	xn <- c(xn, "Intercept")
-	x <- array(c(x, rep(1, n)), dx, dimnames = list(dn[[1]], xn))
-    }
-    p <- dx[2]
-    if (n <= 2 * p)
-	stop("Need more than twice as many observations as variables.")
-
-    if(alpha == 1) { ## alpha == 1 -----------------------
-	z <- lsfit(x, y, intercept = FALSE)
-	qrx <- z$qr
-	## VT:: 26.12.2004
-	## Reorder the coeficients,so that the intercept moves to the beginning of the array
-	## Skip this if p == 1 (i.e. p=1 and intercept=FALSE).
-	## Do the same for the names and for ans$coef - see below
-	cf <- z$coef
-	names(cf) <- xn
-	ans$raw.coefficients <-
-	    if(p > 1 && intercept) cf[c(p, 1:(p - 1))] else cf
-
-	ans$alpha <- alpha
-	ans$quan <- quan <- n
-
-	s0 <- sqrt((1/(n - p)) * sum(z$residuals^2))
-
-	##cat("++++++ B - alpha == 1... - s0=",s0,"\n")
-	if(abs(s0) < 1e-07) {
-	    fitted <- x %*% z$coef
-	    weights <- as.numeric(abs(z$residuals) <= 1e-07)
-	    ans$scale <- ans$raw.scale <- 0
-	    ans$coefficients <- ans$raw.coefficients
+    else { ## ------------------ usual non-trivial case ---------------------
+	if(mcd) ## need 'old x' later
+	    X <- x
+	if (intercept) {
+	    x <- cbind(x, "Intercept" = 1)
+	    dx <- dim(x)
+	    xn <- colnames(x)
 	}
-	else {
-	    ans$raw.scale <- s0
-	    ans$raw.resid <- z$residuals / s0
-	    weights <- as.numeric(abs(ans$raw.resid) <= qnorm(0.9875))
-	    sum.w <- sum(weights)
-	    z <- lsfit(x, y, wt = weights, intercept = FALSE)
+	p <- dx[2]
+	if (n <= 2 * p)
+	    stop("Need more than twice as many observations as variables.")
 
+	ans <- list(alpha = alpha)
+
+	if(alpha == 1) { ## alpha == 1 -----------------------
+	    ## old, suboptimal: z <- lsfit(x, y, intercept = FALSE)
+	    z <- lm.fit(x, y)
+	    qrx <- z$qr
 	    ## VT:: 26.12.2004
-	    ans$coefficients <-
-		if(p > 1 && intercept) z$coef[c(p, 1:(p - 1))] else z$coef
+	    ## Reorder the coeficients, so that the intercept is at the beginning of the matrix
+	    ## Skip this if p == 1 (i.e. p=1 and intercept=FALSE).
+	    ## Do the same for the names and for ans$coef - see below
+	    cf <- z$coef
+	    names(cf) <- xn
+	    ans$raw.coefficients <-
+		if(p > 1 && intercept) cf[c(p, 1:(p - 1))] else cf
 
-	    fitted <- x %*% z$coef
-	    ans$scale <- sqrt(sum(weights * z$residuals^2)/(sum.w - 1))
-	    if (sum.w == n) {
-		cdelta.rew <- 1
+	    resid <- z$residuals
+	    ans$quan <- quan <- n
+
+	    s0 <- sqrt((1/(n - p)) * sum(resid^2))
+
+	    ##cat("++++++ B - alpha == 1... - s0=",s0,"\n")
+	    if(abs(s0) < 1e-07) {
+		fitted <- x %*% z$coef
+		weights <- as.numeric(abs(resid) <= 1e-07)
+		ans$scale <- ans$raw.scale <- 0
+		ans$coefficients <- ans$raw.coefficients
 	    }
 	    else {
-		qn.w <- qnorm((sum.w + n)/(2 * n))
-		cdelta.rew <- 1/sqrt(1 - (2 * n)/(sum.w/qn.w) * dnorm(qn.w))
-		ans$scale <- ans$scale * cdelta.rew
+		ans$raw.scale <- s0
+		ans$raw.resid <- resid / s0
+		weights <- as.numeric(abs(ans$raw.resid) <= quantiel)
+		sum.w <- sum(weights)
+		## old, suboptimal: z <- lsfit(x, y, wt = weights, intercept = FALSE)
+		z <- lm.wfit(x, y, w = weights)
+
+		## VT:: 26.12.2004
+		ans$coefficients <-
+		    if(p > 1 && intercept) z$coef[c(p, 1:(p - 1))] else z$coef
+
+		fitted <- x %*% z$coef
+		ans$scale <- sqrt(sum(weights * resid^2)/(sum.w - 1))
+		if (sum.w == n) {
+		    cdelta.rew <- 1
+		}
+		else {
+		    qn.w <- qnorm((sum.w + n)/(2 * n))
+		    cdelta.rew <- 1/sqrt(1 - (2 * n)/(sum.w/qn.w) * dnorm(qn.w))
+		    ans$scale <- ans$scale * cdelta.rew
+		}
+		ans$resid <- resid/ans$scale
+		weights <- as.numeric(abs(ans$resid) <= quantiel)
 	    }
-	    ans$resid <- z$residuals/ans$scale
-	    weights <- as.numeric(abs(ans$resid) <= qnorm(0.9875))
-	}
 
-	## VT:: 26.12.2004
-	names(ans$coefficients) <-
-	    if(p > 1 && intercept) xn[c(p, 1:(p - 1))] else xn
+	    ## VT:: 26.12.2004
+	    names(ans$coefficients) <-
+		if(p > 1 && intercept) xn[c(p, 1:(p - 1))] else xn
 
-	s1 <- sum(z$residuals^2)
-	ans$crit <- s1
-	sh <- (if (intercept) y - mean(y) else y) ^ 2
-	ans$rsquared <- max(0, min(1, 1 - (s1/sh)))
-	ans$residuals <- rep(NA, length(na.y))
-	ans$residuals[ok] <- z$residuals
-	ans$lts.wt <- matrix(NA, length(na.y))
-	ans$lts.wt[ok] <- weights
-	ans$intercept <- intercept
-	ans$method <- "Least Squares Regression."
-	if (abs(s0) < 1e-07)
-	    ans$method <- paste(ans$method, "\nAn exact fit was found!")
-	if (mcd) {
-	    mcd <- covMcd(X, alpha = 1)
-	    if(-(determinant(mcd$cov, log = TRUE)$modulus[1])/p > 50) {
-		ans$RD[1] <- "singularity"
-	    } else {
-		ans$RD <- rep(NA, length(na.y))
-		ans$RD[ok] <- sqrt(mahalanobis(X, mcd$center, mcd$cov))
-		names(ans$RD) <- rownames
-	    }
-	}
-    } ## end {alpha == 1} : "classical"
+	    s1 <- sum(resid^2)
+	    ans$crit <- s1
+	    sh <- (if (intercept) y - mean(y) else y) ^ 2
+	    ans$rsquared <- max(0, min(1, 1 - (s1/sh)))
 
-    else { ## alpha < 1 -----------------------------------------------
-	coefs <- rep(NA, p)
-	names(coefs) <- xn
-	if(qr.out)
-	    qrx <- qr(x)
-	else
-	    qrx <- qr(x)[c("rank", "pivot")]
+	    ans$method <- "Least Squares Regression."
 
-	rk <- qrx$rank
-	if (rk < p) {
-	    stop("x is singular")
-	}
-	else
+	} ## end {alpha == 1} : "classical"
+
+	else { ## alpha < 1 -----------------------------------------------
+	    coefs <- rep(NA, p)
+	    names(coefs) <- xn
+	    qrx <- if(qr.out) qr(x) else qr(x)[c("rank", "pivot")]
+
+	    rk <- qrx$rank
+	    if (rk < p)
+		stop("x is singular")
+	    ## else :
 	    piv <- 1:p
 
-	quan <- quan.f(alpha, n, rk)
+	    quan <- quan.f(alpha, n, rk)
 
-	z <- .fastlts(x, y, quan, nsamp, intercept, adjust, seed)
+	    z <- .fastlts(x, y, quan, nsamp, intercept, adjust, seed)
 
-	## vt:: lm.fit.qr == lm.fit(...,method=qr,...)
-	##	cf <- lm.fit.qr(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
-	cf <- lm.fit(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
-	ans$best <- sort(as.vector(z$inbest))
-	fitted <- x %*% cf
-	resid <- y - fitted
-	coefs[piv] <- cf
-
-	## VT:: 26.12.2004
-	if(p > 1 && intercept) {
-	    ii <- c(p, 1:(p - 1))
-	    ans$raw.coefficients <- coefs[ii]
-	} else {
-	    ans$raw.coefficients <- coefs
-	}
-
-	ans$alpha <- alpha
-	ans$quan <- quan
-	raw.cnp2[2] <- correct <- LTScnp2(p, intercept = intercept, n, alpha)
-	if(!use.correction) # do not use finite sample correction factor
-	    raw.cnp2[2] <- correct <- 1.0
-	s0 <- sqrt((1/quan) * sum(sort(resid^2, quan)[1:quan]))
-	sh0 <- s0
-	qn.q <- qnorm((quan + n)/ (2 * n))
-	s0 <- s0 / sqrt(1 - (2 * n)/(quan / qn.q) * dnorm(qn.q)) * correct
-
-	if (abs(s0) < 1e-07) {
-	    weights <- as.numeric(abs(resid) <= 1e-07)
-	    ans$scale <- ans$raw.scale <- 0
-	    ans$coefficients <- ans$raw.coefficients
-	}
-	else {
-	    ans$raw.scale <- s0
-	    ans$raw.resid <- resid/ans$raw.scale
-	    quantiel <- qnorm(0.9875)
-	    weights <- as.numeric(abs(resid/s0) <= quantiel)
-
-	    ## vt:: weights has to be a vector instead of a matrix -
-	    ##	to avoid "Error in x * wtmult : non-conformable arrays"
-	    ##
-	    weights <- as.vector(weights)
-	    sum.w <- sum(weights)
-
-	    z1 <- lsfit(x, y, wt = weights, intercept = FALSE)
+	    ## vt:: lm.fit.qr == lm.fit(...,method=qr,...)
+	    ##	cf <- lm.fit.qr(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
+	    cf <- lm.fit(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
+	    ans$best <- sort(as.vector(z$inbest))
+	    fitted <- x %*% cf
+	    resid <- y - fitted
+	    coefs[piv] <- cf ## FIXME? why construct 'coefs' so complicatedly?	use 'cf' !
 
 	    ## VT:: 26.12.2004
-	    ans$coefficients <-
-		if(p > 1) z1$coef[c(p, 1:(p - 1))] else z1$coef
+	    ans$raw.coefficients <-
+		if(p > 1 && intercept) coefs[c(p, 1:(p - 1))] else coefs
 
-	    fitted <- x %*% z1$coef
-	    resid <- z1$residuals
-	    ans$scale <- sqrt(sum(weights * resid^2)/(sum.w - 1))
-	    if (sum.w == n) {
-		cdelta.rew <- 1
-		correct.rew <- 1
+	    ans$quan <- quan
+	    correct <- if(use.correction)
+		LTScnp2(p, intercept = intercept, n, alpha) else 1
+	    raw.cnp2[2] <- correct
+	    s0 <- sqrt((1/quan) * sum(sort(resid^2, quan)[1:quan]))
+	    sh0 <- s0
+	    qn.q <- qnorm((quan + n)/ (2 * n))
+	    s0 <- s0 / sqrt(1 - (2 * n)/(quan / qn.q) * dnorm(qn.q)) * correct
+
+	    if (abs(s0) < 1e-07) {
+		weights <- as.numeric(abs(resid) <= 1e-07)
+		ans$scale <- ans$raw.scale <- 0
+		ans$coefficients <- ans$raw.coefficients
 	    }
 	    else {
-		qn.w <- qnorm((sum.w + n)/(2 * n))
-		cnp2[1] <- cdelta.rew <- 1 / sqrt(1 - (2 * n)/(sum.w / qn.w) * dnorm(qn.w))
-		correct.rew <-
-		    if (use.correction) ## use finite sample correction
-			LTScnp2.rew(p, intercept = intercept, n, alpha)
-		    else 1
-		cnp2[2] <- correct.rew
+		ans$raw.scale <- s0
+		ans$raw.resid <- resid/ans$raw.scale
+		weights <- as.numeric(abs(resid/s0) <= quantiel)
+		sum.w <- sum(weights)
+
+		## old, suboptimal: z1 <- lsfit(x, y, wt = weights, intercept = FALSE)
+		z1 <- lm.wfit(x, y, w = weights)
+
+		## VT:: 26.12.2004
+		ans$coefficients <-
+		    if(p > 1) z1$coef[c(p, 1:(p - 1))] else z1$coef
+
+		fitted <- x %*% z1$coef
+		resid <- z1$residuals
+		ans$scale <- sqrt(sum(weights * resid^2)/(sum.w - 1))
+		if (sum.w == n) {
+		    cdelta.rew <- 1
+		    correct.rew <- 1
+		}
+		else {
+		    qn.w <- qnorm((sum.w + n)/(2 * n))
+		    cnp2[1] <- cdelta.rew <- 1 / sqrt(1 - (2 * n)/(sum.w / qn.w) * dnorm(qn.w))
+		    correct.rew <-
+			if (use.correction) ## use finite sample correction
+			    LTScnp2.rew(p, intercept = intercept, n, alpha)
+			else 1
+		    cnp2[2] <- correct.rew
+		    ans$scale <- ans$scale * cdelta.rew * correct.rew
+		}
+		ans$resid <- resid/ans$scale
+		weights <- as.numeric(abs(ans$resid) <= quantiel)
 	    }
-	    ans$scale <- ans$scale * cdelta.rew * correct.rew
-	    ans$resid <- resid/ans$scale
-	    quantiel <- qnorm(0.9875)
-	    weights <- as.numeric(abs(resid/ans$scale) <= quantiel)
-	}
-	names(ans$coefficients) <- names(ans$raw.coefficients)
-	ans$lts.wt <- matrix(NA, length(na.y))
-	ans$lts.wt[ok] <- weights
-	ans$crit <- z$objfct
-	if (intercept) {
-	    sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0, seed)
-	    y <- as.vector(y) ## < ??
-	    sh <- as.double(sh$adjustcov)
-	    iR2 <- (sh0/sh)^2
-	}
-	else {
-	    s1 <- sum(sort(resid^2, quan)[1:quan])
-	    sh <- sum(sort(y^2, quan)[1:quan])
-	    iR2 <- s1/sh
-	}
+	    ## unneeded: names(ans$coefficients) <- names(ans$raw.coefficients)
+	    ans$crit <- z$objfct
+	    if (intercept) {
+		sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0, seed)
+		y <- as.vector(y) ## < ??
+		sh <- as.double(sh$adjustcov)
+		iR2 <- (sh0/sh)^2
+	    }
+	    else {
+		s1 <- sum(sort(resid^2, quan)[1:quan])
+		sh <- sum(sort(y^2, quan)[1:quan])
+		iR2 <- s1/sh
+	    }
 
-	ans$rsquared <- if(is.finite(iR2)) max(0, min(1, 1 - iR2)) else 0
+	    ans$rsquared <- if(is.finite(iR2)) max(0, min(1, 1 - iR2)) else 0
 
-	attributes(resid) <- attributes(fitted) <- attributes(y)
-	ans$residuals <- rep(NA, length(na.y))
-	ans$residuals[ok] <- resid
+	    attributes(resid) <- attributes(fitted) <- attributes(y)
+	    ans$method <- "Least Trimmed Squares Robust Regression."
+	} ## end { alpha < 1 }
+
 	ans$intercept <- intercept
-	ans$method <- "Least Trimmed Squares Robust Regression."
-	if(abs(s0) < 1e-07)
+	if (abs(s0) < 1e-07)
 	    ans$method <- paste(ans$method, "\nAn exact fit was found!")
-	if (mcd) {
-	    mcd <- covMcd(X, alpha = alpha)
-	    if(-(determinant(mcd$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-		ans$RD[1] <- "singularity"
+
+	if (mcd) { ## compute robust distances {for diagnostics, eg. rdiag()plot}
+	    mcd <- covMcd(X, alpha = 1)
+	    if ( -determinant(mcd$cov, log = TRUE)$modulus > 50 * p) {
+		ans$RD <- "singularity"
 	    }
 	    else {
 		ans$RD <- rep(NA, length(na.y))
@@ -476,24 +437,24 @@ ltsReg.default <-
 		names(ans$RD) <- rownames
 	    }
 	}
-    } ## end { alpha < 1 }
 
-    names(ans$residuals) <- names(ans$lts.wt) <- rownames
-    names(ans$scale) <- names(ans$raw.scale) <- yn
-    names(ans$rsquared) <- yn
-    names(ans$crit) <- yn
-    ans$X <- x
-    ans$Y <- y		# VT:: 01.09.2004 - add y to the result object
-    if (length(rownames))
-	dimnames(ans$X)[[1]] <- rownames[ok]
-    else {
-	xx <- seq(1, length(na.x))
-	dimnames(ans$X) <- list(NULL, NULL)
-	dimnames(ans$X)[[1]] <- xx[ok]
-    }
+    } ## end { nontrivial 'x' }
+
+    ans$lts.wt <- rep(NA, length(na.y))
+    ans$lts.wt[ok] <- weights
+    ans$residuals <- rep(NA, length(na.y))
+    ans$residuals[ok] <- resid
     ans$fitted.values <- rep(NA, length(na.y))
     ans$fitted.values[ok] <- fitted
-    names(ans$fitted.values) <- rownames
+
+    names(ans$fitted.values) <- names(ans$residuals) <- names(ans$lts.wt) <-
+	rownames
+    names(ans$scale) <- names(ans$raw.scale) <- yn
+    names(ans$rsquared) <- names(ans$crit) <- yn
+    ans$Y <- y		# VT:: 01.09.2004 - add y to the result object
+    ans$X <- x
+    dimnames(ans$X) <-
+	list((if(length(rownames)) rownames else seq(along = na.x))[ok], xn)
     if (qr.out)
 	ans$qr <- qrx
     ans$raw.cnp2 <- raw.cnp2
@@ -501,7 +462,7 @@ ltsReg.default <-
     class(ans) <- "lts"
     ans$call <- match.call()
     return(ans)
-}
+} ## {ltsReg.default}
 
 ##predict.lts <- function (object, newdata, na.action = na.pass, ...)
 ##{
@@ -520,17 +481,15 @@ summary.lts <- function (object, correlation = FALSE, ...)
     z <- object
     r <- z$residuals
     f <- z$fitted
+    int <- z$intercept
     w <- as.vector(z$lts.wt)
     n <- sum(w)
 
-##    Qr <- qr(object$X)
-    Qr <- qr(t(t(object$X) %*% diag(as.vector(w))))
+    Qr <- qr(w * z$X)# 'w * z$X': more efficient than t(t(object$X) %*% diag(w))
     p <- Qr$rank
-    p1 <- 1:p
-
+    p1 <- seq(length = p) ## even for p = 0
     rdf <- n - p
-
-    mss <-  if(z$intercept) {
+    mss <-  if(int) {
 		m <- sum(w * f /sum(w))
 		sum(w * (f - m)^2)
 	    } else
@@ -540,39 +499,42 @@ summary.lts <- function (object, correlation = FALSE, ...)
     r <- sqrt(w) * r
     resvar <- rss/rdf
 
-    R <- chol2inv(Qr$qr[p1, p1, drop = FALSE])
+    R <- if (p > 0) chol2inv(Qr$qr[p1, p1, drop = FALSE]) else matrix(,p,p)
 
     ## Reorder R, so that the intercept (if any) moves
-    ## to the beginning. Skip this if p == 1 or intercept=FALSE.
-    if(p > 1 && z$intercept){
-        RR <- R
-        RR[2:p, 2:p] <- R[1:(p - 1), 1:(p-1)]
-        rr <- R[p,]
-        rr[2:p] <- R[p, 1:(p - 1)]
-        rr[1] <- R[p,p]
-        RR[1,] <- rr
-        RR[,1] <- rr
-        R <- RR
+    ## to the beginning. Skip this if p == 1 or intercept=FALSE :
+    if(p > 1 && int) {
+	RR <- R
+	RR[2:p, 2:p] <- R[1:(p - 1), 1:(p-1)]
+	rr <- R[p,]
+	rr[2:p] <- R[p, 1:(p - 1)]
+	rr[1] <- R[p,p]
+	RR[1,] <- rr
+	RR[,1] <- rr
+	R <- RR
     }
     se <- sqrt(diag(R) * resvar)
 
     est <- z$coefficients
     tval <- est/se
 
-    ans <- z[c("call", "terms")]
-    attr(ans, "call") <- attr(z,"call")
-    ans$residuals <- r
-    ans$coefficients <- cbind(est, se, tval, 2*pt(abs(tval), rdf, lower.tail = FALSE))
-    dimnames(ans$coefficients) <- list(names(z$coefficients),
-				 c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
-    ans$sigma <- sqrt(resvar)
-    ans$df <- c(p, rdf, NCOL(Qr$qr))
+    ans <-
+	c(z[c("call", "terms")],
+	  ## not again attr(ans, "call") <- attr(z,"call")
+	  list(residuals = r,
+	       coefficients = {
+		   cbind("Estimate" = est, "Std. Error" = se, "t value" = tval,
+			 "Pr(>|t|)" = 2*pt(abs(tval), rdf, lower.tail = FALSE))
+	       },
+	       sigma = sqrt(resvar),
+	       df = c(p, rdf, NCOL(Qr$qr))))
 
-    df.int <- if(z$intercept) 1 else 0
+    df.int <- if(int) 1 else 0
     if(p - df.int > 0) {
 	ans$r.squared <- mss/(mss + rss)
 	ans$adj.r.squared <- 1 - (1 - ans$r.squared) * ((n - df.int)/rdf)
-	ans$fstatistic <- c(value = (mss/(p - df.int))/resvar, numdf = p - df.int, dendf = rdf)
+	ans$fstatistic <- c(value = (mss/(p - df.int))/resvar,
+			    numdf = p - df.int, dendf = rdf)
     } else
 	ans$r.squared <- ans$adj.r.squared <- 0
 
@@ -583,23 +545,33 @@ summary.lts <- function (object, correlation = FALSE, ...)
 	ans$correlation <- (R * resvar)/outer(se, se)
 	dimnames(ans$correlation) <- dimnames(ans$cov.unscaled)
     }
-
     class(ans) <- "summary.lts"
     ans
 }
 
+print.lts <- function (x, digits = max(3, getOption("digits") - 3), ...)
+{
+    cat("\nCall:\n", deparse(x$call), "\n\n", sep = "")
+    if (length(coef(x))) {
+	cat("Coefficients:\n")
+	print.default(format(coef(x), digits = digits), print.gap = 2, quote = FALSE)
+	cat("\nScale estimate", format(x$scale, digits = digits) ,"\n\n")
+    }
+    else
+	cat("No coefficients\n")
+
+    invisible(x)
+}
+
 print.summary.lts <- function (x, digits = max(3, getOption("digits") - 3), ...)
 {
-    cat("\nCall:\n")
-    xcall <- x$call
-    if(length(xcall) == 0)
-	xcall <- attr(x,"call")
-    cat(paste(deparse(xcall), sep = "\n", collapse = "\n"), "\n\n", sep = "")
-
+    cat("\nCall:\n",
+	paste(deparse(x$call), sep = "\n", collapse = "\n"), "\n\n", sep = "")
     resid <- x$residuals
     df <- x$df
     rdf <- df[2]
-
+    cat("Residuals (from reweighted LS):\n")
+    ## "cut & paste" from print.summary.lm():
     if(rdf > 5) {
 	nam <- c("Min", "1Q", "Median", "3Q", "Max")
 	rq <-	if(length(dim(resid)) == 2)
@@ -615,12 +587,15 @@ print.summary.lts <- function (x, digits = max(3, getOption("digits") - 3), ...)
 	cat("ALL", df[1], "residuals are 0: no residual degrees of freedom!\n")
     }
 
-    if (nsingular <- df[3] - df[1])
-	cat("\nCoefficients: (", nsingular,
-	    " not defined because of singularities)\n", sep = "")
-    else
-	cat("\nCoefficients:\n")
-    printCoefmat(x$coefficients, digits = digits, signif.stars = FALSE, na.print = "NA", ...)
+    if(NROW(x$coefficients)) {
+	if (nsingular <- df[3] - df[1])
+	    cat("\nCoefficients: (", nsingular,
+		" not defined because of singularities)\n", sep = "")
+	else
+	    cat("\nCoefficients:\n")
+	printCoefmat(x$coefficients, digits = digits, signif.stars = FALSE, na.print = "NA", ...)
+    }
+    else cat("\nNo coefficients\n")
 
     cat("\nResidual standard error:",
     format(signif(x$sigma, digits)), "on", rdf, "degrees of freedom\n")
@@ -633,7 +608,7 @@ print.summary.lts <- function (x, digits = max(3, getOption("digits") - 3), ...)
 	    x$fstatistic[3], "DF,  p-value:",
 	    format.pval(pf(x$fstatistic[1], x$fstatistic[2],
 			   x$fstatistic[3], lower.tail = FALSE), digits = digits),
-	"\n")
+	    "\n")
     }
 
     correl <- x$correlation
@@ -672,47 +647,47 @@ LTScnp2 <- function(p, intercept = intercept, n, alpha)
 	}
     }
     else { ## p >= 1
-        if (p == 1) {
-            if (intercept) {
-                fp.500.n <- 1 - exp( 0.630869217886906 ) / n^ 0.650789250442946
-                fp.875.n <- 1 - exp( 0.565065391014791 ) / n^ 1.03044199012509
-            }
-            else {
-                fp.500.n <- 1 - exp(-0.0181777452315321) / n^ 0.697629772271099
-                fp.875.n <- 1 - exp(-0.310122738776431 ) / n^ 1.06241615923172
-            }
-        } else { ## --- p > 1 ---
-            if (intercept) {
-		##                           "alfaq"            "betaq"    "qwaarden"
-                coefgqpkwad875 <- matrix(c(-0.458580153984614, 1.12236071104403, 3,
-                                           -0.267178168108996, 1.1022478781154,  5), ncol = 2)
-                coefeqpkwad500 <- matrix(c(-0.746945886714663, 0.56264937192689,  3,
-                                           -0.535478048924724, 0.543323462033445, 5), ncol = 2)
-            }
-            else {
-		##                           "alfaq"            "betaq"    "qwaarden"
-                coefgqpkwad875 <- matrix(c(-0.251778730491252, 0.883966931611758, 3,
-                                           -0.146660023184295, 0.86292940340761,  5), ncol = 2)
-                coefeqpkwad500 <- matrix(c(-0.487338281979106, 0.405511279418594, 3,
-                                           -0.340762058011,    0.37972360544988,  5), ncol = 2)
-            }
+	if (p == 1) {
+	    if (intercept) {
+		fp.500.n <- 1 - exp( 0.630869217886906 ) / n^ 0.650789250442946
+		fp.875.n <- 1 - exp( 0.565065391014791 ) / n^ 1.03044199012509
+	    }
+	    else {
+		fp.500.n <- 1 - exp(-0.0181777452315321) / n^ 0.697629772271099
+		fp.875.n <- 1 - exp(-0.310122738776431 ) / n^ 1.06241615923172
+	    }
+	} else { ## --- p > 1 ---
+	    if (intercept) {
+		##			     "alfaq"		"betaq"	   "qwaarden"
+		coefgqpkwad875 <- matrix(c(-0.458580153984614, 1.12236071104403, 3,
+					   -0.267178168108996, 1.1022478781154,	 5), ncol = 2)
+		coefeqpkwad500 <- matrix(c(-0.746945886714663, 0.56264937192689,  3,
+					   -0.535478048924724, 0.543323462033445, 5), ncol = 2)
+	    }
+	    else {
+		##			     "alfaq"		"betaq"	   "qwaarden"
+		coefgqpkwad875 <- matrix(c(-0.251778730491252, 0.883966931611758, 3,
+					   -0.146660023184295, 0.86292940340761,  5), ncol = 2)
+		coefeqpkwad500 <- matrix(c(-0.487338281979106, 0.405511279418594, 3,
+					   -0.340762058011,    0.37972360544988,  5), ncol = 2)
+	    }
 
-            y.500 <- log(- coefeqpkwad500[1, ] / p^ coefeqpkwad500[2, ])
-            y.875 <- log(- coefgqpkwad875[1, ] / p^ coefgqpkwad875[2, ])
+	    y.500 <- log(- coefeqpkwad500[1, ] / p^ coefeqpkwad500[2, ])
+	    y.875 <- log(- coefgqpkwad875[1, ] / p^ coefgqpkwad875[2, ])
 
-            A.500 <- cbind(1, - log(coefeqpkwad500[3, ] * p^2))
-            coeffic.500 <- solve(A.500, y.500)
-            A.875 <- cbind(1, - log(coefgqpkwad875[3, ] * p^2))
+	    A.500 <- cbind(1, - log(coefeqpkwad500[3, ] * p^2))
+	    coeffic.500 <- solve(A.500, y.500)
+	    A.875 <- cbind(1, - log(coefgqpkwad875[3, ] * p^2))
 
-            coeffic.875 <- solve(A.875, y.875)
-            fp.500.n <- 1 - exp(coeffic.500[1]) / n^ coeffic.500[2]
-            fp.875.n <- 1 - exp(coeffic.875[1]) / n^ coeffic.875[2]
-        }
+	    coeffic.875 <- solve(A.875, y.875)
+	    fp.500.n <- 1 - exp(coeffic.500[1]) / n^ coeffic.500[2]
+	    fp.875.n <- 1 - exp(coeffic.875[1]) / n^ coeffic.875[2]
+	}
 
-        if(alpha <= 0.875)
-            fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
-        else ##	 0.875 < alpha <= 1
-            fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
+	if(alpha <= 0.875)
+	    fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
+	else ##	 0.875 < alpha <= 1
+	    fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
     }## else (p >= 1)
 
     return(1/fp.alpha.n)
@@ -733,8 +708,8 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	    fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
 	else ##	 0.875 < alpha <= 1
 	    fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
-        ## MM: sqrt() {below} is ``different logic'' than below.. (??)
-        fp.alpha.n <- sqrt(fp.alpha.n)
+	## MM: sqrt() {below} is ``different logic'' than below.. (??)
+	fp.alpha.n <- sqrt(fp.alpha.n)
     }
     else {
 	if (p == 1) {
@@ -749,18 +724,18 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	}
 	else { ##  --- p > 1 ---
 	    if (intercept) {
-		##                           "alfaq"            "betaq"    "qwaarden"
+		##			     "alfaq"		"betaq"	   "qwaarden"
 		coefqpkwad875 <- matrix(c(-0.474174840843602, 1.39681715704956, 3,
-                                          -0.276640353112907, 1.42543242287677, 5), ncol = 2)
+					  -0.276640353112907, 1.42543242287677, 5), ncol = 2)
 		coefqpkwad500 <- matrix(c(-0.773365715932083, 2.02013996406346, 3,
-                                          -0.337571678986723, 2.02037467454833, 5), ncol = 2)
+					  -0.337571678986723, 2.02037467454833, 5), ncol = 2)
 	    }
 	    else {
-		##                           "alfaq"            "betaq"    "qwaarden"
+		##			     "alfaq"		"betaq"	   "qwaarden"
 		coefqpkwad875 <- matrix(c(-0.267522855927958, 1.17559984533974, 3,
-                                          -0.161200683014406, 1.21675019853961, 5), ncol = 2)
+					  -0.161200683014406, 1.21675019853961, 5), ncol = 2)
 		coefqpkwad500 <- matrix(c(-0.417574780492848, 1.83958876341367, 3,
-                                          -0.175753709374146, 1.8313809497999, 5), ncol = 2)
+					  -0.175753709374146, 1.8313809497999, 5), ncol = 2)
 	    }
 	    y.500 <- log( - coefqpkwad500[1, ] / p^ coefqpkwad500[2, ])
 	    y.875 <- log( - coefqpkwad875[1, ] / p^ coefqpkwad875[2, ])
@@ -770,7 +745,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	    coeffic.875 <- solve(A.875, y.875)
 	    fp.500.n <- 1 - exp(coeffic.500[1]) / n^ coeffic.500[2]
 	    fp.875.n <- 1 - exp(coeffic.875[1]) / n^ coeffic.875[2]
-        }
+	}
 
 	if(alpha <= 0.875)
 	    fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
@@ -787,41 +762,41 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     n <- dx[1]
     p <- dx[2]
 
-    ##   parameters for partitioning
+    ##	 parameters for partitioning
     kmini <- 5
     nmini <- 300
     km10 <- 10*kmini
     nmaxi <- nmini*kmini
 
-    ##   vt::03.02.2006 - added options "best" and "exact" for nsamp
+    ##	 vt::03.02.2006 - added options "best" and "exact" for nsamp
     if(!missing(nsamp)) {
-        if(is.numeric(nsamp) && nsamp <= 0) {
-            warning(paste("Invalid number of trials nsamp=",nsamp,"!Using default.\n"))
-            nsamp <- -1
-        } else if(nsamp == "exact" || nsamp == "best") {
-            myk <- p
-            if(n > 2*nmini-1) {
-                warning(paste("Options 'best' and 'exact' not allowed for n greater then ",2*nmini-1," . \nUsing nsamp=",nsamp,"\n"))
-                nsamp <- -1
-            } else {
-                nall <- .ncomb(myk, n)
-                if(nall > 5000 && nsamp == "best") {
-                    nsamp <- 5000
-                    warning(paste("Maximum 5000 subsets allowed for option 'best'. \nComputing 5000 subsets of size ",myk," out of ",n,"\n"))
-                } else {
-                    nsamp <- 0          #all subsamples
-                    if(nall > 5000)
-                        cat(paste("Computing all ",nall," subsets of size ",myk," out of ",n, "\n This may take a very long time!\n"))
-                }
-            }
-        }
+	if(is.numeric(nsamp) && nsamp <= 0) {
+	    warning(paste("Invalid number of trials nsamp=",nsamp,"!Using default.\n"))
+	    nsamp <- -1
+	} else if(nsamp == "exact" || nsamp == "best") {
+	    myk <- p
+	    if(n > 2*nmini-1) {
+		warning(paste("Options 'best' and 'exact' not allowed for n greater then ",2*nmini-1," . \nUsing nsamp=",nsamp,"\n"))
+		nsamp <- -1
+	    } else {
+		nall <- .ncomb(myk, n)
+		if(nall > 5000 && nsamp == "best") {
+		    nsamp <- 5000
+		    warning(paste("Maximum 5000 subsets allowed for option 'best'. \nComputing 5000 subsets of size ",myk," out of ",n,"\n"))
+		} else {
+		    nsamp <- 0		#all subsamples
+		    if(nall > 5000)
+			cat(paste("Computing all ",nall," subsets of size ",myk," out of ",n, "\n This may take a very long time!\n"))
+		}
+	    }
+	}
 
-        if(!is.numeric(nsamp) || nsamp == -1) { # still not defined - set it to the default
-            defcontrol <- rrcov.control() # default control
-            if(!is.numeric(nsamp))
-                warning(paste("Invalid number of trials nsamp=",nsamp,"!Using default nsamp=",defcontrol$nsamp,"\n"))
-            nsamp <- defcontrol$nsamp   # take the default nsamp
-        }
+	if(!is.numeric(nsamp) || nsamp == -1) { # still not defined - set it to the default
+	    defcontrol <- rrcov.control() # default control
+	    if(!is.numeric(nsamp))
+		warning(paste("Invalid number of trials nsamp=",nsamp,"!Using default nsamp=",defcontrol$nsamp,"\n"))
+	    nsamp <- defcontrol$nsamp	# take the default nsamp
+	}
     }
 
 
@@ -849,7 +824,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     nvad <- p + 1
     storage.mode(nvad) <- "integer"
 
-    ##   Allocate temporary storage for the fortran implementation
+    ##	 Allocate temporary storage for the fortran implementation
 
     weights <- matrix(0, nrow = n, ncol = 1)
     temp <- matrix(0, nrow = n, ncol = 1)
@@ -879,84 +854,84 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     storage.mode(am2) <- "double"
     storage.mode(slutn) <- "double"
 
-    ##   integer jmiss(nvad)                 --> p+1
+    ##	 integer jmiss(nvad)		     --> p+1
     jmiss <- matrix(0, nrow = p+1, ncol = 1)
     storage.mode(jmiss) <- "integer"
-    ##   double precision xmed(nvad)	 --> p+1
+    ##	 double precision xmed(nvad)	 --> p+1
     xmed <- matrix(0, nrow = p+1, ncol = 1)
     storage.mode(xmed) <- "double"
-    ##   double precision xmad(nvad)	 p+1
+    ##	 double precision xmad(nvad)	 p+1
     xmad <- matrix(0, nrow = p+1, ncol = 1)
     storage.mode(xmad) <- "double"
-    ##   double precision a(nvad)		 p+1
+    ##	 double precision a(nvad)		 p+1
     a <- matrix(0, nrow = p+1, ncol = 1)
     storage.mode(a) <- "double"
 
-    ##   double precision da(nvad)		 p+1
+    ##	 double precision da(nvad)		 p+1
     da <- matrix(0, nrow = p+1, ncol = 1)
     storage.mode(da) <- "double"
-    ##   double precision h(nvar,nvad)	     p*(p+1)
+    ##	 double precision h(nvar,nvad)	     p*(p+1)
     h <- matrix(0, nrow = p*(p+1), ncol = 1)
     storage.mode(h) <- "double"
-    ##   double precision hvec(nvar*nvad)	     p*(p+1)
+    ##	 double precision hvec(nvar*nvad)	     p*(p+1)
     hvec <- matrix(0, nrow = p*(p+1), ncol = 1)
     storage.mode(hvec) <- "double"
-    ##   double precision c(nvar,nvad)	     p*(p+1)
+    ##	 double precision c(nvar,nvad)	     p*(p+1)
     c <- matrix(0, nrow = p*(p+1), ncol = 1)
     storage.mode(c) <- "double"
-    ##   double precision cstock(10,nvar*nvar)   10*p*p
+    ##	 double precision cstock(10,nvar*nvar)	 10*p*p
     cstock <- matrix(0, nrow = 10*p*p, ncol = 1)
     storage.mode(cstock) <- "double"
-    ##   double precision mstock(10,nvar)	     10*p
+    ##	 double precision mstock(10,nvar)	     10*p
     mstock <- matrix(0, nrow = 10*p, ncol = 1)
     storage.mode(mstock) <- "double"
-    ##   double precision c1stock(km10,nvar*nvar)	 km10*p*p
+    ##	 double precision c1stock(km10,nvar*nvar)	 km10*p*p
     c1stock <- matrix(0, nrow = km10*p*p, ncol = 1)
     storage.mode(c1stock) <- "double"
-    ##    double precision m1stock(km10,nvar)	  km10*p
+    ##	  double precision m1stock(km10,nvar)	  km10*p
     m1stock <- matrix(0, nrow = km10*p, ncol = 1)
     storage.mode(m1stock) <- "double"
-    ##    double precision dath(nmaxi,nvad)		  nmaxi*(p+1)
+    ##	  double precision dath(nmaxi,nvad)		  nmaxi*(p+1)
     dath <- matrix(0, nrow = nmaxi*(p+1), ncol = 1)
     storage.mode(dath) <- "double"
-    ##   double precision sd(nvar)		     p
+    ##	 double precision sd(nvar)		     p
     sd <- matrix(0, nrow = p, ncol = 1)
     storage.mode(sd) <- "double"
-    ##   double precision means(nvar)	     p
+    ##	 double precision means(nvar)	     p
     means <- matrix(0, nrow = p, ncol = 1)
     storage.mode(means) <- "double"
-    ##   double precision bmeans(nvar)	     p
+    ##	 double precision bmeans(nvar)	     p
     bmeans <- matrix(0, nrow = p, ncol = 1)
     storage.mode(bmeans) <- "double"
 
     .Fortran("rfltsreg",
-             x1 = x1,
-             n,
-             p,
-             quan,
-             nsamp,
-             inbest = inbest,
-             objfct = objfct,
-             interc = as.integer(intercept),
-             intadjust = as.integer(adjust),
-             nvad,
-             datt,
-             seed,
-             weights,
-             temp,
-             index1,
-             index2,
-             aw2,
-             aw,
-             residu,
-             yy,
-             nmahad,
-             ndist,
-             am,
-             am2,
-             slutn,
-             jmiss, xmed, xmad, a, da, h, hvec, c, cstock, mstock, c1stock,
-             m1stock, dath, sd,
-             means, bmeans,
-             PACKAGE = "robustbase")[ c("inbest", "objfct") ]
+	     x1 = x1,
+	     n,
+	     p,
+	     quan,
+	     nsamp,
+	     inbest = inbest,
+	     objfct = objfct,
+	     interc = as.integer(intercept),
+	     intadjust = as.integer(adjust),
+	     nvad,
+	     datt,
+	     seed,
+	     weights,
+	     temp,
+	     index1,
+	     index2,
+	     aw2,
+	     aw,
+	     residu,
+	     yy,
+	     nmahad,
+	     ndist,
+	     am,
+	     am2,
+	     slutn,
+	     jmiss, xmed, xmad, a, da, h, hvec, c, cstock, mstock, c1stock,
+	     m1stock, dath, sd,
+	     means, bmeans,
+	     PACKAGE = "robustbase")[ c("inbest", "objfct") ]
 }
