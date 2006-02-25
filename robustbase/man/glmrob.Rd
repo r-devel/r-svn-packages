@@ -157,8 +157,8 @@ glmrob(formula, family = binomial, data, weights, subset, na.action,
 
   E.Cantoni (2004)
   Analysis of Robust Quasi-deviances for Generalized Linear Models.
-  \emph{Journal of Statistical Software}, \bold{10}
-  http://www.jstatsoft.org
+  \emph{Journal of Statistical Software}, \bold{10},
+  \url{http://www.jstatsoft.org}
 }
 
 \author{Andreas Ruckstuhl}
