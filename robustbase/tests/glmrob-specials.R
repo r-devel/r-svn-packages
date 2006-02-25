@@ -1,5 +1,4 @@
 library(robustbase)
-#library(robGLM1, lib="/u/maechler/R/Pkgs/robGLM1.Rcheck")
 
 ## Model without coefficients [ print.glmrob() tests for this ..]
 

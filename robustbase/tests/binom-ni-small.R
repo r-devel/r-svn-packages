@@ -35,7 +35,7 @@ rg10 <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = 10)
 rgL  <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = 100)
 
 no.comp <- - match(c("call", "data", "family", "control", "tcc"), names(rg10))
-stopifnot(all.equal(rg10[no.comp], rgL[no.comp], tol= 1e-15))# tol=0 even
+stopifnot(all.equal(rg10[no.comp], rgL[no.comp], tol= 1e-14))
 
 vcov(rgL) # is now the same as the following:
 rgI <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = Inf)
@@ -80,6 +80,6 @@ stopifnot(all.equal(coef(s3.15)[,1:2], cfg, tol = 1e-5),# 2e-6
 rg3.1000 <- glmrob(cbind(k3 , n3-k3) ~ x, family = binomial, tcc = 1000,
                    acc=1e-10)
 stopifnot(all.equal(rg3.1000[no.comp],
-                    rg3.15  [no.comp], tol = 1e-14)) # tol = 0 even
+                    rg3.15  [no.comp], tol = 1e-13))
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
