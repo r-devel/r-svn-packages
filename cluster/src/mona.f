@@ -1,4 +1,4 @@
-      subroutine mona(nn,pp, x,jerr, nban,ner,kwan,lava, jlack)-- $Id$
+      subroutine mona(nn,pp, x,jerr, nban,ner,kwan,lava, jlack)
 cc
 cc   MONothetic Analysis
 cc

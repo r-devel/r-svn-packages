@@ -1,4 +1,4 @@
-c ------------------------------------------------------------- $Id$
+
 c Dysta() :
 c
 c Compute Distances from X matrix {also for agnes() and diana()}:
