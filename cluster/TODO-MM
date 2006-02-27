@@ -75,6 +75,11 @@ Dec. 2002:
         instead --> centralize this info (and keep short ref.s in the man/plot.*
 
   o	agnes() and hclust() should be merged {and based on C, not Fortran}
+  o	agnes() for large objects needs TWICE the time of hclust();
+	both need MUCH MORE time than hcluster() in pkg 'amap',
+	which is said to be the same as 'hclust' but just only
+	malloc()ating the "huge" dissimilarities inside C.
+	--> translate agnes, i.e.  src/twins.f  to C
 
 
 July 2002:
