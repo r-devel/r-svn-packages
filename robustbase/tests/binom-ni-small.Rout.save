@@ -1,6 +1,6 @@
 
 R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.2.1 Patched (2006-02-18 r37403)
+Version 2.2.1 Patched (2006-02-28 r37448)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -17,7 +17,7 @@ Type 'q()' to quit R.
 
 > library(robustbase)
 Loading required package: MASS
-> #library(robGLM1, lib="/u/maechler/R/Pkgs/robGLM1.Rcheck")
+> #library(robustbase, lib="/u/maechler/R/Pkgs/robustbase.Rcheck")
 > 
 > ### Binomial example with  *small*  ni
 > 
@@ -230,7 +230,14 @@ Warning messages:
 + }
 > 
 > rg0 <- glmrob(cbind(k0, n0-k0) ~ x, family = binomial)
-There were 23 warnings (use warnings() to see them)
+Warning messages:
+1: NaNs produced in: pbinom(q, size, prob, lower.tail, log.p) 
+2: NaNs produced in: pbinom(q, size, prob, lower.tail, log.p) 
+3: Non-finite coefficients at iteration 1 in: glmrobMqle(X = X, y = Y, weights = weights, start = start, offset = offset,  
+4: Algorithm did not converge in: glmrobMqle(X = X, y = Y, weights = weights, start = start, offset = offset,  
+5: fitted probabilities numerically 0 or 1 occurred in: switch(family$family, binomial = { 
+6: NaNs produced in: pbinom(q, size, prob, lower.tail, log.p) 
+7: NaNs produced in: pbinom(q, size, prob, lower.tail, log.p) 
 > ## --> 23 warnings: NaNs produced in: pbinom( ....... ) and more
 > if(FALSE)
 + coef(summary(rg0))[,1:2]
@@ -329,5 +336,5 @@ No deviance values available
 +                     rg3.15  [no.comp], tol = 1e-13))
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  1.44 0.02 1.57 0 0 
+Time elapsed:  1.12 0.07 1.69 0 0 
 > 

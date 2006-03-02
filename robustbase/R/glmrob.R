@@ -80,12 +80,14 @@ function (formula, family = binomial, data, weights, subset,
 
 
 
-summary.glmrob <- function (object, correlation=FALSE, symbolic.cor=FALSE, ...)
+summary.glmrob <- function(object, correlation=FALSE, symbolic.cor=FALSE, ...)
 {
     dispersion <- 1
     coefs <- object$coefficients
+    aliased <- is.na(coefs)# needs care; also used in print method
+    if(any(aliased))
+	coefs <- coefs[!aliased]
     covmat <- object$cov
-    dimnames(covmat) <- list(names(coefs), names(coefs))
     var.cf <- diag(covmat)
     s.err <- sqrt(var.cf)
     zvalue <- coefs/s.err
@@ -94,11 +96,13 @@ summary.glmrob <- function (object, correlation=FALSE, symbolic.cor=FALSE, ...)
 			"z-value" = zvalue, "Pr(>|z|)" = pvalue)
 
     ans <- c(object[c("call", "terms", "family", "iter", "method")],
-	     ## MM: should rather keep the more from 'object' ?
+	     ## MM: should rather keep more from 'object' ?
              ##     currently, cannot even print the asympt.efficiency!
 	     list(deviance=NULL, df.residual=NULL, null.deviance=NULL,
-		  df.null=NULL, deviance.resid=NULL, coefficients=coef.table,
-		  dispersion=dispersion, df=NULL , cov.unscaled=covmat))
+                  df.null= NULL, df= NULL, ## (because of 0 weights; hmm,...)
+                  aliased = aliased,
+		  coefficients = coef.table, dispersion = dispersion,
+                  cov.unscaled = covmat))
     if (correlation) {
 	ans$correlation <- cov2cor(covmat)
 	ans$symbolic.cor <- symbolic.cor
@@ -139,11 +143,13 @@ print.summary.glmrob <-
 	      signif.stars = getOption("show.signif.stars"), ...)
 {
     cat("\nCall: ", deparse(x$call), "\n\n")
-    if (length(coef(x))) {
-        cat("\nCoefficients:\n")
-        coefs <- x$coefficients
-        printCoefmat(coefs, digits = digits, signif.stars = signif.stars,
-                     na.print = "NA", ...)
+    if (length(cf <- coef(x))) {
+	if(nsingular <- sum(x$aliased)) # glm has   df[3] - df[1]
+	    cat("\nCoefficients: (", nsingular,
+		" not defined because of singularities)\n", sep = "")
+	else cat("\nCoefficients:\n")
+	printCoefmat(cf, digits = digits, signif.stars = signif.stars,
+		     na.print = "NA", ...)
     }
     else cat("No coefficients\n\n")
 

@@ -1,5 +1,5 @@
 library(robustbase)
-#library(robGLM1, lib="/u/maechler/R/Pkgs/robGLM1.Rcheck")
+#library(robustbase, lib="/u/maechler/R/Pkgs/robustbase.Rcheck")
 
 ### Binomial example with  *small*  ni
 

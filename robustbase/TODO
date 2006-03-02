@@ -41,7 +41,7 @@ o covMcd() : 'print.it' should be called 'trace';
 	   computation should *Not* print anything for trace = FALSE
 	   {unless warnings and errors} !
 
-o summary.mcd() should *return* and object of class "summary.mcd"
+o summary.mcd() should *return* an object of class "summary.mcd"
   and then  print.summary.mcd() should print it !
 
 o plot(mcd. ) : should show the call !
@@ -64,16 +64,12 @@ o Maybe  we should consider  'family = gaussian'  {analogy to glm()}
   as a possible setting (*not* as default);
   and just divert to  lmrob() in that case
 
-o glmrob() fails when the internal glm.fit() returns NA coefficient
-           whereas as Martin's  'robGLM1' package dropped the corresponding
-	   columns and *did* work
-
 o psi.*(....,  rho = FALSE/TRUE)   functions from Andreas
   should be replaced by using the new  psi_func  objects
   --> ./R/psi-funs-AR.R  &  ./man/pkg-internal.Rd
 
-o glmrob() -> "glmrob" class needs
-  predict() and probably also residuals(..., type = "*")
+o predict.glmrob() and probably also residuals.glmrob()
+  should allow a 'type = *' specification like the *.glm() methods.
 
 o glmrob() needs tests in ./tests/   [maybe take from man/glmrob.Rd]
 	   take those from Martin's old 'robGLM1' package (need more!)
@@ -85,9 +81,12 @@ o summary.glmrob() should be better documented;
 
 o Eva's code (and MM's) also computed & returned the "asymptotic efficiency"!
 
+o Instead of the current `semi-hidden'  modsel.glmrob() [ R/modsel.glmrob.R ]
+  Andreas will provide an  anova.glmrob()
 
 --- nlrob ---
 
 o nlrob() needs tests in ./tests/ -- you can take some from man/nlrob.Rd
 
-o man/fitted.nlrob.Rd  seems completely superfluous to MM
+o summary.nlrob() is currently a "no-op" -- printing it should summarize
+		  robustness weights!

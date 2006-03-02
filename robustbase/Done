@@ -31,6 +31,11 @@ o) we have had some problems, but they are solved now
 
 7) glmrob(): trailing "..." argument is now passed to glmrob<FOO>control()
 
-8) make tests/wgt-himed-xtra.R an order of magnitude faster (less simulations)!
+8) make tests/wgt-himed-xtra.R an order of magnitude faster (less
+   simulations)
 
+9) man/fitted.nlrob.Rd merged into man/nlrob.Rd
+
+10) glmrob() now works when the internal glm.fit() returns NA coefficients
+    by dropping the corresponding columns (as Martin's "robGLM1" did).
 

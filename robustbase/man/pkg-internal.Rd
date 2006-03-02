@@ -11,15 +11,15 @@
 %% for glmrob
 \method{print}{glmrob}(x, digits = max(3, getOption("digits") - 3), ...)
 
-glmrobMqle(X, y, weights = rep(1, nobs), start = NULL,
-          offset = rep(0, nobs), family, weights.on.x = "none",
-          control = glmrobMqle.control(), intercept = TRUE)
-glmrobMqleEpsiB     (mu, Vmu, ni, H, K, tcc)
-glmrobMqleEpsiPois  (mu, Vmu, ni, H, K, tcc)
-glmrobMqleEpsiSB    (mu, Vmu, ni, H, K, tcc)
-glmrobMqleEpsiSPois (mu, Vmu, ni, H, K, tcc)
-glmrobMqleEpsi2B    (mu, Vmu, ni, H, K, tcc)
-glmrobMqleEpsi2Pois (mu, Vmu, ni, H, K, tcc)
+glmrobMqle(X, y, weights = NULL, start = NULL, offset = NULL,
+           family, weights.on.x = "none",
+           control = glmrobMqle.control(), intercept = TRUE)
+% glmrobMqleEpsiB     (mu, Vmu, ni, H, K, tcc)
+% glmrobMqleEpsiPois  (mu, Vmu, ni, H, K, tcc)
+% glmrobMqleEpsiSB    (mu, Vmu, ni, H, K, tcc)
+% glmrobMqleEpsiSPois (mu, Vmu, ni, H, K, tcc)
+% glmrobMqleEpsi2B    (mu, Vmu, ni, H, K, tcc)
+% glmrobMqleEpsi2Pois (mu, Vmu, ni, H, K, tcc)
 
 glmrobMqleDiffQuasiDevB   (mu, mu0, y, ni, w.x, tcc)
 glmrobMqleDiffQuasiDevPois(mu, mu0, y, ni, w.x, tcc)
@@ -34,10 +34,6 @@ glmrobMqleRobDist(X, intercept)
 
 %% for nlrob
   print.nlrob(x, ...)
-%%fitted.nlrob(object)
-predict.nlrob(object, newdata, ...)
-print.nlrob(x, ...)
-residuals.nlrob(object, ...)
 
 %% for rfmodsel
 psi.bisquare(u, c = 4.685, deriv = 0, rho = FALSE)
