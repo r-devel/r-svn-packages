@@ -14,7 +14,7 @@
 \usage{
 glmrob(formula, family = binomial, data, weights, subset, na.action,
        start = NULL, offset, method = "Mqle",
-       weights.on.x = c("none", "hat", "robCov"), control = NULL,
+       weights.on.x = c("none", "hat", "robCov", "covMcd"), control = NULL,
        model = TRUE, x = FALSE, y = TRUE, contrasts = NULL, ...)
 }
 
@@ -61,9 +61,9 @@ glmrob(formula, family = binomial, data, weights, subset, na.action,
     \code{"robCov"}, weights based on the robust Mahalanobis distance of the
     design matrix (intercept excluded) are used where the covariance
     matrix and the centre is estimated by \code{\link[MASS]{cov.rob}}
-    from the package \pkg{MASS}.
-    %% No docu there: FIXME?  For details see \code{\link{glmrob.Mqle.robDist}}.
-    The default is \code{"none"}.}
+    from the package \pkg{MASS}.\cr
+    Similarly,  if \code{"covMcd"}, robust weights are computed using
+    \code{\link{covMcd}}.  The default is \code{"none"}.}
 
   \item{control}{a list of parameters for controlling the fitting process.
     See the documentation for \code{\link{glmrobMqle.control}} for
