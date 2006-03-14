@@ -59,6 +59,7 @@ o glmrob(*, weights.on.x = "robCov")  currently uses  MASS::cov.rob(), i.e.
 o MM wonders if 'family = binomial' is a good default, when OTOH,
   glm() has  'family = gaussian' as a default.
   MM's proposal: have *NO* default, so users need to set family explicitly.
+       [ MM: do it !]
 
 o Maybe  we should consider  'family = gaussian'  {analogy to glm()}
   as a possible setting (*not* as default);
@@ -76,13 +77,20 @@ o glmrob() needs tests in ./tests/   [maybe take from man/glmrob.Rd]
 o --> first test already shows that Martin's tests for "huberC == Inf"
       were *not* yet moved from robGLM1 to glmrob()...
 
+o obj $ df ...  maybe should be defined -- for "glm" methods to be
+  applicable
+
 o summary.glmrob() should be better documented;
   we should decide if the current return value is fine.
 
 o Eva's code (and MM's) also computed & returned the "asymptotic efficiency"!
 
-o Instead of the current `semi-hidden'  modsel.glmrob() [ R/modsel.glmrob.R ]
-  Andreas will provide an  anova.glmrob()
+o anova.glmrob(): More modularization, allowing to provide own 'test' function.
+  Test if Huber's C are different. Need theory to compare different C's and
+  same model (which includes classical vs robust).
+
+o drop1() would be nice
+
 
 --- nlrob ---
 

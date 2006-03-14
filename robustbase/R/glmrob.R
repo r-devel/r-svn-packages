@@ -1,8 +1,8 @@
 glmrob <-
-function (formula, family = binomial, data, weights, subset,
-		   na.action, start = NULL, offset, method = "Mqle",
-		   weights.on.x = c("none", "hat", "robCov"), control = NULL,
-		   model = TRUE, x = FALSE, y = TRUE, contrasts = NULL,	 ...)
+function (formula, family, data, weights, subset,
+	  na.action, start = NULL, offset, method = "Mqle",
+	  weights.on.x = c("none", "hat", "robCov", "covMcd"), control = NULL,
+	  model = TRUE, x = FALSE, y = TRUE, contrasts = NULL, ...)
 {
     call <- match.call()
     if (is.character(family))
@@ -15,7 +15,8 @@ function (formula, family = binomial, data, weights, subset,
     }
     if (!(family$family %in% c("binomial", "poisson"))) {
 	if(family$family == "gaussian")
-	    stop("Use rlm(formula, ...) from library MASS for the Gaussian case")
+	    ## FIXME: use  our	lmrob() as soon as its available
+	    stop("Use MASS::rlm(formula, ...) for the Gaussian case")
 	else
 	    stop("Robust fitting method not yet implemented for this family")
     }
@@ -70,10 +71,10 @@ function (formula, family = binomial, data, weights, subset,
     if (!y)
 	fit$y <- NULL
     fit <- c(fit,
-             list(call = call, formula = formula, terms = mt, data = data,
-                  offset = offset, control = control, method = method,
-                  contrasts = attr(X, "contrasts"),
-                  xlevels = .getXlevels(mt, mf)))
+	     list(call = call, formula = formula, terms = mt, data = data,
+		  offset = offset, control = control, method = method,
+		  contrasts = attr(X, "contrasts"),
+		  xlevels = .getXlevels(mt, mf)))
     class(fit) <- c("glmrob", "glm")
     fit
 }
@@ -95,14 +96,15 @@ summary.glmrob <- function(object, correlation=FALSE, symbolic.cor=FALSE, ...)
     coef.table <- cbind("Estimate" = coefs, "Std. Error" = s.err,
 			"z-value" = zvalue, "Pr(>|z|)" = pvalue)
 
-    ans <- c(object[c("call", "terms", "family", "iter", "method")],
+    ans <- c(object[c("call", "terms", "family", "iter", "control", "method",
+                      "residuals", "fitted.values")],
 	     ## MM: should rather keep more from 'object' ?
-             ##     currently, cannot even print the asympt.efficiency!
+	     ##	    currently, cannot even print the asympt.efficiency!
 	     list(deviance=NULL, df.residual=NULL, null.deviance=NULL,
-                  df.null= NULL, df= NULL, ## (because of 0 weights; hmm,...)
-                  aliased = aliased,
+		  df.null= NULL, df= NULL, ## (because of 0 weights; hmm,...)
+		  aliased = aliased,
 		  coefficients = coef.table, dispersion = dispersion,
-                  cov.unscaled = covmat))
+		  cov.unscaled = covmat))
     if (correlation) {
 	ans$correlation <- cov2cor(covmat)
 	ans$symbolic.cor <- symbolic.cor
@@ -111,7 +113,7 @@ summary.glmrob <- function(object, correlation=FALSE, symbolic.cor=FALSE, ...)
     return(ans)
 }
 
-## almost a copy of vcov.glm() [if that didn't have summmary.glm() explicitly
+## almost a copy of vcov.glm() [if that didn't have summmary.glm() explicitly]
 vcov.glmrob <- function (object, ...)
 {
     so <- summary(object, corr = FALSE, ...)
@@ -132,7 +134,7 @@ print.glmrob <- function (x, digits = max(3, getOption("digits") - 3), ...)
 		      print.gap = 2, quote = FALSE)
     }
     else cat("No coefficients\n\n")
-    cat("\nNumber of observations:", length(x$y),
+    cat("\nNumber of observations:", length(x$residuals),
 	"\nFitted by method ", sQuote(x$method), "\n")
     invisible(x)
 }
@@ -153,9 +155,9 @@ print.summary.glmrob <-
     }
     else cat("No coefficients\n\n")
 
-    cat("\nNumber of observations:", length(x$y),
-	"\nFitted by method", sQuote(x$method),
-	" (in", x$iter, "iterations)\n")
+    n <- length(x$residuals)
+    cat("\nNumber of observations:", n,
+	"\nFitted by method", sQuote(x$method)," (in", x$iter, "iterations)\n")
 
     cat("\n(Dispersion parameter for ", x$family$family,
 	" family taken to be ", format(x$dispersion), ")\n\n",sep = "")

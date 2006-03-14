@@ -39,3 +39,10 @@ o) we have had some problems, but they are solved now
 10) glmrob() now works when the internal glm.fit() returns NA coefficients
     by dropping the corresponding columns (as Martin's "robGLM1" did).
 
+11) 'family = binomial' is a problematic default, when OTOH,
+  glm() has  'family = gaussian' as a default.
+  ==> have *NO* default, so users need to set family explicitly.
+
+12) Instead of modsel.glmrob() [ R/modsel.glmrob.R ]
+    Andreas has provided anova.glmrob()
+

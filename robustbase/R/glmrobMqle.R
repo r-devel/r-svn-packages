@@ -7,9 +7,9 @@ glmrobMqle <-
 	     control = glmrobMqle.control(), intercept = TRUE)
 {
     ## To DO:
-    ## o weights are not really implemented
-    ## o offset is not	implemented
-    ##
+    ## o weights are not really implemented. e.g. as "user weights for poisson"
+    ## o offset is not fully implemented (really? -- should have test case!)
+
     X <- as.matrix(X)
     xnames <- dimnames(X)[[2]]
     ynames <- names(y)
@@ -20,25 +20,23 @@ glmrobMqle <-
     else if(any(weights <= 0))
 	stop("All weights must be positive")
     if (is.null(offset))
-	offset <- rep.int(0, nobs)
+	offset <- rep.int(0, nobs) else if(!all(offset==0))
+	    warning("'offset' not fully implemented")
     variance <- family$variance
     linkinv <- family$linkinv
-    mu.eta <- family$mu.eta
     if (!is.function(variance) || !is.function(linkinv))
 	stop("illegal 'family' argument")
-    valideta <- family$valideta
-    if (is.null(valideta))
-	valideta <- function(eta) TRUE
-    validmu <- family$validmu
-    if (is.null(validmu))
-	validmu <- function(mu) TRUE
-    ##
+    mu.eta <- family$mu.eta
+    if (is.null(valideta <- family$valideta)) valideta <- function(eta) TRUE
+    if (is.null(validmu	 <- family$validmu))  validmu <-  function(mu) TRUE
 
     w.x <- if(ncoef) {
 	switch(weights.on.x,
 	       "none" = rep.int(1, nobs),
-	       "Hii" = glmrobMqleHii(X = X),
-	       "robCov" = glmrobMqleRobDist(X = X, intercept = intercept),
+	       "Hii" = wts_HiiDist(X = X),
+	       "robCov" = wts_RobDist(X, intercept, covFun = MASS::cov.rob),
+                                        # ARu said  'method="mcd" was worse'
+	       "covMcd" = wts_RobDist(X, intercept, covFun = covMcd),
 	       stop("Weighting method", sQuote(weights.on.x),
 		    " is not implemented"))
     } else ## ncoef == 0
@@ -48,8 +46,9 @@ glmrobMqle <-
 ### Initializations
 
     tcc <- control$tcc
+    ## note that 'weights' are used and set by binomial()$initialize !
     eval(family$initialize) ## --> n, mustart, y and weights (=ni)
-    ni <- weights
+    ni <- as.vector(weights)# dropping attributes for computation
     ##
     if(is.null(start))
 	start <- glm.fit(x = X, y = y, weights = weights, offset = offset,
@@ -67,9 +66,8 @@ glmrobMqle <-
 	ncoef <- length(start)
     }
 
-    thetaOld <- theta <- start
-
-    eta <- drop(X %*% theta)
+    thetaOld <- theta <- as.vector(start) # as.v*(): dropping attributes
+    eta <- as.vector(X %*% theta)
     mu <- linkinv(eta) # mu estimates pi (in [0,1]) at the binomial model
     if (!(validmu(mu) && valideta(eta)))
 	stop("Can't find valid starting values: You need help")
@@ -90,24 +88,34 @@ glmrobMqle <-
 	   stop("family", sQuote(family), "not yet implemented")
 	   )
 
+
+    comp.V.resid <- expression({
+	Vmu <- variance(mu)
+	if (any(is.na(Vmu)))  stop("NAs in V(mu)")
+	if (any(Vmu == 0))    stop("0s in V(mu)")
+	sV <- sqrt(Vmu)
+	residP <- (y - mu)* sni/sV
+    })
+
+    comp.Epsi.init <- expression({
+	dmu.deta <- mu.eta(eta)
+	if (any(is.na(dmu.deta))) stop("NAs in d(mu)/d(eta)")
+	H <- floor(mu*ni - tcc* sni*sV)
+	K <- floor(mu*ni + tcc* sni*sV)
+	eval(Epsi.init)
+    })
+
 ### Iterations
 
     sni <- sqrt(ni)
     conv <- FALSE
     if(ncoef) for (nit in 1:control$maxit) {
-	Vmu <- variance(mu)
-	if (any(is.na(Vmu)))  stop("NAs in V(mu)")
-	if (any(Vmu == 0))    stop("0s in V(mu)")
-	dmu.deta <- mu.eta(eta)
-	if (any(is.na(dmu.deta))) stop("NAs in d(mu)/d(eta)")
-	sV <- sqrt(Vmu)
-	residP <- (y - mu)* sni/sV
-	H <- floor(mu*ni - tcc* sni*sV)
-	K <- floor(mu*ni + tcc* sni*sV)
-	eval(Epsi.init)
+
+	eval(comp.V.resid)
+	eval(comp.Epsi.init)
 	## Computation of alpha and (7) using matrix column means:
 	cpsi <- pmax2(-tcc, pmin(residP,tcc)) - eval(Epsi)
-	EEq <- colMeans(cpsi*w.x * sni/sV * dmu.deta * X)
+	EEq <- colMeans(cpsi * w.x * sni/sV * dmu.deta * X)
 	##
 	## Solve  1/n (t(X) %*% B %*% X) %*% delta.coef	  = EEq
 	DiagB <- eval(EpsiS) /(sni*sV) * w.x * (ni*dmu.deta)^2
@@ -117,7 +125,7 @@ glmrobMqle <-
 	    break
 	}
 	theta <- thetaOld + Dtheta
-	eta <- drop(X %*% theta) + offset
+	eta <- as.vector(X %*% theta) + offset
 	mu <- linkinv(eta)
 	## Check convergence: relative error < tolerance
 	conv <- sqrt(sum(Dtheta^2)/max(1e-20, sum(thetaOld^2))) <= control$acc
@@ -143,23 +151,14 @@ glmrobMqle <-
 		   warning("fitted rates numerically 0 occurred")
 	   })
 
-### FIXME: much of the following is "cut & paste" from the iteration part
-    Vmu <- variance(mu)
-    sV <- sqrt(Vmu)
-    residP <- (y - mu)* sni/sV
+    eval(comp.V.resid)
 
     ## Estimated asymptotic covariance of the robust estimator
-
-    H <- floor(mu*ni - tcc* sni*sV)
-    K <- floor(mu*ni + tcc* sni*sV)
-    dmu.deta <- mu.eta(eta)
-    w.r <- pmin(1, tcc/abs(residP))
-    weights <- w.x*w.r
     if(ncoef) {
-	eval(Epsi.init)
+	eval(comp.Epsi.init)
 	alpha <- colMeans(eval(Epsi) * w.x * sni/sV * dmu.deta * X)
 	DiagA <- eval(Epsi2) / (ni*Vmu)* w.x^2* (ni*dmu.deta)^2
-	matQ  <- crossprod(X, DiagA*X)/nobs - outer(alpha, alpha)
+	matQ  <- crossprod(X, DiagA*X)/nobs - tcrossprod(alpha, alpha)
 
 	DiagB <- eval(EpsiS) / (sni*sV)* w.x * (ni*dmu.deta)^2
 	matM <- crossprod(X, DiagB*X)/nobs
@@ -181,7 +180,9 @@ glmrobMqle <-
 	##No  Mn <- M; Mn[ok, ok] <- matM  ; matM  <- Mn
 	##No  Mn <- M; Mn[ok, ok] <- matQ  ; matQ  <- Mn
     }
-    ##
+
+    w.r <- pmin(1, tcc/abs(residP))
+    names(mu) <- names(eta) <- names(residP) # re-add after computation
     list(coefficients = theta, residuals = residP, fitted.values = mu,
 	 w.r = w.r, w.x = w.x, ni = ni, cov = asCov, matM = matM, matQ = matQ,
 	 tcc = tcc, family = family, linear.predictors = eta, deviance = NULL,
@@ -189,28 +190,28 @@ glmrobMqle <-
 }
 
 
-glmrobMqleHii <- function(X) {
+wts_HiiDist <- function(X) {
     x <- qr(X)
     Hii <- colSums(qr.qy(x, diag(1, nrow = NROW(y), ncol = x$rank))^2)
     sqrt(1-Hii)
 }
 
-glmrobMqleRobDist <- function(X, intercept) {
+wts_RobDist <- function(X, intercept, covFun)
+{
     if(intercept) {
-	Z <- as.matrix(X[, -1])
-	Zrc <- cov.rob(Z) ## worse:  method="mcd"
-	dist2 <- mahalanobis(Z, center = Zrc$center, cov = Zrc$cov)
-	## dist2 <- mahalanobis(Z, center=XX.rcov$center, cov=XX.rcov$cov)
+	X <- as.matrix(X[, -1])
+	Xrc <- covFun(X)
+	dist2 <- mahalanobis(X, center = Xrc$center, cov = Xrc$cov)
     }
     else {
-	Z <- as.matrix(X)
-	Zrc <- cov.rob(Z)
-	mu <- as.matrix(Zrc$center)
-	Mu <- Zrc$cov + mu %*% t(mu)
-	dist2 <- mahalanobis(Z, center = rep(0,ncol(Z)), cov = Mu)
+	if(!is.matrix(X)) X <- as.matrix(X)
+	Xrc <- covFun(X)
+	mu <- as.matrix(Xrc$center)
+	Mu <- Xrc$cov + tcrossprod(mu)
+	dist2 <- mahalanobis(X, center = rep(0,ncol(X)), cov = Mu)
     }
-    ncoef <- ncol(X)-intercept ## E[chi^2_p] = p
-    1/sqrt(pmax2(0, (dist2-ncoef)/sqrt(2*ncoef)*8) + 1)
+    ncoef <- ncol(X) ## E[chi^2_p] = p
+    1/sqrt(1+ pmax2(0, 8*(dist2 - ncoef)/sqrt(2*ncoef)))
 }
 
 
@@ -282,7 +283,14 @@ EpsiBin.init <- expression({
     pHm1 <- pbinom(H-1, pmax2(ni-1,1), mu)
     pKm2 <- pbinom(K-2, pmax2(ni-2,1), mu)
     pHm2 <- pbinom(H-2, pmax2(ni-2,1), mu)
-    E2 <- (ni - 1) * mu * ifelse(ni == 2, (H <= 1)*(K >= 2), pKm2 - pHm2)
+
+    ## QlV = Q / V, where Q = Sum_j (j - mu_i)^2 * P[Y_i = j]
+    ## i.e.  Q =	     Sum_j j(j-1)* P[.] +
+    ##		 (1- 2*mu_i) Sum_j   j	 * P[.] +
+    ##		     mu_i^2  Sum_j	   P[.]
+    QlV <- mu/Vmu*(mu*ni*(pK-pH) +
+		   (1 - 2*mu*ni) * ifelse(ni == 1, (H <= 0)*(K >= 1), pKm1 - pHm1) +
+		   (ni - 1) * mu * ifelse(ni == 2, (H <= 1)*(K >= 2), pKm2 - pHm2))
 })
 
 EpsiBin <- expression(
@@ -294,21 +302,15 @@ EpsiBin <- expression(
 
 Epsi2Bin <- expression(
 {
-    ## Calculation of E(psi^2) for the diagonal elements of A in
-    ## matrix Q:
-    (tcc^2*(pH + 1 - pK) +
-     mu/Vmu*(mu*ni*(pK-pH) +
-	     (1 - 2*mu*ni) * ifelse(ni == 1, (H <= 0)*(K >= 1), pKm1 - pHm1) + E2))
+    ## Calculation of E(psi^2) for the diagonal elements of A in matrix Q:
+    tcc^2*(pH + 1 - pK) + QlV
 })
 
 EpsiSBin <- expression(
 {
     ## Calculation of E(psi*s) for the diagonal elements of B in the
-    ## expression matrix M = 1/n t(X) %*% B %*% X:
+    ## expression matrix M = (X' B X)/n
     mu/Vmu*(tcc*(pH - ifelse(ni == 1, H >= 1, pHm1)) +
-	    tcc*(pK - ifelse(ni == 1, K > 0,  pKm1)) +
-	    mu*sni/sV*(pK - pH) +
-	    (1/sni - 2*mu*sni)/sV * ifelse(ni == 1, (H <= 0)*(K >= 1), pKm1 - pHm1) +
-	    E2 / (sni*sV))
+	    tcc*(pK - ifelse(ni == 1, K > 0,  pKm1))) + QlV / (sni*sV)
 })
 

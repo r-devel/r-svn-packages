@@ -24,5 +24,8 @@ rm1
 (s0 <- summary(rm0))
 (s1 <- summary(rm1))
 str(s1)
+stopifnot(all.equal(c(coef(s1)),
+                    c(1.390672035557, 0.01621361360095,
+                      85.77187478275, 0), tol = 1e-13))
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''

@@ -25,7 +25,7 @@ glmrobMqleDiffQuasiDevB   (mu, mu0, y, ni, w.x, tcc)
 glmrobMqleDiffQuasiDevPois(mu, mu0, y, ni, w.x, tcc)
 
 wts_HiiDist(X)
-wts_RobDist(X, intercept, covFun = MASS::cov.rob)
+wts_RobDist(X, intercept, covFun)
 
 % rflmFixedScale(x, y, weights, w = rep(1, nrow(x)), init, scale,
 %                psi = psi.huber, maxit = 20, acc = 1e-04,
