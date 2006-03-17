@@ -2,6 +2,12 @@
 
         bug in cch: var vs naive.var
 
+	[.survfit handled non-increasing indices wrongly (Aniko Szabo)
+
+	Remove obsolete recommendation to use I() to wrap Surv objects
+
+	Register the .C calls.
+	
 2.21    added stratified case-cohort code (also from Norman Breslow)
 
 2.20    export coxph.fit
