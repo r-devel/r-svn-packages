@@ -46,3 +46,6 @@ o) we have had some problems, but they are solved now
 12) Instead of modsel.glmrob() [ R/modsel.glmrob.R ]
     Andreas has provided anova.glmrob()
 
+13) covOGK() is now consistent per default
+    because it is used with scaleTau2() which has now a constant
+    consistency factor by default.

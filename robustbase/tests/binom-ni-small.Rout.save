@@ -1,6 +1,6 @@
 
 R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2006-03-02 r37468)
+Version 2.2.1 Patched (2006-03-16 r37549)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -91,11 +91,14 @@ Loading required package: MASS
              Estimate Std. Error
 (Intercept) -2.515884  0.3784211
 x            5.123650  0.7344629
-> g0 <- glm(cbind(k0, n0-k0) ~ x, family = binomial)# works too
-> coef(summary(g0))[,1:2]
-             Estimate Std. Error
-(Intercept) -1.913157  0.3346560
-x            4.061024  0.6512647
+> g0  <- glm(cbind(k0, n0-k0) ~ x, family = binomial)# works too
+> g0. <- glm(cbind(k0, n0-k0) ~ x, family = binomial, subset = n0 > 0)
+> ## all.equal(g0, g0.)
+> stopifnot(all.equal(print(coef(summary(g0))), coef(summary(g0.))))
+             Estimate Std. Error   z value     Pr(>|z|)
+(Intercept) -1.913157  0.3346560 -5.716786 1.085574e-08
+x            4.061024  0.6512647  6.235596 4.500620e-10
+> 
 > 
 > rg1  <- glmrob(cbind(k , ni-k ) ~ x, family = binomial)
 > rg1. <- glmrob(cbind(k , ni-k ) ~ x, family = binomial,
@@ -168,13 +171,13 @@ List of 26
   .. .. ..- attr(*, "order")= int 1
   .. .. ..- attr(*, "intercept")= int 1
   .. .. ..- attr(*, "response")= int 1
-  .. .. ..- attr(*, ".Environment")=length 12 <environment> 
+  .. .. ..- attr(*, ".Environment")=length 13 <environment> 
   .. .. ..- attr(*, "predvars")= language list(cbind(k, ni - k), x)
   .. .. ..- attr(*, "dataClasses")= Named chr [1:2] "nmatrix.2" "numeric"
   .. .. .. ..- attr(*, "names")= chr [1:2] "cbind(k, ni - k)" "x"
  $ call             : language glmrob(formula = cbind(k, ni - k) ~ x, family = binomial, acc = 1e-10)
  $ formula          :Class 'formula' length 3 cbind(k, ni - k) ~ x
-  .. ..- attr(*, ".Environment")=length 12 <environment> 
+  .. ..- attr(*, ".Environment")=length 13 <environment> 
  $ terms            :Classes 'terms', 'formula' length 3 cbind(k, ni - k) ~ x
   .. ..- attr(*, "variables")= language list(cbind(k, ni - k), x)
   .. ..- attr(*, "factors")= int [1:2, 1] 0 1
@@ -185,11 +188,11 @@ List of 26
   .. ..- attr(*, "order")= int 1
   .. ..- attr(*, "intercept")= int 1
   .. ..- attr(*, "response")= int 1
-  .. ..- attr(*, ".Environment")=length 12 <environment> 
+  .. ..- attr(*, ".Environment")=length 13 <environment> 
   .. ..- attr(*, "predvars")= language list(cbind(k, ni - k), x)
   .. ..- attr(*, "dataClasses")= Named chr [1:2] "nmatrix.2" "numeric"
   .. .. ..- attr(*, "names")= chr [1:2] "cbind(k, ni - k)" "x"
- $ data             :length 12 <environment> 
+ $ data             :length 13 <environment> 
  $ offset           : NULL
  $ control          :List of 4
   ..$ acc     : num 1e-10
@@ -217,25 +220,26 @@ x            -0.2501886  0.5388665
             (Intercept)          x
 (Intercept)   0.1432102 -0.2504843
 x            -0.2504843  0.5394659
-> rgI <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = Inf)
-Warning messages:
-1: Non-finite coefficients at iteration 1 in: glmrobMqle(X = X, y = Y, weights = weights, start = start, offset = offset,  
-2: Algorithm did not converge in: glmrobMqle(X = X, y = Y, weights = weights, start = start, offset = offset,  
-> ## tcc = Inf  still *FAILS* (!)
-> if(FALSE) {
-+ stopifnot(all.equal(rgL[no.comp], rgI[no.comp], tol= 0))
-+ ## and is quite close to the classic one:
-+ (all.equal(vcov(rgI), vcov(g1)))
+> if(FALSE) { ## tcc=Inf fails: non-convergence / singular matrix from GOTO/Atlas3
++  rgI <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = Inf)
++  ## tcc = Inf  still *FAILS* (!)
++  stopifnot(all.equal(rgL[no.comp], rgI[no.comp], tol= 0))
++  ## and is quite close to the classic one:
++  (all.equal(vcov(rgI), vcov(g1)))
 + }
 > 
-> rg0 <- glmrob(cbind(k0, n0-k0) ~ x, family = binomial)
-Warning messages:
-1: Non-finite coefficients at iteration 1 in: glmrobMqle(X = X, y = Y, weights = weights, start = start, offset = offset,  
-2: Algorithm did not converge in: glmrobMqle(X = X, y = Y, weights = weights, start = start, offset = offset,  
-3: fitted probabilities numerically 0 or 1 occurred in: switch(family$family, binomial = { 
-> ## --> 23 warnings: NaNs produced in: pbinom( ....... ) and more
-> if(FALSE)
-+ coef(summary(rg0))[,1:2]
+> rg0 <-  glmrob(cbind(k0, n0-k0) ~ x, family = binomial)
+Warning message:
+fitted probabilities numerically 0 or 1 occurred in: switch(family$family, binomial = { 
+> ## --> warning..
+> rg0. <- glmrob(cbind(k0, n0-k0) ~ x, family = binomial, subset = n0 > 0)
+> 
+> coef(summary(rg0)) # not yet good (cf. 'g0' above!)
+             Estimate Std. Error z-value Pr(>|z|)
+(Intercept) -1.852918        NaN     NaN      NaN
+x            3.847520        NaN     NaN      NaN
+> stopifnot(all.equal(coef(rg0), coef(rg0.)))
+> 
 > 
 > ### Example where all ni >= 3  -- works better, now also correct as.var. !!
 > ### ----------------- =======
@@ -331,5 +335,5 @@ No deviance values available
 +                     rg3.15  [no.comp], tol = 1e-13))
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  1.64 0.12 2.44 0 0 
+Time elapsed:  1.09 0.1 1.58 0 0 
 > 

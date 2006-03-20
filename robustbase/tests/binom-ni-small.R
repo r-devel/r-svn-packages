@@ -14,8 +14,11 @@ k0 <- rbinom(N, size = n0, prob = pr.x)
 cbind(k,ni, k0,n0)
 g1 <- glm(cbind(k , ni-k ) ~ x, family = binomial)
 coef(summary(g1))[,1:2]
-g0 <- glm(cbind(k0, n0-k0) ~ x, family = binomial)# works too
-coef(summary(g0))[,1:2]
+g0  <- glm(cbind(k0, n0-k0) ~ x, family = binomial)# works too
+g0. <- glm(cbind(k0, n0-k0) ~ x, family = binomial, subset = n0 > 0)
+## all.equal(g0, g0.)
+stopifnot(all.equal(print(coef(summary(g0))), coef(summary(g0.))))
+
 
 rg1  <- glmrob(cbind(k , ni-k ) ~ x, family = binomial)
 rg1. <- glmrob(cbind(k , ni-k ) ~ x, family = binomial,
@@ -38,18 +41,21 @@ no.comp <- - match(c("call", "data", "family", "control", "tcc"), names(rg10))
 stopifnot(all.equal(rg10[no.comp], rgL[no.comp], tol= 1e-14))
 
 vcov(rgL) # is now the same as the following:
-rgI <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = Inf)
-## tcc = Inf  still *FAILS* (!)
-if(FALSE) {
-stopifnot(all.equal(rgL[no.comp], rgI[no.comp], tol= 0))
-## and is quite close to the classic one:
-(all.equal(vcov(rgI), vcov(g1)))
+if(FALSE) { ## tcc=Inf fails: non-convergence / singular matrix from GOTO/Atlas3
+ rgI <- glmrob(cbind(k , ni-k ) ~ x, family = binomial, tcc = Inf)
+ ## tcc = Inf  still *FAILS* (!)
+ stopifnot(all.equal(rgL[no.comp], rgI[no.comp], tol= 0))
+ ## and is quite close to the classic one:
+ (all.equal(vcov(rgI), vcov(g1)))
 }
 
-rg0 <- glmrob(cbind(k0, n0-k0) ~ x, family = binomial)
-## --> 23 warnings: NaNs produced in: pbinom( ....... ) and more
-if(FALSE)
-coef(summary(rg0))[,1:2]
+rg0 <-  glmrob(cbind(k0, n0-k0) ~ x, family = binomial)
+## --> warning..
+rg0. <- glmrob(cbind(k0, n0-k0) ~ x, family = binomial, subset = n0 > 0)
+
+coef(summary(rg0)) # not yet good (cf. 'g0' above!)
+stopifnot(all.equal(coef(rg0), coef(rg0.)))
+
 
 ### Example where all ni >= 3  -- works better, now also correct as.var. !!
 ### ----------------- =======

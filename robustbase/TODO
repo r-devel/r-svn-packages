@@ -6,22 +6,22 @@ o  Generalizing  'wgt.himedian':  We'd want a C API on which R builds.
    There are pure R implementations:
     - 'weighted.median()' in limma
     	 and I have generalized it ---> inst/ex-funs.R
-
     - more general code (different 'tie' strategies; weighted *quantile*s)
       in /u/maechler/R/MM/STATISTICS/robust/weighted-median.R
+    - The 'Hmisc' package has wtd.quantile()
 
-o covOGK(): is *inconsistent* (by a constant factor, depending on n)
-  	    as long as it is used with the inconsistent scaleTau2()
-	    {the one that was proposed in the paper}.
-
- >>> MUST document scaleTau2() and see if we can easily make it consistent!
-
+o covOGK():
   The argument name 'weight.fn' is pretty ugly and the default function
   name 'hard.rejection()' is just awful (we need a globally available
   function as 'role model'.
 
   - Consider making 'hard rejection'  the default though!
   -   "        "    n.iter = 1 or = 2 the default.
+
+  - Could allow 'n.iter = 0' to simply compute Cov()_{ij} = rcov(X_i, X_j)
+
+o scaleTau2():  Also do a cheap finite-sample correction [MM] !
+		[done partly; but undocumented, since bound to change]
 
 --- rrcov etc ---
 
@@ -44,7 +44,7 @@ o covMcd() : 'print.it' should be called 'trace';
 o summary.mcd() should *return* an object of class "summary.mcd"
   and then  print.summary.mcd() should print it !
 
-o plot(mcd. ) : should show the call !
+o plot(mcd. ) : should show the call
 
 o ltsReg():  has  undocumented '$resid'
 	     in addition to '$residuals' and '$raw.residuals';
@@ -71,6 +71,8 @@ o glmrob() needs tests in ./tests/   [maybe take from man/glmrob.Rd]
 o --> first test already shows that Martin's tests for "huberC == Inf"
       were *not* yet moved from robGLM1 to glmrob()...
 
+o also, ni = 0 does not work quite as it should ( ./tests/binom-ni-small.R )
+
 o obj $ df ...  maybe should be defined -- for "glm" methods to be
   applicable
 
@@ -92,3 +94,9 @@ o nlrob() needs tests in ./tests/ -- you can take some from man/nlrob.Rd
 
 o summary.nlrob() is currently a "no-op" -- printing it should summarize
 		  robustness weights!
+
+------
+
+o Add data sets from the MMY-book  -- try to use the same variable names as
+  in the book [for that, need to wait for the book; to look at outputs or
+  S-plus scripts].

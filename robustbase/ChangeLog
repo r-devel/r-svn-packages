@@ -1,3 +1,18 @@
+2006-03-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.1-4
+
+	* data/vaso.rda:  one value, vaso[32,2],  had a typo; it was '0.3'
+	but should have been '0.03'
+
+2006-03-16  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/OGK.R (scaleTau2): add consistency correction (for OGK).
+	* man/scaleTau2.Rd: added
+
+	* R/glmrobMqle.R: ni=0 special casing (not finished yet).
+	* tests/binom-ni-small.R: more testing of ni=0
+
 2006-03-14  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* TODO, Done, DESCRIPTION: updated, ready for release

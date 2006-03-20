@@ -74,6 +74,12 @@ glmrobMqle <-
     ##
     switch(family$family,
 	   "binomial" = {
+               if(paste(R.version$major, R.version$minor, sep=".") < 2.3)
+                   ## pbinom(., size=0) wrongly gave NaN
+                   pbinom <- function (q, size, prob,
+                                       lower.tail = TRUE, log.p = FALSE) {
+                       stats::pbinom(q, pmax2(1,size), prob, lower.tail, log.p)
+                   }
 	       Epsi.init <- EpsiBin.init
 	       Epsi <- EpsiBin
 	       EpsiS <- EpsiSBin
@@ -119,6 +125,7 @@ glmrobMqle <-
 	##
 	## Solve  1/n (t(X) %*% B %*% X) %*% delta.coef	  = EEq
 	DiagB <- eval(EpsiS) /(sni*sV) * w.x * (ni*dmu.deta)^2
+        if(any(n0 <- ni == 0)) DiagB[n0] <- 0 # instead of NaN
 	Dtheta <- solve(crossprod(X, DiagB*X)/nobs, EEq)
 	if (any(!is.finite(Dtheta))) {
 	    warning("Non-finite coefficients at iteration ", nit)
@@ -161,6 +168,7 @@ glmrobMqle <-
 	matQ  <- crossprod(X, DiagA*X)/nobs - tcrossprod(alpha, alpha)
 
 	DiagB <- eval(EpsiS) / (sni*sV)* w.x * (ni*dmu.deta)^2
+        if(any(n0 <- ni == 0)) DiagB[n0] <- 0 # instead of NaN
 	matM <- crossprod(X, DiagB*X)/nobs
 	matMinv <- solve(matM)
 	asCov <-  matMinv %*% matQ %*% matMinv / nobs
@@ -278,11 +286,11 @@ EpsiSPois <- expression(
 
 EpsiBin.init <- expression({
     pK <- pbinom(K, ni, mu)
-    pKm1 <- pbinom(K-1, pmax2(ni-1,1), mu)
     pH <- pbinom(H, ni, mu)
-    pHm1 <- pbinom(H-1, pmax2(ni-1,1), mu)
-    pKm2 <- pbinom(K-2, pmax2(ni-2,1), mu)
-    pHm2 <- pbinom(H-2, pmax2(ni-2,1), mu)
+    pKm1 <- pbinom(K-1, pmax2(0, ni-1), mu)
+    pHm1 <- pbinom(H-1, pmax2(0, ni-1), mu)
+    pKm2 <- pbinom(K-2, pmax2(0, ni-2), mu)
+    pHm2 <- pbinom(H-2, pmax2(0, ni-2), mu)
 
     ## QlV = Q / V, where Q = Sum_j (j - mu_i)^2 * P[Y_i = j]
     ## i.e.  Q =	     Sum_j j(j-1)* P[.] +
@@ -311,6 +319,6 @@ EpsiSBin <- expression(
     ## Calculation of E(psi*s) for the diagonal elements of B in the
     ## expression matrix M = (X' B X)/n
     mu/Vmu*(tcc*(pH - ifelse(ni == 1, H >= 1, pHm1)) +
-	    tcc*(pK - ifelse(ni == 1, K > 0,  pKm1))) + QlV / (sni*sV)
+	    tcc*(pK - ifelse(ni == 1, K > 0,  pKm1))) + ifelse(ni == 0, 0, QlV / (sni*sV))
 })
 
