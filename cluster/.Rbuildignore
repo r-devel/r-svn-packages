@@ -1,7 +1,8 @@
 \.rsync.*
-sil.*
 MM-.*
-.*-MM
+TODO-MM
+INDEX-MM
+.*/.*-MM
 mail-.*
 .*mail
 .*/TAGS
@@ -13,7 +14,6 @@ src/.*-log
 src/.*-21retro
 src/clara\.f.*
 .*/Check-me
-src/NOTES-MM
 src/SAFE
 tests/ellipsoid-ex.Rout-.*
 tests/fanny-ex.Rout.*
