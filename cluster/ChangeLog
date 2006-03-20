@@ -1,3 +1,10 @@
+2006-03-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.10.5  for CRAN
+
+	* .rsync-exclude: new file useful since I moved my RCS archive to SVN
+		(using 'cvs2svn' and a perl script on 'svn-stat').
+
 2006-02-27  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/sildist.c (sildist): 2nd round (by Romain and me)

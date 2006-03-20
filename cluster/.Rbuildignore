@@ -1,8 +1,12 @@
-.*,v
+\.rsync.*
+sil.*
+MM-.*
+.*-MM
+mail-.*
+.*mail
+.*/TAGS
 R/.*\+
-R/TAGS
 R/README-Splus
-src/TAGS
 src/list-
 src/.*-Li
 src/.*-log
@@ -11,7 +15,6 @@ src/clara\.f.*
 .*/Check-me
 src/NOTES-MM
 src/SAFE
-tests/Rplots.ps
 tests/ellipsoid-ex.Rout-.*
 tests/fanny-ex.Rout.*
 tests/fanny-relink.*
@@ -22,12 +25,7 @@ tests/clara-2.Rout.save
 tests/clara-segfault.*
 tests/clara-ex.Rout.*
 tests/clara-MM.R.*
-mail-.*
-.*mail
 00-orig-src
-TODO-MM
-data/00Index-MM
-INDEX-MM
 check-log
 resort-INDEX
 Rnews-.*
