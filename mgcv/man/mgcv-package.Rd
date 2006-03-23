@@ -45,7 +45,11 @@ always good in this case.
 
 The package also provides a generalized additive mixed modelling function,
 \code{\link{gamm}}, based on \code{glmmPQL} from the \code{MASS} library and
-\code{lme} from the \code{nlme} library. 
+\code{lme} from the \code{nlme} library. \code{gamm} is particularly useful
+for modelling correlated data (i.e. where a simple independence model for the
+residual variation is inappropriate). In addition, low level routine \code{\link{magic}}
+can fit models to data with a known correlation structure.
+
 
 Some of the underlying GAM fitting methods are available as low level fitting
 functions: see \code{\link{magic}} and \code{\link{mgcv}}. Penalized weighted
