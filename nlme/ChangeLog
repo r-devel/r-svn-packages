@@ -1,3 +1,7 @@
+2006-03-29 Brian Ripley  <Brian.Ripley@r-project.org>
+
+	* R/newMethods.R: as.list() did not work on symbols in R.
+
 2006-03-14 Brian Ripley  <Brian.Ripley@r-project.org>
 
 	* R/lme.R, man/Variogram.Rd: Make example work (na.omit in
