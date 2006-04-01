@@ -1,6 +1,6 @@
 Package: robustbase
-Version: 0.1-4
-Date: 2006-03-20
+Version: 0.1-5
+Date: 2006-04-01
 Title: Basic Robust Statistics
 Author: Original code by many authors, notably
 	Peter Rousseeuw, Christophe Croux, see file 'Copyrights';
