@@ -24,24 +24,20 @@ lmrob.control(seed = 37, Nres = 500,
   \item{bb}{expected value under the normal model of the
     "chi" function with tuning constant equal to
     \code{tuning.chi}.  This is used to compute the S-estimator.}
-  \item{tuning.psi}{tuning constant for the
-    re-descending M-estimator.  The choice \code{4.685061} yields
-    an estimator with asymptotic efficiency of 95\% for
-    normal errors.}
-  \item{max.it}{integer specifying the maximum number of IRWLS
-    iterations.}
-  \item{groups}{This parameter is for the fast-S algorithm.
-    Number of random subsets to
-    use when the data set is large.}
-  \item{n.group}{This parameter is for the fast-S algorithm.
-    Size of each of the \code{groups} above.}
-  \item{k.fast.s}{This parameter is for the fast-S algorithm.
-    Number of local improvement steps for each re-sampling
-    candidate.}
+  \item{tuning.psi}{tuning constant for the re-descending M-estimator.
+    The choice \code{4.685061} yields an estimator with asymptotic
+    efficiency of 95\% for normal errors.}
+  \item{max.it}{integer specifying the maximum number of IRWLS iterations.}
+  \item{groups}{This parameter is for the fast-S algorithm.  Number of
+    random subsets to use when the data set is large.}
+  \item{n.group}{This parameter is for the fast-S algorithm.  Size of
+    each of the \code{groups} above.}
+  \item{k.fast.s}{This parameter is for the fast-S algorithm.  Number of
+    local improvement steps for each re-sampling candidate.}
   \item{compute.rd}{logical indicating if robust distances (based on
-    the MCD robust covariance matrix) are to be computed
-    for the robust diagnostic plots.  This may take some
-    time to finish, specially for large data sets.}
+    the MCD robust covariance estimator \code{\link{covMcd}}) are to be
+    computed for the robust diagnostic plots.  This may take some
+    time to finish, particularly for large data sets.}
 }
 \author{ Matias Salibian-Barrera }
 \seealso{ \code{\link{lmrob}}, also for references and examples.

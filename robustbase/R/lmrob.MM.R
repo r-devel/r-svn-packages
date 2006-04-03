@@ -38,7 +38,7 @@ lmrob.fit.MM <- function(x, y, control)
 	cov.matrix <- matrix(final.MM$cov, p, p)
     }
 
-    rank <- qr(x)$rank ## <<  MM: qr(.) maybe
+    rank <- qr(x)$rank ## << FIXME? qr(.)  should be available from earlier
     r1 <- 1:rank
     dn <- colnames(x)
     if (is.matrix(y)) {
@@ -51,7 +51,7 @@ lmrob.fit.MM <- function(x, y, control)
     }
     f <- x %*% as.matrix(coef)
     r <- as.matrix(y) - f
-    list(fitted.value = as.vector(f), residuals = as.vector(r),
+    list(fitted.values = as.vector(f), residuals = as.vector(r),
 	 rank = rank, degree.freedom = n-rank, coefficients = coef,
 	 initial.coefficients = coef.initial,
 	 scale = final.MM$scale, seed = final.MM$seed, cov = cov.matrix,
@@ -78,27 +78,25 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 	    coef = double(p),
 	    as.integer(control$ max.it),
 	    tuning.psi = as.double(c.psi),
-	    converged = integer(1),
+	    converged = logical(1),
 	    PACKAGE = "robustbase")
     r <- as.vector(y - x %*% b$coef)
     r2 <- as.vector(y - x %*% beta.initial)
-    w <- lmrob.Psi(r/sigma, cc = c.psi, deriv = 1)
+    w   <- lmrob.Psi( r/sigma, cc = c.psi, deriv = 1)
+    ch1 <- lmrob.Chi(r2/sigma, cc = c.chi, deriv = 1)
     A <- solve(	 ( t(x) %*% (x * w) ) / n / sigma )
     w <- w * r / sigma
-    a <- ( t(x) %*% w ) / n
-    a <- a / mean(lmrob.Chi(r2/sigma, cc= c.chi, deriv = 1)*r2/sigma)
-    a <- A %*% a
+    a <- A %*% (( t(x) %*% w ) / (n * mean(ch1 * r2/sigma)))
     w  <- lmrob.Psi( r/sigma, cc = c.psi)
     w2 <- lmrob.Chi(r2/sigma, cc = c.chi)
     u1 <- ( t(x) %*% (x * (w^2) ) ) / n
     u1 <- A %*% u1 %*% A
     u2 <- a %*% t( t(x) %*% (w*w2) ) %*% A / n
     u3 <- A %*% (t(x) %*% (w*w2) ) %*% t(a) / n
-    u4 <- mean( lmrob.Chi(r2/sigma, cc= c.chi, deriv = 1)^2 - .5^2) *
-	a %*% t(a)
-    b$av <- (u1 - u2 - u3 + u4)/n
-    list(coef = b$coef, cov = b$av, control = control,
-	 scale = b$scale, seed = b$seed, converged = (b$converged == 1) )
+    u4 <- mean( ch1^2 - .5^2) *	a %*% t(a)
+
+    list(coef = b$coef, cov = (u1 - u2 - u3 + u4)/n, control = control,
+	 scale = b$scale, seed = b$seed, converged = b$converged )
 }
 
 

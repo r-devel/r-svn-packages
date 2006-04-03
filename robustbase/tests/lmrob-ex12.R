@@ -3,14 +3,22 @@ library(robustbase)
 
 ## EX 1
 data(coleman)
-(m1 <- lmrob(Y ~ ., data = coleman))
+## "empty model" (not really a lot of sense)
+(m0 <- lmrob(Y ~ 0, data = coleman))
+summary(m0)
+## "Intercept" only: robust mean
+(m1 <- lmrob(Y ~ 1, data = coleman))
 summary(m1)
+
+
+(mC <- lmrob(Y ~ ., data = coleman))
+summary(mC)
 ## Values will change once we use R's random number generator !
-##>> stopifnot(
-all.equal(unname(coef(m1)),
-          c(29.5123314250361, -1.66091845261954, 0.083453132305779,
-            0.665713483136765, 1.17852545547180, -4.01036910730544))
-##>> )
+stopifnot(
+all.equal(unname(coef(mC)), c(29.51, -1.66, 0.0834, 0.666, 1.18, -4.01),
+          tol = 1e-3) # tol =0.000146 for 64-bit
+)
+str(mC)
 
 ## EX 2
 gen <- function(n,p, n0, y0, x0, beta = rep(1, p))
@@ -33,18 +41,28 @@ p <- 7 ## p = 20 is more impressive but too slow for "standard test"
 set.seed(17)
 a <- gen(n=n, p=p, n0= n0, y0=10, x0=10)
 plot(a$x[,1], a$y, col = c(rep(2, n0), rep(1, n-n0)))
-system.time( tmp <- lmrob(y~x, data = a) )
-plot(tmp) #- currently 5 plots; MM: don't like #3 (Response vs fitted)
+system.time( m1 <- lmrob(y~x, data = a) )
+plot(m1) #- currently 5 plots; MM:I  don't like #3 (Response vs fitted)
 
-## don't compute robust distances --> much faster (factor of  ~ 8 !)
-system.time(t2 <- lmrob(y~x, data = a,
+## don't compute robust distances --> faster by factor of two:
+system.time(m2 <- lmrob(y~x, data = a,
                         control = lmrob.control(compute.rd = FALSE)))
-## ==> most of the CPU time is spent in cov.rob()!
-(st2 <- summary(t2))
+## ==> half of the CPU time is spent in covMcd()!
+(sm2 <- summary(m2))
 l1 <- lm(y~x, data = a)
-cbind(robust = coef(st2)[,1:2],
+cbind(robust = coef(sm2)[,1:2],
       lm = coef(summary(l1))[,1:2])
-## rm(a,tmp, t2)
+
+##--- Now use n > 2000 --> so we use C internal fast_s_large_n(...)
+n <- 2500 ; n0 <- n %/% 10
+a2 <- gen(n=n, p = 3, n0= n0, y0=10, x0=10)
+plot(a2$x[,1], a2$y, col = c(rep(2, n0), rep(1, n-n0)))
+system.time( m3 <- lmrob(y~x, data = a2) )
+m3
+system.time( m4 <- lmrob(y~x, data = a2, compute.rd = FALSE))
+summary(m4)
+
+## rm(a,m1, m2, m3, m4, sm2, l1)
 
 
 

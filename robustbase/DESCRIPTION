@@ -1,6 +1,6 @@
 Package: robustbase
 Version: 0.1-5
-Date: 2006-04-01
+Date: 2006-04-03
 Title: Basic Robust Statistics
 Author: Original code by many authors, notably
 	Peter Rousseeuw, Christophe Croux, see file 'Copyrights';
@@ -20,3 +20,4 @@ Depends: stats, graphics, methods, MASS
 Suggests: MASS
 LazyLoad: yes
 License: GPL version 2 or later
+Packaged: Mon Apr  3 18:01:53 2006; maechler

@@ -101,7 +101,7 @@ o Add data sets from the MMY-book  -- try to use the same variable names as
   in the book [for that, need to wait for the book; to look at outputs or
   S-plus scripts].
 
---- lmrob ---
+--- lmrob --- --- --- --- ---
 
 o more tests in	tests/
 
@@ -109,9 +109,7 @@ o R/lmrob*.R : seems like a simple ``dump''
 	   (maybe via package.skeleton() ?)
 	   ==> has almost NO comment in the R code
 
-   lmrob():  add "..." allow ``control in there'' as well
-             Change default to  'compute.rd = FALSE' !!
-   --> see comment in R/lmrob.R
+  Possibly change default to  'compute.rd = FALSE' !?!
 
 o src/lmrob.c :
 

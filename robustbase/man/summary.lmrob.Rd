@@ -37,6 +37,10 @@
 mod1 <- lmrob(stack.loss ~ ., data = stackloss)
 sa <- summary(mod1)  # calls summary.lmrob(....)
 sa                   # dispatches to call print.summary.lmrob(....)
+
+data(heart)
+sm2 <- summary( m2 <- lmrob(clength ~ ., data = heart) )
+sm2
 }
 \keyword{robust}
 \keyword{regression}
