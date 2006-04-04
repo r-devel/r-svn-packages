@@ -16,7 +16,7 @@ summary(mC)
 ## Values will change once we use R's random number generator !
 stopifnot(
 all.equal(unname(coef(mC)), c(29.51, -1.66, 0.0834, 0.666, 1.18, -4.01),
-          tol = 1e-3) # tol =0.000146 for 64-bit
+          tol = 1e-3) # tol =0.000146 for 64-bit, 0.000251 for 32-bit
 )
 str(mC)
 
@@ -60,7 +60,16 @@ plot(a2$x[,1], a2$y, col = c(rep(2, n0), rep(1, n-n0)))
 system.time( m3 <- lmrob(y~x, data = a2) )
 m3
 system.time( m4 <- lmrob(y~x, data = a2, compute.rd = FALSE))
-summary(m4)
+(sm4 <- summary(m4))
+
+stopifnot(identical(coef(m3), coef(m4)),
+          all.equal(unname(coef(m3)),
+                    c(0.03802, 0.99653, 1.00555, 0.99981), tol= 4e-5),
+          all.equal(unname(coef(sm4)[,"Std. Error"]),
+                    c(0.0252, 0.00287, 0.0260, 0.0263), tol = 2e-3)
+          )
+
+
 
 ## rm(a,m1, m2, m3, m4, sm2, l1)
 

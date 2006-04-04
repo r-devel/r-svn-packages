@@ -9,7 +9,7 @@
 ### 3) allow the 'control' entries to enter via "..." as well -- Done
 
 ### 4) lmrob() should really behave like lm() {in R; not S !}
-###		--> 'subset' etc                              -- Done
+###		--> 'subset' etc			      -- Done
 
 ### 5) There are still quite a few things hard-coded in ../src/lmrob.c
 ###    E.g., 'Nres' is used, but MAX_NO_RESAMPLES = 500 cannot be changed.
@@ -46,7 +46,7 @@ lmrob <-
 	z <- list(coefficients = if (is.matrix(y))
 		    matrix(,0,3) else numeric(0), residuals = y,
 		  fitted.values = 0 * y, weights = w, rank = 0,
-		  df.residual = if (is.matrix(y)) nrow(y) else length(y))
+		  df.residual = NROW(y), converged = TRUE)
 	if(!is.null(offset)) z$fitted.values <- offset
     }
     else {
@@ -67,7 +67,7 @@ lmrob <-
     z$xlevels <- .getXlevels(mt, mf)
     z$call <- cl
     z$terms <- mt
-    if( control$compute.rd && !is.empty.model(mt)) {
+    if( control$compute.rd && !is.null(x)) {
 	x0 <- if(attr(mt, "intercept") == 1) x[, -1, drop=FALSE] else x
 	if(ncol(x0) >= 1) {
 	    rob <- covMcd(x0)
@@ -93,7 +93,7 @@ print.lmrob <- function(x, digits = max(3, getOption("digits") - 3), ...)
 	    cat("Coefficients:\n")
 	else
 	    cat("Algorithm did not converge\n\n",
-		"Coefficients of the *initial* estimator:\n")
+		"Coefficients of the *initial* S-estimator:\n")
 	print(format(coef(x), digits = digits), print.gap = 2, quote = FALSE)
     } else cat("No coefficients\n")
     cat("\n")
@@ -165,7 +165,7 @@ print.summary.lmrob <-
     if( length(x$coef) ) {
 	if( !(x$converged) ) {
 	    cat("\nAlgorithm did not converge\n")
-	    cat("\nCoefficients of *initial* estimator:\n")
+	    cat("\nCoefficients of *initial* S-estimator:\n")
 	    printCoefmat(x$coef, digits = digits, signif.stars = signif.stars,
 			 ...)
 	} else {

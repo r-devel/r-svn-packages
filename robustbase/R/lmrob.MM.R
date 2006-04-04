@@ -93,7 +93,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
     u1 <- A %*% u1 %*% A
     u2 <- a %*% t( t(x) %*% (w*w2) ) %*% A / n
     u3 <- A %*% (t(x) %*% (w*w2) ) %*% t(a) / n
-    u4 <- mean( ch1^2 - .5^2) *	a %*% t(a)
+    u4 <- mean(w2^2 - (control$bb)^2) * a %*% t(a)
 
     list(coef = b$coef, cov = (u1 - u2 - u3 + u4)/n, control = control,
 	 scale = b$scale, seed = b$seed, converged = b$converged )
@@ -142,7 +142,7 @@ lmrob.S <- function(x, y, control)
     u1 <- A %*% u1 %*% A
     u2 <- a %*% t( t(x) %*% (w*w2) ) %*% A / n
     u3 <- A %*% (t(x) %*% (w*w2) ) %*% t(a) / n
-    u4 <- mean(w^2 - .5^2) * a %*% t(a)
+    u4 <- mean(w2^2 - bb^2) * a %*% t(a)
 
     list(coef = b$coef, cov = (u1 - u2 - u3 + u4)/n,
 	 control = control, scale = b$scale, seed = b$seed)
