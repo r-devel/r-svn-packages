@@ -13,22 +13,21 @@
  *
  * adapt other sampler <<<<<<<<<<  R's random number generator !!!!
 
- * check pointers returned by malloc
-
  * replace abort for too many singular resamples by
  * returning the number of singular ones
  */
 
 /* MM:
-   -  drop 'register' : today's compilers do optimize well!
    -  Done:  fast_s[_large_n]() both had FIXED seed (= 37),
-             and effectively discarded the seed_rand argument below
+	     and effectively discarded the seed_rand argument below
+   -  Done:  drop 'register' : today's compilers do optimize well!
+   -  Done:  using Calloc() / Free() instead of malloc()/free()
  */
 
 #include <R.h>
 #include <Rmath.h>
 
-/* will become  "lmrob.h" ---
+/* will become	"lmrob.h" ---
  *  but first make many of these 'static' <<< FIXME!
  */
 void R_lmrob_S(double *X, double *y, int *n, int *P,
@@ -110,8 +109,7 @@ void r_sum_w_x(double **x, double *w, int n, int p,
 void r_sum_w_x_xprime(double **x, double *w, int n, int p,
 		      double **tmp, double **ans);
 
-
-double median_abs(double *, int , double *);
+double median_abs(double *, int, double *);
 double MAD(double *a, int n, double center, double *tmp, double *tmp2);
 
 double vecprime_vec(double *a, double *b, int n);
@@ -137,12 +135,11 @@ void sum_vec(double *a, double *b, double *c, int n);
 #define MAX_ITER_FIND_SCALE 200
 #define TOL_INVERSE ZERO
 
-
 /* This function computes an S-regression estimator */
 void R_lmrob_S(double *X, double *y, int *n, int *P,
-		int *nres, double *scale, double *beta_s,
-		int *seed_rand, double *C,
-		double *bb, int *Groups, int *N_group, int *K_fast_s)
+	       int *nres, double *scale, double *beta_s,
+	       int *seed_rand, double *rrhoc,
+	       double *bb, int *Groups, int *N_group, int *K_fast_s)
 {
     int bbest_r = 2;
 
@@ -151,11 +148,10 @@ void R_lmrob_S(double *X, double *y, int *n, int *P,
     if( *n > 2000 )
 	fast_s_large_n(X, y, n, P, nres, K_fast_s,
 		       Groups, N_group,
-		       &bbest_r, bb, C, beta_s, scale);
+		       &bbest_r, bb, rrhoc, beta_s, scale);
     else
 	fast_s(X, y, n, P, nres, K_fast_s,
-	       &bbest_r, bb, C, beta_s, scale);
-
+	       &bbest_r, bb, rrhoc, beta_s, scale);
 }
 
 /* This function performs RWLS iterations starting
@@ -171,9 +167,9 @@ void R_lmrob_MM(double *X, double *y, int *n, int *P,
 {
     double **x; /* scale */
     int N = *n, p = *P, i, j;
-    x = (double **) malloc( N * sizeof(double*) );
+    x = (double **) Calloc(N, double *);
     for(i=0; i<N; i++)
-	x[i]= (double *) malloc( (p+1) * sizeof(double) );
+	x[i]= (double *) Calloc( (p+1), double);
 /* rearranges X into a matrix of n x p */
     for(i=0; i<N; i++) {
 	for(j=0; j<p; j++)
@@ -189,8 +185,8 @@ void R_lmrob_MM(double *X, double *y, int *n, int *P,
     }
 
     for(i=0; i<N; i++)
-	free(x[i]);
-    free(x);
+	Free(x[i]);
+    Free(x);
 }
 
 
@@ -203,10 +199,10 @@ void R_lmrob_MM(double *X, double *y, int *n, int *P,
 int lu(double **a, int *P, double *x)
 {
     int *pp,p;
-    register int i,j,k;
+    int i,j,k;
     double *kk,s;
     p = *P;
-    if ((pp = (int *) malloc(p*sizeof(int)))==NULL)
+    if ((pp = (int *) Calloc(p, int))==NULL)
 	return(1);
 /* pp vector storing the permutations */
     for(j=0; j<p; j++) { /* cols */
@@ -222,7 +218,7 @@ int lu(double **a, int *P, double *x)
 	/* return if singular (det=0)
 	 * if pivot (j,j) is "zero"	 */
 	if ( fabs(a[j][j]) < TOL_INVERSE ) {
-	    free(pp);
+	    Free(pp);
 	    return(1);
 	}
 	for(k=(j+1); k<p; k++)
@@ -244,7 +240,7 @@ int lu(double **a, int *P, double *x)
 	    s += a[i][j] * x[j];
 	x[i] = (x[i] - s) / a[i][i];
     }
-    free(pp);
+    Free(pp);
     return(0);
 }
 
@@ -283,7 +279,7 @@ double Psi_reg(double x, double c)
 double Loss_Tukey(double *x, int n, double c)
 {
     double s=0;
-    register int i;
+    int i;
 
     for(i=0; i<n; i++) s += Chi(x[i], c);
 
@@ -347,20 +343,23 @@ void sample_n_outof_N(int n, int N, int *x)
  * adapt the other method
  *
  */
-    register int i,j,flag, cand=0;
+    int i;
     if( N < n ) {
-	/* printf("\nCant get %d out of %d \
-	   without replication\n", n, N); */
+	/* printf("\nCant get %d out of %d \ without replication\n", n, N); */
 	for(i=0; i<n; i++) x[i] = i;
     } else {
+	int j, is_previous, cand=0;
 	for(i=0; i<n; i++) {
-	    flag=1;
-	    while (flag==1) {
-		flag=0;
+	    is_previous=1;
+	    while (is_previous) {
+		is_previous = 0;
 		cand = (int) ( (double) rand() / RAND_MAX *
 			       (double) N );
-		for(j=0; j<i; j++)
-		    if( cand==x[j] ) flag=1;
+		for(j=0; j<i; j++) {
+		    if(cand == x[j]) {
+			is_previous = 1; break;
+		    }
+		}
 	    }
 	    x[i]=cand;
 	}
@@ -371,7 +370,7 @@ void sample_n_outof_N(int n, int N, int *x)
 double norm_diff(double *x, double *y, int n)
 {
     double s=0;
-    register int i;
+    int i;
     for(i=0; i<n; i++)
 	s += (x[i]-y[i])*(x[i]-y[i]);
     return( sqrt(s) );
@@ -380,7 +379,7 @@ double norm_diff(double *x, double *y, int n)
 /* C = A + B */
 void sum_mat(double **a, double **b, double **c, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++)
 	for(j=0; j<m; j++)
 	    c[i][j] = a[i][j] + b[i][j];
@@ -389,7 +388,7 @@ void sum_mat(double **a, double **b, double **c, int n, int m)
 /* A = v1 %*% t(v2) */
 void matias_vec_vec(double **a, double *v1, double *v2, int n)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++)
 	for(j=0; j<n; j++)
 	    a[i][j] = v1[i] * v2[j];
@@ -398,7 +397,7 @@ void matias_vec_vec(double **a, double *v1, double *v2, int n)
 /* C = A * b */
 void scalar_mat(double **a, double b, double **c, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++)
 	for(j=0; j<m; j++)
 	    c[i][j]  = b * a[i][j];
@@ -407,7 +406,7 @@ void scalar_mat(double **a, double b, double **c, int n, int m)
 /* c = a * b */
 void scalar_vec(double *a, double b, double *c, int n)
 {
-    register int i;
+    int i;
     for(i=0; i<n; i++)
 	c[i]  = b * a[i];
 }
@@ -415,7 +414,7 @@ void scalar_vec(double *a, double b, double *c, int n)
 /* returns the inner product of a and b, i.e. t(a) %*% b */
 double vecprime_vec(double *a, double *b, int n)
 {
-    register int i;
+    int i;
     double s = 0.0;
     for(i=0; i<n; i++) s += a[i] * b[i];
     return(s);
@@ -424,21 +423,21 @@ double vecprime_vec(double *a, double *b, int n)
 /* c = a + b */
 void sum_vec(double *a, double *b, double *c, int n)
 {
-    register int i;
+    int i;
     for(i=0; i<n; i++) c[i] = a[i] + b[i];
 }
 
 /* c = a - b */
 void dif_vec(double *a, double *b, double *c, int n)
 {
-    register int i;
+    int i;
     for(i=0; i<n; i++) c[i] = a[i] - b[i];
 }
 
 /* C = A - B */
 void dif_mat(double **a, double **b, double **c, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++)
 	for(j=0; j<m; j++) c[i][j] = a[i][j] - b[i][j];
 }
@@ -446,7 +445,7 @@ void dif_mat(double **a, double **b, double **c, int n, int m)
 /* c = A %*% b */
 void mat_vec(double **a, double *b, double *c, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++)
 	for(c[i]=0,j=0; j<m; j++) c[i] += a[i][j] * b[j];
 }
@@ -455,7 +454,7 @@ void mat_vec(double **a, double *b, double *c, int n, int m)
 void mat_mat(double **a, double **b, double **c, int n,
 		int m, int l)
 {
-    register int i,j,k;
+    int i,j,k;
     for(i=0; i<n; i++)
 	for(j=0; j<l; j++) {
 	    c[i][j] = 0;
@@ -475,18 +474,18 @@ int rwls(double **a, int n, int p,
     double **b,s,*beta1, *beta2, *beta0, *weights, *resid;
     double r,loss1,loss2,lambda;
     int iterations=0, iter_lambda;
-    register int i,j,k;
+    int i,j,k;
 
-    if ( (b = (double **) malloc ( p * sizeof(double *) ) )==NULL )
+    if ( (b = (double **) Calloc(p, double *)) == NULL)
 	return(1);
     for (i=0; i<p; i++)
-	if ( (b[i] = (double *) malloc ( (p+1) * sizeof(double) ) )==NULL )
+	if ( (b[i] = (double *) Calloc((p+1), double)) == NULL)
 	    return(1);
-    beta1 = (double *) malloc( p * sizeof(double) );
-    beta2 = (double *) malloc( p * sizeof(double) );
-    beta0 = (double *) malloc( p * sizeof(double) );
-    weights = (double *) malloc( n * sizeof(double) );
-    resid = (double *) malloc( n * sizeof(double) );
+    beta1 = (double *) Calloc(p, double);
+    beta2 = (double *) Calloc(p, double);
+    beta0 = (double *) Calloc(p, double);
+    weights = (double *) Calloc(n, double);
+    resid = (double *) Calloc(n, double);
 
     for(i=0; i<p; i++)
 	beta2[i] = (beta1[i]=i_estimate[i]) + 1;
@@ -565,10 +564,10 @@ int rwls(double **a, int n, int p,
     } /* end while(norm_diff(...)   */
     for(j=0; j<p; j++)
 	estimate[j]=beta0[j];
-    free(weights); free(beta1); free(beta2);
-    free(beta0); free(resid);
-    for(i=0; i<p; i++) free(b[i]);
-    free(b);
+    Free(weights); Free(beta1); Free(beta2);
+    Free(beta0); Free(resid);
+    for(i=0; i<p; i++) Free(b[i]);
+    Free(b);
 
     return (iterations == max_it) ? 1 : 0;
 
@@ -577,7 +576,7 @@ int rwls(double **a, int n, int p,
 /* sets the entries of a matrix to zero */
 void reset_mat(double **a, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++)
 	for(j=0; j<m; j++)
 	    a[i][j] = 0.0;
@@ -586,7 +585,7 @@ void reset_mat(double **a, int n, int m)
 /* sets the entries of a vector to zero */
 void reset_vec(double *a, int n)
 {
-    register int i;
+    int i;
     for(i=0; i<n; i++) a[i] = 0.0;
 }
 
@@ -630,7 +629,7 @@ void fast_s_large_n(double *X, double *y,
  * *nn_group = size of each of the (*ggroups) groups
  *	       to use in the random subsample
 */
-    register int i,j,k,k2;
+    int i,j,k,k2;
     int n = *nn, p = *pp, kk = *K, *indices;
     int groups = *ggroups, n_group = *nn_group, best_r = *bbest_r;
     double **best_betas, *best_scales;
@@ -640,41 +639,40 @@ void fast_s_large_n(double *X, double *y,
     double best_sc, worst_sc, b = *bb, rhoc = *rrhoc, aux;
     int pos_worst_scale, conv;
 
-    res = (double *) malloc( n * sizeof(double) );
-    weights = (double *) malloc( n * sizeof(double) );
-    tmp	 = (double *) malloc( n * sizeof(double) );
-    tmp2 = (double *) malloc( n * sizeof(double) );
-    tmp_mat  = (double **) malloc( p * sizeof(double *) );
-    tmp_mat2 = (double **) malloc( p * sizeof(double *) );
+    res = (double *) Calloc(n, double);
+    weights = (double *) Calloc(n, double);
+    tmp	 = (double *) Calloc(n, double);
+    tmp2 = (double *) Calloc(n, double);
+    tmp_mat  = (double **) Calloc(p, double *);
+    tmp_mat2 = (double **) Calloc(p, double *);
     for(i=0; i<p; i++) {
-	tmp_mat[i] = (double *) malloc(p * sizeof(double) );
-	tmp_mat2[i] = (double *) malloc((p+1) * sizeof(double) );
+	tmp_mat[i] = (double *) Calloc(p, double);
+	tmp_mat2[i] = (double *) Calloc((p+1), double);
     }
-    beta_ref = (double *) malloc( p * sizeof(double) );
-    final_best_betas = (double **) malloc(best_r * sizeof( double * ) );
+    beta_ref = (double *) Calloc(p, double);
+    final_best_betas = (double **) Calloc(best_r,  double * );
     for(i=0; i < best_r; i++)
-	final_best_betas[i] = (double *) malloc(p * sizeof(double) );
-    final_best_scales = (double *) malloc(best_r * sizeof(double) );
+	final_best_betas[i] = (double *) Calloc(p, double);
+    final_best_scales = (double *) Calloc(best_r, double);
     k = best_r * groups;
-    best_betas = (double **) malloc( k * sizeof( double * ) );
-    best_scales = (double *) malloc( k * sizeof( double ) );
+    best_betas = (double **) Calloc(k,	double * );
+    best_scales = (double *) Calloc(k,	double );
     for(i=0; i < k; i++)
-	best_betas[i] = (double*) malloc( p * sizeof(double) );
-    x = (double**) malloc( n * sizeof(double *) );
+	best_betas[i] = (double*) Calloc(p, double);
+    x = (double**) Calloc(n, double *);
     for(i=0; i<n; i++)
-	x[i] = (double*) malloc( p * sizeof(double) );
+	x[i] = (double*) Calloc(p, double);
     k = n_group * groups;
-    indices = (int *) malloc( k * sizeof(int) );
-    xsamp = (double**) malloc( k * sizeof(double *) );
-    ysamp = (double*) malloc( k * sizeof(double) );
-    for(i=0; i<k; i++)
-	xsamp[i] = (double*) malloc( p * sizeof(double) );
+    indices = (int *) Calloc(k, int);
+    xsamp = (double**) Calloc(k, double *);
+    ysamp = (double*) Calloc(k, double);
+    for(i=0; i < k; i++)
+	xsamp[i] = (double*) Calloc(p, double);
     for(i=0; i<n; i++)
-	for(j=0; j<p; j++)
+	for(j=0; j < p; j++)
 	    x[i][j] = X[j*n+i];
 
-    /* assume that n > 2000
-     * k = n_group * groups */
+    /* assume that n > 2000 */
 
     /*	set the seed -- no longer! -- assume the caller set it ! --
      *	srand((long)37); */
@@ -747,25 +745,25 @@ void fast_s_large_n(double *X, double *y,
 
 /* Done. Now clean-up. */
 
-    for(i=0; i<n; i++) free(x[i]); free(x);
-    free(best_scales);
+    for(i=0; i<n; i++) Free(x[i]); Free(x);
+    Free(best_scales);
     k = best_r * groups;
-    for(i=0; i<k; i++) free( best_betas[i] );
-    free(best_betas); free(indices); free(ysamp);
+    for(i=0; i<k; i++) Free( best_betas[i] );
+    Free(best_betas); Free(indices); Free(ysamp);
     k = n_group * groups;
-    for(i=0; i<k; i++) free(xsamp[i]);
-    free(xsamp); free(tmp); free(tmp2);
+    for(i=0; i<k; i++) Free(xsamp[i]);
+    Free(xsamp); Free(tmp); Free(tmp2);
     for(i=0; i<p; i++) {
-	free(tmp_mat[i]);
-	free(tmp_mat2[i]);
+	Free(tmp_mat[i]);
+	Free(tmp_mat2[i]);
     }
-    free(tmp_mat); free(tmp_mat2); free(weights);
+    Free(tmp_mat); Free(tmp_mat2); Free(weights);
     for(i=0; i<best_r; i++)
-	free(final_best_betas[i]);
-    free(final_best_betas);
-    free(final_best_scales);
-    free(res);
-    free(beta_ref);
+	Free(final_best_betas[i]);
+    Free(final_best_betas);
+    Free(final_best_scales);
+    Free(res);
+    Free(beta_ref);
 
 }
 
@@ -792,7 +790,7 @@ void fast_s_with_memory(double **x, double *y,
  *	*bbeta	= returning fast-S estimator
  *	*sscale = returning associated residual scale
 */
-    register int i,j,k,no_resamples;
+    int i,j,k,no_resamples;
     int n = *nn, p = *pp, Nres = *nRes, kk = *K;
     int *b_i, flag, conv;
     double **x_samp, *beta_cand, *beta_ref, *res, aux;
@@ -805,22 +803,22 @@ void fast_s_with_memory(double **x, double *y,
 	best_scales[i] = INFI;
     }
     pos_worst_scale = 0;
-    res	      = (double *) malloc( n * sizeof(double) );
-    tmp	      = (double *) malloc( n * sizeof(double) );
-    tmp2      = (double *) malloc( n * sizeof(double) );
-    weights   = (double *) malloc( n * sizeof(double) );
-    beta_cand = (double *) malloc( p * sizeof(double) );
-    beta_ref  = (double *) malloc( p * sizeof(double) );
-    b_i	      = (int *) malloc( n * sizeof(int) );
-    x_samp    = (double **) malloc( n * sizeof(double*) );
-    tmp_mat   = (double **) malloc( p * sizeof(double*) );
-    tmp_mat2  = (double **) malloc( p * sizeof(double*) );
+    res	      = (double *) Calloc(n, double);
+    tmp	      = (double *) Calloc(n, double);
+    tmp2      = (double *) Calloc(n, double);
+    weights   = (double *) Calloc(n, double);
+    beta_cand = (double *) Calloc(p, double);
+    beta_ref  = (double *) Calloc(p, double);
+    b_i	      = (int *) Calloc(n, int);
+    x_samp    = (double **) Calloc(n, double *);
+    tmp_mat   = (double **) Calloc(p, double *);
+    tmp_mat2  = (double **) Calloc(p, double *);
     for(i=0; i<n; i++) {
-	x_samp[i]  = (double *) malloc( (p+1) * sizeof(double) );
+	x_samp[i]  = (double *) Calloc((p+1), double);
     }
     for(i=0; i<p; i++) {
-	tmp_mat[i] = (double *) malloc( p * sizeof(double) );
-	tmp_mat2[i] = (double *) malloc( (p+1) * sizeof(double) );
+	tmp_mat[i] = (double *) Calloc(p, double);
+	tmp_mat2[i] = (double *) Calloc((p+1), double);
     }
 /* flag for refine(), conv == 0 means do k refining steps
  *		      conv == 1 means refine until convergence
@@ -868,17 +866,17 @@ void fast_s_with_memory(double **x, double *y,
 /* this function returns all the best_betas
  * and best_scales
 */
-    free(tmp); free(tmp2);
-    free(res); free(weights); free(beta_cand);
-    free(beta_ref); free(b_i);
+    Free(tmp); Free(tmp2);
+    Free(res); Free(weights); Free(beta_cand);
+    Free(beta_ref); Free(b_i);
     for(i=0; i<n; i++) {
-	free(x_samp[i]);
+	Free(x_samp[i]);
     }
     for(i=0; i<p; i++) {
-	free(tmp_mat[i]);
-	free(tmp_mat2[i]);
+	Free(tmp_mat[i]);
+	Free(tmp_mat2[i]);
     }
-    free(x_samp); free(tmp_mat); free(tmp_mat2);
+    Free(x_samp); Free(tmp_mat); Free(tmp_mat2);
 }
 
 void fast_s(double *X, double *y,
@@ -900,7 +898,7 @@ void fast_s(double *X, double *y,
  *	*sscale = returning associated residual scale
 */
 
-    register int i,j,k;
+    int i,j,k;
     int n = *nn, p = *pp, Nres = *nRes, kk = *K, no_resamples;
     int *b_i, flag, conv;
     double **x, **x_samp, *beta_cand, *beta_ref, *res, aux;
@@ -909,48 +907,49 @@ void fast_s(double *X, double *y,
     int best_r = *bbest_r, pos_worst_scale;
     double *tmp, *tmp2, **tmp_mat2, **tmp_mat, best_sc;
 
-    best_betas = (double **) malloc( best_r * sizeof(double*) );
-    best_scales = (double *) malloc( best_r * sizeof(double) );
+    best_betas = (double **) Calloc(best_r, double *);
+    best_scales = (double *) Calloc(best_r, double);
     for(i=0; i<best_r; i++) {
-	best_betas[i] = (double*) malloc( p * sizeof(double) );
-	best_scales[i] = INFI; }
+	best_betas[i] = (double*) Calloc(p, double);
+	best_scales[i] = INFI;
+    }
     pos_worst_scale = 0;
-    res	  = (double *) malloc( n * sizeof(double) );
-    tmp	  = (double *) malloc( n * sizeof(double) );
-    tmp2	  = (double *) malloc( n * sizeof(double) );
-    weights	  = (double *) malloc( n * sizeof(double) );
-    beta_cand = (double *) malloc( p * sizeof(double) );
-    beta_ref  = (double *) malloc( p * sizeof(double) );
-    b_i	  = (int *) malloc( n * sizeof(int) );
-    x	  = (double **) malloc( n * sizeof(double*) );
-    x_samp	  = (double **) malloc( n * sizeof(double*) );
-    tmp_mat	  = (double **) malloc( p * sizeof(double*) );
-    tmp_mat2  = (double **) malloc( p * sizeof(double*) );
+    res	  = (double *) Calloc(n, double);
+    tmp	  = (double *) Calloc(n, double);
+    tmp2  = (double *) Calloc(n, double);
+    weights= (double *) Calloc(n, double);
+    beta_cand = (double *) Calloc(p, double);
+    beta_ref  = (double *) Calloc(p, double);
+    b_i	  = (int *) Calloc(n, int);
+    x	  = (double **) Calloc(n, double *);
+    x_samp= (double **) Calloc(n, double *);
+    tmp_mat  = (double **) Calloc(p, double *);
+    tmp_mat2 = (double **) Calloc(p, double *);
     for(i=0; i<n; i++) {
-	x[i]	   = (double *) malloc( p * sizeof(double) );
-	x_samp[i]  = (double *) malloc( (p+1) * sizeof(double) );
+	x[i]	   = (double *) Calloc(p, double);
+	x_samp[i]  = (double *) Calloc((p+1), double);
     }
     for(i=0; i<p; i++) {
-	tmp_mat[i] = (double *) malloc( p * sizeof(double) );
-	tmp_mat2[i] = (double *) malloc( (p+1) * sizeof(double) );
+	tmp_mat[i] = (double *) Calloc(p, double);
+	tmp_mat2[i] = (double *) Calloc((p+1), double);
     }
 
 #define FREE_fast_s							\
-	free(best_scales); free(tmp); free(tmp2);			\
-	free(res); free(weights); free(beta_cand);			\
-	free(beta_ref); free(b_i);					\
+	Free(best_scales); Free(tmp); Free(tmp2);			\
+	Free(res); Free(weights); Free(beta_cand);			\
+	Free(beta_ref); Free(b_i);					\
 	for(i=0; i<best_r; i++)						\
-	    free(best_betas[i]);					\
-	free(best_betas);						\
+	    Free(best_betas[i]);					\
+	Free(best_betas);						\
 	for(i=0; i<n; i++) {						\
-	    free(x[i]);							\
-	    free(x_samp[i]);						\
+	    Free(x[i]);							\
+	    Free(x_samp[i]);						\
 	}								\
 	for(i=0; i<p; i++) {						\
-	    free(tmp_mat[i]);						\
-	    free(tmp_mat2[i]);						\
+	    Free(tmp_mat[i]);						\
+	    Free(tmp_mat2[i]);						\
 	}								\
-	free(x); free(x_samp); free(tmp_mat); free(tmp_mat2);
+	Free(x); Free(x_samp); Free(tmp_mat); Free(tmp_mat2);
 
 
     for(i=0; i<n; i++)
@@ -1053,17 +1052,18 @@ void refine_fast_s(double **x, double *y, double *weights,
 		   double *beta_ref, double *scale)
 {
 /*
- * weights = vector of length n
- * res = vector of length n
  * x = matrix with the data
  * y = vector with responses
+ * weights = vector of length n
+ * res = vector of length n
+
  * tmp = aux vector of length n
  * tmp2 = aux vector of length n
  * tmp_mat = aux matrix p x p
  * tmp_mat2 = aux matrix p x (p+1)
 */
 
-    register int i,j;
+    int i,j;
     int zeroes=0;
     double initial_scale = *is, s0;
 
@@ -1104,12 +1104,11 @@ void refine_fast_s(double **x, double *y, double *weights,
 	    lu(tmp_mat2, &p, beta_ref);
 	    /* check for convergence? */
 	    if(conv > 0) {
-		if(norm_diff(beta_cand, beta_ref, p) /
-		   norm(beta_cand, p) < EPS )
+		if(norm_diff(beta_cand, beta_ref, p) < EPS * norm(beta_cand, p))
 		    break;
 	    }
 	    for(j=0; j<n; j++)
-		res[j] = y[j] - vecprime_vec(x[j], beta_ref , p);
+		res[j] = y[j] - vecprime_vec(x[j], beta_ref, p);
 	    for(j=0; j<p; j++)
 		beta_cand[j] = beta_ref[j];
 	}
@@ -1136,7 +1135,7 @@ void get_weights_rhop(double *r, double s,
 		int n,
 		double rhoc, double *w)
 {
-    register int i;
+    int i;
     double a;
     for(i=0; i<n; i++) {
 	a = r[i] / s / rhoc;
@@ -1166,7 +1165,7 @@ double find_scale(double *r, double b, double rhoc,
 
 int find_max(double *a, int n)
 {
-    register int i;
+    int i;
     int k=0;
     double tmp = a[0];
     if(n==1) return(0);
@@ -1190,13 +1189,13 @@ void r_sum_w_x(double **x, double *w, int n, int p,
  * \sumin w_i x_i
  * need space for p doubles in *tmp
 */
-    register int i;
+    int i;
 
     reset_vec(sum, p);
 
     for(i=0; i<n; i++) {
 	scalar_vec(x[i], w[i], tmp, p);
-	sum_vec(sum , tmp , sum, p);
+	sum_vec(sum, tmp, sum, p);
     }
 }
 
@@ -1210,7 +1209,7 @@ void r_sum_w_x_xprime(double **x, double *w, int n, int p,
  * \sumin w_i x_i x_i'
  * need space for p x p "doubles" in tmp
 */
-    register int i;
+    int i;
 
     reset_mat(ans, p, p);
 
@@ -1225,7 +1224,7 @@ void r_sum_w_x_xprime(double **x, double *w, int n, int p,
 
 double loss_rho(double *r, double scale, int n, int p, double rhoc)
 {
-    register int i;
+    int i;
     double s = 0;
     for(i=0; i<n; i++)
 	s += Chi(r[i]/scale, rhoc);
@@ -1236,7 +1235,7 @@ double loss_rho(double *r, double scale, int n, int p, double rhoc)
 double norm(double *x, int n)
 {
     double s = 0;
-    register int i;
+    int i;
     for(i=0; i<n; i++) s += x[i] * x[i];
     return(sqrt(s));
 }
@@ -1256,7 +1255,7 @@ double MAD(double *a, int n, double center, double *b,
 double median(double *x, int n, double *aux)
 {
     double t;
-    register int i;
+    int i;
     for(i=0; i<n; i++) aux[i]=x[i];
     if ( (n/2) == (double) n / 2 )
 	t = ( kthplace(aux,n,n/2) + kthplace(aux,n,n/2+1) ) / 2.0 ;
@@ -1267,7 +1266,7 @@ double median(double *x, int n, double *aux)
 double median_abs(double *x, int n, double *aux)
 {
     double t;
-    register int i;
+    int i;
     for(i=0; i<n; i++) aux[i]=fabs(x[i]);
     if ( (n/2) == (double) n / 2 )
 	t = ( kthplace(aux,n,n/2) + kthplace(aux,n,n/2+1) ) / 2.0 ;
@@ -1280,7 +1279,7 @@ double median_abs(double *x, int n, double *aux)
 void mat_prime_mat_w(double **a, double *w, double **c,
 		int n, int m)
 {
-    register int i,j,k;
+    int i,j,k;
     for(i=0; i<m; i++) {
 	for(j=0; j<m; j++) {
 	    c[i][j] = 0;
@@ -1292,7 +1291,7 @@ void mat_prime_mat_w(double **a, double *w, double **c,
 
 void mat_prime_vec(double **a, double *b, double *c, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<m; i++)
 	for(c[i]=0,j=0; j<n; j++) c[i] += a[j][i] * b[j];
 }
@@ -1300,7 +1299,7 @@ void mat_prime_vec(double **a, double *b, double *c, int n, int m)
 
 void disp_vec(double *a, int n)
 {
-    register int i;
+    int i;
     Rprintf("\n");
     for(i=0; i<n; i++) Rprintf("%lf ",a[i]);
     Rprintf("\n");
@@ -1309,7 +1308,7 @@ void disp_vec(double *a, int n)
 
 void disp_mat(double **a, int n, int m)
 {
-    register int i,j;
+    int i,j;
     for(i=0; i<n; i++) {
 	Rprintf("\n");
 	for(j=0; j<m; j++) Rprintf("%10.8f ",a[i][j]);
