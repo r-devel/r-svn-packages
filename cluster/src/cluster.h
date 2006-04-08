@@ -133,6 +133,15 @@ void sildist(double *d,		/* distance : in matrix or dist format; i.e.,
 	     int    *neighbor,	/* neighbor */
 	     int    *ismat);	/* boolean : is 'd' a matrix or 'dist' ? */
 
+void fanny(int *nn, int *jpp, int *kk,
+	   double *x, double *dss, int *jdyss, double *valmd,
+	   int *jtmd, int *ndyst, int *nsend, int *nelem,
+	   int *negbr, double *syl, double *p, double *dp,
+	   double *pt, int *nfuzz, double *esp, double *ef,
+	   double *dvec, double *ttsyl, double *eda, double *edb,
+	   double *obj, int *ncluv, double *sylinf, double *r__,
+	   double *tol, int *maxit);
+
 
 /* ================= Fortran things (remainder) ======================== */
 
@@ -142,15 +151,6 @@ int F77_NAME(daisy)(int *nn, int *jpp, double *x,
 		    int *ndyst, int *mdata, double *disv);
 
 /* -------- ./fanny.f ---------------------------------- */
-int F77_NAME(fanny)(int *nn, int *jpp, int *kk,
-		    double *x, double *dss, int *jdyss, double *valmd,
-		    int *jtmd, int *ndyst, int *nsend, int *nelem,
-		    int *negbr, double *syl, double *p, double *dp,
-		    double *pt, int *nfuzz, double *esp, double *ef,
-		    double *dvec, double *ttsyl, double *eda, double *edb,
-		    double *obj, int *ncluv, double *sylinf, double *r,
-		    double *tol, int *maxit);
-
 /* only called from ../tests/dysta-ex.R */
 int F77_NAME(dysta3)(int *nn, int *jpp, double *x, double *dys, int *ndyst,
 		     int *jtmd, double *valmd, int *jhalt);

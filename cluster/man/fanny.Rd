@@ -112,6 +112,8 @@ plot(fannyx)
 (fanny(x, 2, memb.exp = 3))               # more fuzzy in general
 
 data(ruspini)
+f4 <- fanny(ruspini, 4)
+stopifnot(rle(f4$clustering)$lengths == c(20,23,17,15))
 ## Plot similar to Figure 6 in Stryuf et al (1996)
 plot(fanny(ruspini, 5))
 }
