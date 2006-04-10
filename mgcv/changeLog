@@ -1,3 +1,13 @@
+1.3-14
+
+* mat.c:mgcv_symeig modified to allow selection of the LAPACK routine
+  actually used: dsyevd is the routine used previously, and seems very 
+  reliable. dsyevr is the faster, smaller more modern version, which it
+  seems possible to break... rest of code still calls dsyevd.
+
+* Symbol registration added (thanks largely to Brian Ripley). Version 
+  depends on R >= 2.3.0
+
 1.3-13
 
 * some doc changes
