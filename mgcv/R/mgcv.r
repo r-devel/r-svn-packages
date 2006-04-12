@@ -3275,7 +3275,6 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
 
 # From here on is the code for magic.....
 
-
 mroot <- function(A,rank=NULL,method="chol")
 # finds the smallest square root of A, or the best approximate square root of 
 # given rank. B is returned where BB'=A. A assumed non-negative definite. 
@@ -3297,7 +3296,9 @@ mroot <- function(A,rank=NULL,method="chol")
     return(t(t(um$u[,1:rank])*as.vector(d))) # note recycling rule used for efficiency
   } else
   if (method=="chol")
-  { L<-chol(A,pivot=TRUE)
+  { op<-options(warn=-1) ## don't want to be warned it's not +ve def
+    L<-chol(A,pivot=TRUE)
+    options(op) ## reset default warnings
     piv<-order(attr(L,"pivot"))
     if (is.null(rank)) rank<-attr(L,"rank")
     L<-L[,piv];L<-t(L[1:rank,])
