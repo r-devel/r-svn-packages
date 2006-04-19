@@ -6,345 +6,347 @@
  */
 
 #include <Rmath.h>
-#include "cluster.h"
+#include <R_ext/Print.h>/* for diagnostics */
 
+#include "cluster.h"
 /* dysta3_() is in cluster.h ! */
 
 static void
-caddy(int *, double *, int *,
-      int *, int *, int *, double *);
+fuzzy(int nn, int k, double *p,
+      double *dp, double *pt, double *dss, double *esp,
+      double *ef, double *obj,
+      double r, double tol, int *nit, int trace_lev);
+
 static void
-fygur(int *, int *, int *,
-      int *, int *, int *, int *, int *, double *,
-      double *, double *, double *, double *, double *, double *);
+caddy(int nn, int k, double *p, int *ktrue,
+      int *nfuzz, int *ncluv, double *rdraw, int trace_lev);
+
 static void
-fuzzy(int *, int *, double *, double *, double *, double *,
-      double *, double *, double *, double *, int *,
-      double *, double *, double *, int *);
+fygur(int kk, int nn,
+      int *ncluv, int *nsend, int *nelem, int *negbr,
+      double *syl, double *srank, double *avsyl, double *ttsyl,
+      double *dss, double *s, double *sylinf);
 
 
-void fanny(int *nn, int *jpp, int *kk,
+void fanny(int *nn,  /* = number of objects */
+	   int *jpp, /* = number of variables for clustering */
+	   int *kk,  /* = number of clusters */
 	   double *x, double *dss, int *jdyss, double *valmd,
 	   int *jtmd, int *ndyst, int *nsend, int *nelem,
 	   int *negbr, double *syl, double *p, double *dp,
 	   double *pt, int *nfuzz, double *esp, double *ef,
-	   double *dvec, double *ttsyl, double *eda, double *edb,
-	   double *obj, int *ncluv, double *sylinf, double *r,
-	   double *tol, int *maxit)
+	   double *dvec, double *ttsyl,
+	   double *obj, /* input/output;  see fuzzy() below */
+	   int *ncluv, double *sylinf,
+	   double *r, double *tol, int *maxit)
 {
-/* Arguments
-   nn	= number of objects
-   jpp	= number of variables for clustering
-   kk	= number of clusters
-*/
-
-    /* Local variables */
-    int l, nhalf, jhalt, ktrue;
-    double s;
-
+    int ktrue, trace_lev = (int) obj[1];
+    Rboolean all_stats = (obj[0] == 0.);/* TODO: consider *not* doing caddy() */
 
     if (*jdyss != 1) { /* compute dissimilarities from data */
-	jhalt = 0;
+	int jhalt = 0;
 	dysta3_(nn, jpp, x, dss, ndyst, jtmd, valmd, &jhalt);
-	if (jhalt != 0) {
-	    *jdyss = -1;
-	    return;
+	if (jhalt) {
+	    *jdyss = -1; return;
 	}
     }
 
-    nhalf = *nn * (*nn - 1) / 2;
+    fuzzy(*nn, *kk, p, dp, pt, dss, esp,
+	  ef, obj, *r, *tol, maxit, trace_lev);
 
-    fuzzy(nn, &nhalf, p, dp, pt, dss, esp,
-	  ef, eda, edb, kk, obj, r, tol, maxit);
+    caddy(*nn, *kk, p, /* -> */ &ktrue, nfuzz, ncluv, pt, trace_lev);
 
-    caddy(nn, p, kk, &ktrue, nfuzz, ncluv, pt);
+    obj[0] = (double) ktrue;
 
-    /*  Compute "silhouette": */
-    if (2 <= ktrue && ktrue < *nn) {
-	/* s := max( dss[i,j] ) */
-	for(l = 0, s = 0.; l < nhalf; l++)
-	    if (s < dss[l])
-		s = dss[l];
-	fygur(&ktrue, nn, kk, &nhalf, ncluv, nsend, nelem,
+    /*	Compute "silhouette": */
+    if (all_stats && 2 <= ktrue && ktrue < *nn) {
+	int i, nhalf = *nn * (*nn - 1) / 2;
+	double s = 0.; /* s := max( dss[i,j] ) */
+	for(i = 0; i < nhalf; i++)
+	    if (s < dss[i])
+		s = dss[i];
+	fygur(ktrue, *nn, ncluv, nsend, nelem,
 	      negbr, syl, dvec, pt, ttsyl, dss, &s, sylinf);
     }
     return;
 } /* fanny */
 
 
-int dysta3_(int *nn, int *jpp, double *x, double *dys,
-	    int *ndyst, int *jtmd, double *valmd, int *jhalt)
+void dysta3_(int *nn, int *p, double *x, double *dys,
+	     int *ndyst, int *jtmd, double *valmd, int *jhalt)
 {
-    /* System generated locals */
-    int x_dim1, x_offset;
-
-
-    /* Local variables */
     int j, k, l, nlk, npres;
-    double clk, rpres;
+    double clk, d;
+    int x_d = *nn;
 
-    /* Parameter adjustments */
-    --dys;
-    --valmd;
-    --jtmd;
-    x_dim1 = *nn;
-    x_offset = 1 + x_dim1 * 1;
-    x -= x_offset;
-
-    /* Function Body */
     nlk = 0;
-    for (l = 1; l <= (*nn - 1); ++l) {
-	for (k = l + 1; k <= *nn; ++k) {
+    for (l = 0; l < (*nn - 1); ++l) {
+	for (k = l + 1; k < *nn; ++k, ++nlk) {
 	    clk = 0.;
-	    ++nlk;
 	    npres = 0;
-	    for (j = 1; j <= *jpp; ++j) {
+	    for (j = 0; j < *p; ++j) {
 		if (jtmd[j] < 0) {
-		    if (x[l + j * x_dim1] == valmd[j] ||
-			x[k + j * x_dim1] == valmd[j])
+		    if (x[l + j * x_d] == valmd[j] ||
+			x[k + j * x_d] == valmd[j])
 
 			continue; /* next j */
 		}
 		++npres;
-		if (*ndyst == 1)
-		    clk += (x[l + j * x_dim1] - x[k + j * x_dim1]) *
-			   (x[l + j * x_dim1] - x[k + j * x_dim1]);
-		else
-		    clk += fabs(x[l + j * x_dim1] - x[k + j * x_dim1]);
+		d = x[l + j * x_d] - x[k + j * x_d];
+		if (*ndyst != 2) /* 1 or 3 */
+		    clk += d * d;
+		else /* if (*ndyst == 2) */
+		    clk += fabs(d);
 	    }
 	    if (npres == 0) {
-		*jhalt = 1;
-		dys[nlk] = -1.;
+		dys[nlk] = -1.;	*jhalt = 1;
 	    } else {
-		double p_r = (*jpp) / (double) npres;
-		if (*ndyst == 1)
-		    dys[nlk] = sqrt(clk * p_r);
-		else
-		    dys[nlk] = clk * p_r;
+		clk *= (*p) / (double) npres;
+		dys[nlk] = (*ndyst == 1) ? sqrt(clk) : /*ndyst = 2 or 3 */ clk;
 	    }
 	}
     }
-    return 0;
 } /* dysta3_ */
 
 
 static
-void fuzzy(int *nn, int *hh, double *p,
-	   double *dp, double *pt, double *dss, double *esp,
-	   double *ef, double *eda, double *edb, int *k,
-	   double *obj,
-	   double *r,  /* the exponent, > 1. -- was fixed to 2 originally */
-	   double *tol,/* the precision for the iterations */
-	   int *nit)   /* the maximal number of iterations -- was fixed to 500*/
+void fuzzy(int nn, int k, double *p,
+	   double *dp, double *pt, double *dss, double *esp, double *ef,
+	   double *obj,/* of length 4;
+			* in : (cluster_only, trace_lev, compute_p, 0)
+			* out: (ktrue	    , cryt, PC ("dunn"), normalized_PC)
+			*/
+	   double r,  /* the exponent, > 1. -- was fixed to 2 originally */
+	   double tol,/* the precision for the iterations */
+	   int *nit,   /* the maximal number of iterations --
+			  originally fixed to 500 */
+	   int trace_lev)
 {
-    /* Local variables */
-    double p0, dt, zk, xx, ddd, crt, reen, cryt, rvers;
-    int j, l, m, nd, jm, it, lx, ndk;
+    double dt, xx, ddd, crt, reen, cryt;
+    int p_d = nn, dp_d = nn;
+    int i, j, m, mi, it;
+    Rboolean converged = FALSE, compute_p = (int)obj[2];
 
-    /* System generated locals */
-    int p_dim1, p_offset, dp_dim1, dp_offset;
-    double d__1;
-    /* Parameter adjustments */
-    --dss;
-    --ef;
-    --esp;
-    --pt;
-    dp_dim1 = *nn;
-    dp_offset = 1 + dp_dim1 * 1;
-    dp -= dp_offset;
-    p_dim1 = *nn;
-    p_offset = 1 + p_dim1 * 1;
-    p -= p_offset;
+    if(trace_lev)
+	Rprintf("fanny()'s fuzzy(n = %d, k = %d):\n", nn, k);
 
+    if(compute_p) {
+	/* Compute initial fuzzy clustering, i.e. membership matrix  p[,] */
+	int nd, ndk;
+	double p0 = 0.1 / (k - 1);
+	for (m = 0; m < nn; ++m)
+	    for (j = 0; j < k; ++j)
+		p[m + j * p_d] = p0;
 
-    /* Function Body */
-    rvers = 1. / *r;
-    reen = 1. / (*r - 1.);
-
-/*     initial fuzzy clustering */
-
-    p0 = 0.1 / (*k - 1);
-    for (m = 1; m <= *nn; ++m) {
-	for (l = 1; l <= *k; ++l) {
-	    dp[m + l * dp_dim1] = 0.;
-	    p[m + l * p_dim1] = p0;
+	ndk = nn / k;
+	nd = ndk;
+	j = 0;
+	for (m = 0; m < nn; ++m) {
+	    int jj;
+	    p[m + j * p_d] = 0.9;
+	    if (m+1 >= nd) {
+		++j;
+		if (j+1 == k) /* reset */
+		    nd = nn;
+		else nd += ndk;
+	    }
+	    for (jj = 0; jj < k; ++jj)
+		p[m + jj * p_d] = pow(p[m + jj * p_d], r);
 	}
     }
-    ndk = *nn / *k;
-    nd = ndk;
-    l = 1;
-    for (m = 1; m <= *nn; ++m) {
-	p[m + l * p_dim1] = 0.9;
-	if (m >= nd) {
-	    nd += ndk;
-	    ++l;
-	    if (l == *k) {
-		nd = *nn;
-	    }
-	}
-	for (lx = 1; lx <= *k; ++lx) {
-	    p[m + lx * p_dim1] = pow(p[m + lx * p_dim1], *r);
-	}
+    else { /* p[,]  already contains memberships */
+
+	for (m = 0; m < nn; ++m)
+	    for (j = 0; j < k; ++j)
+		p[m + j * p_d] = pow(p[m + j * p_d], r);
     }
 
 /*     initial criterion value */
 
     cryt = 0.;
-    for (l = 1; l <= *k; ++l) {
-	esp[l] = 0.;
-	ef[l] = 0.;
-	for (m = 1; m <= *nn; ++m) {
-	    esp[l] += p[m + l * p_dim1];
-	    for (j = 1; j <= *nn; ++j) {
-		if (j != m) {
-		    jm = imin2(m,j);
-		    jm = (jm - 1) * *nn - jm * (jm + 1) / 2 + imax2(m,j);
-		    dp[m + l * dp_dim1] += p[j + l * p_dim1] * dss[jm];
-		    ef[l] += p[j + l * p_dim1] * p[m + l * p_dim1] * dss[jm];
+    for (j = 0; j < k; ++j) {
+	esp[j] = 0.;
+	ef[j] = 0.;
+	for (m = 0; m < nn; ++m) {
+	    esp[j] += p[m + j * p_d];
+	    for (i = 0; i < nn; ++i) {
+		if (i != m) {
+		    mi = imin2(m,i);
+		    mi = mi * nn - (mi + 1) * (mi + 2) / 2 + imax2(m,i);
+		    dp[m + j * dp_d] += p[i + j * p_d] * dss[mi];
+		    ef[j] += p[i + j * p_d] * p[m + j * p_d] * dss[mi];
 		}
 	    }
 	}
-	cryt += ef[l] / (esp[l] * 2.);
+	cryt += ef[j] / (esp[j] * 2.);
     }
     crt = cryt;
 
-/*     start of iterations */
-
-    it = 1;
-    m = 0;
-
-    do {
-	/* the new membership coefficients of the objects are calculated,
-	   and the resulting value of the criterion is computed. */
-	++m;
-	dt = 0.;
-	for (l = 1; l <= *k; ++l) {
-	    pt[l] = pow(esp[l] * 2. * esp[l] /
-			(esp[l] * 2. * dp[m + l * dp_dim1] - ef[l]),
-			reen);
-	    dt += pt[l];
+    if(trace_lev) {
+	Rprintf("fuzzy(): initial obj = %g\n", cryt);
+	if(trace_lev >= 2) {
+	    Rprintf("	    ef[]= (");
+	    for(j=0; j < k; j++) Rprintf(" %g%s", ef[j], ((j < k-1)? "," : ")\n"));
+	    Rprintf("	    esp[]= (");
+	    for(j=0; j < k; j++) Rprintf(" %g%s",esp[j], ((j < k-1)? "," : ")\n"));
 	}
-	xx = 0.;
-	for (l = 1; l <= *k; ++l) {
-	    pt[l] /= dt;
-	    if (pt[l] < 0.)
-		xx += pt[l];
-	}
-	/* now: sum_l (pt[l]) == 1;  xx := sum_{pt[l] < 0} pt[l] */
-	for (l = 1; l <= *k; ++l) {
-	    pt[l] = (pt[l] > 0.) ? pow(pt[l] / (1 - xx), *r) : 0.;
-	    esp[l] += pt[l] - p[m + l * p_dim1];
-	    for (j = 1; j <= *nn; ++j) {
-		if (j != m) {
-		    jm = imin2(m,j);
-		    jm = (jm - 1) * *nn - jm * (jm + 1) / 2 + imax2(m,j);
-		    ddd = (pt[l] - p[m + l * p_dim1]) * dss[jm];
-		    dp[j + l * dp_dim1] += ddd;
-		    ef[l] += p[j + l * p_dim1] * 2. * ddd;
+    }
+
+    reen = 1. / (r - 1.);
+
+    it = 0;
+    while(++it <= *nit) { /*  . . . . .  iterations . . . . . . . . . . . . . */
+
+	for(m = 0; m < nn; m++) {
+	    /* the new membership coefficients of the objects are calculated,
+	       and the resulting value of the criterion is computed. */
+	    dt = 0.;
+	    for (j = 0; j < k; ++j) {
+		pt[j] = pow(esp[j] / (dp[m + j * dp_d] - ef[j] / (2 * esp[j])),
+			    reen);
+		dt += pt[j];
+	    }
+	    xx = 0.;
+	    for (j = 0; j < k; ++j) {
+		pt[j] /= dt;
+		if (pt[j] < 0.)
+		    xx += pt[j];
+	    }
+	    /* now: sum_j (pt[j]) == 1;	 xx := sum_{pt[j] < 0} pt[j] */
+	    for (j = 0; j < k; ++j) {
+		double d_mj;
+		pt[j] = (pt[j] > 0.) ? pow(pt[j] / (1 - xx), r) : 0.;
+		d_mj = pt[j] - p[m + j * p_d];
+		esp[j] += d_mj;
+		for (i = 0; i < nn; ++i) {
+		    if (i != m) {
+			mi = imin2(m,i);
+			mi = mi * nn - (mi + 1) * (mi + 2) / 2 + imax2(m,i);
+			ddd = d_mj * dss[mi];
+			dp[i + j * dp_d] += ddd;
+			ef[j] += p[i + j * p_d] * 2. * ddd;
+		    }
 		}
+		p[m + j * p_d] = pt[j];
 	    }
-	    p[m + l * p_dim1] = pt[l];
+
+	    if(trace_lev >= 3) {
+		Rprintf(" pt[m= %d, *]: ",m);
+		for (j = 0; j < k; ++j)
+		    Rprintf(" %g%s", pt[j], ((j < k-1)? "," : "\n"));
+	    }
 	}
 
-	if (m >= *nn) {
-	    cryt = 0.;
-	    *eda = 0.;
-	    for (l = 1; l <= *k; ++l) {
-		*eda += esp[l] / (double) *nn;
-		cryt += ef[l] / (esp[l] * 2.);
-	    }
+	/* m == nn */
+	cryt = 0.;
+	for (j = 0; j < k; ++j)
+	    cryt += ef[j] / (esp[j] * 2.);
 
-	    /* Convergence check */
-	    if (fabs(cryt - crt) <= *tol * cryt)
-		break;
-	    if (it >= *nit) { /* non-convergence in max_it iterations */
-		*nit = -1;
-		break;
-	    }
-	    m = 0;
-	    ++it;
-	    crt = cryt;
-	}
+	if(trace_lev >= 2) Rprintf("  m == n:  obj = %#20.15g", cryt);
 
-    } while(1);
+	/* Convergence check */
+	if((converged = (fabs(cryt - crt) <= tol * cryt)))
+	    break;
 
+	if(trace_lev >= 2) Rprintf("  not converged: it = %d\n", it);
+	crt = cryt;
 
-    /* non-fuzzyness index of libert is computed */
+    } /* while */
 
-    obj[0] = (double) it;
+    *nit = (converged)? it : -1;
+
+    if(trace_lev) {
+	Rprintf("%s%sonverged after %d iterations,  obj = %#20.*g\n",
+		trace_lev >=2 ? "\n" : "", (converged) ? "C" : "NOT c",
+		it, (int)((trace_lev >= 2)? 20 : 7), cryt);
+    }
+
+    /* obj[0] = (double) it; << no longer; return it via *nit ! */
     obj[1] = cryt;
-    zk = (double) (*k);
-    *edb = (zk * *eda - 1.) / (zk - 1.);
-    for (m = 1; m <= *nn; ++m)
-	for (l = 1; l <= *k; ++l)
-	    p[m + l * p_dim1] = pow(p[m + l * p_dim1], rvers);
+    /* PC (partition coefficient), "non-fuzzyness index" of libert is computed
+     * C = 1/n sum_{i,j} u_{i,j} ^ r fulfills
+     *	    1 >= C >= sum_j (1/k)^r = k * k^-r = k^(1-r)
+     * ==> normalization  (C - k^(1-r)) / (1 - k^(1-r)) = (k^(r-1) * C - 1) / (k^(r-1) - 1)
+     */
+    for (j = 0, crt = 0.; j < k; ++j)
+	crt += esp[j];
+    crt /= nn;
+    obj[2] = crt; /* the PC */
+    xx = pow((double)k, r - 1.);
+    obj[3] = (xx * crt - 1.) / (xx - 1.);
+    /* Note however, that for r != 2,  MM rather prefers to use
+     * the "original definition"    C = 1/n sum_{i,j} u_{i,j} ^ 2, and its normalization */
 
-    return;
+    /* p[m,j] := (u_{m,j} ^ r) ^{1/r} == u_{m,j} : */
+    xx = 1. / r;
+    for (m = 0; m < nn; ++m)
+	for (j = 0; j < k; ++j)
+	    p[m + j * p_d] = pow(p[m + j * p_d], xx);
+
 } /* fuzzy */
 
 
 static
-void caddy(int *nn, double *p, int *k, int *ktrue,
-	   int *nfuzz, int *ncluv, double *rdraw)
+void caddy(int nn, int k, double *p, int *ktrue,
+	   int *nfuzz, int *ncluv, double *rdraw, int trace_lev)
 {
-    /* System generated locals */
-    int p_dim1, p_offset;
-
-    /* Local variables */
     Rboolean stay;
-    int l, m, ktry, kleft, kwalk, nbest, lfuzz;
+    int i, m, ktry, nbest;
     double pbest;
 
+    if(trace_lev)
+	Rprintf("fanny()'s caddy(*, k = %d):\n", k);
 
-    /* Parameter adjustments */
-    --ncluv;
-    --rdraw;
-    --nfuzz;
-    p_dim1 = *nn;
-    p_offset = 1 + p_dim1 * 1;
-    p -= p_offset;
-
-    /* Function Body */
-    pbest = p[p_dim1 + 1];
+    pbest = p[0];
     nbest = 1;
-    for (l = 2; l <= *k; ++l) {
-	if (pbest < p[l * p_dim1 + 1]) {
-	    pbest = p[l * p_dim1 + 1];
-	    nbest = l;
+    for (i = 1; i < k; ++i) {
+	if (pbest < p[i * nn]) {
+	    pbest = p[i * nn];
+	    nbest = i+1;
 	}
     }
-    nfuzz[1] = nbest;
-    ncluv[1] = 1;
+    nfuzz[0] = nbest;
+    ncluv[0] = 1;
     *ktrue = 1;
-    for (m = 2; m <= *nn; ++m) {
-	pbest = p[m + p_dim1];
+    for (m = 1; m < nn; ++m) {
+	pbest = p[m];
 	nbest = 1;
-	for (l = 2; l <= *k; ++l) {
-	    if (pbest < p[m + l * p_dim1]) {
-		pbest = p[m + l * p_dim1];
-		nbest = l;
+	for (i = 1; i < k; ++i) {
+	    if (pbest < p[m + i * nn]) {
+		pbest = p[m + i * nn];
+		nbest = i+1;
 	    }
 	}
 	stay = FALSE;
-	for (ktry = 1; ktry <= *ktrue; ++ktry) {
+	for (ktry = 0; ktry < *ktrue; ++ktry) {
 	    if (nfuzz[ktry] == nbest) {
 		stay = TRUE;
-		ncluv[m] = ktry;
+		ncluv[m] = ktry+1;
+		break;
 	    }
 	}
 	if (! stay) {
-	    (*ktrue)++;
 	    nfuzz[*ktrue] = nbest;
+	    (*ktrue)++;
 	    ncluv[m] = *ktrue;
 	}
     }
-    if (*ktrue < *k) {
-	for (kwalk = *ktrue + 1; kwalk <= *k; ++kwalk) {
-	    for (kleft = 1; kleft <= *k; ++kleft) {
+
+    if(trace_lev)
+	Rprintf(" -> k_true (crisp) = %d", *ktrue);
+    if (*ktrue < k) {
+	int kwalk, kleft;
+	if(trace_lev)
+	    Rprintf(" < k (= %d) !!\n", k);
+
+	for (kwalk = *ktrue; kwalk < k; ++kwalk) {
+	    for (kleft = 1; kleft <= k; ++kleft) {
 		stay = FALSE;
-		for (ktry = 1; ktry <= (kwalk - 1); ++ktry) {
-		    if (nfuzz[ktry] == kleft)
+		for (ktry = 0; ktry < kwalk; ++ktry) {
+		    if (nfuzz[ktry] == kleft) {
 			stay = TRUE;
+			break;
+		    }
 		}
 		if (! stay) {
 		    nfuzz[kwalk] = kleft;
@@ -352,15 +354,13 @@ void caddy(int *nn, double *p, int *k, int *ktrue,
 		}
 	    }
 	}
-    }
-    for (m = 1; m <= *nn; ++m) {
-	for (l = 1; l <= *k; ++l) {
-	    lfuzz = nfuzz[l];
-	    rdraw[l] = p[m + lfuzz * p_dim1];
-	}
-	for (l = 1; l <= *k; ++l) {
-	    p[m + l * p_dim1] = rdraw[l];
-	}
+    } else if(trace_lev) Rprintf("\n");
+
+    for (m = 0; m < nn; ++m) {
+	for (i = 0; i < k; ++i)
+	    rdraw[i] = p[m + (nfuzz[i]-1) * nn];
+	for (i = 0; i < k; ++i)
+	    p[m + i * nn] = rdraw[i];
     }
     return;
 } /* caddy */
@@ -369,43 +369,38 @@ void caddy(int *nn, double *p, int *k, int *ktrue,
 
      Compute Silhouette Information :
 
- TODO  cleanup: this is almost identical to black() in	pam.c()
-   -- only difference : different  dys() indexing !
+ TODO  cleanup: this is almost identical to dark() in  ./pam.c
+   -- difference : different  dys[] / dss[] indexing
 */
 static
-void fygur(int *ktrue, int *nn, int *kk, int *hh,
+void fygur(int kk, int nn,
 	   int *ncluv, int *nsend, int *nelem, int *negbr,
 	   double *syl, double *srank, double *avsyl, double *ttsyl,
 	   double *dss, double *s, double *sylinf)
 {
-    /* System generated locals */
-    int sylinf_dim1, sylinf_offset;
-
-    /* Local variables */
-    int j, l, nj, nl, nbb, mjl, njl, ntt, lang = -1 /*Wall*/;
-    int nclu, lplac, numcl, nsylr;
-    double db, btt, dysa, dysb, symax;
+    int sylinf_d = nn; /* sylinf[nn, 4] */
+    int j, l, k, k_, nj, ntt, nsylr;
+    double dysa, dysb;
+    /* pointers to sylinf[] columns:*/
+    double *sylinf_2, *sylinf_3, *sylinf_4;
+    sylinf_2 = sylinf	+ sylinf_d;
+    sylinf_3 = sylinf_2 + sylinf_d;
+    sylinf_4 = sylinf_3 + sylinf_d;
 
     /* Parameter adjustments */
-    sylinf_dim1 = *nn;
-    sylinf_offset = 1 + sylinf_dim1 * 1;
-    sylinf -= sylinf_offset;
-    --srank;
+    --avsyl;
+    --ncluv;
     --syl;
     --negbr;
     --nelem;
-    --nsend;
-    --ncluv;
-    --avsyl;
     --dss;
 
-    /* Function Body */
     nsylr = 0;
     *ttsyl = 0.;
-    for (numcl = 1; numcl <= *ktrue; ++numcl) {
+    for (k = 1; k <= kk; ++k) {
 	ntt = 0;
-	for (j = 1; j <= *nn; ++j) {
-	    if (ncluv[j] == numcl) {
+	for (j = 1; j <= nn; ++j) {
+	    if (ncluv[j] == k) {
 		++ntt;
 		nelem[ntt] = j;
 	    }
@@ -414,71 +409,68 @@ void fygur(int *ktrue, int *nn, int *kk, int *hh,
 	    nj = nelem[j];
 	    dysb = *s * 1.1 + 1.;
 	    negbr[j] = -1;
-	    for (nclu = 1; nclu <= *ktrue; ++nclu) {
-		if (nclu != numcl) {
-		    nbb = 0;
-		    db = 0.;
-		    for (l = 1; l <= *nn; ++l) {
-			if (ncluv[l] == nclu) {
-			    ++nbb;
-			    if (l < nj) {
-				mjl = *nn * (l - 1) + nj - l * (l + 1) / 2;
-				db += dss[mjl];
-			    } else if (l > nj) {
-				mjl = *nn * (nj - 1) + l - nj * (nj + 1) / 2;
-				db += dss[mjl];
-			    } /* else dss(.)=0 ; nothing to add */
-			}
-		    }
-		    btt = (double) nbb;
-		    db /= btt;
-		    if (dysb > db) {
-			dysb = db;
-			negbr[j] = nclu;
+	    /* for all clusters	 k_ != k : */
+	    for (k_ = 1; k_ <= kk; ++k_) if (k_ != k) {
+		int nbb = 0;
+		double db = 0.;
+		for (l = 1; l <= nn; ++l) {
+		    if (ncluv[l] == k_) {
+			++nbb;
+			if (l < nj) {
+			    db += dss[nn * (l - 1) + nj - l * (l + 1) / 2];
+			} else if (l > nj) {
+			    db += dss[nn * (nj - 1) + l - nj * (nj + 1) / 2];
+			} /* else dss(.)=0 ; nothing to add */
 		    }
 		}
-	    }
+		db /= nbb; /* now  db(k_) := mean( d[j, l]; l in C_{k_} ) */
+		if (dysb > db) {
+		    dysb = db;
+		    negbr[j] = k_;
+		}
+	    }/* negbr[j] := arg max_{k_} db(k_) */
 	    if (ntt > 1) {
 		dysa = 0.;
 		for (l = 1; l <= ntt; ++l) {
-		    nl = nelem[l];
+		    int nl = nelem[l];
 		    if (nj < nl) {
-			njl = *nn * (nj - 1) + nl - nj * (nj + 1) / 2;
-			dysa += dss[njl];
+			dysa += dss[nn * (nj - 1) + nl - nj * (nj + 1) / 2];
 		    } else if (nj > nl) {
-			njl = *nn * (nl - 1) + nj - nl * (nl + 1) / 2;
-			dysa += dss[njl];
+			dysa += dss[nn * (nl - 1) + nj - nl * (nl + 1) / 2];
 		    }/* else dss(.)=0 ; nothing to add */
 		}
 		dysa /= ntt - 1;
 		if (dysa > 0.) {
 		    if (dysb > 0.) {
-			if (dysb > dysa) {
+			if (dysb > dysa)
 			    syl[j] = 1. - dysa / dysb;
-			} else if (dysb < dysa) {
+			else if (dysb < dysa)
 			    syl[j] = dysb / dysa - 1.;
-			} else { /* dysb == dysa: */
+			else /* dysb == dysa: */
 			    syl[j] = 0.;
-			}
-			if (syl[j] <= -1.)
+
+			if (syl[j] < -1.)
 			    syl[j] = -1.;
-			else if (syl[j] >= 1.)
+			else if (syl[j] > 1.)
 			    syl[j] = 1.;
+
 		    } else {
 			syl[j] = -1.;
 		    }
-		} else if (dysb > 0.) {
-		    syl[j] = 1.;
-		} else {
-		    syl[j] = 0.;
 		}
-	    } else { /* ntt == 1: */
+		else /* dysa == 0 */ if (dysb > 0.)
+		    syl[j] = 1.;
+		else
+		    syl[j] = 0.;
+	    }
+	    else { /*	  ntt == 1: */
 		syl[j] = 0.;
 	    }
-	}
-	avsyl[numcl] = 0.;
-	for (j = 1; j <= ntt; ++j) {
-	    symax = -2.;
+	} /* for( j ) */
+	avsyl[k] = 0.;
+	for (j = 0; j < ntt; ++j) {
+	    int lang;
+	    double symax = -2.;
 	    for (l = 1; l <= ntt; ++l) {
 		if (symax < syl[l]) {
 		    symax = syl[l];
@@ -486,31 +478,29 @@ void fygur(int *ktrue, int *nn, int *kk, int *hh,
 		}
 	    }
 	    nsend[j] = lang;
-	    srank[j] = syl[lang];
-	    avsyl[numcl] += srank[j];
+	    srank[j] = symax; /* = syl[lang] */
+	    avsyl[k] += srank[j];
 	    syl[lang] = -3.;
 	}
-	*ttsyl += avsyl[numcl];
-	avsyl[numcl] /= (double) ntt;
+	*ttsyl += avsyl[k];
+	avsyl[k] /= (double) ntt;
 	if (ntt < 2) {
+	    sylinf  [nsylr] = (double) k;
+	    sylinf_2[nsylr] = (double) negbr[1];
+	    sylinf_3[nsylr] = 0.;
+	    sylinf_4[nsylr] = (double) nelem[1];
 	    ++nsylr;
-	    sylinf[nsylr + sylinf_dim1] = (double) numcl;
-	    sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[1];
-	    sylinf[nsylr + sylinf_dim1 * 3] = 0.;
-	    sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[1];
 	}
 	else {
-	    for (l = 1; l <= ntt; ++l) {
+	    for (j = 0; j < ntt; ++j) {
+		nj = nsend[j];
+		sylinf	[nsylr] = (double) k;
+		sylinf_2[nsylr] = (double) negbr[nj];
+		sylinf_3[nsylr] = srank[j];
+		sylinf_4[nsylr] = (double) nelem[nj];
 		++nsylr;
-		lplac = nsend[l];
-		sylinf[nsylr + sylinf_dim1] = (double) numcl;
-		sylinf[nsylr + (sylinf_dim1 << 1)] = (double) negbr[lplac];
-		sylinf[nsylr + sylinf_dim1 * 3] = srank[l];
-		sylinf[nsylr + (sylinf_dim1 << 2)] = (double) nelem[lplac];
 	    }
 	}
-    }
-    *ttsyl /= *nn;
-    return;
+    } /* for (k) */
+    *ttsyl /= nn;
 } /* fygur */
-

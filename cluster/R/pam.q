@@ -104,7 +104,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     medID <- res$med
     sildim <- res$silinf[, 4]
     if(diss) {
-	disv <- x
+	if(keep.diss) disv <- x
 	## add labels to Fortran output
 	if(length(xLab) > 0) {
 	    sildim <- xLab[sildim]

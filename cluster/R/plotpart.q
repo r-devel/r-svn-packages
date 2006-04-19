@@ -38,6 +38,7 @@ function(x, ask = FALSE, which.plots = NULL,
                    )
             if(do.all) { pick <- pick + 1; do.all <- pick <= length(tmenu) + 1}
         }
+        invisible()
     }
     else {
         ask <- prod(par("mfcol")) < length(which.plots) && dev.interactive()
@@ -50,9 +51,8 @@ function(x, ask = FALSE, which.plots = NULL,
                         xlim = xlim, ylim = ylim, main = main, ...)
                ,
                plot(silhouette(x), nmax.lab, max.strlen, main = main)
-               )
+               ) ## and return() whatever  *plot(..) returns
     }
-    invisible()
 }
 
 clusplot <- function(x, ...) UseMethod("clusplot")
