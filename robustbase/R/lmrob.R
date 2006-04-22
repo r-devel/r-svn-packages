@@ -1,8 +1,6 @@
 ### FIXME:
 ### ----- MM wants to change
-### 1) compute.rd = FALSE  {no robust Mahalanobis distances;
-###			   are expensive, and only needed for some plotting
-###    will want 'x = !compute.rd' (need X matrix for Maha.Dist)
+
 ### 2) 'seed': By default always same seed --> same result
 ###	       even though algorithm is random.
 ###	INSTEAD: I want to use R's .Random.seed!
@@ -12,7 +10,7 @@
 ###		--> 'subset' etc			      -- Done
 
 ### 5) There are still quite a few things hard-coded in ../src/lmrob.c
-###    E.g., 'Nres' is used, but MAX_NO_RESAMPLES = 500 cannot be changed.
+###    E.g., 'nResample' is used, but MAX_NO_RESAMPLES = 500 cannot be changed.
 
 
 ### The first part of lmrob()  much cut'n'paste from lm() - on purpose!
@@ -194,6 +192,7 @@ print.summary.lmrob <-
 
     } else cat("\nNo Coefficients\n")
 
+    ## FIXME: summarize the robustness weights
     ctrl <- x$control
     real.ctrl <- match(c("bb", "tuning.psi", "tuning.chi"), names(ctrl))
     cat("Algorithmic parameters:\n")

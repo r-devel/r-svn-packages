@@ -13,9 +13,9 @@ cc  GNU General Public License for more details.
 cc
 cc  You should have received a copy of the GNU General Public License
 cc  along with this program; if not, write to the Free Software
-cc  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+cc  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 cc
-cc  I would like to thank Peter Rousseeuw and Katrien van Driessen for 
+cc  I would like to thank Peter Rousseeuw and Katrien van Driessen for
 cc  providing the initial code of this function.
 cc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -68,57 +68,57 @@ cc   and bad leverage points.
 cc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cc
-cc   The new FAST_MCD algorithm introduced here is due to 
+cc   The new FAST_MCD algorithm introduced here is due to
 cc
-cc      Rousseeuw, P.J. and Van Driessen, K. (1997), "A Fast 
+cc      Rousseeuw, P.J. and Van Driessen, K. (1997), "A Fast
 cc      Algorithm for the Minimum Covariance Determinant
 cc      Estimator," in preparation.
 cc
 cc   The algorithm works as follows:
 cc
-cc       The dataset contains n cases, and nvar variables are used. 
+cc       The dataset contains n cases, and nvar variables are used.
 cc       When n < 2*nmini, the algorithm will analyze the dataset as a whole.
 cc       When n >= 2*nmini, the algorithm will use several subdatasets.
 cc
-cc       When the dataset is analyzed as a whole, a trial 
+cc       When the dataset is analyzed as a whole, a trial
 cc       subsample of nvar+1 cases is taken, of which the mean and
-cc       covariance matrix is calculated. The h cases with smallest 
+cc       covariance matrix is calculated. The h cases with smallest
 cc       relative distances are used to calculate the next mean and
 cc       covariance matrix, and this cycle is repeated k1 times.
 cc       [For small n we can consider all subsets of nvar+1 out of n, else
 cc       the algorithm draws 500 random subsets.]
-cc       Afterwards, the best 10 solutions (covariance matrices and 
+cc       Afterwards, the best 10 solutions (covariance matrices and
 cc       corresponding means) are used as starting values for the final
 cc       iterations. These iterations stop when two subsequent determinants
 cc       become equal. (At most k3 iteration steps are taken.)
-cc       The solution with smallest determinant is retained. 
+cc       The solution with smallest determinant is retained.
 cc
-cc       When the dataset contains more than 2*nmini cases, the algorithm 
-cc       does part of the calculations on (at most) kmini nonoverlapping 
-cc       subdatasets, of (roughly) nmini cases. 
+cc       When the dataset contains more than 2*nmini cases, the algorithm
+cc       does part of the calculations on (at most) kmini nonoverlapping
+cc       subdatasets, of (roughly) nmini cases.
 cc
 cc       Stage 1: For each trial subsample in each subdataset,
-cc       k1 iterations are carried out in that subdataset. 
-cc       For each subdataset, the 10 best solutions are stored.   
-cc       
+cc       k1 iterations are carried out in that subdataset.
+cc       For each subdataset, the 10 best solutions are stored.
+cc
 cc       Stage 2 considers the union of the subdatasets, called the
 cc       merged set. (If n is large, the merged set is a proper subset of
 cc       the entire dataset.) In this merged set, each of the 'best
 cc       solutions' of stage 1 are used as starting values for k2
 cc       iterations. Also here, the 10 best solutions are stored.
 cc
-cc       Stage 3 depends on n, the total number of cases in the 
+cc       Stage 3 depends on n, the total number of cases in the
 cc       dataset. If n <= 5000, all 10 preliminary solutions are iterated
 cc       k3 times. If n > 5000, only the best preliminary
 cc       solution is iterated, and the number of iterations decreases to 1
-cc       according to n*nvar. (If n*nvar <= 100,000 we iterate k3 times, 
-cc       whereas for n*nvar > 1,000,000 we take only one iteration step.) 
-cc       
-cc   An important advantage of the algorithm FAST_MCD is that it allows 
+cc       according to n*nvar. (If n*nvar <= 100,000 we iterate k3 times,
+cc       whereas for n*nvar > 1,000,000 we take only one iteration step.)
+cc
+cc   An important advantage of the algorithm FAST_MCD is that it allows
 cc   for exact fit situations, where more than h observations lie on
-cc   a hyperplane. Then the program still yields the MCD location and 
+cc   a hyperplane. Then the program still yields the MCD location and
 cc   scatter matrix, the latter being singular (as it should be), as
-cc   well as the equation of the hyperplane.    
+cc   well as the equation of the hyperplane.
 cc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
@@ -136,9 +136,7 @@ cc              passed as parameters - cutoff and chimed
      *    rec, sscp1, cova1, corr1, cinv1, cova2, cinv2, z,
      *    cstock, mstock, c1stock, m1stock, dath,
      *    cutoff, chimed)
-        
-        
-        
+
 cc
 	implicit integer(i-n), double precision(a-h,o-z)
 cc
@@ -160,8 +158,8 @@ cc  within your computer's memory size.
 cc
 cc  ALGORITHM PARAMETERS:
 cc
-cc      To change the number of subdatasets and their size, the values of 
-cc      kmini and nmini can be changed. 
+cc      To change the number of subdatasets and their size, the values of
+cc      kmini and nmini can be changed.
 cc
 	parameter (kmini=5)
 	parameter (nmini=300)
@@ -175,7 +173,7 @@ cc
 cc
 cc  The parameter krep represents the total number of trial subsamples
 cc  to be drawn when n exceeds 2*nmini.
-cc 
+cc
 c	parameter (krep=500)
 cc
 cc  The following lines need not be modified.
@@ -199,12 +197,12 @@ cc
 cc	double precision chi2(50)
 cc      double precision chimed(50)
 	double precision faclts(11)
-	double precision pivot,rfmahad,medi2 
+	double precision pivot,rfmahad,medi2
 
     	integer inbest(nhalff)
         integer weight(n)
         double precision plane(5,nvar)
-	double precision dat(n,nvar) 
+	double precision dat(n,nvar)
         double precision initcov(nvar*nvar)
         double precision adcov(nvar*nvar)
         double precision initmean(nvar)
@@ -216,7 +214,7 @@ cc      double precision chimed(50)
         double precision nmahad(n)
 	double precision ndist(n)
         double precision am(n),am2(n),slutn(n)
-        
+
         double precision med(nvar)
         double precision mad(nvar)
 	double precision sd(nvar)
@@ -238,10 +236,10 @@ cc      double precision chimed(50)
 	double precision mstock(10,nvar)
 	double precision c1stock(km10,nvar*nvar)
 	double precision m1stock(km10,nvar*nvar)
-	double precision dath(nmaxi,nvar) 
-        
+	double precision dath(nmaxi,nvar)
+
         double precision percen
-       
+
 	logical all,part,fine,final,rfodd,class
 cc  Median of the chi-squared distribution:
 cc        data chimed/0.454937,1.38629,2.36597,3.35670,4.35146,
@@ -259,7 +257,7 @@ cc     *  45.722,46.979,48.232,49.481,50.725,51.966,53.203,54.437,
 cc     *  55.668,56.896,58.120,59.342,60.561,61.777,62.990,64.201,
 cc     *  65.410,66.617,67.821,69.022,70.222,71.420/
         data faclts/2.6477,2.5092,2.3826,2.2662,2.1587,
-     *  2.0589,1.9660,1.879,1.7973,1.7203,1.6473/ 
+     *  2.0589,1.9660,1.879,1.7973,1.7203,1.6473/
 cc
 cc
 
@@ -267,11 +265,11 @@ C	CALL INTPR('Entering RFFASTMCD - KREP: ',-1,KREP,1)
 
 C       20.06.2005 - substitute the parameters nmax and nvmax
         nmax = n
-        nvmax = nvar        
+        nvmax = nvar
         nvmax1=nvmax+1
         nvmax2=nvmax*nvmax
         nvm12=nvmax1*nvmax1
-	
+
 	nrep = krep
 	percen = (1.D0*nhalff)/(1.D0*n)
 	part=.false.
@@ -280,13 +278,13 @@ C       20.06.2005 - substitute the parameters nmax and nvmax
 	all=.true.
         kstep=k1
         medi2=0
-        
+
 
 	if(nvar.gt.nvmax) goto 9400
         if(nvar.lt.5) then
           eps=1.0D-12
         else
-          if(nvar.ge.5.and.nvar.le.8) then 
+          if(nvar.ge.5.and.nvar.le.8) then
             eps=1.0D-14
           else
             eps=1.0D-16
@@ -297,21 +295,21 @@ cc
           if(n.gt.nmax)goto 9200
 cc
 cc  From here on, the sample size n is known.
-cc  Some initializations can be made. First of all, h (= the number of 
+cc  Some initializations can be made. First of all, h (= the number of
 cc  observations on which the MCD is based) is given by the integer variable
 cc  nhalff.
 cc  If nhalff equals n, the MCD is the classical covariance matrix.
-cc  The logical value class indicates this situation. 
+cc  The logical value class indicates this situation.
 cc  The variable nbreak is the breakdown point of the MCD estimator
-cc  based on nhalff observations, whereas jdefaul is the optimal value of 
-cc  nhalff, with maximal breakdown point. The variable percen is the  
-cc  corresponding percentage. 
+cc  based on nhalff observations, whereas jdefaul is the optimal value of
+cc  nhalff, with maximal breakdown point. The variable percen is the
+cc  corresponding percentage.
 cc
 	jbreak=rfnbreak(nhalff,n,nvar)
 	class=.false.
 	if(nhalff.ge.n) then
 	  class=.true.
-          goto 9000 
+          goto 9000
 	endif
 	percen = (1.D0*nhalff)/(1.D0*n)
 cc
@@ -327,17 +325,17 @@ cc
 	  adcov(1)=bstd
           initcov(1)=bstd
           goto 9999
-        endif 
+        endif
 cc
-cc  Some initializations: 
+cc  Some initializations:
 cc    seed = starting value for random generator
 cc    matz = auxiliary variable for the subroutine rs, indicating whether
 cc           or not eigenvectors are calculated
 cc    nsel = number of variables + 1
 cc    ngroup = number of subdatasets
 cc    part = logical value, true if the dataset is split up
-cc    fine = logical value, becomes true when the subsets are merged 
-cc    final = logical value, to indicate the final stage of the algorithm 
+cc    fine = logical value, becomes true when the subsets are merged
+cc    final = logical value, to indicate the final stage of the algorithm
 cc    all = logical value, true for small n, if all (p+1)-subsets out of
 cc          n can be drawn
 cc    subdat = matrix with a first row containing indices of observations
@@ -357,9 +355,9 @@ cc
  21     continue
 cc
 cc  Determine whether the dataset needs to be divided into subdatasets
-cc  or can be treated as a whole. The subroutine rfrdraw constructs  
-cc  nonoverlapping subdatasets, with uniform distribution of the case numbers.  
-cc  For small n, the number of trial subsamples is determined. 
+cc  or can be treated as a whole. The subroutine rfrdraw constructs
+cc  nonoverlapping subdatasets, with uniform distribution of the case numbers.
+cc  For small n, the number of trial subsamples is determined.
 cc
 	mini(1)=0
 	mini(2)=0
@@ -387,7 +385,7 @@ cc
 	      else
 		mini(1)=int(n/3)
 		mini(2)=int(n/3)+1
-		if(3*(n/3) .eq. n-1) then 
+		if(3*(n/3) .eq. n-1) then
 		  mini(3)=int(n/3)
 		else
 		  mini(3)=int(n/3)+1
@@ -430,13 +428,13 @@ cc
 	  nrep=int((krep*1.D0)/ngroup)
 	  minigr=mini(1)+mini(2)+mini(3)+mini(4)+mini(5)
 	  call rfrdraw(subdat,n,seed,minigr,mini,ngroup,kmini)
-	else 
+	else
 	  minigr=n
           nhalf=nhalff
 	  kstep=k1
-	  if(n.le.replow(nsel)) then 
+	  if(n.le.replow(nsel)) then
              nrep=rfncomb(nsel,n)
-	  else 
+	  else
 C VT::02.09.2004 - remove the hardcoded 500 for nrep
 C            nrep=500
             nrep=krep
@@ -454,12 +452,12 @@ cc
 cc
 cc
 cc  Some more initializations:
-cc    m1stock = matrix containing the means of the ngroup*10 best estimates 
-cc              obtained in the subdatasets.  
-cc    c1stock = matrix containing the covariance matrices of the ngroup*10 
+cc    m1stock = matrix containing the means of the ngroup*10 best estimates
+cc              obtained in the subdatasets.
+cc    c1stock = matrix containing the covariance matrices of the ngroup*10
 cc              best estimates obtained in the subdatasets.
-cc    mstock = matrix containing the means of the ten best estimates 
-cc             obtained after merging the subdatasets and iterating from 
+cc    mstock = matrix containing the means of the ten best estimates
+cc             obtained after merging the subdatasets and iterating from
 cc             their best estimates.
 cc    cstock = matrix containing the covariance matrices of the ten best
 cc             estimates obtained after merging the subdatasets
@@ -468,13 +466,13 @@ cc    means = mean vector
 cc    bmeans = initial MCD location estimate
 cc    sd = standard deviation vector
 cc    nmahad = vector of mahalanobis distances
-cc    ndist = vector of general (possibly robust) distances 
+cc    ndist = vector of general (possibly robust) distances
 cc    inbest = best solution vector
 cc    index1 = index vector of subsample observations
 cc    index2 = index vector of ordered mahalanobis distances
 cc    temp  = auxiliary vector
 cc    flag = vector with components indicating the occurrence of a
-cc           singular intermediate MCD estimate. 
+cc           singular intermediate MCD estimate.
 cc
 	  do 31, j=1,nvmax
 	    do 33, k=1,10
@@ -489,7 +487,7 @@ cc
 	    means(j)=0.D0
 	    bmeans(j)=0.D0
 	    sd(j)=0.D0
- 31       continue 
+ 31       continue
 	  do 41, j=1,nmax
 	    nmahad(j)=0.D0
 	    ndist(j)=0.D0
@@ -498,7 +496,7 @@ cc
 	    temp(j)=1000000
  41       continue
 	  do 43,j=1,km10
- 43         flag(j)=1 
+ 43         flag(j)=1
 cc
 cc ********* Compute the classical estimates **************
 cc
@@ -510,7 +508,7 @@ cc
 	  call rfadmit(rec,nvar,nvar+1,sscp1)
  51     continue
 	call rfcovar(n,nvar,nvar+1,sscp1,cova1,means,sd)
-	do 57 j=1,nvar 
+	do 57 j=1,nvar
 	  if(sd(j).eq.0.D0) then
             call rs(nvar,nvar,cova1,w,matz,z,fv1,fv2,ierr)
 	    call rfdis(dat,z,ndist,n,nvar,n,nvar,means)
@@ -555,7 +553,7 @@ cc
  64         rec(i)=dat(j,i)
 	  nmahad(j)=rfmahad(rec,nvar,means,cinv1)
  62     continue
-	  
+
 cc
 cc******** Compute the MCD estimates **************
 cc
@@ -570,9 +568,9 @@ cc     with the variable tottimes.
 cc
 cc     The algorithm returns here twice when the dataset is divided
 cc     at the beginning of the program. According to the situation,
-cc     new initializations are made. The second stage, where the subdatasets 
+cc     new initializations are made. The second stage, where the subdatasets
 cc     are merged, is indicated by the logical value fine and
-cc     the last stage, when the whole dataset is considered, by the logical 
+cc     the last stage, when the whole dataset is considered, by the logical
 cc     variable final. In the last stage, the number of iterations nrep
 cc     is determined according to the total number of observations
 cc     and the dimension.
@@ -600,19 +598,19 @@ C	CALL INTPR('MAIN LOOP - NUMBER of TRIALS NREP: ',-1,NREP,1)
 	      if (n*nvar .gt.100000 .and. n*nvar .le.200000) then
 		kstep=10
 	      else
-		if (n*nvar .gt.200000 .and. n*nvar 
+		if (n*nvar .gt.200000 .and. n*nvar
      *            .le.300000) then
-		  kstep=9 
+		  kstep=9
 		else
-		  if (n*nvar .gt.300000 .and. n*nvar 
+		  if (n*nvar .gt.300000 .and. n*nvar
      *              .le.400000) then
-		    kstep=8 
+		    kstep=8
 		  else
-		    if (n*nvar .gt.400000 .and. n*nvar 
+		    if (n*nvar .gt.400000 .and. n*nvar
      *                .le.500000) then
 		      kstep=7
 		    else
-		      if (n*nvar .gt.500000 .and. n*nvar 
+		      if (n*nvar .gt.500000 .and. n*nvar
      *                  .le.600000) then
 			kstep=6
 		      else
@@ -628,7 +626,7 @@ C	CALL INTPR('MAIN LOOP - NUMBER of TRIALS NREP: ',-1,NREP,1)
      *                        .le.900000) then
 			      kstep=3
 			    else
-			      if (n*nvar .gt.900000 .and. n*nvar 
+			      if (n*nvar .gt.900000 .and. n*nvar
      *                          .le.1000000) then
 				kstep=2
 			      else
@@ -657,15 +655,15 @@ C	CALL INTPR('MAIN LOOP - NUMBER of TRIALS NREP: ',-1,NREP,1)
 	index1(nsel)=nsel-1
 
 cc
-cc  Initialization of the matrices to store partial results. For the 
+cc  Initialization of the matrices to store partial results. For the
 cc  first stage of the algorithm, the currently best covariance matrices and
-cc  means are stored in the matrices c1stock and m1stock initialized earlier. 
-cc  The corresponding objective values and the number of the trial subset 
+cc  means are stored in the matrices c1stock and m1stock initialized earlier.
+cc  The corresponding objective values and the number of the trial subset
 cc  are stored in the matrix mcdndex.
 cc  For the second stage of the algorithm or for small datasets, only the
 cc  currently best objective values are stored in the same matrix mcdndex
-cc  and the corresponding covariance matrices and mean vectors are stored in 
-cc  the matrices cstock and mstock initialized earlier. 
+cc  and the corresponding covariance matrices and mean vectors are stored in
+cc  the matrices cstock and mstock initialized earlier.
 cc
 	if(.not. final) then
 	  do 83 i=1,10
@@ -729,13 +727,13 @@ cc
 cc
 cc  The matrix dath contains the observations to be used in the
 cc  algorithm. In the first stage of the split-up procedure dath contains
-cc  nmini objects, corresponding to the original observations, with the index 
+cc  nmini objects, corresponding to the original observations, with the index
 cc  of the processed group in the array subdat. For the second stage, the
-cc  data points of all the subdatasets are merged in dath. 
-cc  The variable kount indicates the occurrence of a singular subsample leading 
+cc  data points of all the subdatasets are merged in dath.
+cc  The variable kount indicates the occurrence of a singular subsample leading
 cc  to the corresponding plane. In some situations the variable kount counts
 cc  the number of observations on that plane.
-cc  
+cc
 	if (fine .and. .not. final) then
 	  do 91, j=1,minigr
 	    do 93, k=1,nvar
@@ -770,50 +768,50 @@ cc  When all (p+1)-subsets out of n can be drawn, the subroutine rfgenpn
 cc  is used. Otherwise, random subsamples are drawn by the routine
 cc  rfrangen. The trial subsamples are put in the array index1. The
 cc  same thing happens for large datasets, except that the number of
-cc  observations is nmini instead of n. 
+cc  observations is nmini instead of n.
 cc
-cc  When a trial subsample is singular, the algorithm counts the number of  
-cc  observations that lie on the hyperplane corresponding to this sample.  
-cc  If, for small datasets, this number is larger than nhalff, the program 
-cc  stops (exact fit) and gives the mean and the covariance matrix    
+cc  When a trial subsample is singular, the algorithm counts the number of
+cc  observations that lie on the hyperplane corresponding to this sample.
+cc  If, for small datasets, this number is larger than nhalff, the program
+cc  stops (exact fit) and gives the mean and the covariance matrix
 cc  of the observations on the hyperplane, together with the equation
 cc  of the hyperplane.
-cc  For large datasets, the algorithm first checks whether there are more  
-cc  than nhalff observations on the hyperplane. If this is the case, the   
-cc  program stops for the same reason of exact fit and gives the covariance  
-cc  matrix and mean of the observations on the hyperplane. If not, the 
+cc  For large datasets, the algorithm first checks whether there are more
+cc  than nhalff observations on the hyperplane. If this is the case, the
+cc  program stops for the same reason of exact fit and gives the covariance
+cc  matrix and mean of the observations on the hyperplane. If not, the
 cc  algorithm counts the number of observations that lie on the hyperplane.
-cc  When this number is smaller than the current nhalf in the subdataset, these 
-cc  observations are extended to nhalf observations by adding those 
-cc  observations that have smallest orthogonal distances to the hyperplane 
+cc  When this number is smaller than the current nhalf in the subdataset, these
+cc  observations are extended to nhalf observations by adding those
+cc  observations that have smallest orthogonal distances to the hyperplane
 cc  and the algorithm continues.
 cc  When larger, the coefficients of the hyperplane are stored in the matrix
 cc  m1stock for use as starting value in the next stage, and the flag of this
-cc  estimate gets the value zero. 
+cc  estimate gets the value zero.
 cc
-cc  In the second stage of the algorithm, when the subdatasets are merged, 
+cc  In the second stage of the algorithm, when the subdatasets are merged,
 cc  the array index2 contains the indices of the observations
 cc  corresponding to the nhalf observations with minimal relative distances
 cc  with respect to the best estimates of the first stage.
-cc  When the estimate of the first stage is a hyperplane, the algorithm  
-cc  investigates whether there are more than the current nhalf observations of  
-cc  the merged subdataset on that hyperplane. If so, the coefficients of the 
-cc  hyperplane are again stored, now in the matrix mstock, for the final 
-cc  stage of the algorithm. 
-cc  If not, the observations on the hyperplane are extended to nhalf 
-cc  observations by adding the observations in the merged dataset with  
-cc  smallest orthogonal distances to that hyperplane.  
-cc  For small datasets or for larger datasets with n <= nmini*kmini, 
+cc  When the estimate of the first stage is a hyperplane, the algorithm
+cc  investigates whether there are more than the current nhalf observations of
+cc  the merged subdataset on that hyperplane. If so, the coefficients of the
+cc  hyperplane are again stored, now in the matrix mstock, for the final
+cc  stage of the algorithm.
+cc  If not, the observations on the hyperplane are extended to nhalf
+cc  observations by adding the observations in the merged dataset with
+cc  smallest orthogonal distances to that hyperplane.
+cc  For small datasets or for larger datasets with n <= nmini*kmini,
 cc  the algorithm already stops when one solution becomes singular,
-cc  since we then have an exact fit. 
+cc  since we then have an exact fit.
 cc
-cc  In the third stage, the covariance matrices and means of the best 
-cc  solutions of the second stage are used as starting values. 
-cc  Again, when a solution becomes singular, the subroutine 'exact' 
-cc  determines the hyperplane through at least nhalff observations and stops  
-cc  because of the exact fit.  
+cc  In the third stage, the covariance matrices and means of the best
+cc  solutions of the second stage are used as starting values.
+cc  Again, when a solution becomes singular, the subroutine 'exact'
+cc  determines the hyperplane through at least nhalff observations and stops
+cc  because of the exact fit.
 cc
-cc  When the program stops because of an exact fit, the covariance matrix and  
+cc  When the program stops because of an exact fit, the covariance matrix and
 cc  mean of the observations on the hyperplane will always be given.
 cc
 	do 1000 i=1,nrep
@@ -835,17 +833,17 @@ cc
 	    endif
 	  endif
 cc
-cc  The covariance matrix and mean of the initial subsamples are 
-cc  calculated with the subroutine covar and represented by 
+cc  The covariance matrix and mean of the initial subsamples are
+cc  calculated with the subroutine covar and represented by
 cc  the variables cova1 and means.
 cc
-cc  In the following stages of the algorithm, the covariance matrices and means 
-cc  used as starting values are already stored in the matrices c1stock 
+cc  In the following stages of the algorithm, the covariance matrices and means
+cc  used as starting values are already stored in the matrices c1stock
 cc  and m1stock (for the second stage), and in the matrices cstock and mstock
 cc  (for the third stage).
 cc
 cc  The inverse cinv1 of the covariance matrix is calculated by the
-cc  subroutine rfcovsweep, together with its determinant det. 
+cc  subroutine rfcovsweep, together with its determinant det.
 cc
  9550     call rfcovinit(sscp1,nvar+1,nvar+1)
           if(.not.fine.and.part) then
@@ -903,7 +901,7 @@ cc
  135            z(jjj)=plane(ii,jjj)
 	      call rfdis(dath,z,ndist,nmaxi,nvmax,nn,nvar,
      *        means)
-	      call rfshsort(ndist,nn)  
+	      call rfshsort(ndist,nn)
 	      qorder=ndist(nhalf)
 	      if(dabs(qorder-0.D0).lt.10.D-8.and.kount.eq.0
      *        .and.n.gt.nmini*kmini) then
@@ -912,8 +910,8 @@ cc
                   if(dabs(ndist(kkk)-0.D0).lt.10.D-8) then
                     kount=kount+1
                   endif
- 137            continue               
-	        flag(1)=0 
+ 137            continue
+	        flag(1)=0
                 do 139,kkk=1,nvar
  139              plane(1,kkk)=z(kkk)
                 call rfstore2(nvar,cstock,mstock,nvmax2,nvmax,
@@ -923,7 +921,7 @@ cc
 	      else
 		if(dabs(qorder-0.D0).lt.10.D-8.and.
      *          kount.ne.0.and.n.gt.nmini*kmini) then
-		  goto 1000  
+		  goto 1000
                 else
                   flag(1)=1
 	          dist2=rffindq(ndist,nn,nhalf,index2)
@@ -945,7 +943,7 @@ cc
               else
                 call rfdis(dath,z,ndist,nmaxi,nvmax,nn,nvar,means)
               endif
-	      call rfshsort(ndist,nn)  
+	      call rfshsort(ndist,nn)
 	      qorder=ndist(nhalf)
 	      if(dabs(qorder-0.D0).lt.10.D-8.and.
      *        .not.part) then
@@ -965,7 +963,7 @@ cc
      *          .and.kount.eq.0) then
 	          call rfdis(dat,z,ndist,n,nvar,n,nvar,
      *            means)
-		  call rfshsort(ndist,n)  
+		  call rfshsort(ndist,n)
                   if(dabs(ndist(nhalff)-0.D0).lt.10.D-8) then
                     call transfo(cova1,means,dat,med,mad,nvar,n)
                     call rs(nvar,nvar,cova1,w,matz,z,fv1,fv2,ierr)
@@ -982,14 +980,14 @@ cc
                   endif
 	          call rfdis(dath,z,ndist,nmaxi,nvmax,nn,nvar,
      *                              means)
-	          call rfshsort(ndist,nn)  
+	          call rfshsort(ndist,nn)
                   kount=nhalf
                   do 141,kkk=nhalf+1,nn
                     if(dabs(ndist(kkk)-0.D0).lt.10.D-8) then
                       kount=kount+1
                     endif
- 141              continue               
-		  flag((ii-1)*10+1)=0 
+ 141              continue
+		  flag((ii-1)*10+1)=0
                   do 143,kkk=1,nvar
  143                plane(ii,kkk)=z(kkk)
                   call rfstore1(nvar,c1stock,m1stock,nvmax2,nvmax,
@@ -1000,7 +998,7 @@ cc
 	        else
 	          if(dabs(qorder-0.D0).lt.10.D-8.and.part.and.
      *            kount.ne.0) then
-		    goto 1000  
+		    goto 1000
 		  else
 		    call rfishsort(index1,pnsel)
                     call prdraw(index1,pnsel,seed,nn)
@@ -1017,7 +1015,7 @@ cc  Mahalanobis distances are computed with the subroutine rfmahad
 cc  and stored in the array ndist.
 cc  The k-th order statistic of the mahalanobis distances is stored
 cc  in dist2. The array index2 containes the indices of the
-cc  corresponding observations. 
+cc  corresponding observations.
 cc
 	  do 151 j=1,nn
             if(.not.part.or.final) then
@@ -1034,8 +1032,8 @@ cc
 cc
 cc  The variable kstep represents the number of iterations. They depend on
 cc  the situation of the program (k1, k2, or k3). Within each
-cc  iteration the mean and covariance matrix of nhalf observations are 
-cc  calculated. The nhalf smallest corresponding mahalanobis distances 
+cc  iteration the mean and covariance matrix of nhalf observations are
+cc  calculated. The nhalf smallest corresponding mahalanobis distances
 cc  determine the subset for the next iteration.
 cc  The best subset for the whole data is stored in the array inbest.
 cc  The iteration stops when two subsequent determinants become equal.
@@ -1087,7 +1085,7 @@ cc
                   call rs(nvar,nvar,cova1,w,matz,z,fv1,fv2,ierr)
 		  call rfdis(dat,z,ndist,n,nvar,n,nvar,
      *            means)
-		  call rfshsort(ndist,n)  
+		  call rfshsort(ndist,n)
                   if(dabs(ndist(nhalff)-0.D0).lt.10.D-8) then
                     call transfo(cova1,means,dat,med,mad,nvar,n)
                     call rs(nvar,nvar,cova1,w,matz,z,fv1,fv2,ierr)
@@ -1103,14 +1101,14 @@ cc
                   endif
 		  call rfdis(dath,z,ndist,nmaxi,nvmax,nn,nvar,
      *            means)
-		  call rfshsort(ndist,nn)  
+		  call rfshsort(ndist,nn)
                   kount=nhalf
                   do 162,kkk=nhalf+1,nn
                     if(dabs(ndist(kkk)-0.D0).lt.10.D-8) then
                       kount=kount+1
                     endif
- 162              continue               
-		  flag((ii-1)*10+1)=0 
+ 162              continue
+		  flag((ii-1)*10+1)=0
                   do 164, kkk=1,nvar
  164                plane(ii,kkk)=z(kkk)
                   call rfstore1(nvar,c1stock,m1stock,nvmax2,nvmax,
@@ -1118,7 +1116,7 @@ cc
      *            kount)
                   kount=1
 	          goto 1000
-	        else  
+	        else
 		  if(part.and..not.fine.and.kount.ne.0) then
 		    goto 1000
 		  endif
@@ -1127,7 +1125,7 @@ cc
                   call rs(nvar,nvar,cova1,w,matz,z,fv1,fv2,ierr)
 	          call rfdis(dat,z,ndist,n,nvar,n,nvar,
      *            means)
-		  call rfshsort(ndist,n)  
+		  call rfshsort(ndist,n)
                   if(dabs(ndist(nhalff)-0.D0).lt.10.D-8) then
                     call transfo(cova1,means,dat,med,mad,nvar,n)
                     call rs(nvar,nvar,cova1,w,matz,z,fv1,fv2,ierr)
@@ -1143,21 +1141,21 @@ cc
                   endif
 	          call rfdis(dath,z,ndist,nmaxi,nvmax,nn,nvar,
      *            means)
-		  call rfshsort(ndist,nn)  
+		  call rfshsort(ndist,nn)
                   kount=nhalf
                   do 166,kkk=nhalf+1,nn
                     if(dabs(ndist(kkk)-0.D0).lt.10.D-8) then
                       kount=kount+1
                     endif
- 166              continue               
-		  flag(1)=0 
+ 166              continue
+		  flag(1)=0
                   do 168,kkk=1,nvar
  168                plane(1,kkk)=z(kkk)
                   call rfstore2(nvar,cstock,mstock,nvmax2,nvmax,
      *            kmini,cova1,means,i,mcdndex,kount)
                   kount=1
 		  goto 1000
-	        else  
+	        else
 		  if(fine.and..not.final.and.kount.ne.0) then
 		    goto 1000
 		  endif
@@ -1166,7 +1164,7 @@ cc
 	      call rfcovsweep(cinv1,nvar,j)
  600        continue
 	    if(step.ge.2 .and. det.eq.detimin1) then
-	      goto 5000 
+	      goto 5000
 	    endif
 	    detimin1=deti
 	    deti=det
@@ -1207,40 +1205,40 @@ cc
 	    else
 	      iii=1
 cc            At the end of the algorithm, only the ten
-cc            best solutions need to be stored. 
+cc            best solutions need to be stored.
 	    endif
 cc
 cc  For each data group :
 cc    If the objective function is lower than the largest value in the
-cc    matrix mcdndex : 
+cc    matrix mcdndex :
 cc    A distinction is made between different stages of the algorithm:
 cc      * At the first stage of the split-up situation:
 cc        -If the new objective value did not yet occur in mcdndex
 cc         its value and corresponding covariance matrix and mean are
-cc         stored at the right place in the matrices mcdndex, c1stock and 
-cc         m1stock, and other values are shifted to their new position 
+cc         stored at the right place in the matrices mcdndex, c1stock and
+cc         m1stock, and other values are shifted to their new position
 cc         in these arrays.
 cc        -If the new objective value already occurs in mcdndex, a
 cc         comparison is made between the new mean vector and covariance matrix
 cc         and those estimates with the same determinant.
 cc         When for an equal determinant, the mean vector or covariance matrix
-cc         do not correspond, both of them are kept in the matrices mcdndex 
+cc         do not correspond, both of them are kept in the matrices mcdndex
 cc         and nbest.
 cc      * In the second stage of the algorithm, the covariances and means
 cc        are stored :
-cc        - If the new objective value did not yet occur  
-cc          in the matrix mcdndex, it is inserted by shifting the greater 
-cc          determinants upwards and doing the same in the arrays mstock 
+cc        - If the new objective value did not yet occur
+cc          in the matrix mcdndex, it is inserted by shifting the greater
+cc          determinants upwards and doing the same in the arrays mstock
 cc          and cstock.
 cc        - If the new objective value already occurs in the array mcdndex,
 cc          it is compared with all solutions with the same determinant.
 cc          In the case of an equality, the means and covariances
 cc          are compared to determine whether or not to insert the
-cc          new solution. 
-cc    Otherwise nothing happens. When a singularity occurs, 
+cc          new solution.
+cc    Otherwise nothing happens. When a singularity occurs,
 cc    the determinant in the matrix mcdndex is zero and the
-cc    corresponding flag is zero too, so the search in the arrays mcdndex, 
-cc    m1stock, c1stock, mstock and cstock is done on the rows with flag one. 
+cc    corresponding flag is zero too, so the search in the arrays mcdndex,
+cc    m1stock, c1stock, mstock and cstock is done on the rows with flag one.
 cc
 
           if( flag((iii-1)*10+1).eq.1) then
@@ -1249,10 +1247,10 @@ cc
             lll=2
           endif
 	  do 201, j=lll,10
-	    if (det .le. mcdndex(j,2,iii)) then 
+	    if (det .le. mcdndex(j,2,iii)) then
 	      if(det.ne.mcdndex(j,2,iii)) then
-		if(.not.fine.and.part) goto 203 
-		goto 205 
+		if(.not.fine.and.part) goto 203
+		goto 205
 	      else
 		do 207 kkk=j,10
 		  if(det.eq.mcdndex(kkk,2,iii)) then
@@ -1260,11 +1258,11 @@ cc
 		      if(part.and..not.fine) then
 		        if(means(jjj).ne.m1stock((iii-1)*10+
      *                  kkk,jjj)) then
-		          goto 203 
+		          goto 203
 			endif
 		      else
 		        if(means(jjj).ne.mstock(kkk,jjj)) then
-		          goto 205 
+		          goto 205
 			endif
 		      endif
   209               continue
@@ -1272,11 +1270,11 @@ cc
 		      if(part.and..not.fine) then
 		        if(cova1(jjj).ne.c1stock((iii-1)*10+
      *                  kkk,jjj)) then
-		          goto 203 
+		          goto 203
 			endif
 		      else
 		        if(cova1(jjj).ne.cstock(kkk,jjj)) then
-		          goto 205 
+		          goto 205
 			endif
 		      endif
   211               continue
@@ -1284,7 +1282,7 @@ cc
   207           continue
 	      endif
 	      goto 1000
-  203         do 221,k=10,j+1,-1 
+  203         do 221,k=10,j+1,-1
 		do 223 kk=1,nvar*nvar
   223             c1stock((iii-1)*10+k,kk)=
      *            c1stock((iii-1)*10+k-1,kk)
@@ -1293,7 +1291,7 @@ cc
      *            m1stock((iii-1)*10+k-1,kk)
 		mcdndex(k,1,iii)=mcdndex(k-1,1,iii)
 		mcdndex(k,2,iii)=mcdndex(k-1,2,iii)
-  221         continue  
+  221         continue
 	      do 227 kk=1,nvar
 		do 229 kkk=1,nvar
   229             c1stock((iii-1)*10+j,(kk-1)*nvar+kkk)=
@@ -1303,7 +1301,7 @@ cc
 	      mcdndex(j,1,iii)=i
 	      mcdndex(j,2,iii)=det
 	      goto 1000
-  205         do 231,k=10,j+1,-1 
+  205         do 231,k=10,j+1,-1
 	        do 233 kk=1,nvar*nvar
   233             cstock(k,kk)=
      *            cstock(k-1,kk)
@@ -1312,7 +1310,7 @@ cc
      *            mstock(k-1,kk)
 		mcdndex(k,1,iii)=mcdndex(k-1,1,iii)
 		mcdndex(k,2,iii)=mcdndex(k-1,2,iii)
-  231         continue  
+  231         continue
 	      do 237 kk=1,nvar
 		do 239 kkk=1,nvar
   239             cstock(j,(kk-1)*nvar+kkk)=
@@ -1322,8 +1320,8 @@ cc
 	      mcdndex(j,1,iii)=i
 	      mcdndex(j,2,iii)=det
 	      goto 1000
-	    endif 
-  201     continue 
+	    endif
+  201     continue
 	endif
  1000 continue
  1111 continue
@@ -1368,12 +1366,12 @@ cc
 
 cc      VT::chimed is passed now as a parameter
 cc        call rfcovmult(cova1,nvar,nvar,medi2/chimed(nvar))
-cc        call rfcovmult(cova2,nvar,nvar,medi2/chimed(nvar)) 
-cc        call rfcovmult(cinv2,nvar,nvar,1.D0/(medi2/chimed(nvar))) 
+cc        call rfcovmult(cova2,nvar,nvar,medi2/chimed(nvar))
+cc        call rfcovmult(cinv2,nvar,nvar,1.D0/(medi2/chimed(nvar)))
 
         call rfcovmult(cova1,nvar,nvar,medi2/chimed)
-        call rfcovmult(cova2,nvar,nvar,medi2/chimed) 
-        call rfcovmult(cinv2,nvar,nvar,1.D0/(medi2/chimed)) 
+        call rfcovmult(cova2,nvar,nvar,medi2/chimed)
+        call rfcovmult(cinv2,nvar,nvar,1.D0/(medi2/chimed))
         call rfcovcopy(cova1,adcov,nvar,nvar)
 cc
 cc      The MCD location is in bmeans.
@@ -1388,10 +1386,10 @@ cc
 
 cc VT:: no need - the cutoff now is passed as a parameter
 cc	cutoff=chi2(nvar)
-        
+
 	do 280 i=1,n
 	  do 282 mm=1,nvar
- 282      rec(mm)=dat(i,mm) 
+ 282      rec(mm)=dat(i,mm)
 	  dist2=rfmahad(rec,nvar,bmeans,cinv2)
 	  if(dist2.le.cutoff) then
 	    nin=nin+1
@@ -1420,7 +1418,7 @@ ccccc
       subroutine rfexact(kount,nn,ndist,z,nvmax,nvmax1,nvar,sscp1,
      *  rec,dat,nmax,cova1,means,sd,nvar1,weight)
 cc
-cc Determines how many objects lie on the hyperplane with equation 
+cc Determines how many objects lie on the hyperplane with equation
 cc z(1,1)*(x_i1 - means_1)+ ... + z(p,1)* (x_ip - means_p) = 0
 cc and computes their mean and their covariance matrix.
 cc
@@ -1446,7 +1444,7 @@ cc
         else
           weight(kk)=0
 	endif
- 10   continue 
+ 10   continue
       call rfcovar(kount,nvar,nvar+1,sscp1,cova1,means,sd)
       return
       end
@@ -1466,49 +1464,6 @@ cc
         do 20,i=1,n
  20       dat(i,j)=dat(i,j)*mad(j)+med(j)
  5    continue
-      return
-      end
-ccccc
-ccccc
-      function replow(k)
-cc
-cc    Find out which combinations of n and p are
-cc    small enough in order to perform exaustive search
-cc    Returns the maximal n for a given p, for which
-cc    exhaustive search is to be done
-cc    
-cc    k is the number of variables (p)
-cc
-      integer replow, k
-      integer irep(6)
-      data irep/500,50,22,17,15,14/
-
-      iret=0
-      if(k.le.6) iret = irep(k)
-
-      replow = iret
-      return
-      end 
-ccccc
-ccccc
-      function rfncomb(k,n)
-cc
-cc  Computes the number of combinations of k out of n.
-cc  (To avoid integer overflow during the computation,
-cc  ratios of reals are multiplied sequentially.)
-cc  For comb > 1E+009 the resulting 'comb' may be too large
-cc  to be put in the integer 'rfncomb', but the main program
-cc  only calls this function for small enough n and k.
-cc
-      integer rfncomb,k,n
-      double precision comb,fact
-cc
-      comb=dble(1.0)
-      do 10 j=1,k
-      fact=(dble(n-j+1.0))/(dble(k-j+1.0))
-      comb=comb*fact
- 10   continue
-      rfncomb=int(comb+0.5D0)
       return
       end
 ccccc
@@ -1598,7 +1553,7 @@ cc
  10       sd(j)=1/sqrt(a(j,j))
 	do 100 i=1,nvar
 	  do 90 j=1,nvar
-            if(i.eq.j) then 
+            if(i.eq.j) then
               b(i,j)=1.0
             else
 	      b(i,j)=a(i,j)*sd(i)*sd(j)
@@ -1607,106 +1562,7 @@ cc
  100    continue
 	return
 	end
-ccccc
-ccccc
-	subroutine rfrangen(n,nsel,index,seed)
-cc
-cc    Randomly draws nsel cases out of n cases.
-cc    Here, index is the index set.
-cc
-	integer seed
-	integer index(nsel)
-	real rfuniran
-cc
-	do 100 i=1,nsel
- 10       num=int(rfuniran(seed)*n)+1
-	  if(i.gt.1) then
-	    do 50 j=1,i-1
-	      if(index(j).eq.num) goto 10
- 50         continue
-	  endif
-	  index(i)=num
- 100    continue
-	return
-	end
-ccccc
-ccccc
-	function rfuniran(seed)
-cc
-cc  Draws a random number from the uniform distribution on [0,1].
-cc
-	real rfuniran
-	integer seed
-	integer quot
-cc
-	seed=seed*5761+999
-	quot=seed/65536
-	seed=seed-quot*65536
-	rfuniran=float(seed)/65536.D0
-	return
-	end
-ccccc
-ccccc
-	subroutine rfshsort(a,n)
-cc
-cc  Sorts the array a of length n.
-cc
-	double precision a(n)
-	double precision t
-	integer gap
-cc
-	gap=n
- 100    gap=gap/2
-	if(gap.eq.0) goto 200
-	do 180 i=1,n-gap
-	  j=i
- 120      if(j.lt.1) goto 180
-	  nextj=j+gap
-	  if(a(j).gt.a(nextj)) then
-	    t=a(j)
-	    a(j)=a(nextj)
-	    a(nextj)=t
-	  else
-	    j=0
-	  endif
-	  j=j-gap
-	  goto 120
- 180    continue
-	goto 100
- 200    return
-	end
-ccccc
-ccccc
-	subroutine rfishsort(a,kk)
-cc
-cc  Sorts the integer array a of length kk.
-cc
-	integer a(kk)
-	integer t
-	integer gap
-cc
-	gap=kk
- 100    gap=gap/2
-	if(gap.eq.0) goto 200
-	do 180 i=1,kk-gap
-	  j=i
- 120      if(j.lt.1) goto 180
-	  nextj=j+gap
-	  if(a(j).gt.a(nextj)) then
-	    t=a(j)
-	    a(j)=a(nextj)
-	    a(nextj)=t
-	  else
-	    j=0
-	  endif
-	  j=j-gap
-	  goto 120
- 180    continue
-	goto 100
- 200    return
-	end
-cccc
-ccccc
+
         subroutine prdraw(a,pnsel,seed,nn)
 cc
         integer a(nn)
@@ -1714,7 +1570,7 @@ cc
         integer seed
 cc
         jndex=pnsel
-        nrand=int(rfuniran(seed)*(nn-jndex))+1
+        nrand=int(uniran(seed)*(nn-jndex))+1
         jndex=jndex+1
         a(jndex)=nrand+jndex-1
         do 5, i=1,jndex-1
@@ -1735,11 +1591,8 @@ ccccc
 cc
 cc  Computes a Mahalanobis-type distance.
 cc
-	double precision rec(nvar)
-	double precision means(nvar)
-	double precision sigma(nvar,nvar)
-	double precision rfmahad
-	double precision t
+	double precision rec(nvar), means(nvar), sigma(nvar,nvar)
+        double precision rfmahad, t
 cc
 	t=0
 	do 100 j=1,nvar
@@ -1752,115 +1605,7 @@ cc
 	end
 ccccc
 ccccc
-	function rffindq(aw,ncas,k,index)
-cc
-cc  Finds the k-th order statistic of the array aw of length ncas.
-cc
-	double precision rffindq
-	double precision aw(ncas)
-	double precision ax,wa
-	integer index(ncas)
-cc
-	do 10 j=1,ncas
-	  index(j)=j
- 10     continue
-	l=1
-	lr=ncas
- 20     if(l.ge.lr) goto 90
-	ax=aw(k)
-	jnc=l
-	j=lr
- 30     if(jnc.gt.j) goto 80
- 40     if(aw(jnc).ge.ax) goto 50
-	jnc=jnc+1
-	goto 40
- 50     if(aw(j).le.ax) goto 60
-	j=j-1
-	goto 50
- 60     if(jnc.gt.j) goto 70
-	i=index(jnc)
-	index(jnc)=index(j)
-	index(j)=i
-	wa=aw(jnc)
-	aw(jnc)=aw(j)
-	aw(j)=wa
-	jnc=jnc+1
-	j=j-1
- 70     goto 30
- 80     if(j.lt.k) l=jnc
-	if(k.lt.jnc) lr=j
-	goto 20
- 90     rffindq=aw(k)
-	return
-	end
-ccccc
-ccccc
-	subroutine rfrdraw(a,n,seed,ntot,mini,ngroup,kmini)
-cc
-cc  Draws ngroup nonoverlapping subdatasets out of a dataset of size n,
-cc  such that the selected case numbers are uniformly distributed from 1 to n.
-cc
-	integer a(2,ntot)
-	integer mini(kmini)
-	integer seed
-cc
-	jndex=0
-	do 10 k=1,ngroup
-	  do 20 m=1,mini(k)
-	    nrand=int(rfuniran(seed)*(n-jndex))+1 
-	    jndex=jndex+1
-	    if(jndex.eq.1) then
-	      a(1,jndex)=nrand
-	      a(2,jndex)=k
-	    else
-		a(1,jndex)=nrand+jndex-1
-		a(2,jndex)=k
-		do 5,i=1,jndex-1
-		  if(a(1,i).gt.nrand+i-1) then
-		    do 6, j=jndex,i+1,-1
-		      a(1,j)=a(1,j-1)
-		      a(2,j)=a(2,j-1)
- 6                  continue
-		    a(1,i)=nrand+i-1
-		    a(2,i)=k
-		    goto 20
-		  endif
- 5              continue
-	    endif
- 20       continue
- 10     continue
-	return
-	end
-ccccc
-ccccc
-	function rfodd(n)
-cc
-	logical rfodd
-cc
-	rfodd=.true.
-	if(2*(n/2).eq.n) rfodd=.false.
-	return
-	end
-ccccc
-ccccc
-	function rfnbreak(nhalf,n,nvar)
-cc
-cc  Computes the breakdown value of the MCD estimator 
-cc
-
-        integer rfnbreak
-
-	if (nhalf.le.(n+nvar+1)/2) then
-	  rfnbreak=(nhalf-nvar)*100/n
-	else
-	  rfnbreak=(n-nhalf+1)*100/n
-	endif
-	return
-	end
-ccccc
-ccccc     
-       subroutine rfdis(da,z,ndist,nm,nv,nn,nvar,
-     * means)
+       subroutine rfdis(da,z,ndist,nm,nv,nn,nvar, means)
 cc
 cc Computes the distance between the objects of da and a hyperplane with
 cc equation z(1,1)*(x_i1 - means_1) + ... + z(p,1)*(x_ip - means_p) = 0
@@ -1878,13 +1623,13 @@ cc
        return
        end
 ccccc
-ccccc     
+ccccc
       subroutine rfstore2(nvar,cstock,mstock,nvmax2,nvmax,
      * kmini,cova1,means,i,mcdndex,kount)
 cc
-cc  Stores the coefficients of a hyperplane 
+cc  Stores the coefficients of a hyperplane
 cc  z(1,1)*(x_i1 - means_1) + ... +  z(p,1)*(x_ip - means_p) = 0
-cc  into the first row of the matrix mstock, and shifts the other  
+cc  into the first row of the matrix mstock, and shifts the other
 cc  elements of the arrays mstock and cstock.
 cc
       double precision cstock(10,nvmax2)
@@ -1893,7 +1638,7 @@ cc
       double precision cova1(nvar,nvar)
       double precision means(nvar)
 cc
-      do 10,k=10,2,-1 
+      do 10,k=10,2,-1
 	do 20 kk=1,nvar*nvar
  20       cstock(k,kk)=
      *  cstock(k-1,kk)
@@ -1902,7 +1647,7 @@ cc
      *  mstock(k-1,kk)
         mcdndex(k,1,1)=mcdndex(k-1,1,1)
         mcdndex(k,2,1)=mcdndex(k-1,2,1)
- 10   continue  
+ 10   continue
       do 40 kk=1,nvar
         mstock(1,kk)=means(kk)
         do 50 jj=1,nvar
@@ -1922,8 +1667,8 @@ cc
       double precision mcdndex(10,2,kmini)
       double precision cova1(nvar,nvar)
       double precision means(nvar)
-cc      
-      do 10,k=10,2,-1 
+cc
+      do 10,k=10,2,-1
 	do 20 kk=1,nvar*nvar
  20       c1stock((ii-1)*10+k,kk)=
      *  c1stock((ii-1)*10+k-1,kk)
@@ -1932,7 +1677,7 @@ cc
      *  m1stock((ii-1)*10+k-1,kk)
         mcdndex(k,1,ii)=mcdndex(k-1,1,ii)
         mcdndex(k,2,ii)=mcdndex(k-1,2,ii)
- 10   continue  
+ 10   continue
       do 40 kk=1,nvar
 	m1stock((ii-1)*10+1,kk)=means(kk)
         do 50 jj=1,nvar
@@ -1941,15 +1686,16 @@ cc
  40   continue
       mcdndex(1,1,ii)=i
       mcdndex(1,2,ii)=kount
-      return 
+      return
       end
 ccccc
 ccccc
-        subroutine rfmcduni(w,ncas,jqu,slutn,bstd,aw,aw2,
-     *    factor,len)
+C--  MM: This is *almost* == xrfmcduni() in ./rfltsreg.f --- but not quite!
+C--  --  FIXME: Is one of them buggy? [if yes; this one: it does *NOT* use factor]
+        subroutine rfmcduni(w,ncas,jqu,slutn,bstd,aw,aw2, factor,len)
 cc
 cc  rfmcduni : calculates the MCD in the univariate case.
-cc           w contains the ordered observations 
+cc           w contains the ordered observations
 cc
        implicit double precision(a-h,o-z), integer(i-n)
        double precision w(ncas),aw(ncas),aw2(ncas)
@@ -1961,36 +1707,35 @@ cc
        do 5 j=1,ncas-jqu+1
  5       slutn(j)=0.D0
        do 20 jint=1,ncas-jqu+1
-       aw(jint)=0.D0
-       do 10 j=1,jqu
-       aw(jint)=aw(jint)+w(j+jint-1)
-       if (jint.eq.1) sq=sq+w(j)*w(j)
- 10    continue 
-       aw2(jint)=aw(jint)*aw(jint)/jqu
-       if (jint.eq.1) then 
-	 sq=sq-aw2(jint)
-         sqmin=sq
-	 slutn(ndup)=aw(jint)
-		      else 
-         sq=sq-w(jint-1)*w(jint-1)+
-     *        w(jint+jqu-1)*w(jint+jqu-1)
-     *        -aw2(jint) + aw2(jint-1)
-         if(sq.lt.sqmin) then
-           ndup=1
+         aw(jint)=0.D0
+         do 10 j=1,jqu
+           aw(jint)=aw(jint)+w(j+jint-1)
+           if (jint.eq.1) sq=sq+w(j)*w(j)
+ 10      continue
+         aw2(jint)=aw(jint)*aw(jint)/jqu
+         if (jint.eq.1) then
+           sq=sq-aw2(jint)
            sqmin=sq
            slutn(ndup)=aw(jint)
          else
-           if(sq.eq.sqmin) then
-             ndup=ndup+1
-             slutn(ndup)=aw(jint) 
+           sq=sq -w(jint-1)*w(jint-1) + w(jint+jqu-1)*w(jint+jqu-1)
+     *          -aw2(jint) + aw2(jint-1)
+           if(sq.lt.sqmin) then
+             ndup=1
+             sqmin=sq
+             slutn(ndup)=aw(jint)
+           else
+             if(sq.eq.sqmin) then
+               ndup=ndup+1
+               slutn(ndup)=aw(jint)
+             endif
            endif
          endif
-       endif 
- 20    continue 
+ 20    continue
        slutn(1)=slutn(int((ndup+1)/2))/jqu
        bstd=sqrt(sqmin/jqu)
-       return 
-       end 
+       return
+       end
 
 CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 ccccc
@@ -2008,22 +1753,6 @@ cc
  100  continue
       return
       end
-ccccc
-ccccc
-	subroutine rfcovcopy(a,b,n1,n2)
-cc
-cc  Copies matrix a to matrix b.
-cc
-	double precision a(n1,n2)
-	double precision b(n1,n2)
-cc
-	do 100 i=1,n1
-	  do 90 j=1,n2
-	    b(i,j)=a(i,j)
- 90       continue
- 100    continue
-	return
-	end
 ccccc
 ccccc
 	subroutine rfcovsweep(a,nvar,k)
@@ -2047,25 +1776,6 @@ cc
  1000   continue
 	a(k,k)=1/d
 	return
-	end
-ccccc
-ccccc
-	subroutine rfgenpn(n,nsel,index)
-cc
-cc    Constructs all subsets of nsel cases out of n cases.
-cc
-	integer index(nsel)
-cc
-	k=nsel
-	index(k)=index(k)+1
- 10     if(k.eq.1.or.index(k).le.(n-(nsel-k))) goto 100
-	k=k-1
-	index(k)=index(k)+1
-	do 50 i=k+1,nsel
-	  index(i)=index(i-1)+1
- 50     continue
-	goto 10
- 100    return
 	end
 ccccc
 ccccc

@@ -50,6 +50,8 @@ o) we have had some problems, but they are solved now
     because it is used with scaleTau2() which has now a constant
     consistency factor by default.
 
+0.1-5:
+
 14) lmrob():
    - add "..." to argument list in order to allow ``control in there'' as well
 
@@ -57,3 +59,10 @@ o) we have had some problems, but they are solved now
    - indentation etc more or less according to "R core coding standard"
    - not using (many) 'register' -- since compiler optimization is often better
 
+0.1-6:
+
+15) lmrob():
+   - use "good" lin.algebra functions in lmrob.S and lmrob.MM
+   - change default to compute.rd = FALSE  {no robust Mahalanobis distances;
+     are expensive, and only needed for some plotting
+     also MCD can "quickly" become singular.

@@ -1,9 +1,41 @@
+2006-04-22  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmrob.MM.R (lmrob.S): new (control) option 'best.r.s = 2';
+		was hardcoded in
+	* src/lmrob.c (R_lmrob_S): 'best_r' is now argument; further,
+		seed_rand is past to the fast_s*() sub functions, so we
+		can call them from R {and decide ourselves "if fast".
+
+	* src/rf-common.f: new file for functions identical
+	in rffastcmd.f and rfltsreg.f.
+
+2006-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmrob.MM.R (lmrob.MM): return robustness weights as 'wt'
+
+2006-04-18  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmrob.MM.R (lmrob.control): change default for 'compute.rd'
+	to FALSE ==> robust (Mahalanobis) distances are *not* computed by
+	default.  This prevents singularity errors which happen frequently
+	as soon as X contains (large) factors (with few levels).
+
+2006-04-15  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/pension.Rd: add plots and simple 1st aid trafo (!)
+
+	* R/glmrobMqle.R (glmrobMqle): weights.on.x = "hat" couldn't have
+	worked(!) - still needs work __TODO__
+
+	* R/lmrob.MM.R (lmrob.S, lmrob.MM): simplified computations
+	achieving ~ 10% faster execution for a (n,p) = (500,20) example.
+
 2006-04-01  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* src/lmrob.c:   new lmrob() code from Matias' roblm package
-	* R/lmrob.*.R:   renamed s/roblm/lmrob/  but also refactored
+	* src/lmrob.c:	 new lmrob() code from Matias' roblm package
+	* R/lmrob.*.R:	 renamed s/roblm/lmrob/	 but also refactored
 	* man/lmrob.*.Rd: and added a bit
-	* TODO:  section on lmrob()
+	* TODO:	 section on lmrob()
 
 2006-03-20  Martin Maechler  <maechler@stat.math.ethz.ch>
 

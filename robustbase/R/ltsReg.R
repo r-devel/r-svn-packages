@@ -30,7 +30,8 @@ ltsReg.formula <- function(formula, data, ...,
     ##	  method <- match.arg(method)
 
     mf <- match.call(expand.dots = FALSE)
-    mf$method <- mf$contrasts <- mf$model <- mf$x.ret <- mf$y.ret <- mf$... <- NULL
+    mf$method <- mf$contrasts <- mf$model <- mf$x.ret <- mf$y.ret <- mf$... <-
+        NULL
     mf[[1]] <- as.name("model.frame")
     mf <- eval.parent(mf)
     ##	  if (method == "model.frame") return(mf)
@@ -771,30 +772,38 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     ##	 vt::03.02.2006 - added options "best" and "exact" for nsamp
     if(!missing(nsamp)) {
 	if(is.numeric(nsamp) && nsamp <= 0) {
-	    warning(paste("Invalid number of trials nsamp=",nsamp,"!Using default.\n"))
+	    warning("Invalid number of trials nsamp=",nsamp,"! Using default.\n")
 	    nsamp <- -1
 	} else if(nsamp == "exact" || nsamp == "best") {
 	    myk <- p
 	    if(n > 2*nmini-1) {
-		warning(paste("Options 'best' and 'exact' not allowed for n greater then ",2*nmini-1," . \nUsing nsamp=",nsamp,"\n"))
+		warning("Options 'best' and 'exact' not allowed for n greater than ",
+                        2*nmini-1,". \nUsing nsamp=",nsamp,"\n")
 		nsamp <- -1
-	    } else {
-		nall <- .ncomb(myk, n)
+	    }
+            else { ## FIXME: Add a test case for this !
+		nall <- choose(n, myk)
 		if(nall > 5000 && nsamp == "best") {
 		    nsamp <- 5000
-		    warning(paste("Maximum 5000 subsets allowed for option 'best'. \nComputing 5000 subsets of size ",myk," out of ",n,"\n"))
+		    warning("Maximum 5000 subsets allowed for option 'best'.\n",
+                            "Computing 5000 subsets of size ",myk," out of ",n,
+                            "\n")
 		} else {
 		    nsamp <- 0		#all subsamples
 		    if(nall > 5000)
-			cat(paste("Computing all ",nall," subsets of size ",myk," out of ",n, "\n This may take a very long time!\n"))
+			cat("Computing all ",nall," subsets of size ", myk,
+                            " out of ",n,
+                            "\n This may take a very long time!\n")
 		}
 	    }
 	}
 
-	if(!is.numeric(nsamp) || nsamp == -1) { # still not defined - set it to the default
+	if(!is.numeric(nsamp) || nsamp == -1) {
+            ## still not defined - set it to the default
 	    defcontrol <- rrcov.control() # default control
 	    if(!is.numeric(nsamp))
-		warning(paste("Invalid number of trials nsamp=",nsamp,"!Using default nsamp=",defcontrol$nsamp,"\n"))
+		warning("Invalid number of trials nsamp=",nsamp,
+                        "! Using default nsamp=",defcontrol$nsamp,"\n")
 	    nsamp <- defcontrol$nsamp	# take the default nsamp
 	}
     }
