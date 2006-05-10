@@ -2,7 +2,8 @@
 \alias{lmrob.S}
 \title{ S-regression estimators }
 \description{
-  This function computes an S-estimator for linear regression.
+  Computes an S-estimator for linear regression,
+  using the \dQuote{fast S} algorithm.% of Matias Salibian & Victor Yohai ...
 }
 \usage{
 lmrob.S(x, y, control, trace.lev = 0)
