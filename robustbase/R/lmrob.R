@@ -12,6 +12,8 @@
 ### 5) There are still quite a few things hard-coded in ../src/lmrob.c
 ###    E.g., 'nResample' is used, but MAX_NO_RESAMPLES = 500 cannot be changed.
 
+### 6) Use ' method = "MM" ' and a general scheme for "plugin" of other estimators!!
+
 
 ### The first part of lmrob()  much cut'n'paste from lm() - on purpose!
 lmrob <-

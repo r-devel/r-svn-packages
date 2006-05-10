@@ -110,7 +110,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 
     c(b, list(cov = (u1 - u2 - u3 + u4)/n,
               wt = w / r.s, control = control))
-}
+} ## lmrob.MM()
 
 
 lmrob.S <- function(x, y, control, trace.lev = 0)
@@ -171,4 +171,4 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     u4 <- mean(w2^2 - (control$bb)^2) * tcrossprod(a)
 
     c(b, list(cov = (u1 - u2 - u3 + u4)/n, control = control))
-}
+} ## lmrob.S()
