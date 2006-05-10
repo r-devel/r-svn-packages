@@ -66,3 +66,7 @@ o) we have had some problems, but they are solved now
    - change default to compute.rd = FALSE  {no robust Mahalanobis distances;
      are expensive, and only needed for some plotting
      also MCD can "quickly" become singular.
+
+   - added 'trace.lev' argument to lmrob.S()
+      --> can have printing output during search
+

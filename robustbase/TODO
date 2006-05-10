@@ -115,8 +115,6 @@ o R/lmrob*.R : seems like a simple ``dump''
 
   Possibly change default to  'compute.rd = FALSE' !?!
 
-o add 'trace' argument [to lmrob.S() --> printing output during search]
-
 o src/lmrob.c :
 
    Things to fix:
