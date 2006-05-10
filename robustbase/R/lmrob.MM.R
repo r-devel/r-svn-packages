@@ -4,12 +4,17 @@ lmrob.control <-
 	     nResample = 500,
 	     tuning.chi = 1.54764, bb = 0.5, tuning.psi = 4.685061,
 	     max.it = 50, groups = 5, n.group = 400,
-	     best.r.s = 2, k.fast.s = 1,
+	     k.fast.s = 1,
+             best.r.s = 2,      # had '2'    hardwired in C
+             k.max = 50,        # had '50'   hardwired in C
+             refine.tol = 1e-4, # had '1e-7' hardwired in C {"never" converged!}
 	     compute.rd = FALSE)
 {
     list(seed = seed, nResample = nResample, tuning.chi = tuning.chi,
-	 bb = bb, tuning.psi = tuning.psi, groups = groups, n.group = n.group,
-	 best.r.s = best.r.s, k.fast.s = k.fast.s, max.it = max.it,
+	 bb = bb, tuning.psi = tuning.psi,
+         max.it = max.it, groups = groups, n.group = n.group,
+	 best.r.s = best.r.s, k.fast.s = k.fast.s,
+         k.max = k.max, refine.tol = refine.tol,
 	 compute.rd = compute.rd)
 }
 
@@ -52,7 +57,7 @@ lmrob.fit.MM <-
 	coef[-r1] <- NA
 	names(coef) <- dn
     }
-    f <- x %*% coef
+    f <- drop(x %*% coef)
     r <- y - f
     list(fitted.values = f, residuals = r, weights = final.MM$wt,
          rank = rank, degree.freedom = n - rank,
@@ -86,6 +91,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 	    c.psi = c.psi,
 	    converged = logical(1),
 	    PACKAGE = "robustbase")[c("coef", "scale", "converged")]
+    ## FIXME: shouldn't C-code above return residuals ?!
     r.s  <- drop(y - x %*% b$coef)       / sigma
     r2.s <- drop(y - x %*% beta.initial) / sigma
     w   <- lmrob.Psi( r.s, cc = c.psi, deriv = 1)
@@ -107,7 +113,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 }
 
 
-lmrob.S <- function(x, y, control)
+lmrob.S <- function(x, y, control, trace.lev = 0)
 {
     if(!is.matrix(x)) x <- as.matrix(x)
     n <- nrow(x)
@@ -141,10 +147,15 @@ lmrob.S <- function(x, y, control)
 	    groups  = groups,
 	    n.group = nGr,
 	    k.fast.s= as.integer(control$k.fast.s),
-	    PACKAGE = "robustbase")[c("coef", "scale", "seed")]
+	    k.max   = as.integer(control$k.max),
+	    refine.tol= as.double(control$refine.tol),
+	    trace.lev = as.integer(trace.lev),
+	    PACKAGE = "robustbase")[c("coef", "scale", "seed", "k.max")]
     sigma <- b$scale
     if(sigma < 0)
 	stop("C function R_lmrob_S() exited prematurely")
+    names(b)[names(b) == "k.max"] <- "k.iter"
+    ## FIXME: get 'res'iduals from C
     r2.s <- drop(y - x %*% b$coef) / sigma
     w <- lmrob.Chi(r2.s, cc = c.chi, deriv = 2)
     A <- solve(	crossprod(x, x * w) ) * (n * sigma)

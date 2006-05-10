@@ -263,12 +263,11 @@ covMcd <- function(x,
 	    if(length(dimn[[2]]))
 		names(ans$center) <- dimn[[2]]
 	    ans$n.obs <- n
-	    if(mcd$exactfit == -1) {
-		stop("The program allows for at most ", mcd$kount, " observations.")
-	    }
-	    if(mcd$exactfit == -2) {
-		stop("The program allows for at most ", mcd$kount, " variables.")
-	    }
+## no longer relevant:
+## 	    if(mcd$exactfit == -1)
+## 		stop("The program allows for at most ", mcd$kount, " observations.")
+## 	    if(mcd$exactfit == -2)
+## 		stop("The program allows for at most ", mcd$kount, " variables.")
 	    if(mcd$exactfit == 1) {
 		msg <- "The covariance matrix of the data is singular."
 		ans$method <- paste(ans$method, msg, sep = "\n")
@@ -562,14 +561,14 @@ MCDcnp2.rew <- function(p, n, alpha)
 	     x,
 	     n,
 	     p,
-	     quan,
+	     nhalff = quan,
 	     nsamp,
 	     initcovariance = double(p * p),
 	     initmean	    = double(p),
 	     best	    = rep.int(as.integer(10000), quan),
 	     mcdestimate = double(1),
 	     weights   = integer(n),
-	     exactfit  = integer(1),
+	     exactfit  = integer(1), # output indicator: 0: ok; 1: ..., 2: ..
 	     coeff     = matrix(double(5 * p), nrow = 5, ncol = p), ## plane
 	     kount     = integer(1),
 	     adjustcov = double(p * p),

@@ -153,7 +153,7 @@ print.summary.lmrob <-
 	"Residuals:\n", sep = "")
     if (df > 5) {
 	nam <- c("Min", "1Q", "Median", "3Q", "Max")
-	if (length(dim(resid)) == 2)
+	if (NCOL(resid) > 1)
 	    rq <- structure(apply(t(resid), 1, quantile),
 			    dimnames = list(nam, dimnames(resid)[[2]]))
 	else rq <- structure(quantile(resid), names = nam)
@@ -194,10 +194,10 @@ print.summary.lmrob <-
 
     ## FIXME: summarize the robustness weights
     ctrl <- x$control
-    real.ctrl <- match(c("bb", "tuning.psi", "tuning.chi"), names(ctrl))
     cat("Algorithmic parameters:\n")
-    print(unlist(ctrl[	real.ctrl]), digits = digits)
-    print(unlist(ctrl[- real.ctrl])) # non-real ones
+    real.ctrl <- sapply(ctrl, function(x) x != round(x))
+    print(unlist(ctrl[ real.ctrl]), digits = digits)
+    print(unlist(ctrl[!real.ctrl])) # non-real ones
 
     invisible(x)
 }

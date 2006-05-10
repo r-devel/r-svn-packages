@@ -1,13 +1,22 @@
+2006-04-25  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/biweight-funs.R (lmrob.Psi):
+
 2006-04-22  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/lmrob.MM.R (lmrob.S): new (control) option 'best.r.s = 2';
 		was hardcoded in
 	* src/lmrob.c (R_lmrob_S): 'best_r' is now argument; further,
-		seed_rand is past to the fast_s*() sub functions, so we
+		seed_rand is passed to the fast_s*() sub functions, so we
 		can call them from R {and decide ourselves "if fast".
 
 	* src/rf-common.f: new file for functions identical
 	in rffastcmd.f and rfltsreg.f.
+
+2006-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* data/NOxEmissions.Rd: add the large dataset from René Locher
+	* man/NOxEmissions.Rd:
 
 2006-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 

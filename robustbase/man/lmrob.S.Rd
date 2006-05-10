@@ -5,12 +5,15 @@
   This function computes an S-estimator for linear regression.
 }
 \usage{
-lmrob.S(x, y, control)
+lmrob.S(x, y, control, trace.lev = 0)
 }
 \arguments{
   \item{x}{ design matrix }
   \item{y}{ response vector }
   \item{control}{ list as returned by \code{\link{lmrob.control}} }
+  \item{trace.lev}{integer indicating if the progress of the algorithm
+    should be traced (increasingly); default \code{trace.lev = 0} does
+    no tracing.}
 }
 \details{
   This function is used by \code{\link{lmrob.fit.MM}} and not
