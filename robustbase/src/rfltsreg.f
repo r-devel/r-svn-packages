@@ -311,7 +311,7 @@ CDDD	CALL INTPR('>>> Initialization ready',-1,0,0)
           do 23, jj=1,n
  23         ndist(jj)=dat(jj,1)
           call rfshsort(ndist,n)
-          call xrfmcduni(ndist,n,nhalff,slutn,bstd,am,am2,factor,
+          call rfmcduni(ndist,n,nhalff,slutn,bstd,am,am2,factor,
      *      n-nhalff+1)
           goto 9999
         endif
@@ -547,7 +547,7 @@ CDDD		CALL INTPR('>>> INTERCEPT ADJUSTMENT 1',-1,i,1)
           if(intercept.eq.1.and.((.not.fine.and.part).or.
      *      .not.part.or.((nn-nhalf).le.nmore))) then
               call rfshsort(aw,nn)
-              call xrfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
+              call rfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
      *            factor,nn-nhalf+1)
               a(nvar)=a(nvar)+slutn(1)
               do 154 jnc=1,nn
@@ -564,7 +564,7 @@ CDDD		CALL INTPR('>>> INTERCEPT ADJUSTMENT 1',-1,i,1)
                   jnc=index1(index2(1))
                   if(jnc+nmore-nmore2+nhalf-1.gt.nn.or.jnc-nmore2.lt.1)
      *                then
-                      call xrfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
+                      call rfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
      *                    factor,nn-nhalf+1)
                       a(nvar)=a(nvar)+slutn(1)
                       do 169 jnc=1,nn
@@ -573,7 +573,7 @@ CDDD		CALL INTPR('>>> INTERCEPT ADJUSTMENT 1',-1,i,1)
  555                  do 178 jj=0,nhalf-1+nmore
  178                      aw2(jj+1)=aw(jnc-nmore2+jj)
                       nlen=nmore+1
-                      call xrfmcduni(aw2,nhalf+nmore,nhalf,slutn,
+                      call rfmcduni(aw2,nhalf+nmore,nhalf,slutn,
      *          bstd,am,am2,factor,nlen)
                       if(nlen.eq.1.and..not.more1) then
                           if(.not.more2) then
@@ -662,7 +662,7 @@ CDDD		CALL INTPR('>>> INTERCEPT ADJUSTMENT 2',-1,step,1)
           if(intercept.eq.1.and.((.not.fine.and.part).or.
      *      .not.part.or.((nn-nhalf).le.nmore))) then
               call rfshsort(aw,nn)
-              call xrfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
+              call rfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
      *            factor,nn-nhalf+1)
               a(nvar)=a(nvar)+slutn(1)
               do 179 jnc=1,nn
@@ -679,7 +679,7 @@ CDDD		CALL INTPR('>>> INTERCEPT ADJUSTMENT 2',-1,step,1)
                   jnc=index1(index2(1))
                   if(jnc+nmore-nmore2+nhalf-1.gt.nn.or.jnc-nmore2.lt.1)
      *                then
-                      call xrfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
+                      call rfmcduni(aw,nn,nhalf,slutn,bstd,am,am2,
      *                    factor,nn-nhalf+1)
                       a(nvar)=a(nvar)+slutn(1)
                       do 168 jnc=1,nn
@@ -688,7 +688,7 @@ CDDD		CALL INTPR('>>> INTERCEPT ADJUSTMENT 2',-1,step,1)
  666                  do 181 jj=0,nhalf-1+nmore
  181                      aw2(jj+1)=aw(jnc-nmore2+jj)
                       nlen=nmore+1
-                      call xrfmcduni(aw2,nhalf+nmore,nhalf,slutn,bstd,
+                      call rfmcduni(aw2,nhalf+nmore,nhalf,slutn,bstd,
      *                     am,am2,factor,nlen)
                       if(nlen.eq.1.and..not.more1) then
                           if(.not.more2) then
@@ -1201,147 +1201,102 @@ ccccc
       jmat=n+nb
       jnk=0
       do 10 j=1,jmat
-         jnk=(j-1)*nvmax
-         do 10 nc=1,nvmax
-            jnk=jnk+1
-            hvec(jnk)=am(nc,j)
+	 jnk=(j-1)*nvmax
+	 do 10 nc=1,nvmax
+	    jnk=jnk+1
+	    hvec(jnk)=am(nc,j)
  10   continue
 
       nznde=n-1
       lclpl=-jdm
       do 120 jhfd=1,n
-         turn=0.D0
-         lclpl=lclpl+jdm+1
-         jdel=lclpl+n-jhfd
-         do 40 jncb=lclpl,jdel
-         if(dabs(hvec(jncb))-dabs(turn)) 40,40,30
- 30         turn=hvec(jncb)
-            ldel=jncb
- 40      continue
-         if(dabs(turn).le.1D-8) goto 170
-         if(ldel-lclpl) 60,80,60
- 60         deter=-deter
-            ldel=ldel-jdm
-            jncb=lclpl-jdm
-            do 70 jncc=jhfd,jmat
-               ldel=ldel+jdm
-               jncb=jncb+jdm
-               swap=hvec(jncb)
-               hvec(jncb)=hvec(ldel)
- 70         hvec(ldel)=swap
- 80         deter=deter*turn
-         if(jhfd.eq.n) goto 120
-         turn=1./turn
-         jncb=lclpl+1
-         do 90 jncc=jncb,jdel
- 90         hvec(jncc)=hvec(jncc)*turn
-         jncd=lclpl
-         jrow=jhfd+1
-         do 110 jncb=jrow,n
-            jncd=jncd+1
-            jnce=lclpl
-            jncf=jncd
-            do 100 jncc=jrow,jmat
-               jnce=jnce+jdm
-               jncf=jncf+jdm
- 100        hvec(jncf)=hvec(jncf)-hvec(jnce)*hvec(jncd)
- 110     continue
+	 turn=0.D0
+	 lclpl=lclpl+jdm+1
+	 jdel=lclpl+n-jhfd
+	 do 40 jncb=lclpl,jdel
+	 if(dabs(hvec(jncb))-dabs(turn)) 40,40,30
+ 30	    turn=hvec(jncb)
+	    ldel=jncb
+ 40	 continue
+	 if(dabs(turn).le.1D-8) then
+	    nerr=-1
+	    goto 180
+	 endif
+	 if(ldel-lclpl) 60,80,60
+ 60	    deter=-deter
+	    ldel=ldel-jdm
+	    jncb=lclpl-jdm
+	    do 70 jncc=jhfd,jmat
+	       ldel=ldel+jdm
+	       jncb=jncb+jdm
+	       swap=hvec(jncb)
+	       hvec(jncb)=hvec(ldel)
+ 70	    hvec(ldel)=swap
+ 80	    deter=deter*turn
+	 if(jhfd.eq.n) goto 120
+	 turn=1./turn
+	 jncb=lclpl+1
+	 do 90 jncc=jncb,jdel
+ 90	    hvec(jncc)=hvec(jncc)*turn
+	 jncd=lclpl
+	 jrow=jhfd+1
+	 do 110 jncb=jrow,n
+	    jncd=jncd+1
+	    jnce=lclpl
+	    jncf=jncd
+	    do 100 jncc=jrow,jmat
+	       jnce=jnce+jdm
+	       jncf=jncf+jdm
+ 100	    hvec(jncf)=hvec(jncf)-hvec(jnce)*hvec(jncd)
+ 110	 continue
  120  continue
 
       nerr=0
       neqa=n+1
       jbegx=nznde*jdm+1
       do 150 jnc=neqa,jmat
-      jbegx=jbegx+jdm
-      jendx=jbegx+n
-      jbegc=n*jdm+1
-      jendc=jbegc+nznde
-      do 140 jncb=1,nznde
-      jendx=jendx-1
-      jbegc=jbegc-jdm
-      jendc=jendc-jdm-1
-      hvec(jendx)=hvec(jendx)/hvec(jendc+1)
-      swap=hvec(jendx)
-      jncd=jbegx-1
-      do 130 jncc=jbegc,jendc
-      jncd=jncd+1
- 130  hvec(jncd)=hvec(jncd)-hvec(jncc)*swap
- 140  continue
-      hvec(jbegx)=hvec(jbegx)/hvec(1)
+	 jbegx=jbegx+jdm
+	 jendx=jbegx+n
+	 jbegc=n*jdm+1
+	 jendc=jbegc+nznde
+	 do 140 jncb=1,nznde
+	    jendx=jendx-1
+	    jbegc=jbegc-jdm
+	    jendc=jendc-jdm-1
+	    hvec(jendx)=hvec(jendx)/hvec(jendc+1)
+	    swap=hvec(jendx)
+	    jncd=jbegx-1
+	    do 130 jncc=jbegc,jendc
+	       jncd=jncd+1
+	       hvec(jncd)=hvec(jncd)-hvec(jncc)*swap
+ 130	    continue
+ 140	 continue
+	 hvec(jbegx)=hvec(jbegx)/hvec(1)
  150  continue
       jnc=-jdm
       jbegx=nznde*jdm+1
       jendx=jbegx+nznde
       do 160 jncb=neqa,jmat
-      jbegx=jbegx+jdm
-      jendx=jendx+jdm
-      jnc=jnc+jdm
-      jncd=jnc
-      do 160 jncc=jbegx,jendx
-      jncd=jncd+1
- 160  hvec(jncd)=hvec(jncc)
-      goto 180
- 170  nerr=-1
+	 jbegx=jbegx+jdm
+	 jendx=jendx+jdm
+	 jnc=jnc+jdm
+	 jncd=jnc
+	 do 165 jncc=jbegx,jendx
+	    jncd=jncd+1
+	    hvec(jncd)=hvec(jncc)
+ 165	 continue
+ 160  continue
+
  180  jnk=0
       do 190 j=1,jmat
-      do 190 nc=1,nvmax
-      jnk=jnk+1
-      am(nc,j)=hvec(jnk)
+	 do 190 nc=1,nvmax
+	    jnk=jnk+1
+	    am(nc,j)=hvec(jnk)
  190  continue
       return
       end
 ccccc
 C--     VT-- The following functions were added
 C--
-C--  MM: moved to ./rf-common.f
-ccccc
-ccccc
-C--  MM: This is *almost* == rfmcduni() in ./rffastmcd.f --- but not quite!
-C--  --  FIXME: Is one of them buggy? [if yes; I think this one is correct!]
-	subroutine xrfmcduni(w,ncas,jqu,slutn,bstd,aw,aw2,factor,len)
-cc
-cc  rfmcduni : calculates the MCD in the univariate case.
-cc           w contains the ordered observations
-cc
-	implicit double precision (a-h,o-z), integer(i-n)
-	double precision w(ncas),aw(ncas),aw2(ncas)
-	double precision slutn(len)
-cc
-	sq=0.D0
-	sqmin=0.D0
-	ndup=1
-	do 5 j=1,ncas-jqu+1
- 5        slutn(j)=0.D0
-	do 20 jint=1,ncas-jqu+1
-	  aw(jint)=0.D0
-	  do 10 j=1,jqu
-	    aw(jint)=aw(jint)+w(j+jint-1)
-	    if (jint.eq.1) sq=sq+w(j)*w(j)
- 10	  continue
-	  aw2(jint)=aw(jint)*aw(jint)/jqu
-	  if (jint.eq.1) then
-	    sq=sq-aw2(jint)
-	    sqmin=sq
-	    slutn(ndup)=aw(jint)
-	    len=jint
-	  else
-	    sq=sq - w(jint-1)*w(jint-1) + w(jint+jqu-1)*w(jint+jqu-1)
-     *	        - aw2(jint) + aw2(jint-1)
-	    if(sq.lt.sqmin) then
-	      ndup=1
-	      sqmin=sq
-	      slutn(ndup)=aw(jint)
-	      len=jint
-	    else
-	      if(sq.eq.sqmin) then
-		ndup=ndup+1
-		slutn(ndup)=aw(jint)
-	      endif
-	    endif
-	  endif
- 20	continue
-	slutn(1)=slutn(int((ndup+1)/2))/jqu
-	bstd=factor*sqrt(sqmin/jqu)
-	return
-	end
-ccccc
+C--  MM: moved to ./rf-common.f - since they are used from ./rffastmcd.f too
+

@@ -14,14 +14,14 @@ cc
 	real uniran
 cc
 	do 100 i=1,nsel
- 10       num=int(uniran(seed)*n)+1
+ 10	  num=int(uniran(seed)*n)+1
 	  if(i.gt.1) then
 	    do 50 j=1,i-1
 	      if(index(j).eq.num) goto 10
- 50         continue
+ 50	    continue
 	  endif
 	  index(i)=num
- 100    continue
+ 100	continue
 	return
 	end
 ccccc
@@ -50,14 +50,14 @@ cc
 cc
 	k=nsel
 	index(k)=index(k)+1
- 10     if(k.eq.1.or.index(k).le.(n-(nsel-k))) goto 100
+ 10	if(k.eq.1.or.index(k).le.(n-(nsel-k))) goto 100
 	k=k-1
 	index(k)=index(k)+1
 	do 50 i=k+1,nsel
 	  index(i)=index(i-1)+1
- 50     continue
+ 50	continue
 	goto 10
- 100    return
+ 100	return
 	end
 ccccc
 ccccc
@@ -70,11 +70,11 @@ cc
 	integer gap
 cc
 	gap=n
- 100    gap=gap/2
+ 100	gap=gap/2
 	if(gap.eq.0) goto 200
 	do 180 i=1,n-gap
 	  j=i
- 120      if(j.lt.1) goto 180
+ 120	  if(j.lt.1) goto 180
 	  nextj=j+gap
 	  if(a(j).gt.a(nextj)) then
 	    t=a(j)
@@ -85,9 +85,9 @@ cc
 	  endif
 	  j=j-gap
 	  goto 120
- 180    continue
+ 180	continue
 	goto 100
- 200    return
+ 200	return
 	end
 ccccc
 ccccc
@@ -100,11 +100,11 @@ cc
 	integer gap
 cc
 	gap=kk
- 100    gap=gap/2
+ 100	gap=gap/2
 	if(gap.eq.0) goto 200
 	do 180 i=1,kk-gap
 	  j=i
- 120      if(j.lt.1) goto 180
+ 120	  if(j.lt.1) goto 180
 	  nextj=j+gap
 	  if(a(j).gt.a(nextj)) then
 	    t=a(j)
@@ -115,9 +115,9 @@ cc
 	  endif
 	  j=j-gap
 	  goto 120
- 180    continue
+ 180	continue
 	goto 100
- 200    return
+ 200	return
 	end
 ccccc
 ccccc
@@ -174,8 +174,8 @@ cc
 	do 100 i=1,n1
 	  do 90 j=1,n2
 	    b(i,j)=a(i,j)
- 90       continue
- 100    continue
+ 90	  continue
+ 100	continue
 	return
 	end
 ccccc
@@ -191,21 +191,21 @@ cc
 cc
 	do 10 j=1,ncas
 	  index(j)=j
- 10     continue
+ 10	continue
 	l=1
 	lr=ncas
- 20     if(l.ge.lr) goto 90
+ 20	if(l.ge.lr) goto 90
 	ax=aw(k)
 	jnc=l
 	j=lr
- 30     if(jnc.gt.j) goto 80
- 40     if(aw(jnc).ge.ax) goto 50
+ 30	if(jnc.gt.j) goto 80
+ 40	if(aw(jnc).ge.ax) goto 50
 	jnc=jnc+1
 	goto 40
- 50     if(aw(j).le.ax) goto 60
+ 50	if(aw(j).le.ax) goto 60
 	j=j-1
 	goto 50
- 60     if(jnc.gt.j) goto 70
+ 60	if(jnc.gt.j) goto 70
 	i=index(jnc)
 	index(jnc)=index(j)
 	index(j)=i
@@ -214,11 +214,11 @@ cc
 	aw(j)=wa
 	jnc=jnc+1
 	j=j-1
- 70     goto 30
- 80     if(j.lt.k) l=jnc
+ 70	goto 30
+ 80	if(j.lt.k) l=jnc
 	if(k.lt.jnc) lr=j
 	goto 20
- 90     rffindq=aw(k)
+ 90	rffindq=aw(k)
 	return
 	end
 ccccc
@@ -248,15 +248,15 @@ cc
 		    do 6, j=jndex,i+1,-1
 		      a(1,j)=a(1,j-1)
 		      a(2,j)=a(2,j-1)
- 6                  continue
+ 6		    continue
 		    a(1,i)=nrand+i-1
 		    a(2,i)=k
 		    goto 20
 		  endif
- 5              continue
+ 5		continue
 	    endif
- 20       continue
- 10     continue
+ 20	  continue
+ 10	continue
 	return
 	end
 ccccc
@@ -275,14 +275,65 @@ ccccc
 cc
 cc  Computes the breakdown value of the MCD estimator
 cc
-
-        integer rfnbreak
+	integer rfnbreak
 
 	if (nhalf.le.(n+nvar+1)/2) then
 	  rfnbreak=(nhalf-nvar)*100/n
 	else
 	  rfnbreak=(n-nhalf+1)*100/n
 	endif
+	return
+	end
+ccccc
+ccccc
+
+	subroutine rfmcduni(w,ncas,jqu,slutn,bstd,aw,aw2,factor,len)
+cc
+cc  rfmcduni : calculates the MCD in the univariate case.
+cc	     w contains the ordered observations
+cc
+c This version returns the index (jint) in 'len'
+c which is used in rfltreg.f
+
+	implicit double precision (a-h,o-z), integer(i-n)
+	double precision w(ncas),aw(ncas),aw2(ncas)
+	double precision slutn(len)
+cc
+	sq=0.D0
+	sqmin=0.D0
+	ndup=1
+	do 5 j=1,ncas-jqu+1
+ 5	  slutn(j)=0.D0
+	do 20 jint=1,ncas-jqu+1
+	  aw(jint)=0.D0
+	  do 10 j=1,jqu
+	    aw(jint)=aw(jint)+w(j+jint-1)
+	    if (jint.eq.1) sq=sq+w(j)*w(j)
+ 10	  continue
+	  aw2(jint)=aw(jint)*aw(jint)/jqu
+	  if (jint.eq.1) then
+	    sq=sq-aw2(jint)
+	    sqmin=sq
+	    slutn(ndup)=aw(jint)
+	    len=jint
+	  else
+	    sq=sq - w(jint-1)*w(jint-1) + w(jint+jqu-1)*w(jint+jqu-1)
+     *		- aw2(jint) + aw2(jint-1)
+	    if(sq.lt.sqmin) then
+	      ndup=1
+	      sqmin=sq
+	      slutn(ndup)=aw(jint)
+	      len=jint
+	    else
+	      if(sq.eq.sqmin) then
+		ndup=ndup+1
+		slutn(ndup)=aw(jint)
+	      endif
+	    endif
+	  endif
+ 20	continue
+	slutn(1)=slutn(int((ndup+1)/2))/jqu
+	bstd=factor*sqrt(sqmin/jqu)
 	return
 	end
 ccccc
