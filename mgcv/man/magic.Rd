@@ -19,7 +19,7 @@ value decomposition approach.
 magic(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,
       gamma=1,scale=1,gcv=TRUE,ridge.parameter=NULL,
       control=list(maxit=50,tol=1e-6,step.half=25,
-              rank.tol=.Machine$double.eps^0.5))
+      rank.tol=.Machine$double.eps^0.5),extra.rss=0)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -84,7 +84,15 @@ parameter value.}
 Basically any singular value less than \code{rank_tol} multiplied by the largest singular value of 
 the  problem is set to zero.}
 
+
 } %- end of control
+
+
+\item{extra.rss}{is a constant to be added to the residual sum of squares
+(squared norm) term in the calculation of the GCV, UBRE and scale parameter
+estimate. This is useful for certain methods for dealing with very large data sets.}
+
+
 }
 
 \details{ 

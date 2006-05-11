@@ -1,5 +1,19 @@
 1.3-17
 
+* `fix.family.link' can now handle the `cauchit' link, and also appends a
+   third derivative of link function to the family (not yet used).
+
+* `fix.family.var' now adds a second derivative of the link function to 
+   the family (not yet used).
+
+* `magic' modified to accept an argument `rss.extra' which is added to the 
+  RSS(squared norm) term in the GCV/UBRE or scale calculation. This is 
+  useful for dealing with very large data sets using pseudo-model 
+  approaches.
+
+* `trans' and `shift' arguments added to `plot.gam': allows, e.g. single
+   smooth models to be easily plotted on uncentred response scale.
+
 * Some .Rd bug fixes. 
 
 * Addition of choose.k.Rd helpfile, including example code for diagnosing 
@@ -12,9 +26,9 @@
 
 1.3-15
 
-* chol(A,pivot=TRUE) now (R 2.3.0) generates a warning if `A' is not +ve definite. 
-  `mroot' modified to supress this (since it only calls `chol(A,pivot=TRUE)' 
-  because `A' is usually +ve semi-definite). 
+* chol(A,pivot=TRUE) now (R 2.3.0) generates a warning if `A' is not +ve 
+  definite. `mroot' modified to supress this (since it only calls 
+  `chol(A,pivot=TRUE)' because `A' is usually +ve semi-definite). 
 
 1.3-14
 
