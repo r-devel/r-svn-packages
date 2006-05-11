@@ -7,12 +7,12 @@ penalized regression smoothers.
 
 Penalized regression smoothers gain computational efficiency by virtue of
 being defined using a basis of relatively modest size, \code{k}. When setting
-up models in the \code{mgcv} package, using \code{\link{s}} or \code{\te{}}
+up models in the \code{mgcv} package, using \code{\link{s}} or \code{\link{te}}
 terms in a model formula, \code{k} must be chosen. 
 
 In practice \code{k-1} sets the upper limit on the degrees of freedom
 associated with an \code{\link{s}} smooth (1 degree of freedom is lost to the identifiability
-constraint on the smooth). For \code{link{te}} smooths the upper limit of the
+constraint on the smooth). For \code{\link{te}} smooths the upper limit of the
 degrees of freedom is given by the product of the \code{k} values provided for
 each marginal smooth less one, for the constraint. However the actual
 effective degrees of freedom are controlled by the degree of penalization
