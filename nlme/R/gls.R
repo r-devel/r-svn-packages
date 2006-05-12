@@ -78,7 +78,7 @@ gls <-
     N <- nrow(X)
     p <- ncol(X)				# number of coefficients
     parAssign <- attr(X, "assign")
-    fTerms <- terms(as.formula(model))
+    fTerms <- terms(as.formula(model), data=data)
     namTerms <- attr(fTerms, "term.labels")
     if (attr(fTerms, "intercept") > 0) {
         namTerms <- c("(Intercept)", namTerms)
