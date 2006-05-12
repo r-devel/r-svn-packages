@@ -43,6 +43,8 @@ gls <-
     glsSt <-
         glsStruct(corStruct = correlation, varStruct = varFunc(weights))
 
+    ## we need to resolve '.' in the formula here
+    model <- terms(model, data=data)
     ## extract a data frame with enough information to evaluate
     ## formula, groups, corStruct, and varStruct
     mfArgs <- list(formula = asOneFormula(formula(glsSt), model, groups),
