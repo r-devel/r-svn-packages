@@ -110,7 +110,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 
     c(b, list(cov = (u1 - u2 - u3 + u4)/n,
               wt = w / r.s, control = control))
-} ## lmrob.MM()
+}
 
 
 lmrob.S <- function(x, y, control, trace.lev = 0)
@@ -130,7 +130,9 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     seed <- control$seed
     bb <- as.double(control$bb)
     c.chi <- as.double(control$tuning.chi)
-    stopifnot(length(c.chi) > 0, c.chi >= 0, length(bb) > 0)
+    best.r <- as.integer(control$best.r.s)
+    stopifnot(length(c.chi) > 0, c.chi >= 0, length(bb) > 0,
+              length(best.r)> 0, best.r >= 1)
 
     b <- .C("R_lmrob_S",
 	    x = as.double(x),
@@ -143,7 +145,7 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
 	    seed = as.integer(seed),
 	    c.chi,
 	    bb,
-            best_r = as.integer(control$best.r.s),
+            best_r = best.r,
 	    groups  = groups,
 	    n.group = nGr,
 	    k.fast.s= as.integer(control$k.fast.s),
@@ -171,4 +173,4 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     u4 <- mean(w2^2 - (control$bb)^2) * tcrossprod(a)
 
     c(b, list(cov = (u1 - u2 - u3 + u4)/n, control = control))
-} ## lmrob.S()
+}

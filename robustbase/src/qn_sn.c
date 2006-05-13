@@ -63,9 +63,10 @@ See also ../inst/Copyrights
 #include <R_ext/Boolean.h>
 #include <R_ext/Memory.h>
 
-#define Sint int
+/* Interface routines to be called via .C() : */
+#include "robustbase.h"
 
-/* ----------------- Declarations ----------------------------------- */
+/* ----------------- Further Declarations ------------------------------ */
 
 /* sn0() and  qn0() both use */
 
@@ -95,16 +96,6 @@ double sn(double *x, int n, int is_sorted, int finite_corr);
 /* these have no extra factors (no consistency factor & finite_corr): */
 double qn0(double *x, int n);
 double sn0(double *x, int n, int is_sorted, double *a2);
-
-/* Interface routines to be called via .C() : */
-void Qn0(double *x, Sint *n, double *res);
-void Sn0(double *x, Sint *n, Sint *is_sorted, double *res, double *a2);
-/*
- * void Qn    (double *x, Sint *n, Sint *finite_corr, double *res);
- * void Sn    (double *x, Sint *n, Sint *finite_corr, double *res);
-*/
-void wgt_himed_i(double *x, Sint *n,  Sint *iw, double *res);
-void wgt_himed  (double *x, Sint *n, double *w, double *res);
 
 
 /* ----------- Implementations -----------------------------------*/

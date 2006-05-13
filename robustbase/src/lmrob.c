@@ -1,3 +1,5 @@
+/* -*- mode: c; kept-new-versions: 30; kept-old-versions: 20 -*-
+
 /* file lmrob.c
  * was	roblm/src/roblm.c - version 0.6	 by Matias Salibian-Barreras
 
@@ -29,34 +31,12 @@
 
 #include <R_ext/BLAS.h>
 
-static const int one = 1;
 
-/* This assumes that 'p' is correctly defined, and 'j' can be used in caller: */
-#define COPY_beta(BETA_FROM, BETA_TO) \
-  for(j=0; j < p; j++) BETA_TO[j] = BETA_FROM[j];
-/* In theory BLAS should be fast, but this is slightly slower,
- * particularly for non-optimized BLAS :*/
-/* #define COPY_beta(BETA_FROM, BETA_TO) \
-   F77_CALL(dcopy)(&p, BETA_FROM, &one, BETA_TO, &one); */
+#include "robustbase.h"
 
-
-
-/* will become	"lmrob.h" ---
+/* these  will also move to "lmrob.h" ---
  *  but first make many of these 'static' <<< FIXME!
  */
-void R_lmrob_S(double *X, double *y, int *n, int *P,
-	       int *nRes, double *scale, double *beta_s,
-	       int *seed_rand, double *C, double *bb,
-	       int *best_r, int *Groups, int *N_group,
-	       int *K_s, int *max_k, double *rel_tol, int *trace_lev);
-
-void R_lmrob_MM(double *X, double *y, int *n, int *P,
-		double *beta_initial, double *scale,
-		double *beta_m,
-		int *max_it,
-		double *rho_c,
-		int *converged);
-
 void fast_s_large_n(double *X, double *y,
 		    int *nn, int *pp, int *nRes, int *seed_rand,
 		    int *ggroups, int *nn_group,
@@ -147,6 +127,15 @@ void scalar_vec(double *a, double b, double *c, int n);
 void sum_mat(double **a, double **b, double **c, int n, int m);
 void sum_vec(double *a, double *b, double *c, int n);
 
+
+/* This assumes that 'p' is correctly defined, and 'j' can be used in caller: */
+#define COPY_beta(BETA_FROM, BETA_TO) \
+  for(j=0; j < p; j++) BETA_TO[j] = BETA_FROM[j];
+/* In theory BLAS should be fast, but this is slightly slower,
+ * particularly for non-optimized BLAS :*/
+/* static int one = 1; */
+/* #define COPY_beta(BETA_FROM, BETA_TO) \ */
+/*     F77_CALL(dcopy)(&p, BETA_FROM, &one, BETA_TO, &one);  */
 
 
 #define EPS 1e-7
@@ -1105,7 +1094,7 @@ int refine_fast_s(double **x, double *y, double *weights,
  * tmp_mat2 = aux matrix p x (p+1)
 */
 
-    int i,j, zeroes=0;
+    int i,j, zeroes=0, one = 1;
     Rboolean converged = FALSE;/* Wall */
     double s0;
 
@@ -1146,7 +1135,7 @@ int refine_fast_s(double **x, double *y, double *weights,
 	lu(tmp_mat2, &p, beta_ref);
 	if(conv) { /* check for convergence */
 	    double del = norm_diff(beta_cand, beta_ref, p);
-	    double nrmB= norm(beta_cand, n);
+	    double nrmB= norm(beta_cand, p);
 	    if(trace_lev >= 3)
 		Rprintf(" i = %d, ||b[i]||= %12g, ||b[i] - b[i-1]|| = %15g\n",
 			 i, nrmB, del);
@@ -1293,14 +1282,16 @@ double sum_rho_sc(double *r, double scale, int n, int p, double c)
 /* ||x|| */
 double norm(double *x, int n)
 {
-#ifdef _not_BLAS_
+#define _USE_BLAS_
+#ifdef  _USE_BLAS_
+    int one = 1;
+    return(F77_CALL(dnrm2)(&n, x, &one));
+#else
     int i;
-    double s = 0;
+    double s = 0.;
     for(i=0; i < n; i++)
 	s += x[i] * x[i];
     return(sqrt(s));
-#else
-    return(F77_CALL(dnrm2)(&n, x, &one));
 #endif
 }
 
@@ -1334,7 +1325,7 @@ double median(double *x, int n, double *aux)
     for(i=0; i < n; i++) aux[i]=x[i];
     if ( (n/2) == (double) n / 2 )
 	t = ( kthplace(aux,n,n/2) + kthplace(aux,n,n/2+1) ) / 2.0 ;
-    else	t = kthplace(aux,n, n/2+1 ) ;
+    else t = kthplace(aux,n, n/2+1 ) ;
     return(t);
 }
 
