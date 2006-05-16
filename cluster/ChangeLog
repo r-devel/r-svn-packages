@@ -1,7 +1,17 @@
+2006-05-17  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.11.0, to be released to CRAN
+
 2006-05-03  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Depends): require R >= 2.2.1 -- which should have
 	happened earlier, since registration of Fortran symbols failed before.
+
+2006-04-18  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/plantTraits.Rd: new dataset with many variables, including
+		all kinds of factors, provided by Jeanne Vallet.
+	* data/chorSub.Rd: useful for daisy() illustrations
 
 2006-04-12  Martin Maechler  <maechler@stat.math.ethz.ch>
 
