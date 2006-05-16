@@ -1,3 +1,8 @@
+2006-05-03  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Depends): require R >= 2.2.1 -- which should have
+	happened earlier, since registration of Fortran symbols failed before.
+
 2006-04-12  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/fanny.q (fanny): several new options: metric = "SqEuclidean",
@@ -6,6 +11,7 @@
 		warning when k.crisp < k.
 		printing of $membership is now in rounded percent
 	* man/fanny.Rd: document the above
+	* tests/fanny-ex.R: much extended
 
 2006-04-11  Martin Maechler  <maechler@stat.math.ethz.ch>
 
