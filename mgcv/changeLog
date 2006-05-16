@@ -6,10 +6,12 @@
 * `fix.family.var' now adds a second derivative of the link function to 
    the family (not yet used).
 
-* `magic' modified to accept an argument `rss.extra' which is added to the 
-  RSS(squared norm) term in the GCV/UBRE or scale calculation. This is 
-  useful for dealing with very large data sets using pseudo-model 
-  approaches.
+* `magic' modified to (i) accept an argument `rss.extra' which is added to 
+  the  RSS(squared norm) term in the GCV/UBRE or scale calculation; (ii)
+  accept argument `n.score' (defaults to number of data), the number to 
+  use in place of the number of data in the GCV/UBRE calculation.
+  These are useful for dealing with very large data sets using 
+  pseudo-model approaches.
 
 * `trans' and `shift' arguments added to `plot.gam': allows, e.g. single
    smooth models to be easily plotted on uncentred response scale.

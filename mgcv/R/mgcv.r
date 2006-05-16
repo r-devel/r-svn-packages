@@ -3414,7 +3414,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
 
 magic <- function(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gcv=TRUE,
                 ridge.parameter=NULL,control=list(maxit=50,tol=1e-6,step.half=25,
-                rank.tol=.Machine$double.eps^0.5),extra.rss=0)
+                rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
 # Wrapper for C routine magic. Deals with constraints weights and square roots of 
 # penalties. Currently only a diagonal weight matrix is allowed, but this 
 # is easy to change.
@@ -3432,7 +3432,8 @@ magic <- function(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gc
 # If `ridge.parameter' is a positive number then then it is assumed to be the multiplier
 # for a ridge penalty to be applied during fitting. 
 # `extra.rss' is an additive constant by which the RSS is modified in the
-#  GCV/UBRE or scale calculations (Useful for dealing with huge datasets).
+#  GCV/UBRE or scale calculations, n.score is the `n' to use in the GCV/UBRE
+#  score calcualtions (Useful for dealing with huge datasets).
 { n.p<-length(S)
   n.b<-dim(X)[2] # number of parameters
   # get initial estimates of smoothing parameters, using better method than is
@@ -3503,7 +3504,7 @@ magic <- function(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gc
   um<-.C(C_magic,as.double(y),as.double(X),sp=as.double(sp),as.double(def.sp),as.double(Si),as.double(H),
           score=as.double(gamma),scale=as.double(scale),info=as.integer(icontrol),as.integer(cS),
           as.double(control$rank.tol),rms.grad=as.double(control$tol),b=as.double(b),rV=double(q*q),
-          as.double(extra.rss))
+          as.double(extra.rss),as.integer(n.score))
   res<-list(b=um$b,scale=um$scale,score=um$score,sp=um$sp)
   res$rV<-matrix(um$rV[1:(um$info[1]*q)],q,um$info[1])
   gcv.info<-list(full.rank=full.rank,rank=um$info[1],fully.converged=as.logical(um$info[2]),
