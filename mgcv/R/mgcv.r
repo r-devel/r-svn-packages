@@ -2942,7 +2942,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   cat("\n")
   if(x$m>0)
   { cat("Approximate significance of smooth terms:\n")
-    printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, has.Pvalue = TRUE, na.print = "NA", ...)
+    printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, has.Pvalue = TRUE, na.print = "NA",cs.ind=1, ...)
   }
   cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5))
   if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")

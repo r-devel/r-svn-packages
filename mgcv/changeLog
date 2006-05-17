@@ -1,5 +1,8 @@
 1.3-17
 
+* print.summary.gam prints estimated ranks more prettily (thanks Martin 
+  Maechler)
+
 * `fix.family.link' can now handle the `cauchit' link, and also appends a
    third derivative of link function to the family (not yet used).
 
