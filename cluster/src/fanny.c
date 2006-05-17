@@ -75,24 +75,23 @@ void fanny(int *nn,  /* = number of objects */
 void dysta3_(int *nn, int *p, double *x, double *dys,
 	     int *ndyst, int *jtmd, double *valmd, int *jhalt)
 {
-    int j, k, l, nlk, npres;
-    double clk, d;
-    int x_d = *nn;
+    int k, l, nlk, x_d = *nn;
 
     nlk = 0;
     for (l = 0; l < (*nn - 1); ++l) {
 	for (k = l + 1; k < *nn; ++k, ++nlk) {
-	    clk = 0.;
-	    npres = 0;
-	    for (j = 0; j < *p; ++j) {
+	    double clk = 0.;
+	    int j, jj, npres = 0;
+	    for (j = 0, jj = 0; j < *p; j++, jj+=x_d) {
+		double d;
 		if (jtmd[j] < 0) {
-		    if (x[l + j * x_d] == valmd[j] ||
-			x[k + j * x_d] == valmd[j])
+		    if (x[l + jj] == valmd[j] ||
+			x[k + jj] == valmd[j])
 
 			continue; /* next j */
 		}
 		++npres;
-		d = x[l + j * x_d] - x[k + j * x_d];
+		d = x[l + jj] - x[k + jj];
 		if (*ndyst != 2) /* 1 or 3 */
 		    clk += d * d;
 		else /* if (*ndyst == 2) */
@@ -370,7 +369,8 @@ void caddy(int nn, int k, double *p, int *ktrue,
      Compute Silhouette Information :
 
  TODO  cleanup: this is almost identical to dark() in  ./pam.c
-   -- difference : different  dys[] / dss[] indexing
+   -- difference : different  dys[] / dss[] indexing, but that
+   -- dss[] indexing change needs to be "synchronized" in all functions here
 */
 static
 void fygur(int kk, int nn,
@@ -390,22 +390,23 @@ void fygur(int kk, int nn,
     /* Parameter adjustments */
     --avsyl;
     --ncluv;
-    --syl;
-    --negbr;
-    --nelem;
+
     --dss;
 
     nsylr = 0;
     *ttsyl = 0.;
     for (k = 1; k <= kk; ++k) {
+
+	/* nelem[0:(ntt-1)] := indices (1-based) of obs. in cluster k : */
 	ntt = 0;
 	for (j = 1; j <= nn; ++j) {
 	    if (ncluv[j] == k) {
-		++ntt;
 		nelem[ntt] = j;
+		++ntt;
 	    }
 	}
-	for (j = 1; j <= ntt; ++j) {
+
+	for (j = 0; j < ntt; ++j) {/* (j+1)-th obs. in cluster k */
 	    nj = nelem[j];
 	    dysb = *s * 1.1 + 1.;
 	    negbr[j] = -1;
@@ -428,10 +429,10 @@ void fygur(int kk, int nn,
 		    dysb = db;
 		    negbr[j] = k_;
 		}
-	    }/* negbr[j] := arg max_{k_} db(k_) */
+	    }/* negbr[j] := arg min_{k_} db(k_) */
 	    if (ntt > 1) {
 		dysa = 0.;
-		for (l = 1; l <= ntt; ++l) {
+		for (l = 0; l < ntt; ++l) {
 		    int nl = nelem[l];
 		    if (nj < nl) {
 			dysa += dss[nn * (nj - 1) + nl - nj * (nj + 1) / 2];
@@ -463,7 +464,7 @@ void fygur(int kk, int nn,
 		else
 		    syl[j] = 0.;
 	    }
-	    else { /*	  ntt == 1: */
+	    else { /* ntt == 1: */
 		syl[j] = 0.;
 	    }
 	} /* for( j ) */
@@ -471,7 +472,7 @@ void fygur(int kk, int nn,
 	for (j = 0; j < ntt; ++j) {
 	    int lang;
 	    double symax = -2.;
-	    for (l = 1; l <= ntt; ++l) {
+	    for (l = 0; l < ntt; ++l) {
 		if (symax < syl[l]) {
 		    symax = syl[l];
 		    lang = l;
@@ -486,9 +487,9 @@ void fygur(int kk, int nn,
 	avsyl[k] /= (double) ntt;
 	if (ntt < 2) {
 	    sylinf  [nsylr] = (double) k;
-	    sylinf_2[nsylr] = (double) negbr[1];
+	    sylinf_2[nsylr] = (double) negbr[0];
 	    sylinf_3[nsylr] = 0.;
-	    sylinf_4[nsylr] = (double) nelem[1];
+	    sylinf_4[nsylr] = (double) nelem[0];
 	    ++nsylr;
 	}
 	else {

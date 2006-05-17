@@ -150,7 +150,7 @@ int F77_NAME(daisy)(int *nn, int *jpp, double *x,
 		    int *ndyst, int *mdata, double *disv);
 
 /* -------- ./fanny.c ---------------------------------- */
-/* only called from ../tests/dysta-ex.R */
+/* R-level: called only from ../tests/dysta-ex.R  (via .Fortran()): */
 void dysta3_(int *nn, int *p, double *x, double *dys,
 	     int *ndyst, int *jtmd, double *valmd, int *jhalt);
 

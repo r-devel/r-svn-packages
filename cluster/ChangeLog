@@ -1,5 +1,8 @@
 2006-05-17  Martin Maechler  <maechler@stat.math.ethz.ch>
 
+	* src/fanny.c (fygur): a little more cleanup --
+		for compatibility with dark() in src/pam.c
+
 	* DESCRIPTION (Version): 1.11.0, to be released to CRAN
 
 2006-05-03  Martin Maechler  <maechler@stat.math.ethz.ch>
@@ -11,7 +14,7 @@
 
 	* man/plantTraits.Rd: new dataset with many variables, including
 		all kinds of factors, provided by Jeanne Vallet.
-	* data/chorSub.Rd: useful for daisy() illustrations
+	* data/plantTraits.rda: useful for daisy() illustrations
 
 2006-04-12  Martin Maechler  <maechler@stat.math.ethz.ch>
 
