@@ -1,6 +1,11 @@
 2006-05-18 Brian Ripley  <Brian.Ripley@r-project.org>
 
 	* R/groupedData.R: adjust method of as.data.frame.
+	* R/newFunc.R: fix bug in gsummary with objects that have
+	classes, e.g. Hmisc labels.  (Reported by Mark Difford, in a
+	private followup to
+	https://stat.ethz.ch/pipermail/r-help/2006-May/094549.html.)
+	* tests/augPred_lab.R: tests for the above fix.
 
 2006-05-12 Brian Ripley  <Brian.Ripley@r-project.org>
 
