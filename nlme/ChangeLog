@@ -1,3 +1,7 @@
+2006-05-18 Brian Ripley  <Brian.Ripley@r-project.org>
+
+	* R/groupedData.R: adjust method of as.data.frame.
+
 2006-05-12 Brian Ripley  <Brian.Ripley@r-project.org>
 
 	* R/gls.R, R/gnls.R, R/nlme.R: missing data=data in terms calls
