@@ -1,3 +1,7 @@
+2006-05-21 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* LICENCE, inst/LICENCE: add and install a licence file.
+
 2006-05-18 Brian Ripley  <Brian.Ripley@r-project.org>
 
 	* R/groupedData.R: adjust method of as.data.frame.

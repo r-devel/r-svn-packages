@@ -1,3 +1,7 @@
+2006-05-21 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* LICENCE, inst/LICENCE: add and install a licence file.
+
 2006-03-29 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: version is 0.8-15
