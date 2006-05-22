@@ -1,3 +1,7 @@
+2006-05-22 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 3.1-73
+
 2006-05-21 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* LICENCE, inst/LICENCE: add and install a licence file.
@@ -13,7 +17,8 @@
 
 2006-05-12 Brian Ripley  <Brian.Ripley@r-project.org>
 
-	* R/gls.R, R/gnls.R, R/nlme.R: missing data=data in terms calls
+	* R/gls.R, R/gnls.R, R/nlme.R: missing data=data in terms calls,
+	needed to resolve '.' on rhs of formulae.
 
 	* DESCRIPTION: Version is 3.1-72
 
@@ -23,7 +28,7 @@
 
 2006-03-14 Brian Ripley  <Brian.Ripley@r-project.org>
 
-	* R/lme.R, man/Variogram.Rd: Make example work (na.omit in
+	* R/lme.R, man/Variogram.Rd: make example work (na.omit in
 	the wrong place).
 
 2006-03-10 Brian Ripley  <Brian.Ripley@r-project.org>
