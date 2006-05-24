@@ -1,3 +1,10 @@
+2006-05-24 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/dbf.R, man/read.dbf.Rd: add comment and warning on 254-byte
+	limit in character fields.
+
+	* man/write.dbf.Rd: update Xbase URL.
+
 2006-05-21 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* LICENCE, inst/LICENCE: add and install a licence file.
@@ -33,7 +40,7 @@
 
 	* src/SASxport.[ch]: better ways to avoid alignment problems.
 
-	* src/sfmP.h, src/sfm-read.c: remove packing as it causes 
+	* src/sfmP.h, src/sfm-read.c: remove packing as it causes
 	alignment problems on 64-bit platforms.
 
 2005-12-14  Brian Ripley <Brian.Ripley@R-project.org>

@@ -26,6 +26,10 @@ write.dbf(dataframe, file, factor2char = TRUE)
   sign) for numeric is 19 - scale (digits after the decimal sign) which is
   calculated internally based on the number of digits before the decimal
   sign.
+
+  Character fields will be truncated to 254 characters, the limit
+  documented in
+  \url{http://www.clicketyclick.dk/databases/xbase/format/data_types.html}.
 }
 \value{
   Invisible \code{NULL}.
