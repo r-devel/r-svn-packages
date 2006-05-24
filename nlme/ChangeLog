@@ -1,3 +1,10 @@
+2006-05-24 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/gls.R, man/comparePred.Rd:  'minimum' and 'maximum' were
+	evaluated on a formula in the comparePred methods.  Instead,
+	evaluate 'primary' in the 'data' used to fit object1, and document
+	what is done.  (Reported by Mark Difford.)
+
 2006-05-22 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 3.1-73
