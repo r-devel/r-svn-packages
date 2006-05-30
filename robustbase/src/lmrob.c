@@ -167,9 +167,9 @@ void R_lmrob_S(double *X, double *y, int *n, int *P,
 	       best_r, bb, rrhoc, beta_s, scale, trace_lev);
 }
 
-/* This function performs RWLS iterations starting
- * from an S-regression estimator (and associated
- * residual scale)
+/* This function performs RWLS iterations starting from
+ * an S-regression estimator (and associated residual scale).
+ * So, in itself, this is ``just'' an M-estimator :
  */
 void R_lmrob_MM(double *X, double *y, int *n, int *P,
 		double *beta_initial, double *scale,
@@ -194,7 +194,7 @@ void R_lmrob_MM(double *X, double *y, int *n, int *P,
  * irwls to compute the MM-estimate (beta_m)  */
 
     if ( rwls(x,N,p,beta_m,beta_initial,*scale,EPS,*max_it,*rho_c) == 1 )  {
-	for(i=0; i < p; i++) beta_m[i]=beta_initial[i];
+	COPY_beta(beta_initial, beta_m);
 	*converged = 0;	 /* rwls failed to converge */
     } else
 	*converged = 1;

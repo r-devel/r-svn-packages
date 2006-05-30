@@ -62,7 +62,7 @@ lmrob.fit.MM <-
     list(fitted.values = f, residuals = r, weights = final.MM$wt,
          rank = rank, degree.freedom = n - rank,
          coefficients = coef, initial.coefficients = iCoef,
-	 scale = final.MM$scale, seed = final.MM$seed, cov = cov.matrix,
+	 scale = final.MM$scale, seed = init.S$seed, cov = cov.matrix,
 	 converged = final.MM$converged)
 }
 
