@@ -1,3 +1,7 @@
+2006-06-02 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 3.1-74
+
 2006-05-31 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/lme.R: Keep terms and optional model frame in lme.formula.
