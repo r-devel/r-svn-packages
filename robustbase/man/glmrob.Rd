@@ -97,8 +97,8 @@ glmrob(formula, family, data, weights, subset, na.action,
 }
 
 \value{
-  \code{glmrob} returns an object of class \code{"glmrob"} and is also inheriting from
-  \code{\link{glm}}.
+  \code{glmrob} returns an object of class \code{"glmrob"} and is also
+  inheriting from \code{\link{glm}}.
   \cr
   The function \code{\link{summary}} (i.e., \code{\link{summary.glmrob}}) can
   be used to obtain or print a summary of the results.

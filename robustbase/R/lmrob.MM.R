@@ -1,6 +1,6 @@
 
 lmrob.control <-
-    function(seed = 37, ## < was hard-coded in C
+    function(seed = NULL, ## '37' was hard-coded in C {when still using 'rand()'}
 	     nResample = 500,
 	     tuning.chi = 1.54764, bb = 0.5, tuning.psi = 4.685061,
 	     max.it = 50, groups = 5, n.group = 400,
@@ -10,7 +10,7 @@ lmrob.control <-
              refine.tol = 1e-4, # had '1e-7' hardwired in C {"never" converged!}
 	     compute.rd = FALSE)
 {
-    list(seed = seed, nResample = nResample, tuning.chi = tuning.chi,
+    list(seed = as.integer(seed), nResample = nResample, tuning.chi = tuning.chi,
 	 bb = bb, tuning.psi = tuning.psi,
          max.it = max.it, groups = groups, n.group = n.group,
 	 best.r.s = best.r.s, k.fast.s = k.fast.s,
@@ -42,6 +42,7 @@ lmrob.fit.MM <-
 	cov.matrix <- matrix(final.MM$cov, p, p)
     }
     else { ## If IRWLS did not converge, use the initial (S) estimator:
+        warning("IRWLS iterations did NOT converge in ", control$max.it," steps")
 	coef <- iCoef
 	cov.matrix <- matrix(init.S$cov, p, p)
     }
@@ -62,8 +63,8 @@ lmrob.fit.MM <-
     list(fitted.values = f, residuals = r, weights = final.MM$wt,
          rank = rank, degree.freedom = n - rank,
          coefficients = coef, initial.coefficients = iCoef,
-	 scale = final.MM$scale, seed = init.S$seed, cov = cov.matrix,
-	 converged = final.MM$converged)
+	 scale = final.MM$scale, cov = cov.matrix, control = control,
+	 iter = final.MM$iter, converged = final.MM$converged)
 }
 
 
@@ -87,10 +88,11 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 	    beta.initial = as.double(beta.initial),
 	    scale = as.double(scale),
 	    coef = double(p),
-	    as.integer(control$ max.it),
+	    iter = as.integer(control$ max.it),
 	    c.psi = c.psi,
 	    converged = logical(1),
-	    PACKAGE = "robustbase")[c("coef", "scale", "converged")]
+	    PACKAGE = "robustbase")[c("coef", "scale", "converged", "iter")]
+    ## FIXME?: Should rather warn *here* in case of non-convergence
     ## FIXME: shouldn't C-code above return residuals ?!
     r.s  <- drop(y - x %*% b$coef)       / sigma
     r2.s <- drop(y - x %*% beta.initial) / sigma
@@ -124,10 +126,17 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     if(nGr <= p) stop("'control$n.group' must be larger than 'p'")
     large_n <- (n > 2000)
     if(large_n & nGr * groups > n)
-        stop("'groups * n.group' must be larger than 'n' for 'large_n' algorithm")
+	stop("'groups * n.group' must be larger than 'n' for 'large_n' algorithm")
     if(nGr <= p + 10) ## FIXME (be smarter ..)
-        warning("'control$n.group' is probably too small: not much larger than 'p'")
-    seed <- control$seed
+	warning("'control$n.group' is not much larger than 'p', probably too small")
+    if(length(seed <- control$seed) > 0) {
+	if(exists(".Random.seed", envir=.GlobalEnv, inherits=FALSE))  {
+	    seed.keep <- get(".Random.seed", envir=.GlobalEnv, inherits=FALSE)
+	    on.exit(assign(".Random.seed", seed.keep, envir=.GlobalEnv))
+	}
+	assign(".Random.seed", seed, envir=.GlobalEnv)
+    }
+
     bb <- as.double(control$bb)
     c.chi <- as.double(control$tuning.chi)
     best.r <- as.integer(control$best.r.s)
@@ -142,7 +151,6 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
 	    nResample = nResample,
 	    scale = double(1),
 	    coef = double(p),
-	    seed = as.integer(seed),
 	    c.chi,
 	    bb,
             best_r = best.r,
@@ -152,7 +160,7 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
 	    k.max   = as.integer(control$k.max),
 	    refine.tol= as.double(control$refine.tol),
 	    trace.lev = as.integer(trace.lev),
-	    PACKAGE = "robustbase")[c("coef", "scale", "seed", "k.max")]
+	    PACKAGE = "robustbase")[c("coef", "scale", "k.max")]
     sigma <- b$scale
     if(sigma < 0)
 	stop("C function R_lmrob_S() exited prematurely")

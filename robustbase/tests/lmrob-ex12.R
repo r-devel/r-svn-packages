@@ -1,5 +1,6 @@
 
 library(robustbase)
+set.seed(1) # since now .Random.seed is used by default!
 
 ## EX 1
 data(coleman)
@@ -24,6 +25,8 @@ all.equal(unname(coef(mC)),
           tol = 0.004)
 )
 dput(signif(unname(coef(mC)), 7))
+## 64b(0.2-0): c(29.51163, -1.660807, 0.08344846, 0.6657121, 1.178509, -4.010207)
+
 ## 2006-05-13 [after fixing the C bug] :
 ## 64b (0.1-6): c(29.53885, -1.664495, 0.08360545, 0.6657679, 1.179005, -4.016079)
 ## 32b (0.1-6): c(29.41195, -1.644599, 0.08278897, 0.6654978, 1.1761,   -3.98699)
@@ -84,24 +87,26 @@ cbind(robust = coef(sm2)[,1:2],
 n <- 2500 ; n0 <- n %/% 10
 a2 <- gen(n=n, p = 3, n0= n0, y0=10, x0=10)
 plot(a2$x[,1], a2$y, col = c(rep(2, n0), rep(1, n-n0)))
+rs <- .Random.seed
 system.time( m3 <- lmrob(y~x, data = a2) )
 m3
-system.time( m4 <- lmrob(y~x, data = a2, compute.rd = FALSE))
+nrs <- .Random.seed # <-- to check that using 'seed' keeps .Random.seed
+system.time( m4 <- lmrob(y~x, data = a2, seed = rs, compute.rd = FALSE))
 (sm4 <- summary(m4))
 
+## random seed must be the same because we used  'seed = *' :
+stopifnot(nrs == .Random.seed, identical(coef(m3), coef(m4)))
+
 dput(signif(cf <- unname(coef(m3)), 7))
-## 2006-05-13 [after fixing the C bug] :
-## 64b (0.1-6): c(0.03800274, 0.9965285, 1.005553, 0.9997865)
-## 32b (0.1-6): c(0.03800159, 0.9965287, 1.005553, 0.9997847)
-
-dput(signif(sd <- unname(coef(sm4)[, "Std. Error"]), 7))
-## 2006-05-13 [after fixing the C bug] :
-## 64b (0.1-6): c(0.02518127, 0.002868135, 0.02601551, 0.02626918)
-## 32b (0.1-6): c(0.02518041, 0.002868079, 0.02601459, 0.02626802)
-
-stopifnot(identical(coef(m3), coef(m4)),
-	  all.equal(cf, c(0.038002, 0.9965286, 1.005553, 0.999785), tol= 1e-5),
-	  all.equal(sd, c(0.025181, 0.0028681, 0.026015, 0.0262686), tol= 1e-4)
+## 64b(0.2-0): c(-0.01500556, 1.003113, 1.03582,  0.9824093)
+## 32b(0.2-0): c(-0.01504734, 1.003117, 1.035835, 0.9823957)
+dput(signif(100 * (sd <- unname(coef(sm4)[, "Std. Error"])), 7))
+## 64b(0.2-0): c(2.554881, 0.2886926, 2.516886, 2.641934)
+## 32b(0.2-0): c(2.55569,  0.2887459, 2.517603, 2.642825)
+stopifnot(
+	  all.equal(cf, c(-0.015026, 1.003115, 1.035827, 0.9824025), tol= 3e-5)
+          ,
+	  all.equal(100*sd, c(2.5553, 0.288719, 2.5172, 2.64238), tol= 4e-4)
 	  )
 
 

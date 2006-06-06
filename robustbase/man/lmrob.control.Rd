@@ -6,16 +6,20 @@
   estimator and the associated S-estimator.
 }
 \usage{
-lmrob.control(seed = 37, nResample = 500,
+lmrob.control(seed = NULL, nResample = 500,
               tuning.chi = 1.54764, bb = 0.5, tuning.psi = 4.685061,
               max.it = 50, groups = 5, n.group = 400,
               k.fast.s = 1, best.r.s = 2, k.max = 50,
               refine.tol = 1e-04, compute.rd = FALSE)
 }
 \arguments{
-  \item{seed}{random seed for the re-samples used in obtaining candiates
-    for the initial S-estimator.  The default, \code{37} used to be
-    frozen in the underlying C code.}
+  \item{seed}{an integer vector, the seed to be used for random
+    re-sampling used in obtaining candidates for the initial
+    S-estimator; see \code{\link{.Random.seed}}.  The current value of
+    \code{.Random.seed} will be preserved if \code{seed} is set;
+    otherwise (by default), \code{.Random.seed} will be modified as
+    usual from calls to \code{\link{runif}()}.
+  }
   \item{nResample}{number of re-sampling candidates to be
     used to find the initial S-estimator.  Currently defaults to 500
     which works well in most situations (see references).}

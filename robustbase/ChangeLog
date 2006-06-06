@@ -1,3 +1,39 @@
+2006-06-06  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.2-0 "pre-released" to Andreas & Matias
+	* src/lmrob.c (rwls): return *max_it = #{iterations used}
+	* R/lmrob.MM.R (lmrob.MM): return #{iterations} back to R level
+	* R/lmrob.R (summary.lmrob): and make sure they are printed.
+
+2006-06-05  Andreas Ruckstuhl  <rks@zhwin.ch>
+
+	* R/anova.lmrob.R (anova.lmrob): new, for model comparison
+	  both "Wald" and "Deviance" tests.
+
+2006-05-31  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/covMcd.R (covMcd): use R' RNG
+	* R/covMcd.R (print.summary.mcd): is new; also print.mvd and
+		summary.* are now here, and improved.
+
+	* src/rfltsreg.f (rfltsreg): use R's RNG
+	* src/rffastmcd.f (rffastmcd): dito
+
+	* src/rf-common.f (rfrangen): use unifrnd(), and comment out
+		the previous uniran()
+
+	* src/R-rng4ftn.c: use R's RNGs also for Fortran, in
+
+2006-05-29  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* src/lmrob.c: use R's unif_rand() instead of C's rand()
+	* R/lmrob.MM.R: set/save R's .Random.seed, possible from 'seed'
+
+2006-05-29  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION: version 0.1-7; the last one with C's rand()
+	* R/lmrob.MM.R: it's "$seed" from init.S , not M(M)-estimate
+
 2006-04-25  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/biweight-funs.R (lmrob.Psi):

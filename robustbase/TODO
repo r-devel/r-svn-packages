@@ -36,15 +36,7 @@ o tolellipse() --> renamed to tolEllipsePlot()
      - allow other percentiles than just  97.5%
      - maybe *return* something
 
-o covMcd() : 'print.it' should be called 'trace';
-	   but all the if(!print.it) cat(..) statements are *wrong* :
-	   computation should *Not* print anything for trace = FALSE
-	   {unless warnings and errors} !
-
-o summary.mcd() should *return* an object of class "summary.mcd"
-  and then  print.summary.mcd() should print it !
-
-o plot(mcd. ) : should show the call
+o plot(mcd. ) [ R/covPlot.R ] : should show the call
 
 o ltsReg():  has  undocumented '$resid'
 	     in addition to '$residuals' and '$raw.residuals';
@@ -119,7 +111,6 @@ o src/lmrob.c :
 
    Things to fix:
 
-   - calls  C's  rand() instead of R builtin random number generators
    - does many many vector and vector-matrix things itself
      instead of using BLAS and LAPACK
    - does median() , MAD() instead of using R's  sort() routines

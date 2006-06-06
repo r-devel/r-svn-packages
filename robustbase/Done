@@ -23,6 +23,11 @@ o) we have had some problems, but they are solved now
 
 4) covMcd( * ):  replace 'print.it'  by  'trace'  which is more appropriate
    	         and common in S
+   note that the if(!print.it) cat(..) statements were *wrong*;
+   They now all are  if(trace) cat(..), since
+   computation should *Not* print anything for trace = FALSE
+   unless warnings and errors!
+
 
 5) renamed  tolellipse() to tolEllipsePlot()
    all these plotting functions may *NOT* set  par(mfrow = c(1,1)) !
@@ -69,4 +74,18 @@ o) we have had some problems, but they are solved now
 
    - added 'trace.lev' argument to lmrob.S()
       --> can have printing output during search
+
+0.2-2:
+
+16) lmrob) :
+    - 'seed': By default always same seed --> same result
+	       even though algorithm is random.
+      INSTEAD: we now use R's RNG and .Random.seed!
+    - print(summary(.)) now summarizes the robustness weights
+
+17) covMcd() and ltsReg():  now also use R's random number generator and
+    .Random.seed (unless the 'seed' argument is specified).
+
+18) summary.mcd() now  returns an object of class "summary.mcd"
+    and then  print.summary.mcd() prints it.
 

@@ -1,9 +1,6 @@
 ### FIXME:
 ### ----- MM wants to change
 
-### 2) 'seed': By default always same seed --> same result
-###	       even though algorithm is random.
-###	INSTEAD: I want to use R's .Random.seed!
 ### 3) allow the 'control' entries to enter via "..." as well -- Done
 
 ### 4) lmrob() should really behave like lm() {in R; not S !}
@@ -113,8 +110,8 @@ summary.lmrob <- function(object, correlation = FALSE, symbolic.cor = FALSE, ...
 	se <- sqrt(diag(z$cov))
 	est <- z$coefficients
 	tval <- est/se
-	ans <- z[c("call", "terms", "residuals", "scale",
-		   "converged", "control")]
+	ans <- z[c("call", "terms", "residuals", "scale", "weights",
+		   "converged", "iter", "control")]
 	ans$df <- df
 	ans$coefficients <-
 	    if( ans$converged )
@@ -189,17 +186,67 @@ print.summary.lmrob <-
 		       }
 		}
 	    }
+	    cat("Convergence in", x$iter, "IRWLS iterations\n")
 	}
 	cat("\n")
 
+        summarizeRobWeights(x$weights, digits = digits, ...)
+
     } else cat("\nNo Coefficients\n")
 
-    ## FIXME: summarize the robustness weights
-    ctrl <- x$control
-    cat("Algorithmic parameters:\n")
-    real.ctrl <- sapply(ctrl, function(x) x != round(x))
-    print(unlist(ctrl[ real.ctrl]), digits = digits)
-    print(unlist(ctrl[!real.ctrl])) # non-real ones
+    printControl(x$control, digits = digits)
 
     invisible(x)
 }
+
+## hidden in namespace:
+printControl <-
+    function(ctrl, digits = getOption("digits"),
+	     str.names = "seed",
+	     header = "Algorithmic parameters:",
+	     ...)
+{
+    ## Purpose: nicely and sensibly print a 'control' structure
+    ## Author: Martin Maechler, Date: 31 May 2006
+    cat(header,"\n")
+    is.str <- (nc <- names(ctrl)) %in% str.names
+    real.ctrl <- sapply(ctrl, function(x) length(x) > 0 && x != round(x))
+    print(unlist(ctrl[!is.str & real.ctrl]), digits = digits, ...)
+    ## non-real ones, but dropping 0-length ones
+    print(unlist(ctrl[!is.str & !real.ctrl]), ...)
+    if(any(is.str))
+	for(n in nc[is.str]) {
+	    cat(n,":")
+	    str(ctrl[[n]], vec.len = 2)
+	    ## 'vec.len = 2' is smaller than normal, but nice for Mersenne seed
+	}
+}
+
+summarizeRobWeights <-
+    function(w, digits = getOption("digits"),
+             header = "Robustness weights:", ...)
+{
+    ## Purpose: nicely print a "summary" of robustness weights
+    stopifnot(is.numeric(w))
+    cat(header,"\n")
+    n <- length(w)
+    if(n <= 10) print(w, digits = digits, ...)
+    else {
+	n1 <- sum(w1 <- abs(w - 1) < 1e-4)
+	n0 <- sum(w0 <- abs(w) < 1e-4 / n)
+	if(n0 > 0 || n1 > 0) {
+	    if(n0 > 0)
+		cat(n0, " observations c(",
+		    strwrap(paste(which(w0),collapse=",")),
+		    ")\n  are outliers with |weights| < ", formatC(1e-4 / n),".\n",
+		    sep='')
+	    if(n1 > 0)
+		cat(n1, "weights are ~= 1.\n")
+	    cat("The remaining", n - n0 - n1,
+		" ones are summarized as\n")
+	    w <- w[!w1 & !w0]
+	}
+	print(summary(w, digits = digits), digits = digits, ...)
+    }
+}
+
