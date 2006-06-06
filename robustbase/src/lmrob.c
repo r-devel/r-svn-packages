@@ -38,14 +38,14 @@
  *  but first make many of these 'static' <<< FIXME!
  */
 void fast_s_large_n(double *X, double *y,
-		    int *nn, int *pp, int *nRes, int *seed_rand,
+		    int *nn, int *pp, int *nRes,
 		    int *ggroups, int *nn_group,
 		    int *K, int *max_k, double *rel_tol,
 		    int *best_r, double *bb, double *rrhoc,
 		    double *bbeta, double *sscale, int *trace_lev);
 
 void fast_s(double *X, double *y,
-	    int *nn, int *pp, int *nRes, int *seed_rand,
+	    int *nn, int *pp, int *nRes,
 	    int *K, int *max_k, double *rel_tol,
 	    int *best_r, double *bb, double *rrhoc,
 	    double *bbeta, double *sscale, int *trace_lev);
@@ -54,9 +54,13 @@ int rwls(double **a, int n, int p,
 	 double *estimate,
 	 double *i_estimate,
 	 double scale, double epsilon,
-	 int max_it, const double rho_c);
+	 int *max_it, const double rho_c);
 
+#ifdef _NO_LONGUER_USED_
 void sample_n_outof_N(int n, int N, int *x);
+#endif
+static void sample_noreplace(int *x, int n, int k, int *ind_space);
+
 
 int lu(double **a,int *P, double *x);
 
@@ -91,7 +95,7 @@ void fast_s_irwls(double **x, double *y,
 int fast_s_with_memory(double **x, double *y,
 		       int *nn, int *pp, int *nRes,
 		       int *K, int *max_k, double *rel_tol, int *trace_lev,
-		       int *best_r, double *bb, double *rrhoc,
+		       int *best_r, int *ind_space, double *bb, double *rrhoc,
 		       double **best_betas, double *best_scales);
 
 /* for "tracing" only : */
@@ -128,6 +132,21 @@ void sum_mat(double **a, double **b, double **c, int n, int m);
 void sum_vec(double *a, double *b, double *c, int n);
 
 
+#define SETUP_FAST_S(_n_, _p_)					\
+    ind_space =  (int *) R_alloc(n, sizeof(int));		\
+    res	    = (double *) R_alloc(_n_, sizeof(double));		\
+    weights = (double *) R_alloc(_n_, sizeof(double));		\
+    tmp	    = (double *) R_alloc(_n_, sizeof(double));		\
+    tmp2    = (double *) R_alloc(_n_, sizeof(double));		\
+    /* 'Matrices' (pointers to pointers): use Calloc(), 	\
+     *  so we can Free() in precise order: */			\
+    tmp_mat  = (double **) Calloc(_p_, double *);		\
+    tmp_mat2 = (double **) Calloc(_p_, double *);		\
+    for(i=0; i < _p_; i++) {					\
+	tmp_mat [i] = (double *) Calloc( _p_,	 double);	\
+	tmp_mat2[i] = (double *) Calloc((_p_)+1, double);	\
+    }
+
 /* This assumes that 'p' is correctly defined, and 'j' can be used in caller: */
 #define COPY_beta(BETA_FROM, BETA_TO) \
   for(j=0; j < p; j++) BETA_TO[j] = BETA_FROM[j];
@@ -149,7 +168,7 @@ void sum_vec(double *a, double *b, double *c, int n);
 /* This function computes an S-regression estimator */
 void R_lmrob_S(double *X, double *y, int *n, int *P,
 	       int *nRes, double *scale, double *beta_s,
-	       int *seed_rand, double *rrhoc, double *bb,
+	       double *rrhoc, double *bb,
 	       int *best_r, int *Groups, int *N_group,
 	       int *K_s, int *max_k, double *rel_tol, int *trace_lev)
 {
@@ -157,12 +176,12 @@ void R_lmrob_S(double *X, double *y, int *n, int *P,
      *	      = no. of best candidates to be iterated further
      *		("refined") */
     if( *n > 2000 )
-	fast_s_large_n(X, y, n, P, nRes, seed_rand,
+	fast_s_large_n(X, y, n, P, nRes,
 		       Groups, N_group,
 		       K_s, max_k, rel_tol,
 		       best_r, bb, rrhoc, beta_s, scale, trace_lev);
     else
-	fast_s(X, y, n, P, nRes, seed_rand,
+	fast_s(X, y, n, P, nRes,
 	       K_s, max_k, rel_tol,
 	       best_r, bb, rrhoc, beta_s, scale, trace_lev);
 }
@@ -193,7 +212,7 @@ void R_lmrob_MM(double *X, double *y, int *n, int *P,
 /* starting from the S-estimate (beta_initial), use
  * irwls to compute the MM-estimate (beta_m)  */
 
-    if ( rwls(x,N,p,beta_m,beta_initial,*scale,EPS,*max_it,*rho_c) == 1 )  {
+    if ( rwls(x,N,p,beta_m,beta_initial,*scale,EPS, max_it, *rho_c) == 1 ) {
 	COPY_beta(beta_initial, beta_m);
 	*converged = 0;	 /* rwls failed to converge */
     } else
@@ -336,15 +355,30 @@ void sampler_i(int n, int *x)
 }
 #endif
 
+/* This is from VR's bundle, MASS package  VR/MASS/src/lqs.c : */
+/*
+   Sampling k from 0:n-1 without replacement.
+ */
+static void sample_noreplace(int *x, int n, int k, int *ind_space)
+{
+    int i, j, nn=n;
+#define II ind_space
+
+    for (i = 0; i < n; i++) II[i] = i;
+    for (i = 0; i < k; i++) {
+	j = nn * unif_rand();
+	x[i] = II[j];
+	II[j] = II[--nn];
+    }
+#undef II
+}
+
+#ifdef _NO_LONGUER_USED_
 void sample_n_outof_N(int n, int N, int *x)
 {
 /* function to get a random sample of size n
  * of the indices (0 to N) WITHOUT replication
  * *x receives the output
- * rand() returns an integer between 0 and RAND_MAX
- *
- * adapt the other method
- *
  */
     int i;
     if( N < n ) {
@@ -356,8 +390,8 @@ void sample_n_outof_N(int n, int N, int *x)
 	    is_previous=1;
 	    while (is_previous) {
 		is_previous = 0;
-		cand = (int) ( (double) rand() / RAND_MAX *
-			       (double) N );
+		cand = N * unif_rand();
+		/* cand = (int) ( (double) rand() / RAND_MAX * (double) N ); */
 		for(j=0; j < i; j++) {
 		    if(cand == x[j]) {
 			is_previous = 1; break;
@@ -368,6 +402,7 @@ void sample_n_outof_N(int n, int N, int *x)
 	}
     }
 }
+#endif
 
 /* C = A + B */
 void sum_mat(double **a, double **b, double **c, int n, int m)
@@ -462,7 +497,9 @@ int rwls(double **a, int n, int p,
 	 double *estimate,
 	 double *i_estimate,
 	 double scale, double epsilon,
-	 int max_it, const double rho_c)
+	 int *max_it, /* on Input:  maximal number of iterations;
+			 on Output: number of iterations */
+	 const double rho_c)
 {
     double **b, *beta1, *beta2, *beta0, *weights, *resid;
     double r,s, loss1, loss2, lambda;
@@ -483,7 +520,7 @@ int rwls(double **a, int n, int p,
 	beta2[i] = (beta1[i]=i_estimate[i]) + 1;
 
     /* main loop */
-    while( norm_diff(beta1,beta2,p) > epsilon  &&  ++iterations < max_it ) {
+    while( norm_diff(beta1,beta2,p) > epsilon  &&  ++iterations < *max_it ) {
 	R_CheckUserInterrupt();
 	for(i=0; i < n; i++) {
 	    s=0;
@@ -524,7 +561,7 @@ int rwls(double **a, int n, int p,
 
 	if( lu(b,&p,beta1) ) { /* is system singular? */
 
-	    iterations = max_it;
+	    iterations = *max_it;
 	    break; /* out of while(.) */
 	}
 
@@ -570,7 +607,9 @@ int rwls(double **a, int n, int p,
     for(i=0; i < p; i++) Free(b[i]);
     Free(b);
 
-    return (iterations == max_it) ? 1 : 0;
+    *max_it = iterations; /* <- return the number of iterations used,
+			   *	which makes the following superfluous */
+    return (iterations == *max_it) ? 1 : 0;
 
 } /* rwls() */
 
@@ -606,7 +645,7 @@ void zero_vec(double *a, int n)
 /* This function implements the "large n" strategy
 */
 void fast_s_large_n(double *X, double *y,
-		    int *nn, int *pp, int *nRes, int *seed_rand,
+		    int *nn, int *pp, int *nRes,
 		    int *ggroups, int *nn_group,
 		    int *K, int *max_k, double *rel_tol,
 		    int *best_r, double *bb, double *rrhoc,
@@ -637,25 +676,19 @@ void fast_s_large_n(double *X, double *y,
 */
     int i,j,k, k2;
     int n = *nn, p = *pp, kk = *K;
-    int groups = *ggroups, n_group = *nn_group, *indices;
-    double b = *bb, rhoc = *rrhoc;
+    int groups = *ggroups, n_group = *nn_group;
+    double b = *bb, rhoc = *rrhoc, sc, best_sc, worst_sc;
+    int pos_worst_scale;
+
+    /* (Pointers to) Arrays - to be allocated */
+    int *ind_space, *indices;
     double **best_betas, *best_scales, *weights;
     double *tmp, *tmp2, **tmp_mat, **tmp_mat2;
     double **x, **xsamp, *ysamp, *res, *beta_ref;
     double **final_best_betas, *final_best_scales;
-    double sc, best_sc, worst_sc;
-    int pos_worst_scale;
 
-    res = (double *) Calloc(n, double);
-    weights = (double *) Calloc(n, double);
-    tmp	 = (double *) Calloc(n, double);
-    tmp2 = (double *) Calloc(n, double);
-    tmp_mat  = (double **) Calloc(p, double *);
-    tmp_mat2 = (double **) Calloc(p, double *);
-    for(i=0; i < p; i++) {
-	tmp_mat[i] = (double *) Calloc(p, double);
-	tmp_mat2[i] = (double *) Calloc((p+1), double);
-    }
+    SETUP_FAST_S(n, p);
+
     beta_ref = (double *) Calloc(p, double);
     final_best_betas = (double **) Calloc(*best_r, double *);
     for(i=0; i < *best_r; i++)
@@ -683,10 +716,15 @@ void fast_s_large_n(double *X, double *y,
     /* assume that n > 2000 */
 
     /*	set the seed */
-    srand((long)*seed_rand); /* << replace with R's RNG !*/
+    /* srand((long)*seed_rand); */
+    GetRNGstate();
 
     /* get a sample of k indices */
-    sample_n_outof_N(k, n-1, indices);
+    /* sample_n_outof_N(k, n-1, indices); */
+    sample_noreplace(indices, n, k, ind_space);
+    /* FIXME: Also look at lqs_setup(),
+     * -----  and  xr[.,.] "fortran-like" matrix can be used from there!*/
+
     /* get the sampled design matrix and response */
     for(i=0; i < k; i++) {
 	for(j=0; j < p; j++)
@@ -699,7 +737,7 @@ void fast_s_large_n(double *X, double *y,
     for(i=0; i < groups; i++) {
 	if( !fast_s_with_memory(xsamp+i*n_group, ysamp+i*n_group,
 				&n_group, pp, nRes, K, max_k, rel_tol,
-				trace_lev, best_r, bb, rrhoc,
+				trace_lev, best_r, ind_space, bb, rrhoc,
 				best_betas + i* *best_r,
 				best_scales+ i* *best_r)) {
 
@@ -758,6 +796,8 @@ void fast_s_large_n(double *X, double *y,
 /* Done. Now clean-up. */
 
 cleanup_and_return:
+    PutRNGstate();
+
     for(i=0; i < n; i++) Free(x[i]); Free(x);
     Free(best_scales);
     k = *best_r * groups;
@@ -765,17 +805,16 @@ cleanup_and_return:
     Free(best_betas); Free(indices); Free(ysamp);
     k = n_group * groups;
     for(i=0; i < k; i++) Free(xsamp[i]);
-    Free(xsamp); Free(tmp); Free(tmp2);
+    Free(xsamp);
     for(i=0; i < p; i++) {
 	Free(tmp_mat[i]);
 	Free(tmp_mat2[i]);
     }
-    Free(tmp_mat); Free(tmp_mat2); Free(weights);
+    Free(tmp_mat); Free(tmp_mat2);
     for(i=0; i < *best_r; i++)
 	Free(final_best_betas[i]);
     Free(final_best_betas);
     Free(final_best_scales);
-    Free(res);
     Free(beta_ref);
 
 } /* fast_s_large_n() */
@@ -783,7 +822,7 @@ cleanup_and_return:
 int fast_s_with_memory(double **x, double *y,
 		       int *nn, int *pp, int *nRes,
 		       int *K, int *max_k, double *rel_tol, int *trace_lev,
-		       int *best_r, double *bb, double *rrhoc,
+		       int *best_r, int *ind_space, double *bb, double *rrhoc,
 		       double **best_betas, double *best_scales)
 {
 /*
@@ -848,7 +887,9 @@ int fast_s_with_memory(double **x, double *y,
 		goto cleanup_and_return;
 	    }
 	    /* take a sample of the indices  */
-	    sample_n_outof_N(p, n-1, b_i);
+	    /* sample_n_outof_N(p, n-1, b_i); */
+	    sample_noreplace(b_i, n, p, ind_space);
+
 	    /* build the submatrix */
 	    for(j=0; j < p; j++) {
 		for(k=0; k < p; k++)
@@ -903,7 +944,7 @@ cleanup_and_return:
 } /* fast_s_with_memory() */
 
 void fast_s(double *X, double *y,
-	    int *nn, int *pp, int *nRes, int *seed_rand,
+	    int *nn, int *pp, int *nRes,
 	    int *K, int *max_k, double *rel_tol,
 	    int *best_r, double *bb, double *rrhoc,
 	    double *bbeta, double *sscale, int *trace_lev)
@@ -923,14 +964,19 @@ void fast_s(double *X, double *y,
  * *sscale = associated scale estimator (or -1 when problem)
 */
     int i,j,k, no_try_samples;
-    int n = *nn, p = *pp, nResample = *nRes, *b_i;
+    int n = *nn, p = *pp, nResample = *nRes;
     Rboolean lu_sing;
     double b = *bb, rhoc = *rrhoc;
+    double sc, best_sc, worst_sc, aux;
+    int pos_worst_scale;
+
+    /* (Pointers to) Arrays - to be allocated */
+    int *ind_space, *b_i;
     double **x, **x_samp, *beta_cand, *beta_ref, *res;
     double **best_betas, *best_scales, *weights;
     double *tmp, *tmp2, **tmp_mat, **tmp_mat2;
-    double sc, best_sc, worst_sc, aux;
-    int pos_worst_scale;
+
+    SETUP_FAST_S(n, p);
 
     best_betas = (double **) Calloc(*best_r, double *);
     best_scales = (double *) Calloc(*best_r, double);
@@ -938,26 +984,15 @@ void fast_s(double *X, double *y,
 	best_betas[i] = (double*) Calloc(p, double);
 	best_scales[i] = INFI;
     }
-    res	  = (double *) Calloc(n, double);
-    tmp	  = (double *) Calloc(n, double);
-    tmp2  = (double *) Calloc(n, double);
-    weights= (double *) Calloc(n, double);
     beta_cand = (double *) Calloc(p, double);
     beta_ref  = (double *) Calloc(p, double);
     b_i	  = (int *) Calloc(n, int);
     x	  = (double **) Calloc(n, double *);
     x_samp= (double **) Calloc(n, double *);
-    tmp_mat  = (double **) Calloc(p, double *);
-    tmp_mat2 = (double **) Calloc(p, double *);
     for(i=0; i < n; i++) {
 	x[i]	   = (double *) Calloc(p, double);
 	x_samp[i]  = (double *) Calloc((p+1), double);
     }
-    for(i=0; i < p; i++) {
-	tmp_mat[i] = (double *) Calloc(p, double);
-	tmp_mat2[i] = (double *) Calloc((p+1), double);
-    }
-
     for(i=0; i < n; i++)
 	for(j=0; j < p; j++)
 	    x[i][j] = X[j*n+i];
@@ -967,7 +1002,8 @@ void fast_s(double *X, double *y,
     pos_worst_scale = 0;
     worst_sc = INFI;
 
-    srand((long)*seed_rand); /* << replace with R's RNG !*/
+    /* srand((long)*seed_rand); */
+    GetRNGstate();
 
 /* resampling approximation  */
 
@@ -984,7 +1020,9 @@ void fast_s(double *X, double *y,
 		goto cleanup_and_return;
 	    }
 	    /* take a sample of the indices  */
-	    sample_n_outof_N(p, n-1, b_i);
+	    /* sample_n_outof_N(p, n-1, b_i); */
+	    sample_noreplace(b_i, n, p, ind_space);
+
 	    /* build the submatrix */
 	    for(j=0; j < p; j++) {
 		for(k=0; k < p; k++)
@@ -1047,8 +1085,10 @@ void fast_s(double *X, double *y,
 
 cleanup_and_return:
 
-    Free(best_scales); Free(tmp); Free(tmp2);
-    Free(res); Free(weights); Free(beta_cand);
+    PutRNGstate();
+
+    Free(best_scales);
+    Free(beta_cand);
     Free(beta_ref); Free(b_i);
     for(i=0; i < *best_r; i++)
 	Free(best_betas[i]);
@@ -1057,11 +1097,12 @@ cleanup_and_return:
 	Free(x[i]);
 	Free(x_samp[i]);
     }
+    Free(x); Free(x_samp);
     for(i=0; i < p; i++) {
 	Free(tmp_mat[i]);
 	Free(tmp_mat2[i]);
     }
-    Free(x); Free(x_samp); Free(tmp_mat); Free(tmp_mat2);
+    Free(tmp_mat); Free(tmp_mat2);
 
     return;
 } /* fast_s() */

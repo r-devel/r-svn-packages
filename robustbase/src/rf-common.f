@@ -14,7 +14,8 @@ cc
 	real uniran
 cc
 	do 100 i=1,nsel
- 10	  num=int(uniran(seed)*n)+1
+cOLD 10	  num=int(uniran(seed)*n)+1
+ 10	  num=int(unifrnd()*n)+1
 	  if(i.gt.1) then
 	    do 50 j=1,i-1
 	      if(index(j).eq.num) goto 10
@@ -26,20 +27,20 @@ cc
 	end
 ccccc
 ccccc
-	function uniran(seed)
-cc
-cc  Draws a random number from the uniform distribution on [0,1].
-cc
-	real uniran
-	integer seed
-	integer quot
-cc
-	seed=seed*5761+999
-	quot=seed/65536
-	seed=seed-quot*65536
-	uniran=float(seed)/65536.D0
-	return
-	end
+cOLD 	function uniran(seed)
+cOLD cc
+cOLD cc  Draws a random number from the uniform distribution on [0,1].
+cOLD cc
+cOLD 	real uniran
+cOLD 	integer seed
+cOLD 	integer quot
+cOLD cc
+cOLD 	seed=seed*5761+999
+cOLD 	quot=seed/65536
+cOLD 	seed=seed-quot*65536
+cOLD 	uniran=float(seed)/65536.D0
+cOLD 	return
+cOLD 	end
 ccccc
 ccccc
 	subroutine rfgenpn(n,nsel,index)
@@ -235,7 +236,8 @@ cc
 	jndex=0
 	do 10 k=1,ngroup
 	  do 20 m=1,mini(k)
-	    nrand=int(uniran(seed)*(n-jndex))+1
+cOLD 	    nrand=int(uniran(seed)*(n-jndex))+1
+	    nrand=int(unifrnd()*(n-jndex))+1
 	    jndex=jndex+1
 	    if(jndex.eq.1) then
 	      a(1,jndex)=nrand

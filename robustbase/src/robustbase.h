@@ -16,7 +16,7 @@ void wgt_himed  (double *x, Sint *n, double *w, double *res);
 /* ./lmrob.c : */
 void R_lmrob_S(double *X, double *y, int *n, int *P,
 	       int *nRes, double *scale, double *beta_s,
-	       int *seed_rand, double *C, double *bb,
+	       double *C, double *bb,
 	       int *best_r, int *Groups, int *N_group,
 	       int *K_s, int *max_k, double *rel_tol, int *trace_lev);
 

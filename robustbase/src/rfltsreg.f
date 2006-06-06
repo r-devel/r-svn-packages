@@ -116,6 +116,9 @@ cc
 cc
 CDDD	CALL INTPR('>>> Enter RFLTSREG ... nvar=',-1,nvar,1)
 
+        call rndstart
+C            -------- == GetRNGstate() in C
+
 CCCC    10.10.2005 - substitute the parameters nmax and nvmax
         nmax = n
         nvmax = nvar
@@ -834,9 +837,13 @@ cc
       endif
 cc
       goto 9999
- 9999 return
+
+ 9999 continue
+      call rndend
+C          ------ == PutRNGstate() in C
+      return
       end
-ccccc
+ccccc end {rfltsreg}
 ccccc
 
       subroutine rfstatis(x,xmed,xmad,aw,aw2,intercept,nvad,nvmax1,

@@ -256,6 +256,9 @@ cc.	*  2.0589,1.9660,1.879,1.7973,1.7203,1.6473/
 
 C	CALL INTPR('Entering RFFASTMCD - KREP: ',-1,KREP,1)
 
+        call rndstart
+C            -------- == GetRNGstate() in C
+
 C	20.06.2005 - substitute the parameters nmax and nvmax
 	nmax = n
 	nvmax = nvar
@@ -1396,9 +1399,13 @@ cc
 	call transfo(cova2,bmeans,dat,med,mad,nvar,n)
 	goto 9999
 cc ******************************************************************
- 9999	return
+
+ 9999   continue
+        call rndend
+C            ------ == PutRNGstate() in C
+	return
 	end
-ccccc
+ccccc   end {rffastmcd}
 ccccc
 ccccc
 ccccc
@@ -1551,6 +1558,7 @@ cc
 	return
 	end
 
+cc FIXME: 'seed' now unused
 	subroutine prdraw(a,pnsel,seed,nn)
 cc
 	integer a(nn)
@@ -1558,7 +1566,8 @@ cc
 	integer seed
 cc
 	jndex=pnsel
-	nrand=int(uniran(seed)*(nn-jndex))+1
+cOLD 	nrand=int(uniran(seed)*(nn-jndex))+1
+	nrand=int(unifrnd() * (nn-jndex))+1
 	jndex=jndex+1
 	a(jndex)=nrand+jndex-1
 	do 5, i=1,jndex-1
