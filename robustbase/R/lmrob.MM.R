@@ -5,23 +5,23 @@ lmrob.control <-
 	     tuning.chi = 1.54764, bb = 0.5, tuning.psi = 4.685061,
 	     max.it = 50, groups = 5, n.group = 400,
 	     k.fast.s = 1,
-             best.r.s = 2,      # had '2'    hardwired in C
-             k.max = 50,        # had '50'   hardwired in C
-             refine.tol = 1e-4, # had '1e-7' hardwired in C {"never" converged!}
+	     best.r.s = 2,	# had '2'    hardwired in C
+	     k.max = 200,	# had '50'   hardwired in C
+	     refine.tol = 1e-7, # had '1e-7' hardwired in C {often not converged ?!}
 	     compute.rd = FALSE)
 {
     list(seed = as.integer(seed), nResample = nResample, tuning.chi = tuning.chi,
 	 bb = bb, tuning.psi = tuning.psi,
-         max.it = max.it, groups = groups, n.group = n.group,
+	 max.it = max.it, groups = groups, n.group = n.group,
 	 best.r.s = best.r.s, k.fast.s = k.fast.s,
-         k.max = k.max, refine.tol = refine.tol,
+	 k.max = k.max, refine.tol = refine.tol,
 	 compute.rd = compute.rd)
 }
 
 
 lmrob.fit.MM <-
     function(x, y, control,
-             init.S = lmrob.S(x = x, y = y, control = control))
+	     init.S = lmrob.S(x = x, y = y, control = control))
 {
     if(!is.matrix(x)) x <- as.matrix(x)
     n <- nrow(x)
@@ -42,7 +42,7 @@ lmrob.fit.MM <-
 	cov.matrix <- matrix(final.MM$cov, p, p)
     }
     else { ## If IRWLS did not converge, use the initial (S) estimator:
-        warning("IRWLS iterations did NOT converge in ", control$max.it," steps")
+	warning("IRWLS iterations did NOT converge in ", control$max.it," steps")
 	coef <- iCoef
 	cov.matrix <- matrix(init.S$cov, p, p)
     }
@@ -61,8 +61,8 @@ lmrob.fit.MM <-
     f <- drop(x %*% coef)
     r <- y - f
     list(fitted.values = f, residuals = r, weights = final.MM$wt,
-         rank = rank, degree.freedom = n - rank,
-         coefficients = coef, initial.coefficients = iCoef,
+	 rank = rank, degree.freedom = n - rank,
+	 coefficients = coef, initial.coefficients = iCoef,
 	 scale = final.MM$scale, cov = cov.matrix, control = control,
 	 iter = final.MM$iter, converged = final.MM$converged)
 }
@@ -76,8 +76,8 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
     c.psi <- as.double(control$tuning.psi)
     c.chi <- as.double(control$tuning.chi)
     stopifnot(length(c.psi) > 0, length(c.chi) > 0,
-              c.psi >= 0, c.chi >= 0, scale >= 0,
-              length(beta.initial) == p)
+	      c.psi >= 0, c.chi >= 0, scale >= 0,
+	      length(beta.initial) == p)
     sigma <- scale
 
     b <- .C("R_lmrob_MM",
@@ -94,9 +94,9 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 	    PACKAGE = "robustbase")[c("coef", "scale", "converged", "iter")]
     ## FIXME?: Should rather warn *here* in case of non-convergence
     ## FIXME: shouldn't C-code above return residuals ?!
-    r.s  <- drop(y - x %*% b$coef)       / sigma
+    r.s	 <- drop(y - x %*% b$coef)	 / sigma
     r2.s <- drop(y - x %*% beta.initial) / sigma
-    w   <- lmrob.Psi( r.s, cc = c.psi, deriv = 1)
+    w	<- lmrob.Psi( r.s, cc = c.psi, deriv = 1)
     ch1 <- lmrob.Chi(r2.s, cc = c.chi, deriv = 1)
     ## FIXME for multivariate y :
     A <- solve(	crossprod(x, x * w) ) * (n * sigma)
@@ -106,12 +106,12 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
     Xww <- crossprod(x, w*w2)
     u1 <- crossprod(x, x * w^2) / n
     u1 <- A %*% u1 %*% A
-    u2 <- a %*%  crossprod(Xww, A) / n
+    u2 <- a %*%	 crossprod(Xww, A) / n
     u3 <- A %*% tcrossprod(Xww, a) / n
     u4 <- mean(w2^2 - control$bb ^2) * tcrossprod(a)
 
     c(b, list(cov = (u1 - u2 - u3 + u4)/n,
-              wt = w / r.s, control = control))
+	      wt = w / r.s, control = control))
 }
 
 
@@ -141,7 +141,7 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     c.chi <- as.double(control$tuning.chi)
     best.r <- as.integer(control$best.r.s)
     stopifnot(length(c.chi) > 0, c.chi >= 0, length(bb) > 0,
-              length(best.r)> 0, best.r >= 1)
+	      length(best.r)> 0, best.r >= 1)
 
     b <- .C("R_lmrob_S",
 	    x = as.double(x),
@@ -153,18 +153,19 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
 	    coef = double(p),
 	    c.chi,
 	    bb,
-            best_r = best.r,
+	    best_r = best.r,
 	    groups  = groups,
 	    n.group = nGr,
 	    k.fast.s= as.integer(control$k.fast.s),
 	    k.max   = as.integer(control$k.max),
 	    refine.tol= as.double(control$refine.tol),
+	    converged = logical(1),
 	    trace.lev = as.integer(trace.lev),
-	    PACKAGE = "robustbase")[c("coef", "scale", "k.max")]
+	    PACKAGE = "robustbase")[c("coef", "scale", "k.max", "converged")]
     sigma <- b$scale
     if(sigma < 0)
 	stop("C function R_lmrob_S() exited prematurely")
-    names(b)[names(b) == "k.max"] <- "k.iter"
+    names(b)[names(b) == "k.max"] <- "k.iter" # maximal #{refinement iter.}
     ## FIXME: get 'res'iduals from C
     r2.s <- drop(y - x %*% b$coef) / sigma
     w <- lmrob.Chi(r2.s, cc = c.chi, deriv = 2)
@@ -176,7 +177,7 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     Xww <- crossprod(x, w*w2)
     u1 <- crossprod(x, x * w^2) / n
     u1 <- A %*% u1 %*% A
-    u2 <- a %*%  crossprod(Xww, A) / n
+    u2 <- a %*%	 crossprod(Xww, A) / n
     u3 <- A %*% tcrossprod(Xww, a) / n
     u4 <- mean(w2^2 - (control$bb)^2) * tcrossprod(a)
 

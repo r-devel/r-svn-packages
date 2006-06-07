@@ -18,7 +18,8 @@ void R_lmrob_S(double *X, double *y, int *n, int *P,
 	       int *nRes, double *scale, double *beta_s,
 	       double *C, double *bb,
 	       int *best_r, int *Groups, int *N_group,
-	       int *K_s, int *max_k, double *rel_tol, int *trace_lev);
+	       int *K_s, int *max_k, double *rel_tol, int* converged,
+	       int *trace_lev);
 
 void R_lmrob_MM(double *X, double *y, int *n, int *P,
 		double *beta_initial, double *scale,

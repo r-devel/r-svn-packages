@@ -9,8 +9,8 @@
 lmrob.control(seed = NULL, nResample = 500,
               tuning.chi = 1.54764, bb = 0.5, tuning.psi = 4.685061,
               max.it = 50, groups = 5, n.group = 400,
-              k.fast.s = 1, best.r.s = 2, k.max = 50,
-              refine.tol = 1e-04, compute.rd = FALSE)
+              k.fast.s = 1, best.r.s = 2, k.max = 200,
+              refine.tol = 1e-7, compute.rd = FALSE)
 }
 \arguments{
   \item{seed}{an integer vector, the seed to be used for random
