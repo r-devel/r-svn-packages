@@ -52,8 +52,10 @@ licence it under the GNU Public Licence.
 
 See also ../inst/Copyrights
 */
-#include <stdint.h>
-/* or #include <sys/types.h> */
+#include <inttypes.h>
+/*        ^^^^^^^^^^ is supposedly more common and standard than
+ * #include <stdint.h>
+ * or #include <sys/types.h> */
 /* --> int64_t ; if people don't have the above, they can forget about it.. */
 /* #include "int64.h" */
 
