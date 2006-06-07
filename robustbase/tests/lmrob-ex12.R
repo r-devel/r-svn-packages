@@ -12,42 +12,24 @@ summary(m0)
 summary(m1)
 
 
-(mC <- lmrob(Y ~ ., data = coleman))
+(mC <- lmrob(Y ~ ., data = coleman,
+	     control = lmrob.control(refine.tol = 1e-8)))
 summary(mC)
 ## Values will change once we use R's random number generator !
 stopifnot(
 all.equal(unname(coef(mC)),
-          c(29.45, -1.650, 0.0830, 0.6656, 1.177, -3.995),
-          ## tol = 0.00243 for 64-bit, 0.00242 for 32-bit
-          ## --
-          ## was c(29.52, -1.662, 0.0835, 0.6657, 1.179, -4.012),
-          ##     tol =0.000146 for 64-bit, 0.000596 for 32-bit
-          tol = 0.004)
+	  c(30.50232, -1.666147, 0.08425381, 0.6677366, 1.167777, -4.136569),
+	  tol = 2e-7)# 6.112 e-8 (32-b)
 )
 dput(signif(unname(coef(mC)), 7))
-## 64b(0.2-0): c(29.51163, -1.660807, 0.08344846, 0.6657121, 1.178509, -4.010207)
-
-## 2006-05-13 [after fixing the C bug] :
-## 64b (0.1-6): c(29.53885, -1.664495, 0.08360545, 0.6657679, 1.179005, -4.016079)
-## 32b (0.1-6): c(29.41195, -1.644599, 0.08278897, 0.6654978, 1.1761,   -3.98699)
-##-> mean:      c(29.4754, -1.654547, 0.08319721, 0.66563285, 1.1775525, -4.0015345)
-
-## --- now again non-random results!
-
-## 2006-04-24 :
-## 32-bit (0.1-6): c(29.411951606792, -1.64459850945731, 0.0827889726545072,
-##                   0.665497831767958, 1.17609979960314, -3.98699004062665)
-## 64-bit (0.1-6): c(29.5388508044274, -1.66449462058860, 0.0836054450771018,
-##                   0.665767853354177, 1.17900459411589, -4.01607879779799)
-
-## 2006-04-20 :
-## 64-bit (0.1-6): c(29.5388508044274, -1.66449462058860, 0.0836054450771018,
-##                   0.665767853354177, 1.17900459411589, -4.01607879779799)
-## 32-bit (0.1-6): c(29.5044520305338, -1.65965482653590, 0.0834004535344066,
-##                   0.665697308050525, 1.17833839348011, -4.00853793688203)
+## 64b(0.2-0): c(30.50232, -1.666147, 0.08425381, 0.6677366, 1.167777, -4.136569)
+## 32b(0.2-0):	 "exactly" same !
+## Full precision:
+dput(unname(coef(mC)))
+## 32-bit:c(30.5023183940104, -1.66614687550933, 0.0842538074635567, 0.667736589938547, 1.16777744089398, -4.13656884777543)
+## 64-bit:c(30.5023184150851, -1.66614687537736, 0.0842538074722959, 0.667736589980183, 1.16777744061092, -4.1365688503035)
 
 str(mC)
-
 
 ## EX 2
 gen <- function(n,p, n0, y0, x0, beta = rep(1, p))
@@ -63,25 +45,31 @@ gen <- function(n,p, n0, y0, x0, beta = rep(1, p))
     list(x=x, y=y)
 }
 
-## generate --a sample of  n  observations with  p  variables
+## generate --a sample of  n  observations with	 p  variables
 ## and 10% of outliers near (x1,y) = (10,10)
 n <- 500 ; n0 <- n %/% 10
 p <- 7 ## p = 20 is more impressive but too slow for "standard test"
 set.seed(17)
 a <- gen(n=n, p=p, n0= n0, y0=10, x0=10)
 plot(a$x[,1], a$y, col = c(rep(2, n0), rep(1, n-n0)))
-system.time( m1 <- lmrob(y~x, data = a) )
+system.time( m1 <- lmrob(y~x, data = a,
+                         control = lmrob.control(compute.rd = TRUE)))
 plot(m1, ask=FALSE)
 ##-> currently 5 plots; MM:I  don't like #3 (Response vs fitted)
 
 ## don't compute robust distances --> faster by factor of two:
 system.time(m2 <- lmrob(y~x, data = a,
-                        control = lmrob.control(compute.rd = FALSE)))
+			control = lmrob.control(compute.rd = FALSE)))
 ## ==> half of the CPU time is spent in covMcd()!
 (sm2 <- summary(m2))
 l1 <- lm(y~x, data = a)
 cbind(robust = coef(sm2)[,1:2],
       lm = coef(summary(l1))[,1:2])
+
+S.ctrl <- lmrob.control(seed = .Random.seed,## << keeps .Random.seed unchanged
+                        nResample = 1000, best.r.s = 15, refine.tol = 1e-9)
+m2.S <- with(a, lmrob.S(cbind(1,x), y, control = S.ctrl, trace.lev = 1))
+str(m2.S)
 
 ##--- Now use n > 2000 --> so we use C internal fast_s_large_n(...)
 n <- 2500 ; n0 <- n %/% 10
@@ -94,20 +82,24 @@ nrs <- .Random.seed # <-- to check that using 'seed' keeps .Random.seed
 system.time( m4 <- lmrob(y~x, data = a2, seed = rs, compute.rd = FALSE))
 (sm4 <- summary(m4))
 
-## random seed must be the same because we used  'seed = *' :
+## random seed must be the same because we used	 'seed = *' :
 stopifnot(nrs == .Random.seed, identical(coef(m3), coef(m4)))
 
 dput(signif(cf <- unname(coef(m3)), 7))
-## 64b(0.2-0): c(-0.01500556, 1.003113, 1.03582,  0.9824093)
-## 32b(0.2-0): c(-0.01504734, 1.003117, 1.035835, 0.9823957)
+## 0.2-0: c(0.007446546, 1.000712, 1.027921, 0.9896527)
+## 0.2-1: c(0.03148659, 0.9980933, 1.016364, 1.03243)
+## both for 32 and 64 bit
+
 dput(signif(100 * (sd <- unname(coef(sm4)[, "Std. Error"])), 7))
-## 64b(0.2-0): c(2.554881, 0.2886926, 2.516886, 2.641934)
-## 32b(0.2-0): c(2.55569,  0.2887459, 2.517603, 2.642825)
+## 0.2-0: c(2.219388, 0.274644,  2.196982, 2.26253)
+## 0.2-1: c(2.194914, 0.2737579, 2.371728, 2.206261)
+## both for 32 and 64 bit
+
 stopifnot(
-	  all.equal(cf, c(-0.015026, 1.003115, 1.035827, 0.9824025), tol= 3e-5)
-          ,
-	  all.equal(100*sd, c(2.5553, 0.288719, 2.5172, 2.64238), tol= 4e-4)
-	  )
+	  all.equal(cf, c(0.03148659, 0.9980933, 1.016364, 1.03243), tol= 7e-7)
+	  , # ... e-7	 needed on 64b
+	  all.equal(100*sd,c(2.194914,0.2737579, 2.371728, 2.206261),tol= 7e-7)
+	  ) # 1.334 e-7	 needed on 64b
 
 
 ## rm(a,m1, m2, m3, m4, sm2, l1)
