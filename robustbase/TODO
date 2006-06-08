@@ -101,12 +101,6 @@ o more tests in	tests/
 
 o fully implement and test the multivariate case (y = matrix with > 1 col.)
 
-o R/lmrob*.R : seems like a simple ``dump''
-	   (maybe via package.skeleton() ?)
-	   ==> has almost NO comment in the R code
-
-  Possibly change default to  'compute.rd = FALSE' !?!
-
 o src/lmrob.c :
 
    Things to fix:

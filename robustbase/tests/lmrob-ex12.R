@@ -66,8 +66,12 @@ l1 <- lm(y~x, data = a)
 cbind(robust = coef(sm2)[,1:2],
       lm = coef(summary(l1))[,1:2])
 
+m2.S1 <- with(a, lmrob.S(cbind(1,x), y, trace.lev = 2,
+			 ## trace.lev = 2 : quite a bit of output
+			 control= lmrob.control(seed = .Random.seed,
+			 nRes = 80, k.max = 20, refine.tol = 1e-4)))
 S.ctrl <- lmrob.control(seed = .Random.seed,## << keeps .Random.seed unchanged
-                        nResample = 1000, best.r.s = 15, refine.tol = 1e-9)
+			nResample = 1000, best.r.s = 15, refine.tol = 1e-9)
 m2.S <- with(a, lmrob.S(cbind(1,x), y, control = S.ctrl, trace.lev = 1))
 str(m2.S)
 

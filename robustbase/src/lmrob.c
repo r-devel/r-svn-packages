@@ -170,7 +170,7 @@ void R_lmrob_S(double *X, double *y, int *n, int *P,
 	       int *nRes, double *scale, double *beta_s,
 	       double *rrhoc, double *bb,
 	       int *best_r, int *Groups, int *N_group,
-	       int *K_s, int *max_k, double *rel_tol, int* converged,
+	       int *K_s, int *max_k, double *rel_tol, int *converged,
 	       int *trace_lev)
 {
     /* best_r = 't' of Salibian-Barrera_Yohai(2006),
@@ -679,11 +679,12 @@ void fast_s_large_n(double *X, double *y,
  * *bbeta  = final estimator
  * *sscale = associated scale estimator (or -1 when problem)
 */
-    int i,j,k, k2;
+    int i,j,k, k2, it_k;
     int n = *nn, p = *pp, kk = *K;
     int groups = *ggroups, n_group = *nn_group;
     double b = *bb, rhoc = *rrhoc, sc, best_sc, worst_sc;
     int pos_worst_scale;
+    Rboolean conv;
 
     /* (Pointers to) Arrays - to be allocated */
     int *ind_space, *indices;
@@ -754,7 +755,7 @@ void fast_s_large_n(double *X, double *y,
  * best betas in the (xsamp,ysamp) sample
  * with kk C-steps and keep only the "best_r" best ones
 */
-    *converged = 0;
+    conv = FALSE;
     pos_worst_scale = 0;
     for(i=0; i < *best_r; i++)
 	final_best_scales[i] = INFI;
@@ -765,7 +766,7 @@ void fast_s_large_n(double *X, double *y,
     for(i=0; i < (*best_r * groups); i++) {
 	refine_fast_s(xsamp, ysamp, weights, k, p, res,
 		      tmp, tmp2, tmp_mat, tmp_mat2, best_betas[i],
-		      kk, converged/* = FALSE*/, *max_k, *rel_tol, *trace_lev,
+		      kk, &conv/* = FALSE*/, *max_k, *rel_tol, *trace_lev,
 		      b, rhoc, best_scales[i], /* -> */ beta_ref, &sc);
 	if ( sum_rho_sc(res, worst_sc, k, p, rhoc) < b ) {
 	    /* scale will be better */
@@ -784,13 +785,12 @@ void fast_s_large_n(double *X, double *y,
     best_sc = INFI; *converged = 1;  k = 0;
 
     for(i=0; i < *best_r; i++) {
-	Rboolean conv = TRUE;
-	int it_k =
-	    refine_fast_s(x, y, weights, n, p, res,
-			  tmp, tmp2, tmp_mat, tmp_mat2, final_best_betas[i],
-			  kk, &conv /* = TRUE */, *max_k, *rel_tol, *trace_lev,
-			  b, rhoc, final_best_scales[i],
-			  /* -> */ beta_ref, &sc);
+	conv = TRUE;
+	it_k = refine_fast_s(x, y, weights, n, p, res, tmp, tmp2,
+			     tmp_mat, tmp_mat2, final_best_betas[i], kk,
+			     &conv/* = TRUE */, *max_k, *rel_tol, *trace_lev,
+			     b, rhoc, final_best_scales[i],
+			     /* -> */ beta_ref, &sc);
 	if(*trace_lev)
 	    Rprintf(" best [%d]: %d iterations, i.e. %sconverged\n",
 		    i, it_k, conv ? " " : "NOT ");
@@ -969,16 +969,16 @@ void fast_s(double *X, double *y,
  * *K	   = number of refining steps for each candidate
  * *best_r = number of (refined) to be retained for full iteration
  * *converged: will become FALSE  iff at least one of the best_r iterations
- *             did not converge (in max_k steps to rel_tol precision)
+ *	       did not converge (in max_k steps to rel_tol precision)
  * *bb	   = right-hand side of the S-equation (typically 1/2)
  * *rrhoc  = tuning constant for Tukey's bi-square rho()
  *	     (this should be associated with *bb)
  * *bbeta  = final estimator
  * *sscale = associated scale estimator (or -1 when problem)
 */
-    int i,j,k, no_try_samples;
+    int i,j,k, it_k, no_try_samples;
     int n = *nn, p = *pp, nResample = *nRes;
-    Rboolean lu_sing;
+    Rboolean lu_sing, conv;
     double b = *bb, rhoc = *rrhoc;
     double sc, best_sc, worst_sc, aux;
     int pos_worst_scale;
@@ -1012,9 +1012,7 @@ void fast_s(double *X, double *y,
 
     /* disp_mat(x, n, p); */
 
-    pos_worst_scale = 0;
-    worst_sc = INFI;
-    *converged = 0;
+    pos_worst_scale = 0; conv = FALSE; worst_sc = INFI;
 
     /* srand((long)*seed_rand); */
     GetRNGstate();
@@ -1056,13 +1054,14 @@ void fast_s(double *X, double *y,
 	/* conv = FALSE : do *k refining steps */
 	refine_fast_s(x, y, weights, n, p, res,
 		      tmp, tmp2, tmp_mat, tmp_mat2, beta_cand,
-		      *K, converged/* = FALSE*/, *max_k, *rel_tol, *trace_lev,
+		      *K, &conv/* = FALSE*/, *max_k, *rel_tol, *trace_lev,
 		      b, rhoc, -1., /* -> */ beta_ref, &sc);
 	if(*trace_lev >= 2) {
+	    double del = norm_diff(beta_cand, beta_ref, p);
 	    Rprintf("sample[%3d]: after refine_(*, conv=FALSE):\n", i);
-	    Rprintf("beta_cand: "); disp_vec(beta_cand,p);
 	    Rprintf("beta_ref : "); disp_vec(beta_ref,p);
-	    Rprintf("--> sc = %g\n", sc);
+	    Rprintf(" with ||beta_ref - beta_cand|| = %.12g, --> sc = %.15g\n",
+		    del, sc);
 	}
 	if(fabs(sc) == 0.) { /* exact zero set by refine_*() */
 	    if(*trace_lev >= 1)
@@ -1089,20 +1088,18 @@ void fast_s(double *X, double *y,
 		*best_r);
 
     best_sc = INFI; *converged = 1;  k = 0;
-
     for(i=0; i < *best_r; i++) {
-	Rboolean conv = TRUE;
-	int it_k =
-	refine_fast_s(x, y, weights, n, p, res,
-		      tmp, tmp2, tmp_mat, tmp_mat2, best_betas[i],
-		      *K, &conv /* = TRUE */, *max_k, *rel_tol, *trace_lev,
-		      b, rhoc, best_scales[i], /* -> */ beta_ref, &aux);
-
+	conv = TRUE;
+	it_k = refine_fast_s(x, y, weights, n, p, res, tmp, tmp2,
+			     tmp_mat, tmp_mat2, best_betas[i], *K,
+			     &conv /* = TRUE */, *max_k, *rel_tol, *trace_lev,
+			     b, rhoc, best_scales[i], /* -> */ beta_ref, &aux);
 	if(*trace_lev)
-	    Rprintf("i=%2d: conv = %d (%d iter.):", i, conv, it_k);
+	    Rprintf("i=%2d: %sconvergence (%d iter.):",
+		    i, (conv) ? "" : "NON ", it_k);
 	if(aux < best_sc) {
 	    if(*trace_lev)
-		Rprintf(" -> improved scale to %g", aux);
+		Rprintf(" -> improved scale to %.15g", aux);
 	    best_sc = aux;
 	    COPY_beta(beta_ref, bbeta);
 	}
@@ -1209,7 +1206,7 @@ int refine_fast_s(double **x, double *y, double *weights,
 	    double del = norm_diff(beta_cand, beta_ref, p);
 	    double nrmB= norm(beta_cand, p);
 	    if(trace_lev >= 3)
-		Rprintf(" i = %d, ||b[i]||= %12g, ||b[i] - b[i-1]|| = %15g\n",
+		Rprintf(" i = %d, ||b[i]||= %.12g, ||b[i] - b[i-1]|| = %.15g\n",
 			 i, nrmB, del);
 	    converged = (del < rel_tol * nrmB);
 	    if(converged)
