@@ -1,3 +1,8 @@
+2006-06-12  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/plotpart.q (clusplot.default): new argument 'sub'; default is
+	unchanged, but you can suppress the subtitle.
+
 2006-05-17  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/fanny.c (fygur): a little more cleanup --

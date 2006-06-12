@@ -4,7 +4,8 @@
 
 library(cluster)
 
-dysta <- function(x, kind = c("euclidean","manhattan"), dystaK = "dysta")
+dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
+                  dystaK = "dysta")
 {
     ## Purpose:
     ## -------------------------------------------------------------------------
@@ -13,6 +14,7 @@ dysta <- function(x, kind = c("euclidean","manhattan"), dystaK = "dysta")
     ## Author: Martin Maechler, Date:  3 Sep 2002, 08:21
 
     kind <- match.arg(kind)
+    ndyst <- which(kind == eval(formals()$kind))# 1, 2, or 3
     n <- nrow(x <- as.matrix(x))
     p <- ncol(x)
     storage.mode(x) <- "double"
@@ -28,7 +30,7 @@ dysta <- function(x, kind = c("euclidean","manhattan"), dystaK = "dysta")
 	     jp = p,
 	     x,
 	     dys=   double(1 + n*(n-1)/2),
-	     ndyst= as.integer(kind == "euclidean"),# 1 or 0
+	     ndyst= ndyst,
 	     jtmd=  as.integer(ifelse(hasNA, -1, 1)),
 	     valmd= valmd,
 	     jhalt= integer(1),

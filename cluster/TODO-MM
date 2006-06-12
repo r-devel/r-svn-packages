@@ -152,3 +152,7 @@ TODO  (were in ./README_MM which is now eliminated)
 9) man/daisy.Rd  should mention 'Gower (1971)' ;
    mention that Kaufman & Rousseeuw *generalize* this;
    and probably show the full formula from Kauf+Rouss p.35
+
+10) Implement the plot for "fuzzy cluster membership" of section 5.4,
+    from Kauf+Rouss p. 195 ff :
+    I.e. PCA of the membership matrix for the points + "the pure clusters"
