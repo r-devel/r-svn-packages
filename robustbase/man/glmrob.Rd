@@ -213,11 +213,13 @@ summary(Efit2)
 
 ## 'x' weighting:
 
-try(# This fails on some platforms {singular ..}:
-Efit3 <- glmrob(Ysum ~ Age10 + Base4*Trt, family = poisson,
-                data = epilepsy, method= "Mqle", weights.on.x = "hat",
-                control = glmrobMqle.control(tcc=1.2, maxit=100))
-)
+try({
+  ## This fails on some platforms {singular ..},
+  ## but gives many warnings anyay
+ Efit3 <- glmrob(Ysum ~ Age10 + Base4*Trt, family = poisson,
+		 data = epilepsy, method= "Mqle", weights.on.x = "hat",
+		 control = glmrobMqle.control(tcc=1.2, maxit=100))
+})
 if(FALSE) # gives singular cov matrix!
 Efit4 <- glmrob(Ysum ~ Age10 + Base4*Trt, family = poisson,
                 data = epilepsy, method= "Mqle", weights.on.x = "covMcd",
