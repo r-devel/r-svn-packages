@@ -1,0 +1,2 @@
+useDynLib(SQLiteDF)
+export(sopen, sqlite.data.frame)
