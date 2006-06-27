@@ -1,7 +1,17 @@
 useDynLib(SQLiteDF)
-export(sqlite.data.frame, ls.sdf, get.sdf)
+export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf)
 export(length);
 S3method(length, default)
 S3method(names, sqlite.data.frame)
 S3method(length, sqlite.data.frame)
 S3method(dim, sqlite.data.frame)
+S3method("$", sqlite.data.frame)
+S3method("[[", sqlite.data.frame)
+S3method("[", sqlite.data.frame)
+
+S3method("[", sqlite.vector)
+S3method(length, sqlite.vector)
+S3method(as.double, sqlite.vector)
+S3method(as.character, sqlite.vector)
+S3method(as.logical, sqlite.vector)
+S3method(as.integer, sqlite.vector)

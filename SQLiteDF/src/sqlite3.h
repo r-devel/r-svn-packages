@@ -164,7 +164,7 @@ int sqlite3_exec(
 );
 
 /*
-** Return values for sqlite3_exec() and sqlite3_step()
+** Return values for sqlite3_exec() and  = qlite3_step()
 */
 #define SQLITE_OK           0   /* Successful result */
 /* beginning-of-error-codes */

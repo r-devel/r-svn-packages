@@ -1,46 +1,148 @@
 #include <stdio.h>
 #include <string.h>
-#include "R.h"
-#include "Rdefines.h"
-#include "Rinternals.h"
-#include "sqlite3.h"
 #include "sqlite_dataframe.h"
 
-SEXP sdf_create_sdf(SEXP df, SEXP name, SEXP sql_create) {
-    SEXP ret;
-    char *rname, *iname, *biname; 
-    int file_idx = 0, namelen, res;
+/****************************************************************************
+ * UTILITY FUNCTIONS
+ ****************************************************************************/
+
+/* if user supplied a name, return that name. otherwise, use the 
+ * default "data" */
+int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx) {
+    int namelen = 0;
 
     /* check if arg name is supplied */
     if (IS_CHARACTER(name)) {
-        rname = CHAR(STRING_ELT(name,0));
-        if (!_is_r_sym(rname)) { /* error */ return R_NilValue; }
-        namelen = strlen(rname);
-        iname = R_alloc(namelen + 9, sizeof(char)); /* <name>10000.db\0 */
-        sprintf(iname, "%s.db", rname);
+        *rname = CHAR_ELT(name,0);
+        if (!_is_r_sym(*rname)) { 
+            Rprintf("Error: supplied name \"%s\"is not a valid R symbol.\n", 
+                    *rname); 
+            return FALSE; 
+        }
+        namelen = strlen(*rname);
+        *iname = (char*)R_alloc(namelen + 9, sizeof(char)); /* <name>10000.db\0 */
+        sprintf(*iname, "%s.db", *rname);
     } else if (name == R_NilValue) {
-        rname = "data";
+        *rname = "data";
         namelen = 5;
-        iname = R_alloc(13, sizeof(char)); /* data10000.db\0 */
-        file_idx = 1;
-        sprintf(iname, "%s%d.db", rname, file_idx);
+        *iname = (char*)R_alloc(13, sizeof(char)); /* data10000.db\0 */
+        *file_idx = 1;
+        sprintf(*iname, "%s%d.db", *rname, *file_idx);
     } else {
-        /* how to error??? */
-        return R_NilValue;
+        Rprintf("Error: the supplied value for arg name is not a string.\n");
     }
+    return namelen;
+}
 
-    /* here, iname will contain #{iname}.db */
+int _find_free_filename(char *rname, char **iname, int *namelen, int *file_idx) {
     do {
-        if (!_file_exists(iname)) break;
-        namelen = sprintf(iname, "%s%d.db", rname, ++file_idx) - 3;
-    } while (file_idx < 10000);
+        if (!_file_exists(*iname)) break;
+        *namelen = sprintf(*iname, "%s%d.db", rname, ++(*file_idx)) - 3;
+    } while (*file_idx < 10000);
+
+    return *file_idx;
+}
+
+/* creates an sdf attribute table */
+static int _create_sdf_attribute2(const char *iname) {
+    sprintf(g_sql_buf[2], "create table [%s].sdf_attributes(attr text, "
+            "value text, primary key (attr))", iname);
+    int res = _sqlite_exec(g_sql_buf[2]);
+    if (res == SQLITE_OK) {
+        sprintf(g_sql_buf[2], "insert into [%s].sdf_attributes values ('name',"
+                "'%s');", iname, iname);
+        res = _sqlite_exec(g_sql_buf[2]);
+    }
+    return res;
+}
+
+/* checks if a column has a corresponding factor|ordered table */
+static int _is_factor2(const char *iname, const char *factor_type, const char *colname) {
+    sqlite3_stmt stmt;
+    sprintf(g_sql_buf[2], "select * from [%s].[%s %s]", iname, factor_type,
+            colname);
+    int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    return res == SQLITE_OK;
+}
+
+/* create a factor|ordered table */
+static int _create_factor_table2(const char *iname, const char *factor_type, 
+        const char *colname) {
+    sqlite3_stmt *stmt;
+    sprintf(g_sql_buf[2], "create table [%s].[%s %s] (level int, label text, "
+            "primary key(level), unique(label));", iname, factor_type, colname);
+    int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    sqlite3_finalize(stmt);
+    return res; /* error on dup name? */
+}
+
+/* copy a factor|ordered table from a sdf(db) to another sdf(db) */
+static int _copy_factor_levels2(const char *factor_type, const char *iname_src,
+        const char *colname_src, const char *iname_dst, const char *colname_dst) {
+    sqlite3_stmt *stmt;
+    int res;
+    res = _create_factor_table2(iname_dst, factor_type, colname_dst);
+    if (res == SQLITE_OK) {
+        sprintf(g_sql_buf[2], "insert into [%s].[%s %s] select * from [%s].[%s,%s]",
+                iname_src, factor_type, colname_src, iname_dst, factor_type,
+                colname_dst);
+        res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+        sqlite3_finalize(stmt);
+    return res; /* error on dup name? */
+}
+
+
+/* assumes stmt has col_cnt + 1 columns, col 0 is [row name]. returned SEXP is 
+ * not UNPROTECT-ed, user will have to do that. will create the names &
+ * attach factor infos */
+static SEXP _setup_df_sexp1(const char *iname_src, const char *iname_dst,
+        sqlite3_stmt *stmt, int col_cnt, int *dup_indices) {
+    SEXP ret, tmp, value;
+    int i, nprotect;
+    const char *colname;
+
+    PROTECT(ret = NEW_LIST(col_cnt));
+
+    /* set up names */
+    PROTECT(tmp = NEW_CHARACTER(col_cnt)); nprotect = 1;
+    for (i = 0; i < col_cnt; i++) {
+        colname = sqlite3_column_name(stmt, i+1);
+        if (dup_indices[i] == 0) {
+            strcpy(g_sql_buf[1], colname);
+        } else {
+            sprintf(g_sql_buf[1], "%s.%d", colname, dup_indices[i]);
+        }
+
+        SET_STRING_ELT(tmp, i, mkChar(g_sql_buf[1]));
+                    
+    }
+    SET_NAMES(ret, tmp);
+    UNPROTECT(nprotect);
+    return ret;
+}
+
+/****************************************************************************
+ * SDF FUNCTIONS
+ ****************************************************************************/
+
+SEXP sdf_create_sdf(SEXP df, SEXP name) {
+    SEXP ret;
+    char *rname, *iname, *biname; 
+    int file_idx = 0, namelen, res, i, j;
+
+    namelen = _check_sdf_name(name, &rname, &iname, &file_idx);
+    if (!namelen) return R_NilValue;
+
+
+    /* at this point, iname will contain #{iname}.db */
+    _find_free_filename(rname, &iname, &namelen, &file_idx);
     
     /* found a free number */
     if (file_idx < 10000) {
         /* create a sdf db file by running "attach" statement to non-existent
          * db file
          */
-        int sql_len, sql_len2, sql_len3, i, j;
+        int sql_len, sql_len2;
         sqlite3_stmt *stmt;
 
         iname[namelen] = 0;  /* remove ".db" */
@@ -53,19 +155,17 @@ SEXP sdf_create_sdf(SEXP df, SEXP name, SEXP sql_create) {
         /* 
          * create tables for the sdf db
          */
+
+        /* create sdf_attributes table */
+        res = _create_sdf_attribute2(iname);
+        if (_sqlite_error(res)) return R_NilValue;
+
+        /* create sdf_data table */
         SEXP names = GET_NAMES(df), variable, levels;
         int ncols = GET_LENGTH(names), type, *types;
         char *col_name, *class, *factor;
 
         /* TODO: put constraints on table after inserting everything? */
-
-        /* create sdf_attributes table */
-        sprintf(g_sql_buf[0], "create table [%s].sdf_attributes(attr text, "
-                "value text, primary key (attr))", iname);
-        res = _sqlite_exec(g_sql_buf[0]);
-        sprintf(g_sql_buf[0], "insert into [%s].sdf_attributes values ('name',"
-                "'%s');", iname, iname);
-        _sqlite_exec(g_sql_buf[0]);
 
 
         /* 
@@ -97,15 +197,13 @@ SEXP sdf_create_sdf(SEXP df, SEXP name, SEXP sql_create) {
 
             /* create separate table for factors decode */
             if (strcmp(class, "factor") == 0 || strcmp(class, "ordered") == 0){
-                sprintf(g_sql_buf[2], "create table [%s].[factor %s] ("
-                        "level int, label text, primary key(level), "
-                        "unique(label));", iname, col_name);
-                res = _sqlite_exec(g_sql_buf[2]);
-                if (_sqlite_error(res)) return R_NilValue; /* dup tbl name? */
+                if (_create_factor_table2(iname, class, col_name)) 
+                    return R_NilValue; /* dup tbl name? */
 
                 levels = GET_LEVELS(variable);
-                sql_len3 = sprintf(g_sql_buf[2], "insert into [%s].[factor %s] values(?, ?);", iname, col_name);
-                res = sqlite3_prepare(g_workspace, g_sql_buf[2], sql_len3, &stmt, NULL);
+                sprintf(g_sql_buf[2], "insert into [%s].[%s %s] values(?, ?);",
+                        iname, class, col_name);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
                 if (_sqlite_error(res)) return R_NilValue; /* dup tbl name? */
 
                 for (j = 0; j < GET_LENGTH(levels); j++) {
@@ -132,8 +230,8 @@ SEXP sdf_create_sdf(SEXP df, SEXP name, SEXP sql_create) {
         int nrows = GET_LENGTH(rownames);
         char *row_name;
 
-        sql_len2 += sprintf(g_sql_buf[1]+sql_len2, ")");
-        res = sqlite3_prepare(g_workspace, g_sql_buf[1], sql_len2, &stmt, NULL);
+        sprintf(g_sql_buf[1]+sql_len2, ")");
+        res = sqlite3_prepare(g_workspace, g_sql_buf[1], -1, &stmt, NULL);
 
         for (i = 0; i < nrows; i++) {
             row_name = CHAR(STRING_ELT(rownames, i));
@@ -173,9 +271,9 @@ SEXP sdf_create_sdf(SEXP df, SEXP name, SEXP sql_create) {
         /*
          * add the new sdf to the workspace
          */
-        sprintf(g_sql_buf[0], "insert into workspace(filename, internal_name)"
-                " values('%s.db','%s')", iname, iname);
-        res = _sqlite_exec(g_sql_buf[0]);
+        strcpy(g_sql_buf[0], iname);
+        iname[namelen] = '.';
+        res = _add_sdf1(iname, g_sql_buf[0]);
         if (_sqlite_error(res)) return R_NilValue; /* why? */
 
         /*
@@ -192,7 +290,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name, SEXP sql_create) {
 }
 
 SEXP sdf_get_names(SEXP sdf) {
-    char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    char *iname = SDF_INAME(sdf);
     int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
 
     sqlite3_stmt *stmt;
@@ -236,7 +334,8 @@ SEXP sdf_get_length(SEXP sdf) {
     return ret;
 }
 
-SEXP sdf_get_rows(SEXP sdf) {
+/* get row count */
+SEXP sdf_get_row_count(SEXP sdf) {
     char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
     char **out;
     int res, ncol, nrow;
@@ -259,8 +358,296 @@ SEXP sdf_get_rows(SEXP sdf) {
 }
 
     
+SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote, 
+        SEXP _rownames, SEXP _colnames) {
+    char *filename = CHAR_ELT(_filename, 0);
+    FILE *f = fopen(filename, "r");
+
+    if (f == NULL) {
+        Rprintf("Error: File %s does not exist.", filename);
+        return R_NilValue;
+    }
+
+    char *sep = CHAR_ELT(_sep, 0), *quote = CHAR_ELT(_quote,0);
+    char *name = CHAR_ELT(_name, 0);
+
+    /* create the table */
+    /* insert the stuffs */
+    /* register to workspace */
+
+    return R_NilValue;
+}
+
+SEXP sdf_get_rownames(SEXP sdf) {
+    return R_NilValue;
+}
 
 
+SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
+    SEXP ret, *df;
+    char *iname = SDF_INAME(sdf);
+    sqlite3_stmt *stmt, *stmt2;
+    int buflen = 0, idxlen, col_cnt, index;
+    int i, j,res;
+    int *col_indices, col_index_len, *dup_indices;
+
+    sprintf(g_sql_buf[0], "select * from [%s].sdf_data", iname);
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+    if (_sqlite_error(res)) return R_NilValue;
+
+    buflen = sprintf(g_sql_buf[0], "select [row name]");
+    idxlen = LENGTH(col);
+    col_cnt = sqlite3_column_count(stmt) - 1;
+
+    /*
+     * PROCESS COLUMN INDEX
+     */
+    if (MISSING(col)) {
+        for (i = 1; i < col_cnt+1; i++) {
+            buflen += sprintf(g_sql_buf[0]+buflen, "[%s],", 
+                    sqlite3_column_name(stmt, i)); 
+        }
+        g_sql_buf[0][--buflen] = 0; /* remove trailing "," */
+    } else if (col == R_NilValue || idxlen < 1) {
+        sqlite3_finalize(stmt);
+        return R_NilValue;
+    } else if (IS_NUMERIC(col)) {
+        col_indices = (int *)R_alloc(idxlen, sizeof(int));
+        dup_indices = (int *)R_alloc(idxlen, sizeof(int));
+        col_index_len = 0;
+
+        for (i = 0; i < idxlen; i++) {
+            /* no need to correct for 0 base because col 0 is [row name] */
+            index = ((int) REAL(col)[i]); 
+            if (index > col_cnt) {
+                sqlite3_finalize(stmt);
+                Rprintf("Error: undefined columns selected\n");
+                return R_NilValue;
+            } else if (index > 0) {
+                buflen += sprintf(g_sql_buf[0]+buflen, "[%s],", 
+                        sqlite3_column_name(stmt,index));
+                dup_indices[col_index_len] = 0;
+                for (j = 0; j < col_index_len; j++) {
+                    if (col_indices[j] == index) dup_indices[col_index_len]++;
+                }
+                col_indices[col_index_len++] = index;
+            } else if (index < 0) {
+                sqlite3_finalize(stmt);
+                Rprintf("Error: negative indices not supported.\n");
+                return R_NilValue;
+            }
+        }
+
+        if (col_index_len == 0) {
+            sqlite3_finalize(stmt);
+            Rprintf("Error: no indices detected??\n");
+            return R_NilValue;
+        } else {
+            /* remove trailing "," and add the from clause */
+            sprintf(g_sql_buf[0] + (--buflen), " from [%s].sdf_data", iname);
+        }
+    } else if (IS_INTEGER(col)) {
+        /* identical logic with IS_NUMERIC, except that we don't have to cast
+         * stuffs from SEXP col. the alternative is doing if idxlen times. */
+        col_indices = (int *)R_alloc(idxlen, sizeof(int));
+        dup_indices = (int *)R_alloc(idxlen, sizeof(int));
+        col_index_len = 0;
+
+        for (i = 0; i < idxlen; i++) {
+            /* no need to correct for 0 base because col 0 is [row name] */
+            index = INTEGER(col)[i];
+            if (index > col_cnt) {
+                sqlite3_finalize(stmt);
+                Rprintf("Error: undefined columns selected\n");
+                return R_NilValue;
+            } else if (index > 0) {
+                buflen += sprintf(g_sql_buf[0]+buflen, "[%s],", 
+                        sqlite3_column_name(stmt,index));
+                dup_indices[col_index_len] = 0;
+                for (j = 0; j < col_index_len; j++) {
+                    if (col_indices[j] == index) dup_indices[col_index_len]++;
+                }
+                col_indices[col_index_len++] = index;
+            } else if (index < 0) {
+                sqlite3_finalize(stmt);
+                Rprintf("Error: negative indices not supported.\n");
+                return R_NilValue;
+            }
+        }
+
+        if (col_index_len == 0) {
+            sqlite3_finalize(stmt);
+            Rprintf("Error: no indices detected??\n");
+            return R_NilValue;
+        } else {
+            /* remove trailing "," and add the from clause */
+            sprintf(g_sql_buf[0] + (--buflen), " from [%s].sdf_data", iname);
+        }
+    } else if (IS_LOGICAL(col)) {
+        /* recycling stuff, so max column output is the # of cols in the df */
+        col_indices = (int *)R_alloc(col_cnt, sizeof(int));
+        dup_indices = (int *)R_alloc(col_cnt, sizeof(int));
+        col_index_len = 0;
+        for (i = 0; i < col_cnt; i++) {
+            if (LOGICAL(col)[i%idxlen]) {
+                buflen += sprintf(g_sql_buf[0]+buflen, "[%s],", 
+                        sqlite3_column_name(stmt,i+1));
+                dup_indices[col_index_len] = 0;
+                col_indices[col_index_len++] = i;
+            }
+        }
+
+        if (col_index_len == 0) {
+            sqlite3_finalize(stmt);
+            Rprintf("Warning: no column selected.\n");
+            return R_NilValue;
+        }
+    } else {
+        sqlite3_finalize(stmt);
+        Rprintf("Error: don't know how to handle column index.\n");
+        return R_NilValue;
+    }
+
+    /* 
+     * PROCESS ROW INDEX
+     */
+    idxlen = LENGTH(row);
+    if (MISSING(row)) {
+        if (col_index_len > 0) {
+            /* create a new SDF, logic similar to sdf_create_sdf */
+
+            /* find a new name. data<n> ? */
+            char *iname2, *rname2;
+            int namelen, file_idx, sql_len, sql_len2, dup_idx;
+            namelen = _check_sdf_name(R_NilValue, &rname2, &iname2, &file_idx);
+
+            if (!namelen) { sqlite3_finalize(stmt); return R_NilValue; }
+
+            _find_free_filename(rname2, &iname2, &namelen, &file_idx);
+
+            if (file_idx >= 10000) { 
+                Rprintf("Error: cannot find free SDF name.\n");
+                sqlite3_finalize(stmt);
+                return R_NilValue;
+            }
+
+            /* create new db by attaching a non-existent file */
+            iname[namelen] = 0; /* remove ".db" */
+            sprintf(g_sql_buf[1], "attach '%s.db' as %s", iname, iname);
+            res = _sqlite_exec(g_sql_buf[1]);
+            if (_sqlite_error(res)) return R_NilValue;
+
+            /* create attributes table */
+            res = _create_sdf_attribute2(iname);
+            if (_sqlite_error(res)) { 
+                sqlite3_finalize(stmt); return R_NilValue; 
+            }
+
+            /* create sdf_data table */
+            sql_len = sprintf(g_sql_buf[1], "create table [%s],sdf_data ([row name] text", iname);
+
+            for (i = 0; i < col_index_len; i++) {
+                colname = sqlite3_column_name(stmt, col_indices[i]);
+                if (dup_indices[i] == 0) {
+                    sql_len2 = sprintf(g_sql_buf[2], ", [%s] %s", colname,
+                            sqlite3_column_decltype(stmt, col_indices[i]));
+                } else {
+                    /* un-duplicate col names by appending num, just like R */
+                    sql_len2 = sprintf(g_sql_buf[2], ", [%s.%d] %s", colname,
+                            dup_indices[i], 
+                            sqlite3_column_decltype(stmt, col_indices[i]));
+                }
+
+                /* append to g_sql_buf[1], which holds the create 
+                 * table script */
+                sql_len += sql_len2;
+                _expand_buf(1, sql_len);
+                strcpy(g_sql_buf[1], g_sql_buf[2]);
+
+                /* deal with possibly factor columns */
+                if (_is_factor2(iname, "factor", colname)) {
+                    /* found a factor column */
+                    if (dup_indices[i] == 0)  {
+                        _copy_factor_levels2("factor", iname, colname, iname2, colname);
+                    } else {
+                        sprintf(g_sql_buf[3], "%s.%d", colname, dup_indices[i]);
+                        _copy_factor_levels2("factor", iname, colname, iname2, 
+                                g_sql_buf[3]);
+                    }
+                }
+
+                /* and deal with ordered factors too... life is hard, then you die */
+                if (_is_factor2(iname, "ordered", colname)) {
+                    if (dup_indices[i] == 0)  {
+                        _copy_factor_levels2("ordered", iname, colname, iname2, 
+                                colname);
+                    } else {
+                        sprintf(g_sql_buf[3], "%s.%d", colname, dup_indices[i]);
+                        _copy_factor_levels2("ordered", iname, colname, iname2, 
+                                g_sql_buf[3]);
+                    }
+                }
+                                
+            }
+
+            /* don't need it anymore */
+            sqlite3_finalize(stmt);
+
+            /* no table index created, that's for v2 I hope*/
+            sql_len += sprintf(g_sql_buf[1]+sql_len, ");");
+            res = _sqlite_exec(g_sql_buf[1]);
+            if (_sqlite_error(res)) return R_NilValue; 
+
+            /* insert data (with row names). buf[0] contains a select */
+            sprintf(g_sql_buf[1], "insert into [%s].sdf_data %s", iname2,
+                    g_sql_buf[0]);
+            res = _sqlite_exec(g_sql_buf[1]);
+            if (_sqlite_error(res)) return R_NilValue;
+
+            /* add new sdf to workspace */
+            sprintf(g_sql_buf[0], "%s.db", iname2);
+            res = _add_sdf1(iname, g_sql_buf[0]);
+            if (_sqlite_error(res)) return R_NilValue;
+
+            /* create SEXP for the SDF */
+            ret = _create_sdf_sexp(iname2);
+        } else { sqlite3_finalize(stmt); return R_NilValue; }
+    } else if (row == R_NilValue || idxlen < 1) {
+        sqlite3_finalize(stmt);
+        return R_NilValue;
+    } else if (IS_NUMERIC(row)) {
+        sqlite3_finalize(stmt);
+
+        /* append " limit ?,1" to the formed select statement */
+        _expand_buf(0, buflen+10);
+        buflen += sprintf(g_sql_buf[0], " limit ?,1");
+
+        /* indexing will be base-1, because [row name] is at 0 */
+        index = ((int) REAL(row)[0]);
+        if (idxlen < 0 && idxlen == 1) return R_NilValue;
+
+        res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+        if (_sqlite_error(res)) return R_NilValue;
+
+        sqlite3_bind_int(stmt, 1, index);
+        res = sqlite3_step(stmt);
+
+        /* create data frame */
+        ret = _setup_df_sexp2(stmt, col_index_len, idxlen, dup_indices);
+
+        if (index > 0) {
+
+        /* put data in it */
+    } else if (IS_INTEGER(row)) {
+        /* */
+    } else if (IS_LOGICAL(row)) {
+        /* */
+    }
+
+        
+
+    return ret;
+}
 
 SEXP sopen(SEXP name) {
     char *filename;
