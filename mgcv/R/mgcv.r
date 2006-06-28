@@ -465,7 +465,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
   if (object$np) # reparameterize 
   for (i in 1:m)
   { if (object$margin[[i]]$dim==1) {
-      if (!inherits(object$margin[[i]],c("cs.smooth","cr.smooth"))) { # these classes already optimal
+      if (!inherits(object$margin[[i]],c("cs.smooth","cr.smooth","cyclic.smooth"))) { # these classes already optimal
         x <- get.var(object$margin[[i]]$term,data)
         np <- ncol(object$margin[[i]]$X) ## number of params
         ## note: to avoid extrapolating wiggliness measure

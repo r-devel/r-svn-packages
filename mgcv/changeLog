@@ -2,6 +2,12 @@
 
 * color example added to plot.gam.Rd
 
+* bug fix in `smooth.construct.tensor.smooth.spec' - class "cyclic.smooth"
+  marginals no longer re-parameterized.
+
+* `te' documentation modified to mention that marginal reparameterization 
+  can destabilize tensor products. 
+
 1.3-17
 
 * print.summary.gam prints estimated ranks more prettily (thanks Martin 
