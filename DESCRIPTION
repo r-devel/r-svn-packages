@@ -1,0 +1,10 @@
+Package: SQLiteDF
+Type: Package
+Title: Stores data frames & matrices in SQLite tables
+Version: 1.0
+Date: 2006-06-09
+Author: Miguel A. R. Manese
+Maintainer: Miguel A. R. Manese <jjonphl@gmail.com>
+Description: Transparently stores data frames & matrices into SQLite tables.
+License: GPLv2
+Packaged: Wed Jun 28 14:15:47 2006; bates
