@@ -27,9 +27,10 @@ static R_NativePrimitiveArgType wgt_himed_t[] = {
 
 static R_NativePrimitiveArgType R_lmrob_S_t[] = {
     REALSXP, REALSXP, INTSXP, INTSXP, INTSXP, REALSXP, REALSXP,
-    /* seed_rand */ INTSXP, REALSXP, REALSXP,
+    /* rrhoc */ REALSXP, REALSXP,
     /* best_r */ INTSXP, INTSXP, INTSXP,
-    /* K_s */ INTSXP, INTSXP, REALSXP, INTSXP
+    /* K_s */ INTSXP, INTSXP, REALSXP,
+    /* converged */ LGLSXP, INTSXP
 };
 
 static R_NativePrimitiveArgType R_lmrob_MM_t[] = {
