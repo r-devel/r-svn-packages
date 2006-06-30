@@ -1,17 +1,18 @@
 library(robustbase)
-library(MASS)
+## library(MASS)## only 'Animals' data  plus
+##                 MASS::cov.mcd and MASS::mvrnorm {unused}
 
-dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE,
-                   method = c("FASTMCD","MASS")) {
+dodata <- function(nrep = 1, time = nrep >= 3, short = time, full = !short,
+		   method = c("FASTMCD", "MASS")) {
     ##@bdescr
     ## Test the function covMcd() on the literature datasets:
     ##
     ## Call covMcd() for all regression datasets available in robustbase and print:
-    ##  - execution time (if time == TRUE)
-    ##  - objective fucntion
-    ##  - best subsample found (if short == false)
-    ##  - outliers identified (with cutoff 0.975) (if short == false)
-    ##  - estimated center and covariance matrix if full == TRUE)
+    ##  - execution time (if time)
+    ##  - objective function
+    ##  - best subsample found (if not short)
+    ##  - outliers identified (with cutoff 0.975) (if not short)
+    ##  - estimated center and covariance matrix if full)
     ##
     ##@edescr
     ##
@@ -29,7 +30,7 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE,
         n <- dim(x)[1]
         p <- dim(x)[2]
         if(method == "MASS") {
-            mcd <- cov.mcd(x)
+            mcd <- MASS::cov.mcd(x)
             quan <- as.integer(floor((n + p + 1)/2)) #default: floor((n+p+1)/2)
         }
         else {
@@ -37,21 +38,14 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE,
             quan <- as.integer(mcd$quan)
         }
 
-        if(method == "MASS")
-            crit <- mcd$crit
-        else
-            crit <- log(mcd$crit)
+        crit <- if(method == "MASS") mcd$crit else log(mcd$crit)
 
+        xres <- sprintf("%*s %3d %3d %3d %12.6f", lname, xname, n, p, quan, crit)
         if(time) {
             xtime <- system.time(dorep(x, nrep, method))[1]/nrep
-            xres <- sprintf("%3d %3d %3d %12.6f %10.3f\n",
-                            dim(x)[1], dim(x)[2], quan, crit, xtime)
+            xres <- sprintf("%s %10.1f", xres, 1000 * xtime)
         }
-        else {
-            xres <- sprintf("%3d %3d %3d %12.6f\n", dim(x)[1], dim(x)[2], quan, crit)
-        }
-        lpad <- lname-nchar(xname)
-        cat(pad.right(xname,lpad), xres)
+        cat(xres, "\n")
 
         if(!short) {
             cat("Best subsample: \n")
@@ -75,8 +69,8 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE,
     method <- match.arg(method)
 
     data(heart)
-    data(starsCYG)
     data(phosphor)
+    data(starsCYG)
     data(stackloss)
     data(coleman)
     data(salinity)
@@ -94,18 +88,17 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE,
     tmp <- sys.call()
     cat("\nCall: ", deparse(substitute(tmp)),"\n")
 
-    cat("Data Set               n   p  Half LOG(obj)        Time\n")
+    cat("Data Set               n   p  Half   LOG(obj)  Time [ms]\n")
     cat("========================================================\n")
     domcd(heart[, 1:2], data(heart), nrep)
-    domcd(starsCYG, data(starsCYG), nrep)
     domcd(data.matrix(subset(phosphor, select = -plant)),
           data(phosphor), nrep)
+    domcd(starsCYG, data(starsCYG), nrep)
     domcd(stack.x, data(stackloss), nrep)
     domcd(data.matrix(subset(coleman, select = -Y)), data(coleman), nrep)
     domcd(data.matrix(subset(salinity, select = -Y)), data(salinity), nrep)
     domcd(data.matrix(subset(wood, select = -y)), data(wood), nrep)
     domcd(data.matrix(subset(hbk,  select = -Y)), data(hbk), nrep)
-
 
     domcd(brain, "Animals", nrep)
     domcd(milk, data(milk), nrep)
@@ -115,10 +108,35 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE,
     ##    domcd(x5000$X,data(x5000), nrep)
 }
 
+if(FALSE) { ## the following functions are completely unused here ---------------
+
+#### gendata() ####
+## Generates a location contaminated multivariate
+## normal sample of n observations in p dimensions
+##    (1-eps)*Np(0,Ip) + eps*Np(m,Ip)
+## where
+##    m = (b,b,...,b)
+## Defaults: eps=0 and b=10
+##
+gendata <- function(n,p,eps = 0,b = 10) {
+
+    if(missing(n) || missing(p))
+        stop("Please specify (n,p)")
+    if(eps < 0 || eps >= 0.5)
+        stop(message = "eps must be in [0,0.5)")
+    X <- MASS::mvrnorm(n,rep(0,p),diag(1,nrow = p,ncol = p))
+    nbad <- as.integer(eps * n)
+    if(nbad > 0) {
+        Xbad <- MASS::mvrnorm(nbad,rep(b,p),diag(1,nrow = p,ncol = p))
+        xind <- sample(n,nbad)
+        X[xind,] <- Xbad
+    }
+    list(X = X, xind = xind)
+}
+
 dogen <- function(nrep = 1, eps = 0.49, method = c("FASTMCD", "MASS")) {
 
     domcd <- function(x, nrep = 1) {
-        gc()
         xtime <- system.time(dorep(x, nrep, method))[1]/nrep
         cat(sprintf("%6d %3d %10.2f\n", dim(x)[1], dim(x)[2], xtime))
         xtime
@@ -163,40 +181,6 @@ check <- function(mcd, xind) {
     length(xind) - length(which(mymatch))
 }
 
-dorep <- function(x, nrep = 1, method = c("FASTMCD","MASS")) {
-
-    method <- match.arg(method)
-    for(i in 1:nrep)
-    if(method == "MASS")
-        cov.mcd(x)
-    else
-        covMcd(x)
-}
-
-#### gendata() ####
-## Generates a location contaminated multivariate
-## normal sample of n observations in p dimensions
-##    (1-eps)*Np(0,Ip) + eps*Np(m,Ip)
-## where
-##    m = (b,b,...,b)
-## Defaults: eps=0 and b=10
-##
-gendata <- function(n,p,eps = 0,b = 10) {
-
-    if(missing(n) || missing(p))
-        stop("Please specify (n,p)")
-    if(eps < 0 || eps >= 0.5)
-        stop(message = "eps must be in [0,0.5)")
-    X <- mvrnorm(n,rep(0,p),diag(1,nrow = p,ncol = p))
-    nbad <- as.integer(eps * n)
-    if(nbad > 0) {
-        Xbad <- mvrnorm(nbad,rep(b,p),diag(1,nrow = p,ncol = p))
-        xind <- sample(n,nbad)
-        X[xind,] <- Xbad
-    }
-    list(X = X, xind = xind)
-}
-
 pad.right <- function(z, pads)
 {
     ## Pads spaces to right of text
@@ -204,9 +188,23 @@ pad.right <- function(z, pads)
     paste(z, padding, sep = "")
 }
 
+}## the above are not used here -------------------------------------------------
+
+dorep <- function(x, nrep = 1, method = c("FASTMCD","MASS")) {
+
+    method <- match.arg(method)
+    for(i in 1:nrep)
+    if(method == "MASS")
+        MASS::cov.mcd(x)
+    else
+        covMcd(x)
+}
+
 
 ## -- now do it:
 set.seed(101) # <<-- sub-sampling algorithm now based on R's RNG and seed
 dodata()
+dodata(nrep = 12)
+dodata(nrep = 12, method = "MASS")
 
 cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
