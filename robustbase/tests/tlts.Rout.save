@@ -1,6 +1,6 @@
 
 R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.1 RC (2006-05-30 r38234)
+Version 2.3.1 Patched (2006-06-26 r38426)
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -16,8 +16,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > library(robustbase)
-Loading required package: MASS
-> library(MASS)
+> ## library(MASS)## MASS::ltsreg
 > 
 > y20 <- c(2:4, 8, 12, 22, 28, 29, 33, 34, 38, 40, 41, 47:48, 50:51, 54, 56, 59)
 > 
@@ -44,17 +43,18 @@ Loading required package: MASS
 +     print(ltsReg(y1,x1, alpha = 0.8, intercept = FALSE))
 + }
 > 
-> dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE, method = c("FASTLTS","MASS"))
+> dodata <- function(nrep = 1, time = nrep >= 3, short = time, full = !short,
++ 		   method = c("FASTLTS", "MASS"))
 + {
 +     ##@bdescr
 +     ## Test function ltsReg() on the literature datasets:
 +     ##
 +     ## Call ltsReg() for all regression datasets available in robustbase and print:
-+     ##  - execution time (if time == TRUE)
-+     ##  - objective fucntion
-+     ##  - best subsample found (if short == false)
-+     ##  - outliers identified (with cutoff 0.975) (if short == false)
-+     ##  - estimated coeficients and scale (if full == TRUE)
++     ##  - execution time (if time)
++     ##  - objective function
++     ##  - best subsample found (if not)
++     ##  - outliers identified (with cutoff 0.975) (if not short)
++     ##  - estimated coeficients and scale (if full)
 +     ##
 +     ##@edescr
 +     ##
@@ -80,24 +80,21 @@ Loading required package: MASS
 +         dx <- dim(x) - 0:1 # not counting intercept
 + 
 +         if(method == "MASS") {
-+             lts <- ltsreg(form, data = dataset)
-+             quan <- as.integer((dx[1] + (dx[2] + 1) + 1)/2) #default: (n+p+1)/2
++             lts <- MASS::ltsreg(form, data = dataset)
++             quan <- (dx[1] + (dx[2] + 1) + 1)/2 #default: (n+p+1)/2
 +         } else {
 +             lts <- ltsReg(form, data = dataset, mcd = FALSE)
-+             quan <- as.integer(lts$quan)
++             quan <- lts$quan
 +         }
 + 
-+         crit <- lts$crit
++         xres <- sprintf("%*s %3d %3d %3d %12.6f",
++                         lname, dname, dx[1], dx[2], as.integer(quan), lts$crit)
 +         if(time) {
 +             xtime <- system.time(dorep(form, data, nrep, method))[1]/nrep
-+             xres <- sprintf("%3d %3d %3d %12.6f %10.3f\n", dx[1], dx[2], quan, crit, xtime)
++             xres <- sprintf("%s %10.1f\n", xres, 1000 * xtime)
 +         }
-+         else {
-+             xres <- sprintf("%3d %3d %3d %12.6f\n", dx[1], dx[2], quan, crit)
-+         }
++         cat(xres, "\n")
 + 
-+         lpad <- lname - nchar(dname)
-+         cat(pad.right(dname,lpad), xres)
 +         if(!short) {
 +             cat("Best subsample: \n")
 +             print(lts$best)
@@ -117,7 +114,6 @@ Loading required package: MASS
 +         }
 +     }
 + 
-+     lname <- 20
 +     method <- match.arg(method)
 + 
 +     data(heart)
@@ -135,8 +131,10 @@ Loading required package: MASS
 +     cat("\nCall: ", deparse(substitute(cll)),"\n")
 + 
 +     cat("========================================================\n")
-+     cat("Data Set               n   p  Half      obj         Time\n")
++     cat("Data Set               n   p  Half      obj    Time [ms]\n")
 +     cat("========================================================\n")
++     ##   1 3 5 7 9.1 3 5 7 9. 123 123
++     lname <- 20 ##        --^
 + 
 +     dolts(clength ~ . , "heart", nrep = nrep)
 +     dolts(log.light ~ log.Te , "starsCYG", nrep = nrep)
@@ -158,13 +156,42 @@ Loading required package: MASS
 +     ## set mcd=FALSE - we want to time only the LTS algorithm
 +     for(i in 1:nrep)
 +         if(method == "MASS")
-+             ##        ltsreg(x,y,control=list(psamp = NA, nsamp = "best", adjust = FALSE))
-+             ltsreg(form, data = data)
++             ## MASS::ltsreg(x,y,control=list(psamp = NA, nsamp = "best", adjust = FALSE))
++             MASS::ltsreg(form, data = data)
 +         else
 +             ltsReg(form, data = data, mcd = FALSE)
 + }
 > 
-> dogen <- function(nrep = 1, eps = 0.4, method = c("FASTLTS","MASS"))
+> if(FALSE) { ## the following functions are completely unused here ---------------
++ 
++ #### gendata() ####
++ ## Generates a data set with bad leverage points (outliers in x-space)
++ ## n observations in p dimensions acording to the model:
++ ##   yi = Xi1+Xi2+...+ei
++ ## where ei - N(0,1) is the error term, Xi,j for j=1...p-1 - N(0,100) are
++ ## the non-trivial explanatory variables and xip is the intercept term.
++ ## The outliers in the x-space are introduced by replacing eps. percent of
++ ## xi1 by values distributed as N(100,100).
++ ##
++ ## Defaults: eps=0
++ ##
++ gendata <- function(n,p,eps = 0) {
++ 
++     if(eps < 0 || eps >= 0.5)
++         stop(message = "eps must be in [0,0.5)")
++ 
++     p <- p-1
++     x <- matrix(rnorm(n*(p),0,100), c(n,p))
++     y <- rowSums(x) + 1 + rnorm(n, 0, 1)
++ 
++     nbad <- as.integer(eps * n)
++     xind <- sort(sample(n,nbad))
++     xbad <- rnorm(nbad,100,100)
++     for(i in 1:nbad)
++         x[xind[i],1] <- xbad[i]
++     list(x = x, y = y, xind = xind)
++ }
++ dogen <- function(nrep = 1, eps = 0.4, method = c("FASTLTS","MASS"))
 + {
 + 
 +     dolts <- function(form, dname, dataset, nrep = 1)
@@ -177,7 +204,6 @@ Loading required package: MASS
 +         x <- model.matrix(form, model.frame(form, data = dataset))
 +         dx <- dim(x) - 0:1 # not counting intercept
 + 
-+         gc()
 +         xtime <- system.time(dorep(form, data = dataset, nrep, method))[1]/nrep
 +         n <- as.integer(dx[1])
 +         p <- as.integer(dx[2] + 1)
@@ -211,43 +237,15 @@ Loading required package: MASS
 +     cat("=====================\n")
 +     cat("Total time: ", tottime*nrep, "\n")
 + }
-> 
-> #### gendata() ####
-> ## Generates a data set with bad leverage points (outliers in x-space)
-> ## n observations in p dimensions acording to the model:
-> ##   yi = Xi1+Xi2+...+ei
-> ## where ei - N(0,1) is the error term, Xi,j for j=1...p-1 - N(0,100) are
-> ## the non-trivial explanatory variables and xip is the intercept term.
-> ## The outliers in the x-space are introduced by replacing eps. percent of
-> ## xi1 by values distributed as N(100,100).
-> ##
-> ## Defaults: eps=0
-> ##
-> gendata <- function(n,p,eps = 0) {
 + 
-+     if(eps < 0 || eps >= 0.5)
-+         stop(message = "eps must be in [0,0.5)")
-+ 
-+     p <- p-1
-+     x <- matrix(rnorm(n*(p),0,100), c(n,p))
-+     y <- rowSums(x) + 1 + rnorm(n, 0, 1)
-+ 
-+     nbad <- as.integer(eps * n)
-+     xind <- sort(sample(n,nbad))
-+     xbad <- rnorm(nbad,100,100)
-+     for(i in 1:nbad) {
-+         x[xind[i],1] <- xbad[i]
-+     }
-+     list(x = x, y = y, xind = xind)
-+ }
-> 
-> 
-> pad.right <- function(z, pads)
++ pad.right <- function(z, pads)
 + {
 + ### Pads spaces to right of text
 +     padding <- paste(rep(" ", pads), collapse = "")
 +     paste(z, padding, sep = "")
 + }
++ 
++ }## the above are not used here -------------------------------------------------
 > 
 > set.seed(101) # <<-- sub-sampling algorithm now based on R's RNG and seed
 > 
@@ -255,9 +253,9 @@ Loading required package: MASS
 
 Call:  dodata() 
 ========================================================
-Data Set               n   p  Half      obj         Time
+Data Set               n   p  Half      obj    Time [ms]
 ========================================================
-heart                 12   2   8     0.065810
+               heart  12   2   8     0.065810 
 Best subsample: 
 [1]  1  2  4  5  6  7 11 12
 Outliers:  4 
@@ -294,7 +292,7 @@ Multiple R-Squared: 0.9913,	Adjusted R-squared: 0.9879
 F-statistic:   286 on 2 and 5 DF,  p-value: 6.992e-06 
 
 --------------------------------------------------------
-starsCYG              47   1  25     1.880169
+            starsCYG  47   1  25     1.880169 
 Best subsample: 
  [1]  2  4  6 10 13 15 17 19 21 22 25 27 28 29 33 35 36 38 39 41 42 43 44 45 46
 Outliers:  6 
@@ -328,7 +326,7 @@ Multiple R-Squared: 0.5544,	Adjusted R-squared: 0.5429
 F-statistic: 48.51 on 1 and 39 DF,  p-value: 2.392e-08 
 
 --------------------------------------------------------
-phosphor              18   2  11     0.245377
+            phosphor  18   2  11     0.245377 
 Best subsample: 
  [1]  1  2  3  4  6  7 11 12 14 15 18
 Outliers:  1 
@@ -363,7 +361,7 @@ Multiple R-Squared: 0.5188,	Adjusted R-squared: 0.4501
 F-statistic: 7.548 on 2 and 14 DF,  p-value: 0.005972 
 
 --------------------------------------------------------
-stackloss             21   3  13     0.083378
+           stackloss  21   3  13     0.083378 
 Best subsample: 
  [1]  5  6  7  8  9 10 11 12 15 16 17 18 19
 Outliers:  4 
@@ -399,7 +397,7 @@ Multiple R-Squared: 0.975,	Adjusted R-squared: 0.9692
 F-statistic:   169 on 3 and 13 DF,  p-value: 1.159e-10 
 
 --------------------------------------------------------
-coleman               20   5  13     0.028344
+             coleman  20   5  13     0.028344 
 Best subsample: 
  [1]  1  2  6  7  8  9 11 13 14 15 16 19 20
 Outliers:  2 
@@ -437,7 +435,7 @@ Multiple R-Squared: 0.9883,	Adjusted R-squared: 0.9835
 F-statistic: 203.2 on 5 and 12 DF,  p-value: 3.654e-11 
 
 --------------------------------------------------------
-salinity              28   3  16     0.065610
+            salinity  28   3  16     0.065610 
 Best subsample: 
  [1]  2  3  4  6  7 12 14 15 17 18 19 20 21 22 26 27
 Outliers:  4 
@@ -473,7 +471,7 @@ Multiple R-Squared: 0.8989,	Adjusted R-squared: 0.8838
 F-statistic:  59.3 on 3 and 20 DF,  p-value: 3.92e-10 
 
 --------------------------------------------------------
-aircraft              23   4  14     0.298554
+            aircraft  23   4  14     0.298554 
 Best subsample: 
  [1]  1  5  6  7  8  9 10 11 13 14 15 17 20 23
 Outliers:  2 
@@ -510,7 +508,7 @@ Multiple R-Squared: 0.8257,	Adjusted R-squared: 0.7822
 F-statistic: 18.95 on 4 and 16 DF,  p-value: 6.467e-06 
 
 --------------------------------------------------------
-delivery              25   2  14     0.112945
+            delivery  25   2  14     0.112945 
 Best subsample: 
  [1]  2  5  6  7  8 10 12 13 14 15 17 21 22 25
 Outliers:  3 
@@ -545,7 +543,7 @@ Multiple R-Squared: 0.9624,	Adjusted R-squared: 0.9585
 F-statistic: 243.3 on 2 and 19 DF,  p-value: 2.901e-14 
 
 --------------------------------------------------------
-wood                  20   5  13     0.070258
+                wood  20   5  13     0.070258 
 Best subsample: 
  [1]  2  3  9 10 11 12 13 14 15 16 17 18 20
 Outliers:  4 
@@ -583,7 +581,7 @@ Multiple R-Squared: 0.9583,	Adjusted R-squared: 0.9375
 F-statistic:    46 on 5 and 10 DF,  p-value: 1.397e-06 
 
 --------------------------------------------------------
-hbk                   75   3  40     3.724554
+                 hbk  75   3  40     3.724554 
 Best subsample: 
  [1] 11 12 14 16 17 18 20 25 26 30 31 32 33 34 35 36 37 39 40 41 42 44 45 46 48
 [26] 50 55 56 58 59 60 61 63 64 66 67 69 71 72 74
@@ -621,6 +619,10 @@ F-statistic: 0.9088 on 3 and 61 DF,  p-value: 0.4421
 
 --------------------------------------------------------
 ========================================================
+> ## FIXME: These *FAIL* !
+> ## dodata(nrep = 12)
+> ## dodata(nrep = 12, method = "MASS")
+> 
 > test_rsquared()
 
 Call:
@@ -711,5 +713,5 @@ Scale estimate 19.34
 > 
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
-Time elapsed:  2.42 0.195 3.468 0 0 
+Time elapsed:  2.622 0.214 3.515 0 0 
 > 

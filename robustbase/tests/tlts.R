@@ -1,5 +1,5 @@
 library(robustbase)
-library(MASS)
+## library(MASS)## MASS::lqs
 
 y20 <- c(2:4, 8, 12, 22, 28, 29, 33, 34, 38, 40, 41, 47:48, 50:51, 54, 56, 59)
 
@@ -26,29 +26,31 @@ test_rsquared <- function() {
     print(ltsReg(y1,x1, alpha = 0.8, intercept = FALSE))
 }
 
-dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE, method = c("FASTLTS","MASS"))
+dodata <- function(nrep = 1, time = nrep >= 3, short = time, full = !short,
+		   method = c("FASTLTS", "MASS"))
 {
     ##@bdescr
     ## Test function ltsReg() on the literature datasets:
     ##
-    ## Call ltsReg() for all regression datasets available in robustbase and print:
-    ##  - execution time (if time == TRUE)
-    ##  - objective fucntion
-    ##  - best subsample found (if short == false)
-    ##  - outliers identified (with cutoff 0.975) (if short == false)
-    ##  - estimated coeficients and scale (if full == TRUE)
+    ## Call ltsReg() for "all" regression datasets available in robustbase
+    ## and print:
+    ##  - execution time (if time)
+    ##  - objective function
+    ##  - best subsample found (if not short)
+    ##  - outliers identified (with cutoff 0.975) (if not short)
+    ##  - estimated coeficients and scale (if full)
     ##
     ##@edescr
     ##
-    ##@in  nrep              : [integer] number of repetitions to use for estimating the
-    ##                                   (average) execution time
-    ##@in  time              : [boolean] whether to evaluate the execution time
-    ##@in  short             : [boolean] whether to do short output (i.e. only the
-    ##                                   objective function value). If short == FALSE,
-    ##                                   the best subsample and the identified outliers are
-    ##                                   printed. See also the parameter full below
-    ##@in  full              : [boolean] whether to print the estimated coeficients and scale
-    ##@in  method            : [character] select a method: one of (FASTLTS, MASS)
+    ##@in  nrep    : [integer] number of repetitions to use for estimating the
+    ##                         (average) execution time
+    ##@in  time    : [boolean] whether to evaluate the execution time
+    ##@in  short   : [boolean] whether to do short output (i.e. only the
+    ##                         objective function value). If short == FALSE,
+    ##                         the best subsample and the identified outliers are
+    ##                         printed. See also the parameter full below
+    ##@in  full    : [boolean] whether to print the estimated coeficients and scale
+    ##@in  method  : [character] select a method: one of (FASTLTS, MASS)
 
 
     dolts <- function(form, dname, dataset, nrep = 1) {
@@ -58,28 +60,26 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE, method = 
             dataset <- get(dname)
         } else if(missing(dname))
             dname <- deparse(substitute(dataset))
+        environment(form) <- environment() ## !?!
         x <- model.matrix(form, model.frame(form, data = dataset))
         dx <- dim(x) - 0:1 # not counting intercept
 
         if(method == "MASS") {
-            lts <- ltsreg(form, data = dataset)
-            quan <- as.integer((dx[1] + (dx[2] + 1) + 1)/2) #default: (n+p+1)/2
+            lts <- MASS::lqs(form, data = dataset, method = "lts")
+            quan <- (dx[1] + (dx[2] + 1) + 1)/2 #default: (n+p+1)/2
         } else {
             lts <- ltsReg(form, data = dataset, mcd = FALSE)
-            quan <- as.integer(lts$quan)
+            quan <- lts$quan
         }
 
-        crit <- lts$crit
+        xres <- sprintf("%*s %3d %3d %3d %12.6f",
+                        lname, dname, dx[1], dx[2], as.integer(quan), lts$crit)
         if(time) {
-            xtime <- system.time(dorep(form, data, nrep, method))[1]/nrep
-            xres <- sprintf("%3d %3d %3d %12.6f %10.3f\n", dx[1], dx[2], quan, crit, xtime)
+            xtime <- system.time(dorep(form, data = dataset, nrep, method))[1]
+            xres <- sprintf("%s %10.1f", xres, 1000 * xtime / nrep)
         }
-        else {
-            xres <- sprintf("%3d %3d %3d %12.6f\n", dx[1], dx[2], quan, crit)
-        }
+        cat(xres, "\n")
 
-        lpad <- lname - nchar(dname)
-        cat(pad.right(dname,lpad), xres)
         if(!short) {
             cat("Best subsample: \n")
             print(lts$best)
@@ -99,7 +99,6 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE, method = 
         }
     }
 
-    lname <- 20
     method <- match.arg(method)
 
     data(heart)
@@ -117,8 +116,10 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE, method = 
     cat("\nCall: ", deparse(substitute(cll)),"\n")
 
     cat("========================================================\n")
-    cat("Data Set               n   p  Half      obj         Time\n")
+    cat("Data Set               n   p  Half      obj    Time [ms]\n")
     cat("========================================================\n")
+    ##   1 3 5 7 9.1 3 5 7 9. 123 123
+    lname <- 20 ##        --^
 
     dolts(clength ~ . , "heart", nrep = nrep)
     dolts(log.light ~ log.Te , "starsCYG", nrep = nrep)
@@ -136,16 +137,43 @@ dodata <- function(nrep = 1, time = FALSE, short = FALSE, full = TRUE, method = 
 
 dorep <- function(form, data, nrep = 1, method = c("FASTLTS","MASS"))
 {
-
-    ## set mcd=FALSE - we want to time only the LTS algorithm
-    for(i in 1:nrep)
-        if(method == "MASS")
-            ##        ltsreg(x,y,control=list(psamp = NA, nsamp = "best", adjust = FALSE))
-            ltsreg(form, data = data)
-        else
-            ltsReg(form, data = data, mcd = FALSE)
+    if(method == "MASS")
+        ## MASS::lqs(x,y,control=list(psamp = NA, nsamp= "best", adjust= FALSE))
+        for(i in 1:nrep) MASS::lqs(form, data = data, method = "lts")
+    else
+        ## set mcd=FALSE - we want to time only the LTS algorithm
+        for(i in 1:nrep) ltsReg(form, data = data, mcd = FALSE)
 }
 
+if(FALSE) { ## the following functions are completely unused here ---------------
+
+#### gendata() ####
+## Generates a data set with bad leverage points (outliers in x-space)
+## n observations in p dimensions acording to the model:
+##   yi = Xi1+Xi2+...+ei
+## where ei - N(0,1) is the error term, Xi,j for j=1...p-1 - N(0,100) are
+## the non-trivial explanatory variables and xip is the intercept term.
+## The outliers in the x-space are introduced by replacing eps. percent of
+## xi1 by values distributed as N(100,100).
+##
+## Defaults: eps=0
+##
+gendata <- function(n,p,eps = 0) {
+
+    if(eps < 0 || eps >= 0.5)
+        stop(message = "eps must be in [0,0.5)")
+
+    p <- p-1
+    x <- matrix(rnorm(n*(p),0,100), c(n,p))
+    y <- rowSums(x) + 1 + rnorm(n, 0, 1)
+
+    nbad <- as.integer(eps * n)
+    xind <- sort(sample(n,nbad))
+    xbad <- rnorm(nbad,100,100)
+    for(i in 1:nbad)
+        x[xind[i],1] <- xbad[i]
+    list(x = x, y = y, xind = xind)
+}
 dogen <- function(nrep = 1, eps = 0.4, method = c("FASTLTS","MASS"))
 {
 
@@ -159,7 +187,6 @@ dogen <- function(nrep = 1, eps = 0.4, method = c("FASTLTS","MASS"))
         x <- model.matrix(form, model.frame(form, data = dataset))
         dx <- dim(x) - 0:1 # not counting intercept
 
-        gc()
         xtime <- system.time(dorep(form, data = dataset, nrep, method))[1]/nrep
         n <- as.integer(dx[1])
         p <- as.integer(dx[2] + 1)
@@ -194,36 +221,6 @@ dogen <- function(nrep = 1, eps = 0.4, method = c("FASTLTS","MASS"))
     cat("Total time: ", tottime*nrep, "\n")
 }
 
-#### gendata() ####
-## Generates a data set with bad leverage points (outliers in x-space)
-## n observations in p dimensions acording to the model:
-##   yi = Xi1+Xi2+...+ei
-## where ei - N(0,1) is the error term, Xi,j for j=1...p-1 - N(0,100) are
-## the non-trivial explanatory variables and xip is the intercept term.
-## The outliers in the x-space are introduced by replacing eps. percent of
-## xi1 by values distributed as N(100,100).
-##
-## Defaults: eps=0
-##
-gendata <- function(n,p,eps = 0) {
-
-    if(eps < 0 || eps >= 0.5)
-        stop(message = "eps must be in [0,0.5)")
-
-    p <- p-1
-    x <- matrix(rnorm(n*(p),0,100), c(n,p))
-    y <- rowSums(x) + 1 + rnorm(n, 0, 1)
-
-    nbad <- as.integer(eps * n)
-    xind <- sort(sample(n,nbad))
-    xbad <- rnorm(nbad,100,100)
-    for(i in 1:nbad) {
-        x[xind[i],1] <- xbad[i]
-    }
-    list(x = x, y = y, xind = xind)
-}
-
-
 pad.right <- function(z, pads)
 {
 ### Pads spaces to right of text
@@ -231,9 +228,16 @@ pad.right <- function(z, pads)
     paste(z, padding, sep = "")
 }
 
+}## the above are not used here -------------------------------------------------
+
 set.seed(101) # <<-- sub-sampling algorithm now based on R's RNG and seed
 
 dodata()
+if(FALSE) { ## FIXME: These *FAIL* !
+dodata(nrep = 12)
+dodata(nrep = 12, method = "MASS")
+}
+
 test_rsquared()
 test_location()
 
