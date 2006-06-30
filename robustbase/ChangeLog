@@ -1,3 +1,38 @@
+2006-06-27  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Depends): no longer depend on "MASS" which is suggested.
+
+	* NAMESPACE, man/summarizeRobWeights.Rd: export and document
+		summarizeRobWeights().
+
+	* R/lmrob.R (summarizeRobWeights): improvement (singular/plural etc)
+
+	* R/ltsReg.R (ltsReg.formula): add 'subset' etc; and follow
+		guidelines in developer.r-project.org/model-fitting-functions.txt.
+
+	* tests/tmcd.R: typo; add timing comparison
+
+	* R/glmrob.R (glmrob): family = "gaussian" now dispatches to lmrob()
+
+2006-06-24  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/glmrob.R (print.summary.glmrob): as for lmrob(), now use
+		summarizeRobWeights() and printControl().
+
+	* R/lmrob.R (printControl): more flexible
+
+	* man/glmrob.Rd: update examples with 'weights.on.x'
+
+2006-06-23  Andreas Ruckstuhl  <rks@zhwin.ch>
+
+	* R/glmrobMqle.R (wts_HiiDist): *row*Sums()!
+
+2006-06-13  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.2-2
+
+	* src/Makevars (PKG_LIBS): need this (in particular for Windows)
+
 2006-06-08  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/lmrob.c (refine_fast_s): made sure 'conv *is* called as *Rboolean
