@@ -1,3 +1,11 @@
+2006-07-03  Douglas Bates  <Douglas.Bates@R-project.org>
+
+	* man/{many files}: Documentation changes contributed by Spencer
+	Graves <spencer.graves@pdf.com>.  Most of the changes add Pinheiro
+	and Bates (2000) as a reference or add additional \seealso{}
+	entries.  Some examples from Pinheiro and Bates (2000) have also
+	been added.
+
 2006-06-02 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 3.1-74
