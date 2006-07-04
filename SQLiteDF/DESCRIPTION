@@ -7,3 +7,4 @@ Author: Miguel A. R. Manese
 Maintainer: Miguel A. R. Manese <jjonphl@gmail.com>
 Description: Transparently stores data frames & matrices into SQLite tables.
 License: GPLv2
+Packaged: Tue Jul  4 08:49:44 2006; jon

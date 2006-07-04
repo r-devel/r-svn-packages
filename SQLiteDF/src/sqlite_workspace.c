@@ -101,7 +101,6 @@ int _add_sdf1(char *filename, char *internal_name) {
 SEXP sdf_init_workspace() {
     int file_idx = 0, i;
     char *basename = "workspace", *filename;
-    FILE *f;
     SEXP ret;
 
     /* initialize sql_buf */
@@ -201,7 +200,7 @@ SEXP sdf_list_sdfs(SEXP pattern) {
         /* since internal_names must be a valid r symbol, 
            did not check for "'" */
         sprintf(g_sql_buf[0], "select internal_name from workspace where "
-                "internal_name like '%s\%'", CHAR(STRING_ELT(pattern, 0)));
+                "internal_name like '%s%'", CHAR(STRING_ELT(pattern, 0)));
         res = sqlite3_get_table(g_workspace, g_sql_buf[0], &result, &nrow,
                 &ncol, NULL);
     }

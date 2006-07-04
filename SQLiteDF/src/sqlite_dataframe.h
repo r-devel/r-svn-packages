@@ -6,8 +6,6 @@
 #ifndef __SQLITE_DATAFRAME__
 #define __SQLITE_DATAFRAME__
 
-#include "sqlite3.h"
-
 #define WORKSPACE_COLUMNS 3
 
 int _is_r_sym(char *sym);
@@ -21,11 +19,18 @@ SEXP _getListElement(SEXP list, char *varname);
 int _expand_buf(int i, int size);
 const char *_get_column_type(const char *class, int type);
 int _add_sdf1(char *filename, char *internal_name);
-SEXP _create_sdf_sexp(char *iname);
+SEXP _create_sdf_sexp(const char *iname);
 int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
 SEXP _shrink_vector(SEXP vec, int len);
+int _get_row_count2(const char *table);
+SEXP _get_rownames(const char *sdf_iname) ;
+
+SEXP sdf_get_variable(SEXP sdf, SEXP name);
 
 #define _sqlite_exec(sql) sqlite3_exec(g_workspace, sql, _empty_callback, NULL, NULL)
+#ifndef SET_ROWNAMES
+#define SET_ROWNAMES(x,n) setAttrib(x, R_RowNamesSymbol, n)
+#endif
 
 /* R object accessors shortcuts */
 #define CHAR_ELT(str, i) CHAR(STRING_ELT(str,i))

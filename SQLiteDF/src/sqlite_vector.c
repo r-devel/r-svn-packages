@@ -15,14 +15,13 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
 
     int res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
 
-    if (_sqlite_error(res)) { sqlite3_finalize(stmt); return R_NilValue; }
+    if (_sqlite_error(res)) return R_NilValue;
 
-    int sxptype;
     const char *coltype = sqlite3_column_decltype(stmt, 0);
     sqlite3_finalize(stmt);
 
 
-    SEXP ret, value, class; int nprotected = 0;
+    SEXP ret, value, class = R_NilValue; int nprotected = 0;
     PROTECT(ret = NEW_LIST(2)); nprotected++;
 
     /* set list names */
@@ -130,7 +129,7 @@ SEXP sdf_get_variable_length(SEXP svec) {
 SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
     char *iname = SDF_INAME(svec), *varname = SVEC_VARNAME(svec);
-    int index, idxlen, i, retlen, res, nprotected = 0;
+    int index, idxlen, i, retlen, res;
 
     /* check if sdf exists */
     sqlite3_stmt *stmt;
@@ -151,7 +150,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
         index = ((int) REAL(idx)[0]) - 1;
         if (index < 0 && idxlen == 1) return ret;
 
-        if (index > 0) {
+        if (index >= 0) {
             sqlite3_bind_int(stmt, 1, index);
             res = sqlite3_step(stmt);
             if (res == SQLITE_ROW) { 
@@ -159,7 +158,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
             } 
         } 
         
-        if (index <= 0 || res != SQLITE_ROW) {
+        if (index < 0 || res != SQLITE_ROW) {
             /* something wrong w/ 1st idx, and it is quietly ignored. we make 
              * a "dummy" call to setup the SEXP */
             sqlite3_bind_int(stmt, 1, 0);
@@ -184,11 +183,17 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
         index = INTEGER(idx)[0] - 1;
         if (index < 0 && idxlen == 1) return ret;
 
-        if (index > 0) {
+        if (index >= 0) {
             sqlite3_bind_int(stmt, 1, index);
-            sqlite3_step(stmt);
-            retlen = _get_vector_index_typed_result(stmt, &ret, idxlen);
-        } else {
+            res = sqlite3_step(stmt);
+            if (res == SQLITE_ROW) { 
+                retlen = _get_vector_index_typed_result(stmt, &ret, idxlen);
+            } 
+        } 
+        
+        if (index < 0 || res != SQLITE_ROW) {
+            /* something wrong w/ 1st idx, and it is quietly ignored. we make 
+             * a "dummy" call to setup the SEXP */
             sqlite3_bind_int(stmt, 1, 0);
             _get_vector_index_typed_result(stmt, &ret, idxlen - 1);
             retlen = 0;
@@ -211,7 +216,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
         int veclen = _get_row_count2(g_sql_buf[0]);
 
         /* find if there is any TRUE element in the vector */
-        for (i = 0; i < idxlen; i++) {
+        for (i = 0; i < idxlen && i < veclen; i++) {
             if (LOGICAL(idx)[i]) {
                 sqlite3_bind_int(stmt, 1, i);
                 sqlite3_step(stmt);
@@ -228,7 +233,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
             }
         }
 
-        if (i < idxlen) {
+        if (i < idxlen && i < veclen) {
             for (i++; i < veclen; i++) {
                 if (LOGICAL(idx)[i%idxlen]) {
                     sqlite3_reset(stmt);

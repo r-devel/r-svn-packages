@@ -10,7 +10,7 @@
 #include "sqlite_dataframe.h"
 
 int _is_r_sym(char *sym) {
-    int ret = 0, i, len = strlen(sym);
+    int i, len = strlen(sym);
 
     if (isalpha(sym[0]) || sym[0] == '_') i = 1;
     else if (sym[0] == '.') { if (isdigit(sym[1])) return FALSE; i = 2; }
@@ -35,7 +35,7 @@ int _empty_callback(void *data, int ncols, char **rows, char **cols) {
 
 char *_fixname(char *rname) {
     char *tmp = rname;
-    while (*tmp) { if (*tmp = '.') *tmp = '_'; tmp++; }
+    while (*tmp) { if (*tmp == '.') *tmp = '_'; tmp++; }
     return rname;
 }
 
@@ -67,10 +67,13 @@ int _check_sql_buf(int i) {
 } 
 
 int _expand_buf(int i, int size) {
+    int expanded = FALSE;
     if (size >= g_sql_buf_sz[i]) {
         g_sql_buf_sz[i] *= 2;
         g_sql_buf[i] = Realloc(g_sql_buf[i], g_sql_buf_sz[i], char);
+        expanded = TRUE;
     }
+    return expanded;
 }
 
 int _sqlite_error(int res) {
@@ -114,7 +117,7 @@ int _get_row_count2(const char *table) {
 /* TODO: windows version */
 char *_get_full_pathname2(char *relpath) {
     char *tmp1, *tmp2, tmp3, tmp4;
-    int buflen, relpathlen, tokenlen;
+    int buflen, relpathlen;
 
     relpathlen = strlen(relpath);
     if (relpath[0] == '/') {
@@ -154,6 +157,7 @@ char *_get_full_pathname2(char *relpath) {
             }
         } else { 
             /* non-relative path part, append to buf */
+            tmp4 = 0;
             if (tmp3 == '/') { *tmp2 = '/'; tmp4 = *(tmp2+1); *(tmp2+1) = 0; }
             _expand_buf(2, buflen+strlen(tmp1));
             strcpy(g_sql_buf[2] + buflen, tmp1);
@@ -183,8 +187,38 @@ SEXP _getListElement(SEXP list, char *varname) {
     return ret;
 }
 
-SEXP _create_sdf_sexp(char *iname) {
-    SEXP names, variable, ret;
+SEXP _get_rownames(const char *sdf_iname) {
+    sqlite3_stmt *stmt;
+    sprintf(g_sql_buf[0], "select [row name] from [%s].sdf_data", sdf_iname);
+    int res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+
+    if (_sqlite_error(res)) return R_NilValue; 
+
+    SEXP ret, value;
+    int nprotected = 1;
+    PROTECT(ret = NEW_LIST(2)); 
+
+    /* set list names */
+    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    SET_STRING_ELT(value, 0, mkChar("iname"));
+    SET_STRING_ELT(value, 1, mkChar("varname"));
+    SET_NAMES(ret, value);
+
+    /* set list values */
+    SET_VECTOR_ELT(ret, 0, mkString(sdf_iname));
+    SET_VECTOR_ELT(ret, 1, mkString("row name"));
+
+    /* set class */
+    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    SET_STRING_ELT(value, 0, mkChar("sqlite.vector"));
+    SET_STRING_ELT(value, 1, mkChar("character"));
+    SET_CLASS(ret, value);
+
+    UNPROTECT(nprotected);
+    return ret;
+}
+SEXP _create_sdf_sexp(const char *iname) {
+    SEXP names, class, variable, ret;
     int nprotected = 0;
     PROTECT(ret = NEW_LIST(1)); nprotected++;
     PROTECT(names = mkString("iname")); nprotected++;
@@ -194,10 +228,11 @@ SEXP _create_sdf_sexp(char *iname) {
     SET_VECTOR_ELT(ret, 0, variable);
 
     /* set class */
-    PROTECT(names = NEW_CHARACTER(2)); nprotected++;
-    SET_STRING_ELT(names, 0, mkChar("sqlite.data.frame"));
-    SET_STRING_ELT(names, 1, mkChar("data.frame"));
-    SET_CLASS(ret, names);
+    PROTECT(class = NEW_CHARACTER(2)); nprotected++;
+    SET_STRING_ELT(class, 0, mkChar("sqlite.data.frame"));
+    SET_STRING_ELT(class, 1, mkChar("data.frame"));
+    SET_CLASS(ret, class);
+    SET_ROWNAMES(ret, _get_rownames(iname));
     
     UNPROTECT(nprotected);
     return ret;
@@ -222,11 +257,10 @@ static void __attach_levels2(char *table, SEXP var, int len) {
 }
     
 int _get_factor_levels1(const char *iname, const char *varname, SEXP var) {
-    SEXP levels;
     int ret = VAR_INTEGER;
     
     sprintf(g_sql_buf[1], "[%s].[factor %s]", iname, varname);
-    int res = _get_row_count2(g_sql_buf[1]), idx;
+    int res = _get_row_count2(g_sql_buf[1]);
     if (res > 0) { /* res is exptected to be {-1} \union I+ */
         __attach_levels2(g_sql_buf[1], var, res);
         ret = VAR_FACTOR;

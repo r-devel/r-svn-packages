@@ -32,7 +32,8 @@ names.sqlite.data.frame <- function(x) .Call("sdf_get_names", x);
 length.sqlite.data.frame <- function(x) .Call("sdf_get_length", x);
 nrow.sqlite.data.frame <- function(x) .Call("sdf_get_row_count", x);
 dim.sqlite.data.frame <- function(x) 
-    c(nrow.sqlite.data.frame(x), length.sqlite.data.frame(x))
+    c(nrow.sqlite.data.frame(x), length.sqlite.data.frame(x));
+dimnames.sqlite.data.frame <- function(x) list(row.names(x), names(x))
 "$.sqlite.data.frame" <- function(x, name) .Call("sdf_get_variable", x, name);
 "[[.sqlite.data.frame" <- function(x, idx) {
     if (length(idx) != 1) stop("index must be a 1-element vector.");
@@ -42,7 +43,12 @@ dim.sqlite.data.frame <- function(x)
         else .Call("sdf_get_variable", x, names(x)[idx])
     } else stop("don't know how to handle index.");
 }
-"[.sqlite.data.frame" <- function(x, row=NULL, col=NULL) c(row,col);
+"[.sqlite.data.frame" <- function(x, row=NULL, col=NULL) {
+#    if (row == NULL || col == NULL) { data.frame(NULL) }
+#    if (missing(row)) row = NULL;
+#    if (missing(col)) col = NULL; 
+    .Call("sdf_get_index", x, row, col); 
+}
 
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.vector
