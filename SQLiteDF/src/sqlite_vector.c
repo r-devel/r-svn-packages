@@ -129,7 +129,7 @@ SEXP sdf_get_variable_length(SEXP svec) {
 SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
     char *iname = SDF_INAME(svec), *varname = SVEC_VARNAME(svec);
-    int index, idxlen, i, retlen, res;
+    int index, idxlen, i, retlen=0, res;
 
     /* check if sdf exists */
     sqlite3_stmt *stmt;

@@ -19,6 +19,7 @@ duplicates. E.g. if name arg is \emph{iris}, and it already exists, then the
 new SDF will have a name \emph{iris1}. If it still exists, then the name
 will be \emph{iris2}, and so on.
 }
+}
 \references{ ~put references to the literature/web site here ~ }
 \author{Miguel A. R. Manese}
 \note{
@@ -28,11 +29,12 @@ a separate database. The name of the stored in the SDF.
 }
 \seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
 \examples{
+    library(datasets)
     iris.sdf <- sqlite.data.frame(iris)
     names(iris.sdf)
     class(iris.sdf)
-    iris.sdf\$Petal.Length[1:10]
+    iris.sdf$Petal.Length[1:10]
     iris.sdf[["Petal.Length"]][1:10]
-    iris.sdf[1,c(T,F)]
+    iris.sdf[1,c(TRUE,FALSE)]
     #apply(iris.sdf[1:4], 2, mean)
 }

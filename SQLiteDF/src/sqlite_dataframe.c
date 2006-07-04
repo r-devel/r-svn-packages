@@ -62,6 +62,7 @@ static int _is_factor2(const char *iname, const char *factor_type, const char *c
     sprintf(g_sql_buf[2], "select * from [%s].[%s %s]", iname, factor_type,
             colname);
     int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    sqlite3_finalize(stmt);
     return res == SQLITE_OK;
 }
 
@@ -72,6 +73,7 @@ static int _create_factor_table2(const char *iname, const char *factor_type,
     sprintf(g_sql_buf[2], "create table [%s].[%s %s] (level int, label text, "
             "primary key(level), unique(label));", iname, factor_type, colname);
     int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    if (res == SQLITE_OK) sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     return res; /* error on dup name? */
 }
@@ -87,6 +89,7 @@ static int _copy_factor_levels2(const char *factor_type, const char *iname_src,
                 iname_src, factor_type, colname_src, iname_dst, factor_type,
                 colname_dst);
         res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+        if (res == SQLITE_OK) sqlite3_step(stmt);
         sqlite3_finalize(stmt);
     }
     return res; /* error on dup name? */
@@ -157,7 +160,7 @@ static SEXP _setup_df_sexp1(sqlite3_stmt *stmt, const char *iname,
 /* expected that 1st col of stmt is [row name], so we start with index 1 */
 static int _add_row_to_df(SEXP df, sqlite3_stmt *stmt, int row, int ncols) {
     SEXP vec;
-    int type, is_null, i;
+    int type = -1, is_null, i;
     for (i = 1; i <= ncols; i++) {
         vec = VECTOR_ELT(df, i-1);
         type = TYPEOF(vec);
@@ -174,6 +177,7 @@ static int _add_row_to_df(SEXP df, sqlite3_stmt *stmt, int row, int ncols) {
             LOGICAL(vec)[row] = sqlite3_column_int(stmt, i);
         }
     }
+    return type;
 }
 
 static void _set_rownames2(SEXP df) {
@@ -340,8 +344,9 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         /*
          * add the new sdf to the workspace
          */
-        strcpy(g_sql_buf[0], iname);
         iname[namelen] = '.';
+        strcpy(g_sql_buf[0], iname);
+        iname[namelen] = 0;
         res = _add_sdf1(iname, g_sql_buf[0]);
         if (_sqlite_error(res)) return R_NilValue; /* why? */
 
@@ -437,8 +442,8 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
         return R_NilValue;
     }
 
-    char *sep = CHAR_ELT(_sep, 0), *quote = CHAR_ELT(_quote,0);
-    char *name = CHAR_ELT(_name, 0);
+    /*char *sep = CHAR_ELT(_sep, 0), *quote = CHAR_ELT(_quote,0);
+    char *name = CHAR_ELT(_name, 0);*/
 
     /* create the table */
     /* insert the stuffs */
@@ -448,13 +453,13 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
 }
 
 SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
-    SEXP ret, *df;
+    SEXP ret = R_NilValue;
     char *iname = SDF_INAME(sdf);
-    sqlite3_stmt *stmt, *stmt2;
+    sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
     int i, j,res;
     int *col_indices, col_index_len, *dup_indices;
-    int row_index_len;
+    int row_index_len = 0;
 
     sprintf(g_sql_buf[0], "select * from [%s].sdf_data ", iname);
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
@@ -600,7 +605,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
             /* find a new name. data<n> ? */
             char *iname2, *rname2;
             const char *colname;
-            int namelen, file_idx = 0, sql_len, sql_len2, dup_idx;
+            int namelen, file_idx = 0, sql_len, sql_len2;
             namelen = _check_sdf_name(R_NilValue, &rname2, &iname2, &file_idx);
 
             if (!namelen) return R_NilValue; 
@@ -718,7 +723,6 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
         if (ret == R_NilValue) { sqlite3_finalize(stmt); return R_NilValue; }
 
         /* put data in it */
-        row_index_len = 0;
         if (index >= 0 && index < row_cnt) {
             _add_row_to_df(ret, stmt, row_index_len++, col_index_len);
         }
@@ -768,7 +772,6 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
         if (ret == R_NilValue) { sqlite3_finalize(stmt); return R_NilValue; }
 
         /* put data in it */
-        row_index_len = 0;
         if (index >= 0 && index < row_cnt) {
             _add_row_to_df(ret, stmt, row_index_len++, col_index_len);
         }
@@ -805,11 +808,11 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
         buflen += sprintf(g_sql_buf[0]+buflen, " limit ?,1");
 
         /* find if there is any TRUE element in the vector */
-        for (i = 0; i < idxlen & i < row_cnt; i++) {
+        for (i = 0; i < idxlen && i < row_cnt; i++) {
             if (LOGICAL(row)[i]) break;
         }
 
-        if (i < idxlen & i < row_cnt) {
+        if (i < idxlen && i < row_cnt) {
             est_row_cnt = (idxlen-i) * (row_cnt/idxlen);
             if (row_cnt%idxlen > i) est_row_cnt += (row_cnt%idxlen - i);
 
@@ -819,7 +822,6 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
             sqlite3_bind_int(stmt, 1, i);
             sqlite3_step(stmt);
             ret = _setup_df_sexp1(stmt, iname, col_index_len, est_row_cnt, dup_indices);
-            row_index_len = 0;
             _add_row_to_df(ret, stmt, row_index_len++, col_index_len);
             
             for (i++ ; i < row_cnt; i++) {

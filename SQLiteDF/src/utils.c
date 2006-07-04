@@ -192,6 +192,7 @@ SEXP _get_rownames(const char *sdf_iname) {
     sprintf(g_sql_buf[0], "select [row name] from [%s].sdf_data", sdf_iname);
     int res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
 
+    sqlite3_finalize(stmt);
     if (_sqlite_error(res)) return R_NilValue; 
 
     SEXP ret, value;
@@ -217,6 +218,7 @@ SEXP _get_rownames(const char *sdf_iname) {
     UNPROTECT(nprotected);
     return ret;
 }
+
 SEXP _create_sdf_sexp(const char *iname) {
     SEXP names, class, variable, ret;
     int nprotected = 0;

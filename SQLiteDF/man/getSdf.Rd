@@ -42,8 +42,6 @@ Returns an sqlite.data.frame object.
 ##--	or do  help(data=index)  for the standard data sets.
 
 ## The function is currently defined as
-function (name) 
-.Call("sdf_get_sdf", name)
+#function (name) 
+#.Call("sdf_get_sdf", name)
 }
-\keyword{ ~kwd1 }% at least one, from doc/KEYWORDS
-\keyword{ ~kwd2 }% __ONLY ONE__ keyword per line
