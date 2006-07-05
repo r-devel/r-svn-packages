@@ -251,7 +251,7 @@ static void __attach_levels2(char *table, SEXP var, int len) {
     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
     _sqlite_error(res);
     while (sqlite3_step(stmt) == SQLITE_ROW) { 
-        SET_STRING_ELT(levels, idx, mkChar(sqlite3_column_text(stmt, 1)));
+        SET_STRING_ELT(levels, idx, mkChar((char *)sqlite3_column_text(stmt, 1)));
         idx++;
     }
     SET_LEVELS(var, levels);

@@ -47,7 +47,8 @@ int _find_free_filename(char *rname, char **iname, int *namelen, int *file_idx) 
 static int _create_sdf_attribute2(const char *iname) {
     sprintf(g_sql_buf[2], "create table [%s].sdf_attributes(attr text, "
             "value text, primary key (attr))", iname);
-    int res = _sqlite_exec(g_sql_buf[2]);
+    int res;
+    res = _sqlite_exec(g_sql_buf[2]);
     if (res == SQLITE_OK) {
         sprintf(g_sql_buf[2], "insert into [%s].sdf_attributes values ('name',"
                 "'%s');", iname, iname);
@@ -61,7 +62,8 @@ static int _is_factor2(const char *iname, const char *factor_type, const char *c
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[2], "select * from [%s].[%s %s]", iname, factor_type,
             colname);
-    int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    int res;
+    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
     sqlite3_finalize(stmt);
     return res == SQLITE_OK;
 }
@@ -72,7 +74,8 @@ static int _create_factor_table2(const char *iname, const char *factor_type,
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[2], "create table [%s].[%s %s] (level int, label text, "
             "primary key(level), unique(label));", iname, factor_type, colname);
-    int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    int res;
+    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
     if (res == SQLITE_OK) sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     return res; /* error on dup name? */
@@ -168,7 +171,7 @@ static int _add_row_to_df(SEXP df, sqlite3_stmt *stmt, int row, int ncols) {
         is_null = (sqlite3_column_type(stmt, row) == SQLITE_NULL);
 
         if (type == CHARSXP) {
-            SET_STRING_ELT(vec, row, mkChar(sqlite3_column_text(stmt, i)));
+            SET_STRING_ELT(vec, row, mkChar((char *)sqlite3_column_text(stmt, i)));
         } else if (type == INTSXP) {
             INTEGER(vec)[row] = sqlite3_column_int(stmt, i);
         } else if (type == REALSXP) {
@@ -347,7 +350,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         iname[namelen] = '.';
         strcpy(g_sql_buf[0], iname);
         iname[namelen] = 0;
-        res = _add_sdf1(iname, g_sql_buf[0]);
+        res = _add_sdf1(g_sql_buf[0], iname);
         if (_sqlite_error(res)) return R_NilValue; /* why? */
 
         /*
@@ -368,7 +371,7 @@ SEXP sdf_get_names(SEXP sdf) {
     int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
 
     sqlite3_stmt *stmt;
-    int res;
+    int res, i;
    
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], len, &stmt, NULL);
     if (_sqlite_error(res)) return R_NilValue;
@@ -378,7 +381,7 @@ SEXP sdf_get_names(SEXP sdf) {
     len = sqlite3_column_count(stmt)-1;
     PROTECT(ret = NEW_CHARACTER(len));
 
-    for (int i = 0; i < len; i++) {
+    for (i = 0; i < len; i++) {
         SET_STRING_ELT(ret, i, mkChar(sqlite3_column_name(stmt, i+1)));
     }
 

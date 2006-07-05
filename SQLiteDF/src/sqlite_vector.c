@@ -78,7 +78,7 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len
         if (strcmp(coltype, "text") == 0) {
             PROTECT(*ret = NEW_CHARACTER(idx_or_len));
             if (added) 
-                SET_STRING_ELT(*ret, 0, mkChar(sqlite3_column_text(stmt, 0)));
+                SET_STRING_ELT(*ret, 0, mkChar((char *)sqlite3_column_text(stmt, 0)));
         } else if (strcmp(coltype, "double") == 0) {
             PROTECT(*ret = NEW_NUMERIC(idx_or_len));
             if (added) REAL(*ret)[0] = sqlite3_column_double(stmt, 0);
@@ -99,7 +99,7 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len
             added = 0;
         } else if (strcmp(coltype, "text") == 0) {
             SET_STRING_ELT(*ret, idx_or_len, 
-                    mkChar(sqlite3_column_text(stmt, 0)));
+                    mkChar((char *)sqlite3_column_text(stmt, 0)));
         } else if (strcmp(coltype, "double") == 0) {
             REAL(*ret)[idx_or_len] = sqlite3_column_double(stmt, 0);
         } else if (strcmp(coltype, "bit") == 0) {
