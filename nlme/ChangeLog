@@ -1,10 +1,3 @@
-2006-07-03  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* R/lme.R (lme.formula): when control()$returnObject is TRUE, only
-	warn instead of stop() in the case of non-convergence.
-	* tests/lme.R: test the above
-	* tests/lme.Rout.save:
-
 2006-07-03  Douglas Bates  <Douglas.Bates@R-project.org>
 
 	* DESCRIPTION: Version is 3.1-75
@@ -14,6 +7,15 @@
 	and Bates (2000) as a reference or add additional \seealso{}
 	entries.  Some examples from Pinheiro and Bates (2000) have also
 	been added.
+
+	* R/nlme.R: reformat the code, typo.
+
+2006-07-03  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lme.R (lme.formula): when control()$returnObject is TRUE, only
+	warn instead of stop() in the case of non-convergence.
+	* tests/lme.R: test the above
+	ZZ* tests/lme.Rout.save:
 
 2006-06-02 Brian Ripley <Brian.Ripley@R-project.org>
 
