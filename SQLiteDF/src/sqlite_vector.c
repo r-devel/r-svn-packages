@@ -11,6 +11,8 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     char *iname = SDF_INAME(sdf);
     char *varname = CHAR_ELT(name, 0);
 
+    if (!USE_SDF(iname)) return R_NilValue;
+
     /* check if sdf & varname w/in that sdf exists */
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data", varname, iname);
@@ -118,6 +120,7 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len
 
 SEXP sdf_get_variable_length(SEXP svec) {
     char *iname = SDF_INAME(svec);
+    if (!USE_SDF(iname)) return R_NilValue;
     sprintf(g_sql_buf[0], "[%s].sdf_data", iname);
 
     SEXP ret;
@@ -132,6 +135,8 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
     char *iname = SDF_INAME(svec), *varname = SVEC_VARNAME(svec);
     int index, idxlen, i, retlen=0, res;
+
+    if (!USE_SDF(iname)) return R_NilValue;
 
     /* check if sdf exists */
     sqlite3_stmt *stmt;
@@ -280,6 +285,8 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     varname_src = SVEC_VARNAME(vector);
     nargs = INTEGER(_nargs)[0];
 
+    if (!USE_SDF(iname_src)) return R_NilValue;
+
     /* check nargs */
     if (nargs > 2) {
         Rprintf("Error: Don't know how to handle Math functions w/ more than 2 args\n");
@@ -313,12 +320,6 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
 
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
-
-    /* add to workspace */
-    strcpy(g_sql_buf[0], iname);
-    iname[namelen] = '.';
-    _add_sdf1(iname,  g_sql_buf[0]);
-    iname[namelen] = 0;
 
     /* create sqlite.vector sexp */
     SEXP ret, value; int nprotected = 0;

@@ -1,0 +1,2 @@
+PKG_LIBS=-L../inst/sqlite/win -lsqlite3
+PKG_CFLAGS=-Wall -pedantic

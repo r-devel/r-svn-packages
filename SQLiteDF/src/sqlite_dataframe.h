@@ -6,7 +6,8 @@
 #ifndef __SQLITE_DATAFRAME__
 #define __SQLITE_DATAFRAME__
 
-#define WORKSPACE_COLUMNS 3
+#define WORKSPACE_COLUMNS 5
+#define MAX_ATTACHED 30     /* 31 including workspace.db */
 
 /* utilities for checking characteristics of arg */
 int _is_r_sym(char *sym);
@@ -14,8 +15,10 @@ int _file_exists(char *filename);
 int _sdf_exists2(char *iname);
 
 /* sdf utilities */
+int USE_SDF(const char *iname);  /* call this before doing anything on an SDF */
 SEXP _create_sdf_sexp(const char *iname);  /* create a SEXP for an SDF */
 int _add_sdf1(char *filename, char *internal_name); /* add SDF to workspace */
+void _delete_sdf2(char *iname); /* remove SDF from workspace */
 int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
 int _get_row_count2(const char *table);
 SEXP _get_rownames(const char *sdf_iname);

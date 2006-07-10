@@ -72,16 +72,22 @@ char *_create_sdf_skeleton2(SEXP name, int *onamelen) {
         return NULL;
     }
 
-    /* create new db by attaching a non-existent file */
+    /* add to workspace */
+    strcpy(g_sql_buf[3], iname);
     iname[namelen] = 0; /* remove ".db" */
-    sprintf(g_sql_buf[2], "attach '%s.db' as [%s]", iname, iname);
-    res = _sqlite_exec(g_sql_buf[2]);
-    if (_sqlite_error(res)) return NULL; 
+    res = _add_sdf1(g_sql_buf[3], iname);
+    if (_sqlite_error(res)) return NULL;
+
+    /* detach SDF's if necessary to attach this one. if file does not
+     * exist, then a sqlite db will be created after we make our 1st table */
+    if (!USE_SDF(iname)) { _delete_sdf2(iname); return NULL; }
+
 
     /* create attributes table */
     res = _create_sdf_attribute2(iname);
     if (_sqlite_error(res)) {
         sprintf(g_sql_buf[2], "detach '%s'", iname);
+        _delete_sdf2(iname);
         return NULL; 
     }
 
@@ -352,22 +358,11 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
                 
         sqlite3_finalize(stmt);
 
-        /*
-         * add the new sdf to the workspace
-         */
-        iname[namelen] = '.';
-        strcpy(g_sql_buf[0], iname);
-        iname[namelen] = 0;
-        res = _add_sdf1(g_sql_buf[0], iname);
-        if (_sqlite_error(res)) return R_NilValue; /* why? */
-
-        /*
-         * create a new object representing the sdf
-         */
+        /* create a new object representing the sdf */
         ret = _create_sdf_sexp(iname);
 
     } else {
-        Rprintf("ERROR: cannot find a free internal name.");
+        Rprintf("ERROR: unable to create a sqlite data frame.\n");
         ret = R_NilValue;
     }
         
@@ -375,8 +370,12 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
 }
 
 SEXP sdf_get_names(SEXP sdf) {
-    char *iname = SDF_INAME(sdf);
-    int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
+    char *iname;
+    iname = SDF_INAME(sdf);
+    if (!USE_SDF(iname)) return R_NilValue;
+
+    int len;
+    len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
 
     sqlite3_stmt *stmt;
     int res, i;
@@ -399,7 +398,10 @@ SEXP sdf_get_names(SEXP sdf) {
 }
 
 SEXP sdf_get_length(SEXP sdf) {
-    char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    char *iname;
+    iname  = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    if (!USE_SDF(iname)) return R_NilValue;
+
     int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
 
     sqlite3_stmt *stmt;
@@ -422,6 +424,8 @@ SEXP sdf_get_length(SEXP sdf) {
 /* get row count */
 SEXP sdf_get_row_count(SEXP sdf) {
     char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    if (!USE_SDF(iname)) return R_NilValue;
+
     char **out;
     int res, ncol, nrow;
     SEXP ret;
@@ -466,6 +470,8 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
 SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
     SEXP ret = R_NilValue;
     char *iname = SDF_INAME(sdf);
+    if (!USE_SDF(iname)) return R_NilValue;
+
     sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
     int i, j,res;
