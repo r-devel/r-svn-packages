@@ -4,10 +4,16 @@
 #define __SQLITE_WORKSPACE__
 #include "sqlite_dataframe.h"
 
+/* global variables */
 sqlite3 *g_workspace = NULL;
 char *g_sql_buf[NBUFS];
 int g_sql_buf_sz[NBUFS];
 
+/****************************************************************************
+ * UTILITY FUNCTIONS
+ ****************************************************************************/
+
+/* test if a file is a sqlite database file */
 sqlite3* _is_sqlitedb(char *filename) {
     sqlite3 *db;
     int res;
@@ -31,6 +37,7 @@ is_sqlitedb_FAIL:
     return NULL;
 }
 
+/* test if a file is a SQLiteDF workspace */
 sqlite3* _is_workspace(char *filename) {
     sqlite3* db = _is_sqlitedb(filename); 
 
@@ -56,28 +63,40 @@ sqlite3* _is_workspace(char *filename) {
     return db;
 }
 
-int _is_sdf(char *filename) {
+/* test if a file is a sqlite.data.frame. returns the internal name of the
+ * sdf if file is an sdf or NULL otherwise */
+char * _is_sdf2(char *filename) {
     sqlite3* db = _is_sqlitedb(filename); 
-    int ret = (db != NULL);
+    char *ret = (db == NULL) ? NULL : filename;
 
     if (ret) {
         sqlite3_stmt *stmt;
-        char *sql = "select * from sdf_attributes";
-        int res = sqlite3_prepare(db, sql, -1, &stmt, NULL), ncols;
-        ret = ((res == SQLITE_OK) && /* no attribute table */
+        char *sql = "select * from sdf_attributes where attr='name'";
+        int res, ncols;
+        res = sqlite3_prepare(db, sql, -1, &stmt, NULL);
+        ret = (((res == SQLITE_OK) && /* no attribute table */
                ((ncols = sqlite3_column_count(stmt)) == 2) &&
                (strcmp(sqlite3_column_name(stmt, 0), "attr") == 0) &&
                (strcmp(sqlite3_column_decltype(stmt, 0), "text") == 0) &&
                (strcmp(sqlite3_column_name(stmt, 1), "value") == 0) &&
-               (strcmp(sqlite3_column_decltype(stmt, 1), "text") == 0)) ;
+               (strcmp(sqlite3_column_decltype(stmt, 1), "text") == 0))) ? ret : NULL ;
         
-        if (!ret) goto _is_sdf_cleanup;
-        sqlite3_finalize(stmt); 
-        
+        if (ret == NULL) goto _is_sdf_cleanup;
+
+        /* get internal name */
+        res = sqlite3_step(stmt);
+        ret = (res == SQLITE_ROW) ? ret : NULL;
+        if (ret == NULL) goto _is_sdf_cleanup;
+
+        /* copy to buf2, because when we finalize stmt, we won't be sure
+         * if sqlite3_column_text()'s ret value will still be there */
+        strcpy(g_sql_buf[2], (char *)sqlite3_column_text(stmt, 1));
+        ret = g_sql_buf[2];
+        sqlite3_finalize(stmt);
         
         sql = "select * from sdf_data";
         res = sqlite3_prepare(db, sql, -1, &stmt, NULL);
-        ret = (res == SQLITE_OK);  /* if not, missing data table */
+        ret = (res == SQLITE_OK) ? ret : NULL;  /* if not, missing data table */
 
 _is_sdf_cleanup:
         sqlite3_finalize(stmt);
@@ -87,16 +106,54 @@ _is_sdf_cleanup:
     return ret;
 }
 
+/* remove an sdf from the workspace */
 void _delete_sdf2(char *iname) {
     sprintf(g_sql_buf[2], "delete from workspace where internal_name='%s';", iname);
     _sqlite_exec(g_sql_buf[2]);
 }
 
+/* add a sdf to the workspace */
 int _add_sdf1(char *filename, char *internal_name) {
     sprintf(g_sql_buf[1], "insert into workspace(rel_filename, full_filename, internal_name) values('%s', '%s', '%s')",
             filename, _get_full_pathname2(filename), internal_name);
     return _sqlite_exec(g_sql_buf[1]);
 }
+
+
+static char* _get_sdf_detail2(char *iname, int what) {
+    sqlite3_stmt *stmt;
+    char * ret; int res;
+
+    sprintf(g_sql_buf[2], "select full_filename from workspace where "
+            "internal_name='%s'", iname);
+    sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
+    res = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    if (res == SQLITE_DONE) {
+        ret = NULL;
+    } else {
+        ret = g_sql_buf[2];
+        switch (what) {
+            case SDF_DETAIL_EXISTS: 
+                break; /* doesn't matter */
+            case SDF_DETAIL_FULLFILENAME:
+                strcpy(g_sql_buf[2], (char *)sqlite3_column_text(stmt, 0));
+                break;
+        }
+    }
+
+    return ret;
+}
+
+/* returns TRUE if sdf exists in the workspace */
+int _sdf_exists2(char *iname) {
+    return _get_sdf_detail2(iname, SDF_DETAIL_EXISTS) != NULL;
+}
+
+/****************************************************************************
+ * WORKSPACE FUNCTIONS
+ ****************************************************************************/
 
 SEXP sdf_init_workspace() {
     int file_idx = 0, i;
@@ -150,7 +207,7 @@ SEXP sdf_init_workspace() {
                     continue;
                 }
 
-                if (!_is_sdf(fname)) {
+                if (_is_sdf2(fname) == NULL) {
                     Rprintf("Warning: %s is not a valid SDF.\n", fname);
                     _delete_sdf2(iname);
                     continue;
@@ -173,6 +230,9 @@ SEXP sdf_init_workspace() {
     }
 
     UNPROTECT(1);
+
+    /* register sqlite math functions */
+    __register_vector_math();
     return ret;
 }
         
@@ -234,7 +294,7 @@ SEXP sdf_get_sdf(SEXP name) {
     res = sqlite3_step(stmt);
 
     if (res == SQLITE_ROW) ret = _create_sdf_sexp(iname);
-    else ret = R_NilValue;
+    else { Rprintf("Error: SDF %s not found.\n", iname); ret = R_NilValue; }
     
     sqlite3_finalize(stmt);
 
@@ -242,7 +302,9 @@ SEXP sdf_get_sdf(SEXP name) {
 }
 
 SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
-    char *fname, *iname;
+    /* when studying this, please be mindful of the global buffers used.
+     * you have been warned */
+    char *fname, *iname, *iname_orig;;
     int fnamelen, res;
     sqlite3_stmt *stmt;
 
@@ -259,11 +321,22 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
         return R_NilValue;
     }
 
-    /* check if it exists in the workspace already */
+    /* check if it is a valid sdf file */
+    if (_is_sdf2(fname) == NULL) {
+        Rprintf("Error: %s is not a valid SDF.\n", fname);
+        return R_NilValue;
+    } else {
+        /* _is_sdf2 puts the orig iname in buf2. transfer data to buf0 since
+         * functions called below will use buf2 */
+        strcpy(g_sql_buf[0], g_sql_buf[2]);
+        iname_orig = g_sql_buf[0];
+    }
+
+    /* check if file to be attached exists in the workspace already */
     _get_full_pathname2(fname);
     res = sqlite3_prepare(g_workspace, "select internal_name from workspace where full_filename=?",
             -1, &stmt, NULL);
-    sqlite3_bind_text(stmt, 1, g_sql_buf[2], strlen(g_sql_buf[2]), SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 1, g_sql_buf[2], -1, SQLITE_STATIC);
     res = sqlite3_step(stmt);
     if (res == SQLITE_ROW) {
         Rprintf("Warning: That sdf is already attached as '%s'\n",
@@ -274,57 +347,54 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
 
 
     /* internal_name checking and processing. */
-    int file_idx, inamelen;
     if (IS_CHARACTER(internal_name)) {
+        /* if name is specified, rename the sdf. original internal name is the
+         * one stored at sdf_attribute */
         iname = CHAR_ELT(internal_name, 0);
         if (!_is_r_sym(iname)) {
-            Rprintf("Error: %s is not a valid R symbol.", iname);
+            Rprintf("Error: %s is not a valid R symbol.\n", iname);
             return R_NilValue;
         }
-
-        res = sqlite3_prepare(g_workspace, "select full_filename from workspace "
-               " where internal_name=?", -1, &stmt, NULL);
-        sqlite3_bind_text(stmt, 1, iname, strlen(iname), SQLITE_STATIC);
-        res = sqlite3_step(stmt);
-        if (res == SQLITE_ROW) {
-            Rprintf("Warning: The sdf internal name '%s' is already taken by file %s.\n",
-                    iname, sqlite3_column_text(stmt, 1));
-            sqlite3_finalize(stmt);
-            return R_NilValue;
-        } else sqlite3_finalize(stmt);
     } else {
-        file_idx = 1;
-        res = sqlite3_prepare(g_workspace, "select 1 from workspace "
-               " where internal_name=?", -1, &stmt, NULL);
-        
-        do {
-            inamelen = sprintf(g_sql_buf[0], "data%d", file_idx++);
-            sqlite3_bind_text(stmt, 1, g_sql_buf[0], inamelen, SQLITE_STATIC);
-            res = sqlite3_step(stmt);
-            sqlite3_reset(stmt);
-        } while (res == SQLITE_ROW && file_idx < 10000);
+        /* if no name is specified, use original internal name */
+        iname = (char *)iname_orig;  /* g_sql_buf[0]! */
+    }
 
+    /* check if internal name is already used in the workspace */
+    res = sqlite3_prepare(g_workspace, "select full_filename from workspace "
+           " where internal_name=?", -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, iname, -1, SQLITE_STATIC);
+    res = sqlite3_step(stmt);
+    if (res == SQLITE_ROW) {
+        Rprintf("Error: The sdf internal name '%s' is already used by file %s.\n",
+                iname, sqlite3_column_text(stmt, 1));
         sqlite3_finalize(stmt);
-
-        if (file_idx < 10000) {
-            iname = g_sql_buf[0];
-        } else {
-            Rprintf("Error: Cannot find a free default file name.\n");
-            return R_NilValue;
-        }
-    }
-
-
-    /* check if it is a valid sdf file */
-    if (!_is_sdf(fname)) {
-        Rprintf("Error: %s is not a valid SDF.\n", fname);
         return R_NilValue;
-    }
-
+    } 
+    sqlite3_finalize(stmt);
+    
     /* finally, attach it. */
     sprintf(g_sql_buf[1], "attach '%s' as [%s]", fname, iname);
     res = _sqlite_exec(g_sql_buf[1]);
     if (_sqlite_error(res)) return R_NilValue;
+
+    /* if internal name found in newly-attached-SDF is the same as the
+     * name wanted by the user, do nothing. otherwise, update sdf_attribute
+     * on attached-SDF. this is like attachSdf then renameSdf */
+    if (iname != iname_orig && strcmp(iname, iname_orig) != 0) {
+        sprintf(g_sql_buf[1], "update [%s].sdf_attributes set value=? where attr='name'",
+                iname);
+        res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
+        if (_sqlite_error(res)) { 
+            sqlite3_finalize(stmt); 
+            sprintf(g_sql_buf[1], "detach [%s]", iname);
+            _sqlite_exec(g_sql_buf[1]);
+            return R_NilValue;
+        }
+        res = sqlite3_bind_text(stmt, 1, iname, -1, SQLITE_STATIC);
+        res = sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    } 
 
     /* .. and update workspace */
     res = _add_sdf1(fname, iname);
@@ -354,3 +424,61 @@ SEXP sdf_detach_sdf(SEXP internal_name) {
 
     return ret;
 }
+
+SEXP sdf_rename_sdf(SEXP sdf, SEXP name) {
+    char *iname, *path, *newname;
+    SEXP ret;
+    int res, ret_tmp;
+
+    iname = SDF_INAME(sdf);
+    newname = CHAR_ELT(name, 0);
+    
+    /* check if valid r name */
+    if (!_is_r_sym(newname)) {
+        Rprintf("Error: %s is not a valid R symbol.", iname);
+        return R_NilValue;
+    }
+
+    /* check if sdf already exists */
+    if (_sdf_exists2(newname)) { /* name is already taken */
+        Rprintf("Error: the name \"%s\" is already taken.\n", newname);
+        return R_NilValue;
+    }
+
+    /* get path of the sdf file, because we're goint to detach it */
+    path = _get_sdf_detail2(iname, SDF_DETAIL_FULLFILENAME);
+    if (path == NULL) {
+        Rprintf("Error: no sdf named \"%s\" exists.\n", iname);
+        return R_NilValue;
+    }
+
+    /* change name in sdf_attribute */
+    sprintf(g_sql_buf[0], "update [%s].sdf_attributes set value='%s' "
+            "where attr='name'", iname, newname);
+    res = _sqlite_exec(g_sql_buf[0]);
+    Rprintf("result: %d\n", res);
+    /* if (_sqlite_error(res)) return R_NilValue; */
+
+    /* detach and remove sdf from workspace */
+    sprintf(g_sql_buf[0], "detach '%s'", iname);
+    res = _sqlite_exec(g_sql_buf[0]);
+    ret_tmp = !_sqlite_error(res);
+
+    /* remove from ws, attach and add again to ws using new name */
+    if (ret_tmp) {
+        _delete_sdf2(iname);
+        sprintf(g_sql_buf[0], "attach '%s' as '%s'", path, newname);
+        res = _sqlite_exec(g_sql_buf[0]);
+        ret_tmp = !_sqlite_error(res);
+        
+        /* TODO: make path relative! */
+        _add_sdf1(iname, path);
+    }
+
+    PROTECT(ret = NEW_LOGICAL(1));
+    LOGICAL(ret)[0] = ret_tmp;
+    UNPROTECT(1);
+
+    return ret;
+}
+

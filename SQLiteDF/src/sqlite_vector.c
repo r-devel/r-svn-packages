@@ -1,4 +1,6 @@
 #include "sqlite_dataframe.h"
+#include <math.h>
+#include "Rmath.h"
 
 SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     if (!IS_CHARACTER(name)) {
@@ -43,7 +45,7 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
         /* determine if int, factor or ordered */
         type = _get_factor_levels1(iname, varname, ret);
         switch(type) {
-            case VAR_INTEGER: class = mkChar("numeric"); break;
+            case VAR_INTEGER: class = mkChar("integer"); break;
             case VAR_FACTOR: class = mkChar("factor"); break;
             case VAR_ORDERED: class = mkChar("ordered");
         }
@@ -267,5 +269,173 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
 }
 
 
+SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) {
+    char *iname, *iname_src, *varname_src, *funcname;
+    int namelen, res, nargs;
+    sqlite3_stmt *stmt;
+
+    /* get data from arguments (function name and sqlite.vector stuffs) */
+    funcname = CHAR_ELT(func, 0);
+    iname_src = SDF_INAME(vector);
+    varname_src = SVEC_VARNAME(vector);
+    nargs = INTEGER(_nargs)[0];
+
+    /* check nargs */
+    if (nargs > 2) {
+        Rprintf("Error: Don't know how to handle Math functions w/ more than 2 args\n");
+        return R_NilValue;
+    }
+
+    /* create a new sdf, with 1 column named V1 */
+    iname = _create_sdf_skeleton2(R_NilValue, &namelen);
+    if (iname == NULL) return R_NilValue;
+
+    sprintf(g_sql_buf[0], "create table [%s].sdf_data ([row name] text, "
+            "V1 double)", iname);
+    res = _sqlite_exec(g_sql_buf[0]);
+    _sqlite_error(res);
+
+    /* insert into <newsdf>.col, row.names select func(col), rownames */
+    sprintf(g_sql_buf[0], "insert into [%s].sdf_data([row name], V1) "
+            "select [row name], %s([%s]) from [%s].sdf_data", iname, funcname,
+            varname_src, iname_src);
+
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0); 
+    if (_sqlite_error(res)) {
+        sprintf(g_sql_buf[0], "detach %s", iname);
+        _sqlite_exec(g_sql_buf[0]);
+
+        /* we will return a string with the file name, and do file.remove
+         * at R */
+        iname[namelen] = '.';
+        return mkString(iname);
+    }
+
+    sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+
+    /* add to workspace */
+    strcpy(g_sql_buf[0], iname);
+    iname[namelen] = '.';
+    _add_sdf1(iname,  g_sql_buf[0]);
+    iname[namelen] = 0;
+
+    /* create sqlite.vector sexp */
+    SEXP ret, value; int nprotected = 0;
+    PROTECT(ret = NEW_LIST(2)); nprotected++;
+
+    /* set list names */
+    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    SET_STRING_ELT(value, 0, mkChar("iname"));
+    SET_STRING_ELT(value, 1, mkChar("varname"));
+    SET_NAMES(ret, value);
+
+    /* set list values */
+    SET_VECTOR_ELT(ret, 0, mkString(iname));
+    SET_VECTOR_ELT(ret, 1, mkString("V1"));
+
+    /* set sexp class */
+    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    SET_VECTOR_ELT(value, 0, mkChar("sqlite.vector"));
+    SET_VECTOR_ELT(value, 1, mkChar("numeric"));
+    SET_CLASS(ret, value);
+
+    UNPROTECT(nprotected);
+
+    return ret;
+
+}
 
 
+
+/****************************************************************************
+ * VECTOR MATH/OPS/GROUP OPERATIONS
+ ****************************************************************************/
+int __vecmath_checkarg(sqlite3_context *ctx, sqlite3_value *arg, double *value) {
+    int ret = 1;
+    if (sqlite3_value_type(arg) == SQLITE_NULL) { 
+        sqlite3_result_null(ctx); 
+        ret = 0;
+    } else {
+        if (sqlite3_value_type(arg) == SQLITE_INTEGER) 
+            *value = sqlite3_value_int(arg); 
+        else *value = sqlite3_value_double(arg); 
+    }
+    return ret;
+}
+
+#define SQLITE_MATH_FUNC1(name, func) static void __vecmath_ ## name(\
+        sqlite3_context *ctx, int argc, sqlite3_value **argv) { \
+    double value; \
+    if (__vecmath_checkarg(ctx, argv[0], &value)) { \
+        sqlite3_result_double(ctx, func(value)); \
+    }  \
+}
+
+/* SQLITE_MATH_FUNC1(abs, abs)   in SQLite */
+SQLITE_MATH_FUNC1(sign, sign)   /* in R */
+SQLITE_MATH_FUNC1(sqrt, sqrt)
+SQLITE_MATH_FUNC1(floor, floor)
+SQLITE_MATH_FUNC1(ceiling, ceil)
+SQLITE_MATH_FUNC1(trunc, ftrunc) /* in R */
+/* SQLITE_MATH_FUNC1(round, )   in SQLite */
+/* SQLITE_MATH_FUNC1(signif, ) 2 arg */
+SQLITE_MATH_FUNC1(exp, exp)
+/* SQLITE_MATH_FUNC1(log, ) 2 arg */
+SQLITE_MATH_FUNC1(cos, cos)
+SQLITE_MATH_FUNC1(sin, sin)
+SQLITE_MATH_FUNC1(tan, tan)
+SQLITE_MATH_FUNC1(acos, acos)
+SQLITE_MATH_FUNC1(asin, asin)
+SQLITE_MATH_FUNC1(atan, atan)
+SQLITE_MATH_FUNC1(cosh, cosh)
+SQLITE_MATH_FUNC1(sinh, sinh)
+SQLITE_MATH_FUNC1(tanh, tanh)
+SQLITE_MATH_FUNC1(acosh, acosh)  /* nowhere in include?? */
+SQLITE_MATH_FUNC1(asinh, asinh)  /* nowhere in include?? */
+SQLITE_MATH_FUNC1(atanh, atanh)  /* nowhere in include?? */
+SQLITE_MATH_FUNC1(lgamma, lgammafn) /* in R */
+SQLITE_MATH_FUNC1(gamma, gammafn) /* in R */
+/* SQLITE_MATH_FUNC1(gammaCody, gammaCody)   * in R ?? */
+SQLITE_MATH_FUNC1(digamma, digamma) /* in R */    
+SQLITE_MATH_FUNC1(trigamma, trigamma) /* in R */
+
+#define VMENTRY1(func)  {#func, __vecmath_ ## func}
+void __register_vector_math() {
+    int i, res;
+    static const struct {
+        char *name;
+        void (*func)(sqlite3_context*, int, sqlite3_value**);
+    } arr_func1[] = {
+        VMENTRY1(sign),
+        VMENTRY1(sqrt),
+        VMENTRY1(floor),
+        VMENTRY1(ceiling),
+        VMENTRY1(trunc),
+        VMENTRY1(exp),
+        VMENTRY1(cos),
+        VMENTRY1(sin),
+        VMENTRY1(tan),
+        VMENTRY1(acos),
+        VMENTRY1(asin),
+        VMENTRY1(atan),
+        VMENTRY1(cosh),
+        VMENTRY1(sinh),
+        VMENTRY1(tanh),
+        VMENTRY1(acosh),
+        VMENTRY1(asinh),
+        VMENTRY1(atanh),
+        VMENTRY1(lgamma),
+        VMENTRY1(gamma),
+        VMENTRY1(digamma),
+        VMENTRY1(trigamma)
+    };
+
+    int func1_len = sizeof(arr_func1) / sizeof(arr_func1[0]);
+
+    for (i = 0; i < func1_len; i++) {
+        res = sqlite3_create_function(g_workspace, arr_func1[i].name, 1, 
+                SQLITE_ANY, NULL, arr_func1[i].func, NULL, NULL);
+        _sqlite_error(res);
+    }
+}

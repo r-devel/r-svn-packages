@@ -1,2 +1,2 @@
-PKG_LIBS=-L../inst/sqlite/ -lsqlite3
+PKG_LIBS=-L../inst/sqlite/linux -lsqlite3 -lm
 PKG_CFLAGS=-Wall -pedantic

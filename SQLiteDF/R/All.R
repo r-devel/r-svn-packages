@@ -22,8 +22,19 @@ readTableSdf <- function(filename, sep=",", quote="\"'", name=NULL,
     .Call("sdf_import_table", filename, name, sep, quote, rownames, colnames);
 
 attachSdf <- function(sdf_filename, sdf_iname=NULL) 
-    .Call("sdf_attach_sdf", sdf_filename, sdf_iname);
+    invisible(.Call("sdf_attach_sdf", sdf_filename, sdf_iname));
 detachSdf <- function(iname) .Call("sdf_detach_sdf", iname);
+
+# sqlite.data.frame functions
+dupSdf <- function(sdf) { 
+    if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.");
+    sdf[1:length(sdf)]
+}
+renameSdf <- function(sdf, name) { 
+    if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.");
+    if (!is.character(name)) stop("name argument must be a string.");
+    .Call("sdf_rename_sdf", sdf, name);
+}
 
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.data.frame
@@ -64,3 +75,19 @@ as.double.sqlite.vector <- function(x) as.double(x[1:length(x)])
 as.character.sqlite.vector <- function(x) as.character(x[1:length(x)])
 as.logical.sqlite.vector <- function(x) as.logical(x[1:length(x)])
 as.integer.sqlite.vector <- function(x) as.integer(x[1:length(x)])
+Math.sqlite.vector <- function(x, ...) {
+    if (any(inherits(x, "factor"), inherits(x, "ordered"))) 
+        stop(paste(.Generic, "not meaningful for factors"));
+    if (!any(inherits(x, "numeric"), inherits(x, "integer"), inherits(x, "logical")))
+        stop("Non-numeric argument to mathematical function");
+    #.Generic
+    extra.args <- list(...);
+    nargs <- 1 + length(extra.args);
+    nformals <- length(formals(get(.Generic, mode="function")))
+    if (nformals == 0) nformals <- 1;
+    if (nargs > nformals)
+        stop("error in number of arguments\n");
+    ret <- .Call("sdf_do_variable_math", .Generic, x, extra.args, nargs);
+    if (is.character(ret)) { file.remove(ret); ret <- NULL; }
+    ret;
+}

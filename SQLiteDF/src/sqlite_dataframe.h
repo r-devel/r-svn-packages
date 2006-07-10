@@ -8,24 +8,44 @@
 
 #define WORKSPACE_COLUMNS 3
 
+/* utilities for checking characteristics of arg */
 int _is_r_sym(char *sym);
 int _file_exists(char *filename);
+int _sdf_exists2(char *iname);
+
+/* sdf utilities */
+SEXP _create_sdf_sexp(const char *iname);  /* create a SEXP for an SDF */
+int _add_sdf1(char *filename, char *internal_name); /* add SDF to workspace */
+int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
+int _get_row_count2(const char *table);
+SEXP _get_rownames(const char *sdf_iname);
+char *_get_full_pathname2(char *relpath); /* get full path given relpath, used in workspace mgmt */
+
+/* utilities for creating SDF's */
+char *_create_sdf_skeleton2(SEXP name, int *o_namelen);
+
+/* R utilities */
+SEXP _getListElement(SEXP list, char *varname);
+SEXP _shrink_vector(SEXP vec, int len); /* shrink vector size */
+
+/* sqlite utilities */
 int _empty_callback(void *data, int ncols, char **row, char **cols);
+int _sqlite_error(int res);
+const char *_get_column_type(const char *class, int type); /* get sqlite type corresponding to R class & type */
+
+/* global buffer (g_sql_buf) utilities */
+int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
+
+
+/* sqlite.vector utilities */
+SEXP sdf_get_variable(SEXP sdf, SEXP name);
+
+/* misc utilities */
 char *_r2iname(char *internal_name, char *filename);
 char *_fixname(char *rname);
-char *_get_full_pathname2(char *relpath);
-int _sqlite_error(int res);
-SEXP _getListElement(SEXP list, char *varname);
-int _expand_buf(int i, int size);
-const char *_get_column_type(const char *class, int type);
-int _add_sdf1(char *filename, char *internal_name);
-SEXP _create_sdf_sexp(const char *iname);
-int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
-SEXP _shrink_vector(SEXP vec, int len);
-int _get_row_count2(const char *table);
-SEXP _get_rownames(const char *sdf_iname) ;
 
-SEXP sdf_get_variable(SEXP sdf, SEXP name);
+/* register functions to sqlite */
+void __register_vector_math();
 
 #define _sqlite_exec(sql) sqlite3_exec(g_workspace, sql, _empty_callback, NULL, NULL)
 #ifndef SET_ROWNAMES
@@ -47,6 +67,9 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name);
 #define VAR_FACTOR  1
 #define VAR_ORDERED 2
 
+/* detail constants (see _get_sdf_detail2 in sqlite_workspace.c) */
+#define SDF_DETAIL_EXISTS 0
+#define SDF_DETAIL_FULLFILENAME 1
 
 #ifndef __SQLITE_WORKSPACE__
 extern sqlite3 *g_workspace;

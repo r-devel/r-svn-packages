@@ -187,10 +187,10 @@ SEXP _getListElement(SEXP list, char *varname) {
     return ret;
 }
 
-SEXP _get_rownames(const char *sdf_iname) {
+SEXP _get_rownames2(const char *sdf_iname) {
     sqlite3_stmt *stmt;
-    sprintf(g_sql_buf[0], "select [row name] from [%s].sdf_data", sdf_iname);
-    int res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+    sprintf(g_sql_buf[2], "select [row name] from [%s].sdf_data", sdf_iname);
+    int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
 
     sqlite3_finalize(stmt);
     if (_sqlite_error(res)) return R_NilValue; 
@@ -234,13 +234,14 @@ SEXP _create_sdf_sexp(const char *iname) {
     SET_STRING_ELT(class, 0, mkChar("sqlite.data.frame"));
     SET_STRING_ELT(class, 1, mkChar("data.frame"));
     SET_CLASS(ret, class);
-    SET_ROWNAMES(ret, _get_rownames(iname));
+    SET_ROWNAMES(ret, _get_rownames2(iname));
     
     UNPROTECT(nprotected);
     return ret;
 }
 
 static void __attach_levels2(char *table, SEXP var, int len) {
+    /* arg table is assumed to be surrounded by [] already */
     SEXP levels;
     int idx = 0, res;
     sqlite3_stmt *stmt;

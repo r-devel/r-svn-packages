@@ -8,7 +8,7 @@
 
 /* if user supplied a name, return that name. otherwise, use the 
  * default "data" */
-int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx) {
+static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx) {
     int namelen = 0;
 
     /* check if arg name is supplied */
@@ -34,7 +34,7 @@ int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx) {
     return namelen;
 }
 
-int _find_free_filename(char *rname, char **iname, int *namelen, int *file_idx) {
+static int _find_free_filename(char *rname, char **iname, int *namelen, int *file_idx) {
     do {
         if (!_file_exists(*iname)) break;
         *namelen = sprintf(*iname, "%s%d.db", rname, ++(*file_idx)) - 3;
@@ -57,6 +57,37 @@ static int _create_sdf_attribute2(const char *iname) {
     return res;
 }
 
+char *_create_sdf_skeleton2(SEXP name, int *onamelen) {
+    char *iname, *rname;
+    int namelen, file_idx = 0, res;
+
+    namelen = _check_sdf_name(name, &rname, &iname, &file_idx);
+
+    if (!namelen) return NULL;
+
+    _find_free_filename(rname, &iname, &namelen, &file_idx);
+
+    if (file_idx >= 10000) { 
+        Rprintf("Error: cannot find free SDF name.\n");
+        return NULL;
+    }
+
+    /* create new db by attaching a non-existent file */
+    iname[namelen] = 0; /* remove ".db" */
+    sprintf(g_sql_buf[2], "attach '%s.db' as [%s]", iname, iname);
+    res = _sqlite_exec(g_sql_buf[2]);
+    if (_sqlite_error(res)) return NULL; 
+
+    /* create attributes table */
+    res = _create_sdf_attribute2(iname);
+    if (_sqlite_error(res)) {
+        sprintf(g_sql_buf[2], "detach '%s'", iname);
+        return NULL; 
+    }
+
+    *onamelen = namelen;
+    return iname;
+}
 /* checks if a column has a corresponding factor|ordered table */
 static int _is_factor2(const char *iname, const char *factor_type, const char *colname) {
     sqlite3_stmt *stmt;
@@ -203,38 +234,15 @@ static void _set_rownames2(SEXP df) {
 
 SEXP sdf_create_sdf(SEXP df, SEXP name) {
     SEXP ret;
-    char *rname, *iname; 
-    int file_idx = 0, namelen, res, i, j;
+    char *iname; 
+    int namelen, res, i, j;
 
-    namelen = _check_sdf_name(name, &rname, &iname, &file_idx);
-    if (!namelen) return R_NilValue;
-
-
-    /* at this point, iname will contain #{iname}.db */
-    _find_free_filename(rname, &iname, &namelen, &file_idx);
+    /* find free name, attach sdf, create sdf_attributes */
+    iname = _create_sdf_skeleton2(name, &namelen);
     
-    /* found a free number */
-    if (file_idx < 10000) {
-        /* create a sdf db file by running "attach" statement to non-existent
-         * db file
-         */
+    if (iname != NULL) {
         int sql_len, sql_len2;
         sqlite3_stmt *stmt;
-
-        iname[namelen] = 0;  /* remove ".db" */
-        sql_len = sprintf(g_sql_buf[0], "attach '%s.db' as %s", iname, iname);
-
-        res = _sqlite_exec(g_sql_buf[0]);
-        if (_sqlite_error(res)) return R_NilValue; /* duplicate dbname */
-            
-
-        /* 
-         * create tables for the sdf db
-         */
-
-        /* create sdf_attributes table */
-        res = _create_sdf_attribute2(iname);
-        if (_sqlite_error(res)) return R_NilValue;
 
         /* create sdf_data table */
         SEXP names = GET_NAMES(df), variable, levels;
@@ -286,7 +294,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
                     sqlite3_reset(stmt);
                     factor = CHAR(STRING_ELT(levels, j));
                     sqlite3_bind_int(stmt, 1, j+1);
-                    sqlite3_bind_text(stmt, 2, factor, strlen(factor), SQLITE_STATIC);
+                    sqlite3_bind_text(stmt, 2, factor, -1, SQLITE_STATIC);
                     sqlite3_step(stmt);
                 }
                 sqlite3_finalize(stmt);
@@ -359,7 +367,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         ret = _create_sdf_sexp(iname);
 
     } else {
-        Rprintf("ERROR: cannot find a free internal name for %s", rname);
+        Rprintf("ERROR: cannot find a free internal name.");
         ret = R_NilValue;
     }
         
@@ -601,35 +609,12 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
         } if (col_index_len > 1) {
             /* create a new SDF, logic similar to sdf_create_sdf */
 
-            /* we have to close the current statement so we can do
-             * edits in the db */
-            /* sqlite3_finalize(stmt); */
-
             /* find a new name. data<n> ? */
-            char *iname2, *rname2;
+            char *iname2;
             const char *colname;
-            int namelen, file_idx = 0, sql_len, sql_len2;
-            namelen = _check_sdf_name(R_NilValue, &rname2, &iname2, &file_idx);
+            int namelen, sql_len, sql_len2;
 
-            if (!namelen) return R_NilValue; 
-
-            _find_free_filename(rname2, &iname2, &namelen, &file_idx);
-
-            if (file_idx >= 10000) { 
-                Rprintf("Error: cannot find free SDF name.\n");
-                return R_NilValue;
-            }
-
-
-            /* create new db by attaching a non-existent file */
-            iname2[namelen] = 0; /* remove ".db" */
-            sprintf(g_sql_buf[1], "attach '%s.db' as %s", iname2, iname2);
-            res = _sqlite_exec(g_sql_buf[1]);
-            if (_sqlite_error(res)) return R_NilValue; 
-
-            /* create attributes table */
-            res = _create_sdf_attribute2(iname2);
-            if (_sqlite_error(res)) return R_NilValue; 
+            iname2 = _create_sdf_skeleton2(R_NilValue, &namelen);
 
             /* create sdf_data table */
             sql_len = sprintf(g_sql_buf[1], "create table [%s].sdf_data ([row name] text", iname2);
