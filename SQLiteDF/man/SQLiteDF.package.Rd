@@ -2,30 +2,14 @@
 \alias{SQLiteDF-package}
 \alias{SQLiteDF}
 \docType{package}
-\title{
-Utilities to store data into SQLite data frames.
-}
-\description{
-Not much really.
-}
+\title{ SQLite data frames }
+\description{ S3 and utility methods to implement SQLite data frames. }
 \details{
-\tabular{ll}{
-Package: \tab SQLiteDF\cr
-Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2006-06-09\cr
-License: \tab What license is it under?\cr
-}
+This package aims to transparently operate on data frames stored in
+SQLite databases.
 }
 \author{
 Miguel A. R. Manese
 Maintainer: Miguel A. R. Manese <jjonphl@gmail.com>
 }
-\references{
-NA
-}
 \keyword{ package }
-\seealso{
-}
-\examples{
-}

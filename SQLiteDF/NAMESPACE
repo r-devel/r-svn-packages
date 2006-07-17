@@ -1,5 +1,6 @@
 useDynLib(SQLiteDF)
 export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf)
+export(dupSdf,renameSdf)
 export(length);
 S3method(length, default)
 S3method(names, sqlite.data.frame)
@@ -16,3 +17,5 @@ S3method(as.double, sqlite.vector)
 S3method(as.character, sqlite.vector)
 S3method(as.logical, sqlite.vector)
 S3method(as.integer, sqlite.vector)
+S3method(Math, sqlite.vector)
+S3method(Summary, sqlite.vector)

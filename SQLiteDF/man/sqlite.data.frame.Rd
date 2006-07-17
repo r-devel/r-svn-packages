@@ -1,33 +1,89 @@
 \name{sqlite.data.frame}
 \alias{sqlite.data.frame}
 \alias{sdf}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{SQLite Data Frame}
-\description{ Creates an sqlite data frame (SDF) from ordinary data frame.  }
+\description{ Creates an sqlite data frame (SDF) from ordinary data frames.  }
 \usage{
 sqlite.data.frame(x, name=NULL)
 }
+\arguments{
+  \item{x}{The object to be coerced into a data frame which is then stored in a 
+SQLite database. \code{as.data.frame} is called first on x before creating
+the SDF database. }
+  \item{name}{The internal name of the SDF. If none is provided, a generic
+name \emph{data}<n> is used (e.g. data1, data2, etc). Each SDF should have a unique
+internal name and also be a valid R symbol. Numbers are appended to names in case of duplicates, 
+e.g. if name arg is \emph{iris}, and it already exists, then the
+new SDF will have a name \emph{iris1}. If it still exists, then the name
+will be \emph{iris2}, and so on. }
+}
 \details{
+SQLite data frames (SDF's) are data frames whose data are stored in a SQLite database.
+SQLite is an open source, powerful (considering its size), light weight data base engine.
+It stores each database (composed of tables, indices, etc.) in a single file. Since a
+single SDF occupies a whole database, each SDF will be contained in a single file.
 
+Each SDF file contains the following tables:
+\itemize{
+\item{sdf_attributes}{a key-value table that contains the SDF attributes. Currently,
+only \emph{name} is used representing the SDF's internal name.}
+\item{sdf_data}{contains the actual data. Factors and ordered variables are stored as
+integers. Their levels are stored in other tables. Numeric (real) are stored as double,
+characters as text and integers as int's. Currently, complex numbers are not supported.
+Column names correspond exactly to the variable names of the ordinary data frames. E.g.
+Petal.Length will have a column name Petal.Length in the table. This is possible
+because SQLite allows almost any kind of column name as long as it is quoted by 
+square brakets ([ ]). You're on your own if you try to be a smartass on this. Also,
+an extra column named \emph{row name} (with the space between the words), of type
+text is used to store the data frame row names is set as the table's primary key.
+So please don't use \emph{row name} as a variable name.}
+\item{[factor <colname>] and [ordered <colname>]}{stores the levels and level labels
+for each factor variable in the SDF. One such table will be created for every
+factor or ordered var, even if two variables share the same level labels. Besides
+storing the level data, it is used to mark a column as being a factor.}
+}
+
+SDF's are managed in a workspace separate from R's. When SQLiteDF is loaded, it searches
+for the file \code{workspace.db} in the current working directory. This file contains
+a list of SDF's created/used in the previous session (i.e. SQLiteDF sessions are automatically
+saved), including their full and relative path and attach information. 
+Workspace is managed using the SQLite engine
+by opening \code{workspace.db} as the main database and then attaching (SQLite's attach) the SDF's.
+Unfortunately, the number of attached databases is limited to 31 (actually 32, but 1 is reserved
+for the temp db). Therefore, SDF's are \emph{scored} according to the number of times
+it has been used. When the maximum allowed attachment is reached, the least used attached
+SDF's is detached and the needed one is attached in its place. The packaged SQLite3 static library 
+has been modified to have 31 maximum attachments, because the default is 10. 
+
+Back to when SQLiteDF is loaded, after opening \code{workspace.db}, the SDF's stored in the list
+are sorted according to their number of uses in the previous session and then the 
+first 30 are attached. The relative path is used for finding the SDF file. If the file
+cannot be found, it is deleted from the SQLiteDF workspace (with a warning message). The
+scores are then all reset.
+
+A sqlite.data.frame object is basically list with the following elements:
+\itemize{
+\item{iname}{the internal name of the SDF.}
+\item{row.names}{A sqlite.vector of mode character containing the row names of the SDF}
+\item{class}{The S3 class vector \code{c("sqlite.data.frame", "data.frame")}}
+}
 }
 \value{
-  \item{x}{The object to be converted into a data frame and then stored in a 
-SQLite database. }
-  \item{name}{The name of the SDF. If none is provided, a generic
-name \emph{data}<n> is used. Names will be appended with numbers to prevent
-duplicates. E.g. if name arg is \emph{iris}, and it already exists, then the
-new SDF will have a name \emph{iris1}. If it still exists, then the name
-will be \emph{iris2}, and so on.
+A S3 object representing the SDF. The SDF database will be created in the same directory
+with file name derived by appending the extension \emph{db} to the passed internal
+name, or the default internal name if none is provided.
 }
-}
-\references{ ~put references to the literature/web site here ~ }
 \author{Miguel A. R. Manese}
 \note{
-A SDF is created by creating a sqlite database, with the specified name
-as the filename with a db extension (e.g. data1.db). Each SDF is contained in
-a separate database. The name of the stored in the SDF.
+The full path is used to avoid attaching the same db which may have different relative path
+after the user changes directory after loading SQLiteDF (see \code{attachSdf}.
 }
-\seealso{ ~~objects to See Also as \code{\link{help}}, ~~~ }
+\seealso{
+    \code{\link[SQLiteDF]{lsSdf}}
+    \code{\link[SQLiteDF]{getSdf}}
+    \code{\link[SQLiteDF]{attachSdf}}
+    \code{\link[SQLiteDF]{detachSdf}}
+}
 \examples{
     library(datasets)
     iris.sdf <- sqlite.data.frame(iris)

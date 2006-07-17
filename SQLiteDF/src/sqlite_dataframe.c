@@ -80,7 +80,7 @@ char *_create_sdf_skeleton2(SEXP name, int *onamelen) {
 
     /* detach SDF's if necessary to attach this one. if file does not
      * exist, then a sqlite db will be created after we make our 1st table */
-    if (!USE_SDF(iname)) { _delete_sdf2(iname); return NULL; }
+    if (!USE_SDF(iname, FALSE)) { /* _delete_sdf2(iname); */ return NULL; }
 
 
     /* create attributes table */
@@ -255,6 +255,11 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         int ncols = GET_LENGTH(names), type, *types;
         char *col_name, *class, *factor;
 
+        /* variables for adding rownames */
+        SEXP rownames;
+        int nrows;
+        char *row_name;
+
         /* TODO: put constraints on table after inserting everything? */
 
 
@@ -308,29 +313,33 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         }
         
         _expand_buf(0,sql_len+35);
-        /* sql_len += sprintf(g_sql_buf[0]+sql_len, ", primary key([row name]));");*/
-        sql_len += sprintf(g_sql_buf[0]+sql_len, ");");
+        sql_len += sprintf(g_sql_buf[0]+sql_len, ", primary key([row name]));");
+        /* sql_len += sprintf(g_sql_buf[0]+sql_len, ");"); */
         res = _sqlite_exec(g_sql_buf[0]);
         if (_sqlite_error(res)) return R_NilValue; /* why? */
 
         /*
          * add the data in df to the sdf
          */
-        SEXP rownames = getAttrib(df, R_RowNamesSymbol);
-        int nrows = GET_LENGTH(rownames);
-        char *row_name;
+        rownames = getAttrib(df, R_RowNamesSymbol);
+        nrows = GET_LENGTH(rownames);
 
         sprintf(g_sql_buf[1]+sql_len2, ")");
         res = sqlite3_prepare(g_workspace, g_sql_buf[1], -1, &stmt, NULL);
 
         for (i = 0; i < nrows; i++) {
-            row_name = CHAR(STRING_ELT(rownames, i));
             sqlite3_reset(stmt);
 
-            if (*row_name)
-                sqlite3_bind_text(stmt, 1, row_name, strlen(row_name), SQLITE_STATIC);
-            else
-                sqlite3_bind_int(stmt, 1, i);
+            /* since this is coming from a real dataframe, we're assured that
+             * the rownames are unique */
+            if (IS_CHARACTER(rownames)) {
+                row_name = CHAR(STRING_ELT(rownames, i));
+                if (*row_name) /* if not empty string */
+                    sqlite3_bind_text(stmt, 1, row_name, strlen(row_name), SQLITE_STATIC);
+                else sqlite3_bind_int(stmt, 1, i);
+            } else if (IS_INTEGER(rownames)) {
+                sqlite3_bind_int(stmt, 1, INTEGER(rownames)[i]);
+            } else sqlite3_bind_int(stmt, 1, i);
 
             for (j = 0; j < ncols; j++) {
                 variable = VECTOR_ELT(df, j);
@@ -372,7 +381,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
 SEXP sdf_get_names(SEXP sdf) {
     char *iname;
     iname = SDF_INAME(sdf);
-    if (!USE_SDF(iname)) return R_NilValue;
+    if (!USE_SDF(iname, TRUE)) return R_NilValue;
 
     int len;
     len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
@@ -400,7 +409,7 @@ SEXP sdf_get_names(SEXP sdf) {
 SEXP sdf_get_length(SEXP sdf) {
     char *iname;
     iname  = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
-    if (!USE_SDF(iname)) return R_NilValue;
+    if (!USE_SDF(iname, TRUE)) return R_NilValue;
 
     int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
 
@@ -424,7 +433,7 @@ SEXP sdf_get_length(SEXP sdf) {
 /* get row count */
 SEXP sdf_get_row_count(SEXP sdf) {
     char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
-    if (!USE_SDF(iname)) return R_NilValue;
+    if (!USE_SDF(iname, TRUE)) return R_NilValue;
 
     char **out;
     int res, ncol, nrow;
@@ -470,7 +479,7 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
 SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
     SEXP ret = R_NilValue;
     char *iname = SDF_INAME(sdf);
-    if (!USE_SDF(iname)) return R_NilValue;
+    if (!USE_SDF(iname, TRUE)) return R_NilValue;
 
     sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
@@ -847,6 +856,152 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
         _set_rownames2(ret);
     } else if (ret != R_NilValue && col_index_len == 1) {
         ret = VECTOR_ELT(ret, 0);
+    }
+
+    return ret;
+}
+
+SEXP sdf_rbind(SEXP sdf, SEXP data) {
+    char *class = CHAR_ELT(data, 0);
+    char *iname = SDF_INAME(sdf), *colname;
+    SEXP ret = R_NilValue, col, names, levels;
+    int len, buflen, buflen2, i, j, res, type, nrows;
+    sqlite3_stmt *stmt;
+
+    if (strcmp(class,"data.frame") == 0) {
+        /* check table names, types. variables may not be in same order, as
+         * long as names and types are identical. */
+        names = GET_NAMES(data);
+        len = GET_LENGTH(names);
+
+        buflen = sprintf(g_sql_buf[0], "select 1");
+        for (i = 0; i < len; i++) {
+            _expand_buf(0, buflen + 100);
+            buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", CHAR_ELT(names, i));
+        }
+        _expand_buf(0, buflen + 100);
+        sprintf(g_sql_buf[0]+buflen, " from %s", iname);
+
+        res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
+        if (res != SQLITE_OK) { /* column name mismatch */
+            Rprintf("Error: column names should exactly match the names of the SDF.\n");
+            return ret;
+        }
+
+        /* now check the type */
+        sqlite3_step(stmt);
+        for (i = 0; i< len; i++) {
+            do { 
+                type = sqlite3_column_type(stmt, i+1); 
+            } while((type == SQLITE_NULL) && (sqlite3_step(stmt) != SQLITE_DONE));
+
+            if (type == SQLITE_NULL) {
+                Rprintf("Error: can't figure out type of col %d because all rows are NULL."
+                        " There is still a way to figure out type, but I'm bailing out.", i);
+                sqlite3_finalize(stmt);
+                return ret;
+            }
+
+            col = VECTOR_ELT(data, i);
+            class = CHAR_ELT(GET_CLASS(col),0);
+            if ((type == SQLITE_FLOAT && !IS_NUMERIC(col)) ||
+                (type == SQLITE_TEXT && !IS_CHARACTER(col)) ||
+                (type == SQLITE_INTEGER && !IS_INTEGER(col))) break;
+
+            /* additional tests for int */
+            if (type == SQLITE_INTEGER) {
+                colname = CHAR_ELT(names, i);
+
+                /* test if the sdf column is indeed a factor */
+                if (strcmp(class,"factor") == 0) {
+                    sqlite3_stmt *stmt2;
+                    if (!_is_factor2(iname, "factor", colname)) break;
+                    sprintf(g_sql_buf[1], "[%s].[factor %s]", iname, colname);
+                    nrows = _get_row_count2(g_sql_buf[1]);
+
+                    levels = GET_LEVELS(col);
+                    if (nrows < GET_LENGTH(levels)) {
+                        Rprintf("Error: The data frame variable %s has more levels than"
+                                " its SDF counterpart.\n", colname);
+                        break;
+                    }
+
+                    sprintf(g_sql_buf[2], "select label from %s ordered by level", g_sql_buf[1]);
+                    sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, NULL);
+                    
+                    for (j = 0; j < nrows; j++)  {
+                        sqlite3_step(stmt2);
+                        if (strcmp((char *)sqlite3_column_text(stmt2, 0), CHAR_ELT(levels, j)) == 0) {
+                            Rprintf("Error: Level label mismatch in variable %s, [%s] in data frame"
+                                    " vs [%s] in SDF.\n", colname, (char *)sqlite3_column_text(stmt2, 0),
+                                    CHAR_ELT(levels, j));
+                            break;
+                        }
+                    }
+
+                    if (j < nrows); break;
+
+                }  else if (strcmp(class,"ordered") == 0) { /* same with ordered */
+                    sqlite3_stmt *stmt2;
+                    if (!_is_factor2(iname, "ordered", colname)) break;
+                    sprintf(g_sql_buf[1], "[%s].[ordered %s]", iname, colname);
+                    nrows = _get_row_count2(g_sql_buf[1]);
+
+                    levels = GET_LEVELS(col);
+                    if (nrows < GET_LENGTH(levels)) {
+                        Rprintf("Error: The data frame variable %s has more levels than"
+                                " its SDF counterpart.\n", colname);
+                        break;
+                    }
+
+                    sprintf(g_sql_buf[2], "select label from %s ordered by level", g_sql_buf[1]);
+                    sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, NULL);
+                    
+                    for (j = 0; j < nrows; j++)  {
+                        sqlite3_step(stmt2);
+                        if (strcmp((char *)sqlite3_column_text(stmt2, 0), CHAR_ELT(levels, j)) == 0) {
+                            Rprintf("Error: Level label mismatch in variable %s, [%s] in data frame"
+                                    " vs [%s] in SDF.\n", colname, (char *)sqlite3_column_text(stmt2, 0),
+                                    CHAR_ELT(levels, j));
+                            break;
+                        }
+                    }
+
+                    if (j < nrows); break;
+
+                }  /* else if class == "ordered" */
+            } /* if integer */
+        } /* for loop for column type checking */
+
+        if (i < len) {
+            Rprintf("Error: type mismatch at variable %s\n", CHAR_ELT(names, i));
+            return ret;
+        }
+
+        /* create the insert statement */
+        buflen = sprintf(g_sql_buf[0], "insert into [%s].sdf_data([row name]", iname);
+        buflen2 = sprintf(g_sql_buf[1], "values(?");
+        for (i = 0; i < len; i++) {
+            _expand_buf(0, buflen+100);
+            buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", CHAR_ELT(names, i));
+            _expand_buf(1, buflen2+5);
+            buflen2 += sprintf(g_sql_buf[1]+buflen2, ",?");
+        }
+
+        _expand_buf(2, buflen + buflen2 + 10);
+        sprintf(g_sql_buf[2], "%s) %s", g_sql_buf[0], g_sql_buf[1]);
+        res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
+        if (_sqlite_error(res)) return ret;
+
+        /* finally, add rows */
+        nrows = LENGTH(GET_ROWNAMES(data));
+
+        for (i = 0; i < nrows; i++) {
+            
+        }
+
+
+    } else if (strcmp(class,"sqlite.data.frame") == 0) {
     }
 
     return ret;

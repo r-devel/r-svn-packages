@@ -78,7 +78,7 @@ as.integer.sqlite.vector <- function(x) as.integer(x[1:length(x)])
 Math.sqlite.vector <- function(x, ...) {
     if (any(inherits(x, "factor"), inherits(x, "ordered"))) 
         stop(paste(.Generic, "not meaningful for factors"));
-    if (!any(inherits(x, "numeric"), inherits(x, "integer"), inherits(x, "logical")))
+    if (!any(inherits(x, "numeric"), inherits(x, "integer")))
         stop("Non-numeric argument to mathematical function");
     #.Generic
     extra.args <- list(...);
@@ -88,6 +88,13 @@ Math.sqlite.vector <- function(x, ...) {
     if (nargs > nformals)
         stop("error in number of arguments\n");
     ret <- .Call("sdf_do_variable_math", .Generic, x, extra.args, nargs);
+    if (is.character(ret)) { file.remove(ret); ret <- NULL; }
+    ret;
+}
+Summary.sqlite.vector <- function(x, na.rm=F) {
+    if (!any(inherits(x, "numeric"), inherits(x, "integer"), inherits(x, "logical")))
+        stop("Non-numeric argument");
+    ret <- .Call("sdf_do_variable_summary", .Generic, x, as.logical(na.rm))
     if (is.character(ret)) { file.remove(ret); ret <- NULL; }
     ret;
 }

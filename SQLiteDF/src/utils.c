@@ -90,7 +90,7 @@ const char *_get_column_type(const char *class, int type) {
     else if (type == REALSXP) return "double";
     else if (type == CHARSXP) return "text";
     else if (type == LGLSXP) return "bit";
-    else if (strcmp(class, "factor") == 0) return "int";
+    else if (strcmp(class, "factor") == 0) return "int"; /* do I really reach this ? */
     else if (strcmp(class, "ordered") == 0) return "int";
     
     return NULL;
