@@ -1,3 +1,9 @@
+2006-07-24  Douglas Bates  <bates@douglas-bates-computer.local>
+
+	* R/lme.R: Patch by Andrew Robinson <A.Robinson@ms.unimelb.edu.au>
+	and Berwin Turlach <berwin@maths.uwa.edu.au> to set maximum number
+	of function calls in nlminb.
+
 2006-07-03  Douglas Bates  <Douglas.Bates@R-project.org>
 
 	* DESCRIPTION: Version is 3.1-75
