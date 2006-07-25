@@ -1288,7 +1288,7 @@ gam.method <- function(am="magic",gam="outer",outer="nlm",pearson=FALSE,family=N
   list(am=am,gam=gam,outer=outer,pearson=pearson)
 }
 
-gam.outer <- function(lsp,fscale,family,control,method,gamma,G)
+gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
 # P-IRLS scheme iterated to convergence for each trial set of smoothing
 # parameters.
@@ -1297,9 +1297,9 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G)
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim, G=G,family=family,control=control,
-            gamma=gamma,pearson=method$pearson)
+            gamma=gamma,pearson=method$pearson,...)
     lsp<-um$estimate
-    object<-attr(full.score(lsp,G,family,control,gamma=gamma,pearson=method$pearson),"full.gam.object")
+    object<-attr(full.score(lsp,G,family,control,gamma=gamma,pearson=method$pearson,...),"full.gam.object")
     object$gcv.ubre <- um$minimum
     object$outer.info <- um
   } else { ## methods calling gam.fit2
@@ -1320,15 +1320,15 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G)
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim,
 	    check.analyticals=control$nlm$check.analyticals,
-            args=args)
+            args=args,...)
       lsp <- b$estimate
 
     } else if (method$outer=="optim") {
       b<-optim(par=lsp,fn=gam2objective,gr=gam2derivative,method="L-BFGS-B",control=
-         list(fnscale=fscale,factr=control$optim$factr,lmm=min(5,length(lsp))),args=args)
+         list(fnscale=fscale,factr=control$optim$factr,lmm=min(5,length(lsp))),args=args,...)
       lsp <- b$par
     }
-    obj <- gam2objective(lsp,args,printWarn=TRUE) # final model fit, with warnings 
+    obj <- gam2objective(lsp,args,printWarn=TRUE,...) # final model fit, with warnings 
     object <- attr(obj,"full.fit")
     object$outer.info <- b
     object$gcv.ubre <- as.numeric(obj)
@@ -1352,7 +1352,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G)
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 control=gam.control(),method=gam.method(),
-                scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,G=NULL,...)
+                scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,G=NULL,in.out=NULL,...)
 
 # Routine to fit a GAM to some data. The model is stated in the formula, which is then 
 # interpreted to figure out which bits relate to smooth terms and which to parametric terms.
@@ -1391,6 +1391,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  H=H,fit.method=fit.method,parametric.only=FALSE,absorb.cons=control$absorb.cons,
                  max.tprs.knots=control$max.tprs.knots)
     
+    G$family <- family
+   
     if (ncol(G$X)>nrow(G$X)+nrow(G$C)) stop("Model has more coefficients than data")
 
     G$terms<-terms;G$pterms<-pterms
@@ -1424,38 +1426,45 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   outer.looping <- !G$am && (method$gam=="perf.outer"||method$gam=="outer") &&
                     length(G$S)>0 && sum(G$sp<0)!=0
 
-  # take only a few IRLS step to get scale estimates for "pure" outer
+  # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
     
   if (outer.looping && method$gam=="outer") fixedSteps <- control$outerPIsteps else 
       fixedSteps <- control$globit+control$maxit+2
   
-  object<-gam.fit(G,family=family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
+  if (outer.looping && method$gam=="outer" && !is.null(in.out)) { # initial s.p.s and scale provided
+    ok <- TRUE ## run a few basic checks
+    if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
+    if (length(in.out$sp)!=length(G$all.sp)) ok <- FALSE
+    if (!ok) stop("in.out incorrect: see documentation")
+    object<-list() # fake enough of a returned fit object for initialization 
+    object$sp <- in.out$sp[G$all.sp<0] # only use the values for free s.p.s
+    object$gcv.ubre <- in.out$scale
+    object$sig2 <- 0 ## just means that in.out$scale acts as total scale
+  } else ## do performance iteration.... 
+  object<-gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
   
-  if (!is.null(sp)) # fill returned s.p. array with estimated and supplied terms
-  { temp.sp<-object$sp
-    object$sp<-sp
-    object$sp[sp<0]<-temp.sp
-  }
+  # fill returned s.p. array with estimated and supplied terms
+  temp.sp<-object$sp
+  object$sp<-G$all.sp
+  object$sp[G$all.sp<0]<-temp.sp
    
-  # mgcv.conv<-object$mgcv.conv
    
   if (outer.looping)
-  { # use perf.iter s.p. estimates from gam.fit as starting values...
+  { # use perf.iter s.p. estimates from gam.fit or supplied initial s.p.s as starting values...
     lsp<-log(object$sp[G$all.sp<0]) # make sure only free s.p.s are optimized!
-    # don't allow initial sp's too far from defaults, otherwise optimizers may
+    # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
-    if (method$gam!="perf.outer") { 
+    if (method$gam!="perf.outer"&&is.null(in.out)) { ## note no checks if supplied 
       lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
       ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
       ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
       if (fixedSteps<1) lsp <- lsp2 ## don't use perf iter sp's at all
     }
-   # temp.sp <-object$sp # keep copy off all sp's
     mgcv.conv <- object$mgcv.conv  
   
-    object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(object$y),family=family,
-                        control=control,method=method,gamma=gamma,G=G)
+    object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(G$y),family=G$family,
+                        control=control,method=method,gamma=gamma,G=G,...)
     object$mgcv.conv <- mgcv.conv 
     temp.sp <- G$all.sp
     temp.sp[G$all.sp<0] <- object$sp # copy estimated sp's into whole vector
@@ -1465,7 +1474,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   ## correct null deviance if there's an offset ....
 
   if (G$intercept&&any(G$offset)) object$null.deviance <-
-                                  glm(G$y~offset(G$offset),family=family)$deviance
+                                  glm(G$y~offset(G$offset),family=G$family)$deviance
 
   if (G$sig2<0) object$method <- "GCV" else object$method <- "UBRE"
 
@@ -1671,7 +1680,7 @@ mgcv.find.theta<-function(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,tol)
 }
 
 
-full.score <- function(sp,G,family,control,gamma,pearson)
+full.score <- function(sp,G,family,control,gamma,pearson,...)
 # function suitable for calling from nlm in order to polish gam fit
 # so that actual minimum of score is found in generalized cases
 { G$sp<-exp(sp);
@@ -1684,7 +1693,7 @@ full.score <- function(sp,G,family,control,gamma,pearson)
     G$H[off1:off2,off1:off2]<-G$H[off1:off2,off1:off2]+G$sp[i]*G$S[[i]]
   }
   G$S<-list() # have to reset since length of this is used as number of penalties
-  xx<-gam.fit(G,family=family,control=control,gamma=gamma)
+  xx<-gam.fit(G,family=family,control=control,gamma=gamma,...)
   if (pearson) res <- xx$gcv.ubre else res <- xx$gcv.ubre.dev
   attr(res,"full.gam.object")<-xx
   res
@@ -1693,7 +1702,7 @@ full.score <- function(sp,G,family,control,gamma,pearson)
 gam.fit <- function (G, start = NULL, etastart = NULL, 
     mustart = NULL, family = gaussian(), 
     control = gam.control(),gamma=1,
-    fixedSteps=(control$maxit+control$globit+1)) 
+    fixedSteps=(control$maxit+control$globit+1),...) 
 # fitting function for a gam, modified from glm.fit.
 # note that smoothing parameter estimates from one irls iterate are carried over to the next irls iterate
 # unless the range of s.p.s is large enough that numerical problems might be encountered (want to avoid 
