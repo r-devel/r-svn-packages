@@ -619,6 +619,11 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
     if (is.null(k)) ok <- FALSE
     else ok<-TRUE
   }
+  
+  if (object$bs.dim <3) { object$bs.dim <- 3
+    warning("basis dimension, k, increased to minimum possible\n")
+  }
+
   nk <- object$bs.dim
   if (!ok) { k <- rep(0,nk);k[2]<- -1}
   
@@ -717,6 +722,11 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   # evaluate covariate, x, and knots, k.
   x <- get.var(object$term,data)
   nx<-length(x)
+
+  if (object$bs.dim <4) { object$bs.dim <- 4
+    warning("basis dimension, k, increased to minimum possible\n")
+  }
+
   nk <- object$bs.dim
   if (!is.null(knots))  k <- get.var(object$term,knots)
   else k<-NULL
