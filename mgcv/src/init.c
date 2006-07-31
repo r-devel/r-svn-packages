@@ -1,5 +1,6 @@
 /* Symbol registration initialization: original provided by Brian Ripley.
-   Anything called from R should be registered here. (See also NAMESPACE:1)
+   Anything called from R should be registered here (and declared in mgcv.h).
+   (See also NAMESPACE:1)
  */ 
 #include <R.h>
 #include <Rinternals.h>
@@ -18,6 +19,7 @@ R_CMethodDef CEntries[] = {
     {"predict_tprs", (DL_FUNC) &predict_tprs, 12},
     {"MinimumSeparation", (DL_FUNC) &MinimumSeparation, 7},
     {"magic", (DL_FUNC) &magic, 16},
+    {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
     {NULL, NULL, 0}
 };
 
