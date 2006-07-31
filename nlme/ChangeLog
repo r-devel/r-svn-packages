@@ -1,4 +1,9 @@
-2006-07-24  Douglas Bates  <bates@douglas-bates-computer.local>
+2006-07-31  Douglas Bates  <Douglas.Bates@R-project.org>
+
+	* man/ranef.lme.Rd: Modified the description of the `standard'
+	argument to more clearly describe its effect.
+
+2006-07-24  Douglas Bates  <Douglas.Bates@R-project.org>
 
 	* R/lme.R: Patch by Andrew Robinson <A.Robinson@ms.unimelb.edu.au>
 	and Berwin Turlach <berwin@maths.uwa.edu.au> to set maximum number
