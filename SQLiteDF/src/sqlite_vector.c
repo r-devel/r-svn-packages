@@ -2,6 +2,110 @@
 #include <math.h>
 #include "Rmath.h"
 
+/****************************************************************************
+ * UTILITY FUNCTIONS
+ ****************************************************************************/
+static char *_create_svector1(SEXP name, const char *type, int * _namelen) {
+    int namelen, res;
+    char *iname = _create_sdf_skeleton1(name, &namelen);
+
+    if (iname == NULL) return NULL;
+
+    sprintf(g_sql_buf[2], "create table [%s].sdf_data ([row name] text, "
+            "V1 %s, primary key ([row name]))", iname, type);
+    res = _sqlite_exec(g_sql_buf[2]);
+    _sqlite_error(res);
+
+    if (_namelen != NULL) *_namelen = namelen;
+    return iname;
+}
+
+static SEXP _create_svector_sexp(const char *iname, const char *varname, 
+        const char *type) {
+    SEXP ret, value; int nprotected = 0;
+    PROTECT(ret = NEW_LIST(2)); nprotected++;
+
+    /* set list names */
+    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    SET_STRING_ELT(value, 0, mkChar("iname"));
+    SET_STRING_ELT(value, 1, mkChar("varname"));
+    SET_NAMES(ret, value);
+
+    /* set list values */
+    SET_VECTOR_ELT(ret, 0, mkString(iname));
+    SET_VECTOR_ELT(ret, 1, mkString(varname));
+
+    /* set sexp class */
+    if (strcmp(type, "ordered") == 0) {
+        PROTECT(value = NEW_CHARACTER(3)); nprotected++;
+        SET_VECTOR_ELT(value, 0, mkChar("sqlite.vector"));
+        SET_VECTOR_ELT(value, 1, mkChar(type));
+        SET_VECTOR_ELT(value, 2, mkChar("factor"));
+    } else {
+        PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+        SET_VECTOR_ELT(value, 0, mkChar("sqlite.vector"));
+        SET_VECTOR_ELT(value, 1, mkChar(type));
+        SET_CLASS(ret, value);
+    }
+
+    UNPROTECT(nprotected);
+
+    return ret;
+}
+
+/* if ret == NULL, 3rd arg is the length of the vector created. otherwise
+ * it is the index in the vector ret where we will put the result extracted
+ * from ret */
+int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len) {
+    int added = 1;
+    if (*ret == NULL || *ret == R_NilValue) {
+        const char *coltype = sqlite3_column_decltype(stmt, 0);
+        if (sqlite3_column_type(stmt, 0) == SQLITE_NULL) {
+            added = 0;
+        }
+        
+        if (strcmp(coltype, "text") == 0) {
+            PROTECT(*ret = NEW_CHARACTER(idx_or_len));
+            if (added) 
+                SET_STRING_ELT(*ret, 0, mkChar((char *)sqlite3_column_text(stmt, 0)));
+        } else if (strcmp(coltype, "double") == 0) {
+            PROTECT(*ret = NEW_NUMERIC(idx_or_len));
+            if (added) REAL(*ret)[0] = sqlite3_column_double(stmt, 0);
+        } else if (strcmp(coltype, "bit") == 0) {
+            PROTECT(*ret = NEW_LOGICAL(idx_or_len));
+            if (added) INTEGER(*ret)[0] = sqlite3_column_int(stmt, 0);
+        } else if (strcmp(coltype, "integer") == 0 || 
+                   strcmp(coltype, "int") == 0) {
+            /* caller should just copy off the vars level attr for factors */
+            PROTECT(*ret = NEW_INTEGER(idx_or_len));
+            if (added) INTEGER(*ret)[0] = sqlite3_column_int(stmt, 0);
+        } else added = 0;
+
+        UNPROTECT(1);
+    } else {
+        const char *coltype = sqlite3_column_decltype(stmt, 0);
+        if (sqlite3_column_type(stmt, 0) == SQLITE_NULL) {
+            added = 0;
+        } else if (strcmp(coltype, "text") == 0) {
+            SET_STRING_ELT(*ret, idx_or_len, 
+                    mkChar((char *)sqlite3_column_text(stmt, 0)));
+        } else if (strcmp(coltype, "double") == 0) {
+            REAL(*ret)[idx_or_len] = sqlite3_column_double(stmt, 0);
+        } else if (strcmp(coltype, "bit") == 0) {
+            INTEGER(*ret)[idx_or_len] = sqlite3_column_int(stmt, 0);
+        } else if (strcmp(coltype, "integer") == 0 ||
+                   strcmp(coltype, "int") == 0) {
+            /* caller should just copy off the vars level attr for factors */
+            INTEGER(*ret)[idx_or_len] = sqlite3_column_int(stmt, 0);
+        } else added = 0;
+    }
+        
+    return added;
+}
+
+/****************************************************************************
+ * SVEC FUNCTIONS
+ ****************************************************************************/
 SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     if (!IS_CHARACTER(name)) {
         Rprintf("ERROR: argument is not a string.\n");
@@ -11,7 +115,7 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     char *iname = SDF_INAME(sdf);
     char *varname = CHAR_ELT(name, 0);
 
-    if (!USE_SDF(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
 
     /* check if sdf & varname w/in that sdf exists */
     sqlite3_stmt *stmt;
@@ -71,61 +175,14 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
 
 }
 
-int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len) {
-    int added = 1;
-    if (*ret == NULL || *ret == R_NilValue) {
-        const char *coltype = sqlite3_column_decltype(stmt, 0);
-        if (sqlite3_column_type(stmt, 0) == SQLITE_NULL) {
-            added = 0;
-        }
-        
-        if (strcmp(coltype, "text") == 0) {
-            PROTECT(*ret = NEW_CHARACTER(idx_or_len));
-            if (added) 
-                SET_STRING_ELT(*ret, 0, mkChar((char *)sqlite3_column_text(stmt, 0)));
-        } else if (strcmp(coltype, "double") == 0) {
-            PROTECT(*ret = NEW_NUMERIC(idx_or_len));
-            if (added) REAL(*ret)[0] = sqlite3_column_double(stmt, 0);
-        } else if (strcmp(coltype, "bit") == 0) {
-            PROTECT(*ret = NEW_LOGICAL(idx_or_len));
-            if (added) INTEGER(*ret)[0] = sqlite3_column_int(stmt, 0);
-        } else if (strcmp(coltype, "integer") == 0 || 
-                   strcmp(coltype, "int") == 0) {
-            /* caller should just copy off the vars level attr for factors */
-            PROTECT(*ret = NEW_INTEGER(idx_or_len));
-            if (added) INTEGER(*ret)[0] = sqlite3_column_int(stmt, 0);
-        } else added = 0;
-
-        UNPROTECT(1);
-    } else {
-        const char *coltype = sqlite3_column_decltype(stmt, 0);
-        if (sqlite3_column_type(stmt, 0) == SQLITE_NULL) {
-            added = 0;
-        } else if (strcmp(coltype, "text") == 0) {
-            SET_STRING_ELT(*ret, idx_or_len, 
-                    mkChar((char *)sqlite3_column_text(stmt, 0)));
-        } else if (strcmp(coltype, "double") == 0) {
-            REAL(*ret)[idx_or_len] = sqlite3_column_double(stmt, 0);
-        } else if (strcmp(coltype, "bit") == 0) {
-            INTEGER(*ret)[idx_or_len] = sqlite3_column_int(stmt, 0);
-        } else if (strcmp(coltype, "integer") == 0 ||
-                   strcmp(coltype, "int") == 0) {
-            /* caller should just copy off the vars level attr for factors */
-            INTEGER(*ret)[idx_or_len] = sqlite3_column_int(stmt, 0);
-        } else added = 0;
-    }
-        
-    return added;
-}
 
 SEXP sdf_get_variable_length(SEXP svec) {
     char *iname = SDF_INAME(svec);
-    if (!USE_SDF(iname, TRUE)) return R_NilValue;
-    sprintf(g_sql_buf[0], "[%s].sdf_data", iname);
+    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
 
     SEXP ret;
     PROTECT(ret = NEW_INTEGER(1));
-    INTEGER(ret)[0] = _get_row_count2(g_sql_buf[0]);
+    INTEGER(ret)[0] = _get_row_count2(iname, 1);
     UNPROTECT(1);
     return ret;
 }
@@ -135,15 +192,9 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
     char *iname = SDF_INAME(svec), *varname = SVEC_VARNAME(svec);
     int index, idxlen, i, retlen=0, res;
-
-    if (!USE_SDF(iname, TRUE)) return R_NilValue;
-
-    /* check if sdf exists */
     sqlite3_stmt *stmt;
-    sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data", varname, iname);
-    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
-    sqlite3_finalize(stmt);
-    if (_sqlite_error(res)) { return ret; }
+
+    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
 
     idxlen = LENGTH(idx);
     if (idxlen < 1) return ret;
@@ -168,10 +219,15 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
         if (index < 0 || res != SQLITE_ROW) {
             /* something wrong w/ 1st idx, and it is quietly ignored. we make 
              * a "dummy" call to setup the SEXP */
+            sqlite3_reset(stmt);
             sqlite3_bind_int(stmt, 1, 0);
-            _get_vector_index_typed_result(stmt, &ret, idxlen - 1);
+            res = sqlite3_step(stmt);
+            if (res == SQLITE_ROW) {
+                _get_vector_index_typed_result(stmt, &ret, idxlen - 1);
+            }
             retlen = 0;
         }
+
 
         if (idxlen > 1) {
             for (i = 1; i < idxlen; i++) {
@@ -201,8 +257,12 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
         if (index < 0 || res != SQLITE_ROW) {
             /* something wrong w/ 1st idx, and it is quietly ignored. we make 
              * a "dummy" call to setup the SEXP */
+            sqlite3_reset(stmt);
             sqlite3_bind_int(stmt, 1, 0);
-            _get_vector_index_typed_result(stmt, &ret, idxlen - 1);
+            res = sqlite3_step(stmt);
+            if (res == SQLITE_ROW) {
+                _get_vector_index_typed_result(stmt, &ret, idxlen - 1);
+            }
             retlen = 0;
         }
 
@@ -219,8 +279,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
 
     } else if (IS_LOGICAL(idx)) {
         /* have to deal with recycling */
-        sprintf(g_sql_buf[0], "[%s].sdf_data", iname);
-        int veclen = _get_row_count2(g_sql_buf[0]);
+        int veclen = _get_row_count2(iname, 1);
 
         /* find if there is any TRUE element in the vector */
         for (i = 0; i < idxlen && i < veclen; i++) {
@@ -273,6 +332,26 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     return ret;
 }
 
+/* sqlite.vector.[<- */
+SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value) {
+    int idx_len, val_len;
+
+    /* match levels if factor or ordered */
+    if (inherits(value, "ordered")) {
+    } else if (inherits(value, "factor")) {
+    }
+
+    idx_len = LENGTH(idx);
+    val_len = LENGTH(value);
+
+    if (IS_NUMERIC(idx)) {
+    } else if (IS_INTEGER(idx)) {
+    } else if (IS_LOGICAL(idx)) {
+    }
+
+    return R_NilValue;
+}
+
 /* the global accumulator should be safe if we only do 1 cummulative or
  * aggregate at any time. it won't work for stuffs like "select max(col)-min(col)
  * from sdf_data". */
@@ -291,7 +370,7 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     varname_src = SVEC_VARNAME(vector);
     nargs = INTEGER(_nargs)[0];
 
-    if (!USE_SDF(iname_src, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
 
     /* check nargs */
     if (nargs > 2) {
@@ -300,13 +379,7 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     }
 
     /* create a new sdf, with 1 column named V1 */
-    iname = _create_sdf_skeleton2(R_NilValue, &namelen);
-    if (iname == NULL) return R_NilValue;
-
-    sprintf(g_sql_buf[0], "create table [%s].sdf_data ([row name] text, "
-            "V1 double)", iname);
-    res = _sqlite_exec(g_sql_buf[0]);
-    _sqlite_error(res);
+    iname = _create_svector1(R_NilValue, "double", &namelen);
 
     /* insert into <newsdf>.col, row.names select func(col), rownames */
     sprintf(g_sql_buf[0], "insert into [%s].sdf_data([row name], V1) "
@@ -329,29 +402,404 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
-    /* create sqlite.vector sexp */
-    SEXP ret, value; int nprotected = 0;
-    PROTECT(ret = NEW_LIST(2)); nprotected++;
+    return _create_svector_sexp(iname, "V1", "numeric");
+}
 
-    /* set list names */
-    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
-    SET_STRING_ELT(value, 0, mkChar("iname"));
-    SET_STRING_ELT(value, 1, mkChar("varname"));
-    SET_NAMES(ret, value);
+SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
+    char *iname = NULL, *iname_src, *varname_src, *funcname;
+    int res, functype = -1, op2_len, svec_len, i;
+    sqlite3_stmt *stmt, *stmt2;
 
-    /* set list values */
-    SET_VECTOR_ELT(ret, 0, mkString(iname));
-    SET_VECTOR_ELT(ret, 1, mkString("V1"));
+    /* get data from arguments (function name and sqlite.vector stuffs) */
+    funcname = CHAR_ELT(func, 0);
+    iname_src = SDF_INAME(vector);
+    varname_src = SVEC_VARNAME(vector);
 
-    /* set sexp class */
-    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
-    SET_VECTOR_ELT(value, 0, mkChar("sqlite.vector"));
-    SET_VECTOR_ELT(value, 1, mkChar("numeric"));
-    SET_CLASS(ret, value);
+    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
+    switch(funcname[0]) {
+        case '+' :
+        case '-' :
+        case '*' :
+        case '/' :
+        case '^' :
+        case '%' : /* %% and %/% */ 
+            functype = 0; break;  /* output is REAL */
+        case '&' :
+        case '|' :
+        case '!' :  /* ! and != */
+            if (funcname[1] == 0) { functype = 1; break; }
+        case '=' :  /* == */
+        case '<' :  /* < and <= */
+        case '>' :  /* > and >= */
+            functype = 2; 
+    }
 
-    UNPROTECT(nprotected);
+    svec_len = _get_row_count2(iname_src, 1);
+    if (functype == 0 || functype == 2 || (functype == 1 && funcname[0] != '!')) {
+        char *insert_fmt_string1c, *insert_fmt_string1s;
+        char *insert_fmt_string2c, *insert_fmt_string2s;
+        iname = _create_svector1(R_NilValue, (functype == 0) ? "double" : "bit", NULL);
 
-    return ret;
+        if (functype == 1) { /* boolean binary operators */
+            insert_fmt_string1s = "insert into [%s].sdf_data "
+                        "select [row name], ([%s] != 0) %s (? != 0) from [%s].sdf_data";
+            insert_fmt_string2s = "insert into [%s].sdf_data values(?, (? != 0) %s (? != 0))";
+            /* no need for char version of fmt_string2, since %% only occurs for functype==0 */
+            insert_fmt_string1c = insert_fmt_string1s;
+            insert_fmt_string2c = insert_fmt_string2s;
+        } else {
+            insert_fmt_string1s = "insert into [%s].sdf_data "
+                        "select [row name], [%s] %s ? from [%s].sdf_data";
+            insert_fmt_string1c = "insert into [%s].sdf_data "
+                        "select [row name], [%s] %c ? from [%s].sdf_data";
+            /* fmt_string2c format operator from a char, used for %% and %/% */
+            /* BUG: i'm casting to int before applying / & %, w/c is different
+             * from R. added trunc to pass package test */
+            insert_fmt_string2c = "insert into [%s].sdf_data values(?, trunc(? %c ?))";
+            insert_fmt_string2s = "insert into [%s].sdf_data values(?, ? %s ?)";
+        }
+
+
+        if (IS_NUMERIC(op2)) {
+            op2_len = LENGTH(op2);
+
+            if (op2_len == 1) {
+                if (funcname[0] == '%') {
+                    sprintf(g_sql_buf[2], insert_fmt_string1c, iname, 
+                            varname_src, funcname[1], iname_src);
+                } else {
+                    sprintf(g_sql_buf[2], insert_fmt_string1s, iname,
+                            varname_src, funcname, iname_src);
+                }
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+                sqlite3_bind_double(stmt, 1, REAL(op2)[0]);
+                sqlite3_step(stmt);
+            } else if (op2_len <= svec_len) {  /* recycle op2 */
+                sprintf(g_sql_buf[2], "select [row name], [%s] from [%s].sdf_data",
+                        varname_src, iname_src);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+                _sqlite_error(res);
+
+                if (funcname[0] == '%') {
+                    /* sqlite does int div with "/" if both args are int. mod is % also.
+                     * fortunately, in both cases the sqlite op is 2nd char of funcname */
+                    sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+
+                    for (i = 0; i < svec_len; i++) {
+                        sqlite3_step(stmt2);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_text(stmt, 1, (char *)sqlite3_column_text(stmt2, 0), -1, SQLITE_STATIC);
+                        sqlite3_bind_int(stmt, 2, (int)sqlite3_column_double(stmt2, 1));
+                        sqlite3_bind_int(stmt, 3, (int)REAL(op2)[i % op2_len]);
+                        sqlite3_step(stmt);
+                    }
+                } else { /* non-integer binary operation */
+                    sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+
+                    for (i = 0; i < svec_len; i++) {
+                        sqlite3_step(stmt2);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_text(stmt, 1, (char *)sqlite3_column_text(stmt2, 0), -1, SQLITE_STATIC);
+                        sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 1));
+                        sqlite3_bind_double(stmt, 3, REAL(op2)[i % op2_len]);
+                        sqlite3_step(stmt);
+                    }
+                }
+                sqlite3_finalize(stmt2);
+            } else { /* op2_len > svec_len, recycle svec */
+                sprintf(g_sql_buf[1], "select [%s] from [%s].sdf_data",
+                        varname_src, iname_src);
+
+                if (funcname[0] == '%') {
+                    sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+                } else {
+                    sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+                }
+               
+                i = 0;
+                while (i < op2_len) {
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+                    _sqlite_error(res);
+
+                    if (funcname[0] == '%') {
+                        for ( ; i < op2_len && sqlite3_step(stmt) == SQLITE_ROW ; i++) {
+                            sqlite3_step(stmt2);
+
+                            sqlite3_reset(stmt);
+                            /* simplify my life, just use ints for row names so that we
+                             * don't have to worry about duplicates */
+                            sqlite3_bind_int(stmt, 1, i); 
+                            sqlite3_bind_int(stmt, 2, sqlite3_column_int(stmt2, 1));
+                            sqlite3_bind_int(stmt, 3, (int)REAL(op2)[i % op2_len]);
+                            sqlite3_step(stmt);
+                        }
+                    } else {
+                        for ( ; i < op2_len && sqlite3_step(stmt) == SQLITE_ROW ; i++) {
+                            sqlite3_step(stmt2);
+
+                            sqlite3_reset(stmt);
+                            sqlite3_bind_int(stmt, 1, i);
+                            sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 1));
+                            sqlite3_bind_double(stmt, 3, REAL(op2)[i % op2_len]);
+                            sqlite3_step(stmt);
+                        }
+                    }
+
+                    /* recycle on svec if we loop again */
+                    sqlite3_finalize(stmt2);
+                }
+            }
+
+            sqlite3_finalize(stmt);
+        } else if (IS_INTEGER(op2) || IS_LOGICAL(op2)) { /* I N T E G E R */
+            /* we are taking advantage of the fact that logicals are stored as int.
+             * if this becomes untrue in the future, then this is a bug */
+            op2_len = LENGTH(op2);
+
+            if (op2_len == 1) {
+                if (funcname[0] == '%') {
+                    sprintf(g_sql_buf[2], insert_fmt_string1c, iname, 
+                            varname_src, funcname[1], iname_src);
+                } else {
+                    sprintf(g_sql_buf[2], insert_fmt_string1s, iname,
+                            varname_src, funcname, iname_src);
+                }
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+                sqlite3_bind_double(stmt, 1, (double)INTEGER(op2)[0]);
+                sqlite3_step(stmt);
+            } else if (op2_len <= svec_len) {
+                sprintf(g_sql_buf[2], "select [row name], [%s] from [%s].sdf_data",
+                        varname_src, iname_src);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+                _sqlite_error(res);
+
+                if (funcname[0] == '%') {
+                    /* sqlite does int div with "/" if both args are int. mod is % also.
+                     * fortunately, in both cases the sqlite op is 2nd char of funcname */
+                    sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+
+                    for (i = 0; i < svec_len; i++) {
+                        sqlite3_step(stmt2);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_text(stmt, 1, (char *)sqlite3_column_text(stmt2, 0), -1, SQLITE_STATIC);
+                        sqlite3_bind_int(stmt, 2, sqlite3_column_int(stmt2, 1));
+                        sqlite3_bind_int(stmt, 3, INTEGER(op2)[i % op2_len]);
+                        sqlite3_step(stmt);
+                    }
+                } else {
+                    sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+
+                    for (i = 0; i < svec_len; i++) {
+                        sqlite3_step(stmt2);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_text(stmt, 1, (char *)sqlite3_column_text(stmt2, 0), -1, SQLITE_STATIC);
+                        sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 1));
+                        sqlite3_bind_double(stmt, 3, (double)INTEGER(op2)[i % op2_len]);
+                        sqlite3_step(stmt);
+                    }
+                }
+                sqlite3_finalize(stmt2);
+            } else {
+                sprintf(g_sql_buf[1], "select [%s] from [%s].sdf_data",
+                        varname_src, iname_src);
+
+                if (funcname[0] == '%') {
+                    sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+                } else {
+                    sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                    _sqlite_error(res);
+                }
+               
+                i = 0;
+                while (i < op2_len) {
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+                    _sqlite_error(res);
+
+                    if (funcname[0] == '%') {
+                        for ( ; i < op2_len && sqlite3_step(stmt) == SQLITE_ROW ; i++) {
+                            sqlite3_step(stmt2);
+
+                            sqlite3_reset(stmt);
+                            /* simplify my life, just use ints for row names so that we
+                             * don't have to worry about duplicates */
+                            sqlite3_bind_int(stmt, 1, i); 
+                            sqlite3_bind_int(stmt, 2, sqlite3_column_int(stmt2, 1));
+                            sqlite3_bind_int(stmt, 3, INTEGER(op2)[i % op2_len]);
+                            sqlite3_step(stmt);
+                        }
+                    } else {
+                        for ( ; i < op2_len && sqlite3_step(stmt) == SQLITE_ROW ; i++) {
+                            sqlite3_step(stmt2);
+
+                            sqlite3_reset(stmt);
+                            sqlite3_bind_int(stmt, 1, i);
+                            sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 1));
+                            sqlite3_bind_double(stmt, 3, (double)INTEGER(op2)[i % op2_len]);
+                            sqlite3_step(stmt);
+                        }
+                    }
+
+                    /* recycle on svec if we loop again */
+                    sqlite3_finalize(stmt2);
+                }
+            }
+
+            sqlite3_finalize(stmt);
+        } else if (inherits(op2, "sqlite.vector")) { 
+            /* op2 is surely not a factor, as handled by the R wrapper */
+            char *iname_op2, *varname_op2;
+            sqlite3_stmt *stmt3;
+            iname_op2 = SDF_INAME(op2);
+            varname_op2 = SVEC_VARNAME(op2);
+
+            if (!USE_SDF1(iname_op2, TRUE)) {
+                /* delete created sqlite.vector */
+                Rprintf("Warning: detaching created result SDF %s\n", iname);
+                sdf_detach_sdf(mkString(iname));
+                return R_NilValue;
+            }
+
+            op2_len = _get_row_count2(iname_op2, 1);
+            
+            sprintf(g_sql_buf[2], "select [%s] from [%s].sdf_data", varname_src, iname_src);
+            res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+            _sqlite_error(res);
+
+            sprintf(g_sql_buf[2], "select [%s] from [%s].sdf_data", varname_op2, iname_op2);
+            res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt3, 0);
+            _sqlite_error(res);
+
+            if (funcname[0] == '%') {
+                sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+
+                if (svec_len == op2_len) {
+                    for (i = 0; i < svec_len; i++) {
+                        sqlite3_step(stmt2); sqlite3_step(stmt3);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_int(stmt, 1, i);
+                        sqlite3_bind_int(stmt, 2, sqlite3_column_int(stmt2, 0));
+                        sqlite3_bind_int(stmt, 3, sqlite3_column_int(stmt3, 0));
+                        sqlite3_step(stmt);
+                    }
+                } else if (svec_len < op2_len) {
+                    i = 0;
+                    while (i < op2_len) {
+                        for ( ; sqlite3_step(stmt2) == SQLITE_ROW && i < op2_len; i++) {
+                            sqlite3_step(stmt3);
+
+                            sqlite3_reset(stmt);
+                            sqlite3_bind_int(stmt, 1, i);
+                            sqlite3_bind_int(stmt, 2, sqlite3_column_int(stmt2, 0));
+                            sqlite3_bind_int(stmt, 3, sqlite3_column_int(stmt3, 0));
+                            sqlite3_step(stmt);
+                        }
+                        sqlite3_reset(stmt2);
+                    }
+                } else {
+                    i = 0;
+                    while (i < svec_len) {
+                        for ( ; sqlite3_step(stmt3) == SQLITE_ROW && i < svec_len; i++) {
+                            sqlite3_step(stmt2);
+
+                            sqlite3_reset(stmt);
+                            sqlite3_bind_int(stmt, 1, i);
+                            sqlite3_bind_int(stmt, 2, sqlite3_column_int(stmt2, 0));
+                            sqlite3_bind_int(stmt, 3, sqlite3_column_int(stmt3, 0));
+                            sqlite3_step(stmt);
+                        }
+                        sqlite3_reset(stmt3);
+                    }
+                }
+            } else { /* not an integer op %% or %/% */
+                sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+
+                if (svec_len == op2_len) {
+                    for (i = 0; i < svec_len; i++) {
+                        sqlite3_step(stmt2); sqlite3_step(stmt3);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_int(stmt, 1, i);
+                        sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 0));
+                        sqlite3_bind_double(stmt, 3, sqlite3_column_double(stmt3, 0));
+                        sqlite3_step(stmt);
+                    }
+                } else if (svec_len < op2_len) { /* recycle svec */
+                    i = 0;
+                    while (i < op2_len) {
+                        for ( ; sqlite3_step(stmt2) == SQLITE_ROW && i < op2_len; i++) {
+                            sqlite3_step(stmt3);
+
+                            sqlite3_reset(stmt);
+                            sqlite3_bind_int(stmt, 1, i);
+                            sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 0));
+                            sqlite3_bind_double(stmt, 3, sqlite3_column_double(stmt3, 0));
+                            sqlite3_step(stmt);
+                        }
+                        sqlite3_reset(stmt2);
+                    }
+                } else { /* svec_len > op2_len, recycle op2 */
+                    i = 0;
+                    while (i < svec_len) {
+                        for ( ; sqlite3_step(stmt3) == SQLITE_ROW && i < svec_len; i++) {
+                            sqlite3_step(stmt2);
+
+                            sqlite3_reset(stmt);
+                            sqlite3_bind_int(stmt, 1, i);
+                            sqlite3_bind_double(stmt, 2, sqlite3_column_double(stmt2, 0));
+                            sqlite3_bind_double(stmt, 3, sqlite3_column_double(stmt3, 0));
+                            sqlite3_step(stmt);
+                        }
+                        sqlite3_reset(stmt3);
+                    }
+                }
+            }
+
+            sqlite3_finalize(stmt);
+            sqlite3_finalize(stmt2);
+            sqlite3_finalize(stmt3);
+        }
+    } else if (functype == 1 && funcname[0] != '!') { /* unary not operator */
+        iname = _create_svector1(R_NilValue, "bit", NULL);
+        sprintf(g_sql_buf[2], "insert into [%s].sdf_data "
+                    "select [row name], [%s] == 0 from [%s].sdf_data", 
+                    iname, varname_src, iname_src);
+        res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+        _sqlite_error(res);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+
+    if (iname != NULL)
+        return _create_svector_sexp(iname, "V1", 
+                (functype == 0) ? "numeric" : "logical");
+
+    return R_NilValue;
 
 }
 
@@ -366,7 +814,7 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
     iname_src = SDF_INAME(vector);
     varname_src = SVEC_VARNAME(vector);
 
-    if (!USE_SDF(iname_src, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
 
     g_narm = LOGICAL(na_rm)[0];
     if (strcmp(funcname, "range") == 0) {
@@ -419,6 +867,44 @@ __sdf_do_variable_summary_out:
     return ret;
 }
 
+
+SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
+    char *iname, *iname_src, *varname_src, *type;
+    sqlite3_stmt *stmt;
+    int res;
+
+    iname_src = SDF_INAME(svec);
+    varname_src = SVEC_VARNAME(svec);
+
+    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
+
+    /* determine type of svec */
+    sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data limit 1", varname_src, iname_src);
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+    _sqlite_error(res);
+    sqlite3_step(stmt);
+    strcpy(g_sql_buf[0], sqlite3_column_decltype(stmt, 0));
+    sqlite3_finalize(stmt);
+
+    /* create a new vector of that type */
+    iname = _create_svector1(R_NilValue, g_sql_buf[0], NULL);
+
+    /* insert to new sdf ordered */
+    sprintf(g_sql_buf[0], "insert into [%s].sdf_data "
+            "select [row name], [%s] from [%s].sdf_data "
+            "order by [%s] %s", iname, varname_src, iname_src, varname_src,
+            (LOGICAL(decreasing)[0]) ? "desc" : "asc");
+    res = _sqlite_exec(g_sql_buf[0]);
+    _sqlite_error(res);
+
+    if (inherits(svec, "factor")) { /* copy factor table to iname */
+        if (inherits(svec, "ordered")) type = "ordered";
+        else type = "factor";
+        _copy_factor_levels2(type, iname_src, varname_src, iname, "V1");
+    } else type = CHAR_ELT(GET_CLASS(svec), 1);
+
+    return _create_svector_sexp(iname, "V1", type);
+}
 
 /****************************************************************************
  * VECTOR MATH/OPS/GROUP OPERATIONS

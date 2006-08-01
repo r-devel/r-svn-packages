@@ -53,3 +53,9 @@ for (j in names(iris)) {
         if (sv[i] != iris[i,j]) stop("Not equal on", i, "on col", j, "\n")
 }
 #iris.sdf.project <- iris[,1:4]
+
+# test operators
+stopifnot(all((iris.sdf[,1] + iris.sdf[,2]) == (iris[,1] + iris[,2])))
+#stopifnot(all((iris.sdf[,1]*10 %/% iris.sdf[,2]) == (iris[,1]*10 %/% iris[,2])))
+stopifnot(all(with(iris.sdf, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width) == with(iris, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width)))
+stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))

@@ -19,17 +19,19 @@ int _file_exists(char *filename);
 int _sdf_exists2(char *iname);
 
 /* sdf utilities */
-int USE_SDF(const char *iname, int exists);  /* call this before doing anything on an SDF */
+int USE_SDF1(const char *iname, int exists);  /* call this before doing anything on an SDF */
 SEXP _create_sdf_sexp(const char *iname);  /* create a SEXP for an SDF */
 int _add_sdf1(char *filename, char *internal_name); /* add SDF to workspace */
 void _delete_sdf2(const char *iname); /* remove SDF from workspace */
 int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
-int _get_row_count2(const char *table);
+int _get_row_count2(const char *table, int quote);
 SEXP _get_rownames(const char *sdf_iname);
 char *_get_full_pathname2(char *relpath); /* get full path given relpath, used in workspace mgmt */
 
 /* utilities for creating SDF's */
-char *_create_sdf_skeleton2(SEXP name, int *o_namelen);
+char *_create_sdf_skeleton1(SEXP name, int *o_namelen);
+int _copy_factor_levels2(const char *factor_type, const char *iname_src,
+        const char *colname_src, const char *iname_dst, const char *colname_dst);
 
 /* R utilities */
 SEXP _getListElement(SEXP list, char *varname);
@@ -46,6 +48,7 @@ int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
 
 /* sqlite.vector utilities */
 SEXP sdf_get_variable(SEXP sdf, SEXP name);
+SEXP sdf_detach_sdf(SEXP internal_name);
 
 /* misc utilities */
 char *_r2iname(char *internal_name, char *filename);
@@ -81,6 +84,10 @@ void __register_vector_math();
 /* detail constants (see _get_sdf_detail2 in sqlite_workspace.c) */
 #define SDF_DETAIL_EXISTS 0
 #define SDF_DETAIL_FULLFILENAME 1
+
+/* R SXP type constants */
+#define FACTORSXP 11
+#define ORDEREDSXP 12
 
 #ifndef __SQLITE_WORKSPACE__
 extern sqlite3 *g_workspace;

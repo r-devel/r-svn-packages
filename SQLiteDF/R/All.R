@@ -10,9 +10,6 @@
     library.dynam.unload("SQLiteDF", libpath)
 }
 
-length <- function(x) UseMethod("length");
-length.default <- .Primitive("length");
-
 # workspace functions
 lsSdf <- function(pattern=NULL) .Call("sdf_list_sdfs", pattern);
 getSdf <- function(name) .Call("sdf_get_sdf", name);
@@ -35,14 +32,34 @@ renameSdf <- function(sdf, name) {
     if (!is.character(name)) stop("name argument must be a string.");
     .Call("sdf_rename_sdf", sdf, name);
 }
+inameSdf <- function(sdf) .Call("sdf_get_iname", sdf)
 
+# -------------------------------------------------------------------------
+# overriden primitives
+# -------------------------------------------------------------------------
+# returns sexp-level length.
+length <- function(x) UseMethod("length");
+length.default <- .Primitive("length");
+
+# because sdf objects is actually a list, the internal is.list always true.
+# by making SDF not a list, which makes list-requiring func call
+# as.list.sqlite.data.frame, we can get a lot of functions (lapply, ...) for free.
+is.list <- function(x) UseMethod("is.list");
+is.list.default <- .Primitive("is.list")
+
+# the default rbind's dispatch is "not normal," won't dispatch to rbind.sdf
+# even if all args are sdf's
+rbind <- function(..., deparse.level) UseMethod("rbind")
+rbind.default <- function(..., deparse.level) .Internal(rbind(deparse.level, ...));
+
+sort.default <- sort; sort <- function(x, ...) UseMethod("sort");
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.data.frame
 # -------------------------------------------------------------------------
 names.sqlite.data.frame <- function(x) .Call("sdf_get_names", x);
 length.sqlite.data.frame <- function(x) .Call("sdf_get_length", x);
 nrow.sqlite.data.frame <- function(x) .Call("sdf_get_row_count", x);
-dim.sqlite.data.frame <- function(x) 
+dim.sqlite.data.frame <- function(x)
     c(nrow.sqlite.data.frame(x), length.sqlite.data.frame(x));
 dimnames.sqlite.data.frame <- function(x) list(row.names(x), names(x))
 "$.sqlite.data.frame" <- function(x, name) .Call("sdf_get_variable", x, name);
@@ -60,6 +77,20 @@ dimnames.sqlite.data.frame <- function(x) list(row.names(x), names(x))
 #    if (missing(col)) col = NULL; 
     .Call("sdf_get_index", x, row, col); 
 }
+as.list.sqlite.data.frame <- function(x, ...) {
+    ret <- list();
+    for (i in names(x)) ret[[i]] <- x[[i]];
+    ret;
+}
+is.list.sqlite.data.frame <- function(x) FALSE;
+rbind.sqlite.data.frame <- function(..., deparse.level=1) {
+    args <- list(...);
+    .Call("sdf_rbind", args[[1]], args[[2]]);
+}
+with.sqlite.data.frame <- function(sdf, expr, ...)  
+    eval(substitute(expr), as.list(sdf), enclos=parent.frame())
+
+      
 
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.vector
@@ -97,4 +128,13 @@ Summary.sqlite.vector <- function(x, na.rm=F) {
     ret <- .Call("sdf_do_variable_summary", .Generic, x, as.logical(na.rm))
     if (is.character(ret)) { file.remove(ret); ret <- NULL; }
     ret;
+}
+Ops.sqlite.vector <- function(e1, e2) {
+    if (inherits(e1, "factor") | inherits(e2, "factor"))
+        stop("not meaningful for factors");
+    if (!inherits(e1, "sqlite.vector")) { tmp <- e1; e1 <- e2; e2 <- tmp; }
+    .Call("sdf_do_variable_op", .Generic, e1, e2);
+}
+sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
+    .Call("sdf_sort_variable", x, as.logical(decreasing))
 }

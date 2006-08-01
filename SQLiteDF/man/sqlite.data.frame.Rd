@@ -61,11 +61,14 @@ first 30 are attached. The relative path is used for finding the SDF file. If th
 cannot be found, it is deleted from the SQLiteDF workspace (with a warning message). The
 scores are then all reset.
 
-A sqlite.data.frame object is basically list with the following elements:
+A sqlite.data.frame object is a list a single element:
 \itemize{
 \item{iname}{the internal name of the SDF.}
-\item{row.names}{A sqlite.vector of mode character containing the row names of the SDF}
+}
+and the following attributes:
+\itemize{
 \item{class}{The S3 class vector \code{c("sqlite.data.frame", "data.frame")}}
+\item{row.names}{A sqlite.vector of mode character containing the row names of the SDF}
 }
 }
 \value{

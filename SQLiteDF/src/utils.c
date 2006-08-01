@@ -79,7 +79,7 @@ int _expand_buf(int i, int size) {
 int _sqlite_error(int res) {
     int ret = FALSE;
     if (res != SQLITE_OK) { 
-        Rprintf("ERROR: %s\n", sqlite3_errmsg(g_workspace));
+        Rprintf("SQLITE ERROR: %s\n", sqlite3_errmsg(g_workspace));
         ret = TRUE;
     }
     return ret;
@@ -105,8 +105,9 @@ int __count_callback(void *data, int ncols, char **rows, char **cols) {
     return 0;
 }
 
-int _get_row_count2(const char *table) {
-    sprintf(g_sql_buf[2], "select count(*) from %s", table);
+int _get_row_count2(const char *table, int quote) {
+    if (quote) sprintf(g_sql_buf[2], "select count(*) from [%s].sdf_data", table);
+    else sprintf(g_sql_buf[2], "select count(*) from %s", table);
    
     int ret, res;
     res = sqlite3_exec(g_workspace, g_sql_buf[2], __count_callback, &ret, NULL);
@@ -263,14 +264,14 @@ int _get_factor_levels1(const char *iname, const char *varname, SEXP var) {
     int ret = VAR_INTEGER;
     
     sprintf(g_sql_buf[1], "[%s].[factor %s]", iname, varname);
-    int res = _get_row_count2(g_sql_buf[1]);
+    int res = _get_row_count2(g_sql_buf[1], 0);
     if (res > 0) { /* res is exptected to be {-1} \union I+ */
         __attach_levels2(g_sql_buf[1], var, res);
         ret = VAR_FACTOR;
     }
 
     sprintf(g_sql_buf[1], "[%s].[ordered %s]", iname, varname);
-    res = _get_row_count2(g_sql_buf[1]);
+    res = _get_row_count2(g_sql_buf[1], 0);
     if (res > 0) {
         __attach_levels2(g_sql_buf[1], var, res);
         ret = VAR_ORDERED;
@@ -307,4 +308,17 @@ SEXP _shrink_vector(SEXP vec, int len) {
 
     return ret;
 }
+
+/* see equivalent: inherits() */
+/* int _sexp_instance_of(SEXP obj, const char *class) {
+    SEXP obj_class = GET_CLASS(obj);
+    int ret = 0, len = LENGTH(obj_class), i;
+
+    for (i = 0; i < len; i++) {
+        if (strcmp(CHAR_ELT(obj_class, i), class) == 0) {
+            ret = 1; break;
+        }
+    }
+    return ret;
+} */
 
