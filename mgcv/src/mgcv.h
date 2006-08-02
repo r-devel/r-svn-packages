@@ -9,9 +9,17 @@ void update_beta(double *X,double *Sr,double *rS,double *theta,double *w,
 		 int *m, int *n,int *q, int *get_trA,int *deriv,
 		 double *rank_tol,double *beta, double *trA, double *beta1,
 		 double *trA1,double *rV,int *rank_est);
+
 void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,
 	   double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score);
+
+void gdi(double *X,double *E,double *rS,
+         double *sp,double *z,double *w,double *mu, double *y,
+         double *p_weights,double *g1,double *g2,double *g3,double *V0,
+         double *V1,double *V2,double *beta,double *D1,double *D2,double *trA,
+         double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
+	 int *n,int *q, int *M,int *Encol,int *rSncol);
 
 /* various service routines */
 void RQT(double *A,int *r,int *c);
