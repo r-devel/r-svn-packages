@@ -20,7 +20,7 @@ R_CMethodDef CEntries[] = {
     {"MinimumSeparation", (DL_FUNC) &MinimumSeparation, 7},
     {"magic", (DL_FUNC) &magic, 16},
     {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
-    {"gdi",(DL_FUNC) &gdi,30},
+    {"gdi",(DL_FUNC) &gdi,32},
     {NULL, NULL, 0}
 };
 

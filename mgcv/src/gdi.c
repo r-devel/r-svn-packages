@@ -58,7 +58,7 @@ void multSk(double *y,double *x,int *xcol,int k,double *rS,int *rSncol,int *q,do
 { int i,off,nc,bt,ct;
   double *rSk;
   off=0; /* the start of the kth square root */
-  for (i=0;i<k-1;i++) off += *q * rSncol[i];
+  for (i=0;i<k;i++) off += *q * rSncol[i];
   rSk = rS + off; /* pointer to the kth square root */
   nc = rSncol[k];
   bt=1;ct=0;
@@ -231,6 +231,7 @@ void B1B2zBaseSetup(double *B2z,double *B1z,double *z,double *P,double *K,
     bt=0;ct=0;mgcv_mmult(KPtSPKtz,K,v2,&bt,&ct,n,&one,r);
     xx = -sp[k];
     for (i=0;i<*q;i++,B1z++,pPPtSPKtz++) *B1z = xx * *pPPtSPKtz;  
+    KPtSPKtz += *n; /* move to next slot */
   }
   /* D. double loop through sps to set up B2z */
   pB2z=B2z;
@@ -245,7 +246,7 @@ void B1B2zBaseSetup(double *B2z,double *B1z,double *z,double *P,double *K,
     dp1 = v1 + *q;xx=sp[m]*sp[k];
     for (dp=v1,dp0=pB2z;dp<dp1;dp++,dp0++) *dp0 = xx * *dp;
 
-    /* 2. obtain PP'SkPP'SmPK'z (simple k,m interchange of term 13)*/
+    /* 2. obtain PP'SkPP'SmPK'z (simple k,m interchange of term 1)*/
     pPPtSPKtz = PPtSPKtz + m * *q;
     multSk(v1,pPPtSPKtz,&one,k,rS,rSncol,q,v2);    
     bt=1;ct=0;mgcv_mmult(v2,P,v1,&bt,&ct,r,&one,q);
@@ -257,8 +258,8 @@ void B1B2zBaseSetup(double *B2z,double *B1z,double *z,double *P,double *K,
     /* 3. the final term PP'SkPK' */
     if (m==k) {
 	dp = PPtSPKtz + k * *q;
-        dp1 = v1 + *q;xx=sp[k];
-        for (dp=v1,dp0=pB2z;dp<dp1;dp++,dp0++) *dp0 -= xx * *dp;
+        dp1 = dp + *q;xx=sp[k];
+        for (dp0=pB2z;dp<dp1;dp++,dp0++) *dp0 -= xx * *dp;
     }
 
     pB2z += *q;
@@ -304,7 +305,7 @@ void B1B2z(double *B2z,double *B1z,double *B2zBase,double *B1zBase,double *z,
   /* B. initialize B2z and B1z to base values */
   dp1 = B1z + *q * *M;
   for (dp=B1z,dp0=B1zBase;dp<dp1;dp++,dp0++) *dp = *dp0;
-  dp1 = B2z + *M * (1 + *M) /2;
+  dp1 = B2z + *q * *M * (1 + *M) /2;
   for (dp=B2z,dp0=B2zBase;dp<dp1;dp++,dp0++) *dp = *dp0;
   /* C. Initial loop through smoothing parameters, creating:
         * TKKtz[i], PKtTKKtz[i], KKtTKKtz[i], PKtTz[i],Tz[i],KKtTz[i]
@@ -461,7 +462,7 @@ void B1B2z(double *B2z,double *B1z,double *B2zBase,double *B1zBase,double *z,
     for (dp=v1,dp0=pB2z;dp<dp1;dp++,dp0++) *dp0 += *dp;
 
     /* 12. obtain PK'TmKP'SkPK'z */
-    pKPtSPKtz = KPtSPKtz + k * *q;
+    pKPtSPKtz = KPtSPKtz + k * *n;
     dp = Tk + m * *n;dp1 = dp + *n;
     for (dp0=v1;dp < dp1;dp++,dp0++,pKPtSPKtz++) *dp0 = *dp * *pKPtSPKtz;
     bt=1;ct=0;mgcv_mmult(v2,K,v1,&bt,&ct,r,&one,n);
@@ -502,7 +503,7 @@ void B1B2z(double *B2z,double *B1z,double *B2zBase,double *B1zBase,double *z,
 void getB1z1(double *B1z1,double *z1,double *K,double *P,double *Tk,double *sp,
              double *rS,int *rSncol,int *n,int *r, int *q,int *M,double *work)
 /* function to form dB/d \rho_k dz'/\rho_m for k,m=1..M and return the result in
-   B1z1 which have dimension n*M^2. The storage order is:
+   B1z1 which have dimension q*M^2. The storage order is:
    dB/d \rho_0 dz'/\rho_0, dB/d \rho_0 dz'/\rho_1, ...
    All matrices are stored column-wise, as in R. Conceptual dimensions are:
    * K is n by r
@@ -523,7 +524,7 @@ void getB1z1(double *B1z1,double *z1,double *K,double *P,double *Tk,double *sp,
   /* B. obtain PK'z1 and KK'z1  */ 
   bt=1;ct=0;mgcv_mmult(v2,K,z1,&bt,&ct,r,M,n);
   bt=0;ct=0;mgcv_mmult(KKtz1,K,v2,&bt,&ct,n,M,r);
-  bt=0;ct=0;mgcv_mmult(PKtz1,K,v2,&bt,&ct,q,M,r);
+  bt=0;ct=0;mgcv_mmult(PKtz1,P,v2,&bt,&ct,q,M,r);
   
   /* C. loop through the smoothing parameters updating B1z1 */
   for (k=0;k<*M;k++) {
@@ -548,7 +549,7 @@ void getB1z1(double *B1z1,double *z1,double *K,double *P,double *Tk,double *sp,
     /* PK'TkKK'z1 */
     dp0 = Tk + k * *n;dp1 = dp0 + *n;
     for (pv1=v1,dp2=KKtz1,j=0;j<*M;j++) 
-     for (dp=dp0;dp<dp1;dp++,pz1++,pv1++) *pv1 = *dp * *dp2;
+     for (dp=dp0;dp<dp1;dp++,dp2++,pv1++) *pv1 = *dp * *dp2;
     bt=1;ct=0;mgcv_mmult(v2,K,v1,&bt,&ct,r,M,n);
     bt=0;ct=0;mgcv_mmult(v1,P,v2,&bt,&ct,q,M,r);
     /* v1 now contains result - need to add (-2 times) to appropriate block of B1z1 */
@@ -578,7 +579,7 @@ void gdi(double *X,double *E,double *rS,
     double *p_weights,double *g1,double *g2,double *g3,double *V0,
     double *V1,double *V2,double *beta,double *D1,double *D2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-    int *n,int *q, int *M,int *Encol,int *rSncol)     
+    int *n,int *q, int *M,int *Encol,int *rSncol,double *debug1,double *debug2)     
 /* Function to iterate for first and second derivatives of the deviance 
    of a GAM fit, and to evaluate the first and second derivatives of
    tr(A). Derivatives are w.r.t. log smoothing parameters.
@@ -612,8 +613,9 @@ void gdi(double *X,double *E,double *rS,
    * trA1 and trA2 are an M-vector and M by M matrix for returning the first 
      and second derivatives of tr(A) wrt the log smoothing parameters.
    * rank_est is for returning the estimated rank of the problem.
-   * the remaining arguments are the dimensions already refered to.
-
+   * the remaining arguments are the dimensions already refered to except for:
+   * debug1 and debug2 which are for debugging use to pass out extra information.
+   
    The method has 4 main parts:
 
    1. The initial QR- decomposition and SVD are performed, various quantities which 
@@ -681,6 +683,11 @@ void gdi(double *X,double *E,double *rS,
   { for (pi=pivot,p2=work;p2<p0;pi++,p2++) *p2 = pd[*pi];  /* apply pivot into work */
     p3 = pd + *q;
     for (p1=pd,p2=work;p1<p3;p1++,p2++) *p1 = *p2;  /* copy back into E */
+  }
+  /* pivot columns of X - can't think of a smart arsed way of doing this*/
+  for (i=0;i< *n;i++) {
+      for (j=0;j<*q;j++) work[j]=X[pivot[j] * *n + i];
+      for (j=0;j<*q;j++) X[j * *n + i] = work[j];
   }
   
   /* Now form the augmented R matrix [R',E']' */
@@ -764,8 +771,9 @@ void gdi(double *X,double *E,double *rS,
   B1B2zBaseSetup(B2zBase,B1zBase,zz,P,K,KKtz,PKtz,KPtSPKtz,rS,
                  rSncol,n,q,&rank,M,sp,work);
   /* need to copy B2zBase and B1zBase into b2 and b1 */
-  p1=b2+n_b2;for (p0=b2,p2=B2zBase;p0<p1;p0++,p2++) *p0 = *p2;  
-  p1=b1+n_b1;for (p0=b1,p2=B1zBase;p0<p1;p0++,p2++) *p0 = *p2;  
+
+  p1=b2+n_b2;for (p0=b2,p2=B2zBase;p0<p1;p0++,p2++)  *p0 = *p2;  
+  p1=b1+n_b1;for (p0=b1,p2=B1zBase;p0<p1;p0++,p2++)  *p0 = *p2;  
 
   /* Set up constants involved in z (not z'!) updates (little work => leave readable!)*/
   c0=(double *)calloc((size_t)*n,sizeof(double));
@@ -776,7 +784,7 @@ void gdi(double *X,double *E,double *rS,
   /* c1 = (y-mu)*g2/g1 */
   for (i=0;i<*n;i++) c1[i]=c2[i]*c0[i];
   /* c2 = (y-mu)*(g3/g1-g2/g1) - g2/g1 */
-  for (i=0;i<*n;i++) c2[i]=c0[i]*(g3[i]-g2[i]/g1[i])/g1[i]-c2[i];
+  for (i=0;i<*n;i++) c2[i]=c0[i]*(g3[i]-g2[i]*g2[i]/g1[i])/g1[i]-c2[i];
 
   /* set up constants involved in w updates */
   a0=(double *)calloc((size_t)*n,sizeof(double));
@@ -807,7 +815,27 @@ void gdi(double *X,double *E,double *rS,
      for convergence testing */
   D1_old =(double *)calloc((size_t)(*M),sizeof(double));
   D2_old =(double *)calloc((size_t)(*M * *M),sizeof(double));
-  for (iter=0;iter<200;iter++) { /* main derivative iteration */ 
+
+  /* create initial gradient and Hessian of deviance */
+
+  bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,q); /* gradient of deviance is complete */
+      
+  getXtMX(D2,b1,dev_hess,q,M,v1);
+          
+  for (pb2=b2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
+     p1 = dev_grad + *q;  
+     for (xx=0.0,p0=dev_grad;p0<p1;p0++,pb2++) xx += *p0 * *pb2;
+     D2[k * *M + m] += xx;
+     D2[m * *M + k] = D2[k * *M + m];
+  } /* Hessian of Deviance is complete !! */ 
+
+  /* store D1 and D2 for convergence testing */
+  for (p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) *p2 = *p0;
+  for (p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) *p2 = *p0;
+  
+  /* NOTE: when DEBUG complete, better to store initial D1 and D2 directly in D1_old and D2_old */
+    
+  for (iter=0;iter<1;iter++) { /* main derivative iteration */ 
       /* get derivatives of eta and mu */
       bt=0;ct=0;mgcv_mmult(eta1,X,b1,&bt,&ct,n,M,q);
       bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,q);
@@ -832,7 +860,7 @@ void gdi(double *X,double *E,double *rS,
 
       rc_prod(w2,a0,eta2,&n_2dCols,n); 
       for (pw2=w2,m=0;m < *M;m++) for (k=m;k < *M;k++) {
-	  rc_prod(v1,mu1 + *n * m,eta1 + *n * k,&one,n);
+	  rc_prod(v1,eta1 + *n * m,eta1 + *n * k,&one,n);
           rc_prod(v2,a2,v1,&one,n);
           p1=v2 + *n;
           for (p0=v2;p0<p1;p0++,pw2++) *pw2 += *p0;        
@@ -902,46 +930,47 @@ void gdi(double *X,double *E,double *rS,
       /* (dB/d\rho_k dz'/d\rho_m)[i] is in B1Z1[q*m+M*k*q+i] */
       
       pb2 = b2;   
-      for (pz2=zz2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
+      for (m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
 	  p0=B1z1 + *q * m + *M * *q * k;p2 = p0 + *q;
           p1=B1z1 + *q * k + *M * *q * m;
           for (;p0<p2;p0++,p1++,pb2++) *pb2 += *p1 + *p0; 
       } /* b2 complete */
 
-      /* evalaute gradient and Hessian of deviance (since these are what convergence 
+      /* evaluate gradient and Hessian of deviance (since these are what convergence 
          should be judged on) */
       bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,q); /* gradient of deviance is complete */
       
+             
       getXtMX(D2,b1,dev_hess,q,M,v1);
           
-      for (pb2=b2,pz2=zz2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
-	p1 = dev_grad + *q;  
+      for (pb2=b2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
+        p1 = dev_grad + *q;  
         for (xx=0.0,p0=dev_grad;p0<p1;p0++,pb2++) xx += *p0 * *pb2;
-        D2[m * *M + k] = D2[k * *M + m] = xx;
-      } /* Hessian of Deviance is complete !! */ 
-       
+        D2[k * *M + m] += xx;
+        D2[m * *M + k] = D2[k * *M + m];
+      } /* Hessian of Deviance is complete !! */
+
+
       /* now test for convergence */
-      if (iter) { 
-	ok=1;
-        /* test first derivative convergence */ 
-        for (diff=mag=0,p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) {
-	    xx = fabs(*p0 - *p2); /* change in derivative */
-            if (xx>diff) diff=xx;
-            xx = (fabs(*p0) + fabs(*p2))/2; /* size of derivative */
-            if (xx>mag) mag=xx; 
-        } 
-        if (diff > mag * *conv_tol) ok=0;
-        /* and do same for second derivatives */
-        for (diff=mag=0,p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) {
-	    xx = fabs(*p0 - *p2); /* change in derivative */
-            if (xx>diff) diff=xx;
-            xx = (fabs(*p0) + fabs(*p2))/2; /* size of derivative */
-            if (xx>mag) mag=xx;
-        } 
-        if (diff > mag * *conv_tol) ok=0;
-        if (ok) break; /* converged */
-      }
-   
+      ok=1;
+      /* test first derivative convergence */ 
+      for (diff=mag=0,p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) {
+         xx = fabs(*p0 - *p2); /* change in derivative */
+         if (xx>diff) diff=xx;
+         xx = (fabs(*p0) + fabs(*p2))/2; /* size of derivative */
+         if (xx>mag) mag=xx; 
+      } 
+      if (diff > mag * *conv_tol) ok=0;
+      /* and do same for second derivatives */
+      for (diff=mag=0,p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) {
+         xx = fabs(*p0 - *p2); /* change in derivative */
+         if (xx>diff) diff=xx;
+         xx = (fabs(*p0) + fabs(*p2))/2; /* size of derivative */
+         if (xx>mag) mag=xx;
+      } 
+      if (diff > mag * *conv_tol) ok=0;
+      if (ok) break; /* converged */
+        
       /* store D1 and D2 for convergence testing */
       for (p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) *p2 = *p0;
       for (p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) *p2 = *p0;
@@ -959,6 +988,12 @@ void gdi(double *X,double *E,double *rS,
   for (p1=P,i=0;i < rank; i++) for (j=0;j<*q;j++,p1++) rV[pivot[j] + i * *q] = *p1;
   p0 = rV + *q * rank;p1 = rV + *q * *q;
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
+
+  /* dump debug information */
+  
+  for (i=0;i<*q;i++) for (j=0;j<*M;j++) debug1[pivot[i] + j * *q] = b1[i + j * *q];
+  
+  for (i=0;i<*q;i++) for (j=0;j<n_2dCols;j++) debug2[pivot[i] + j * *q] = b2[i + j * *q];
 
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      Note: Vt and R already freed. P is really V - don't free yet.

@@ -17,6 +17,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
 {   x <- as.matrix(x)
+    iter <- 0;coef <- rep(0,ncol(x))
     xnames <- dimnames(x)[[2]]
     ynames <- if (is.matrix(y)) 
         rownames(y)
@@ -106,7 +107,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         boundary <- conv <- FALSE
         rV=matrix(0,ncol(x),ncol(x))   
         old.pdev <- 0     
-        for (iter in 1:control$maxit) {
+        if (FALSE) for (iter in 1:control$maxit) {
             good <- weights > 0
             varmu <- variance(mu)[good]
             if (any(is.na(varmu))) 
@@ -298,8 +299,13 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
-           rSncol=as.integer(unlist(lapply(rS,ncol))))      
+           rSncol=as.integer(unlist(lapply(rS,ncol))),
+           debug1=as.double(matrix(0,ncol(x),nSp)),debug2=as.double(matrix(0,ncol(x),nSp*(1+nSp)/2)))      
 
+
+         debug1 <- matrix(oo$debug1,ncol(x),nSp)
+         debug2 <- matrix(oo$debug2,ncol(x),nSp*(1+nSp)/2)
+ 
 
          rV <- matrix(oo$rV,ncol(x),ncol(x))
          coef <- oo$beta;
@@ -378,6 +384,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,D1=D1,D2=D2,trA=trA,trA1=trA1,trA2=trA2,
-        GCV=GCV,GCV1=GCV1,GCV2=GCV2,UBRE=UBRE,UBRE1=UBRE1,UBRE2=UBRE2,rV=rV,scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
+        GCV=GCV,GCV1=GCV1,GCV2=GCV2,UBRE=UBRE,UBRE1=UBRE1,UBRE2=UBRE2,rV=rV,
+        scale.est=scale.est,aic=aic.model,rank=oo$rank.est,debug1=debug1,debug2=debug2)
 }
 

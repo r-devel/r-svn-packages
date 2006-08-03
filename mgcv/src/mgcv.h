@@ -19,7 +19,7 @@ void gdi(double *X,double *E,double *rS,
          double *p_weights,double *g1,double *g2,double *g3,double *V0,
          double *V1,double *V2,double *beta,double *D1,double *D2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-	 int *n,int *q, int *M,int *Encol,int *rSncol);
+	 int *n,int *q, int *M,int *Encol,int *rSncol,double *debug1,double *debug2);
 
 /* various service routines */
 void RQT(double *A,int *r,int *c);
