@@ -311,9 +311,13 @@ void B1B2z(double *B2z,double *B1z,double *B2zBase,double *B1zBase,double *z,
         * TKKtz[i], PKtTKKtz[i], KKtTKKtz[i], PKtTz[i],Tz[i],KKtTz[i]
         * B1z
   */
-  pTk = Tk;pTKKtz=TKKtz;
-  pPKtTKKtz = PKtTKKtz;pKKtTKKtz=KKtTKKtz;
-  pTz = Tz;pKKtTz=KKtTz;pPKtTz=PKtTz;
+  pTk = Tk;
+  pTKKtz=TKKtz;
+  pPKtTKKtz = PKtTKKtz;
+  pKKtTKKtz=KKtTKKtz;
+  pTz = Tz;
+  pKKtTz=KKtTz;
+  pPKtTz=PKtTz;
   for (k=0;k<*M;k++) { /* loop through smoothing parameters */
     /* form TKKtz[i] */
     dp1 = pTk + *n;  
@@ -455,7 +459,8 @@ void B1B2z(double *B2z,double *B1z,double *B2zBase,double *B1zBase,double *z,
     for (dp=v1,dp0=pB2z;dp<dp1;dp++,dp0++) *dp0 += *dp;
         
     /* 11. obtain PK'Tkmz */
-    bt=1;ct=0;mgcv_mmult(v2,K,pTkm,&bt,&ct,r,&one,n);
+    for (dp=pTkm,dp1=pTkm + *n,dp0=v1,dp2=z;dp < dp1;dp++,dp0++,dp2++) *dp0 = *dp * *dp2;
+    bt=1;ct=0;mgcv_mmult(v2,K,v1,&bt,&ct,r,&one,n);
     bt=0;ct=0;mgcv_mmult(v1,P,v2,&bt,&ct,q,&one,r);
     /* result now in v1, add v1 to relevant part of B2z */
     dp1 = v1 + *q;
@@ -503,7 +508,7 @@ void B1B2z(double *B2z,double *B1z,double *B2zBase,double *B1zBase,double *z,
 void getB1z1(double *B1z1,double *z1,double *K,double *P,double *Tk,double *sp,
              double *rS,int *rSncol,int *n,int *r, int *q,int *M,double *work)
 /* function to form dB/d \rho_k dz'/\rho_m for k,m=1..M and return the result in
-   B1z1 which have dimension q*M^2. The storage order is:
+   B1z1 which has dimension q*M^2. The storage order is:
    dB/d \rho_0 dz'/\rho_0, dB/d \rho_0 dz'/\rho_1, ...
    All matrices are stored column-wise, as in R. Conceptual dimensions are:
    * K is n by r
@@ -791,14 +796,14 @@ void gdi(double *X,double *E,double *rS,
   a1=(double *)calloc((size_t)*n,sizeof(double));  
   a2=(double *)calloc((size_t)*n,sizeof(double));
   for (i=0;i< *n;i++) a0[i] = - w[i]*w[i]*w[i]*(V1[i]*g1[i]+2*V0[i]*g2[i])/(2*p_weights[i]) ;
-  for (i=0;i< *n;i++) a1[i] = 3/(w[i]*p_weights[i]);
+  for (i=0;i< *n;i++) a1[i] = 3/w[i];
   for (i=0;i< *n;i++) 
     a2[i] = -w[i]*w[i]*w[i]*(V2[i]*g1[i]+3*V1[i]*g2[i]+2*g3[i]*V0[i])/(g1[i]*2*p_weights[i]);
 
   /* some useful arrays for Tk and Tkm */
   wi=(double *)calloc((size_t)*n,sizeof(double));
   wis=(double *)calloc((size_t)*n,sizeof(double));
-  for (i=0;i< *n;i++) { wi[i]=1/w[i];wis[i]=wi[i]*w[i];}
+  for (i=0;i< *n;i++) { wi[i]=1/w[i];wis[i]=wi[i]*wi[i];}
 
   /* get gradient vector and Hessian of deviance wrt coefficients */
   for (i=0;i< *n ;i++) v1[i] = -2*p_weights[i]*(y[i]-mu[i])/(V0[i]*g1[i]);
@@ -835,7 +840,7 @@ void gdi(double *X,double *E,double *rS,
   
   /* NOTE: when DEBUG complete, better to store initial D1 and D2 directly in D1_old and D2_old */
     
-  for (iter=0;iter<1;iter++) { /* main derivative iteration */ 
+  for (iter=0;iter<100;iter++) { /* main derivative iteration */ 
       /* get derivatives of eta and mu */
       bt=0;ct=0;mgcv_mmult(eta1,X,b1,&bt,&ct,n,M,q);
       bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,q);
@@ -1016,7 +1021,6 @@ void gdi(double *X,double *E,double *rS,
 
 
   get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M);
-  mtest();
   /* clear up the remainder */
   free(U1);
   free(V);
@@ -1024,5 +1028,4 @@ void gdi(double *X,double *E,double *rS,
   free(KU1t);
   free(Tk);
   free(Tkm);
-  mtest();
 }

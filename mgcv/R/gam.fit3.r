@@ -107,7 +107,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         boundary <- conv <- FALSE
         rV=matrix(0,ncol(x),ncol(x))   
         old.pdev <- 0     
-        if (FALSE) for (iter in 1:control$maxit) {
+        for (iter in 1:control$maxit) {
             good <- weights > 0
             varmu <- variance(mu)[good]
             if (any(is.na(varmu))) 
@@ -322,14 +322,14 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          delta.3 <- delta*delta.2
     
          GCV <- nobs*dev/delta.2
-         GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma*trA1/delta.3
+         GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
          GCV2 <- outer(trA1,D1)
          GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
                 6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 
-                nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2*gamma 
+                nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2/delta.3 
 
          UBRE <- dev/nobs - 2*delta*scale/nobs + scale
-         UBRE1 <- D1/nobs + gamma * trA1 *2*nobs*dev/delta.3
+         UBRE1 <- D1/nobs + gamma * trA1 *2*scale/nobs
          UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
 
          scale.est <- dev/(nobs-trA)
