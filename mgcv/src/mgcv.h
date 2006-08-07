@@ -19,7 +19,10 @@ void gdi(double *X,double *E,double *rS,
          double *p_weights,double *g1,double *g2,double *g3,double *V0,
          double *V1,double *V2,double *beta,double *D1,double *D2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-	 int *n,int *q, int *M,int *Encol,int *rSncol,double *debug1,double *debug2);
+	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv);
+
+void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
+             double *penalty,double *rank_tol);
 
 /* various service routines */
 void RQT(double *A,int *r,int *c);
@@ -38,7 +41,7 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd);
 void mroot(double *A,int *rank,int *n);
-
+void R_cond(double *R,int *r,int *c,double *work,double *Rcondition);
 
 
 /* basis constructor/prediction routines*/

@@ -1268,17 +1268,18 @@ gam.method.description <- function(method,am=TRUE)
   if (method$gam=="perf.mgcv") return("performance iteration - mgcv")
   if (method$gam=="perf.outer") return(paste("perf. iter. magic + outer",method$outer))
   if (method$pearson==FALSE) {
-    if (method$outer=="nlm") return("deviance based outer iter. - nlm exact derivs.")
+    if (method$outer=="nlm.hess") return("deviance based outer iter. - nlm exact hessian.")
+    if (method$outer=="nlm.grad") return("deviance based outer iter. - nlm exact derivs.")
     if (method$outer=="optim")  return("deviance based outer iter. - Quasi-Newton exact derivs.")
     if (method$outer=="nlm.fd") return("deviance based outer iter. - nlm with finite differences.")
   } else {
-    if (method$outer=="nlm") return("Pearson based outer iter. - nlm exact derivs.")
+    if (method$outer=="nlm.grad") return("Pearson based outer iter. - nlm exact derivs.")
     if (method$outer=="optim")  return("Pearson based outer iter. - Quasi-Newton exact derivs.")
     if (method$outer=="nlm.fd") return("Pearson based outer iter. - nlm with finite differences.")
   }
 }
 
-gam.method <- function(am="magic",gam="outer",outer="nlm",pearson=FALSE,family=NULL)
+gam.method <- function(am="magic",gam="outer",outer="nlm.hess",pearson=FALSE,family=NULL)
 # Function for returning fit method control list for gam.
 # am controls the fitting method to use for pure additive models.
 # gam controls the type of iteration to use for Gams.
@@ -1288,7 +1289,7 @@ gam.method <- function(am="magic",gam="outer",outer="nlm",pearson=FALSE,family=N
 { if (sum(am==c("mgcv","magic"))==0) stop("Unknown additive model fit method.") 
   if (sum(gam==c("perf.magic","perf.mgcv","perf.outer","outer","outer"))==0) 
   stop("Unknown *generalized* additive model fit method.") 
-  if (sum(outer==c("optim","nlm","nlm.fd"))==0) 
+  if (sum(outer==c("optim","nlm.hess","nlm.grad","nlm.fd"))==0) 
   stop("Unknown GAM outer optimizing method.") 
   if (!is.logical(pearson)) {pearson <- FALSE;
     warning("pearson should be TRUE or FALSE - set to FALSE.")
@@ -1324,8 +1325,8 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- "GCV";scale<-1}
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,pearson=method$pearson)
-    if (method$outer=="nlm") {
-      b <- nlm(gam3objective, lsp, typsize = lsp, fscale = fscale, 
+    if (method$outer=="nlm.hess") {
+      b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
             stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim,
@@ -1333,6 +1334,15 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
             args=args,...)
       lsp <- b$estimate
 
+    } else if (method$outer=="nlm.grad") {
+       b <- nlm(gam3objective, lsp, typsize = lsp, fscale = fscale, 
+            stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
+	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
+            iterlim = control$nlm$iterlim,
+	    check.analyticals=control$nlm$check.analyticals,
+            args=args,...)
+      lsp <- b$estimate
+      
     } else if (method$outer=="optim") {
       b<-optim(par=lsp,fn=gam2objective,gr=gam2derivative,method="L-BFGS-B",control=
          list(fnscale=fscale,factr=control$optim$factr,lmm=min(5,length(lsp))),args=args,...)

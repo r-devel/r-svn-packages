@@ -100,6 +100,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                 else x %*% start)
             }
         else family$linkfun(mustart)
+        etaold <- eta
         mu <- linkinv(eta)
         if (!(validmu(mu) && valideta(eta))) 
             stop("Can't find valid starting values: please specify some")
@@ -129,33 +130,20 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             var.mug<-variance(mug)
             w <- sqrt((weg * mevg^2)/var.mug)
 
-#            if (deriv&&iter>1) ## then get derivatives of z and w w.r.t. theta
-#            { d2g <- family$d2link(mug)
-#              dV <- family$dvar(mug)
-#              eta1 <- (x%*%upe$beta1)[good,]
-#              z1 <- as.vector((yg-mug)*d2g*mevg)*eta1
-#              w1 <- as.vector(-0.5*w^3/weg*(dV/mevg + 2*var.mug*d2g))*eta1
-#            }
-            ngoodobs <- as.integer(nobs - sum(!good))
+            ngoodobs <- as.integer(nobs - sum(!good)) ### ????
             ## Here a Fortran call has been replaced by update.beta call
            
             if (sum(good)<ncol(x)) stop("Not enough informative observations.")
            
-## CHANGE NEEDED: must be replaced by a simple fitter call 
-           dum1 <- rep(0,ncol(x));dum2 <- rep(0,nobs);dum3 <- rep(0,nSp)
-           oo<-.C(C_update_beta,as.double(x[good,]),as.double(Sr),as.double(unlist(rS)),as.double(sp),
-                   as.double(w),
-                   as.double(rep(0,nobs*nSp)),as.double(z),as.double(rep(0,nobs*nSp)),as.integer(ncol(Sr)),
-                   rSncol=as.integer(unlist(lapply(rS,ncol))),m=as.integer(length(rS)),
-                   n=as.integer(sum(good)),
-                   q=as.integer(ncol(x)),get.trA=as.integer(0),deriv=as.integer(0),
-                   rank.tol= as.double(.Machine$double.eps),
-                   beta=as.double(dum1),trA=as.double(1),beta1=as.double(rep(0,ncol(x)*nSp)),
-                   trA1=as.double(dum3),rV=as.double(rV),rank=as.integer(1))
+
+            dum1 <- rep(0,ncol(x));dum2 <- rep(0,nobs);dum3 <- rep(0,nSp)
+            oo<-.C(C_pls_fit,y=as.double(z),as.double(x[good,]),as.double(w),as.double(Sr),as.integer(sum(good)),
+            as.integer(ncol(x)),as.integer(ncol(Sr)),eta=as.double(z),penalty=as.double(1),
+            as.double(.Machine$double.eps*100))
         
-            start <- oo$beta;
-            trA <- oo$trA
-##            upe$beta1 <- matrix(oo$beta1,oo$q,oo$m)
+            start <- oo$y[1:ncol(x)];
+            penalty <- oo$penalty
+            eta <- oo$eta
 
             if (any(!is.finite(start))) {
                 conv <- FALSE
@@ -164,7 +152,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                 break
             }
 
-           eta <- drop(x%*%start)
+           
      
            mu <- linkinv(eta <- eta + offset)
            dev <- sum(dev.resids(y, mu, weights))
@@ -186,10 +174,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                     stop("inner loop 1; can't correct step size")
                   ii <- ii + 1
                   start <- (start + coefold)/2
-  ##                # ... modify derivatives similarly ...
-  ##                if (deriv) upe$beta1 <- (upe$beta1 + beta1old)/2
-                 
-                  eta <- drop(x %*% start)
+                  eta <- (eta + etaold)/2               
                   mu <- linkinv(eta <- eta + offset)
                   dev <- sum(dev.resids(y, mu, weights))
                 }
@@ -206,10 +191,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                     stop("inner loop 2; can't correct step size")
                   ii <- ii + 1
                   start <- (start + coefold)/2
- ##                 # ... modify derivatives similarly ...
- ##                 if (deriv) upe$beta1 <- (upe$beta1 + beta1old)/2
-
-                  eta <- drop(x %*% start)
+                  eta <- (eta + etaold)/2 
                   mu <- linkinv(eta <- eta + offset)
                 }
                 boundary <- TRUE
@@ -217,26 +199,23 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                 if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
             }
-             pdev <- dev + t(start)%*%St%*%start ## the penalized deviance 
+
+            pdev <- dev + penalty  ## the penalized deviance 
 
             if (iter>1&&pdev>old.pdev) { ## solution diverging
               ii <- 1
-             # while (pdev - old.pdev> (0.1 + abs(old.pdev))* control$epsilon*.9)
             while (pdev -old.pdev > (.1+abs(old.pdev))*.2)  
-            {
+             {
                 if (ii > 200) 
                    stop("inner loop 3; can't correct step size")
                 ii <- ii + 1
-                start <- (start + coefold)/2
- ##             # ... modify derivatives similarly ...
- ##               if (deriv) upe$beta1 <- (upe$beta1 + beta1old)/2
-                 
-                  eta <- drop(x %*% start)
-                  mu <- linkinv(eta <- eta + offset)
+                start <- (start + coefold)/2 
+                eta <- (eta + etaold)/2               
+                mu <- linkinv(eta <- eta + offset)
                   dev <- sum(dev.resids(y, mu, weights))
                   pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
             
-               }
+              }
             } 
 
             if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
@@ -247,12 +226,12 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             else {  old.pdev <- pdev
                 devold <- dev
                 coef <- coefold <- start
+                etaold <- eta 
             }
         } ### end main loop 
        
         dev <- sum(dev.resids(y, mu, weights)) 
        
-        if (deriv) {
         ## Now call the derivative calculation scheme. This requires the
         ## following inputs:
         ## z and w - the pseudodata and weights
@@ -299,48 +278,40 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
-           rSncol=as.integer(unlist(lapply(rS,ncol))),
-           debug1=as.double(matrix(0,ncol(x),nSp)),debug2=as.double(matrix(0,ncol(x),nSp*(1+nSp)/2)))      
+           rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv))      
 
-
-         debug1 <- matrix(oo$debug1,ncol(x),nSp)
-         debug2 <- matrix(oo$debug2,ncol(x),nSp*(1+nSp)/2)
- 
 
          rV <- matrix(oo$rV,ncol(x),ncol(x))
          coef <- oo$beta;
-         trA <- oo$trA;trA1 <- oo$trA1;
-         trA2 <- matrix(oo$trA2,nSp,nSp);
-         D1 <- oo$D1;
-         D2 <- matrix(oo$D2,nSp,nSp);
-         V <- variance(mug);
-
-        
- 
+         trA <- oo$trA;
+         
          delta <- nobs - gamma * trA
-         delta.2 <- delta*delta
-         delta.3 <- delta*delta.2
-    
+         delta.2 <- delta*delta           
+  
          GCV <- nobs*dev/delta.2
-         GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
-         GCV2 <- outer(trA1,D1)
-         GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
-                6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 
-                nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2/delta.3 
-
          UBRE <- dev/nobs - 2*delta*scale/nobs + scale
-         UBRE1 <- D1/nobs + gamma * trA1 *2*scale/nobs
-         UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
-
          scale.est <- dev/(nobs-trA)
-        } else { 
-### NEEDS REWORKING FOR BETTER GENERAL UPDATE
-          trA1<-trA2<-D1<-D2<-UBRE2<-GCV2<-UBRE1<-GCV1<-NULL
-          delta <- nobs - gamma * trA
-          GCV <- dev*nobs/delta^2
-          scale.est <- dev/(nobs-trA)
-          UBRE <- dev/nobs - 2*delta*scale/nobs + scale
-        }
+
+         if (deriv) {
+           trA1 <- oo$trA1;
+           trA2 <- matrix(oo$trA2,nSp,nSp);
+           D1 <- oo$D1;
+           D2 <- matrix(oo$D2,nSp,nSp);
+        
+           delta.3 <- delta*delta.2
+
+           GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
+           GCV2 <- outer(trA1,D1)
+           GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
+                  6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 
+                  nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2/delta.3  
+
+           UBRE1 <- D1/nobs + gamma * trA1 *2*scale/nobs
+           UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
+         } else {
+           trA1<-trA2<-D1<-D2<-UBRE2<-GCV2<-UBRE1<-GCV1<-NULL
+         }
+         
         # end of inserted code
         if (!conv&&printWarn) 
             warning("Algorithm did not converge")
@@ -385,6 +356,24 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,D1=D1,D2=D2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,UBRE=UBRE,UBRE1=UBRE1,UBRE2=UBRE2,rV=rV,
-        scale.est=scale.est,aic=aic.model,rank=oo$rank.est,debug1=debug1,debug2=debug2)
+        scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
 }
 
+gam4objective <- function(lsp,args,...)
+## Performs IRLS GAM fitting for smoothing parameters given in lsp 
+## and returns the GCV or UBRE score for the model.
+## args is a list containing the arguments for gam.fit2
+## For use as nlm() objective
+{ 
+  b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
+     offset = args$offset,family = args$family,weights=args$w,deriv=TRUE,
+     control=args$control,gamma=args$gamma,scale=args$scale,pearson=args$pearson,
+     printWarn=FALSE,...)
+  if (args$scoreType == "GCV") ret <- b$GCV else ret <- b$UBRE
+  attr(ret,"full.fit") <- b
+  if (args$scoreType == "GCV") at <- b$GCV1 else at <- b$UBRE1
+  attr(ret,"gradient") <- at
+  if (args$scoreType == "GCV") at <- b$GCV2 else at <- b$UBRE2
+  attr(ret,"hessian") <- at
+  ret
+}

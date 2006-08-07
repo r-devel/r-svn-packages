@@ -83,23 +83,30 @@ double diagABt(double *d,double *A,double *B,int *r,int *c)
 
 
 void get_trA(double *trA,double *trA1,double *trA2,double *U1,double *KU1t,double *P,double *K,double *sp,
-             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M)
+             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
 
 /* obtains trA and its first two derivatives wrt the log smoothing parameters 
    * P is q by r
    * K is n by r
    * U1 is q by r
    * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
+
+   * If deriv is 0 then only tr(A) is obtained here.
 */
 
 { double *diagA,*diagAA,xx,*KtTK,*U1KtTK,*work,*pTk,*pTm,*pdA,*pdAA,*p1,*pd,
          *PtrSm,*U1PtrSm,*U1PtSP,*KPtrSm,*KU1tU1PtrSm,*diagBtSB,*diagBtSBA;
   int i,m,k,bt,ct,j,one=1,km,mk,rSoff;
-  /* set up work space */
-  work =  (double *)calloc((size_t)*n,sizeof(double));
+  
   /* obtain tr(A) and diag(A) */ 
   diagA = (double *)calloc((size_t)*n,sizeof(double));
   *trA = diagABt(diagA,K,K,n,r);
+  if (!(*deriv)) { /* then only tr(A) is required so return now*/
+      free(diagA);
+      return;
+  }
+  /* set up work space */
+  work =  (double *)calloc((size_t)*n,sizeof(double));
   /* obtain diag(AA) */
   diagAA = (double *)calloc((size_t)*n,sizeof(double));
   xx = diagABt(diagAA,KU1t,KU1t,n,q);
@@ -584,7 +591,7 @@ void gdi(double *X,double *E,double *rS,
     double *p_weights,double *g1,double *g2,double *g3,double *V0,
     double *V1,double *V2,double *beta,double *D1,double *D2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-    int *n,int *q, int *M,int *Encol,int *rSncol,double *debug1,double *debug2)     
+    int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv)     
 /* Function to iterate for first and second derivatives of the deviance 
    of a GAM fit, and to evaluate the first and second derivatives of
    tr(A). Derivatives are w.r.t. log smoothing parameters.
@@ -619,7 +626,8 @@ void gdi(double *X,double *E,double *rS,
      and second derivatives of tr(A) wrt the log smoothing parameters.
    * rank_est is for returning the estimated rank of the problem.
    * the remaining arguments are the dimensions already refered to except for:
-   * debug1 and debug2 which are for debugging use to pass out extra information.
+   * deriv, which controls whether or not any derivatives are produced... if 
+   * not then coefficients, rV and trA are obtained, but nothing else.
    
    The method has 4 main parts:
 
@@ -647,6 +655,8 @@ void gdi(double *X,double *E,double *rS,
      i)   if i<j interchange the indices
      ii)  off = (j*m-(j+1)*j/2+i)*q 
      iii) v2[off+k] is the required derivative.       
+
+    
 
 */
 { double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*K,*R,*d,*Vt,*V,*U1,*KU1t,xx,*b1,*b2,*P,
@@ -735,113 +745,120 @@ void gdi(double *X,double *E,double *rS,
   p3=d+rank;
   for (p0=d;p0<p3;p0++) for (i=0;i< *q;i++,P++) *P /= *p0;
   P=V;
-  
+
+  PKtz = (double *)calloc((size_t) *q,sizeof(double)); /* PK'z */
+  if (!(*deriv)) { /* then evaluate coefficients here */
+    bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,&rank,&one,n);
+    bt=0;ct=0;mgcv_mmult(PKtz,P,work,&bt,&ct,q,&one,&rank);
+  }
+
   /************************************************************************************/
   /* The coefficient derivative iteration starts here */
   /************************************************************************************/
   /* set up some storage first */
-  n_2dCols = *M * (1 + *M)/2;
-  n_b2 = *q * n_2dCols;
-  b2 = (double *)calloc((size_t)n_b2,sizeof(double)); /* 2nd derivs of beta */
-  B2zBase = (double *)calloc((size_t)n_b2,sizeof(double)); /* part of 2nd derivs of beta */
-  B2z = (double *)calloc((size_t)n_b2,sizeof(double)); /* part of 2nd derivs of beta */
-  n_b1 = *q * *M;
-  b1 = (double *)calloc((size_t)n_b1,sizeof(double)); /* 1st derivs of beta */
-  B1zBase = (double *)calloc((size_t)n_b1,sizeof(double)); /* part of 1st derivs of beta */
-  B1z = (double *)calloc((size_t)n_b1,sizeof(double)); /* part of 1st  derivs of beta */
-  n_eta1 = *n * *M;
-  eta1 = (double *)calloc((size_t)n_eta1,sizeof(double));
-  Tk = (double *)calloc((size_t)n_eta1,sizeof(double));
-  mu1 = (double *)calloc((size_t)n_eta1,sizeof(double));
-  z1 = (double *)calloc((size_t)n_eta1,sizeof(double));
-  zz1 = (double *)calloc((size_t)n_eta1,sizeof(double));
-  w1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+  if (*deriv) {
+    n_2dCols = *M * (1 + *M)/2;
+    n_b2 = *q * n_2dCols;
+    b2 = (double *)calloc((size_t)n_b2,sizeof(double)); /* 2nd derivs of beta */
+    B2zBase = (double *)calloc((size_t)n_b2,sizeof(double)); /* part of 2nd derivs of beta */
+    B2z = (double *)calloc((size_t)n_b2,sizeof(double)); /* part of 2nd derivs of beta */
+    n_b1 = *q * *M;
+    b1 = (double *)calloc((size_t)n_b1,sizeof(double)); /* 1st derivs of beta */
+    B1zBase = (double *)calloc((size_t)n_b1,sizeof(double)); /* part of 1st derivs of beta */
+    B1z = (double *)calloc((size_t)n_b1,sizeof(double)); /* part of 1st  derivs of beta */
+    n_eta1 = *n * *M;
+    eta1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+    Tk = (double *)calloc((size_t)n_eta1,sizeof(double));
+    mu1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+    z1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+    zz1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+    w1 = (double *)calloc((size_t)n_eta1,sizeof(double));
 
-  n_eta2 = *n * n_2dCols;
-  eta2 = (double *)calloc((size_t)n_eta2,sizeof(double));
-  Tkm = (double *)calloc((size_t)n_eta2,sizeof(double));
-  z2 = (double *)calloc((size_t)n_eta2,sizeof(double));
-  zz2 = (double *)calloc((size_t)n_eta2,sizeof(double));
-  w2 = (double *)calloc((size_t)n_eta2,sizeof(double));
+    n_eta2 = *n * n_2dCols;
+    eta2 = (double *)calloc((size_t)n_eta2,sizeof(double));
+    Tkm = (double *)calloc((size_t)n_eta2,sizeof(double));
+    z2 = (double *)calloc((size_t)n_eta2,sizeof(double));
+    zz2 = (double *)calloc((size_t)n_eta2,sizeof(double));
+    w2 = (double *)calloc((size_t)n_eta2,sizeof(double));
 
-  B1z1 = (double *)calloc((size_t)(*M * *M * *q),sizeof(double));
-  KKtz = (double *)calloc((size_t) *n,sizeof(double)); /* KK'z */
-  PKtz = (double *)calloc((size_t) *q,sizeof(double)); /* PK'z */
-  KPtSPKtz = (double *)calloc((size_t)(*n * *M),sizeof(double)); /* KP'S_kPK'z */
+    B1z1 = (double *)calloc((size_t)(*M * *M * *q),sizeof(double));
+    KKtz = (double *)calloc((size_t) *n,sizeof(double)); /* KK'z */
+  
+    KPtSPKtz = (double *)calloc((size_t)(*n * *M),sizeof(double)); /* KP'S_kPK'z */
   
  
-  v1 = work;v2=work + *n * *M; /* a couple of working vectors */ 
-  /* Now get the iteration independent parts of the derivatives, which are also
-     the intial values for the derivatives */
-  B1B2zBaseSetup(B2zBase,B1zBase,zz,P,K,KKtz,PKtz,KPtSPKtz,rS,
+    v1 = work;v2=work + *n * *M; /* a couple of working vectors */ 
+    /* Now get the iteration independent parts of the derivatives, which are also
+       the intial values for the derivatives */
+    B1B2zBaseSetup(B2zBase,B1zBase,zz,P,K,KKtz,PKtz,KPtSPKtz,rS,
                  rSncol,n,q,&rank,M,sp,work);
-  /* need to copy B2zBase and B1zBase into b2 and b1 */
+    /* need to copy B2zBase and B1zBase into b2 and b1 */
 
-  p1=b2+n_b2;for (p0=b2,p2=B2zBase;p0<p1;p0++,p2++)  *p0 = *p2;  
-  p1=b1+n_b1;for (p0=b1,p2=B1zBase;p0<p1;p0++,p2++)  *p0 = *p2;  
+    p1=b2+n_b2;for (p0=b2,p2=B2zBase;p0<p1;p0++,p2++)  *p0 = *p2;  
+    p1=b1+n_b1;for (p0=b1,p2=B1zBase;p0<p1;p0++,p2++)  *p0 = *p2;  
 
-  /* Set up constants involved in z (not z'!) updates (little work => leave readable!)*/
-  c0=(double *)calloc((size_t)*n,sizeof(double));
-  c1=(double *)calloc((size_t)*n,sizeof(double));  
-  c2=(double *)calloc((size_t)*n,sizeof(double));
-  for (i=0;i< *n;i++) c0[i]=y[i]-mu[i];
-  for (i=0;i<*n;i++) c2[i]=g2[i]/g1[i];
-  /* c1 = (y-mu)*g2/g1 */
-  for (i=0;i<*n;i++) c1[i]=c2[i]*c0[i];
-  /* c2 = (y-mu)*(g3/g1-g2/g1) - g2/g1 */
-  for (i=0;i<*n;i++) c2[i]=c0[i]*(g3[i]-g2[i]*g2[i]/g1[i])/g1[i]-c2[i];
+    /* Set up constants involved in z (not z'!) updates (little work => leave readable!)*/
+    c0=(double *)calloc((size_t)*n,sizeof(double));
+    c1=(double *)calloc((size_t)*n,sizeof(double));  
+    c2=(double *)calloc((size_t)*n,sizeof(double));
+    for (i=0;i< *n;i++) c0[i]=y[i]-mu[i];
+    for (i=0;i<*n;i++) c2[i]=g2[i]/g1[i];
+    /* c1 = (y-mu)*g2/g1 */
+    for (i=0;i<*n;i++) c1[i]=c2[i]*c0[i];
+    /* c2 = (y-mu)*(g3/g1-g2/g1) - g2/g1 */
+    for (i=0;i<*n;i++) c2[i]=c0[i]*(g3[i]-g2[i]*g2[i]/g1[i])/g1[i]-c2[i];
 
-  /* set up constants involved in w updates */
-  a0=(double *)calloc((size_t)*n,sizeof(double));
-  a1=(double *)calloc((size_t)*n,sizeof(double));  
-  a2=(double *)calloc((size_t)*n,sizeof(double));
-  for (i=0;i< *n;i++) a0[i] = - w[i]*w[i]*w[i]*(V1[i]*g1[i]+2*V0[i]*g2[i])/(2*p_weights[i]) ;
-  for (i=0;i< *n;i++) a1[i] = 3/w[i];
-  for (i=0;i< *n;i++) 
-    a2[i] = -w[i]*w[i]*w[i]*(V2[i]*g1[i]+3*V1[i]*g2[i]+2*g3[i]*V0[i])/(g1[i]*2*p_weights[i]);
+    /* set up constants involved in w updates */
+    a0=(double *)calloc((size_t)*n,sizeof(double));
+    a1=(double *)calloc((size_t)*n,sizeof(double));  
+    a2=(double *)calloc((size_t)*n,sizeof(double));
+    for (i=0;i< *n;i++) a0[i] = - w[i]*w[i]*w[i]*(V1[i]*g1[i]+2*V0[i]*g2[i])/(2*p_weights[i]) ;
+    for (i=0;i< *n;i++) a1[i] = 3/w[i];
+    for (i=0;i< *n;i++) 
+      a2[i] = -w[i]*w[i]*w[i]*(V2[i]*g1[i]+3*V1[i]*g2[i]+2*g3[i]*V0[i])/(g1[i]*2*p_weights[i]);
 
-  /* some useful arrays for Tk and Tkm */
-  wi=(double *)calloc((size_t)*n,sizeof(double));
-  wis=(double *)calloc((size_t)*n,sizeof(double));
-  for (i=0;i< *n;i++) { wi[i]=1/w[i];wis[i]=wi[i]*wi[i];}
+    /* some useful arrays for Tk and Tkm */
+    wi=(double *)calloc((size_t)*n,sizeof(double));
+    wis=(double *)calloc((size_t)*n,sizeof(double));
+    for (i=0;i< *n;i++) { wi[i]=1/w[i];wis[i]=wi[i]*wi[i];}
 
-  /* get gradient vector and Hessian of deviance wrt coefficients */
-  for (i=0;i< *n ;i++) v1[i] = -2*p_weights[i]*(y[i]-mu[i])/(V0[i]*g1[i]);
-  dev_grad=(double *)calloc((size_t)*q,sizeof(double));
-  bt=1;ct=0;mgcv_mmult(dev_grad,X,v1,&bt,&ct,q,&one,n);
+    /* get gradient vector and Hessian of deviance wrt coefficients */
+    for (i=0;i< *n ;i++) v1[i] = -2*p_weights[i]*(y[i]-mu[i])/(V0[i]*g1[i]);
+    dev_grad=(double *)calloc((size_t)*q,sizeof(double));
+    bt=1;ct=0;mgcv_mmult(dev_grad,X,v1,&bt,&ct,q,&one,n);
   
-  for (i=0;i< *n ;i++) 
-  v1[i] = 2*p_weights[i]*
-         (1/V0[i] + (y[i]-mu[i])/(V0[i]*V0[i]*g1[i])*(V1[i]*g1[i]+V0[i]*g2[i]))/(g1[i]*g1[i]);
-  dev_hess=(double *)calloc((size_t)(*q * *q),sizeof(double));
-  getXtWX(dev_hess,X,v1,n,q,v2);
+    for (i=0;i< *n ;i++) 
+    v1[i] = 2*p_weights[i]*
+            (1/V0[i] + (y[i]-mu[i])/(V0[i]*V0[i]*g1[i])*(V1[i]*g1[i]+V0[i]*g2[i]))/(g1[i]*g1[i]);
+    dev_hess=(double *)calloc((size_t)(*q * *q),sizeof(double));
+    getXtWX(dev_hess,X,v1,n,q,v2);
   
-  /* create storage for gradient and Hessian of deviance wrt sp's from previous iteration,
-     for convergence testing */
-  D1_old =(double *)calloc((size_t)(*M),sizeof(double));
-  D2_old =(double *)calloc((size_t)(*M * *M),sizeof(double));
+    /* create storage for gradient and Hessian of deviance wrt sp's from previous iteration,
+       for convergence testing */
+    D1_old =(double *)calloc((size_t)(*M),sizeof(double));
+    D2_old =(double *)calloc((size_t)(*M * *M),sizeof(double));
 
-  /* create initial gradient and Hessian of deviance */
+    /* create initial gradient and Hessian of deviance */
 
-  bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,q); /* gradient of deviance is complete */
-      
-  getXtMX(D2,b1,dev_hess,q,M,v1);
+    bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,q); /* gradient of deviance is complete */
+       
+    getXtMX(D2,b1,dev_hess,q,M,v1);
           
-  for (pb2=b2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
-     p1 = dev_grad + *q;  
-     for (xx=0.0,p0=dev_grad;p0<p1;p0++,pb2++) xx += *p0 * *pb2;
-     D2[k * *M + m] += xx;
-     D2[m * *M + k] = D2[k * *M + m];
-  } /* Hessian of Deviance is complete !! */ 
+    for (pb2=b2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
+       p1 = dev_grad + *q;  
+       for (xx=0.0,p0=dev_grad;p0<p1;p0++,pb2++) xx += *p0 * *pb2;
+       D2[k * *M + m] += xx;
+       D2[m * *M + k] = D2[k * *M + m];
+    } /* Hessian of Deviance is complete !! */ 
 
-  /* store D1 and D2 for convergence testing */
-  for (p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) *p2 = *p0;
-  for (p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) *p2 = *p0;
+    /* store D1 and D2 for convergence testing */
+    for (p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) *p2 = *p0;
+    for (p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) *p2 = *p0;
   
-  /* NOTE: when DEBUG complete, better to store initial D1 and D2 directly in D1_old and D2_old */
+    /* NOTE: when DEBUG complete, better to store initial D1 and D2 directly in D1_old and D2_old */
     
-  for (iter=0;iter<100;iter++) { /* main derivative iteration */ 
-      /* get derivatives of eta and mu */
+    for (iter=0;iter<100;iter++) { /* main derivative iteration */ 
+        /* get derivatives of eta and mu */
       bt=0;ct=0;mgcv_mmult(eta1,X,b1,&bt,&ct,n,M,q);
       bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,q);
      
@@ -980,8 +997,8 @@ void gdi(double *X,double *E,double *rS,
       for (p0=D1,p2=D1_old,p1=D1 + *M;p0<p1;p0++,p2++) *p2 = *p0;
       for (p0=D2,p2=D2_old,p1=D2 + *M * *M;p0<p1;p0++,p2++) *p2 = *p0;
       
-   } /* end of main derivative iteration */
-
+    } /* end of main derivative iteration */
+  } /* end of if (*deriv) */ 
   /************************************************************************************/
   /* End of the coefficient derivative iteration  */
   /************************************************************************************/
@@ -994,38 +1011,155 @@ void gdi(double *X,double *E,double *rS,
   p0 = rV + *q * rank;p1 = rV + *q * *q;
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
-  /* dump debug information */
-  
-  for (i=0;i<*q;i++) for (j=0;j<*M;j++) debug1[pivot[i] + j * *q] = b1[i + j * *q];
-  
-  for (i=0;i<*q;i++) for (j=0;j<n_2dCols;j++) debug2[pivot[i] + j * *q] = b2[i + j * *q];
-
+ 
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      Note: Vt and R already freed. P is really V - don't free yet.
   */ 
-  free(KKtz);
-  free(zz);free(WX);free(tau);free(pivot);free(work);free(d);free(b2);free(B2zBase);free(B2z);
-  free(b1);
-  free(B1zBase);
-  free(B1z);
-  free(eta1);
-  free(mu1);
-  free(eta2);
-  free(B1z1);
   
-  free(KPtSPKtz);free(c0);free(c1);free(c2);free(a0);
-  free(a1);free(a2);free(wi);free(wis);free(dev_grad);free(dev_hess);free(D1_old);
-  free(D2_old);free(z1);free(z2);free(zz1);free(zz2);
-  free(w1);free(w2);free(PKtz);
+  free(zz);free(WX);free(tau);free(pivot);free(work);free(d);free(PKtz);
+  
+  if (*deriv) {
+    free(b1);free(B1zBase);free(B1z);free(eta1);free(mu1);
+    free(eta2);free(B1z1);free(KKtz);
+    free(KPtSPKtz);free(c0);free(c1);free(c2);free(a0);
+    free(a1);free(a2);free(wi);free(wis);free(dev_grad);free(dev_hess);free(D1_old);
+    free(D2_old);free(z1);free(z2);free(zz1);free(zz2);
+    free(w1);free(w2);free(b2);free(B2zBase);free(B2z);
+  }
 
 
+  get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv);
 
-  get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M);
   /* clear up the remainder */
-  free(U1);
-  free(V);
-  free(K);
-  free(KU1t);
-  free(Tk);
-  free(Tkm);
+  free(U1);free(KU1t);free(K);free(V);
+
+  if (*deriv)
+  { free(Tk);
+    free(Tkm);
+  }
 }
+
+
+void R_cond(double *R,int *r,int *c,double *work,double *Rcondition)
+/* estimates the condition number of c by c upper triangular matrix 
+   R stored in an r by c matrix, stored in column order. 
+   work should be of minimum length c * 4. 
+   Algorithm is due to Cline, Moler, Stewart and Wilkinson (1979) as reported in
+   Golub and Van Loan (1996).
+   n <- 100;m <- 10
+   X <- matrix(runif(n*m),n,m)
+   X[,1] <- X[,m]
+   qrx <- qr(X,LAPACK=TRUE)
+   R <- qr.R(qrx)
+   .C("R_cond",R=as.double(R),r=as.integer(m),c=as.integer(m),
+       work=as.double(rep(0,4*m)),Rcond=as.double(1),PACKAGE="mgcv")$Rcond
+*/ 
+{ double kappa,*pm,*pp,*y,*p,ym,yp,pm_norm,pp_norm,y_inf=0.0,R_inf=0.0;
+  int i,j,k;
+  /* allocate work */
+  pp=work;work+= *c;pm=work;work+= *c;
+  y=work;work+= *c;p=work;work+= *c;   
+  for (i=0;i<*c;i++) p[i] = 0.0;
+  for (k=*c-1;k>=0;k--) {
+      yp = (1-p[k])/R[k + *r *k];
+      ym = (-1-p[k])/R[k + *r *k];
+      for (pp_norm=0.0,i=0;i<k;i++) { pp[i] = p[i] + R[i + *r * k] * yp;pp_norm += fabs(pp[i]);}
+      for (pm_norm=0.0,i=0;i<k;i++) { pm[i] = p[i] + R[i + *r * k] * ym;pm_norm += fabs(pm[i]);}
+      if (fabs(yp)+pp_norm >= fabs(ym)+pm_norm) {
+	  y[k]=yp;
+          for (i=0;i<k;i++) p[i] = pp[i];
+      } else {
+          y[k]=ym;
+          for (i=0;i<k;i++) p[i] = pm[i];
+      }
+      kappa=fabs(y[k]);
+      if (kappa>y_inf) y_inf=kappa;
+  }
+  for (i=0;i<*c;i++) { 
+    for (kappa=0.0,j=i;j<*c;j++) kappa += fabs(R[i + *r * j]);  
+    if (kappa>R_inf) R_inf = kappa;
+  }
+  kappa=R_inf*y_inf;
+  *Rcondition=kappa;
+}
+
+
+void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,double *penalty,double *rank_tol)
+/* Fast but stable PLS fitter. Obtains linear predictor, eta, of weighted penalized linear model,
+   without evaluating the coefficients, but also returns coefficients in case they are needed. 
+
+   On return:
+   * eta contains the linear predictor
+   * penalty is the evaluated penalty
+   * the first q elements of y are the coefficients. 
+   
+   n <- 100;x <- runif(n);w <- rep(1,n)
+   X <- model.matrix(~x+I(x^2))
+   X[,1] <- X[,3]
+   y <- rnorm(n)
+   E <- diag(3)
+   oo <- .C("pls_fit",y=as.double(y),as.double(X),as.double(w),as.double(E),as.integer(n),
+            as.integer(ncol(X)),as.integer(3),eta=as.double(1:n),penalty=as.double(1),
+            as.double(.Machine$double.eps*100),PACKAGE="mgcv")
+   er <- lm(c(y,rep(0,ncol(E)))~rbind(X,t(E))-1,weights=c(w^2,rep(1,ncol(E))))
+   range(fitted(er)[1:n]-oo$eta)
+   coef(er);oo$y[1:ncol(X)]
+*/
+
+{ int nn,i,j,k,ii,rank,one=1,*pivot,left,tp;
+  double *z,*WX,*tau,Rcond,xx,*work;
+  nn= *n + *cE;
+  z = (double *)calloc((size_t)nn,sizeof(double)); /* storage for z=[Wz,0] */
+  for (i=0;i< *n;i++) z[i] = y[i]*w[i]; /* form z itself*/
+
+  WX = (double *) calloc((size_t) ( nn * *q),sizeof(double));
+  for (j=0;j<*q;j++) 
+  { for (i=0;i<*n;i++) /* form WX */
+    { k = i + nn * j;
+      WX[k]=w[i]*X[i + *n *j];
+    }
+    for (ii=0,i = *n;ii<*cE;i++,ii++) /* append E' */ 
+    { k = i + nn * j;
+      WX[k] = E[j + *q * ii];
+    }
+  } 
+  /* get the QR decomposition of WX */
+  tau=(double *)calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
+ 
+  pivot=(int *)calloc((size_t)*q,sizeof(int));
+  
+  mgcv_qr(WX,&nn,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
+  /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
+  
+  /* first find the rank of R */
+  work = (double *)calloc((size_t)(4 * *q),sizeof(double));
+  rank = *q;
+  R_cond(WX,&nn,&rank,work,&Rcond);
+  while (*rank_tol * Rcond > 1) { rank--;R_cond(WX,&nn,&rank,work,&Rcond);}
+  free(work);
+
+  /* Now get the fitted values X \beta, *without* finding \beta */
+  left=1;tp=1;mgcv_qrqy(z,WX,tau,&nn,&one,q,&left,&tp); /* z = Q'z */
+  for (i=rank;i<nn;i++) z[i]=0.0;
+  for (i=0;i<rank;i++) y[i] = z[i];        /* y = Q'z */ 
+  left=1;tp=0;mgcv_qrqy(z,WX,tau,&nn,&one,q,&left,&tp);
+  for (i=0;i<*n;i++) eta[i] = z[i]/w[i]; /* the linear predictor */
+  for (*penalty=0.0,i=*n;i<nn;i++) *penalty += z[i]*z[i]; /* the penalty term */
+  
+  /* now find  \hat \beta = R^{-1}Q'z, which are needed if P-IRLS starts to diverge
+     in order to be able to evaluate penalty on step reduction */
+  
+  /* now back substitute to find \hat \beta */  
+  for (k=rank;k<*q;k++) z[k]=0.0; /* truncated parameters */
+  for (k=rank-1;k>=0;k--) {
+      for (xx=0.0,j=k+1;j < rank;j++) xx += WX[k + nn * j]*z[j];
+      z[k] = (y[k] - xx)/WX[k + nn * k];
+  }
+  /* unpivot result into y */
+  for (i=0;i< *q;i++) y[pivot[i]] = z[i];
+ 
+  /*, should this be required... */
+  free(z);free(WX);free(tau);free(pivot);
+}
+
+
