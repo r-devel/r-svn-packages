@@ -359,6 +359,105 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
 }
 
+newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
+                   control,gamma,scale,conv.tol=1e-7,maxNstep=5,maxSstep=2,
+                   maxHalf=30,printWarn=FALSE,scoreType="GCV",...)
+## Newton optimizer for GAM gcv/aic optimization that can cope with an 
+## indefinite Hessian! Main enhancements are: i) always checks whether Hessian
+## is +ve definite, if not uses steepest descent; ii) step halves on step 
+## failure, without obtaining derivatives until success; (iii) carries start
+## values forward from one evaluation to next to speed convergence.    
+{ ## initial fit
+  b<-gam.fit3(x=X, y=y, sp=lsp, S=S,rS=rS,off=off, H=H,
+     offset = offset,family = family,weights=weights,deriv=TRUE,
+     control=control,gamma=gamma,scale=scale,
+     printWarn=FALSE,...)
+  useGCV <- if (scoreType=="GCV") TRUE else FALSE
+  mustart<-b$fitted.values
+  if (useGCV) { old.score <- score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
+  } else {
+    old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+  }
+  Slength <- maxSstep 
+  for (i in 1:200) {
+    ## get the trial step ...
+    eh <- eigen(hess,symmetric=TRUE)
+    d <- eh$values;U <- eh$vectors
+    #dmin <- max(abs(d))*.Machine$double.eps^.5
+    ind <- d < 0
+    d[ind] <- -d[ind] ## see Gill Murray and Wright p107/8
+    d <- 1/d
+    Sstep <- -Slength * grad/max(abs(grad)) # steepest descent direction 
+    
+    Nstep <- -drop(U%*%(d*(t(U)%*%grad))) # (modified) Newton direction
+    ms <- max(abs(Nstep))
+    if (ms>maxNstep) Nstep <- Nstep/ms
+
+    ## try the step ...
+    lsp1 <- lsp + Nstep
+    b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+       offset = offset,family = family,weights=weights,deriv=TRUE,
+       control=control,gamma=gamma,scale=scale,
+       printWarn=FALSE,mustart=mustart,...)
+    score1 <- if (useGCV) b$GCV else b$UBRE
+    ## accept if improvement, else step halve
+    ii <- 0 ## step halving counter
+    if (score1<score) { ## accept
+      old.score <- score 
+      mustart <- b$fitted.values
+      lsp <- lsp1
+      if (useGCV) { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
+      } else {
+        score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+      }
+    } else { ## step halving ...
+      step <- Nstep ## start with the (pseudo) Newton direction
+      while (score1>score && ii < maxHalf) {
+        if (ii==3) { ## Newton really not working
+          step <- Sstep ## use steepest descent direction
+        } else step <- step/2
+        if (ii>3) Slength <- Slength/2 ## keep track of SD step length
+        lsp1 <- lsp + step
+        b1<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+           offset = offset,family = family,weights=weights,deriv=FALSE,
+           control=control,gamma=gamma,scale=scale,
+           printWarn=FALSE,mustart=mustart,...)
+        score1 <- if (useGCV) b1$GCV else b1$UBRE
+        if (score1 <= score) { ## accept
+          b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+             offset = offset,family = family,weights=weights,deriv=TRUE,
+             control=control,gamma=gamma,scale=scale,
+             printWarn=FALSE,mustart=mustart,...)
+          mustart <- b$fitted.values
+          old.score <- score;lsp <- lsp1
+          if (useGCV) { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
+          } else {
+            score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+          }
+          if (ii>3) Slength <- min(Slength*2,maxSstep) ## try increasing SD step length
+        }  # end of if (score1<= score )
+        ii <- ii + 1
+      } # end of step halving
+    }
+    ## test for convergence
+    converged <- TRUE
+    score.scale <- b$scale.est + score;    
+    if (sum(grad>score.scale*conv.tol)) converged <- FALSE
+    if (abs(old.score-score)>score.scale*conv.tol) converged <- FALSE
+    if (ii==maxHalf) converged <- TRUE ## step failure
+    if (converged) break
+  } ## end of iteration loop
+  if (ii==maxHalf) ct <- "step failed"
+  else if (i==200) ct <- "iteration limit reached" 
+  else ct <- "full convergence"
+  list(score=score,lsp=lsp,grad=grad,hess=hess,iter=i,conv =ct,object=b)
+}
+
+
+
+
+
+
 gam4objective <- function(lsp,args,...)
 ## Performs IRLS GAM fitting for smoothing parameters given in lsp 
 ## and returns the GCV or UBRE score for the model.
@@ -377,3 +476,6 @@ gam4objective <- function(lsp,args,...)
   attr(ret,"hessian") <- at
   ret
 }
+
+
+

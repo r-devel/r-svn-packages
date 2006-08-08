@@ -1268,18 +1268,18 @@ gam.method.description <- function(method,am=TRUE)
   if (method$gam=="perf.mgcv") return("performance iteration - mgcv")
   if (method$gam=="perf.outer") return(paste("perf. iter. magic + outer",method$outer))
   if (method$pearson==FALSE) {
-    if (method$outer=="nlm.hess") return("deviance based outer iter. - nlm exact hessian.")
-    if (method$outer=="nlm.grad") return("deviance based outer iter. - nlm exact derivs.")
+    if (method$outer=="newton") return("deviance based outer iter. - newton, exact hessian.")
+    if (method$outer=="nlm") return("deviance based outer iter. - nlm exact derivs.")
     if (method$outer=="optim")  return("deviance based outer iter. - Quasi-Newton exact derivs.")
     if (method$outer=="nlm.fd") return("deviance based outer iter. - nlm with finite differences.")
   } else {
-    if (method$outer=="nlm.grad") return("Pearson based outer iter. - nlm exact derivs.")
+    if (method$outer=="nlm") return("Pearson based outer iter. - nlm exact derivs.")
     if (method$outer=="optim")  return("Pearson based outer iter. - Quasi-Newton exact derivs.")
     if (method$outer=="nlm.fd") return("Pearson based outer iter. - nlm with finite differences.")
   }
 }
 
-gam.method <- function(am="magic",gam="outer",outer="nlm.hess",pearson=FALSE,family=NULL)
+gam.method <- function(am="magic",gam="outer",outer="newton",pearson=FALSE,family=NULL)
 # Function for returning fit method control list for gam.
 # am controls the fitting method to use for pure additive models.
 # gam controls the type of iteration to use for Gams.
@@ -1289,11 +1289,12 @@ gam.method <- function(am="magic",gam="outer",outer="nlm.hess",pearson=FALSE,fam
 { if (sum(am==c("mgcv","magic"))==0) stop("Unknown additive model fit method.") 
   if (sum(gam==c("perf.magic","perf.mgcv","perf.outer","outer","outer"))==0) 
   stop("Unknown *generalized* additive model fit method.") 
-  if (sum(outer==c("optim","nlm.hess","nlm.grad","nlm.fd"))==0) 
+  if (sum(outer==c("optim","nlm","newton","nlm.fd"))==0) 
   stop("Unknown GAM outer optimizing method.") 
   if (!is.logical(pearson)) {pearson <- FALSE;
     warning("pearson should be TRUE or FALSE - set to FALSE.")
   } 
+  if (outer=="newton") pearson <- FALSE
   if (!is.null(family)&&substr(family$family,1,17)=="Negative Binomial" 
        &&gam!="perf.magic"&&gam!="perf.mgcv") gam <- "perf.magic"  
   list(am=am,gam=gam,outer=outer,pearson=pearson)
@@ -1313,28 +1314,30 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     object<-attr(full.score(lsp,G,family,control,gamma=gamma,pearson=method$pearson,...),"full.gam.object")
     object$gcv.ubre <- um$minimum
     object$outer.info <- um
+    object$sp <- exp(lsp)
+    return(object)
+  }
+  ## some preparations for the other methods 
+  if (substr(family$family,1,17)=="Negative Binomial") 
+  stop("Negative binomial family not (yet) usable with type 2 iteration methods.")
+  if (is.null(attr(G$smooth[[1]],"qrc"))) 
+  stop("Must use gam.control(absorb.cons=TRUE), for type 2 iteration methods.")
+  family <- fix.family.link(family)
+  family <- fix.family.var(family)
+  G$rS <- mini.roots(G$S,G$off,ncol(G$X))
+  if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- "GCV";scale<-1}
+  if (method$outer=="newton"){ ## the gam.fit3 method 
+    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,weights=G$w,
+                   control=control,gamma=gamma,scale=scale,conv.tol=1e-7,printWarn=FALSE,scoreType=criterion,...)   
+    obj <- b$score
+    object <- b$object
+    lsp <- b$lsp
+    b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
   } else { ## methods calling gam.fit2
-    if (substr(family$family,1,17)=="Negative Binomial") 
-    stop("Negative binomial family not (yet) usable with type 2 iteration methods.")
-    if (is.null(attr(G$smooth[[1]],"qrc"))) 
-    stop("Must use gam.control(absorb.cons=TRUE), for type 2 iteration
-    methods.")
-    family <- fix.family.link(family)
-    family <- fix.family.var(family)
-    G$rS <- mini.roots(G$S,G$off,ncol(G$X))
-    if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- "GCV";scale<-1}
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,pearson=method$pearson)
-    if (method$outer=="nlm.hess") {
-      b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
-            stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
-	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
-            iterlim = control$nlm$iterlim,
-	    check.analyticals=control$nlm$check.analyticals,
-            args=args,...)
-      lsp <- b$estimate
-
-    } else if (method$outer=="nlm.grad") {
+   
+    if (method$outer=="nlm") {
        b <- nlm(gam3objective, lsp, typsize = lsp, fscale = fscale, 
             stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
@@ -1350,21 +1353,23 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     }
     obj <- gam2objective(lsp,args,printWarn=TRUE,...) # final model fit, with warnings 
     object <- attr(obj,"full.fit")
-    object$outer.info <- b
-    object$gcv.ubre <- as.numeric(obj)
-    if (args$scoreType=="GCV") object$scale <- object$scale.est else
-    object$scale <- G$sig2
-    mv<-magic.post.proc(G$X,object,w=sqrt(object$weights))
-    object$Vp <- mv$Vb
-    object$hat<-mv$hat
-    object$Ve <- mv$Ve
-    object$edf<-mv$edf
-    object$aic <- object$aic + 2*sum(mv$edf)
-    object$nsdf <- G$nsdf
-    object$GCV<-object$GCV1<-object$UBRE<-object$UBRE1<-object$trA<-
-    object$trA1<-object$alpha<-object$alpha1<-object$rV<-object$scale.est<-NULL
-    object$sig2 <- object$scale
-  }
+  } # end of methods calling gam.fit2
+  
+  object$outer.info <- b
+  object$gcv.ubre <- as.numeric(obj)
+  if (criterion=="GCV") object$scale <- object$scale.est else
+  object$scale <- G$sig2
+  mv<-magic.post.proc(G$X,object,w=sqrt(object$weights))
+  object$Vp <- mv$Vb
+  object$hat<-mv$hat
+  object$Ve <- mv$Ve
+  object$edf<-mv$edf
+  object$aic <- object$aic + 2*sum(mv$edf)
+  object$nsdf <- G$nsdf
+  object$GCV<-object$GCV1<-object$UBRE<-object$UBRE1<-object$trA<-
+  object$trA1<-object$alpha<-object$alpha1<-object$rV<-object$scale.est<-NULL
+  object$sig2 <- object$scale
+  
   object$sp <- exp(lsp)
   object
 }
