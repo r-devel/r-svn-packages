@@ -9,7 +9,7 @@ estimation criterion for a gam.
 It is used to set argument \code{method} of \code{\link{gam}}.
 }
 \usage{
-gam.method(am="magic",gam="outer",outer="nlm",pearson=FALSE,family=NULL)
+gam.method(am="magic",gam="outer",outer="newton",pearson=FALSE,family=NULL)
 }
 \arguments{ 
 \item{am}{ Which method to use for a pure additive model (i.e. identity link,
@@ -26,17 +26,22 @@ engine. \code{"perf.outer"} for \code{\link{magic}} based performance
 iteration followed by outer iteration (see details). \code{"outer"} for pure
 outer iteration.}
 
-\item{outer}{ The optimization approach to use for outer
-iteration. \code{"nlm"} to use \code{\link{nlm}} with exact first derivatives
+\item{outer}{ The optimization approach to use to optimize log smoothing
+parameters by outer
+iteration.\code{"newton"} for modified Newton method backed up by steepest
+descent, based on exact first and second derivatives. \code{"nlm"} to use 
+\code{\link{nlm}} with exact first derivatives
 to optimize the smoothness selection criterion. \code{"nlm.fd"} to use
-\code{nlm} with finite differenced first dericatives (slower and less
+\code{nlm} with finite differenced first derivatives (slower and less
 reliable). \code{"optim"} to use the \code{"L-BFGS-B"} quasi-Newton method
 option of routine \code{optim}, with exact first derivatives.}
 
 \item{pearson}{When using any sort of outer iteration, there is a choise
 between using GCV/UBRE scores based on the Pearson statistic, or based on the
 deviance. The Pearson versions result in smoother models, but this is often
-oversmoothing, particularly for `low count' data and binary regression.}
+oversmoothing, particularly for `low count' data and binary regression.
+This option is not available with outer methods \code{"newton"} and \code{"nlm"}.
+}
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied
 method argument. In this circumstance the family argument is passed, to check
@@ -95,9 +100,11 @@ occasions when the P-IRLS convergence tolerance is close to being matched
 exactly, so that two components of a finite differenced derivative require
 different numbers of iterations of P-IRLS in their evaluation. An alternative
 is provided in which \code{nlm} uses numerically exact first derivatives, this
-is faster and less problematic than the other scheme. Finally, a quasi-Newton
-scheme with exact derivtives can be used instead, based on \code{optim}. In practice this usually
-seems to be slower than the \code{nlm} method.  
+is faster and less problematic than the other scheme. An alternative is to use a quasi-Newton
+scheme with exact derivtives, based on \code{optim}. In practice this usually
+seems to be slower than the \code{nlm} method. Usually the fastest and most
+reliable approach is to use a modified Newton optimizer with exact first and
+second derivatives, and this is the default.
 
 It is possible to iterate the performance iteration to convergence and then
 improve the smoothing parameter estimates using outer iteration: only a few steps are

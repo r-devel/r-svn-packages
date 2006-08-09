@@ -1,5 +1,10 @@
 1.3-19
 
+* Improved outer iteration added via gdi.c coupled with gam.fit3. 
+  Exact first and second derivatives of GCV/UBRE/AIC are now 
+  available via new iteration methods. These somewhat improve the 
+  speed and reliability of fitting in the generalized case. 
+
 * magic.c::mgcv_mmult modified so that all inner loop calculations are 
   optimal (i.e. inner loop pointers increments are all 1).
 

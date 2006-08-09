@@ -12,11 +12,12 @@
 gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL, 
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
-            control = gam.control(), intercept = TRUE,deriv=TRUE,
+            control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
             gamma=1,scale=1,printWarn=TRUE,...) 
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{   x <- as.matrix(x)
+{   if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
+    x <- as.matrix(x)
     iter <- 0;coef <- rep(0,ncol(x))
     xnames <- dimnames(x)[[2]]
     ynames <- if (is.matrix(y)) 
@@ -57,9 +58,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
     if (nSp==0) deriv <- FALSE 
     St <- totalPenalty(S,H,off,sp,ncol(x))
     Sr <- mroot(St)
-#    z1 <- w1 <- matrix(0,nobs,nSp)
-#    beta1old <- matrix(0,ncol(x),nSp)
-#    upe <- list(beta=rep(0,ncol(x)),beta1=beta1old,trA=0,trA1=rep(0,nSp))
+
     ## end of added code
 
     if (EMPTY) {
@@ -278,7 +277,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
-           rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv))      
+           rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd))      
 
 
          rV <- matrix(oo$rV,ncol(x),ncol(x))
@@ -294,20 +293,22 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
          if (deriv) {
            trA1 <- oo$trA1;
-           trA2 <- matrix(oo$trA2,nSp,nSp);
+           
            D1 <- oo$D1;
-           D2 <- matrix(oo$D2,nSp,nSp);
-        
+           
            delta.3 <- delta*delta.2
 
            GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
-           GCV2 <- outer(trA1,D1)
-           GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
-                  6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 
-                  nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2/delta.3  
-
            UBRE1 <- D1/nobs + gamma * trA1 *2*scale/nobs
-           UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
+           if (deriv==2) {
+             trA2 <- matrix(oo$trA2,nSp,nSp); 
+             D2 <- matrix(oo$D2,nSp,nSp);
+             GCV2 <- outer(trA1,D1)
+             GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
+                      6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 
+                      nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2/delta.3  
+             UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
+           } else {trA2<-D2<-UBRE2<-GCV2 <- NULL}
          } else {
            trA1<-trA2<-D1<-D2<-UBRE2<-GCV2<-UBRE1<-GCV1<-NULL
          }
@@ -360,18 +361,18 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 }
 
 newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
-                   control,gamma,scale,conv.tol=1e-7,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="GCV",...)
+                   control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
+                   maxHalf=30,printWarn=FALSE,scoreType="GCV",use.svd=TRUE,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
-## indefinite Hessian! Main enhancements are: i) always checks whether Hessian
-## is +ve definite, if not uses steepest descent; ii) step halves on step 
+## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
+## to +ve definite ii) step halves on step 
 ## failure, without obtaining derivatives until success; (iii) carries start
 ## values forward from one evaluation to next to speed convergence.    
 { ## initial fit
   b<-gam.fit3(x=X, y=y, sp=lsp, S=S,rS=rS,off=off, H=H,
-     offset = offset,family = family,weights=weights,deriv=TRUE,
+     offset = offset,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,...)
+     printWarn=FALSE,use.svd=use.svd,...)
   useGCV <- if (scoreType=="GCV") TRUE else FALSE
   mustart<-b$fitted.values
   if (useGCV) { old.score <- score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
@@ -396,9 +397,9 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
     ## try the step ...
     lsp1 <- lsp + Nstep
     b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
-       offset = offset,family = family,weights=weights,deriv=TRUE,
+       offset = offset,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
-       printWarn=FALSE,mustart=mustart,...)
+       printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
     score1 <- if (useGCV) b$GCV else b$UBRE
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
@@ -419,15 +420,15 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
         if (ii>3) Slength <- Slength/2 ## keep track of SD step length
         lsp1 <- lsp + step
         b1<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
-           offset = offset,family = family,weights=weights,deriv=FALSE,
+           offset = offset,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,mustart=mustart,...)
+           printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
         score1 <- if (useGCV) b1$GCV else b1$UBRE
         if (score1 <= score) { ## accept
           b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
-             offset = offset,family = family,weights=weights,deriv=TRUE,
+             offset = offset,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,
-             printWarn=FALSE,mustart=mustart,...)
+             printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
           if (useGCV) { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
@@ -461,21 +462,132 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
 gam4objective <- function(lsp,args,...)
 ## Performs IRLS GAM fitting for smoothing parameters given in lsp 
 ## and returns the GCV or UBRE score for the model.
-## args is a list containing the arguments for gam.fit2
+## args is a list containing the arguments for gam.fit3
 ## For use as nlm() objective
 { 
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
-     offset = args$offset,family = args$family,weights=args$w,deriv=TRUE,
+     offset = args$offset,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,pearson=args$pearson,
-     printWarn=FALSE,...)
+     use.svd=FALSE,printWarn=FALSE,...)
   if (args$scoreType == "GCV") ret <- b$GCV else ret <- b$UBRE
   attr(ret,"full.fit") <- b
   if (args$scoreType == "GCV") at <- b$GCV1 else at <- b$UBRE1
   attr(ret,"gradient") <- at
-  if (args$scoreType == "GCV") at <- b$GCV2 else at <- b$UBRE2
-  attr(ret,"hessian") <- at
   ret
 }
+
+
+
+
+
+newton1 <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
+                   control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
+                   maxHalf=30,printWarn=FALSE,scoreType="GCV",use.svd=TRUE,...)
+## Newton optimizer for GAM gcv/aic optimization that can cope with an 
+## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
+## to +ve definite ii) step halves on step 
+## failure, without obtaining derivatives until success; (iii) carries start
+## values forward from one evaluation to next to speed convergence.    
+{ ## initial fit
+  b<-gam.fit3(x=X, y=y, sp=lsp, S=S,rS=rS,off=off, H=H,
+     offset = offset,family = family,weights=weights,deriv=2,
+     control=control,gamma=gamma,scale=scale,
+     printWarn=FALSE,use.svd=use.svd,...)
+  useGCV <- if (scoreType=="GCV") TRUE else FALSE
+  mustart<-b$fitted.values
+  if (useGCV) { old.score <- score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
+  } else {
+    old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+  }
+ 
+  for (i in 1:200) {
+    ## get the trial step ...
+    eh <- eigen(hess,symmetric=TRUE)
+    d <- eh$values;U <- eh$vectors
+    ind <- d < 0
+    d[ind] <- -d[ind] ## see Gill Murray and Wright p107/8
+    d <- 1/d
+
+    step <- -drop(U%*%(d*(t(U)%*%grad))) # (modified) Newton direction
+    ms <- max(abs(step))
+    if (ms>maxNstep) step <- step/ms
+
+    ## try the step ...
+    lsp1 <- lsp + step
+    b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+       offset = offset,family = family,weights=weights,deriv=0,
+       control=control,gamma=gamma,scale=scale,
+       printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+    score1 <- if (useGCV) b$GCV else b$UBRE
+    ## accept if improvement, else step halve
+    ii <- 0 ## step halving counter
+    if (score1<score) { ## extend step
+      old.score <- score
+      score <- score1
+      stl <- 1;
+      ok <- if (ms>maxNstep) FALSE else TRUE
+      while (ok) {
+        stl <- stl * 1.5
+        estep <- step * stl
+        ms <- max(abs(estep))
+        if (ms>maxNstep) { 
+          estep <- estep/ms
+          ok <- FALSE
+        }
+        lsp1 <- lsp + estep
+        b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+          offset = offset,family = family,weights=weights,deriv=0,
+          control=control,gamma=gamma,scale=scale,
+          printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+        score1 <- if (useGCV) b$GCV else b$UBRE
+        if (score1<=score) { ## accept
+          score <- score1
+        } else { ## got worse again, accept previous and stop
+          ok <- FALSE
+          stl <- stl/1.5 
+          lsp1 <- lsp + step *stl
+        }
+      } 
+      ## lsp1 is best found, by end
+    } else { ## step halving ...
+      while (score1>score && ii < maxHalf) {
+        step <- step/2
+        lsp1 <- lsp + step
+        b1<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+           offset = offset,family = family,weights=weights,deriv=0,
+           control=control,gamma=gamma,scale=scale,
+           printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+           score1 <- if (useGCV) b1$GCV else b1$UBRE
+       
+        if (score1>score) ii <- ii + 1 ## prevent ii==maxHalf and decrease at same time
+      } # end of step halving
+      old.score <- score
+    }
+    if (ii < maxHalf) ## then step succeeded 
+    { b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+             offset = offset,family = family,weights=weights,deriv=2,
+             control=control,gamma=gamma,scale=scale,
+             printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+      mustart <- b$fitted.values
+      lsp <- lsp1
+      if (useGCV) { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
+      } else { score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+      }
+    }
+    ## test for convergence
+    converged <- TRUE
+    score.scale <- b$scale.est + score;    
+    if (sum(grad>score.scale*conv.tol)) converged <- FALSE
+    if (abs(old.score-score)>score.scale*conv.tol) converged <- FALSE
+    if (ii==maxHalf) converged <- TRUE ## step failure
+    if (converged) break
+  } ## end of iteration loop
+  if (ii==maxHalf) ct <- "step failed"
+  else if (i==200) ct <- "iteration limit reached" 
+  else ct <- "full convergence"
+  list(score=score,lsp=lsp,grad=grad,hess=hess,iter=i,conv =ct,object=b)
+}
+
 
 
 

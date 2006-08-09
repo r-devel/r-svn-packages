@@ -1328,7 +1328,9 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
   if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- "GCV";scale<-1}
   if (method$outer=="newton"){ ## the gam.fit3 method 
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,weights=G$w,
-                   control=control,gamma=gamma,scale=scale,conv.tol=1e-7,printWarn=FALSE,scoreType=criterion,...)   
+                control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
+                maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)   
     obj <- b$score
     object <- b$object
     lsp <- b$lsp
@@ -1338,7 +1340,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,pearson=method$pearson)
    
     if (method$outer=="nlm") {
-       b <- nlm(gam3objective, lsp, typsize = lsp, fscale = fscale, 
+       b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
             stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim,
@@ -1608,7 +1610,7 @@ print.gam<-function (x,...)
 gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,globit = 20,
                          mgcv.tol=1e-7,mgcv.half=15,nb.theta.mult=10000,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,absorb.cons=TRUE,
-                         max.tprs.knots=5000,nlm=list(),optim=list(),outerPIsteps=4) 
+                         max.tprs.knots=5000,nlm=list(),optim=list(),newton=list(),outerPIsteps=1) 
 # Control structure for a gam. 
 # irls.reg is the regularization parameter to use in the GAM fitting IRLS loop.
 # epsilon is the tolerance to use in the IRLS MLE loop. maxit is the number 
@@ -1654,6 +1656,13 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,globit = 20,
     if (is.null(nlm$check.analyticals)) nlm$check.analyticals <- FALSE
     nlm$check.analyticals <- as.logical(nlm$check.analyticals) 
 
+    # and newton defaults
+    if (is.null(newton$conv.tol)) newton$conv.tol <- 1e-6
+    if (is.null(newton$maxNstep)) newton$maxNstep <- 5
+    if (is.null(newton$maxSstep)) newton$maxSstep <- 2
+    if (is.null(newton$maxHalf)) newton$maxHalf <- 30
+    if (is.null(newton$use.svd)) newton$use.svd <- FALSE
+
     # and optim defaults
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
@@ -1661,7 +1670,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,globit = 20,
     list(irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,globit = globit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,nb.theta.mult=nb.theta.mult,
          rank.tol=rank.tol,absorb.cons=absorb.cons,max.tprs.knots=max.tprs.knots,nlm=nlm,
-         optim=optim,outerPIsteps=outerPIsteps)
+         optim=optim,newton=newton,outerPIsteps=outerPIsteps)
     
 }
 
