@@ -1,3 +1,7 @@
+2006-08-11 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* tests/stata.Rout.save: update for str() change.
+
 2006-06-17 Thomas Lumley <tlmley@u.washington.edu>
 
 	* R/writeForeignSAS.R, COPYRIGHTS: Add Stephen Weigand's modifications 
