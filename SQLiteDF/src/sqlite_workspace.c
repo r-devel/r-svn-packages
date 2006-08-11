@@ -255,7 +255,6 @@ int USE_SDF1(const char *iname, int exists) {
     sqlite3_finalize(stmt);
 
     if (!loaded) {
-        int nloaded;
         char *fname = g_sql_buf[1];
 
         /* test first if we will be loading valid sdf */
@@ -271,26 +270,8 @@ int USE_SDF1(const char *iname, int exists) {
             return 0;
         }
 
-        sqlite3_prepare(g_workspace, "select count(*) from workspace where loaded=1",
-                -1, &stmt, NULL);
-        sqlite3_step(stmt);
-        nloaded = sqlite3_column_int(stmt, 0);
-        sqlite3_finalize(stmt);
-
-        /* test if we have to detach somebody */
-        if (nloaded == MAX_ATTACHED) {
-            /* have to evict */
-            sqlite3_prepare(g_workspace, "select internal_name from workspace "
-                    "where loaded=1 order by uses", -1, &stmt, NULL);
-            sqlite3_step(stmt);
-            char *iname2;
-            iname2 = (char *)sqlite3_column_text(stmt, 0);
-            sprintf(g_sql_buf[2], "detach [%s]", iname2);
-            _sqlite_exec(g_sql_buf[2]);
-            sprintf(g_sql_buf[2], "update workspace set loaded=0 where internal_name='%s'", iname);
-            _sqlite_exec(g_sql_buf[2]);
-            sqlite3_finalize(stmt);
-        }
+        /* unload sdf's if we run to the MAX_ATTACHED limit */
+        _prepare_attach2();
 
         /* set loaded to true */
         sprintf(g_sql_buf[2], "update workspace set loaded=1 where internal_name='%s'", iname);

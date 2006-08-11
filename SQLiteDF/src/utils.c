@@ -76,10 +76,10 @@ int _expand_buf(int i, int size) {
     return expanded;
 }
 
-int _sqlite_error(int res) {
+int _sqlite_error_check(int res, const char *file, int line) {
     int ret = FALSE;
     if (res != SQLITE_OK) { 
-        Rprintf("SQLITE ERROR: %s\n", sqlite3_errmsg(g_workspace));
+        Rprintf("SQLITE ERROR (line %d at %s): %s\n", line, file, sqlite3_errmsg(g_workspace));
         ret = TRUE;
     }
     return ret;
@@ -88,7 +88,7 @@ int _sqlite_error(int res) {
 const char *_get_column_type(const char *class, int type) {
     if (type == INTSXP) return "int";
     else if (type == REALSXP) return "double";
-    else if (type == CHARSXP) return "text";
+    else if (type == STRSXP) return "text";
     else if (type == LGLSXP) return "bit";
     else if (strcmp(class, "factor") == 0) return "int"; /* do I really reach this ? */
     else if (strcmp(class, "ordered") == 0) return "int";
@@ -188,6 +188,7 @@ SEXP _getListElement(SEXP list, char *varname) {
     return ret;
 }
 
+/* return the row names of an sdf as a sqlite.vector */
 SEXP _get_rownames2(const char *sdf_iname) {
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[2], "select [row name] from [%s].sdf_data", sdf_iname);
@@ -307,6 +308,41 @@ SEXP _shrink_vector(SEXP vec, int len) {
     }
 
     return ret;
+}
+
+/* prepare sdf workspace before attaching a new db */
+int _prepare_attach2() {
+    sqlite3_stmt *stmt;
+    int nloaded;
+
+    sqlite3_prepare(g_workspace, "select count(*) from workspace where loaded=1",
+            -1, &stmt, NULL);
+    sqlite3_step(stmt);
+    nloaded = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    /* test if we have to detach somebody */
+    if (nloaded == MAX_ATTACHED) {
+        /* have to evict */
+        sqlite3_prepare(g_workspace, "select internal_name from workspace "
+                "where loaded=1 order by uses", -1, &stmt, NULL);
+        sqlite3_step(stmt);
+        char *iname2;
+        iname2 = (char *)sqlite3_column_text(stmt, 0);
+        sprintf(g_sql_buf[2], "detach [%s]", iname2);
+        _sqlite_exec(g_sql_buf[2]);
+        /* I don't know why I get away with this, but I think
+         * I should finalize stmt before I can update workspace table */
+        sqlite3_finalize(stmt); 
+    }
+
+    return nloaded == MAX_ATTACHED;
+}
+
+char *_str_tolower(char *out, const char *ref) {
+    int i;
+    for (i = 0; ref[i]; i++) out[i] = tolower(ref[i]);
+    return out;
 }
 
 /* see equivalent: inherits() */

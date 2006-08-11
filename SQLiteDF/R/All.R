@@ -10,7 +10,9 @@
     library.dynam.unload("SQLiteDF", libpath)
 }
 
+# -------------------------------------------------------------------------
 # workspace functions
+# -------------------------------------------------------------------------
 lsSdf <- function(pattern=NULL) .Call("sdf_list_sdfs", pattern);
 getSdf <- function(name) .Call("sdf_get_sdf", name);
 
@@ -22,7 +24,9 @@ attachSdf <- function(sdf_filename, sdf_iname=NULL)
     invisible(.Call("sdf_attach_sdf", sdf_filename, sdf_iname));
 detachSdf <- function(iname) .Call("sdf_detach_sdf", iname);
 
+# -------------------------------------------------------------------------
 # sqlite.data.frame functions
+# -------------------------------------------------------------------------
 dupSdf <- function(sdf) { 
     if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.");
     sdf[1:length(sdf)]
@@ -35,24 +39,68 @@ renameSdf <- function(sdf, name) {
 inameSdf <- function(sdf) .Call("sdf_get_iname", sdf)
 
 # -------------------------------------------------------------------------
+# external data functions
+# -------------------------------------------------------------------------
+sdfImportDBI <- function(con, sql, batch.size=2048, row.names="row_names", sdf.iname = NULL) {
+    on.exit(dbClearResult(rs));
+    rs <- dbSendQuery(con, sql);
+    df <- fetch(rs, batch.size);
+    has_rn <- (1:length(df))[names(df) == row.names];
+    if (length(has_rn) == 0) has_rn <- FALSE;
+    if (has_rn) { 
+        rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn;
+    }
+    sdf <- sqlite.data.frame(df, sdf.iname);
+    rowname <- batch.size
+    while (! dbHasCompleted(rs)) {
+        df <- fetch(rs, batch.size);
+        if (has_rn) { 
+            rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn;
+        }
+        rbind.sqlite.data.frame(sdf, df);
+    }
+    sdf;
+}
+
+sdfImportSQLite <- function(dbfilename, tablename, sdf.iname = tablename) {
+    .Call("sdf_import_sqlite_table", dbfilename, tablename, sdf.iname);
+}
+
+# -------------------------------------------------------------------------
 # overriden primitives
 # -------------------------------------------------------------------------
-# returns sexp-level length.
-length <- function(x) UseMethod("length");
-length.default <- .Primitive("length");
-
-# because sdf objects is actually a list, the internal is.list always true.
-# by making SDF not a list, which makes list-requiring func call
-# as.list.sqlite.data.frame, we can get a lot of functions (lapply, ...) for free.
-is.list <- function(x) UseMethod("is.list");
-is.list.default <- .Primitive("is.list")
-
 # the default rbind's dispatch is "not normal," won't dispatch to rbind.sdf
 # even if all args are sdf's
 rbind <- function(..., deparse.level) UseMethod("rbind")
 rbind.default <- function(..., deparse.level) .Internal(rbind(deparse.level, ...));
 
-sort.default <- sort; sort <- function(x, ...) UseMethod("sort");
+sort.default <- base::sort; sort <- function(x, ...) UseMethod("sort");
+formals(sort.default) <- c(formals(sort.default), alist(...=))
+environment(quantile.default) <- .GlobalEnv
+
+median <- function(x, na.rm=FALSE) quantile(x, 0.5, na.rm=na.rm)
+
+eval <- function(expr, envir=parent.frame(), enclos=if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv()) {
+    if (inherits(envir, "sqlite.data.frame")) envir <- as.list(envir);
+    .Internal(eval(expr, envir, enclos));
+}
+
+# -------------------------------------------------------------------------
+# biglm stuffs
+# -------------------------------------------------------------------------
+sdflm <- function(formula, sdf, batch.size=1024) {
+    n <- 1:batch.size;
+    sdf.nrows <- nrow(sdf);
+    res <- biglm(formula, sdf[n,]);
+    n <- n + batch.size;
+    while (n[1] < sdf.nrows) {
+        if (n[batch.size] > sdf.nrows) n <- n[1]:sdf.nrows;
+        res <- update(res, sdf[n,]);
+        n <- n + batch.size;
+    }
+    res;
+}
+
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.data.frame
 # -------------------------------------------------------------------------
@@ -89,6 +137,7 @@ rbind.sqlite.data.frame <- function(..., deparse.level=1) {
 }
 with.sqlite.data.frame <- function(sdf, expr, ...)  
     eval(substitute(expr), as.list(sdf), enclos=parent.frame())
+as.data.frame.sqlite.data.frame <- function(x, ...) x
 
       
 
@@ -138,3 +187,16 @@ Ops.sqlite.vector <- function(e1, e2) {
 sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
     .Call("sdf_sort_variable", x, as.logical(decreasing))
 }
+quantilexx.sqlite.vector <- function(x, probs=seq(0, 1, 0.25), names=FALSE, 
+        na.rm=FALSE, type=7, ...) {
+    # I just copied these, mostly.
+    if (!any(inherits(x,"numeric"), inherits(x,"integer")))
+        stop("only for numeric vectors");
+    if (any((p.ok <- !is.na(probs)) & (probs < 0 | probs > 1)))
+        stop("'probs' outside [0,1]")
+    n <- length(x); np <- length(probs);
+    xs <- sort(x);
+}
+
+quantile.sqlite.vector <- function(x, probs=seq(0,1,0.25), names=FALSE,
+        na.rm=FALSE, type=7, ...) NextMethod();

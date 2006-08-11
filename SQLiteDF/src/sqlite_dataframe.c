@@ -91,7 +91,7 @@ char *_create_sdf_skeleton1(SEXP name, int *onamelen) {
         return NULL; 
     }
 
-    *onamelen = namelen;
+    if (onamelen) *onamelen = namelen;
     return iname;
 }
 /* checks if a column has a corresponding factor|ordered table */
@@ -106,7 +106,7 @@ static int _is_factor2(const char *iname, const char *factor_type, const char *c
 }
 
 /* create a factor|ordered table */
-static int _create_factor_table2(const char *iname, const char *factor_type, 
+int _create_factor_table2(const char *iname, const char *factor_type, 
         const char *colname) {
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[2], "create table [%s].[%s %s] (level int, label text, "
@@ -295,6 +295,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
                 if (_create_factor_table2(iname, class, col_name)) 
                     return R_NilValue; /* dup tbl name? */
 
+                _sqlite_exec("begin");
                 levels = GET_LEVELS(variable);
                 sprintf(g_sql_buf[2], "insert into [%s].[%s %s] values(?, ?);",
                         iname, class, col_name);
@@ -309,12 +310,13 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
                     sqlite3_step(stmt);
                 }
                 sqlite3_finalize(stmt);
+                _sqlite_exec("commit");
             }
         }
         
         _expand_buf(0,sql_len+35);
-        sql_len += sprintf(g_sql_buf[0]+sql_len, ", primary key([row name]));");
-        /* sql_len += sprintf(g_sql_buf[0]+sql_len, ");"); */
+        /* sql_len += sprintf(g_sql_buf[0]+sql_len, ", primary key([row name]));"); */
+        sql_len += sprintf(g_sql_buf[0]+sql_len, ");");
         res = _sqlite_exec(g_sql_buf[0]);
         if (_sqlite_error(res)) return R_NilValue; /* why? */
 
@@ -324,6 +326,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         rownames = getAttrib(df, R_RowNamesSymbol);
         nrows = GET_LENGTH(rownames);
 
+        _sqlite_error(_sqlite_exec("begin"));
         sprintf(g_sql_buf[1]+sql_len2, ")");
         res = sqlite3_prepare(g_workspace, g_sql_buf[1], -1, &stmt, NULL);
 
@@ -359,13 +362,15 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
 
             res = sqlite3_step(stmt);
             if (res != SQLITE_DONE) { 
+                _sqlite_exec("ROLLBACK");
                 sqlite3_finalize(stmt);
-                Rprintf("ERROR: %s\n", sqlite3_errmsg(g_workspace));
+                Rprintf("SQLITE ERROR: %s\n", sqlite3_errmsg(g_workspace));
                 return R_NilValue; /* why? */
             }
         }
                 
         sqlite3_finalize(stmt);
+        _sqlite_error(_sqlite_exec("COMMIT"));
 
         /* create a new object representing the sdf */
         ret = _create_sdf_sexp(iname);
@@ -977,7 +982,6 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
 
         _expand_buf(2, buflen + buflen2 + 10);
         sprintf(g_sql_buf[2], "%s) %s)", g_sql_buf[0], g_sql_buf[1]);
-        Rprintf("%s\n", g_sql_buf[2]);
         res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
         if (_sqlite_error(res)) return ret;
 
@@ -985,6 +989,7 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
         nrows = LENGTH(GET_ROWNAMES(data));
         rownames = GET_ROWNAMES(data);
 
+        _sqlite_exec("begin");
         for (i = 0; i < nrows; i++) {
             sqlite3_bind_text(stmt, 1, CHAR_ELT(rownames, i), -1, SQLITE_STATIC);
             for (j = 0; j < ncols; j++) {
@@ -1014,6 +1019,7 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
         }
 
         sqlite3_finalize(stmt);
+        _sqlite_exec("begin");
         ret = sdf;
     } else if (strcmp(class,"sqlite.data.frame") == 0) {
     }

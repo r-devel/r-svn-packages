@@ -32,6 +32,8 @@ char *_get_full_pathname2(char *relpath); /* get full path given relpath, used i
 char *_create_sdf_skeleton1(SEXP name, int *o_namelen);
 int _copy_factor_levels2(const char *factor_type, const char *iname_src,
         const char *colname_src, const char *iname_dst, const char *colname_dst);
+int _create_factor_table2(const char *iname, const char *factor_type, 
+        const char *colname);
 
 /* R utilities */
 SEXP _getListElement(SEXP list, char *varname);
@@ -39,8 +41,9 @@ SEXP _shrink_vector(SEXP vec, int len); /* shrink vector size */
 
 /* sqlite utilities */
 int _empty_callback(void *data, int ncols, char **row, char **cols);
-int _sqlite_error(int res);
+int _sqlite_error_check(int res, const char *file, int line);
 const char *_get_column_type(const char *class, int type); /* get sqlite type corresponding to R class & type */
+sqlite3* _is_sqlitedb(char *filename);
 
 /* global buffer (g_sql_buf) utilities */
 int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
@@ -50,14 +53,19 @@ int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
 SEXP sdf_get_variable(SEXP sdf, SEXP name);
 SEXP sdf_detach_sdf(SEXP internal_name);
 
+/* workspace utilities */
+int _prepare_attach2();  /* prepare workspace before attaching a sqlite db */
+
 /* misc utilities */
 char *_r2iname(char *internal_name, char *filename);
 char *_fixname(char *rname);
+char *_str_tolower(char *out, const char *ref);
 
 /* register functions to sqlite */
 void __register_vector_math();
 
 #define _sqlite_exec(sql) sqlite3_exec(g_workspace, sql, _empty_callback, NULL, NULL)
+#define _sqlite_error(sql) _sqlite_error_check((sql), __FILE__, __LINE__)
 #ifndef SET_ROWNAMES
 #define SET_ROWNAMES(x,n) setAttrib(x, R_RowNamesSymbol, n)
 #endif

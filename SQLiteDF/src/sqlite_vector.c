@@ -485,6 +485,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* sqlite does int div with "/" if both args are int. mod is % also.
                      * fortunately, in both cases the sqlite op is 2nd char of funcname */
                     sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
+                    _sqlite_exec("begin");
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -497,8 +498,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_int(stmt, 3, (int)REAL(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
+                    _sqlite_exec("commit");
                 } else { /* non-integer binary operation */
                     sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                    _sqlite_exec("begin");
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -511,6 +514,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_double(stmt, 3, REAL(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
+                    _sqlite_exec("commit");
                 }
                 sqlite3_finalize(stmt2);
             } else { /* op2_len > svec_len, recycle svec */
@@ -527,7 +531,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     _sqlite_error(res);
                 }
                
-                i = 0;
+                i = 0; _sqlite_exec("begin");
                 while (i < op2_len) {
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
                     _sqlite_error(res);
@@ -559,6 +563,8 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* recycle on svec if we loop again */
                     sqlite3_finalize(stmt2);
                 }
+
+                _sqlite_exec("commit");
             }
 
             sqlite3_finalize(stmt);
@@ -589,6 +595,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* sqlite does int div with "/" if both args are int. mod is % also.
                      * fortunately, in both cases the sqlite op is 2nd char of funcname */
                     sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
+                    _sqlite_exec("begin");
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -601,8 +608,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_int(stmt, 3, INTEGER(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
+                    _sqlite_exec("commit");
                 } else {
                     sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                    _sqlite_exec("begin");
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -615,6 +624,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_double(stmt, 3, (double)INTEGER(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
+                    _sqlite_exec("commit");
                 }
                 sqlite3_finalize(stmt2);
             } else {
@@ -631,7 +641,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     _sqlite_error(res);
                 }
                
-                i = 0;
+                i = 0; _sqlite_exec("begin");
                 while (i < op2_len) {
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
                     _sqlite_error(res);
@@ -663,6 +673,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* recycle on svec if we loop again */
                     sqlite3_finalize(stmt2);
                 }
+                _sqlite_exec("commit");
             }
 
             sqlite3_finalize(stmt);
@@ -692,6 +703,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
 
             if (funcname[0] == '%') {
                 sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);
+                _sqlite_exec("begin");
                 res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                 _sqlite_error(res);
 
@@ -734,8 +746,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_reset(stmt3);
                     }
                 }
+                _sqlite_exec("commit");
             } else { /* not an integer op %% or %/% */
                 sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                _sqlite_exec("begin");
                 res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                 _sqlite_error(res);
 
@@ -778,6 +792,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_reset(stmt3);
                     }
                 }
+                _sqlite_exec("commit");
             }
 
             sqlite3_finalize(stmt);
