@@ -2,6 +2,8 @@
 
 	Convert all .rda data files to version 2 (RDX2).
 
+        change row names on 'jasa' object to character.
+
 2.27	cch checks for censored observations outside subcohort (Ellen O'Meara)
 	Updated reference for stratified case-cohort design.
 	

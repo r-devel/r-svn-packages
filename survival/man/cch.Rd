@@ -97,12 +97,12 @@ Therneau, TM and Li, H (1999). Computing the Cox model for case-cohort designs.
 Lifetime Data Analysis 5: 99--112.
 
 
-Borgan, \O, Langholz, B, Samuelsen, SO, Goldstein, L and Pogoda, J (2000)
+Borgan, \eqn{\O}{O}, Langholz, B, Samuelsen, SO, Goldstein, L and Pogoda, J (2000)
  Exposure stratified case-cohort designs. Lifetime Data Analysis 6, 39-58.
 
 }
 \seealso{
-\code{twophase} and \code{svycoxph} in the "survey" package for slightly
+\code{twophase} and \code{svycoxph} in the "survey" package for
 more general two-phase designs. \url{http://faculty.washington.edu/tlumley/survey/}
 }
 \examples{
@@ -117,8 +117,10 @@ subcoh <- nwtco$in.subcohort
 selccoh <- with(nwtco, rel==1|subcoh==1)
 ccoh.data <- nwtco[selccoh,]
 ccoh.data$subcohort <- subcoh[selccoh]
-ccoh.data$histol <- factor(ccoh.data$histol,labels=c("FH","UH"))  # Central histology 
-ccoh.data$stage <- factor(ccoh.data$stage,labels=c("I","II","III","IV")) # Stage
+## central-lab histology 
+ccoh.data$histol <- factor(ccoh.data$histol,labels=c("FH","UH"))
+## tumour stage
+ccoh.data$stage <- factor(ccoh.data$stage,labels=c("I","II","III","IV"))
 ccoh.data$age <- ccoh.data$age/12 # Age in years
 
 ##
