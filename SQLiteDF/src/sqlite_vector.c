@@ -5,9 +5,9 @@
 /****************************************************************************
  * UTILITY FUNCTIONS
  ****************************************************************************/
-static char *_create_svector1(SEXP name, const char *type, int * _namelen) {
+char *_create_svector1(SEXP name, const char *type, int * _namelen, int protect) {
     int namelen, res;
-    char *iname = _create_sdf_skeleton1(name, &namelen);
+    char *iname = _create_sdf_skeleton1(name, &namelen, protect);
 
     if (iname == NULL) return NULL;
 
@@ -115,7 +115,7 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     char *iname = SDF_INAME(sdf);
     char *varname = CHAR_ELT(name, 0);
 
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     /* check if sdf & varname w/in that sdf exists */
     sqlite3_stmt *stmt;
@@ -178,7 +178,7 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
 
 SEXP sdf_get_variable_length(SEXP svec) {
     char *iname = SDF_INAME(svec);
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     SEXP ret;
     PROTECT(ret = NEW_INTEGER(1));
@@ -194,7 +194,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     int index, idxlen, i, retlen=0, res;
     sqlite3_stmt *stmt;
 
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     idxlen = LENGTH(idx);
     if (idxlen < 1) return ret;
@@ -352,6 +352,78 @@ SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value) {
     return R_NilValue;
 }
 
+SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
+    char *iname, *varname, *type;
+    sqlite3_stmt *stmt;
+    int nprotected = 0;
+    SEXP ret, names;
+
+    iname = SDF_INAME(svec);
+    varname = SVEC_VARNAME(svec);
+    USE_SDF1(iname, TRUE, FALSE);
+
+    if ((inherits(svec, "ordered") && ((type = "ordered"))) ||
+            (inherits(svec, "factor") && ((type = "factor")))) {
+        int nrows, i, max_rows = INTEGER(maxsum)[0];
+
+
+        sprintf(g_sql_buf[0], "[%s].[%s %s]", iname, type, varname);
+        nrows = _get_row_count2(g_sql_buf[0], FALSE);
+        if (nrows <= max_rows) max_rows = nrows;
+        else { nrows = max_rows; max_rows--; }
+
+        PROTECT(ret = NEW_INTEGER(nrows)); nprotected = 1;
+        PROTECT(names = NEW_CHARACTER(nrows)); nprotected++;
+
+        sprintf(g_sql_buf[0], "select [%s].[%s %s].label, count(*) from "
+                "[%s].sdf_data join [%s].[%s %s] on [%s].sdf_data.[%s]=[%s].[%s %s].level "
+                "group by [%s].sdf_data.[%s], [%s].[%s %s].level order by count(*) desc",
+                iname, type, varname, iname, iname, type, varname, iname, varname,
+                iname, type, varname, iname, varname, iname, type, varname);
+        sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+
+        for (i = 0; i < max_rows; i++) {
+            sqlite3_step(stmt);
+            SET_STRING_ELT(names, i, mkChar((char *)sqlite3_column_text(stmt, 0)));
+            INTEGER(ret)[i] = sqlite3_column_int(stmt, 1);
+        }
+
+        if (nrows > max_rows) {
+            int others_sum = 0;
+            SET_STRING_ELT(names, nrows-1, mkChar("(Others)"));
+            while (sqlite3_step(stmt) == SQLITE_ROW) {
+                others_sum += sqlite3_column_int(stmt, 1);
+            }
+            INTEGER(ret)[nrows-1] = others_sum;
+        }
+    } else if (inherits(svec, "logical")) {
+        sprintf(g_sql_buf[0], "select count(*) from "
+                "[%s].sdf_data group by [%s] order by [%s]", iname, varname, varname);
+
+        PROTECT(names = NEW_CHARACTER(3)); nprotected = 1;
+        PROTECT(ret = NEW_CHARACTER(3)); nprotected++;
+
+        SET_STRING_ELT(names, 0, mkChar("Mode"));
+        SET_STRING_ELT(names, 1, mkChar("FALSE"));
+        SET_STRING_ELT(names, 2, mkChar("TRUE"));
+
+        sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+        SET_STRING_ELT(ret, 0, mkChar("logical"));
+        sqlite3_step(stmt);
+        SET_STRING_ELT(ret, 1, mkChar((const char *)sqlite3_column_text(stmt, 0)));
+        sqlite3_step(stmt);
+        SET_STRING_ELT(ret, 2, mkChar((const char *)sqlite3_column_text(stmt, 0)));
+
+    } else return R_NilValue;
+
+    sqlite3_finalize(stmt);
+    SET_NAMES(ret, names);
+    SET_CLASS(ret, mkString("table"));
+    UNPROTECT(nprotected);
+    return ret;
+}
+            
+
 /* the global accumulator should be safe if we only do 1 cummulative or
  * aggregate at any time. it won't work for stuffs like "select max(col)-min(col)
  * from sdf_data". */
@@ -370,7 +442,7 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     varname_src = SVEC_VARNAME(vector);
     nargs = INTEGER(_nargs)[0];
 
-    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname_src, TRUE, TRUE)) return R_NilValue;
 
     /* check nargs */
     if (nargs > 2) {
@@ -379,7 +451,7 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     }
 
     /* create a new sdf, with 1 column named V1 */
-    iname = _create_svector1(R_NilValue, "double", &namelen);
+    iname = _create_svector1(R_NilValue, "double", &namelen, TRUE);
 
     /* insert into <newsdf>.col, row.names select func(col), rownames */
     sprintf(g_sql_buf[0], "insert into [%s].sdf_data([row name], V1) "
@@ -402,6 +474,9 @@ SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP extra_args, SEXP _nargs) 
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
+    UNUSE_SDF2(iname);
+    UNUSE_SDF2(iname_src);
+
     return _create_svector_sexp(iname, "V1", "numeric");
 }
 
@@ -415,7 +490,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
     iname_src = SDF_INAME(vector);
     varname_src = SVEC_VARNAME(vector);
 
-    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname_src, TRUE, TRUE)) return R_NilValue;
     switch(funcname[0]) {
         case '+' :
         case '-' :
@@ -438,7 +513,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
     if (functype == 0 || functype == 2 || (functype == 1 && funcname[0] != '!')) {
         char *insert_fmt_string1c, *insert_fmt_string1s;
         char *insert_fmt_string2c, *insert_fmt_string2s;
-        iname = _create_svector1(R_NilValue, (functype == 0) ? "double" : "bit", NULL);
+        iname = _create_svector1(R_NilValue, (functype == 0) ? "double" : "bit", NULL, TRUE);
 
         if (functype == 1) { /* boolean binary operators */
             insert_fmt_string1s = "insert into [%s].sdf_data "
@@ -475,6 +550,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                 _sqlite_error(res);
                 sqlite3_bind_double(stmt, 1, REAL(op2)[0]);
                 sqlite3_step(stmt);
+                sqlite3_finalize(stmt);
             } else if (op2_len <= svec_len) {  /* recycle op2 */
                 sprintf(g_sql_buf[2], "select [row name], [%s] from [%s].sdf_data",
                         varname_src, iname_src);
@@ -485,7 +561,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* sqlite does int div with "/" if both args are int. mod is % also.
                      * fortunately, in both cases the sqlite op is 2nd char of funcname */
                     sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
-                    _sqlite_exec("begin");
+                    _sqlite_begin;
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -498,10 +574,12 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_int(stmt, 3, (int)REAL(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
-                    _sqlite_exec("commit");
+                    sqlite3_finalize(stmt);
+                    sqlite3_finalize(stmt2);
+                    _sqlite_commit;
                 } else { /* non-integer binary operation */
                     sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
-                    _sqlite_exec("begin");
+                    _sqlite_begin;
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -514,9 +592,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_double(stmt, 3, REAL(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
-                    _sqlite_exec("commit");
+                    sqlite3_finalize(stmt);
+                    sqlite3_finalize(stmt2);
+                    _sqlite_commit;
                 }
-                sqlite3_finalize(stmt2);
             } else { /* op2_len > svec_len, recycle svec */
                 sprintf(g_sql_buf[1], "select [%s] from [%s].sdf_data",
                         varname_src, iname_src);
@@ -531,7 +610,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     _sqlite_error(res);
                 }
                
-                i = 0; _sqlite_exec("begin");
+                i = 0; _sqlite_begin;
                 while (i < op2_len) {
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
                     _sqlite_error(res);
@@ -564,10 +643,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     sqlite3_finalize(stmt2);
                 }
 
-                _sqlite_exec("commit");
+                sqlite3_finalize(stmt);
+                _sqlite_commit;
             }
 
-            sqlite3_finalize(stmt);
         } else if (IS_INTEGER(op2) || IS_LOGICAL(op2)) { /* I N T E G E R */
             /* we are taking advantage of the fact that logicals are stored as int.
              * if this becomes untrue in the future, then this is a bug */
@@ -595,7 +674,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* sqlite does int div with "/" if both args are int. mod is % also.
                      * fortunately, in both cases the sqlite op is 2nd char of funcname */
                     sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);  
-                    _sqlite_exec("begin");
+                    _sqlite_begin;
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -608,10 +687,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_int(stmt, 3, INTEGER(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
-                    _sqlite_exec("commit");
+                    _sqlite_commit;
                 } else {
                     sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
-                    _sqlite_exec("begin");
+                    _sqlite_begin;
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                     _sqlite_error(res);
 
@@ -624,7 +703,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_bind_double(stmt, 3, (double)INTEGER(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
-                    _sqlite_exec("commit");
+                    _sqlite_commit;
                 }
                 sqlite3_finalize(stmt2);
             } else {
@@ -641,7 +720,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     _sqlite_error(res);
                 }
                
-                i = 0; _sqlite_exec("begin");
+                i = 0; _sqlite_begin; 
                 while (i < op2_len) {
                     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
                     _sqlite_error(res);
@@ -673,7 +752,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                     /* recycle on svec if we loop again */
                     sqlite3_finalize(stmt2);
                 }
-                _sqlite_exec("commit");
+                _sqlite_commit;
             }
 
             sqlite3_finalize(stmt);
@@ -684,12 +763,13 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
             iname_op2 = SDF_INAME(op2);
             varname_op2 = SVEC_VARNAME(op2);
 
-            if (!USE_SDF1(iname_op2, TRUE)) {
+            if (!USE_SDF1(iname_op2, TRUE, TRUE)) {
                 /* delete created sqlite.vector */
                 Rprintf("Warning: detaching created result SDF %s\n", iname);
                 sdf_detach_sdf(mkString(iname));
                 return R_NilValue;
             }
+            _sqlite_begin;
 
             op2_len = _get_row_count2(iname_op2, 1);
             
@@ -703,7 +783,6 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
 
             if (funcname[0] == '%') {
                 sprintf(g_sql_buf[2], insert_fmt_string2c, iname, funcname[1]);
-                _sqlite_exec("begin");
                 res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                 _sqlite_error(res);
 
@@ -746,10 +825,9 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_reset(stmt3);
                     }
                 }
-                _sqlite_exec("commit");
+                _sqlite_commit;
             } else { /* not an integer op %% or %/% */
                 sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
-                _sqlite_exec("begin");
                 res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
                 _sqlite_error(res);
 
@@ -792,15 +870,17 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
                         sqlite3_reset(stmt3);
                     }
                 }
-                _sqlite_exec("commit");
             }
 
             sqlite3_finalize(stmt);
             sqlite3_finalize(stmt2);
             sqlite3_finalize(stmt3);
+            _sqlite_commit;
+
+            UNUSE_SDF2(iname_op2);
         }
     } else if (functype == 1 && funcname[0] != '!') { /* unary not operator */
-        iname = _create_svector1(R_NilValue, "bit", NULL);
+        iname = _create_svector1(R_NilValue, "bit", NULL, TRUE);
         sprintf(g_sql_buf[2], "insert into [%s].sdf_data "
                     "select [row name], [%s] == 0 from [%s].sdf_data", 
                     iname, varname_src, iname_src);
@@ -810,9 +890,13 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2) {
         sqlite3_finalize(stmt);
     }
 
-    if (iname != NULL)
+    if (iname != NULL) {
         return _create_svector_sexp(iname, "V1", 
                 (functype == 0) ? "numeric" : "logical");
+        UNUSE_SDF2(iname);
+    }
+
+    UNUSE_SDF2(iname_src);
 
     return R_NilValue;
 
@@ -829,7 +913,7 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
     iname_src = SDF_INAME(vector);
     varname_src = SVEC_VARNAME(vector);
 
-    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname_src, TRUE, FALSE)) return R_NilValue;
 
     g_narm = LOGICAL(na_rm)[0];
     if (strcmp(funcname, "range") == 0) {
@@ -891,7 +975,7 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
     iname_src = SDF_INAME(svec);
     varname_src = SVEC_VARNAME(svec);
 
-    if (!USE_SDF1(iname_src, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname_src, TRUE, TRUE)) return R_NilValue;
 
     /* determine type of svec */
     sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data limit 1", varname_src, iname_src);
@@ -902,7 +986,7 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
     sqlite3_finalize(stmt);
 
     /* create a new vector of that type */
-    iname = _create_svector1(R_NilValue, g_sql_buf[0], NULL);
+    iname = _create_svector1(mkString("tmp-sort"), g_sql_buf[0], NULL, TRUE);
 
     /* insert to new sdf ordered */
     sprintf(g_sql_buf[0], "insert into [%s].sdf_data "
@@ -917,6 +1001,9 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
         else type = "factor";
         _copy_factor_levels2(type, iname_src, varname_src, iname, "V1");
     } else type = CHAR_ELT(GET_CLASS(svec), 1);
+
+    UNUSE_SDF2(iname_src);
+    UNUSE_SDF2(iname);
 
     return _create_svector_sexp(iname, "V1", type);
 }

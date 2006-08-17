@@ -6,7 +6,7 @@
 #ifndef __SQLITE_DATAFRAME__
 #define __SQLITE_DATAFRAME__
 
-#define WORKSPACE_COLUMNS 5
+#define WORKSPACE_COLUMNS 6
 #ifndef WIN32
 #define MAX_ATTACHED 30     /* 31 including workspace.db */
 #else
@@ -19,7 +19,8 @@ int _file_exists(char *filename);
 int _sdf_exists2(char *iname);
 
 /* sdf utilities */
-int USE_SDF1(const char *iname, int exists);  /* call this before doing anything on an SDF */
+int USE_SDF1(const char *iname, int exists, int protect);  /* call this before doing anything on an SDF */
+int UNUSE_SDF2(const char *iname); /* somewhat like UNPROTECT */
 SEXP _create_sdf_sexp(const char *iname);  /* create a SEXP for an SDF */
 int _add_sdf1(char *filename, char *internal_name); /* add SDF to workspace */
 void _delete_sdf2(const char *iname); /* remove SDF from workspace */
@@ -27,13 +28,16 @@ int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
 int _get_row_count2(const char *table, int quote);
 SEXP _get_rownames(const char *sdf_iname);
 char *_get_full_pathname2(char *relpath); /* get full path given relpath, used in workspace mgmt */
+int _is_factor2(const char *iname, const char *factor_type, const char *colname);
+SEXP _get_rownames2(const char *sdf_iname);
 
 /* utilities for creating SDF's */
-char *_create_sdf_skeleton1(SEXP name, int *o_namelen);
+char *_create_sdf_skeleton1(SEXP name, int *o_namelen, int protect);
 int _copy_factor_levels2(const char *factor_type, const char *iname_src,
         const char *colname_src, const char *iname_dst, const char *colname_dst);
 int _create_factor_table2(const char *iname, const char *factor_type, 
         const char *colname);
+char *_create_svector1(SEXP name, const char *type, int * _namelen, int protect);
 
 /* R utilities */
 SEXP _getListElement(SEXP list, char *varname);
@@ -65,7 +69,16 @@ char *_str_tolower(char *out, const char *ref);
 void __register_vector_math();
 
 #define _sqlite_exec(sql) sqlite3_exec(g_workspace, sql, _empty_callback, NULL, NULL)
-#define _sqlite_error(sql) _sqlite_error_check((sql), __FILE__, __LINE__)
+#define _sqlite_error(res) _sqlite_error_check((res), __FILE__, __LINE__)
+
+#ifdef __SQLITE_DEBUG__
+#define _sqlite_begin  { _sqlite_error(_sqlite_exec("begin")); Rprintf("begin at "  __FILE__  " line %d\n",  __LINE__); }
+#define _sqlite_commit  { _sqlite_error(_sqlite_exec("commit")); Rprintf("commit at "  __FILE__  " line %d\n",  __LINE__); }
+#else
+#define _sqlite_begin  _sqlite_error(_sqlite_exec("begin")) 
+#define _sqlite_commit _sqlite_error(_sqlite_exec("commit"))
+#endif
+
 #ifndef SET_ROWNAMES
 #define SET_ROWNAMES(x,n) setAttrib(x, R_RowNamesSymbol, n)
 #endif

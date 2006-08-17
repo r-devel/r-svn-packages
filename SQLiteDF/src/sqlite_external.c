@@ -49,7 +49,7 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname) {
 
     
     /* create the sdf where the data will be imported to */
-    iname = _create_sdf_skeleton1(_sdfiname, NULL);
+    iname = _create_sdf_skeleton1(_sdfiname, NULL, FALSE);
     if (iname == NULL) goto sdf_import_sqlite_table__out;
 
     iname_len = strlen(iname);  /* needed for buf resizing below */

@@ -57,7 +57,7 @@ static int _create_sdf_attribute2(const char *iname) {
     return res;
 }
 
-char *_create_sdf_skeleton1(SEXP name, int *onamelen) {
+char *_create_sdf_skeleton1(SEXP name, int *onamelen, int protect) {
     char *iname, *rname;
     int namelen, file_idx = 0, res;
 
@@ -80,7 +80,7 @@ char *_create_sdf_skeleton1(SEXP name, int *onamelen) {
 
     /* detach SDF's if necessary to attach this one. if file does not
      * exist, then a sqlite db will be created after we make our 1st table */
-    if (!USE_SDF1(iname, FALSE)) { /* _delete_sdf2(iname); */ return NULL; }
+    if (!USE_SDF1(iname, FALSE, protect)) { /* _delete_sdf2(iname); */ return NULL; }
 
 
     /* create attributes table */
@@ -95,7 +95,7 @@ char *_create_sdf_skeleton1(SEXP name, int *onamelen) {
     return iname;
 }
 /* checks if a column has a corresponding factor|ordered table */
-static int _is_factor2(const char *iname, const char *factor_type, const char *colname) {
+int _is_factor2(const char *iname, const char *factor_type, const char *colname) {
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[2], "select * from [%s].[%s %s]", iname, factor_type,
             colname);
@@ -244,7 +244,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
     int namelen, res, i, j;
 
     /* find free name, attach sdf, create sdf_attributes */
-    iname = _create_sdf_skeleton1(name, &namelen);
+    iname = _create_sdf_skeleton1(name, &namelen, FALSE);
     
     if (iname != NULL) {
         int sql_len, sql_len2;
@@ -315,8 +315,8 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         }
         
         _expand_buf(0,sql_len+35);
-        /* sql_len += sprintf(g_sql_buf[0]+sql_len, ", primary key([row name]));"); */
-        sql_len += sprintf(g_sql_buf[0]+sql_len, ");");
+        sql_len += sprintf(g_sql_buf[0]+sql_len, ", primary key([row name]));");
+        /* sql_len += sprintf(g_sql_buf[0]+sql_len, ");"); */
         res = _sqlite_exec(g_sql_buf[0]);
         if (_sqlite_error(res)) return R_NilValue; /* why? */
 
@@ -386,7 +386,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
 SEXP sdf_get_names(SEXP sdf) {
     char *iname;
     iname = SDF_INAME(sdf);
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     int len;
     len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
@@ -414,7 +414,7 @@ SEXP sdf_get_names(SEXP sdf) {
 SEXP sdf_get_length(SEXP sdf) {
     char *iname;
     iname  = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
 
@@ -438,7 +438,7 @@ SEXP sdf_get_length(SEXP sdf) {
 /* get row count */
 SEXP sdf_get_row_count(SEXP sdf) {
     char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     int nrow;
     SEXP ret;
@@ -479,7 +479,7 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
 SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
     SEXP ret = R_NilValue;
     char *iname = SDF_INAME(sdf);
-    if (!USE_SDF1(iname, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, TRUE)) return R_NilValue;
 
     sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
@@ -629,7 +629,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
             const char *colname;
             int namelen, sql_len, sql_len2;
 
-            iname2 = _create_sdf_skeleton1(R_NilValue, &namelen);
+            iname2 = _create_sdf_skeleton1(R_NilValue, &namelen, TRUE);
 
             /* create sdf_data table */
             sql_len = sprintf(g_sql_buf[1], "create table [%s].sdf_data ([row name] text", iname2);
@@ -693,6 +693,9 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
             sprintf(g_sql_buf[0], "%s.db", iname2);
             res = _add_sdf1(g_sql_buf[0], iname2);
             if (_sqlite_error(res)) return R_NilValue;
+
+            /* remove protection */
+            UNUSE_SDF2(iname2);
 
             /* create SEXP for the SDF */
             ret = _create_sdf_sexp(iname2);
@@ -849,6 +852,8 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
 
         UNPROTECT(1); /* for the ret from _setup_df_sexp1 */
     }
+
+    UNUSE_SDF2(iname);
 
     if (ret != R_NilValue && col_index_len > 1) {
         SEXP class = mkString("data.frame");

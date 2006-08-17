@@ -325,15 +325,15 @@ int _prepare_attach2() {
     if (nloaded == MAX_ATTACHED) {
         /* have to evict */
         sqlite3_prepare(g_workspace, "select internal_name from workspace "
-                "where loaded=1 order by uses", -1, &stmt, NULL);
+                "where loaded=1 and used=0 order by uses", -1, &stmt, NULL);
         sqlite3_step(stmt);
         char *iname2;
         iname2 = (char *)sqlite3_column_text(stmt, 0);
         sprintf(g_sql_buf[2], "detach [%s]", iname2);
-        _sqlite_exec(g_sql_buf[2]);
-        /* I don't know why I get away with this, but I think
-         * I should finalize stmt before I can update workspace table */
+        _sqlite_error(_sqlite_exec(g_sql_buf[2]));
+        sprintf(g_sql_buf[2], "update workspace set loaded=0 where internal_name='%s'", iname2);
         sqlite3_finalize(stmt); 
+        _sqlite_error(_sqlite_exec(g_sql_buf[2]));
     }
 
     return nloaded == MAX_ATTACHED;
