@@ -12,7 +12,13 @@ static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx)
     int namelen = 0;
 
     /* check if arg name is supplied */
-    if (IS_CHARACTER(name)) {
+    if (name == R_NilValue) {
+        *rname = "data";
+        namelen = 5;
+        *iname = (char*)R_alloc(13, sizeof(char)); /* data10000.db\0 */
+        *file_idx = 1;
+        sprintf(*iname, "%s%d.db", *rname, *file_idx);
+    } else if (IS_CHARACTER(name)) {
         *rname = CHAR_ELT(name,0);
         if (!_is_r_sym(*rname)) { 
             Rprintf("Error: supplied name \"%s\"is not a valid R symbol.\n", 
@@ -22,12 +28,6 @@ static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx)
         namelen = strlen(*rname);
         *iname = (char*)R_alloc(namelen + 9, sizeof(char)); /* <name>10000.db\0 */
         sprintf(*iname, "%s.db", *rname);
-    } else if (name == R_NilValue) {
-        *rname = "data";
-        namelen = 5;
-        *iname = (char*)R_alloc(13, sizeof(char)); /* data10000.db\0 */
-        *file_idx = 1;
-        sprintf(*iname, "%s%d.db", *rname, *file_idx);
     } else {
         Rprintf("Error: the supplied value for arg name is not a string.\n");
     }
@@ -251,7 +251,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         sqlite3_stmt *stmt;
 
         /* create sdf_data table */
-        SEXP names = GET_NAMES(df), variable, levels;
+        SEXP names = GET_NAMES(df), variable, levels, var_class;
         int ncols = GET_LENGTH(names), type, *types;
         char *col_name, *class, *factor;
 
@@ -278,7 +278,8 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
             _expand_buf(0, sql_len+strlen(col_name)+10);
 
             variable = _getListElement(df, col_name);
-            class = CHAR(STRING_ELT(GET_CLASS(variable), 0));
+            var_class = GET_CLASS(variable);
+            class = (var_class == R_NilValue) ? NULL : CHAR(STRING_ELT(var_class, 0));
             type = TYPEOF(variable);
             types[i] = type;
 
@@ -291,7 +292,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
             sql_len2 += 2; 
 
             /* create separate table for factors decode */
-            if (strcmp(class, "factor") == 0 || strcmp(class, "ordered") == 0){
+            if (class != NULL && (strcmp(class, "factor") == 0 || strcmp(class, "ordered") == 0)){
                 if (_create_factor_table2(iname, class, col_name)) 
                     return R_NilValue; /* dup tbl name? */
 

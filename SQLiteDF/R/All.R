@@ -51,9 +51,9 @@ sqlite.matrix <- function(data, name=NULL) {
 # external data functions
 # -------------------------------------------------------------------------
 sdfImportDBI <- function(con, sql, batch.size=2048, row.names="row_names", sdf.iname = NULL) {
-    on.exit(dbClearResult(rs));
-    rs <- dbSendQuery(con, sql);
-    df <- fetch(rs, batch.size);
+    on.exit(DBI:::dbClearResult(rs));
+    rs <- DBI:::dbSendQuery(con, sql);
+    df <- DBI:::fetch(rs, batch.size);
     has_rn <- (1:length(df))[names(df) == row.names];
     if (length(has_rn) == 0) has_rn <- FALSE;
     if (has_rn) { 
@@ -62,7 +62,7 @@ sdfImportDBI <- function(con, sql, batch.size=2048, row.names="row_names", sdf.i
     sdf <- sqlite.data.frame(df, sdf.iname);
     rowname <- batch.size
     while (! dbHasCompleted(rs)) {
-        df <- fetch(rs, batch.size);
+        df <- DBI:::fetch(rs, batch.size);
         if (has_rn) { 
             rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn;
         }
@@ -128,7 +128,7 @@ eval <- function(expr, envir=parent.frame(), enclos=if (is.list(envir) || is.pai
 sdflm <- function(formula, sdf, batch.size=1024) {
     n <- 1:batch.size;
     sdf.nrows <- nrow(sdf);
-    res <- biglm(formula, sdf[n,]);
+    res <- biglm:::biglm(formula, sdf[n,]);
     n <- n + batch.size;
     while (n[1] < sdf.nrows) {
         if (n[batch.size] > sdf.nrows) n <- n[1]:sdf.nrows;

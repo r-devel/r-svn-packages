@@ -1,0 +1,87 @@
+2006-08-17 (6:05pm Manila time)
+- fixed R-devel tests failure
+- removed Depends on biglm, DBI. used namespace qualifiers 
+- added ChangeLog
+- added tests on summary
+- added version in DESCRIPTION, starting at 0.1.11
+
+2006-08-17
+- fix on USE_SDF1 bug, when a function uses 2 sdf's the 1st may be unloaded 
+  because of low use count
+- fix on transactions
+- started implementing sqlite.matrix
+- commented out parts of the test that fails due to "minor technicalities" (precision, NA). will test them again...
+- summary works, almost the same as original df except for NA handling
+
+2006-08-11
+- added sdflm, as.data.frame.sdf, eval, sdfImportDBI, sdfImportSQLite
+- added Requires DBI, biglm in DESCRIPTION
+- corrected generic-ized is.list, length (already generic)
+- added "begin", "commit" in sdf_create_sdf, rbind, and row ops. absence of
+  which was the cause of the slowness
+- factored out _prepare_attach2() w/c checks the # of attached sqlite db's
+  and detaches as necessary.
+- fixed bug on detecting R character type, STRSXP instead of CHARSXP
+- added utility _str_tolower(), file name & line number in _sqlite_error
+- override stats::quantile env
+- change Makevars to link statically
+
+2006-08-01
+- added methods is.list and as.list to sdf's. lapply (sapply) now works
+- rbind(sdf, df) works, however no "labeled" rbind
+- finished Op group (%% & %/% implemented wrongly for now...)
+- with.sqlite.data.frame is already working
+- sort.sqlite.vector() is working
+- renamed USE_SDF to USE_SDF1, restricted it to only use buf1 and below.
+  there was something affected by this, which calls USE_SDF twice (initially
+  i thought it would only be used on top of funcs, so using all buffers is
+  ok. if you use it in the middle of the func, it would overwrite all buffers).
+- fixed sdf_get_row_count, _create_svector1 (renamed from *2, added ordered),
+  renamed _create_sdf_skeleton2 to skeleton1 because it uses USE_SDF1,
+  changed _get_row_count2 to have quoted and non-quoted option
+- added tests
+
+2006-07-17
+- added documentation
+- finished Summary group, cummulative stuffs in Math group for sqlite.vector
+- revised tests to use stop()
+- started rbind for data frames
+
+2006-07-10
+- added windows dll's, Makevar.win. windows dll still has the default 10 max
+  attached db
+- added USE_SDF, w/c does the juggling of which db to be attached
+
+2006-07-10
+- moved libsqlite3.* to inst/sqlite/linux, added inst/sqlite/win to have
+  sqlite windows static dll
+- change libsqlite3.a to have 31 max attach-ed db's
+- most of Math.sqlite.vector is working already
+- fixed sdf_attach_sdf
+- factored out creation of sdf in _create_sdf_skeleton2
+- added dupSdf, renameSdf
+
+2006-07-05
+- Added test script
+- Fixed compile error for Ubuntu dapper (?), as tested by Mr. Medri. 
+
+2006-07-04
+- fixed lots of monstrous bugs introduced by refactoring stuffs
+- fixed R CMD check errors on documentation
+
+2006-07-04
+- added row.names support for sdf
+- -pedantic cleanups
+- fixes by Prof. Bates: duplicate include & sqlite3_stmt mis-declaration
+- minor fixes
+
+2006-06-27
+- added sqlite.vector, its indexers, length and conversion to ordinary vec
+- indexers for sqlite.data.frame: [, [[, $
+- attachSdf, detachSdf
+
+2006-06-26
+1st submit
+
+
+
