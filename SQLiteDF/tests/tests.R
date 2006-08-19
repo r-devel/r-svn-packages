@@ -56,7 +56,9 @@ for (j in names(iris)) {
 
 # test operators
 stopifnot(all((iris.sdf[,1] + iris.sdf[,2]) == (iris[,1] + iris[,2])))
-#stopifnot(all((iris.sdf[,1]*10 %/% iris.sdf[,2]) == (iris[,1]*10 %/% iris[,2])))
+stopifnot(all((iris.sdf[,1]*10 %/% iris.sdf[,2]) == (iris[,1]*10 %/% iris[,2])))
+stopifnot(all(signif(log(iris.sdf[,1],17)) == signif(log(iris[,1],17))))
+stopifnot(all(round(log(iris.sdf[,1]),5) == round(log(iris[,1]),5)))
 stopifnot(all(with(iris.sdf, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width) == with(iris, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width)))
 
 stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))

@@ -208,16 +208,34 @@ Math.sqlite.vector <- function(x, ...) {
     if (!any(inherits(x, "numeric"), inherits(x, "integer")))
         stop("Non-numeric argument to mathematical function");
     #.Generic
+    other.args <- formals(get(.Generic, mode="function"))[-1];
     extra.args <- list(...);
-    nargs <- 1 + length(extra.args);
-    nformals <- length(formals(get(.Generic, mode="function")))
-    if (nformals == 0) nformals <- 1;
-    if (nargs > nformals)
-        stop("error in number of arguments\n");
-    ret <- .Call("sdf_do_variable_math", .Generic, x, extra.args, nargs);
+
+    # "union" of list elements, with values in extra.args taking precedence
+    # to get default values if missing.
+    # there is some "magic" with Math group functions: they already perform
+    # checking on number of args, ... is passed without the original param names,
+    # and even if you do round(digits=3,5.23512) ... will be list(3)
+    if (length(extra.args) > 0) other.args[1:length(extra.args)] <- extra.args
+
+    # as of 2.4.0, the most # of args in any of the func under Math is 2.
+    # the 2nd arg is tricky, since it can be a vector > 1 then we'd have
+    # to take care of recycling etc. simplify by allowing only scalars
+    # as 2nd arg.
+    if (length(other.args) > 0) {
+        argnames <- names(other.args);
+        if (is.call(other.args[[argnames[1]]])) 
+            other.args[[argnames[1]]] <- eval(other.args[[argnames[1]]]); 
+        if (length(other.args[[argnames[1]]]) > 1) 
+            stop(paste("non scalar", argnames[1], "is not supported"));
+        if (is.null(other.args[[argnames[1]]]))
+            stop(paste("NULL", argnames[1], "is not supported"));
+    }
+    ret <- .Call("sdf_do_variable_math", .Generic, x, other.args);
     if (is.character(ret)) { file.remove(ret); ret <- NULL; }
     ret;
 }
+
 Summary.sqlite.vector <- function(x, na.rm=F) {
     if (!any(inherits(x, "numeric"), inherits(x, "integer"), inherits(x, "logical")))
         stop("Non-numeric argument");
@@ -228,8 +246,11 @@ Summary.sqlite.vector <- function(x, na.rm=F) {
 Ops.sqlite.vector <- function(e1, e2) {
     if (inherits(e1, "factor") | inherits(e2, "factor"))
         stop("not meaningful for factors");
-    if (!inherits(e1, "sqlite.vector")) { tmp <- e1; e1 <- e2; e2 <- tmp; }
-    .Call("sdf_do_variable_op", .Generic, e1, e2);
+    arg.reversed <- FALSE;
+    if (!inherits(e1, "sqlite.vector")) { 
+        tmp <- e1; e1 <- e2; e2 <- tmp; arg.reversed = TRUE; 
+    }
+    .Call("sdf_do_variable_op", .Generic, e1, e2, arg.reversed);
 }
 sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
     .Call("sdf_sort_variable", x, as.logical(decreasing))

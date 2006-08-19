@@ -1,2 +1,2 @@
-PKG_CPPFLAGS=-ISQLite -wall -pedantic
-PKG_LIBS=-LSQLite/.libs -lsqlite3
+PKG_CPPFLAGS=-ISQLite
+PKG_LIBS=-LSQLite -lsqlite3

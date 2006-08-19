@@ -25,9 +25,9 @@ single SDF occupies a whole database, each SDF will be contained in a single fil
 
 Each SDF file contains the following tables:
 \itemize{
-\item{sdf_attributes}{a key-value table that contains the SDF attributes. Currently,
+\item{sdf\_attributes}{a key-value table that contains the SDF attributes. Currently,
 only \emph{name} is used representing the SDF's internal name.}
-\item{sdf_data}{contains the actual data. Factors and ordered variables are stored as
+\item{sdf\_data}{contains the actual data. Factors and ordered variables are stored as
 integers. Their levels are stored in other tables. Numeric (real) are stored as double,
 characters as text and integers as int's. Currently, complex numbers are not supported.
 Column names correspond exactly to the variable names of the ordinary data frames. E.g.
@@ -97,3 +97,6 @@ after the user changes directory after loading SQLiteDF (see \code{attachSdf}.
     iris.sdf[1,c(TRUE,FALSE)]
     #apply(iris.sdf[1:4], 2, mean)
 }
+\keyword{data}
+\keyword{manip}
+\keyword{classes}

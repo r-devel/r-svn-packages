@@ -24,5 +24,38 @@ A. sql buffers
    only those buffers up to 2 (e.g., USE_SDF1 uses only buffers 1 & 2) so
    3 can be used by the calling function.
 
-B. USE_SDF1, UNUSE_SDF2
-1. Because of the limited 
+B. MAX_ATTACHED, USE_SDF1, UNUSE_SDF2
+1. The number of DB attached to the SQLite engine is limited by the value
+   of the macro MAX_ATTACHED in SQLite.
+2. By default, MAX_ATTACHED is 10. This package modifies it to 31. This
+   is the maximum, according to the SQLite docs. SQLite uses bitfields
+   somewhere, where the nth bit probably represents the nth attached db.
+3. SQLiteDF produces a lot of SDF. Most operations creates SDF where 
+   intermediate values are stored.
+4. On startup, it opens workspace.db in the current directory. Then it 
+   attaches SDF's listed in workspace.db.
+5. The package "juggles" with db's attached by using USE_SDF1 and UNUSE_SDF2.
+6. USE_SDF1 checks if a SDF is loaded. If not, and there is a free "slot,"
+   it is attached. If there is no free slot, then the least used among those
+   loaded is detached to make room for this one. The use count of the SDF
+   loaded is increased.
+7. On USE_SDF1, there is an option to "protect" it from being unloaded. There
+   are cases where a function uses 2 SDF and the second USE_SDF may unload
+   the 1st. In general, top-level functions that will use 2 SDF's, including
+   those that will store results in an SDF, will have to set the protect
+   statement. The protect options sets a bit in the workspace db to flag that
+   it should not be detached.
+8. When the protect option is used, make sure to do UNUSE_SDF2. This clears
+   the flag in workspace.db.
+9. _prepare_attach2() contains the logic for detaching SDF's.
+
+C. transactions
+1. when doing bulk modifications (insert/update/delete), enclose them in a
+   transaction, otherwise it will be real slow (see SQLite benchmarks in
+   SQLite site).
+2. Statements that are sqlite_step()-ed inside a transaction, even if they are
+   sqlite_prepare()-ed before a BEGIN. 
+3. You may use macros _sqlite_begin and _sqlite_commit. When __SQLITE_DEBUG__
+   is defined, file and lines where the BEGIN or COMMIT occurred. Besides that
+   it is convenient. 
+

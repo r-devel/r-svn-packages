@@ -1,3 +1,10 @@
+2006-08-20 (00:32 Manila)
+- added docs in HACKING
+- fixed latex error on sqlite.data.frame.Rd
+- changed configure to copy libsqlite3.la to SQLite/ (like configure.win)
+- finished Ops (%%, %/%), and (round, signif, log)
+- fixed bug on operand order for Ops
+- added test cases
 
 2006-08-19 (9:39 Manila time)
 - added configure files from Prof. Ripley
