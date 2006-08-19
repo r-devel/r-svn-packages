@@ -1037,20 +1037,3 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
 SEXP sdf_get_iname(SEXP sdf) {
     return _getListElement(sdf, "iname");
 }
-
-SEXP sopen(SEXP name) {
-    char *filename;
-    
-    if (IS_CHARACTER(name)) {
-        filename = CHAR(STRING_ELT(name,0));
-        Rprintf("%s\n", filename);
-    }
-    /* sqlite3 *db;
-    int res = sqlite3_open(filename, &db); */
-    SEXP ret;
-    PROTECT(ret = NEW_LOGICAL(1));
-    LOGICAL(ret)[0] = IS_CHARACTER(name);
-    /* sqlite3_close(db); */ 
-    UNPROTECT(1);
-    return ret;
-}

@@ -1,3 +1,7 @@
+2006-08-20 (6:35 Manila)
+- configure file fixes from Prof. Ripley
+- added native routines registration
+
 2006-08-20 (00:32 Manila)
 - added docs in HACKING
 - fixed latex error on sqlite.data.frame.Rd

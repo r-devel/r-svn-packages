@@ -7,11 +7,7 @@
 #define __SQLITE_DATAFRAME__
 
 #define WORKSPACE_COLUMNS 6
-#ifndef WIN32
 #define MAX_ATTACHED 30     /* 31 including workspace.db */
-#else
-#define MAX_ATTACHED 10     /* set to 10 until I have recompiled it to 30 */
-#endif
 
 /* utilities for checking characteristics of arg */
 int _is_r_sym(char *sym);
@@ -52,10 +48,6 @@ sqlite3* _is_sqlitedb(char *filename);
 /* global buffer (g_sql_buf) utilities */
 int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
 
-
-/* sqlite.vector utilities */
-SEXP sdf_get_variable(SEXP sdf, SEXP name);
-SEXP sdf_detach_sdf(SEXP internal_name);
 
 /* workspace utilities */
 int _prepare_attach2();  /* prepare workspace before attaching a sqlite db */
@@ -116,4 +108,42 @@ extern char *g_sql_buf[NBUFS];
 extern int g_sql_buf_sz[NBUFS];
 #endif
 
+
+/* top level functions */
+/* sqlite_workspace.c */
+SEXP sdf_init_workspace();
+SEXP sdf_finalize_workspace();
+SEXP sdf_list_sdfs(SEXP pattern);
+SEXP sdf_get_sdf(SEXP name);
+SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name);
+SEXP sdf_detach_sdf(SEXP internal_name);
+SEXP sdf_rename_sdf(SEXP sdf, SEXP name);
+
+/* sqlite_dataframe.c */
+SEXP sdf_create_sdf(SEXP df, SEXP name);
+SEXP sdf_get_names(SEXP sdf);
+SEXP sdf_get_length(SEXP sdf);
+SEXP sdf_get_row_count(SEXP sdf);
+SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote, 
+        SEXP _rownames, SEXP _colnames);
+SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col);
+SEXP sdf_rbind(SEXP sdf, SEXP data);
+SEXP sdf_get_iname(SEXP sdf);
+
+/* sqlite_vector.c */
+SEXP sdf_get_variable(SEXP sdf, SEXP name);
+SEXP sdf_get_variable_length(SEXP svec);
+SEXP sdf_get_variable_index(SEXP svec, SEXP idx);
+/* SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value); */
+SEXP sdf_variable_summary(SEXP svec, SEXP maxsum);
+SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP other_args);
+SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed);
+SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm);
+SEXP sdf_sort_variable(SEXP svec, SEXP decreasing);
+
+/* sqlite_external.c */
+SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname);
+
+/* sqlite_matrix.c */
+SEXP sdf_as_matrix(SEXP sdf, SEXP name);
 #endif
