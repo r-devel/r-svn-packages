@@ -1,0 +1,28 @@
+Implementation notes for those who want to modify the code
+
+A. sql buffers
+1. Much of the logic is concerned with constructing the SQL to be executed.
+   These sql's are stored in one of the global buffers (g_sql_buf).
+2. Currently, there are 4 of them (controlled by constant NBUFS in 
+   src/sqlite_dataframe.h).
+3. It is assumed that R is running on a single thread, so this approach will
+   work.
+4. Initially, all buffers are 1024 characters long. The buffer sizes are
+   stored in the global int array g_sql_buf_sz.
+5. When writing strings to a buf with variable length, use 
+   _expand_buf([index of buffer], [approx size]). If approx size is greater
+   than the buffer's length, it will be reallocated with twice the current
+   size.
+6. Functions use a naming convention with respect to the buffer it uses.
+   Top-level functions may use any of the buffers. Those with name
+   ending in a number are expected to use buffers a buffer with that number
+   as index, and those "below" it. For example, the function USE_SDF1 may
+   use buffers 1 and 2, so those calling it should not store data in those
+   buffers that they will need after the function call. Initially I was able
+   to make do with 3 buffers (0, 1 & 2), but somewhere I had to add another
+   buffer (w/c makes it 4). In most cases, the buffers "below" a number are
+   only those buffers up to 2 (e.g., USE_SDF1 uses only buffers 1 & 2) so
+   3 can be used by the calling function.
+
+B. USE_SDF1, UNUSE_SDF2
+1. Because of the limited 

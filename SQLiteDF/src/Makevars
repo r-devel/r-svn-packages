@@ -1,2 +1,2 @@
-PKG_LIBS=../inst/sqlite/linux/libsqlite3.a -lm 
-PKG_CFLAGS=-Wall -pedantic
+PKG_CPPFLAGS=-ISQLite -wall -pedantic
+PKG_LIBS=-LSQLite/.libs -lsqlite3

@@ -1,0 +1,12 @@
+#! /bin/sh
+# This is a hand-written shell script
+
+if test ! -d src/SQLite; then
+  (cd src; gzip -dc ../sqlite-3*.tar.gz | tar -xf -)
+  (cd src; ln -s sqlite-3* SQLite)
+  (cd src/SQLite; mv src/sqliteInt.h src/sqliteInt.h.orig; sed -e 's/MAX_ATTACHED 10/MAX_ATTACHED 31/' src/sqliteInt.h.orig > src/sqliteInt.h)
+fi
+if test ! -f src/SQLite/Makefile; then
+  (cd src/SQLite; ./configure --disable-shared)
+fi
+(cd src/SQLite; make)

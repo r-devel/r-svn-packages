@@ -1,4 +1,19 @@
-2006-08-17 (6:05pm Manila time)
+
+2006-08-19 (9:39 Manila time)
+- added configure files from Prof. Ripley
+- added documentations for inameSDF, sdfImportSQLite, sdfImportDBI, sdflm.
+- added HACKING notes
+- added list of functions known to work in SQLiteDF.package.Rd
+- changed sqlite_vector accumulator to long double, fixed the accuracy problem
+
+2006-08-18  Douglas Bates  <bates@R-project.org>
+       * R/All.R (with.sqlite.data.frame, summary.sqlite.vector,
+       as.logical.sqlite.vector, as.integer.sqlite.vector,
+       as.double.sqlite.vector): Modify calling sequence of S3 methods to
+       correspond to generic.
+       * man/sqlite.data.frame.Rd: add keywords
+
+2006-08-18 (6:05pm Manila time)
 - fixed R-devel tests failure
 - removed Depends on biglm, DBI. used namespace qualifiers 
 - added ChangeLog

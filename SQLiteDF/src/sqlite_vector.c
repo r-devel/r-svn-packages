@@ -427,7 +427,7 @@ SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
 /* the global accumulator should be safe if we only do 1 cummulative or
  * aggregate at any time. it won't work for stuffs like "select max(col)-min(col)
  * from sdf_data". */
-static double g_accumulator = 0.0; /* accumulator var for cumsum, cumprod, etc. */
+static long double g_accumulator = 0.0; /* accumulator var for cumsum, cumprod, etc. */
 static int g_start = 0;            /* flag for start of cummulation */
 static int g_narm = 0;             /* for Summary group */
 

@@ -59,8 +59,7 @@ stopifnot(all((iris.sdf[,1] + iris.sdf[,2]) == (iris[,1] + iris[,2])))
 #stopifnot(all((iris.sdf[,1]*10 %/% iris.sdf[,2]) == (iris[,1]*10 %/% iris[,2])))
 stopifnot(all(with(iris.sdf, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width) == with(iris, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width)))
 
-# something wrong with precision
-#stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))
+stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))
 
 # test summary
 for (j in 1:5) stopifnot(all(summary(iris.sdf[,j]) == summary(iris[,j])))
