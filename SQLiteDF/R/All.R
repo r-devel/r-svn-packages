@@ -1,4 +1,4 @@
-.onLoad <- function(libname, pkgname) .Call("sdf_init_workspace");
+.onLoad <- function(libname, pkgname) .Call("sdf_init_workspace")
 
 .onUnload <- function(libpath) {
     .Call("sdf_finalize_workspace")
@@ -8,16 +8,16 @@
 # -------------------------------------------------------------------------
 # workspace functions
 # -------------------------------------------------------------------------
-lsSdf <- function(pattern=NULL) .Call("sdf_list_sdfs", pattern);
-getSdf <- function(name) .Call("sdf_get_sdf", name);
+lsSdf <- function(pattern=NULL) .Call("sdf_list_sdfs", pattern)
+getSdf <- function(name) .Call("sdf_get_sdf", name)
 
 readTableSdf <- function(filename, sep=",", quote="\"'", name=NULL, 
                             rownames, colnames)
-    .Call("sdf_import_table", filename, name, sep, quote, rownames, colnames);
+    .Call("sdf_import_table", filename, name, sep, quote, rownames, colnames)
 
 attachSdf <- function(sdf_filename, sdf_iname=NULL) 
-    invisible(.Call("sdf_attach_sdf", sdf_filename, sdf_iname));
-detachSdf <- function(iname) .Call("sdf_detach_sdf", iname);
+    invisible(.Call("sdf_attach_sdf", sdf_filename, sdf_iname))
+detachSdf <- function(iname) .Call("sdf_detach_sdf", iname)
 
 # -------------------------------------------------------------------------
 # sqlite.data.frame functions
@@ -28,13 +28,13 @@ detachSdf <- function(iname) .Call("sdf_detach_sdf", iname);
 }
 
 dupSdf <- function(sdf) { 
-    if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.");
+    if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.")
     sdf[1:length(sdf)]
 }
 renameSdf <- function(sdf, name) { 
-    if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.");
-    if (!is.character(name)) stop("name argument must be a string.");
-    .Call("sdf_rename_sdf", sdf, name);
+    if (!inherits(sdf, "sqlite.data.frame")) stop("Not a sqlite.data.frame.")
+    if (!is.character(name)) stop("name argument must be a string.")
+    .Call("sdf_rename_sdf", sdf, name)
 }
 inameSdf <- function(sdf) .Call("sdf_get_iname", sdf)
 
@@ -51,33 +51,33 @@ sqlite.matrix <- function(data, name=NULL) {
 # external data functions
 # -------------------------------------------------------------------------
 sdfImportDBI <- function(con, sql, batch.size=2048, rownames="row_names", iname = NULL) {
-    on.exit(DBI:::dbClearResult(rs));
-    rs <- DBI:::dbSendQuery(con, sql);
-    df <- DBI:::fetch(rs, batch.size);
+    on.exit(DBI:::dbClearResult(rs))
+    rs <- DBI:::dbSendQuery(con, sql)
+    df <- DBI:::fetch(rs, batch.size)
     if (length(rownames) > 1) stop("more than one column containing row names?")
 
     if (is.numeric(rownames)) has_rn <- rownames
-    else if (is.character(rownames)) has_rn <- (1:length(df))[names(df) == row.names];
+    else if (is.character(rownames)) has_rn <- (1:length(df))[names(df) == row.names]
 
-    if (length(has_rn) == 0) has_rn <- FALSE;
+    if (length(has_rn) == 0) has_rn <- FALSE
 
     if (has_rn) { 
-        rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn;
+        rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn
     }
-    sdf <- sqlite.data.frame(df, iname);
+    sdf <- sqlite.data.frame(df, iname)
     rowname <- batch.size
     while (! dbHasCompleted(rs)) {
-        df <- DBI:::fetch(rs, batch.size);
+        df <- DBI:::fetch(rs, batch.size)
         if (has_rn) { 
-            rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn;
+            rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn
         }
-        rbind.sqlite.data.frame(sdf, df);
+        rbind.sqlite.data.frame(sdf, df)
     }
-    sdf;
+    sdf
 }
 
 sdfImportSQLite <- function(dbfilename, tablename, iname = tablename) {
-    .Call("sdf_import_sqlite_table", dbfilename, tablename, iname);
+    .Call("sdf_import_sqlite_table", dbfilename, tablename, iname)
 }
 
 sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=FALSE, 
@@ -88,23 +88,23 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
     data <- read.table(file=file,sep=sep,quote=quote,dec=dec,as.is=as.is,na.strings=na.strings,
                 colClasses=colClasses,skip=skip,fill=fill,strip.white=strip.white,
                 blank.lines.skip=blank.lines.skip,comment.char=comment.char,
-                allowEscapes=allowEscapes,flush=flush,nrows=batch.size);
-    sdf <- sqlite.data.frame(data, iname);
+                allowEscapes=allowEscapes,flush=flush,nrows=batch.size)
+    sdf <- sqlite.data.frame(data, iname)
     
     if (length(colClasses) < length(data) || colClasses == NA) 
         colClasses <- sapply(data, function(x) class(x)[1]);
 
     sskip <- skip;
     while (nrow(data) == batch.size) {
-        sskip <- sskip + batch.size;
+        sskip <- sskip + batch.size
         data <- read.table(file=file,sep=sep,quote=quote,dec=dec,as.is=as.is,
                     na.strings=na.strings, colClasses=colClasses,skip=skip,fill=fill,
                     strip.white=strip.white, blank.lines.skip=blank.lines.skip,
                     comment.char=comment.char, allowEscapes=allowEscapes,flush=flush,
-                    nrows=batch.size);
-        rbind(sdf, data);
+                    nrows=batch.size)
+        rbind(sdf, data)
     }
-    sdf;
+    sdf
 }
 
 
@@ -122,69 +122,65 @@ environment(quantile.default) <- .GlobalEnv
 
 median <- function(x, na.rm=FALSE) quantile(x, 0.5, na.rm=na.rm)
 
-eval <- function(expr, envir=parent.frame(), enclos=if (is.list(envir) || is.pairlist(envir)) parent.frame() else baseenv()) {
-    if (inherits(envir, "sqlite.data.frame")) envir <- as.list(envir);
-    .Internal(eval(expr, envir, enclos));
-}
-
 # -------------------------------------------------------------------------
 # biglm stuffs
 # -------------------------------------------------------------------------
 sdflm <- function(formula, sdf, batch.size=1024) {
-    n <- 1:batch.size;
-    sdf.nrows <- nrow(sdf);
-    res <- biglm:::biglm(formula, sdf[n,]);
-    n <- n + batch.size;
+    n <- 1:batch.size
+    sdf.nrows <- nrow(sdf)
+    res <- biglm:::biglm(formula, sdf[n,])
+    n <- n + batch.size
     while (n[1] < sdf.nrows) {
-        if (n[batch.size] > sdf.nrows) n <- n[1]:sdf.nrows;
-        res <- update(res, sdf[n,]);
-        n <- n + batch.size;
+        if (n[batch.size] > sdf.nrows) n <- n[1]:sdf.nrows
+        res <- update(res, sdf[n,])
+        n <- n + batch.size
     }
-    res;
+    res
 }
 
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.data.frame
 # -------------------------------------------------------------------------
-names.sqlite.data.frame <- function(x) .Call("sdf_get_names", x);
-length.sqlite.data.frame <- function(x) .Call("sdf_get_length", x);
-nrow.sqlite.data.frame <- function(x) .Call("sdf_get_row_count", x);
+names.sqlite.data.frame <- function(x) .Call("sdf_get_names", x)
+length.sqlite.data.frame <- function(x) .Call("sdf_get_length", x)
+nrow.sqlite.data.frame <- function(x) .Call("sdf_get_row_count", x)
 dim.sqlite.data.frame <- function(x)
-    c(nrow.sqlite.data.frame(x), length.sqlite.data.frame(x));
+    c(nrow.sqlite.data.frame(x), length.sqlite.data.frame(x))
 dimnames.sqlite.data.frame <- function(x) list(row.names(x), names(x))
-"$.sqlite.data.frame" <- function(x, name) .Call("sdf_get_variable", x, name);
+"$.sqlite.data.frame" <- function(x, name) .Call("sdf_get_variable", x, name)
 "[[.sqlite.data.frame" <- function(x, idx) {
-    if (length(idx) != 1) stop("index must be a 1-element vector.");
+    if (length(idx) != 1) stop("index must be a 1-element vector.")
     if (is.character(idx)) .Call("sdf_get_variable", x, idx)
     else if (is.numeric(idx)) {
         if (idx > length(x)) stop("subscript out of bounds")
         else .Call("sdf_get_variable", x, names(x)[idx])
-    } else stop("don't know how to handle index.");
+    } else stop("don't know how to handle index.")
 }
 "[.sqlite.data.frame" <- function(x, row=NULL, col=NULL) {
 #    if (row == NULL || col == NULL) { data.frame(NULL) }
 #    if (missing(row)) row = NULL;
 #    if (missing(col)) col = NULL; 
-    .Call("sdf_get_index", x, row, col); 
+    .Call("sdf_get_index", x, row, col) 
 }
 as.list.sqlite.data.frame <- function(x, ...) {
-    ret <- list();
-    for (i in names(x)) ret[[i]] <- x[[i]];
-    ret;
+    ret <- list()
+    for (i in names(x)) ret[[i]] <- x[[i]]
+    ret
 }
 is.list.sqlite.data.frame <- function(x) FALSE;
 rbind.sqlite.data.frame <- function(..., deparse.level=1) {
-    args <- list(...);
-    .Call("sdf_rbind", args[[1]], args[[2]]);
+    args <- list(...)
+    .Call("sdf_rbind", args[[1]], args[[2]])
 }
 with.sqlite.data.frame <- function(data, expr, ...)  
     eval(substitute(expr), as.list(data), enclos=parent.frame())
 as.data.frame.sqlite.data.frame <- function(x, ...) x
 as.matrix.sqlite.data.frame <- function(x, ...) {
-    args <- as.list(...);
-    if ("name" %in% as.list) name <- args$name else name <- NULL;
+    args <- as.list(...)
+    if ("name" %in% as.list) name <- args$name else name <- NULL
     sqlite.matrix(x, name)
 }
+row.names.sqlite.data.frame <- function(x) attr(x, "sdf.row.names");
 
       
 
@@ -193,10 +189,10 @@ as.matrix.sqlite.data.frame <- function(x, ...) {
 # -------------------------------------------------------------------------
 "[.sqlite.vector" <- function(x, idx) {
     # temporary, better to be in C because assumption is length(x) is large
-    if (is.numeric(idx) && all(idx <= 0)) idx <- (1:length(x))[idx];
-    .Call("sdf_get_variable_index", x, idx);
+    if (is.numeric(idx) && all(idx <= 0)) idx <- (1:length(x))[idx]
+    .Call("sdf_get_variable_index", x, idx)
 }
-length.sqlite.vector <- function(x) .Call("sdf_get_variable_length", x);
+length.sqlite.vector <- function(x) .Call("sdf_get_variable_length", x)
 # methods to "coerce" to ordinary vectors
 as.double.sqlite.vector <- function(x, ...) as.double(x[1:length(x)])
 as.character.sqlite.vector <- function(x, ...) as.character(x[1:length(x)])
@@ -204,12 +200,12 @@ as.logical.sqlite.vector <- function(x, ...) as.logical(x[1:length(x)])
 as.integer.sqlite.vector <- function(x, ...) as.integer(x[1:length(x)])
 Math.sqlite.vector <- function(x, ...) {
     if (any(inherits(x, "factor"), inherits(x, "ordered"))) 
-        stop(paste(.Generic, "not meaningful for factors"));
+        stop(paste(.Generic, "not meaningful for factors"))
     if (!any(inherits(x, "numeric"), inherits(x, "integer")))
-        stop("Non-numeric argument to mathematical function");
+        stop("Non-numeric argument to mathematical function")
     #.Generic
-    other.args <- formals(get(.Generic, mode="function"))[-1];
-    extra.args <- list(...);
+    other.args <- formals(get(.Generic, mode="function"))[-1]
+    extra.args <- list(...)
 
     # "union" of list elements, with values in extra.args taking precedence
     # to get default values if missing.
@@ -223,62 +219,51 @@ Math.sqlite.vector <- function(x, ...) {
     # to take care of recycling etc. simplify by allowing only scalars
     # as 2nd arg.
     if (length(other.args) > 0) {
-        argnames <- names(other.args);
+        argnames <- names(other.args)
         if (is.call(other.args[[argnames[1]]])) 
-            other.args[[argnames[1]]] <- eval(other.args[[argnames[1]]]); 
+            other.args[[argnames[1]]] <- eval(other.args[[argnames[1]]])
         if (length(other.args[[argnames[1]]]) > 1) 
-            stop(paste("non scalar", argnames[1], "is not supported"));
+            stop(paste("non scalar", argnames[1], "is not supported"))
         if (is.null(other.args[[argnames[1]]]))
-            stop(paste("NULL", argnames[1], "is not supported"));
+            stop(paste("NULL", argnames[1], "is not supported"))
     }
-    ret <- .Call("sdf_do_variable_math", .Generic, x, other.args);
-    if (is.character(ret)) { file.remove(ret); ret <- NULL; }
+    ret <- .Call("sdf_do_variable_math", .Generic, x, other.args)
+    if (is.character(ret)) { file.remove(ret); ret <- NULL }
     ret;
 }
 
 Summary.sqlite.vector <- function(x, na.rm=F) {
     if (!any(inherits(x, "numeric"), inherits(x, "integer"), inherits(x, "logical")))
-        stop("Non-numeric argument");
+        stop("Non-numeric argument")
     ret <- .Call("sdf_do_variable_summary", .Generic, x, as.logical(na.rm))
-    if (is.character(ret)) { file.remove(ret); ret <- NULL; }
-    ret;
+    if (is.character(ret)) { file.remove(ret); ret <- NULL }
+    ret
 }
 Ops.sqlite.vector <- function(e1, e2) {
     if (inherits(e1, "factor") | inherits(e2, "factor"))
-        stop("not meaningful for factors");
-    arg.reversed <- FALSE;
+        stop("not meaningful for factors")
+    arg.reversed <- FALSE
     if (!inherits(e1, "sqlite.vector")) { 
         tmp <- e1; e1 <- e2; e2 <- tmp; arg.reversed = TRUE; 
     }
-    .Call("sdf_do_variable_op", .Generic, e1, e2, arg.reversed);
+    .Call("sdf_do_variable_op", .Generic, e1, e2, arg.reversed)
 }
 sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
     .Call("sdf_sort_variable", x, as.logical(decreasing))
 }
-quantilexx.sqlite.vector <- function(x, probs=seq(0, 1, 0.25), names=FALSE, 
-        na.rm=FALSE, type=7, ...) {
-    # I just copied these, mostly.
-    if (!any(inherits(x,"numeric"), inherits(x,"integer")))
-        stop("only for numeric vectors");
-    if (any((p.ok <- !is.na(probs)) & (probs < 0 | probs > 1)))
-        stop("'probs' outside [0,1]")
-    n <- length(x); np <- length(probs);
-    xs <- sort(x);
-}
-
 quantile.sqlite.vector <- function(x, probs=seq(0,1,0.25), names=FALSE,
-        na.rm=FALSE, type=7, ...) NextMethod();
+        na.rm=FALSE, type=7, ...) NextMethod()
 is.numeric.sqlite.vector <- function(x) inherits(x, "numeric") || inherits(x, "integer")
 is.character.sqlite.vector <- function(x) inherits(x, "character")
 is.integer.sqlite.vector <- function(x) inherits(x, "integer")
 summary.sqlite.vector <- function(object, maxsum=100, digits=max(3, getOption("digits")-3), ...) {
     if (inherits(object, "factor") || inherits(object, "logical")) 
         .Call("sdf_variable_summary", object, as.integer(maxsum))
-    else NextMethod();
+    else NextMethod()
 }
 
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.matrix
 # -------------------------------------------------------------------------
-length.sqlite.matrix <- function(x) .Call("sdf_get_variable_length", x);
-dim.sqlite.matrix <- function(x) attr(x, "dim");
+length.sqlite.matrix <- function(x) .Call("sdf_get_variable_length", x)
+dim.sqlite.matrix <- function(x) attr(x, "dim")

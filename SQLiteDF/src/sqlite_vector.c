@@ -180,11 +180,7 @@ SEXP sdf_get_variable_length(SEXP svec) {
     char *iname = SDF_INAME(svec);
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
-    SEXP ret;
-    PROTECT(ret = NEW_INTEGER(1));
-    INTEGER(ret)[0] = _get_row_count2(iname, 1);
-    UNPROTECT(1);
-    return ret;
+    return ScalarInteger(_get_row_count2(iname, 1));
 }
 
     

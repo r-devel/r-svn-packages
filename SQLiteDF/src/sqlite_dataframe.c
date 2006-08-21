@@ -414,26 +414,20 @@ SEXP sdf_get_names(SEXP sdf) {
 
 SEXP sdf_get_length(SEXP sdf) {
     char *iname;
-    iname  = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
-    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
-
-    int len = sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
-
+    int len;
     sqlite3_stmt *stmt;
     int res;
-   
-    res = sqlite3_prepare(g_workspace, g_sql_buf[0], len, &stmt, NULL);
+
+    iname  = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
+
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
     if (_sqlite_error(res)) return R_NilValue;
 
-    SEXP ret;
-
     len = sqlite3_column_count(stmt)-1;
-    PROTECT(ret = NEW_INTEGER(1));
-    INTEGER(ret)[0] = len;
-
     sqlite3_finalize(stmt);
-    UNPROTECT(1);
-    return ret;
+    return ScalarInteger(len);
 }
 
 /* get row count */
@@ -447,11 +441,7 @@ SEXP sdf_get_row_count(SEXP sdf) {
     nrow = _get_row_count2(iname, TRUE);
 
     if (nrow < 1) ret = R_NilValue;
-    else {
-        PROTECT(ret = NEW_INTEGER(1));
-        INTEGER(ret)[0] = nrow;
-        UNPROTECT(1);
-    }
+    else ret = ScalarInteger(nrow);
 
     return ret;
 }

@@ -176,6 +176,11 @@ SEXP sdf_init_workspace() {
         }
     }
 
+    /* create symbols used for object attributes */
+    SDF_RowNamesSymbol = install("sdf.row.names");
+    SDF_DimSymbol = install("sdf.dim");
+    SDF_DimNamesSymbol = install("sdf.dimnames");
+
     /*
      * check for workspace.db, workspace1.db, ..., workspace9999.db if they
      * are valid workspace file. if one is found, use that as the workspace.
@@ -188,14 +193,13 @@ SEXP sdf_init_workspace() {
         sprintf(filename, "%s%d.db", basename, ++file_idx);
     }
 
-    PROTECT(ret = NEW_LOGICAL(1));
     if ((g_workspace == NULL) && (file_idx < 10000)) {
         /* no workspace found but there are still "available" file name */
         /* if (file_idx) warn("workspace will be stored at #{filename}") */
         sqlite3_open(filename, &g_workspace);
         _sqlite_exec("create table workspace(rel_filename text, full_filename text,"
                "internal_name text, loaded bit, uses int, used bit)");
-        LOGICAL(ret)[0] = TRUE;
+        ret = ScalarLogical(TRUE);
     } else if (g_workspace != NULL) {
         /* a valid workspace has been found, load each of the tables */
         int res, nrows, ncols; 
@@ -228,12 +232,10 @@ SEXP sdf_init_workspace() {
         }
         sqlite3_free_table(result_set);
 
-        LOGICAL(ret)[0] = TRUE;
+        ret = ScalarLogical(TRUE);
     } else { /* can't find nor create workspace */
-        LOGICAL(ret)[0] = FALSE;
+        ret = ScalarLogical(FALSE);
     }
-
-    UNPROTECT(1);
 
     /* register sqlite math functions */
     __register_vector_math();
@@ -306,10 +308,8 @@ int UNUSE_SDF2(const char *iname) {
 SEXP sdf_finalize_workspace() {
     SEXP ret;
     int i;
-    PROTECT(ret = NEW_LOGICAL(1)); 
-    LOGICAL(ret)[0] = (sqlite3_close(g_workspace) == SQLITE_OK);
+    ret = ScalarLogical(sqlite3_close(g_workspace) == SQLITE_OK);
     for (i = 0; i < NBUFS; i++) Free(g_sql_buf[i]);
-    UNPROTECT(1);
     return ret;
 } 
 
@@ -342,13 +342,14 @@ SEXP sdf_list_sdfs(SEXP pattern) {
 }
 
 SEXP sdf_get_sdf(SEXP name) {    
+    char *iname;
+    SEXP ret;
+
     if (TYPEOF(name) != STRSXP) {
         Rprintf("Error: Argument must be a string containing the SDF name.\n");
         return R_NilValue;
     }
-
-    char *iname = CHAR(STRING_ELT(name, 0));
-    SEXP ret;
+    iname = CHAR(STRING_ELT(name, 0));
 
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
@@ -459,30 +460,27 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
 /* not necessary anymore, since stuffs will eventually be detached
  * if we keep on adding new sdfs */
 SEXP sdf_detach_sdf(SEXP internal_name) {
+    char *iname;
+    int res;
+
     if (!IS_CHARACTER(internal_name)) {
         Rprintf("Error: iname argument is not a string.\n");
         return R_NilValue;
     }
 
-    char *iname = CHAR_ELT(internal_name, 0);
+    iname = CHAR_ELT(internal_name, 0);
     sprintf(g_sql_buf[0], "detach [%s]", iname);
 
-    SEXP ret; int res;
     res = _sqlite_exec(g_sql_buf[0]);
     res = !_sqlite_error(res);
 
     if (res) _delete_sdf2(iname);
-
-    PROTECT(ret = NEW_LOGICAL(1));
-    LOGICAL(ret)[0] = res;
-    UNPROTECT(1);
-
-    return ret;
+    
+    return ScalarLogical(res);
 }
 
 SEXP sdf_rename_sdf(SEXP sdf, SEXP name) {
     char *iname, *path, *newname;
-    SEXP ret;
     int res, ret_tmp;
 
     iname = SDF_INAME(sdf);
@@ -532,10 +530,6 @@ SEXP sdf_rename_sdf(SEXP sdf, SEXP name) {
         _add_sdf1(iname, path);
     }
 
-    PROTECT(ret = NEW_LOGICAL(1));
-    LOGICAL(ret)[0] = ret_tmp;
-    UNPROTECT(1);
-
-    return ret;
+    return ScalarLogical(ret_tmp);
 }
 

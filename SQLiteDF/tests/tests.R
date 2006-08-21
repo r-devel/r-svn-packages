@@ -12,6 +12,10 @@ stopifnot(file.exists("data1.db"))
 u2.sdf <- sqlite.data.frame(attenu)
 stopifnot(file.exists("data2.db"))
 
+# test row.names
+stopifnot(all(row.names(u1.sdf)==row.names(iris)))
+stopifnot(all(row.names(u2.sdf)==row.names(attenu)))
+
 # test creating named sdfs
 iris.sdf <- sqlite.data.frame(iris, "iris")
 stopifnot(file.exists("iris.db"))

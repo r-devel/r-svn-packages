@@ -1,3 +1,12 @@
+2006-08-21 (9:30 Manila)
+- added symbols SDF_RowNamesSymbol, SDF_DimSymbols, SDF_DimNamesSymbols. SDF
+  row names is now attached to SDF_RowNamesSymbol ("sdf.row.names")
+- added row.names.sqlite.data.frame
+- added src/win/opcode.h
+- used ScalarLogical(), ScalarInteger(), ...
+- removed ";" in All.R
+- removed eval()
+
 2006-08-20 (6:35 Manila)
 - configure file fixes from Prof. Ripley
 - added native routines registration

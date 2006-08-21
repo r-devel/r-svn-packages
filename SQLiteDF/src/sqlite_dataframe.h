@@ -6,6 +6,23 @@
 #ifndef __SQLITE_DATAFRAME__
 #define __SQLITE_DATAFRAME__
 
+/* # of sql buffers */
+#define NBUFS 4
+
+#ifdef __SQLITE_WORKSPACE__
+SEXP SDF_RowNamesSymbol;
+SEXP SDF_DimSymbol;
+SEXP SDF_DimNamesSymbol;
+#else 
+extern SEXP SDF_RowNamesSymbol;
+extern SEXP SDF_DimSymbol;
+extern SEXP SDF_DimNamesSymbol;
+
+extern sqlite3 *g_workspace;
+extern char *g_sql_buf[NBUFS];
+extern int g_sql_buf_sz[NBUFS];
+#endif
+
 #define WORKSPACE_COLUMNS 6
 #define MAX_ATTACHED 30     /* 31 including workspace.db */
 
@@ -72,7 +89,7 @@ void __register_vector_math();
 #endif
 
 #ifndef SET_ROWNAMES
-#define SET_ROWNAMES(x,n) setAttrib(x, R_RowNamesSymbol, n)
+#define SET_ROWNAMES(x,n) setAttrib(x, SDF_RowNamesSymbol, n)
 #endif
 
 /* override R's, which does a GetRowNames which is different I believe */
@@ -85,9 +102,6 @@ void __register_vector_math();
 /* SDF object accessors shortcuts */
 #define SDF_INAME(sdf) CHAR(STRING_ELT(_getListElement(sdf, "iname"),0))
 #define SVEC_VARNAME(sdf) CHAR(STRING_ELT(_getListElement(sdf, "varname"),0))
-
-/* # of sql buffers */
-#define NBUFS 4
 
 /* possible var types when stored in sqlite as integer */
 #define VAR_INTEGER 0
@@ -102,11 +116,6 @@ void __register_vector_math();
 #define FACTORSXP 11
 #define ORDEREDSXP 12
 
-#ifndef __SQLITE_WORKSPACE__
-extern sqlite3 *g_workspace;
-extern char *g_sql_buf[NBUFS];
-extern int g_sql_buf_sz[NBUFS];
-#endif
 
 
 /* top level functions */
