@@ -380,17 +380,25 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
     old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
   }
   Slength <- maxSstep 
+  score.scale <- b$scale.est + score;    
+  uconv.ind <- abs(grad) > score.scale*conv.tol
   for (i in 1:200) {
+    ## exclude apparently converged gradients from computation
+    hess1 <- hess[uconv.ind,uconv.ind] 
+    grad1 <- grad[uconv.ind]
     ## get the trial step ...
-    eh <- eigen(hess,symmetric=TRUE)
+    eh <- eigen(hess1,symmetric=TRUE)
     d <- eh$values;U <- eh$vectors
-    #dmin <- max(abs(d))*.Machine$double.eps^.5
     ind <- d < 0
     d[ind] <- -d[ind] ## see Gill Murray and Wright p107/8
     d <- 1/d
+    
+    Nstep <- 0 * grad
+    Nstep[uconv.ind] <- -drop(U%*%(d*(t(U)%*%grad1))) # (modified) Newton direction
+   
     Sstep <- -Slength * grad/max(abs(grad)) # steepest descent direction 
     
-    Nstep <- -drop(U%*%(d*(t(U)%*%grad))) # (modified) Newton direction
+    ## Nstep <- -drop(U%*%(d*(t(U)%*%grad))) # (modified) Newton direction
     ms <- max(abs(Nstep))
     if (ms>maxNstep) Nstep <- Nstep/ms
 
@@ -443,8 +451,12 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
     ## test for convergence
     converged <- TRUE
     score.scale <- b$scale.est + score;    
-    if (sum(grad>score.scale*conv.tol)) converged <- FALSE
-    if (abs(old.score-score)>score.scale*conv.tol) converged <- FALSE
+    uconv.ind <- abs(grad) > score.scale*conv.tol
+    if (sum(uconv.ind)) converged <- FALSE
+    if (abs(old.score-score)>score.scale*conv.tol) { 
+      if (converged) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
+      converged <- FALSE      
+    }
     if (ii==maxHalf) converged <- TRUE ## step failure
     if (converged) break
   } ## end of iteration loop
@@ -499,19 +511,24 @@ newton1 <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
   } else {
     old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
   }
- 
+  score.scale <- b$scale.est + score;    
+  uconv.ind <- abs(grad) > score.scale*conv.tol
   for (i in 1:200) {
+    ## exclude apparently converged gradients from computation
+    hess1 <- hess[uconv.ind,uconv.ind] 
+    grad1 <- grad[uconv.ind,iconv.ind]
     ## get the trial step ...
-    eh <- eigen(hess,symmetric=TRUE)
+    eh <- eigen(hess1,symmetric=TRUE)
     d <- eh$values;U <- eh$vectors
     ind <- d < 0
     d[ind] <- -d[ind] ## see Gill Murray and Wright p107/8
     d <- 1/d
-
-    step <- -drop(U%*%(d*(t(U)%*%grad))) # (modified) Newton direction
+    
+    step <- 0 * grad
+    step[uconv.ind] <- -drop(U%*%(d*(t(U)%*%grad1))) # (modified) Newton direction
     ms <- max(abs(step))
     if (ms>maxNstep) step <- step/ms
-
+    
     ## try the step ...
     lsp1 <- lsp + step
     b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
@@ -577,7 +594,8 @@ newton1 <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
     ## test for convergence
     converged <- TRUE
     score.scale <- b$scale.est + score;    
-    if (sum(grad>score.scale*conv.tol)) converged <- FALSE
+    uconv.ind <- abs(grad) > score.scale*conv.tol
+    if (sum(uconv.ind)) converged <- FALSE
     if (abs(old.score-score)>score.scale*conv.tol) converged <- FALSE
     if (ii==maxHalf) converged <- TRUE ## step failure
     if (converged) break
