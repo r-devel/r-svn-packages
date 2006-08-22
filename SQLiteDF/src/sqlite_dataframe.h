@@ -30,6 +30,11 @@ extern int g_sql_buf_sz[NBUFS];
 #define SET_SDFVECTORTYPE(x,t) setAttrib(x, SDF_VectorTypeSymbol, t) 
 #define TEST_SDFVECTORTYPE(x, t) (strcmp(CHAR(asChar(GET_SDFVECTORTYPE(x))), t) == 0)
 #define GET_SDFROWNAMES(x) getAttrib(x, SDF_RowNamesSymbol)
+#define SET_SDFROWNAMES(x, r) setAttrib(x, SDF_RowNamesSymbol, r)
+
+#ifndef SET_ROWNAMES
+#define SET_ROWNAMES(x, r) setAttrib(x, R_RowNamesSymbol, r)
+#endif
 
 #define WORKSPACE_COLUMNS 6
 #define MAX_ATTACHED 30     /* 31 including workspace.db */
@@ -95,11 +100,6 @@ void __register_vector_math();
 #define _sqlite_begin  _sqlite_error(_sqlite_exec("begin")) 
 #define _sqlite_commit _sqlite_error(_sqlite_exec("commit"))
 #endif
-
-#ifndef SET_ROWNAMES 
-#define SET_ROWNAMES(x,n) setAttrib(x, SDF_RowNamesSymbol, n)
-#endif
-
 
 /* R object accessors shortcuts */
 #define CHAR_ELT(str, i) CHAR(STRING_ELT(str,i))

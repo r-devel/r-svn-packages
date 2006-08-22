@@ -1,16 +1,16 @@
 useDynLib(SQLiteDF)
 export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf, sdflm)
-export(dupSdf,renameSdf, inameSdf)
+export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
 export(sqlite.matrix)
 
-export(rbind, sort, eval) 
+export(sort, eval) 
 export(quantile.default, median)
-export(typeSvec, is.typeSvec)
+export(typeSvec, has.typeSvec)
 
 importFrom(stats, quantile.default)
+importFrom(utils, head, tail)
 
-S3method(rbind, default)
 S3method(sort, default)
 
 S3method(names, sqlite.data.frame)
@@ -23,10 +23,11 @@ S3method("[[", sqlite.data.frame)
 S3method("[", sqlite.data.frame)
 S3method(as.list, sqlite.data.frame)
 S3method(is.list, sqlite.data.frame)
-S3method(rbind, sqlite.data.frame)
 S3method(with, sqlite.data.frame)
 S3method(as.data.frame, sqlite.data.frame)
 #S3method(as.matrix, sqlite.data.frame)
+S3method(head, sqlite.data.frame)
+S3method(tail, sqlite.data.frame)
 
 S3method("[", sqlite.vector)
 S3method(length, sqlite.vector)

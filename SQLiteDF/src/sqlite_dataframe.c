@@ -207,7 +207,7 @@ static int _add_row_to_df(SEXP df, sqlite3_stmt *stmt, int row, int ncols) {
 
         is_null = (sqlite3_column_type(stmt, row) == SQLITE_NULL);
 
-        if (type == CHARSXP) {
+        if (type == STRSXP || type == CHARSXP) {
             SET_STRING_ELT(vec, row, mkChar((char *)sqlite3_column_text(stmt, i)));
         } else if (type == INTSXP) {
             INTEGER(vec)[row] = sqlite3_column_int(stmt, i);
@@ -220,6 +220,7 @@ static int _add_row_to_df(SEXP df, sqlite3_stmt *stmt, int row, int ncols) {
     return type;
 }
 
+/* set ordinary df row name as numbers */
 static void _set_rownames2(SEXP df) {
     SEXP value = VECTOR_ELT(df, 0);
     int len = LENGTH(value), i;
@@ -355,8 +356,8 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
                         sqlite3_bind_double(stmt, j+2, REAL(variable)[i]);
                         break;
                     case CHARSXP:
-                        col_name = CHAR(STRING_ELT(variable,i));
-                        sqlite3_bind_text(stmt, j+2, col_name, strlen(col_name), SQLITE_STATIC);
+                    case STRSXP:
+                        sqlite3_bind_text(stmt, j+2, CHAR_ELT(variable, i), -1, SQLITE_STATIC);
                 }
                 /* TODO: handle NA's & NULL's */
             }
@@ -487,7 +488,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
     col_cnt = sqlite3_column_count(stmt) - 1;
 
     /*
-     * PROCESS COLUMN INDEX
+     * PROCESS COLUMN INDEX: set columns in the select statement
      */
     if (col == R_NilValue) {
         for (i = 1; i < col_cnt+1; i++) {
@@ -604,7 +605,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
     }
 
     /* 
-     * PROCESS ROW INDEX
+     * PROCESS ROW INDEX: setup limit or where clause
      */
     idxlen = LENGTH(row);
     if (row == R_NilValue) {
@@ -847,8 +848,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
     UNUSE_SDF2(iname);
 
     if (ret != R_NilValue && col_index_len > 1) {
-        SEXP class = mkString("data.frame");
-        SET_CLASS(ret, class);
+        SET_CLASS(ret, mkString("data.frame"));
         _set_rownames2(ret);
     } else if (ret != R_NilValue && col_index_len == 1) {
         ret = VECTOR_ELT(ret, 0);
@@ -858,13 +858,15 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
 }
 
 SEXP sdf_rbind(SEXP sdf, SEXP data) {
-    char *class = CHAR_ELT(GET_CLASS(data), 0);
+    char *class;
     char *iname = SDF_INAME(sdf), *colname, *rowname;
     SEXP ret = R_NilValue, col, names, levels, rownames;
-    int ncols, buflen, buflen2, i, j, res, nrows, *types;
+    int ncols, buflen, buflen2, i, j, res, nrows, *types, rownames_type;
     sqlite3_stmt *stmt;
     const char *type;
+    char *rn_str; int rn_int; double rn_dbl;
 
+    class = CHAR_ELT(GET_CLASS(data), 0);
     if (strcmp(class,"data.frame") == 0) {
         /* check table names, types. variables may not be in same order, as
          * long as names and types are identical. */
@@ -881,6 +883,7 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
 
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (res != SQLITE_OK) { /* column name mismatch */
+            _sqlite_error(res);
             Rprintf("Error: column names should exactly match the names of the SDF.\n");
             return ret;
         }
@@ -891,7 +894,7 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
             type = sqlite3_column_decltype(stmt, i+1); /* +1 bec 1st col is "1" */
 
             col = VECTOR_ELT(data, i);
-            class = CHAR_ELT(GET_CLASS(col),0);
+            /* class = CHAR_ELT(GET_CLASS(col),0); */
 
             if (strcmp(type, "double") == 0 && IS_NUMERIC(col)) types[i] = SQLITE_FLOAT;
             else if (strcmp(type, "text") == 0 && IS_CHARACTER(col)) types[i] = SQLITE_TEXT;
@@ -982,12 +985,27 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
         if (_sqlite_error(res)) return ret;
 
         /* finally, add rows */
-        nrows = LENGTH(GET_ROWNAMES(data));
-        rownames = GET_ROWNAMES(data);
+        rownames = getAttrib(data, R_RowNamesSymbol); /* GET_ROWNAMES(data); */
+        nrows = LENGTH(rownames);
+        rownames_type = TYPEOF(rownames);
 
-        _sqlite_exec("begin");
+        _sqlite_begin;
         for (i = 0; i < nrows; i++) {
-            sqlite3_bind_text(stmt, 1, CHAR_ELT(rownames, i), -1, SQLITE_STATIC);
+            sqlite3_reset(stmt);
+            if (rownames_type == STRSXP) {
+                rn_str = CHAR_ELT(rownames, i);
+            } else if (rownames_type == INTSXP) {
+                sprintf(g_sql_buf[1], "%d", INTEGER(rownames)[i]);
+                rn_str = g_sql_buf[1];
+            } else if (rownames_type == REALSXP) {
+                sprintf(g_sql_buf[1], "%f", REAL(rownames)[i]);
+                rn_str = g_sql_buf[1];
+            } else {
+                sprintf(g_sql_buf[1], "%d", i);
+                rn_str = g_sql_buf[1];
+            }
+            sqlite3_bind_text(stmt, 1, rn_str, -1, SQLITE_STATIC);
+
             for (j = 0; j < ncols; j++) {
                 col = VECTOR_ELT(data, j);
                 switch(types[j]) {
@@ -1003,19 +1021,17 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
 
             res = sqlite3_step(stmt);
             if (res != SQLITE_DONE) { /* row name pk conflict */
-                rowname = CHAR_ELT(rownames, i);
                 for (j = 1; res != SQLITE_DONE; j++) { /* _normally_, j shouldn't overflow */
                     sqlite3_reset(stmt);
-                    sprintf(g_sql_buf[2], "%s-%d", rowname, j);
+                    sprintf(g_sql_buf[2], "%s-%d", rn_str, j);
                     sqlite3_bind_text(stmt, 1, g_sql_buf[2], -1, SQLITE_STATIC);
                     res = sqlite3_step(stmt);
                 }
-            }
-            sqlite3_reset(stmt);
+            } 
         }
 
         sqlite3_finalize(stmt);
-        _sqlite_exec("begin");
+        _sqlite_commit;
         ret = sdf;
     } else if (strcmp(class,"sqlite.data.frame") == 0) {
     }

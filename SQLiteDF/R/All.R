@@ -23,7 +23,7 @@ detachSdf <- function(iname) .Call("sdf_detach_sdf", iname)
 # sqlite.vector functions
 # -------------------------------------------------------------------------
 typeSvec <- function(x) attr(x, "sdf.vector.type")
-is.typeSvec <- function(x, type) {
+has.typeSvec <- function(x, type) {
     if (inherits(x, "sqlite.vector")) typeSvec(x) == type else FALSE
 }
 
@@ -59,27 +59,28 @@ sqlite.matrix <- function(data, name=NULL) {
 # external data functions
 # -------------------------------------------------------------------------
 sdfImportDBI <- function(con, sql, batch.size=2048, rownames="row_names", iname = NULL) {
-    on.exit(DBI:::dbClearResult(rs))
-    rs <- DBI:::dbSendQuery(con, sql)
-    df <- DBI:::fetch(rs, batch.size)
+    on.exit(dbClearResult(rs))
+    rs <- dbSendQuery(con, sql)
+    df <- fetch(rs, batch.size)
     if (length(rownames) > 1) stop("more than one column containing row names?")
 
     if (is.numeric(rownames)) has_rn <- rownames
-    else if (is.character(rownames)) has_rn <- (1:length(df))[names(df) == row.names]
+    else if (is.character(rownames)) has_rn <- (1:length(df))[names(df) == rownames]
 
     if (length(has_rn) == 0) has_rn <- FALSE
 
     if (has_rn) { 
         rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn
     }
+
     sdf <- sqlite.data.frame(df, iname)
     rowname <- batch.size
     while (! dbHasCompleted(rs)) {
-        df <- DBI:::fetch(rs, batch.size)
+        df <- fetch(rs, batch.size)
         if (has_rn) { 
             rn <- df[,has_rn]; df <- df[,-has_rn]; row.names(df) <- rn
         }
-        rbind.sqlite.data.frame(sdf, df)
+        rbindSdf(sdf, df)
     }
     sdf
 }
@@ -110,7 +111,7 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
                     strip.white=strip.white, blank.lines.skip=blank.lines.skip,
                     comment.char=comment.char, allowEscapes=allowEscapes,flush=flush,
                     nrows=batch.size)
-        rbind(sdf, data)
+        rbindSdf(sdf, data)
     }
     sdf
 }
@@ -119,11 +120,6 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
 # -------------------------------------------------------------------------
 # overriden primitives
 # -------------------------------------------------------------------------
-# the default rbind's dispatch is "not normal," won't dispatch to rbind.sdf
-# even if all args are sdf's
-rbind <- function(..., deparse.level) UseMethod("rbind")
-rbind.default <- function(..., deparse.level) .Internal(rbind(deparse.level, ...));
-
 if (R.version$major == "2" && substr(R.version$minor,1,1) == "3") {
     sort.default <- base::sort 
     sort <- function(x, ...) UseMethod("sort")
@@ -179,9 +175,8 @@ as.list.sqlite.data.frame <- function(x, ...) {
     ret
 }
 is.list.sqlite.data.frame <- function(x) FALSE;
-rbind.sqlite.data.frame <- function(..., deparse.level=1) {
-    args <- list(...)
-    .Call("sdf_rbind", args[[1]], args[[2]])
+rbindSdf <- function(sdf, df) {
+    .Call("sdf_rbind", sdf, df)
 }
 with.sqlite.data.frame <- function(data, expr, ...)  
     eval(substitute(expr), as.list(data), enclos=parent.frame())
@@ -191,7 +186,15 @@ as.matrix.sqlite.data.frame <- function(x, ...) {
     if ("name" %in% as.list) name <- args$name else name <- NULL
     sqlite.matrix(x, name)
 }
+
 row.names.sqlite.data.frame <- function(x) attr(x, "sdf.row.names")
+
+# row.names are overwritten with 1:n
+head.sqlite.data.frame <- function(x, n = 6, ...) x[1:n,]
+tail.sqlite.data.frame <- function(x, n = 6, ...) {
+    rows <- nrow(x); x[(rows-n+1):rows,]
+}
+
 #"==.sqlite.data.frame" <- function(e1, e2) {
 #    if (e1
 
@@ -212,9 +215,9 @@ as.character.sqlite.vector <- function(x, ...) as.character(x[1:length(x)])
 as.logical.sqlite.vector <- function(x, ...) as.logical(x[1:length(x)])
 as.integer.sqlite.vector <- function(x, ...) as.integer(x[1:length(x)])
 Math.sqlite.vector <- function(x, ...) {
-    if (any(is.typeSvec(x, "factor"), is.typeSvec(x, "ordered")))
+    if (any(has.typeSvec(x, "factor"), has.typeSvec(x, "ordered")))
         stop(paste(.Generic, "not meaningful for factors"))
-    if (!any(is.typeSvec(x, "numeric"), is.typeSvec(x, "integer")))
+    if (!any(has.typeSvec(x, "numeric"), has.typeSvec(x, "integer")))
         stop("Non-numeric argument to mathematical function")
     #.Generic
     other.args <- formals(get(.Generic, mode="function"))[-1]
@@ -246,14 +249,14 @@ Math.sqlite.vector <- function(x, ...) {
 }
 
 Summary.sqlite.vector <- function(x, na.rm=F) {
-    if (!any(is.typeSvec(x, "numeric"), is.typeSvec(x, "integer"), is.typeSvec(x, "logical")))
+    if (!any(has.typeSvec(x, "numeric"), has.typeSvec(x, "integer"), has.typeSvec(x, "logical")))
         stop("Non-numeric argument")
     ret <- .Call("sdf_do_variable_summary", .Generic, x, as.logical(na.rm))
     if (is.character(ret)) { file.remove(ret); ret <- NULL }
     ret
 }
 Ops.sqlite.vector <- function(e1, e2) {
-    if (any(is.typeSvec(e1, "factor"), is.typeSvec(e2, "factor"),
+    if (any(has.typeSvec(e1, "factor"), has.typeSvec(e2, "factor"),
             inherits(e1, "factor"), inherits(e2, "factor")))
         stop("not meaningful for factors")
     arg.reversed <- FALSE

@@ -212,10 +212,8 @@ SEXP _get_rownames2(const char *sdf_iname) {
     SET_VECTOR_ELT(ret, 1, mkString("row name"));
 
     /* set class */
-    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
-    SET_STRING_ELT(value, 0, mkChar("sqlite.vector"));
-    SET_STRING_ELT(value, 1, mkChar("character"));
-    SET_CLASS(ret, value);
+    SET_CLASS(ret, mkString("sqlite.vector"));
+    SET_SDFVECTORTYPE(ret, mkString("character"));
 
     UNPROTECT(nprotected);
     return ret;
@@ -235,7 +233,7 @@ SEXP _create_sdf_sexp(const char *iname) {
     PROTECT(class = NEW_CHARACTER(1)); nprotected++;
     SET_STRING_ELT(class, 0, mkChar("sqlite.data.frame"));
     SET_CLASS(ret, class);
-    SET_ROWNAMES(ret, _get_rownames2(iname));
+    SET_SDFROWNAMES(ret, _get_rownames2(iname));
     
     UNPROTECT(nprotected);
     return ret;

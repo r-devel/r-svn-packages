@@ -1,3 +1,13 @@
+2006-08-22 (19:45 Manila)
+- removed rbind S3, replaced with rbindSdf()
+- fixed rbindSdf() for devel
+- fixed a couple of sqlite.vector functions that still does "inheritance"
+- re-added DBI in depends because it has no namespace and DBI::: does not work
+- added head(), tail(). however both do not follow the original's row names yet
+- added optional tests for sdfImportDBI, rbindSdf
+- added doc for typeSvec, has.typeSvec
+- runs for me in both R-devel, R-2.3.1
+
 2006-08-22 (10:45 Manila)
 - sqlite.data.frame now does not inherit from data.frame
 - sqlite.vector does not inherit from the builtin data types
