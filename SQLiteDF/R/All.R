@@ -120,11 +120,11 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
 # -------------------------------------------------------------------------
 # overriden primitives
 # -------------------------------------------------------------------------
-if (R.version$major == "2" && substr(R.version$minor,1,1) == "3") {
+if (paste(R.version$major, R.version$minor, sep=".") == "2.3.0") {
     sort.default <- base::sort 
     sort <- function(x, ...) UseMethod("sort")
     formals(sort.default) <- c(formals(sort.default), alist(...=))
-} else { sort <- base::sort; sort.default <- base::sort.default }
+}
 environment(quantile.default) <- .GlobalEnv
 
 median <- function(x, na.rm=FALSE) quantile(x, 0.5, na.rm=na.rm)
@@ -195,9 +195,7 @@ tail.sqlite.data.frame <- function(x, n = 6, ...) {
     rows <- nrow(x); x[(rows-n+1):rows,]
 }
 
-#"==.sqlite.data.frame" <- function(e1, e2) {
-#    if (e1
-
+    
       
 
 # -------------------------------------------------------------------------
@@ -248,7 +246,7 @@ Math.sqlite.vector <- function(x, ...) {
     ret;
 }
 
-Summary.sqlite.vector <- function(x, na.rm=F) {
+Summary.sqlite.vector <- function(x, ..., na.rm=F) {
     if (!any(has.typeSvec(x, "numeric"), has.typeSvec(x, "integer"), has.typeSvec(x, "logical")))
         stop("Non-numeric argument")
     ret <- .Call("sdf_do_variable_summary", .Generic, x, as.logical(na.rm))
@@ -271,13 +269,39 @@ sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
 }
 quantile.sqlite.vector <- function(x, probs=seq(0,1,0.25), names=FALSE,
         na.rm=FALSE, type=7, ...) NextMethod()
-#is.numeric.sqlite.vector <- function(x) inherits(x, "numeric") || inherits(x, "integer")
-#is.character.sqlite.vector <- function(x) inherits(x, "character")
-#is.integer.sqlite.vector <- function(x) inherits(x, "integer")
 summary.sqlite.vector <- function(object, maxsum=100, digits=max(3, getOption("digits")-3), ...) {
     if (inherits(object, "factor") || inherits(object, "logical")) 
         .Call("sdf_variable_summary", object, as.integer(maxsum))
     else NextMethod()
+}
+
+is.sqlite.vector <- function(x) class(x)[1] == "sqlite.vector"
+
+all.equal.sqlite.vector <- function(target, current, batch.size=1024, ...) {
+    len <- length(target)
+    if (len != length(current)) 
+        return(paste("sqlite.vector: lengths(", len, ", ", length(current),
+                        ") differ", sep=""))
+    batch.all.equal <- function(x, y) {
+        i <- 1;
+        while (i < len) {
+            last <- min(i+batch.size, len)
+            if (!isTRUE(all.equal(target[i:last], current[i:last])))
+                return(FALSE)
+            i <- i + batch.size
+        }
+        return(TRUE)
+    }
+    if (is.sqlite.vector(target) & is.sqlite.vector(current)) {
+        if (typeSvec(target) != typeSvec(current))
+            return(paste("target is ", typeSvec(target), " sqlite.vector, current is ",
+                    typeSvec(current), " sqlite.vector", sep=""))
+        # not the most efficient, but the quickest to code
+        return(batch.all.equal(target, current))
+    } else if (typeSvec(target) == class(current)[1]) {
+        return(batch.all.equal(target, current))
+    }
+    return(FALSE)
 }
 
 # -------------------------------------------------------------------------

@@ -1,3 +1,10 @@
+2006-08-23 (00:20 Manila)
+- added all.equal.sqlite.vector
+- added == for character
+- updated test script
+- used conditional on NAMESPACE for sort
+- R CMD check runs for me in linux (R-devel, R-2.3.0), windows (R-2.3.0)
+
 2006-08-22 (19:45 Manila)
 - removed rbind S3, replaced with rbindSdf()
 - fixed rbindSdf() for devel

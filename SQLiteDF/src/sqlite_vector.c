@@ -672,6 +672,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
         } else if (IS_INTEGER(op2) || IS_LOGICAL(op2)) { /* I N T E G E R */
             /* we are taking advantage of the fact that logicals are stored as int.
              * if this becomes untrue in the future, then this is a bug */
+            /* we are binding double because ___ (?) */
             op2_len = LENGTH(op2);
 
             if (op2_len == 1) {
@@ -693,8 +694,6 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
                 _sqlite_error(res);
 
                 if (funcname[0] == '%') {
-                    /* sqlite does int div with "/" if both args are int. mod is % also.
-                     * fortunately, in both cases the sqlite op is 2nd char of funcname */
                     sprintf(g_sql_buf[2], insert_fmt_string2c, iname, 
                             (funcname[1] == '%') ? "r_mod" : "r_intdiv");
                     _sqlite_begin;
@@ -710,6 +709,8 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
                         sqlite3_bind_int(stmt, vec_idx, INTEGER(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
+                    sqlite3_finalize(stmt);
+                    sqlite3_finalize(stmt2);
                     _sqlite_commit;
                 } else {
                     sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
@@ -726,9 +727,10 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
                         sqlite3_bind_double(stmt, vec_idx, (double)INTEGER(op2)[i % op2_len]);
                         sqlite3_step(stmt);
                     }
+                    sqlite3_finalize(stmt);
+                    sqlite3_finalize(stmt2);
                     _sqlite_commit;
                 }
-                sqlite3_finalize(stmt2);
             } else {
                 sprintf(g_sql_buf[1], "select [%s] from [%s].sdf_data",
                         varname_src, iname_src);
@@ -776,10 +778,74 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
                     /* recycle on svec if we loop again */
                     sqlite3_finalize(stmt2);
                 }
+                sqlite3_finalize(stmt);
                 _sqlite_commit;
             }
 
-            sqlite3_finalize(stmt);
+        } else if (IS_CHARACTER(op2)) {
+            if (functype != 2) error("not supported");
+
+            op2_len = LENGTH(op2);
+
+            if (op2_len == 1) {
+                sprintf(g_sql_buf[2], insert_fmt_string1s, iname,
+                            varname_src, funcname, iname_src);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+                sqlite3_bind_text(stmt, 1, CHAR_ELT(op2, 0), -1, SQLITE_STATIC);
+                sqlite3_step(stmt);
+            } else if (op2_len <= svec_len) {
+                sprintf(g_sql_buf[2], "select [row name], [%s] from [%s].sdf_data",
+                        varname_src, iname_src);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+                _sqlite_error(res);
+
+                sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                _sqlite_begin;
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+
+                for (i = 0; i < svec_len; i++) {
+                    sqlite3_step(stmt2);
+
+                    sqlite3_reset(stmt);
+                    sqlite3_bind_text(stmt, 1, (char *)sqlite3_column_text(stmt2, 0), -1, SQLITE_STATIC);
+                    sqlite3_bind_text(stmt, sdf_idx, (char *)sqlite3_column_text(stmt2, 1), -1, SQLITE_STATIC);
+                    sqlite3_bind_text(stmt, vec_idx, CHAR_ELT(op2, i % op2_len), -1 , SQLITE_STATIC);
+                    sqlite3_step(stmt);
+                }
+                sqlite3_finalize(stmt2);
+                _sqlite_commit;
+            } else {
+                sprintf(g_sql_buf[1], "select [%s] from [%s].sdf_data",
+                        varname_src, iname_src);
+
+                sprintf(g_sql_buf[2], insert_fmt_string2s, iname, funcname);
+                res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+                _sqlite_error(res);
+               
+                i = 0; _sqlite_begin; 
+                while (i < op2_len) {
+                    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt2, 0);
+                    _sqlite_error(res);
+
+                    for ( ; i < op2_len && sqlite3_step(stmt) == SQLITE_ROW ; i++) {
+                        sqlite3_step(stmt2);
+
+                        sqlite3_reset(stmt);
+                        sqlite3_bind_int(stmt, 1, i);
+                        sqlite3_bind_text(stmt, sdf_idx, (char *)sqlite3_column_text(stmt2, 1), -1, SQLITE_STATIC);
+                        sqlite3_bind_text(stmt, vec_idx, CHAR_ELT(op2, i % op2_len), -1 , SQLITE_STATIC);
+                        sqlite3_step(stmt);
+                    }
+
+                    /* recycle on svec if we loop again */
+                    sqlite3_finalize(stmt2);
+                }
+                sqlite3_finalize(stmt);
+                _sqlite_commit;
+            }
+        
         } else if (inherits(op2, "sqlite.vector")) { 
             /* op2 is surely not a factor, as handled by the R wrapper */
             /* even though it is impossible for reversed to be FALSE, still use
@@ -791,7 +857,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
 
             if (!USE_SDF1(iname_op2, TRUE, TRUE)) {
                 /* delete created sqlite.vector */
-                Rprintf("Warning: detaching created result SDF %s\n", iname);
+                warning("detaching created result SDF %s\n", iname);
                 sdf_detach_sdf(mkString(iname));
                 return R_NilValue;
             }
