@@ -20,6 +20,14 @@ attachSdf <- function(sdf_filename, sdf_iname=NULL)
 detachSdf <- function(iname) .Call("sdf_detach_sdf", iname)
 
 # -------------------------------------------------------------------------
+# sqlite.vector functions
+# -------------------------------------------------------------------------
+typeSvec <- function(x) attr(x, "sdf.vector.type")
+is.typeSvec <- function(x, type) {
+    if (inherits(x, "sqlite.vector")) typeSvec(x) == type else FALSE
+}
+
+# -------------------------------------------------------------------------
 # sqlite.data.frame functions
 # -------------------------------------------------------------------------
 "sqlite.data.frame" <- function(x, name=NULL) {
@@ -116,8 +124,11 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
 rbind <- function(..., deparse.level) UseMethod("rbind")
 rbind.default <- function(..., deparse.level) .Internal(rbind(deparse.level, ...));
 
-sort.default <- base::sort; sort <- function(x, ...) UseMethod("sort");
-formals(sort.default) <- c(formals(sort.default), alist(...=))
+if (R.version$major == "2" && substr(R.version$minor,1,1) == "3") {
+    sort.default <- base::sort 
+    sort <- function(x, ...) UseMethod("sort")
+    formals(sort.default) <- c(formals(sort.default), alist(...=))
+} else { sort <- base::sort; sort.default <- base::sort.default }
 environment(quantile.default) <- .GlobalEnv
 
 median <- function(x, na.rm=FALSE) quantile(x, 0.5, na.rm=na.rm)
@@ -180,7 +191,9 @@ as.matrix.sqlite.data.frame <- function(x, ...) {
     if ("name" %in% as.list) name <- args$name else name <- NULL
     sqlite.matrix(x, name)
 }
-row.names.sqlite.data.frame <- function(x) attr(x, "sdf.row.names");
+row.names.sqlite.data.frame <- function(x) attr(x, "sdf.row.names")
+#"==.sqlite.data.frame" <- function(e1, e2) {
+#    if (e1
 
       
 
@@ -199,9 +212,9 @@ as.character.sqlite.vector <- function(x, ...) as.character(x[1:length(x)])
 as.logical.sqlite.vector <- function(x, ...) as.logical(x[1:length(x)])
 as.integer.sqlite.vector <- function(x, ...) as.integer(x[1:length(x)])
 Math.sqlite.vector <- function(x, ...) {
-    if (any(inherits(x, "factor"), inherits(x, "ordered"))) 
+    if (any(is.typeSvec(x, "factor"), is.typeSvec(x, "ordered")))
         stop(paste(.Generic, "not meaningful for factors"))
-    if (!any(inherits(x, "numeric"), inherits(x, "integer")))
+    if (!any(is.typeSvec(x, "numeric"), is.typeSvec(x, "integer")))
         stop("Non-numeric argument to mathematical function")
     #.Generic
     other.args <- formals(get(.Generic, mode="function"))[-1]
@@ -233,14 +246,15 @@ Math.sqlite.vector <- function(x, ...) {
 }
 
 Summary.sqlite.vector <- function(x, na.rm=F) {
-    if (!any(inherits(x, "numeric"), inherits(x, "integer"), inherits(x, "logical")))
+    if (!any(is.typeSvec(x, "numeric"), is.typeSvec(x, "integer"), is.typeSvec(x, "logical")))
         stop("Non-numeric argument")
     ret <- .Call("sdf_do_variable_summary", .Generic, x, as.logical(na.rm))
     if (is.character(ret)) { file.remove(ret); ret <- NULL }
     ret
 }
 Ops.sqlite.vector <- function(e1, e2) {
-    if (inherits(e1, "factor") | inherits(e2, "factor"))
+    if (any(is.typeSvec(e1, "factor"), is.typeSvec(e2, "factor"),
+            inherits(e1, "factor"), inherits(e2, "factor")))
         stop("not meaningful for factors")
     arg.reversed <- FALSE
     if (!inherits(e1, "sqlite.vector")) { 
@@ -248,14 +262,15 @@ Ops.sqlite.vector <- function(e1, e2) {
     }
     .Call("sdf_do_variable_op", .Generic, e1, e2, arg.reversed)
 }
+
 sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
     .Call("sdf_sort_variable", x, as.logical(decreasing))
 }
 quantile.sqlite.vector <- function(x, probs=seq(0,1,0.25), names=FALSE,
         na.rm=FALSE, type=7, ...) NextMethod()
-is.numeric.sqlite.vector <- function(x) inherits(x, "numeric") || inherits(x, "integer")
-is.character.sqlite.vector <- function(x) inherits(x, "character")
-is.integer.sqlite.vector <- function(x) inherits(x, "integer")
+#is.numeric.sqlite.vector <- function(x) inherits(x, "numeric") || inherits(x, "integer")
+#is.character.sqlite.vector <- function(x) inherits(x, "character")
+#is.integer.sqlite.vector <- function(x) inherits(x, "integer")
 summary.sqlite.vector <- function(object, maxsum=100, digits=max(3, getOption("digits")-3), ...) {
     if (inherits(object, "factor") || inherits(object, "logical")) 
         .Call("sdf_variable_summary", object, as.integer(maxsum))

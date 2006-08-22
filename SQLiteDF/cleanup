@@ -1,2 +1,2 @@
 #!/bin/sh
-rm -rf src/sqlite-3* src/SQLite src/*.o src/*.so workspace.db
+rm -rf src/sqlite-3* src/SQLite src/*.o src/*.so src/Makevars workspace.db

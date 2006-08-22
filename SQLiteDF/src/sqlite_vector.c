@@ -36,17 +36,10 @@ static SEXP _create_svector_sexp(const char *iname, const char *varname,
     SET_VECTOR_ELT(ret, 1, mkString(varname));
 
     /* set sexp class */
-    if (strcmp(type, "ordered") == 0) {
-        PROTECT(value = NEW_CHARACTER(3)); nprotected++;
-        SET_VECTOR_ELT(value, 0, mkChar("sqlite.vector"));
-        SET_VECTOR_ELT(value, 1, mkChar(type));
-        SET_VECTOR_ELT(value, 2, mkChar("factor"));
-    } else {
-        PROTECT(value = NEW_CHARACTER(2)); nprotected++;
-        SET_VECTOR_ELT(value, 0, mkChar("sqlite.vector"));
-        SET_VECTOR_ELT(value, 1, mkChar(type));
-        SET_CLASS(ret, value);
-    }
+    SET_CLASS(ret, mkString("sqlite.vector"));
+
+    /* set sdf.vector.type */
+    SET_SDFVECTORTYPE(ret, mkString(type));
 
     UNPROTECT(nprotected);
 
@@ -107,13 +100,18 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len
  * SVEC FUNCTIONS
  ****************************************************************************/
 SEXP sdf_get_variable(SEXP sdf, SEXP name) {
+    char *iname, *varname, *svec_type = NULL;
+    const char *coltype;
+    int type = -1, res, nprotected = 0;
+    SEXP ret, value;
+
     if (!IS_CHARACTER(name)) {
         Rprintf("ERROR: argument is not a string.\n");
         return R_NilValue;
     }
 
-    char *iname = SDF_INAME(sdf);
-    char *varname = CHAR_ELT(name, 0);
+    iname = SDF_INAME(sdf);
+    varname = CHAR_ELT(name, 0);
 
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
@@ -121,15 +119,13 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     sqlite3_stmt *stmt;
     sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data", varname, iname);
 
-    int res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
 
     if (_sqlite_error(res)) return R_NilValue;
 
-    const char *coltype = sqlite3_column_decltype(stmt, 0);
+    coltype = sqlite3_column_decltype(stmt, 0);
     sqlite3_finalize(stmt);
-
-
-    SEXP ret, value, class = R_NilValue; int nprotected = 0;
+    
     PROTECT(ret = NEW_LIST(2)); nprotected++;
 
     /* set list names */
@@ -143,32 +139,22 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     SET_VECTOR_ELT(ret, 1, mkString(varname));
 
     /* set class */
-    int type = -1;
-    if (strcmp(coltype, "text") == 0) class = mkChar("character");
-    else if (strcmp(coltype, "double") == 0) class = mkChar("numeric");
-    else if (strcmp(coltype, "bit") == 0) class = mkChar("logical");
+    if (strcmp(coltype, "text") == 0) svec_type = "character";
+    else if (strcmp(coltype, "double") == 0) svec_type = "numeric";
+    else if (strcmp(coltype, "bit") == 0) svec_type = "logical";
     else if (strcmp(coltype, "integer") == 0 || strcmp(coltype, "int") == 0) {
         /* determine if int, factor or ordered */
         type = _get_factor_levels1(iname, varname, ret);
         switch(type) {
-            case VAR_INTEGER: class = mkChar("integer"); break;
-            case VAR_FACTOR: class = mkChar("factor"); break;
-            case VAR_ORDERED: class = mkChar("ordered");
+            case VAR_INTEGER: svec_type = "integer"; break;
+            case VAR_FACTOR: svec_type = "factor"; break;
+            case VAR_ORDERED: svec_type = "ordered";
         }
 
     }
 
-    if (type != VAR_ORDERED) {
-        PROTECT(value = NEW_CHARACTER(2)); nprotected++;
-        SET_STRING_ELT(value, 0, mkChar("sqlite.vector"));
-        SET_STRING_ELT(value, 1, class);
-    } else {
-        PROTECT(value = NEW_CHARACTER(3)); nprotected++;
-        SET_STRING_ELT(value, 0, mkChar("sqlite.vector"));
-        SET_STRING_ELT(value, 1, class);
-        SET_STRING_ELT(value, 2, mkChar("factor"));
-    }
-    SET_CLASS(ret, value);
+    SET_CLASS(ret, mkString("sqlite.vector"));
+    SET_SDFVECTORTYPE(ret, mkString(svec_type));
 
     UNPROTECT(nprotected);
     return ret;
@@ -314,7 +300,7 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
         tmp = GET_LEVELS(svec);
         if (tmp != R_NilValue) {
             SET_LEVELS(ret, duplicate(tmp));
-            if (LENGTH(GET_CLASS(svec)) == 2) {
+            if (TEST_SDFVECTORTYPE(svec, "factor")) {
                 SET_CLASS(ret, mkString("factor"));
             } else {
                 PROTECT(tmp = NEW_CHARACTER(2));
@@ -358,8 +344,8 @@ SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
     varname = SVEC_VARNAME(svec);
     USE_SDF1(iname, TRUE, FALSE);
 
-    if ((inherits(svec, "ordered") && ((type = "ordered"))) ||
-            (inherits(svec, "factor") && ((type = "factor")))) {
+    if ((TEST_SDFVECTORTYPE(svec, "ordered") && ((type = "ordered"))) ||
+            (TEST_SDFVECTORTYPE(svec, "factor") && ((type = "factor")))) {
         int nrows, i, max_rows = INTEGER(maxsum)[0];
 
 
@@ -392,7 +378,7 @@ SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
             }
             INTEGER(ret)[nrows-1] = others_sum;
         }
-    } else if (inherits(svec, "logical")) {
+    } else if (TEST_SDFVECTORTYPE(svec, "logical")) {
         sprintf(g_sql_buf[0], "select count(*) from "
                 "[%s].sdf_data group by [%s] order by [%s]", iname, varname, varname);
 
@@ -1037,8 +1023,8 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
     res = _sqlite_exec(g_sql_buf[0]);
     _sqlite_error(res);
 
-    if (inherits(svec, "factor")) { /* copy factor table to iname */
-        if (inherits(svec, "ordered")) type = "ordered";
+    if (TEST_SDFVECTORTYPE(svec, "factor")) { /* copy factor table to iname */
+        if (TEST_SDFVECTORTYPE(svec, "ordered")) type = "ordered";
         else type = "factor";
         _copy_factor_levels2(type, iname_src, varname_src, iname, "V1");
     } else type = CHAR_ELT(GET_CLASS(svec), 1);

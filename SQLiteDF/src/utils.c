@@ -232,9 +232,8 @@ SEXP _create_sdf_sexp(const char *iname) {
     SET_VECTOR_ELT(ret, 0, variable);
 
     /* set class */
-    PROTECT(class = NEW_CHARACTER(2)); nprotected++;
+    PROTECT(class = NEW_CHARACTER(1)); nprotected++;
     SET_STRING_ELT(class, 0, mkChar("sqlite.data.frame"));
-    SET_STRING_ELT(class, 1, mkChar("data.frame"));
     SET_CLASS(ret, class);
     SET_ROWNAMES(ret, _get_rownames2(iname));
     

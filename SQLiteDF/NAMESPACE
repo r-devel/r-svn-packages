@@ -6,6 +6,7 @@ export(sqlite.matrix)
 
 export(rbind, sort, eval) 
 export(quantile.default, median)
+export(typeSvec, is.typeSvec)
 
 importFrom(stats, quantile.default)
 
@@ -37,9 +38,9 @@ S3method(Math, sqlite.vector)
 S3method(Summary, sqlite.vector)
 S3method(Ops, sqlite.vector)
 S3method(sort, sqlite.vector)
-S3method(is.numeric, sqlite.vector)
-S3method(is.character, sqlite.vector)
-S3method(is.integer, sqlite.vector)
+#S3method(is.numeric, sqlite.vector)
+#S3method(is.character, sqlite.vector)
+#S3method(is.integer, sqlite.vector)
 S3method(summary, sqlite.vector)
 
 #S3method(length, sqlite.matrix)

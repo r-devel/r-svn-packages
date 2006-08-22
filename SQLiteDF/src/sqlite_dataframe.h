@@ -11,10 +11,12 @@
 
 #ifdef __SQLITE_WORKSPACE__
 SEXP SDF_RowNamesSymbol;
+SEXP SDF_VectorTypeSymbol;
 SEXP SDF_DimSymbol;
 SEXP SDF_DimNamesSymbol;
 #else 
 extern SEXP SDF_RowNamesSymbol;
+extern SEXP SDF_VectorTypeSymbol;
 extern SEXP SDF_DimSymbol;
 extern SEXP SDF_DimNamesSymbol;
 
@@ -22,6 +24,12 @@ extern sqlite3 *g_workspace;
 extern char *g_sql_buf[NBUFS];
 extern int g_sql_buf_sz[NBUFS];
 #endif
+
+/* sdf type attributes */
+#define GET_SDFVECTORTYPE(x) getAttrib(x, SDF_VectorTypeSymbol) 
+#define SET_SDFVECTORTYPE(x,t) setAttrib(x, SDF_VectorTypeSymbol, t) 
+#define TEST_SDFVECTORTYPE(x, t) (strcmp(CHAR(asChar(GET_SDFVECTORTYPE(x))), t) == 0)
+#define GET_SDFROWNAMES(x) getAttrib(x, SDF_RowNamesSymbol)
 
 #define WORKSPACE_COLUMNS 6
 #define MAX_ATTACHED 30     /* 31 including workspace.db */
@@ -88,13 +96,10 @@ void __register_vector_math();
 #define _sqlite_commit _sqlite_error(_sqlite_exec("commit"))
 #endif
 
-#ifndef SET_ROWNAMES
+#ifndef SET_ROWNAMES 
 #define SET_ROWNAMES(x,n) setAttrib(x, SDF_RowNamesSymbol, n)
 #endif
 
-/* override R's, which does a GetRowNames which is different I believe */
-#undef GET_ROWNAMES
-#define GET_ROWNAMES(x) getAttrib(x, R_RowNamesSymbol)
 
 /* R object accessors shortcuts */
 #define CHAR_ELT(str, i) CHAR(STRING_ELT(str,i))

@@ -1,3 +1,13 @@
+2006-08-22 (10:45 Manila)
+- sqlite.data.frame now does not inherit from data.frame
+- sqlite.vector does not inherit from the builtin data types
+- added attribute sdf.vector.type to hold the type of sqlite.vector
+- commented out summary() tests in tests.R, added tests n classes of sdf's
+- added function typeSvec and is.typeSvec to query type of sqlite.vector
+- fixed row.names comparison. I guess I put that before checking in and after
+  running tests, because ==.sqlite.vector is not implemented, only Ops.sqlite.vector.
+- updated version to 0.1.13
+
 2006-08-21 (9:30 Manila)
 - added symbols SDF_RowNamesSymbol, SDF_DimSymbols, SDF_DimNamesSymbols. SDF
   row names is now attached to SDF_RowNamesSymbol ("sdf.row.names")
@@ -6,6 +16,7 @@
 - used ScalarLogical(), ScalarInteger(), ...
 - removed ";" in All.R
 - removed eval()
+- made configure, cleanup executable
 
 2006-08-20 (6:35 Manila)
 - configure file fixes from Prof. Ripley

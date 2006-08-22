@@ -178,6 +178,7 @@ SEXP sdf_init_workspace() {
 
     /* create symbols used for object attributes */
     SDF_RowNamesSymbol = install("sdf.row.names");
+    SDF_VectorTypeSymbol = install("sdf.vector.type");
     SDF_DimSymbol = install("sdf.dim");
     SDF_DimNamesSymbol = install("sdf.dimnames");
 
