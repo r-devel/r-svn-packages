@@ -1,3 +1,11 @@
+2006-08-23  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/mona.R: update (slightly extend) regression test
+	* tests/mona.Rout.save: consequence
+
+	* R/mona.q (mona): replace apply(<matrix>, 2, factor) with safer
+	code, to work correctly in R 2.4.0 and later (thanks to Brian).
+
 2006-06-12  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/plotpart.q (clusplot.default): new argument 'sub'; default is
