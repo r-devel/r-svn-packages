@@ -120,7 +120,8 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
 # -------------------------------------------------------------------------
 # overriden primitives
 # -------------------------------------------------------------------------
-if (paste(R.version$major, R.version$minor, sep=".") == "2.3.0") {
+if (paste(R.version$major, R.version$minor[1], sep=".") == "2.3") {
+    print("loaded sort")
     sort.default <- base::sort 
     sort <- function(x, ...) UseMethod("sort")
     formals(sort.default) <- c(formals(sort.default), alist(...=))
@@ -163,12 +164,23 @@ dimnames.sqlite.data.frame <- function(x) list(row.names(x), names(x))
         else .Call("sdf_get_variable", x, names(x)[idx])
     } else stop("don't know how to handle index.")
 }
-"[.sqlite.data.frame" <- function(x, row=NULL, col=NULL) {
-#    if (row == NULL || col == NULL) { data.frame(NULL) }
-#    if (missing(row)) row = NULL;
-#    if (missing(col)) col = NULL; 
-    .Call("sdf_get_index", x, row, col) 
+"[.sqlite.data.frame" <- function(x, row, col) {
+    Narg <- nargs()
+    if (Narg == 3) {
+        if (missing(row) && missing(col)) return(x)  # x[,]
+        if (missing(row)) row = NULL
+        if (missing(col)) col = NULL
+        if (is.null(row) && is.null(col)) return(data.frame())
+        return(.Call("sdf_get_index", x, row, col, FALSE))
+    } else if (Narg == 2) {
+        # in R 2.3 above, x[1] returns the "projection" of x containing
+        # 1st column, not the 1st element of 1st column (?!)
+        if (missing(row)) return(x)  # x[]
+        if (is.null(row)) return(data.frame())
+        return(.Call("sdf_get_index", x, NULL, row, TRUE))
+    }
 }
+
 as.list.sqlite.data.frame <- function(x, ...) {
     ret <- list()
     for (i in names(x)) ret[[i]] <- x[[i]]
@@ -196,6 +208,17 @@ tail.sqlite.data.frame <- function(x, n = 6, ...) {
 }
 
     
+print.sqlite.data.frame <- function(x, n = 6, ...) {
+    xdim <- dim(x)
+    xnames <- inameSdf(x)
+    cat(paste("SQLite data frame \"", xnames[1], "\" (",
+              xdim[1], " rows by ", xdim[2],
+              " columns) stored in file \"",
+              xnames[2], "\"\n\n", sep = ""))
+    cat(paste("First", n, "rows:\n"))
+    print(head(x, n = 6, ...))
+    if (xdim[1] > n) cat(" ...\n")
+}
       
 
 # -------------------------------------------------------------------------
@@ -286,7 +309,7 @@ all.equal.sqlite.vector <- function(target, current, batch.size=1024, ...) {
         i <- 1;
         while (i < len) {
             last <- min(i+batch.size, len)
-            if (!isTRUE(all.equal(target[i:last], current[i:last])))
+            if (!isTRUE(all.equal(target[i:last], current[i:last], ...)))
                 return(FALSE)
             i <- i + batch.size
         }
@@ -304,6 +327,20 @@ all.equal.sqlite.vector <- function(target, current, batch.size=1024, ...) {
     return(FALSE)
 }
 
+print.sqlite.vector <- function(x, n = 6, ...) {
+    xdim <- length(x)
+    xlist <- as.list(x)
+    xnames <- inameSdf(x)
+    cat(paste("SQLite vector (",
+              xdim, " elements)",
+              " of type ", typeSvec(x), "\n",
+              "Column \"", xlist$varname, "\" in SQLite data frame \"",
+              xnames[1], "\" stored in file \"",
+              xnames[2], "\"\n\n", sep = ""))
+    cat(paste("First", n, "elements:\n"))
+    print(x[1:n], ...)
+    if (xdim > n) cat(" ...\n")
+}
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.matrix
 # -------------------------------------------------------------------------

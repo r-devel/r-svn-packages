@@ -17,7 +17,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"sdf_get_length", (DL_FUNC) &sdf_get_length, 1},
     {"sdf_get_row_count", (DL_FUNC) &sdf_get_row_count, 1},
     {"sdf_import_table", (DL_FUNC) &sdf_import_table, 6},
-    {"sdf_get_index", (DL_FUNC) &sdf_get_index, 3},
+    {"sdf_get_index", (DL_FUNC) &sdf_get_index, 4},
     {"sdf_rbind", (DL_FUNC) &sdf_rbind, 2},
     {"sdf_get_iname", (DL_FUNC) &sdf_get_iname, 1},
 

@@ -1,3 +1,15 @@
+2006-08-23 (10:27 Manila)
+- added [], [n], [,] indexing for sdf. added tests for those
+- added Prof. Bates print.sqlite.data.frame with modifications,
+print.sqlite.vector
+- changed inameSdf to return filename too
+- changed some Rprintf to error() and warning()
+- added doc for rbindSdf
+- fixed bug in sort.sqlite.vector
+- fixed bug in sdf_get_index, where a new sdf is added to the workspace twice
+(one in _create_sdf_skeleton2 and another in sdf_get_index)
+- sort() still does not work for 2.3.x (not generic)
+
 2006-08-23 (00:20 Manila)
 - added all.equal.sqlite.vector
 - added == for character

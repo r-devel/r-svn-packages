@@ -34,12 +34,20 @@ static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx)
     return namelen;
 }
 
-static int _find_free_filename(char *rname, char **iname, int *namelen, int *file_idx) {
+static int _find_free_filename2(char *rname, char **iname, int *namelen, int *file_idx) {
+    sqlite3_stmt *stmt;
+    sqlite3_prepare(g_workspace, "select 1 from workspace where internal_name=?", -1,
+            &stmt, NULL);
     do {
-        if (!_file_exists(*iname)) break;
+        if (!_file_exists(*iname)) {
+            sqlite3_reset(stmt);
+            sqlite3_bind_text(stmt, 1, *iname, -1, SQLITE_STATIC);
+            if (sqlite3_step(stmt) != SQLITE_ROW) break;
+        }
         *namelen = sprintf(*iname, "%s%d.db", rname, ++(*file_idx)) - 3;
     } while (*file_idx < 10000);
 
+    sqlite3_finalize(stmt);
     return *file_idx;
 }
 
@@ -65,7 +73,7 @@ char *_create_sdf_skeleton1(SEXP name, int *onamelen, int protect) {
 
     if (!namelen) return NULL;
 
-    _find_free_filename(rname, &iname, &namelen, &file_idx);
+    _find_free_filename2(rname, &iname, &namelen, &file_idx);
 
     if (file_idx >= 10000) { 
         Rprintf("Error: cannot find free SDF name.\n");
@@ -468,16 +476,16 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
     return R_NilValue;
 }
 
-SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
+SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
     SEXP ret = R_NilValue;
     char *iname = SDF_INAME(sdf);
-    if (!USE_SDF1(iname, TRUE, TRUE)) return R_NilValue;
-
     sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
     int i, j,res;
     int *col_indices, col_index_len, *dup_indices;
-    int row_index_len = 0;
+    int row_index_len = 0, force_new_df = LOGICAL(new_sdf)[0];
+
+    if (!USE_SDF1(iname, TRUE, TRUE)) return R_NilValue;
 
     sprintf(g_sql_buf[0], "select * from [%s].sdf_data ", iname);
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
@@ -609,11 +617,11 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
      */
     idxlen = LENGTH(row);
     if (row == R_NilValue) {
-        if (col_index_len == 1) {
+        if (col_index_len == 1 && !force_new_df) {
             ret = sdf_get_variable(sdf, mkString(sqlite3_column_name(stmt,col_indices[0])));
             sqlite3_finalize(stmt);
             return ret;
-        } if (col_index_len > 1) {
+        } if (col_index_len > 1 || (force_new_df && col_index_len == 1)) {
             /* create a new SDF, logic similar to sdf_create_sdf */
 
             /* find a new name. data<n> ? */
@@ -679,11 +687,6 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
             sprintf(g_sql_buf[1], "insert into [%s].sdf_data %s", iname2,
                     g_sql_buf[0]);
             res = _sqlite_exec(g_sql_buf[1]);
-            if (_sqlite_error(res)) return R_NilValue;
-
-            /* add new sdf to workspace */
-            sprintf(g_sql_buf[0], "%s.db", iname2);
-            res = _add_sdf1(g_sql_buf[0], iname2);
             if (_sqlite_error(res)) return R_NilValue;
 
             /* remove protection */
@@ -859,12 +862,12 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col) {
 
 SEXP sdf_rbind(SEXP sdf, SEXP data) {
     char *class;
-    char *iname = SDF_INAME(sdf), *colname, *rowname;
+    char *iname = SDF_INAME(sdf), *colname;
     SEXP ret = R_NilValue, col, names, levels, rownames;
     int ncols, buflen, buflen2, i, j, res, nrows, *types, rownames_type;
     sqlite3_stmt *stmt;
     const char *type;
-    char *rn_str; int rn_int; double rn_dbl;
+    char *rn_str; 
 
     class = CHAR_ELT(GET_CLASS(data), 0);
     if (strcmp(class,"data.frame") == 0) {
@@ -1041,5 +1044,30 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
 
 
 SEXP sdf_get_iname(SEXP sdf) {
-    return _getListElement(sdf, "iname");
+    char *iname, *sql;
+    sqlite3_stmt *stmt;
+    SEXP ret, names;
+
+    iname = SDF_INAME(sdf);
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
+
+    sql = "select internal_name, rel_filename from workspace where internal_name=?";
+    sqlite3_prepare(g_workspace, sql, -1, &stmt, NULL);
+    sqlite3_bind_text(stmt, 1, iname, -1, SQLITE_STATIC);
+    sqlite3_step(stmt);
+
+    PROTECT(ret = NEW_CHARACTER(2));
+    SET_STRING_ELT(ret, 0, mkChar((char *)sqlite3_column_text(stmt, 0)));
+    SET_STRING_ELT(ret, 1, mkChar((char *)sqlite3_column_text(stmt, 1)));
+
+    PROTECT(names = NEW_CHARACTER(2));
+    SET_STRING_ELT(names, 0, mkChar("Internal Name"));
+    SET_STRING_ELT(names, 1, mkChar("File"));
+
+    SET_NAMES(ret, names);
+
+    sqlite3_finalize(stmt);
+    UNPROTECT(2);
+
+    return ret;
 }

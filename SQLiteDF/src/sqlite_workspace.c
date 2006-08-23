@@ -89,7 +89,8 @@ char * _is_sdf2(char *filename) {
         
         if (ret == NULL) goto _is_sdf_cleanup;
 
-        /* get internal name */
+        /* get internal name. we are assuming here that the 1st row of the attributes
+         * table always contains the column name */
         res = sqlite3_step(stmt);
         ret = (res == SQLITE_ROW) ? ret : NULL;
         if (ret == NULL) goto _is_sdf_cleanup;
@@ -190,7 +191,7 @@ SEXP sdf_init_workspace() {
     sprintf(filename, "%s.db", basename);
     while(_file_exists(filename) && file_idx < 10000) {
         if ((g_workspace = _is_workspace(filename)) != NULL) break;
-        Rprintf("%s is not a workspace\n", filename);
+        warning("%s is not a SQLiteDF workspace\n", filename);
         sprintf(filename, "%s%d.db", basename, ++file_idx);
     }
 
@@ -199,7 +200,7 @@ SEXP sdf_init_workspace() {
         /* if (file_idx) warn("workspace will be stored at #{filename}") */
         sqlite3_open(filename, &g_workspace);
         _sqlite_exec("create table workspace(rel_filename text, full_filename text,"
-               "internal_name text, loaded bit, uses int, used bit)");
+               "internal_name text unique, loaded bit, uses int, used bit)");
         ret = ScalarLogical(TRUE);
     } else if (g_workspace != NULL) {
         /* a valid workspace has been found, load each of the tables */
@@ -246,14 +247,15 @@ SEXP sdf_init_workspace() {
 int USE_SDF1(const char *iname, int exists, int protect) {
     sqlite3_stmt *stmt;
     int loaded, res;
+    char *iname_final = (char *)iname;
 
     /* determine if iname is loaded */
     sprintf(g_sql_buf[2], "select loaded, rel_filename from workspace where internal_name='%s'", iname);
     sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
     res = sqlite3_step(stmt);
     if (exists && res != SQLITE_ROW) { 
+        error("No SDF with name '%s' found in the workspace.\n", iname);
         sqlite3_finalize(stmt); 
-        Rprintf("Error: No SDF with name '%s' found in the workspace.\n", iname);
         return 0; 
     }
     loaded = (res == SQLITE_ROW) ? sqlite3_column_int(stmt, 0) : 0;
@@ -265,27 +267,44 @@ int USE_SDF1(const char *iname, int exists, int protect) {
 
         /* test first if we will be loading valid sdf */
         if (exists && !_file_exists(fname)) {
-            Rprintf("Error: SDF %s does not exist.\n", iname);
             _delete_sdf2(iname);
+            warning("SDF %s does not exist.\n", iname);
             return 0;
         }
 
         if (exists && _is_sdf2(fname) == NULL) {
-            Rprintf("Error: %s is not a valid SDF.\n", fname);
             _delete_sdf2(iname);
+            warning("%s is not a valid SDF.\n", fname);
             return 0;
         }
+
+        /* g_sql_buf[2] contains the internal name as stored in the sdf
+         * attribute. sync workspace record to that if needed */
+        if (exists && strcmp(iname, g_sql_buf[2]) != 0) {
+            if (!_is_r_sym(g_sql_buf[2])) {
+                warning("name stored in SDF is not valid. Ignoring that name...");
+                goto __out_of_syncname;
+            }
+            iname_final = R_alloc(strlen(g_sql_buf[2]) + 1, sizeof(g_sql_buf[2]));
+            strcpy(iname_final, g_sql_buf[2]);
+
+            sprintf(g_sql_buf[2], "update workspace set internal_name='%s' where "
+                        "internal_name='%s'", iname_final, iname);
+            _sqlite_error(_sqlite_exec(g_sql_buf[2]));
+
+        }
+__out_of_syncname:
 
         /* unload sdf's if we run to the MAX_ATTACHED limit */
         _prepare_attach2();
 
         /* set loaded to true */
-        sprintf(g_sql_buf[2], "update workspace set loaded=1 where internal_name='%s'", iname);
+        sprintf(g_sql_buf[2], "update workspace set loaded=1 where internal_name='%s'", iname_final);
         res = _sqlite_exec(g_sql_buf[2]);
         _sqlite_error(res);
 
         /* load, using relative path */
-        sprintf(g_sql_buf[2], "attach '%s' as [%s]", fname, iname);
+        sprintf(g_sql_buf[2], "attach '%s' as [%s]", fname, iname_final);
         res = _sqlite_exec(g_sql_buf[2]);
         if (_sqlite_error(res)) return 0;
     }
@@ -293,7 +312,7 @@ int USE_SDF1(const char *iname, int exists, int protect) {
     /* upgrade its uses count, and protect if necessary */
     if (protect) protect = 1; 
     sprintf(g_sql_buf[2], "update workspace set uses=uses+1, used=%d" 
-            " where internal_name='%s'", protect, iname);
+            " where internal_name='%s'", protect, iname_final);
     _sqlite_exec(g_sql_buf[2]);
     return 1;
 }

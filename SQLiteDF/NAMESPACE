@@ -4,14 +4,13 @@ export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
 export(sqlite.matrix)
 
-export(eval) 
 export(quantile.default, median)
 export(typeSvec, has.typeSvec)
 
 importFrom(stats, quantile.default)
 importFrom(utils, head, tail)
 
-if (paste(R.version$major, R.version$minor, sep=".") == "2.3.0") {
+if (paste(R.version$major, R.version$minor[1], sep=".") == "2.3") {
     S3method(sort, default)
     export(sort.default)
 }
@@ -31,6 +30,7 @@ S3method(as.data.frame, sqlite.data.frame)
 #S3method(as.matrix, sqlite.data.frame)
 S3method(head, sqlite.data.frame)
 S3method(tail, sqlite.data.frame)
+S3method(print, sqlite.data.frame)
 
 S3method("[", sqlite.vector)
 S3method(length, sqlite.vector)
@@ -47,6 +47,7 @@ S3method(sort, sqlite.vector)
 #S3method(is.integer, sqlite.vector)
 S3method(summary, sqlite.vector)
 S3method(all.equal, sqlite.vector)
+S3method(print, sqlite.vector)
 
 #S3method(length, sqlite.matrix)
 #S3method(dim, sqlite.matrix)

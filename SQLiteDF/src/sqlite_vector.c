@@ -106,8 +106,7 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     SEXP ret, value;
 
     if (!IS_CHARACTER(name)) {
-        Rprintf("ERROR: argument is not a string.\n");
-        return R_NilValue;
+        error("argument is not a string.\n");
     }
 
     iname = SDF_INAME(sdf);
@@ -1079,7 +1078,7 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
     sqlite3_finalize(stmt);
 
     /* create a new vector of that type */
-    iname = _create_svector1(mkString("tmp-sort"), g_sql_buf[0], NULL, TRUE);
+    iname = _create_svector1(mkString("tmp_sort"), g_sql_buf[0], NULL, TRUE);
 
     /* insert to new sdf ordered */
     sprintf(g_sql_buf[0], "insert into [%s].sdf_data "
@@ -1093,7 +1092,7 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
         if (TEST_SDFVECTORTYPE(svec, "ordered")) type = "ordered";
         else type = "factor";
         _copy_factor_levels2(type, iname_src, varname_src, iname, "V1");
-    } else type = CHAR_ELT(GET_CLASS(svec), 1);
+    } else type = CHAR_ELT(GET_SDFVECTORTYPE(svec), 0);
 
     UNUSE_SDF2(iname_src);
     UNUSE_SDF2(iname);

@@ -35,7 +35,7 @@ Petal.Length will have a column name Petal.Length in the table. This is possible
 because SQLite allows almost any kind of column name as long as it is quoted by 
 square brakets ([ ]). You're on your own if you try to be a smartass on this. Also,
 an extra column named \emph{row name} (with the space between the words), of type
-text is used to store the data frame row names is set as the table's primary key.
+text is used to store the data frame row names and is set as the table's primary key.
 So please don't use \emph{row name} as a variable name.}
 \item{[factor <colname>] and [ordered <colname>]}{stores the levels and level labels
 for each factor variable in the SDF. One such table will be created for every
@@ -79,7 +79,7 @@ name, or the default internal name if none is provided.
 \author{Miguel A. R. Manese}
 \note{
 The full path is used to avoid attaching the same db which may have different relative path
-after the user changes directory after loading SQLiteDF (see \code{attachSdf}.
+after the user changes directory after loading SQLiteDF (see \code{attachSdf}).
 }
 \seealso{
     \code{\link[SQLiteDF]{lsSdf}}

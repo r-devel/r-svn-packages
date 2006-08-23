@@ -23,6 +23,7 @@ internal name.  }
     \code{\link[SQLiteDF]{lsSdf}}
 }
 \examples{
+    sqlite.data.frame(iris)
     mysdf <- getSdf("data1")
 }
 \keyword{data}

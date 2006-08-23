@@ -75,13 +75,23 @@ stopifnot(length(iris.sdf) == length(iris),
 # test sdf indexers
 compareSdfToDf(iris.sdf, iris)
 #compareSdfToDf(u2.sdf, attenu) # problem with factors
+stopifnot(all.equal(unlist(iris.sdf),unlist(iris.sdf[])),
+          all.equal(unlist(iris.sdf),unlist(iris.sdf[,])))
+tmp <- iris.sdf[1]
+stopifnot(nrow(tmp) == nrow(iris.sdf),
+          names(tmp) == names(iris.sdf)[1],
+          all.equal(tmp[,1], iris.sdf[,1]))
+
 
 # test operators
-stopifnot(all.equal(iris.sdf[,1] + iris.sdf[,2], iris[,1] + iris[,2]))
-stopifnot(all.equal(iris.sdf[,1]*10 %/% iris.sdf[,2],iris[,1]*10 %/% iris[,2]))
-stopifnot(all.equal(signif(log(iris.sdf[,1],17)), signif(log(iris[,1],17))))
-stopifnot(all.equal(round(log(iris.sdf[,1]),5), round(log(iris[,1]),5)))
-stopifnot(all.equal(with(iris.sdf, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width), with(iris, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width)))
+stopifnot(all.equal(iris.sdf[,1] + iris.sdf[,2], iris[,1] + iris[,2]),
+          all.equal(iris.sdf[,1]*10 %/% iris.sdf[,2],iris[,1]*10 %/% iris[,2]),
+          all.equal(signif(log(iris.sdf[,1],17)), signif(log(iris[,1],17))),
+          all.equal(round(log(iris.sdf[,1]),5), round(log(iris[,1]),5)),
+          all.equal(with(iris.sdf, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width), 
+                    with(iris, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width)),
+          all.equal(sort(iris.sdf[,2]), sort(iris[,2])),
+          all.equal(quantile(iris.sdf[,3]), quantile(iris[,3])))
 
 stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))
 

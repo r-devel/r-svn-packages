@@ -140,7 +140,7 @@ SEXP sdf_get_length(SEXP sdf);
 SEXP sdf_get_row_count(SEXP sdf);
 SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote, 
         SEXP _rownames, SEXP _colnames);
-SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col);
+SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf);
 SEXP sdf_rbind(SEXP sdf, SEXP data);
 SEXP sdf_get_iname(SEXP sdf);
 
