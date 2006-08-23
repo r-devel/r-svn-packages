@@ -74,6 +74,7 @@ int _empty_callback(void *data, int ncols, char **row, char **cols);
 int _sqlite_error_check(int res, const char *file, int line);
 const char *_get_column_type(const char *class, int type); /* get sqlite type corresponding to R class & type */
 sqlite3* _is_sqlitedb(char *filename);
+void _init_sqlite_function_accumulator();
 
 /* global buffer (g_sql_buf) utilities */
 int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */

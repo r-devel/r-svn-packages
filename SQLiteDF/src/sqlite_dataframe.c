@@ -134,10 +134,10 @@ int _copy_factor_levels2(const char *factor_type, const char *iname_src,
     res = _create_factor_table2(iname_dst, factor_type, colname_dst);
     if (res == SQLITE_OK) {
         sprintf(g_sql_buf[2], "insert into [%s].[%s %s] select * from [%s].[%s %s]",
-                iname_src, factor_type, colname_src, iname_dst, factor_type,
-                colname_dst);
+                iname_dst, factor_type, colname_dst, iname_src, factor_type,
+                colname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
-        if (res == SQLITE_OK) sqlite3_step(stmt);
+        if (res == SQLITE_OK) res = sqlite3_step(stmt);
         sqlite3_finalize(stmt);
     }
     return res; /* error on dup name? */
@@ -484,6 +484,12 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
     int i, j,res;
     int *col_indices, col_index_len, *dup_indices;
     int row_index_len = 0, force_new_df = LOGICAL(new_sdf)[0];
+    const char *colname;
+
+    /* dup_indices is used to handle when same column chosen more than once.
+     * e.g. iris[,c(1,1)] have names Sepal.Length, Sepal.Length.1 *
+     * col_indices is used to store the column index of selected columns
+     * in the sdf_data table */
 
     if (!USE_SDF1(iname, TRUE, TRUE)) return R_NilValue;
 
@@ -500,14 +506,14 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
      */
     if (col == R_NilValue) {
         for (i = 1; i < col_cnt+1; i++) {
-            buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", 
-                    sqlite3_column_name(stmt, i)); 
+            colname = sqlite3_column_name(stmt, i);
+            buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
         }
         _expand_buf(0, buflen+20+strlen(iname));
         buflen += sprintf(g_sql_buf[0]+buflen, " from [%s].sdf_data", iname);
         col_index_len = col_cnt;
-        col_indices = (int *)R_alloc(idxlen, sizeof(int));
-        dup_indices = (int *)R_alloc(idxlen, sizeof(int));
+        col_indices = (int *)R_alloc(col_cnt, sizeof(int));
+        dup_indices = (int *)R_alloc(col_cnt, sizeof(int));
         for (i = 0; i < col_cnt; i++) { col_indices[i] = i; dup_indices[i] = 0; }
     } else if (col == R_NilValue || idxlen < 1) {
         sqlite3_finalize(stmt);
@@ -522,11 +528,10 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             index = ((int) REAL(col)[i]); 
             if (index > col_cnt) {
                 sqlite3_finalize(stmt);
-                Rprintf("Error: undefined columns selected\n");
-                return R_NilValue;
+                error("undefined columns selected\n");
             } else if (index > 0) {
-                buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", 
-                        sqlite3_column_name(stmt,index));
+                colname = sqlite3_column_name(stmt,index);
+                buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
                 dup_indices[col_index_len] = 0;
                 for (j = 0; j < col_index_len; j++) {
                     if (col_indices[j] == index) dup_indices[col_index_len]++;
@@ -534,8 +539,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
                 col_indices[col_index_len++] = index;
             } else if (index < 0) {
                 sqlite3_finalize(stmt);
-                Rprintf("Error: negative indices not supported.\n");
-                return R_NilValue;
+                error("negative indices not supported.\n");
             }
         }
 
@@ -559,11 +563,10 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             index = INTEGER(col)[i];
             if (index > col_cnt) {
                 sqlite3_finalize(stmt);
-                Rprintf("Error: undefined columns selected\n");
-                return R_NilValue;
+                error("undefined columns selected\n");
             } else if (index > 0) {
-                buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", 
-                        sqlite3_column_name(stmt,index));
+                colname = sqlite3_column_name(stmt,index);
+                buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
                 dup_indices[col_index_len] = 0;
                 for (j = 0; j < col_index_len; j++) {
                     if (col_indices[j] == index) dup_indices[col_index_len]++;
@@ -571,8 +574,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
                 col_indices[col_index_len++] = index;
             } else if (index < 0) {
                 sqlite3_finalize(stmt);
-                Rprintf("Error: negative indices not supported.\n");
-                return R_NilValue;
+                error("negative indices not supported.\n");
             }
         }
 
@@ -593,14 +595,16 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             if (LOGICAL(col)[i%idxlen]) {
                 buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", 
                         sqlite3_column_name(stmt,i+1));
+
                 dup_indices[col_index_len] = 0;
                 col_indices[col_index_len++] = i;
             }
+
         }
 
         if (col_index_len == 0) {
             sqlite3_finalize(stmt);
-            Rprintf("Warning: no column selected.\n");
+            warning("no column selected.\n");
             return R_NilValue;
         } else { 
             _expand_buf(0, buflen+20+strlen(iname));
@@ -608,8 +612,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
         }
     } else {
         sqlite3_finalize(stmt);
-        Rprintf("Error: don't know how to handle column index.\n");
-        return R_NilValue;
+        error("don't know how to handle column index.\n");
     }
 
     /* 
@@ -626,7 +629,6 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
 
             /* find a new name. data<n> ? */
             char *iname2;
-            const char *colname;
             int namelen, sql_len, sql_len2;
 
             iname2 = _create_sdf_skeleton1(R_NilValue, &namelen, TRUE);

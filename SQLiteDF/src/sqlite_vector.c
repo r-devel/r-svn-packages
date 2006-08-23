@@ -412,6 +412,11 @@ static long double g_accumulator = 0.0; /* accumulator var for cumsum, cumprod, 
 static int g_start = 0;            /* flag for start of cummulation */
 static int g_narm = 0;             /* for Summary group */
 
+void _init_sqlite_function_accumulator() {
+    g_accumulator = 0.0;   /* initialize accumulator */
+    g_start = 1;           /* flag that we are at start of accumulating */
+}
+
 SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP other_args) {
     char *iname, *iname_src, *varname_src, *funcname;
     int namelen, res;
@@ -462,8 +467,7 @@ vecmath_prepare_error:
         return mkString(iname);
     }
 
-    g_accumulator = 0.0;   /* initialize accumulator */
-    g_start = 1;           /* flag that we are at start of accumulating */
+    _init_sqlite_function_accumulator();
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
 
@@ -1010,8 +1014,7 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
     g_narm = LOGICAL(na_rm)[0];
     if (strcmp(funcname, "range") == 0) {
         /* special handling for range. use min then max */
-        g_start = 1;
-        g_accumulator = 0.0;
+        _init_sqlite_function_accumulator();
         sprintf(g_sql_buf[0], "select min_df([%s]) from [%s].sdf_data", varname_src, iname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (_sqlite_error(res)) return R_NilValue;
@@ -1024,8 +1027,7 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
             goto __sdf_do_variable_summary_out;
         }
         
-        g_start = 1;
-        g_accumulator = 0.0;
+        _init_sqlite_function_accumulator();
         sprintf(g_sql_buf[0], "select max_df([%s]) from [%s].sdf_data", varname_src, iname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (_sqlite_error(res)) return R_NilValue;
@@ -1036,8 +1038,7 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
         REAL(ret)[0] = _ret;
         REAL(ret)[1] = g_accumulator;
     } else {
-        g_start = 1;  /* we'll use these instead of sqlite3_aggregate_context */
-        g_accumulator = 0.0;
+        _init_sqlite_function_accumulator();
         sprintf(g_sql_buf[0], "select %s_df([%s]) from [%s].sdf_data", funcname, varname_src, iname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (_sqlite_error(res)) return R_NilValue;

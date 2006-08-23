@@ -107,7 +107,7 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
     while (nrow(data) == batch.size) {
         sskip <- sskip + batch.size
         data <- read.table(file=file,sep=sep,quote=quote,dec=dec,as.is=as.is,
-                    na.strings=na.strings, colClasses=colClasses,skip=skip,fill=fill,
+                    na.strings=na.strings, colClasses=colClasses,skip=sskip,fill=fill,
                     strip.white=strip.white, blank.lines.skip=blank.lines.skip,
                     comment.char=comment.char, allowEscapes=allowEscapes,flush=flush,
                     nrows=batch.size)
@@ -120,15 +120,15 @@ sdfImportText <- function(file, iname=NULL, sep="", quote="\"'", dec=".", as.is=
 # -------------------------------------------------------------------------
 # overriden primitives
 # -------------------------------------------------------------------------
-if (paste(R.version$major, R.version$minor[1], sep=".") == "2.3") {
-    print("loaded sort")
+ver = paste(R.version$major, R.version$minor[1], sep=".")
+if (ver < "2.4.0") {
     sort.default <- base::sort 
     sort <- function(x, ...) UseMethod("sort")
     formals(sort.default) <- c(formals(sort.default), alist(...=))
+    median <- function(x, na.rm=FALSE) as.numeric(quantile(x, 0.5, na.rm=na.rm))
 }
 environment(quantile.default) <- .GlobalEnv
 
-median <- function(x, na.rm=FALSE) quantile(x, 0.5, na.rm=na.rm)
 
 # -------------------------------------------------------------------------
 # biglm stuffs
@@ -220,6 +220,8 @@ print.sqlite.data.frame <- function(x, n = 6, ...) {
     if (xdim[1] > n) cat(" ...\n")
 }
       
+summary.sqlite.data.frame <- function(object, maxsum=7, digits=max(3, getOption("digits")-3), ...)
+    base:::summary.data.frame(object, maxsum, digits, ...)
 
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.vector
@@ -230,6 +232,7 @@ print.sqlite.data.frame <- function(x, n = 6, ...) {
     .Call("sdf_get_variable_index", x, idx)
 }
 length.sqlite.vector <- function(x) .Call("sdf_get_variable_length", x)
+is.list.sqlite.vector <- function(x) FALSE
 # methods to "coerce" to ordinary vectors
 as.double.sqlite.vector <- function(x, ...) as.double(x[1:length(x)])
 as.character.sqlite.vector <- function(x, ...) as.character(x[1:length(x)])
@@ -290,12 +293,34 @@ Ops.sqlite.vector <- function(e1, e2) {
 sort.sqlite.vector <- function(x, decreasing=FALSE, ...) {
     .Call("sdf_sort_variable", x, as.logical(decreasing))
 }
-quantile.sqlite.vector <- function(x, probs=seq(0,1,0.25), names=FALSE,
-        na.rm=FALSE, type=7, ...) NextMethod()
+
+#quantile.sqlite.vector <- function(x, probs=seq(0,1,0.25), names=FALSE,
+#        na.rm=FALSE, type=7, ...) NextMethod()
+
 summary.sqlite.vector <- function(object, maxsum=100, digits=max(3, getOption("digits")-3), ...) {
-    if (inherits(object, "factor") || inherits(object, "logical")) 
+    if (has.typeSvec(object, "factor") || has.typeSvec(object, "ordered") || has.typeSvec(object, "logical")) 
         .Call("sdf_variable_summary", object, as.integer(maxsum))
-    else NextMethod()
+    else if (has.typeSvec(object, "numeric") || has.typeSvec(object, "integer")) {
+        # copied from summary.default
+        qq <- quantile(object)
+        qq <- signif(c(qq[1:3], mean(object), qq[4:5]), digits)
+        names(qq) <- c("Min.", "1st Qu.", "Median", "Mean", "3rd Qu.", "Max.")
+        class(qq) <- "table"
+        qq
+    } else if (has.typeSvec(object, "character")) {
+        ret <- c(as.character(length(object)), "sqlite.vector", "character")
+        names(ret) <- c("Length", "Class", "Type")
+        class(ret) <- "table"
+        ret
+    } else error(paste("not implemented for type ", typeSvec(object), sep=""))
+}
+
+mean.sqlite.vector <- function(x, ...) {
+    if (!(has.typeSvec(x, "numeric") || has.typeSvec(x, "integer") || has.typeSvec(x, "logical"))) {
+        warning("argument is not numeric or logical: returning NA")
+        return(as.numeric(NA))
+    }
+    sum(x) / length(x)
 }
 
 is.sqlite.vector <- function(x) class(x)[1] == "sqlite.vector"

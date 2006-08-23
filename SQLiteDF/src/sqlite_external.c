@@ -76,7 +76,7 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname) {
 
             _expand_buf(1, buflen1 + colname_len + 10);
             buflen1 += sprintf(g_sql_buf[1]+buflen1, ",[%s]", colname);
-        } else if (strstr(type, "char") || strcmp(type, "text")) {
+        } else if (strstr(type, "char") || strcmp(type, "text") == 0) {
             _expand_buf(0, buflen0 + strlen(colname) + 10);
             buflen0 += sprintf(g_sql_buf[0]+buflen0, ",[%s] int", colname);
 
@@ -88,9 +88,15 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname) {
             _create_factor_table2(iname, "factor", colname);
 
             /* insert factor levels and labels */
-            sprintf(g_sql_buf[2], "insert into [%s].[factor %s] (label, level)"
-                   " select distinct [%s], cumsum(1) from [@@import@@].[%s]", 
+            sprintf(g_sql_buf[2], "insert into [%s].[factor %s] (label)"
+                   " select distinct [%s] from [@@import@@].[%s]", 
                    iname, colname, colname, tblname);
+            res = _sqlite_exec(g_sql_buf[2]);
+            _sqlite_error(res);
+
+            _init_sqlite_function_accumulator();
+            sprintf(g_sql_buf[2], "update [%s].[factor %s] set level=cumsum(1)",
+                   iname, colname);
             res = _sqlite_exec(g_sql_buf[2]);
             _sqlite_error(res);
 
@@ -99,9 +105,9 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname) {
             buflen3 += sprintf(g_sql_buf[3] + buflen3, " join [%s].[factor %s] "
                     "on [@@import@@].[%s].[%s] = [%s].[factor %s].label",
                     iname, colname, tblname, colname, iname, colname);
-        } else if (strcmp(type, "blob") || !*type) {
+        } else if (strcmp(type, "blob") == 0 || !*type) {
             /* not supported */
-            Rprintf("Warning: skipping column %s because it is a blob.\n", colname);
+            warning("skipping column %s because it is a blob.\n", colname);
         } else { /* numeric / float / real / ... */
             _expand_buf(0, buflen0 + strlen(colname) + 10);
             buflen0 += sprintf(g_sql_buf[0]+buflen0, ",[%s] double", colname);
@@ -122,6 +128,8 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname) {
         goto sdf_import_sqlite_table__out;
     }
 
+    /* execute insert-select script */
+    _init_sqlite_function_accumulator();
     _expand_buf(0, buflen1 + buflen3 + iname_len + 32 );
     sprintf(g_sql_buf[0], "insert into [%s].sdf_data %s %s", iname, g_sql_buf[1], g_sql_buf[3]);
     res = _sqlite_exec(g_sql_buf[0]);

@@ -1,4 +1,13 @@
 2006-08-23 (10:27 Manila)
+- added mean.sqlite.vector, fixed summary.sqlite.vector, added
+summary.sqlite.data.frame
+- is.list.sqlite.vector === FALSE
+- fixed version conditionals for generic sort
+- fixed sdfImportSQLite, added test case
+- fixed _copy_factor_levels2
+- checked on linux (R-2.3.0, R-devel)
+
+2006-08-23 (10:27 Manila)
 - added [], [n], [,] indexing for sdf. added tests for those
 - added Prof. Bates print.sqlite.data.frame with modifications,
 print.sqlite.vector

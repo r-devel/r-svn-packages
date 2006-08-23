@@ -91,10 +91,12 @@ stopifnot(all.equal(iris.sdf[,1] + iris.sdf[,2], iris[,1] + iris[,2]),
           all.equal(with(iris.sdf, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width), 
                     with(iris, Sepal.Length*Sepal.Width - Petal.Length/Petal.Width)),
           all.equal(sort(iris.sdf[,2]), sort(iris[,2])),
-          all.equal(quantile(iris.sdf[,3]), quantile(iris[,3])))
+          all.equal(quantile(iris.sdf[,3]), quantile(iris[,3])),
+          all.equal(sapply(iris.sdf[,1:4],mean), sapply(iris[,1:4],mean)))
 
 stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))
 
+# test sdfImportDBI
 #if (require(RSQLite)) {
 #    dr <- SQLite()
 #    con <- dbConnect(dr, dbname="example.db")
@@ -113,9 +115,16 @@ stopifnot(2*nrow(attenu)==nrow(u2.sdf))
 #print((nrow(attenu)+1):(nrow(u2.sdf)))
 #compareSdfToDf(u2.sdf[(nrow(attenu)+1):(nrow(u2.sdf)),], attenu)
 
+# test sdfImportSQLite
+k <- sdfImportSQLite("example.db", "iris")
+k1 <- k[,2:6]
+for (i in 1:4) stopifnot(all.equal(k1[,i],iris[,i]))
+stopifnot(all.equal(levels(k1[,5]),levels(iris[,5])),
+          all.equal(as.integer(k1[,5]), as.integer(iris[,5])))
+
 # test summary
-#for (j in 1:5) stopifnot(all(summary(iris.sdf[,j]) == summary(iris[,j])))
-#iris.sdf.summary <- summary(iris.sdf)
-#iris.summary <- summary(iris)
-#stopifnot(all(iris.sdf.summary[,1:4] == iris.summary[,1:4]))
-#stopifnot(all(na.exclude(iris.sdf.summary[,5])==na.exclude(iris.summary[,5])))
+for (j in 1:5) stopifnot(all(summary(iris.sdf[,j]) == summary(iris[,j])))
+iris.sdf.summary <- summary(iris.sdf)
+iris.summary <- summary(iris)
+stopifnot(all(iris.sdf.summary[,1:4] == iris.summary[,1:4]))
+stopifnot(all(na.exclude(iris.sdf.summary[,5])==na.exclude(iris.summary[,5])))

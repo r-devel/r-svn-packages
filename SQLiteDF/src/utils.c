@@ -339,6 +339,7 @@ int _prepare_attach2() {
 char *_str_tolower(char *out, const char *ref) {
     int i;
     for (i = 0; ref[i]; i++) out[i] = tolower(ref[i]);
+    out[i] = 0;
     return out;
 }
 
