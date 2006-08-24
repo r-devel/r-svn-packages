@@ -18,6 +18,7 @@ src/SAFE
 tests/ellipsoid-ex.Rout-.*
 tests/fanny-ex.Rout.*
 tests/fanny-relink.*
+tests/.*.Rout.save-[3264].*
 tests/dysta-ex.*
 tests/clara-151.R
 tests/clara-2.R

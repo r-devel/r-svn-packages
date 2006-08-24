@@ -1,3 +1,8 @@
+2006-08-24  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/silhouette.R (sortSilhouette): make sure "iOrd" is there also
+	if "Ordered" is TRUE. (fixes plotting w/ col = 'clusterwise'.)
+
 2006-08-23  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/mona.R: update (slightly extend) regression test
