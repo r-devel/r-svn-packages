@@ -2,9 +2,8 @@ useDynLib(SQLiteDF)
 export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf, sdflm)
 export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
-export(sqlite.matrix)
+#export(sqlite.matrix)
 
-export(quantile.default)
 export(typeSvec, has.typeSvec)
 
 importFrom(stats, quantile.default)
@@ -12,8 +11,9 @@ importFrom(utils, head, tail)
 
 # since Depends: R (>= 2.3.0) already, check pre 2.4.0 only
 if (paste(R.version$major, R.version$minor, sep=".") < "2.4.0") {
-    export(sort, median)
+    export(sort, median)      # uses quantile, w/c uses sort()
     S3method(sort, default)
+    export(quantile.default)  # to use sort()
 }
 
 S3method(names, sqlite.data.frame)

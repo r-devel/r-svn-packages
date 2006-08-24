@@ -125,9 +125,13 @@ if (ver < "2.4.0") {
     sort.default <- base::sort 
     sort <- function(x, ...) UseMethod("sort")
     formals(sort.default) <- c(formals(sort.default), alist(...=))
+    
+    # to make use of sort()
     median <- function(x, na.rm=FALSE) as.numeric(quantile(x, 0.5, na.rm=na.rm))
+
+    # to get generic sort
+    environment(quantile.default) <- .GlobalEnv
 }
-environment(quantile.default) <- .GlobalEnv
 
 
 # -------------------------------------------------------------------------
