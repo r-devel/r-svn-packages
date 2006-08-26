@@ -7,6 +7,9 @@ tar zxf ../sqlite-3.3.7.tar.gz
 mv sqlite-3.3.7 SQLite
 cd SQLite
 echo "---- configuring SQLite ----"
+## remove chmod, change to ls
+sed -e 's/chmod +x/ls /g; s/chmod u+w/ls /g; s/chmod \d\{3\}/ls /g; s/chmod/ls /g' configure > configure.tmp
+mv configure.tmp configure
 sh configure --build=i386-pc-mingw32 --disable-shared
 echo "---- making SQLite ----"
 mv src/sqliteInt.h src/sqliteInt.h.temp
