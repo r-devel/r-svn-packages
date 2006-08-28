@@ -2,7 +2,7 @@
 \alias{sqlite.data.frame}
 \alias{sdf}
 \title{SQLite Data Frame}
-\description{ Creates an sqlite data frame (SDF) from ordinary data frames.  }
+\description{ Creates an Sqlite Data Frame (SDF) from ordinary data frames.  }
 \usage{
 sqlite.data.frame(x, name=NULL)
 }

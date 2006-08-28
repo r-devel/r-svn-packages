@@ -48,17 +48,9 @@ char *_r2iname(char *rname, char *iname) {
     return iname;
 }
 
-/*
-int _sql_exec_noret(char *sql, ...) {
-    int len;
-    _check_sql_buf();
-
-    len = sprintf(g_sql_buf, sql);
-}*/
-
 int _check_sql_buf(int i) {
-    if (i >= NBUFS) return FALSE;
     int ret = strlen(g_sql_buf[i]);
+    if (i >= NBUFS) return FALSE;
     if ((ret*1.0/g_sql_buf_sz[i]) > 0.6) {
         g_sql_buf_sz[i] *= 2;
         g_sql_buf[i] = Realloc(g_sql_buf[i], g_sql_buf_sz[i], char);
@@ -100,18 +92,18 @@ const char *_get_r_class(const char *db, const char *type) {
     return NULL;
 }
 
-int __count_callback(void *data, int ncols, char **rows, char **cols) {
-    *((int*) data) = atoi(rows[0]);
-    return 0;
-}
-
 int _get_row_count2(const char *table, int quote) {
+    int ret, res;
+    sqlite3_stmt *stmt;
+
     if (quote) sprintf(g_sql_buf[2], "select count(*) from [%s].sdf_data", table);
     else sprintf(g_sql_buf[2], "select count(*) from %s", table);
    
-    int ret, res;
-    res = sqlite3_exec(g_workspace, g_sql_buf[2], __count_callback, &ret, NULL);
+    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
     if (res != SQLITE_OK) return -1;
+    sqlite3_step(stmt);
+    ret = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
     return ret;
 }
 
@@ -190,15 +182,17 @@ SEXP _getListElement(SEXP list, char *varname) {
 
 /* return the row names of an sdf as a sqlite.vector */
 SEXP _get_rownames2(const char *sdf_iname) {
+    int res;
     sqlite3_stmt *stmt;
+    SEXP ret, value;
+    int nprotected = 1;
+
     sprintf(g_sql_buf[2], "select [row name] from [%s].sdf_data", sdf_iname);
-    int res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
+    res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
 
     sqlite3_finalize(stmt);
     if (_sqlite_error(res)) return R_NilValue; 
 
-    SEXP ret, value;
-    int nprotected = 1;
     PROTECT(ret = NEW_LIST(2)); 
 
     /* set list names */
@@ -259,23 +253,23 @@ static void __attach_levels2(char *table, SEXP var, int len) {
 }
     
 int _get_factor_levels1(const char *iname, const char *varname, SEXP var) {
-    int ret = VAR_INTEGER;
+    int res;
     
     sprintf(g_sql_buf[1], "[%s].[factor %s]", iname, varname);
-    int res = _get_row_count2(g_sql_buf[1], 0);
+    res = _get_row_count2(g_sql_buf[1], 0);
     if (res > 0) { /* res is exptected to be {-1} \union I+ */
         __attach_levels2(g_sql_buf[1], var, res);
-        ret = VAR_FACTOR;
+        return VAR_FACTOR;
     }
 
     sprintf(g_sql_buf[1], "[%s].[ordered %s]", iname, varname);
     res = _get_row_count2(g_sql_buf[1], 0);
     if (res > 0) {
         __attach_levels2(g_sql_buf[1], var, res);
-        ret = VAR_ORDERED;
+        return VAR_ORDERED;
     }
 
-    return ret;
+    return VAR_INTEGER;
 }
 
 SEXP _shrink_vector(SEXP vec, int len) {
@@ -321,10 +315,10 @@ int _prepare_attach2() {
     /* test if we have to detach somebody */
     if (nloaded == MAX_ATTACHED) {
         /* have to evict */
+        char *iname2;
         sqlite3_prepare(g_workspace, "select internal_name from workspace "
                 "where loaded=1 and used=0 order by uses", -1, &stmt, NULL);
         sqlite3_step(stmt);
-        char *iname2;
         iname2 = (char *)sqlite3_column_text(stmt, 0);
         sprintf(g_sql_buf[2], "detach [%s]", iname2);
         _sqlite_error(_sqlite_exec(g_sql_buf[2]));
@@ -342,17 +336,3 @@ char *_str_tolower(char *out, const char *ref) {
     out[i] = 0;
     return out;
 }
-
-/* see equivalent: inherits() */
-/* int _sexp_instance_of(SEXP obj, const char *class) {
-    SEXP obj_class = GET_CLASS(obj);
-    int ret = 0, len = LENGTH(obj_class), i;
-
-    for (i = 0; i < len; i++) {
-        if (strcmp(CHAR_ELT(obj_class, i), class) == 0) {
-            ret = 1; break;
-        }
-    }
-    return ret;
-} */
-

@@ -128,3 +128,8 @@ iris.sdf.summary <- summary(iris.sdf)
 iris.summary <- summary(iris)
 stopifnot(all(iris.sdf.summary[,1:4] == iris.summary[,1:4]))
 stopifnot(all(na.exclude(iris.sdf.summary[,5])==na.exclude(iris.summary[,5])))
+
+# test matrices
+#iris.mat <- as.matrix(iris)
+#iris.smat <- sqlite.matrix(iris)
+

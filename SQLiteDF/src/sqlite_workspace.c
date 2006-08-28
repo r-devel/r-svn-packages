@@ -234,6 +234,9 @@ SEXP sdf_init_workspace() {
         }
         sqlite3_free_table(result_set);
 
+        /* notify if a previous workspace is reloaded */
+        Rprintf("[Previouse SQLiteDF workspace restored (%s)]\n", filename);
+
         ret = ScalarLogical(TRUE);
     } else { /* can't find nor create workspace */
         ret = ScalarLogical(FALSE);

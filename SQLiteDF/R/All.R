@@ -206,7 +206,15 @@ as.matrix.sqlite.data.frame <- function(x, ...) {
 row.names.sqlite.data.frame <- function(x) attr(x, "sdf.row.names")
 
 # row.names are overwritten with 1:n
-head.sqlite.data.frame <- function(x, n = 6, ...) x[1:n,]
+head.sqlite.data.frame <- function(x, n = 6, ...) {
+    xrows <- nrow(x)
+    if (n > xrows) {
+        n <- min(6, xrows)
+        warning(paste("Number of rows specified exceeds the SDF's number of rows.",
+            "Trimming down to ", n, " rows", sep=""))
+    }
+    x[1:n,]
+}
 tail.sqlite.data.frame <- function(x, n = 6, ...) {
     rows <- nrow(x); x[(rows-n+1):rows,]
 }
@@ -220,7 +228,7 @@ print.sqlite.data.frame <- function(x, n = 6, ...) {
               " columns) stored in file \"",
               xnames[2], "\"\n\n", sep = ""))
     cat(paste("First", n, "rows:\n"))
-    print(head(x, n = 6, ...))
+    print(head(x, n, ...))
     if (xdim[1] > n) cat(" ...\n")
 }
       
@@ -374,4 +382,33 @@ print.sqlite.vector <- function(x, n = 6, ...) {
 # S3 methods for sqlite.matrix
 # -------------------------------------------------------------------------
 length.sqlite.matrix <- function(x) .Call("sdf_get_variable_length", x)
-dim.sqlite.matrix <- function(x) attr(x, "dim")
+dim.sqlite.matrix <- function(x) attr(x, "sdf.dim") # nrow(), ncol()
+dimnames.sqlite.matrix <- function(x) attr(x, "sdf.dimnames") # rownames(), colnames()
+head.sqlite.matrix <- function(x, n=6, ...) {
+    mdim <- dim(x)
+    mrows <- mdim[1]
+    if (n > mrows) {
+        n <- min(6, mrows)
+        warning(paste("Number of rows specified exceeds the SDF's number of rows.",
+            "Trimming down to ", n, " rows", sep=""))
+    }
+    start.idx <- seq(1, mdim[1]*mdim[2], by=mdim[1])
+    stopifnot(length(start.idx) == mdim[2])
+    idx <- sapply(start.idx, function(x) x:(x+n-1))
+    ret <- .Call("sdf_get_variable_index", x, idx)
+    if (is.null(ret)) return(invisible(NULL))
+    ret <- matrix(ret, n, mdim[2])
+    colnames(ret) <- colnames(x)
+    ret
+}
+print.sqlite.matrix <- function(x, n = 6, ...) {
+    xdim <- dim(x)
+    xnames <- inameSdf(x)
+    cat(paste("SQLite matrix \"", xnames[1], "\" (",
+              xdim[1], " rows by ", xdim[2],
+              " columns) stored in file \"",
+              xnames[2], "\"\n\n", sep = ""))
+    cat(paste("First", n, "rows:\n"))
+    print(head(x, n, ...))
+    if (xdim[1] > n) cat(" ...\n")
+}

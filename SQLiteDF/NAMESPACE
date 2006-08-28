@@ -2,7 +2,7 @@ useDynLib(SQLiteDF)
 export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf, sdflm)
 export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
-#export(sqlite.matrix)
+export(sqlite.matrix)
 
 export(typeSvec, has.typeSvec)
 
@@ -53,5 +53,9 @@ S3method(print, sqlite.vector)
 S3method(mean, sqlite.vector)
 S3method(is.list, sqlite.vector)
 
-#S3method(length, sqlite.matrix)
-#S3method(dim, sqlite.matrix)
+S3method(length, sqlite.matrix)
+S3method(dim, sqlite.matrix)
+S3method(dimnames, sqlite.matrix)
+S3method(head, sqlite.matrix)
+S3method(print, sqlite.matrix)
+

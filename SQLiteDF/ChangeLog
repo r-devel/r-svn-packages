@@ -1,3 +1,8 @@
+2006-08-28 (08:00 Manila)
+- added sqlite.matrix and some of its methods
+- fixed print.sqlite.data.frame bug
+- added msg when an existing workspace.db is loaded
+
 2006-08-27 (05:30 Manila)
 - added sed script in configure.win to change chmod to ls
 

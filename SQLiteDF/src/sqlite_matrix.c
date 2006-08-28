@@ -1,24 +1,6 @@
 #define __SQLITE_MATRIX__
 #include "sqlite_dataframe.h"
 
-/* SEXP SDFMatrixDimSymbol =  */
-/****************************************************************************
- * utilities
- ****************************************************************************/
-static void _installAttrib(SEXP obj, SEXP name, SEXP value) {
-    /* to bypass dim & dimnames property checking */
-    SEXP attr, cur_attr;
-    PROTECT(attr = NEW_LIST(1));
-    SETCAR(attr, value);
-    SET_TAG(attr, name);
-    if (ATTRIB(obj) == R_NilValue) SET_ATTRIB(obj, attr);
-    else {
-        cur_attr = nthcdr(ATTRIB(obj), length(ATTRIB(obj)) - 1);
-        SETCDR(cur_attr, attr);
-    }
-    UNPROTECT(1);
-}
-
 /****************************************************************************
  * SMAT FUNCTIONS
  ****************************************************************************/
@@ -30,7 +12,6 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
     SEXP ret, tmp, names;
 
     iname = SDF_INAME(sdf);
-    mat_iname = CHAR_ELT(name, 0);
 
     if (!USE_SDF1(iname, TRUE, TRUE)) return R_NilValue;
 
@@ -77,8 +58,8 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
     names = NEW_CHARACTER(ncols - 1);
     
     /* insert cast-ed values, and column names */
-    nrows = _get_row_count2(iname, FALSE);
-    _sqlite_error(_sqlite_exec("begin"));
+    nrows = _get_row_count2(iname, TRUE);
+    _sqlite_begin;
     for (i = 1; i < ncols; i++) {
         colname = sqlite3_column_name(stmt, i);
 
@@ -104,11 +85,11 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
     }
     sqlite3_finalize(stmt2);
     sqlite3_finalize(stmt);
-    _sqlite_error(_sqlite_exec("commit"));
+    _sqlite_commit;
 
     /* return smat sexp */
-    PROTECT(ret = NEW_LIST(2)); i = 2; /* 1 for names sexp above */
-    SET_VECTOR_ELT(ret, 0, mkString(iname));
+    PROTECT(ret = NEW_LIST(2)); i = 1; /* 1 for names sexp above */
+    SET_VECTOR_ELT(ret, 0, mkString(mat_iname));
     SET_VECTOR_ELT(ret, 1, mkString("V1"));
 
     /* set smat data name */
@@ -118,24 +99,20 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
     SET_NAMES(ret, tmp);
 
     /* set class */
-    PROTECT(tmp = NEW_CHARACTER(2)); i++;
-    SET_STRING_ELT(tmp, 0, mkChar("sqlite.matrix"));
-    SET_STRING_ELT(tmp, 1, mkChar("matrix"));
+    PROTECT(tmp = mkString("sqlite.matrix")); i++;
     SET_CLASS(ret, tmp);
 
     /* set smat dim */
     PROTECT(tmp = NEW_INTEGER(2)); i++;
     INTEGER(tmp)[0] = nrows;
-    INTEGER(tmp)[1] = ncols;
-    /*_installAttrib(ret, R_DimSymbol, tmp);*/
-    setAttrib(ret, R_DimSymbol, tmp);
+    INTEGER(tmp)[1] = ncols - 1;  /* ncols includes [row names] */
+    setAttrib(ret, SDF_DimSymbol, tmp);
 
     /* set smat dimname */
     PROTECT(tmp = NEW_LIST(2)); i++;
-    SET_VECTOR_ELT(tmp, 0, _get_rownames2(iname));
+    SET_VECTOR_ELT(tmp, 0, R_NilValue); /* NOT EXACTLY... */
     SET_VECTOR_ELT(tmp, 1, names);
-    /*_installAttrib(ret, R_DimNamesSymbol, tmp);*/
-    SET_DIMNAMES(ret, tmp);
+    setAttrib(ret, SDF_DimNamesSymbol, tmp);
 
     UNPROTECT(i);
 
