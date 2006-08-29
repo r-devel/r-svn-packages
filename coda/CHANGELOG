@@ -1,3 +1,6 @@
+0.10-7
+- Documentation clarification for bugs2jags()
+
 0.10-6
 - Fixed HPDinterval() for univariate chains
   Thanks to David LeBlond
