@@ -13,7 +13,7 @@ read.dbf <- function(file, as.is = FALSE)
                     inames[i], "\n")
     }
     data_types <- attr(df, "data_types")
-    for(i in seq(along=onames))
+    for(i in seq_along(onames))
         if(data_types[i] == "D") df[[i]] <- as.Date(df[[i]], format="%Y%m%d")
     if(!as.is) {
         df <- data.frame(lapply(df, function(x) {
@@ -43,7 +43,7 @@ write.dbf <- function(dataframe, file, factor2char = TRUE, max_nchar = 254)
     m <- ncol(dataframe)
     DataTypes <- c(logical="L", integer="N", numeric="F", character="C",
                    factor=if(factor2char) "C" else "N", Date="D")[cl]
-    for(i in seq(length = m)) {
+    for(i in seq_len(m)) {
         x <- dataframe[[i]]
         if(is.factor(x))
             dataframe[[i]] <-
@@ -54,7 +54,7 @@ write.dbf <- function(dataframe, file, factor2char = TRUE, max_nchar = 254)
     precision <- integer(m)
     scale <- integer(m)
     dfnames <- names(dataframe)
-    for (i in seq(length = m)) {
+    for (i in seq_len(m)) {
         nlen <- nchar(dfnames[i])
         x <- dataframe[, i]
         if (is.logical(x)) {
