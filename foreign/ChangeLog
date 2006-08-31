@@ -1,9 +1,11 @@
-2006-08-30 Brian Ripley <Brian.Ripley@R-project.org>
+2006-08-31 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: there are no imports, from methods or elsewhere.
 	   version is 0.8-16.
 
-	* Sread.R, dbf.R, octave.R: use seq_{along,len}.
+	* R/Sread.R, R/dbf.R, R/octave.R: use seq_{along,len}.
+	
+	* src/minitab.c: only use Rinternals.h.
 
 2006-08-11 Brian Ripley <Brian.Ripley@R-project.org>
 
