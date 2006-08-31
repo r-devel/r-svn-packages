@@ -1,3 +1,10 @@
+2006-08-31 Thomas Lumley <tlumley@u.washington.edu>
+
+	* R/read.dta, src/stataread.c: return list from C, 
+	  much faster for wide files
+
+	* man/read.dta.Rd, man/write.dta.Rd: update for Stata 9.
+
 2006-08-31 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: there are no imports, from methods or elsewhere.
