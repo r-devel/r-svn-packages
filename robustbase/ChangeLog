@@ -1,3 +1,8 @@
+2006-09-04  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/ltsReg.R (ltsReg.default): add argument name: sort(*, partial = )
+	* R/covMcd.R (covMcd): dito
+
 2006-06-27  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Depends): no longer depend on "MASS" which is suggested.

@@ -242,7 +242,7 @@ ltsReg.default <-
 	    ans$coefficients <- reweighting$center
 	    ans$scale <- sqrt(sum(weights)/(sum(weights) - 1) * reweighting$cov)
 	    resid <- y - ans$coefficients
-	    ans$crit <- sum(sort((y - center)^2, quan)[1:quan])
+	    ans$crit <- sum(sort((y - center)^2, partial = quan)[1:quan])
 	    if (sum(weights) == n) {
 		cdelta.rew <- 1
 		correct.rew <- 1
@@ -378,7 +378,7 @@ ltsReg.default <-
 	    correct <- if(use.correction)
 		LTScnp2(p, intercept = intercept, n, alpha) else 1
 	    raw.cnp2[2] <- correct
-	    s0 <- sqrt((1/quan) * sum(sort(resid^2, quan)[1:quan]))
+	    s0 <- sqrt((1/quan) * sum(sort(resid^2, partial = quan)[1:quan]))
 	    sh0 <- s0
 	    qn.q <- qnorm((quan + n)/ (2 * n))
 	    s0 <- s0 / sqrt(1 - (2 * n)/(quan / qn.q) * dnorm(qn.q)) * correct
@@ -430,8 +430,8 @@ ltsReg.default <-
 		iR2 <- (sh0/sh)^2
 	    }
 	    else {
-		s1 <- sum(sort(resid^2, quan)[1:quan])
-		sh <- sum(sort(y^2, quan)[1:quan])
+		s1 <- sum(sort(resid^2, partial = quan)[1:quan])
+		sh <- sum(sort(y^2,     partial = quan)[1:quan])
 		iR2 <- s1/sh
 	    }
 
