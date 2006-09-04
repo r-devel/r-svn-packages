@@ -1,3 +1,7 @@
+2006-09-04 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: needs to depends on stats, for na.omit.
+
 2006-08-31 Thomas Lumley <tlumley@u.washington.edu>
 
 	* R/read.dta, src/stataread.c: return a list from C, 
@@ -8,7 +12,6 @@
 	* src/sfm-read.c: changes from PR#9074 <tim.bock@numbers.net.au>
 
 	* src/writeForeignCode.R: fixes for PR#8936,  PR#8927, PR#9006
-	
 
 2006-08-31 Brian Ripley <Brian.Ripley@R-project.org>
 
