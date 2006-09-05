@@ -145,3 +145,16 @@ sdf_import_sqlite_table__out:
     _sqlite_exec("detach [@@import@@]");
     return ret;
 }
+
+SEXP sdf_tempdir() {
+    SEXP tempdir, ans;
+
+    PROTECT(tempdir = allocList(1));
+    SET_TYPEOF(tempdir, LANGSXP);
+    SETCAR(tempdir,install("tempdir"));
+    /* SET_VECTOR_ELT(tempdir, 0, install("tempdir")); */
+    ans = eval(tempdir, R_GlobalEnv);
+    
+    UNPROTECT(1);
+    return ans;
+}

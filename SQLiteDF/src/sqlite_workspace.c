@@ -187,12 +187,12 @@ SEXP sdf_init_workspace() {
      * check for workspace.db, workspace1.db, ..., workspace9999.db if they
      * are valid workspace file. if one is found, use that as the workspace.
      */
-    filename = R_alloc(18, sizeof(char)); /* workspace10000.db\0 */
-    sprintf(filename, "%s.db", basename);
+    filename = R_alloc(28, sizeof(char)); /* .SQLiteDF/workspace10000.db\0 */
+    sprintf(filename, ".SQLiteDF/%s.db", basename);
     while(_file_exists(filename) && file_idx < 10000) {
         if ((g_workspace = _is_workspace(filename)) != NULL) break;
         warning("%s is not a SQLiteDF workspace\n", filename);
-        sprintf(filename, "%s%d.db", basename, ++file_idx);
+        sprintf(filename, ".SQLiteDF/%s%d.db", basename, ++file_idx);
     }
 
     if ((g_workspace == NULL) && (file_idx < 10000)) {
@@ -235,7 +235,7 @@ SEXP sdf_init_workspace() {
         sqlite3_free_table(result_set);
 
         /* notify if a previous workspace is reloaded */
-        Rprintf("[Previouse SQLiteDF workspace restored (%s)]\n", filename);
+        Rprintf("[Previous SQLiteDF workspace restored (%s)]\n", filename);
 
         ret = ScalarLogical(TRUE);
     } else { /* can't find nor create workspace */
@@ -257,9 +257,8 @@ int USE_SDF1(const char *iname, int exists, int protect) {
     sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, NULL);
     res = sqlite3_step(stmt);
     if (exists && res != SQLITE_ROW) { 
-        error("No SDF with name '%s' found in the workspace.\n", iname);
         sqlite3_finalize(stmt); 
-        return 0; 
+        error("No SDF with name '%s' found in the workspace.\n", iname);
     }
     loaded = (res == SQLITE_ROW) ? sqlite3_column_int(stmt, 0) : 0;
     strcpy(g_sql_buf[1], (char*)sqlite3_column_text(stmt, 1)); /* ref filename */
@@ -285,7 +284,7 @@ int USE_SDF1(const char *iname, int exists, int protect) {
          * attribute. sync workspace record to that if needed */
         if (exists && strcmp(iname, g_sql_buf[2]) != 0) {
             if (!_is_r_sym(g_sql_buf[2])) {
-                warning("name stored in SDF is not valid. Ignoring that name...");
+                warning("name \"%s\" stored in SDF is not valid. Ignoring that name...", g_sql_buf[2]);
                 goto __out_of_syncname;
             }
             iname_final = R_alloc(strlen(g_sql_buf[2]) + 1, sizeof(g_sql_buf[2]));
@@ -369,8 +368,7 @@ SEXP sdf_get_sdf(SEXP name) {
     SEXP ret;
 
     if (TYPEOF(name) != STRSXP) {
-        Rprintf("Error: Argument must be a string containing the SDF name.\n");
-        return R_NilValue;
+        error("Argument must be a string containing the SDF name.");
     }
     iname = CHAR(STRING_ELT(name, 0));
 
@@ -391,19 +389,16 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
         fname = CHAR_ELT(filename, 0);
         fnamelen = strlen(fname);
     } else {
-        Rprintf("Error: filename argument must be a string.\n");
-        return R_NilValue;
+        error("filename argument must be a string.");
     }
 
     if (strcmp(fname+(fnamelen-3),".db") != 0) {
-        Rprintf("Error: Cannot attach because extension is not .db, which may cause problems [%s].\n");
-        return R_NilValue;
+        error("will not attach because extension is not .db");
     }
 
     /* check if it is a valid sdf file */
     if (_is_sdf2(fname) == NULL) {
-        Rprintf("Error: %s is not a valid SDF.\n", fname);
-        return R_NilValue;
+        error("%s is not a valid SDF.", fname);
     } else {
         /* _is_sdf2 puts the orig iname in buf2. transfer data to buf0 since
          * functions called below will use buf2 */
@@ -418,7 +413,7 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
     sqlite3_bind_text(stmt, 1, g_sql_buf[2], -1, SQLITE_STATIC);
     res = sqlite3_step(stmt);
     if (res == SQLITE_ROW) {
-        Rprintf("Warning: That sdf is already attached as '%s'\n",
+        warning("this sdf is already attached as '%s'\n",
                 sqlite3_column_text(stmt, 0));
         sqlite3_finalize(stmt);
         return R_NilValue;
@@ -431,8 +426,7 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
          * one stored at sdf_attribute */
         iname = CHAR_ELT(internal_name, 0);
         if (!_is_r_sym(iname)) {
-            Rprintf("Error: %s is not a valid R symbol.\n", iname);
-            return R_NilValue;
+            error("%s is not a valid R symbol.", iname);
         }
     } else {
         /* if no name is specified, use original internal name */
@@ -445,10 +439,10 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
     sqlite3_bind_text(stmt, 1, iname, -1, SQLITE_STATIC);
     res = sqlite3_step(stmt);
     if (res == SQLITE_ROW) {
-        Rprintf("Error: The sdf internal name '%s' is already used by file %s.\n",
-                iname, sqlite3_column_text(stmt, 1));
+        strcpy(g_sql_buf[0], (char *)sqlite3_column_text(stmt,1));
         sqlite3_finalize(stmt);
-        return R_NilValue;
+        error("the sdf internal name '%s' is already used by file %s.",
+                iname, g_sql_buf[0]);
     } 
     sqlite3_finalize(stmt);
     
@@ -487,8 +481,7 @@ SEXP sdf_detach_sdf(SEXP internal_name) {
     int res;
 
     if (!IS_CHARACTER(internal_name)) {
-        Rprintf("Error: iname argument is not a string.\n");
-        return R_NilValue;
+        error("iname argument is not a string.");
     }
 
     iname = CHAR_ELT(internal_name, 0);
@@ -513,28 +506,24 @@ SEXP sdf_rename_sdf(SEXP sdf, SEXP name) {
 
     /* check if valid r name */
     if (!_is_r_sym(newname)) {
-        Rprintf("Error: %s is not a valid R symbol.", iname);
-        return R_NilValue;
+        error("%s is not a valid R symbol.", iname);
     }
 
     /* check if sdf already exists */
     if (_sdf_exists2(newname)) { /* name is already taken */
-        Rprintf("Error: the name \"%s\" is already taken.\n", newname);
-        return R_NilValue;
+        error("Error: the name \"%s\" is already taken.", newname);
     }
 
     /* get path of the sdf file, because we're going to detach it */
     path = _get_sdf_detail2(iname, SDF_DETAIL_FULLFILENAME);
     if (path == NULL) {
-        Rprintf("Error: no sdf named \"%s\" exists.\n", iname);
-        return R_NilValue;
+        error("no sdf named \"%s\" exists.", iname);
     }
 
     /* change name in sdf_attribute */
     sprintf(g_sql_buf[0], "update [%s].sdf_attributes set value='%s' "
             "where attr='name'", iname, newname);
     res = _sqlite_exec(g_sql_buf[0]);
-    Rprintf("result: %d\n", res);
     /* if (_sqlite_error(res)) return R_NilValue; */
 
     /* detach and remove sdf from workspace */

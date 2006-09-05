@@ -20,20 +20,22 @@ char *_create_svector1(SEXP name, const char *type, int * _namelen, int protect)
     return iname;
 }
 
-static SEXP _create_svector_sexp(const char *iname, const char *varname, 
-        const char *type) {
+SEXP _create_svector_sexp(const char *iname, const char *tblname,
+        const char *varname, const char *type) {
     SEXP ret, value; int nprotected = 0;
-    PROTECT(ret = NEW_LIST(2)); nprotected++;
+    PROTECT(ret = NEW_LIST(3)); nprotected++;
 
     /* set list names */
-    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    PROTECT(value = NEW_CHARACTER(3)); nprotected++;
     SET_STRING_ELT(value, 0, mkChar("iname"));
-    SET_STRING_ELT(value, 1, mkChar("varname"));
+    SET_STRING_ELT(value, 1, mkChar("tblname"));
+    SET_STRING_ELT(value, 2, mkChar("varname"));
     SET_NAMES(ret, value);
 
     /* set list values */
     SET_VECTOR_ELT(ret, 0, mkString(iname));
-    SET_VECTOR_ELT(ret, 1, mkString(varname));
+    SET_VECTOR_ELT(ret, 1, mkString(tblname));
+    SET_VECTOR_ELT(ret, 2, mkString(varname));
 
     /* set sexp class */
     SET_CLASS(ret, mkString("sqlite.vector"));
@@ -75,7 +77,7 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len
         } else added = 0;
 
         UNPROTECT(1);
-    } else {
+    } else if (stmt != NULL) {
         const char *coltype = sqlite3_column_decltype(stmt, 0);
         if (sqlite3_column_type(stmt, 0) == SQLITE_NULL) {
             added = 0;
@@ -90,6 +92,18 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int idx_or_len
                    strcmp(coltype, "int") == 0) {
             /* caller should just copy off the vars level attr for factors */
             INTEGER(*ret)[idx_or_len] = sqlite3_column_int(stmt, 0);
+        } else added = 0;
+    } else if (stmt == NULL) {
+        const char *coltype = sqlite3_column_decltype(stmt, 0);
+        if (sqlite3_column_type(stmt, 0) == SQLITE_NULL) {
+            added = 0;
+        } else if (strcmp(coltype, "text") == 0) {
+            SET_STRING_ELT(*ret, idx_or_len, NA_STRING);
+        } else if (strcmp(coltype, "double") == 0) {
+            REAL(*ret)[idx_or_len] = NA_REAL;
+        } else if (strcmp(coltype, "bit") == 0 || strcmp(coltype, "integer") == 0 ||
+                   strcmp(coltype, "int") == 0) {
+            INTEGER(*ret)[idx_or_len] = NA_INTEGER;
         } else added = 0;
     }
         
@@ -125,17 +139,19 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
     coltype = sqlite3_column_decltype(stmt, 0);
     sqlite3_finalize(stmt);
     
-    PROTECT(ret = NEW_LIST(2)); nprotected++;
+    PROTECT(ret = NEW_LIST(3)); nprotected++;
 
     /* set list names */
-    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
+    PROTECT(value = NEW_CHARACTER(3)); nprotected++;
     SET_STRING_ELT(value, 0, mkChar("iname"));
-    SET_STRING_ELT(value, 1, mkChar("varname"));
+    SET_STRING_ELT(value, 1, mkChar("tblname"));
+    SET_STRING_ELT(value, 2, mkChar("varname"));
     SET_NAMES(ret, value);
 
     /* set list values */
     SET_VECTOR_ELT(ret, 0, mkString(iname));
-    SET_VECTOR_ELT(ret, 1, mkString(varname));
+    SET_VECTOR_ELT(ret, 1, mkString("sdf_data"));
+    SET_VECTOR_ELT(ret, 2, mkString(varname));
 
     /* set class */
     if (strcmp(coltype, "text") == 0) svec_type = "character";
@@ -171,7 +187,8 @@ SEXP sdf_get_variable_length(SEXP svec) {
     
 SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
-    char *iname = SDF_INAME(svec), *varname = SVEC_VARNAME(svec);
+    char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
+         *varname = SVEC_VARNAME(svec);
     int index, idxlen, i, retlen=0, res;
     sqlite3_stmt *stmt;
 
@@ -180,9 +197,10 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     idxlen = LENGTH(idx);
     if (idxlen < 1) return ret;
 
-    sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data limit ?,1",
-            varname, iname);
+    sprintf(g_sql_buf[0], "select [%s] from [%s].[%s] limit ?,1",
+            varname, iname, tblname);
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+    if (_sqlite_error(res)) error("cannot complete request");
 
     /* get data based on index */
     if (IS_NUMERIC(idx)) {
@@ -217,8 +235,11 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
                 sqlite3_reset(stmt);
                 sqlite3_bind_int(stmt, 1, index);
                 res = sqlite3_step(stmt);
-                if (res == SQLITE_ROW)
+                if (res == SQLITE_ROW) {
                     retlen += _get_vector_index_typed_result(stmt, &ret, retlen); 
+                } else {
+                    retlen += _get_vector_index_typed_result(NULL, &ret, retlen); 
+                }
             }
         }
     } else if (IS_INTEGER(idx)) {
@@ -253,8 +274,12 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
                 if (index < 0) continue;
                 sqlite3_reset(stmt);
                 sqlite3_bind_int(stmt, 1, index);
-                sqlite3_step(stmt);
-                retlen += _get_vector_index_typed_result(stmt, &ret, retlen); 
+                res = sqlite3_step(stmt);
+                if (res == SQLITE_ROW) {
+                    retlen += _get_vector_index_typed_result(stmt, &ret, retlen); 
+                } else {
+                    retlen += _get_vector_index_typed_result(NULL, &ret, retlen);
+                }
             }
         }
 
@@ -285,8 +310,12 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
                 if (LOGICAL(idx)[i%idxlen]) {
                     sqlite3_reset(stmt);
                     sqlite3_bind_int(stmt, 1, i);
-                    sqlite3_step(stmt);
-                    retlen += _get_vector_index_typed_result(stmt, &ret, retlen);
+                    res = sqlite3_step(stmt);
+                    if (res == SQLITE_ROW) {
+                        retlen += _get_vector_index_typed_result(stmt, &ret, retlen);
+                    } else {
+                        retlen += _get_vector_index_typed_result(NULL, &ret, retlen);
+                    }
                 }
             }
         }
@@ -334,12 +363,13 @@ SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value) {
 }
 
 SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
-    char *iname, *varname, *type;
+    char *iname, *tblname, *varname, *type;
     sqlite3_stmt *stmt;
     int nprotected = 0;
     SEXP ret, names;
 
     iname = SDF_INAME(svec);
+    tblname = SVEC_TBLNAME(svec);
     varname = SVEC_VARNAME(svec);
     USE_SDF1(iname, TRUE, FALSE);
 
@@ -357,10 +387,10 @@ SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
         PROTECT(names = NEW_CHARACTER(nrows)); nprotected++;
 
         sprintf(g_sql_buf[0], "select [%s].[%s %s].label, count(*) from "
-                "[%s].sdf_data join [%s].[%s %s] on [%s].sdf_data.[%s]=[%s].[%s %s].level "
-                "group by [%s].sdf_data.[%s], [%s].[%s %s].level order by count(*) desc",
-                iname, type, varname, iname, iname, type, varname, iname, varname,
-                iname, type, varname, iname, varname, iname, type, varname);
+                "[%s].[%s] join [%s].[%s %s] on [%s].[%s].[%s]=[%s].[%s %s].level "
+                "group by [%s].[%s].[%s], [%s].[%s %s].level order by count(*) desc",
+                iname, type, varname, iname, tblname, iname, type, varname, iname, tblname, varname,
+                iname, type, varname, iname, tblname, varname, iname, type, varname);
         sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
 
         for (i = 0; i < max_rows; i++) {
@@ -379,7 +409,7 @@ SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
         }
     } else if (TEST_SDFVECTORTYPE(svec, "logical")) {
         sprintf(g_sql_buf[0], "select count(*) from "
-                "[%s].sdf_data group by [%s] order by [%s]", iname, varname, varname);
+                "[%s].[%s] group by [%s] order by [%s]", iname, tblname, varname, varname);
 
         PROTECT(names = NEW_CHARACTER(3)); nprotected = 1;
         PROTECT(ret = NEW_CHARACTER(3)); nprotected++;
@@ -474,7 +504,7 @@ vecmath_prepare_error:
     UNUSE_SDF2(iname);
     UNUSE_SDF2(iname_src);
 
-    return _create_svector_sexp(iname, "V1", "numeric");
+    return _create_svector_sexp(iname, "sdf_data", "V1", "numeric");
 }
 
 SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
@@ -987,7 +1017,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
     }
 
     if (iname != NULL) {
-        return _create_svector_sexp(iname, "V1", 
+        return _create_svector_sexp(iname, "sdf_data", "V1", 
                 (functype == 0) ? "numeric" : "logical");
         UNUSE_SDF2(iname);
     }
@@ -1098,7 +1128,7 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
     UNUSE_SDF2(iname_src);
     UNUSE_SDF2(iname);
 
-    return _create_svector_sexp(iname, "V1", type);
+    return _create_svector_sexp(iname, "sdf_data", "V1", type);
 }
 
 /****************************************************************************

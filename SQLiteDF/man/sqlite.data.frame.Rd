@@ -44,7 +44,8 @@ storing the level data, it is used to mark a column as being a factor.}
 }
 
 SDF's are managed in a workspace separate from R's. When SQLiteDF is loaded, it searches
-for the file \code{workspace.db} in the current working directory. This file contains
+for the file \code{workspace.db} inside the subdirectory \code{.SQLiteDF} in the current 
+working directory. This file contains
 a list of SDF's created/used in the previous session (i.e. SQLiteDF sessions are automatically
 saved), including their full and relative path and attach information. 
 Workspace is managed using the SQLite engine
@@ -52,12 +53,13 @@ by opening \code{workspace.db} as the main database and then attaching (SQLite's
 Unfortunately, the number of attached databases is limited to 31 (actually 32, but 1 is reserved
 for the temp db). Therefore, SDF's are \emph{scored} according to the number of times
 it has been used. When the maximum allowed attachment is reached, the least used attached
-SDF's is detached and the needed one is attached in its place. The packaged SQLite3 static library 
-has been modified to have 31 maximum attachments, because the default is 10. 
+SDF's is detached and the needed one is attached in its place. On compiling the package, the
+configure script modifies the bundled SQLite source such that
+constant controlling the maximum attachments is modified to 31 (default is 10).
 
 Back to when SQLiteDF is loaded, after opening \code{workspace.db}, the SDF's stored in the list
 are sorted according to their number of uses in the previous session and then the 
-first 30 are attached. The relative path is used for finding the SDF file. If the file
+first 30 are attached. The relative path is used for finding the SQLite file. If the file
 cannot be found, it is deleted from the SQLiteDF workspace (with a warning message). The
 scores are then all reset.
 
@@ -70,6 +72,11 @@ and the following attributes:
 \item{class}{The S3 class vector \code{c("sqlite.data.frame", "data.frame")}}
 \item{row.names}{A sqlite.vector of mode character containing the row names of the SDF}
 }
+
+All SDF's created in the session will have their SQLite file stored in the subdirectory .SQLiteDF in the
+current working directory. SDF's created in the other session can be imported/attached
+to the current SDF workspace using \code{attachSdf}, which may reside anywhere in the
+file system. 
 }
 \value{
 A S3 object representing the SDF. The SDF database will be created in the same directory

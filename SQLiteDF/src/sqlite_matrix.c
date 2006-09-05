@@ -88,14 +88,16 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
     _sqlite_commit;
 
     /* return smat sexp */
-    PROTECT(ret = NEW_LIST(2)); i = 1; /* 1 for names sexp above */
+    PROTECT(ret = NEW_LIST(3)); i = 1; /* 1 for names sexp above */
     SET_VECTOR_ELT(ret, 0, mkString(mat_iname));
-    SET_VECTOR_ELT(ret, 1, mkString("V1"));
+    SET_VECTOR_ELT(ret, 1, mkString("sdf_data"));
+    SET_VECTOR_ELT(ret, 2, mkString("V1"));
 
     /* set smat data name */
-    PROTECT(tmp = NEW_CHARACTER(2)); i++;
+    PROTECT(tmp = NEW_CHARACTER(3)); i++;
     SET_STRING_ELT(tmp, 0, mkChar("iname"));
-    SET_STRING_ELT(tmp, 1, mkChar("varname"));
+    SET_STRING_ELT(tmp, 1, mkChar("tblname"));
+    SET_STRING_ELT(tmp, 2, mkChar("varname"));
     SET_NAMES(ret, tmp);
 
     /* set class */
@@ -110,7 +112,8 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
 
     /* set smat dimname */
     PROTECT(tmp = NEW_LIST(2)); i++;
-    SET_VECTOR_ELT(tmp, 0, R_NilValue); /* NOT EXACTLY... */
+    SET_VECTOR_ELT(tmp, 0, _create_svector_sexp(mat_iname, 
+                "sdf_matrix_rownames", "name", "character"));
     SET_VECTOR_ELT(tmp, 1, names);
     setAttrib(ret, SDF_DimNamesSymbol, tmp);
 

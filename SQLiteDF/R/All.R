@@ -1,10 +1,14 @@
-.onLoad <- function(libname, pkgname) .Call("sdf_init_workspace")
+.onLoad <- function(libname, pkgname) {
+    tryCatch({setwd(".SQLiteDF"); setwd("..")}, error=function (e) dir.create(".SQLiteDF"))
+    .Call("sdf_init_workspace")
+}
 
 .onUnload <- function(libpath) {
     .Call("sdf_finalize_workspace")
     library.dynam.unload("SQLiteDF", libpath)
 }
 
+sdf_tempdir <- function() .Call("sdf_tempdir")
 # -------------------------------------------------------------------------
 # workspace functions
 # -------------------------------------------------------------------------
@@ -399,6 +403,7 @@ head.sqlite.matrix <- function(x, n=6, ...) {
     if (is.null(ret)) return(invisible(NULL))
     ret <- matrix(ret, n, mdim[2])
     colnames(ret) <- colnames(x)
+    rownames(ret) <- rownames(x)[1:n]
     ret
 }
 print.sqlite.matrix <- function(x, n = 6, ...) {
@@ -412,3 +417,5 @@ print.sqlite.matrix <- function(x, n = 6, ...) {
     print(head(x, n, ...))
     if (xdim[1] > n) cat(" ...\n")
 }
+#"[.sqlite.matrix" <- function(x, row, col) {
+    

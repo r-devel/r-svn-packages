@@ -83,6 +83,9 @@ int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
 /* workspace utilities */
 int _prepare_attach2();  /* prepare workspace before attaching a sqlite db */
 
+/* sqlite vector utilities */
+SEXP _create_svector_sexp(const char *iname, const char *tblname, const char *varname, const char *type);
+
 /* misc utilities */
 char *_r2iname(char *internal_name, char *filename);
 char *_fixname(char *rname);
@@ -107,6 +110,7 @@ void __register_vector_math();
 
 /* SDF object accessors shortcuts */
 #define SDF_INAME(sdf) CHAR(STRING_ELT(_getListElement(sdf, "iname"),0))
+#define SVEC_TBLNAME(sdf) CHAR(STRING_ELT(_getListElement(sdf, "tblname"),0))
 #define SVEC_VARNAME(sdf) CHAR(STRING_ELT(_getListElement(sdf, "varname"),0))
 
 /* possible var types when stored in sqlite as integer */

@@ -6,8 +6,8 @@
  * UTILITY FUNCTIONS
  ****************************************************************************/
 
-/* if user supplied a name, return that name. otherwise, use the 
- * default "data" */
+/* if user supplied a name (1st arg), return that name. otherwise, use the 
+ * default "data". rname is R name, iname is internal name */
 static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx) {
     int namelen = 0;
 
@@ -15,18 +15,16 @@ static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx)
     if (name == R_NilValue) {
         *rname = "data";
         namelen = 5;
-        *iname = (char*)R_alloc(13, sizeof(char)); /* data10000.db\0 */
+        *iname = (char*)R_alloc(13, sizeof(char)); /* .SQLiteDF/data10000.db\0 */
         *file_idx = 1;
         sprintf(*iname, "%s%d.db", *rname, *file_idx);
     } else if (IS_CHARACTER(name)) {
         *rname = CHAR_ELT(name,0);
         if (!_is_r_sym(*rname)) { 
-            Rprintf("Error: supplied name \"%s\"is not a valid R symbol.\n", 
-                    *rname); 
-            return FALSE; 
+            error("supplied name \"%s\"is not a valid R symbol.", *rname); 
         }
         namelen = strlen(*rname);
-        *iname = (char*)R_alloc(namelen + 9, sizeof(char)); /* <name>10000.db\0 */
+        *iname = (char*)R_alloc(namelen + 9, sizeof(char)); /* .SQLiteDF/<name>10000.db\0 */
         sprintf(*iname, "%s.db", *rname);
     } else {
         Rprintf("Error: the supplied value for arg name is not a string.\n");
@@ -34,14 +32,22 @@ static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx)
     return namelen;
 }
 
-static int _find_free_filename2(char *rname, char **iname, int *namelen, int *file_idx) {
+static int _find_free_filename2(char *rname, char *dirname, char **iname, int *namelen, int *file_idx) {
     sqlite3_stmt *stmt;
+    char *tmp_iname;
     sqlite3_prepare(g_workspace, "select 1 from workspace where internal_name=?", -1,
             &stmt, NULL);
     do {
-        if (!_file_exists(*iname)) {
+        if (dirname != NULL) {
+            sprintf(g_sql_buf[2], "%s/%s", dirname, *iname);
+            tmp_iname = g_sql_buf[2];
+        } else {
+            tmp_iname = *iname;
+        }
+
+        if (!_file_exists(tmp_iname)) {
             sqlite3_reset(stmt);
-            sqlite3_bind_text(stmt, 1, *iname, -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, 1, tmp_iname, -1, SQLITE_STATIC);
             if (sqlite3_step(stmt) != SQLITE_ROW) break;
         }
         *namelen = sprintf(*iname, "%s%d.db", rname, ++(*file_idx)) - 3;
@@ -73,7 +79,7 @@ char *_create_sdf_skeleton1(SEXP name, int *onamelen, int protect) {
 
     if (!namelen) return NULL;
 
-    _find_free_filename2(rname, &iname, &namelen, &file_idx);
+    _find_free_filename2(rname, ".SQLiteDF", &iname, &namelen, &file_idx);
 
     if (file_idx >= 10000) { 
         Rprintf("Error: cannot find free SDF name.\n");
@@ -81,7 +87,7 @@ char *_create_sdf_skeleton1(SEXP name, int *onamelen, int protect) {
     }
 
     /* add to workspace */
-    strcpy(g_sql_buf[3], iname);
+    sprintf(g_sql_buf[3], ".SQLiteDF/%s", iname);
     iname[namelen] = 0; /* remove ".db" */
     res = _add_sdf1(g_sql_buf[3], iname);
     if (_sqlite_error(res)) return NULL;

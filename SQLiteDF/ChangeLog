@@ -1,3 +1,9 @@
+2006-09-03 (15:34 Manila)
+- moved default data dir to ./.SQLiteDF
+- "generalized" sqlite vector, in that any table column can be used as an
+sqlite.vector (previously, only columns of table sdf_data)
+- fixed sqlite.matrix rownames
+
 2006-08-28 (08:00 Manila)
 - added sqlite.matrix and some of its methods
 - fixed print.sqlite.data.frame bug

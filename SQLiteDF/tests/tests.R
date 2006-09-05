@@ -4,13 +4,13 @@ library(datasets)
 # or open workspace.db in the current directory (assuming workspace.db is 
 # a valid workspace file)
 library(SQLiteDF)
-stopifnot(file.exists("workspace.db"))
+stopifnot(file.exists(".SQLiteDF/workspace.db"))
 
 # test creating unnamed sdfs
 u1.sdf <- sqlite.data.frame(iris)
-stopifnot(file.exists("data1.db"))
+stopifnot(file.exists(".SQLiteDF/data1.db"))
 u2.sdf <- sqlite.data.frame(attenu)
-stopifnot(file.exists("data2.db"))
+stopifnot(file.exists(".SQLiteDF/data2.db"))
 
 # test classes
 stopifnot(class(u1.sdf) == "sqlite.data.frame",
@@ -44,9 +44,9 @@ compareSdfToDf <- function(sdf, df, with.names=TRUE) {
 
 # test creating named sdfs
 iris.sdf <- sqlite.data.frame(iris, "iris")
-stopifnot(file.exists("iris.db"))
+stopifnot(file.exists(".SQLiteDF/iris.db"))
 iris2.sdf <- sqlite.data.frame(iris, "iris")
-stopifnot(file.exists("iris1.db"))
+stopifnot(file.exists(".SQLiteDF/iris1.db"))
 
 # test lsSdf(), w/c queries workspace.db
 lsSdf() 
@@ -55,7 +55,7 @@ stopifnot((sort(lsSdf()) == c("data1", "data2", "iris", "iris1")))
 # test attach/detach sdf
 detachSdf("data1")
 stopifnot(sort(lsSdf()) == c("data2", "iris", "iris1"))
-attachSdf("data1.db")
+attachSdf(".SQLiteDF/data1.db")
 stopifnot(sort(lsSdf()) == sort(c("data2", "iris", "iris1", "data1")))
 
 # test row.names, head, tail, "==.character"
