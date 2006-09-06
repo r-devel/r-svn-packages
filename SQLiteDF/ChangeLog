@@ -1,3 +1,7 @@
+2006-09-06 (09:55 Manila)
+- fixed linux configure script (add #include <unistd> in src/SQLite/tool/lemon.c)
+- removed warnings, errors in configure.win (sh again, "uninitialized" vars)
+
 2006-09-03 (15:34 Manila)
 - moved default data dir to ./.SQLiteDF
 - "generalized" sqlite vector, in that any table column can be used as an

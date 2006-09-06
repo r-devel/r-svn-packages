@@ -1,8 +1,9 @@
 useDynLib(SQLiteDF)
 export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf, sdflm)
-export(dupSdf,renameSdf, inameSdf, rbindSdf, sdf_tempdir)
+export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
 export(sqlite.matrix)
+#export(sdf_tmpdir)
 
 export(typeSvec, has.typeSvec)
 

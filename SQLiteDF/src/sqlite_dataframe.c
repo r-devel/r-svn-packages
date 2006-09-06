@@ -488,7 +488,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
     sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
     int i, j,res;
-    int *col_indices, col_index_len, *dup_indices;
+    int *col_indices = NULL, col_index_len = 0, *dup_indices = NULL;
     int row_index_len = 0, force_new_df = LOGICAL(new_sdf)[0];
     const char *colname;
 

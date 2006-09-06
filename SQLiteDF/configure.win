@@ -10,6 +10,7 @@ echo "---- configuring SQLite ----"
 ## remove chmod, change to ls
 sed -e 's/chmod +x/ls /g; s/chmod u+w/ls /g; s/chmod \d\{3\}/ls /g; s/chmod/ls /g' configure > configure.tmp
 mv configure.tmp configure
+export CONFIG_SHELL=sh
 sh configure --build=i386-pc-mingw32 --disable-shared
 echo "---- making SQLite ----"
 mv src/sqliteInt.h src/sqliteInt.h.temp

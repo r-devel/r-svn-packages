@@ -381,8 +381,8 @@ SEXP sdf_get_sdf(SEXP name) {
 SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
     /* when studying this, please be mindful of the global buffers used.
      * you have been warned */
-    char *fname, *iname, *iname_orig;;
-    int fnamelen, res;
+    char *fname=NULL, *iname, *iname_orig=NULL;
+    int fnamelen=0, res;
     sqlite3_stmt *stmt;
 
     if (IS_CHARACTER(filename)) {

@@ -148,7 +148,7 @@ sdflm <- function(formula, sdf, batch.size=1024) {
     n <- n + batch.size
     while (n[1] < sdf.nrows) {
         if (n[batch.size] > sdf.nrows) n <- n[1]:sdf.nrows
-        res <- update(res, sdf[n,])
+        res <- biglm:::update(res, sdf[n,])
         n <- n + batch.size
     }
     res
@@ -328,7 +328,7 @@ summary.sqlite.vector <- function(object, maxsum=100, digits=max(3, getOption("d
         names(ret) <- c("Length", "Class", "Type")
         class(ret) <- "table"
         ret
-    } else error(paste("not implemented for type ", typeSvec(object), sep=""))
+    } else stop(paste("not implemented for type ", typeSvec(object), sep=""))
 }
 
 mean.sqlite.vector <- function(x, ...) {
