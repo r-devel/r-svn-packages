@@ -1,6 +1,7 @@
-2006-09-04 Brian Ripley <Brian.Ripley@R-project.org>
+2006-09-06 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: needs to depends on stats, for na.omit.
+	  It does use methods::as
 
 2006-08-31 Thomas Lumley <tlumley@u.washington.edu>
 

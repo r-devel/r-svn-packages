@@ -4,6 +4,7 @@ Version: 0.8-16
 Date: 2006-08-31
 Title: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase, ...
 Depends: R (>= 2.4.0), stats
+Imports: methods
 Maintainer: R-core <R-core@r-project.org>
 Author: R-core members, Saikat DebRoy <saikat@stat.wisc.edu>,
 	Roger Bivand <Roger.Bivand@nhh.no> and others:
