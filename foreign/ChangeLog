@@ -2,6 +2,7 @@
 
 	* DESCRIPTION: needs to depends on stats, for na.omit.
 	  It does use methods::as
+	  Version is 0.8-17
 
 2006-08-31 Thomas Lumley <tlumley@u.washington.edu>
 
@@ -17,7 +18,7 @@
 2006-08-31 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: there are no imports, from methods or elsewhere.
-	   version is 0.8-16.
+	  Version is 0.8-16.
 
 	* R/Sread.R, R/dbf.R, R/octave.R: use seq_{along,len}.
 	
