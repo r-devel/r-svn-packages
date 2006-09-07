@@ -9,7 +9,7 @@
 #include <R_ext/Print.h>/* for diagnostics */
 
 #include "cluster.h"
-/* dysta3_() is in cluster.h ! */
+/* dysta3() is in cluster.h ! */
 
 static void
 fuzzy(int nn, int k, double *p,
@@ -45,7 +45,7 @@ void fanny(int *nn,  /* = number of objects */
 
     if (*jdyss != 1) { /* compute dissimilarities from data */
 	int jhalt = 0;
-	dysta3_(nn, jpp, x, dss, ndyst, jtmd, valmd, &jhalt);
+	dysta3(nn, jpp, x, dss, ndyst, jtmd, valmd, &jhalt);
 	if (jhalt) {
 	    *jdyss = -1; return;
 	}
@@ -72,8 +72,8 @@ void fanny(int *nn,  /* = number of objects */
 } /* fanny */
 
 
-void dysta3_(int *nn, int *p, double *x, double *dys,
-	     int *ndyst, int *jtmd, double *valmd, int *jhalt)
+void dysta3(int *nn, int *p, double *x, double *dys,
+	    int *ndyst, int *jtmd, double *valmd, int *jhalt)
 {
     int k, l, nlk, x_d = *nn;
 
@@ -105,7 +105,7 @@ void dysta3_(int *nn, int *p, double *x, double *dys,
 	    }
 	}
     }
-} /* dysta3_ */
+} /* dysta3 */
 
 
 static

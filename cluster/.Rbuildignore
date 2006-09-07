@@ -5,10 +5,16 @@ INDEX-MM
 .*/.*-MM
 mail-.*
 .*mail
+resort-INDEX
+Rnews-.*
+do-.*
+.*_1\.[89]
+R/.*_1\.[89]
 .*/TAGS
 R/.*\+
 R/README-Splus
 src/list-
+src/.*\+
 src/.*-Li
 src/.*-log
 src/.*-21retro
@@ -27,9 +33,3 @@ tests/clara-segfault.*
 tests/clara-ex.Rout.*
 tests/clara-MM.R.*
 00-orig-src
-check-log
-resort-INDEX
-Rnews-.*
-do-.*
-.*_1\.[89]
-R/.*_1\.[89]
