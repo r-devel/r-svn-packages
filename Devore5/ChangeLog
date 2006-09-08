@@ -1,0 +1,57 @@
+2004-10-03  Douglas Bates  <bates@bates1-home>
+
+	* man/xmp13.09.Rd: Repaired typo
+
+2003-07-22  Douglas Bates  <bates@stat.wisc.edu>
+
+	* data/ex01.60.rda, data/ex01.60.txt: Switch to rda format
+
+	* ChangeLog: *** empty log message ***
+
+	* DESCRIPTION: Release 0.4-2
+
+2003-07-22  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION: Release 0.4-2
+
+2002-07-22  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/ex09.44.Rd, man/xmp10.08.Rd, INDEX, data/00Index: Release 0.4-1
+
+	* R/dummy.R, data/xmp10.05.rda, man/xmp11.05.Rd, man/xmp11.06.Rd, man/xmp11.07.Rd, man/xmp11.11.Rd, man/xmp11.16.Rd:
+	0.4-1 Release
+
+	* DESCRIPTION: *** empty log message ***
+
+	* data/ex11.42.txt, data/ex11.43.rda, data/ex11.43.txt, data/ex11.48.rda, data/ex11.48.txt, data/ex11.50.rda, data/ex11.50.txt, data/ex11.52.rda, data/ex11.52.txt, data/ex11.56.rda, data/ex11.56.txt, data/ex11.57.rda, data/ex11.57.txt, data/ex11.59.rda, data/ex11.59.txt, data/ex11.61.rda, data/ex11.61.txt, data/xmp10.03.rda, data/xmp10.03.txt, data/xmp10.05.rda, data/xmp10.05.txt, data/xmp10.08.rda, data/xmp10.10.rda, data/xmp10.10.txt, data/xmp11.01.rda, data/xmp11.01.txt, data/xmp11.07.rda, data/xmp11.07.txt, data/xmp11.13.rda, data/xmp11.13.txt, data/xmp11.16.rda, data/xmp11.16.txt, data/ex09.44.rda, data/ex09.77.rda, data/ex09.77.txt, data/ex10.06.rda, data/ex10.06.txt, data/ex10.08.rda, data/ex10.08.txt, data/ex10.18.rda, data/ex10.18.txt, data/ex10.41.rda, data/ex10.41.txt, data/ex11.02.rda, data/ex11.02.txt, data/ex11.03.rda, data/ex11.03.txt, data/ex11.04.rda, data/ex11.04.txt, data/ex11.05.rda, data/ex11.05.txt, data/ex11.08.rda, data/ex11.08.txt, data/ex11.09.rda, data/ex11.09.txt, data/ex11.10.rda, data/ex11.10.txt, data/ex11.15.rda, data/ex11.15.txt, data/ex11.16.rda, data/ex11.16.txt, data/ex11.17.rda, data/ex11.17.txt, data/ex11.18.rda, data/ex11.18.txt, data/ex11.20.rda, data/ex11.20.txt, data/ex11.29.rda, data/ex11.29.txt, data/ex11.31.rda, data/ex11.31.txt, data/ex11.34.rda, data/ex11.34.txt, data/ex11.35.rda, data/ex11.35.txt, data/ex11.39.rda, data/ex11.39.txt, data/ex11.40.rda, data/ex11.40.txt, data/ex11.42.rda:
+	Conversion to rda format when factors are present
+
+	* man/Tukey.Rd, man/xmp01.01.Rd, man/xmp13.09.Rd, R/Tukey.R:
+	Tukey function is now TukeyHSD in main
+
+2001-12-30  Douglas Bates  <bates@stat.wisc.edu>
+
+	* INDEX, data/00Index, man/ex10.42.Rd, DESCRIPTION, man/xmp04.29.Rd, man/Tukey.Rd, man/ex13.40.Rd, man/ex13.42.Rd, man/ex13.44.Rd, man/ex13.46.Rd, data/ex10.37.txt, data/xmp11.05.txt, data/xmp11.06.txt, data/xmp11.11.txt, data/xmp11.12.txt, data/ex09.84.txt, data/ex10.27.rda, data/ex10.27.txt, data/ex10.37.rda, data/ex10.42.rda, data/ex13.40.txt, data/ex13.42.txt, data/ex13.44.txt, data/ex13.46.txt, data/xmp11.05.rda, data/xmp11.06.rda, data/xmp11.11.rda, data/xmp11.12.rda:
+	Preparing for version 0.3-5
+
+2001-05-12  Douglas Bates  <bates@stat.wisc.edu>
+
+	* data/xmp11.16.txt, man/Tukey.Rd, man/xmp01.15.Rd, man/xmp11.16.Rd, ChangeLog, DESCRIPTION, INDEX, R/Tukey.R:
+	Release 0.3-4
+
+2001-01-18  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/Tukey.R: Modified the plot.Tukey method to pass graphics
+	parameters on to the graphics function calls.4
+
+2000-05-07  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/Tukey.R: Added a generic and an aov method for Tukey multiple
+	comparisons.
+
+2000-02-07  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION (Date): Escaped the % characters in the .Rd files.
+	This version now passes a R CMD check.
+	
+
