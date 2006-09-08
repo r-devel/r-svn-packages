@@ -1,0 +1,42 @@
+2005-09-05  Douglas Bates  <bates@localhost.localdomain>
+
+	* DESCRIPTION (Date): Added examples using algorithm = "port"
+
+2004-10-03  Douglas Bates  <bates@bates1-home>
+
+	* inst/original/Bennett5.dat: Move the original pages to an inst
+	directory.
+
+	* R/zzz.R (.onLoad): Change to require(stats) and put in .onLoad
+
+	* DESCRIPTION (LazyData): Added
+
+2003-07-22  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/Gauss1.Rd: Changed use of the \argument macro to \describe
+	in this and all the other documentation files.
+
+2001-01-10  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/Gauss1.Rd: Removed the call to library(NISTnls) from this
+	and all the other examples.
+
+2000-12-19  Douglas Bates  <bates@stat.wisc.edu>
+
+	* man/Bennett5.Rd: Commented out the first example that dies for
+	some reason.
+
+2000-02-06  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION (Version): Modified the examples so they do not use
+	the non-existent argument warnOnly. Several of the examples then
+	have to be enclosed in \dontrun{}.  Changed the Version number to
+	0.9-3
+
+1999-05-27  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION (Package): Created the files for the 0.9 release.
+	No summary calls yet as summary.nls does not exist in the nls
+	package.
+	
+
