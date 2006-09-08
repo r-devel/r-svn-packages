@@ -7,7 +7,7 @@ Author: Terry M Therneau and Beth Atkinson <atkinson@mayo.edu>.
 Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
 Description: Recursive partitioning and regression trees
 Title: Recursive Partitioning
-Depends: R (>= 2.4.0), graphics, stats
+Depends: R (>= 2.4.0), graphics, stats, grDevices
 Suggests: survival
 License: use under GPL 2 or later, or see file LICENCE
 LazyData: yes
