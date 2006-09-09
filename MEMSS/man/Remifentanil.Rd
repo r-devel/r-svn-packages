@@ -55,6 +55,6 @@
 	and S-PLUS}, Springer, New York.
 }
 \examples{
-data(Remifentanil)
+str(Remifentanil)
 }
 \keyword{datasets}

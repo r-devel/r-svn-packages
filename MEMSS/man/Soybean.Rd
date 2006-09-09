@@ -42,7 +42,7 @@
     Repeated Measurement Data},  Chapman and Hall, London.
 }
 \examples{
-data(Soybean)
+str(Soybean)
 #summary(fm1 <- nlsList(SSlogis, data = Soybean))
 }
 \keyword{datasets}

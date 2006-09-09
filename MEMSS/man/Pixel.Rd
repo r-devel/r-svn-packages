@@ -39,6 +39,6 @@
 options(show.signif.stars = FALSE)
 str(Pixel)
 summary(Pixel)
-(fm1 <- lmer(pixel ~ day + I(day^2) + (1|DS) + (day|Dog), Pixel))
+(fm1 <- lmer(pixel ~ day + I(day^2) + (1|Dog:Side) + (day|Dog), Pixel))
 }
 \keyword{datasets}

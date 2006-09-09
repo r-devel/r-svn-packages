@@ -43,6 +43,6 @@
 \source{
 }
 \examples{
-data(MathAchSchool)
+str(MathAchSchool)
 }
 \keyword{datasets}

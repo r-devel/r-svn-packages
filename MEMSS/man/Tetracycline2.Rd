@@ -32,6 +32,6 @@
 	and S-PLUS}, Springer, New York.
 }
 \examples{
-data(Tetracycline2)
+str(Tetracycline2)
 }
 \keyword{datasets}

@@ -44,6 +44,6 @@
   \emph{Technometrics}, \bold{35}, 161-174 
 }
 \examples{
-data(Fatigue)
+str(Fatigue)
 }
 \keyword{datasets}

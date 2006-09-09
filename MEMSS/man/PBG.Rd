@@ -49,6 +49,6 @@ the HD5-antagonist MDL 72222 administered.
     \bold{28}, 303-311.
 }
 \examples{
-data(PBG)
+str(PBG)
 }
 \keyword{datasets}

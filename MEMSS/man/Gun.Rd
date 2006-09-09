@@ -40,6 +40,6 @@
     Experiments (4th ed)}, Harcourt Brace, New York.
 }
 \examples{
-data(Gun)
+str(Gun)
 }
 \keyword{datasets}

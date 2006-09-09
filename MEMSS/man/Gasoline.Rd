@@ -58,6 +58,6 @@
     Statistics with S-PLUS (3rd ed)}, Springer, New York.
 }
 \examples{
-data(Gasoline)
+str(Gasoline)
 }
 \keyword{datasets}

@@ -55,6 +55,6 @@
     ed)}, Iowa State University Press, Ames, IA
 }
 \examples{
-data(Alfalfa)
+str(Alfalfa)
 }
 \keyword{datasets}

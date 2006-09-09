@@ -47,6 +47,6 @@
      and S-PLUS}, Springer, New York. (Appendix A.2)
 }
 \examples{
-data(Assay)
+str(Assay)
 }
 \keyword{datasets}

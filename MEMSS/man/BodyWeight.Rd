@@ -48,6 +48,6 @@
        Analysis}, Chapman and Hall, London.
 }
 \examples{
-data(BodyWeight)
+str(BodyWeight)
 }
 \keyword{datasets}

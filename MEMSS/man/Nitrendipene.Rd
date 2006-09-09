@@ -31,6 +31,6 @@
     Analysis and Its Applications}, Wiley, New York.
 }
 \examples{
-data(Nitrendipene)
+str(Nitrendipene)
 }
 \keyword{datasets}

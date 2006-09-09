@@ -68,6 +68,6 @@
   Cary, NC.
 }
 \examples{
-data(Phenobarb)
+str(Phenobarb)
 }
 \keyword{datasets}

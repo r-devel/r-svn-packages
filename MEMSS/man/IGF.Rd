@@ -35,6 +35,6 @@
 	and S-PLUS}, Springer, New York.  (Appendix A.11)
 }
 \examples{
-data(IGF)
+str(IGF)
 }
 \keyword{datasets}

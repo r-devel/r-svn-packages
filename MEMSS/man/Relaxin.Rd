@@ -27,6 +27,6 @@
 	and S-PLUS}, Springer, New York.
 }
 \examples{
-data(Relaxin)
+str(Relaxin)
 }
 \keyword{datasets}

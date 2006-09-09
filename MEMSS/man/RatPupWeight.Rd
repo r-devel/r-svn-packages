@@ -36,6 +36,6 @@
 	and S-PLUS}, Springer, New York.
 }
 \examples{
-data(RatPupWeight)
+str(RatPupWeight)
 }
 \keyword{datasets}

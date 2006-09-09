@@ -49,6 +49,6 @@
   Cary, NC.
 }
 \examples{
-data(Oxide)
+str(Oxide)
 }
 \keyword{datasets}

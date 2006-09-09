@@ -30,6 +30,6 @@
     \bold{21}.
 }
 \examples{
-data(Muscle)
+str(Muscle)
 }
 \keyword{datasets}

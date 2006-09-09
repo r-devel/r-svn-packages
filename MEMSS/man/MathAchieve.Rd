@@ -39,6 +39,6 @@
 \source{
 }
 \examples{
-data(MathAchieve)
+str(MathAchieve)
 }
 \keyword{datasets}

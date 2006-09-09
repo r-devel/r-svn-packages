@@ -39,7 +39,7 @@
 }
 \examples{
 options(show.signif.stars = FALSE)
-data(ergoStool)
+str(ergoStool)
 (fm1 <- lmer(effort ~ Type + (1|Subject), ergoStool))
 anova(fm1)
 }

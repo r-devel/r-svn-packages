@@ -37,6 +37,6 @@
     Reproduction Science}, \bold{14}, 219-231.
 }
 \examples{
-data(Ovary)
+str(Ovary)
 }
 \keyword{datasets}

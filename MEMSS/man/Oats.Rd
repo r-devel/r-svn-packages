@@ -44,6 +44,6 @@
     Statistics with S-PLUS (3rd ed)}, Springer, New York.
 }
 \examples{
-data(Oats)
+str(Oats)
 }
 \keyword{datasets}

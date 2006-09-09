@@ -47,6 +47,6 @@
 	and S-PLUS}, Springer, New York.
 }
 \examples{
-data(Wafer)
+str(Wafer)
 }
 \keyword{datasets}

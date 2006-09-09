@@ -89,6 +89,6 @@
 	and S-PLUS}, Springer, New York.
 }
 \examples{
-data(Wheat2)
+str(Wheat2)
 }
 \keyword{datasets}

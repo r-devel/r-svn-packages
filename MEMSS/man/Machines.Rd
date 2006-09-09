@@ -37,6 +37,6 @@
     Volume I: Designed Experiments}, Chapman and Hall, London.
 }
 \examples{
-data(Machines)
+str(Machines)
 }
 \keyword{datasets}

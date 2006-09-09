@@ -58,6 +58,6 @@
     \emph{Statistical Science}, \bold{2}, 448-450.
 }
 \examples{
-data(Earthquake)
+str(Earthquake)
 }
 \keyword{datasets}

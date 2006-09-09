@@ -47,8 +47,6 @@
   problems'', \emph{Biometrika}, \bold{51}, 313--326.
 }
 \examples{
-data(Orthodont)
-formula(Orthodont)
-plot(Orthodont)
+str(Orthodont)
 }
 \keyword{datasets}

@@ -54,6 +54,6 @@
     Cary, NC.
 }
 \examples{
-data(Dialyzer)
+str(Dialyzer)
 }
 \keyword{datasets}

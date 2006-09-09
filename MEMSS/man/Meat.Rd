@@ -44,6 +44,6 @@
   Wiley, New York.
 }
 \examples{
-data(Meat)
+str(Meat)
 }
 \keyword{datasets}

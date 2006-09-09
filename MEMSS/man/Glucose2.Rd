@@ -42,6 +42,6 @@
     Analysis}, Chapman and Hall, London.
 }
 \examples{
-data(Glucose2)
+str(Glucose2)
 }
 \keyword{datasets}

@@ -36,8 +36,8 @@
     Repeated Measurement Data},  Chapman and Hall, London.
 }
 \examples{
-data(Cefamandole)
-plot(Cefamandole)
+str(Cefamandole)
+#plot(Cefamandole)
 #fm1 <- nlsList(SSbiexp, data = Cefamandole)
 #summary(fm1)
 }

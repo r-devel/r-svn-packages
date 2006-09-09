@@ -33,6 +33,7 @@
       Engineering and the Sciences (5th ed)}, Duxbury, Boston, MA.
 }
 \examples{
-data(Rail)
+str(Rail)
+(fm1 <- lmer(travel ~ 1 | Rail, Rail))
 }
 \keyword{datasets}

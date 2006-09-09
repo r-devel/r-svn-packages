@@ -38,6 +38,6 @@
   Oxford.
 }
 \examples{
-data(Spruce)
+str(Spruce)
 }
 \keyword{datasets}

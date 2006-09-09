@@ -37,6 +37,6 @@
      Oxford.
 }
 \examples{
-data(Milk)
+str(Milk)
 }
 \keyword{datasets}

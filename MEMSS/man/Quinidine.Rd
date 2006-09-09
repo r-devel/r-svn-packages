@@ -100,6 +100,6 @@
   468-480.
 }
 \examples{
-data(Quinidine)
+str(Quinidine)
 }
 \keyword{datasets}
