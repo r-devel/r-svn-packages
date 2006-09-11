@@ -121,15 +121,15 @@ gnls <-
 
   ##
   ##  If data is a pframe, copy the parameters in the frame to frame 1
-  ##
-  if (inherits(data, "pframe")) {
-    pp <- parameters(data)
-    for (i in names(pp)) {
-      assign(i, pp[[i]])
-    }
-    attr(data,"parameters") <- NULL
-    class(data) <- "data.frame"
-  }
+  ##  Doesn't exist in R
+##  if (inherits(data, "pframe")) {
+##    pp <- parameters(data)
+##    for (i in names(pp)) {
+##      assign(i, pp[[i]])
+##    }
+##    attr(data,"parameters") <- NULL
+##    class(data) <- "data.frame"
+##  }
 
   ## check if correlation is present and has groups
   if (!is.null(correlation)) {
@@ -873,9 +873,3 @@ gnlsControl <-
        nlmStepMax = nlmStepMax, opt = match.arg(opt), optimMethod = optimMethod,
        .relStep = .relStep, minAbsParApVar = minAbsParApVar)
 }
-
-### Local Variables:
-### mode:S
-### S-keep-dump-files: t
-### End:
-

@@ -291,15 +291,15 @@ nlme.formula <-
   pnames <- unique(c(fnames, unlist(rnames)))
   ##
   ##  If data is a pframe, copy the parameters in the frame to frame 1
-  ##
-  if (inherits(data, "pframe")) {
-    pp <- parameters(data)
-    for (i in names(pp)) {
-      assign(i, pp[[i]])
-    }
-    attr(data,"parameters") <- NULL
-    class(data) <- "data.frame"
-  }
+  ## Doesn't exist in R
+##  if (inherits(data, "pframe")) {
+##    pp <- parameters(data)
+##    for (i in names(pp)) {
+##      assign(i, pp[[i]])
+##    }
+##    attr(data,"parameters") <- NULL
+##    class(data) <- "data.frame"
+##  }
 
   ## check if corStruct is present and assign groups to its formula,
   ## if necessary
@@ -1018,10 +1018,10 @@ getParsNlme <-
   for (nm in names(plist)) {
     if (is.logical(f <- plist[[nm]]$fixed)) {
       if (f) {
-        pars[, nm] <- beta[fmap[[nm]]]
+        pars[, nm] <- beta[[fmap[[nm]]]]
       }
     } else {
-      pars[, nm] <- f %*% beta[fmap[[nm]]]
+      pars[, nm] <- f %*% beta[[fmap[[nm]]]]
     }
     if (level > 0) {
       Q <- length(groups)

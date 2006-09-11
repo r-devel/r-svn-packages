@@ -1404,12 +1404,12 @@ corMatrix.pdIdent <-
   if (is.null(Ncol <- attr(object, "ncol"))) {
     stop(paste("Cannot extract the matrix with uninitialized dimensions"))
   }
-  val <- diag(Ncol)
+  val <- diag(nrow = Ncol)
   attr(val, "stdDev") <- rep(exp(as.vector(object)), Ncol)
   if (length(nm <- Names(object)) == 0) {
-    nm <- paste("V", 1:len, sep = "")
-    dimnames(val) <- list(nm, nm)
+    nm <- paste("V", 1:Ncol, sep = "")
   }
+  dimnames(val) <- list(nm, nm)
   names(attr(val, "stdDev")) <- nm
   val
 }

@@ -108,7 +108,7 @@ getGroups.data.frame <-
   value <- do.call("data.frame", vlist)
   if (missing(level)) return(value)
   if (is.character(level)) {
-    nlevel <- match(level, names(flist))
+    nlevel <- match(level, names(vlist))
     if (any(aux <- is.na(nlevel))) {
       stop(paste("Level of", level[aux],"does not match formula \"",
 		 deparse(form), "\""))

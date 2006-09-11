@@ -758,7 +758,7 @@ intervals.gls <-
                 ## need to deleted components with fixed coefficients
                 aux <- glsSt[whichKeep]
                 class(aux) <- class(glsSt)
-                attr(aux, "settings") <- attr(lmeSt, "settings")
+                attr(aux, "settings") <- attr(glsSt, "settings")
                 attr(aux, "pmap") <- attr(glsSt, "pmap")[, whichKeep, drop = FALSE]
                 glsSt <- aux
             }

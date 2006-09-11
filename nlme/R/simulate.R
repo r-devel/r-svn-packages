@@ -125,11 +125,11 @@ simulate.lme <-
             attr(lmeSt, "conLin") <- conLin
             lmeSt <- Initialize(lmeSt, data = NULL, groups = NULL, control = control)
             attr(lmeSt, "conLin") <- MEdecomp(attr(lmeSt, "conLin"))
-            aMs <- ms( ~ -logLik(lmeSt, lmePars),
-                      start = list(lmePars = c(coef(lmeSt))),
-                      control= list(rel.tolerance = control$msTol,
-                      maxiter = control$msMaxIter,
-                      scale = control$msScale))
+            aMs <- nlminb(c(coef(lmeSt)),
+               function(lmePars) -logLik(lmeSt, lmePars),
+               control = list(iter.max = controlvals$msMaxIter,
+               eval.max = controlvals$msMaxEval, 
+               trace = controlvals$msVerbose))
             c(info = aMs$flags[1], logLik = -aMs$value)
         }
 
