@@ -1,8 +1,11 @@
 1.3-19
 
+* numerous changes to NAMESPACE and gamm related functions to pass
+  codetools checks.
+
 * Improved outer iteration added via gdi.c coupled with gam.fit3. 
   Exact first and second derivatives of GCV/UBRE/AIC are now 
-  available via new iteration methods. These somewhat improve the 
+  available via new iteration methods. These improve the 
   speed and reliability of fitting in the generalized case. 
 
 * magic.c::mgcv_mmult modified so that all inner loop calculations are 

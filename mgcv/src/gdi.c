@@ -628,6 +628,49 @@ void Rinv(double *Ri,double *R,int *c,int *r, int *ri)
 }
 
 
+void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
+             double *eta,double *eta1,double *eta2,double *P, double *P1, double *P2,
+             double *work,int n,int m,int deriv2)
+/* Function to evaluate the pearson statistic sum_i [w_i(z_i-eta_i)]^2
+   and its derivstives wrt the log smoothing parameters. Arrays ending 
+   1 or 2 contain 1st or second derivatives of their base name quantity 
+   wrt log smoothing parameters. n is length of z, w, eta. m is number 
+   of smoothing parameters.
+*/
+{ double *zeta,*wzeta,*p0,*p1,*p2,*p3,*zetaSq,*wSqzeta,*wzetaSq,*wSqzetaSq;
+  int i,bt,ct,one=1;
+  zeta = work;work +=n;
+  wzeta = work;work +=n;
+  zetaSq = work;work +=n;
+  wSqzeta = work;work +=n;
+  wzetaSq = work;work +=n;
+  wSqzetaSq = work; work +=n;
+  for (p0=zeta,p1=zeta+n,p2=z,p3=eta;p0<p1;p0++,p2++,p3++,zetaSq++) 
+  { *p0 = *p2 - *p3; *zetaSq = *p0 * *p0;} /* get z - eta */
+  zetaSq -= n;  
+  for (*P=0.0,p0=wzeta,p1=wzeta+n,p2=zeta,p3=w;p0<p1;p0++,p2++,p3++,wSqzeta++,wzetaSq++,zetaSq++) 
+  { *p0 = *p2 * *p3; *P += *p0 * *p0; /* w_i(z_i - eta_i) and Pearson statistic */ 
+    *wSqzeta = *p0 * *p3; 
+    *wzetaSq = *p0 * *zetaSq;
+  } 
+  wSqzeta -= n;zetaSq -=n;wzetaSq -= n;
+  if (deriv2) {
+    for (p0=w,p1=w+n;p0<p1;p0++,wzetaSq++,wSqzetaSq++)  
+      *wSqzetaSq = *p0 * *wzetaSq;
+    wSqzetaSq -= n;wzetaSq -= n;
+  }   
+  /* do first derivatives */
+  bt=1;ct=0;mgcv_mmult(P1,wzetaSq,w1,&bt,&ct,&one,&m,&n);
+  bt=1;ct=0;mgcv_mmult(work,wSqzeta,z1,&bt,&ct,&one,&m,&n);
+  for (i=0;i<m;i++) P1[i] += work[i];
+  bt=1;ct=0;mgcv_mmult(work,wSqzeta,eta1,&bt,&ct,&one,&m,&n);
+  for (i=0;i<m;i++) P1[i] += work[i];
+  if (deriv2) { /* get the second derivatives */
+        
+
+  }
+}
+
 
 
 void gdi(double *X,double *E,double *rS,
@@ -1098,8 +1141,6 @@ void gdi(double *X,double *E,double *rS,
   /************************************************************************************/
 
   /* unpivot P into rV and PKtz into beta */
-
-
 
   for (i=0;i< *q;i++) beta[pivot[i]] = PKtz[i];
 
