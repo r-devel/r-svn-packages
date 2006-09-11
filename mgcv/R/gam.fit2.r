@@ -15,7 +15,7 @@ rep(1, nobs), start = NULL, etastart = NULL,
         rownames(y)
     else names(y)
     conv <- FALSE
-    nobs <- NROW(y)
+    n <- nobs <- NROW(y) ## n is just to keep codetools happy
     nvars <- ncol(x)
     EMPTY <- nvars == 0
     if (is.null(weights)) 

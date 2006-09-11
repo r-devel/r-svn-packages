@@ -24,7 +24,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         rownames(y)
     else names(y)
     conv <- FALSE
-    nobs <- NROW(y)
+    n <- nobs <- NROW(y) ## n is just to keep codetools happy
     nvars <- ncol(x)
     EMPTY <- nvars == 0
     if (is.null(weights)) 
@@ -516,7 +516,7 @@ newton1 <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
   for (i in 1:200) {
     ## exclude apparently converged gradients from computation
     hess1 <- hess[uconv.ind,uconv.ind] 
-    grad1 <- grad[uconv.ind,iconv.ind]
+    grad1 <- grad[uconv.ind,uconv.ind]
     ## get the trial step ...
     eh <- eigen(hess1,symmetric=TRUE)
     d <- eh$values;U <- eh$vectors

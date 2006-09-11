@@ -1679,7 +1679,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,globit = 20,
 mgcv.get.scale<-function(Theta,weights,good,mu,mu.eta.val,G)
 # Get scale implied by current fit and trial -ve binom Theta, I've used
 # mu and mu.eta.val used in fit rather than implied by it....
-{ variance<-neg.bin(Theta)$variance
+{ variance<- MASS::neg.bin(Theta)$variance
   w<-sqrt(weights[good]*mu.eta.val[good]^2/variance(mu)[good])
   wres<-w*(G$y-G$X%*%G$p)
   scale<-sum(wres^2)/(G$n-sum(G$edf)-G$nsdf)
@@ -1747,7 +1747,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 {
     intercept<-G$intercept
     conv <- FALSE
-    nobs <- NROW(G$y)
+    n <- nobs <- NROW(G$y) ## n just there to keep codetools happy
     nvars <- NCOL(G$X) # check this needed
     y<-G$y # original data
     X<-G$X # original design matrix
@@ -1886,7 +1886,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
         if (find.theta) # then family is negative binomial with unknown theta - estimate it here from G$sig2
         { Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
-          if (is.null(nb.link)) family<-neg.bin(Theta)
+          if (is.null(nb.link)) family<-MASS::neg.bin(Theta)
           else family<-do.call("negative.binomial",list(theta=Theta,link=nb.link))
           variance <- family$variance;dev.resids <- family$dev.resids
           aic <- family$aic

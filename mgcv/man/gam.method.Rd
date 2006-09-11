@@ -93,30 +93,23 @@ particularly with low n binomial data, or low mean counts. Hence the default
 is to use (i).
 
 Several alternative optimisation methods can be used for outer
-optimization. \code{nlm} can be used with finite differenced first
-derivatives. This is not ideal theoretically, since it is possible for the
-finite difference estimates of derivatives to be very badly in error on rare
+optimization.Usually the fastest and most
+reliable approach is to use a modified Newton optimizer with exact first and
+second derivatives, and this is the default. \code{nlm} can be used with
+finite differenced first derivatives. This is not ideal theoretically, since 
+it is possible for the finite difference estimates of derivatives to be very
+badly in error on rare
 occasions when the P-IRLS convergence tolerance is close to being matched
 exactly, so that two components of a finite differenced derivative require
 different numbers of iterations of P-IRLS in their evaluation. An alternative
 is provided in which \code{nlm} uses numerically exact first derivatives, this
-is faster and less problematic than the other scheme. An alternative is to use a quasi-Newton
+is faster and less problematic than the other scheme. An further alternative is to use a quasi-Newton
 scheme with exact derivtives, based on \code{optim}. In practice this usually
-seems to be slower than the \code{nlm} method. Usually the fastest and most
-reliable approach is to use a modified Newton optimizer with exact first and
-second derivatives, and this is the default.
+seems to be slower than the \code{nlm} method. 
 
-It is possible to iterate the performance iteration to convergence and then
-improve the smoothing parameter estimates using outer iteration: only a few steps are
-usually required in the outer iteration in this case, so it may be quite
-efficient, but it is not recommended if the performance iteration itself is
-non-convergent. When using `pure' outer iteration, a single step of the
-performance iteration is in fact taken first, to obtain estimates of the scale
-of the GCV/UBRE objective: starting values for the smoothing parameters are
-obtained using \code{\link{initial.sp}}.
 
 In summary: performance iteration is fast, but can fail to converge. Outer
-iteration is slower, but more reliable. At present only performance iteration
+iteration is a little slower, but more reliable. At present only performance iteration
 is available for negative binomial families.
 }
 
