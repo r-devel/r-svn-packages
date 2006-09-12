@@ -252,7 +252,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                 stop("NAs in d(mu)/d(eta)")
          good <- (weights > 0) & (mu.eta.val != 0)
    
-         mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good];weg<-weights[good]
+         mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
+         weg <- weights[good];etag <- eta[good]
          z <- (eta - offset)[good] + (yg - mug)/mevg
          var.mug<-variance(mug)
          w <- sqrt((weg * mevg^2)/var.mug)
@@ -265,15 +266,16 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          V1 <- family$dvar(mug)
          V2 <- family$d2var(mug)      
 
-         D1 <- array(0,nSp);D2 <- matrix(0,nSp,nSp) # output for derivs of deviance
+         P1 <- D1 <- array(0,nSp);P2 <- D2 <- matrix(0,nSp,nSp) # for derivs of deviance/ Pearson
          trA1 <- array(0,nSp);trA2 <- matrix(0,nSp,nSp) # for derivs of tr(A)
          rV=matrix(0,ncol(x),ncol(x));
          dum <- 1
          oo <-
          .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),
-           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),y=as.double(yg),
+           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weights),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),V0=as.double(V),
-           V1=as.double(V1),V2=as.double(V2),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),trA=as.double(dum),
+           V1=as.double(V1),V2=as.double(V2),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
+           P=as.double(dum),P1=as.double(P1),P2=as.double(P2),trA=as.double(dum),
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),

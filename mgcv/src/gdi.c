@@ -135,7 +135,8 @@ void get_trA(double *trA,double *trA1,double *trA2,double *U1,double *KU1t,doubl
 
      /* 4tr(TkTmA - ATmTkA) */
      pTk = Tk + k * *n;pTm = Tk + m * *n;
-     for (xx=0.0,pdA=diagA,pdAA=diagAA,p1=pdA + *n;pdA<p1;pdA++,pdAA++,pTk++,pTm++) xx += *pTk * *pTm  * (*pdA - *pdAA);
+     for (xx=0.0,pdA=diagA,pdAA=diagAA,p1=pdA + *n;pdA<p1;pdA++,pdAA++,pTk++,pTm++) 
+     xx += *pTk * *pTm  * (*pdA - *pdAA);
      trA2[km] += 4*xx; 
 
      /* -4 tr(TkATmA + TmATkA) */
@@ -630,15 +631,15 @@ void Rinv(double *Ri,double *R,int *c,int *r, int *ri)
 
 void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
              double *eta,double *eta1,double *eta2,double *P, double *P1, double *P2,
-             double *work,int n,int m,int deriv2)
+             double *work,int n,int M,int deriv, int deriv2)
 /* Function to evaluate the pearson statistic sum_i [w_i(z_i-eta_i)]^2
    and its derivstives wrt the log smoothing parameters. Arrays ending 
    1 or 2 contain 1st or second derivatives of their base name quantity 
-   wrt log smoothing parameters. n is length of z, w, eta. m is number 
+   wrt log smoothing parameters. n is length of z, w, eta. M is number 
    of smoothing parameters.
 */
-{ double *zeta,*wzeta,*p0,*p1,*p2,*p3,*zetaSq,*wSqzeta,*wzetaSq,*wSqzetaSq;
-  int i,bt,ct,one=1;
+{ double *zeta,*wzeta,*p0,*p1,*p2,*p3,*p4,*zetaSq,*wSqzeta,*wzetaSq,*wSqzetaSq,xx;
+  int i,bt,ct,one=1,m,k;
   zeta = work;work +=n;
   wzeta = work;work +=n;
   zetaSq = work;work +=n;
@@ -654,29 +655,42 @@ void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
     *wzetaSq = *p0 * *zetaSq;
   } 
   wSqzeta -= n;zetaSq -=n;wzetaSq -= n;
+  if (!deriv) return; /* no derivatives required */
   if (deriv2) {
     for (p0=w,p1=w+n;p0<p1;p0++,wzetaSq++,wSqzetaSq++)  
       *wSqzetaSq = *p0 * *wzetaSq;
     wSqzetaSq -= n;wzetaSq -= n;
   }   
   /* do first derivatives */
-  bt=1;ct=0;mgcv_mmult(P1,wzetaSq,w1,&bt,&ct,&one,&m,&n);
-  bt=1;ct=0;mgcv_mmult(work,wSqzeta,z1,&bt,&ct,&one,&m,&n);
-  for (i=0;i<m;i++) P1[i] += work[i];
-  bt=1;ct=0;mgcv_mmult(work,wSqzeta,eta1,&bt,&ct,&one,&m,&n);
-  for (i=0;i<m;i++) P1[i] += work[i];
-  if (deriv2) { /* get the second derivatives */
-        
-
+  bt=1;ct=0;mgcv_mmult(P1,wzetaSq,w1,&bt,&ct,&one,&M,&n);
+  bt=1;ct=0;mgcv_mmult(work,wSqzeta,z1,&bt,&ct,&one,&M,&n);
+  for (i=0;i<M;i++) P1[i] += work[i];
+  bt=1;ct=0;mgcv_mmult(work,wSqzeta,eta1,&bt,&ct,&one,&M,&n);
+  for (i=0;i<M;i++) P1[i] += work[i];
+  if (deriv2)  /* get the second derivatives */
+  for (m=0;m < M;m++) for (k=m;k < M;k++) {
+      xx=0.0;
+      for (i=0;i<n;i++,w2++,z2++,eta2++) /* terms involving second derivatives */
+	  xx += *w2 * wzetaSq[i] + wSqzeta[i] * (*z2 + *eta2);
+      p2=w1+m*n;p3=w1+k*n;
+      for (p0=zetaSq,p1=zetaSq+n;p0<p1;p0++,p2++,p3++) xx += *p0 * *p2 * *p3;
+      p2=w1+m*n;p3=z1+k*n;p4=eta1+k*n;
+      for (p0=wzeta,p1=wzeta+n;p0<p1;p0++,p2++,p3++,p4++) xx+= 2 * *p0 * *p2 * (*p3 + *p4);
+      p2=w1+k*n;p3=z1+m*n;p4=eta1+m*n;
+      for (p0=wzeta,p1=wzeta+n;p0<p1;p0++,p2++,p3++,p4++) xx+= 2 * *p0 * *p2 * (*p3 + *p4);
+      p0=z1+m*n;p1=eta1+m*n;p2=z1+k*n;p3=eta1+m*n;p4=p3+n;
+      for (;p3<p4;w++,p0++,p1++,p2++,p3++) xx += *w * *w * (*p0 + *p1) * (*p2 + *p3);
+      P2[m*M+k]=P2[k*M+m]=xx;
   }
 }
 
 
 
 void gdi(double *X,double *E,double *rS,
-    double *sp,double *z,double *w,double *mu, double *y,
+    double *sp,double *z,double *w,double *mu,double *eta, double *y,
     double *p_weights,double *g1,double *g2,double *g3,double *V0,
-    double *V1,double *V2,double *beta,double *D1,double *D2,double *trA,
+    double *V1,double *V2,double *beta,double *D1,double *D2,
+    double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
     int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd)     
 /* Function to iterate for first and second derivatives of the deviance 
@@ -1148,7 +1162,8 @@ void gdi(double *X,double *E,double *rS,
   p0 = rV + *q * rank;p1 = rV + *q * *q;
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
- 
+  pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
+
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      Note: Vt and R already freed. P is really V - don't free yet.
   */ 
