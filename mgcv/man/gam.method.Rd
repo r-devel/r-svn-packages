@@ -9,7 +9,8 @@ estimation criterion for a gam.
 It is used to set argument \code{method} of \code{\link{gam}}.
 }
 \usage{
-gam.method(am="magic",gam="outer",outer="newton",pearson=FALSE,family=NULL)
+gam.method(am="magic",gam="outer",outer="newton",gcv="deviance",
+           family=NULL)
 }
 \arguments{ 
 \item{am}{ Which method to use for a pure additive model (i.e. identity link,
@@ -36,11 +37,17 @@ to optimize the smoothness selection criterion. \code{"nlm.fd"} to use
 reliable). \code{"optim"} to use the \code{"L-BFGS-B"} quasi-Newton method
 option of routine \code{optim}, with exact first derivatives.}
 
-\item{pearson}{When using any sort of outer iteration, there is a choise
-between using GCV/UBRE scores based on the Pearson statistic, or based on the
-deviance. The Pearson versions result in smoother models, but this is often
-oversmoothing, particularly for `low count' data and binary regression.
-This option is not available with outer methods \code{"newton"} and \code{"nlm"}.
+\item{gcv}{One of \code{"deviance"}, \code{"GACV"} or \code{"pearson"},
+specifying the flavour of GCV to use with outer iteration. \code{"deviance"}
+simply replaces the residual sum of squares term in a GCV score with the
+deviance, following Hastie and Tibshirani (1990, section 6.9). \code{"GACV"}
+(only available with outer method \code{"newton"}) 
+uses a varient of Gu and Xiang's (2001) generalized approximate cross
+validation, modified to deal with arbitrary link-error
+combinations. \code{"pearson"} uses a suggestion from the literature of
+replacing the RSS in a GCV score with the Pearson statistic: this is a very
+poor choise (see Wood, 2006, section 4.5.4). This latter option is not 
+available with outer methods \code{"newton"} and \code{"nlm"}.
 }
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied

@@ -1267,8 +1267,10 @@ gam.method.description <- function(method,am=TRUE)
   if (method$gam=="perf.magic") return("performance iteration - magic")
   if (method$gam=="perf.mgcv") return("performance iteration - mgcv")
   if (method$gam=="perf.outer") return(paste("perf. iter. magic + outer",method$outer))
-  if (method$pearson==FALSE) {
-    if (method$outer=="newton") return("deviance based outer iter. - newton, exact hessian.")
+  if (method$gcv=="GACV") {
+    return("GACV based outer iter. - newton, exact hessian.")
+  } else if (method$gcv=="deviance")
+  { if (method$outer=="newton") return("deviance based outer iter. - newton, exact hessian.")
     if (method$outer=="nlm") return("deviance based outer iter. - nlm exact derivs.")
     if (method$outer=="optim")  return("deviance based outer iter. - Quasi-Newton exact derivs.")
     if (method$outer=="nlm.fd") return("deviance based outer iter. - nlm with finite differences.")
@@ -1279,25 +1281,33 @@ gam.method.description <- function(method,am=TRUE)
   }
 }
 
-gam.method <- function(am="magic",gam="outer",outer="newton",pearson=FALSE,family=NULL)
+gam.method <- function(am="magic",gam="outer",outer="newton",gcv="deviance",family=NULL)
 # Function for returning fit method control list for gam.
 # am controls the fitting method to use for pure additive models.
 # gam controls the type of iteration to use for Gams.
 # outer controls the optimization method to use when using outer
 # looping with gams.
-# pearson determined whether to base scores on Pearson statistic or deviance.
+# gcv determines the flavour of GCV score for outer iteration
 { if (sum(am==c("mgcv","magic"))==0) stop("Unknown additive model fit method.") 
   if (sum(gam==c("perf.magic","perf.mgcv","perf.outer","outer","outer"))==0) 
   stop("Unknown *generalized* additive model fit method.") 
   if (sum(outer==c("optim","nlm","newton","nlm.fd"))==0) 
   stop("Unknown GAM outer optimizing method.") 
-  if (!is.logical(pearson)) {pearson <- FALSE;
-    warning("pearson should be TRUE or FALSE - set to FALSE.")
-  } 
-  if (outer=="newton") pearson <- FALSE
+  if (sum(gcv==c("deviance","GACV","pearson"))==0)
+  stop("Unkwown flavour of GCV")
+  
+  if (gcv=="GACV"&&outer!="newton") { 
+    warning("GACV only supported with newton optimization, GCV type reset")
+    gcv <- "deviance"
+  }
+  if (gcv=="pearson"&&(outer=="newton"||outer=="nlm")) {
+    warning("Pearson based GCV is unsupported for newton or nlm outer methods, reset")
+    gcv <- "deviance"
+  }
+
   if (!is.null(family)&&substr(family$family,1,17)=="Negative Binomial" 
        &&gam!="perf.magic"&&gam!="perf.mgcv") gam <- "perf.magic"  
-  list(am=am,gam=gam,outer=outer,pearson=pearson)
+  list(am=am,gam=gam,outer=outer,gcv=gcv)
 }
 
 gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
@@ -1309,9 +1319,9 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim, G=G,family=family,control=control,
-            gamma=gamma,pearson=method$pearson,...)
+            gamma=gamma,pearson=(method$gcv=="pearson"),...)
     lsp<-um$estimate
-    object<-attr(full.score(lsp,G,family,control,gamma=gamma,pearson=method$pearson,...),"full.gam.object")
+    object<-attr(full.score(lsp,G,family,control,gamma=gamma,pearson=(method$gcv=="pearson"),...),"full.gam.object")
     object$gcv.ubre <- um$minimum
     object$outer.info <- um
     object$sp <- exp(lsp)
@@ -1325,7 +1335,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
   family <- fix.family.link(family)
   family <- fix.family.var(family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X))
-  if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- "GCV";scale<-1}
+  if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- method$gcv;scale<-1}
   if (method$outer=="newton"){ ## the gam.fit3 method 
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,weights=G$w,
                 control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
@@ -1337,7 +1347,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
   } else { ## methods calling gam.fit2
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,
-             weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,pearson=method$pearson)
+             weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,pearson=(method$gcv=="pearson"))
    
     if (method$outer=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
@@ -1359,8 +1369,8 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
   
   object$outer.info <- b
   object$gcv.ubre <- as.numeric(obj)
-  if (criterion=="GCV") object$scale <- object$scale.est else
-  object$scale <- G$sig2
+  if (criterion=="UBRE") object$scale <- G$sig2 else object$scale <- object$scale.est 
+  
   mv<-magic.post.proc(G$X,object,w=sqrt(object$weights))
   object$Vp <- mv$Vb
   object$hat<-mv$hat
@@ -1428,7 +1438,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (is.null(G$offset)) G$offset<-rep(0,G$n)
      
-    method <- gam.method(method$am,method$gam,method$outer,method$pearson,family) # checking it's ok
+    method <- gam.method(method$am,method$gam,method$outer,method$gcv,family) # checking it's ok
 
     if (scale==0) 
     { if (family$family=="binomial"||family$family=="poisson") scale<-1 #ubre

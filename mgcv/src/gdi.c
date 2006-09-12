@@ -650,9 +650,10 @@ void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
   { *p0 = *p2 - *p3; *zetaSq = *p0 * *p0;} /* get z - eta */
   zetaSq -= n;  
   for (*P=0.0,p0=wzeta,p1=wzeta+n,p2=zeta,p3=w;p0<p1;p0++,p2++,p3++,wSqzeta++,wzetaSq++,zetaSq++) 
-  { *p0 = *p2 * *p3; *P += *p0 * *p0; /* w_i(z_i - eta_i) and Pearson statistic */ 
-    *wSqzeta = *p0 * *p3; 
-    *wzetaSq = *p0 * *zetaSq;
+  { *p0 = *p2 * *p3; /* wzeta= w_i(z_i - eta_i) */
+    *P += *p0 * *p0; /*Pearson statistic */ 
+    *wSqzeta = *p0 * *p3; /* w_i^2(z_i - eta_i) */
+    *wzetaSq = *p3 * *zetaSq; /* w_i (z_i-eta_i)^2 */
   } 
   wSqzeta -= n;zetaSq -=n;wzetaSq -= n;
   if (!deriv) return; /* no derivatives required */
@@ -666,21 +667,22 @@ void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
   bt=1;ct=0;mgcv_mmult(work,wSqzeta,z1,&bt,&ct,&one,&M,&n);
   for (i=0;i<M;i++) P1[i] += work[i];
   bt=1;ct=0;mgcv_mmult(work,wSqzeta,eta1,&bt,&ct,&one,&M,&n);
-  for (i=0;i<M;i++) P1[i] += work[i];
+  for (i=0;i<M;i++) { P1[i] += -work[i];P1[i]*=2;}
   if (deriv2)  /* get the second derivatives */
   for (m=0;m < M;m++) for (k=m;k < M;k++) {
       xx=0.0;
       for (i=0;i<n;i++,w2++,z2++,eta2++) /* terms involving second derivatives */
-	  xx += *w2 * wzetaSq[i] + wSqzeta[i] * (*z2 + *eta2);
+	  xx += *w2 * wzetaSq[i] + wSqzeta[i] * (*z2 - *eta2);
       p2=w1+m*n;p3=w1+k*n;
       for (p0=zetaSq,p1=zetaSq+n;p0<p1;p0++,p2++,p3++) xx += *p0 * *p2 * *p3;
       p2=w1+m*n;p3=z1+k*n;p4=eta1+k*n;
-      for (p0=wzeta,p1=wzeta+n;p0<p1;p0++,p2++,p3++,p4++) xx+= 2 * *p0 * *p2 * (*p3 + *p4);
+      for (p0=wzeta,p1=wzeta+n;p0<p1;p0++,p2++,p3++,p4++) xx+= 2 * *p0 * *p2 * (*p3 - *p4);
       p2=w1+k*n;p3=z1+m*n;p4=eta1+m*n;
-      for (p0=wzeta,p1=wzeta+n;p0<p1;p0++,p2++,p3++,p4++) xx+= 2 * *p0 * *p2 * (*p3 + *p4);
-      p0=z1+m*n;p1=eta1+m*n;p2=z1+k*n;p3=eta1+m*n;p4=p3+n;
-      for (;p3<p4;w++,p0++,p1++,p2++,p3++) xx += *w * *w * (*p0 + *p1) * (*p2 + *p3);
-      P2[m*M+k]=P2[k*M+m]=xx;
+      for (p0=wzeta,p1=wzeta+n;p0<p1;p0++,p2++,p3++,p4++) xx+= 2 * *p0 * *p2 * (*p3 - *p4);
+      p0=z1+m*n;p1=eta1+m*n;p2=z1+k*n;p3=eta1+k*n;p4=p3+n;
+      for (;p3<p4;w++,p0++,p1++,p2++,p3++) xx += *w * *w * (*p0 - *p1) * (*p2 - *p3);
+      w-=n;
+      P2[m*M+k]=P2[k*M+m]= 2*xx;
   }
 }
 
@@ -790,6 +792,8 @@ void gdi(double *X,double *E,double *rS,
   */
   ScS=0;for (pi=rSncol;pi<rSncol + *M;pi++) ScS+= *pi;  /* total columns of input rS */
   n_work = (4 * *n + 2 * *q) * *M + 2 * *n;
+  k = (*M * (1 + *M))/2 * *n;
+  if (n_work < k) n_work = k;
   work = (double *)calloc((size_t) n_work,sizeof(double)); /* work space for several routines*/
   p0 = work + *q;
   for (pd=rS,i=0;i<ScS;i++,pd += *q) /* work across columns */
@@ -898,7 +902,7 @@ void gdi(double *X,double *E,double *rS,
   /************************************************************************************/
   /* set up some storage first */
   if (*deriv) {
-    n_2dCols = *M * (1 + *M)/2;
+    n_2dCols = (*M * (1 + *M))/2;
     n_b2 = *q * n_2dCols;
     b2 = (double *)calloc((size_t)n_b2,sizeof(double)); /* 2nd derivs of beta */
     B2zBase = (double *)calloc((size_t)n_b2,sizeof(double)); /* part of 2nd derivs of beta */
@@ -1061,9 +1065,9 @@ void gdi(double *X,double *E,double *rS,
       
       if (deriv2) {
         rc_prod(zz2,z,w2,&n_2dCols,n);
-        rc_prod(w2,w,z2,&n_2dCols,n); /* NOTE: w2 over-written here! */
+        rc_prod(work,w,z2,&n_2dCols,n); /* NOTE: w2 over-written here! */
         p2 = zz2 + n_2dCols * *n;
-        for (p0=zz2,p1=w2;p0<p2;p0++,p1++) *p0 += *p1; 
+        for (p0=zz2,p1=work;p0<p2;p0++,p1++) *p0 += *p1; 
      
         for (pz2=zz2,m=0;m < *M;m++) for (k=m;k < *M;k++) {
            rc_prod(v1,w1+ m * *n ,z1 + k * *n,&one,n);
@@ -1082,15 +1086,15 @@ void gdi(double *X,double *E,double *rS,
       /* now evaluate Bzz1 and Bzz2 and add them to B1z and B2z,
          using w1 and w2 as work-space. */
 
-      bt=1;ct=0;mgcv_mmult(w1,K,zz1,&bt,&ct,&rank,M,n);
-      bt=0;ct=0;mgcv_mmult(b1,P,w1,&bt,&ct,q,M,&rank); /* b1 = B zz1, currently */
+      bt=1;ct=0;mgcv_mmult(work,K,zz1,&bt,&ct,&rank,M,n);
+      bt=0;ct=0;mgcv_mmult(b1,P,work,&bt,&ct,q,M,&rank); /* b1 = B zz1, currently */
 
       p2 = b1 + *M * *q;
       for (p0=b1,p1=B1z;p0<p2;p0++,p1++) *p0 += *p1; /* b1 complete */
 
       if (deriv2) {
-        bt=1;ct=0;mgcv_mmult(w2,K,zz2,&bt,&ct,&rank,&n_2dCols,n);
-        bt=0;ct=0;mgcv_mmult(b2,P,w2,&bt,&ct,q,&n_2dCols,&rank); /* b2 = B zz2, currently */
+        bt=1;ct=0;mgcv_mmult(work,K,zz2,&bt,&ct,&rank,&n_2dCols,n);
+        bt=0;ct=0;mgcv_mmult(b2,P,work,&bt,&ct,q,&n_2dCols,&rank); /* b2 = B zz2, currently */
         p2 = b2 + n_2dCols * *q;
         for (p0=b2,p1=B2z;p0<p2;p0++,p1++) *p0 += *p1; /* b2 = B2 zz + B zz2, currently */
        

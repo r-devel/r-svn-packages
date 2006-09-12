@@ -3,8 +3,11 @@
 * numerous changes to NAMESPACE and gamm related functions to pass
   codetools checks.
 
+* gam.method()  modified to allow GACV as an option for outer GCV 
+  model selection.
+
 * Improved outer iteration added via gdi.c coupled with gam.fit3. 
-  Exact first and second derivatives of GCV/UBRE/AIC are now 
+  Exact first and second derivatives of GACV/GCV/UBRE/AIC are now 
   available via new iteration methods. These improve the 
   speed and reliability of fitting in the generalized case. 
 
