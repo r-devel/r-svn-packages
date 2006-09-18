@@ -778,7 +778,8 @@ intervals.gls <-
             auxVal[["sigma"]] <- exp(aux[nP, ])
             attr(auxVal[["sigma"]], "label") <- "Residual standard error:"
             aux <- aux[-nP,, drop = FALSE]
-            rownames(aux) <- namP <- names(coef(glsSt, FALSE))
+            rownames(aux) <- ## namP <-
+                names(coef(glsSt, FALSE))
             for(i in 1:3) {
                 coef(glsSt) <- aux[,i]
                 aux[,i] <- coef(glsSt, unconstrained = FALSE)

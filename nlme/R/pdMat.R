@@ -152,7 +152,7 @@ pdConstruct.pdMat <-
     } else {
       if (inherits(form, "formula")) {
         namesForm <- Names(asOneSidedFormula(form), data)
-        namesForm1 <- NULL
+##        namesForm1 <- NULL
       } else {
         stop("\"form\" can only be a formula or a list of formulae")
       }

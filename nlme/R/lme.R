@@ -1319,7 +1319,8 @@ intervals.lme <-
       }
     }
     rownames(origInt) <-           # re-express names if necessary
-      namP <- names(coef(lmeSt, unconstrained = FALSE))
+      ## namP <-
+          names(coef(lmeSt, unconstrained = FALSE))
     for(i in 1:3) {                     # re-express intervals in constrained pars
       coef(lmeSt) <- origInt[,i]
       origInt[,i] <- coef(lmeSt, unconstrained = FALSE)
@@ -1364,7 +1365,7 @@ logLik.lme <-
 {
   p <- object$dims$ncol[object$dims$Q + 1]
   N <- object$dims$N
-  Np <- N - p
+##  Np <- N - p
   estM <- object$method
   if (missing(REML)) REML <- estM == "REML"
   val <- object[["logLik"]]

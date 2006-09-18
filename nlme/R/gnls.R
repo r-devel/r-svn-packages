@@ -187,7 +187,7 @@ gnls <-
     ord <- order(grps)
     grps <- grps[ord]
     dataMod <- dataMod[ord, ,drop = FALSE]
-    revOrder <- match(origOrder, row.names(dataMod)) # putting in orig. order
+##    revOrder <- match(origOrder, row.names(dataMod)) # putting in orig. order
   } else grps <- NULL
 
   N <- dim(dataMod)[1]			# number of observations
@@ -201,7 +201,7 @@ gnls <-
   dataModShrunk <- dataMod[naPat, , drop=FALSE]
   yShrunk <- eval(form[[2]], dataModShrunk)
   if (!is.null(groups)) {
-    ordShrunk <- ord[naPat]
+##    ordShrunk <- ord[naPat]
     grpShrunk <- grps[naPat]
     revOrderShrunk <- match(origOrderShrunk, row.names(dataModShrunk))
   } else {
@@ -401,7 +401,7 @@ gnls <-
                nlModel,
 	       NAOK = TRUE)
     if (work$settings[4] == 1) {
-      convResult <- 2
+##      convResult <- 2
       if (controlvals$returnObject) {
         warning("Step halving factor reduced below minimum in NLS step")
       } else {
@@ -444,11 +444,11 @@ gnls <-
 
     if ((max(aConv) <= controlvals$tolerance) ||
         (aConv["params"] <= controlvals$tolerance && convIter == 1)) {
-      convResult <- 0
+##      convResult <- 0
       break
     }
     if (numIter >= controlvals$maxIter) {
-      convResult <- 1
+##      convResult <- 1
       if (controlvals$returnObject) {
 	warning("Maximum number of iterations reached without convergence")
 	break

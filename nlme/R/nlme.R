@@ -394,10 +394,10 @@ nlme.formula <-
   }
   grps <- grps[ord, , drop = FALSE]
   dataMix <- dataMix[ord, ,drop = FALSE]
-  revOrder <- match(origOrder, row.names(dataMix)) # putting in orig. order
+##  revOrder <- match(origOrder, row.names(dataMix)) # putting in orig. order
   naPat <- naPat[ord]			# ordered naPat
   dataMixShrunk <- dataMix[naPat, , drop=FALSE]
-  ordShrunk <- ord[naPat]
+##  ordShrunk <- ord[naPat]
   grpShrunk <- grps[naPat,, drop = FALSE]
   revOrderShrunk <- match(origOrderShrunk, row.names(dataMixShrunk))
   yShrunk <- eval(model[[2]], dataMixShrunk)
@@ -854,7 +854,7 @@ nlme.formula <-
                nlModel,
 	       NAOK = TRUE)
     if (work$settings[4] == 1) {
-      convResult <- 2
+##      convResult <- 2
       if (controlvals$returnObject) {
         warning("Step halving factor reduced below minimum in PNLS step")
       } else {
@@ -920,11 +920,11 @@ nlme.formula <-
 
     if ((max(aConv) <= controlvals$tolerance) ||
         (aConv["fixed"] <= controlvals$tolerance && convIter == 1)) {
-      convResult <- 0
+##      convResult <- 0
       break
     }
     if (numIter >= controlvals$maxIter) {
-      convResult <- 1
+##      convResult <- 1
       if (controlvals$returnObject) {
 	warning("Maximum number of iterations reached without convergence")
 	break
@@ -1461,9 +1461,3 @@ nonlinModel <- function( modelExpression, env,
     modelValue
   }
 }
-
-### Local Variables:
-### mode:S
-### S-keep-dump-files: t
-### End:
-
