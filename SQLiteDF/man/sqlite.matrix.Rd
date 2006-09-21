@@ -2,13 +2,14 @@
 \alias{sqlite.matrix}
 \title{SQLite Matrix}
 \description{
-EXPERIMENTAL: Creates a sqlite matrix (SMAT) from ordinary data frames.
+EXPERIMENTAL: Creates a SQlite Matrix (SMAT) from data frames, matrices
+and SQLite Data Frames.
 }
 \usage{
 sqlite.matrix(data, name = NULL)
 }
 \arguments{
-  \item{data}{ a data vector, data frame or SQLite Data Frame }
+  \item{data}{ a data frame, matrix or SQLite Data Frame }
   \item{name}{ the name of the SQLite Matrix }
 }
 \details{
@@ -27,7 +28,8 @@ A S3 object representing the SQLite Matrix.
 }
 \author{Miguel A. R. Manese}
 %\note{ }
-\seealso{\code{\link[SQLiteDF]{sqlite.data.frame}}}
+\seealso{\code{\link[SQLiteDF]{sqlite.vector}}
+         \code{\link[SQLiteDF]{sqlite.data.frame}}}
 \examples{
     iris.sdf <- sqlite.data.frame(iris)
     im <- sqlite.matrix(iris.sdf[,1:4])

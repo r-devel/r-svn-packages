@@ -197,9 +197,8 @@ static SEXP _setup_df_sexp1(sqlite3_stmt *stmt, const char *iname,
                 UNPROTECT(1);
             }
         } else {
-            Rprintf("Error: not supported type %s for %s\n", coltype, colname);
             UNPROTECT(2); /* unprotect ret, names */
-            return R_NilValue;
+            error("not supported type %s for %s\n", coltype, colname);
         }
 
         SET_VECTOR_ELT(ret, i, value);

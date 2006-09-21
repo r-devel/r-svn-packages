@@ -1091,44 +1091,69 @@ __sdf_do_variable_summary_out:
 
 
 SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
-    char *iname, *iname_src, *varname_src, *type;
+    char *iname, *tblname, *varname, *type, *sort_type, *iname2;
     sqlite3_stmt *stmt;
     int res;
 
-    iname_src = SDF_INAME(svec);
-    varname_src = SVEC_VARNAME(svec);
+    iname = SDF_INAME(svec);
+    tblname = SVEC_TBLNAME(svec);
+    varname = SVEC_VARNAME(svec);
 
-    if (!USE_SDF1(iname_src, TRUE, TRUE)) return R_NilValue;
+    if (!USE_SDF1(iname, TRUE, TRUE)) return R_NilValue;
 
     /* determine type of svec */
-    sprintf(g_sql_buf[0], "select [%s] from [%s].sdf_data limit 1", varname_src, iname_src);
+    sprintf(g_sql_buf[0], "select [%s] from [%s].[%s] limit 1", varname, iname, tblname);
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
     _sqlite_error(res);
     sqlite3_step(stmt);
     strcpy(g_sql_buf[0], sqlite3_column_decltype(stmt, 0));
     sqlite3_finalize(stmt);
 
-    /* create a new vector of that type */
-    iname = _create_svector1(mkString("tmp_sort"), g_sql_buf[0], NULL, TRUE);
-
-    /* insert to new sdf ordered */
-    sprintf(g_sql_buf[0], "insert into [%s].sdf_data "
-            "select [row name], [%s] from [%s].sdf_data "
-            "order by [%s] %s", iname, varname_src, iname_src, varname_src,
-            (LOGICAL(decreasing)[0]) ? "desc" : "asc");
-    res = _sqlite_exec(g_sql_buf[0]);
-    _sqlite_error(res);
-
     if (TEST_SDFVECTORTYPE(svec, "factor")) { /* copy factor table to iname */
         if (TEST_SDFVECTORTYPE(svec, "ordered")) type = "ordered";
         else type = "factor";
-        _copy_factor_levels2(type, iname_src, varname_src, iname, "V1");
+        _copy_factor_levels2(type, iname, varname, iname, "V1");
     } else type = CHAR_ELT(GET_SDFVECTORTYPE(svec), 0);
 
-    UNUSE_SDF2(iname_src);
-    UNUSE_SDF2(iname);
+    if (strcmp(tblname, "sdf_data") == 0) {
+        /* cache sorted data if column to be sorted comes from main sdf_data */
 
-    return _create_svector_sexp(iname, "sdf_data", "V1", type);
+        /* test if there is already a sort_varname table */
+        sort_type = (LOGICAL(decreasing)[0]) ? "desc" : "asc";
+        sprintf(g_sql_buf[1], "select count(*) from [%s].sqlite_master "
+                "where type='table' and name='sort_%s_%s'", iname, sort_type, varname);
+        sqlite3_prepare(g_workspace, g_sql_buf[1], -1, &stmt, NULL);
+        sqlite3_step(stmt);
+        res = sqlite3_column_int(stmt, 0);
+        sqlite3_finalize(stmt);
+
+        if (res == 0) {
+            sprintf(g_sql_buf[1], "create table [%s].[sort_%s_%s] ([%s] %s)", 
+                    iname, sort_type, varname, varname, g_sql_buf[0]);
+            if (_sqlite_error(_sqlite_exec(g_sql_buf[1]))) 
+                    error("Can't create table: %s", g_sql_buf[1]);
+
+            /* insert to new sdf ordered */
+            sprintf(g_sql_buf[0], "insert into [%s].[sort_%s_%s] "
+                    "select [%s] from [%s].[%s] order by [%s] %s", 
+                    iname, sort_type, varname, varname, iname, tblname, varname, sort_type);
+                    
+            res = _sqlite_exec(g_sql_buf[0]);
+            if (_sqlite_error(res)) error("Can't insert: %s", g_sql_buf[0]);
+        }
+
+        UNUSE_SDF2(iname);
+        sprintf(g_sql_buf[0], "sort_%s_%s", sort_type, varname);
+        return _create_svector_sexp(iname, g_sql_buf[0], varname, type);
+    } else {
+        /* create a new sdf table, copy data to that */
+
+        /* create a sorted column */
+
+        error("Not yet supported.");
+    }
+
+    return R_NilValue;
 }
 
 /****************************************************************************

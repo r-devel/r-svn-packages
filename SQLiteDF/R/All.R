@@ -26,6 +26,12 @@ detachSdf <- function(iname) .Call("sdf_detach_sdf", iname)
 # -------------------------------------------------------------------------
 # sqlite.vector functions
 # -------------------------------------------------------------------------
+sqlite.vector <- function(vec, name=NULL) {
+    if (!is.atomic(vec)) stop("vec is not an atomic vector")
+    tmp <- data.frame(V1=vec)
+    ret <- sqlite.data.frame(tmp, name)
+    ret$V1
+}
 typeSvec <- function(x) attr(x, "sdf.vector.type")
 has.typeSvec <- function(x, type) {
     if (inherits(x, "sqlite.vector")) typeSvec(x) == type else FALSE
@@ -53,10 +59,35 @@ inameSdf <- function(sdf) .Call("sdf_get_iname", sdf)
 # -------------------------------------------------------------------------
 # sqlite.matrix functions
 # -------------------------------------------------------------------------
+.smat.fix.dimnames <- function(data.dimnames, data.dim=sapply(data.dimnames,length)) {
+    if (is.null(data.dimnames)) {
+        data.dimnames <- list(as.character(1:data.dim[1]), as.character(1:data.dim[2]))
+    } else {
+        if (is.null(data.dimnames[[1]])) 
+            data.dimnames[[1]] <- as.character(1:data.dim[1])
+        if (is.null(data.dimnames[[2]]))
+            data.dimnames[[2]] <- as.character(1:data.dim[2])
+    }
+    data.dimnames
+}
+
 sqlite.matrix <- function(data, name=NULL) {
     if (inherits(data, "sqlite.matrix")) data
     else if (inherits(data, "sqlite.data.frame")) .Call("sdf_as_matrix", data, name)
-    else .Call("smat_create_smat", as.matrix(data), name)
+    else {
+        data <- as.matrix(data)
+        data.dim <- dim(data)
+        data.dimnames <- dimnames(data)
+        dim(data) <- NULL
+        vec <- sqlite.vector(data)
+        data.dimnames <- .smat.fix.dimnames(data.dimnames, data.dim)
+        if (typeSvec(vec) %in% c("factor", "ordered")) {
+            vec <- unclass(vec)
+            attr(vec, "levels") <- NULL
+            attr(vec, "sdf.vector.type") <- "character"
+        }
+        return(.Call("sdf_create_smat", vec, data.dimnames))
+    }
 }
 
 # -------------------------------------------------------------------------
@@ -181,8 +212,6 @@ dimnames.sqlite.data.frame <- function(x) list(row.names(x), names(x))
         if (is.null(row) && is.null(col)) return(data.frame())
         return(.Call("sdf_get_index", x, row, col, FALSE))
     } else if (Narg == 2) {
-        # in R 2.3 above, x[1] returns the "projection" of x containing
-        # 1st column, not the 1st element of 1st column (?!)
         if (missing(row)) return(x)  # x[]
         if (is.null(row)) return(data.frame())
         return(.Call("sdf_get_index", x, NULL, row, TRUE))
@@ -227,9 +256,10 @@ tail.sqlite.data.frame <- function(x, n = 6, ...) {
 print.sqlite.data.frame <- function(x, n = 6, ...) {
     xdim <- dim(x)
     xnames <- inameSdf(x)
+    n <- min(xdim[1], n)
     cat(paste("SQLite data frame \"", xnames[1], "\" (",
-              xdim[1], " rows by ", xdim[2],
-              " columns) stored in file \"",
+              xdim[1], " row(s) by ", xdim[2],
+              " column(s)) stored in file \"",
               xnames[2], "\"\n\n", sep = ""))
     cat(paste("First", n, "rows:\n"))
     print(head(x, n, ...))
@@ -303,6 +333,7 @@ Ops.sqlite.vector <- function(e1, e2) {
     if (!inherits(e1, "sqlite.vector")) { 
         tmp <- e1; e1 <- e2; e2 <- tmp; arg.reversed = TRUE; 
     }
+    # if e2 is not sqlite.vector nor atomic vector, come what may
     .Call("sdf_do_variable_op", .Generic, e1, e2, arg.reversed)
 }
 
@@ -372,6 +403,7 @@ print.sqlite.vector <- function(x, n = 6, ...) {
     xdim <- length(x)
     xlist <- as.list(x)
     xnames <- inameSdf(x)
+    n <- min(xdim, n)
     cat(paste("SQLite vector (",
               xdim, " elements)",
               " of type ", typeSvec(x), "\n",
@@ -411,11 +443,58 @@ print.sqlite.matrix <- function(x, n = 6, ...) {
     xnames <- inameSdf(x)
     cat(paste("SQLite matrix \"", xnames[1], "\" (",
               xdim[1], " rows by ", xdim[2],
-              " columns) stored in file \"",
+              " column(s)) stored in file \"",
               xnames[2], "\"\n\n", sep = ""))
     cat(paste("First", n, "rows:\n"))
     print(head(x, n, ...))
     if (xdim[1] > n) cat(" ...\n")
 }
-#"[.sqlite.matrix" <- function(x, row, col) {
+"[.sqlite.matrix" <- function(x, row, col) {
+    Narg <- nargs()
+    Ncol <- ncol(x)
+    Nrow <- nrow(x)
+    return.matrix <- function(x, row, col) {
+        ncolx <- length(col); nrowx <- length(row)
+        idxcol <- Nrow * (col - 1)   # base-0 index of 1st column elems
+        idx <- as.numeric(sapply(idxcol, function(x) x + row))
+        ret <- .Call("sdf_get_variable_index", x, idx)
+        if (ncolx > 1 && nrowx > 1) {
+            ret <- matrix(x[idx], nrow=length(row), ncolx)
+            colnames(ret) <- colnames(x)[col]
+            rownames(ret) <- rownames(x)[row]
+        } else if (ncolx > 1) names(ret) <- colnames(x)[col]
+        else if (nrowx > 1) names(ret) <- row
+         
+        return(ret)
+    }
+
+    if (Narg == 3) {
+        if (missing(row) && missing(col)) return(x)   # x[,]
+        if (missing(row)) return(.Call("sdf_get_matrix_columns", x, col))  # x[,m]
+        if (missing(col)) return(return.matrix(x, row, 1:Ncol))  # x[n,]
+        if (is.null(row) && is.null(col)) return (matrix(nrow=0,ncol=0))
+        return(return.matrix(x, row, col)) # x[n,m]
+    } else if (Narg == 2) {
+        if (missing(row)) return(x)  # x[]
+        if (is.null(row)) return(numeric(0)) # x[NULL]
+        return(.Call("sdf_get_variable_index", x, row)) # x[n]
+    }
+}
+
+Ops.sqlite.matrix <- function(e1, e2) {
+    arg.reversed <- FALSE
+    if (!inherits(e1, "sqlite.matrix")) { 
+        tmp <- e1; e1 <- e2; e2 <- tmp; arg.reversed = TRUE; 
+    }
+    if (!all(dim(e1) == dim(e2))) stop("non-conformable arrays")
+    ret <- Ops.sqlite.vector(e1, e2)
+    if (arg.reversed) {
+        if (is.atomic(e2)) {
+            e2.dimnames <- .smat.fix.dimnames(dimnames(e2), dim(e2))
+            return(.Call("sdf_create_smat", ret, e2.dimnames))
+        } else if (is.sqlite.matrix(e2)) {
+            return(.Call("sdf_create_smat", ret, dimnames(e2)))
+        }
+    } else return(.Call("sdf_create_smat", ret, dimanes(e1)))
+}
     

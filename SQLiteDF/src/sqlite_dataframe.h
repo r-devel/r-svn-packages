@@ -165,4 +165,5 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname);
 
 /* sqlite_matrix.c */
 SEXP sdf_as_matrix(SEXP sdf, SEXP name);
+SEXP sdf_create_smat(SEXP svec, SEXP dimnames);
 #endif

@@ -129,7 +129,12 @@ iris.summary <- summary(iris)
 stopifnot(all(iris.sdf.summary[,1:4] == iris.summary[,1:4]))
 stopifnot(all(na.exclude(iris.sdf.summary[,5])==na.exclude(iris.summary[,5])))
 
-# test matrices
-#iris.mat <- as.matrix(iris)
-#iris.smat <- sqlite.matrix(iris)
+# test matrices on sdf's
+iris.mat <- as.matrix(iris)
+iris.smat <- sqlite.matrix(iris)
+stopifnot(typeSvec(iris.smat) == mode(iris.mat),
+          length(iris.smat) == length(iris.mat),
+          all(colnames(iris.smat) == colnames(iris.mat)))
+          #all(rownames(iris.smat) == rownames(iris.mat))) # still bug here
+
 

@@ -1,8 +1,9 @@
 useDynLib(SQLiteDF)
-export(sqlite.data.frame, lsSdf, getSdf,attachSdf,detachSdf, sdflm)
+export(sqlite.data.frame, sqlite.vector, sqlite.matrix)
+export(lsSdf, getSdf,attachSdf,detachSdf)
 export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
-export(sqlite.matrix)
+export(sdflm)
 #export(sdf_tmpdir)
 
 export(typeSvec, has.typeSvec)
@@ -59,4 +60,7 @@ S3method(dim, sqlite.matrix)
 S3method(dimnames, sqlite.matrix)
 S3method(head, sqlite.matrix)
 S3method(print, sqlite.matrix)
+S3method("[", sqlite.matrix)
+S3method(Ops, sqlite.matrix)
+
 

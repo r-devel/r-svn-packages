@@ -1,3 +1,9 @@
+2006-09-20 (18:50 Manila)
+- new sqlite.vector(vec), creates a 1-column sdf from a vector
+- sqlite.matrix : dimnames, [, other experimental stuff
+- sort.sqlite.vector sorts to a table to the sdf, no more creating a new
+sdf
+ 
 2006-09-06 (09:55 Manila)
 - fixed linux configure script (add #include <unistd> in src/SQLite/tool/lemon.c)
 - removed warnings, errors in configure.win (sh again, "uninitialized" vars)
