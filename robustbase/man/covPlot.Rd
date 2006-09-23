@@ -115,6 +115,14 @@ plot(mcd, which = "tolEllipsePlot", classic = TRUE)
 op <- par(mfrow = c(2,3))
 plot(mcd) ## -> which = "all" (5 plots)
 par(op)
+
+## same plots for another robust Cov estimate:
+data(hbk)
+hbk.x <- data.matrix(hbk[, 1:3])
+cOGK <- covOGK(hbk.x, n.iter = 2, sigmamu = scaleTau2,
+               weight.fn = hard.rejection)
+covPlot(hbk.x, m.cov = cOGK, classic = TRUE, ask= TRUE)
+
 \dontshow{
 op <- par(mfrow = c(3,3))
 plot(mcd, classic = TRUE) ## -> which = "all" (7 plots)
