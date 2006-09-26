@@ -1,3 +1,8 @@
+2006-09-25 (18:50 Manila)
+- inlined _expand_buf
+- fixed sql buffer resizing in sdf_get_index
+- added sdflm2
+
 2006-09-20 (18:50 Manila)
 - new sqlite.vector(vec), creates a 1-column sdf from a vector
 - sqlite.matrix : dimnames, [, other experimental stuff

@@ -77,7 +77,7 @@ sqlite3* _is_sqlitedb(char *filename);
 void _init_sqlite_function_accumulator();
 
 /* global buffer (g_sql_buf) utilities */
-int _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
+R_INLINE void _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
 
 
 /* workspace utilities */
@@ -166,4 +166,8 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname);
 /* sqlite_matrix.c */
 SEXP sdf_as_matrix(SEXP sdf, SEXP name);
 SEXP sdf_create_smat(SEXP svec, SEXP dimnames);
+
+/* sqlite_biglm.c */
+SEXP sdf_do_biglm(SEXP sdfx, SEXP svecy, SEXP sdfx_dim, SEXP intercept);
+
 #endif

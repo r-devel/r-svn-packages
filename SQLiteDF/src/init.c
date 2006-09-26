@@ -38,6 +38,9 @@ static const R_CallMethodDef CallEntries[] = {
     /* sqlite_matrix.c */
     {"sdf_as_matrix", (DL_FUNC) &sdf_as_matrix, 2},
     {"sdf_create_smat", (DL_FUNC) &sdf_create_smat, 2},
+
+    /* sqlite_biglm.c */
+    {"sdf_do_biglm", (DL_FUNC) &sdf_do_biglm, 4},
     {NULL, NULL, 0}
 };
 

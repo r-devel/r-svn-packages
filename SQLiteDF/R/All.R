@@ -185,6 +185,23 @@ sdflm <- function(formula, sdf, batch.size=1024) {
     res
 }
 
+sdflm2 <- function(x, y, intercept=TRUE) {
+    if (!inherits(y, "sqlite.vector")) stop("y must be a sqlite.vector")
+    if (! attr(y, "sdf.vector.type") %in% c("numeric", "integer"))
+        stop("y must be a numeric sqlite.vector")
+    if (!inherits(x, "sqlite.data.frame")) stop("x must be a sqlite.data.frame")
+    if (! all(sapply(x, function (x) attr(x, "sdf.vector.type")) %in% c("numeric", "integer")))
+        stop("all columns of x must be numeric sqlite.vector-s")
+    if (nrow(x) != length(y)) stop("rows of x and length of y not equal")
+
+    rval <- .Call("sdf_do_biglm", x, y, dim(x), intercept)
+    if (intercept) rval$names <- c("(Intercept)", names(x))
+    else rval$names <- names(x)
+    rval$n <- nrow(x)
+    rval
+}
+
+
 # -------------------------------------------------------------------------
 # S3 methods for sqlite.data.frame
 # -------------------------------------------------------------------------
@@ -498,3 +515,16 @@ Ops.sqlite.matrix <- function(e1, e2) {
     } else return(.Call("sdf_create_smat", ret, dimanes(e1)))
 }
     
+
+# -------------------------------------------------------------------------
+# S3 methods for sdflm
+# -------------------------------------------------------------------------
+#coef.sdflm <- function(object, ...) {
+#    rval <- biglm:::coef.biglm(object, ...)
+#    names(rval) <- names(rval$X)
+#    rval
+#}
+
+update.sdflm <- function(object, moredata, ...) {
+    error("not updatable")
+}

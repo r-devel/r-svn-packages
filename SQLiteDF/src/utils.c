@@ -58,14 +58,13 @@ int _check_sql_buf(int i) {
     return ret;
 } 
 
-int _expand_buf(int i, int size) {
-    int expanded = FALSE;
+R_INLINE void  _expand_buf(int i, int size) {
     if (size >= g_sql_buf_sz[i]) {
         g_sql_buf_sz[i] *= 2;
         g_sql_buf[i] = Realloc(g_sql_buf[i], g_sql_buf_sz[i], char);
-        expanded = TRUE;
+        /* return TRUE; */
     }
-    return expanded;
+    /* return expanded; */
 }
 
 int _sqlite_error_check(int res, const char *file, int line) {
@@ -193,24 +192,7 @@ SEXP _get_rownames2(const char *sdf_iname) {
     sqlite3_finalize(stmt);
     if (_sqlite_error(res)) return R_NilValue; 
 
-    PROTECT(ret = NEW_LIST(2)); 
-
-    /* set list names */
-    PROTECT(value = NEW_CHARACTER(2)); nprotected++;
-    SET_STRING_ELT(value, 0, mkChar("iname"));
-    SET_STRING_ELT(value, 1, mkChar("varname"));
-    SET_NAMES(ret, value);
-
-    /* set list values */
-    SET_VECTOR_ELT(ret, 0, mkString(sdf_iname));
-    SET_VECTOR_ELT(ret, 1, mkString("row name"));
-
-    /* set class */
-    SET_CLASS(ret, mkString("sqlite.vector"));
-    SET_SDFVECTORTYPE(ret, mkString("character"));
-
-    UNPROTECT(nprotected);
-    return ret;
+    return _create_svector_sexp(sdf_iname, "sdf_data", "row name", "character");
 }
 
 SEXP _create_sdf_sexp(const char *iname) {

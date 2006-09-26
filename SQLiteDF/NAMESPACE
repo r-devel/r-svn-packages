@@ -3,7 +3,7 @@ export(sqlite.data.frame, sqlite.vector, sqlite.matrix)
 export(lsSdf, getSdf,attachSdf,detachSdf)
 export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
-export(sdflm)
+export(sdflm, sdflm2)
 #export(sdf_tmpdir)
 
 export(typeSvec, has.typeSvec)
@@ -63,4 +63,5 @@ S3method(print, sqlite.matrix)
 S3method("[", sqlite.matrix)
 S3method(Ops, sqlite.matrix)
 
-
+#S3method(coef, sdflm)
+S3method(update, sdflm)

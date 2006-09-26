@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <string.h>
 #include "sqlite_dataframe.h"
 
@@ -432,7 +431,7 @@ SEXP sdf_get_length(SEXP sdf) {
     sqlite3_stmt *stmt;
     int res;
 
-    iname  = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    iname  = SDF_INAME(sdf); 
     sprintf(g_sql_buf[0], "select * from [%s].sdf_data;", iname);
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
@@ -510,11 +509,12 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
      * PROCESS COLUMN INDEX: set columns in the select statement
      */
     if (col == R_NilValue) {
+        int len;
         for (i = 1; i < col_cnt+1; i++) {
             colname = sqlite3_column_name(stmt, i);
             buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
+            _expand_buf(0, buflen + 100);
         }
-        _expand_buf(0, buflen+20+strlen(iname));
         buflen += sprintf(g_sql_buf[0]+buflen, " from [%s].sdf_data", iname);
         col_index_len = col_cnt;
         col_indices = (int *)R_alloc(col_cnt, sizeof(int));
@@ -537,6 +537,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             } else if (index > 0) {
                 colname = sqlite3_column_name(stmt,index);
                 buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
+                _expand_buf(0, buflen + 100);
                 dup_indices[col_index_len] = 0;
                 for (j = 0; j < col_index_len; j++) {
                     if (col_indices[j] == index) dup_indices[col_index_len]++;
@@ -572,6 +573,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             } else if (index > 0) {
                 colname = sqlite3_column_name(stmt,index);
                 buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
+                _expand_buf(0, buflen + 100);
                 dup_indices[col_index_len] = 0;
                 for (j = 0; j < col_index_len; j++) {
                     if (col_indices[j] == index) dup_indices[col_index_len]++;
@@ -585,9 +587,9 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
 
         if (col_index_len == 0) {
             sqlite3_finalize(stmt);
-            Rprintf("Error: no indices detected??\n");
-            return R_NilValue;
+            error("no valid indices detected");
         } else { 
+            /*Rprintf("debug: col_index_len: %d, idxlen: %d, buf 0: %s\n", col_index_len, idxlen, g_sql_buf[0]);*/
             _expand_buf(0, buflen+20+strlen(iname));
             buflen += sprintf(g_sql_buf[0]+buflen, " from [%s].sdf_data", iname);
         }
@@ -629,7 +631,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             ret = sdf_get_variable(sdf, mkString(sqlite3_column_name(stmt,col_indices[0])));
             sqlite3_finalize(stmt);
             return ret;
-        } if (col_index_len > 1 || (force_new_df && col_index_len == 1)) {
+        } else if (col_index_len > 1 || (force_new_df && col_index_len == 1)) {
             /* create a new SDF, logic similar to sdf_create_sdf */
 
             /* find a new name. data<n> ? */
@@ -653,6 +655,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
                             dup_indices[i], 
                             sqlite3_column_decltype(stmt, col_indices[i]));
                 }
+                _expand_buf(1, sql_len + 100);
 
                 /* deal with possibly factor columns */
                 if (_is_factor2(iname, "factor", colname)) {
@@ -691,6 +694,7 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
             if (_sqlite_error(res)) { Rprintf("here? %s\n", g_sql_buf[1]); return R_NilValue; }
 
             /* insert data (with row names). buf[0] contains a select */
+            _expand_buf(1, g_sql_buf_sz[0] + 32);
             sprintf(g_sql_buf[1], "insert into [%s].sdf_data %s", iname2,
                     g_sql_buf[0]);
             res = _sqlite_exec(g_sql_buf[1]);
