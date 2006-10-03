@@ -1032,7 +1032,7 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
     char *iname_src, *varname_src, *funcname;
     int res;
     sqlite3_stmt *stmt;
-    double _ret = NA_REAL; SEXP ret;
+    double _ret = NA_REAL, _ret2; SEXP ret;
 
     /* get data from arguments (function name and sqlite.vector stuffs) */
     funcname = CHAR_ELT(func, 0);
@@ -1048,8 +1048,9 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
         sprintf(g_sql_buf[0], "select min_df([%s]) from [%s].sdf_data", varname_src, iname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (_sqlite_error(res)) return R_NilValue;
-        sqlite3_step(stmt); sqlite3_finalize(stmt);
-        _ret = g_accumulator;
+        sqlite3_step(stmt); 
+        _ret = sqlite3_column_double(stmt, 0);
+        sqlite3_finalize(stmt);
 
         if (R_IsNA(_ret) && !g_narm) {
             PROTECT(ret = NEW_NUMERIC(2));
@@ -1061,26 +1062,30 @@ SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
         sprintf(g_sql_buf[0], "select max_df([%s]) from [%s].sdf_data", varname_src, iname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (_sqlite_error(res)) return R_NilValue;
-        sqlite3_step(stmt); sqlite3_finalize(stmt);
+        sqlite3_step(stmt); 
+        _ret2 = sqlite3_column_double(stmt, 0);
+        sqlite3_finalize(stmt);
 
         /* if there is NA, then the if above should have caught it already */
         PROTECT(ret = NEW_NUMERIC(2));
         REAL(ret)[0] = _ret;
-        REAL(ret)[1] = g_accumulator;
+        REAL(ret)[1] = _ret2;
     } else {
         _init_sqlite_function_accumulator();
         sprintf(g_sql_buf[0], "select %s_df([%s]) from [%s].sdf_data", funcname, varname_src, iname_src);
         res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
         if (_sqlite_error(res)) return R_NilValue;
-        res = sqlite3_step(stmt); sqlite3_finalize(stmt);
+        res = sqlite3_step(stmt); 
+        _ret = sqlite3_column_double(stmt, 0);
+        sqlite3_finalize(stmt);
 
         if (strcmp(funcname, "all") == 0 || strcmp(funcname, "any") == 0) {
             PROTECT(ret = NEW_LOGICAL(1));
-            if (R_IsNA(g_accumulator)) LOGICAL(ret)[0] = NA_INTEGER;
-            else LOGICAL(ret)[0] = !(g_accumulator == 0);
+            if (R_IsNA(_ret)) LOGICAL(ret)[0] = NA_INTEGER;
+            else LOGICAL(ret)[0] = (_ret != 0);
         } else {
             PROTECT(ret = NEW_NUMERIC(1));
-            REAL(ret)[0] = g_accumulator;
+            REAL(ret)[0] = _ret;
         }
     }
 
@@ -1159,6 +1164,12 @@ SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
 /****************************************************************************
  * VECTOR MATH/OPS/GROUP OPERATIONS
  ****************************************************************************/
+struct accumulator_t {
+    /* long double acts weird here, but if it's not long double,
+     * it f*cks up sum() */
+    long double accumulator;
+    int started;
+};
 
 R_INLINE int __vecmath_checkarg(sqlite3_context *ctx, sqlite3_value *arg, double *value) {
     int ret = 1;
@@ -1230,7 +1241,7 @@ SQLITE_MATH_FUNC1(gamma, gammafn) /* in R */
 SQLITE_MATH_FUNC1(digamma, digamma) /* in R */    
 SQLITE_MATH_FUNC1(trigamma, trigamma) /* in R */
 
-#define SUM(a, b)  (a) + (b)
+#define SUM(a, b)  ((long double)(a) + (b))
 #define PROD(a, b) (a) * (b)
 #define MIN(a, b) ((a) <= (b)) ? (a) : (b)
 #define MAX(a, b) ((a) >= (b)) ? (a) : (b)
@@ -1245,16 +1256,20 @@ SQLITE_MATH_FUNC_CUM(cummax, MAX)
 #define SQLITE_SUMMARY_FUNC(name, func) static void __vecsummary_ ## name(\
         sqlite3_context *ctx, int argc, sqlite3_value **argv) { \
     double value; \
-    if (!g_narm && R_IsNA(g_accumulator)) return; /* NA if na.rm=F & NA found */ \
+    struct accumulator_t *acc; \
+    acc = sqlite3_aggregate_context(ctx, sizeof(struct accumulator_t)); \
+    if (!g_narm && R_IsNA(acc->accumulator)) return; /* NA if na.rm=F & NA found */ \
     if (sqlite3_value_type(argv[0]) != SQLITE_NULL) {  \
         if (sqlite3_value_type(argv[0]) == SQLITE_INTEGER) {  \
             int tmp = sqlite3_value_int(argv[0]); \
             value = (tmp == NA_INTEGER) ? R_NaReal : tmp; \
         } else value = sqlite3_value_double(argv[0]);  \
         if (R_IsNA(value)) { \
-            if (!g_narm) g_accumulator = value; return; \
-        } else if (g_start) { g_start = 0; g_accumulator = value; } \
-        else g_accumulator = func(g_accumulator, value); \
+            if (!g_narm) acc->accumulator = value; return; /* else ignore */ \
+        } else if (!acc->started) { \
+            acc->started = 1; \
+            acc->accumulator = value; \
+        } else acc->accumulator = func(acc->accumulator, value); \
     } \
 }
 
@@ -1267,7 +1282,9 @@ SQLITE_SUMMARY_FUNC(max_df, MAX)
 
 static void __vecsummary_finalize(sqlite3_context *ctx) {
     /* g_accumulator already summarizes it. just return that */
-    sqlite3_result_double(ctx, g_accumulator);
+    struct accumulator_t *acc = (struct accumulator_t *)
+                sqlite3_aggregate_context(ctx, sizeof(struct accumulator_t)); 
+    sqlite3_result_double(ctx, acc->accumulator);
 }
 
 static void __r_modulo(sqlite3_context *ctx, int argc, sqlite3_value **argv) {

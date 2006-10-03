@@ -1,3 +1,8 @@
+2006-10-03 (17:45 Manila, 0.1.25)
+- fixed 0.1.24 warnings (errors in R/All.R)
+- used sqlite context on aggregates. somehow, sizeof on struct with long
+double worked. have to look out for that. 
+
 2006-09-25 (18:50 Manila)
 - inlined _expand_buf
 - fixed sql buffer resizing in sdf_get_index

@@ -90,6 +90,8 @@ sqlite.matrix <- function(data, name=NULL) {
     }
 }
 
+is.sqlite.matrix <- function(x) inherits(x, "sqlite.matrix")
+
 # -------------------------------------------------------------------------
 # external data functions
 # -------------------------------------------------------------------------
@@ -387,7 +389,7 @@ mean.sqlite.vector <- function(x, ...) {
     sum(x) / length(x)
 }
 
-is.sqlite.vector <- function(x) class(x)[1] == "sqlite.vector"
+is.sqlite.vector <- function(x) inherits(x, "sqlite.vector")
 
 all.equal.sqlite.vector <- function(target, current, batch.size=1024, ...) {
     len <- length(target)
@@ -512,7 +514,7 @@ Ops.sqlite.matrix <- function(e1, e2) {
         } else if (is.sqlite.matrix(e2)) {
             return(.Call("sdf_create_smat", ret, dimnames(e2)))
         }
-    } else return(.Call("sdf_create_smat", ret, dimanes(e1)))
+    } else return(.Call("sdf_create_smat", ret, dimnanes(e1)))
 }
     
 
@@ -526,5 +528,5 @@ Ops.sqlite.matrix <- function(e1, e2) {
 #}
 
 update.sdflm <- function(object, moredata, ...) {
-    error("not updatable")
+    stop("not updatable")
 }
