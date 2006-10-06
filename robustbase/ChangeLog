@@ -1,4 +1,25 @@
+2006-10-04  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* INDEX: added a "manual"  INDEX which has all the data sets at
+	the end.
+
+	* R/OGK.R (covOGK): more default arguments: n.iter = 2
+
+	* R/OGK.R (s_mad, s_IQR): more "scale functions" for (O)GK
+
+	* tests/OGK-ex.R: added examples for new s_*() scales;
+	* tests/OGK-ex.Rout.save: new
+
+2006-10-03  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/qnsn.R (s_Qn, sSn): new (trivial) wrapper functions for easier
+	use in covOGK().
+	* man/Sn.Rd, man/Qn.Rd: ditto
+	* man/covOGK.Rd: example with the above
+
 2006-09-30  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.2-6
 
 	* R/covPlot.R (covPlot): added 'labels.id', 'cex.id' and
 	'label.pos' arguments, "parallel" to plot.lm() and improved the

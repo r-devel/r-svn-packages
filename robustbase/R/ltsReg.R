@@ -365,7 +365,7 @@ ltsReg.default <-
 	    ## vt:: lm.fit.qr == lm.fit(...,method=qr,...)
 	    ##	cf <- lm.fit.qr(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
 	    cf <- lm.fit(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
-	    ans$best <- sort(as.vector(z$inbest))
+	    ans$best <- sort(z$inbest)
 	    fitted <- x %*% cf
 	    resid <- y - fitted
 	    coefs[piv] <- cf ## FIXME? why construct 'coefs' so complicatedly?	use 'cf' !
@@ -780,12 +780,13 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     return(1/fp.alpha.n)
 } ## LTScnp2.rew
 
-.fastlts <- function(x, y, quan, nsamp, intercept, adjust) {
+.fastlts <- function(x, y, quan, nsamp, intercept, adjust)
+{
     dx <- dim(x)
     n <- dx[1]
     p <- dx[2]
 
-    ##	 parameters for partitioning
+    ## Parameters for partitioning --- *IDENTICAL* to those in ../src/rfltsreg.[fc]
     kmini <- 5
     nmini <- 300
     km10 <- 10*kmini
@@ -831,28 +832,21 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     }
 
 
-    y <- as.matrix(y)
-    x1 <- matrix(0, ncol = p + 1, nrow = n)
-    x1 <- cbind(x, y)
-    x1 <- as.matrix(x1)
+    ## y <- as.matrix(y)
+    ## xy <- matrix(0, ncol = p + 1, nrow = n)
+    xy <- cbind(x, y)
+    ## xy <- as.matrix(xy)
+    storage.mode(xy) <- "double"
 
-    objfct <- 0
-
-    storage.mode(x1) <- "double"
     storage.mode(n) <- "integer"
     storage.mode(p) <- "integer"
     storage.mode(quan) <- "integer"
     storage.mode(nsamp) <- "integer"
-    storage.mode(objfct) <- "double"
 
-    inbest <- matrix(10000, nrow = quan, ncol = 1)
+    objfct <- as.double(0)
+    inbest <- rep.int(as.integer(10000), quan)
 
-    storage.mode(inbest) <- "integer"
-
-    datt <- matrix(0, ncol = p + 1, nrow = n)
-    storage.mode(datt) <- "double"
-    nvad <- p + 1
-    storage.mode(nvad) <- "integer"
+    datt <- matrix(as.double(0), ncol = p + 1, nrow = n)
 
     ##	 Allocate temporary storage for the fortran implementation
 
@@ -935,7 +929,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     storage.mode(bmeans) <- "double"
 
     .Fortran("rfltsreg",
-	     x1 = x1,
+	     xy = xy,
 	     n,
 	     p,
 	     quan,
@@ -944,7 +938,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	     objfct = objfct,
 	     interc = as.integer(intercept),
 	     intadjust = as.integer(adjust),
-	     nvad,
+	     nvad = as.integer(p + 1),
 	     datt,
 	     integer(1),## << 'seed' no longer used -- FIXME
 	     weights,
@@ -957,11 +951,11 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	     yy,
 	     nmahad,
 	     ndist,
-	     am,
-	     am2,
-	     slutn,
-	     jmiss, xmed, xmad, a, da, h, hvec, c, cstock, mstock, c1stock,
-	     m1stock, dath, sd,
+	     am, am2,
+	     slutn, jmiss,
+             xmed, xmad, a, da, h, hvec, c,
+             cstock, mstock, c1stock, m1stock,
+             dath, sd,
 	     means, bmeans,
 	     PACKAGE = "robustbase")[ c("inbest", "objfct") ]
 }
