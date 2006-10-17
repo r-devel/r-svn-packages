@@ -1335,7 +1335,8 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
   family <- fix.family.link(family)
   family <- fix.family.var(family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X))
-  if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { criterion <- method$gcv;scale<-1}
+  if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { 
+                 criterion <- method$gcv;scale <- -1}
   if (method$outer=="newton"){ ## the gam.fit3 method 
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,weights=G$w,
                 control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
