@@ -401,6 +401,8 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
   Slength <- maxSstep 
   score.scale <- b$scale.est + score;    
   uconv.ind <- abs(grad) > score.scale*conv.tol
+  ## check for all converged too soon, and undo !
+  if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
   for (i in 1:200) {
     ## exclude apparently converged gradients from computation
     hess1 <- hess[uconv.ind,uconv.ind] 

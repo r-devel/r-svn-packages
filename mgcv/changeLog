@@ -3,6 +3,13 @@
 * bug in gam4objective called when using gam.method(outer="nlm") - never 
   used GCV.
 
+* fixed bug in `newton' whereby immediate convergence actually caused
+  routine to fail.
+
+* modified `smoothCon' and `predictMat' so that `qrc' attribute always
+  created if constraint absorption used, even if there are no constraints.
+  This attribute can then be used to test that there are no unabsorbed 
+  constraints (e.g. in `gam.outer').
 
 1.3-20
 

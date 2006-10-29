@@ -903,7 +903,10 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
       sm$C <- NULL
       sm$rank <- pmin(sm$rank,k-j)
       ## ... so qr.qy(sm$qrc,c(rep(0,nrow(sm$C)),b)) gives original para.'s
-    }  
+    } else {
+      attr(sm,"qrc") <- "no constraints"
+      attr(sm,"nCons") <- 0;
+    } 
   } else attr(sm,"qrc") <-NULL
 
   sm 
@@ -914,11 +917,15 @@ PredictMat <- function(object,data)
 ## smoothCon on resulting Prediction Matrix
 { X <- Predict.matrix(object,data)
   qrc <- attr(object,"qrc")
-  if (!is.null(qrc)) { ## then a transform has been applied by smoothCon
-    j<-attr(object,"nCons");k<-ncol(X)
-    X<-t(qr.qy(qrc,t(X))[(j+1):k,])
+  if (!is.null(qrc)) { ## then smoothCon absorbed constraints
+    j <- attr(object,"nCons")
+    if (j>0) { ## there were constraints to absorb - need to untransform
+      k<-ncol(X)
+      X <- t(qr.qy(qrc,t(X))[(j+1):k,])
+    }
   }
-  del.index <- attr(object,"del.index")
+  ## drop columns eliminated by side-conditions...
+  del.index <- attr(object,"del.index") 
   if (!is.null(del.index)) X <- X[,-del.index]
   X
 }
