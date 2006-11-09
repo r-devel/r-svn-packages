@@ -1700,7 +1700,7 @@ mgcv.get.scale<-function(Theta,weights,good,mu,mu.eta.val,G)
 { variance<- MASS::neg.bin(Theta)$variance
   w<-sqrt(weights[good]*mu.eta.val[good]^2/variance(mu)[good])
   wres<-w*(G$y-G$X%*%G$p)
-  scale<-sum(wres^2)/(G$n-sum(G$edf)-G$nsdf)
+  scale<-sum(wres^2)/(G$n-sum(G$edf))
 }
 
 
@@ -1903,11 +1903,16 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         }
 
         if (find.theta) # then family is negative binomial with unknown theta - estimate it here from G$sig2
-        { Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
+        { if (G$fit.method=="magic") { ## then need to get edf array
+            mv<-magic.post.proc(G$X,mr,w=G$w)
+            G$edf <- mv$edf
+          }
+          Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
           if (is.null(nb.link)) family<-MASS::neg.bin(Theta)
           else family<-do.call("negative.binomial",list(theta=Theta,link=nb.link))
           variance <- family$variance;dev.resids <- family$dev.resids
           aic <- family$aic
+          family$Theta <- Theta ## save Theta estiamte in family
         }
 
         if (control$trace&&G$fit.method=="mgcv")
