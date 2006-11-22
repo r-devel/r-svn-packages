@@ -137,6 +137,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            
 
             dum1 <- rep(0,ncol(x));dum2 <- rep(0,nobs);dum3 <- rep(0,nSp)
+            
             oo<-.C(C_pls_fit,y=as.double(z),as.double(x[good,]),as.double(w),as.double(Sr),as.integer(sum(good)),
             as.integer(ncol(x)),as.integer(ncol(Sr)),eta=as.double(z),penalty=as.double(1),
             as.double(.Machine$double.eps*100))
@@ -202,10 +203,13 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
             pdev <- dev + penalty  ## the penalized deviance 
 
+            if (control$trace) 
+                  cat("penalized deviance =", pdev, "\n")
+
             if (iter>1&&pdev>old.pdev) { ## solution diverging
               ii <- 1
-            while (pdev -old.pdev > (.1+abs(old.pdev))*.2)  
-             {
+            while (pdev -old.pdev > (.1+abs(old.pdev))*.Machine$double.eps*10)  
+             { ## step halve until pdev <= old.pdev
                 if (ii > 200) 
                    stop("inner loop 3; can't correct step size")
                 ii <- ii + 1
@@ -214,7 +218,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                 mu <- linkinv(eta <- eta + offset)
                   dev <- sum(dev.resids(y, mu, weights))
                   pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
-            
+                if (control$trace) 
+                  cat("Step halved: new penalized deviance =", pdev, "\n")
               }
             } 
 
@@ -271,6 +276,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          trA1 <- array(0,nSp);trA2 <- matrix(0,nSp,nSp) # for derivs of tr(A)
          rV=matrix(0,ncol(x),ncol(x));
          dum <- 1
+         if (control$trace) cat("calling gdi...")
          oo <-
          .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),
            sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
@@ -281,7 +287,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd))      
-
+         if (control$trace) cat("done!\n")
 
          rV <- matrix(oo$rV,ncol(x),ncol(x))
          coef <- oo$beta;
