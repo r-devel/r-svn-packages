@@ -144,7 +144,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         
             start <- oo$y[1:ncol(x)];
             penalty <- oo$penalty
-            eta <- oo$eta
+            eta <- drop(x%*%start)
 
             if (any(!is.finite(start))) {
                 conv <- FALSE
@@ -280,7 +280,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          oo <-
          .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),
            sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
-           p.weights=as.double(weights),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),V0=as.double(V),
+           p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),V0=as.double(V),
            V1=as.double(V1),V2=as.double(V2),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
            P=as.double(dum),P1=as.double(P1),P2=as.double(P2),trA=as.double(dum),
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
