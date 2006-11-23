@@ -22,8 +22,7 @@
 \value{
   for \code{read.S}, an R version of the S3 object.
 
-  for \code{data.restore}, a character vector containing the names of the
-  objects which have been created in \code{env}.
+  for \code{data.restore}, the name of the file.
 }
 \details{
   \code{read.S} can read the binary files produced in some older
