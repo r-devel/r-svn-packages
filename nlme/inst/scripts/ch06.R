@@ -5,7 +5,7 @@
 library(nlme)
 options(width = 65, digits = 5)
 options(contrasts = c(unordered = "contr.helmert", ordered = "contr.poly"))
-postscript(file = "ch06.ps")
+pdf(file = "ch06.pdf")
 
 # Chapter 6    Nonlinear Mixed-Effects Models:
 #              Basic Concepts and Motivating Examples

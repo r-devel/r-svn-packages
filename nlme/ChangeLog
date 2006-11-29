@@ -1,3 +1,9 @@
+2006-11-29  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION: Prepare for new version.
+	* R/newMethods.R (getData.nls): getData.nls for R's nls objects
+	* inst/scripts/ch*.R: update Pinheiro and Bates (2000) scripts
+
 2006-11-29  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/reStruct.R: fix PR#9262, multiple-line deparse.
