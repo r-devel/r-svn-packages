@@ -1,6 +1,8 @@
-2006-11-28  Brian Ripley <ripley@stats.ox.ac.uk>
+2006-11-29  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/reStruct.R: fix PR#9262, multiple-line deparse.
+	* R/gls.R, groupedData.R, lme.R, lmList.R, newMethods,R, nlme.R:
+	more deparse width issues.
 
 2006-09-28  Douglas Bates  <bates@stat.wisc.edu>
 
