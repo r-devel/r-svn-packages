@@ -1,3 +1,8 @@
+2006-11-30 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* NAMESPACE: Conditional on R>=2.5.0, import write.table
+	* DESCRIPTION: Declare imports from utils, although only needed for R>=2.5.0
+
 2006-11-29 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-18.
