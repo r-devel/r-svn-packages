@@ -1,5 +1,7 @@
 2006-12-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 
+	* DESCRIPTION (Version): 1.11.3 -- released to CRAN
+
 	* R/daisy.q (daisy): finish metric "gower", and test an example
 
 2006-12-01  Martin Maechler  <maechler@stat.math.ethz.ch>
