@@ -109,7 +109,7 @@ fm4Ovar.lme <- update(fm1Ovar.lme,
                        correlation = corCAR1(form = ~Time))
 anova(fm2Ovar.lme, fm4Ovar.lme, test = F)
 (fm5Ovar.lme <- update(fm1Ovar.lme,
-                       corr = corARMA(p = 1, q = 1))
+                       corr = corARMA(p = 1, q = 1)))
 anova(fm2Ovar.lme, fm5Ovar.lme)
 plot(ACF(fm5Ovar.lme,  maxLag = 10, resType = "n"), alpha = 0.01)
 Variogram(fm2BW.lme, form = ~ Time)

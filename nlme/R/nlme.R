@@ -455,6 +455,17 @@ nlme.formula <-
     }
     plist[[nm]] <- this
   }
+  ## Ensure that all elements of are matrices
+  contrMat <- function(nm, contr, data)
+  {
+    levs <- levels(data[[nm]])
+    val <- do.call(contr[[nm]], list(n = length(levs)))
+    rownames(val) <- levs
+    val
+  }
+  nms <- names(contr)[sapply(contr, is.character)]
+  contr[nms] <- lapply(nms, contrMat, contr = contr, data = dataMix)
+
   if (is.null(sfix <- start$fixed))
     stop ("start must have a component called \"fixed\"")
   ##
