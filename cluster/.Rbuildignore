@@ -19,12 +19,13 @@ src/.*-Li
 src/.*-log
 src/.*-21retro
 src/clara\.f.*
-.*/Check-me
 src/SAFE
 tests/ellipsoid-ex.Rout-.*
 tests/fanny-ex.Rout.*
 tests/.*.Rout.save-[3264].*
+tests/.*.Rout.save-R[1-9].*
 tests/swaplink-.*
+tests/to-.*
 tests/dysta-ex.*
 tests/clara-151.R
 tests/clara-2.R
