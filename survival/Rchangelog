@@ -1,3 +1,5 @@
+2.31	Fix formals for as.character() methods.
+
 2.30	Several minor bug fixes/improvements.
 
 2.29    Fix anova.coxph(, test="Cp")
