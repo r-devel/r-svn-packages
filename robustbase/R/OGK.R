@@ -37,10 +37,9 @@
 ##  =============        ================
 
 covOGK <- function(X, n.iter = 2,
-                   sigmamu,
-                   rcov = covGK,
-                   weight.fn,
-                   keep.data = FALSE, ...)
+		   sigmamu,
+		   rcov = covGK, weight.fn = hard.rejection,
+		   keep.data = FALSE, ...)
 {
     stopifnot(n.iter >= 1)
     call <- match.call()

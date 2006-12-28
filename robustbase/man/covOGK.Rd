@@ -12,7 +12,7 @@
   Gnanadesikan and Kettenring (1972).
 }
 \usage{
-covOGK(X, n.iter = 2, sigmamu, rcov = covGK, weight.fn,
+covOGK(X, n.iter = 2, sigmamu, rcov = covGK, weight.fn = hard.rejection,
        keep.data = FALSE, \dots)
 
 covGK (x, y, scalefn = scaleTau2, \dots)
@@ -104,20 +104,17 @@ s_IQR(x, mu.too = FALSE, na.rm = FALSE)
 data(hbk)
 hbk.x <- data.matrix(hbk[, 1:3])
 
-cO1 <- covOGK(hbk.x,
-              sigmamu = scaleTau2, weight.fn = hard.rejection)
-cO2 <- covOGK(hbk.x, sigmamu = s_Qn,  weight.fn = hard.rejection)
-cO3 <- covOGK(hbk.x, sigmamu = s_Sn,  weight.fn = hard.rejection)
-cO4 <- covOGK(hbk.x, sigmamu = s_mad, weight.fn = hard.rejection)
-cO5 <- covOGK(hbk.x, sigmamu = s_IQR, weight.fn = hard.rejection)
+cO1 <- covOGK(hbk.x, sigmamu = scaleTau2)
+cO2 <- covOGK(hbk.x, sigmamu = s_Qn)
+cO3 <- covOGK(hbk.x, sigmamu = s_Sn)
+cO4 <- covOGK(hbk.x, sigmamu = s_mad)
+cO5 <- covOGK(hbk.x, sigmamu = s_IQR)
 
 %% FIXME: Add time comparison, here or in "vignette", "demo", "...
 
 data(toxicity)
-cO1tox <- covOGK(toxicity,
-                 sigmamu = scaleTau2, weight.fn = hard.rejection)
-cO2tox <- covOGK(toxicity,
-                 sigmamu = s_Qn,      weight.fn = hard.rejection)
+cO1tox <- covOGK(toxicity, sigmamu = scaleTau2)
+cO2tox <- covOGK(toxicity, sigmamu = s_Qn)
 
 ## nice formatting of correlation matrices:
 as.dist(round(cov2cor(cO1tox$cov), 2))

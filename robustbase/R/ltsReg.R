@@ -794,14 +794,14 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 
     ##	 vt::03.02.2006 - added options "best" and "exact" for nsamp
     if(!missing(nsamp)) {
-	if(is.numeric(nsamp) && nsamp <= 0) {
+	if(!is.numeric(nsamp) || nsamp <= 0) {
 	    warning("Invalid number of trials nsamp=",nsamp,"! Using default.\n")
 	    nsamp <- -1
 	} else if(nsamp == "exact" || nsamp == "best") {
 	    myk <- p
 	    if(n > 2*nmini-1) {
-		warning("Options 'best' and 'exact' not allowed for n greater than ",
-                        2*nmini-1,". \nUsing nsamp=",nsamp,"\n")
+		warning("'nsamp' options 'best' and 'exact' not allowed for n greater than ",
+                        2*nmini-1,". Will use default.\n")
 		nsamp <- -1
 	    }
             else { ## FIXME: Add a test case for this !
@@ -809,8 +809,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 		if(nall > 5000 && nsamp == "best") {
 		    nsamp <- 5000
 		    warning("Maximum 5000 subsets allowed for option 'best'.\n",
-                            "Computing 5000 subsets of size ",myk," out of ",n,
-                            "\n")
+                            "Computing 5000 subsets of size ",myk," out of ",n,"\n")
 		} else {
 		    nsamp <- 0		#all subsamples
 		    if(nall > 5000)
@@ -819,15 +818,9 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
                             "\n This may take a very long time!\n")
 		}
 	    }
-	}
-
-	if(!is.numeric(nsamp) || nsamp == -1) {
-            ## still not defined - set it to the default
-	    defCtrl <- rrcov.control() # default control
-	    if(!is.numeric(nsamp))
-		warning("Invalid number of trials nsamp=",nsamp,
-                        "! Using default nsamp=",defCtrl$nsamp,"\n")
-	    nsamp <- defCtrl$nsamp	# take the default nsamp
+        }
+	if(nsamp == -1) { ## still not defined - set it to the default
+	    nsamp <- rrcov.control()$nsamp
 	}
     }
 
@@ -936,7 +929,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	     nsamp,
 	     inbest = inbest,
 	     objfct = objfct,
-	     interc = as.integer(intercept),
+	     intercept = as.integer(intercept),
 	     intadjust = as.integer(adjust),
 	     nvad = as.integer(p + 1),
 	     datt,
