@@ -34,7 +34,8 @@ c    nhalff: 'quan' = quan.f(alpha, n, rk)  which is
 c                   = (n + p + 1) %/% 2  when alpha= 1/2
 c    krep  = nsamp  (e.g. = 5000 for "best")
 c
-      implicit integer(i-n), double precision(a-h,o-z)
+      implicit none
+      integer kmini, nmini, k1,k2,k3,km10,nmaxi,maxmini
 c
 ccc   parameter (nvmax=115)
 ccc   parameter (nmax=57000)
@@ -54,6 +55,8 @@ ccc   parameter (nvm11=nvmax*(nvmax+1))
 C--   VT   parameter (maxmini=int((3*nmini-1)/2)+1)
       parameter (maxmini=450)
 cc
+      integer n,nvar,nvad,nhalff
+
       integer inbest(nhalff)
       double precision dat(n,nvad)
       double precision datt(n,nvad)
@@ -69,13 +72,20 @@ cc
       double precision ndist(n)
       double precision am(n),am2(n),slutn(n)
 
-      integer matz,seed,tottimes,step
-      integer pnsel
-      integer replow
-      integer krep,n,nvar,nhalff,nvad
-      double precision objfct
-      logical all,part,fine,final,rfodd,more1,more2
+      integer krep, matz,iseed, seed, tottimes,step
       integer intercept,intadjust
+      integer pnsel, replow
+      integer i,ii,iii, j,jj,jjj, jndex, k,kk,kkk, lll, m,mm, nn
+      integer jmin,jmax, jerd,jnc,jdefaul,jbreak,jreg, kstep,kount
+      integer minigr
+      integer nfac,nerr, ngroup, nhalf,nlen,nmax,nmore, nmore2, nquant
+      integer nvmax1, nvm11, nvmax, nsel, nstop, nrep
+
+      double precision bstd, dist2, eps, factor, objfct, object
+      double precision fckw, fckwi, fckw1, percen
+      double precision MADeps
+
+      logical all,part,fine,final,rfodd,more1,more2
       integer rfnbreak,rfncomb
 
       integer flag(km10)
@@ -85,6 +95,8 @@ cc
       double precision faclts(11)
       double precision mcdndex(10,2,kmini)
 
+c     Function
+      double precision rffindq
 
 ccc   integer jmiss(nvmax1)
 ccc   double precision xmed(nvmax1)
@@ -325,16 +337,15 @@ CDDD  CALL INTPR('>>> Initialization ready',-1,0,0)
       endif
 cc
       if(.not.fine .and. .not.final) then
-	call rfstatis(dat,xmed,xmad,aw,aw2,intercept,nvad,
-     *	     nvmax1,nmax,n,
+	call rfstatis(dat,xmed,xmad,aw2,intercept,nvad, nvmax1,nmax,n,
      *	     nstop,MADeps,weights,y,nvar,index2)
 	if(nstop.eq.1) goto 9999
       endif
 
 cc
       jreg=1
-      call rflsreg(nvmax1,nmax,nvmax,nvar,n,a,dat,y,weights,da,
-     *	   h,fckw,hvec,nvm11,jmiss,nvad,n)
+      call rflsreg(nvmax1, nvmax,nvar,n,a,dat, weights, da, h,
+     *	   fckw,hvec,nvm11,jmiss,nvad,n)
 cc	       nfac=nvad-1
       nfac=nvar-1
       call rfrtran(nvar,intercept,nfac,nvad,nvmax1,xmed,
@@ -618,8 +629,8 @@ c     9555
  159		continue
 	      endif
  157	    continue
-	    call rflsreg(nvmax1,nmax,nvmax,nvar,n,a,datt,y,weights,
-     *		 da,h,fckw,hvec,nvm11,jmiss,nvad,nn)
+	    call rflsreg(nvmax1, nvmax,nvar,n,a,datt, weights, da, h,
+     *		 fckw,hvec,nvm11,jmiss,nvad,nn)
 
 c           171
 	    do 172 jnc=1,nn
@@ -838,16 +849,20 @@ ccccc end {rfltsreg}
 ccccc
 
 
-      subroutine rfstatis(x,xmed,xmad,aw,aw2,intercept,nvad,nvmax1,
+      subroutine rfstatis(x,xmed,xmad,aw2,intercept,nvad,nvmax1,
      *     nmax,n,nstop,MADeps,weights,y,nvar,index2)
 cc
+      implicit none
+      integer intercept, nvad,nvmax1, nmax, n, nstop, nvar
       double precision xmed(nvmax1), x(n,nvad), xmad(nvmax1)
-      double precision aw(nmax), aw2(nmax)
+      double precision aw2(nmax)
       double precision weights(nmax)
       double precision y(nmax)
       double precision MADeps
       double precision rfamdan
       integer index2(nmax)
+c
+      integer j,jnc
 cc
       nstop=0
 c     nstop=0: success;  =1 : "problem": mad ~= 0
@@ -858,7 +873,7 @@ c     	regression without intercept
           xmed(j)=0.0
           do 10 jnc=1,n
  10         aw2(jnc)=abs(x(jnc,j))
-          xmad(j)=rfamdan(aw,nmax,aw2,n,index2)*1.4826
+          xmad(j)=rfamdan(nmax,aw2,n,index2)*1.4826
           if(abs(xmad(j)) .le. MADeps) then
             xmad(j)=0.0
             do 20 jnc=1,n
@@ -869,7 +884,7 @@ c     	regression without intercept
               return
             endif
           endif
- 30       do 40 jnc=1,n
+          do 40 jnc=1,n
             x(jnc,j)=x(jnc,j)/xmad(j)
  40       continue
  50     continue
@@ -883,11 +898,11 @@ c     	regression with intercept
           do 70 jnc=1,n
             aw2(jnc)=x(jnc,j)
  70       continue
-          xmed(j)=rfamdan(aw,nmax,aw2,n,index2)
+          xmed(j)=rfamdan(nmax,aw2,n,index2)
           do 80 jnc=1,n
             aw2(jnc)=abs(aw2(jnc)-xmed(j))
  80       continue
-          xmad(j)=rfamdan(aw,nmax,aw2,n,index2)*1.4826
+          xmad(j)=rfamdan(nmax,aw2,n,index2)*1.4826
           if(abs(xmad(j)) .le. MADeps) then
             xmad(j)=0.0
             do 90 jnc=1,n
@@ -899,7 +914,7 @@ c     	regression with intercept
             endif
           endif
 
- 100      do 110 jnc=1,n
+          do 110 jnc=1,n
             x(jnc,j)=(x(jnc,j)-xmed(j))/xmad(j)
  110      continue
  120    continue
@@ -913,9 +928,9 @@ c     	regression with intercept
       return
       end
 cc
-      function rfamdan(aw,nmax,aa,n,index2)
+      function rfamdan(nmax,aa,n,index2)
 cc
-      double precision aa(n),aw(nmax)
+      double precision aa(n)
       integer index2(nmax)
       double precision rffindq
       double precision rfamdan
@@ -930,10 +945,10 @@ cc
       return
       end
 cc
-      subroutine rflsreg(nvmax1,nmax,nvmax,k,n,f,x,y,w,da,h,fckw,
+      subroutine rflsreg(nvmax1, nvmax,k, n, f, x, w, da, h,fckw,
      *  hvec,nvm11,jmiss,nvad,nnn)
 cc
-      double precision x(n,nvad),f(k),y(n),w(n),da(k)
+      double precision x(n,nvad), f(k), w(n), da(k)
       double precision hvec(nvm11),h(nvmax,nvmax1)
       double precision fckw,dfckw,dfact
       double precision dwjnc,dyj,dfka
@@ -947,7 +962,7 @@ cc
  10   continue
       anul=0.0
       do 30 jnc=1,nnn
-        call rffcn(k,f,x,jnc,nmax,nvmax1,n,nvad)
+        call rffcn(k,f,x,jnc,n,nvad)
         dwjnc=dble(w(jnc))
         anul=anul+w(jnc)
         dyj=dble(x(jnc,kplus))
@@ -966,7 +981,7 @@ cc
  60   continue
       call rfmatnv(h,nvmax,nvmax1,hvec,nvm11,k,1,jmiss)
       mm=k+1
-      fckw=rfqlsrg(k,n,nvmax1,nmax,nvmax,f,x,y,w,h,mm,nvad,nnn)
+      fckw=rfqlsrg(k,n,nvmax1,nvmax,f,x, w,h,mm,nvad,nnn)
       do 80 jnc=1,k
         f(jnc)=h(jnc,k+1)
  80   continue
@@ -987,9 +1002,10 @@ cc
       end
 ccccc
 ccccc
-      subroutine rffcn(k,f,x,jnc,nmax,nvmax1,n,nvad)
+      subroutine rffcn(k,f,x,jnc,n,nvad)
 cc
-      double precision f(k),x(n,nvad)
+      integer k, jnc,n,nvad, j
+      double precision f(k), x(n,nvad)
 cc
       do 10,j=1,k
         f(j)=x(jnc,j)
@@ -1033,10 +1049,10 @@ cc
  40     continue
         if (turn .eq. 0) goto 180
 
- 50     jpaal=ldel-jdelc+1
+        jpaal=ldel-jdelc+1
         jmiss(jhfd)=jpaal
         if(jpaal .gt. jhfd) then
- 60       deter=-deter
+          deter=-deter
           jpaal=jpaal-jdm
           jncd=jhfd-jdm
           do 70 jnc=1,npnb
@@ -1047,7 +1063,7 @@ cc
             hvec(jpaal)=swap
  70       continue
         endif
- 80     deter=deter*turn
+        deter=deter*turn
         turn=1.0D0/turn
         jncd=jdelc+nma
         do 90 jnc=jdelc,jncd
@@ -1059,7 +1075,7 @@ cc
           jpaal=jpaal+jdm
           jncb=jncb+jdm
           if(jnc .ne. jhfd) then
- 100        jcl=jpaal+nma
+            jcl=jpaal+nma
             swap=hvec(jncb)
             jncd=jdelc-1
             do 110 jncc=jpaal,jcl
@@ -1074,7 +1090,7 @@ cc
         jhfd=n+1-jncb
         ldel=jmiss(jhfd)
         if(ldel .ne. jhfd) then
- 140      jpaal=(ldel-1)*jdm+1
+          jpaal=(ldel-1)*jdm+1
           jcl=jpaal+nma
           jdelc=(jhfd-1)*jdm+1-jpaal
           do 150 jncc=jpaal,jcl
@@ -1096,18 +1112,20 @@ c---
       end
 ccccc
 ccccc
-      function rfqlsrg(k,n,nvmax1,nmax,nvmax,f,x,y,w,h,mm,nvad,nnn)
+      function rfqlsrg(k,n,nvmax1,nvmax,f,x, w,h,mm,nvad,nnn)
 cc
-      double precision f(k), x(n,nvad), y(n), w(n)
+      double precision f(k), x(n,nvad), w(n)
       double precision q,hsum,h(nvmax,nvmax1)
 cc
       q=0.D0
       do 30 jnc=1,nnn
-        call rffcn(k,f,x,jnc,nmax,nvmax1,n,nvad)
+        call rffcn(k,f,x,jnc,n,nvad)
         hsum=0.D0
         do 20 jncb=1,k
- 20       hsum=h(jncb,mm)*f(jncb)+hsum
- 30   q=(hsum-x(jnc,mm))*(hsum-x(jnc,mm))*w(jnc)+q
+           hsum=h(jncb,mm)*f(jncb)+hsum
+ 20     continue
+        q=(hsum-x(jnc,mm))*(hsum-x(jnc,mm))*w(jnc)+q
+ 30   continue
       rfqlsrg=q
       return
       end
@@ -1234,7 +1252,7 @@ ccccc
 	 jdel=lclpl+n-jhfd
 	 do 40 jncb=lclpl,jdel
            if(dabs(hvec(jncb)) .gt. dabs(turn)) then
- 30          turn=hvec(jncb)
+             turn=hvec(jncb)
              ldel=jncb
            endif
  40	 continue
