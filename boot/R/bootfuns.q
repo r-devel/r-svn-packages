@@ -674,7 +674,7 @@ jack.after.boot <- function(boot.out, index=1, t=NULL, L=NULL,
     if (isMatrix(data))
         n <- nrow(data)
     else	n <- length(data)
-    f <- boot.array(boot.out)[fins,]
+    f <- boot.array(boot.out)[fins, , drop=TRUE]
     percentiles <- matrix(data = NA, length(alpha), n)
     J <- numeric(n)
     for(j in 1:n) {
