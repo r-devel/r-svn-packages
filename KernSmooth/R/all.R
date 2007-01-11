@@ -1086,8 +1086,8 @@ sstdiag <- function(x,drv=0,degree=1,kernel="normal",
 
 .onLoad <- function(lib, pkg)
 {
-   message("KernSmooth 2.22 installed")
-   message("Copyright M. P. Wand 1997")
+   packageStartupMessage("KernSmooth 2.22 installed")
+   packageStartupMessage("Copyright M. P. Wand 1997")
 }
 
 .onUnload <- function(libpath)
