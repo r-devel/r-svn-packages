@@ -1,4 +1,5 @@
-2.31	Fix formals for as.character() methods.
+2.31	Fix formals for as.character() and as.matrix() methods.
+	Improve documentation for data sets.
 
 2.30	Several minor bug fixes/improvements.
 
