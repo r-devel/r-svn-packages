@@ -1,0 +1,5 @@
+2007-01-24  Douglas Bates  <bates@R-project.org>
+
+	* DESCRIPTION: Change to LazyData, new version.
+	* man/*.Rd: Remove calls to data().
+
