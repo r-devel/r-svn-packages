@@ -119,10 +119,8 @@ covMcd <- function(x,
 	    if(length(dimn[[2]]))
 		names(ans$center) <- dimn[[2]]
 	    ans$n.obs <- n
-	    msg <- "The classical covariance matrix is singular."
-	    ans$method <- paste(ans$method, msg, sep="\n")
-	    if(trace)
-		cat(msg,"\n")
+            ans$singularity <- list(kind = "classical")
+            if(trace) cat("classical estimate is singular\n")
 
 	    weights <- 1
 	}
@@ -142,10 +140,8 @@ covMcd <- function(x,
 		ans$cov <- ans$cov * cnp2[1]
 	    }
 	    if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-		msg <- "The reweighted MCD scatter matrix is singular."
-		ans$method <- paste(ans$method, msg, sep="\n")
-		if(trace)
-		    cat(msg,"\n")
+                ans$singularity <- list(kind = "reweighted.MCD")
+		if(trace) cat("reweighted MCD is singular\n")
 	    }
 	    else {
 		mah <- mahalanobis(x, ans$center, ans$cov, tol = tolSolve)
@@ -200,14 +196,13 @@ covMcd <- function(x,
 	scale <- sqrt(calpha * correct) * as.double(mcd$initcovariance)
 	center <- as.double(mcd$initmean)
 	if(abs(scale - 0) < 1e-07) {
+            ans$singularity <- list(kind = "identicalObs", q = quan)
 	    ## VT:: 22.12.04 - ans$cov and ans$raw.cov must be a matrices
 	    ans$cov <- matrix(0)
 	    names(ans$cov) <- dimn[[2]][1]
 	    ans$center <- center
 	    names(ans$center) <- dimn[[2]][1]
 	    ans$n.obs <- n
-	    ans$method <- paste(ans$method,"\nMore than", quan,
-				"of the observations are identical.")
 	    ans$alpha <- alpha
 	    ans$quan <- quan
 	    ans$raw.cov <- matrix(0)
@@ -270,65 +265,22 @@ covMcd <- function(x,
 	    if(length(dimn[[2]]))
 		names(ans$center) <- dimn[[2]]
 	    ans$n.obs <- n
+
 ## no longer relevant:
 ##	    if(mcd$exactfit == -1)
 ##		stop("The program allows for at most ", mcd$kount, " observations.")
 ##	    if(mcd$exactfit == -2)
 ##		stop("The program allows for at most ", mcd$kount, " variables.")
-	    if(mcd$exactfit == 1) {
-		msg <- "The covariance matrix of the data is singular."
-		ans$method <- paste(ans$method, msg, sep = "\n")
-		if(trace)
-		    cat(msg, "\n")
-	    }
-	    if(mcd$exactfit == 2) {
-		msg <- paste("The covariance matrix has become singular during",
-			     "the iterations of the MCD algorithm.",
-			     collapse = "\n")
-		ans$method <- paste(ans$method, msg, sep = "\n")
-		if(trace)
-		    cat(msg, "\n")
-	    }
-	    if(p == 2) {
-		msg <- paste("There are", mcd$kount,
-			     "observations in the entire dataset of\n", n,
-			     "observations that lie on the line with equation\n",
-			     signif(mcd$coeff[1,1], digits= 5), "(x_i1-m_1) +",
-			     signif(mcd$coeff[1,2], digits= 5), "(x_i2-m_2)=0\n",
-			     "with (m_1,m_2) the mean of these observations.")
-		ans$method <- paste(ans$method, msg, sep = "\n")
-		if(trace)
-		    cat(msg, "\n")
-	    }
-	    else if(p == 3) {
-		msg <- paste("There are", mcd$kount,
-			     "observations in the entire dataset of\n", n,
-			     "observations that lie on the plane with equation\n",
-			     signif(mcd$coeff[1,1], digits= 5), "(x_i1-m_1) +",
-			     signif(mcd$coeff[1,2], digits= 5), "(x_i2-m_2) +",
-			     signif(mcd$coeff[1,3], digits= 5), "(x_i3-m_3)=0\n",
-			     "with (m_1,m_2) the mean of these observations."
-			     )
-		ans$method <- paste(ans$method, msg, sep = "\n")
-		if(trace)
-		    cat(msg, "\n")
-	    }
-	    else { ##  p > 3 -----------
-		msg1 <- paste("There are", mcd$kount,
-			     "observations in the entire dataset of\n", n,
-			     "observations that lie on the hyperplane with equation\n",
-			     "a_1*(x_i1-m_1)+...+a_p*(x_ip-m_p)=0 \n",
-			     "with (m_1,...,m_p) the mean\n",
-			     "of these observations and coefficients a_i equal to: \n")
-                msg <- paste(msg1,
-                             paste(formatC(mcd$coeff[1, ], digits= 5), collapse=","))
-		if(trace) {
-		    cat(msg1)
-		    print(signif(mcd$coeff[1, ], digits= 5))
-		}
-                ans$method <- paste(ans$method, msg, sep = "\n")
-	    } ## end {p > 3}
+            if(!(mcd$exactfit %in% c(1,2)))
+                stop("Unexpected 'exactfit' code ", mcd$exactfit, ". Please report!")
 
+            ## new (2007-01) and *instead* of older long 'method' extension;
+            ## the old message is stilled *printed* via singularityMessage()
+            ##
+            ## exactfit is now *passed* to result instead of coded into 'message':
+            ans$singularity <-
+                list(kind = "on.hyperplane", exactCode = mcd$exactfit,
+                     p = p, count = mcd$kount, coeff = mcd$coeff[1,])
 	    ans$alpha <- alpha
 	    ans$quan <- quan
 	    ans$raw.cov <- mcd$initcovariance
@@ -383,11 +335,8 @@ covMcd <- function(x,
 
 	    ## Check if the reweighted scatter matrix is singular.
 	    if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-
-		msg <- "The reweighted MCD scatter matrix is singular."
-		ans$method <- paste(ans$method, msg, sep="\n")
-		if(trace)
-		    cat(msg,"\n")
+                ans$singularity <- list(kind = "reweighted.MCD")
+		if(trace) cat("The reweighted MCD scatter matrix is singular.\n")
 		ans$mah <- ans$raw.mah
 	    }
 	    else {
@@ -417,6 +366,64 @@ covMcd <- function(x,
     return(ans)
 }
 
+singularityMsg <- function(singList, n.obs)
+{
+    stopifnot(is.list(singList))
+    switch(singList$kind,
+	   "classical" = {
+	       "The classical covariance matrix is singular."
+	   },
+	   "reweighted.MCD" = {
+	       "The reweighted MCD scatter matrix is singular."
+	   },
+	   "identicalObs" = {
+	       sprintf("Initial scale 0 because more than 'quan' (=%d) observations are identical.",
+		       singList$q)
+	   },
+	   "on.hyperplane" = {
+	       stopifnot(c("p", "count", "coeff") %in% names(singList))
+
+	       obsMsg <- function(m, n)
+		   paste("There are", m,
+			 "observations (in the entire dataset of",
+			 n, "obs.) lying on the")
+	       with(singList,
+                    c(switch(exactCode,
+                             ## exactfit == 1 :
+                             "The covariance matrix of the data is singular.",
+                             ## exactfit == 2 :
+                             c("The covariance matrix has become singular during",
+                               "the iterations of the MCD algorithm.")),
+
+                      if(p == 2) {
+                          paste(obsMsg(count, n.obs), "line with equation ",
+                                signif(coeff[1], digits= 5), "(x_i1-m_1) +",
+                                signif(coeff[2], digits= 5), "(x_i2-m_2) = 0",
+                                "with (m_1,m_2) the mean of these observations.")
+                      }
+                      else if(p == 3) {
+                          paste(obsMsg(count, n.obs), "plane with equation ",
+                                signif(coeff[1], digits= 5), "(x_i1-m_1) +",
+                                signif(coeff[2], digits= 5), "(x_i2-m_2) +",
+                                signif(coeff[3], digits= 5), "(x_i3-m_3) = 0",
+                                "with (m_1,m_2) the mean of these observations."
+                                )
+                      }
+                      else { ##  p > 3 -----------
+                          con <- textConnection("astring", "w")
+                          dput(zapsmall(coeff), con)
+                          close(con)
+                          paste(obsMsg(count, n.obs), "hyperplane with equation ",
+                                "a_1*(x_i1 - m_1) + ... + a_p*(x_ip - m_p) = 0",
+                                " with (m_1,...,m_p) the mean of these observations",
+                                " and coefficients a_i from the vector   a <- ", astring)
+                      }))
+	   },
+	   ## Otherwise
+	   stop("illegal 'singularity$kind'")
+	   ) ## end{switch}
+}
+
 print.mcd <- function(x, digits = max(3, getOption("digits") - 3), print.gap = 2, ...)
 {
     cat("Minimum Covariance Determinant (MCD) estimator.\n")
@@ -425,6 +432,8 @@ print.mcd <- function(x, digits = max(3, getOption("digits") - 3), print.gap = 2
 	dput(cl)
     }
     cat("-> Method: ", x$method, "\n")
+    if(is.list(x$singularity))
+	cat(strwrap(singularityMsg(x$singularity, x$n.obs)), sep ="\n")
     cat("\nLog(Det.): ", format(log(x$crit), digits = digits) ,"\n")
     cat("Robust Estimate of Location:\n")
     print(x$center, digits = digits, print.gap = print.gap, ...)

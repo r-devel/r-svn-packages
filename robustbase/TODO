@@ -110,3 +110,8 @@ o src/lmrob.c :
    - does median() , MAD() instead of using R's  sort() routines
 
 ----
+
+o Alternative version of covOGK() for correlation-only
+  using's Huber's correlation formula which ensures [-1,1] range
+  --> ~/R/MM/Pkg-ex/robustbase/robcorgroesser1.R
+  and ~/R/MM/STATISTICS/robust/pairwise-new.R

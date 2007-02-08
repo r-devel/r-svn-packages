@@ -1538,7 +1538,7 @@ ccccc
 ccccc
 	subroutine rfcorrel(nvar,a,b,sd)
 cc
-cc  Transforms the scatter matrix a to the correlation matrix b.
+cc  Transforms the scatter matrix a to the correlation matrix b: <==> R's  cov2cor(.)
 cc
 	double precision a(nvar,nvar)
 	double precision b(nvar,nvar)
