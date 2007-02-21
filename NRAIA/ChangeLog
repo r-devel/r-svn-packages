@@ -1,3 +1,9 @@
+2007-02-21  Douglas Bates  <bates@stat.wisc.edu>
+
+	* DESCRIPTION (Date): New version
+	* Added a plotfit function to plot the original data and a smooth
+	version of the fitted model (single covariate only).
+
 2007-02-02  Douglas Bates  <bates@r-forge.wu-wien.ac.at>
 
 	* DESCRIPTION (Date): New version - fix the stored data objects so
