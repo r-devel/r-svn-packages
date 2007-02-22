@@ -1,4 +1,5 @@
 #include "sqlite_dataframe.h"
+#include "exports.h"
 #include <R_ext/Rdynload.h>
 
 static const R_CallMethodDef CallEntries[] = {

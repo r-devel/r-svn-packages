@@ -3,8 +3,8 @@
 cd src
 echo "---- unpacking SQLite ----"
 rm -rf SQLite
-tar zxf ../sqlite-3.3.7.tar.gz
-mv sqlite-3.3.7 SQLite
+tar zxf ../sqlite-3.3.13.tar.gz
+mv sqlite-3.3.13 SQLite
 cd SQLite
 echo "---- configuring SQLite ----"
 ## remove chmod, change to ls

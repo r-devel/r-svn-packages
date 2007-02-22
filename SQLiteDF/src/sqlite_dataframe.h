@@ -2,6 +2,7 @@
 #include "Rdefines.h"
 #include "Rinternals.h"
 #include "sqlite3.h"
+#include "exports.h"
 
 #ifndef __SQLITE_DATAFRAME__
 #define __SQLITE_DATAFRAME__
@@ -50,20 +51,24 @@ int UNUSE_SDF2(const char *iname); /* somewhat like UNPROTECT */
 SEXP _create_sdf_sexp(const char *iname);  /* create a SEXP for an SDF */
 int _add_sdf1(char *filename, char *internal_name); /* add SDF to workspace */
 void _delete_sdf2(const char *iname); /* remove SDF from workspace */
-int _get_factor_levels1(const char *iname, const char *varname, SEXP var);
+int _get_factor_levels1(const char *iname, const char *varname, SEXP var, int set_class);
 int _get_row_count2(const char *table, int quote);
 SEXP _get_rownames(const char *sdf_iname);
 char *_get_full_pathname2(char *relpath); /* get full path given relpath, used in workspace mgmt */
 int _is_factor2(const char *iname, const char *factor_type, const char *colname);
 SEXP _get_rownames2(const char *sdf_iname);
 
-/* utilities for creating SDF's */
+/* utilities for creating SDFs */
 char *_create_sdf_skeleton1(SEXP name, int *o_namelen, int protect);
 int _copy_factor_levels2(const char *factor_type, const char *iname_src,
         const char *colname_src, const char *iname_dst, const char *colname_dst);
 int _create_factor_table2(const char *iname, const char *factor_type, 
         const char *colname);
 char *_create_svector1(SEXP name, const char *type, int * _namelen, int protect);
+
+/* utilities for creating SVecs */
+int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int colidx, 
+        int idx_or_len, int *coltype);
 
 /* R utilities */
 SEXP _getListElement(SEXP list, char *varname);
@@ -126,48 +131,7 @@ void __register_vector_math();
 #define FACTORSXP 11
 #define ORDEREDSXP 12
 
-
-
-/* top level functions */
-/* sqlite_workspace.c */
-SEXP sdf_init_workspace();
-SEXP sdf_finalize_workspace();
-SEXP sdf_list_sdfs(SEXP pattern);
-SEXP sdf_get_sdf(SEXP name);
-SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name);
-SEXP sdf_detach_sdf(SEXP internal_name);
-SEXP sdf_rename_sdf(SEXP sdf, SEXP name);
-
-/* sqlite_dataframe.c */
-SEXP sdf_create_sdf(SEXP df, SEXP name);
-SEXP sdf_get_names(SEXP sdf);
-SEXP sdf_get_length(SEXP sdf);
-SEXP sdf_get_row_count(SEXP sdf);
-SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote, 
-        SEXP _rownames, SEXP _colnames);
-SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf);
-SEXP sdf_rbind(SEXP sdf, SEXP data);
-SEXP sdf_get_iname(SEXP sdf);
-
-/* sqlite_vector.c */
-SEXP sdf_get_variable(SEXP sdf, SEXP name);
-SEXP sdf_get_variable_length(SEXP svec);
-SEXP sdf_get_variable_index(SEXP svec, SEXP idx);
-/* SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value); */
-SEXP sdf_variable_summary(SEXP svec, SEXP maxsum);
-SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP other_args);
-SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed);
-SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm);
-SEXP sdf_sort_variable(SEXP svec, SEXP decreasing);
-
-/* sqlite_external.c */
-SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname);
-
-/* sqlite_matrix.c */
-SEXP sdf_as_matrix(SEXP sdf, SEXP name);
-SEXP sdf_create_smat(SEXP svec, SEXP dimnames);
-
-/* sqlite_biglm.c */
-SEXP sdf_do_biglm(SEXP sdfx, SEXP svecy, SEXP sdfx_dim, SEXP intercept);
+/* additional column types */
+#define SQLITEDF_BIT 100
 
 #endif

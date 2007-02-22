@@ -151,11 +151,12 @@ int _copy_factor_levels2(const char *factor_type, const char *iname_src,
 
 /* assumes stmt has col_cnt + 1 columns, col 0 is [row name]. returned SEXP is 
  * not UNPROTECT-ed, user will have to do that. will create the names &
- * attach factor infos */
+ * attach factor infos.
+ * not that this will only create the data frame, not pull data from sqlite */
 static SEXP _setup_df_sexp1(sqlite3_stmt *stmt, const char *iname, 
         int col_cnt, int row_cnt, int *dup_indices) {
-    SEXP ret, names, value, class = R_NilValue;
-    int i, type;
+    SEXP ret, names, value = R_NilValue;
+    int i;
     const char *colname, *coltype;
 
     PROTECT(ret = NEW_LIST(col_cnt));
@@ -166,7 +167,7 @@ static SEXP _setup_df_sexp1(sqlite3_stmt *stmt, const char *iname,
         colname = sqlite3_column_name(stmt, i+1);  /* +1 bec [row name is 0] */
         coltype = sqlite3_column_decltype(stmt, i+1);
 
-        if (dup_indices[i] == 0) {
+        if (dup_indices == NULL || dup_indices[i] == 0) {
             strcpy(g_sql_buf[1], colname);
         } else {
             sprintf(g_sql_buf[1], "%s.%d", colname, dup_indices[i]);
@@ -183,18 +184,10 @@ static SEXP _setup_df_sexp1(sqlite3_stmt *stmt, const char *iname,
         } else if (strcmp(coltype, "integer") == 0 || 
                    strcmp(coltype, "int") == 0) {
             PROTECT(value = NEW_INTEGER(row_cnt));
-            type = _get_factor_levels1(iname, colname, value);
-            if (type == VAR_FACTOR) {
-                PROTECT(class = mkString("factor"));
-                SET_CLASS(value, class);
-                UNPROTECT(1);
-            } else if (type == VAR_ORDERED) {
-                PROTECT(class = NEW_CHARACTER(2));
-                SET_STRING_ELT(class, 0, mkChar("ordered"));
-                SET_STRING_ELT(class, 1, mkChar("factor"));
-                SET_CLASS(value, class);
-                UNPROTECT(1);
-            }
+
+            /* attach level values, & set class of factor/ordered if
+             * value is a factor/ordered */
+            _get_factor_levels1(iname, colname, value, TRUE);
         } else {
             UNPROTECT(2); /* unprotect ret, names */
             error("not supported type %s for %s\n", coltype, colname);
@@ -364,6 +357,11 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
                     case INTSXP : 
                         sqlite3_bind_int(stmt, j+2, INTEGER(variable)[i]);
                         break;
+                    case LGLSXP : 
+                        /* they might make it a bit although currentLY 
+                         * LOGICAL==INTEGER macro */
+                        sqlite3_bind_int(stmt, j+2, LOGICAL(variable)[i]);
+                        break;
                     case REALSXP:
                         sqlite3_bind_double(stmt, j+2, REAL(variable)[i]);
                         break;
@@ -509,7 +507,6 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
      * PROCESS COLUMN INDEX: set columns in the select statement
      */
     if (col == R_NilValue) {
-        int len;
         for (i = 1; i < col_cnt+1; i++) {
             colname = sqlite3_column_name(stmt, i);
             buflen += sprintf(g_sql_buf[0]+buflen, ",[%s]", colname);
@@ -1080,5 +1077,132 @@ SEXP sdf_get_iname(SEXP sdf) {
     sqlite3_finalize(stmt);
     UNPROTECT(2);
 
+    return ret;
+}
+
+SEXP sdf_select(SEXP sdf, SEXP select, SEXP where, SEXP limit, SEXP debug) {
+    char *iname, *tmp;
+    sqlite3_stmt *stmt;
+    int buflen0 = 0, buflen1 = 0, len, nrows, res;
+    SEXP ret = NULL;
+    int dbg = LOGICAL(debug)[0];
+
+    iname = SDF_INAME(sdf);
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
+
+    /* create the sql to be executed */
+
+    /* process select stmt */
+    if (select == R_NilValue) {
+        buflen0 = sprintf(g_sql_buf[0], "select * from [%s].sdf_data", iname);
+    } else if (!IS_CHARACTER(select)) {
+        error("select argument is not a string");
+    } else {
+        tmp = CHAR_ELT(select, 0);
+        _expand_buf(0, strlen(tmp)+100);
+        buflen0 = sprintf(g_sql_buf[0], "select [row name], %s from [%s].sdf_data", 
+                tmp, iname);
+    }
+
+    /* create separate count() statement, to determine number of rows */
+    buflen1 = sprintf(g_sql_buf[1], "select count([row name]) from [%s].sdf_data", iname);
+
+    /* process where clause */
+    if (where == R_NilValue) {
+        /* do nothing */
+    } else if (!IS_CHARACTER(where)) {
+        error("where argument is not a string");
+    } else {
+        tmp = CHAR_ELT(where, 0);
+        len = strlen(tmp);
+        _expand_buf(0, buflen0+len+10);
+        buflen0 += sprintf(g_sql_buf[0]+buflen0, " where %s", tmp);
+        _expand_buf(1, buflen1+len+10);
+        buflen1 += sprintf(g_sql_buf[1]+buflen1, " where %s", tmp);
+    }
+
+    /* process limit clause */
+    if (limit == R_NilValue) {
+        /* do nothing */
+    } else if (!IS_CHARACTER(limit)) {
+        error("limit argument is not a string");
+    } else {
+        tmp = CHAR_ELT(limit, 0);
+        len = strlen(tmp);
+        _expand_buf(0, buflen0+len+10);
+        buflen0 += sprintf(g_sql_buf[0]+buflen0, " limit %s", tmp);
+        _expand_buf(1, buflen1+len+10);
+        
+        /* limit xxx happens after everything has been selected, and so
+         * limit actually limits the count(*) result! not the rows to
+         * be counted */
+    }
+
+    /* test if the "select count(*) " is a valid sql statement */
+    res = sqlite3_prepare(g_workspace, g_sql_buf[1], -1, &stmt, NULL);
+    if (_sqlite_error(res)) error("Error in SQL select statement.");
+
+    /* get the number of rows from the "select count(*) " query */
+    sqlite3_step(stmt);
+    nrows = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+
+    if (nrows == 0) return R_NilValue;
+
+    /* test again if actual select stmt is a valid sql statement */
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, NULL);
+    if (_sqlite_error(res)) error("Error in SQL select statement.");
+    len = sqlite3_column_count(stmt);
+
+    if (dbg)
+        Rprintf("sql: %s\nncols: %d, nrows: %d\n", g_sql_buf[0], len, nrows);
+
+    if (len < 2) { sqlite3_finalize(stmt); return R_NilValue; }
+    else if (len == 2) { /* return a vector */
+        int coltype, idx = 0;
+        const char *colname;
+
+        /* initialize R vector */
+        res = sqlite3_step(stmt);
+        if (res == SQLITE_ROW)
+            idx = _get_vector_index_typed_result(stmt, &ret, 1, nrows, &coltype);
+
+        while ((res = sqlite3_step(stmt)) == SQLITE_ROW) {
+            idx += _get_vector_index_typed_result(stmt, &ret, 1, idx, &coltype);
+        }
+
+        if (ret != R_NilValue) {
+            if (idx < nrows) ret = _shrink_vector(ret, idx);
+            if (coltype == SQLITE_INTEGER) {
+                colname = sqlite3_column_name(stmt, 1);
+                _get_factor_levels1(iname, colname, ret, TRUE);
+            }
+            /*UNPROTECT(1); _get_vector_index_typed_result UNPROTECTs already*/
+        }
+    } else { /* return a data frame */
+        --len;  /* _setup_df_sexp1 does not count the preceding [row name] */
+        ret = _setup_df_sexp1(stmt, iname, len, nrows, NULL);
+        if (ret != R_NilValue) {
+            int idx;
+
+            for (idx = 0; sqlite3_step(stmt) == SQLITE_ROW && idx < nrows; idx++) {
+                _add_row_to_df(ret, stmt, idx, len);
+            }
+
+            if (idx < nrows) {
+                for (int i = 0; i < len; i++) {
+                    SET_VECTOR_ELT(ret, i, 
+                            _shrink_vector(VECTOR_ELT(ret, i), idx));
+                }
+            }
+
+            SET_CLASS(ret, mkString("data.frame"));
+            _set_rownames2(ret);
+            
+            UNPROTECT(1);
+        }
+    }
+
+    sqlite3_finalize(stmt);
     return ret;
 }

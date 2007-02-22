@@ -6,6 +6,9 @@ library(datasets)
 library(SQLiteDF)
 stopifnot(file.exists(".SQLiteDF/workspace.db"))
 
+# test all modes
+iris <- cbind(iris, integers=1:10, logicals=c(T,F), chars=c("foo","bar"))
+
 # test creating unnamed sdfs
 u1.sdf <- sqlite.data.frame(iris)
 stopifnot(file.exists(".SQLiteDF/data1.db"))
@@ -16,22 +19,27 @@ stopifnot(file.exists(".SQLiteDF/data2.db"))
 stopifnot(class(u1.sdf) == "sqlite.data.frame",
           class(u2.sdf) == "sqlite.data.frame")
 
-
-
 compareSdfToDf <- function(sdf, df, with.names=TRUE) {
     ncols <- ncol(df)
     nrows <- nrow(df)
+
+    # test [.sqlite.data.frame
     for (i in 1:nrows) { for (j in 1:ncols) {
         if (df[i,j] != sdf[i,j]) stop("Not equal on ", i, ",", j, "\n")
     }}
+
+    # test [[.sqlite.data.frame (int arg), [.sqlite.vector, 
+    # length.sqlite.vector, has.typeSvec
     for (j in 1:ncols) { 
         sv <- sdf[[j]]; # test sqlite.vector
         stopifnot(class(sv) == "sqlite.vector", has.typeSvec(sv, class(df[[j]])[1]))
         if (length(sv) != nrows) stop("Unexpected # of rows for col", j, "\n")
         for (i in 1:nrows)
             if (sv[i] != df[i,j])
-                stop("Not equal on", i, "on col", j, "\n")
+                stop("Not equal on row ", i, ", col ", j, "\n")
     }
+
+    # test names.sqlite.data.frame, [[.sqlite.data.frame (name arg), ...
     if (with.names) for (j in names(df)) { 
         sv <- sdf[[j]]; # test sqlite.vector
         stopifnot(class(sv) == "sqlite.vector", has.typeSvec(sv, class(df[[j]])[1]))
@@ -40,6 +48,50 @@ compareSdfToDf <- function(sdf, df, with.names=TRUE) {
             if (sv[i] != df[i,j]) 
                 stop("Not equal on", i, "on col", j, "\n")
     }
+
+    # quote the 1st element of a vector suitable as arg to sdfSelect(where=)
+    makewhere <- function(vect, name) {
+        paste("[", name, "]=", 
+              switch(class(vect),
+                numeric=as.character(vect[1]),
+                factor=as.character(as.integer(vect[1])),
+                ordered=as.character(as.integer(vect[1])),
+                character=paste("'", vect[1], "'", sep=""),
+                integer=as.character(vect[1]), 
+                logical=as.character(as.integer(vect[1]))),
+              sep="")
+    }
+
+    # test sdfSelect returning vectors
+    for (i in 1:ncols) {
+        colname = paste("[",names(df)[i],"]", sep="")
+        vect <- df[[i]]
+
+        # test where arg with the 1st value of the vector
+        testwhere = makewhere(vect, names(df)[i])
+        print(testwhere)
+            
+        stopifnot(all.equal(sdfSelect(sdf, select=colname), vect),
+                  all.equal(sdfSelect(sdf, select=colname, limit=nrows-1),
+                            vect[1:(nrows-1)]),
+                  all.equal(sdfSelect(sdf, select=colname, where=testwhere, debug=T),
+                            vect[vect == vect[1]]))
+    }
+
+    # test sdfSelect returning data frames
+    select = paste(paste("[", names(df), "]", sep=""), collapse=",")
+    where = makewhere(df[[1]], names(df)[1])
+
+    # row.names() not equal, & besides sdf returns char & 
+    # R has integer row.names
+    stopifnot(all.equal(sdfSelect(sdf, select, limit="9,5"), df[10:14,],
+                        check.attributes=FALSE),  
+              all.equal(sdfSelect(sdf, limit=nrows-1), df[-nrows,],
+                        check.attributes=FALSE),
+              all.equal(sdfSelect(sdf, where=where), df[df[[1]]==df[1,1],],
+                        check.attributes=FALSE))
+
+    
 }
 
 # test creating named sdfs
@@ -136,5 +188,4 @@ stopifnot(typeSvec(iris.smat) == mode(iris.mat),
           length(iris.smat) == length(iris.mat),
           all(colnames(iris.smat) == colnames(iris.mat)))
           #all(rownames(iris.smat) == rownames(iris.mat))) # still bug here
-
 

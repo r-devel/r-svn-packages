@@ -67,7 +67,7 @@ R_INLINE void  _expand_buf(int i, int size) {
     /* return expanded; */
 }
 
-int _sqlite_error_check(int res, const char *file, int line) {
+R_INLINE int _sqlite_error_check(int res, const char *file, int line) {
     int ret = FALSE;
     if (res != SQLITE_OK) { 
         Rprintf("SQLITE ERROR (line %d at %s): %s\n", line, file, sqlite3_errmsg(g_workspace));
@@ -183,8 +183,6 @@ SEXP _getListElement(SEXP list, char *varname) {
 SEXP _get_rownames2(const char *sdf_iname) {
     int res;
     sqlite3_stmt *stmt;
-    SEXP ret, value;
-    int nprotected = 1;
 
     sprintf(g_sql_buf[2], "select [row name] from [%s].sdf_data", sdf_iname);
     res = sqlite3_prepare(g_workspace, g_sql_buf[2], -1, &stmt, 0);
@@ -234,13 +232,21 @@ static void __attach_levels2(char *table, SEXP var, int len) {
     UNPROTECT(1);
 }
     
-int _get_factor_levels1(const char *iname, const char *varname, SEXP var) {
+/* attaches level values and class attributes to the SEXP var if it has class 
+ * factor and/or ordered */
+int _get_factor_levels1(const char *iname, const char *varname, SEXP var, int set_class) {
     int res;
+    SEXP class;
     
     sprintf(g_sql_buf[1], "[%s].[factor %s]", iname, varname);
     res = _get_row_count2(g_sql_buf[1], 0);
     if (res > 0) { /* res is exptected to be {-1} \union I+ */
         __attach_levels2(g_sql_buf[1], var, res);
+        if (set_class) {
+            PROTECT(class = mkString("factor"));
+            SET_CLASS(var, class);
+            UNPROTECT(1);
+        }
         return VAR_FACTOR;
     }
 
@@ -248,8 +254,23 @@ int _get_factor_levels1(const char *iname, const char *varname, SEXP var) {
     res = _get_row_count2(g_sql_buf[1], 0);
     if (res > 0) {
         __attach_levels2(g_sql_buf[1], var, res);
+        if (set_class) {
+            PROTECT(class = NEW_CHARACTER(2));
+            SET_STRING_ELT(class, 0, mkChar("ordered"));
+            SET_STRING_ELT(class, 1, mkChar("factor"));
+            SET_CLASS(var, class);
+            UNPROTECT(1);
+        }
         return VAR_ORDERED;
     }
+
+    /*
+    if (set_class) {
+        PROTECT(class = NEW_CHARACTER(1));
+        SET_STRING_ELT(class, 0, mkChar("integer"));
+        SET_CLASS(var, class);
+        UNPROTECT(1);
+    }*/
 
     return VAR_INTEGER;
 }
@@ -277,6 +298,13 @@ SEXP _shrink_vector(SEXP vec, int len) {
             PROTECT(ret = NEW_LOGICAL(len));
             for (i = 0; i < len; i++) LOGICAL(ret)[i] = LOGICAL(vec)[i];
         } else return ret;
+
+        /* preserve class, levels for factors/ordered */
+        if (isFactor(vec)) {
+            SET_CLASS(ret, duplicate(GET_CLASS(vec)));
+            SET_LEVELS(ret, duplicate(GET_LEVELS(vec)));
+        }
+
         UNPROTECT(1);
     }
 

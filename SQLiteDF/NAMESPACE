@@ -4,6 +4,7 @@ export(lsSdf, getSdf,attachSdf,detachSdf)
 export(dupSdf,renameSdf, inameSdf, rbindSdf)
 export(sdfImportDBI, sdfImportSQLite)
 export(sdflm, sdflm2)
+export(sdfSelect)
 #export(sdf_tmpdir)
 
 export(typeSvec, has.typeSvec)
