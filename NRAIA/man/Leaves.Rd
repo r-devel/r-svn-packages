@@ -25,22 +25,24 @@
   \emph{The Growth of Leaves}, London: Butterworth. 
 }
 \examples{
-plot(Length ~ Time, data = Leaves, las = 1,
-     xlab = "Time from initial emergence (days)",
-     ylab = "Leaf length (cm)",
-     main = "Leaves data and fitted curve")
+options(show.signif.stars = FALSE)
 ## first fit a logistic model
 fm1 <- nls(Length ~ SSlogis(Time, Asym, xmid, scal), data = Leaves)
 summary(fm1)
-usr <- par("usr")
-xx <- seq(usr[1], usr[2], len = 51)
-lines(xx, predict(fm1, list(Time = xx)))
-title(sub = deparse(fm1$call$formula))
+plotfit(fm1, xlab = "Time from initial emergence (days)",
+        ylab = "Leaf length (cm)", main = "Logistic growth model")
 ## compare with Richards growth model
-\dontrun{
-fm2 <- nls(Length ~ SSRichards(Time, Asym, xmid, scal, pow),
-           data = Leaves)
-anova( fm2, fm1 )
-}
+fm2 <- nls(Length ~ Asym/(1+exp(-(Time - xmid)/scal))^exp(-lpow), Leaves,
+           c(coef(fm1),c(lpow = 0)))
+summary(fm2)
+anova(fm1, fm2)
+plotfit(fm1, xlab = "Time from initial emergence (days)",
+        ylab = "Leaf length (cm)", main = "Richards growth model")
+pm1 <- profile(fm1)
+plot(pm1, aspect = 'xy', layout = c(3,1))
+plot(pm1, absVal = FALSE, aspect = 'xy', layout = c(3,1))
+pm2 <- profile(fm2, alpha = 0.05)
+plot(pm2, aspect = 'xy', layout = c(4,1))
+plot(pm2, absVal = FALSE, aspect = 'xy', layout = c(4,1))
 }
 \keyword{datasets}
