@@ -8,14 +8,15 @@ Lipo                    Lipoprotein concentrations
 Lubricant               Viscosity of lubricants
 Nitren                  Nitrendipene data
 Nitrite                 Nitrite utilization by bean leaves
-Oilshale                Pyrolysis of Oil Shale
 O.xylene                O-xylene reaction data
+Oilshale                Pyrolysis of Oil Shale
 PCB                     PCB concentrations in Lake Cayuga fish
 Pinene                  Alpha-pinene and by-products
 Pinene2                 Alpha-pinene and by-products
 Rumford                 Count Rumford's cooling data
 Sacch2                  Pharmacokinetics of saccharin
 Saccharin               Elimination of saccharin
-sPMMA                   syndiotactic poly-methyl-methacrylate
 Sulfi                   Pharmacokinetics of sulfisoxazole
 Tetra                   Tetracycline concentrations
+plotfit                 Plot x-y data and a fitted model
+sPMMA                   syndiotactic poly-methyl-methacrylate
