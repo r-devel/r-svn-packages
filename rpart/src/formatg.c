@@ -4,6 +4,7 @@
 */
 #include <stdio.h>
 #include "rpartS.h"
+#undef WIN32
 #ifdef WIN32
 #include <ctype.h>
 #endif
