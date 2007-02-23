@@ -33,15 +33,10 @@
   Originally from Sredni (1970), Ph.D. Thesis, University of Wisconsin - Madison.
 }
 \examples{
-xyplot(conc ~ Time, Chloride, aspect = 'xy',
-     type = c("g", "p"), xlab = "Time (min)",
-     ylab = "Chloride ion concentration (\%)")
 ## Fit nonlinear regression model
 (fm1 <- nls(conc ~ Asym*(1 - prop*exp(-exp(lrc)*Time)), data = Chloride,
            start = c(Asym = 50, prop = 0.6, lrc = log(0.25)), trace = TRUE))
-# usr <- par("usr")
-# xx <- seq(usr[1], usr[2], len = 50)
-# lines(xx, predict(fm1, list(Time = xx)))
+plotfit(fm1, xlab = "Time (min)", ylab = "Chloride ion concentration (\%)")
 plot(resid(fm1) ~ fitted(fm1),  # plot shows patterns in the residuals
      xlab = "Least squares fitted values",
      ylab = "Least squares residuals",

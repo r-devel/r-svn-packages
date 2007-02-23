@@ -26,9 +26,6 @@
 }
 \examples{
 str(BOD2)
-xyplot(demand ~ Time, BOD2, type = c("g", "p"),
-        xlab = "Time (days)",
-        ylab = "Biochemical Oxygen Demand")
 # simplest form of fitting a first-order model to these data
 (fm1 <- nls(demand ~ A*(1-exp(-exp(lrc)*Time)), data = BOD2,
    start = c(A = 2.2, lrc = log(0.25))))
@@ -38,9 +35,8 @@ coef(fm1)
    start = c(lrc = log(0.25)), algorithm = "plinear", trace = TRUE))
 # using a self-starting model
 (fm3 <- nls(demand ~ SSasympOrig(Time, A, lrc), data = BOD2))
-% usr <- par("usr")
-% xx <- seq(usr[1], usr[2], len = 51)
-% lines(xx, predict(fm3, list(Time = xx)))
-% title(sub = deparse(fm3$call$formula))
+plotfit(fm3, xlab = "Time (days)",
+        ylab = "Biochemical Oxygen Demand")
+
 }
 \keyword{datasets}
