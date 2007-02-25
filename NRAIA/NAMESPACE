@@ -1,4 +1,5 @@
 import(stats)
+import(splines)
 import(lattice)
 import(grid)
 
