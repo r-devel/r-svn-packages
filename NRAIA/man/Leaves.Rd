@@ -36,7 +36,7 @@ fm2 <- nls(Length ~ Asym/(1+exp(-(Time - xmid)/scal))^exp(-lpow), Leaves,
            c(coef(fm1),c(lpow = 0)))
 summary(fm2)
 anova(fm1, fm2)
-plotfit(fm1, xlab = "Time from initial emergence (days)",
+plotfit(fm2, xlab = "Time from initial emergence (days)",
         ylab = "Leaf length (cm)", main = "Richards growth model")
 pm1 <- profile(fm1)
 plot(pm1, aspect = 'xy', layout = c(3,1))

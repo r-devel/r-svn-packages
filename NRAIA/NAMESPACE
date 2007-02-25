@@ -1,6 +1,11 @@
-import(lattice)
 import(stats)
+import(lattice)
+import(grid)
+
 export(plotfit)
+
 S3method(plotfit, nls)
 S3method(plot, profile.nls)
+S3method(as.data.frame, profile.nls)
+
 
