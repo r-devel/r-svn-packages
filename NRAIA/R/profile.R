@@ -18,7 +18,7 @@ as.data.frame.profile.nls <-
 ## A lattice-based plot method for profile.nls objects
 ## FIXME use pmax.int and pmin.int after 2.5.0 is released
 plot.profile.nls <-
-    function (x, levels = qf(pmax(0, pmin(1, conf)), 1, df[2]),
+    function (x, levels = sqrt(qf(pmax(0, pmin(1, conf)), 1, df[2])),
               conf = c(50, 80, 90, 95, 99)/100, 
               absVal = TRUE, ...) 
 {
@@ -29,17 +29,17 @@ plot.profile.nls <-
                                         x$tau))
     bspl <- lapply(spl, splines::backSpline)
     tau <- c(-rev(levels), 0, levels)
-    df <- data.frame(tau = rep.int(tau, length(x)),
+    fr <- data.frame(tau = rep.int(tau, length(x)),
                      pval = unlist(lapply(bspl,
                      function(sp) predict(sp, x= tau)$y)),
                      pnm = gl(length(x), length(tau), labels = names(x)))
     ylab <- expression(tau)
     if (absVal) {
-        df$tau <- abs(df$tau)
+        fr$tau <- abs(fr$tau)
         ylab <- expression("|" * tau * "|")
     }
-    xyplot(tau ~ pval | pnm, df,
-           scales = list(x = list(relation = 'free'), y = list(rot = 0)),
+    xyplot(tau ~ pval | pnm, fr,
+           scales = list(x = list(relation = 'free'), y = list(rot = 90)),
            ylab = ylab, xlab = "", panel = function(x, y, ...)
        {
            pfun <- function(x) predict(spl[[panel.number()]], x = x)$y
@@ -136,35 +136,40 @@ dp <- function(x = NULL,
     }
 }
 
-
 splom.profile.nls <-
-    function (x, levels = qf(pmax(0, pmin(1, conf)), df[1], df[2]),
+    function (x, data,
+              levels = sqrt(df[1] * qf(pmax(0, pmin(1, conf)), df[1], df[2])),
               conf = c(50, 80, 90, 95, 99)/100, ...)
 {
     df <- attr(x, "summary")$df
     levels <- sort(levels[is.finite(levels) && levels > 0])
+    levels <- c(-rev(levels), 0, levels)
     mlev <- max(levels)
     pfr <- do.call("expand.grid", lapply(x, function(el) c(-mlev, mlev)))
     spl <- lapply(x, function(x)
                   splines::interpSpline(x$par.vals[, attr(x, "parameters")$par],
                                         x$tau))
-    bspl <- lapply(spl, splines::backSpline)
     fr <- as.data.frame(x)
     nms <- names(spl)
     for (nm in nms) fr[[nm]] <- predict(spl[[nm]], fr[[nm]])$y
     lp <- function(x, y, groups, subscripts, ...)
     {
-        browser()
         i <- eval.parent(expression(i))
         j <- eval.parent(expression(j))
+        lims <- current.panel.limits()
         fri <- subset(fr, .pnm == nms[i])
         sij <- interpSpline(fri[ , i], fri[ , j])
         psij <- predict(sij)
-        panel.lines(psij$y, psij$x, ...)
+        llines(psij$y, psij$x, ...)
+        tcks <- predict(sij, levels)
+        delx <- diff(lims$xlim)/50
+        lsegments(tcks$y - delx, tcks$x, tcks$y + delx, tcks$x, ...)
         frj <- subset(fr, .pnm == nms[j])
         sji <- interpSpline(frj[ , j], frj[ , i])
-        psji <- predict(sji)
-        panel.lines(psji$x, psji$y, ...)
+        llines(predict(sji), ...)
+        tcks <- predict(sji, levels)
+        dely <- diff(lims$ylim)/50
+        lsegments(tcks$x, tcks$y - dely, tcks$x, tcks$y + dely, ...)
     }
     up <- function(...) {}
     
