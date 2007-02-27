@@ -6,6 +6,7 @@ Maintainer: Douglas Bates <bates@stat.wisc.edu>
 Author:  R port by Douglas Bates <bates@stat.wisc.edu>
 Description: Datasets from Bates and Watts (1988) "Nonlinear Regression
          Analysis and Its Applications" with sample code.
-Depends: lattice, stats, grid
+Depends: lattice, stats
+LazyLoad: yes
 LazyData: yes
 License: GPL version 2 or later

@@ -39,7 +39,7 @@ plot.profile.nls <-
         ylab <- expression("|" * tau * "|")
     }
     xyplot(tau ~ pval | pnm, fr,
-           scales = list(x = list(relation = 'free'), y = list(rot = 90)),
+           scales = list(x = list(relation = 'free')),
            ylab = ylab, xlab = "", panel = function(x, y, ...)
        {
            pfun <- function(x) predict(spl[[panel.number()]], x = x)$y
@@ -79,6 +79,8 @@ dp <- function(x = NULL,
                axis.line.lwd = axis.line$lwd,
                ...)
 {
+    j <- eval.parent(expression(j))
+    n.var <- eval.parent(expression(n.var))
     add.text <- trellis.par.get("add.text")
     axis.line <- trellis.par.get("axis.line")
     axis.text <- trellis.par.get("axis.text")
@@ -93,8 +95,7 @@ dp <- function(x = NULL,
                        varname.font),
                        fontfamily = varname.fontfamily))
 
-    if (FALSE) ## plot axes
-    ## if (draw)    
+    if (draw)    
     {
         rot <- c(90, 0)
         if (is.null(at))
@@ -112,12 +113,16 @@ dp <- function(x = NULL,
                     format(at, trim = TRUE)
                 }
         }
-        for (side in c("left", "top", "right", "bottom"))
+        sides <- c("right", "bottom")
+        if (j == 1) sides <- "right"
+        if (j == n.var) sides <- "bottom"
+        for (side in sides)
             panel.axis(side = side,
                        at = at,
                        labels = lab,
                        tick = TRUE,
-                       half = TRUE,
+                       check.overlap = TRUE,
+                       half = !(j %in% c(1, n.var)),
 
                        tck = 1, ## from scales ?
                        rot = rot, 
@@ -136,43 +141,97 @@ dp <- function(x = NULL,
     }
 }
 
+## convert the x-cosine and y-cosine to an average and difference,
+## ensuring that the difference is positive by flipping signs if
+## necessary
+ad <- function(xc, yc)
+{
+    a <- (xc + yc)/2
+    d <- (xc - yc)
+    cbind(ifelse(d > 0, a, -a), abs(d))
+}
+
+## convert d versus a (as an xyVector) and level to a matrix of taui and tauj
+tauij <- function(xy, lev) lev * cos(xy$x + outer(xy$y/2, c(-1, 1)))
+
+## safe arc-cosine
+sacos <- function(x) acos(pmax(-1, pmin(1, x)))
+
+## extract only the y component from a prediction
+predy <- function(sp, vv) predict(sp, vv)$y
+
+cont <- function(sij, sji, levels, nseg = 101)
+{
+    ada <- array(0, c(length(levels), 2, 4))
+    ada[, , 1] <- ad(0, sacos(predy(sij,  levels)/levels))
+    ada[, , 2] <- ad(sacos(predy(sji, levels)/levels), 0)
+    ada[, , 3] <- ad(pi, sacos(predy(sij, -levels)/levels))
+    ada[, , 4] <- ad(sacos(predy(sji, -levels)/levels), pi)
+    pts <- array(0, c(length(levels), nseg + 1, 2))
+    for (i in seq_along(levels))
+        pts[i, ,] <- tauij(predict(periodicSpline(ada[i, 1, ], ada[i, 2, ]),
+                                   nseg = nseg), levels[i])
+    levs <- c(-rev(levels), 0, levels)
+    list(tki = predict(sij, levs), tkj = predict(sji, levs), pts = pts)
+}
+
 splom.profile.nls <-
-    function (x, data,
+    function (x, data,  ## unused - for compatibility with generic only
               levels = sqrt(df[1] * qf(pmax(0, pmin(1, conf)), df[1], df[2])),
               conf = c(50, 80, 90, 95, 99)/100, ...)
 {
     df <- attr(x, "summary")$df
     levels <- sort(levels[is.finite(levels) && levels > 0])
-    levels <- c(-rev(levels), 0, levels)
     mlev <- max(levels)
     pfr <- do.call("expand.grid", lapply(x, function(el) c(-mlev, mlev)))
     spl <- lapply(x, function(x)
-                  splines::interpSpline(x$par.vals[, attr(x, "parameters")$par],
-                                        x$tau))
+                  interpSpline(x$par.vals[, attr(x, "parameters")$par], x$tau))
+    bsp <- lapply(spl, backSpline)
     fr <- as.data.frame(x)
     nms <- names(spl)
-    for (nm in nms) fr[[nm]] <- predict(spl[[nm]], fr[[nm]])$y
-    lp <- function(x, y, groups, subscripts, ...)
-    {
+    for (nm in nms) fr[[nm]] <- predy(spl[[nm]], fr[[nm]])
+    lp <- function(x, y, groups, subscripts, ...) {
         i <- eval.parent(expression(i))
         j <- eval.parent(expression(j))
-        lims <- current.panel.limits()
         fri <- subset(fr, .pnm == nms[i])
         sij <- interpSpline(fri[ , i], fri[ , j])
-        psij <- predict(sij)
-        llines(psij$y, psij$x, ...)
-        tcks <- predict(sij, levels)
-        delx <- diff(lims$xlim)/50
-        lsegments(tcks$y - delx, tcks$x, tcks$y + delx, tcks$x, ...)
         frj <- subset(fr, .pnm == nms[j])
         sji <- interpSpline(frj[ , j], frj[ , i])
+        psij <- predict(sij)
+        ll <- cont(sij, sji, levels)
+        dd <- sapply(current.panel.limits(), diff)/50
+        ## now do the actual plotting
+        panel.grid(h = -1, v = -1)
+        llines(psij$y, psij$x, ...)
         llines(predict(sji), ...)
-        tcks <- predict(sji, levels)
-        dely <- diff(lims$ylim)/50
-        lsegments(tcks$x, tcks$y - dely, tcks$x, tcks$y + dely, ...)
+        with(ll$tki, lsegments(y - dd[1], x, y + dd[1], x, ...))
+        with(ll$tkj, lsegments(x, y - dd[2], x, y + dd[2], ...))
+        for (k in seq_along(levels)) llines(ll$pts[k, , ], ...)
     }
-    up <- function(...) {}
-    
+    up <- function(x, y, groups, subscripts, ...) {
+        i <- eval.parent(expression(j)) ## plots are transposed
+        j <- eval.parent(expression(i))
+        fri <- subset(fr, .pnm == nms[i])
+        sij <- interpSpline(fri[ , i], fri[ , j])
+        frj <- subset(fr, .pnm == nms[j])
+        sji <- interpSpline(frj[ , j], frj[ , i])
+        psij <- predict(sij)
+        psji <- predict(sji)
+        ll <- cont(sij, sji, levels)
+        pts <- ll$pts
+        ## do the actual plotting
+        pushViewport(viewport(xscale = range(predy(bsp[[i]], x)),
+                              yscale = range(predy(bsp[[j]], y))))
+        limits <- current.panel.limits()
+        panel.grid(h = -1, v = -1)
+        llines(predy(bsp[[i]], psij$y), predy(bsp[[j]], psij$x), ...)
+        llines(predy(bsp[[i]], psji$x), predy(bsp[[j]], psji$y), ...)
+        for (k in seq_along(levels))
+            llines(predy(bsp[[i]], pts[k, , 1]),
+                   predy(bsp[[j]], pts[k, , 2]), ...)
+        popViewport(1)
+    }        
+
     splom(~ pfr, lower.panel = lp, upper.panel = up, diag.panel = dp, ...)
 }
 
