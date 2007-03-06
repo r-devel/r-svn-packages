@@ -1,3 +1,7 @@
+2007-03-06 Thomas Lumley <tlumley@u.washington.edu>
+
+	* R/read.dta.R: avoid as.data.frame.list, for efficiency 
+	
 2006-12-22 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* man/read.epiinfo.Rd: spelling
