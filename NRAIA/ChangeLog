@@ -1,3 +1,7 @@
+2007-03-05  Douglas Bates  <bates@r-project.org>
+
+	* R/profile.R (dp): correct thinko in call to panel.axis
+
 2007-03-05  Douglas Bates  <bates@stat.wisc.edu>
 
 	* DESCRIPTION (Date): New version

@@ -118,7 +118,8 @@ splom.profile.nls <-
     }
     ## panel function for lower triangle
     lp <- function(x, y, groups, subscripts, ...) {
-        tr <- traces[[eval.parent(expression(j))]][[eval.parent(expression(i))]]
+        tr <- traces[[eval.parent(expression(j))]][[
+            eval.parent(expression(i))]]
         pushViewport(viewport(xscale = c(-1.07, 1.07) * mlev,
                               yscale = c(-1.07, 1.07) * mlev))
         dd <- sapply(current.panel.limits(), diff)/50
@@ -200,7 +201,7 @@ splom.profile.nls <-
             if (j == n.var) sides <- "left"
             for (side in sides)
                 panel.axis(side = side,
-                           at = format(at, trim = TRUE),
+                           at = at,
                            labels = format(at, trim = TRUE),
                            tick = TRUE,
                            check.overlap = TRUE,
