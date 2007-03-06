@@ -1,6 +1,7 @@
 plotfit <- function(fm, ...) UseMethod("plotfit")
 
-plotfit.nls <- function(fm, ...)
+## Determine the names of the x and y variables in a fitted model
+vnm <- function(fm)
 {
     mm <- fm$m
     cc <- fm$call
@@ -10,14 +11,24 @@ plotfit.nls <- function(fm, ...)
     vnms <- rhsnms[!(rhsnms %in% pnms)]
     if (length(vnms) > 1)
         stop("plotfit not yet implements for >1 covariate")
-    predfun <- function(x) {
+    list(x = as.name(vnms), y = form[[2]])
+}
+
+## Create the predictor function from a fitted model
+pfun <- function(fm)
+{
+    vnmx <- as.character(vnm(fm)$x)
+    function(x) {
         ll <- list(x)
-        names(ll) <- vnms
+        names(ll) <- vnmx
         predict(fm, ll)
     }
-    xyplot(eval(substitute(y ~ x, list(y = form[[2]],
-                                       x = as.name(vnms)))),
-           mm$getEnv(),
+}
+    
+plotfit.nls <- function(fm, ...)
+{
+    predfun <- pfun(fm)
+    xyplot(eval(substitute(y ~ x, vnm(fm))), fm$m$getEnv(),
            panel = function(x, y, ...) {
                panel.grid(h = -1, v = -1)
                panel.points(x, y, ...)
@@ -25,4 +36,26 @@ plotfit.nls <- function(fm, ...)
            }, ...)
 }
 
-    
+plotfit.list <- function(fm, ...)
+{
+    if (!all(unlist(lapply(fm, inherits, "nls"))))
+        stop("plotfit of a list must be a list of nls models")
+    nms <- names(fm)
+    pfuns <- lapply(fm, pfun)
+    xyplot(eval(substitute(y ~ x, vnm(fm[[1]]))), fm[[1]]$m$getEnv(),
+           panel = function(x, y, ...) {
+               panel.grid(h = -1, v = -1)
+               panel.points(x, y, ...)
+               dots <- list(...)
+               lims <- current.panel.limits()$x
+               if (!is.null(dots$from)) lims[1] <- as.numeric(dots$from)[1]
+               if (!is.null(dots$to)) lims[2] <- as.numeric(dots$to)[1]
+               n <- 101
+               if (!is.null(dots$n)) n <- as.integer(max(2, dots$n[1]))
+               xv <- seq(lims[1], lims[2], len = n)
+               ln <- trellis.par.get("superpose.line")
+               for (i in seq_along(pfuns))
+                   llines(xv, pfuns[[i]](xv), col = ln$col[i],
+                          lty = ln$lty[i], lwd = ln$lwd[i])
+           }, ...)
+}

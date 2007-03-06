@@ -6,6 +6,7 @@ import(grid)
 export(plotfit)
 
 S3method(plotfit, nls)
+S3method(plotfit, list)
 S3method(plot, profile.nls)
 S3method(splom, profile.nls)
 S3method(as.data.frame, profile.nls)
