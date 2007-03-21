@@ -1,3 +1,10 @@
+2007-03-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/ltsReg.R (ltsReg.default): fix long-standing ("rrcov") bug of
+	wrong coefficient order in ltsReg(x,y, intercept=FALSE).
+
+	* tests/LTS-specials.R: add regression-test
+
 2007-02-08  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/covMcd.R (singularityMsg): moved the remaining cases out of

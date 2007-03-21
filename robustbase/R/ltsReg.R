@@ -66,7 +66,7 @@ ltsReg.formula <- function(formula, data, subset, weights, na.action,
 	xint <- match("(Intercept)", colnames(x), nomatch = 0)
 	if(xint)
 	    x <- x[, -xint, drop = FALSE]
-	fit <- ltsReg(x, y, intercept = (xint > 0), ...)
+	fit <- ltsReg.default(x, y, intercept = (xint > 0), ...)
     }
 
     ## 3) return the na.action info
@@ -272,7 +272,7 @@ ltsReg.default <-
     else { ## ------------------ usual non-trivial case ---------------------
 	if(mcd) ## need 'old x' later
 	    X <- x
-	if (intercept) {
+	if (intercept) { ## intercept must be *last* (<- fortran code) {"uahh!"}
 	    x <- cbind(x, "Intercept" = 1)
 	    dx <- dim(x)
 	    xn <- colnames(x)
@@ -280,6 +280,11 @@ ltsReg.default <-
 	p <- dx[2]
 	if (n <= 2 * p)
 	    stop("Need more than twice as many observations as variables.")
+
+	getCoef <- ## simple wrapper (because of above "intercept last")
+	    if(p > 1 && intercept)
+		 function(cf) cf[c(p, 1:(p - 1))]
+	    else function(cf) cf
 
 	ans <- list(alpha = alpha)
 
@@ -293,8 +298,7 @@ ltsReg.default <-
 	    ## Do the same for the names and for ans$coef - see below
 	    cf <- z$coef
 	    names(cf) <- xn
-	    ans$raw.coefficients <-
-		if(p > 1 && intercept) cf[c(p, 1:(p - 1))] else cf
+	    ans$raw.coefficients <- getCoef(cf)
 
 	    resid <- z$residuals
 	    ans$quan <- quan <- n
@@ -316,9 +320,7 @@ ltsReg.default <-
 		## old, suboptimal: z <- lsfit(x, y, wt = weights, intercept = FALSE)
 		z <- lm.wfit(x, y, w = weights)
 
-		## VT:: 26.12.2004
-		ans$coefficients <-
-		    if(p > 1 && intercept) z$coef[c(p, 1:(p - 1))] else z$coef
+		ans$coefficients <- getCoef(z$coef)
 
 		fitted <- x %*% z$coef
 		ans$scale <- sqrt(sum(weights * resid^2)/(sum.w - 1))
@@ -334,9 +336,7 @@ ltsReg.default <-
 		weights <- as.numeric(abs(ans$resid) <= quantiel)
 	    }
 
-	    ## VT:: 26.12.2004
-	    names(ans$coefficients) <-
-		if(p > 1 && intercept) xn[c(p, 1:(p - 1))] else xn
+	    names(ans$coefficients) <- getCoef(xn)
 
 	    s1 <- sum(resid^2)
 	    ans$crit <- s1
@@ -370,9 +370,7 @@ ltsReg.default <-
 	    resid <- y - fitted
 	    coefs[piv] <- cf ## FIXME? why construct 'coefs' so complicatedly?	use 'cf' !
 
-	    ## VT:: 26.12.2004
-	    ans$raw.coefficients <-
-		if(p > 1 && intercept) coefs[c(p, 1:(p - 1))] else coefs
+	    ans$raw.coefficients <- getCoef(coefs)
 
 	    ans$quan <- quan
 	    correct <- if(use.correction)
@@ -397,9 +395,7 @@ ltsReg.default <-
 		## old, suboptimal: z1 <- lsfit(x, y, wt = weights, intercept = FALSE)
 		z1 <- lm.wfit(x, y, w = weights)
 
-		## VT:: 26.12.2004
-		ans$coefficients <-
-		    if(p > 1) z1$coef[c(p, 1:(p - 1))] else z1$coef
+		ans$coefficients <- getCoef(z1$coef)
 
 		fitted <- x %*% z1$coef
 		resid <- z1$residuals
@@ -823,7 +819,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	    nsamp <- rrcov.control()$nsamp
 	}
     }
-
+    nsamp <- as.integer(nsamp)
 
     ## y <- as.matrix(y)
     ## xy <- matrix(0, ncol = p + 1, nrow = n)
@@ -834,92 +830,38 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     storage.mode(n) <- "integer"
     storage.mode(p) <- "integer"
     storage.mode(quan) <- "integer"
-    storage.mode(nsamp) <- "integer"
-
-    objfct <- as.double(0)
-    inbest <- rep.int(as.integer(10000), quan)
-
-    datt <- matrix(as.double(0), ncol = p + 1, nrow = n)
 
     ##	 Allocate temporary storage for the fortran implementation
 
-    weights <- matrix(0, nrow = n, ncol = 1)
-    temp <- matrix(0, nrow = n, ncol = 1)
-    index1 <- matrix(0, nrow = n, ncol = 1)
-    index2 <- matrix(0, nrow = n, ncol = 1)
-    aw2 <- matrix(0, nrow = n, ncol = 1)
-    aw <- matrix(0, nrow = n, ncol = 1)
-    residu <- matrix(0, nrow = n, ncol = 1)
-    yy <- matrix(0, nrow = n, ncol = 1)
-    nmahad <- matrix(0, nrow = n, ncol = 1)
-    ndist <- matrix(0, nrow = n, ncol = 1)
-    am <- matrix(0, nrow = n, ncol = 1)
-    am2 <- matrix(0, nrow = n, ncol = 1)
-    slutn <- matrix(0, nrow = n, ncol = 1)
+    datt <- matrix(0., ncol = p + 1, nrow = n)
 
-    storage.mode(weights) <- "double"
-    storage.mode(temp) <- "integer"
-    storage.mode(index1) <- "integer"
-    storage.mode(index2) <- "integer"
-    storage.mode(aw2) <- "double"
-    storage.mode(aw) <- "double"
-    storage.mode(residu) <- "double"
-    storage.mode(yy) <- "double"
-    storage.mode(nmahad) <- "double"
-    storage.mode(ndist) <- "double"
-    storage.mode(am) <- "double"
-    storage.mode(am2) <- "double"
-    storage.mode(slutn) <- "double"
+    temp <- index1 <- index2 <- integer(n)
 
-    ##	 integer jmiss(nvad)		     --> p+1
-    jmiss <- matrix(0, nrow = p+1, ncol = 1)
-    storage.mode(jmiss) <- "integer"
-    ##	 double precision xmed(nvad)	 --> p+1
-    xmed <- matrix(0, nrow = p+1, ncol = 1)
-    storage.mode(xmed) <- "double"
-    ##	 double precision xmad(nvad)	 p+1
-    xmad <- matrix(0, nrow = p+1, ncol = 1)
-    storage.mode(xmad) <- "double"
-    ##	 double precision a(nvad)		 p+1
-    a <- matrix(0, nrow = p+1, ncol = 1)
-    storage.mode(a) <- "double"
+    weights <- aw2 <- aw <- residu <- yy <-
+	nmahad <- ndist <- am <- am2 <- slutn <-
+	    double(n)
 
-    ##	 double precision da(nvad)		 p+1
-    da <- matrix(0, nrow = p+1, ncol = 1)
-    storage.mode(da) <- "double"
-    ##	 double precision h(nvar,nvad)	     p*(p+1)
-    h <- matrix(0, nrow = p*(p+1), ncol = 1)
-    storage.mode(h) <- "double"
-    ##	 double precision hvec(nvar*nvad)	     p*(p+1)
-    hvec <- matrix(0, nrow = p*(p+1), ncol = 1)
-    storage.mode(hvec) <- "double"
-    ##	 double precision c(nvar,nvad)	     p*(p+1)
-    c <- matrix(0, nrow = p*(p+1), ncol = 1)
-    storage.mode(c) <- "double"
-    ##	 double precision cstock(10,nvar*nvar)	 10*p*p
-    cstock <- matrix(0, nrow = 10*p*p, ncol = 1)
-    storage.mode(cstock) <- "double"
-    ##	 double precision mstock(10,nvar)	     10*p
-    mstock <- matrix(0, nrow = 10*p, ncol = 1)
-    storage.mode(mstock) <- "double"
-    ##	 double precision c1stock(km10,nvar*nvar)	 km10*p*p
-    c1stock <- matrix(0, nrow = km10*p*p, ncol = 1)
-    storage.mode(c1stock) <- "double"
-    ##	  double precision m1stock(km10,nvar)	  km10*p
-    m1stock <- matrix(0, nrow = km10*p, ncol = 1)
-    storage.mode(m1stock) <- "double"
-    ##	  double precision dath(nmaxi,nvad)		  nmaxi*(p+1)
-    dath <- matrix(0, nrow = nmaxi*(p+1), ncol = 1)
-    storage.mode(dath) <- "double"
-    ##	 double precision sd(nvar)		     p
-    sd <- matrix(0, nrow = p, ncol = 1)
-    storage.mode(sd) <- "double"
-    ##	 double precision means(nvar)	     p
-    means <- matrix(0, nrow = p, ncol = 1)
-    storage.mode(means) <- "double"
-    ##	 double precision bmeans(nvar)	     p
-    bmeans <- matrix(0, nrow = p, ncol = 1)
-    storage.mode(bmeans) <- "double"
+    jmiss <- integer(p+1)	##	 integer jmiss(nvad)	  --> p+1
+
+    xmed <- double(p+1)		##	 double	 xmed(nvad)	  --> p+1
+    xmad <- double(p+1)		##	 double	 xmad(nvad)
+    a	 <- double(p+1)		##	 double	    a(nvad)
+    da	 <- double(p+1)		##	 double	   da(nvad)
+
+    h <- matrix(0., p, p+1)	##	 double	 h(nvar,nvad)		p*(p+1)
+    hvec <- double(p*(p+1))	##	 double	 hvec(nvar*nvad)	p*(p+1)
+    c <- matrix(0., p, p+1)	##	 double	 c(nvar,nvad)		p*(p+1)
+
+    cstock <- matrix(0., 10, p*p)##	 double	 cstock(10,nvar*nvar)	10*p*p
+    mstock <- matrix(0., 10, p) ##	 double	 mstock(10,nvar)	10*p
+    c1stock <- matrix(0., km10, p*p)##	 double	 c1stock(km10,nvar*nvar)  km10*p*p
+    m1stock <- matrix(0., km10, p)##	 double	 m1stock(km10,nvar)	km10*p
+
+    dath <- matrix(0., nmaxi, p+1)##	 double	 dath(nmaxi,nvad)	nmaxi*(p+1)
+
+    sd <- double(p)		##	 double	 sd(nvar)		p
+    means <- double(p)		##	 double	 means(nvar)		p
+    bmeans <- double(p)		##	 double	 means(nvar)		p
 
     .Fortran("rfltsreg",
 	     xy = xy,
@@ -927,8 +869,10 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	     p,
 	     quan,
 	     nsamp,
-	     inbest = inbest,
-	     objfct = objfct,
+
+	     inbest = rep.int(as.integer(10000), quan),
+	     objfct = as.double(0),
+
 	     intercept = as.integer(intercept),
 	     intadjust = as.integer(adjust),
 	     nvad = as.integer(p + 1),
