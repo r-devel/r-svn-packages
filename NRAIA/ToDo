@@ -1,0 +1,5 @@
+- In splom.profile.nls check the levels against the limits of the
+  backSplines for each of the parameters.  Setting alphamax > 0.01
+  in the call to profile (BTW, alphamax should be called alphamin)
+  then using the default for conf the splom method currently causes an
+  error.

@@ -3,7 +3,7 @@ import(splines)
 import(lattice)
 import(grid)
 
-export(plotfit)
+export(plotfit, SSRichards)
 
 S3method(plotfit, nls)
 S3method(plotfit, list)

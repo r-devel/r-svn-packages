@@ -10,7 +10,7 @@ vnm <- function(fm)
     rhsnms <- all.vars(form[[3]])
     vnms <- rhsnms[!(rhsnms %in% pnms)]
     if (length(vnms) > 1)
-        stop("plotfit not yet implements for >1 covariate")
+        stop("plotfit not yet implemented for >1 covariate")
     list(x = as.name(vnms), y = form[[2]])
 }
 

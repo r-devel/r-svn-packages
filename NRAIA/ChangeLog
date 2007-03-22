@@ -1,3 +1,12 @@
+2007-03-22  Douglas Bates  <bates@gchq.local>
+
+	* DESCRIPTION (Date): New version
+	* R/SSRichards.R: Add self-starting Richards growth model
+
+2007-03-07  Douglas Bates  <bates@stat.wisc.edu>
+
+	* R/plotfit.R (vnm): Corrected grammar error in message.
+
 2007-03-05  Douglas Bates  <bates@r-project.org>
 
 	* R/profile.R (dp): correct thinko in call to panel.axis
