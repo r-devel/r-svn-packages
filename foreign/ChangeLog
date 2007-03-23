@@ -1,3 +1,9 @@
+2007-03-23 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 0.8-19, depends on 2.5.0.
+	* NAMESPACE: remove conditionality
+	* man/read.ssd.Rd: add comments about alternatives.
+
 2007-03-06 Thomas Lumley <tlumley@u.washington.edu>
 
 	* R/read.dta.R: avoid as.data.frame.list, for efficiency 

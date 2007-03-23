@@ -6,6 +6,4 @@ export(data.restore, lookup.xport, read.dbf, read.dta, read.epiinfo,
 
 # not exported: SModeNames writeForeignStata writeForeignSPSS
 
-if(getRversion() >= "2.5.0") {
 importFrom(utils, write.table)
-}
