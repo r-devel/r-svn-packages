@@ -1,3 +1,11 @@
+2007-03-26  Kurt Hornik  <Kurt.Hornik@wu-wien.ac.at>
+
+	* NAMESPACE:
+	* R/arff.R:
+	* man/read.arff.Rd:
+	* man/write.arff.Rd:
+	Add functionality for reading and writing Weka ARFF files.
+
 2007-03-23 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-19, depends on 2.5.0.
