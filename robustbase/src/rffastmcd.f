@@ -78,8 +78,9 @@ cc
 cc   The algorithm works as follows:
 cc
 cc	 The dataset contains n cases, and nvar variables are used.
-cc	 When n < 2*nmini, the algorithm will analyze the dataset as a whole.
-cc	 When n >= 2*nmini, the algorithm will use several subdatasets.
+cc  Let n_0 := 2 * nmini (== 600).
+cc	 When n <  n_0, the algorithm will analyze the dataset as a whole.
+cc	 When n >= n_0, the algorithm will use several subdatasets.
 cc
 cc	 When the dataset is analyzed as a whole, a trial
 cc	 subsample of nvar+1 cases is taken, of which the mean and
@@ -125,6 +126,7 @@ cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 
 	subroutine rffastmcd(dat,n,nvar,nhalff,krep,initcov,initmean,
+c                                       ------ nhalff = quan = h(alpha)
      *	  inbest,det,weight,fit,coeff,kount,adcov,
      *	  iseed,
      *	  temp, index1, index2, nmahad, ndist, am, am2, slutn,
@@ -175,7 +177,8 @@ C	parameter (nvm12=nvmax1*nvmax1)
 	parameter (km10=10*kmini)
 	parameter (nmaxi=nmini*kmini)
 cc
-	integer rfncomb,rfnbreak
+	integer rfncomb
+c unused   integer rfnbreak
 	integer ierr,matz,seed,tottimes,step
 	integer pnsel
 	integer flag(km10)
@@ -299,10 +302,10 @@ cc  observations on which the MCD is based) is given by the integer variable
 cc  nhalff.
 cc  If nhalff equals n, the MCD is the classical covariance matrix.
 cc  The logical value class indicates this situation.
-cc  The variable nbreak is the breakdown point of the MCD estimator
-cc  based on nhalff observations, whereas jdefaul is the optimal value of
-cc  nhalff, with maximal breakdown point. The variable percen is the
-cc  corresponding percentage.
+cc  The variable jbreak is the breakdown point of the MCD estimator
+cc  based on nhalff observations, whereas jdefaul = (n+nvar+1)/2
+cc  would be the optimal value of nhalff, with maximal breakdown point.
+cc  The variable percen is the corresponding percentage (MM: rather "fraction").
 cc
 	percen = (1.D0*nhalff)/(1.D0*n)
 
@@ -316,7 +319,7 @@ cc
 	  endif
 	endif
 
-	jbreak=rfnbreak(nhalff,n,nvar)
+c unused	jbreak=rfnbreak(nhalff,n,nvar)
 	class= .false.
 	if(nhalff.ge.n) then
 c	 compute *only* the classical estimate
@@ -339,7 +342,9 @@ cc.	  call rfmcduni(ndist,n,nhalff,slutn,bstd,am,am2, factor,
 	  initcov(1)=bstd
 	  goto 9999
 	endif
-cc
+
+cc  p >= 2   in the following
+cc  ------
 cc  Some initializations:
 cc    seed = starting value for random generator
 cc    matz = auxiliary variable for the subroutine rs, indicating whether

@@ -22,10 +22,10 @@
 ### Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 ## hidden in namespace:
-quan.f <- function(alpha, n, rk) {
-    ## Compute size of subsample, given alpha
+quan.f <- function(alpha, n, p) {
+    ## Compute h(alpha) := size of subsample, given alpha, (n,p)
     ## Same function for covMcd() and ltsReg()
-    n2 <- (n+rk+1) %/% 2
+    n2 <- (n+p+1) %/% 2
     floor(2 * n2 - n + 2 * (n - n2) * alpha)
 }
 
@@ -84,17 +84,20 @@ covMcd <- function(x,
     dimn <- dimnames(x)
     n <- dx[1]
     p <- dx[2]
-    if(n < 2 * p)
-	stop("Need at least 2*(number of variables) observations ")
+    ## h(alpha) , the size of the subsamples
+    quan <- quan.f(alpha, n, p)
     jmin <- (n + p + 1) %/% 2
+    if(n < 2 * p) {
+        if(n < p + 1)# absolute barrier!
+            stop("n <= p -- you can't be serious!")
+	warning("n < 2 * p --- Care: probably too small sample size!")
+	## stop("Need at least 2*(number of variables) observations ")
+    }
     if(alpha < 1/2) ## FIXME? shouldn't we rather test	'alpha < jmin/n' ?
 	stop("The MCD must cover at least", jmin, "observations")
-    else if(alpha > 1)
-	stop("alpha is out of range")
+    else if(alpha > 1) stop("alpha must be <= 1")
 
     quantiel <- qchisq(0.975, p)
-    quan <- quan.f(alpha, n, p)
-
     ## vt::03.02.2006 - raw.cnp2 and cnp2 are vectors of size 2 and  will
     ##	 contain the correction factors (concistency and finite sample)
     ##	 for the raw and reweighted estimates respectively. Set them
@@ -152,10 +155,11 @@ covMcd <- function(x,
 	ans$alpha <- alpha
 	ans$quan <- quan
 	ans$raw.cov <- mcd
-	dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
 	ans$raw.center <- loc
-	if(length(dimn[[2]]))
-	    names(ans$raw.center) <- dimn[[2]]
+	if(!is.null(nms <- dimn[[2]])) {
+	    names(ans$raw.center) <- nms
+	    dimnames(ans$raw.cov) <- list(nms,nms)
+	}
 	ans$crit <- exp(obj)
 	ans$method <- paste(ans$method,
 			    "\nThe minimum covariance determinant estimates based on",
@@ -184,10 +188,9 @@ covMcd <- function(x,
     ##	(see calfa in Croux and Haesbroeck)
     qalpha <- qchisq(quan/n, p)
     calphainvers <- pgamma(qalpha/2, p/2 + 1)/(quan/n)
-    raw.cnp2[1] <- calpha <- 1/calphainvers
-    raw.cnp2[2] <- correct <- MCDcnp2(p, n, alpha)
-    if(!use.correction)	  # do not use finite sample correction factor
-	raw.cnp2[2] <- correct <- 1.0
+    calpha <- 1/calphainvers
+    correct <- if(use.correction) MCDcnp2(p, n, alpha) else 1.
+    raw.cnp2 <- c(calpha, correct)
 
     if(p == 1) {
 	## ==> Compute univariate location and scale estimates
@@ -197,18 +200,15 @@ covMcd <- function(x,
 	center <- as.double(mcd$initmean)
 	if(abs(scale - 0) < 1e-07) {
             ans$singularity <- list(kind = "identicalObs", q = quan)
-	    ## VT:: 22.12.04 - ans$cov and ans$raw.cov must be a matrices
-	    ans$cov <- matrix(0)
-	    names(ans$cov) <- dimn[[2]][1]
-	    ans$center <- center
-	    names(ans$center) <- dimn[[2]][1]
+	    ans$raw.cov <- ans$cov <- matrix(0)
+	    ans$raw.center <- ans$center <- center
 	    ans$n.obs <- n
 	    ans$alpha <- alpha
 	    ans$quan <- quan
-	    ans$raw.cov <- matrix(0)
-	    names(ans$raw.cov) <- dimn[[2]][1]
-	    ans$raw.center <- center
-	    names(ans$raw.center) <- dimn[[2]][1]
+	    if(!is.null(nms <- dimn[[2]][1])) {
+		names(ans$raw.center) <- names(ans$center) <- nms
+		dimnames(ans$raw.cov) <- dimnames(ans$cov) <- list(nms,nms)
+	    }
 	    ans$crit <- 0
 	    weights <- as.numeric(abs(x - center) < 1e-07) # 0 / 1
 	} ## end { scale ~= 0 }
@@ -227,18 +227,19 @@ covMcd <- function(x,
 	    else {
 		qdelta.rew <- qchisq(sum.w/n, p)
 		cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-		cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
-		cnp2[2] <- correct.rew <- MCDcnp2.rew(p, n, alpha)
-		if(!use.correction) # do not use finite sample correction factor
-		    cnp2[2] <- correct.rew <- 1.0
-	    }
+		cdelta.rew <- 1/cdeltainvers.rew
+		correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
+                cnp2 <- c(cdelta.rew, correct.rew)
+            }
 	    ans$cov <- ans$cov * cdelta.rew * correct.rew
 	    ans$alpha <- alpha
 	    ans$quan <- quan
-	    ans$raw.cov <- scale^2
-	    names(ans$raw.cov) <- dimn[[2]][1]
+	    ans$raw.cov <- as.matrix(scale^2)
 	    ans$raw.center <- as.vector(center)
-	    names(ans$raw.center) <- dimn[[2]][1]
+	    if(!is.null(nms <- dimn[[2]][1])) {
+		dimnames(ans$raw.cov) <- list(nms,nms)
+		names(ans$raw.center) <- nms
+	    }
 	    ans$crit <- 1/(quan - 1) *
                 sum(sort((x - as.double(mcd$initmean))^2, partial = quan)[1:quan])
 	    center <- ans$center
@@ -260,10 +261,11 @@ covMcd <- function(x,
 	if(mcd$exactfit != 0) {
 	    dim(mcd$coeff) <- c(5, p)
 	    ans$cov <- mcd$initcovariance
-	    dimnames(ans$cov) <- list(dimn[[2]], dimn[[2]])
 	    ans$center <- as.vector(mcd$initmean)
-	    if(length(dimn[[2]]))
-		names(ans$center) <- dimn[[2]]
+	    if(!is.null(nms <- dimn[[2]])) {
+		dimnames(ans$cov) <- list(nms, nms)
+		names(ans$center) <- nms
+	    }
 	    ans$n.obs <- n
 
 ## no longer relevant:
@@ -284,10 +286,11 @@ covMcd <- function(x,
 	    ans$alpha <- alpha
 	    ans$quan <- quan
 	    ans$raw.cov <- mcd$initcovariance
-	    dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
 	    ans$raw.center <- as.vector(mcd$initmean)
-	    if(length(dimn[[2]]))
-		names(ans$raw.center) <- dimn[[2]]
+	    if(!is.null(nms <- dimn[[2]])) {
+		names(ans$raw.center) <- nms
+		dimnames(ans$raw.cov) <- list(nms,nms)
+	    }
 	    ans$crit <- 0
 	    weights <- mcd$weights
 	} ## end exact fit <==>	 (mcd$exactfit != 0)
@@ -309,10 +312,9 @@ covMcd <- function(x,
 	    else {
 		qdelta.rew <- qchisq(sum.w/n, p)
 		cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-		cnp2[1] <- cdelta.rew <- 1/cdeltainvers.rew
-		cnp2[2] <- correct.rew <- MCDcnp2.rew(p, n, alpha)
-		if(!use.correction) # do not use finite sample correction factor
-		    cnp2[2] <- correct.rew <- 1.0
+		cdelta.rew <- 1/cdeltainvers.rew
+		correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
+                cnp2 <- c(cdelta.rew, correct.rew)
 	    }
 
 	    ans <- c(ans, cov.wt(x, wt = weights, cor))
@@ -325,10 +327,11 @@ covMcd <- function(x,
 	    ans$alpha <- alpha
 	    ans$quan <- quan
 	    ans$raw.cov <- mcd$initcovariance
-	    dimnames(ans$raw.cov) <- list(dimn[[2]], dimn[[2]])
 	    ans$raw.center <- as.vector(mcd$initmean)
-	    if(length(dimn[[2]]))
-		names(ans$raw.center) <- dimn[[2]]
+	    if(!is.null(nms <- dimn[[2]])) {
+		names(ans$raw.center) <- nms
+		dimnames(ans$raw.cov) <- list(nms,nms)
+	    }
 	    ans$raw.weights <- weights
 	    ans$crit <- mcd$mcdestimate
 	    ans$raw.mah <- mahalanobis(x, ans$raw.center, ans$raw.cov, tol = tolSolve)
@@ -559,7 +562,7 @@ MCDcnp2.rew <- function(p, n, alpha)
     n <- dx[1]
     p <- dx[2]
 
-    ##	 parameters for partitioning
+    ##	 parameters for partitioning {equal to those in Fortran !!}
     kmini <- 5
     nmini <- 300
     km10 <- 10*kmini
