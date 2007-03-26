@@ -1,5 +1,10 @@
 2007-03-26  Martin Maechler  <maechler@stat.math.ethz.ch>
 
+	* R/covMcd.R (covMcd): __experimental__ try to be more tolerant
+		about small n, notably n < 2p, to see where the boundary
+		really lies.
+ ***** may change again before release *****
+
 	* src/rf-common.f (rfnbreak): really unused
 	* src/rfltsreg.f, src/rffastmcd.f: comment use of rfnbreak()
 

@@ -86,15 +86,20 @@ covMcd <- function(x,
     p <- dx[2]
     ## h(alpha) , the size of the subsamples
     quan <- quan.f(alpha, n, p)
-    jmin <- (n + p + 1) %/% 2
     if(n < 2 * p) {
-        if(n < p + 1)# absolute barrier!
-            stop("n <= p -- you can't be serious!")
+	if(n <= p + 1) # ==> floor((n+p+1)/2) > n - 1  -- not Ok
+	    stop(if (n <= p) # absolute barrier!
+		 "n <= p -- you can't be serious!"
+	    else "n == p+1  is too small sample size for MCD")
+	## else	 p+1 < n < 2*p
 	warning("n < 2 * p --- Care: probably too small sample size!")
 	## stop("Need at least 2*(number of variables) observations ")
     }
-    if(alpha < 1/2) ## FIXME? shouldn't we rather test	'alpha < jmin/n' ?
-	stop("The MCD must cover at least", jmin, "observations")
+##     jmin <- (n + p + 1) %/% 2
+##     if(alpha < 1/2) ## FIXME? shouldn't we rather test	'alpha < jmin/n' ?
+## 	stop("The MCD must cover at least", jmin, "observations")
+    if(quan > n)
+	stop("Sample size n  <  h(alpha; n,p) := size of \"good\" subsample")
     else if(alpha > 1) stop("alpha must be <= 1")
 
     quantiel <- qchisq(0.975, p)
