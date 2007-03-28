@@ -256,6 +256,7 @@ cccc  CALL INTPR('>>> RFLTSREG ... minigr=',-1,iseed,1)
 	nhalf=nhalff
 	kstep=k1
 	if(n.le.replow(nsel)) then
+c     		use all combinations; happens iff  nsel = nvar = p <= 6
 	  nrep=rfncomb(nsel,n)
 	else
 	  nrep = krep

@@ -218,6 +218,7 @@ cc
  10	continue
 	l=1
 	lr=ncas
+c    while(l < lr)
  20	if(l.ge.lr) goto 90
 	ax=aw(k)
 	jnc=l
@@ -229,15 +230,16 @@ cc
  50	if(aw(j).le.ax) goto 60
 	j=j-1
 	goto 50
- 60	if(jnc.gt.j) goto 70
-	i=index(jnc)
-	index(jnc)=index(j)
-	index(j)=i
-	wa=aw(jnc)
-	aw(jnc)=aw(j)
-	aw(j)=wa
-	jnc=jnc+1
-	j=j-1
+ 60	if(jnc .le. j) then
+           i=index(jnc)
+           index(jnc)=index(j)
+           index(j)=i
+           wa=aw(jnc)
+           aw(jnc)=aw(j)
+           aw(j)=wa
+           jnc=jnc+1
+           j=j-1
+        endif
  70	goto 30
  80	if(j.lt.k) l=jnc
 	if(k.lt.jnc) lr=j

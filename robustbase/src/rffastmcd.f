@@ -161,14 +161,15 @@ cc
 	parameter (k2=2)
 	parameter (k3=100)
 
-c MM: below, there is also hardcoded "10" in places related to "stock" !
+c MM: below, '10' ("the ten best solutions") is also hardcoded in many places,
+c	 related to "stock" !
 
 cc
-cc  The parameter krep represents the total number of trial subsamples
-cc  to be drawn when n exceeds 2*nmini.
+cc  krep := the total number of trial subsamples
+cc          to be drawn when n exceeds 2*nmini;
+cc  	was hardcoded krep := 500; now an *argument*
 cc
-c	parameter (krep=500)
-cc
+
 cc  The following lines need not be modified.
 cc
 C	parameter (nvmax1=nvmax+1)
@@ -186,6 +187,7 @@ c unused   integer rfnbreak
 	integer subdat(2,nmaxi)
 	double precision mcdndex(10,2,kmini)
 	integer subndex(450)
+c FIXME                 ^^^ how does this depend on (kmini,nmini,...) ???
 	integer replow
 	integer fit
 cc	double precision chi2(50)
@@ -450,6 +452,7 @@ c MM(FIXME):  The following code depends crucially on  kmini == 5
 	  nhalf=nhalff
 	  kstep=k1
 	  if(n.le.replow(nsel)) then
+c     		use all combinations; happens iff  nsel = nvar+1 = p+1 <= 6
 	     nrep=rfncomb(nsel,n)
 	  else
 C VT::02.09.2004 - remove the hardcoded 500 for nrep
