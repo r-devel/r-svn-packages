@@ -86,20 +86,20 @@ covMcd <- function(x,
     p <- dx[2]
     ## h(alpha) , the size of the subsamples
     quan <- quan.f(alpha, n, p)
-    if(n < 2 * p) {
-	if(n <= p + 1) # ==> floor((n+p+1)/2) > n - 1  -- not Ok
-	    stop(if (n <= p) # absolute barrier!
-		 "n <= p -- you can't be serious!"
-	    else "n == p+1  is too small sample size for MCD")
-	## else	 p+1 < n < 2*p
-	warning("n < 2 * p --- Care: probably too small sample size!")
-	## stop("Need at least 2*(number of variables) observations ")
+    if(n <= p + 1) # ==> floor((n+p+1)/2) > n - 1  -- not Ok
+	stop(if (n <= p) # absolute barrier!
+	     "n <= p -- you can't be serious!"
+	else "n == p+1	is too small sample size for MCD")
+    ## else
+    if(n < 2 * p) { ## p+1 < n < 2p
+	warning("n < 2 * p, i.e., possibly too small sample size")
+	## was stop("Need at least 2*(number of variables) observations ")
     }
 ##     jmin <- (n + p + 1) %/% 2
 ##     if(alpha < 1/2) ## FIXME? shouldn't we rather test	'alpha < jmin/n' ?
-## 	stop("The MCD must cover at least", jmin, "observations")
+##	stop("The MCD must cover at least", jmin, "observations")
     if(quan > n)
-	stop("Sample size n  <  h(alpha; n,p) := size of \"good\" subsample")
+	stop("Sample size n  <	h(alpha; n,p) := size of \"good\" subsample")
     else if(alpha > 1) stop("alpha must be <= 1")
 
     quantiel <- qchisq(0.975, p)
@@ -576,13 +576,17 @@ MCDcnp2.rew <- function(p, n, alpha)
     ##	 vt::03.02.2006 - added options "best" and "exact" for nsamp
     if(!missing(nsamp)) {
 	if(is.numeric(nsamp) && (nsamp < 0 || nsamp == 0 && p > 1)) {
-	    warning("Invalid number of trials nsamp= ",nsamp," !Using default.\n")
+	    warning("Invalid number of trials nsamp= ", nsamp,
+                    " ! Using default.\n")
 	    nsamp <- -1
 	} else if(nsamp == "exact" || nsamp == "best") {
-	    myk <- p
+	    myk <- p + 1 ## was 'p'; but p+1 ("nsel = nvar+1") is correct
 	    if(n > 2*nmini-1) {
+                ## TODO: make 'nmini' user configurable; however that
+                ##      currently needs changes to the fortran source
+                ##	and re-compilation!
 		warning("Options 'best' and 'exact' not allowed for n greater than ",
-			2*nmini-1,". \nUsing nsamp= ",nsamp,"\n")
+			2*nmini-1,".\nUsing default.\n")
 		nsamp <- -1
 	    } else {
 		nall <- choose(n, myk)
@@ -591,7 +595,7 @@ MCDcnp2.rew <- function(p, n, alpha)
 		    warning("'nsamp = \"best\"' allows maximally 5000 subsets;\n",
 			    "computing these subsets of size ",
                             myk," out of ",n,"\n")
-		} else {
+		} else { ## "exact" or ("best"  &  nall < 5000)
 		    nsamp <- 0 ## all subsamples
 		    if(nall > 5000)
 			warning("Computing all ", nall, " subsets of size ",myk,
@@ -611,26 +615,20 @@ MCDcnp2.rew <- function(p, n, alpha)
 	}
     }
 
-    storage.mode(x) <- "double"
-    storage.mode(n) <- "integer"
-    storage.mode(p) <- "integer"
-    storage.mode(quan) <- "integer"
-    storage.mode(nsamp) <- "integer"
-
     ##	 Allocate temporary storage for the Fortran implementation,
     ##	 directly in the .Fortran() call.
     ##	  (if we used C, we'd rather allocate there, and be quite faster!)
 
     .Fortran("rffastmcd",
-	     x,
-	     n,
-	     p,
-	     nhalff = quan,
-	     nsamp,
+	     x = if(is.double(x)) x else as.double(x),
+	     n =	as.integer(n),
+	     p =	as.integer(p),   ## = 'nvar'  in Fortran
+	     nhalff =	as.integer(quan),
+	     nsamp  =	as.integer(nsamp),# = 'krep'
 	     initcovariance = double(p * p),
 	     initmean	    = double(p),
 	     best	    = rep.int(as.integer(10000), quan),
-	     mcdestimate = double(1),
+	     mcdestimate = double(1),    ## = 'det'
 	     weights   = integer(n),
 	     exactfit  = integer(1), # output indicator: 0: ok; 1: ..., 2: ..
 	     coeff     = matrix(double(5 * p), nrow = 5, ncol = p), ## plane
