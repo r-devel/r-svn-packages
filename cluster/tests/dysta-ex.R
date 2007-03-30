@@ -25,16 +25,33 @@ dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
 	valmd <- rep(valmd, p)
     } else valmd <- 0.
 
-    r <- .Fortran(dystaK,
-	     n,
-	     jp = p,
-	     x,
-	     dys=   double(1 + n*(n-1)/2),
-	     ndyst= ndyst,
-	     jtmd=  as.integer(ifelse(hasNA, -1, 1)),
-	     valmd= valmd,
-	     jhalt= integer(1),
-	     PACKAGE = "cluster")[c("dys", "jhalt")]
+    dys <- double(1 + n*(n-1)/2)
+    jtmd <- as.integer(ifelse(hasNA, -1, 1))
+
+    r <-
+        if(dystaK == "dysta3") {
+            .C(dystaK,
+               n,
+               jp = p,
+               x,
+               dys= dys,
+               ndyst= ndyst,
+               jtmd=  jtmd,
+               valmd= valmd,
+               jhalt= integer(1),
+               PACKAGE = "cluster")[c("dys", "jhalt")]
+        } else {
+            .Fortran(dystaK,
+                     n,
+                     jp = p,
+                     x,
+                     dys= dys,
+                     ndyst= ndyst,
+                     jtmd=  jtmd,
+                     valmd= valmd,
+                     jhalt= integer(1),
+                     PACKAGE = "cluster")[c("dys", "jhalt")]
+        }
     if(r$jhalt) {
 	cat("`jhalt' was ", r$jhalt,
 	    " -- some dissimilarities will be missing.\n")
