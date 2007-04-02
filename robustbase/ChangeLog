@@ -1,4 +1,9 @@
-2007-03-2  Valentin Todorov  <valentin.todorov@chello.at>
+2007-04-2  Valentin Todorov  <valentin.todorov@chello.at>
+    * R/covMcd.R: the (repeated) calculation of the consistency 
+    *   correction factor for the raw and reweighted MCD covariance 
+    *   replaced by a call to a function MCDcons()
+
+2007-03-30  Valentin Todorov  <valentin.todorov@chello.at>
     * R/covMcd (print.mcd): solve a conflict with fastmcd() in package robust - 
     *   both return an object of class "mcd"
     

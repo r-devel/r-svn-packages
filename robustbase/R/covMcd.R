@@ -142,10 +142,14 @@ covMcd <- function(x,
 
         ## Consistency factor for reweighted MCD
         if(sum.w != n) {
-        qdelta.rew <- qchisq(sum.w/n, p)
-        cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1) / (sum.w/n)
-        cnp2[1] <- 1/cdeltainvers.rew
-        ans$cov <- ans$cov * cnp2[1]
+            ## VT::19.3.2007 - replace this code used several times by a function MCDcons(p, alpha)
+            ## - for the reweighted cov use 'sum(weights)/n' instead of alpha
+            ##
+            ### qdelta.rew <- qchisq(sum.w/n, p)
+            ### cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1) / (sum.w/n)
+            ### cnp2[1] <- 1/cdeltainvers.rew
+            cnp2[1] <- MCDcons(p, sum.w/n)
+            ans$cov <- ans$cov * cnp2[1]
         }
         if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
                 ans$singularity <- list(kind = "reweighted.MCD")
@@ -191,9 +195,11 @@ covMcd <- function(x,
 
     ## Compute the consistency correction factor for the raw MCD
     ##  (see calfa in Croux and Haesbroeck)
-    qalpha <- qchisq(quan/n, p)
-    calphainvers <- pgamma(qalpha/2, p/2 + 1)/(quan/n)
-    calpha <- 1/calphainvers
+    ## VT::19.3.2007 
+    ### qalpha <- qchisq(quan/n, p)
+    ### calphainvers <- pgamma(qalpha/2, p/2 + 1)/(quan/n)
+    ### calpha <- 1/calphainvers
+    calpha <- MCDcons(p, quan/n)
     correct <- if(use.correction) MCDcnp2(p, n, alpha) else 1.
     raw.cnp2 <- c(calpha, correct)
 
@@ -230,12 +236,14 @@ covMcd <- function(x,
         correct.rew <- 1
         }
         else {
-        qdelta.rew <- qchisq(sum.w/n, p)
-        cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-        cdelta.rew <- 1/cdeltainvers.rew
-        correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
-                cnp2 <- c(cdelta.rew, correct.rew)
-            }
+            ## VT::19.3.2007
+            ### qdelta.rew <- qchisq(sum.w/n, p)
+            ### cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
+            ### cdelta.rew <- 1/cdeltainvers.rew
+            cdelta.rew  <- MCDcons(p, sum.w/n)
+            correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
+            cnp2 <- c(cdelta.rew, correct.rew)
+        }
         ans$cov <- ans$cov * cdelta.rew * correct.rew
         ans$alpha <- alpha
         ans$quan <- quan
@@ -315,9 +323,12 @@ covMcd <- function(x,
         correct.rew <- 1
         }
         else {
-        qdelta.rew <- qchisq(sum.w/n, p)
-        cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-        cdelta.rew <- 1/cdeltainvers.rew
+        ## VT::19.3.2007
+        ##
+        ### qdelta.rew <- qchisq(sum.w/n, p)
+        ### cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
+        ### cdelta.rew <- 1/cdeltainvers.rew
+        cdelta.rew <- MCDcons(p, sum.w/n)
         correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
                 cnp2 <- c(cdelta.rew, correct.rew)
         }
@@ -491,6 +502,19 @@ print.summary.mcd <-
 ## ----                    ~~~~~~~~~~~
 
 ### --- Namespace hidden (but parsed once and for all) : -------------
+MCDcons <- function(p, alpha){
+    ## VT::19.3.2007 - replace the code used several times by a function MCDcons(p, alpha)
+    ##
+    ## Compute the consistency correction factor for the MCD estimate
+    ##  (see calfa in Croux and Haesbroeck)
+    ##  - alpha = h/n = quan/n
+    ##  - use the same function for the reweighted estimates, 
+    ##      but instead of 'alpha' call with 'sum(weights)/n'
+    
+    qalpha <- qchisq(alpha, p)
+    calphainvers <- pgamma(qalpha/2, p/2 + 1)/alpha
+    1/calphainvers
+}
 
 MCDcnp2 <- function(p, n, alpha)
 {
