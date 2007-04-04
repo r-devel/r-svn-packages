@@ -1,4 +1,21 @@
 ------------------------------------------------------------------------
+r4239 | deepayan | 2007-04-04 11:48:50 -0700 (Wed, 04 Apr 2007) | 1 line
+Changed paths:
+   M /trunk/rcompgen/ChangeLog
+   M /trunk/rcompgen/DESCRIPTION
+   M /trunk/rcompgen/NAMESPACE
+   M /trunk/rcompgen/R/argdb.R
+   M /trunk/rcompgen/R/completion.R
+   M /trunk/rcompgen/R/win32helper.R
+   M /trunk/rcompgen/R/zzz.R
+   A /trunk/rcompgen/SvnLog
+   A /trunk/rcompgen/TODO
+   M /trunk/rcompgen/man/rcompgen.Rd
+   A /trunk/rcompgen/update.sh
+
+copied final changes from google subversion over to the new
+repository.  All subsequent changes should be made here.
+------------------------------------------------------------------------
 r4238 | ripley | 2007-04-04 00:04:17 -0700 (Wed, 04 Apr 2007) | 1 line
 
 make a recommended package
