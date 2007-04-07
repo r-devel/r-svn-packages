@@ -313,8 +313,8 @@ rc.options(\dots)
   formatted using the current \code{width} option, so that printing them
   on the console one line at a time will be a reasonable way to list
   them.  \code{comps} is a space separated (collapsed) list of the same
-  completions, in case the front-end wishes to 
-
+  completions, in case the front-end wishes to display it in some other
+  fashion.
 
   As the various front-end interfaces evolve, the details of these
   functions are likely to change as well.
