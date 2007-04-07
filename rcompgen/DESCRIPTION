@@ -1,6 +1,5 @@
 Package: rcompgen
 Version: 0.1-8
-Priority: recommended
 Date: 2007/04/04
 Title: Completion generator for R
 Author: Deepayan Sarkar <deepayan.sarkar@r-project.org>
