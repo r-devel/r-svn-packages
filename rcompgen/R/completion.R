@@ -67,7 +67,7 @@ rc.settings <- function(ops, ns, args, func, ipck, S3, data, help, argdb, files)
     if (!missing(data))  checkAndChange( "data",  data)
     if (!missing(help))  checkAndChange( "help",  help)
     if (!missing(argdb)) checkAndChange("argdb", argdb)
-    if (!missing(files)) checkAndChange("argdb", files)
+    if (!missing(files)) checkAndChange("files", files)
     invisible()
 }
 
@@ -669,13 +669,17 @@ fileCompletionPreferred <- function()
 
 fileCompletions <- function(token)
 {
+    ## uses Sys.glob (conveniently introduced in 2.5.0)
     ## assume token starts just after the begin quote
-    dirn <- dirname(token)
-    basen <- basename(token)
-    comp.files <-
-        list.files(path = dirn,
-                   pattern = sprintf("^%s", makeRegexpSafe(basen)))
-    file.path(dirn, comp.files)
+
+    ## Sys.glob doesn't work without expansion.  Is that intended?
+    token.expanded <- path.expand(token)
+    comps <- Sys.glob(sprintf("%s*", token.expanded), dirmark = TRUE)
+
+    ## for things that only extend beyond the cursor, need to
+    ## 'unexpand' path
+    if (token.expanded != token) comps <- sub(path.expand("~"), "~", comps)
+    comps
 }
 
 
