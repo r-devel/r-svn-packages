@@ -156,6 +156,11 @@ rc.status <- function()
     }
     start <- 
         if (insideQuotes)
+
+            ## FIXME (easy): should just set 'start' to the location
+            ## of the last quote, but that would need more minutes of
+            ## thinking than I have right now.
+
             suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]\\\\/~ ]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
         else
             suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
