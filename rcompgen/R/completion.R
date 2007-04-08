@@ -147,7 +147,21 @@ rc.status <- function()
 {
     linebuffer <- .CompletionEnv[["linebuffer"]]
     end <- .CompletionEnv[["end"]]
-    start <- suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
+
+    ## special rules apply when we are inside quotes (see fileCompletionPreferred() below)
+    insideQuotes <- {
+        lbss <- head(unlist(strsplit(linebuffer, "")), .CompletionEnv[["end"]])
+        ((sum(lbss == "'") %% 2 == 1) ||
+         (sum(lbss == '"') %% 2 == 1))
+    }
+    start <- 
+        if (insideQuotes)
+            suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]\\\\/~ ]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
+        else
+            suppressWarnings(gregexpr("[^\\.\\w:?$@[\\]]+", substr(linebuffer, 1, end), perl = TRUE))[[1]]
+
+    
+            
     ##                                    ^^^^^^^^^^^^^^
     ##                             things that should not cause breaks
     start <- ## 0-indexed
