@@ -697,7 +697,8 @@ fileCompletions <- function(token)
 
     ## for things that only extend beyond the cursor, need to
     ## 'unexpand' path
-    if (token.expanded != token) comps <- sub(path.expand("~"), "~", comps)
+    if (token.expanded != token)
+        comps <- sub(path.expand("~"), "~", comps, fixed = TRUE)
     comps
 }
 
