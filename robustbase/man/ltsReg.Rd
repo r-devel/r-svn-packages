@@ -27,7 +27,7 @@ ltsReg(x, \dots)
   \item{subset}{an optional vector specifying a subset of observations
     to be used in the fitting process.}
   \item{weights}{an optional vector of weights to be used
-    in the fitting process. \bold{NO USED YET}.
+    in the fitting process. \bold{NOT USED YET}.
     %%% If specified, weighted least squares is used
     %%% with weights \code{weights} (that is, minimizing \code{sum(w*e^2)});
     %%% otherwise ordinary least squares is used.
@@ -99,11 +99,14 @@ ltsReg(x, \dots)
   removed either by \code{y ~ x - 1} or \code{y ~ 0 + x}.  See
   \code{\link{formula}} for more details.
 }
+\note{We strongly recommend using \code{\link{lmrob}()} instead of
+  \code{ltsReg} (\emph{See also} below)!
+}
 \value{
   The function \code{ltsReg} returns an object of class \code{"lts"}.
-  \cr
-  The function \code{\link{summary}} is used to obtain and print
-  a summary table of the results.
+  The \code{\link{summary}} method function is used to obtain (and
+  print) a summary table of the results, and \code{\link[ltsPlot]{plot}()}
+  can be used to plot them, see the the specific help pages.
 
   The generic accessor functions \code{\link{coefficients}},
   \code{\link{fitted.values}} and \code{\link{residuals}}
@@ -150,7 +153,8 @@ ltsReg(x, \dots)
     small raw residuals, and 0 for points with large raw residuals.
   }
   \item{method}{character string naming the method (Least Trimmed Squares).}
-  \item{X}{the input data as a matrix.}
+  \item{X}{the input data as a matrix (including intercept column if
+    applicable).}
   \item{Y}{the response variable as a vector.}
 
 }

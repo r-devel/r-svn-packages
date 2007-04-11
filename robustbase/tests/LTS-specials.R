@@ -10,6 +10,7 @@ summary(r1)
 (r1. <- ltsReg(y = x))
 i1 <- 14:16; ii <- (1:20)[-i1]
 UN <- function(lis) lapply(lis, unname)
+dimnames(r1.$X)[1] <- dimnames(r1$X)[1]
 stopifnot(all.equal(   r1[ii],     r1.[ii],  tol= 1e-15),
           all.equal(UN(r1[i1]), UN(r1.[i1]), tol= 1e-15))
 

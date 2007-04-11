@@ -81,7 +81,7 @@ ltsReg.formula <- function(formula, data, subset, weights, na.action,
     fit$terms <- mt
 
     if(model) fit$model <- mf
-    if(x.ret) fit$x <- x
+    if(x.ret) fit$x <- x # or? if(xint == 0) x else  x[, c(2:p,1), drop=FALSE]
     if(y.ret) fit$y <- y
 
     fit
@@ -281,6 +281,9 @@ ltsReg.default <-
 	if (n <= 2 * p)
 	    stop("Need more than twice as many observations as variables.")
 
+	## VT:: 26.12.2004
+	## Reorder the coefficients so that the intercept is at the beginning ..
+	## Skip this if p == 1 (i.e. p=1 and intercept=FALSE).
 	getCoef <- ## simple wrapper (because of above "intercept last")
 	    if(p > 1 && intercept)
 		 function(cf) cf[c(p, 1:(p - 1))]
@@ -292,10 +295,6 @@ ltsReg.default <-
 	    ## old, suboptimal: z <- lsfit(x, y, intercept = FALSE)
 	    z <- lm.fit(x, y)
 	    qrx <- z$qr
-	    ## VT:: 26.12.2004
-	    ## Reorder the coeficients, so that the intercept is at the beginning of the matrix
-	    ## Skip this if p == 1 (i.e. p=1 and intercept=FALSE).
-	    ## Do the same for the names and for ans$coef - see below
 	    cf <- z$coef
 	    names(cf) <- xn
 	    ans$raw.coefficients <- getCoef(cf)
@@ -466,10 +465,9 @@ ltsReg.default <-
 	rownames
     names(ans$scale) <- names(ans$raw.scale) <- yn
     names(ans$rsquared) <- names(ans$crit) <- yn
-    ans$Y <- y		# VT:: 01.09.2004 - add y to the result object
-    ans$X <- x
-    dimnames(ans$X) <-
-	list((if(length(rownames)) rownames else seq(along = na.x))[ok], xn)
+    ans$Y <- y
+    ans$X <- if(p > 1 && intercept) x[, c(p, 1:(p - 1))] else x
+    dimnames(ans$X) <- list(rownames[ok], names(ans$coefficients))
     if (qr.out)
 	ans$qr <- qrx
     ans$raw.cnp2 <- raw.cnp2
@@ -515,19 +513,7 @@ summary.lts <- function (object, correlation = FALSE, ...)
     resvar <- rss/rdf
 
     R <- if (p > 0) chol2inv(Qr$qr[p1, p1, drop = FALSE]) else matrix(,p,p)
-
-    ## Reorder R, so that the intercept (if any) moves
-    ## to the beginning. Skip this if p == 1 or intercept=FALSE :
-    if(p > 1 && int) {
-	RR <- R
-	RR[2:p, 2:p] <- R[1:(p - 1), 1:(p-1)]
-	rr <- R[p,]
-	rr[2:p] <- R[p, 1:(p - 1)]
-	rr[1] <- R[p,p]
-	RR[1,] <- rr
-	RR[,1] <- rr
-	R <- RR
-    }
+    ## no need to reorder R anymore, since 'X' already has "intercept first"
     se <- sqrt(diag(R) * resvar)
 
     est <- z$coefficients
@@ -580,8 +566,9 @@ print.lts <- function (x, digits = max(3, getOption("digits") - 3), ...)
 
 print.summary.lts <-
     function(x, digits = max(3, getOption("digits") - 3),
-	     signif.stars = FALSE, ...)
-    ##			    ^^^^^ (since they are not quite correct ?)
+	     signif.stars = getOption("show.signif.stars"), ...)
+##	     signif.stars = FALSE, ...)
+##			    ^^^^^ (since they are not quite correct ?)
 {
     cat("\nCall:\n",
 	paste(deparse(x$call), sep = "\n", collapse = "\n"), "\n\n", sep = "")

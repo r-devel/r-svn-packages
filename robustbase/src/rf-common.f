@@ -206,6 +206,8 @@ ccccc
 cc
 cc  Finds the k-th order statistic of the array aw of length ncas.
 cc
+cc MM{FIXME}: "rather" use R's C API   rPsort (double* X, int N, int K)
+
         implicit none
         integer ncas,k,index(ncas)
 	double precision rffindq, aw(ncas)
@@ -223,6 +225,7 @@ c    while(l < lr)
 	ax=aw(k)
 	jnc=l
 	j=lr
+
  30	if(jnc.gt.j) goto 80
  40	if(aw(jnc).ge.ax) goto 50
 	jnc=jnc+1
@@ -240,7 +243,7 @@ c    while(l < lr)
            jnc=jnc+1
            j=j-1
         endif
- 70	goto 30
+	goto 30
  80	if(j.lt.k) l=jnc
 	if(k.lt.jnc) lr=j
 	goto 20
