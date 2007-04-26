@@ -21,8 +21,9 @@
 ### along with this program; if not, write to the Free Software
 ### Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-## hidden in namespace:
-quan.f <- function(alpha, n, p) {
+## No longer hidden in namespace :
+## easier to explain when user-available & documented if
+h.alpha.n <- function(alpha, n, p) {
     ## Compute h(alpha) := size of subsample, given alpha, (n,p)
     ## Same function for covMcd() and ltsReg()
     n2 <- (n+p+1) %/% 2
@@ -54,25 +55,24 @@ covMcd <- function(x,
     tolSolve <- control$tolSolve # had 1e-10 hardwired {now defaults to 1e-14}
 
     if(length(seed) > 0) {
-    if(exists(".Random.seed", envir=.GlobalEnv, inherits=FALSE))  {
-        seed.keep <- get(".Random.seed", envir=.GlobalEnv, inherits=FALSE)
-        on.exit(assign(".Random.seed", seed.keep, envir=.GlobalEnv))
-    }
-    assign(".Random.seed", seed, envir=.GlobalEnv)
+        if(exists(".Random.seed", envir=.GlobalEnv, inherits=FALSE))  {
+            seed.keep <- get(".Random.seed", envir=.GlobalEnv, inherits=FALSE)
+            on.exit(assign(".Random.seed", seed.keep, envir=.GlobalEnv))
+        }
+        assign(".Random.seed", seed, envir=.GlobalEnv)
     }
 
     ##   vt::03.02.2006 - added options "best" and "exact" for nsamp
     ##   nsamp will be further analized in the wrapper .fastmcd()
     if(!missing(nsamp) && is.numeric(nsamp) && nsamp <= 0)
-    stop("Invalid number of trials nsamp = ",nsamp, "!")
-
+        stop("Invalid number of trials nsamp = ",nsamp, "!")
 
 
     if(is.data.frame(x))
-    x <- data.matrix(x)
+        x <- data.matrix(x)
     else if (!is.matrix(x))
-    x <- matrix(x, length(x), 1,
-            dimnames = list(names(x), deparse(substitute(x))))
+        x <- matrix(x, length(x), 1,
+                    dimnames = list(names(x), deparse(substitute(x))))
 
     ## drop all rows with missing values (!!) :
     na.x <- !is.finite(x %*% rep(1, ncol(x)))
@@ -80,26 +80,28 @@ covMcd <- function(x,
     x <- x[ok, , drop = FALSE]
     dx <- dim(x)
     if(!length(dx))
-    stop("All observations have missing values!")
+        stop("All observations have missing values!")
     dimn <- dimnames(x)
     n <- dx[1]
     p <- dx[2]
     ## h(alpha) , the size of the subsamples
-    quan <- quan.f(alpha, n, p)
+    h <- h.alpha.n(alpha, n, p)
     if(n <= p + 1) # ==> floor((n+p+1)/2) > n - 1  -- not Ok
-    stop(if (n <= p) # absolute barrier!
-         "n <= p -- you can't be serious!"
-    else "n == p+1  is too small sample size for MCD")
+        stop(if (n <= p) # absolute barrier!
+             "n <= p -- you can't be serious!"
+        else "n == p+1  is too small sample size for MCD")
     ## else
     if(n < 2 * p) { ## p+1 < n < 2p
-    warning("n < 2 * p, i.e., possibly too small sample size")
-    ## was stop("Need at least 2*(number of variables) observations ")
+        warning("n < 2 * p, i.e., possibly too small sample size")
+        ## was stop("Need at least 2*(number of variables) observations ")
     }
-##     jmin <- (n + p + 1) %/% 2
-##     if(alpha < 1/2) ## FIXME? shouldn't we rather test   'alpha < jmin/n' ?
-##  stop("The MCD must cover at least", jmin, "observations")
-    if(quan > n)
-    stop("Sample size n  <  h(alpha; n,p) := size of \"good\" subsample")
+    ##     jmin <- (n + p + 1) %/% 2
+    ##     if(alpha < 1/2) ## FIXME? shouldn't we rather test   'alpha < jmin/n' ?
+    ##  stop("The MCD must cover at least", jmin, "observations")
+    ## MM: I think this should be sufficient;
+    ##     we should even omit the (n < 2p) warning
+    if(h > n)
+        stop("Sample size n  <  h(alpha; n,p) := size of \"good\" subsample")
     else if(alpha > 1) stop("alpha must be <= 1")
 
     quantiel <- qchisq(0.975, p)
@@ -115,64 +117,242 @@ covMcd <- function(x,
         call = match.call())
 
     if(alpha == 1) { ## alpha=1: Just compute the classical estimates --------
-    mcd <- cov.wt(x)$cov
-    loc <- as.vector(colMeans(x))
-    obj <- determinant(mcd, log = TRUE)$modulus[1]
-    if ( -obj/p > 50 ) {
-        ans$cov <- mcd
-        dimnames(ans$cov) <- list(dimn[[2]], dimn[[2]])
-        if (cor)
-        ans$cor <- cov2cor(ans$cov)
-        ans$center <- loc
-        if(length(dimn[[2]]))
-        names(ans$center) <- dimn[[2]]
-        ans$n.obs <- n
+        mcd <- cov.wt(x)$cov
+        loc <- as.vector(colMeans(x))
+        obj <- determinant(mcd, log = TRUE)$modulus[1]
+        if ( -obj/p > 50 ) {
+            ans$cov <- mcd
+            dimnames(ans$cov) <- list(dimn[[2]], dimn[[2]])
+            if (cor)
+                ans$cor <- cov2cor(ans$cov)
+            ans$center <- loc
+            if(length(dimn[[2]]))
+                names(ans$center) <- dimn[[2]]
+            ans$n.obs <- n
             ans$singularity <- list(kind = "classical")
             if(trace) cat("classical estimate is singular\n")
 
-        weights <- 1
-    }
-    else {
-        mah <- mahalanobis(x, loc, mcd, tol = tolSolve)
-        ## VT:: 01.09.2004 - bug in alpha=1
-        weights <- as.numeric(mah < quantiel) # 0/1
-        sum.w <- sum(weights)
-        ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
-        ans$cov <- sum.w/(sum.w - 1) * ans$cov
-
-        ## Consistency factor for reweighted MCD
-        if(sum.w != n) {
-            ## VT::19.3.2007 - replace this code used several times by a function MCDcons(p, alpha)
-            ## - for the reweighted cov use 'sum(weights)/n' instead of alpha
-            ##
-            ### qdelta.rew <- qchisq(sum.w/n, p)
-            ### cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1) / (sum.w/n)
-            ### cnp2[1] <- 1/cdeltainvers.rew
-            cnp2[1] <- MCDcons(p, sum.w/n)
-            ans$cov <- ans$cov * cnp2[1]
-        }
-        if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-                ans$singularity <- list(kind = "reweighted.MCD")
-        if(trace) cat("reweighted MCD is singular\n")
+            weights <- 1
         }
         else {
-        mah <- mahalanobis(x, ans$center, ans$cov, tol = tolSolve)
-        weights <- as.numeric(mah < quantiel) # 0/1
-        }
-    }
+            mah <- mahalanobis(x, loc, mcd, tol = tolSolve)
+            ## VT:: 01.09.2004 - bug in alpha=1
+            weights <- as.numeric(mah < quantiel) # 0/1
+            sum.w <- sum(weights)
+            ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
+            ans$cov <- sum.w/(sum.w - 1) * ans$cov
 
-    ans$alpha <- alpha
-    ans$quan <- quan
-    ans$raw.cov <- mcd
-    ans$raw.center <- loc
-    if(!is.null(nms <- dimn[[2]])) {
-        names(ans$raw.center) <- nms
-        dimnames(ans$raw.cov) <- list(nms,nms)
-    }
-    ans$crit <- exp(obj)
-    ans$method <- paste(ans$method,
-                "\nThe minimum covariance determinant estimates based on",
-                n, "observations \nare equal to the classical estimates.")
+            ## Consistency factor for reweighted MCD
+            if(sum.w != n) {
+                cnp2[1] <- MCDcons(p, sum.w/n)
+                ans$cov <- ans$cov * cnp2[1]
+            }
+            if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
+                ans$singularity <- list(kind = "reweighted.MCD")
+                if(trace) cat("reweighted MCD is singular\n")
+            }
+            else {
+                mah <- mahalanobis(x, ans$center, ans$cov, tol = tolSolve)
+                weights <- as.numeric(mah < quantiel) # 0/1
+            }
+        }
+
+        ans$alpha <- alpha
+        ans$quan <- h
+        ans$raw.cov <- mcd
+        ans$raw.center <- loc
+        if(!is.null(nms <- dimn[[2]])) {
+            names(ans$raw.center) <- nms
+            dimnames(ans$raw.cov) <- list(nms,nms)
+        }
+        ans$crit <- exp(obj)
+        ans$method <-
+            paste(ans$method,
+                  "\nThe minimum covariance determinant estimates based on",
+                  n, "observations \nare equal to the classical estimates.")
+        ans$mcd.wt <- rep(NA, length(ok))
+        ans$mcd.wt[ok] <- weights
+        if(length(dimn[[1]]))
+            names(ans$mcd.wt) <- dimn[[1]]
+        ans$wt <- NULL
+        ans$X <- x
+        if(length(dimn[[1]]))
+            dimnames(ans$X)[[1]] <- names(ans$mcd.wt)[ok]
+        else
+            dimnames(ans$X) <- list(seq(along = ok)[ok], NULL)
+        if(trace)
+            cat(ans$method, "\n")
+        ans$raw.cnp2 <- raw.cnp2
+        ans$cnp2 <- cnp2
+        class(ans) <- "mcd"
+        return(ans)
+    } ## end {alpha=1} --
+
+    mcd <- .fastmcd(x, h, nsamp)
+
+    ## Compute the consistency correction factor for the raw MCD
+    ##  (see calfa in Croux and Haesbroeck)
+    calpha <- MCDcons(p, h/n)    ## VT::19.3.2007
+    correct <- if(use.correction) MCDcnp2(p, n, alpha) else 1.
+    raw.cnp2 <- c(calpha, correct)
+
+    if(p == 1) {
+        ## ==> Compute univariate location and scale estimates
+        ans$method <- "Univariate location and scale estimation."
+
+        scale <- sqrt(calpha * correct) * as.double(mcd$initcovariance)
+        center <- as.double(mcd$initmean)
+        if(abs(scale - 0) < 1e-07) {
+            ans$singularity <- list(kind = "identicalObs", q = h)
+            ans$raw.cov <- ans$cov <- matrix(0)
+            ans$raw.center <- ans$center <- center
+            ans$n.obs <- n
+            ans$alpha <- alpha
+            ans$quan <- h
+            if(!is.null(nms <- dimn[[2]][1])) {
+                names(ans$raw.center) <- names(ans$center) <- nms
+                dimnames(ans$raw.cov) <- dimnames(ans$cov) <- list(nms,nms)
+            }
+            ans$crit <- 0
+            weights <- as.numeric(abs(x - center) < 1e-07) # 0 / 1
+        } ## end { scale ~= 0 }
+        else {
+            ## Compute the weights for the raw MCD in case p=1
+            weights <- as.numeric(((x - center)/scale)^2 < quantiel) # 0/1
+            sum.w <- sum(weights)
+            ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
+            ans$cov <- sum.w/(sum.w - 1) * ans$cov
+
+            ## Apply the correction factor for the reweighted cov
+            if(sum.w == n) {
+                cdelta.rew <- 1
+                correct.rew <- 1
+            }
+            else {
+                cdelta.rew  <- MCDcons(p, sum.w/n) ## VT::19.3.2007
+                correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
+                cnp2 <- c(cdelta.rew, correct.rew)
+            }
+            ans$cov <- ans$cov * cdelta.rew * correct.rew
+            ans$alpha <- alpha
+            ans$quan <- h
+            ans$raw.cov <- as.matrix(scale^2)
+            ans$raw.center <- as.vector(center)
+            if(!is.null(nms <- dimn[[2]][1])) {
+                dimnames(ans$raw.cov) <- list(nms,nms)
+                names(ans$raw.center) <- nms
+            }
+            ans$crit <- 1/(h - 1) *
+                sum(sort((x - as.double(mcd$initmean))^2, partial = h)[1:h])
+            center <- ans$center
+            scale <- as.vector(sqrt(ans$cov))
+            weights <- as.numeric(((x - center)/scale)^2 < quantiel)
+        } ## end{ scale > 0 }
+    } ## end p=1
+
+    else { ## p >= 2 : ---------------------------------------------------------
+
+      ## Apply correction factor to the raw estimates
+      ## and use them to compute weights
+      mcd$initcovariance <- calpha * mcd$initcovariance * correct
+      dim(mcd$initcovariance) <- c(p, p)
+
+      if(mcd$exactfit != 0) {
+        ## If not all observations are in general position, i.e. more than
+        ## h observations lie on a hyperplane, the program still yields
+        ## the MCD location and scatter matrix, the latter being singular
+        ## (as it should be), as well as the equation of the hyperplane.
+
+        dim(mcd$coeff) <- c(5, p)
+        ans$cov <- mcd$initcovariance
+        ans$center <- as.vector(mcd$initmean)
+        if(!is.null(nms <- dimn[[2]])) {
+            dimnames(ans$cov) <- list(nms, nms)
+            names(ans$center) <- nms
+        }
+        ans$n.obs <- n
+
+  ## no longer relevant:
+  ##      if(mcd$exactfit == -1)
+  ##      stop("The program allows for at most ", mcd$kount, " observations.")
+  ##      if(mcd$exactfit == -2)
+  ##      stop("The program allows for at most ", mcd$kount, " variables.")
+        if(!(mcd$exactfit %in% c(1,2)))
+            stop("Unexpected 'exactfit' code ", mcd$exactfit, ". Please report!")
+        ## new (2007-01) and *instead* of older long 'method' extension;
+        ## the old message is stilled *printed* via singularityMessage()
+        ##
+        ## exactfit is now *passed* to result instead of coded into 'message':
+        ans$singularity <-
+            list(kind = "on.hyperplane", exactCode = mcd$exactfit,
+                 p = p, count = mcd$kount, coeff = mcd$coeff[1,])
+        ans$alpha <- alpha
+        ans$quan <- h
+        ans$raw.cov <- mcd$initcovariance
+        ans$raw.center <- as.vector(mcd$initmean)
+        if(!is.null(nms <- dimn[[2]])) {
+            names(ans$raw.center) <- nms
+            dimnames(ans$raw.cov) <- list(nms,nms)
+        }
+        ans$crit <- 0
+        weights <- mcd$weights
+
+      } ## end exact fit <==>  (mcd$exactfit != 0)
+
+      else { ## exactfit == 0 : have general position ------------------------
+
+        ## FIXME: here we assume that mcd$initcovariance is not singular
+        ## ----- but it is for data(mortality, package = "riv") !
+        mah <- mahalanobis(x, mcd$initmean, mcd$initcovariance, tol = tolSolve)
+        mcd$weights <- weights <- as.numeric(mah < quantiel)
+        sum.w <- sum(weights)
+
+        ## Compute and apply the consistency correction factor for
+        ## the reweighted cov
+        if(sum.w == n) {
+            cdelta.rew <- 1
+            correct.rew <- 1
+        }
+        else {
+            cdelta.rew <- MCDcons(p, sum.w/n) ## VT::19.3.2007
+            correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
+            cnp2 <- c(cdelta.rew, correct.rew)
+        }
+
+        ans <- c(ans, cov.wt(x, wt = weights, cor))
+        ans$cov <- sum.w/(sum.w - 1) * ans$cov
+        ans$cov <- ans$cov * cdelta.rew * correct.rew
+
+        ##vt:: add also the best found subsample to the result list
+        ans$best <- sort(as.vector(mcd$best))
+
+        ans$alpha <- alpha
+        ans$quan <- h
+        ans$raw.cov <- mcd$initcovariance
+        ans$raw.center <- as.vector(mcd$initmean)
+        if(!is.null(nms <- dimn[[2]])) {
+            names(ans$raw.center) <- nms
+            dimnames(ans$raw.cov) <- list(nms,nms)
+        }
+        ans$raw.weights <- weights
+        ans$crit <- mcd$mcdestimate
+        ans$raw.mah <- mahalanobis(x, ans$raw.center, ans$raw.cov, tol = tolSolve)
+
+        ## Check if the reweighted scatter matrix is singular.
+        if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
+            ans$singularity <- list(kind = "reweighted.MCD")
+            if(trace) cat("The reweighted MCD scatter matrix is singular.\n")
+            ans$mah <- ans$raw.mah
+        }
+        else {
+            mah <- mahalanobis(x, ans$center, ans$cov, tol = tolSolve)
+            ans$mah <- mah
+            weights <- as.numeric(mah < quantiel)
+        }
+      } ## end{ not exact fit }
+
+    } ## end{ p >= 2 }
+
     ans$mcd.wt <- rep(NA, length(ok))
     ans$mcd.wt[ok] <- weights
     if(length(dimn[[1]]))
@@ -185,200 +365,6 @@ covMcd <- function(x,
         dimnames(ans$X) <- list(seq(along = ok)[ok], NULL)
     if(trace)
         cat(ans$method, "\n")
-    ans$raw.cnp2 <- raw.cnp2
-    ans$cnp2 <- cnp2
-    class(ans) <- "mcd"
-    return(ans)
-    } ## end {alpha=1} --
-
-    mcd <- .fastmcd(x, quan, nsamp)
-
-    ## Compute the consistency correction factor for the raw MCD
-    ##  (see calfa in Croux and Haesbroeck)
-    ## VT::19.3.2007 
-    ### qalpha <- qchisq(quan/n, p)
-    ### calphainvers <- pgamma(qalpha/2, p/2 + 1)/(quan/n)
-    ### calpha <- 1/calphainvers
-    calpha <- MCDcons(p, quan/n)
-    correct <- if(use.correction) MCDcnp2(p, n, alpha) else 1.
-    raw.cnp2 <- c(calpha, correct)
-
-    if(p == 1) {
-    ## ==> Compute univariate location and scale estimates
-    ans$method <- "Univariate location and scale estimation."
-
-    scale <- sqrt(calpha * correct) * as.double(mcd$initcovariance)
-    center <- as.double(mcd$initmean)
-    if(abs(scale - 0) < 1e-07) {
-            ans$singularity <- list(kind = "identicalObs", q = quan)
-        ans$raw.cov <- ans$cov <- matrix(0)
-        ans$raw.center <- ans$center <- center
-        ans$n.obs <- n
-        ans$alpha <- alpha
-        ans$quan <- quan
-        if(!is.null(nms <- dimn[[2]][1])) {
-        names(ans$raw.center) <- names(ans$center) <- nms
-        dimnames(ans$raw.cov) <- dimnames(ans$cov) <- list(nms,nms)
-        }
-        ans$crit <- 0
-        weights <- as.numeric(abs(x - center) < 1e-07) # 0 / 1
-    } ## end { scale ~= 0 }
-    else {
-        ## Compute the weights for the raw MCD in case p=1
-        weights <- as.numeric(((x - center)/scale)^2 < quantiel) # 0/1
-        sum.w <- sum(weights)
-        ans <- c(ans, cov.wt(x, wt = weights, cor = cor))
-        ans$cov <- sum.w/(sum.w - 1) * ans$cov
-
-        ## Apply the correction factor for the reweighted cov
-        if(sum.w == n) {
-        cdelta.rew <- 1
-        correct.rew <- 1
-        }
-        else {
-            ## VT::19.3.2007
-            ### qdelta.rew <- qchisq(sum.w/n, p)
-            ### cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-            ### cdelta.rew <- 1/cdeltainvers.rew
-            cdelta.rew  <- MCDcons(p, sum.w/n)
-            correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
-            cnp2 <- c(cdelta.rew, correct.rew)
-        }
-        ans$cov <- ans$cov * cdelta.rew * correct.rew
-        ans$alpha <- alpha
-        ans$quan <- quan
-        ans$raw.cov <- as.matrix(scale^2)
-        ans$raw.center <- as.vector(center)
-        if(!is.null(nms <- dimn[[2]][1])) {
-        dimnames(ans$raw.cov) <- list(nms,nms)
-        names(ans$raw.center) <- nms
-        }
-        ans$crit <- 1/(quan - 1) *
-                sum(sort((x - as.double(mcd$initmean))^2, partial = quan)[1:quan])
-        center <- ans$center
-        scale <- as.vector(sqrt(ans$cov))
-        weights <- as.numeric(((x - center)/scale)^2 < quantiel)
-    } ## end{ scale > 0 }
-    } ## end p=1
-
-    else { ## p >= 2 : ----------------------------------------------------------
-
-    ## Apply correction factor to the raw estimates and use them to compute weights
-    mcd$initcovariance <- calpha * mcd$initcovariance * correct
-    dim(mcd$initcovariance) <- c(p, p)
-
-    ## If not all observations are in general position, i.e. more than
-    ## h observations lie on a hyperplane, the program still yields
-    ## the MCD location and scatter matrix, the latter being singular
-    ## (as it should be), as well as the equation of the hyperplane.
-    if(mcd$exactfit != 0) {
-        dim(mcd$coeff) <- c(5, p)
-        ans$cov <- mcd$initcovariance
-        ans$center <- as.vector(mcd$initmean)
-        if(!is.null(nms <- dimn[[2]])) {
-        dimnames(ans$cov) <- list(nms, nms)
-        names(ans$center) <- nms
-        }
-        ans$n.obs <- n
-
-## no longer relevant:
-##      if(mcd$exactfit == -1)
-##      stop("The program allows for at most ", mcd$kount, " observations.")
-##      if(mcd$exactfit == -2)
-##      stop("The program allows for at most ", mcd$kount, " variables.")
-            if(!(mcd$exactfit %in% c(1,2)))
-                stop("Unexpected 'exactfit' code ", mcd$exactfit, ". Please report!")
-
-            ## new (2007-01) and *instead* of older long 'method' extension;
-            ## the old message is stilled *printed* via singularityMessage()
-            ##
-            ## exactfit is now *passed* to result instead of coded into 'message':
-            ans$singularity <-
-                list(kind = "on.hyperplane", exactCode = mcd$exactfit,
-                     p = p, count = mcd$kount, coeff = mcd$coeff[1,])
-        ans$alpha <- alpha
-        ans$quan <- quan
-        ans$raw.cov <- mcd$initcovariance
-        ans$raw.center <- as.vector(mcd$initmean)
-        if(!is.null(nms <- dimn[[2]])) {
-        names(ans$raw.center) <- nms
-        dimnames(ans$raw.cov) <- list(nms,nms)
-        }
-        ans$crit <- 0
-        weights <- mcd$weights
-    } ## end exact fit <==>  (mcd$exactfit != 0)
-
-    else { ## exactfit == 0 : have general position ------------------------
-
-            ## FIXME: here we assume that mcd$initcovariance is not singular
-            ## ----- but it is for data(mortality, package = "riv") !
-        mah <- mahalanobis(x, mcd$initmean, mcd$initcovariance, tol = tolSolve)
-        mcd$weights <- weights <- as.numeric(mah < quantiel)
-        sum.w <- sum(weights)
-
-        ## Compute and apply the consistency correction factor for
-        ## the reweighted cov
-        if(sum.w == n) {
-        cdelta.rew <- 1
-        correct.rew <- 1
-        }
-        else {
-        ## VT::19.3.2007
-        ##
-        ### qdelta.rew <- qchisq(sum.w/n, p)
-        ### cdeltainvers.rew <- pgamma(qdelta.rew/2, p/2 + 1)/(sum.w/n)
-        ### cdelta.rew <- 1/cdeltainvers.rew
-        cdelta.rew <- MCDcons(p, sum.w/n)
-        correct.rew <- if(use.correction) MCDcnp2.rew(p, n, alpha) else 1.
-                cnp2 <- c(cdelta.rew, correct.rew)
-        }
-
-        ans <- c(ans, cov.wt(x, wt = weights, cor))
-        ans$cov <- sum.w/(sum.w - 1) * ans$cov
-        ans$cov <- ans$cov * cdelta.rew * correct.rew
-
-        ##vt:: add also the best found subsample to the result list
-        ans$best <- sort(as.vector(mcd$best))
-
-        ans$alpha <- alpha
-        ans$quan <- quan
-        ans$raw.cov <- mcd$initcovariance
-        ans$raw.center <- as.vector(mcd$initmean)
-        if(!is.null(nms <- dimn[[2]])) {
-        names(ans$raw.center) <- nms
-        dimnames(ans$raw.cov) <- list(nms,nms)
-        }
-        ans$raw.weights <- weights
-        ans$crit <- mcd$mcdestimate
-        ans$raw.mah <- mahalanobis(x, ans$raw.center, ans$raw.cov, tol = tolSolve)
-
-        ## Check if the reweighted scatter matrix is singular.
-        if( - (determinant(ans$cov, log = TRUE)$modulus[1] - 0)/p > 50) {
-                ans$singularity <- list(kind = "reweighted.MCD")
-        if(trace) cat("The reweighted MCD scatter matrix is singular.\n")
-        ans$mah <- ans$raw.mah
-        }
-        else {
-        mah <- mahalanobis(x, ans$center, ans$cov, tol = tolSolve)
-        ans$mah <- mah
-        weights <- as.numeric(mah < quantiel)
-        }
-    } ## end{ not exact fit }
-
-    } ## end{ p >= 2 }
-
-    ans$mcd.wt <- rep(NA, length(ok))
-    ans$mcd.wt[ok] <- weights
-    if(length(dimn[[1]]))
-    names(ans$mcd.wt) <- dimn[[1]]
-    ans$wt <- NULL
-    ans$X <- x
-    if(length(dimn[[1]]))
-    dimnames(ans$X)[[1]] <- names(ans$mcd.wt)[ok]
-    else
-    dimnames(ans$X) <- list(seq(along = ok)[ok], NULL)
-    if(trace)
-    cat(ans$method, "\n")
     ans$raw.cnp2 <- raw.cnp2
     ans$cnp2 <- cnp2
     class(ans) <- "mcd"
@@ -396,7 +382,7 @@ singularityMsg <- function(singList, n.obs)
            "The reweighted MCD scatter matrix is singular."
        },
        "identicalObs" = {
-           sprintf("Initial scale 0 because more than 'quan' (=%d) observations are identical.",
+           sprintf("Initial scale 0 because more than 'h' (=%d) observations are identical.",
                singList$q)
        },
        "on.hyperplane" = {
@@ -454,14 +440,14 @@ print.mcd <- function(x, digits = max(3, getOption("digits") - 3), print.gap = 2
     if(is.list(x$singularity))
         cat(strwrap(singularityMsg(x$singularity, x$n.obs)), sep ="\n")
 
-    ## VT::29.03.2007 - solve a conflict with fastmcd() in package robust - 
+    ## VT::29.03.2007 - solve a conflict with fastmcd() in package robust -
     ##      also returning an object of class "mcd"
     xx <- NA
     if(!is.null(x$crit))
         xx <- format(log(x$crit), digits = digits)
     else if (!is.null(x$raw.objective))
         xx <- format(log(x$raw.objective), digits = digits)
-        
+
     cat("\nLog(Det.): ", xx ,"\n")
     cat("Robust Estimate of Location:\n")
     print(x$center, digits = digits, print.gap = print.gap, ...)
@@ -483,17 +469,17 @@ print.summary.mcd <-
 
     ## hmm, maybe not *such* a good idea :
     if(!is.null(x$cor)) {
-      cat("\nRobust Estimate of Correlation: \n")
-      dimnames(x$cor) <- dimnames(x$cov)
-      print(x$cor, digits = digits, print.gap = print.gap, ...)
+	cat("\nRobust Estimate of Correlation: \n")
+	dimnames(x$cor) <- dimnames(x$cov)
+	print(x$cor, digits = digits, print.gap = print.gap, ...)
     }
 
     cat("\nEigenvalues:\n")
     print(eigen(x$cov, only.values = TRUE)$values, digits = digits, ...)
 
     if(!is.null(x$mah)) {
-    cat("\nRobust Distances: \n")
-    print(as.vector(x$mah), digits = digits, ...)
+	cat("\nRobust Distances: \n")
+	print(as.vector(x$mah), digits = digits, ...)
     }
     invisible(x)
 }
@@ -502,99 +488,111 @@ print.summary.mcd <-
 ## ----                    ~~~~~~~~~~~
 
 ### --- Namespace hidden (but parsed once and for all) : -------------
-MCDcons <- function(p, alpha){
-    ## VT::19.3.2007 - replace the code used several times by a function MCDcons(p, alpha)
+
+MCDcons <- function(p, alpha)
+{
+    ## Replace the code used several times (VT::19.3.2007)
     ##
     ## Compute the consistency correction factor for the MCD estimate
     ##  (see calfa in Croux and Haesbroeck)
     ##  - alpha = h/n = quan/n
-    ##  - use the same function for the reweighted estimates, 
+    ##  - use the same function for the reweighted estimates,
     ##      but instead of 'alpha' call with 'sum(weights)/n'
-    
+
     qalpha <- qchisq(alpha, p)
-    calphainvers <- pgamma(qalpha/2, p/2 + 1)/alpha
-    1/calphainvers
+    caI <- pgamma(qalpha/2, p/2 + 1) / alpha
+    1/caI
 }
 
 MCDcnp2 <- function(p, n, alpha)
 {
-    if(p > 2) {
-    ##              "alfaq"        "betaq"    "qwaarden"
-    coeffqpkwad875 <- matrix(c(-0.455179464070565, 1.11192541278794, 2,
-                   -0.294241208320834, 1.09649329149811, 3), ncol = 2)
-    coeffqpkwad500 <- matrix(c(-1.42764571687802,  1.26263336932151, 2,
-                   -1.06141115981725,  1.28907991440387, 3), ncol = 2)
-
-    y.500 <- log( - coeffqpkwad500[1, ] / p^coeffqpkwad500[2, ] )
-    y.875 <- log( - coeffqpkwad875[1, ] / p^coeffqpkwad875[2, ] )
-
-    A.500 <- cbind(1, - log(coeffqpkwad500[3, ] * p^2))
-    A.875 <- cbind(1, - log(coeffqpkwad875[3, ] * p^2))
-    coeffic.500 <- solve(A.500, y.500)
-    coeffic.875 <- solve(A.875, y.875)
-    fp.500.n <- 1 - exp(coeffic.500[1]) / n^coeffic.500[2]
-    fp.875.n <- 1 - exp(coeffic.875[1]) / n^coeffic.875[2]
-    }
-    else { ## p <= 2
-    if(p == 2) {
-        fp.500.n <- 1 - exp( 0.673292623522027) / n^0.691365864961895
-        fp.875.n <- 1 - exp( 0.446537815635445) / n^1.06690782995919
-    }
-    if(p == 1) {
-        fp.500.n <- 1 - exp( 0.262024211897096) / n^0.604756680630497
-        fp.875.n <- 1 - exp(-0.351584646688712) / n^1.01646567502486
-    }
-    }
-
     stopifnot(0.5 <= alpha, alpha <= 1)
+
+    if(p > 2) {
+	##			    "alfaq"	      "betaq"	    "qwaarden"
+	coeffqpkwad875 <- matrix(c(-0.455179464070565, 1.11192541278794, 2,
+				   -0.294241208320834, 1.09649329149811, 3),
+				 ncol = 2)
+	coeffqpkwad500 <- matrix(c(-1.42764571687802,  1.26263336932151, 2,
+				   -1.06141115981725,  1.28907991440387, 3),
+				 ncol = 2)
+
+	y.500 <- log( - coeffqpkwad500[1, ] / p^coeffqpkwad500[2, ] )
+	y.875 <- log( - coeffqpkwad875[1, ] / p^coeffqpkwad875[2, ] )
+
+	A.500 <- cbind(1, - log(coeffqpkwad500[3, ] * p^2))
+	A.875 <- cbind(1, - log(coeffqpkwad875[3, ] * p^2))
+	coeffic.500 <- solve(A.500, y.500)
+	coeffic.875 <- solve(A.875, y.875)
+	fp.500.n <- 1 - exp(coeffic.500[1]) / n^coeffic.500[2]
+	fp.875.n <- 1 - exp(coeffic.875[1]) / n^coeffic.875[2]
+    }
+    else if(p == 2) {
+	fp.500.n <- 1 - exp( 0.673292623522027) / n^0.691365864961895
+	fp.875.n <- 1 - exp( 0.446537815635445) / n^1.06690782995919
+    } else if(p == 1) {
+	fp.500.n <- 1 - exp( 0.262024211897096) / n^0.604756680630497
+	fp.875.n <- 1 - exp(-0.351584646688712) / n^1.01646567502486
+    }
+
+    ## VT:18.04.2007 - use simulated correction factors for several p and n:
+    ## p in [1, 20] n in [2*p, ...]
+    if(alpha == 0.5 && !is.na(fp.x <- MCDcnp2sim(p, n)))
+	fp.500.n <- 1/fp.x
+
     if(alpha <= 0.875)
-    fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
+	fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
     else ##  0.875 < alpha <= 1
-    fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
+	fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
 
     return(1/fp.alpha.n)
 } ## end{ MCDcnp2 }
 
 MCDcnp2.rew <- function(p, n, alpha)
 {
-    if(p > 2) {
-    ##              "alfaq"        "betaq"    "qwaarden"
-    coeffrewqpkwad875 <- matrix(c(-0.544482443573914, 1.25994483222292, 2,
-                      -0.343791072183285, 1.25159004257133, 3), ncol = 2)
-    coeffrewqpkwad500 <- matrix(c(-1.02842572724793,  1.67659883081926, 2,
-                      -0.26800273450853,  1.35968562893582, 3), ncol = 2)
-
-    y.500 <- log( - coeffrewqpkwad500[1, ] / p^ coeffrewqpkwad500[2, ] )
-    y.875 <- log( - coeffrewqpkwad875[1, ] / p^ coeffrewqpkwad875[2, ] )
-
-    A.500 <- cbind(1, - log(coeffrewqpkwad500[3, ] * p^2))
-    coeffic.500 <- solve(A.500, y.500)
-    A.875 <- cbind(1, - log(coeffrewqpkwad875[3, ] * p^2))
-    coeffic.875 <- solve(A.875, y.875)
-    fp.500.n <- 1 - exp(coeffic.500[1]) / n^ coeffic.500[2]
-    fp.875.n <- 1 - exp(coeffic.875[1]) / n^ coeffic.875[2]
-    }
-    else {
-    if(p == 2) {
-        fp.500.n <- 1 - exp( 3.11101712909049 ) / n^ 1.91401056721863
-        fp.875.n <- 1 - exp( 0.79473550581058 ) / n^ 1.10081930350091
-    }
-    if(p == 1) {
-        fp.500.n <- 1 - exp( 1.11098143415027 ) / n^ 1.5182890270453
-        fp.875.n <- 1 - exp( -0.66046776772861) / n^ 0.88939595831888
-    }
-    }
-
     stopifnot(0.5 <= alpha, alpha <= 1)
+
+    if(p > 2) {
+	##		"alfaq"	       "betaq"	  "qwaarden"
+	coeffrewqpkwad875 <- matrix(c(-0.544482443573914, 1.25994483222292, 2,
+				      -0.343791072183285, 1.25159004257133, 3),
+				    ncol = 2)
+	coeffrewqpkwad500 <- matrix(c(-1.02842572724793,  1.67659883081926, 2,
+				      -0.26800273450853,  1.35968562893582, 3),
+				    ncol = 2)
+
+	y.500 <- log( - coeffrewqpkwad500[1, ] / p^ coeffrewqpkwad500[2, ] )
+	y.875 <- log( - coeffrewqpkwad875[1, ] / p^ coeffrewqpkwad875[2, ] )
+
+	A.500 <- cbind(1, - log(coeffrewqpkwad500[3, ] * p^2))
+	coeffic.500 <- solve(A.500, y.500)
+	A.875 <- cbind(1, - log(coeffrewqpkwad875[3, ] * p^2))
+	coeffic.875 <- solve(A.875, y.875)
+	fp.500.n <- 1 - exp(coeffic.500[1]) / n^ coeffic.500[2]
+	fp.875.n <- 1 - exp(coeffic.875[1]) / n^ coeffic.875[2]
+    }
+    else if(p == 2) {
+	fp.500.n <- 1 - exp( 3.11101712909049 ) / n^ 1.91401056721863
+	fp.875.n <- 1 - exp( 0.79473550581058 ) / n^ 1.10081930350091
+    } else if(p == 1) {
+	fp.500.n <- 1 - exp( 1.11098143415027 ) / n^ 1.5182890270453
+	fp.875.n <- 1 - exp( -0.66046776772861) / n^ 0.88939595831888
+    }
+
+    ## VT:18.04.2007 - use simulated correction factors for several p and n:
+    ## p in [1, 20] n in [2*p, ...]
+    if(alpha == 0.5 && !is.na(fp.x <- MCDcnp2sim.rew(p, n)))
+	fp.500.n <- 1/fp.x
+
     if(alpha <= 0.875)
-    fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
+	fp.alpha.n <- fp.500.n + (fp.875.n - fp.500.n)/0.375 * (alpha - 0.5)
     else ##  0.875 < alpha <= 1
-    fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
+	fp.alpha.n <- fp.875.n + (1 - fp.875.n)/0.125 * (alpha - 0.875)
     return(1/fp.alpha.n)
 } ## end{ MCDcnp2.rew }
 
 
-.fastmcd <- function(x, quan, nsamp)
+.fastmcd <- function(x, h, nsamp)
 {
     dx <- dim(x)
     n <- dx[1]
@@ -656,11 +654,11 @@ MCDcnp2.rew <- function(p, n, alpha)
          x = if(is.double(x)) x else as.double(x),
          n =    as.integer(n),
          p =    as.integer(p),   ## = 'nvar'  in Fortran
-         nhalff =   as.integer(quan),
+         nhalff =   as.integer(h),
          nsamp  =   as.integer(nsamp),# = 'krep'
          initcovariance = double(p * p),
          initmean       = double(p),
-         best       = rep.int(as.integer(10000), quan),
+         best       = rep.int(as.integer(10000), h),
          mcdestimate = double(1),    ## = 'det'
          weights   = integer(n),
          exactfit  = integer(1), # output indicator: 0: ok; 1: ..., 2: ..
@@ -707,4 +705,47 @@ MCDcnp2.rew <- function(p, n, alpha)
          PACKAGE = "robustbase")[ ## keep the following ones:
          c("initcovariance", "initmean", "best", "mcdestimate",
            "weights", "exactfit", "coeff", "kount", "adjustcov") ]
+}
+
+##
+## VT:18.04.2007 - use simulated correction factors for several p and n
+##   and alpha = 1/2
+##       ~~~~~~~~~~~
+##  p in [1, 20] n in [2*p, ...]
+##  see the modifications in MCDcnp2() and MCDcnp2.rew
+##
+
+##---- for  "raw" MCD -----------------
+MCDcnp2sim.p.min <- 1
+MCDcnp2sim.p.max <- 20
+MCDcnp2sim.n.min <- c(3, 2*(2:20))
+MCDcnp2sim.n.max <- 20+ 2*(1:20)
+MCDcnp2sim.mat <- matrix(c(NA, 3.303217, 1.418784, 2.122717, 1.435279, 1.766613, 1.403473, 1.631451, 1.410154, 1.529998, 1.359984, 1.481593, 1.325524, 1.409765, 1.303291, 1.365001, 1.317106, 1.302858, 1.277312, 1.322895, 1.273938, 3.15342, 1.799889, 2.258497, 1.688312, 1.906779, 1.548203, 1.724785, 1.500873, 1.573442, 1.417137, 1.540805, 1.395945, 1.472596, 1.394247, 1.377487, 1.337394, 1.369354, 1.333378, 1.3181, 1.313813, 1.315528, 2.12777, 2.718898, 1.993509, 2.220433, 1.820585, 1.97782, 1.672455, 1.770151, 1.587478, 1.685352, 1.539295, 1.584536, 1.499487, 1.50702, 1.41952, 1.449058, 1.393042, 1.432999, 1.369964, 1.400997, 1.333824, 2.950549, 2.145387, 2.382224, 1.927077, 2.032489, 1.8371, 1.877833, 1.710891, 1.756053, 1.620778, 1.657761, 1.558978, 1.56257, 1.508633, 1.534406, 1.46709, 1.468734, 1.432529, 1.455283, 1.386975, 1.417532, 2.229573, 2.494447, 2.016117, 2.190061, 1.877996, 1.978964, 1.767284, 1.836948, 1.677372, 1.743316, 1.616383, 1.655964, 1.55484, 1.594831, 1.502185, 1.543723, 1.467005, 1.491123, 1.44402, 1.446915, 1.401578, 2.580264, 2.109121, 2.240741, 1.944719, 2.043397, 1.821808, 1.89725, 1.748788, 1.786988, 1.659333, 1.697012, 1.610622, 1.616503, 1.538529, 1.562024, 1.499964, 1.529344, 1.474519, 1.483264, 1.441552, 1.434448, 2.165233, 2.320281, 2.007836, 2.086471, 1.884052, 1.950563, 1.76926, 1.843328, 1.708941, 1.741039, 1.627206, 1.644755, 1.580563, 1.593402, 1.527312, 1.568418, 1.501462, 1.502542, 1.464583, 1.467921, 1.431141, 2.340443, 2.048262, 2.161097, 1.926082, 1.995422, 1.81446, 1.853165, 1.738533, 1.784456, 1.679444, 1.696463, 1.612931, 1.629483, 1.548186, 1.580026, 1.52198, 1.531111, 1.482914, 1.484824, 1.442726, 1.447838, 2.093386, 2.185793, 1.948989, 2.02804, 1.867137, 1.907732, 1.771923, 1.800413, 1.691612, 1.720603, 1.642705, 1.649769, 1.589028, 1.598955, 1.539759, 1.55096, 1.503965, 1.50703, 1.471349, 1.469791, 1.436959, 2.218315, 1.997369, 2.041128, 1.887059, 1.928524, 1.79626, 1.827538, 1.716748, 1.735696, 1.658329, 1.664211, 1.599286, 1.611511, 1.553925, 1.562637, 1.516805, 1.529894, 1.476064, 1.482474, 1.453253, 1.458467, 2.0247, 2.07899, 1.921976, 1.949376, 1.824629, 1.851671, 1.744713, 1.765647, 1.683525, 1.685592, 1.625113, 1.624961, 1.571921, 1.581223, 1.535257, 1.537464, 1.497165, 1.504879, 1.468682, 1.469319, 1.448344, 2.092315, 1.941412, 1.969843, 1.844093, 1.866133, 1.766145, 1.783829, 1.703613, 1.709714, 1.646078, 1.654264, 1.594523, 1.598488, 1.545105, 1.555356, 1.514627, 1.521353, 1.483958, 1.487677, 1.449191, 1.459721, 1.958987, 1.985144, 1.87739, 1.879643, 1.786823, 1.799642, 1.720015, 1.724688, 1.663539, 1.662997, 1.609267, 1.615124, 1.56746, 1.562026, 1.520586, 1.52503, 1.493008, 1.502496, 1.471983, 1.468546, 1.435064, 1.994706, 1.880348, 1.894254, 1.805827, 1.815965, 1.744296, 1.743389, 1.665481, 1.681644, 1.624466, 1.626109, 1.584028, 1.5818, 1.54376, 1.547237, 1.504878, 1.515087, 1.479032, 1.47936, 1.450758, 1.45073, 1.892685, 1.91087, 1.825301, 1.827176, 1.745363, 1.746115, 1.693373, 1.701692, 1.648247, 1.637112, 1.594648, 1.592013, 1.554849, 1.55013, 1.522186, 1.520901, 1.492606, 1.493072, 1.460868, 1.46733, 1.440956, 1.92771, 1.835696, 1.841979, 1.775991, 1.766092, 1.703807, 1.708791, 1.654985, 1.655917, 1.602388, 1.611867, 1.570765, 1.573368, 1.53419, 1.529033, 1.506767, 1.503596, 1.481126, 1.471806, 1.444917, 1.451682, 1.850262, 1.855034, 1.778997, 1.789995, 1.718871, 1.717326, 1.667357, 1.666291, 1.619743, 1.631475, 1.582624, 1.58766, 1.546302, 1.545063, 1.512222, 1.517888, 1.489127, 1.487271, 1.466722, 1.463618, 1.444137, 1.8709, 1.794033, 1.80121, 1.736376, 1.740201, 1.673776, 1.682541, 1.638153, 1.642294, 1.604417, 1.597721, 1.559534, 1.559108, 1.533942, 1.529348, 1.499517, 1.501586, 1.473147, 1.473031, 1.457615, 1.452348, 1.805753, 1.812952, 1.746549, 1.747222, 1.696924, 1.694957, 1.652157, 1.650568, 1.607807, 1.613666, 1.577295, 1.570712, 1.543704, 1.538272, 1.515369, 1.517113, 1.487451, 1.491593, 1.464514, 1.464658, 1.439359, 1.823222, 1.758781, 1.767358, 1.70872, 1.712926, 1.666956, 1.667838, 1.62077, 1.621445, 1.592891, 1.58549, 1.55603, 1.559042, 1.521501, 1.523342, 1.499913, 1.501937, 1.473359, 1.472522, 1.452613, 1.452448),
+                         ncol = MCDcnp2sim.p.max - MCDcnp2sim.p.min + 1)
+
+MCDcnp2sim.n.min.rew <- c(3, 2*(2:20))
+MCDcnp2sim.n.max.rew <- 20+ 2*(1:20)
+
+MCDcnp2sim.mat.rew <- matrix(c(NA, 0.953408, 0.85711, 1.057535, 0.927637, 1.064532, 0.99255, 0.982068, 0.985076, 1.018959, 0.991628, 1.001685, 1.016789, 1.004238, 0.993295, 0.975207, 0.99543, 0.97484, 0.984114, 0.99296, 1.004626, 2.216302, 1.418526, 1.635601, 1.31402, 1.33975, 1.251798, 1.210917, 1.133114, 1.150666, 1.138732, 1.096822, 1.076489, 1.058343, 1.045746, 1.036743, 1.008929, 1.049537, 1.028148, 1.027297, 1.020578, 1.00074, 1.73511, 2.06681, 1.545905, 1.659655, 1.456835, 1.47809, 1.331966, 1.334229, 1.231218, 1.220443, 1.198143, 1.193965, 1.142156, 1.146231, 1.124661, 1.112719, 1.089973, 1.070606, 1.082681, 1.061243, 1.053191, 2.388892, 1.847626, 1.96998, 1.630723, 1.701272, 1.521008, 1.553057, 1.382168, 1.414555, 1.326982, 1.321403, 1.265207, 1.264856, 1.200418, 1.21152, 1.17531, 1.168536, 1.140586, 1.14457, 1.111392, 1.112031, 1.968153, 2.168931, 1.784373, 1.894409, 1.667912, 1.693007, 1.545176, 1.582428, 1.45319, 1.480559, 1.371611, 1.358541, 1.330235, 1.30264, 1.257518, 1.244156, 1.221907, 1.22455, 1.178965, 1.177855, 1.166319, 2.275891, 1.866587, 2.014249, 1.750567, 1.829363, 1.650019, 1.689043, 1.562539, 1.561359, 1.473378, 1.488554, 1.411097, 1.416527, 1.35117, 1.361044, 1.30205, 1.299037, 1.250265, 1.260083, 1.218665, 1.236027, 1.95771, 2.074066, 1.847385, 1.905408, 1.71393, 1.768425, 1.63908, 1.67234, 1.564992, 1.562337, 1.49229, 1.499573, 1.420813, 1.424067, 1.383947, 1.378726, 1.33062, 1.330071, 1.279404, 1.295302, 1.263947, 2.164121, 1.871024, 1.979485, 1.782417, 1.84489, 1.706023, 1.734857, 1.622782, 1.634869, 1.55196, 1.554423, 1.482325, 1.509195, 1.440726, 1.436328, 1.386335, 1.396277, 1.347939, 1.346732, 1.310242, 1.309371, 1.938822, 2.050409, 1.834863, 1.882536, 1.737494, 1.761608, 1.65742, 1.687579, 1.591863, 1.60158, 1.520982, 1.535234, 1.470649, 1.486485, 1.42892, 1.435574, 1.384132, 1.382329, 1.343281, 1.346581, 1.315111, 2.063894, 1.880094, 1.907246, 1.78278, 1.806648, 1.6952, 1.720922, 1.63084, 1.635274, 1.565423, 1.56171, 1.512015, 1.4986, 1.463903, 1.456588, 1.422856, 1.407325, 1.376724, 1.373923, 1.346464, 1.34259, 1.898389, 1.950406, 1.812053, 1.849175, 1.72649, 1.737651, 1.646719, 1.655112, 1.587601, 1.597894, 1.539877, 1.53329, 1.495054, 1.490548, 1.445249, 1.446037, 1.410272, 1.412274, 1.375797, 1.369604, 1.341232, 1.992488, 1.830452, 1.857314, 1.758686, 1.763822, 1.683215, 1.679543, 1.619269, 1.608512, 1.565, 1.562282, 1.498869, 1.51325, 1.470912, 1.464654, 1.427573, 1.439301, 1.402308, 1.391006, 1.37074, 1.367573, 1.855502, 1.891242, 1.77513, 1.790618, 1.706443, 1.713098, 1.642896, 1.636577, 1.580366, 1.581752, 1.542937, 1.531668, 1.487894, 1.492039, 1.460304, 1.449762, 1.4219, 1.420953, 1.390137, 1.388677, 1.360506, 1.908277, 1.802091, 1.806128, 1.723757, 1.727249, 1.659883, 1.670056, 1.605209, 1.611481, 1.558846, 1.551762, 1.512951, 1.511515, 1.468948, 1.476073, 1.441508, 1.434997, 1.412687, 1.406782, 1.380452, 1.375924, 1.811415, 1.822311, 1.740544, 1.739355, 1.68127, 1.685342, 1.620281, 1.622572, 1.579611, 1.570103, 1.529881, 1.530097, 1.490041, 1.4947, 1.457329, 1.456344, 1.423363, 1.428653, 1.399988, 1.390069, 1.376594, 1.837723, 1.76039, 1.771031, 1.697404, 1.690915, 1.634409, 1.63713, 1.589594, 1.586521, 1.552974, 1.545571, 1.505923, 1.512794, 1.477833, 1.477821, 1.444241, 1.44452, 1.419258, 1.421297, 1.394924, 1.389393, 1.779716, 1.781271, 1.706031, 1.71224, 1.655099, 1.654284, 1.608878, 1.605955, 1.565683, 1.565938, 1.523594, 1.531235, 1.492749, 1.486786, 1.457635, 1.461416, 1.432472, 1.430164, 1.404441, 1.400021, 1.378273, 1.798932, 1.735577, 1.727031, 1.671049, 1.677601, 1.624427, 1.617626, 1.579533, 1.579987, 1.544635, 1.538715, 1.504538, 1.50726, 1.477163, 1.477084, 1.450861, 1.444496, 1.428416, 1.422813, 1.400185, 1.39552, 1.750193, 1.752145, 1.690365, 1.692051, 1.642391, 1.63858, 1.600144, 1.596401, 1.558305, 1.555932, 1.525968, 1.522984, 1.491563, 1.492554, 1.467575, 1.45786, 1.437545, 1.430893, 1.413983, 1.409386, 1.391943, 1.762922, 1.701346, 1.704996, 1.6556, 1.655548, 1.611964, 1.615219, 1.569103, 1.571079, 1.540617, 1.541602, 1.503791, 1.50195, 1.478069, 1.47678, 1.452458, 1.451732, 1.429144, 1.426547, 1.40363, 1.402647),
+                         ncol = MCDcnp2sim.p.max - MCDcnp2sim.p.min + 1)
+
+MCDcnp2sim <- function(p, n){
+    pind <- p - MCDcnp2sim.p.min + 1
+    if(p >= MCDcnp2sim.p.min &&
+       p <= MCDcnp2sim.p.max &&
+       n >= MCDcnp2sim.n.min[pind] &&
+       n <= MCDcnp2sim.n.max[pind]) {
+        nind <- n - MCDcnp2sim.n.min[pind] + 1
+        MCDcnp2sim.mat[nind, pind]
+    } else NA
+}
+
+MCDcnp2sim.rew <- function(p, n)
+{
+    pind <- p - MCDcnp2sim.p.min + 1
+    if(p >= MCDcnp2sim.p.min && p <= MCDcnp2sim.p.max &&
+       n >= MCDcnp2sim.n.min.rew[pind] && n <= MCDcnp2sim.n.max.rew[pind]) {
+        nind <- n - MCDcnp2sim.n.min.rew[pind] + 1
+        MCDcnp2sim.mat.rew[nind, pind]
+    } else NA
 }

@@ -201,18 +201,18 @@ ltsReg.default <-
 	    warning("'qr.out = TRUE' for univariate location is disregarded")
 	    qr.out <- FALSE
 	}
-	quan <- quan.f(alpha, n, dx[2])
+	h <- h.alpha.n(alpha, n, dx[2])
 	p <- 1
 	if (alpha == 1) {
 	    scale <- sqrt(cov.wt(as.matrix(y))$cov)
 	    center <- as.vector(mean(y))
 	    ## xbest <- NULL
 	} else {
-	    sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0)
+	    sh <- .fastmcd(as.matrix(y), as.integer(h), nsamp = 0)
 
 	    center <- as.double(sh$initmean)
-	    qalpha <- qchisq(quan/n, 1)
-	    calphainvers <- pgamma(qalpha/2, 1/2 + 1)/(quan/n)
+	    qalpha <- qchisq(h/n, 1)
+	    calphainvers <- pgamma(qalpha/2, 1/2 + 1)/(h/n)
 	    raw.cnp2[1] <- calpha <- 1/calphainvers
 	    raw.cnp2[2] <- correct <- LTScnp2(1, intercept = intercept, n, alpha)
 	    if(!use.correction) # do not use finite sample correction factor
@@ -227,7 +227,7 @@ ltsReg.default <-
 		    coefficients = center,
 		    raw.coefficients = center,
 		    alpha = alpha,
-		    quan  = quan,
+		    quan  = h,
 		    raw.resid = resid/scale)
 
 	if (abs(scale) < 1e-07) {
@@ -242,7 +242,7 @@ ltsReg.default <-
 	    ans$coefficients <- reweighting$center
 	    ans$scale <- sqrt(sum(weights)/(sum(weights) - 1) * reweighting$cov)
 	    resid <- y - ans$coefficients
-	    ans$crit <- sum(sort((y - center)^2, partial = quan)[1:quan])
+	    ans$crit <- sum(sort((y - center)^2, partial = h)[1:h])
 	    if (sum(weights) == n) {
 		cdelta.rew <- 1
 		correct.rew <- 1
@@ -300,7 +300,7 @@ ltsReg.default <-
 	    ans$raw.coefficients <- getCoef(cf)
 
 	    resid <- z$residuals
-	    ans$quan <- quan <- n
+	    ans$quan <- h <- n
 
 	    s0 <- sqrt((1/(n - p)) * sum(resid^2))
 
@@ -357,9 +357,9 @@ ltsReg.default <-
 	    ## else :
 	    piv <- 1:p
 
-	    quan <- quan.f(alpha, n, rk)
+	    h <- h.alpha.n(alpha, n, rk)
 
-	    z <- .fastlts(x, y, quan, nsamp, intercept, adjust)
+	    z <- .fastlts(x, y, h, nsamp, intercept, adjust)
 
 	    ## vt:: lm.fit.qr == lm.fit(...,method=qr,...)
 	    ##	cf <- lm.fit.qr(x[z$inbest, , drop = FALSE], y[z$inbest])$coef
@@ -371,14 +371,14 @@ ltsReg.default <-
 
 	    ans$raw.coefficients <- getCoef(coefs)
 
-	    ans$quan <- quan
+	    ans$quan <- h
 	    correct <- if(use.correction)
 		LTScnp2(p, intercept = intercept, n, alpha) else 1
 	    raw.cnp2[2] <- correct
-	    s0 <- sqrt((1/quan) * sum(sort(resid^2, partial = quan)[1:quan]))
+	    s0 <- sqrt((1/h) * sum(sort(resid^2, partial = h)[1:h]))
 	    sh0 <- s0
-	    qn.q <- qnorm((quan + n)/ (2 * n))
-	    s0 <- s0 / sqrt(1 - (2 * n)/(quan / qn.q) * dnorm(qn.q)) * correct
+	    qn.q <- qnorm((h + n)/ (2 * n))
+	    s0 <- s0 / sqrt(1 - (2 * n)/(h / qn.q) * dnorm(qn.q)) * correct
 
 	    if (abs(s0) < 1e-07) {
 		weights <- as.numeric(abs(resid) <= 1e-07)
@@ -419,14 +419,14 @@ ltsReg.default <-
 	    ## unneeded: names(ans$coefficients) <- names(ans$raw.coefficients)
 	    ans$crit <- z$objfct
 	    if (intercept) {
-		sh <- .fastmcd(as.matrix(y), as.integer(quan), nsamp = 0)
+		sh <- .fastmcd(as.matrix(y), as.integer(h), nsamp = 0)
 		y <- as.vector(y) ## < ??
 		sh <- as.double(sh$adjustcov)
 		iR2 <- (sh0/sh)^2
 	    }
 	    else {
-		s1 <- sum(sort(resid^2, partial = quan)[1:quan])
-		sh <- sum(sort(y^2,     partial = quan)[1:quan])
+		s1 <- sum(sort(resid^2, partial = h)[1:h])
+		sh <- sum(sort(y^2,     partial = h)[1:h])
 		iR2 <- s1/sh
 	    }
 
@@ -763,7 +763,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     return(1/fp.alpha.n)
 } ## LTScnp2.rew
 
-.fastlts <- function(x, y, quan, nsamp, intercept, adjust)
+.fastlts <- function(x, y, h.alph, nsamp, intercept, adjust)
 {
     dx <- dim(x)
     n <- dx[1]
@@ -816,7 +816,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 
     storage.mode(n) <- "integer"
     storage.mode(p) <- "integer"
-    storage.mode(quan) <- "integer"
+    storage.mode(h.alph) <- "integer"
 
     ##	 Allocate temporary storage for the fortran implementation
 
@@ -854,10 +854,10 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
 	     xy = xy,
 	     n,
 	     p,
-	     quan,
+	     h.alph,
 	     nsamp,
 
-	     inbest = rep.int(as.integer(10000), quan),
+	     inbest = rep.int(as.integer(10000), h.alph),
 	     objfct = as.double(0),
 
 	     intercept = as.integer(intercept),

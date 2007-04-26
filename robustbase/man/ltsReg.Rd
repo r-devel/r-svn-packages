@@ -55,8 +55,9 @@ ltsReg(x, \dots)
   \item{intercept}{if true, a model with constant term will be
   estimated; otherwise no constant term will be included.  Default is
   \code{intercept = TRUE}  }
-  \item{alpha}{the percentage of squared residuals whose sum will be
-    minimized, by default 0.5.  In general, \code{alpha} must between 0.5 and 1.}
+  \item{alpha}{the percentage (roughly) of squared residuals whose sum will be
+    minimized, by default 0.5.  In general, \code{alpha} must between
+    0.5 and 1.}
   \item{nsamp}{number of subsets used for initial estimates or
     \code{"best"} or \code{"exact"}.  Default is \code{nsamp = 500}.  For
     \code{nsamp="best"} exhaustive enumeration is done, as long as the
@@ -82,13 +83,17 @@ ltsReg(x, \dots)
   \item{\dots}{arguments passed to or from other methods.}
 }
 \details{
-  The LTS regression method minimizes the sum of the h smallest squared
-  residuals, where h must be at least half the number of
-  observations.  The default value of h is roughly 0.5n where n is the
-  total number of observations, but the user may choose any value
-  between n/2 and n.  The LTS estimate of the error scale is given
-  by the minimum of the objective function multiplied by a consistency
-  factor and a finite sample correction factor - see Pison et al. (2002)
+  The LTS regression method minimizes the sum of the \eqn{h} smallest
+  squared residuals, where \eqn{h > n/2}, i.e. at least half the number of
+  observations must be used.  The default value of \eqn{h} (when
+  \code{alpha=1/2}) is roughly \eqn{n / 2}, more precisely,
+  \code{(n+p+1) \%/\% 2} where \eqn{n} is the
+  total number of observations, but by setting \code{alpha}, the user
+  may choose higher values up to n, where
+  \eqn{h = h(\alpha,n,p) =} \code{\link{h.alpha.n}(alpha,n,p)}.  The LTS
+  estimate of the error scale is given by the minimum of the objective
+  function multiplied by a consistency factor
+  and a finite sample correction factor -- see Pison et al. (2002)
   for details.  The rescaling factors for the raw and final estimates are
   returned also in the vectors \code{raw.cnp2} and \code{cnp2} of
   length 2 respectively.  The finite sample corrections can be suppressed
@@ -124,8 +129,8 @@ ltsReg(x, \dots)
     \code{intercept=TRUE}), obtained after reweighting.
   }
   \item{best}{
-    the best subset found and used for computing the raw estimates.  The
-    size of \code{best} is equal to \code{quan}.
+    the best subset found and used for computing the raw estimates, with
+    \code{\link{length}(best) == quan = \link{h.alpha.n}(alpha,n,p)}.
   }
   \item{fitted.values}{vector like \code{y} containing the fitted values
     of the response after reweighting.}

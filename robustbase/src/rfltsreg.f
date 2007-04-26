@@ -30,7 +30,7 @@ c
 c    dat   = cbind(x,y)   hence  n x (p+1)
 c    nvar  = p
 c    nvad  = p+1
-c    nhalff: 'quan' = quan.f(alpha, n, rk)  which is
+c    nhalff: 'quan' = quan.f = h.alpha.n(alpha, n, rk)  which is
 c                   = (n + p + 1) %/% 2  when alpha= 1/2
 c    krep  = nsamp  (e.g. = 5000 for "best")
 c

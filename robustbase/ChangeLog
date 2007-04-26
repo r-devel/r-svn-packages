@@ -1,3 +1,17 @@
+2007-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/ltsReg.R: replace 'quan' by 'h' internally
+	* R/covMcd.R: ditto
+
+	* R/covMcd.R (h.alpha.n): renamed from "quan.f"() and now exported:
+	* NAMESPACE: and hence
+	* man/h.alpha.n.Rd: documented, and linked to from here
+	* man/ltsReg.Rd, man/covMcd.Rd:
+
+2007-04-18  Valentin Todorov  <valentin.todorov@chello.at>
+
+	* R/covMcd.R: use simulated finite sample correction factors {FIXME!}
+
 2007-04-11  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/ltsReg.R (ltsReg.default): 'ans$X' now has "intercept first"
