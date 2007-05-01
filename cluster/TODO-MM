@@ -3,6 +3,8 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
+o clara() to work with *daisy*-like distances, not just L2 & L1.
+
 o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
 		  gives a clearly better result
 		  clara(ru4, k=3, met="manhattan", sampsize=4)

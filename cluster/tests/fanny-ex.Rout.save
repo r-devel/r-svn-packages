@@ -1,5 +1,5 @@
 
-R version 2.4.0 Patched (2006-11-29 r40065)
+R version 2.4.1 beta (2006-12-04 r40122)
 Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -205,7 +205,7 @@ Fuzzy Clustering object of class 'fanny' :
 m.ship.expon.        2
 objective      9.39325
 tolerance        1e-15
-iterations          45
+iterations          43
 converged            1
 maxit              500
 n                   28
@@ -296,7 +296,7 @@ Fuzzy Clustering object of class 'fanny' :
 m.ship.expon.      1.5
 objective     16.08227
 tolerance        1e-15
-iterations           9
+iterations          10
 converged            1
 maxit              500
 n                   28
@@ -1058,20 +1058,20 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.116 0.024 0.21 0 0 
+Time elapsed:  0.14 0.004 0.178 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are ``completely fuzzy'' -- and now give a warnings
 > f4.20 <- fanny(chorSub, k = 4, trace.lev = 1) ; f4.20$coef
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 8277.57
-Converged after 49 iterations,  obj =             2665.982
+Converged after 46 iterations,  obj =             2665.982
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
 the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ? in: fanny(chorSub, k = 4, trace.lev = 1) 
   dunn_coeff   normalized 
-2.500000e-01 1.110223e-15 
+2.500000e-01 1.850372e-15 
 > f4.18  <- fanny(chorSub, k = 4,   memb.exp = 1.8) # same problem
 Warning message:
 the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ? in: fanny(chorSub, k = 4, memb.exp = 1.8) 
@@ -1089,7 +1089,7 @@ fuzzy(): initial obj = 4641.75
 	    ef[]= ( 15405.8, 15405.8, 15405.8, 15405.8)
 	    esp[]= ( 6.63795, 6.63795, 6.63795, 6.63795)
   m == n:  obj =      4641.7451124068
-Converged after 1 iterations,  obj = 4641.7451124068102217
+Converged after 1 iterations,  obj = 4641.7451124068084027
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
@@ -1102,7 +1102,7 @@ fuzzy(): initial obj = 7365.64
 	    ef[]= ( 46750.7, 97854, 64737.8, 24170.1)
 	    esp[]= ( 17, 17, 17, 10)
   m == n:  obj =      4744.9792255200  not converged: it = 1
-  m == n:  obj =      4679.5979841396  not converged: it = 2
+  m == n:  obj =      4679.5979841397  not converged: it = 2
   m == n:  obj =      4661.1063474652  not converged: it = 3
   m == n:  obj =      4651.1976132009  not converged: it = 4
   m == n:  obj =      4645.1558185569  not converged: it = 5
@@ -1110,8 +1110,8 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4638.7561402053  not converged: it = 7
   m == n:  obj =      4637.0268537669  not converged: it = 8
   m == n:  obj =      4635.8286004555  not converged: it = 9
-  m == n:  obj =      4634.9880315171  not converged: it = 10
-  m == n:  obj =      4634.3943437633  not converged: it = 11
+  m == n:  obj =      4634.9880315172  not converged: it = 10
+  m == n:  obj =      4634.3943437634  not converged: it = 11
   m == n:  obj =      4633.9736501112  not converged: it = 12
   m == n:  obj =      4633.6751509742  not converged: it = 13
   m == n:  obj =      4633.4632343974  not converged: it = 14
@@ -1120,27 +1120,27 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4633.1290071452  not converged: it = 17
   m == n:  obj =      4633.0740913561  not converged: it = 18
   m == n:  obj =      4633.0343739482  not converged: it = 19
-  m == n:  obj =      4633.0053552140  not converged: it = 20
+  m == n:  obj =      4633.0053552141  not converged: it = 20
   m == n:  obj =      4632.9838809909  not converged: it = 21
   m == n:  obj =      4632.9677467724  not converged: it = 22
   m == n:  obj =      4632.9554145804  not converged: it = 23
   m == n:  obj =      4632.9458119538  not converged: it = 24
   m == n:  obj =      4632.9381902596  not converged: it = 25
   m == n:  obj =      4632.9320254723  not converged: it = 26
-  m == n:  obj =      4632.9269490797  not converged: it = 27
+  m == n:  obj =      4632.9269490798  not converged: it = 27
   m == n:  obj =      4632.9227001877  not converged: it = 28
   m == n:  obj =      4632.9190924339  not converged: it = 29
   m == n:  obj =      4632.9159911876  not converged: it = 30
   m == n:  obj =      4632.9132978577  not converged: it = 31
-  m == n:  obj =      4632.9109390973  not converged: it = 32
-  m == n:  obj =      4632.9088593705  not converged: it = 33
+  m == n:  obj =      4632.9109390974  not converged: it = 32
+  m == n:  obj =      4632.9088593706  not converged: it = 33
   m == n:  obj =      4632.9070158249  not converged: it = 34
   m == n:  obj =      4632.9053747439  not converged: it = 35
   m == n:  obj =      4632.9039090813  not converged: it = 36
   m == n:  obj =      4632.9025967379  not converged: it = 37
   m == n:  obj =      4632.9014193477  not converged: it = 38
   m == n:  obj =      4632.9003614151  not converged: it = 39
-  m == n:  obj =      4632.8994096945  not converged: it = 40
+  m == n:  obj =      4632.8994096946  not converged: it = 40
   m == n:  obj =      4632.8985527385  not converged: it = 41
   m == n:  obj =      4632.8977805631  not converged: it = 42
   m == n:  obj =      4632.8970843966  not converged: it = 43
@@ -1148,7 +1148,7 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4632.8958899491  not converged: it = 45
   m == n:  obj =      4632.8953786491  not converged: it = 46
   m == n:  obj =      4632.8949171027  not converged: it = 47
-  m == n:  obj =      4632.8945003974  not converged: it = 48
+  m == n:  obj =      4632.8945003975  not converged: it = 48
   m == n:  obj =      4632.8941241248  not converged: it = 49
   m == n:  obj =      4632.8937843232  not converged: it = 50
   m == n:  obj =      4632.8934774285  not converged: it = 51
@@ -1200,24 +1200,24 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4632.8906296581  not converged: it = 97
   m == n:  obj =      4632.8906269906  not converged: it = 98
   m == n:  obj =      4632.8906245774  not converged: it = 99
-  m == n:  obj =      4632.8906223942  not converged: it = 100
+  m == n:  obj =      4632.8906223941  not converged: it = 100
   m == n:  obj =      4632.8906204188  not converged: it = 101
   m == n:  obj =      4632.8906186316  not converged: it = 102
   m == n:  obj =      4632.8906170145  not converged: it = 103
   m == n:  obj =      4632.8906155512  not converged: it = 104
   m == n:  obj =      4632.8906142271  not converged: it = 105
   m == n:  obj =      4632.8906130289  not converged: it = 106
-  m == n:  obj =      4632.8906119446  not converged: it = 107
+  m == n:  obj =      4632.8906119445  not converged: it = 107
   m == n:  obj =      4632.8906109632  not converged: it = 108
   m == n:  obj =      4632.8906100750  not converged: it = 109
   m == n:  obj =      4632.8906092711  not converged: it = 110
   m == n:  obj =      4632.8906085435  not converged: it = 111
   m == n:  obj =      4632.8906078849  not converged: it = 112
   m == n:  obj =      4632.8906072887  not converged: it = 113
-  m == n:  obj =      4632.8906067490  not converged: it = 114
+  m == n:  obj =      4632.8906067489  not converged: it = 114
   m == n:  obj =      4632.8906062603  not converged: it = 115
   m == n:  obj =      4632.8906058180
-Converged after 116 iterations,  obj = 4632.8906058179745742
+Converged after 116 iterations,  obj = 4632.8906058179682077
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 4
 > stopifnot(f4.16$clustering == f4.16.2$clustering,
@@ -1321,5 +1321,5 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.42 0.028 0.711 0 0 
+Time elapsed:  0.36 0.004 0.462 0 0 
 > 
