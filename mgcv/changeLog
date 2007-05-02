@@ -1,3 +1,14 @@
+1.3-24
+
+* "cr" basis constructor modified to use the same centering conditions 
+  as other bases (sum to zero over covariates, rather than parameters 
+  sum to zero). This makes centred confidence intervals for smooths, of 
+  the sort used in plot.gam, behave in a similar way for all bases. With 
+  the old "cr" centering constraint there could be high negative 
+  correlation between coefficients of a centered smooth and the intercept: 
+  this could make centred "cr" smooth CIs wider than CIs for other bases 
+  (not really wrong, but disconcerting).  
+
 1.3-23
 
 * step size correction bug fixed in gam.fit3. `Perfect' convergence could

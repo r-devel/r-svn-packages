@@ -659,7 +659,8 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
   if (is.null(shrink)) { 
   object$rank<-nk-2 
   } else object$rank <- nk   # penalty rank
-  object$C <- matrix(oo[[7]],1,nk)  # constraint
+  object$C <- matrix(colSums(object$X),1,ncol(object$X))
+##  object$C <- matrix(oo[[7]],1,nk)  # constraint
   object$df<-object$bs.dim-1 # degrees of freedom, given constraint
   object$null.space.dim <- 2
   object$xp <- oo[[3]]  # knot positions 
