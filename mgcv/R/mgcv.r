@@ -2049,6 +2049,11 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 }
 
 
+model.matrix.gam <- function(object,...)
+{ if (!inherits(object,"gam")) stop("`object' is not of class \"gam\"")
+  predict.gam(object,type="lpmatrix",...)
+}
+
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                        block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) 
 {

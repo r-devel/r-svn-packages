@@ -45,7 +45,8 @@ estimation of the effective degrees of freedom: this usually reflects problems w
 In this circumstance reported estimated degrees of freedom can not be trusted, although the fitted model and term estimates are likely to be quite 
 acceptable. 
 
-If the fit method is based on \code{\link{magic}} or \code{\link{gam.fit2}} then there is no global search and the problems with phantom local minima are much reduced. The first plot in this case will simply be a normal QQ plot of the standardized residuals.
+If the fit method is based on \code{\link{magic}} or \code{\link{gam.fit2}} or
+\code{link{gam.fit3}}then there is no global search and the problems with phantom local minima are much reduced. The first plot in this case will simply be a normal QQ plot of the standardized residuals.
 
 The other 3 plots are two residual plots and plot of fitted values against original data.
 

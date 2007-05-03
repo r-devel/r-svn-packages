@@ -1,5 +1,7 @@
 1.3-24
 
+* `model.matrix.gam' added.
+
 * "cr" basis constructor modified to use the same centering conditions 
   as other bases (sum to zero over covariates, rather than parameters 
   sum to zero). This makes centred confidence intervals for smooths, of 
