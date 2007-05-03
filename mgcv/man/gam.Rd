@@ -1,4 +1,4 @@
-\name{gam}
+ \name{gam}
 \alias{gam}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Generalized additive models with integrated smoothness estimation}
@@ -199,7 +199,6 @@ smooth of the two covariates \code{x} and \code{z} constructed from marginal t.p
 of dimension 5 and 10 with marginal penalties of order 2 and 3. Any combination of basis types is 
 possible, as is any number of covariates.
 
-
 Formulae can involve nested or ``overlapping'' terms such as \cr
 \code{y~s(x)+s(z)+s(x,z)} or \code{y~s(x,z)+s(z,v)}: see
 \code{\link{gam.side}} for further details and examples.} 
@@ -293,7 +292,7 @@ undelying smoothness selection routine (but it is not the default). }
 \item{gamma}{It is sometimes useful to inflate the model degrees of 
 freedom in the GCV or UBRE score by a constant multiplier. This allows 
 such a multiplier to be supplied (not used if underlying fit routine is
-non-default \code{\link{mgcv}). } 
+non-default \code{\link{mgcv}}). } 
 
 \item{fit}{If this argument is \code{TRUE} then \code{gam} sets up the model and fits it, but if it is
 \code{FALSE} then the model is set up and an object \code{G} containing what
@@ -302,6 +301,7 @@ would be required to fit is returned is returned. See argument \code{G}.}
 \item{G}{Usually \code{NULL}, but may contain the object returned by a previous call to \code{gam} with 
 \code{fit=FALSE}, in which case all other arguments are ignored except for
 \code{gamma}, \code{in.out}, \code{control}, \code{method} and \code{fit}.}
+
 \item{in.out}{optional list for initializing outer iteration. If supplied
 then this must contain two elements: \code{sp} should be an array of
 initialization values for all smoothing parameters (there must be a value for
@@ -309,7 +309,9 @@ all smoothing parameters, whether fixed or to be estimated, but those for
 fixed s.p.s are not used); \code{scale} is the typical scale of the GCV/UBRE function,
 for passing to the outer optimizer.}
 \item{...}{further arguments for 
-passing on e.g. to \code{gam.fit}} (such as \code{mustart}). }
+passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
+
+}
 
 \value{ 
 If \code{fit == FALSE} the function returns a list \code{G} of items needed to

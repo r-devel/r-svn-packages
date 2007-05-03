@@ -26,7 +26,7 @@ columns of \code{X1}. \code{NULL} if the two matrices are independent.
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
-\reference{
+\references{
 Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman
 and Hall/CRC Press.
 }

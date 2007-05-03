@@ -1,5 +1,9 @@
 1.3-24
 
+* spring cleaning of help files.
+
+* gam.check modified to report more useful convergence diagnostics.
+
 * `model.matrix.gam' added.
 
 * "cr" basis constructor modified to use the same centering conditions 
