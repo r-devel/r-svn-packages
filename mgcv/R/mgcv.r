@@ -2961,8 +2961,16 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, ...)
     for (i in 1:nt)
     { ind <- object$assign==i
       b <- bp[ind];V <- Vb[ind,ind]
-      pTerms.df[i] <- nb <- length(b)      
-      pTerms.chi.sq[i] <- b%*%solve(V,b)
+      ## psuedo-inverse needed in case of truncation of parametric space 
+      if (length(b)==1) { 
+        V <- 1/V 
+        pTerms.df[i] <- nb <- 1      
+        pTerms.chi.sq[i] <- V*b*b
+      } else {
+        V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
+        pTerms.df[i] <- nb <- attr(V,"rank")      
+        pTerms.chi.sq[i] <- t(b)%*%V%*%b
+      }
       if (!est.disp)
       pTerms.pv[i]<-pchisq(pTerms.chi.sq[i],df=nb,lower.tail=FALSE)
       else

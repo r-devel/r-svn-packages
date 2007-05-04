@@ -1,5 +1,8 @@
 1.3-24
 
+* summary.gam modified so that it behaves correctly if fitting routines 
+  detect and deal with rank deficiency in parameteric part of a model.
+
 * spring cleaning of help files.
 
 * gam.check modified to report more useful convergence diagnostics.
