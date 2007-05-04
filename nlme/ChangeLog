@@ -1,3 +1,8 @@
+2007-05-04  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* man/{Extracr.pdMat,getdata.*,summary.varFunc}.Rd: remove
+	surplus }.
+
 2007-03-30  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION (Version, Date): 3.1-80
