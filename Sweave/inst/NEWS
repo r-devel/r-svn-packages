@@ -1,0 +1,11 @@
+								-*-text-*-
+
+CHANGES COMPARED TO SWEAVE IN R 2.5.0
+
+  o Sweave no longer inserts a hard path to the latex style file
+    Sweave.sty. Users should add the file to their regular latex path
+    and add a \usepackage{Sweave} statement to the preamble of the
+    document (like with every other latex style file). Argument
+    stylepath no longer exists.
+
+  o The FAQ is now a package vignette.
