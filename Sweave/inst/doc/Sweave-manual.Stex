@@ -1,0 +1,36 @@
+\documentclass[a4paper]{article}
+
+%% NOTE: This file uses the Sweave-Tex-Syntax, such that we can easily
+%% use the noweb syntax in examples without need for escaping etc.
+
+%%\VignetteIndexEntry{Sweave User Manual}
+%%\VignetteDepends{Sweave}
+%%\VignetteKeywords{R, latex, dynamic reports, literate data analysis}
+%%\VignettePackage{Sweave}
+
+\SweaveOpts{keep.source=TRUE}
+
+\title{\bf Sweave User Manual}
+\author{Friedrich Leisch}
+\date{Sweave version \Sexpr{packageDescription("Sweave",fields="Version")}\\ \today}
+
+
+
+\usepackage[utf8]{inputenc}
+\usepackage{a4wide,Sweave}
+
+\newcommand{\file}[1]{\textsf{#1}}
+\newcommand{\showSweaveOpts}[1]{\texttt{$\backslash$SweaveOpts$\{$#1$\}$}}
+
+\begin{document}
+
+\maketitle
+
+This file will contain an updated version of the Sweave User Manual.
+
+\end{document}  
+ 
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

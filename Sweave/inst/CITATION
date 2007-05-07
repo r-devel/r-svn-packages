@@ -1,0 +1,20 @@
+citHeader("To cite Sweave in publications use:")
+
+citEntry(entry="InProceedings",	
+         author = "Friedrich Leisch",
+         title = "Sweave: Dynamic Generation of Statistical Reports Using Literate Data Analysis",	
+         booktitle = "Compstat 2002 --- Proceedings in Computational Statistics",
+         pages = "575--580",
+         year	       = 2002,
+         editor       = "Wolfgang Haerdle and Bernd Roenz",
+         publisher    = "Physica Verlag, Heidelberg",
+         note	       = "ISBN 3-7908-1517-9",
+
+         textVersion = paste("Friedrich Leisch:",
+                             "Dynamic generation of statistical reports using literate data analysis.",
+                             "In W. Haerdle and B. Roenz, editors,",
+                             "Compstat 2002 - Proceedings in Computational Statistics,",
+                             "pages 575--580. Physika Verlag, Heidelberg, Germany, 2002. ISBN 3-7908-1517-9.")
+         )
+
+citFooter("A copy of the paper can be obtained from http://www.stat.uni-muenchen.de/~leisch/Sweave")

@@ -1,0 +1,21 @@
+export(
+       Rtangle,
+       RtangleSetup,
+       RtangleWritedoc,
+       RweaveChunkPrefix,
+       RweaveEvalWithOpt,
+       RweaveLatex,
+       RweaveLatexFinish,
+       RweaveLatexOptions,
+       RweaveLatexOptions,
+       RweaveLatexSetup,
+       RweaveLatexWritedoc,
+       RweaveTryStop,
+       Stangle,
+       Sweave,
+       SweaveHooks,
+       SweaveSyntConv,
+       SweaveSyntaxLatex,
+       SweaveSyntaxNoweb,
+       makeRweaveLatexCodeRunner
+       )

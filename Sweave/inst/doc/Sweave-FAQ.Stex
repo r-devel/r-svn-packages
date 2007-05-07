@@ -1,0 +1,318 @@
+\documentclass[a4paper]{article}
+
+%% NOTE: This file uses the Sweave-Tex-Syntax, such that we can easily
+%% use the noweb syntax in examples without need for escaping etc.
+
+
+%%\VignetteIndexEntry{Sweave: Frequently Asked Questions}
+%%\VignetteDepends{Sweave}
+%%\VignetteKeywords{R, latex, dynamic reports, literate data analysis}
+%%\VignettePackage{Sweave}
+
+\SweaveOpts{keep.source=TRUE}
+
+\title{\bf Sweave: Frequently Asked Questions}
+\author{Friedrich Leisch}
+\date{Sweave version \Sexpr{packageDescription("Sweave",fields="Version")}\\ \today}
+
+\usepackage[utf8]{inputenc}
+\usepackage{url,verbatim,a4wide,Sweave}
+\newcommand{\file}[1]{\textsf{#1}}
+\newcommand{\showSweaveOpts}[1]{\texttt{$\backslash$SweaveOpts$\{$#1$\}$}}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\newpage
+
+\begin{Scode}{echo=FALSE}
+options(prompt=c("R> ", "+  "))
+
+options(pager=function(...) cat(readLines(as.list(...)[[1]]), sep="\n"))
+\end{Scode} 
+
+\section{Sweave Basics}
+
+\subsection{Where can I find the manual and other information on Sweave?}
+ 
+Package Sweave contains this FAQ and the Sweave manual as package vignettes:
+\begin{Scode}{}
+vignette(package="Sweave")
+\end{Scode}
+Additional publications like the CompStat paper and the 2-part miniseries
+from R News (Issues 2/3 and 2/3) can be found at
+\begin{quote}
+  \url{http://www.stat.uni-muenchen.de/~leisch/Sweave}
+\end{quote}
+  
+
+\subsection{How do I cite Sweave in publications?}
+
+Enter the command \verb|citation("Sweave")| at the R prompt to obtain up-to-date references:
+\begin{Scode}{}
+citation("Sweave")
+\end{Scode} 
+
+
+  
+\subsection{Can I run Sweave directly from a shell?}
+
+E.g., for writing makefiles it can be useful to run Sweave directly
+from a shell rather than manually start R and then run Sweave. This
+can easily be done using commands of form
+\begin{verbatim}
+  R CMD Sweave myfile.Rnw
+\end{verbatim}
+using R 2.5.0 or newer.  A more elaborate solution which also includes
+automatically running \texttt{latex} has been written by Gregor
+Gorjanc and is available from every CRAN mirror at
+\url{http://cran.R-project.org/contrib/extra/scripts/}.
+
+
+
+\subsection{\LaTeX~environments Schunk, Sinput and Soutput are undefined.}
+
+Older versions of Sweave automatically inserted a statement of form
+\begin{verbatim}
+ \usepackage{/path/to/Rhome/share/texmf/Sweave.sty}
+\end{verbatim}
+into the \file{.tex} file if no \verb|\usepackage{Sweave}| statement
+was found. This creates problems when the path contains blank or
+special characters, and hence is no longer done.  Please copy the file
+\file{Sweave.sty} to a place where \LaTeX~finds it and insert an
+explicit
+\begin{verbatim}
+\usepackage{Sweave}
+\end{verbatim}
+into the preamble of every Sweave document. Of course you can also use
+any other means to define environments Schunk, Sinput and Soutput. To
+locate \file{Sweave.sty} on your computer, you can use the following command:
+\begin{Scode}{}
+system.file("texmf","Sweave.sty",package="Sweave")
+\end{Scode} 
+The subdirectory \file{share/texmf} of your R installation also
+contains a copy of the style file.
+
+
+
+
+%%%**********************************************************
+
+\begin{Scode}{echo=FALSE}
+options(prompt=rep(" ",2))
+\end{Scode} 
+
+
+\newpage
+\section{Graphics}
+
+\subsection{Why does \LaTeX{} not find my EPS and PDF graphic files when
+  the filename contains a dot?}
+  
+Sweave uses the standard \LaTeX{} package \texttt{graphicx} to handle
+graphic files, which automatically uses EPS files for standard
+\LaTeX{} and PDF files for PDF\LaTeX{}, if the name of the input file
+has no extension, i.e., contains no dots. Hence, you may run into
+trouble with graphics handling if the name of your Sweave file
+contains extra dots: \file{foo.Rnw} is OK, while \file{foo.bar.Rnw}
+is not.
+If you need only one version of the figures, use one of the following:
+\begin{quote}
+  \showSweaveOpts{eps=FALSE}\\
+  \showSweaveOpts{pdf=FALSE}
+\end{quote}
+
+
+\subsection{Why does Sweave by default create both EPS and PDF
+  graphic files?}
+   
+The \LaTeX{} package \texttt{graphicx} needs EPS files for plain
+\LaTeX{}, but PDF files for PDF\LaTeX{} (the latter can also handle
+PNG and JPEG files). Sweave automatically creates graphics in EPS
+and PDF format, such that the user can freely run \texttt{latex} or
+\texttt{pdflatex} on the final document as needed.
+
+\subsection{Empty figure chunks give \LaTeX{} errors.}
+
+When a code chunk with \texttt{fig=true} does not call any plotting
+functions invalid EPS and PDF files are created. Sweave cannot know
+if the code in a figure chunk actually plotted something or not, so
+it will try to include the graphics, which is bound to fail.
+
+\subsection{Why do R lattice graphics not work?}
+
+The commands in package \texttt{lattice} have different behavior
+than the standard plot commands in the \texttt{graphics} package:
+lattice commands return an object of class \texttt{"trellis"}, the
+actual plotting is performed by the \texttt{print} method for the
+class. Encapsulating calls to lattice functions in \texttt{print()}
+statements should do the trick, e.g.:
+\begin{verbatim}
+<<fig=TRUE>>=
+library(lattice)
+print(bwplot(1:10))
+@
+\end{verbatim}
+should work. Future versions of Sweave may have more automated means
+to deal with trellis graphics. 
+
+
+\subsection{How can I get Black \& White lattice graphics?}
+
+What is the most elegant way to specify that strip panels are to have 
+transparent backgrounds and graphs are to be in black and white when 
+lattice is being used with Sweave?  I would prefer a global option that 
+stays in effect for multiple plots.
+
+Answer by Deepayan Sarkar: I'd do something like this as part of
+the initialization:
+\begin{Scode}{}
+  library(lattice)
+  ltheme <- canonical.theme(color = FALSE)     ## in-built B&W theme
+  ltheme$strip.background$col <- "transparent" ## change strip bg
+  lattice.options(default.theme = ltheme)      ## set as default
+\end{Scode}
+   
+\subsection{Creating several figures from one figure chunk does not work}
+
+Consider that you want to create several graphs in a loop similar
+to
+\begin{verbatim}
+<<fig=TRUE>>
+for (i in 1:4) plot(rnorm(100)+i)
+@
+\end{verbatim}
+   This will currently \textbf{not} work, because Sweave allows
+   \textbf{only one graph} per figure chunk. The simple reason is that
+   Sweave opens a postscript device before executing the code and
+   closes it afterwards. If you need to plot in a loop, you have to
+   program it along the lines of
+\begin{verbatim}
+<<results=tex,echo=FALSE>>=
+for(i in 1:4){
+  file=paste("myfile", i, ".eps", sep="")
+  postscript(file=file, paper="special", width=6, height=6)
+  plot(rnorm(100)+i)
+  dev.off()
+  cat("\\includegraphics{", file, "}\n\n", sep="")
+}
+@
+\end{verbatim}
+
+
+   
+  \subsection{How can I place all those auto-generated graphics
+  files in a subdirectory rather than the same directory as the Sweave
+  file?}
+
+  After
+\begin{quote}
+        \showSweaveOpts{prefix.string=foo/bar}
+\end{quote}
+  Sweave will place all figures in subdirectory \texttt{foo} and their name
+  will start with \texttt{bar} (instead of the name of the Sweave file). The
+  subdirectory \texttt{foo} should exist before you run Sweave.
+
+ \subsection{How can I set default \texttt{par()} settings for figure
+    chunks?}
+
+  Because each EPS and PDF file opens a new device, using \texttt{par()}
+  has only an effect if it is used inside a figure chunk. If you want
+  to use the same settings for a series of figures, it is easier to
+  use a hook function than repeating the same \texttt{par()} statement
+  in each figure chunk.
+
+  The effect of
+\begin{Scode}{}
+  options(SweaveHooks=list(fig=function() par(bg="red", fg="blue")))
+\end{Scode} 
+  should be easy to spot. Do not forget to remove the hook at the end
+  of the Sweave file unless you want to use it as a global option for
+  all Sweave files.
+
+\newpage
+\section{Formatting}
+
+  \subsection{How can I change the formatting of S input and output
+     chunks?}
+   
+   Sweave uses the \texttt{fancyvrb} package for formatting all S code
+   and text output. \texttt{fancyvrb} is a very powerful and flexible
+   package that allows fine control for layouting text in verbatim
+   environments. If you want to change the default layout, simply read
+   the \texttt{fancyvrb} documentation and modify the definitions of
+   the \texttt{Sinput} and \texttt{Soutput} environments in
+   \file{Sweave.sty}, respectively.
+
+
+  \subsection{How can I change the line length of S input and
+     output?}
+   
+   Sweave respects the usual way of specifying the desired line length
+   in S, namely \texttt{options(width)}. E.g., after
+   \texttt{options(width=40)} lines will be formatted to have at most 40
+   characters (if possible).
+
+\subsection{Why does Sweave delete all comments from the R code? Why
+  does it mess up line breaks for continuation lines?}
+
+In order to know where to insert output in the code, Sweave runs all
+code through the R parser. The ``input lines'' you see are the result
+from running the code through \texttt{parse()} and \texttt{deparse()},
+which by default discards all comments and reformats line breaks. 
+If you want to keep the original formatting together with all
+comments, simply set
+\begin{quote}
+   \showSweaveOpts{keep.source=TRUE}
+\end{quote}
+using R 2.5.0 or newer.
+
+\newpage
+\section{Miscellaneous}
+
+  \subsection{Can I use Sweave for OpenOffice files?}
+
+   Package \texttt{odfWeave} provides an Sweave 
+   implementation which uses OpenOffice rather than \LaTeX for word processing.
+   
+  \subsection{Can I use Sweave for Microsoft Word files?}
+
+  No.
+   
+  \subsection{Can I use Sweave for HTML files?}
+
+   Package \texttt{R2HTML} provides a driver for using Sweave in
+   combination with HTML rather than \LaTeX.
+   
+  \subsection{After loading package \texttt{R2HTML} Sweave doesn't
+     work properly!}
+   
+   Package \texttt{R2HTML} registers an Sweave driver for HTML
+   files, and after that the Syntax for HTML is in the search list
+   before the default syntax.
+\begin{verbatim}
+  options(SweaveSyntax="SweaveSyntaxNoweb")   
+\end{verbatim}
+or calling Sweave like
+\begin{verbatim}
+  Sweave(..., syntax="SweaveSyntaxNoweb")
+\end{verbatim}
+ensures the default syntax even after loading \texttt{R2HTML}.
+
+
+\subsection{How can I get Emacs to automatically recognize files in Sweave format?}
+
+Recent versions of ESS (Emacs speaks statistics,
+\url{http://ess.R-project.org}) automatically recognize files with
+extension \texttt{.Rnw} as Sweave files and turn on the correct
+modes. Please follow the instructions on the ESS homepage on how to
+install ESS on your computer.
+
+\end{document}  
+ 
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
