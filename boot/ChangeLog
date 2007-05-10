@@ -1,3 +1,8 @@
+version 1.2-28 unreleased
+
+    INDEX, man: change 'library' to 'package' and remove some references to
+    S-PLUS.
+
 version 1.2-27 2006-11-29
 
     bootfuns.q : use control=NULL for deparsed calls.
