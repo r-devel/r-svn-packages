@@ -45,7 +45,7 @@ null.space.dimension<-function(d,m)
   ind<-2*m<d+1
   if (sum(ind)) # then default m required for some elements
   { m[ind]<-1;ind<-2*m<d+2
-    while (sum(ind)) { m[ind]<-m[ind]+1;ind<-2+m<d+2;}
+    while (sum(ind)) { m[ind]<-m[ind]+1;ind<-2*m<d+2;}
   }
   M<-m*0+1;ind<-M==1;i<-0
   while(sum(ind))
@@ -57,10 +57,6 @@ null.space.dimension<-function(d,m)
   }
   M
 }
-
-
-
-
 
 
 

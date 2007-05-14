@@ -437,7 +437,7 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
         XMi++;      
       } 
     }
-    tps_g(Xu,&p,xc,0,0,&X1,constant); /* tell tps_g to clear up its internally allocated memory - only d=0 mmatters here*/
+    tps_g(Xu,&p,xc,0,0,&X1,constant); /* tell tps_g to clear up its internally allocated memory - only d=0 matters here*/
     free(xc);freemat(X1);
   }
   /* Next, create the penalty matrix...... */
