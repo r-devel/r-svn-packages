@@ -2769,7 +2769,7 @@ saddle <- function(A=NULL, u=NULL, wdist="m", type="simp", d=NULL, d1=1,
         type <- "simp"
         wdist <- "o"
         speq <- optim(init, K.adj)
-        if (speq$conv == 0) {
+        if (speq$convergence == 0) {
             ahat <- speq$par
             Khat <- K.adj(ahat)
             K2hat <- det(K2(ahat))
@@ -2833,7 +2833,7 @@ saddle <- function(A=NULL, u=NULL, wdist="m", type="simp", d=NULL, d1=1,
             }
             K2hat <- det(temp)
         }
-        if (speq$conv == 0) {
+        if (speq$convergence == 0) {
             gs <- 1/sqrt(2*pi*K2hat)^d*exp(Khat)
             if (d == 1) {
                 r <- sgn(ahat)*sqrt(-2*Khat)
