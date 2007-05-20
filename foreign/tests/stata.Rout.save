@@ -295,7 +295,7 @@ abbreviating variable names in: write.dta(esoph, esophile, convert.factors = "co
 6    white      6
 7    black      7
 > 
-> stata8<-read.dta("auto8.dta",missing=TRUE,convert.underscore=FALSE)
+> stata8<-read.dta("auto8.dta",missing.type=TRUE,convert.underscore=FALSE)
 > str(stata8)
 'data.frame':	74 obs. of  13 variables:
  $ make        : chr  "AMC Concord" "AMC Pacer" "AMC Spirit" "Buick Century" ...
