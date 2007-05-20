@@ -1251,7 +1251,7 @@ Initialize.glsStruct <-
         object[] <- lapply(object, Initialize, data)
         theta <- lapply(object, coef)
         len <- unlist(lapply(theta, length))
-        num <- seq(along = len)
+        num <- seq_along(len)
         if (sum(len) > 0) {
             pmap <- outer(rep(num, len), num, "==")
         } else {

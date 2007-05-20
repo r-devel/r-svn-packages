@@ -95,7 +95,7 @@ gnls <-
     params <- list(params)
   }
   val <- NULL
-  for(i in seq(along = params)) {
+  for(i in seq_along(params)) {
     if (is.name(params[[i]][[2]])) {
       val <- c(val, list(params[[i]]))
     } else {
@@ -107,7 +107,7 @@ gnls <-
   }
   params <- as.list(val)
   pnames <- character(length(params))
-  for (i in seq(along = params)) {
+  for (i in seq_along(params)) {
     this <- eval(params[[i]])
     if (!inherits(this, "formula"))
       stop ("params must be a formula or list of formulae")
@@ -711,7 +711,7 @@ predict.gnls <-
     params <- list(params)
   }
   val <- NULL
-  for(i in seq(along = params)) {
+  for(i in seq_along(params)) {
     if (is.name(params[[i]][[2]])) {
       val <- c(val, list(params[[i]]))
     } else {
@@ -825,7 +825,7 @@ Initialize.gnlsStruct <-
     object[] <- lapply(object, Initialize, data)
     theta <- lapply(object, coef)
     len <- unlist(lapply(theta, length))
-    num <- seq(along = len)
+    num <- seq_along(len)
     if (sum(len) > 0) {
       pmap <- outer(rep(num, len), num, "==")
     } else {

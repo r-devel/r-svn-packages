@@ -565,13 +565,13 @@ lmeApVar <-
   conLin[["logLik"]] <- 0               # making sure
   sig2 <- sigma * sigma
   reSt <- lmeSt[["reStruct"]]
-  for(i in seq(along = reSt)) {
+  for(i in seq_along(reSt)) {
     matrix(reSt[[i]]) <- as.double(sig2) * pdMatrix(reSt[[i]])
     if (inherits(reSt[[i]], "pdSymm") && natural) {
       reSt[[i]] <- pdNatural(reSt[[i]])
     }
     if (inherits(reSt[[i]], "pdBlocked") && natural) {
-      for(j in seq(along = reSt[[i]])) {
+      for(j in seq_along(reSt[[i]])) {
         if (inherits(reSt[[i]][[j]], "pdSymm")) {
           reSt[[i]][[j]] <- pdNatural(reSt[[i]][[j]])
         }
@@ -646,7 +646,7 @@ MEEM <-
 	     double(1))[["precvec"]]
     Prec <- vector("list", length(object))
     names(Prec) <- names(object)
-    for (i in seq(along = object)) {
+    for (i in seq_along(object)) {
       len <- dd$qvec[i]^2
       matrix(object[[i]]) <-
         crossprod(matrix(zz[1:len + dd$DmOff[i]], ncol = dd$qvec[i]))
@@ -678,7 +678,7 @@ MEestimate <-
   val <- vector(mode = "list", length = Q)
   names(val) <- nam
   start <- dd$StrRows * c(0, cumsum(nc))
-  for (i in seq(along = reSt)) {
+  for (i in seq_along(reSt)) {
     val[[i]] <-
       matrix(resp[as.vector(outer(1:(nc[i]), dd$SToff[[i]] - start[i], "+"))],
 	     ncol = nc[i], byrow = TRUE,
@@ -711,7 +711,7 @@ MEdims <-
   {
     pop <- function(x) x[-length(x)]
     cstart <- c(0, cumsum(N * ncols))
-    for (i in seq(along = lstrow)) {
+    for (i in seq_along(lstrow)) {
       lstrow[[i]] <- cstart[i] +
         if (triangle) {
           lstrow[[i]] - ncols[i]        # storage offsets style
@@ -737,7 +737,7 @@ MEdims <-
     isLast[, Q + 1 - i] <- c(0 != diff(as.integer(groups[[i]])), TRUE)
   }
   isLast[N,  ] <- TRUE
-  lastRow <- apply(isLast, 2, function(x) seq(along = x)[x])
+  lastRow <- apply(isLast, 2, function(x) seq_along(x)[x])
   if(!is.list(lastRow)) {
     nm <- names(lastRow)
     lastRow <- as.list(lastRow)
@@ -1304,12 +1304,12 @@ intervals.lme <-
     origInt <- origInt[-nP,, drop = FALSE]
 
     if (attr(aV, "natural")) {          # convert any pdSymm's to pdNatural's
-      for(i in seq(along = lmeSt$reStruct)) {
+      for(i in seq_along(lmeSt$reStruct)) {
 	if (inherits(lmeSt$reStruct[[i]], "pdSymm")) {
 	  lmeSt$reStruct[[i]] <- pdNatural(lmeSt$reStruct[[i]])
 	} else {
           if (inherits(lmeSt$reStruct[[i]], "pdBlocked")) {
-            for(j in seq(along = lmeSt$reStruct[[i]])) {
+            for(j in seq_along(lmeSt$reStruct[[i]])) {
               if (inherits(lmeSt$reStruct[[i]][[j]], "pdSymm")) {
                 lmeSt$reStruct[[i]][[j]] <- pdNatural(lmeSt$reStruct[[i]][[j]])
               }
@@ -1333,7 +1333,7 @@ intervals.lme <-
                natInt[[i]] <-
                natInt[[i]] <-
                  rev(as.matrix( split( as.data.frame( natInt[[i]] ),
-                                      rep( seq(along = plen), plen ))))
+                                      rep( seq_along(plen), plen ))))
                names(natInt[[i]]) <- rev(names(plen))
                for (j in names(plen)) {
                  dimnames(natInt[[i]][[j]])[[1]] <-
@@ -1484,7 +1484,7 @@ pairs.lme <-
        }
 	       aux <- t(as.matrix(ranef(object, level = level)))
 	       aux <- as.logical(apply(
-	(solve(t(pdMatrix(object$modelStruct$reStruct, fact = TRUE)[[level]]),
+	(solve(t(pdMatrix(object$modelStruct$reStruct, factor = TRUE)[[level]]),
 		 aux)/object$sigma)^2, 2, sum) > qchisq(1 - id, dim(aux)[1]))
 	       aux
 	     },
@@ -1767,9 +1767,9 @@ plot.ranef.lme <-
 
     condvar <- eval(expression(g), argData)
     xscales.lim <- as.list(levels(condvar))
-    subsc <- seq(along = condvar)
+    subsc <- seq_along(condvar)
 
-    for (i in seq(along = xscales.lim)) {
+    for (i in seq_along(xscales.lim)) {
         subscripts <- subsc[condvar == xscales.lim[[i]]]
         vN <- .vNam[subscripts][1]
         if (.vType[vN] == "numeric") {
@@ -2094,7 +2094,7 @@ print.ranef.lme <-
   if (!inherits(x[[1]], "data.frame")) {
     print.data.frame(x, ...)
   } else {                              # list
-    for(i in seq(along = x)) {
+    for(i in seq_along(x)) {
       cat("Level:", attr(x, "grpNames")[i],"\n")
       print.data.frame(x[[i]])
       if (i < length(x)) cat("\n")
@@ -2805,7 +2805,7 @@ Initialize.lmeStruct <-
   object[] <- lapply(object, Initialize, data, conLin, control)
   theta <- lapply(object, coef)
   len <- unlist(lapply(theta, length))
-  num <- seq(along = len)
+  num <- seq_along(len)
   if (sum(len) > 0) {
     pmap <- outer(rep(num, len), num, "==")
   } else {
