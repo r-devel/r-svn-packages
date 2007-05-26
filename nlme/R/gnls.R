@@ -220,7 +220,7 @@ gnls <-
       plist[[nm]] <-
         model.matrix(asOneSidedFormula(params[[nm]][[3]]),
                  model.frame(asOneSidedFormula(params[[nm]][[3]]), dataModShrunk))
-      auxContr <- attr(plist[[nm]], "contr")
+      auxContr <- attr(plist[[nm]], "contrasts")
       contr <- c(contr, auxContr[is.na(match(names(auxContr), names(contr)))])
     }
   }

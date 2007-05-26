@@ -1,4 +1,4 @@
-2007-05-20  Brian Ripley <Brian.Ripley@R-project.org>
+2007-05-20,24  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/*.R: partial matching issues, switch to seq_along.
 

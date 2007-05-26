@@ -419,7 +419,7 @@ nlme.formula <-
 	this[["fixed"]] <-
           model.matrix(asOneSidedFormula(fixed[[nm]][[3]]),
                   model.frame(asOneSidedFormula(fixed[[nm]][[3]]), dataMix))
-        auxContr <- attr(this[["fixed"]], "contr")
+        auxContr <- attr(this[["fixed"]], "contrasts")
         contr <- c(contr, auxContr[is.na(match(names(auxContr), names(contr)))])
       }
     }
@@ -432,7 +432,7 @@ nlme.formula <-
               model.matrix(asOneSidedFormula(ranForm[[i]][[nm]][[3]]),
                         model.frame(asOneSidedFormula(ranForm[[i]][[nm]][[3]]),
                                     dataMix))
-            auxContr <- attr(this[["random"]][[i]], "contr")
+            auxContr <- attr(this[["random"]][[i]], "contrasts")
             contr <-
               c(contr, auxContr[is.na(match(names(auxContr), names(contr)))])
           }
@@ -445,7 +445,7 @@ nlme.formula <-
             }, data = dataMix))
           for(j in seq_along(this[["random"]][[i]])) {
             if (is.matrix(this[["random"]][[i]][[j]])) {
-              auxContr <- attr(this[["random"]][[i]][[j]], "contr")
+              auxContr <- attr(this[["random"]][[i]][[j]], "contrasts")
               contr <-
                 c(contr, auxContr[is.na(match(names(auxContr), names(contr)))])
             }
