@@ -324,7 +324,7 @@ lme.formula <-
     if (!needUpdate(lmeSt)) {
 	if (optRes$convergence) {
 	    msg <- paste(controlvals$opt, " problem, convergence error code = ",
-			 optRes$convergence, "; message = ", optRes$message,
+			 optRes$convergence, "\n  message = ", optRes$message,
 			 sep='')
 	    if(!controlvals$returnObject)
 		stop(msg)
@@ -1692,7 +1692,7 @@ plot.ranef.lme <-
     reName <- form[[2]]
     if (length(reName) != 1 &&
         substring(deparse(reName),
-                  nchar(deparse(reName)) - 10) != "(Intercept)") {
+                  nchar(deparse(reName), "c") - 10) != "(Intercept)") {
       stop("Only single effects allowed in left side of form.")
     }
     reName <- deparse(reName)

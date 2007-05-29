@@ -165,12 +165,12 @@ pdConstruct.pdMat <-
           err <- TRUE
           namCopy <- nam
           indNoMatch <- (1:length(nam))[noMatch]
-          if (any(wch1 <- (nchar(nam) > 12))) {
+          if (any(wch1 <- (nchar(nam, "c") > 12))) {
             ## possibly names with .(Intercept) in value
-            wch1 <- substring(nam, nchar(nam)-10) == "(Intercept)"
+            wch1 <- substring(nam, nchar(nam, "c")-10) == "(Intercept)"
             if (any(wch1)) {
               namCopy[indNoMatch[wch1]] <-
-                substring(nam[wch1], 1, nchar(nam[wch1]) - 12)
+                substring(nam[wch1], 1, nchar(nam[wch1], "c") - 12)
               noMatch[wch1] <- FALSE
               indNoMatch <- indNoMatch[!wch1]  # possibly not matched
             }
@@ -327,12 +327,12 @@ Names.pdMat <-
       valueCopy <- value
       indNoMatch <- (1:length(value))[noMatch]
       nam1 <- value[noMatch]            # no matching names
-      if (any(wch1 <- (nchar(nam1) > 12))) {
+      if (any(wch1 <- (nchar(nam1, "c") > 12))) {
         ## possibly names with .(Intercept) in value
-        wch1 <- substring(nam1, nchar(nam1)-10) == "(Intercept)"
+        wch1 <- substring(nam1, nchar(nam1, "c")-10) == "(Intercept)"
         if (any(wch1)) {
           valueCopy[indNoMatch[wch1]] <-
-            substring(nam1[wch1], 1, nchar(nam1[wch1]) - 12)
+            substring(nam1[wch1], 1, nchar(nam1[wch1], "c") - 12)
           noMatch[wch1] <- FALSE
           indNoMatch <- indNoMatch[!wch1]  # possibly not matched
         }

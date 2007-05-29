@@ -1,3 +1,9 @@
+2007-05-29  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/{gls,lme,pdMat}.R: qualify uses of nchar().
+	* R/lme.R: layout of over-long error message.
+	* tests/lme.Rout.save: update for above and for 2.6.0 layout.
+
 2007-05-20,24  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/*.R: partial matching issues, switch to seq_along.

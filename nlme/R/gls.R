@@ -788,7 +788,7 @@ intervals.gls <-
             for(i in namG) {
                 auxVal[[i]] <- aux[pmap[,i], , drop = FALSE]
                 dimnames(auxVal[[i]])[[1]] <-
-                    substring(dimnames(auxVal[[i]])[[1]], nchar(i) + 2)
+                    substring(dimnames(auxVal[[i]])[[1]], nchar(i, "c") + 2)
                 attr(auxVal[[i]], "label") <-
                     switch(i,
                            corStruct = "Correlation structure:",
