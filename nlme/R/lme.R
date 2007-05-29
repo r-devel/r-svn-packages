@@ -375,6 +375,7 @@ lme.formula <-
 		   conLin = if (decomp) oldConLin else attr(lmeSt, "conLin"))[
 		   revOrder, , drop = FALSE]
   Resid <- y[revOrder] - Fitted
+  rownames(Resid) <- rownames(Fitted) <- origOrder
   attr(Resid, "std") <- lmeFit$sigma/(varWeights(lmeSt)[revOrder])
   ## putting groups back in original order
   grps <- grps[revOrder, , drop = FALSE]
@@ -420,7 +421,8 @@ lme.formula <-
 		 method = method,
 		 fitted = Fitted,
 		 residuals = Resid,
-                 fixDF = fixDF)
+                 fixDF = fixDF,
+                 na.action = attr(dataMix, "na.action"))
   if (keep.data && !miss.data) estOut$data <- data
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
@@ -1212,8 +1214,8 @@ fitted.lme <-
       lab <- paste(lab, aux)
     }
     attr(val, "label") <- lab
-  }
-  val
+    val
+  } else napredict(object$na.action, val)
 }
 
 formula.lme <- function(x, ...) eval(x$call$fixed)
@@ -2511,8 +2513,8 @@ residuals.lme <-
              pearson = "Standardized residuals",
              normalized = "Normalized residuals"
              )
-  }
-  val
+    val
+  } else naresid(object$na.action, val)
 }
 
 summary.lme <- function(object, adjustSigma = TRUE, verbose = FALSE, ...)

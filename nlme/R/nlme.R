@@ -969,6 +969,7 @@ nlme.formula <-
     Resid <- resid(nlmeSt, level = 0:Q)[revOrderShrunk, ]
   }
   Fitted <- yShrunk[revOrderShrunk] - Resid
+  rownames(Resid) <- rownames(Fitted) <- origOrderShrunk
   grpShrunk <- grpShrunk[revOrderShrunk, , drop = FALSE]
   attr(Resid, "std") <- nlmeFit$sigma/(varWeights(nlmeSt)[revOrderShrunk])
   ## inverting back reStruct

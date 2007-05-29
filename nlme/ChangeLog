@@ -1,8 +1,13 @@
 2007-05-29  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* R/{gls,lme,pdMat}.R: qualify uses of nchar().
+	* R/{gls,lme,pdMat}.R: qualify uses of nchar() by 'type'.
 	* R/lme.R: layout of over-long error message.
 	* tests/lme.Rout.save: update for above and for 2.6.0 layout.
+	* R/{gls,gnls,lme,nlme}.R: copy row names to fitted values and
+	residuals.
+	* R/{gls,gnls,lme}.R: support naresid and napredict.
+	* man/{residuals,fitted}.lme.Rd: document this.
+	* tests/missing.{R,Rout.save}: tests of misssing-value support.
 
 2007-05-20,24  Brian Ripley <Brian.Ripley@R-project.org>
 

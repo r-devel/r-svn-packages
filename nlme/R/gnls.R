@@ -489,6 +489,7 @@ gnls <-
     Fitted[] <- Fitted[revOrderShrunk]
     grpShrunk[] <- grpShrunk[revOrderShrunk]
   }
+  names(Resid) <- names(Fitted) <- origOrderShrunk
   ## getting the approximate var-cov of the parameters
   ## first making Xy into single column array again
   attr(gnlsSt, "conLin")$Xy <- array(auxRes, c(NReal, 1))
@@ -523,7 +524,8 @@ gnls <-
 		 residuals = Resid,
 		 plist = plist,
                  pmap = pmap,
-                 parAssign = parAssign)
+                 parAssign = parAssign,
+                 na.action = attr(dataMod, "na.action"))
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
     attr(estOut, "units") <- attr(data, "units")
