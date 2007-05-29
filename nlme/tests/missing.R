@@ -1,5 +1,7 @@
 library(nlme)
 
+options(digits=4) # avoid rounding differences
+
 Ovary[c(1,272), 2] <- NA
 fm1 <- gls(follicles ~ sin(2*pi*Time) + cos(2*pi*Time), Ovary,
            correlation = corAR1(form = ~ 1 | Mare), na.action=na.exclude)
