@@ -1201,13 +1201,16 @@ fitted.lme <-
   } else {				# assuming integers
     level <- 1 + level
   }
-  val <- val[, level]
+  val2 <- napredict(object$na.action, val[, level])
   if (length(level) == 1) {
+    grp.nm <- row.names(object[["groups"]])
     grps <- as.character(object[["groups"]][, max(c(1, level - 1))])
     if (asList) {
       val <- as.list(split(val, ordered(grps, levels = unique(grps))))
     } else {
-      names(val) <- grps
+      grp.nm <- row.names(object[["groups"]])
+      val <- val2
+      names(val) <- grps[match(names(val), grp.nm)]
     }
     lab <- "Fitted values"
     if (!is.null(aux <- attr(object, "units")$y)) {
@@ -1215,7 +1218,7 @@ fitted.lme <-
     }
     attr(val, "label") <- lab
     val
-  } else napredict(object$na.action, val)
+  } else val2
 }
 
 formula.lme <- function(x, ...) eval(x$call$fixed)
@@ -2499,7 +2502,9 @@ residuals.lme <-
     if (asList) {
       val <- as.list(split(val, ordered(grps, levels = unique(grps))))
     } else {
-      names(val) <- grps
+      grp.nm <- row.names(object[["groups"]])
+      val <-naresid(object$na.action, val)
+      names(val) <- grps[match(names(val), grp.nm)]
     }
     attr(val, "label") <-
       switch(type,

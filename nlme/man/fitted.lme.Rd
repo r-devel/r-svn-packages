@@ -36,8 +36,8 @@
   (\code{asList = FALSE}); else, when multiple grouping levels are
   specified in \code{level}, the returned object is a data frame with
   columns given by the fitted values at different levels and the
-  grouping factors.  In the latter case only the \code{\link{napredict}}
-  method is applied.
+  grouping factors.  For a vector or data frame result the
+  \code{\link{napredict}} method is applied.
 }
 \references{
   Bates, D.M. and Pinheiro, J.C. (1998) "Computational methods for

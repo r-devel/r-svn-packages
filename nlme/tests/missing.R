@@ -14,7 +14,7 @@ fm2 <- lme(distance ~ age + Sex, data = Orthodont, random = ~ 1,
 fitted(fm2, 0:1)
 fitted(fm2)
 residuals(fm2, 0:1)
-residuals(fm2)
+round(residuals(fm2), 2)
 
 Soybean[1:5, "Time"] <- NA
 fm3 <- gnls(weight ~ SSlogis(Time, Asym, xmid, scal), Soybean,
