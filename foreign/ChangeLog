@@ -1,3 +1,9 @@
+2007-05-29 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/dbf.R, R/read.dta.R: comments on meaning of nchar()
+	- probably always ASCII
+	* tests/stata.Rout.save: update for R 2.6.x
+
 2007-05-20 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/Sread.R, R/octave.R, tests/stata.*: partial matching issues,
