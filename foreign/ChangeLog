@@ -1,8 +1,9 @@
 2007-06-01 Brian Ripley <Brian.Ripley@R-project.org>
 
-	* src/foerign.h: remove duplicate definition of R_ExpandFileName.
+	* src/foreign.h: remove duplicate definition of R_ExpandFileName.
 	* src/R_systat.c, src/Rdfread.c, src/SASexport.c, src/spss.c,
 	src/stataread.c: issues with CHAR being made (const char *).
+	* DESCRIPTION: Version is 0.8-21, depends on R >=2.6.0
 
 2007-05-29 Brian Ripley <Brian.Ripley@R-project.org>
 
