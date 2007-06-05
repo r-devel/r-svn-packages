@@ -1,3 +1,15 @@
+2007-06-05  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.11.7  (mainly for R-devel)
+
+2007-06-02  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/plot.diana.Rd, etc: s/dendrogramm/dendrogram/
+
+2007-05-31  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/plantTraits.Rd: add \encoding{latin1}
+
 2007-04-09  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 1.11.6 - needed
