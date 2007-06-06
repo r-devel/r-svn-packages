@@ -1470,9 +1470,6 @@ read_compressed_data (struct file_handle * h, R_flt64 * temp)
       p = ext->x;
     }
 
-  /* Not reached. */
-  if (!(0)) error("assert failed : 0");
-
 winnage:
   /* We have filled up an entire record.  Update state and return
      successfully. */
