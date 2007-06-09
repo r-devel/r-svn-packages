@@ -1,3 +1,24 @@
+2007-06-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/lmrob-data.R, *.Rout.save: new consistency tests for lmrob()
+
+	* R/biweight-funs.R (tukeyPsi1, tukeyChi): renamed from
+	lmrob.Psi() and lmrob.Chi();  also renamed
+	* man/tukeyPsi1.Rd, man/tukeyChi.Rd: updated, also mentioning "psiFunc"
+
+	* src/lmrob.c (rwls): now controlling *relative* error in MM
+	iterations, i.e., convergence happens when  ||b1 - b2|| < eps * ||b1||.
+	The above 'eps' is now part of lmrob.control() instead of
+	hard-wired in C code.
+
+	* R/lmrob.MM.R (lmrob.MM): new argument 'trace.lev'
+	* src/robustbase.h (R_lmrob_MM): add trace_lev argument
+
+2007-06-08  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* src/lmrob.c (refine_fast_s): slight change in warning()
+	[make message nicer for future R >= 2.5.1]
+
 2007-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/ltsReg.R: replace 'quan' by 'h' internally
