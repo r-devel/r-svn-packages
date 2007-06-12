@@ -1,3 +1,9 @@
+2007-06-12  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION (Version, Date): 3.1-82
+	Also, R >= 2.4.0 because of seq_along.
+	* tests/lme.Rout.save: back to 2.5.1 layout.
+
 2007-05-29  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/{gls,lme,pdMat}.R: qualify uses of nchar() by 'type'.
@@ -7,7 +13,7 @@
 	residuals.
 	* R/{gls,gnls,lme}.R: support naresid and napredict.
 	* man/{residuals,fitted}.lme.Rd: document this.
-	* tests/missing.{R,Rout.save}: tests of misssing-value support.
+	* tests/missing.{R,Rout.save}: tests of missing-value support.
 
 2007-05-20,24  Brian Ripley <Brian.Ripley@R-project.org>
 
