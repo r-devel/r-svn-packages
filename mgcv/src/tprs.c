@@ -155,8 +155,8 @@ int null_space_dimension(int d, int m)
 { int M,i;
   if (2*m<=d) {m=1;while (2*m<d+2) m++;} 
   M=1;     /* dimension of penalty null space */
-  for (i=0;i<d;i++) M*=d+m-1-i;
-  for (i=2;i<=d;i++) M/=i;     /* M = (m+d+1)!/(d!(m-d!) */
+  for (i=0;i<d;i++) M*=d+m-1-i;/* get (m+d-1)!/(m-1)! = (m+d-1)*(m+d-2) ... *(m) -- d terms */ 
+  for (i=2;i<=d;i++) M/=i;     /* M = (m+d-1)!/(d!(m-1)!) */
   return(M);
 }
 

@@ -227,7 +227,7 @@
   frame which contains, e.g. log(x) rather than x itself. offset handling 
   simplified as a result.
 
-* prediction from te smooths could fail becuase of a bug in handling the 
+* prediction from te smooths could fail because of a bug in handling the 
   list of re-parameterization matrices for 1-D terms in 
   Predict.matrix.tensor.smooth. Fixed. (tensor product docs also updated)
 
