@@ -287,7 +287,7 @@ int *Xd_strip(matrix *Xd)
 }
 
 void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,matrix *X,matrix *S,
-                matrix *UZ,matrix *Xu,int n_knots,int max_knots)
+                matrix *UZ,matrix *Xu,int n_knots)
 
 /* Takes d covariates x_1,..,x_d and creates the truncated basis for an order m 
    smoothing spline, returning the design matrix and wiggliness penalty matrix 
@@ -355,8 +355,6 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
   Xu->c--; /* hide indexing column */
   if (Xu->r<k) 
   ErrorMessage(_("A term has fewer unique covariate combinations than specified maximum degrees of freedom"),1);
-  if (Xu->r>max_knots)
-  ErrorMessage(_("Too many knots for t.p.r.s term: see `gam.control' to increase limit, or use a different basis, or see large data set help for `gam'."),1);
   if (2*m<=d) { m=0;while (2*m<d+2) m++;} 
   tpsE(&E,Xu,m,d); /* The important matrix in the full t.p.s. problem */
   tpsT(&T,Xu,m,d); /* The tps constraint matrix */

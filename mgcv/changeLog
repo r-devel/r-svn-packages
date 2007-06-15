@@ -1,5 +1,27 @@
 1.3-25
 
+* PredictMat can now handle NAs in a returned prediction matrix.
+ 
+* vis.gam can handle NA's in predictions.
+
+* Modification of large dataset handling for "tp" and "ts" bases. If there
+  are more that 3000 unique covariate combinations for a tprs then 3000 
+  combinations are randomly sub-sampled, and used as the initial knots for 
+  tprs basis construction. The same random number seed is used every time, 
+  (R's RNG state is unaltered by this). Control of this is usually via the 
+  `max.knots' (default 3000) and `seed' (default 1) elements of the `xt'
+  argument of `s'. In consequence, `max.tprs.knots' has been removed from 
+  `gam.control'.
+
+* Modification of `s' and `te' to allow an extra argument `xt' which can 
+  contain extra information to pass to the basis constructors for smooths.
+
+* removal of `full.call' from smooth.spec objects - it wasn't used 
+  anywhere any more, and is a pain to maintain.
+
+* removal of `full.formula' from the `gam' object - it is no longer used 
+  anywhere and requires alot of code to construct.
+
 * A bug in `null.space.dimension' caused prediction to fail for `s' terms 
   of 4 or more variables, unless the `m' argument was supplied explicitly 
   (and was large enough for the number of variables). Fixed. 

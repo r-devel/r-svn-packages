@@ -389,7 +389,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),k
   }  
   else  m<-length(split$smooth.spec) # number of smooth terms
   
-  G<-list(m=m,full.formula=split$full.formula)
+  G<-list(m=m)##,full.formula=split$full.formula)
 
   if (is.null(attr(data,"terms"))) # then data is not a model frame
   mf<-model.frame(split$pf,data,drop.unused.levels=FALSE) # FALSE or can end up with wrong prediction matrix!
@@ -546,7 +546,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),k
   G$random<-random
   G$X<-X  
 
-  G$y <- data[[deparse(split$full.formula[[2]],backtick=TRUE)]]
+  G$y <- data[[split$response]] ##data[[deparse(split$full.formula[[2]],backtick=TRUE)]]
   
   G$n<-nrow(data)
 
@@ -1140,7 +1140,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     
     object$prior.weights <- weights
     class(object)<-"gam"
-    object$full.formula <- G$full.formula
+    ##object$full.formula <- G$full.formula
 
     object$fitted.values <- predict.gam(object,type="response")
     object$residuals <- residuals(ret$lme) #as.numeric(G$y) - object$fitted.values
