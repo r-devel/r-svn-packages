@@ -1,9 +1,17 @@
+2007-06-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.2-8  ready to be released
+
+	* src/lmrob.c (rwls): patch from Matias Salibian: Don't do any
+	"lambda iterations" anymore, they are remnants from old "experiments".
+
 2007-06-19  Valentin Todorov  <valentin.todorov@chello.at>
 
     * R/covMcd.R: usage of simulated finite sample correction factors fixed:
     * - case p=1 fixed
-    * - simulated corrections used only when the Pison et.al. 
+    * - simulated corrections used only when the Pison et.al.
     *   formula is definitely wrong (negative or very large)
+
 2007-06-09  Martin Maechler  <maechler@stat.math.ethz.ch>
 
     * tests/lmrob-data.R, *.Rout.save: new consistency tests for lmrob()
