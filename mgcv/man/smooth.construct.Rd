@@ -127,7 +127,7 @@ information on how to handle large datasets in their \code{xt} field. The defaul
 subsample 3000 `knots' from which to produce a tprs basis, if the number of
 unique predictor variable combinations in excess of 3000. The default can be
 modified via the \code{xt} argument to \code{\link{s}}. This is supplied as a
-list with elements \code{max.knots} and {\code{seed}} containing a number
+list with elements \code{max.knots} and \code{seed} containing a number
 to use in place of 3000, and the random number seed to use (either can be
 missing). 
 

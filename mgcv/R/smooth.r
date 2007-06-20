@@ -248,9 +248,10 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)
   k.new<-round(k) # in case user has supplied non-integer basis dimension
   if (!all.equal(k.new,k)) {warning("argument k of s() should be integer and has been rounded")}
   k<-k.new
-  if (k==-1) k<-10*3^(d-1) # auto-initialize basis dimension
-  if (k < 2) 
-  { k <- 2
+  if (length(k)==1 && k==-1) k<-10*3^(d-1) # auto-initialize basis dimension
+  ind <- k<2
+  if (sum(ind)) 
+  { k[ind] <- 2
     warning("meaninglessly low k; reset to 2\n")
   }
   if (bs=="cr"||bs=="cc") # a check
