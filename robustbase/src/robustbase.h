@@ -1,4 +1,6 @@
-#include <R.h>
+/* External and interal  API  of  C and Fortran routines in robustbase */
+
+/* C code which includes this, typically includes <R.h> */
 
 /* ./qn_sn.c : */
 #define Sint int

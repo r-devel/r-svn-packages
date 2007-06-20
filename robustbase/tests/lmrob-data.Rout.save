@@ -1,5 +1,5 @@
 
-R version 2.5.0 Patched (2007-06-08 r41896)
+R version 2.5.1 beta (2007-06-19 r41995)
 Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -296,11 +296,11 @@ lmrob(formula = stack.loss ~ ., data = stackloss)
 
 Weighted Residuals:
       Min        1Q    Median        3Q       Max 
--10.50973  -1.43820  -0.09134   1.02503   7.23113 
+-10.50974  -1.43819  -0.09134   1.02503   7.23113 
 
 Coefficients:
              Estimate Std. Error t value Pr(>|t|)    
-(Intercept) -41.52461    5.29780  -7.838 4.82e-07 ***
+(Intercept) -41.52462    5.29780  -7.838 4.82e-07 ***
 Air.Flow      0.93885    0.11743   7.995 3.68e-07 ***
 Water.Temp    0.57955    0.26296   2.204   0.0416 *  
 Acid.Conc.   -0.11292    0.06989  -1.616   0.1246    
@@ -326,5 +326,5 @@ seed : int(0)
 > 
 > 
 > cat('Time elapsed: ', proc.time(),'\n') # "stats"
-Time elapsed:  1.352 0.044 1.403 0 0 
+Time elapsed:  0.822 0.077 1.448 0 0 
 > 

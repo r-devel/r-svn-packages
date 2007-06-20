@@ -527,8 +527,12 @@ int rwls(double **a, int n, int p,
     /* main loop */
     while(!converged &&	 ++iterations < *max_it) {
 
-	double r,s, loss2, lambda;
-	int k, iter_lambda;
+	double r,s, loss2;
+	int k;
+#ifdef LAMBDA_Iterations_remnant_no_longer_needed
+	double lambda;
+	int iter_lambda;
+#endif
 
 	R_CheckUserInterrupt();
 	for(i=0; i < n; i++) {
@@ -581,9 +585,6 @@ int rwls(double **a, int n, int p,
 
 	/* else -- lu() was not singular : */
 
-	/* Is beta1 good enough? --
-	 * if not, find beta0 in [beta1, beta2] and use that. */
-
 	/* get the residuals and loss for beta1 */
 	for(i=0; i < n; i++) {
 	    s = 0;
@@ -592,6 +593,11 @@ int rwls(double **a, int n, int p,
 	    resid[i] = a[i][p] - s;
 	}
 	*loss = sum_rho(resid,n,rho_c);
+
+#ifdef LAMBDA_Iterations_remnant_no_longer_needed
+	/* Is beta1 good enough? --
+	 * if not, find beta0 in [beta1, beta2] and use that. */
+
 	COPY_beta(beta1, beta0);
 	/* from now on:	 *loss = loss( beta0 ) ... */
 	lambda = 1.;
@@ -626,15 +632,25 @@ int rwls(double **a, int n, int p,
 	if(trace_lev >= 2)
 	    Rprintf(" used %4d lambda iter.;", iter_lambda);
 
+#endif /*lambda iterations */
+
 	d_beta = norm1_diff(beta1,beta2, p);
 	if(trace_lev >= 2)
 	    Rprintf(" ||b1 - b2||_1 = %g\n", d_beta);
 
+#ifdef LAMBDA_Iterations_remnant_no_longer_needed
 	converged = d_beta <= epsilon * fmax2(epsilon, norm1(beta0, p));
+#else
+	converged = d_beta <= epsilon * fmax2(epsilon, norm1(beta1, p));
+#endif
 
     } /* end while(!converged & iter <=...) */
 
+#ifdef LAMBDA_Iterations_remnant_no_longer_needed
     COPY_beta(beta0, estimate);
+#else
+    COPY_beta(beta1, estimate);
+#endif
 
     if(trace_lev)
 	Rprintf(" rwls() used %d it.; last ||b1 - b2||_1 = %g;%sconvergence\n",

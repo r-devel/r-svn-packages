@@ -104,7 +104,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
     ## FIXME?: Should rather warn *here* in case of non-convergence
     ## now does return  residuals :
     stopifnot(all.equal(b$resid, drop(y - x %*% b$coef),
-                        check.attributes = FALSE, tol = 1e-12))
+			check.attributes = FALSE, tol = 1e-12))
     ## scaled residuals:
     r.s	 <- b$resid / sigma
     r2.s <- drop(y - x %*% beta.initial) / sigma
