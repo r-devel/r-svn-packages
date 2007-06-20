@@ -1,5 +1,11 @@
 1.3-25
 
+* modifications of gam.setup, predict.gam and plot.gam to allow smooths
+  to contribute an offset term to the model (offset is returned from 
+  smooth.construct or Predict.matrix as an "offset" attribute of 
+  model/prediction matrix). This is useful for smooths which have known 
+  boundary conditions of some sort.
+
 * PredictMat can now handle NAs in a returned prediction matrix.
  
 * vis.gam can handle NA's in predictions.

@@ -71,7 +71,9 @@ locations are generated automatically.}
 \value{
 The input argument \code{object}, assigned a new class to indicate what type of smooth it is and with at least the 
 following items added:
-\item{X}{The model matrix from this term.}
+\item{X}{The model matrix from this term. This may have an \code{"offset"}
+attribute:  a vector of length \code{nrow(X)} containing any contribution of
+the smooth to the model offset term.}
 \item{C}{The matrix defining any constraints on the term - usually a one row matrix giving the column sums of the  
 model matrix, which defines the constraint that each term should sum to zero over the covariate values.}
 \item{S}{A list of positive semi-definite penalty matrices that apply to this term. The list will be empty 

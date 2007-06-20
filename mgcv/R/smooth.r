@@ -757,6 +757,7 @@ PredictMat <- function(object,data)
 ## wrapper function which calls Predict.matrix and imposes same constraints as 
 ## smoothCon on resulting Prediction Matrix
 { X <- Predict.matrix(object,data)
+  offset <- attr(X,"offset")
   qrc <- attr(object,"qrc")
   if (!is.null(qrc)) { ## then smoothCon absorbed constraints
     j <- attr(object,"nCons")
@@ -775,6 +776,7 @@ PredictMat <- function(object,data)
   ## drop columns eliminated by side-conditions...
   del.index <- attr(object,"del.index") 
   if (!is.null(del.index)) X <- X[,-del.index]
+  attr(X,"offset") <- offset
   X
 }
 

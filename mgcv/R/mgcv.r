@@ -423,6 +423,13 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     sm[[i]]$first.para<-first.para     
     first.para<-first.para+n.para
     sm[[i]]$last.para<-first.para-1
+    ## termwise offset handling ...
+    Xoff <- attr(sm[[i]]$X,"offset")
+    if (!is.null(Xoff)) { 
+      if (is.null(G$offset)) G$offset <- Xoff
+      else G$offset <- G$offset + Xoff
+    }
+    ## model matrix accumulation ...
     X<-cbind(X,sm[[i]]$X);sm[[i]]$X<-NULL
    
     G$smooth[[i]] <- sm[[i]]   
@@ -1457,13 +1464,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   stop<-0
 
   Terms <- delete.response(object$pterms)
-
+  s.offset <- NULL # to accumulate any smooth term specific offset
+  any.soff <- FALSE # indicator of term specific offset existence
   for (b in 1:n.blocks)  # work through prediction blocks
   { start<-stop+1
     stop<-start+b.size[b]-1
     if (n.blocks==1) data <- newdata else data<-newdata[start:stop,]
-    X<-matrix(0,b.size[b],nb)
-
+    X <- matrix(0,b.size[b],nb)
+    Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
     ## implements safe prediction for parametric part as described in
     ## http://developer.r-project.org/model-fitting-functions.txt
     if (new.data.ok)
@@ -1479,14 +1487,19 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     
     if (object$nsdf) X[,1:object$nsdf]<-Xp
     if (n.smooth) for (k in 1:n.smooth) 
-    { X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para]<-
-                              PredictMat(object$smooth[[k]],data)
+    { Xfrag <- PredictMat(object$smooth[[k]],data)		 
+      X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
+      Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
+      if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
       if (type=="terms") ColNames[n.pterms+k]<-object$smooth[[k]]$label
     }
     # have prediction matrix for this block, now do something with it
-    if (type=="lpmatrix") H[start:stop,]<-X else 
+    if (type=="lpmatrix") { 
+      H[start:stop,]<-X
+      if (any.soff) s.offset <- rbind(s.offset,Xoff)
+    } else 
     if (type=="terms")
-    { ##
+    {
       ind <- 1:length(object$assign)
       if (n.pterms)  # work through parametric part
       for (i in 1:n.pterms)
@@ -1499,7 +1512,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (n.smooth&&!para.only) 
       { for (k in 1:n.smooth) # work through the smooth terms 
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
-          fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients[first:last]
+          fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients[first:last] + Xoff[,k]
           if (se.fit) # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
           se[start:stop,n.pterms+k]<-
           sqrt(rowSums((X[,first:last]%*%object$Vp[first:last,first:last])*X[,first:last]))
@@ -1530,8 +1543,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       }
     } else # "link" or "response"
     { k<-attr(attr(object$model,"terms"),"offset")
-      fit[start:stop]<-X%*%object$coefficients
-      if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf)
+      fit[start:stop]<-X%*%object$coefficients + rowSums(Xoff)
+      if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
       if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp)*X))
       if (type=="response") # transform    
       { fam<-object$family;linkinv<-fam$linkinv;dmu.deta<-fam$mu.eta  
@@ -1543,6 +1556,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   rn <- rownames(newdata)
   if (type=="lpmatrix") { 
     colnames(H) <- names(object$coefficients);rownames(H)<-rn
+    if (!is.null(s.offset)) { 
+      s.offset <- napredict(na.act,s.offset)
+      attr(H,"offset") <- s.offset
+    }
     H <- napredict(na.act,H)
   } else { 
     if (se.fit) { 
@@ -1732,8 +1749,10 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
       { dat<-data.frame(x=xx);names(dat)<-x$smooth[[i]]$term}  # prediction data.frame
       X <- PredictMat(x$smooth[[i]],dat)   # prediction matrix from this term
       first<-x$smooth[[i]]$first.para;last<-x$smooth[[i]]$last.para
-      p<-x$coefficients[first:last]      # relevent coefficients 
-      fit<-X%*%p                         # fitted values
+      p<-x$coefficients[first:last]       # relevent coefficients 
+      offset <- attr(X,"offset")
+      if (is.null(offset)) 
+      fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       if (se) se.fit<-sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
       edf<-sum(x$edf[first:last])
       xterm <- x$smooth[[i]]$term
@@ -1768,7 +1787,9 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
       X <- PredictMat(x$smooth[[i]],dat)   # prediction matrix for this term
       first<-x$smooth[[i]]$first.para;last<-x$smooth[[i]]$last.para
       p<-x$coefficients[first:last]      # relevent coefficients 
-      fit<-X%*%p                         # fitted values
+      offset <- attr(X,"offset")
+      if (is.null(offset)) 
+      fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       fit[exclude] <- NA                 # exclude grid points too far from data
       if (se) 
       { se.fit<-sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
