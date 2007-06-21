@@ -347,6 +347,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
 { shrink <- attr(object,"shrink")
   ## deal with possible extra arguments of "tp" type smooth
   xtra <- list()
+  object$xt <- as.list(object$xt)
   if (is.null(object$xt$max.knots)) xtra$max.knots <- 3000 
   else xtra$max.knots <- object$xt$max.knots 
   if (is.null(object$xt$seed)) xtra$seed <- 1 
@@ -563,7 +564,7 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   } # end of getBD local function
   # evaluate covariate, x, and knots, k.
   x <- get.var(object$term,data)
-  nx<-length(x)
+##  nx<-length(x)
 
   if (object$bs.dim <4) { object$bs.dim <- 4
     warning("basis dimension, k, increased to minimum possible\n")

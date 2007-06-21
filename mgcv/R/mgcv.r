@@ -75,7 +75,7 @@ mgcv.control<-function(conv.tol=1e-7,max.half=20,target.edf=NULL,min.edf=-1)
 { list(conv.tol=conv.tol,max.half=max.half,target.edf=target.edf,min.edf=min.edf)
 }
 
-mgcv<-function(y,X,sp,S,off,C=NULL,w=rep(1,length(y)),H=NULL,scale=1,gcv=TRUE,control=mgcv.control())
+mgcv <- function(y,X,sp,S,off,C=NULL,w=rep(1,length(y)),H=NULL,scale=1,gcv=TRUE,control=mgcv.control())
 
 # Performs multiple smoothing parameter selection for Generalized ridge regression problems 
 # y is the response vector
@@ -172,7 +172,7 @@ mgcv<-function(y,X,sp,S,off,C=NULL,w=rep(1,length(y)),H=NULL,scale=1,gcv=TRUE,co
   conv<-list(edf=sdiag[1:direct.mesh],score=sdiag[direct.mesh+1:direct.mesh],g=ddiag[1:m],h=ddiag[(m+1):(2*m)],
              e=ddiag[(2*m+1):(3*m)],iter=idiag[1],init.ok=as.logical(idiag[2]),step.fail=as.logical(idiag[3]))
   
-  ret<-list(b=p,scale=scale,score=gcv.ubre,sp=sp,Vb=Vp,hat=hat,edf=edf,info=conv)
+  list(b=p,scale=scale,score=gcv.ubre,sp=sp,Vb=Vp,hat=hat,edf=edf,info=conv)
  
 }
 
@@ -470,9 +470,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$H<-H
 
   if (!is.null(sp)) # then user has supplied fixed smoothing parameters
-  { ok<-TRUE
-    if (length(sp)!=k.sp) { ok<-FALSE;warning("Supplied smoothing parameter vector is too short - ignored.")}
-    if (sum(is.na(sp))) { ok<-FALSE;warning("NA's in supplied smoothing parameter vector - ignoring.")}
+  { if (length(sp)!=k.sp) { warning("Supplied smoothing parameter vector is too short - ignored.")}
+    if (sum(is.na(sp))) { warning("NA's in supplied smoothing parameter vector - ignoring.")}
   } else # set up for auto-initialization
   G$sp<-rep(-1,k.sp) # is this really needed?
   if (is.null(sp)) G$all.sp<-G$sp else G$all.sp <- sp
@@ -982,7 +981,7 @@ mgcv.get.scale<-function(Theta,weights,good,mu,mu.eta.val,G)
 { variance<- MASS::neg.bin(Theta)$variance
   w<-sqrt(weights[good]*mu.eta.val[good]^2/variance(mu)[good])
   wres<-w*(G$y-G$X%*%G$p)
-  scale<-sum(wres^2)/(G$n-sum(G$edf))
+  sum(wres^2)/(G$n-sum(G$edf))
 }
 
 
@@ -1153,8 +1152,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         G$w<-w
         G$X<-X[good,]  # truncated design matrix       
 		if (dim(X)[2]==1) dim(G$X)<-c(length(X[good,]),1) # otherwise dim(G$X)==NULL !!
-        ngoodobs <- as.integer(nobs - sum(!good))
-        ncols <- as.integer(1)
+      
         # must set G$sig2 to scale parameter or -1 here....
         G$sig2<-scale
 
@@ -1286,7 +1284,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     residuals <- rep(NA, nobs)
     residuals[good] <- z - (eta - offset)[good]
     
-    nr <- min(sum(good), nvars)
+    ##nr <- min(sum(good), nvars)
 
     wt <- rep(0, nobs)
     wt[good] <- w^2
@@ -1611,7 +1609,7 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
     n<-10  
     while (n>1 && zr/n<2.5*gap) n<-n-1    
     zrange<-c(min(trans(z-zse+shift),na.rm=TRUE),max(trans(z+zse+shift),na.rm=TRUE))  
-    zlev<-pretty(zrange,n)  
+    zlev<-pretty(zrange,n)  ## ignore codetools on this one  
     yrange<-range(y);yr<-yrange[2]-yrange[1]  
     xrange<-range(x);xr<-xrange[2]-xrange[1]  
     ypos<-yrange[2]+yr/10
@@ -1619,14 +1617,14 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
     args$x <- substitute(x);args$y <- substitute(y)
     args$type="n";args$xlab<-args$ylab<-"";args$axes<-FALSE
     do.call("plot",args)
-#    plot(x,y,type="n",xlab="",ylab="",axes=FALSE)
+##  plot(x,y,type="n",xlab="",ylab="",axes=FALSE)
     cs<-(yr/10)/strheight(zlab);if (cs>1) cs<-1 # text scaling based on height  
-    cw<-par()$cxy[1]  
+##  cw<-par()$cxy[1]  
     tl<-strwidth(zlab);  
     if (tl*cs>3*xr/10) cs<-(3*xr/10)/tl  
     args <- as.list(substitute(list(...)))[-1]
     n.args <- names(args)
-    zz <- trans(z+shift)
+    zz <- trans(z+shift) ## ignore codetools for this
     args$x<-substitute(x);args$y<-substitute(y);args$z<-substitute(zz)
     if (!"levels"%in%n.args) args$levels<-substitute(zlev)
     if (!"lwd"%in%n.args) args$lwd<-2
@@ -1634,7 +1632,7 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
     if (!"axes"%in%n.args) args$axes <- FALSE
     if (!"add"%in%n.args) args$add <- TRUE
     do.call("contour",args)
-    #contour(x,y,z,levels=zlev,lwd=2,labcex=cs*0.65,axes=FALSE,add=TRUE)  
+##  contour(x,y,z,levels=zlev,lwd=2,labcex=cs*0.65,axes=FALSE,add=TRUE)  
     if (is.null(args$cex.main)) cm <- 1 else cm <- args$cex.main
     if (titleOnly)  title(zlab,cex.main=cm) else 
     { xpos<-xrange[1]+3*xr/10  
@@ -1712,9 +1710,9 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
     if (n.plots%%pages!=0) 
     { ppp<-ppp+1
       while (ppp*(pages-1)>=n.plots) pages<-pages-1
-      if (n.plots%%pages) last.pages<-0 else last.ppp<-n.plots-ppp*pages
+ ##     if (n.plots%%pages) last.pages<-0 ##else last.ppp<-n.plots-ppp*pages
     } 
-    else last.ppp<-0
+ ## else last.ppp<-0
     # now figure out number of rows and columns
     c<-trunc(sqrt(ppp))
 	if (c<1) c<-1
@@ -1987,7 +1985,7 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
 { type <- match.arg(type)
   y <- object$y
   mu <- object$fitted.values
-  family <- object$family
+##  family <- object$family
   wts <- object$prior.weights
   res<- switch(type,working = object$residuals,
          scaled.pearson = (y-mu)*sqrt(wts)/sqrt(object$sig2*object$family$variance(mu)),
@@ -2057,7 +2055,7 @@ summary2.gam <- function (object,freq=TRUE,...)
       V <- Vp[start:stop,start:stop] # cov matrix for smooth
       p<-object$coefficients[start:stop]  # params for smooth
       M1<-object$smooth[[i]]$df
-      M<-round(sum(object$edf[start:stop]))
+##      M<-round(sum(object$edf[start:stop]))
       V<-pinv(V,M1) # get rank M pseudoinverse of V
       chi.sq[i]<-t(p)%*%V%*%p
       er<-names(object$coefficients)[start]
@@ -2609,8 +2607,8 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   } else # add standard error surfaces
   { if (color=="bw"||color=="gray") 
     { subs <- paste("grey are +/-",se,"s.e.") 
-      lo.col <- "gray"
-      hi.col <- "gray"
+      lo.col <- "gray" ## ignore codetools claims about this
+      hi.col <- "gray" ## ignore codetools 
     } else
     { subs<-paste("red/green are +/-",se,"s.e.")
       lo.col <- "green"
@@ -2836,7 +2834,7 @@ magic <- function(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gc
   # (from final columns of Q, from QR=C'). Then form XZ and Z'S_i^0.5 for all i 
   # and Z'HZ.
   # On return from mgcv2 set parameters to Zb (apply Q to [0,b']').   
-  Xo<-X
+  ##Xo<-X
   if (!is.null(C)) # then impose constraints 
    { n.con<-dim(C)[1]
     ns.qr<-qr(t(C)) # last n.b-n.con columns of Q are the null space of C

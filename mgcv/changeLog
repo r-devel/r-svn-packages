@@ -1,4 +1,4 @@
-1.3-25
+1.3-26
 
 * modifications of gam.setup, predict.gam and plot.gam to allow smooths
   to contribute an offset term to the model (offset is returned from 
@@ -27,6 +27,8 @@
 
 * removal of `full.formula' from the `gam' object - it is no longer used 
   anywhere and requires alot of code to construct.
+
+1.3-25
 
 * A bug in `null.space.dimension' caused prediction to fail for `s' terms 
   of 4 or more variables, unless the `m' argument was supplied explicitly 
