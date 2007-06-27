@@ -1,5 +1,9 @@
 2007-06-13  Brian Ripley <Brian.Ripley@R-project.org>
 
+	* R/VarCov.R: correct getVarCov.gls, PR#9752
+
+2007-06-13  Brian Ripley <Brian.Ripley@R-project.org>
+
 	* DESCRIPTION (Version, Date): 3.1-83
 	Also, update authors and email addresses where known.
 	* R/lme.R: called quantile on potentially missing values.

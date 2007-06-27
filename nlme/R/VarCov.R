@@ -71,7 +71,7 @@ getVarCov.gls <-
         vw  <-  1/varWeights(obj$modelStruct$varStruct)[ind]
     }
     else vw  <-  rep(1,nrow(S))
-    vars  <-  (obj$sigma^2)*vw
+    vars  <-  (obj$sigma * vw)^2
     result  <-  t(S * sqrt(vars))*sqrt(vars)
     class(result)  <-  c("marginal","VarCov")
     attr(result,"group.levels")  <-  names(obj$groups)
