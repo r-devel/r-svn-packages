@@ -1,3 +1,8 @@
+2007-07-02  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/varFunc.R: varIdent did not look at its 'fixed' arg, PR#9765
+	* tests/varIndent.R: test for the above.
+
 2007-06-13  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/VarCov.R: correct getVarCov.gls, PR#9752

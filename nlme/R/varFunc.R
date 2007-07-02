@@ -258,7 +258,7 @@ varIdent <-
       value <- log(value)               # unconstrained form
     } else grpNames <- NULL
     attr(value, "groupNames") <- grpNames
-    if (!is.null(attr(value, "fixed"))) {
+    if (!is.null(fixed)) {
        fix <- attr(value, "fixed") <- log(unlist(fixed))
       if (is.null(fixNames <- names(fix))) {
 	stop("Fixed parameters must have names in varIdent")
