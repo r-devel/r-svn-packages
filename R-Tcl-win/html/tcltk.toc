@@ -1,0 +1,37 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<BODY>
+<UL>
+	<LI> <OBJECT type="text/sitemap">
+		<param name="Name" value="Tcl8.4.15/Tk8.4.15 Manual">
+		<param name="Local" value="contents.htm">
+		</OBJECT>
+	<UL>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Tcl/Tk Applications">
+			<param name="Local" value="UserCmd/contents.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Tcl Commands">
+			<param name="Local" value="TclCmd/contents.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Tcl Library">
+			<param name="Local" value="TclLib/contents.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Tk Commands">
+			<param name="Local" value="TkCmd/contents.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Tk Library">
+			<param name="Local" value="TkLib/contents.htm">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="Tcl/Tk Keywords">
+			<param name="Local" value="Keywords/contents.htm">
+			</OBJECT>
+	</UL>
+</UL>
+</BODY>
+</HTML>
