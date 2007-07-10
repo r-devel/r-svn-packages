@@ -1,8 +1,8 @@
 Package: SQLiteDF
 Type: Package
 Title: Stores data frames & matrices in SQLite tables
-Version: 0.1.27
-Date: 2006-09-06
+Version: 0.1.29
+Date: 2007-07-10
 Author: Miguel A. R. Manese
 Maintainer: Miguel A. R. Manese <jjonphl@gmail.com>
 Description: Transparently stores data frames & matrices into SQLite tables.

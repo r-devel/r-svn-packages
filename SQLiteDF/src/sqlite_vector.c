@@ -84,7 +84,8 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int colidx,
     } else if (stmt != NULL) {
         int ctype = *coltype;
 
-        /* first row must have been NULL so that *coltype was not set */
+        /* first row/previous rows must have been NULL so that *coltype 
+         * was not set */
         if (ctype == SQLITE_NULL) {
             ctype = *coltype = sqlite3_column_type(stmt, colidx);
             /* distinguish int or logical */
@@ -204,144 +205,49 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
     char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
          *varname = SVEC_VARNAME(svec);
-    int index, idxlen, i, retlen=0, res, coltype;
+    int *index, _idx, nrows, i, init=FALSE, retlen=0, res, coltype;
     sqlite3_stmt *stmt;
 
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
-    idxlen = LENGTH(idx);
-    if (idxlen < 1) return ret;
+    /* get # of rows in svec */
+    nrows = _get_row_count2(iname, TRUE);
+    if (nrows < 1) return ret;
 
     sprintf(g_sql_buf[0], "select [%s] from [%s].[%s] where rowid=?",
             varname, iname, tblname);
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
     if (_sqlite_error(res)) error("cannot complete request");
 
-    /* get data based on index */
-    if (IS_NUMERIC(idx)) {
-        /* special handling of 1st index, bec this is where we create the
-         * SEXP to be used to hold the result */
-        index = (int) REAL(idx)[0];
-        if (index < 1 && idxlen == 1) return ret;
+    index = _make_row_index(idx, &nrows);
 
-        if (index >= 1) {
-            sqlite3_bind_int(stmt, 1, index);
-            res = sqlite3_step(stmt);
+    for (i = 0; i < nrows; i++) {
+        _idx = index[i];
+        if (_idx < 1 || _idx == NA_INTEGER) continue;
+        sqlite3_reset(stmt);
+        sqlite3_bind_int(stmt, 1, _idx);
+        res = sqlite3_step(stmt);
+        if (!init) {
             if (res == SQLITE_ROW) { 
-                retlen = _get_vector_index_typed_result(stmt, &ret, 0, idxlen, &coltype);
-            } 
-        } 
-        
-        if (index < 1 || res != SQLITE_ROW) {
-            /* something wrong w/ 1st idx, and it is quietly ignored. we make 
-             * a "dummy" call to setup the SEXP */
-            sqlite3_reset(stmt);
-            sqlite3_bind_int(stmt, 1, 0);
-            res = sqlite3_step(stmt);
-            if (res == SQLITE_ROW) {
-                /* populate with 1st row. this should be overwritten by 
-                 * succeeding calls. if there are no valid result, then 
-                 * everything will be removed by _shrink_vector().
+                /* valid 1st row. initialize the returned vector with length
+                 * nrows. retlen holds the length of vector ret. 
+                 */ 
+                retlen = _get_vector_index_typed_result(stmt, &ret, 0, nrows, &coltype);
+            } else {
+                /* invalid 1st row, initalize anyway but now with length 
+                 * nrows-1. we put dummy results in 1st element of vector which
+                 * should be overwritten in succeeding calls
                  */
-                _get_vector_index_typed_result(stmt, &ret, 0, idxlen - 1, &coltype);
-            }
-            retlen = 0;
-        }
-
-
-        if (idxlen > 1) {
-            for (i = 1; i < idxlen; i++) {
-                index = (int) REAL(idx)[i];
-                if (index < 1) continue;
                 sqlite3_reset(stmt);
-                sqlite3_bind_int(stmt, 1, index);
+                sqlite3_bind_int(stmt, 1, 0);  /* get 1st row */
                 res = sqlite3_step(stmt);
-                if (res == SQLITE_ROW) {
-                    retlen += _get_vector_index_typed_result(stmt, &ret, 0, retlen, &coltype); 
-                } else {
-                    retlen += _get_vector_index_typed_result(NULL, &ret, 0, retlen, &coltype); 
-                }
+                _get_vector_index_typed_result(stmt, &ret, 0, nrows - 1, &coltype);
+                retlen = 0;
             }
-        }
-    } else if (IS_INTEGER(idx)) {
-        /* similar to REAL (IS_NUMERIC) above, except that we don't have
-         * to cast idx to int. can't refactor this out, sucks. */
-        index = INTEGER(idx)[0];
-        if (index < 1 && idxlen == 1) return ret;
-
-        if (index >= 1) {
-            sqlite3_bind_int(stmt, 1, index);
-            res = sqlite3_step(stmt);
-            if (res == SQLITE_ROW) { 
-                retlen = _get_vector_index_typed_result(stmt, &ret, 0, idxlen, &coltype);
-            } 
-        } 
-        
-        if (index < 1 || res != SQLITE_ROW) {
-            /* something wrong w/ 1st idx, and it is quietly ignored. we make 
-             * a "dummy" call to setup the SEXP */
-            sqlite3_reset(stmt);
-            sqlite3_bind_int(stmt, 1, 0);
-            res = sqlite3_step(stmt);
-            if (res == SQLITE_ROW) {
-                _get_vector_index_typed_result(stmt, &ret, 0, idxlen - 1, &coltype);
-            }
-            retlen = 0;
-        }
-
-        if (idxlen > 1) {
-            for (i = 1; i < idxlen; i++) {
-                index = INTEGER(idx)[i];
-                if (index < 1) continue;
-                sqlite3_reset(stmt);
-                sqlite3_bind_int(stmt, 1, index);
-                res = sqlite3_step(stmt);
-                if (res == SQLITE_ROW) {
-                    retlen += _get_vector_index_typed_result(stmt, &ret, 0, retlen, &coltype); 
-                } else {
-                    retlen += _get_vector_index_typed_result(NULL, &ret, 0, retlen, &coltype);
-                }
-            }
-        }
-
-    } else if (IS_LOGICAL(idx)) {
-        /* have to deal with recycling */
-        int veclen = _get_row_count2(iname, 1);
-
-        /* in this indexing, idx[i] == TRUE is equiv to vector[i]. therefore
-         * idxlen <= veclen. if idxlen < veclen, then idx is recycled. */
-
-        /* find if there is any TRUE element in the vector */
-        for (i = 1; i < idxlen && i < veclen; i++) {
-            if (LOGICAL(idx)[i]) {
-                sqlite3_bind_int(stmt, 1, i+1);
-                sqlite3_step(stmt);
-                /* there are at least (idxlen-i) TRUE per cycle of the LOGICAL
-                 * index. there are at least (veclen/idxlen) cycles (int div).
-                 * at the last cycle, if (veclen%idxlen > 0), there will be
-                 * at least (veclen%idxlen - i) if veclen%idxlen > i */
-                retlen = (idxlen-i) * (veclen/idxlen);
-                if (veclen%idxlen > i) retlen += (veclen%idxlen - i);
-
-                /* create the vector */
-                retlen = _get_vector_index_typed_result(stmt, &ret, 0, retlen, &coltype);
-                break;
-            }
-        }
-
-        if (i < idxlen && i < veclen) {
-            for (i++; i < veclen; i++) {
-                if (LOGICAL(idx)[i%idxlen]) {
-                    sqlite3_reset(stmt);
-                    sqlite3_bind_int(stmt, 1, i+1);
-                    res = sqlite3_step(stmt);
-                    if (res == SQLITE_ROW) {
-                        retlen += _get_vector_index_typed_result(stmt, &ret, 0, retlen, &coltype);
-                    } else {
-                        retlen += _get_vector_index_typed_result(NULL, &ret, 0, retlen, &coltype);
-                    }
-                }
-            }
+            init = TRUE;
+        } else {
+            retlen += _get_vector_index_typed_result((res == SQLITE_ROW) ? stmt : NULL,
+                            &ret, 0, retlen, &coltype);
         }
     }
 
@@ -368,45 +274,154 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
 
 /* sqlite.vector.[<- */
 SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value) {
-    int idx_len, val_len, svec_len, i, res;
+    int *index;
+    int coltype, valtype, idx_len, val_len, svec_len, i, i2, res;
     char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
          *varname = SVEC_VARNAME(svec);
+    const char *decltype;
     sqlite3_stmt *stmt;
 
-    /* match levels if factor or ordered */
-    if (inherits(value, "ordered")) {
-    } else if (inherits(value, "factor")) {
-    }
 
-    idx_len = LENGTH(idx);
+    if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
+
+    /* find the type of the svec */
+    sprintf(g_sql_buf[0], "select [%s] from [%s].[%s] where not [%s] is null limit 1", 
+                varname, iname, tblname, varname);
+    res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
+    if (_sqlite_error(res)) error("cannot complete request");
+    sqlite3_step(stmt);
+    decltype = sqlite3_column_decltype(stmt, 0);
+    Rprintf("decltype: %s\n", decltype); 
+    coltype = _get_r_type(decltype);
+    sqlite3_finalize(stmt);
+
+    /* get index */
     val_len = LENGTH(value);
-    svec_len = _get_row_count2(iname, TRUE);
-
+    idx_len = svec_len = _get_row_count2(iname, TRUE);
+    /*Rprintf("idx_len: %d\n", idx_len);*/
+    index = _make_row_index(idx, &idx_len);
     if (idx_len % val_len != 0) 
         warning("number of items to replace is not a multiple of replacement length");
+
+    /* find the type of value to be assigned */
+    valtype = TYPEOF(value);
+
+    /* we will use the style similar to R's */
+    coltype = coltype * 100 + valtype;
 
     sprintf(g_sql_buf[0], "update [%s].[%s] set [%s]=? where rowid=?",
             iname, tblname, varname);
     _sqlite_begin;
     res = sqlite3_prepare(g_workspace, g_sql_buf[0], -1, &stmt, 0);
-    if (_sqlite_error(res)) {
-        error("cannot complete request");
-        _sqlite_commit;
-    }
+    if (_sqlite_error(res)) error("cannot complete request");
+    /*Rprintf("idx_len: %d\n", idx_len);*/
 
-    if (IS_NUMERIC(idx)) {
-        for (i = 0; i < idx_len; i++) {
-            /* determine type of svec, cast value to type of it */
-            /* value can only be of a single type, because it is a vector! */
-            /* if svec is a factor, value is a string, must check with
-             * factor levels */
-        }
-    } else if (IS_INTEGER(idx)) {
-    } else if (IS_LOGICAL(idx)) {
+    Rprintf("coltype: %d\n", coltype);
+    switch (coltype) {
+        case 1010: /* logical <- logical */
+        case 1310: /* int <- logical */
+        case 1313: /* int <- int */
+            /* TODO: check if factor */
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                sqlite3_bind_int(stmt, 1, INTEGER(value)[i2]);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                sqlite3_step(stmt);
+            }
+            break;
+        case 1410: /* real <- logical */
+        case 1413: /* real <- int */
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                sqlite3_bind_double(stmt, 1, (double) INTEGER(value)[i2]);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                sqlite3_step(stmt);
+            }
+            break;
+        case 1414: /* real <- real */
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                sqlite3_bind_double(stmt, 1, REAL(value)[i2]);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                res = sqlite3_step(stmt);
+            }
+            break;
+        case 1610: /* character <- logical */
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                sqlite3_bind_text(stmt, 1, 
+                        (INTEGER(value)[i2]) ? "TRUE" : "FALSE", -1,
+                        SQLITE_STATIC);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                sqlite3_step(stmt);
+            }
+            break;
+        case 1613: /* character <- integer */
+            /* value could be a factor! */
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                res = sprintf(g_sql_buf[1], "%d", INTEGER(value)[i2], 
+                        SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 1, g_sql_buf[1], res, SQLITE_STATIC);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                sqlite3_step(stmt);
+            }
+            break;
+        case 1614: { /* character <- real */
+            SEXP chvalue;
+            PROTECT(chvalue = AS_CHARACTER(value));
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                sqlite3_bind_text(stmt, 1, CHAR(STRING_ELT(chvalue, i2)), 
+                        -1, SQLITE_STATIC);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                sqlite3_step(stmt);
+            }
+            UNPROTECT(1);
+          }
+            break;
+        case 1616: /* character <- character */
+            for (i = 0; i < idx_len; i++) { 
+                sqlite3_reset(stmt);
+                i2 = i % val_len;
+                sqlite3_bind_text(stmt, 1, CHAR(STRING_ELT(value, i2)), 
+                        -1, SQLITE_STATIC);
+                sqlite3_bind_int(stmt, 2, index[i]);
+                sqlite3_step(stmt);
+            }
+            break;
+        case 1314: /* int <- real */
+            _sqlite_commit;
+            error("cannot promote vector from integer to real");
+        case 1014: /* logical <- real */
+            _sqlite_commit;
+            error("cannot promote vector from logical to real");
+        case 1013: /* logical <- int */
+            _sqlite_commit;
+            error("cannot promote vector from logical to integer");
+        case 1016: /* logical <- character */
+            _sqlite_commit;
+            error("cannot promote vector from logical to character");
+        case 1316: /* integer <- character */
+            /* TODO: this could be factors */
+            _sqlite_commit;
+            error("cannot promote vector from integer to character");
+        case 1416: /* real <- character */
+            _sqlite_commit;
+            error("cannot promote vector from real to character");
+        default:
+            _sqlite_commit;
+            error("don't know what to do with coltype=%d", coltype);
     }
-
     _sqlite_commit;
-    return R_NilValue;
+
+    return svec;
 }
 
 SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {

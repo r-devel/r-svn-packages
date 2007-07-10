@@ -78,8 +78,10 @@ SEXP _shrink_vector(SEXP vec, int len); /* shrink vector size */
 int _empty_callback(void *data, int ncols, char **row, char **cols);
 int _sqlite_error_check(int res, const char *file, int line);
 const char *_get_column_type(const char *class, int type); /* get sqlite type corresponding to R class & type */
+int _get_r_type(const char *decl_type);                   /* get r type based on sqlite decltype */
 sqlite3* _is_sqlitedb(char *filename);
 void _init_sqlite_function_accumulator();
+int *_make_row_index(SEXP idx, int *plen);
 
 /* global buffer (g_sql_buf) utilities */
 R_INLINE void _expand_buf(int i, int size);  /* expand ith buf if size > buf[i].size */
@@ -99,7 +101,7 @@ char *_str_tolower(char *out, const char *ref);
 /* register functions to sqlite */
 void __register_vector_math();
 
-#define _sqlite_exec(sql) sqlite3_exec(g_workspace, sql, _empty_callback, NULL, NULL)
+#define _sqlite_exec(sql) sqlite3_exec(g_workspace, sql, NULL, NULL, NULL)
 #define _sqlite_error(res) _sqlite_error_check((res), __FILE__, __LINE__)
 
 #ifdef __SQLITE_DEBUG__

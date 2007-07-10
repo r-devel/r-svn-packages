@@ -18,7 +18,8 @@ if test ! -f src/SQLite/Makefile; then
   CPICFLAGS=`${R_HOME}/bin/R CMD config CPICFLAGS`
   CFLAGS="${CFLAGS} ${CPICFLAGS}"
   export CC CFLAGS
-  (cd src/SQLite; sed -e '/^#include.*stdlib.h/a #include <unistd.h>' tool/lemon.c > lemon.c.tmp; mv lemon.c.tmp tool/lemon.c; ./configure --disable-shared)
+  (cd src/SQLite; sed -e '/^#include.*stdlib.h/a\
+#include <unistd.h>' tool/lemon.c > lemon.c.tmp; mv lemon.c.tmp tool/lemon.c; ./configure --disable-shared)
 fi
 (cd src/SQLite; make)
 # we need to pick up the library containing fdatasync

@@ -18,8 +18,8 @@ sed -e 's/MAX_ATTACHED 10/MAX_ATTACHED 31/' src/sqliteInt.h.temp > src/sqliteInt
 ## most lines have '$(NAWK)', but one has 'awk'
 sed -e 's+./libtool+ sh libtool+' -e's/awk -f /gawk -f/' Makefile > Makefile.tmp
 ## for some reason opcodes.h gets made incorrectly
-make -f Makefile.tmp parse.c opcodes.c
-cp ../win/opcodes.h opcodes.h
-touch opcodes.h
+#make -f Makefile.tmp parse.c opcodes.c
+#cp ../win/opcodes.h opcodes.h
+#touch opcodes.h
 make -f Makefile.tmp
 cp .libs/libsqlite3.a .

@@ -87,6 +87,14 @@ const char *_get_column_type(const char *class, int type) {
     return NULL;
 }
 
+int _get_r_type(const char *decl_type) {
+    if (strcmp(decl_type, "int") == 0) return INTSXP;
+    else if (strcmp(decl_type, "double") == 0) return REALSXP;
+    else if (strcmp(decl_type, "text") == 0) return STRSXP;
+    else if (strcmp(decl_type, "bit") == 0) return LGLSXP;
+    return -1;
+}
+
 const char *_get_r_class(const char *db, const char *type) {
     return NULL;
 }
@@ -345,4 +353,52 @@ char *_str_tolower(char *out, const char *ref) {
     for (i = 0; ref[i]; i++) out[i] = tolower(ref[i]);
     out[i] = 0;
     return out;
+}
+
+/* note that *plen must be initialized with the # of rows of the indexed
+ * vector. this is used win idx is a boolean, so that we can recycle it to
+ * span the whole vector.
+ * NOTE: index returned is 1-based */
+int *_make_row_index(SEXP idx, int *plen) {
+    int idxlen = LENGTH(idx), len = *plen, i, k;
+    int *ret;
+
+    if (IS_NUMERIC(idx)) {
+        double tmp;
+        ret = (int *)R_alloc(idxlen, sizeof(int));
+        for (i = k = 0; i < idxlen; i++) {
+            tmp = REAL(idx)[i];
+            if (!(tmp == NA_REAL || tmp < 1)) ret[k++] = (int) tmp;
+
+            /*
+            if (tmp == NA_REAL) ret[i] = NA_INTEGER;
+            else if (tmp < 1) ret[i] = NA_INTEGER;
+            else ret[i] = (int) tmp;
+            */
+        }
+        *plen = k;
+    } else if (IS_INTEGER(idx)) {
+        int tmp;
+        ret = (int *)R_alloc(idxlen, sizeof(int));
+        for (i = k = 0; i < idxlen; i++) {
+            tmp = INTEGER(idx)[i];
+            if (!(tmp == NA_REAL || tmp < 1)) ret[k++] = (int) tmp;
+            /*
+            if (tmp < 1) ret[i] = NA_INTEGER;
+            else ret[i] = tmp;
+            */
+        }
+        *plen = k;
+    } else if (IS_LOGICAL(idx)) {
+        int k, tmp;  /* to deal with recycling */
+        ret = (int *)R_alloc(len, sizeof(int));
+        for (i = k = 0; i < len; i++) {
+            /* i index the values, j the index sexp, k the output index */
+            if (LOGICAL(idx)[i%idxlen]) ret[k++] = i+1;
+            /* ret[k++] = (LOGICAL(idx)[j%idxlen]) ? i : NA_INTEGER; */
+        }
+        *plen = k;
+    }
+
+    return ret;
 }

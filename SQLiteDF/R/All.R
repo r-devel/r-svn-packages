@@ -304,6 +304,10 @@ summary.sqlite.data.frame <- function(object, maxsum=7, digits=max(3, getOption(
     if (is.numeric(idx) && all(idx <= 0)) idx <- (1:length(x))[idx]
     .Call("sdf_get_variable_index", x, idx)
 }
+
+"[<-.sqlite.vector" <- function(x, idx, value) {
+    .Call("sdf_set_variable_index", x, idx, value)
+}
 length.sqlite.vector <- function(x) .Call("sdf_get_variable_length", x)
 is.list.sqlite.vector <- function(x) FALSE
 # methods to "coerce" to ordinary vectors

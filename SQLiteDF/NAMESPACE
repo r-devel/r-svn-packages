@@ -38,6 +38,7 @@ S3method(print, sqlite.data.frame)
 S3method(summary, sqlite.data.frame)
 
 S3method("[", sqlite.vector)
+S3method("[<-", sqlite.vector)
 S3method(length, sqlite.vector)
 S3method(as.double, sqlite.vector)
 S3method(as.character, sqlite.vector)

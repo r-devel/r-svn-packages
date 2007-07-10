@@ -37,6 +37,7 @@ compareSdfToDf <- function(sdf, df, with.names=TRUE) {
         for (i in 1:nrows)
             if (sv[i] != df[i,j])
                 stop("Not equal on row ", i, ", col ", j, "\n")
+        all.equal(sv[c(T,F,F)], df[c(T,F,F),j])
     }
 
     # test names.sqlite.data.frame, [[.sqlite.data.frame (name arg), ...
@@ -129,7 +130,7 @@ compareSdfToDf(iris.sdf, iris)
 #compareSdfToDf(u2.sdf, attenu) # problem with factors
 stopifnot(all.equal(unlist(iris.sdf),unlist(iris.sdf[])),
           all.equal(unlist(iris.sdf),unlist(iris.sdf[,])))
-tmp <- iris.sdf[1]
+tmp <- iris.sdf[1]     # sdf w/ ncol=1
 stopifnot(nrow(tmp) == nrow(iris.sdf),
           names(tmp) == names(iris.sdf)[1],
           all.equal(tmp[,1], iris.sdf[,1]))
@@ -148,6 +149,57 @@ stopifnot(all.equal(iris.sdf[,1] + iris.sdf[,2], iris[,1] + iris[,2]),
 
 stopifnot(sapply(iris.sdf[,1:4],sum) == sapply(iris[,1:4],sum))
 
+
+# test [<-.sqlite.vector
+ref <- data.frame(
+        integer=1:10, real=as.real(1:10), 
+        logical=rep(c(T,F,T),length.out=10), 
+        character=I(c("one", "two", "three", "four", "five", 
+                       "six", "seven", "eight", "nine", "ten")))
+ref.sdf <- sqlite.data.frame(ref)
+.assign <- function (svec, idx, values, eqvalues=values) {
+    idxlen <- if (is.logical(idx)) sum(rep(idx, length.out=length(svec))) else length(idx) 
+    if (is.logical(idx)) idx <- rep(idx, length.out=length(svec))
+    if (length(values) != idxlen) 
+        values <- rep(values, length.out=idxlen)
+    if (length(eqvalues) != idxlen)
+        eqvalues <- rep(eqvalues, length.out=idxlen)
+    svec[idx] <- values 
+    all.equal(svec[idx], eqvalues)
+}
+
+## test real <- real, int, logical
+col = ref.sdf[["real"]]
+stopifnot(.assign(col, 1, 25),
+          .assign(col, c(1,3,5,7,9), 100),
+          .assign(col, c(1,3,5,7,9), c(25, 100)),
+          .assign(col, c(2,4,6,8,10), c(T,F,T), as.real(c(T,F,T))), # w/ logicals
+          .assign(col, c(4,5,6,7,8), 1:5, as.real(1:5)),            # w/ ints
+          .assign(col, c(T,F), 1:5, as.real(1:5)))
+
+# test int <- int, logical
+col = ref.sdf[["integer"]]
+stopifnot(.assign(col, 1, as.integer(25)),
+          .assign(col, c(1,3,5,7,9), as.integer(100)),
+          .assign(col, c(1,3,5,7,9), as.integer(c(25, 100))),
+          .assign(col, c(2,4,6,8,10), c(T,F,T), as.integer(c(1,0,1))), # w/ logicals
+          .assign(col, c(4,5,6,7,8), 1:5),                             # w/ ints
+          .assign(col, c(T,F), 1:5))
+
+# test logical <- logical
+col = ref.sdf[["logical"]]
+stopifnot(.assign(col, 1, F),
+          .assign(col, c(1,3,5,7,9), F),
+          .assign(col, c(F,T), T))
+
+# test character <- character, real, int, logical
+col = ref.sdf[["character"]]
+stopifnot(.assign(col, 1, "isa"),
+          .assign(col, c(1,3,5,7,9), c("uno", "tatlo", "lima", "pito", "syam")),
+          .assign(col, 1, 25, "25"),
+          .assign(col, 1, 3/4, "0.75"),                  # w/ reals
+          .assign(col, 1:5, as.integer(3), "3"),         # w/ integers
+          .assign(col, 4:8, c(T,F), c("TRUE","FALSE")))  # w/ logicals
 # test sdfImportDBI
 #if (require(RSQLite)) {
 #    dr <- SQLite()
