@@ -325,7 +325,8 @@ cpblock <- function(X,Y,Nmax,q)
    wk <- rep(0,n)
    qraux <- rep(0,qq)
 
-   out <- .Fortran(F_cp,as.double(X),as.double(Y),as.integer(n),as.integer(q),
+   ## remove unused 'q' 2007-07-10
+   out <- .Fortran(F_cp,as.double(X),as.double(Y),as.integer(n),
                    as.integer(qq),as.integer(Nmax),as.double(RSS),as.double(Xj),
                    as.double(Yj),as.double(coef),as.double(Xmat),as.double(wk),
                    as.double(qraux),as.double(Cpvals))
