@@ -17,7 +17,6 @@ This simple operation have a quite complicated implementation. The intended
 name is checked against SDF's already registed to the workspace, the SDF
 is detached and removed from the SDF workspace, and then re-attached and
 re-added to the workspace. }
-}
 \value{
 \code{TRUE} if the operation was successful. \code{FALSE} with an error
 message displayed otherwise.
