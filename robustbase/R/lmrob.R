@@ -64,13 +64,8 @@ lmrob <-
     z$xlevels <- .getXlevels(mt, mf)
     z$call <- cl
     z$terms <- mt
-    if( control$compute.rd && !is.null(x)) {
-	x0 <- if(attr(mt, "intercept") == 1) x[, -1, drop=FALSE] else x
-	if(ncol(x0) >= 1) {
-	    rob <- covMcd(x0)
-	    z$MD <- sqrt( mahalanobis(x0, rob$center, rob$cov) )
-	}
-    }
+    if(control$compute.rd && !is.null(x))
+        z$MD <- robMD(x, attr(mt, "intercept"))
     if (model)
 	z$model <- mf
     if (ret.x)
@@ -81,6 +76,14 @@ lmrob <-
     z
 }
 
+## internal function, used in lmrob() and maybe plot.lmrob()
+robMD <- function(x, intercept, ...) {
+    if(intercept == 1) x <- x[, -1, drop=FALSE]
+    if(ncol(x) >= 1) {
+	rob <- covMcd(x, ...)
+	sqrt( mahalanobis(x, rob$center, rob$cov) )
+    }
+}
 
 print.lmrob <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
@@ -102,18 +105,17 @@ vcov.lmrob <- function (object, ...) { object$cov }
 
 summary.lmrob <- function(object, correlation = FALSE, symbolic.cor = FALSE, ...)
 {
-    z <- object
-    if (is.null(z$terms))
+    if (is.null(object$terms))
 	stop("invalid 'lmrob' object:  no terms component")
-    p <- z$rank
-    df <- z$degree.freedom
+    p <- object$rank
+    df <- object$degree.freedom
     if (p > 0) {
 	n <- p + df
-	se <- sqrt(diag(z$cov))
-	est <- z$coefficients
+	se <- sqrt(diag(object$cov))
+	est <- object$coefficients
 	tval <- est/se
-	ans <- z[c("call", "terms", "residuals", "scale", "weights",
-		   "converged", "iter", "control")]
+	ans <- object[c("call", "terms", "residuals", "scale", "weights",
+			"converged", "iter", "control")]
 	ans$df <- df
 	ans$coefficients <-
 	    if( ans$converged )
@@ -122,17 +124,17 @@ summary.lmrob <- function(object, correlation = FALSE, symbolic.cor = FALSE, ...
 	dimnames(ans$coefficients) <-
 	    list(names(est), c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
 
-	ans$cov.unscaled <- z$cov
+	ans$cov.unscaled <- object$cov
 	dimnames(ans$cov.unscaled) <- dimnames(ans$coefficients)[c(1,1)]
 	if (correlation) {
 	    ans$correlation <- ans$cov.unscaled / outer(se, se)
 	    ans$symbolic.cor <- symbolic.cor
 	}
     } else { ## p = 0: "null model"
-	ans <- z
+	ans <- object
 	ans$coefficients <- matrix(, 0, 4)
 	ans$df <- df
-	ans$cov.unscaled <- z$cov
+	ans$cov.unscaled <- object$cov
     }
     class(ans) <- "summary.lmrob"
     ans
@@ -233,7 +235,7 @@ printControl <-
 
 summarizeRobWeights <-
     function(w, digits = getOption("digits"), header = "Robustness weights:",
-	     eps = 1e-4, eps1 = eps, ...)
+	     eps = 0.1 / length(w), eps1 = 1e-3, ...)
 {
     ## Purpose: nicely print a "summary" of robustness weights
     stopifnot(is.numeric(w))
@@ -243,12 +245,18 @@ summarizeRobWeights <-
     if(n <= 10) print(w, digits = digits, ...)
     else {
 	n1 <- sum(w1 <- abs(w - 1) < eps1)
-	n0 <- sum(w0 <- abs(w) < eps / n)
+	n0 <- sum(w0 <- abs(w) < eps)
+        if(any(w0 & w1))
+            warning("weights should not be both close to 0 and close to 1!\n",
+                    "You should use different 'eps' and/or 'eps1'")
 	if(n0 > 0 || n1 > 0) {
 	    if(n0 > 0) {
+                formE <- function(e) formatC(e, digits = max(2, digits-3), width=1)
 		i0 <- which(w0)
-		c3 <- paste("with |weight| < ", formatC(eps / n, digits = digits),
-			    ";", sep='')
+		maxw <- max(w[w0])
+		c3 <- paste("with |weight| ",
+			    if(maxw == 0) "= 0" else paste("<=", formE(maxw)),
+			    " ( < ", formE(eps), ");", sep='')
 		cat0(if(n0 > 1) {
 		       cc <- sprintf("%d observations c(%s)",
 				     n0, strwrap(paste(i0, collapse=",")))
@@ -265,7 +273,7 @@ summarizeRobWeights <-
 			     sprintf("%s%d weights are",
 				     if(n1 == n)"All " else '', n1)), "~= 1;")
 	    n.rem <- n - n0 - n1
-	    if(n.rem == 0)
+	    if(n.rem <= 0) # < 0 possible if w0 & w1 overlap
 		return(invisible())
 	    cat0("the remaining",
 		 ngettext(n.rem, "one", sprintf("%d ones", n.rem)))

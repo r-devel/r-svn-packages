@@ -1,3 +1,26 @@
+2007-07-16  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 0.4-0 - definitely made progress
+
+	* R/plot.lmrob.R (plot.lmrob): recompute robust Mahalanobis
+	distances and cache them with the object.
+
+2007-07-10  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmrob.R (summarizeRobWeights): new defaults; work but warn
+	when 'eps' and 'eps1' lead to weights both close to 0 and 1.
+
+	* R/covPlot.R: don't warn for which = "all"
+	* man/covPlot.Rd: example
+
+2007-06-28  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* data/kootenay.tab: add "famous" data set
+	* man/kootenay.Rd:
+
+	* data/cushny.R: add the other "famous" simple data set
+	* man/cushny.Rd:
+
 2007-06-20  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 0.2-8  ready to be released

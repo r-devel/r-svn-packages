@@ -8,7 +8,7 @@
 \usage{
 summarizeRobWeights(w, digits = getOption("digits"),
                     header = "Robustness weights:",
-                    eps = 1e-04, eps1 = eps, \dots)
+ 	            eps = 0.1 / length(w), eps1 = 1e-3, \dots)
 }
 \arguments{
   \item{w}{numeric vector of robustness weigths.}
