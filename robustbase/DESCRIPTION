@@ -6,7 +6,9 @@ Author: Original code by many authors, notably
 	Peter Rousseeuw and Christophe Croux, see file 'Copyrights';
 	Valentin Todorov <valentin.todorov@chello.at>,
 	Andreas Ruckstuhl <rks@zhwin.ch>,
-	Matias Salibian-Barrera <matias@stat.ubc.ca>, Martin Maechler
+	Matias Salibian-Barrera <matias@stat.ubc.ca>,
+	Tobias Verbeke <tobias.verbeke@businessdecision.com>,
+	Martin Maechler
 Maintainer: Martin Maechler <maechler@stat.math.ethz.ch>
 NOTE: SEVERAL PARTS ARE STILL PRELIMINARY AND MAY BE CHANGED IN THE FUTURE.
       THIS TYPICALLY INCLUDES ARGUMENT NAMES,
@@ -16,7 +18,7 @@ Description: "Essential" Robust Statistics.  The goal is to provide
  regression methodology including model selections and multivariate
  statistics where we strive to cover the book "Robust Statistics,
  Theory and Methods" by Maronna, Martin and Yohai; Wiley 2006.
-Depends: R (>= 2.2.1), stats, graphics, methods
+Depends: R (>= 2.3.1), stats, graphics, methods
 Suggests: MASS
 LazyLoad: yes
 LazyData: yes

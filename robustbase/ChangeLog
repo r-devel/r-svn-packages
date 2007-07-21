@@ -1,3 +1,44 @@
+2007-07-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Author): add Tobias
+
+	* src/rmc.c (h_kern): revert to absolute test; many more experiments
+	* tests/mc-etc.R (x3): a smallish "extreme" case of "non-convergence"
+
+2007-07-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/mc-etc.R: new testing of mc() and related
+
+	* src/rmc.c (mc_C_d): changed work[] and weight[] to 0-indexing;
+		this is hopefully the last bug ...
+
+	* R/adjbox.R (adjbox.formula): use adjbox(), not boxplot()!
+	* man/adjboxStats.Rd: added
+
+2007-07-20  Tobias Verbeke  <tobias.verbeke@businessdecision.com>
+
+	* R/adjbox.R: Skewness-adjusted boxplot ported from Matlab LibRA
+	* man/adjbox.Rd:
+
+	* data/los.rda, man/los.Rd:
+	* data/condroz.rda, man/condroz.Rd: two dataset related to medcouple
+
+2007-07-19  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/adjoutlyingness.R: new (also from the Antwerpen MC collection)
+
+	* DESCRIPTION (Depends): R >= 2.3.1, so we can use
+	* NAMESPACE (useDynLib): .registration = TRUE
+	* R/*.R (.C, .Fortran): now can use name variable instead of string
+	and drop 'PACKAGE = ".."'
+
+
+2007-07-18  Tobias Verbeke and Martin Maechler <maechler@R-project.org>
+
+	* src/rmc.c, src/robustbase.h (rmc): code for medcouple (MC);
+		needs debugging: infinite loops and segmentation faults
+	* R/mc.R (mc): new mc() for MedCouple
+
 2007-07-16  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 0.4-0 - definitely made progress

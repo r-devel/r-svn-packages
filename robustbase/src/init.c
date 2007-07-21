@@ -17,6 +17,10 @@ static R_NativePrimitiveArgType Sn0_t[] = {
     REALSXP, INTSXP, INTSXP, REALSXP, REALSXP
 };
 
+static R_NativePrimitiveArgType mc_C_t[] = {
+    REALSXP, INTSXP, REALSXP, INTSXP, REALSXP
+};
+
 static R_NativePrimitiveArgType wgt_himed_i_t[] = {
     REALSXP, INTSXP, INTSXP, REALSXP
 };
@@ -44,6 +48,7 @@ static R_NativePrimitiveArgType R_lmrob_MM_t[] = {
 static const R_CMethodDef CEntries[]  = {
     CDEF(Qn0),
     CDEF(Sn0),
+    CDEF(mc_C),
     CDEF(wgt_himed_i),
     CDEF(wgt_himed),
     CDEF(R_lmrob_S),

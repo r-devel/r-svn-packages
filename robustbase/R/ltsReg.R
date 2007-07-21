@@ -850,7 +850,7 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
     means <- double(p)		##	 double	 means(nvar)		p
     bmeans <- double(p)		##	 double	 means(nvar)		p
 
-    .Fortran("rfltsreg",
+    .Fortran(rfltsreg,
 	     xy = xy,
 	     n,
 	     p,
@@ -880,6 +880,5 @@ LTScnp2.rew <- function(p, intercept = intercept, n, alpha)
              xmed, xmad, a, da, h, hvec, c,
              cstock, mstock, c1stock, m1stock,
              dath, sd,
-	     means, bmeans,
-	     PACKAGE = "robustbase")[ c("inbest", "objfct") ]
+	     means, bmeans)[ c("inbest", "objfct") ]
 }

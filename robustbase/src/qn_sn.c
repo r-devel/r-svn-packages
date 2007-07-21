@@ -67,10 +67,10 @@ See also ../inst/Copyrights
 
 /* ----------------- Further Declarations ------------------------------ */
 
-/* sn0() and  qn0() both use */
+/* sn0() and  qn0()  --- but also  rmc()  in ./rmc.c
+ * -----      ----                 -----
+ use
 
-static double pull(double *a, int n, int k);
-/*
    pull(a,n,k): finds the k-th order statistic of an
 		array a[] of length n (preserving a[])
 */
@@ -83,11 +83,6 @@ static double pull(double *a, int n, int k);
 */
 
 /* qn0() uses (and for C API:) */
-double whimed_i(double *a, int *iw, int n,
-		double *acand, double *a_srt, int *iw_cand);
-double whimed(double *a, double *w, int n,
-	      double *acand, double *a_srt, double *w_cand);
-
 
 /* Main routines for C API */
 double qn(double *x, int n, int finite_corr);

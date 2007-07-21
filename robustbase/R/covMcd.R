@@ -650,7 +650,7 @@ MCDcnp2.rew <- function(p, n, alpha)
     ##   directly in the .Fortran() call.
     ##    (if we used C, we'd rather allocate there, and be quite faster!)
 
-    .Fortran("rffastmcd",
+    .Fortran(rffastmcd,
          x = if(is.double(x)) x else as.double(x),
          n =    as.integer(n),
          p =    as.integer(p),   ## = 'nvar'  in Fortran
@@ -700,11 +700,10 @@ MCDcnp2.rew <- function(p, n, alpha)
          dath = double(nmaxi * p),   # (nmaxi,nvmax)
 
          cutoff = qchisq(0.975, p),
-         chimed = qchisq(0.5,   p),
-
-         PACKAGE = "robustbase")[ ## keep the following ones:
-         c("initcovariance", "initmean", "best", "mcdestimate",
-           "weights", "exactfit", "coeff", "kount", "adjustcov") ]
+         chimed = qchisq(0.5,   p)
+             )[ ## keep the following ones:
+               c("initcovariance", "initmean", "best", "mcdestimate",
+                 "weights", "exactfit", "coeff", "kount", "adjustcov") ]
 }
 
 ##

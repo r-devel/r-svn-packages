@@ -1,6 +1,5 @@
 
-##R 2.3.0 and later: useDynLib(robustbase, .registration=TRUE)
-useDynLib(robustbase)
+useDynLib(robustbase, .registration=TRUE)# -> R >= 2.3.0
 
 importFrom("graphics", plot)# < more ?
 importFrom("stats", anova, coef, family, fitted,
@@ -41,6 +40,11 @@ export(Sn, Qn,
        lmrob.S,
        lmrob.control,
 
+       mc, # Mia Hubers's medcouple
+       adjbox,
+       adjboxStats,
+       adjOutlyingness,
+
        glmrob,
        nlrob,
        glmrobMqle.control
@@ -50,6 +54,10 @@ export(Sn, Qn,
 ## S3 methods for ``our own'' S3 generics:
 S3method(ltsReg, default)
 S3method(ltsReg, formula)
+
+S3method(mc, default)
+S3method(adjbox, default)
+S3method(adjbox, formula)
 
 
 ## Register all the methods for S3 generics elsewhere

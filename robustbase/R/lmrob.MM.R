@@ -84,7 +84,7 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
 	      length(beta.initial) == p)
     sigma <- scale
 
-    b <- .C("R_lmrob_MM",
+    b <- .C(R_lmrob_MM,
 	    x = as.double(x),
 	    y = as.double(y),
 	    n = as.integer(n),
@@ -98,9 +98,8 @@ lmrob.MM <- function(x, y, beta.initial, scale, control)
             loss = double(1),
 	    rel.tol= as.double(control$rel.tol),
 	    converged = logical(1),
-	    trace.lev = as.integer(control$trace.lev),
-	    PACKAGE = "robustbase")[
-            c("coef", "scale", "resid", "loss", "converged", "iter")]
+	    trace.lev = as.integer(control$trace.lev)
+            )[c("coef", "scale", "resid", "loss", "converged", "iter")]
     ## FIXME?: Should rather warn *here* in case of non-convergence
     ## now does return  residuals :
     stopifnot(all.equal(b$resid, drop(y - x %*% b$coef),
@@ -155,7 +154,7 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
     stopifnot(length(c.chi) > 0, c.chi >= 0, length(bb) > 0,
 	      length(best.r) > 0, best.r >= 1)
 
-    b <- .C("R_lmrob_S",
+    b <- .C(R_lmrob_S,
 	    x = as.double(x),
 	    y = as.double(y),
 	    n = as.integer(n),
@@ -172,8 +171,8 @@ lmrob.S <- function(x, y, control, trace.lev = 0)
 	    k.max   = as.integer(control$k.max),
 	    refine.tol= as.double(control$refine.tol),
 	    converged = logical(1),
-	    trace.lev = as.integer(trace.lev),
-	    PACKAGE = "robustbase")[c("coef", "scale", "k.max", "converged")]
+	    trace.lev = as.integer(trace.lev)
+	    )[c("coef", "scale", "k.max", "converged")]
     sigma <- b$scale
     if(sigma < 0)
 	stop("C function R_lmrob_S() exited prematurely")
