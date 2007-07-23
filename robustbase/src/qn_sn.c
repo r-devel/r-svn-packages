@@ -52,13 +52,6 @@ licence it under the GNU Public Licence.
 
 See also ../inst/Copyrights
 */
-#include <inttypes.h>
-/*        ^^^^^^^^^^ is supposedly more common and standard than
- * #include <stdint.h>
- * or #include <sys/types.h> */
-/* --> int64_t ; if people don't have the above, they can forget about it.. */
-/* #include "int64.h" */
-
 #include <R.h>
 #include <Rmath.h> /* -> <math.h> and much more */
 
@@ -76,7 +69,7 @@ See also ../inst/Copyrights
 */
 
 /*
-   whimed(a,iw,n): finds the weighted high median of an array
+   whimed_i(a,iw,n): finds the weighted high median of an array
 		a[] of length n, with positive int weights iw[]
 		(using auxiliary arrays acand[], a_srt[] & iw_cand[]
 		 all of length n).
@@ -109,38 +102,6 @@ void Sn0(double *x, Sint *n, Sint *is_sorted, double *res, double *a2)
 
     vmaxset(vmax);
 }
-
-void wgt_himed_i(double *x, Sint *n, Sint *iw, double *res)
-{
-    double *a_srt, *acand;
-    int *iw_cand, nn = (int)*n;
-    char *vmax;
-
-    vmax = vmaxget();
-    acand  = (double *)R_alloc(nn, sizeof(double));
-    a_srt  = (double *)R_alloc(nn, sizeof(double));
-    iw_cand= (int *)   R_alloc(nn, sizeof(int));
-
-    *res = whimed_i(x, (int *)iw, nn, acand, a_srt, iw_cand);
-    vmaxset(vmax);
-}
-
-void wgt_himed(double *x, Sint *n, double *w, double *res)
-{
-    double *a_srt, *a_cand, *w_cand;
-    int nn = (int)*n;
-    char *vmax;
-
-    vmax = vmaxget();
-    a_cand = (double *) R_alloc(nn, sizeof(double));
-    a_srt  = (double *) R_alloc(nn, sizeof(double));
-    w_cand = (double *) R_alloc(nn, sizeof(double));
-
-    *res = whimed(x, w, nn, a_cand, a_srt, w_cand);
-    vmaxset(vmax);
-}
-
-
 
 double qn0(double *x, int n)
 {
@@ -319,100 +280,6 @@ double qn(double *x, int n, int finite_corr)
     }
     else return r;
 } /* qn */
-
-
-#define WGT_HIMED_PROC(_NAME_, _WGT_TYPE_, _WGT_SUM_TYPE_)              \
-                                                                        \
-double _NAME_(double *a, _WGT_TYPE_ *w, int n,				\
-	      double* a_cand, double *a_srt, _WGT_TYPE_* w_cand)	\
-{									\
-									\
-/*									\
- Algorithm to compute the weighted high median in O(n) time.		\
-									\
- The whimed is defined as the smallest a(j) such that the sum		\
- of the weights of all a(i) <= a(j) is strictly greater than		\
- half of the total weight.						\
-									\
- Arguments:								\
-									\
-      a: double array containing the observations			\
-      n: number of observations						\
-      w: array of int weights of the observations.			\
-									\
-*/									\
-									\
-    int n2, i, kcand;							\
-    /* sum of weights: `int' do overflow when  n ~>= 1e5 */		\
-    _WGT_SUM_TYPE_ wleft, wmid, wright, w_tot, wrest;			\
-									\
-    double trial;							\
-									\
-    w_tot = 0;								\
-    for (i = 0; i < n; ++i)						\
-	w_tot += w[i];							\
-    wrest = 0;								\
-									\
-/* REPEAT : */								\
-Loop:									\
-    /* trial = pull(a, n, n / 2 + 1) : */				\
-    for (i = 0; i < n; ++i)						\
-	a_srt[i] = a[i];						\
-    n2 = n/2;/* =^= n/2 +1 with 0-indexing */				\
-    rPsort(a_srt, n, n2);						\
-    trial = a_srt[n2];							\
-									\
-    wleft = 0;    wmid  = 0;    wright= 0;				\
-    for (i = 0; i < n; ++i) {						\
-	if (a[i] < trial)						\
-	    wleft += w[i];						\
-	else if (a[i] > trial)						\
-	    wright += w[i];						\
-	else								\
-	    wmid += w[i];						\
-    }									\
-    /* wleft = sum_{i; a[i]  < trial}  w[i]				\
-     * wmid  = sum_{i; a[i] == trial}  w[i] at least one 'i' since trial is one a[]! \
-     * wright= sum_{i; a[i]  > trial}  w[i]				\
-     */									\
-    kcand = 0;								\
-    if (2 * (wrest + wleft) > w_tot) {					\
-	for (i = 0; i < n; ++i) {					\
-	    if (a[i] < trial) {						\
-		a_cand[kcand] = a[i];					\
-		w_cand[kcand] = w[i];	++kcand;			\
-	    }								\
-	}								\
-    }									\
-    else if (2 * (wrest + wleft + wmid) <= w_tot) {			\
-	for (i = 0; i < n; ++i) {					\
-	    if (a[i] > trial) {						\
-		 a_cand[kcand] =	a[i];				\
-		 w_cand[kcand] = w[i];	++kcand;			\
-	    }								\
-	}								\
-	wrest += wleft + wmid;						\
-    }									\
-    else {								\
-	return trial;							\
-	/*==========*/							\
-    }									\
-    n = kcand;								\
-    for (i = 0; i < n; ++i) {						\
-	 a[i] =	a_cand[i];						\
-	 w[i] = w_cand[i];						\
-    }									\
-    goto Loop;								\
-									\
-} /* WGT_HIMED_PROC */
-
-WGT_HIMED_PROC(whimed_i, int, int64_t)
-
-WGT_HIMED_PROC(whimed,  double, double)
-
-#undef WGT_HIMED_PROC
-
-
 
 
 double sn0(double *x, int n, int is_sorted, double *a2)
