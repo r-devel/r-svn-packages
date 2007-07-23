@@ -10,7 +10,7 @@
     This data frame contains the following columns:
     \describe{
 	\item{Dog}{
-	    a factor with levels \code{1} to \code{10} designating the dog
+	    a factor with levels \code{A} to \code{J} designating the dog
 	    on which the scan was made
 	}
 	\item{Side}{
@@ -23,11 +23,6 @@
 	}
 	\item{pixel}{
 	    a numeric vector of pixel intensities
-	}
-	\item{DS}{
-	    the interaction of the \code{Dog} and \code{Side} factors.
-	    This provides a grouping factor with a unique level for each
-	    side within each dog.
 	}
     }
 }
