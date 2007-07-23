@@ -24,7 +24,7 @@ double whimed_i(double *a, int *iw, int n,
 double whimed(double *a, double *w, int n,
 	      double *acand, double *a_srt, double *w_cand);
 
-/* --------- ./rmc.c -------- */
+/* --------- ./mc.c -------- */
 
 /* call via .C() from R : */
 void mc_C(double *z, int *n, double *eps, int *iter, double *out);

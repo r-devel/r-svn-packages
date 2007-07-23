@@ -67,8 +67,8 @@ See also ../inst/Copyrights
 
 /* ----------------- Further Declarations ------------------------------ */
 
-/* sn0() and  qn0()  --- but also  rmc()  in ./rmc.c
- * -----      ----                 -----
+/* sn0() and  qn0()  --- but also  mc_C()  in ./mc.c
+ * -----      ----                 ------
  use
 
    pull(a,n,k): finds the k-th order statistic of an
