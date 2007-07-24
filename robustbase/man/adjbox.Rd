@@ -151,10 +151,16 @@ if(require("boot")) {
  par(op)
 }
 
-### Hubert and Vandervieren (2006), p. 11, Fig. 6.
- op <- par(mfrow = c(1,2))
- boxplot(condroz$Ca, main = "Original Boxplot")
- adjbox(condroz$Ca, main  = "Adjusted Boxplot")
- par(op)
+### Hubert and Vandervieren (2006), p. 11, Fig. 6. -- enhanced
+op <- par(mfrow = c(2,2), mar = c(1,3,3,1), oma = c(0,0,3,0))
+with(condroz, {
+ boxplot(Ca, main = "Original Boxplot")
+ adjbox (Ca, main = "Adjusted Boxplot")
+ boxplot(Ca, main = "Original Boxplot [log]", log = "y")
+ adjbox (Ca, main = "Adjusted Boxplot [log]", log = "y")
+})
+mtext("'Ca' from data(condroz)",
+      outer=TRUE, font = par("font.main"), cex = 2)
+par(op)
 }
 \keyword{hplot}

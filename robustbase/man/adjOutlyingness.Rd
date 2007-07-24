@@ -17,6 +17,7 @@ adjOutlyingness(x, ndir = 250, clower = 3, cupper = 4)
     should be searched.}
   \item{clower, cupper}{the constant to be used for the lower and upper
     tails, in order to transform the data towards symmetry.}
+%%% MM: How can I modify it to the  *NON*-adjusted case ?
 }
 \details{
   ~~ If necessary, more details than the description above ~~
@@ -36,8 +37,11 @@ adjOutlyingness(x, ndir = 250, clower = 3, cupper = 4)
   \code{\link{mc}}.
 }
 \examples{
-if(FALSE) ### SEGMENTATION FAULT!
+dim(longley)
 adjOutlyingness(longley)
+
+dim(hbk)
+adjOutlyingness(hbk)
 }
 \keyword{robust}
 \keyword{multivariate}

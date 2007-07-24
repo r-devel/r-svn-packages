@@ -18,15 +18,13 @@
 /* Interface routines to be called via .C() and those from API : */
 #include "robustbase.h"
 /*
-  which includes
+  including
 
- - whimed_i(a,iw,n): the weighted high median of an array a of length n,
-		  using the positive integer weights iw[].
+ whimed_i(a,iw,n): the weighted high median of an array a of length n,
+		   using the positive integer weights iw[].
 
- - pull(a,n,k):	 the k-th order statistic of  a[1:n]
-
- * which are defined in ./qn_sn.c
- *			  ~~~~~~~
+ * which is in ./wgt_himed.c_templ
+ *		 ~~~~~~~~~~~~~~~~~
 */
 
 /* Includes the auxiliary function
@@ -53,8 +51,8 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
     eps	  = c(eps1, eps2)
     iter  = c(maxit, trace.lev)
 */
-    double medc, xmed, xden, trial;
-    int i,j,jj, h1,h2, nl,nr, knew, trace_lev = iter[1], it = 0;
+    double medc, xmed, xden, trial = -2./* -Wall */;
+    int i,j, h1,h2, nl,nr, knew, trace_lev = iter[1], it = 0;
     Rboolean IsFound = FALSE, converged = TRUE;
 
     double *work   = (double *) R_alloc(n, sizeof(double));
@@ -68,15 +66,9 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
     int *left, *right, *p, *q;
 
 /* NOTE: array[0] is empty --- so 1-indexing is used (MM: danger!) */
-    double *x  = Calloc((n+1),double);
-    double *x1 = Calloc((n+1),double);
-    double *x2 = Calloc((n+1),double);
+    double *x  = (double *) R_alloc(n+1, sizeof(double));
+    double *x2; /* just a pointer instead of  Calloc((n+1),double); */
 
-    /* MM: why should x[0] = 0 be part --- doesn't this assume
-     *	   that	 x (or 'z[]') is already centered or all positive or ???
-     * Note that  R_rsort(x, n)	  then sorts  x[0 : (n-1) ] !!!
-     * --> fix that and use R_rsort(&x[1], n) !!
-     */
     if (n < 3) {
 	medc = 0.; goto Finish;
     }
@@ -121,15 +113,16 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
 
     j = 1;
     while (x[j] > eps[0] && j <= n) {
-	x1[j] = x[j];
+	/* x1[j] = x[j]; */
 	j++;
     }
     if(trace_lev >= 3)
 	Rprintf("   x1[] := {x | x_j > eps}         has %d entries\n", j-1);
     i = 1;
+    x2 = x+j-1; /* pointer -- corresponding to  x2[i] = x[j]; */
     while (x[j] > -eps[0] && j <= n) {
-        x1[j] = x[j];
-        x2[i] = x[j];
+	/* x1[j] = x[j]; */
+        /* x2[i] = x[j]; */
         j++;
         i++;
     }
@@ -138,11 +131,8 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
         Rprintf("'median-x' {x | -eps < x_i <= eps} has %d (= 'k') entries\n",
 		i-1);
     h1 = j-1; /* == size of x1[] == the sum of those two sizes above */
-    for(; j <= n; j++, i++)
-	x2[i] = x[j];
-
-    /* now  x2[] := {x | x_j <= eps}   (which includes the median 0) */
-    h2 = i-1; /* == size of x2[] == maximal size of whimed() arrays */
+    /* conceptually,  x2[] := {x | x_j <= eps}   (which includes the median 0) */
+    h2 = i + (n-j); /* == size of x2[] == maximal size of whimed() arrays */
 
     /* work arrays for whimed_i() :  allocate *once* only !! */
     acand  = (double *) R_alloc(h2, sizeof(double));
@@ -154,7 +144,6 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
     right = (int *) R_alloc((h2+1), sizeof(int));
     p     = (int *) R_alloc((h2+1), sizeof(int));
     q     = (int *) R_alloc((h2+1), sizeof(int));
-
 
     for (i = 1; i <= h2; i++) {
 	left [i] = 1;
@@ -170,48 +159,63 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
 
     it = 0; IsFound = FALSE;
 
-    while (!IsFound && (nr-nl > n) && it++ < iter[0])
+    while (!IsFound && (nr-nl > n) && it < iter[0])
     {
 	int sum_p, sum_q;
+	it++;
 	j = 0;
 	for (i = 1; i <= h2; i++)
 	    if (left[i] <= right[i]) {
 		int k;
 		weight[j] = right[i] - left[i]+1;
 		k = left[i] + (weight[j]/2);
-		work[j] = h_kern(x1[k], x2[i], k, i, h1+1, eps[1]);
+		work[j] = h_kern(x[k], x2[i], k, i, h1+1, eps[1]);
 		j++;
 	    }
-	trial = whimed_i(work, weight, j,
-			 acand, a_srt, iw_cand);
+	if(trace_lev >= 4) {
+	    Rprintf(" before whimed(): work[0:(%d-1)], weight[] :\n", j);
+	    for(i=0; i < j; i++) Rprintf(" %8g", work  [i]); Rprintf("\n");
+	    for(i=0; i < j; i++) Rprintf(" %8d", weight[i]); Rprintf("\n");
+	}
+	trial = whimed_i(work, weight, j, acand, a_srt, iw_cand);
 	if(trace_lev >= 3)
-	    Rprintf("	it=%2d, whimed(*, n=%d, *)= %5g ",
-		    it, j, trial);
+	    Rprintf("%4s it=%2d, whimed(n=%3d)= %8g ", " ", it, j, trial);
 
 	j = 1;
 	for (i = h2; i >= 1; i--) {
-	    while (j <= h1 && h_kern(x1[j],x2[i],j,i,h1+1,eps[1]) > trial)
+	    while (j <= h1 && h_kern(x[j],x2[i],j,i,h1+1,eps[1]) > trial)
 		j++;
+/* 	    for(; j <= h1; j++) { */
+/* 		register double h = h_kern(x[j],x2[i],j,i,h1+1,eps[1]); */
+/* 		if(h > trial) break; */
+/* 	    } */
 	    p[i] = j-1;
 	}
 	j = h1;
-	for (i = 1; i <= h2; i++) {
-	    while (j >= 1 && h_kern(x1[j],x2[i],j,i,h1+1,eps[1]) < trial)
+	for (i = 1, sum_p=0, sum_q=0; i <= h2; i++) {
+	    while (j >= 1 && h_kern(x[j],x2[i],j,i,h1+1,eps[1]) < trial)
 		j--;
 	    q[i] = j+1;
-	}
 
-	for (i = 1, sum_p=0, sum_q=0; i <= h2; i++) {
 	    sum_p += p[i];
-	    sum_q += q[i]-1;
+	    sum_q += j;/* = q[i]-1 */
 	}
 
-	if(trace_lev >= 3)
-	    Rprintf("sum_(p,q)= (%d,%d)", sum_p, sum_q);
+	if(trace_lev >= 3) {
+	    if (trace_lev == 3)
+		Rprintf("sum_(p,q)= (%d,%d)", sum_p, sum_q);
+	    else { /* trace_lev >= 4 */
+		Rprintf("\n%3s p[]:", "");
+		for(i = 1; i <= h2; i++) Rprintf(" %2d", p[i]);
+		Rprintf(" sum= %3d\n%3s q[]:", sum_p, "");
+		for(i = 1; i <= h2; i++) Rprintf(" %2d", q[i]);
+		Rprintf(" sum= %3d\n", sum_q);
+	    }
+	}
 
 	if (knew <= sum_p) {
 	    if(trace_lev >= 3)
-		Rprintf("; sum_p >= ..\n");
+		Rprintf("; sum_p >= kn\n");
 	    for (i = 1; i <= h2; i++)
 		right[i] = p[i];
 	    nr = sum_p;
@@ -234,7 +238,7 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
 
     converged = IsFound || (nr-nl <= n);
     if(!converged) {
-	REprintf("maximal number of iterations (%d) reached prematurely (it=%d)\n",
+	REprintf("maximal number of iterations (%d =? %d) reached prematurely\n",
 		 iter[0], it);
 	/* still: */
 	medc = trial;
@@ -244,18 +248,20 @@ double mc_C_d(double *z, int n, double *eps, int *iter)
 	j = 0;
 	for (i = 1; i <= h2; i++) {
 	    if (left[i] <= right[i]) {
-		for (jj = left[i]; jj <= right[i]; jj++) {
-		    work[j] = -h_kern(x1[jj],x2[i],jj,i,h1+1,eps[1]);
+		int k;
+		for (k = left[i]; k <= right[i]; k++) {
+		    work[j] = -h_kern(x[k],x2[i],k,i,h1+1,eps[1]);
 		    j++;
 		}
 	    }
 	}
 	if(trace_lev)
 	    Rprintf("  not found [it=%d,  (nr,nl) = (%d,%d)],"
-		    " -> (knew-nl, j-1) = (%d,%d)\n",
+		    " -> (knew-nl, j) = (%d,%d)\n",
 		    it, nr, nl, knew-nl, j);
-	/* FIXME: use  rPsort(work, n, k)  - since we don't need  work :*/
-	medc = - pull(work, /* n = */ j, /* k = */ knew-nl);
+	/* using rPsort(work, n,k), since we don't need work[] anymore:*/
+	rPsort(work, /* n = */ j, /* k = */ knew-nl-1);
+	medc = - work[knew-nl-1];
     }
 
     if(converged && trace_lev >= 2)
@@ -265,10 +271,6 @@ Finish:
     iter[0] = it; /* to return */
     iter[1] = converged;
 
-    Free(x);
-    Free(x1);
-    Free(x2);
-
     return medc;
 
 } /* end{ mc_C_d } */
@@ -277,6 +279,7 @@ Finish:
 static
 double h_kern(double a, double b, int ai, int bi, int ab, double eps)
 {
+/*     if (fabs(a-b) <= DBL_MIN) */
 /*  if (fabs(a-b) < 2.0*eps * (eps + fabs(a+b))) */
     if (fabs(a-b) < 2.0*eps) /* test consistent with use of 'eps' initially */
 	return sign((double)(ab - (ai+bi)));
