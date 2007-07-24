@@ -35,8 +35,8 @@ double _WHIMED_(double *a, _WGT_TYPE_ *w, int n,
 /*
   Algorithm to compute the weighted high median in O(n) time.
 
-  The whimed is defined as the smallest a(j) such that the sum
-  of the weights of all a(i) <= a(j) is strictly greater than
+  The whimed is defined as the smallest a[j] such that the sum
+  of the weights of all a[i] <= a[j] is strictly greater than
   half of the total weight.
 
   Arguments:
@@ -102,12 +102,12 @@ double _WHIMED_(double *a, _WGT_TYPE_ *w, int n,
 	}
 	n = kcand;
 	for (i = 0; i < n; ++i) {
-	    a[i] =	a_cand[i];
+	    a[i] = a_cand[i];
 	    w[i] = w_cand[i];
 	}
     } while(1);
 
-} /* WGT_HIMED_PROC */
+} /* _WHIMED_ */
 
 #undef _WHIMED_
 #undef _WGT_TYPE_
