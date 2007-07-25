@@ -3,12 +3,6 @@ PUBLIC LICENSE Version 2, June 1991.  The terms of this license
 are in a file called COPYING which you should have received with
 this software.
 
-If you have not received a copy of this file, you can obtain one
-by writing to:
-
-   The Free Software Foundation, Inc.,
-   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
 The file COPYING can be found in the sources of this package, in the
 R sources and any R installation, either in the top-level directory 
-or the doc/ directory.
+or the doc/ directory or via http://www.r-project.org/Licenses/.
