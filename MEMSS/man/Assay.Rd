@@ -9,17 +9,15 @@
     This data frame contains the following columns:
     \describe{
 	\item{Block}{
-	    an ordered factor with levels
-	    \code{2} < \code{1} identifying the block where the wells
-	    are measured.
+	    an factor with levels \code{A} and \code{B}
+	    identifying the block of the well
 	}
 	\item{sample}{
 	    a factor with levels \code{a} to \code{f} identifying the
-	    sample corresponding to the well.
+	    sample corresponding to the well
 	}
 	\item{dilut}{
-	    a factor with levels
-	    \code{1} to \code{5}
+	    an ordered factor with levels \code{1} to \code{5}
 	    indicating the dilution applied to the well
 	}
 	\item{logDens}{
@@ -34,8 +32,8 @@
     plate are labeled A--H from top to bottom and the 12 columns on the
     plate are labeled 1--12 from left to right.  Only the central 60 wells
     of the plate are used for the bioassay (the intersection of rows B--G
-    and columns 2--11).  There are two blocks in the design: Block 1
-    contains columns 2--6 and Block 2 contains columns 7--11. Within each
+    and columns 2--11).  There are two blocks in the design: Block A
+    contains columns 2--6 and Block B contains columns 7--11. Within each
     block, six samples are assigned randomly to rows and five (serial)
     dilutions are assigned randomly to columns. The response variable is
     the logarithm of the optical density. The cells are treated with a

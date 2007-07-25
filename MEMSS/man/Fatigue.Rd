@@ -9,14 +9,8 @@
   This data frame contains the following columns:
   \describe{
     \item{Path}{
-      an ordered factor with levels
-      \code{1} < \code{2} < \code{3} < \code{4} < \code{5} <
-      \code{6} < \code{7} < \code{8} < \code{9} < \code{10} <
-      \code{11} < \code{12} < \code{13} < \code{14} < \code{15} <
-      \code{16} < \code{17} < \code{18} < \code{19} < \code{20} <
-      \code{21} giving the test path (or test unit) number.  The
-      order is in terms of increasing failure time or decreasing
-      terminal crack length.
+      the test path (or test unit) identifier - a factor with levels
+      \code{A} to \code{U}.
     }
     \item{cycles}{
       number of test cycles at which the measurement is made
@@ -45,5 +39,9 @@
 }
 \examples{
 str(Fatigue)
+xyplot(relLength ~ cycles | Path, Fatigue, type = c("g", "b"),
+       aspect = 'xy', xlab = "Number of test cycles (millions)",
+       ylab = "Relative crack length (dimensionless)",
+       layout = c(7,3))
 }
 \keyword{datasets}

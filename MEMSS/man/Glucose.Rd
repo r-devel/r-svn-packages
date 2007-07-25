@@ -9,8 +9,7 @@
     This data frame contains the following columns:
     \describe{
 	\item{Subject}{
-	    an ordered factor with levels
-	    \code{6} < \code{2} < \code{3} < \code{5} < \code{1} < \code{4}
+	    a factor with levels \code{A} to \code{F}
 	}
 	\item{Time}{
 	    a numeric vector
@@ -30,5 +29,6 @@
 }
 \examples{
 str(Glucose)
+xyplot(conc ~ Time | Meal * Subject, Glucose)
 }
 \keyword{datasets}

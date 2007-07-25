@@ -10,18 +10,17 @@
     \describe{
 	\item{effort}{
 	    a numeric vector giving the effort (Borg scale) required to
-	    arise from a stool.
+	    arise from a stool
 	}
 	\item{Type}{
 	    a factor with levels
 	    \code{T1}, 
 	    \code{T2}, 
 	    \code{T3}, and 
-	    \code{T4} giving the stool type.
+	    \code{T4} giving the stool type
 	}
 	\item{Subject}{
-	    an ordered factor giving a unique identifier for the subject
-	    in the experiment.
+	    a factor with levels \code{A} to \code{I}
 	}
     }
 }
@@ -40,7 +39,7 @@
 \examples{
 options(show.signif.stars = FALSE)
 str(ergoStool)
-(fm1 <- lmer(effort ~ Type + (1|Subject), ergoStool))
+print(m1 <- lmer(effort ~ Type + (1|Subject), ergoStool), corr = FALSE)
 anova(fm1)
 }
 \keyword{datasets}

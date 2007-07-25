@@ -9,26 +9,18 @@
     This data frame contains the following columns:
     \describe{
 	\item{Quake}{
-	    an ordered factor with levels
-	    \code{20} < \code{16} < \code{14} < \code{10} < \code{3} <
-	    \code{8} < \code{23} < \code{22} < \code{6} < \code{13} <
-	    \code{7} < \code{21} < \code{18} < \code{15} < \code{4} <
-	    \code{12} < \code{19} < \code{5} < \code{9} < \code{1} <
-	    \code{2} < \code{17} < \code{11} indicating the earthquake
-	    on which the measurements were made.
+	    a factor with levels \code{A} to \code{U}
 	}
 	\item{Richter}{
-	    a numeric vector giving the intensity of the earthquake on
-	    the Richter scale.
+	    the intensity of the earthquake on the Richter scale
 	}
 	\item{distance}{
 	    the distance from the seismological measuring station to the
-	    epicenter of the earthquake (km).
+	    epicenter of the earthquake (km)
 	}
 	\item{soil}{
-	    a factor with levels \code{0} and \code{1} 
-	    giving the soil condition at the measuring station, either
-	    soil or rock. 
+	    a factor with levels \code{S} (soil) and \code{R} (rock)
+	    giving the soil condition at the measuring station 
 	}
 	\item{accel}{
 	    maximum horizontal acceleration observed (g).

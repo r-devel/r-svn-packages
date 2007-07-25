@@ -9,12 +9,7 @@
     This data frame contains the following columns:
     \describe{
 	\item{Subject}{
-	    an ordered factor with levels
-	    \code{10} < \code{8} < \code{2} < \code{6} < \code{3} <
-	    \code{5} < \code{9} < \code{7} < \code{1} < \code{4} <
-	    \code{17} < \code{20} < \code{11} < \code{12} < \code{16} <
-	    \code{13} < \code{14} < \code{18} < \code{15} < \code{19}
-	    giving the unique identifier for each subject
+	    a factor with levels \code{A} to \code{T}
 	}
 	\item{QB}{
 	    a factor with levels
@@ -22,7 +17,7 @@
 	    \code{300} giving the bovine blood flow rate (dL/min).
 	}
 	\item{pressure}{
-	    a numeric vector giving the transmembrane pressure (dmHg).
+	    the transmembrane pressure (dmHg).
 	}
 	\item{rate}{
 	    the hemodialyzer ultrafiltration rate (mL/hr).

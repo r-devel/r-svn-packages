@@ -35,6 +35,7 @@
 xyplot(circumference ~ age, Orange, groups = Tree, type = c("g", "b"),
        auto.key = list(space = "right", lines = TRUE), aspect = "xy",
        xlab = "Age (days since 1968/12/31)", ylab = "Circumference (mm)")
+\dontrun{
 m1 <- nlmer(circumference ~ SSlogis(age, Asym, xmid, scal) ~ Asym|Tree,
             Orange, verbose = TRUE,
             start = c(Asym = 190, xmid = 730, scal = 350))

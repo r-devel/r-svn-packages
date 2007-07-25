@@ -9,9 +9,7 @@
   This data frame contains the following columns:
   \describe{
     \item{Subject}{
-      a factor with levels
-      \code{1} to \code{7} identifying the subject whose glucose
-      level is measured. 
+      a factor with levels \code{A} to \code{G}
     }
     \item{Date}{
       a factor with levels
@@ -42,6 +40,9 @@
     Analysis}, Chapman and Hall, London.
 }
 \examples{
-str(Glucose2)
+str(Glucose2
+xyplot(glucose ~ Time | Subject, Glucose2, type = c("g", "b"),
+       groups = Date, aspect = 'xy', layout = c(4,2),
+       index.cond = function(x,y) max(y))
 }
 \keyword{datasets}
