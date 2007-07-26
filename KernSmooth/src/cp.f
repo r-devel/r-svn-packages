@@ -13,7 +13,7 @@ c     Last changed: 09/05/95
 
 c     remove unused 'q' 2007-07-10
       subroutine cp(X,Y,n,qq,Nmax,RSS,Xj,Yj,coef,Xmat,wk,qraux,Cpvals)
-      integer Nmax,n,q,qq,Nval,nj,i,j,k,idiv,ilow,iupp
+      integer Nmax,n,qq,Nval,nj,i,j,k,idiv,ilow,iupp
       double precision RSS(Nmax),X(n),Y(n),Xj(n),Yj(n),coef(qq),wk(n),
      +                 Xmat(n,qq),qraux(qq),Cpvals(NMax),fiti,RSSj
 
