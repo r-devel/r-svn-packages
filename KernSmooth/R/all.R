@@ -1,3 +1,8 @@
+## file KernSmooth/R/all.R
+## original file Copyright (C) M. P. Wand
+## modifications for use with R copyright (C) B. D. Ripley
+## Unlimited use and distribution (see LICENCE).
+
 bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
                  gridsize=401,range.x,truncate=TRUE)
 

@@ -1,3 +1,9 @@
+c  Part of R package KernSmooth
+c  Copyright (C) 1995  M. P. Wand
+c  Copyright (C) 2007  B. D. Ripley
+c
+c  Unlimited use and distribution (see LICENCE).
+
 cccccccc FORTRAN subroutine cp.f cccccccccc
 
 c     For computing Mallow's C_p values for a

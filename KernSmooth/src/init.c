@@ -1,3 +1,10 @@
+/*
+ *  Part of R package KernSmooth
+ *  Copyright (C) 2005-2007  B. D. Ripley
+ *
+ *  Unlimited use and distribution (see LICENCE).
+ */
+
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Rdynload.h>
