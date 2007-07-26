@@ -1,7 +1,7 @@
 Package: rpart
 Priority: recommended
-Version: 3.1-36
-Date: March 2002 version of rpart, R version 2007-06-12
+Version: 3.1-37
+Date: March 2002 version of rpart, R version 2007-07-26
 Author: Terry M Therneau and Beth Atkinson <atkinson@mayo.edu>.
         R port by Brian Ripley <ripley@stats.ox.ac.uk>.
 Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
