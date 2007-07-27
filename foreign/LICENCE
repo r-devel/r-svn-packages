@@ -1,8 +1,7 @@
-This software is distributed under the terms of the GNU GENERAL
-PUBLIC LICENSE Version 2, June 1991.  The terms of this license
-are in a file called COPYING which you should have received with
-this software.
+This software is distributed under the terms of the GNU General Public
+License as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
 
-The file COPYING can be found in the sources of this package, in the
-R sources and any R installation, either in the top-level directory 
-or the doc/ directory, or via http://www.r-project.org/Licenses/ .
+A copy of the GNU General Public License is in file COPYING in the
+sources of this package, and is also available at
+http://www.r-project.org/Licenses/
