@@ -1,3 +1,9 @@
+2007-08-02  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/adjoutlyingness.R (adjOutlyingness): small improvements,
+	  getting rid of loops; fix an obvious typo (in original code).
+	  Leave away the Inf and NaN that from  abs(Y[] - m) / ( tup | tlo)
+
 2007-07-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Author): add Tobias

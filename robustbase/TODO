@@ -124,3 +124,12 @@ o package 'riv' (author @ epfl.ch!) has 'slc()'  ~=  cov.S(.)  -- in pure R code
   doesn't Valentin have a version too?
   otherwise: test this, ask author for "donation" to robustbase
   [NB:
+
+o adjOutlyingness() :
+    typo-bug is corrected; and I have made it more pretty.
+    Still a bit problematic when denominator = 0
+    Currently leave away all the c/0 = Inf and 0/0 = NaN values.
+
+    MM: Maybe, it's the fact that the   coef = 1.5  should really depend on
+        the sample size  n   and will be too large for small n (??)
+  --> should ask Mia and maybe Guy Brys
