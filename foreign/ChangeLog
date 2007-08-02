@@ -1,3 +1,8 @@
+2007-08-02 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/pfm-read.c, src/sfm-read.c: include headers provided
+	via R.h.
+
 2007-07-27 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-22
