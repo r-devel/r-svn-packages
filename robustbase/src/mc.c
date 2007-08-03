@@ -43,7 +43,7 @@ void mc_C(double *z, int *in, double *eps, int *iter, double *out)
 
 /* MM:	The tolerance  'eps1' and 'eps2' can now be passed from R;
  *	the original code had only one 'eps' for both and hardcoded
- *	   eps =  0.0000000000001;  /* == 1e-13 )) *./
+ *	   eps =  0.0000000000001;  /.* == 1e-13 )) *./
  */
 double mc_C_d(double *z, int n, double *eps, int *iter)
 {
