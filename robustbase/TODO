@@ -133,3 +133,4 @@ o adjOutlyingness() :
     MM: Maybe, it's the fact that the   coef = 1.5  should really depend on
         the sample size  n   and will be too large for small n (??)
   --> should ask Mia and maybe Guy Brys
+

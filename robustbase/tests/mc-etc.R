@@ -84,6 +84,9 @@ for(n in 3:60) {
     cat(".")
 };  cat("\n")
 
+
+cat('Time elapsed: ', proc.time(),'\n') # for ``statistical reasons''
+
 quit('no')
 ##  ------
 
