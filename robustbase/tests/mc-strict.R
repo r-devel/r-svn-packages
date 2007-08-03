@@ -66,7 +66,7 @@ set.seed(5); system.time(a5 <- adjOutlyingness(wood))
 set.seed(6); system.time(a6 <- adjOutlyingness(wood[, 1:5]))# the 'X' space
 
 ## FIXME:  32-bit <-> 64-bit different results {tested on Linux only}
-is32 <- R.version$arch == "i686"
+is32 <- .Machine$sizeof.pointer == 4 ## <- should work for Linux/MacOS/Windows
 stopifnot(which(!a2$nonOut) == 1:14,
 	  which(!a3$nonOut) == 1:14,
           which(!a4$nonOut) == if(is32) c(1, 2, 41, 70) else c(12, 70),
