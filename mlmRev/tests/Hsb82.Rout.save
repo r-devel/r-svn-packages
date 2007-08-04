@@ -1,6 +1,6 @@
 
-R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+R version 2.4.0 beta (2006-09-25 r39510)
+Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,29 +19,28 @@ Type 'q()' to quit R.
 Loading required package: lme4
 Loading required package: Matrix
 Loading required package: lattice
-Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > lmer(mAch ~ meanses*cses + sector*cses + (cses|school), Hsb82)
-Linear mixed-effects model fit by REML
+Linear mixed-effects model fit by REML 
 Formula: mAch ~ meanses * cses + sector * cses + (cses | school) 
    Data: Hsb82 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 46521.66 46583.58 -23251.83   46496.49     46503.66
+   AIC   BIC logLik MLdeviance REMLdeviance
+ 46522 46584 -23252      46496        46504
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- school   (Intercept)  2.37957 1.54259        
-          cses         0.10121 0.31814  0.391 
+ school   (Intercept)  2.37954 1.54258        
+          cses         0.10122 0.31815  0.391 
  Residual             36.72116 6.05980        
-# of obs: 7185, groups: school, 160
+number of obs: 7185, groups: school, 160
 
 Fixed effects:
                     Estimate Std. Error t value
-(Intercept)         12.12793    0.19929  60.856
-meanses              5.33287    0.36916  14.446
-cses                 2.94504    0.15560  18.927
-sectorCatholic       1.22658    0.30627   4.005
-meanses:cses         1.03923    0.29889   3.477
-cses:sectorCatholic -1.64267    0.23978  -6.851
+(Intercept)          12.1279     0.1993   60.86
+meanses               5.3329     0.3692   14.45
+cses                  2.9450     0.1556   18.93
+sectorCatholic        1.2266     0.3063    4.00
+meanses:cses          1.0392     0.2989    3.48
+cses:sectorCatholic  -1.6427     0.2398   -6.85
 
 Correlation of Fixed Effects:
             (Intr) meanss cses   sctrCt mnss:c

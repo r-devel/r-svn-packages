@@ -1,6 +1,6 @@
 
-R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+R version 2.4.0 beta (2006-09-25 r39510)
+Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,35 +19,34 @@ Type 'q()' to quit R.
 Loading required package: lme4
 Loading required package: Matrix
 Loading required package: lattice
-Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > Early$tos <- Early$age - 0.5
 > (fm1 <- lmer(cog ~ tos * trt + (tos|id), Early))
-Linear mixed-effects model fit by REML
+Linear mixed-effects model fit by REML 
 Formula: cog ~ tos * trt + (tos | id) 
    Data: Early 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 2372.742 2398.876 -1179.371   2369.944     2358.742
+  AIC  BIC logLik MLdeviance REMLdeviance
+ 2378 2404  -1182       2375         2364
 Random effects:
- Groups   Name        Variance Std.Dev. Corr   
- id       (Intercept) 165.398  12.8607         
-          tos          10.305   3.2102  -1.000 
- Residual              75.504   8.6893         
-# of obs: 309, groups: id, 103
+ Groups   Name        Variance   Std.Dev.   Corr  
+ id       (Intercept) 9.2307e+01 9.60764658       
+          tos         3.9029e-08 0.00019756 0.000 
+ Residual             7.8058e+01 8.83505762       
+number of obs: 309, groups: id, 103
 
 Fixed effects:
             Estimate Std. Error t value
-(Intercept) 118.4074     2.7551  42.978
-tos         -21.1333     1.8933 -11.162
-trtY          4.2190     3.6715   1.149
-tos:trtY      5.2713     2.5231   2.089
+(Intercept)  118.407      2.470   47.95
+tos          -21.133      1.863  -11.35
+trtY           4.219      3.291    1.28
+tos:trtY       5.271      2.482    2.12
 
 Correlation of Fixed Effects:
          (Intr) tos    trtY  
-tos      -0.819              
-trtY     -0.750  0.615       
-tos:trtY  0.615 -0.750 -0.819
+tos      -0.754              
+trtY     -0.750  0.566       
+tos:trtY  0.566 -0.750 -0.754
 Warning message:
-nlminb returned message false convergence (8) 
- in: "LMEoptimize<-"(`*tmp*`, value = list(maxIter = 200, tolerance = 1.49011611938477e-08,  
+Estimated variance-covariance for factor 'id' is singular
+ in: `LMEoptimize<-`(`*tmp*`, value = list(maxIter = 200, tolerance = 1.49011611938477e-08,  
 > q("no")

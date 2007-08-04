@@ -7,7 +7,7 @@ Maintainer: Douglas Bates <bates@stat.wisc.edu>
 Description: Data and examples from a multilevel modelling software review
   as well as other well-known data sets from the multilevel modelling
   literature.
-Depends: lme4(>= 0.995-1), Matrix(>= 0.995-2), R(>= 2.2.0)
+Depends: lme4(>= 0.9975-0), Matrix(>= 0.9975-0), R(>= 2.4.0)
 Suggests: MASS, lattice, coda
 SaveImage: no
 LazyData: yes

@@ -1,6 +1,6 @@
 
-R : Copyright 2006, The R Foundation for Statistical Computing
-Version 2.3.0 Under development (unstable) (2006-01-17 r37109)
+R version 2.4.0 beta (2006-09-25 r39510)
+Copyright (C) 2006 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,92 +19,91 @@ Type 'q()' to quit R.
 Loading required package: lme4
 Loading required package: Matrix
 Loading required package: lattice
-Loading required package: Matrix
 > options(show.signif.stars = FALSE)
 > (fm1 <- lmer(math ~ year + (1|childid) + (1|schoolid), egsingle))
-Linear mixed-effects model fit by REML
+Linear mixed-effects model fit by REML 
 Formula: math ~ year + (1 | childid) + (1 | schoolid) 
    Data: egsingle 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 16767.41 16794.96 -8379.706   16747.05     16759.41
+   AIC   BIC logLik MLdeviance REMLdeviance
+ 16767 16795  -8380      16747        16759
 Random effects:
  Groups   Name        Variance Std.Dev.
  childid  (Intercept) 0.66992  0.81849 
  schoolid (Intercept) 0.18693  0.43235 
  Residual             0.34700  0.58907 
-# of obs: 7230, groups: childid, 1721; schoolid, 60
+number of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
-              Estimate Std. Error t value
-(Intercept) -0.7804818  0.0610879 -12.776
-year         0.7461233  0.0053964 138.264
+             Estimate Std. Error t value
+(Intercept) -0.780482   0.061088  -12.78
+year         0.746123   0.005396  138.26
 
 Correlation of Fixed Effects:
      (Intr)
 year -0.031
 > (fm2 <- lmer(math ~ year + (1|childid) + (year|schoolid), egsingle))
-Linear mixed-effects model fit by REML
+Linear mixed-effects model fit by REML 
 Formula: math ~ year + (1 | childid) + (year | schoolid) 
    Data: egsingle 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 16494.38 16535.69 -8241.188   16471.87     16482.38
+   AIC   BIC logLik MLdeviance REMLdeviance
+ 16494 16536  -8241      16472        16482
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
  childid  (Intercept) 0.672304 0.81994        
- schoolid (Intercept) 0.166813 0.40843        
+ schoolid (Intercept) 0.166812 0.40843        
           year        0.011584 0.10763  0.443 
- Residual             0.324517 0.56966        
-# of obs: 7230, groups: childid, 1721; schoolid, 60
+ Residual             0.324516 0.56966        
+number of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
-             Estimate Std. Error t value
-(Intercept) -0.777091   0.058231 -13.345
-year         0.762961   0.015333  49.761
+            Estimate Std. Error t value
+(Intercept) -0.77709    0.05823  -13.34
+year         0.76296    0.01533   49.76
 
 Correlation of Fixed Effects:
      (Intr)
 year 0.358 
 > (fm3 <- lmer(math ~ year + (year|childid) + (1|schoolid), egsingle))
-Linear mixed-effects model fit by REML
+Linear mixed-effects model fit by REML 
 Formula: math ~ year + (year | childid) + (1 | schoolid) 
    Data: egsingle 
-      AIC      BIC    logLik MLdeviance REMLdeviance
- 16529.50 16570.81 -8258.749   16505.29     16517.50
+   AIC   BIC logLik MLdeviance REMLdeviance
+ 16529 16571  -8259      16505        16517
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- childid  (Intercept) 0.648101 0.80505        
+ childid  (Intercept) 0.648102 0.80505        
           year        0.021517 0.14669  0.463 
- schoolid (Intercept) 0.153681 0.39202        
- Residual             0.301197 0.54881        
-# of obs: 7230, groups: childid, 1721; schoolid, 60
+ schoolid (Intercept) 0.153679 0.39202        
+ Residual             0.301196 0.54881        
+number of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
-              Estimate Std. Error t value
-(Intercept) -0.7930705  0.0560997 -14.137
-year         0.7471583  0.0063566 117.541
+             Estimate Std. Error t value
+(Intercept) -0.793071   0.056099  -14.14
+year         0.747158   0.006357  117.54
 
 Correlation of Fixed Effects:
      (Intr)
 year 0.065 
 > (fm4 <- lmer(math ~ year+(year|childid)+(year|schoolid), egsingle))
-Linear mixed-effects model fit by REML
+Linear mixed-effects model fit by REML 
 Formula: math ~ year + (year | childid) + (year | schoolid) 
    Data: egsingle 
-      AIC      BIC   logLik MLdeviance REMLdeviance
- 16352.74 16407.83 -8168.37   16326.25     16336.74
+   AIC   BIC logLik MLdeviance REMLdeviance
+ 16353 16408  -8168      16326        16337
 Random effects:
  Groups   Name        Variance Std.Dev. Corr  
- childid  (Intercept) 0.640474 0.80030        
-          year        0.011258 0.10610  0.551 
- schoolid (Intercept) 0.168557 0.41056        
+ childid  (Intercept) 0.640472 0.80030        
+          year        0.011258 0.10611  0.551 
+ schoolid (Intercept) 0.168556 0.41056        
           year        0.011264 0.10613  0.398 
- Residual             0.301433 0.54903        
-# of obs: 7230, groups: childid, 1721; schoolid, 60
+ Residual             0.301432 0.54903        
+number of obs: 7230, groups: childid, 1721; schoolid, 60
 
 Fixed effects:
-             Estimate Std. Error t value
-(Intercept) -0.779160   0.058302 -13.364
-year         0.763124   0.015399  49.556
+            Estimate Std. Error t value
+(Intercept)  -0.7792     0.0583  -13.36
+year          0.7631     0.0154   49.56
 
 Correlation of Fixed Effects:
      (Intr)
