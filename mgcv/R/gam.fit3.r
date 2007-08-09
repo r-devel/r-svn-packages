@@ -224,9 +224,15 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             } 
 
             if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
-                conv <- TRUE
-                coef <- start
-                break
+                if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2){
+                  old.pdev <- pdev
+                  coef <- coefold <- start
+                  etaold <- eta 
+                } else {
+                  conv <- TRUE
+                  coef <- start
+                  break 
+                }
             }
             else {  old.pdev <- pdev
                 coef <- coefold <- start

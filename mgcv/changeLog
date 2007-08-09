@@ -1,5 +1,9 @@
 1.3-26
 
+* gam.fit3 modified to test for convergence of coefficients as well
+  as penalized deviance, otherwise in extreme cases the derivative 
+  iterations can diverge.
+
 * modifications of gam.setup, predict.gam and plot.gam to allow smooths
   to contribute an offset term to the model (offset is returned from 
   smooth.construct or Predict.matrix as an "offset" attribute of 
