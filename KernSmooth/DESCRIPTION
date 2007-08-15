@@ -12,4 +12,3 @@ Description: functions for kernel smoothing (and density estimation)
   corresponding to the book: 
   Wand, M.P. and Jones, M.C. (1995) "Kernel Smoothing".
 License: Unlimited use and distribution (see LICENCE).
-URL: http://www.maths.unsw.edu.au/~wand
