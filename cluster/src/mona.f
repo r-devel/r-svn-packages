@@ -26,7 +26,17 @@ c VARs
       integer a, b, c, d, k, ka, kb, kal, kalf, km
       integer l, lbb, laa, lcc, ldd, lee, lack,lama, lams
       integer nel, nelbb, nzf, nhalf, npass, nclu, myst, mysca
-
+c--begin{-Wall}
+      a=0
+      b=0
+      c=0
+      d=0
+      jma=0
+      jtel=0
+      jtelz=0
+      lcc=0
+      nelbb=0
+c-- end{-Wall}
       nhalf=(nn+1)/2
       jptwe=(pp+4)/5
       myst=0
