@@ -51,7 +51,7 @@ corRatio(value, form, nugget, metric, fixed)
   \eqn{d} denote the range and \eqn{n} denote the nugget
   effect, the correlation between two observations a distance
   \eqn{r} apart is \eqn{1/(1+(r/d)^2)} when no nugget effect
-  is present and \eqn{(1-n)/(1+(r/d)^2)}} when a
+  is present and \eqn{(1-n)/(1+(r/d)^2)} when a
   nugget effect is  assumed. Objects created using this constructor need
   to be later initialized using the appropriate \code{Initialize}
   method. 
