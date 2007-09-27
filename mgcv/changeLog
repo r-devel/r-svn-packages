@@ -6,6 +6,10 @@
 
 1.3-26
 
+* modification to `gam' so that GCV/UBRE scores reported with all fixed 
+  smoothing parameters are consistent with equivalent under s.p. 
+  estimation.
+
 * gam.fit3 modified to test for convergence of coefficients as well
   as penalized deviance, otherwise in extreme cases the derivative 
   iterations can diverge.
