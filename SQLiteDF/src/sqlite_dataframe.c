@@ -7,7 +7,7 @@
 
 /* if user supplied a name (1st arg), return that name. otherwise, use the 
  * default "data". rname is R name, iname is internal name */
-static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx) {
+static int _check_sdf_name(SEXP name, const char **rname, char **iname, int *file_idx) {
     int namelen = 0;
 
     /* check if arg name is supplied */
@@ -31,7 +31,8 @@ static int _check_sdf_name(SEXP name, char **rname, char **iname, int *file_idx)
     return namelen;
 }
 
-static int _find_free_filename2(char *rname, char *dirname, char **iname, int *namelen, int *file_idx) {
+static int _find_free_filename2(const char *rname, char *dirname, char **iname, 
+                                int *namelen, int *file_idx) {
     sqlite3_stmt *stmt;
     char *tmp_iname;
     sqlite3_prepare(g_workspace, "select 1 from workspace where internal_name=?", -1,
@@ -71,7 +72,8 @@ static int _create_sdf_attribute2(const char *iname) {
 }
 
 char *_create_sdf_skeleton1(SEXP name, int *onamelen, int protect) {
-    char *iname, *rname;
+    const char *rname;
+    char *iname;
     int namelen, file_idx = 0, res;
 
     namelen = _check_sdf_name(name, &rname, &iname, &file_idx);
@@ -259,12 +261,12 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
         /* create sdf_data table */
         SEXP names = GET_NAMES(df), variable, levels, var_class;
         int ncols = GET_LENGTH(names), type, *types;
-        char *col_name, *class, *factor;
+        const char *col_name, *class, *factor;
 
         /* variables for adding rownames */
         SEXP rownames;
         int nrows;
-        char *row_name;
+        const char *row_name;
 
         /* TODO: put constraints on table after inserting everything? */
 
@@ -396,7 +398,7 @@ SEXP sdf_create_sdf(SEXP df, SEXP name) {
 }
 
 SEXP sdf_get_names(SEXP sdf) {
-    char *iname;
+    const char *iname;
     iname = SDF_INAME(sdf);
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
@@ -424,7 +426,7 @@ SEXP sdf_get_names(SEXP sdf) {
 }
 
 SEXP sdf_get_length(SEXP sdf) {
-    char *iname;
+    const char *iname;
     int len;
     sqlite3_stmt *stmt;
     int res;
@@ -443,7 +445,7 @@ SEXP sdf_get_length(SEXP sdf) {
 
 /* get row count */
 SEXP sdf_get_row_count(SEXP sdf) {
-    char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
+    const char *iname = CHAR(STRING_ELT(_getListElement(sdf, "iname"),0));
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     int nrow;
@@ -460,7 +462,7 @@ SEXP sdf_get_row_count(SEXP sdf) {
     
 SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote, 
         SEXP _rownames, SEXP _colnames) {
-    char *filename = CHAR_ELT(_filename, 0);
+    const char *filename = CHAR_ELT(_filename, 0);
     FILE *f = fopen(filename, "r");
 
     if (f == NULL) {
@@ -480,7 +482,7 @@ SEXP sdf_import_table(SEXP _filename, SEXP _name, SEXP _sep, SEXP _quote,
 
 SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
     SEXP ret = R_NilValue;
-    char *iname = SDF_INAME(sdf);
+    const char *iname = SDF_INAME(sdf);
     sqlite3_stmt *stmt;
     int buflen = 0, idxlen, col_cnt, row_cnt, index;
     int i, j,res;
@@ -869,13 +871,11 @@ SEXP sdf_get_index(SEXP sdf, SEXP row, SEXP col, SEXP new_sdf) {
 }
 
 SEXP sdf_rbind(SEXP sdf, SEXP data) {
-    char *class;
-    char *iname = SDF_INAME(sdf), *colname;
+    const char *iname = SDF_INAME(sdf), *class, *colname;
     SEXP ret = R_NilValue, col, names, levels, rownames;
     int ncols, buflen, buflen2, i, j, res, nrows, *types, rownames_type;
     sqlite3_stmt *stmt;
-    const char *type;
-    char *rn_str; 
+    const char *type, *rn_str; 
 
     class = CHAR_ELT(GET_CLASS(data), 0);
     if (strcmp(class,"data.frame") == 0) {
@@ -1052,7 +1052,8 @@ SEXP sdf_rbind(SEXP sdf, SEXP data) {
 
 
 SEXP sdf_get_iname(SEXP sdf) {
-    char *iname, *sql;
+    const char *iname;
+    char *sql;
     sqlite3_stmt *stmt;
     SEXP ret, names;
 
@@ -1081,7 +1082,7 @@ SEXP sdf_get_iname(SEXP sdf) {
 }
 
 SEXP sdf_select(SEXP sdf, SEXP select, SEXP where, SEXP limit, SEXP debug) {
-    char *iname, *tmp;
+    const char *iname, *tmp;
     sqlite3_stmt *stmt;
     int buflen0 = 0, buflen1 = 0, len, nrows, res;
     SEXP ret = NULL;

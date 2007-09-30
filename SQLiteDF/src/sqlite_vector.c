@@ -131,7 +131,7 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int colidx,
  * SVEC FUNCTIONS
  ****************************************************************************/
 SEXP sdf_get_variable(SEXP sdf, SEXP name) {
-    char *iname, *varname, *svec_type = NULL;
+    const char *iname, *varname, *svec_type = NULL;
     const char *coltype;
     int type = -1, res, nprotected = 0;
     SEXP ret, value;
@@ -194,7 +194,7 @@ SEXP sdf_get_variable(SEXP sdf, SEXP name) {
 
 
 SEXP sdf_get_variable_length(SEXP svec) {
-    char *iname = SDF_INAME(svec);
+    const char *iname = SDF_INAME(svec);
     if (!USE_SDF1(iname, TRUE, FALSE)) return R_NilValue;
 
     return ScalarInteger(_get_row_count2(iname, 1));
@@ -203,8 +203,8 @@ SEXP sdf_get_variable_length(SEXP svec) {
     
 SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
     SEXP ret = R_NilValue, tmp;
-    char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
-         *varname = SVEC_VARNAME(svec);
+    const char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
+               *varname = SVEC_VARNAME(svec);
     int *index, _idx, nrows, i, init=FALSE, retlen=0, res, coltype;
     sqlite3_stmt *stmt;
 
@@ -276,8 +276,8 @@ SEXP sdf_get_variable_index(SEXP svec, SEXP idx) {
 SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value) {
     int *index;
     int coltype, valtype, idx_len, val_len, svec_len, i, i2, res;
-    char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
-         *varname = SVEC_VARNAME(svec);
+    const char *iname = SDF_INAME(svec), *tblname = SVEC_TBLNAME(svec),
+               *varname = SVEC_VARNAME(svec);
     const char *decltype;
     sqlite3_stmt *stmt;
 
@@ -425,7 +425,7 @@ SEXP sdf_set_variable_index(SEXP svec, SEXP idx, SEXP value) {
 }
 
 SEXP sdf_variable_summary(SEXP svec, SEXP maxsum) {
-    char *iname, *tblname, *varname, *type;
+    const char *iname, *tblname, *varname, *type;
     sqlite3_stmt *stmt;
     int nprotected = 0;
     SEXP ret, names;
@@ -510,7 +510,8 @@ void _init_sqlite_function_accumulator() {
 }
 
 SEXP sdf_do_variable_math(SEXP func, SEXP vector, SEXP other_args) {
-    char *iname, *iname_src, *varname_src, *funcname;
+    const char *iname_src, *varname_src, *funcname;
+    char *iname;
     int namelen, res;
     sqlite3_stmt *stmt;
 
@@ -570,7 +571,8 @@ vecmath_prepare_error:
 }
 
 SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
-    char *iname = NULL, *iname_src, *varname_src, *funcname;
+    const char *iname_src, *varname_src, *funcname;
+    char *iname = NULL; 
     int res, functype = -1, op2_len, svec_len, i, reversed;
     sqlite3_stmt *stmt, *stmt2;
 
@@ -945,7 +947,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
             /* op2 is surely not a factor, as handled by the R wrapper */
             /* even though it is impossible for reversed to be FALSE, still use
              * sdf_idx and vec_idx so that code would be less confusing */
-            char *iname_op2, *varname_op2;
+            const char *iname_op2, *varname_op2;
             sqlite3_stmt *stmt3;
             iname_op2 = SDF_INAME(op2);
             varname_op2 = SVEC_VARNAME(op2);
@@ -1091,7 +1093,7 @@ SEXP sdf_do_variable_op(SEXP func, SEXP vector, SEXP op2, SEXP arg_reversed) {
 }
 
 SEXP sdf_do_variable_summary(SEXP func, SEXP vector, SEXP na_rm) {
-    char *iname_src, *varname_src, *funcname;
+    const char *iname_src, *varname_src, *funcname;
     int res;
     sqlite3_stmt *stmt;
     double _ret = NA_REAL, _ret2; SEXP ret;
@@ -1158,7 +1160,7 @@ __sdf_do_variable_summary_out:
 
 
 SEXP sdf_sort_variable(SEXP svec, SEXP decreasing) {
-    char *iname, *tblname, *varname, *type, *sort_type;
+    const char *iname, *tblname, *varname, *type, *sort_type;
     sqlite3_stmt *stmt;
     int res;
 

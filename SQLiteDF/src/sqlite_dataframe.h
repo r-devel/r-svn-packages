@@ -41,20 +41,20 @@ extern int g_sql_buf_sz[NBUFS];
 #define MAX_ATTACHED 30     /* 31 including workspace.db */
 
 /* utilities for checking characteristics of arg */
-int _is_r_sym(char *sym);
+int _is_r_sym(const char *sym);
 int _file_exists(char *filename);
-int _sdf_exists2(char *iname);
+int _sdf_exists2(const char *iname);
 
 /* sdf utilities */
 int USE_SDF1(const char *iname, int exists, int protect);  /* call this before doing anything on an SDF */
 int UNUSE_SDF2(const char *iname); /* somewhat like UNPROTECT */
 SEXP _create_sdf_sexp(const char *iname);  /* create a SEXP for an SDF */
-int _add_sdf1(char *filename, char *internal_name); /* add SDF to workspace */
+int _add_sdf1(const char *filename, const char *internal_name); /* add SDF to workspace */
 void _delete_sdf2(const char *iname); /* remove SDF from workspace */
 int _get_factor_levels1(const char *iname, const char *varname, SEXP var, int set_class);
 int _get_row_count2(const char *table, int quote);
 SEXP _get_rownames(const char *sdf_iname);
-char *_get_full_pathname2(char *relpath); /* get full path given relpath, used in workspace mgmt */
+char *_get_full_pathname2(const char *relpath); /* get full path given relpath, used in workspace mgmt */
 int _is_factor2(const char *iname, const char *factor_type, const char *colname);
 SEXP _get_rownames2(const char *sdf_iname);
 
@@ -71,7 +71,7 @@ int _get_vector_index_typed_result(sqlite3_stmt *stmt, SEXP *ret, int colidx,
         int idx_or_len, int *coltype);
 
 /* R utilities */
-SEXP _getListElement(SEXP list, char *varname);
+SEXP _getListElement(SEXP list, const char *varname);
 SEXP _shrink_vector(SEXP vec, int len); /* shrink vector size */
 
 /* sqlite utilities */
@@ -79,7 +79,7 @@ int _empty_callback(void *data, int ncols, char **row, char **cols);
 int _sqlite_error_check(int res, const char *file, int line);
 const char *_get_column_type(const char *class, int type); /* get sqlite type corresponding to R class & type */
 int _get_r_type(const char *decl_type);                   /* get r type based on sqlite decltype */
-sqlite3* _is_sqlitedb(char *filename);
+sqlite3* _is_sqlitedb(const char *filename);
 void _init_sqlite_function_accumulator();
 int *_make_row_index(SEXP idx, int *plen);
 

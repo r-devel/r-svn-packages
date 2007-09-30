@@ -51,8 +51,8 @@ static SEXP _create_smat_sexp(const char *mat_iname, const char *type,
  * SMAT FUNCTIONS
  ****************************************************************************/
 SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
-    char *iname, *mat_iname, *type;
-    const char *dectype, *colname, *vectype = NULL;
+    char *mat_iname, *type;
+    const char *iname, *dectype, *colname, *vectype = NULL;
     sqlite3_stmt *stmt, *stmt2;
     int ncols, nrows, i;
     SEXP ret, names;
@@ -145,7 +145,7 @@ SEXP sdf_as_matrix(SEXP sdf, SEXP name) {
 SEXP sdf_create_smat(SEXP svec, SEXP dimnames) {
     SEXP tmp, ret = svec;
     sqlite3_stmt *stmt;
-    char *mat_iname;
+    const char *mat_iname;
     int i, nrows, ncols;
 
     mat_iname = SDF_INAME(svec);
@@ -160,8 +160,8 @@ SEXP sdf_create_smat(SEXP svec, SEXP dimnames) {
     tmp = VECTOR_ELT(dimnames, 0);
 
     if (inherits(tmp, "sqlite.vector")) {
-        char *iname = SDF_INAME(tmp), *tblname = SVEC_TBLNAME(tmp),
-             *varname = SVEC_VARNAME(tmp);
+        const char *iname = SDF_INAME(tmp), *tblname = SVEC_TBLNAME(tmp),
+                   *varname = SVEC_VARNAME(tmp);
         USE_SDF1(iname, TRUE, TRUE);
         nrows = _get_row_count2(iname, TRUE);
         sprintf(g_sql_buf[0], "insert into [%s].sdf_matrix_rownames(name) "
@@ -224,8 +224,8 @@ SEXP sdf_create_smat(SEXP svec, SEXP dimnames) {
 SEXP sdf_get_matrix_columns(SEXP smat, SEXP cols) {
     SEXP colnames, ret;
     sqlite3_stmt *stmt1, *stmt2;
-    char *mat_iname, *mat2_iname;
-    const char *coltype, *vectype;
+    const char *mat_iname, *coltype, *vectype;
+    char *mat2_iname;
     int i, nrows, ncols, index, idxlen, ci_len, ci_actual_len;
     int *col_indices;
 

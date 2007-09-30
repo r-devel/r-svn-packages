@@ -1,3 +1,7 @@
+2007-09-30 (0.1.30)
+- fixed for R 2.6.0+ and devel: CHAR_ELT() now returns const char*, removed
+CR in src/Makevars.in
+
 2007-07-11 (0.1.30)
 - fix for changes in formals() in latest R-devel (cannot do formals() directly
 on primitive functions like log(), has to do formals(args(log)) )

@@ -8,7 +8,8 @@ SEXP sdf_import_sqlite_table(SEXP _dbfilename, SEXP _tblname, SEXP _sdfiname) {
     sqlite3_stmt *stmt;
     int res, nrows, ncols, buflen0, buflen1, buflen3, i;
     int tblname_len, colname_len, iname_len;
-    char *dbfilename, *tblname, *iname, *type;
+    const char *dbfilename, *tblname;
+    char *iname, *type;
     const char *colname;
     SEXP ret = NULL;
 

@@ -9,7 +9,7 @@
 #define __UTIL__
 #include "sqlite_dataframe.h"
 
-int _is_r_sym(char *sym) {
+int _is_r_sym(const char *sym) {
     int i, len = strlen(sym);
 
     if (isalpha(sym[0]) || sym[0] == '_') i = 1;
@@ -115,7 +115,7 @@ int _get_row_count2(const char *table, int quote) {
 }
 
 /* TODO: windows version */
-char *_get_full_pathname2(char *relpath) {
+char *_get_full_pathname2(const char *relpath) {
     char *tmp1, *tmp2, tmp3, tmp4;
     int buflen, relpathlen;
 
@@ -138,7 +138,7 @@ char *_get_full_pathname2(char *relpath) {
     }
 
     /* we'll go along the relpath string "normalizing" relative paths */
-    tmp1 = relpath;
+    tmp1 = strcpy(g_sql_buf[3], relpath);
     while (tmp1[0]) {
         tmp2 = tmp1;
         while(!(*tmp2 == '/' || *tmp2 == 0)) tmp2++;
@@ -173,7 +173,7 @@ char *_get_full_pathname2(char *relpath) {
 }
 
 /* based on p70 of R-exts.pdf */
-SEXP _getListElement(SEXP list, char *varname) {
+SEXP _getListElement(SEXP list, const char *varname) {
     SEXP ret = R_NilValue, names = GET_NAMES(list);
     int i;
 

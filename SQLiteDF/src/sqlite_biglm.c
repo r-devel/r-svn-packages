@@ -47,7 +47,7 @@ SEXP sdf_do_biglm(SEXP sdfx, SEXP svecy, SEXP sdfx_dim, SEXP intercept) {
     int np, nrbar, nprotect = 0, intrcpt, i, ier;
     double *xrow, y, *ptrD, *ptrrbar, *ptrthetab, sserr, weight;
     sqlite3_stmt *stmt1, *stmt2;
-    char *inamex, *inamey, *tblnamey, *varnamey;
+    const char *inamex, *inamey, *tblnamey, *varnamey;
 
     inamex = SDF_INAME(sdfx);
 

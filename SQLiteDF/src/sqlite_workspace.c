@@ -14,7 +14,7 @@ int g_sql_buf_sz[NBUFS];
  ****************************************************************************/
 
 /* test if a file is a sqlite database file */
-sqlite3* _is_sqlitedb(char *filename) {
+sqlite3* _is_sqlitedb(const char *filename) {
     sqlite3 *db;
     int res;
     res = sqlite3_open(filename, &db);
@@ -71,9 +71,9 @@ sqlite3* _is_workspace(char *filename) {
 
 /* test if a file is a sqlite.data.frame. returns the internal name of the
  * sdf if file is an sdf or NULL otherwise */
-char * _is_sdf2(char *filename) {
+const char * _is_sdf2(const char *filename) {
     sqlite3* db = _is_sqlitedb(filename); 
-    char *ret = (db == NULL) ? NULL : filename;
+    const char *ret = (db == NULL) ? NULL : filename;
 
     if (ret) {
         sqlite3_stmt *stmt;
@@ -120,7 +120,7 @@ void _delete_sdf2(const char *iname) {
 }
 
 /* add a sdf to the workspace */
-int _add_sdf1(char *filename, char *internal_name) {
+int _add_sdf1(const char *filename, const char *internal_name) {
     sprintf(g_sql_buf[1], "insert into workspace(rel_filename, full_filename, "
             "internal_name, loaded, uses, used) values('%s', '%s', '%s', 0, 0, 0)",
             filename, _get_full_pathname2(filename), internal_name);
@@ -129,7 +129,7 @@ int _add_sdf1(char *filename, char *internal_name) {
 }
 
 
-static char* _get_sdf_detail2(char *iname, int what) {
+static char* _get_sdf_detail2(const char *iname, int what) {
     sqlite3_stmt *stmt;
     char * ret; int res;
 
@@ -156,7 +156,7 @@ static char* _get_sdf_detail2(char *iname, int what) {
 }
 
 /* returns TRUE if sdf exists in the workspace */
-int _sdf_exists2(char *iname) {
+int _sdf_exists2(const char *iname) {
     return _get_sdf_detail2(iname, SDF_DETAIL_EXISTS) != NULL;
 }
 
@@ -364,7 +364,7 @@ SEXP sdf_list_sdfs(SEXP pattern) {
 }
 
 SEXP sdf_get_sdf(SEXP name) {    
-    char *iname;
+    const char *iname;
     SEXP ret;
 
     if (TYPEOF(name) != STRSXP) {
@@ -381,7 +381,7 @@ SEXP sdf_get_sdf(SEXP name) {
 SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
     /* when studying this, please be mindful of the global buffers used.
      * you have been warned */
-    char *fname=NULL, *iname, *iname_orig=NULL;
+    const char *fname=NULL, *iname, *iname_orig=NULL;
     int fnamelen=0, res;
     sqlite3_stmt *stmt;
 
@@ -477,7 +477,7 @@ SEXP sdf_attach_sdf(SEXP filename, SEXP internal_name) {
 /* not necessary anymore, since stuffs will eventually be detached
  * if we keep on adding new sdfs */
 SEXP sdf_detach_sdf(SEXP internal_name) {
-    char *iname;
+    const char *iname;
     int res;
 
     if (!IS_CHARACTER(internal_name)) {
@@ -496,7 +496,8 @@ SEXP sdf_detach_sdf(SEXP internal_name) {
 }
 
 SEXP sdf_rename_sdf(SEXP sdf, SEXP name) {
-    char *iname, *path, *newname;
+    const char *iname, *newname;
+    char *path; 
     int res, ret_tmp;
 
     iname = SDF_INAME(sdf);
