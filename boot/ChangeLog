@@ -1,6 +1,7 @@
-version 1.2-30 ????-??-??
+version 1.2-30 2007-10-03
 
     po/R-ru.po: new file
+    *.Rd: remove old \non_function{} markup.
 
 version 1.2-29 2007-08-29
 
