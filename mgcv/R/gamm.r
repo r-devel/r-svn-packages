@@ -848,7 +848,7 @@ extract.lme.cov<-function(b,data,start.level=1)
 formXtViX <- function(V,X)
 ## forms X'V^{-1}X as efficiently as possible given the structure of
 ## V (diagonal, block-diagonal, full)
-{ X <- X[V$ind,] # have to re-order X according to V ordering
+{ X <- X[V$ind,,drop=FALSE] # have to re-order X according to V ordering
   if (is.list(V$V)) {     ### block diagonal case
     Z <- X
     j0<-1
