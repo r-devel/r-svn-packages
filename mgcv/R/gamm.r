@@ -855,7 +855,7 @@ formXtViX <- function(V,X)
     for (i in 1:length(V$V))
     { Cv <- chol(V$V[[i]])
       j1 <- j0+nrow(V$V[[i]])-1
-      Z[j0:j1,]<-backsolve(Cv,as.matrix(X[j0:j1,]),transpose=TRUE)
+      Z[j0:j1,]<-backsolve(Cv,X[j0:j1,,drop=FALSE],transpose=TRUE)
       j0 <- j1 + 1
     }
     res <- t(Z)%*%Z
@@ -883,6 +883,105 @@ new.name <- function(proposed,old.names)
   prop
 }
 
+gammPQL <- function (fixed, random, family, data, correlation, weights,
+    control, niter = 30, verbose = TRUE, ...)
+
+## service routine for `gamm' to do PQL fitting. Based in part on glmmPQL
+## from the MASS library. In particular, for back compatibility the 
+## numerical results should be identical with gamm fits by glmmPQL calls.
+## because `gamm' already does some of the preliminary stuff that glmmPQL
+## does, gammPQL can be simpler. It also deals with the possibility of 
+## the original data frame containing variables called `zz' `wts' or `invwt'
+
+{  
+  #  m <- mcall <- Call <- match.call()
+  #  nm <- names(m)[-1]
+  #  keep <- is.element(nm, c("weights", "data", "subset", "na.action"))
+  #  for (i in nm[!keep]) m[[i]] <- NULL
+  #  allvars <- if (is.list(random))
+  #      allvars <- c(all.vars(fixed), names(random), unlist(lapply(random,
+  #          function(x) all.vars(formula(x)))))
+  #  else c(all.vars(fixed), all.vars(random))
+  #  Terms <- if (missing(data))
+  #      terms(fixed)
+  #  else terms(fixed, data = data)
+  #  off <- attr(Terms, "offset")
+  #  if (length(off <- attr(Terms, "offset")))
+  #      allvars <- c(allvars, as.character(attr(Terms, "variables"))[off +
+  #          1])
+  #  Call$fixed <- eval(fixed)
+  #  Call$random <- eval(random)
+  #  m$formula <- as.formula(paste("~", paste(allvars, collapse = "+")))
+  #  environment(m$formula) <- environment(fixed)
+  #  m$drop.unused.levels <- TRUE
+  #  m[[1]] <- as.name("model.frame")
+  #  mf <- eval.parent(m)
+    off <- model.offset(data)
+    if (is.null(off))
+        off <- 0
+    wts <- weights
+    if (is.null(wts))
+        wts <- rep(1, nrow(data))
+    wts.name <- new.name("wts",names(data))
+    data[[wts.name]] <- wts 
+    
+    eval(parse(text=paste("fit0 <- glm(formula = fixed, family = family, data = data,",
+         "weights =",wts.name,",...)")))
+    w <- fit0$prior.weights
+    eta <- fit0$linear.predictors
+    
+    zz <- eta + fit0$residuals - off
+    wz <- fit0$weights
+    fam <- family
+##    y <- data$y
+  #  nm <- names(mcall)[-1]
+  #  keep <- is.element(nm, c("fixed", "random", "data", "subset",
+  #      "na.action", "control"))
+  #  for (i in nm[!keep]) mcall[[i]] <- NULL
+     zz.name <- new.name("zz",names(data))
+     eval(parse(text=paste("fixed[[2]] <- quote(",zz.name,")")))
+  #   fixed[[2]] <- quote(zz)
+  #  mcall[["fixed"]] <- fixed
+  #  mcall[[1]] <- as.name("lme")
+  #  mcall$random <- random
+  #  mcall$method <- "ML"
+  #  if (!missing(correlation))
+  #      mcall$correlation <- correlation
+  #  mcall$weights <- quote(varFixed(~invwt))
+    data[[zz.name]] <- zz
+    invwt.name <- new.name("invwt",names(data))
+    data[[invwt.name]] <- 1/wz
+    w.formula <- as.formula(paste("~",invwt.name,sep=""))
+  #  mcall$data <- mf
+    for (i in 1:niter) {
+        if (verbose)
+            message("iteration ", i)
+        fit<-lme(fixed=fixed,random=random,data=data,correlation=correlation,control=control,
+                    weights=varFixed(w.formula),method="ML",...)
+ #fit <- eval(mcall)
+
+        etaold <- eta
+        eta <- fitted(fit) + off
+        if (sum((eta - etaold)^2) < 1e-06 * sum(eta^2))
+            break
+        mu <- fam$linkinv(eta)
+        mu.eta.val <- fam$mu.eta(eta)
+        data[[zz.name]] <- eta + (fit0$y - mu)/mu.eta.val - off
+        wz <- w * mu.eta.val^2/fam$variance(mu)
+        data[[invwt.name]] <- 1/wz
+ #       mcall$data <- mf
+    }
+#    attributes(fit$logLik) <- NULL
+#    fit$call <- Call
+#    fit$family <- family
+#    fit$logLik <- as.numeric(NA)
+#    oldClass(fit) <- c("glmmPQL", oldClass(fit))
+    fit
+}
+
+
+
+
 
 gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=list(),weights=NULL,
       subset=NULL,na.action,knots=NULL,control=nlme::lmeControl(niterEM=0,optimMethod="L-BFGS-B"),
@@ -896,7 +995,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
 # NOTE: need to fill out the gam object properly
 
 {   if (!require("nlme")) stop("gamm() requires package nlme to be installed")
-    if (!require("MASS")) stop("gamm() requires package MASS to be installed")
+  #  if (!require("MASS")) stop("gamm() requires package MASS to be installed")
     # check that random is a named list
     if (!is.null(random))
     { if (is.list(random)) 
@@ -1001,7 +1100,8 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     if (lme.used)
     { ## following construction is a work-around for problem in nlme 3-1.52 
       eval(parse(text=paste("ret$lme<-lme(",deparse(fixed.formula),
-          ",random=rand,data=strip.offset(mf),correlation=correlation,control=control,weights=weights,method=method)"
+          ",random=rand,data=strip.offset(mf),correlation=correlation,",
+          "control=control,weights=weights,method=method)"
             ,sep=""    ))) 
       ##ret$lme<-lme(fixed.formula,random=rand,data=mf,correlation=correlation,control=control)
     } else
@@ -1009,8 +1109,9 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
       if (inherits(weights,"varFunc")) 
       stop("weights must be like glm weights for generalized case")
       if (verbosePQL) cat("\n Maximum number of PQL iterations: ",niterPQL,"\n")
-      eval(parse(text=paste("ret$lme<-glmmPQL(",deparse(fixed.formula),
-          ",random=rand,data=strip.offset(mf),family=family,correlation=correlation,control=control,",
+      eval(parse(text=paste("ret$lme<-gammPQL(",deparse(fixed.formula),
+          ",random=rand,data=strip.offset(mf),family=family,",
+          "correlation=correlation,control=control,",
             "weights=weights,niter=niterPQL,verbose=verbosePQL)",sep=""))) 
      
       ##ret$lme<-glmmPQL(fixed.formula,random=rand,data=mf,family=family,correlation=correlation,

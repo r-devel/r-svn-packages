@@ -1,3 +1,12 @@
+1.3-28
+
+* `gamm' modified to call a routine `gammPQL' in place of MASS:glmmPQL. 
+  This avoids some duplication, and facilitates maintainance. 
+
+* Bug fix in formXtViX where matrix dimensions got dropped when subsetting
+  thereby messing up variance calculations for gamm fits in which some 
+  group sizes were 1. 
+
 1.3-27
 
 * Fix of nasty bug in large dataset handling with "tp" basis. Subsampling 
