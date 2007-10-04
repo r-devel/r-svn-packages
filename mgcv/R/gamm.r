@@ -886,97 +886,61 @@ new.name <- function(proposed,old.names)
 gammPQL <- function (fixed, random, family, data, correlation, weights,
     control, niter = 30, verbose = TRUE, ...)
 
-## service routine for `gamm' to do PQL fitting. Based in part on glmmPQL
-## from the MASS library. In particular, for back compatibility the 
-## numerical results should be identical with gamm fits by glmmPQL calls.
-## because `gamm' already does some of the preliminary stuff that glmmPQL
-## does, gammPQL can be simpler. It also deals with the possibility of 
-## the original data frame containing variables called `zz' `wts' or `invwt'
+## service routine for `gamm' to do PQL fitting. Based on glmmPQL
+## from the MASS library (Venables & Ripley). In particular, for back 
+## compatibility the numerical results should be identical with gamm 
+## fits by glmmPQL calls. Because `gamm' already does some of the 
+## preliminary stuff that glmmPQL does, gammPQL can be simpler. It also 
+## deals with the possibility of the original data frame containing 
+## variables called `zz' `wts' or `invwt'
 
-{  
-  #  m <- mcall <- Call <- match.call()
-  #  nm <- names(m)[-1]
-  #  keep <- is.element(nm, c("weights", "data", "subset", "na.action"))
-  #  for (i in nm[!keep]) m[[i]] <- NULL
-  #  allvars <- if (is.list(random))
-  #      allvars <- c(all.vars(fixed), names(random), unlist(lapply(random,
-  #          function(x) all.vars(formula(x)))))
-  #  else c(all.vars(fixed), all.vars(random))
-  #  Terms <- if (missing(data))
-  #      terms(fixed)
-  #  else terms(fixed, data = data)
-  #  off <- attr(Terms, "offset")
-  #  if (length(off <- attr(Terms, "offset")))
-  #      allvars <- c(allvars, as.character(attr(Terms, "variables"))[off +
-  #          1])
-  #  Call$fixed <- eval(fixed)
-  #  Call$random <- eval(random)
-  #  m$formula <- as.formula(paste("~", paste(allvars, collapse = "+")))
-  #  environment(m$formula) <- environment(fixed)
-  #  m$drop.unused.levels <- TRUE
-  #  m[[1]] <- as.name("model.frame")
-  #  mf <- eval.parent(m)
-    off <- model.offset(data)
-    if (is.null(off))
-        off <- 0
-    wts <- weights
-    if (is.null(wts))
-        wts <- rep(1, nrow(data))
-    wts.name <- new.name("wts",names(data))
-    data[[wts.name]] <- wts 
+{ off <- model.offset(data)
+  if (is.null(off)) off <- 0
+
+  wts <- weights
+  if (is.null(wts)) wts <- rep(1, nrow(data))
+  wts.name <- new.name("wts",names(data)) ## avoid overwriting what's already in `data'
+  data[[wts.name]] <- wts 
+
+  fit0 <- NULL ## keep checking tools happy 
+  ## initial fit (might be better replaced with `gam' call)
+  eval(parse(text=paste("fit0 <- glm(formula = fixed, family = family, data = data,",
+                        "weights =",wts.name,",...)")))
+  w <- fit0$prior.weights
+  eta <- fit0$linear.predictors
     
-    eval(parse(text=paste("fit0 <- glm(formula = fixed, family = family, data = data,",
-         "weights =",wts.name,",...)")))
-    w <- fit0$prior.weights
-    eta <- fit0$linear.predictors
-    
-    zz <- eta + fit0$residuals - off
-    wz <- fit0$weights
-    fam <- family
-##    y <- data$y
-  #  nm <- names(mcall)[-1]
-  #  keep <- is.element(nm, c("fixed", "random", "data", "subset",
-  #      "na.action", "control"))
-  #  for (i in nm[!keep]) mcall[[i]] <- NULL
-     zz.name <- new.name("zz",names(data))
-     eval(parse(text=paste("fixed[[2]] <- quote(",zz.name,")")))
-  #   fixed[[2]] <- quote(zz)
-  #  mcall[["fixed"]] <- fixed
-  #  mcall[[1]] <- as.name("lme")
-  #  mcall$random <- random
-  #  mcall$method <- "ML"
-  #  if (!missing(correlation))
-  #      mcall$correlation <- correlation
-  #  mcall$weights <- quote(varFixed(~invwt))
-    data[[zz.name]] <- zz
-    invwt.name <- new.name("invwt",names(data))
+  zz <- eta + fit0$residuals - off
+  wz <- fit0$weights
+  fam <- family
+
+  ## find non clashing name for pseudodata and insert in formula
+  zz.name <- new.name("zz",names(data))
+  eval(parse(text=paste("fixed[[2]] <- quote(",zz.name,")")))
+ 
+  data[[zz.name]] <- zz ## pseudodata to `data' 
+  
+  ## find non-clashing name fro inverse weights, and make 
+  ## varFixed formula using it...
+  
+  invwt.name <- new.name("invwt",names(data))
+  data[[invwt.name]] <- 1/wz
+  w.formula <- as.formula(paste("~",invwt.name,sep=""))
+
+  for (i in 1:niter) {
+    if (verbose) message("iteration ", i)
+    fit<-lme(fixed=fixed,random=random,data=data,correlation=correlation,
+             control=control,weights=varFixed(w.formula),method="ML",...)
+    etaold <- eta
+    eta <- fitted(fit) + off
+    if (sum((eta - etaold)^2) < 1e-06 * sum(eta^2)) break
+    mu <- fam$linkinv(eta)
+    mu.eta.val <- fam$mu.eta(eta)
+    ## get pseudodata and insert in `data' 
+    data[[zz.name]] <- eta + (fit0$y - mu)/mu.eta.val - off
+    wz <- w * mu.eta.val^2/fam$variance(mu)
     data[[invwt.name]] <- 1/wz
-    w.formula <- as.formula(paste("~",invwt.name,sep=""))
-  #  mcall$data <- mf
-    for (i in 1:niter) {
-        if (verbose)
-            message("iteration ", i)
-        fit<-lme(fixed=fixed,random=random,data=data,correlation=correlation,control=control,
-                    weights=varFixed(w.formula),method="ML",...)
- #fit <- eval(mcall)
-
-        etaold <- eta
-        eta <- fitted(fit) + off
-        if (sum((eta - etaold)^2) < 1e-06 * sum(eta^2))
-            break
-        mu <- fam$linkinv(eta)
-        mu.eta.val <- fam$mu.eta(eta)
-        data[[zz.name]] <- eta + (fit0$y - mu)/mu.eta.val - off
-        wz <- w * mu.eta.val^2/fam$variance(mu)
-        data[[invwt.name]] <- 1/wz
- #       mcall$data <- mf
-    }
-#    attributes(fit$logLik) <- NULL
-#    fit$call <- Call
-#    fit$family <- family
-#    fit$logLik <- as.numeric(NA)
-#    oldClass(fit) <- c("glmmPQL", oldClass(fit))
-    fit
+  } ## end i in 1:niter
+  fit
 }
 
 
@@ -1170,9 +1134,6 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     
     V<-extract.lme.cov2(ret$lme,mf,n.sr+1) # the data covariance matrix, excluding smooths
     XVX <- formXtViX(V,G$Xf)
-#    Cv<-chol(V)
-#    X<-G$Xf
-#    Z<-backsolve(Cv,X,transpose=TRUE)
     S<-matrix(0,ncol(G$Xf),ncol(G$Xf)) # penalty matrix
     first <- G$nsdf+1
     k <- 1
@@ -1190,7 +1151,6 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
       first <- last + 1 
     }
     S<-S/ret$lme$sigma^2 # X'V^{-1}X divided by \sigma^2, so should S be
-#    Z<-t(Z)%*%Z # X'V^{-1}X # this was XVX
     Vb <- chol2inv(chol(XVX+S)) # covariance matrix - in constraint space
     # need to project out of constraint space
     Vp <- matrix(Vb[1:G$nsdf,],G$nsdf,ncol(Vb))
