@@ -61,7 +61,7 @@ rc.settings <- function(ops, ns, args, func, ipck, S3, data, help, argdb, files)
     if (!missing(ops))   checkAndChange(  "ops",   ops)
     if (!missing(ns))    checkAndChange(   "ns",    ns)
     if (!missing(args))  checkAndChange( "args",  args)
-    if (!missing(func))  checkAndChange( "func",  args)
+    if (!missing(func))  checkAndChange( "func",  func)
     if (!missing(ipck))  checkAndChange( "ipck",  ipck)
     if (!missing(S3))    checkAndChange(   "S3",    S3)
     if (!missing(data))  checkAndChange( "data",  data)
@@ -224,7 +224,7 @@ matchAvailableTopics <-
     indexFiles <- file.path(ll, names(ll), "help", "AnIndex")
     unique(unlist(lapply(indexFiles,
                          function(f) {
-                             if (!file.exists(f)) return (charater(0))
+                             if (!file.exists(f)) return (character(0))
                              foo <-
                                  scan(f, what = list("", ""),
                                       sep = "\t",
