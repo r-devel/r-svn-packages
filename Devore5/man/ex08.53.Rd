@@ -1,6 +1,5 @@
 \name{ex08.53}
 \alias{ex08.53}
-\non_function{}
 \title{data from exercise 8.53}
 \description{
 The \code{ex08.53} data frame has 13 rows and 1 columns.

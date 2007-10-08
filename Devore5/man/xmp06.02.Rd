@@ -1,6 +1,5 @@
 \name{xmp06.02}
 \alias{xmp06.02}
-\non_function{}
 \title{data from Example 6.2}
 \description{
   The \code{xmp06.02} data frame has 20 rows and 1 columns.

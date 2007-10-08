@@ -1,6 +1,5 @@
 \name{xmp01.02}
 \alias{xmp01.02}
-\non_function{}
 \title{data from Example 1.2}
 \description{
     The \code{xmp01.02} data frame has 27 rows and 1 column of flexural

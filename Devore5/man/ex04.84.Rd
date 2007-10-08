@@ -1,6 +1,5 @@
 \name{ex04.84}
 \alias{ex04.84}
-\non_function{}
 \title{data from exercise 4.84}
 \description{
     The \code{ex04.84} data frame has 20 rows and 1 columns of bearing

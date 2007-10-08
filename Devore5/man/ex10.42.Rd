@@ -1,6 +1,5 @@
 \name{ex10.42}
 \alias{ex10.42}
-\non_function{}
 \title{data from exercise 10.42}
 \usage{data(ex10.42)}
 \description{

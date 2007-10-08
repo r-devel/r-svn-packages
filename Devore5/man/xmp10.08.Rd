@@ -1,6 +1,5 @@
 \name{xmp10.08}
 \alias{xmp10.08}
-\non_function{}
 \title{data from Example 10.8}
 \usage{data(xmp10.08)}
 \description{
