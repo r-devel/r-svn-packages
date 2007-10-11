@@ -1,3 +1,13 @@
+1.3-29
+
+* `gamm' now silently drops grouping factors within the correlation 
+   structure formulae that duplicate random effects grouping factors 
+   (which automatically act as grouping factors on the correlation 
+   structures anyway).
+
+* Some replacement of dubious `as.matrix' calls with use of `,drop=FALSE]' 
+  in gamm.r   
+
 1.3-28
 
 * `gamm' modified to call a routine `gammPQL' in place of MASS::glmmPQL. 
