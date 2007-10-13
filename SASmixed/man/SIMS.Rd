@@ -1,6 +1,5 @@
 \name{SIMS}
 \alias{SIMS}
-\non_function{}
 \title{Second International Mathematics Study data}
 \description{
     The \code{SIMS} data frame has 3691 rows and 3 columns.

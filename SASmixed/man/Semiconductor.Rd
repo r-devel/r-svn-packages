@@ -1,6 +1,5 @@
 \name{Semiconductor}
 \alias{Semiconductor}
-\non_function{}
 \title{Semiconductor split-plot experiment}
 \description{
     The \code{Semiconductor} data frame has 48 rows and 5 columns.
