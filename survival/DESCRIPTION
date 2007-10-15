@@ -11,4 +11,4 @@ Description: survival analysis: descriptive statistics, two-sample
   tests, parametric accelerated failure models, Cox model. Delayed entry
   (truncation) allowed for all models; interval censoring for parametric
   models. Case-cohort designs.
-License: GPL2
+License: GPL-2
