@@ -12,5 +12,6 @@ Description: functions and datasets for bootstrapping from the
 Title: Bootstrap R (S-Plus) Functions (Canty)
 Depends: R (>= 2.4.0), graphics, stats
 Suggests: survival
+LazyLoad: yes
 LazyData: yes
 License: Unlimited

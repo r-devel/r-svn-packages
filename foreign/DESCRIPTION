@@ -12,4 +12,5 @@ Author: R-core members, Saikat DebRoy <saikat@stat.wisc.edu>,
 Description: Functions for reading and writing data stored by statistical
         packages such as Minitab, S, SAS, SPSS, Stata, Systat, ...,
 	and for reading and writing .dbf (dBase) files.
+LazyLoad: yes
 License: GPL (>= 2)
