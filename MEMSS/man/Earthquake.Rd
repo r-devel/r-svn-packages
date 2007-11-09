@@ -1,6 +1,5 @@
 \name{Earthquake}
 \alias{Earthquake}
-\non_function{}
 \title{Earthquake Intensity}
 \description{
     The \code{Earthquake} data frame has 182 rows and 5 columns.

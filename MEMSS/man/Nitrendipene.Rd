@@ -1,6 +1,5 @@
 \name{Nitrendipene}
 \alias{Nitrendipene}
-\non_function{}
 \title{Assay of nitrendipene}
 \description{
     The \code{Nitrendipene} data frame has 89 rows and 4 columns.

@@ -1,6 +1,5 @@
 \name{Assay}
 \alias{Assay}
-\non_function{}
 \title{Bioassay on Cell Culture Plate}
 \description{
     The \code{Assay} data frame has 60 rows and 4 columns.

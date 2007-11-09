@@ -1,6 +1,5 @@
 \name{Milk}
 \alias{Milk}
-\non_function{}
 \title{Protein content of cows' milk}
 \description{
     The \code{Milk} data frame has 1337 rows and 4 columns.

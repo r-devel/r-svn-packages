@@ -1,6 +1,5 @@
 \name{Orthodont}
 \alias{Orthodont}
-\non_function{}
 \title{Growth curve data on an orthdontic measurement}
 \description{
   The \code{Orthodont} data frame has 108 rows and 4 columns of the

@@ -1,6 +1,5 @@
 \name{Wheat2}
 \alias{Wheat2}
-\non_function{}
 \title{Wheat Yield Trials}
 \description{
     The \code{Wheat2} data frame has 224 rows and 5 columns.

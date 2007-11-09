@@ -1,6 +1,5 @@
 \name{Phenobarb}
 \alias{Phenobarb}
-\non_function{}
 \title{Phenobarbitol Kinetics}
 \description{
   The \code{Phenobarb} data frame has 744 rows and 7 columns.

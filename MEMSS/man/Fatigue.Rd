@@ -1,6 +1,5 @@
 \name{Fatigue}
 \alias{Fatigue}
-\non_function{}
 \title{Cracks caused by metal fatigue}
 \description{
   The \code{Fatigue} data frame has 262 rows and 3 columns.

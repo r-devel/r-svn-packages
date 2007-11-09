@@ -1,6 +1,5 @@
 \name{Ovary}
 \alias{Ovary}
-\non_function{}
 \title{Counts of Ovarian Follicles}
 \description{
   The \code{Ovary} data frame has 308 rows and 3 columns.

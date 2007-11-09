@@ -1,6 +1,5 @@
 \name{Wheat}
 \alias{Wheat}
-\non_function{}
 \title{Yields by growing conditions}
 \description{
     The \code{Wheat} data frame has 48 rows and 4 columns.

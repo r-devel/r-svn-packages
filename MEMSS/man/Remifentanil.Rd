@@ -1,6 +1,5 @@
 \name{Remifentanil}
 \alias{Remifentanil}
-\non_function{}
 \title{Pharmacokinetics of remifentanil}
 \description{
     The \code{Remifentanil} data frame has 2107 rows and 12 columns.

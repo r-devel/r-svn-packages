@@ -1,6 +1,5 @@
 \name{Wafer}
 \alias{Wafer}
-\non_function{}
 \title{Modeling of Analog MOS Circuits}
 \description{
     The \code{Wafer} data frame has 400 rows and 4 columns.

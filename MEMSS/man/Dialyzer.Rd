@@ -1,6 +1,5 @@
 \name{Dialyzer}
 \alias{Dialyzer}
-\non_function{}
 \title{High-Flux Hemodialyzer}
 \description{
     The \code{Dialyzer} data frame has 140 rows and 5 columns.
