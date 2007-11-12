@@ -1,5 +1,10 @@
 1.3-29
 
+* `magic' could segfault if supplied with many constraints and relatively 
+   high rank penalties, so that after constriant the penalty  matrix 
+   square roots had more columns than rows (never happened in additive 
+   model case, but can happen in more general settings). Fixed.
+
 * `gamm' now silently drops grouping factors within the correlation 
    structure formulae that duplicate random effects grouping factors 
    (which automatically act as grouping factors on the correlation 
