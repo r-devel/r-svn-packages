@@ -2859,7 +2859,7 @@ magic <- function(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gc
     if (n.p>0) for (i in 1:n.p) { 
       S[[i]]<-qr.qty(ns.qr,S[[i]])[(n.con+1):n.b,,drop=FALSE]
       ## following essential given assumptions of the C code...
-      if (ncol(S[[i]]>nrow(S[[i]]))) { ## no longer have a min col square root.
+      if (ncol(S[[i]])>nrow(S[[i]])) { ## no longer have a min col square root.
         S[[i]] <- t(qr.R(qr(t(S[[i]])))) ## better!
       }
     }
