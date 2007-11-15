@@ -1,6 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.3-30
+
+* gamm.Rd updated to reflect change to gammPQL in 1.3-28.
+
 1.3-29
 
 * `magic' could segfault if supplied with many constraints and relatively 

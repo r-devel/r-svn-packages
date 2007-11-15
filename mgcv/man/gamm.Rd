@@ -4,7 +4,7 @@
 \title{Generalized Additive Mixed Models}
 \description{ Fits the specified  generalized additive mixed model (GAMM) to
 data, by a call to \code{lme} in the normal errors identity link case, or by 
-a call to \code{glmmPQL} from the \code{MASS} library otherwise. 
+a call to \code{gammPGL} (a modification of \code{glmmPQL} from the \code{MASS} library) otherwise. 
 In the latter case estimates are only approximately MLEs. The routine is typically 
 slower than \code{gam}, and not quite as numerically robust.
 
@@ -61,7 +61,8 @@ factors, without the need to make this explicit in the formula (this is
 slightly different to the behaviour of \code{lme}). See examples below.}
 \item{family}{A \code{family} as used in a call to \code{\link{glm}} or \code{\link{gam}}.
 The default \code{gaussian} with identity link causes \code{gamm} to fit by a direct call to
-\code{\link[nlme]{lme}} procided there is no offset term, otherwise \code{glmmPQL} from the \code{MASS} library is used.}
+\code{\link[nlme]{lme}} procided there is no offset term, otherwise
+\code{gammPQL} is used.}
 \item{data}{ A data frame containing the model response variable and 
 covariates required by the formula.  By default the variables are taken 
 from \code{environment(formula)}, typically the environment from 
@@ -112,7 +113,7 @@ version of R does not have the \code{nlminb} optimizer function.}
 \item{method}{Which of \code{"ML"} or \code{"REML"} to use in the Gaussian
 additive mixed model case when \code{lme} is called directly. Ignored in the
 generalized case (or if the model
-has an offset), in which case \code{glmmPQL} is used.}
+has an offset), in which case \code{gammPQL} is used.}
 
 \item{...}{further arguments for passing on e.g. to \code{lme}} 
 }
@@ -130,7 +131,7 @@ or the correlation structures available in the \code{nlme} library.
 
 
 Some details of how GAMs are represented as mixed models and estimated using
-\code{lme} or \code{glmmPQL} in \code{gamm} can be found in Wood (2004 ,2006a,b). In addition \code{gamm} obtains a posterior covariance matrix for the parameters of all the fixed effects and the smooth terms. The approach is similar to that described in (Lin & Zhang, 1999) - the covariance matrix of the data (or pseudodata in the generalized case) implied by the weights, correlation and random effects structure is obtained, based on the estimates of the parameters of these terms and this is used to obtain the posterior covariance matrix of the fixed and smooth effects. 
+\code{lme} or \code{gammPQL} in \code{gamm} can be found in Wood (2004 ,2006a,b). In addition \code{gamm} obtains a posterior covariance matrix for the parameters of all the fixed effects and the smooth terms. The approach is similar to that described in (Lin & Zhang, 1999) - the covariance matrix of the data (or pseudodata in the generalized case) implied by the weights, correlation and random effects structure is obtained, based on the estimates of the parameters of these terms and this is used to obtain the posterior covariance matrix of the fixed and smooth effects. 
 
 The bases used to represent smooth terms are the same as those used in \code{\link{gam}}.
 
@@ -151,9 +152,9 @@ since these use an improved optimizer.
 GCV/UBRE model selection. At present this contains enough information to use
 \code{predict}, \code{summary} and \code{print} methods and \code{vis.gam},
 but not to use e.g. the \code{anova} method function to compare models.}
-\item{lme}{the fitted model object returned by \code{lme} or \code{glmmPQL}. Note that the model formulae and grouping 
+\item{lme}{the fitted model object returned by \code{lme} or \code{gammPQL}. Note that the model formulae and grouping 
 structures may appear to be rather bizarre, because of the manner in which the GAMM is split up and the calls to 
-\code{lme} and \code{glmmPQL} are constructed.}
+\code{lme} and \code{gammPQL} are constructed.}
 
 }
 
