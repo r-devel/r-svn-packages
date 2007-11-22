@@ -12,7 +12,7 @@ RweaveLatex()
 RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
                  debug = FALSE, echo = TRUE, eval = TRUE,
                  keep.source = FALSE, split = FALSE,
-                 pdf = TRUE, eps = TRUE)
+                 pdf = TRUE, eps = FALSE, envir=.GlobalEnv)
 }
 \arguments{
   \item{file}{Name of Sweave source file.}
@@ -32,6 +32,9 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
   \item{split}{set default for option \code{split}, see details below.}
   \item{pdf}{set default for option \code{pdf}, see details below.}
   \item{eps}{set default for option \code{eps}, see details below.}
+  \item{envir}{Environment where code chunks are evaluated. Either an
+    environment, or the character string \code{"new"}, in which case a
+    new temprorary environment is used.}
 }
 \section{Supported Options}{
   RweaveLatex supports the following options for code chunks (the values
@@ -77,7 +80,7 @@ RweaveLatexSetup(file, syntax, output = NULL, quiet = FALSE,
       chunk produces 
       graphical output. Note that only one figure per code chunk can be
       processed this way.}
-    \item{eps:}{logical (\code{TRUE}), indicating whether EPS figures shall be
+    \item{eps:}{logical (\code{FALSE}), indicating whether EPS figures shall be
       generated. Ignored if \code{fig = FALSE}.} 
     \item{pdf:}{logical (\code{TRUE}), indicating whether PDF figures shall be
       generated. Ignored if \code{fig = FALSE}.}

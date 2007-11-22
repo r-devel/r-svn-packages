@@ -1,6 +1,6 @@
 								-*-text-*-
 
-CHANGES COMPARED TO SWEAVE IN R 2.5.0
+CHANGES COMPARED TO SWEAVE IN R 2.7.x
 
   o Sweave no longer inserts a hard path to the latex style file
     Sweave.sty. Users should add the file to their regular latex path
@@ -9,3 +9,8 @@ CHANGES COMPARED TO SWEAVE IN R 2.5.0
     stylepath no longer exists.
 
   o The FAQ is now a package vignette.
+
+  o Only PDF versions of graphics are created by default.
+
+  o The environment where code chunks are evaluated can be set by the
+    user. 
