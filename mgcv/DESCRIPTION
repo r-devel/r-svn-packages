@@ -12,4 +12,4 @@ Depends: R (>= 2.3.0)
 Imports: graphics, stats
 Suggests: nlme (>= 3.1-64), MASS (>= 7.2-2)
 LazyLoad: yes
-License: GPL version 2 or later
+License: GPL (>=2)
