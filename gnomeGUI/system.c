@@ -64,7 +64,7 @@ static void Rgnome_CleanUp(SA_TYPE saveact, int status, int runLast);
  *  1) FATAL MESSAGES AT STARTUP
  */
 
-static void Rgnome_Suicide(char *s)
+static void Rgnome_Suicide(const char *s)
 {
     GtkWidget *dialog;
     gchar *message;
@@ -208,7 +208,7 @@ static void Rgnome_CleanUp(SA_TYPE saveact, int status, int runLast)
     exit(status);
 }
 
-static void Rgnome_ShowMessage(char *s)
+static void Rgnome_ShowMessage(const char *s)
 {
     GtkWidget *dialog;
 

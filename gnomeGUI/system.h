@@ -21,14 +21,14 @@
 
 /* defined in GNOME GUI */
 
-int  Rgnome_ShowFiles(int nfile, char **file, char **headers, char *wtitle,
-		      Rboolean del, char *pager);
+int  Rgnome_ShowFiles(int nfile, const char **file, const char **headers,
+		      const char *wtitle, Rboolean del, const char *pager);
 int  Rgnome_ChooseFile(int new, char *buf, int len);
 
 void Rgnome_StartConsole(Rboolean OpenConsole);
-int  Rgnome_ReadConsole(char *prompt, unsigned char *buf, int len, 
+int  Rgnome_ReadConsole(const char *prompt, unsigned char *buf, int len, 
 			int addtohistory);
-void Rgnome_WriteConsole(char *buf, int len);
+void Rgnome_WriteConsole(const char *buf, int len);
 void Rgnome_ResetConsole(void);
 void Rgnome_FlushConsole(void);
 void Rgnome_ClearerrConsole(void);
