@@ -1,7 +1,7 @@
 Package: gnomeGUI
 Type: Frontend
 Version: 2.7.0-1
-Date: 2007-12-23
+Date: 2007-12-26
 Title: GNOME Console for R
 Author: R Development Core Team
 Maintainer: R Core Team <R-core@r-project.org>
