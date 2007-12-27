@@ -1,39 +1,41 @@
 This directory contains the files for building CHM help for Tcl/Tk as
-included in R_Tcl.zip.
+included in R_Tcl.zip.  This version is for Tcl/Tk >= 8.5.0.
 
 Building Tcl/Tk
 ===============
 
-Get the Tcl/Tk sources (I used 8.4.15 when testing this).
+Get the Tcl/Tk sources (I used 8.5.0 when testing this).
 You need VC++6 and a Windows command-line window.
 
 Run "\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT"
 
-cd tcl8.4.x\win
-nmake -nologo -f makefile.vc release winhelp
+cd tcl8.5.x\win
+nmake -nologo -f makefile.vc release
 nmake -f makefile.vc install
-cd ..\..\tk8.4.x\win
-nmake -nologo -f makefile.vc TCLDIR=..\..\tcl8.4.x release winhelp
+cd ..\..\tk8.5.x\win
+nmake -nologo -f makefile.vc OPTS=noxp TCLDIR=..\..\tcl8.5.x release
 nmake -f makefile.vc install
 
 Now copy /Program Files/Tcl to say /R/Tcl and (in any reasonable shell)
 cd /R/Tcl
-rm bin/tclpip84.dll bin/tclsh84.exe bin/wish84.exe
-rm -rf lib/*.lib lib/tk8.4/demos lib/tk8.4/images
-cp .../tcl8.4.x/license.terms .
+rm bin/tclpip85.dll bin/tclsh85.exe bin/wish85.exe
+rm -rf lib/*.lib lib/tk8.5/demos lib/tk8.5/images lib/tclConfig.sh
+cp .../tcl8.5.x/license.terms .
 
 
 Building the CHM help
 =====================
 
-Copy the contents of the html and tools directory over those in .../tcl8.4.x
-(The tools/*.tcl are modified versions of those in that directory.)
+Copy the contents of the html and tools directory over those in
+.../tcl8.5.x. (The tools/*.tcl are modified versions of those in that
+directory, adding a style file to the <HEAD> sections.)
 
-cd .../tcl8.4.x/tools
-../win/Release/tclsh84 tcltk-man2html.tcl
+cd .../tcl8.5.x/tools
+../win/Release/tclsh85 tcltk-man2html.tcl
 cd ../html
-hhc tcltk84.hhp
-cp tcltk84.chm /R/Tcl
+hhc tcltk85.hhp
+mkdir /R/Tcl/doc
+cp tcltk85.chm /R/Tcl/doc
 
-BDR 2004-01-09 2007-07-10
+BDR 2004-01-09 2007-07-10 2007-12-26
 
