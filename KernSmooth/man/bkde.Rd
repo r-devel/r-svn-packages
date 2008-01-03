@@ -22,6 +22,8 @@ Missing values are not allowed.
 the kernel bandwidth smoothing parameter.
 Larger values of \code{bandwidth} make smoother estimates,
 smaller values of \code{bandwidth} make less smooth estimates.
+The default is a normal reference bandwidth computed from the
+variance of \code{x}.
 }
 \item{kernel}{
 character string which determines the smoothing kernel.
