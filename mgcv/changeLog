@@ -3,6 +3,10 @@
 
 1.3-30
 
+* `magic' and helpfile modified slightly to pick up number of smoothing 
+   parameters to estimate solely from `S' list - still user responsibility 
+   to ensure `sp' and `S' dimensions correspond.        
+
 * gamm.Rd updated to reflect change to gammPQL in 1.3-28.
 
 1.3-29

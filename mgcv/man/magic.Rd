@@ -37,7 +37,8 @@ gradient of the GCV/UBRE score is too small at the supplied value.  }
 that it is not stored as a full matrix, but rather as the smallest square matrix including all 
 the non-zero elements of the penalty matrix. Element 1,1 of \code{S[[i]]}  occupies 
 element \code{off[i]}, \code{off[i]} of the ith penalty matrix. Each \code{S[[i]]} must be 
-positive semi-definite.  }
+positive semi-definite. Set to \code(list()) if there are no smoothing
+parameters to be estimated. }
 
 \item{off}{is an array indicating the first parameter in the parameter vector that is 
 penalized by the penalty involving \code{S[[i]]}.}
