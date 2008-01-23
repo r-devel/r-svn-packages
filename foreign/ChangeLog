@@ -1,3 +1,8 @@
+2008-01-23 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/minitab.c: force text-mode opening (embedded uses of R can
+	change the default on Windows).
+	
 2007-09-17 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-23, use approved license abbreviation.
