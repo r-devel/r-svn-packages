@@ -40,12 +40,8 @@ typedef struct {
     int fontsize;			/* Size in points */
     gboolean usefixed;
 
-#if GTK2
     PangoFont *font;
     PangoContext *context; /* NOT USED YET */
-#else
-    GdkFont *font;
-#endif
 
 } gtkDesc;
 

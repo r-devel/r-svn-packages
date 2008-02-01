@@ -1,36 +1,16 @@
 AC_INIT(src/devices.c)
 
-AC_ARG_WITH(gtk, [--with-gtk Version of GTK+ to use], GTK_VERSION="${withval}", GTK_VERSION="1.2")
-
-if test -z ${GTK_VERSION##2.0}; then
-   AC_CHECK_PROGS(PKG_CONFIG, pkg-config)   
-   if test -n "${PKG_CONFIG}"; then
-      if (${PKG_CONFIG} --exists gtk+-2.0); then
-         GTK_CPPFLAGS=`${PKG_CONFIG} --cflags gtk+-2.0`
-         GTK_LIBS=`${PKG_CONFIG} --libs gtk+-2.0`
-         GTK_CPPFLAGS=${GTK_CPPFLAGS}" -DGTK2"
-      else
-         echo "ERROR: gtk+2.0 not found by pkg-config."
-         exit 1
-      fi
+AC_CHECK_PROGS(PKG_CONFIG, pkg-config)   
+if test -n "${PKG_CONFIG}"; then
+   if (${PKG_CONFIG} --exists gtk+-2.0); then
+      GTK_CPPFLAGS=`${PKG_CONFIG} --cflags gtk+-2.0`
+      GTK_LIBS=`${PKG_CONFIG} --libs gtk+-2.0`
    else
-      echo "ERROR: Cannot find pkg-config."
-      exit 1
-   fi
-elif test -z ${GTK_VERSION##1.2}; then
-   AC_CHECK_PROGS(GTK_CONFIG, gtk-config)
-   if test -z "${GTK_CONFIG}"; then
-      AC_CHECK_PROGS(GTK_CONFIG, gtk12-config)
-   fi
-   if test -n "${GTK_CONFIG}"; then
-      GTK_CPPFLAGS=`${GTK_CONFIG} --cflags`
-      GTK_LIBS=`${GTK_CONFIG} --libs`
-   else
-       echo "ERROR: Cannot find gtk-config." 
+      echo "ERROR: gtk+2.0 not found by pkg-config."
       exit 1
    fi
 else
-   echo "Only versions 1.2 and 2.0 of gtk+ are supported."
+   echo "ERROR: Cannot find pkg-config."
    exit 1
 fi
 

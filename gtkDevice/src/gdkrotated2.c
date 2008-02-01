@@ -18,8 +18,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef GTK2
-
 #include <math.h>
 #include "gdkrotated.h"
 
@@ -251,14 +249,4 @@ void gdk_draw_layout_rot(GdkDrawable *drawable,
 	g_object_unref(tpixbuf);
     }
 }
-
-#endif /* ifdef GTK2 */
-
-
-
-
-
-
-
-
 

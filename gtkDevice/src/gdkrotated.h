@@ -20,7 +20,6 @@
 
 #include <gtk/gtk.h>
 
-#ifdef GTK2
 #include <pango/pango.h>
 void gdk_draw_layout_rot (GdkDrawable  *drawable,
 			  GdkGC	       *gc,
@@ -28,15 +27,3 @@ void gdk_draw_layout_rot (GdkDrawable  *drawable,
 			  int		y,
 			  PangoLayout   *layout,
 			  double        angle);
-#else
-void gdk_draw_text_rot	 (GdkDrawable  *drawable,
-			  GdkFont      *font,
-			  GdkGC	       *gc,
-			  gint		x,
-			  gint		y,
-			  gint          maxx,
-			  gint          maxy,
-			  const gchar  *text,
-			  gint		text_length,
-			  double        angle);
-#endif

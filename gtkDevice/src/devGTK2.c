@@ -18,8 +18,6 @@
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifdef GTK2
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -1373,19 +1371,4 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     /* finish */
     return TRUE;
 }
-
-#endif /* ifdef GTK2 */
-
-
-
-
-
-
-
-
-
-
-
-
-
 
