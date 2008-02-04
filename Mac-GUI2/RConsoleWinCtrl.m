@@ -89,6 +89,9 @@
 			NSRunAlertPanel(NLS(@"Cannot start R"),[NSString stringWithFormat:NLS(@"Unable to start R: %@"), [[REngine mainEngine] lastError]],NLS(@"OK"),nil,nil);
 			exit(-1);
 		}
+            // start R on a separate thread
+            SLog(@" - start REPL thread");
+            [NSThread detachNewThreadSelector:@selector(run:) toTarget:engine withObject:self];
 	}
 }
 

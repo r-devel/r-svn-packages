@@ -221,6 +221,15 @@ BOOL preventReentrance = NO;
 	protectedMode=NO;
 }
 
+- (void) run: (id) sender
+{
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    replThread = [NSThread currentThread];
+    [self runREPL];
+    replThread = nil;
+    [pool release];
+}
+
 - (void) runREPL
 {
 	BOOL keepInLoop = YES;

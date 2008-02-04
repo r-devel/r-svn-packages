@@ -17,18 +17,23 @@ NSString *Rapp_R_version;
 
 int main(int argc, char *argv[])
 {
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-	/* setup R version strings */
-	Rapp_R_version_short = [[NSString alloc] initWithFormat:@"%d.%d", (R_VERSION >> 16), (R_VERSION >> 8)&255];
-	Rapp_R_version = [[NSString alloc] initWithFormat:@"%s.%s", R_MAJOR, R_MINOR];
-
-	SLog(@" - set APP VERSION (%s) and REVISION (%@)", R_GUI_VERSION_STR,
-		 [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"]);
-	setenv("R_GUI_APP_VERSION", R_GUI_VERSION_STR, 1);
-	setenv("R_GUI_APP_REVISION", [(NSString*)[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"] UTF8String], 1);
-	
-	[NSApplication sharedApplication];
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    
+    /* setup R version strings */
+    Rapp_R_version_short = [[NSString alloc] initWithFormat:@"%d.%d", (R_VERSION >> 16), (R_VERSION >> 8)&255];
+    Rapp_R_version = [[NSString alloc] initWithFormat:@"%s.%s", R_MAJOR, R_MINOR];
+    
+    SLog(@" - set APP VERSION (%s) and REVISION (%@)", R_GUI_VERSION_STR,
+         [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"]);
+    setenv("R_GUI_APP_VERSION", R_GUI_VERSION_STR, 1);
+    setenv("R_GUI_APP_REVISION", [(NSString*)[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"] UTF8String], 1);
+    
+    int i = NSApplicationMain(argc, (const char **) argv);
+    [pool release];
+    return i;
+    
+#if 0
+    [NSApplication sharedApplication];
 	[NSBundle loadNibNamed:@"MainMenu" owner:NSApp];
 
 	/*
@@ -59,6 +64,7 @@ int main(int argc, char *argv[])
 	
 	SLog(@"main: exiting with status 0");
 	return 0;
+#endif
 }
 
 /* return NSApplicationMain(argc, (const char **) argv); */

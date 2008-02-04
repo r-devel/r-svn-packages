@@ -76,6 +76,8 @@ extern BOOL preventReentrance;
 	
 	/* SaveAction (yes/no/ask - anything else is treated as ask) */
 	NSString *saveAction;
+    
+    NSThread *replThread; // thread on which the REPL is run or nil if none
 }
 
 + (REngine*) mainEngine;
