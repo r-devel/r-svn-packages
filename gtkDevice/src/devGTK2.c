@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1998-2001   Lyndon Drake
+ *  Copyright (C) 1998-2008   Lyndon Drake
  *                            and the R Development Core Team
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,9 +27,12 @@
 
 #include <R.h>
 #include <Rinternals.h>
+#include <Rversion.h>
+#if R_VERSION < R_Version(2, 7, 0)
 #include <Rgraphics.h>
 #include <Rdevices.h>
 #include <R_ext/GraphicsDevice.h>
+#endif
 #include <R_ext/GraphicsEngine.h>
 
 #include "devGTK.h"
@@ -50,7 +53,6 @@ static void GTK_Clip(double x0, double x1, double y0, double y1,
 		     NewDevDesc *dd);
 static void GTK_Close(NewDevDesc *dd);
 static void GTK_Deactivate(NewDevDesc *dd);
-static void GTK_Hold(NewDevDesc *dd);
 static Rboolean GTK_Locator(double *x, double *y, NewDevDesc *dd);
 static void GTK_Line(double x1, double y1, double x2, double y2,
 		     R_GE_gcontext *gc,
@@ -255,6 +257,7 @@ static void SetFont(NewDevDesc *dd, gint face, gint size)
 	pango_font_description_set_size(fontdesc, PANGO_SCALE * size);
     }
     else {
+	/* FIXME use gc->fontfamily */
 	pango_font_description_set_family(fontdesc, "helvetica");
 	pango_font_description_set_weight(fontdesc, weight[(face-1)%2]);
 	pango_font_description_set_style(fontdesc, slant[((face-1)/2)%2]);
@@ -431,7 +434,11 @@ static gint expose_event (GtkWidget *widget,
 			   event->area.width, event->area.height);
     }
     else {
+#if R_VERSION < R_Version(2, 7, 0)
 	GEplayDisplayList((GEDevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*)dd)));
+#else
+	GEplayDisplayList(desc2GEDesc(dd));
+#endif
     }
     
     return FALSE;
@@ -441,7 +448,11 @@ static gint delete_event(GtkWidget *widget, GdkEvent *event, NewDevDesc *dd)
 {
     g_return_val_if_fail (dd != NULL, FALSE);
 
+#if R_VERSION < R_Version(2, 7, 0)
     Rf_KillDevice ((DevDesc*) Rf_GetDevice (Rf_devNumber ((DevDesc*) dd)));
+#else
+    GEkillDevice(desc2GEDesc(dd));
+#endif
     
     return TRUE;
 }
@@ -655,7 +666,11 @@ static void GTK_resize(NewDevDesc *dd)
 	}
     }
 
-    GEplayDisplayList ((GEDevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*)dd)));
+#if R_VERSION < R_Version(2, 7, 0)
+    GEplayDisplayList((GEDevDesc*) Rf_GetDevice(Rf_devNumber((DevDesc*)dd)));
+#else
+    GEplayDisplayList(desc2GEDesc(dd));
+#endif
 }
 
 /* clear the drawing area */
@@ -716,7 +731,11 @@ static void GTK_Activate(NewDevDesc *dd)
     if(!gtkd->window)
 	return;
 
+#if R_VERSION < R_Version(2, 7, 0)
     devnum = Rf_devNumber((DevDesc*)dd) + 1;
+#else
+    devnum = ndevNumber(dd) + 1;
+#endif
 
     title_text = g_strdup_printf(title_text_active, devnum);
 
@@ -736,7 +755,11 @@ static void GTK_Deactivate(NewDevDesc *dd)
     if(!gtkd->window)
 	return;
 
+#if R_VERSION < R_Version(2, 7, 0)
     devnum = Rf_devNumber((DevDesc*)dd) + 1;
+#else
+    devnum = ndevNumber(dd) + 1;
+#endif
 
     title_text = g_strdup_printf(title_text_inactive, devnum);
 
@@ -1073,10 +1096,6 @@ static void GTK_Mode(gint mode, NewDevDesc *dd)
 #endif
 }
 
-static void GTK_Hold(NewDevDesc *dd)
-{
-}
-
 
 /* Device driver entry point */
 Rboolean
@@ -1117,10 +1136,8 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
 	return FALSE;
     }
 
-    dd->newDevStruct = 1;
 
     /* setup data structure */
-    dd->open = GTK_Open;
     dd->close = GTK_Close;
     dd->activate = GTK_Activate;
     dd->deactivate = GTK_Deactivate;
@@ -1136,7 +1153,6 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
     dd->polygon = GTK_Polygon;
     dd->locator = GTK_Locator;
     dd->mode = GTK_Mode;
-    dd->hold = GTK_Hold;
     dd->metricInfo = GTK_MetricInfo;
 
     dd->left = 0;
@@ -1291,10 +1307,8 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
 	}
     }
 
-    dd->newDevStruct = 1;
 
     /* setup data structure */
-    dd->open = GTK_Open;
     dd->close = GTK_Close;
     dd->activate = GTK_Activate;
     dd->deactivate = GTK_Deactivate;
@@ -1310,7 +1324,6 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     dd->polygon = GTK_Polygon;
     dd->locator = GTK_Locator;
     dd->mode = GTK_Mode;
-    dd->hold = GTK_Hold;
     dd->metricInfo = GTK_MetricInfo;
 
     dd->left = 0;
