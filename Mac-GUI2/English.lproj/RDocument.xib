@@ -2,17 +2,17 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.01">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">9A559</string>
-		<string key="IBDocument.InterfaceBuilderVersion">628</string>
-		<string key="IBDocument.AppKitVersion">941</string>
-		<string key="IBDocument.HIToolboxVersion">334.00</string>
+		<string key="IBDocument.SystemVersion">9B18</string>
+		<string key="IBDocument.InterfaceBuilderVersion">629</string>
+		<string key="IBDocument.AppKitVersion">949</string>
+		<string key="IBDocument.HIToolboxVersion">343.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="5"/>
+			<integer value="6"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<string id="481663422">com.apple.InterfaceBuilder.CocoaPlugin</string>
+			<string id="618426502">com.apple.InterfaceBuilder.CocoaPlugin</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.RootObjects" id="580458321">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -25,51 +25,817 @@
 			<object class="NSWindowTemplate" id="275939982">
 				<int key="NSWindowStyleMask">15</int>
 				<int key="NSWindowBacking">2</int>
-				<string key="NSWindowRect">{{110, 298}, {507, 413}}</string>
+				<string key="NSWindowRect">{{201, 387}, {507, 413}}</string>
 				<int key="NSWTFlags">1886912512</int>
 				<string key="NSWindowTitle" id="590237441">Window</string>
 				<string key="NSWindowClass">NSWindow</string>
-				<string key="NSViewClass">View</string>
+				<object class="NSToolbar" key="NSViewClass" id="336123486">
+					<object class="NSMutableString" key="NSToolbarIdentifier">
+						<characters key="NS.bytes">0255A004-EE9D-4543-B4D8-222F1A59D0A9</characters>
+					</object>
+					<nil key="NSToolbarDelegate"/>
+					<bool key="NSToolbarPrefersToBeShown">YES</bool>
+					<bool key="NSToolbarShowsBaselineSeparator">YES</bool>
+					<bool key="NSToolbarAllowsUserCustomization">NO</bool>
+					<bool key="NSToolbarAutosavesConfiguration">NO</bool>
+					<int key="NSToolbarDisplayMode">1</int>
+					<int key="NSToolbarSizeMode">1</int>
+					<object class="NSMutableDictionary" key="NSToolbarIBIdentifiedItems">
+						<bool key="EncodedWithXMLCoder">YES</bool>
+						<object class="NSMutableArray" key="dict.sortedKeys">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>NSToolbarCustomizeToolbarItem</string>
+							<string>NSToolbarFlexibleSpaceItem</string>
+							<string>NSToolbarPrintItem</string>
+							<string>NSToolbarSeparatorItem</string>
+							<string>NSToolbarShowColorsItem</string>
+							<string>NSToolbarShowFontsItem</string>
+							<string>NSToolbarSpaceItem</string>
+						</object>
+						<object class="NSMutableArray" key="dict.values">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<object class="NSToolbarItem" id="386220953">
+								<string key="NSToolbarItemIdentifier">NSToolbarCustomizeToolbarItem</string>
+								<string key="NSToolbarItemLabel" id="623085755">Customize</string>
+								<reference key="NSToolbarItemPaletteLabel" ref="623085755"/>
+								<string key="NSToolbarItemToolTip">Customize Toolbar</string>
+								<nil key="NSToolbarItemView"/>
+								<object class="NSImage" key="NSToolbarItemImage">
+									<int key="NSImageFlags">683671552</int>
+									<string key="NSSize">{32, 32}</string>
+									<object class="NSMutableArray" key="NSReps">
+										<bool key="EncodedWithXMLCoder">YES</bool>
+										<object class="NSArray">
+											<bool key="EncodedWithXMLCoder">YES</bool>
+											<integer value="0" id="8"/>
+											<object class="NSBitmapImageRep">
+												<object class="NSData" key="NSTIFFRepresentation">
+													<bytes key="NS.bytes">TU0AKgAAEAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAICAgbAAAABAAAAAAEBAQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAQEBAUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAENDQ0dJSUlW11dXbBpaWnDb29vzyAgIGUPDw8xAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAABsbGyUoKChIHh4ePSkpKUonJycsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMDCEJCQoWvr6/i9fX1/fX19f7h4eH82dnZ+YODg9sYGBg8
+AAAAAAAAAAAAAAAAAAAAAAAAAAJFRUV6ZGRkvf39/f/+/v7//////0NDQ7QAAAAEAAAAAAAAAAAAAAAA
+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
+AAAACQAAABAAAAAYAAAAIAAAACoAAAAxAAAANgAAADkAAAA4AQEBOQAAAC8AAAAnAAAAHQAAABUAAAAO
+AAAACgAAAAsAAAAPAAAAFwAAACAAAAAqAAAAMQAAADQAAAAzAAAALQAAACQAAAAbAAAAEgAAAAsAAAAA
+AAAAAAAAAAQAAAAJAAAAEAAAABgAAAAgAAAAKgAAADEAAAA2AAAAOQAAADgAAAA1AAAALwAAACcAAAAd
+AAAAFQAAAA4AAAAKAAAACwAAAA8AAAAXAAAAIAAAACoAAAAxAAAANAAAADMAAAAtAAAAJAAAABsAAAAS
+AAAACwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0BAAADAAAAAQAgAAABAQADAAAAAQAgAAABAgADAAAABAAA
+EKoBAwADAAAAAQABAAABBgADAAAAAQACAAABEQAEAAAAAQAAAAgBEgADAAAAAQABAAABFQADAAAAAQAE
+AAABFgADAAAAAQD8AAABFwAEAAAAAQAAEAABHAADAAAAAQABAAABUgADAAAAAQABAAABUwADAAAABAAA
+ELIAAAAAAAgACAAIAAgAAQABAAEAAQ</bytes>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="NSColor" key="NSColor" id="496342733">
+										<int key="NSColorSpace">3</int>
+										<bytes key="NSWhite">MCAwAA</bytes>
+									</object>
+								</object>
+								<nil key="NSToolbarItemTarget"/>
+								<string key="NSToolbarItemAction">runToolbarCustomizationPalette:</string>
+								<string key="NSToolbarItemMinSize" id="981196570">{0, 0}</string>
+								<reference key="NSToolbarItemMaxSize" ref="981196570"/>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+							</object>
+							<object class="NSToolbarFlexibleSpaceItem" id="81639080">
+								<string key="NSToolbarItemIdentifier">NSToolbarFlexibleSpaceItem</string>
+								<string key="NSToolbarItemLabel" id="1039467709"/>
+								<string key="NSToolbarItemPaletteLabel">Flexible Space</string>
+								<nil key="NSToolbarItemToolTip"/>
+								<nil key="NSToolbarItemView"/>
+								<nil key="NSToolbarItemImage"/>
+								<nil key="NSToolbarItemTarget"/>
+								<nil key="NSToolbarItemAction"/>
+								<string key="NSToolbarItemMinSize">{1, 5}</string>
+								<string key="NSToolbarItemMaxSize">{20000, 32}</string>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+								<object class="NSMenuItem" key="NSToolbarItemMenuFormRepresentation">
+									<bool key="NSIsDisabled">YES</bool>
+									<bool key="NSIsSeparator">YES</bool>
+									<string key="NSTitle" id="248896587"/>
+									<reference key="NSKeyEquiv" ref="248896587"/>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<object class="NSCustomResource" key="NSOnImage" id="899418888">
+										<string key="NSClassName" id="197077483">NSImage</string>
+										<string key="NSResourceName">NSMenuCheckmark</string>
+									</object>
+									<object class="NSCustomResource" key="NSMixedImage" id="662100394">
+										<reference key="NSClassName" ref="197077483"/>
+										<string key="NSResourceName">NSMenuMixedState</string>
+									</object>
+								</object>
+							</object>
+							<object class="NSToolbarItem" id="371980821">
+								<string key="NSToolbarItemIdentifier">NSToolbarPrintItem</string>
+								<string key="NSToolbarItemLabel" id="21252745">Print</string>
+								<reference key="NSToolbarItemPaletteLabel" ref="21252745"/>
+								<reference key="NSToolbarItemToolTip" ref="21252745"/>
+								<nil key="NSToolbarItemView"/>
+								<object class="NSImage" key="NSToolbarItemImage">
+									<int key="NSImageFlags">750780416</int>
+									<string key="NSSize">{32, 32}</string>
+									<object class="NSMutableArray" key="NSReps">
+										<bool key="EncodedWithXMLCoder">YES</bool>
+										<object class="NSArray">
+											<bool key="EncodedWithXMLCoder">YES</bool>
+											<reference ref="8"/>
+											<object class="NSCoreUIImageRep">
+												<object class="NSMutableDictionary" key="NSCoreUIImageOptions">
+													<bool key="EncodedWithXMLCoder">YES</bool>
+													<object class="NSMutableArray" key="dict.sortedKeys">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<string>imageNameKey</string>
+														<string>widget</string>
+													</object>
+													<object class="NSMutableArray" key="dict.values">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<object class="NSMutableString">
+															<characters key="NS.bytes">image.ToolbarPrint</characters>
+														</object>
+														<string>image</string>
+													</object>
+												</object>
+												<string key="NSSize">{32, 32}</string>
+												<int key="NSBitsPerSample">0</int>
+												<bool key="NSHasAlpha">YES</bool>
+											</object>
+										</object>
+									</object>
+									<reference key="NSColor" ref="496342733"/>
+								</object>
+								<nil key="NSToolbarItemTarget"/>
+								<string key="NSToolbarItemAction">printDocument:</string>
+								<reference key="NSToolbarItemMinSize" ref="981196570"/>
+								<reference key="NSToolbarItemMaxSize" ref="981196570"/>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+							</object>
+							<object class="NSToolbarSeparatorItem" id="408032713">
+								<string key="NSToolbarItemIdentifier">NSToolbarSeparatorItem</string>
+								<reference key="NSToolbarItemLabel" ref="1039467709"/>
+								<string key="NSToolbarItemPaletteLabel">Separator</string>
+								<nil key="NSToolbarItemToolTip"/>
+								<nil key="NSToolbarItemView"/>
+								<nil key="NSToolbarItemImage"/>
+								<nil key="NSToolbarItemTarget"/>
+								<nil key="NSToolbarItemAction"/>
+								<string key="NSToolbarItemMinSize">{12, 5}</string>
+								<string key="NSToolbarItemMaxSize">{12, 1000}</string>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+								<object class="NSMenuItem" key="NSToolbarItemMenuFormRepresentation">
+									<bool key="NSIsDisabled">YES</bool>
+									<bool key="NSIsSeparator">YES</bool>
+									<reference key="NSTitle" ref="248896587"/>
+									<reference key="NSKeyEquiv" ref="248896587"/>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="899418888"/>
+									<reference key="NSMixedImage" ref="662100394"/>
+								</object>
+							</object>
+							<object class="NSToolbarItem" id="1033247071">
+								<string key="NSToolbarItemIdentifier">NSToolbarShowColorsItem</string>
+								<string key="NSToolbarItemLabel" id="992901092">Colors</string>
+								<reference key="NSToolbarItemPaletteLabel" ref="992901092"/>
+								<string key="NSToolbarItemToolTip">Show Color Panel</string>
+								<nil key="NSToolbarItemView"/>
+								<object class="NSImage" key="NSToolbarItemImage">
+									<int key="NSImageFlags">683671552</int>
+									<string key="NSSize">{32, 32}</string>
+									<object class="NSMutableArray" key="NSReps">
+										<bool key="EncodedWithXMLCoder">YES</bool>
+										<object class="NSArray">
+											<bool key="EncodedWithXMLCoder">YES</bool>
+											<reference ref="8"/>
+											<object class="NSBitmapImageRep">
+												<object class="NSData" key="NSTIFFRepresentation">
+													<bytes key="NS.bytes">TU0AKgAAEAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCQEOEzkMUylkF5BChyLCWqEq6G+wL/1voSro
+ZYciwlFkGJAyOQxTCAkBDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADkEPXiWEIbtJyTf/Yt9C/370Tf+d/lf/
+tv9c/77+V/+/9E7/u99C/7XJOf9+hCK7QUAOXgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAxQHHRZjIY42zEH+RvBI/2r/W/9//2D/
+kf9k/6L/Zv+w/mf/wf9m/9T/Zv/l/2H//v9e/+/ySv/Mwzj+Y1kXjhQRAx0AAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMUCR0adDOgP91f/1n/c/9c/2P/
+aP5i/4P+bv+Y/nL/qP53/7r+d//K/nb/2P5z/+f+bv/5/2f///9i///8W//dwD//dF4coBQPAx0AAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFmM0jj7dc/9Z/4r/
+Yf5//2z+ff9y/nX/iP59/6H+hf+w/on/wf6K/9H+if/g/ob/7/6A////eP//823//uNk///kXf/drT//
+Y0cXjgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1BKF41zHv+
+WP+m/2H+mP9s/pb/eP6T/4L+jf+P/or/p/6V/7j+mv/L/p3/2/6a/+f+lv/8/5D///uH//7pe//+3G//
+/sxk///MXf/Mizj+QSkOXgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABCQYO
+IIRau0fwov9d/6//a/6q/3j+qv+H/qj/k/6l/5r+nv+s/qL/wv6q/9T+rP/i/qv/8v+m////n//+8ZX/
+/uGK//7Se//+w23//7hh//CdSv+ETiK7CQUBDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAw5K1M2yZX/Wv/K/2P+vv90/rz/hP67/5L+uv+f/rr/qf60/7L+sP/K/rr/2/69/+z+u//8/7X/
+//mt//7nov/+2Jb//sqJ//65eP/+q2f//6Re/8htOf85GwxSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAFmRRkD7ftv9d/9f/a/7O/3r+zv+M/s//mv7N/6r+zP+3/s3/wP7F/87+yP/l/s//
+9v/N////xP/+7bv//t6t//7Qn//+v5D//q+A//6fbv//lGH/321C/2MrGI8AAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAfh3fCSfTW/2D/4/9v/t//g/7f/5H+3/+k/t//sv7g/8H+3v/Q/t7/
+2P7Z/+3+4P///93///fT//7kxP/+17T//sSo//61l//+pYb//pRz//+FZv/0bU7/hzIiwgAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACihmehT/vn/Yv/z/3L/8f+F//H/lv/z/6f/8/+3//H/
+yf/x/9n/8v/o//D/+P/x///97f/+6dv//tnK//7Iuv/+tqr//qeZ//6WiP/+hXb//3Nl//5jVv+hMyno
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK62w/Vb///9j/v//dP7//4b+//+X/v//
+qP7//7f+///L/v//3P7//+////////////L0//7e4P/+zc///ru9//6qrP/+mZv//oiK//51d//+ZWf/
+/1pc/7AvMf0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAolqHoUfX+/2Hu//9x7f7/
+hO3+/5ft/v+m7f7/tu3+/8jt/v/X7P7/5Or+//Xt////6f///tvt//7K3f/+usv//qq7//6YrP/+h5r/
+/neK//9md//+VWj/oSk26AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB91h8JJ0fT/
+Yd///27b/v+A2/7/kdv+/6Hc/v+w2v7/wNv+/8rX/v/V1P7/69z+//7Z////0Pn//sLm//602P/+pcj/
+/pW3//6EqP/+cpb//2WJ//RNcP+HIjTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+FlBkkD+x3/9a0f//asr+/3rL/v+Kyf7/mcr+/6fH/v+0x/7/u8D+/83F/v/ky/7/8sn///+////+uPD/
+/qng//6d0f/+jsP//n6y//5uov//Xpf/30Jx/2MXLI8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAALKjlTNJLJ/1jG//9huP7/crf+/4G2/v+Ptf7/nLP+/6av/v+xrP7/yLb+/9q3/v/qt/7/
++7L///+q+//+n+n//pPa//6Fy//+dLz//mWu//9cqP/IN3D/OAwbUgAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAEGCQ4eWIS7RZ3w/1us//9npf7/daX+/4Wj/v+OoP7/l5j+/6qg/v/Apv7/
+0Kj+/+Cn/v/wpP7//5r///+S8//+h+P//njU//5sxf//X7r/8Emd/4QhT7sJAQUOAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0mQV4zd8z+V6D//16T/v9pkf7/dY7+/3+G/v+Nh/7/
+pZH+/7aX/v/Jl/7/2Zb+/+aR/v/3jP///4L+//556//+bN7//mHO//9Zzv/MNo3+QA0pXQAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABUyY446bt3/VoX//156/v9ndv7/
+bm7+/4d3/v+fgv7/roP+/7+G/v/Phf7/3oL+/+18/v//dP///2v2//5h5f//Web/3T2u/2MWSI4AAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwgUHRkwdKA6WN3/
+VWz//1le//9nX/7/gWr+/5Ru/v+ncf7/tnT+/8hy/v/Wb/7/5mr+//Rj////Xf///1j+/90+wv90Gl+g
+EwMOHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+BAcWHxciaJMzPMz+RkTw/2hY//98Wv//j2H//6Bh//+uY/7/v2L//9Jg///jXf///Fr//+5H8v/MNcX+
+aBhdkxUEEh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAACAAAABRMTU3QoI5TMSDPI/2FA3/9+SfT/mVH+/7RW//+8U/7/vUn0/7o+3/+zNcj/
+jSSUzFMSUnMAAAAFAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAQIAAAkFAAAVCAAAIg8EEkEmFl+UPCGOyE8op+dgK7D3biux/ncrsPd9KKfn
+dSGOyFkWX5QbBBJBCAAAIgUAABUCAAAJAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAABgIAABAFAAAcCAAAKQwAADkRAABIFQAAVRgAAF0YAABf
+GAAAXRUAAFURAABIDAAAOQgAACkFAAAcAgAAEAAAAAYAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAgAAAAUAAAAIAAAACwAAAA4AAAAS
+AAAAFAAAABUAAAAUAAAAEgAAAA4AAAALAAAACAAAAAUAAAACAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0BAAADAAAAAQAgAAABAQADAAAAAQAgAAABAgADAAAABAAA
+EKoBAwADAAAAAQABAAABBgADAAAAAQACAAABEQAEAAAAAQAAAAgBEgADAAAAAQABAAABFQADAAAAAQAE
+AAABFgADAAAAAQD8AAABFwAEAAAAAQAAEAABHAADAAAAAQABAAABUgADAAAAAQABAAABUwADAAAABAAA
+ELIAAAAAAAgACAAIAAgAAQABAAEAAQ</bytes>
+												</object>
+											</object>
+										</object>
+									</object>
+									<reference key="NSColor" ref="496342733"/>
+								</object>
+								<nil key="NSToolbarItemTarget"/>
+								<string key="NSToolbarItemAction">orderFrontColorPanel:</string>
+								<reference key="NSToolbarItemMinSize" ref="981196570"/>
+								<reference key="NSToolbarItemMaxSize" ref="981196570"/>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+							</object>
+							<object class="NSToolbarItem" id="45802969">
+								<string key="NSToolbarItemIdentifier">NSToolbarShowFontsItem</string>
+								<string key="NSToolbarItemLabel" id="914599628">Fonts</string>
+								<reference key="NSToolbarItemPaletteLabel" ref="914599628"/>
+								<string key="NSToolbarItemToolTip">Show Font Panel</string>
+								<nil key="NSToolbarItemView"/>
+								<object class="NSImage" key="NSToolbarItemImage">
+									<int key="NSImageFlags">683671552</int>
+									<string key="NSSize">{32, 32}</string>
+									<object class="NSMutableArray" key="NSReps">
+										<bool key="EncodedWithXMLCoder">YES</bool>
+										<object class="NSArray">
+											<bool key="EncodedWithXMLCoder">YES</bool>
+											<reference ref="8"/>
+											<object class="NSBitmapImageRep">
+												<object class="NSData" key="NSTIFFRepresentation">
+													<bytes key="NS.bytes">TU0AKgAAEAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0BAAADAAAAAQAgAAABAQADAAAAAQAgAAABAgADAAAABAAA
+EKoBAwADAAAAAQABAAABBgADAAAAAQACAAABEQAEAAAAAQAAAAgBEgADAAAAAQABAAABFQADAAAAAQAE
+AAABFgADAAAAAQD8AAABFwAEAAAAAQAAEAABHAADAAAAAQABAAABUgADAAAAAQABAAABUwADAAAABAAA
+ELIAAAAAAAgACAAIAAgAAQABAAEAAQ</bytes>
+												</object>
+											</object>
+										</object>
+									</object>
+									<reference key="NSColor" ref="496342733"/>
+								</object>
+								<nil key="NSToolbarItemTarget"/>
+								<string key="NSToolbarItemAction">orderFrontFontPanel:</string>
+								<reference key="NSToolbarItemMinSize" ref="981196570"/>
+								<reference key="NSToolbarItemMaxSize" ref="981196570"/>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+							</object>
+							<object class="NSToolbarSpaceItem" id="276621084">
+								<string key="NSToolbarItemIdentifier">NSToolbarSpaceItem</string>
+								<reference key="NSToolbarItemLabel" ref="1039467709"/>
+								<string key="NSToolbarItemPaletteLabel">Space</string>
+								<nil key="NSToolbarItemToolTip"/>
+								<nil key="NSToolbarItemView"/>
+								<nil key="NSToolbarItemImage"/>
+								<nil key="NSToolbarItemTarget"/>
+								<nil key="NSToolbarItemAction"/>
+								<string key="NSToolbarItemMinSize">{32, 5}</string>
+								<string key="NSToolbarItemMaxSize">{32, 32}</string>
+								<bool key="NSToolbarItemEnabled">YES</bool>
+								<bool key="NSToolbarItemAutovalidates">YES</bool>
+								<int key="NSToolbarItemTag">-1</int>
+								<bool key="NSToolbarIsUserRemovable">YES</bool>
+								<int key="NSToolbarItemVisibilityPriority">0</int>
+								<object class="NSMenuItem" key="NSToolbarItemMenuFormRepresentation">
+									<bool key="NSIsDisabled">YES</bool>
+									<bool key="NSIsSeparator">YES</bool>
+									<reference key="NSTitle" ref="248896587"/>
+									<reference key="NSKeyEquiv" ref="248896587"/>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="899418888"/>
+									<reference key="NSMixedImage" ref="662100394"/>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="NSMutableArray" key="NSToolbarIBAllowedItems" id="730464324">
+						<bool key="EncodedWithXMLCoder">YES</bool>
+						<reference ref="1033247071"/>
+						<reference ref="45802969"/>
+						<reference ref="408032713"/>
+						<reference ref="371980821"/>
+						<reference ref="276621084"/>
+						<reference ref="81639080"/>
+						<reference ref="386220953"/>
+					</object>
+					<reference key="NSToolbarIBDefaultItems" ref="730464324"/>
+					<object class="NSMutableArray" key="NSToolbarIBSelectableItems">
+						<bool key="EncodedWithXMLCoder">YES</bool>
+					</object>
+				</object>
 				<string key="NSWindowContentMinSize">{94, 86}</string>
 				<object class="NSView" key="NSWindowView" id="568628114">
 					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSTextField" id="433022199">
+						<object class="NSScrollView" id="665629397">
 							<reference key="NSNextResponder" ref="568628114"/>
-							<int key="NSvFlags">256</int>
-							<string key="NSFrame">{{119, 195}, {269, 22}}</string>
+							<int key="NSvFlags">274</int>
+							<object class="NSMutableArray" key="NSSubviews">
+								<bool key="EncodedWithXMLCoder">YES</bool>
+								<object class="NSClipView" id="74412919">
+									<reference key="NSNextResponder" ref="665629397"/>
+									<int key="NSvFlags">2304</int>
+									<object class="NSMutableArray" key="NSSubviews">
+										<bool key="EncodedWithXMLCoder">YES</bool>
+										<object class="NSTextView" id="231650935">
+											<reference key="NSNextResponder" ref="74412919"/>
+											<int key="NSvFlags">2322</int>
+											<object class="NSMutableSet" key="NSDragTypes">
+												<bool key="EncodedWithXMLCoder">YES</bool>
+												<object class="NSMutableArray" key="set.sortedObjects">
+													<bool key="EncodedWithXMLCoder">YES</bool>
+													<string>Apple HTML pasteboard type</string>
+													<string>Apple PDF pasteboard type</string>
+													<string>Apple PICT pasteboard type</string>
+													<string>Apple PNG pasteboard type</string>
+													<string>Apple URL pasteboard type</string>
+													<string>CorePasteboardFlavorType 0x6D6F6F76</string>
+													<string>CorePasteboardFlavorType 0x75726C20</string>
+													<string>NSColor pasteboard type</string>
+													<string>NSFilenamesPboardType</string>
+													<string>NSStringPboardType</string>
+													<string>NeXT Encapsulated PostScript v1.2 pasteboard type</string>
+													<string>NeXT RTFD pasteboard type</string>
+													<string>NeXT Rich Text Format v1.0 pasteboard type</string>
+													<string>NeXT TIFF v4.0 pasteboard type</string>
+													<string>NeXT font pasteboard type</string>
+													<string>NeXT ruler pasteboard type</string>
+													<string>WebURLsWithTitlesPboardType</string>
+												</object>
+											</object>
+											<string key="NSFrameSize">{407, 14}</string>
+											<reference key="NSSuperview" ref="74412919"/>
+											<reference key="NSWindow"/>
+											<object class="NSTextContainer" key="NSTextContainer" id="540651737">
+												<object class="NSLayoutManager" key="NSLayoutManager">
+													<object class="NSTextStorage" key="NSTextStorage">
+														<object class="NSMutableString" key="NSString">
+															<characters key="NS.bytes">Doc</characters>
+														</object>
+														<object class="NSDictionary" key="NSAttributes">
+															<bool key="EncodedWithXMLCoder">YES</bool>
+															<object class="NSMutableArray" key="dict.sortedKeys">
+																<bool key="EncodedWithXMLCoder">YES</bool>
+																<string>NSFont</string>
+																<string>NSParagraphStyle</string>
+															</object>
+															<object class="NSMutableArray" key="dict.values">
+																<bool key="EncodedWithXMLCoder">YES</bool>
+																<object class="NSFont">
+																	<string key="NSName">Monaco</string>
+																	<double key="NSSize">1.000000e+01</double>
+																	<int key="NSfFlags">16</int>
+																</object>
+																<object class="NSParagraphStyle">
+																	<int key="NSAlignment">3</int>
+																	<object class="NSArray" key="NSTabStops">
+																		<bool key="EncodedWithXMLCoder">YES</bool>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">0.000000e+00</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">5.600000e+01</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.120000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.680000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">2.240000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">2.800000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">3.360000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">3.920000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">4.480000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">5.040000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">5.600000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">6.160000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">6.720000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">7.280000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">7.840000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">8.400000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">8.960000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">9.520000e+02</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.008000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.064000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.120000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.176000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.232000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.288000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.344000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.400000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.456000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.512000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.568000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.624000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.680000e+03</double>
+																		</object>
+																		<object class="NSTextTab">
+																			<double key="NSLocation">1.736000e+03</double>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+														<nil key="NSDelegate"/>
+													</object>
+													<object class="NSMutableArray" key="NSTextContainers">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<reference ref="540651737"/>
+													</object>
+													<int key="NSLMFlags">6</int>
+													<nil key="NSDelegate"/>
+												</object>
+												<reference key="NSTextView" ref="231650935"/>
+												<double key="NSWidth">4.070000e+02</double>
+												<int key="NSTCFlags">1</int>
+											</object>
+											<object class="NSTextViewSharedData" key="NSSharedData">
+												<int key="NSFlags">11239</int>
+												<object class="NSColor" key="NSBackgroundColor" id="644322057">
+													<int key="NSColorSpace">3</int>
+													<bytes key="NSWhite">MQA</bytes>
+												</object>
+												<object class="NSColor" key="NSInsertionColor" id="145346873">
+													<int key="NSColorSpace">3</int>
+													<bytes key="NSWhite">MAA</bytes>
+												</object>
+												<object class="NSDictionary" key="NSSelectedAttributes">
+													<bool key="EncodedWithXMLCoder">YES</bool>
+													<object class="NSMutableArray" key="dict.sortedKeys">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<string>NSBackgroundColor</string>
+														<string id="762343752">NSColor</string>
+													</object>
+													<object class="NSMutableArray" key="dict.values">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<object class="NSColor">
+															<int key="NSColorSpace">6</int>
+															<string key="NSCatalogName" id="772952381">System</string>
+															<string key="NSColorName">selectedTextBackgroundColor</string>
+															<object class="NSColor" key="NSColor" id="688433846">
+																<int key="NSColorSpace">3</int>
+																<bytes key="NSWhite">MC42NjY2NjY2OQA</bytes>
+															</object>
+														</object>
+														<object class="NSColor">
+															<int key="NSColorSpace">6</int>
+															<reference key="NSCatalogName" ref="772952381"/>
+															<string key="NSColorName">selectedTextColor</string>
+															<reference key="NSColor" ref="145346873"/>
+														</object>
+													</object>
+												</object>
+												<nil key="NSMarkedAttributes"/>
+												<object class="NSDictionary" key="NSLinkAttributes">
+													<bool key="EncodedWithXMLCoder">YES</bool>
+													<object class="NSMutableArray" key="dict.sortedKeys">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<reference ref="762343752"/>
+														<string>NSUnderline</string>
+													</object>
+													<object class="NSMutableArray" key="dict.values">
+														<bool key="EncodedWithXMLCoder">YES</bool>
+														<object class="NSColor">
+															<int key="NSColorSpace">1</int>
+															<bytes key="NSRGB">MCAwIDEAA</bytes>
+														</object>
+														<integer value="1" id="9"/>
+													</object>
+												</object>
+												<nil key="NSDefaultParagraphStyle"/>
+											</object>
+											<int key="NSTVFlags">6</int>
+											<string key="NSMaxSize">{490, 1e+07}</string>
+											<reference key="NSMinize" ref="981196570"/>
+											<nil key="NSDelegate"/>
+										</object>
+									</object>
+									<string key="NSFrame">{{1, 1}, {490, 391}}</string>
+									<reference key="NSSuperview" ref="665629397"/>
+									<reference key="NSWindow"/>
+									<reference key="NSNextKeyView" ref="231650935"/>
+									<reference key="NSDocView" ref="231650935"/>
+									<reference key="NSBGColor" ref="644322057"/>
+									<object class="NSCursor" key="NSCursor">
+										<string key="NSHotSpot">{4, -5}</string>
+										<int key="NSCursorType">1</int>
+									</object>
+									<int key="NScvFlags">4</int>
+								</object>
+								<object class="NSScroller" id="766390152">
+									<reference key="NSNextResponder" ref="665629397"/>
+									<int key="NSvFlags">256</int>
+									<string key="NSFrame">{{491, 1}, {15, 391}}</string>
+									<reference key="NSSuperview" ref="665629397"/>
+									<reference key="NSWindow"/>
+									<reference key="NSTarget" ref="665629397"/>
+									<string key="NSAction" id="919539402">_doScroller:</string>
+									<double key="NSPercent">5.261033e-02</double>
+								</object>
+								<object class="NSScroller" id="572946390">
+									<reference key="NSNextResponder" ref="665629397"/>
+									<int key="NSvFlags">256</int>
+									<string key="NSFrame">{{-100, -100}, {87, 18}}</string>
+									<reference key="NSSuperview" ref="665629397"/>
+									<reference key="NSWindow"/>
+									<int key="NSsFlags">1</int>
+									<reference key="NSTarget" ref="665629397"/>
+									<reference key="NSAction" ref="919539402"/>
+									<double key="NSCurValue">1.000000e+00</double>
+									<double key="NSPercent">9.456522e-01</double>
+								</object>
+							</object>
+							<string key="NSFrame">{{0, 20}, {507, 393}}</string>
+							<reference key="NSSuperview" ref="568628114"/>
+							<reference key="NSWindow"/>
+							<reference key="NSNextKeyView" ref="74412919"/>
+							<int key="NSsFlags">18</int>
+							<reference key="NSVScroller" ref="766390152"/>
+							<reference key="NSHScroller" ref="572946390"/>
+							<reference key="NSContentView" ref="74412919"/>
+						</object>
+						<object class="NSTextField" id="903608123">
+							<reference key="NSNextResponder" ref="568628114"/>
+							<int key="NSvFlags">290</int>
+							<string key="NSFrame">{{5, 3}, {485, 14}}</string>
 							<reference key="NSSuperview" ref="568628114"/>
 							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
-							<object class="NSTextFieldCell" key="NSCell" id="566561048">
+							<object class="NSTextFieldCell" key="NSCell" id="163326865">
 								<int key="NSCellFlags">67239424</int>
-								<int key="NSCellFlags2">138412032</int>
-								<string key="NSContents">Your document contents here</string>
+								<int key="NSCellFlags2">4325376</int>
+								<string key="NSContents">Label</string>
 								<object class="NSFont" key="NSSupport">
 									<string key="NSName">LucidaGrande</string>
-									<double key="NSSize">1.800000e+01</double>
-									<int key="NSfFlags">16</int>
+									<double key="NSSize">1.100000e+01</double>
+									<int key="NSfFlags">3100</int>
 								</object>
-								<reference key="NSControlView" ref="433022199"/>
+								<reference key="NSControlView" ref="903608123"/>
 								<object class="NSColor" key="NSBackgroundColor">
 									<int key="NSColorSpace">6</int>
-									<string key="NSCatalogName" id="390436589">System</string>
+									<reference key="NSCatalogName" ref="772952381"/>
 									<string key="NSColorName">controlColor</string>
-									<object class="NSColor" key="NSColor">
-										<int key="NSColorSpace">3</int>
-										<bytes key="NSWhite">MC42NjY2NjY2OQA</bytes>
-									</object>
+									<reference key="NSColor" ref="688433846"/>
 								</object>
 								<object class="NSColor" key="NSTextColor">
 									<int key="NSColorSpace">6</int>
-									<reference key="NSCatalogName" ref="390436589"/>
+									<reference key="NSCatalogName" ref="772952381"/>
 									<string key="NSColorName">controlTextColor</string>
-									<object class="NSColor" key="NSColor">
-										<int key="NSColorSpace">3</int>
-										<bytes key="NSWhite">MAA</bytes>
-									</object>
+									<reference key="NSColor" ref="145346873"/>
 								</object>
 							</object>
 						</object>
@@ -78,8 +844,8 @@
 					<reference key="NSSuperview"/>
 					<reference key="NSWindow"/>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {1280, 1002}}</string>
-				<string key="NSMinSize">{94, 108}</string>
+				<string key="NSScreenRect">{{0, 0}, {1920, 1178}}</string>
+				<string key="NSMinSize">{94, 164}</string>
 			</object>
 			<object class="NSCustomObject" id="796877042">
 				<string key="NSClassName">NSApplication</string>
@@ -90,11 +856,51 @@
 				<bool key="EncodedWithXMLCoder">YES</bool>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
-						<string key="label">delegate</string>
+						<string key="label" id="903863124">delegate</string>
+						<reference key="source" ref="336123486"/>
+						<reference key="destination" ref="512844837"/>
+					</object>
+					<int key="connectionID">100035</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">initialFirstResponder</string>
+						<reference key="source" ref="275939982"/>
+						<reference key="destination" ref="231650935"/>
+					</object>
+					<int key="connectionID">100036</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">textView</string>
+						<reference key="source" ref="512844837"/>
+						<reference key="destination" ref="231650935"/>
+					</object>
+					<int key="connectionID">100040</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<reference key="label" ref="903863124"/>
+						<reference key="source" ref="231650935"/>
+						<reference key="destination" ref="512844837"/>
+					</object>
+					<int key="connectionID">100041</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">statusTextField</string>
+						<reference key="source" ref="512844837"/>
+						<reference key="destination" ref="903608123"/>
+					</object>
+					<int key="connectionID">100042</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<reference key="label" ref="903863124"/>
 						<reference key="source" ref="275939982"/>
 						<reference key="destination" ref="512844837"/>
 					</object>
-					<int key="connectionID">17</int>
+					<int key="connectionID">100043</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
@@ -102,7 +908,7 @@
 						<reference key="source" ref="512844837"/>
 						<reference key="destination" ref="275939982"/>
 					</object>
-					<int key="connectionID">18</int>
+					<int key="connectionID">100044</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -134,6 +940,7 @@
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<reference ref="568628114"/>
+							<reference ref="336123486"/>
 						</object>
 						<reference key="parent" ref="732574258"/>
 						<reference key="objectName" ref="590237441"/>
@@ -143,29 +950,106 @@
 						<reference key="object" ref="568628114"/>
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<reference ref="433022199"/>
+							<reference ref="665629397"/>
+							<reference ref="903608123"/>
 						</object>
 						<reference key="parent" ref="275939982"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">20</int>
-						<reference key="object" ref="433022199"/>
-						<object class="NSMutableArray" key="children">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<reference ref="566561048"/>
-						</object>
-						<reference key="parent" ref="568628114"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">100020</int>
-						<reference key="object" ref="566561048"/>
-						<reference key="parent" ref="433022199"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">-3</int>
 						<reference key="object" ref="796877042"/>
 						<reference key="parent" ref="732574258"/>
 						<string key="objectName">Application</string>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100021</int>
+						<reference key="object" ref="665629397"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="766390152"/>
+							<reference ref="572946390"/>
+							<reference ref="231650935"/>
+						</object>
+						<reference key="parent" ref="568628114"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100022</int>
+						<reference key="object" ref="766390152"/>
+						<reference key="parent" ref="665629397"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100023</int>
+						<reference key="object" ref="572946390"/>
+						<reference key="parent" ref="665629397"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100024</int>
+						<reference key="object" ref="231650935"/>
+						<reference key="parent" ref="665629397"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100025</int>
+						<reference key="object" ref="903608123"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="163326865"/>
+						</object>
+						<reference key="parent" ref="568628114"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100026</int>
+						<reference key="object" ref="163326865"/>
+						<reference key="parent" ref="903608123"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100027</int>
+						<reference key="object" ref="336123486"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="1033247071"/>
+							<reference ref="45802969"/>
+							<reference ref="408032713"/>
+							<reference ref="371980821"/>
+							<reference ref="276621084"/>
+							<reference ref="81639080"/>
+							<reference ref="386220953"/>
+						</object>
+						<reference key="parent" ref="275939982"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100028</int>
+						<reference key="object" ref="1033247071"/>
+						<reference key="parent" ref="336123486"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100029</int>
+						<reference key="object" ref="45802969"/>
+						<reference key="parent" ref="336123486"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100030</int>
+						<reference key="object" ref="408032713"/>
+						<reference key="parent" ref="336123486"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100031</int>
+						<reference key="object" ref="371980821"/>
+						<reference key="parent" ref="336123486"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100032</int>
+						<reference key="object" ref="276621084"/>
+						<reference key="parent" ref="336123486"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100033</int>
+						<reference key="object" ref="81639080"/>
+						<reference key="parent" ref="336123486"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">100034</int>
+						<reference key="object" ref="386220953"/>
+						<reference key="parent" ref="336123486"/>
 					</object>
 				</object>
 			</object>
@@ -175,8 +1059,20 @@
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<string>-1.IBPluginDependency</string>
 					<string>-2.IBPluginDependency</string>
-					<string>20.IBPluginDependency</string>
-					<string>20.ImportedFromIB2</string>
+					<string>100021.IBPluginDependency</string>
+					<string>100022.IBPluginDependency</string>
+					<string>100023.IBPluginDependency</string>
+					<string>100024.IBPluginDependency</string>
+					<string>100025.IBPluginDependency</string>
+					<string>100026.IBPluginDependency</string>
+					<string>100027.IBPluginDependency</string>
+					<string>100028.IBPluginDependency</string>
+					<string>100029.IBPluginDependency</string>
+					<string>100030.IBPluginDependency</string>
+					<string>100031.IBPluginDependency</string>
+					<string>100032.IBPluginDependency</string>
+					<string>100033.IBPluginDependency</string>
+					<string>100034.IBPluginDependency</string>
 					<string>5.IBPluginDependency</string>
 					<string>5.IBWindowTemplateEditedContentRect</string>
 					<string>5.ImportedFromIB2</string>
@@ -188,17 +1084,29 @@
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
-					<reference ref="481663422"/>
-					<reference ref="481663422"/>
-					<reference ref="481663422"/>
-					<integer value="1" id="9"/>
-					<reference ref="481663422"/>
-					<string id="450622461">{{190, 319}, {507, 413}}</string>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<reference ref="618426502"/>
+					<string id="42870142">{{513, 313}, {507, 413}}</string>
 					<reference ref="9"/>
-					<reference ref="450622461"/>
+					<reference ref="42870142"/>
 					<reference ref="9"/>
 					<string>{94, 86}</string>
-					<reference ref="481663422"/>
+					<reference ref="618426502"/>
 					<reference ref="9"/>
 				</object>
 			</object>
@@ -222,7 +1130,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">100020</int>
+			<int key="maxID">100044</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -231,21 +1139,20 @@
 					<string key="className">RDocumentWinCtrl</string>
 					<string key="superclassName">NSWindowController</string>
 					<object class="NSMutableDictionary" key="actions">
-						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSArray" key="dict.sortedKeys">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-						</object>
-						<object class="NSMutableArray" key="dict.values">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-						</object>
+						<string key="NS.key.0">executeSelection:</string>
+						<string key="NS.object.0">id</string>
 					</object>
 					<object class="NSMutableDictionary" key="outlets">
 						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSArray" key="dict.sortedKeys">
+						<object class="NSMutableArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>statusTextField</string>
+							<string>textView</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>NSTextField</string>
+							<string>NSTextView</string>
 						</object>
 					</object>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
@@ -260,63 +1167,442 @@
 		<int key="IBDocument.defaultPropertyAccessControl">3</int>
 		<object class="NSMutableData" key="IBDocument.RunnableNib">
 			<bytes key="NS.bytes">YnBsaXN0MDDUAAEAAgADAAQABQAGAAkAClgkdmVyc2lvblQkdG9wWSRhcmNoaXZlclgkb2JqZWN0cxIA
-AYag0QAHAAhdSUIub2JqZWN0ZGF0YYABXxAPTlNLZXllZEFyY2hpdmVyrxBLAAsADAAxADUANgA8AD0A
-QQBFAEoAUgBqAGsAbABtAG4AbwALAHwAgACLAIwAnACdAKUApgCpALMAtAC1ALoAvADBAMIAxQDJAM8A
-0wALANQA1gDXANgA2wDcAOAA5QDmAO4A8QDyAPQA/AEFAQ4BDwEQAREBEgETARYBGQEkAS8BMAExATIB
-MwE0ALABNQE2ATkBPAE/VSRudWxs3xASAA0ADgAPABAAEQASABMAFAAVABYAFwAYABkAGgAbABwAHQAe
-AB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALwAwVk5TUm9vdFYkY2xhc3NdTlNPYmplY3Rz
-S2V5c18QD05TQ2xhc3Nlc1ZhbHVlc18QGU5TQWNjZXNzaWJpbGl0eU9pZHNWYWx1ZXNdTlNDb25uZWN0
-aW9uc1tOU05hbWVzS2V5c1tOU0ZyYW1ld29ya11OU0NsYXNzZXNLZXlzWk5TT2lkc0tleXNdTlNOYW1l
-c1ZhbHVlc18QGU5TQWNjZXNzaWJpbGl0eUNvbm5lY3RvcnNdTlNGb250TWFuYWdlcl8QEE5TVmlzaWJs
-ZVdpbmRvd3NfEA9OU09iamVjdHNWYWx1ZXNfEBdOU0FjY2Vzc2liaWxpdHlPaWRzS2V5c1lOU05leHRP
-aWRcTlNPaWRzVmFsdWVzgAKASoAvgDyASYAIgDSABYA7gD2ANYBHgACABoAzgEgSAAGGtoA+0gAOADIA
-MwA0W05TQ2xhc3NOYW1lgASAA18QEFJEb2N1bWVudFdpbkN0cmzSADcAOAA5ADpYJGNsYXNzZXNaJGNs
-YXNzbmFtZaIAOgA7Xk5TQ3VzdG9tT2JqZWN0WE5TT2JqZWN0XxAQSUJDb2NvYUZyYW1ld29ya9IADgA+
-AD8AQFpOUy5vYmplY3RzgAeg0gA3ADgAQgBDowBDAEQAO1xOU011dGFibGVTZXRVTlNTZXTSAA4APgBG
-AEeAJKIASABJgAmALdQADgBLAEwATQBOAB8AUABRXU5TRGVzdGluYXRpb25YTlNTb3VyY2VXTlNMYWJl
-bIAsgAKACoAr3ABTAA4AVABVAFYAVwBYAFkAWgBbAFwAXQBeAF8AYABhAGIAYwBkAGUAZgBnAGgAaVxO
-U1dpbmRvd1ZpZXdcTlNTY3JlZW5SZWN0XU5TV2luZG93VGl0bGVZTlNXVEZsYWdzXU5TV2luZG93Q2xh
-c3NfEBZOU1dpbmRvd0NvbnRlbnRNaW5TaXplXE5TV2luZG93UmVjdF8QD05TV2luZG93QmFja2luZ18Q
-EU5TV2luZG93U3R5bGVNYXNrWU5TTWluU2l6ZVtOU1ZpZXdDbGFzc4AQgCqAKIAMEnB4AACADYAPgAsQ
-AhAPgCmADl8QGHt7MTEwLCAyOTh9LCB7NTA3LCA0MTN9fVZXaW5kb3dYTlNXaW5kb3dUVmlld1h7OTQs
-IDg2fdcAcAAOAHEAcgBzAGwAdAB1AHYAdwB4AHkAdQB7XxAPTlNOZXh0UmVzcG9uZGVyWk5TU3Vidmll
-d3NYTlN2RmxhZ3NbTlNGcmFtZVNpemVbTlNTdXBlcnZpZXeAEYAngBIRAQCAJYARgCbSAA4APgBGAH6A
-JKEAf4AT2ABwAA4AgQCCAHIAgwBsAHQAXgCFAIYAhwB4AIgAdQBeV05TRnJhbWVWTlNDZWxsWU5TRW5h
-YmxlZIAQgCOAFIAVCYARgBBfEBd7ezExOSwgMTk1fSwgezI2OSwgMjJ9fdgAjQAOAI4AjwCQAJEAkgCT
-AJQAlQCWAJcAmAB/AJoAm1tOU0NlbGxGbGFnc18QEU5TQmFja2dyb3VuZENvbG9yWk5TQ29udGVudHNZ
-TlNTdXBwb3J0XU5TQ29udHJvbFZpZXdcTlNDZWxsRmxhZ3MyW05TVGV4dENvbG9yEgQB/gCAIoAagBaA
-F4ATEghAAACAH18QG1lvdXIgZG9jdW1lbnQgY29udGVudHMgaGVyZdQADgCeAJ8AoAChAKIAowCkVk5T
-U2l6ZVZOU05hbWVYTlNmRmxhZ3OAGSNAMgAAAAAAAIAYEBBcTHVjaWRhR3JhbmRl0gA3ADgApwCoogCo
-ADtWTlNGb2501QAOAKoAqwCsAK0ArgCvALAAsQCyV05TQ29sb3JcTlNDb2xvclNwYWNlW05TQ29sb3JO
-YW1lXU5TQ2F0YWxvZ05hbWWAHoAdEAaAHIAbVlN5c3RlbVxjb250cm9sQ29sb3LTAA4AqwC2AK4AuAC5
-V05TV2hpdGWAHhADSzAuNjY2NjY2NjkA0gA3ADgAuwCqogCqADvVAA4AqgCrAKwArQCuAL4AsAC/ALKA
-HoAhgCCAG18QEGNvbnRyb2xUZXh0Q29sb3LTAA4AqwC2AK4AuADEgB5CMADSADcAOADGAMekAMcAyACC
-ADtfEA9OU1RleHRGaWVsZENlbGxcTlNBY3Rpb25DZWxs0gA3ADgAygDLpQDLAMwAzQDOADtbTlNUZXh0
-RmllbGRZTlNDb250cm9sVk5TVmlld1tOU1Jlc3BvbmRlctIANwA4ANAA0aMA0QDSADteTlNNdXRhYmxl
-QXJyYXlXTlNBcnJheVp7NTA3LCA0MTN90gA3ADgA1QDNowDNAM4AO18QFnt7MCwgMH0sIHsxMjgwLCAx
-MDAyfX1Zezk0LCAxMDh90gA3ADgA2QDaogDaADtfEBBOU1dpbmRvd1RlbXBsYXRlWGRlbGVnYXRl0gA3
-ADgA3QDeowDeAN8AO18QFE5TTmliT3V0bGV0Q29ubmVjdG9yXk5TTmliQ29ubmVjdG9y1AAOAEsATABN
-AE4AUAAfAOSALIAKgAKALlZ3aW5kb3fSAA4APgDnAOiAMqUAUAB/AOsAXgCHgAqAE4AwgBCAFdIADgAy
-ADMA8IAEgDFdTlNBcHBsaWNhdGlvbtIANwA4APMA0qIA0gA70gAOAD4A5wD2gDKlAB8AXgAfAFAAf4AC
-gBCAAoAKgBPSAA4APgDnAP6AMqYAHwBQAOsAfwBeAIeAAoAKgDCAE4AQgBXSAA4APgDnAQeAMqYBCABh
-AQoBCwEMAQ2ANoAMgDeAOIA5gDpcRmlsZSdzIE93bmVyW0FwcGxpY2F0aW9uXxApU3RhdGljIFRleHQg
-KFlvdXIgZG9jdW1lbnQgY29udGVudHMgaGVyZSlcQ29udGVudCBWaWV3XxAtVGV4dCBGaWVsZCBDZWxs
-IChZb3VyIGRvY3VtZW50IGNvbnRlbnRzIGhlcmUp0gAOAD4A5wEVgDKg0gAOAD4A5wEYgDKg0gAOAD4A
-5wEbgDKoAB8ASABQAH8A6wBJAF4Ah4ACgAmACoATgDCALYAQgBXSAA4APgDnASaAMqgBJwEoASkBKgEr
-ASwBLQEugD+AQIBBgEKAQ4BEgEWARhIAAYa1EBEQBRAUE//////////9EBISAAGGtNIADgA+AEYBOIAk
-oNIADgA+AOcBO4AyoNIADgA+AOcBPoAyoNIANwA4AUABQaIBQQA7Xk5TSUJPYmplY3REYXRhAAgAGQAi
-ACcAMQA6AD8ARABSAFQAZgD/AQUBUAFXAV4BbAF+AZoBqAG0AcABzgHZAecCAwIRAiQCNgJQAloCZwJp
-AmsCbQJvAnECcwJ1AncCeQJ7An0CfwKBAoMChQKHAowCjgKXAqMCpQKnAroCwwLMAtcC3ALrAvQDBwMQ
-AxsDHQMeAycDLgM7A0EDSgNMA1EDUwNVA2YDdAN9A4UDhwOJA4sDjQO+A8sD2APmA/AD/gQXBCQENgRK
-BFQEYARiBGQEZgRoBG0EbwRxBHMEdQR3BHkEewSWBJ0EpgSrBLQE0QTjBO4E9wUDBQ8FEQUTBRUFGAUa
-BRwFHgUnBSkFLAUuBU8FVwVeBWgFagVsBW4FcAVxBXMFdQWPBbAFvAXQBdsF5QXzBgAGDAYRBhMGFQYX
-BhkGGwYgBiIGQAZRBlgGXwZoBmoGcwZ1BncGhAaNBpIGmQauBrYGwwbPBt0G3wbhBuMG5QbnBu4G+wcI
-BxAHEgcUByAHKQcuB0MHRQdHB0kHSwdeB2sHbQdwB3kHggeUB6EHqge1B8EHywfSB94H5wfuB/0IBQgQ
-CBkIIAg5CEMITAhRCGQIbQh2CH0IlAijCLQItgi4CLoIvAjDCMwIzgjZCNsI3QjfCOEI4wjsCO4I8Aj+
-CQcJDAkVCRcJIgkkCSYJKAkqCSwJNQk3CUQJRglICUoJTAlOCVAJWQlbCWgJaglsCW4JcAlyCXQJgQmN
-CbkJxgn2Cf8KAQoCCgsKDQoOChcKGQoqCiwKLgowCjIKNAo2CjgKOgpDCkUKVgpYCloKXApeCmAKYgpk
-CmYKawptCm8KcQp6CnwKgQqKCowKjQqWCpgKmQqiCqQKpQquCrMAAAAAAAACAgAAAAAAAAFCAAAAAAAA
-AAAAAAAAAAAKwg</bytes>
+AYag0QAHAAhdSUIub2JqZWN0ZGF0YYABXxAPTlNLZXllZEFyY2hpdmVyrxEBOgALAAwAMQA1ADYAPAA9
+AEEARQBPAFcAZwBxAAsAcgCCAIMAiwCMAI8AmQCaAJsAoACiAKcAqACrAK8AtQC2ALoAvwDXANgAXQDZ
+APIA9gD6AQ0BDgEPARABEQESARMBFAENATQBNQE2AT4BPwFDASQBSAFMAU0BUQFUAVcBWgFdAV4BXwFi
+AQ4BcwF0AXUBdgF3AXMBiQFcAY4BjwGSAZYBlwGaAZwBDwGrAawBrQE+AbIBtgG7Ab4BvwHAARAB0AHR
+AdIB0wHbAd0BEQHsAe0BPgHzAfcB/AIEAgwCDQIOAhECEgE+AhYCGQIaARICKgIrAT4CLAI0AjYBEwJF
+AkYCRwE+AkwCUAJVAlgCWQJaAmQCZwJqAmsCcAKCAogCmQKdArECxQLGAscCyALJAsoCywLMAs0CzgLP
+AtAC0QLSAtMC1ALVAtYC1wLgAugC7gLxAvkAjgL6Av8DIgMmAykDLAMvAzIDNQM4AzsDPgNBA0QDRwNK
+A00DUANTA1YDWQNcA18DYgNlA2gDawNuA3EDdAN3A3oDfQOAA4MDhgOIA40DjgOQA5QDmAOaA5wDqwOu
+AHQAkAO2A7sDvAPBA8IDygDrA8sDzwPSA9MD1gPXA9wD3QPfA+ID7gPvA/AD8wP+A/8EAAQDAAsEBAQG
+BAcECAQLBAwEEQQSBBcEGAQdBB4EIwQoBDwEPwRABFQEaQR+BH8EgASBBIIEgwSEBIUEhgSHBIgEiQSK
+BIsEjASNBI4EjwSSBJUEsQTNBM4EzwTQBNEE0gTTBNQE1QTWBNcE2ATZBNoE2wTcBN0E3gTfBOAE4QTi
+BOME5ACWBOUE6ATrBO5VJG51bGzfEBIADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4A
+HwAgACEAIgAjACQAJQAmACcAKAApACoAKwAsAC0ALgAvADBWTlNSb290ViRjbGFzc11OU09iamVjdHNL
+ZXlzXxAPTlNDbGFzc2VzVmFsdWVzXxAZTlNBY2Nlc3NpYmlsaXR5T2lkc1ZhbHVlc11OU0Nvbm5lY3Rp
+b25zW05TTmFtZXNLZXlzW05TRnJhbWV3b3JrXU5TQ2xhc3Nlc0tleXNaTlNPaWRzS2V5c11OU05hbWVz
+VmFsdWVzXxAZTlNBY2Nlc3NpYmlsaXR5Q29ubmVjdG9yc11OU0ZvbnRNYW5hZ2VyXxAQTlNWaXNpYmxl
+V2luZG93c18QD05TT2JqZWN0c1ZhbHVlc18QF05TQWNjZXNzaWJpbGl0eU9pZHNLZXlzWU5TTmV4dE9p
+ZFxOU09pZHNWYWx1ZXOAAoEBOYEBAoEBGoEBOIAIgQEGgAWBARmBARuBAQeBATaAAIAGgQEFgQE3EgAB
+hs6BARzSAA4AMgAzADRbTlNDbGFzc05hbWWABIADXxAQUkRvY3VtZW50V2luQ3RybNIANwA4ADkAOlgk
+Y2xhc3Nlc1okY2xhc3NuYW1logA6ADteTlNDdXN0b21PYmplY3RYTlNPYmplY3RfEBBJQkNvY29hRnJh
+bWV3b3Jr0gAOAD4APwBAWk5TLm9iamVjdHOAB6DSADcAOABCAEOjAEMARAA7XE5TTXV0YWJsZVNldFVO
+U1NldNIADgA+AEYAR4A8pwBIAEkASgBLAEwATQBOgAmAH4D6gPyA/oEBAIEBAdQADgBQAFEAUgBTAFQA
+HwBWXU5TRGVzdGluYXRpb25YTlNTb3VyY2VXTlNMYWJlbIAegAqAAoAd2ABYAA4AWQBaAFsAXABdAF4A
+XwBgAGEAYgBjAGQAZQBfXxAPTlNOZXh0UmVzcG9uZGVyV05TRnJhbWVWTlNDZWxsWE5TdkZsYWdzWU5T
+RW5hYmxlZFhOU1dpbmRvd1tOU1N1cGVydmlld4ALgByADIAOEQEiCYANgAvXAFgADgBoAFsAaQBdAF4A
+ZQBrAGwAbQBuAGUAcFpOU1N1YnZpZXdzW05TRnJhbWVTaXplgA2A9YCLEQEAgPOADYD0XxATe3s1LCAz
+fSwgezQ4NSwgMTR9fdgAcwAOAHQAdQB2AHcAeAB5AHoAewB8AH0AfgBUAIAAgVtOU0NlbGxGbGFnc18Q
+EU5TQmFja2dyb3VuZENvbG9yWk5TQ29udGVudHNZTlNTdXBwb3J0XU5TQ29udHJvbFZpZXdcTlNDZWxs
+RmxhZ3MyW05TVGV4dENvbG9yEgQB/gCAG4ATgA+AEIAKEgBCAACAGFVMYWJlbNQADgCEAIUAhgCHAIgA
+iQCKVk5TU2l6ZVZOU05hbWVYTlNmRmxhZ3OAEiNAJgAAAAAAAIAREQwcXEx1Y2lkYUdyYW5kZdIANwA4
+AI0AjqIAjgA7Vk5TRm9udNUADgCQAJEAkgCTAJQAlQCWAJcAmFdOU0NvbG9yXE5TQ29sb3JTcGFjZVtO
+U0NvbG9yTmFtZV1OU0NhdGFsb2dOYW1lgBeAFhAGgBWAFFZTeXN0ZW1cY29udHJvbENvbG9y0wAOAJEA
+nACUAJ4An1dOU1doaXRlgBcQA0swLjY2NjY2NjY5ANIANwA4AKEAkKIAkAA71QAOAJAAkQCSAJMAlACk
+AJYApQCYgBeAGoAZgBRfEBBjb250cm9sVGV4dENvbG9y0wAOAJEAnACUAJ4AqoAXQjAA0gA3ADgArACt
+pACtAK4AWgA7XxAPTlNUZXh0RmllbGRDZWxsXE5TQWN0aW9uQ2VsbNIANwA4ALAAsaUAsQCyALMAtAA7
+W05TVGV4dEZpZWxkWU5TQ29udHJvbFZOU1ZpZXdbTlNSZXNwb25kZXJfEA9zdGF0dXNUZXh0RmllbGTS
+ADcAOAC3ALijALgAuQA7XxAUTlNOaWJPdXRsZXRDb25uZWN0b3JeTlNOaWJDb25uZWN0b3LUAA4AUABR
+AFIAUwC8AB8AvoAegCCAAoD53ADAAA4AwQDCAMMAxADFAMYAxwDIAMkAygBfAMwAzQDOAM8A0ADRANIA
+0wDUANUA1lxOU1dpbmRvd1ZpZXdcTlNTY3JlZW5SZWN0XU5TV2luZG93VGl0bGVZTlNXVEZsYWdzXU5T
+V2luZG93Q2xhc3NfEBZOU1dpbmRvd0NvbnRlbnRNaW5TaXplXE5TV2luZG93UmVjdF8QD05TV2luZG93
+QmFja2luZ18QEU5TV2luZG93U3R5bGVNYXNrWU5TTWluU2l6ZVtOU1ZpZXdDbGFzc4ALgPiA9oAiEnB4
+AACAI4CKgCEQAhAPgPeAJF8QGHt7MjAxLCAzODd9LCB7NTA3LCA0MTN9fVZXaW5kb3fdAA4A2gDbANwA
+3QDeAN8A4ADhAOIA4wDkAOUA5gDnAGQA5wDqAOsA7AArAGQA6gDwAOsA8V8QF05TVG9vbGJhcklCRGVm
+YXVsdEl0ZW1zXxAfTlNUb29sYmFyU2hvd3NCYXNlbGluZVNlcGFyYXRvcl8QF05TVG9vbGJhcklCQWxs
+b3dlZEl0ZW1zXxAfTlNUb29sYmFyQXV0b3NhdmVzQ29uZmlndXJhdGlvbl8QEU5TVG9vbGJhclNpemVN
+b2RlXxAaTlNUb29sYmFySUJJZGVudGlmaWVkSXRlbXNfEBFOU1Rvb2xiYXJEZWxlZ2F0ZV8QGU5TVG9v
+bGJhclByZWZlcnNUb0JlU2hvd25fECBOU1Rvb2xiYXJBbGxvd3NVc2VyQ3VzdG9taXphdGlvbl8QGk5T
+VG9vbGJhcklCU2VsZWN0YWJsZUl0ZW1zXxAUTlNUb29sYmFyRGlzcGxheU1vZGVfEBNOU1Rvb2xiYXJJ
+ZGVudGlmaWVygImAhwmAhwgQAYAngAAJCICIgCXSAA4A8wD0APVZTlMuc3RyaW5ngCZfECQwMjU1QTAw
+NC1FRTlELTQ1NDMtQjREOC0yMjJGMUE1OUQwQTnSADcAOAD3APijAPgA+QA7XxAPTlNNdXRhYmxlU3Ry
+aW5nWE5TU3RyaW5n0wAOAPsAPgD8AP0BBVdOUy5rZXlzgHGnAP4A/wEAAQEBAgEDAQSAKIApgCqAK4As
+gC2ALqcBBgEHAQgBCQEKAQsBDIAvgEKAUoBdgGSAdYB8XxAWTlNUb29sYmFyU2hvd0ZvbnRzSXRlbV8Q
+Fk5TVG9vbGJhclNlcGFyYXRvckl0ZW1fEB1OU1Rvb2xiYXJDdXN0b21pemVUb29sYmFySXRlbV8QGk5T
+VG9vbGJhckZsZXhpYmxlU3BhY2VJdGVtXxASTlNUb29sYmFyUHJpbnRJdGVtXxASTlNUb29sYmFyU3Bh
+Y2VJdGVtXxAXTlNUb29sYmFyU2hvd0NvbG9yc0l0ZW3fEBABFQAOARYBFwEYARkBGgEbARwBHQEeAR8B
+IAEhASIBIwEkASUAKwBkASgAZAArAGQBLAEtAS4BLwEwATABLQEzXxAfTlNUb29sYmFySXRlbVZpc2li
+aWxpdHlQcmlvcml0eV8QEU5TVG9vbGJhckl0ZW1WaWV3XxAUTlNUb29sYmFySXRlbUVuYWJsZWRfEBNO
+U1Rvb2xiYXJJdGVtQWN0aW9uXxAYTlNUb29sYmFySXNVc2VyUmVtb3ZhYmxlXxATTlNUb29sYmFySXRl
+bVRhcmdldF8QGk5TVG9vbGJhckl0ZW1BdXRvdmFsaWRhdGVzXxAXTlNUb29sYmFySXRlbUlkZW50aWZp
+ZXJfEBlOU1Rvb2xiYXJJdGVtUGFsZXR0ZUxhYmVsXxAUTlNUb29sYmFySXRlbVRvb2xUaXBfEBBOU1Rv
+b2xiYXJJdGVtVGFnXxAUTlNUb29sYmFySXRlbU1heFNpemVfEBROU1Rvb2xiYXJJdGVtTWluU2l6ZV8Q
+Ek5TVG9vbGJhckl0ZW1MYWJlbF8QEk5TVG9vbGJhckl0ZW1JbWFnZRAAgEGAAAmAPwmAAAmAMIAxgDIT
+//////////+AQIBAgDGAM1VGb250c18QD1Nob3cgRm9udCBQYW5lbNUADgCEATcBOACQATkBOgE7ATwB
+PVxOU0ltYWdlRmxhZ3NWTlNSZXBzgD6ANBIowAAAgDWAPVh7MzIsIDMyfdIADgA+AEYBQYA8oQFCgDbS
+AA4APgFEAUWAO6IBRgFHgDeAONIADgFJAUoBS18QFE5TVElGRlJlcHJlc2VudGF0aW9ugDqAOU8RELpN
+TQAqAAAQCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAFB8vcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAA4WIlAuR23/CxEbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKD5f4C5Hbf8UHy9wAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABcjNoAuR23/Lkdt/xcjNoAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCA0gK0Jm8C5Hbf8uR23/IjVSwAAAAAAA
+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
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAA8A
+AAAWJTlY1SU5WNYiNVHKIjVRyyI1UswoPl/mAAAANAAAADYAAAA2ERopgC5Hbf8lOVjZIjVRyyI1Ucol
+OVjWLkdt/wUJDTMAAAAPAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAIAAAADwAAABYAAAAdAAAAIgAAACcAAAAsAAAALwAAADIAAAA0AAAANgAAADYAAAA0AAAAMgAAAC8A
+AAAsAAAAJwAAACIAAAAdAAAAFgAAAA8AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADQEAAAMAAAABACAAAAEBAAMAAAABACAAAAECAAMAAAAEAAAQ
+qgEDAAMAAAABAAEAAAEGAAMAAAABAAIAAAERAAQAAAABAAAACAESAAMAAAABAAEAAAEVAAMAAAABAAQA
+AAEWAAMAAAABAPwAAAEXAAQAAAABAAAQAAEcAAMAAAABAAEAAAFSAAMAAAABAAEAAAFTAAMAAAAEAAAQ
+sgAAAAAACAAIAAgACAABAAEAAQAB0gA3ADgBTgFPowFPAVAAO18QEE5TQml0bWFwSW1hZ2VSZXBaTlNJ
+bWFnZVJlcNIANwA4AVIBU6IBUwA7V05TQXJyYXnSADcAOAFVAVajAVYBUwA7Xk5TTXV0YWJsZUFycmF5
+0wAOAJEAnACUAJ4BWYAXRDAgMADSADcAOAFbAVyiAVwAO1dOU0ltYWdlXxAUb3JkZXJGcm9udEZvbnRQ
+YW5lbDpWezAsIDB90gA3ADgBYAFhogFhADtdTlNUb29sYmFySXRlbd8QEQEVAA4BYwEWARcBGAEZARoB
+GwEcAR0BHgEfASABIQEiASMBJAFkAWUAKwBkACsAZAArAGQBbAFtACsBLwFvAXABcQArXxAjTlNUb29s
+YmFySXRlbU1lbnVGb3JtUmVwcmVzZW50YXRpb26AUYBIgAAJgAAJgAAJgEOARYAAgEeARoBEgABQWVNl
+cGFyYXRvcld7MTIsIDV9WnsxMiwgMTAwMH3ZAA4BeAF5AXoBewF8AX0BfgF/AYABgQGCAGQBgQBkAYYB
+hwGIV05TVGl0bGVfEBFOU0tleUVxdWl2TW9kTWFza11OU0lzU2VwYXJhdG9yWk5TS2V5RXF1aXZcTlNJ
+c0Rpc2FibGVkXU5TTW5lbW9uaWNMb2NZTlNPbkltYWdlXE5TTWl4ZWRJbWFnZYBQgEkSABAAAAmASQkS
+f////4BKgE7TAA4AMgGKAYsBjAGNXk5TUmVzb3VyY2VOYW1lgE2AS4BMXxAPTlNNZW51Q2hlY2ttYXJr
+0gA3ADgBkAGRogGRADtfEBBOU0N1c3RvbVJlc291cmNl0wAOADIBigGLAYwBlYBNgEuAT18QEE5TTWVu
+dU1peGVkU3RhdGXSADcAOAGYAZmiAZkAO1pOU01lbnVJdGVt0gA3ADgBmwEOowEOAWEAO98QEAEVAA4B
+FgEXARgBGQEaARsBHAEdAR4BHwEgASEBIgEjASQBJQArAGQBoABkACsAZAGkAaUBpgEvATABMAGlAaqA
+QYAACYBcCYAACYBTgFSAVYBAgECAVIBWWUN1c3RvbWl6ZV8QEUN1c3RvbWl6ZSBUb29sYmFy1QAOAIQB
+NwE4AJABOQGvATsBsAE9gD6AV4BYgD3SAA4APgBGAbSAPKEBtYBZ0gAOAD4BRAG4gDuiAUYBuoA3gFrS
+AA4BSQFKAb2AOoBbTxEQuk1NACoAABAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIGwAAAAQAAAAABAQECAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABDQ0NHSUlJVtdXV2waWlpw29vb88gICBl
+Dw8PMQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbGxslKCgoSB4eHj0pKSlKJycnLAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDAwhCQkKFr6+v4vX19f319fX+
+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
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAwDMBQIAPQAAAAQAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAABAAAAAkAAAAQAAAAGAAAACAAAAAqAAAAMQAAADYAAAA5AAAAOAEBATkAAAAv
+AAAAJwAAAB0AAAAVAAAADgAAAAoAAAALAAAADwAAABcAAAAgAAAAKgAAADEAAAA0AAAAMwAAAC0AAAAk
+AAAAGwAAABIAAAALAAAAAAAAAAAAAAAEAAAACQAAABAAAAAYAAAAIAAAACoAAAAxAAAANgAAADkAAAA4
+AAAANQAAAC8AAAAnAAAAHQAAABUAAAAOAAAACgAAAAsAAAAPAAAAFwAAACAAAAAqAAAAMQAAADQAAAAz
+AAAALQAAACQAAAAbAAAAEgAAAAsAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANAQAAAwAAAAEAIAAAAQEAAwAA
+AAEAIAAAAQIAAwAAAAQAABCqAQMAAwAAAAEAAQAAAQYAAwAAAAEAAgAAAREABAAAAAEAAAAIARIAAwAA
+AAEAAQAAARUAAwAAAAEABAAAARYAAwAAAAEA/AAAARcABAAAAAEAABAAARwAAwAAAAEAAQAAAVIAAwAA
+AAEAAQAAAVMAAwAAAAQAABCyAAAAAAAIAAgACAAIAAEAAQABAAFfEB9ydW5Ub29sYmFyQ3VzdG9taXph
+dGlvblBhbGV0dGU63xARARUADgFjARYBFwEYARkBGgEbARwBHQEeAR8BIAEhASIBIwEkAcEBwgArAGQA
+KwBkACsAZAHJAcoAKwEvAcwBzQFxACuAY4BigAAJgAAJgAAJgF6AX4AAgGGAYIBEgABeRmxleGlibGUg
+U3BhY2VWezEsIDV9W3syMDAwMCwgMzJ92QAOAXgBeQF6AXsBfAF9AX4BfwGAAYEBggBkAYEAZAGGAYcB
+iIBQgEkJgEkJgEqATtIANwA4AdwBEKMBEAFhADvfEBABFQAOARYBFwEYARkBGgEbARwBHQEeAR8BIAEh
+ASIBIwEkASUAKwBkAeEAZAArAGQB5QHmAeYBLwEwATAB5gHrgEGAAAmAdAmAAAmAZYBmgGaAQIBAgGaA
+Z1VQcmludNUADgCEATcBOACQATkB7wHwAfEBPYA+gGgSLMAAAIBpgD3SAA4APgBGAfWAPKEB9oBq0gAO
+AD4BRAH5gDuiAUYB+4A3gGvVAA4B/QCEAf4B/wIAAgECAgEkAGRfEBROU0NvcmVVSUltYWdlT3B0aW9u
+c18QD05TQml0c1BlclNhbXBsZVpOU0hhc0FscGhhgHOAbIByCdMADgD7AD4A/AIGAgmAcaICBwIIgG2A
+bqICCgILgG+AcFxpbWFnZU5hbWVLZXlWd2lkZ2V00gAOAPMA9AIQgCZfEBJpbWFnZS5Ub29sYmFyUHJp
+bnRVaW1hZ2XSADcAOAITAhSjAhQCFQA7XxATTlNNdXRhYmxlRGljdGlvbmFyeVxOU0RpY3Rpb25hcnnS
+ADcAOAIXAhijAhgBUAA7XxAQTlNDb3JlVUlJbWFnZVJlcF5wcmludERvY3VtZW50Ot8QEQEVAA4BYwEW
+ARcBGAEZARoBGwEcAR0BHgEfASABIQEiASMBJAIbAhwAKwBkACsAZAArAGQCIwIkACsBLwImAicBcQAr
+gHuAeoAACYAACYAACYB2gHeAAIB5gHiARIAAVVNwYWNlV3szMiwgNX3ZAA4BeAF5AXoBewF8AX0BfgF/
+AYABgQGCAGQBgQBkAYYBhwGIgFCASQmASQmASoBO0gA3ADgCNQESowESAWEAO98QEAEVAA4BFgEXARgB
+GQEaARsBHAEdAR4BHwEgASEBIgEjASQBJQArAGQCOgBkACsAZAI+Aj8CQAEvATABMAI/AkSAQYAACYCG
+CYAACYB9gH6Af4BAgECAfoCAVkNvbG9yc18QEFNob3cgQ29sb3IgUGFuZWzVAA4AhAE3ATgAkAE5AkkB
+OwJKAT2APoCBgIKAPdIADgA+AEYCToA8oQJPgIPSAA4APgFEAlKAO6IBRgJUgDeAhNIADgFJAUoCV4A6
+gIVPERC6TU0AKgAAEAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACCQEOEzkMUylkF5BChyLCWqEq6G+w
+L/1voSroZYciwlFkGJAyOQxTCAkBDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADkEPXiWEIbtJyTf/Yt9C/370
+Tf+d/lf/tv9c/77+V/+/9E7/u99C/7XJOf9+hCK7QUAOXgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAxQHHRZjIY42zEH+RvBI/2r/
+W/9//2D/kf9k/6L/Zv+w/mf/wf9m/9T/Zv/l/2H//v9e/+/ySv/Mwzj+Y1kXjhQRAx0AAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMUCR0adDOgP91f/1n/
+c/9c/2P/aP5i/4P+bv+Y/nL/qP53/7r+d//K/nb/2P5z/+f+bv/5/2f///9i///8W//dwD//dF4coBQP
+Ax0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFmM0jj7d
+c/9Z/4r/Yf5//2z+ff9y/nX/iP59/6H+hf+w/on/wf6K/9H+if/g/ob/7/6A////eP//823//uNk///k
+Xf/drT//Y0cXjgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1B
+KF41zHv+WP+m/2H+mP9s/pb/eP6T/4L+jf+P/or/p/6V/7j+mv/L/p3/2/6a/+f+lv/8/5D///uH//7p
+e//+3G///sxk///MXf/Mizj+QSkOXgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAABCQYOIIRau0fwov9d/6//a/6q/3j+qv+H/qj/k/6l/5r+nv+s/qL/wv6q/9T+rP/i/qv/8v+m////
+n//+8ZX//uGK//7Se//+w23//7hh//CdSv+ETiK7CQUBDgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAw5K1M2yZX/Wv/K/2P+vv90/rz/hP67/5L+uv+f/rr/qf60/7L+sP/K/rr/2/69/+z+
+u//8/7X///mt//7nov/+2Jb//sqJ//65eP/+q2f//6Re/8htOf85GwxSAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAFmRRkD7ftv9d/9f/a/7O/3r+zv+M/s//mv7N/6r+zP+3/s3/wP7F/87+
+yP/l/s//9v/N////xP/+7bv//t6t//7Qn//+v5D//q+A//6fbv//lGH/321C/2MrGI8AAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfh3fCSfTW/2D/4/9v/t//g/7f/5H+3/+k/t//sv7g/8H+
+3v/Q/t7/2P7Z/+3+4P///93///fT//7kxP/+17T//sSo//61l//+pYb//pRz//+FZv/0bU7/hzIiwgAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACihmehT/vn/Yv/z/3L/8f+F//H/lv/z/6f/
+8/+3//H/yf/x/9n/8v/o//D/+P/x///97f/+6dv//tnK//7Iuv/+tqr//qeZ//6WiP/+hXb//3Nl//5j
+Vv+hMynoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK62w/Vb///9j/v//dP7//4b+
+//+X/v//qP7//7f+///L/v//3P7//+////////////L0//7e4P/+zc///ru9//6qrP/+mZv//oiK//51
+d//+ZWf//1pc/7AvMf0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAolqHoUfX+/2Hu
+//9x7f7/hO3+/5ft/v+m7f7/tu3+/8jt/v/X7P7/5Or+//Xt////6f///tvt//7K3f/+usv//qq7//6Y
+rP/+h5r//neK//9md//+VWj/oSk26AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB91
+h8JJ0fT/Yd///27b/v+A2/7/kdv+/6Hc/v+w2v7/wNv+/8rX/v/V1P7/69z+//7Z////0Pn//sLm//60
+2P/+pcj//pW3//6EqP/+cpb//2WJ//RNcP+HIjTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAFlBkkD+x3/9a0f//asr+/3rL/v+Kyf7/mcr+/6fH/v+0x/7/u8D+/83F/v/ky/7/8sn///+/
+///+uPD//qng//6d0f/+jsP//n6y//5uov//Xpf/30Jx/2MXLI8AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAALKjlTNJLJ/1jG//9huP7/crf+/4G2/v+Ptf7/nLP+/6av/v+xrP7/yLb+/9q3
+/v/qt/7/+7L///+q+//+n+n//pPa//6Fy//+dLz//mWu//9cqP/IN3D/OAwbUgAAAAAAAAAAAAAAAAAA
+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
+TlNOZXh0S2V5Vmlld11OU0NvbnRlbnRWaWV3gAuA74DygPEQEoCNEQESgA2AC4DrgI6AjtIADgA+AEYC
+hIA8owKAAn8Cd4COgOuA79wAWAAOAFkCiQKKAGgAWwKLAF0CjABeAnQCbgKOAo8CkAKRApICkwKUAGUC
+lgJuApRYTlNDdXJzb3JZTlNjdkZsYWdzWU5TRG9jVmlld1lOU0JHQ29sb3KAjIDqgOaA5xAEgI8RCQCA
+kIANgNeAjICQ0gAOAD4ARgKbgDyhApSAkN0AWAAOAp4CnwKgAqEAWwBpAqIAXQKjAF4CpAKAAqYCpwCW
+AqgCqQKqAqsCrABlATACgAArXxAPTlNUZXh0Q29udGFpbmVyWU5TVFZGbGFnc1xOU1NoYXJlZERhdGFb
+TlNEcmFnVHlwZXNZTlNNYXhTaXplWE5TTWluaXplWk5TRGVsZWdhdGWAjoDlgKSA1oCREQkSgKOA5IAN
+gECAjoAA0gAOAD4APwKzgAevEBECtAK1ArYCtwK4ArkCugK7ArwCvQK+Ar8CwALBAsICwwLEgJKAk4CU
+gJWAloCXgJiAmYCagJuAnICdgJ6An4CggKGAol8QGU5lWFQgUlRGRCBwYXN0ZWJvYXJkIHR5cGVfEBJO
+U1N0cmluZ1Bib2FyZFR5cGVfEBpOZVhUIHJ1bGVyIHBhc3RlYm9hcmQgdHlwZV8QHk5lWFQgVElGRiB2
+NC4wIHBhc3RlYm9hcmQgdHlwZV8QGUFwcGxlIFVSTCBwYXN0ZWJvYXJkIHR5cGVfECNDb3JlUGFzdGVi
+b2FyZEZsYXZvclR5cGUgMHg2RDZGNkY3Nl8QI0NvcmVQYXN0ZWJvYXJkRmxhdm9yVHlwZSAweDc1NzI2
+QzIwXxAbV2ViVVJMc1dpdGhUaXRsZXNQYm9hcmRUeXBlXxAZQXBwbGUgUERGIHBhc3RlYm9hcmQgdHlw
+ZV8QGUFwcGxlIFBORyBwYXN0ZWJvYXJkIHR5cGVfEBpBcHBsZSBIVE1MIHBhc3RlYm9hcmQgdHlwZV8Q
+FU5TRmlsZW5hbWVzUGJvYXJkVHlwZV8QF05TQ29sb3IgcGFzdGVib2FyZCB0eXBlXxAxTmVYVCBFbmNh
+cHN1bGF0ZWQgUG9zdFNjcmlwdCB2MS4yIHBhc3RlYm9hcmQgdHlwZV8QGkFwcGxlIFBJQ1QgcGFzdGVi
+b2FyZCB0eXBlXxAZTmVYVCBmb250IHBhc3RlYm9hcmQgdHlwZV8QKk5lWFQgUmljaCBUZXh0IEZvcm1h
+dCB2MS4wIHBhc3RlYm9hcmQgdHlwZVl7NDA3LCAxNH3VAtgADgLZAtoC2wDrAtwClALeAt9ZTlNUQ0Zs
+YWdzWk5TVGV4dFZpZXdXTlNXaWR0aF8QD05TTGF5b3V0TWFuYWdlcoDVgJAjQHlwAAAAAACApdUADgLh
+AuIC4wKkAuQC5QLmAJYAK18QEE5TVGV4dENvbnRhaW5lcnNdTlNUZXh0U3RvcmFnZVlOU0xNRmxhZ3OA
+1IDTgKaAANQADgLpAPkCpALqAusC7AArXE5TQXR0cmlidXRlc4DSgKiAp4AA0gAOAPMA9ALwgCZTRG9j
+0wAOAPsAPgLyAvMC9oDRogL0AvWAqYCqogL3AviAq4DPXxAQTlNQYXJhZ3JhcGhTdHlsZdMC+wAOAvwC
+/QL+AJ5aTlNUYWJTdG9wc1tOU0FsaWdubWVudICsgM7SAA4APgFEAwGAO68QIAMCAwMDBAMFAwYDBwMI
+AwkDCgMLAwwDDQMOAw8DEAMRAxIDEwMUAxUDFgMXAxgDGQMaAxsDHAMdAx4DHwMgAyGArYCvgLCAsYCy
+gLOAtIC1gLaAt4C4gLmAuoC7gLyAvYC+gL+AwIDBgMKAw4DEgMWAxoDHgMiAyYDKgMuAzIDN0gAOAyMD
+JAMlWk5TTG9jYXRpb26AriMAAAAAAAAAANIANwA4AycDKKIDKAA7WU5TVGV4dFRhYtIADgMjAyQDK4Cu
+I0BMAAAAAAAA0gAOAyMDJAMugK4jQFwAAAAAAADSAA4DIwMkAzGAriNAZQAAAAAAANIADgMjAyQDNICu
+I0BsAAAAAAAA0gAOAyMDJAM3gK4jQHGAAAAAAADSAA4DIwMkAzqAriNAdQAAAAAAANIADgMjAyQDPYCu
+I0B4gAAAAAAA0gAOAyMDJANAgK4jQHwAAAAAAADSAA4DIwMkA0OAriNAf4AAAAAAANIADgMjAyQDRoCu
+I0CBgAAAAAAA0gAOAyMDJANJgK4jQINAAAAAAADSAA4DIwMkA0yAriNAhQAAAAAAANIADgMjAyQDT4Cu
+I0CGwAAAAAAA0gAOAyMDJANSgK4jQIiAAAAAAADSAA4DIwMkA1WAriNAikAAAAAAANIADgMjAyQDWICu
+I0CMAAAAAAAA0gAOAyMDJANbgK4jQI3AAAAAAADSAA4DIwMkA16AriNAj4AAAAAAANIADgMjAyQDYYCu
+I0CQoAAAAAAA0gAOAyMDJANkgK4jQJGAAAAAAADSAA4DIwMkA2eAriNAkmAAAAAAANIADgMjAyQDaoCu
+I0CTQAAAAAAA0gAOAyMDJANtgK4jQJQgAAAAAADSAA4DIwMkA3CAriNAlQAAAAAAANIADgMjAyQDc4Cu
+I0CV4AAAAAAA0gAOAyMDJAN2gK4jQJbAAAAAAADSAA4DIwMkA3mAriNAl6AAAAAAANIADgMjAyQDfICu
+I0CYgAAAAAAA0gAOAyMDJAN/gK4jQJlgAAAAAADSAA4DIwMkA4KAriNAmkAAAAAAANIADgMjAyQDhYCu
+I0CbIAAAAAAA0gA3ADgDhwL5ogL5ADvUAA4AhACFAIYAhwOKA4sDjIASI0AkAAAAAAAAgNAQEFZNb25h
+Y2/SADcAOAOPAhWiAhUAO9IANwA4A5EC4qQC4gOSA5MAO18QGU5TTXV0YWJsZUF0dHJpYnV0ZWRTdHJp
+bmdfEBJOU0F0dHJpYnV0ZWRTdHJpbmfSAA4APgBGA5aAPKECp4Ck0gA3ADgDmQLbogLbADvSADcAOAOb
+Ap6iAp4AO9gADgOdA54DnwB0A6ADoQOiA6MDpAArAKQClgOoACsDqldOU0ZsYWdzXxAXTlNEZWZhdWx0
+UGFyYWdyYXBoU3R5bGVfEBBOU0luc2VydGlvbkNvbG9yXxAUTlNTZWxlY3RlZEF0dHJpYnV0ZXNfEBJO
+U01hcmtlZEF0dHJpYnV0ZXNfEBBOU0xpbmtBdHRyaWJ1dGVzgOMRK+eAAIAagNeA2IAAgN/TAA4AkQCc
+AJQAngOtgBdCMQDTAA4A+wA+AvIDsAOzgNGiA7EDsoDZgNqiA7QDtYDbgN3VAA4AkACRAJIAkwCUAJUA
+lgO5AJiAF4AWgNyAFF8QG3NlbGVjdGVkVGV4dEJhY2tncm91bmRDb2xvctUADgCQAJEAkgCTAJQApACW
+A78AmIAXgBqA3oAUXxARc2VsZWN0ZWRUZXh0Q29sb3LTAA4A+wA+AvIDxAPHgNGiA8UDsoDggNqiA8gD
+yYDhgOJbTlNVbmRlcmxpbmXTAA4AkQPMAJQA6wPOVU5TUkdCgBdGMCAwIDEA0gA3ADgD0APRogPRADtf
+EBROU1RleHRWaWV3U2hhcmVkRGF0YVx7NDkwLCAxZSswN33SADcAOAPUAtmlAtkD1QCzALQAO1ZOU1Rl
+eHRfEBR7ezEsIDF9LCB7NDkwLCAzOTF9fdMADgPYA9kD2gPbAOtZTlNIb3RTcG90XE5TQ3Vyc29yVHlw
+ZYDpgOhXezQsIC01fdIANwA4A94CiaICiQA70gA3ADgD4APhpAPhALMAtAA7Wk5TQ2xpcFZpZXfZAFgD
+4wAOAFkAWwBdA+QAXgPlAm4CbgPoA+kAbQBlA+sCbgPtWE5TVGFyZ2V0WE5TQWN0aW9uWU5TUGVyY2Vu
+dICMgIyA7oDsgA2A7YCMIz+q773AAAAAXxAVe3s0OTEsIDF9LCB7MTUsIDM5MX19XF9kb1Njcm9sbGVy
+OtIANwA4A/ED8qUD8gCyALMAtAA7Wk5TU2Nyb2xsZXLbAFgD4wAOAFkCcgBbAF0D5ABeA/QD5QJuAm4D
+6AP4AOsAbQBlA+sCbgP8A/1aTlNDdXJWYWx1ZYCMgIyA7oDwgA2A7YCMIz/wAAAAAAAAIz/uQshgAAAA
+XxAYe3stMTAwLCAtMTAwfSwgezg3LCAxOH19XxAVe3swLCAyMH0sIHs1MDcsIDM5M3190gA3ADgEAQQC
+pAQCALMAtAA7XE5TU2Nyb2xsVmlld1p7NTA3LCA0MTN90gA3ADgEBQCzowCzALQAO18QFnt7MCwgMH0s
+IHsxOTIwLCAxMTc4fX1Zezk0LCAxNjR90gA3ADgECQQKogQKADtfEBBOU1dpbmRvd1RlbXBsYXRlVndp
+bmRvd9QADgBQAFEAUgBTApQAvAQQgB6AkIAggPtfEBVpbml0aWFsRmlyc3RSZXNwb25kZXLUAA4AUABR
+AFIAUwAfANYEFoAegAKAJID9WGRlbGVnYXRl1AAOAFAAUQBSAFMClAAfBByAHoCQgAKA/1h0ZXh0Vmll
+d9QADgBQAFEAUgBTAB8AvAQWgB6AAoAggP3UAA4AUABRAFIAUwAfApQEFoAegAKAkID90gAOAD4BRAQq
+gDuvEBEBCQBiANYELgJ/AncClAJuAQYBCwEMAQgAvAEKAFQBBwBfgF2ADoAkgQEDgOuA74CQgIyAL4B1
+gHyAUoAggGSACoBCgAvSAA4AMgAzBD6ABIEBBF1OU0FwcGxpY2F0aW9u0gAOAD4BRARCgDuvEBEA1gBU
+ALwAHwJuAm4CbgBfANYA1gDWANYAHwDWAF8A1gC8gCSACoAggAKAjICMgIyAC4AkgCSAJIAkgAKAJIAL
+gCSAINIADgA+AUQEVoA7rxASAQkA1gQuAB8AYgJ/Am4CdwEGApQBCwEMAQgAvAEKAFQBBwBfgF2AJIEB
+A4ACgA6A64CMgO+AL4CQgHWAfIBSgCCAZIAKgEKAC9IADgA+AUQEa4A7rxASBGwEbQRuBG8EcARxBHIE
+cwR0BHUEdgR3BHgAzgR6BHsEfAR9gQEIgQEJgQEKgQELgQEMgQENgQEOgQEPgQEQgQERgQESgQETgQEU
+gCKBARWBARaBAReBARhfECxUb29sYmFyIEZsZXhpYmxlIFNwYWNlIEl0ZW0gKEZsZXhpYmxlIFNwYWNl
+KVdUb29sYmFyW0FwcGxpY2F0aW9uXEZpbGUncyBPd25lcl8QF1RleHQgRmllbGQgQ2VsbCAoTGFiZWwp
+XxARVmVydGljYWwgU2Nyb2xsZXJbU2Nyb2xsIFZpZXdfEBNIb3Jpem9udGFsIFNjcm9sbGVyXxAUVG9v
+bGJhciBJdGVtIChGb250cylZVGV4dCBWaWV3XxAaVG9vbGJhciBTcGFjZSBJdGVtIChTcGFjZSlfEBVU
+b29sYmFyIEl0ZW0gKENvbG9ycylfEBhUb29sYmFyIEl0ZW0gKEN1c3RvbWl6ZSlfEBRUb29sYmFyIEl0
+ZW0gKFByaW50KV8QE1N0YXRpYyBUZXh0IChMYWJlbClfECJUb29sYmFyIFNlcGFyYXRvciBJdGVtIChT
+ZXBhcmF0b3IpXENvbnRlbnQgVmlld9IADgA+AUQEkYA7oNIADgA+AUQElIA7oNIADgA+AUQEl4A7rxAZ
+AQkAYgQuAEsASQEGAQsATQEMAEoBCABOAQcASADWAB8CfwJuAncClABMALwBCgBUAF+AXYAOgQEDgPyA
+H4AvgHWBAQCAfID6gFKBAQGAQoAJgCSAAoDrgIyA74CQgP6AIIBkgAqAC9IADgA+AUQEs4A7rxAZBLQE
+tQS2BLcEuAS5BLoEuwS8BL0EvgS/BMAEwQTCBMMExATFBMYExwTIBMkEygTLBMyBAR2BAR6BAR+BASCB
+ASGBASKBASOBASSBASWBASaBASeBASiBASmBASqBASuBASyBAS2BAS6BAS+BATCBATGBATKBATOBATSB
+ATUSAAGGwRIAAYa6E//////////9EgABhsMSAAGGzBIAAYa9EgABhsASAAGGyxIAAYa8EgABhsQSAAGG
+whIAAYbJEgABhr4SAAGGyhIAAYa7EgABhs0SAAGGthIAAYa1EgABhrcSAAGGuBIAAYbIEAUSAAGGvxIA
+AYa50gAOAD4ARgTngDyg0gAOAD4BRATqgDug0gAOAD4BRATtgDug0gA3ADgE7wTwogTwADteTlNJQk9i
+amVjdERhdGEACAAZACIAJwAxADoAPwBEAFIAVABmAt4C5AMvAzYDPQNLA10DeQOHA5MDnwOtA7gDxgPi
+A/AEAwQVBC8EOQRGBEgESwROBFEEVARWBFkEWwReBGEEZARnBGkEawRuBHEEdgR5BIIEjgSQBJIEpQSu
+BLcEwgTHBNYE3wTyBPsFBgUIBQkFEgUZBSYFLAU1BTcFRgVIBUoFTAVOBVAFUwVWBWcFdQV+BYYFiAWK
+BYwFjgWvBcEFyQXQBdkF4wXsBfgF+gX8Bf4GAAYDBgQGBgYIBiUGMAY8Bj4GQAZCBkUGRwZJBksGYQaC
+Bo4GogatBrcGxQbSBt4G4wblBucG6QbrBu0G8gb0BvoHCwcSBxkHIgckBy0HLwcyBz8HSAdNB1QHaQdx
+B34HigeYB5oHnAeeB6AHogepB7YHwwfLB80HzwfbB+QH6Qf+CAAIAggECAYIGQgmCCgIKwg0CD0ITwhc
+CGUIcAh8CIYIjQiZCKsItAi7CNII4QjyCPQI9gj4CPoJKwk4CUUJUwldCWsJhAmRCaMJtwnBCc0JzwnR
+CdMJ1QnaCdwJ3gngCeIJ5AnmCegKAwoKCj8KWQp7CpUKtwrLCugK/AsYCzsLWAtvC4ULhwuJC4oLjAuN
+C48LkQuTC5QLlQuXC5kLogusC64L1QveC+UL9wwADA0MFQwXDCYMKAwqDCwMLgwwDDIMNAxDDEUMRwxJ
+DEsMTQxPDFEMagyDDKMMwAzVDOoNBA1HDWkNfQ2UDaoNxQ3bDfgOEg4uDkUOWA5vDoYOmw6wDrIOtA62
+DrcOuQ66DrwOvQ6/DsEOww7MDs4O0A7SDtQO2g7sDwEPDg8VDxcPGQ8eDyAPIg8rDzQPNg85DzsPRA9G
+D0sPTQ9PD1gPbw9xD3MgMSA6IEEgVCBfIGggbSB1IH4ghSCUIKEgoyCoILEgtiC+INUg3CDlIOog+CE/
+IWUhZyFpIWshbCFuIW8hcSFyIXQhdiF4IXohfCF+IYAhgSGLIZMhniHDIcsh3yHtIfgiBSITIh0iKiIs
+Ii4iMyI0IjYiNyI8Ij4iQCJNIlwiXiJgImIidCJ9IoIilSKiIqQipiKoIrsixCLJItQi3SLkIycjKSMr
+IywjLiMvIzEjMiM0IzYjOCM6IzwjPiNAI0ojXiNzI3UjdyN5I3sjhCOGI4kjiyOUI5YjmyOdI58jqCOq
+I6w0ajSMNNM01TTXNNk02jTcNN003zTgNOI05DTmNOg06jTsNO40/TUENRA1NTU3NTk1OjU8NT01PzVB
+NUo1UTWUNZY1mDWZNZs1nDWeNZ81oTWjNaU1pzWpNas1rTWzNcg1yjXMNdE10zXVNd414DXjNeU17jXw
+NfU19zX5Ng42JTY3NkI2RDZGNkg2STZWNlg2XTZfNmE2ZjZoNmo2dzZ+Noc2iTaeNqQ2rTa0Nso21zbg
+Nuc2+jcJN1A3UjdUN1Y3VzdZN1o3XDddN183YTdjN2U3ZzdpN2s3cTd5N543oDeiN6M3pTemN6g3qjez
+N7o3/Tf/OAE4AjgEOAU4BzgIOAo4DDgOOBA4EjgUOBY4HTgwOEU4RzhJOEs4TThWOFg4WzhdOGY4aDht
+OG84cTh6OHw4fkk8SVRJXUlfSW5JcElySXRJdkl4SXpJfEmFSYdJiEmRSZZJoEmpSbJJtEm5SbtJvUnu
+SfpKA0oPSh1KK0otSi9KMUozSjVKN0o6SjxKPkpASkJKREpNSk9KVkpYSlpKXEqNSpZKoEqqSrRKtkq4
+SrpKvEq+SsBKw0rFSsdKyUrLSs1K1krYSttK3UsSSyRLLks7S0dLUUtaS2VLZ0tpS2tLbUtvS3JLdEt2
+S3hLekt8S35Lh0uJS65LsEuyS7RLtku4S7pLvEu+S8BLwkvES8ZLyEvKS8xLzkvQS+xMAUweTD9MW0yB
+TKdMxUzhTP1NGk0yTUxNgE2dTblN5k3wTgVOD04aTiJONE42TjhOQU5DTlhOa055ToNOhU6HTolOi06c
+TqlOq06tTq9OsU66TrxOwE7NTs9O1E7WTthO3U7fTuFO9E8BTwxPGE8aTxxPJU8nT2pPbE9uT3BPck90
+T3ZPeE96T3xPfk+AT4JPhE+GT4hPik+MT45PkE+ST5RPlk+YT5pPnE+eT6BPok+kT6ZPqE+qT7NPvk/A
+T8lP0k/XT+FP6k/sT/VP/lAAUAlQElAUUB1QJlAoUDFQOlA8UEVQTlBQUFlQYlBkUG1QdlB4UIFQilCM
+UJVQnlCgUKlQslC0UL1QxlDIUNFQ2lDcUOVQ7lDwUPlRAlEEUQ1RFlEYUSFRKlEsUTVRPlFAUUlRUlFU
+UV1RZlFoUXFRelF8UYVRjlGQUZlRolGkUa1RtlG4UcFRylHMUdVR3lHgUelR8lH0Uf1SBlIIUhFSGlIc
+UiVSLlIwUjlSQlJEUk1SVlJbUmxSblJ3UnlSe1KCUotSkFKZUqJSvlLTUtxS3lLhUuNS7FLxUvpS/1Mg
+UyhTQlNVU2xTgVOUU5ZTmVObU51Tn1OhU6NTpVOyU7RTt1PEU8ZTy1PNU89T1FPWU9hT7VPvU/FT81P1
+VBNUKFQqVCxULlQwVERUUVRTVFhUWlRcVGFUY1RlVHFUflSEVIZUjVSWVJtUslS/VMhU01TaVPFU/lUI
+VRVVF1UZVSFVKlUvVThVQVVMVXFVelWDVY1Vj1WRVZNVlVWXVZlVm1WkVbxVyVXSVd1V6FYVViBWIlYk
+ViZWKFYqVixWLlY3VkBWW1ZzVnxWhVaSVp1WplatVsZW0FbZVt5W8Vb4VwlXC1cNVw9XEVcpVzpXPFc+
+V0BXQldLV1xXXldgV2JXZFdtV35XgFeCV4RXhleXV5lXm1edV59XqFeqV89X0VfTV9VX2FfaV9xX3lfg
+V+JX5FfmV+hX6lfsV+5X8FfyV/tX/VgAWA5YF1gZWD5YQFhCWERYRlhIWEpYTFhOWFBYUlhUWFZYWFha
+WFxYXlhgWGlYa1iSWJRYlliZWJtYnVifWKFYo1ilWKdYqVirWK1Yr1ixWLNYtVi3WMBYwljpWOxY71jy
+WPVY+Fj7WP5ZAVkEWQdZClkNWRBZElkVWRhZG1keWU1ZVVlhWW5ZiFmcWahZvlnVWd9Z/FoUWi9aRlpc
+WoFajlqXWplamlqjWqVaplqvWrFa5lroWupa7VrvWvFa81r1Wvha+lr8Wv5bAVsDWwVbB1sJWwtbDVsP
+WxFbE1sVWxdbGVsbWyRbJltbW15bYVtkW2dbalttW3Bbc1t2W3lbfFt/W4JbhVuIW4tbjluRW5Rbl1ua
+W51boFujW6Zbq1uwW7lbvlvDW8hbzVvSW9db3FvhW+Zb61vwW/Vb+lv/XARcCVwOXBNcFVwaXB9cKFwq
+XCtcNFw2XDdcQFxCXENcTFxRAAAAAAAAAgIAAAAAAAAE8QAAAAAAAAAAAAAAAAAAXGA</bytes>
 		</object>
 	</data>
 </archive>

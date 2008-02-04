@@ -19,16 +19,20 @@
 // low water-mark of the buffer - if less than the water mark is available then the buffer will be flushed
 #define writeBufferLowWaterMark   2048
 
-
-// FIXME: those colors should become configurable
-#define outputColor [NSColor colorWithCalibratedRed: 0.0 green: 0.0 blue: 0.5 alpha: 1.0]
-#define promptColor [NSColor colorWithCalibratedRed: 0.5 green: 0.0 blue: 0.5 alpha: 1.0]
-#define inputColor [NSColor colorWithCalibratedRed: 0.0 green: 0.0 blue: 0.0 alpha: 1.0]
-
+// class-level colors
+static NSColor *outputColor, *promptColor, *inputColor;
 
 @implementation RConsoleWinCtrl
 
 #pragma mark --- Initialization ---
+
++ (void) initialize
+{
+	NSLog(@"RConsoleWinCtrl.initialize (allocate default colors)");
+	outputColor = [[NSColor colorWithCalibratedRed: 0.0 green: 0.0 blue: 0.5 alpha: 1.0] retain];
+	promptColor = [[NSColor colorWithCalibratedRed: 0.5 green: 0.0 blue: 0.5 alpha: 1.0] retain];
+	inputColor  = [[NSColor colorWithCalibratedRed: 0.0 green: 0.0 blue: 0.0 alpha: 1.0] retain];
+}
 
 - (id)initWithWindowNibName:(NSString *)windowNibName
 {
@@ -50,6 +54,7 @@
 		currentFontSize = [Preferences floatForKey: kConsoleFontSize withDefault: 11.0];
 		textFont = [[NSFont userFixedPitchFontOfSize:currentFontSize] retain];
 	}
+	NSLog(@"RConsoleWinCtrl%@: initWithWindowNibName: %@", self, windowNibName);
 	return self;
 }
 
@@ -95,6 +100,9 @@
 	}
 }
 
+
+#pragma mark --- NSWindowController delegate methods ---
+
 - (void)windowDidLoad
 {
 	SLog(@"RConsoleWinCtrl: windowDidLoad, name=%@, window=%@", [self windowNibName], [self window]);
@@ -102,10 +110,17 @@
 	[textView setFont:textFont];
 	//[textView setTypingAttributes:[NSDictionary dictionaryWithObject:textFont forKey:@"NSFont"]];
 	[textView setString:@"\n"];
-	
 	[self initEngine];
 }
 
+- (NSString *)windowTitleForDocumentDisplayName:(NSString *)displayName
+{
+	// the title is always "R Console" regardless of the file name
+	return @"R Console";
+}
+
+
+#pragma mark --- console API ---
 
 /* console input - the string passed here is handled as if it was typed on the console */
 - (void) consoleInput: (NSString*) cmd interactive: (BOOL) inter
@@ -131,12 +146,14 @@
 
 - (BOOL) processSingleEventBlocking: (BOOL) blocking
 {
+	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 	NSEvent *event = [NSApp nextEventMatchingMask:NSAnyEventMask
 										untilDate:blocking?[NSDate distantFuture]:nil
 										   inMode:NSDefaultRunLoopMode 
 										  dequeue:YES];
 	if (event)
 		[NSApp sendEvent:event];
+	[pool release];
 	return event?YES:NO;
 }
 
@@ -168,6 +185,7 @@
 	}
 	//}
 }
+
 
 #pragma mark --- REngine callbacks ---
 /* --- REngine callbacks --- */

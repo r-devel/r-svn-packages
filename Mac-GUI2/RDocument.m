@@ -9,39 +9,54 @@
 #import "RDocument.h"
 #import "RDocumentWinCtrl.h"
 
+#include <string.h>
+
 @implementation RDocument
 
 - (id)init
 {
     self = [super init];
     if (self) {
-    
-        // Add your subclass-specific initialization here.
-        // If an error occurs here, send a [self release] message and return nil.
-    
+		contents = nil;
     }
     return self;
 }
 
 - (void)makeWindowControllers
 {
-	[self addWindowController:[[RDocumentWinCtrl alloc] initWithWindowNibName:@"RDocument"]];
+	NSLog(@"RDocument.makeWindowControllers");
+	RDocumentWinCtrl *ctrl = [[RDocumentWinCtrl alloc] initWithWindowNibName:@"RDocument"];
+	[self addWindowController: ctrl];
+	[ctrl release];
 }
 
-- (void)windowControllerDidLoadNib:(NSWindowController *) aController
+- (NSString*) string
 {
-    [super windowControllerDidLoadNib:aController];
-    // Add any code here that needs to be executed once the windowController has loaded the document's window.
+	return contents;
+}
+
+- (BOOL) isDocumentEdited
+{
+	NSArray *a = [self windowControllers];
+	if ([a count] < 1) return NO;
+	BOOL dirty = NO;
+	for (RDocumentWinCtrl *ctrl in a)
+		dirty |= [ctrl isEdited];	
+	return dirty;
 }
 
 - (NSData *)dataOfType:(NSString *)typeName error:(NSError **)outError
 {
-    // Insert code here to write your document to data of the specified type. If the given outError != NULL, ensure that you set *outError when returning nil.
-
-    // You can also choose to override -fileWrapperOfType:error:, -writeToURL:ofType:error:, or -writeToURL:ofType:forSaveOperation:originalContentsURL:error: instead.
-
-    // For applications targeted for Panther or earlier systems, you should use the deprecated API -dataRepresentationOfType:. In this case you can also choose to override -fileWrapperRepresentationOfType: or -writeToFile:ofType: instead.
-
+	NSLog(@"RDocument.dataOfType:%@", typeName);
+	NSString *str = contents;
+	NSArray *a = [self windowControllers];
+	if ([a count] > 0)
+		str = [(RDocumentWinCtrl*)[a objectAtIndex:0] string];
+	
+	if (str) {
+		const char *c = [str UTF8String];
+		return [NSData dataWithBytes:c length:strlen(c)];
+	}
     if ( outError != NULL ) {
 		*outError = [NSError errorWithDomain:NSOSStatusErrorDomain code:unimpErr userInfo:NULL];
 	}
@@ -50,27 +65,30 @@
 
 - (BOOL)readFromData:(NSData *)data ofType:(NSString *)typeName error:(NSError **)outError
 {
-    // Insert code here to read your document from the given data of the specified type.  If the given outError != NULL, ensure that you set *outError when returning NO.
-
-    // You can also choose to override -readFromFileWrapper:ofType:error: or -readFromURL:ofType:error: instead. 
-    
-    // For applications targeted for Panther or earlier systems, you should use the deprecated API -loadDataRepresentation:ofType. In this case you can also choose to override -readFromFile:ofType: or -loadFileWrapperRepresentation:ofType: instead.
-    
-    if ( outError != NULL ) {
-		*outError = [NSError errorWithDomain:NSOSStatusErrorDomain code:unimpErr userInfo:NULL];
+	NSLog(@"RDocument.readFromData:ofType:%@", typeName);
+	
+	NSString *str = [[NSString alloc] initWithData:data encoding: NSUTF8StringEncoding];
+	if (!str) { // if UTF-8 fails, try Latin1
+		str = [[NSString alloc] initWithData:data encoding: NSISOLatin1StringEncoding];
+		if (!str) {
+			if (outError)
+				*outError = [NSError errorWithDomain:NSOSStatusErrorDomain code:kTextUnsupportedEncodingErr userInfo:NULL];
+			return NO;
+		}
 	}
+	
+	if (contents) [contents release];
+	contents = str;
+	NSArray * a = [self windowControllers];
+	for (RDocumentWinCtrl *ctrl in a)
+		[ctrl replaceContentsWithString: str];
+	NSLog(@" - controllers = %d", [a count]);
+
     return YES;
 }
 
 - (void) changeTitle: (NSString *)title
 {
-	NSEnumerator *e = [[self windowControllers] objectEnumerator];
-	NSWindowController *wc = nil;
-	
-	while (wc = [e nextObject]) {
-		NSWindow *dw = [wc window];
-		[dw setTitle: title];
-	}
 }
 
 - (void) setEditable: (BOOL) editable

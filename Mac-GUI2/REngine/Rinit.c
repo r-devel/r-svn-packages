@@ -61,6 +61,7 @@
 #error "Your R version is too old, 2.4.0 or higher is required"
 #endif
 
+#define CSTACK_DEFNS
 #include <Rinterface.h>
 
 /* and SaveAction is not officially exported */
@@ -77,10 +78,10 @@ extern SEXP (*ptr_do_selectlist)(SEXP, SEXP, SEXP, SEXP);
 extern void (*ptr_do_flushconsole)();
 extern void (*ptr_R_ProcessEvents)();
 
-extern int  (*ptr_R_EditFile)(char *); /* in r-devel ptr_Raqua_Edit is no longer used*/
+extern int  (*ptr_R_EditFile)(const char *); /* in r-devel ptr_Raqua_Edit is no longer used*/
 extern SEXP (*ptr_do_selectlist)(SEXP, SEXP, SEXP, SEXP);
-extern int  (*ptr_Raqua_CustomPrint)(char *, SEXP); /* custom print proxy for help/search/pkg-info */
-extern int  (*ptr_CocoaSystem)(char *);
+extern int  (*ptr_Raqua_CustomPrint)(const char *, SEXP); /* custom print proxy for help/search/pkg-info */
+extern int  (*ptr_CocoaSystem)(const char *);
 
 int end_Rmainloop(void);    /* from src/main.c */
 int Rf_initialize_R(int ac, char **av); /* from src/unix/system.c */
@@ -127,6 +128,8 @@ int initR(int argc, char **argv, int save_action) {
     R_Consolefile = NULL;
     R_Interactive = 1;
     SaveAction = (save_action==Rinit_save_yes)?SA_SAVE:((save_action==Rinit_save_no)?SA_NOSAVE:SA_SAVEASK);
+
+	R_CStackLimit = -1;
 
     /* ptr_R_Suicide = Re_Suicide; */
     /* ptr_R_CleanUp = Re_CleanUp; */

@@ -9,10 +9,16 @@
 
 #import <Cocoa/Cocoa.h>
 
+#define docTypeRSource @"R Source File";
+
 @interface RDocument : NSDocument
 {
+	NSString *contents;
 }
 
 - (void) changeTitle: (NSString*) title;
 - (void) setEditable: (BOOL) editable;
+
+- (NSString*) string;
+
 @end

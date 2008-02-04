@@ -29,6 +29,7 @@
 	SLog(@"RConsoleDocument: makeWindowControllers");
 	RConsoleWinCtrl *wctrl = [[RConsoleWinCtrl alloc] initWithWindowNibName:@"RConsole"];
 	[self addWindowController:wctrl];
+	[wctrl release];
 }
 
 - (void)windowControllerDidLoadNib:(NSWindowController *) aController
