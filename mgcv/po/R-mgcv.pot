@@ -518,3 +518,6 @@ msgstr ""
 
 msgid "xt argument is faulty"
 msgstr "" 
+
+msgid "Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'"
+msgstr ""

@@ -1,5 +1,5 @@
 ## R routines for gam fitting with calculation of derivatives w.r.t. sp.s
-## (c) Simon Wood 2004,2005,2006
+## (c) Simon Wood 2004-2008
 
 ## This routine is for type 3 gam fitting. The basic idea is that a P-IRLS
 ## is run to convergence, and only then is a scheme for evaluating the 
@@ -313,6 +313,10 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            
            D1 <- oo$D1
            P1 <- oo$P1
+          
+           if (sum(!is.finite(D1))||sum(!is.finite(P1))||sum(!is.finite(trA1))) { 
+             stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
+         
            delta.3 <- delta*delta.2
 
            GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
@@ -323,6 +327,10 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
              trA2 <- matrix(oo$trA2,nSp,nSp) 
              D2 <- matrix(oo$D2,nSp,nSp)
              P2 <- matrix(oo$P2,nSp,nSp)
+              
+             if (sum(!is.finite(D2))||sum(!is.finite(P2))||sum(!is.finite(trA2))) { 
+               stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
+             
              GCV2 <- outer(trA1,D1)
              GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
                       6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 

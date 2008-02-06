@@ -191,7 +191,7 @@ represent the smooth term. If \code{k} is not
  the smooth should be multiplied. For example \code{gam(y~z+s(x,by=z))}
    would specify a model \eqn{ E(y) = f(x)z}{E(y)=f(x)z} where
    \eqn{f(\cdot)}{f(.)} is a smooth function (the formula is
-   \code{y~x+s(x,by=z)} rather than \code{y~s(x,by=z)} because
+   \code{y~z+s(x,by=z)} rather than \code{y~s(x,by=z)} because
    the smooths are always set up to sum to zero over the covariate
    values). The \code{by} option is particularly useful for models in
    which different functions of the same variable are required for
