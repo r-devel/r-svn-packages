@@ -1,12 +1,18 @@
 #include <R.h>
 #include <Rinternals.h>
-#include <Rgraphics.h>
-#include <Rdevices.h>
-#include <R_ext/GraphicsDevice.h>
+#include <Rversion.h>
+#if R_VERSION < R_Version(2, 7, 0)
+# include <Rgraphics.h>
+# include <Rdevices.h>
+# include <R_ext/GraphicsDevice.h>
+typedef NewDevDesc* pDevDesc;
+#endif
 #include <R_ext/GraphicsEngine.h>
 
-#define BEGIN_SUSPEND_INTERRUPTS
-#define END_SUSPEND_INTERRUPTS
+#ifndef BEGIN_SUSPEND_INTERRUPTS
+# define BEGIN_SUSPEND_INTERRUPTS
+# define END_SUSPEND_INTERRUPTS
+#endif
 
 #include <gtk/gtk.h>
 #include "devGTK.h"
@@ -22,19 +28,25 @@ createGtkDevice(char *display, double width, double height, double ps, GtkDevice
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
 	/* Allocate and initialize the device driver data */
-	if (!(dev = (NewDevDesc *) calloc(1, sizeof(NewDevDesc))))
+	if (!(dev = (pDevDesc) calloc(1, sizeof(NewDevDesc))))
 	    return NULL;
+#if R_VERSION < R_Version(2, 7, 0)
 	/* Do this for early redraw attempts */
 	dev->displayList = R_NilValue;
+#endif
 	if (! init_fun ((DevDesc*)dev, display, width, height, ps)) {
 	    free(dev);
 	    PROBLEM  "unable to start device gtk" ERROR;
 	}
+#if R_VERSION < R_Version(2, 7, 0)
 	gsetVar(install(".Device"), mkString("GTK"), R_NilValue);
 	dd = GEcreateDevDesc(dev);
-        dd->newDevStruct = 1;
 	Rf_addDevice((DevDesc*) dd);
 	GEinitDisplayList(dd);
+#else
+	dd = GEcreateDevDesc(dev);
+	GEaddDevice2(dd, "GTK");
+#endif
     } END_SUSPEND_INTERRUPTS;
 
     gdk_flush();
