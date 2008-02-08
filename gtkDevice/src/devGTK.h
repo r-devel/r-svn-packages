@@ -41,6 +41,7 @@ typedef struct {
     gboolean usefixed;
 
     PangoFont *font;
+    PangoFontDescription *fontdesc;
     PangoContext *context; /* NOT USED YET */
 
 } gtkDesc;
