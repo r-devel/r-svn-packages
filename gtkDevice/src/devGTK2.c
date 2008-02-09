@@ -25,17 +25,6 @@
 #include <gtk/gtk.h>
 #include <locale.h>
 
-#include <R.h>
-#include <Rinternals.h>
-#include <Rversion.h>
-#if R_VERSION < R_Version(2, 7, 0)
-# include <Rgraphics.h>
-# include <Rdevices.h>
-# include <R_ext/GraphicsDevice.h>
-typedef NewDevDesc* pDevDesc;
-#endif
-#include <R_ext/GraphicsEngine.h>
-
 #include "devGTK.h"
 #include "gdkrotated.h"
 
@@ -355,7 +344,7 @@ static gboolean realize_event(GtkWidget *widget, pDevDesc dd)
 static gboolean initialize(pDevDesc dd)
 {
     gtkDesc *gtkd;
-    GdkGCClass *gcclass;
+    //GdkGCClass *gcclass;
 
     gtkd = (gtkDesc *) dd->deviceSpecific;
     g_return_val_if_fail(gtkd != NULL, FALSE);
@@ -364,7 +353,7 @@ static gboolean initialize(pDevDesc dd)
 
     /* create gc */
     gtkd->wgc = gdk_gc_new(gtkd->drawing->window);
-    gcclass = GDK_GC_GET_CLASS(gtkd->wgc);
+    //gcclass = GDK_GC_GET_CLASS(gtkd->wgc);
 
     /* set the cursor */
     gtkd->gcursor = gdk_cursor_new(GDK_CROSSHAIR);
@@ -699,6 +688,8 @@ static void GTK_NewPage (R_GE_gcontext *gc,
     
     gtkd->fill = R_OPAQUE(gc->fill) ? gc->fill : R_RGB(255,255,255);
     SetColor(&gtkd->gcol_bg, gtkd->fill);
+    gdk_rgb_find_color(gtk_widget_get_colormap(gtkd->drawing),
+		       &gtkd->gcol_bg);
     gdk_window_set_background(gtkd->drawing->window, &gtkd->gcol_bg);
 
     gdk_window_clear(gtkd->drawing->window);
@@ -1115,7 +1106,7 @@ static void GTK_Mode(gint mode, pDevDesc dd)
 
 /* Device driver entry point */
 Rboolean
-GTKDeviceDriver(DevDesc *odd, char *display, double width, 
+GTKDeviceDriver(pDevDesc odd, char *display, double width, 
 		double height, double pointsize)
 {
     pDevDesc dd;
@@ -1210,7 +1201,7 @@ GTKDeviceDriver(DevDesc *odd, char *display, double width,
 
 
 Rboolean
-GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, double pointsize)
+GTKDeviceFromWidget(pDevDesc odd, char *widget, double width, double height, double pointsize)
 {
     pDevDesc dd = (pDevDesc) odd;
     double ps = pointsize;
@@ -1313,6 +1304,12 @@ GTKDeviceFromWidget(DevDesc *odd, char *widget, double width, double height, dou
     dd->locator = GTK_Locator;
     dd->mode = GTK_Mode;
     dd->metricInfo = GTK_MetricInfo;
+#if R_VERSION >= R_Version(2, 7, 0)
+    dd->hasTextUTF8 = TRUE;
+    dd->wantSymbolUTF8 = TRUE;
+    dd->strWidthUTF8 = GTK_StrWidth;
+    dd->textUTF8 = GTK_Text;
+#endif
 
     dd->left = 0;
     dd->right = gtkd->windowWidth;

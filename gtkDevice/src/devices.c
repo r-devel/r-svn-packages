@@ -1,30 +1,23 @@
-#include <R.h>
-#include <Rinternals.h>
-#include <Rversion.h>
-#if R_VERSION < R_Version(2, 7, 0)
-# include <Rgraphics.h>
-# include <Rdevices.h>
-# include <R_ext/GraphicsDevice.h>
-typedef NewDevDesc* pDevDesc;
-#endif
-#include <R_ext/GraphicsEngine.h>
+#include <gtk/gtk.h>
+#include "devGTK.h"
 
 #ifndef BEGIN_SUSPEND_INTERRUPTS
 # define BEGIN_SUSPEND_INTERRUPTS
 # define END_SUSPEND_INTERRUPTS
 #endif
 
-#include <gtk/gtk.h>
-#include "devGTK.h"
-
-typedef Rboolean (*GtkDeviceCreateFun)(DevDesc *, char *display, double width, double height, double pointsize);
+typedef Rboolean 
+(*GtkDeviceCreateFun)(pDevDesc, char *display, double width, 
+		      double height, double pointsize);
 
 static  GEDevDesc *
-createGtkDevice(char *display, double width, double height, double ps, GtkDeviceCreateFun init_fun)
+createGtkDevice(char *display, double width, double height, double ps, 
+		GtkDeviceCreateFun init_fun)
 {
     GEDevDesc *dd;
-    NewDevDesc *dev;
+    pDevDesc dev;
 
+    R_GE_checkVersionOrDie(R_GE_version);
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
 	/* Allocate and initialize the device driver data */
@@ -34,7 +27,7 @@ createGtkDevice(char *display, double width, double height, double ps, GtkDevice
 	/* Do this for early redraw attempts */
 	dev->displayList = R_NilValue;
 #endif
-	if (! init_fun ((DevDesc*)dev, display, width, height, ps)) {
+	if (! init_fun (dev, display, width, height, ps)) {
 	    free(dev);
 	    PROBLEM  "unable to start device gtk" ERROR;
 	}

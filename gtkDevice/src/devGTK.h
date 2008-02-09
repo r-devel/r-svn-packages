@@ -5,7 +5,14 @@
 
 #include <R.h>
 #include <Rinternals.h>
-#include <Rgraphics.h>
+#include <Rversion.h>
+#if R_VERSION < R_Version(2, 7, 0)
+# include <Rgraphics.h>
+# include <Rdevices.h>
+# include <R_ext/GraphicsDevice.h>
+typedef NewDevDesc* pDevDesc;
+#endif
+#include <R_ext/GraphicsEngine.h>
 
 typedef struct {
     /* R Graphics Parameters */
@@ -47,10 +54,10 @@ typedef struct {
 } gtkDesc;
 
 
-Rboolean GTKDeviceDriver(DevDesc *dd, char *display, double width, 
+Rboolean GTKDeviceDriver(pDevDesc dd, char *display, double width, 
 			 double height, double pointsize);
 
-Rboolean GTKDeviceFromWidget(DevDesc *dd, char *w, double width, 
+Rboolean GTKDeviceFromWidget(pDevDesc dd, char *w, double width, 
 			     double height, double pointsize);
 
 #endif /* ifndef R_DEV_GTK_H */
