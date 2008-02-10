@@ -65,10 +65,10 @@ static void GTK_Rect(double x0, double y0, double x1, double y1,
 static void GTK_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     pDevDesc dd);
-static double GTK_StrWidth(char *str,
+static double GTK_StrWidth(const char *str,
 			   R_GE_gcontext *gc,
 			   pDevDesc dd);
-static void GTK_Text(double x, double y, char *str, 
+static void GTK_Text(double x, double y, const char *str, 
 		     double rot, double hadj, 
 		     R_GE_gcontext *gc,
 		     pDevDesc dd);
@@ -548,7 +548,7 @@ static Rboolean GTK_Open(pDevDesc dd, gtkDesc *gtkd, char *dsp, double w,
 }
 
 
-static double GTK_StrWidth (char *str,
+static double GTK_StrWidth (const char *str,
 			    R_GE_gcontext *gc,
 			    pDevDesc dd)
 {
@@ -980,7 +980,7 @@ static void GTK_Polygon(int n, double *x, double *y,
 
 
 
-static void GTK_Text(double x, double y, char *str, 
+static void GTK_Text(double x, double y, const char *str, 
 		     double rot, double hadj, 
 		     R_GE_gcontext *gc,
 		     pDevDesc dd)
