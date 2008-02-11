@@ -3,6 +3,10 @@
 
 1.3-30
 
+* print methods now return first argument invisibly as they should.
+
+* code for (very) old style summary removed. 
+
 * `gam.fit3' now traps derivative iteration divergence, and suggests 
   tightening the convergence tolerance `epsilon' in `gam.control'. 
   Divergence can happen for ill-conditioned models if the PIRLS has 

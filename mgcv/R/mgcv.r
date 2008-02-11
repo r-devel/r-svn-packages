@@ -920,6 +920,7 @@ print.gam<-function (x,...)
   cat("\nGCV score: ",x$gcv.ubre,"\n")
   else if (x$method=="UBRE")
   cat("\nUBRE score: ",x$gcv.ubre,"\n")
+  invisible(x)
 }
 
 gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,globit = 20,
@@ -2014,174 +2015,6 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
   res
 }
 
-## old summary and anova code starts here .....
-## functions and classes renamed summary2 and anova2.
-
-
-summary2.gam <- function (object,freq=TRUE,...) 
-# summary method for gam object - provides approximate p values for terms + other diagnostics
-{ pinv<-function(V,M,rank.tol=1e-6)
-  { D<-La.svd(V)
-    M1<-length(D$d[D$d>rank.tol*D$d[1]])
-    if (M>M1) M<-M1 # avoid problems with zero eigen-values
-    if (M+1<=length(D$d)) D$d[(M+1):length(D$d)]<-1
-    D$d<- 1/D$d
-    if (M+1<=length(D$d)) D$d[(M+1):length(D$d)]<-0
-    res <- D$u%*%diag(D$d)%*%D$v
-    attr(res,"rank") <- M
-    res
-  }
-  if (freq) Vp <- object$Ve else Vp <- object$Vp
-  se<-0;for (i in 1:length(object$coefficients)) se[i] <- Vp[i,i]^0.5
-  residual.df<-length(object$y)-sum(object$edf)
-  if (object$nsdf>0) # individual parameters
-  { p.coeff<-object$coefficients[1:object$nsdf]
-    p.t<-p.coeff/se[1:object$nsdf]
-    if (object$method=="UBRE") 
-    p.pv<-2*pnorm(abs(p.t),lower.tail=FALSE) else
-    p.pv<-2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
-  } else {p.coeff<-p.t<-p.pv<-array(0,0)}
-  
-  term.labels<-attr(object$pterms,"term.labels")
-  nt<-length(term.labels)
-  if (nt>0) # individual parametric terms
-  { np<-length(object$assign)
-    Vb<-matrix(Vp[1:np,1:np],np,np)
-    bp<-array(object$coefficients[1:np],np)
-    pTerms.pv <- array(0,nt)
-    attr(pTerms.pv,"names") <- term.labels
-    pTerms.df <- pTerms.chi.sq <- pTerms.pv
-    for (i in 1:nt)
-    { ind <- object$assign==i
-      b <- bp[ind];V <- Vb[ind,ind]
-      pTerms.df[i] <- nb <- length(b)
-      pTerms.chi.sq[i] <- b%*%solve(V,b)
-      if (object$method=="UBRE")
-      pTerms.pv[i]<-pchisq(pTerms.chi.sq[i],df=nb,lower.tail=FALSE)
-      else     
-      pTerms.pv[i]<-pf(pTerms.chi.sq[i]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)
-    }
-  } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}
-
-  m<-length(object$smooth) # number of smooth terms
-  edf<-s.pv<-chi.sq<-array(0,m)
-  if (m>0) # form test statistics for each smooth
-  { for (i in 1:m)
-    { start<-object$smooth[[i]]$first.para;stop<-object$smooth[[i]]$last.para
-      V <- Vp[start:stop,start:stop] # cov matrix for smooth
-      p<-object$coefficients[start:stop]  # params for smooth
-      M1<-object$smooth[[i]]$df
-##      M<-round(sum(object$edf[start:stop]))
-      V<-pinv(V,M1) # get rank M pseudoinverse of V
-      chi.sq[i]<-t(p)%*%V%*%p
-      er<-names(object$coefficients)[start]
-      er<-substring(er,1,nchar(er)-2)
-      if (object$smooth[[i]]$by!="NA") 
-      { er<-paste(er,":",object$smooth[[i]]$by,sep="")} 
-      names(chi.sq)[i]<-er
-      edf[i]<-sum(object$edf[start:stop])
-      if (freq) df <- attr(V,"rank") else df <- edf[i]
-      if (object$method=="UBRE")
-      s.pv[i]<-pchisq(chi.sq[i],df=df,lower.tail=FALSE)
-      else     
-      s.pv[i]<-pf(chi.sq[i]/df,df1=df,df2=residual.df,lower.tail=FALSE) 
-   }
-  }
-  w <- object$prior.weights
-  nobs <- nrow(object$model)
-  r.sq<- 1 - var(w*(object$y-object$fitted.values))*(nobs-1)/(var(w*object$y)*residual.df) 
-  dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
-  ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
-       s.pv=s.pv,scale=object$sig2,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
-       dev.expl=dev.expl,edf=edf,dispersion=object$sig2,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
-       pTerms.df=pTerms.df)
-  if (object$method=="GCV") ret$gcv<-object$gcv.ubre else if (object$method=="UBRE") ret$ubre<-object$gcv.ubre
-  class(ret)<-"summary.gam2"
-  ret
-}
-
-print.summary.gam2<-function(x,...)
-# print method for gam summary method.
-{ print(x$family)
-  cat("Formula:\n")
-  print(x$formula)
-  if (length(x$p.coeff)>0)
-  { cat("\nParametric coefficients:\n")
-    width<-max(nchar(names(x$p.coeff)))
-    cat(rep(" ",width),"   Estimate  std. err.    t ratio    Pr(>|t|)\n",sep="")
-    for (i in 1:length(x$p.coeff))
-    cat(formatC(names(x$p.coeff)[i],width=width)," ",formatC(x$p.coeff[i],width=10,digits=5)," ",
-    formatC(x$se[i],width=10,digits=4)," ",formatC(x$p.t[i],width=10,digits=4),"    ",format.pval(x$p.pv[i]),"\n",sep="")
-  }
-  cat("\n")
-  if(x$m>0)
-  { cat("Approximate significance of smooth terms:\n")
-    width<-max(nchar(names(x$chi.sq)))
-    cat(rep(" ",width),"        edf       chi.sq     p-value\n",sep="")
-    for (i in 1:x$m)
-    cat(formatC(names(x$chi.sq)[i],width=width)," ",formatC(x$edf[i],width=10,digits=4),"   ",
-    formatC(x$chi.sq[i],width=10,digits=5),"     ",format.pval(x$s.pv[i]),"\n",sep="")
-  }
-  cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5))
-  if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
-  if (!is.null(x$ubre)) cat("UBRE score = ",formatC(x$ubre,digits=5),sep="")
-  if (!is.null(x$gcv)) cat("GCV score = ",formatC(x$gcv,digits=5)," ",sep="")
-  cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
-}
-
-
-anova.gam2 <- function (object, ..., dispersion = NULL, test = NULL)
-{   # adapted from anova.glm: R stats package
-    dotargs <- list(...)
-    named <- if (is.null(names(dotargs)))
-        rep(FALSE, length(dotargs))
-    else (names(dotargs) != "")
-    if (any(named))
-        warning("The following arguments to anova.glm(..) are invalid and dropped: ",
-            paste(deparse(dotargs[named]), collapse = ", "))
-    dotargs <- dotargs[!named]
-    is.glm <- unlist(lapply(dotargs, function(x) inherits(x,
-        "glm")))
-    dotargs <- dotargs[is.glm]
-    if (length(dotargs) > 0)
-        return(anova.glmlist(c(list(object), dotargs), dispersion = dispersion,
-            test = test))
-    if (!is.null(dispersion)) warning("dispersion argument ignored")
-    if (!is.null(test)) warning("test argument ignored")
-    if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
-    sg <- summary(object,freq=TRUE) 
-    class(sg) <- "anova.gam2"
-    sg
-}
-
-
-print.anova.gam2 <- function(x,...)
-{ # print method for class anova.gam resulting from single
-  # gam model calls to anova.
-  print(x$family)
-  cat("Formula:\n")
-  print(x$formula)
-  if (length(x$pTerms.pv)>0)
-  { cat("\nParametric Terms:\n")
-    term.names <- names(x$pTerms.pv)
-    width<-max(nchar(term.names))
-    cat(rep(" ",width),"         df       chi.sq     p-value\n",sep="")
-    for (i in 1:length(term.names))
-    cat(formatC(term.names[i],width=width)," ",formatC(x$pTerms.df[i],width=10,digits=4),"   ",
-    formatC(x$pTerms.chi.sq[i],width=10,digits=5),"     ",format.pval(x$pTerms.pv[i]),"\n",sep="")
-  }
-  cat("\n")
-  if(x$m>0)
-  { cat("Approximate significance of smooth terms:\n")
-    width<-max(nchar(names(x$chi.sq)))
-    cat(rep(" ",width),"        edf       chi.sq     p-value\n",sep="")
-    for (i in 1:x$m)
-    cat(formatC(names(x$chi.sq)[i],width=width)," ",formatC(x$edf[i],width=10,digits=4),"   ",
-    formatC(x$chi.sq[i],width=10,digits=5),"     ",format.pval(x$s.pv[i]),"\n",sep="")
-  }
-}
-
-## end of old summary and anova code
 
 ## Start of anova and summary code as improved by Henric Nilsson ....
 ## Added 10/8/05...
@@ -2338,7 +2171,9 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
   if (!is.null(x$ubre)) cat("UBRE score = ",formatC(x$ubre,digits=5),sep="")
   if (!is.null(x$gcv)) cat("GCV score = ",formatC(x$gcv,digits=5)," ",sep="")
-  cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
+  cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n =
+                              ",x$n,"\n",sep="")
+  invisible(x)
 }
 
 
@@ -2382,6 +2217,7 @@ print.anova.gam <- function(x, digits = max(3, getOption("digits") - 3), ...)
   { cat("Approximate significance of smooth terms:\n")
     printCoefmat(x$s.table, digits = digits, signif.stars = FALSE, has.Pvalue = TRUE, na.print = "NA", ...)
   }
+  invisible(x)
 }
 
 ## End of improved anova and summary code. 
