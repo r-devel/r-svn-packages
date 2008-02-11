@@ -1180,10 +1180,6 @@ GTKDeviceDriver(pDevDesc odd, char *display, double width,
     dd->ipr[1] = pixelHeight();
 
     /* device capabilities */
-    dd->canResizePlot= TRUE;
-    dd->canChangeFont= FALSE;
-    dd->canRotateText= TRUE;
-    dd->canResizeText= TRUE;
     dd->canClip = TRUE;
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
@@ -1329,10 +1325,6 @@ GTKDeviceFromWidget(pDevDesc odd, char *widget, double width, double height, dou
     dd->ipr[1] = pixelHeight();
 
     /* device capabilities */
-    dd->canResizePlot= TRUE;
-    dd->canChangeFont= FALSE;
-    dd->canRotateText= TRUE;
-    dd->canResizeText= TRUE;
     dd->canClip = TRUE;
     dd->canHAdj = 0;/* not better? {0, 0.5, 1} */
     dd->canChangeGamma = FALSE;
