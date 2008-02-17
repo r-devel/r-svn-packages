@@ -37,7 +37,7 @@
 /* Device driver actions */
 static void GTK_Activate(pDevDesc dd);
 static void GTK_Circle(double x, double y, double r,
-		       R_GE_gcontext *gc,
+		       const pGEcontext gc,
 		       pDevDesc dd);
 static void GTK_Clip(double x0, double x1, double y0, double y1, 
 		     pDevDesc dd);
@@ -45,32 +45,32 @@ static void GTK_Close(pDevDesc dd);
 static void GTK_Deactivate(pDevDesc dd);
 static Rboolean GTK_Locator(double *x, double *y, pDevDesc dd);
 static void GTK_Line(double x1, double y1, double x2, double y2,
-		     R_GE_gcontext *gc,
+		     const pGEcontext gc,
 		     pDevDesc dd);
 static void GTK_MetricInfo(int c,
-			   R_GE_gcontext *gc,
+			   const pGEcontext gc,
 			   double* ascent, double* descent,
 			   double* width, pDevDesc dd);
 static void GTK_Mode(int mode, pDevDesc dd);
-static void GTK_NewPage(R_GE_gcontext *gc, pDevDesc dd);
+static void GTK_NewPage(const pGEcontext gc, pDevDesc dd);
 static void GTK_Polygon(int n, double *x, double *y, 
-			R_GE_gcontext *gc,
+			const pGEcontext gc,
 			pDevDesc dd);
 static void GTK_Polyline(int n, double *x, double *y, 
-			 R_GE_gcontext *gc,
+			 const pGEcontext gc,
 			 pDevDesc dd);
 static void GTK_Rect(double x0, double y0, double x1, double y1,
-		     R_GE_gcontext *gc,
+		     const pGEcontext gc,
 		     pDevDesc dd);
 static void GTK_Size(double *left, double *right,
 		     double *bottom, double *top,
 		     pDevDesc dd);
 static double GTK_StrWidth(const char *str,
-			   R_GE_gcontext *gc,
+			   const pGEcontext gc,
 			   pDevDesc dd);
 static void GTK_Text(double x, double y, const char *str, 
 		     double rot, double hadj, 
-		     R_GE_gcontext *gc,
+		     const pGEcontext gc,
 		     pDevDesc dd);
 static Rboolean GTK_Open(pDevDesc, gtkDesc*, char*, double, double);
 
@@ -123,7 +123,8 @@ text_extents (PangoFontDescription *desc,
 	      gint        *rbearing,
 	      gint        *width,
 	      gint        *ascent,
-	      gint        *descent)
+	      gint        *descent,
+	      int ink)
 {
     PangoLayout *layout;
     PangoRectangle rect;
@@ -142,7 +143,12 @@ text_extents (PangoFontDescription *desc,
     pango_layout_set_text(layout, text, strlen(text));
 #endif
 
-    pango_layout_line_get_pixel_extents(pango_layout_get_line(layout, 0), NULL, &rect);
+    if(ink)
+	pango_layout_line_get_pixel_extents(pango_layout_get_line(layout, 0),
+					    &rect, NULL);
+    else
+	pango_layout_line_get_pixel_extents(pango_layout_get_line(layout, 0),
+					    NULL, &rect);
 
     if(ascent)
 	*ascent = PANGO_ASCENT(rect);
@@ -549,7 +555,7 @@ static Rboolean GTK_Open(pDevDesc dd, gtkDesc *gtkd, char *dsp, double w,
 
 
 static double GTK_StrWidth (const char *str,
-			    R_GE_gcontext *gc,
+			    const pGEcontext gc,
 			    pDevDesc dd)
 {
     int size, width;
@@ -560,14 +566,14 @@ static double GTK_StrWidth (const char *str,
     
     text_extents(gtkd->fontdesc, gtk_widget_get_pango_context(gtkd->drawing),
 		 str, strlen(str),
-		 0, 0, &width, 0, 0);
+		 0, 0, &width, 0, 0, 0);
 
     return (double) width;
 }
 
 
 static void GTK_MetricInfo (int c,
-			    R_GE_gcontext *gc,
+			    const pGEcontext gc,
 			    double* ascent, double* descent,
 			    double* width, pDevDesc dd)
 {
@@ -596,7 +602,7 @@ static void GTK_MetricInfo (int c,
 	text_extents(gtkd->fontdesc, 
 		     gtk_widget_get_pango_context(gtkd->drawing),
 		     text, strlen(text),
-		     0, 0, &iwidth, &iascent, &idescent);
+		     0, 0, &iwidth, &iascent, &idescent, 1);
     } else
 #endif
     {
@@ -604,7 +610,7 @@ static void GTK_MetricInfo (int c,
 	text_extents(gtkd->fontdesc, 
 		     gtk_widget_get_pango_context(gtkd->drawing),
 		     text, strlen(text),
-		     0, 0, &iwidth, &iascent, &idescent);
+		     0, 0, &iwidth, &iascent, &idescent, 1);
     }
     *ascent = (double) iascent;
     *descent = (double) idescent;
@@ -671,7 +677,7 @@ static void GTK_resize(pDevDesc dd)
 }
 
 /* clear the drawing area */
-static void GTK_NewPage (R_GE_gcontext *gc,
+static void GTK_NewPage (const pGEcontext gc,
 			 pDevDesc dd)
 {
     gtkDesc *gtkd;
@@ -770,7 +776,7 @@ static void GTK_Deactivate(pDevDesc dd)
 /* drawing stuff */
 
 static void GTK_Rect(double x0, double y0, double x1, double y1,
-		     R_GE_gcontext *gc,
+		     const pGEcontext gc,
 		     pDevDesc dd)
 {
     double tmp;
@@ -830,7 +836,7 @@ static void GTK_Rect(double x0, double y0, double x1, double y1,
 }
 
 static void GTK_Circle(double x, double y, double r,
-		       R_GE_gcontext *gc,
+		       const pGEcontext gc,
 		       pDevDesc dd)
 {
     GdkColor gcol_fill, gcol_outline;
@@ -875,7 +881,7 @@ static void GTK_Circle(double x, double y, double r,
 }
 
 static void GTK_Line(double x1, double y1, double x2, double y2,
-		     R_GE_gcontext *gc,
+		     const pGEcontext gc,
 		     pDevDesc dd)
 {
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
@@ -902,7 +908,7 @@ static void GTK_Line(double x1, double y1, double x2, double y2,
 }
 
 static void GTK_Polyline(int n, double *x, double *y, 
-			 R_GE_gcontext *gc,
+			 const pGEcontext gc,
 			 pDevDesc dd)
 {
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
@@ -936,7 +942,7 @@ static void GTK_Polyline(int n, double *x, double *y,
 }
 
 static void GTK_Polygon(int n, double *x, double *y, 
-			R_GE_gcontext *gc,
+			const pGEcontext gc,
 			pDevDesc dd)
 {
     gtkDesc *gtkd = (gtkDesc *) dd->deviceSpecific;
@@ -982,7 +988,7 @@ static void GTK_Polygon(int n, double *x, double *y,
 
 static void GTK_Text(double x, double y, const char *str, 
 		     double rot, double hadj, 
-		     R_GE_gcontext *gc,
+		     const pGEcontext gc,
 		     pDevDesc dd)
 {
     PangoContext *context;
@@ -1167,8 +1173,8 @@ GTKDeviceDriver(pDevDesc odd, char *display, double width,
     dd->bottom = gtkd->windowHeight;
     dd->top = 0;
 
-    dd->cra[0] = ps/0.8;
-    dd->cra[1] = ps/0.6;
+    dd->cra[0] = 0.9*ps;
+    dd->cra[1] = 1.2*ps;
 
     /* character addressing offsets */
     dd->xCharOffset = 0.4900;

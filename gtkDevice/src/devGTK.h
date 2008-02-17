@@ -11,6 +11,8 @@
 # include <Rdevices.h>
 # include <R_ext/GraphicsDevice.h>
 typedef NewDevDesc* pDevDesc;
+typedef GEDevDesc* pGEDevDesc;
+typedef R_GE_gcontext* pGEcontext;
 #endif
 #include <R_ext/GraphicsEngine.h>
 

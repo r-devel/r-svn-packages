@@ -10,11 +10,11 @@ typedef Rboolean
 (*GtkDeviceCreateFun)(pDevDesc, char *display, double width, 
 		      double height, double pointsize);
 
-static  GEDevDesc *
+static pGEDevDesc
 createGtkDevice(char *display, double width, double height, double ps, 
 		GtkDeviceCreateFun init_fun)
 {
-    GEDevDesc *dd;
+    pGEDevDesc dd;
     pDevDesc dev;
 
     R_GE_checkVersionOrDie(R_GE_version);
