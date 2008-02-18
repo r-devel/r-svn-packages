@@ -1,4 +1,4 @@
-version 1.2-31 2008-??-??
+version 1.2-31 2008-02-18
 
     print.simplex now returns its result invisibly.
 
