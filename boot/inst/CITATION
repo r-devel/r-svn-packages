@@ -1,0 +1,17 @@
+citHeader("To cite the boot bundle in publications use:")
+
+citEntry(entry="Book",
+         title = "Bootstrap Methods and Their Applications",
+         author = personList(as.person("A. C. Davison"),
+                             as.person("D. V. Hinkley")),
+	 publisher = "Cambridge University Press",
+         address   = "Cambridge",
+         year     = "1997",
+         note     = "ISBN 0-521-57391-2",
+         url      = "http://statwww.epfl.ch/davison/BMA/",
+
+         textVersion =
+         paste("Davison, A. C. & Hinkley, D. V. (1997)",
+  	       "Bootstrap Methods and Their Applications",
+               "Cambridge University Press, Cambridge. ISBN 0-521-57391-2")
+)
