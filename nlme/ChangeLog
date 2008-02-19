@@ -1,3 +1,8 @@
+2008-02-19  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* inst/CITATION: add file (essentially what citation() would
+	produce, without the warning).
+
 2008-02-18  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION (Version, Date): 3.1-87

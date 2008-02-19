@@ -1,4 +1,21 @@
-citHeader("To cite the boot bundle in publications use:")
+citHeader("To cite the 'boot' package in publications use:")
+
+desc <- packageDescription("boot")
+year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", desc$Date)
+vers <- paste("R package version", desc$Version)
+
+citEntry(entry="Manual",
+         title = "boot: Bootstrap R (S-Plus) Functions",
+         author = personList(as.person("Angelo Canty"),
+                             as.person("B. D. Ripley")),
+         year = year,
+         note = vers,
+
+         textVersion =
+         paste("Angelo Canty and Brian Ripley (",
+               year,
+               "). boot: Bootstrap R (S-Plus) Functions. ",
+               vers, ".", sep=""))
 
 citEntry(entry="Book",
          title = "Bootstrap Methods and Their Applications",
@@ -12,6 +29,6 @@ citEntry(entry="Book",
 
          textVersion =
          paste("Davison, A. C. & Hinkley, D. V. (1997)",
-  	       "Bootstrap Methods and Their Applications",
+  	       "Bootstrap Methods and Their Applications.",
                "Cambridge University Press, Cambridge. ISBN 0-521-57391-2")
 )
