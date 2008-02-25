@@ -7,19 +7,22 @@ Building Tcl/Tk
 Get the Tcl/Tk sources (I used 8.5.0 when testing this).
 You need VC++6 and a Windows command-line window.
 
-Run "\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT"
+Run "c:\Program Files\Microsoft Visual Studio\VC98\Bin\VCVARS32.BAT"
+Need Schemadef.h, Tmschema.h, Uxtheme.h from XP Platform SDK, or
+OPTS=noxp below.
 
 cd tcl8.5.x\win
 nmake -nologo -f makefile.vc release
 nmake -f makefile.vc install
 cd ..\..\tk8.5.x\win
-nmake -nologo -f makefile.vc OPTS=noxp TCLDIR=..\..\tcl8.5.x release
+nmake -nologo -f makefile.vc [OPTS=noxp] TCLDIR=..\..\tcl8.5.x release
 nmake -f makefile.vc install
 
 Now copy /Program Files/Tcl to say /R/Tcl and (in any reasonable shell)
 cd /R/Tcl
-rm bin/tclpip85.dll bin/tclsh85.exe bin/wish85.exe
-rm -rf lib/*.lib lib/tk8.5/demos lib/tk8.5/images lib/tclConfig.sh
+#rm bin/tclpip85.dll bin/tclsh85.exe bin/wish85.exe
+#rm -rf lib/*.lib 
+rm -rf lib/tk8.5/demos lib/tk8.5/images lib/tclConfig.sh
 cp .../tcl8.5.x/license.terms .
 
 
@@ -39,3 +42,42 @@ cp tcltk85.chm /R/Tcl/doc
 
 BDR 2004-01-09 2007-07-10 2007-12-26
 
+
+Additional extensions
+=====================
+
+BWidget
+-------
+
+just unpack BWidget-1.8.0.tar.bz2 in /R/Tcl/lib and rename to BWidget.
+
+Tktable
+-------
+
+unpack Tktable2.9.tar.gz
+cd Tktable
+mkdir /R/Tcl/lib/Tktable
+cp win/pkgIndex.tcl /R/Tcl/lib/Tktable
+# edit /R/Tcl/lib/Tktable/pkgIndex.tcl and add version no
+cp library/tkTable.tcl /R/Tcl/lib/Tktable
+cp win/tkTable.tcl.h generic
+cd generic
+make
+cp Tktable.dll /R/Tcl/lib/Tktable
+
+where the generic/Makefile is
+
+TBL_COMMAND = table
+TBL_RUNTIME = tkTable.tcl
+VERSION = 2.9
+
+DEFINES = -DDLL_BUILD -DBUILD_Tktable $(TBL_CFLAGS) \
+	  -DPACKAGE_VERSION=\"$(VERSION)\" \
+	  -DTBL_COMMAND=\"$(TBL_COMMAND)\" \
+	  -DTBL_RUNTIME="\"$(TBL_RUNTIME)\"" \
+	  -DTBL_RUNTIME_DIR="\"\""
+
+SOURCES = tkTable.c tkTableCell.c tkTableCellSort.c tkTableCmds.c tkTableEdit.c tkTableTag.c tkTableUtil.c tkTableWin.c
+
+all:
+	gcc -shared -o Tktable.dll $(DEFINES) -O2 -I/R/Tcl/include $(SOURCES) -L /R/Tcl/bin -ltcl85 -ltk85 -lgdi32
