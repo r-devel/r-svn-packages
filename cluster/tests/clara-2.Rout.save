@@ -1,5 +1,5 @@
 
-R version 2.5.0 alpha (2007-03-28 r40917)
+R version 2.7.0 Under development (unstable) (2007-09-24 r42966)
 Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -20,7 +20,8 @@ Type 'q()' to quit R.
 > ## generate 1500 objects, divided into 2 clusters.
 > if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
 Warning message:
-Buggy version of Kinderman-Ramage generator used. in: RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") 
+In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
+  Buggy version of Kinderman-Ramage generator used.
 > set.seed(264)
 > x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
 +            cbind(rnorm(800,50,8), rnorm(800,10,8)))
@@ -1326,5 +1327,5 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  3.809 0.026 4.04 0 0 
+Time elapsed:  4.712 0.04 4.802 0 0 
 > 

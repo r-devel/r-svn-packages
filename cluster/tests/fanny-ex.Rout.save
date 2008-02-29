@@ -1,6 +1,6 @@
 
-R version 2.4.1 beta (2006-12-04 r40122)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.6.1 Patched (2007-12-16 r43716)
+Copyright (C) 2007 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -1058,7 +1058,7 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.14 0.004 0.178 0 0 
+Time elapsed:  0.094 0.011 0.11 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are ``completely fuzzy'' -- and now give a warnings
@@ -1069,16 +1069,19 @@ Converged after 46 iterations,  obj =             2665.982
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
-the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ? in: fanny(chorSub, k = 4, trace.lev = 1) 
+In fanny(chorSub, k = 4, trace.lev = 1) :
+  the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
   dunn_coeff   normalized 
 2.500000e-01 1.850372e-15 
 > f4.18  <- fanny(chorSub, k = 4,   memb.exp = 1.8) # same problem
 Warning message:
-the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ? in: fanny(chorSub, k = 4, memb.exp = 1.8) 
+In fanny(chorSub, k = 4, memb.exp = 1.8) :
+  the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
 > f4.18. <- fanny(chorSub, k = 4,   memb.exp = 1.8,
 +                 iniMem.p = f4.20$membership) # very quick convergence
 Warning message:
-the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ? in: fanny(chorSub, k = 4, memb.exp = 1.8, iniMem.p = f4.20$membership) 
+In fanny(chorSub, k = 4, memb.exp = 1.8, iniMem.p = f4.20$membership) :
+  the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
 > stopifnot(all.equal(f4.18[-c(7,9)], f4.18.[-c(7,9)], tol = 5e-7))
 > 
 > f4.16  <- fanny(chorSub, k = 4, memb.exp = 1.6) # now gives 4 crisp clusters
@@ -1093,7 +1096,8 @@ Converged after 1 iterations,  obj = 4641.7451124068084027
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
-the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ? in: fanny(chorSub, k = 4, memb.exp = 1.6, iniMem.p = f4.18$membership,  
+In fanny(chorSub, k = 4, memb.exp = 1.6, iniMem.p = f4.18$membership,  :
+  the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
 > f4.16.2 <- fanny(chorSub, k = 4, memb.exp = 1.6,
 +                  iniMem.p = cluster:::as.membership(p4cl),
 +                  tol = 1e-10, trace.lev = 2)## looks much better:
@@ -1321,5 +1325,5 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.36 0.004 0.462 0 0 
+Time elapsed:  0.274 0.016 0.296 0 0 
 > 
