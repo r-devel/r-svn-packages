@@ -1,8 +1,13 @@
-2005-09-05  Douglas Bates  <bates@localhost.localdomain>
+2008-03-06  Douglas Bates <bates@stat.wisc.edu>
+
+        * [r4977] trunk/NISTnls/DESCRIPTION: Remove INDEX, update DESCRIPTION
+          for new requirements on the License info, new release
+	
+2005-09-05  Douglas Bates  <bates@stat.wisc.edu>
 
 	* DESCRIPTION (Date): Added examples using algorithm = "port"
 
-2004-10-03  Douglas Bates  <bates@bates1-home>
+2004-10-03  Douglas Bates  <bates@stat.wisc.edu>
 
 	* inst/original/Bennett5.dat: Move the original pages to an inst
 	directory.
