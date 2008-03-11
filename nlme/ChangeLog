@@ -1,5 +1,10 @@
 2008-02-19  Brian Ripley <Brian.Ripley@R-project.org>
 
+	* man/logLik.lme.Rd, man/logLik.gnls.Rd: correct description of
+	'REML' argument.
+
+2008-02-19  Brian Ripley <Brian.Ripley@R-project.org>
+
 	* inst/CITATION: add file (essentially what citation() would
 	produce, without the warning).
 
