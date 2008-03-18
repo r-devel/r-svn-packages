@@ -46,6 +46,10 @@
 #define VERSION_7SE 111
 #define VERSION_8 113
 #define VERSION_114 114
+/*
+http://statacorp.com/statalist/archive/2007-06/msg01021.html
+says 113 is versions 8-9, 114 is version 10.
+*/
 
 /* Stata format constants */
 #define STATA_FLOAT  'f'
@@ -611,9 +615,9 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 	OutByteBinary((char) VERSION_6, fp);            /* release */
     else if (version==7)
 	OutByteBinary((char) VERSION_7, fp);   
-    else if (version==8)
+    else if (version==8)  /* and also 9, mapped in R code */
 	OutByteBinary((char) VERSION_8, fp);   
-    else if (version==10)
+    else if (version==10) /* see comment above */
 	OutByteBinary((char) VERSION_114, fp);   
     OutByteBinary((char) CN_TYPE_NATIVE, fp);
     OutByteBinary(1,fp);            /* filetype */
