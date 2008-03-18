@@ -1,3 +1,8 @@
+2008-03-18 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/read.dta.R, src/stataread.c, man/read.dta.Rd,
+	man/write.dta.Rd. Add support for Stata 10 (aka 114) format.
+
 2008-03-09 Duncan Murdoch <Duncan.Murdoch@R-project.org>
 
 	* R/read.epiinfo.R:  bad regexp for blanks fixed.
