@@ -1,3 +1,8 @@
+2008-03-22 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/dbfopen.c: Use R_atof where available, for
+	locale-independence.
+
 2008-03-18 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/read.dta.R, src/stataread.c, man/read.dta.Rd,
