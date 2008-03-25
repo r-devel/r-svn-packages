@@ -44,7 +44,7 @@
 
 #define R_INTERFACE_PTRS 1
 #include <Rinterface.h>
-#include <Rdevices.h>    /* for KillAllDevices */
+#include <Rembedded.h>    /* for KillAllDevices */
 #include <R_ext/Print.h> /* for Rprintf */
 #include <Rversion.h>
 #if defined(R_VERSION) && R_VERSION >= R_Version(2, 7, 0)
@@ -208,7 +208,7 @@ static void Rgnome_CleanUp(SA_TYPE saveact, int status, int runLast)
     }
 
     /* close all the graphics devices */
-    if(saveact != SA_SUICIDE) KillAllDevices();
+    if(saveact != SA_SUICIDE) Rf_KillAllDevices();
     fpu_setup(FALSE);
 
     exit(status);
