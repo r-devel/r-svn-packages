@@ -1,3 +1,12 @@
+2008-03-26 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 0.8-24.
+	* src/SASxport.c: Patch from PD for case where record 
+	ends on card boundary
+	(http://finzi.psych.upenn.edu/R/Rhelp02a/archive/57864.html,
+	https://stat.ethz.ch/pipermail/r-help/2008-February/155272.html)
+	* tests/sas.R: regression test.
+
 2008-03-22 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/dbfopen.c: Use R_atof where available, for
@@ -6,7 +15,7 @@
 2008-03-18 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/read.dta.R, src/stataread.c, man/read.dta.Rd,
-	man/write.dta.Rd. Add support for Stata 10 (aka 114) format.
+	man/write.dta.Rd.  Add support for Stata 10 (aka 114) format.
 
 2008-03-09 Duncan Murdoch <Duncan.Murdoch@R-project.org>
 
