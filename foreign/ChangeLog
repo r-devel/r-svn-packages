@@ -6,6 +6,7 @@
 	(http://finzi.psych.upenn.edu/R/Rhelp02a/archive/57864.html,
 	https://stat.ethz.ch/pipermail/r-help/2008-February/155272.html)
 	* tests/sas.R: regression test.
+	*src/pfm-read.c: Use R's NA_REAL etc.
 
 2008-03-22 Brian Ripley <Brian.Ripley@R-project.org>
 
