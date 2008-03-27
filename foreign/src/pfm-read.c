@@ -443,12 +443,12 @@ read_string (struct file_handle *h)
       return NULL;
     }
   else if (buf == NULL)
-    buf = Calloc (256, unsigned char);
+    buf = Calloc (65536, unsigned char);
 
   n = read_int (h);
   if (n == NA_INTEGER)
     return NULL;
-  if (n < 0 || n > 255)
+  if (n < 0 || n > 65535)
     lose ((_("Bad string length %d"), n));
   
   {
@@ -780,7 +780,7 @@ read_variables (struct file_handle *h)
 	}
 
       asciify ((char *) name);
-      if (width < 0 || width > 255)
+      if (width < 0 || width > 65535)
 	lose ((_("Bad width %d for variable %s"), width, name));
 
       v = create_variable (ext->dict, (char *) name, 
