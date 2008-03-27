@@ -46,12 +46,6 @@
 #include <Rinterface.h>
 #include <Rembedded.h>    /* for KillAllDevices */
 #include <R_ext/Print.h> /* for Rprintf */
-#include <Rversion.h>
-#if defined(R_VERSION) && R_VERSION >= R_Version(2, 7, 0)
-# define CONST const
-#else
-# define CONST
-#endif
 
 #include "gtkconsole.h"
 #include "terminal.h"
@@ -70,7 +64,7 @@ static void Rgnome_CleanUp(SA_TYPE saveact, int status, int runLast);
  *  1) FATAL MESSAGES AT STARTUP
  */
 
-static void Rgnome_Suicide(CONST char *s)
+static void Rgnome_Suicide(const char *s)
 {
     GtkWidget *dialog;
     gchar *message;
