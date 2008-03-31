@@ -2,8 +2,9 @@ Title: Survival analysis, including penalised likelihood.
 Maintainer: Thomas Lumley <tlumley@u.washington.edu>
 Priority: recommended
 Package: survival
-Version: 2.34
-Depends: stats, utils, graphics, splines, R (>= 2.0.0)
+Version: 2.34-1
+Date: 2008-03-31
+Depends: stats, utils, graphics, splines, R (>= 2.6.0)
 LazyData: Yes
 LazyLoad: Yes
 Author: S original by Terry Therneau, ported by Thomas Lumley
