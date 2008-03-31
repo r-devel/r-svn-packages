@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2006
+##  R routines for the package mgcv (c) Simon Wood 2000-2008
 ##  With contributions from Henric Nilsson
 
 
@@ -182,7 +182,7 @@ mgcv <- function(y,X,sp,S,off,C=NULL,w=rep(1,length(y)),H=NULL,scale=1,gcv=TRUE,
 
 
 
-interpret.gam<-function (gf)
+interpret.gam <- function (gf)
 # interprets a gam formula of the generic form:
 #   y~x0+x1+x3*x4 + s(x5)+ s(x6,x7) ....
 # and returns:
@@ -679,7 +679,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     pmf$formula <- gp$pf
     pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
 
-    pterms <- attr(pmf,"terms")
+    pterms <- attr(pmf,"terms") ## pmf only used for this
 
     if (is.character(family)) family<-eval(parse(text=family))
     if (is.function(family)) family <- family()
@@ -2645,8 +2645,7 @@ magic <- function(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gc
                 ridge.parameter=NULL,control=list(maxit=50,tol=1e-6,step.half=25,
                 rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
 # Wrapper for C routine magic. Deals with constraints weights and square roots of 
-# penalties. Currently only a diagonal weight matrix is allowed, but this 
-# is easy to change.
+# penalties. 
 # y is data vector, X is model matrix, sp is array of smoothing parameters,
 # S is list of penalty matrices stored as smallest square submatrix excluding no 
 # non-zero entries, off[i] is the location on the leading diagonal of the

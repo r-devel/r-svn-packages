@@ -338,7 +338,7 @@ summary.pdIdnot <-
 ### end of pdIdnot class
 
 
-gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,
+gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),knots=NULL,
                      parametric.only=FALSE,absorb.cons=FALSE)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gamm fit.
@@ -421,7 +421,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),k
             # smooths as fixed effects
   random<-list()
   random.i<-0
-  k.sp <- 0  # counter for penalties
+ # k.sp <- 0  # counter for penalties
   xlab <- rep("",0)
   if (m)
   for (i in 1:m) 
@@ -438,16 +438,17 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),k
       }
     } 
     if (!sm$fixed) random.i <- random.i+1
-    k<-ncol(sm$X)
-    j<-nrow(sm$C)
+   
     ZSZ <- list()
-    if (nrow(sm$C)) # there are constraints
-    { qrc<-qr(t(sm$C))
+    if (!is.null(sm$C)&&nrow(sm$C)) # there are constraints
+    { k<-ncol(sm$X)
+      j<-nrow(sm$C)
+      qrc<-qr(t(sm$C))
       if (!sm$fixed)
       for (l in 1:length(sm$S)) # tensor product terms have > 1 penalty 
       { ZSZ[[l]]<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
         ZSZ[[l]]<-t(qr.qty(qrc,t(ZSZ[[l]]))[(j+1):k,])
-        k.sp <- k.sp+1
+   #     k.sp <- k.sp+1
       }
       XZ<-t(qr.qy(qrc,t(sm$X))[(j+1):k,])
       sm$qrc<-qrc
@@ -455,6 +456,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),k
     { if (!sm$fixed) 
       for (l in 1:length(sm$S)) ZSZ[[l]]<-sm$S[[l]]
       XZ<-sm$X
+      k <- ncol(sm$X);j<-0
     }
     G$Xf<-cbind(G$Xf,XZ)   # accumulate model matrix that treats all smooths as fixed
     if (!sm$fixed) 
@@ -463,21 +465,24 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gam.setup"),k
         # tensor product term - need to find null space from sum of penalties
         sum.ZSZ <- ZSZ[[1]]/mean(abs(ZSZ[[1]]))
         null.rank <- sm$margin[[1]]$bs.dim-sm$margin[[1]]$rank
+        bs.dim <- sm$margin[[1]]$bs.dim
         if (length(ZSZ)>1) for (l in 2:length(ZSZ)) 
         { sum.ZSZ <- sum.ZSZ + ZSZ[[l]]/mean(abs(ZSZ[[l]]))
           null.rank <- # the rank of the null space of the penalty 
                        null.rank * (sm$margin[[l]]$bs.dim-sm$margin[[l]]$rank)
+          bs.dim <- bs.dim*sm$margin[[l]]$bs.dim
         }
+        null.rank <- null.rank - bs.dim + sm$df
         sum.ZSZ <- (sum.ZSZ+t(sum.ZSZ))/2 # ensure symmetry
         ev <- eig(sum.ZSZ)
         mult.pen <- TRUE
       } else            # regular s() term
       { ZSZ[[1]] <- (ZSZ[[1]]+t(ZSZ[[1]]))/2
         ev<-eig(ZSZ[[1]])
-        null.rank <- sm$bs.dim - sm$rank
+        null.rank <- sm$df - sm$rank
         mult.pen <- FALSE
       }
-      p.rank <- ncol(sm$X) - null.rank
+      p.rank <- ncol(XZ) - null.rank
       if (p.rank>ncol(XZ)) p.rank <- ncol(XZ)
       U<-ev$vectors
       D<-ev$values[1:p.rank]
@@ -1005,7 +1010,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
   
     # now call gamm.setup 
 
-    G<-gamm.setup(gp,pterms=pTerms,data=mf,knots=knots,parametric.only=FALSE,absorb.cons=FALSE)
+    G<-gamm.setup(gp,pterms=pTerms,data=mf,knots=knots,parametric.only=FALSE,absorb.cons=TRUE)
 
     n.sr <- length(G$random) # number of random smooths (i.e. s(...,fx=FALSE,...) terms)
 
@@ -1113,7 +1118,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
         else b <- c(G$smooth[[i]]$D*b,beta) # single penalty case
         b<-G$smooth[[i]]$U%*%b 
       }
-      nc <- nrow(G$smooth[[i]]$C) 
+      if (is.null(G$smooth[[i]]$C)) nc <- 0 else nc <- nrow(G$smooth[[i]]$C) 
       if (nc) b <- qr.qy(G$smooth[[i]]$qrc,c(rep(0,nc),b))
       object$smooth[[i]]$first.para<-length(p)+1
       p<-c(p,b)
@@ -1143,8 +1148,8 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     first <- G$nsdf+1
     k <- 1
     if (G$m>0) for (i in 1:G$m) # Accumulate the total penalty matrix
-    { n.para <- object$smooth[[i]]$last.para - object$smooth[[i]]$first.para + 1 - 
-                nrow(G$smooth[[i]]$C)
+    { if (is.null(G$smooth[[i]]$C)) nc <- 0 else nc <- nrow(G$smooth[[i]]$C) 
+      n.para <- object$smooth[[i]]$last.para - object$smooth[[i]]$first.para + 1 - nc
       last <- first + n.para - 1 
       if (!object$smooth[[i]]$fixed)
       { for (l in 1:length(object$smooth[[i]]$ZSZ))
@@ -1162,14 +1167,13 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     X <- matrix(XVX[1:G$nsdf,],G$nsdf,ncol(XVX))
     first <- G$nsdf+1
     if (G$m >0) for (i in 1:G$m)
-    { nc <- nrow(G$smooth[[i]]$C)
+    { if (is.null(G$smooth[[i]]$C)) nc <- 0 else nc <- nrow(G$smooth[[i]]$C)  
       last <- first+object$smooth[[i]]$df-1 # old code: nrow(object$smooth[[i]]$ZSZ)-1
-      if (nc)
       { V <- rbind(matrix(0,nc,ncol(Vp)),Vb[first:last,])
-        V <- qr.qy(G$smooth[[i]]$qrc,V)
+        if (nc) V <- qr.qy(G$smooth[[i]]$qrc,V)
         Vp <- rbind(Vp,V) # cov matrix
         V <- rbind(matrix(0,nc,ncol(Vp)),XVX[first:last,])
-        V <- qr.qy(G$smooth[[i]]$qrc,V)
+        if (nc) V <- qr.qy(G$smooth[[i]]$qrc,V)
         X <- rbind(X,V)  # X'V^{-1}X
       }
       first <- last+1
@@ -1178,14 +1182,13 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     Z <- matrix(X[,1:G$nsdf],nrow(X),G$nsdf)
     first<-G$nsdf+1
     if (G$m>0) for (i in 1:G$m)
-    { last <- first + object$smooth[[i]]$df-1   # old code: nrow(object$smooth[[i]]$ZSZ)-1
-      nc <- nrow(G$smooth[[i]]$C)
-      if (nc)
+    { last <- first + object$smooth[[i]]$df-1   
+      if (is.null(G$smooth[[i]]$C)) nc <- 0 else nc <- nrow(G$smooth[[i]]$C) 
       { V <- cbind(matrix(0,nrow(Vb),nc),Vp[,first:last])
-        V <- t(qr.qy(G$smooth[[i]]$qrc,t(V)))
+        if (nc) V <- t(qr.qy(G$smooth[[i]]$qrc,t(V)))
         Vb<-cbind(Vb,V) 
         V <- cbind(matrix(0,nrow(Vb),nc),X[,first:last])
-        V <- t(qr.qy(G$smooth[[i]]$qrc,t(V)))
+        if (nc) V <- t(qr.qy(G$smooth[[i]]$qrc,t(V)))
         Z<-cbind(Z,V) 
       }
       first <- last+1

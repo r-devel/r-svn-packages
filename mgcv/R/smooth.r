@@ -324,13 +324,14 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
     nr <- max.rank-r
     object$bs.dim<-max.rank
   }
-  C<-matrix(colSums(X),1,ncol(X))
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    X<-as.numeric(by)*X
-  }
-  object$X<-X;object$S<-S;object$C<-C
+ # C<-matrix(colSums(X),1,ncol(X))
+ # if (object$by!="NA")  # deal with "by" variable 
+ # { by <- get.var(object$by,data)
+ #   if (is.null(by)) stop("Can't find by variable")
+ #   X<-as.numeric(by)*X
+ # }
+  object$X<-X;object$S<-S;
+# object$C<-C
   object$df<-ncol(X)-1
   object$null.space.dim <- prod(nr) # penalty null space rank 
   object$rank<-r
@@ -412,11 +413,11 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
                as.integer(object$p.order),as.integer(object$bs.dim),X=as.double(X),S=as.double(S),
                UZ=as.double(UZ),Xu=as.double(Xu),n.Xu=as.integer(nXu),C=as.double(C))
   object$X<-matrix(oo$X,n,k)                   # model matrix
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    object$X<-as.numeric(by)*object$X
-  }
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    object$X<-as.numeric(by)*object$X
+#  }
   object$S<-list()
   if (!object$fixed) 
   { object$S[[1]]<-matrix(oo$S,k,k)         # penalty matrix
@@ -430,7 +431,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   object$UZ<-matrix(oo$UZ[1:UZ.len],oo$n.Xu+M,k)         # truncated basis matrix
   Xu.len <- oo$n.Xu*object$dim
   object$Xu<-matrix(oo$Xu[1:Xu.len],oo$n.Xu,object$dim)  # unique covariate combinations
-  object$C<-matrix(oo$C,1,k)                   # constraints
+#  object$C<-matrix(oo$C,1,k)                   # constraints
   object$df<-object$bs.dim-1                   # DoF given constraint
   object$shift<-shift                          # covariate shifts
   if (is.null(shrink)) { 
@@ -487,11 +488,11 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
            as.double(C),as.integer(control))
 
   object$X <- matrix(oo[[5]],nx,nk)
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    object$X <- as.numeric(by)*object$X
-  }
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    object$X <- as.numeric(by)*object$X
+#  }
   object$S<-list()     # only return penalty if term not fixed
   if (!object$fixed) 
   { object$S[[1]] <- matrix(oo[[6]],nk,nk)
@@ -504,7 +505,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
   if (is.null(shrink)) { 
   object$rank<-nk-2 
   } else object$rank <- nk   # penalty rank
-  object$C <- matrix(colSums(object$X),1,ncol(object$X))
+#  object$C <- matrix(colSums(object$X),1,ncol(object$X))
 ##  object$C <- matrix(oo[[7]],1,nk)  # constraint
   object$df<-object$bs.dim-1 # degrees of freedom, given constraint
   object$null.space.dim <- 2
@@ -589,14 +590,14 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   object$BD<-BD # needed for prediction
   object$xp<-k  # needed for prediction   
   X<-Predict.matrix.cyclic.smooth(object,data) 
-  C<-matrix(colSums(X),1,ncol(X))
+#  C<-matrix(colSums(X),1,ncol(X))
   object$X<-X
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    object$X<-as.numeric(by)*object$X
-  }
-  object$C<-C
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    object$X<-as.numeric(by)*object$X
+#  }
+#  object$C<-C
   object$rank<-ncol(X)-1  # rank of smoother matrix
   object$df<-object$bs.dim-2 # degrees of freedom, accounting for centring and cycling
   object$null.space.dim <- 1  
@@ -613,11 +614,11 @@ Predict.matrix.tensor.smooth<-function(object,data)
   if (mxp>0) 
   for (i in 1:mxp) if (!is.null(object$XP[[i]])) X[[i]] <- X[[i]]%*%object$XP[[i]]
   T <- tensor.prod.model.matrix(X)
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    T <- as.numeric(by)*T
-  }
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    T <- as.numeric(by)*T
+#  }
   T
 }
 
@@ -646,11 +647,11 @@ Predict.matrix.cyclic.smooth<-function(object,data)
   x <- get.var(object$term,data)
   if (length(x)<1) stop("no data to predict at")
   X <- pred.mat(x,object$xp,object$BD)
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    X<-as.numeric(by)*X
-  }
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    X<-as.numeric(by)*X
+#  }
   X
 }
 
@@ -667,11 +668,11 @@ Predict.matrix.cr.smooth<-function(object,data)
             as.integer(object$bs.dim),as.double(X),as.double(S),
                    as.double(C),as.integer(control))
   X<-matrix(oo[[5]],nx,nk) # the prediction matrix
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    X<-as.numeric(by)*X
-  }
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    X<-as.numeric(by)*X
+#  }
   X
 }
 
@@ -702,6 +703,8 @@ Predict.matrix.tprs.smooth<-function(object,data)
       as.integer(object$bs.dim),as.integer(object$null.space.dim),as.double(object$Xu),
       as.integer(nrow(object$Xu)),as.double(object$UZ),as.double(by),as.integer(by.exists),X=as.double(X))
   X<-matrix(oo$X,n,object$bs.dim)
+  attr(X,"by.done") <- TRUE
+  X
 }
 
 Predict.matrix.ts.smooth<-function(object,data)
@@ -732,6 +735,30 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
     }
   } 
 
+  ## automatically produce centering constraint...
+  if (is.null(sm$C)) {
+    sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
+  }
+
+  ## pick up "by variables" now...
+  if (object$by!="NA"&&is.null(sm$by.done))
+  { by <- get.var(object$by,data)
+    if (is.null(by)) stop("Can't find by variable")
+    sm$X <- as.numeric(by)*sm$X
+  }
+
+
+  ## set df field...
+  if (is.null(sm$df)) {
+    sm$df <- object$bs.dim - nrow(sm$C)
+  }
+
+  ## automatically discard penalties for fixed terms...
+  if (!is.null(object$fixed)&&object$fixed) {
+    sm$S <- NULL
+  }
+
+  ## absorb constraints.....
   if (absorb.cons)
   { k<-ncol(sm$X)
     j<-nrow(sm$C)
@@ -762,6 +789,14 @@ PredictMat <- function(object,data)
 ## wrapper function which calls Predict.matrix and imposes same constraints as 
 ## smoothCon on resulting Prediction Matrix
 { X <- Predict.matrix(object,data)
+  if (!is.null(attr(X,"by.done"))) { ## handle `by variables' 
+    if (object$by!="NA")  # deal with "by" variable 
+    { by <- get.var(object$by,data)
+      if (is.null(by)) stop("Can't find by variable")
+      X<-as.numeric(by)*X
+    }
+    attr(X,"by.done") <- NULL
+  }
   offset <- attr(X,"offset")
   qrc <- attr(object,"qrc")
   if (!is.null(qrc)) { ## then smoothCon absorbed constraints
