@@ -1,6 +1,22 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.4-0
+
+** `smoothCon' now handles by variables and centering constraints 
+   automatically, removing the need for smooth constructors to do so.
+   `PredMat' handles by variables automatically. Users can over-ride this
+   behaviour when adding smooth classes, if needed - see documentation.
+
+* `gamm.setup' modified to call `gam.setup' for most of the setup, leaving 
+  just the re-parameterization step to do. 
+
+* `gamm' modified to allow constraint absorption (same as `gam')
+
+* `gamm' bug fixed whereby "cc" smooths would get the wrong null space 
+  dimension (effect was small, but noticeable, in practice e.g. Cairo 
+  temperature example from chapter 6 of Wood, 2006, book).
+
 1.3-30
 
 * print methods now return first argument invisibly as they should.
