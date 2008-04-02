@@ -40,9 +40,7 @@ set \code{d=c(2,1)}.}
 
 \item{by}{specifies a covariate by which the whole smooth term is to
     be multiplied. This is particularly useful for creating models in
-    which a smooth interacts with a factor: in this case the \code{by}
-    variable would usually be the dummy variable coding one level of the
-  factor. See the examples below.}
+    which a smooth interacts with a factor: See the example in \code{\link{s}}.}
 
 \item{fx}{indicates whether the term is a fixed d.f. regression
   spline (\code{TRUE}) or a penalized regression spline (\code{FALSE}).}
@@ -112,15 +110,6 @@ the term is a function of.}
 (tensor product smooths have multiple penalties). \code{TRUE} if the penalty is to 
 be ignored, \code{FALSE}, otherwise. }
   
-
-  
-%%\item{full.call}{Text for pasting into a string to be converted to a
-%%    gam formula, which has the values of function options given explicitly -
-%%  this is useful for constructing a fully expanded gam formula which can
-%%be used without needing access to any variables that may have been used
-%%to define k, fx, bs or m in the original call. i.e. this is text which
-%%when parsed and evaluated generates a call to \code{te()} with all the
-%%options spelled out explicitly.}
 
 \item{label}{A suitable text label for this smooth term.}
 

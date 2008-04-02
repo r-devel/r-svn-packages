@@ -300,6 +300,8 @@ gam.side <- function(sm,tol=.Machine$double.eps^.5)
     vn <- sm[[i]]$term
     ## need to include by variables in names
     if (sm[[i]]$by!="NA") vn <- paste(vn,sm[[i]]$by,sep="")
+    ## need to distinguish levels of factor by variables...
+    if (!is.null(sm[[i]]$by.level))  vn <- paste(vn,sm[[i]]$by.level,sep="")
     sm[[i]]$vn <- vn ## use this record to identify variables from now
     v.names <- c(v.names,vn)
     if (sm[[i]]$dim > maxDim) maxDim <- sm[[i]]$dim
@@ -373,7 +375,6 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   }  
   else  m<-length(split$smooth.spec) # number of smooth terms
   
-## G<-list(m=m,full.formula=split$full.formula,min.sp=min.sp,H=H)
   G<-list(m=m,min.sp=min.sp,H=H)
   
 
@@ -406,13 +407,21 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$off<-array(0,0)
   first.para<-G$nsdf+1
   sm <- list()
+  newm <- 0
   if (m>0) for (i in 1:m) 
   { # idea here is that terms are set up in accordance with information given in split$smooth.spec
     # appropriate basis constructor is called depending on the class of the smooth
     # constructor returns penalty matrices model matrix and basis specific information
-    sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons)
+    ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons) ## old code
+    sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons)
+    for (j in 1:length(sml)) {
+      newm <- newm + 1
+      sm[[newm]] <- sml[[j]]
+    }
   }
   
+  G$m <- m <- newm ## number of actual smooths
+
   ## at this stage, it is neccessary to impose any side conditions required
   ## for identifiability
   if (m>0) sm<-gam.side(sm,tol=.Machine$double.eps^.5)
@@ -1618,7 +1627,23 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
 # n2 is the square root of the number of grid points to use for contouring
 # 2-d terms.
 
-{ sp.contour <- function(x,y,z,zse,xlab="",ylab="",zlab="",titleOnly=FALSE,
+{ sub.edf <- function(lab,edf) {
+    ## local function to substitute edf into brackets of label
+    ## labels are e.g. smooth[[1]]$label
+    pos <- regexpr(":",lab)[1]
+    if (pos<0) { ## there is no by variable stuff
+      pos <- nchar(lab) - 1
+      lab <- paste(substr(lab,start=1,stop=pos),",",round(edf,digits=2),")",sep="")
+    } else {
+      lab1 <- substr(lab,start=1,stop=pos-2)
+      lab2 <- substr(lab,start=pos-1,stop=nchar(lab))
+      lab <- paste(lab1,",",round(edf,digits=2),lab2,sep="")
+    }
+    lab
+  } ## end of sub.edf
+
+
+  sp.contour <- function(x,y,z,zse,xlab="",ylab="",zlab="",titleOnly=FALSE,
                se.plot=TRUE,se.mult=1,trans=I,shift=0,...)   
   # internal function for contouring 2-d smooths with 1 s.e. limits
   { gap<-median(zse,na.rm=TRUE)  
@@ -1772,9 +1797,8 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
       edf<-sum(x$edf[first:last])
       xterm <- x$smooth[[i]]$term
       if (is.null(xlab)) xlabel<- xterm else xlabel <- xlab
-      if (is.null(ylab)) 
-      ylabel<-paste("s(",xterm,",",as.character(round(edf,2)),")",sep="") else
-      ylabel <- ylab
+      if (is.null(ylab)) ylabel <- sub.edf(x$smooth[[i]]$label,edf) else
+                         ylabel <- ylab
       pd.item<-list(fit=fit,dim=1,x=xx,ylab=ylabel,xlab=xlabel,raw=raw[[1]])
       if (partial.resids) {pd.item$p.resid <- fv.terms[,length(order)+i]+w.resid}
       if (se) pd.item$se=se.fit*se1.mult  # Note multiplier
@@ -1812,9 +1836,7 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
       }
       edf<-sum(x$edf[first:last])
       if (is.null(main)) 
-      { if (is.null(x$smooth[[i]]$margin))
-        title<-paste("s(",xterm,",",yterm,",",as.character(round(edf,2)),")",sep="") else
-        title<-paste("te(",xterm,",",yterm,",",as.character(round(edf,2)),")",sep="")
+      { title <- sub.edf(x$smooth[[i]]$label,edf)
       }
       else title <- main
       pd.item<-list(fit=fit,dim=2,xm=xm,ym=ym,ylab=ylabel,xlab=xlabel,title=title,raw=raw)
@@ -2108,11 +2130,11 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, ...)
       M<-min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
       V<-pinv(V,M) # get rank M pseudoinverse of V
       chi.sq[i]<-t(p)%*%V%*%p
-      er<-names(object$coefficients)[start]
-      er<-substring(er,1,nchar(er)-2)
-      if (object$smooth[[i]]$by!="NA") 
-      { er<-paste(er,":",object$smooth[[i]]$by,sep="")} 
-      names(chi.sq)[i]<-er
+##      er<-names(object$coefficients)[start]
+##      er<-substring(er,1,nchar(er)-2)
+##      if (object$smooth[[i]]$by!="NA") 
+##      { er<-paste(er,":",object$smooth[[i]]$by,sep="")} 
+      names(chi.sq)[i]<- object$smooth[[i]]$label
       edf[i]<-sum(object$edf[start:stop])
       if (freq) df[i] <- attr(V, "rank") else df[i] <- edf[i]
       if (!est.disp)
@@ -2171,8 +2193,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
   if (!is.null(x$ubre)) cat("UBRE score = ",formatC(x$ubre,digits=5),sep="")
   if (!is.null(x$gcv)) cat("GCV score = ",formatC(x$gcv,digits=5)," ",sep="")
-  cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n =
-                              ",x$n,"\n",sep="")
+  cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
   invisible(x)
 }
 

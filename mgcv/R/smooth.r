@@ -208,10 +208,7 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA)
   full.call<-paste("te(",term[1],sep="")
   if (dim>1) for (i in 2:dim) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="")   # label for parameters of this term
- ## full.call<-paste(full.call,",k=",deparse(k,backtick=TRUE),",bs=",deparse(bs,backtick=TRUE),
- ##                  ",m=",deparse(m,backtick=TRUE),",d=",deparse(d,backtick=TRUE),
- ##                  ",by=",by.var,",fx=",deparse(fx,backtick=TRUE),",mp=",deparse(mp,backtick=TRUE),
- ##                  ",np=",deparse(np,backtick=TRUE),")",sep="")
+
   ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np)##full.call=full.call)
   class(ret)<-"tensor.smooth.spec"
   ret
@@ -230,7 +227,7 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)
 # , whether it is fixed or penalized and the order of the penalty (0 for auto).
 # xt contains information to be passed straight on to the basis constructor
 { vars<-as.list(substitute(list(...)))[-1] # gets terms to be smoothed without evaluation
- # call<-match.call() # get function call
+
   d<-length(vars) # dimension of smoother
   term<-deparse(vars[[d]],backtick=TRUE,width.cutoff=500) # last term in the ... arguments
   by.var<-deparse(substitute(by),backtick=TRUE,width.cutoff=500) #getting the name of the by variable
@@ -264,10 +261,7 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)
   full.call<-paste("s(",term[1],sep="")
   if (d>1) for (i in 2:d) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="") # used for labelling parameters
-##  full.call<-paste(full.call,",k=",deparse(k,backtick=TRUE,width.cutoff=500),",fx=",
-##                   deparse(fx,backtick=TRUE,width.cutoff=500),",bs=",
-##                   deparse(bs,backtick=TRUE,width.cutoff=500),",m=",deparse(m,backtick=TRUE,width.cutoff=500),
-##                   ",by=",by.var,")",sep="")
+
   ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt)
   class(ret)<-paste(bs,".smooth.spec",sep="")
   ret
@@ -324,14 +318,9 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
     nr <- max.rank-r
     object$bs.dim<-max.rank
   }
- # C<-matrix(colSums(X),1,ncol(X))
- # if (object$by!="NA")  # deal with "by" variable 
- # { by <- get.var(object$by,data)
- #   if (is.null(by)) stop("Can't find by variable")
- #   X<-as.numeric(by)*X
- # }
+
   object$X<-X;object$S<-S;
-# object$C<-C
+
   object$df<-ncol(X)-1
   object$null.space.dim <- prod(nr) # penalty null space rank 
   object$rank<-r
@@ -413,11 +402,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
                as.integer(object$p.order),as.integer(object$bs.dim),X=as.double(X),S=as.double(S),
                UZ=as.double(UZ),Xu=as.double(Xu),n.Xu=as.integer(nXu),C=as.double(C))
   object$X<-matrix(oo$X,n,k)                   # model matrix
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    object$X<-as.numeric(by)*object$X
-#  }
+
   object$S<-list()
   if (!object$fixed) 
   { object$S[[1]]<-matrix(oo$S,k,k)         # penalty matrix
@@ -431,7 +416,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   object$UZ<-matrix(oo$UZ[1:UZ.len],oo$n.Xu+M,k)         # truncated basis matrix
   Xu.len <- oo$n.Xu*object$dim
   object$Xu<-matrix(oo$Xu[1:Xu.len],oo$n.Xu,object$dim)  # unique covariate combinations
-#  object$C<-matrix(oo$C,1,k)                   # constraints
+
   object$df<-object$bs.dim-1                   # DoF given constraint
   object$shift<-shift                          # covariate shifts
   if (is.null(shrink)) { 
@@ -488,11 +473,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
            as.double(C),as.integer(control))
 
   object$X <- matrix(oo[[5]],nx,nk)
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    object$X <- as.numeric(by)*object$X
-#  }
+
   object$S<-list()     # only return penalty if term not fixed
   if (!object$fixed) 
   { object$S[[1]] <- matrix(oo[[6]],nk,nk)
@@ -505,8 +486,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
   if (is.null(shrink)) { 
   object$rank<-nk-2 
   } else object$rank <- nk   # penalty rank
-#  object$C <- matrix(colSums(object$X),1,ncol(object$X))
-##  object$C <- matrix(oo[[7]],1,nk)  # constraint
+
   object$df<-object$bs.dim-1 # degrees of freedom, given constraint
   object$null.space.dim <- 2
   object$xp <- oo[[3]]  # knot positions 
@@ -568,7 +548,6 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   } # end of getBD local function
   # evaluate covariate, x, and knots, k.
   x <- get.var(object$term,data)
-##  nx<-length(x)
 
   if (object$bs.dim <4) { object$bs.dim <- 4
     warning("basis dimension, k, increased to minimum possible\n")
@@ -590,14 +569,9 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   object$BD<-BD # needed for prediction
   object$xp<-k  # needed for prediction   
   X<-Predict.matrix.cyclic.smooth(object,data) 
-#  C<-matrix(colSums(X),1,ncol(X))
+
   object$X<-X
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    object$X<-as.numeric(by)*object$X
-#  }
-#  object$C<-C
+
   object$rank<-ncol(X)-1  # rank of smoother matrix
   object$df<-object$bs.dim-2 # degrees of freedom, accounting for centring and cycling
   object$null.space.dim <- 1  
@@ -614,11 +588,7 @@ Predict.matrix.tensor.smooth<-function(object,data)
   if (mxp>0) 
   for (i in 1:mxp) if (!is.null(object$XP[[i]])) X[[i]] <- X[[i]]%*%object$XP[[i]]
   T <- tensor.prod.model.matrix(X)
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    T <- as.numeric(by)*T
-#  }
+
   T
 }
 
@@ -647,11 +617,7 @@ Predict.matrix.cyclic.smooth<-function(object,data)
   x <- get.var(object$term,data)
   if (length(x)<1) stop("no data to predict at")
   X <- pred.mat(x,object$xp,object$BD)
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    X<-as.numeric(by)*X
-#  }
+
   X
 }
 
@@ -668,11 +634,7 @@ Predict.matrix.cr.smooth<-function(object,data)
             as.integer(object$bs.dim),as.double(X),as.double(S),
                    as.double(C),as.integer(control))
   X<-matrix(oo[[5]],nx,nk) # the prediction matrix
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    X<-as.numeric(by)*X
-#  }
+
   X
 }
 
@@ -740,14 +702,6 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
     sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
   }
 
-  ## pick up "by variables" now...
-  if (object$by!="NA"&&is.null(sm$by.done))
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    sm$X <- as.numeric(by)*sm$X
-  }
-
-
   ## set df field...
   if (is.null(sm$df)) {
     sm$df <- object$bs.dim - nrow(sm$C)
@@ -758,45 +712,75 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
     sm$S <- NULL
   }
 
+
+  ## pick up "by variables" now...
+  if (object$by!="NA"&&is.null(sm$by.done))
+  { by <- get.var(object$by,data)
+    if (is.null(by)) stop("Can't find by variable")
+    if (is.factor(by)) { 
+      sml <- list()
+      lev <- levels(by)
+      for (j in 1:length(lev)) {
+        sml[[j]] <- sm  ## replicate smooth for each factor level
+        by.dum <- as.numeric(lev[j]==by)
+        sml[[j]]$X <- by.dum*sm$X  ## multiply model matrix by dummy for level
+        sml[[j]]$by.level <- lev[j] ## store level
+        sml[[j]]$label <- paste(sm$label,":",object$by,lev[j],sep="") 
+      }
+    } else {
+      sml <- list(sm)
+      sml[[1]]$X <- as.numeric(by)*sm$X
+      sml[[1]]$label <- paste(sm$label,":",object$by,sep="") 
+    }
+  } else {
+    sml <- list(sm)
+  }
+
+
   ## absorb constraints.....
   if (absorb.cons)
   { k<-ncol(sm$X)
     j<-nrow(sm$C)
     if (j>0) # there are constraints
     { qrc<-qr(t(sm$C))
-      if (length(sm$S)>0)
-      for (l in 1:length(sm$S)) # tensor product terms have > 1 penalty 
-      { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
-        sm$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,])
-      }
-      sm$X<-t(qr.qy(qrc,t(sm$X))[(j+1):k,])
-      #sm$qrc<-qrc
-      attr(sm,"qrc") <- qrc
-      attr(sm,"nCons") <- j;
-      sm$C <- NULL
-      sm$rank <- pmin(sm$rank,k-j)
-      ## ... so qr.qy(sm$qrc,c(rep(0,nrow(sm$C)),b)) gives original para.'s
-    } else {
-      attr(sm,"qrc") <- "no constraints"
-      attr(sm,"nCons") <- 0;
-    } 
-  } else attr(sm,"qrc") <-NULL
-
-  sm 
+      for (i in 1:length(sml)) { ## loop through smooth list
+        if (length(sm$S)>0)
+        for (l in 1:length(sm$S)) # tensor product terms have > 1 penalty 
+        { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
+          sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,])
+        }
+        sml[[i]]$X<-t(qr.qy(qrc,t(sml[[i]]$X))[(j+1):k,])
+        attr(sml[[i]],"qrc") <- qrc
+        attr(sml[[i]],"nCons") <- j;
+        sml[[i]]$C <- NULL
+        sml[[i]]$rank <- pmin(sm$rank,k-j)
+        ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
+     } ## end smooth list loop
+   } else { ## no constraints
+     for (i in 1:length(sml)) {
+       attr(sml[[i]],"qrc") <- "no constraints"
+       attr(sml[[i]],"nCons") <- 0;
+     }
+   } ## end else 
+  } else attr(sml[[i]],"qrc") <-NULL ## no absorption
+  sml
 }
 
 PredictMat <- function(object,data)
 ## wrapper function which calls Predict.matrix and imposes same constraints as 
 ## smoothCon on resulting Prediction Matrix
 { X <- Predict.matrix(object,data)
-  if (!is.null(attr(X,"by.done"))) { ## handle `by variables' 
+  if (is.null(attr(X,"by.done"))) { ## handle `by variables' 
     if (object$by!="NA")  # deal with "by" variable 
     { by <- get.var(object$by,data)
       if (is.null(by)) stop("Can't find by variable")
-      X<-as.numeric(by)*X
+      if (is.factor(by)) {
+        by.dum <- as.numeric(object$by.level==by)
+        X <- by.dum*X
+      } else X <- as.numeric(by)*X
     }
-    attr(X,"by.done") <- NULL
   }
+  attr(X,"by.done") <- NULL
   offset <- attr(X,"offset")
   qrc <- attr(object,"qrc")
   if (!is.null(qrc)) { ## then smoothCon absorbed constraints

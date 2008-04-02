@@ -3,10 +3,24 @@
 
 1.4-0
 
-** `smoothCon' now handles by variables and centering constraints 
+** `by' variables can now be factor variables.
+
+** `smoothCon' now handles `by' variables and centering constraints 
    automatically, removing the need for smooth constructors to do so.
-   `PredMat' handles by variables automatically. Users can over-ride this
-   behaviour when adding smooth classes, if needed - see documentation.
+   `PredMat' handles `by' variables automatically. Users can over-ride 
+   this behaviour when adding smooth classes, if needed - see 
+   documentation.
+
+** `gamm' now supports nested smooth terms, and uses the same, constraint 
+   absorbed, parameterization as `gam'.
+
+* `smoothCon' now returns a list of smooth objects to facilitate factor
+  `by' variables.
+
+* `smoothCon' makes smooth object labels more informative, if there are 
+  `by' variables... this also makes default plots more informative.
+
+* `plot.gam' indicates `by' variables in labels
 
 * `gamm.setup' modified to call `gam.setup' for most of the setup, leaving 
   just the re-parameterization step to do. 

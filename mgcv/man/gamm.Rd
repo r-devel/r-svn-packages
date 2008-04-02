@@ -215,8 +215,6 @@ then fitting is usually possible.
 Models must contain at least one random effect: either a smooth with non-zero
 smoothing parameter, or a random effect specified in argument \code{random}.
 
-Models like \code{s(z)+s(x)+s(x,z)} are not currently supported.
-
 \code{gamm} is not as numerically stable as \code{gam}: an \code{lme} call
 will occasionally fail. See details section for suggestions.
 

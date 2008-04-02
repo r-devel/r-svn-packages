@@ -17,7 +17,8 @@ can be added by writing a new \code{smooth.construct} method function and a corr
 
 In practice, \code{smooth.construct} is usually called via the wrapper
 function \code{\link{smoothCon}}, which handles \code{by} variables and
-centering constraints.
+centering constraints (see the \code{\link{smoothCon}} documentation if 
+you need to handle these things directly, for a user defined smooth class).
 }
 
 \usage{

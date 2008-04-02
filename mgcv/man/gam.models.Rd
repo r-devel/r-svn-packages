@@ -87,16 +87,10 @@
    \code{y~z+s(x,by=z)-1}.\cr
   
   The \code{by} mechanism also allows models to be estimated in which
-  the form of a smooth depends on the level of a factor, but to do this
-  the user must generate the dummy variables for each level of the
-  factor. Suppose for example that \code{fac} is a factor with 3 levels
-  \code{1}, \code{2}, \code{3},
-  and at each level of this factor ther response depends smoothly on a
-  variable \code{x} in a manner that is level dependent. Three dummy
-  variables \code{fac.1}, \code{fac.2}, \code{fac.3}, can be generated for the factor   
-  (e.g. \code{fac.1<-as.numeric(fac==1)}). Then the model formula would
-  be:\cr
-  \code{y~fac+s(x,by=fac.1)+s(x,by=fac.2)+s(x,by=fac.3)}.\cr
+  the form of a smooth depends on the level of a factor. If a \code{by} variable 
+  is a factor then a smooth of the specified type is produced for each level of 
+  the factor, with each corresponding model matrix multiplied multiplied by
+  the dummy variable coding for the factor level concerned.
 
 In the above examples the smooths of more than one covariate have all employed 
 single penalty thin plate regression splines. These isotropic smooths are not 
@@ -134,14 +128,22 @@ y <- f3*x1 + e
 b<-gam(y~x1-1+s(x2,by=x1))
 plot(b,pages=1)
 summary(b)
-# A dummy `by' variable example (with a spurious covariate x0)
+## A dummy `by' variable example (with a spurious covariate x0)
+## simulte data...
 fac<-as.factor(c(rep(1,100),rep(2,100),rep(3,200)))
 fac.1<-as.numeric(fac==1);fac.2<-as.numeric(fac==2);
 fac.3<-as.numeric(fac==3)
 y<-f1*fac.1+f2*fac.2+f3*fac.3+ e
-b<-gam(y~fac+s(x2,by=fac.1)+s(x2,by=fac.2)+s(x2,by=fac.3)+s(x0))
-plot(b,pages=1)
+
+## fit model...
+b <- gam(y ~ fac+s(x2,by=fac)+s(x0))
+plot(b)
 summary(b)
+
+## note that the preceding fit is the same as....
+b1<-gam(y~fac+s(x2,by=fac.1)+s(x2,by=fac.2)+s(x2,by=fac.3)+s(x0))
+plot(b1,pages=1)
+summary(b1)
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 
