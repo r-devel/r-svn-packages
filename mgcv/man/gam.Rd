@@ -333,7 +333,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686. [Default
 method for additive case (but no longer for generalized)]
 
 Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
-additive models. J.R.Statist.Soc.B 70(2): --- [Default method for generalized
+additive models. J.R.Statist.Soc.B 70(3):495-518 --- [Default method for generalized
 additive model case]
 
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
@@ -346,10 +346,6 @@ and Hall/CRC Press.
 
 Wood, S.N. (2006c) On confidence intervals for generalized additive models based on penalized regression splines. Australian and New Zealand Journal of Statistics. 48(4): 445-464.
 
-Wood, S.N. (2000)  Modelling and Smoothing Parameter Estimation
-with Multiple Quadratic Penalties. J.R.Statist.Soc.B 62(2):413-428 [The original
-paper, but no longer the default methods.]
-
 
 Key Reference on GAMs and related models:
 
@@ -359,6 +355,10 @@ and Hall.
 Hastie and Tibshirani (1990) Generalized Additive Models. Chapman and Hall.
 
 Wahba (1990) Spline Models of Observational Data. SIAM 
+
+Wood, S.N. (2000)  Modelling and Smoothing Parameter Estimation
+with Multiple Quadratic Penalties. J.R.Statist.Soc.B 62(2):413-428 [The original
+mgcv paper, but no longer the default methods.]
 
 Background References:
 

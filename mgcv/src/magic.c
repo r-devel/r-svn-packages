@@ -654,7 +654,7 @@ void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,dou
    control[1] - n, the number of data
    control[2] - q, the number of parameters
    control[3] - 1 if H is to be used, 0 to ignore it 
-   control[4] - m, the length of sp.
+   control[4] - m, the number of penalty matrices in S.
    control[5] - the maximum number of step halvings to try
 
    cS[i] gives the number of columns of S relating to S_i (column 0 is the first column of S_0).

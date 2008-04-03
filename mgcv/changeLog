@@ -31,7 +31,6 @@
   dimension (effect was small, but noticeable, in practice e.g. Cairo 
   temperature example from chapter 6 of Wood, 2006, book).
 
-1.3-30
 
 * print methods now return first argument invisibly as they should.
 
@@ -47,6 +46,10 @@
    to ensure `sp' and `S' dimensions correspond.        
 
 * gamm.Rd updated to reflect change to gammPQL in 1.3-28.
+
+1.3-30
+
+* change to DESCRIPTION file.
 
 1.3-29
 
