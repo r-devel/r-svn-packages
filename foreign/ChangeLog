@@ -1,3 +1,7 @@
+2008-04-04 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* tests/sas.R: precautionary use of binary mode
+
 2008-03-27 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-24.
