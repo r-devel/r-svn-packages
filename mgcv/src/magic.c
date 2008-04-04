@@ -624,7 +624,7 @@ void magic_gH(double *U1U1,double **M,double **K,double *VS,double **My,double *
 }
 
 
-void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,double *gamma,double *scale,
+void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,double *L,double *gamma,double *scale,
            int *control,int *cS,double *rank_tol,double *tol,double *b,double *rV,double *norm_const,int *n_score) 
 
 /* Maximally stable multiple gcv/ubre optimizer, based on pivoted QR decomposition and SVD, but without 
@@ -638,12 +638,14 @@ void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,dou
 
    y - an n dimensional response vector
    X - an n by q model matrix
-   sp - an m-array of smoothing parameters (any -ve => autoinitialize)
+   sp - an mp-array of smoothing parameters (any -ve => autoinitialize)
    def_sp - an array of default values for sp's (any -ve => set up internally)
    b - a q dimensional parameter vector
    S - an array of dimension q columns of square roots of the m S_i penalty matrices. There are cS[i]
        columns for the ith penalty, and they are packed starting from i=0.
    H - a q by q fixed penalty matrix
+   L - m by mp matrix mapping log(sp) to log coeffs multiplying S terms. 
+       ignored if control[6] is negative.
    gamma - a factor by which to inflate the model degrees of freedom in GCV/UBRE scores.
    norm_const - a constant to be added to the residual sum of squares (squared norm) term in 
                 the GCV/UBRE and scale estimation calculations.
@@ -656,6 +658,8 @@ void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,dou
    control[3] - 1 if H is to be used, 0 to ignore it 
    control[4] - m, the number of penalty matrices in S.
    control[5] - the maximum number of step halvings to try
+   control[6] - mp, the number of actual smoothing parameters: -ve signals 
+                that it's m and L is to be taken as the identity, but ignored.
 
    cS[i] gives the number of columns of S relating to S_i (column 0 is the first column of S_0).
    rank_tol is the tolerance to use in rank determination square root of the machine precision is quite good.
@@ -683,7 +687,7 @@ void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,dou
    control[3] - the number of iterations used
    control[4] - the number of score function evaluations
    control[5] - maximum number of step halvings to try 
-   control[6] - The maximum number of iterations before giving up
+   control[6] - The maximum number of iterations before giving up   
 
    Note that the effective degrees of freedom for each parameter are given by the 
    leading diagonal of cov(b)X'X/scale.
@@ -699,12 +703,13 @@ void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,dou
    derivative magnitude. 
 
  */
-{ int *pi,*pivot,q,n,autoinit,left,ScS,m,i,j,tp,k,use_sd=0,rank,converged,iter=0,ok,
-      gcv,try,fit_call=0,step_fail=0,max_half,*spok,/* *dir_sp,*/maxit,def_supplied,use_dsyevd=1;
+{ int *pi,*pivot,q,n,autoinit,left,ScS,m,mp,i,j,tp,k,use_sd=0,rank,converged,iter=0,ok,
+      gcv,try,fit_call=0,step_fail=0,max_half,*spok,/* *dir_sp,*/def_supplied,use_dsyevd=1;
   double *p,*p1,*p2,*tau,xx,*y1,*y0,yy,**Si=NULL,*work,score,*sd_step,*n_step,*U1,*V,*d,**M,**K,
          *VS,*U1U1,**My,**Ky,**yK,*dnorm,*ddelta,**d2norm,**d2delta,norm,delta,*grad,**hess,*nsp,
          min_score,*step,d_score=1e10,*ev=NULL,*u,msg=0.0,Xms,*rSms,*bag,*bsp,sign;
-  gcv=control[0];q=control[2];n=control[1];m=control[4];max_half=control[5];maxit=control[6];
+  gcv=control[0];q=control[2];n=control[1];m=control[4];max_half=control[5];mp=control[6];
+  
   /* first get the QR decomposition of X */
   tau=(double *)calloc((size_t)q,sizeof(double)); /* part of reflector storage */
   pivot=(int *)calloc((size_t)q,sizeof(int));
@@ -756,6 +761,9 @@ void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,dou
   autoinit=0;for (p=sp;p<sp+m;p++) if (*p <=0.0) { autoinit=1;break;} /* autoinitialize s.p.s? */ 
   def_supplied=1; for (p=def_sp;p<def_sp+m;p++) if (*p <=0.0) { def_supplied=0;break;} 
 
+  if (mp>0&&autoinit&&!def_supplied) 
+    error(_("magic requires smoothing parameter starting values if L supplied"));
+  
   if (m>0&&!def_supplied) /* generate default sp's */
   { rSms=(double *)calloc((size_t)m,sizeof(double));
     /* first get some sort of norm for X */
