@@ -10,7 +10,7 @@ void update_beta(double *X,double *Sr,double *rS,double *theta,double *w,
 		 double *rank_tol,double *beta, double *trA, double *beta1,
 		 double *trA1,double *rV,int *rank_est);
 
-void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,
+void magic(double *y,double *X,double *sp,double *def_sp,double *S,double *H,double *L,
 	   double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score);
 

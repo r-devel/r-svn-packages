@@ -349,7 +349,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   ## first simply call `gam.setup'....
 
   G <- gam.setup(formula,pterms,data=data,knots=knots,sp=NULL,
-                    min.sp=NULL,H=NULL,fit.method="magic",parametric.only=FALSE,absorb.cons=TRUE)
+                    min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE)
  
   # now perform re-parameterization...
 

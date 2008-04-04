@@ -11,11 +11,10 @@ This routine optimizes a GCV or UBRE score in this way. Basically the GCV or
 UBRE score is evaluated for each trial set of smoothing parameters by
 estimating the GAM for those smoothing parameters. The score is minimized
 w.r.t. the parameters numerically, using \code{newton} (default), \code{optim} or \code{nlm}. Exact
-derivatives of the score can be used by fitting with \code{\link{gam.fit2}} or
-\code{link{gam.fit3}} (for exact first and second derivatives). This
+(first and second) derivatives of the score can be used by fitting with
+\code{link{gam.fit3}}. This
 improves efficiency and reliability relative to relying on finite
 difference derivatives.  
-
 
 Not normally called directly, but rather a service routine for \code{\link{gam}}.
 }
@@ -41,7 +40,7 @@ the optimization method to use.}
 \item{G}{List produced by \code{\link{gam.setup}}, containing most of what's
 needed to actually fit GAM.}
 
-\item{...}{other arguments, typically for passing on to \code{gam.fit2} (ultimately).}
+\item{...}{other arguments, typically for passing on to \code{gam.fit3} (ultimately).}
 }
 \details{ 
 Estimation of smoothing parameters by optimizing GCV scores obtained at
@@ -60,7 +59,7 @@ functions in generalized linear models. J. Amer. Statist. Assoc. 81:96-103.
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{\code{\link{gam.fit2}},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
+\seealso{\code{\link{gam.fit3}},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
 
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...

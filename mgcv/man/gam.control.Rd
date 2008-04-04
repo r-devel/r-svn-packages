@@ -10,9 +10,9 @@ loss of numerical stability during fitting.  To change the default
 choise of fitting method, see \code{\link{gam.method}}.
 }
 \usage{
-gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,globit = 20,
-            mgcv.tol=1e-7,mgcv.half=15,nb.theta.mult=10000, trace = FALSE,
-            rank.tol=.Machine$double.eps^0.5,absorb.cons=TRUE,
+gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
+            mgcv.tol=1e-7,mgcv.half=15,nb.theta.mult=10000, 
+            trace = FALSE,rank.tol=.Machine$double.eps^0.5,
             nlm=list(),optim=list(),newton=list(),
             outerPIsteps=1) 
 }
@@ -29,18 +29,10 @@ underlying fitting method is \code{\link{mgcv}} (not the default - see
 }
 
 \item{epsilon}{This is used for judging conversion of the GLM IRLS loop in
-\code{\link{gam.fit}}, \code{\link{gam.fit2}} or \code{\link{gam.fit3}}.}
+\code{\link{gam.fit}} or \code{\link{gam.fit3}}.}
 
-\item{maxit}{Maximum number of IRLS iterations to perform. When using
-performance iteration (not default) then these iterations re in addition to
-\code{globit} initial iterations.  If fitting is based on
-\code{\link{mgcv}} (not default, even for performance iteration) then GCV/UBRE 
-will be cautious for these iterations.}
+\item{maxit}{Maximum number of IRLS iterations to perform.}
 
-\item{globit}{Maximum number of initial IRLS iterations to perform (with normal 
-GCV/UBRE optimization) when using performance iteration (only). If convergence
-is  not achieved after these iterations then a further \code{maxit} iterations
-will be performed. Ignored for default outer iteration.} 
 
 \item{mgcv.tol}{The convergence tolerance parameter to use in GCV/UBRE optimization.}
 
@@ -59,13 +51,6 @@ the initial value divided by \code{nb.theta.mult}. }
 \item{rank.tol}{The tolerance used to estimate the rank of the fitting
 problem, for methods which deal with rank deficient cases (basically all
 except those based on \code{\link{mgcv}}).}
-
-\item{absorb.cons}{If \code{TRUE} then the GAM is set up using a
-parameterization which requires no further constraint. Usually this means that
-all the smooths are automatically centered (i.e. they sum to zero over the
-covariate values). If \code{FALSE} then the ordinary parameterizations of the
-smooths are used, which require constraints to be imposed during fitting. Not
-all estimation methods can deal with the \code{FALSE} case.}
 
 \item{nlm}{list of control parameters to pass to \code{\link{nlm}} if this is
 used for outer estimation of smoothing parameters (not default). See details.}

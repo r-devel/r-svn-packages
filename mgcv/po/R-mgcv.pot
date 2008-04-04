@@ -521,3 +521,13 @@ msgstr ""
 
 msgid "Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'"
 msgstr ""
+
+msgid "L must be a matrix."
+msgstr ""
+
+msgid "L must have at least as many rows as columns."
+msgstr ""
+
+msgid "L has inconsistent dimensions."
+msgstr ""
+

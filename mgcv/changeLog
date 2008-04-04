@@ -14,6 +14,20 @@
 ** `gamm' now supports nested smooth terms, and uses the same, constraint 
    absorbed, parameterization as `gam'.
 
+* `magic' and `gam.fit3' now allow log smoothing parameters to be a 
+  linear transformation of a smaller set of underlying smoothing parameters.
+
+* `mgcv' based fitting has been removed as an option in `gam', as has 
+  Pearson based GCV. In consequence `am' argument removed from 
+  `gam.method' and `globit' removed from `gam.control'.
+
+* `gam.fit2' has been removed, since gam.fit3 is simply better.
+
+* the `absorb.cons' option has been removed from `gam.control'.
+
+* `fix.family.link' and `fix.family.var' bug fix --- only return 
+   family unmodified is all required derivative functions are present.
+
 * `smoothCon' now returns a list of smooth objects to facilitate factor
   `by' variables.
 

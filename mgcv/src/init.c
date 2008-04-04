@@ -18,7 +18,7 @@ R_CMethodDef CEntries[] = {
     {"construct_cr", (DL_FUNC) &construct_cr, 8},
     {"predict_tprs", (DL_FUNC) &predict_tprs, 12},
     {"MinimumSeparation", (DL_FUNC) &MinimumSeparation, 7},
-    {"magic", (DL_FUNC) &magic, 16},
+    {"magic", (DL_FUNC) &magic, 17},
     {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
     {"gdi",(DL_FUNC) &gdi,36},
     {"R_cond",(DL_FUNC) &R_cond,5} ,

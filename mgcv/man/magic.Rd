@@ -16,7 +16,7 @@ value decomposition approach.
 } %- end description
 
 \usage{
-magic(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,
+magic(y,X,sp,S,off,L=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,
       scale=1,gcv=TRUE,ridge.parameter=NULL,
       control=list(maxit=50,tol=1e-6,step.half=25,
       rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
@@ -28,8 +28,10 @@ magic(y,X,sp,S,off,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,
 
 \item{X}{is the model matrix.}
 
-\item{sp}{is the array of smoothing parameters multiplying the penalty matrices stored in 
-\code{S}. Any that are negative are autoinitialized, otherwise they are taken as supplying 
+\item{sp}{is the array of smoothing parameters. The vector \code{L\%*\%log(sp)} 
+contains the logs of the smoothing parameters that actually multiply the penalty matrices stored in 
+\code{S} (\code{L} is taken as the identity if \code{NULL}). 
+Any \code{sp} values that are negative are autoinitialized, otherwise they are taken as supplying 
 starting values. A supplied starting value will be reset to a default starting value if the
 gradient of the GCV/UBRE score is too small at the supplied value.  }
  
@@ -42,6 +44,9 @@ parameters to be estimated. }
 
 \item{off}{is an array indicating the first parameter in the parameter vector that is 
 penalized by the penalty involving \code{S[[i]]}.}
+
+\item{L}{is a matrix mapping \code{log(sp)} to the log smoothing parameters that actually multiply the
+penalties defined by the elemts of \code{S}. Taken as the identity, if \code{NULL}. See above under \code{sp}.}
 
 \item{rank}{ is an array specifying the ranks of the penalties. This is useful, but not 
 essential, for forming square roots of the penalty matrices.}
@@ -160,6 +165,9 @@ The method is coded in \code{C} with matrix factorizations performed using LINPA
 
 \item{sp}{an array of the estimated smoothing parameters.}
 
+\item{sp.full}{an array of the smoothing parameters that actually multiply the elements of
+\code{S} (same as \code{sp} if \code{L} was \code{NULL}). This is \code{exp(L\%*\%log(sp))}.}
+
 \item{rV}{a factored form of the parameter covariance matrix. The (Bayesian)  covariance
 matrix of the parametes \code{b} is given by \code{rV\%*\%t(rV)*scale}. }
 
@@ -205,14 +213,16 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686
 ## set up additive model
    G <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE)
 ## fit using magic
-   mgfit <- magic(G$y,G$X,G$sp,G$S,G$off,G$rank,C=G$C)
+   mgfit <- magic(G$y,G$X,G$sp,G$S,G$off,rank=G$rank,C=G$C)
 ## and fit using gam as consistency check
    b <- gam(G=G)
    mgfit$sp;b$sp  # compare smoothing parameter estimates
    edf <- magic.post.proc(G$X,mgfit,G$w)$edf  # extract e.d.f. per parameter
-## get termwise e.d.f.s
-   twedf <- 0;for (i in 1:4) twedf[i] <- sum(edf[((i-1)*10+1):(i*10)])
-   twedf;b$edf  # compare
+   range(edf-b$edf)  # compare
+
+## constrain first two smooths to have identical smoothing parameters
+   L <- diag(3);L <- rbind(L[1,],L)
+   mgfit <- magic(G$y,G$X,rep(-1,3),G$S,G$off,L=L,rank=G$rank,C=G$C)
 
 ## Now a correlated data example ... 
     library(nlme)
@@ -236,7 +246,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686
     ## Use `gam' to set up model for fitting...
     G <- gam(y~s(x,k=20),fit=FALSE)
     ## fit using magic, with weight *matrix*
-    mgfit <- magic(G$y,G$X,G$sp,G$S,G$off,G$rank,C=G$C,w=w)
+    mgfit <- magic(G$y,G$X,G$sp,G$S,G$off,rank=G$rank,C=G$C,w=w)
 ## Modify previous gam object using new fit, for plotting...    
     mg.stuff <- magic.post.proc(G$X,mgfit,w)
     b$edf <- mg.stuff$edf;b$Vp <- mg.stuff$Vb

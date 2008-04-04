@@ -1,7 +1,6 @@
 \name{gam2objective}
 \alias{gam2objective}
 \alias{gam2derivative}
-\alias{gam3objective}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Objective functions for GAM smoothing parameter estimation}
 \description{Estimation of GAM smoothing parameters is most stable if
@@ -12,21 +11,17 @@ smoothing parameters, in a manner sutable for use by \code{\link{optim}} or \cod
 Not normally called directly, but rather service routines for \code{\link{gam.outer}}.
 }
 \usage{
-gam2objective(lsp,args,printWarn=FALSE,...)
+gam2objective(lsp,args,...)
 gam2derivative(lsp,args,...)
-gam3objective(lsp,args,...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
 \item{lsp}{The log smoothing parameters.}
 
-\item{args}{List of arguments required to call \code{\link{gam.fit2}}.}
+\item{args}{List of arguments required to call \code{\link{gam.fit3}}.}
 
-\item{printWarn}{Should \code{\link{gam.fit2}} print some warnings? Used to
-suppress warnings that are only of interest for the final fitted model, until
-that model is reached.}
 
-\item{...}{Other arguments for passing to \code{gam.fit2}.}
+\item{...}{Other arguments for passing to \code{gam.fit3}.}
 }
 \details{ \code{gam2objective} and \code{gam2derivative} are functions suitable
 for calling by \code{\link{optim}}, to evaluate the GCV/UBRE score and it's
@@ -51,7 +46,7 @@ functions in generalized linear models. J. Amer. Statist. Assoc. 81:96-103.
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{\code{gam.fit2},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
+\seealso{\code{gam.fit3},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
 
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...

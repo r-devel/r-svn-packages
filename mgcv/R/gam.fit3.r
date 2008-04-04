@@ -393,7 +393,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
 }
 
-newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
+newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",use.svd=TRUE,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
@@ -401,8 +401,16 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
 ## to +ve definite ii) step halves on step 
 ## failure, without obtaining derivatives until success; (iii) carries start
 ## values forward from one evaluation to next to speed convergence.    
-{ ## initial fit
-  b<-gam.fit3(x=X, y=y, sp=lsp, S=S,rS=rS,off=off, H=H,
+## L is the matrix such that L%*%lsp gives the logs of the smoothing 
+## parameters actually multiplying the S[[i]]'s
+{ ## sanity check L
+  if (is.null(L)) L <- diag(length(S)) else {
+    if (!inherits(L,"matrix")) stop("L must be a matrix.")
+    if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
+    if (nrow(L)!=length(S)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
+  }
+  ## initial fit
+  b<-gam.fit3(x=X, y=y, sp=L%*%lsp, S=S,rS=rS,off=off, H=H,
      offset = offset,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
      printWarn=FALSE,use.svd=use.svd,...)
@@ -417,6 +425,9 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
     old.score <- score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
   }
   
+  grad <- t(L)%*%grad
+  hess <- t(L)%*%hess%*%L
+
   Slength <- maxSstep 
   score.scale <- b$scale.est + score;    
   uconv.ind <- abs(grad) > score.scale*conv.tol
@@ -438,13 +449,12 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
    
     Sstep <- -Slength * grad/max(abs(grad)) # steepest descent direction 
     
-    ## Nstep <- -drop(U%*%(d*(t(U)%*%grad))) # (modified) Newton direction
     ms <- max(abs(Nstep))
     if (ms>maxNstep) Nstep <- maxNstep * Nstep/ms
 
     ## try the step ...
     lsp1 <- lsp + Nstep
-    b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+    b<-gam.fit3(x=X, y=y, sp=L%*%lsp1, S=S,rS=rS,off=off, H=H,
        offset = offset,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
        printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
@@ -464,6 +474,8 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
       } else if (scoreType=="UBRE") {
           score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
       } else { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2} 
+      grad <- t(L)%*%grad
+      hess <- t(L)%*%hess%*%L
     } else { ## step halving ...
       step <- Nstep ## start with the (pseudo) Newton direction
       while (score1>score && ii < maxHalf) {
@@ -472,7 +484,7 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
         } else step <- step/2
         if (ii>3) Slength <- Slength/2 ## keep track of SD step length
         lsp1 <- lsp + step
-        b1<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+        b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1, S=S,rS=rS,off=off, H=H,
            offset = offset,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
@@ -484,7 +496,7 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
         } else score1 <- b1$GCV
 
         if (score1 <= score) { ## accept
-          b<-gam.fit3(x=X, y=y, sp=lsp1, S=S,rS=rS,off=off, H=H,
+          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1, S=S,rS=rS,off=off, H=H,
              offset = offset,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,
              printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
@@ -495,6 +507,8 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
           } else if (scoreType=="UBRE") {
             score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
           } else { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2}
+          grad <- t(L)%*%grad
+          hess <- t(L)%*%hess%*%L
           if (ii>3) Slength <- min(Slength*2,maxSstep) ## try increasing SD step length
         }  # end of if (score1<= score )
         ii <- ii + 1
@@ -515,11 +529,40 @@ newton <- function(lsp,X,y,S,rS,off,H,offset,family,weights,
   if (ii==maxHalf) ct <- "step failed"
   else if (i==200) ct <- "iteration limit reached" 
   else ct <- "full convergence"
-  list(score=score,lsp=lsp,grad=grad,hess=hess,iter=i,conv =ct,object=b)
+  list(score=score,lsp=lsp,lsp.full=L%*%lsp,grad=grad,hess=hess,iter=i,conv =ct,object=b)
 }
 
 
 
+gam2derivative <- function(lsp,args,...)
+## Performs IRLS GAM fitting for smoothing parameters given in lsp 
+## and returns the derivatives of the GCV or UBRE score w.r.t the 
+## smoothing parameters for the model.
+## args is a list containing the arguments for gam.fit3
+## For use as optim() objective gradient
+{ b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
+     offset = args$offset,family = args$family,weights=args$w,deriv=1,
+     control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
+     use.svd=FALSE,printWarn=FALSE,...)
+  if (args$scoreType == "deviance") ret <- b$GCV1 else ret <- b$UBRE1
+  ret
+}
+
+
+gam2objective <- function(lsp,args,...)
+## Performs IRLS GAM fitting for smoothing parameters given in lsp 
+## and returns the GCV or UBRE score for the model.
+## args is a list containing the arguments for gam.fit3
+## For use as optim() objective
+{ 
+  b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
+     offset = args$offset,family = args$family,weights=args$w,deriv=0,
+     control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
+     use.svd=FALSE,printWarn=FALSE,...)
+  if (args$scoreType == "deviance") ret <- b$GCV else ret <- b$UBRE
+  attr(ret,"full.fit") <- b
+  ret
+}
 
 
 
@@ -540,7 +583,233 @@ gam4objective <- function(lsp,args,...)
   ret
 }
 
+##
+## The following fix up family objects for use with gam.fit3
+##
 
 
+fix.family.link<-function(fam)
+# adds d2link the second derivative of the link function w.r.t. mu
+# to the family supplied, as well as a 3rd derivative function 
+# d3link...
+# All d2link and d3link functions have been checked numerically. 
+{ if (!inherits(fam,"family")) stop("fam not a family object")
+  if (!is.null(fam$d2link)&&!is.null(fam$d3link)) return(fam) 
+  link <- fam$link
+  if (length(link)>1) if (fam$family=="quasi") # then it's a power link
+  { lambda <- log(fam$linkfun(exp(1))) ## the power, if > 0
+    if (lambda<=0) { fam$d2link <- function(mu) -1/mu^2
+      fam$d3link <- function(mu) 2/mu^3
+    }
+    else { fam$d2link <- function(mu) lambda*(lambda-1)*mu^(lambda-2)
+      fam$d3link <- function(mu) (lambda-2)*(lambda-1)*lambda*mu^(lambda-3)
+    }
+    return(fam)
+  } else stop("unrecognized (vector?) link")
+
+  if (link=="identity") {
+    fam$d3link <- fam$d2link <- function(mu) rep.int(0,length(mu))
+    return(fam)
+  } 
+  if (link == "log") {
+    fam$d2link <- function(mu) -1/mu^2
+    fam$d3link <- function(mu) 2/mu^3
+    return(fam)
+  }
+  if (link == "inverse") {
+    fam$d2link <- function(mu) 2/mu^3
+    fam$d3link <- function(mu) {mu <- mu*mu;-6/(mu*mu)}
+    return(fam)
+  }
+  if (link == "logit") {
+    fam$d2link <- function(mu) 1/(1 - mu)^2 - 1/mu^2
+    fam$d3link <- function(mu) 2/(1 - mu)^3 + 2/mu^3
+    return(fam)
+  }
+  if (link == "probit") {
+    fam$d2link <- function(mu) { 
+      eta <- fam$linkfun(mu)
+      eta/fam$mu.eta(eta)^2
+    }
+    fam$d3link <- function(mu) {
+      eta <-  fam$linkfun(mu)
+      (1 + 2*eta^2)/fam$mu.eta(eta)^3
+    }
+    return(fam)
+  }
+  if (link == "cloglog") {
+    fam$d2link <- function(mu) { l1m <- log(1-mu)
+      -1/((1 - mu)^2*l1m) *(1+ 1/l1m)
+    }
+    fam$d3link <- function(mu) { l1m <- log(1-mu)
+       mu3 <- (1-mu)^3
+      -1/(mu3 * l1m^3) -(1 + 2 * l1m)/
+       (mu3 * l1m^2) * (1 + 1/l1m)
+    }
+    return(fam)
+  }
+  if (link == "sqrt") {
+    fam$d2link <- function(mu) -.25 * mu^-1.5
+    fam$d3link <- function(mu) .375 * mu^-2.5
+    return(fam)
+  }
+  if (link == "cauchit") {
+    fam$d2link <- function(mu) { 
+     eta <- fam$linkfun(mu)
+     2*pi*pi*eta*(1+eta*eta)
+    }
+    fam$d3link <- function(mu) { 
+     eta <- fam$linkfun(mu)
+     eta2 <- eta*eta
+     2*pi*pi*pi*(1+3*eta2)*(1+eta2)
+    }
+    return(fam)
+  }
+  if (link == "1/mu^2") {
+    fam$d2link <- function(mu) 6 * mu^-4
+    fam$d3link <- function(mu) -24* mu^-5
+    return(fam)
+  }
+  stop("link not recognised")
+}
+
+
+fix.family.var<-function(fam)
+# adds dvar the derivative of the variance function w.r.t. mu
+# to the family supplied, as well as d2var the 2nd derivative of 
+# the variance function w.r.t. the mean. (All checked numerically). 
+{ if (!inherits(fam,"family")) stop("fam not a family object")
+  if (!is.null(fam$dvar)&&!is.null(fam$d2var)) return(fam) 
+  family <- fam$family
+  if (family=="gaussian") {
+    fam$d2var <- fam$dvar <- function(mu) rep.int(0,length(mu))
+    return(fam)
+  } 
+  if (family=="poisson"||family=="quasipoisson") {
+    fam$dvar <- function(mu) rep.int(1,length(mu))
+    fam$d2var <- function(mu) rep.int(0,length(mu))
+    return(fam)
+  } 
+  if (family=="binomial"||family=="quasibinomial") {
+    fam$dvar <- function(mu) 1-2*mu
+    fam$d2var <- function(mu) rep.int(-2,length(mu))
+    return(fam)
+  }
+  if (family=="Gamma") {
+    fam$dvar <- function(mu) 2*mu
+    fam$d2var <- function(mu) rep.int(2,length(mu))
+    return(fam)
+  }
+  if (family=="quasi") {
+    fam$dvar <- switch(fam$varfun,
+       constant = function(mu) rep.int(0,length(mu)),
+       "mu(1-mu)" = function(mu) 1-2*mu,
+       mu = function(mu) rep.int(1,length(mu)),
+       "mu^2" = function(mu) 2*mu,
+       "mu^3" = function(mu) 3*mu^2           
+    )
+    if (is.null(fam$dvar)) stop("variance function not recognized for quasi")
+    fam$d2var <- switch(fam$varfun,
+       constant = function(mu) rep.int(0,length(mu)),
+       "mu(1-mu)" = function(mu) rep.int(-2,length(mu)),
+       mu = function(mu) rep.int(0,length(mu)),
+       "mu^2" = function(mu) rep.int(2,length(mu)),
+       "mu^3" = function(mu) 6*mu           
+    )
+    return(fam)
+  }
+  if (family=="inverse.gaussian") {
+    fam$dvar <- function(mu) 3*mu^2
+    fam$d2var <- function(mu) 6*mu
+    return(fam)
+  }
+  stop("family not recognised")
+}
+
+
+negbin <- function (theta = stop("'theta' must be specified"), link = "log") { 
+## modified from Venables and Ripley's MASS library to work with gam.fit3,
+## and to allow a range of `theta' values to be specified
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
+  else if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    if (inherits(link, "link-glm")) {
+       stats <- link
+            if (!is.null(stats$name))
+                linktemp <- stats$name
+        }
+        else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
+    }
+    env <- new.env(parent = .GlobalEnv)
+    assign(".Theta", theta, envir = env)
+    variance <- function(mu) mu + mu^2/get(".Theta")
+    ## dvaraince/dmu needed as well
+    dvar <- function(mu) 1 + 2*mu/get(".Theta")
+    ## d2variance/dmu...
+    d2var <- function(mu) 2/get(".Theta")
+    
+    validmu <- function(mu) all(mu > 0)
+
+    dev.resids <- function(y, mu, wt) { Theta <- get(".Theta")
+      2 * wt * (y * log(pmax(1, y)/mu) - 
+        (y + Theta) * log((y + Theta)/(mu + Theta))) 
+    }
+    aic <- function(y, n, mu, wt, dev) {
+        Theta <- get(".Theta")
+        term <- (y + Theta) * log(mu + Theta) - y * log(mu) +
+            lgamma(y + 1) - Theta * log(Theta) + lgamma(Theta) -
+            lgamma(Theta + y)
+        2 * sum(term * wt)
+    }
+    initialize <- expression({
+        if (any(y < 0)) stop("negative values not allowed for the negative binomial family")
+        n <- rep(1, nobs)
+        mustart <- y + (y == 0)/6
+    })
+    environment(dvar) <- environment(d2var) <- environment(variance) <- environment(validmu) <- 
+                         environment(dev.resids) <- environment(aic) <- env
+    famname <- paste("Negative Binomial(", format(round(theta,4)), ")", sep = "")
+    structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var, dev.resids = dev.resids,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
+        validmu = validmu, valideta = stats$valideta), class = "family")
+}
+
+
+
+
+
+totalPenalty <- function(S,H,off,theta,p)
+{ if (is.null(H)) St <- matrix(0,p,p)
+  else { St <- H; 
+    if (ncol(H)!=p||nrow(H)!=p) stop("H has wrong dimension")
+  }
+  theta <- exp(theta)
+  m <- length(theta)
+  if (m>0) for (i in 1:m) {
+    k0 <- off[i]
+    k1 <- k0 + nrow(S[[i]]) - 1
+    St[k0:k1,k0:k1] <- St[k0:k1,k0:k1] + S[[i]] * theta[i]
+  }
+  St
+}
+
+mini.roots <- function(S,off,np)
+# function to obtain square roots, B[[i]], of S[[i]]'s having as few
+# columns as possible. S[[i]]=B[[i]]%*%t(B[[i]]). np is the total number
+# of parameters. S is in packed form. 
+{ m<-length(S)
+  B<-S
+  for (i in 1:m)
+  { b<-mroot(S[[i]])
+    B[[i]]<-matrix(0,np,ncol(b))
+    B[[i]][off[i]:(off[i]+nrow(b)-1),]<-b
+  }
+  B
+}
 
 

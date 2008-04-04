@@ -9,20 +9,14 @@ estimation criterion for a gam.
 It is used to set argument \code{method} of \code{\link{gam}}.
 }
 \usage{
-gam.method(am="magic",gam="outer",outer="newton",gcv="deviance",
+gam.method(gam="outer",outer="newton",gcv="deviance",
            family=NULL)
 }
 \arguments{ 
-\item{am}{ Which method to use for a pure additive model (i.e. identity link,
-gaussian errors). Either \code{"magic"} if the Wood (2004) method
-(\code{\link{magic}}) is to be used, or \code{"mgcv"} if the faster, but less
-stable and general Wood (2000) method (\code{\link{mgcv}}) should be used.}
 
 \item{gam}{Which method to use in the generalized case (i.e. all case other
-than gaussian with identity link). \code{"perf.magic"} for the performance
+than gaussian with identity link). \code{"perf"} for the performance
 iteration (see details) with \code{\link{magic}} as the basic estimation
-engine. \code{"perf.mgcv"} for performance iteration with
-\code{\link{mgcv}} as the underlying estimation
 engine. \code{"perf.outer"} for \code{\link{magic}} based performance
 iteration followed by outer iteration (see details). \code{"outer"} for pure
 outer iteration.}
@@ -37,7 +31,7 @@ to optimize the smoothness selection criterion. \code{"nlm.fd"} to use
 reliable). \code{"optim"} to use the \code{"L-BFGS-B"} quasi-Newton method
 option of routine \code{optim}, with exact first derivatives.}
 
-\item{gcv}{One of \code{"deviance"}, \code{"GACV"} or \code{"pearson"},
+\item{gcv}{One of \code{"deviance"} or \code{"GACV"},
 specifying the flavour of GCV to use with outer iteration. \code{"deviance"}
 simply replaces the residual sum of squares term in a GCV score with the
 deviance, following Hastie and Tibshirani (1990, section 6.9). \code{"GACV"}
@@ -91,13 +85,6 @@ optimized in some way. This is termed \code{"outer"} optimization, since the
 optimization is outer to the P-IRLS loop. Outer iteration is slower than
 performance iteration.
 
-The `appropriate GCV/UBRE' score in the previous paragraph can be defined in
-one of two ways either (i) the deviance, or (ii) the Pearson statistic can be
-used in place of the residual sum of squares in the GCV/UBRE score. (ii) makes
-the GCV/UBRE score correspond to the score for the working linear model at
-convergence of the P-IRLS, but in practice tends to result in oversmoothing, 
-particularly with low n binomial data, or low mean counts. Hence the default
-is to use (i).
 
 Several alternative optimisation methods can be used for outer
 optimization.Usually the fastest and most
@@ -126,15 +113,14 @@ is available for negative binomial families.
 Gu and Wahba (1991) Minimizing GCV/GML scores with multiple smoothing parameters via
 the Newton method. SIAM J. Sci. Statist. Comput. 12:383-398
 
-Wood, S.N. (2000)  Modelling and Smoothing Parameter Estimation
-with Multiple  Quadratic Penalties. J.R.Statist.Soc.B 62(2):413-428
-
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 
 65(1):95-114
 
 Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
 generalized additive models. J. Amer. Statist. Ass.
 
+Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
+additive models. J.R.Statist.Soc.B 70(3):495-518
 
 \url{http://www.maths.bath.ac.uk/~sw283/}
 

@@ -49,7 +49,7 @@ estimation of the effective degrees of freedom: this usually reflects problems w
 In this circumstance reported estimated degrees of freedom can not be trusted, although the fitted model and term estimates are likely to be quite 
 acceptable. 
 
-If the fit method is based on \code{\link{magic}} or \code{\link{gam.fit2}} or
+If the fit method is based on \code{\link{magic}} or
 \code{\link{gam.fit3}}then there is no global search and the problems with
 phantom local minima are much reduced. These more recent methods are also much
 more robust than the \code{\link{mgcv}} based methods.

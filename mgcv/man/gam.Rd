@@ -74,9 +74,7 @@ Generalized Cross Validation (GCV) criterion
 where \eqn{D}{D} is the deviance, \eqn{n}{n} the number of data, \eqn{s}{s}
 the scale parameter and 
 \eqn{DoF}{DoF} the effective degrees of freedom of the model. Notice that UBRE is effectively
-just AIC rescaled, but is only used when \eqn{s}{s} is known. It is also
-possible to replace D by the Pearson statistic (see \code{\link{gam.method}}),
-but this can lead to over smoothing. A better behaved alternative is GACV
+just AIC rescaled, but is only used when \eqn{s}{s} is known. An alternative is GACV
 (again see \code{\link{gam.method}}). Smoothing parameters are chosen to 
 minimize the GCV or UBRE/AIC score for the model, and the main computational challenge solved 
 by the \code{mgcv} package is to do this efficiently and reliably. Various
@@ -464,7 +462,7 @@ y<-rpois(rep(1,n),g)
 b2<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson)
 plot(b2,pages=1)
 # repeat fit using performance iteration
-gm <- gam.method(gam="perf.magic")
+gm <- gam.method(gam="perf")
 b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,method=gm)
 plot(b3,pages=1)
 
