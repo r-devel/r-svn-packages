@@ -531,3 +531,5 @@ msgstr ""
 msgid "L has inconsistent dimensions."
 msgstr ""
 
+msgid "\"perf.magic\" is deprecated: reset to \"perf\""
+msgstr ""

@@ -3,6 +3,11 @@
 
 1.4-0
 
+** Negative binomial handling changed. `negbin' family added: adapted from 
+   MASS to work with gam outer iteration fitting. `gam.negbin' fitting 
+   routine added in order to enable use of `negbin' with outer iteration.
+   See ?gam.neg.bin for details.
+
 ** `by' variables can now be factor variables.
 
 ** `smoothCon' now handles `by' variables and centering constraints 

@@ -395,7 +395,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
 newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="deviance",use.svd=TRUE,...)
+                   maxHalf=30,printWarn=FALSE,scoreType="deviance",use.svd=TRUE,
+                   mustart = NULL,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
 ## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
 ## to +ve definite ii) step halves on step 
@@ -413,7 +414,7 @@ newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp, S=S,rS=rS,off=off, H=H,
      offset = offset,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,use.svd=use.svd,...)
+     printWarn=FALSE,use.svd=use.svd,mustart=mustart,...)
 
   mustart<-b$fitted.values
 
@@ -730,6 +731,9 @@ fix.family.var<-function(fam)
 negbin <- function (theta = stop("'theta' must be specified"), link = "log") { 
 ## modified from Venables and Ripley's MASS library to work with gam.fit3,
 ## and to allow a range of `theta' values to be specified
+## single `theta' to specify fixed value; 2 theta values (first smaller that second)
+## are limits within which to search for theta; otherwise supplied values make up 
+## search set.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   if (linktemp %in% c("log", "identity", "sqrt")) stats <- make.link(linktemp)
@@ -750,8 +754,8 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
     ## dvaraince/dmu needed as well
     dvar <- function(mu) 1 + 2*mu/get(".Theta")
     ## d2variance/dmu...
-    d2var <- function(mu) 2/get(".Theta")
-    
+    d2var <- function(mu) rep(2/get(".Theta"),length(mu))
+    getTheta <- function() get(".Theta")
     validmu <- function(mu) all(mu > 0)
 
     dev.resids <- function(y, mu, wt) { Theta <- get(".Theta")
@@ -771,12 +775,12 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
         mustart <- y + (y == 0)/6
     })
     environment(dvar) <- environment(d2var) <- environment(variance) <- environment(validmu) <- 
-                         environment(dev.resids) <- environment(aic) <- env
-    famname <- paste("Negative Binomial(", format(round(theta,4)), ")", sep = "")
+                         environment(dev.resids) <- environment(aic) <- environment(getTheta) <- env
+    famname <- paste("Negative Binomial(", format(round(theta,3)), ")", sep = "")
     structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var, dev.resids = dev.resids,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
-        validmu = validmu, valideta = stats$valideta), class = "family")
+        validmu = validmu, valideta = stats$valideta,getTheta = getTheta), class = "family")
 }
 
 
