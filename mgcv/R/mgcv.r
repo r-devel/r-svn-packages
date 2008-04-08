@@ -840,7 +840,7 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
   ## correct null deviance if there's an offset ....
 
   if (G$intercept&&any(G$offset)) object$null.deviance <-
-                                  glm(G$y~offset(G$offset),family=G$family)$deviance
+                                  glm(G$y~offset(G$offset),family=object$family)$deviance
 
   if (G$sig2<0) { 
     if (method$gcv=="deviance") object$method <- "GCV" else object$method <- "GACV"
@@ -894,7 +894,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (is.function(family)) family <- family()
     if (is.null(family$family)) stop("family not recognized")
   
-    if (family$family=="gaussian" && family$link=="identity") am <- TRUE
+    if (family$family[1]=="gaussian" && family$link=="identity") am <- TRUE
     else am <- FALSE
     
  #   if (am) fit.method <- method$am else { 
@@ -916,7 +916,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     method <- gam.method(method$gam,method$outer,method$gcv,family) # checking it's ok
 
     if (scale==0) 
-    { if (family$family=="binomial"||family$family=="poisson") scale<-1 #ubre
+    { if (family$family[1]=="binomial"||family$family[1]=="poisson") scale<-1 #ubre
       else scale <- -1 #gcv
     }
   
@@ -1413,11 +1413,11 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     if (boundary) 
         warning("Algorithm stopped at boundary value")
     eps <- 10 * .Machine$double.eps
-    if (family$family == "binomial") {
+    if (family$family[1] == "binomial") {
         if (any(mu > 1 - eps) || any(mu < eps)) 
             warning("fitted probabilities numerically 0 or 1 occurred")
     }
-    if (family$family == "poisson") {
+    if (family$family[1] == "poisson") {
         if (any(mu < eps)) 
             warning("fitted rates numerically 0 occurred")
     }

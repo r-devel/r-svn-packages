@@ -352,11 +352,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         if (printWarn&&boundary) 
             warning("Algorithm stopped at boundary value")
         eps <- 10 * .Machine$double.eps
-        if (printWarn&&family$family == "binomial") {
+        if (printWarn&&family$family[1] == "binomial") {
             if (any(mu > 1 - eps) || any(mu < eps)) 
                 warning("fitted probabilities numerically 0 or 1 occurred")
         }
-        if (printWarn&&family$family == "poisson") {
+        if (printWarn&&family$family[1] == "poisson") {
             if (any(mu < eps)) 
                 warning("fitted rates numerically 0 occurred")
         }
