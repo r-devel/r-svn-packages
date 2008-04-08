@@ -353,12 +353,6 @@ msgstr ""
 msgid "pearson should be TRUE or FALSE - set to FALSE."
 msgstr ""
 
-msgid "Negative binomial family not (yet) usable with type 2 iteration methods."
-msgstr ""
-
-msgid "Must use gam.control(absorb.cons=TRUE), for type 2 iteration\n    methods."
-msgstr ""
-
 msgid "Model has more coefficients than data"
 msgstr ""
 
@@ -533,3 +527,10 @@ msgstr ""
 
 msgid "\"perf.magic\" is deprecated: reset to \"perf\""
 msgstr ""
+
+msgid "only outer method `newton' supports `negbin' family and theta selection: reset"
+msgstr ""
+
+
+msgid "Discrete Theta search not available with performance iteration"
+msgstr

@@ -6,7 +6,8 @@
 ** Negative binomial handling changed. `negbin' family added: adapted from 
    MASS to work with gam outer iteration fitting. `gam.negbin' fitting 
    routine added in order to enable use of `negbin' with outer iteration.
-   See ?gam.neg.bin for details.
+   See ?negbin for details. MASS families no longer supported. 
+   `nb.theta.mult' removed from `gam.control'.
 
 ** `by' variables can now be factor variables.
 

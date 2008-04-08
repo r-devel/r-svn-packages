@@ -1,3 +1,4 @@
+
 ##  R routines for the package mgcv (c) Simon Wood 2000-2008
 ##  With contributions from Henric Nilsson
 
@@ -1051,7 +1052,7 @@ print.gam<-function (x,...)
 }
 
 gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
-                         mgcv.tol=1e-7,mgcv.half=15,nb.theta.mult=10000,trace =FALSE,
+                         mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=1) 
 # Control structure for a gam. 
@@ -1060,8 +1061,6 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
 # of IRLS iterations to use. mgcv.tol is the tolerance to use in the mgcv call within each IRLS. mgcv.half is the 
 # number of step halvings to employ in the mgcv search for the optimal GCV score, before giving up 
 # on a search direction. trace turns on or off some de-bugging information.
-# nb.theta.mult controls the upper and lower limits on theta estimates - for use with negative binomial  
-# for single s.p. case and "magic" otherwise. 
 # rank.tol is the tolerance to use for rank determination
 # outerPIsteps is the number of performance iteration steps used to intialize
 #                         outer iteration
@@ -1071,8 +1070,6 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
         stop("value of epsilon must be > 0")
     if (!is.numeric(maxit) || maxit <= 0) 
         stop("maximum number of iterations must be > 0")
-    if (!is.numeric(nb.theta.mult)||nb.theta.mult<2) 
-        stop("nb.theta.mult must be >= 2")
     if (rank.tol<0||rank.tol>1) 
     { rank.tol=.Machine$double.eps^0.5
       warning("silly value supplied for rank.tol: reset to square root of machine precision.")
@@ -1108,7 +1105,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
     optim$factr <- abs(optim$factr)
 
     list(irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
-         trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,nb.theta.mult=nb.theta.mult,
+         trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
          optim=optim,newton=newton,outerPIsteps=outerPIsteps)
     
@@ -1119,7 +1116,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
 mgcv.get.scale<-function(Theta,weights,good,mu,mu.eta.val,G)
 # Get scale implied by current fit and trial -ve binom Theta, I've used
 # mu and mu.eta.val used in fit rather than implied by it....
-{ variance<- MASS::neg.bin(Theta)$variance
+{ variance<- negbin(Theta)$variance
   w<-sqrt(weights[good]*mu.eta.val[good]^2/variance(mu)[good])
   wres<-w*(G$y-G$X%*%G$p)
   sum(wres^2)/(G$n-sum(G$edf))
@@ -1195,16 +1192,20 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     olm <- G$am   # only need 1 iteration as it's a pure additive model. 
     find.theta<-FALSE # any supplied -ve binomial theta treated as known, G$sig2 is scale parameter
     if (substr(family$family[1],1,17)=="Negative Binomial")
-    { if (G$sig2<=0) find.theta<-TRUE # find theta by GCV
-      # now get theta/initial theta
-      V<-mu<-0.5
-      while(all.equal(V,mu)==TRUE)
-      { mu<-mu*2;V<-family$variance(mu)
-        if (all.equal(V,mu)!=TRUE) Theta<-mu^2/(V-mu)
+    { Theta <- family$getTheta()
+      if (length(Theta)==1) { ## Theta fixed
+        find.theta <- FALSE
+        G$sig2 <- 1
+      } else {
+        if (length(Theta)>2)
+        warning("Discrete Theta search not available with performance iteration")
+        Theta <- range(Theta)
+        T.max <- Theta[2]          ## upper search limit
+        T.min <- Theta[1]          ## lower search limit
+        Theta <- sqrt(T.max*T.min) ## initial value
+        find.theta <- TRUE
       }
-      T.max<-Theta*control$nb.theta.mult;T.min<-Theta/control$nb.theta.mult
-      if (family$family[1]=="Negative Binomial") nb.link<-NULL # neg.bin family, no link choises
-      else nb.link<-family$link # negative.binomial family, there's a choise of links
+      nb.link<-family$link # negative.binomial family, there's a choise of links
     }
 
     
@@ -1329,11 +1330,10 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
             G$edf <- mv$edf
 #          }
           Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
-          if (is.null(nb.link)) family<-MASS::neg.bin(Theta)
-          else family<-do.call("negbin",list(theta=Theta,link=nb.link))
+          family<-do.call("negbin",list(theta=Theta,link=nb.link))
           variance <- family$variance;dev.resids <- family$dev.resids
           aic <- family$aic
-          family$Theta <- Theta ## save Theta estiamte in family
+          family$Theta <- Theta ## save Theta estimate in family
         }
 
 #        if (control$trace&&G$fit.method=="mgcv")

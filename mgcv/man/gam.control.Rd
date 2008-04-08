@@ -11,8 +11,8 @@ choise of fitting method, see \code{\link{gam.method}}.
 }
 \usage{
 gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
-            mgcv.tol=1e-7,mgcv.half=15,nb.theta.mult=10000, 
-            trace = FALSE,rank.tol=.Machine$double.eps^0.5,
+            mgcv.tol=1e-7,mgcv.half=15, trace = FALSE,
+            rank.tol=.Machine$double.eps^0.5,
             nlm=list(),optim=list(),newton=list(),
             outerPIsteps=1) 
 }
@@ -39,11 +39,6 @@ underlying fitting method is \code{\link{mgcv}} (not the default - see
 \item{mgcv.half}{If a step of  the GCV/UBRE optimization method leads 
 to a worse GCV/UBRE score, then the step length is halved. This is
 the number of halvings to try before giving up.}
-
-\item{nb.theta.mult}{Controls the limits on theta when negative binomial 
-parameter is to be estimated. Maximum theta is set to the initial value 
-multiplied by \code{nb.theta.mult}, while the minimum value is set to
-the initial value divided by \code{nb.theta.mult}. }
 
 \item{trace}{Set this to \code{TRUE} to turn on diagnostic output.}
 

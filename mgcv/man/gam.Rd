@@ -208,9 +208,7 @@ Formulae can involve nested or ``overlapping'' terms such as \cr
 \item{family}{
 This is a family object specifying the distribution and link to use in
 fitting etc. See \code{\link{glm}} and \code{\link{family}} for more
-details. The negative binomial families provided by the MASS library 
-can be used, with or without known \eqn{\theta}{theta} parameter: see
-\code{\link{gam.neg.bin}} for details.
+details. A negative binomial family is provided: see \code{\link{negbin}}.
 } 
 
 \item{data}{ A data frame containing the model response variable and 
@@ -243,11 +241,9 @@ convergence: see \code{\link{gam.method}} for details.}
 \item{scale}{ If this is zero then GCV is used for all distributions
 except Poisson and binomial where UBRE is used with scale parameter
 assumed to be 1. If this is greater than 1 it is assumed to be the scale
-parameter/variance and UBRE is used: to use the negative binomial in this case
-\eqn{\theta}{theta} must be known. If \code{scale} is negative  GCV 
+parameter/variance and UBRE is used. If \code{scale} is negative  GCV 
 is always used, which means that the scale parameter will be estimated by GCV and the Pearson 
-estimator, or in the case of the negative binomial \eqn{\theta}{theta} will be estimated 
-in order to force the GCV/Pearson scale estimate to unity (if this is possible). For binomial models in 
+estimator. For binomial models in 
 particular, it is probably worth  comparing UBRE and GCV results; for ``over-dispersed Poisson'' GCV is
 probably more appropriate than UBRE.} 
 
@@ -412,7 +408,7 @@ an infinite range on the linear predictor scale.
 
 \seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{s}}, \code{\link{predict.gam}},\code{\link{plot.gam}}, \code{\link{summary.gam}}, \code{\link{gam.side}},
 \code{\link{gam.selection}},\code{\link{mgcv}}, \code{\link{gam.control}}
-\code{\link{gam.check}}, \code{\link{gam.neg.bin}}, \code{\link{magic}},\code{\link{vis.gam}}
+\code{\link{gam.check}}, \code{\link{negbin}}, \code{\link{magic}},\code{\link{vis.gam}}
  }
 
 \examples{
