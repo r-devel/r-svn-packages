@@ -534,3 +534,14 @@ msgstr ""
 
 msgid "Discrete Theta search not available with performance iteration"
 msgstr
+
+
+msgid "arguments of smooth not same dimension"
+msgstr ""
+
+msgid "factor `by' variables can not be used with matrix arguments."
+msgstr ""
+
+msgid "`by' variable must be same dimension as smooth arguments"
+msgstr ""
+
