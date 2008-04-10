@@ -2920,6 +2920,7 @@ set.mgcv.options <- function()
   set.mgcv.options()
 }
 
+.onUnload <- function(libpath) library.dynam.unload("mgcv", libpath)
 
 .First.lib <- function(lib, pkg) {
   library.dynam("mgcv", pkg, lib)
