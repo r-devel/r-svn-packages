@@ -101,7 +101,7 @@ tensor.prod.penalties <- function(S)
 }
 
 
-get.var<-function(txt,data)
+get.var<-function(txt,data,vecMat = TRUE)
 # txt contains text that may be a variable name and may be an expression 
 # for creating a variable. get.var first tries data[[txt]] and if that 
 # fails tries evaluating txt within data (only). Routine returns NULL
@@ -114,7 +114,7 @@ get.var<-function(txt,data)
     if (inherits(x,"try-error")) x <- NULL
   }
   if (!is.numeric(x)&&!is.factor(x)) x <- NULL  
-  if (is.matrix(x)) x <- as.numeric(x)
+  if (vecMat&&is.matrix(x)) x <- as.numeric(x)
   x
 }
 
@@ -688,11 +688,14 @@ smooth.construct <- function(object,data,knots) UseMethod("smooth.construct")
 Predict.matrix <- function(object,data) UseMethod("Predict.matrix")
 
 
-smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data))
+smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),dataX = NULL)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterizaion used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
-## Note that `data' must be a data.frame or model.frame
+## Note that `data' must be a data.frame or model.frame, unless n is provided explicitly, 
+## in which case a list will do.
+## If present dataX specifies the data to be used to set up the model matrix, given the 
+## basis set up using data (but n same for both).
 { sm <- smooth.construct(object,data,knots)
   if (!is.null(attr(sm,"qrc"))) warning("smooth objects should not have a qrc attribute.")
  
@@ -711,6 +714,11 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   if (!is.null(object$fixed)&&object$fixed) {
     sm$S <- NULL
   }
+
+
+  ## check whether different data to be used for basis setup
+  ## and model matrix... 
+  if (!is.null(dataX)) sm$X <- Predict.matrix(sm,dataX) 
 
   ## check whether smooth called with matrix argument
   if (nrow(sm$X)!=n) matrixArg <- TRUE else matrixArg <- FALSE

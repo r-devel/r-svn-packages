@@ -362,7 +362,7 @@ gam.side <- function(sm,tol=.Machine$double.eps^.5)
 
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
-                    min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE)
+                    min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE,idLinksBases=TRUE)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
 { # split the formula if the object being passed is a formula, otherwise it's already split
@@ -405,6 +405,49 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$smooth<-list()
   G$S<-list()
  
+
+  if (m>0 && idLinksBases) { ## search smooth.spec[[]] for terms linked by common id's
+    id.list <- list() ## id information list
+    nid <- 0          ## number of unique id's
+    for (i in 1:m) if (!is.null(split$smooth.spec[[i]]$id)) {
+      id <- as.charecter(split$smooth.spec[[i]]$id)
+      if (nid) {
+        if (id%*%names(id.list)) { ## it's an existing id
+          ni <- length(id.list[[id]]$sm.i) ## number of terms so far with this id
+          id.list[[id]]$sm.i[ni+1] <- i    ## adding smooth.spec index to this id's list
+          ## now a check that term has same dimension as base smooth...
+          base.i <- id.list[[id]]$sm.i[1]
+          if (split$smooth.spec[[base.i]]$dim!=
+              split$smooth.spec[[i]]$dim) stop("`id' linked smooths must have same number of arguments")
+          ## clone smooth.spec from base smooth spec....
+          temp.term <- split$smooth.spec[[i]]$term
+          temp.label <- split$smooth.spec[[i]]$label 
+          temp.by <- split$smooth.spec[[i]]$by
+          temp.xt <- split$smooth.spec[[i]]$xt ## don't generally know what's in here => don't clone
+          split$smooth.spec[[i]] <- split$smooth.spec[[base.i]]
+          split$smooth.spec[[i]]$term <- temp.term
+          split$smooth.spec[[i]]$label <- temp.label
+          split$smooth.spec[[i]]$by <- temp.by 
+          split$smooth.spec[[i]]$xt <- temp.xt
+          ## add data for this term to the data list for basis setup...
+          for (j in 1:length(temp.term)) id.list[[id]]$data[[j]] <- cbind(id.list[[id]]$data[[j]],
+                                                          get.var(temp.term[j],data,vecMat=FALSE))
+        } else { ## new id
+          nid <- nid + 1
+          id.list[[id]] <- i ## start the array of smooths with this id
+          id.list[[id]]$data <- list()
+          ## need to collect together all data for which this basis will be used,
+          ## for basis setup...
+          term <- split$smooth.spec[[i]]$term
+          for (j in 1:length(term)) id.list[[id]]$data[[j]] <- get.var(term[j],data,vecMat=FALSE)
+        } 
+      } else { ## first id
+       nid <- 1 
+       id.list[[id]] <- list(sm.i = i)   ## the array of smooths with this id                 
+      }
+    }
+  } ## id.list complete
+
   G$off<-array(0,0)
   first.para<-G$nsdf+1
   sm <- list()
@@ -414,7 +457,14 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     # appropriate basis constructor is called depending on the class of the smooth
     # constructor returns penalty matrices model matrix and basis specific information
     ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons) ## old code
-    sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons)
+    id <- split$smooth.spec[[i]]$id
+    if (is.null(id)||!idLinksBases) { ## regular evaluation
+      sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons) 
+    } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
+      names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
+      sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
+                       absorb.cons,n=nrow(data),dataX=data)
+    }
     for (j in 1:length(sml)) {
       newm <- newm + 1
       sm[[newm]] <- sml[[j]]
