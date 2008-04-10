@@ -1,3 +1,7 @@
+2008-04-10  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/zzz.R (.onUnload): add ..dynam.unload()ing
+
 2008-02-29  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Date, Version): 1.11.10 and release
@@ -13,8 +17,8 @@
 
 2007-12-18  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* src/ind_2.h (ind_2): for m := max(i,j) > 46342, (m-2)*(m-1) gave
-	integer overflow which lead to a seg.fault.  Now fixed.
+	* src/ind_2.h (ind_2): for m := max(i,j) > 46342, (m-2)*(m-1) give
+	integer overflow which leads to a seg.fault.  Now fixed.
 	* src/pam.c (bswap): slightly improve trace output.
 	* tests/pam.R, tests/pam.Rout.save: corresponding slight adaptions.
 
