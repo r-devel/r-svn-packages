@@ -6,7 +6,8 @@
 \description{ Fits a generalized additive model (GAM) to
   data. The degree of smoothness of model terms is estimated as part of
   fitting; isotropic or scale invariant smooths of any number of variables are
-  available as model terms; confidence/credible intervals are readily
+  available as model terms, as are linear functionals of such smooths; 
+  confidence/credible intervals are readily
   available for any quantity predicted using a fitted model; \code{gam} is
   extendable: i.e. users can add smooths. 
 
@@ -15,7 +16,8 @@ with smoothing parameters selected by GCV/UBRE or by regression splines with
 fixed degrees of freedom (mixtures of the two are
 permitted). Multi-dimensional smooths are available using penalized thin plate
 regression splines (isotropic) or tensor product splines (when an isotropic smooth is inappropriate). 
-For more on specifying models see \code{\link{gam.models}}. For more on model 
+For more on specifying models see \code{\link{gam.models}} and \code{\link{linear.functional.terms}}. 
+For more on model 
 selection see \code{\link{gam.selection}}. For faster fits use the \code{"cr"}
 bases for smooth terms and \code{\link{te}} smooths for smooths of several
 variables.
@@ -185,7 +187,7 @@ represent the smooth term. If \code{k} is not
  to select d.f. by GCV/UBRE). \code{bs} indicates the basis to use for the smooth: for a full
  list see \code{\link{s}}, but note that the default \code{"tp"}, while
  it possesses nice optimality properties is slow and memory hungry for very
- large datasets (but see examples for how to get around this). \code{by} can be used to specify a variable by which
+ large datasets. \code{by} can be used to specify a variable by which
  the smooth should be multiplied. For example \code{gam(y~z+s(x,by=z))}
    would specify a model \eqn{ E(y) = f(x)z}{E(y)=f(x)z} where
    \eqn{f(\cdot)}{f(.)} is a smooth function (the formula is
@@ -199,7 +201,9 @@ An alternative for specifying smooths of more than one covariate is e.g.: \cr
 \code{te(x,z,bs=c("tp","tp"),m=c(2,3),k=c(5,10))} which would specify a tensor product 
 smooth of the two covariates \code{x} and \code{z} constructed from marginal t.p.r.s. bases 
 of dimension 5 and 10 with marginal penalties of order 2 and 3. Any combination of basis types is 
-possible, as is any number of covariates.
+possible, as is any number of covariates. Linear functionals of smooths are also available: see
+\code{\link{linear.functional.terms}}.
+
 
 Formulae can involve nested or ``overlapping'' terms such as \cr
 \code{y~s(x)+s(z)+s(x,z)} or \code{y~s(x,z)+s(z,v)}: see
@@ -211,7 +215,7 @@ fitting etc. See \code{\link{glm}} and \code{\link{family}} for more
 details. A negative binomial family is provided: see \code{\link{negbin}}.
 } 
 
-\item{data}{ A data frame containing the model response variable and 
+\item{data}{ A data frame or list containing the model response variable and 
 covariates required by the formula. By default the variables are taken 
 from \code{environment(formula)}: typically the environment from 
 which \code{gam} is called.} 
@@ -408,7 +412,7 @@ an infinite range on the linear predictor scale.
 
 \seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{s}}, \code{\link{predict.gam}},\code{\link{plot.gam}}, \code{\link{summary.gam}}, \code{\link{gam.side}},
 \code{\link{gam.selection}},\code{\link{mgcv}}, \code{\link{gam.control}}
-\code{\link{gam.check}}, \code{\link{negbin}}, \code{\link{magic}},\code{\link{vis.gam}}
+\code{\link{gam.check}}, \code{\link{linear.functional.terms}} \code{\link{negbin}}, \code{\link{magic}},\code{\link{vis.gam}}
  }
 
 \examples{

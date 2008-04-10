@@ -1924,7 +1924,8 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
       if (is.null(xlab)) xlabel <- xterm else xlabel <- xlab
       yterm <- x$smooth[[i]]$term[2]
       if (is.null(ylab)) ylabel <- yterm else ylabel <- ylab
-      raw<-data.frame(x=x$model[xterm][[1]],y=x$model[yterm][[1]])
+      raw<-data.frame(x=as.numeric(x$model[xterm][[1]]),
+                      y=as.numeric(x$model[yterm][[1]]))
       n2<-max(10,n2)
       xm<-seq(min(raw$x),max(raw$x),length=n2)
       ym<-seq(min(raw$y),max(raw$y),length=n2)  
@@ -1934,7 +1935,7 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
       exclude <- exclude.too.far(xx,yy,raw$x,raw$y,dist=too.far) else
       exclude <- rep(FALSE,n2*n2)
       if (x$smooth[[i]]$by!="NA")         # deal with any by variables
-      { by<-rep(1,n);dat<-data.frame(x=xx,y=yy,by=by)
+      { by<-rep(1,n2^2);dat<-data.frame(x=xx,y=yy,by=by)
         names(dat)<-c(xterm,yterm,x$smooth[[i]]$by)
       } else
       { dat<-data.frame(x=xx,y=yy);names(dat)<-c(xterm,yterm)}  # prediction data.frame

@@ -40,8 +40,7 @@
   \item{by}{specifies a covariate by which the whole smooth term is to
     be multiplied. This is particularly useful for creating models in
     which a smooth interacts with a factor: See the examples below. 
-   This is the means by which `variable
-  coefficient models' can be specified.}
+   This is the means by which `variable coefficient models' can be specified.}
 
 \item{xt}{Any extra information required to set up a particular basis. Used
   e.g. to set large data set handling behaviour for \code{"tp"} basis.}

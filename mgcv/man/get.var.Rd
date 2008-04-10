@@ -6,7 +6,7 @@
 string is the name of a variable in the data frame/ list. If it is then the value of this variable is returned. 
 Otherwise the routine tries to evaluate the expression within the data.frame/list (but nowhere else) and if 
 successful returns the result. If neither step works then \code{NULL} is returned. The routine is useful for
-processing gam formulae.}
+processing gam formulae. If the variable is a matrix then it is coerced to a numeric vector.}
 
 \usage{ get.var(txt,data)
 }
@@ -18,7 +18,7 @@ function returns \code{NULL}.}
 \item{data}{A data frame or list.} 
 }
 
-\value{The evaluated variable, or \code{NULL}}
+\value{The evaluated variable, coerced to a numeric vector if it's a matrix, or \code{NULL}}
 
 \references{
 \url{http://www.maths.bath.ac.uk/~sw283/}
@@ -32,6 +32,8 @@ y <- 1:4;dat<-data.frame(x=5:10)
 get.var("x",dat)
 get.var("y",dat)
 get.var("x==6",dat)
+dat <- list(X=matrix(1:6,3,2))
+get.var("X",dat)
 }
 \keyword{models} \keyword{smooth} \keyword{regression} %-- one or more ..
 

@@ -14,14 +14,15 @@ although this behaviour can be over-ridden.
 }
 
 \usage{
-smoothCon(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
-PredictMat(object,data)
+smoothCon(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data))
+PredictMat(object,data,n=nrow(data))
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
 \item{object}{ is a smooth specification object or a smooth object.}
-\item{data}{A data frame containing the values of the (named) covariates at which the smooth term is to be 
-evaluated.}
+\item{data}{A data frame, model frame or list containing the values of the 
+(named) covariates at which the smooth term is to be 
+evaluated. If it's a list then \code{n} must be supplied.}
 \item{knots}{An optional data frame supplying any knot locations to be
 supplied for basis construction.}
 \item{absorb.cons}{Set to \code{TRUE} in order to have identifiability
@@ -29,6 +30,8 @@ constraints absorbed into the basis.}
 \item{scale.penalty}{should the penalty coefficient matrix be scaled to have
 approximately the same `size' as the inner product of the terms model matrix
 with itself? This can improve the performance of \code{\link{gamm}} fitting.}
+\item{n}{number of values for each covariate, or if a covariate is a matrix, 
+the number of rows in that matrix: must be supplied explicitly if \code{data} is a list. }
 }
 
 \value{ From \code{smoothCon} a list of \code{smooth} objects returned by the

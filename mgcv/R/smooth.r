@@ -106,12 +106,15 @@ get.var<-function(txt,data)
 # for creating a variable. get.var first tries data[[txt]] and if that 
 # fails tries evaluating txt within data (only). Routine returns NULL
 # on failure, or if result is not numeric or a factor.
+# matrices are coerced to vectors, which facilitates matrix arguments 
+# to smooths.
 { x <- data[[txt]]
   if (is.null(x)) 
   { x <- try(eval(parse(text=txt),data,enclos=NULL),silent=TRUE)
     if (inherits(x,"try-error")) x <- NULL
   }
   if (!is.numeric(x)&&!is.factor(x)) x <- NULL  
+  if (is.matrix(x)) x <- as.numeric(x)
   x
 }
 
@@ -350,6 +353,8 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   { xx <- get.var(object$term[[i]],data)
     shift[i]<-mean(xx)  # centre covariates
     xx <- xx - shift[i]
+    if (i==1) n <- length(xx) else 
+    if (n!=length(xx)) stop("arguments of smooth not same dimension")
     x<-c(x,xx)
   }
   if (is.null(knots)) {knt<-0;nk<-0}
@@ -365,7 +370,6 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
       nk <- nk0
     }
   }
-  n<-nrow(data)
   if (nk>n) { nk <- 0
   warning("more knots than data in a tp term: knots ignored.")}
   ## deal with possibility of large data set
@@ -650,22 +654,25 @@ Predict.matrix.tprs.smooth<-function(object,data)
   for (i in 1:object$dim) 
   { xx <- get.var(object$term[[i]],data)
     xx <- xx - object$shift[i]
+    if (i==1) n <- length(xx) else 
+    if (length(xx)!=n) stop("arguments of smooth not same dimension")
     if (length(xx)<1) stop("no data to predict at")
     x<-c(x,xx)
   }
-  n<-nrow(data)
-  if (object$by!="NA")  # deal with "by" variable 
-  { by <- get.var(object$by,data)
-    if (is.null(by)) stop("Can't find by variable")
-    by.exists<-TRUE
-  } else
-  { by<-0;by.exists<-FALSE}
+#  n<-nrow(data)
+#  if (object$by!="NA")  # deal with "by" variable 
+#  { by <- get.var(object$by,data)
+#    if (is.null(by)) stop("Can't find by variable")
+#    by.exists<-TRUE
+#  } else { 
+    by<-0;by.exists<-FALSE
+#  }
   X<-matrix(0,n,object$bs.dim)
   oo<-.C(C_predict_tprs,as.double(x),as.integer(object$dim),as.integer(n),as.integer(object$p.order),
       as.integer(object$bs.dim),as.integer(object$null.space.dim),as.double(object$Xu),
       as.integer(nrow(object$Xu)),as.double(object$UZ),as.double(by),as.integer(by.exists),X=as.double(X))
   X<-matrix(oo$X,n,object$bs.dim)
-  attr(X,"by.done") <- TRUE
+#  attr(X,"by.done") <- TRUE
   X
 }
 
@@ -681,22 +688,15 @@ smooth.construct <- function(object,data,knots) UseMethod("smooth.construct")
 Predict.matrix <- function(object,data) UseMethod("Predict.matrix")
 
 
-smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
+smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data))
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterizaion used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
+## Note that `data' must be a data.frame or model.frame
 { sm <- smooth.construct(object,data,knots)
   if (!is.null(attr(sm,"qrc"))) warning("smooth objects should not have a qrc attribute.")
  
-  ## following is intended to make scaling `nice' for better gamm performance
-  if (scale.penalty && length(sm$S)>0) # then the penalty coefficient matrix is rescaled
-  { maXX <- mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
-    for (i in 1:length(sm$S)) {
-      maS <- mean(abs(sm$S[[i]]))
-      sm$S[[i]] <- sm$S[[i]] * maXX / maS
-    }
-  } 
-
+ 
   ## automatically produce centering constraint...
   if (is.null(sm$C)) {
     sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
@@ -712,12 +712,15 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
     sm$S <- NULL
   }
 
+  ## check whether smooth called with matrix argument
+  if (nrow(sm$X)!=n) matrixArg <- TRUE else matrixArg <- FALSE
 
   ## pick up "by variables" now...
   if (object$by!="NA"&&is.null(sm$by.done))
   { by <- get.var(object$by,data)
     if (is.null(by)) stop("Can't find by variable")
     if (is.factor(by)) { 
+      if (matrixArg) stop("factor `by' variables can not be used with matrix arguments.")
       sml <- list()
       lev <- levels(by)
       for (j in 1:length(lev)) {
@@ -729,12 +732,39 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
       }
     } else {
       sml <- list(sm)
+      if (length(by)!=nrow(sm$X)) stop("`by' variable must be same dimension as smooth arguments")
       sml[[1]]$X <- as.numeric(by)*sm$X
       sml[[1]]$label <- paste(sm$label,":",object$by,sep="") 
     }
   } else {
     sml <- list(sm)
   }
+
+  ## If the smooth had matrix arguments with `q' columns then the model matrix
+  ## is currently `q' model matrices stacked on top of each other which mow
+  ## need to be summed...
+  if (matrixArg) {
+    q <- nrow(sml[[1]]$X)/n ## note: can't get here if `by' a factor
+    ind <- 1:n 
+    X <- sml[[1]]$X[ind,]
+    for (i in 2:q) {
+      ind <- ind + n
+      X <- X + sml[[1]]$X[ind,]
+    }
+    sml[[1]]$X <- X
+  }
+
+
+  ## following is intended to make scaling `nice' for better gamm performance
+  if (scale.penalty && length(sm$S)>0) # then the penalty coefficient matrix is rescaled
+  { for (k in 1:length(sml)) {
+      maXX <- mean(abs(t(sml[[k]]$X)%*%sml[[k]]$X)) # `size' of X'X
+      for (i in 1:length(sml[[k]]$S)) {
+        maS <- mean(abs(sml[[k]]$S[[i]]))
+        sml[[k]]$S[[i]] <- sml[[k]]$S[[i]] * maXX / maS
+      }
+    }
+  } 
 
 
   ## absorb constraints.....
@@ -766,7 +796,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE)
   sml
 }
 
-PredictMat <- function(object,data)
+PredictMat <- function(object,data,n=nrow(data))
 ## wrapper function which calls Predict.matrix and imposes same constraints as 
 ## smoothCon on resulting Prediction Matrix
 { X <- Predict.matrix(object,data)
@@ -777,11 +807,27 @@ PredictMat <- function(object,data)
       if (is.factor(by)) {
         by.dum <- as.numeric(object$by.level==by)
         X <- by.dum*X
-      } else X <- as.numeric(by)*X
+      } else { 
+        if (length(by)!=nrow(X)) stop("`by' variable must be same dimension as smooth arguments")
+        X <- as.numeric(by)*X
+      }
     }
   }
   attr(X,"by.done") <- NULL
   offset <- attr(X,"offset")
+
+  ## now deal with any necessary model matrix summation
+  if (n != nrow(X)) {
+    q <- nrow(X)/n ## note: can't get here if `by' a factor
+    ind <- 1:n 
+    Xs <- X[ind,]
+    for (i in 2:q) {
+      ind <- ind + n
+      Xs <- Xs + X[ind,]
+    }
+    X <- Xs
+  }
+
   qrc <- attr(object,"qrc")
   if (!is.null(qrc)) { ## then smoothCon absorbed constraints
     j <- attr(object,"nCons")
