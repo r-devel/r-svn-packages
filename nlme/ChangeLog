@@ -1,3 +1,7 @@
+2008-04-10  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/zzMethods.R: add .onUnload() to unload the DLL.
+
 2008-03-30  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION (Version, Date): 3.1-88
