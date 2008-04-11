@@ -7,7 +7,7 @@
   smooth - it exists purely to help set up a model using spline based smooths.
 }
 
-\usage{s(..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)}
+\usage{s(..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA,id=NULL)}
 
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -44,6 +44,13 @@
 
 \item{xt}{Any extra information required to set up a particular basis. Used
   e.g. to set large data set handling behaviour for \code{"tp"} basis.}
+
+\item{id}{A label or integer identifying this term in order to link its smoothing
+          parameters to others of the same type. If two or more terms have the same 
+          \code{id} then they will have the same smoothing paramsters, and, by default,
+          the same bases (first occurance defines basis type, but data from all terms 
+          used in basis construction).}
+
   }
 
 \details{The function does not evaluate the variable arguments. To use this function to specify use of

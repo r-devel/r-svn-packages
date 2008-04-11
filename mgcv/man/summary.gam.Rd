@@ -4,7 +4,7 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Summary for a GAM fit}
 \description{ Takes a fitted \code{gam} object produced by \code{gam()} and produces various useful
-summaries from it. 
+summaries from it. (See \code{\link{sink}} to divert output to a file.)
 }
 \usage{
 \method{summary}{gam}(object, dispersion=NULL, freq=TRUE, ...)

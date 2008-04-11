@@ -93,6 +93,11 @@ constraints are required.}
 unpenalized). If this is null then {\tt smoothCon} will set it to the basis 
 dimension less the number of constraints.}
 
+\item{L}{smooths may depend on fewer `underlying' smoothing parameters than there are elements of
+\code{S}. In this case \code{L} is the matrix mapping the vector of underlying log smoothing 
+parameters to the vector of logs of the smoothing parameters actually multiplying the \code{S[[i]]}. 
+\code{L=NULL} signifies that there is one smoothing parameter per \code{S[[i]]}. }
+
 Usually the returned object will also include extra information required to define the basis, and used by 
 \code{\link{Predict.matrix}} methods to make predictions using the basis. See the \code{Details} section for the information included for the built in smooth classes. 
 

@@ -8,7 +8,8 @@
   based smooths.
 }
 
-\usage{te(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA)
+\usage{te(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,
+                        mp=TRUE,np=TRUE,xt=NA,id=NULL)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -58,6 +59,12 @@ easily interpretable, however it can reduce numerical stability.}
 \item{xt}{Either a single object, providing any extra information to be passed
 to each marginal basis constructor, or a list of such objects, one for each
 marginal basis. }
+
+\item{id}{A label or integer identifying this term in order to link its smoothing
+          parameters to others of the same type. If two or more terms have the same 
+          \code{id} then they will have the same smoothing paramsters, and, by default,
+          the same bases (first occurance defines basis type, but data from all terms 
+          used in basis construction).}
 }
 
 \details{ Smooths of several covariates can be constructed from tensor products of the bases

@@ -120,7 +120,7 @@ get.var<-function(txt,data,vecMat = TRUE)
 
 
 
-te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA)
+te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA,id=NULL)
 # function for use in gam formulae to specify a tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -212,7 +212,7 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA)
   if (dim>1) for (i in 2:dim) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="")   # label for parameters of this term
 
-  ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np)##full.call=full.call)
+  ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np,id=id)##full.call=full.call)
   class(ret)<-"tensor.smooth.spec"
   ret
 }
@@ -221,7 +221,7 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA)
 
 
 
-s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)
+s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA,id=NULL)
 # function for use in gam formulae to specify smooth term, e.g. s(x0,x1,x2,k=40,m=3,by=x3) specifies 
 # a rank 40 thin plate regression spline of x0,x1 and x2 with a third order penalty, to be multiplied by
 # covariate x3, when it enters the model.
@@ -245,16 +245,16 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)
   for (i in 1:d) term[i] <- attr(terms(reformulate(term[i])),"term.labels")
   # term now contains the names of the covariates for this model term
   # now evaluate all the other 
-  k.new<-round(k) # in case user has supplied non-integer basis dimension
+  k.new <- round(k) # in case user has supplied non-integer basis dimension
   if (!all.equal(k.new,k)) {warning("argument k of s() should be integer and has been rounded")}
-  k<-k.new
+  k <- k.new
   if (length(k)==1 && k==-1) k<-10*3^(d-1) # auto-initialize basis dimension
   ind <- k<2
   if (sum(ind)) 
   { k[ind] <- 2
     warning("meaninglessly low k; reset to 2\n")
   }
-  if (bs=="cr"||bs=="cc") # a check
+  if (bs=="cr"||bs=="cc"||bs=="cs") # a check
   { if (d>1) { warning("cr/cc basis only works with 1-d smooths!\n");bs<-"tp";}
   } 
   m[m<0]<-0
@@ -265,7 +265,7 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA)
   if (d>1) for (i in 2:d) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="") # used for labelling parameters
 
-  ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt)
+  ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt,id=id)
   class(ret)<-paste(bs,".smooth.spec",sep="")
   ret
 }
@@ -277,6 +277,8 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
   for (i in 1:m)
   { object$margin[[i]]<-smooth.construct(object$margin[[i]],data,knots)
     Xm[[i]]<-object$margin[[i]]$X
+    if (length(object$margin[[i]]$S)>1) 
+    stop("Sorry, tensor products of smooths with multiple penalties are not supported.")
     Sm[[i]]<-object$margin[[i]]$S[[1]]
     d[i]<-nrow(Sm[[i]])
     r[i]<-object$margin[[i]]$rank
@@ -701,6 +703,8 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
  
  
   ## automatically produce centering constraint...
+  ## must be done here on original model matrix to ensure same
+  ## basis for all `id' linked terms
   if (is.null(sm$C)) {
     sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
   }
@@ -715,6 +719,19 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     sm$S <- NULL
   }
 
+  ## The following is intended to make scaling `nice' for better gamm performance.
+  ## Note that this takes place before any resetting of the model matrix, and 
+  ## any `by' variable handling. From a `gamm' perspective this is not ideal, 
+  ## but to do otherwise would mess up the meaning of smoothing parameters
+  ## sufficiently that linking terms via `id's would not work properly (they 
+  ## would have the same basis, but different penalties)
+  if (scale.penalty && length(sm$S)>0) # then the penalty coefficient matrix is rescaled
+  {  maXX <- mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
+      for (i in 1:length(sm$S)) {
+        maS <- mean(abs(sm$S[[i]]))
+        sm$S[[i]] <- sm$S[[i]] * maXX / maS
+      }
+  } 
 
   ## check whether different data to be used for basis setup
   ## and model matrix... 
@@ -761,19 +778,6 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     }
     sml[[1]]$X <- X
   }
-
-
-  ## following is intended to make scaling `nice' for better gamm performance
-  if (scale.penalty && length(sm$S)>0) # then the penalty coefficient matrix is rescaled
-  { for (k in 1:length(sml)) {
-      maXX <- mean(abs(t(sml[[k]]$X)%*%sml[[k]]$X)) # `size' of X'X
-      for (i in 1:length(sml[[k]]$S)) {
-        maS <- mean(abs(sml[[k]]$S[[i]]))
-        sml[[k]]$S[[i]] <- sml[[k]]$S[[i]] * maXX / maS
-      }
-    }
-  } 
-
 
   ## absorb constraints.....
   if (absorb.cons)

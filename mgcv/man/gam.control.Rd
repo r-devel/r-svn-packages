@@ -14,7 +14,7 @@ gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
             mgcv.tol=1e-7,mgcv.half=15, trace = FALSE,
             rank.tol=.Machine$double.eps^0.5,
             nlm=list(),optim=list(),newton=list(),
-            outerPIsteps=1) 
+            outerPIsteps=1,idLinksBases=TRUE,scalePenalty=TRUE) 
 }
 \arguments{ 
 \item{irls.reg}{For most models this should be 0. The iteratively re-weighted least squares method
@@ -23,9 +23,7 @@ problems in a model with a log link, because a mean of zero corresponds to an in
 values. Such convergence problems are caused by a fundamental lack of identifiability, but do not show up as 
 lack of identifiability in the penalized linear model problems that have to be solved at each stage of iteration.
 In such circumstances it is possible to apply a ridge regression penalty to the model to impose identifiability, and 
-\code{irls.reg} is the size of the penalty. The penalty can not be used if the
-underlying fitting method is \code{\link{mgcv}} (not the default - see
-\code{\link{gam.method}} for details).
+\code{irls.reg} is the size of the penalty.
 }
 
 \item{epsilon}{This is used for judging conversion of the GLM IRLS loop in
@@ -60,6 +58,17 @@ used for outer estimation of log smoothing parameters. See details.}
 initialize outer iteration. Less than 1 means
 that only one performance iteration step is taken to get the function scale,
 but the corresponding smoothing parameter estimates are discarded. }
+
+\item{idLinksBases}{If smooth terms have their smoothing parameters linked via 
+the \code{id} mechanism (see \code{\link{s}}), should they also have the same 
+bases. Set this to \code{FALSE} only if you are sure you know what you are doing 
+(you should almost surely set \code{scalePenalty} to \code{FALSE} as well in this 
+case.}
+
+\item{scalePenalty}{\code{\link{gamm}} is somewhat sensitive to the absolute scaling 
+of the penalty matrices of a smooth relative to its model matrix. This option rescales 
+the penalty matrices to accomodate this problem. Probably should be set to \code{FALSE} 
+if you are linking smoothing parameters but have set \code{idLinkBases} to \code{FALSE}.}
 }
 
 \details{ When outer iteration is used for fitting then the control list
@@ -90,21 +99,6 @@ of fitting that determines problem rank, etc. (defaults to \code{FALSE}).
 Outer iteration using \code{\link{optim}} is controlled using list
 \code{optim}, which currently has one element: \code{factr} which takes
 default value 1e7.
-
-
-When fitting is been done by calls to routine \code{\link{mgcv}} (not default), 
-\code{maxit} and \code{globit} control the maximum iterations of the IRLS algorithm, as follows: 
-the algorithm will first execute up to
-\code{globit} steps in which the GCV/UBRE algorithm performs a global search for the best overall 
-smoothing parameter at every iteration. If convergence is not achieved within
-\code{globit} iterations, then a further 
-\code{maxit} steps are taken, in which the overall smoothing parameter estimate is taken as the 
-one locally minimising the GCV/UBRE score and resulting in the lowest EDF change. The difference 
-between the two phases is only significant if the GCV/UBRE function develops more than one minima. 
-The reason for this approach is that the GCV/UBRE score for the IRLS problem can develop `phantom'
-minimima for some models: these are minima which are not present in the GCV/UBRE score of the IRLS
-problem resulting from moving the parameters to the minimum! Such minima can lead to convergence 
-failures, which are usually fixed by the second phase. 
 }
 
 

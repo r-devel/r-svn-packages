@@ -359,10 +359,46 @@ gam.side <- function(sm,tol=.Machine$double.eps^.5)
   sm
 }
 
+clone.smooth.spec <- function(specb,spec) {
+## produces a version of base smooth.spec, `specb', but with 
+## the variables relating to `spec'. Used by `gam.setup' in handling 
+## of linked smooths.
+ ## check dimensions same...
+ if (specb$dim!=spec$dim) stop("`id' linked smooths must have same number of arguments") 
+ ## Now start cloning...
+ if (inherits(specb,"tensor.smooth.spec")) { ##`te' generated base smooth.spec
+    specb$term <- spec$term
+    specb$label <- spec$label 
+    specb$by <- spec$by
+    k <- 1
+    for (i in 1:length(specb$margin)) {
+      if (is.null(spec$margin)) { ## sloppy user -- have to construct margin info...
+         for (j in 1:length(specb$margin[[i]]$term)) {
+           specb$margin[[i]]$term[j] <- spec$term[k]
+           k <- k + 1
+         }
+         specb$margin[[i]]$label <- ""
+ 
+      } else { ## second term was at least `te', so margin cloning is easy
+        specb$margin[[i]]$term <- spec$margin[[i]]$term
+        specb$margin[[i]]$label <- spec$margin[[i]]$label
+        specb$margin[[i]]$xt <- spec$margin[[i]]$xt
+      }
+    }
+
+  } else { ## `s' generated case
+    specb$term <- spec$term
+    specb$label <- spec$label 
+    specb$by <- spec$by
+    specb$xt <- spec$xt ## don't generally know what's in here => don't clone
+  }
+  specb ## return clone
+}
 
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
-                    min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE,idLinksBases=TRUE)
+                    min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE,idLinksBases=TRUE,
+                    scale.penalty=TRUE)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
 { # split the formula if the object being passed is a formula, otherwise it's already split
@@ -410,26 +446,19 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     id.list <- list() ## id information list
     nid <- 0          ## number of unique id's
     for (i in 1:m) if (!is.null(split$smooth.spec[[i]]$id)) {
-      id <- as.charecter(split$smooth.spec[[i]]$id)
+      id <- as.character(split$smooth.spec[[i]]$id)
       if (nid) {
         if (id%*%names(id.list)) { ## it's an existing id
           ni <- length(id.list[[id]]$sm.i) ## number of terms so far with this id
           id.list[[id]]$sm.i[ni+1] <- i    ## adding smooth.spec index to this id's list
-          ## now a check that term has same dimension as base smooth...
-          base.i <- id.list[[id]]$sm.i[1]
-          if (split$smooth.spec[[base.i]]$dim!=
-              split$smooth.spec[[i]]$dim) stop("`id' linked smooths must have same number of arguments")
           ## clone smooth.spec from base smooth spec....
-          temp.term <- split$smooth.spec[[i]]$term
-          temp.label <- split$smooth.spec[[i]]$label 
-          temp.by <- split$smooth.spec[[i]]$by
-          temp.xt <- split$smooth.spec[[i]]$xt ## don't generally know what's in here => don't clone
-          split$smooth.spec[[i]] <- split$smooth.spec[[base.i]]
-          split$smooth.spec[[i]]$term <- temp.term
-          split$smooth.spec[[i]]$label <- temp.label
-          split$smooth.spec[[i]]$by <- temp.by 
-          split$smooth.spec[[i]]$xt <- temp.xt
+          base.i <- id.list[[id]]$sm.i[1]
+         
+          split$smooth.spec[[i]] <- clone.smooth.spec(split$smooth.spec[[base.i]],
+                                                      split$smooth.spec[[i]])
+        
           ## add data for this term to the data list for basis setup...
+          temp.term <- split$smooth.spec[[i]]$term
           for (j in 1:length(temp.term)) id.list[[id]]$data[[j]] <- cbind(id.list[[id]]$data[[j]],
                                                           get.var(temp.term[j],data,vecMat=FALSE))
         } else { ## new id
@@ -456,14 +485,14 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   { # idea here is that terms are set up in accordance with information given in split$smooth.spec
     # appropriate basis constructor is called depending on the class of the smooth
     # constructor returns penalty matrices model matrix and basis specific information
-    ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons) ## old code
+    ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty) ## old code
     id <- split$smooth.spec[[i]]$id
     if (is.null(id)||!idLinksBases) { ## regular evaluation
       sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons) 
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
-                       absorb.cons,n=nrow(data),dataX=data)
+                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
@@ -472,6 +501,36 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   }
   
   G$m <- m <- newm ## number of actual smooths
+
+  ## The matrix, L, mapping the underlying log smoothing parameters to the
+  ## log of the smoothing parameter multiplying the S[[i]] must be
+  ## worked out...
+  idx <- list();L <- matrix(0,0,0)
+  if (m>0) for (i in 1:m) {
+    id <- sm[[i]]$id
+    ## get the L matrix for this smooth...
+    if (is.null(sm[[i]]$L)) Li <- diag(length(sm[[i]]$S)) else Li <- sm[[i]]$L 
+    ## extend the global L matrix...
+    if (is.null(id)||is.null(idx[[id]])) { ## new `id'     
+      if (!is.null(id)) { ## create record in `idx'
+        idx[[id]]$c <- ncol(L)+1   ## starting column in L for this `id'
+        idx[[id]]$nc <- ncol(Li)   ## number of columns relating to this `id'
+      }
+      L <- rbind(cbind(L,matrix(0,nrow(L),ncol(Li))),
+                 cbind(matrix(0,nrow(Li),ncol(L)),Li))
+    } else { ## it's a repeat id => shares existing sp's
+      L0 <- matrix(0,nrow(Li),ncol(L))
+      if (ncol(Li)>idx[[id]]$nc) {
+        stop("Later terms sharing an `id' can not have more smoothing parameters than the first such term")
+      }
+      L0[,idx[[id]]$c:(idx[[id]]$c+ncol(Li)-1)] <- Li
+      L <- rbind(L,L0)
+    }
+  }
+
+  if (!sum(L!=diag(ncol(L)))) L <- NULL ## it's just the identity
+
+  G$L <- L
 
   ## at this stage, it is neccessary to impose any side conditions required
   ## for identifiability
@@ -497,6 +556,9 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$X<-X;rm(X)
   n.p<-ncol(G$X) 
   # deal with penalties
+
+####### Folowing needs updating to deal with L
+
   n.smooths<-0 # number of `free' penalties
   k.sp<-0 # count through sp and min.sp
   G$rank<-array(0,0)
@@ -759,7 +821,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     ## make sure criterion gets set to UBRE
   } else if (method$outer=="newton"){ ## the gam.fit3 method -- not negbin
 
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=NULL,H=G$H,offset=G$offset,family=family,weights=G$w,
+    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,H=G$H,offset=G$offset,family=family,weights=G$w,
                 control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                 printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)   
@@ -951,7 +1013,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
  #     if (method$gam=="perf.mgcv") fit.method <- "mgcv" else fit.method <- "magic"}
 
     G<-gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
-                 H=H,parametric.only=FALSE,absorb.cons=TRUE)
+                 H=H,parametric.only=FALSE,absorb.cons=TRUE,
+                 idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty)
     
     G$family <- family
    
@@ -987,6 +1050,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   
 ##  object$full.formula<-as.formula(G$full.formula)
 ##  environment(object$full.formula)<-environment(G$formula) 
+  
+  if (!is.null(G$L)) object$full.sp <- exp(G$L%*%log(object$sp))
   object$formula<-G$formula
   object$model<-G$mf # store the model frame
   object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
@@ -1104,7 +1169,8 @@ print.gam<-function (x,...)
 gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
-                         nlm=list(),optim=list(),newton=list(),outerPIsteps=1) 
+                         nlm=list(),optim=list(),newton=list(),outerPIsteps=1,
+                         idLinksBases=TRUE,scalePenalty=TRUE) 
 # Control structure for a gam. 
 # irls.reg is the regularization parameter to use in the GAM fitting IRLS loop.
 # epsilon is the tolerance to use in the IRLS MLE loop. maxit is the number 
@@ -1157,7 +1223,8 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
     list(irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
-         optim=optim,newton=newton,outerPIsteps=outerPIsteps)
+         optim=optim,newton=newton,outerPIsteps=outerPIsteps,
+         idLinksBases=idLinksBases,scalePenalty=scalePenalty)
     
 }
 
@@ -1368,7 +1435,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
  #         G$Vp<-mr$Vb;G$hat<-mr$hat;G$edf<-mr$edf;G$conv<-mr$info
  #       }
  #       else { 
-          mr<-magic(G$y,G$X,msp,G$S,G$off,L=NULL,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
+          mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
                     ridge.parameter=control$irls.reg,control=magic.control)
           G$p<-mr$b;msp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score;
          
