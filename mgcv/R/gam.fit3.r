@@ -542,11 +542,15 @@ gam2derivative <- function(lsp,args,...)
 ## smoothing parameters for the model.
 ## args is a list containing the arguments for gam.fit3
 ## For use as optim() objective gradient
-{ b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
+{ if (!is.null(args$L)) {
+    lsp <- args$L%*%lsp + args$lsp0
+  }
+  b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
      offset = args$offset,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     use.svd=FALSE,printWarn=FALSE,...)
+     use.svd=FALSE,...)
   if (args$scoreType == "deviance") ret <- b$GCV1 else ret <- b$UBRE1
+  if (!is.null(args$L)) ret <- t(args$L)%*%ret
   ret
 }
 
@@ -556,11 +560,13 @@ gam2objective <- function(lsp,args,...)
 ## and returns the GCV or UBRE score for the model.
 ## args is a list containing the arguments for gam.fit3
 ## For use as optim() objective
-{ 
+{ if (!is.null(args$L)) {
+    lsp <- args$L%*%lsp + args$lsp0
+  }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
      offset = args$offset,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     use.svd=FALSE,printWarn=FALSE,...)
+     use.svd=FALSE,...)
   if (args$scoreType == "deviance") ret <- b$GCV else ret <- b$UBRE
   attr(ret,"full.fit") <- b
   ret
@@ -573,14 +579,17 @@ gam4objective <- function(lsp,args,...)
 ## and returns the GCV or UBRE score for the model.
 ## args is a list containing the arguments for gam.fit3
 ## For use as nlm() objective
-{ 
+{ if (!is.null(args$L)) {
+    lsp <- args$L%*%lsp + args$lsp0
+  }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
      offset = args$offset,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     use.svd=FALSE,printWarn=FALSE,...)
+     use.svd=FALSE,...)
   if (args$scoreType == "deviance") ret <- b$GCV else ret <- b$UBRE
   attr(ret,"full.fit") <- b
   if (args$scoreType == "deviance") at <- b$GCV1 else at <- b$UBRE1
+  if (!is.null(args$L)) at <- t(args$L)%*%at
   attr(ret,"gradient") <- at
   ret
 }

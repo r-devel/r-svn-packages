@@ -789,7 +789,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   else for (i=0;i<mp;i++) sp0[i]=log(sp0[i]);  
 
   if (L_exists) {
-    i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0  */
+    i=0;j=1;if (mp) mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0  */
     for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
   } else { /* sp0 and sp are identical */
     for (i=0;i<m;i++) sp[i]=sp0[i];
@@ -800,7 +800,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   U1=(double *)calloc((size_t)(q*q),sizeof(double));
   V=(double *)calloc((size_t)(q*q),sizeof(double));
   d=(double *)calloc((size_t)q,sizeof(double));
-  if (m>0) /* allocate derivative related storage */
+  if (mp>0) /* allocate derivative related storage */
   { M=array2d(m,q*q);K=array2d(m,q*q);VS=(double *)calloc((size_t)(q*q),sizeof(double));
     My=array2d(m,q);Ky=array2d(m,q);yK=array2d(m,q);
     hess=array2d(m,m);
@@ -829,7 +829,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   /* .... U1 and V are q by rank matrices, d is a dimension rank vector */
   /* Now check that all derivatives are large enough that SD or Newton can be expected to work... */
 
-  if (m>0&&!autoinit)
+  if (mp>0&&!autoinit)
   { magic_gH(U1U1,M,K,VS,My,Ky,yK,hess,grad1,dnorm,ddelta,sp,d2norm,d2delta,S,
                  U1,V,d,y1,rank,q,m,cS,gcv,gamma,scale,norm,delta,*n_score,norm_const);
     xx=1e-4*(1+fabs(score));
@@ -880,7 +880,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   }
   
   /* Now do smoothing parameter estimation if there are any to estimate */
-  if (m>0)
+  if (mp>0)
   { converged=0;iter=0;
     while (!converged)
     { iter++;
@@ -977,7 +977,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
     }
 
     if (L_exists) {
-      i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L nsp */
+      i=0;j=1; mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L nsp */
       for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
     } else { /* nsp and sp are identical */
       for (i=0;i<m;i++) sp[i]=sp0[i];
@@ -989,7 +989,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
     free2d(d2norm);free2d(d2delta);free(U1U1);free(rSms);free(u);
     free(VS);free(grad);free(dnorm);free(ddelta);free(nsp);free(ev);
     free(bsp);free(bag);free(spok);free(sp);free(grad1);free(u0);
-  }   
+  } /* end of smoothness selection (if (mp>0) {... )*/
+
   /* prepare ``outputs''... */
   /* now get rV (in unpivoted space) */
   for (p2=V,p1=d;p1<d+rank;p1++) /* work through columns */ 

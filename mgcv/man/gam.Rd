@@ -266,35 +266,28 @@ Different terms can use different
 numbers of knots, unless they share a covariate.
 }
 
-\item{sp}{A vector of smoothing parameters for each term can be provided here.
- Smoothing parameters must 
-be supplied in the order that the smooth terms appear in the model 
-formula. Negative elements indicate that the 
-parameter should be estimated, and hence a mixture of fixed and estimated 
-parameters is possible. However, when routine \code{\link{mgcv}}
-is used as the underlying smoothness estimation method (not the default), then
-all elements of \code{sp} must be positive, if it is supplied. Note that \code{fx=TRUE} 
-in a smooth term over-rides what is supplied here effectively setting the 
-smoothing parameter to zero.}
+\item{sp}{A vector of smoothing parameters can be provided here.
+ Smoothing parameters must be supplied in the order that the smooth terms appear in the model 
+formula. Negative elements indicate that the parameter should be estimated, and hence a mixture 
+of fixed and estimated parameters is possible. If smooths share smoothing parameters then \code{length(sp)} 
+must correspond to the number of underlying smoothing paraemeters.}
 
 \item{min.sp}{Lower bounds can be supplied for the smoothing parameters. Note
-that if this option is used then the smoothing parameters \code{sp}, in the returned object, will need to be added to
-what is supplied here to get the actual smoothing parameters. Lower bounds on the smoothing 
-parameters can sometimes help stabilize otherwise divergent P-IRLS
-iterations. This option cannot be used with \code{\link{mgcv}} as the
-undelying smoothness selection routine (but it is not the default).}
+that if this option is used then the smoothing parameters \code{full.sp}, in the 
+returned object, will need to be added to what is supplied here to get the 
+ smoothing parameters actually multiplying the penalties. \code{length(min.sp)} should 
+always be the same as the total number of penalties (so it may be longer than \code{sp},
+if smooths share smoothing parameters).}
 
 \item{H}{A user supplied fixed quadratic penalty on the parameters of the 
 GAM can be supplied, with this as its coefficient matrix. A common use of this term is 
 to add a ridge penalty to the parameters of the GAM in circumstances in which the model
 is close to un-identifiable on the scale of the linear predictor, but perfectly well
-defined on the response scale. This option cannot be used with \code{\link{mgcv}} as the
-undelying smoothness selection routine (but it is not the default). }
+defined on the response scale.}
 
 \item{gamma}{It is sometimes useful to inflate the model degrees of 
 freedom in the GCV or UBRE score by a constant multiplier. This allows 
-such a multiplier to be supplied (not used if underlying fit routine is
-non-default \code{\link{mgcv}}). } 
+such a multiplier to be supplied. } 
 
 \item{fit}{If this argument is \code{TRUE} then \code{gam} sets up the model and fits it, but if it is
 \code{FALSE} then the model is set up and an object \code{G} containing what
@@ -388,9 +381,6 @@ Wahba (e.g. 1990) and Gu (e.g. 2002).
 
 \section{WARNINGS }{
 
-If non-default fit method method \code{mgcv} is selected, the code does not check for rank deficiency of the
-model matrix that may result from lack of identifiability between the
-parametric and smooth components of the model. 
 
 You must have more unique combinations of covariates than the model has total
 parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 

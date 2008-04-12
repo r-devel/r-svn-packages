@@ -561,7 +561,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
    # G$all.sp <- sp
     G$sp <- sp
   } else { # set up for auto-initialization
-    G$sp<-rep(-1,ncol(L)) # is this really needed?
+    G$sp<-rep(-1,ncol(L))
    # G$all.sp<-G$sp
   }
 
@@ -596,8 +596,9 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   if (sum(fix.ind)) {
     lsp0 <- sp[fix.ind]
-    lsp0[lsp0>0] <- log(lsp0)
-    lsp0[lsp0 ==0] <- log(.Machine$double.xmin)*1000 ## zero fudge
+    ind <- lsp0==0
+    lsp0[!ind] <- log(lsp0[!ind])
+    lsp0[ind] <- log(.Machine$double.xmin)*1000 ## zero fudge
     lsp0 <- L[,fix.ind,drop=FALSE]%*%lsp0
 
     L <- L[,!fix.ind,drop=FALSE]  
@@ -801,9 +802,9 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim, G=G,family=family,control=control,
-            gamma=gamma,pearson=(method$gcv=="pearson"),...)
+            gamma=gamma,...)
     lsp<-um$estimate
-    object<-attr(full.score(lsp,G,family,control,gamma=gamma,pearson=(method$gcv=="pearson"),...),"full.gam.object")
+    object<-attr(full.score(lsp,G,family,control,gamma=gamma,...),"full.gam.object")
     object$gcv.ubre <- um$minimum
     object$outer.info <- um
     object$sp <- exp(lsp)
@@ -841,9 +842,10 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     object$gcv.ubre <- as.numeric(b$score)
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
     object$outer.info <- b   
-  } else { ## methods calling gam.fit2
+  } else { ## methods calling gam.fit3 
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,
-             weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,pearson=(method$gcv=="pearson"))
+             weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
+             L=G$L,lsp0=G$lsp0)
    
     if (method$outer=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
@@ -1281,10 +1283,14 @@ mgcv.find.theta<-function(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,tol)
 }
 
 
-full.score <- function(sp,G,family,control,gamma,pearson,...)
+full.score <- function(sp,G,family,control,gamma,...)
 # function suitable for calling from nlm in order to polish gam fit
 # so that actual minimum of score is found in generalized cases
-{ G$sp<-exp(sp);
+{ if (is.null(G$L)) {
+    G$sp<-exp(sp);
+  } else {
+    G$sp <- as.numeric(exp(G$L%*%sp + G$lsp0))
+  }
   # set up single fixed penalty....
   q<-NCOL(G$X)
   if (is.null(G$H)) G$H<-matrix(0,q,q)
@@ -1294,8 +1300,9 @@ full.score <- function(sp,G,family,control,gamma,pearson,...)
     G$H[off1:off2,off1:off2]<-G$H[off1:off2,off1:off2]+G$sp[i]*G$S[[i]]
   }
   G$S<-list() # have to reset since length of this is used as number of penalties
+  G$L <- NULL
   xx<-gam.fit(G,family=family,control=control,gamma=gamma,...)
-  if (pearson) res <- xx$gcv.ubre else res <- xx$gcv.ubre.dev
+  res <- xx$gcv.ubre.dev
   attr(res,"full.gam.object")<-xx
   res
 }
@@ -2945,7 +2952,7 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
     if (nrow(L)!=n.p||ncol(L)!=length(sp)) stop("L has inconsistent dimensions.")
     if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
-    def.sp <- exp(as.numeric(coef(lm(log(def.sp)~L-1+offset(lsp0)))))
+    if (ncol(L)) def.sp <- exp(as.numeric(coef(lm(log(def.sp)~L-1+offset(lsp0)))))
   }
 
   # get square roots of penalties using supplied ranks or estimated 

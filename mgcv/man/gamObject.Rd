@@ -104,6 +104,11 @@ constraints.}
 
 \item{rank}{The numerical rank of the problem.}
 
+\item{full.sp}{full array of smoothing parameters multiplying penalties (excluding any contribution 
+from \code{min.sp} argument to \code{gam}). May be larger than \code{sp} if some terms share 
+smoothing parameters, and/or some smoothing parameter values were supplied in the \code{sp} argument
+of \code{\link{gam}}.}
+
 \item{fully.converged}{\code{TRUE} is multiple GCV/UBRE converged by meeting 
 convergence criteria. \code{FALSE} if method stopped with a steepest descent step 
 failure.}
@@ -151,7 +156,9 @@ returned by the optimization routine used (currently \code{\link{nlm}} or \code{
 model formula in the order in which they appear. These smooth objects are what gets returned by
 the \code{\link{smooth.construct}} objects.}
 
-\item{sp}{smoothing parameter for each smooth.}
+\item{sp}{estimated smoothing parameters for the model. These are the underlying smoothing
+parameters, subject to optimization. For the full set of smoothing parameters multiplying the 
+penalties see \code{full.sp}. }
 
 \item{terms}{\code{terms} object of \code{model} model frame.}
 
