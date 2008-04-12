@@ -189,7 +189,6 @@ interpret.gam <- function (gf)
 # and returns:
 # 1. a model formula for the parametric part: pf (and pfok indicating whether it has terms)
 # 2. a list of descriptors for the smooths: smooth.spec
-# 3. a full version of the formulae with all terms expanded in full
 { p.env<-environment(gf) # environment of formula
   tf<-terms.formula(gf,specials=c("s","te")) # specials attribute indicates which terms are smooth
  
@@ -444,36 +443,29 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   if (m>0 && idLinksBases) { ## search smooth.spec[[]] for terms linked by common id's
     id.list <- list() ## id information list
-    nid <- 0          ## number of unique id's
     for (i in 1:m) if (!is.null(split$smooth.spec[[i]]$id)) {
       id <- as.character(split$smooth.spec[[i]]$id)
-      if (nid) {
-        if (id%*%names(id.list)) { ## it's an existing id
-          ni <- length(id.list[[id]]$sm.i) ## number of terms so far with this id
-          id.list[[id]]$sm.i[ni+1] <- i    ## adding smooth.spec index to this id's list
-          ## clone smooth.spec from base smooth spec....
-          base.i <- id.list[[id]]$sm.i[1]
+      if (length(id.list)&&id%in%names(id.list)) { ## it's an existing id
+        ni <- length(id.list[[id]]$sm.i) ## number of terms so far with this id
+        id.list[[id]]$sm.i[ni+1] <- i    ## adding smooth.spec index to this id's list
+        ## clone smooth.spec from base smooth spec....
+        base.i <- id.list[[id]]$sm.i[1]
          
-          split$smooth.spec[[i]] <- clone.smooth.spec(split$smooth.spec[[base.i]],
+        split$smooth.spec[[i]] <- clone.smooth.spec(split$smooth.spec[[base.i]],
                                                       split$smooth.spec[[i]])
         
-          ## add data for this term to the data list for basis setup...
-          temp.term <- split$smooth.spec[[i]]$term
-          for (j in 1:length(temp.term)) id.list[[id]]$data[[j]] <- cbind(id.list[[id]]$data[[j]],
+        ## add data for this term to the data list for basis setup...
+        temp.term <- split$smooth.spec[[i]]$term
+        for (j in 1:length(temp.term)) id.list[[id]]$data[[j]] <- cbind(id.list[[id]]$data[[j]],
                                                           get.var(temp.term[j],data,vecMat=FALSE))
-        } else { ## new id
-          nid <- nid + 1
-          id.list[[id]] <- i ## start the array of smooths with this id
-          id.list[[id]]$data <- list()
-          ## need to collect together all data for which this basis will be used,
-          ## for basis setup...
-          term <- split$smooth.spec[[i]]$term
-          for (j in 1:length(term)) id.list[[id]]$data[[j]] <- get.var(term[j],data,vecMat=FALSE)
-        } 
-      } else { ## first id
-       nid <- 1 
-       id.list[[id]] <- list(sm.i = i)   ## the array of smooths with this id                 
-      }
+      } else { ## new id
+        id.list[[id]] <- list(sm.i=i) ## start the array of indeces of smooths with this id
+        id.list[[id]]$data <- list()
+        ## need to collect together all data for which this basis will be used,
+        ## for basis setup...
+        term <- split$smooth.spec[[i]]$term
+        for (j in 1:length(term)) id.list[[id]]$data[[j]] <- get.var(term[j],data,vecMat=FALSE)
+      } ## new id finished
     }
   } ## id.list complete
 
@@ -528,9 +520,6 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     }
   }
 
-  if (!sum(L!=diag(ncol(L)))) L <- NULL ## it's just the identity
-
-  G$L <- L
 
   ## at this stage, it is neccessary to impose any side conditions required
   ## for identifiability
@@ -557,29 +546,41 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   n.p<-ncol(G$X) 
   # deal with penalties
 
-####### Folowing needs updating to deal with L
+####### Following needs updating to deal with L...
+## min.sp must be length nrow(L) to make sense
+## sp must be length ncol(L) --- need to partiion
+## L into columns relating to free log smoothing paramters,
+## and columns, L0, corresponding to values supplied in sp.
+## lsp0 = L0%*%log(sp[sp>=0]) [need to fudge sp==0 case by
+## setting log(0) to, e.g. 10*log(.Machine$double.xmin)]
+## magic needs updating to accept lsp0 (newton done...)
 
-  n.smooths<-0 # number of `free' penalties
-  k.sp<-0 # count through sp and min.sp
+  if (!is.null(sp)) # then user has supplied fixed smoothing parameters
+  { if (length(sp)!=ncol(L)) { warning("Supplied smoothing parameter vector is too short - ignored.")}
+    if (sum(is.na(sp))) { warning("NA's in supplied smoothing parameter vector - ignoring.")}
+   # G$all.sp <- sp
+    G$sp <- sp
+  } else { # set up for auto-initialization
+    G$sp<-rep(-1,ncol(L)) # is this really needed?
+   # G$all.sp<-G$sp
+  }
+
+  if (!is.null(min.sp)) # then minimum s.p.'s supplied
+  { if (length(min.sp)!=nrow(L)) stop("length of min.sp is wrong.")
+    if (sum(is.na(min.sp))) stop("NA's in min.sp.")
+    if (sum(min.sp<0)) stop("elements of min.sp must be non negative.")
+  }
+
+  k.sp<-0 # count through sp and S
   G$rank<-array(0,0)
-  G$sp<-array(0,0)
   if (m>0) for (i in 1:m)
   { sm<-G$smooth[[i]]
     if (length(sm$S)>0)
     for (j in 1:length(sm$S))  # work through penalty matrices
     { k.sp<-k.sp+1
-      if (is.null(sp)||sp[k.sp]<0) # s.p.s to be estimated
-      { n.smooths<-n.smooths+1
-        G$off[n.smooths]<-sm$first.para 
-        G$S[[n.smooths]]<-sm$S[[j]]
-        G$rank[n.smooths]<-sm$rank[j]
-        G$sp[n.smooths] <- -1 # confirms that it's to be estimated
-      } else
-      if (sp[k.sp]>0) # add penalty to fixed penalty H
-      { if (is.null(H)) H<-matrix(0,n.p,n.p)
-        H[sm$first.para:sm$last.para,sm$first.para:sm$last.para]<-
-        H[sm$first.para:sm$last.para,sm$first.para:sm$last.para]+sp[k.sp]*sm$S[[j]]  
-      } # if sp is zero then ignore term
+      G$off[k.sp]<-sm$first.para 
+      G$S[[k.sp]]<-sm$S[[j]]
+      G$rank[k.sp]<-sm$rank[j]
       if (!is.null(min.sp))
       { if (is.null(H)) H<-matrix(0,n.p,n.p)
         H[sm$first.para:sm$last.para,sm$first.para:sm$last.para]<-
@@ -587,22 +588,27 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       }           
     } 
   }
-  if (!is.null(sp)&&length(sp)!=k.sp) stop("supplied sp has wrong length")  
-  if (!is.null(min.sp)&&length(min.sp)!=k.sp) stop("supplied min.sp has wrong length")
+ 
+  ## Now remove columns of L and rows of sp relating to fixed 
+  ## smoothing parameters, and use removed elements to create lsp0
+
+  fix.ind <- G$sp>=0
+
+  if (sum(fix.ind)) {
+    lsp0 <- sp[fix.ind]
+    lsp0[lsp0>0] <- log(lsp0)
+    lsp0[lsp0 ==0] <- log(.Machine$double.xmin)*1000 ## zero fudge
+    lsp0 <- L[,fix.ind,drop=FALSE]%*%lsp0
+
+    L <- L[,!fix.ind,drop=FALSE]  
+    G$sp <- G$sp[!fix.ind]
+  } else {lsp0 <- rep(0,nrow(L))}
+
   G$H<-H
 
-  if (!is.null(sp)) # then user has supplied fixed smoothing parameters
-  { if (length(sp)!=k.sp) { warning("Supplied smoothing parameter vector is too short - ignored.")}
-    if (sum(is.na(sp))) { warning("NA's in supplied smoothing parameter vector - ignoring.")}
-  } else # set up for auto-initialization
-  G$sp<-rep(-1,k.sp) # is this really needed?
-  if (is.null(sp)) G$all.sp<-G$sp else G$all.sp <- sp
-  if (!is.null(min.sp)) # then minimum s.p.'s supplied
-  { if (length(min.sp)!=n.smooths) stop("length of min.sp is wrong.")
-    if (sum(is.na(min.sp))) stop("NA's in min.sp.")
-    if (sum(min.sp<0)) stop("elements of min.sp must be non negative.")
-  }
+  if (ncol(L)==nrow(L)&&!sum(L!=diag(ncol(L)))) L <- NULL ## it's just the identity
 
+  G$L <- L;G$lsp0 <- lsp0
 
   # deal with constraints 
    
@@ -630,7 +636,6 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   # now run some checks on the arguments
 
   
-
   ### Should check that there are enough unique covariate combinations to support model dimension
 
   G
@@ -709,7 +714,8 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
 
   for (i in 1:n.th) { ## search through theta values
     family <- fix.family.link(negbin(theta=exp(l.theta[i]),link=link))
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=NULL,H=G$H,offset=G$offset,family=family,weights=G$w,
+    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...)  
@@ -736,7 +742,8 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
     lt.1tau <- lt0 + (1-tau)*(lt1-lt0)
     for (lt in c(lt.1tau,lt.tau))
     { family <- fix.family.link(negbin(theta=exp(lt),link=link))
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=NULL,H=G$H,offset=G$offset,family=family,weights=G$w,
+      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...)   
@@ -760,7 +767,8 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
       }
      
       family <- fix.family.link(negbin(theta=exp(lt.new),link=link))
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=NULL,H=G$H,offset=G$offset,family=family,weights=G$w,
+      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...)   
@@ -820,15 +828,16 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     object <- gam.negbin(lsp,fscale,family,control,method,gamma,G,...)
     ## make sure criterion gets set to UBRE
   } else if (method$outer=="newton"){ ## the gam.fit3 method -- not negbin
-
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,H=G$H,offset=G$offset,family=family,weights=G$w,
-                control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
-                maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)   
+   
+    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
+                maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
+                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)                
+                
     object <- b$object
     object$GACV <- object$D2 <- object$P2 <- object$UBRE2 <- object$trA2 <- 
     object$GACV1 <- object$GACV2 <- object$GCV2 <- object$D1 <- object$P1 <- NULL
-    object$sp <- exp(b$lsp)
+    object$sp <- as.numeric(exp(b$lsp))
     object$gcv.ubre <- as.numeric(b$score)
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
     object$outer.info <- b   
@@ -896,10 +905,10 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
   if (outer.looping && method$gam=="outer" && !is.null(in.out)) { # initial s.p.s and scale provided
     ok <- TRUE ## run a few basic checks
     if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
-    if (length(in.out$sp)!=length(G$all.sp)) ok <- FALSE
+    if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
     if (!ok) stop("in.out incorrect: see documentation")
     object<-list() # fake enough of a returned fit object for initialization 
-    object$sp <- in.out$sp[G$all.sp<0] # only use the values for free s.p.s
+    ##object$sp <- in.out$sp[G$all.sp<0] # only use the values for free s.p.s
     object$gcv.ubre <- in.out$scale
     object$sig2 <- 0 ## just means that in.out$scale acts as total scale
   } else ## do performance iteration.... 
@@ -908,18 +917,22 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
   G$family <- family ## restore, in case manipulated for negative binomial 
    
   # fill returned s.p. array with estimated and supplied terms
-  temp.sp<-object$sp
-  object$sp<-G$all.sp
-  object$sp[G$all.sp<0]<-temp.sp
+#  temp.sp<-object$sp
+#  object$sp<-G$all.sp
+#  object$sp[G$all.sp<0]<-temp.sp
    
    
   if (outer.looping)
   { # use perf.iter s.p. estimates from gam.fit or supplied initial s.p.s as starting values...
-    lsp<-log(object$sp[G$all.sp<0]) # make sure only free s.p.s are optimized!
+    lsp<-log(object$sp) 
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
     if (method$gam!="perf.outer"&&is.null(in.out)) { ## note no checks if supplied 
       lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
+      if (!is.null(G$L)) { ## estimate underlying smoothing parameters
+        if (is.null(G$lsp0)) G$lsp0 <- rep(0,nrow(G$L))
+        lsp2 <- as.numeric(coef(lm(lsp2~G$L-1+offset(G$lsp0))))
+      }
       ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
       ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
       if (fixedSteps<1) lsp <- lsp2 ## don't use perf iter sp's at all
@@ -929,9 +942,9 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
     object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(G$y),family=G$family,
                         control=control,method=method,gamma=gamma,G=G,...)
     object$mgcv.conv <- mgcv.conv 
-    temp.sp <- G$all.sp
-    temp.sp[G$all.sp<0] <- object$sp # copy estimated sp's into whole vector
-    object$sp <- temp.sp   # correct object sp vector
+#    temp.sp <- G$all.sp
+#    temp.sp[G$all.sp<0] <- object$sp # copy estimated sp's into whole vector
+#   object$sp <- temp.sp   # correct object sp vector
   } else { ## performance iteration already complete, but check for all fixed sp case ...
     if (!G$am && (method$gam=="perf.outer"||method$gam=="outer")) {
       ## need to fix up GCV/UBRE score 
@@ -1051,7 +1064,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ##  object$full.formula<-as.formula(G$full.formula)
 ##  environment(object$full.formula)<-environment(G$formula) 
   
-  if (!is.null(G$L)) object$full.sp <- exp(G$L%*%log(object$sp))
+  if (!is.null(G$L)) object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
   object$formula<-G$formula
   object$model<-G$mf # store the model frame
   object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
@@ -1327,10 +1340,10 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
     
     # obtain average element sizes for the penalties
-    n.free<-length(G$S)
-    if (n.free>0)
+    n.S<-length(G$S)
+    if (n.S>0)
     { S.size<-0
-      for (i in 1:n.free) S.size[i]<-mean(abs(G$S[[i]])) 
+      for (i in 1:n.S) S.size[i]<-mean(abs(G$S[[i]])) 
     }
     weights<-G$w # original weights
    
@@ -1380,7 +1393,8 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     boundary <- FALSE
     scale<-G$sig2
 #    if (G$fit.method=="magic") { 
-      msp<-rep(-1,n.free) # free smoothing parameter vector for magic
+     # msp<-rep(-1,n.free) # free smoothing parameter vector for magic
+      msp <- G$sp
       magic.control<-list(tol=G$conv.tol,step.half=G$max.half,maxit=control$maxit+control$globit,
                           rank.tol=control$rank.tol)
 #    } else
@@ -1435,7 +1449,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
  #         G$Vp<-mr$Vb;G$hat<-mr$hat;G$edf<-mr$edf;G$conv<-mr$info
  #       }
  #       else { 
-          mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
+          mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
                     ridge.parameter=control$irls.reg,control=magic.control)
           G$p<-mr$b;msp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score;
          
@@ -2895,7 +2909,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
 
 
 
-magic <- function(y,X,sp,S,off,L=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gcv=TRUE,
+magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gcv=TRUE,
                 ridge.parameter=NULL,control=list(maxit=50,tol=1e-6,step.half=25,
                 rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
 # Wrapper for C routine magic. Deals with constraints weights and square roots of 
@@ -2905,7 +2919,8 @@ magic <- function(y,X,sp,S,off,L=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,sca
 # non-zero entries, off[i] is the location on the leading diagonal of the
 # total penalty matrix of element (1,1) of S[[i]], rank is an array of penalty 
 # ranks, L is a matrix mapping the log underlying smoothing parameters to the 
-# smoothing parameters that actually multiply the penalties.
+# smoothing parameters that actually multiply the penalties. i.e. the 
+# log smoothing parameters are L%*%sp + lsp0
 # H is any fixed penalty, C is a linear constraint matrix and w is the 
 # weight vector. gamma is the dof inflation factor, scale is the scale parameter, only 
 # used with UBRE, gcv TRUE means use GCV, if false, use UBRE.  
@@ -2929,7 +2944,8 @@ magic <- function(y,X,sp,S,off,L=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,sca
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
     if (nrow(L)!=n.p||ncol(L)!=length(sp)) stop("L has inconsistent dimensions.")
-    def.sp <- exp(as.numeric(coef(lm(log(def.sp)~L-1))))
+    if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
+    def.sp <- exp(as.numeric(coef(lm(log(def.sp)~L-1+offset(lsp0)))))
   }
 
   # get square roots of penalties using supplied ranks or estimated 
@@ -2995,11 +3011,13 @@ magic <- function(y,X,sp,S,off,L=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,sca
   if (!is.null(ridge.parameter)&&ridge.parameter>0)
   { if(is.null(H)) H<-diag(ridge.parameter,q) else H<-H+diag(ridge.parameter,q)}
   icontrol[4]<-as.integer(!is.null(H));icontrol[5]<- n.p;icontrol[6]<-control$step.half
-  if (is.null(L)) { icontrol[7] <- -1;L <- diag(n.p) } else icontrol[7] <- ncol(L)
+  if (is.null(L)) { icontrol[7] <- -1;L <- diag(n.p) } else icontrol[7]<-ncol(L)
+  if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
+ 
   b<-array(0,icontrol[3])
   # argument names in call refer to returned values.
   um<-.C(C_magic,as.double(y),as.double(X),sp=as.double(sp),as.double(def.sp),as.double(Si),as.double(H),as.double(L),
-          score=as.double(gamma),scale=as.double(scale),info=as.integer(icontrol),as.integer(cS),
+          lsp0=as.double(lsp0),score=as.double(gamma),scale=as.double(scale),info=as.integer(icontrol),as.integer(cS),
           as.double(control$rank.tol),rms.grad=as.double(control$tol),b=as.double(b),rV=double(q*q),
           as.double(extra.rss),as.integer(n.score))
   res<-list(b=um$b,scale=um$scale,score=um$score,sp=um$sp,sp.full=as.numeric(exp(L%*%log(um$sp))))

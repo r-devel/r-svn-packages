@@ -393,7 +393,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
 }
 
-newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
+newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",use.svd=TRUE,
                    mustart = NULL,...)
@@ -402,7 +402,7 @@ newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
 ## to +ve definite ii) step halves on step 
 ## failure, without obtaining derivatives until success; (iii) carries start
 ## values forward from one evaluation to next to speed convergence.    
-## L is the matrix such that L%*%lsp gives the logs of the smoothing 
+## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
 { ## sanity check L
   if (is.null(L)) L <- diag(length(S)) else {
@@ -410,8 +410,9 @@ newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
     if (nrow(L)!=length(S)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
   }
+  if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
   ## initial fit
-  b<-gam.fit3(x=X, y=y, sp=L%*%lsp, S=S,rS=rS,off=off, H=H,
+  b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
      offset = offset,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
      printWarn=FALSE,use.svd=use.svd,mustart=mustart,...)
@@ -455,7 +456,7 @@ newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
 
     ## try the step ...
     lsp1 <- lsp + Nstep
-    b<-gam.fit3(x=X, y=y, sp=L%*%lsp1, S=S,rS=rS,off=off, H=H,
+    b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
        offset = offset,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
        printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
@@ -485,7 +486,7 @@ newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
         } else step <- step/2
         if (ii>3) Slength <- Slength/2 ## keep track of SD step length
         lsp1 <- lsp + step
-        b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1, S=S,rS=rS,off=off, H=H,
+        b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
            offset = offset,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
@@ -497,7 +498,7 @@ newton <- function(lsp,X,y,S,rS,off,L,H,offset,family,weights,
         } else score1 <- b1$GCV
 
         if (score1 <= score) { ## accept
-          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1, S=S,rS=rS,off=off, H=H,
+          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
              offset = offset,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,
              printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)

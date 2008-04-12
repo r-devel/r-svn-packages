@@ -16,7 +16,7 @@ value decomposition approach.
 } %- end description
 
 \usage{
-magic(y,X,sp,S,off,L=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,
+magic(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,
       scale=1,gcv=TRUE,ridge.parameter=NULL,
       control=list(maxit=50,tol=1e-6,step.half=25,
       rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
@@ -47,6 +47,11 @@ penalized by the penalty involving \code{S[[i]]}.}
 
 \item{L}{is a matrix mapping \code{log(sp)} to the log smoothing parameters that actually multiply the
 penalties defined by the elemts of \code{S}. Taken as the identity, if \code{NULL}. See above under \code{sp}.}
+
+\item{lsp0}{If \code{L} is not \code{NULL} this is a vector of constants in
+the linear transformation from \code{log(sp)} to the actual log smoothing
+parameters. So the logs of the smoothing parameters multiplying the
+\code{S[[i]]} are given by \code{L\%*\%log(sp) + lsp0}. Taken as 0 if \code{NULL}.}
 
 \item{rank}{ is an array specifying the ranks of the penalties. This is useful, but not 
 essential, for forming square roots of the penalty matrices.}

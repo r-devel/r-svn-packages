@@ -211,8 +211,10 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA,i
   full.call<-paste("te(",term[1],sep="")
   if (dim>1) for (i in 2:dim) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="")   # label for parameters of this term
-
-  ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np,id=id)##full.call=full.call)
+  if (!is.null(id)) id <- as.character(id)
+ 
+  ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np,
+            id=id)
   class(ret)<-"tensor.smooth.spec"
   ret
 }
@@ -264,8 +266,10 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA,id=NULL)
   full.call<-paste("s(",term[1],sep="")
   if (d>1) for (i in 2:d) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="") # used for labelling parameters
+  if (!is.null(id)) id <- as.character(id)
 
-  ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt,id=id)
+  ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt,
+            id=id)
   class(ret)<-paste(bs,".smooth.spec",sep="")
   ret
 }
@@ -742,7 +746,8 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 
   ## pick up "by variables" now...
   if (object$by!="NA"&&is.null(sm$by.done))
-  { by <- get.var(object$by,data)
+  { if (is.null(dataX)) by <- get.var(object$by,data) 
+    else by <- get.var(object$by,dataX)
     if (is.null(by)) stop("Can't find by variable")
     if (is.factor(by)) { 
       if (matrixArg) stop("factor `by' variables can not be used with matrix arguments.")

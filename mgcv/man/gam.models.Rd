@@ -129,7 +129,7 @@ b<-gam(y~x1-1+s(x2,by=x1))
 plot(b,pages=1)
 summary(b)
 ## A dummy `by' variable example (with a spurious covariate x0)
-## simulte data...
+## simulate data...
 fac<-as.factor(c(rep(1,100),rep(2,100),rep(3,200)))
 fac.1<-as.numeric(fac==1);fac.2<-as.numeric(fac==2);
 fac.3<-as.numeric(fac==3)
@@ -137,7 +137,7 @@ y<-f1*fac.1+f2*fac.2+f3*fac.3+ e
 
 ## fit model...
 b <- gam(y ~ fac+s(x2,by=fac)+s(x0))
-plot(b)
+plot(b,pages=1)
 summary(b)
 
 ## note that the preceding fit is the same as....

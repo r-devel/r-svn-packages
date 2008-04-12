@@ -624,8 +624,9 @@ void magic_gH(double *U1U1,double **M,double **K,double *VS,double **My,double *
 }
 
 
-void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,double *gamma,double *scale,
-           int *control,int *cS,double *rank_tol,double *tol,double *b,double *rV,double *norm_const,int *n_score) 
+void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,double *lsp0,
+           double *gamma,double *scale,int *control,int *cS,double *rank_tol,double *tol,double *b,
+           double *rV,double *norm_const,int *n_score) 
 
 /* Maximally stable multiple gcv/ubre optimizer, based on pivoted QR decomposition and SVD, but without 
    a line search. At each point in the smoothing parameter space, the numerical rank of the problem 
@@ -639,13 +640,15 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
    y - an n dimensional response vector
    X - an n by q model matrix
    sp0 - an mp-array of (underlying) smoothing parameters (any -ve => autoinitialize)
-   def_sp - an array of default values for sp's (any -ve => set up internally)
+   def_sp - an array of default values for sp0's (any -ve => set up internally)
    b - a q dimensional parameter vector
    S - an array of dimension q columns of square roots of the m S_i penalty matrices. There are cS[i]
        columns for the ith penalty, and they are packed starting from i=0.
    H - a q by q fixed penalty matrix
    L - m by mp matrix mapping log(sp0) to log coeffs multiplying S terms. 
        ignored if control[6] is negative.
+   lsp0 - constant vector in linear transformation of log(sp0). So sp = Llog(sp0)+lsp0
+          also ignored if control[6] is negative.
    gamma - a factor by which to inflate the model degrees of freedom in GCV/UBRE scores.
    norm_const - a constant to be added to the residual sum of squares (squared norm) term in 
                 the GCV/UBRE and scale estimation calculations.
@@ -786,7 +789,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   else for (i=0;i<mp;i++) sp0[i]=log(sp0[i]);  
 
   if (L_exists) {
-    i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0 */
+    i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0  */
+    for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
   } else { /* sp0 and sp are identical */
     for (i=0;i<m;i++) sp[i]=sp0[i];
   }
@@ -844,12 +848,14 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
     
     if (L_exists) {
       i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0 */
+      for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
     } else { /* sp0 and sp are identical */
       for (i=0;i<m;i++) sp[i]=sp0[i];
     }
 
     if (!ok) 
-    { fit_magic(X,sp,Si,H,gamma,scale,control,*rank_tol,yy,y0,y1,U1,V,d,b,&score,&norm,&delta,&rank,norm_const,n_score);
+    { fit_magic(X,sp,Si,H,gamma,scale,control,*rank_tol,yy,y0,y1,
+                U1,V,d,b,&score,&norm,&delta,&rank,norm_const,n_score);
       fit_call++;
     }
   }
@@ -888,10 +894,12 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
         for (i=0;i<mp;i++) nsp[i]=sp0[i]+step[i];
         if (L_exists) {
           i=0;j=1;mgcv_mmult(sp,L,nsp,&i,&i,&m,&j,&mp); /* form sp = L nsp */
+          for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L nsp + lsp0 */
         } else { /* nsp and sp are identical */
           for (i=0;i<m;i++) sp[i]=nsp[i];
         }
-        fit_magic(X,sp,Si,H,gamma,scale,control,*rank_tol,yy,y0,y1,U1,V,d,b,&score,&norm,&delta,&rank,norm_const,n_score);
+        fit_magic(X,sp,Si,H,gamma,scale,control,*rank_tol,yy,y0,y1,
+                  U1,V,d,b,&score,&norm,&delta,&rank,norm_const,n_score);
         fit_call++;
         if (score<min_score) /* accept step */
         { ok=0;
@@ -916,8 +924,9 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
      
       /* now get derivatives */
       { if (L_exists) {
-          i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L nsp */
-        } else { /* nsp and sp are identical */
+          i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0 */
+          for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
+        } else { /* sp0 and sp are identical */
           for (i=0;i<m;i++) sp[i]=sp0[i];
         }
         magic_gH(U1U1,M,K,VS,My,Ky,yK,hess,grad1,dnorm,ddelta,sp,d2norm,d2delta,S,
@@ -953,7 +962,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
       while (ok) /* change sp for as long as substantial reduction occurs */
       { sp0[k] += sign*xx;
         if (L_exists) {
-          i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L nsp */
+          i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L sp0 */
+          for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
         } else { /* nsp and sp are identical */
           for (i=0;i<m;i++) sp[i]=sp0[i];
         } 
@@ -968,6 +978,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
 
     if (L_exists) {
       i=0;j=1;mgcv_mmult(sp,L,sp0,&i,&i,&m,&j,&mp); /* form sp = L nsp */
+      for (p=sp,p1=lsp0,p2=sp+m;p<p2;p++,p1++) *p += *p1; /* form sp= L sp0 + lsp0 */
     } else { /* nsp and sp are identical */
       for (i=0;i<m;i++) sp[i]=sp0[i];
     }
@@ -999,7 +1010,6 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   
   free(tau);free(pivot);free(work);free(y0);free(y1);free(U1);free(V);free(d);free(sd_step);
   free(n_step);
-  
     
  /* dmalloc_verify(NULL);dmalloc_log_stats();*/
 }
