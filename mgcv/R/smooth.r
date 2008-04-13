@@ -120,7 +120,7 @@ get.var<-function(txt,data,vecMat = TRUE)
 
 
 
-te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA,id=NULL)
+te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NULL,id=NULL)
 # function for use in gam formulae to specify a tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -178,7 +178,7 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA,i
 
   # deal with `xt' extras list
   xtra <- list()
-  if (length(xt)==1) for (i in 1:n.bases) xtra[[i]] <- xt else
+  if (is.null(xt)||length(xt)==1) for (i in 1:n.bases) xtra[[i]] <- xt else
   if (length(xt)==n.bases) xtra <- xt else
   stop("xt argument is faulty.")
 
@@ -198,10 +198,11 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NA,i
   margin<-list()
   for (i in 1:n.bases)
   { j1<-j+d[i]-1
+    if (is.null(xt)) xt1 <- NULL else xt1 <- xtra[[i]]
     stxt<-"s("
     for (l in j:j1) stxt<-paste(stxt,term[l],",",sep="")
     stxt<-paste(stxt,"k=",deparse(k[i],backtick=TRUE),",bs=",deparse(bs[i],backtick=TRUE),
-                ",m=",deparse(m[i],backtick=TRUE),",xt=xtra[[i]]", ")")
+                ",m=",deparse(m[i],backtick=TRUE),",xt=xt1", ")")
     margin[[i]]<- eval(parse(text=stxt))  # NOTE: fx and by not dealt with here!
     j<-j1+1
   }
