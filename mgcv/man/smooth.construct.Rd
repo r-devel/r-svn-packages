@@ -6,6 +6,7 @@
 \alias{smooth.construct.cs.smooth.spec}
 \alias{smooth.construct.cc.smooth.spec}
 \alias{smooth.construct.tensor.smooth.spec}
+\alias{smooth.construct.ps.smooth.spec}
 \alias{p.spline}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Constructor functions for smooth terms in a GAM}
@@ -116,7 +117,8 @@ enough to reach the last re-parameterized marginal in the list.
 \code{ts.smooth.spec} (thin plate regression splines with shrinkage-to-zero);
 \code{cs.smooth.spec} (cubic regression splines with shrinkage-to-zero);
 \code{cc.smooth.spec} (cyclic cubic regression splines);
-\code{tensor.smooth.spec} (tensor product smooths).
+\code{tensor.smooth.spec} (tensor product smooths);
+\code{ps.smooth.spec} (Eilers and Marx (1986) style p-splines).
 
 The returned objects for the built in smooth classes have the following extra elements.
 \code{cr.smooth} objects (generated using \code{bs="cr"}) have an additional array \code{xp} giving the knot locations used to generate the basis.
@@ -167,7 +169,13 @@ Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 Wood, S.N. (2004a) Stable and efficient multiple smoothing parameter estimation for
 generalized additive models. J. Amer. Statist. Ass. 99:673-686
 
-The p-spline code given in the example is based on:
+The p-spline code given in the example is based on those advocated in:
+
+Ruppert, D., M.P. Wand and R.J. Carroll (2003) Semiparametric Regression. Cambridge 
+University Press.
+
+However if you want p-splines, rather than splines with derivative based penalties,
+then the built in "ps" class is probably a better bet. It's based on
 
 Eilers, P.H.C. and B.D. Marx (1996) Flexible Smoothing with B-splines and Penalties. 
 Statistical Science, 11(2):89-121
@@ -188,57 +196,71 @@ constraint free parameterizations.}
 
 \examples{# adding "p-spline" classes and methods
 
-smooth.construct.ps.smooth.spec<-function(object,data,knots)
-# a p-spline constructor method function
-{ require(splines)
-  if (length(object$p.order)==1) m <- rep(object$p.order,2) 
-  else m <- object$p.order  # m[1] - basis order, m[2] - penalty order
-  nk <- object$bs.dim - m[1]  # number of interior knots
-  if (nk<=0) stop("basis dimension too small for b-spline order")
-  x <- get.var(object$term,data)    # find the data
-  xl <- min(x);xu <- max(x);xr <- xu - xl # data limits and range
-  xl <- xl-xr*0.001;xu <- xu+xr*0.001;dx <- (xu-xl)/(nk-1) 
-  if (!is.null(knots)) k <- get.var(object$term,knots) 
+smooth.construct.tr.smooth.spec<-function(object,data,knots)
+## a truncated power spline constructor method function
+## object$p.order = null space dimension
+{ m <- object$p.order
+  if (m<1) stop("silly m supplied")
+  nk<-object$bs.dim-m-1 # number of knots
+  if (nk<=0) stop("k too small for m")
+  x <- get.var(object$term,data)  # find the data
+  x.shift <- mean(x) # shift used to enhance stability
+  if (!is.null(knots)) # are there supplied knots?
+  k <- get.var(object$term,knots)
   else k<-NULL
-  if (is.null(k)) 
-  k <- seq(min(x)-dx*(m[1]+1),max(x)+dx*(m[1]+1),length=nk+2*m[1]+2)   
-  if (length(k)!=nk+2*m[1]+2) 
-  stop(paste("there should be ",nk+2*m[1]+2," supplied knots"))
-  object$X <- spline.des(k,x,m[1]+2,x*0)$design # get model matrix
-
-  ## now construct penalty        
-  S<-diag(object$bs.dim);
-  if (m[2]) for (i in 1:m[2]) S <- diff(S)
-  object$S <- list(t(S)\%*\%S)  # get penalty
-  object$S[[1]] <- (object$S[[1]]+t(object$S[[1]]))/2 # exact symmetry
+  if (is.null(k)) # space knots through data
+  { n<-length(x)
+    k<-quantile(x[2:(n-1)],seq(0,1,length=nk+2))[2:(nk+1)]
+  }
+  if (length(k)!=nk) # right number of knots?
+  stop(paste("there should be ",nk," supplied knots"))
+  x <- x - x.shift # basis stabilizing shift
+  k <- k - x.shift # knots treated the same!
+  X<-matrix(0,length(x),object$bs.dim)
+  for (i in 1:(m+1)) X[,i] <- x^(i-1)
+  for (i in 1:nk) X[,i+m+1]<-(x-k[i])^m*as.numeric(x>k[i])
+  object$X<-X # the finished model matrix
+  if (!object$fixed) # create the penalty matrix
+  { object$S[[1]]<-diag(c(rep(0,m+1),rep(1,nk)))
+  }
+  object$rank<-nk  # penalty rank
+  object$null.space.dim <- m+1  # dim. of unpenalized space
+  ## store "tr" specific stuff ...
+  object$knots<-k;object$m<-m;object$x.shift <- x.shift
+  ## get the centering constraint ...
  
-  object$rank <- object$bs.dim-m[2]  # penalty rank 
-  object$null.space.dim <- m[2]    # dimension of unpenalized space  
-  object$knots <- k; object$m <- m      # store p-spline specific info.
-
-  class(object)<-"pspline.smooth"  # Give object a class
+  object$df<-ncol(object$X)-1      # maximum DoF
+ 
+  class(object)<-"tr.smooth"  # Give object a class
   object
 }
 
-Predict.matrix.pspline.smooth<-function(object,data)
-# prediction method function for the p.spline smooth class
-{ require(splines)
-  x <- get.var(object$term,data) ## obtain data
-  X <- spline.des(object$knots,x,object$m[1]+2,x*0)$design
-  X
+Predict.matrix.tr.smooth<-function(object,data)
+## prediction method function for the `tr' smooth class
+{ x <- get.var(object$term,data)
+  x <- x - object$x.shift # stabilizing shift
+  m <- object$m;     # spline order (3=cubic)
+  k<-object$knots    # knot locations
+  nk<-length(k)      # number of knots
+  X<-matrix(0,length(x),object$bs.dim)
+  for (i in 1:(m+1)) X[,i] <- x^(i-1)
+  for (i in 1:nk) X[,i+m+1] <- (x-k[i])^m*as.numeric(x>k[i])
+  X # return the prediction matrix
 }
+
+
 
 # an example, using the new class....
 set.seed(0);n<-400;
 x0 <- runif(n, 0, 1);x1 <- runif(n, 0, 1)
 x2 <- runif(n, 0, 1);x3 <- runif(n, 0, 1)
 f <- 2 * sin(pi * x0)
-f <- f + exp(2 * x1) - 3.75887
-f <- f+0.2*x2^11*(10*(1-x2))^6+10*(10*x2)^3*(1-x2)^10-1.396
+f <- f + exp(2 * x1)
+f <- f+0.2*x2^11*(10*(1-x2))^6+10*(10*x2)^3*(1-x2)^10
 e <- rnorm(n)*2
 y <- f + e
-b<-gam(y~s(x0,bs="ps",m=2)+s(x1,bs="ps",m=c(1,3))+
-         s(x2,bs="ps",m=2)+s(x3,bs="ps",m=2))
+b<-gam(y~s(x0,bs="tr",m=2)+s(x1,bs="ps",m=c(1,3))+
+         s(x2,bs="tr",m=3)+s(x3,bs="tr",m=2))
 plot(b,pages=1)
 # another example using tensor products of the new class
 
@@ -250,7 +272,7 @@ n<-400
 x<-runif(n);z<-runif(n);
 f <- test1(x,z)
 y <- f + rnorm(n)*0.1
-b <- gam(y~te(x,z,bs=c("ps","ps"),m=c(2,2)))
+b <- gam(y~te(x,z,bs=c("tr","tr"),m=c(2,2)))
 vis.gam(b)
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...

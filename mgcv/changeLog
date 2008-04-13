@@ -3,6 +3,9 @@
 
 1.4-0
 
+** An adaptive smoother class has been added, for smoothing with respect
+   to one or two variables: invoked with `s(...,bs="ad",...). 
+
 ** Smooth terms can now be linked in order that they have the same 
    smoothing parameters (and, by default, bases). Linkage is specified
    using the `id' argument to `s' or `te'. Terms with the same `id' value
@@ -30,6 +33,10 @@
 
 ** `gamm' now supports nested smooth terms, and uses the same, constraint 
    absorbed, parameterization as `gam'.
+
+* The Eilers and Marx style p-spline class is now one of the default 
+  smoothing classes, rather than just being an example of how to set up
+  a class in the help file.
 
 * `magic' and `gam.fit3' now allow log smoothing parameters to be a 
   linear transformation of a smaller set of underlying smoothing parameters.

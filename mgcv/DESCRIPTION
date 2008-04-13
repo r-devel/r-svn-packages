@@ -10,6 +10,6 @@ Description: Routines for GAMs and other generalized ridge regression
 Priority: recommended
 Depends: R (>= 2.3.0)
 Imports: graphics, stats
-Suggests: nlme (>= 3.1-64)
+Suggests: nlme (>= 3.1-64), splines
 LazyLoad: yes
 License: GPL (>=2)

@@ -351,6 +351,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   G <- gam.setup(formula,pterms,data=data,knots=knots,sp=NULL,
                     min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE)
  
+  if (!is.null(G$L)) stop("gamm can not handle linked smoothing parameters (probably from use of `id' or adaptive smooths)")
   # now perform re-parameterization...
 
   first.f.para<-G$nsdf+1

@@ -2161,9 +2161,13 @@ plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=
             }
           } 
           if (partial.resids)
-          { if (is.null(list(...)[["pch"]]))
-            points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),pch=".",...) else
-            points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),...)
+          { if (length(pd[[i]]$raw)==length(pd[[i]]$p.resid)) {
+              if (is.null(list(...)[["pch"]]))
+              points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),pch=".",...) else
+              points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),...) 
+            } else {
+              warning("Partial residuals do not have a natural x-axis location for linear functional terms")
+            }
           }
 	  if (rug) 
           { if (jit) rug(jitter(as.numeric(pd[[i]]$raw)),...)

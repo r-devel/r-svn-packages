@@ -7,7 +7,7 @@
   smooth - it exists purely to help set up a model using spline based smooths.
 }
 
-\usage{s(..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NA,id=NULL)}
+\usage{s(..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NULL,id=NULL)}
 
 %- maybe also `usage' for other objects documented here.
 \arguments{
