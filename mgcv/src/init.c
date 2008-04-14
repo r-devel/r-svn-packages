@@ -11,7 +11,7 @@
 R_CMethodDef CEntries[] = {
     {"update_beta", (DL_FUNC) &update_beta, 22},
     {"RMonoCon", (DL_FUNC) &RMonoCon, 7},
-    {"RuniqueCombs", (DL_FUNC) &RuniqueCombs, 3},
+    {"RuniqueCombs", (DL_FUNC) &RuniqueCombs, 4},
     {"RPCLS", (DL_FUNC) &RPCLS, 14},
     {"mgcv", (DL_FUNC) &mgcv, 27},
     {"construct_tprs", (DL_FUNC) &construct_tprs, 13},

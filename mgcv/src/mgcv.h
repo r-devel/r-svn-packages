@@ -27,7 +27,7 @@ void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,doubl
 
 /* various service routines */
 void RQT(double *A,int *r,int *c);
-void RuniqueCombs(double *X,int *r, int *c);
+void RuniqueCombs(double *X,int *ind,int *r, int *c);
 void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,double *Afd,double *Hd,double *Sd,int *off,int *dim,double *theta, int *m,int *nar);
 void RMonoCon(double *Ad,double *bd,double *xd,int *control,double *lower,double *upper,int *n);
 void mgcv_AtA(double *AA,double *A,int *q,int *n);

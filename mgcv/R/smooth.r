@@ -25,13 +25,17 @@ mono.con<-function(x,up=TRUE,lower=NA,upper=NA)
 
 
 uniquecombs<-function(x) {
-# takes matrix x and counts up unique rows
+## takes matrix x and counts up unique rows
+## `unique' now does this in R
 if (is.null(x)) stop("x is null")
 if (is.null(nrow(x))) stop("x has no row attribute")
 if (is.null(ncol(x))) stop("x has no col attribute")
-res<-.C(C_RuniqueCombs,as.double(x),as.integer(nrow(x)),as.integer(ncol(x)))
-n<-res[[2]]*res[[3]]
-x<-matrix(res[[1]][1:n],res[[2]],res[[3]])
+ind <- rep(0,nrow(x))
+res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
+        r=as.integer(nrow(x)),c=as.integer(ncol(x)))
+n <- res$r*res$c
+x <- matrix(res$x[1:n],res$r,res$c)
+attr(x,"index") <- res$ind+1 ## C to R index gotcha
 x
 }
 
