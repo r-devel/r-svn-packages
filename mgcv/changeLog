@@ -29,10 +29,16 @@
    automatically, removing the need for smooth constructors to do so.
    `PredMat' handles `by' variables automatically. Users can over-ride 
    this behaviour when adding smooth classes, if needed - see 
-   documentation.
+   documentation. 
 
 ** `gamm' now supports nested smooth terms, and uses the same, constraint 
    absorbed, parameterization as `gam'.
+
+* `smooth.construct' methods are now expected to set default values
+   for the penalty order `p.order' and the basis dimension `bs.dim'
+   if none are supplied. They should also sanity check supplied 
+   values. Previosly this was done by `s', but this put unhelpful
+   restrictions on new smooth classes.
 
 * The Eilers and Marx style p-spline class is now one of the default 
   smoothing classes, rather than just being an example of how to set up

@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2007
+##  R routines for the package mgcv (c) Simon Wood 2000-2008
 
 mono.con<-function(x,up=TRUE,lower=NA,upper=NA)
 # Takes the knot sequence x for a cubic regression spline and returns a list with 
@@ -105,7 +105,7 @@ tensor.prod.penalties <- function(S)
 }
 
 
-get.var<-function(txt,data,vecMat = TRUE)
+get.var <- function(txt,data,vecMat = TRUE)
 # txt contains text that may be a variable name and may be an expression 
 # for creating a variable. get.var first tries data[[txt]] and if that 
 # fails tries evaluating txt within data (only). Routine returns NULL
@@ -117,14 +117,16 @@ get.var<-function(txt,data,vecMat = TRUE)
   { x <- try(eval(parse(text=txt),data,enclos=NULL),silent=TRUE)
     if (inherits(x,"try-error")) x <- NULL
   }
-  if (!is.numeric(x)&&!is.factor(x)) x <- NULL  
+  if (!is.numeric(x)&&!is.factor(x)) x <- NULL
+  if (is.matrix(x)) ismat <- TRUE else ismat <- FALSE
   if (vecMat&&is.matrix(x)) x <- as.numeric(x)
+  if (ismat) attr(x,"matrix") <- TRUE
   x
 }
 
 
 
-te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NULL,id=NULL)
+te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NULL,id=NULL)
 # function for use in gam formulae to specify a tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -228,7 +230,7 @@ te <- function(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NULL
 
 
 
-s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NULL,id=NULL)
+s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL)
 # function for use in gam formulae to specify smooth term, e.g. s(x0,x1,x2,k=40,m=3,by=x3) specifies 
 # a rank 40 thin plate regression spline of x0,x1 and x2 with a third order penalty, to be multiplied by
 # covariate x3, when it enters the model.
@@ -255,16 +257,16 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NULL,id=NULL)
   k.new <- round(k) # in case user has supplied non-integer basis dimension
   if (!all.equal(k.new,k)) {warning("argument k of s() should be integer and has been rounded")}
   k <- k.new
-  if (length(k)==1 && k==-1) k<-10*3^(d-1) # auto-initialize basis dimension
-  ind <- k<2
-  if (sum(ind)) 
-  { k[ind] <- 2
-    warning("meaninglessly low k; reset to 2\n")
-  }
-  if (bs=="cr"||bs=="cc"||bs=="cs") # a check
-  { if (d>1) { warning("cr/cc basis only works with 1-d smooths!\n");bs<-"tp";}
-  } 
-  m[m<0]<-0
+#  if (length(k)==1 && k==-1) k<-10*3^(d-1) # auto-initialize basis dimension
+#  ind <- k<2
+#  if (sum(ind)) 
+#  { k[ind] <- 2
+#    warning("meaninglessly low k; reset to 2\n")
+#  }
+#  if (bs=="cr"||bs=="cc"||bs=="cs") # a check
+#  { if (d>1) { warning("cr/cc basis only works with 1-d smooths!\n");bs<-"tp";}
+#  } 
+#  m[m<0]<-0
   # check for repeated variables in function argument list
   if (length(unique(term))!=d) stop("Repeated variables as arguments of a smooth are not permitted")
   # assemble label for term
@@ -284,7 +286,13 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
 { m<-length(object$margin)  # number of marginal bases
   Xm<-list();Sm<-list();nr<-r<-d<-array(0,m)
   for (i in 1:m)
-  { object$margin[[i]]<-smooth.construct(object$margin[[i]],data,knots)
+  { knt <- dat <- list()
+    term <- object$margin[[i]]$term
+    for (j in 1:length(term)) { 
+      dat[[term[j]]] <- data[[term[j]]]
+      knt[[term[j]]] <- knots[[term[j]]] 
+    }
+    object$margin[[i]]<-smooth.construct(object$margin[[i]],dat,knt)
     Xm[[i]]<-object$margin[[i]]$X
     if (length(object$margin[[i]]$S)>1) 
     stop("Sorry, tensor products of smooths with multiple penalties are not supported.")
@@ -356,7 +364,6 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   else xtra$max.knots <- object$xt$max.knots 
   if (is.null(object$xt$seed)) xtra$seed <- 1 
   else xtra$seed <- object$xt$seed 
-
   ## now collect predictors
   x<-array(0,0)
   shift<-array(0,object$dim)
@@ -399,6 +406,8 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
       assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
     }
   } ## end of large data set handling
+  if (object$bs.dim[1]<0) object$bs.dim <- 10*3^(object$dim-1) # auto-initialize basis dimension
+  object$p.order[is.na(object$p.order)] <- 0 ## auto-initialize
   k<-object$bs.dim 
   M<-null.space.dimension(object$dim,object$p.order) 
   if (k<M+1) # essential or construct_tprs will segfault, as tprs_setup does this
@@ -406,6 +415,8 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
     object$bs.dim<-k
     warning("basis dimension, k, increased to minimum possible\n")
   }
+  
+
   X<-array(0,n*k)
   S<-array(0,k*k)
  
@@ -414,7 +425,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   C<-array(0,k)
   nXu<-0  
   oo<-.C(C_construct_tprs,as.double(x),as.integer(object$dim),as.integer(n),as.double(knt),as.integer(nk),
-               as.integer(object$p.order),as.integer(object$bs.dim),X=as.double(X),S=as.double(S),
+               as.integer(object$p.order[1]),as.integer(object$bs.dim),X=as.double(X),S=as.double(S),
                UZ=as.double(UZ),Xu=as.double(Xu),n.Xu=as.integer(nXu),C=as.double(C))
   object$X<-matrix(oo$X,n,k)                   # model matrix
 
@@ -465,7 +476,9 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
     if (is.null(k)) ok <- FALSE
     else ok<-TRUE
   }
-  
+    
+  if (object$bs.dim < 0) object$bs.dim <- 10 ## default
+
   if (object$bs.dim <3) { object$bs.dim <- 3
     warning("basis dimension, k, increased to minimum possible\n")
   }
@@ -563,7 +576,7 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   } # end of getBD local function
   # evaluate covariate, x, and knots, k.
   x <- get.var(object$term,data)
-
+  if (object$bs.dim < 0 ) object$bs.dim <- 10 ## default
   if (object$bs.dim <4) { object$bs.dim <- 4
     warning("basis dimension, k, increased to minimum possible\n")
   }
@@ -600,6 +613,9 @@ smooth.construct.ps.smooth.spec<-function(object,data,knots)
 { require(splines)
   if (length(object$p.order)==1) m <- rep(object$p.order,2) 
   else m <- object$p.order  # m[1] - basis order, m[2] - penalty order
+  m[is.na(m)] <- 2 ## defualt
+  object$p.order <- m
+  if (object$bs.dim<0) object$bs.dim <- max(10,m[1]+1) ## default
   nk <- object$bs.dim - m[1]  # number of interior knots
   if (nk<=0) stop("basis dimension too small for b-spline order")
   x <- get.var(object$term,data)    # find the data
@@ -703,6 +719,8 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
   }
   if (object$dim> 2 )  stop("the adaptive smooth class is limited to 1 or 2 covariates.")
   else if (object$dim==1) { ## following is 1D case...
+    if (object$bs.dim < 0) object$bs.dim <- 40 ## default
+    if (is.na(object$p.order[1])) object$p.order[1] <- 5
     pobject <- object
     pobject$p.order <- c(2,2)
     class(pobject) <- paste(bs[1],".smooth.spec",sep="")
@@ -755,6 +773,7 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
     }
   } else if (object$dim==2){ ## 2D case 
     ## first task is to obtain a tensor product basis
+    object$bs.dim[object$bs.dim<0] <- 15 ## default
     k <- object$bs.dim;if (length(k)==1) k <- c(k[1],k[1])
     tec <- paste("te(",object$term[1],",",object$term[2],",bs=bs[1],k=k,m=2)",sep="")
     pobject <- eval(parse(text=tec)) ## tensor smooth specification object
@@ -770,7 +789,13 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
     ## now need to create the adaptive penalties...
     ## First the penalty basis...
     kp <- object$p.order
-    if (bs[2]=="tp") kp <- kp[1] else {if (length(kp)!=2) kp <- c(kp[1],kp[1])}
+    if (bs[2]=="tp") { 
+      kp <- kp[1] 
+      if (is.na(kp)) kp <- 10 ## default
+    } else {
+      if (length(kp)!=2) kp <- c(kp[1],kp[1])
+      kp[is.na(kp)] <- 3 ## default
+    }
     kp.tot <- prod(kp);k.tot <- (k[1]-2)*(k[2]-2) ## rows of Difference matrices   
     if (kp.tot > (k[1]-2)*(k[2]-2)) stop("penalty basis too large for smoothing basis") 
     
@@ -846,7 +871,12 @@ Predict.matrix.tensor.smooth<-function(object,data)
 # the prediction method for a tensor product smooth
 { m<-length(object$margin)
   X<-list()
-  for (i in 1:m) X[[i]]<-Predict.matrix(object$margin[[i]],data)
+  for (i in 1:m) { 
+    term <- object$margin[[i]]$term
+    dat <- list()
+    for (j in 1:length(term)) dat[[term[j]]] <- data[[term[j]]]
+    X[[i]]<-Predict.matrix(object$margin[[i]],dat)
+  }
   mxp <- length(object$XP)
   if (mxp>0) 
   for (i in 1:mxp) if (!is.null(object$XP[[i]])) X[[i]] <- X[[i]]%*%object$XP[[i]]
@@ -943,19 +973,77 @@ Predict.matrix.ts.smooth<-function(object,data)
 
 smooth.construct <- function(object,data,knots) UseMethod("smooth.construct")
 
+smooth.construct2 <- function(object,data,knots) {
+## This routine does not require that `data' contains only
+## the evaluated `object$term's and the `by' variable... it
+## obtains such a data object from `data' and also deals with
+## multiple evaluations at the same covariate points efficiently
+
+  dk <- ExtractData(object,data,knots) 
+  object <- smooth.construct(object,dk$data,dk$knots)
+  ind <- attr(dk$data,"index") ## repeats index 
+  if (!is.null(ind)) { ## unpack the model matrix
+    object$X <- object$X[ind,]
+  } 
+  object
+}
 
 Predict.matrix <- function(object,data) UseMethod("Predict.matrix")
 
+Predict.matrix2 <- function(object,data) {
+   dk <- ExtractData(object,data,NULL) 
+   X <- Predict.matrix(object,dk$data)
+   ind <- attr(dk$data,"index") ## repeats index
+   if (!is.null(ind)) { ## unpack the model matrix
+     X <- X[ind,]
+   } 
+   X
+}
+
+
+
+ExtractData <- function(object,data,knots) {
+## `data' and `knots' contain the data needed to evaluate the `terms', `by'
+## and `knots' elements of `object'. This routine does so, and returns
+## a list with element `data' containing just the evaluated `terms', 
+## with the by variable as the last column. If the `terms' evaluate matrices, 
+## then a check is made of whether repeat evaluations are being made, 
+## and if so only the unique evaluation points are returned in data, along 
+## with the `index' attribute required to re-assemble the full dataset.
+   knt <- dat <- list()
+   for (i in 1:length(object$term)) { 
+     dat[[object$term[i]]] <- get.var(object$term[i],data)
+     knt[[object$term[i]]] <- get.var(object$term[i],knots)
+
+   }
+   names(dat) <- object$term;m <- length(object$term)
+   if (!is.null(attr(dat[[1]],"matrix"))) { ## strip down to unique covariate combinations
+     n <- length(dat[[1]])
+     X <- matrix(dat[[1]],n,m)
+     if (m>1) for (i in 2:m ) X[,i] <- dat[[i]]
+     X <- uniquecombs(X)
+     if (nrow(X)<n*.9) { ## worth the hassle
+       for (i in 1:m) dat[[i]] <- X[,i]     ## return only unique rows
+       attr(dat,"index") <- attr(X,"index") ## index[i] is row of dat[[i]] containing original row i
+     }
+   }    
+   if (object$by!="NA") {
+     dat[[m+1]] <- get.var(object$by,data)
+     names(dat)[m+1] <- object$by
+   }
+   return(list(data=dat,knots=knt))
+}
 
 smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),dataX = NULL)
 ## wrapper function which calls smooth.construct methods, but can then modify
-## the parameterizaion used. If absorb.cons==TRUE then a constraint free
+## the parameterization used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
+## Handles `by' variables, and summation convention.
 ## Note that `data' must be a data.frame or model.frame, unless n is provided explicitly, 
 ## in which case a list will do.
 ## If present dataX specifies the data to be used to set up the model matrix, given the 
 ## basis set up using data (but n same for both).
-{ sm <- smooth.construct(object,data,knots)
+{ sm <- smooth.construct2(object,data,knots)
   if (!is.null(attr(sm,"qrc"))) warning("smooth objects should not have a qrc attribute.")
  
  
@@ -992,7 +1080,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 
   ## check whether different data to be used for basis setup
   ## and model matrix... 
-  if (!is.null(dataX)) sm$X <- Predict.matrix(sm,dataX) 
+  if (!is.null(dataX)) sm$X <- Predict.matrix2(sm,dataX) 
 
   ## check whether smooth called with matrix argument
   if (nrow(sm$X)!=n) matrixArg <- TRUE else matrixArg <- FALSE
@@ -1069,7 +1157,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 PredictMat <- function(object,data,n=nrow(data))
 ## wrapper function which calls Predict.matrix and imposes same constraints as 
 ## smoothCon on resulting Prediction Matrix
-{ X <- Predict.matrix(object,data)
+{ X <- Predict.matrix2(object,data)
   if (is.null(attr(X,"by.done"))) { ## handle `by variables' 
     if (object$by!="NA")  # deal with "by" variable 
     { by <- get.var(object$by,data)

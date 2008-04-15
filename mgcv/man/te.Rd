@@ -8,8 +8,8 @@
   based smooths.
 }
 
-\usage{te(..., k=NA,bs="cr",m=0,d=NA,by=NA,fx=FALSE,
-                        mp=TRUE,np=TRUE,xt=NA,id=NULL)
+\usage{te(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
+                        mp=TRUE,np=TRUE,xt=NULL,id=NULL)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -30,10 +30,9 @@ cubic regression spline; \code{"tp"} for thin plate regression spline;
 also be used here (see \code{\link{smooth.construct}} for an example). If only one 
 identifier is given then this is used for all bases.}
 
-\item{m}{The order of the penalty for each t.p.r.s. term (e.g. 2 for
-    normal cubic spline penalty with 2nd derivatives). If a single number is given 
-    then it is used for all terms. \code{0} autoinitializes. \code{m} is ignored for the 
-\code{"cr"} and \code{"cc"} bases.}
+\item{m}{The order of the penalty (for smooth classes that use this) for each term. 
+   If a single number is given  then it is used for all terms. \code{NA} autoinitializes. 
+  \code{m} is ignored by some bases (e.g. \code{"cr"}).}
 
 \item{d}{array of marginal basis dimensions. For example if you want a smooth for 3 covariates 
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 

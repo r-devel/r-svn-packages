@@ -34,10 +34,11 @@ If \code{object} is not class \code{tensor.smooth.spec} it will have the followi
 \itemize{
 \item{term}{The names of the covariates for this smooth, in an array.}
 \item{bs.dim}{ Argument \code{k} of the \code{s} term generating the object. This is the dimension of the basis 
-used to represent the term (or, arguably, 1 greater than the basis dimension for \code{cc} terms).}
+used to represent the term (or, arguably, 1 greater than the basis dimension for \code{cc} terms). 
+\code{bs.dim<0} indicates that the constructor should set this to the default value.}
 \item{fixed}{\code{TRUE} if the term is to be unpenalized, otherwise \code{FALSE}.}
 \item{dim}{the number covariates of which this smooth is a function.}
-\item{p.order}{the order of the smoothness penalty or 0 for autoselection of this. This is argument 
+\item{p.order}{the order of the smoothness penalty or \code{NA} for autoselection of this. This is argument 
 \code{m} of the \code{s} term that generated \code{object}.}
 \item{by}{the name of any \code{by} variable to multiply this term as supplied as an argument to \code{s}. 
 \code{"NA"} if there is no such term.}
@@ -66,9 +67,13 @@ tensor product should be unpenalized.}
 \item{np}{\code{TRUE} if 1-D marginal smooths are to be re-parameterized in terms of
 function values.}
 }}
-\item{data}{a data frame in which the covariates and any \code{by} variable can be found.}
-\item{knots}{an optional data frame specifying knot locations for each covariate. If it is null then the knot 
-locations are generated automatically.}
+
+\item{data}{a data frame or list containing the evaluation of the elements of \code{object$term},
+with names given by \code{object$term}. The last entry will be the \code{by} variable, if \code{object$by}
+is not \code{"NA"}.}
+
+\item{knots}{an optional data frame or list containing the knots relating to \code{object$term}. 
+If it is null then the knot locations are generated automatically.}
 }
 
 \value{
@@ -118,7 +123,8 @@ enough to reach the last re-parameterized marginal in the list.
 \code{cs.smooth.spec} (cubic regression splines with shrinkage-to-zero);
 \code{cc.smooth.spec} (cyclic cubic regression splines);
 \code{tensor.smooth.spec} (tensor product smooths);
-\code{ps.smooth.spec} (Eilers and Marx (1986) style p-splines).
+\code{ps.smooth.spec} (Eilers and Marx (1986) style p-splines);
+\code{ad.smooth.spec} (adaptive smooths of 1 or 2 variables.)
 
 The returned objects for the built in smooth classes have the following extra elements.
 \code{cr.smooth} objects (generated using \code{bs="cr"}) have an additional array \code{xp} giving the knot locations used to generate the basis.
@@ -166,7 +172,7 @@ with Multiple  Quadratic Penalties. J.R.Statist.Soc.B 62(2):413-428
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 
 
-Wood, S.N. (2004a) Stable and efficient multiple smoothing parameter estimation for
+Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
 generalized additive models. J. Amer. Statist. Ass. 99:673-686
 
 The p-spline code given in the example is based on those advocated in:
@@ -199,9 +205,11 @@ constraint free parameterizations.}
 smooth.construct.tr.smooth.spec<-function(object,data,knots)
 ## a truncated power spline constructor method function
 ## object$p.order = null space dimension
-{ m <- object$p.order
+{ m <- object$p.order[1]
+  if (is.na(m)) m < - 2 ## default 
   if (m<1) stop("silly m supplied")
-  nk<-object$bs.dim-m-1 # number of knots
+  if (object$bs.dim<0) object$bs.dim <- 10 ## default
+  nk<-object$bs.dim-m-1 ## number of knots
   if (nk<=0) stop("k too small for m")
   x <- get.var(object$term,data)  # find the data
   x.shift <- mean(x) # shift used to enhance stability

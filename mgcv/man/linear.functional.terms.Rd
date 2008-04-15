@@ -1,5 +1,7 @@
 \name{linear.functional.terms}
 \alias{linear.functional.terms}
+\alias{function.predictors}
+\alias{signal.regression}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Linear functionals of a smooth in GAMs}
 
@@ -10,7 +12,8 @@ are allowed, where the \eqn{x_{ij}}{x_ij} are covariate values and the \eqn{L_{i
 fixed weights. i.e. the response can depend on the weighted sum of the same smooth 
 evaluated at different covariate values. This allows, for example, for the 
 response to depend on the derivatives or integrals of a smooth (approximated by finite 
-differencing or quadrature, respectively). 
+differencing or quadrature, respectively). It also allows dependence on predictor functions 
+(sometimes called `signal regression').
 
 The mechanism by which this is achieved is to supply matrices of covariate values to the 
 model smooth terms specified by \code{\link{s}} or \code{\link{te}} terms in the model formula.
@@ -37,12 +40,6 @@ For example to simply examine the underlying smooth function one would use vecto
 }
 
 %- maybe also `usage' for other objects documented here.
-\section{WARNING}{
-There are no identifiability checks made between the smooth and
-parametric parts of a gam formula, and any such lack of identifiability will
-cause problems if the underlying fitting routine is \code{\link{mgcv}} (not
-the default). 
-}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
@@ -51,7 +48,10 @@ the default).
 library(mgcv)
 set.seed(0)
 
-## simple summation example...
+###############################
+## simple summation example...#
+###############################
+
 n<-400
 sig<-2
 x <- runif(n, 0, .9)
@@ -67,12 +67,13 @@ b <- gam(y~s(X))
 plot(b)  ## reconstruction of f
 plot(f,fitted(b))
 
-
-## multivariate integral example. Function `test1' will be integrated 
-## (by midpoint quadrature) over 100 equal area sub-squares covering 
-## the unit square. Noise is added to the resulting simualted data. 
-## `test1' is estimated from the resulting data using two alternative
-## smooths. 
+######################################################################
+## multivariate integral example. Function `test1' will be integrated# 
+## (by midpoint quadrature) over 100 equal area sub-squares covering # 
+## the unit square. Noise is added to the resulting simualted data.  #
+## `test1' is estimated from the resulting data using two alternative#
+## smooths.                                                          #
+######################################################################
 
 test1 <- function(x,z,sx=0.3,sz=0.4)
   { (pi**sx*sz)*(1.2*exp(-(x-0.2)^2/sx^2-(z-0.3)^2/sz^2)+
@@ -89,7 +90,7 @@ mx <- mz <- (1:og-1)/og
 ox <- rep(mx,og);ox <- rep(ox,rep(ig^2,og^2))
 oz <- rep(mz,rep(og,og));oz <- rep(oz,rep(ig^2,og^2))
 
-x <- ox + ix/og;z <- oz + iz/og ## full quadrature grid, subsquare by subsquare
+x <- ox + ix/og;z <- oz + iz/og ## full grid, subsquare by subsquare
 
 ## create matrix covariates...
 X <- matrix(x,og^2,ig^2,byrow=TRUE)
@@ -103,7 +104,7 @@ y <- f + rnorm(og^2)*5e-4 ## add noise
 ## ... so each y is a noisy observation of the integral of `test1'
 ## over a 0.1 by 0.1 sub-square from the unit square
 
-## Now fit model to simualted data...
+## Now fit model to simulated data...
 
 L <- X*0 + dA
 
@@ -129,6 +130,49 @@ contour(xs,zs,truth)
 plot(b)
 vis.gam(b,view=c("X","Z"),cond=list(L1=1,L=1),plot.type="contour")
 vis.gam(b1,view=c("X","Z"),cond=list(L1=1,L=1),plot.type="contour")
+
+####################################
+## A "signal" regression example...#
+####################################
+
+rf <- function(x=seq(0,1,length=100)) {
+## generates random functions...
+  m <- ceiling(runif(1)*5) ## number of components
+  f <- x*0;
+  mu <- runif(m,min(x),max(x));sig <- (runif(m)+.5)*(max(x)-min(x))/10
+  for (i in 1:m) f <- f+ dnorm(x,mu[i],sig[i])
+  f
+}
+
+x <- seq(0,1,length=100) ## evaluation points
+
+## example functional predictors...
+par(mfrow=c(3,3));for (i in 1:9) plot(x,rf(x),type="l",xlab="x")
+
+## simulate 200 functions and store in rows of L...
+L <- matrix(NA,200,100) 
+for (i in 1:200) L[i,] <- rf()    ## simulate the functional predictors
+
+f2 <- function(x) { ## the coefficient function
+  (0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10)/10 
+}
+
+f <- f2(x) ## the true coefficient function
+
+y <- L\%*\%f + rnorm(200)*20 ## simulated response data
+
+## Now fit the model E(y) = L%*%f(x) where f is a smooth function.
+## The summation convention is used to evaluate smooth at each value
+## in matrix X to get matrix F, say. Then rowSum(L*F) gives E(y)
+## Note that centering constraint of f means that rowSums(L) is required
+## in model...
+
+ 
+X <- matrix(x,200,100,byrow=TRUE) ## matrix of eval points for each function
+
+b <- gam(y~s(X,by=L,k=20)+rowSums(L)) 
+par(mfrow=c(1,1))
+plot(b,shade=TRUE);lines(x,f-mean(f),col=2)
 
 
 

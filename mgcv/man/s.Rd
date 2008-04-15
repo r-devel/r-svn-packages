@@ -7,21 +7,24 @@
   smooth - it exists purely to help set up a model using spline based smooths.
 }
 
-\usage{s(..., k=-1,fx=FALSE,bs="tp",m=0,by=NA,xt=NULL,id=NULL)}
+\usage{s(..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL)}
 
 %- maybe also `usage' for other objects documented here.
 \arguments{
-  \item{...}{ a list of variables that are the covariates that this
+\item{...}{ a list of variables that are the covariates that this
     smooth is a function of.}
-  \item{k}{ the dimension of the basis used to represent the smooth term.
+
+\item{k}{ the dimension of the basis used to represent the smooth term.
     The default depends on the number of variables that the smooth is a
     function of. \code{k} should not be less than the dimension of the
     null space of the penalty for the term (see
     \code{\link{null.space.dimension}}), but will be reset if
   it is. See \code{\link{choose.k}} for further information.}
-  \item{fx}{indicates whether the term is a fixed d.f. regression
+
+\item{fx}{indicates whether the term is a fixed d.f. regression
   spline (\code{TRUE}) or a penalized regression spline (\code{FALSE}).}
-  \item{bs}{this can be \code{"cr"} for a cubic regression spline, \code{"cs"}
+
+\item{bs}{this can be \code{"cr"} for a cubic regression spline, \code{"cs"}
   for a cubic regression spline with shrinkage, \code{"cc"} for
     a cyclic (periodic) spline,
     \code{"tp"} for a thin plate regression spline, \code{"ts"} for a thin
@@ -31,13 +34,14 @@
     \code{"cr"} and \code{"cc"} bases are faster to set up than the \code{"tp"} basis, particularly
   on large data sets (although the \code{knots} argument to \code{gam} can be
   used to get round this).}
-  \item{m}{The order of the penalty for this t.p.r.s. term (e.g. 2 for
-    normal cubic spline penalty with 2nd derivatives). O signals
-    autoinitialization, which sets the order to the lowest value
-    satisfying 2m>d+1, where d is the number of covariates: this choise
-    ensures visual smoothness. In addition, m must satisfy the technical
-    restriction 2m>d, otherwise it will be autoinitialized.}
-  \item{by}{specifies a covariate by which the whole smooth term is to
+
+\item{m}{The order of the penalty for this term (e.g. 2 for
+    normal cubic spline penalty with 2nd derivatives when using 
+   default t.p.r.s basis). \code{NA} signals
+    autoinitialization. Only some smooth classes use this. The \code{"ps"} 
+    class can use a 2 item array giving the basis and penalty order separately.}
+
+\item{by}{specifies a covariate by which the whole smooth term is to
     be multiplied. This is particularly useful for creating models in
     which a smooth interacts with a factor: See the examples below. 
    This is the means by which `variable coefficient models' can be specified.}
