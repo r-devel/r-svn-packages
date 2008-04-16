@@ -67,7 +67,7 @@ lines(x,mu-mean(mu),col=2)
 
 ## disappointing 2D example
 par(mfrow=c(2,2),mar=c(1,1,1,1))
-x <- seq(-1, 1, length= 60)
+x <- seq(-.5, 1.5, length= 60)
 z <- x
 f3 <- function(x,z,k=15) {  r <- sqrt(x^2+z^2); f <- exp(-r^2*k);f}                          
 f <- outer(x, z, f3)
@@ -75,8 +75,8 @@ op <- par(bg = "white")
 persp(x, z, f, theta = 30, phi = 30, col = "lightblue",ticktype="detailed")
 
 n <- 2000
-x <- runif(n)*2-1
-z <- runif(n)*2-1
+x <- runif(n)*2-.5
+z <- runif(n)*2-.5
 f <- f3(x,z)
 y <- f + rnorm(n)*.4
 

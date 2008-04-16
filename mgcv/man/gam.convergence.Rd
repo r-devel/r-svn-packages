@@ -7,9 +7,7 @@
 fit convergence. The default fitting options specified by
 \code{\link{gam.method}} (as the default for argument \code{method} of
 \code{\link{gam}}), always opt for certainty of convergence over speed of
-fit. In the additive modelling contexts this means using fitting routine
-\code{\link{magic}} rather than the slightly faster routine
-\code{\link{mgcv}}. In the Generalized Additive Model case it means using
+fit. In the Generalized Additive Model case it means using
 `outer' iteration in preference to `performance iteration': see
 \code{\link{gam.outer}} for details. 
 
@@ -21,7 +19,7 @@ to fix this.
 
 There are two things that you can do to speed up GAM fitting. (i) Change the
 \code{method} argument to \code{\link{gam}} so that `performance iteration' is
-used in place of the default outer iteration. See the \code{perf.magic} option
+used in place of the default outer iteration. See the \code{perf} option
 under \code{\link{gam.method}}, for example. Usually performance iteration
 converges well and it can be quicker than the default outer iteration. 
 (ii) For large datasets it may be worth changing
@@ -29,8 +27,7 @@ the smoothing basis to use \code{bs="cr"} (see \code{\link{s}} for details)
 for 1-d smooths, and to use \code{\link{te}} smooths in place of
 \code{\link{s}} smooths for smooths of more than one variable. This is because
 the default thin plate regression spline basis \code{"tp"} is costly to set up
-for large datasets (much over 1000 data, say). Alternatively see the last few
-examples for \code{\link{gam}}. 
+for large datasets (much over 1000 data, say).
 
 If the GAM estimation process fails to converge when using performance
 iteration, then switch to outer iteration via the \code{method} argument of

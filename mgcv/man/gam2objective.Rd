@@ -27,7 +27,7 @@ gam2derivative(lsp,args,...)
 for calling by \code{\link{optim}}, to evaluate the GCV/UBRE score and it's
 derivatives w.r.t. log smoothing parameters.
 
-\code{gam3objective} is an equaivalent to \code{gam2objective}, suitable for
+\code{gam4objective} is an equivalent to \code{gam2objective}, suitable for
 optimization by \code{\link{nlm}} - derivatives of the GCV/UBRE function are
 calculated and returned as attributes.
 

@@ -57,6 +57,12 @@ parameter estimation method used.}
 
 \item{formula}{the model formula.}
 
+\item{full.sp}{full array of smoothing parameters multiplying penalties (excluding any contribution 
+from \code{min.sp} argument to \code{gam}). May be larger than \code{sp} if some terms share 
+smoothing parameters, and/or some smoothing parameter values were supplied in the \code{sp} argument
+of \code{\link{gam}}.}
+
+
 %%\item{full.formula}{the model formula with each smooth term fully
 %%  expanded and with option arguments given explicitly (i.e. not with reference
 %%  to other variables) - useful for later prediction from the model.}
@@ -104,10 +110,6 @@ constraints.}
 
 \item{rank}{The numerical rank of the problem.}
 
-\item{full.sp}{full array of smoothing parameters multiplying penalties (excluding any contribution 
-from \code{min.sp} argument to \code{gam}). May be larger than \code{sp} if some terms share 
-smoothing parameters, and/or some smoothing parameter values were supplied in the \code{sp} argument
-of \code{\link{gam}}.}
 
 \item{fully.converged}{\code{TRUE} is multiple GCV/UBRE converged by meeting 
 convergence criteria. \code{FALSE} if method stopped with a steepest descent step 

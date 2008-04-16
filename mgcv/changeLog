@@ -14,8 +14,9 @@
 ** Model terms can now include linear functionals of smooths, by supplying 
    matrix arguments and matrix `by' variables to model smooth terms. This 
    allows, for example, a model to depend on the integral of a smooth 
-   function, or its derivative. See ?linear.functional.terms. Main code 
-   changes are in `smoothCon' and `predMat'.
+   function, or its derivative, or for models to depend on functional 
+   predictors. See ?linear.functional.terms. Main code changes are in 
+   `smoothCon' and `predMat'.
 
 ** Negative binomial handling changed. `negbin' family added: adapted from 
    MASS to work with gam outer iteration fitting. `gam.negbin' fitting 
@@ -37,8 +38,17 @@
 * `smooth.construct' methods are now expected to set default values
    for the penalty order `p.order' and the basis dimension `bs.dim'
    if none are supplied. They should also sanity check supplied 
-   values. Previosly this was done by `s', but this put unhelpful
+   values. Previously this was done by `s', but this put unhelpful
    restrictions on new smooth classes.
+
+* `smooth.construct' now expects to recieve `data' and `knots' arguments
+   with names corresponding exactly to `object$term'. In addition `data'
+   should contain only what is required by `object$term' + a final column
+   containing a `by' variable, if present. Predict.mat expects the same of 
+   its `data' argument. wrapper functions smooth.construct2 and 
+   Predict.mat2 will accept a data frame containing any number of variables 
+   -- all that is required is that `object$terms' can be evaluated using 
+   it. These functions handle repeat rows in matrix arguments efficiently.
 
 * The Eilers and Marx style p-spline class is now one of the default 
   smoothing classes, rather than just being an example of how to set up

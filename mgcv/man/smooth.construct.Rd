@@ -206,16 +206,14 @@ smooth.construct.tr.smooth.spec<-function(object,data,knots)
 ## a truncated power spline constructor method function
 ## object$p.order = null space dimension
 { m <- object$p.order[1]
-  if (is.na(m)) m < - 2 ## default 
+  if (is.na(m)) m <- 2 ## default 
   if (m<1) stop("silly m supplied")
   if (object$bs.dim<0) object$bs.dim <- 10 ## default
   nk<-object$bs.dim-m-1 ## number of knots
   if (nk<=0) stop("k too small for m")
-  x <- get.var(object$term,data)  # find the data
+  x <- data[[object$term]]  ## the data
   x.shift <- mean(x) # shift used to enhance stability
-  if (!is.null(knots)) # are there supplied knots?
-  k <- get.var(object$term,knots)
-  else k<-NULL
+  k <- knots[[object$term]] ## will be NULL if none supplied
   if (is.null(k)) # space knots through data
   { n<-length(x)
     k<-quantile(x[2:(n-1)],seq(0,1,length=nk+2))[2:(nk+1)]
@@ -245,7 +243,7 @@ smooth.construct.tr.smooth.spec<-function(object,data,knots)
 
 Predict.matrix.tr.smooth<-function(object,data)
 ## prediction method function for the `tr' smooth class
-{ x <- get.var(object$term,data)
+{ x <- data[[object$term]]
   x <- x - object$x.shift # stabilizing shift
   m <- object$m;     # spline order (3=cubic)
   k<-object$knots    # knot locations
