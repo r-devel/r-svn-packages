@@ -39,7 +39,7 @@ variables.
 gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action,offset=NULL,control=gam.control(),method=gam.method(),
     scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,
-    fit=TRUE,G=NULL,in.out,...)
+    fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
 }
 %- maybe also `usage' for other objects documented here.
 \details{ 
@@ -292,6 +292,8 @@ such a multiplier to be supplied. }
 \item{fit}{If this argument is \code{TRUE} then \code{gam} sets up the model and fits it, but if it is
 \code{FALSE} then the model is set up and an object \code{G} containing what
 would be required to fit is returned is returned. See argument \code{G}.}
+
+\item{paraPen}{optional list specifying any penalties to be applied to parametric model terms.}
 
 \item{G}{Usually \code{NULL}, but may contain the object returned by a previous call to \code{gam} with 
 \code{fit=FALSE}, in which case all other arguments are ignored except for

@@ -3,6 +3,10 @@
 
 1.4-0
 
+** Argument `paraPen' of `gam' allows (multiple) penalization of 
+   parametric model terms. This allows `gam' to fit any model that
+   can be expressed as a peanlized GLM.
+
 ** An adaptive smoother class has been added, for smoothing with respect
    to one or two variables: invoked with `s(...,bs="ad",...). 
 
@@ -11,12 +15,12 @@
    using the `id' argument to `s' or `te'. Terms with the same `id' value
    will have the same smoothing parameter(s).
 
-** Model terms can now include linear functionals of smooths, by supplying 
-   matrix arguments and matrix `by' variables to model smooth terms. This 
-   allows, for example, a model to depend on the integral of a smooth 
-   function, or its derivative, or for models to depend on functional 
-   predictors. See ?linear.functional.terms. Main code changes are in 
-   `smoothCon' and `predMat'.
+*** Model terms can now include linear functionals of smooths, by 
+    supplying matrix arguments and matrix `by' variables to model 
+    smooth terms. This allows, for example, a model to depend on the 
+    integral of a smooth function, or its derivative, or for models to 
+    depend on functional  predictors. See ?linear.functional.terms. Main 
+    code changes are in `smoothCon' and `predMat'.
 
 ** Negative binomial handling changed. `negbin' family added: adapted from 
    MASS to work with gam outer iteration fitting. `gam.negbin' fitting 
@@ -34,6 +38,10 @@
 
 ** `gamm' now supports nested smooth terms, and uses the same, constraint 
    absorbed, parameterization as `gam'.
+
+** `s' and `te' terms accept an `sp' argument setting the term specific 
+   smoothing parameters (and over-riding argument `sp' of `gam'). Ignored
+   by `gamm'.
 
 * `smooth.construct' methods are now expected to set default values
    for the penalty order `p.order' and the basis dimension `bs.dim'

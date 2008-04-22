@@ -395,9 +395,70 @@ clone.smooth.spec <- function(specb,spec) {
 }
 
 
+parametricPenalty <- function(pterms,assign,paraPen,sp0) {
+## routine to process any penalties on the parametric part of the model.
+## paraPen is a list whose items have names corresponding to the 
+## term.labels in pterms. Each list item may have named elements 
+## L, rank and sp. All other elements should be penalty coefficient matrices.
+  S <- list()     ## penalty matrix list
+  off <- rep(0,0) ## offset array
+  rank <- rep(0,0) ## rank array
+  sp <- rep(0,0)    ## smoothing param array
+  L <- matrix(0,0,0) 
+  k <- 0
+  tind <- unique(assign) ## unique term indices
+  for (i in 1:length(tind)) if (tind[i]>0) {
+    term.label <- attr(pterms[tind[i]],"term.label")
+    P <- paraPen[[term.label]] ## get any penalty information for this term
+    if (!is.null(P)) { ## then there is information
+      ind <- (1:length(assign))[assign==tind[i]] ## index of coefs involved here
+      Li <- P$L;P$L <- NULL
+      spi <- P$sp;P$sp <- NULL
+      ranki <- P$rank;P$rank <- NULL
+      ## remaining terms should be penalty matrices...
+      np <- length(P)
+
+      if (!is.null(ranki)&&length(ranki)!=np) stop("`rank' has wrong length in `paraPen'") 
+      if (np) for (i in 1:np) { ## unpack penalty matrices, offsets and ranks
+        k <- k + 1
+        S[[k]] <- P[[i]]
+        off[k] <- min(ind) ## index of first coef penalized by this term
+        if ( ncol(P[[i]])!=nrow(P[[i]])||nrow(P[[i]])!=length(ind)) stop(" a parametric penalty has wrong dimension")
+        if (is.null(ranki)) {
+          ev <- eigen(S[[k]],symmetric=TRUE,only.values=TRUE)$values
+          rank[k] <- sum(ev>max(ev)*.Machine$double.eps*10) ## estimate rank
+        } else rank[k] <- ranki[i]
+      }
+      ## now deal with L matrices
+      if (np) { ## only do this stuff if there are any penalties!
+        if (is.null(Li)) Li <- diag(np)
+        if (nrow(Li)!=np) stop("L has wrong dimension in `paraPen'")
+        L <- rbind(cbind(L,matrix(0,nrow(L),ncol(Li))),
+                   cbind(matrix(0,nrow(Li),ncol(L)),Li))
+        if (is.null(spi)) {
+          sp[(length(sp)+1):(length(sp)+ncol(Li))] <- -1 ## auto-initialize
+        } else {
+          if (length(spi)!=ncol(Li)) stop("`sp' dimension wrong in `paraPen'")
+          sp[(length(sp)+1):(length(sp)+ncol(Li))] <- spi
+        }
+      }
+    } ## end !is.null(P)  
+  } ## looped through all terms
+  if (k==0) return(NULL)
+  if (!is.null(sp0)) {
+    if (length(sp0)<length(sp)) stop("`sp' too short")
+    sp0 <- sp0[1:length(sp)]
+    sp[sp<0] <- sp0[sp<0]
+  }
+  ## S is list of penalty matrices, off[i] is index of first coefficient penalized by each S[[i]]
+  ## sp is array of underlying smoothing parameter (-ve to estimate), L is matrix mapping log
+  ## underlying smoothing parameters to log smoothing parameters, rank[i] is the rank of S[[i]].
+  list(S=S,off=off,sp=sp,L=L,rank=rank)
+}
+
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
-                    min.sp=NULL,H=NULL,parametric.only=FALSE,absorb.cons=TRUE,idLinksBases=TRUE,
-                    scale.penalty=TRUE)
+                    min.sp=NULL,H=NULL,absorb.cons=TRUE,idLinksBases=TRUE,
+                    scale.penalty=TRUE,paraPen=NULL)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
 { # split the formula if the object being passed is a formula, otherwise it's already split
@@ -433,7 +494,11 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$xlevels <- .getXlevels(pterms,mf)
   G$assign <- attr(X,"assign") # used to tell which coeffs relate to which pterms
 
-  if (parametric.only) { G$X<-X;return(G)}
+  ## now deal with any user supplied penalties on the parametric part of the model...
+  PP <- parametricPenalty(pterms,G$assign,paraPen,sp)
+  if (!is.null(PP)&&!is.null(sp)) sp <- sp[-(1:length(PP$sp))] ## strip out supplied sps already used
+    
+##  if (parametric.only) { G$X<-X;return(G)}
   
   # next work through smooth terms (if any) extending model matrix.....
   
@@ -497,7 +562,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   ## The matrix, L, mapping the underlying log smoothing parameters to the
   ## log of the smoothing parameter multiplying the S[[i]] must be
   ## worked out...
-  idx <- list();L <- matrix(0,0,0)
+  idx <- list() ## idx[[id]]$c contains index of first col in L relating to id
+  L <- matrix(0,0,0)
   if (m>0) for (i in 1:m) {
     id <- sm[[i]]$id
     ## get the L matrix for this smooth...
@@ -555,15 +621,45 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 ## setting log(0) to, e.g. 10*log(.Machine$double.xmin)]
 ## magic needs updating to accept lsp0 (newton done...)
 
+  ## following deals with supplied and estimated smoothing parameters...
+  ## first process the `sp' array supplied to `gam'...
+ 
   if (!is.null(sp)) # then user has supplied fixed smoothing parameters
   { if (length(sp)!=ncol(L)) { warning("Supplied smoothing parameter vector is too short - ignored.")}
     if (sum(is.na(sp))) { warning("NA's in supplied smoothing parameter vector - ignoring.")}
-   # G$all.sp <- sp
     G$sp <- sp
   } else { # set up for auto-initialization
     G$sp<-rep(-1,ncol(L))
-   # G$all.sp<-G$sp
   }
+  
+  ## now work through the smooths searching for any `sp' elements
+  ## supplied in `s' or `te' terms.... This relies on `idx' created 
+  ## above...
+  
+  k <- 1 ## current location in `sp' array
+  if (m>0) for (i in 1:m) {
+    id <- sm[[i]]$id
+    if (is.null(sm[[i]]$L)) Li <- diag(length(sm[[i]]$S)) else Li <- sm[[i]]$L 
+    if (is.null(id)) { ## it's a smooth without an id
+      spi <- sm[[i]]$sp
+      if (!is.null(spi)) { ## sp supplied in `s' or `te'
+        if (length(spi)!=ncol(Li)) stop("incorrect number of smoothing parameters supplied for a smooth term")
+        G$sp[k:(k+ncol(Li)-1)] <- spi
+      }       
+      k <- k + ncol(Li) 
+    } else { ## smooth has an id
+      spi <- sm[[i]]$sp
+      if (is.null(idx[[id]]$sp.done)) { ## not already dealt with these sp's
+        if (!is.null(spi)) { ## sp supplied in `s' or `te'
+          if (length(spi)!=ncol(Li)) stop("incorrect number of smoothing parameters supplied for a smooth term")
+          G$sp[idx[[id]]$c:(idx[[id]]$c+idx[[id]]$nc-1)] <- spi
+        }
+        idx[[id]]$sp.done <- TRUE ## only makes sense to use supplied `sp' from defining term
+        k <- k + idx[[id]]$nc 
+      }
+    }
+  } ## finished processing `sp' vectors supplied in `s' or `te' terms
+
 
   if (!is.null(min.sp)) # then minimum s.p.'s supplied
   { if (length(min.sp)!=nrow(L)) stop("length of min.sp is wrong.")
@@ -589,13 +685,26 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     } 
   }
  
+  ## need to modify L, G$S, G$sp, G$rank and G$off to include any penalties
+  ## on parametric stuff, at this point....
+
+  if (!is.null(PP)) { ## deal with penalties on parametric terms
+    L <- rbind(cbind(L,matrix(0,nrow(L),ncol(PP$L))),
+                 cbind(matrix(0,nrow(PP$L),ncol(L)),PP$L))
+    G$off <- c(PP$off,G$off)
+    G$S <- c(PP$S,G$S)
+    G$rank <- c(PP$rank,G$rank)
+    G$sp <- c(PP$sp,G$sp)
+  }
+
+
   ## Now remove columns of L and rows of sp relating to fixed 
   ## smoothing parameters, and use removed elements to create lsp0
 
   fix.ind <- G$sp>=0
 
   if (sum(fix.ind)) {
-    lsp0 <- sp[fix.ind]
+    lsp0 <- G$sp[fix.ind]
     ind <- lsp0==0
     lsp0[!ind] <- log(lsp0[!ind])
     lsp0[ind] <- log(.Machine$double.xmin)*1000 ## zero fudge
@@ -992,7 +1101,8 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 control=gam.control(),method=gam.method(),
-                scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,G=NULL,in.out=NULL,...)
+                scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
+                paraPen=NULL,G=NULL,in.out=NULL,...)
 
 # Routine to fit a GAM to some data. The model is stated in the formula, which is then 
 # interpreted to figure out which bits relate to smooth terms and which to parametric terms.
@@ -1004,7 +1114,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf<-match.call(expand.dots=FALSE)
     mf$formula<-gp$fake.formula 
     mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-
-               mf$gamma<-mf$method<-mf$fit<-mf$G<-mf$...<-NULL
+               mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$...<-NULL
     mf$drop.unused.levels<-TRUE
     mf[[1]]<-as.name("model.frame")
     pmf <- mf
@@ -1028,8 +1138,9 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
  #     if (method$gam=="perf.mgcv") fit.method <- "mgcv" else fit.method <- "magic"}
 
     G<-gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
-                 H=H,parametric.only=FALSE,absorb.cons=TRUE,
-                 idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty)
+                 H=H,absorb.cons=TRUE,
+                 idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
+                 paraPen=paraPen)
     
     G$family <- family
    
@@ -1620,8 +1731,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 # Steps are:
 #  1. Set newdata to object$model if no newdata supplied
 #  2. split up newdata into manageable blocks if too large
-#  3. Obtain parametric model matrix by call to gam.setup (NOTE: take care to use number of 
-#     levels in original data!)
+#  3. Obtain parametric model matrix (safely!)
 #  4. Work through smooths calling prediction.matrix constructors for each term
 #  5. Work out required quantities
 # 

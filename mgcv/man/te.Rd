@@ -9,7 +9,7 @@
 }
 
 \usage{te(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
-                        mp=TRUE,np=TRUE,xt=NULL,id=NULL)
+              mp=TRUE,np=TRUE,xt=NULL,id=NULL,sp=NULL)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -64,6 +64,13 @@ marginal basis. }
           \code{id} then they will have the same smoothing paramsters, and, by default,
           the same bases (first occurance defines basis type, but data from all terms 
           used in basis construction).}
+
+\item{sp}{any supplied smoothing parameters for this term. Must be an array of the same
+length as the number of penalties for this smooth. Positive or zero elements are taken as fixed 
+smoothing parameters. Negative elements signal auto-initialization. Over-rides values supplied in 
+\code{sp} argument to \code{\link{gam}}. Ignored by \code{gamm}.}
+
+
 }
 
 \details{ Smooths of several covariates can be constructed from tensor products of the bases
