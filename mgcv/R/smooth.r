@@ -441,7 +441,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   else 
   { knt<-array(0,0)
     for (i in 1:object$dim) 
-    { dum <- knots[[object$term[i]]]
+    { dum <- knots[[object$term[i]]]-shift[i]
 ##dum <- get.var(object$term[[i]],knots)-shift[i]
       if (is.null(dum)) {knt<-0;nk<-0;break} # no valid knots for this term
       knt <- c(knt,dum)

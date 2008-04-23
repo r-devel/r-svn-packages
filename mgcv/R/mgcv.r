@@ -1464,7 +1464,9 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
       for (i in 1:n.S) S.size[i]<-mean(abs(G$S[[i]])) 
     }
     weights<-G$w # original weights
-   
+
+    n.score <- sum(weights!=0) ## n to use in GCV score (i.e. don't count points with no influence)   
+
     offset<-G$offset 
 
     variance <- family$variance;dev.resids <- family$dev.resids
@@ -1568,7 +1570,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
  #       }
  #       else { 
           mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
-                    ridge.parameter=control$irls.reg,control=magic.control)
+                    ridge.parameter=control$irls.reg,control=magic.control,n.score=n.score)
           G$p<-mr$b;msp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score;
          
  #       }
@@ -1699,9 +1701,9 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
  #   }
     aic.model <- aic(y, n, mu, weights, dev) + 2 * sum(G$edf)
     if (scale < 0) { ## deviance based GCV
-      gcv.ubre.dev <- length(y)*dev/(length(y)-gamma*sum(G$edf))^2
+      gcv.ubre.dev <- n.score*dev/(n.score-gamma*sum(G$edf))^2
     } else { # deviance based UBRE, which is just AIC
-      gcv.ubre.dev <- dev/length(y) + 2 * gamma * sum(G$edf)/length(y) - G$sig2
+      gcv.ubre.dev <- dev/n.score + 2 * gamma * sum(G$edf)/n.score - G$sig2
     }
   
 	list(coefficients = as.vector(coef), residuals = residuals, fitted.values = mu, 

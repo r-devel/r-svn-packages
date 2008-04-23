@@ -5,7 +5,7 @@
 
 ** Argument `paraPen' of `gam' allows (multiple) penalization of 
    parametric model terms. This allows `gam' to fit any model that
-   can be expressed as a peanlized GLM.
+   can be expressed as a penalized GLM.
 
 ** An adaptive smoother class has been added, for smoothing with respect
    to one or two variables: invoked with `s(...,bs="ad",...). 
@@ -61,6 +61,10 @@
 * The Eilers and Marx style p-spline class is now one of the default 
   smoothing classes, rather than just being an example of how to set up
   a class in the help file.
+
+* `gam.fit' passes corrected n to `magic' so that `n' used in gcv/ubre
+   does not include obs with zero prior weight. `gam.fit3' already doing 
+   this...
 
 * `magic' and `gam.fit3' now allow log smoothing parameters to be a 
   linear transformation of a smaller set of underlying smoothing parameters.
