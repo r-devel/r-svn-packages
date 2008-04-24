@@ -1,7 +1,6 @@
 \name{smooth.construct.ad.smooth.spec}
 \alias{smooth.construct.ad.smooth.spec}
 \alias{adaptive.smooth}
-\alias{smooth.construct.ad.smooth.spec}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Adaptive smooths in GAMs}
 
@@ -50,6 +49,9 @@ In practice it is often as effective to simply transform the smoothing covariate
 \item{knots}{a list containing any knots supplied for basis setup --- in same order and with same names as \code{data}. 
              Can be \code{NULL}}
 
+}
+
+\value{ An object of class \code{"pspline.smooth"} in the 1D case or \code{"tensor.smooth"} in the 2D case.
 }
 
 \details{ The constructor is not normally called directly, but is rather used internally by \code{\link{gam}}. 

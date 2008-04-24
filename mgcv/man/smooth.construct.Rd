@@ -1,10 +1,9 @@
- \name{smooth.construct}
+\name{smooth.construct}
 \alias{smooth.construct}
 \alias{smooth.construct2}
 \alias{user.defined.smooth}
-\alias{smooth.construct.tp.smooth.spec}
 \alias{smooth.construct.cr.smooth.spec}
-\alias{smooth.construct.ts.smooth.spec}
+
 \alias{smooth.construct.cs.smooth.spec}
 \alias{smooth.construct.cc.smooth.spec}
 \alias{smooth.construct.tensor.smooth.spec}
@@ -125,9 +124,9 @@ enough to reach the last re-parameterized marginal in the list.
 }
 
 \details{ There are built in methods for objects with the following classes:
-\code{tp.smooth.spec} (thin plate regression splines); 
-\code{cr.smooth.spec} (cubic regression splines);
+\code{tp.smooth.spec} (thin plate regression splines --- see \code{\link{thin.plate.regression.spline}}); 
 \code{ts.smooth.spec} (thin plate regression splines with shrinkage-to-zero);
+\code{cr.smooth.spec} (cubic regression splines);
 \code{cs.smooth.spec} (cubic regression splines with shrinkage-to-zero);
 \code{cc.smooth.spec} (cyclic cubic regression splines);
 \code{tensor.smooth.spec} (tensor product smooths);
@@ -140,29 +139,8 @@ The returned objects for the built in smooth classes have the following extra el
 \code{cyclic.smooth} objects (generated using \code{bs="cc"}) have an array \code{xp} of knot locations and a matrix 
 \code{BD} used to define the basis (BD transforms function values at the knots to second derivatives at the knots).
 
-\code{tprs.smooth} objects require several items to be stored in order to define the basis. These are:
-\itemize{ 
-\item{shift}{A record of the shift applied to each covariate in order to center it around zero and 
-avoid any co-linearity problems that might otehrwise occur in the penalty null space basis of the term. }
-\item{Xu}{A matrix of the unique covariate combinations for this smooth (the basis is constructed by first stripping 
-out duplicate locations).}
-\item{UZ}{The matrix mapping the t.p.r.s. parameters back to the parameters of a full thin plate spline.}
-\item{null.space.dimension}{The dimension of the space of functions that have zero wiggliness according to the 
-wiggliness penalty for this term.}
-}
-
-Again, these extra elements would be found in the elements of the \code{margin} list of \code{tensor.smooth} 
-class object.
 
 
-\code{tp.smooth.spec} (and \code{ts.smooth.spec}) objects will contain
-information on how to handle large datasets in their \code{xt} field. The default is to randomly
-subsample 3000 `knots' from which to produce a tprs basis, if the number of
-unique predictor variable combinations in excess of 3000. The default can be
-modified via the \code{xt} argument to \code{\link{s}}. This is supplied as a
-list with elements \code{max.knots} and \code{seed} containing a number
-to use in place of 3000, and the random number seed to use (either can be
-missing). 
 
 
 The classes \code{cs.smooth} and \code{ts.smooth} are modifications of the
