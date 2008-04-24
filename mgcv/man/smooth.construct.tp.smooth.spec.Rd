@@ -1,13 +1,13 @@
 \name{smooth.construct.tp.smooth.spec}
 \alias{smooth.construct.tp.smooth.spec}
 \alias{smooth.construct.ts.smooth.spec}
-\alias{thin.plate.regression.spline}
+\alias{tprs}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{Thin plate regression splines in GAMs}
+\title{Penalized thin plate regression splines in GAMs}
 
 \description{\code{\link{gam}} can use isotropic smooths of any number of variables, specified via terms like
-\code{s(x,z,bs="tp")} (or just \code{s(x,z)} as this is the default basis). These terms are based on thin plate 
-regression splines.
+\code{s(x,z,bs="tp",m=3)} (or just \code{s(x,z)} as this is the default basis). These terms are based on thin plate 
+regression splines. \code{m} specifies the order of the derivatives in the thin plate spline penalty.
 
  Thin plate regression splines are constructed by starting with the
   basis and penalty for a full thin plate spline and then truncating this basis in
@@ -30,7 +30,9 @@ regression splines.
   \code{max.knots} can be modified using the \code{xt} argument to \code{s}.
    Alternatively the user can supply knots from which to construct a basis. 
 
-
+ The \code{"ts"} smooths are t.p.r.s. with a small multiple of the identity matrix added to the 
+ spline penalty so that the term can be shrink to zero, and not just to a function in the t.p.r.s.
+ penalty null space. 
 }
 
 \usage{
@@ -67,6 +69,9 @@ wiggliness penalty for this term.}
 \details{ The default basis dimension for this class is \code{k=10*3^(d-1)} where \code{d} is the number
  of covariates for the term.
 
+The default is to set \code{m} (the order of derivative in the thin plate spline penalty) to the smallest value satisfying \code{2m > d+1} where \code{d} if the number of covariates of the term: this yileds `visually smooth' functions. In any case \code{2m>d} must be satisfied. 
+
+
 The constructor is not normally called directly, but is rather used internally by \code{\link{gam}}. 
 To use for basis setup it is recommended to use \code{\link{smooth.construct2}}.  
 
@@ -79,9 +84,22 @@ list with elements \code{max.knots} and \code{seed} containing a number
 to use in place of 3000, and the random number seed to use (either can be
 missing). 
 
+For these bases \code{knots} has two uses. Firstly, for large datasets 
+the calculation of the \code{tp} basis can be time-consuming. The user can retain most of the advantages of the t.p.r.s. 
+approach by supplying  a reduced set of covariate values from which to obtain the basis - 
+typically the number of covariate values used will be substantially 
+smaller than the number of data, and substantially larger than the basis dimension, \code{k}. This approach is 
+the one taken automatically if the number of unique covariate values (combinations) exceeds \code{max.knots}.
+The second possibility 
+is to avoid the eigen-decomposition used to find the t.p.r.s. basis altogether and simply use 
+the basis implied by the chosen knots: this will happen if the number of knots supplied matches the 
+basis dimension, \code{k}. For a given basis dimension the second option is 
+faster, but gives poorer results (and the user must be quite careful in choosing knot locations). 
+
+
 }
 
-\refereences{
+\references{
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 }
 

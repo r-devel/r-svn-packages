@@ -4,35 +4,34 @@
 \title{Generalized additive models with integrated smoothness estimation}
 
 \description{ Fits a generalized additive model (GAM) to
-  data. The degree of smoothness of model terms is estimated as part of
-  fitting; isotropic or scale invariant smooths of any number of variables are
-  available as model terms, as are linear functionals of such smooths; 
-  confidence/credible intervals are readily
-  available for any quantity predicted using a fitted model; \code{gam} is
-  extendable: i.e. users can add smooths. 
+data. The degree of smoothness of model terms is estimated as part of
+fitting. Can also fit any GLM subject to multiple quadratic penalties (including 
+estimation of degree of penalization). Isotropic or scale invariant smooths of any number of variables are
+available as model terms, as are linear functionals of such smooths; confidence/credible intervals are readily
+available for any quantity predicted using a fitted model; \code{gam} is extendable: i.e. users can add smooths. 
 
  Smooth terms are represented using penalized regression splines (or similar smoothers)
-with smoothing parameters selected by GCV/UBRE or by regression splines with
-fixed degrees of freedom (mixtures of the two are
-permitted). Multi-dimensional smooths are available using penalized thin plate
-regression splines (isotropic) or tensor product splines (when an isotropic smooth is inappropriate). 
+with smoothing parameters selected by GCV/UBRE/AIC or by regression splines with
+fixed degrees of freedom (mixtures of the two are permitted). Multi-dimensional smooths are 
+available using penalized thin plate regression splines (isotropic) or tensor product splines 
+(when an isotropic smooth is inappropriate). 
 For more on specifying models see \code{\link{gam.models}} and \code{\link{linear.functional.terms}}. 
-For more on model 
-selection see \code{\link{gam.selection}}. For faster fits use the \code{"cr"}
+For more on model selection see \code{\link{gam.selection}}. For faster fits use the \code{"cr"}
 bases for smooth terms and \code{\link{te}} smooths for smooths of several
 variables.
 
- \code{gam()} is not a clone of what S-PLUS provides: the major
-  differences are (i) that by default estimation of the
-  degree of smoothness of model terms is part of model fitting, (ii) a
-  Bayesian approach to variance estimation is employed that makes for easier
-  confidence interval calculation (with good coverage probabilites) and (iii) the
-  facilities for incorporating smooths of more than one variable are
-  different: specifically there are no \code{lo} smooths, but instead (a) \code{s}
-  terms can have more than one argument, implying an isotropic smooth and (b) \code{te} smooths are
-  provided as an effective means for modelling smooth interactions of any
-  number of variables via scale invariant tensor product smooths. If you want
-  a clone of what S-PLUS provides use \link[gam]{gam} from package \code{gam}.
+\code{gam()} is not a clone of what S-PLUS provides: the major
+differences are (i) that by default estimation of the
+degree of smoothness of model terms is part of model fitting, (ii) a
+Bayesian approach to variance estimation is employed that makes for easier
+confidence interval calculation (with good coverage probabilites), (iii) that the model
+can depend on any (bounded) linear functional of smooth terms,
+and (iv) the facilities for incorporating smooths of more than one variable are
+different: specifically there are no \code{lo} smooths, but instead (a) \code{s}
+terms can have more than one argument, implying an isotropic smooth and (b) \code{te} smooths are
+provided as an effective means for modelling smooth interactions of any
+number of variables via scale invariant tensor product smooths. If you want
+a clone of what S-PLUS provides use \link[gam]{gam} from package \code{gam}.
 }
 \usage{
 
@@ -110,7 +109,9 @@ The built in alternatives for univariate smooths terms are: a conventional penal
 cubic regression spline basis, parameterized in terms of the function values at the knots; 
 a cyclic cubic spline with a similar parameterization and thin plate regression splines. 
 The cubic spline bases are computationally very efficient, but require `knot' locations to be 
-chosen (automatically by default). The thin plate regression splines are optimal low rank 
+chosen (automatically by default). 
+
+The thin plate regression splines are optimal low rank 
 smooths which do not have knots, but are more computationally costly to set
 up. Smooths of several variables can be represented using thin plate
 regression splines, or tensor products of any available basis 
@@ -136,35 +137,9 @@ freedom of a term, in which case the actual degrees of freedom will be
 one less than the basis dimension. See \code{\link{choose.k}} for information
 on checking the basis dimension choise.
 
-  Thin plate regression splines are constructed by starting with the
-  basis for a full thin plate spline and then truncating this basis in
-  an optimal manner, to obtain a low rank smoother. Details are given in
-  Wood (2003). One key advantage of the approach is that it avoids
-  the knot placement problems of conventional regression spline
-  modelling, but it also has the advantage that smooths of lower rank
-  are nested within smooths of higher rank, so that it is legitimate to
-  use conventional hypothesis testing methods to compare models based on
-  pure regression splines. The t.p.r.s. basis can become expensive to
-  calculate for large datasets. For this reason the default behaviour is to
-  randomly subsample \code{max.knots} unique data locations if there are more than \code{max.knots}
-  such, and to use the sub-sample for basis construction. The sampling is
-  always done with the same random seed to ensure repeatability (does not
-  reset R RNG). \code{max.knots} is 3000, by default. Both seed and
-  \code{max.knots} can be modified using the \code{xt} argument to \code{s}.
-   Alternatively the user can supply knots from which to construct a basis. 
+ 
 
-  In the case of the cubic regression spline basis, knots  of the spline are placed evenly
-  throughout the covariate values to which the term refers:  For
-  example, if fitting 101 data with an 11 knot spline of \code{x} then
-  there would be a knot at every 10th (ordered)  \code{x} value. The
-  parameterization used represents the spline in terms of its
-   values at the knots. The values at neighbouring knots
-     are connected by sections of  cubic polynomial constrained to be 
-     continuous up to and including second derivative at the knots. The resulting curve
-     is a natural cubic  spline through the values at the knots (given two extra conditions specifying 
-     that the second derivative of the curve should be zero at the two end 
-     knots). This parameterization gives the parameters a nice
-  interpretability. 
+ 
 
      
      Details of the default underlying fitting methods are given in Wood (2004
@@ -181,8 +156,7 @@ Smooth terms are specified by expressions of the form: \cr
 \code{var2}, etc. are the covariates which the smooth
 is a function of and \code{k} is the dimension of the basis used to
 represent the smooth term. If \code{k} is not
- specified then \code{k=10*3^(d-1)} is used where \code{d} is the number
- of covariates for this term. \code{fx} is used to indicate whether or
+ specified then basis specific defaults are used.  \code{fx} is used to indicate whether or
  not this term has a fixed number of degrees of freedom (\code{fx=FALSE}
  to select d.f. by GCV/UBRE). \code{bs} indicates the basis to use for the smooth: for a full
  list see \code{\link{s}}, but note that the default \code{"tp"}, while
@@ -252,18 +226,9 @@ particular, it is probably worth  comparing UBRE and GCV results; for ``over-dis
 probably more appropriate than UBRE.} 
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
-For the \code{cr} and \code{cc} bases the user simply supplies the knots to be used, and there must be the same number as the basis
-dimension, \code{k}, for the smooth concerned. For the \code{tp} basis \code{knots} has two uses. Firstly, for large datasets 
-the calculation of the \code{tp} basis can be time-consuming. The user can retain most of the advantages of the t.p.r.s. 
-approach by supplying  a reduced set of covariate values from which to obtain the basis - 
-typically the number of covariate values used will be substantially 
-smaller than the number of data, and substantially larger than the basis dimension, \code{k}. The second possibility 
-is to avoid the eigen-decomposition used to find the t.p.r.s. basis altogether and simply use 
-the basis implied by the chosen knots: this will happen if the number of knots supplied matches the 
-basis dimension, \code{k}. For a given basis dimension the second option is 
-faster, but gives poorer results (and the user must be quite careful in choosing knot locations). 
-Different terms can use different 
-numbers of knots, unless they share a covariate.
+For most bases the user simply supplies the knots to be used, and there must be the same number as the basis
+dimension, \code{k}, for the smooth concerned. See \code{\link{tprs}} for what happens in the \code{"tp"/"ts"} case. 
+Different terms can use different numbers of knots, unless they share a covariate.
 }
 
 \item{sp}{A vector of smoothing parameters can be provided here.

@@ -2,13 +2,7 @@
 \alias{smooth.construct}
 \alias{smooth.construct2}
 \alias{user.defined.smooth}
-\alias{smooth.construct.cr.smooth.spec}
-
-\alias{smooth.construct.cs.smooth.spec}
-\alias{smooth.construct.cc.smooth.spec}
 \alias{smooth.construct.tensor.smooth.spec}
-\alias{smooth.construct.ps.smooth.spec}
-\alias{p.spline}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Constructor functions for smooth terms in a GAM}
 \description{Smooth terms in a GAM formula are turned into smooth specification objects of 
@@ -124,44 +118,27 @@ enough to reach the last re-parameterized marginal in the list.
 }
 
 \details{ There are built in methods for objects with the following classes:
-\code{tp.smooth.spec} (thin plate regression splines --- see \code{\link{thin.plate.regression.spline}}); 
+\code{tp.smooth.spec} (thin plate regression splines: see \code{\link{tprs}}); 
 \code{ts.smooth.spec} (thin plate regression splines with shrinkage-to-zero);
-\code{cr.smooth.spec} (cubic regression splines);
+\code{cr.smooth.spec} (cubic regression splines: see \code{\link{cubic.regression.spline}};
 \code{cs.smooth.spec} (cubic regression splines with shrinkage-to-zero);
 \code{cc.smooth.spec} (cyclic cubic regression splines);
-\code{tensor.smooth.spec} (tensor product smooths);
-\code{ps.smooth.spec} (Eilers and Marx (1986) style p-splines);
-\code{ad.smooth.spec} (adaptive smooths of 1 or 2 variables.)
+\code{ps.smooth.spec} (Eilers and Marx (1986) style P-splines: see \code{\link{ps.spline}});
+\code{cp.smooth.spec} (cyclic P-splines)
+\code{ad.smooth.spec} (adaptive smooths of 1 or 2 variables: see \code{\link{adaptive.smooth}});
+\code{tensor.smooth.spec} (tensor product smooths).
 
-The returned objects for the built in smooth classes have the following extra elements.
-\code{cr.smooth} objects (generated using \code{bs="cr"}) have an additional array \code{xp} giving the knot locations used to generate the basis.
-
-\code{cyclic.smooth} objects (generated using \code{bs="cc"}) have an array \code{xp} of knot locations and a matrix 
-\code{BD} used to define the basis (BD transforms function values at the knots to second derivatives at the knots).
-
-
-
-
-
-The classes \code{cs.smooth} and \code{ts.smooth} are modifications of the
-classes \code{cr.smooth} and \code{tprs.smooth} respsectively: they differ
-only in having an extra shrinkage component added to their penalties, so that
-automatic model selection can effectively remove such terms from a model altogether.
 }
 
 
 \references{ 
 
-Wood, S.N. (2000)  Modelling and Smoothing Parameter Estimation
-with Multiple  Quadratic Penalties. J.R.Statist.Soc.B 62(2):413-428
-
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 
+Wood, S.N. (2006) Low rank scale invariant tensor product smooths for
+generalized additive mixed models. Biometrics 62(4):1025-1036
 
-Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
-generalized additive models. J. Amer. Statist. Ass. 99:673-686
-
-The p-spline code given in the example is based on those advocated in:
+The P-spline code given in the example is based on those advocated in:
 
 Ruppert, D., M.P. Wand and R.J. Carroll (2003) Semiparametric Regression. Cambridge 
 University Press.
@@ -177,7 +154,7 @@ Statistical Science, 11(2):89-121
 
 \author{Simon N. Wood \email{simon.wood@r-project.org}}
 
-\seealso{ \code{get.var}, \code{\link{gamm}}, \code{\link{gam}},
+\seealso{ \code{s}, \code{s},\code{get.var}, \code{\link{gamm}}, \code{\link{gam}},
  \code{\link{Predict.matrix}},
 \code{\link{smoothCon}}, \code{\link{PredictMat}}
  }
