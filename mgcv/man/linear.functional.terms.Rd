@@ -44,7 +44,7 @@ For example to simply examine the underlying smooth function one would use vecto
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 \examples{
-### test code for matrix argument `linear operator' smoothing
+### matrix argument `linear operator' smoothing
 library(mgcv)
 set.seed(0)
 
@@ -161,14 +161,15 @@ f <- f2(x) ## the true coefficient function
 
 y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 
-## Now fit the model E(y) = L%*%f(x) where f is a smooth function.
+## Now fit the model E(y) = L\%*\%f(x) where f is a smooth function.
 ## The summation convention is used to evaluate smooth at each value
 ## in matrix X to get matrix F, say. Then rowSum(L*F) gives E(y)
 ## Note that centering constraint of f means that rowSums(L) is required
 ## in model...
 
- 
-X <- matrix(x,200,100,byrow=TRUE) ## matrix of eval points for each function
+## create matrix of eval points for each function. Note that
+## `smoothCon' is smart and will recognize the duplication...
+X <- matrix(x,200,100,byrow=TRUE) 
 
 b <- gam(y~s(X,by=L,k=20)+rowSums(L)) 
 par(mfrow=c(1,1))

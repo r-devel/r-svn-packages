@@ -123,7 +123,7 @@ enough to reach the last re-parameterized marginal in the list.
 \code{cr.smooth.spec} (cubic regression splines: see \code{\link{cubic.regression.spline}};
 \code{cs.smooth.spec} (cubic regression splines with shrinkage-to-zero);
 \code{cc.smooth.spec} (cyclic cubic regression splines);
-\code{ps.smooth.spec} (Eilers and Marx (1986) style P-splines: see \code{\link{ps.spline}});
+\code{ps.smooth.spec} (Eilers and Marx (1986) style P-splines: see \code{\link{p.spline}});
 \code{cp.smooth.spec} (cyclic P-splines)
 \code{ad.smooth.spec} (adaptive smooths of 1 or 2 variables: see \code{\link{adaptive.smooth}});
 \code{tensor.smooth.spec} (tensor product smooths).
