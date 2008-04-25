@@ -1,24 +1,36 @@
- \name{gam}
+\name{gam}
 \alias{gam}
+\concept{Varying coefficient model}
+\concept{Functional linear model}
+\concept{Penalized GLM}
+\concept{Generalized Additive Model}
+\concept{Penalized regression}
+\concept{Spline smoothing}
+\concept{Penalized regression spline}
+\concept(Generalized Cross Validation)
+\concept(Smoothing parameter selection)
+\concept{tensor product smoothing}
+\concept{thin plate spline}
+\concept{P-spline}
+\concept{Generalized ridge regression}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Generalized additive models with integrated smoothness estimation}
 
 \description{ Fits a generalized additive model (GAM) to
-data. The degree of smoothness of model terms is estimated as part of
-fitting. Can also fit any GLM subject to multiple quadratic penalties (including 
+data, the term `GAM' being taken to include any quadratically penalized GLM.  
+The degree of smoothness of model terms is estimated as part of
+fitting. \code{gam} can also fit any GLM subject to multiple quadratic penalties (including 
 estimation of degree of penalization). Isotropic or scale invariant smooths of any number of variables are
 available as model terms, as are linear functionals of such smooths; confidence/credible intervals are readily
-available for any quantity predicted using a fitted model; \code{gam} is extendable: i.e. users can add smooths. 
+available for any quantity predicted using a fitted model; \code{gam} is extendable: users can add smooths. 
 
  Smooth terms are represented using penalized regression splines (or similar smoothers)
 with smoothing parameters selected by GCV/UBRE/AIC or by regression splines with
 fixed degrees of freedom (mixtures of the two are permitted). Multi-dimensional smooths are 
 available using penalized thin plate regression splines (isotropic) or tensor product splines 
-(when an isotropic smooth is inappropriate). 
+(when an isotropic smooth is inappropriate). For an overview of the smooths available see \code{\link{smooth.terms}}. 
 For more on specifying models see \code{\link{gam.models}} and \code{\link{linear.functional.terms}}. 
-For more on model selection see \code{\link{gam.selection}}. For faster fits use the \code{"cr"}
-bases for smooth terms and \code{\link{te}} smooths for smooths of several
-variables.
+For more on model selection see \code{\link{gam.selection}}. 
 
 \code{gam()} is not a clone of what S-PLUS provides: the major
 differences are (i) that by default estimation of the
@@ -26,7 +38,8 @@ degree of smoothness of model terms is part of model fitting, (ii) a
 Bayesian approach to variance estimation is employed that makes for easier
 confidence interval calculation (with good coverage probabilites), (iii) that the model
 can depend on any (bounded) linear functional of smooth terms,
-and (iv) the facilities for incorporating smooths of more than one variable are
+and, (iv) the parametric part of the model can be penalized, and 
+(v) the facilities for incorporating smooths of more than one variable are
 different: specifically there are no \code{lo} smooths, but instead (a) \code{s}
 terms can have more than one argument, implying an isotropic smooth and (b) \code{te} smooths are
 provided as an effective means for modelling smooth interactions of any
@@ -41,111 +54,6 @@ gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
 }
 %- maybe also `usage' for other objects documented here.
-\details{ 
-A generalized additive model (GAM) is a generalized linear model (GLM) in which the linear 
-predictor is given by a user specified sum of smooth functions of the covariates plus a 
-conventional parametric component of the linear predictor. A simple example is:
-\deqn{\log(E(y_i)) = f_1(x_{1i})+f_2(x_{2i})}{log(E(y_i))=f_1(x_1i)+f_2(x_2i)}
-where the (independent) response variables \eqn{y_i \sim {\rm Poi }}{y_i~Poi}, and
-\eqn{f_1}{f_1} and \eqn{f_2}{f_2} are smooth functions of covariates \eqn{x_1}{x_1} and 
-\eqn{x_2}{x_2}. The log is an example of a link function. 
-
-If absolutely any smooth functions were allowed in model fitting then maximum likelihood 
-estimation of such models would invariably result in complex overfitting estimates of 
-\eqn{f_1}{f_1}  and \eqn{f_2}{f_2}. For this reason the models are usually fit by 
-penalized likelihood 
-maximization, in which the model (negative log) likelihood is modified by the addition of 
-a penalty for each smooth function, penalizing its `wiggliness'. To control the tradeoff 
-between penalizing wiggliness and penalizing badness of fit each penalty is multiplied by 
-an associated smoothing parameter: how to estimate these parameters, and 
-how to practically represent the smooth functions are the main statistical questions 
-introduced by moving from GLMs to GAMs. 
-
-The \code{mgcv} implementation of \code{gam} represents the smooth functions using 
-penalized regression splines, and by default uses basis functions for these splines that 
-are designed to be optimal, given the number basis functions used. The smooth terms can be 
-functions of any number of covariates and the user has some control over how smoothness of 
-the functions is measured. 
-
-\code{gam} in \code{mgcv} solves the smoothing parameter estimation problem by using the 
-Generalized Cross Validation (GCV) criterion
-\deqn{n D / (n - DoF)^2}{n D/(n - DoF)^2}
- or an Un-Biased Risk Estimator (UBRE )criterion
-\deqn{D/n + 2 s DoF / n - s }{D/n + 2 s DoF / n -s} 
-where \eqn{D}{D} is the deviance, \eqn{n}{n} the number of data, \eqn{s}{s}
-the scale parameter and 
-\eqn{DoF}{DoF} the effective degrees of freedom of the model. Notice that UBRE is effectively
-just AIC rescaled, but is only used when \eqn{s}{s} is known. An alternative is GACV
-(again see \code{\link{gam.method}}). Smoothing parameters are chosen to 
-minimize the GCV or UBRE/AIC score for the model, and the main computational challenge solved 
-by the \code{mgcv} package is to do this efficiently and reliably. Various
-alternative numerical methods are provided: see \code{\link{gam.method}}.
-
-
-Broadly \code{gam} works by first constructing basis functions and one or more quadratic penalty 
-coefficient matrices for each smooth term in the model formula, obtaining a model matrix for 
-the strictly parametric part of the model formula, and combining these to obtain a 
-complete model matrix (/design matrix) and a set of penalty matrices for the smooth terms. 
-Some linear identifiability constraints are also obtained at this point. The model is 
-fit using \code{\link{gam.fit}}, a modification of \code{\link{glm.fit}}. The GAM 
-penalized likelihood maximization problem is solved by Penalized Iteratively 
-Reweighted  Least Squares (P-IRLS) (see e.g. Wood 2000). 
-Smoothing parameter selection is integrated in one of two ways. (i)
-`Performance iteration' uses the fact that at each P-IRLS iteration a penalized 
-weighted least squares problem is solved, and the smoothing parameters of that problem can 
-estimated by GCV or UBRE. Eventually, in most cases, both model parameter estimates and smoothing 
-parameter estimates converge. (ii) Alternatively the P-IRLS scheme is iterated to
-convergence for each trial set of smoothing parameters, and GCV or UBRE scores
-are only evaluated on convergence - optimization is then `outer' to the P-IRLS
-loop: in this case the P-IRLS iteration has to be differentiated, to
-facilitate optimization, and \code{\link{gam.fit3}} is used in place of
-\code{gam.fit}. The default is the second method, outer iteration.
-
-
-Several alternative basis-penalty types  are built in for representing model
-smooths, but alternatives can easily be added (see \code{\link{smooth.construct}} which
-uses p-splines to illustrate how to add new smooths). 
-The built in alternatives for univariate smooths terms are: a conventional penalized
-cubic regression spline basis, parameterized in terms of the function values at the knots; 
-a cyclic cubic spline with a similar parameterization and thin plate regression splines. 
-The cubic spline bases are computationally very efficient, but require `knot' locations to be 
-chosen (automatically by default). 
-
-The thin plate regression splines are optimal low rank 
-smooths which do not have knots, but are more computationally costly to set
-up. Smooths of several variables can be represented using thin plate
-regression splines, or tensor products of any available basis 
-including user defined bases (tensor product penalties are obtained automatically form 
-the marginal basis penalties). The t.p.r.s. basis is isotropic, so if this is not appropriate tensor 
-product terms should be used. Tensor product smooths have one penalty and smoothing parameter per marginal 
-basis, which means that the relative scaling of covariates is essentially determined automatically by GCV/UBRE. 
-The t.p.r.s. basis and cubic regression spline bases are both available with
-either conventional `wiggliness penalties' or penalties augmented with a
-shrinkage component: the conventional penalties treat some space of functions
-as `completely smooth' and do not penalize such functions at all; the
-penalties with extra shrinkage will zero a term altogether for high enough
-smoothing parameters: \code{\link{gam.selection}} has an example of the use of
-such terms.
-
-
-For any  basis the user specifies the dimension of the basis for each smooth
-term. The dimension of the basis is one more than the maximum degrees of freedom that the 
-term can have, but usually the term will be fitted by penalized
-maximum likelihood estimation and the actual degrees of freedom will be
-chosen by GCV. However, the user can choose to fix the degrees of
-freedom of a term, in which case the actual degrees of freedom will be
-one less than the basis dimension. See \code{\link{choose.k}} for information
-on checking the basis dimension choise.
-
- 
-
- 
-
-     
-     Details of the default underlying fitting methods are given in Wood (2004
-     and 2008). Some alternative methods are discussed in Wood (2000 and 2006). 
-
- }
 
 \arguments{ 
 \item{formula}{ A GAM formula (see also \code{\link{gam.models}}). This is exactly like the formula for a
@@ -281,6 +189,114 @@ fit a GAM, but doesn't actually fit it.
 
 Otherwise the function returns an object of class \code{"gam"} as described in \code{\link{gamObject}}.
 }
+
+
+\details{ 
+A generalized additive model (GAM) is a generalized linear model (GLM) in which the linear 
+predictor is given by a user specified sum of smooth functions of the covariates plus a 
+conventional parametric component of the linear predictor. A simple example is:
+\deqn{\log(E(y_i)) = f_1(x_{1i})+f_2(x_{2i})}{log(E(y_i))=f_1(x_1i)+f_2(x_2i)}
+where the (independent) response variables \eqn{y_i \sim {\rm Poi }}{y_i~Poi}, and
+\eqn{f_1}{f_1} and \eqn{f_2}{f_2} are smooth functions of covariates \eqn{x_1}{x_1} and 
+\eqn{x_2}{x_2}. The log is an example of a link function. 
+
+If absolutely any smooth functions were allowed in model fitting then maximum likelihood 
+estimation of such models would invariably result in complex overfitting estimates of 
+\eqn{f_1}{f_1}  and \eqn{f_2}{f_2}. For this reason the models are usually fit by 
+penalized likelihood 
+maximization, in which the model (negative log) likelihood is modified by the addition of 
+a penalty for each smooth function, penalizing its `wiggliness'. To control the tradeoff 
+between penalizing wiggliness and penalizing badness of fit each penalty is multiplied by 
+an associated smoothing parameter: how to estimate these parameters, and 
+how to practically represent the smooth functions are the main statistical questions 
+introduced by moving from GLMs to GAMs. 
+
+The \code{mgcv} implementation of \code{gam} represents the smooth functions using 
+penalized regression splines, and by default uses basis functions for these splines that 
+are designed to be optimal, given the number basis functions used. The smooth terms can be 
+functions of any number of covariates and the user has some control over how smoothness of 
+the functions is measured. 
+
+\code{gam} in \code{mgcv} solves the smoothing parameter estimation problem by using the 
+Generalized Cross Validation (GCV) criterion
+\deqn{n D / (n - DoF)^2}{n D/(n - DoF)^2}
+ or an Un-Biased Risk Estimator (UBRE )criterion
+\deqn{D/n + 2 s DoF / n - s }{D/n + 2 s DoF / n -s} 
+where \eqn{D}{D} is the deviance, \eqn{n}{n} the number of data, \eqn{s}{s}
+the scale parameter and 
+\eqn{DoF}{DoF} the effective degrees of freedom of the model. Notice that UBRE is effectively
+just AIC rescaled, but is only used when \eqn{s}{s} is known. An alternative is GACV
+(again see \code{\link{gam.method}}). Smoothing parameters are chosen to 
+minimize the GCV or UBRE/AIC score for the model, and the main computational challenge solved 
+by the \code{mgcv} package is to do this efficiently and reliably. Various
+alternative numerical methods are provided: see \code{\link{gam.method}}.
+
+
+Broadly \code{gam} works by first constructing basis functions and one or more quadratic penalty 
+coefficient matrices for each smooth term in the model formula, obtaining a model matrix for 
+the strictly parametric part of the model formula, and combining these to obtain a 
+complete model matrix (/design matrix) and a set of penalty matrices for the smooth terms. 
+Some linear identifiability constraints are also obtained at this point. The model is 
+fit using \code{\link{gam.fit}}, a modification of \code{\link{glm.fit}}. The GAM 
+penalized likelihood maximization problem is solved by Penalized Iteratively 
+Reweighted  Least Squares (P-IRLS) (see e.g. Wood 2000). 
+Smoothing parameter selection is integrated in one of two ways. (i)
+`Performance iteration' uses the fact that at each P-IRLS iteration a penalized 
+weighted least squares problem is solved, and the smoothing parameters of that problem can 
+estimated by GCV or UBRE. Eventually, in most cases, both model parameter estimates and smoothing 
+parameter estimates converge. (ii) Alternatively the P-IRLS scheme is iterated to
+convergence for each trial set of smoothing parameters, and GCV or UBRE scores
+are only evaluated on convergence - optimization is then `outer' to the P-IRLS
+loop: in this case the P-IRLS iteration has to be differentiated, to
+facilitate optimization, and \code{\link{gam.fit3}} is used in place of
+\code{gam.fit}. The default is the second method, outer iteration.
+
+
+Several alternative basis-penalty types  are built in for representing model
+smooths, but alternatives can easily be added (see \code{\link{smooth.construct}} which
+uses p-splines to illustrate how to add new smooths). 
+The built in alternatives for univariate smooths terms are: a conventional penalized
+cubic regression spline basis, parameterized in terms of the function values at the knots; 
+a cyclic cubic spline with a similar parameterization and thin plate regression splines. 
+The cubic spline bases are computationally very efficient, but require `knot' locations to be 
+chosen (automatically by default). 
+
+The thin plate regression splines are optimal low rank 
+smooths which do not have knots, but are more computationally costly to set
+up. Smooths of several variables can be represented using thin plate
+regression splines, or tensor products of any available basis 
+including user defined bases (tensor product penalties are obtained automatically form 
+the marginal basis penalties). The t.p.r.s. basis is isotropic, so if this is not appropriate tensor 
+product terms should be used. Tensor product smooths have one penalty and smoothing parameter per marginal 
+basis, which means that the relative scaling of covariates is essentially determined automatically by GCV/UBRE. 
+The t.p.r.s. basis and cubic regression spline bases are both available with
+either conventional `wiggliness penalties' or penalties augmented with a
+shrinkage component: the conventional penalties treat some space of functions
+as `completely smooth' and do not penalize such functions at all; the
+penalties with extra shrinkage will zero a term altogether for high enough
+smoothing parameters: \code{\link{gam.selection}} has an example of the use of
+such terms.
+
+
+For any  basis the user specifies the dimension of the basis for each smooth
+term. The dimension of the basis is one more than the maximum degrees of freedom that the 
+term can have, but usually the term will be fitted by penalized
+maximum likelihood estimation and the actual degrees of freedom will be
+chosen by GCV. However, the user can choose to fix the degrees of
+freedom of a term, in which case the actual degrees of freedom will be
+one less than the basis dimension. See \code{\link{choose.k}} for information
+on checking the basis dimension choise.
+
+ 
+
+ 
+
+     
+     Details of the default underlying fitting methods are given in Wood (2004
+     and 2008). Some alternative methods are discussed in Wood (2000 and 2006). 
+
+ }
+
 
 \references{
 

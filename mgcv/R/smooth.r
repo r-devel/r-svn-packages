@@ -1148,8 +1148,6 @@ ExtractData <- function(object,data,knots) {
      n <- length(dat[[1]])
      X <- matrix(unlist(dat),n,m)
      
-##     if (m>1) for (i in 2:m ) X[,i] <- dat[[i]]
-     
      if (is.numeric(X)) {
        X <- uniquecombs(X)
        if (nrow(X)<n*.9) { ## worth the hassle
@@ -1159,8 +1157,11 @@ ExtractData <- function(object,data,knots) {
      } ## end if(is.numeric(X))
    }    
    if (object$by!="NA") {
-     dat[[m+1]] <- get.var(object$by,data)
-     names(dat)[m+1] <- object$by
+     by <- get.var(object$by,data) 
+     if (!is.null(by))
+     { dat[[m+1]] <- by 
+       names(dat)[m+1] <- object$by
+     }
    }
    return(list(data=dat,knots=knt))
 }

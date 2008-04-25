@@ -18,44 +18,53 @@ depend on (a discrete approximation to) any linear functional of a smooth term, 
 
 The single penalty built in smooth classes are summarized as follows
 \itemize{
-\item{"tp"}{thin plate regression splines are low rank isotropic smoothers of any number of covariates. By isotropic is 
+\item{Thin plate regression splines}{\code{bs="tp"}. These are low rank isotropic smoothers of any number of covariates. By isotropic is 
 meant that rotation of the covariate co-ordinate system will not change the result of smoothing. By low rank is meant 
 that they have far fewer coefficients than there are data to smooth. They are reduced rank versions of the thin plate splines and use the thin plate spline penalty. They are the default
 smooth for \code{s} terms because there is a defined sense in which they are the optimal smoother of any given
 basis dimension/rank (Wood, 2003). Thin plate regression splines do not have `knots' 
-(at least not in any conventional sense): a truncated eigen-decomposition is used to achieve the rank reduction.  See \code{\link{tprs}} for further details. }
-\item{"ts"}{as \code{"tp"} but with a small ridge penalty added to the smoothing penalty, so that the whole term can be 
+(at least not in any conventional sense): a truncated eigen-decomposition is used to achieve the rank reduction.  See \code{\link{tprs}} for further details. 
+
+\code{bs="ts"} is as \code{"tp"} but with a small ridge penalty added to the smoothing penalty, so that the whole term can be 
 shrunk to zero.}
-\item{"cr"}{cubic regression splines have a cubic spline basis defined by a modest set of knots spread evenly through the 
+
+\item{Cubic regression splines}{\code{bs="cr"}. 
+These have a cubic spline basis defined by a modest sized 
+set of knots spread evenly through the 
 covariate values. They are penalized by the conventional intergrated square second derivative cubic spline penalty. 
-For details see \code{\link{cubic.regression.spline}} and e.g. Wood (2006a).}
-\item{"cs"}{shrinkage version of \code{"cr"}.}
-\item{"cc"}{cyclic cubic regression splines, are penalized cubic regression splines whose ends match up to second 
+For details see \code{\link{cubic.regression.spline}} and e.g. Wood (2006a).
+
+\code{bs="cs"} specifies a shrinkage version of \code{"cr"}.
+
+\code{bs="cc"} specifies a cyclic cubic regression splines. i.e. a penalized cubic regression splines whose ends match, up to second 
 derivative.}
-\item{"ps"}{are P-splines as proposed by Eilers and Marx (1996). These combine a B-spline basis, with a discrete penalty
+
+\item{P-splines}{\code{bs="ps"}. 
+These are P-splines as proposed by Eilers and Marx (1996). They combine a B-spline basis, with a discrete penalty
 on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penbalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mis different orders of basis and penalty.}
-\item{"cs"}{cyclic version of P-splines.}
+
+\code{bs="cs"} gives a cyclic version of a P-spline.
 }
 
 Broadly speaking the default penalized thin plate regression splines tend to give the best MSE performance, 
-but they are a little slower to set up than the other bases. The knot based penalized cubic regression spline 
-based smooths (with derivative based penalties) usually come next in MSE performance, with the P-splines doing 
+but they are a little slower to set up than the other bases. The knot based penalized cubic regression splines
+(with derivative based penalties) usually come next in MSE performance, with the P-splines doing 
 just a little worse. However the P-splines are useful in non-standard situations.
 
-All the preceding classes (any any user defined smooths with single penalties) may be used as marginal 
+All the preceding classes (and any user defined smooths with single penalties) may be used as marginal 
 bases for tensor product smooths specified via \code{\link{te}} terms. Tensor product smooths are smooth functions 
 of several variables where the basis is built up from tensor products of bases for smooths of fewer (usually one) 
-variables (marginal bases). The multiple penalties for these smooths can also be produced automatically from the
+variable(s) (marginal bases). The multiple penalties for these smooths are produced automatically from the
 penalties of the marginal smooths. Wood (2006b) give the general recipe for this construction.
 
 Tensor product smooths often perform better than isotropic smooths when the covariates of a smooth are not naturally
-on the same scale, so that their relative scaling is arbitrary. For example if smoothing with repect to time and 
-distance an isotropic smoother will give very different results if distance is in centimetres and time is in 
-minutes to the results obtained using units of metres and seconds: a tensor product smooth will  give the same 
-answer in both cases (see \code{\link{te}} for an example of this). The tensor prodcut terms are knot based, and the 
+on the same scale, so that their relative scaling is arbitrary. For example, if smoothing with repect to time and 
+distance, an isotropic smoother will give very different results if the units are cm and minutes compared to if the units are 
+metres and seconds: a tensor product smooth will  give the same 
+answer in both cases (see \code{\link{te}} for an example of this). Note that tensor product terms are knot based, and the 
 thin plate splines seem to offer no advantage over cubic or P-splines as  marginal bases.
  
-Finally univariate and bivariate adaptive, \code{"ad"} smooths are available (see \code{\link{adaptive.smooth}}). 
+Finally univariate and bivariate adaptive (\code{bs="ad"}) smooths are available (see \code{\link{adaptive.smooth}}). 
 These are appropriate when the degree of smoothing should itself vary with the covariates to be smoothed, and the 
 data contain sufficient information to be able to estimate the appropriate variation. Because this flexibility is 
 achieved by splitting the penalty into several `basis penalties' these terms are not suitable as components of tensor 
@@ -63,6 +72,10 @@ product smooths.
 
 
 }
+
+\seealso{\code{\link{s}}, \code{\link{te}}, \code{\link{tprs}}, \code{\link{cubic.regression.spline}},
+\code{\link{p.spline}}, \code{\link{adaptive.smooth}}}
+
 \author{
 Simon Wood <simon.wood@r-project.org>
 }

@@ -524,7 +524,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
         for (j in 1:length(temp.term)) id.list[[id]]$data[[j]] <- cbind(id.list[[id]]$data[[j]],
                                                           get.var(temp.term[j],data,vecMat=FALSE))
       } else { ## new id
-        id.list[[id]] <- list(sm.i=i) ## start the array of indeces of smooths with this id
+        id.list[[id]] <- list(sm.i=i) ## start the array of indices of smooths with this id
         id.list[[id]]$data <- list()
         ## need to collect together all data for which this basis will be used,
         ## for basis setup...

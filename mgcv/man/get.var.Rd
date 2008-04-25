@@ -19,7 +19,7 @@ function returns \code{NULL}.}
 \item{vecMat}{Should matrices be coerced to numeric vectors?}
 }
 
-\value{The evaluated variable od code{NULL}. May be coerced to a numeric vector if it's a matrix.}
+\value{The evaluated variable or \code{NULL}. May be coerced to a numeric vector if it's a matrix.}
 
 \references{
 \url{http://www.maths.bath.ac.uk/~sw283/}
