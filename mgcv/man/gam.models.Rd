@@ -43,7 +43,7 @@ This page therefore concentrates on the model formula for \code{gam}.
 
 \section{Models with simple smooth terms}{
 Consider the example model.
-deqn{\mu_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + f_1(x_{3i}) + 
+\deqn{\mu_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + f_1(x_{3i}) + 
 f_2(x_{4i},x_{5i})}{ mu_i = b_0 + b_1 x_1i + b_2 x_2i + f1(x_3i) + f2(x_4i,x_5i)}
 where the (independent) response variables have distribution 
 \eqn{y_i \sim N(\mu_i,\sigma^2)}{y_i ~ N(mu_i,s^2)}.

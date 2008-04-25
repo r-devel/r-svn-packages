@@ -1,18 +1,6 @@
 \name{gam}
 \alias{gam}
-\concept{Varying coefficient model}
-\concept{Functional linear model}
-\concept{Penalized GLM}
-\concept{Generalized Additive Model}
-\concept{Penalized regression}
-\concept{Spline smoothing}
-\concept{Penalized regression spline}
-\concept(Generalized Cross Validation)
-\concept(Smoothing parameter selection)
-\concept{tensor product smoothing}
-\concept{thin plate spline}
-\concept{P-spline}
-\concept{Generalized ridge regression}
+
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Generalized additive models with integrated smoothness estimation}
 
@@ -494,7 +482,19 @@ detach(eg)
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..
-
+\concept{Varying coefficient model}
+\concept{Functional linear model}
+\concept{Penalized GLM}
+\concept{Generalized Additive Model}
+\concept{Penalized regression}
+\concept{Spline smoothing}
+\concept{Penalized regression spline}
+\concept{Generalized Cross Validation}
+\concept{Smoothing parameter selection}
+\concept{tensor product smoothing}
+\concept{thin plate spline}
+\concept{P-spline}
+\concept{Generalized ridge regression}
 
 
 
