@@ -7,7 +7,7 @@
 
 \description{\code{\link{gam}} allows the response variable to depend on linear 
 functionals of smooth terms. Specifically dependancies of the form
-\deqn{g(\mu_i) = \ldots + \sum_j L_{ij} f(x_{ij}) + \ldots }{g(m) = ... + sum_j L_ij f(x_ij) +...}
+\deqn{g(\mu_i) = \ldots + \sum_j L_{ij} f(x_{ij}) + \ldots }{g(mu_i) = ... + sum_j L_ij f(x_ij) +...}
 are allowed, where the \eqn{x_{ij}}{x_ij} are covariate values and the \eqn{L_{ij}}{L_ij} are 
 fixed weights. i.e. the response can depend on the weighted sum of the same smooth 
 evaluated at different covariate values. This allows, for example, for the 
@@ -174,8 +174,6 @@ X <- matrix(x,200,100,byrow=TRUE)
 b <- gam(y~s(X,by=L,k=20)+rowSums(L)) 
 par(mfrow=c(1,1))
 plot(b,shade=TRUE);lines(x,f-mean(f),col=2)
-
-
 
 }
 \keyword{models} \keyword{regression}%-- one or more ..

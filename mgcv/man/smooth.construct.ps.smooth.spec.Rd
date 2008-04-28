@@ -9,7 +9,8 @@
 \description{\code{\link{gam}} can use univariate P-splines as proposed by Eilers and Marx (1996), 
 specified via terms like \code{s(x,bs="ps")}. These terms use B-spline bases 
 penalized by discrete penalties applied directly to 
-the basis coefficients. Cyclic P-splines are specified by model terms like \code{s(x,bs="cp",...)}. Theses bases can be used in tensor product smooths (see \code{\link{te}}).
+the basis coefficients. Cyclic P-splines are specified by model terms like \code{s(x,bs="cp",...)}. 
+These bases can be used in tensor product smooths (see \code{\link{te}}).
 
 The advantage of P-splines is the flexible way that penalty and basis order can be mixed. This often provides a useful way of `taming' an otherwise poorly behave smooth. However, in regular use, splines with derivative based penalties (e.g. \code{"tp"} or \code{"cs"} bases) tend to result in slightly better MSE performance, presumably because the good approximation theoretic propoerties of splines are rather closely connected to the use of derivative penalties.  
 }
@@ -36,14 +37,14 @@ The advantage of P-splines is the flexible way that penalty and basis order can 
 for the elements that this object will contain.
 }
 
-\details{A call smooth term of the form \code{s(x,bs="ps",m=c(2,3))} specifies a 2nd order P-spline basis (cubic spline), 
+\details{A  smooth term of the form \code{s(x,bs="ps",m=c(2,3))} specifies a 2nd order P-spline basis (cubic spline), 
 with a third order difference penalty (0th order is a ridge penalty) on the coefficients. If \code{m} is a single number then it is taken as the basis order and penalty order. The default is the `cubic spline like' \code{m=c(2,2)}.
 
-The default basis dimension, \code{k}, is the larger of 10 and \code{m[1]+1} for a \code{"ps"} terms and the larger of 10 and \code{m[1]} for a \code{"cp"} term. \code{m[1]+1} and \code{m[1]} are the lower limites on basis dimension for the two types. 
+The default basis dimension, \code{k}, is the larger of 10 and \code{m[1]+1} for a \code{"ps"} terms and the larger of 10 and \code{m[1]} for a \code{"cp"} term. \code{m[1]+1} and \code{m[1]} are the lower limits on basis dimension for the two types. 
 
 If knots are supplied, then the number of knots should be one more than the basis dimension (i.e. \code{k+1}) for a \code{"cp"}smooth. For the \code{"ps"} basis the number of supplied knots should be \code{k + m[1] + 2}, and the range of the middle 
-\code{k-m[1]} knots should include all the covariate values.See example.
- P-splines don't make much sense with uneven knot spacing.
+\code{k-m[1]} knots should include all the covariate values. See example.
+  P-splines don't make much sense with uneven knot spacing.
 }
 
 \references{

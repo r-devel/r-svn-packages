@@ -74,7 +74,7 @@ product smooths.
 }
 
 \seealso{\code{\link{s}}, \code{\link{te}}, \code{\link{tprs}}, \code{\link{cubic.regression.spline}},
-\code{\link{p.spline}}, \code{\link{adaptive.smooth}}}
+\code{\link{p.spline}}, \code{\link{adaptive.smooth}}, \code{\link{user.defined.smooth}}}
 
 \author{
 Simon Wood <simon.wood@r-project.org>

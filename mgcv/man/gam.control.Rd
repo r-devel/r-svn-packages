@@ -63,7 +63,7 @@ but the corresponding smoothing parameter estimates are discarded. }
 the \code{id} mechanism (see \code{\link{s}}), should they also have the same 
 bases. Set this to \code{FALSE} only if you are sure you know what you are doing 
 (you should almost surely set \code{scalePenalty} to \code{FALSE} as well in this 
-case.}
+case).}
 
 \item{scalePenalty}{\code{\link{gamm}} is somewhat sensitive to the absolute scaling 
 of the penalty matrices of a smooth relative to its model matrix. This option rescales 
@@ -71,7 +71,19 @@ the penalty matrices to accomodate this problem. Probably should be set to \code
 if you are linking smoothing parameters but have set \code{idLinkBases} to \code{FALSE}.}
 }
 
-\details{ When outer iteration is used for fitting then the control list
+\details{ 
+
+Outer iteration using \code{newton} is controlled by the list \code{newton}
+with the following elements : \code{conv.tol} (default
+1e-6) is the relative convergence tolerance; \code{maxNstep} is the maximum
+length allowed for an element of the Newton search direction (default 5);
+\code{maxSstep} is the maximum length allowed for an element of the steepest
+descent direction (only used if Newton fails - default 2); \code{maxHalf} is
+the maximum number of step halvings to permit before giving up (default 30); 
+\code{use.svd} determines whether to use an SVD step or QR step for the part
+of fitting that determines problem rank, etc. (defaults to \code{FALSE}).
+
+If outer iteration using \code{\link{nlm}} is used for fitting, then the control list
 \code{nlm} stores control arguments for calls to routine
 \code{\link{nlm}}. The list has the following named elements: (i) \code{ndigit} is
 the number of significant digits in the GCV/UBRE score - by default this is
@@ -86,16 +98,6 @@ calculations should be checked numerically - defaults to \code{FALSE}. Any of
 these which are not supplied and named in the list are set to their default
 values.
 
-Outer iteration using \code{newton} is controlled by the list \code{newton}
-with the following elements : \code{conv.tol} (default
-1e-6) is the relative convergence tolerance; \code{maxNstep} is the maximum
-length allowed for an element of the Newton search direction (default 5);
-\code{maxSstep} is the maximum length allowed for an element of the steepest
-descent direction (only used if Newton fails - default 2); \code{maxHalf} is
-the maximum number of step halvings to permit before giving up (default 30); 
-\code{use.svd} determines whether to use an SVD step or QR step for the part
-of fitting that determines problem rank, etc. (defaults to \code{FALSE}).
-
 Outer iteration using \code{\link{optim}} is controlled using list
 \code{optim}, which currently has one element: \code{factr} which takes
 default value 1e7.
@@ -104,17 +106,11 @@ default value 1e7.
 
 \references{
 
-Gu and Wahba (1991) Minimizing GCV/GML scores with multiple smoothing parameters via
-the Newton method. SIAM J. Sci. Statist. Comput. 12:383-398
-
-Wood, S.N. (2000)  Modelling and Smoothing Parameter Estimation
-with Multiple  Quadratic Penalties. J.R.Statist.Soc.B 62(2):413-428
-
-Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 
-65(1):95-114
-
 Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
-generalized additive models. J. Amer. Statist. Ass.
+generalized additive models. J. Amer. Statist. Ass.99:673-686.
+
+Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
+additive models. J.R.Statist.Soc.B 70(3):495-518.
 
 
 \url{http://www.maths.bath.ac.uk/~sw283/}

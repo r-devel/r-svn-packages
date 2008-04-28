@@ -44,40 +44,11 @@ gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
 %- maybe also `usage' for other objects documented here.
 
 \arguments{ 
-\item{formula}{ A GAM formula (see also \code{\link{gam.models}}). This is exactly like the formula for a
-GLM except that smooth terms can be added to the right hand side of the
-formula (and a formula of the form \code{y ~ .} is not allowed).
-Smooth terms are specified by expressions of the form: \cr
-\code{s(var1,var2,...,k=12,fx=FALSE,bs="tp",by=a.var)} where \code{var1},
-\code{var2}, etc. are the covariates which the smooth
-is a function of and \code{k} is the dimension of the basis used to
-represent the smooth term. If \code{k} is not
- specified then basis specific defaults are used.  \code{fx} is used to indicate whether or
- not this term has a fixed number of degrees of freedom (\code{fx=FALSE}
- to select d.f. by GCV/UBRE). \code{bs} indicates the basis to use for the smooth: for a full
- list see \code{\link{s}}, but note that the default \code{"tp"}, while
- it possesses nice optimality properties is slow and memory hungry for very
- large datasets. \code{by} can be used to specify a variable by which
- the smooth should be multiplied. For example \code{gam(y~z+s(x,by=z))}
-   would specify a model \eqn{ E(y) = f(x)z}{E(y)=f(x)z} where
-   \eqn{f(\cdot)}{f(.)} is a smooth function (the formula is
-   \code{y~z+s(x,by=z)} rather than \code{y~s(x,by=z)} because
-   the smooths are always set up to sum to zero over the covariate
-   values). The \code{by} option is particularly useful for models in
-   which different functions of the same variable are required for
-   each level of a factor and for `variable parameter models': see \code{\link{s}}. 
-
-An alternative for specifying smooths of more than one covariate is e.g.: \cr
-\code{te(x,z,bs=c("tp","tp"),m=c(2,3),k=c(5,10))} which would specify a tensor product 
-smooth of the two covariates \code{x} and \code{z} constructed from marginal t.p.r.s. bases 
-of dimension 5 and 10 with marginal penalties of order 2 and 3. Any combination of basis types is 
-possible, as is any number of covariates. Linear functionals of smooths are also available: see
-\code{\link{linear.functional.terms}}.
-
-
-Formulae can involve nested or ``overlapping'' terms such as \cr
-\code{y~s(x)+s(z)+s(x,z)} or \code{y~s(x,z)+s(z,v)}: see
-\code{\link{gam.side}} for further details and examples.} 
+\item{formula}{ A GAM formula (see \code{\link{formula.gam}} and also \code{\link{gam.models}}). 
+This is exactly like the formula for a GLM except that smooth terms, \code{s} and \code{te} can be added 
+to the right hand side to specify that the linear predictor depends on smooth functions of predictors 
+(or linear functionals of these).
+} 
 
 \item{family}{
 This is a family object specifying the distribution and link to use in
@@ -122,8 +93,9 @@ particular, it is probably worth  comparing UBRE and GCV results; for ``over-dis
 probably more appropriate than UBRE.} 
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
-For most bases the user simply supplies the knots to be used, and there must be the same number as the basis
-dimension, \code{k}, for the smooth concerned. See \code{\link{tprs}} for what happens in the \code{"tp"/"ts"} case. 
+For most bases the user simply supplies the knots to be used, which must match up with the \code{k} value
+supplied (the number of knots is not always just \code{k}. 
+See \code{\link{tprs}} for what happens in the \code{"tp"/"ts"} case. 
 Different terms can use different numbers of knots, unless they share a covariate.
 }
 
@@ -131,7 +103,7 @@ Different terms can use different numbers of knots, unless they share a covariat
  Smoothing parameters must be supplied in the order that the smooth terms appear in the model 
 formula. Negative elements indicate that the parameter should be estimated, and hence a mixture 
 of fixed and estimated parameters is possible. If smooths share smoothing parameters then \code{length(sp)} 
-must correspond to the number of underlying smoothing paraemeters.}
+must correspond to the number of underlying smoothing parameters.}
 
 \item{min.sp}{Lower bounds can be supplied for the smoothing parameters. Note
 that if this option is used then the smoothing parameters \code{full.sp}, in the 
@@ -154,7 +126,8 @@ such a multiplier to be supplied. }
 \code{FALSE} then the model is set up and an object \code{G} containing what
 would be required to fit is returned is returned. See argument \code{G}.}
 
-\item{paraPen}{optional list specifying any penalties to be applied to parametric model terms.}
+\item{paraPen}{optional list specifying any penalties to be applied to parametric model terms. 
+\code{\link{gam.models}} explains more.}
 
 \item{G}{Usually \code{NULL}, but may contain the object returned by a previous call to \code{gam} with 
 \code{fit=FALSE}, in which case all other arguments are ignored except for
@@ -241,47 +214,25 @@ facilitate optimization, and \code{\link{gam.fit3}} is used in place of
 
 
 Several alternative basis-penalty types  are built in for representing model
-smooths, but alternatives can easily be added (see \code{\link{smooth.construct}} which
-uses p-splines to illustrate how to add new smooths). 
-The built in alternatives for univariate smooths terms are: a conventional penalized
-cubic regression spline basis, parameterized in terms of the function values at the knots; 
-a cyclic cubic spline with a similar parameterization and thin plate regression splines. 
-The cubic spline bases are computationally very efficient, but require `knot' locations to be 
-chosen (automatically by default). 
+smooths, but alternatives can easily be added (see \code{\link{smooth.terms}} 
+for an overview and \code{\link{smooth.construct}} for how to add smooth classes). In practice the 
+default basis is usually the best choise, but the choise of the basis dimension (\code{k} in the 
+\code{s} and \code{te} terms) is something that should be considered carefully (the exact value is not critical,
+but it is important not to make it restrictively small, nor very large and computationally costly). The basis should 
+be chosen to be larger than is believed to be necessary to approximate the smooth function concerned. 
+The effective degrees of freedom for the smooth will then be controlled by the smoothing penalty on 
+the term, and (usually) selected automatically (withy an upper limit set by \code{k-1}). Of course 
+the \code{k} should not be made too large, or computation will be slow (or in extreme there will be more 
+coefficients to estimate than there are data).
 
-The thin plate regression splines are optimal low rank 
-smooths which do not have knots, but are more computationally costly to set
-up. Smooths of several variables can be represented using thin plate
-regression splines, or tensor products of any available basis 
-including user defined bases (tensor product penalties are obtained automatically form 
-the marginal basis penalties). The t.p.r.s. basis is isotropic, so if this is not appropriate tensor 
-product terms should be used. Tensor product smooths have one penalty and smoothing parameter per marginal 
-basis, which means that the relative scaling of covariates is essentially determined automatically by GCV/UBRE. 
-The t.p.r.s. basis and cubic regression spline bases are both available with
-either conventional `wiggliness penalties' or penalties augmented with a
-shrinkage component: the conventional penalties treat some space of functions
-as `completely smooth' and do not penalize such functions at all; the
-penalties with extra shrinkage will zero a term altogether for high enough
-smoothing parameters: \code{\link{gam.selection}} has an example of the use of
-such terms.
-
-
-For any  basis the user specifies the dimension of the basis for each smooth
-term. The dimension of the basis is one more than the maximum degrees of freedom that the 
-term can have, but usually the term will be fitted by penalized
-maximum likelihood estimation and the actual degrees of freedom will be
-chosen by GCV. However, the user can choose to fix the degrees of
-freedom of a term, in which case the actual degrees of freedom will be
-one less than the basis dimension. See \code{\link{choose.k}} for information
-on checking the basis dimension choise.
-
- 
-
- 
-
+Note that \code{gam} assumes a very inclusive definition of what counts as a GAM: 
+basically any penalized GLM can be used: to this end \code{gam} allows the non smooth model 
+components to be penalized via argument \code{paraPen} and allows the linear predictor to depend on 
+general linear functionals of smooths, via the summation convention mechanism described in 
+\code{\link{linear.functional.terms}}
      
-     Details of the default underlying fitting methods are given in Wood (2004
-     and 2008). Some alternative methods are discussed in Wood (2000 and 2006). 
+Details of the default underlying fitting methods are given in Wood (2004
+and 2008). Some alternative methods are discussed in Wood (2000 and 2006). 
 
  }
 
@@ -352,7 +303,6 @@ Wahba (e.g. 1990) and Gu (e.g. 2002).
 
 \section{WARNINGS }{
 
-
 You must have more unique combinations of covariates than the model has total
 parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 
 terms less the number of spline terms). 
@@ -360,18 +310,16 @@ terms less the number of spline terms).
 Automatic smoothing parameter selection is not likely to work well when 
 fitting models to very few response data.
 
-With large datasets (more than a few thousand data) the \code{"tp"}
-basis gets very slow to use: use the \code{knots} argument as discussed above and 
-shown in the examples. Alternatively, for 1-d smooths  you can use the \code{"cr"} basis and 
-for multi-dimensional smooths use \code{te} smooths.
-
 For data with many  zeroes clustered together in the covariate space it is quite easy to set up 
 GAMs which suffer from identifiability problems, particularly when using Poisson or binomial
 families. The problem is that with e.g. log or logit links, mean value zero corresponds to
 an infinite range on the linear predictor scale.
 } 
 
-\seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{s}}, \code{\link{predict.gam}},\code{\link{plot.gam}}, \code{\link{summary.gam}}, \code{\link{gam.side}},
+\seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{smooth.terms}},
+\code{\link{linear.functional.terms}}, \code{\link{s}},
+\code{\link{te}} \code{\link{predict.gam}},
+\code{\link{plot.gam}}, \code{\link{summary.gam}}, \code{\link{gam.side}},
 \code{\link{gam.selection}},\code{\link{mgcv}}, \code{\link{gam.control}}
 \code{\link{gam.check}}, \code{\link{linear.functional.terms}} \code{\link{negbin}}, \code{\link{magic}},\code{\link{vis.gam}}
  }

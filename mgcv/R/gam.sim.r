@@ -4,6 +4,7 @@
 gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
 
   if (eg==1) { ## 4 term Gu  and Wahba example
+    cat("Gu & Wahba 4 term additive model\n")
     x0 <- runif(n, 0, 1)
     x1 <- runif(n, 0, 1)
     x2 <- runif(n, 0, 1)
@@ -27,6 +28,7 @@ gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
     data <- data.frame(y=y,x0=x0,x1=x1,x2=x2,x3=x3,f=f,f0=f0(x0),f1=f1(x1),f2=f2(x2),f3=x3*0)
     return(data)
   } else if (eg==2) { ## Simple 2D smoothing example
+    cat("Bivariate smoothing example\n")
     test1<-function(x,z,sx=0.3,sz=0.4)  
     { (pi**sx*sz)*(1.2*exp(-(x-0.2)^2/sx^2-(z-0.3)^2/sz^2)+
       0.8*exp(-(x-0.7)^2/sx^2-(z-0.8)^2/sz^2))
@@ -41,6 +43,7 @@ gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
     truth <- list(x=xs,z=zs,f=truth)
     return(list(data=data,truth=truth,pr=pr))
   } else if (eg==3) { ## continuous `by' variable
+    cat("Continuous `by' variable example\n")
     x1 <- runif(n, 0, 1)
     x2 <- sort(runif(n, 0, 1))
     f <-  0.2 * x2^11 * (10 * (1 - x2))^6 + 
@@ -50,6 +53,7 @@ gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
     y <- f*x1 + e
     return(data.frame(y=y,x1=x1,x2=x2,f=f))
   } else if (eg==4) { ## factor `by' variable
+    cat("Factor `by' variable example\n")
     n <- 400   
     x0 <- runif(n, 0, 1)
     x1 <- runif(n, 0, 1)
@@ -64,6 +68,19 @@ gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
     fac.3<-as.numeric(fac==3)
     y<-f1*fac.1+f2*fac.2+f3*fac.3+ e 
     return(data.frame(y=y,x0=x0,x1=x1,x2=x2,fac=fac,f1=f1,f2=f2,f3=f3))
+  } else if (eg==5) { ## additive + factor
+    cat("Additive model + factor\n")
+    x0 <- rep(1:4,50)
+    x1 <- runif(n, 0, 1)
+    x2 <- runif(n, 0, 1)
+    x3 <- runif(n, 0, 1)
+    y <- 2 * x0
+    y <- y + exp(2 * x1)
+    y <- y + 0.2 * x2^11 * (10 * (1 - x2))^6 + 10 * (10 * x2)^3 * (1 - x2)^10
+    e <- rnorm(n, 0, scale)
+    y <- y + e
+    x0<-as.factor(x0)
+    return(data.frame(y=y,x0=x0,x1=x1,x2=x2,x3=x3))
   }
 }
 

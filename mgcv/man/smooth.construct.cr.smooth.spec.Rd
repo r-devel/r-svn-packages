@@ -63,7 +63,8 @@ If they are not supplied then the knots  of the spline are placed evenly
      that the second derivative of the curve should be zero at the two end 
      knots).
 
-Note that the cyclic smoother will wrap at the smallest and largest covariate values, unless knots are supplied.
+Note that the cyclic smoother will wrap at the smallest and largest covariate values, unless knots are supplied, and 
+is not subject to the condition that second derivatives go to zero at the first and last knots.
 }
 
 \references{

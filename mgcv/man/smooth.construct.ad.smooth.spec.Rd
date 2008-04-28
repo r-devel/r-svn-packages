@@ -29,7 +29,7 @@ Bear in mind that adaptive smoothing places quite severe demands on the data. Fo
 univariate smooth of 200 data is rather like estimating 10 smoothing parameters, each from a data series of length 20.
 The problem is particularly serious for smooths of 2 variables, where the number of smoothing parameters required to 
 get reasonable flexibility in the penalty can grow rather fast, but it often requires a very large smoothing basis 
-dimension to make good use of this flexibility. In short adaptive smooths should be used sparingly and with care. 
+dimension to make good use of this flexibility. In short, adaptive smooths should be used sparingly and with care. 
 
 In practice it is often as effective to simply transform the smoothing covariate as it is to use an adaptive smooth.
 
