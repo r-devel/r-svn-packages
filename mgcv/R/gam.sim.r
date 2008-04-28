@@ -81,6 +81,23 @@ gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
     y <- y + e
     x0<-as.factor(x0)
     return(data.frame(y=y,x0=x0,x1=x1,x2=x2,x3=x3))
+  } else if (eg==6) { ## Gu and Wahba + a random ractor
+    cat("4 term additive + random effect")
+    dat <- gamSim(1,n=n,scale=0)
+    fac <- rep(1:4,n/4)
+    dat$f <- dat$f + fac*3
+    dat$fac<-as.factor(fac)
+    if (dist=="normal") {
+      dat$y <- dat$f + rnorm(n)*scale 
+    } else if (dist=="poisson") {
+      g <- exp(dat$f*scale)
+      dat$y <- rpois(rep(1,n),g)
+    } else if (dist=="binary") {
+      g <- (dat$f-5)*scale
+      g <- binomial()$linkinv(g)
+      dat$y <- rbinom(g,1,g)
+    }
+    return(dat)
   }
 }
 

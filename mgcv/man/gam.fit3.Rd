@@ -1,17 +1,18 @@
 \name{gam.fit3}
 \alias{gam.fit3}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{P-IRLS GAM estimation with GCV \& UBRE derivative calculation}
+\title{P-IRLS GAM estimation with GCV \& UBRE/AIC derivative calculation}
 \description{Estimation of GAM smoothing parameters is most stable if
-optimization of the UBRE or GCV score is outer to the penalized iteratively
+optimization of the UBRE/AIC or GCV score is outer to the penalized iteratively
 re-weighted least squares scheme used to estimate the model given smoothing 
 parameters.
 
-This routine estimates a GAM given log smoothing paramaters, and evaluates
-derivatives of the GCV and UBRE scores of the model with respect to the
+This routine estimates a GAM (any quadratically penalized GLM) given log 
+smoothing paramaters, and evaluates derivatives of the GCV and UBRE/AIC scores 
+of the model with respect to the
 log smoothing parameters. Calculation of exact derivatives is generally faster
 than approximating them by finite differencing, as well as generally improving
-the reliability of GCV/UBRE score minimization.
+the reliability of GCV/UBRE/AIC score minimization.
 
 The approach is to run the P-IRLS
 to convergence, and only then to iterate for first and second derivatives. 
@@ -28,7 +29,7 @@ gam.fit3(x, y, sp, S=list(),rS=list(),off, H=NULL,
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
-\item{x}{The model matrix for the GAM.}
+\item{x}{The model matrix for the GAM (or any penalized GLM).}
 
 \item{y}{The response variable.}
 
@@ -63,7 +64,7 @@ as possible, but as many rows as there are parameters.}
 \item{intercept}{does the model have and intercept, \code{TRUE} or
 \code{FALSE}}
 
-\item{deriv}{ Should derivatives of the GCV and UBRE scores be calculated?
+\item{deriv}{ Should derivatives of the GCV and UBRE/AIC scores be calculated?
              0, 1 or 2,
             indicating the maximum order of differentiation to apply.}
 
@@ -74,7 +75,7 @@ derivative/coefficient evaluation method? }
 \item{gamma}{The weight given to each degree of freedom in the GCV and UBRE
 scores can be varied (usually increased) using this parameter.}
 
-\item{scale}{The scale parameter - needed for the UBRE score.}
+\item{scale}{The scale parameter - needed for the UBRE/AIC score.}
 
 \item{printWarn}{Set to \code{FALSE} to suppress some warnings. Useful in
 order to ensure that some warnings are only printed if they apply to the final
@@ -86,7 +87,7 @@ fitted model, rather than an intermediate used in optimization.}
 modifications to allow (i) for quadratic penalties on the log likelihood;
 (ii) derivatives of the model coefficients with respect to
 log smoothing parameters to be obtained by an extra iteration  and 
-(iii) derivatives of the GAM GCV and UBRE scores to be
+(iii) derivatives of the GAM GCV and UBRE/AIC scores to be
 evaluated at convergence. 
 
 In addition the routines apply step halving to any step that increases the

@@ -7,7 +7,8 @@
   modification is that rather than solving a weighted least squares problem at each IRLS step, 
   a weighted, penalized least squares problem
   is solved at each IRLS step with smoothing parameters associated with each penalty chosen by GCV or UBRE,
-  using routine \code{mgcv} or \code{magic}. For further information on usage see code for \code{gam}. Some regularization of the 
+  using routine \code{\link{magic}}. 
+For further information on usage see code for \code{gam}. Some regularization of the 
 IRLS weights is also permitted as a way of addressing identifiability related problems (see 
 \code{\link{gam.control}}). Negative binomial parameter estimation is
 supported.

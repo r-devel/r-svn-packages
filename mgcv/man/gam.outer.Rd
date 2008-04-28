@@ -12,7 +12,7 @@ UBRE score is evaluated for each trial set of smoothing parameters by
 estimating the GAM for those smoothing parameters. The score is minimized
 w.r.t. the parameters numerically, using \code{newton} (default), \code{optim} or \code{nlm}. Exact
 (first and second) derivatives of the score can be used by fitting with
-\code{link{gam.fit3}}. This
+\code{\link{gam.fit3}}. This
 improves efficiency and reliability relative to relying on finite
 difference derivatives.  
 
@@ -25,7 +25,7 @@ gam.outer(lsp,fscale,family,control,method,gamma,G,...)
 \arguments{ 
 \item{lsp}{The log smoothing parameters.}
 
-\item{fscale}{Typical scale of the GCV or UBRE score.}
+\item{fscale}{Typical scale of the GCV or UBRE/AIC score.}
 
 \item{family}{the model family.}
 
@@ -35,23 +35,22 @@ finite differencing is being used.}
 \item{method}{method list returned from \code{\link{gam.method}}. This defines
 the optimization method to use.}
 
-\item{gamma}{ The degree of freedom inflation factor for the GCV/UBRE score.}
+\item{gamma}{ The degree of freedom inflation factor for the GCV/UBRE/AIC score.}
 
 \item{G}{List produced by \code{\link{gam.setup}}, containing most of what's
-needed to actually fit GAM.}
+needed to actually fit a GAM.}
 
 \item{...}{other arguments, typically for passing on to \code{gam.fit3} (ultimately).}
 }
 \details{ 
-Estimation of smoothing parameters by optimizing GCV scores obtained at
-convergence of the P-IRLS iteration was proposed by O'Sullivan et al. (1986),
-and is here termed `outer' iteration. 
+See Wood (2008) for full details on `outer iteration'.
 }
 
 \references{
 
-O 'Sullivan, Yandall & Raynor (1986) Automatic smoothing of regression
-functions in generalized linear models. J. Amer. Statist. Assoc. 81:96-103.
+Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
+additive models. J.R.Statist.Soc.B 70(3):495-518
+
 
 \url{http://www.maths.bath.ac.uk/~sw283/}
 

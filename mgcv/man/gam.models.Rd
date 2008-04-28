@@ -68,23 +68,23 @@ The \code{gam} formula for this would be \cr
 The above assumes that \eqn{x_{4}}{x_4} and \eqn{x_5}{x_5} are naturally on 
 similar scales (e.g. they might be co-ordinates), so that isotropic smoothing 
 is appropriate. If this assumption is false then tensor product smoothing might be 
-more appropriate (see \code{\link{te}}). Then\cr
+better (see \code{\link{te}}). \cr
 \code{y ~ x1 + x2 + s(x3) + te(x4,x5)}\cr
-would generate a tensor product smooth for \eqn{x_{4}}{x_4} and \eqn{x_5}{x_5}. 
-By default this would have basis dimension 25 and use cubic regression spline marginals. 
+would generate a tensor product smooth of \eqn{x_{4}}{x_4} and \eqn{x_5}{x_5}. 
+By default this smooth would have basis dimension 25 and use cubic regression spline marginals. 
 Varying the defaults is easy. For example\cr
 \code{y ~ x1 + x2 + s(x3) + te(x4,x5,bs=c("cr","ps"),k=c(6,7))}\cr
-specifyies that the tensor product should use a rank 6 cubic regression spline marginal
+specifies that the tensor product should use a rank 6 cubic regression spline marginal
 and a rank 7 P-spline marginal to create a smooth with basis dimension 42.
 }
 
-\section{nested terms}{
- Another situation that occurs quite often is the one in which we
-  would like to find out if the model:
+\section{Nested terms}{
+ Another common modelling task is to decide
+if a model like:
   \deqn{E(y_i) = f(x_i,z_i)}{E(y)=f(x,z)}
   is really necessary or whether:
   \deqn{E(y_i)=f_1(x_i)+f_2(z_i)}{E(y)=f1(x)+f2(z)}
-  wouldn't do just as well. One way to do this is to look at the results
+  would do just as well. One possibility is to examine the results
   of fitting:\cr
   \code{y ~ s(x) + s(z) + s(x,z)}.\cr
   \code{gam} automatically generates side conditions to make this model
@@ -97,7 +97,7 @@ and a rank 7 P-spline marginal to create a smooth with basis dimension 42.
 for letting smooths `interact' with factors or parametric terms. They are also the key to specifying general linear 
 functionals of smooths.
 
-The \code{\link{s}} and \code{\link{te}} terms used to specify smooths in a model accept an argument \code{by}, 
+The \code{\link{s}} and \code{\link{te}} terms used to specify smooths accept an argument \code{by}, 
 which is a numeric or factor variable of the same dimension as the covariates of the smooth. 
 If a \code{by} variable is numeric, then its \eqn{i^{th}}{ith} element multiples the  \eqn{i^{th}}{ith}
 row of the model matrix corresponding to the smooth term concerned. If a \code{by} variable is a factor then it generates 
@@ -114,12 +114,12 @@ The appropriate formula is:\cr
 \code{y ~ z + s(x,by=z)}\cr
 - the \code{by} argument ensures that the smooth function gets multiplied by
 covariate \code{z}, but GAM smooths are centred (average value zero),
-so the \code{z+} term is needed as well (\eqn{f}{f} is being
-represented by a constant plus a centred smooth). If we'd wanted:
+so the `parametric' \code{z} term is needed as well (\eqn{f}{f} is being
+represented by a constant plus a centred smooth). If we wanted:
 \deqn{E(y_i) = f(x_i)z_i}{E(y_i)=f(x_i)z_i}
 then the appropriate formula would be:\cr
 \code{y ~ z + s(x,by=z)-1}.\cr
-The example code below also includes factor \code{by} variables.
+The example code below also illustrates the use of factor \code{by} variables.
 
 \code{by} variables may be supplied as numeric matrices as part of specifying general linear functional terms.
 }
@@ -135,13 +135,13 @@ summation convention covered under `linear functional terms'.
 
 As an example suppose that \eqn{E(y_i)\equiv\mu_i}{E(y_i)=mu_i} and 
 \deqn{g(\mu_i) = f_1(x_{1i}) + f_2(x_{2i},x_{3i}) + 
-f_3(x_{4i})}{g(nu_i) = f1(x_1i) + f2(x_2i,x_3i) + f3(x_4i)}
+f_3(x_{4i})}{g(mu_i) = f1(x_1i) + f2(x_2i,x_3i) + f3(x_4i)}
 but that \eqn{f_1}{f1} and \eqn{f_3}{f3} should have the same smoothing parameters (and \eqn{x_2}{x_2}
 and \eqn{x_3}{x_3} are on different scales). Then 
 the \code{gam} formula\cr
 \code{y ~ s(x1,id=1) + te(x_2,x3) + s(x4,id=1)}\cr
 would achieve the desired result. \code{id} can be numbers or character strings. Giving an \code{id} to a 
-term with a factor by variable causes the smooths at each level of the factor to have the same smoothing 
+term with a factor \code{by} variable causes the smooths at each level of the factor to have the same smoothing 
 parameter.
 
 Smooth term \code{id}s are not supported by \code{gamm}.
@@ -158,33 +158,37 @@ Such terms are implemented in \code{mgcv} using a simple `summation convention' 
 smooth are supplied as matrices, then summation of the evaluated smooth over the columns of the matrices is implied. Each 
 covariate matrix and any \code{by} variable matrix must be of the same dimension. Consider, for example the term\cr
 \code{s(X,Z,by=L)}\cr
-where \code{X}, \code{Z} and code{L} are \eqn{n \times p}{n by p} matrices. Let \eqn{f}{f} denote the thin plate regression 
+where \code{X}, \code{Z} and \code{L} are \eqn{n \times p}{n by p} matrices. Let \eqn{f}{f} denote the thin plate regression 
 spline specified. The resulting contibution to the \eqn{i^{\rm th}}{ith} 
 element of the linear predictor is 
-\deqn{\sum_{j=1}^p L_{ij}f(X_{ij},Z_{ij})}{sum_i^p L_ij f(X_ij,Z_ij)}
+\deqn{\sum_{j=1}^p L_{ij}f(X_{ij},Z_{ij})}{sum_j^p L_ij f(X_ij,Z_ij)}
 If no \code{L} is supplied then all its elements are taken as 1. In R code terms, let \code{F} denote the \eqn{n \times p}{n by p} 
-matrix obtained by evaluating the smooth at the values in \code{X} and \code{Z}, then the contribution of the term to the 
-linear predictor is \code{rowSums(L*F)} (note that it's element by element multiplication here!). Because of the centering 
-constraints on smooth terms in a GAM a term proportional to \code{rowSums(L)} is usually needed in the model (unless this results 
+matrix obtained by evaluating the smooth at the values in \code{X} and \code{Z}. Then the contribution of the term to the 
+linear predictor is \code{rowSums(L*F)} (note that it's element by element multiplication here!). 
+Because of the centering  constraints on smooth GAM terms, a term proportional to 
+\code{rowSums(L)} is usually needed in the model (unless this results 
 in a constant vector).
 
-The summation convention applies to \code{te} terms as well as \code{s} terms. More details and examples are provided in 
+The summation convention applies to \code{te} terms as well as \code{s} terms. More details and examples 
+are provided in 
 \code{link{linear.functional.terms}}. 
 }
 
 \section{Penalizing the parametric terms}{
 In case the ability to add smooth classes, smooth identities, \code{by} variables and the summation convention are 
 still not sufficient to implement exactly the penalized GLM that you require, \code{\link{gam}} also allows you to penalize the 
-parametric terms in the model formula. This is mostly useful in allowing one or more model matrices to be supplied, along with a 
+parametric terms in the model formula. This is mostly useful in 
+allowing one or more matrix terms to be included in the formula, along with a 
 sequence of quadratic penalty matrices for each. 
 
 Suppose that you have set up a model matrix \eqn{\bf X}{X}, and want to penalize the corresponding coefficients, \eqn{\beta}{b}
-with two penalties \eqn{\beta^T {\bf S}_1 \beta}{b'S1 b} and \eqn{\beta^T {\bf S}_2 \beta}{b'S2 b}. Then something like the 
+with two penalties \eqn{\beta^T {\bf S}_1 \beta}{b'S1 b} and \eqn{\beta^T {\bf S}_2 \beta}{b'S2 b}. 
+Then something like the 
 following would be appropriate:\cr
-code{gam(y ~ X - 1,paraPen=list(X=list(S1,S1)))}\cr
+\code{gam(y ~ X - 1,paraPen=list(X=list(S1,S1)))}\cr
 The \code{paraPen} argument should be a list with elements having  names corresponding to the terms being penalized. 
 Each element of \code{paraPen} is itself a list, with optional elements \code{L}, \code{rank} and \code{sp}: all other elements 
-must be penalty matrices. If present \code{rank} is a vector giving the rank of each penalty matrix 
+must be penalty matrices. If present, \code{rank} is a vector giving the rank of each penalty matrix 
 (if absent this is determined numerically). \code{L} is a matrix that maps underlying log smoothing parameters to the 
 log smoothing parameters that actually multiply the individual quadratic penalties: taken as the identity if not supplied.
 \code{sp} is a vector of (underlying) smoothing parameter values: positive values are taken as fixed, negative to signal that 
@@ -200,6 +204,9 @@ An obvious application of \code{paraPen} is to incorporate random effects, and a
 
 \references{
 Wahba (1990) Spline Models of Observational Data SIAM.
+
+Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman
+and Hall/CRC Press.
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}

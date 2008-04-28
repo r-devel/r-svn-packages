@@ -4,9 +4,7 @@
 \title{Setting GAM fitting method}
 \description{ This is a function of package \code{mgcv} which allows 
 selection of the numerical method used to optimize the  smoothing parameter 
-estimation criterion for a gam.
-
-It is used to set argument \code{method} of \code{\link{gam}}.
+estimation criterion for a gam. It is used to set argument \code{method} of \code{\link{gam}}.
 }
 \usage{
 gam.method(gam="outer",outer="newton",gcv="deviance",
@@ -38,16 +36,12 @@ deviance, following Hastie and Tibshirani (1990, section 6.9). \code{"GACV"}
 (only available with outer method \code{"newton"}) 
 uses a varient of Gu and Xiang's (2001) generalized approximate cross
 validation, modified to deal with arbitrary link-error
-combinations. \code{"pearson"} uses a suggestion from the literature of
-replacing the RSS in a GCV score with the Pearson statistic: this is a very
-poor choise (see Wood, 2006, section 4.5.4). This latter option is not 
-available with outer methods \code{"newton"} and \code{"nlm"}.
+combinations (see Wood, 2008). 
 }
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied
 method argument. In this circumstance the family argument is passed, to check
-that it works with the specified method. Negative binomial families only work 
-with performance iteration, and the method is reset to this if necessary.}
+that it works with the specified method. }
 }
 
 \details{ The performance iteration was suggested by Gu (and is rather similar
@@ -82,12 +76,12 @@ basically O'Sullivan's (1986) suggestion. Here the P-IRLS scheme is iterated
 to convergence for a fixed set of smoothing parameters, with an appropriate
 GCV/UBRE score evaluated at convergence. This score at convergence is
 optimized in some way. This is termed \code{"outer"} optimization, since the
-optimization is outer to the P-IRLS loop. Outer iteration is slower than
+optimization is outer to the P-IRLS loop. Outer iteration can be slower than
 performance iteration.
 
 
 Several alternative optimisation methods can be used for outer
-optimization.Usually the fastest and most
+optimization. Usually the fastest and most
 reliable approach is to use a modified Newton optimizer with exact first and
 second derivatives, and this is the default. \code{nlm} can be used with
 finite differenced first derivatives. This is not ideal theoretically, since 
@@ -103,8 +97,7 @@ seems to be slower than the \code{nlm} method.
 
 
 In summary: performance iteration is fast, but can fail to converge. Outer
-iteration is a little slower, but more reliable. At present only performance iteration
-is available for negative binomial families.
+iteration is a little slower, but more reliable.
 }
 
 
