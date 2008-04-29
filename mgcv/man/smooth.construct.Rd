@@ -128,6 +128,8 @@ enough to reach the last re-parameterized marginal in the list.
 \code{ad.smooth.spec} (adaptive smooths of 1 or 2 variables: see \code{\link{adaptive.smooth}});
 \code{tensor.smooth.spec} (tensor product smooths).
 
+There is an implicit assumption that the basis only depends on the knots and/or the set of unique 
+covariate combinations. 
 }
 
 
@@ -154,7 +156,7 @@ Statistical Science, 11(2):89-121
 
 \author{Simon N. Wood \email{simon.wood@r-project.org}}
 
-\seealso{ \code{s}, \code{s},\code{get.var}, \code{\link{gamm}}, \code{\link{gam}},
+\seealso{ \code{\link{s}},\code{\link{get.var}}, \code{\link{gamm}}, \code{\link{gam}},
  \code{\link{Predict.matrix}},
 \code{\link{smoothCon}}, \code{\link{PredictMat}}
  }

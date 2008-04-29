@@ -1075,7 +1075,7 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
 
   ## correct null deviance if there's an offset ....
 
-  if (G$intercept&&any(G$offset)) object$null.deviance <-
+  if (G$intercept&&any(G$offset!=0)) object$null.deviance <-
                                   glm(G$y~offset(G$offset),family=object$family)$deviance
 
   if (G$sig2<0) { 
@@ -1975,10 +1975,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   H # ... and return
 }
 
-plot.gam<-function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
-                   pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
-                   ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade=FALSE,shade.col="gray80",
-                   shift=0,trans=I,...)
+plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
+                     pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
+                     ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade=FALSE,shade.col="gray80",
+                     shift=0,trans=I,...)
 
 # Create an appropriate plot for each smooth term of a GAM.....
 # x is a gam object

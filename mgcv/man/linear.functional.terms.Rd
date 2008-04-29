@@ -18,7 +18,7 @@ differencing or quadrature, respectively). It also allows dependence on predicto
 The mechanism by which this is achieved is to supply matrices of covariate values to the 
 model smooth terms specified by \code{\link{s}} or \code{\link{te}} terms in the model formula.
 Each column of the covariate matrix gives rise to a corresponding column of predictions 
-from the smooth, let the resulting matrix of evaluated smooth values be F (F will have 
+from the smooth. Let the resulting matrix of evaluated smooth values be F (F will have 
 the same dimension as the covariate matrices). In the absense of a \code{by} variable 
 then these columns are simply summed and added to the linear predictor. i.e. the contribution of the 
 term to the linear predictor is \code{rowSums(F)}. If a \code{by} variable is present 

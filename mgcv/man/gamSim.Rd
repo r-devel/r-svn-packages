@@ -26,8 +26,10 @@ the response}
 \details{See the source code for exactly what is simulated in each case. 
 \item{1}{Gu and Wahba 4 univariate term example.}
 \item{2}{A smooth function of 2 variables.}
-\item{3}{Example with continuous by variable}
-\item{4}{Example with factor by variable}
+\item{3}{Example with continuous by variable.}
+\item{4}{Example with factor by variable.}
+\item{5}{An additive example plus a factor variable.}
+\item{6}{additive + random effect.}
 }
 
 \value{ Depends on \code{eg}, usually a dataframe, which may also contain some information on 

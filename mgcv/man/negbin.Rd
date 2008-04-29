@@ -44,7 +44,7 @@ taken as the discrete set of values of theta over which to search for \code{thet
 option only works with AIC based outer iteration, if performance iteration is used then an array will only
 be used to define a search range.
 
-If performance iteration is used (see \code{\link{gam.method}})then the method 
+If performance iteration is used (see \code{\link{gam.method}}) then the method 
 of estimation is to choose \eqn{\hat \theta}{theta}  so that the GCV (Pearson) estimate 
 of the scale parameter is one (since the scale parameter 
 is one for the negative binomial). In this case \eqn{\theta}{theta} estimation is nested within the IRLS loop 
@@ -64,11 +64,11 @@ using the previous smothing parameter and fitted values to start the new fit.
 
 In a simulation test based on 800 replicates of
 the first example data, given below, the GCV based (performance iteration) method yielded models with, 
-on avergage 6% better MSE performance than the AIC based (outer iteration) method. 
-\code{theta} had a 0.86 correlation coefficint between models.
+on avergage 6\% better MSE performance than the AIC based (outer iteration) method. 
+\code{theta} had a 0.86 correlation coefficient between models.
 \code{theta} estimates averaged 3.36 with a standard deviation of 0.44 for the AIC based method and
 3.22 with a standard deviation of 0.43 for the GCV based method. However the GCV based method is 
-less computationally reliable failing in around 4% of replicates. 
+less computationally reliable, failing in around 4\% of replicates. 
 
 }
 
@@ -76,6 +76,10 @@ less computationally reliable failing in around 4% of replicates.
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
 modified from Venables and Ripley's \code{negative.binomial} family.
+}
+
+\references{
+Venables, B. and B.R. Ripley (2002) Modern Applied Statistics in S, Springer.
 }
 
 \section{WARNINGS}{
@@ -88,27 +92,20 @@ The negative binomial functions from the MASS library are no longet supported.
 library(mgcv)
 set.seed(3)
 n<-400
-x0 <- runif(n, 0, 1)
-x1 <- runif(n, 0, 1)
-x2 <- runif(n, 0, 1)
-x3 <- runif(n, 0, 1)
-pi <- asin(1) * 2
-f <- 2 * sin(pi * x0)
-f <- f + exp(2 * x1)
-f <- f + 0.2 * x2^11 * (10 * (1 - x2))^6 + 10 * (10 * x2)^3 * (1 - x2)^10
-g<-exp(f/5)
+dat <- gamSim(1,n=n)
+g <- exp(dat$f/5)
 
 # negative binomial data  
-y<-rnbinom(g,size=3,mu=g)
-
+dat$y <- rnbinom(g,size=3,mu=g)
+attach(dat)
 # known theta ...
-b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(3))
+b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(3))
 plot(b,pages=1)
 print(b)
 
 ## unknown theta via performance iteration...
-b1<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(c(1,10)),
-       method=gam.method(gam="perf"))
+b1 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(c(1,10)),
+          method=gam.method(gam="perf"))
 plot(b1,pages=1)
 print(b1)
 
@@ -125,14 +122,18 @@ b2$family$getTheta()
 b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(2:10/2))
 plot(b3,pages=1)
 print(b3)
+detach(dat)
 
 ## another example...
 set.seed(1)
-f<-f-min(f);g<-f^2
-y<-rnbinom(g,size=3,mu=g)
-b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(1:10,link="sqrt")) 
+f <- dat$f
+f <- f - min(f);g <- f^2
+dat$y <- rnbinom(g,size=3,mu=g)
+attach(dat)
+b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(1:10,link="sqrt")) 
 plot(b,pages=1)
 print(b)
+detach(dat);rm(dat)
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

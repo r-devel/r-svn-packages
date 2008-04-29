@@ -56,7 +56,8 @@ shrinkage component of the penalty is set at a level that usually makes negligab
 contribution to the penalization of the model, only becoming effective when
 the term is effectively `completely smooth' according to the conventional penalty.
 
-
+Note that GCV and UBRE are not appropriate for comparing models using different families: 
+in that case AIC should be used.
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}

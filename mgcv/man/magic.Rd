@@ -207,16 +207,10 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686
 \examples{
 ## Use `magic' for a standard additive model fit ... 
    library(mgcv)
-   set.seed(1);n <- 400;sig2 <- 4
-   x0 <- runif(n, 0, 1);x1 <- runif(n, 0, 1)
-   x2 <- runif(n, 0, 1);x3 <- runif(n, 0, 1)
-   f <- 2 * sin(pi * x0)
-   f <- f + exp(2 * x1) - 3.75887
-   f <- f+0.2*x2^11*(10*(1-x2))^6+10*(10*x2)^3*(1-x2)^10
-   e <- rnorm(n, 0, sqrt(sig2))
-   y <- f + e
+   set.seed(1);n <- 400;sig <- 2
+   dat <- gamSim(1,n=n,scale=sig)
 ## set up additive model
-   G <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE)
+   G <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE,data=dat)
 ## fit using magic
    mgfit <- magic(G$y,G$X,G$sp,G$S,G$off,rank=G$rank,C=G$C)
 ## and fit using gam as consistency check
@@ -234,7 +228,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686
 ## simulate truth
     set.seed(1);n<-400;sig<-2
     x <- 0:(n-1)/(n-1)
-    f <- 0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10-1.396
+    f <- 0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10
 ## produce scaled covariance matrix for AR1 errors...
     V <- corMatrix(Initialize(corAR1(.6),data.frame(x=x)))
     Cv <- chol(V)  # t(Cv)%*%Cv=V

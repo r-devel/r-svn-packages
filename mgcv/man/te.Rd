@@ -26,9 +26,10 @@
 marginal basis. \code{"cr"} for cubic regression spline; \code{"cs"} for cubic
 regression spline with shrinkage; \code{"cc"} for periodic/cyclic 
 cubic regression spline; \code{"tp"} for thin plate regression spline;
-\code{"ts"} for t.p.r.s. with extra shrinkage. User defined bases can 
+\code{"ts"} for t.p.r.s. with extra shrinkage. See \code{\link{smooth.terms}} for details 
+and full list. User defined bases can 
 also be used here (see \code{\link{smooth.construct}} for an example). If only one 
-identifier is given then this is used for all bases.}
+basis code is given then this is used for all bases.}
 
 \item{m}{The order of the penalty (for smooth classes that use this) for each term. 
    If a single number is given  then it is used for all terms. \code{NA} autoinitializes. 
@@ -38,9 +39,13 @@ identifier is given then this is used for all bases.}
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 
 set \code{d=c(2,1)}.}
 
-\item{by}{specifies a covariate by which the whole smooth term is to
-    be multiplied. This is particularly useful for creating models in
-    which a smooth interacts with a factor: See the example in \code{\link{s}}.}
+\item{by}{a numeric or factor variable of the same dimension as each covariate. 
+In the numeric vector case the elements multiply the smooth evaluated at the corresponding 
+covariate values (a `varying coefficient model' results). 
+In the factor case causes a replicate of the smooth to be produced for
+each factor level. See \code{\link{gam.models}} for further details. May also be a matrix 
+if covariates are matrices: in this case implements linear functional of a smooth 
+(see \code{\link{gam.models}} and \code{\link{linear.functional.terms}} for details).}
 
 \item{fx}{indicates whether the term is a fixed d.f. regression
   spline (\code{TRUE}) or a penalized regression spline (\code{FALSE}).}
@@ -50,17 +55,17 @@ a single penalty: single penalties are not recommended - they tend to allow only
 wiggly models.}
 
 \item{np}{ \code{TRUE} to use the `normal parameterization' for a tensor
-product smooth. This parameterization represents any 1-d marginal smooths
-using a parameterization where the parameters are function values at `knots'
+product smooth. This represents any 1-d marginal smooths
+via parameters that are function values at `knots',
 spread evenly through the data. The parameterization makes the penalties
-easily interpretable, however it can reduce numerical stability.}
+easily interpretable, however it can reduce numerical stability in some cases.}
 
 \item{xt}{Either a single object, providing any extra information to be passed
 to each marginal basis constructor, or a list of such objects, one for each
 marginal basis. }
 
 \item{id}{A label or integer identifying this term in order to link its smoothing
-          parameters to others of the same type. If two or more terms have the same 
+          parameters to others of the same type. If two or more smooth terms have the same 
           \code{id} then they will have the same smoothing paramsters, and, by default,
           the same bases (first occurance defines basis type, but data from all terms 
           used in basis construction).}

@@ -55,7 +55,6 @@ regression splines. \code{m} specifies the order of the derivatives in the thin 
 
 \value{ An object of class \code{"tprs.smooth"} or \code{"ts.smooth"}. In addition to the usual elements of a 
 smooth class documented under \code{\link{smooth.construct}}, this object will contain:
-\itemize{ 
 \item{shift}{A record of the shift applied to each covariate in order to center it around zero and 
 avoid any co-linearity problems that might otehrwise occur in the penalty null space basis of the term. }
 \item{Xu}{A matrix of the unique covariate combinations for this smooth (the basis is constructed by first stripping 
@@ -64,12 +63,11 @@ out duplicate locations).}
 \item{null.space.dimension}{The dimension of the space of functions that have zero wiggliness according to the 
 wiggliness penalty for this term.}
 }
-}
 
 \details{ The default basis dimension for this class is \code{k=10*3^(d-1)} where \code{d} is the number
  of covariates for the term.
 
-The default is to set \code{m} (the order of derivative in the thin plate spline penalty) to the smallest value satisfying \code{2m > d+1} where \code{d} if the number of covariates of the term: this yileds `visually smooth' functions. In any case \code{2m>d} must be satisfied. 
+The default is to set \code{m} (the order of derivative in the thin plate spline penalty) to the smallest value satisfying \code{2m > d+1} where \code{d} if the number of covariates of the term: this yields `visually smooth' functions. In any case \code{2m>d} must be satisfied. 
 
 
 The constructor is not normally called directly, but is rather used internally by \code{\link{gam}}. 
@@ -84,7 +82,7 @@ list with elements \code{max.knots} and \code{seed} containing a number
 to use in place of 3000, and the random number seed to use (either can be
 missing). 
 
-For these bases \code{knots} has two uses. Firstly, for large datasets 
+For these bases \code{knots} has two uses. Firstly, as mentioned already, for large datasets 
 the calculation of the \code{tp} basis can be time-consuming. The user can retain most of the advantages of the t.p.r.s. 
 approach by supplying  a reduced set of covariate values from which to obtain the basis - 
 typically the number of covariate values used will be substantially 
@@ -95,8 +93,6 @@ is to avoid the eigen-decomposition used to find the t.p.r.s. basis altogether a
 the basis implied by the chosen knots: this will happen if the number of knots supplied matches the 
 basis dimension, \code{k}. For a given basis dimension the second option is 
 faster, but gives poorer results (and the user must be quite careful in choosing knot locations). 
-
-
 }
 
 \references{

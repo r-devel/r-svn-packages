@@ -21,7 +21,7 @@ for quantities derived from the model, and for lookup table prediction outside
   
  \item{object}{ a fitted \code{gam} object as produced by \code{gam()}.
                 }
- \item{newdata}{ A data frame containing the values of the model covariates at which predictions
+ \item{newdata}{ A data frame or list containing the values of the model covariates at which predictions
   are required. If this is not provided then predictions corresponding to the
                 original data are returned. If \code{newdata} is provided then
                 it should contain all the variables needed for prediction: a
@@ -127,18 +127,10 @@ parametric model components.
 library(mgcv)
 n<-200
 sig <- 2
-x0 <- runif(n, 0, 1)
-x1 <- runif(n, 0, 1)
-x2 <- runif(n, 0, 1)
-x3 <- runif(n, 0, 1)
-y <- 2 * sin(pi * x0)
-y <- y + exp(2 * x1) 
-y <- y + 0.2 * x2^11 * (10 * (1 - x2))^6 + 10 * (10 * x2)^3 * (1 - x2)^10
-y <- y + x3
-e <- rnorm(n, 0, sig)
-y <- y + e
-b<-gam(y~s(x0)+s(I(x1^2))+s(x2)+offset(x3))
-rm(y,x0,x1,x2,x3)
+dat <- gamSim(1,n=n,scale=sig)
+
+b<-gam(y~s(x0)+s(I(x1^2))+s(x2)+offset(x3),data=dat)
+
 newd <- data.frame(x0=(0:30)/30,x1=(0:30)/30,x2=(0:30)/30,x3=(0:30)/30)
 pred <- predict.gam(b,newd)
 

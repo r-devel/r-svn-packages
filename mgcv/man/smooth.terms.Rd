@@ -41,7 +41,7 @@ derivative.}
 
 \item{P-splines}{\code{bs="ps"}. 
 These are P-splines as proposed by Eilers and Marx (1996). They combine a B-spline basis, with a discrete penalty
-on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penbalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mis different orders of basis and penalty.}
+on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mix different orders of basis and penalty.}
 
 \code{bs="cs"} gives a cyclic version of a P-spline.
 }
@@ -68,7 +68,7 @@ Finally univariate and bivariate adaptive (\code{bs="ad"}) smooths are available
 These are appropriate when the degree of smoothing should itself vary with the covariates to be smoothed, and the 
 data contain sufficient information to be able to estimate the appropriate variation. Because this flexibility is 
 achieved by splitting the penalty into several `basis penalties' these terms are not suitable as components of tensor 
-product smooths.
+product smooths, and are not supported by \code{gamm}.
 
 
 }

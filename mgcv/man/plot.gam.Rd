@@ -160,7 +160,6 @@ The function can not deal with smooths of more than 2 variables!
 library(mgcv)
 set.seed(0)
 ## fake some data...
-
 f1 <- function(x) {exp(2 * x)}
 f2 <- function(x) { 
   0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10 

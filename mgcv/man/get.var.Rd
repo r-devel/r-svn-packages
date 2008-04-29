@@ -6,7 +6,7 @@
 string is the name of a variable in the data frame/ list. If it is then the value of this variable is returned. 
 Otherwise the routine tries to evaluate the expression within the data.frame/list (but nowhere else) and if 
 successful returns the result. If neither step works then \code{NULL} is returned. The routine is useful for
-processing gam formulae. If the variable is a matrix then itis coerced to a numeric vector, by default.}
+processing gam formulae. If the variable is a matrix then it is coerced to a numeric vector, by default.}
 
 \usage{ get.var(txt,data,vecMat=TRUE)
 }

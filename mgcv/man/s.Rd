@@ -24,16 +24,10 @@
 \item{fx}{indicates whether the term is a fixed d.f. regression
   spline (\code{TRUE}) or a penalized regression spline (\code{FALSE}).}
 
-\item{bs}{this can be \code{"cr"} for a cubic regression spline, \code{"cs"}
-  for a cubic regression spline with shrinkage, \code{"cc"} for
-    a cyclic (periodic) spline,
-    \code{"tp"} for a thin plate regression spline, \code{"ts"} for a thin
-    plate regression spline with shrinkage or a user defined 
-    character string for other user defined smooth classes. Of the built in alternatives, only thin plate
-    regression splines can be used for multidimensional smooths. Note that the
-    \code{"cr"} and \code{"cc"} bases are faster to set up than the \code{"tp"} basis, particularly
-  on large data sets (although the \code{knots} argument to \code{gam} can be
-  used to get round this).}
+\item{bs}{a two letter character string indicating the (penalized) smoothing basis to use.
+(eg \code{"tp"} for thin plate regression spline, \code{"cr"} for cubic regression spline).
+see \code{\link{smooth.terms}} for an over view of what is available.
+}
 
 \item{m}{The order of the penalty for this term (e.g. 2 for
     normal cubic spline penalty with 2nd derivatives when using 
@@ -41,10 +35,14 @@
     autoinitialization. Only some smooth classes use this. The \code{"ps"} 
     class can use a 2 item array giving the basis and penalty order separately.}
 
-\item{by}{specifies a covariate by which the whole smooth term is to
-    be multiplied. This is particularly useful for creating models in
-    which a smooth interacts with a factor: See the examples below. 
-   This is the means by which `variable coefficient models' can be specified.}
+\item{by}{a numeric or factor variable of the same dimension as each covariate. 
+In the numeric vector case the elements multiply the smooth evaluated at the corresponding 
+covariate values (a `varying coefficient model' results). 
+In the factor case causes a replicate of the smooth to be produced for
+each factor level. See \code{\link{gam.models}} for further details. May also be a matrix 
+if covariates are matrices: in this case implements linear functional of a smooth 
+(see \code{\link{gam.models}} and \code{\link{linear.functional.terms}} for details).
+}
 
 \item{xt}{Any extra information required to set up a particular basis. Used
   e.g. to set large data set handling behaviour for \code{"tp"} basis.}
@@ -53,7 +51,8 @@
           parameters to others of the same type. If two or more terms have the same 
           \code{id} then they will have the same smoothing paramsters, and, by default,
           the same bases (first occurance defines basis type, but data from all terms 
-          used in basis construction).}
+          used in basis construction). An \code{id} with a factor \code{by} variable causes the smooths
+          at each factor level to have the same smoothing parameter.} 
 
 \item{sp}{any supplied smoothing parameters for this term. Must be an array of the same
 length as the number of penalties for this smooth. Positive or zero elements are taken as fixed 
