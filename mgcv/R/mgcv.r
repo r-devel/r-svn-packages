@@ -2408,10 +2408,31 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
 }
 
 
-## Start of anova and summary code as improved by Henric Nilsson ....
-## Added 10/8/05...
+## Start of anova and summary (with contributions from Henric Nilsson) ....
 
-summary.gam <- function (object, dispersion = NULL, freq = TRUE, ...) 
+eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
+## forms truncated eigen-decomposition of XVX', efficiently,
+## where V is symmetric, and X has more rows than columns
+## first `rank' eigen values/vectors are returned, where `rank'
+## is the smaller of any non-NULL supplied value, and the rank
+## estimated using `tol'
+  qrx <- qr(X)
+  R <- qr.R(qrx)
+  V <- R%*%V%*%t(R)
+  V <- (V + t(V))/2
+  ed <- eigen(V,symmetric=TRUE)
+  ind <- abs(ed$values) > max(abs(ed$values))*tol
+  erank <- sum(ind) ## empirical rank
+  if (is.null(rank)) {
+    rank <- erank
+  } else { if (rank<erank) ind <- 1:rank }
+  vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
+  list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
+}
+
+
+
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...) 
 # summary method for gam object - provides approximate p values for terms + other diagnostics
 # Improved by Henric Nilsson
 { pinv<-function(V,M,rank.tol=1e-6)
@@ -2492,21 +2513,27 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, ...)
   m<-length(object$smooth) # number of smooth terms
   df <- edf <- s.pv <- chi.sq <- array(0, m)
   if (m>0) # form test statistics for each smooth
-  { for (i in 1:m)
+  { if (!freq) X <- model.matrix(object)
+    for (i in 1:m)
     { start<-object$smooth[[i]]$first.para;stop<-object$smooth[[i]]$last.para
       V <- covmat[start:stop,start:stop] # cov matrix for smooth
       p<-object$coefficients[start:stop]  # params for smooth
-      M1<-object$smooth[[i]]$df
-      M<-min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
-      V<-pinv(V,M) # get rank M pseudoinverse of V
-      chi.sq[i]<-t(p)%*%V%*%p
-##      er<-names(object$coefficients)[start]
-##      er<-substring(er,1,nchar(er)-2)
-##      if (object$smooth[[i]]$by!="NA") 
-##      { er<-paste(er,":",object$smooth[[i]]$by,sep="")} 
+      edf[i]<-sum(object$edf[start:stop]) # edf for this smooth
+      if (freq) { ## old style frequentist
+        M1<-object$smooth[[i]]$df
+        M<-min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
+        V<-pinv(V,M) # get rank M pseudoinverse of V
+        chi.sq[i]<-t(p)%*%V%*%p
+        df[i] <- attr(V, "rank")
+      } else { ## Nychka statistics
+        Xt <- X[,start:stop] 
+        ft <- Xt%*%p
+        ed <- eigXVX(Xt,V,ceiling(edf[i]))
+        ## t(ft)%*%ginv(Ats)%*%ft where Ats = Xt%*%Vt%*%t(Xt), efficiently calculated...
+        chi.sq[i] <- sum(((t(ed$vectors)%*%ft)/sqrt(ed$values))^2)
+        df[i] <- (edf[i]+ed$rank)/2
+      }
       names(chi.sq)[i]<- object$smooth[[i]]$label
-      edf[i]<-sum(object$edf[start:stop])
-      if (freq) df[i] <- attr(V, "rank") else df[i] <- edf[i]
       if (!est.disp)
       s.pv[i]<-pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
       else
@@ -2517,16 +2544,16 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, ...)
         s.table <- cbind(edf, df, chi.sq, s.pv)      
         dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "Chi.sq", "p-value"))
       } else {
-        s.table <- cbind(edf, chi.sq, s.pv)      
-        dimnames(s.table) <- list(names(chi.sq), c("edf", "Chi.sq", "p-value"))
+        s.table <- cbind(edf, df, chi.sq, s.pv)      
+        dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "Chi.sq", "p-value"))
       }
     } else {
       if (freq) {
         s.table <- cbind(edf, df, chi.sq/df, s.pv)      
         dimnames(s.table) <- list(names(chi.sq), c("edf", "Est.rank", "F", "p-value"))
       } else {
-        s.table <- cbind(edf, chi.sq/df, s.pv)      
-        dimnames(s.table) <- list(names(chi.sq), c("edf", "F", "p-value"))
+        s.table <- cbind(edf, df, chi.sq/df, s.pv)      
+        dimnames(s.table) <- list(names(chi.sq), c("edf", "Ref.df", "F", "p-value"))
       }
     }
   }
