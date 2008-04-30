@@ -2636,7 +2636,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL)
             test = test))
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
-    sg <- summary(object, dispersion = dispersion, freq = TRUE)
+    sg <- summary(object, dispersion = dispersion, freq = FALSE)
     class(sg) <- "anova.gam"
     sg
 }
