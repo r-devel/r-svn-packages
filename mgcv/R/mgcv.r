@@ -608,6 +608,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
    
     G$smooth[[i]] <- sm[[i]]   
   }
+  G$cmX <- colMeans(X) ## useful for componentwise CI construction 
   G$X<-X;rm(X)
   n.p<-ncol(G$X) 
   # deal with penalties
@@ -1179,6 +1180,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   
   if (!is.null(G$L)) object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
   object$formula<-G$formula
+  object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
   object$model<-G$mf # store the model frame
   object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
   object$control <- control
@@ -1729,6 +1731,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 # Type == "link"     - for linear predictor
 #      == "response" - for fitted values
 #      == "terms"    - for individual terms on scale of linear predictor 
+#      == "iterms"   - exactly as "terms" except that se's include uncertainty about mean  
 #      == "lpmatrix" - for matrix mapping parameters to l.p.
 # Steps are:
 #  1. Set newdata to object$model if no newdata supplied
@@ -1744,9 +1747,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 # ready to go, so that only factor levels are checked for sanity.
 # 
 # if `terms' is non null then it should be a list of terms to be returned 
-# when type=="terms". 
+# when type=="terms" or "iterms". 
 # if `object' has an attribute `para.only' then only parametric terms of order
-# 1 are returned for type=="terms" : i.e. only what termplot can handle.
+# 1 are returned for type=="terms"/"iterms" : i.e. only what termplot can handle.
 #
 # if no new data is supplied then na.action does nothing, otherwise 
 # if na.action == "na.pass" then NA predictors result in NA predictions (as lm
@@ -1754,7 +1757,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 #              == "na.omit" or "na.exclude" then NA predictors result in
 #                       dropping
 
-  if (type!="link"&&type!="terms"&&type!="response"&&type!="lpmatrix")  
+  if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  
   { warning("Unknown type, reset to terms.")
     type<-"terms"
   }
@@ -1838,7 +1841,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if (type=="lpmatrix")
   { H<-matrix(0,np,nb)
   } else
-  if (type=="terms")
+  if (type=="terms"||type=="iterms")
   { term.labels<-attr(object$pterms,"term.labels")
     if (is.null(attr(object,"para.only"))) para.only <-FALSE else
     para.only <- TRUE  # if true then only return information on parametric part
@@ -1880,14 +1883,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
       Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
       if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
-      if (type=="terms") ColNames[n.pterms+k]<-object$smooth[[k]]$label
+      if (type=="terms"||type=="iterms") ColNames[n.pterms+k]<-object$smooth[[k]]$label
     }
     # have prediction matrix for this block, now do something with it
     if (type=="lpmatrix") { 
       H[start:stop,]<-X
       if (any.soff) s.offset <- rbind(s.offset,Xoff)
     } else 
-    if (type=="terms")
+    if (type=="terms"||type=="iterms")
     {
       ind <- 1:length(object$assign)
       if (n.pterms)  # work through parametric part
@@ -1902,9 +1905,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       { for (k in 1:n.smooth) # work through the smooth terms 
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients[first:last] + Xoff[,k]
-          if (se.fit) # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-          se[start:stop,n.pterms+k]<-
-          sqrt(rowSums((X[,first:last]%*%object$Vp[first:last,first:last])*X[,first:last]))
+          if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
+            if (type=="iterms") { ## termwise se to "carry the intercept"
+              X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
+              X1[,first:last] <- X[,first:last]
+              se[start:stop,n.pterms+k] <- sqrt(rowSums((X1%*%object$Vp)*X1))
+            } else se[start:stop,n.pterms+k] <- ## terms strictly centred
+            sqrt(rowSums((X[,first:last]%*%object$Vp[first:last,first:last])*X[,first:last]))
+          } ## end if (se.fit)
         }
         colnames(fit) <- ColNames
         if (se.fit) colnames(se) <- ColNames
@@ -1971,14 +1979,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       H <- napredict(na.act,H)
     }
   }
-  if (type=="terms") attr(H,"constant") <- object$coefficients[1]
+  if (type=="terms"||type=="iterms") attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 }
 
 plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade=FALSE,shade.col="gray80",
-                     shift=0,trans=I,...)
+                     shift=0,trans=I,seWithMean=TRUE,...)
 
 # Create an appropriate plot for each smooth term of a GAM.....
 # x is a gam object
@@ -2158,7 +2166,14 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       offset <- attr(X,"offset")
       if (is.null(offset)) 
       fit <- X%*%p else fit<-X%*%p + offset       # fitted values
-      if (se) se.fit<-sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
+      if (se) {
+        if (seWithMean) { ## then se to include uncertainty in overall mean
+          X1 <- matrix(x$cmX,nrow(X),ncol(x$Vp),byrow=TRUE)
+          X1[,first:last] <- X
+          se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
+        } else se.fit <- ## se in centred space only
+        sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
+      }
       edf<-sum(x$edf[first:last])
       xterm <- x$smooth[[i]]$term
       if (is.null(xlab)) xlabel<- xterm else xlabel <- xlab
@@ -2196,8 +2211,14 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       if (is.null(offset)) 
       fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       fit[exclude] <- NA                 # exclude grid points too far from data
-      if (se) 
-      { se.fit<-sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
+      if (se) {  
+        if (seWithMean) { ## then se to include uncertainty in overall mean
+          X1 <- matrix(x$cmX,nrow(X),ncol(x$Vp),byrow=TRUE)
+          X1[,first:last] <- X
+          se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
+        } else se.fit <- ## se in centred space only
+        sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
+
         se.fit[exclude] <- NA # exclude grid points too distant from data
       }
       edf<-sum(x$edf[first:last])
@@ -2334,7 +2355,8 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
         { if (scale==0&&is.null(ylim)) 
           { if (partial.resids) ylimit <- range(pd[[i]]$p.resid,na.rm=TRUE) else ylimit <-range(pd[[i]]$fit)}
           if (!is.null(ylim)) ylimit <- ylim
-          plot(pd[[i]]$x,trans(pd[[i]]$fit+shift),type="l",,xlab=pd[[i]]$xlab,ylab=pd[[i]]$ylab,ylim=trans(ylimit+shift),xlim=xlim,main=main,...)
+          plot(pd[[i]]$x,trans(pd[[i]]$fit+shift),type="l",,xlab=pd[[i]]$xlab,
+               ylab=pd[[i]]$ylab,ylim=trans(ylimit+shift),xlim=xlim,main=main,...)
           if (rug) 
 	  { if (jit) rug(jitter(as.numeric(pd[[i]]$raw)),...)
             else rug(as.numeric(pd[[i]]$raw),...) 

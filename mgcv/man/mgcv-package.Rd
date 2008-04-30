@@ -45,10 +45,10 @@ the model coefficients is returned in \code{Vp} of the
 \code{\link{gamObject}}. See \code{\link{predict.gam}} for examples of how
 this can be used to obtain credible regions for any quantity derived from the
 fitted model, either directly, or by direct simulation from the posterior
-distribution of the model coefficients. Frequentist approximations can be used
-for hypothesis testing: see \code{\link{anova.gam}} and
-\code{\link{summary.gam}}, but note that the underlying approximations are not
-always good in this case.
+distribution of the model coefficients. Approximate p-values can also be obtained for testing 
+individual smooth terms for equality to the zero function, using similar ideas. Frequentist
+approximations can be used for hypothesis testing based model comparison. See \code{\link{anova.gam}} and
+\code{\link{summary.gam}} for more on hypothesis testing.
 
 The package also provides a generalized additive mixed modelling function,
 \code{\link{gamm}}, based on a PQL approach and  

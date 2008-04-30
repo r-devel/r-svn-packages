@@ -7,7 +7,7 @@
 summaries from it. (See \code{\link{sink}} to divert output to a file.)
 }
 \usage{
-\method{summary}{gam}(object, dispersion=NULL, freq=TRUE, ...)
+\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, ...)
 
 \method{print}{summary.gam}(x,digits = max(3, getOption("digits") - 3), 
                   signif.stars = getOption("show.signif.stars"),...)
@@ -38,17 +38,45 @@ Residual degrees of freedom are taken as number of data minus model degrees of
 freedom. 
 Let \eqn{ {\bf P}_i}{P_i} be the matrix 
 giving the parameters of the ith smooth when applied to the data (or pseudodata in the generalized case) and let \eqn{ {\bf X}}{X} 
-be the design matrix of the model. Then \eqn{ tr({\bf XP}_i )}{tr(XP_i)} is the edf for the ith term. Clearly this definition causes 
-the edf's to add up properly! 
+be the design matrix of the model. Then \eqn{ tr({\bf XP}_i )}{tr(XP_i)} is the edf for the ith term. Clearly this definition causes the edf's to add up properly! 
 
 \code{print.summary.gam} tries to print various bits of summary information useful for term selection in a pretty way.
 
-If \code{freq=FALSE} then the Bayesian parameter covariance matrix,
-\code{object$Vp}, is used to calculate test statistics for terms, and the
-degrees of freedom for reference distributions is taken as the estimated
-degrees of freedom for the term concerned. This is not easy to justify
-theoretically, and the resulting `Bayesian p-values' are difficult to
-interpret and often have much worse frequentist performance than the default p-values. 
+If \code{freq=TRUE} then the frequentist approximation for p-values of smooth terms described in section
+4.8.5 of Wood (2006) is used. The approximation is not great.  If \eqn{ {\bf p}_i}{p_i} 
+is the parameter vector for the ith smooth term, and this term has estimated
+covariance matrix \eqn{ {\bf V}_i}{V_i} then the 
+statistic is \eqn{ {\bf p}_i^\prime {\bf V}_i^{k-} {\bf
+p}_i}{p_i'V_i^{k-}p_i}, where \eqn{ {\bf V}^{k-}_i}{V_i^{k-}} is the rank k 
+pseudo-inverse of \eqn{ {\bf V_i}}{V_i}, and k is estimated rank of  
+\eqn{{\bf V_i}}{V_i}. p-values are obtained as follows. In the case of
+known dispersion parameter, they are obtained by comparing the chi.sq statistic to the 
+chi-squared distribution with k degrees of freedom, where k is the estimated
+rank of  \eqn{ {\bf V_i}}{V_i}. If the dispersion parameter is unknown (in 
+which case it will have been estimated) the statistic is compared
+to an F distribution with k upper d.f.  and lower d.f. given by the residual degrees of freedom for the model . 
+Typically the p-values will be somewhat too low, because they are conditional
+on the smoothing parameters, which are usually uncertain, but note that the
+statistic can also have low power if the rank, k, is too high relative to the
+EDF of the term!
+
+If \code{freq=FALSE} then `Bayesian p-values' are returned for the smooth terms, based on a test statistic motivated
+by Nychka's (1988) analysis of the frequentist properties of Bayesian confidence intervals for smooths. 
+These appear to have better frequentist performance (in terms of power and distribution under the null) 
+than the alternative strictly frequentist approximation. Let \eqn{\bf f}{f} denote the vector of 
+values of a smooth term evaluated at the original 
+covariate values and let \eqn{{\bf V}_f}{V_f} denote the corresponding Bayesian covariance matrix. Let 
+\eqn{{\bf V}_f^{r-}}{V*_f} denote the rank \eqn{r}{r} pseudoinverse of \eqn{{\bf V}_f}{V_f}, where \eqn{r}{r} is
+the smaller of the EDF for the term, rounded up, and the numerical rank of \eqn{{\bf V}_f}{V_f}. The statistic used is
+then 
+\deqn{T = {\bf f}^T {\bf V}_f^{r-}{\bf f}}{T = f'V*_f f}
+(this can be calcualted efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to a 
+chi-squared distribution with degrees of freedom given by the average of the EDF for the term and \eqn{r}{r}, 
+or \eqn{T}{T} is used as a component in an F ratio statistic if the scale parameter has been estimated. 
+The definition of Bayesian p-value used is: 
+the probability of observing an \eqn{\bf f}{f} less probably than \eqn{\bf 0}{0}, under the approximation for the posterior 
+for \eqn{\bf f}{f} implied by the truncation used in the test statistic. The adjustment of the degrees of freedom is a crude 
+attempt to allow for the effect of penalization. 
 }
 
 \value{\code{summary.gam} produces a list of summary information for a fitted \code{gam} object. 
@@ -65,26 +93,10 @@ estimated, and the standard normal if not.}
 \item{m}{The number of smooth terms in the model.}
 
 \item{chi.sq}{An array of test statistics for assessing the significance of
-model smooth terms. If \eqn{ {\bf p}_i}{p_i} 
-is the parameter vector for the ith smooth term, and this term has estimated
-covariance matrix \eqn{ {\bf V}_i}{V_i} then the 
-statistic is \eqn{ {\bf p}_i^\prime {\bf V}_i^{k-} {\bf
-p}_i}{p_i'V_i^{k-}p_i}, where \eqn{ {\bf V}^{k-}_i}{V_i^{k-}} is the rank k 
-pseudo-inverse of \eqn{ {\bf V_i}}{V_i}, and k is estimated rank of  \eqn{
-{\bf V_i}}{V_i}.}
+model smooth terms. See details.}
 
 \item{s.pv}{An array of approximate p-values for the null hypotheses that each
-smooth term is zero. Be warned, these are only approximate. In the case of
-known dispersion parameter, they are obtained by comparing the chi.sq statistic given above to the 
-chi-squared distribution with k degrees of freedom, where k is the estimated
-rank of  \eqn{ {\bf V_i}}{V_i}. If the dispersion parameter is unknown (in 
-which case it will have been estimated) the statistic is compared
-to an F distribution with k upper d.f.  and lower d.f. given by the residual degrees of freedom for the model . 
-Typically the p-values will be somewhat too low, because they are conditional
-on the smoothing parameters, which are usually uncertain, but note that the
-statistic can also have low power if the rank, k, is too high relative to the
-EDF of the term!
-}
+smooth term is zero. Be warned, these are only approximate.}
 
 \item{se}{array of standard error estimates for all parameter estimates.}
 
@@ -120,8 +132,8 @@ explained is probably more appropriate for non-normal errors.}
 each parametric term is zero.}
 
 \item{pTerms.pv}{p-values associated with the tests that each term is
-zero. For penalized fits these are approximate, being conditional on the smoothing
-parameters. The reference distribution is an appropriate chi-squared when the
+zero. For penalized fits these are approximate. The reference distribution 
+is an appropriate chi-squared when the
 scale parameter is known, and is based on an F when it is not.}
 
 \item{cov.unscaled}{The estimated covariance matrix of the parameters (or
@@ -140,6 +152,9 @@ by scale parameter.}
 
 \references{
 
+Nychka (1988) Bayesian Confidence Intervals for Smoothing Splines. 
+Journal of the American Statistical Association 83:1134-1143.
+
 Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman
 and Hall/CRC Press.
 
@@ -147,9 +162,7 @@ and Hall/CRC Press.
 \author{ Simon N. Wood \email{simon.wood@r-project.org} with substantial
 improvements by Henric Nilsson.}
 
-\section{WARNING }{ The supplied p-values will often be underestimates if
-smoothing parameters have been estimated as part of model fitting.
-
+\section{WARNING }{ The p-values are approximate. 
 } 
 
 \seealso{  \code{\link{gam}}, \code{\link{predict.gam}},

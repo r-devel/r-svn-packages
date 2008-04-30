@@ -28,6 +28,8 @@ cases, not at the MLE.}
 
 \item{call}{the matched call (allows \code{update} to be used with \code{gam} objects, for example). }
 
+\item{cmX}{column means of the model matrix --- useful for componentwise CI calculation.}
+
 \item{coefficients}{the coefficients of the fitted model. Parametric
           coefficients are  first, followed  by coefficients for each
           spline term in turn.}

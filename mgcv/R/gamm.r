@@ -1239,7 +1239,8 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     
     object<-list(model=mf,formula=formula,smooth=G$smooth,nsdf=G$nsdf,family=family,
                  df.null=nrow(G$X),y=G$y,terms=Terms,pterms=pTerms,xlevels=G$xlevels,
-                 contrasts=G$contrasts,assign=G$assign,na.action=attr(mf,"na.action"))
+                 contrasts=G$contrasts,assign=G$assign,na.action=attr(mf,"na.action"),
+                 cmX=G$cmX)
     # Transform  parameters back to the original space....
     bf<-as.numeric(ret$lme$coefficients$fixed)
     br<-as.numeric(unlist(ret$lme$coefficients$random))

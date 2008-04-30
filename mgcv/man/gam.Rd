@@ -328,51 +328,49 @@ an infinite range on the linear predictor scale.
 library(mgcv)
 set.seed(0) ## simulate some data... 
 dat <- gamSim(1,n=400,dist="normal",scale=2)
-attach(dat)
-b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3))
+b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat)
 summary(b)
 plot(b,pages=1,residuals=TRUE)
 
 ## same fit in two parts .....
-G<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE)
+G<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE,data=dat)
 b<-gam(G=G)
 print(b)
 
 ## set the smoothing parameter for the first term, estimate rest ...
-bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),sp=c(0.01,-1,-1,-1))
+bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),sp=c(0.01,-1,-1,-1),data=dat)
 plot(bp,pages=1)
 ## alternatively...
-bp <- gam(y~s(x0,sp=.01)+s(x1)+s(x2)+s(x3))
+bp <- gam(y~s(x0,sp=.01)+s(x1)+s(x2)+s(x3),data=dat)
 
 # set lower bounds on smoothing parameters ....
-bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),min.sp=c(0.001,0.01,0,10)) 
+bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),
+        min.sp=c(0.001,0.01,0,10),data=dat) 
 print(b);print(bp)
 
 ## now a GAM with 3df regression spline term & 2 penalized terms
-b0<-gam(y~s(x0,k=4,fx=TRUE,bs="tp")+s(x1,k=12)+s(x2,k=15))
+b0<-gam(y~s(x0,k=4,fx=TRUE,bs="tp")+s(x1,k=12)+s(x2,k=15),data=dat)
 plot(b0,pages=1)
 
 ## now fit a 2-d term to x0,x1
-b1<-gam(y~s(x0,x1)+s(x2)+s(x3))
+b1<-gam(y~s(x0,x1)+s(x2)+s(x3),data=dat)
 par(mfrow=c(2,2))
 plot(b1)
 
 
 
 par(mfrow=c(1,1))
-detach(dat)
 ## now simulate poisson data...
 dat <- gamSim(1,n=400,dist="poisson",scale=.25)
-attach(dat)
 
-b2<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson)
+b2<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,data=dat)
 plot(b2,pages=1)
 
 ## repeat fit using performance iteration
 gm <- gam.method(gam="perf")
-b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,method=gm)
+b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
+        data=dat,method=gm)
 plot(b3,pages=1)
-detach(dat)
 
 ## a binary example 
 dat <- gamSim(1,n=400,dist="binary",scale=.33)

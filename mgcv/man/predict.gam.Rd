@@ -31,7 +31,9 @@ for quantities derived from the model, and for lookup table prediction outside
 associated standard errors) is returned. When \code{type="terms"} each component of the 
 linear predictor is returned seperately (possibly with standard errors): this includes 
 parametric model components, followed by each smooth component, but excludes
-any offset and any intercept. When \code{type="response"} predictions 
+any offset and any intercept. \code{type="iterms"} is the same, except that any standard errors 
+returned for smooth components will include the uncertainty about the intercept/overall mean.  When 
+\code{type="response"} predictions 
 on the scale of the response are returned (possibly with approximate
 standard errors). When \code{type="lpmatrix"} then a matrix is returned
 which yields the values of the linear predictor (minus any offset) when
@@ -133,6 +135,11 @@ b<-gam(y~s(x0)+s(I(x1^2))+s(x2)+offset(x3),data=dat)
 
 newd <- data.frame(x0=(0:30)/30,x1=(0:30)/30,x2=(0:30)/30,x3=(0:30)/30)
 pred <- predict.gam(b,newd)
+
+## difference between "terms" and "iterms"
+nd2 <- data.frame(x0=c(.25,.5),x1=c(.25,.5),x2=c(.25,.5),x3=c(.25,.5))
+predict(b,nd2,type="terms",se=TRUE)
+predict(b,nd2,type="iterms",se=TRUE)
 
 ## now get variance of sum of predictions using lpmatrix
 
