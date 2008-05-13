@@ -72,6 +72,12 @@
    -- all that is required is that `object$terms' can be evaluated using 
    it. These functions handle repeat rows in matrix arguments efficiently.
 
+* bug fix in `plot.gam' -- no longer requires to hit return if `select'
+  used (ever).
+
+* bug fix in `fixDependence' --- a completely dependent `X2' would not
+  be detected, since the first element of R2 would be zero: used first
+  element of R1 to set scale instead.
 
 * `gam.fit' passes corrected n to `magic' so that `n' used in gcv/ubre
    does not include obs with zero prior weight. `gam.fit3' already doing 

@@ -216,7 +216,7 @@ set.seed(10)
 ## simulate date from y = f(x2)*x1 + error
 dat <- gamSim(3,n=400)
 
-b<-gam(y~x1-1+s(x2,by=x1),data=dat)
+b<-gam(y ~ s(x2,by=x1),data=dat)
 plot(b,pages=1)
 summary(b)
 
@@ -224,26 +224,27 @@ summary(b)
 ## simulate data...
 
 dat <- gamSim(4)
-attach(dat)
 
 ## fit model...
-b <- gam(y ~ fac+s(x2,by=fac)+s(x0))
+b <- gam(y ~ fac+s(x2,by=fac)+s(x0),data=dat)
 plot(b,pages=1)
 summary(b)
 
 ## note that the preceding fit is the same as....
-b1<-gam(y ~ fac+s(x2,by=as.numeric(fac==1))+s(x2,by=as.numeric(fac==2))+
-            s(x2,by=as.numeric(fac==3))+s(x0))
+b1<-gam(y ~ s(x2,by=as.numeric(fac==1))+s(x2,by=as.numeric(fac==2))+
+            s(x2,by=as.numeric(fac==3))+s(x0)-1,data=dat)
+## ... the `-1' is because the intercept is confounded with the 
+## *uncentred* smooths here.
 plot(b1,pages=1)
 summary(b1)
 
 ## repeat, but force all the s(x2) terms to have the same smoothing param
 ## (not a very good idea for these data!)
-b2 <- gam(y ~ fac+s(x2,by=fac,id=1)+s(x0))
+b2 <- gam(y ~ fac+s(x2,by=fac,id=1)+s(x0),data=dat)
 plot(b2,pages=1)
 summary(b2)
 
-detach(dat);rm(dat)
+rm(dat)
 
 ## An example of a simple random effects term implemented via 
 ## penalization of the parametric part of the model...

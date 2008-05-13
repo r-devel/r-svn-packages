@@ -276,6 +276,7 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5)
 # routine finds which columns of X2 should be zeroed to 
 # fix this.
 { qr1 <- qr(X1,LAPACK=TRUE)
+  R11 <- abs(qr.R(qr1)[1,1])
   r<-ncol(X1);n<-nrow(X1)
   QtX2 <- qr.qty(qr1,X2)[(r+1):n,] # Q'X2
   qr2 <- qr(QtX2,LAPACK=TRUE)
@@ -283,7 +284,7 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5)
   # now final diagonal block of R may be zero, indicating rank 
   # deficiency. 
   r0<-r<-nrow(R)
-  while (mean(abs(R[r0:r,r0:r]))<abs(R[1,1])*tol) r0 <- r0 -1
+  while (mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1
   r0<-r0+1
   if (r0>r) return(NULL) else
   qr2$pivot[r0:r] # the columns of X2 to zero in order to get independence
@@ -407,7 +408,8 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   L <- matrix(0,0,0) 
   k <- 0
   tind <- unique(assign) ## unique term indices
-  for (i in 1:length(tind)) if (tind[i]>0) {
+  n.t <- length(tind)
+  if (n.t>0) for (i in 1:n.t) if (tind[i]>0) {
     term.label <- attr(pterms[tind[i]],"term.label")
     P <- paraPen[[term.label]] ## get any penalty information for this term
     if (!is.null(P)) { ## then there is information
@@ -1906,8 +1908,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-            if (type=="iterms") { ## termwise se to "carry the intercept"
+            if (type=="iterms"&&inherits(attr(object$smooth[[k]],"qrc"),"qr")) { ## termwise se to "carry the intercept"
               X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
+              meanL1 <- object$smooth[[k]]$meanL1
+              if (!is.null(meanL1)) X1 <- X1 / meanL1              
               X1[,first:last] <- X[,first:last]
               se[start:stop,n.pterms+k] <- sqrt(rowSums((X1%*%object$Vp)*X1))
             } else se[start:stop,n.pterms+k] <- ## terms strictly centred
@@ -2167,11 +2171,14 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       if (is.null(offset)) 
       fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       if (se) {
-        if (seWithMean) { ## then se to include uncertainty in overall mean
+        ## test whether mean variability to be added to variability (only for centred terms)
+        if (seWithMean&&inherits(attr(x$smooth[[i]],"qrc"),"qr")) {
           X1 <- matrix(x$cmX,nrow(X),ncol(x$Vp),byrow=TRUE)
+          meanL1 <- x$smooth[[i]]$meanL1
+          if (!is.null(meanL1)) X1 <- X1 / meanL1
           X1[,first:last] <- X
           se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
-        } else se.fit <- ## se in centred space only
+        } else se.fit <- ## se in centred (or anyway unconstained) space only
         sqrt(rowSums((X%*%x$Vp[first:last,first:last])*X))
       }
       edf<-sum(x$edf[first:last])
@@ -2212,8 +2219,10 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       fit[exclude] <- NA                 # exclude grid points too far from data
       if (se) {  
-        if (seWithMean) { ## then se to include uncertainty in overall mean
+        if (seWithMean&&inherits(attr(x$smooth[[i]],"qrc"),"qr")) { ## then se to include uncertainty in overall mean
           X1 <- matrix(x$cmX,nrow(X),ncol(x$Vp),byrow=TRUE)
+          meanL1 <- x$smooth[[i]]$meanL1
+          if (!is.null(meanL1)) X1 <- X1 / meanL1
           X1[,first:last] <- X
           se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
         } else se.fit <- ## se in centred space only
@@ -2350,7 +2359,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     j<-1
     if (m>0) for (i in 1:m)
     { if (is.null(select)||i==select)
-      { if (interactive() && pd[[i]]$dim<3 && i>1&&(i-1)%%ppp==0) readline("Press return for next page....")
+      { if (interactive() && is.null(select) && pd[[i]]$dim<3 && i>1&&(i-1)%%ppp==0) readline("Press return for next page....")
         if (pd[[i]]$dim==1)
         { if (scale==0&&is.null(ylim)) 
           { if (partial.resids) ylimit <- range(pd[[i]]$p.resid,na.rm=TRUE) else ylimit <-range(pd[[i]]$fit)}
@@ -2401,7 +2410,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
         term.labels <- term.labels[order==1]
         if (select <= length(term.labels)) {
         if (interactive() && m &&i%%ppp==0) 
-        readline("Press return for next page....")
+##        readline("Press return for next page....")
         termplot(x,terms=term.labels[select],se=se,rug=rug,col.se=1,col.term=1)
         }  
       }

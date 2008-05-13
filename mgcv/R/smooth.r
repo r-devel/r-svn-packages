@@ -362,7 +362,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
 
   object$X<-X;object$S<-S;
 
-  object$df<-ncol(X)-1
+  object$df <- ncol(X)
   object$null.space.dim <- prod(nr) # penalty null space rank 
   object$rank<-r
   object$XP <- XP
@@ -506,7 +506,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   Xu.len <- oo$n.Xu*object$dim
   object$Xu<-matrix(oo$Xu[1:Xu.len],oo$n.Xu,object$dim)  # unique covariate combinations
 
-  object$df<-object$bs.dim-1                   # DoF given constraint
+  object$df<-object$bs.dim                   # DoF unconstrained and unpenalized
   object$shift<-shift                          # covariate shifts
   if (is.null(shrink)) { 
     object$rank <- k-M 
@@ -619,7 +619,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
   object$rank<-nk-2 
   } else object$rank <- nk   # penalty rank
 
-  object$df<-object$bs.dim-1 # degrees of freedom, given constraint
+  object$df<-object$bs.dim # degrees of freedom,  unconstrained and unpenalized
   object$null.space.dim <- 2
   object$xp <- oo[[3]]  # knot positions 
   class(object) <- "cr.smooth"
@@ -736,7 +736,7 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   object$X<-X
 
   object$rank<-ncol(X)-1  # rank of smoother matrix
-  object$df<-object$bs.dim-2 # degrees of freedom, accounting for centring and cycling
+  object$df<-object$bs.dim-1 # degrees of freedom, accounting for  cycling
   object$null.space.dim <- 1  
   class(object)<-"cyclic.smooth"
   object
@@ -1190,12 +1190,13 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   ## basis for all `id' linked terms
   if (is.null(sm$C)) {
     sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
-  }
+    conSupplied <- FALSE
+  } else conSupplied <- TRUE
 
-  ## set df field...
-  if (is.null(sm$df)) {
-    sm$df <- object$bs.dim - nrow(sm$C)
-  }
+  ## set df fields (pre-constraint)...
+  if (is.null(sm$df)) sm$df <- object$bs.dim
+ 
+
 
   ## automatically discard penalties for fixed terms...
   if (!is.null(object$fixed)&&object$fixed) {
@@ -1242,15 +1243,28 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     } else {
       sml <- list(sm)
       if (length(by)!=nrow(sm$X)) stop("`by' variable must be same dimension as smooth arguments")
+      
       sml[[1]]$X <- as.numeric(by)*sm$X
       sml[[1]]$label <- paste(sm$label,":",object$by,sep="") 
+
+      ## test for cases where no centring constraint on the smooth is needed. 
+      if (!conSupplied) {
+        if (matrixArg) {
+          q <- nrow(sml[[1]]$X)/n
+          L1 <- matrix(by,n,q)%*%rep(1,q)
+          if (sd(L1)>mean(L1)*.Machine$double.eps*1000) sml[[1]]$C <- sm$C <- matrix(0,0,1) 
+          else sml[[1]]$meanL1 <- mean(L1) ## store mean of L1 for use when adding intecept variability
+        } else { ## numeric `by' -- constraint only needed if constant
+          if (sd(by)>mean(by)*.Machine$double.eps*1000) sml[[1]]$C <- sm$C <- matrix(0,0,1)   
+        }
+      } ## end of constraint removal
     }
   } else {
     sml <- list(sm)
   }
 
   ## If the smooth had matrix arguments with `q' columns then the model matrix
-  ## is currently `q' model matrices stacked on top of each other which mow
+  ## is currently `q' model matrices stacked on top of each other which now
   ## need to be summed...
   if (matrixArg) {
     q <- nrow(sml[[1]]$X)/n ## note: can't get here if `by' a factor
@@ -1263,6 +1277,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     sml[[1]]$X <- X
   }
 
+  
   ## absorb constraints.....
   if (absorb.cons)
   { k<-ncol(sm$X)
@@ -1280,6 +1295,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
         attr(sml[[i]],"nCons") <- j;
         sml[[i]]$C <- NULL
         sml[[i]]$rank <- pmin(sm$rank,k-j)
+        sml[[i]]$df <- sml[[i]]$df - j
         ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
      } ## end smooth list loop
    } else { ## no constraints

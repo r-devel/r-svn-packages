@@ -97,8 +97,8 @@ sum to zero over the covariate values. Set to a zero row matrix if no
 constraints are required.}
 
 \item{df}{the degrees of freedom associated with this term (when
-unpenalized). If this is null then {\tt smoothCon} will set it to the basis 
-dimension less the number of constraints.}
+unpenalized and unconstrained). If this is null then {\tt smoothCon} will set it to the basis 
+dimension. {\tt smoothCon} will reduce this by the number of constraints.}
 
 \item{L}{smooths may depend on fewer `underlying' smoothing parameters than there are elements of
 \code{S}. In this case \code{L} is the matrix mapping the vector of underlying log smoothing 
@@ -200,7 +200,7 @@ smooth.construct.tr.smooth.spec<-function(object,data,knots)
   object$knots<-k;object$m<-m;object$x.shift <- x.shift
   ## get the centering constraint ...
  
-  object$df<-ncol(object$X)-1      # maximum DoF
+  object$df<-ncol(object$X)     # maximum DoF (if unconstrained)
  
   class(object)<-"tr.smooth"  # Give object a class
   object

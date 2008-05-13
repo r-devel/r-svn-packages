@@ -26,12 +26,10 @@ then it must be a matrix, L,say, of the same dimension as F (and the covariate m
 and it contains the weights \eqn{L_{ij}}{L_ij} in the summation given above. 
 So in this case the contribution to the  linear predictor is \code{rowSums(L*F)}. 
 
-There is one important detail. Smooths are always subject to centering constraints in a GAM. This means 
-that the constant function has been removed from the basis. Usually, when using linear functionals of 
-smooths this means that an extra term needs to be added to the parametric part of the model 
-of the form \code{l1 <- rowSums(L)} --- this term corresponds to the linear functional 
-applied to the constant function. Of course if \code{l1} is a constant vector then either it or 
-the intercept should be dropped as they will not be identifiable.
+Note that if a \eqn{{\bf L1}}{L1} (i.e. \code{rowSums(L)}) is a constant vector, or there is no \code{by} 
+variable then the smooth will automatically be centred in order to ensure identifiability. Otherwise it 
+will not be. Note that for centred smooths it can be worth replacing the constant term in the model with \code{rowSums(L)} 
+in order to ensure that predictions are automatically on the right scale.
 
 When predicting from the model it is not necessary to provide matrix covariate and \code{by} variable values. 
 For example to simply examine the underlying smooth function one would use vectors of covariate values and vector 
@@ -171,9 +169,9 @@ y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 ## `smoothCon' is smart and will recognize the duplication...
 X <- matrix(x,200,100,byrow=TRUE) 
 
-b <- gam(y~s(X,by=L,k=20)+rowSums(L)) 
+b <- gam(y~s(X,by=L,k=20)) 
 par(mfrow=c(1,1))
-plot(b,shade=TRUE);lines(x,f-mean(f),col=2)
+plot(b,shade=TRUE);lines(x,f,col=2)
 
 }
 \keyword{models} \keyword{regression}%-- one or more ..
