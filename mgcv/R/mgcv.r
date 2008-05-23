@@ -54,11 +54,28 @@ pcls <- function(M)
     df[i]<-nrow(M$S[[i]])
     if (M$off[i]+df[i]-1>nar[2]) stop(paste("M$S[",i,"] is too large given M$off[",i,"]",sep=""))
   }
-
+  qra.exist <- FALSE
+  if (ncol(M$X)>nrow(M$X)) {
+    if (m>0) stop("Penalized model matrix must have no more columns than rows") 
+    else { ## absorb M$C constraints
+      qra <- qr(t(M$C))
+      j <- nrow(M$C);k <- ncol(M$X)
+      M$X <- t(qr.qty(qra,t(M$X))[(j+1):k,])
+      M$Ain <- t(qr.qty(qra,t(M$Ain))[(j+1):k,])
+      M$C <- matrix(0,0,0)
+      M$p <- rep(0,ncol(M$X)) 
+      nar[2] <- length(M$p)
+      nar[4] <- 0
+      qra.exist <- TRUE
+      if  (ncol(M$X)>nrow(M$X)) stop("Model matrix not full column rank")
+    }
+  }
   o<-.C(C_RPCLS,as.double(M$X),as.double(M$p),as.double(M$y),as.double(M$w),as.double(M$Ain),as.double(M$bin)
         ,as.double(M$C),as.double(H),as.double(Sa),as.integer(M$off),as.integer(df),as.double(M$sp),
         as.integer(length(M$off)),as.integer(nar))
-  array(o[[2]],length(M$p))
+  p <- array(o[[2]],length(M$p))
+  if (qra.exist) p <- qr.qy(qra,c(rep(0,j),p))
+  p
 }  
 
 mgcv.control<-function(conv.tol=1e-7,max.half=20,target.edf=NULL,min.edf=-1)
@@ -2456,7 +2473,7 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
   erank <- sum(ind) ## empirical rank
   if (is.null(rank)) {
     rank <- erank
-  } else { if (rank<erank) ind <- 1:rank }
+  } else { if (rank<erank) ind <- 1:rank else rank <- erank }
   vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
   list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
 }
@@ -2517,7 +2534,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...)
     for (i in 1:nt)
     { ind <- object$assign==i
       b <- bp[ind];V <- Vb[ind,ind]
-      ## psuedo-inverse needed in case of truncation of parametric space 
+      ## pseudo-inverse needed in case of truncation of parametric space 
       if (length(b)==1) { 
         V <- 1/V 
         pTerms.df[i] <- nb <- 1      
@@ -2559,10 +2576,21 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...)
       } else { ## Nychka statistics
         Xt <- X[,start:stop] 
         ft <- Xt%*%p
-        ed <- eigXVX(Xt,V,ceiling(edf[i]))
+        trial.rank <- ceiling(edf[i]) ## R 2.7.0 ceiling is not as advertised!
+        if (edf[i]-trial.rank>0) trial.rank <- trial.rank+1
+        ed <- eigXVX(Xt,V,trial.rank)
+        if (ed$rank<trial.rank) {
+          ##df[i] <- ed$rank
+          iv <- 1/ed$values
+        } else {
+          ##df[i] <- edf[i]
+          ##d.edf  <- edf[i] - trial.rank + 1
+          iv <- 1/ed$values
+          ##iv[trial.rank] <- iv[trial.rank] * d.edf
+        }
         ## t(ft)%*%ginv(Ats)%*%ft where Ats = Xt%*%Vt%*%t(Xt), efficiently calculated...
-        chi.sq[i] <- sum(((t(ed$vectors)%*%ft)/sqrt(ed$values))^2)
-        df[i] <- (edf[i]+ed$rank)/2
+        chi.sq[i] <- sum(((t(ed$vectors)%*%ft)*sqrt(iv))^2)
+        df[i] <- edf[i] + .5
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       if (!est.disp)
@@ -3228,7 +3256,8 @@ print.mgcv.version <- function()
 set.mgcv.options <- function()
 ## function used to set optional value used in notLog
 ## and notExp...
-{ options(mgcv.vc.logrange=25)
+{ runif(1) ## ensure there is a seed 
+  options(mgcv.vc.logrange=25)
 }
 
 .onAttach <- function(...) { 

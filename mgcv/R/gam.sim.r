@@ -3,11 +3,14 @@
 
 gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
 
-  if (eg==1) { ## 4 term Gu  and Wahba example
-    cat("Gu & Wahba 4 term additive model\n")
+  if (eg==1||eg==7) { ## 4 term Gu  and Wahba example
+    if (eg==1) cat("Gu & Wahba 4 term additive model\n")
+    else  cat("Gu & Wahba 4 term additive model, correlated predictors\n")
     x0 <- runif(n, 0, 1)
-    x1 <- runif(n, 0, 1)
+    if (eg==7) x1 <- x0*.7 + runif(n, 0, .3) else
+    x1 <- runif(n,0,1)
     x2 <- runif(n, 0, 1)
+    if (eg==7) x3 <- x2*.9 + runif(n,0,.1) else
     x3 <- runif(n, 0, 1)
     f0 <- function(x) 2 * sin(pi * x)
     f1 <- function(x) exp(2 * x)

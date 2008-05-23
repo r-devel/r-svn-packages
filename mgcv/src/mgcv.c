@@ -1110,8 +1110,9 @@ else
 #endif
 }
 
-void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,double *Afd,double *Hd,double *Sd,
-      int *off,int *dim,double *theta, int *m,int *nar)
+void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,
+            double *Afd,double *Hd,double *Sd,
+            int *off,int *dim,double *theta, int *m,int *nar)
 
 /* Interface routine for PCLS the constrained penalized weighted least squares solver.
    nar is an array of dimensions. Let:

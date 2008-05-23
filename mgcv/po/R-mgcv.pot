@@ -545,3 +545,8 @@ msgstr ""
 msgid "`by' variable must be same dimension as smooth arguments"
 msgstr ""
 
+msgid "Penalized model matrix must have no more columns than rows"
+msgstr ""
+
+msgid "Model matrix not full column rank"
+msgstr ""
