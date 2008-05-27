@@ -10,7 +10,7 @@
 \usage{
 read.dta(file, convert.dates = TRUE, tz = NULL,
          convert.factors = TRUE, missing.type = FALSE,
-         convert.underscore=TRUE, warn.missing.labels=TRUE)
+         convert.underscore = TRUE, warn.missing.labels = TRUE)
 }
 \arguments{
   \item{file}{a filename as a character string.}
@@ -31,7 +31,7 @@ read.dta(file, convert.dates = TRUE, tz = NULL,
   variable labels, and timestamp are stored as attributes of the data
   frame.  Nothing is done with variable characteristics.
 
-  Optionally, Stata dates (\%d formats) are converted to \R's
+  Optionally, Stata dates (\%d and \%td formats) are converted to \R's
   \code{Date} class and variables with Stata value labels are
   converted to factors. Ordinarily, \code{read.dta} will not convert
   a variable to a factor unless a label is present for every level. Use
@@ -44,14 +44,24 @@ read.dta(file, convert.dates = TRUE, tz = NULL,
   names as the loaded data. For string variables the list value is
   \code{NULL}. For other variables the value is \code{NA} where the
   observation is not missing and 0-26 when the observation is
-  missing. This is attached as the code{"missing"} attribute of the
+  missing. This is attached as the \code{"missing"} attribute of the
   returned value.
   
   The option to allow underscores in variable names may become the
   default in future versions now that R supports their use.
 }
 \value{
-  a data frame
+  a data frame with attributes.  These will include \code{"datalabel"},
+  \code{"time.stamp"}, \code{"formats"}, \code{"types"},
+  \code{"val.labels"}, \code{"var.labels"} and \code{"version"} and may
+  include \code{"label.table"}.  Possible versions are \code{5,6,7},
+  \code{-7} (Stata 7SE, \sQuote{format-111}), \code{-8} (Stata 8 and 9,
+  \sQuote{format-113}) and \code{-10} (Stata 10, \sQuote{format-114}).
+
+  The value labels in attribute \code{"val.labels"} name a table for
+  each variable, or are an empty string.  The tables are elements of the
+  named list attribute \code{"label.table"}: each is an integer vector with
+  names,
 }
 \references{
   Stata Users Manual (versions 5 & 6), Programming manual (version 7),

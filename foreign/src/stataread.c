@@ -172,8 +172,8 @@ static char* nameMangle(char *stataname, int len){
 
 SEXP R_LoadStataData(FILE *fp)
 {
-    int i, j, nvar, nobs, charlen, version, swapends, varnamelength, 
-	nlabels, totlen;
+    int i, j = 0, nvar, nobs, charlen, version, swapends, 
+	varnamelength, nlabels, totlen;
     unsigned char abyte;
     /* timestamp is used for timestamp and for variable formats */
     char datalabel[81], timestamp[50], aname[33];
@@ -278,7 +278,7 @@ SEXP R_LoadStataData(FILE *fp)
 		SET_VECTOR_ELT(df, i, allocVector(INTSXP, nobs));
 		break;
 	    default:
-		if (abyte<STATA_STRINGOFFSET)
+		if (abyte < STATA_STRINGOFFSET)
 		    error(_("unknown data type"));
 		SET_VECTOR_ELT(df, i, allocVector(STRSXP, nobs));
 		break;
@@ -450,9 +450,10 @@ SEXP R_LoadStataData(FILE *fp)
 
 
     /** value labels **/
-    if (abs(version) > 5){
+    if (abs(version) > 5) {
+	/* There may be up to nvar value labels, but possibly 0 */
 	PROTECT(labeltable = allocVector(VECSXP, nvar));
-	PROTECT(tmp = allocVector(STRSXP,nvar));
+	PROTECT(tmp = allocVector(STRSXP, nvar));
 	for(j = 0; j < nvar; j++){
 	    /* first int not needed, use fread directly to trigger EOF */
 	    fread((int *) aname, sizeof(int), 1, fp);
@@ -465,13 +466,13 @@ SEXP R_LoadStataData(FILE *fp)
 	    off =  Calloc((size_t) nlabels, int);
 	    PROTECT(levels = allocVector(REALSXP, nlabels));
 	    PROTECT(labels = allocVector(STRSXP, nlabels));
-	    for(i = 0;i < nlabels; i++)
+	    for(i = 0; i < nlabels; i++)
 		off[i] = InIntegerBinary(fp, 1, swapends);
-	    for(i = 0;i < nlabels; i++)
+	    for(i = 0; i < nlabels; i++)
 		REAL(levels)[i] = (double) InIntegerBinary(fp, 0, swapends);
 	    txt =  Calloc((size_t) totlen, char);
 	    InStringBinary(fp, totlen, txt);
-	    for(i = 0;i < nlabels; i++)
+	    for(i = 0; i < nlabels; i++)
 		SET_STRING_ELT(labels, i, mkChar(txt+off[i]));
 	    namesgets(levels, labels);
 	    SET_VECTOR_ELT(labeltable, j, levels);
@@ -481,6 +482,11 @@ SEXP R_LoadStataData(FILE *fp)
 	}
 	namesgets(labeltable, tmp);
 	UNPROTECT(1); /*tmp*/
+	if(j > 0 && j < nvar) {
+	    labeltable = lengthgets(labeltable, j);
+	    UNPROTECT(1);
+	    PROTECT(labeltable);
+	}
     }
 
     /** tidy up **/
@@ -498,8 +504,8 @@ SEXP R_LoadStataData(FILE *fp)
     setAttrib(df, install("version"), sversion);
     UNPROTECT(1);
 
-    if (abs(version) > 5){
-	setAttrib(df, install("label.table"), labeltable);
+    if (abs(version) > 5) {
+	if(j > 0) setAttrib(df, install("label.table"), labeltable);
 	UNPROTECT(1); /*labeltable*/;
     }
     UNPROTECT(2); /* types, df */

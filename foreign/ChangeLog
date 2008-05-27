@@ -2,7 +2,15 @@
 
 	* DESCRIPTION: Version is 0.8-26.
 	* src/stataread.c: increase buffer size for version 10 files.
+	The "label.table" list attribute only contains as many elements
+	as are present in the file, and is only present in the result is
+	there are value labels in the file.
 	Reformatting for legibility.
+	* R/read.dta.R: Reformatting for legibility, more support for
+	Stata 10 files.
+	* man/read.dta.Rd: typo.  More information on the attributes and
+	how value labels are stored.
+	* tests/stata.Rout.save: update.
 
 2008-04-10 Brian Ripley <Brian.Ripley@R-project.org>
 
