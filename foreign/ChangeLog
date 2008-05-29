@@ -3,7 +3,7 @@
 	* DESCRIPTION: Version is 0.8-26.
 	* src/stataread.c: increase buffer size for version 10 files.
 	The "label.table" list attribute now only contains as many elements
-	as are present in the file, and is only present in the result is
+	as are present in the file, and is only present in the result if
 	there are value labels in the file.
 	Version numbers are now positive in returned attribute 
 	except for -7 (Stata 7SE).
