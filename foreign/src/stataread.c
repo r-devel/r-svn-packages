@@ -500,7 +500,7 @@ SEXP R_LoadStataData(FILE *fp)
     UNPROTECT(1);
 
     PROTECT(sversion = allocVector(INTSXP,1));
-    INTEGER(sversion)[0] = version;
+    INTEGER(sversion)[0] = (version == -7)? version : abs(version);
     setAttrib(df, install("version"), sversion);
     UNPROTECT(1);
 
@@ -601,38 +601,37 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 {
     int i,j,k=0,l,nvar,nobs,charlen,txtlen,len;
     char datalabel[81]="Written by R.              ", timestamp[18], aname[33];
-    char format9g[12]="%9.0g", strformat[12]="";
+    char format9g[50]="%9.0g", strformat[50]="";
     SEXP names,types,theselabels,orig_names;
 
-    int namelength=8;
+    int namelength = 8;
     int fmtlist_len = 12;
 
-    if (version>=7) namelength=32;
-    if (version>=10) fmtlist_len = 49;
+    if (version >= 7) namelength=32;
+    if (version >= 10) fmtlist_len = 49;
 
     /* names are 32 characters in version 7 */
 
     /** first write the header **/
-    if (version==6)
+    if (version == 6)
 	OutByteBinary((char) VERSION_6, fp);            /* release */
-    else if (version==7)
+    else if (version == 7)
 	OutByteBinary((char) VERSION_7, fp);
-    else if (version==8)  /* and also 9, mapped in R code */
+    else if (version == 8)  /* and also 9, mapped in R code */
 	OutByteBinary((char) VERSION_8, fp);
-    else if (version==10) /* see comment above */
+    else if (version == 10) /* see comment above */
 	OutByteBinary((char) VERSION_114, fp);
     OutByteBinary((char) CN_TYPE_NATIVE, fp);
-    OutByteBinary(1,fp);            /* filetype */
-    OutByteBinary(0,fp);            /* padding */
+    OutByteBinary(1, fp);            /* filetype */
+    OutByteBinary(0, fp);            /* padding */
 
-    nvar=length(df);
-    OutShortIntBinary(nvar,fp);
-    nobs=length(VECTOR_ELT(df,0));
-    OutIntegerBinary(nobs,fp,1);  /* number of cases */
-    OutStringBinary(datalabel,fp,81);   /* data label - zero terminated string */
-    for(i=0;i<18;i++){
-      timestamp[i]=0;
-    }
+    nvar = length(df);
+    OutShortIntBinary(nvar, fp);
+    nobs=length(VECTOR_ELT(df, 0));
+    OutIntegerBinary(nobs, fp, 1);  /* number of cases */
+    OutStringBinary(datalabel, fp, 81);   /* data label - zero terminated string */
+    /* FIXME: use a real time */
+    for(i = 0; i < 18; i++) timestamp[i] = 0;
     OutStringBinary(timestamp,fp,18);   /* file creation time - zero terminated string */
 
 
@@ -644,88 +643,84 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
     /*  we should honor the "Csingle" attribute and also write logicals as
 	byte rather than long */
 
-    PROTECT(types=allocVector(INTSXP,nvar));
-    if (version<=7){
-      for(i=0;i<nvar;i++){
-	switch(TYPEOF(VECTOR_ELT(df,i))){
-	  case LGLSXP:
-	    OutByteBinary(STATA_BYTE,fp);
-	    break;
-	   case INTSXP:
-	    OutByteBinary(STATA_INT,fp);
-	    break;
-	  case REALSXP:
-	    OutByteBinary(STATA_DOUBLE,fp);
-	    break;
-	  case STRSXP:
-	    charlen=0;
-	    for(j=0;j<nobs;j++){
-	      k=strlen(CHAR(STRING_ELT(VECTOR_ELT(df,i),j)));
-	      if (k>charlen)
-		charlen=k;
+    PROTECT(types = allocVector(INTSXP,nvar));
+    if (version <= 7) {
+	for(i = 0;i < nvar; i++){
+	    switch(TYPEOF(VECTOR_ELT(df, i))){
+	    case LGLSXP:
+		OutByteBinary(STATA_BYTE, fp);
+		break;
+	    case INTSXP:
+		OutByteBinary(STATA_INT, fp);
+		break;
+	    case REALSXP:
+		OutByteBinary(STATA_DOUBLE, fp);
+		break;
+	    case STRSXP:
+		charlen = 0;
+		for(j = 0; j < nobs; j++){
+		    k = strlen(CHAR(STRING_ELT(VECTOR_ELT(df, i), j)));
+		    if (k > charlen) charlen = k;
+		}
+		OutByteBinary((unsigned char)(charlen+STATA_STRINGOFFSET), fp);
+		INTEGER(types)[i] = charlen;
+		break;
+	    default:
+		error(_("unknown data type"));
+		break;
 	    }
-	    OutByteBinary((unsigned char)(charlen+STATA_STRINGOFFSET),fp);
-	    INTEGER(types)[i]=charlen;
-	    break;
-	  default:
-	    error(_("unknown data type"));
-	    break;
 	}
-      }
     } else { /* version 8, 10 */
-      for(i=0;i<nvar;i++){
-	switch(TYPEOF(VECTOR_ELT(df,i))){
-	  case LGLSXP:
-	    OutByteBinary(STATA_SE_BYTE,fp);
-	    break;
-	  case INTSXP:
-	    OutByteBinary(STATA_SE_INT,fp);
-	    break;
-	  case REALSXP:
-	    OutByteBinary(STATA_SE_DOUBLE,fp);
-	    break;
-	  case STRSXP:
-	    charlen=0;
-	    for(j=0;j<nobs;j++){
-	      k=strlen(CHAR(STRING_ELT(VECTOR_ELT(df,i),j)));
-	      if (k>charlen)
-		charlen=k;
+	for(i = 0; i < nvar; i++){
+	    switch(TYPEOF(VECTOR_ELT(df, i))){
+	    case LGLSXP:
+		OutByteBinary(STATA_SE_BYTE,fp);
+		break;
+	    case INTSXP:
+		OutByteBinary(STATA_SE_INT,fp);
+		break;
+	    case REALSXP:
+		OutByteBinary(STATA_SE_DOUBLE,fp);
+		break;
+	    case STRSXP:
+		charlen = 0;
+		for(j = 0;j < nobs; j++){
+		    k = strlen(CHAR(STRING_ELT(VECTOR_ELT(df, i),j)));
+		    if (k > charlen) charlen = k;
+		}
+		OutByteBinary((unsigned char)(charlen+STATA_SE_STRINGOFFSET), fp);
+		INTEGER(types)[i] = charlen;
+		break;
+	    default:
+		error(_("unknown data type"));
+		break;
 	    }
-	    OutByteBinary((unsigned char)(charlen+STATA_SE_STRINGOFFSET),fp);
-	    INTEGER(types)[i]=charlen;
-	    break;
-	  default:
-	    error(_("unknown data type"));
-	    break;
 	}
-      }
     }
     /** names truncated to 8 (or 32 for v7-8) characters**/
 
-    PROTECT(names=getAttrib(df,R_NamesSymbol));
-    for (i=0;i<nvar;i++){
-	strncpy(aname,CHAR(STRING_ELT(names,i)),namelength);
-	OutStringBinary(nameMangleOut(aname,namelength),fp,namelength);
-	OutByteBinary(0,fp);
+    PROTECT(names = getAttrib(df, R_NamesSymbol));
+    for (i = 0; i < nvar;i ++){
+	strncpy(aname, CHAR(STRING_ELT(names, i)), namelength);
+	OutStringBinary(nameMangleOut(aname, namelength), fp, namelength);
+	OutByteBinary(0, fp);
     }
 
 
 
     /** sortlist -- not relevant **/
-
-    for (i=0;i<2*(nvar+1);i++)
-	OutByteBinary(0,fp);
+    for (i = 0; i < 2*(nvar+1); i++) OutByteBinary(0, fp);
 
     /** format list: arbitrarily write numbers as %9g format
 	but strings need accurate types */
-    for (i=0;i<nvar;i++){
-	if (TYPEOF(VECTOR_ELT(df,i))==STRSXP){
-	  /* string types are at most 128 characters
-	      so we can't get a buffer overflow in sprintf **/
+    for (i = 0; i < nvar; i++){
+	if (TYPEOF(VECTOR_ELT(df,i)) == STRSXP){
+	    /* string types are at most 128 characters
+	       so we can't get a buffer overflow in sprintf **/
 	    sprintf(strformat,"%%%ds",INTEGER(types)[i]);
-	    OutStringBinary(strformat,fp,fmtlist_len);
+	    OutStringBinary(strformat, fp, fmtlist_len);
 	} else {
-	    OutStringBinary(format9g,fp,fmtlist_len);
+	    OutStringBinary(format9g, fp, fmtlist_len);
 	}
     }
 
@@ -734,60 +729,56 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 	The label format has the same name as the variable. **/
 
 
-    for(i=0;i<nvar;i++){
-	    if (VECTOR_ELT(leveltable,i)==R_NilValue){ /* no label */
-		    for(j=0;j<namelength+1;j++)
-			    OutByteBinary(0,fp);
-	    } else {                                   /* label */
-		    strncpy(aname,CHAR(STRING_ELT(names,i)),namelength);
-		    OutStringBinary(nameMangleOut(aname,namelength),fp,namelength);
-		    OutByteBinary(0,fp);
-	    }
+    for(i = 0; i < nvar; i++) {
+	if (VECTOR_ELT(leveltable, i) == R_NilValue){ /* no label */
+	    for(j = 0; j < namelength+1; j++) OutByteBinary(0, fp);
+	} else {                                   /* label */
+	    strncpy(aname, CHAR(STRING_ELT(names, i)), namelength);
+	    OutStringBinary(nameMangleOut(aname, namelength), fp, namelength);
+	    OutByteBinary(0, fp);
+	}
     }
 
 
     /** Variable Labels -- full R name of column**/
     /** FIXME: this is now just the same abbreviated name **/
 
-    PROTECT(orig_names=getAttrib(df,install("orig.names")));
-    for(i=0;i<nvar;i++) {
+    PROTECT(orig_names = getAttrib(df,install("orig.names")));
+    for(i = 0; i < nvar; i++) {
 	strncpy(datalabel,CHAR(STRING_ELT(orig_names,i)),81);
-	datalabel[80]=(char) 0;
-	OutStringBinary(datalabel,fp,81);
+	datalabel[80] = (char) 0;
+	OutStringBinary(datalabel, fp, 81);
     }
     UNPROTECT(1);
 
 
     /** variable 'characteristics' -- not relevant**/
-    OutByteBinary(0,fp);
-    OutByteBinary(0,fp);
-    OutByteBinary(0,fp);
-    if (version>=7) { /*longer in version 7. This is wrong in the manual*/
-	OutByteBinary(0,fp);
-	OutByteBinary(0,fp);
+    OutByteBinary(0, fp);
+    OutByteBinary(0, fp);
+    OutByteBinary(0, fp);
+    if (version >= 7) { /*longer in version 7. This is wrong in the manual*/
+	OutByteBinary(0, fp);
+	OutByteBinary(0, fp);
     }
 
 
     /** The Data **/
-
-
-    for(i=0;i<nobs;i++){
-	for(j=0;j<nvar;j++){
-	    switch (TYPEOF(VECTOR_ELT(df,j))) {
+    for(i = 0; i < nobs; i++){
+	for(j = 0;j < nvar; j++){
+	    switch (TYPEOF(VECTOR_ELT(df, j))) {
 	    case LGLSXP:
-		OutDataByteBinary(LOGICAL(VECTOR_ELT(df,j))[i],fp);
+		OutDataByteBinary(LOGICAL(VECTOR_ELT(df,j))[i], fp);
 		break;
 	    case INTSXP:
-		OutIntegerBinary(INTEGER(VECTOR_ELT(df,j))[i],fp,0);
+		OutIntegerBinary(INTEGER(VECTOR_ELT(df,j))[i], fp, 0);
 		break;
 	    case REALSXP:
-		OutDoubleBinary(REAL(VECTOR_ELT(df,j))[i],fp,0);
+		OutDoubleBinary(REAL(VECTOR_ELT(df,j))[i], fp, 0);
 		break;
 	    case STRSXP:
-		k=length(STRING_ELT(VECTOR_ELT(df,j),i));
-		OutStringBinary(CHAR(STRING_ELT(VECTOR_ELT(df,j),i)),fp,k);
-		for(l=INTEGER(types)[j]-k;l>0;l--)
-		    OutByteBinary(0,fp);
+		k = length(STRING_ELT(VECTOR_ELT(df, j), i));
+		OutStringBinary(CHAR(STRING_ELT(VECTOR_ELT(df, j), i)), fp, k);
+		for(l = INTEGER(types)[j]-k; l > 0; l--) OutByteBinary(0, fp);
 		break;
 	    default:
 		error(_("this should not happen."));
@@ -798,52 +789,44 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 
     /** value labels: pp92-94 of 'Programming' manual in v7.0 **/
 
-    for(i=0;i<nvar;i++){
-	    if (VECTOR_ELT(leveltable,i)==R_NilValue)
-		    continue; /* no labels */
-	    else {
-		    theselabels=VECTOR_ELT(leveltable,i);
-		    len=4*2*(length(theselabels)+1);
-		    txtlen=0;
-		    for (j=0;j<length(theselabels);j++){
-			    txtlen+=strlen(CHAR(STRING_ELT(theselabels,j)))+1;
-		    }
-		    len+=txtlen;
-		    OutIntegerBinary(len,fp,0); /* length of table */
-		    strncpy(aname,CHAR(STRING_ELT(names,i)),namelength);
-		    OutStringBinary(nameMangleOut(aname,namelength),fp,namelength);
-		    OutByteBinary(0,fp); /* label format name */
-		    OutByteBinary(0,fp); OutByteBinary(0,fp); OutByteBinary(0,fp); /*padding*/
-		    OutIntegerBinary(length(theselabels),fp,0);
-		    OutIntegerBinary(txtlen,fp,0);
-		    /* offsets */
-		    len=0;
-		    for (j=0;j<length(theselabels);j++){
-			    OutIntegerBinary(len,fp,0);
-			    len+=strlen(CHAR(STRING_ELT(theselabels,j)))+1;
-		    }
-		    /* values: just 1,2,3,...*/
-		    for (j=0;j<length(theselabels);j++){
-			    OutIntegerBinary(j+1,fp,0);
-		    }
-		    /* the actual labels */
-		    for(j=0;j<length(theselabels);j++){
-			    len=strlen(CHAR(STRING_ELT(theselabels,j)));
-			    OutStringBinary(CHAR(STRING_ELT(theselabels,j)),fp,len);
-			    OutByteBinary(0,fp);
-			    txtlen-=len+1;
-			    if (txtlen<0) error(_("this should happen: overrun"));
-		    }
-		    if (txtlen>0) error(_("this should happen: underrun"));
+    for(i = 0;i < nvar; i++){
+	if (VECTOR_ELT(leveltable, i) == R_NilValue)
+	    continue; /* no labels */
+	else {
+	    theselabels = VECTOR_ELT(leveltable, i);
+	    len = 4*2*(length(theselabels)+1);
+	    txtlen = 0;
+	    for (j = 0; j < length(theselabels); j++)
+		txtlen += strlen(CHAR(STRING_ELT(theselabels, j))) + 1;
+	    len += txtlen;
+	    OutIntegerBinary(len, fp, 0); /* length of table */
+	    strncpy(aname, CHAR(STRING_ELT(names, i)), namelength);
+	    OutStringBinary(nameMangleOut(aname, namelength), fp, namelength);
+	    OutByteBinary(0, fp); /* label format name */
+	    OutByteBinary(0, fp); OutByteBinary(0, fp); OutByteBinary(0, fp); /*padding*/
+	    OutIntegerBinary(length(theselabels), fp, 0);
+	    OutIntegerBinary(txtlen, fp, 0);
+	    /* offsets */
+	    len = 0;
+	    for (j = 0; j < length(theselabels); j++){
+		OutIntegerBinary(len, fp, 0);
+		len += strlen(CHAR(STRING_ELT(theselabels,j))) + 1;
 	    }
+	    /* values: just 1,2,3,...*/
+	    for (j = 0; j < length(theselabels); j++)
+		OutIntegerBinary(j+1, fp, 0);
+	    /* the actual labels */
+	    for(j = 0; j < length(theselabels); j++){
+		len = strlen(CHAR(STRING_ELT(theselabels, j)));
+		OutStringBinary(CHAR(STRING_ELT(theselabels,j)), fp, len);
+		OutByteBinary(0, fp);
+		txtlen -= len+1;
+		if (txtlen < 0) error(_("this should happen: overrun"));
+	    }
+	    if (txtlen > 0) error(_("this should happen: underrun"));
+	}
     }
-
-
-    UNPROTECT(1); /*names*/
-
-    UNPROTECT(1); /*types*/
-
-
+    UNPROTECT(2); /* names,types */
 }
 
 SEXP do_writeStata(SEXP call)
@@ -852,7 +835,7 @@ SEXP do_writeStata(SEXP call)
     FILE *fp;
     int version;
 
-    if ((sizeof(double)!=8) | (sizeof(int)!=4) | (sizeof(float)!=4))
+    if ((sizeof(double) != 8) | (sizeof(int) != 4) | (sizeof(float) != 4))
       error(_("cannot yet read write .dta on this platform"));
 
 
@@ -861,17 +844,17 @@ SEXP do_writeStata(SEXP call)
 
 
     fp = fopen(R_ExpandFileName(CHAR(STRING_ELT(fname,0))), "wb");
-    if (!fp)
-	error(_("unable to open file"));
+    if (!fp) error(_("unable to open file"));
 
-    df=CADDR(call);
+    df = CADDR(call);
     if (!inherits(df,"data.frame"))
 	error(_("data to be saved must be in a data frame"));
 
-    version=INTEGER(coerceVector(CADDDR(call),INTSXP))[0];
-    if ((version<6) || (version>8))
-	error(_("can only write version 6-8 formats"));
-    leveltable=CAD4R(call);
+    version = INTEGER(coerceVector(CADDDR(call), INTSXP))[0];
+    /* 9 is mapped to 8 in R code */
+    if ((version < 6) || (version > 10))
+	error(_("can only write version 6-10 formats"));
+    leveltable = CAD4R(call);
 
     R_SaveStataData(fp,df,version,leveltable);
     fclose(fp);

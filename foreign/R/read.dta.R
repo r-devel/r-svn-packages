@@ -13,9 +13,9 @@
 #  A copy of the GNU General Public License is available at
 #  http://www.r-project.org/Licenses/
 
-read.dta <- function(file, convert.dates=TRUE,tz=NULL,
-                     convert.factors=TRUE, missing.type=FALSE,
-                     convert.underscore=TRUE, warn.missing.labels=TRUE)
+read.dta <- function(file, convert.dates = TRUE,
+                     convert.factors = TRUE, missing.type = FALSE,
+                     convert.underscore = FALSE, warn.missing.labels = TRUE)
 {
     rval <- .External(do_readStata, file)
 
@@ -55,14 +55,12 @@ read.dta <- function(file, convert.dates=TRUE,tz=NULL,
     }
 
     if (convert.dates){
-        if (!is.null(tz))
-            warning("argument tz= is no longer needed and will soon be removed")
         ff <- attr(rval,"formats")
         dates <- grep("%-*d", ff)
         for(v in dates)
             rval[[v]] <- as.Date("1960-1-1")+rval[[v]]
     }
-    if (convert.factors %in% c(TRUE, NA)){
+    if (convert.factors %in% c(TRUE, NA)) {
         if (attr(rval, "version") == 5)
             warning("cannot read factor labels from Stata 5 files")
         else {
@@ -96,8 +94,10 @@ read.dta <- function(file, convert.dates=TRUE,tz=NULL,
     rval
 }
 
-write.dta <- function(dataframe, file, version = 6,convert.dates=TRUE,tz="GMT",
-                      convert.factors=c("labels","string","numeric","codes"))
+write.dta <-
+    function(dataframe, file, version = 7,
+             convert.dates = TRUE, tz = "GMT",
+             convert.factors = c("labels","string","numeric","codes"))
 {
 
     if (version < 6) stop("Version must be 6-10")
@@ -120,25 +120,30 @@ write.dta <- function(dataframe, file, version = 6,convert.dates=TRUE,tz="GMT",
     names(dataframe) <- nn
     attr(dataframe,"orig.names") <- oldn
 
-    if (convert.dates){
-        dates <- which(isdate <- sapply(dataframe,
-                                        function(x) inherits(x,"POSIXt")))
-        for( v in dates)
+    if (convert.dates) {
+        dates <- which(sapply(dataframe,
+                              function(x) inherits(x, "Date")))
+        for(v in dates)
+            dataframe[[v]] <- as.vector(julian(dataframe[[v]],
+                                               as.Date("1960-1-1")))
+        dates <- which(sapply(dataframe,
+                              function(x) inherits(x, "POSIXt")))
+        for(v in dates)
             dataframe[[v]] <- as.vector(round(julian(dataframe[[v]],
                                                      ISOdate(1960,1,1, tz=tz))))
     }
     convert.factors <- match.arg(convert.factors)
     factors <- which(sapply(dataframe,is.factor))
-    if(convert.factors == "string"){
+    if(convert.factors == "string") {
         for(v in factors)
             dataframe[[v]] <- I(as.character(dataframe[[v]]))
-    } else if (convert.factors == "numeric"){
-         for(v in factors)
-             dataframe[[v]] <- as.numeric(as.character(dataframe[[v]]))
-     } else if (convert.factors == "codes"){
-         for (v in factors)
-             dataframe[[v]] <- as.numeric(dataframe[[v]])
-     }
+    } else if (convert.factors == "numeric") {
+        for(v in factors)
+            dataframe[[v]] <- as.numeric(as.character(dataframe[[v]]))
+    } else if (convert.factors == "codes") {
+        for (v in factors)
+            dataframe[[v]] <- as.numeric(dataframe[[v]])
+    }
 
     shortlevels <- function(f) {
         ll <- levels(f)
