@@ -805,11 +805,11 @@ gam.method <- function(gam="outer",outer="newton",gcv="deviance",family=NULL)
   }
   if (sum(gam==c("perf","perf.outer","outer"))==0) 
   stop("Unknown *generalized* additive model fit method.") 
-  if (sum(outer==c("optim","nlm","newton","nlm.fd"))==0) 
+  if (sum(outer==c("optim","nlm","newton","bfgs","nlm.fd"))==0) 
   stop("Unknown GAM outer optimizing method.") 
   if (sum(gcv==c("deviance","GACV"))==0) stop("Unkwown flavour of GCV")
   
-  if (gcv=="GACV"&&outer!="newton") { 
+  if (gcv=="GACV"&&!(outer=="newton"||outer=="bfgs")) { 
     warning("GACV only supported with newton optimization, GCV type reset")
     gcv <- "deviance"
   }
@@ -844,6 +844,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
 
   for (i in 1:n.th) { ## search through theta values
     family <- fix.family.link(negbin(theta=exp(l.theta[i]),link=link))
+    if (method$outer=="bfgs") b <- bfgs(
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  family=family,weights=G$w,
+                  control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
+                  maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                 family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
@@ -872,6 +878,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
     lt.1tau <- lt0 + (1-tau)*(lt1-lt0)
     for (lt in c(lt.1tau,lt.tau))
     { family <- fix.family.link(negbin(theta=exp(lt),link=link))
+      if (method$outer=="bfgs") b <- bfgs(
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  family=family,weights=G$w,
+                  control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
+                  maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else 
       b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
@@ -897,6 +909,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
       }
      
       family <- fix.family.link(negbin(theta=exp(lt.new),link=link))
+       if (method$outer=="bfgs") b <- bfgs(
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  family=family,weights=G$w,
+                  control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
+                  maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else
       b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
@@ -957,8 +975,12 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
     }
     object <- gam.negbin(lsp,fscale,family,control,method,gamma,G,...)
     ## make sure criterion gets set to UBRE
-  } else if (method$outer=="newton"){ ## the gam.fit3 method -- not negbin
-   
+  } else if (method$outer=="newton"||method$outer=="bfgs"){ ## the gam.fit3 method -- not negbin
+    if (method$outer=="bfgs") 
+    b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
+                maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
+                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
@@ -2578,6 +2600,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...)
         ft <- Xt%*%p
         trial.rank <- ceiling(edf[i]) ## R 2.7.0 ceiling is not as advertised!
         if (edf[i]-trial.rank>0) trial.rank <- trial.rank+1
+      #  trial.rank <- floor(edf[i]+.95) 
         ed <- eigXVX(Xt,V,trial.rank)
         if (ed$rank<trial.rank) {
           ##df[i] <- ed$rank

@@ -100,10 +100,12 @@ void get_trA(double *trA,double *trA1,double *trA2,double *U1,double *KU1t,doubl
   int i,m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2;
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* obtain tr(A) and diag(A) */ 
-  diagA = (double *)calloc((size_t)*n,sizeof(double));
-  *trA = diagABt(diagA,K,K,n,r);
-  if (!(*deriv)) { /* then only tr(A) is required so return now*/
-      free(diagA);
+  if (*deriv) {
+    diagA = (double *)calloc((size_t)*n,sizeof(double));
+    *trA = diagABt(diagA,K,K,n,r);
+  } else { /* then only tr(A) is required so return now*/
+      for (xx=0.0,i=0,j=i+ *q * *r;i<j;i++,U1++) xx+= *U1 * *U1;
+      *trA = xx;
       return;
   }
   /* set up work space */
@@ -882,19 +884,22 @@ void gdi(double *X,double *E,double *rS,
     }
     free(pivot2);   
   }
-  K = (double *)calloc((size_t) *n * rank,sizeof(double));
-  p0=U1;p1=K; /* first q rows of U0 should be U1 */
-  for (j=0;j<rank;j++,p1+= *n) { p3=p1 + *q;for (p2=p1;p2<p3;p2++,p0++) *p2 = *p0;} 
-  left=1;tp=0;mgcv_qrqy(K,WX,tau,n,&rank,q,&left,&tp); /* QU1 = Q%*%U1, now */
-
-  KU1t = (double *)calloc((size_t) *n * *q,sizeof(double));
-  bt=0;ct=1;mgcv_mmult(KU1t,K,U1,&bt,&ct,n,q,&rank);
-
- 
 
   PKtz = (double *)calloc((size_t) *q,sizeof(double)); /* PK'z */
-  if (!(*deriv)) { /* then evaluate coefficients here */
-    bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,&rank,&one,n);
+  
+  if (*deriv) { /* then following O(nq^2) required */
+    K = (double *)calloc((size_t) *n * rank,sizeof(double));
+    p0=U1;p1=K; /* first q rows of U0 should be U1 */
+    for (j=0;j<rank;j++,p1+= *n) { p3=p1 + *q;for (p2=p1;p2<p3;p2++,p0++) *p2 = *p0;} 
+    left=1;tp=0;mgcv_qrqy(K,WX,tau,n,&rank,q,&left,&tp); /* QU1 = Q%*%U1, now */
+
+    KU1t = (double *)calloc((size_t) *n * *q,sizeof(double));
+    bt=0;ct=1;mgcv_mmult(KU1t,K,U1,&bt,&ct,n,q,&rank);
+  } else { /* evaluate coefficients more efficiently */
+    /* PKtz is P[U1]'Q'zz */
+    left=1;tp=1;mgcv_qrqy(zz,WX,tau,n,&one,q,&left,&tp); /* puts Q'zz in zz */
+    bt=1;ct=0;mgcv_mmult(work,U1,zz,&bt,&ct,&rank,&one,q); /* puts [U1]'Q'zz in work */
+    /*    bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,&rank,&one,n);*/
     bt=0;ct=0;mgcv_mmult(PKtz,P,work,&bt,&ct,q,&one,&rank);
   }
 
@@ -1213,11 +1218,10 @@ void gdi(double *X,double *E,double *rS,
   get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv);
 
   /* clear up the remainder */
-  free(U1);free(KU1t);free(K);free(V);
+  free(U1);free(V);
 
   if (*deriv)
-  { free(Tk);
-    free(Tkm);
+  { free(Tk);free(Tkm);free(KU1t);free(K);
   }
 }
 
@@ -1266,7 +1270,8 @@ void R_cond(double *R,int *r,int *c,double *work,double *Rcondition)
 }
 
 
-void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,double *penalty,double *rank_tol)
+void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
+             double *penalty,double *rank_tol)
 /* Fast but stable PLS fitter. Obtains linear predictor, eta, of weighted penalized linear model,
    without evaluating the coefficients, but also returns coefficients in case they are needed. 
 

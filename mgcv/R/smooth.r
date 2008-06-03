@@ -1194,7 +1194,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   } else conSupplied <- TRUE
 
   ## set df fields (pre-constraint)...
-  if (is.null(sm$df)) sm$df <- object$bs.dim
+  if (is.null(sm$df)) sm$df <- sm$bs.dim
  
 
 

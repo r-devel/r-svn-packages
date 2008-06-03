@@ -97,8 +97,8 @@ sum to zero over the covariate values. Set to a zero row matrix if no
 constraints are required.}
 
 \item{df}{the degrees of freedom associated with this term (when
-unpenalized and unconstrained). If this is null then {\tt smoothCon} will set it to the basis 
-dimension. {\tt smoothCon} will reduce this by the number of constraints.}
+unpenalized and unconstrained). If this is null then \code{smoothCon} will set it to the basis 
+dimension. \code{smoothCon} will reduce this by the number of constraints.}
 
 \item{L}{smooths may depend on fewer `underlying' smoothing parameters than there are elements of
 \code{S}. In this case \code{L} is the matrix mapping the vector of underlying log smoothing 
@@ -224,11 +224,12 @@ Predict.matrix.tr.smooth<-function(object,data)
 # an example, using the new class....
 set.seed(0)
 dat <- gamSim(1,n=400,scale=2)
-attach(dat)
 b<-gam(y~s(x0,bs="tr",m=2)+s(x1,bs="ps",m=c(1,3))+
-         s(x2,bs="tr",m=3)+s(x3,bs="tr",m=2))
+         s(x2,bs="tr",m=3)+s(x3,bs="tr",m=2),data=dat)
 plot(b,pages=1)
-detach(dat)
+b<-gamm(y~s(x0,bs="tr",m=2)+s(x1,bs="ps",m=c(1,3))+
+         s(x2,bs="tr",m=3)+s(x3,bs="tr",m=2),data=dat)
+plot(b$gam,pages=1)
 # another example using tensor products of the new class
 dat <- gamSim(2,n=400,scale=.1)$data
 b <- gam(y~te(x,z,bs=c("tr","tr"),m=c(2,2)),data=dat)
