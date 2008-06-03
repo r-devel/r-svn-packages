@@ -233,26 +233,25 @@ library(mgcv)
 ## simple examples using gamm as alternative to gam
 set.seed(0) 
 dat <- gamSim(1,n=400,scale=2)
-attach(dat)
-b <- gamm(y~s(x0)+s(x1)+s(x2)+s(x3))
+b <- gamm(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat)
 plot(b$gam,pages=1)
 summary(b$lme) # details of underlying lme fit
 summary(b$gam) # gam style summary of fitted model
 anova(b$gam) 
 
-b <- gamm(y~te(x0,x1)+s(x2)+s(x3)) 
+b <- gamm(y~te(x0,x1)+s(x2)+s(x3),data=dat) 
 op <- par(mfrow=c(2,2))
 plot(b$gam)
 par(op)
-detach(dat);rm(dat)
+rm(dat)
 
 ## Add a factor to the linear predictor, to be modelled as random
 dat <- gamSim(6,n=400,scale=.2,dist="poisson")
-attach(dat)
-b2<-gamm(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,random=list(fac=~1))
+b2<-gamm(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
+         data=dat,random=list(fac=~1))
 plot(b2$gam,pages=1)
 fac <- dat$fac
-detach(dat);rm(dat)
+rm(dat)
 
 ## now an example with autocorrelated errors....
 n <- 400;sig <- 2
@@ -312,7 +311,6 @@ plot(b$gam,pages=1)
 library(nlme);set.seed(1);n <- 200
 dat <- gamSim(2,n=n,scale=0) ## standard example
 attach(dat)
-
 old.par<-par(mfrow=c(2,2))
 contour(truth$x,truth$z,truth$f)  ## true function
 f <- data$f                       ## true expected response

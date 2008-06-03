@@ -30,9 +30,11 @@ that says that the response is just some smooth function of all the
 covariates.
 
 Note one important point. In order for the model to be identifiable
-the smooth functions have to be constrained to have zero mean (usually
-taken over the set of covariate values). Such constraints are always
-applied by \code{gam}.
+the smooth functions usually have to be constrained to have zero mean (usually
+taken over the set of covariate values). The constraint is needed if the term involving the 
+smooth includes a constant function in its span. \code{gam} always applies such constraints 
+unless there is a \code{by} variable present, in which case an assessment is made of whether 
+the constraint is needed or not (see below).
 
 The following sections discuss specifying model structures for \code{gam}. 
 Specification of the distribution and link function is done using the \code{\link{family}} 
@@ -111,17 +113,19 @@ As an example, consider the model
 \deqn{E(y_i) = \beta_0+ f(x_i)z_i}{E(y_i) = b_0 + f(x_i)z_i}
 where \eqn{f}{f} is a smooth function, and \eqn{z_i}{z_i} is a numeric variable.
 The appropriate formula is:\cr
-\code{y ~ z + s(x,by=z)}\cr
+\code{y ~ s(x,by=z)}\cr
 - the \code{by} argument ensures that the smooth function gets multiplied by
-covariate \code{z}, but GAM smooths are centred (average value zero),
-so the `parametric' \code{z} term is needed as well (\eqn{f}{f} is being
-represented by a constant plus a centred smooth). If we wanted:
-\deqn{E(y_i) = f(x_i)z_i}{E(y_i)=f(x_i)z_i}
-then the appropriate formula would be:\cr
-\code{y ~ z + s(x,by=z)-1}.\cr
+covariate \code{z}. Note that when using factor variables, then the presence of centering constraints usually
+means that the by variable should be included as a parametric term, as well.
+
 The example code below also illustrates the use of factor \code{by} variables.
 
 \code{by} variables may be supplied as numeric matrices as part of specifying general linear functional terms.
+
+If a \code{by} variable is present and numeric (rather than a factor) then the corresponding smooth is only subjected 
+to an identifiability constraint if (i) the \code{by} variable is a constant vector, or, (ii) for a matrix 
+\code{by} variable, \code{L}, if \code{L\%*\%rep(1,ncol(L))} is constant or (iii) if a user defined smooth constructor 
+supplies an identifiability constraint explicitly. 
 }
 
 \section{Linking smooths with `id'}{
@@ -165,9 +169,7 @@ element of the linear predictor is
 If no \code{L} is supplied then all its elements are taken as 1. In R code terms, let \code{F} denote the \eqn{n \times p}{n by p} 
 matrix obtained by evaluating the smooth at the values in \code{X} and \code{Z}. Then the contribution of the term to the 
 linear predictor is \code{rowSums(L*F)} (note that it's element by element multiplication here!). 
-Because of the centering  constraints on smooth GAM terms, a term proportional to 
-\code{rowSums(L)} is usually needed in the model (unless this results 
-in a constant vector).
+
 
 The summation convention applies to \code{te} terms as well as \code{s} terms. More details and examples 
 are provided in 

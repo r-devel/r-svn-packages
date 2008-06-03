@@ -66,17 +66,19 @@ These appear to have better frequentist performance (in terms of power and distr
 than the alternative strictly frequentist approximation. Let \eqn{\bf f}{f} denote the vector of 
 values of a smooth term evaluated at the original 
 covariate values and let \eqn{{\bf V}_f}{V_f} denote the corresponding Bayesian covariance matrix. Let 
-\eqn{{\bf V}_f^{r-}}{V*_f} denote the rank \eqn{r}{r} pseudoinverse of \eqn{{\bf V}_f}{V_f}, where \eqn{r}{r} is
-the smaller of the EDF for the term, rounded up, and the numerical rank of \eqn{{\bf V}_f}{V_f}. The statistic used is
+\eqn{{\bf V}_f^{r-}}{V*_f} denote the rank \eqn{r}{r} pseudoinverse of \eqn{{\bf V}_f}{V_f}, where \eqn{r}{r} is the 
+EDF for the term, rounded up, (or the numerical rank of \eqn{{\bf V}_f}{V_f} if this is smaller). The statistic used is
 then 
 \deqn{T = {\bf f}^T {\bf V}_f^{r-}{\bf f}}{T = f'V*_f f}
-(this can be calcualted efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to a 
-chi-squared distribution with degrees of freedom given by the average of the EDF for the term and \eqn{r}{r}, 
-or \eqn{T}{T} is used as a component in an F ratio statistic if the scale parameter has been estimated. 
+(this can be calculated efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to a 
+chi-squared distribution with degrees of freedom given by the EDF for the term + 0.5, 
+or \eqn{T}{T} is used as a component in an F ratio statistic if the scale parameter has been estimated. The heuristic justification
+for the reference DoF is that the correct reference level is \eqn{r}{r}, which if on average close to EDF + 0.5, with the latter behaving 
+better when the EDF is near its lower limit.
+
 The definition of Bayesian p-value used is: 
 the probability of observing an \eqn{\bf f}{f} less probably than \eqn{\bf 0}{0}, under the approximation for the posterior 
-for \eqn{\bf f}{f} implied by the truncation used in the test statistic. The adjustment of the degrees of freedom is a crude 
-attempt to allow for the effect of penalization. 
+for \eqn{\bf f}{f} implied by the truncation used in the test statistic.
 }
 
 \value{\code{summary.gam} produces a list of summary information for a fitted \code{gam} object. 

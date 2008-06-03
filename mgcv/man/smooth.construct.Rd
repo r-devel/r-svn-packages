@@ -94,7 +94,8 @@ The following items may be added:
 \item{C}{The matrix defining any constraints on the term. If this is \code{NULL} then
 {\tt smoothCon} will add an identifiability constraint that each term should
 sum to zero over the covariate values. Set to a zero row matrix if no
-constraints are required.}
+constraints are required. Note that a supplied \code{C} is never ignored, even if any
+\code{by} variables of a smooth imply that no constraint is actually needed. }
 
 \item{df}{the degrees of freedom associated with this term (when
 unpenalized and unconstrained). If this is null then \code{smoothCon} will set it to the basis 

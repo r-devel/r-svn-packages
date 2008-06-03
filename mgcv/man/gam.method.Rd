@@ -21,8 +21,10 @@ outer iteration.}
 
 \item{outer}{ The optimization approach to use to optimize log smoothing
 parameters by outer
-iteration.\code{"newton"} for modified Newton method backed up by steepest
-descent, based on exact first and second derivatives. \code{"nlm"} to use 
+iteration.\code{"newton"} (default) for modified Newton method backed up by steepest
+descent, based on exact first and second derivatives. \code{"bfgs"} for a hybrid Newton-
+Quasi-Newton approach which can be faster for models with many smoothing parameters.
+ \code{"nlm"} to use 
 \code{\link{nlm}} with exact first derivatives
 to optimize the smoothness selection criterion. \code{"nlm.fd"} to use
 \code{nlm} with finite differenced first derivatives (slower and less
@@ -44,14 +46,39 @@ method argument. In this circumstance the family argument is passed, to check
 that it works with the specified method. }
 }
 
-\details{ The performance iteration was suggested by Gu (and is rather similar
-to the PQL method in generalized linear mixed modelling). At each step of the
+\details{ The default methods used by \code{gam} are based on Newton type optimization of
+GCV/UBRE/AIC scores with respect to smoothing parameters, as described in Wood (2004) 
+and Wood (2008) for the additive and generalized additive model cases respectively. 
+The smoothing criteria (GCV etc) are evaluated for the fitted model itself (rather than some working 
+approximate model). Since this involves optimizing the criteria `outside' the PIRLS or LS method used 
+for fitting, it is referred to as `outer' iteration. 
+
+In the generalized case several alternative optimisation methods can be used for outer
+optimization. Usually the fastest and most
+reliable approach is to use a modified Newton optimizer with exact first and
+second derivatives, and this is the default. However if there are large numbers of smoothing parameters
+then it can be faster to use a hybrid Newton-BFGS quasi-Newton approach, which avoids the expense of 
+frequent full second derivative evaluation.
+
+ \code{nlm} can be used with finite differenced first derivatives. This is not ideal theoretically, since 
+it is possible for the finite difference estimates of derivatives to be very
+badly in error on rare
+occasions when the P-IRLS convergence tolerance is close to being matched
+exactly, so that two components of a finite differenced derivative require
+different numbers of iterations of P-IRLS in their evaluation. An alternative
+is provided in which \code{nlm} uses numerically exact first derivatives, this
+is faster and less problematic than the other scheme. A further alternative is to use a quasi-Newton
+scheme with exact derivtives, based on \code{optim}. In practice this usually
+seems to be slower than the \code{nlm} method. 
+
+
+The alternative approach of `performance oriented iteration' was suggested by Gu 
+(and is rather similar to the PQL method in generalized linear mixed modelling). At each step of the
 P-IRLS (penalized iteratively reweighted least squares) iteration, 
 by which a gam is fitted, the smoothing parameters are
 estimated by GCV or UBRE applied to the working penalized linear modelling
 problem. In most cases, this process converges and gives smoothness estimates
-that perform well. It is usually very fast, since smoothing parameters are
-estimated alongside other model coefficients in a single P-IRLS process.
+that perform well (see e.g. Wood 2004). 
 
 The performance iteration has two disadvantages. (i) in the presence of
 co-linearity or concurvity (a frequent problem when spatial smoothers are
@@ -71,33 +98,9 @@ not that the model with lower score would perform better (it usually doesn't),
 but rather that it makes model comparison on the basis of GCV/UBRE score
 rather difficult. 
 
-Both disadvantages of performance iteration are surmountable by using what is
-basically O'Sullivan's (1986) suggestion. Here the P-IRLS scheme is iterated
-to convergence for a fixed set of smoothing parameters, with an appropriate
-GCV/UBRE score evaluated at convergence. This score at convergence is
-optimized in some way. This is termed \code{"outer"} optimization, since the
-optimization is outer to the P-IRLS loop. Outer iteration can be slower than
-performance iteration.
-
-
-Several alternative optimisation methods can be used for outer
-optimization. Usually the fastest and most
-reliable approach is to use a modified Newton optimizer with exact first and
-second derivatives, and this is the default. \code{nlm} can be used with
-finite differenced first derivatives. This is not ideal theoretically, since 
-it is possible for the finite difference estimates of derivatives to be very
-badly in error on rare
-occasions when the P-IRLS convergence tolerance is close to being matched
-exactly, so that two components of a finite differenced derivative require
-different numbers of iterations of P-IRLS in their evaluation. An alternative
-is provided in which \code{nlm} uses numerically exact first derivatives, this
-is faster and less problematic than the other scheme. A further alternative is to use a quasi-Newton
-scheme with exact derivtives, based on \code{optim}. In practice this usually
-seems to be slower than the \code{nlm} method. 
-
-
-In summary: performance iteration is fast, but can fail to converge. Outer
-iteration is a little slower, but more reliable.
+In summary: performance iteration can fail to converge. It may occasionally be 
+faster than outer iteration, but since the Wood (2008) method `outer' iteration 
+is faster in most cases.
 }
 
 
@@ -105,9 +108,6 @@ iteration is a little slower, but more reliable.
 
 Gu and Wahba (1991) Minimizing GCV/GML scores with multiple smoothing parameters via
 the Newton method. SIAM J. Sci. Statist. Comput. 12:383-398
-
-Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 
-65(1):95-114
 
 Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
 generalized additive models. J. Amer. Statist. Ass.

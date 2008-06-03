@@ -14,7 +14,7 @@ smoothing parameter is high enough (as the smoothing parameter goes to infinity 
 straight line.) \code{s(x,bs="cc")} specifies a cyclic penalized cubic regression spline smooth.
 
 `Cardinal' spline bases are used: Wood (2006) sections 4.1.2 and 4.1.3 gives full details. These bases have 
-very low setup costs. For a given basis dimension \code{k} they typically perform a little less well 
+very low setup costs. For a given basis dimension, \code{k}, they typically perform a little less well 
 then thin plate regression splines, but a little better than p-splines. See \code{\link{te}} to use these bases in tensor product smooths of several variables.
 }
 
@@ -42,7 +42,7 @@ then thin plate regression splines, but a little better than p-splines. See \cod
 this object will contain:
 \itemize{
 \item{xp}{giving the knot locations used to generate the basis.}
-\code{BD}{class \code{"cyclic.smooth"} objects include matrix \code{BD} which transforms function values 
+\item{BD}{class \code{"cyclic.smooth"} objects include matrix \code{BD} which transforms function values 
           at the knots to second derivatives at the knots.}
 }
 }

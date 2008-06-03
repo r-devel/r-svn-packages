@@ -94,7 +94,7 @@ probably more appropriate than UBRE.}
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
 For most bases the user simply supplies the knots to be used, which must match up with the \code{k} value
-supplied (the number of knots is not always just \code{k}. 
+supplied (note that the number of knots is not always just \code{k}). 
 See \code{\link{tprs}} for what happens in the \code{"tp"/"ts"} case. 
 Different terms can use different numbers of knots, unless they share a covariate.
 }
@@ -145,7 +145,7 @@ passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
 }
 
 \value{ 
-If \code{fit == FALSE} the function returns a list \code{G} of items needed to
+If \code{fit=FALSE} the function returns a list \code{G} of items needed to
 fit a GAM, but doesn't actually fit it. 
 
 Otherwise the function returns an object of class \code{"gam"} as described in \code{\link{gamObject}}.
@@ -229,7 +229,7 @@ Note that \code{gam} assumes a very inclusive definition of what counts as a GAM
 basically any penalized GLM can be used: to this end \code{gam} allows the non smooth model 
 components to be penalized via argument \code{paraPen} and allows the linear predictor to depend on 
 general linear functionals of smooths, via the summation convention mechanism described in 
-\code{\link{linear.functional.terms}}
+\code{\link{linear.functional.terms}}.
      
 Details of the default underlying fitting methods are given in Wood (2004
 and 2008). Some alternative methods are discussed in Wood (2000 and 2006). 
@@ -331,7 +331,7 @@ dat <- gamSim(1,n=400,dist="normal",scale=2)
 b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat)
 summary(b)
 plot(b,pages=1,residuals=TRUE)
-
+plot(b,pages=1,seWithMean=TRUE)
 ## same fit in two parts .....
 G<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE,data=dat)
 b<-gam(G=G)

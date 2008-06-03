@@ -11,7 +11,7 @@
          n=100,n2=40,pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
          all.terms=FALSE,shade=FALSE,shade.col="gray80",
-         shift=0,trans=I,seWithMean=TRUE,...)
+         shift=0,trans=I,seWithMean=FALSE,...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -130,8 +130,8 @@ always easy to achieve. Note that these plots can not be modified to the same ex
 Fine control of plots for parametric terms can be obtained by calling
 \code{\link{termplot}} directly, taking care to use its \code{terms} argument.
 
-Note that, by default, the confidence bands include the uncertainty about the overall mean. In other words 
-although each smooth is shown centred, the confidence bands are obtianed as if every other term in the model was 
+Note that, if \code{seWithMean=TRUE}, the confidence bands include the uncertainty about the overall mean. In other words 
+although each smooth is shown centred, the confidence bands are obtained as if every other term in the model was 
 constrained to have average 0, (average taken over the covariate values), except for the smooth concerned. This seems to correspond more closely to how most users interpret componentwise intervals in practice, and also results in intervals with
 close to nominal (frequentist) coverage probabilities by an extension of Nychka's (1988) results.
    }
@@ -192,6 +192,7 @@ x0 <- factor(x0)
 ## fit and plot...
 b<-gam(y~x0+s(x1)+s(x2)+s(x3))
 plot(b,pages=1,residuals=TRUE,all.terms=TRUE,shade=TRUE,shade.col=2)
+plot(b,pages=1,seWithMean=TRUE) ## better coverage intervals
 
 ## just parametric term alone...
 termplot(b,terms="x0",se=TRUE)

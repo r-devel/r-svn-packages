@@ -28,7 +28,7 @@ So in this case the contribution to the  linear predictor is \code{rowSums(L*F)}
 
 Note that if a \eqn{{\bf L1}}{L1} (i.e. \code{rowSums(L)}) is a constant vector, or there is no \code{by} 
 variable then the smooth will automatically be centred in order to ensure identifiability. Otherwise it 
-will not be. Note that for centred smooths it can be worth replacing the constant term in the model with \code{rowSums(L)} 
+will not be. Note also that for centred smooths it can be worth replacing the constant term in the model with \code{rowSums(L)} 
 in order to ensure that predictions are automatically on the right scale.
 
 When predicting from the model it is not necessary to provide matrix covariate and \code{by} variable values. 

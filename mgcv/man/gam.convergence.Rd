@@ -17,12 +17,14 @@ convergence failure message from \code{magic} when outer iterating, then this
 is what has happened): lower \code{outerPIsteps} in \code{\link{gam.control}}
 to fix this. 
 
-There are two things that you can do to speed up GAM fitting. (i) Change the
+There are three things that you can try to speed up GAM fitting. (i) if you have large 
+numbers of smoothing parameters in the generalized case, then try the \code{"bfgs"} method as the \code{outer} 
+option in \code{\link{gam.method}}, this can be faster than the default. (ii) Change the
 \code{method} argument to \code{\link{gam}} so that `performance iteration' is
 used in place of the default outer iteration. See the \code{perf} option
 under \code{\link{gam.method}}, for example. Usually performance iteration
-converges well and it can be quicker than the default outer iteration. 
-(ii) For large datasets it may be worth changing
+converges well and it can sometimes be quicker than the default outer iteration. 
+(iii) For large datasets it may be worth changing
 the smoothing basis to use \code{bs="cr"} (see \code{\link{s}} for details)
 for 1-d smooths, and to use \code{\link{te}} smooths in place of
 \code{\link{s}} smooths for smooths of more than one variable. This is because

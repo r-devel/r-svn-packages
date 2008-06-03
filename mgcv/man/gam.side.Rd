@@ -55,15 +55,15 @@ plot(b,pages=1)
 
 ## Simulate data with real interation...
 dat <- gamSim(2,n=500,scale=.1)
-attach(dat$data)
 old.par<-par(mfrow=c(2,2))
 ## a fully nested tensor product example
-b<-gam(y~s(x,bs="cr",k=6)+s(z,bs="cr",k=6)+te(x,z,k=6))
+b<-gam(y~s(x,bs="cr",k=6)+s(z,bs="cr",k=6)+te(x,z,k=6),
+       data=dat$data)
 plot(b)
 
 
 par(old.par)
-detach(dat$data);rm(dat)
+rm(dat)
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

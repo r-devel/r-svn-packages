@@ -31,15 +31,13 @@ represent the smooth term. If \code{k} is not
 and therefore have a fixed number of degrees of freedom set by \code{k} 
 (almost always \code{k-1}). \code{bs} indicates the basis to use for the smooth:
 the built in options are described in \code{\link{smooth.terms}}, and user defined 
-smooths can be added (see \code{\link{user.defined.smooth}}). If \code{"bs"} is not supplied 
+smooths can be added (see \code{\link{user.defined.smooth}}). If \code{bs} is not supplied 
 then the default \code{"tp"} (\code{\link{tprs}}) basis is used. 
 \code{by} can be used to specify a variable by which
-the smooth should be multiplied. For example \code{gam(y~z+s(x,by=z))}
+the smooth should be multiplied. For example \code{gam(y~s(x,by=z))}
 would specify a model \eqn{ E(y) = f(x)z}{E(y)=f(x)z} where
-\eqn{f(\cdot)}{f(.)} is a smooth function (the formula is
-\code{y~z+s(x,by=z)} rather than \code{y~s(x,by=z)} because
-the smooths are always set up to sum to zero over the covariate
-values). The \code{by} option is particularly useful for models in
+\eqn{f(\cdot)}{f(.)} is a smooth function. The \code{by} 
+option is particularly useful for models in
 which different functions of the same variable are required for
 each level of a factor and for `varying coefficient models': see \code{\link{gam.models}}. 
 \code{id} is used to give smooths identities: smooths with the same identity have
