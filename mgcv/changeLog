@@ -15,7 +15,9 @@
    using the `id' argument to `s' or `te'. Terms with the same `id' value
    will have the same smoothing parameter(s).
 
-** `by' variables can now be factor variables.
+** `by' variables can now be factor variables. Also smooth terms with a 
+   `by' variable are only subject to a sum-to-zero constraint if it
+   is needed for identifiability.
 
 ** Argument `paraPen' of `gam' allows (multiple) penalization of 
    parametric model terms. This allows `gam' to fit any model that

@@ -8,7 +8,7 @@ Function to efficiently estimate smoothing parameters in generalized
 ridge regression problems with multiple (quadratic) penalties, by GCV 
 or UBRE. The function uses Newton's method in multi-dimensions, backed up by 
 steepest descent to iteratively adjust the smoothing parameters for each penalty 
-(one penalty may have a smoothing parameter fixed at unity ). 
+(one penalty may have a smoothing parameter fixed at 1). 
 
 For maximal numerical stability the method is based on orthogonal decomposition methods, 
 and attempts to deal with numerical rank deficiency gracefully using a truncated singular 
@@ -28,7 +28,8 @@ magic(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,
 
 \item{X}{is the model matrix.}
 
-\item{sp}{is the array of smoothing parameters. The vector \code{L\%*\%log(sp)} 
+\item{sp}{is the array of smoothing parameters. The vector \code{L\%*\%log(sp)
++ lsp0} 
 contains the logs of the smoothing parameters that actually multiply the penalty matrices stored in 
 \code{S} (\code{L} is taken as the identity if \code{NULL}). 
 Any \code{sp} values that are negative are autoinitialized, otherwise they are taken as supplying 
@@ -177,6 +178,7 @@ The method is coded in \code{C} with matrix factorizations performed using LINPA
 matrix of the parametes \code{b} is given by \code{rV\%*\%t(rV)*scale}. }
 
 \item{gcv.info}{is a list of information about the performance of the method with the following elements:
+\itemize{
 \item{full.rank}{The apparent rank of the problem: number of parameters less number of equality constraints.}
 \item{rank}{The estimated actual rank of the problem (at the final iteration of the method).}
 \item{fully.converged}{is \code{TRUE} if the method converged by satisfying the convergence criteria, and \code{FALSE} if it coverged 
@@ -185,7 +187,7 @@ by failing to decrease the score along the search direction.}
 \item{iter}{is the number of Newton/Steepest descent iterations taken.}
 \item{score.calls}{is the number of times that the GCV/UBRE score had to be evaluated.}
 \item{rms.grad}{is the root mean square of the gradient of the UBRE/GCV score w.r.t. the smoothing parameters.}
-}
+}}
 Note that some further useful quantities can be obtained using \code{\link{magic.post.proc}}.
 
 }

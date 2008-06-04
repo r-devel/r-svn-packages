@@ -54,11 +54,8 @@ known dispersion parameter, they are obtained by comparing the chi.sq statistic 
 chi-squared distribution with k degrees of freedom, where k is the estimated
 rank of  \eqn{ {\bf V_i}}{V_i}. If the dispersion parameter is unknown (in 
 which case it will have been estimated) the statistic is compared
-to an F distribution with k upper d.f.  and lower d.f. given by the residual degrees of freedom for the model . 
-Typically the p-values will be somewhat too low, because they are conditional
-on the smoothing parameters, which are usually uncertain, but note that the
-statistic can also have low power if the rank, k, is too high relative to the
-EDF of the term!
+to an F distribution with k upper d.f.  and lower d.f. given by the residual degrees of freedom for the model. 
+Typically the p-values will be somewhat too low.
 
 If \code{freq=FALSE} then `Bayesian p-values' are returned for the smooth terms, based on a test statistic motivated
 by Nychka's (1988) analysis of the frequentist properties of Bayesian confidence intervals for smooths. 
@@ -73,11 +70,13 @@ then
 (this can be calculated efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to a 
 chi-squared distribution with degrees of freedom given by the EDF for the term + 0.5, 
 or \eqn{T}{T} is used as a component in an F ratio statistic if the scale parameter has been estimated. The heuristic justification
-for the reference DoF is that the correct reference level is \eqn{r}{r}, which if on average close to EDF + 0.5, with the latter behaving 
-better when the EDF is near its lower limit.
+for the reference DoF is that, away from the lower bound on the EDF, the
+theoretically correct reference level appears to be \eqn{r}{r}, which if on
+average close to EDF + 0.5. However EDF + 0.5 behaves better than \eqn{r}{r} 
+when the EDF is near its lower limit.
 
 The definition of Bayesian p-value used is: 
-the probability of observing an \eqn{\bf f}{f} less probably than \eqn{\bf 0}{0}, under the approximation for the posterior 
+the probability of observing an \eqn{\bf f}{f} less probable than \eqn{\bf 0}{0}, under the approximation for the posterior 
 for \eqn{\bf f}{f} implied by the truncation used in the test statistic.
 }
 

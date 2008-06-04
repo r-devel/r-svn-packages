@@ -6,8 +6,8 @@
 
 \description{\code{\link{gam}} can use adaptive smooths of one or two variables, specified 
 via terms like \code{s(...,bs="ad",...)}. (\code{\link{gamm}} can not use such terms --- check out 
-package \code{AdaptFit} if this is a problem.) The basis for such a term is a tensor product of 
-p-splines or cubic regression splines. Discrete P-spline type penalties are applied directly to the coefficients 
+package \code{AdaptFit} if this is a problem.) The basis for such a term is a (tensor product of) 
+p-spline(s) or cubic regression spline(s). Discrete P-spline type penalties are applied directly to the coefficients 
 of the basis, but the penalties themselves have a basis representation, allowing the strength of the
 penalty to vary with the covariates. The coefficients of the penalty basis are the smoothing parameters.
 

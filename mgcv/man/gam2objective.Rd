@@ -4,10 +4,10 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Objective functions for GAM smoothing parameter estimation}
 \description{Estimation of GAM smoothing parameters is most stable if
-optimization of the UBRE or GCV score is outer to the penalized iteratively
+optimization of the UBRE/AIC or GCV score is outer to the penalized iteratively
 re-weighted least squares scheme used to estimate the model given smoothing 
-parameters. These functions evaluate the GCV/UBRE score of a GAM model, given
-smoothing parameters, in a manner sutable for use by \code{\link{optim}} or \code{\link{nlm}}.
+parameters. These functions evaluate the GCV/UBRE/AIC score of a GAM model, given
+smoothing parameters, in a manner suitable for use by \code{\link{optim}} or \code{\link{nlm}}.
 Not normally called directly, but rather service routines for \code{\link{gam.outer}}.
 }
 \usage{
@@ -24,11 +24,11 @@ gam2derivative(lsp,args,...)
 \item{...}{Other arguments for passing to \code{gam.fit3}.}
 }
 \details{ \code{gam2objective} and \code{gam2derivative} are functions suitable
-for calling by \code{\link{optim}}, to evaluate the GCV/UBRE score and it's
+for calling by \code{\link{optim}}, to evaluate the GCV/UBRE/AIC score and its
 derivatives w.r.t. log smoothing parameters.
 
 \code{gam4objective} is an equivalent to \code{gam2objective}, suitable for
-optimization by \code{\link{nlm}} - derivatives of the GCV/UBRE function are
+optimization by \code{\link{nlm}} - derivatives of the GCV/UBRE/AIC function are
 calculated and returned as attributes.
 
 The basic idea of optimizing smoothing parameters `outer' to the P-IRLS loop
@@ -49,7 +49,7 @@ additive models. J.R.Statist.Soc.B 70(3):495-518
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{\code{gam.fit3},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
+\seealso{\code{\link{gam.fit3}},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
 
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...

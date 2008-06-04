@@ -44,8 +44,7 @@ this object will contain:
 \item{xp}{giving the knot locations used to generate the basis.}
 \item{BD}{class \code{"cyclic.smooth"} objects include matrix \code{BD} which transforms function values 
           at the knots to second derivatives at the knots.}
-}
-}
+}}
 
 \details{ 
 The constructor is not normally called directly, but is rather used internally by \code{\link{gam}}. 

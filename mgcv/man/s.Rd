@@ -86,6 +86,10 @@ the term is a function of.}
 
 \item{label}{A suitable text label for this smooth term.}
 \item{xt}{The object passed in as argument \code{xt}.}
+\item{id}{An identifying label or number for the smooth, linking it to other
+smooths. Defaults to \code{NULL} for no linkage. }
+\item{sp}{array of smoothing parameters for the term (negative for
+auto-estimation). Defaults to \code{NULL}.}
 }
 
 

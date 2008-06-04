@@ -119,7 +119,7 @@ is close to un-identifiable on the scale of the linear predictor, but perfectly 
 defined on the response scale.}
 
 \item{gamma}{It is sometimes useful to inflate the model degrees of 
-freedom in the GCV or UBRE score by a constant multiplier. This allows 
+freedom in the GCV or UBRE/AIC score by a constant multiplier. This allows 
 such a multiplier to be supplied. } 
 
 \item{fit}{If this argument is \code{TRUE} then \code{gam} sets up the model and fits it, but if it is
@@ -221,8 +221,10 @@ default basis is usually the best choise, but the choise of the basis dimension 
 but it is important not to make it restrictively small, nor very large and computationally costly). The basis should 
 be chosen to be larger than is believed to be necessary to approximate the smooth function concerned. 
 The effective degrees of freedom for the smooth will then be controlled by the smoothing penalty on 
-the term, and (usually) selected automatically (withy an upper limit set by \code{k-1}). Of course 
-the \code{k} should not be made too large, or computation will be slow (or in extreme there will be more 
+the term, and (usually) selected automatically (withy an upper limit set by
+\code{k-1} or occasionally \code{k}). Of course 
+the \code{k} should not be made too large, or computation will be slow (or in
+extreme cases there will be more 
 coefficients to estimate than there are data).
 
 Note that \code{gam} assumes a very inclusive definition of what counts as a GAM: 

@@ -5,7 +5,9 @@
 \description{ Function used in definition of tensor product smooth terms within
   \code{gam} model formulae. The function does not evaluate a
   smooth - it exists purely to help set up a model using tensor product 
-  based smooths.
+  based smooths. Designed to construct tensor products from any marginal
+  smooths with a basis-penalty representation (with the restriction that each 
+  marginal smooth must have only one penalty).
 }
 
 \usage{te(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
@@ -104,7 +106,7 @@ of the smooth. This means that the penalty of the tensor product associated
 with any particular covariate direction can be interpreted as the penalty of
 the appropriate marginal smooth applied in that direction and averaged over
 the smooth. Currently this is only done for marginals of a single
-variable. This parameterization can reduce numerical stability for when used
+variable. This parameterization can reduce numerical stability  when used
 with marginal smooths other than \code{"cc"}, \code{"cr"} and \code{"cs"}: if
 this causes problems, set \code{np=FALSE}.
 
@@ -138,6 +140,10 @@ be ignored, \code{FALSE}, otherwise. }
 
 \item{np}{\code{TRUE} to re-parameterize 1-D marginal smooths in terms of function
 values (defualt).}
+
+\item{id}{the \code{id} argument supplied to \code{te}.}
+
+\item{sp}{the \code{sp} argument supplied to \code{te}.}
 }
 
 

@@ -56,16 +56,16 @@ a simple bisection search after an initial crude line search to bracket one. The
 terminate at the upper boundary of the search region is a Poisson fit would have yielded an estimated 
 scale parameter <1.
 
-If outer iteration is used then \eqn{theta}{theta} is estimated by searching for the value yielding the lowest AIC.
+If outer iteration is used then \eqn{\theta}{theta} is estimated by searching for the value yielding the lowest AIC.
 The search is either over the supplied array of values, or is a grid search over the supplied range, followed by a 
-golden section search. A full fit is required for each trial \eqn{theta}{theta}, so the process is slow, but speed
-is enhanced by making the changes in \eqn{theta}{theta} as small as possible, from one step to the next, and 
+golden section search. A full fit is required for each trial \eqn{\theta}{theta}, so the process is slow, but speed
+is enhanced by making the changes in \eqn{\theta}{theta} as small as possible, from one step to the next, and 
 using the previous smothing parameter and fitted values to start the new fit. 
 
 In a simulation test based on 800 replicates of
 the first example data, given below, the GCV based (performance iteration) method yielded models with, 
 on avergage 6\% better MSE performance than the AIC based (outer iteration) method. 
-\code{theta} had a 0.86 correlation coefficient between models.
+\code{theta} had a 0.86 correlation coefficient between the two methods.
 \code{theta} estimates averaged 3.36 with a standard deviation of 0.44 for the AIC based method and
 3.22 with a standard deviation of 0.43 for the GCV based method. However the GCV based method is 
 less computationally reliable, failing in around 4\% of replicates. 
@@ -85,7 +85,7 @@ Venables, B. and B.R. Ripley (2002) Modern Applied Statistics in S, Springer.
 \section{WARNINGS}{
 \code{\link{gamm}} does not support \code{theta} estimation
 
-The negative binomial functions from the MASS library are no longet supported.
+The negative binomial functions from the MASS library are no longer supported.
 }
 
 \examples{

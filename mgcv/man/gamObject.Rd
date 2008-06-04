@@ -84,49 +84,16 @@ expected value for  each datum.}
 criterion used.}
 
 \item{mgcv.conv}{ A list of convergence diagnostics relating to the
-\code{"mgcv"} or \code{"magic"} parts of smoothing
-parameter estimation - this will not be very meaningful for pure \code{"outer"}
-estimation of smoothing parameters. \code{mgcv.conv} differs for method \code{"magic"} and \code{"mgcv"}. Here is 
-the \code{"mgcv"} version:
-
-\item{score}{corresponding to edf, an array of GCV or UBRE scores for the model given the final 
-     estimated relative smoothing parameters.}
-
-\item{g}{the gradient of the GCV/UBRE score w.r.t. the relative smoothing parameters at termination.}
-
-\item{h}{the second derivatives corresponding to \code{g} above - i.e. the leading diagonal of the Hessian.}
-
-\item{e}{the eigen-values of the Hessian. All non-negative indicates a positive definite Hessian.}
-
-\item{iter}{the number of iterations taken.}
-
-\item{in.ok}{\code{TRUE} if the second smoothing parameter guess improved the GCV/UBRE score.}
-
-\item{step.fail}{\code{TRUE} if the algorithm terminated by failing to improve the GCV/UBRE score rather than by `converging'. 
-Not necessarily a problem, but check the above derivative information quite carefully.}
-
-In the case of \code{"magic"} the items are:
-
-\item{full.rank}{The apparent rank of the problem given the model matrix and 
-constraints.}
-
-\item{rank}{The numerical rank of the problem.}
-
-
-\item{fully.converged}{\code{TRUE} is multiple GCV/UBRE converged by meeting 
-convergence criteria. \code{FALSE} if method stopped with a steepest descent step 
-failure.}
-
-\item{hess.pos.def}{Was the hessian of the GCV/UBRE score positive definite at 
-smoothing parameter estimation convergence?}
-
-\item{iter}{How many iterations were required to find the smoothing parameters?}
-
-\item{score.calls}{and how many times did the GCV/UBRE score have to be evaluated?}
-
-\item{rms.grad}{root mean square of the gradient of the GCV/UBRE score at 
-convergence.}
-
+\code{"magic"} parts of smoothing parameter estimation - this will not be very meaningful for pure \code{"outer"}
+estimation of smoothing parameters. The items are: \code{full.rank}, The apparent rank of the problem given the model matrix and 
+constraints; \code{rank}, The numerical rank of the problem;
+ \code{fully.converged}, \code{TRUE} is multiple GCV/UBRE converged by meeting 
+convergence criteria and \code{FALSE} if method stopped with a steepest descent step 
+failure; \code{hess.pos.def}Was the hessian of the GCV/UBRE score positive definite at 
+smoothing parameter estimation convergence?; \code{iter}{How many iterations were required to find the smoothing parameters?}
+\code{score.calls}, and how many times did the GCV/UBRE score have to be
+evaluated?; \code{rms.grad}, root mean square of the gradient of the GCV/UBRE score at 
+convergence.
 } % end of mgcv.conv listing
 
 \item{min.edf}{Minimum possible degrees of freedom for whole model.}

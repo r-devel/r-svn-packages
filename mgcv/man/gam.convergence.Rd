@@ -12,16 +12,16 @@ fit. In the Generalized Additive Model case it means using
 \code{\link{gam.outer}} for details. 
 
 It is possible for the default `outer' iteration to fail when finding intial
-smoothing parameters using a few steps of outer iteration (if you get a
+smoothing parameters using a few steps of performance iteration (if you get a
 convergence failure message from \code{magic} when outer iterating, then this
 is what has happened): lower \code{outerPIsteps} in \code{\link{gam.control}}
 to fix this. 
 
 There are three things that you can try to speed up GAM fitting. (i) if you have large 
 numbers of smoothing parameters in the generalized case, then try the \code{"bfgs"} method as the \code{outer} 
-option in \code{\link{gam.method}}, this can be faster than the default. (ii) Change the
+option in \code{\link{gam.method}}: this can be faster than the default. (ii) Change the
 \code{method} argument to \code{\link{gam}} so that `performance iteration' is
-used in place of the default outer iteration. See the \code{perf} option
+used in place of the default outer iteration. See the \code{gam="perf"} option
 under \code{\link{gam.method}}, for example. Usually performance iteration
 converges well and it can sometimes be quicker than the default outer iteration. 
 (iii) For large datasets it may be worth changing

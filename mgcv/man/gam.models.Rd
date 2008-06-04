@@ -45,10 +45,11 @@ This page therefore concentrates on the model formula for \code{gam}.
 
 \section{Models with simple smooth terms}{
 Consider the example model.
-\deqn{\mu_i = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + f_1(x_{3i}) + 
-f_2(x_{4i},x_{5i})}{ mu_i = b_0 + b_1 x_1i + b_2 x_2i + f1(x_3i) + f2(x_4i,x_5i)}
-where the response variables have distribution 
-\eqn{y_i \sim N(\mu_i,\sigma^2)}{y_i ~ N(mu_i,s^2)}.
+\deqn{g(\mu_i) = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + f_1(x_{3i}) + 
+f_2(x_{4i},x_{5i})}{ g(mu_i) = b_0 + b_1 x_1i + b_2 x_2i + f1(x_3i) + f2(x_4i,x_5i)}
+where the response variables \eqn{y_i}{y_i} has expectation \eqn{\mu_i}{mu_i}
+and \eqn{g}{g} is a link function.
+
 
 The \code{gam} formula for this would be \cr
   \code{y ~ x1 + x2 + s(x3) + s(x4,x5)}. \cr
@@ -104,7 +105,9 @@ which is a numeric or factor variable of the same dimension as the covariates of
 If a \code{by} variable is numeric, then its \eqn{i^{th}}{ith} element multiples the  \eqn{i^{th}}{ith}
 row of the model matrix corresponding to the smooth term concerned. If a \code{by} variable is a factor then it generates 
 an indicator vector for each level of the factor. The model matrix for the smooth term is then replicated for each factor level,
-and each copy has its rows multiplied by the corresponding rows of its indicator variable. In short a different smooth is generated
+and each copy has its rows multiplied by the corresponding rows of its
+indicator variable. The smoothness penalties are also duplicated for each
+factor level.  In short a different smooth is generated
 for each factor level (the \code{id} argument to \code{\link{s}} and \code{\link{te}} can be used to force all 
 such smooths to have the same smoothing parameter). 
 
@@ -173,7 +176,7 @@ linear predictor is \code{rowSums(L*F)} (note that it's element by element multi
 
 The summation convention applies to \code{te} terms as well as \code{s} terms. More details and examples 
 are provided in 
-\code{link{linear.functional.terms}}. 
+\code{\link{linear.functional.terms}}. 
 }
 
 \section{Penalizing the parametric terms}{

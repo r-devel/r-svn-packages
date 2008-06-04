@@ -74,7 +74,7 @@ if you are linking smoothing parameters but have set \code{idLinkBases} to \code
 \details{ 
 
 Outer iteration using \code{newton} is controlled by the list \code{newton}
-with the following elements : \code{conv.tol} (default
+with the following elements: \code{conv.tol} (default
 1e-6) is the relative convergence tolerance; \code{maxNstep} is the maximum
 length allowed for an element of the Newton search direction (default 5);
 \code{maxSstep} is the maximum length allowed for an element of the steepest

@@ -76,7 +76,14 @@ Maintainer: Simon Wood <simon.wood@r-project.org>
 
 }
 \references{
-Wood, S.N. (2006) \emph{Generalized Additive Models: an introduction with R}, CRC
+Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
+generalized additive models. J. Amer. Statist. Ass. 99:673-686. 
+
+Wood, S.N. (2006) \emph{Generalized Additive Models: an introduction with R},
+CRC
+
+Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
+additive models. J.R.Statist.Soc.B 70(3):495-518 
 }
 \keyword{ package }
 \keyword{models} 

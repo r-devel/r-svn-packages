@@ -10,7 +10,7 @@ parameters.
 This routine optimizes a GCV or UBRE score in this way. Basically the GCV or
 UBRE score is evaluated for each trial set of smoothing parameters by
 estimating the GAM for those smoothing parameters. The score is minimized
-w.r.t. the parameters numerically, using \code{newton} (default), \code{optim} or \code{nlm}. Exact
+w.r.t. the parameters numerically, using \code{newton} (default), \code{bfgs}, \code{optim} or \code{nlm}. Exact
 (first and second) derivatives of the score can be used by fitting with
 \code{\link{gam.fit3}}. This
 improves efficiency and reliability relative to relying on finite

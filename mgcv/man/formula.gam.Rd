@@ -59,9 +59,9 @@ Formulae can involve nested or ``overlapping'' terms such as \cr
 \code{y~s(x)+s(z)+s(x,z)} or \code{y~s(x,z)+s(z,v)}:\cr see
 \code{\link{gam.side}} for further details and examples. 
 
-Smooth terms in a \code{gam} formula will except matrix arguments as covariates (and corresponding \code{by} variable), 
+Smooth terms in a \code{gam} formula will accept matrix arguments as covariates (and corresponding \code{by} variable), 
 in which case a `summation convention' is invoked. Consider the example of \code{s(X,Z,by=L)} where \code{X}, \code{Z}
-and \code{L} are n by m matrices. Let \code{F} be the n by m matrix that results form evaluating the smooth at the values in 
+and \code{L} are n by m matrices. Let \code{F} be the n by m matrix that results from evaluating the smooth at the values in 
 \code{X} and \code{Z}. Then the contribution to the linear predictor from the term will be
 \code{rowSums(F*L)} (note the element-wise multiplication). This convention allows the linear predictor of the GAM
 to depend on (a discrete approximation to) any linear functional of a smooth: see \code{\link{linear.functional.terms}} for more information and examples (including functional linear models/signal regression).
