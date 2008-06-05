@@ -969,8 +969,8 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
                  criterion <- method$gcv;scale <- -1}
 
   if (substr(family$family[1],1,17)=="Negative Binomial" && length(family$getTheta())>1) {
-    if (method$outer!="newton") {
-      warning("only outer method `newton' supports `negbin' family and theta selection: reset")
+    if (!(method$outer=="newton"||method$outer=="bfgs")) {
+      warning("only outer methods `newton' & `bfgs' supports `negbin' family and theta selection: reset")
       method$outer <- "newton"
     }
     object <- gam.negbin(lsp,fscale,family,control,method,gamma,G,...)

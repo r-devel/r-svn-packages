@@ -109,7 +109,7 @@
 * the `absorb.cons' option has been removed from `gam.control'.
 
 * `fix.family.link' and `fix.family.var' bug fix --- only return 
-   family unmodified is all required derivative functions are present.
+   family unmodified if all required derivative functions are present.
 
 * `smoothCon' now returns a list of smooth objects to facilitate factor
   `by' variables.

@@ -374,6 +374,15 @@ b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
         data=dat,method=gm)
 plot(b3,pages=1)
 
+## repeat using GACV as in Wood 2008...
+
+gm <- gam.method(gcv="GACV")
+b4<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
+        data=dat,method=gm,scale=-1)
+plot(b4,pages=1)
+
+ 
+
 ## a binary example 
 dat <- gamSim(1,n=400,dist="binary",scale=.33)
 
