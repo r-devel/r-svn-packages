@@ -16,7 +16,9 @@ parameter is as close as possible to 1, the value that the scale parameter shoul
 are chosen by UBRE/AIC (with scale parameter set to 1) and a value of \code{theta} is  
 searched for which minimizes the AIC of the model. 
 
-The second option is much slower than the first. 
+The second option is much slower than the first, but the first can sometimes fail to converge. 
+To use the first option, set \code{gam="perf"} in the \code{method} argument of \code{gam}: see 
+\code{\link{gam.method}} for details.
 }
 
 \usage{

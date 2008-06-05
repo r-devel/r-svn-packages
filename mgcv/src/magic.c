@@ -708,7 +708,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
  */
 { int *pi,*pivot,q,n,autoinit,left,ScS,m,mp,i,j,tp,k,use_sd=0,rank,converged,iter=0,ok,
     gcv,try,fit_call=0,step_fail=0,max_half,*spok,def_supplied,use_dsyevd=1,L_exists;
-  double *sp,*p,*p1,*p2,*tau,xx,*y1,*y0,yy,**Si=NULL,*work,score,*sd_step,*n_step,*U1,*V,*d,**M,**K,
+  double *sp=NULL,*p,*p1,*p2,*tau,xx,*y1,*y0,yy,**Si=NULL,*work,score,*sd_step,*n_step,*U1,*V,*d,**M,**K,
          *VS,*U1U1,**My,**Ky,**yK,*dnorm,*ddelta,**d2norm,**d2delta,norm,delta,*grad,**hess,*nsp,
          min_score,*step,d_score=1e10,*ev=NULL,*u,msg=0.0,Xms,*rSms,*bag,*bsp,sign,*grad1,*u0;
   gcv=control[0];q=control[2];n=control[1];m=control[4];max_half=control[5];mp=control[6];
@@ -820,7 +820,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
     bag=(double *)calloc((size_t)m,sizeof(double));
   } else 
   { M=K=My=Ky=yK=hess=d2norm=d2delta=NULL;
-    VS=grad=dnorm=ddelta=nsp=ev=u=U1U1=bsp=bag=NULL;
+    u0=VS=grad1=grad=dnorm=ddelta=nsp=ev=u=U1U1=bsp=bag=NULL;
     spok=NULL;/*dir_sp=NULL;*/
   }
 

@@ -1,3 +1,21 @@
+/* Copyright (C) 2007,2008 Simon N. Wood  simon.wood@r-project.org
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+(www.gnu.org/copyleft/gpl.html)
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
+USA. */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -767,7 +785,7 @@ void gdi(double *X,double *E,double *rS,
     
 
 */
-{ double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*K,*R,*d,*Vt,*V,*U1,*KU1t,xx,*b1,*b2,*P,
+{ double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*K=NULL,*R,*d,*Vt,*V,*U1,*KU1t=NULL,xx,*b1,*b2,*P,
          *c0,*c1,*c2,*a0,*a1,*a2,*B2z,*B2zBase,*B1z,*B1zBase,*eta1,*mu1,*eta2,*KKtz,
          *PKtz,*KPtSPKtz,*v1,*v2,*wi,*wis,*z1,*z2,*zz1,*zz2,*pz2,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2;

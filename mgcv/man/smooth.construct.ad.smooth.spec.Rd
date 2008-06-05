@@ -108,9 +108,10 @@ y <- f + rnorm(n)*.4
 
 b0 <- gam(y~s(x,z,k=150))
 vis.gam(b0,theta=30,phi=30,ticktype="detailed")
-b <- gam(y~s(x,z,bs="ad",k=15,m=3),gamma=1.4)
-vis.gam(b,theta=30,phi=30,ticktype="detailed")
-cor(fitted(b0),f);cor(fitted(b),f)
+## slow, uncomment to use...
+#b <- gam(y~s(x,z,bs="ad",k=15,m=3),gamma=1.4)
+#vis.gam(b,theta=30,phi=30,ticktype="detailed")
+#cor(fitted(b0),f);cor(fitted(b),f)
 
 }
 \keyword{models} \keyword{regression}%-- one or more ..
