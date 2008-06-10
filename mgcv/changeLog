@@ -3,6 +3,9 @@
 
 1.4-1
 
+* term specific offsets handled properly w.r.t. `by' variables in 
+  `smoothCon' (a rather specialized topic!)
+
 * minor doc bug fix for `smooth.construct'.
 
 1.4-0

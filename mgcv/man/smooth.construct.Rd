@@ -88,8 +88,8 @@ The input argument \code{object}, assigned a new class to indicate what type of 
 following items added:
 \item{X}{The model matrix from this term. This may have an \code{"offset"}
 attribute:  a vector of length \code{nrow(X)} containing any contribution of
-the smooth to the model offset term. code{by} variables do not need to be
-dealt with here, but if they are then an item code{by.done} must be added to
+the smooth to the model offset term. \code{by} variables do not need to be
+dealt with here, but if they are then an item \code{by.done} must be added to
 the \code{object}.}
 \item{S}{A list of positive semi-definite penalty matrices that apply to this term. The list will be empty 
 if the term is to be left un-penalized.}
