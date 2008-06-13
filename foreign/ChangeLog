@@ -1,3 +1,7 @@
+2008-06-13 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* tests/sas.R: make optional, controlled by env variable.
+
 2008-05-29 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-26.
