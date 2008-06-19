@@ -1,8 +1,8 @@
 \name{s3bby}
-\encoding{latin1}
-\alias{s3bby}
-\non_function{}
 \title{Responses simulated by Rodriguez and Goldman}
+\docType{data}
+\alias{s3bby}
+\encoding{latin1}
 \description{
   A matrix of the results of 100 simulations of dichotomous multilevel
   data. The rows correspond to the 2449 births for which the covariates
@@ -19,10 +19,10 @@
   \url{http://data.princeton.edu/multilevel/simul.htm}
 }
 \references{
-  Rodriguez, Germán and Goldman, Noreen (1995), "An assessment of
-  estimation procedures for multilevel models with binary responses",
-  \emph{Journal of the Royal Statistical Society, Series A}, \bold{158},
-  73-89.
+  Rodriguez, Germán and Goldman, Noreen (1995)
+  An assessment of estimation procedures for multilevel models with
+  binary responses,
+  \emph{Journal of the Royal Statistical Society, Series A} \bold{158}, 73--89.
 }
 \examples{
 str(s3bby)

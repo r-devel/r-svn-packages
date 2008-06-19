@@ -34,9 +34,11 @@
 \examples{
 str(Mmmec)
 summary(Mmmec)
+
+if(FALSE) ## offset(.) in formula is not yet implemented
 (fm1 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region),
              Mmmec, poisson))
-(fm2 <- lmer(deaths ~ offset(log(expected)) + uvb + (1|region),
-                 Mmmec, poisson, method = "Laplace")) # change to "AGQ" when available
+(fm2 <- lmer(deaths ~ uvb + (1|region), offset= log(expected),
+             data=Mmmec, poisson))
 }
 \keyword{datasets}

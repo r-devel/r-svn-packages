@@ -1,11 +1,11 @@
 \name{bdf}
+\title{Language Scores of 8-Graders in The Netherlands}
 \alias{bdf}
-\non_function{}
-\title{Language scores}
+\docType{data}
 \usage{data(bdf)}
 \description{
-The \code{bdf} data frame has 2287 rows and 25 columns of language
-scores from grade 8 pupils in elementary schools in The Netherlands.
+  The \code{bdf} data frame has 2287 rows and 25 columns of language
+  scores from grade 8 pupils in elementary schools in The Netherlands.
 }
 \format{
   \describe{
@@ -44,8 +44,9 @@ scores from grade 8 pupils in elementary schools in The Netherlands.
   \url{http://stat.gamma.rug.nl/snijders/multilevel.htm}
 }
 \references{
-  Snijders, Tom and Bosker, Roel (1999), \emph{Multilevel Analysis: An
-    Introduction to Basic and Advanced Multilevel Modeling}, Sage.
+  Snijders, Tom and Bosker, Roel (1999)
+  \emph{Multilevel Analysis: An Introduction to Basic and Advanced
+    Multilevel Modeling}, Sage.
 }
 \examples{
 summary(bdf)

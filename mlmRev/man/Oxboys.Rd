@@ -1,6 +1,6 @@
 \name{Oxboys}
 \alias{Oxboys}
-\non_function{}
+\docType{data}
 \title{Heights of Boys in Oxford}
 \description{
   The \code{Oxboys} data frame has 234 rows and 4 columns.
@@ -31,8 +31,9 @@
   standardized age.
 }
 \source{
-  Pinheiro, J. C. and Bates, D. M. (2000), \emph{Mixed-Effects Models in
-    S and S-PLUS}, Springer, New York.  (Appendix A.19)
+  Pinheiro, J. C. and Bates, D. M. (2000)
+  \emph{Mixed-Effects Models in S and S-PLUS},
+  Springer, New York.  (Appendix A.19)
 }
 \examples{
 data(Oxboys)
