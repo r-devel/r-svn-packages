@@ -33,7 +33,7 @@ in order to ensure that predictions are automatically on the right scale.
 
 When predicting from the model it is not necessary to provide matrix covariate and \code{by} variable values. 
 For example to simply examine the underlying smooth function one would use vectors of covariate values and vector 
-\code{by} variables, with the \code{by} variable and equivalent of \code{l1}, above, set to vectors of ones. 
+\code{by} variables, with the \code{by} variable and equivalent of \code{L1}, above, set to vectors of ones. 
 
 }
 
@@ -68,7 +68,7 @@ plot(f,fitted(b))
 ######################################################################
 ## multivariate integral example. Function `test1' will be integrated# 
 ## (by midpoint quadrature) over 100 equal area sub-squares covering # 
-## the unit square. Noise is added to the resulting simualted data.  #
+## the unit square. Noise is added to the resulting simulated data.  #
 ## `test1' is estimated from the resulting data using two alternative#
 ## smooths.                                                          #
 ######################################################################
@@ -161,9 +161,7 @@ y <- L\%*\%f + rnorm(200)*20 ## simulated response data
 
 ## Now fit the model E(y) = L\%*\%f(x) where f is a smooth function.
 ## The summation convention is used to evaluate smooth at each value
-## in matrix X to get matrix F, say. Then rowSum(L*F) gives E(y)
-## Note that centering constraint of f means that rowSums(L) is required
-## in model...
+## in matrix X to get matrix F, say. Then rowSum(L*F) gives E(y).
 
 ## create matrix of eval points for each function. Note that
 ## `smoothCon' is smart and will recognize the duplication...

@@ -1,6 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.4-2
+
+* ?linear.functional.term error fix.
+
 1.4-1
 
 * `Predict.matrix2' was not in NAMESPACE: fixed.
