@@ -7,7 +7,7 @@
 summaries from it. (See \code{\link{sink}} to divert output to a file.)
 }
 \usage{
-\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, ...)
+\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, alpha=0.5, ...)
 
 \method{print}{summary.gam}(x,digits = max(3, getOption("digits") - 3), 
                   signif.stars = getOption("show.signif.stars"),...)
@@ -24,6 +24,9 @@ summaries from it. (See \code{\link{sink}} to divert output to a file.)
 \item{freq}{By default p-values for individual terms are calculated using the frequentist estimated
 covariance matrix of the parameter estimators. If this is set to FALSE then
 the Bayesian covariance matrix of the parameters is used instead. See details. }
+
+\item{alpha}{ adjustment to reference distribution per estiamted smoothing parameter. 
+}
 
 \item{digits}{controls number of digits printed in output.}
 
@@ -64,20 +67,28 @@ than the alternative strictly frequentist approximation. Let \eqn{\bf f}{f} deno
 values of a smooth term evaluated at the original 
 covariate values and let \eqn{{\bf V}_f}{V_f} denote the corresponding Bayesian covariance matrix. Let 
 \eqn{{\bf V}_f^{r-}}{V*_f} denote the rank \eqn{r}{r} pseudoinverse of \eqn{{\bf V}_f}{V_f}, where \eqn{r}{r} is the 
-EDF for the term, rounded up, (or the numerical rank of \eqn{{\bf V}_f}{V_f} if this is smaller). The statistic used is
-then 
+EDF for the term. The statistic used is then 
 \deqn{T = {\bf f}^T {\bf V}_f^{r-}{\bf f}}{T = f'V*_f f}
 (this can be calculated efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to a 
-chi-squared distribution with degrees of freedom given by the EDF for the term + 0.5, 
-or \eqn{T}{T} is used as a component in an F ratio statistic if the scale parameter has been estimated. The heuristic justification
-for the reference DoF is that, away from the lower bound on the EDF, the
-theoretically correct reference level appears to be \eqn{r}{r}, which if on
-average close to EDF + 0.5. However EDF + 0.5 behaves better than \eqn{r}{r} 
-when the EDF is near its lower limit.
+chi-squared distribution with degrees of freedom given by the EDF for the term + \code{alpha} * (number of 
+estimated smoothing parameters), or \eqn{T}{T} is used as a component in an F ratio statistic if the 
+scale parameter has been estimated. The adjustment per smoothing parameter is based on simulation evidence, 
+using GCV or AIC type smoothing parameter selection. A smaller \code{alpha} seems to be appropriate when smoothing 
+parameters are selected by \code{\link{gamm}}. The non-integer rank truncated inverse is constructed to give an 
+approximation varying smoothly between the bounding integer rank approximations, while yielding test statistics with the 
+correct mean and variance. 
 
 The definition of Bayesian p-value used is: 
 the probability of observing an \eqn{\bf f}{f} less probable than \eqn{\bf 0}{0}, under the approximation for the posterior 
 for \eqn{\bf f}{f} implied by the truncation used in the test statistic.
+
+Note that Bayesian p-values will not have the correct frequentist distribution under the null
+ for terms that can be zeroed completely: the null will be accepted too readily, 
+so that in this case the frequentist alternative may be preferable. 
+
+Also note that increasing the \code{gamma} parameter of \code{\link{gam}} tends to mean that \code{alpha} should be decreased, 
+to get close to uniform p-value distribution under the null.  
+
 }
 
 \value{\code{summary.gam} produces a list of summary information for a fitted \code{gam} object. 
@@ -163,7 +174,7 @@ and Hall/CRC Press.
 \author{ Simon N. Wood \email{simon.wood@r-project.org} with substantial
 improvements by Henric Nilsson.}
 
-\section{WARNING }{ The p-values are approximate. 
+\section{WARNING }{ The p-values are approximate: do read the details section.
 } 
 
 \seealso{  \code{\link{gam}}, \code{\link{predict.gam}},

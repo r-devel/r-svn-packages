@@ -14,7 +14,8 @@ although this behaviour can be over-ridden.
 }
 
 \usage{
-smoothCon(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),dataX=NULL)
+smoothCon(object,data,knots,absorb.cons=FALSE,
+          scale.penalty=TRUE,n=nrow(data),dataX=NULL)
 PredictMat(object,data,n=nrow(data))
 }
 %- maybe also `usage' for other objects documented here.

@@ -632,14 +632,14 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   n.p<-ncol(G$X) 
   # deal with penalties
 
-####### Following needs updating to deal with L...
+
 ## min.sp must be length nrow(L) to make sense
-## sp must be length ncol(L) --- need to partiion
+## sp must be length ncol(L) --- need to partition
 ## L into columns relating to free log smoothing paramters,
 ## and columns, L0, corresponding to values supplied in sp.
 ## lsp0 = L0%*%log(sp[sp>=0]) [need to fudge sp==0 case by
 ## setting log(0) to, e.g. 10*log(.Machine$double.xmin)]
-## magic needs updating to accept lsp0 (newton done...)
+
 
   ## following deals with supplied and estimated smoothing parameters...
   ## first process the `sp' array supplied to `gam'...
@@ -679,6 +679,28 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       }
     }
   } ## finished processing `sp' vectors supplied in `s' or `te' terms
+
+  ## copy initial sp's back into smoth objects, so there is a record of
+  ## fixed and free...
+  k <- 1 
+  if (length(idx)) for (i in 1:length(idx)) idx[[i]]$sp.done <- FALSE
+  if (m>0) for (i in 1:m) { ## work through all smooths
+    id <- sm[[i]]$id 
+    if (!is.null(id)) { ## smooth with id
+      if (idx[[id]]$nc>0) { ## only copy if there are sp's
+        G$smooth[[i]]$sp <- G$sp[idx[[id]]$c:(idx[[id]]$c+idx[[id]]$nc-1)]
+      }   
+      if (!idx[[id]]$sp.done) { ## only update k on first encounter with this smooth
+        idx[[id]]$sp.done <- TRUE
+        k <- k + idx[[id]]$nc
+      }
+    
+    } else { ## no id, just work through sp 
+      if (is.null(sm[[i]]$L)) nc <- length(sm[[i]]$S) else nc <- ncol(sm[[i]]$L)
+      if (nc>0) G$smooth[[i]]$sp <- G$sp[k:(k+nc-1)]
+      k <- k + nc
+    }
+  } ## now all elements of G$smooth have a record of initial sp. 
 
 
   if (!is.null(min.sp)) # then minimum s.p.'s supplied
@@ -2488,7 +2510,7 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
 ## estimated using `tol'
   qrx <- qr(X)
   R <- qr.R(qrx)
-  V <- R%*%V%*%t(R)
+  V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
   ind <- abs(ed$values) > max(abs(ed$values))*tol
@@ -2500,9 +2522,51 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
   list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
 }
 
+pinvXVX <- function(X,V,rank=NULL) {
+## Routine for forming fractionally trunctated
+## pseudoinverse of XVX'. Returns as D where
+## DD' gives the pseudoinverse itself.
+  k <- floor(rank)
+  nu <- rank - k
+#  if (k < 1) { k <- 1; nu <- 0}
+  if (nu>0) k1 <- k+1 else k1 <- k
+
+  qrx <- qr(X)
+  R <- qr.R(qrx)
+  V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
+  V <- (V + t(V))/2
+  ed <- eigen(V,symmetric=TRUE)
+
+  ## Get the eigenvectors...
+  vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
+  if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
+  if (k==0) {
+     vec <- t(t(vec)*sqrt(nu/ed$val[1]))
+     return(vec)
+  }
+ 
+  ## deal with the fractional part of the pinv...
+  if (nu>0) {
+     if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
+     b12 <- .5*nu*(1-nu)
+     if (b12<0) b12 <- 0
+     b12 <- sqrt(b12)
+     B <- matrix(c(1,b12,b12,nu),2,2)
+     ev <- diag(ed$values[k:k1]^-.5)
+     B <- ev%*%B%*%ev
+     eb <- eigen(B,symmetric=TRUE)
+     rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
+     vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
+  } else {
+    vec <- t(t(vec)/sqrt(ed$val[1:k]))
+  }
+  vec ## vec%*%t(vec) is the pseudoinverse
+}
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...) 
+
+
+summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=.5, ...) 
 # summary method for gam object - provides approximate p values for terms + other diagnostics
 # Improved by Henric Nilsson
 { pinv<-function(V,M,rank.tol=1e-6)
@@ -2583,7 +2647,11 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...)
   m<-length(object$smooth) # number of smooth terms
   df <- edf <- s.pv <- chi.sq <- array(0, m)
   if (m>0) # form test statistics for each smooth
-  { if (!freq) X <- model.matrix(object)
+  { if (!freq) { 
+      X <- model.matrix(object)
+      ## get corrected edf
+      ##  edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
+    }
     for (i in 1:m)
     { start<-object$smooth[[i]]$first.para;stop<-object$smooth[[i]]$last.para
       V <- covmat[start:stop,start:stop] # cov matrix for smooth
@@ -2598,22 +2666,39 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...)
       } else { ## Nychka statistics
         Xt <- X[,start:stop] 
         ft <- Xt%*%p
-        trial.rank <- ceiling(edf[i]) ## R 2.7.0 ceiling is not as advertised!
-        if (edf[i]-trial.rank>0) trial.rank <- trial.rank+1
-      #  trial.rank <- floor(edf[i]+.95) 
-        ed <- eigXVX(Xt,V,trial.rank)
-        if (ed$rank<trial.rank) {
-          ##df[i] <- ed$rank
+        if (FALSE) { ## current release version
+          trial.rank <- ceiling(edf[i]) ## R 2.7.0 ceiling is not as advertised!
+          if (edf[i]-trial.rank>0) trial.rank <- trial.rank+1
+     
+          ed <- eigXVX(Xt,V,trial.rank)
+          
           iv <- 1/ed$values
-        } else {
-          ##df[i] <- edf[i]
-          ##d.edf  <- edf[i] - trial.rank + 1
-          iv <- 1/ed$values
-          ##iv[trial.rank] <- iv[trial.rank] * d.edf
-        }
-        ## t(ft)%*%ginv(Ats)%*%ft where Ats = Xt%*%Vt%*%t(Xt), efficiently calculated...
-        chi.sq[i] <- sum(((t(ed$vectors)%*%ft)*sqrt(iv))^2)
-        df[i] <- edf[i] + .5
+       
+          ## t(ft)%*%ginv(Ats)%*%ft where Ats = Xt%*%Vt%*%t(Xt), efficiently calculated...
+          chi.sq[i] <- sum(((t(ed$vectors)%*%ft)*sqrt(iv))^2)
+          df[i] <- edf[i] + .5
+        } else { ## experimental version --- problematic
+          df[i] <- min(ncol(Xt),edf[i])
+          D <- pinvXVX(Xt,V,df[i])
+          df[i] <- df[i]+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
+          chi.sq[i] <- sum((t(D)%*%ft)^2)   
+          if (FALSE) { ## full interval inversion  
+            if (inherits(attr(object$smooth[[i]],"qrc"),"qr")) {
+              X1 <- matrix(object$cmX,nrow(Xt),ncol(object$Vp),byrow=TRUE)
+              meanL1 <- object$smooth[[i]]$meanL1
+              if (!is.null(meanL1)) X1 <- X1 / meanL1
+              X1[,start:stop] <- Xt
+              df[i] <- edf[i]
+              D <- pinvXVX(X1,object$Vp,df[i]+1)
+              #se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
+            } else { ## se in centred (or anyway unconstained) space only
+              df[i] <- edf[i]
+              D <- pinvXVX(Xt,V,df[i])
+            }
+            fm <- sum(D%*%(t(D)%*%ft))/sum(colSums(D)^2) ## re-centering
+            chi.sq[i] <- sum((t(D)%*%(ft-fm))^2)  
+          }
+        } ## end experimental version
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       if (!est.disp)
@@ -2677,7 +2762,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
 }
 
 
-anova.gam <- function (object, ..., dispersion = NULL, test = NULL)
+anova.gam <- function (object, ..., dispersion = NULL, test = NULL, alpha=.5, freq=FALSE)
 # improved by Henric Nilsson
 {   # adapted from anova.glm: R stats package
     dotargs <- list(...)
@@ -2696,7 +2781,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL)
             test = test))
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
-    sg <- summary(object, dispersion = dispersion, freq = FALSE)
+    sg <- summary(object, dispersion = dispersion, freq = freq,alpha = alpha)
     class(sg) <- "anova.gam"
     sg
 }
@@ -3073,7 +3158,7 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 ## target e.d.f. for a single smoothing parameter problem. 
 ## X is model matrix; S is penalty matrix; target is target 
 ## average e.d.f. per penalized term.
-{ R <- qr.R(qr(X))
+{ R <- qr.R(qr(X)) ### BUG? pivoting?
   te <- try(RS <- backsolve(R,S,transpose=TRUE),silent=TRUE)
   if (inherits(te,"try-error")) return(-1)
   te <- try(RSR <- backsolve(R,t(RS),transpose=TRUE),silent=TRUE)

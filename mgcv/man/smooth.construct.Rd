@@ -91,9 +91,13 @@ attribute:  a vector of length \code{nrow(X)} containing any contribution of
 the smooth to the model offset term. \code{by} variables do not need to be
 dealt with here, but if they are then an item \code{by.done} must be added to
 the \code{object}.}
+
 \item{S}{A list of positive semi-definite penalty matrices that apply to this term. The list will be empty 
 if the term is to be left un-penalized.}
-\item{rank}{an array giving the ranks of the penalties.}
+
+\item{rank}{An array giving the ranks of the penalties.}
+
+\item{null.space.dim}{The dimension of the penalty null space (before centering).}
 
 The following items may be added:
 

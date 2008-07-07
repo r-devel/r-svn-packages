@@ -11,7 +11,8 @@ are usually approximate, unless the models are un-penalized.
 
 }
 \usage{
-\method{anova}{gam}(object, ..., dispersion = NULL, test = NULL)
+\method{anova}{gam}(object, ..., dispersion = NULL, test = NULL,
+                    alpha = .5, freq = FALSE)
 \method{print}{anova.gam}(x, digits = max(3, getOption("digits") - 3),...)
 }
 %- maybe also `usage' for other objects documented here.
@@ -21,6 +22,10 @@ are usually approximate, unless the models are un-penalized.
 \item{dispersion}{ a value for the dispersion parameter: not normally used.}
 \item{test}{what sort of test to perform for a multi-model call. One of
 \code{"Chisq"}, \code{"F"} or \code{"Cp"}. }
+\item{alpha}{adjustment to degrees of freedom per estimated smoothing parameter for a 
+term when called with a single model object. See \code{\link{summary.gam}} for details.}
+\item{freq}{whether to use frequentist or Bayesian approximations for single smooth term 
+p-values. See \code{\link{summary.gam}} for details.}
 \item{digits}{number of digits to use when printing output.}
 }
 \details{ If more than one fitted model is provided than \code{anova.glm} is
