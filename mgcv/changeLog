@@ -3,6 +3,11 @@
 
 1.4-2
 
+* p-values tweaked again, for slightly better performance with smooths of 
+several variables.
+
+* record of intial sp's is now carried in `smooth' objects in filed `sp'.
+
 * ?linear.functional.term error fix.
 
 1.4-1
