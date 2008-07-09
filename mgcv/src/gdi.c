@@ -101,6 +101,242 @@ double diagABt(double *d,double *A,double *B,int *r,int *c)
 }
 
 
+void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
+             double *rS,int *rSncol,int *Encol, int *q,int *M,double *beta, 
+             double *b1, double *b2,int *deriv)
+/* Routine to obtain beta'Sbeta and its derivatives w.r.t. the log smoothing 
+   parameters... S= EE'.
+
+   b1 and b2 contain first and second derivatives of q-vector beta w.r.t. 
+   \pho_k. They are packed as follows....
+
+   * b1 will contain dbeta/d\rho_0, dbeta/d\rho_1 etc. So, for example, dbeta_i/d\rho_j
+     (indices starting at zero) is located in b1[q*j+i].
+   
+   * b2 will contain d^2beta/d\rho_0d\rho_0, d^2beta/d\rho_1d\rho_0,... but rows will not be
+     stored if they duplicate an existing row (e.g. d^2beta/d\rho_0d\rho_1 would not be 
+     stored as it already exists and can be accessed by interchanging the sp indices).
+     So to get d^2beta_k/d\rho_id\rho_j: 
+     i)   if i<j interchange the indices
+     ii)  off = (j*m-(j+1)*j/2+i)*q (m is number of sp's) 
+     iii) v2[off+k] is the required derivative.       
+
+*/
+{ double *Sb,*Skb,*work,*work1,*p1,*p0,*p2,xx;
+  int i,j,bt,ct,one=1,m,k,rSoff,mk,km; 
+  
+  work = (double *)calloc((size_t)*q,sizeof(double)); 
+  Sb = (double *)calloc((size_t)*q,sizeof(double));
+  bt=1;ct=0;mgcv_mmult(work,E,beta,&bt,&ct,Encol,&one,q);
+  bt=0;ct=0;mgcv_mmult(Sb,E,work,&bt,&ct,q,&one,Encol); /* S \hat \beta */
+
+  for (*bSb=0.0,i=0;i<*q;i++) *bSb += beta[i] * Sb[i]; /* \hat \beta' S \hat \beta */
+
+  if (deriv <=0) {free(work);free(Sb);return;}
+
+  work1 = (double *)calloc((size_t)*q,sizeof(double));
+  Skb = (double *)calloc((size_t)*M * *q,sizeof(double));
+ 
+  for (p1=Skb,rSoff=0,i=0;i<*M;i++) { /* first part of first derivatives */
+     /* form S_k \beta * sp[i]... */
+     bt=1;ct=0;mgcv_mmult(work,rS + rSoff ,beta,&bt,&ct,rSncol+i,&one,q);
+     for (j=0;j<rSncol[i];j++) work[i] *= sp[i]; 
+     bt=0;ct=0;mgcv_mmult(p1,rS + rSoff ,work,&bt,&ct,q,&one,rSncol+i);
+     rSoff += *q * rSncol[i];
+
+     /* now the first part of the first derivative */
+     for (xx=0.0,j=0;j<*q;j++,p1++) xx += beta[j] * *p1;
+     bSb1[i] = xx; 
+  }
+
+  if (*deriv>1)  for (m=0;m < *M;m++) { /* Hessian */
+     bt=1;ct=0;mgcv_mmult(work1,E,b1+m * *q,&bt,&ct,Encol,&one,q);
+     bt=0;ct=0;mgcv_mmult(work,E,work1,&bt,&ct,q,&one,Encol);  /* S dbeta/drho_m */
+
+    for (k=m;k < *M;k++) {
+      km=k * *M + m;mk=m * *M + k;  /* second derivatives needed */
+      /* d2beta'/drho_k drho_m S beta */
+      for (xx=0.0,p0=Sb,p1=Sb + *q;p0<p1;p0++,b2++) xx += *b2 * *p0;
+      bSb2[km] = 2*xx; 
+       
+      /* dbeta'/drho_k S d2beta/drho_m */
+      for (xx=0.0,p0=b1+k* *q,p1=p0 + *q,p2=work;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      bSb2[km] += 2*xx;
+
+      /* dbeta'/drho_k S_m beta sp[m] */
+      for (xx=0.0,p0=Skb + k* *q,p1=p0 + *q,p2= b1+m* *q;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      bSb2[km] += 2*xx;
+ 
+      /* dbeta'/drho_m S_k beta sp[k] */
+      for (xx=0.0,p0=Skb + m* *q,p1=p0 + *q,p2= b1+k* *q;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      bSb2[km] += 2*xx;
+
+      if (k==m) bSb2[km] += bSb1[k]; else bSb2[mk] = bSb2[km];
+    }
+  } /* done Hessian */
+
+  /* Now finish off the first derivatives */
+  bt=1;ct=0;mgcv_mmult(work,b1,Sb,&bt,&ct,M,&one,q);
+  for (i=0;i<*M;i++) bSb1[i] += 2*work[i];
+  
+  free(Sb);free(work);free(Skb);free(work1);
+
+}
+
+void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
+	      double *rS,int *rSncol,int *Encol,int *q,int *M,int *deriv,double *tol)
+/* Routine to obtain log|S| and its derivatives w.r.t. the log(sp).
+   S is q by q total penalty matrix, where S= EE'
+   rS contains M, q by rSncol[i], square roots of S components, packed one
+      after another.
+   sp is array of smoothing parameters (not logged).
+   
+*/
+{ int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k;
+  double *d,*d0,*U,*U0,*rDiUtrSk,*DUSUD,*p1,xx;
+  d0 = d = (double *)calloc((size_t)*q,sizeof(double));
+  /* eigen-decompose S (overwriting it) */
+  U0 = U = (double *)calloc((size_t)*q * *q,sizeof(double)); /* Actually S=EE' */
+  bt=0;ct=1;mgcv_mmult(U,E,E,&bt,&ct,q,q,Encol);
+  mgcv_symeig(U,d,q,&use_dsyevd); /* eigenvectors are in ascending order */
+  i=0; /* count the eigenvalues to discard */
+  while (i < *q && d[i] < d[*q - 1] * *tol) i++;
+  U += *q * i;d+=i; /* discard the zero eigenvalues & their eigenvectors */
+  rank = *q - i; 
+  /* U contains eigenvectors of S, treat as q by rank, from here */
+  
+  for (*det=0,i=0;i<rank;i++) *det += log(d[i]); /* log|S|_+ */
+
+  if (*deriv <=0) {free(d0);free(U0);return;} /* evaluation only */
+
+  /* Now work on the derivative.... */
+
+  /* form U_+ D_+^{-.5} and store in U*/
+  for (p1=U,i=0;i<rank;i++) { 
+    xx = 1.0/sqrt(d[i]);
+    for (j=0;j<*q;j++,p1++) *p1 *= xx;
+  }  /* `d' used as working storage from here */
+
+  /* storage for D^{-.5}U_+'S_k^{.5}... */
+  rDiUtrSk = (double *)calloc((size_t)(rank * rank),sizeof(double)); 
+  
+  if (*deriv>1) { /* Storage for  D^{-.5}U_+'S_k^{.5} U_+ D^{-.5} */
+    DUSUD = (double *) calloc((size_t)(rank * rank * *M) ,sizeof(double));
+  } else DUSUD = (double *) NULL;
+  
+  for (rSoff=0,i=0;i<*M;i++) { /* loop for first derivatives, and second derivative components */
+     bt=1;ct=0;mgcv_mmult(rDiUtrSk,U,rS+rSoff * *q,&bt,&ct,&rank,rSncol+i,q);
+     rSoff += rSncol[i];
+     det1[i] = sp[i]*diagABt(d,rDiUtrSk,rDiUtrSk,&rank,rSncol+i);
+     if (*deriv>1) { 
+       bt=0;ct=1;mgcv_mmult(DUSUD + i * rank * rank,rDiUtrSk,rDiUtrSk,&bt,&ct,&rank,&rank,rSncol+i);
+     }
+  } /* gradient vector for log|S| complete */
+  
+  /* Now do the Hessian of log|S| */
+  if (*deriv>1) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+    km=k * *M + m;mk=m * *M + k;
+    det2[km] = -diagABt(d,DUSUD+ m * rank * rank,DUSUD + k * rank * rank ,&rank,&rank);  
+    if (k==m) det2[km] += det1[k]; else det2[mk] = det2[km];
+  }
+  
+  free(d0);free(U0);free(rDiUtrSk);
+  if (*deriv > 1) free(DUSUD);
+
+}
+
+void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
+             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
+
+/* obtains derivatives of |X'WX + S| wrt the log smoothing parameters. The determinant itself
+   has to be obtained from |P|+ before it is unpivoted 
+   * P is q by r
+   * K is n by r
+  
+   * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
+ 
+   * Note that P and K are as in Wood (2008) JRSSB 70, 495-518.
+
+*/
+
+{ double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1;
+  int m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2;
+  if (*deriv==2) deriv2=1; else deriv2=0;
+  /* obtain diag(KK') */ 
+  if (*deriv) {
+    diagKKt = (double *)calloc((size_t)*n,sizeof(double));
+    xx = diagABt(diagKKt,K,K,n,r); 
+  } else { /* nothing to do */
+      return;
+  }
+  /* set up work space */
+  work =  (double *)calloc((size_t)*n,sizeof(double));
+
+  /* now loop through the smoothing parameters to create K'TkK */
+  if (deriv2) {
+    KtTK = (double *)calloc((size_t)(*r * *r * *M),sizeof(double));
+    for (k=0;k < *M;k++) {
+      j = k * *r * *r;
+      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work);
+    }
+  } else { KtTK=(double *)NULL;} /* keep compiler happy */
+  
+  /* start first derivative */ 
+  bt=1;ct=0;mgcv_mmult(det1,Tk,diagKKt,&bt,&ct,M,&one,n); /* tr(TkKK') */ 
+
+  /* Finish first derivative and create create P'SmP if second derivs needed */
+ 
+  PtrSm = (double *)calloc((size_t)(*r * *q ),sizeof(double)); /* storage for P' rSm */
+  trPtSP = (double *)calloc((size_t) *M,sizeof(double));
+
+  if (deriv2) {
+    PtSP = (double *)calloc((size_t)(*M * *r * *r ),sizeof(double));
+  } else { PtSP = (double *) NULL;}
+
+  for (rSoff=0,m=0;m < *M;m++) { /* loop through penalty matrices */
+     bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
+     rSoff += rSncol[m];
+     trPtSP[m] = sp[m] * diagABt(work,PtrSm,PtrSm,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
+     det1[m] = 2*det1[m] + trPtSP[m]; /* completed first derivative */
+     if (deriv2) { /* get P'S_mP */
+       bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm,PtrSm,&bt,&ct,r,r,rSncol+m);
+     }
+  }
+
+  /* Now accumulate the second derivatives */
+
+  if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+     km=k * *M + m;mk=m * *M + k;
+     /* 2tr(Tkm KK') */
+     for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
+     det2[km] = 2*xx;
+
+     /* -4 tr(KTkKK'TmK) */
+     det2[km] -= 4*diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+
+     /* sp[k]*tr(P'S_kP) */
+     if (k==m) det2[km] += trPtSP[m];
+
+     /* -2*sp[m]*tr(K'T_kKP'S_mP) */
+     det2[km] -= 2*sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
+     
+     /* -2*sp[k]*tr(K'T_mKP'S_kP) */
+     det2[km] -= 2*sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
+ 
+     /* - sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+     det2[km] -= sp[m]*sp[k]*diagABt(work,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
+
+     det2[mk] = det2[km];     
+  }
+
+  /* free up some memory */
+  if (deriv2) {free(PtSP);free(KtTK);}
+  free(diagKKt);free(work);
+  free(PtrSm);free(trPtSP);
+
+}
+
+
 void get_trA(double *trA,double *trA1,double *trA2,double *U1,double *KU1t,double *P,double *K,double *sp,
              double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
 
@@ -111,6 +347,10 @@ void get_trA(double *trA,double *trA1,double *trA2,double *U1,double *KU1t,doubl
    * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
 
    * If deriv is 0 then only tr(A) is obtained here.
+   * Note that P and K are as in Wood (2008) JRSSB 70, 495-518, but the expressions used here
+     are slightly different. They are as efficient, but are from before I noticed that U1 
+     could be eliminated. 
+
 */
 
 { double *diagA,*diagAA,xx,*KtTK,*U1KtTK,*work,*pTk,*pTm,*pdA,*pdAA,*p1,*pd,
@@ -748,6 +988,8 @@ void gdi(double *X,double *E,double *rS,
      and second derivatives of the deviance wrt the log smoothing parameters.
    * trA1 and trA2 are an M-vector and M by M matrix for returning the first 
      and second derivatives of tr(A) wrt the log smoothing parameters.
+   * P0,P1,P2 are for returning the Pearson statistic and its derivatives, or 
+     for the REML penalty, if REML!=0.
    * rank_est is for returning the estimated rank of the problem.
    * the remaining arguments are the dimensions already refered to except for:
    * deriv, which controls which derivatives are produced:
@@ -755,6 +997,8 @@ void gdi(double *X,double *E,double *rS,
        deriv==1 for first derivatives only
        deriv==2 for gradient and Hessian
    
+   The REML penalty returned in P0 is to be added to the *deviance*.
+
    The method has 4 main parts:
 
    1. The initial QR- decomposition and SVD are performed, various quantities which 
@@ -769,7 +1013,7 @@ void gdi(double *X,double *E,double *rS,
    4. Evaluation of the derivatives of tr(A) (i.e. trA1 and trA2)
 
    The method involves first and second derivatives of a number of k-vectors wrt
-   log smoothing parameters (\rho), where q is q or n. Consider such a vector, v. 
+   log smoothing parameters (\rho), where k is q or n. Consider such a vector, v. 
    
    * v1 will contain dv/d\rho_0, dv/d\rho_1 etc. So, for example, dv_i/d\rho_j
      (indices starting at zero) is located in v1[q*j+i].
@@ -788,10 +1032,12 @@ void gdi(double *X,double *E,double *rS,
 { double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*K=NULL,*R,*d,*Vt,*V,*U1,*KU1t=NULL,xx,*b1,*b2,*P,
          *c0,*c1,*c2,*a0,*a1,*a2,*B2z,*B2zBase,*B1z,*B1zBase,*eta1,*mu1,*eta2,*KKtz,
          *PKtz,*KPtSPKtz,*v1,*v2,*wi,*wis,*z1,*z2,*zz1,*zz2,*pz2,*w1,*w2,*pw2,*Tk,*Tkm,
-         *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2;
+         *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2,
+         ldetXWXS;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter,m,one=1,n_2dCols,n_b1,n_b2,
-      n_eta1,n_eta2,n_work,ok,deriv2,*pivot2;
+    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,REML=1;
 
+ 
   if (*deriv==2) deriv2=1; else deriv2=0;
   zz = (double *)calloc((size_t)*n,sizeof(double)); /* storage for z'=Wz */
   for (i=0;i< *n;i++) zz[i] = z[i]*w[i]; /* form z'=Wz itself*/
@@ -851,6 +1097,13 @@ void gdi(double *X,double *E,double *rS,
     rank= *q;xx=d[0] * *rank_tol;
     while(d[rank-1]<xx) rank--;
     *rank_est = rank;
+    /* REML NOTE: |X'WX+S| is the product of the d's squared */  
+    
+    if (REML) { 
+        for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(d[i]);    
+       ldetXWXS *= 2;
+    }
+
     V = (double *) calloc((size_t)(*q * rank),sizeof(double));
     U1 = (double *) calloc((size_t)(*q * rank),sizeof(double));
     /* produce the truncated V (q by rank): columns dropped so V'V=I but VV'!=I   */
@@ -881,6 +1134,13 @@ void gdi(double *X,double *E,double *rS,
     R_cond(R,&r,&rank,work,&Rcond);
     while (*rank_tol * Rcond > 1) { rank--;R_cond(R,&r,&rank,work,&Rcond);}
     *rank_est = rank;
+
+    /* REML NOTE: |X'WX+S| is the product of the R[i,i]s squared */  
+
+    if (REML) { 
+      for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(fabs(R[i + i * r])); 
+      ldetXWXS *= 2;
+    }
 
     /* Now get P, which is q by rank*/
     V = (double *) calloc((size_t)(*q * rank),sizeof(double));
@@ -1204,6 +1464,13 @@ void gdi(double *X,double *E,double *rS,
   /* End of the coefficient derivative iteration  */
   /************************************************************************************/
 
+  /* REML NOTE: \beta'S\beta stuff has to be done here on pivoted versions.
+     Store bSb in P0, bSb1 in P1 and bSb2 in P2.
+  */
+  if (REML) {
+       get_bSb(P0,P1,P2,sp,E,rS,rSncol,Encol,q,M,PKtz,b1,b2,deriv);
+  
+  }
   /* unpivot P into rV and PKtz into beta */
 
   for (i=0;i< *q;i++) beta[pivot[i]] = PKtz[i];
@@ -1212,7 +1479,7 @@ void gdi(double *X,double *E,double *rS,
   p0 = rV + *q * rank;p1 = rV + *q * *q;
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
-  pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
+  if (!REML) pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
 
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      Note: Vt and R already freed. P is really V - don't free yet.
@@ -1231,9 +1498,31 @@ void gdi(double *X,double *E,double *rS,
 
     if (deriv2) { free(dev_hess);}
   }
+  
+  /* Now get the remainder of the REML penalty */
+  if (REML) {
+    /* First deal with log|X'WX+S| */   
+    *P0 += ldetXWXS;
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
+    for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
+      P1[i] += trA1[i];
+      for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
+    } 
+    
+    /* Now log|S|_+ */
+  
+    get_detS(trA,trA1,trA2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    *P0 -= *trA;
+    for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
+      P1[i] -= trA1[i];
+      for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
+    } 
+    i=0;
+  } else i = *deriv; /* order of derivatives required from next routine */
 
+  /* Note: the following gets only trA if its REML */
 
-  get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv);
+  get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,&i);
 
   /* clear up the remainder */
   free(U1);free(V);

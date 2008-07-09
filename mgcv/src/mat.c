@@ -270,6 +270,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd)
    Two alternative underlying LAPACK routines can be used, 
    either dsyevd (slower, robust) or dsyevr (faster, seems less robust). 
    Vectors returned in columns of A, values in ev.
+   Eigenvalues are in *ascending* order....
    Testing R code....
    library(mgcv)
    n<-4;A<-matrix(rnorm(n*n),n,n);A<-A%*%t(A);d<-array(0,n)

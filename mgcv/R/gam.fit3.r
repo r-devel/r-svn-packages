@@ -13,10 +13,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-            gamma=1,scale=1,printWarn=TRUE,...) 
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{   scale <- abs(scale)
+{  
+    scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
     x <- as.matrix(x)
     iter <- 0;coef <- rep(0,ncol(x))
@@ -62,6 +63,10 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
     ## end of added code
 
+    D1 <- D2 <- P <- P1 <- P2 <- trA <- trA1 <- trA2 <- 
+        GCV<- GCV1<- GCV2<- GACV<- GACV1<- GACV2<- UBRE <-
+        UBRE1<- UBRE2<- REML<- REML1<- REML2 <-NULL
+
     if (EMPTY) {
         eta <- rep.int(0, nobs) + offset
         if (!valideta(eta)) 
@@ -80,7 +85,6 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         alpha <- dev
         trA2 <- trA1 <- trA <- 0
         if (deriv) GCV2 <- GCV1<- UBRE2 <- UBRE1<-trA1 <- rep(0,nSp)
-        else GCV2<-GCV1<-UBRE2<-UBRE1<-trA2<-trA1 <- NULL
         GCV <- nobs*alpha/(nobs-gamma*trA)^2
         UBRE <- alpha/nobs - scale + 2*gamma/n*trA
         scale.est <- alpha / (nobs - trA)
@@ -298,55 +302,65 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          rV <- matrix(oo$rV,ncol(x),ncol(x))
          coef <- oo$beta;
          trA <- oo$trA;
-         P <- oo$P
-         
-         delta <- nobs - gamma * trA
-         delta.2 <- delta*delta           
-  
-         GCV <- nobs*dev/delta.2
-         GACV <- dev/nobs + P * 2*gamma*trA/(delta * nobs) 
-
-         UBRE <- dev/nobs - 2*delta*scale/nobs + scale
          scale.est <- dev/(nobs-trA)
 
-         if (deriv) {
-           trA1 <- oo$trA1
+         if (scoreType=="REML") {
+           REML <- dev + oo$P
+           if (deriv) {
+             REML1 <- oo$D1 + oo$P1
+             if (deriv==2) REML2 <- matrix(oo$D2+oo$P2,nSp,nSp)
+             if (sum(!is.finite(REML2))) {
+               stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")
+             }
+           }
+         } else { ## Not REML ....
+
+           P <- oo$P
            
-           D1 <- oo$D1
-           P1 <- oo$P1
+           delta <- nobs - gamma * trA
+           delta.2 <- delta*delta           
+  
+           GCV <- nobs*dev/delta.2
+           GACV <- dev/nobs + P * 2*gamma*trA/(delta * nobs) 
+
+           UBRE <- dev/nobs - 2*delta*scale/nobs + scale
+        
+           if (deriv) {
+             trA1 <- oo$trA1
+           
+             D1 <- oo$D1
+             P1 <- oo$P1
           
-           if (sum(!is.finite(D1))||sum(!is.finite(P1))||sum(!is.finite(trA1))) { 
-             stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
+             if (sum(!is.finite(D1))||sum(!is.finite(P1))||sum(!is.finite(trA1))) { 
+                 stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
          
-           delta.3 <- delta*delta.2
+             delta.3 <- delta*delta.2
+  
+             GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
+             GACV1 <- D1/nobs + 2*P/delta.2 * trA1 + 2*gamma*trA*P1/(delta*nobs)
 
-           GCV1 <- nobs*D1/delta.2 + 2*nobs*dev*trA1*gamma/delta.3
-           GACV1 <- D1/nobs + 2*P/delta.2 * trA1 + 2*gamma*trA*P1/(delta*nobs)
-
-           UBRE1 <- D1/nobs + gamma * trA1 *2*scale/nobs
-           if (deriv==2) {
-             trA2 <- matrix(oo$trA2,nSp,nSp) 
-             D2 <- matrix(oo$D2,nSp,nSp)
-             P2 <- matrix(oo$P2,nSp,nSp)
+             UBRE1 <- D1/nobs + gamma * trA1 *2*scale/nobs
+             if (deriv==2) {
+               trA2 <- matrix(oo$trA2,nSp,nSp) 
+               D2 <- matrix(oo$D2,nSp,nSp)
+               P2 <- matrix(oo$P2,nSp,nSp)
               
-             if (sum(!is.finite(D2))||sum(!is.finite(P2))||sum(!is.finite(trA2))) { 
-               stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
+               if (sum(!is.finite(D2))||sum(!is.finite(P2))||sum(!is.finite(trA2))) { 
+                 stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
              
-             GCV2 <- outer(trA1,D1)
-             GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
+               GCV2 <- outer(trA1,D1)
+               GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
                       6*nobs*dev*outer(trA1,trA1)*gamma*gamma/(delta.2*delta.2) + 
                       nobs*D2/delta.2 + 2*nobs*dev*gamma*trA2/delta.3  
-             GACV2 <- D2/nobs + outer(trA1,trA1)*4*P/(delta.3) +
+               GACV2 <- D2/nobs + outer(trA1,trA1)*4*P/(delta.3) +
                       2 * P * trA2 / delta.2 + 2 * outer(trA1,P1)/delta.2 +
                       2 * outer(P1,trA1) *(1/(delta * nobs) + trA/(nobs*delta.2)) +
                       2 * trA * P2 /(delta * nobs) 
-             GACV2 <- (GACV2 + t(GACV2))*.5
-             UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
-           } else {GACV2<-P2<-trA2<-D2<-UBRE2<-GCV2 <- NULL}
-         } else {
-           GACV1<-P1<-P2<-trA1<-trA2<-D1<-D2<-GACV2<-UBRE2<-GCV2<-UBRE1<-GCV1<-NULL
-         }
-         
+               GACV2 <- (GACV2 + t(GACV2))*.5
+               UBRE2 <- D2/nobs +2*gamma * trA2 * scale / nobs
+             } ## end if (deriv==2)
+           } ## end if (deriv)
+        } ## end !REML
         # end of inserted code
         if (!conv&&printWarn) 
             warning("Algorithm did not converge")
@@ -390,14 +404,15 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
-        GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,UBRE1=UBRE1,UBRE2=UBRE2,rV=rV,
+        GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
+        UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,
         scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
 }
 
 newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="deviance",use.svd=TRUE,
-                   mustart = NULL,...)
+                   maxHalf=30,printWarn=FALSE,scoreType="REML",     ## "deviance",
+                   use.svd=TRUE,mustart = NULL,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
 ## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
 ## to +ve definite ii) step halves on step 
@@ -405,7 +420,11 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 ## values forward from one evaluation to next to speed convergence.    
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
-{ ## sanity check L
+{  
+  scoreType <- "REML"   ##### NOTE DEBUG ONLY  
+  
+
+  ## sanity check L
   if (is.null(L)) L <- diag(length(S)) else {
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
@@ -420,7 +439,9 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   mustart<-b$fitted.values
 
-  if (scoreType=="GACV") {
+  if (scoreType=="REML") {
+     old.score <- score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+  } else if (scoreType=="GACV") {
     old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
   } else if (scoreType=="UBRE"){
     old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
@@ -461,7 +482,10 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
        offset = offset,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
        printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
-    if (scoreType=="GACV") {
+    
+    if (scoreType=="REML") {
+      score1 <- b$REML
+    } else if (scoreType=="GACV") {
       score1 <- b$GACV
     } else if (scoreType=="UBRE") {
       score1 <- b$UBRE
@@ -472,7 +496,9 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
       old.score <- score 
       mustart <- b$fitted.values
       lsp <- lsp1
-      if (scoreType=="GACV") {
+      if (scoreType=="REML") {
+          score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+      } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
       } else if (scoreType=="UBRE") {
           score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
@@ -491,8 +517,10 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
            offset = offset,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
-       
-        if (scoreType=="GACV") {
+         
+        if (scoreType=="REML") {       
+          score1 <- b1$REML
+        } else if (scoreType=="GACV") {
           score1 <- b1$GACV
         } else if (scoreType=="UBRE") {
           score1 <- b1$UBRE
@@ -505,7 +533,10 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
              printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
-          if (scoreType=="GACV") {
+         
+          if (scoreType=="REML") {
+            score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+          } else if (scoreType=="GACV") {
             score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
           } else if (scoreType=="UBRE") {
             score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
