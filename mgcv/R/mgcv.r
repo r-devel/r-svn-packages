@@ -801,23 +801,28 @@ formula.gam <- function(x, ...)
 
 gam.method.description <- function(method,am=TRUE)
 ## produces short fitting method description string
-{ if (am) return(method$am)
+{ if (method$reml) {
+    if (method$outer=="newton") return("REML based outer iter. - newton, exact hessian.")
+    if (method$outer=="bfgs") return("REML based outer iter. - bfgs exact derivs.") 
+  }
+  if (am) return(method$am)
   if (method$gam=="perf") return("performance iteration - magic")
   if (method$gam=="perf.outer") return(paste("perf. iter. magic + outer",method$outer))
   if (method$gcv=="GACV") {
-    return("GACV based outer iter. - newton, exact hessian.")
+    if (method$outer=="newton") return("GACV based outer iter. - newton, exact hessian.")
+    if (method$outer=="bfgs") return("GACV based outer iter. - bfgs exact derivs.") 
   } else { 
     if (method$outer=="newton") return("deviance based outer iter. - newton, exact hessian.")
+    if (method$outer=="bfgs") return("deviance based outer iter. - bfgs exact derivs.")
     if (method$outer=="nlm") return("deviance based outer iter. - nlm exact derivs.")
     if (method$outer=="optim")  return("deviance based outer iter. - Quasi-Newton exact derivs.")
     if (method$outer=="nlm.fd") return("deviance based outer iter. - nlm with finite differences.")
   } 
 }
 
-gam.method <- function(gam="outer",outer="newton",gcv="deviance",family=NULL)
+gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,family=NULL)
 # Function for returning fit method control list for gam.
-# am controls the fitting method to use for pure additive models.
-# gam controls the type of iteration to use for Gams.
+# gam controls the type of iteration to use for GAMs.
 # outer controls the optimization method to use when using outer
 # looping with gams.
 # gcv determines the flavour of GCV score for outer iteration
@@ -831,14 +836,19 @@ gam.method <- function(gam="outer",outer="newton",gcv="deviance",family=NULL)
   stop("Unknown GAM outer optimizing method.") 
   if (sum(gcv==c("deviance","GACV"))==0) stop("Unkwown flavour of GCV")
   
+  
+  if (reml && !(outer=="newton"||outer=="bfgs")) { 
+    warning("REML only supported with newton/bfgs optimization, optimizer reset")
+    outer <- "newton"
+  }
   if (gcv=="GACV"&&!(outer=="newton"||outer=="bfgs")) { 
-    warning("GACV only supported with newton optimization, GCV type reset")
+    warning("GACV only supported with newton/bfgs optimization, GCV type reset")
     gcv <- "deviance"
   }
   
 #  if (!is.null(family)&&substr(family$family,1,17)=="Negative Binomial" 
 #       &&gam!="perf") gam <- "perf"  
-  list(gam=gam,outer=outer,gcv=gcv)
+  list(gam=gam,outer=outer,gcv=gcv,reml=reml)
 }
 
 gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
@@ -988,16 +998,18 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
   family <- fix.family.var(family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X))
   if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { 
-                 criterion <- method$gcv;scale <- -1}
+                 criterion <- method$gcv;scale <- -1}  
 
   if (substr(family$family[1],1,17)=="Negative Binomial" && length(family$getTheta())>1) {
     if (!(method$outer=="newton"||method$outer=="bfgs")) {
       warning("only outer methods `newton' & `bfgs' supports `negbin' family and theta selection: reset")
       method$outer <- "newton"
-    }
+    } 
+    if (method$reml) warning("REML not supported with negative binomial, using AIC")
     object <- gam.negbin(lsp,fscale,family,control,method,gamma,G,...)
     ## make sure criterion gets set to UBRE
   } else if (method$outer=="newton"||method$outer=="bfgs"){ ## the gam.fit3 method -- not negbin
+    if (method$reml) criterion <- "REML"
     if (method$outer=="bfgs") 
     b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
@@ -1063,8 +1075,8 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
 ## Do gam estimation and smoothness selection...
 
   # is outer looping needed ?
-  outer.looping <- !G$am && (method$gam=="perf.outer"||method$gam=="outer") &&
-                    length(G$S)>0 && sum(G$sp<0)!=0
+  outer.looping <- ((!G$am && (method$gam=="perf.outer"||method$gam=="outer"))||method$reml) &&
+                   length(G$S)>0 && sum(G$sp<0)!=0
 
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
@@ -1146,6 +1158,8 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
     if (method$gcv=="deviance") object$method <- "GCV" else object$method <- "GACV"
   } else object$method <- "UBRE"
 
+  if (method$reml) object$method <- "REML"
+
   object$smooth<-G$smooth
   # now re-assign variable names to coefficients etc. 
   if (G$nsdf>0) term.names<-colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
@@ -1216,7 +1230,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (is.null(G$offset)) G$offset<-rep(0,G$n)
      
-    method <- gam.method(method$gam,method$outer,method$gcv,family) # checking it's ok
+    method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
 
     if (scale==0) 
     { if (family$family[1]=="binomial"||family$family[1]=="poisson") scale<-1 #ubre

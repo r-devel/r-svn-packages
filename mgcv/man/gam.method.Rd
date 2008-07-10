@@ -7,7 +7,7 @@ selection of the numerical method used to optimize the  smoothing parameter
 estimation criterion for a gam. It is used to set argument \code{method} of \code{\link{gam}}.
 }
 \usage{
-gam.method(gam="outer",outer="newton",gcv="deviance",
+gam.method(gam="outer",outer="newton",gcv="deviance",reml=FALSE,
            family=NULL)
 }
 \arguments{ 
@@ -40,6 +40,10 @@ uses a varient of Gu and Xiang's (2001) generalized approximate cross
 validation, modified to deal with arbitrary link-error
 combinations (see Wood, 2008). 
 }
+
+\item{reml}{Should REML be used as the smoothing parameter selector, rather 
+than GCV/AIC/URE? WARNING --- test version, only works correctly when 
+scale parameter is one, at present.}
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied
 method argument. In this circumstance the family argument is passed, to check

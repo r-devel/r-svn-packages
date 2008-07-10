@@ -20,7 +20,7 @@ void gdi(double *X,double *E,double *rS,
          double *V1,double *V2,double *beta,double *D1,double *D2,
          double *P0,double *P1,double *P2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd);
+	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML);
 
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);

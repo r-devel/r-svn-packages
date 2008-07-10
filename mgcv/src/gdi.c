@@ -105,7 +105,9 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
              double *rS,int *rSncol,int *Encol, int *q,int *M,double *beta, 
              double *b1, double *b2,int *deriv)
 /* Routine to obtain beta'Sbeta and its derivatives w.r.t. the log smoothing 
-   parameters... S= EE'.
+   parameters, this is part of REML calculation... 
+   
+   S= EE'.
 
    b1 and b2 contain first and second derivatives of q-vector beta w.r.t. 
    \pho_k. They are packed as follows....
@@ -185,7 +187,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 
 void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
 	      double *rS,int *rSncol,int *Encol,int *q,int *M,int *deriv,double *tol)
-/* Routine to obtain log|S| and its derivatives w.r.t. the log(sp).
+/* Routine to obtain log|S| and its derivatives w.r.t. the log(sp), for REML.
    S is q by q total penalty matrix, where S= EE'
    rS contains M, q by rSncol[i], square roots of S components, packed one
       after another.
@@ -248,8 +250,9 @@ void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
 void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
              double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
 
-/* obtains derivatives of |X'WX + S| wrt the log smoothing parameters. The determinant itself
-   has to be obtained from |P|+ before it is unpivoted 
+/* obtains derivatives of |X'WX + S| wrt the log smoothing parameters, as required for REML. 
+   The determinant itself has to be obtained during intial decompositions: see gdi().
+
    * P is q by r
    * K is n by r
   
@@ -955,7 +958,8 @@ void gdi(double *X,double *E,double *rS,
     double *V1,double *V2,double *beta,double *D1,double *D2,
     double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-    int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd)     
+	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd,
+    int *REML)     
 /* Function to iterate for first and second derivatives of the deviance 
    of a GAM fit, and to evaluate the first and second derivatives of
    tr(A). Derivatives are w.r.t. log smoothing parameters.
@@ -1035,7 +1039,7 @@ void gdi(double *X,double *E,double *rS,
          *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2,
          ldetXWXS;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter,m,one=1,n_2dCols,n_b1,n_b2,
-    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,REML=1;
+    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2;
 
  
   if (*deriv==2) deriv2=1; else deriv2=0;
@@ -1099,7 +1103,7 @@ void gdi(double *X,double *E,double *rS,
     *rank_est = rank;
     /* REML NOTE: |X'WX+S| is the product of the d's squared */  
     
-    if (REML) { 
+    if (*REML) { 
         for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(d[i]);    
        ldetXWXS *= 2;
     }
@@ -1137,7 +1141,7 @@ void gdi(double *X,double *E,double *rS,
 
     /* REML NOTE: |X'WX+S| is the product of the R[i,i]s squared */  
 
-    if (REML) { 
+    if (*REML) { 
       for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(fabs(R[i + i * r])); 
       ldetXWXS *= 2;
     }
@@ -1467,7 +1471,7 @@ void gdi(double *X,double *E,double *rS,
   /* REML NOTE: \beta'S\beta stuff has to be done here on pivoted versions.
      Store bSb in P0, bSb1 in P1 and bSb2 in P2.
   */
-  if (REML) {
+  if (*REML) {
        get_bSb(P0,P1,P2,sp,E,rS,rSncol,Encol,q,M,PKtz,b1,b2,deriv);
   
   }
@@ -1479,7 +1483,9 @@ void gdi(double *X,double *E,double *rS,
   p0 = rV + *q * rank;p1 = rV + *q * *q;
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
-  if (!REML) pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
+  /* Note that returning Pearson derivatives would overwrite P0, P1 and P2 if REML used */
+
+  if (! *REML) pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
 
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      Note: Vt and R already freed. P is really V - don't free yet.
@@ -1500,7 +1506,7 @@ void gdi(double *X,double *E,double *rS,
   }
   
   /* Now get the remainder of the REML penalty */
-  if (REML) {
+  if (*REML) {
     /* First deal with log|X'WX+S| */   
     *P0 += ldetXWXS;
     get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
@@ -1520,7 +1526,7 @@ void gdi(double *X,double *E,double *rS,
     i=0;
   } else i = *deriv; /* order of derivatives required from next routine */
 
-  /* Note: the following gets only trA if its REML */
+  /* Note: the following gets only trA if REML is being used */
 
   get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,&i);
 

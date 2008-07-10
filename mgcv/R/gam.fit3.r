@@ -295,7 +295,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
-           rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd))      
+           rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
+           REML = as.integer(scoreType=="REML"))      
        
          if (control$trace) cat("done!\n")
  
@@ -411,11 +412,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
 
 deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL, 
-            weights = rep(1, nobs), start = NULL, etastart = NULL, 
-            mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
+            weights = rep(1, length(y)), start = NULL, etastart = NULL, 
+            mustart = NULL, offset = rep(0, length(y)), family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...)
-## FD checking of derivatives
+## FD checking of derivatives: basically a debugging routine
 {  b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,off=off, H=H,
       offset = offset,family = family,weights=weights,deriv=2,
       control=control,gamma=gamma,scale=scale,
@@ -439,7 +440,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
 
 newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="REML",     ## "deviance",
+                   maxHalf=30,printWarn=FALSE,scoreType="deviance",
                    use.svd=TRUE,mustart = NULL,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
 ## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
@@ -459,7 +460,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
 
-  scoreType <- "REML"   ##### NOTE DEBUG ONLY  
+#  scoreType <- "REML"   ##### NOTE DEBUG ONLY  
 #  deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
 #     offset = offset,family = family,weights=weights,deriv=2,
 #     control=control,gamma=gamma,scale=scale,
@@ -471,7 +472,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
      offset = offset,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,use.svd=use.svd,mustart=mustart,...)
+     printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
 
   mustart<-b$fitted.values
 
@@ -517,7 +518,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
     b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
        offset = offset,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
-       printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+       printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
     
     if (scoreType=="REML") {
       score1 <- b$REML
@@ -552,7 +553,8 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
         b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
            offset = offset,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+           printWarn=FALSE,mustart=mustart,use.svd=use.svd,
+           scoreType=scoreType,...)
          
         if (scoreType=="REML") {       
           score1 <- b1$REML
@@ -566,7 +568,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
           b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
              offset = offset,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,
-             printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+             printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
          
@@ -631,7 +633,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
      offset = offset,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,use.svd=use.svd,mustart=mustart,...)
+     printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
 #  ptm <- proc.time()-ptm
 #  cat("deriv=2 ",ptm,"\n")
 
@@ -693,7 +695,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
       b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
           offset = offset,family = family,weights=weights,deriv=deriv,
           control=control,gamma=gamma,scale=scale,
-          printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+          printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
 #       ptm <- proc.time()-ptm
 #       cat("deriv= ",deriv,"  ",ptm,"\n")
       
@@ -712,7 +714,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
         b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
                offset = offset,family = family,weights=weights,deriv=2,
                control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+               printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
 #         ptm <- proc.time()-ptm
 #         cat("deriv=2 ",ptm,"\n")
 
@@ -732,7 +734,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
                offset = offset,family = family,weights=weights,deriv=1,
                control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,use.svd=use.svd,...)
+               printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
 #         ptm <- proc.time()-ptm
 #         cat("deriv=1 ",ptm,"\n")
 

@@ -25,7 +25,7 @@ gam.fit3(x, y, sp, S=list(),rS=list(),off, H=NULL,
          weights = rep(1, nobs), start = NULL, etastart = NULL, 
          mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
          control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-         gamma=1,scale=1,printWarn=TRUE,...) 
+         gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -80,6 +80,8 @@ scores can be varied (usually increased) using this parameter.}
 \item{printWarn}{Set to \code{FALSE} to suppress some warnings. Useful in
 order to ensure that some warnings are only printed if they apply to the final
 fitted model, rather than an intermediate used in optimization.}
+
+\item{scoreType}{specifies smoothing parameter selection criterion to use.}
 
 \item{...}{Other arguments: ignored.}
 }
