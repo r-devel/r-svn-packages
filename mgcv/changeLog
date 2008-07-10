@@ -3,6 +3,8 @@
 
 1.4-2
 
+** Efficient and general REML smoothing selection implemented.
+
 * p-values tweaked again, for slightly better performance with smooths of 
 several variables.
 

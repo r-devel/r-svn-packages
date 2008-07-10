@@ -132,7 +132,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 
   for (*bSb=0.0,i=0;i<*q;i++) *bSb += beta[i] * Sb[i]; /* \hat \beta' S \hat \beta */
 
-  if (deriv <=0) {free(work);free(Sb);return;}
+  if (*deriv <=0) {free(work);free(Sb);return;}
 
   work1 = (double *)calloc((size_t)*q,sizeof(double));
   Skb = (double *)calloc((size_t)*M * *q,sizeof(double));
@@ -140,7 +140,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
   for (p1=Skb,rSoff=0,i=0;i<*M;i++) { /* first part of first derivatives */
      /* form S_k \beta * sp[i]... */
      bt=1;ct=0;mgcv_mmult(work,rS + rSoff ,beta,&bt,&ct,rSncol+i,&one,q);
-     for (j=0;j<rSncol[i];j++) work[i] *= sp[i]; 
+     for (j=0;j<rSncol[i];j++) work[j] *= sp[i]; 
      bt=0;ct=0;mgcv_mmult(p1,rS + rSoff ,work,&bt,&ct,q,&one,rSncol+i);
      rSoff += *q * rSncol[i];
 
@@ -236,7 +236,7 @@ void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   /* Now do the Hessian of log|S| */
   if (*deriv>1) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
     km=k * *M + m;mk=m * *M + k;
-    det2[km] = -diagABt(d,DUSUD+ m * rank * rank,DUSUD + k * rank * rank ,&rank,&rank);  
+    det2[km] = -sp[m]*sp[k]*diagABt(d,DUSUD+ m * rank * rank,DUSUD + k * rank * rank ,&rank,&rank);  
     if (k==m) det2[km] += det1[k]; else det2[mk] = det2[km];
   }
   
@@ -1504,18 +1504,18 @@ void gdi(double *X,double *E,double *rS,
     /* First deal with log|X'WX+S| */   
     *P0 += ldetXWXS;
     get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
-    for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
+    if (*deriv) for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
       P1[i] += trA1[i];
-      for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
     } 
     
     /* Now log|S|_+ */
   
     get_detS(trA,trA1,trA2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
     *P0 -= *trA;
-    for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
+    if (*deriv) for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
       P1[i] -= trA1[i];
-      for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
     } 
     i=0;
   } else i = *deriv; /* order of derivatives required from next routine */

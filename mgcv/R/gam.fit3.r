@@ -409,6 +409,34 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
 }
 
+
+deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL, 
+            weights = rep(1, nobs), start = NULL, etastart = NULL, 
+            mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
+            control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...)
+## FD checking of derivatives
+{  b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,off=off, H=H,
+      offset = offset,family = family,weights=weights,deriv=2,
+      control=control,gamma=gamma,scale=scale,
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType="REML",...)
+   REML1 <- b$REML1
+   fdREML <- dREML <- b$REML2
+   eps <- 1e-6
+   for (i in 1:length(sp)) {
+     sp1 <- sp;sp1[i] <- sp[i]+eps
+     b<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,off=off, H=H,
+      offset = offset,family = family,weights=weights,deriv=2,
+      control=control,gamma=gamma,scale=scale,
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType="REML",...)
+    
+     fdREML[,i] <- (b$REML1-REML1)/eps
+   }
+   cat("dREML  ");print(dREML)
+   cat("fdREML ");print(fdREML)
+}
+
+
 newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="REML",     ## "deviance",
@@ -421,7 +449,6 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
 {  
-  scoreType <- "REML"   ##### NOTE DEBUG ONLY  
   
 
   ## sanity check L
@@ -431,6 +458,15 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
     if (nrow(L)!=length(S)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
+
+  scoreType <- "REML"   ##### NOTE DEBUG ONLY  
+#  deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
+#     offset = offset,family = family,weights=weights,deriv=2,
+#     control=control,gamma=gamma,scale=scale,
+#     printWarn=FALSE,use.svd=use.svd,mustart=mustart,...)
+
+
+
   ## initial fit
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
      offset = offset,family = family,weights=weights,deriv=2,
