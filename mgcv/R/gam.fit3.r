@@ -16,7 +16,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{  
+{   if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
     x <- as.matrix(x)
@@ -305,15 +305,33 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          trA <- oo$trA;
          scale.est <- dev/(nobs-trA)
 
-         if (scoreType=="REML") {
-           REML <- dev + oo$P
-           if (deriv) {
-             REML1 <- oo$D1 + oo$P1
-             if (deriv==2) REML2 <- matrix(oo$D2+oo$P2,nSp,nSp)
-             if (sum(!is.finite(REML2))) {
-               stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")
+        if (scoreType=="REML") {
+           if (scale.known) { ## use Fisher-Laplace REML
+             REML <- (dev + oo$conv.tol)/(2*scale) - family$ls(y,weights,scale) + oo$rank.tol/2
+             if (deriv) {
+               REML1 <- oo$D1/(2*scale) + oo$trA1/2
+               if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp))/2
+               if (sum(!is.finite(REML2))) {
+                 stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")
+               }
              }
-           }
+           } else { ## scale unknown use Pearson-Fisher-Laplace REML
+             phi <- oo$P ## REMLish scale estimate
+             phi1 <- oo$P1;phi2 <- matrix(oo$P2,nSp,nSp)
+             Dp <- dev + oo$conv.tol
+             Dp1 <- oo$D1
+             Dp2 <- matrix(oo$D2,nSp,nSp)
+             K <- oo$rank.tol/2
+             K1 <- oo$trA1/2;K2 <- matrix(oo$trA2,nSp,nSp)/2             
+
+             REML <- Dp/(2*phi) - family$ls(y,weights,phi) + K
+
+             REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2) + family$ls1(y,weights,phi)) + K1
+             
+             REML2 <- Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
+                      (Dp/phi^3 - family$ls2(y,weights,phi))*outer(phi1,phi1) -
+                      (Dp/(2*phi^2)+family$ls1(y,weights,phi))*phi2 + K2
+           } 
          } else { ## Not REML ....
 
            P <- oo$P
@@ -421,9 +439,11 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       offset = offset,family = family,weights=weights,deriv=2,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType="REML",...)
+   REML <- b$REML
    REML1 <- b$REML1
-   fdREML <- dREML <- b$REML2
-   eps <- 1e-6
+   fdREML <- dREML <- b$REML1
+   fdREML1 <- dREML1 <- b$REML2
+   eps <- 1e-7
    for (i in 1:length(sp)) {
      sp1 <- sp;sp1[i] <- sp[i]+eps
      b<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,off=off, H=H,
@@ -431,10 +451,15 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType="REML",...)
     
-     fdREML[,i] <- (b$REML1-REML1)/eps
+     fdREML1[,i] <- (b$REML1-REML1)/eps
+     fdREML[i] <- (b$REML-REML)/eps
    }
+
    cat("dREML  ");print(dREML)
    cat("fdREML ");print(fdREML)
+   
+   cat("dREML1  ");print(dREML1)
+   cat("fdREML1 ");print(fdREML1)
 }
 
 
@@ -970,6 +995,55 @@ fix.family.var<-function(fam)
   if (family=="inverse.gaussian") {
     fam$dvar <- function(mu) 3*mu^2
     fam$d2var <- function(mu) 6*mu
+    return(fam)
+  }
+  stop("family not recognised")
+}
+
+
+fix.family.ls<-function(fam)
+# adds ls the log saturated likelihood and its derivatives ls1 and ls2
+# w.r.t. the scale parameter to the family object.
+{ if (!inherits(fam,"family")) stop("fam not a family object")
+  if (!is.null(fam$ls)&&!is.null(fam$ls1)&&!is.null(fam$ls2)) return(fam) 
+  family <- fam$family
+  if (family=="gaussian") {
+    fam$ls <- function(y,w,scale) -sum(w)*log(2*pi*scale)/2
+    fam$ls1 <- function(y,w,scale) -sum(w)/(2*scale)
+    fam$ls2 <- function(y,w,scale) sum(w)/(2*scale*scale)
+    return(fam)
+  } 
+  if (family=="poisson"||family=="quasipoisson") {
+    fam$ls1 <- fam$ls2 <- fam$ls <- function(y,w,scale) 0
+    return(fam)
+  } 
+  if (family=="binomial"||family=="quasibinomial") {
+    fam$ls1 <- fam$ls2 <- fam$ls <- function(y,w,scale) 0
+    return(fam)
+  }
+  if (family=="Gamma") {
+    fam$ls <- function(y,w,scale) {
+      k <- -lgamma(1/scale) - log(scale)/scale - 1/scale
+      sum(w*(k-log(y)))
+    }
+    fam$ls1 <- function(y,w,scale) {
+      k <- digamma(1/scale)/(scale*scale)
+      sum(w*k)
+    }
+    fam$ls2 <- function(y,w,scale) {
+      k <- (-trigamma(1/scale)/(scale) - 2*digamma(1/scale))/(scale^3)
+      sum(w*k) 
+    }
+    return(fam)
+  }
+  if (family=="quasi") {
+    fam$ls1 <- fam$ls2 <- fam$ls <- function(y,w,scale) 0
+    return(fam)
+  }
+  if (family=="inverse.gaussian") {
+    fam$ls <- function(y,w,scale) -sum(w*log(2*pi*scale*y^3))/2
+    fam$ls1 <- function(y,w,scale) -sum(w)/(2*scale)
+    fam$ls2 <- function(y,w,scale) sum(w)/(2*scale*scale)
     return(fam)
   }
   stop("family not recognised")

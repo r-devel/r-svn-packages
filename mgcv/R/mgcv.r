@@ -996,6 +996,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
  # stop("Must use gam.control(absorb.cons=TRUE), for type 2 iteration methods.")
   family <- fix.family.link(family)
   family <- fix.family.var(family)
+  if (method$reml) family <- fix.family.ls(family) 
   G$rS <- mini.roots(G$S,G$off,ncol(G$X))
   if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { 
                  criterion <- method$gcv;scale <- -1}  

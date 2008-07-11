@@ -42,8 +42,9 @@ combinations (see Wood, 2008).
 }
 
 \item{reml}{Should REML be used as the smoothing parameter selector, rather 
-than GCV/AIC/URE? WARNING --- test version, only works correctly when 
-scale parameter is one, at present.}
+than GCV/AIC/URE? The REML criteria used is based on a Laplace 
+approximation, with the expected Hessian of the log-likelihood used in place 
+of the Hessian, and a Pearson estimate used for the scale parameter.}
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied
 method argument. In this circumstance the family argument is passed, to check

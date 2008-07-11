@@ -185,7 +185,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 
 }
 
-void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
+int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
 	      double *rS,int *rSncol,int *Encol,int *q,int *M,int *deriv,double *tol)
 /* Routine to obtain log|S| and its derivatives w.r.t. the log(sp), for REML.
    S is q by q total penalty matrix, where S= EE'
@@ -194,7 +194,7 @@ void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
    sp is array of smoothing parameters (not logged).
    
 */
-{ int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k;
+{ int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim;
   double *d,*d0,*U,*U0,*rDiUtrSk,*DUSUD,*p1,xx;
   d0 = d = (double *)calloc((size_t)*q,sizeof(double));
   /* eigen-decompose S (overwriting it) */
@@ -205,11 +205,12 @@ void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   while (i < *q && d[i] < d[*q - 1] * *tol) i++;
   U += *q * i;d+=i; /* discard the zero eigenvalues & their eigenvectors */
   rank = *q - i; 
+  null_space_dim = i;
   /* U contains eigenvectors of S, treat as q by rank, from here */
   
   for (*det=0,i=0;i<rank;i++) *det += log(d[i]); /* log|S|_+ */
 
-  if (*deriv <=0) {free(d0);free(U0);return;} /* evaluation only */
+  if (*deriv <=0) {free(d0);free(U0);return(null_space_dim);} /* evaluation only */
 
   /* Now work on the derivative.... */
 
@@ -244,7 +245,7 @@ void get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   
   free(d0);free(U0);free(rDiUtrSk);
   if (*deriv > 1) free(DUSUD);
-
+  return(null_space_dim);
 }
 
 void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
@@ -990,10 +991,14 @@ void gdi(double *X,double *E,double *rS,
      V0(mu), V'(mu) and V''(mu) 
    * D1 and D2 are an M-vector and M by M matrix for returning the first 
      and second derivatives of the deviance wrt the log smoothing parameters.
+     if *REML is non zero then the derivs will be of the penalized deviance,
+     and b'Sb will be returned in conv_tol  
    * trA1 and trA2 are an M-vector and M by M matrix for returning the first 
      and second derivatives of tr(A) wrt the log smoothing parameters.
+     If *REML is non zero then the derivatives of the REML penalty are 
+     returned instead (with the REML penalty returned in `rank_tol', hack, hack).
    * P0,P1,P2 are for returning the Pearson statistic and its derivatives, or 
-     for the REML penalty, if REML!=0.
+     the Pearson scale estimate and derivatives if *REML is non - zero. 
    * rank_est is for returning the estimated rank of the problem.
    * the remaining arguments are the dimensions already refered to except for:
    * deriv, which controls which derivatives are produced:
@@ -1001,7 +1006,8 @@ void gdi(double *X,double *E,double *rS,
        deriv==1 for first derivatives only
        deriv==2 for gradient and Hessian
    
-   The REML penalty returned in P0 is to be added to the *deviance*.
+   If REML is non-zeor, then the REML penalty returned in rank_tol, with it's 
+   derivatives in trA1, trA2: it is to be added to the *deviance* to get D_r.
 
    The method has 4 main parts:
 
@@ -1037,9 +1043,9 @@ void gdi(double *X,double *E,double *rS,
          *c0,*c1,*c2,*a0,*a1,*a2,*B2z,*B2zBase,*B1z,*B1zBase,*eta1,*mu1,*eta2,*KKtz,
          *PKtz,*KPtSPKtz,*v1,*v2,*wi,*wis,*z1,*z2,*zz1,*zz2,*pz2,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2,
-         ldetXWXS;
+         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter,m,one=1,n_2dCols,n_b1,n_b2,
-    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2;
+    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,null_space_dim;
 
  
   if (*deriv==2) deriv2=1; else deriv2=0;
@@ -1472,8 +1478,11 @@ void gdi(double *X,double *E,double *rS,
      Store bSb in P0, bSb1 in P1 and bSb2 in P2.
   */
   if (*REML) {
-       get_bSb(P0,P1,P2,sp,E,rS,rSncol,Encol,q,M,PKtz,b1,b2,deriv);
-  
+    get_bSb(&bSb,trA1,trA2,sp,E,rS,rSncol,Encol,q,M,PKtz,b1,b2,deriv);
+    if (*deriv) for (p2=D2,p1=trA2,i = 0; i< *M;i++) { /* penalized deviance derivs needed */
+        D1[i] += trA1[i];
+        if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
+    } 
   }
   /* unpivot P into rV and PKtz into beta */
 
@@ -1483,9 +1492,30 @@ void gdi(double *X,double *E,double *rS,
   p0 = rV + *q * rank;p1 = rV + *q * *q;
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
-  /* Note that returning Pearson derivatives would overwrite P0, P1 and P2 if REML used */
+  /* Now get the remainder of the REML penalty */
+  if (*REML) {
+    /* First deal with log|X'WX+S| */   
+    reml_penalty = ldetXWXS;
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
+   
+    /* Now log|S|_+ */
+  
+    null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    reml_penalty -= *P0;
+    if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
+      trA1[i] -= P1[i];
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
+    } 
+  } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
 
-  if (! *REML) pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
+  pearson(w,w1,w2,z,z1,z2,eta,eta1,eta2,P0,P1,P2,work,*n,*M,*deriv,deriv2);
+
+  if (*REML) { /* really want scale estimate and derivatives in P0-P2, so rescale */
+    j = *n - null_space_dim;
+    *P0 /= j;
+    if (*deriv) for (p1 = P1,p2 = P1 + *M;p1<p2;p1++) *p1 /= j;
+    if (*deriv>1) for (p1 = P2,p2 = P2 + *M * *M;p1<p2;p1++) *p1 /= j; 
+  }
 
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      Note: Vt and R already freed. P is really V - don't free yet.
@@ -1505,29 +1535,11 @@ void gdi(double *X,double *E,double *rS,
     if (deriv2) { free(dev_hess);}
   }
   
-  /* Now get the remainder of the REML penalty */
-  if (*REML) {
-    /* First deal with log|X'WX+S| */   
-    *P0 += ldetXWXS;
-    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
-    if (*deriv) for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
-      P1[i] += trA1[i];
-      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
-    } 
-    
-    /* Now log|S|_+ */
-  
-    get_detS(trA,trA1,trA2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
-    *P0 -= *trA;
-    if (*deriv) for (p2=P2,p1=trA2,i = 0; i< *M;i++) { 
-      P1[i] -= trA1[i];
-      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
-    } 
-    i=0;
-  } else i = *deriv; /* order of derivatives required from next routine */
+ 
 
-  /* Note: the following gets only trA if REML is being used */
-
+  /* Note: the following gets only trA if REML is being used,
+           so as not to overwrite the derivatives actually needed  */
+  if (*REML) i=0; else i = *deriv;
   get_trA(trA,trA1,trA2,U1,KU1t,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,&i);
 
   /* clear up the remainder */
@@ -1536,6 +1548,8 @@ void gdi(double *X,double *E,double *rS,
   if (*deriv)
   { free(Tk);free(Tkm);free(KU1t);free(K);
   }
+
+  if (*REML) {*rank_tol = reml_penalty;*conv_tol = bSb;}
 }
 
 
