@@ -598,7 +598,6 @@ read_long_var_names (struct file_handle * h, struct dictionary * dict
 		, unsigned long size, unsigned int count)
 {
   char * data;
-  unsigned int j;
   struct variable ** lp;
   struct variable ** end;
   char * p;
@@ -642,10 +641,6 @@ read_long_var_names (struct file_handle * h, struct dictionary * dict
 
   free(data);
   return 1;
-
-lossage:
-  free(data);
-  return 0;
 }
 
 static int
