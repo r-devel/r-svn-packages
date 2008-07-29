@@ -1331,6 +1331,10 @@ read_documents (struct file_handle * h)
 	   h->fn));
 
   assertive_bufread(h, &n_lines, sizeof n_lines, 0);
+  /* R change, see
+     https://stat.ethz.ch/pipermail/r-devel/2008-July/050194.html
+   */
+  if (ext->reverse_endian) bswap_int32 (&n_lines);
   dict->n_documents = n_lines;
   if (dict->n_documents <= 0)
     lose ((_("%s: Number of document lines (%d) must be greater than 0"),
