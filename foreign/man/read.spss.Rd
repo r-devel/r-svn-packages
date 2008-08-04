@@ -57,6 +57,8 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   but the simplest cases are types \code{"one"}, \code{"two"} and
   \code{"three"} with a corresponding number of (real or string) values
   whose labels can be found from the \code{"label.table"} attribute.
+  Other possibilities are a finite or semi-infinite range, possibly plus
+  a single value.
 }
 \details{
   This uses modified code from the PSPP project

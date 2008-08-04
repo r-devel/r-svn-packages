@@ -73,6 +73,24 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
                     other <- miss[[v]]$value
                     xi[xi %in% other] <- NA
                     rval[[v]] <- xi
+                } else if(tp == "low" || tp == "low+1") {
+                    xi <- rval[[v]]
+                    z <- miss[[v]]$value
+                    xi[xi <= z[1]] <- NA
+                    if(tp == "low+1") xi[xi == z[2]] <- NA
+                    rval[[v]] <- xi
+                } else if(tp == "high" || tp == "high+1") {
+                    xi <- rval[[v]]
+                    z <- miss[[v]]$value
+                    xi[xi >= z[1]] <- NA
+                    if(tp == "high+1") xi[xi == z[2]] <- NA
+                    rval[[v]] <- xi
+                } else if(tp == "range" || tp == "range+1") {
+                    xi <- rval[[v]]
+                    z <- miss[[v]]$value
+                    xi[xi >= z[1] | xi <= z[2]] <- NA
+                    if(tp == "range+1") xi[xi == z[3]] <- NA
+                    rval[[v]] <- xi
                 } else
                     warning(gettextf("missingness type %s is not yet handled", tp),
                             domain = NA)
