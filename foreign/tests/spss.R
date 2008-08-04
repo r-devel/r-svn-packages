@@ -43,7 +43,7 @@ stopifnot(identical(electric.s,	     electric.p),
 
 ## after "long label patch":
 
-Sys.setlocale (locale="C")## to resolve locale problem
+invisible(Sys.setlocale (locale="C")) ## to resolve locale problem
 ldat <- read.spss("spss_long.sav", to.data.frame=TRUE)
 ## -->  warning about character representation code (20127)
 ldat

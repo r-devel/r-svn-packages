@@ -309,8 +309,7 @@ List of 20
 > 
 > ## after "long label patch":
 > 
-> Sys.setlocale (locale="C")## to resolve locale problem
-[1] "LC_CTYPE=C;LC_NUMERIC=C;LC_TIME=C;LC_COLLATE=C;LC_MONETARY=C;LC_MESSAGES=de_CH.UTF-8;LC_PAPER=de_CH.UTF-8;LC_NAME=C;LC_ADDRESS=C;LC_TELEPHONE=C;LC_MEASUREMENT=de_CH.UTF-8;LC_IDENTIFICATION=C"
+> invisible(Sys.setlocale (locale="C")) ## to resolve locale problem
 > ldat <- read.spss("spss_long.sav", to.data.frame=TRUE)
 Warning message:
 In read.spss("spss_long.sav", to.data.frame = TRUE) :
