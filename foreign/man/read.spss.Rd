@@ -11,7 +11,7 @@
 \usage{
 read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
           max.value.labels = Inf, trim.factor.names = FALSE,
-          trim_values = TRUE, reencode = NA)
+          trim_values = TRUE, reencode = NA, use.missings = FALSE)
 }
 \arguments{
   \item{file}{Character string: the name of the file to read.}
@@ -27,7 +27,11 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   \item{reencode}{logical: should character strings be re-encoded to the
     current locale.  The default, \code{NA}, means to do so in a UTF-*
     locale, only.  Alternatively character, specifying an encoding to
-    assume.} 
+    assume.}
+  \item{use.missings}{logical: should information on user-defined
+    missing values be used to set the correspsonding values to
+    \code{NA}?  Only types \code{"one"}, \code{"two"} and
+    \code{"three"} are handled at present and others give a warning.}
 }
 \value{
   A list (or data frame) with one component for each variable in
@@ -43,6 +47,16 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   or a names character vector.
   Attribute \code{"variable.labels"} is a named character vector with
   names the short variable names and elements the long names.
+  
+  If there are user-defined missing values, there will be a attribute
+  \code{"Misssings"}.  This is a named list one list element per
+  variable.  This list has an element \code{type}, a length-one
+  character vector giving the type of missingness, and may also have an
+  element \code{value} with the values corresponding to missingness.
+  This is a complex subject (where the code is the main documentation),
+  but the simplest cases are types \code{"one"}, \code{"two"} and
+  \code{"three"} with a corresponding number of (real or string) values
+  whose labels can be found from the \code{"label.table"} attribute.
 }
 \details{
   This uses modified code from the PSPP project

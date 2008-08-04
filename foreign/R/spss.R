@@ -24,7 +24,7 @@
 
 read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
 		      max.value.labels = Inf, trim.factor.names = FALSE,
-                      trim_values = TRUE, reencode = NA)
+                      trim_values = TRUE, reencode = NA, use.missings = FALSE)
 {
 
     trim <- function(strings, trim=TRUE)
@@ -56,6 +56,29 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
         }
     }
 
+    miss <- attr(rval, "missings")
+    if(!is.null(miss)) {
+        if(reencode) {
+            nm <- names(miss)
+            miss <- iconv(miss, cp, "")
+            names(miss) <- iconv(nm, cp, "")
+            attr(rval, "missings") <- miss
+        }
+        if(use.missings)
+            for(v in names(rval)) {
+                tp <- miss[[v]]$type
+                if(tp %in% "none") next
+                if(tp %in% c("one", "two", "three")) {
+                    xi <- rval[[v]]
+                    other <- miss[[v]]$value
+                    xi[xi %in% other] <- NA
+                    rval[[v]] <- xi
+                } else
+                    warning(gettextf("missingness type %s is not yet handled", tp),
+                            domain = NA)
+        }
+    } else use.missings <- FALSE
+
     vl <- attr(rval,"label.table")
     if(reencode) names(vl) <- iconv(names(vl), cp, "")
     has.vl <- which(!sapply(vl, is.null))
@@ -75,9 +98,9 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
                                  levels = rev(trim(vl[[v]], trim_values)),
 				 labels = rev(trim(names(vl[[v]]), trim.factor.names)))
         } else
-	    attr(rval[[nm]],"value.labels") <- vl[[v]]
+	    attr(rval[[nm]], "value.labels") <- vl[[v]]
     }
-    if(reencode) attr(rval,"label.table") <- vl
+    if(reencode) attr(rval, "label.table") <- vl
 
     if (to.data.frame) {
 	varlab <- attr(rval, "variable.labels")

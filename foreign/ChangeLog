@@ -1,3 +1,10 @@
+2008-08-05 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/sfm-read.c, src/spss.c, man/read.spss.Rd: return information
+	on user-defined missing values.
+	* R/spss.R, man/read.spss.R: add argument 'use.missings'.
+
+
 2008-07-29 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-28.
@@ -19,7 +26,7 @@
 
 2008-06-18 Brian Ripley <Brian.Ripley@R-project.org>
 
-	* src/SASxport.c, sas/minitab.c, sas/spss.c, sas/stataread.c: use
+	* src/SASxport.c, src/minitab.c, src/spss.c, src/stataread.c: use
 	sterrror(errno) to give reason for fopen failure.
 
 2008-06-13 Brian Ripley <Brian.Ripley@R-project.org>
@@ -834,4 +841,3 @@
 	name "foreign".
 
 	* R/zzz.R: Added the copyright stuff.
-
