@@ -56,6 +56,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
     }
 
     ## Added code
+    if (family$family=="gaussian"&&family$link=="identity") strictly.additive <- TRUE else
+      strictly.additive <- FALSE
     nSp <- length(S)
     if (nSp==0) deriv <- FALSE 
     St <- totalPenalty(S,H,off,sp,ncol(x))
@@ -226,6 +228,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                   cat("Step halved: new penalized deviance =", pdev, "\n")
               }
             } 
+            
+            if (strictly.additive) { conv <- TRUE;coef <- start;break;}
 
             if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
                 if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2){
@@ -306,8 +310,9 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          scale.est <- dev/(nobs-trA)
 
         if (scoreType=="REML") {
+           ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
            if (scale.known) { ## use Fisher-Laplace REML
-             REML <- (dev + oo$conv.tol)/(2*scale) - family$ls(y,weights,scale) + oo$rank.tol/2
+             REML <- (dev + oo$conv.tol)/(2*scale) - ls[1] + oo$rank.tol/2
              if (deriv) {
                REML1 <- oo$D1/(2*scale) + oo$trA1/2
                if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp))/2
@@ -324,13 +329,14 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
              K <- oo$rank.tol/2
              K1 <- oo$trA1/2;K2 <- matrix(oo$trA2,nSp,nSp)/2             
 
-             REML <- Dp/(2*phi) - family$ls(y,weights,phi) + K
-
-             REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2) + family$ls1(y,weights,phi)) + K1
-             
-             REML2 <- Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
-                      (Dp/phi^3 - family$ls2(y,weights,phi))*outer(phi1,phi1) -
-                      (Dp/(2*phi^2)+family$ls1(y,weights,phi))*phi2 + K2
+             REML <- Dp/(2*phi) - ls[1] + K
+             if (deriv) {
+               REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2) + ls[2]) + K1
+               if (deriv==2) REML2 <- 
+                      Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
+                      (Dp/phi^3 - ls[3])*outer(phi1,phi1) -
+                      (Dp/(2*phi^2)+ls[2])*phi2 + K2
+             }
            } 
          } else { ## Not REML ....
 
@@ -944,6 +950,13 @@ fix.family.link<-function(fam)
     fam$d3link <- function(mu) -24* mu^-5
     return(fam)
   }
+  if (substr(link,1,3)=="mu^") { ## it's a power link
+    ## note that lambda <=0 gives log link so don't end up here
+    lambda <- get("lambda",environment(fam$linkfun))
+    fam$d2link <- function(mu) (lambda*(lambda-1)) * mu^{lambda-2}
+    fam$d3link <- function(mu) (lambda*(lambda-1)*lambda-2) * mu^{lambda-3}
+    return(fam)
+  }
   stop("link not recognised")
 }
 
@@ -1002,48 +1015,47 @@ fix.family.var<-function(fam)
 
 
 fix.family.ls<-function(fam)
-# adds ls the log saturated likelihood and its derivatives ls1 and ls2
+# adds ls the log saturated likelihood and its derivatives
 # w.r.t. the scale parameter to the family object.
 { if (!inherits(fam,"family")) stop("fam not a family object")
-  if (!is.null(fam$ls)&&!is.null(fam$ls1)&&!is.null(fam$ls2)) return(fam) 
+  if (!is.null(fam$ls)) return(fam) 
   family <- fam$family
   if (family=="gaussian") {
-    fam$ls <- function(y,w,scale) -sum(w)*log(2*pi*scale)/2
-    fam$ls1 <- function(y,w,scale) -sum(w)/(2*scale)
-    fam$ls2 <- function(y,w,scale) sum(w)/(2*scale*scale)
+    fam$ls <- function(y,w,n,scale) c(-sum(w)*log(2*pi*scale)/2,-sum(w)/(2*scale),sum(w)/(2*scale*scale))
     return(fam)
   } 
-  if (family=="poisson"||family=="quasipoisson") {
-    fam$ls1 <- fam$ls2 <- fam$ls <- function(y,w,scale) 0
+  if (family=="poisson") {
+    fam$ls <- function(y,w,n,scale) {
+      res <- rep(0,3)
+      res[1] <- sum(dpois(y,y,log=TRUE)*w)
+    }
     return(fam)
   } 
-  if (family=="binomial"||family=="quasibinomial") {
-    fam$ls1 <- fam$ls2 <- fam$ls <- function(y,w,scale) 0
+  if (family=="binomial") {
+    fam$ls <- function(y,w,n,scale) { 
+      c(-binomial()$aic(y,n,y,w,0)/2,0,0)
+    }
     return(fam)
   }
   if (family=="Gamma") {
-    fam$ls <- function(y,w,scale) {
+    fam$ls <- function(y,w,n,scale) {
+      res <- rep(0,3)
       k <- -lgamma(1/scale) - log(scale)/scale - 1/scale
-      sum(w*(k-log(y)))
-    }
-    fam$ls1 <- function(y,w,scale) {
+      res[1] <- sum(w*(k-log(y)))
       k <- digamma(1/scale)/(scale*scale)
-      sum(w*k)
-    }
-    fam$ls2 <- function(y,w,scale) {
+      res[2] <- sum(w*k)  
       k <- (-trigamma(1/scale)/(scale) - 2*digamma(1/scale))/(scale^3)
-      sum(w*k) 
+      res[3] <- sum(w*k) 
     }
     return(fam)
   }
-  if (family=="quasi") {
-    fam$ls1 <- fam$ls2 <- fam$ls <- function(y,w,scale) 0
+  if (family=="quasi"||family=="quasipoisson"||family=="quasibinomial") {
+    fam$ls <- function(y,w,n,scale) rep(0,3)
     return(fam)
   }
   if (family=="inverse.gaussian") {
-    fam$ls <- function(y,w,scale) -sum(w*log(2*pi*scale*y^3))/2
-    fam$ls1 <- function(y,w,scale) -sum(w)/(2*scale)
-    fam$ls2 <- function(y,w,scale) sum(w)/(2*scale*scale)
+    fam$ls <- function(y,w,n,scale) c(-sum(w*log(2*pi*scale*y^3))/2,
+     -sum(w)/(2*scale),sum(w)/(2*scale*scale))
     return(fam)
   }
   stop("family not recognised")
@@ -1107,8 +1119,6 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
 
 
 
-
-
 totalPenalty <- function(S,H,off,theta,p)
 { if (is.null(H)) St <- matrix(0,p,p)
   else { St <- H; 
@@ -1139,3 +1149,114 @@ mini.roots <- function(S,off,np)
 }
 
 
+ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
+## evaluates log Tweedie density for 1<=p<=2, using series summation of
+## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
+ 
+  if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
+  if (p<1||p>2) stop("p must be in [1,2]")
+  ld <- cbind(y,y,y)
+  if (p == 2) {
+    ld[,1] <- dgamma(y, shape = 1/phi,rate = 1/(phi * mu),log=TRUE)
+    ld[,2] <- (digamma(1/phi) + log(phi) - 1 + y/mu - log(y/mu))/(phi*phi)
+    ld[,3] <- -2*ld[,2]/phi + (1-trigamma(1/phi)/phi)/(phi^3)
+    return(ld)
+  }  
+  if (p == 1) {
+    ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
+    bkt <- (y*log(mu/phi) - mu)
+    dig <- digamma(y/phi+1)
+    trig <- trigamma(y/phi+1)
+    ld[,1] <- bkt/phi - lgamma(y/phi+1)
+    ld[,2] <- (-bkt - y + dig*y)/(phi*phi)
+    ld[,3] <- (2*bkt + 3*y - 2*dig*y - trig *y*y/phi)/(phi^3)
+    return(ld) 
+  }
+  ## .. otherwise need the full series thing....
+  ## first deal with the zeros  
+  if (length(mu)==1) mu <- rep(mu,length(y))
+  ind <- y==0
+ 
+  ld[ind,1] <- -mu[ind]^(2-p)/(phi*(2-p))
+  ld[ind,2] <- -ld[ind,1]/phi
+  ld[ind,3] <- -2*ld[ind,2]/phi
+
+  if (sum(!ind)==0) return(ld)
+
+  ## now the non-zeros
+  y <- y[!ind];mu <- mu[!ind]
+  w <- w1 <- w2 <- y*0
+  oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),y=as.double(y),
+           phi=as.double(phi),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+  theta <- mu^(1-p)
+  k.theta <- mu*theta/(2-p)
+  theta <- theta/(1-p)
+  l.base <-  (y*theta-k.theta)/phi
+  ld[!ind,1] <- l.base - log(y) + oo$w
+  ld[!ind,2] <- -l.base/phi + oo$w1   
+  ld[!ind,3] <- 2*l.base/(phi*phi) + oo$w2
+  
+  ld
+}
+
+Tweedie <- function(p=1,link=power(0)) {
+## a restricted Tweedie family
+  if (p<1||p>2) stop("`p' can not be less than 1 or greater than 2")
+  
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  okLinks <- c("log", "identity", "sqrt","inverse")
+  if (linktemp %in% okLinks)
+    stats <- make.link(linktemp) else 
+  if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    if (inherits(link, "link-glm")) {
+       stats <- link
+       if (!is.null(stats$name))
+          linktemp <- stats$name
+        } else {
+            stop(gettextf("link \"%s\" not available for poisson family.",
+                linktemp, collapse = ""),domain = NA)
+        }
+    }
+    
+    variance <- function(mu) mu^p
+    dvar <- function(mu) p*mu^(p-1)
+    if (p==1) d2var <- function(mu) 0*mu else
+      d2var <- function(mu) p*(p-1)*mu^(p-2)
+
+    validmu <- function(mu) all(mu >= 0)
+
+    dev.resids <- function(y, mu, wt) {
+        y1 <- y + (y == 0)
+        if (p == 1)
+            theta <- log(y1/mu)
+        else theta <- (y1^(1 - p) - mu^(1 - p))/(1 - p)
+        if (p == 2)
+            kappa <- log(y1/mu)
+        else kappa <- (y^(2 - p) - mu^(2 - p))/(2 - p)
+        2 * wt * (y * theta - kappa)
+    }
+    initialize <- expression({
+        n <- rep(1, nobs)
+        mustart <- y + 0.1 * (y == 0)
+    })
+    ls <-  function(y,w,n,scale) {
+      power <- p
+      ldTweedie(y,y,p=power,phi=scale)
+    }
+
+    aic <- function(y, n, mu, wt, dev) {
+      power <- p
+      scale <- dev/sum(wt)
+      -2*sum(ldTweedie(y,mu,p=power,phi=scale)[,1]*wt) + 2
+    }
+    structure(list(family = paste("Tweedie(",p,")",sep=""), variance = variance, 
+              dev.resids = dev.resids,aic = aic, link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv,
+        mu.eta = stats$mu.eta, initialize = initialize, validmu = validmu,
+        valideta = stats$valideta,dvar=dvar,d2var=d2var,ls=ls), class = "family")
+
+
+}

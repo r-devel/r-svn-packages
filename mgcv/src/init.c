@@ -23,6 +23,7 @@ R_CMethodDef CEntries[] = {
     {"gdi",(DL_FUNC) &gdi,37},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
     {"pls_fit",(DL_FUNC)&pls_fit,10},
+    {"tweedious",(DL_FUNC)&tweedious,8},
     {NULL, NULL, 0}
 };
 

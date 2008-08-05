@@ -3,10 +3,14 @@
 
 1.4-2
 
+* Tweedie family added.
+
 ** Efficient and general REML smoothing selection implemented.
 
+* `power' links now handled by default fitting methods (i.e. gam.fit3)
+
 * p-values tweaked again, for slightly better performance with smooths of 
-several variables.
+several variables. Still not quite right.
 
 * record of intial sp's is now carried in `smooth' objects in filed `sp'.
 

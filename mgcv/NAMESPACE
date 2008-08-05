@@ -41,7 +41,7 @@ anova.gam,coef.pdIdnot,coef.pdTens,
       solve.pdIdnot,
        summary.pdIdnot,summary.pdTens,te,
        tensor.prod.model.matrix,tensor.prod.penalties,
-       uniquecombs, vcov.gam, vis.gam)
+       Tweedie,uniquecombs, vcov.gam, vis.gam)
 
 importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors)
 importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,polygon,strheight,strwidth,text)

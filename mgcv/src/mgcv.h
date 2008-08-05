@@ -26,6 +26,8 @@ void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,doubl
              double *penalty,double *rank_tol);
 
 /* various service routines */
+void  tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,double *eps,int *n);
+
 void RQT(double *A,int *r,int *c);
 void RuniqueCombs(double *X,int *ind,int *r, int *c);
 void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,double *Afd,double *Hd,double *Sd,int *off,int *dim,double *theta, int *m,int *nar);
