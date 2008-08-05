@@ -104,7 +104,7 @@ SEXP
 read_mtp(SEXP fname)
 {
     FILE *f;
-    char buf[MTP_BUF_SIZE], blank[1];
+    char buf[MTP_BUF_SIZE], blank[1], *pres;
     MTB  *mtb, thisRec;
     int i, j, res, nMTB = MTB_INITIAL_ENTRIES;
 
@@ -120,8 +120,8 @@ read_mtp(SEXP fname)
 	strncmp(buf, "Minitab Portable Worksheet ", 27) != 0)
 	error(_("file '%s' is not in Minitab Portable Worksheet format"),
 	      CHAR(fname));
-    res = fgets(buf, MTP_BUF_SIZE, f);
-    if(res == EOF) error(_("file read error"));
+    pres = fgets(buf, MTP_BUF_SIZE, f);
+    if(!pres) error(_("file read error"));
     UNPROTECT(1);
 
     mtb = Calloc(nMTB, MTB);
@@ -156,10 +156,10 @@ read_mtp(SEXP fname)
 		error(_("non-numeric data types are not yet implemented"));
 	    }
 	}
-	res = fgets(buf, MTP_BUF_SIZE, f); /* clear rest of current line */
-	if(res == EOF) error(_("file read error"));
-	res = fgets(buf, MTP_BUF_SIZE, f); /* load next line */
-	if(res == EOF) error(_("file read error"));
+	pres = fgets(buf, MTP_BUF_SIZE, f); /* clear rest of current line */
+	if(!pres) error(_("file read error"));
+	pres = fgets(buf, MTP_BUF_SIZE, f); /* load next line */
+	if(!pres) error(_("file read error"));
     }
     return MTB2SEXP(mtb, i);
 }
