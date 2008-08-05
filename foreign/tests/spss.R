@@ -32,7 +32,7 @@ summary(electric.s)
 ii <- c(2,10)
 vl <- list(FIRSTCHD = c("OTHER   CHD"= 6, "FATAL   MI"= 5, "NONFATALMI"= 3,
 			"SUDDEN  DEATH" = 2, "NO CHD" = 1),
-	   DAYOFWK = c(MISSING=9, SATURDAY=7, FRIDAY=6, THURSDAY=5,
+	   DAYOFWK = c(SATURDAY=7, FRIDAY=6, THURSDAY=5,
 		       WEDNSDAY=4, TUESDAY=3, MONDAY=2, SUNDAY=1))
 stopifnot(identical(electric.s,	     electric.p),
 	  identical(electric.s[-ii], electric.s4[-ii]),

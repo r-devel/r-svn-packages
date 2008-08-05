@@ -11,7 +11,7 @@
 \usage{
 read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
           max.value.labels = Inf, trim.factor.names = FALSE,
-          trim_values = TRUE, reencode = NA, use.missings = FALSE)
+          trim_values = TRUE, reencode = NA, use.missings = to.data.frame)
 }
 \arguments{
   \item{file}{Character string: the name of the file to read.}
@@ -25,13 +25,12 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   \item{trim_values}{logical: should values and value labels have
     trailing spaces ignored when matching for \code{use.value.labels = TRUE}?}
   \item{reencode}{logical: should character strings be re-encoded to the
-    current locale.  The default, \code{NA}, means to do so in a UTF-*
+    current locale.  The default, \code{NA}, means to do so in a UTF-8
     locale, only.  Alternatively character, specifying an encoding to
     assume.}
   \item{use.missings}{logical: should information on user-defined
-    missing values be used to set the correspsonding values to
-    \code{NA}?  Only types \code{"one"}, \code{"two"} and
-    \code{"three"} are handled at present and others give a warning.}
+    missing values be used to set the corresponding values to
+    \code{NA}?}
 }
 \value{
   A list (or data frame) with one component for each variable in
@@ -49,16 +48,17 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   names the short variable names and elements the long names.
   
   If there are user-defined missing values, there will be a attribute
-  \code{"Misssings"}.  This is a named list one list element per
-  variable.  This list has an element \code{type}, a length-one
+  \code{"Missings"}.  This is a named list with one list element per
+  variable.  Each element has an element \code{type}, a length-one
   character vector giving the type of missingness, and may also have an
   element \code{value} with the values corresponding to missingness.
-  This is a complex subject (where the code is the main documentation),
-  but the simplest cases are types \code{"one"}, \code{"two"} and
-  \code{"three"} with a corresponding number of (real or string) values
-  whose labels can be found from the \code{"label.table"} attribute.
-  Other possibilities are a finite or semi-infinite range, possibly plus
-  a single value.
+  This is a complex subject (where the \R and C source code for
+  \code{read.spss}) is the main documentation), but the simplest cases
+  are types \code{"one"}, \code{"two"} and \code{"three"} with a
+  corresponding number of (real or string) values whose labels can be
+  found from the \code{"label.table"} attribute.  Other possibilities are
+  a finite or semi-infinite range, possibly plus a single value.
+  See also \url{http://www.gnu.org/software/pspp/manual/html_node/Missing-Observations.html#Missing-Observations}.
 }
 \details{
   This uses modified code from the PSPP project
@@ -83,12 +83,12 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   when matching to value labels, as examples have been seen where the
   strings and the value labels had different amounts of padding.  See
   the examples for \code{\link{sub}} for ways to remove trailing spaces
-  in charcter data.
+  in character data.
 }
 \note{
   If SPSS value labels are converted to factors the underlying numerical
   codes will not in general be the same as the SPSS numerical
-  values, since the numerical codes in R are always 1,2,3,...
+  values, since the numerical codes in R are always 1,2,3,\dots.
 
   You may see warnings about the file encoding for SPSS \code{save}
   files: it is possible such files contain non-ASCII character data
@@ -96,7 +96,7 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   1252, a superset of Latin-1.  The encoding is recorded (as an integer)
   in attribute \code{"codepage"} of the result if it looks like a
   Windows codepage.  Automatic re-encoding is done only in UTF-8
-  locales: see \code{reencode}.
+  locales: see argument \code{reencode}.
 }
 \author{Saikat DebRoy and the R Core team}
 \examples{

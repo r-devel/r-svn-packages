@@ -3,7 +3,9 @@
 	* src/sfm-read.c, src/spss.c, man/read.spss.Rd: return information
 	on user-defined missing values.
 	* R/spss.R, man/read.spss.R: add argument 'use.missings'.
-	* tests/spss.R*: don't record the previous locale in output.
+	* tests/spss.R*: don't record the previous locale in output,
+	adapt for default mapping of missings with
+	read.spss(to.data.frame=TRUE).
 	* src/dbfopen.c, src/minitab.c, src/stataread.c: check return
 	values from fread etc.
 

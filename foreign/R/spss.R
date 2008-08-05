@@ -24,7 +24,8 @@
 
 read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
 		      max.value.labels = Inf, trim.factor.names = FALSE,
-                      trim_values = TRUE, reencode = NA, use.missings = FALSE)
+                      trim_values = TRUE, reencode = NA,
+                      use.missings = to.data.frame)
 {
 
     trim <- function(strings, trim=TRUE)
@@ -77,7 +78,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
                     ## FIXME: do we need to worry about padding for string vals?
                     xi[xi %in% other] <- NA
                     rval[[v]] <- xi
-                    ## NB: untested from here down
+                    ## NB: not much tested from here down
                 } else if(tp == "low" || tp == "low+1") {
                     xi <- rval[[v]]
                     z <- miss[[v]]$value
