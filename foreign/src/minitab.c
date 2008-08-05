@@ -106,7 +106,7 @@ read_mtp(SEXP fname)
     FILE *f;
     char buf[MTP_BUF_SIZE], blank[1];
     MTB  *mtb, thisRec;
-    int i, j, nMTB = MTB_INITIAL_ENTRIES;
+    int i, j, res, nMTB = MTB_INITIAL_ENTRIES;
 
     PROTECT(fname = asChar(fname));
 #ifdef WIN32 /* force text-mode read */
@@ -120,7 +120,8 @@ read_mtp(SEXP fname)
 	strncmp(buf, "Minitab Portable Worksheet ", 27) != 0)
 	error(_("file '%s' is not in Minitab Portable Worksheet format"),
 	      CHAR(fname));
-    fgets(buf, MTP_BUF_SIZE, f);
+    res = fgets(buf, MTP_BUF_SIZE, f);
+    if(res == EOF) error(_("file read error"));
     UNPROTECT(1);
 
     mtb = Calloc(nMTB, MTB);
@@ -140,21 +141,25 @@ read_mtp(SEXP fname)
 	case 0:		/* numeric data */
 	    thisRec->dat.ndat = Calloc(thisRec->len, double);
 	    for (j = 0; j < thisRec->len; j++) {
-		fscanf(f, "%lg", thisRec->dat.ndat + j);
+		res = fscanf(f, "%lg", thisRec->dat.ndat + j);
+		if(res == EOF) error(_("file read error"));
 	    }
 	    break;
 	default:
 	    if (thisRec->type == 4) { /* we have a matrix so dtype is number of columns */
 		thisRec->dat.ndat = Calloc(thisRec->len, double);
 		for (j = 0; j < thisRec->len; j++) {
-		    fscanf(f, "%lg", thisRec->dat.ndat + j);
+		    res = fscanf(f, "%lg", thisRec->dat.ndat + j);
+		    if(res == EOF) error(_("file read error"));
 		}
 	    } else {
 		error(_("non-numeric data types are not yet implemented"));
 	    }
 	}
-	fgets(buf, MTP_BUF_SIZE, f); /* clear rest of current line */
-	fgets(buf, MTP_BUF_SIZE, f); /* load next line */
+	res = fgets(buf, MTP_BUF_SIZE, f); /* clear rest of current line */
+	if(res == EOF) error(_("file read error"));
+	res = fgets(buf, MTP_BUF_SIZE, f); /* load next line */
+	if(res == EOF) error(_("file read error"));
     }
     return MTB2SEXP(mtb, i);
 }
