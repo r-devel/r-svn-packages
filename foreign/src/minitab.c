@@ -121,7 +121,7 @@ read_mtp(SEXP fname)
 	error(_("file '%s' is not in Minitab Portable Worksheet format"),
 	      CHAR(fname));
     pres = fgets(buf, MTP_BUF_SIZE, f);
-    if(!pres) error(_("file read error"));
+    if(pres != buf) error(_("file read error"));
     UNPROTECT(1);
 
     mtb = Calloc(nMTB, MTB);
@@ -157,9 +157,9 @@ read_mtp(SEXP fname)
 	    }
 	}
 	pres = fgets(buf, MTP_BUF_SIZE, f); /* clear rest of current line */
-	if(!pres) error(_("file read error"));
+  	if(pres != buf) error(_("file read error"));
 	pres = fgets(buf, MTP_BUF_SIZE, f); /* load next line */
-	if(!pres) error(_("file read error"));
+	/* don't test here, as we test eof at end of loop */
     }
     return MTB2SEXP(mtb, i);
 }
