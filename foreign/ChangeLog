@@ -1,3 +1,8 @@
+2008-08-06 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/read.dta.R: avoid as.Date after
+	https://stat.ethz.ch/pipermail/r-help/2008-August/170114.html
+
 2008-08-05 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/sfm-read.c, src/spss.c, man/read.spss.Rd: return information

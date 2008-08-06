@@ -57,8 +57,9 @@ read.dta <- function(file, convert.dates = TRUE,
     if (convert.dates){
         ff <- attr(rval,"formats")
         dates <- grep("%-*d", ff)
-        for(v in dates)
-            rval[[v]] <- as.Date("1960-1-1")+rval[[v]]
+        ## avoid as.Date in case strptime is screwed up
+        base <- structure(-3653, class="Date")
+        for(v in dates) rval[[v]] <- base+rval[[v]]
     }
     if (convert.factors %in% c(TRUE, NA)) {
         if (attr(rval, "version") == 5)
