@@ -82,22 +82,22 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
                 } else if(tp == "low" || tp == "low+1") {
                     xi <- rval[[v]]
                     z <- miss[[v]]$value
-                    if(tp == "low+1") xi[ xi <= z[1] | xi == z[2] ] <- NA
-                    else  xi[xi <= z[1]] <- NA
+                    if(tp == "low+1") xi[ xi <= z[1L] | xi == z[2L] ] <- NA
+                    else  xi[xi <= z[1L]] <- NA
                     rval[[v]] <- xi
                 } else if(tp == "high" || tp == "high+1") {
                     xi <- rval[[v]]
                     z <- miss[[v]]$value
-                    if(tp == "high+1") xi[ xi >= z[1] | xi == z[2] ] <- NA
-                    else xi[ xi >= z[1] ] <- NA
+                    if(tp == "high+1") xi[ xi >= z[1L] | xi == z[2L] ] <- NA
+                    else xi[ xi >= z[1L] ] <- NA
                     rval[[v]] <- xi
                 } else if(tp == "range" || tp == "range+1") {
                     xi <- rval[[v]]
                     z <- miss[[v]]$value
                     if(tp == "range+1")
-                        xi[ xi >= z[1] | xi <= z[2] | xi[xi == z[3]] ] <- NA
+                        xi[ xi >= z[1L] | xi <= z[2L] | xi[xi == z[3L]] ] <- NA
                     else
-                        xi[ xi >= z[1] | xi <= z[2] ] <- NA
+                        xi[ xi >= z[1L] | xi <= z[2L] ] <- NA
                     rval[[v]] <- xi
                 } else
                     warning(gettextf("missingness type %s is not handled", tp),
