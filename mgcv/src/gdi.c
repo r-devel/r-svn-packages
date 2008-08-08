@@ -1005,8 +1005,9 @@ void gdi(double *X,double *E,double *rS,
        deriv==0 for no derivatives: only trA, rV and beta returned
        deriv==1 for first derivatives only
        deriv==2 for gradient and Hessian
-   
-   If REML is non-zeor, then the REML penalty returned in rank_tol, with it's 
+     -- on exit contains the number of iteration steps required.   
+
+   If REML is non-zero, then the REML penalty returned in rank_tol, with it's 
    derivatives in trA1, trA2: it is to be added to the *deviance* to get D_r.
 
    The method has 4 main parts:
@@ -1550,6 +1551,8 @@ void gdi(double *X,double *E,double *rS,
   }
 
   if (*REML) {*rank_tol = reml_penalty;*conv_tol = bSb;}
+
+  *deriv = iter; /* the number of iteration steps taken */
 }
 
 

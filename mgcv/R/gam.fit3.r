@@ -16,7 +16,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{   if (scale>0) scale.known <- TRUE else scale.known <- FALSE
+{   fisher <- FALSE
+    if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
     x <- as.matrix(x)
@@ -107,7 +108,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             }
         else family$linkfun(mustart)
         etaold <- eta
-        mu <- linkinv(eta)
+        muold <- mu <- linkinv(eta)
         if (!(validmu(mu) && valideta(eta))) 
             stop("Can't find valid starting values: please specify some")
     
@@ -131,10 +132,17 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                   iter)
                 break
             }
-            mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good];weg<-weights[good]
-            z <- (eta - offset)[good] + (yg - mug)/mevg
-            var.mug<-variance(mug)
-            w <- sqrt((weg * mevg^2)/var.mug)
+            mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good]
+            weg<-weights[good];var.mug<-variance(mug)
+            if (fisher) { ## Conventional Fisher scoring
+              z <- (eta - offset)[good] + (yg - mug)/mevg
+              w <- sqrt((weg * mevg^2)/var.mug)
+            } else { ## full Newton
+              c <- yg - mug
+              e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
+              z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
+              w <- sqrt(weg*e*mevg/var.mug)
+            }
 
             ## Here a Fortran call has been replaced by update.beta call
            
@@ -178,7 +186,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                   ii <- ii + 1
                   start <- (start + coefold)/2
                   eta <- (eta + etaold)/2               
-                  mu <- linkinv(eta <- eta + offset)
+                  mu <- linkinv(eta)
                   dev <- sum(dev.resids(y, mu, weights))
                 }
                 boundary <- TRUE
@@ -195,7 +203,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                   ii <- ii + 1
                   start <- (start + coefold)/2
                   eta <- (eta + etaold)/2 
-                  mu <- linkinv(eta <- eta + offset)
+                  mu <- linkinv(eta)
                 }
                 boundary <- TRUE
                 dev <- sum(dev.resids(y, mu, weights))
@@ -221,7 +229,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                 ii <- ii + 1
                 start <- (start + coefold)/2 
                 eta <- (eta + etaold)/2               
-                mu <- linkinv(eta <- eta + offset)
+                mu <- linkinv(eta)
                   dev <- sum(dev.resids(y, mu, weights))
                   pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
                 if (control$trace) 
@@ -232,10 +240,12 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             if (strictly.additive) { conv <- TRUE;coef <- start;break;}
 
             if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
-                if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2){
+               ## if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
+                if (max(abs(mu-muold))>control$epsilon*max(abs(mu+muold))/2) {
                   old.pdev <- pdev
                   coef <- coefold <- start
                   etaold <- eta 
+                  muold <- mu
                 } else {
                   conv <- TRUE
                   coef <- start
@@ -302,7 +312,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
            REML = as.integer(scoreType=="REML"))      
        
-         if (control$trace) cat("done!\n")
+         if (control$trace) cat("done! (iteration took ",oo$deriv," steps)\n")
  
          rV <- matrix(oo$rV,ncol(x),ncol(x))
          coef <- oo$beta;
