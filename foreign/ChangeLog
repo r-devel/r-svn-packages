@@ -1,5 +1,9 @@
 2008-08-07 Brian Ripley <Brian.Ripley@R-project.org>
 
+	* R/read.ssd.R: allow long var names, PR#9631/2.
+
+2008-08-07 Brian Ripley <Brian.Ripley@R-project.org>
+
 	* DESCRIPTION: Version is 0.8-29.
 	* R/read.dta.R: avoid as.Date() after
 	https://stat.ethz.ch/pipermail/r-help/2008-August/170114.html
