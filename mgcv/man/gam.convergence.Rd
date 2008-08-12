@@ -3,10 +3,11 @@
 \alias{gam.performance}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM convergence and performance issues}
-\description{ When fitting GAMs there is a tradeoff between speed of fitting and probability of
-fit convergence. The default fitting options specified by
+\description{ When fitting GAMs there is a tradeoff between speed of 
+fitting and probability of fit convergence. The default fitting options 
+specified by
 \code{\link{gam.method}} (as the default for argument \code{method} of
-\code{\link{gam}}), always opt for certainty of convergence over speed of
+\code{\link{gam}}), opt for certainty of convergence over speed of
 fit. In the Generalized Additive Model case it means using
 `outer' iteration in preference to `performance iteration': see
 \code{\link{gam.outer}} for details. 
@@ -16,6 +17,12 @@ smoothing parameters using a few steps of performance iteration (if you get a
 convergence failure message from \code{magic} when outer iterating, then this
 is what has happened): lower \code{outerPIsteps} in \code{\link{gam.control}}
 to fix this. 
+
+Occasionally, when using a non-canonical link function, the Fisher 
+scoring approach to finding model coeffients can fail to converge. In 
+this case try using \code{fisher=FALSE} in the control argument to 
+\code{gam}: see \code{\link{gam.control}}. Doing this will cause a full 
+Newton approach to be used.
 
 There are three things that you can try to speed up GAM fitting. (i) if you have large 
 numbers of smoothing parameters in the generalized case, then try the \code{"bfgs"} method as the \code{outer} 

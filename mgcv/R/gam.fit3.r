@@ -16,7 +16,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{   fisher <- FALSE
+{   fisher <- control$fisher
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
@@ -283,9 +283,17 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
    
          mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
          weg <- weights[good];etag <- eta[good]
-         z <- (eta - offset)[good] + (yg - mug)/mevg
          var.mug<-variance(mug)
-         w <- sqrt((weg * mevg^2)/var.mug)
+
+         if (fisher) { ## Conventional Fisher scoring
+              z <- (eta - offset)[good] + (yg - mug)/mevg
+              w <- sqrt((weg * mevg^2)/var.mug)
+         } else { ## full Newton
+              c <- yg - mug
+              e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
+              z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
+              w <- sqrt(weg*e*mevg/var.mug)
+         }
         
          g1 <- 1/mevg
          g2 <- family$d2link(mug)
@@ -294,6 +302,13 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          V <- family$variance(mug)
          V1 <- family$dvar(mug)
          V2 <- family$d2var(mug)      
+        
+         if (fisher) {
+           g4 <- V3 <- 0
+         } else {
+           g4 <- family$d4link(mug)
+           V3 <- family$d3var(mug)
+         }
 
          P1 <- D1 <- array(0,nSp);P2 <- D2 <- matrix(0,nSp,nSp) # for derivs of deviance/ Pearson
          trA1 <- array(0,nSp);trA2 <- matrix(0,nSp,nSp) # for derivs of tr(A)
@@ -303,14 +318,14 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
        oo <- .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),
            sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
-           p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),V0=as.double(V),
-           V1=as.double(V1),V2=as.double(V2),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
+           p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
+           V1=as.double(V1),V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
            P=as.double(dum),P1=as.double(P1),P2=as.double(P2),trA=as.double(dum),
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
-           REML = as.integer(scoreType=="REML"))      
+           REML = as.integer(scoreType=="REML"),fisher=as.integer(fisher))      
        
          if (control$trace) cat("done! (iteration took ",oo$deriv," steps)\n")
  
@@ -884,36 +899,42 @@ fix.family.link<-function(fam)
 # d3link...
 # All d2link and d3link functions have been checked numerically. 
 { if (!inherits(fam,"family")) stop("fam not a family object")
-  if (!is.null(fam$d2link)&&!is.null(fam$d3link)) return(fam) 
+  if (!is.null(fam$d2link)&&!is.null(fam$d3link)&&!is.null(fam$d4link)) return(fam) 
   link <- fam$link
   if (length(link)>1) if (fam$family=="quasi") # then it's a power link
   { lambda <- log(fam$linkfun(exp(1))) ## the power, if > 0
     if (lambda<=0) { fam$d2link <- function(mu) -1/mu^2
       fam$d3link <- function(mu) 2/mu^3
+      fam$d4link <- function(mu) -6/mu^4
     }
     else { fam$d2link <- function(mu) lambda*(lambda-1)*mu^(lambda-2)
       fam$d3link <- function(mu) (lambda-2)*(lambda-1)*lambda*mu^(lambda-3)
+      fam$d4link <- function(mu) (lambda-3)*(lambda-2)*(lambda-1)*lambda*mu^(lambda-4)
     }
     return(fam)
   } else stop("unrecognized (vector?) link")
 
   if (link=="identity") {
-    fam$d3link <- fam$d2link <- function(mu) rep.int(0,length(mu))
+    fam$d4link <- fam$d3link <- fam$d2link <- 
+    function(mu) rep.int(0,length(mu))
     return(fam)
   } 
   if (link == "log") {
     fam$d2link <- function(mu) -1/mu^2
     fam$d3link <- function(mu) 2/mu^3
+    fam$d4link <- function(mu) -6/mu^4
     return(fam)
   }
   if (link == "inverse") {
     fam$d2link <- function(mu) 2/mu^3
-    fam$d3link <- function(mu) {mu <- mu*mu;-6/(mu*mu)}
+    fam$d3link <- function(mu) { mu <- mu*mu;-6/(mu*mu)}
+    fam$d4link <- function(mu) { mu2 <- mu*mu;24/(mu2*mu2*mu)}
     return(fam)
   }
   if (link == "logit") {
     fam$d2link <- function(mu) 1/(1 - mu)^2 - 1/mu^2
     fam$d3link <- function(mu) 2/(1 - mu)^3 + 2/mu^3
+    fam$d4link <- function(mu) 6/(1-mu)^4 - 6/mu^4
     return(fam)
   }
   if (link == "probit") {
@@ -925,6 +946,10 @@ fix.family.link<-function(fam)
       eta <-  fam$linkfun(mu)
       (1 + 2*eta^2)/fam$mu.eta(eta)^3
     }
+    fam$d4link <- function(mu) {
+       eta <-  fam$linkfun(mu)
+       (7*eta + 6*eta^3)/fam$mu.eta(eta)^4
+    }
     return(fam)
   }
   if (link == "cloglog") {
@@ -933,14 +958,19 @@ fix.family.link<-function(fam)
     }
     fam$d3link <- function(mu) { l1m <- log(1-mu)
        mu3 <- (1-mu)^3
-      -1/(mu3 * l1m^3) -(1 + 2 * l1m)/
-       (mu3 * l1m^2) * (1 + 1/l1m)
+      (-2 - 3*l1m - 2*l1m^2)/mu3/l1m^3
+    }
+    fam$d4link <- function(mu){
+      l1m <- log(1-mu)
+      mu4 <- (1-mu)^4
+      ( - 12 - 11 * l1m - 6 * l1m^2 - 6/l1m )/mu4  /l1m^3
     }
     return(fam)
   }
   if (link == "sqrt") {
     fam$d2link <- function(mu) -.25 * mu^-1.5
     fam$d3link <- function(mu) .375 * mu^-2.5
+    fam$d4link <- function(mu) -0.9375 * mu^-3.5
     return(fam)
   }
   if (link == "cauchit") {
@@ -953,18 +983,25 @@ fix.family.link<-function(fam)
      eta2 <- eta*eta
      2*pi*pi*pi*(1+3*eta2)*(1+eta2)
     }
+    fam$d4link <- function(mu) { 
+     eta <- fam$linkfun(mu)
+     eta2 <- eta*eta
+     2*pi^4*(8*eta+12*eta2*eta)*(1+eta2)
+    }
     return(fam)
   }
   if (link == "1/mu^2") {
     fam$d2link <- function(mu) 6 * mu^-4
-    fam$d3link <- function(mu) -24* mu^-5
+    fam$d3link <- function(mu) -24 * mu^-5
+    fam$d4link <- function(mu) 120 * mu^-6
     return(fam)
   }
   if (substr(link,1,3)=="mu^") { ## it's a power link
     ## note that lambda <=0 gives log link so don't end up here
     lambda <- get("lambda",environment(fam$linkfun))
     fam$d2link <- function(mu) (lambda*(lambda-1)) * mu^{lambda-2}
-    fam$d3link <- function(mu) (lambda*(lambda-1)*lambda-2) * mu^{lambda-3}
+    fam$d3link <- function(mu) (lambda*(lambda-1)*(lambda-2)) * mu^{lambda-3}
+    fam$d4link <- function(mu) (lambda*(lambda-1)*(lambda-2)*(lambda-3)) * mu^{lambda-4}
     return(fam)
   }
   stop("link not recognised")
@@ -976,25 +1013,27 @@ fix.family.var<-function(fam)
 # to the family supplied, as well as d2var the 2nd derivative of 
 # the variance function w.r.t. the mean. (All checked numerically). 
 { if (!inherits(fam,"family")) stop("fam not a family object")
-  if (!is.null(fam$dvar)&&!is.null(fam$d2var)) return(fam) 
+  if (!is.null(fam$dvar)&&!is.null(fam$d2var)&&!is.null(fam$d3var)) return(fam) 
   family <- fam$family
   if (family=="gaussian") {
-    fam$d2var <- fam$dvar <- function(mu) rep.int(0,length(mu))
+    fam$d3var <- fam$d2var <- fam$dvar <- function(mu) rep.int(0,length(mu))
     return(fam)
   } 
   if (family=="poisson"||family=="quasipoisson") {
     fam$dvar <- function(mu) rep.int(1,length(mu))
-    fam$d2var <- function(mu) rep.int(0,length(mu))
+    fam$d3var <- fam$d2var <- function(mu) rep.int(0,length(mu))
     return(fam)
   } 
   if (family=="binomial"||family=="quasibinomial") {
     fam$dvar <- function(mu) 1-2*mu
     fam$d2var <- function(mu) rep.int(-2,length(mu))
+    fam$d3var <- function(mu) rep.int(0,length(mu))
     return(fam)
   }
   if (family=="Gamma") {
     fam$dvar <- function(mu) 2*mu
     fam$d2var <- function(mu) rep.int(2,length(mu))
+    fam$d3var <- function(mu) rep.int(0,length(mu))
     return(fam)
   }
   if (family=="quasi") {
@@ -1013,11 +1052,19 @@ fix.family.var<-function(fam)
        "mu^2" = function(mu) rep.int(2,length(mu)),
        "mu^3" = function(mu) 6*mu           
     )
+    fam$d3var <- switch(fam$varfun,
+       constant = function(mu) rep.int(0,length(mu)),
+       "mu(1-mu)" = function(mu) rep.int(0,length(mu)),
+       mu = function(mu) rep.int(0,length(mu)),
+       "mu^2" = function(mu) rep.int(0,length(mu)),
+       "mu^3" = function(mu) rep.int(6,length(mu))           
+    )
     return(fam)
   }
   if (family=="inverse.gaussian") {
     fam$dvar <- function(mu) 3*mu^2
     fam$d2var <- function(mu) 6*mu
+    fam$d3var <- function(mu) rep.int(6,length(mu)) 
     return(fam)
   }
   stop("family not recognised")
@@ -1099,6 +1146,7 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
     dvar <- function(mu) 1 + 2*mu/get(".Theta")
     ## d2variance/dmu...
     d2var <- function(mu) rep(2/get(".Theta"),length(mu))
+    d3var <- function(mu) rep(0,length(mu))
     getTheta <- function() get(".Theta")
     validmu <- function(mu) all(mu > 0)
 
@@ -1122,7 +1170,7 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
                          environment(dev.resids) <- environment(aic) <- environment(getTheta) <- env
     famname <- paste("Negative Binomial(", format(round(theta,3)), ")", sep = "")
     structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
-        linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var, dev.resids = dev.resids,
+        linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var,d3var=d3var, dev.resids = dev.resids,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
         validmu = validmu, valideta = stats$valideta,getTheta = getTheta), class = "family")
 }
@@ -1236,7 +1284,8 @@ Tweedie <- function(p=1,link=power(0)) {
     dvar <- function(mu) p*mu^(p-1)
     if (p==1) d2var <- function(mu) 0*mu else
       d2var <- function(mu) p*(p-1)*mu^(p-2)
-
+    if (p==1||p==2)  d3var <- function(mu) 0*mu else
+      d3var <- function(mu) p*(p-1)*(p-2)*mu^(p-3)
     validmu <- function(mu) all(mu >= 0)
 
     dev.resids <- function(y, mu, wt) {
@@ -1266,7 +1315,7 @@ Tweedie <- function(p=1,link=power(0)) {
     structure(list(family = paste("Tweedie(",p,")",sep=""), variance = variance, 
               dev.resids = dev.resids,aic = aic, link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv,
         mu.eta = stats$mu.eta, initialize = initialize, validmu = validmu,
-        valideta = stats$valideta,dvar=dvar,d2var=d2var,ls=ls), class = "family")
+        valideta = stats$valideta,dvar=dvar,d2var=d2var,d3var=d3var,ls=ls), class = "family")
 
 
 }

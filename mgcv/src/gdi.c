@@ -955,12 +955,12 @@ void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
 
 void gdi(double *X,double *E,double *rS,
     double *sp,double *z,double *w,double *mu,double *eta, double *y,
-    double *p_weights,double *g1,double *g2,double *g3,double *V0,
-    double *V1,double *V2,double *beta,double *D1,double *D2,
+	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
+	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
     double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd,
-    int *REML)     
+	 int *REML,int *fisher)     
 /* Function to iterate for first and second derivatives of the deviance 
    of a GAM fit, and to evaluate the first and second derivatives of
    tr(A). Derivatives are w.r.t. log smoothing parameters.
@@ -985,10 +985,10 @@ void gdi(double *X,double *E,double *rS,
    * z and w are n-vectors of the pseudodata and iterative weights
    * p_weights is an n-vector of prior weights (as opposed to the iterative weights in w)
    * mu and y are n-vectors of the fitted values and data.
-   * g1,g2,g3 are the n-vectors of the link derivatives: 
-     g'(mu), g''(mu) and g'''(mu)
-   * V0, V1, V2 are n-vectors of the variance function and first two derivatives.
-     V0(mu), V'(mu) and V''(mu) 
+   * g1,g2,g3,g4 are the n-vectors of the link derivatives: 
+     g'(mu), g''(mu) g'''(mu) and g''''(mu)
+   * V0, V1, V2, V3 are n-vectors of the variance function and first two derivatives.
+     V0(mu), V'(mu), V''(mu) & V'''(mu) 
    * D1 and D2 are an M-vector and M by M matrix for returning the first 
      and second derivatives of the deviance wrt the log smoothing parameters.
      if *REML is non zero then the derivs will be of the penalized deviance,
@@ -1007,8 +1007,10 @@ void gdi(double *X,double *E,double *rS,
        deriv==2 for gradient and Hessian
      -- on exit contains the number of iteration steps required.   
 
-   If REML is non-zero, then the REML penalty returned in rank_tol, with it's 
-   derivatives in trA1, trA2: it is to be added to the *deviance* to get D_r.
+    * If REML is non-zero, then the REML penalty returned in rank_tol, with it's 
+      derivatives in trA1, trA2: it is to be added to the *deviance* to get D_r.
+    * non-zero `fisher' indicates that Fisher scoring, rather than full Newton,
+      is the basis for iteration. 
 
    The method has 4 main parts:
 
@@ -1044,8 +1046,9 @@ void gdi(double *X,double *E,double *rS,
          *c0,*c1,*c2,*a0,*a1,*a2,*B2z,*B2zBase,*B1z,*B1zBase,*eta1,*mu1,*eta2,*KKtz,
          *PKtz,*KPtSPKtz,*v1,*v2,*wi,*wis,*z1,*z2,*zz1,*zz2,*pz2,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2,
-         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0;
-  int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter,m,one=1,n_2dCols,n_b1,n_b2,
+         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
+         *fa,*fa1,*fa2,*fb,*fc,*fc1,*fc2,*fc3,*fd,*fd1,*fd2;
+  int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
     n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,null_space_dim;
 
  
@@ -1242,38 +1245,87 @@ void gdi(double *X,double *E,double *rS,
     c0=(double *)calloc((size_t)*n,sizeof(double));
     c1=(double *)calloc((size_t)*n,sizeof(double));  
     c2=(double *)calloc((size_t)*n,sizeof(double));
-    for (i=0;i< *n;i++) c0[i]=y[i]-mu[i];
-    for (i=0;i<*n;i++) c2[i]=g2[i]/g1[i];
-    /* c1 = (y-mu)*g2/g1 */
-    for (i=0;i<*n;i++) c1[i]=c2[i]*c0[i];
-    /* c2 = (y-mu)*(g3/g1-g2/g1) - g2/g1 */
-    for (i=0;i<*n;i++) c2[i]=c0[i]*(g3[i]-g2[i]*g2[i]/g1[i])/g1[i]-c2[i];
-
-#ifdef DEBUG
-    printf("\n c0:\n");
-	for (i=0;i<*n;i++) printf("  %g",c0[i]);
-    printf("\n c1:\n");
-	for (i=0;i<*n;i++) printf("  %g",c1[i]);
-     printf("\n c2:\n");
-	for (i=0;i<*n;i++) printf("  %g",c2[i]);
-#endif    
-
-    /* set up constants involved in w updates */
     a0=(double *)calloc((size_t)*n,sizeof(double));
     a1=(double *)calloc((size_t)*n,sizeof(double));  
     a2=(double *)calloc((size_t)*n,sizeof(double));
-    for (i=0;i< *n;i++) a0[i] = - w[i]*w[i]*w[i]*(V1[i]*g1[i]+2*V0[i]*g2[i])/(2*p_weights[i]) ;
-    for (i=0;i< *n;i++) a1[i] = 3/w[i];
-    for (i=0;i< *n;i++) 
-      a2[i] = -w[i]*w[i]*w[i]*(V2[i]*g1[i]+3*V1[i]*g2[i]+2*g3[i]*V0[i])/(g1[i]*2*p_weights[i]);
+    fa=fa1=fa2=fb=fc=fc1=fc2=fc3=fd=fd1=fd2=(double *)NULL;
+    if (*fisher) { /* Fisher scoring updates */
+      for (i=0;i< *n;i++) c0[i]=y[i]-mu[i];
+      for (i=0;i<*n;i++) c2[i]=g2[i]/g1[i];
+      /* c1 = (y-mu)*g2/g1 */
+      for (i=0;i<*n;i++) c1[i]=c2[i]*c0[i];
+      /* c2 = (y-mu)*(g3/g1-g2/g1) - g2/g1 */
+      for (i=0;i<*n;i++) c2[i]=c0[i]*(g3[i]-g2[i]*g2[i]/g1[i])/g1[i]-c2[i];
+
 #ifdef DEBUG
-    printf("\n\n\n\n a0:\n");
-	for (i=0;i<*n;i++) printf("  %g",a0[i]);
-    printf("\n a1:\n");
-	for (i=0;i<*n;i++) printf("  %g",a1[i]);
-     printf("\n a2:\n");
-	for (i=0;i<*n;i++) printf("  %g",a2[i]);
+      printf("\n c0:\n");
+	for (i=0;i<*n;i++) printf("  %g",c0[i]);
+      printf("\n c1:\n");
+	for (i=0;i<*n;i++) printf("  %g",c1[i]);
+       printf("\n c2:\n");
+	for (i=0;i<*n;i++) printf("  %g",c2[i]);
 #endif    
+
+      /* set up constants involved in w updates */
+   
+      for (i=0;i< *n;i++) a0[i] = - w[i]*w[i]*w[i]*(V1[i]*g1[i]+2*V0[i]*g2[i])/(2*p_weights[i]) ;
+      for (i=0;i< *n;i++) a1[i] = 3/w[i];
+      for (i=0;i< *n;i++) 
+        a2[i] = -w[i]*w[i]*w[i]*(V2[i]*g1[i]+3*V1[i]*g2[i]+2*g3[i]*V0[i])/(g1[i]*2*p_weights[i]);
+#ifdef DEBUG
+      printf("\n\n\n\n a0:\n");
+	 for (i=0;i<*n;i++) printf("  %g",a0[i]);
+      printf("\n a1:\n");
+	for (i=0;i<*n;i++) printf("  %g",a1[i]);
+      printf("\n a2:\n");
+	for (i=0;i<*n;i++) printf("  %g",a2[i]);
+#endif
+    } else { /* full Newton updates */
+      fa = (double *) calloc((size_t)*n,sizeof(double));
+      fa1 = (double *) calloc((size_t)*n,sizeof(double));
+      fa2 = (double *) calloc((size_t)*n,sizeof(double));
+      for (i=0;i< *n;i++) {
+        fa[i] = 1/g1[i];
+        fa1[i] = -g2[i]*fa[i]*fa[i];
+        fa2[i] = -2*fa1[i]*g2[i]*fa[i] - g3[i]*fa[i]*fa[i];
+      }
+      fc = (double *) calloc((size_t)*n,sizeof(double));
+      fc1 = (double *) calloc((size_t)*n,sizeof(double));
+      fc2 = (double *) calloc((size_t)*n,sizeof(double));
+      fc3 = (double *) calloc((size_t)*n,sizeof(double));
+      for (i=0;i< *n;i++) {
+        fc[i] = V0[i]*g1[i];
+        fc1[i] = V1[i]*g1[i] + V0[i]*g2[i];
+        fc2[i] = V2[i]*g1[i] + 2*V1[i]*g2[i] + V0[i]*g3[i];
+        fc3[i] = V3[i]*g1[i] + 3*(V2[i]*g2[i]+V1[i]*g3[i]) + V0[i]*g4[i];
+      }
+      fb = (double *) calloc((size_t)*n,sizeof(double));
+      for (i=0;i< *n;i++) fb[i] = y[i] - mu[i];
+      fd = (double *) calloc((size_t)*n,sizeof(double));
+      fd1 = (double *) calloc((size_t)*n,sizeof(double));
+      fd2 = (double *) calloc((size_t)*n,sizeof(double));
+      for (i=0;i< *n;i++) {
+        fd[i] = fa[i]*(1+fb[i]*fc1[i]/fc[i]);
+        fd1[i] = fd[i]*(fa1[i]-fa[i]*fc1[i]/fc[i]) + fa[i]*fa[i]*fb[i]*fc2[i]/fc[i];
+        fd2[i] = fd1[i]*(fa1[i]-fa[i]*fc1[i]/fc[i]) +
+	         fd[i]*fa[i]*(fa2[i] - (fa1[i]*fc1[i]+fa[i]*fc2[i]-fa[i]*fc1[i]*fc1[i]/fc[i])/fc[i]) +
+                 2*fa[i]*fa[i]*fa1[i]*fb[i]*fc2[i]/fc[i] +
+	         fa[i]*fa[i]*fa[i]*(fb[i]*fc3[i]-fc2[i]-fb[i]*fc2[i]*fc1[i]/fc[i])/fc[i];
+      }
+      /* end of preliminaries, now setup the multipliers that go forward */
+      /* dz/deta... */
+      for (i=0;i<*n;i++) c1[i] = 1 - (fa[i]+fb[i]*fd1[i]/fd[i])/fd[i];
+      /* d2z/deta2... */
+      for (i=0;i<*n;i++) c2[i] = ((2*fa[i]*fd1[i] - fb[i]*fd2[i] + 2*fb[i]*fd1[i]*fd1[i]/fd[i])/fd[i] - fa1[i]*fa[i])/fd[i];
+      /* dw/deta... */
+      for (i=0;i<*n;i++) a0[i] = 0.5*p_weights[i]*(fd1[i]/sqrt(fd[i]) - sqrt(fd[i])*fc1[i]*fa[i]/fc[i])/sqrt(fc[i]); 
+      /* multiplier for dw/deta product in d2w/deta2... */
+      for (i=0;i<*n;i++) a1[i] = 1/w[i];
+      /* multiplier for remainder term in d2w/deta2... */
+      for (i=0;i<*n;i++) a2[i] =  0.5*w[i]*(fd2[i]/fd[i]+fa[i]*(fc1[i]*fc1[i]*fa[i]/fc[1] - fc2[i]*fa[i] - fc1[i]*fa1[i])/fc[i]);
+      free(fa);free(fa1);free(fa2);free(fb);free(fc);free(fc1);free(fc2);free(fc3);free(fd);free(fd1);free(fd2);
+      
+    } /* end of full Newton setup */
     /* some useful arrays for Tk and Tkm */
     wi=(double *)calloc((size_t)*n,sizeof(double));
     wis=(double *)calloc((size_t)*n,sizeof(double));
@@ -1284,7 +1336,7 @@ void gdi(double *X,double *E,double *rS,
     dev_grad=(double *)calloc((size_t)*q,sizeof(double));
     bt=1;ct=0;mgcv_mmult(dev_grad,X,v1,&bt,&ct,q,&one,n);
     
-    if (deriv2) {
+    if (deriv2) { /* get hessian of deviance w.r.t. beta */
       for (i=0;i< *n ;i++) 
       v1[i] = 2*p_weights[i]*
             (1/V0[i] + (y[i]-mu[i])/(V0[i]*V0[i]*g1[i])*(V1[i]*g1[i]+V0[i]*g2[i]))/(g1[i]*g1[i]);

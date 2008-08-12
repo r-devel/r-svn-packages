@@ -5,6 +5,10 @@
 
 * Tweedie family added.
 
+** Option added to do full Newton fitting in place of Fisher scoring:
+   useful for rare cases in which PIRLS does not coverge with Fisher 
+   scoring.
+
 ** Efficient and general REML smoothing selection implemented.
 
 * `power' links now handled by default fitting methods (i.e. gam.fit3)

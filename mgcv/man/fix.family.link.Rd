@@ -18,15 +18,17 @@ fix.family.var(fam)
 \details{ Outer iteration GAM estimation requires derivatives of the GCV/UBRE
 score, which are obtained by differentiating the P-IRLS GAM fitting iteration
 w.r.t. the model smoothing parameters. The expressions for the derivatives
-require the second and third derivatives of the link w.r.t. the mean, and the first
-and second derivatives of the variance function w.r.t. the mean. These functions add
+require the second and third derivatives of the link w.r.t. the mean (and the 4th 
+derivatives if Fisher scoring is not used). Also required are the first
+and second derivatives of the variance function w.r.t. the mean (plus the third 
+derivative if Fisher scoring is not used). These functions add
 functions evaluating these quantities to a family. 
 
-If the family already has functions \code{dvar}, \code{d2var}, \code{d2link}
-and \code{d3link} then these
-functions simply return the family unmodified: this allows non-standard links
+If the family already has functions \code{dvar}, \code{d2var}, \code{d3var}, \code{d2link},
+\code{d3link} and \code{d4link} then these functions simply return the family unmodified: this allows non-standard links
 to be used with \code{\link{gam}} when using outer iteration (performance
-iteration operates with unmodified families).
+iteration operates with unmodified families). Note that if you only need Fisher scoring then 
+\code{d4link} and \code{d3var} can be dummy, as they are ignored.
 
 The \code{dvar} function is a function of a mean vector, \code{mu}, and returns
 a vector of corresponding first derivatives of the family variance

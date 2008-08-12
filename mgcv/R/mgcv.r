@@ -1372,7 +1372,7 @@ print.gam<-function (x,...)
   invisible(x)
 }
 
-gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
+gam.control <- function (fisher=TRUE,irls.reg=0.0,epsilon = 1e-06, maxit = 100,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=1,
@@ -1386,7 +1386,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
 # rank.tol is the tolerance to use for rank determination
 # outerPIsteps is the number of performance iteration steps used to intialize
 #                         outer iteration
-{
+{   if (!is.logical(fisher)) stop("`fisher' must be TRUE or FALSE.")
     if (!is.numeric(irls.reg) || irls.reg <0.0) stop("IRLS regularizing parameter must be a non-negative number.")
     if (!is.numeric(epsilon) || epsilon <= 0) 
         stop("value of epsilon must be > 0")
@@ -1426,7 +1426,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
 
-    list(irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
+    list(fisher=fisher,irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
          optim=optim,newton=newton,outerPIsteps=outerPIsteps,
