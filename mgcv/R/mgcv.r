@@ -1282,7 +1282,7 @@ gam.check <- function(b)
 # takes a fitted gam object and produces some standard diagnostic plots
 {# if (b$fit.method=="mgcv"||b$fit.method=="performance iteration - mgcv")
  # fit.method <- "mgcv" else fit.method <- "other"
-  if (b$method=="GACV"||b$method=="GCV"||b$method=="UBRE")
+  if (b$method=="GACV"||b$method=="GCV"||b$method=="UBRE"||b$method=="REML")
   { old.par<-par(mfrow=c(2,2))
     sc.name<-b$method
 #    if (fit.method=="mgcv")
@@ -1369,6 +1369,8 @@ print.gam<-function (x,...)
   cat("\nUBRE score: ",x$gcv.ubre,"\n")
   else if (x$method=="GACV")
   cat("\nGACV score: ",x$gcv.ubre,"\n")
+  else if (x$method=="REML")
+  cat("\nREML score: ",x$gcv.ubre,"\n")
   invisible(x)
 }
 
@@ -2748,7 +2750,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=.5, ...)
        dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
        pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
        pTerms.table = pTerms.table, s.table = s.table)
-  if (object$method=="UBRE") ret$ubre<-object$gcv.ubre else ret$gcv<-object$gcv.ubre
+  if (object$method=="UBRE") ret$ubre<-object$gcv.ubre else 
+  if (object$method=="REML") ret$reml<- object$gcv.ubre else ret$gcv<-object$gcv.ubre
   class(ret)<-"summary.gam"
   ret
 }
@@ -2772,6 +2775,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
   if (!is.null(x$ubre)) cat("UBRE score = ",formatC(x$ubre,digits=5),sep="")
   if (!is.null(x$gcv)) cat("GCV score = ",formatC(x$gcv,digits=5)," ",sep="")
+  if (!is.null(x$reml)) cat("REML score = ",formatC(x$reml,digits=5)," ",sep="")
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
   invisible(x)
 }
