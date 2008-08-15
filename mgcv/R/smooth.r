@@ -189,8 +189,13 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   full.call<-paste("te(",term[1],sep="")
   if (dim>1) for (i in 2:dim) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="")   # label for parameters of this term
-  if (!is.null(id)) id <- as.character(id)
- 
+  if (!is.null(id)) { 
+    if (length(id)>1) { 
+      id <- id[1]
+      warning("only first element of `id' used")
+    } 
+    id <- as.character(id)
+  }
   ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np,
             id=id,sp=sp)
   class(ret)<-"tensor.smooth.spec"
@@ -244,7 +249,13 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
   full.call<-paste("s(",term[1],sep="")
   if (d>1) for (i in 2:d) full.call<-paste(full.call,",",term[i],sep="")
   label<-paste(full.call,")",sep="") # used for labelling parameters
-  if (!is.null(id)) id <- as.character(id)
+  if (!is.null(id))  {
+    if (length(id)>1) { 
+      id <- id[1]
+      warning("only first element of `id' used")
+    } 
+   id <- as.character(id)
+  }
 
   ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt,
             id=id,sp=sp)

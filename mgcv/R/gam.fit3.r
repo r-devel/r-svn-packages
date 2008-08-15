@@ -335,8 +335,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          scale.est <- dev/(nobs-trA)
 
         if (scoreType=="REML") {
-           ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
-           if (scale.known) { ## use Fisher-Laplace REML
+          if (scale.known) { ## use Fisher-Laplace REML
+             ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
              REML <- (dev + oo$conv.tol)/(2*scale) - ls[1] + oo$rank.tol/2
              if (deriv) {
                REML1 <- oo$D1/(2*scale) + oo$trA1/2
@@ -347,6 +347,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
              }
            } else { ## scale unknown use Pearson-Fisher-Laplace REML
              phi <- oo$P ## REMLish scale estimate
+             ls <- family$ls(y,weights,n,phi) ## saturated likelihood and derivatives
              phi1 <- oo$P1;phi2 <- matrix(oo$P2,nSp,nSp)
              Dp <- dev + oo$conv.tol
              Dp1 <- oo$D1
@@ -1085,6 +1086,7 @@ fix.family.ls<-function(fam)
     fam$ls <- function(y,w,n,scale) {
       res <- rep(0,3)
       res[1] <- sum(dpois(y,y,log=TRUE)*w)
+      res
     }
     return(fam)
   } 
@@ -1099,10 +1101,11 @@ fix.family.ls<-function(fam)
       res <- rep(0,3)
       k <- -lgamma(1/scale) - log(scale)/scale - 1/scale
       res[1] <- sum(w*(k-log(y)))
-      k <- digamma(1/scale)/(scale*scale)
+      k <- (digamma(1/scale)+log(scale))/(scale*scale)
       res[2] <- sum(w*k)  
-      k <- (-trigamma(1/scale)/(scale) - 2*digamma(1/scale))/(scale^3)
+      k <- (-trigamma(1/scale)/(scale) + (1-2*log(scale)-2*digamma(1/scale)))/(scale^3)
       res[3] <- sum(w*k) 
+      res
     }
     return(fam)
   }
@@ -1304,7 +1307,7 @@ Tweedie <- function(p=1,link=power(0)) {
     })
     ls <-  function(y,w,n,scale) {
       power <- p
-      ldTweedie(y,y,p=power,phi=scale)
+      colSums(w*ldTweedie(y,y,p=power,phi=scale))
     }
 
     aic <- function(y, n, mu, wt, dev) {

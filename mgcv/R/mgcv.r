@@ -2223,6 +2223,16 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   } else
   { ppp<-1;oldpar<-par()}
   
+  if ((pages==0&&prod(par("mfcol"))<n.plots&&dev.interactive())||
+       pages>1&&dev.interactive()) ask <- TRUE else ask <- FALSE 
+
+  if (pages==0&&is.null(select)) par(mfrow=par("mfrow")) ## new display
+
+  if (ask) {
+        oask <- devAskNewPage(TRUE)
+        on.exit(devAskNewPage(oask))
+    }
+
   # work through all smooth terms assembling the plot data list pd with elements
   # dim, x, fit, se, ylab, xlab for 1-d terms;
   # dim, xm, ym, fit, se, ylab, xlab, title for 2-d terms;
@@ -2348,8 +2358,8 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     j<-1
     if (m>0) for (i in 1:m)
     { if (is.null(select)||i==select)
-      { if (interactive()&& is.null(select) && pd[[i]]$dim<3 && i>1&&(i-1)%%ppp==0) 
-        readline("Press return for next page....")
+      { ##if (interactive()&& is.null(select) && pd[[i]]$dim<3 && i>1&&(i-1)%%ppp==0) 
+        ##readline("Press return for next page....")
         if (pd[[i]]$dim==1)
         { ul<-pd[[i]]$fit+pd[[i]]$se
           ll<-pd[[i]]$fit-pd[[i]]$se
@@ -2437,7 +2447,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     j<-1
     if (m>0) for (i in 1:m)
     { if (is.null(select)||i==select)
-      { if (interactive() && is.null(select) && pd[[i]]$dim<3 && i>1&&(i-1)%%ppp==0) readline("Press return for next page....")
+      {### if (interactive() && is.null(select) && pd[[i]]$dim<3 && i>1&&(i-1)%%ppp==0) readline("Press return for next page....")
         if (pd[[i]]$dim==1)
         { if (scale==0&&is.null(ylim)) 
           { if (partial.resids) ylimit <- range(pd[[i]]$p.resid,na.rm=TRUE) else ylimit <-range(pd[[i]]$fit)}
@@ -2478,8 +2488,8 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   { class(x) <- c("gam","glm","lm") # needed to get termplot to call model.frame.glm 
     if (is.null(select)) {
       attr(x,"para.only") <- TRUE
-      if (interactive() && m && i%%ppp==0) 
-      readline("Press return for next page....")
+    #  if (interactive() && m && i%%ppp==0) 
+    #  readline("Press return for next page....")
       termplot(x,se=se,rug=rug,col.se=1,col.term=1)
     } else { # figure out which plot is required
       if (select > m) { 
