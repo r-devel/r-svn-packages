@@ -2,7 +2,9 @@
 
 	* R/read.dta.R, man/write.dta.Rd: allow arrays in write.dta with
 	all dims but the first equal to one.
-	* R/arff.R: improvements by Martin C. Martin (PR#12574)
+	* R/arff.R: improvements by Martin C. Martin (PR#12574),
+	corrected.  Use "wb" to open file (and so preserve eol on Windows).
+	* man/{read,write}.arff.Rd: update URL
 
 2008-08-07 Brian Ripley <Brian.Ripley@R-project.org>
 

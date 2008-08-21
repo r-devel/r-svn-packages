@@ -96,13 +96,13 @@ function(file)
 }
 
 write.arff <-
-function(x, file, eol = "\n")
+function(x, file, eol = "\n", relation = deparse(substitute(x)))
 {
     ## See write.table().
     if(file == "")
         file <- stdout()
     else if(is.character(file)) {
-        file <- file(file, "wt")
+        file <- file(file, "wb")
         on.exit(close(file))
     }
     if(!inherits(file, "connection"))
@@ -119,12 +119,18 @@ function(x, file, eol = "\n")
         ifelse(is.na(s), s,
                sprintf("'%s'", gsub("(['\\])", "\\\\\\1", s)))
     }
+    spquote <- function(s) {
+        if (length(grep("^[[:alpha:]]", s)) == 0) s <- paste("X", s, sep="")
+        if (length(grep(" ", s))) s <- paste('"', s, '"', sep="")
+        s
+    }
 
-    ## Write header.  Alter names if necessary
-    text <- paste('@relation "', make.names(deparse(substitute(x))), '"', sep=)
+    ## Write header.  Quote, mangle if necessary.
+    text <- paste('@relation', spquote(make.names(relation)))
     writeLines(text, file, sep = eol)
     for (name in colnames(x)) {
-        text <- paste("@attribute", name)
+        ## Attribute names need to start with a letter, quoted if contain spaces.
+        text <- paste('@attribute', spquote(name))
         if (is.data.frame(x) && is.factor(x[[name]])) {
             lev <- squote(levels(x[[name]]))
             levels(x[[name]]) <- lev
