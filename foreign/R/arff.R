@@ -102,7 +102,7 @@ function(x, file, eol = "\n")
     if(file == "")
         file <- stdout()
     else if(is.character(file)) {
-        file <- file(file, 'w')
+        file <- file(file, "wt")
         on.exit(close(file))
     }
     if(!inherits(file, "connection"))
@@ -111,7 +111,7 @@ function(x, file, eol = "\n")
     if (!is.data.frame(x) && !is.matrix(x))
         x <- data.frame(x)
 
-    ## We need to quote ourselves, as write.table() escapes the quote
+    ## We need to quote for ourselves, as write.table() escapes the quote
     ## char but not the backslash.  Weka seems to prefer backslash
     ## escapes inside single quotes, so we provide that ...
     squote <- function(s) {
@@ -120,26 +120,26 @@ function(x, file, eol = "\n")
                sprintf("'%s'", gsub("(['\\])", "\\\\\\1", s)))
     }
 
-    ## Write header.
-    text <- paste('@relation', deparse(substitute(x)))
+    ## Write header.  Alter names if necessary
+    text <- paste('@relation "', make.names(deparse(substitute(x))), '"', sep=)
     writeLines(text, file, sep = eol)
-    for(name in names(x)) {
-        text <- paste('@attribute', name)
-        if(is.factor(x[[name]])) {
+    for (name in colnames(x)) {
+        text <- paste("@attribute", name)
+        if (is.data.frame(x) && is.factor(x[[name]])) {
             lev <- squote(levels(x[[name]]))
             levels(x[[name]]) <- lev
-            text <- paste(text, " {",
-                          paste(lev, collapse = ","), "}",
-                          sep = "")
-        } else if(is.character(x[[name]])) {
-            text <- paste(text, "string")
-            x[[name]] <- squote((x[[name]]))
-        } else if(inherits(x[[name]], "POSIXt")) {
-            text <- paste(text, "date \"yyyy-MM-dd hh:mm:ss\"")
-            x[[name]] <- squote(format(x[[name]]))
-        } else {
-            text <- paste(text, "numeric")
+            text <- paste(text, " {", paste(lev, collapse = ","), "}", sep = "")
         }
+        else if (is.character(x[,name])) {
+            text <- paste(text, "string")
+            x[,name] <- squote((x[,name]))
+        }
+        else if (inherits(x[,name], "POSIXt")) {
+            text <- paste(text, "date \"yyyy-MM-dd hh:mm:ss\"")
+            x[,name] <- squote(format(x[,name]))
+        }
+        else
+            text <- paste(text, "numeric")
         writeLines(text, file, sep = eol)
     }
 
@@ -173,7 +173,7 @@ function(x)
     x <- sub("hh", "%H", x)
     x <- sub("mm", "%M", x)
     x <- sub("ss", "%S", x)
-    ## Is there a POSIX format string for fractions of seconds?
+    ## Is there a POSIX format string for fractions of seconds? [No]
 
     x
 }

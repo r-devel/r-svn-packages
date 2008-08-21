@@ -1,3 +1,9 @@
+2008-08-21 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/read.dta.R, man/write.dta.Rd: allow arrays in write.dta with
+	all dims but the first equal to one.
+	* R/arff.R: improvements by Martin C. Martin (PR#12574)
+
 2008-08-07 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/read.ssd.R: allow long var names, PR#9631/2.

@@ -153,7 +153,10 @@ write.dta <-
     }
     leveltable <- lapply(dataframe,shortlevels)
 
-    if (any(sapply(dataframe, function(x) !is.null(dim(x)))))
+    if (any(sapply(dataframe, function(x) {
+        d <- dim(x)
+        !is.null(d) && d[1] < length(x)
+        })))
         stop("cannot handle multicolumn columns")
     invisible(.External(do_writeStata, file, dataframe, version, leveltable))
 }
