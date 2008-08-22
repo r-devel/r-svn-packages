@@ -10,16 +10,14 @@ loss of numerical stability during fitting.  To change the default
 choise of fitting method, see \code{\link{gam.method}}.
 }
 \usage{
-gam.control(fisher=TRUE,irls.reg=0.0,epsilon = 1e-06, maxit = 100,
+gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
             mgcv.tol=1e-7,mgcv.half=15, trace = FALSE,
             rank.tol=.Machine$double.eps^0.5,
             nlm=list(),optim=list(),newton=list(),
             outerPIsteps=1,idLinksBases=TRUE,scalePenalty=TRUE) 
 }
 \arguments{ 
-\item{fisher}{\code{TRUE} to use Fisher scoring, \code{FALSE} to use full Newton fitting 
-              (which are the same thing if a canonical link is used.). Useful for the rare cases where 
-             Fisher scoring fails, or is very slow to converge.}
+
 \item{irls.reg}{For most models this should be 0. The iteratively re-weighted least squares method
 by which GAMs are fitted  can fail to converge in some circumstances. For example, data with many zeroes can cause 
 problems in a model with a log link, because a mean of zero corresponds to an infinite range of linear predictor 

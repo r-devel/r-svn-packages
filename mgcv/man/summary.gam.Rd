@@ -7,7 +7,7 @@
 summaries from it. (See \code{\link{sink}} to divert output to a file.)
 }
 \usage{
-\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, alpha=0.5, ...)
+\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, alpha=0, ...)
 
 \method{print}{summary.gam}(x,digits = max(3, getOption("digits") - 3), 
                   signif.stars = getOption("show.signif.stars"),...)
@@ -25,7 +25,7 @@ summaries from it. (See \code{\link{sink}} to divert output to a file.)
 covariance matrix of the parameter estimators. If this is set to FALSE then
 the Bayesian covariance matrix of the parameters is used instead. See details. }
 
-\item{alpha}{ adjustment to reference distribution per estiamted smoothing parameter. 
+\item{alpha}{ adjustment to reference distribution per estimated smoothing parameter. 
 }
 
 \item{digits}{controls number of digits printed in output.}
@@ -72,9 +72,10 @@ EDF for the term. The statistic used is then
 (this can be calculated efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to a 
 chi-squared distribution with degrees of freedom given by the EDF for the term + \code{alpha} * (number of 
 estimated smoothing parameters), or \eqn{T}{T} is used as a component in an F ratio statistic if the 
-scale parameter has been estimated. The adjustment per smoothing parameter is based on simulation evidence, 
-using GCV or AIC type smoothing parameter selection. A smaller \code{alpha} seems to be appropriate when smoothing 
-parameters are selected by \code{\link{gamm}}. The non-integer rank truncated inverse is constructed to give an 
+scale parameter has been estimated. There is some simulation evidence that the adjustment per 
+smoothing parameter improvesp-values when using GCV or AIC type smoothing parameter selection (\code{alpha=0.5}
+seems to be best). The default \code{alpha=0} seems to be appropriate when smoothing 
+parameters are selected by REML/PQL. The non-integer rank truncated inverse is constructed to give an 
 approximation varying smoothly between the bounding integer rank approximations, while yielding test statistics with the 
 correct mean and variance. 
 

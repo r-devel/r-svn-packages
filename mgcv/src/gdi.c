@@ -194,7 +194,7 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
    sp is array of smoothing parameters (not logged).
    
 */
-{ int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim;
+{ int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim,max_rSc;
   double *d,*d0,*U,*U0,*rDiUtrSk,*DUSUD,*p1,xx;
   d0 = d = (double *)calloc((size_t)*q,sizeof(double));
   /* eigen-decompose S (overwriting it) */
@@ -208,6 +208,8 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   null_space_dim = i;
   /* U contains eigenvectors of S, treat as q by rank, from here */
   
+  max_rSc=rSncol[0];for (i=1;i<*M;i++) if (max_rSc<rSncol[i]) max_rSc = rSncol[i]; 
+
   for (*det=0,i=0;i<rank;i++) *det += log(d[i]); /* log|S|_+ */
 
   if (*deriv <=0) {free(d0);free(U0);return(null_space_dim);} /* evaluation only */
@@ -221,7 +223,7 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   }  /* `d' used as working storage from here */
 
   /* storage for D^{-.5}U_+'S_k^{.5}... */
-  rDiUtrSk = (double *)calloc((size_t)(rank * rank),sizeof(double)); 
+  rDiUtrSk = (double *)calloc((size_t)(rank * max_rSc),sizeof(double)); 
   
   if (*deriv>1) { /* Storage for  D^{-.5}U_+'S_k^{.5} U_+ D^{-.5} */
     DUSUD = (double *) calloc((size_t)(rank * rank * *M) ,sizeof(double));
@@ -230,20 +232,24 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   for (rSoff=0,i=0;i<*M;i++) { /* loop for first derivatives, and second derivative components */
      bt=1;ct=0;mgcv_mmult(rDiUtrSk,U,rS+rSoff * *q,&bt,&ct,&rank,rSncol+i,q);
      rSoff += rSncol[i];
-     det1[i] = sp[i]*diagABt(d,rDiUtrSk,rDiUtrSk,&rank,rSncol+i);
+     det1[i] = sp[i]*diagABt(d0,rDiUtrSk,rDiUtrSk,&rank,rSncol+i);
      if (*deriv>1) { 
        bt=0;ct=1;mgcv_mmult(DUSUD + i * rank * rank,rDiUtrSk,rDiUtrSk,&bt,&ct,&rank,&rank,rSncol+i);
      }
   } /* gradient vector for log|S| complete */
   
   /* Now do the Hessian of log|S| */
-  if (*deriv>1) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+  if (*deriv>1) 
+  for (m=0;m < *M;m++) 
+  for (k=m;k < *M;k++){
     km=k * *M + m;mk=m * *M + k;
-    det2[km] = -sp[m]*sp[k]*diagABt(d,DUSUD+ m * rank * rank,DUSUD + k * rank * rank ,&rank,&rank);  
+    det2[km] = -sp[m]*sp[k]*diagABt(d0,DUSUD+ m * rank * rank,DUSUD + k * rank * rank ,&rank,&rank);  
     if (k==m) det2[km] += det1[k]; else det2[mk] = det2[km];
   }
   
-  free(d0);free(U0);free(rDiUtrSk);
+  free(d0);
+  free(U0);
+  free(rDiUtrSk);
   if (*deriv > 1) free(DUSUD);
   return(null_space_dim);
 }

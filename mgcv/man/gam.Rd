@@ -13,7 +13,7 @@ available as model terms, as are linear functionals of such smooths; confidence/
 available for any quantity predicted using a fitted model; \code{gam} is extendable: users can add smooths. 
 
  Smooth terms are represented using penalized regression splines (or similar smoothers)
-with smoothing parameters selected by GCV/UBRE/AIC or by regression splines with
+with smoothing parameters selected by GCV/UBRE/AIC/REML or by regression splines with
 fixed degrees of freedom (mixtures of the two are permitted). Multi-dimensional smooths are 
 available using penalized thin plate regression splines (isotropic) or tensor product splines 
 (when an isotropic smooth is inappropriate). For an overview of the smooths available see \code{\link{smooth.terms}}. 
@@ -186,9 +186,13 @@ Generalized Cross Validation (GCV) criterion
 where \eqn{D}{D} is the deviance, \eqn{n}{n} the number of data, \eqn{s}{s}
 the scale parameter and 
 \eqn{DoF}{DoF} the effective degrees of freedom of the model. Notice that UBRE is effectively
-just AIC rescaled, but is only used when \eqn{s}{s} is known. An alternative is GACV
-(again see \code{\link{gam.method}}). Smoothing parameters are chosen to 
-minimize the GCV or UBRE/AIC score for the model, and the main computational challenge solved 
+just AIC rescaled, but is only used when \eqn{s}{s} is known. 
+
+Alternatives are GACV (again see \code{\link{gam.method}}), or a Laplace approximation to REML, there
+is some evidence that the latter may actually be the most effective choise. 
+
+Smoothing parameters are chosen to 
+minimize the GCV, UBRE/AIC, GACV or REML scores for the model, and the main computational challenge solved 
 by the \code{mgcv} package is to do this efficiently and reliably. Various
 alternative numerical methods are provided: see \code{\link{gam.method}}.
 
@@ -206,7 +210,7 @@ Smoothing parameter selection is integrated in one of two ways. (i)
 weighted least squares problem is solved, and the smoothing parameters of that problem can 
 estimated by GCV or UBRE. Eventually, in most cases, both model parameter estimates and smoothing 
 parameter estimates converge. (ii) Alternatively the P-IRLS scheme is iterated to
-convergence for each trial set of smoothing parameters, and GCV or UBRE scores
+convergence for each trial set of smoothing parameters, and GCV, UBRE or REML scores
 are only evaluated on convergence - optimization is then `outer' to the P-IRLS
 loop: in this case the P-IRLS iteration has to be differentiated, to
 facilitate optimization, and \code{\link{gam.fit3}} is used in place of

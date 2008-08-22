@@ -801,7 +801,8 @@ formula.gam <- function(x, ...)
 
 gam.method.description <- function(method,am=TRUE)
 ## produces short fitting method description string
-{ if (method$reml) {
+{ 
+  if (method$reml) {
     if (method$outer=="newton") return("REML based outer iter. - newton, exact hessian.")
     if (method$outer=="bfgs") return("REML based outer iter. - bfgs exact derivs.") 
   }
@@ -820,13 +821,14 @@ gam.method.description <- function(method,am=TRUE)
   } 
 }
 
-gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,family=NULL)
+gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,fisher=TRUE,family=NULL)
 # Function for returning fit method control list for gam.
 # gam controls the type of iteration to use for GAMs.
 # outer controls the optimization method to use when using outer
 # looping with gams.
 # gcv determines the flavour of GCV score for outer iteration
-{ if (gam=="perf.magic") {
+{ if (!is.logical(fisher)) stop("`fisher' must be TRUE or FALSE.")
+  if (gam=="perf.magic") {
     warning("\"perf.magic\" is deprecated: reset to \"perf\"")
     gam="perf"
   }
@@ -848,7 +850,7 @@ gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,fami
   
 #  if (!is.null(family)&&substr(family$family,1,17)=="Negative Binomial" 
 #       &&gam!="perf") gam <- "perf"  
-  list(gam=gam,outer=outer,gcv=gcv,reml=reml)
+  list(gam=gam,outer=outer,gcv=gcv,reml=reml,fisher=fisher)
 }
 
 gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
@@ -1231,7 +1233,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (is.null(G$offset)) G$offset<-rep(0,G$n)
      
-    method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
+    method <- gam.method(method$gam,method$outer,method$gcv,method$reml,method$fisher,family) # checking it's ok
 
     if (scale==0) 
     { if (family$family[1]=="binomial"||family$family[1]=="poisson") scale<-1 #ubre
@@ -1251,6 +1253,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   if (!fit) return(G)
   
+  control$fisher <- method$fisher
   object <- estimate.gam(G,method,control,in.out,gamma,...)
   
 ##  object$full.formula<-as.formula(G$full.formula)
@@ -1374,7 +1377,7 @@ print.gam<-function (x,...)
   invisible(x)
 }
 
-gam.control <- function (fisher=TRUE,irls.reg=0.0,epsilon = 1e-06, maxit = 100,
+gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=1,
@@ -1388,7 +1391,7 @@ gam.control <- function (fisher=TRUE,irls.reg=0.0,epsilon = 1e-06, maxit = 100,
 # rank.tol is the tolerance to use for rank determination
 # outerPIsteps is the number of performance iteration steps used to intialize
 #                         outer iteration
-{   if (!is.logical(fisher)) stop("`fisher' must be TRUE or FALSE.")
+{  
     if (!is.numeric(irls.reg) || irls.reg <0.0) stop("IRLS regularizing parameter must be a non-negative number.")
     if (!is.numeric(epsilon) || epsilon <= 0) 
         stop("value of epsilon must be > 0")
@@ -1428,7 +1431,7 @@ gam.control <- function (fisher=TRUE,irls.reg=0.0,epsilon = 1e-06, maxit = 100,
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
 
-    list(fisher=fisher,irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
+    list(irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
          optim=optim,newton=newton,outerPIsteps=outerPIsteps,
@@ -1511,7 +1514,12 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 # fixedSteps < its default causes at most fixedSteps iterations to be taken,
 # without warning if convergence has not been achieved. This is useful for
 # obtaining starting values for outer iteration.
-{
+{   fisher <- control$fisher
+    if (!fisher) { ## Newton needs extra derivatives...
+      family <- fix.family.link(family)
+      family <- fix.family.var(family)
+      if (family$link==family$canonical) fisher <- TRUE
+    }
     intercept<-G$intercept
     conv <- FALSE
     n <- nobs <- NROW(G$y) ## n just there to keep codetools happy
@@ -1621,12 +1629,27 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
             break
         }
    
-        z<-G$y <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
-        w<- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
+        mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
+        weg <- weights[good];etag <- eta[good]
+        var.mug<-variance(mug)
+
+        if (fisher) { ## Conventional Fisher scoring
+              G$y <- z <- (eta - offset)[good] + (yg - mug)/mevg
+              w <- sqrt((weg * mevg^2)/var.mug)
+        } else { ## full Newton
+              c <- yg - mug
+              e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
+              G$y <- z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
+              w <- sqrt(weg*e*mevg/var.mug)
+        }
+        
+
+        ##z<-G$y <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
+        ##w<- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
         
         G$w<-w
-        G$X<-X[good,]  # truncated design matrix       
-		if (dim(X)[2]==1) dim(G$X)<-c(length(X[good,]),1) # otherwise dim(G$X)==NULL !!
+        G$X<-X[good,,drop=FALSE]  # truncated design matrix       
+        ## if (dim(X)[2]==1) dim(G$X)<-c(length(X[good,]),1) # otherwise dim(G$X)==NULL !!
       
         # must set G$sig2 to scale parameter or -1 here....
         G$sig2<-scale
@@ -2226,7 +2249,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   if ((pages==0&&prod(par("mfcol"))<n.plots&&dev.interactive())||
        pages>1&&dev.interactive()) ask <- TRUE else ask <- FALSE 
 
-  if (pages==0&&is.null(select)) par(mfrow=par("mfrow")) ## new display
+  ##if (pages==0&&is.null(select)) par(mfrow=par("mfrow")) ## new display
 
   if (ask) {
         oask <- devAskNewPage(TRUE)
@@ -2593,7 +2616,7 @@ pinvXVX <- function(X,V,rank=NULL) {
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=.5, ...) 
+summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...) 
 # summary method for gam object - provides approximate p values for terms + other diagnostics
 # Improved by Henric Nilsson
 { pinv<-function(V,M,rank.tol=1e-6)

@@ -17,6 +17,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
 {   fisher <- control$fisher
+    if (family$link==family$canonical) fisher <- TRUE ## Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
@@ -900,6 +901,14 @@ fix.family.link<-function(fam)
 # d3link...
 # All d2link and d3link functions have been checked numerically. 
 { if (!inherits(fam,"family")) stop("fam not a family object")
+  if (is.null(fam$canonical)) { ## note the canonical link - saves effort in full Newton
+    if (fam$family=="gaussian") fam$canonical <- "identity" else
+    if (fam$family=="poisson"||fam$family=="quasipoisson") fam$canonical <- "log" else
+    if (fam$family=="binomial"||fam$family=="quasibinomial") fam$canonical <- "logit" else
+    if (fam$family=="Gamma") fam$canonical <- "inverse" else
+    if (fam$family=="inverse.gaussian") fam$canonical <- "1/mu^2" else
+    fam$canonical <- "none"
+  }
   if (!is.null(fam$d2link)&&!is.null(fam$d3link)&&!is.null(fam$d4link)) return(fam) 
   link <- fam$link
   if (length(link)>1) if (fam$family=="quasi") # then it's a power link
@@ -1175,7 +1184,7 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
     structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var,d3var=d3var, dev.resids = dev.resids,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
-        validmu = validmu, valideta = stats$valideta,getTheta = getTheta), class = "family")
+        validmu = validmu, valideta = stats$valideta,getTheta = getTheta,canonical="log"), class = "family")
 }
 
 
@@ -1318,7 +1327,7 @@ Tweedie <- function(p=1,link=power(0)) {
     structure(list(family = paste("Tweedie(",p,")",sep=""), variance = variance, 
               dev.resids = dev.resids,aic = aic, link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv,
         mu.eta = stats$mu.eta, initialize = initialize, validmu = validmu,
-        valideta = stats$valideta,dvar=dvar,d2var=d2var,d3var=d3var,ls=ls), class = "family")
+        valideta = stats$valideta,dvar=dvar,d2var=d2var,d3var=d3var,ls=ls,canonical="none"), class = "family")
 
 
 }

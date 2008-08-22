@@ -8,7 +8,7 @@ estimation criterion for a gam. It is used to set argument \code{method} of \cod
 }
 \usage{
 gam.method(gam="outer",outer="newton",gcv="deviance",reml=FALSE,
-           family=NULL)
+           fisher=TRUE,family=NULL)
 }
 \arguments{ 
 
@@ -42,9 +42,16 @@ combinations (see Wood, 2008).
 }
 
 \item{reml}{Should REML be used as the smoothing parameter selector, rather 
-than GCV/AIC/URE? The REML criteria used is based on a Laplace 
-approximation, with the expected Hessian of the log-likelihood used in place 
-of the Hessian, and a Pearson estimate used for the scale parameter.}
+than GCV/AIC/UBRE? The REML criteria used is based on a Laplace 
+approximation. If \code{fisher==TRUE} then the expected Hessian of the log-likelihood
+is used in place of the Hessian for non-canonical links. 
+A Pearson estimate is used for the scale parameter. REML is not available
+with performance iteration. There is some evidence that REML is actually the 
+best choise in most cases.}
+
+\item{fisher}{\code{TRUE} to use Fisher scoring, \code{FALSE} to use full Newton fitting 
+              (which are the same thing if a canonical link is used.). Useful for the 
+             rare cases where Fisher scoring fails, or is very slow to converge. }
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied
 method argument. In this circumstance the family argument is passed, to check
@@ -52,7 +59,7 @@ that it works with the specified method. }
 }
 
 \details{ The default methods used by \code{gam} are based on Newton type optimization of
-GCV/UBRE/AIC scores with respect to smoothing parameters, as described in Wood (2004) 
+GCV/UBRE/AIC/REML scores with respect to smoothing parameters, as described in Wood (2004) 
 and Wood (2008) for the additive and generalized additive model cases respectively. 
 The smoothing criteria (GCV etc) are evaluated for the fitted model itself (rather than some working 
 approximate model). Since this involves optimizing the criteria `outside' the PIRLS or LS method used 

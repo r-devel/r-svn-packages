@@ -3,6 +3,10 @@
 
 1.4-2
 
+* s and te check that `id' is a single element.
+
+* plot.gam modified so that page change behaviour is like plot.glm 
+
 * Tweedie family added.
 
 ** Option added to do full Newton fitting in place of Fisher scoring:

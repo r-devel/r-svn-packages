@@ -2,7 +2,7 @@
 \alias{mgcv-package}
 \docType{package}
 \title{
-GAMs with GCV smoothness estimation and GAMMs by REML/PQL
+GAMs with GCV/AIC/REML smoothness estimation and GAMMs by REML/PQL
 }
 \description{
 \code{mgcv} provides functions for generalized additive modelling  and
@@ -31,7 +31,7 @@ within a \code{gam} model formula, isotropic smooths of any number of predictors
 predictors can be specified using \code{\link{te}} terms. \code{\link{smooth.terms}} provides an 
 overview of the built in smooth classes. Estimation is by
 penalized likelihood or quasi-likelihood maximization, with smoothness
-selection by GCV or gAIC/ UBRE. See \code{\link{gam}}, \code{\link{gam.models}}, 
+selection by GCV, gAIC/ UBRE or REML. See \code{\link{gam}}, \code{\link{gam.models}}, 
 \code{\link{linear.functional.terms}} and \code{\link{gam.selection}} for some discussion of model specification and
 selection. For detailed control of fitting see \code{\link{gam.convergence}},
 \code{\link{gam.method}} and \code{\link{gam.control}}. For checking and

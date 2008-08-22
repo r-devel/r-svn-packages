@@ -93,6 +93,14 @@ if a model like:
   \code{gam} automatically generates side conditions to make this model
   identifiable. You can also estimate `overlapping' models like:\cr
   \code{y ~ s(x,z) + s(z,v)}.  
+
+  Note that optimum interpretability of such models is obtained by ensuring that 
+  lower order terms are strictly nested withing higher order ones. This is most easily achieved by
+  employing tensor product smooths for multidimensional terms, and ensuring that lower order terms are
+  using the same (marginal) bases as higher order ones. For example:\cr
+  \code{y ~ s(x,bs="cr",k=5) + s(z,bs="cr",k=5) + te(x,z)}\cr
+  would ensure strict nesting of the main effects within the interaction (given the \code{\link{te}} default 
+  \code{bs} and \code{k} arguments), since the main effects employ the same bases used as marginals for the \code{te} term.
 }
 
 \section{`by' variables}{
