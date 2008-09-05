@@ -306,8 +306,8 @@ plot.boot <- function(x,index=1, t0=NULL, t=NULL, jack=FALSE,
         if (is.null(t0)) t0 <- boot.out$t0[index]
     }
     t <- t[is.finite(t)]
-    if (const(t, min(1e-8,mean(t)/1e6))) {
-        print(paste("All values of t* are equal to ", mean(t)))
+    if (const(t, min(1e-8,mean(t, na.rm=TRUE)/1e6))) {
+        print(paste("All values of t* are equal to ", mean(t, na.rm=TRUE)))
         return(invisible(boot.out))
     }
     if (is.null(nclass)) nclass <- min(max(ceiling(length(t)/25),10),100)
@@ -875,8 +875,8 @@ boot.ci <- function(boot.out,conf=0.95,type="all",
             if (is.null(var.t)) var.t <- boot.out$t[,index[2]]
         }
     }
-    if (const(t, min(1e-8,mean(t)/1e6))) {
-        print(paste("All values of t are equal to ", mean(t),
+    if (const(t, min(1e-8,mean(t, na.rm=TRUE)/1e6))) {
+        print(paste("All values of t are equal to ", mean(t, na.rm=TRUE),
                     "\n Cannot calculate confidence intervals"))
         return(NULL)
     }
@@ -2091,7 +2091,7 @@ imp.weights <- function( boot.out, def=TRUE, q=NULL )
 
 const <- function(w, eps=1e-8) {
 # Are all of the values of w equal to within the tolerance eps.
-	all(abs(w-mean(w)) < eps) }
+	all(abs(w-mean(w, na.rm=TRUE)) < eps) }
 
 imp.moments <- function(boot.out=NULL, index=1, t=boot.out$t[,index],
 			w=NULL, def=TRUE, q=NULL )
