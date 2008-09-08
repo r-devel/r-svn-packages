@@ -699,7 +699,9 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   QNsteps <- floor(length(S)/2) ## how often to Newton should depend on cost...
 
-  if (scoreType=="GACV") {
+  if (scoreType=="REML") {
+     score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+  } else if (scoreType=="GACV") {
     old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
   } else if (scoreType=="UBRE"){
     old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
@@ -757,8 +759,9 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 #       ptm <- proc.time()-ptm
 #       cat("deriv= ",deriv,"  ",ptm,"\n")
       
- 
-      if (scoreType=="GACV") {
+      if (scoreType=="REML") {
+          score1 <- b1$REML1
+      } else if (scoreType=="GACV") {
           score1 <- b1$GACV
       } else if (scoreType=="UBRE") {
           score1 <- b1$UBRE
@@ -778,7 +781,9 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
         mustart <- b$fitted.values
         old.score <- score;lsp <- lsp1
-        if (scoreType=="GACV") {
+        if (scoreType=="REML") {
+           score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+        } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
         } else if (scoreType=="UBRE") {
           score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
@@ -799,7 +804,9 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
         mustart <- b$fitted.values
         old.score <- score;lsp <- lsp1
         old.grad <- grad
-        if (scoreType=="GACV") {
+        if (scoreType=="REML") {
+          score <- b$REML;grad <- b$REML1 
+        } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1
         } else if (scoreType=="UBRE") {
           score <- b$UBRE;grad <- b$UBRE1
