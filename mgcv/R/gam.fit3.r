@@ -466,33 +466,54 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
             weights = rep(1, length(y)), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, length(y)), family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...)
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,...)
 ## FD checking of derivatives: basically a debugging routine
-{  b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,off=off, H=H,
-      offset = offset,family = family,weights=weights,deriv=2,
+{  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
+   b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,off=off, H=H,
+      offset = offset,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType="REML",...)
-   REML <- b$REML
-   REML1 <- b$REML1
-   fdREML <- dREML <- b$REML1
-   fdREML1 <- dREML1 <- b$REML2
-   eps <- 1e-7
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+
+   if (scoreType=="REML") {
+     score0 <- b$REML;grad0 <- b$REML1; if (deriv==2) hess <- b$REML2 
+   } else if (scoreType=="GACV") {
+     score0 <- b$GACV;grad0 <- b$GACV1;if (deriv==2) hess <- b$GACV2 
+   } else if (scoreType=="UBRE"){
+     score0 <- b$UBRE;grad0 <- b$UBRE1;if (deriv==2) hess <- b$UBRE2 
+   } else { ## default to deviance based GCV
+     score0 <- b$GCV;grad0 <- b$GCV1;if (deriv==2) hess <- b$GCV2
+   }
+  
+   fd.grad <- grad0
+   if (deriv==2) fd.hess <- hess
    for (i in 1:length(sp)) {
      sp1 <- sp;sp1[i] <- sp[i]+eps
      b<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,off=off, H=H,
-      offset = offset,family = family,weights=weights,deriv=2,
+      offset = offset,family = family,weights=weights,deriv=deriv-1,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType="REML",...)
-    
-     fdREML1[,i] <- (b$REML1-REML1)/eps
-     fdREML[i] <- (b$REML-REML)/eps
-   }
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+      
+      if (scoreType=="REML") {
+        score <- b$REML;if (deriv==2) grad <- b$REML1;
+      } else if (scoreType=="GACV") {
+        score <- b$GACV;if (deriv==2) grad <- b$GACV1;
+      } else if (scoreType=="UBRE"){
+        score <- b$UBRE;if (deriv==2) grad <- b$UBRE1; 
+      } else { ## default to deviance based GCV
+        score <- b$GCV;if (deriv==2) grad <- b$GCV1;
+      }
 
-   cat("dREML  ");print(dREML)
-   cat("fdREML ");print(fdREML)
+      fd.grad[i] <- (score-score0)/eps
+      if (deriv==2) fd.hess[,i] <- (grad-grad0)/eps
+   }
    
-   cat("dREML1  ");print(dREML1)
-   cat("fdREML1 ");print(fdREML1)
+   cat("grad    ");print(grad0)
+   cat("fd.grad ");print(fd.grad)
+   if (deriv==2) {
+     cat("hess\n");print(hess)
+     cat("fd.hess\n");print(fd.hess)
+   }
+   NULL
 }
 
 
@@ -518,12 +539,18 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
 
-#  scoreType <- "REML"   ##### NOTE DEBUG ONLY  
-#  deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
-#     offset = offset,family = family,weights=weights,deriv=2,
-#     control=control,gamma=gamma,scale=scale,
-#     printWarn=FALSE,use.svd=use.svd,mustart=mustart,...)
-
+  ## code designed to be turned on during debugging...
+  check.derivs <- FALSE 
+  if (check.derivs) {
+     deriv <- 2
+     eps <- 1e-7
+     deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
+         offset = offset,family = family,weights=weights,deriv=deriv,
+         control=control,gamma=gamma,scale=scale,
+         printWarn=FALSE,use.svd=use.svd,mustart=mustart,
+         scoreType=scoreType,eps=eps,...)
+  }
+  ## ... end of debugging code 
 
 
   ## initial fit
