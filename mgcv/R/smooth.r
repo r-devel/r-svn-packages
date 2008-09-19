@@ -897,6 +897,13 @@ mfil <- function(M,i,j,m) {
 
 
 D2 <- function(ni=5,nj=5) {
+## NOTE: BUGGY ON GRIDS OF < 5 by 5 --- total penalty has
+## more than 3 zero eigen-vales (5 by 5 and above is fine)
+## Actually issue here is that it is dumb to only define 
+## penalty on inner grid where every term can be defined 
+## It would be better to define each penalty on the largest grid 
+## possible. Otherwise corner terms behave very strangely, since 
+## they are involved only in mixed partials.
 ## Function to obtain second difference matrices for
 ## coefficients notionally on a regular ni by nj grid
 ## returns second order differences in each direction +
@@ -939,6 +946,132 @@ D2 <- function(ni=5,nj=5) {
 
 smooth.construct.ad.smooth.spec<-function(object,data,knots)
 ## an adaptive p-spline constructor method function
+## This is the simplifies and more efficient version...
+## NOTE: only 2-D still needs work (on D2 and consequent changes)
+{ bs <- object$xt$bs
+  if (length(bs)>1) bs <- bs[1]
+  if (is.null(bs)) { ## use default bases  
+    bs <- "ps"
+  } else { # bases supplied, need to sanity check
+    if (!bs%in%c("cc","cr","ps","cp")) bs[1] <- "ps"
+  }
+  if (bs == "cc"||bs=="cp") bsp <- "cp" else bsp <- "ps" ## if basis is cyclic, then so should penalty
+  if (object$dim> 2 )  stop("the adaptive smooth class is limited to 1 or 2 covariates.")
+  else if (object$dim==1) { ## following is 1D case...
+    if (object$bs.dim < 0) object$bs.dim <- 40 ## default
+    if (is.na(object$p.order[1])) object$p.order[1] <- 5
+    pobject <- object
+    pobject$p.order <- c(2,2)
+    class(pobject) <- paste(bs[1],".smooth.spec",sep="")
+    ## get basic spline object...
+    if (is.null(knots)&&bs[1]%in%c("cr","cc")) { ## must create knots
+      x <- data[[object$term]]
+      knots <- list(seq(min(x),max(x),length=object$bs.dim))
+      names(knots) <- object$term
+    } ## end of knot creation
+    pspl <- smooth.construct(pobject,data,knots)
+    nk <- ncol(pspl$X)
+    k <- object$p.order[1]   ## penalty basis size 
+    if (k>=nk-2) stop("penalty basis too large for smoothing basis")
+    if (k <= 0) { ## no penalty 
+      pspl$fixed <- TRUE
+      pspl$S <- NULL
+    } else if (k>=2) { ## penalty basis needed ...
+      x <- 1:(nk-2)/nk;m=2
+      ## All elements of V must be >=0 for all S[[l]] to be +ve semi-definite 
+      if (k==2) V <- cbind(rep(1,nk-2),x) else if (k==3) {
+         m <- 1
+         ps2 <- smooth.construct(s(x,k=k,bs=bsp,m=m,fx=TRUE),data=data.frame(x=x),knots=NULL)
+         V <- ps2$X
+      } else { ## general penalty basis construction...
+        ps2 <- smooth.construct(s(x,k=k,bs=bsp,m=m,fx=TRUE),data=data.frame(x=x),knots=NULL)
+        V <- ps2$X
+      }
+      Db<-diff(diff(diag(nk))) ## base difference matrix
+      D <- list()
+     # for (i in 1:k) D[[i]] <- as.numeric(V[,i])*Db
+     # L <- matrix(0,k*(k+1)/2,k)
+      S <- list();l<-0
+      for (i in 1:k) {
+        S[[i]] <- t(Db)%*%(as.numeric(V[,i])*Db)
+        pspl$rank[i] <- sum(rowSums(abs(S[[i]]))>0)
+      }
+      pspl$S <- S
+    }
+  } else if (object$dim==2){ ## 2D case 
+    ## first task is to obtain a tensor product basis
+    object$bs.dim[object$bs.dim<0] <- 15 ## default
+    k <- object$bs.dim;if (length(k)==1) k <- c(k[1],k[1])
+    tec <- paste("te(",object$term[1],",",object$term[2],",bs=bs,k=k,m=2)",sep="")
+    pobject <- eval(parse(text=tec)) ## tensor smooth specification object
+    pobject$np <- FALSE ## do not re-parameterize
+    if (is.null(knots)&&bs[1]%in%c("cr","cc")) { ## create suitable knots 
+      for (i in 1:2) {
+        x <- data[[object$term[i]]]
+        knots <- list(seq(min(x),max(x),length=k[i]))
+        names(knots)[i] <- object$term[i]
+      } 
+    } ## finished knots
+    pspl <- smooth.construct(pobject,data,knots) ## create basis
+    ## now need to create the adaptive penalties...
+    ## First the penalty basis...
+    kp <- object$p.order
+   
+    if (length(kp)!=2) kp <- c(kp[1],kp[1])
+    kp[is.na(kp)] <- 3 ## default
+   
+    kp.tot <- prod(kp);k.tot <- (k[1]-2)*(k[2]-2) ## rows of Difference matrices   
+    if (kp.tot > k.tot) stop("penalty basis too large for smoothing basis") 
+    
+    if (kp.tot <= 0) { ## no penalty 
+      pspl$fixed <- TRUE
+      pspl$S <- NULL
+    } else { ## penalized, but how?
+      Db <- D2(ni=k[1],nj=k[2]) ## get the difference-on-grid matrices
+      pspl$S <- list() ## delete original S list
+      if (kp.tot==1) { ## return a single fixed penalty
+        pspl$S[[1]] <- t(Db[[1]])%*%Db[[1]] + t(Db[[2]])%*%Db[[2]] 
+                                          + t(Db[[3]])%*%Db[[3]]
+
+      } else { ## adaptive 
+        if (kp.tot==3) { ## planar adaptiveness
+          V <- cbind(rep(1,k.tot),Db[[4]],Db[[5]])
+        } else { ## spline adaptive penalty...
+          ## first check sanity of basis dimension request
+          ok <- TRUE
+          if (sum(kp<2)) ok <- FALSE
+         
+          if (!ok) stop("penalty basis too small")
+          m <- min(min(kp)-2,1); m<-c(m,m)
+          ps2 <- smooth.construct(te(i,j,bs=bsp,k=kp,fx=TRUE,m=m,np=FALSE),
+                                data=data.frame(i=Db$ri,j=Db$ci),knots=NULL) 
+          V <- ps2$X
+        
+        } ## spline adaptive basis finished
+        ## build penalty list
+      
+        S <- list()
+        for (i in 1:kp.tot) {
+          S[[i]] <- t(Db$Drr)%*%(as.numeric(V[,i])*Db$Drr) + t(Db$Dcc)%*%(as.numeric(V[,i])*Db$Dcc)
+                    + t(Db$Dcr)%*%(as.numeric(V[,i])*Db$Dcr)
+          ev <- eigen(S[[i]],symmetric=TRUE,only.values=TRUE)$values
+          pspl$rank[i] <- sum(ev>max(ev)*.Machine$double.eps*10)
+        }
+
+        pspl$S <- S
+      } ## adaptive penalty finished
+    } ## penalized case finished
+  } 
+  pspl$pen.smooth <- ps2 ## the penalty smooth object
+  pspl
+}
+
+
+
+smooth.construct.ad1.smooth.spec<-function(object,data,knots)
+## an adaptive p-spline constructor method function
+## This version is the original 1.4 release --- it's way over-complicated and
+## a much simpler scheme is as good, and much more efficient...
 { bs <- object$xt$bs
   if (is.null(bs)) { ## use default bases  
     bs <- c("ps","ps")

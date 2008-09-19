@@ -3,15 +3,24 @@
 
 1.4-2
 
+* ad class greatly simplified and 2D penalty improved. Much faster as a 
+  result.
+
 * s and te check that `id' is a single element.
 
 * plot.gam modified so that page change behaviour is like plot.glm 
 
 * Tweedie family added.
 
-** Option added to do full Newton fitting in place of Fisher scoring:
-   useful for rare cases in which PIRLS does not coverge with Fisher 
-   scoring.
+** To further enhance stability and efficiency, Fisher scoring is now 
+   only used for canonical links, when it corresponds to full Newton. 
+   With non-canonical links PIRLS is based on full Newton. In addition all 
+   computations are now with derivative ratios to guard against 
+   overflow.
+
+** Derivative iteration as in Wood (2008) has been replaced by a direct
+   implicit function method (which costs no more given Newton based 
+   PIRLS).
 
 ** Efficient and general REML smoothing selection implemented.
 
@@ -20,7 +29,8 @@
 * p-values tweaked again, for slightly better performance with smooths of 
 several variables. Still not quite right.
 
-* record of intial sp's is now carried in `smooth' objects in filed `sp'.
+* record of intial sp's is now carried in `smooth' objects in field 
+`sp'.
 
 * ?linear.functional.term error fix.
 

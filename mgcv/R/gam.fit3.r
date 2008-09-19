@@ -16,8 +16,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{   fisher <- control$fisher
-    if (family$link==family$canonical) fisher <- TRUE ## Newton = Fisher, but Fisher cheaper!
+{   if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE ## Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
@@ -311,6 +310,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            V3 <- family$d3var(mug)
          }
 
+         if (TRUE) { ### TEST CODE for derivative ratio based versions of code... 
+           g2 <- g2/g1;g3 <- g3/g1;g4 <- g4/g1
+           V1 <- V1/V;V2 <- V2/V;V3 <- V3/V
+         }
+
          P1 <- D1 <- array(0,nSp);P2 <- D2 <- matrix(0,nSp,nSp) # for derivs of deviance/ Pearson
          trA1 <- array(0,nSp);trA2 <- matrix(0,nSp,nSp) # for derivs of tr(A)
          rV=matrix(0,ncol(x),ncol(x));
@@ -469,6 +473,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,...)
 ## FD checking of derivatives: basically a debugging routine
 {  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
+   if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,off=off, H=H,
       offset = offset,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
@@ -489,7 +494,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
    for (i in 1:length(sp)) {
      sp1 <- sp;sp1[i] <- sp[i]+eps
      b<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,off=off, H=H,
-      offset = offset,family = family,weights=weights,deriv=deriv-1,
+      offset = offset,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
       
@@ -510,6 +515,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
    cat("grad    ");print(grad0)
    cat("fd.grad ");print(fd.grad)
    if (deriv==2) {
+     fd.hess <- .5*(fd.hess + t(fd.hess))
      cat("hess\n");print(hess)
      cat("fd.hess\n");print(fd.hess)
    }
@@ -543,7 +549,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   check.derivs <- FALSE 
   if (check.derivs) {
      deriv <- 2
-     eps <- 1e-7
+     eps <- 1e-4
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
          offset = offset,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
