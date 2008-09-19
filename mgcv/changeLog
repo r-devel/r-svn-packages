@@ -4,7 +4,7 @@
 1.4-2
 
 * ad class greatly simplified and 2D penalty improved. Much faster as a 
-  result.
+  result, and 2D adaptive actually quite good.
 
 * s and te check that `id' is a single element.
 

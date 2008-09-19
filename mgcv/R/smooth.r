@@ -915,23 +915,38 @@ D2 <- function(ni=5,nj=5) {
   rmt <- rep(1:ni,nj) ## the row index
   cmt <- rep(1:nj,rep(ni,nj)) ## the column index
 
-  ci <- Ind[2:(ni-1),2:(nj-1)] ## column index
+  ci <- Ind[2:(ni-1),1:nj] ## column index
   n.ci <- length(ci)
-  Dcr <- Dcc <- Drr <- matrix(0,n.ci,ni*nj)  ## difference matrices
-  rind <- rmt[ci]                              ## index to coef array row
-  cind <- cmt[ci]                              ## index to coef array column
+  Drr <- matrix(0,n.ci,ni*nj)  ## difference matrices
+  rr.ri <- rmt[ci]                              ## index to coef array row
+  rr.ci <- cmt[ci]                              ## index to coef array column
  
-  Dcc <- Drr <- mfil(Drr,1:n.ci,ci,-2) ## central coefficient
-  ci <- Ind[1:(ni-2),2:(nj-1)] 
+  Drr <- mfil(Drr,1:n.ci,ci,-2) ## central coefficient
+  ci <- Ind[1:(ni-2),1:nj] 
   Drr <- mfil(Drr,1:n.ci,ci,1) ## back coefficient
-  ci <- Ind[3:ni,2:(nj-1)]
+  ci <- Ind[3:ni,1:nj]
   Drr <- mfil(Drr,1:n.ci,ci,1) ## forward coefficient
 
-  ci <- Ind[2:(ni-1),1:(nj-2)]
+
+  ci <- Ind[1:ni,2:(nj-1)] ## column index
+  n.ci <- length(ci)
+  Dcc <- matrix(0,n.ci,ni*nj)  ## difference matrices
+  cc.ri <- rmt[ci]                              ## index to coef array row
+  cc.ci <- cmt[ci]                              ## index to coef array column
+ 
+  Dcc <- mfil(Dcc,1:n.ci,ci,-2) ## central coefficient
+  ci <- Ind[1:ni,1:(nj-2)]
   Dcc <- mfil(Dcc,1:n.ci,ci,1) ## back coefficient
-  ci <- Ind[2:(ni-1),3:nj]
+  ci <- Ind[1:ni,3:nj]
   Dcc <- mfil(Dcc,1:n.ci,ci,1) ## forward coefficient
 
+
+  ci <- Ind[2:(ni-1),2:(nj-1)] ## column index
+  n.ci <- length(ci)
+  Dcr <- matrix(0,n.ci,ni*nj)  ## difference matrices
+  cr.ri <- rmt[ci]                              ## index to coef array row
+  cr.ci <- cmt[ci]                              ## index to coef array column
+ 
   ci <- Ind[1:(ni-2),1:(nj-2)] 
   Dcr <- mfil(Dcr,1:n.ci,ci,sqrt(0.125)) ## -- coefficient
   ci <- Ind[3:ni,3:nj] 
@@ -941,7 +956,8 @@ D2 <- function(ni=5,nj=5) {
   ci <- Ind[3:ni,1:(nj-2)] 
   Dcr <- mfil(Dcr,1:n.ci,ci,-sqrt(0.125)) ## +- coefficient
 
-  list(Dcc=Dcc,Drr=Drr,Dcr=Dcr,ri = rind,ci = cind)
+  list(Dcc=Dcc,Drr=Drr,Dcr=Dcr,rr.ri=rr.ri,rr.ci=rr.ci,cc.ri=cc.ri,
+                cc.ci=cc.ci,cr.ri=cr.ri,cr.ci=cr.ci,rmt=rmt,cmt=cmt)
 }
 
 smooth.construct.ad.smooth.spec<-function(object,data,knots)
@@ -1044,25 +1060,27 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
           if (!ok) stop("penalty basis too small")
           m <- min(min(kp)-2,1); m<-c(m,m)
           ps2 <- smooth.construct(te(i,j,bs=bsp,k=kp,fx=TRUE,m=m,np=FALSE),
-                                data=data.frame(i=Db$ri,j=Db$ci),knots=NULL) 
-          V <- ps2$X
-        
+                                data=data.frame(i=Db$rmt,j=Db$cmt),knots=NULL) 
+          Vrr <- Predict.matrix(ps2,data.frame(i=Db$rr.ri,j=Db$rr.ci))
+          Vcc <- Predict.matrix(ps2,data.frame(i=Db$cc.ri,j=Db$cc.ci))
+          Vcr <- Predict.matrix(ps2,data.frame(i=Db$cr.ri,j=Db$cr.ci))
         } ## spline adaptive basis finished
         ## build penalty list
       
         S <- list()
         for (i in 1:kp.tot) {
-          S[[i]] <- t(Db$Drr)%*%(as.numeric(V[,i])*Db$Drr) + t(Db$Dcc)%*%(as.numeric(V[,i])*Db$Dcc)
-                    + t(Db$Dcr)%*%(as.numeric(V[,i])*Db$Dcr)
+          S[[i]] <- t(Db$Drr)%*%(as.numeric(Vrr[,i])*Db$Drr) + t(Db$Dcc)%*%(as.numeric(Vcc[,i])*Db$Dcc)
+                    + t(Db$Dcr)%*%(as.numeric(Vcr[,i])*Db$Dcr)
           ev <- eigen(S[[i]],symmetric=TRUE,only.values=TRUE)$values
           pspl$rank[i] <- sum(ev>max(ev)*.Machine$double.eps*10)
         }
 
         pspl$S <- S
+        pspl$pen.smooth <- ps2 ## the penalty smooth object
       } ## adaptive penalty finished
     } ## penalized case finished
   } 
-  pspl$pen.smooth <- ps2 ## the penalty smooth object
+  
   pspl
 }
 
