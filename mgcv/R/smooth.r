@@ -1058,7 +1058,7 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
           if (sum(kp<2)) ok <- FALSE
          
           if (!ok) stop("penalty basis too small")
-          m <- min(min(kp)-2,1); m<-c(m,m)
+          m <- min(min(kp)-2,1); m<-c(m,m);j<-1
           ps2 <- smooth.construct(te(i,j,bs=bsp,k=kp,fx=TRUE,m=m,np=FALSE),
                                 data=data.frame(i=Db$rmt,j=Db$cmt),knots=NULL) 
           Vrr <- Predict.matrix(ps2,data.frame(i=Db$rr.ri,j=Db$rr.ci))

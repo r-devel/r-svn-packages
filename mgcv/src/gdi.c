@@ -347,6 +347,153 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 }
 
 
+void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *sp,
+             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
+
+/* obtains trA and its first two derivatives wrt the log smoothing parameters 
+   * P is q by r
+   * K is n by r
+   * U1 is q by r
+   * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
+
+   * If deriv is 0 then only tr(A) is obtained here.
+   * This version uses only K and P, and is for the case where expressions involve weights which
+     are reciprocal varainces, not the squares of weights which are reciprocal standard deviations.
+
+
+*/
+
+{ double *diagKKt,*diagKKtKKt,xx,*KtTK,*KtTKKtK,*KKtK,*KtK,*work,*pTk,*pTm,*pdKKt,*pdKKtKKt,*p1,*pd,
+    *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*diagKtKKtK,*PtSPKtK;
+  int i,m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2;
+  if (*deriv==2) deriv2=1; else deriv2=0;
+  /* obtain tr(A) and diag(A) = diag(KK') */ 
+  if (*deriv) {
+    diagKKt = (double *)calloc((size_t)*n,sizeof(double));
+    *trA = diagABt(diagKKt,K,K,n,r);
+  } else { /* then only tr(A) is required so return now*/
+      for (xx=0.0,i=0,j=i+ *n * *r;i<j;i++,K++) xx+= *K * *K;
+      *trA = xx;
+      return;
+  }
+  /* set up work space */
+  work =  (double *)calloc((size_t)*n,sizeof(double));
+  /* Get K'K and KK'K  */
+  KtK = (double *)calloc((size_t)*r * *r,sizeof(double));
+  bt=1;ct=0;mgcv_mmult(KtK,K,K,&bt,&ct,r,r,n);  
+  KKtK = (double *)calloc((size_t)*n * *r,sizeof(double));
+  bt=1;ct=0;mgcv_mmult(KKtK,K,KtK,&bt,&ct,n,r,r);  
+
+  /* obtain diag(K'KK'K) */
+  diagKtKKtK = (double *)calloc((size_t)*n,sizeof(double));
+  xx = diagABt(diagKtKKtK,KKtK,K,n,r);
+  /* now loop through the smoothing parameters to create K'TkK and K'TkKK'K */
+  if (deriv2) {
+    KtTK = (double *)calloc((size_t)(*r * *r * *M),sizeof(double));
+    KtTKKtK = (double *)calloc((size_t)(*r * *r * *M),sizeof(double));
+    for (k=0;k < *M;k++) {
+      j = k * *r * *r;
+      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work);
+      bt=ct=0;mgcv_mmult(KtTKKtK + k * *r * *r ,KtTK + j,KtK,&bt,&ct,q,r,r);
+    }
+  } else { KtTK=KtTKKtK=(double *)NULL;}
+  
+  /* evaluate first and last terms in first derivative of tr(F) */
+  bt=1;ct=0;mgcv_mmult(trA1,Tk,diagKKt,&bt,&ct,M,&one,n); /* tr(KK'Tk) */ 
+  bt=1;ct=0;mgcv_mmult(work,Tk,diagKKtKKt,&bt,&ct,M,&one,n); /* tr(KK'TkKK') */
+  for (i=0;i<*M;i++) trA1[i] +=  - work[i];
+
+  /* now evaluate terms in Hessian of tr(F) which depend on what's available so far */
+  if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+     km=k * *M + m;mk=m * *M + k;
+
+     /* tr(KK'Tkm  - KK'TkKK') */
+     for (xx=0.0,pdKKt=diagKKt,pdKKtKKt=diagKKtKKt,p1=pdKKt + *n;pdKKt<p1;pdKKt++,pdKKtKKt++,Tkm++) 
+          xx += *Tkm * (*pdKKt - *pdKKtKKt);
+     trA2[km] = xx;
+
+     /* -2 tr(K'TkKK'TmAK)*/
+     trA2[km] -= 2*diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+
+     /* 2 tr(K'TkKK'TmKK'K) */
+     trA2[km] += 2*diagABt(work,KtTK+k * *r * *r,KtTKKtK+m * *r * *r,q,r);
+ 
+     trA2[mk] = trA2[km];     
+  }
+
+  /* free up some memory */
+  if (deriv2) {free(KtTKKtK);free(KtTK);} 
+
+  free(diagKtKKtK);free(diagKKt);
+
+  /* create KP'rSm, KK'KP'rSm and P'SmP */
+  PtrSm = (double *)calloc((size_t)(*r * *q ),sizeof(double)); /* transient storage for P' rSm */
+  KPtrSm = (double *)calloc((size_t)(*n * *q),sizeof(double)); /* transient storage for K P' rSm */
+  diagKPtSPKt = (double *)calloc((size_t)(*n * *M),sizeof(double));
+  if (deriv2) {
+    PtSP = (double *)calloc((size_t)(*M * *r * *r ),sizeof(double));
+    PtSPKtK = (double *)calloc((size_t)(*M * *r * *r ),sizeof(double));
+    KtKPtrSm = (double *)calloc((size_t)(*n * *q),sizeof(double));/* transient storage for K U1'U1 P'rSm */ 
+    diagKPtSPKtKKt = (double *)calloc((size_t)(*n * *M),sizeof(double));
+  } else { PtSP=KtKPtrSm=diagKPtSPKtKKt=(double *)NULL; }
+  for (rSoff=0,m=0;m < *M;m++) {
+    bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
+    bt=0;ct=0;mgcv_mmult(KPtrSm,K,PtrSm,&bt,&ct,n,rSncol+m,r); 
+    if (deriv2) {
+      bt=0;ct=0;mgcv_mmult(KtKPtrSm,KtK,PtrSm,&bt,&ct,r,rSncol+m,r); 
+      bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm,PtrSm,&bt,&ct,r,r,rSncol+m);
+    
+      bt=0;ct=0;mgcv_mmult(KKtKPtrSm,KKtK,PtrSm,&bt,&ct,n,rSncol+m,r);      
+      bt=0;ct=1;mgcv_mmult(PtSPKtK + m * *r * *r,PtrSm,KtKPtrSm,&bt,&ct,r,r,rSncol+m); 
+      xx = diagABt(diagKPtSPKtKKt+ m * *n,KPtrSm,KKtKPtrSm,n,rSncol+m);
+    }
+    rSoff += rSncol[m];
+    xx = sp[m] * diagABt(diagKPtSPKt+ m * *n,KPtrSm,KPtrSm,n,rSncol+m);
+    trA1[m] -= xx; /* finishing trA1 */
+    if (deriv2) trA2[m * *M + m] -=xx; /* the extra diagonal term of trA2 */
+  }
+  if (!deriv2) { /* trA1 finished, so return */
+    free(PtrSm);free(KPtrSm);free(diagKPtSPKt);
+    free(work);free(KtK);free(KKtK);
+    return;
+  }
+  /* now use these terms to finish off the Hessian of tr(F) */ 
+   for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+     km=k * *M + m;mk=m * *M + k;
+
+     /* 2 sp[m] tr(KK'TkKP'SmPK') */
+     pTk = Tk + k * *n;
+     for (xx=0.0,pd = diagKPtSPKtKKt + m * *n,p1=pd + *n;pd < p1;pd++,pTk++) xx += *pd * *pTk;
+     trA2[km] += 2*sp[m] *xx;
+
+     /* 2 sp[k] tr(KK'TmKP'SkPK') */
+     pTm = Tk + m * *n;
+     for (xx=0.0,pd = diagKPtSPKtKKt + k * *n,p1=pd + *n;pd < p1;pd++,pTm++) xx += *pd * *pTm;
+     trA2[km] += 2*sp[k] *xx;
+     
+     /* - sp[m] tr(TkKP'SmPK') */
+     pTk = Tk + k * *n;
+     for (xx=0.0,pd = diagKPtSPKt + m * *n,p1=pd + *n;pd < p1;pd++,pTk++) xx += *pd * *pTk;
+     trA2[km] -= sp[m] *xx;
+     
+     /* - sp[k] tr(TmKP'SkPK') */
+     pTm = Tk + m * *n;
+     for (xx=0.0,pd = diagKPtSPKt + k * *n,p1=pd + *n;pd < p1;pd++,pTm++) xx += *pd * *pTm;
+     trA2[km] -= sp[k] *xx;
+
+     /* 2 sp[m] sp[k] tr(KP'SkPP'SmPK') */
+     trA2[km] += 2 * sp[k]*sp[m]*diagABt(work,PtSP + m * *r * *r,PtSPKtK + k * *r * *r,q,r);
+      
+     trA2[mk] =trA2[km];
+   } 
+   /* clear up */
+   free(PtrSm);free(KPtrSm);free(PtSP);free(KtKPtrSm);free(diagKPtSPKt);
+   free(diagKPtSPKtKKt);free(work);free(KtK);free(KKtK);free(PtSPKtK);
+   
+}
+
+
+
 void get_trA(double *trA,double *trA1,double *trA2,double *U1,double *KU1t,double *P,double *K,double *sp,
              double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
 
@@ -1086,13 +1233,14 @@ void gdi(double *X,double *E,double *rS,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd,
 	 int *REML,int *fisher)     
-/* Verison of gdi, based on derivative ratios and Implicit Function Theorem 
-   calculation of the derivatives of beta....
+/* Version of gdi, based on derivative ratios and Implicit Function Theorem 
+   calculation of the derivatives of beta. Assumption is that Fisher is only used 
+   with canonical link, when it is equivalent to Newton anyway.
 
-   Function to iterate for first and second derivatives of the deviance 
-   of a GAM fit, and to evaluate the first and second derivatives of
-   tr(A). Derivatives are w.r.t. log smoothing parameters.
-
+   This version deals properly with negative weights, which can occur with Newton based 
+   PIRLS. In consequence w's in this routine are proportional to reciprocal variances,
+   not reciprocal stadard deviations.
+  
    The function is to be called at convergence of a P-IRLS scheme so that 
    z, w, mu and functions of these can be treated as fixed, and only the 
    derivatives need to be updated.
@@ -1145,7 +1293,496 @@ void gdi(double *X,double *E,double *rS,
    1. The initial QR- decomposition and SVD are performed, various quantities which 
       are independent of derivatives are created
 
-   2. Iteration to obtain the derivatives of the coefficients wrt the log smoothing 
+   2. IFT used to obtain derivatives of the coefficients wrt the log smoothing 
+      parameters. 
+
+   3. Evaluation of the derivatives of the deviance wrt the log smoothing parameters
+      (i.e. calculation of D1 and D2)
+
+   4. Evaluation of the derivatives of tr(A) (i.e. trA1 and trA2)
+
+   The method involves first and second derivatives of a number of k-vectors wrt
+   log smoothing parameters (\rho), where k is q or n. Consider such a vector, v. 
+   
+   * v1 will contain dv/d\rho_0, dv/d\rho_1 etc. So, for example, dv_i/d\rho_j
+     (indices starting at zero) is located in v1[q*j+i].
+   
+   * v2 will contain d^2v/d\rho_0d\rho_0, d^2v/d\rho_1d\rho_0,... but rows will not be
+     stored if they duplicate an existing row (e.g. d^2v/d\rho_0d\rho_1 would not be 
+     stored as it already exists and can be accessed by interchanging the sp indices).
+     So to get d^2v_k/d\rho_id\rho_j: 
+     i)   if i<j interchange the indices
+     ii)  off = (j*m-(j+1)*j/2+i)*q 
+     iii) v2[off+k] is the required derivative.       
+
+    
+
+*/
+{ double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*K=NULL,*R,*d,*Vt,*V,*U1,*KU1t=NULL,xx,*b1,*b2,*P,
+         *c0,*c1,*c2,*a1,*a2,*eta1,*eta2,
+         *PKtz,*v1,*v2,*wi,*wis,*w1,*w2,*pw2,*Tk,*Tkm,
+         *pb2, *dev_grad,*dev_hess=NULL,Rcond,*tau2,
+         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
+         *alpha,*alpha1,*alpha2,*raw;
+  int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
+         n_eta1,n_eta2,n_work,deriv2,*pivot2,null_space_dim,neg_w=0;
+
+  if (*deriv==2) deriv2=1; else deriv2=0;
+
+  /* first step is to obtain P and K */
+  nn= *n + *Encol;
+  zz = (double *)calloc((size_t)nn,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
+  raw = (double *)calloc((size_t) *n,sizeof(double)); /* storage for sqrt(|w|) */
+  
+  for (i=0;i< *n;i++) 
+    if (w[i]<0) { neg_w++;raw[i] = sqrt(-w[i]);} 
+    else raw[i] = sqrt(w[i]);
+
+  if (neg_w) {
+    nind = (int *)calloc((size_t)neg_w,sizeof(int)); /* index the negative w_i */
+    k=0;for (i=0;i< *n;i++) if (w[i]<0) { nind[k]=i;k++;}
+  } else { nind = (int *)NULL;}
+
+  for (i=0;i< *n;i++) zz[i] = y[i]*raw[i]; /* form z itself*/
+
+  for (i=0;i<neg_w;i++) {k=nind[i];zz[k] = -zz[k];} 
+
+  WX = (double *) calloc((size_t) ( nn * *q),sizeof(double));
+  for (j=0;j<*q;j++) 
+  { for (i=0;i<*n;i++) /* form WX */
+    { k = i + nn * j;
+      WX[k]=raw[i]*X[i + *n *j];
+    }
+    for (ii=0,i = *n;ii<*cE;i++,ii++) /* append E' */ 
+    { k = i + nn * j;
+      WX[k] = E[j + *q * ii];
+    }
+  } 
+  /* get the QR decomposition of WX */
+  tau=(double *)calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
+ 
+  pivot=(int *)calloc((size_t)*q,sizeof(int));
+  
+  mgcv_qr(WX,&nn,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
+  /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
+  
+  /* first find the rank of R */
+  work = (double *)calloc((size_t)(4 * *q),sizeof(double));
+  rank = *q;
+  R_cond(WX,&nn,&rank,work,&Rcond);
+  while (*rank_tol * Rcond > 1) { rank--;R_cond(WX,&nn,&rank,work,&Rcond);}
+  free(work);
+
+  Q1 = (double *)calloc((size_t) nn * rank,sizeof(double)); 
+  for (i=0;i<rank;i++) Q1[i * nn + i] = 1.0;
+  left=1;tp=0;mgcv_qrqy(Q1,WX,tau,&nn,&rank,q,&left,&tp); /* Q from the QR decomposition */
+
+  Ri =  (double *)calloc((size_t) rank * rank,sizeof(double)); 
+  Rinv(Ri,WX,&rank,nn,&rank); /* getting R^{-1} */
+  
+  K = (double *)calloc((size_t) *n * rank,sizeof(double));
+  P = (double *)calloc((size_t) *q * rank,sizeof(double));
+
+  ldetI2D = 0.0; /* REML determinant correction */
+
+  if (neg_w) { /* then the correction for the negative w_i has to be evaluated */
+    if (neg_w < rank+1) k = rank+1; else k = neg_w;
+    IQ = (double *)calloc((size_t) k * rank,sizeof(double)); 
+    for (i=0;i<neg_w;i++) { /* Copy the rows of Q corresponding to -ve w_i into IQ */
+      p0 = IQ + i;p1 = Q1 + nind[i];
+      for (j=0;j<rank;j++,p0+=k,p1+= nn) *p0 = *p1;
+    }
+    /* Note that IQ may be zero padded, for convenience */
+    Vt = (double *)calloc((size_t) rank * rank,sizeof(double));
+    d = (double *)calloc((size_t)  rank,sizeof(double));
+    mgcv_svd_full(IQ,Vt,d,&k,&rank); /* SVD of IQ */
+    free(IQ);
+    for (i=0;i<rank;i++) {
+      d[i] = 1 - 2*d[i]*d[i];
+      if (d[i]<=0) d[i]=0.0; 
+      else {
+        ldetI2D += log(d[i]); /* log|I-2D^2| */ 
+        d[i] = 1/sqrt(d[i]);
+      }
+    } /* d now contains diagonal of diagonal matrix (I-2D^2)^{-1/2} (possibly pseudoinverse) */
+    /* Now form (I-2D^2)^.5 Vt and store in Vt... */
+    for (p0=Vt,i=0;i<rank;i++)
+    for (p1=d,p2=d+rank;p1<p2;p1++,p0++) *p0 *= *p1;
+
+    /* Form K */
+    IQ = (double *)calloc((size_t) *n * rank,sizeof(double));
+    for (p0=IQ,p1=Q1,j=0;j<rank;j++,p1 += nn) /* copy just Q1 into IQ */
+      for (p2 = p1,p3=p1 + n;p2<p3;p0++,p2++) *p0 = *p2; 
+    bt=0;ct=1;mgcv_mmult(K,IQ,Vt,&bt,&ct,*n,&rank,&rank);
+    /* Form P */
+    bt=0;ct=1;mgcv_mmult(IQ,Ri,Vt,&ct,&rank,&rank,&rank);
+    for (p0=P,p1=IQ,j=0;j<rank;j++,p1 += *n,p0+= *q) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
+      for (p4=p0,p2 = p1,p3=p1 + rank;p2<p3;p4++,p2++) *p4 = *p2; 
+    free(IQ);        
+  } else { /* no negative weights so P and K much simpler */
+    Vt = d = (double *)NULL; 
+    /* Form K */
+    for (p0=K,p1=Q1,j=0;j<rank;j++,p1 += nn) /* copy just Q1 into K */
+    for (p2 = p1,p3=p1 + n;p2<p3;p0++,p2++) *p0 = *p2; 
+    /* Form P */
+    for (p0=P,p1=Ri,j=0;j<rank;j++,p1 += *n,p0+= *q) /* copy R^{-1} into first rows of P */
+    for (p4=p0,p2 = p1,p3=p1 + rank;p2<p3;p4++,p2++) *p4 = *p2; 
+  }
+  
+  /* At this stage P and K are complete */
+
+   if (*REML) { 
+      for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(fabs(WX[i + i * nn])); 
+      ldetXWXS *= 2;
+      ldetXWXS += ldetI2D; /* correction for negative weights */
+    }
+
+
+  /* Apply pivoting to the parameter space - this simply means reordering the rows of Sr and the 
+     rS_i, and then unscrambling the parameter vector at the end (along with any covariance matrix)
+     pivot[i] gives the unpivoted position of the ith pivoted parameter.
+  */
+
+  ScS=0;for (pi=rSncol;pi<rSncol + *M;pi++) ScS+= *pi;  /* total columns of input rS */
+  n_work = (4 * *n + 2 * *q) * *M + 2 * *n;
+  k = (*M * (1 + *M))/2 * *n;
+  if (n_work < k) n_work = k;
+  work = (double *)calloc((size_t) n_work,sizeof(double)); /* work space for several routines*/
+  p0 = work + *q;
+  for (pd=rS,i=0;i<ScS;i++,pd += *q) /* work across columns */
+  { for (pi=pivot,p2=work;p2<p0;pi++,p2++) *p2 = pd[*pi];  /* apply pivot into work */
+    p3 = pd + *q;
+    for (p1=pd,p2=work;p1<p3;p1++,p2++) *p1 = *p2;  /* copy back into rS */
+  } /* rS pivoting complete, do E .... */
+  p0 = work + *q;
+  for (pd=E,i=0;i< *Encol;i++,pd += *q) /* work across columns */
+  { for (pi=pivot,p2=work;p2<p0;pi++,p2++) *p2 = pd[*pi];  /* apply pivot into work */
+    p3 = pd + *q;
+    for (p1=pd,p2=work;p1<p3;p1++,p2++) *p1 = *p2;  /* copy back into E */
+  }
+  /* pivot columns of X - can't think of a smart arsed way of doing this*/
+  for (i=0;i< *n;i++) {
+      for (j=0;j<*q;j++) work[j]=X[pivot[j] * *n + i];
+      for (j=0;j<*q;j++) X[j * *n + i] = work[j];
+  }
+  
+  PKtz = (double *)calloc((size_t) *q,sizeof(double)); /* PK'z --- the pivoted coefficients*/
+  bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,&rank,&one,n);
+  bt=0;ct=0;mgcv_mmult(PKtz,P,work,&bt,&ct,q,&one,&rank);  
+
+ 
+  /************************************************************************************/
+  /* The coefficient derivative setup starts here */
+  /************************************************************************************/
+  /* set up some storage first */
+  if (*deriv) {
+    n_2dCols = (*M * (1 + *M))/2;
+    n_b2 = *q * n_2dCols;
+    b2 = (double *)calloc((size_t)n_b2,sizeof(double)); /* 2nd derivs of beta */
+   
+    n_b1 = *q * *M;
+    b1 = (double *)calloc((size_t)n_b1,sizeof(double)); /* 1st derivs of beta */
+   
+    n_eta1 = *n * *M;
+    eta1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+    Tk = (double *)calloc((size_t)n_eta1,sizeof(double));
+   
+    w1 = (double *)calloc((size_t)n_eta1,sizeof(double));
+
+    n_eta2 = *n * n_2dCols;
+    eta2 = (double *)calloc((size_t)n_eta2,sizeof(double));
+    Tkm = (double *)calloc((size_t)n_eta2,sizeof(double));
+  
+    w2 = (double *)calloc((size_t)n_eta2,sizeof(double));
+
+ 
+    v1 = work;v2=work + *n * *M; /* a couple of working vectors */ 
+   
+    /* Set up constants involved in z (not z'!) updates (little work => leave readable!)*/
+    c0=(double *)calloc((size_t)*n,sizeof(double));
+    c1=(double *)calloc((size_t)*n,sizeof(double));  
+    c2=(double *)calloc((size_t)*n,sizeof(double));
+  
+    a1=(double *)calloc((size_t)*n,sizeof(double));  
+    a2=(double *)calloc((size_t)*n,sizeof(double));
+    alpha=alpha1=alpha2 =(double *)NULL;
+    if (*fisher) { /* Fisher scoring updates */
+      for (i=0;i< *n;i++) c0[i]=y[i]-mu[i];
+      /* c1 = (y-mu)*g''/g' = dz/deta */
+      for (i=0;i<*n;i++) c1[i]=g2[i]*c0[i];
+      /* d2z/deta2 = c2 = ((y-mu)*(g'''/g'-(g''/g')^2) - g''/g')/g' */
+      for (i=0;i<*n;i++) c2[i]=(c0[i]*(g3[i]-g2[i]*g2[i])-g2[i])/g1[i];
+
+      /* set up constants involved in w updates */
+      /* dw/deta = - w[i]/2*(V'/V+2g''/g')/g' */
+      for (i=0;i< *n;i++) a1[i] = -  w[i] *(V1[i] + 2*g2[i])/g1[i];
+     
+      
+      /* d2w/deta2 .... */
+      for (i=0;i< *n;i++) 
+        a2[i] = a1[i]*(a1[i]/w[i]-g2[i]/g1[i]) - w[i]*(V2[i]-V1[i]*V1[i] + 2*g3[i]-2*g2[i]*g2[i])/(g1[i]*g1[i]) ;
+
+    } else { /* full Newton updates */
+      
+      alpha = (double *) calloc((size_t)*n,sizeof(double));
+      alpha1 = (double *) calloc((size_t)*n,sizeof(double));
+      alpha2 = (double *) calloc((size_t)*n,sizeof(double));
+      for (i=0;i< *n;i++) {
+        alpha[i] = 1 + (y[i]-mu[i])*(V1[i]+g2[i]);
+        xx = V2[i]-V1[i]*V1[i]+g3[i]-g2[i]*g2[i]; /* temp. storage */
+        alpha1[i] = (-(V1[i]+g2[i]) + (y[i]-mu[i])*xx)/alpha[i];
+        alpha2[i] = (-2*xx + (y[i]-mu[i])*(V3[i]-3*V1[i]*V2[i]+2*V1[i]*V1[i]*V1[i]+g4[i]-3*g3[i]*g2[i]+2*g2[i]*g2[i]*g2[i]))/alpha[i];
+      }
+    
+      /* end of preliminaries, now setup the multipliers that go forward */
+      /* dz/deta... */
+      for (i=0;i<*n;i++) c1[i] = 1 - 1/alpha[i] + (y[i]-mu[i])/alpha[i]*(g2[i]-alpha1[i]);
+      /* d2z/deta2... */
+      for (i=0;i<*n;i++) c2[i] = ((y[i]-mu[i])*(g3[i]-g2[i]*g2[i]-alpha2[i]+alpha1[i]*alpha1[i]) -
+                                  (1+(y[i]-mu[i])*alpha1[i])*(g2[i]-alpha1[i]) + alpha1[i])/(alpha[i]*g1[i]);
+     
+      /* dw/deta ... */
+      for (i=0;i<*n;i++) a1[i] = w[i]*(alpha1[i]-V1[i]-2*g2[i])/g1[i];
+      /* d2w/deta2... */
+      for (i=0;i<*n;i++) a2[i] = a1[i]*(a1[i]/w[i]-g2[i]/g1[i]) - 
+                                 w[i]*(alpha1[i]*alpha1[i] - alpha2[i] + V2[i]-V1[i]*V1[i] + 2*g3[i]-2*g2[i]*g2[i])/(g1[i]*g1[i]) ;
+
+      free(alpha);free(alpha1);free(alpha2);
+      
+    } /* end of full Newton setup */
+
+
+    /* some useful arrays for Tk and Tkm */
+    wi=(double *)calloc((size_t)*n,sizeof(double)); 
+    for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i])}
+
+
+    /* get gradient vector and Hessian of deviance wrt coefficients */
+    for (i=0;i< *n ;i++) v1[i] = -2*p_weights[i]*(y[i]-mu[i])/(V0[i]*g1[i]);
+    dev_grad=(double *)calloc((size_t)*q,sizeof(double));
+    bt=1;ct=0;mgcv_mmult(dev_grad,X,v1,&bt,&ct,q,&one,n);
+    
+    if (deriv2) { /* get hessian of deviance w.r.t. beta */
+      for (i=0;i< *n ;i++) v1[i] = 2*w[i];
+      dev_hess=(double *)calloc((size_t)(*q * *q),sizeof(double));
+      getXtWX(dev_hess,X,v1,n,q,v2);
+    } 
+  
+  } /* end of if (*deriv) */ 
+  else { /* keep compilers happy */
+    b1=eta1=eta2=c0=c1=c2=(double *)NULL;
+    a1=a2=wi=wis=dev_grad=w1=w2=b2=(double *)NULL;
+    Tk=Tkm=(double *)NULL;
+  }
+  /************************************************************************************/
+  /* End of the coefficient derivative preparation  */
+  /************************************************************************************/
+
+
+  /************************************************************************************/
+  /* Implicit Function Theorem code */
+  /************************************************************************************/
+  if (*deriv) {
+    /* obtain derivatives of beta (b1,b2) and eta (eta1,eta2) using the IFT (a1 = dw/deta) */
+
+    /* Note that PKtz used as pivoted version of beta, but not clear that PKtz really essential if IFT used */
+
+   
+    ift(X,P,rS,PKtz,sp,w,a1,b1,b2,eta1,eta2,n,q,&rank,M,rSncol,&deriv2);
+  
+  
+    /* Now use IFT based derivatives to obtain derivatives of W and hence the T_* terms */
+
+    /* get derivatives of w */  
+    rc_prod(w1,a1,eta1,M,n); /* w1 = dw/d\rho_k done */
+    if (deriv2) {
+      rc_prod(w2,a1,eta2,&n_2dCols,n); 
+      for (pw2=w2,m=0;m < *M;m++) for (k=m;k < *M;k++) {
+        rc_prod(v1,eta1 + *n * m,eta1 + *n * k,&one,n);
+        rc_prod(v2,a2,v1,&one,n);
+        p1=v2 + *n;
+        for (p0=v2;p0<p1;p0++,pw2++) *pw2 += *p0;           
+      } /* w2 completed */
+    }
+    /* get Tk and Tkm */
+      
+    rc_prod(Tk,wi,w1,M,n); /* Tk done */
+    if (deriv2) {
+      rc_prod(Tkm,wi,w2,&n_2dCols,n);
+      for (p0=Tkm,m=0;m < *M;m++) for (k=m;k < *M;k++) {
+        rc_prod(v1,w1+k * *n,w1+m * *n,&one,n);
+        rc_prod(v2,wis,v1,&one,n);
+        p2 = v2 + *n;
+        for (p1=v2;p1<p2;p1++,p0++) *p0 -= *p1; 
+      } /* Tkm finished */
+    } 
+
+    /* evaluate gradient and Hessian of deviance */
+
+    bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,q); /* gradient of deviance is complete */
+      
+    if (deriv2) {       
+      getXtMX(D2,b1,dev_hess,q,M,v1);
+          
+      for (pb2=b2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
+          p1 = dev_grad + *q;  
+          for (xx=0.0,p0=dev_grad;p0<p1;p0++,pb2++) xx += *p0 * *pb2;
+          D2[k * *M + m] += xx;
+          D2[m * *M + k] = D2[k * *M + m];
+      } /* Hessian of Deviance is complete !! */
+    }
+
+  } /* end of if (*deriv) */
+
+  /* END of IFT */
+
+
+  /* REML NOTE: \beta'S\beta stuff has to be done here on pivoted versions.
+     Store bSb in P0, bSb1 in P1 and bSb2 in P2.
+  */
+  if (*REML) {
+    get_bSb(&bSb,trA1,trA2,sp,E,rS,rSncol,Encol,q,M,PKtz,b1,b2,deriv);
+    if (*deriv) for (p2=D2,p1=trA2,i = 0; i< *M;i++) { /* penalized deviance derivs needed */
+        D1[i] += trA1[i];
+        if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
+    } 
+  }
+  /* unpivot P into rV and PKtz into beta */
+
+  for (i=0;i< *q;i++) beta[pivot[i]] = PKtz[i];
+
+  for (p1=P,i=0;i < rank; i++) for (j=0;j<*q;j++,p1++) rV[pivot[j] + i * *q] = *p1;
+  p0 = rV + *q * rank;p1 = rV + *q * *q;
+  for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
+
+  /* Now get the remainder of the REML penalty */
+  if (*REML) {
+    /* First deal with log|X'WX+S| */   
+    reml_penalty = ldetXWXS;
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
+   
+    /* Now log|S|_+ */
+  
+    null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    reml_penalty -= *P0;
+    if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
+      trA1[i] -= P1[i];
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
+    } 
+  } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
+
+  pearson2(P0,P1,P2,y,mu,V0,V1,V2,g1,g2,p_weights,eta1,eta2,*n,*M,*deriv,deriv2);
+  
+  if (*REML) { /* really want scale estimate and derivatives in P0-P2, so rescale */
+    j = *n - null_space_dim;
+    *P0 /= j;
+    if (*deriv) for (p1 = P1,p2 = P1 + *M;p1<p2;p1++) *p1 /= j;
+    if (*deriv>1) for (p1 = P2,p2 = P2 + *M * *M;p1<p2;p1++) *p1 /= j; 
+  }
+
+  /* clean up memory, except what's needed to get tr(A) and derivatives 
+     Note: Vt and R already freed. P is really V - don't free yet.
+  */ 
+  
+  free(WX);free(tau);free(pivot);free(work);free(PKtz);free(zz);
+  
+  if (*deriv) {
+    free(b1);free(eta1);
+    free(eta2);
+    free(c0);free(c1);free(c2);
+    free(a1);free(a2);free(wi);free(dev_grad);
+    free(w1);free(w2);free(b2);
+
+    if (deriv2) { free(dev_hess);}
+  }
+  
+ 
+
+  /* Note: the following gets only trA if REML is being used,
+           so as not to overwrite the derivatives actually needed  */
+  if (*REML) i=0; else i = *deriv;
+  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,&i);
+
+  /* clear up the remainder */
+  free(U1);free(V);
+
+  if (*deriv)
+  { free(Tk);free(Tkm);free(KU1t);free(K);
+  }
+
+  if (*REML) {*rank_tol = reml_penalty;*conv_tol = bSb;}
+
+  *deriv = iter; /* the number of iteration steps taken */
+} /* end of gdi() */
+
+
+
+void gdi3(double *X,double *E,double *rS,
+    double *sp,double *z,double *w,double *mu,double *eta, double *y,
+	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
+	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
+    double *P0, double *P1,double *P2,double *trA,
+    double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
+	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd,
+	 int *REML,int *fisher)     
+/* Verison of gdi, based on derivative ratios and Implicit Function Theorem 
+   calculation of the derivatives of beta....
+
+   Assumes that weights are +ve, which need not happen.
+  
+   The function is to be called at convergence of a P-IRLS scheme so that 
+   z, w, mu and functions of these can be treated as fixed, and only the 
+   derivatives need to be updated.
+
+   All matrices are packed into arrays in column order (i.e. col1, col2,...)
+   as in R. 
+
+   All names ending in 1,2 or 3 are derivatives of some sort, with the integer
+   indicating the order of differentiation. 
+
+   The arguments of this function point to the following:
+   * X is and n by q model matrix.
+   * E is a q by Encol square root of the total penalty matrix, so EE'=S
+   * rS is a list of square roots of individual penalty matrices, packed
+     in one array. The ith such matrix rSi, say, has dimension q by rSncol[i]
+     and the ith penalty is [rSi][rSi]'.
+   * sp is an M array of smoothing parameters (NOT log smoothing parameters)
+   * z and w are n-vectors of the pseudodata and iterative weights
+   * p_weights is an n-vector of prior weights (as opposed to the iterative weights in w)
+   * mu and y are n-vectors of the fitted values and data.
+   * g1,g2,g3,g4 are the n-vectors of the link derivatives 
+     Note that g''(mu) g'''(mu) and g''''(mu) are *divided by* g'(mu)
+   * V0, V1, V2, V3 are n-vectors of the variance function and first three derivatives,
+     Note that V'(mu), V''(mu) & V'''(mu) are divided by V(mu)
+   * D1 and D2 are an M-vector and M by M matrix for returning the first 
+     and second derivatives of the deviance wrt the log smoothing parameters.
+     if *REML is non zero then the derivs will be of the penalized deviance,
+     and b'Sb will be returned in conv_tol  
+   * trA1 and trA2 are an M-vector and M by M matrix for returning the first 
+     and second derivatives of tr(A) wrt the log smoothing parameters.
+     If *REML is non zero then the derivatives of the REML penalty are 
+     returned instead (with the REML penalty returned in `rank_tol', hack, hack).
+   * P0,P1,P2 are for returning the Pearson statistic and its derivatives, or 
+     the Pearson scale estimate and derivatives if *REML is non - zero. 
+   * rank_est is for returning the estimated rank of the problem.
+   * the remaining arguments are the dimensions already refered to except for:
+   * deriv, which controls which derivatives are produced:
+       deriv==0 for no derivatives: only trA, rV and beta returned
+       deriv==1 for first derivatives only
+       deriv==2 for gradient and Hessian
+     -- on exit contains the number of iteration steps required.   
+
+    * If REML is non-zero, then the REML penalty returned in rank_tol, with it's 
+      derivatives in trA1, trA2: it is to be added to the *deviance* to get D_r.
+    * non-zero `fisher' indicates that Fisher scoring, rather than full Newton,
+      is the basis for iteration. 
+
+   The method has 4 main parts:
+
+   1. The initial QR- decomposition and SVD are performed, various quantities which 
+      are independent of derivatives are created
+
+   2. IFT used to obtain derivatives of the coefficients wrt the log smoothing 
       parameters. 
 
    3. Evaluation of the derivatives of the deviance wrt the log smoothing parameters
@@ -1328,7 +1965,7 @@ void gdi(double *X,double *E,double *rS,
   }
 
   /************************************************************************************/
-  /* The coefficient derivative iteration starts here */
+  /* The coefficient derivative setup starts here */
   /************************************************************************************/
   /* set up some storage first */
   if (*deriv) {
@@ -1575,7 +2212,7 @@ void gdi(double *X,double *E,double *rS,
   if (*REML) {*rank_tol = reml_penalty;*conv_tol = bSb;}
 
   *deriv = iter; /* the number of iteration steps taken */
-} /* end of gdi() */
+} /* end of gdi3() */
 
 
 
@@ -2984,10 +3621,13 @@ void R_cond(double *R,int *r,int *c,double *work,double *Rcondition)
 }
 
 
-void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
+void pls_fit0(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol)
 /* Fast but stable PLS fitter. Obtains linear predictor, eta, of weighted penalized linear model,
    without evaluating the coefficients, but also returns coefficients in case they are needed. 
+
+   Original version which can not deal with -ve weights since it assumes w_i are the square root 
+   weights on entry....
 
    On return:
    * eta contains the linear predictor
@@ -3063,6 +3703,170 @@ void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,doubl
  
   /*, should this be required... */
   free(z);free(WX);free(tau);free(pivot);
+}
+
+
+void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
+             double *penalty,double *rank_tol)
+/* Fast but stable PLS fitter. Obtains linear predictor, eta, of weighted penalized linear model,
+   without evaluating the coefficients, but also returns coefficients in case they are needed. 
+   
+   In this version the w_i are the w_i in \sum_i w_i (y_i - X_i \beta)^2
+   rather than being the square root of these. Some w_i may be negative (as
+   may occur when using Newton, rather than Fisher updates on IRLS). Note that it is still 
+   assumed that any zero weighted data will have been dropped before the call.
+
+   On return:
+   
+   * if *n is -ve then X'WX+E'E was not +ve definite (which means that the routine should be
+     called again with weights based on Fisher scoring).
+
+   otherwise:
+
+   * eta contains the linear predictor
+   * penalty is the evaluated penalty
+   * the first q elements of y are the coefficients. 
+   
+
+   n <- 100;x <- runif(n);w <- runif(100)
+   X <- model.matrix(~x+I(x^2))
+   X[,1] <- X[,3]
+   y <- rnorm(n)
+   E <- diag(3)
+   oo <- .C("pls_fit",y=as.double(y),as.double(X),as.double(w),as.double(E),as.integer(n),
+            as.integer(ncol(X)),as.integer(3),eta=as.double(1:n),penalty=as.double(1),
+            as.double(.Machine$double.eps*100),PACKAGE="mgcv")
+   er <- lm(c(y,rep(0,ncol(E)))~rbind(X,t(E))-1,weights=c(w,rep(1,ncol(E))))
+   range(fitted(er)[1:n]-oo$eta)
+   as.numeric(coef(er));oo$y[1:ncol(X)]
+
+
+   n <- 100;x <- runif(n);w <- runif(100)-.2
+   X <- model.matrix(~x+I(x^2))
+   y <- rnorm(n)
+   E <- diag(3)
+   oo <- .C("pls_fit",y=as.double(y),as.double(X),as.double(w),as.double(E),n=as.integer(n),
+            as.integer(ncol(X)),as.integer(3),eta=as.double(1:n),penalty=as.double(1),
+            as.double(.Machine$double.eps*100),PACKAGE="mgcv")
+   beta <- solve((t(X)%*%(w*X)+t(E)%*%E),t(X)%*%(w*y))   
+   eta <- X%*%beta
+
+   range(eta-oo$eta)
+   as.numeric(beta);oo$y[1:ncol(X)]
+
+   oo$penalty;sum((E%*%beta)^2)
+    
+
+*/
+
+{ int nn,i,j,k,ii,rank,one=1,*pivot,left,tp,neg_w=0,*nind,bt,ct;
+  double *z,*WX,*tau,Rcond,xx,*work,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1;
+  nn= *n + *cE;
+  
+  z = (double *)calloc((size_t)nn,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
+  raw = (double *)calloc((size_t) *n,sizeof(double)); /* storage for sqrt(|w|) */
+  
+  for (i=0;i< *n;i++) 
+    if (w[i]<0) { neg_w++;raw[i] = sqrt(-w[i]);} 
+    else raw[i] = sqrt(w[i]);
+
+  if (neg_w) {
+    nind = (int *)calloc((size_t)neg_w,sizeof(int)); /* index the negative w_i */
+    k=0;for (i=0;i< *n;i++) if (w[i]<0) { nind[k]=i;k++;}
+  } else { nind = (int *)NULL;}
+
+  for (i=0;i< *n;i++) z[i] = y[i]*raw[i]; /* form z itself*/
+
+  for (i=0;i<neg_w;i++) {k=nind[i];z[k] = -z[k];} 
+
+  WX = (double *) calloc((size_t) ( nn * *q),sizeof(double));
+  for (j=0;j<*q;j++) 
+  { for (i=0;i<*n;i++) /* form WX */
+    { k = i + nn * j;
+      WX[k]=raw[i]*X[i + *n *j];
+    }
+    for (ii=0,i = *n;ii<*cE;i++,ii++) /* append E' */ 
+    { k = i + nn * j;
+      WX[k] = E[j + *q * ii];
+    }
+  } 
+  /* get the QR decomposition of WX */
+  tau=(double *)calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
+ 
+  pivot=(int *)calloc((size_t)*q,sizeof(int));
+  
+  mgcv_qr(WX,&nn,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
+  /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
+  
+  /* first find the rank of R */
+  work = (double *)calloc((size_t)(4 * *q),sizeof(double));
+  rank = *q;
+  R_cond(WX,&nn,&rank,work,&Rcond);
+  while (*rank_tol * Rcond > 1) { rank--;R_cond(WX,&nn,&rank,work,&Rcond);}
+  free(work);
+
+  if (neg_w) { /* then the correction for the negative w_i has to be evaluated */
+    Q1 = (double *)calloc((size_t) nn * rank,sizeof(double)); 
+    for (i=0;i<rank;i++) Q1[i * nn + i] = 1.0;
+    left=1;tp=0;mgcv_qrqy(Q1,WX,tau,&nn,&rank,q,&left,&tp); /* Q from the QR decomposition */
+    if (neg_w < rank+1) k = rank+1; else k = neg_w;
+    IQ = (double *)calloc((size_t) k * rank,sizeof(double)); 
+    for (i=0;i<neg_w;i++) { /* Copy the rows of Q corresponding to -ve w_i into IQ */
+      p0 = IQ + i;p1 = Q1 + nind[i];
+      for (j=0;j<rank;j++,p0+=k,p1+= nn) *p0 = *p1;
+    }
+    free(Q1); 
+    /* Note that IQ may be zero padded, for convenience */
+    Vt = (double *)calloc((size_t) rank * rank,sizeof(double));
+    d = (double *)calloc((size_t)  rank,sizeof(double));
+    mgcv_svd_full(IQ,Vt,d,&k,&rank); /* SVD of IQ */
+    free(IQ);
+    for (i=0;i<rank;i++) {
+      d[i] = 1 - 2*d[i]*d[i];
+      if (d[i]< - *rank_tol) { /* X'WX not +ve definite, clean up and abort */
+        *n = -1;
+        free(Vt);free(d);free(pivot);free(tau);free(nind);free(raw);free(z);free(WX);
+        return;
+      }
+      if (d[i]<=0) d[i]=0.0; else d[i] = 1/d[i];
+    }
+    /* d now contains diagonal of diagonal matrix (I-2D^2)^{-1} (possibly pseudoinverse) */
+  } else {Vt = d = (double *)NULL; }
+  /* The -ve w_i corection is now complete */
+
+  /* Now get the fitted values X \beta, *without* finding \beta */
+  left=1;tp=1;mgcv_qrqy(z,WX,tau,&nn,&one,q,&left,&tp); /* z = Q'z */
+  for (i=rank;i<nn;i++) z[i]=0.0;
+
+  if (neg_w) { /* apply the correction factor for negative w_i terms */
+     bt=0;ct=0;mgcv_mmult(y,Vt,z,&bt,&ct,&rank,&one,&rank); /* V' Q_1' z */
+     for (i=0;i<rank;i++) y[i] *= d[i];
+     bt=1;ct=0;mgcv_mmult(z,Vt,y,&bt,&ct,&rank,&one,&rank); /* V (I-2D^2)^{-1} V' Q_1' z */
+  }
+
+  for (i=0;i<rank;i++) y[i] = z[i];        /* y = Q'z, or corrected version */ 
+  left=1;tp=0;mgcv_qrqy(z,WX,tau,&nn,&one,q,&left,&tp);
+  for (i=0;i<*n;i++) eta[i] = z[i]/raw[i]; /* the linear predictor */
+
+  for (*penalty=0.0,i=*n;i<nn;i++) *penalty += z[i]*z[i]; /* the penalty term */
+  
+  /* now find  \hat \beta = R^{-1}Q'z, which are needed if P-IRLS starts to diverge
+     in order to be able to evaluate penalty on step reduction */
+  
+ 
+
+  /* now back substitute to find \hat \beta */  
+  for (k=rank;k<*q;k++) z[k]=0.0; /* truncated parameters */
+  for (k=rank-1;k>=0;k--) {
+      for (xx=0.0,j=k+1;j < rank;j++) xx += WX[k + nn * j]*z[j];
+      z[k] = (y[k] - xx)/WX[k + nn * k];
+  }
+  /* unpivot result into y */
+  for (i=0;i< *q;i++) y[pivot[i]] = z[i];
+ 
+  /*, should this be required... */
+  free(z);free(WX);free(tau);free(pivot);free(raw);
+  if (neg_w) { free(nind);free(d);free(Vt);}
 }
 
 
