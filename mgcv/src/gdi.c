@@ -254,6 +254,99 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   return(null_space_dim);
 }
 
+void get_ddetXW2XpS(double *det1,double *det2,double *P,double *K,double *sp,
+             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
+
+/* obtains derivatives of |X'W^2X + S| wrt the log smoothing parameters, as required for REML. 
+   The determinant itself has to be obtained during intial decompositions: see gdi().
+
+   * P is q by r
+   * K is n by r
+  
+   * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
+ 
+   * Note that P and K are as in Wood (2008) JRSSB 70, 495-518.
+
+*/
+
+{ double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1;
+  int m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2;
+  if (*deriv==2) deriv2=1; else deriv2=0;
+  /* obtain diag(KK') */ 
+  if (*deriv) {
+    diagKKt = (double *)calloc((size_t)*n,sizeof(double));
+    xx = diagABt(diagKKt,K,K,n,r); 
+  } else { /* nothing to do */
+      return;
+  }
+  /* set up work space */
+  work =  (double *)calloc((size_t)*n,sizeof(double));
+
+  /* now loop through the smoothing parameters to create K'TkK */
+  if (deriv2) {
+    KtTK = (double *)calloc((size_t)(*r * *r * *M),sizeof(double));
+    for (k=0;k < *M;k++) {
+      j = k * *r * *r;
+      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work);
+    }
+  } else { KtTK=(double *)NULL;} /* keep compiler happy */
+  
+  /* start first derivative */ 
+  bt=1;ct=0;mgcv_mmult(det1,Tk,diagKKt,&bt,&ct,M,&one,n); /* tr(TkKK') */ 
+
+  /* Finish first derivative and create create P'SmP if second derivs needed */
+ 
+  PtrSm = (double *)calloc((size_t)(*r * *q ),sizeof(double)); /* storage for P' rSm */
+  trPtSP = (double *)calloc((size_t) *M,sizeof(double));
+
+  if (deriv2) {
+    PtSP = (double *)calloc((size_t)(*M * *r * *r ),sizeof(double));
+  } else { PtSP = (double *) NULL;}
+
+  for (rSoff=0,m=0;m < *M;m++) { /* loop through penalty matrices */
+     bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
+     rSoff += rSncol[m];
+     trPtSP[m] = sp[m] * diagABt(work,PtrSm,PtrSm,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
+     det1[m] = 2*det1[m] + trPtSP[m]; /* completed first derivative */
+     if (deriv2) { /* get P'S_mP */
+       bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm,PtrSm,&bt,&ct,r,r,rSncol+m);
+     }
+  }
+
+  /* Now accumulate the second derivatives */
+
+  if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+     km=k * *M + m;mk=m * *M + k;
+     /* 2tr(Tkm KK') */
+     for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
+     det2[km] = xx;
+
+     /* -4 tr(KTkKK'TmK) */
+     det2[km] -= diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+
+     /* sp[k]*tr(P'S_kP) */
+     if (k==m) det2[km] += trPtSP[m];
+
+     /* -sp[m]*tr(K'T_kKP'S_mP) */
+     det2[km] -= sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
+     
+     /* -sp[k]*tr(K'T_mKP'S_kP) */
+     det2[km] -= sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
+ 
+     /* - sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+     det2[km] -= sp[m]*sp[k]*diagABt(work,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
+
+     det2[mk] = det2[km];     
+  }
+
+  /* free up some memory */
+  if (deriv2) {free(PtSP);free(KtTK);}
+  free(diagKKt);free(work);
+  free(PtrSm);free(trPtSP);
+
+}
+
+
 void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
              double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
 
@@ -1206,7 +1299,11 @@ void ift(double *X,double *P,double *rS,double *beta,double *sp,double *w,
     pp = b2;   
     for (i=0;i<*M;i++) for (k=i;k<*M;k++) { 
       p0 = eta1 + *n * i;p1 = eta1 + *n * k;
-      for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * 2 * w[j] * dwdeta[j];
+      /*  for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * 2 * w[j] * dwdeta[j];
+          .... this version only for use when weights are square root weights,
+          following is used instead
+      */
+      for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * dwdeta[j];
       bt=1;ct=0;mgcv_mmult(Skb,X,work,&bt,&ct,q,&one,n); /* X'f */
       multSk(work,b1+k* *q,&one,i,rS,rSncol,q,work1); /* get S_i dbeta/drho_k */
       for (j=0;j<*q;j++) Skb[j] += -sp[i]*work[j];
@@ -1418,9 +1515,8 @@ void gdi(double *X,double *E,double *rS,
     bt=0;ct=1;mgcv_mmult(IQ,Ri,Vt,&ct,&rank,&rank,&rank);
     for (p0=P,p1=IQ,j=0;j<rank;j++,p1 += *n,p0+= *q) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
       for (p4=p0,p2 = p1,p3=p1 + rank;p2<p3;p4++,p2++) *p4 = *p2; 
-    free(IQ);        
+    free(IQ);free(d);free(Vt)    
   } else { /* no negative weights so P and K much simpler */
-    Vt = d = (double *)NULL; 
     /* Form K */
     for (p0=K,p1=Q1,j=0;j<rank;j++,p1 += nn) /* copy just Q1 into K */
     for (p2 = p1,p3=p1 + n;p2<p3;p0++,p2++) *p0 = *p2; 
@@ -1498,7 +1594,7 @@ void gdi(double *X,double *E,double *rS,
  
     v1 = work;v2=work + *n * *M; /* a couple of working vectors */ 
    
-    /* Set up constants involved in z (not z'!) updates (little work => leave readable!)*/
+    /* Set up constants involved updates (little work => leave readable!)*/
     c0=(double *)calloc((size_t)*n,sizeof(double));
     c1=(double *)calloc((size_t)*n,sizeof(double));  
     c2=(double *)calloc((size_t)*n,sizeof(double));
@@ -1552,7 +1648,7 @@ void gdi(double *X,double *E,double *rS,
     } /* end of full Newton setup */
 
 
-    /* some useful arrays for Tk and Tkm */
+    /* a useful arrays for Tk and Tkm */
     wi=(double *)calloc((size_t)*n,sizeof(double)); 
     for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i])}
 
