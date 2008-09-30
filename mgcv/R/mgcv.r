@@ -1059,7 +1059,7 @@ gam.outer <- function(lsp,fscale,family,control,method,gamma,G,...)
   
   if (criterion=="UBRE") object$scale <- G$sig2 else object$scale <- object$scale.est 
   
-  mv<-magic.post.proc(G$X,object,w=sqrt(object$weights))
+  mv<-magic.post.proc(G$X,object,w=object$weights)
   object$Vp <- mv$Vb
   object$hat<-mv$hat
   object$Ve <- mv$Ve
@@ -1682,7 +1682,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
         if (find.theta) {# then family is negative binomial with unknown theta - estimate it here from G$sig2
 #          if (G$fit.method=="magic") { ## then need to get edf array
-            mv<-magic.post.proc(G$X,mr,w=G$w)
+            mv<-magic.post.proc(G$X,mr,w=G$w^2)
             G$edf <- mv$edf
 #          }
           Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
@@ -1791,7 +1791,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     n.ok <- nobs - sum(weights == 0)
     nulldf <- n.ok - as.integer(intercept)
  #   if (G$fit.method=="magic") { # then some post processing is needed to extract covariance matrix etc...
-      mv<-magic.post.proc(G$X,mr,w=G$w)
+      mv<-magic.post.proc(G$X,mr,w=G$w^2)
       G$Vp<-mv$Vb;G$hat<-mv$hat;
       G$Ve <- mv$Ve # frequentist cov. matrix
       G$edf<-mv$edf
@@ -3187,20 +3187,20 @@ magic.post.proc <- function(X,object,w=NULL)
 # Ve the frequentist parameter estimator covariance matrix.
 # edf the array of estimated degrees of freedom per parameter Vb%*%t(X)%*%W%*%X /scale
 # hat the leading diagonal of the hat/influence matrix 
-# NOTE: W=diag(w^2). 
+# NOTE: W=diag(w) if w non-matrix, otherwise w is a matrix square root. 
 # flop count is O(nq^2) if X is n by q... this is why routine not part of magic
 { V<-object$rV%*%t(object$rV)
   if (!is.null(w)) 
-  { if (is.matrix(w))
-    X<-w%*%X else 
-    X<-as.vector(w)*X # use recycling rule to form diag(w)%*%X cheaply 
+  { if (is.matrix(w)) WX <- X <- w%*%X else 
+    WX <- as.vector(w)*X # use recycling rule to form diag(w)%*%X cheaply 
     
-  }
-  M <- V%*%t(X);B <- X*t(M)
-  Ve <- M%*%t(M)*object$scale # frequentist cov. matrix
+  } else {WX <- X}
+  M <- WX%*%V
+  Ve <- (V%*%t(X))%*%M*object$scale # frequentist cov. matrix
+  B <- X*M
   rm(M)
-  hat <- apply(B,1,sum) # diag(X%*%V%*%t(X))
-  edf <- apply(B,2,sum) # diag(V%*%t(X)%*%X)
+  hat <- apply(B,1,sum) # diag(X%*%V%*%t(WX))
+  edf <- apply(B,2,sum) # diag(V%*%t(X)%*%WX)
   Vb <- V*object$scale;rm(V)
   list(Ve=Ve,Vb=Vb,hat=hat,edf=edf)
 }

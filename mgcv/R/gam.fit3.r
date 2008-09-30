@@ -145,6 +145,14 @@ gam.fit2 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
               e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
               z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
               w <- sqrt(weg*e*mevg/var.mug)
+              ## correct `good', `w' and `z' to remove any zero weights
+              if (sum(w==0)) {
+                wf <- weights*0
+                wf[good] <- w
+                good <- (wf!=0)&good
+                ind <- w!=0
+                w <- w[ind];z <- z[ind]
+              }
             }
 
             ## Here a Fortran call has been replaced by update.beta call
@@ -287,13 +295,29 @@ gam.fit2 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          var.mug<-variance(mug)
 
          if (fisher) { ## Conventional Fisher scoring
+              
               z <- (eta - offset)[good] + (yg - mug)/mevg
+            
               w <- sqrt((weg * mevg^2)/var.mug)
          } else { ## full Newton
+          
               c <- yg - mug
               e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
               z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
               w <- sqrt(weg*e*mevg/var.mug)
+
+              ## correct `good', `w' and `z' to remove any zero weights
+              if (sum(w==0)) {
+                wf <- weights*0
+                wf[good] <- w
+                good <- (wf!=0)&good
+                ind <- w!=0
+                w <- w[ind];z <- z[ind]
+                mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
+                weg <- weights[good];etag <- eta[good]
+                var.mug<-variance(mug)
+              }
+         
          }
         
          g1 <- 1/mevg
@@ -813,7 +837,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                REML1 <- oo$D1/(2*scale) + oo$trA1/2
                if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp))/2
                if (sum(!is.finite(REML2))) {
-                 stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")
+                 stop("Non finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")
                }
              }
            } else { ## scale unknown use Pearson-Fisher-Laplace REML
@@ -854,7 +878,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
              P1 <- oo$P1
           
              if (sum(!is.finite(D1))||sum(!is.finite(P1))||sum(!is.finite(trA1))) { 
-                 stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
+                 stop("Non-finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")}
          
              delta.3 <- delta*delta.2
   
@@ -868,7 +892,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                P2 <- matrix(oo$P2,nSp,nSp)
               
                if (sum(!is.finite(D2))||sum(!is.finite(P2))||sum(!is.finite(trA2))) { 
-                 stop("Smoothing parameter derivate iteration diverging. Decrease fit tolerance! See `epsilon' in `gam.contol'")}
+                 stop("Non-finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")}
              
                GCV2 <- outer(trA1,D1)
                GCV2 <- (GCV2 + t(GCV2))*gamma*2*nobs/delta.3 +
@@ -945,6 +969,10 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
 
+   P0 <- b$P;fd.P1 <- P10 <- b$P1;  if (deriv==2) fd.P2 <- P2 <- b$P2 
+   trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
+   dev0 <- b$deviance;fd.D1 <- D10 <- b$D1 ; if (deriv==2) fd.D2 <- D2 <- b$D2 
+
    if (scoreType=="REML") {
      score0 <- b$REML;grad0 <- b$REML1; if (deriv==2) hess <- b$REML2 
    } else if (scoreType=="GACV") {
@@ -964,6 +992,12 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
       
+      if (scoreType!="REML") {
+        P <- b$P; P1 <- b$P1
+        trA <- b$trA;gtrA <- b$trA1
+      }
+      dev <- b$deviance;D1 <- b$D1
+
       if (scoreType=="REML") {
         score <- b$REML;if (deriv==2) grad <- b$REML1;
       } else if (scoreType=="GACV") {
@@ -974,10 +1008,57 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
         score <- b$GCV;if (deriv==2) grad <- b$GCV1;
       }
 
+      if (scoreType!="REML") {
+        fd.P1[i] <- (P-P0)/eps
+        fd.gtrA[i] <- (trA-trA0)/eps
+      }
+      fd.D1[i] <- (dev - dev0)/eps
+     
       fd.grad[i] <- (score-score0)/eps
-      if (deriv==2) fd.hess[,i] <- (grad-grad0)/eps
+      if (deriv==2) { 
+        fd.hess[,i] <- (grad-grad0)/eps
+        if (scoreType!="REML") {
+          fd.htrA[,i] <- (gtrA-gtrA0)/eps
+          fd.P2[,i] <- (P1-P10)/eps
+        }
+        fd.D2[,i] <- (D1-D10)/eps
+       
+      }
    }
    
+   if (scoreType!="REML") {
+     cat("\n Pearson Statistic... \n")
+     cat("grad    ");print(P10)
+     cat("fd.grad ");print(fd.P1)
+     if (deriv==2) {
+       fd.P2 <- .5*(fd.P2 + t(fd.P2))
+       cat("hess\n");print(P2)
+       cat("fd.hess\n");print(fd.P2)
+     }
+
+     cat("\n\n tr(A)... \n")
+     cat("grad    ");print(gtrA0)
+     cat("fd.grad ");print(fd.gtrA)
+     if (deriv==2) {
+       fd.htrA <- .5*(fd.htrA + t(fd.htrA))
+       cat("hess\n");print(htrA)
+       cat("fd.hess\n");print(fd.htrA)
+     }
+   }
+
+   cat("\n Deviance... \n")
+   cat("grad    ");print(D10)
+   cat("fd.grad ");print(fd.D1)
+   if (deriv==2) {
+     fd.D2 <- .5*(fd.D2 + t(fd.D2))
+     cat("hess\n");print(D2)
+     cat("fd.hess\n");print(fd.D2)
+   }
+
+
+
+   cat("\n\n The objective...\n")
+
    cat("grad    ");print(grad0)
    cat("fd.grad ");print(fd.grad)
    if (deriv==2) {

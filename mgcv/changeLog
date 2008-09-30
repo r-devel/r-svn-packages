@@ -26,6 +26,9 @@
 
 * `power' links now handled by default fitting methods (i.e. gam.fit3)
 
+* `magic.post.proc' now expects weights, not sqrt(weights) as the 
+   `w' argument (unless `w' is a matrix).
+
 * p-values tweaked again, for slightly better performance with smooths of 
 several variables. Still not quite right.
 

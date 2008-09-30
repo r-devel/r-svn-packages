@@ -317,11 +317,11 @@ void get_ddetXW2XpS(double *det1,double *det2,double *P,double *K,double *sp,
 
   if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
      km=k * *M + m;mk=m * *M + k;
-     /* 2tr(Tkm KK') */
+     /* tr(Tkm KK') */
      for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
      det2[km] = xx;
 
-     /* -4 tr(KTkKK'TmK) */
+     /* - tr(KTkKK'TmK) */
      det2[km] -= diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
      /* sp[k]*tr(P'S_kP) */
@@ -333,7 +333,7 @@ void get_ddetXW2XpS(double *det1,double *det2,double *P,double *K,double *sp,
      /* -sp[k]*tr(K'T_mKP'S_kP) */
      det2[km] -= sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
  
-     /* - sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+     /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
      det2[km] -= sp[m]*sp[k]*diagABt(work,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
 
      det2[mk] = det2[km];     
@@ -400,7 +400,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
      bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
      rSoff += rSncol[m];
      trPtSP[m] = sp[m] * diagABt(work,PtrSm,PtrSm,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
-     det1[m] = 2*det1[m] + trPtSP[m]; /* completed first derivative */
+     det1[m] += trPtSP[m]; /* completed first derivative */
      if (deriv2) { /* get P'S_mP */
        bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm,PtrSm,&bt,&ct,r,r,rSncol+m);
      }
@@ -441,7 +441,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 
 
 void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *sp,
-             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
+	      double *rS,int *rSncol,double *Tk,double *Tkm,double *w,int *n,int *q,int *r,int *M,int *deriv)
 
 /* obtains trA and its first two derivatives wrt the log smoothing parameters 
    * P is q by r
@@ -456,30 +456,42 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
 
 */
 
-{ double *diagKKt,*diagKKtKKt,xx,*KtTK,*KtTKKtK,*KKtK,*KtK,*work,*pTk,*pTm,*pdKKt,*pdKKtKKt,*p1,*pd,
-    *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*diagKtKKtK,*PtSPKtK;
-  int i,m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2;
+{ double *diagKKt,*diagKKtKKt,xx,*KtTK,*KtTKKtK,*KKtK,*KtK,*work,*pTk,*pTm,*pdKKt,*pdKKtKKt,*p0,*p1,*p2,*p3,*pd,
+    *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*PtSPKtK, *KtKPtrSm, *KKtKPtrSm,*Ip,*IpK;
+  int i,m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2,neg_w=0;
   if (*deriv==2) deriv2=1; else deriv2=0;
-  /* obtain tr(A) and diag(A) = diag(KK') */ 
-  if (*deriv) {
-    diagKKt = (double *)calloc((size_t)*n,sizeof(double));
-    *trA = diagABt(diagKKt,K,K,n,r);
-  } else { /* then only tr(A) is required so return now*/
-      for (xx=0.0,i=0,j=i+ *n * *r;i<j;i++,K++) xx+= *K * *K;
-      *trA = xx;
-      return;
+  /* Get the sign array for negative w_i */
+  Ip = (double *)calloc((size_t)*n,sizeof(double));
+  for (p0=w,p1=p0+ *n,p2=Ip;p0<p1;p0++,p2++) if (*p0 < 0) {*p2 = -1.0;neg_w=1;} else *p2 = 1.0;
+
+  /* obtain tr(A) and diag(A) = diag(KK'Ip) */ 
+  diagKKt = (double *)calloc((size_t)*n,sizeof(double));
+  *trA = diagABt(diagKKt,K,K,n,r); 
+  if (neg_w) { /* correct trA */
+    for (*trA=0.0,p0=diagKKt,p1=p0 + *n,p2=Ip;p0<p1;p0++,p2++) *trA += *p2 * *p0;
   }
+  if (!*deriv) {
+    free(Ip);free(diagKKt);
+    return;
+  }
+
   /* set up work space */
   work =  (double *)calloc((size_t)*n,sizeof(double));
-  /* Get K'K and KK'K  */
+  /* Get K'IpK and KK'IpK  */
   KtK = (double *)calloc((size_t)*r * *r,sizeof(double));
-  bt=1;ct=0;mgcv_mmult(KtK,K,K,&bt,&ct,r,r,n);  
+  if (neg_w) { 
+    IpK = (double *)calloc((size_t) *r * *n,sizeof(double));
+    for (p0=IpK,p3=K,i=0;i<*r;i++) 
+      for (p1=Ip,p2=p1 + *n;p1<p2;p1++,p0++,p3++) *p0 = *p1 * *p3; 
+  } else IpK = K;
+  bt=1;ct=0;mgcv_mmult(KtK,K,IpK,&bt,&ct,r,r,n);  
   KKtK = (double *)calloc((size_t)*n * *r,sizeof(double));
-  bt=1;ct=0;mgcv_mmult(KKtK,K,KtK,&bt,&ct,n,r,r);  
+  bt=0;ct=0;mgcv_mmult(KKtK,K,KtK,&bt,&ct,n,r,r);  
 
-  /* obtain diag(K'KK'K) */
-  diagKtKKtK = (double *)calloc((size_t)*n,sizeof(double));
-  xx = diagABt(diagKtKKtK,KKtK,K,n,r);
+  /* obtain diag(KK'KK') */
+  diagKKtKKt = (double *)calloc((size_t)*n,sizeof(double));
+  xx = diagABt(diagKKtKKt,KKtK,K,n,r);
+ 
   /* now loop through the smoothing parameters to create K'TkK and K'TkKK'K */
   if (deriv2) {
     KtTK = (double *)calloc((size_t)(*r * *r * *M),sizeof(double));
@@ -505,19 +517,21 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
           xx += *Tkm * (*pdKKt - *pdKKtKKt);
      trA2[km] = xx;
 
-     /* -2 tr(K'TkKK'TmAK)*/
+     /* -2 tr(K'TkKK'TmK)*/
      trA2[km] -= 2*diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
-     /* 2 tr(K'TkKK'TmKK'K) */
-     trA2[km] += 2*diagABt(work,KtTK+k * *r * *r,KtTKKtK+m * *r * *r,q,r);
- 
+     /* 2 tr(K'TkKK'TmKK'K) -- needs correction*/
+     xx = 2*diagABt(work,KtTK+k * *r * *r,KtTKKtK+m * *r * *r,q,r);
+    
+     trA2[km] += xx;
+
      trA2[mk] = trA2[km];     
   }
 
   /* free up some memory */
   if (deriv2) {free(KtTKKtK);free(KtTK);} 
 
-  free(diagKtKKtK);free(diagKKt);
+  free(diagKKtKKt);free(diagKKt);
 
   /* create KP'rSm, KK'KP'rSm and P'SmP */
   PtrSm = (double *)calloc((size_t)(*r * *q ),sizeof(double)); /* transient storage for P' rSm */
@@ -526,7 +540,8 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
   if (deriv2) {
     PtSP = (double *)calloc((size_t)(*M * *r * *r ),sizeof(double));
     PtSPKtK = (double *)calloc((size_t)(*M * *r * *r ),sizeof(double));
-    KtKPtrSm = (double *)calloc((size_t)(*n * *q),sizeof(double));/* transient storage for K U1'U1 P'rSm */ 
+    KtKPtrSm = (double *)calloc((size_t)(*r * *q),sizeof(double));/* transient storage for K'K P'rSm */ 
+    KKtKPtrSm = (double *)calloc((size_t)(*n * *q),sizeof(double));/* transient storage for K'K P'rSm */ 
     diagKPtSPKtKKt = (double *)calloc((size_t)(*n * *M),sizeof(double));
   } else { PtSP=KtKPtrSm=diagKPtSPKtKKt=(double *)NULL; }
   for (rSoff=0,m=0;m < *M;m++) {
@@ -542,6 +557,10 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
     }
     rSoff += rSncol[m];
     xx = sp[m] * diagABt(diagKPtSPKt+ m * *n,KPtrSm,KPtrSm,n,rSncol+m);
+       if (neg_w) { /* have to correct xx for negative w_i */
+      for (xx=0.0,p0=diagKPtSPKt+m * *n,p1=p0 + *n,p2=Ip;p0<p1;p0++,p2++) xx += *p0 * *p2;
+      xx *= sp[m];
+    }
     trA1[m] -= xx; /* finishing trA1 */
     if (deriv2) trA2[m * *M + m] -=xx; /* the extra diagonal term of trA2 */
   }
@@ -582,7 +601,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
    /* clear up */
    free(PtrSm);free(KPtrSm);free(PtSP);free(KtKPtrSm);free(diagKPtSPKt);
    free(diagKPtSPKtKKt);free(work);free(KtK);free(KKtK);free(PtSPKtK);
-   
+   free(Ip);if (neg_w) free(IpK);  
 }
 
 
@@ -1165,7 +1184,7 @@ void pearson2(double *P, double *P1, double *P2,
     if (deriv) {
       Pe1[i] = - xx* (2 + resid*V1[i])/g1[i];
       if (deriv2) {
-        Pe2[i] = - Pe1[i]*g2[i] + 
+        Pe2[i] = - Pe1[i]*g2[i]/g1[i] + 
 	  (2*p_weights[i]/V[i]+2*xx*V1[i] - Pe1[i]*V1[i]*g1[i] - xx*resid*(V2[i]-V1[i]*V1[i]))/(g1[i]*g1[i]);
       }
     }
@@ -1415,14 +1434,15 @@ void gdi(double *X,double *E,double *rS,
     
 
 */
-{ double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*K=NULL,*R,*d,*Vt,*V,*U1,*KU1t=NULL,xx,*b1,*b2,*P,
+{ double *zz,*WX,*tau,*work,*pd,*p0,*p1,*p2,*p3,*p4,*K=NULL,
+         *Ri,*d,*Vt,xx,*b1,*b2,*P,
          *c0,*c1,*c2,*a1,*a2,*eta1,*eta2,
-         *PKtz,*v1,*v2,*wi,*wis,*w1,*w2,*pw2,*Tk,*Tkm,
-         *pb2, *dev_grad,*dev_hess=NULL,Rcond,*tau2,
+         *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
+         *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
-         *alpha,*alpha1,*alpha2,*raw;
-  int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
-         n_eta1,n_eta2,n_work,deriv2,*pivot2,null_space_dim,neg_w=0;
+    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ;
+  int i,j,k,*pivot,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
+    n_eta1,n_eta2,n_work,deriv2,null_space_dim,neg_w=0,*nind,nn,ii,ldetI2D;
 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
@@ -1440,9 +1460,9 @@ void gdi(double *X,double *E,double *rS,
     k=0;for (i=0;i< *n;i++) if (w[i]<0) { nind[k]=i;k++;}
   } else { nind = (int *)NULL;}
 
-  for (i=0;i< *n;i++) zz[i] = y[i]*raw[i]; /* form z itself*/
+  for (i=0;i< *n;i++) zz[i] = z[i]*raw[i]; /* form z itself*/
 
-  for (i=0;i<neg_w;i++) {k=nind[i];zz[k] = -zz[k];} 
+  for (i=0;i<neg_w;i++) { k=nind[i];zz[k] = -zz[k];} 
 
   WX = (double *) calloc((size_t) ( nn * *q),sizeof(double));
   for (j=0;j<*q;j++) 
@@ -1450,7 +1470,7 @@ void gdi(double *X,double *E,double *rS,
     { k = i + nn * j;
       WX[k]=raw[i]*X[i + *n *j];
     }
-    for (ii=0,i = *n;ii<*cE;i++,ii++) /* append E' */ 
+    for (ii=0,i = *n;ii<*Encol;i++,ii++) /* append E' */ 
     { k = i + nn * j;
       WX[k] = E[j + *q * ii];
     }
@@ -1475,7 +1495,7 @@ void gdi(double *X,double *E,double *rS,
   left=1;tp=0;mgcv_qrqy(Q1,WX,tau,&nn,&rank,q,&left,&tp); /* Q from the QR decomposition */
 
   Ri =  (double *)calloc((size_t) rank * rank,sizeof(double)); 
-  Rinv(Ri,WX,&rank,nn,&rank); /* getting R^{-1} */
+  Rinv(Ri,WX,&rank,&nn,&rank); /* getting R^{-1} */
   
   K = (double *)calloc((size_t) *n * rank,sizeof(double));
   P = (double *)calloc((size_t) *q * rank,sizeof(double));
@@ -1509,20 +1529,20 @@ void gdi(double *X,double *E,double *rS,
     /* Form K */
     IQ = (double *)calloc((size_t) *n * rank,sizeof(double));
     for (p0=IQ,p1=Q1,j=0;j<rank;j++,p1 += nn) /* copy just Q1 into IQ */
-      for (p2 = p1,p3=p1 + n;p2<p3;p0++,p2++) *p0 = *p2; 
-    bt=0;ct=1;mgcv_mmult(K,IQ,Vt,&bt,&ct,*n,&rank,&rank);
+      for (p2 = p1,p3=p1 + *n;p2<p3;p0++,p2++) *p0 = *p2; 
+    bt=0;ct=1;mgcv_mmult(K,IQ,Vt,&bt,&ct,n,&rank,&rank);
     /* Form P */
-    bt=0;ct=1;mgcv_mmult(IQ,Ri,Vt,&ct,&rank,&rank,&rank);
-    for (p0=P,p1=IQ,j=0;j<rank;j++,p1 += *n,p0+= *q) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
-      for (p4=p0,p2 = p1,p3=p1 + rank;p2<p3;p4++,p2++) *p4 = *p2; 
-    free(IQ);free(d);free(Vt)    
+    bt=0;ct=1;mgcv_mmult(IQ,Ri,Vt,&bt,&ct,&rank,&rank,&rank);
+    for (p0=P,p1=IQ,j=0;j<rank;j++,p0+= *q) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
+      for (p2=p0,p3 = p2 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
+    free(IQ);free(d);free(Vt);   
   } else { /* no negative weights so P and K much simpler */
     /* Form K */
     for (p0=K,p1=Q1,j=0;j<rank;j++,p1 += nn) /* copy just Q1 into K */
-    for (p2 = p1,p3=p1 + n;p2<p3;p0++,p2++) *p0 = *p2; 
+    for (p2 = p1,p3=p1 + *n;p2<p3;p0++,p2++) *p0 = *p2; 
     /* Form P */
-    for (p0=P,p1=Ri,j=0;j<rank;j++,p1 += *n,p0+= *q) /* copy R^{-1} into first rows of P */
-    for (p4=p0,p2 = p1,p3=p1 + rank;p2<p3;p4++,p2++) *p4 = *p2; 
+    for (p0=P,p1=Ri,j=0;j<rank;j++,p0+= *q) /* copy R^{-1} into first rows of P */
+    for (p2=p0,p3=p0 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
   }
   
   /* At this stage P and K are complete */
@@ -1566,6 +1586,11 @@ void gdi(double *X,double *E,double *rS,
   bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,&rank,&one,n);
   bt=0;ct=0;mgcv_mmult(PKtz,P,work,&bt,&ct,q,&one,&rank);  
 
+
+  /************************************************************************************/
+  /* free some memory */                    
+  /************************************************************************************/
+  free(raw);free(nind);free(WX);free(tau);free(Q1);free(Ri);
  
   /************************************************************************************/
   /* The coefficient derivative setup starts here */
@@ -1610,7 +1635,7 @@ void gdi(double *X,double *E,double *rS,
       for (i=0;i<*n;i++) c2[i]=(c0[i]*(g3[i]-g2[i]*g2[i])-g2[i])/g1[i];
 
       /* set up constants involved in w updates */
-      /* dw/deta = - w[i]/2*(V'/V+2g''/g')/g' */
+      /* dw/deta = - w[i]*(V'/V+2g''/g')/g' */
       for (i=0;i< *n;i++) a1[i] = -  w[i] *(V1[i] + 2*g2[i])/g1[i];
      
       
@@ -1650,7 +1675,7 @@ void gdi(double *X,double *E,double *rS,
 
     /* a useful arrays for Tk and Tkm */
     wi=(double *)calloc((size_t)*n,sizeof(double)); 
-    for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i])}
+    for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i]);}
 
 
     /* get gradient vector and Hessian of deviance wrt coefficients */
@@ -1667,7 +1692,7 @@ void gdi(double *X,double *E,double *rS,
   } /* end of if (*deriv) */ 
   else { /* keep compilers happy */
     b1=eta1=eta2=c0=c1=c2=(double *)NULL;
-    a1=a2=wi=wis=dev_grad=w1=w2=b2=(double *)NULL;
+    a1=a2=wi=dev_grad=w1=w2=b2=(double *)NULL;
     Tk=Tkm=(double *)NULL;
   }
   /************************************************************************************/
@@ -1702,17 +1727,9 @@ void gdi(double *X,double *E,double *rS,
     }
     /* get Tk and Tkm */
       
-    rc_prod(Tk,wi,w1,M,n); /* Tk done */
-    if (deriv2) {
-      rc_prod(Tkm,wi,w2,&n_2dCols,n);
-      for (p0=Tkm,m=0;m < *M;m++) for (k=m;k < *M;k++) {
-        rc_prod(v1,w1+k * *n,w1+m * *n,&one,n);
-        rc_prod(v2,wis,v1,&one,n);
-        p2 = v2 + *n;
-        for (p1=v2;p1<p2;p1++,p0++) *p0 -= *p1; 
-      } /* Tkm finished */
-    } 
-
+    rc_prod(Tk,wi,w1,M,n); 
+    if (deriv2) rc_prod(Tkm,wi,w2,&n_2dCols,n);
+    
     /* evaluate gradient and Hessian of deviance */
 
     bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,q); /* gradient of deviance is complete */
@@ -1777,10 +1794,10 @@ void gdi(double *X,double *E,double *rS,
   }
 
   /* clean up memory, except what's needed to get tr(A) and derivatives 
-     Note: Vt and R already freed. P is really V - don't free yet.
+     
   */ 
   
-  free(WX);free(tau);free(pivot);free(work);free(PKtz);free(zz);
+  free(pivot);free(work);free(PKtz);free(zz);
   
   if (*deriv) {
     free(b1);free(eta1);
@@ -1797,13 +1814,12 @@ void gdi(double *X,double *E,double *rS,
   /* Note: the following gets only trA if REML is being used,
            so as not to overwrite the derivatives actually needed  */
   if (*REML) i=0; else i = *deriv;
-  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,&i);
+  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,w,n,q,&rank,M,&i);
 
-  /* clear up the remainder */
-  free(U1);free(V);
 
+  free(P);free(K);
   if (*deriv)
-  { free(Tk);free(Tkm);free(KU1t);free(K);
+    { free(Tk);free(Tkm);
   }
 
   if (*REML) {*rank_tol = reml_penalty;*conv_tol = bSb;}
@@ -3928,7 +3944,7 @@ void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,doubl
     }
     /* d now contains diagonal of diagonal matrix (I-2D^2)^{-1} (possibly pseudoinverse) */
   } else {Vt = d = (double *)NULL; }
-  /* The -ve w_i corection is now complete */
+  /* The -ve w_i correction is now complete */
 
   /* Now get the fitted values X \beta, *without* finding \beta */
   left=1;tp=1;mgcv_qrqy(z,WX,tau,&nn,&one,q,&left,&tp); /* z = Q'z */
