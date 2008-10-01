@@ -600,7 +600,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
    } 
    /* clear up */
    free(PtrSm);free(KPtrSm);free(PtSP);free(KtKPtrSm);free(diagKPtSPKt);
-   free(diagKPtSPKtKKt);free(work);free(KtK);free(KKtK);free(PtSPKtK);
+   free(diagKPtSPKtKKt);free(work);free(KtK);free(KKtK);free(PtSPKtK);free(KKtKPtrSm);
    free(Ip);if (neg_w) free(IpK);  
 }
 

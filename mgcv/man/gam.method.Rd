@@ -8,7 +8,7 @@ estimation criterion for a gam. It is used to set argument \code{method} of \cod
 }
 \usage{
 gam.method(gam="outer",outer="newton",gcv="deviance",reml=FALSE,
-           fisher=TRUE,family=NULL)
+           family=NULL)
 }
 \arguments{ 
 
@@ -43,15 +43,12 @@ combinations (see Wood, 2008).
 
 \item{reml}{Should REML be used as the smoothing parameter selector, rather 
 than GCV/AIC/UBRE? The REML criteria used is based on a Laplace 
-approximation. If \code{fisher==TRUE} then the expected Hessian of the log-likelihood
-is used in place of the Hessian for non-canonical links. 
+approximation. 
 A Pearson estimate is used for the scale parameter. REML is not available
 with performance iteration. There is some evidence that REML is actually the 
 best choise in most cases.}
 
-\item{fisher}{\code{TRUE} to use Fisher scoring, \code{FALSE} to use full Newton fitting 
-              (which are the same thing if a canonical link is used.). Useful for the 
-             rare cases where Fisher scoring fails, or is very slow to converge. }
+
 
 \item{family}{The routine is called by \code{\link{gam}} to check the supplied
 method argument. In this circumstance the family argument is passed, to check

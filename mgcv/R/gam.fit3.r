@@ -500,7 +500,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 ## it deals with weights, rather than sqrt weights.
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
-{   if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE ## Newton = Fisher, but Fisher cheaper!
+{   if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE ##if cononical Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     scale <- abs(scale)
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
@@ -822,7 +822,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
            REML = as.integer(scoreType=="REML"),fisher=as.integer(fisher))      
        
-         if (control$trace) cat("done! (iteration took ",oo$deriv," steps)\n")
+         if (control$trace) cat("done!\n")
  
          rV <- matrix(oo$rV,ncol(x),ncol(x))
          coef <- oo$beta;
@@ -830,7 +830,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          scale.est <- dev/(nobs-trA)
 
         if (scoreType=="REML") {
-          if (scale.known) { ## use Fisher-Laplace REML
+          if (scale.known) { ## use Laplace REML
              ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
              REML <- (dev + oo$conv.tol)/(2*scale) - ls[1] + oo$rank.tol/2
              if (deriv) {
@@ -840,7 +840,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
                  stop("Non finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")
                }
              }
-           } else { ## scale unknown use Pearson-Fisher-Laplace REML
+           } else { ## scale unknown use Pearson-Laplace REML
              phi <- oo$P ## REMLish scale estimate
              ls <- family$ls(y,weights,n,phi) ## saturated likelihood and derivatives
              phi1 <- oo$P1;phi2 <- matrix(oo$P2,nSp,nSp)
@@ -1054,8 +1054,6 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
      cat("hess\n");print(D2)
      cat("fd.hess\n");print(fd.D2)
    }
-
-
 
    cat("\n\n The objective...\n")
 

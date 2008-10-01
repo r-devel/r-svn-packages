@@ -821,14 +821,13 @@ gam.method.description <- function(method,am=TRUE)
   } 
 }
 
-gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,fisher=TRUE,family=NULL)
+gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,family=NULL)
 # Function for returning fit method control list for gam.
 # gam controls the type of iteration to use for GAMs.
 # outer controls the optimization method to use when using outer
 # looping with gams.
 # gcv determines the flavour of GCV score for outer iteration
-{ if (!is.logical(fisher)) stop("`fisher' must be TRUE or FALSE.")
-  if (gam=="perf.magic") {
+{ if (gam=="perf.magic") {
     warning("\"perf.magic\" is deprecated: reset to \"perf\"")
     gam="perf"
   }
@@ -850,7 +849,7 @@ gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,fish
   
 #  if (!is.null(family)&&substr(family$family,1,17)=="Negative Binomial" 
 #       &&gam!="perf") gam <- "perf"  
-  list(gam=gam,outer=outer,gcv=gcv,reml=reml,fisher=fisher)
+  list(gam=gam,outer=outer,gcv=gcv,reml=reml)
 }
 
 gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
@@ -1110,8 +1109,7 @@ estimate.gam <- function (G,method,control,in.out,gamma,...) {
 #  temp.sp<-object$sp
 #  object$sp<-G$all.sp
 #  object$sp[G$all.sp<0]<-temp.sp
-   
-   
+      
   if (outer.looping)
   { # use perf.iter s.p. estimates from gam.fit or supplied initial s.p.s as starting values...
     lsp<-log(object$sp) 
@@ -1233,7 +1231,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (is.null(G$offset)) G$offset<-rep(0,G$n)
      
-    method <- gam.method(method$gam,method$outer,method$gcv,method$reml,method$fisher,family) # checking it's ok
+    method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
 
     if (scale==0) 
     { if (family$family[1]=="binomial"||family$family[1]=="poisson") scale<-1 #ubre
@@ -1253,7 +1251,6 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   if (!fit) return(G)
   
-  control$fisher <- method$fisher
   object <- estimate.gam(G,method,control,in.out,gamma,...)
   
 ##  object$full.formula<-as.formula(G$full.formula)
