@@ -113,7 +113,7 @@ void tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,d
     wb[jb] = j * w_base - lgamma((double)j+1) - lgamma(-j * alpha);
     x = j*(alpha-1)/ *phi;
     wb1[jb] = wb[jb] + log(-x); /* note this is for log(-W_j')) */
-    wb2[jb] = wb[jb] + log(x*(x-1));
+    wb2[jb] = wb[jb]  + log(x*(x-1/ *phi));
   }
 
   /* Now j0 is the true j corresponding to buffer position 0. j starts at 1.
@@ -155,7 +155,7 @@ void tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,d
         wb[jb] = j * w_base - lgamma((double)j+1) - lgamma(-j*alpha);
         x = j*(alpha-1)/ *phi;
         wb1[jb] = wb[jb] + log(-x);
-        wb2[jb] = wb[jb] + log(x*(x-1));
+        wb2[jb] = wb[jb] + log(x*(x-1/ *phi));
         jalogy = j*alogy[i];
         wj = wb[jb] - jalogy;
         w1j = wb1[jb]  - jalogy;
@@ -194,7 +194,7 @@ void tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,d
         wb[jb] = j * w_base - lgamma((double)j+1) - lgamma(-j*alpha);
         x = j*(alpha-1)/ *phi;
         wb1[jb] = wb[jb] + log(-x);
-        wb2[jb] = wb[jb] + log(x*(x-1));
+        wb2[jb] = wb[jb] + log(x*(x-1/ *phi));
         jalogy = j*alogy[i];
         wj = wb[jb] - jalogy;
         w1j = wb1[jb]  - jalogy;
@@ -229,14 +229,14 @@ void tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,d
 
 /* test code for tweedious...
 library(mgcv);library(tweedie)
-phi <- 1
-p <- 2.0
-mu <- 1.3
-y <- 1
+phi <- 2
+p <- 1.1
+mu <- .001
+y <- c(1,1,2,1,3,0,0,30,67)
 eps <- 1e-6
-l0 <- mgcv:::ldTweedie(y,mu=mu,p=p,phi=phi)
-l1 <- mgcv:::ldTweedie(y,mu=mu,p=p,phi=phi+eps)
-  (l1[2]-l0[2])/eps;l0
+l0 <- colSums(mgcv:::ldTweedie(y,mu=mu,p=p,phi=phi))
+l1 <- colSums(mgcv:::ldTweedie(y,mu=mu,p=p,phi=phi+eps))
+  (l1-l0)/eps;l0
 
 log(dtweedie(y,power=p,mu=mu,phi=phi))
 

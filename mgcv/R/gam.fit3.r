@@ -502,7 +502,13 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 ## need to modify family before call.
 {   if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE ##if cononical Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
-    scale <- abs(scale)
+    if (!scale.known&&scoreType=="REML") { ## the final element of sp is actually log(scale)
+      nsp <- length(sp)
+      scale <- exp(sp[nsp])
+      sp <- sp[-nsp]
+    }
+
+   # scale <- abs(scale) ## NOTE: this line should not be needed
     if (!deriv%in%c(0,1,2)) stop("unsupported order of differentiation requested of gam.fit3")
     x <- as.matrix(x)
     iter <- 0;coef <- rep(0,ncol(x))
@@ -820,7 +826,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
-           REML = as.integer(scoreType=="REML"),fisher=as.integer(fisher))      
+           REML = as.integer(scoreType%in%c("REML","P-REML")),fisher=as.integer(fisher))      
        
          if (control$trace) cat("done!\n")
  
@@ -828,38 +834,55 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          coef <- oo$beta;
          trA <- oo$trA;
          scale.est <- dev/(nobs-trA)
+         reml.scale <- NA  
 
-        if (scoreType=="REML") {
-          if (scale.known) { ## use Laplace REML
-             ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
-             REML <- (dev + oo$conv.tol)/(2*scale) - ls[1] + oo$rank.tol/2
-             if (deriv) {
-               REML1 <- oo$D1/(2*scale) + oo$trA1/2
-               if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp))/2
-               if (sum(!is.finite(REML2))) {
-                 stop("Non finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")
-               }
-             }
-           } else { ## scale unknown use Pearson-Laplace REML
-             phi <- oo$P ## REMLish scale estimate
-             ls <- family$ls(y,weights,n,phi) ## saturated likelihood and derivatives
-             phi1 <- oo$P1;phi2 <- matrix(oo$P2,nSp,nSp)
-             Dp <- dev + oo$conv.tol
-             Dp1 <- oo$D1
-             Dp2 <- matrix(oo$D2,nSp,nSp)
-             K <- oo$rank.tol/2
-             K1 <- oo$trA1/2;K2 <- matrix(oo$trA2,nSp,nSp)/2             
-
-             REML <- Dp/(2*phi) - ls[1] + K
-             if (deriv) {
-               REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2) + ls[2]) + K1
-               if (deriv==2) REML2 <- 
-                      Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
-                      (Dp/phi^3 - ls[3])*outer(phi1,phi1) -
-                      (Dp/(2*phi^2)+ls[2])*phi2 + K2
-             }
-           } 
-         } else { ## Not REML ....
+        if (scoreType=="REML") { ## use Laplace REML
+          
+          ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
+          Dp <- dev + oo$conv.tol
+          REML <- Dp/(2*scale) - ls[1] + oo$rank.tol/2
+          if (deriv) {
+            REML1 <- oo$D1/(2*scale) + oo$trA1/2
+            if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp))/2
+            if (sum(!is.finite(REML2))) {
+               stop("Non finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")
+            }
+          }
+          if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
+            ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
+            dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale
+            d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale
+            d2lr.dspphi <- -oo$D1/(2*scale)
+            REML1 <- c(REML1,dlr.dlphi)
+            if (deriv==2) {
+              REML2 <- rbind(REML2,d2lr.dspphi)
+              REML2 <- cbind(REML2,c(d2lr.dspphi,d2lr.d2lphi))
+            }
+          }
+          reml.scale <- scale
+        } else if (scoreType=="P-REML") { ## scale unknown use Pearson-Laplace REML
+          reml.scale <- phi <- oo$P ## REMLish scale estimate
+          ls <- family$ls(y,weights,n,phi) ## saturated likelihood and derivatives
+        
+          Dp <- dev + oo$conv.tol
+         
+          K <- oo$rank.tol/2
+                 
+          REML <- Dp/(2*phi) - ls[1] + K
+          if (deriv) {
+            phi1 <- oo$P1; Dp1 <- oo$D1; K1 <- oo$trA1/2;
+            REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2) + ls[2]) + K1
+            if (deriv==2) {
+                   phi2 <- matrix(oo$P2,nSp,nSp);Dp2 <- matrix(oo$D2,nSp,nSp)
+                   K2 <- matrix(oo$trA2,nSp,nSp)/2    
+                   REML2 <- 
+                   Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
+                   (Dp/phi^3 - ls[3])*outer(phi1,phi1) -
+                   (Dp/(2*phi^2)+ls[2])*phi2 + K2
+            }
+          }
+ 
+        } else { ## Not REML ....
 
            P <- oo$P
            
@@ -952,7 +975,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,
-        scale.est=scale.est,aic=aic.model,rank=oo$rank.est)
+        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est)
 }
 
 
@@ -973,7 +996,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
    trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
    dev0 <- b$deviance;fd.D1 <- D10 <- b$D1 ; if (deriv==2) fd.D2 <- D2 <- b$D2 
 
-   if (scoreType=="REML") {
+   if (scoreType=="REML"||scoreType=="P-REML") {
      score0 <- b$REML;grad0 <- b$REML1; if (deriv==2) hess <- b$REML2 
    } else if (scoreType=="GACV") {
      score0 <- b$GACV;grad0 <- b$GACV1;if (deriv==2) hess <- b$GACV2 
@@ -992,13 +1015,14 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
       
-      if (scoreType!="REML") {
+      if (scoreType!="REML"&&scoreType!="P-REML") {
         P <- b$P; P1 <- b$P1
         trA <- b$trA;gtrA <- b$trA1
+        dev <- b$deviance;D1 <- b$D1
       }
-      dev <- b$deviance;D1 <- b$D1
+     
 
-      if (scoreType=="REML") {
+      if (scoreType=="REML"||scoreType=="P-REML") {
         score <- b$REML;if (deriv==2) grad <- b$REML1;
       } else if (scoreType=="GACV") {
         score <- b$GACV;if (deriv==2) grad <- b$GACV1;
@@ -1008,25 +1032,27 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
         score <- b$GCV;if (deriv==2) grad <- b$GCV1;
       }
 
-      if (scoreType!="REML") {
+      if (scoreType!="REML"&&scoreType!="P-REML") {
         fd.P1[i] <- (P-P0)/eps
         fd.gtrA[i] <- (trA-trA0)/eps
+        fd.D1[i] <- (dev - dev0)/eps
       }
-      fd.D1[i] <- (dev - dev0)/eps
+      
      
       fd.grad[i] <- (score-score0)/eps
       if (deriv==2) { 
         fd.hess[,i] <- (grad-grad0)/eps
-        if (scoreType!="REML") {
+        if (scoreType!="REML"&&scoreType!="P-REML") {
           fd.htrA[,i] <- (gtrA-gtrA0)/eps
           fd.P2[,i] <- (P1-P10)/eps
+          fd.D2[,i] <- (D1-D10)/eps
         }
-        fd.D2[,i] <- (D1-D10)/eps
+        
        
       }
    }
    
-   if (scoreType!="REML") {
+   if (scoreType!="REML"&&scoreType!="P-REML") {
      cat("\n Pearson Statistic... \n")
      cat("grad    ");print(P10)
      cat("fd.grad ");print(fd.P1)
@@ -1044,17 +1070,18 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
        cat("hess\n");print(htrA)
        cat("fd.hess\n");print(fd.htrA)
      }
-   }
+   
 
-   cat("\n Deviance... \n")
-   cat("grad    ");print(D10)
-   cat("fd.grad ");print(fd.D1)
-   if (deriv==2) {
-     fd.D2 <- .5*(fd.D2 + t(fd.D2))
-     cat("hess\n");print(D2)
-     cat("fd.hess\n");print(fd.D2)
+     cat("\n Deviance... \n")
+     cat("grad    ");print(D10)
+     cat("fd.grad ");print(fd.D1)
+     if (deriv==2) {
+       fd.D2 <- .5*(fd.D2 + t(fd.D2))
+       cat("hess\n");print(D2)
+       cat("fd.hess\n");print(fd.D2)
+     }
    }
-
+ 
    cat("\n\n The objective...\n")
 
    cat("grad    ");print(grad0)
@@ -1083,10 +1110,10 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   
 
   ## sanity check L
-  if (is.null(L)) L <- diag(length(S)) else {
+  if (is.null(L)) L <- diag(length(lsp)) else {
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
-    if (nrow(L)!=length(S)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
+    if (nrow(L)!=length(S)+as.numeric(scoreType=="REML"&&scale==0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
 
@@ -1112,7 +1139,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   mustart<-b$fitted.values
 
-  if (scoreType=="REML") {
+  if (scoreType=="REML"||scoreType=="P-REML") {
      old.score <- score <- b$REML;grad <- b$REML1;hess <- b$REML2 
   } else if (scoreType=="GACV") {
     old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
@@ -1156,7 +1183,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
        control=control,gamma=gamma,scale=scale,
        printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
     
-    if (scoreType=="REML") {
+    if (scoreType=="REML"||scoreType=="P-REML") {
       score1 <- b$REML
     } else if (scoreType=="GACV") {
       score1 <- b$GACV
@@ -1169,7 +1196,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
       old.score <- score 
       mustart <- b$fitted.values
       lsp <- lsp1
-      if (scoreType=="REML") {
+      if (scoreType=="REML"||scoreType=="P-REML") {
           score <- b$REML;grad <- b$REML1;hess <- b$REML2 
       } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
@@ -1192,7 +1219,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,
            scoreType=scoreType,...)
          
-        if (scoreType=="REML") {       
+        if (scoreType=="REML"||scoreType=="P-REML") {       
           score1 <- b1$REML
         } else if (scoreType=="GACV") {
           score1 <- b1$GACV
@@ -1208,7 +1235,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
          
-          if (scoreType=="REML") {
+          if (scoreType=="REML"||scoreType=="P-REML") {
             score <- b$REML;grad <- b$REML1;hess <- b$REML2 
           } else if (scoreType=="GACV") {
             score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
@@ -1258,10 +1285,10 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
 { ## sanity check L
-  if (is.null(L)) L <- diag(length(S)) else {
+  if (is.null(L)) L <- diag(length(lsp)) else {
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
-    if (nrow(L)!=length(S)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
+    if (nrow(L)!=length(S)+as.numeric(scoreType=="REML"&&scale==0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
   ## initial fit
@@ -1277,7 +1304,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   QNsteps <- floor(length(S)/2) ## how often to Newton should depend on cost...
 
-  if (scoreType=="REML") {
+  if (scoreType=="REML"||scoreType=="P-REML") {
      score <- b$REML;grad <- b$REML1;hess <- b$REML2 
   } else if (scoreType=="GACV") {
     old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
@@ -1337,7 +1364,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 #       ptm <- proc.time()-ptm
 #       cat("deriv= ",deriv,"  ",ptm,"\n")
       
-      if (scoreType=="REML") {
+      if (scoreType=="REML"||scoreType=="P-REML") {
           score1 <- b1$REML1
       } else if (scoreType=="GACV") {
           score1 <- b1$GACV
@@ -1359,7 +1386,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
         mustart <- b$fitted.values
         old.score <- score;lsp <- lsp1
-        if (scoreType=="REML") {
+        if (scoreType=="REML"||scoreType=="P-REML") {
            score <- b$REML;grad <- b$REML1;hess <- b$REML2 
         } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
@@ -1382,7 +1409,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
         mustart <- b$fitted.values
         old.score <- score;lsp <- lsp1
         old.grad <- grad
-        if (scoreType=="REML") {
+        if (scoreType=="REML"||scoreType=="P-REML") {
           score <- b$REML;grad <- b$REML1 
         } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1
@@ -1843,6 +1870,16 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   w <- w1 <- w2 <- y*0
   oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),y=as.double(y),
            phi=as.double(phi),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+  
+#  check.derivs <- TRUE
+#  if (check.derivs) {
+#    eps <- 1e-6
+#    oo1 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),y=as.double(y),
+#           phi=as.double(phi+eps),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+#    w2.fd <- (oo1$w1-oo$w1)/eps
+#    print(oo$w2);print(w2.fd)
+#  }  
+
   theta <- mu^(1-p)
   k.theta <- mu*theta/(2-p)
   theta <- theta/(1-p)
