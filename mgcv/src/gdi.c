@@ -185,20 +185,22 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 
 }
 
-int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
+int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *sp,
 	      double *rS,int *rSncol,int *Encol,int *q,int *M,int *deriv,double *tol)
 /* Routine to obtain log|S| and its derivatives w.r.t. the log(sp), for REML.
    S is q by q total penalty matrix, where S= EE'
    rS contains M, q by rSncol[i], square roots of S components, packed one
       after another.
    sp is array of smoothing parameters (not logged).
+   U is a q by q matrix the columns of which will contain the eigen-vectors
+   of S, on exit. The null space eigen-vectors are first.
    
 */
 { int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim,max_rSc;
-  double *d,*d0,*U,*U0,*rDiUtrSk,*DUSUD,*p1,xx;
+  double *d,*d0,*rDiUtrSk,*DUSUD,*p1,xx;
   d0 = d = (double *)calloc((size_t)*q,sizeof(double));
   /* eigen-decompose S (overwriting it) */
-  U0 = U = (double *)calloc((size_t)*q * *q,sizeof(double)); /* Actually S=EE' */
+  /* Actually S=EE'.... */
   bt=0;ct=1;mgcv_mmult(U,E,E,&bt,&ct,q,q,Encol);
   mgcv_symeig(U,d,q,&use_dsyevd); /* eigenvectors are in ascending order */
   i=0; /* count the eigenvalues to discard */
@@ -212,7 +214,7 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
 
   for (*det=0,i=0;i<rank;i++) *det += log(d[i]); /* log|S|_+ */
 
-  if (*deriv <=0) {free(d0);free(U0);return(null_space_dim);} /* evaluation only */
+  if (*deriv <=0) {free(d0);return(null_space_dim);} /* evaluation only */
 
   /* Now work on the derivative.... */
 
@@ -248,7 +250,6 @@ int get_detS(double *det,double *det1,double *det2,double *E,double *sp,
   }
   
   free(d0);
-  free(U0);
   free(rDiUtrSk);
   if (*deriv > 1) free(DUSUD);
   return(null_space_dim);
@@ -1341,6 +1342,151 @@ void ift(double *X,double *P,double *rS,double *beta,double *sp,double *w,
 }
 
 
+double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, double *R,double *Q, int *nind,double *sp,
+                 double *rS,int *rSncol,int *q,int *n,int *nn,int *Ms,int *M,int *neg_w,double *rank_tol,int *deriv) {
+/* Routine to obtain the version of log|X'WX+S| that applies to ML, rather than REML.
+   * U1 is basis for penalty range space
+   * Q, R are the QR factors of diag(abs(W))X augmenented by the square root of S
+   * nind is the array indexing the locations of the `neg_w' -ve elements of W.
+   * q is the number of model coefficients
+   * Ms is the penalty null space dimension.
+   * nn is the number of rows in Q. 
+
+   Basic task of the routine is to project Hessian of the penalized log likelihood 
+   into the range space of the penalty, in order to obtain the correction term that 
+   applies for ML. 
+*/
+
+  double *RU1,*tau,*work,*Ri,*Qb,Rcond,*K,*P,*IQ,*IQQ,*Vt,
+         *d,*p0,*p1,*pd,*p2,*p3,ldetXWXS,ldetI2D;
+  int bt,ct,qM,*pivot,rank,ncol,i,j,k,left,tp,*pi,*pi1; 
+
+  qM = *q - *Ms;
+
+  RU1 = (double *)calloc((size_t) *q * qM,sizeof(double));
+  bt=0;ct=0;mgcv_mmult(RU1,R,U1,&bt,&ct,q,&qM,q);
+ 
+  /* A pivoted QR decomposition of RU1 is needed next */
+  tau=(double *)calloc((size_t)qM,sizeof(double)); /* part of reflector storage */
+  pivot=(int *)calloc((size_t)qM,sizeof(int));
+  
+  mgcv_qr(RU1,q,&qM,pivot,tau); /* RU1 and tau now contain the QR decomposition information */
+  /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
+  
+  /* Now obtain rank of new factor R */
+  
+  work = (double *)calloc((size_t)(4 * qM),sizeof(double));
+  rank = qM;
+  R_cond(RU1,q,&rank,work,&Rcond);
+  while (*rank_tol * Rcond > 1) { rank--;R_cond(RU1,q,&rank,work,&Rcond);}
+  free(work);
+
+  /* Ri needed (possibly truncated to rank by rank) */
+
+  Ri =  (double *)calloc((size_t) rank * rank,sizeof(double)); 
+  Rinv(Ri,RU1,&rank,q,&rank); /* getting R^{-1} */
+  
+  /* new Q factor needed explicitly */
+
+  Qb = (double *)calloc((size_t) *q * rank,sizeof(double)); 
+  for (i=0;i< rank;i++) Qb[i * *q + i] = 1.0;
+  left=1;tp=0;mgcv_qrqy(Qb,RU1,tau,q,&rank,&rank,&left,&tp); /* Q from the QR decomposition */
+
+  free(tau);
+
+  K = (double *)calloc((size_t) *n * rank,sizeof(double));
+  P = (double *)calloc((size_t) *q * rank,sizeof(double));
+
+  if (*neg_w) { /* need to deal with -ve weight correction */
+    if (*neg_w < *q+1) k = *q+1; else k = *neg_w;
+    IQ = (double *)calloc((size_t) k * *q,sizeof(double)); 
+    for (i=0;i< *neg_w;i++) { /* Copy the rows of Q corresponding to -ve w_i into IQ */
+      p0 = IQ + i;p1 = Q + nind[i];
+      for (j=0;j<*q;j++,p0+=k,p1+= *nn) *p0 = *p1;
+    }
+    /* Note that IQ may be zero padded, for convenience */
+    IQQ = (double *)calloc((size_t) k * rank,sizeof(double)); 
+    bt=0;ct=0;mgcv_mmult(IQQ,IQ,Qb,&bt,&ct,&k,&rank,q); /* I^-Q_1 \bar Q is k by rank */
+    free(IQ);
+     
+    /* Get the SVD of IQQ */
+    Vt = (double *)calloc((size_t) rank * rank,sizeof(double));
+    d = (double *)calloc((size_t)  rank,sizeof(double));
+    mgcv_svd_full(IQQ,Vt,d,&k,&rank); /* SVD of IQ */
+    free(IQQ);
+    for (i=0;i<rank;i++) {
+      d[i] = 1 - 2*d[i]*d[i];
+      if (d[i]<=0) d[i]=0.0; 
+      else {
+        ldetI2D += log(d[i]); /* log|I-2D^2| */ 
+        d[i] = 1/sqrt(d[i]);
+      }
+    } /* d now contains diagonal of diagonal matrix (I-2D^2)^{-1/2} (possibly pseudoinverse) */
+    /* Now form (I-2D^2)^.5 Vt and store in Vt... */
+    for (p0=Vt,i=0;i<rank;i++)
+    for (p1=d,p2=d+rank;p1<p2;p1++,p0++) *p0 *= *p1;
+    
+    /* Form K */
+    IQ = (double *)calloc((size_t) *n * *q,sizeof(double));
+    for (p0=IQ,p1=Q,j=0;j<*q;j++,p1 += *nn) /* copy just Q1 into IQ */
+      for (p2 = p1,p3=p1 + *n;p2<p3;p0++,p2++) *p0 = *p2; 
+    
+    work = (double *)calloc((size_t)*q * rank,sizeof(double));
+    bt=0;ct=1;mgcv_mmult(work,Qb,Vt,&bt,&ct,q,&rank,&rank); /* \bar Q V (I - 2D^2)^.5 */
+
+    bt=0;ct=0;mgcv_mmult(K,IQ,work,&bt,&ct,n,&rank,q);
+    free(work);
+    
+    /* Form P */
+    bt=0;ct=1;mgcv_mmult(IQ,Ri,Vt,&bt,&ct,&rank,&rank,&rank);
+    for (p0=P,p1=IQ,j=0;j<rank;j++,p0+= *q) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
+      for (p2=p0,p3 = p2 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
+    free(IQ);free(d);free(Vt);   
+    
+  } else { /* no negative weights, so P and K can be obtained directly */
+    ldetI2D = 0.0;
+    /* Form K */
+    IQ = (double *)calloc((size_t) *n * *q,sizeof(double));
+    for (p0=IQ,p1=Q,j=0;j<*q;j++,p1 += *nn) /* copy just Q1 into IQ */
+      for (p2 = p1,p3=p1 + *n;p2<p3;p0++,p2++) *p0 = *p2; 
+    bt=0;ct=0;mgcv_mmult(K,IQ,Qb,&bt,&ct,n,&rank,q);
+    /* Form P */
+    for (p0=P,p1=Ri,j=0;j<rank;j++,p0+= *q) /* copy R^{-1} into first rows of P */
+    for (p2=p0,p3=p0 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
+    free(IQ);
+  }
+
+  free(Ri);
+
+  /* Evaluate the required log determinant... */
+
+  for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(fabs(RU1[i + i * *q])); 
+  ldetXWXS *= 2;
+  ldetXWXS += ldetI2D; /* the negative weights correction */
+
+  free(RU1);
+
+  /* rS also needs to be transformed and pivoted... */
+
+  ncol = 0;for (i=0;i<*M;i++) ncol += rSncol[i];
+  work = (double *)calloc((size_t) qM * ncol,sizeof(double));
+  bt=1;ct=0;mgcv_mmult(work,U1,rS,&bt,&ct,&qM,&ncol,q);
+
+  for (p2=rS,pd=work,i=0;i<ncol;i++,pd += qM) /* work across columns of work */
+  { for (pi=pivot,pi1=pivot+qM;pi<pi1;pi++,p2++) *p2 = pd[*pi];  /* apply pivot into rS */
+  } 
+  
+  free(work);free(Qb);free(pivot);
+
+  /* Now we have all the ingredients to obtain required derivatives of the log determinant... */
+  
+  if (*deriv)
+    get_ddetXWXpS(det1,det2,P,K,sp,rS,rSncol,Tk,Tkm,n,&qM,&rank,M,deriv);
+
+  free(P);free(K);
+  return(ldetXWXS);
+}
+
 void gdi(double *X,double *E,double *rS,
     double *sp,double *z,double *w,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
@@ -1399,8 +1545,9 @@ void gdi(double *X,double *E,double *rS,
        deriv==2 for gradient and Hessian
      -- on exit contains the number of iteration steps required.   
 
-    * If REML is non-zero, then the REML penalty returned in rank_tol, with it's 
+    * If REML is +ve non-zero, then the REML penalty returned in rank_tol, with it's 
       derivatives in trA1, trA2: it is to be added to the *deviance* to get D_r.
+    * If REML is -ve non-zero, then the ML penalty is returned in place of the REML one.
     * non-zero `fisher' indicates that Fisher scoring, rather than full Newton,
       is the basis for iteration. 
 
@@ -1439,8 +1586,8 @@ void gdi(double *X,double *E,double *rS,
          *c0,*c1,*c2,*a1,*a2,*eta1,*eta2,
          *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
-         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
-    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ;
+    ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
+    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U,*U1;
   int i,j,k,*pivot,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
     n_eta1,n_eta2,n_work,deriv2,null_space_dim,neg_w=0,*nind,nn,ii,ldetI2D;
 
@@ -1490,9 +1637,13 @@ void gdi(double *X,double *E,double *rS,
   while (*rank_tol * Rcond > 1) { rank--;R_cond(WX,&nn,&rank,work,&Rcond);}
   free(work);
 
-  Q1 = (double *)calloc((size_t) nn * rank,sizeof(double)); 
-  for (i=0;i<rank;i++) Q1[i * nn + i] = 1.0;
-  left=1;tp=0;mgcv_qrqy(Q1,WX,tau,&nn,&rank,q,&left,&tp); /* Q from the QR decomposition */
+  /* Note that in the following the Q is extracted with q rather than rank columns
+     this is because ML estimation requires the `full' rather than truncated version.
+     Q1 can still be treated as nn by rank, of course.
+  */
+  Q1 = (double *)calloc((size_t) nn * *q,sizeof(double)); 
+  for (i=0;i< *q;i++) Q1[i * nn + i] = 1.0;
+  left=1;tp=0;mgcv_qrqy(Q1,WX,tau,&nn,q,q,&left,&tp); /* Q from the QR decomposition */
 
   Ri =  (double *)calloc((size_t) rank * rank,sizeof(double)); 
   Rinv(Ri,WX,&rank,&nn,&rank); /* getting R^{-1} */
@@ -1547,7 +1698,7 @@ void gdi(double *X,double *E,double *rS,
   
   /* At this stage P and K are complete */
 
-   if (*REML) { 
+   if (*REML>0) {  
       for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(fabs(WX[i + i * nn])); 
       ldetXWXS *= 2;
       ldetXWXS += ldetI2D; /* correction for negative weights */
@@ -1590,7 +1741,14 @@ void gdi(double *X,double *E,double *rS,
   /************************************************************************************/
   /* free some memory */                    
   /************************************************************************************/
-  free(raw);free(nind);free(WX);free(tau);free(Q1);free(Ri);
+  if (*REML<0) { /* ML is required (rather than REML), and need to save some stuff */
+    R = (double *) calloc((size_t) *q * *q ,sizeof(double)); /* save just R (untruncated) */
+    for (p0=R,p1=WX,i=0;i<*q;i++,p1+=nn,p0 += *q) 
+      for (p2=p1,p3=p0,p4=p0+i;p3<=p4;p3++,p2++) *p3 = *p2;
+    
+  } else { free(Q1);free(nind); } /* needed later for ML calculation */
+
+  free(raw);free(WX);free(tau);free(Ri);
  
   /************************************************************************************/
   /* The coefficient derivative setup starts here */
@@ -1769,20 +1927,56 @@ void gdi(double *X,double *E,double *rS,
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
   /* Now get the remainder of the REML penalty */
-  if (*REML) {
-    /* First deal with log|X'WX+S| */   
-    reml_penalty = ldetXWXS;
-    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
+  //  if (*REML) {
+  //  /* First deal with log|X'WX+S| */   
+  //  reml_penalty = ldetXWXS;
+  //  get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
    
     /* Now log|S|_+ */
   
-    null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
-    reml_penalty -= *P0;
+  //   null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+  //  reml_penalty -= *P0;
+  //  if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
+  //    trA1[i] -= P1[i];
+  //    if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
+  //  } 
+  // } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
+
+  if (*REML) {
+    /* First log|S|_+ */
+    U1 = U = (double *) calloc((size_t) *q * *q,sizeof(double)); /* matrix for eigen-vectors of S (null space first) */  
+    null_space_dim = get_detS(U,P0,trA1,trA2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    reml_penalty = - *P0;
+    U1 += *q * null_space_dim; /* column basis of range space of S */
+  } 
+
+  if (*REML>0) { /* It's REML */
+    /* Now deal with log|X'WX+S| */   
+    reml_penalty += ldetXWXS;
+    get_ddetXWXpS(P1,P2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* P1/2 really contain det derivs */
+   
     if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
-      trA1[i] -= P1[i];
-      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
+      trA1[i] = P1[i] - trA1[i];
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 = *p1 - *p2;   
     } 
+    free(U); /* not needed */
   } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
+
+  if (*REML<0) { /* it's ML, and more complicated */
+
+    /* get derivs of ML log det in P1 and P2... */
+    ldetXWXS = MLpenalty(P1,P2,Tk,Tkm,U1,R,Q1,nind,sp,rS,rSncol,q,n,&nn,&null_space_dim,M,&neg_w,rank_tol,deriv);
+    
+    reml_penalty += ldetXWXS;
+
+    if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
+      trA1[i] = P1[i] - trA1[i];
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 = *p1 - *p2;   
+    } 
+    
+    free(R);free(Q1);free(nind);free(U);
+  } /* note that rS scrambled from here on... */
+
 
   pearson2(P0,P1,P2,y,mu,V0,V1,V2,g1,g2,p_weights,eta1,eta2,*n,*M,*deriv,deriv2);
   
@@ -1924,7 +2118,7 @@ void gdi3(double *X,double *E,double *rS,
          *PKtz,*v1,*v2,*wi,*wis,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,*tau2,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
-         *alpha,*alpha1,*alpha2;
+    *alpha,*alpha1,*alpha2,*U;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
     n_eta1,n_eta2,n_work,deriv2,*pivot2,null_space_dim;
 
@@ -2273,8 +2467,9 @@ void gdi3(double *X,double *E,double *rS,
     get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
    
     /* Now log|S|_+ */
-  
-    null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    U = (double *) calloc((size_t) *q * *q,sizeof(double));
+    null_space_dim = get_detS(U,P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    free(U);
     reml_penalty -= *P0;
     if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
       trA1[i] -= P1[i];
@@ -2424,7 +2619,7 @@ void gdi1(double *X,double *E,double *rS,
          *c0,*c1,*c2,*a1,*a2,*B2z,*B2zBase,*B1z,*B1zBase,*eta1,*mu1,*eta2,*KKtz,
          *PKtz,*KPtSPKtz,*v1,*v2,*wi,*wis,*z1,*z2,*zz1,*zz2,*pz2,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2,
-         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
+         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*U,
          *alpha,*alpha1,*alpha2;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
     n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,null_space_dim,use_ift=1;
@@ -2975,8 +3170,9 @@ void gdi1(double *X,double *E,double *rS,
     get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
    
     /* Now log|S|_+ */
-  
-    null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    U = (double *) calloc((size_t) *q * *q,sizeof(double));
+    null_space_dim = get_detS(U,P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    free(U);
     reml_penalty -= *P0;
     if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
       trA1[i] -= P1[i];
@@ -3127,7 +3323,7 @@ void gdi2(double *X,double *E,double *rS,
          *c0,*c1,*c2,*a0,*a1,*a2,*B2z,*B2zBase,*B1z,*B1zBase,*eta1,*mu1,*eta2,*KKtz,
          *PKtz,*KPtSPKtz,*v1,*v2,*wi,*wis,*z1,*z2,*zz1,*zz2,*pz2,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2,*B1z1, *dev_grad,*dev_hess=NULL,diff,mag,*D1_old,*D2_old,Rcond,*tau2,
-         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,
+         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*U,
          *fa,*fa1,*fa2,*fb,*fc,*fc1,*fc2,*fc3,*fd,*fd1,*fd2;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
     n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,null_space_dim;
@@ -3633,8 +3829,9 @@ void gdi2(double *X,double *E,double *rS,
     get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
    
     /* Now log|S|_+ */
-  
-    null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    U = (double *) calloc((size_t) *q * *q,sizeof(double));
+    null_space_dim = get_detS(U,P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
+    free(U);
     reml_penalty -= *P0;
     if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
       trA1[i] -= P1[i];

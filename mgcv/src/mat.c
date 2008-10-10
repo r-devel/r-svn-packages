@@ -156,7 +156,7 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 
 
 void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp)
-/* applies k reflectors of Q of a QR decomposition to matrix b.
+/* applies k reflectors of Q of a QR decomposition to r by c matrix b.
    Apply Q from left if left!=0, right otherwise.
    Transpose Q only if tp!=0.
    Information about Q has been returned from mgcv_qr, and is stored in tau and 
