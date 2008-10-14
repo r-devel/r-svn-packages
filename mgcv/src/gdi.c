@@ -197,7 +197,7 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
    
 */
 { int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim,max_rSc;
-  double *d,*d0,*rDiUtrSk,*DUSUD,*p1,xx;
+  double *d,*d0,*rDiUtrSk,*DUSUD,*p0,*p1,xx, *Ud;
   d0 = d = (double *)calloc((size_t)*q,sizeof(double));
   /* eigen-decompose S (overwriting it) */
   /* Actually S=EE'.... */
@@ -218,10 +218,12 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
 
   /* Now work on the derivative.... */
 
+  Ud = (double *)calloc((size_t)*q * *q ,sizeof(double));
+
   /* form U_+ D_+^{-.5} and store in U*/
-  for (p1=U,i=0;i<rank;i++) { 
+  for (p0=Ud,p1=U,i=0;i<rank;i++) { 
     xx = 1.0/sqrt(d[i]);
-    for (j=0;j<*q;j++,p1++) *p1 *= xx;
+    for (j=0;j<*q;j++,p1++,p0++) *p0 = xx * *p1;
   }  /* `d' used as working storage from here */
 
   /* storage for D^{-.5}U_+'S_k^{.5}... */
@@ -232,7 +234,7 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
   } else DUSUD = (double *) NULL;
   
   for (rSoff=0,i=0;i<*M;i++) { /* loop for first derivatives, and second derivative components */
-     bt=1;ct=0;mgcv_mmult(rDiUtrSk,U,rS+rSoff * *q,&bt,&ct,&rank,rSncol+i,q);
+     bt=1;ct=0;mgcv_mmult(rDiUtrSk,Ud,rS+rSoff * *q,&bt,&ct,&rank,rSncol+i,q);
      rSoff += rSncol[i];
      det1[i] = sp[i]*diagABt(d0,rDiUtrSk,rDiUtrSk,&rank,rSncol+i);
      if (*deriv>1) { 
@@ -249,7 +251,7 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
     if (k==m) det2[km] += det1[k]; else det2[mk] = det2[km];
   }
   
-  free(d0);
+  free(d0);free(Ud);
   free(rDiUtrSk);
   if (*deriv > 1) free(DUSUD);
   return(null_space_dim);
@@ -318,27 +320,28 @@ void get_ddetXW2XpS(double *det1,double *det2,double *P,double *K,double *sp,
 
   if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
      km=k * *M + m;mk=m * *M + k;
-     /* tr(Tkm KK') */
+     /* 2tr(Tkm KK') */
      for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
-     det2[km] = xx;
+     det2[km] = 2*xx;
 
-     /* - tr(KTkKK'TmK) */
-     det2[km] -= diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+     /* -4 tr(KTkKK'TmK) */
+     det2[km] -= 4*diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
      /* sp[k]*tr(P'S_kP) */
      if (k==m) det2[km] += trPtSP[m];
 
-     /* -sp[m]*tr(K'T_kKP'S_mP) */
-     det2[km] -= sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
+     /* -2*sp[m]*tr(K'T_kKP'S_mP) */
+     det2[km] -= 2*sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
      
-     /* -sp[k]*tr(K'T_mKP'S_kP) */
-     det2[km] -= sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
+     /* -2*sp[k]*tr(K'T_mKP'S_kP) */
+     det2[km] -= 2*sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
  
-     /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+     /* - sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
      det2[km] -= sp[m]*sp[k]*diagABt(work,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
 
      det2[mk] = det2[km];     
   }
+
 
   /* free up some memory */
   if (deriv2) {free(PtSP);free(KtTK);}
@@ -411,28 +414,30 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 
   if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
      km=k * *M + m;mk=m * *M + k;
-     /* 2tr(Tkm KK') */
+     /* tr(Tkm KK') */
      for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
-     det2[km] = 2*xx;
+     det2[km] = xx;
 
-     /* -4 tr(KTkKK'TmK) */
-     det2[km] -= 4*diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+     /* - tr(KTkKK'TmK) */
+     det2[km] -= diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
      /* sp[k]*tr(P'S_kP) */
      if (k==m) det2[km] += trPtSP[m];
 
-     /* -2*sp[m]*tr(K'T_kKP'S_mP) */
-     det2[km] -= 2*sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
+     /* -sp[m]*tr(K'T_kKP'S_mP) */
+     det2[km] -= sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
      
-     /* -2*sp[k]*tr(K'T_mKP'S_kP) */
-     det2[km] -= 2*sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
+     /* -sp[k]*tr(K'T_mKP'S_kP) */
+     det2[km] -= sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
  
-     /* - sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+     /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
      det2[km] -= sp[m]*sp[k]*diagABt(work,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
 
      det2[mk] = det2[km];     
   }
 
+
+ 
   /* free up some memory */
   if (deriv2) {free(PtSP);free(KtTK);}
   free(diagKKt);free(work);
@@ -1390,12 +1395,12 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
 
   Qb = (double *)calloc((size_t) *q * rank,sizeof(double)); 
   for (i=0;i< rank;i++) Qb[i * *q + i] = 1.0;
-  left=1;tp=0;mgcv_qrqy(Qb,RU1,tau,q,&rank,&rank,&left,&tp); /* Q from the QR decomposition */
+  left=1;tp=0;mgcv_qrqy(Qb,RU1,tau,q,&rank,&qM,&left,&tp); /* Q from the QR decomposition */
 
   free(tau);
 
   K = (double *)calloc((size_t) *n * rank,sizeof(double));
-  P = (double *)calloc((size_t) *q * rank,sizeof(double));
+  P = (double *)calloc((size_t) qM * rank,sizeof(double));
 
   if (*neg_w) { /* need to deal with -ve weight correction */
     if (*neg_w < *q+1) k = *q+1; else k = *neg_w;
@@ -1439,7 +1444,7 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
     
     /* Form P */
     bt=0;ct=1;mgcv_mmult(IQ,Ri,Vt,&bt,&ct,&rank,&rank,&rank);
-    for (p0=P,p1=IQ,j=0;j<rank;j++,p0+= *q) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
+    for (p0=P,p1=IQ,j=0;j<rank;j++,p0+= qM) /* copy R^{-1}V'(I-2D)^{-.5} into first rows of P */
       for (p2=p0,p3 = p2 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
     free(IQ);free(d);free(Vt);   
     
@@ -1451,7 +1456,7 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
       for (p2 = p1,p3=p1 + *n;p2<p3;p0++,p2++) *p0 = *p2; 
     bt=0;ct=0;mgcv_mmult(K,IQ,Qb,&bt,&ct,n,&rank,q);
     /* Form P */
-    for (p0=P,p1=Ri,j=0;j<rank;j++,p0+= *q) /* copy R^{-1} into first rows of P */
+    for (p0=P,p1=Ri,j=0;j<rank;j++,p0+= qM) /* copy R^{-1} into first rows of P */
     for (p2=p0,p3=p0 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
     free(IQ);
   }
@@ -1462,8 +1467,9 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
 
   for (ldetXWXS=0.0,i=0;i<rank;i++) ldetXWXS += log(fabs(RU1[i + i * *q])); 
   ldetXWXS *= 2;
+ 
   ldetXWXS += ldetI2D; /* the negative weights correction */
-
+  
   free(RU1);
 
   /* rS also needs to be transformed and pivoted... */
@@ -1927,21 +1933,7 @@ void gdi(double *X,double *E,double *rS,
   for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
 
   /* Now get the remainder of the REML penalty */
-  //  if (*REML) {
-  //  /* First deal with log|X'WX+S| */   
-  //  reml_penalty = ldetXWXS;
-  //  get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,q,&rank,M,deriv); /* trA? really contain det derivs */
-   
-    /* Now log|S|_+ */
-  
-  //   null_space_dim = get_detS(P0,P1,P2,E,sp,rS,rSncol,Encol,q,M,deriv,rank_tol);
-  //  reml_penalty -= *P0;
-  //  if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
-  //    trA1[i] -= P1[i];
-  //    if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 -= *p1;   
-  //  } 
-  // } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
-
+ 
   if (*REML) {
     /* First log|S|_+ */
     U1 = U = (double *) calloc((size_t) *q * *q,sizeof(double)); /* matrix for eigen-vectors of S (null space first) */  
@@ -1963,15 +1955,16 @@ void gdi(double *X,double *E,double *rS,
   } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
 
   if (*REML<0) { /* it's ML, and more complicated */
-
+    
     /* get derivs of ML log det in P1 and P2... */
+
     ldetXWXS = MLpenalty(P1,P2,Tk,Tkm,U1,R,Q1,nind,sp,rS,rSncol,q,n,&nn,&null_space_dim,M,&neg_w,rank_tol,deriv);
     
     reml_penalty += ldetXWXS;
 
     if (*deriv) for (p2=trA2,p1=P2,i = 0; i< *M;i++) { 
-      trA1[i] = P1[i] - trA1[i];
-      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 = *p1 - *p2;   
+      trA1[i] =  P1[i] - trA1[i];
+      if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 =  *p1  - *p2;   
     } 
     
     free(R);free(Q1);free(nind);free(U);

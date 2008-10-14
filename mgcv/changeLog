@@ -22,7 +22,7 @@
    implicit function method (which costs no more given Newton based 
    PIRLS).
 
-** Efficient and general REML smoothing selection implemented.
+** Efficient and general REML/ML smoothing selection implemented.
 
 * `power' links now handled by default fitting methods (i.e. gam.fit3)
 
