@@ -8,7 +8,7 @@ plot.rpart <- function(x, uniform=FALSE, branch=1, compress=FALSE,
 
     if (compress & missing(nspace)) nspace <- branch
     if (!compress) nspace <- -1     #means no compression
-    if (dev.cur() == 1) get(getOption("device"))()
+    if (dev.cur() == 1) plot.new()
     assign(paste(".rpart.parms", dev.cur(), sep = "."),
             list(uniform=uniform, branch=branch, nspace=nspace,
 		 minbranch=minbranch), envir=.GlobalEnv)
