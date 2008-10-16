@@ -502,7 +502,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 ## need to modify family before call.
 {   if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE ##if cononical Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
-    if (!scale.known&&scoreType=="REML") { ## the final element of sp is actually log(scale)
+    if (!scale.known&&scoreType%in%c("REML","ML")) { ## the final element of sp is actually log(scale)
       nsp <- length(sp)
       scale <- exp(sp[nsp])
       sp <- sp[-nsp]
@@ -817,6 +817,10 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          dum <- 1
          if (control$trace) cat("calling gdi...")
 
+       REML <- 0 ## signals GCV/AIC used
+       if (scoreType%in%c("REML","P-REML")) REML <- 1 else 
+       if (scoreType%in%c("ML","P-ML")) REML <- -1 
+
        oo <- .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),
            sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
@@ -826,7 +830,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
-           REML = -as.integer(scoreType%in%c("REML","P-REML")),fisher=as.integer(fisher))      
+           REML = as.integer(REML),fisher=as.integer(fisher))      
        
          if (control$trace) cat("done!\n")
  
@@ -836,7 +840,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
          scale.est <- dev/(nobs-trA)
          reml.scale <- NA  
 
-        if (scoreType=="REML") { ## use Laplace REML
+        if (scoreType%in%c("REML","ML")) { ## use Laplace (RE)ML
           
           ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
           Dp <- dev + oo$conv.tol
@@ -860,7 +864,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
             }
           }
           reml.scale <- scale
-        } else if (scoreType=="P-REML") { ## scale unknown use Pearson-Laplace REML
+        } else if (scoreType%in%c("P-REML","P-ML")) { ## scale unknown use Pearson-Laplace REML
           reml.scale <- phi <- oo$P ## REMLish scale estimate
           ls <- family$ls(y,weights,n,phi) ## saturated likelihood and derivatives
         
@@ -996,7 +1000,9 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
    trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
    dev0 <- b$deviance;fd.D1 <- D10 <- b$D1 ; if (deriv==2) fd.D2 <- D2 <- b$D2 
 
-   if (scoreType=="REML"||scoreType=="P-REML") {
+   if (scoreType%in%c("REML","P-REML","ML","P-ML")) reml <- TRUE else reml <- FALSE
+
+   if (reml) {
      score0 <- b$REML;grad0 <- b$REML1; if (deriv==2) hess <- b$REML2 
    } else if (scoreType=="GACV") {
      score0 <- b$GACV;grad0 <- b$GACV1;if (deriv==2) hess <- b$GACV2 
@@ -1015,14 +1021,14 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
       
-      if (scoreType!="REML"&&scoreType!="P-REML") {
+      if (!reml) {
         P <- b$P; P1 <- b$P1
         trA <- b$trA;gtrA <- b$trA1
         dev <- b$deviance;D1 <- b$D1
       }
      
 
-      if (scoreType=="REML"||scoreType=="P-REML") {
+      if (reml) {
         score <- b$REML;if (deriv==2) grad <- b$REML1;
       } else if (scoreType=="GACV") {
         score <- b$GACV;if (deriv==2) grad <- b$GACV1;
@@ -1032,7 +1038,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
         score <- b$GCV;if (deriv==2) grad <- b$GCV1;
       }
 
-      if (scoreType!="REML"&&scoreType!="P-REML") {
+      if (!reml) {
         fd.P1[i] <- (P-P0)/eps
         fd.gtrA[i] <- (trA-trA0)/eps
         fd.D1[i] <- (dev - dev0)/eps
@@ -1052,7 +1058,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
       }
    }
    
-   if (scoreType!="REML"&&scoreType!="P-REML") {
+   if (!reml) {
      cat("\n Pearson Statistic... \n")
      cat("grad    ");print(P10)
      cat("fd.grad ");print(fd.P1)
@@ -1107,7 +1113,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
 {  
-  
+  reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
 
   ## sanity check L
   if (is.null(L)) L <- diag(length(lsp)) else {
@@ -1139,7 +1145,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   mustart<-b$fitted.values
 
-  if (scoreType=="REML"||scoreType=="P-REML") {
+  if (reml) {
      old.score <- score <- b$REML;grad <- b$REML1;hess <- b$REML2 
   } else if (scoreType=="GACV") {
     old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
@@ -1183,7 +1189,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
        control=control,gamma=gamma,scale=scale,
        printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
     
-    if (scoreType=="REML"||scoreType=="P-REML") {
+    if (reml) {
       score1 <- b$REML
     } else if (scoreType=="GACV") {
       score1 <- b$GACV
@@ -1196,7 +1202,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
       old.score <- score 
       mustart <- b$fitted.values
       lsp <- lsp1
-      if (scoreType=="REML"||scoreType=="P-REML") {
+      if (reml) {
           score <- b$REML;grad <- b$REML1;hess <- b$REML2 
       } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
@@ -1219,7 +1225,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,
            scoreType=scoreType,...)
          
-        if (scoreType=="REML"||scoreType=="P-REML") {       
+        if (reml) {       
           score1 <- b1$REML
         } else if (scoreType=="GACV") {
           score1 <- b1$GACV
@@ -1235,7 +1241,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
          
-          if (scoreType=="REML"||scoreType=="P-REML") {
+          if (reml) {
             score <- b$REML;grad <- b$REML1;hess <- b$REML2 
           } else if (scoreType=="GACV") {
             score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
@@ -1269,7 +1275,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
 bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="deviance",use.svd=TRUE,
+                   maxHalf=30,printWarn=FALSE,scoreType="GCV",use.svd=TRUE,
                    mustart = NULL,...)
 ## This optimizer is experimental... The main feature is to alternate infrequent 
 ## Newton steps with BFGS Quasi-Newton steps. In theory this should be faster 
@@ -1284,7 +1290,10 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 ## values forward from one evaluation to next to speed convergence.    
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
-{ ## sanity check L
+{ 
+  reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+
+  ## sanity check L
   if (is.null(L)) L <- diag(length(lsp)) else {
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
@@ -1304,7 +1313,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   QNsteps <- floor(length(S)/2) ## how often to Newton should depend on cost...
 
-  if (scoreType=="REML"||scoreType=="P-REML") {
+  if (reml) {
      score <- b$REML;grad <- b$REML1;hess <- b$REML2 
   } else if (scoreType=="GACV") {
     old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
@@ -1364,7 +1373,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 #       ptm <- proc.time()-ptm
 #       cat("deriv= ",deriv,"  ",ptm,"\n")
       
-      if (scoreType=="REML"||scoreType=="P-REML") {
+      if (reml) {
           score1 <- b1$REML1
       } else if (scoreType=="GACV") {
           score1 <- b1$GACV
@@ -1386,7 +1395,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
         mustart <- b$fitted.values
         old.score <- score;lsp <- lsp1
-        if (scoreType=="REML"||scoreType=="P-REML") {
+        if (reml) {
            score <- b$REML;grad <- b$REML1;hess <- b$REML2 
         } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
@@ -1409,7 +1418,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
         mustart <- b$fitted.values
         old.score <- score;lsp <- lsp1
         old.grad <- grad
-        if (scoreType=="REML"||scoreType=="P-REML") {
+        if (reml) {
           score <- b$REML;grad <- b$REML1 
         } else if (scoreType=="GACV") {
           score <- b$GACV;grad <- b$GACV1
@@ -1450,14 +1459,21 @@ gam2derivative <- function(lsp,args,...)
 ## smoothing parameters for the model.
 ## args is a list containing the arguments for gam.fit3
 ## For use as optim() objective gradient
-{ if (!is.null(args$L)) {
+{ reml <- args$scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+  if (!is.null(args$L)) {
     lsp <- args$L%*%lsp + args$lsp0
   }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
      offset = args$offset,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      use.svd=FALSE,...)
-  if (args$scoreType == "deviance") ret <- b$GCV1 else ret <- b$UBRE1
+  if (reml) {
+          ret <- b$REML1 
+  } else if (args$scoreType=="GACV") {
+          ret <- b$GACV1
+  } else if (args$scoreType=="UBRE") {
+          ret <- b$UBRE1
+  } else { ret <- b$GCV1}
   if (!is.null(args$L)) ret <- t(args$L)%*%ret
   ret
 }
@@ -1468,14 +1484,21 @@ gam2objective <- function(lsp,args,...)
 ## and returns the GCV or UBRE score for the model.
 ## args is a list containing the arguments for gam.fit3
 ## For use as optim() objective
-{ if (!is.null(args$L)) {
+{ reml <- args$scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+  if (!is.null(args$L)) {
     lsp <- args$L%*%lsp + args$lsp0
   }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
      offset = args$offset,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      use.svd=FALSE,...)
-  if (args$scoreType == "deviance") ret <- b$GCV else ret <- b$UBRE
+  if (reml) {
+          ret <- b$REML 
+  } else if (args$scoreType=="GACV") {
+          ret <- b$GACV
+  } else if (args$scoreType=="UBRE") {
+          ret <- b$UBRE
+  } else { ret <- b$GCV}
   attr(ret,"full.fit") <- b
   ret
 }
@@ -1487,17 +1510,27 @@ gam4objective <- function(lsp,args,...)
 ## and returns the GCV or UBRE score for the model.
 ## args is a list containing the arguments for gam.fit3
 ## For use as nlm() objective
-{ if (!is.null(args$L)) {
+{ reml <- args$scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
+  if (!is.null(args$L)) {
     lsp <- args$L%*%lsp + args$lsp0
   }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
      offset = args$offset,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      use.svd=FALSE,...)
-  if (args$scoreType == "deviance") ret <- b$GCV else ret <- b$UBRE
+  
+  if (reml) {
+          ret <- b$REML;at <- b$REML1
+  } else if (args$scoreType=="GACV") {
+          ret <- b$GACV;at <- b$GACV1
+  } else if (args$scoreType=="UBRE") {
+          ret <- b$UBRE;at <- b$UBRE1
+  } else { ret <- b$GCV;at <- b$GCV1}  
+
   attr(ret,"full.fit") <- b
-  if (args$scoreType == "deviance") at <- b$GCV1 else at <- b$UBRE1
+
   if (!is.null(args$L)) at <- t(args$L)%*%at
+
   attr(ret,"gradient") <- at
   ret
 }

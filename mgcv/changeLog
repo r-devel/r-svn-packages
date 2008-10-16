@@ -1,16 +1,18 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-1.4-2
+ISSUES TO CLEAR
 
-* ad class greatly simplified and 2D penalty improved. Much faster as a 
-  result, and 2D adaptive actually quite good.
 
-* s and te check that `id' is a single element.
+* removal of gam.method and all references to it in helpfiles.
 
-* plot.gam modified so that page change behaviour is like plot.glm 
+* negbin and REML. 
 
-* Tweedie family added.
+1.5-0
+
+** Efficient and general REML/ML smoothing selection implemented. 
+   Smoothness selection criterion and numerical optimizer are now
+   selected using arguments `method' and `optimizer' of `gam' 
 
 ** To further enhance stability and efficiency, Fisher scoring is now 
    only used for canonical links, when it corresponds to full Newton. 
@@ -22,7 +24,14 @@
    implicit function method (which costs no more given Newton based 
    PIRLS).
 
-** Efficient and general REML/ML smoothing selection implemented.
+* ad class greatly simplified and 2D penalty improved. Much faster as a 
+  result, and 2D adaptive actually quite good.
+
+* s and te check that `id' is a single element.
+
+* plot.gam modified so that page change behaviour is like plot.glm 
+
+* Tweedie family added.
 
 * `power' links now handled by default fitting methods (i.e. gam.fit3)
 

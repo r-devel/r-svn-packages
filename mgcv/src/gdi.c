@@ -367,7 +367,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 */
 
 { double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1;
-  int m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2;
+  int m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2,max_col;
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* obtain diag(KK') */ 
   if (*deriv) {
@@ -392,8 +392,11 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   bt=1;ct=0;mgcv_mmult(det1,Tk,diagKKt,&bt,&ct,M,&one,n); /* tr(TkKK') */ 
 
   /* Finish first derivative and create create P'SmP if second derivs needed */
- 
-  PtrSm = (double *)calloc((size_t)(*r * *q ),sizeof(double)); /* storage for P' rSm */
+  
+  max_col = *q;
+  for (j=0;j<*M;j++) if (max_col<rSncol[j]) max_col=rSncol[j]; /* under ML can have q < max(rSncol) */
+
+  PtrSm = (double *)calloc((size_t)(*r * max_col ),sizeof(double)); /* storage for P' rSm */
   trPtSP = (double *)calloc((size_t) *M,sizeof(double));
 
   if (deriv2) {
@@ -505,7 +508,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
     for (k=0;k < *M;k++) {
       j = k * *r * *r;
       getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work);
-      bt=ct=0;mgcv_mmult(KtTKKtK + k * *r * *r ,KtTK + j,KtK,&bt,&ct,q,r,r);
+      bt=ct=0;mgcv_mmult(KtTKKtK + k * *r * *r ,KtTK + j,KtK,&bt,&ct,r,r,r);
     }
   } else { KtTK=KtTKKtK=(double *)NULL;}
   

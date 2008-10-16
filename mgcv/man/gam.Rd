@@ -37,9 +37,9 @@ a clone of what S-PLUS provides use \link[gam]{gam} from package \code{gam}.
 \usage{
 
 gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
-    na.action,offset=NULL,control=gam.control(),method=gam.method(),
-    scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,
-    fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
+    na.action,offset=NULL,method="GCV.Cp",optimizer=c("outer","newton"),
+    control=gam.control(),scale=0,knots=NULL,sp=NULL,min.sp=NULL,
+    H=NULL,gamma=1,fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -79,18 +79,21 @@ included in \code{formula}: this conforms to the behaviour of
 \item{control}{A list of fit control parameters returned by 
 \code{\link{gam.control}}.}
 
-\item{method}{A list controlling the fitting methods used. This can make a
-difference to computational speed, and, in some cases, reliability of
-convergence: see \code{\link{gam.method}} for details.}
+\item{method}{The smoothing parameter estimation method. \code{"GCV.Cp"} to use GCV for unknown scale parameter and
+Mallows' Cp/UBRE/AIC for known scale. \code{"GACV.Cp"} is equivalent, but using GACV in place of GCV. \code{"REML"} 
+for REML estimation, including of unknown scale, \code{"P-REML"} for REML estimation, but using a Pearson estimate 
+of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likelihood in place of REML. }
 
-\item{scale}{ If this is zero then GCV is used for all distributions
-except Poisson and binomial where UBRE is used with scale parameter
-assumed to be 1. If this is greater than 1 it is assumed to be the scale
-parameter/variance and UBRE is used. If \code{scale} is negative  GCV 
-is always used, which means that the scale parameter will be estimated by GCV and the Pearson 
-estimator. For binomial models in 
-particular, it is probably worth  comparing UBRE and GCV results; for ``over-dispersed Poisson'' GCV is
-probably more appropriate than UBRE.} 
+\item{optimizer}{An array specifying the numerical optimization method to use to optimize the smoothing 
+parameter estimation criterion (given by \code{method}). \code{"perf"} for performance iteration. \code{"outer"} 
+for the more stable direct approach. \code{"outer"} can use several alternative optimizers, specified in the 
+second element of \code{optimizer}: \code{"newton"} (default), \code{"bfgs"}, \code{"optim"}, \code{"\nlm"} 
+and \code{"nlm.fd"} (the latter is based entirely on finite differenced derivatives and is very slow). }
+
+\item{scale}{ If this is positive then it is taken as the known scale parameter. Negative signals that the 
+scale paraemter is unknown. 0 signals that the scale parameter is 1  for Poisson and binomial and unknown otherwise. 
+Note that (RE)ML methods can only work with scale parameter 1 for the Poisson and binomial cases.    
+} 
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
 For most bases the user simply supplies the knots to be used, which must match up with the \code{k} value

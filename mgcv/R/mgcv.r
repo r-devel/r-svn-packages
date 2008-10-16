@@ -852,7 +852,7 @@ gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,fami
   list(gam=gam,outer=outer,gcv=gcv,reml=reml)
 }
 
-gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
+gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,...) {
 ## negative binomial gam fit, using `negbin' family, when some sort of 
 ## search for theta parameter is required. If the `theta' parameter to `negbin'
 ## is a length 2 array with theta[2]>theta[1] then `theta is taken as the 
@@ -877,7 +877,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
 
   for (i in 1:n.th) { ## search through theta values
     family <- fix.family.link(negbin(theta=exp(l.theta[i]),link=link))
-    if (method$outer=="bfgs") b <- bfgs(
+    if (optimizer[2]=="bfgs") b <- bfgs(
                   lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
@@ -911,7 +911,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
     lt.1tau <- lt0 + (1-tau)*(lt1-lt0)
     for (lt in c(lt.1tau,lt.tau))
     { family <- fix.family.link(negbin(theta=exp(lt),link=link))
-      if (method$outer=="bfgs") b <- bfgs(
+      if (optimizer[2]=="bfgs") b <- bfgs(
                   lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
@@ -942,7 +942,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
       }
      
       family <- fix.family.link(negbin(theta=exp(lt.new),link=link))
-       if (method$outer=="bfgs") b <- bfgs(
+       if (optimizer[2]=="bfgs") b <- bfgs(
                   lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
@@ -968,7 +968,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,gamma,G,scale,...) {
   object
 }
 
-gam.outer <- function(lsp,fscale,family,control,method,criterion,scale,gamma,G,...)
+gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
 # P-IRLS scheme iterated to convergence for each trial set of smoothing
 # parameters.
@@ -977,7 +977,10 @@ gam.outer <- function(lsp,fscale,family,control,method,criterion,scale,gamma,G,.
 #    `object'
 #  2. Call `magic.post.proc' to get parameter covariance matrices, edf etc to
 #     add to `object' 
-{ if (method$outer=="nlm.fd") {
+{ if (is.null(optimizer[2])) optimizer[2] <- "newton"
+  if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimizartion method.")
+  if (optimizer[2]=="nlm.fd") {
+    if (method%in%c("REML","ML","GACV.Cp","P-ML","P-REML")) stop("nlm.fd only available for GCV/UBRE")
     um<-nlm(full.score,lsp,typsize=lsp,fscale=fscale, stepmax = 
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
@@ -992,25 +995,21 @@ gam.outer <- function(lsp,fscale,family,control,method,criterion,scale,gamma,G,.
   }
   ## some preparations for the other methods 
  
-
   family <- fix.family.link(family)
   family <- fix.family.var(family)
-  if (method$reml) family <- fix.family.ls(family) 
+  if (method%in%c("REML","ML","P-REML","P-ML")) {reml <- TRUE; family <- fix.family.ls(family)} else reml <- FALSE 
   G$rS <- mini.roots(G$S,G$off,ncol(G$X))
- # if (G$sig2>0) {criterion <- "UBRE";scale <- G$sig2} else { 
- #                criterion <- method$gcv;scale <- -1}  
 
   if (substr(family$family[1],1,17)=="Negative Binomial" && length(family$getTheta())>1) {
-    if (!(method$outer=="newton"||method$outer=="bfgs")) {
+    if (!(optimizer[2]=="newton"||optimizer[2]=="bfgs")) {
       warning("only outer methods `newton' & `bfgs' supports `negbin' family and theta selection: reset")
-      method$outer <- "newton"
+      optimizer[2] <- "newton"
     } 
-    if (method$reml) warning("REML not supported with negative binomial, using AIC")
-    object <- gam.negbin(lsp,fscale,family,control,method,gamma,G,...)
+    if (reml) warning("REML not supported with negative binomial, using AIC")
+    object <- gam.negbin(lsp,fscale,family,control,method,optimizer,gamma,G,...)
     ## make sure criterion gets set to UBRE
-  } else if (method$outer=="newton"||method$outer=="bfgs"){ ## the gam.fit3 method -- not negbin
-  #  if (method$reml) criterion <- "REML"
-    if (method$outer=="bfgs") 
+  } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method -- not negbin
+    if (optimizer[2]=="bfgs") 
     b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
@@ -1032,7 +1031,7 @@ gam.outer <- function(lsp,fscale,family,control,method,criterion,scale,gamma,G,.
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
              L=G$L,lsp0=G$lsp0)
    
-    if (method$outer=="nlm") {
+    if (optimizer[2]=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
             stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
@@ -1041,7 +1040,7 @@ gam.outer <- function(lsp,fscale,family,control,method,criterion,scale,gamma,G,.
             args=args,...)
       lsp <- b$estimate
       
-    } else if (method$outer=="optim") {
+    } else if (optimizer[2]=="optim") {
       b<-optim(par=lsp,fn=gam2objective,gr=gam2derivative,method="L-BFGS-B",control=
          list(fnscale=fscale,factr=control$optim$factr,lmm=min(5,length(lsp))),args=args,...)
       lsp <- b$par
@@ -1071,11 +1070,22 @@ gam.outer <- function(lsp,fscale,family,control,method,criterion,scale,gamma,G,.
 }
 
 
-estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
+estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 ## Do gam estimation and smoothness selection...
 
+  if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
+  if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
+
+  if (method%in%c("REML","P-REML","ML","P-ML")) {
+    if (optimizer[1]=="perf") {
+      warning("Reset optimizer to outer/newton") 
+      optimizer <- c("outer","newton")
+    }
+    reml <- TRUE
+  } else reml <- FALSE
+
   # is outer looping needed ?
-  outer.looping <- ((!G$am && (method$gam=="perf.outer"||method$gam=="outer"))||method$reml) &&
+  outer.looping <- ((!G$am && (optimizer[1]=="outer"))||reml||method=="GACV.Cp") &&
                    length(G$S)>0 && sum(G$sp<0)!=0
 
   ## sort out exact sp selection criterion to use
@@ -1085,13 +1095,9 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
       else G$sig2 <- -1 #gcv
   } else {G$sig2 <- scale}
 
-  if (method$reml) { ## then REML selection, but which variant?
-   if (G$family$family[1] == "binomial"||G$family$family[1] == "poisson") { 
-     scale <- 1;criterion <- "REML"
-   } else {
-     if (scale>=0) criterion <- "REML" ## known scale is >0, estimate otherwise
-     else criterion <- "P-REML" ## use Pearson estimator of scale    
-   }
+  if (reml) { ## then RE(ML) selection, but which variant?
+   criterion <- method
+   if (G$family$family[1] == "binomial"||G$family$family[1] == "poisson") scale <- 1
   } else {
     if (scale==0) { 
       if (G$family$family[1]=="binomial"||G$family$family[1]=="poisson") scale<-1 #ubre
@@ -1099,7 +1105,7 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
     }
     if (scale > 1) criterion <- "UBRE"
     else {
-      if (method$gcv=="deviance") criterion <- "GCV" else criterion <- "GACV"
+      if (method=="GCV.Cp") criterion <- "GCV" else criterion <- "GACV"
     }
   }
 
@@ -1107,7 +1113,7 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
   family <- G$family  
-  if (outer.looping && method$gam=="outer") { 
+  if (outer.looping && optimizer[1]=="outer") { 
     fixedSteps <- control$outerPIsteps      ## how many performance iteration steps to use for initialization
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       G$sig2 <- 1 
@@ -1115,7 +1121,7 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
     }
   } else fixedSteps <- control$maxit+2
   
-  if (outer.looping && method$gam=="outer" && !is.null(in.out)) { # initial s.p.s and scale provided
+  if (outer.looping && optimizer[1]=="outer" && !is.null(in.out)) { # initial s.p.s and scale provided
     ok <- TRUE ## run a few basic checks
     if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
     if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
@@ -1134,7 +1140,7 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
     lsp<-log(object$sp) 
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
-    if (method$gam!="perf.outer"&&is.null(in.out)) { ## note no checks if supplied 
+    if (is.null(in.out)) { ## note no checks if supplied 
       lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
       if (!is.null(G$L)) { ## estimate underlying smoothing parameters
         if (is.null(G$lsp0)) G$lsp0 <- rep(0,nrow(G$L))
@@ -1146,7 +1152,7 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
     }
     mgcv.conv <- object$mgcv.conv  
   
-    if (criterion=="REML"&&scale==0) { ## log(scale) to be estimated as a smoothing parameter
+    if (criterion%in%c("REML","ML")&&scale<=0) { ## log(scale) to be estimated as a smoothing parameter
       log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
       lsp <- c(lsp,log.scale) ## append log initial scale estimate to lsp
       ## extend G$L, if present...
@@ -1155,24 +1161,24 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
     }
 
     object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(G$y),family=G$family,
-                        control=control,criterion=criterion,method=method,scale=scale,gamma=gamma,G=G,...)
+                        control=control,criterion=criterion,method=method,optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)
     
-    if (criterion=="REML"&&scale==0) object$sp <- object$sp[-length(object$sp)] ## drop scale estimate from sp array
+    if (criterion%in%c("REML","ML")&&scale<=0)  object$sp <- 
+                                                object$sp[-length(object$sp)] ## drop scale estimate from sp array
     object$mgcv.conv <- mgcv.conv 
 
   } else { ## performance iteration already complete, but check for all fixed sp case ...
-    if (!G$am && (method$gam=="perf.outer"||method$gam=="outer")) {
+    if (!G$am && (optimizer[1]=="outer")) {
       ## need to fix up GCV/UBRE score 
       if (criterion=="UBRE") object$gcv.ubre <- object$deviance/G$n - scale +
                              2 * gamma * scale* sum(object$edf)/G$n else 
-      if (criterion=="deviance") object$gcv.ubre <- G$n *
+      if (criterion=="GCV") object$gcv.ubre <- G$n *
                         object$deviance/(G$n-sum(object$edf))^2 else 
       if (criterion=="GACV") { 
         P <- sum(object$weights*object$residuals^2)
         tau <- sum(object$edf)
         object$gcv.ubre <- object$deviance/G$n + 2 * gamma*tau * P / (G$n*(G$n-tau))
       }  
-      if (criterion=="REML"||criterion=="P-REML") object$gcv.ubre <- NA
     }
   }
 
@@ -1201,7 +1207,7 @@ estimate.gam <- function (G,method,control,in.out,scale,gamma,...) {
 }
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
-                control=gam.control(),method=gam.method(),
+                method="GCV.Cp",optimizer=c("outer","newton"),control=gam.control(),
                 scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
                 paraPen=NULL,G=NULL,in.out=NULL,...)
 
@@ -1215,7 +1221,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf<-match.call(expand.dots=FALSE)
     mf$formula<-gp$fake.formula 
     mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-
-               mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$...<-NULL
+               mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$...<-NULL
     mf$drop.unused.levels<-TRUE
     mf[[1]]<-as.name("model.frame")
     pmf <- mf
@@ -1235,9 +1241,6 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (family$family[1]=="gaussian" && family$link=="identity") am <- TRUE
     else am <- FALSE
     
- #   if (am) fit.method <- method$am else { 
- #     if (method$gam=="perf.mgcv") fit.method <- "mgcv" else fit.method <- "magic"}
-
     G<-gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
                  H=H,absorb.cons=TRUE,
                  idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
@@ -1273,11 +1276,11 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   if (!fit) return(G)
   
-  method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
+#  method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
   G$conv.tol<-control$mgcv.tol      # tolerence for mgcv
   G$max.half<-control$mgcv.half # max step halving in Newton update mgcv
 
-  object <- estimate.gam(G,method,control,in.out,scale,gamma,...)
+  object <- estimate.gam(G,method,optimizer,control,in.out,scale,gamma,...)
   
 ##  object$full.formula<-as.formula(G$full.formula)
 ##  environment(object$full.formula)<-environment(G$formula) 
@@ -1297,7 +1300,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$data <- data
   object$df.residual <- nrow(G$X) - sum(object$edf)
   object$min.edf<-G$min.edf
-  object$fit.method <- gam.method.description(method,G$am)
+#  object$fit.method <- gam.method.description(method,G$am)
   object$call<-G$cl # needed for update() to work
   class(object)<-c("gam","glm","lm")
   object
@@ -1389,16 +1392,8 @@ print.gam<-function (x,...)
     edf[i]<-sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
     cat("\nEstimated degrees of freedom:\n",edf,"  total = ",sum(x$edf),"\n")
   }
-  if (x$method=="GCV")  
-  cat("\nGCV score: ",x$gcv.ubre,"\n")
-  else if (x$method=="UBRE")
-  cat("\nUBRE score: ",x$gcv.ubre,"\n")
-  else if (x$method=="GACV")
-  cat("\nGACV score: ",x$gcv.ubre,"\n")
-  else if (x$method=="REML")
-  cat("\nREML score: ",x$gcv.ubre,"\n") else
-  if (x$method=="P-REML")
-  cat("\nP-REML score: ",x$gcv.ubre,"\n")
+  if (!is.null(x$method))  
+  cat("\n",x$method," score: ",x$gcv.ubre,"\n",sep="")
   invisible(x)
 }
 
@@ -2807,9 +2802,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
        s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
        dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
        pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
-       pTerms.table = pTerms.table, s.table = s.table)
-  if (object$method=="UBRE") ret$ubre<-object$gcv.ubre else 
-  if (object$method%in%c("REML","P-REML")) ret$reml<- object$gcv.ubre else ret$gcv<-object$gcv.ubre
+       pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre)
+ 
   class(ret)<-"summary.gam"
   ret
 }
@@ -2831,9 +2825,9 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   }
   cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5))
   if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
-  if (!is.null(x$ubre)) cat("UBRE score = ",formatC(x$ubre,digits=5),sep="")
-  if (!is.null(x$gcv)) cat("GCV score = ",formatC(x$gcv,digits=5)," ",sep="")
-  if (!is.null(x$reml)) cat("REML score = ",formatC(x$reml,digits=5)," ",sep="")
+  
+  if (!is.null(x$method)) cat(x$method," score = ",formatC(x$sp.criterion,digits=5),sep="")
+ 
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
   invisible(x)
 }
