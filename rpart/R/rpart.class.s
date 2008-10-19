@@ -48,32 +48,32 @@ rpart.class <- function(y, offset, parms, wt) {
 	}
     else stop("Parameter argument must be a list")
 
-    list(y=y, parms=parms, numresp=numclass+1, counts=counts,
-	 ylevels= levels(fy), numy=1,
+    list(y=y, parms=parms, numresp=numclass+1L, counts=counts,
+	 ylevels= levels(fy), numy=1L,
 	 print = function(yval, ylevel, digits) {
 	     if (is.null(ylevel))
-		     temp <- as.character(yval[,1])
-	     else    temp <- ylevel[yval[,1]]
+		     temp <- as.character(yval[,1L])
+	     else    temp <- ylevel[yval[,1L]]
 
-	     nclass <- (ncol(yval) -1)/2
+	     nclass <- (ncol(yval) -1L)/2
 	     if (nclass <5) {
-		 yprob <- format(yval[, 1+nclass + 1:nclass],
+		 yprob <- format(yval[, 1L+nclass + 1L:nclass],
 				 digits=digits,nsmall=digits)
 		 }
-	     else yprob <- formatg(yval[, 1+nclass + 1:nclass], digits=2)
+	     else yprob <- formatg(yval[, 1L+nclass + 1L:nclass], digits=2)
              if(is.null(dim(yprob))) # yprob is a vector
                      yprob <- matrix(yprob, ncol=length(yprob))
-	     temp <- paste(temp, ' (', yprob[,1], sep='')
-	     for(i in 2:ncol(yprob))
+	     temp <- paste(temp, ' (', yprob[,1L], sep='')
+	     for(i in 2L:ncol(yprob))
 		     temp  <- paste(temp, yprob[, i], sep=' ')
 	     temp <- paste(temp, ")", sep="")
 	     temp
 	     },
 	 summary= function(yval, dev, wt, ylevel, digits) {
-	     nclass <- (ncol(yval)-1) /2
+	     nclass <- (ncol(yval)-1L) /2
 	     group <- yval[, 1]
-	     counts <- yval[, 1+ (1:nclass)]
-	     yprob  <- yval[, 1+nclass + 1:nclass]
+	     counts <- yval[, 1L+ (1L:nclass)]
+	     yprob  <- yval[, 1L+nclass + 1L:nclass]
 	     if(!is.null(ylevel)) group <- ylevel[group]
 
 	     temp1 <- formatg(counts, format="%5g")
@@ -92,9 +92,9 @@ rpart.class <- function(y, offset, parms, wt) {
 	     },
 	 text= function(yval, dev, wt, ylevel, digits, n, use.n) {
 
-	     nclass <- (ncol(yval)-1) /2
-	     group <- yval[, 1]
-	     counts <- yval[, 1+ (1:nclass)]
+	     nclass <- (ncol(yval)-1L) /2
+	     group <- yval[, 1L]
+	     counts <- yval[, 1L+ (1L:nclass)]
 	     if(!is.null(ylevel)) group <- ylevel[group]
 
 	     temp1 <- formatg(counts, digits)
