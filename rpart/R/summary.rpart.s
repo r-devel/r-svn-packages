@@ -78,8 +78,8 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 	    cat("  left son=", sons[1L], " (", sons.n[1L], " obs)",
 		" right son=", sons[2L], " (", sons.n[2L], " obs)", sep='')
 	    j <- nn - (sons.n[1L] + sons.n[2L])
-	    if (j>1) cat(", ", j, " observations remain\n", sep='')
-	    else if (j==1) cat(", 1 observation remains\n")
+	    if (j>1L) cat(", ", j, " observations remain\n", sep='')
+	    else if (j==1L) cat(", 1 observation remains\n")
 	    else     cat("\n")
 	    cat("  Primary splits:\n")
 	    j <- seq(index[i], length.out=1L+ff$ncompete[i])
@@ -90,7 +90,7 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 		      " improve=", format(signif(x$splits[j,3], digits)),
 		      ", (", nn - x$splits[j,1L], " missing)", sep=''),
                 sep="\n")
-	    if (ff$nsurrogate[i] >0) {
+	    if (ff$nsurrogate[i] >0L) {
 		cat("  Surrogate splits:\n")
 		j <- seq(1 +index[i] + ff$ncompete[i], length.out=ff$nsurrogate[i])
 		agree <- x$splits[j,3L]

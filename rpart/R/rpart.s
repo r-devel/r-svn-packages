@@ -225,7 +225,7 @@ rpart <- function(formula, data, weights, subset,
 			    dev=  rp$dnode[,1L],
 			    yval= rp$dnode[,4L],
 			    complexity=rp$dnode[,2L],
-			    ncompete  = pmax(0, rp$inode[,3L]-1),
+			    ncompete  = pmax(0L, rp$inode[,3L] - 1L),
 			    nsurrogate=rp$inode[,4L])
 	}
     else {
@@ -238,10 +238,10 @@ rpart <- function(formula, data, weights, subset,
 			    dev=  rp$dnode[,1L],
 			    yval= rp$dnode[,4L],
 			    complexity=rp$dnode[,2L],
-			    ncompete  = pmax(0, rp$inode[,3L]-1),
+			    ncompete  = pmax(0L, rp$inode[,3L] - 1L),
 			    nsurrogate=rp$inode[,4L])
 	}
-    if (method.int ==3 ) {
+    if (method.int == 3L) {
         numclass <- init$numresp -1L
         # Create the class probability vector from the class counts, and
         #   add it to the results
@@ -288,7 +288,7 @@ rpart <- function(formula, data, weights, subset,
 		    control= controls,
 		    functions= functions)
 	}
-    if (ncat>0) ans$csplit <- catmat +2
+    if (ncat>0) ans$csplit <- catmat + 2L
     if (model) {
 	ans$model <- m
 	if (missing(y)) y <- FALSE

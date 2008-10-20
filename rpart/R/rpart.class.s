@@ -12,9 +12,9 @@ rpart.class <- function(y, offset, parms, wt) {
 		      split=1)
     else if (is.list(parms)) {
 	if (is.null(names(parms))) stop("The parms list must have names")
-	temp <- pmatch(names(parms), c("prior", "loss", "split"), nomatch=0)
-	if (any(temp==0))
-	    stop("'parms' component not matched: ", names(parms)[temp==0])
+	temp <- pmatch(names(parms), c("prior", "loss", "split"), nomatch=0L)
+	if (any(temp==0L))
+	    stop("'parms' component not matched: ", names(parms)[temp==0L])
 	names(parms) <- c("prior", "loss", "split")[temp]
 
 	if (is.null(parms$prior)) temp <- c(counts/sum(counts))
@@ -39,7 +39,7 @@ rpart.class <- function(y, offset, parms, wt) {
 			stop("Loss matrix has a row of zeros")
 	    }
 
-	if (is.null(parms$split)) temp3 <- 1
+	if (is.null(parms$split)) temp3 <- 1L
  	    else {
 		temp3 <- pmatch(parms$split, c("gini", "information"))
 		if (is.null(temp3)) stop("Invalid splitting rule")

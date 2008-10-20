@@ -60,7 +60,7 @@ snip.rpart <- function(x, toss) {
     x$splits <- split
 
     # Thin out unneeded rows in the frame component
-    ff$ncompete[newleaf] <- ff$nsurrogate[newleaf] <- 0
+    ff$ncompete[newleaf] <- ff$nsurrogate[newleaf] <- 0L
     ff$var[newleaf]     <- "<leaf>"
     x$frame <- ff[sort(c(keepit, newleaf)),]
 
