@@ -233,16 +233,6 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
   k.new <- round(k) # in case user has supplied non-integer basis dimension
   if (!all.equal(k.new,k)) {warning("argument k of s() should be integer and has been rounded")}
   k <- k.new
-#  if (length(k)==1 && k==-1) k<-10*3^(d-1) # auto-initialize basis dimension
-#  ind <- k<2
-#  if (sum(ind)) 
-#  { k[ind] <- 2
-#    warning("meaninglessly low k; reset to 2\n")
-#  }
-#  if (bs=="cr"||bs=="cc"||bs=="cs") # a check
-#  { if (d>1) { warning("cr/cc basis only works with 1-d smooths!\n");bs<-"tp";}
-#  } 
-#  m[m<0]<-0
   # check for repeated variables in function argument list
   if (length(unique(term))!=d) stop("Repeated variables as arguments of a smooth are not permitted")
   # assemble label for term
@@ -431,7 +421,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
 { shrink <- attr(object,"shrink")
   ## deal with possible extra arguments of "tp" type smooth
   xtra <- list()
-#  object$xt <- as.list(object$xt)
+
   if (is.null(object$xt$max.knots)) xtra$max.knots <- 3000 
   else xtra$max.knots <- object$xt$max.knots 
   if (is.null(object$xt$seed)) xtra$seed <- 1 
@@ -453,7 +443,6 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   { knt<-array(0,0)
     for (i in 1:object$dim) 
     { dum <- knots[[object$term[i]]]-shift[i]
-##dum <- get.var(object$term[[i]],knots)-shift[i]
       if (is.null(dum)) {knt<-0;nk<-0;break} # no valid knots for this term
       knt <- c(knt,dum)
       nk0 <- length(dum)
@@ -542,27 +531,21 @@ Predict.matrix.tprs.smooth<-function(object,data)
 { x<-array(0,0)
   for (i in 1:object$dim) 
   { xx <- data[[object$term[i]]]
-##xx <- get.var(object$term[[i]],data)
     xx <- xx - object$shift[i]
     if (i==1) n <- length(xx) else 
     if (length(xx)!=n) stop("arguments of smooth not same dimension")
     if (length(xx)<1) stop("no data to predict at")
     x<-c(x,xx)
   }
-#  n<-nrow(data)
-#  if (object$by!="NA")  # deal with "by" variable 
-#  { by <- get.var(object$by,data)
-#    if (is.null(by)) stop("Can't find by variable")
-#    by.exists<-TRUE
-#  } else { 
-    by<-0;by.exists<-FALSE
-#  }
+
+  by<-0;by.exists<-FALSE
+
   X<-matrix(0,n,object$bs.dim)
   oo<-.C(C_predict_tprs,as.double(x),as.integer(object$dim),as.integer(n),as.integer(object$p.order),
       as.integer(object$bs.dim),as.integer(object$null.space.dim),as.double(object$Xu),
       as.integer(nrow(object$Xu)),as.double(object$UZ),as.double(by),as.integer(by.exists),X=as.double(X))
   X<-matrix(oo$X,n,object$bs.dim)
-#  attr(X,"by.done") <- TRUE
+
   X
 }
 
@@ -649,7 +632,7 @@ smooth.construct.cs.smooth.spec<-function(object,data,knots)
 
 Predict.matrix.cr.smooth<-function(object,data)
 # this is the prediction method for a cubic regression spline
-{ ##x <- get.var(object$term,data)
+{
   x <- data[[object$term]]
   if (length(x)<1) stop("no data to predict at")
   nx<-length(x)
@@ -719,7 +702,6 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
     list(B=B,D=D)
   } # end of getBD local function
   # evaluate covariate, x, and knots, k.
-##  x <- get.var(object$term,data)
   x <- data[[object$term]]
   if (object$bs.dim < 0 ) object$bs.dim <- 10 ## default
   if (object$bs.dim <4) { object$bs.dim <- 4
@@ -727,8 +709,6 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   }
 
   nk <- object$bs.dim
-##  if (!is.null(knots))  k <- get.var(object$term,knots)
-##  else k<-NULL
   k <- knots[[object$term]]
   if (is.null(k)) k<-place.knots(x,nk)   
 
@@ -775,7 +755,6 @@ Predict.matrix.cyclic.smooth<-function(object,data)
        I[j,]*as.numeric((x-knots[j1])/h[hj])
     X
   }
-##  x <- get.var(object$term,data)
   x <- data[[object$term]]
   if (length(x)<1) stop("no data to predict at")
   X <- pred.mat(x,object$xp,object$BD)
@@ -897,13 +876,7 @@ mfil <- function(M,i,j,m) {
 
 
 D2 <- function(ni=5,nj=5) {
-## NOTE: BUGGY ON GRIDS OF < 5 by 5 --- total penalty has
-## more than 3 zero eigen-vales (5 by 5 and above is fine)
-## Actually issue here is that it is dumb to only define 
-## penalty on inner grid where every term can be defined 
-## It would be better to define each penalty on the largest grid 
-## possible. Otherwise corner terms behave very strangely, since 
-## they are involved only in mixed partials.
+
 ## Function to obtain second difference matrices for
 ## coefficients notionally on a regular ni by nj grid
 ## returns second order differences in each direction +
@@ -963,7 +936,7 @@ D2 <- function(ni=5,nj=5) {
 smooth.construct.ad.smooth.spec<-function(object,data,knots)
 ## an adaptive p-spline constructor method function
 ## This is the simplifies and more efficient version...
-## NOTE: only 2-D still needs work (on D2 and consequent changes)
+
 { bs <- object$xt$bs
   if (length(bs)>1) bs <- bs[1]
   if (is.null(bs)) { ## use default bases  
@@ -1289,8 +1262,6 @@ Predict.matrix2 <- function(object,data) {
 
 
 
-
-
 ExtractData <- function(object,data,knots) {
 ## `data' and `knots' contain the data needed to evaluate the `terms', `by'
 ## and `knots' elements of `object'. This routine does so, and returns
@@ -1334,7 +1305,8 @@ ExtractData <- function(object,data,knots) {
 ## calls for basis construction, and other functions call for prediction
 #########################################################################
 
-smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),dataX = NULL)
+smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
+                      dataX = NULL,null.space.penalty = TRUE)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterization used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
@@ -1357,8 +1329,6 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 
   ## set df fields (pre-constraint)...
   if (is.null(sm$df)) sm$df <- sm$bs.dim
- 
-
 
   ## automatically discard penalties for fixed terms...
   if (!is.null(object$fixed)&&object$fixed) {
@@ -1455,7 +1425,6 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       attr(sml[[1]]$X,"offset") <- offX
     } ## end of term specific offset handling
   }
-
   
   ## absorb constraints.....
   if (absorb.cons)
@@ -1484,6 +1453,26 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
      }
    } ## end else 
   } else for (i in 1:length(sml)) attr(sml[[i]],"qrc") <-NULL ## no absorption
+
+  ## The idea here is that term selection can be accomplished as part of fitting 
+  ## by applying penalties to the null space of the penalty... 
+
+  if (null.space.penalty) { ## then an extra penalty on the un-penalized space should be added 
+    St <- sml[[1]]$S[[1]]
+    if (length(sml[[1]]$S)>1) for (i in 1:length(sml[[1]]$S)) St <- St + sml[[1]]$S[[i]]
+    es <- eigen(St,symmetric=TRUE)
+    ind <- es$values<max(es$values)*.Machine$double.eps^.66
+    if (sum(ind)) { ## then there is an unpenalized space remaining
+      U <- es$vectors[,ind,drop=FALSE]
+      Sf <- U%*%t(U) ## penalty for the unpenalized components
+      M <- length(sm$S)
+      for (i in 1:length(sml)) {
+        sml[[i]]$S[[M+1]] <- Sf
+        sml[[i]]$rank[M+1] <- sum(ind)
+      }
+    }
+  }
+
   sml
 }
 

@@ -38,7 +38,7 @@ a clone of what S-PLUS provides use \link[gam]{gam} from package \code{gam}.
 
 gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action,offset=NULL,method="GCV.Cp",optimizer=c("outer","newton"),
-    control=gam.control(),scale=0,knots=NULL,sp=NULL,min.sp=NULL,
+    control=gam.control(),scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,
     H=NULL,gamma=1,fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
 }
 %- maybe also `usage' for other objects documented here.
@@ -94,6 +94,12 @@ and \code{"nlm.fd"} (the latter is based entirely on finite differenced derivati
 scale paraemter is unknown. 0 signals that the scale parameter is 1  for Poisson and binomial and unknown otherwise. 
 Note that (RE)ML methods can only work with scale parameter 1 for the Poisson and binomial cases.    
 } 
+
+\item{select}{ If this is \code{TRUE} then \code{gam} can add an extra penalty to each term so 
+that it can be penalized to zero. If the corresponding 
+smoothing paraemter is estimated as zero then the penalty has no effect. Then the smoothing parameter estimation that is 
+part of fitting can completely remove terms from the model.
+}
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
 For most bases the user simply supplies the knots to be used, which must match up with the \code{k} value

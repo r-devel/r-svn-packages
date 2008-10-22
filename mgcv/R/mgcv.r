@@ -197,9 +197,6 @@ mgcv <- function(y,X,sp,S,off,C=NULL,w=rep(1,length(y)),H=NULL,scale=1,gcv=TRUE,
 
 
 
-
-
-
 interpret.gam <- function (gf)
 # interprets a gam formula of the generic form:
 #   y~x0+x1+x3*x4 + s(x5)+ s(x6,x7) ....
@@ -287,6 +284,7 @@ interpret.gam <- function (gf)
   class(ret)<-"split.gam.formula"
   ret
 }
+
 
 fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5)
 # model matrix X2 may be linearly dependent on X1. This 
@@ -476,7 +474,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
 }
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
-                    min.sp=NULL,H=NULL,absorb.cons=TRUE,idLinksBases=TRUE,
+                    min.sp=NULL,H=NULL,absorb.cons=TRUE,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
@@ -564,11 +562,12 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty) ## old code
     id <- split$smooth.spec[[i]]$id
     if (is.null(id)||!idLinksBases) { ## regular evaluation
-      sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty) 
+      sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,
+                       null.space.penalty=select) 
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
-                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty)
+                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,null.space.penalty=select)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
@@ -1208,7 +1207,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 method="GCV.Cp",optimizer=c("outer","newton"),control=gam.control(),
-                scale=0,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
+                scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
                 paraPen=NULL,G=NULL,in.out=NULL,...)
 
 # Routine to fit a GAM to some data. The model is stated in the formula, which is then 
@@ -1220,7 +1219,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     cl<-match.call() # call needed in gam object for update to work
     mf<-match.call(expand.dots=FALSE)
     mf$formula<-gp$fake.formula 
-    mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-
+    mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <-
                mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$...<-NULL
     mf$drop.unused.levels<-TRUE
     mf[[1]]<-as.name("model.frame")
@@ -1242,7 +1241,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     else am <- FALSE
     
     G<-gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
-                 H=H,absorb.cons=TRUE,
+                 H=H,absorb.cons=TRUE,select=select,
                  idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
     

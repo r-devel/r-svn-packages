@@ -22,7 +22,7 @@ gamSim <- function(eg=1,n=400,dist="normal",scale=2) {
       y <- f + e
     } else if (dist=="poisson") {
       g<-exp(f*scale)
-      f <- log(f) ## true linear predictor
+      f <- log(g) ## true linear predictor
       y<-rpois(rep(1,n),g)
     } else if (dist=="binary") {
       f <- (f-5)*scale
