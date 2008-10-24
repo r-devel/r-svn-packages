@@ -3,6 +3,14 @@
 
 ISSUES TO CLEAR
 
+* Major issue: calculating U for det(S)_+ on the fly is not a 
+  good idea. If an eigen-value gets truncated then this usually leads 
+  to a sudden big drop in  l/l_r since a large +ve contribution has 
+  suddenly been dropped. It is probably necessary to decide on U in 
+  advance and to keep all eigenvalues that should be >0, resetting all 
+  that underflow to some default?
+
+* outerPIstep=0 causes failure (with select=TRUE, at least)
 
 * removal of gam.method and all references to it in helpfiles.
 

@@ -493,7 +493,7 @@ gam.fit2 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
 gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL, 
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
-            mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
+            mustart = NULL, offset = rep(0, nobs),U1=0,Mp=-1, family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 ## This version is designed to allow iterative weights to be negative. This means that 
@@ -821,14 +821,14 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
        if (scoreType%in%c("REML","P-REML")) REML <- 1 else 
        if (scoreType%in%c("ML","P-ML")) REML <- -1 
 
-       oo <- .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),
+       oo <- .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),U1=as.double(U1),
            sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
            V1=as.double(V1),V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
            P=as.double(dum),P1=as.double(P1),P2=as.double(P2),trA=as.double(dum),
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
-           p=as.integer(ncol(x)),M=as.integer(nSp),Encol = as.integer(ncol(Sr)),
+           p=as.integer(ncol(x)),M=as.integer(nSp),Mp=as.integer(Mp),Encol = as.integer(ncol(Sr)),
            rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
            REML = as.integer(REML),fisher=as.integer(fisher))      
        
@@ -985,14 +985,14 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),off, H=NULL,
 
 deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL, 
             weights = rep(1, length(y)), start = NULL, etastart = NULL, 
-            mustart = NULL, offset = rep(0, length(y)), family = gaussian(), 
+            mustart = NULL, offset = rep(0, length(y)),U1,Mp,family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,...)
 ## FD checking of derivatives: basically a debugging routine
 {  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
    if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,off=off, H=H,
-      offset = offset,family = family,weights=weights,deriv=deriv,
+      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
 
@@ -1017,7 +1017,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
    for (i in 1:length(sp)) {
      sp1 <- sp;sp1[i] <- sp[i]+eps
      b<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,off=off, H=H,
-      offset = offset,family = family,weights=weights,deriv=deriv,
+      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
       printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
       
@@ -1101,7 +1101,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),off, H=NULL,
 }
 
 
-newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
+newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
                    use.svd=TRUE,mustart = NULL,...)
@@ -1129,7 +1129,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
      deriv <- 2
      eps <- 1e-4
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
-         offset = offset,family = family,weights=weights,deriv=deriv,
+         offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,use.svd=use.svd,mustart=mustart,
          scoreType=scoreType,eps=eps,...)
@@ -1139,7 +1139,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
   ## initial fit
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,off=off, H=H,
-     offset = offset,family = family,weights=weights,deriv=2,
+     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
 
@@ -1185,7 +1185,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
     ## try the step ...
     lsp1 <- lsp + Nstep
     b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
-       offset = offset,family = family,weights=weights,deriv=2,
+       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
        printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
     
@@ -1220,7 +1220,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
         if (ii>3) Slength <- Slength/2 ## keep track of SD step length
         lsp1 <- lsp + step
         b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
-           offset = offset,family = family,weights=weights,deriv=0,
+           offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,
            scoreType=scoreType,...)
@@ -1235,7 +1235,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 
         if (score1 <= score) { ## accept
           b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
-             offset = offset,family = family,weights=weights,deriv=2,
+             offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,
              printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
           mustart <- b$fitted.values
@@ -1257,7 +1257,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
     }
     ## test for convergence
     converged <- TRUE
-    score.scale <- b$scale.est + score;    
+    score.scale <- b$scale.est + abs(score);    
     uconv.ind <- abs(grad) > score.scale*conv.tol
     if (sum(uconv.ind)) converged <- FALSE
     if (abs(old.score-score)>score.scale*conv.tol) { 
@@ -1273,7 +1273,7 @@ newton <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
   list(score=score,lsp=lsp,lsp.full=L%*%lsp,grad=grad,hess=hess,iter=i,conv =ct,object=b)
 }
 
-bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
+bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="GCV",use.svd=TRUE,
                    mustart = NULL,...)
@@ -1367,7 +1367,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 #      ptm <- proc.time()
       if (kk!=0||ii==1) deriv <- 1 else deriv <- 0
       b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
-          offset = offset,family = family,weights=weights,deriv=deriv,
+          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
           control=control,gamma=gamma,scale=scale,
           printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
 #       ptm <- proc.time()-ptm
@@ -1387,7 +1387,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
       if (kk==0) { ## time for a full Newton step ...
 #        ptm <- proc.time()
         b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
-               offset = offset,family = family,weights=weights,deriv=2,
+               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                control=control,gamma=gamma,scale=scale,
                printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
 #         ptm <- proc.time()-ptm
@@ -1409,7 +1409,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
 #        ptm <- proc.time()
          if (ii==1) b <- b1 else  
          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,off=off, H=H,
-               offset = offset,family = family,weights=weights,deriv=1,
+               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                control=control,gamma=gamma,scale=scale,
                printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
 #         ptm <- proc.time()-ptm
@@ -1435,7 +1435,7 @@ bfgs <- function(lsp,X,y,S,rS,off,L,lsp0,H,offset,family,weights,
     } ## end of successful step updating
     ## test for convergence
     converged <- TRUE
-    score.scale <- b$scale.est + score;    
+    score.scale <- b$scale.est + abs(score);    
     uconv.ind <- abs(grad) > score.scale*conv.tol
     if (sum(uconv.ind)) converged <- FALSE
     if (abs(old.score-score)>score.scale*conv.tol) { 
@@ -1464,7 +1464,7 @@ gam2derivative <- function(lsp,args,...)
     lsp <- args$L%*%lsp + args$lsp0
   }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
-     offset = args$offset,family = args$family,weights=args$w,deriv=1,
+     offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      use.svd=FALSE,...)
   if (reml) {
@@ -1489,7 +1489,7 @@ gam2objective <- function(lsp,args,...)
     lsp <- args$L%*%lsp + args$lsp0
   }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
-     offset = args$offset,family = args$family,weights=args$w,deriv=0,
+     offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      use.svd=FALSE,...)
   if (reml) {
@@ -1515,7 +1515,7 @@ gam4objective <- function(lsp,args,...)
     lsp <- args$L%*%lsp + args$lsp0
   }
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,off=args$off, H=args$H,
-     offset = args$offset,family = args$family,weights=args$w,deriv=1,
+     offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
      use.svd=FALSE,...)
   
@@ -1848,6 +1848,30 @@ totalPenalty <- function(S,H,off,theta,p)
   }
   St
 }
+
+totalPenaltySpace <- function(S,H,off,p)
+{ ## function to obtain (orthogonal) bases for the null space and 
+  ## range space of the penalty, and obtain actual null space dimension
+  ## components are roughly rescaled to avoid any dominating
+
+  if (is.null(H)) St <- matrix(0,p,p)
+  else { St <- H/mean(abs(H[H!=0])); 
+    if (ncol(H)!=p||nrow(H)!=p) stop("H has wrong dimension")
+  }
+  m <- length(S)
+  if (m>0) for (i in 1:m) {
+    k0 <- off[i]
+    k1 <- k0 + nrow(S[[i]]) - 1
+    St[k0:k1,k0:k1] <- St[k0:k1,k0:k1] + S[[i]]/mean(abs(S[[i]][S[[i]]!=0]))
+  }
+  es <- eigen(St,symmetric=TRUE)
+  ind <- es$values>max(es$values)*.Machine$double.eps^.66
+  Y <- es$vectors[,ind,drop=FALSE]  ## range space
+  Z <- es$vectors[,!ind,drop=FALSE] ## null space - ncol(Z) is null space dimension
+  list(Y=Y,Z=Z)
+}
+
+
 
 mini.roots <- function(S,off,np)
 # function to obtain square roots, B[[i]], of S[[i]]'s having as few

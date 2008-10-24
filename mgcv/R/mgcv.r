@@ -877,12 +877,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
   for (i in 1:n.th) { ## search through theta values
     family <- fix.family.link(negbin(theta=exp(l.theta[i]),link=link))
     if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
@@ -911,12 +911,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
     for (lt in c(lt.1tau,lt.tau))
     { family <- fix.family.link(negbin(theta=exp(lt),link=link))
       if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else 
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
@@ -942,12 +942,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
      
       family <- fix.family.link(negbin(theta=exp(lt.new),link=link))
        if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
@@ -1009,11 +1009,11 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     ## make sure criterion gets set to UBRE
   } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method -- not negbin
     if (optimizer[2]=="bfgs") 
-    b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+    b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...) else
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,
+    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)                
@@ -1026,7 +1026,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
     object$outer.info <- b   
   } else { ## methods calling gam.fit3 
-    args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,family=family,
+    args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,off=G$off,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
              L=G$L,lsp0=G$lsp0)
    
@@ -1071,6 +1071,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 ## Do gam estimation and smoothness selection...
+  
 
   if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
@@ -1081,7 +1082,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       optimizer <- c("outer","newton")
     }
     reml <- TRUE
-  } else reml <- FALSE
+    Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
+    G$U1 <- Ssp$Y       ## range space of penalty
+    G$Mp <- ncol(Ssp$Z) ## null space dimension
+  } else { 
+    reml <- FALSE
+    G$U1 <- 0;G$Mp <- -1 ## not needed for GCV/AIC
+  }
 
   # is outer looping needed ?
   outer.looping <- ((!G$am && (optimizer[1]=="outer"))||reml||method=="GACV.Cp") &&
@@ -1102,7 +1109,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (G$family$family[1]=="binomial"||G$family$family[1]=="poisson") scale<-1 #ubre
       else scale <- -1 #gcv
     }
-    if (scale > 1) criterion <- "UBRE"
+    if (scale > 0) criterion <- "UBRE"
     else {
       if (method=="GCV.Cp") criterion <- "GCV" else criterion <- "GACV"
     }
@@ -1621,14 +1628,11 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
    
     boundary <- FALSE
     scale<-G$sig2
-#    if (G$fit.method=="magic") { 
-     # msp<-rep(-1,n.free) # free smoothing parameter vector for magic
-      msp <- G$sp
-      magic.control<-list(tol=G$conv.tol,step.half=G$max.half,maxit=control$maxit+control$globit,
+
+    msp <- G$sp
+    magic.control<-list(tol=G$conv.tol,step.half=G$max.half,maxit=control$maxit+control$globit,
                           rank.tol=control$rank.tol)
-#    } else
-#    { mgcv.control<-list(conv.tol=G$conv.tol,max.half=G$max.half,min.edf=G$min.edf,target.edf=-1)
-#    }
+
     for (iter in 1:(control$maxit)) 
     {
         good <- weights > 0
@@ -1655,55 +1659,34 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         if (fisher) { ## Conventional Fisher scoring
               G$y <- z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- sqrt((weg * mevg^2)/var.mug)
-        } else { ## full Newton
+        } else { ## full Newton (actually this is a problem as w can be negative!!)
               c <- yg - mug
               e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
               G$y <- z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
               w <- sqrt(weg*e*mevg/var.mug)
         }
         
-
-        ##z<-G$y <- (eta - offset)[good] + (y - mu)[good]/mu.eta.val[good]
-        ##w<- sqrt((weights[good] * mu.eta.val[good]^2)/variance(mu)[good])
-        
         G$w<-w
         G$X<-X[good,,drop=FALSE]  # truncated design matrix       
-        ## if (dim(X)[2]==1) dim(G$X)<-c(length(X[good,]),1) # otherwise dim(G$X)==NULL !!
-      
+     
         # must set G$sig2 to scale parameter or -1 here....
         G$sig2<-scale
 
- #       if (G$fit.method=="mgcv"&&n.free>0) # check that s.p.'s haven't drifted too far apart
- #       { temp.sp<-G$sp;temp.S.size<-S.size*temp.sp
- #         # check if there is a danger of getting stuck on a flat section of gcv/ubre score...
- #         if (min(temp.sp)>0 && min(temp.S.size)<.Machine$double.eps^0.5*max(temp.S.size)) 
- #         G$sp<- rep(-1.0,n.free) # .... if so use use auto-initialization in mgcv
- #         if (control$trace) cat("Re-initializing smoothing parameters\n") 
- #         if (iter>control$globit) # solution could be cycling - use more cautious optimization approach
- #         { mgcv.control$target.edf<-G$nsdf+sum(G$edf)
- #         } else
- #         mgcv.control$target.edf<- -1 # want less cautious optimization - better at local minimum avoidance
- #       }
+
         if (sum(!is.finite(G$y))+sum(!is.finite(G$w))>0) 
         stop("iterative weights or data non-finite in gam.fit - regularization may help. See ?gam.control.")
 
- #       if (G$fit.method=="mgcv") 
- #       { mr<-mgcv(G$y,G$X,G$sp,G$S,G$off,G$C,G$w,H=G$H,scale=G$sig2,gcv=(G$sig2<0),control=mgcv.control)
- #         G$p<-mr$b;G$sp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score
- #         G$Vp<-mr$Vb;G$hat<-mr$hat;G$edf<-mr$edf;G$conv<-mr$info
- #       }
- #       else { 
-          mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
+        ## solve the working weighted penalized LS problem ...
+
+        mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
                     ridge.parameter=control$irls.reg,control=magic.control,n.score=n.score)
-          G$p<-mr$b;msp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score;
-         
- #       }
+        G$p<-mr$b;msp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score;
 
         if (find.theta) {# then family is negative binomial with unknown theta - estimate it here from G$sig2
-#          if (G$fit.method=="magic") { ## then need to get edf array
-            mv<-magic.post.proc(G$X,mr,w=G$w^2)
-            G$edf <- mv$edf
-#          }
+            ##  need to get edf array
+          mv<-magic.post.proc(G$X,mr,w=G$w^2)
+          G$edf <- mv$edf
+
           Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
           family<-do.call("negbin",list(theta=Theta,link=nb.link))
           variance <- family$variance;dev.resids <- family$dev.resids
@@ -1711,11 +1694,6 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
           family$Theta <- Theta ## save Theta estimate in family
         }
 
-#        if (control$trace&&G$fit.method=="mgcv")
-#        { cat("sp: ",G$sp,"\n")
-#          plot(G$conv$edf,G$conv$score,xlab="EDF",ylab="GCV/UBRE score",type="l");
-#          points(G$nsdf+sum(G$edf),G$gcv.ubre,pch=20,col=2)
-#        }
         if (any(!is.finite(G$p))) {
             conv <- FALSE   
             warning(paste("Non-finite coefficients at iteration",iter))
@@ -1772,7 +1750,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         ## Test for convergence here ...
 
         if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon || olm ||
-            iter > fixedSteps) {
+            iter >= fixedSteps) {
             conv <- TRUE
             coef <- start #1.5.0
             break
@@ -1800,8 +1778,6 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     residuals <- rep(NA, nobs)
     residuals[good] <- z - (eta - offset)[good]
     
-    ##nr <- min(sum(good), nvars)
-
     wt <- rep(0, nobs)
     wt[good] <- w^2
    
@@ -1809,20 +1785,17 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     nulldev <- sum(dev.resids(y, wtdmu, weights))
     n.ok <- nobs - sum(weights == 0)
     nulldf <- n.ok - as.integer(intercept)
- #   if (G$fit.method=="magic") { # then some post processing is needed to extract covariance matrix etc...
-      mv<-magic.post.proc(G$X,mr,w=G$w^2)
-      G$Vp<-mv$Vb;G$hat<-mv$hat;
-      G$Ve <- mv$Ve # frequentist cov. matrix
-      G$edf<-mv$edf
-      G$conv<-mr$gcv.info
-      G$sp<-msp
-      rank<-G$conv$rank
- #   } else { 
- #     X <- as.vector(G$w) * G$X 
- #     X <- G$Vp %*% t(X)
- #     G$Ve <- X%*%t(X)/G$sig2 # frequentist cov. matrix 
- #     rank <- ncol(G$X)-ncol(G$C)
- #   }
+    
+    ## Extract a little more information from the fit....
+
+    mv<-magic.post.proc(G$X,mr,w=G$w^2)
+    G$Vp<-mv$Vb;G$hat<-mv$hat;
+    G$Ve <- mv$Ve # frequentist cov. matrix
+    G$edf<-mv$edf
+    G$conv<-mr$gcv.info
+    G$sp<-msp
+    rank<-G$conv$rank
+
     aic.model <- aic(y, n, mu, weights, dev) + 2 * sum(G$edf)
     if (scale < 0) { ## deviance based GCV
       gcv.ubre.dev <- n.score*dev/(n.score-gamma*sum(G$edf))^2

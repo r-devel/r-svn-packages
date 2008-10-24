@@ -14,13 +14,13 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score);
 
-void gdi(double *X,double *E,double *rS,
+void gdi(double *X,double *E,double *rS,double *U1,
          double *sp,double *z,double *w,double *mu, double *eta, double *y,
          double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
          double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
          double *P0,double *P1,double *P2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-	 int *n,int *q, int *M,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML,int *fisher);
+	 int *n,int *q, int *M,int *Mp,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML,int *fisher);
 
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);
