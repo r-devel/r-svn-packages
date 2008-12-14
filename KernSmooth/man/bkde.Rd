@@ -10,7 +10,7 @@ density of the data.
 }
 \usage{
 bkde(x, kernel = "normal", canonical = FALSE, bandwidth,
-     gridsize = 401, range.x, truncate = TRUE)
+     gridsize = 401L, range.x, truncate = TRUE)
 }
 \arguments{
 \item{x}{

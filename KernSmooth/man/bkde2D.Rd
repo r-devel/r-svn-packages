@@ -10,7 +10,7 @@ the grid points. The kernel is the standard bivariate normal
 density. 
 }
 \usage{
-bkde2D(x, bandwidth, gridsize=c(51, 51), range.x, truncate=TRUE)
+bkde2D(x, bandwidth, gridsize=c(51L, 51L), range.x, truncate=TRUE)
 }
 \arguments{
 \item{x}{

@@ -4,7 +4,7 @@
 ## Unlimited use and distribution (see LICENCE).
 
 bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
-                 gridsize=401,range.x,truncate=TRUE)
+                 gridsize=401L,range.x,truncate=TRUE)
 
 # Last changed: 16/06/95
 
@@ -54,8 +54,8 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
    {
       range.x <- c(min(x)-tau*h,max(x)+tau*h)
    }
-   a <- range.x[1]
-   b <- range.x[2]
+   a <- range.x[1L]
+   b <- range.x[2L]
 
    # Set up grid points and bin the data
 
@@ -64,9 +64,9 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
 
    # Compute kernel weights
 
-   L <- min(floor(tau*h*(M-1)/(b-a)),M)
-   lvec <- (0:L)
-   delta  <- (b-a)/(h*(M-1))
+   L <- min(floor(tau*h*(M-1L)/(b-a)),M)
+   lvec <- (0L:L)
+   delta  <- (b-a)/(h*(M-1L))
    if (canonical==FALSE) del0 <- 1
    if (kernel=="normal")
    {
@@ -92,16 +92,16 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
    # Now combine weight and counts to obtain estimate
 
    P <- 2^(ceiling(log(M+L)/log(2)))
-   kappa <- c(kappa,rep(0,P-2*L-1),kappa[(L+1):2])
-   gcounts <- c(gcounts,rep(0,P-M))
+   kappa <- c(kappa,rep(0,P-2L*L-1L),kappa[(L+1):2])
+   gcounts <- c(gcounts,rep(0L,P-M))
    kappa <- fft(kappa)
    gcounts <- fft(gcounts)
-   return(list(x=gpoints,y=(Re(fft(kappa*gcounts,TRUE))/P)[1:M]))
+   return(list(x=gpoints,y=(Re(fft(kappa*gcounts,TRUE))/P)[1L:M]))
 }
 
 
 
-bkde2D <- function(x,bandwidth,gridsize=c(51,51),range.x,truncate=TRUE)
+bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
 
 # Last changed: 25/08/95
 
@@ -117,27 +117,27 @@ bkde2D <- function(x,bandwidth,gridsize=c(51,51),range.x,truncate=TRUE)
    # direction if only a single
    # bandwidth is given.
 
-   if (length(h)==1) h <- c(h,h)
+   if (length(h) == 1L) h <- c(h,h)
 
    # If range.x is not specified then
    # set it at its default value.
 
    if (missing(range.x))
    {
-      range.x <- list(0,0)
-      for (id in (1:2))
+      range.x <- list(0, 0)
+      for (id in (1L:2L))
       {
          range.x[[id]] <- c(min(x[,id])-1.5*h[id],max(x[,id])+1.5*h[id])
       }
    }
 
-   a <- c(range.x[[1]][1],range.x[[2]][1])
-   b <- c(range.x[[1]][2],range.x[[2]][2])
+   a <- c(range.x[[1L]][1L],range.x[[2L]][1L])
+   b <- c(range.x[[1L]][2L],range.x[[2L]][2L])
 
    # Set up grid points and bin the data
 
-   gpoints1 <- seq(a[1],b[1],length=M[1])
-   gpoints2 <- seq(a[2],b[2],length=M[2])
+   gpoints1 <- seq(a[1L],b[1L],length=M[1L])
+   gpoints2 <- seq(a[2L],b[2L],length=M[2L])
 
    gcounts <- linbin2D(x,gpoints1,gpoints2)
 
@@ -145,36 +145,36 @@ bkde2D <- function(x,bandwidth,gridsize=c(51,51),range.x,truncate=TRUE)
 
    L <- numeric()
    kapid <- list(0,0)
-   for (id in (1:2))
+   for (id in (1L:2L))
    {
       L[id] <- min(floor(tau*h[id]*(M[id]-1)/(b[id]-a[id])),(M[id]-1))
       lvecid <- (0:L[id])
       facid <- (b[id]-a[id])/(h[id]*(M[id]-1))
       kapid[[id]] <- matrix(dnorm(lvecid*facid)/h[id])
    }
-   kapp <- kapid[[1]]%*%(t(kapid[[2]]))/n
+   kapp <- kapid[[1L]]%*%(t(kapid[[2L]]))/n
 
    # Now combine weight and counts using the FFT
    # to obtain estimate
 
    P <- 2^(ceiling(log(M+L)/log(2))) # smallest powers of 2 >= M+L
-   L1 <- L[1] ; L2 <- L[2]
-   M1 <- M[1] ; M2 <- M[2]
-   P1 <- P[1] ; P2 <- P[2]
+   L1 <- L[1L] ; L2 <- L[2L]
+   M1 <- M[1L] ; M2 <- M[2L]
+   P1 <- P[1L] ; P2 <- P[2L]
 
    rp <- matrix(0,P1,P2)
-   rp[1:(L1+1),1:(L2+1)] <- kapp
-   if (L1>0) rp[(P1-L1+1):P1,1:(L2+1)] <- kapp[(L1+1):2,1:(L2+1)]
+   rp[1L:(L1+1),1L:(L2+1)] <- kapp
+   if (L1>0) rp[(P1-L1+1):P1,1L:(L2+1)] <- kapp[(L1+1):2,1L:(L2+1)]
    if (L2>0) rp[,(P2-L2+1):P2] <- rp[,(L2+1):2]
                                # wrap-around version of "kapp"
 
    sp <- matrix(0,P1,P2)
-   sp[1:M1,1:M2] <- gcounts
+   sp[1L:M1,1L:M2] <- gcounts
                                # zero-padded version of "gcounts"
 
    rp <- fft(rp)                       # Obtain FFT's of r and s
    sp <- fft(sp)
-   rp <- Re(fft(rp*sp,inverse=TRUE)/(P1*P2))[1:M1,1:M2]
+   rp <- Re(fft(rp*sp,inverse=TRUE)/(P1*P2))[1L:M1,1L:M2]
                              # invert element-wise product of FFT's
                              # and truncate and normalise it
 
@@ -186,7 +186,7 @@ bkde2D <- function(x,bandwidth,gridsize=c(51,51),range.x,truncate=TRUE)
 }
 
 
-bkfe <- function(x,drv,bandwidth,gridsize=401,range.x,binned=FALSE,truncate=TRUE)
+bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRUE)
 
 # Last changed: 18/12/95
 
@@ -196,8 +196,8 @@ bkfe <- function(x,drv,bandwidth,gridsize=401,range.x,binned=FALSE,truncate=TRUE
    # Rename variables
 
    M <- gridsize
-   a <- range.x[1]
-   b <- range.x[2]
+   a <- range.x[1L]
+   b <- range.x[2L]
    h <- bandwidth
 
    # Bin the data if not already binned
@@ -223,14 +223,14 @@ bkfe <- function(x,drv,bandwidth,gridsize=401,range.x,binned=FALSE,truncate=TRUE
 
    tau <- 4 + drv
    L <- min(floor(tau*h/delta),M)
-   lvec <- (0:L)
+   lvec <- (0L:L)
    arg <- lvec*delta/h
 
    kappam <- dnorm(arg)/(h^(drv+1))
    hmold0 <- 1
    hmold1 <- arg
    hmnew <- 1
-   if (drv >= 2) for (i in (2:drv))
+   if (drv >= 2L) for (i in (2L:drv))
    {
       hmnew <- arg*hmold1 - (i-1)*hmold0
       hmold0 <- hmold1   # Compute mth degree Hermite polynomial
@@ -246,7 +246,7 @@ bkfe <- function(x,drv,bandwidth,gridsize=401,range.x,binned=FALSE,truncate=TRUE
    kappam <- fft(kappam)
    Gcounts <- fft(Gcounts)
 
-   est <- sum(gcounts*(Re(fft(kappam*Gcounts,TRUE))/P)[1:M])/(n^2)
+   est <- sum(gcounts*(Re(fft(kappam*Gcounts,TRUE))/P)[1L:M])/(n^2)
 
    return(est)
 }
@@ -337,13 +337,13 @@ cpblock <- function(X,Y,Nmax,q)
                    as.double(qraux),Cpvals=as.double(Cpvals))
 
    Cpvec <- out$Cpvals
-   Nval <- order(Cpvec)[1]
+   Nval <- order(Cpvec)[1L]
 
    return(Nval)
 }
 
 ######### End of S-function cpblock ########
-dpih <- function(x,scalest="minim",level=2,gridsize=401,range.x=range(x),
+dpih <- function(x,scalest="minim",level=2,gridsize=401L,range.x=range(x),
                           truncate=TRUE)
 
 # Last changed: 16/06/95
@@ -355,8 +355,8 @@ dpih <- function(x,scalest="minim",level=2,gridsize=401,range.x=range(x),
 
    n <- length(x)
    M <- gridsize
-   a <- range.x[1]
-   b <- range.x[2]
+   a <- range.x[1L]
+   b <- range.x[2L]
 
    # Set up grid points and bin the data
 
@@ -439,7 +439,7 @@ dpih <- function(x,scalest="minim",level=2,gridsize=401,range.x=range(x),
    return(hpi)
 }
 dpik <- function(x,scalest="minim",level=2,kernel="normal",
-                canonical=FALSE,gridsize=401,range.x=range(x),truncate=TRUE)
+                canonical=FALSE,gridsize=401L,range.x=range(x),truncate=TRUE)
 
 # Last changed: 18/06/97
 
@@ -462,8 +462,8 @@ dpik <- function(x,scalest="minim",level=2,kernel="normal",
 
    n <- length(x)
    M <- gridsize
-   a <- range.x[1]
-   b <- range.x[2]
+   a <- range.x[1L]
+   b <- range.x[2L]
 
    # Set up grid points and bin the data
 
@@ -551,7 +551,8 @@ dpik <- function(x,scalest="minim",level=2,kernel="normal",
 
 # Last changed: 16/06/95
 
-dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,gridsize=401,
+dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
+                  gridsize=401L,
                   range.x=range(x),truncate=TRUE)
 
 {
@@ -571,8 +572,8 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,gridsize=401
 
    n <- length(x)
    M <- gridsize
-   a <- range.x[1]
-   b <- range.x[2]
+   a <- range.x[1L]
+   b <- range.x[2L]
 
    # Bin the data
 
@@ -601,7 +602,7 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,gridsize=401
    if (th24Q<0) gamseh <- (3*gamseh/(8*sqrt(pi)))^(1/7)
    if (th24Q>0) gamseh <- (15*gamseh/(16*sqrt(pi)))^(1/7)
 
-   mddest <- locpoly(xcounts,ycounts,drv=2,bandwidth=gamseh,
+   mddest <- locpoly(xcounts,ycounts,drv=2L,bandwidth=gamseh,
                      range.x=range.x,binned=TRUE)$y
 
    llow <- floor(proptrun*M) + 1
@@ -655,7 +656,7 @@ linbin <- function(X,gpoints,truncate=TRUE)
    M <- length(gpoints)
    trun <- 0
    if (truncate) trun <- 1
-   a <- gpoints[1]
+   a <- gpoints[1L]
    b <- gpoints[M]
    out <- .Fortran(F_linbin,as.double(X),as.integer(n),
            as.double(a),as.double(b),as.integer(M),
@@ -680,8 +681,8 @@ linbin2D <- function(X,gpoints1,gpoints2)
    X <- c(X[,1],X[,2])
    M1 <- length(gpoints1)
    M2 <- length(gpoints2)
-   a1 <- gpoints1[1]
-   a2 <- gpoints2[1]
+   a1 <- gpoints1[1L]
+   a2 <- gpoints2[1L]
    b1 <- gpoints1[M1]
    b2 <- gpoints2[M2]
    out <- .Fortran(F_lbtwod,as.double(X),as.integer(n),
@@ -702,12 +703,14 @@ linbin2D <- function(X,gpoints1,gpoints2)
 
 # Last changed: 07/07/95
 
-locpoly <- function(x,y,drv=0,degree,kernel="normal",
-                    bandwidth,gridsize=401,bwdisc=25,range.x,
+locpoly <- function(x,y,drv=0L,degree,kernel="normal",
+                    bandwidth,gridsize=401L,bwdisc=25,range.x,
                     binned=FALSE,truncate=TRUE)
 
 {
-   if (missing(degree)) degree <- drv + 1
+   drv <- as.integer(drv)
+   if (missing(degree)) degree <- drv + 1L
+   else degree <- as.integer(degree)
 
    if (missing(range.x)&(binned==FALSE))
    if (missing(y))
@@ -723,11 +726,11 @@ locpoly <- function(x,y,drv=0,degree,kernel="normal",
    # Rename common variables
 
    M <- gridsize
-   Q <- bwdisc
-   a <- range.x[1]
-   b <- range.x[2]
-   pp <- degree + 1
-   ppp <- 2*degree + 1
+   Q <- as.integer(bwdisc)
+   a <- range.x[1L]
+   b <- range.x[2L]
+   pp <- degree + 1L
+   ppp <- 2L*degree + 1L
    tau <- 4
 
    # Decide whether a density estimate or regression
@@ -765,14 +768,14 @@ locpoly <- function(x,y,drv=0,degree,kernel="normal",
 
    # Set the bin width
 
-   delta <- (b-a)/(M-1)
+   delta <- (b-a)/(M-1L)
 
    # Discretise the bandwidths
 
    if (length(bandwidth)==M)
    {
 
-      hlow <- sort(bandwidth)[1]
+      hlow <- sort(bandwidth)[1L]
       hupp <- sort(bandwidth)[M]
 
       hdisc <- exp(seq(log(hlow),log(hupp),length=Q))
@@ -787,21 +790,21 @@ locpoly <- function(x,y,drv=0,degree,kernel="normal",
       if (Q > 1)
       {
          lhdisc <- log(hdisc)
-         gap <- (lhdisc[Q]-lhdisc[1])/(Q-1)
+         gap <- (lhdisc[Q]-lhdisc[1L])/(Q-1)
          if (gap==0)
             indic <- rep(1,M)
          else
          {
-            tlhvec <- ((log(bandwidth) - log(sort(bandwidth)[1]))/gap) + 1
+            tlhvec <- ((log(bandwidth) - log(sort(bandwidth)[1L]))/gap) + 1
             indic <- round(tlhvec)
          }
       }
       else indic <- rep(1,M)
    }
-   else if (length(bandwidth)==1)
+   else if (length(bandwidth)==1L)
    {
       indic <- rep(1,M)
-      Q <- 1
+      Q <- 1L
       Lvec <- rep(floor(tau*bandwidth/delta),Q)
       hdisc <- rep(bandwidth,Q)
    }
@@ -850,9 +853,9 @@ rlbin <- function(X,Y,gpoints,truncate=TRUE)
 {
    n <- length(X)
    M <- length(gpoints)
-   if (truncate) trun <- 1
-   else trun <- 0
-   a <- gpoints[1]
+   if (truncate) trun <- 1L
+   else trun <- 0L
+   a <- gpoints[1L]
    b <- gpoints[M]
    out <- .Fortran(F_rlbin,as.double(X),as.double(Y),as.integer(n),
            as.double(a),as.double(b),as.integer(M),as.integer(trun),
@@ -869,8 +872,8 @@ rlbin <- function(X,Y,gpoints,truncate=TRUE)
 # Last changed: 16/06/95
 
 
-sdiag <- function(x,drv=0,degree=1,kernel="normal",
-                    bandwidth,gridsize=401,bwdisc=25,range.x,
+sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
+                    bandwidth,gridsize=401L,bwdisc=25,range.x,
                     binned=FALSE,truncate=TRUE)
 
 {
@@ -880,9 +883,9 @@ sdiag <- function(x,drv=0,degree=1,kernel="normal",
    # Rename common variables
 
    M <- gridsize
-   Q <- bwdisc
-   a <- range.x[1]
-   b <- range.x[2]
+   Q <- as.integer(bwdisc)
+   a <- range.x[1L]
+   b <- range.x[2L]
    pp <- degree + 1
    ppp <- 2*degree + 1
    tau <- 4
@@ -903,14 +906,14 @@ sdiag <- function(x,drv=0,degree=1,kernel="normal",
 
    # Set the bin width
 
-   delta <- (b-a)/(M-1)
+   delta <- (b-a)/(M-1L)
 
    # Discretise the bandwidths
 
    if (length(bandwidth)==M)
    {
 
-      hlow <- sort(bandwidth)[1]
+      hlow <- sort(bandwidth)[1L]
       hupp <- sort(bandwidth)[M]
 
       hdisc <- exp(seq(log(hlow),log(hupp),length=Q))
@@ -922,15 +925,15 @@ sdiag <- function(x,drv=0,degree=1,kernel="normal",
       # Determine index of closest entry of "hdisc"
       # to each member of "bandwidth"
 
-      if (Q > 1)
+      if (Q > 1L)
       {
          lhdisc <- log(hdisc)
-         gap <- (lhdisc[Q]-lhdisc[1])/(Q-1)
+         gap <- (lhdisc[Q]-lhdisc[1L])/(Q-1L)
          if (gap==0)
             indic <- rep(1,M)
          else
          {
-            tlhvec <- ((log(bandwidth) - log(sort(bandwidth)[1]))/gap) + 1
+            tlhvec <- ((log(bandwidth) - log(sort(bandwidth)[1L]))/gap) + 1
             indic <- round(tlhvec)
          }
       }
@@ -980,8 +983,8 @@ sdiag <- function(x,drv=0,degree=1,kernel="normal",
 
 # Last changed: 16/06/95
 
-sstdiag <- function(x,drv=0,degree=1,kernel="normal",
-                    bandwidth,gridsize=401,bwdisc=25,range.x,
+sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
+                    bandwidth,gridsize=401L,bwdisc=25,range.x,
                     binned=FALSE,truncate=TRUE)
 
 {
@@ -991,12 +994,12 @@ sstdiag <- function(x,drv=0,degree=1,kernel="normal",
    # Rename common variables
 
    M <- gridsize
-   Q <- bwdisc
-   a <- range.x[1]
-   b <- range.x[2]
-   pp <- degree + 1
-   ppp <- 2*degree + 1
-   tau <- 4
+   Q <- as.integer(bwdisc)
+   a <- range.x[1L]
+   b <- range.x[2L]
+   pp <- degree + 1L
+   ppp <- 2L*degree + 1L
+   tau <- 4L
 
    # Bin the data if not already binned
 
@@ -1014,14 +1017,14 @@ sstdiag <- function(x,drv=0,degree=1,kernel="normal",
 
    # Set the bin width
 
-   delta <- (b-a)/(M-1)
+   delta <- (b-a)/(M-1L)
 
    # Discretise the bandwidths
 
    if (length(bandwidth)==M)
    {
 
-      hlow <- sort(bandwidth)[1]
+      hlow <- sort(bandwidth)[1L]
       hupp <- sort(bandwidth)[M]
 
       hdisc <- exp(seq(log(hlow),log(hupp),length=Q))
@@ -1033,15 +1036,15 @@ sstdiag <- function(x,drv=0,degree=1,kernel="normal",
       # Determine index of closest entry of "hdisc"
       # to each member of "bandwidth"
 
-      if (Q > 1)
+      if (Q > 1L)
       {
          lhdisc <- log(hdisc)
-         gap <- (lhdisc[Q]-lhdisc[1])/(Q-1)
+         gap <- (lhdisc[Q]-lhdisc[1L])/(Q-1)
          if (gap==0)
             indic <- rep(1,M)
          else
          {
-            tlhvec <- ((log(bandwidth) - log(sort(bandwidth)[1]))/gap) + 1
+            tlhvec <- ((log(bandwidth) - log(sort(bandwidth)[1L]))/gap) + 1
             indic <- round(tlhvec)
          }
       }

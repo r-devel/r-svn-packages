@@ -10,8 +10,8 @@ using local polynomials. A fast binned implementation
 over an equally-spaced grid is used.
 }
 \usage{
-locpoly(x, y, drv = 0, degree =, kernel = "normal", 
-        bandwidth, gridsize = 401, bwdisc = 25, 
+locpoly(x, y, drv = 0L, degree, kernel = "normal", 
+        bandwidth, gridsize = 401L, bwdisc = 25, 
         range.x, binned = FALSE, truncate = TRUE)
 }
 \arguments{

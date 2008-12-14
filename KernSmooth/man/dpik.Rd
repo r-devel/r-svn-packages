@@ -9,7 +9,7 @@ of a kernel density estimate.
 }
 \usage{
 dpik(x, scalest="minim", level=2, kernel="normal",   
-     canonical=FALSE, gridsize=401, range.x=range(x), 
+     canonical=FALSE, gridsize=401L, range.x=range(x), 
      truncate=TRUE)
 }
 \arguments{
