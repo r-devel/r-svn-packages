@@ -155,7 +155,7 @@ write.dta <-
 
     if (any(sapply(dataframe, function(x) {
         d <- dim(x)
-        !is.null(d) && d[1] < length(x)
+        !is.null(d) && d[1L] < length(x)
         })))
         stop("cannot handle multicolumn columns")
     invisible(.External(do_writeStata, file, dataframe, version, leveltable))

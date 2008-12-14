@@ -83,7 +83,7 @@ writeForeignSAS<-function(df,datafile,codefile,dataname="rdata",
     for (f in fmtnames){
       cat("value",f,"\n",file=codefile,append = TRUE)
       values<-fmt.values[[f]]
-        for(i in 1:length(values)){
+        for(i in 1L:length(values)){
           cat("    ",i,"=",adQuote(values[i]),"\n",file=codefile,append=TRUE)
         }
         cat(";\n\n",file=codefile,append=TRUE)

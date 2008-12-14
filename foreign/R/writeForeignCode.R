@@ -61,7 +61,7 @@ writeForeignSPSS<-function(df,datafile,codefile,varnames=NULL){
       cat("/\n",file=codefile,append=TRUE)
       cat(varnames[v]," \n",file=codefile,append=TRUE)
       levs<-levels(df[[v]])
-      cat(paste(1:length(levs),adQuote(levs),"\n",sep=" "),file=codefile,append=TRUE)
+      cat(paste(1L:length(levs),adQuote(levs),"\n",sep=" "),file=codefile,append=TRUE)
     }
     cat(".\n",file=codefile,append=TRUE)
   }

@@ -55,7 +55,7 @@ read.ssd <- function(libname, sectionnames, tmpXport=tempfile(),
         libname  <- tempdir()
         allFiles <- list.files(oldDir)
         oldNames <- character(0L)
-        for(i in 1:length(sn)){
+        for(i in 1L:length(sn)){
             fName <- grep(sn[i], allFiles, value = TRUE)
             if(length(fName) == 0L)
                 stop(gettextf("sectionname %s not found", sn[i]), domain = NA)

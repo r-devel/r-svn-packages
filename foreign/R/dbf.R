@@ -23,7 +23,7 @@ read.dbf <- function(file, as.is = FALSE)
     inames <- make.names(onames, unique = TRUE)
     names(df) <- inames
     if (!(identical(onames, inames))) {
-        for (i in 1:length(onames))
+        for (i in 1L:length(onames))
             if (!(identical(onames[i], inames[i])))
                 message("Field name: ", onames[i], " changed to: ", inames[i])
     }
@@ -50,7 +50,7 @@ write.dbf <- function(dataframe, file, factor2char = TRUE, max_nchar = 254)
     if (!is.data.frame(dataframe)) dataframe <- as.data.frame(dataframe)
     if (any(sapply(dataframe, function(x) !is.null(dim(x)))))
         stop("cannot handle matrix/array columns")
-    cl <- sapply(dataframe, function(x) class(x[1]))
+    cl <- sapply(dataframe, function(x) class(x[1L]))
     asis <- cl == "AsIs"
     cl[asis & sapply(dataframe, mode) == "character"] <- "character"
     if(length(cl0 <- setdiff(cl, allowed_classes)))
