@@ -1,6 +1,7 @@
 2008-08-21 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/*R: make more use of integer constants.
+	* tests/stata.Rout.save: update for str() changes in R 2.8.0.
 	
 2008-08-21 Brian Ripley <Brian.Ripley@R-project.org>
 
