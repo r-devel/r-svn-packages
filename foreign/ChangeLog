@@ -2,7 +2,8 @@
 
 	* R/*R: make more use of integer constants.
 	* tests/stata.Rout.save: update for str() changes in R 2.8.0.
-	* R/spss.R: assume codepage 65001 is UTF-8.
+	* R/spss.R, man/read.spss.Rd, src/sfm-read.c: assume 
+	codepage 65001 is UTF-8.
 	
 2008-08-21 Brian Ripley <Brian.Ripley@R-project.org>
 
