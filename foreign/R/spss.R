@@ -41,7 +41,8 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
     } else if(codepage <= 500) {
         attr(rval, "codepage") <- NULL
         reencode <- FALSE
-    } else cp <- paste("CP", codepage, sep="")
+    } else if(codepage == 65001) cp <- "UTF-8"
+    else cp <- paste("CP", codepage, sep="")
     if(is.na(reencode)) reencode <- l10n_info()[["UTF-8"]]
 
     if(reencode) {
