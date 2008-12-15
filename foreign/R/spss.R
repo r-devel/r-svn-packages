@@ -38,7 +38,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
     if(is.character(reencode)) {
         cp <- reencode
         reencode <- TRUE
-    } else if(codepage <= 500) {
+    } else if(codepage <= 500 || codepage >= 2000) {
         attr(rval, "codepage") <- NULL
         reencode <- FALSE
         # http://msdn.microsoft.com/en-us/library/ms776446(VS.85).aspx
