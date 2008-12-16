@@ -73,9 +73,9 @@ EDF for the term. The statistic used is then
 chi-squared distribution with degrees of freedom given by the EDF for the term + \code{alpha} * (number of 
 estimated smoothing parameters), or \eqn{T}{T} is used as a component in an F ratio statistic if the 
 scale parameter has been estimated. There is some simulation evidence that the adjustment per 
-smoothing parameter improvesp-values when using GCV or AIC type smoothing parameter selection (\code{alpha=0.5}
+smoothing parameter improves p-values when using GCV or AIC type smoothing parameter selection (\code{alpha=0.5}
 seems to be best). The default \code{alpha=0} seems to be appropriate when smoothing 
-parameters are selected by REML/PQL. The non-integer rank truncated inverse is constructed to give an 
+parameters are selected by REML/ML/PQL. The non-integer rank truncated inverse is constructed to give an 
 approximation varying smoothly between the bounding integer rank approximations, while yielding test statistics with the 
 correct mean and variance. 
 
@@ -83,12 +83,13 @@ The definition of Bayesian p-value used is:
 the probability of observing an \eqn{\bf f}{f} less probable than \eqn{\bf 0}{0}, under the approximation for the posterior 
 for \eqn{\bf f}{f} implied by the truncation used in the test statistic.
 
-Note that Bayesian p-values will not have the correct frequentist distribution under the null
- for terms that can be zeroed completely: the null will be accepted too readily, 
-so that in this case the frequentist alternative may be preferable. 
+Note that the p-values distributional approximations start to break down below one effective degree of freedom, and 
+p-values are not reported below 0.5 degrees of freedom. 
 
 Also note that increasing the \code{gamma} parameter of \code{\link{gam}} tends to mean that \code{alpha} should be decreased, 
 to get close to uniform p-value distribution under the null.  
+
+For best p-value performance it seems to be best to use ML or REML smoothness selection. 
 
 }
 
@@ -199,13 +200,15 @@ plot(bc,pages=1)
 summary(bc)
 
 ## p-value check - increase k to make this useful!
-n<-200;p<-0;k<-20
+k<-20;n <- 200;p <- rep(NA,k)
 for (i in 1:k)
-{ b<-gam(y~s(x,z),data=data.frame(y=rnorm(n),x=runif(n),z=runif(n)))
+{ b<-gam(y~te(x,z),data=data.frame(y=rnorm(n),x=runif(n),z=runif(n)),method="ML")
   p[i]<-summary(b)$s.p[1]
 }
 plot(((1:k)-0.5)/k,sort(p))
 abline(0,1,col=2)
+ks.test(p,"punif") ## how close to uniform are the p-values?
+
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
 

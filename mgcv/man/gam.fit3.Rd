@@ -23,7 +23,7 @@ Not normally called directly, but rather service routines for \code{\link{gam}}.
 
 gam.fit3(x, y, sp, S=list(),rS=list(),off, H=NULL, 
          weights = rep(1, nobs), start = NULL, etastart = NULL, 
-         mustart = NULL, offset = rep(0, nobs), family = gaussian(), 
+         mustart = NULL, offset = rep(0, nobs), U1 = 0, Mp = -1, family = gaussian(), 
          control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
          gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
 }
@@ -56,6 +56,10 @@ as possible, but as many rows as there are parameters.}
 \item{mustart}{optional starting values for the mean.}
 
 \item{offset}{the model offset}
+
+\item{U1}{An orthogonal basis for the range space of the penalty --- required for ML smoothness estimation only.}
+
+\item{Mp}{The dimension of the total penalty null space --- required for ML smoothness estimation only.}
 
 \item{family}{the family - actually this routine would never be called with \code{gaussian()}} 
 

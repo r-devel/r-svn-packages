@@ -148,6 +148,7 @@ initialization values for all smoothing parameters (there must be a value for
 all smoothing parameters, whether fixed or to be estimated, but those for
 fixed s.p.s are not used); \code{scale} is the typical scale of the GCV/UBRE function,
 for passing to the outer optimizer.}
+
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
 
@@ -197,13 +198,13 @@ the scale parameter and
 \eqn{DoF}{DoF} the effective degrees of freedom of the model. Notice that UBRE is effectively
 just AIC rescaled, but is only used when \eqn{s}{s} is known. 
 
-Alternatives are GACV (again see \code{\link{gam.method}}), or a Laplace approximation to REML, there
+Alternatives are GACV, or a Laplace approximation to REML, there
 is some evidence that the latter may actually be the most effective choise. 
 
 Smoothing parameters are chosen to 
 minimize the GCV, UBRE/AIC, GACV or REML scores for the model, and the main computational challenge solved 
 by the \code{mgcv} package is to do this efficiently and reliably. Various
-alternative numerical methods are provided: see \code{\link{gam.method}}.
+alternative numerical methods are provided which can be set by argument \code{optimizer}.
 
 
 Broadly \code{gam} works by first constructing basis functions and one or more quadratic penalty 
@@ -345,12 +346,23 @@ set.seed(0) ## simulate some data...
 dat <- gamSim(1,n=400,dist="normal",scale=2)
 b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat)
 summary(b)
-plot(b,pages=1,residuals=TRUE)
-plot(b,pages=1,seWithMean=TRUE)
+plot(b,pages=1,residuals=TRUE)  ## show partial residuals
+plot(b,pages=1,seWithMean=TRUE) ## `with intercept' CIs
+
 ## same fit in two parts .....
 G<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE,data=dat)
 b<-gam(G=G)
 print(b)
+
+## change the smoothness selection method to REML
+b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="REML")
+plot(b,pages=1)
+
+## ... and do automatic terms selection as well
+b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,
+       method="REML",select=TRUE)
+plot(b,pages=1)
+
 
 ## set the smoothing parameter for the first term, estimate rest ...
 bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),sp=c(0.01,-1,-1,-1),data=dat)
@@ -382,16 +394,15 @@ b2<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,data=dat)
 plot(b2,pages=1)
 
 ## repeat fit using performance iteration
-gm <- gam.method(gam="perf")
+
 b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
-        data=dat,method=gm)
+        data=dat,optimizer="perf")
 plot(b3,pages=1)
 
 ## repeat using GACV as in Wood 2008...
 
-gm <- gam.method(gcv="GACV")
 b4<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
-        data=dat,method=gm,scale=-1)
+        data=dat,method="GACV.Cp",scale=-1)
 plot(b4,pages=1)
 
  

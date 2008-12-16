@@ -8,7 +8,7 @@ by Venables and Ripley), with or without a known \eqn{\theta}{theta} parameter.
 Two approaches to estimating the \code{theta} parameter are available:
 
 \item If `performance iteration' is used for smoothing parameter estimation 
-(see \code{\link{gam.method}}), then smoothing parameters are chosen by GCV and 
+(see \code{\link{gam}}), then smoothing parameters are chosen by GCV and 
 \code{theta} is chosen in order to ensure that the Pearson estimate of the scale 
 parameter is as close as possible to 1, the value that the scale parameter should have.
 
@@ -17,8 +17,7 @@ are chosen by UBRE/AIC (with scale parameter set to 1) and a value of \code{thet
 searched for which minimizes the AIC of the model. 
 
 The second option is much slower than the first, but the first can sometimes fail to converge. 
-To use the first option, set \code{gam="perf"} in the \code{method} argument of \code{gam}: see 
-\code{\link{gam.method}} for details.
+To use the first option, set the \code{optimizer} argument of \code{\link{gam}} to \code{"perf"}.
 }
 
 \usage{
@@ -106,7 +105,7 @@ print(b)
 
 ## unknown theta via performance iteration...
 b1 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=negbin(c(1,10)),
-          method=gam.method(gam="perf"),data=dat)
+          optimizer="perf",data=dat)
 plot(b1,pages=1)
 print(b1)
 

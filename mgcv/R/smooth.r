@@ -1306,7 +1306,7 @@ ExtractData <- function(object,data,knots) {
 #########################################################################
 
 smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
-                      dataX = NULL,null.space.penalty = TRUE)
+                      dataX = NULL,null.space.penalty = FALSE)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterization used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 

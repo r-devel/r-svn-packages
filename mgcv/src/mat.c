@@ -124,13 +124,33 @@ matrix(um[[2]],q,q);er$v
 }
 
 
+void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
+/* Finds C = R^{-1} B where R is the c by c matrix stored in the upper triangle 
+   of r by c argument R. B is c by bc. (Possibility of non square argument
+   R facilitates use with output from mgcv_qr). This is just a standard back 
+   substitution loop.
+*/  
+{ int i,j,k;
+  double x,*pR,*pC;
+  for (j=0;j<*bc;j++) { /* work across columns of B & C */
+    for (i = *c-1;i>=0;i--) { /* work up each row of B & C */
+      x = 0.0;
+      /* for (k=i+1;k<*c;k++) x += R[i + *r * k] * C[k + j * *c]; ...following replaces...*/
+      pR = R + i + (i+1) * *r;pC = C + j * *c + i + 1;
+      for (k=i+1;k<*c;k++,pR+= *r,pC++) x += *pR * *pC;      
+      C[i + j * *c] = (B[i + j * *c] - x)/R[i + *r * i];
+    }
+  }
+}
+
+
 
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 /* call LA_PACK to get pivoted QR decomposition of x
    tau is an array of length min(r,c)
    pivot is array of length c, zeroed on entry, pivoting order on return.
-   On exist upper triangle of x is R.Lower triangle plus tau represent reflectors 
-   making up Q.
+   On exist upper triangle of x is R. Below upper triangle plus tau 
+   represent reflectors making up Q.
    pivoting is always performed (not just when matrix is rank deficient), so
    leading diagonal of R is in descending order of magnitude.
    library(mgcv)
@@ -265,24 +285,34 @@ qr.R(qr(Xa,tol=0))
   free(x);free(work);
 }
 
-void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd)
-/* gets eigenvalues and vectors of symmetric matrix A. 
+void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
+                 int *descending)
+
+/* gets eigenvalues and (optionally) vectors of symmetric matrix A. 
+   
    Two alternative underlying LAPACK routines can be used, 
    either dsyevd (slower, robust) or dsyevr (faster, seems less robust). 
-   Vectors returned in columns of A, values in ev.
-   Eigenvalues are in *ascending* order....
+   Vectors returned in columns of A, values in ev (ascending).
+   
+   ******************************************************
+   *** Eigenvalues are returned  in *ascending* order ***
+   *** unless descending is set to be non-zero        ***
+   ******************************************************
+
    Testing R code....
    library(mgcv)
    n<-4;A<-matrix(rnorm(n*n),n,n);A<-A%*%t(A);d<-array(0,n)
    er<-eigen(A)
-   um<-.C("mgcv_symeig",as.double(A),as.double(d),as.integer(n),as.integer(1),PACKAGE="mgcv")
+   um<-.C("mgcv_symeig",as.double(A),as.double(d),as.integer(n),
+           as.integer(1),as.integer(1),PACKAGE="mgcv")
    er$vectors;matrix(um[[1]],n,n)
    er$values;um[[2]]
 */  
 
 { char jobz='V',uplo='U',range='A'; 
-  double work1,*work,dum1=0,abstol=0.0,*Z,*dum2;
-  int lwork = -1,liwork = -1,iwork1,info,*iwork,dumi=0,n_eval=0,*isupZ;
+  double work1,*work,dum1=0,abstol=0.0,*Z,*dum2,x,*p;
+  int lwork = -1,liwork = -1,iwork1,info,*iwork,dumi=0,n_eval=0,*isupZ,i;
+  if (*get_vectors) jobz='V'; else jobz='N';
   if (*use_dsyevd)
   { F77_NAME(dsyevd)(&jobz,&uplo,n,A,n,ev,&work1,&lwork,&iwork1,&liwork,&info);
     lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
@@ -305,8 +335,21 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd)
 		   &abstol,&n_eval,ev, 
     		     Z,n,isupZ, work,&lwork,iwork,&liwork,&info);
     free(work);free(iwork);
-    dum2 = Z + *n * *n; /* copy vectors back into A */
-    for (work=Z;work<dum2;work++,A++) *A = *work;
+    
+    if (*descending) for (i=0;i<*n/2;i++) { /* reverse the eigenvalues */
+      x = ev[i]; ev[i] = ev[*n-i-1];ev[*n-i-1] = x;
+    }
+
+    if (*get_vectors) {  /* copy vectors back into A */
+      if (*descending) { /* need to reverse order */
+        dum2 = Z + *n * (*n-1);
+        for (work=dum2;work>=Z;work -= *n)
+	  for (p=work;p<work + *n;p++,A++) *A = *p; 
+      } else { /* simple copy */
+        dum2 = Z + *n * *n;
+        for (work=Z;work<dum2;work++,A++) *A = *work;
+      }
+    }
     free(Z);free(isupZ);
   }
 

@@ -3,16 +3,31 @@
 
 ISSUES TO CLEAR
 
-* Major issue: calculating U for det(S)_+ on the fly is not a 
-  good idea. If an eigen-value gets truncated then this usually leads 
-  to a sudden big drop in  l/l_r since a large +ve contribution has 
-  suddenly been dropped. It is probably necessary to decide on U in 
-  advance and to keep all eigenvalues that should be >0, resetting all 
-  that underflow to some default?
+* Need to clean gdi.c (of C++ comments and dead code) and gam.fit3.r
+
+* upper limits  on sps with REML needs to be more systematic
+
+* .Rd check problem with R 2.8.1
+
+* Fixed penalty not dealt with properly with new detS code.
+
+* gam.check generates error with some methods
+
+* print and summary score reporting not right for gamm gam objects.
+
+* partial residuals and by variables (should only show 
+  partial resids that infleunce smooth and are meaningful).
+
+* Need ability for smooth,construct to surpress rescaling of 
+  penalties, in order to keep variance components meaningful.
+
+* Need to re-try sole gamm using gam. 
+
+* all branch testing of critera families links and optimizers.
+
+* check gam.check for all optimizers and criteria.
 
 * outerPIstep=0 causes failure (with select=TRUE, at least)
-
-* removal of gam.method and all references to it in helpfiles.
 
 * negbin and REML. 
 
@@ -20,7 +35,8 @@ ISSUES TO CLEAR
 
 ** Efficient and general REML/ML smoothing selection implemented. 
    Smoothness selection criterion and numerical optimizer are now
-   selected using arguments `method' and `optimizer' of `gam' 
+   selected using arguments `method' and `optimizer' of `gam', and 
+   `gam.method' has been removed.
 
 ** To further enhance stability and efficiency, Fisher scoring is now 
    only used for canonical links, when it corresponds to full Newton. 

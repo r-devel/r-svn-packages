@@ -71,9 +71,8 @@ plot(b,pages=1)
 print(b)
 
 ## Same by approximate REML...
-gm <- gam.method(reml=TRUE)
 b1 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.1,power(.1)),
-          data=dat,method=gm)
+          data=dat,method="REML")
 plot(b1,pages=1)
 print(b1)
 

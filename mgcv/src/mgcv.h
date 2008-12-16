@@ -14,13 +14,14 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score);
 
-void gdi(double *X,double *E,double *rS,double *U1,
+void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
          double *sp,double *z,double *w,double *mu, double *eta, double *y,
          double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
          double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
          double *P0,double *P1,double *P2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-	 int *n,int *q, int *M,int *Mp,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML,int *fisher);
+	 int *n,int *q, int *M,int *Mp,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML,
+         int *fisher,int *fixed_penalty);
 
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);
@@ -38,11 +39,12 @@ void MinimumSeparation(double *gx,double *gy,int *gn,double *dx,double *dy, int 
 void mgcv_chol(double *a,int *pivot,int *n,int *rank);
 void mgcv_svd(double *x,double *u, double *d,int *r,int *c);
 void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp);
+void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau);
 void update_qr(double *Q,double *R,int *n, int *q,double *lam, int *k);
 void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
-void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd);
+void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd, int *get_vectors,int *descending);
 void mroot(double *A,int *rank,int *n);
 void R_cond(double *R,int *r,int *c,double *work,double *Rcondition);
 

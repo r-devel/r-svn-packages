@@ -1,61 +1,44 @@
 \name{gam.method}
 \alias{gam.method}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{Setting GAM fitting method}
-\description{ This is a function of package \code{mgcv} which allows 
-selection of the numerical method used to optimize the  smoothing parameter 
-estimation criterion for a gam. It is used to set argument \code{method} of \code{\link{gam}}.
-}
-\usage{
-gam.method(gam="outer",outer="newton",gcv="deviance",reml=FALSE,
-           family=NULL)
-}
-\arguments{ 
+\title{GAM fitting methods}
+\description{Smoothness slection criteria and numerical methods}
+\section{Smoothness selection criteria}{
 
-\item{gam}{Which method to use in the generalized case (i.e. all case other
-than gaussian with identity link). \code{"perf"} for the performance
-iteration (see details) with \code{\link{magic}} as the basic estimation
-engine. \code{"perf.outer"} for \code{\link{magic}} based performance
-iteration followed by outer iteration (see details). \code{"outer"} for pure
-outer iteration.}
+\code{\link{gam}} estimates the smoothing parameters for the terms of a GAM, or other penalized GLM
+by optimizing one of several smoothness selection criteria. 
 
-\item{outer}{ The optimization approach to use to optimize log smoothing
-parameters by outer
-iteration.\code{"newton"} (default) for modified Newton method backed up by steepest
-descent, based on exact first and second derivatives. \code{"bfgs"} for a hybrid Newton-
-Quasi-Newton approach which can be faster for models with many smoothing parameters.
- \code{"nlm"} to use 
-\code{\link{nlm}} with exact first derivatives
-to optimize the smoothness selection criterion. \code{"nlm.fd"} to use
-\code{nlm} with finite differenced first derivatives (slower and less
-reliable). \code{"optim"} to use the \code{"L-BFGS-B"} quasi-Newton method
-option of routine \code{optim}, with exact first derivatives.}
+\describe{
+\item{GCV}{Generalized Cross Validation. This is the number of data times the deviance over the square of the residual effective 
+degrees of freedom. }
 
-\item{gcv}{One of \code{"deviance"} or \code{"GACV"},
-specifying the flavour of GCV to use with outer iteration. \code{"deviance"}
-simply replaces the residual sum of squares term in a GCV score with the
-deviance, following Hastie and Tibshirani (1990, section 6.9). \code{"GACV"}
-(only available with outer method \code{"newton"}) 
-uses a varient of Gu and Xiang's (2001) generalized approximate cross
-validation, modified to deal with arbitrary link-error
-combinations (see Wood, 2008). 
+\item{UBRE}{ This criteria is used only when the scale parameter is known, as the alternative to GCV or GACV. 
+In the additive model case it is Mallows' Cp and it is also equivalent to a scaled AIC 
+(given that the scale parameter is known). This is basically the deviance plus twice the effective degrees of freedom. }
+
+\item{GACV}{Generalized Approximate Cross Validation. Essentially a rescaled AIC, but with a Pearson estimator used for 
+the scale parameter. This is easier to justify in the Generalized case than AIC or UBRE, but both are asymptotically 
+equivalent to GACV.}
+
+\item{REML}{Restricted Maximum Likelihood. If the smooths are treated as random effects (with partially improper 
+distributions), then they can be integrated out of the likelihood to obtain a REML score to be maximized to 
+find smoothing parameters. In the generalized case a Laplace approximation to the integral is used. }
+
+\item{ML}{Maximum Likelihood. As REML, but only the wiggly components of the smooths are treated as random effects 
+to be integrated out, resulting in smoother estimates.}
+
 }
 
-\item{reml}{Should REML be used as the smoothing parameter selector, rather 
-than GCV/AIC/UBRE? The REML criteria used is based on a Laplace 
-approximation. 
-A Pearson estimate is used for the scale parameter. REML is not available
-with performance iteration. There is some evidence that REML is actually the 
-best choise in most cases.}
+The smoothness selection criteria is controlled by the \code{method} argument of \code{\link{gam}}.
 
-
-
-\item{family}{The routine is called by \code{\link{gam}} to check the supplied
-method argument. In this circumstance the family argument is passed, to check
-that it works with the specified method. }
 }
 
-\details{ The default methods used by \code{gam} are based on Newton type optimization of
+\section{Optimization methods}{
+
+The numerical optimization method used to optimize the smoothness selection criterion is chosen using the 
+\code{optimizer} argument to \code{\link{gam}}. 
+
+ The default methods used by \code{gam} are based on Newton type optimization of
 GCV/UBRE/AIC/REML scores with respect to smoothing parameters, as described in Wood (2004) 
 and Wood (2008) for the additive and generalized additive model cases respectively. 
 The smoothing criteria (GCV etc) are evaluated for the fitted model itself (rather than some working 

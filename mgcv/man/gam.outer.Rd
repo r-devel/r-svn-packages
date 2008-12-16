@@ -19,7 +19,7 @@ difference derivatives.
 Not normally called directly, but rather a service routine for \code{\link{gam}}.
 }
 \usage{
-gam.outer(lsp,fscale,family,control,method,criterion,scale,gamma,G,...)
+gam.outer(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -32,8 +32,9 @@ gam.outer(lsp,fscale,family,control,method,criterion,scale,gamma,G,...)
 \item{control}{control argument to pass to \code{\link{gam.fit}} if pure
 finite differencing is being used.}
 
-\item{method}{method list returned from \code{\link{gam.method}}. This defines
-the optimization method to use.}
+\item{method}{method argument to \code{\link{gam}} defining the smoothness criterion to use (but depending on whether or not scale known).}
+
+\item{optimizer}{The argument to \code{\link{gam}} defining the numerical optimization method to use. }
 
 \item{criterion}{Which smoothness selction criterion to use. One of \code{"UBRE"},
 \code{"GCV"}, \code{"GACV"}, \code{"REML"} or \code{"P-REML"}.   }

@@ -65,6 +65,22 @@ void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work)
   }
 }
 
+double trBtAB(double *A,double *B,int *n,int*m) 
+/* form tr(B'AB) where A is n by n and B is n by m, m < n,
+   basic point is that this is sum_ijk A_ik B_ij B_kj
+ */
+{ double tr=0.0,x,*p,*p1,*p2;
+  int j,k;
+  for (j=0;j<*m;j++)
+    for (k=0;k<*n;k++) {
+      p = A + *n * k;p2 = p + *n;
+      p1 = B + *n * j;
+      x = B[k + j * *n];
+      for (;p<p2;p++,p1++) tr += *p * *p1 * x;   
+    }
+  return(tr);
+}
+
 
 void multSk(double *y,double *x,int *xcol,int k,double *rS,int *rSncol,int *q,double *work)
 /* function to form y = Sk x, where a square root of Sk 
@@ -97,6 +113,17 @@ double diagABt(double *d,double *A,double *B,int *r,int *c)
   for (p1=d + *r,pd=d;pd<p1;pa++,pb++,pd++) *pd += *pa * *pb;
   /* d now contains diag(AB') */
   for (tr=0.0,pd=d,p1=d + *r;pd < p1;pd++) tr += *pd;
+  return(tr);
+}
+
+
+double trAB(double *A,double *B,int *n, int *m)
+/* Get tr(AB) where A is n by m and B is m by n 
+*/ 
+{ double *p,*pa,*pb,tr=0.0;
+  int i,j;
+  for (pa=A,pb=B,j=0;j<*m;j++,pb++)
+    for (p=pb,i=0;i<*n;i++,p += *m,pa++) tr+= *p * *pa;
   return(tr);
 }
 
@@ -151,6 +178,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
      bSb1[i] = xx; 
   }
 
+
   if (*deriv>1)  for (m=0;m < *M;m++) { /* Hessian */
      bt=1;ct=0;mgcv_mmult(work1,E,b1+m * *q,&bt,&ct,Encol,&one,q);
      bt=0;ct=0;mgcv_mmult(work,E,work1,&bt,&ct,q,&one,Encol);  /* S dbeta/drho_m */
@@ -185,9 +213,273 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 
 }
 
+double frobenius_norm(double *X,int *r, int *c)
+/* The Frobenius norm of r by c matrix X. Interestingly, this gives an 
+   upper bound on the two norm (largest singular value). 
+*/
+{ double fnorm=0.0,*p1;
+  int n;
+  n = *r * *c;
+  for (p1=X+n;X<p1;X++) fnorm += *X * *X;
+  return(sqrt(fnorm));
+}
+
+double qr_ldet_inv(double *X,int *r,double *Xi,int *get_inv) 
+/* Obtains the log|X| and the inverse of X (r by r), by pivoted QR decomposition. 
+   The inverse is returned (unpivoted) in Xi. 
+   The function returns log|X| as its value.
+*/
+{ double *tau,ldet,*p,*Qt;
+  int *pivot,i,TRUE=1,j;
+  /* Allocated working storage ...*/
+  pivot = (int *)calloc((size_t)*r,sizeof(int));
+  tau = (double *)calloc((size_t)*r,sizeof(double));
+  
+  mgcv_qr(X,r,r,pivot,tau); /* get QR=X itself */
+
+  /* evaluate log|X| = sum_i log(|R_ii|) ...*/
+  for (ldet=0.0,p=X,i=0;i<*r;i++,p += *r+1) ldet += log(fabs(*p));
+  
+  if (*get_inv) {
+  /* Now get the inverse of X. X^{-1} = R^{-1}Q' */
+    Qt = (double *)calloc((size_t)*r * *r,sizeof(double));
+    for (p=Qt,i=0;i<*r;i++,p += *r+1) *p = 1.0;
+    mgcv_qrqy(Qt,X,tau,r,r,r,&TRUE,&TRUE); /* Extracting the orthogonal factor Q' */
+
+    mgcv_backsolve(X,r,r,Qt,Xi,r); /* Now Xi contains the row pivoted inverse of X */
+
+    /* Finally unpivot Xi. 
+       pivot[i] is the unpivoted row that pivoted row i should end up in  
+    */
+
+    for (p=Xi,j=0;j<*r;j++,p += *r) { /* work column by colum using tau as working storage */
+
+      for (i=0;i<*r;i++) tau[pivot[i]] = p[i]; /* ith row of pivoted -> pivot[i] row of unpivoted */
+      for (i=0;i<*r;i++) p[i] = tau[i];        /* store unpivoted column in Xi */
+
+    }
+    free(Qt);
+  } /* end if (*get_inv) */
+  free(pivot);free(tau);
+  return(ldet);
+}
+
+
+void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
+               double *det, double *det1, double *det2, double *d_tol,
+               double *r_tol,int *fixed_penalty)
+/* Routine to evaluate log|S| and its derivatives wrt log(sp), in a stable manner.
+
+   Inputs are:
+   `sp' the array of smoothing parameters.
+   `sqrtS' the `M' square root penalty matrices. The ith is `q' by `rSncol[i]'. They are 
+        packed one after the other. 
+   `deriv' is the order of derivatives required. 0,1 or 2.
+   `d_tol' is the tolerance to use for grouping dominant terms. 
+   `r_tol' (<< d_tol) is the tolerance used for rank determination.
+   `fixed_penalty' non-zero indicates that there is a fixed component of 
+          total penalty matrix S, the square root of which is in the final 
+          q * rSncol[M+1] elements of sqrtS.                 
+
+   Outputs are:
+   `det' the log determinant.
+   `det1' M-array of derivatives of log det wrt log sp. 
+   `det2' M by M Hessian of log det wrt log sp.   
+   
+*/
+{ double *rS, *Un, *U, *S,*Si,*Sb,*B,*C,*Sg,*p,*p1,*p2,*p3,*frob,*ev,max_frob,x,*spf;
+  int iter,i,j,k,bt,ct,rSoff,K,Q,Qr,*gamma,*gamma1,*alpha,TRUE=1,FALSE=0,r,max_col,Mf;
+
+  if (fixed_penalty) { 
+    Mf = *M + 1;  /* total number of components, including fixed one */
+    spf = (double *)calloc((size_t)Mf,sizeof(double));
+    for (i=0;i<*M;i++) spf[i]=sp[i];spf[*M]=1.0; /* includes sp for fixed term */
+  } 
+  else {spf=sp;Mf = *M;} /* total number of components, including fixed one */
+
+  /* Create a working copy of sqrtS, which can be modified  */
+  if (*deriv) { /* only need to modify if derivatives needed */
+    for (j=i=0;i<Mf;i++) j += rSncol[i];j *= *q;
+    rS = (double *)calloc((size_t) j,sizeof(double));
+    for (p=rS,p1=rS+j,p2=sqrtS;p<p1;p++,p2++) *p = *p2;
+  }
+  /* Explicitly form the Si (stored in a single block), so S_i is stored
+     in Si + i * q * q (starting i from 0). As iteration progresses,
+     blocks are shrunk -- always Q by Q */
+  p = Si = (double *)calloc((size_t)*q * *q * Mf,sizeof(double));
+  max_col = *q; /* need enough storage just in case square roots are over-sized */
+  for (rSoff=i=0;i<Mf;p+= *q * *q,rSoff+=rSncol[i],i++) {
+    bt=0;ct=1;mgcv_mmult(p,sqrtS+rSoff * *q,sqrtS+rSoff * *q,&bt,&ct,q,q,rSncol+i);
+    if (rSncol[i]>max_col) max_col=rSncol[i];
+  }
+
+ 
+  /* Initialize the sub-dominant set gamma and the counters */
+  K = 0;Q = *q;
+  frob =  (double *)calloc((size_t)Mf,sizeof(double)); 
+  gamma = (int *)calloc((size_t)Mf,sizeof(int));  /* terms remaining to deal with */
+  gamma1 = (int *)calloc((size_t)Mf,sizeof(int)); /* new gamma */
+  alpha = (int *)calloc((size_t)Mf,sizeof(int));  /* dominant terms */
+  for (i=0;i<Mf;i++) gamma[i] = 1; /* no terms dealt with initially */
+  
+  /* Other storage... */
+
+  S = (double *) calloc((size_t) Q * Q,sizeof(double)); /* Transformed S (total) */
+  U=Sb = (double *) calloc((size_t) Q * Q,sizeof(double)); /* summation storage */
+  Sg = (double *) calloc((size_t) Q * Q,sizeof(double)); /* summation storage */
+  ev = (double *) calloc((size_t) Q,sizeof(double));     /* eigenvalue storage */
+  B = (double *) calloc((size_t) Q * max_col,sizeof(double)); /* Intermediate storage */
+  C = (double *) calloc((size_t) Q * max_col,sizeof(double)); /* Intermediate storage */
+
+  /* Start the main similarity transform loop */
+  iter =0;
+  while(1) {
+    iter ++;
+
+  /* Find the Frobenius norms of the Si in set gamma */
+    max_frob=0.0;
+    for (p=Si,i=0;i<Mf;i++,p += Q * Q) 
+      if (gamma[i]) { /* don't bother if already dealt with */ 
+        frob[i] = frobenius_norm(p,&Q,&Q);
+        if (frob[i]*sp[i]>max_frob) max_frob=frob[i]*sp[i];
+    }
+  /* Find sets alpha and gamma' */
+    for (i=0;i<Mf;i++) {
+      if (gamma[i]) { /* term is still to be dealt with */
+        if (frob[i]*sp[i] > max_frob * *d_tol) { 
+          alpha[i] = 1;gamma1[i] = 0; /* deal with it now */
+        } else {
+          alpha[i] = 0;gamma1[i] = 1; /* put it off */ 
+        }
+      } else { /* wasn't in gamma, so not in alpha or gamma1 */
+        alpha[i] = gamma1[i] = 0;
+      }
+    }
+
+  /* Form the scaled sum of the Si in alpha and eigen-decompose it to get its rank */
+    for (p=Sb,p1=p+Q*Q;p<p1;p++) *p=0.0; /* clear Sb */
+    for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (alpha[i]) { 
+      x = frob[i];
+      for (p1=p,p2=Sb,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 / x;
+    } 
+    mgcv_symeig(Sb,ev,&Q,&FALSE,&FALSE,&FALSE); /* get eigenvalues (ascending) of scaled sum over alpha */
+    
+    r=1;
+    while(r<Q&&(ev[Q-r-1]>ev[Q-1] * *r_tol)) r++; 
+    /* ...  r is the rank of Sb, or any other positively weighted sum over alpha */
+
+  /* If Q==r then terminate (form S first if it's the first iteration) */
+    
+    if (Q==r) { 
+      if (iter==1 ) { /* form S */
+        for (p=Si,i=0;i<Mf;i++,p += Q*Q) { 
+          x = sp[i];
+          for (p1=p,p2=S,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+        }
+        break; 
+      } else break; /* just use current S */ 
+    } /* if Q==r test */
+
+  /* Form the dominant term and eigen-decompose it */
+    for (p=Sb,p1=p+Q*Q;p<p1;p++) *p = 0.0; /* clear Sb */
+    for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (alpha[i]) { /* summing S[[i]]*sp[i] over i in alpha */
+      x = sp[i];
+      for (p1=p,p2=Sb,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+    } 
+    mgcv_symeig(Sb,ev,&Q,&FALSE,&TRUE,&TRUE); /* get eigen decomposition of dominant term (ev descending) */
+    
+  /* .... U points to Sb, which now contains eigen-vectors*/
+
+  /* Form the sum over the elements in gamma1, Sg */
+
+    for (p=Sg,p1=p+Q*Q;p<p1;p++) *p=0.0; /* clear Sg */
+    for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (gamma1[i]) { /* summing S[[i]]*sp[i] over i in gamma1 */
+      x = sp[i];
+      for (p1=p,p2=Sg,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+    } 
+
+  /* Form S' the similarity transformed S */
+    if (K>0) { /* deal with upper right component B */
+      /* first copy out B into C */ 
+      for (j=0;j<Q;j++) for (i=0;i<K;i++) C[i + K * j] = S[i + *q * (j+K)];
+      /* Now form BU (store in B)*/
+      bt=0;ct=0;mgcv_mmult(B,C,U,&bt,&ct,&K,&Q,&Q);
+      /* Replace B into S */
+      for (j=0;j<Q;j++) for (i=0;i<K;i++) S[i + *q * (j+K)]= S[j + K + *q * i] = B[i + K * j];
+    }
+
+    /* Now deal with the lower right component, C */
+    /* U'SgU  */
+    bt=0;ct=0;mgcv_mmult(B,Sg,U,&bt,&ct,&Q,&Q,&Q); /* SgU is in B */
+    bt=1;ct=0;mgcv_mmult(C,U,B,&bt,&ct,&Q,&Q,&Q);  /* U'SgU is in C */ 
+    for (i=0;i<r;i++) C[i+i * Q] += ev[i];  /* Adding in the (truly) non zero eigen-values */
+   
+    /* Now copy C back into right part of S' */
+    for (j=0;j<Q;j++) for (i=0;i<Q;i++) S[i + K + *q * (j+K)] = C[i + Q * j];
+    
+  /* Transform the square roots of Si in alpha and gamma1 (Can leave fixed term alone - not needed)*/
+    if (*deriv) { /* transformed rS_i only needed fro derivatives */
+      for (p=rS,k=0;k<*M;p += rSncol[k] * *q,k++) if (alpha[k]) {  /* p points to the square root of S_i */    
+        /* extract the part of rS_i to be modified */
+        for (i=0;i<Q;i++) for (j=0;j<rSncol[k];j++) C[i + Q * j] = p[i + K + *q * j];
+        bt=1;ct=0;mgcv_mmult(B,U,C,&bt,&ct,&r,rSncol+k,&Q); 
+        for (i=0;i<r;i++) for (j=0;j<rSncol[k];j++) p[i + K + *q * j] = B[i + r * j];
+        for (i=Q+r;i<K+Q;i++) for (j=0;j<rSncol[k];j++) p[i + *q * j] = 0.0;
+      } else if (gamma1[k]) { 
+        for (i=0;i<Q;i++) for (j=0;j<rSncol[k];j++) C[i + Q * j] = p[i + K + *q * j];
+        bt=1;ct=0;mgcv_mmult(B,U,C,&bt,&ct,&Q,rSncol+k,&Q);
+        for (i=0;i<Q;i++) for (j=0;j<rSncol[k];j++) p[i + K + *q * j] = B[i + Q * j];
+      }
+    }
+
+  /* Transform the Si in gamma' */
+    Qr = Q - r;Un = U + r * Q;
+    for (p1=p=Si,i=0;i<Mf;i++,p += Q*Q,p1 +=Qr*Qr) if (gamma1[i]) { /* p points to old Si, and p1 to new */
+      bt=1;ct=0;mgcv_mmult(B,Un,p,&bt,&ct,&Qr,&Q,&Q);
+      bt=0;ct=0;mgcv_mmult(p1,p,Un,&bt,&ct,&Qr,&Qr,&Q); 
+    }
+  /* Update K, Q and gamma */   
+    K = K + r; Q = Qr;
+    for (i=0;i<Mf;i++) gamma[i] = gamma1[i];
+  } /* end of Similarity Transfrom Loop */
+
+  /* Now get the determinant and inverse of the transformed S (stored in B) */
+  *det = qr_ldet_inv(S,q,B,deriv);
+  /* finally, the dervivatives, based on transformed S inverse and transformed square roots */  
+  
+  if (*deriv) { /* get the first derivatives */
+    for (p=rS,i=0;i<*M;p += *q *rSncol[i],i++) det1[i] = trBtAB(B,p,q,rSncol+i)*sp[i]; /* tr(S^{-1}S_i) */
+  }
+  
+  if (*deriv==2) { /* get second derivatives, as well */
+    for (p1=Si,p=rS,i=0;i<*M;p += *q *rSncol[i],i++,p1 += *q * *q) { /* loop through creating S^{-1} S_i and storing in Si*/
+      bt=0;ct=0;mgcv_mmult(C,B,p,&bt,&ct,q,rSncol+i,q);
+      bt=0;ct=1;mgcv_mmult(p1,C,p,&bt,&ct,q,q,rSncol+i);
+    }
+    for (i=0;i<*M;i++) for (j=i;j<*M;j++) 
+      det2[i + *M * j] = det2[j + *M * i] = -sp[i]*sp[j]*trAB(Si + *q * *q *i,Si + *q * *q *j,q,q);
+    for (i=0;i<*M;i++) det2[i + *M * i] += det1[i];
+  }
+  free(frob);
+  free(gamma);
+  free(gamma1);
+  free(alpha);
+  free(S);
+  free(Sb);
+  free(Sg);
+  if (*deriv) { free(rS);}
+  if (*fixed_penalty) {free(spf);}
+  free(Si);
+  free(ev);
+  free(B);
+  free(C);
+}
+
+
 int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *sp,
 	      double *rS,int *rSncol,int *Encol,int *q,int *M,int *deriv,int *Mp)
-/* Routine to obtain log|S| and its derivatives w.r.t. the log(sp), for REML.
+/* Defunct: insufficiently stable 
+   Routine to obtain log|S| and its derivatives w.r.t. the log(sp), for REML.
    S is q by q total penalty matrix, where S= EE'
    rS contains M, q by rSncol[i], square roots of S components, packed one
       after another.
@@ -196,13 +488,13 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
    of S, on exit. The null space eigen-vectors are first.
    
 */
-{ int i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim,max_rSc;
+{ int TRUE=1,FALSE=0,i,j,rank,rSoff,use_dsyevd=0,bt,ct,km,mk,m,k,null_space_dim,max_rSc;
   double *d,*d0,*rDiUtrSk,*DUSUD,*p0,*p1,xx, *Ud,mult;
   d0 = d = (double *)calloc((size_t)*q,sizeof(double));
   /* eigen-decompose S (overwriting it) */
   /* Actually S=EE'.... */
   bt=0;ct=1;mgcv_mmult(U,E,E,&bt,&ct,q,q,Encol);
-  mgcv_symeig(U,d,q,&use_dsyevd); /* eigenvectors are in ascending order */
+  mgcv_symeig(U,d,q,&use_dsyevd,&TRUE,&FALSE); /* eigenvectors are in ascending order */
   //  i=0; /* count the eigenvalues to discard */
   //while (i < *q && d[i] < d[*q - 1] * *tol) i++;
   // i replaced with Mp below...
@@ -223,7 +515,7 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
     d[i] = fabs(d[i]);
     mult = 1e-25;
     while (d[i]<=0) { /* repeat until number is different from zero */ 
-      d[i] = d[*q-1]*mult;
+      d[i] = d[rank-1]*mult;
       mult *= 10;
     } 
   }
@@ -267,6 +559,12 @@ int get_detS(double *U,double *det,double *det1,double *det2,double *E,double *s
     if (k==m) det2[km] += det1[k]; else det2[mk] = det2[km];
   }
   
+  /*  if (*deriv) { 
+    printf("det = %g  grad =",*det);
+      for (i=0;i<*M;i++) printf("  %g",det1[i]);
+    printf("\n");
+    }*/
+
   free(d0);free(Ud);
   free(rDiUtrSk);
   if (*deriv > 1) free(DUSUD);
@@ -1187,7 +1485,7 @@ void Rinv(double *Ri,double *R,int *c,int *r, int *ri)
 void pearson2(double *P, double *P1, double *P2,
               double *y,double *mu,double *V, double *V1,double *V2,double *g1,double *g2,
               double *p_weights,double *eta1, double *eta2,int n,int M,int deriv, int deriv2)
-/* Alternative calculation of the derivatives of the Pearsn statistic, which avoids assuming that
+/* Alternative calculation of the derivatives of the Pearson statistic, which avoids assuming that
    z and w are based on Fisher scoring */
 { double resid,xx,*Pe1,*Pe2,*pp,*p1,*p0,*v2,*Pi1,*Pi2;
   int i,k,m,n_2dCols=0,one=1;
@@ -1260,7 +1558,7 @@ void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
    and its derivstives wrt the log smoothing parameters. Arrays ending 
    1 or 2 contain 1st or second derivatives of their base name quantity 
    wrt log smoothing parameters. n is length of z, w, eta. M is number 
-   of smoothing parameters.
+   of smoothing parameters. Note: Only works with Fisher scoring.
 */
 { double *zeta,*wzeta,*p0,*p1,*p2,*p3,*p4,*zetaSq,*wSqzeta,*wzetaSq,*wSqzetaSq,xx;
   int i,bt,ct,one=1,m,k;
@@ -1512,21 +1810,21 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
   return(ldetXWXS);
 }
 
-void gdi(double *X,double *E,double *rS,double *U1,
+void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
     double *sp,double *z,double *w,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
 	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
     double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Encol,int *rSncol,int *deriv,int *use_svd,
-	 int *REML,int *fisher)     
+	 int *REML,int *fisher,int *fixed_penalty)     
 /* Version of gdi, based on derivative ratios and Implicit Function Theorem 
    calculation of the derivatives of beta. Assumption is that Fisher is only used 
    with canonical link, when it is equivalent to Newton anyway.
 
    This version deals properly with negative weights, which can occur with Newton based 
    PIRLS. In consequence w's in this routine are proportional to reciprocal variances,
-   not reciprocal stadard deviations.
+   not reciprocal standard deviations.
   
    The function is to be called at convergence of a P-IRLS scheme so that 
    z, w, mu and functions of these can be treated as fixed, and only the 
@@ -1577,6 +1875,9 @@ void gdi(double *X,double *E,double *rS,double *U1,
     * If REML is -ve non-zero, then the ML penalty is returned in place of the REML one.
     * non-zero `fisher' indicates that Fisher scoring, rather than full Newton,
       is the basis for iteration. 
+    * non-zero `fixed_penalty' inticates that S includes a fixed penalty component,
+      the range space projected square root of which is in the final element of `UrS'.
+      This information is used by get_detS2().
 
    The method has 4 main parts:
 
@@ -1614,12 +1915,13 @@ void gdi(double *X,double *E,double *rS,double *U1,
          *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
     ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
-    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U;
+    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U, d_tol;
   int i,j,k,*pivot,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
     n_eta1,n_eta2,n_work,deriv2,null_space_dim,neg_w=0,*nind,nn,ii,ldetI2D;
 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
+  d_tol = sqrt(*rank_tol * 100);
   /* first step is to obtain P and K */
   nn= *n + *Encol;
   zz = (double *)calloc((size_t)nn,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
@@ -1663,6 +1965,8 @@ void gdi(double *X,double *E,double *rS,double *U1,
   R_cond(WX,&nn,&rank,work,&Rcond);
   while (*rank_tol * Rcond > 1) { rank--;R_cond(WX,&nn,&rank,work,&Rcond);}
   free(work);
+
+  /* printf("q = %d  rank = %d\n",*q,rank);  DEBUG */
 
   /* Note that in the following the Q is extracted with q rather than rank columns
      this is because ML estimation requires the `full' rather than truncated version.
@@ -1870,7 +2174,7 @@ void gdi(double *X,double *E,double *rS,double *U1,
     } /* end of full Newton setup */
 
 
-    /* a useful arrays for Tk and Tkm */
+    /* a useful array for Tk and Tkm */
     wi=(double *)calloc((size_t)*n,sizeof(double)); 
     for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i]);}
 
@@ -1971,7 +2275,10 @@ void gdi(double *X,double *E,double *rS,double *U1,
     /* First log|S|_+ */
     //U1 = 
     U = (double *) calloc((size_t) *q * *q,sizeof(double)); /* matrix for eigen-vectors of S (null space first) */  
-    get_detS(U,P0,trA1,trA2,E,sp,rS,rSncol,Encol,q,M,deriv,Mp); // Mp in place of rank_tol
+    // get_detS(U,P0,trA1,trA2,E,sp,rS,rSncol,Encol,q,M,deriv,Mp); // Mp in place of rank_tol
+    i = *q - *Mp; /* number of columns of UrS */
+    /* P0, trA1 and trA2 used here for log det and its derivatives... */
+    get_detS2(sp,UrS,rSncol,&i,M,deriv,P0,trA1, trA2,&d_tol,rank_tol,fixed_penalty);
     reml_penalty = - *P0;
     //U1 += *q * null_space_dim; /* column basis of range space of S */
   } 

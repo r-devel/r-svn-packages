@@ -7,12 +7,13 @@
 \code{gam} objects. For a single fitted \code{gam} object, Wald tests of
 the significance of each parametric and smooth term are performed. Otherwise
 the fitted models are compared using an analysis of deviance table. The tests
-are usually approximate, unless the models are un-penalized.
+are usually approximate, unless the models are un-penalized. Simulation evidence 
+suggests that best p-value performance results from using ML estimated smoothing parameters. 
 
 }
 \usage{
 \method{anova}{gam}(object, ..., dispersion = NULL, test = NULL,
-                    alpha = .5, freq = FALSE)
+                    alpha = 0, freq = FALSE)
 \method{print}{anova.gam}(x, digits = max(3, getOption("digits") - 3),...)
 }
 %- maybe also `usage' for other objects documented here.
