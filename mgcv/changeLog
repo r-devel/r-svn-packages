@@ -7,13 +7,7 @@ ISSUES TO CLEAR
 
 * upper limits  on sps with REML needs to be more systematic
 
-* .Rd check problem with R 2.8.1
-
-* Fixed penalty not dealt with properly with new detS code.
-
 * gam.check generates error with some methods
-
-* print and summary score reporting not right for gamm gam objects.
 
 * partial residuals and by variables (should only show 
   partial resids that infleunce smooth and are meaningful).
@@ -47,6 +41,9 @@ ISSUES TO CLEAR
 ** Derivative iteration as in Wood (2008) has been replaced by a direct
    implicit function method (which costs no more given Newton based 
    PIRLS).
+
+** An option `select' has been added to `gam' to allow terrms to be
+   completely removed from a model by smoothness selection. 
 
 * ad class greatly simplified and 2D penalty improved. Much faster as a 
   result, and 2D adaptive actually quite good.

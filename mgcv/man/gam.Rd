@@ -96,9 +96,9 @@ Note that (RE)ML methods can only work with scale parameter 1 for the Poisson an
 } 
 
 \item{select}{ If this is \code{TRUE} then \code{gam} can add an extra penalty to each term so 
-that it can be penalized to zero. If the corresponding 
-smoothing paraemter is estimated as zero then the penalty has no effect. Then the smoothing parameter estimation that is 
-part of fitting can completely remove terms from the model.
+that it can be penalized to zero.  This means that the smoothing parameter estimation that is 
+part of fitting can completely remove terms from the model. If the corresponding 
+smoothing parameter is estimated as zero then the extra penalty has no effect.
 }
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 

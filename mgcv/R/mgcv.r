@@ -1400,7 +1400,7 @@ print.gam<-function (x,...)
     edf[i]<-sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
     cat("\nEstimated degrees of freedom:\n",edf,"  total = ",sum(x$edf),"\n")
   }
-  if (!is.null(x$method))  
+  if (is.null(x$fit.method)&&!is.null(x$method))  
   cat("\n",x$method," score: ",x$gcv.ubre,"\n",sep="")
   invisible(x)
 }
@@ -2774,6 +2774,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   nobs <- nrow(object$model)
   r.sq<- 1 - var(w*(object$y-object$fitted.values))*(nobs-1)/(var(w*object$y)*residual.df) 
   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
+  if (!is.null(object$fit.method)) object$method <- NULL ## it's from gamm 
   ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
        s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
        dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,

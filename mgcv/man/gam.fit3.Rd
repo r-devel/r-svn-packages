@@ -21,7 +21,7 @@ Not normally called directly, but rather service routines for \code{\link{gam}}.
 }
 \usage{
 
-gam.fit3(x, y, sp, S=list(),rS=list(),off, H=NULL, 
+gam.fit3(x, y, sp, S=list(),rS=list(),UrS=list(), off, H=NULL, 
          weights = rep(1, nobs), start = NULL, etastart = NULL, 
          mustart = NULL, offset = rep(0, nobs), U1 = 0, Mp = -1, family = gaussian(), 
          control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
@@ -42,6 +42,10 @@ by \code{S[[i]]}.}
 
 \item{rS}{List of square roots of penalty matrices, each having as few columns
 as possible, but as many rows as there are parameters.}
+
+\item{UrS}{List of square root penalties premultiplied by transpose of orthogonal
+           basis for the total penalty. Only required for (RE)ML smoothing parameter
+           estimation.}
 
 \item{off}{\code{off[i]} indicates which parameter \code{S[[i]][1,1]} relates to.}
 

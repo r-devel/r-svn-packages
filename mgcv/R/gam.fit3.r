@@ -2025,6 +2025,7 @@ mini.roots <- function(S,off,np)
 # columns as possible. S[[i]]=B[[i]]%*%t(B[[i]]). np is the total number
 # of parameters. S is in packed form. 
 { m<-length(S)
+  if (m<=0) return(list())
   B<-S
   for (i in 1:m)
   { b<-mroot(S[[i]])
