@@ -5,19 +5,14 @@ ISSUES TO CLEAR
 
 * Need to clean gdi.c (of C++ comments and dead code) and gam.fit3.r
 
-* upper limits  on sps with REML needs to be more systematic
-
 * gam.check generates error with some methods
 
-* partial residuals and by variables (should only show 
-  partial resids that infleunce smooth and are meaningful).
-
-* Need ability for smooth,construct to surpress rescaling of 
+* Need ability for smooth, construct to supress rescaling of 
   penalties, in order to keep variance components meaningful.
 
 * Need to re-try sole gamm using gam. 
 
-* all branch testing of critera families links and optimizers.
+* all branch testing of criteria families links and optimizers.
 
 * check gam.check for all optimizers and criteria.
 
@@ -45,10 +40,18 @@ ISSUES TO CLEAR
 ** An option `select' has been added to `gam' to allow terrms to be
    completely removed from a model by smoothness selection. 
 
+* The `newton' optimizer places upper limits on smoothing parameters 
+  for all (RE)ML smoothing parameter estimation, to enhance stability. 
+
 * ad class greatly simplified and 2D penalty improved. Much faster as a 
   result, and 2D adaptive actually quite good.
 
 * s and te check that `id' is a single element.
+
+* By default partial residuals are no longer plotted for smooths with 
+  `by' variables since they are usually meaningless here (they can 
+  be re-instated by argument `by.resids').
+  
 
 * plot.gam modified so that page change behaviour is like plot.glm 
 

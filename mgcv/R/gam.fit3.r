@@ -1151,6 +1151,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
 rt <- function(x,r1) {
 ## transform of x, asymptoting to values in r1
 ## returns rerivatives wrt to x as well as transform values
+## r1[i] == NA for no transform 
   x <- as.numeric(x)
   ind <- x>0 
   rho2 <- rho1 <- rho <- 0*x
@@ -1162,6 +1163,10 @@ rt <- function(x,r1) {
   rho2[ind] <- r1[ind]*h2*2
   rho[!ind] <- r1[!ind]*x[!ind]/2
   rho1[!ind] <- r1[!ind]/2
+  ind <- is.na(r1)
+  rho[ind] <- x[ind]
+  rho1[ind] <- 1
+  rho2[ind] <- 0
   list(rho=rho,rho1=rho1,rho2=rho2)
 }
 
@@ -1174,6 +1179,8 @@ rti <- function(r,r1) {
   r2 <- r[ind]*.5/r1[ind] + .5
   x[ind] <- log(r2/(1-r2))
   x[!ind] <- 2*r[!ind]/r1[!ind]
+  ind <- is.na(r1)
+  x[ind] <- r[ind]
   x
 }
 
@@ -1201,8 +1208,14 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
 
-  if (reml) lsp.max <- 16 - lsp0 ### trial only -- more care needed for release
-  else lsp.max <- NULL
+  if (reml) { 
+    frob.X <- sqrt(sum(X*X))
+    lsp.max <- rep(NA,length(lsp0))
+    for (i in 1:length(S)) { 
+      lsp.max[i] <- 16 + log(frob.X/sqrt(sum(rS[[i]]^2))) - lsp0[i]
+      if (lsp.max[i]<2) lsp.max[i] <- 2
+    } 
+  } else lsp.max <- NULL
 
   if (!is.null(lsp.max)) { ## then there are upper limits on lsp's
     lsp1.max <- coef(lm(lsp.max-lsp0~L-1)) ## get upper limits on lsp1 scale

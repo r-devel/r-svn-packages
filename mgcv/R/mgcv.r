@@ -2085,7 +2085,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade=FALSE,shade.col="gray80",
-                     shift=0,trans=I,seWithMean=FALSE,...)
+                     shift=0,trans=I,seWithMean=FALSE,by.resids=FALSE,...)
 
 # Create an appropriate plot for each smooth term of a GAM.....
 # x is a gam object
@@ -2407,7 +2407,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
               lines(pd[[i]]$x,trans(ll+shift),...)
             }
           } 
-          if (partial.resids)
+          if (partial.resids&&(by.resids||x$smooth[[i]]$by=="NA"))
           { if (length(pd[[i]]$raw)==length(pd[[i]]$p.resid)) {
               if (is.null(list(...)[["pch"]]))
               points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),pch=".",...) else
@@ -2475,7 +2475,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
 	  { if (jit) rug(jitter(as.numeric(pd[[i]]$raw)),...)
             else rug(as.numeric(pd[[i]]$raw),...) 
           }
-          if (partial.resids)
+          if (partial.resids&&(by.resids||x$smooth[[i]]$by=="NA"))
           { if (is.null(list(...)[["pch"]]))
             points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),pch=".",...) else
             points(pd[[i]]$raw,trans(pd[[i]]$p.resid+shift),...)
