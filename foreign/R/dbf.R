@@ -23,7 +23,7 @@ read.dbf <- function(file, as.is = FALSE)
     inames <- make.names(onames, unique = TRUE)
     names(df) <- inames
     if (!(identical(onames, inames))) {
-        for (i in 1L:length(onames))
+        for (i in seq_along(onames))
             if (!(identical(onames[i], inames[i])))
                 message("Field name: ", onames[i], " changed to: ", inames[i])
     }
@@ -31,9 +31,7 @@ read.dbf <- function(file, as.is = FALSE)
     for(i in seq_along(onames))
         if(data_types[i] == "D") df[[i]] <- as.Date(df[[i]], format="%Y%m%d")
     if(!as.is) {
-        df <- data.frame(lapply(df, function(x) {
-            if(is.character(x)) {factor(x)} else x
-        }))
+        df <- data.frame(lapply(df, function(x) if(is.character(x)) factor(x) else x))
        attr(df, "data_types") <-  data_types
     }
     df
@@ -96,7 +94,7 @@ write.dbf <- function(dataframe, file, factor2char = TRUE, max_nchar = 254)
             if(p > max_nchar)
                 warning(gettext("character column %d will be truncated to %d bytes", i, max_nchar), domain = NA)
             precision[i] <- min(p, max_nchar)
-            scale[i] <- 0
+            scale[i] <- 0L
         } else stop("unknown column type in data frame")
     }
     if (any(is.na(precision))) stop("NA in precision") # added RSB 2005-04-17

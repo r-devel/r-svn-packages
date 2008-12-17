@@ -40,9 +40,8 @@ function(file)
     col_types <- NULL
     col_dfmts <- character()
     line <- readLines(file, n = 1L)
-    while(length(line) > 0L &&
-          (regexpr('^[[:space:]]*@(?i)data', line,
-                   perl = TRUE) == -1L)) {
+    while(length(line) &&
+          regexpr('^[[:space:]]*@(?i)data', line, perl = TRUE) == -1L) {
         if(regexpr('^[[:space:]]*@(?i)attribute', line,
                    perl = TRUE) > 0L) {
             con <- textConnection(line)
@@ -120,7 +119,7 @@ function(x, file, eol = "\n", relation = deparse(substitute(x)))
                sprintf("'%s'", gsub("(['\\])", "\\\\\\1", s)))
     }
     spquote <- function(s) {
-        if (length(grep("^[[:alpha:]]", s)) == 0) s <- paste("X", s, sep="")
+        if (length(grep("^[[:alpha:]]", s)) == 0L) s <- paste("X", s, sep="")
         if (length(grep(" ", s))) s <- paste('"', s, '"', sep="")
         s
     }

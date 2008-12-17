@@ -58,7 +58,7 @@ read.S <- function (file)
 	}
 	else if (code == 6L) {
 	    result <- list()
-	    if (len > 0L) {
+	    if (len) {
 		names <- ReadSObj(5L, len)
 		codes <- ReadSObj(2L, len)
 		lens <- ReadSObj(2L, len)
