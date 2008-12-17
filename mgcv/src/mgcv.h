@@ -26,6 +26,10 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);
 
+void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
+               double *det, double *det1, double *det2, double *d_tol,
+               double *r_tol,int *fixed_penalty); /* stable determinant of sum evaluation */
+
 /* various service routines */
 void  tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,double *eps,int *n);
 

@@ -290,7 +290,7 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
 { double *rS, *Un, *U, *S,*Si,*Sb,*B,*C,*Sg,*p,*p1,*p2,*p3,*frob,*ev,max_frob,x,*spf;
   int iter,i,j,k,bt,ct,rSoff,K,Q,Qr,*gamma,*gamma1,*alpha,TRUE=1,FALSE=0,r,max_col,Mf;
 
-  if (fixed_penalty) { 
+  if (*fixed_penalty) { 
     Mf = *M + 1;  /* total number of components, including fixed one */
     spf = (double *)calloc((size_t)Mf,sizeof(double));
     for (i=0;i<*M;i++) spf[i]=sp[i];spf[*M]=1.0; /* includes sp for fixed term */
@@ -341,12 +341,12 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
     for (p=Si,i=0;i<Mf;i++,p += Q * Q) 
       if (gamma[i]) { /* don't bother if already dealt with */ 
         frob[i] = frobenius_norm(p,&Q,&Q);
-        if (frob[i]*sp[i]>max_frob) max_frob=frob[i]*sp[i];
+        if (frob[i] *spf[i] >max_frob) max_frob=frob[i]  * spf[i];
     }
   /* Find sets alpha and gamma' */
     for (i=0;i<Mf;i++) {
       if (gamma[i]) { /* term is still to be dealt with */
-        if (frob[i]*sp[i] > max_frob * *d_tol) { 
+        if (frob[i]  * spf[i] > max_frob * *d_tol) { 
           alpha[i] = 1;gamma1[i] = 0; /* deal with it now */
         } else {
           alpha[i] = 0;gamma1[i] = 1; /* put it off */ 
@@ -364,26 +364,34 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
     } 
     mgcv_symeig(Sb,ev,&Q,&FALSE,&FALSE,&FALSE); /* get eigenvalues (ascending) of scaled sum over alpha */
     
+    
+
     r=1;
     while(r<Q&&(ev[Q-r-1]>ev[Q-1] * *r_tol)) r++; 
     /* ...  r is the rank of Sb, or any other positively weighted sum over alpha */
+
+    /* printf("\n iter = %d,  rank = %d,   Q = %d",iter,r,Q);
+    printf("\n gamma = ");for (i=0;i<Mf;i++) printf(" %d",gamma[i]);
+    printf("\n alpha = ");for (i=0;i<Mf;i++) printf(" %d",alpha[i]);
+    printf("\n gamma1 = ");for (i=0;i<Mf;i++) printf(" %d",gamma1[i]);
+    printf("\n ev = ");for (i=0;i<Q;i++) printf("  %g",ev[i]);*/
 
   /* If Q==r then terminate (form S first if it's the first iteration) */
     
     if (Q==r) { 
       if (iter==1 ) { /* form S */
         for (p=Si,i=0;i<Mf;i++,p += Q*Q) { 
-          x = sp[i];
+          x = spf[i];
           for (p1=p,p2=S,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
         }
         break; 
       } else break; /* just use current S */ 
-    } /* if Q==r test */
+    } /* end if (Q==r) */
 
   /* Form the dominant term and eigen-decompose it */
     for (p=Sb,p1=p+Q*Q;p<p1;p++) *p = 0.0; /* clear Sb */
     for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (alpha[i]) { /* summing S[[i]]*sp[i] over i in alpha */
-      x = sp[i];
+      x = spf[i];
       for (p1=p,p2=Sb,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
     } 
     mgcv_symeig(Sb,ev,&Q,&FALSE,&TRUE,&TRUE); /* get eigen decomposition of dominant term (ev descending) */
@@ -394,7 +402,7 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
 
     for (p=Sg,p1=p+Q*Q;p<p1;p++) *p=0.0; /* clear Sg */
     for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (gamma1[i]) { /* summing S[[i]]*sp[i] over i in gamma1 */
-      x = sp[i];
+      x = spf[i];
       for (p1=p,p2=Sg,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
     } 
 
@@ -436,7 +444,7 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
     Qr = Q - r;Un = U + r * Q;
     for (p1=p=Si,i=0;i<Mf;i++,p += Q*Q,p1 +=Qr*Qr) if (gamma1[i]) { /* p points to old Si, and p1 to new */
       bt=1;ct=0;mgcv_mmult(B,Un,p,&bt,&ct,&Qr,&Q,&Q);
-      bt=0;ct=0;mgcv_mmult(p1,p,Un,&bt,&ct,&Qr,&Qr,&Q); 
+      bt=0;ct=0;mgcv_mmult(p1,B,Un,&bt,&ct,&Qr,&Qr,&Q); 
     }
   /* Update K, Q and gamma */   
     K = K + r; Q = Qr;
