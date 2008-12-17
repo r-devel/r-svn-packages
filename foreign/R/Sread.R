@@ -47,7 +47,7 @@ read.S <- function (file)
 	else if (code == 2L)
 	    result <- readBin(s, "int", len, endian = endian)
 	else if (code == 3L)
-	    result <- readBin(s, "numeric", len, size=4, endian = endian)
+	    result <- readBin(s, "numeric", len, size=4L, endian = endian)
 	else if (code == 4L)
 	    result <- readBin(s, "numeric", len, endian = endian)
 	else if (code == 5L) {
