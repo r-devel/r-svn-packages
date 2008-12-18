@@ -51,8 +51,6 @@ means that many of these are less than 1.}
 
 \item{family}{family object specifying distribution and link used.}
 
-\item{fit.method}{ Character string describing the multiple GCV/UBRE smoothing
-parameter estimation method used.}
 
 \item{fitted.values}{fitted model predictions of expected value for each
           datum.}
@@ -65,9 +63,6 @@ smoothing parameters, and/or some smoothing parameter values were supplied in th
 of \code{\link{gam}}.}
 
 
-%%\item{full.formula}{the model formula with each smooth term fully
-%%  expanded and with option arguments given explicitly (i.e. not with reference
-%%  to other variables) - useful for later prediction from the model.}
 
 \item{gcv.ubre}{The minimized GCV or UBRE score.}
 
@@ -80,7 +75,8 @@ Same length as response data vector.}
 \item{linear.predictors}{fitted model prediction of link function of
 expected value for  each datum.}
 
-\item{method}{One of \code{"GCV"} or \code{"UBRE"}, depending on the fitting
+\item{method}{One of \code{"GCV"} or \code{"UBRE"}, \code{"REML"}, \code{"P-REML"}, \code{"ML"},
+\code{"P-ML"}, \code{"PQL"}, \code{"lme.ML"} or \code{"lme.REML"}, depending on the fitting
 criterion used.}
 
 \item{mgcv.conv}{ A list of convergence diagnostics relating to the
@@ -109,8 +105,11 @@ convergence.
 
 \item{offset}{model offset.}
 
+\item{optimizer}{\code{optimizer} argument to \code{\link{gam}}, or \code{"magic"} if it's a pure 
+additive model.}
+
 \item{outer.info}{If `outer' iteration has been used to fit the model (see
-\code{\link{gam.method}}) then this is present and contains whatever was
+\code{\link{gam}} argument \code{optimizer}) then this is present and contains whatever was
 returned by the optimization routine used (currently \code{\link{nlm}} or \code{\link{optim}}). }
 
 \item{prior.weights}{prior weights on observations.} 

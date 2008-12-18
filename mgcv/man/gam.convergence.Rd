@@ -4,10 +4,10 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM convergence and performance issues}
 \description{ When fitting GAMs there is a tradeoff between speed of 
-fitting and probability of fit convergence. The default fitting options 
+fitting and probability of fit convergence. The default fitting options, 
 specified by
-\code{\link{gam.method}} (as the default for argument \code{method} of
-\code{\link{gam}}), opt for certainty of convergence over speed of
+\code{\link{gam}} arguments \code{method} and \code{optimizer}, 
+opt for certainty of convergence over speed of
 fit. In the Generalized Additive Model case it means using
 `outer' iteration in preference to `performance iteration': see
 \code{\link{gam.outer}} for details. 
@@ -25,11 +25,10 @@ this case try using \code{fisher=FALSE} in the control argument to
 Newton approach to be used.
 
 There are three things that you can try to speed up GAM fitting. (i) if you have large 
-numbers of smoothing parameters in the generalized case, then try the \code{"bfgs"} method as the \code{outer} 
-option in \code{\link{gam.method}}: this can be faster than the default. (ii) Change the
-\code{method} argument to \code{\link{gam}} so that `performance iteration' is
-used in place of the default outer iteration. See the \code{gam="perf"} option
-under \code{\link{gam.method}}, for example. Usually performance iteration
+numbers of smoothing parameters in the generalized case, then try the \code{"bfgs"} method 
+option in \code{\link{gam}} argument \code{optimizer}: this can be faster than the default. (ii) Change the
+\code{optimizer} argument to \code{\link{gam}} so that `performance iteration' is
+used in place of the default outer iteration. Usually performance iteration
 converges well and it can sometimes be quicker than the default outer iteration. 
 (iii) For large datasets it may be worth changing
 the smoothing basis to use \code{bs="cr"} (see \code{\link{s}} for details)
@@ -39,8 +38,8 @@ the default thin plate regression spline basis \code{"tp"} is costly to set up
 for large datasets (much over 1000 data, say).
 
 If the GAM estimation process fails to converge when using performance
-iteration, then switch to outer iteration via the \code{method} argument of
-\code{\link{gam}} (see \code{\link{gam.method}}). If it still fails, try
+iteration, then switch to outer iteration via the \code{optimizer} argument of
+\code{\link{gam}}. If it still fails, try
 increasing the number of IRLS iterations (see \code{\link{gam.control}}) or
 perhaps experiment with the convergence tolerance. 
 

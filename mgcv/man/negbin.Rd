@@ -45,7 +45,7 @@ taken as the discrete set of values of theta over which to search for \code{thet
 option only works with AIC based outer iteration, if performance iteration is used then an array will only
 be used to define a search range.
 
-If performance iteration is used (see \code{\link{gam.method}}) then the method 
+If performance iteration is used (see \code{\link{gam}} argument \code{optimizer}) then the method 
 of estimation is to choose \eqn{\hat \theta}{theta}  so that the GCV (Pearson) estimate 
 of the scale parameter is one (since the scale parameter 
 is one for the negative binomial). In this case \eqn{\theta}{theta} estimation is nested within the IRLS loop 

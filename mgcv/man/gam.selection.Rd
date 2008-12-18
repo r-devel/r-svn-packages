@@ -32,7 +32,7 @@ most common form of local minimum, but is usually avoidable by avoiding
 extreme smoothing parameters as starting values in optimization, and by
 avoiding big jumps in smoothing parameters while optimizing. Never the less, if you are
 suspicious of smoothing parameter estimates, try changing fit method (see
-\code{\link{gam.method}}) and see if the estimates change, or try changing
+\code{\link{gam}} arguments \code{method} and \code{optimizer}) and see if the estimates change, or try changing
 some or all of the smoothing parameters `manually' (argument \code{sp} of \code{\link{gam}},
 or \code{sp} arguments to \code{\link{s}} or \code{\link{te}}). 
 

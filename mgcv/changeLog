@@ -5,7 +5,7 @@ ISSUES TO CLEAR
 
 * Need to clean gdi.c (of C++ comments and dead code) and gam.fit3.r
 
-* gam.check generates error with some methods
+* add smoothing parameter uncertainty summary for (RE)ML methods
 
 * Need ability for smooth, construct to supress rescaling of 
   penalties, in order to keep variance components meaningful.
@@ -19,6 +19,8 @@ ISSUES TO CLEAR
 * outerPIstep=0 causes failure (with select=TRUE, at least)
 
 * negbin and REML. 
+
+* need to add proper rank deficiency testing
 
 1.5-0
 

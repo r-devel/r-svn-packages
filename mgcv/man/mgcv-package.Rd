@@ -34,7 +34,7 @@ penalized likelihood or quasi-likelihood maximization, with smoothness
 selection by GCV, gAIC/ UBRE or REML. See \code{\link{gam}}, \code{\link{gam.models}}, 
 \code{\link{linear.functional.terms}} and \code{\link{gam.selection}} for some discussion of model specification and
 selection. For detailed control of fitting see \code{\link{gam.convergence}},
-\code{\link{gam.method}} and \code{\link{gam.control}}. For checking and
+\code{\link{gam}} arguments \code{method} and \code{optimizer} and \code{\link{gam.control}}. For checking and
 visualization see \code{\link{gam.check}}, \code{\link{choose.k}}, \code{\link{vis.gam}} and \code{\link{plot.gam}}.
 While a number of types of smoother are built into the package, it is also
 extendable with user defined smooths, see \code{\link{smooth.construct}}, for example.

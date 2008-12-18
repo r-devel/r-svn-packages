@@ -7,7 +7,7 @@ control of the numerical options for fitting a GAM.
 Typically users will want to modify the defaults if model fitting fails to
 converge, or if the warnings are generated which suggest a 
 loss of numerical stability during fitting.  To change the default
-choise of fitting method, see \code{\link{gam.method}}.
+choise of fitting method, see \code{\link{gam} arguments \code{method} and \code{optimizer}}.
 }
 \usage{
 gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
@@ -121,7 +121,7 @@ additive models. J.R.Statist.Soc.B 70(3):495-518.
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{\code{\link{gam.method}}   \code{\link{gam}}, \code{\link{gam.fit}}, \code{\link{glm.control}} }
+\seealso{\code{\link{gam}}, \code{\link{gam.fit}}, \code{\link{glm.control}} }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..
 

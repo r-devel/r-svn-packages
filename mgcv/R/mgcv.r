@@ -793,58 +793,6 @@ formula.gam <- function(x, ...)
 { x$formula
 }
 
-gam.method.description <- function(method,am=TRUE)
-## produces short fitting method description string
-{ 
-  if (method$reml) {
-    if (method$outer=="newton") return("REML based outer iter. - newton, exact hessian.")
-    if (method$outer=="bfgs") return("REML based outer iter. - bfgs exact derivs.") 
-  }
-  if (am) return(method$am)
-  if (method$gam=="perf") return("performance iteration - magic")
-  if (method$gam=="perf.outer") return(paste("perf. iter. magic + outer",method$outer))
-  if (method$gcv=="GACV") {
-    if (method$outer=="newton") return("GACV based outer iter. - newton, exact hessian.")
-    if (method$outer=="bfgs") return("GACV based outer iter. - bfgs exact derivs.") 
-  } else { 
-    if (method$outer=="newton") return("deviance based outer iter. - newton, exact hessian.")
-    if (method$outer=="bfgs") return("deviance based outer iter. - bfgs exact derivs.")
-    if (method$outer=="nlm") return("deviance based outer iter. - nlm exact derivs.")
-    if (method$outer=="optim")  return("deviance based outer iter. - Quasi-Newton exact derivs.")
-    if (method$outer=="nlm.fd") return("deviance based outer iter. - nlm with finite differences.")
-  } 
-}
-
-gam.method <- function(gam="outer",outer="newton",gcv="deviance",reml=FALSE,family=NULL)
-# Function for returning fit method control list for gam.
-# gam controls the type of iteration to use for GAMs.
-# outer controls the optimization method to use when using outer
-# looping with gams.
-# gcv determines the flavour of GCV score for outer iteration
-{ if (gam=="perf.magic") {
-    warning("\"perf.magic\" is deprecated: reset to \"perf\"")
-    gam="perf"
-  }
-  if (sum(gam==c("perf","perf.outer","outer"))==0) 
-  stop("Unknown *generalized* additive model fit method.") 
-  if (sum(outer==c("optim","nlm","newton","bfgs","nlm.fd"))==0) 
-  stop("Unknown GAM outer optimizing method.") 
-  if (sum(gcv==c("deviance","GACV"))==0) stop("Unkwown flavour of GCV")
-  
-  
-  if (reml && !(outer=="newton"||outer=="bfgs")) { 
-    warning("REML only supported with newton/bfgs optimization, optimizer reset")
-    outer <- "newton"
-  }
-  if (gcv=="GACV"&&!(outer=="newton"||outer=="bfgs")) { 
-    warning("GACV only supported with newton/bfgs optimization, GCV type reset")
-    gcv <- "deviance"
-  }
-  
-#  if (!is.null(family)&&substr(family$family,1,17)=="Negative Binomial" 
-#       &&gam!="perf") gam <- "perf"  
-  list(gam=gam,outer=outer,gcv=gcv,reml=reml)
-}
 
 gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,...) {
 ## negative binomial gam fit, using `negbin' family, when some sort of 
@@ -1264,17 +1212,6 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (is.null(G$offset)) G$offset<-rep(0,G$n)
      
-  #  method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
-
-  #  if (scale==0) 
-  #  { if (family$family[1]=="binomial"||family$family[1]=="poisson") scale<-1 #ubre
-  #    else scale <- -1 #gcv
-  #  }
-  
-  #  G$sig2<-scale
-
-  #  G$conv.tol<-control$mgcv.tol      # tolerence for mgcv
-  #  G$max.half<-control$mgcv.half # max step halving in Newton update mgcv
     G$min.edf<-G$nsdf-dim(G$C)[1]
     if (G$m) for (i in 1:G$m) G$min.edf<-G$min.edf+G$smooth[[i]]$null.space.dim
 
@@ -1284,14 +1221,11 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   if (!fit) return(G)
   
-#  method <- gam.method(method$gam,method$outer,method$gcv,method$reml,family) # checking it's ok
   G$conv.tol<-control$mgcv.tol      # tolerence for mgcv
   G$max.half<-control$mgcv.half # max step halving in Newton update mgcv
 
   object <- estimate.gam(G,method,optimizer,control,in.out,scale,gamma,...)
-  
-##  object$full.formula<-as.formula(G$full.formula)
-##  environment(object$full.formula)<-environment(G$formula) 
+
   
   if (!is.null(G$L)) object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
   object$formula<-G$formula
@@ -1308,7 +1242,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$data <- data
   object$df.residual <- nrow(G$X) - sum(object$edf)
   object$min.edf<-G$min.edf
-#  object$fit.method <- gam.method.description(method,G$am)
+  if (G$am&&!(method%in%c("REML","ML","P-ML","P-REML"))) object$optimizer <- "magic" else object$optimizer <- optimizer
   object$call<-G$cl # needed for update() to work
   class(object)<-c("gam","glm","lm")
   object
@@ -1317,35 +1251,24 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
 gam.check <- function(b)
 # takes a fitted gam object and produces some standard diagnostic plots
-{# if (b$fit.method=="mgcv"||b$fit.method=="performance iteration - mgcv")
- # fit.method <- "mgcv" else fit.method <- "other"
-  if (b$method=="GACV"||b$method=="GCV"||b$method=="UBRE"||b$method=="REML")
+{ if (b$method%in%c("GCV","UBRE","REML","ML","P-ML","P-REML"))
   { old.par<-par(mfrow=c(2,2))
     sc.name<-b$method
-#    if (fit.method=="mgcv")
-#    { if (b$mgcv.conv$iter>0)
-#      { plot(b$mgcv.conv$edf,b$mgcv.conv$score,xlab="Estimated Degrees of Freedom",
-#         ylab=paste(sc.name,"Score"),main=paste(sc.name,"w.r.t. model EDF"),type="l")
-#        points(b$nsdf+sum(b$edf),b$gcv.ubre,col=2,pch=20)
-#      }
-#    } else { 
-      qqnorm(residuals(b))
-#   }
+    qqnorm(residuals(b))
     plot(b$linear.predictors,residuals(b),main="Resids vs. linear pred.",
          xlab="linear predictor",ylab="residuals");
     hist(residuals(b),xlab="Residuals",main="Histogram of residuals");
     plot(fitted(b),b$y,xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values")
     
     ## now summarize convergence information 
-    cat("\nfit method:",b$fit.method)
+    cat("\nMethod:",b$method,"  Optimizer:",b$optimizer)
     if (!is.null(b$outer.info)) { ## summarize convergence information
-      if (b$fit.method=="GACV based outer iter. - newton, exact hessian."||
-          b$fit.method=="deviance based outer iter. - newton, exact hessian.")
+      if (b$optimizer[2]%in%c("newton","bfgs"))
       { boi <- b$outer.info
         cat("\n",boi$conv," after ",boi$iter," iteration",sep="")
         if (boi$iter==1) cat(".") else cat("s.")
-        cat("\ngradient range [",min(boi$grad),",",max(boi$grad),"] (score ",b$gcv.ubre,
-            " & scale ",b$sig2,").",sep="")
+        cat("\nGradient range [",min(boi$grad),",",max(boi$grad),"]",sep="")
+        cat("\n(score ",b$gcv.ubre," & scale ",b$sig2,").",sep="")
         ev <- eigen(boi$hess)$values
         if (min(ev)>0) cat("\nHessian positive definite, ") else cat("\n")
         cat("eigenvalue range [",min(ev),",",max(ev),"].\n",sep="")
@@ -1361,28 +1284,16 @@ gam.check <- function(b)
          
         if (!b$mgcv.conv$fully.converged)
         cat(" by steepest\ndescent step failure.\n") else cat(".\n")
-#        if (fit.method=="mgcv")
-#        { if (length(b$smooth)>1&&b$mgcv.conv$iter>0)
-#          { cat("The mean absolute",sc.name,"score gradient at convergence was ",mean(abs(b$mgcv.conv$g)),".\n")
-#            if (sum(b$mgcv.conv$e<0)) 
-#               cat("The Hessian of the",sc.name ,"score at convergence was not positive definite.\n")
-#            else cat("The Hessian of the",sc.name,"score at convergence was positive definite.\n")
-#          }
-#          if (!b$mgcv.conv$init.ok&&(b$mgcv.conv$iter>0)) 
-#              cat("Note: the default second smoothing parameter guess failed.\n")
-#        } else { 
-          cat("The RMS",sc.name,"score gradiant at convergence was",b$mgcv.conv$rms.grad,".\n")
-          if (b$mgcv.conv$hess.pos.def)
-          cat("The Hessian was positive definite.\n") else cat("The Hessian was not positive definite.\n")
-          cat("The estimated model rank was ",b$mgcv.conv$rank,
+        cat("The RMS",sc.name,"score gradiant at convergence was",b$mgcv.conv$rms.grad,".\n")
+        if (b$mgcv.conv$hess.pos.def)
+        cat("The Hessian was positive definite.\n") else cat("The Hessian was not positive definite.\n")
+        cat("The estimated model rank was ",b$mgcv.conv$rank,
                    " (maximum possible: ",b$mgcv.conv$full.rank,")\n",sep="")
- #       }
       }
     }
     cat("\n")
     par(old.par)
-  }
-  else
+  } else ## probably a `gamm' `gam' object
   plot(b$linear.predictor,residuals(b),xlab="linear predictor",ylab="residuals")
 }
 
@@ -1400,7 +1311,7 @@ print.gam<-function (x,...)
     edf[i]<-sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
     cat("\nEstimated degrees of freedom:\n",edf,"  total = ",sum(x$edf),"\n")
   }
-  if (is.null(x$fit.method)&&!is.null(x$method))  
+  if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  
   cat("\n",x$method," score: ",x$gcv.ubre,"\n",sep="")
   invisible(x)
 }
@@ -2774,7 +2685,6 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   nobs <- nrow(object$model)
   r.sq<- 1 - var(w*(object$y-object$fitted.values))*(nobs-1)/(var(w*object$y)*residual.df) 
   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
-  if (!is.null(object$fit.method)) object$method <- NULL ## it's from gamm 
   ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
        s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
        dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
@@ -2803,7 +2713,8 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5))
   if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
   
-  if (!is.null(x$method)) cat(x$method," score = ",formatC(x$sp.criterion,digits=5),sep="")
+  if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  
+    cat(x$method," score = ",formatC(x$sp.criterion,digits=5),sep="")
  
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
   invisible(x)
