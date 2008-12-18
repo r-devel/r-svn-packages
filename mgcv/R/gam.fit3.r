@@ -1272,7 +1272,8 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
 
   if (!is.null(lsp.max)) { ## need to transform to delta space
     rho <- rt(delta,lsp1.max)
-    hess <- diag(rho$rho1)%*%hess%*%diag(rho$rho1) + diag(rho$rho2*grad)
+    nr <- length(rho$rho1)
+    hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
     grad <- rho$rho1*grad
   }
 
@@ -1357,7 +1358,8 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
       if (!is.null(lsp.max)) { ## need to transform to delta space
         delta <- delta1
         rho <- rt(delta,lsp1.max)
-        hess <- diag(rho$rho1)%*%hess%*%diag(rho$rho1) + diag(rho$rho2*grad)
+        nr <- length(rho$rho1)
+        hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
         grad <- rho$rho1*grad
       }
 
@@ -1407,7 +1409,8 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
           if (!is.null(lsp.max)) { ## need to transform to delta space
              delta <- delta1
              rho <- rt(delta,lsp1.max)
-             hess <- diag(rho$rho1)%*%hess%*%diag(rho$rho1) + diag(rho$rho2*grad)
+             nr <- length(rho$rho1)
+             hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
              grad <- rho$rho1*grad
           }
           
