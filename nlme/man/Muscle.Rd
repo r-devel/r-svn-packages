@@ -24,8 +24,8 @@
 }
 \details{
     Baumann and Waldvogel (1963) describe data on the shortening of heart
-    muscle strips dipped in a CaCl$_2$ solution.  The muscle strips are
-    taken from the left auricle of a rat's heart.}
+    muscle strips dipped in a \eqn{\mbox{CaCl}{}_2}{CaCl_2} solution.
+    The muscle strips are taken from the left auricle of a rat's heart.}
 \source{
     Baumann, F. and Waldvogel, F. (1963), La restitution pastsystolique
     de la contraction de l'oreillette gauche du rat. Effets de divers
