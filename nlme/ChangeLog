@@ -1,6 +1,6 @@
 2008-12-19  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* man/*.Rd: clean up some reference formats
+	* man/*.Rd: clean up some reference formats and misuse of $...$.
 
 2008-06-07  Brian Ripley <Brian.Ripley@R-project.org>
 
