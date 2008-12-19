@@ -1,7 +1,8 @@
-2008-12-15 Brian Ripley <Brian.Ripley@R-project.org>
+2008-12-19 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-30.
 	* R/*.R: more code cleanup.
+	* man/read.ssd.R, man/read.xport.Rd: correct \email format
 
 2008-12-15 Brian Ripley <Brian.Ripley@R-project.org>
 
