@@ -6,12 +6,12 @@ ISSUES TO CLEAR
 
 * outerPIstep=0 causes failure (with select=TRUE, at least)
 
-* negbin and REML. 
-
 * Need ability for smooth construct to supress rescaling of 
   penalties, in order to keep variance components meaningful.
 
-* add smoothing parameter uncertainty summary for (RE)ML methods
+* valgrind check for leaks
+
+* Add more on REML to the help files.
 
 * Need to clean gdi.c (of C++ comments and dead code) and gam.fit3.r
 
@@ -25,12 +25,12 @@ ISSUES TO CLEAR
 
 1.5-0
 
-** Efficient and general REML/ML smoothing selection implemented. 
+*** Efficient and general REML/ML smoothing selection implemented. 
    Smoothness selection criterion and numerical optimizer are now
    selected using arguments `method' and `optimizer' of `gam', and 
    `gam.method' has been removed.
 
-** To further enhance stability and efficiency, Fisher scoring is now 
+*** To further enhance stability and efficiency, Fisher scoring is now 
    only used for canonical links, when it corresponds to full Newton. 
    With non-canonical links PIRLS is based on full Newton. In addition all 
    computations are now with derivative ratios to guard against 
@@ -46,19 +46,26 @@ ISSUES TO CLEAR
 * The `newton' optimizer places upper limits on smoothing parameters 
   for all (RE)ML smoothing parameter estimation, to enhance stability. 
 
-* ad class greatly simplified and 2D penalty improved. Much faster as a 
-  result, and 2D adaptive actually quite good.
+* The adaptive smoothing "ad" class has been greatly simplified and 2D 
+  penalty improved. Much faster as a result, and 2D adaptive actually 
+  quite good.
 
 * s and te check that `id' is a single element.
 
 * By default partial residuals are no longer plotted for smooths with 
   `by' variables since they are usually meaningless here (they can 
   be re-instated by argument `by.resids').
-  
 
+* vcov.gam defaults to Bayesian covariance matrix.
+  
 * plot.gam modified so that page change behaviour is like plot.glm 
 
 * Tweedie family added.
+
+* negbin family upgraded to work with (RE)ML.
+
+* `sp.vcov' function added to extract covariance matrix of log 
+  smoothing parameters from (RE)ML based fits.
 
 * `power' links now handled by default fitting methods (i.e. gam.fit3)
 
@@ -66,7 +73,7 @@ ISSUES TO CLEAR
    `w' argument (unless `w' is a matrix).
 
 * p-values tweaked again, for slightly better performance with smooths of 
-several variables. Still not quite right.
+  several variables. Still not quite right.
 
 * record of intial sp's is now carried in `smooth' objects in field 
 `sp'.

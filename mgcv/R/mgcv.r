@@ -802,6 +802,10 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
 ## to be an array giving a discrete set of theta values over which to optimize
 ## by exhaustive search. Note that AIC is used as the criterion, since the 
 ## deviance depends on theta, UBRE is not proportional to AIC if theta is varied.
+ 
+  if (method%in%c("ML","REML","P-REML","P-ML")) { use.aic <- FALSE;scoreType=method } 
+                                           else { use.aic <- TRUE;scoreType="UBRE"}
+
   theta <- family$getTheta()
   link <- family$link
   if (length(theta)==2&&(theta[2]>theta[1])) { ## perform interval search
@@ -820,19 +824,21 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
   for (i in 1:n.th) { ## search through theta values
     family <- fix.family.link(negbin(theta=exp(l.theta[i]),link=link))
     if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...)  
-    aic <- b$object$aic + 2*b$object$trA
-    if (i==1 || aic<best.score) {
-      best.score <- aic
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...)  
+    if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
+    else score <- b$score ## (P-)(RE)ML
+    if (i==1 || score<best.score) {
+      best.score <- score
       b.est <- b
       ib <- i
     }
@@ -854,18 +860,19 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
     for (lt in c(lt.1tau,lt.tau))
     { family <- fix.family.link(negbin(theta=exp(lt),link=link))
       if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
-                  family=family,weights=G$w,
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else 
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
-                  family=family,weights=G$w,
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...) else 
+      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...)   
-      aic <- b$object$aic + 2*b$object$trA 
-      if (lt==lt.tau) f.tau <-aic else f.1tau <- aic
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...)   
+      if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
+      else score <- b$score 
+      if (lt==lt.tau) f.tau <- score else f.1tau <- score
     }
     lsp <- b$lsp 
     mustart <- b$object$fitted.values
@@ -885,18 +892,19 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
      
       family <- fix.family.link(negbin(theta=exp(lt.new),link=link))
        if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
-                  family=family,weights=G$w,
+                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...) else
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
-                  family=family,weights=G$w,
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...) else
+      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType="UBRE",use.svd=control$newton$use.svd,mustart=mustart,...)   
-      aic <- b$object$aic + 2*b$object$trA  
-      if (f.tau.update) f.tau <- aic else f.1tau <- aic
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...)  
+      if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
+      else score <- b$score       
+      if (f.tau.update) f.tau <- score else f.1tau <- score
     }
     b.est <- b
   }
@@ -909,6 +917,10 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
   object$gcv.ubre <- as.numeric(b.est$score)
   object
 }
+
+
+
+
 
 gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
@@ -947,7 +959,6 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
       warning("only outer methods `newton' & `bfgs' supports `negbin' family and theta selection: reset")
       optimizer[2] <- "newton"
     } 
-    if (reml) warning("REML not supported with negative binomial, using AIC")
     object <- gam.negbin(lsp,fscale,family,control,method,optimizer,gamma,G,...)
     ## make sure criterion gets set to UBRE
   } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method -- not negbin
@@ -962,6 +973,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                 printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)                
                 
     object <- b$object
+    object$REML <- object$REML1 <- object$REML2 <-
     object$GACV <- object$D2 <- object$P2 <- object$UBRE2 <- object$trA2 <- 
     object$GACV1 <- object$GACV2 <- object$GCV2 <- object$D1 <- object$P1 <- NULL
     object$sp <- as.numeric(exp(b$lsp))
@@ -1065,14 +1077,24 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   }
 
- 
+  if (substr(G$family$family[1],1,17)=="Negative Binomial") { 
+    scale <- 1; ## no choise
+    if (method%in%c("GCV.Cp","GACV.Cp")) criterion <- "UBRE"
+  }
+  ## Reset P-ML or P-REML in known scale parameter cases
+  if (scale>0) {
+    if (method=="P-ML") criterion <- method <- "ML" else 
+    if (method=="P-REML")  criterion <- method <- "REML"
+  } 
+
+
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
   family <- G$family  
   if (outer.looping && optimizer[1]=="outer") { 
     fixedSteps <- control$outerPIsteps      ## how many performance iteration steps to use for initialization
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
-      G$sig2 <- 1 
+      scale <- G$sig2 <- 1
       G$family <- negbin(max(family$getTheta()),link=family$link)
     }
   } else fixedSteps <- control$maxit+2
@@ -1251,7 +1273,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
 gam.check <- function(b)
 # takes a fitted gam object and produces some standard diagnostic plots
-{ if (b$method%in%c("GCV","UBRE","REML","ML","P-ML","P-REML"))
+{ if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))
   { old.par<-par(mfrow=c(2,2))
     sc.name<-b$method
     qqnorm(residuals(b))
@@ -2776,7 +2798,16 @@ cooks.distance.gam <- function(model,...)
   (res/(1 - hat))^2 * hat/(dispersion * p)
 }
 
-vcov.gam <- function(object, freq = TRUE, dispersion = NULL, ...)
+
+sp.vcov <- function(x) {
+## get cov matrix of smoothing parameters, if available
+  if (!inherits(x,"gam")) stop("argument is not a gam object")
+  if (x$method%in%c("ML","P-ML","REML","P-REML")&&!is.null(x$outer.info$hess)) {
+    return(solve(x$outer.info$hess))
+  } else return(NULL)
+}
+
+vcov.gam <- function(object, freq = FALSE, dispersion = NULL, ...)
 ## supplied by Henric Nilsson <henric.nilsson@statisticon.se> 
 { if (freq)
     vc <- object$Ve

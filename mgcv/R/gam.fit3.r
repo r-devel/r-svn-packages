@@ -1981,17 +1981,25 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
             lgamma(Theta + y)
         2 * sum(term * wt)
     }
+    ls <- function(y,w,n,scale) {
+       Theta <- get(".Theta")
+       ylogy <- y;ind <- y>0;ylogy[ind] <- y[ind]*log(y[ind])
+       term <- (y + Theta) * log(y + Theta) - ylogy +
+            lgamma(y + 1) - Theta * log(Theta) + lgamma(Theta) -
+            lgamma(Theta + y)
+       c(-sum(term*w),0,0)
+    }
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the negative binomial family")
         n <- rep(1, nobs)
         mustart <- y + (y == 0)/6
     })
     environment(dvar) <- environment(d2var) <- environment(variance) <- environment(validmu) <- 
-                         environment(dev.resids) <- environment(aic) <- environment(getTheta) <- env
+    environment(ls) <- environment(dev.resids) <- environment(aic) <- environment(getTheta) <- env
     famname <- paste("Negative Binomial(", format(round(theta,3)), ")", sep = "")
     structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var,d3var=d3var, dev.resids = dev.resids,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
         validmu = validmu, valideta = stats$valideta,getTheta = getTheta,canonical="log"), class = "family")
 }
 

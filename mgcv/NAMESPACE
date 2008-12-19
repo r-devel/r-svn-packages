@@ -38,7 +38,7 @@ anova.gam,coef.pdIdnot,coef.pdTens,
        smooth.construct.ps.smooth.spec,
        smooth.construct.ad.smooth.spec,
        summary.gam,
-      solve.pdIdnot,
+      solve.pdIdnot,sp.vcov,
        summary.pdIdnot,summary.pdTens,te,
        tensor.prod.model.matrix,tensor.prod.penalties,
        Tweedie,uniquecombs, vcov.gam, vis.gam)
