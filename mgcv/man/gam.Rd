@@ -355,11 +355,11 @@ b<-gam(G=G)
 print(b)
 
 ## change the smoothness selection method to REML
-b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="REML")
+b0<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="REML")
 plot(b,pages=1)
 
 ## ... and do automatic terms selection as well
-b<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,
+b1<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,
        method="REML",select=TRUE)
 plot(b,pages=1)
 
@@ -370,10 +370,17 @@ plot(bp,pages=1)
 ## alternatively...
 bp <- gam(y~s(x0,sp=.01)+s(x1)+s(x2)+s(x3),data=dat)
 
+
 # set lower bounds on smoothing parameters ....
 bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),
         min.sp=c(0.001,0.01,0,10),data=dat) 
 print(b);print(bp)
+
+# same with REML
+bp<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),
+        min.sp=c(0.1,0.1,0,10),data=dat,method="REML") 
+print(b0);print(bp)
+
 
 ## now a GAM with 3df regression spline term & 2 penalized terms
 b0<-gam(y~s(x0,k=4,fx=TRUE,bs="tp")+s(x1,k=12)+s(x2,k=15),data=dat)

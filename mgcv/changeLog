@@ -3,11 +3,12 @@
 
 ISSUES TO CLEAR
 
-
 * outerPIstep=0 causes failure (with select=TRUE, at least)
 
 * Need ability for smooth construct to supress rescaling of 
   penalties, in order to keep variance components meaningful.
+
+* double check  REML/ML and quasi.
 
 * valgrind check for leaks
 

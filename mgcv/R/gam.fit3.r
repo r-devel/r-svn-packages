@@ -829,7 +829,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Mp=as.integer(Mp),Encol = as.integer(ncol(Sr)),
-           rSncol=as.integer(unlist(lapply(rS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
+           rSncol=as.integer(unlist(lapply(UrS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
            REML = as.integer(REML),fisher=as.integer(fisher),fixed.penalty = as.integer(!is.null(H)))      
        
          if (control$trace) cat("done!\n")
