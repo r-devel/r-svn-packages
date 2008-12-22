@@ -1341,7 +1341,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   ## but to do otherwise would mess up the meaning of smoothing parameters
   ## sufficiently that linking terms via `id's would not work properly (they 
   ## would have the same basis, but different penalties)
-  if (scale.penalty && length(sm$S)>0) # then the penalty coefficient matrix is rescaled
+  if (scale.penalty && length(sm$S)>0 && is.null(sm$no.rescale)) # then the penalty coefficient matrix is rescaled
   {  maXX <- mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
       for (i in 1:length(sm$S)) {
         maS <- mean(abs(sm$S[[i]]))
