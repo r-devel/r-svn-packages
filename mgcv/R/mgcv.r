@@ -3210,7 +3210,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
       while (mean(ldxx/(ldxx+ldss))<.4) { def.sp <- def.sp/10;ldss <- ldss/10 }
     }
   } 
-  def.sp
+  as.numeric(def.sp)
 }
 
 

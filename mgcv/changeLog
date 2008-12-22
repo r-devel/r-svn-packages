@@ -3,10 +3,11 @@
 
 ISSUES TO CLEAR
 
-* outerPIstep=0 causes failure (with select=TRUE, at least)
+* Ch6 Sole example is very smooth when REML estimated ---
+  check sanity of fit.
 
-* Need ability for smooth construct to supress rescaling of 
-  penalties, in order to keep variance components meaningful.
+* All sp fixed and GACV/REML etc.... Also can a fixed value for 
+  log(scale) be provided with REML?
 
 * double check  REML/ML and quasi.
 

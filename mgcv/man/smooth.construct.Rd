@@ -108,6 +108,11 @@ sum to zero over the covariate values. Set to a zero row matrix if no
 constraints are required. Note that a supplied \code{C} is never ignored, even if any
 \code{by} variables of a smooth imply that no constraint is actually needed. }
 
+\item{no.rescale}{if this is non-NULL then the penalty coefficient matrix of the smooth will not be 
+rescaled for enhaced numerical stability (rescaling is the default, because \code{\link{gamm}} requires it). 
+Turning off rescaling is useful if the values of the smoothing parameters should be interpretable in a model, 
+for example because they are inverse variance components.  }
+
 \item{df}{the degrees of freedom associated with this term (when
 unpenalized and unconstrained). If this is null then \code{smoothCon} will set it to the basis 
 dimension. \code{smoothCon} will reduce this by the number of constraints.}

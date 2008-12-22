@@ -821,6 +821,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
        if (scoreType%in%c("REML","P-REML")) REML <- 1 else 
        if (scoreType%in%c("ML","P-ML")) REML <- -1 
 
+       if (REML==0) rSncol <- unlist(lapply(rS,ncol)) else rSncol <- unlist(lapply(UrS,ncol))
+
        oo <- .C(C_gdi,X=as.double(x[good,]),E=as.double(Sr),rS = as.double(unlist(rS)),UrS = as.double(unlist(UrS)),U1=as.double(U1),
            sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
@@ -829,7 +831,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
            trA1=as.double(trA1),trA2=as.double(trA2),rV=as.double(rV),rank.tol=as.double(.Machine$double.eps*100),
            conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
            p=as.integer(ncol(x)),M=as.integer(nSp),Mp=as.integer(Mp),Encol = as.integer(ncol(Sr)),
-           rSncol=as.integer(unlist(lapply(UrS,ncol))),deriv=as.integer(deriv),use.svd=as.integer(use.svd),
+           rSncol=rSncol,deriv=as.integer(deriv),use.svd=as.integer(use.svd),
            REML = as.integer(REML),fisher=as.integer(fisher),fixed.penalty = as.integer(!is.null(H)))      
        
          if (control$trace) cat("done!\n")
@@ -2067,15 +2069,20 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
   if (p<1||p>2) stop("p must be in [1,2]")
   ld <- cbind(y,y,y)
-  if (p == 2) {
+  if (p == 2) { ## It's Gamma
     ld[,1] <- dgamma(y, shape = 1/phi,rate = 1/(phi * mu),log=TRUE)
     ld[,2] <- (digamma(1/phi) + log(phi) - 1 + y/mu - log(y/mu))/(phi*phi)
     ld[,3] <- -2*ld[,2]/phi + (1-trigamma(1/phi)/phi)/(phi^3)
     return(ld)
   }  
-  if (p == 1) {
+
+  if (length(mu)==1) mu <- rep(mu,length(y))
+
+  if (p == 1) { ## It's Poisson like
     ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
-    bkt <- (y*log(mu/phi) - mu)
+    ind <- (y!=0)|(mu!=0) ## take care to deal with y log(mu) when y=mu=0
+    bkt <- y*0
+    bkt[ind] <- (y[ind]*log(mu[ind]/phi) - mu[ind])
     dig <- digamma(y/phi+1)
     trig <- trigamma(y/phi+1)
     ld[,1] <- bkt/phi - lgamma(y/phi+1)
@@ -2083,9 +2090,10 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
     ld[,3] <- (2*bkt + 3*y - 2*dig*y - trig *y*y/phi)/(phi^3)
     return(ld) 
   }
+
   ## .. otherwise need the full series thing....
   ## first deal with the zeros  
-  if (length(mu)==1) mu <- rep(mu,length(y))
+  
   ind <- y==0
  
   ld[ind,1] <- -mu[ind]^(2-p)/(phi*(2-p))
