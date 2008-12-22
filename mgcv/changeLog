@@ -4,7 +4,8 @@
 ISSUES TO CLEAR
 
 * Ch6 Sole example is very smooth when REML estimated ---
-  check sanity of fit.
+  check sanity of fit. --- Tweedie error, but quasi/GCV now produces 
+  NaNs....
 
 * All sp fixed and GACV/REML etc.... Also can a fixed value for 
   log(scale) be provided with REML?

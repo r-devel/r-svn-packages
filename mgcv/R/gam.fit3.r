@@ -2070,6 +2070,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   if (p<1||p>2) stop("p must be in [1,2]")
   ld <- cbind(y,y,y)
   if (p == 2) { ## It's Gamma
+    if (sum(y<=0)) stop("y must be strictly positive for a Gamma density")
     ld[,1] <- dgamma(y, shape = 1/phi,rate = 1/(phi * mu),log=TRUE)
     ld[,2] <- (digamma(1/phi) + log(phi) - 1 + y/mu - log(y/mu))/(phi*phi)
     ld[,3] <- -2*ld[,2]/phi + (1-trigamma(1/phi)/phi)/(phi^3)
@@ -2080,6 +2081,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
 
   if (p == 1) { ## It's Poisson like
     ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
+    if (sum(!is.integer(y/phi))) stop("y must be an integer multiple of phi for Tweedie(p=1)")
     ind <- (y!=0)|(mu!=0) ## take care to deal with y log(mu) when y=mu=0
     bkt <- y*0
     bkt[ind] <- (y[ind]*log(mu[ind]/phi) - mu[ind])
@@ -2130,7 +2132,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
 
 Tweedie <- function(p=1,link=power(0)) {
 ## a restricted Tweedie family
-  if (p<1||p>2) stop("`p' can not be less than 1 or greater than 2")
+  if (p<=1||p>2) stop("Only 1<p<=2 supported")
   
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)

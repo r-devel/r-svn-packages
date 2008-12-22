@@ -12,7 +12,7 @@ Tweedie(p=1, link = power(0))
 }
 \arguments{
 \item{p}{the variance of an observation is proportional to its mean to the power \code{p}. \code{p} must
-lie between 1 and 2, inclusive. 1 is Poisson like (but with a free scale parameter), 2 is gamma. }
+be greater than 1 and less than or equal to 2. 1 would be Poisson, 2 is gamma. }
 
 \item{link}{The link function: one of \code{"log"}, \code{"identity"}, \code{"inverse"}, \code{"sqrt"}, or a 
 \code{\link{power}} link.}
@@ -27,8 +27,11 @@ w.r.t. the scale parameter.}
 }
 
 \details{ A Tweedie random variable with 1<p<2 is a sum of \code{N} gamma random variables 
-where \code{N} has a Poisson distribution. The p=1 case is a generalization of a Poisson distribution,
-while p=2 is a gamma. The random variables have support on the positive reals, with a mass at zero.
+where \code{N} has a Poisson distribution. The p=1 case is a generalization of a Poisson distribution and is a discrete 
+distribution supported on integer multiples of the scale parameter. For 1<p<2 the distribution is supported on the 
+positive reals with a point mass at zero. p=2 is a gamma distribution. As p gets very close to 1 the continuous 
+distribution begins to converge on the discretely supported limit at p=1, and is therefore highly multimodal. 
+See \code{\link{ldTweedie}} for more on this behaviour.
 
 \code{Tweedie} is based partly on the \code{\link{poisson}} family, and partly on \code{tweedie} from the 
 \code{statmod} package. It includes extra components to work with all \code{mgcv} GAM fitting methods as well as 
@@ -57,6 +60,7 @@ Tweedie, M. C. K. (1984). An index which distinguishes between
      Roy), pp. 579-604. Calcutta: Indian Statistical Institute.
 }
 
+\seealso{\code{\link{ldTweedie}}}
 
 \examples{
 library(mgcv)
