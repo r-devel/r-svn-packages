@@ -46,8 +46,8 @@
   \item{logLik}{the log-likelihood at convergence.}
   \item{numIter}{the number of iterations used in the iterative
     algorithm.}
-  \item{plist}{ }
-  \item{pmap}{ }
+  \item{plist}{}
+  \item{pmap}{}
   \item{residuals}{a vector with the residuals.} 
   \item{sigma}{the estimated residual standard error.}
   \item{varBeta}{an approximate covariance matrix of the
