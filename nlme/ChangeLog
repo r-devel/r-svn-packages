@@ -1,5 +1,6 @@
 2008-12-27  Brian Ripley <Brian.Ripley@R-project.org>
 
+	* DESCRIPTION (Version, Date): 3.1-90
 	* R/gls.R: call dist correctly (PR#13418)
 
 2008-12-19  Brian Ripley <Brian.Ripley@R-project.org>
