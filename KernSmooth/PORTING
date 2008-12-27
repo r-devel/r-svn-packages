@@ -115,3 +115,8 @@ Version 2.22-22
 
 Add a few more details to the help files.
 
+
+Version 2.22-23
+===============
+
+Use integer constants.
