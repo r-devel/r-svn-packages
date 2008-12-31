@@ -1,7 +1,7 @@
-version 1.2-35 ????-??-??
+version 1.2-35 2009-01-01
 
     make use of integer constants
-    spelling corrections, formats for references, 'the the'.
+    spelling corrections, formats for references, 'the the', Rd markup
 	
 version 1.2-34 2008-09-05
 
