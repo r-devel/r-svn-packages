@@ -7,6 +7,7 @@ the \code{\link{negbin}} family (a modification of MASS library \code{negative.b
 by Venables and Ripley), with or without a known \eqn{\theta}{theta} parameter. 
 Two approaches to estimating the \code{theta} parameter are available:
 
+\itemize{
 \item If `performance iteration' is used for smoothing parameter estimation 
 (see \code{\link{gam}}), then smoothing parameters are chosen by GCV and 
 \code{theta} is chosen in order to ensure that the Pearson estimate of the scale 
@@ -17,7 +18,7 @@ are chosen by UBRE/AIC (with scale parameter set to 1) then a value of \code{the
 searched for which minimizes the AIC of the model. Alternatively If (RE)ML is used for smoothing 
 parameter estimation then a value of \code{theta} is searched for which maximizes the (restricted) 
 likelihood. 
-
+}
 The second option is much slower than the first, but the first can sometimes fail to converge. 
 To use the first option, set the \code{optimizer} argument of \code{\link{gam}} to \code{"perf"}.
 }

@@ -8,9 +8,8 @@
 \title{Penalized Cubic regression splines in GAMs}
 
 \description{\code{\link{gam}} can use univariate penalized cubic regression spline smooths, specified via terms like
-\code{s(x,bs="cr")}. \code{s(x,bs="cs")} specifies a penalized cubic regression spline in which a small ridge 
-penalty has been added to the cubic spline penalty, in order to allow the term to be shrunk  to zero if the 
-smoothing parameter is high enough (as the smoothing parameter goes to infinity a normal cubic spline tends to a 
+\code{s(x,bs="cr")}. \code{s(x,bs="cs")} specifies a penalized cubic regression spline which has had its penalty modified 
+to shrink towards zero at high enough smoothing parameters (as the smoothing parameter goes to infinity a normal cubic spline tends to a 
 straight line.) \code{s(x,bs="cc")} specifies a cyclic penalized cubic regression spline smooth.
 
 `Cardinal' spline bases are used: Wood (2006) sections 4.1.2 and 4.1.3 gives full details. These bases have 
@@ -60,6 +59,11 @@ If they are not supplied then the knots  of the spline are placed evenly
      is a natural cubic  spline through the values at the knots (given two extra conditions specifying 
      that the second derivative of the curve should be zero at the two end 
      knots).
+
+The shrinkage version of the smooth, eigen-decomposes the wiggliness penalty matrix, and sets its 2 zero eigenvalues to small 
+multiples of the smallest strictly positive eigenvalue. The penalty is then set to the matrix with eigenvectors corresponding 
+to those of the original penalty, but eigenvalues set to the peturbed versions. This penalty matrix has full rank and shrinks 
+the curve to zero at high enough smoothing parameters.
 
 Note that the cyclic smoother will wrap at the smallest and largest covariate values, unless knots are supplied, and 
 is not subject to the condition that second derivatives go to zero at the first and last knots.

@@ -604,7 +604,14 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
     
         boundary <- conv <- FALSE
         rV=matrix(0,ncol(x),ncol(x))   
-        old.pdev <- 0     
+       
+        ## need an initial `null deviance' to test for initial divergence... 
+        null.coef <- qr.coef(qr(x),family$linkfun(mean(y)+0*y))
+        null.coef[is.na(null.coef)] <- 0 
+        null.eta <- x%*%null.coef + offset
+        old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights)) + t(null.coef)%*%St%*%null.coef 
+        ## ... if the deviance exceeds this then there is an immediate problem
+            
         for (iter in 1:control$maxit) { ## start of main fitting iteration
             good <- weights > 0
             varmu <- variance(mu)[good]
@@ -716,8 +723,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             ## ... threshold for judging divergence --- too tight and near
             ## perfect convergence can cause a failure here
 
-            if (iter>1&&(pdev-old.pdev>div.thresh)) { ## solution diverging
+            if (pdev-old.pdev>div.thresh) { ## solution diverging
              ii <- 1 ## step halving counter
+             if (iter==1) { ## immediate divergence, need to shrink towards zero 
+               etaold <- null.eta; coefold <- null.coef
+             }
              while (pdev -old.pdev > div.thresh)  
              { ## step halve until pdev <= old.pdev
                 if (ii > 200) 

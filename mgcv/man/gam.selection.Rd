@@ -67,6 +67,15 @@ for a term tend to infinity, the term will be selected out of the model. This la
 is more expensive computationally, but has the advantage that it can be applied automatically 
 to any smooth term. The \code{select} argument to \code{\link{gam}} turns on this method.
 
+In fact, as implemented, both approaches operate by eigen-decomposiong the original penalty matrix. 
+A new penalty is created on the null space: it is the matrix with the same eigenvectors as the
+original penalty, but with the originally postive egienvalues set to zero, and the originally 
+zero eigenvalues set to something positive. The first approach just addes a multiple of this 
+penalty to the original penalty, where the multiple is chosen so that the new penalty can not 
+dominate the original. The second approach treats the new penalty as an extra penalty, with its 
+own smoothing parameter. 
+
+
 Of course, as with all model selection methods, some care must be take to ensure that the 
 automatic selection is sensible, and a decision about the effective degrees of freedom at 
 which to declare a term `negligible' has to be made. 

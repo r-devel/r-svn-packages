@@ -497,8 +497,18 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   { object$S[[1]]<-matrix(oo$S,k,k)         # penalty matrix
     object$S[[1]]<-(object$S[[1]]+t(object$S[[1]]))/2 # ensure exact symmetry
     if (!is.null(shrink)) # then add shrinkage term to penalty 
-    { norm <- mean(object$S[[1]]^2)^0.5
-      object$S[[1]] <- object$S[[1]] + diag(k)*norm*abs(shrink)
+    { ## pre- 1.5 code the identity term could dominate the small eigenvales
+      ## and really mess up the penalty...
+      ## norm <- mean(object$S[[1]]^2)^0.5
+      ## object$S[[1]] <- object$S[[1]] + diag(k)*norm*abs(shrink)
+      
+      ## Modify the penalty by increasing the penalty on the 
+      ## unpenalized space from zero... 
+      es <- eigen(object$S[[1]],symmetric=TRUE)
+      ## now add a penalty on the penalty null space
+      es$values[(k-M+1):k] <- es$values[k-M]*shrink 
+      ## ... so penalty on null space is still less than that on range space.
+      object$S[[1]] <- es$vectors%*%(as.numeric(es$values)*t(es$vectors))
     }
   }
   UZ.len <- (oo$n.Xu+M)*k
@@ -520,7 +530,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
 smooth.construct.ts.smooth.spec<-function(object,data,knots)
 # implements a class of tprs like smooths with an additional shrinkage
 # term in the penalty... this allows for fully integrated GCV model selection
-{ attr(object,"shrink") <- 1e-4
+{ attr(object,"shrink") <- 1e-2
   object <- smooth.construct.tp.smooth.spec(object,data,knots)
   class(object) <- "ts.smooth"
   object
@@ -605,12 +615,24 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
   { object$S[[1]] <- matrix(oo[[6]],nk,nk)
     object$S[[1]]<-(object$S[[1]]+t(object$S[[1]]))/2 # ensure exact symmetry
     if (!is.null(shrink)) # then add shrinkage term to penalty 
-    { norm <- mean(object$S[[1]]^2)^0.5
-      object$S[[1]] <- object$S[[1]] + diag(nk)*norm*abs(shrink)
+    { ## Following is pre-1.5 code. Approach was not general enough
+      ## as identity term could dominate the small eigenvalues
+      ## and really ness up the penalty
+      ## norm <- mean(object$S[[1]]^2)^0.5
+      ## object$S[[1]] <- object$S[[1]] + diag(nk)*norm*abs(shrink)
+      
+      ## Modify the penalty by increasing the penalty on the 
+      ## unpenalized space from zero... 
+      es <- eigen(object$S[[1]],symmetric=TRUE)
+      ## now add a penalty on the penalty null space
+      es$values[nk-1] <- es$values[nk-2]*shrink 
+      es$values[nk] <- es$values[nk-1]*shrink
+      ## ... so penalty on null space is still less than that on range space.
+      object$S[[1]] <- es$vectors%*%(as.numeric(es$values)*t(es$vectors))
     }
   }
   if (is.null(shrink)) { 
-  object$rank<-nk-2 
+    object$rank <- nk-2 
   } else object$rank <- nk   # penalty rank
 
   object$df<-object$bs.dim # degrees of freedom,  unconstrained and unpenalized
@@ -623,7 +645,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
 smooth.construct.cs.smooth.spec<-function(object,data,knots)
 # implements a class of cr like smooths with an additional shrinkage
 # term in the penalty... this allows for fully integrated GCV model selection
-{ attr(object,"shrink") <- 1e-4
+{ attr(object,"shrink") <- .01
   object <- smooth.construct.cr.smooth.spec(object,data,knots)
   class(object) <- "cs.smooth"
   object

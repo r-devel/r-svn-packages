@@ -424,11 +424,11 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   k <- 0
   tind <- unique(assign) ## unique term indices
   n.t <- length(tind)
-  if (n.t>0) for (i in 1:n.t) if (tind[i]>0) {
-    term.label <- attr(pterms[tind[i]],"term.label")
+  if (n.t>0) for (j in 1:n.t) if (tind[j]>0) {
+    term.label <- attr(pterms[tind[j]],"term.label")
     P <- paraPen[[term.label]] ## get any penalty information for this term
     if (!is.null(P)) { ## then there is information
-      ind <- (1:length(assign))[assign==tind[i]] ## index of coefs involved here
+      ind <- (1:length(assign))[assign==tind[j]] ## index of coefs involved here
       Li <- P$L;P$L <- NULL
       spi <- P$sp;P$sp <- NULL
       ranki <- P$rank;P$rank <- NULL
@@ -452,12 +452,16 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
         if (nrow(Li)!=np) stop("L has wrong dimension in `paraPen'")
         L <- rbind(cbind(L,matrix(0,nrow(L),ncol(Li))),
                    cbind(matrix(0,nrow(Li),ncol(L)),Li))
+        ind <- (length(sp)+1):(length(sp)+ncol(Li))
         if (is.null(spi)) {
-          sp[(length(sp)+1):(length(sp)+ncol(Li))] <- -1 ## auto-initialize
+          sp[ind] <- -1 ## auto-initialize
         } else {
           if (length(spi)!=ncol(Li)) stop("`sp' dimension wrong in `paraPen'")
-          sp[(length(sp)+1):(length(sp)+ncol(Li))] <- spi
+          sp[ind] <- spi
         }
+        ## add smoothing parameter names....
+        if (length(ind)>1) names(sp)[ind] <- paste(term.label,ind-ind[1]+1,sep="") 
+        else names(sp)[ind] <- term.label
       }
     } ## end !is.null(P)  
   } ## looped through all terms
@@ -508,7 +512,14 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   ## now deal with any user supplied penalties on the parametric part of the model...
   PP <- parametricPenalty(pterms,G$assign,paraPen,sp)
-  if (!is.null(PP)&&!is.null(sp)) sp <- sp[-(1:length(PP$sp))] ## strip out supplied sps already used
+  if (!is.null(PP)) { ## strip out supplied sps already used
+    ind <- 1:length(PP$sp)
+    if (!is.null(sp)) sp <- sp[-ind]
+    if (!is.null(min.sp)) { 
+      PP$min.sp <- min.sp[ind]
+      min.sp <- min.sp[-ind]
+    } 
+  }
     
 ##  if (parametric.only) { G$X<-X;return(G)}
   
@@ -577,10 +588,12 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   ## worked out...
   idx <- list() ## idx[[id]]$c contains index of first col in L relating to id
   L <- matrix(0,0,0)
+  sp.names <- rep("",0) ## need a list of names to identify sps in global sp array
   if (m>0) for (i in 1:m) {
     id <- sm[[i]]$id
     ## get the L matrix for this smooth...
-    if (is.null(sm[[i]]$L)) Li <- diag(length(sm[[i]]$S)) else Li <- sm[[i]]$L 
+    length.S <- length(sm[[i]]$S)
+    if (is.null(sm[[i]]$L)) Li <- diag(length.S) else Li <- sm[[i]]$L 
     ## extend the global L matrix...
     if (is.null(id)||is.null(idx[[id]])) { ## new `id'     
       if (!is.null(id)) { ## create record in `idx'
@@ -589,6 +602,11 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       }
       L <- rbind(cbind(L,matrix(0,nrow(L),ncol(Li))),
                  cbind(matrix(0,nrow(Li),ncol(L)),Li))
+      if (length.S > 0) { ## there are smoothing parameters to name
+        if (length.S == 1) spn <- sm[[i]]$label else 
+          spn <- paste(sm[[i]]$label,1:length.S,sep="")
+        sp.names <- c(sp.names,spn) ## extend the sp name vector
+      }
     } else { ## it's a repeat id => shares existing sp's
       L0 <- matrix(0,nrow(Li),ncol(L))
       if (ncol(Li)>idx[[id]]$nc) {
@@ -646,6 +664,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$sp<-rep(-1,ncol(L))
   }
   
+  names(G$sp) <- sp.names
+
   ## now work through the smooths searching for any `sp' elements
   ## supplied in `s' or `te' terms.... This relies on `idx' created 
   ## above...
@@ -731,6 +751,13 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$S <- c(PP$S,G$S)
     G$rank <- c(PP$rank,G$rank)
     G$sp <- c(PP$sp,G$sp)
+    if (!is.null(PP$min.sp)) { ## deal with minimum sps
+      if (is.null(H)) H <- matrix(0,n.p,n.p)
+      for (i in 1:length(PP$S)) {
+        ind <- PP$off[i]:(PP$off[i]+ncol(PP$S[[i]])-1)
+        H[ind,ind] <- H[ind,ind] + PP$min.sp[i] * PP$S[[i]]
+      }
+    } ## min.sp stuff finished
   }
 
 
@@ -1250,6 +1277,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   
   if (!is.null(G$L)) object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
+  names(object$sp) <- names(G$sp)
   object$formula<-G$formula
   object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
   object$model<-G$mf # store the model frame
