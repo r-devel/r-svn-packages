@@ -306,9 +306,13 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5)
 }
 
 
-gam.side <- function(sm,tol=.Machine$double.eps^.5)
-# works through a list of smooths, aiming to identify nested or partially
-# nested terms, and impose identifiability constraints on them
+gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5)
+# works through a list of smooths, sm, aiming to identify nested or partially
+# nested terms, and impose identifiability constraints on them.
+# Xp is the parametric model matrix. It is needed in order to check whether
+# there is a constant (or equivalent) in the model. If there is then this needs 
+# to be included when working out side constraints, otherwise dependencies can be 
+# missed. 
 { m <- length(sm)
   if (m==0) return(sm)
   v.names<-array("",0);maxDim<-1
@@ -325,6 +329,16 @@ gam.side <- function(sm,tol=.Machine$double.eps^.5)
   lv <- length(v.names)   
   v.names <- unique(v.names)
   if (lv == length(v.names)) return(sm) ## no repeats => no nesting
+
+  ## Only get this far if there is nesting.
+  ## Need to test for intercept or equivalent in Xp
+  intercept <- FALSE
+  if (ncol(Xp)) {
+    f <- rep(1,nrow(Xp))
+    ff <- qr.fitted(qr(Xp),f)
+    if (max(abs(ff-f))<.Machine$double.eps*100) intercept <- TRUE 
+  }
+
   sm.id <- as.list(v.names)
   names(sm.id) <- v.names
   for (i in 1:length(sm.id)) sm.id[[i]]<-array(0,0)
@@ -347,7 +361,7 @@ gam.side <- function(sm,tol=.Machine$double.eps^.5)
   for (d in 2:maxDim) { ## work up through dimensions 
     for (i in 1:m) { ## work through smooths
       if (sm[[i]]$dim == d) { ## check for nesting
-        X1 <- matrix(0,nrow(sm[[i]]$X),0)
+        X1 <- matrix(1,nrow(sm[[i]]$X),as.integer(intercept))
         for (j in 1:d) { ## work through variables
           b <- sm.id[[sm[[i]]$vn[j]]] # list of smooths dependent on this variable
           k <- (1:length(b))[b==i] ## locate current smooth in list 
@@ -355,7 +369,7 @@ gam.side <- function(sm,tol=.Machine$double.eps^.5)
             X1 <- cbind(X1,sm[[b[l]]]$X)
           }
         } ## Now X1 contains columns for all lower dimensional terms
-        if (ncol(X1)==0) ind <- NULL else
+        if (ncol(X1)==as.integer(intercept)) ind <- NULL else
         ind <- fixDependence(X1,sm[[i]]$X,tol=tol)        
         ## ... the columns to zero to ensure independence
         if (!is.null(ind)) { 
@@ -502,7 +516,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$intercept <-  attr(attr(mf,"terms"),"intercept")>0
   G$offset <- model.offset(mf)   # get the model offset (if any)
 
-  # construct model matrix.... 
+  # construct strictly parametric model matrix.... 
   
   X <- model.matrix(pterms,mf)
   G$nsdf <- ncol(X)
@@ -620,7 +634,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   ## at this stage, it is neccessary to impose any side conditions required
   ## for identifiability
-  if (m>0) sm<-gam.side(sm,tol=.Machine$double.eps^.5)
+  if (m>0) sm<-gam.side(sm,X,tol=.Machine$double.eps^.5)
 
   if (m>0) for (i in 1:m) 
   { n.para<-ncol(sm[[i]]$X)
@@ -856,12 +870,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...) else
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...)  
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)  
     if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
     else score <- b$score ## (P-)(RE)ML
     if (i==1 || score<best.score) {
@@ -891,12 +905,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...) else 
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else 
       b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...)   
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)   
       if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
       else score <- b$score 
       if (lt==lt.tau) f.tau <- score else f.1tau <- score
@@ -923,12 +937,12 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...) else
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
       b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,...)  
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)  
       if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
       else score <- b$score       
       if (f.tau.update) f.tau <- score else f.1tau <- score
@@ -993,11 +1007,11 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...) else
+                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,null.coef=G$null.coef,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,...)                
+                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,null.coef=G$null.coef,...)                
                 
     object <- b$object
     object$REML <- object$REML1 <- object$REML2 <-
@@ -1010,7 +1024,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } else { ## methods calling gam.fit3 
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
-             L=G$L,lsp0=G$lsp0)
+             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef)
    
     if (optimizer[2]=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
@@ -1054,7 +1068,6 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 ## Do gam estimation and smoothness selection...
   
-
   if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
 
@@ -1164,6 +1177,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$L)) G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
     }
+
+    ## Get an estimate of the coefs corresponding to maximum reasonable deviance...
+
+    null.coef <- qr.coef(qr(G$X),family$linkfun(mean(G$y)+0*G$y))
+    null.coef[is.na(null.coef)] <- 0;G$null.coef <- null.coef
 
     object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(G$y),family=G$family,
                         control=control,criterion=criterion,method=method,optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)

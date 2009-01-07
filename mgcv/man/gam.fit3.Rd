@@ -25,7 +25,7 @@ gam.fit3(x, y, sp, S=list(),rS=list(),UrS=list(), off, H=NULL,
          weights = rep(1, nobs), start = NULL, etastart = NULL, 
          mustart = NULL, offset = rep(0, nobs), U1 = 0, Mp = -1, family = gaussian(), 
          control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-         gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
+         gamma=1,scale=1,printWarn=TRUE,scoreType="REML",coef.null=rep(0,ncol(x)),...) 
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -90,6 +90,9 @@ order to ensure that some warnings are only printed if they apply to the final
 fitted model, rather than an intermediate used in optimization.}
 
 \item{scoreType}{specifies smoothing parameter selection criterion to use.}
+
+\item{coef.null}{coefficients for a model which gives some sort of upper bound on deviance.
+This allows immediate divergence problems to be controlled.}
 
 \item{...}{Other arguments: ignored.}
 }

@@ -495,7 +495,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs),U1=0,Mp=-1, family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",...) 
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(X)),...) 
 ## This version is designed to allow iterative weights to be negative. This means that 
 ## it deals with weights, rather than sqrt weights.
 ## deriv, sp, S, rS, H added to arg list. 
@@ -606,8 +606,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
         rV=matrix(0,ncol(x),ncol(x))   
        
         ## need an initial `null deviance' to test for initial divergence... 
-        null.coef <- qr.coef(qr(x),family$linkfun(mean(y)+0*y))
-        null.coef[is.na(null.coef)] <- 0 
+        ## null.coef <- qr.coef(qr(x),family$linkfun(mean(y)+0*y))
+        ## null.coef[is.na(null.coef)] <- 0 
         null.eta <- x%*%null.coef + offset
         old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights)) + t(null.coef)%*%St%*%null.coef 
         ## ... if the deviance exceeds this then there is an immediate problem
@@ -999,7 +999,7 @@ score.transect <- function(ii, x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NU
             weights = rep(1, length(y)), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, length(y)),U1,Mp,family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,...) {
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,null.coef=rep(0,ncol(X)),...) {
 ## plot a transect through the score for sp[ii]
   np <- 200
   if (scoreType%in%c("REML","P-REML","ML","P-ML")) reml <- TRUE else reml <- FALSE
@@ -1010,7 +1010,7 @@ score.transect <- function(ii, x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NU
      b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,UrS=UrS,off=off, H=H,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
 
       if (reml) {
         score[i] <- b$REML
@@ -1033,14 +1033,14 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             weights = rep(1, length(y)), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, length(y)),U1,Mp,family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,...)
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,null.coef=rep(0,ncol(X)),...)
 ## FD checking of derivatives: basically a debugging routine
 {  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
    if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    b<-gam.fit3(x=x, y=y, sp=sp, S=S,rS=rS,UrS=UrS,off=off, H=H,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
 
    P0 <- b$P;fd.P1 <- P10 <- b$P1;  if (deriv==2) fd.P2 <- P2 <- b$P2 
    trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
@@ -1065,13 +1065,13 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
      bf<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,UrS=UrS,off=off, H=H,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
       
      sp1 <- sp;sp1[i] <- sp[i]-eps/2
      bb<-gam.fit3(x=x, y=y, sp=sp1, S=S,rS=rS,UrS=UrS,off=off, H=H,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+      printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
       
    
       if (!reml) {
@@ -1201,7 +1201,7 @@ rti <- function(r,r1) {
 newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
-                   use.svd=TRUE,mustart = NULL,...)
+                   use.svd=TRUE,mustart = NULL,null.coef=rep(0,ncol(X)),...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
 ## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
 ## to +ve definite ii) step halves on step 
@@ -1247,7 +1247,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,use.svd=use.svd,mustart=mustart,
-         scoreType=scoreType,eps=eps,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
   }
 
   ii <- 0
@@ -1256,7 +1256,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,use.svd=use.svd,mustart=mustart,
-         scoreType=scoreType,eps=eps,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
   }
   ## ... end of debugging code 
 
@@ -1265,7 +1265,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+     printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
 
   mustart<-b$fitted.values
 
@@ -1302,7 +1302,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,use.svd=use.svd,mustart=mustart,
-         scoreType=scoreType,eps=eps,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
     }
     ii <- 0
     if (ii>0) {
@@ -1310,7 +1310,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,use.svd=use.svd,mustart=mustart,
-         scoreType=scoreType,eps=eps,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
     }
 
     ## exclude apparently converged gradients from computation
@@ -1342,7 +1342,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
     b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
        offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,
-       printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
+       printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,null.coef=null.coef,...)
     
     if (reml) {
       score1 <- b$REML
@@ -1391,7 +1391,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
            printWarn=FALSE,mustart=mustart,use.svd=use.svd,
-           scoreType=scoreType,...)
+           scoreType=scoreType,null.coef=null.coef,...)
          
         if (reml) {       
           score1 <- b1$REML
@@ -1405,7 +1405,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
           b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,
-             printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
+             printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,null.coef=null.coef,...)
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
          
@@ -1451,7 +1451,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
 bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="GCV",use.svd=TRUE,
-                   mustart = NULL,...)
+                   mustart = NULL,null.coef=rep(0,ncol(X)),...)
 ## This optimizer is experimental... The main feature is to alternate infrequent 
 ## Newton steps with BFGS Quasi-Newton steps. In theory this should be faster 
 ## than Newton, because of the cost of full Hessian calculation, but
@@ -1480,7 +1480,7 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,...)
+     printWarn=FALSE,use.svd=use.svd,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
 #  ptm <- proc.time()-ptm
 #  cat("deriv=2 ",ptm,"\n")
 
@@ -1544,7 +1544,7 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
       b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
           offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
           control=control,gamma=gamma,scale=scale,
-          printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
+          printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,null.coef=null.coef,...)
 #       ptm <- proc.time()-ptm
 #       cat("deriv= ",deriv,"  ",ptm,"\n")
       
@@ -1564,7 +1564,7 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
         b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
                offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
+               printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,null.coef=null.coef,...)
 #         ptm <- proc.time()-ptm
 #         cat("deriv=2 ",ptm,"\n")
 
@@ -1586,7 +1586,7 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
                offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,...)
+               printWarn=FALSE,mustart=mustart,use.svd=use.svd,scoreType=scoreType,null.coef=null.coef,...)
 #         ptm <- proc.time()-ptm
 #         cat("deriv=1 ",ptm,"\n")
 
@@ -1641,7 +1641,7 @@ gam2derivative <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,UrS=args$UrS,off=args$off, H=args$H,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     use.svd=FALSE,...)
+     use.svd=FALSE,null.coef=args$null.coef,...)
   if (reml) {
           ret <- b$REML1 
   } else if (args$scoreType=="GACV") {
@@ -1666,7 +1666,7 @@ gam2objective <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,UrS=args$UrS,off=args$off, H=args$H,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     use.svd=FALSE,...)
+     use.svd=FALSE,null.coef=args$null.coef,...)
   if (reml) {
           ret <- b$REML 
   } else if (args$scoreType=="GACV") {
@@ -1692,7 +1692,7 @@ gam4objective <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, S=args$S,rS=args$rS,UrS=args$UrS,off=args$off, H=args$H,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     use.svd=FALSE,...)
+     use.svd=FALSE,null.coef=args$null.coef,...)
   
   if (reml) {
           ret <- b$REML;at <- b$REML1

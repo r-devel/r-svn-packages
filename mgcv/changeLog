@@ -3,20 +3,6 @@
 
 ISSUES TO CLEAR
 
-* id bug: model matrix is rank defficient when there's nesting and 
-  id's. It has more columns than when there are no ids. Error shows up 
-  in last example in identity.Rd in mgcvTest... Problem is related to 
-  use of common basis, which means that dependancy is not detected 
-  properly. Basic problem is that columns can appear independent until 
-  the constant (or equivalent) is added. Possible fix is to include 
-  parametric X in `X1'. Alternative is to test that constant is in 
-  span of parametric X, and append constant column to X1 if it is.
-  Can't move identifiability before centering, or will over 
-  constrain... best fix is probably to use qr to test for constant 
-  being in span of parametric component iff there is any constraining 
-  to do....
-
-  
 * Ideally, move null model computation out of gam.fit3, to gam.setup, 
   to avoid repeated qr decompostion.
  
@@ -67,7 +53,8 @@ ISSUES TO CLEAR
    It is much better to set the zero eigenvalues of the penalty matrix 
    to a small proportion of the smallest +ve eigenvalue, and to 
    use the matrix with the resulting eigen-decomposition as the 
-   penalty. This is now done.
+   penalty. This is now done. Thanks to Roman Torgovitsky for 
+   reporting the original problem.
 
 ** Tweedie family added (including `ldTweedie' function to evaluate 
    log Tweedie densities for powers in (1,2]).
@@ -83,7 +70,13 @@ ISSUES TO CLEAR
   improvement in penalized deviance relative to a null model. If not 
   then step halving towards the null model parameter is employed.
   The null model is as close to constant predicted values as the model
-  structure allows.
+  structure allows (it is estimated upfront in estimate.gam, to save 
+  computation)
+
+* `gam.side' now takes account of whether the model has an intercept 
+  (or the model model matrix column corresponding to an intercept is 
+   in the column space of the model matrix of the parametric model 
+   components).  
 
 * The smoothing parameter array returned by `gam' now includes names
   for the smoothing parameters.
