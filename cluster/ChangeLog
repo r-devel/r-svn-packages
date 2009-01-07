@@ -1,3 +1,16 @@
+2009-01-07  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version, Date): 1.11.12
+
+2009-01-05  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/ellipsoidhull.Rd: fix for more stringent Rd parsing
+
+2008-09-16  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/ellipsoidhull.R (print.ellipsoid): and others: replace
+	backquotes ( ` ) by regular quotes.
+
 2008-06-15  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/silhouette.R (sortSilhouette): do *not* overwrite the
