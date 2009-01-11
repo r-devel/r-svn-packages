@@ -1,4 +1,4 @@
-/* Copyright (C) 2007,2008 Simon N. Wood  simon.wood@r-project.org
+/* Copyright (C) 2007,2008,2009 Simon N. Wood  simon.wood@r-project.org
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -264,11 +264,260 @@ double qr_ldet_inv(double *X,int *r,double *Xi,int *get_inv)
   return(ldet);
 }
 
-
 void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
                double *det, double *det1, double *det2, double *d_tol,
                double *r_tol,int *fixed_penalty)
-/* Routine to evaluate log|S| and its derivatives wrt log(sp), in a stable manner.
+/* Routine to evaluate log|S| and its derivatives wrt log(sp), in a stable manner, using 
+   an orthogonal transformation strategy based on QR decomposition.
+
+   Inputs are:
+   `sp' the array of smoothing parameters.
+   `sqrtS' the `M' square root penalty matrices. The ith is `q' by `rSncol[i]'. They are 
+        packed one after the other. 
+   `deriv' is the order of derivatives required. 0,1 or 2.
+   `d_tol' is the tolerance to use for grouping dominant terms. 
+   `r_tol' (<< d_tol) is the tolerance used for rank determination.
+   `fixed_penalty' non-zero indicates that there is a fixed component of 
+          total penalty matrix S, the square root of which is in the final 
+          q * rSncol[M+1] elements of sqrtS.                 
+
+   Outputs are:
+   `det' the log determinant.
+   `det1' M-array of derivatives of log det wrt log sp. 
+   `det2' M by M Hessian of log det wrt log sp.   
+   
+*/
+{ double *R,*work,*tau,*rS1,*rS2, *S,*Si,*Sb,*B,*Sg,*p,*p1,*p2,*p3,*p4,*frob,max_frob,x,*spf,Rcond;
+  int *pivot,iter,i,j,k,bt,ct,rSoff,K,Q,Qr,*gamma,*gamma1,*alpha,r,max_col,Mf,tot_col=0,left,tp;
+
+  if (*fixed_penalty) { 
+    Mf = *M + 1;  /* total number of components, including fixed one */
+    spf = (double *)calloc((size_t)Mf,sizeof(double));
+    for (i=0;i<*M;i++) spf[i]=sp[i];spf[*M]=1.0; /* includes sp for fixed term */
+  } 
+  else {spf=sp;Mf = *M;} /* total number of components, including fixed one */
+
+  /* Create working copies of sqrtS, which can be modified:
+     rS1 is repeatedly orthogonally transformed, while rS2 is row pivoted. 
+  */
+  if (*deriv) { /* only need to modify if derivatives needed */
+    for (j=i=0;i<Mf;i++) j += rSncol[i];tot_col=j;
+    j *= *q;
+    rS1 = (double *)calloc((size_t) j,sizeof(double));
+    rS2 = (double *)calloc((size_t) j,sizeof(double));
+    for (p=rS1,p3=rS2,p1=rS1+j,p2=sqrtS;p<p1;p++,p2++,p3++) *p3 = *p = *p2;
+  }
+  /* Explicitly form the Si (stored in a single block), so S_i is stored
+     in Si + i * q * q (starting i from 0). As iteration progresses,
+     blocks are shrunk -- always q by Q */
+  p = Si = (double *)calloc((size_t)*q * *q * Mf,sizeof(double));
+  max_col = *q; /* need enough storage just in case square roots are over-sized */
+  for (rSoff=i=0;i<Mf;p+= *q * *q,rSoff+=rSncol[i],i++) {
+    bt=0;ct=1;mgcv_mmult(p,sqrtS+rSoff * *q,sqrtS+rSoff * *q,&bt,&ct,q,q,rSncol+i);
+    if (rSncol[i]>max_col) max_col=rSncol[i];
+  }
+
+ 
+  /* Initialize the sub-dominant set gamma and the counters */
+  K = 0;Q = *q;
+  frob =  (double *)calloc((size_t)Mf,sizeof(double)); 
+  gamma = (int *)calloc((size_t)Mf,sizeof(int));  /* terms remaining to deal with */
+  gamma1 = (int *)calloc((size_t)Mf,sizeof(int)); /* new gamma */
+  alpha = (int *)calloc((size_t)Mf,sizeof(int));  /* dominant terms */
+  for (i=0;i<Mf;i++) gamma[i] = 1; /* no terms dealt with initially */
+  
+  /* Other storage... */
+
+  S = (double *) calloc((size_t) Q * Q,sizeof(double)); /* Transformed S (total) */
+  Sb = (double *) calloc((size_t) Q * Q,sizeof(double)); /* summation storage */
+  pivot = (int *)calloc((size_t) Q,sizeof(int)); /* pivot storage */
+  tau = (double *) calloc((size_t) Q,sizeof(double)); /* working storage */  
+  work = (double *)calloc((size_t)(4 * Q),sizeof(double));
+
+  Sg = (double *) calloc((size_t) Q * Q,sizeof(double)); /* summation storage */
+  B = (double *) calloc((size_t) Q * max_col,sizeof(double)); /* Intermediate storage */
+  R = (double *) calloc((size_t) Q * Q,sizeof(double)); /* storage for unpivoted QR factor */
+  /* Start the main orthogonal transform loop */
+  iter =0;
+  while(1) {
+    iter ++;
+
+  /* Find the Frobenius norms of the Si in set gamma */
+    max_frob=0.0;
+    for (p=Si,i=0;i<Mf;i++,p += *q * Q) 
+      if (gamma[i]) { /* don't bother if already dealt with */ 
+        frob[i] = frobenius_norm(p,q,&Q);
+        if (frob[i] *spf[i] >max_frob) max_frob=frob[i]  * spf[i];
+    }
+  /* Find sets alpha and gamma' */
+    for (i=0;i<Mf;i++) {
+      if (gamma[i]) { /* term is still to be dealt with */
+        if (frob[i]  * spf[i] > max_frob * *d_tol) { 
+          alpha[i] = 1;gamma1[i] = 0; /* deal with it now */
+        } else {
+          alpha[i] = 0;gamma1[i] = 1; /* put it off */ 
+        }
+      } else { /* wasn't in gamma, so not in alpha or gamma1 */
+        alpha[i] = gamma1[i] = 0;
+      }
+    }
+
+  /* Form the scaled sum of the Si in alpha and get its rank by pivoted QR
+     and condition estimation...
+  */
+    for (p=Sb,p1=p + *q * Q;p<p1;p++) *p=0.0; /* clear Sb */
+    for (p=Si,i=0;i<Mf;i++,p += *q * Q) if (alpha[i]) { 
+      x = frob[i];
+      for (p1=p,p2=Sb,p3=p + *q * Q;p1<p3;p1++,p2++) *p2 += *p1 / x;
+    } 
+    for (i=0;i<*q;i++) pivot[i]=0; 
+    mgcv_qr(Sb, &Q, q ,pivot,tau); /* obtain pivoted QR decomposition of Sb */
+    /* Now obtain the rank, r, of Sb (see Golub and van Loan, 1996, p.129 & p.260)... */ 
+    r = Q;
+    R_cond(Sb,&Q,&r,work,&Rcond);
+    while (*r_tol * Rcond > 1) { r--;R_cond(Sb,&Q,&r,work,&Rcond);}
+    Qr = Q-r;  
+
+    /* ...  r is the rank of Sb, or any other positively weighted sum over alpha */
+
+    /*    printf("\n iter = %d,  rank = %d,   Q = %d",iter,r,Q);
+    printf("\n gamma = ");for (i=0;i<Mf;i++) printf(" %d",gamma[i]);
+    printf("\n alpha = ");for (i=0;i<Mf;i++) printf(" %d",alpha[i]);
+    printf("\n gamma1 = ");for (i=0;i<Mf;i++) printf(" %d",gamma1[i]);*/
+   
+
+  /* If Q==r then terminate (form S first if it's the first iteration) */
+    
+    if (Q==r) { 
+      if (iter==1 ) { /* form S */
+        for (p=Si,i=0;i<Mf;i++,p += Q*Q) { 
+          x = spf[i];
+          for (p1=p,p2=S,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+        }
+        break; 
+      } else break; /* just use current S */ 
+    } /* end if (Q==r) */
+
+  /* Form the dominant term and QR-decompose it */
+    for (p=Sb,p1=p + *q * Q;p<p1;p++) *p = 0.0; /* clear Sb */
+    for (p=Si,i=0;i<Mf;i++,p += *q * Q) if (alpha[i]) { /* summing S[[i]]*sp[i] over i in alpha */
+      x = spf[i];
+      for (p1=p,p2=Sb,p3=p+ *q * Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+    }
+    for (i=0;i<*q;i++) pivot[i]=0; 
+    mgcv_qr(Sb, &Q, q ,pivot,tau); /* obtain pivoted QR decomposition of Sb */
+    
+  /* unpivot R, which means that no further pivoting is needed */
+    for (p=R,p1=R + *q * r;p<p1;p++) *p=0.0; /* clear R */
+    for (i=0;i<r;i++) for (j=i;j<*q;j++) R[i + pivot[j] * r] = Sb[i + j * Q]; 
+
+  /* Form the sum over the elements in gamma1, Sg */
+
+    for (p=Sg,p1=p + *q * Q;p<p1;p++) *p=0.0; /* clear Sg */
+    for (p=Si,i=0;i<Mf;i++,p += *q * Q) if (gamma1[i]) { /* summing S[[i]]*sp[i] over i in gamma1 */
+      x = spf[i];
+      for (p1=p,p2=Sg,p3=p+ *q * Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+    } 
+
+  /* Form S' the orthogonal transform of S */
+  
+  /* Form Q'Sg... */ 
+    left=1;tp=1; 
+    mgcv_qrqy(Sg,Sb,tau,&Q,q,&Q,&left,&tp);
+
+  /* copy transformed Sg into remainder of transformed S */
+    for (i=0;i<Q;i++) for (j=0;j<*q;j++) S[i+K + j * *q] = Sg[i + j * Q];
+  /* and add R in the appropriate place ... */ 
+    for (i=0;i<r;i++) for (j=0;j<*q;j++) S[i+K + j * *q] += R[i + j * r];       
+
+
+  /* transform remaining S_i in gamma1 */ 
+    for (p1=p=Si,i=0;i<Mf;i++,p += *q * Q,p1 += *q *Qr) if (gamma1[i]) {
+      left=1;tp=1;
+      mgcv_qrqy(p,Sb,tau,&Q,q,&Q,&left,&tp); /* Q'Si */
+      p2=p+r;p3=p1;
+      for (j=0;j<*q;j++,p2+=r) for (k=0;k<Qr;k++,p3++,p2++) *p3 = *p2; /* copy to correct place */ 
+    } 
+ 
+  /* Transform the square roots of Si */
+    if (*deriv) { /* transformed rS1 only needed for derivatives */
+      /* copy last Q rows of rS1 into rS2 */
+      for (i=0;i<Q;i++) for (j=0;j<tot_col;j++) rS2[i+Q*j] = rS1[K + i + *q * j];
+      /* pre-multiply rS2 by Q */ 
+      left=1;tp=1;
+      mgcv_qrqy(rS2,Sb,tau,&Q,&tot_col,&Q,&left,&tp); /* Q'rS2 */
+      
+      /* copy rS2 into last Q rows of rS1 */
+      for (i=0;i<Q;i++) for (j=0;j<tot_col;j++) rS1[K + i + *q * j] = rS2[i+Q*j];
+    
+      /* zero the last Qr rows of the rS1 in alpha */
+      for (p=rS1,k=0;k<Mf;p +=rSncol[k] * *q, k++) if (alpha[k]) {
+        for (i=K+r;i<*q;i++) for (j=0;j<rSncol[k];j++) p[i + j * *q] = 0.0;
+      }
+    }
+
+ 
+  /* Update K, Q and gamma */   
+    K = K + r; Q = Qr;
+    for (i=0;i<Mf;i++) gamma[i] = gamma1[i];
+  } /* end of Orthogonal Transform Loop */
+
+  /* transpose S */
+  for (i=0;i<*q;i++) for (j=0;j<*q;j++) R[i + *q * j] = S[j + *q * i]; 
+
+  /* Now get the determinant and inverse of the transformed S (stored in B) */
+  *det = qr_ldet_inv(R,q,B,deriv); /* R=S' here */
+  /* finally, the dervivatives, based on transformed S inverse and transformed square roots */  
+  
+  if (*deriv) { /* get the first derivatives */
+    /* first accumulate S^{-T} sqrtS into Si */
+    bt=0;ct=0;mgcv_mmult(Si,B,sqrtS,&bt,&ct,q,&tot_col,q);
+    /* Now get the required derivatives */
+    for (p=Si,p1=rS1,i=0;i<*M;p += *q *rSncol[i],p1+= *q *rSncol[i],i++) {
+      for (x=0.0,p2=p1,p3=p,p4=p1+ *q*rSncol[i];p2<p4;p2++,p3++) x += *p2 * *p3; 
+      det1[i] = x*sp[i]; /* tr(S^{-1}S_i) */
+    }
+  }
+  
+  if (*deriv==2) { /* get second derivatives, as well */
+    for (p=Si,p1=rS2,p2 = p1 + *q * tot_col;p1<p2;p1++,p++) *p1 = *p; /* copy S^{-1} sqrtS into rS2 */   
+
+    /* loop through creating S^{-1} S_i and storing in Si...*/
+    for (p1=Si,p=rS2,p2=rS1,i=0;i<*M;p2+= *q * rSncol[i], p += *q *rSncol[i],i++,p1 += *q * *q) {
+      bt=0;ct=1;mgcv_mmult(p1,p,p2,&bt,&ct,q,q,rSncol+i);
+    }
+
+    // DEBUG ONLY...
+    for (i=0;i<*M;i++) { for (x=0.0,j=0;j<*q;j++) x += Si[i* *q * *q + j + j* *q];det1[i]=x*sp[i];}
+
+    for (i=0;i<*M;i++) for (j=i;j<*M;j++) 
+      det2[i + *M * j] = det2[j + *M * i] = -sp[i]*sp[j]*trAB(Si + *q * *q *i,Si + *q * *q *j,q,q);
+    for (i=0;i<*M;i++) det2[i + *M * i] += det1[i];
+  }
+  free(R);
+  free(work);
+  free(frob);
+  free(gamma);
+  free(gamma1);
+  free(alpha);
+  free(S);
+  free(Sb);
+  free(Sg);
+  if (*deriv) { free(rS1);free(rS2);}
+  if (*fixed_penalty) {free(spf);}
+  free(Si);
+  free(B);
+  free(pivot);free(tau);
+} /* end of get_detS3 */
+
+
+
+
+void get_detS2a(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
+               double *det, double *det1, double *det2, double *d_tol,
+               double *r_tol,int *fixed_penalty)
+/* Routine to evaluate log|S| and its derivatives wrt log(sp), in a stable manner, using 
+   a similarity transform strategy.
 
    Inputs are:
    `sp' the array of smoothing parameters.
