@@ -3,21 +3,7 @@
 
 ISSUES TO CLEAR
 
-* Ideally, move null model computation out of gam.fit3, to gam.setup, 
-  to avoid repeated qr decompostion.
- 
-* Need to double check meaning of paraPen smoothing parameters.
-
-* All sp fixed and GACV/REML etc.... Also can a fixed value for 
-  log(scale) be provided with REML?
-
-* double check  REML/ML and quasi.
-
-* valgrind check for leaks
-
 * Add more on REML to the help files.
-
-* Need to clean gdi.c (of C++ comments and dead code) and gam.fit3.r
 
 * all branch testing of criteria families links and optimizers.
 

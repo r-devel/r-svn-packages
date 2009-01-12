@@ -412,6 +412,12 @@ b4<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
         data=dat,method="GACV.Cp",scale=-1)
 plot(b4,pages=1)
 
+## repeat using REML as in Wood 2008...
+
+b5<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
+        data=dat,method="REML")
+plot(b5,pages=1)
+
  
 
 ## a binary example 

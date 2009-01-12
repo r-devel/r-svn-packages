@@ -118,6 +118,9 @@ returned by the optimization routine used (currently \code{\link{nlm}} or \code{
 
 \item{rank}{apparent rank of fitted model.}
 
+\item{reml.scale}{The scale (RE)ML scale parameter estimate, if (P-)(RE)ML used 
+for smoothness estimation. }
+
 \item{residuals}{the working residuals for the fitted model.}
 
 \item{sig2}{estimated or supplied variance/scale parameter.}
@@ -128,7 +131,9 @@ the \code{\link{smooth.construct}} objects.}
 
 \item{sp}{estimated smoothing parameters for the model. These are the underlying smoothing
 parameters, subject to optimization. For the full set of smoothing parameters multiplying the 
-penalties see \code{full.sp}. }
+penalties see \code{full.sp}. Divide the scale parameter by the smoothing parameters to get,
+variance components, but note that this is not valid for smooths that have used rescaling to 
+improve conditioning.}
 
 \item{terms}{\code{terms} object of \code{model} model frame.}
 

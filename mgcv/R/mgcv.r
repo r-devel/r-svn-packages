@@ -871,11 +871,16 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+    if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)  
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
+    b <- simplyFit(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
+                  control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
+                  maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)
     if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
     else score <- b$score ## (P-)(RE)ML
     if (i==1 || score<best.score) {
@@ -906,11 +911,16 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else 
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+      if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)   
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
+    b <- simplyFit(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
+                  control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
+                  maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) 
       if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
       else score <- b$score 
       if (lt==lt.tau) f.tau <- score else f.1tau <- score
@@ -938,11 +948,16 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
                   printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
-      b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+      if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)  
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)  else
+      b <- simplyFit(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
+                  control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
+                  maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
+                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)
       if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
       else score <- b$score       
       if (f.tau.update) f.tau <- score else f.1tau <- score
@@ -973,8 +988,13 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 #  2. Call `magic.post.proc' to get parameter covariance matrices, edf etc to
 #     add to `object' 
 { if (is.null(optimizer[2])) optimizer[2] <- "newton"
-  if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimizartion method.")
+  if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimization method.")
+  if (length(lsp)==0) { ## no sp estimation to do -- run a fit instead
+    optimizer[2] <- "no.sps" ## will cause gam2objective to be called, below
+  }
+  nbGetTheta <- substr(family$family[1],1,17)=="Negative Binomial" && length(family$getTheta())>1
   if (optimizer[2]=="nlm.fd") {
+    if (nbGetTheta) stop("nlm.fd not available with negative binomial Theta estimation")
     if (method%in%c("REML","ML","GACV.Cp","P-ML","P-REML")) stop("nlm.fd only available for GCV/UBRE")
     um<-nlm(full.score,lsp,typsize=lsp,fscale=fscale, stepmax = 
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
@@ -995,8 +1015,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   if (method%in%c("REML","ML","P-REML","P-ML")) {reml <- TRUE; family <- fix.family.ls(family)} else reml <- FALSE 
   
 
-  if (substr(family$family[1],1,17)=="Negative Binomial" && length(family$getTheta())>1) {
-    if (!(optimizer[2]=="newton"||optimizer[2]=="bfgs")) {
+  if (nbGetTheta) {
+    if (!(optimizer[2]%in%c("newton","bfgs","no.sps"))) {
       warning("only outer methods `newton' & `bfgs' supports `negbin' family and theta selection: reset")
       optimizer[2] <- "newton"
     } 
@@ -1064,6 +1084,17 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object
 }
 
+get.null.coef <- function(G) {
+## Get an estimate of the coefs corresponding to maximum reasonable deviance...
+  y <- G$y
+  weights <- G$w
+  nobs <- G$n
+  eval(G$family$initialize) ## have to do this to ensure y numeric
+  y <- as.numeric(y)
+  null.coef <- qr.coef(qr(G$X),G$family$linkfun(mean(y)+0*y))
+  null.coef[is.na(null.coef)] <- 0;
+  null.coef
+}
 
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 ## Do gam estimation and smoothness selection...
@@ -1093,22 +1124,23 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   }
 
   # is outer looping needed ?
-  outer.looping <- ((!G$am && (optimizer[1]=="outer"))||reml||method=="GACV.Cp") &&
-                   length(G$S)>0 && sum(G$sp<0)!=0
+  outer.looping <- ((!G$am && (optimizer[1]=="outer"))||reml||method=="GACV.Cp") ## && length(G$S)>0 && sum(G$sp<0)!=0
 
   ## sort out exact sp selection criterion to use
 
+  fam.name <- G$family$family[1]
+
   if (scale==0) ## choose criterion for performance iteration
-  { if (G$family$family[1] == "binomial"||G$family$family[1] == "poisson") G$sig2<-1 #ubre
+  { if (fam.name == "binomial"||fam.name == "poisson") G$sig2<-1 #ubre
       else G$sig2 <- -1 #gcv
   } else {G$sig2 <- scale}
 
   if (reml) { ## then RE(ML) selection, but which variant?
    criterion <- method
-   if (G$family$family[1] == "binomial"||G$family$family[1] == "poisson") scale <- 1
+   if (fam.name == "binomial"||fam.name == "poisson") scale <- 1
   } else {
     if (scale==0) { 
-      if (G$family$family[1]=="binomial"||G$family$family[1]=="poisson") scale<-1 #ubre
+      if (fam.name=="binomial"||fam.name=="poisson") scale<-1 #ubre
       else scale <- -1 #gcv
     }
     if (scale > 0) criterion <- "UBRE"
@@ -1117,7 +1149,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   }
 
-  if (substr(G$family$family[1],1,17)=="Negative Binomial") { 
+  if (fam.name=="quasi"||fam.name=="quasipoisson"||fam.name=="quasibinomial") {
+    ## REML/ML invalid with quasi families
+    if (method=="REML") method <- "P-REML"
+    if (method=="ML") method <- "P-ML"
+  }
+
+  if (substr(fam.name,1,17)=="Negative Binomial") { 
     scale <- 1; ## no choise
     if (method%in%c("GCV.Cp","GACV.Cp")) criterion <- "UBRE"
   }
@@ -1131,7 +1169,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
   family <- G$family  
-  if (outer.looping && optimizer[1]=="outer") { 
+  if (outer.looping) { 
     fixedSteps <- control$outerPIsteps      ## how many performance iteration steps to use for initialization
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       scale <- G$sig2 <- 1
@@ -1139,7 +1177,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   } else fixedSteps <- control$maxit+2
   
-  if (outer.looping && optimizer[1]=="outer" && !is.null(in.out)) { # initial s.p.s and scale provided
+  if (outer.looping && !is.null(in.out)) { # initial s.p.s and scale provided
     ok <- TRUE ## run a few basic checks
     if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
     if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
@@ -1158,7 +1196,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     lsp<-log(object$sp) 
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
-    if (is.null(in.out)) { ## note no checks if supplied 
+    if (is.null(in.out)&&length(lsp)>0) { ## note no checks if supplied 
       lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
       if (!is.null(G$L)) { ## estimate underlying smoothing parameters
         if (is.null(G$lsp0)) G$lsp0 <- rep(0,nrow(G$L))
@@ -1180,8 +1218,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
     ## Get an estimate of the coefs corresponding to maximum reasonable deviance...
 
-    null.coef <- qr.coef(qr(G$X),family$linkfun(mean(G$y)+0*G$y))
-    null.coef[is.na(null.coef)] <- 0;G$null.coef <- null.coef
+    G$null.coef <- get.null.coef(G)
 
     object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(G$y),family=G$family,
                         control=control,criterion=criterion,method=method,optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)
@@ -1191,18 +1228,18 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     object$mgcv.conv <- mgcv.conv 
 
   } else { ## performance iteration already complete, but check for all fixed sp case ...
-    if (!G$am && (optimizer[1]=="outer")) {
-      ## need to fix up GCV/UBRE score 
-      if (criterion=="UBRE") object$gcv.ubre <- object$deviance/G$n - scale +
-                             2 * gamma * scale* sum(object$edf)/G$n else 
-      if (criterion=="GCV") object$gcv.ubre <- G$n *
-                        object$deviance/(G$n-sum(object$edf))^2 else 
-      if (criterion=="GACV") { 
-        P <- sum(object$weights*object$residuals^2)
-        tau <- sum(object$edf)
-        object$gcv.ubre <- object$deviance/G$n + 2 * gamma*tau * P / (G$n*(G$n-tau))
-      }  
-    }
+   # if (!G$am && (optimizer[1]=="outer")) {
+   #   ## need to fix up GCV/UBRE score 
+   #   if (criterion=="UBRE") object$gcv.ubre <- object$deviance/G$n - scale +
+   #                          2 * gamma * scale* sum(object$edf)/G$n else 
+   #   if (criterion=="GCV") object$gcv.ubre <- G$n *
+   #                     object$deviance/(G$n-sum(object$edf))^2 else 
+   #   if (criterion=="GACV") { 
+   #     P <- sum(object$weights*object$residuals^2)
+   #     tau <- sum(object$edf)
+   #     object$gcv.ubre <- object$deviance/G$n + 2 * gamma*tau * P / (G$n*(G$n-tau))
+   #   }  
+   # }
   }
 
   ## correct null deviance if there's an offset ....
