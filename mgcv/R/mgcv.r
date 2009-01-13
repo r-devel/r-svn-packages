@@ -1045,7 +1045,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
              L=G$L,lsp0=G$lsp0,null.coef=G$null.coef)
-   
+  
     if (optimizer[2]=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
             stepmax = control$nlm$stepmax, ndigit = control$nlm$ndigit,
@@ -1059,7 +1059,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
       b<-optim(par=lsp,fn=gam2objective,gr=gam2derivative,method="L-BFGS-B",control=
          list(fnscale=fscale,factr=control$optim$factr,lmm=min(5,length(lsp))),args=args,...)
       lsp <- b$par
-    }
+    } else b <- NULL
     obj <- gam2objective(lsp,args,printWarn=TRUE,...) # final model fit, with warnings 
     object <- attr(obj,"full.fit")
     object$gcv.ubre <- as.numeric(obj) 
@@ -1089,9 +1089,11 @@ get.null.coef <- function(G) {
   y <- G$y
   weights <- G$w
   nobs <- G$n
-  eval(G$family$initialize) ## have to do this to ensure y numeric
+  start <- etastart <- mustart <- NULL
+  family <- G$family
+  eval(family$initialize) ## have to do this to ensure y numeric
   y <- as.numeric(y)
-  null.coef <- qr.coef(qr(G$X),G$family$linkfun(mean(y)+0*y))
+  null.coef <- qr.coef(qr(G$X),family$linkfun(mean(y)+0*y))
   null.coef[is.na(null.coef)] <- 0;
   null.coef
 }
