@@ -1,8 +1,13 @@
 \.rsync.*
 MM-.*
 TODO-MM
+DONE-MM
 INDEX-MM
 .*/.*-MM
+Changelog\..*
+.*\.log
+.*-warnings
+.*references
 mail-.*
 .*mail
 resort-INDEX
