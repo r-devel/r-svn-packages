@@ -169,7 +169,8 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
    /* actual call */
   F77_NAME(dgeqp3)(r,c,x,r,pivot,tau,work,&lwork,&info); 
   free(work);
-  if (*r<*c) lwork= *r; else lwork= *c; for (ip=pivot;ip<pivot+lwork;ip++) (*ip)--;
+  /*if (*r<*c) lwork= *r; else lwork= *c;*/ 
+  for (ip=pivot;ip < pivot + *c;ip++) (*ip)--;
   /* ... for 'tis C in which we work and not the 'cursed Fortran... */
   
 }

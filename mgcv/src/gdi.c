@@ -380,7 +380,7 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
 
     /* ...  r is the rank of Sb, or any other positively weighted sum over alpha */
 
-    /*    printf("\n iter = %d,  rank = %d,   Q = %d",iter,r,Q);
+    /*  printf("\n iter = %d,  rank = %d,   Q = %d",iter,r,Q);
     printf("\n gamma = ");for (i=0;i<Mf;i++) printf(" %d",gamma[i]);
     printf("\n alpha = ");for (i=0;i<Mf;i++) printf(" %d",alpha[i]);
     printf("\n gamma1 = ");for (i=0;i<Mf;i++) printf(" %d",gamma1[i]);*/
@@ -410,6 +410,11 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
   /* unpivot R, which means that no further pivoting is needed */
     for (p=R,p1=R + *q * r;p<p1;p++) *p=0.0; /* clear R */
     for (i=0;i<r;i++) for (j=i;j<*q;j++) R[i + pivot[j] * r] = Sb[i + j * Q]; 
+
+   /* DEBUG ONLY... */
+    /*  printf("\npivot = ");for (j=0;j<*q;j++) printf("%d ",pivot[j]);
+    printf("Current R...\n");
+    for (i=0;i<r;i++) { for (j=0;j<*q;j++) printf("%7.2g  ",Sb[i + Q *j]); printf("\n");} */
 
   /* Form the sum over the elements in gamma1, Sg */
 
@@ -456,6 +461,10 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
       }
     }
 
+
+    /* DEBUG ONLY... */
+    /* printf("Current S...\n");
+       for (i=0;i<*q;i++) { for (j=0;j<*q;j++) printf("%7.2g  ",S[i + *q *j]); printf("\n");}*/
  
   /* Update K, Q and gamma */   
     K = K + r; Q = Qr;
@@ -465,9 +474,13 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
   /* transpose S */
   for (i=0;i<*q;i++) for (j=0;j<*q;j++) R[i + *q * j] = S[j + *q * i]; 
 
+  /* DEBUG ONLY... */
+  /* printf("Final S...\n");
+     for (i=0;i<*q;i++) { for (j=0;j<*q;j++) printf("%7.2g  ",S[i + *q *j]); printf("\n");}*/
+
   /* Now get the determinant and inverse of the transformed S (stored in B) */
   *det = qr_ldet_inv(R,q,B,deriv); /* R=S' here */
-  /* finally, the dervivatives, based on transformed S inverse and transformed square roots */  
+  /* finally, the derivatives, based on transformed S inverse and transformed square roots */  
   
   if (*deriv) { /* get the first derivatives */
     /* first accumulate S^{-T} sqrtS into Si */
@@ -2348,13 +2361,17 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
 
   /* Now get the remainder of the REML penalty */
  
-  if (*REML) {
+  if (*REML) { /* REML or ML */
     /* First log|S|_+ */ 
     U = (double *) calloc((size_t) *q * *q,sizeof(double)); /* matrix for eigen-vectors of S (null space first) */  
     i = *q - *Mp; /* number of columns of UrS */
     /* P0, trA1 and trA2 used here for log det and its derivatives... */
     get_detS2(sp,UrS,rSncol,&i,M,deriv,P0,trA1, trA2,&d_tol,rank_tol,fixed_penalty);
     reml_penalty = - *P0;
+    /* DEBUGGING printouts.... */
+    /*   printf("\nderiv = %d  |S| = %g  d|S|...\n",*deriv,reml_penalty);
+	 for (i=0;i<*M;i++) printf("%g  ",trA1[i]);printf("\n");*/
+
   } 
 
   if (*REML>0) { /* It's REML */

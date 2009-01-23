@@ -3,6 +3,9 @@
 
 ISSUES TO CLEAR
 
+* newton can take huge steps in log sp space, becuase of transform ---
+  need to fix.
+
 * Add more on REML to the help files.
 
 * all branch testing of criteria families links and optimizers.
