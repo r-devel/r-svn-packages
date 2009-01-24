@@ -681,7 +681,7 @@ deriv.check <- function(x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
 
 rt <- function(x,r1) {
 ## transform of x, asymptoting to values in r1
-## returns rerivatives wrt to x as well as transform values
+## returns derivatives wrt to x as well as transform values
 ## r1[i] == NA for no transform 
   x <- as.numeric(x)
   ind <- x>0 
@@ -889,6 +889,11 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
     if (!is.null(lsp.max)) { ## need to take step in delta space
       delta1 <- delta + Nstep
       lsp1 <- rt(delta1,lsp1.max)$rho ## transform to log sp space
+      while (max(abs(lsp1-lsp))>maxNstep) { ## make sure step is not too long
+        Nstep <- Nstep / 2 
+        delta1 <- delta + Nstep
+        lsp1 <- rt(delta1,lsp1.max)$rho
+      } 
     } else lsp1 <- lsp + Nstep
 
     b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
