@@ -3,6 +3,12 @@
 
 ISSUES TO CLEAR
 
+* add test for single smooths (flush out memory stupidities)
+  
+* add tests for soap.
+
+* add pathalogical tests from 2008 paper
+
 * Add more on REML to the help files.
 
 * all branch testing of criteria families links and optimizers.

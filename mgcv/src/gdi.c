@@ -310,11 +310,14 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
   /* Explicitly form the Si (stored in a single block), so S_i is stored
      in Si + i * q * q (starting i from 0). As iteration progresses,
      blocks are shrunk -- always q by Q */
-  p = Si = (double *)calloc((size_t)*q * *q * Mf,sizeof(double));
-  max_col = *q; /* need enough storage just in case square roots are over-sized */
+
+  max_col = *q; /* need enough storage just in case square roots are over-sized */ 
+  for (i=0;i<Mf;i++) if (rSncol[i]>max_col) max_col=rSncol[i];
+
+  p = Si = (double *)calloc((size_t)*q * max_col * Mf,sizeof(double));
+  
   for (rSoff=i=0;i<Mf;p+= *q * *q,rSoff+=rSncol[i],i++) {
-    bt=0;ct=1;mgcv_mmult(p,sqrtS+rSoff * *q,sqrtS+rSoff * *q,&bt,&ct,q,q,rSncol+i);
-    if (rSncol[i]>max_col) max_col=rSncol[i];
+    bt=0;ct=1;mgcv_mmult(p,sqrtS+rSoff * *q,sqrtS+rSoff * *q,&bt,&ct,q,q,rSncol+i);   
   }
 
  
