@@ -745,7 +745,7 @@ simplyFit <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
           score <- b$UBRE
   } else score <- b$GCV
 
-  list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=NULL,hess=NULL,iter=0,conv =NULL,object=b)
+  list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=NULL,hess=NULL,score.hist=NULL,iter=0,conv =NULL,object=b)
 
 }
 
@@ -772,7 +772,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
 
-  if (reml) { 
+  if (reml&&FALSE) { ## DEBUG TEST: is there *any* evidence that limits are needed
     frob.X <- sqrt(sum(X*X))
     lsp.max <- rep(NA,length(lsp0))
     for (i in 1:length(S)) { 
@@ -845,6 +845,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   uconv.ind <- abs(grad) > score.scale*conv.tol
   ## check for all converged too soon, and undo !
   if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
+  score.hist <- rep(NA,200)
   for (i in 1:200) {
    ## debugging code....
    if (check.derivs) {
@@ -987,6 +988,9 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
         ii <- ii + 1
       } # end of step halving
     }
+    ## record current score
+    score.hist[i] <- score 
+   
     ## test for convergence
     converged <- TRUE
     score.scale <- b$scale.est + abs(score);    
@@ -1002,7 +1006,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   if (ii==maxHalf) ct <- "step failed"
   else if (i==200) ct <- "iteration limit reached" 
   else ct <- "full convergence"
-  list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,conv =ct,object=b)
+  list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,conv =ct,score.hist = score.hist[!is.na(score.hist)],object=b)
 }
 
 bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
@@ -1061,6 +1065,7 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   ## check for all converged too soon, and undo !
   if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
   kk <- 0 ## counter for QN steps between Newton steps
+  score.hist <- rep(NA,200)
   for (i in 1:200) {
    
     if (kk==0) { ## time to reset B
@@ -1157,6 +1162,9 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
         B <- B - rho*(B%*%yg)%*%t(step) + rho*step%*%t(step)
       } ## end of BFGS
     } ## end of successful step updating
+    ## record current score
+    score.hist[i] <- score
+
     ## test for convergence
     converged <- TRUE
     score.scale <- b$scale.est + abs(score);    
@@ -1172,7 +1180,7 @@ bfgs <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   if (ii==maxHalf) ct <- "step failed"
   else if (i==200) ct <- "iteration limit reached" 
   else ct <- "full convergence"
-  list(score=score,lsp=lsp,lsp.full=L%*%lsp,grad=grad,hess=hess,iter=i,conv =ct,object=b)
+  list(score=score,lsp=lsp,lsp.full=L%*%lsp,grad=grad,hess=hess,iter=i,conv =ct,score.hist=score.hist[!is.na(score.hist)],object=b)
 }
 
 

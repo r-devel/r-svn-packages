@@ -968,7 +968,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
   object$GACV <- object$D2 <- object$P2 <- object$UBRE2 <- object$trA2 <- 
   object$GACV1 <- object$GACV2 <- object$GCV2 <- object$D1 <- object$P1 <- NULL
   object$sp <- exp(b.est$lsp)
-  b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
+  b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess,score.hist=b$score.hist) ## return info
   object$outer.info <- b
   object$gcv.ubre <- as.numeric(b.est$score)
   object
@@ -1039,7 +1039,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     object$GACV1 <- object$GACV2 <- object$GCV2 <- object$D1 <- object$P1 <- NULL
     object$sp <- as.numeric(exp(b$lsp))
     object$gcv.ubre <- as.numeric(b$score)
-    b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess) ## return info
+    b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess,score.hist=b$score.hist) ## return info
     object$outer.info <- b   
   } else { ## methods calling gam.fit3 
     args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,

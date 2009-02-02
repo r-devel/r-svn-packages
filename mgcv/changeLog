@@ -3,9 +3,19 @@
 
 ISSUES TO CLEAR
 
+* Upper limits on sps make no sense for shrinkage smoothers, where 
+  the whole point is that the penalty should be able to dominate.
+  Since I only put limits on when trying to solve the |S| problem,
+  I should try taking them off.  
+
+* add serious convergence testing --- thousands of reps, with many 
+  nuisance terms and a variety of smoothness selection methods, to 
+  test that we get *full* convergence every time. Include adaptive
+  te smoothers, and nesting, since these test the numerics harder.   
+
 * add test for single smooths (flush out memory stupidities)
   
-* add tests for soap.
+* add tests for soap.... full soap examples should be in mgcvTest.
 
 * add pathalogical tests from 2008 paper
 

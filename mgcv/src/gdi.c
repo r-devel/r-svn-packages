@@ -930,7 +930,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
      trA2[km] -= 2*diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
      /* 2 tr(K'TkKK'TmKK'K) -- needs correction*/
-     xx = 2*diagABt(work,KtTK+k * *r * *r,KtTKKtK+m * *r * *r,q,r);
+     xx = 2*diagABt(work,KtTK+k * *r * *r,KtTKKtK+m * *r * *r,r,r);
     
      trA2[km] += xx;
 
@@ -1003,7 +1003,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
      trA2[km] -= sp[k] *xx;
 
      /* 2 sp[m] sp[k] tr(KP'SkPP'SmPK') */
-     trA2[km] += 2 * sp[k]*sp[m]*diagABt(work,PtSP + m * *r * *r,PtSPKtK + k * *r * *r,q,r);
+     trA2[km] += 2 * sp[k]*sp[m]*diagABt(work,PtSP + m * *r * *r,PtSPKtK + k * *r * *r,r,r);
       
      trA2[mk] =trA2[km];
    } 
