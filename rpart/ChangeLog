@@ -1,5 +1,6 @@
 2009 ??? ??	3.1-43	Spelling in man/snip.rpart.Rd.
 			Spacing issue in tests/testall.Rout.save
+			Remove environments from fit$functions if basic
 
 2008 Oct 21	3.1-42	Make use of 1L etc, update plot.rpart to use dev.new
 
