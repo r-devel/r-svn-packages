@@ -124,6 +124,61 @@ matrix(um[[2]],q,q);er$v
 }
 
 
+void mgcv_td_qy(double *S,double *tau,int *n,int *m, double *B,int *left,int *transpose)
+/* Multiplies m by n matrix B by orthogonal matrix returned from mgcv_tri_diag and stored in 
+   S, tau. B is overwritten with result. 
+    
+   Note that this is a bit inefficient if really only a few rotations matter!
+
+   Calls LAPACK routine dormtr 
+*/
+{ char trans='N',side='R',uplo='U';
+  int nq,lwork=-1,info;
+  double *work,work1;
+  if (*left) { side = 'L';nq = *m;} else nq = *n;
+  if (*transpose) trans = 'T';
+  /* workspace query ... */
+  F77_NAME(dormtr)(&side,&uplo,&trans,m,n,S,&nq,tau,B,m,&work1,&lwork,&info);
+  lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
+  work=(double *)calloc((size_t)lwork,sizeof(double));
+  /* actual call ... */
+  F77_NAME(dormtr)(&side,&uplo,&trans,m,n,S,&nq,tau,B,m,work,&lwork,&info);
+  free(work);
+}
+
+void mgcv_tri_diag(double *S,int *n,double *tau)
+/* Reduces symmetric n by n matrix S to tridiagonal form T 
+   by similarity transformation. Q'SQ = T, where Q is an
+   orthogonal matrix. Only the upper triangle of S is actually
+   used.
+
+   On exit the diagonal and superdiagonal of T are written in 
+   the corresponding position in S. The elements above the first 
+   superdiagonal, along with tau, store the householder reflections 
+   making up Q. 
+
+   Note that this is not optimally efficient if actually only a 
+   few householder rotations are needed because S does not have 
+   full rank.
+
+   The routine calls dsytrd from LAPACK.
+     
+*/
+{ int lwork=-1,info;
+  double *work,work1,*e,*d;
+  char uplo='U';
+  d = (double *)calloc((size_t)*n,sizeof(double));
+  e = (double *)calloc((size_t)*n-1,sizeof(double));
+  /* work space query... */
+  F77_NAME(dsytrd)(&uplo,n,S,n,d,e,tau,&work1,&lwork,&info);
+  lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
+  work=(double *)calloc((size_t)lwork,sizeof(double));
+  /* Actual call... */
+  F77_NAME(dsytrd)(&uplo,n,S,n,d,e,tau,work,&lwork,&info);
+  free(work);free(d);free(e);
+}
+
+
 void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
 /* Finds C = R^{-1} B where R is the c by c matrix stored in the upper triangle 
    of r by c argument R. B is c by bc. (Possibility of non square argument

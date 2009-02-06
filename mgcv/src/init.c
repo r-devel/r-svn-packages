@@ -25,6 +25,7 @@ R_CMethodDef CEntries[] = {
     {"pls_fit",(DL_FUNC)&pls_fit,10},
     {"tweedious",(DL_FUNC)&tweedious,8},
     {"get_detS2",(DL_FUNC)&get_detS2,12},
+    {"get_stableS",(DL_FUNC)&get_stableS,13},
     {NULL, NULL, 0}
 };
 

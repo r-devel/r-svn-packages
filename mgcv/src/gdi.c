@@ -228,6 +228,7 @@ double qr_ldet_inv(double *X,int *r,double *Xi,int *get_inv)
 /* Obtains the log|X| and the inverse of X (r by r), by pivoted QR decomposition. 
    The inverse is returned (unpivoted) in Xi. 
    The function returns log|X| as its value.
+   X is overwirtten in the process
 */
 { double *tau,ldet,*p,*Qt;
   int *pivot,i,TRUE=1,j;
@@ -738,6 +739,243 @@ void get_detS2a(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deri
   free(gamma1);
   free(alpha);
   free(S);
+  free(Sb);
+  free(Sg);
+  if (*deriv) { free(rS);}
+  if (*fixed_penalty) {free(spf);}
+  free(Si);
+  free(ev);
+  free(B);
+  free(C);
+} /* end get_detS2a */
+
+
+
+void get_stableS(double *S,double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
+               double *det, double *det1, double *det2, double *d_tol,
+               double *r_tol,int *fixed_penalty)
+/* Routine to similarity transform S = \sum_i \lambda_i S_i, to produce an S which facilitates
+   stable computation. 
+
+   THEORETICAL NOTE: There appears to be no reason to use eigen-decompositions here. The rank 
+                     determination can be done by QR based methods, while the similarity 
+                     transformation can be achieved by tri-diagonalization. LAPACK routine
+                     dsytrd (Double SYmmetric TRi-Diagonalization) and dormtr (for 
+                     multiplication by the resulting orthogonal factor), provide what is needed.
+                  
+                     If the square-root of S is found by choleski on the diagonally pre-conditioned 
+                     S, then a well behaved root is obtained, with no `large-zero' leakage beyond 
+                     the range space of each component of S. This should be compared with `mroot' 
+                     (just pivoted Choleski, where some leakage does occur -- into the penalty null 
+                      space, but within the non-zero block of the penalty). 
+
+   Also evaluates log|S| and its derivatives wrt log(sp), in a stable manner, using 
+   a similarity transform strategy.
+
+   Inputs are:
+   `sp' the array of smoothing parameters.
+   `sqrtS' the `M' square root penalty matrices. The ith is `q' by `rSncol[i]'. They are 
+        packed one after the other. 
+   `deriv' is the order of derivatives required. 0,1 or 2.
+   `d_tol' is the tolerance to use for grouping dominant terms. 
+   `r_tol' (<< d_tol) is the tolerance used for rank determination.
+   `fixed_penalty' non-zero indicates that there is a fixed component of 
+          total penalty matrix S, the square root of which is in the final 
+          q * rSncol[M+1] elements of sqrtS.                 
+
+   Outputs are:
+   `det' the log determinant.
+   `det1' M-array of derivatives of log det wrt log sp. 
+   `det2' M by M Hessian of log det wrt log sp.   
+   
+*/
+{ double *rS, *Un, *U, *Si,*Sb,*B,*C,*Sg,*p,*p1,*p2,*p3,*frob,*ev,max_frob,x,*spf;
+  int iter,i,j,k,bt,ct,rSoff,K,Q,Qr,*gamma,*gamma1,*alpha,TRUE=1,FALSE=0,r,max_col,Mf;
+
+  if (*fixed_penalty) { 
+    Mf = *M + 1;  /* total number of components, including fixed one */
+    spf = (double *)calloc((size_t)Mf,sizeof(double));
+    for (i=0;i<*M;i++) spf[i]=sp[i];spf[*M]=1.0; /* includes sp for fixed term */
+  } 
+  else {spf=sp;Mf = *M;} /* total number of components, including fixed one */
+
+  /* Create a working copy of sqrtS, which can be modified  */
+  if (*deriv) { /* only need to modify if derivatives needed */
+    for (j=i=0;i<Mf;i++) j += rSncol[i];j *= *q;
+    rS = (double *)calloc((size_t) j,sizeof(double));
+    for (p=rS,p1=rS+j,p2=sqrtS;p<p1;p++,p2++) *p = *p2;
+  }
+  /* Explicitly form the Si (stored in a single block), so S_i is stored
+     in Si + i * q * q (starting i from 0). As iteration progresses,
+     blocks are shrunk -- always Q by Q */
+  p = Si = (double *)calloc((size_t)*q * *q * Mf,sizeof(double));
+  max_col = *q; /* need enough storage just in case square roots are over-sized */
+  for (rSoff=i=0;i<Mf;p+= *q * *q,rSoff+=rSncol[i],i++) {
+    bt=0;ct=1;mgcv_mmult(p,sqrtS+rSoff * *q,sqrtS+rSoff * *q,&bt,&ct,q,q,rSncol+i);
+    if (rSncol[i]>max_col) max_col=rSncol[i];
+  }
+
+ 
+  /* Initialize the sub-dominant set gamma and the counters */
+  K = 0;Q = *q;
+  frob =  (double *)calloc((size_t)Mf,sizeof(double)); 
+  gamma = (int *)calloc((size_t)Mf,sizeof(int));  /* terms remaining to deal with */
+  gamma1 = (int *)calloc((size_t)Mf,sizeof(int)); /* new gamma */
+  alpha = (int *)calloc((size_t)Mf,sizeof(int));  /* dominant terms */
+  for (i=0;i<Mf;i++) gamma[i] = 1; /* no terms dealt with initially */
+  
+  /* Other storage... */
+
+  //S = (double *) calloc((size_t) Q * Q,sizeof(double)); /* Transformed S (total) */
+  U=Sb = (double *) calloc((size_t) Q * Q,sizeof(double)); /* summation storage */
+  Sg = (double *) calloc((size_t) Q * Q,sizeof(double)); /* summation storage */
+  ev = (double *) calloc((size_t) Q,sizeof(double));     /* eigenvalue storage */
+  B = (double *) calloc((size_t) Q * max_col,sizeof(double)); /* Intermediate storage */
+  C = (double *) calloc((size_t) Q * max_col,sizeof(double)); /* Intermediate storage */
+
+  /* Start the main similarity transform loop */
+  iter =0;
+  while(1) {
+    iter ++;
+
+  /* Find the Frobenius norms of the Si in set gamma */
+    max_frob=0.0;
+    for (p=Si,i=0;i<Mf;i++,p += Q * Q) 
+      if (gamma[i]) { /* don't bother if already dealt with */ 
+        frob[i] = frobenius_norm(p,&Q,&Q);
+        if (frob[i] *spf[i] >max_frob) max_frob=frob[i]  * spf[i];
+    }
+  /* Find sets alpha and gamma' */
+    for (i=0;i<Mf;i++) {
+      if (gamma[i]) { /* term is still to be dealt with */
+        if (frob[i]  * spf[i] > max_frob * *d_tol) { 
+          alpha[i] = 1;gamma1[i] = 0; /* deal with it now */
+        } else {
+          alpha[i] = 0;gamma1[i] = 1; /* put it off */ 
+        }
+      } else { /* wasn't in gamma, so not in alpha or gamma1 */
+        alpha[i] = gamma1[i] = 0;
+      }
+    }
+
+  /* Form the scaled sum of the Si in alpha and eigen-decompose it to get its rank */
+    for (p=Sb,p1=p+Q*Q;p<p1;p++) *p=0.0; /* clear Sb */
+    for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (alpha[i]) { 
+      x = frob[i];
+      for (p1=p,p2=Sb,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 / x;
+    } 
+    mgcv_symeig(Sb,ev,&Q,&FALSE,&FALSE,&FALSE); /* get eigenvalues (ascending) of scaled sum over alpha */
+    
+    
+
+    r=1;
+    while(r<Q&&(ev[Q-r-1]>ev[Q-1] * *r_tol)) r++; 
+    /* ...  r is the rank of Sb, or any other positively weighted sum over alpha */
+
+    /* printf("\n iter = %d,  rank = %d,   Q = %d",iter,r,Q);
+    printf("\n gamma = ");for (i=0;i<Mf;i++) printf(" %d",gamma[i]);
+    printf("\n alpha = ");for (i=0;i<Mf;i++) printf(" %d",alpha[i]);
+    printf("\n gamma1 = ");for (i=0;i<Mf;i++) printf(" %d",gamma1[i]);
+    printf("\n ev = ");for (i=0;i<Q;i++) printf("  %g",ev[i]);*/
+
+  /* If Q==r then terminate (form S first if it's the first iteration) */
+    
+    if (Q==r) { 
+      if (iter==1 ) { /* form S */
+        for (p=Si,i=0;i<Mf;i++,p += Q*Q) { 
+          x = spf[i];
+          for (p1=p,p2=S,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+        }
+        break; 
+      } else break; /* just use current S */ 
+    } /* end if (Q==r) */
+
+  /* Form the dominant term and eigen-decompose it */
+    for (p=Sb,p1=p+Q*Q;p<p1;p++) *p = 0.0; /* clear Sb */
+    for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (alpha[i]) { /* summing S[[i]]*sp[i] over i in alpha */
+      x = spf[i];
+      for (p1=p,p2=Sb,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+    } 
+    mgcv_symeig(Sb,ev,&Q,&FALSE,&TRUE,&TRUE); /* get eigen decomposition of dominant term (ev descending) */
+    
+  /* .... U points to Sb, which now contains eigen-vectors*/
+
+  /* Form the sum over the elements in gamma1, Sg */
+
+    for (p=Sg,p1=p+Q*Q;p<p1;p++) *p=0.0; /* clear Sg */
+    for (p=Si,i=0;i<Mf;i++,p += Q*Q) if (gamma1[i]) { /* summing S[[i]]*sp[i] over i in gamma1 */
+      x = spf[i];
+      for (p1=p,p2=Sg,p3=p+Q*Q;p1<p3;p1++,p2++) *p2 += *p1 * x;
+    } 
+
+  /* Form S' the similarity transformed S */
+    if (K>0) { /* deal with upper right component B */
+      /* first copy out B into C */ 
+      for (j=0;j<Q;j++) for (i=0;i<K;i++) C[i + K * j] = S[i + *q * (j+K)];
+      /* Now form BU (store in B)*/
+      bt=0;ct=0;mgcv_mmult(B,C,U,&bt,&ct,&K,&Q,&Q);
+      /* Replace B into S */
+      for (j=0;j<Q;j++) for (i=0;i<K;i++) S[i + *q * (j+K)]= S[j + K + *q * i] = B[i + K * j];
+    }
+
+    /* Now deal with the lower right component, C */
+    /* U'SgU  */
+    bt=0;ct=0;mgcv_mmult(B,Sg,U,&bt,&ct,&Q,&Q,&Q); /* SgU is in B */
+    bt=1;ct=0;mgcv_mmult(C,U,B,&bt,&ct,&Q,&Q,&Q);  /* U'SgU is in C */ 
+    for (i=0;i<r;i++) C[i+i * Q] += ev[i];  /* Adding in the (truly) non zero eigen-values */
+   
+    /* Now copy C back into right part of S' */
+    for (j=0;j<Q;j++) for (i=0;i<Q;i++) S[i + K + *q * (j+K)] = C[i + Q * j];
+    
+  /* Transform the square roots of Si in alpha and gamma1 (Can leave fixed term alone - not needed)*/
+    if (*deriv) { /* transformed rS_i only needed for derivatives */
+      for (p=rS,k=0;k<*M;p += rSncol[k] * *q,k++) if (alpha[k]) {  /* p points to the square root of S_i */    
+        /* extract the part of rS_i to be modified */
+        for (i=0;i<Q;i++) for (j=0;j<rSncol[k];j++) C[i + Q * j] = p[i + K + *q * j];
+        bt=1;ct=0;mgcv_mmult(B,U,C,&bt,&ct,&r,rSncol+k,&Q); 
+        for (i=0;i<r;i++) for (j=0;j<rSncol[k];j++) p[i + K + *q * j] = B[i + r * j];
+        for (i=K+r;i<K+Q;i++) for (j=0;j<rSncol[k];j++) p[i + *q * j] = 0.0;
+      } else if (gamma1[k]) { 
+        for (i=0;i<Q;i++) for (j=0;j<rSncol[k];j++) C[i + Q * j] = p[i + K + *q * j];
+        bt=1;ct=0;mgcv_mmult(B,U,C,&bt,&ct,&Q,rSncol+k,&Q);
+        for (i=0;i<Q;i++) for (j=0;j<rSncol[k];j++) p[i + K + *q * j] = B[i + Q * j];
+      }
+    }
+
+  /* Transform the Si in gamma' */
+    Qr = Q - r;Un = U + r * Q;
+    for (p1=p=Si,i=0;i<Mf;i++,p += Q*Q,p1 +=Qr*Qr) if (gamma1[i]) { /* p points to old Si, and p1 to new */
+      bt=1;ct=0;mgcv_mmult(B,Un,p,&bt,&ct,&Qr,&Q,&Q);
+      bt=0;ct=0;mgcv_mmult(p1,B,Un,&bt,&ct,&Qr,&Qr,&Q); 
+    }
+  /* Update K, Q and gamma */   
+    K = K + r; Q = Qr;
+    for (i=0;i<Mf;i++) gamma[i] = gamma1[i];
+  } /* end of Similarity Transfrom Loop */
+
+  /* Now get the determinant and inverse of the transformed S (stored in B) - overwrites S */
+  //*det = qr_ldet_inv(S,q,B,deriv);
+  /* finally, the dervivatives, based on transformed S inverse and transformed square roots */  
+ 
+    *deriv = 0; // turning off next bit 
+  if (*deriv) { /* get the first derivatives */
+   for (p=rS,i=0;i<*M;p += *q *rSncol[i],i++) det1[i] = trBtAB(B,p,q,rSncol+i)*sp[i]; /* tr(S^{-1}S_i) */
+  }
+ 
+  if (*deriv==2) { /* get second derivatives, as well */
+    for (p1=Si,p=rS,i=0;i<*M;p += *q *rSncol[i],i++,p1 += *q * *q) { /* loop through creating S^{-1} S_i and storing in Si*/
+      bt=0;ct=0;mgcv_mmult(C,B,p,&bt,&ct,q,rSncol+i,q);
+      bt=0;ct=1;mgcv_mmult(p1,C,p,&bt,&ct,q,q,rSncol+i);
+    }
+    for (i=0;i<*M;i++) for (j=i;j<*M;j++) 
+      det2[i + *M * j] = det2[j + *M * i] = -sp[i]*sp[j]*trAB(Si + *q * *q *i,Si + *q * *q *j,q,q);
+    for (i=0;i<*M;i++) det2[i + *M * i] += det1[i];
+  }
+  free(frob);
+  free(gamma);
+  free(gamma1);
+  free(alpha);
+  //free(S);
   free(Sb);
   free(Sg);
   if (*deriv) { free(rS);}
