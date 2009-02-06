@@ -755,7 +755,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
                    use.svd=TRUE,mustart = NULL,null.coef=rep(0,ncol(X)),...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
-## indefinite Hessian! Main enhancements are: i) always peturbs the Hessian
+## indefinite Hessian! Main enhancements are: i) always perturbs the Hessian
 ## to +ve definite ii) step halves on step 
 ## failure, without obtaining derivatives until success; (iii) carries start
 ## values forward from one evaluation to next to speed convergence.    
@@ -772,7 +772,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
   }
   if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
 
-  if (reml&&FALSE) { ## DEBUG TEST: is there *any* evidence that limits are needed
+  if (reml) { ## DEBUG TEST: (&&FALSE this) is there *any* evidence that limits are needed
     frob.X <- sqrt(sum(X*X))
     lsp.max <- rep(NA,length(lsp0))
     for (i in 1:length(S)) { 

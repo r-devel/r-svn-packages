@@ -37,9 +37,10 @@ a clone of what S-PLUS provides use \link[gam]{gam} from package \code{gam}.
 \usage{
 
 gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
-    na.action,offset=NULL,method="GCV.Cp",optimizer=c("outer","newton"),
-    control=gam.control(),scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,
-    H=NULL,gamma=1,fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
+    na.action,offset=NULL,method="GCV.Cp",
+    optimizer=c("outer","newton"),control=gam.control(),scale=0,
+    select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,
+    fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
 }
 %- maybe also `usage' for other objects documented here.
 

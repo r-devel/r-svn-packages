@@ -986,10 +986,10 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
     fit_magic(X,sp,Si,H,gamma,scale,control,*rank_tol,yy,y0,y1,U1,V,d,b,&score,&norm,&delta,&rank,norm_const,n_score);
    
     /* free search related memory */
-    free2d(Si);free2d(M);free2d(K);free2d(My);free2d(Ky);free2d(yK);free2d(hess);
+    free2d(M);free2d(K);free2d(My);free2d(Ky);free2d(yK);free2d(hess);
     free2d(d2norm);free2d(d2delta);free(U1U1);free(rSms);free(u);
     free(VS);free(grad);free(dnorm);free(ddelta);free(nsp);free(ev);
-    free(bsp);free(bag);free(spok);free(sp);free(grad1);free(u0);
+    free(bsp);free(bag);free(spok);free(grad1);free(u0);
   } /* end of smoothness selection (if (mp>0) {... )*/
 
   /* prepare ``outputs''... */
@@ -1009,6 +1009,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   control[2]=1-use_sd; /* 1 if Hessian +ve definite, 0 otherwise */
   control[3]=iter; /* iterations used */
   control[4]=fit_call; /* number of evaluations of GCV/UBRE score */
+
+  if (m>0) {free(sp);free2d(Si);}
   
   free(tau);free(pivot);free(work);free(y0);free(y1);free(U1);free(V);free(d);free(sd_step);
   free(n_step);

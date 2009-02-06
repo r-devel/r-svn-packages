@@ -3,29 +3,8 @@
 
 ISSUES TO CLEAR
 
-* Upper limits on sps make no sense for shrinkage smoothers, where 
-  the whole point is that the penalty should be able to dominate.
-  Since I only put limits on when trying to solve the |S| problem,
-  I should try taking them off.  
-
-* add serious convergence testing --- thousands of reps, with many 
-  nuisance terms and a variety of smoothness selection methods, to 
-  test that we get *full* convergence every time. Include adaptive
-  te smoothers, and nesting, since these test the numerics harder.   
-
-* add test for single smooths (flush out memory stupidities)
-  
-* add tests for soap.... full soap examples should be in mgcvTest.
-
-* add pathalogical tests from 2008 paper
-
-* Add more on REML to the help files.
-
-* all branch testing of criteria families links and optimizers.
-
-* check gam.check for all optimizers and criteria.
-
-* need to add proper rank deficiency testing in mgcvTest
+* Tidy up newton code --- upper limit stuff just commented out at 
+present!
 
 1.5-0
 
@@ -115,6 +94,9 @@ ISSUES TO CLEAR
   `sp'.
 
 * ?linear.functional.term error fix.
+
+* memory leak in magic.c:magic fixed --- all fixed smoothing 
+  parameters lead to 2 arrays being left unfreed.
 
 1.4-1
 
