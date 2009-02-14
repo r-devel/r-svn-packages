@@ -23,14 +23,25 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
 	 int *n,int *q, int *M,int *Mp,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML,
          int *fisher,int *fixed_penalty);
 
+void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
+         double *sp,double *z,double *w,double *mu,double *eta, double *y,
+	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
+	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
+         double *P0, double *P1,double *P2,double *trA,
+         double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
+	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
+	  int *REML,int *fisher,int *fixed_penalty);     
+
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);
+void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,int *rE,double *eta,
+	      double *penalty,double *rank_tol);
 
 void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
                double *det, double *det1, double *det2, double *d_tol,
                double *r_tol,int *fixed_penalty); /* stable determinant of sum evaluation */
 
-void get_stableS(double *S,double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
+void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
                double *det, double *det1, double *det2, double *d_tol,
 		 double *r_tol,int *fixed_penalty);
 
@@ -55,7 +66,7 @@ void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd, int *get_vectors,int *descending);
 void mroot(double *A,int *rank,int *n);
 void R_cond(double *R,int *r,int *c,double *work,double *Rcondition);
-void mgcv_td_qy(double *S,double *tau,int *n,int *m, double *B,int *left,int *transpose);
+void mgcv_td_qy(double *S,double *tau,int *m,int *n, double *B,int *left,int *transpose);
 void mgcv_tri_diag(double *S,int *n,double *tau);
 
 /* basis constructor/prediction routines*/

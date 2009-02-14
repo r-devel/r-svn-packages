@@ -124,7 +124,7 @@ matrix(um[[2]],q,q);er$v
 }
 
 
-void mgcv_td_qy(double *S,double *tau,int *n,int *m, double *B,int *left,int *transpose)
+void mgcv_td_qy(double *S,double *tau,int *m,int *n, double *B,int *left,int *transpose)
 /* Multiplies m by n matrix B by orthogonal matrix returned from mgcv_tri_diag and stored in 
    S, tau. B is overwritten with result. 
     
