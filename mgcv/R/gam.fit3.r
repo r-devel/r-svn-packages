@@ -30,7 +30,7 @@ gam.reparam <- function(rS,lsp,deriv)
   M <- length(lsp) 
   if (length(rS)>M) fixed.penalty <- TRUE else fixed.penalty <- FALSE
   
-  d.tol <- .1 ## .Machine$double.eps^.3
+  d.tol <- .Machine$double.eps^.3
 
 ### NOTE: convergence failures whenever there are 2 or more similarity iterations, even though
 ###       *same* model and data is fine if tol changed to give just 1 iter.
@@ -44,7 +44,9 @@ gam.reparam <- function(rS,lsp,deriv)
                   fixed_penalty = as.integer(fixed.penalty))
   S <- matrix(oo$S,q,q)
   p <- abs(diag(S))^.5            ## by Choleski, p can not be zero if S +ve def
-  E <-  t(t(chol(t(t(S/p)/p)))*p) ## the square root S, which column separation
+  p[p==0] <- 1                    ## but it's possible to make a mistake!!
+  E <-  t(t(chol(t(t(S/p)/p)))*p) ## the square root S, with column separation
+  ##E <- t(mroot(t(t(S/p)/p),rank=q)*p)
   Qs <- matrix(oo$Qs,q,q)         ## the reparameterization matrix t(Qs)%*%S%*%Qs -> S
   k0 <- 1
   for (i in 1:length(rS)) { ## unpack the rS in the new space
@@ -1524,6 +1526,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
     } else score1 <- b$GCV
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
+    ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
     if (score1<score) { ## accept
       old.score <- score 
       mustart <- b$fitted.values
@@ -1548,6 +1551,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
 
     } else { ## step halving ...
       step <- Nstep ## start with the (pseudo) Newton direction
+      ##sc.extra <- 1e-4*sum(grad*step) ## -ve sufficient decrease 
       while (score1>score && ii < maxHalf) {
         if (ii==3&&i<10) { ## Newton really not working - switch to SD, but keeping step length 
           s.length <- min(sum(step^2)^.5,maxSstep)
@@ -1571,7 +1575,7 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
         } else if (scoreType=="UBRE") {
           score1 <- b1$UBRE
         } else score1 <- b1$GCV
-
+        ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
         if (score1 <= score) { ## accept
           b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0, S=S,rS=rS,UrS=UrS,off=off, H=H,
              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
@@ -1606,8 +1610,9 @@ newton <- function(lsp,X,y,S,rS,UrS,off,L,lsp0,H,offset,U1,Mp,family,weights,
    
     ## test for convergence
     converged <- TRUE
-    score.scale <- b$scale.est + abs(score);    
-    uconv.ind <- abs(grad) > score.scale*conv.tol*.1
+    score.scale <- b$scale.est + abs(score);
+    grad2 <- diag(hess)    
+    uconv.ind <- (abs(grad) > score.scale*conv.tol*.1)|(abs(grad2)>score.scale*conv.tol*.1)
     if (sum(abs(grad)>score.scale*conv.tol)) converged <- FALSE
     if (abs(old.score-score)>score.scale*conv.tol) { 
       if (converged) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress

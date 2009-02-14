@@ -188,7 +188,7 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
 { int i,j,k;
   double x,*pR,*pC;
   for (j=0;j<*bc;j++) { /* work across columns of B & C */
-    for (i = *c-1;i>=0;i--) { /* work up each row of B & C */
+    for (i = *c-1;i>=0;i--) { /* work up each column of B & C */
       x = 0.0;
       /* for (k=i+1;k<*c;k++) x += R[i + *r * k] * C[k + j * *c]; ...following replaces...*/
       pR = R + i + (i+1) * *r;pC = C + j * *c + i + 1;
@@ -198,6 +198,22 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
   }
 }
 
+void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
+/* Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
+   of r by c argument R. B is c by bc. (Possibility of non square argument
+   R facilitates use with output from mgcv_qr). This is just a standard forward 
+   substitution loop.
+*/  
+{ int i,j,k;
+  double x;
+  for (j=0;j<*bc;j++) { /* work across columns of B & C */
+    for (i = 0;i< *c;i++) { /* work down each column of B & C */
+      x=0.0;
+      for (k=0;k<i;k++) x+= C[k + j * *c] * R[k + i * *r]; 
+      C[i + j * *c] = (B[i + j * *c] - x) / R[i + i * *r]; 
+    }
+  }
+}
 
 
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)

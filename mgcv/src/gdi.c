@@ -1043,7 +1043,7 @@ void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int
     for (i=0;i<*M;i++) det2[i + *M * i] += det1[i];
   }
 
-  printf("\n%d similarity transform iterations\n",iter);
+  // printf("\n%d similarity transform iterations\n",iter);
   free(frob);
   free(gamma);
   free(gamma1);
@@ -2014,6 +2014,95 @@ void pearson(double *w, double *w1,double *w2,double *z,double *z1, double *z2,
 }
 
 
+
+void applyP(double *y,double *x,double *R,double *Vt,int neg_w,int nr,int r,int c)
+/* Forms y = Px. If neg_w==0 P = R^{-1} otherwise P = R^{-1}V  where V is 
+   transpose of Vt (r by r). x is r by c. R is in the r by r upper triangle of nr by r 
+   array R. */
+{ double *x1;
+  int bt,ct;
+  if (neg_w) { /* apply V */
+    x1 = (double *)calloc((size_t)r*c,sizeof(double));
+    bt=1;ct=0;mgcv_mmult(x1,Vt,x,&bt,&ct,&r,&c,&r);   /* x1 = V x */    
+    mgcv_backsolve(R,&nr,&r,x1,y, &c);                /* y = R^{-1} V x */
+    free(x1);
+  } else mgcv_backsolve(R,&nr,&r,x,y, &c);            /* y = R^{-1} x */
+}
+
+void applyPt(double *y,double *x,double *R,double *Vt,int neg_w,int nr,int r,int c)
+/* Forms y = P'x. If neg_w==0 P = R^{-1} otherwise P = R^{-1}V  where V is 
+   transpose of Vt (r by r). x is r by c. R is in the r by r upper triangle of nr by r 
+   array R. */
+{ double *x1;
+  int bt,ct;
+  if (neg_w) { /* apply V */
+    x1 = (double *)calloc((size_t)r*c,sizeof(double));
+    mgcv_forwardsolve(R,&nr,&r,x,x1, &c);                /* x1 = R^{-T} x */
+    bt=0;ct=0;mgcv_mmult(y,Vt,x1,&bt,&ct,&r,&c,&r);   /* y = V'R^{-T} x */    
+    free(x1);
+  } else mgcv_forwardsolve(R,&nr,&r,x,y, &c);            /* y = R^{-T} x */
+}
+
+void ift1(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,double *w,
+         double *dwdeta,double *b1, double *b2,double *eta1,double *eta2,
+	  int *n,int *r, int *M,int *rSncol,int *deriv2,int *neg_w,int *nr)
+
+/* Uses the implicit function theorem to get derivatives of beta wrt rho = log(sp) cheaply
+   without iteration, when Newton or Fisher-canonical-link are used... 
+   X is n by q
+   P is q by r
+   there are M smoothing parameters (unlogged) in sp
+   beta is a q vector
+   b1 is q by M
+   b2 is q by n_2dCols 
+*/
+{ int n_2dCols,i,j,k,one=1,bt,ct;
+  double *work,*Skb,*pp,*p0,*p1,*work1;
+  work = (double *) calloc((size_t)*n,sizeof(double));
+  work1 = (double *) calloc((size_t)*n,sizeof(double));
+  Skb = (double *) calloc((size_t)*r,sizeof(double));
+  n_2dCols = (*M * (1 + *M))/2;
+  for (i=0;i<*M;i++) { /* first derivative loop */
+    multSk(Skb,beta,&one,i,rS,rSncol,r,work); /* get S_i \beta */
+    for (j=0;j<*r;j++) Skb[j] *= -sp[i]; 
+    //bt=1;ct=0;mgcv_mmult(work,P,Skb,&bt,&ct,r,&one,q); 
+    applyPt(work,Skb,R,Vt,*neg_w,*nr,*r,1);
+    applyP(b1 + i * *r,work,R,Vt,*neg_w,*nr,*r,1);
+    //bt=0;ct=0;mgcv_mmult(b1 + i * *q,P,work,&bt,&ct,q,&one,r); /* so ith col of b1 contains -2sp[i]PP'S_ib */ 
+  } /* first derivatives of beta finished */
+
+  bt=0;ct=0;mgcv_mmult(eta1,X,b1,&bt,&ct,n,M,r); /* first deriv of eta */
+
+  if (*deriv2) { /* then second derivatives needed */
+    pp = b2;   
+    for (i=0;i<*M;i++) for (k=i;k<*M;k++) { 
+      p0 = eta1 + *n * i;p1 = eta1 + *n * k;
+      /*  for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * 2 * w[j] * dwdeta[j];
+          .... this version only for use when weights are square root weights,
+          following is used instead
+      */
+      for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * dwdeta[j];
+      bt=1;ct=0;mgcv_mmult(Skb,X,work,&bt,&ct,r,&one,n); /* X'f */
+      multSk(work,b1+k* *r,&one,i,rS,rSncol,r,work1); /* get S_i dbeta/drho_k */
+      for (j=0;j<*r;j++) Skb[j] += -sp[i]*work[j];
+      multSk(work,b1+i* *r,&one,k,rS,rSncol,r,work1); /* get S_k dbeta/drho_i */
+      for (j=0;j<*r;j++) Skb[j] += -sp[k]*work[j];
+      applyPt(work,Skb,R,Vt,*neg_w,*nr,*r,1);
+      // bt=1;ct=0;mgcv_mmult(work,P,Skb,&bt,&ct,r,&one,q); 
+      // bt=0;ct=0;mgcv_mmult(pp,P,work,&bt,&ct,q,&one,r);
+      applyP(pp,work,R,Vt,*neg_w,*nr,*r,1);
+      if (i==k) for (j=0;j< *r;j++) pp[j] += b1[i * *r + j];
+      pp += *r;
+    }
+
+    bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,r); /* second derivatives of eta */
+  }
+
+  free(work);free(Skb);free(work1);
+} /* end ift1 */
+
+
+
 void ift(double *X,double *P,double *rS,double *beta,double *sp,double *w,
          double *dwdeta,double *b1, double *b2,double *eta1,double *eta2,
          int *n,int *q,int *r, int *M,int *rSncol,int *deriv2)
@@ -2312,7 +2401,6 @@ int icompare (const void * a, const void * b)
 }
 
 
-
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     double *sp,double *z,double *w,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
@@ -2573,7 +2661,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
         d[i] = 1/sqrt(d[i]);
       }
     } /* d now contains diagonal of diagonal matrix (I-2D^2)^{-1/2} (possibly pseudoinverse) */
-    /* Now form (I-2D^2)^.5 Vt and store in Vt... */
+    /* Now form (I-2D^2)^-.5 Vt and store in Vt... */
     for (p0=Vt,i=0;i<rank;i++)
     for (p1=d,p2=d+rank;p1<p2;p1++,p0++) *p0 *= *p1;
 
@@ -2583,7 +2671,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* Form P */
     bt=0;ct=1;mgcv_mmult(P,Ri,Vt,&bt,&ct,&rank,&rank,&rank);
    
-    free(d);free(Vt);   
+    free(d);   
   } else { /* no negative weights so P and K much simpler */
     /* Form K */
     for (p0=K,p1=Q1,j=0;j<rank;j++,p1 += *n) /* copy just Q1 into K */
@@ -2634,7 +2722,9 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   
   PKtz = (double *)calloc((size_t) rank,sizeof(double)); /* PK'z --- the pivoted coefficients*/
   bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,&rank,&one,n);
-  bt=0;ct=0;mgcv_mmult(PKtz,P,work,&bt,&ct,&rank,&one,&rank);  
+  applyP(PKtz,work,R,Vt,neg_w,nr,rank,1);
+
+  //  bt=0;ct=0;mgcv_mmult(PKtz,P,work,&bt,&ct,&rank,&one,&rank);  
 
 
   /************************************************************************************/
@@ -2767,8 +2857,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* Note that PKtz used as pivoted version of beta, but not clear that PKtz really essential if IFT used */
 
    
-    ift(X,P,rS,PKtz,sp,w,a1,b1,b2,eta1,eta2,n,&rank,&rank,M,rSncol,&deriv2);
-  
+    // ift(X,P,rS,PKtz,sp,w,a1,b1,b2,eta1,eta2,n,&rank,&rank,M,rSncol,&deriv2);
+    ift1(R,Vt,X,rS,PKtz,sp,w,a1,b1,b2,eta1,eta2,n,&rank,M,rSncol,&deriv2,&neg_w,&nr);
   
     /* Now use IFT based derivatives to obtain derivatives of W and hence the T_* terms */
 
@@ -2891,7 +2981,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   /* clean up memory, except what's needed to get tr(A) and derivatives 
      
   */ 
-  
+
+  if (neg_w) free(Vt);   
   free(pivot);free(work);free(PKtz);free(zz);
   free(pivot1);
   if (*deriv) {

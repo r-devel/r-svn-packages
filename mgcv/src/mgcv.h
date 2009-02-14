@@ -59,6 +59,7 @@ void mgcv_chol(double *a,int *pivot,int *n,int *rank);
 void mgcv_svd(double *x,double *u, double *d,int *r,int *c);
 void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp);
 void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
+void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau);
 void update_qr(double *Q,double *R,int *n, int *q,double *lam, int *k);
 void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);

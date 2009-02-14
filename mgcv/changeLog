@@ -67,6 +67,12 @@ present!
 * The `newton' optimizer places upper limits on smoothing parameters 
   for all (RE)ML smoothing parameter estimation, to enhance stability. 
 
+* The `newton' optimizer was dropping terms when their gradient was 
+  below the convergence threshold (and allowing re-entry). This 
+  promotes zig-zagging unless the terms are independent. Now only 
+  drops terms if gradient and second derivative are very small 
+  (so obective is really flat). 
+
 * The adaptive smoothing "ad" class has been greatly simplified and 2D 
   penalty improved. Much faster as a result, and 2D adaptive actually 
   quite good.
