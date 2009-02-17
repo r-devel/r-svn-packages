@@ -355,7 +355,7 @@ void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv
     rS1 = (double *)calloc((size_t) j,sizeof(double));
     rS2 = (double *)calloc((size_t) j,sizeof(double));
     for (p=rS1,p3=rS2,p1=rS1+j,p2=sqrtS;p<p1;p++,p2++,p3++) *p3 = *p = *p2;
-  }
+  } else {rS1=rS2=NULL;}
   /* Explicitly form the Si (stored in a single block), so S_i is stored
      in Si + i * q * q (starting i from 0). As iteration progresses,
      blocks are shrunk -- always q by Q */
@@ -616,7 +616,7 @@ void get_detS2a(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deri
     for (j=i=0;i<Mf;i++) j += rSncol[i];j *= *q;
     rS = (double *)calloc((size_t) j,sizeof(double));
     for (p=rS,p1=rS+j,p2=sqrtS;p<p1;p++,p2++) *p = *p2;
-  }
+  } else rS=NULL;
   /* Explicitly form the Si (stored in a single block), so S_i is stored
      in Si + i * q * q (starting i from 0). As iteration progresses,
      blocks are shrunk -- always Q by Q */
@@ -1264,7 +1264,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
     KtKPtrSm = (double *)calloc((size_t)(*r * *q),sizeof(double));/* transient storage for K'K P'rSm */ 
     KKtKPtrSm = (double *)calloc((size_t)(*n * *q),sizeof(double));/* transient storage for K'K P'rSm */ 
     diagKPtSPKtKKt = (double *)calloc((size_t)(*n * *M),sizeof(double));
-  } else { PtSP=KtKPtrSm=diagKPtSPKtKKt=(double *)NULL; }
+  } else {  KKtKPtrSm=PtSPKtK= PtSP=KtKPtrSm=diagKPtSPKtKKt=(double *)NULL; }
   for (rSoff=0,m=0;m < *M;m++) {
     bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
     bt=0;ct=0;mgcv_mmult(KPtrSm,K,PtrSm,&bt,&ct,n,rSncol+m,r); 
@@ -1901,8 +1901,8 @@ void pearson2(double *P, double *P1, double *P2,
       Pe2 = (double *)calloc((size_t)n,sizeof(double)); /* for d2P/deta2 */
       v2 = (double *)calloc((size_t)n,sizeof(double));
       Pi2 = (double *)calloc((size_t)n_2dCols*n,sizeof(double)); /* for d2P_i/drho */
-    }
-  }
+    } else {Pe2=v2=Pi2=NULL;}
+  } else {Pi1 = Pe2 = v2 = Pe1 = Pi2 = NULL;}
   *P=0.0;
   for (i=0; i < n;i++) {
     resid = y[i]-mu[i];
@@ -2158,6 +2158,233 @@ void ift(double *X,double *P,double *rS,double *beta,double *sp,double *w,
 }
 
 
+
+
+void drop_cols(double *X, int r, int c,int *drop, int n_drop) 
+/* Routine to drop the columns in X indexed by drop (*ascending* order) 
+   Result returned in X.
+*/ 
+{ int k,j,j0,j1;  
+  double *p,*p1,*p2;
+  if (n_drop<=0) return;
+  if (n_drop) { /* drop the unidentifiable columns */
+    for (k=0;k<n_drop;k++) {
+      j = drop[k]-k; /* target start column */
+      j0 = drop[k]+1; /* start of block to copy */
+      if (k<n_drop-1) j1 = drop[k+1]; else j1 = c; /* end of block to copy */
+      for (p=X + j * r,p1=X + j0 * r,p2=X + j1 * r;p1<p2;p++,p1++) *p = *p1;
+    }      
+  }
+}
+
+void drop_rows(double *X,int r, int c,int *drop,int n_drop)
+/* Drops rows indexed by drop from X, returning result packed in 
+   r-n_drop by c matrix X. `drop' *must* be in ascending order */
+{ int i,j,k;
+  double *Xs;
+  if (n_drop<=0) return;
+  Xs=X;
+  for (j=0;j<c;j++) { /* work across columns */ 
+    for (i=0;i<drop[0];i++,X++,Xs++) *X = *Xs;  
+    Xs++;
+    for (k=1;k<n_drop;k++) { 
+      for (i=drop[k-1]+1;i<drop[k];i++,X++,Xs++) *X = *Xs;
+      Xs++;
+    }
+    for (i=drop[n_drop-1]+1;i<r;i++,X++,Xs++) *X = *Xs;  
+  }
+}
+
+
+void undrop_rows(double *X,int r,int c,int *drop,int n_drop)
+/* Inserts extra zero rows in X in the rows indicated by drop,
+   and shifts the others up accordingly. So, X ends up r by c, with 
+   zero rows in the positions given in drop.
+
+   The assumption is that X is densely packed as (r-n_drop) by c on 
+   entry.
+   
+   `drop' *must* be in ascending order.
+*/
+{ double *Xs;
+  int i,j,k;
+  if (n_drop <= 0) return;
+  Xs = X + (r-n_drop)*c - 1; /* position of the end of input X */
+  X += r*c - 1;              /* end of final X */
+  for (j=c-1;j>=0;j--) { /* back through columns */
+    for (i=r-1;i>drop[n_drop-1];i--,X--,Xs--) *X = *Xs;
+    *X = 0.0; X--;
+    for (k=n_drop-1;k>0;k--) {
+      for (i=drop[k]-1;i>drop[k-1];i--,X--,Xs--) *X = *Xs;
+      *X = 0.0; X--;
+    }
+    for (i=drop[0]-1;i>=0;i--,X--,Xs--) *X = *Xs; 
+  }
+}
+
+void undrop_cols(double *X,int r,int c, int *drop, int n_drop)
+/* X has allocated storage for an r by c matrix on entry, but is 
+   packed as an r by (c - n_drop) matrix. On output it is full r by
+   c, with zeroes in the inserted columns indexed by drop.
+   
+   `drop' *must* be in ascending order.
+*/
+{ double *Xs;
+  int i,k,n;
+  if (n_drop <= 0) return;
+  Xs = X + r*(c-n_drop) - 1; /* end of input matrix */
+  X += r*c - 1;              /* end of output matrix */
+  
+  n = (c-drop[n_drop-1]-1)*r; /* size of first block to copy */
+  for (i = 0;i<n;i++,X--,Xs--) *X = *Xs;
+  for (i=0;i<r;i++,X--) *X = 0.0; /* insert 0s at col drop[n_drop-1] */
+  
+  for (k=n_drop-1;k>0;k++) { /* work through drop */
+    n = (drop[k] - drop[k-1]-1)*r; /* size of block between cols drop[k-1] and drop[k] */
+    for (i=0;i<n;i++,X--,Xs--) *X = *Xs;
+    for (i=0;i<r;i++,X--) *X = 0.0; /* insert 0s at col drop[k-1] */
+  }
+  /* There is no last block to copy --- it's already in place */
+}
+
+
+
+double MLpenalty1(double *det1,double *det2,double *Tk,double *Tkm,double *nulli, double *R,double *Q, int *nind,double *sp,
+                 double *rS,int *rSncol,int *q,int *n,int *Ms,int *M,int *neg_w,double *rank_tol,int *deriv) {
+/* Routine to obtain the version of log|X'WX+S| that applies to ML, rather than REML.
+   This version assumes that we are working in an already truncated range-null separated space.
+
+   * nulli is an array indicating whether a parameter (column) relates to the null 
+     space (+ve) or range space (-ve) of the total penalty matrix.
+   * Q, R are the QR factors of diag(abs(W))X augmenented by the square root of S
+   * nind is the array indexing the locations of the `neg_w' -ve elements of W.
+   * q is the number of model coefficients
+   * Ms is the penalty null space dimension.
+   * nn is the number of rows in Q. 
+
+   Basic task of the routine is to project Hessian of the penalized log likelihood 
+   into the range space of the penalty, in order to obtain the correction term that 
+   applies for ML.
+
+   NOTE: rS is over-written by this. 
+*/
+
+  double *RU1,*tau,*work,*Ri,*Qb,*K,*P,*IQ,*IQQ,*Vt,
+         *d,*p0,*p1,*p2,*p3,ldetXWXS,ldetI2D;
+  int ScS,bt,ct,qM,*pivot,i,j,k,left,tp,n_drop=0,*drop,FALSE=0; 
+
+  drop = (int *)calloc((size_t)*Ms,sizeof(int));
+  for (i=0;i < *q;i++) if (nulli[i]>0.0) { drop[n_drop] = i;n_drop++; }
+
+  for (ScS=0.0,i=0;i<*M;i++) ScS += rSncol[i]; /* total columns of rS */
+
+  qM = *q - n_drop;
+
+  RU1 = (double *)calloc((size_t) *q * *q ,sizeof(double));
+  for (p1=RU1,p2=R,p3=R+ *q * *q;p2 < p3;p1++,p2++) *p1 = *p2;
+ 
+  drop_cols(RU1,*q,*q,drop,n_drop); /* drop the null space columns from R */ 
+
+  /* A pivoted QR decomposition of RU1 is needed next */
+  tau=(double *)calloc((size_t)qM,sizeof(double)); /* part of reflector storage */
+  pivot=(int *)calloc((size_t)qM,sizeof(int));
+  
+  mgcv_qr(RU1,q,&qM,pivot,tau); /* RU1 and tau now contain the QR decomposition information */
+  /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
+  
+  /* Ri needed */
+
+  Ri =  (double *)calloc((size_t) qM * qM,sizeof(double)); 
+  Rinv(Ri,RU1,&qM,q,&qM); /* getting R^{-1} */
+  
+  /* new Q factor needed explicitly */
+
+  Qb = (double *)calloc((size_t) *q * qM,sizeof(double)); 
+  for (i=0;i< qM;i++) Qb[i * *q + i] = 1.0;
+  left=1;tp=0;mgcv_qrqy(Qb,RU1,tau,q,&qM,&qM,&left,&tp); /* Q from the QR decomposition */
+
+  free(tau);
+
+  K = (double *)calloc((size_t) *n * qM,sizeof(double));
+  P = (double *)calloc((size_t) qM * qM,sizeof(double));
+
+  if (*neg_w) { /* need to deal with -ve weight correction */
+    if (*neg_w < *q+1) k = *q+1; else k = *neg_w;
+    IQ = (double *)calloc((size_t) k * *q,sizeof(double)); 
+    for (i=0;i< *neg_w;i++) { /* Copy the rows of Q corresponding to -ve w_i into IQ */
+      p0 = IQ + i;p1 = Q + nind[i];
+      for (j=0;j<*q;j++,p0+=k,p1+= *n) *p0 = *p1;
+    }
+    /* Note that IQ may be zero padded, for convenience */
+    IQQ = (double *)calloc((size_t) k * qM,sizeof(double)); 
+    bt=0;ct=0;mgcv_mmult(IQQ,IQ,Qb,&bt,&ct,&k,&qM,q); /* I^-Q_1 \bar Q is k by rank */
+    free(IQ);
+     
+    /* Get the SVD of IQQ */
+    Vt = (double *)calloc((size_t) qM * qM,sizeof(double));
+    d = (double *)calloc((size_t) qM,sizeof(double));
+    mgcv_svd_full(IQQ,Vt,d,&k,&qM); /* SVD of IQ */
+    free(IQQ);
+    for (i=0;i<qM;i++) {
+      d[i] = 1 - 2*d[i]*d[i];
+      if (d[i]<=0) d[i]=0.0; 
+      else {
+        ldetI2D += log(d[i]); /* log|I-2D^2| */ 
+        d[i] = 1/sqrt(d[i]);
+      }
+    } /* d now contains diagonal of diagonal matrix (I-2D^2)^{-1/2} (possibly pseudoinverse) */
+    /* Now form (I-2D^2)^.5 Vt and store in Vt... */
+    for (p0=Vt,i=0;i<qM;i++)
+    for (p1=d,p2=d+qM;p1<p2;p1++,p0++) *p0 *= *p1;
+    
+    /* Form K */
+   
+    work = (double *)calloc((size_t) *q * qM,sizeof(double));
+    bt=0;ct=1;mgcv_mmult(work,Qb,Vt,&bt,&ct,q,&qM,&qM); /* \bar Q V (I - 2D^2)^.5 */
+
+    bt=0;ct=0;mgcv_mmult(K,Q,work,&bt,&ct,n,&qM,q);
+    free(work);
+    
+    /* Form P */
+    bt=0;ct=1;mgcv_mmult(P,Ri,Vt,&bt,&ct,&qM,&qM,&qM);
+    free(d);free(Vt);   
+    
+  } else { /* no negative weights, so P and K can be obtained directly */
+    ldetI2D = 0.0;
+    /* Form K */
+    bt=0;ct=0;mgcv_mmult(K,Q,Qb,&bt,&ct,n,&qM,q);
+    /* Form P */
+    for (p0=P,p1=Ri,p2=Ri+ qM * qM;p1<p2;p0++,p1++) *p0 = *p1; /* copy R^{-1} into P */
+  }
+
+  free(Ri);
+
+  /* Evaluate the required log determinant... */
+
+  for (ldetXWXS=0.0,i=0;i<qM;i++) ldetXWXS += log(fabs(RU1[i + i * *q])); 
+  ldetXWXS *= 2;
+ 
+  ldetXWXS += ldetI2D; /* the negative weights correction */
+  
+  free(RU1);
+
+  /* rS also needs to have null space parts dropped, and to be pivoted... */
+
+  drop_rows(rS,*q,ScS,drop,n_drop);   /* rS now rank by ScS */ 
+  pivoter(rS,&qM,&ScS,pivot,&FALSE,&FALSE); /* row pivot of rS */
+  
+  free(Qb);free(pivot);
+
+  /* Now we have all the ingredients to obtain required derivatives of the log determinant... */
+  
+  if (*deriv)
+    get_ddetXWXpS(det1,det2,P,K,sp,rS,rSncol,Tk,Tkm,n,&qM,&qM,M,deriv);
+
+  free(P);free(K);free(drop);
+  return(ldetXWXS);
+} /* end of MLpenalty1 */
+
+
 double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, double *R,double *Q, int *nind,double *sp,
                  double *rS,int *rSncol,int *q,int *n,int *nn,int *Ms,int *M,int *neg_w,double *rank_tol,int *deriv) {
 /* Routine to obtain the version of log|X'WX+S| that applies to ML, rather than REML.
@@ -2188,7 +2415,7 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
   
   mgcv_qr(RU1,q,&qM,pivot,tau); /* RU1 and tau now contain the QR decomposition information */
   /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
-  
+ 
   /* Now obtain rank of new factor R */
   
   work = (double *)calloc((size_t)(4 * qM),sizeof(double));
@@ -2302,95 +2529,11 @@ double MLpenalty(double *det1,double *det2,double *Tk,double *Tkm,double *U1, do
 
   free(P);free(K);
   return(ldetXWXS);
-}
+} /* end of MLpenalty */
 
 
-void drop_cols(double *X, int r, int c,int *drop, int n_drop) 
-/* Routine to drop the columns in X indexed by drop (*ascending* order) 
-   Result returned in X.
-*/ 
-{ int k,j,j0,j1;  
-  double *p,*p1,*p2;
-  if (n_drop<=0) return;
-  if (n_drop) { /* drop the unidentifiable columns */
-    for (k=0;k<n_drop;k++) {
-      j = drop[k]-k; /* target start column */
-      j0 = drop[k]+1; /* start of block to copy */
-      if (k<n_drop-1) j1 = drop[k+1]; else j1 = c; /* end of block to copy */
-      for (p=X + j * r,p1=X + j0 * r,p2=X + j1 * r;p1<p2;p++,p1++) *p = *p1;
-    }      
-  }
-}
-
-void drop_rows(double *X,int r, int c,int *drop,int n_drop)
-/* Drops rows indexed by drop from X, returning result packed in 
-   r-n_drop by c matrix X. `drop' *must* be in ascending order */
-{ int i,j,k;
-  double *Xs;
-  if (n_drop<=0) return;
-  Xs=X;
-  for (j=0;j<c;j++) { /* work across columns */ 
-    for (i=0;i<drop[0];i++,X++,Xs++) *X = *Xs;  
-    Xs++;
-    for (k=1;k<n_drop;k++) { 
-      for (i=drop[k-1]+1;i<drop[k];i++,X++,Xs++) *X = *Xs;
-      Xs++;
-    }
-    for (i=drop[n_drop-1]+1;i<r;i++,X++,Xs++) *X = *Xs;  
-  }
-}
 
 
-void undrop_rows(double *X,int r,int c,int *drop,int n_drop)
-/* Inserts extra zero rows in X in the rows indicated by drop,
-   and shifts the others up accordingly. So, X ends up r by c, with 
-   zero rows in the positions given in drop.
-
-   The assumption is that X is densely packed as (r-n_drop) by c on 
-   entry.
-   
-   `drop' *must* be in ascending order.
-*/
-{ double *Xs;
-  int i,j,k;
-  if (n_drop <= 0) return;
-  Xs = X + (r-n_drop)*c - 1; /* position of the end of input X */
-  X += r*c - 1;              /* end of final X */
-  for (j=c-1;j>=0;j--) { /* back through columns */
-    for (i=r-1;i>drop[n_drop-1];i--,X--,Xs--) *X = *Xs;
-    *X = 0.0; X--;
-    for (k=n_drop-1;k>0;k--) {
-      for (i=drop[k]-1;i>drop[k-1];i--,X--,Xs--) *X = *Xs;
-      *X = 0.0; X--;
-    }
-    for (i=drop[0]-1;i>=0;i--,X--,Xs--) *X = *Xs; 
-  }
-}
-
-void undrop_cols(double *X,int r,int c, int *drop, int n_drop)
-/* X has allocated storage for an r by c matrix on entry, but is 
-   packed as an r by (c - n_drop) matrix. On output it is full r by
-   c, with zeroes in the inserted columns indexed by drop.
-   
-   `drop' *must* be in ascending order.
-*/
-{ double *Xs;
-  int i,j,k,n;
-  if (n_drop <= 0) return;
-  Xs = X + r*(c-n_drop) - 1; /* end of input matrix */
-  X += r*c - 1;              /* end of output matrix */
-  
-  n = (c-drop[n_drop-1]-1)*r; /* size of first block to copy */
-  for (i = 0;i<n;i++,X--,Xs--) *X = *Xs;
-  for (i=0;i<r;i++,X--) *X = 0.0; /* insert 0s at col drop[n_drop-1] */
-  
-  for (k=n_drop-1;k>0;k++) { /* work through drop */
-    n = (drop[k] - drop[k-1]-1)*r; /* size of block between cols drop[k-1] and drop[k] */
-    for (i=0;i<n;i++,X--,Xs--) *X = *Xs;
-    for (i=0;i<r;i++,X--) *X = 0.0; /* insert 0s at col drop[k-1] */
-  }
-  /* There is no last block to copy --- it's already in place */
-}
 
 
 
@@ -2409,7 +2552,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
 	 int *REML,int *fisher,int *fixed_penalty)     
-/* REWRITE NOTES: UrS redundant? U1 redundant? use_svd definitely redundant.
+/* REWRITE NOTES: UrS redundant? U1 redundant?
 
    CURRENT SETUP: should do REML except |S|_+ term, and tr(A) based stuff. 
                   ML not done.
@@ -2418,7 +2561,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
    calculation of the derivatives of beta. Assumption is that Fisher is only used 
    with canonical link, when it is equivalent to Newton anyway.
 
-   This version does identifiability trunctation on the basis of "well scaled" 
+   This version does identifiability truncation on the basis of "well scaled" 
    penalty square root, Es, and is assuming that a stability enhancing 
    reparameterization and stable E are being employed.
 
@@ -2513,15 +2656,15 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
 
 */
-{ double *zz,*WX,*tau,*tau1,*work,*pd,*p0,*p1,*p2,*p3,*p4,*K=NULL,
+{ double *zz,*WX,*tau,*tau1,*work,*p0,*p1,*p2,*p3,*K=NULL,
     *R1,*Ri,*d,*Vt,xx,*b1,*b2,*P,*Q,
          *c0,*c1,*c2,*a1,*a2,*eta1,*eta2,
          *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
-    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U, d_tol,Rnorm,Enorm;
+    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli;
   int    i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,n_drop,*drop,
-    n_eta1,n_eta2,n_work,deriv2,null_space_dim,neg_w=0,*nind,nn,nr,ii,ldetI2D,TRUE=1,FALSE=0;
+    n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nr,ldetI2D,TRUE=1,FALSE=0;
 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
@@ -2597,6 +2740,9 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
      Before returning, zeros will need to be inserted in the parameter vector at these locations. 
   */
 
+  nulli = (double *)calloc((size_t)*q,sizeof(double)); /* keep track of the params in null space */
+  for (i=0;i<*q - *Mp;i++) nulli[i] = -1.0;    /* parameter in penalty range space */
+  for (i= *q - *Mp;i < *q;i++) nulli[i] = 1.0; /* parameter in penalty null space */ 
   n_drop = *q - rank;
   if (n_drop) {
     drop = (int *)calloc((size_t)n_drop,sizeof(int)); /* original locations of dropped parameters */
@@ -2607,7 +2753,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     drop_cols(E,*Enrow,*q,drop,n_drop); /* E now q by rank */ 
     drop_cols(X,*n,*q,drop,n_drop);     /* X now n by rank */
     drop_rows(rS,*q,ScS,drop,n_drop);   /* rS now rank by ScS */ 
-  }
+    drop_rows(nulli,*q,1,drop,n_drop);  /* keeps track of null space params */
+  } else drop=NULL;
 
   /* At this stage the parameter space has been purged of terms that are
      theoretically unidentifiable, given WX and the penalties */
@@ -2620,6 +2767,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
    
   mgcv_qr(R,&nr,&rank,pivot1,tau1); /* The final QR decomposition */ 
   
+  i=1;pivoter(nulli,&rank,&i,pivot1,&FALSE,&FALSE); /* pivoting the rows of nulli */
+
   /* Form Q1 = Qf Qs[1:q,] where Qf and Qs are orthogonal factors from first and final QR decomps
      respectively ... */
 
@@ -2679,6 +2828,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* Form P */
     for (p0=P,p1=Ri,j=0;j<rank;j++,p0+= rank) /* copy R^{-1} into P */
     for (p2=p0,p3=p0 + rank;p2<p3;p1++,p2++) *p2 = *p1; 
+    Vt = NULL; 
   }
   
   /* At this stage P and K are complete */
@@ -2730,13 +2880,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   /************************************************************************************/
   /* free some memory */                    
   /************************************************************************************/
-  // NOTE: ML not updated yet 
- if (*REML<0) { /* ML is required (rather than REML), and need to save some stuff */
-    R = (double *) calloc((size_t) *q * *q ,sizeof(double)); /* save just R (untruncated) */
-    for (p0=R,p1=WX,i=0;i<*q;i++,p1+= *n,p0 += *q) 
-      for (p2=p1,p3=p0,p4=p0+i;p3<=p4;p3++,p2++) *p3 = *p2;
-    
-  } else { free(Q1);free(nind); } /* needed later for ML calculation */
+
 
  free(raw);free(WX);free(tau);free(Ri);free(R1); // NOTE: not updated
  free(tau1);free(Q);
@@ -2839,7 +2983,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   
   } /* end of if (*deriv) */ 
   else { /* keep compilers happy */
-    b1=eta1=eta2=c0=c1=c2=(double *)NULL;
+    v1=v2=b1=eta1=eta2=c0=c1=c2=(double *)NULL;
     a1=a2=wi=dev_grad=w1=w2=b2=(double *)NULL;
     Tk=Tkm=(double *)NULL;
   }
@@ -2896,6 +3040,14 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   } /* end of if (*deriv) */
 
   /* END of IFT */
+
+  if (*REML<0) { /* ML is required (rather than REML), and need to save some stuff */
+    /* save just R as rank by rank instead of nr by rank */
+    for (p0=R,p1=R,j=0;j<rank;j++,p1+=nr) {
+      for (p2=p1,i=0;i<=j;i++,p0++,p2++) *p0 = *p2;
+      for (i=j+1;i<rank;i++,p0++) *p0 = 0.0; 
+    }
+  } else { free(R);free(Q1);free(nind); } /* needed later for ML calculation */
 
 
   /* REML NOTE: \beta'S\beta stuff has to be done here on pivoted versions.
@@ -2956,7 +3108,10 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     
     /* get derivs of ML log det in P1 and P2... */
 
-    ldetXWXS = MLpenalty(P1,P2,Tk,Tkm,U1,R,Q1,nind,sp,rS,rSncol,q,n,n,Mp,M,&neg_w,rank_tol,deriv);
+    ldetXWXS =  MLpenalty1(P1,P2,Tk,Tkm,nulli,R,Q1,nind,sp,rS,rSncol,
+                           &rank,n,Mp,M,&neg_w,rank_tol,deriv);
+
+    // MLpenalty(P1,P2,Tk,Tkm,U1,R,Q1,nind,sp,rS,rSncol,q,n,n,Mp,M,&neg_w,rank_tol,deriv);
     
     reml_penalty += ldetXWXS;
 
@@ -2972,7 +3127,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   pearson2(P0,P1,P2,y,mu,V0,V1,V2,g1,g2,p_weights,eta1,eta2,*n,*M,*deriv,deriv2);
   
   if (*REML) { /* really want scale estimate and derivatives in P0-P2, so rescale */
-    j = *n - null_space_dim;
+    j = *n - *Mp;
     *P0 /= j;
     if (*deriv) for (p1 = P1,p2 = P1 + *M;p1<p2;p1++) *p1 /= j;
     if (*deriv>1) for (p1 = P2,p2 = P2 + *M * *M;p1<p2;p1++) *p1 /= j; 
@@ -2998,12 +3153,16 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
  
 
   /* Note: the following gets only trA if REML is being used,
-           so as not to overwrite the derivatives actually needed  */
+           so as not to overwrite the derivatives actually needed,
+           which also means that it doesn't matterr if MLpenalty
+           has messed up rS */
+
   if (*REML) i=0; else i = *deriv;
   get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,w,n,q,&rank,M,&i);
 
 
   if (n_drop) free(drop);
+  free(nulli);
 
   free(P);free(K);
   if (*deriv)
@@ -3126,7 +3285,7 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
     ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
     *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U, d_tol;
   int i,j,k,*pivot,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
-    n_eta1,n_eta2,n_work,deriv2,null_space_dim,neg_w=0,*nind,nn,ii,ldetI2D;
+    n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nn,ii,ldetI2D;
 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
@@ -3298,7 +3457,7 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
     for (p0=R,p1=WX,i=0;i<*q;i++,p1+=nn,p0 += *q) 
       for (p2=p1,p3=p0,p4=p0+i;p3<=p4;p3++,p2++) *p3 = *p2;
     
-  } else { free(Q1);free(nind); } /* needed later for ML calculation */
+  } else { free(Q1);free(nind);R=NULL; } /* needed later for ML calculation */
 
   free(raw);free(WX);free(tau);free(Ri);
  
@@ -3401,7 +3560,7 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
   
   } /* end of if (*deriv) */ 
   else { /* keep compilers happy */
-    b1=eta1=eta2=c0=c1=c2=(double *)NULL;
+    v1=v2=b1=eta1=eta2=c0=c1=c2=(double *)NULL;
     a1=a2=wi=dev_grad=w1=w2=b2=(double *)NULL;
     Tk=Tkm=(double *)NULL;
   }
@@ -3525,7 +3684,7 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
   pearson2(P0,P1,P2,y,mu,V0,V1,V2,g1,g2,p_weights,eta1,eta2,*n,*M,*deriv,deriv2);
   
   if (*REML) { /* really want scale estimate and derivatives in P0-P2, so rescale */
-    j = *n - null_space_dim;
+    j = *n - *Mp;
     *P0 /= j;
     if (*deriv) for (p1 = P1,p2 = P1 + *M;p1<p2;p1++) *p1 /= j;
     if (*deriv>1) for (p1 = P2,p2 = P2 + *M * *M;p1<p2;p1++) *p1 /= j; 
@@ -3671,7 +3830,7 @@ void gdi2(double *X,double *E,double *rS,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*U,
          *fa,*fa1,*fa2,*fb,*fc,*fc1,*fc2,*fc3,*fd,*fd1,*fd2;
   int i,j,k,*pivot,ScS,*pi,rank,r,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
-    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,null_space_dim;
+    n_eta1,n_eta2,n_work,ok,deriv2,*pivot2,null_space_dim=0;
 
  
   if (*deriv==2) deriv2=1; else deriv2=0;
@@ -4579,7 +4738,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
 */
 
-{ int i,j,k,ii,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1;
+{ int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1;
   double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
     *R1,*tau1,Rnorm,Enorm,*R;
   
@@ -4657,7 +4816,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
     /* drop columns indexed in `drop'... */
     drop_cols(R1,*q,*q,drop,n_drop);    /* R1 now q by rank */
     drop_cols(E,*rE,*q,drop,n_drop); /* E now q by rank */ 
-  }
+  } else {drop=NULL;}
 
   /* At this stage the parameter space has been purged of terms that are
      theoretically unidentifiable, given WX and the penalties */

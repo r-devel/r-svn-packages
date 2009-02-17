@@ -30,23 +30,22 @@ gam.reparam <- function(rS,lsp,deriv)
   M <- length(lsp) 
   if (length(rS)>M) fixed.penalty <- TRUE else fixed.penalty <- FALSE
   
-  d.tol <- .Machine$double.eps^.3
+  d.tol <- .Machine$double.eps^.3 ## group `similar sized' penalties, to save work
 
-### NOTE: convergence failures whenever there are 2 or more similarity iterations, even though
-###       *same* model and data is fine if tol changed to give just 1 iter.
+  r.tol <- .Machine$double.eps^.75 ## This is a bit delicate -- too large and penalty range space can be supressed.
 
   oo <- .C("get_stableS",S=as.double(matrix(0,q,q)),Qs=as.double(matrix(0,q,q)),sp=as.double(exp(lsp)),
                   rS=as.double(unlist(rS)), rSncol = as.integer(rSncol), q = as.integer(q),
                   M = as.integer(M), deriv=as.integer(deriv), det = as.double(0), 
                   det1 = as.double(rep(0,M)),det2 = as.double(matrix(0,M,M)), 
                   d.tol = as.double(d.tol),
-                  r.tol = as.double(.Machine$double.eps^.5),
+                  r.tol = as.double(r.tol),
                   fixed_penalty = as.integer(fixed.penalty))
   S <- matrix(oo$S,q,q)
   p <- abs(diag(S))^.5            ## by Choleski, p can not be zero if S +ve def
   p[p==0] <- 1                    ## but it's possible to make a mistake!!
-  E <-  t(t(chol(t(t(S/p)/p)))*p) ## the square root S, with column separation
-  ##E <- t(mroot(t(t(S/p)/p),rank=q)*p)
+  ##E <-  t(t(chol(t(t(S/p)/p)))*p) ## the square root S, with column separation
+  E <- t(mroot(t(t(S/p)/p),rank=q)*p)
   Qs <- matrix(oo$Qs,q,q)         ## the reparameterization matrix t(Qs)%*%S%*%Qs -> S
   k0 <- 1
   for (i in 1:length(rS)) { ## unpack the rS in the new space
@@ -110,11 +109,30 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
 
     ## find a stable reparameterization...
     
-    rp <- gam.reparam(UrS,sp,deriv*as.numeric(scoreType%in%c("REML","ML","P-REML","P-ML")))
+    grderiv <- deriv*as.numeric(scoreType%in%c("REML","ML","P-REML","P-ML"))
+    rp <- gam.reparam(UrS,sp,grderiv)
+    deriv.check <- FALSE
+    if (deriv.check&&grderiv) {
+      eps <- 1e-4
+      fd.grad <- rp$det1
+      for (i in 1:length(sp)) {
+        spp <- sp; spp[i] <- spp[i] + eps/2
+        rp1 <- gam.reparam(UrS,spp,grderiv)
+        spp[i] <- spp[i] - eps
+        rp0 <- gam.reparam(UrS,spp,grderiv)
+        fd.grad[i] <- (rp1$det-rp0$det)/eps
+      }
+      print(fd.grad)
+      print(rp$det1) 
+    }
+
+
     q <- ncol(x)
     T <- diag(q)
     T[1:ncol(rp$Qs),1:ncol(rp$Qs)] <- rp$Qs
     T <- U1%*%T ## new params b'=T'b old params
+    
+    null.coef <- t(T)%*%null.coef
 
     x <- x%*%T   ## model matrix
    

@@ -3,6 +3,18 @@
 
 ISSUES TO CLEAR
 
+* negative weights mess up first derivatives (cauchit with binomial 
+  is good at this). One problem is that |XWX+S| seems wrong, despite 
+  coefficients being as expected. 
+
+* Function header documentation in gdi.c is a mess.
+
+* Clean gam.fit3 again
+
+* Must test non-canonical links *and* negative weight case.  
+
+* balanced Eb still internal to gam.fit3, which is wasteful.
+
 * modification notes: limited to gdi1 so far, except:
   1. changed from EE'=S to E'E=S in get_bSb.
 
@@ -12,18 +24,8 @@ ISSUES TO CLEAR
 * Convergence failures --- with or without upper limits they occur.
   Need unconditionally stable approach.
 
-  1. gdi.c:pivoter() added to automate pivoting tasks.
-  2. gdi.c:get_stableS() added to facilitate stable total penalty 
-     root, with stable |S| at same time. 
-  3. new gdi.c needed that does stability truncation on basis 
-     of `well scaled' problem. 
-  4. gam.fit3 needs to take U, Mp and balanced sqrt E, all to 
-     be generated in estimate.gam (for all methods). UrS, is 
-     presumably needed for all methods as well, if stable sqrt S
-     is always to be used.
   5. estimate.gam needs to *always* add sqrt H to rS list and 
      find null space of total penalty  
-  6. modify gdi convention so that E'E =S (not EE')
 
 * check help file format in console mode.
 

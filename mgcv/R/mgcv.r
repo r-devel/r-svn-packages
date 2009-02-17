@@ -1113,15 +1113,15 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
     reml <- TRUE
   } else reml <- FALSE ## experimental insert
-    Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
-    # G$U1 <- Ssp$Y       ## range space of penalty
-    G$U1 <- cbind(Ssp$Y,Ssp$Z) ## EXPERIMENTAL: eigen space basis
-    G$Mp <- ncol(Ssp$Z) ## null space dimension
-    G$UrS <- list()     ## need penalty matrices in overall penalty range space...
-    for (i in 1:length(G$S)) G$UrS[[i]] <- t(Ssp$Y)%*%G$rS[[i]]
-    if (!is.null(G$H)) { ## then the sqrt fixed penalty matrix H is needed for (RE)ML 
+  Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
+  # G$U1 <- Ssp$Y       ## range space of penalty
+  G$U1 <- cbind(Ssp$Y,Ssp$Z) ## EXPERIMENTAL: eigen space basis
+  G$Mp <- ncol(Ssp$Z) ## null space dimension
+  G$UrS <- list()     ## need penalty matrices in overall penalty range space...
+  for (i in 1:length(G$S)) G$UrS[[i]] <- t(Ssp$Y)%*%G$rS[[i]]
+  if (!is.null(G$H)) { ## then the sqrt fixed penalty matrix H is needed for (RE)ML 
       G$UrS[[i+1]] <- t(Ssp$Y)%*%mroot(G$H)
-    }
+  }
 #  } else { 
 #    reml <- FALSE
 #    G$UrS <- list(1);G$U1 <- 0;G$Mp <- -1 ## not needed for GCV/AIC
