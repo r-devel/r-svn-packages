@@ -24,6 +24,18 @@ USA. */
 #include "matrix.h"
 #include "mgcv.h"
 
+
+void getXtX(double *XtX,double *X,int *r,int *c)
+/* form X'X (nearly) as efficiently as possible */
+{ double *p0,*p1,*p2,*p3,*p4,x;
+  int i,j;
+  for (p0=X,i=0;i<*c;i++,p0 += *r) 
+  for (p1=X,j=0;j<=i;j++,p1 += *r) {
+    for (x=0.0,p2=p0,p3=p1,p4=p0 + *r;p2<p4;p2++,p3++) x += *p2 * *p3;    
+    XtX[i + j * *c] = XtX[j + i * *c] = x;
+  }
+}
+
 void getXtWX(double *XtWX, double *X,double *w,int *r,int *c,double *work)
 /* forms X'WX as efficiently as possible, where W = diag(w)
    and X is an r by c matrix stored column wise. 
@@ -2656,15 +2668,15 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
 
 */
-{ double *zz,*WX,*tau,*tau1,*work,*p0,*p1,*p2,*p3,*K=NULL,
+{ double *zz,*WX,*tau,*tau1,*work,*p0,*p1,*p2,*p3,*p4,*K=NULL,
     *R1,*Ri,*d,*Vt,xx,*b1,*b2,*P,*Q,
          *c0,*c1,*c2,*a1,*a2,*eta1,*eta2,
          *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
-    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli;
+    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli,ldetI2D;
   int    i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,n_drop,*drop,
-    n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nr,ldetI2D,TRUE=1,FALSE=0;
+    n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
@@ -2769,6 +2781,12 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   
   i=1;pivoter(nulli,&rank,&i,pivot1,&FALSE,&FALSE); /* pivoting the rows of nulli */
 
+  if (deriv2) { /* get first bit of X'WX (hessian of the deviance)*/
+    pivoter(R1,q,&rank,pivot1,&TRUE,&FALSE); /* pivot the columns of R1 */
+    dev_hess = (double *)calloc((size_t)rank*rank,sizeof(double));
+    getXtX(dev_hess,R1,q,&rank);    
+  } else { dev_hess = NULL;}
+
   /* Form Q1 = Qf Qs[1:q,] where Qf and Qs are orthogonal factors from first and final QR decomps
      respectively ... */
 
@@ -2802,6 +2820,24 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     d = (double *)calloc((size_t)  rank,sizeof(double));
     mgcv_svd_full(IQ,Vt,d,&k,&rank); /* SVD of IQ */
     free(IQ);
+
+    if (deriv2) { /* correct the Hessian of the deviance */
+      /* put DV'R into P, temporarily */
+      p1=P;
+      for (j=0;j<rank;j++,p1+=rank) {
+        p0 = R + j * nr; /* start of column j of R */
+        for (p2=Vt,p3=p1,p4=p1+rank;p3<p4;p3++,p2++) *p3 = *p2 * *p0;
+        p0++;
+        for (k=1;k<=j;k++,p0++) 
+	  for (p3=p1;p3<p4;p3++,p2++) *p3 += *p2 * *p0;
+      } /* end of loop to form V'R */
+      /* Now form DV'R */
+      for (p0=P,j=0;j<rank;j++) for (p1=d,p2=d+rank;p1<p2;p1++,p0++) *p0 *= *p1; 
+      /* Form K = R'VDDV'R --- the correction factor for X'WX */
+      getXtX(K,P,&rank,&rank);
+      for (p0=dev_hess,p1=p0+rank*rank,p2=K;p0<p1;p0++,p2++) *p0 += -2 * *p2;
+    }
+
     for (i=0;i<rank;i++) {
       d[i] = 1 - 2*d[i]*d[i];
       if (d[i]<=0) d[i]=0.0; 
@@ -2820,6 +2856,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* Form P */
     bt=0;ct=1;mgcv_mmult(P,Ri,Vt,&bt,&ct,&rank,&rank,&rank);
    
+   
+
     free(d);   
   } else { /* no negative weights so P and K much simpler */
     /* Form K */
@@ -2975,11 +3013,13 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     dev_grad=(double *)calloc((size_t) rank,sizeof(double));
     bt=1;ct=0;mgcv_mmult(dev_grad,X,v1,&bt,&ct,&rank,&one,n);
     
-    if (deriv2) { /* get hessian of deviance w.r.t. beta */
-      for (i=0;i< *n ;i++) v1[i] = 2*w[i];
-      dev_hess=(double *)calloc((size_t)(rank*rank),sizeof(double));
-      getXtWX(dev_hess,X,v1,n,&rank,v2);
-    } 
+    ///////// Surely there is a more efficient way of doing the following....
+
+   //   if (deriv2) { /* get hessian of deviance w.r.t. beta */
+   //   for (i=0;i< *n ;i++) v1[i] = 2*w[i];
+   //   dev_hess=(double *)calloc((size_t)(rank*rank),sizeof(double));
+   //   getXtWX(dev_hess,X,v1,n,&rank,v2);
+   // } 
   
   } /* end of if (*deriv) */ 
   else { /* keep compilers happy */
@@ -3154,7 +3194,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
   /* Note: the following gets only trA if REML is being used,
            so as not to overwrite the derivatives actually needed,
-           which also means that it doesn't matterr if MLpenalty
+           which also means that it doesn't matter if MLpenalty
            has messed up rS */
 
   if (*REML) i=0; else i = *deriv;
@@ -3283,9 +3323,9 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
          *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
     ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
-    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U, d_tol;
+    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ, *U, d_tol,ldetI2D;
   int i,j,k,*pivot,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,
-    n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nn,ii,ldetI2D;
+    n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nn,ii;
 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
