@@ -2225,12 +2225,12 @@ void undrop_rows(double *X,int r,int c,int *drop,int n_drop)
   X += r*c - 1;              /* end of final X */
   for (j=c-1;j>=0;j--) { /* back through columns */
     for (i=r-1;i>drop[n_drop-1];i--,X--,Xs--) *X = *Xs;
-    *X = 0.0; X--;
+    *X = 0.0;X--;
     for (k=n_drop-1;k>0;k--) {
       for (i=drop[k]-1;i>drop[k-1];i--,X--,Xs--) *X = *Xs;
-      *X = 0.0; X--;
+      *X = 0.0;X--;
     }
-    for (i=drop[0]-1;i>=0;i--,X--,Xs--) *X = *Xs; 
+    for (i=drop[0]-1;i>=0;i--,X--,Xs--) *X = *Xs;
   }
 }
 
@@ -3088,7 +3088,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,&rank); /* gradient of deviance is complete */
       
     if (deriv2) {       
-      getXtMX(D2,b1,dev_hess,q,M,v1);
+      getXtMX(D2,b1,dev_hess,&rank,M,v1);
           
       for (pb2=b2,m=0;m < *M;m++) for (k=m;k < *M;k++) { /* double sp loop */
           p1 = dev_grad + rank;  
@@ -3129,7 +3129,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
   /* note that PP' and hence rV rV' are propto the cov matrix. */
 
-  for (p1=P,i=0;i < rank; i++) for (j=0;j<rank;j++,p1++) rV[pivot1[j] + i * *q] = *p1;
+  for (p1=P,i=0;i < rank; i++) for (j=0;j<rank;j++,p1++) rV[pivot1[j] + i * rank] = *p1;
   
   undrop_rows(rV,*q,rank,drop,n_drop); /* zero rows inserted */
 
@@ -4990,7 +4990,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   /* unpivot result into y */
   for (i=0;i< rank;i++) y[pivot1[i]] = z[i];
   /* insert zeroes for unidentifiables */
-  undrop_cols(y,*q,1,drop,n_drop); 
+  undrop_rows(y,*q,1,drop,n_drop); 
 
   free(z);free(WX);free(tau);free(pivot);free(raw);
   free(R);free(pivot1);free(tau1);
