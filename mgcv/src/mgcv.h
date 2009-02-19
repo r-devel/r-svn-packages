@@ -24,7 +24,7 @@ void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
          int *fisher,int *fixed_penalty);
 
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
-	  double *sp,double *z,double *w,double *wf,double *mu,double *eta, double *y,
+	  double *sp,double *z,double *w,double *wf,double *alpha,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
 	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
          double *P0, double *P1,double *P2,double *trA,

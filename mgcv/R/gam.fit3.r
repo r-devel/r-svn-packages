@@ -248,7 +248,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             
         for (iter in 1:control$maxit) { ## start of main fitting iteration
             good <- weights > 0
-            varmu <- variance(mu)[good]
+            var.val <- variance(mu)
+            varmu <- var.val[good]
             if (any(is.na(varmu))) 
                 stop("NAs in V(mu)")
             if (any(varmu == 0)) 
@@ -256,7 +257,15 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             mu.eta.val <- mu.eta(eta)
             if (any(is.na(mu.eta.val[good]))) 
                 stop("NAs in d(mu)/d(eta)")
-            good <- (weights > 0) & (mu.eta.val != 0)
+            
+            if (fisher) {
+              good <- (weights > 0) & (mu.eta.val != 0)
+            } else { ## full Newton - then it's possible to get zero weight observations, which need to be dropped
+              c <- y - mu
+              alpha <- 1 + c*(family$dvar(mu)/var.val + family$d2link(mu)*mu.eta.val)
+              alpha[alpha==0] <- .Machine$double.eps
+              good <-  (weights > 0) & (mu.eta.val != 0)
+            }
             if (all(!good)) {
                 conv <- FALSE
                 warning("No observations informative at iteration ", 
@@ -264,15 +273,15 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
                 break
             }
             mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good]
-            weg<-weights[good];var.mug<-variance(mug)
+            weg<-weights[good];var.mug<-var.val[good]
             if (fisher) { ## Conventional Fisher scoring
               z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- (weg * mevg^2)/var.mug
             } else { ## full Newton
-              c <- yg - mug
-              alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
-              z <- (eta - offset)[good] + c/alpha ## offset subtracted as eta = X%*%beta + offset
-              w <- weg*alpha*mevg/var.mug
+              # c = yg - mug
+              #alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
+              z <- (eta - offset)[good] + (yg-mug)/(mevg*alpha[good]) ## offset subtracted as eta = X%*%beta + offset
+              w <- weg*alpha[good]*mevg^2/var.mug
             }
 
             ## Here a Fortran call has been replaced by update.beta call
@@ -281,8 +290,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
      
            # oo <- .C(C_pls_fit,y=as.double(z),X=as.double(x[good,]),w=as.double(w),E=as.double(t(Sr)),n=as.integer(sum(good)),
            # q=as.integer(ncol(x)),Encol=as.integer(ncol(t(Sr))),eta=as.double(z),penalty=as.double(1),
-           # rank.tol=as.double(.Machine$double.eps*100))
-       
+           # rank.tol=as.double(.Machine$double.eps*100))            
+            
             oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),E=as.double(Sr),Es=as.double(Eb),
                       n=as.integer(sum(good)),q=as.integer(ncol(x)),rE=as.integer(nrow(Sr)),eta=as.double(z),penalty=as.double(1),
                       rank.tol=as.double(.Machine$double.eps*100))
@@ -420,30 +429,41 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
         ## the deviance and trA 
 
          good <- weights > 0
-         varmu <- variance(mu)[good]
+         var.val <- variance(mu)
+         varmu <- var.val[good]
          if (any(is.na(varmu))) stop("NAs in V(mu)")
          if (any(varmu == 0)) stop("0s in V(mu)")
          mu.eta.val <- mu.eta(eta)
          if (any(is.na(mu.eta.val[good]))) 
                 stop("NAs in d(mu)/d(eta)")
-         good <- (weights > 0) & (mu.eta.val != 0)
    
+         if (fisher) {
+              good <- (weights > 0) & (mu.eta.val != 0)
+         } else { ## full Newton
+              c <- y - mu
+              alpha <- 1 + c*(family$dvar(mu)/var.val + family$d2link(mu)*mu.eta.val)
+              ### can't just drop obs when alpha==0, as they are informative, but
+              ### happily using an `effective zero' is stable here, and there is 
+              ### a natural effective zero, since E(alpha) = 1.
+              alpha[alpha==0] <- .Machine$double.eps 
+              good <-  (weights > 0) & (mu.eta.val != 0)
+         }
+
          mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
          weg <- weights[good];etag <- eta[good]
-         var.mug<-variance(mug)
+         var.mug<-var.val[good]
 
          if (fisher) { ## Conventional Fisher scoring
               z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- (weg * mevg^2)/var.mug
-              wf <- 0 ## Don't need Fisher weights separately
+              alphag <- wf <- 0 ## Don't need Fisher weights separately
          } else { ## full Newton
-              c <- yg - mug
-              alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
-              z <- (eta - offset)[good] + c/alpha ## offset subtracted as eta = X%*%beta + offset
-              w <- weg*mevg/var.mug
-              wf <- w * mevg   ## Fisher weights for EDF calculation
-              w <- w * alpha   ## Full Newton weights
-              ## w <- weg*alpha*mevg/var.mug
+              ##c <- yg - mug
+              ##alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
+              alphag <- alpha[good]
+              z <- (eta - offset)[good] + (yg-mug)/(mevg*alphag) ## offset subtracted as eta = X%*%beta + offset
+              wf <- weg*mevg^2/var.mug ## Fisher weights for EDF calculation
+              w <- wf * alphag   ## Full Newton weights
          }
         
          g1 <- 1/mevg
@@ -479,7 +499,8 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
        if (REML==0) rSncol <- unlist(lapply(rS,ncol)) else rSncol <- unlist(lapply(UrS,ncol))
 
        oo <- .C(C_gdi1,X=as.double(x[good,]),E=as.double(Sr),Eb = as.double(Eb), rS = as.double(unlist(rS)),U1=as.double(U1),
-           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),wf=as.double(wf),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
+           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),wf=as.double(wf),alpha=as.double(alphag),
+           mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
            V1=as.double(V1),V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
            P=as.double(dum),P1=as.double(P1),P2=as.double(P2),trA=as.double(dum),

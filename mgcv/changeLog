@@ -3,15 +3,9 @@
 
 ISSUES TO CLEAR
 
-* negative weights mess up first derivatives (cauchit with binomial 
-  is good at this). One problem is that |XWX+S| seems wrong, despite 
-  coefficients being as expected. 
-
 * Function header documentation in gdi.c is a mess.
 
 * Clean gam.fit3 again
-
-* Must test non-canonical links *and* negative weight case.  
 
 * balanced Eb still internal to gam.fit3, which is wasteful.
 

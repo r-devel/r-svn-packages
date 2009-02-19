@@ -21,7 +21,7 @@ R_CMethodDef CEntries[] = {
     {"magic", (DL_FUNC) &magic, 18},
     {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
     {"gdi",(DL_FUNC) &gdi,44},
-    {"gdi1",(DL_FUNC) &gdi1,44},
+    {"gdi1",(DL_FUNC) &gdi1,45},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
     {"pls_fit",(DL_FUNC)&pls_fit,10},
     {"pls_fit1",(DL_FUNC)&pls_fit1,11},

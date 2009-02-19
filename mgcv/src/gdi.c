@@ -1888,7 +1888,7 @@ void Rinv(double *Ri,double *R,int *c,int *r, int *ri)
   rc=Ri;
   for (i=0;i<*c;i++) {
       for (eye=1,k=i;k>=0;k--) {
-	  for (xx=0.0,j=k+1;j < *c;j++) xx += R[k + j * *r] * rc[j];
+	  for (xx=0.0,j=k+1;j <=i;j++) xx += R[k + j * *r] * rc[j];
           rc[k]=(eye-xx)/R[k + k * *r];
           eye=0;
       }
@@ -2557,7 +2557,7 @@ int icompare (const void * a, const void * b)
 
 
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
-	  double *sp,double *z,double *w,double *wf,double *mu,double *eta, double *y,
+	  double *sp,double *z,double *w,double *wf,double *alpha,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
 	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
     double *P0, double *P1,double *P2,double *trA,
@@ -2675,7 +2675,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk,*Tfkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
-    *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli,ldetI2D;
+    *alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli,ldetI2D;
   int    i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,n_drop,*drop,
     n_eta1,n_eta2,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
 
@@ -2955,7 +2955,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   
     a1=(double *)calloc((size_t)*n,sizeof(double));  
     a2=(double *)calloc((size_t)*n,sizeof(double));
-    alpha=alpha1=alpha2 =(double *)NULL;
+    alpha1=alpha2 =(double *)NULL;
     if (*fisher) { /* Fisher scoring updates */
    
       /* set up constants involved in w updates */
@@ -2969,11 +2969,10 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
     } else { /* full Newton updates */
       
-      alpha = (double *) calloc((size_t)*n,sizeof(double));
       alpha1 = (double *) calloc((size_t)*n,sizeof(double));
       alpha2 = (double *) calloc((size_t)*n,sizeof(double));
       for (i=0;i< *n;i++) {
-        alpha[i] = 1 + (y[i]-mu[i])*(V1[i]+g2[i]);
+	//  alpha[i] = 1 + (y[i]-mu[i])*(V1[i]+g2[i]);
         xx = V2[i]-V1[i]*V1[i]+g3[i]-g2[i]*g2[i]; /* temp. storage */
         alpha1[i] = (-(V1[i]+g2[i]) + (y[i]-mu[i])*xx)/alpha[i];
         alpha2[i] = (-2*xx + (y[i]-mu[i])*(V3[i]-3*V1[i]*V2[i]+2*V1[i]*V1[i]*V1[i]+g4[i]-3*g3[i]*g2[i]+2*g2[i]*g2[i]*g2[i]))/alpha[i];
@@ -2999,7 +2998,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
       }
 
 
-      free(alpha);free(alpha1);free(alpha2);
+      free(alpha1);free(alpha2);
       
     } /* end of full Newton setup */
 
@@ -3232,6 +3231,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     pivot = (int *)calloc((size_t)rank,sizeof(int));
     tau = (double *)calloc((size_t)rank,sizeof(double));
     mgcv_qr(WX,&nr,&rank,pivot,tau);
+   
     Rinv(P,WX,&rank,&nr,&rank); /* P= R^{-1} */
     /* there's something about the way you taste that makes me want to clear my throat, 
        there's a method to your madness, that really gets my goat */
