@@ -435,11 +435,15 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
          if (fisher) { ## Conventional Fisher scoring
               z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- (weg * mevg^2)/var.mug
+              wf <- 0 ## Don't need Fisher weights separately
          } else { ## full Newton
               c <- yg - mug
               alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
               z <- (eta - offset)[good] + c/alpha ## offset subtracted as eta = X%*%beta + offset
-              w <- weg*alpha*mevg/var.mug
+              w <- weg*mevg/var.mug
+              wf <- w * mevg   ## Fisher weights for EDF calculation
+              w <- w * alpha   ## Full Newton weights
+              ## w <- weg*alpha*mevg/var.mug
          }
         
          g1 <- 1/mevg
@@ -475,7 +479,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
        if (REML==0) rSncol <- unlist(lapply(rS,ncol)) else rSncol <- unlist(lapply(UrS,ncol))
 
        oo <- .C(C_gdi1,X=as.double(x[good,]),E=as.double(Sr),Eb = as.double(Eb), rS = as.double(unlist(rS)),U1=as.double(U1),
-           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
+           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),wf=as.double(wf),mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
            V1=as.double(V1),V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),
            P=as.double(dum),P1=as.double(P1),P2=as.double(P2),trA=as.double(dum),

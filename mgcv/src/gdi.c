@@ -1184,7 +1184,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
 
    * If deriv is 0 then only tr(A) is obtained here.
    * This version uses only K and P, and is for the case where expressions involve weights which
-     are reciprocal varainces, not the squares of weights which are reciprocal standard deviations.
+     are reciprocal variances, not the squares of weights which are reciprocal standard deviations.
 
 
 */
@@ -2557,7 +2557,7 @@ int icompare (const void * a, const void * b)
 
 
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
-    double *sp,double *z,double *w,double *mu,double *eta, double *y,
+	  double *sp,double *z,double *w,double *wf,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
 	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
     double *P0, double *P1,double *P2,double *trA,
@@ -2602,7 +2602,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
    * U1 is an (orthogonal) basis for the penalty range space (q by (q-Mp), where Mp
      is the null space dimension).
    * sp is an M array of smoothing parameters (NOT log smoothing parameters)
-   * z and w are n-vectors of the pseudodata and iterative weights
+   * z, w and wf are n-vectors of the pseudodata iterative newton weights and iterative 
+     fisher weights (only if `fisher' is zero) 
    * p_weights is an n-vector of prior weights (as opposed to the iterative weights in w)
    * mu and y are n-vectors of the fitted values and data.
    * g1,g2,g3,g4 are the n-vectors of the link derivatives 
@@ -2670,8 +2671,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 */
 { double *zz,*WX,*tau,*tau1,*work,*p0,*p1,*p2,*p3,*p4,*K=NULL,
     *R1,*Ri,*d,*Vt,xx,*b1,*b2,*P,*Q,
-         *c0,*c1,*c2,*a1,*a2,*eta1,*eta2,
-         *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,
+    *af1,*af2,*a1,*a2,*eta1,*eta2,
+    *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk,*Tfkm,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
     *alpha,*alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli,ldetI2D;
@@ -2950,20 +2951,13 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     v1 = work;v2=work + *n * *M; /* a couple of working vectors */ 
    
     /* Set up constants involved updates (little work => leave readable!)*/
-    c0=(double *)calloc((size_t)*n,sizeof(double));
-    c1=(double *)calloc((size_t)*n,sizeof(double));  
-    c2=(double *)calloc((size_t)*n,sizeof(double));
+  
   
     a1=(double *)calloc((size_t)*n,sizeof(double));  
     a2=(double *)calloc((size_t)*n,sizeof(double));
     alpha=alpha1=alpha2 =(double *)NULL;
     if (*fisher) { /* Fisher scoring updates */
-      for (i=0;i< *n;i++) c0[i]=y[i]-mu[i];
-      /* c1 = (y-mu)*g''/g' = dz/deta */
-      for (i=0;i<*n;i++) c1[i]=g2[i]*c0[i];
-      /* d2z/deta2 = c2 = ((y-mu)*(g'''/g'-(g''/g')^2) - g''/g')/g' */
-      for (i=0;i<*n;i++) c2[i]=(c0[i]*(g3[i]-g2[i]*g2[i])-g2[i])/g1[i];
-
+   
       /* set up constants involved in w updates */
       /* dw/deta = - w[i]*(V'/V+2g''/g')/g' */
       for (i=0;i< *n;i++) a1[i] = -  w[i] *(V1[i] + 2*g2[i])/g1[i];
@@ -2986,27 +2980,28 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
       }
     
       /* end of preliminaries, now setup the multipliers that go forward */
-      /* dz/deta... */
-      for (i=0;i<*n;i++) c1[i] = 1 - 1/alpha[i] + (y[i]-mu[i])/alpha[i]*(g2[i]-alpha1[i]);
-      /* d2z/deta2... */
-      for (i=0;i<*n;i++) c2[i] = ((y[i]-mu[i])*(g3[i]-g2[i]*g2[i]-alpha2[i]+alpha1[i]*alpha1[i]) -
-                                  (1+(y[i]-mu[i])*alpha1[i])*(g2[i]-alpha1[i]) + alpha1[i])/(alpha[i]*g1[i]);
-     
+
+   
       /* dw/deta ... */
       for (i=0;i<*n;i++) a1[i] = w[i]*(alpha1[i]-V1[i]-2*g2[i])/g1[i];
       /* d2w/deta2... */
       for (i=0;i<*n;i++) a2[i] = a1[i]*(a1[i]/w[i]-g2[i]/g1[i]) - 
                                  w[i]*(alpha1[i]*alpha1[i] - alpha2[i] + V2[i]-V1[i]*V1[i] + 2*g3[i]-2*g2[i]*g2[i])/(g1[i]*g1[i]) ;
 
+      if (! *REML) { /* then Fisher versions of a1 and a2 also needed */
+        af1=(double *)calloc((size_t)*n,sizeof(double));  
+        af2=(double *)calloc((size_t)*n,sizeof(double));
+        /* dwf/deta = - w[i]*(V'/V+2g''/g')/g' */
+        for (i=0;i< *n;i++) af1[i] = -  wf[i] *(V1[i] + 2*g2[i])/g1[i];
+        /* d2wf/deta2 .... */
+        for (i=0;i< *n;i++) 
+        af2[i] = af1[i]*(af1[i]/wf[i]-g2[i]/g1[i]) - wf[i]*(V2[i]-V1[i]*V1[i] + 2*g3[i]-2*g2[i]*g2[i])/(g1[i]*g1[i]) ;
+      }
+
+
       free(alpha);free(alpha1);free(alpha2);
       
     } /* end of full Newton setup */
-
-
-    /* a useful array for Tk and Tkm */
-    wi=(double *)calloc((size_t)*n,sizeof(double)); 
-    for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i]);}
-
 
     /* get gradient vector and Hessian of deviance wrt coefficients */
     for (i=0;i< *n ;i++) v1[i] = -2*p_weights[i]*(y[i]-mu[i])/(V0[i]*g1[i]);
@@ -3015,16 +3010,17 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     
     ///////// Surely there is a more efficient way of doing the following....
 
-   //   if (deriv2) { /* get hessian of deviance w.r.t. beta */
-   //   for (i=0;i< *n ;i++) v1[i] = 2*w[i];
+     if (deriv2) { /* get hessian of deviance w.r.t. beta */
+       for (p0=dev_hess,p1=p0 + rank * rank;p0<p1;p0++) *p0 *= 2.0;      
+   // for (i=0;i< *n ;i++) v1[i] = 2*w[i];
    //   dev_hess=(double *)calloc((size_t)(rank*rank),sizeof(double));
    //   getXtWX(dev_hess,X,v1,n,&rank,v2);
-   // } 
+    } 
   
   } /* end of if (*deriv) */ 
   else { /* keep compilers happy */
-    v1=v2=b1=eta1=eta2=c0=c1=c2=(double *)NULL;
-    a1=a2=wi=dev_grad=w1=w2=b2=(double *)NULL;
+    v1=v2=b1=eta1=eta2=(double *)NULL;
+    a1=a2=dev_grad=w1=w2=b2=(double *)NULL;
     Tk=Tkm=(double *)NULL;
   }
   /************************************************************************************/
@@ -3057,11 +3053,37 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
         for (p0=v2;p0<p1;p0++,pw2++) *pw2 += *p0;           
       } /* w2 completed */
     }
+
+
+    /* a useful array for Tk and Tkm */
+    wi=(double *)calloc((size_t)*n,sizeof(double)); 
+    for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i]);}
+
     /* get Tk and Tkm */
       
     rc_prod(Tk,wi,w1,M,n); 
     if (deriv2) rc_prod(Tkm,wi,w2,&n_2dCols,n);
     
+    if (! *REML && ! *fisher) { /* then Fisher based versions of Tk and Tkm needed */ 
+      rc_prod(w1,af1,eta1,M,n); /* w1 = dwf/d\rho_k done */
+        Tfk = (double *)calloc((size_t)n_eta1,sizeof(double));
+        Tfkm = (double *)calloc((size_t)n_eta2,sizeof(double));
+      if (deriv2) {
+        rc_prod(w2,af1,eta2,&n_2dCols,n); 
+        for (pw2=w2,m=0;m < *M;m++) for (k=m;k < *M;k++) {
+          rc_prod(v1,eta1 + *n * m,eta1 + *n * k,&one,n);
+          rc_prod(v2,af2,v1,&one,n);
+          p1=v2 + *n;
+          for (p0=v2;p0<p1;p0++,pw2++) *pw2 += *p0;           
+        } /* w2 completed */
+      }
+      for (i=0;i< *n;i++) { wi[i]=1/wf[i];}
+      rc_prod(Tfk,wi,w1,M,n); 
+      if (deriv2) rc_prod(Tfkm,wi,w2,&n_2dCols,n);
+      free(af1);free(af2);
+    } /* Fisher based Tk, Tkm, completed */
+
+
     /* evaluate gradient and Hessian of deviance */
 
     bt=1;ct=0;mgcv_mmult(D1,b1,dev_grad,&bt,&ct,M,&one,&rank); /* gradient of deviance is complete */
@@ -3077,7 +3099,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
       } /* Hessian of Deviance is complete !! */
     }
 
-  } /* end of if (*deriv) */
+  } else {wi=NULL;} /* end of if (*deriv) */
 
   /* END of IFT */
 
@@ -3183,30 +3205,55 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   if (*deriv) {
     free(b1);free(eta1);
     free(eta2);
-    free(c0);free(c1);free(c2);
     free(a1);free(a2);free(wi);free(dev_grad);
     free(w1);free(w2);free(b2);
 
     if (deriv2) { free(dev_hess);}
   }
   
- 
-
   /* Note: the following gets only trA if REML is being used,
            so as not to overwrite the derivatives actually needed,
            which also means that it doesn't matter if MLpenalty
            has messed up rS */
 
+  
+  if (*fisher) { /* then all quantites are the ones required for EDF calculations */ 
+    wf = w;Tfk=Tk;Tfkm=Tkm;
+  } else { /* Need expected value versions of everything for EDF calculation */
+    /* form sqrt(wf)X augmented with E */
+    nr = *n + *Enrow;
+    WX = (double *)calloc((size_t)nr * rank,sizeof(double));
+    for (p0=w,p1=w + *n,p2=wf;p0<p1;p0++,p2++) *p0 = sqrt(*p2);
+    for (p3=X,p0 = WX,i=0;i<rank;i++) {
+      for (p1=w,p2=w+*n;p1<p2;p1++,p0++,p3++) *p0 = *p3 * *p1;
+      for (j=0;j<*Enrow;j++,E++,p0++) *p0 = *E;
+    }
+    /* QR decompose it and hence get new P and K */
+    pivot = (int *)calloc((size_t)rank,sizeof(int));
+    tau = (double *)calloc((size_t)rank,sizeof(double));
+    mgcv_qr(WX,&nr,&rank,pivot,tau);
+    Rinv(P,WX,&rank,&nr,&rank); /* P= R^{-1} */
+    /* there's something about the way you taste that makes me want to clear my throat, 
+       there's a method to your madness, that really gets my goat */
+    Q = (double *)calloc((size_t) nr * rank,sizeof(double)); 
+    for (i=0;i< rank;i++) Q[i * nr + i] = 1.0;
+    left=1;tp=0;mgcv_qrqy(Q,WX,tau,&nr,&rank,&rank,&left,&tp); /* Q from the second QR decomposition */
+    for (p1=Q,p0=K,j=0;j<rank;j++,p1 += *Enrow) for (i=0;i<*n;i++,p1++,p0++) *p0 = *p1;
+    free(Q);free(WX);free(tau);
+    if (*deriv)  pivoter(rS,&rank,&ScS,pivot,&FALSE,&FALSE); /* apply the latest pivoting to rows of rS */
+    free(pivot); 
+  }
   if (*REML) i=0; else i = *deriv;
-  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,w,n,q,&rank,M,&i);
+  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tfk,Tfkm,wf,n,&rank,&rank,M,&i);
 
 
   if (n_drop) free(drop);
   free(nulli);
 
   free(P);free(K);
-  if (*deriv)
-    { free(Tk);free(Tkm);
+  if (*deriv) { 
+    free(Tk);free(Tkm);
+    if (! *REML && ! *fisher) { free(Tfk);free(Tfkm);}
   }
 
   if (*REML) {*rank_tol = reml_penalty;*conv_tol = bSb;}
