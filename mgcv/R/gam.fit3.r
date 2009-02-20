@@ -107,6 +107,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
     nSp <- length(sp)  
     if (nSp==0) deriv <- FALSE 
 
+    xnames <- dimnames(x)[[2]]
+    ynames <- if (is.matrix(y)) 
+        rownames(y)
+    else names(y)
+
     ## find a stable reparameterization...
     
     grderiv <- deriv*as.numeric(scoreType%in%c("REML","ML","P-REML","P-ML"))
@@ -146,10 +151,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
     St <- rbind(cbind(rp$S,matrix(0,nrow(rp$S),Mp)),matrix(0,Mp,q))
   
     iter <- 0;coef <- rep(0,ncol(x))
-    xnames <- dimnames(x)[[2]]
-    ynames <- if (is.matrix(y)) 
-        rownames(y)
-    else names(y)
+   
     conv <- FALSE
     n <- nobs <- NROW(y) ## n is just to keep codetools happy
     nvars <- ncol(x)
@@ -630,6 +632,10 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
         residuals <- rep.int(NA, nobs)
         residuals[good] <- z - (eta - offset)[good]
           
+        ## undo reparameterization....
+        coef <- as.numeric(T %*% coef)
+        rV <- T %*% rV
+
         names(coef) <- xnames 
     } ### end if (!EMPTY)
     names(residuals) <- ynames
@@ -650,10 +656,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
    
     aic.model <- aic(y, n, mu, weights, dev) # note: incomplete 2*edf needs to be added
 
-    ## undo reparameterization....
-    coef <- T %*% coef
-    rV <- T %*% rV
-
+   
     list(coefficients = coef, residuals = residuals, fitted.values = mu, 
          family = family, linear.predictors = eta, deviance = dev, 
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 

@@ -23,9 +23,10 @@ Not normally called directly, but rather service routines for \code{\link{gam}}.
 
 gam.fit3(x, y, sp, S=list(),rS=list(),UrS=list(), off, H=NULL, 
          weights = rep(1, nobs), start = NULL, etastart = NULL, 
-         mustart = NULL, offset = rep(0, nobs), U1 = 0, Mp = -1, family = gaussian(), 
-         control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
-         gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),...) 
+         mustart = NULL, offset = rep(0, nobs), U1 = diag(ncol(x)), 
+         Mp = -1, family = gaussian(), control = gam.control(), 
+         intercept = TRUE,deriv=2,use.svd=TRUE,gamma=1,scale=1,
+         printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),...) 
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 

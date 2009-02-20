@@ -732,7 +732,10 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
 
   nk <- object$bs.dim
   k <- knots[[object$term]]
-  if (is.null(k)) k<-place.knots(x,nk)   
+  if (is.null(k)) k <- place.knots(x,nk)   
+  if (length(k)==2) {
+     k <- place.knots(c(k,x),nk)
+  }  
 
   if (length(k)!=nk) stop("number of supplied knots != k for a cc smooth")
 
@@ -803,10 +806,27 @@ smooth.construct.cp.smooth.spec<-function(object,data,knots)
   if (nk<=m[1]) stop("basis dimension too small for b-spline order")
   x <- data[[object$term]]    # find the data
   k <- knots[[object$term]]
-  if (is.null(k)) k <- seq(min(x),max(x),length=nk)
+  
+  if (is.null(k)) { x0 <- min(x);x1 <- max(x) } else
+  if (length(k)==2) { 
+    x0 <- min(k);x1 <- max(k);
+    if (x0>min(x)||x1<max(x)) stop("knot range does not include data")
+  } 
+  if (is.null(k)||length(k)==2) {
+     k <- seq(x0,x1,length=nk)  
+  } else {
+    if (length(k)!=nk) 
+    stop(paste("there should be ",nk," supplied knots"))
+  }
+
   if (length(k)!=nk) stop(paste("there should be",nk,"knots supplied"))
 
   object$X <- cSplineDes(x,k,ord=m[1]+2)  ## model matrix
+
+  if (!is.null(k)) {
+    if (sum(colSums(object$X)==0)>0) warning("knot range is so wide that there is *no* information about some basis coefficients")
+  }  
+
   
   ## now construct penalty...
   p.ord <- m[2]
@@ -850,14 +870,25 @@ smooth.construct.ps.smooth.spec<-function(object,data,knots)
   nk <- object$bs.dim - m[1]  # number of interior knots
   if (nk<=0) stop("basis dimension too small for b-spline order")
   x <- data[[object$term]]    # find the data
-  xl <- min(x);xu <- max(x);xr <- xu - xl # data limits and range
-  xl <- xl-xr*0.001;xu <- xu+xr*0.001;dx <- (xu-xl)/(nk-1) 
   k <- knots[[object$term]]
-  if (is.null(k)) 
-  k <- seq(min(x)-dx*(m[1]+1),max(x)+dx*(m[1]+1),length=nk+2*m[1]+2)   
-  if (length(k)!=nk+2*m[1]+2) 
-  stop(paste("there should be ",nk+2*m[1]+2," supplied knots"))
+  if (is.null(k)) { xl <- min(x);xu <- max(x) } else
+  if (length(k)==2) { 
+    xl <- min(k);xu <- max(k);
+    if (xl>min(x)||xu<max(x)) stop("knot range does not include data")
+  } 
+ 
+  if (is.null(k)||length(k)==2) {
+    xr <- xu - xl # data limits and range
+    xl <- xl-xr*0.001;xu <- xu+xr*0.001;dx <- (xu-xl)/(nk-1) 
+    k <- seq(xl-dx*(m[1]+1),xu+dx*(m[1]+1),length=nk+2*m[1]+2)   
+  } else {
+    if (length(k)!=nk+2*m[1]+2) 
+    stop(paste("there should be ",nk+2*m[1]+2," supplied knots"))
+  }
   object$X <- spline.des(k,x,m[1]+2,x*0)$design # get model matrix
+  if (!is.null(k)) {
+    if (sum(colSums(object$X)==0)>0) warning("knot range is so wide that there is *no* information about some basis coefficients")
+  }  
 
   ## now construct penalty        
   S<-diag(object$bs.dim);

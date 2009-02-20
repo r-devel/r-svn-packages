@@ -263,8 +263,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686. [Default
 method for additive case (but no longer for generalized)]
 
 Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
-additive models. J.R.Statist.Soc.B 70(3):495-518 --- [Default method for generalized
-additive model case]
+additive models. J.R.Statist.Soc.B 70(3):495-518. [Generalized additive model case]
 
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 

@@ -32,7 +32,7 @@ then thin plate regression splines, but a little better than p-splines. See \cod
             is the last element.} 
 
 \item{knots}{a list containing any knots supplied for basis setup --- in same order and with same names as \code{data}. 
-             Can be \code{NULL}}
+             Can be \code{NULL}. See details.}
 
 }
 
@@ -65,8 +65,12 @@ multiples of the smallest strictly positive eigenvalue. The penalty is then set 
 to those of the original penalty, but eigenvalues set to the peturbed versions. This penalty matrix has full rank and shrinks 
 the curve to zero at high enough smoothing parameters.
 
-Note that the cyclic smoother will wrap at the smallest and largest covariate values, unless knots are supplied, and 
-is not subject to the condition that second derivatives go to zero at the first and last knots.
+Note that the cyclic smoother will wrap at the smallest and largest covariate values, unless knots are supplied. If only two 
+knots are supplied then they are taken as the end points of the smoother (provided all the data lie between them), and the 
+remaining knots are generated automatically.
+
+The cyclic smooth is not 
+subject to the condition that second derivatives go to zero at the first and last knots.
 }
 
 \references{
@@ -87,6 +91,10 @@ and Hall/CRC Press.
 ## finished simulating data, now fit model...
   b <- gam(y ~ s(x,bs="cc",k=12) + s(z),family=poisson,
                       knots=list(x=seq(0,10,length=12)))
+## or more simply
+   b <- gam(y ~ s(x,bs="cc",k=12) + s(z),family=poisson,
+                      knots=list(x=c(0,10)))
+
 ## plot results...
   par(mfrow=c(2,2))
   plot(x,y);plot(b,select=1,shade=TRUE);lines(x,f-mean(f),col=2)

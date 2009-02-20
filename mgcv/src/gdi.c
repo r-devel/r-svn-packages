@@ -2282,7 +2282,7 @@ double MLpenalty1(double *det1,double *det2,double *Tk,double *Tkm,double *nulli
 */
 
   double *RU1,*tau,*work,*Ri,*Qb,*K,*P,*IQ,*IQQ,*Vt,
-         *d,*p0,*p1,*p2,*p3,ldetXWXS,ldetI2D;
+         *d,*p0,*p1,*p2,*p3,ldetXWXS,ldetI2D=0.0;
   int ScS,bt,ct,qM,*pivot,i,j,k,left,tp,n_drop=0,*drop,FALSE=0; 
 
   drop = (int *)calloc((size_t)*Ms,sizeof(int));
@@ -4825,11 +4825,13 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
 */
 
-{ int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1;
+{ int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1,nz;
   double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
     *R1,*tau1,Rnorm,Enorm,*R;
   
-  z = (double *)calloc((size_t) *n,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
+  nr = *q + *rE;
+  nz = *n; if (nz<nr) nz=nr; /* possible for nr to be more than n */
+  z = (double *)calloc((size_t) nz,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
   raw = (double *)calloc((size_t) *n,sizeof(double)); /* storage for sqrt(|w|) */
   
   for (i=0;i< *n;i++) 
@@ -4870,7 +4872,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   /* Form a nicely scaled version of [R',Es']' for rank determination */ 
   Rnorm = frobenius_norm(R1,q,q);
   Enorm =  frobenius_norm(Es,rE,q);
-  nr = *q + *rE;
+ 
   R = (double *)calloc((size_t)*q * nr,sizeof(double));
   for (j=0;j<*q;j++) { 
     for (i=0;i< *q;i++) R[i + nr * j] = R1[i + *q * j]/Rnorm;
@@ -4955,11 +4957,11 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
   /* Now get the fitted values X \beta, *without* finding \beta */
   left=1;tp=1;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); /* z = Q'z */
-  for (i=rank;i<*n;i++) z[i]=0.0;
+  for (i=rank;i<nz;i++) z[i]=0.0;
 
   left=1,tp=1; mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1'Q'z, where Q1 is the first rank rows of second orth factor */
 
-  for (i=rank;i < *n;i++) z[i]=0.0;
+  for (i=rank;i < nz;i++) z[i]=0.0;
 
   if (neg_w) { /* apply the correction factor for negative w_i terms */
      bt=0;ct=0;mgcv_mmult(y,Vt,z,&bt,&ct,&rank,&one,&rank); /* V' Q_1' z */

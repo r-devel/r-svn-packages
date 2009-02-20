@@ -1118,7 +1118,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   G$U1 <- cbind(Ssp$Y,Ssp$Z) ## EXPERIMENTAL: eigen space basis
   G$Mp <- ncol(Ssp$Z) ## null space dimension
   G$UrS <- list()     ## need penalty matrices in overall penalty range space...
-  for (i in 1:length(G$S)) G$UrS[[i]] <- t(Ssp$Y)%*%G$rS[[i]]
+  if (length(G$S)>0) for (i in 1:length(G$S)) G$UrS[[i]] <- t(Ssp$Y)%*%G$rS[[i]]
   if (!is.null(G$H)) { ## then the sqrt fixed penalty matrix H is needed for (RE)ML 
       G$UrS[[i+1]] <- t(Ssp$Y)%*%mroot(G$H)
   }
