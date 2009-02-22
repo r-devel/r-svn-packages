@@ -44,8 +44,8 @@ gam.reparam <- function(rS,lsp,deriv)
   S <- matrix(oo$S,q,q)
   p <- abs(diag(S))^.5            ## by Choleski, p can not be zero if S +ve def
   p[p==0] <- 1                    ## but it's possible to make a mistake!!
-  ##E <-  t(t(chol(t(t(S/p)/p)))*p) ## the square root S, with column separation
-  E <- t(mroot(t(t(S/p)/p),rank=q)*p)
+  ##E <-  t(t(chol(t(t(S/p)/p)))*p) 
+  E <- t(mroot(t(t(S/p)/p),rank=q)*p) ## the square root S, with column separation
   Qs <- matrix(oo$Qs,q,q)         ## the reparameterization matrix t(Qs)%*%S%*%Qs -> S
   k0 <- 1
   for (i in 1:length(rS)) { ## unpack the rS in the new space
@@ -80,10 +80,17 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             mustart = NULL, offset = rep(0, nobs),U1=diag(ncol(x)), Mp=-1, family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,use.svd=TRUE,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),...) 
-
-## CURRENT PROBLEM: Eb and E not guaranteed same size!!!!!! 
-## 
+ 
 ## experimental version with new truncation strategy
+## ISSUES: 
+## 0. No penalty cases have to be dealt with - currently fail.
+## 1. Eb needs to be passed in from outside, rather than calculated every call.
+## 2. More efficient use of re-parameterization strategy should be employed, 
+##    as repara is O(nq^2). Could pass in a repara object, containing sp's
+##    at last repara, X, rS, E, Eb in transformed form + T. If object is NULL
+##    that would signal need to create it. It would only be re-created if the log sps
+##    have moved far enough that some component is more than 3? from sps at last re-para.
+##    reparaq object would be returned at end of routine. 
 ## NOTES: rS appears to be redundant: UrS is all that is needed, and rS gets over-written.
 ##        convention is not that E'E = S (E is Sr)
 ##        S appears to be redundant.
@@ -185,10 +192,6 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
     ## Added code
     if (family$family=="gaussian"&&family$link=="identity") strictly.additive <- TRUE else
       strictly.additive <- FALSE
-#    nSp <- length(S)
-#    if (nSp==0) deriv <- FALSE 
-#    St <- totalPenalty(S,H,off,sp,ncol(x))
-#    Sr <- mroot(St)
 
     ## end of added code
 
@@ -260,18 +263,11 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
             if (any(is.na(mu.eta.val[good]))) 
                 stop("NAs in d(mu)/d(eta)")
             
-            if (fisher) {
-              good <- (weights > 0) & (mu.eta.val != 0)
-            } else { ## full Newton - then it's possible to get zero weight observations, which need to be dropped
-              c <- y - mu
-              alpha <- 1 + c*(family$dvar(mu)/var.val + family$d2link(mu)*mu.eta.val)
-              alpha[alpha==0] <- .Machine$double.eps
-              good <-  (weights > 0) & (mu.eta.val != 0)
-            }
+            good <- (weights > 0) & (mu.eta.val != 0)
+         
             if (all(!good)) {
                 conv <- FALSE
-                warning("No observations informative at iteration ", 
-                  iter)
+                warning("No observations informative at iteration ", iter)
                 break
             }
             mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good]
@@ -280,20 +276,17 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
               z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- (weg * mevg^2)/var.mug
             } else { ## full Newton
-              # c = yg - mug
-              #alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
-              z <- (eta - offset)[good] + (yg-mug)/(mevg*alpha[good]) ## offset subtracted as eta = X%*%beta + offset
-              w <- weg*alpha[good]*mevg^2/var.mug
+              c = yg - mug
+              alpha <- 1 + c*(family$dvar(mug)/var.mug + family$d2link(mug)*mevg)
+              alpha[alpha==0] <- .Machine$double.eps
+              z <- (eta - offset)[good] + (yg-mug)/(mevg*alpha) ## offset subtracted as eta = X%*%beta + offset
+              w <- weg*alpha*mevg^2/var.mug
             }
 
             ## Here a Fortran call has been replaced by update.beta call
            
             if (sum(good)<ncol(x)) stop("Not enough informative observations.")
-     
-           # oo <- .C(C_pls_fit,y=as.double(z),X=as.double(x[good,]),w=as.double(w),E=as.double(t(Sr)),n=as.integer(sum(good)),
-           # q=as.integer(ncol(x)),Encol=as.integer(ncol(t(Sr))),eta=as.double(z),penalty=as.double(1),
-           # rank.tol=as.double(.Machine$double.eps*100))            
-            
+           
             oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),E=as.double(Sr),Es=as.double(Eb),
                       n=as.integer(sum(good)),q=as.integer(ncol(x)),rE=as.integer(nrow(Sr)),eta=as.double(z),penalty=as.double(1),
                       rank.tol=as.double(.Machine$double.eps*100))
@@ -304,9 +297,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
               oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),E=as.double(Sr),Es=as.double(Eb),
                       n=as.integer(sum(good)),q=as.integer(ncol(x)),rE=as.integer(nrow(Sr)),eta=as.double(z),penalty=as.double(1),
                       rank.tol=as.double(.Machine$double.eps*100))
-              #oo<-.C(C_pls_fit,y=as.double(z),as.double(x[good,]),as.double(w),as.double(t(Sr)),n=as.integer(sum(good)),
-              #       as.integer(ncol(x)),as.integer(ncol(t(Sr))),eta=as.double(z),penalty=as.double(1),
-              #       as.double(.Machine$double.eps*100))
+            
             }
 
             start <- oo$y[1:ncol(x)];
@@ -458,14 +449,13 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
          if (fisher) { ## Conventional Fisher scoring
               z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- (weg * mevg^2)/var.mug
-              alphag <- wf <- 0 ## Don't need Fisher weights separately
+              alpha <- wf <- 0 ## Don't need Fisher weights separately
          } else { ## full Newton
-              ##c <- yg - mug
-              ##alpha <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
-              alphag <- alpha[good]
-              z <- (eta - offset)[good] + (yg-mug)/(mevg*alphag) ## offset subtracted as eta = X%*%beta + offset
+              c <- yg - mug
+              alpha <- 1 + c*(family$dvar(mug)/var.mug + family$d2link(mug)*mevg)
+              z <- (eta - offset)[good] + (yg-mug)/(mevg*alpha) ## offset subtracted as eta = X%*%beta + offset
               wf <- weg*mevg^2/var.mug ## Fisher weights for EDF calculation
-              w <- wf * alphag   ## Full Newton weights
+              w <- wf * alpha   ## Full Newton weights
          }
         
          g1 <- 1/mevg
@@ -501,7 +491,7 @@ gam.fit3 <- function (x, y, sp, S=list(),rS=list(),UrS=list(),off, H=NULL,
        if (REML==0) rSncol <- unlist(lapply(rS,ncol)) else rSncol <- unlist(lapply(UrS,ncol))
 
        oo <- .C(C_gdi1,X=as.double(x[good,]),E=as.double(Sr),Eb = as.double(Eb), rS = as.double(unlist(rS)),U1=as.double(U1),
-           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),wf=as.double(wf),alpha=as.double(alphag),
+           sp=as.double(exp(sp)),z=as.double(z),w=as.double(w),wf=as.double(wf),alpha=as.double(alpha),
            mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
            p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),g3=as.double(g3),g4=as.double(g4),V0=as.double(V),
            V1=as.double(V1),V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),D1=as.double(D1),D2=as.double(D2),

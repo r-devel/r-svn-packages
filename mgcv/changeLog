@@ -3,6 +3,9 @@
 
 ISSUES TO CLEAR
 
+* would be better to only re-parameterize when necessary, perhaps when 
+  log sps more than e.g. 4 from values at last repara.
+
 * must test all fixed sp with method="ML" etc, also min sp.
 
 * Function header documentation in gdi.c is a mess.
@@ -58,6 +61,10 @@ present!
 
 ** Tweedie family added (including `ldTweedie' function to evaluate 
    log Tweedie densities for powers in (1,2]).
+
+* "ps" "cp" and "cc" smooths can now be supplied with 2 knots to be 
+  treated as `endpoints' of the smooths (full set of knots can still 
+  be supplied as before).
 
 * The `newton' optimizer places upper limits on smoothing parameters 
   for all (RE)ML smoothing parameter estimation, to enhance stability. 
