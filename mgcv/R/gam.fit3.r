@@ -1704,7 +1704,7 @@ bfgs <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   mustart<-b$fitted.values
 
-  QNsteps <- floor(length(S)/2) ## how often to Newton should depend on cost...
+  QNsteps <- floor(length(UrS)/2) ## how often to Newton should depend on cost...
 
   if (reml) {
      score <- b$REML;grad <- b$REML1;hess <- b$REML2 

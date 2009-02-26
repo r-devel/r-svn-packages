@@ -15,15 +15,13 @@ present!
 1.5-0
 
 *** Efficient and general REML/ML smoothing selection implemented. 
-   Smoothness selection criterion and numerical optimizer are now
-   selected using arguments `method' and `optimizer' of `gam', and 
-   `gam.method' has been removed.
+    Smoothness selection criterion and numerical optimizer are now
+    selected using arguments `method' and `optimizer' of `gam', and 
+    `gam.method' has been removed.
 
 *** To further enhance stability and efficiency, Fisher scoring is now 
-   only used for canonical links, when it corresponds to full Newton. 
-   With non-canonical links PIRLS is based on full Newton. In addition all 
-   computations are now with derivative ratios to guard against 
-   overflow.
+    only used for canonical links, when it corresponds to full Newton. 
+    With non-canonical links PIRLS is based on full Newton. 
 
 ** Derivative iteration as in Wood (2008) has been replaced by a direct
    implicit function method (which costs no more given Newton based 
@@ -50,9 +48,6 @@ present!
   treated as `endpoints' of the smooths (full set of knots can still 
   be supplied as before).
 
-* The `newton' optimizer places upper limits on smoothing parameters 
-  for all (RE)ML smoothing parameter estimation, to enhance stability. 
-
 * The `newton' optimizer was dropping terms when their gradient was 
   below the convergence threshold (and allowing re-entry). This 
   promotes zig-zagging unless the terms are independent. Now only 
@@ -67,11 +62,11 @@ present!
   improvement in penalized deviance relative to a null model. If not 
   then step halving towards the null model parameter is employed.
   The null model is as close to constant predicted values as the model
-  structure allows (it is estimated upfront in estimate.gam, to save 
+  structure allows (it is estimated up front in estimate.gam, to save 
   computation)
 
 * `gam.side' now takes account of whether the model has an intercept 
-  (or the model model matrix column corresponding to an intercept is 
+   (or the model model matrix column corresponding to an intercept is 
    in the column space of the model matrix of the parametric model 
    components).  
 
@@ -113,6 +108,8 @@ present!
 
 * memory leak in magic.c:magic fixed --- all fixed smoothing 
   parameters lead to 2 arrays being left unfreed.
+
+* various .Rd file fixes.
 
 1.4-1
 
