@@ -865,22 +865,22 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
   for (i in 1:n.th) { ## search through theta values
     family <- fix.family.link(negbin(theta=exp(l.theta[i]),link=link))
     if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,
                   family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
-    if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...) else
+    if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
-    b <- simplyFit(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...) else
+    b <- simplyFit(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...)
     if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
     else score <- b$score ## (P-)(RE)ML
     if (i==1 || score<best.score) {
@@ -906,21 +906,21 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
     for (lt in c(lt.1tau,lt.tau))
     { family <- fix.family.link(negbin(theta=exp(lt),link=link))
       if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else 
-      if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...) else 
+      if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
-    b <- simplyFit(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...) else
+    b <- simplyFit(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) 
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...) 
       if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
       else score <- b$score 
       if (lt==lt.tau) f.tau <- score else f.1tau <- score
@@ -943,21 +943,21 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
      
       family <- fix.family.link(negbin(theta=exp(lt.new),link=link))
        if (optimizer[2]=="bfgs") b <- bfgs(
-                  lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...) else
-      if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...) else
+      if (optimizer[2]=="newton") b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                   offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)  else
-      b <- simplyFit(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...)  else
+      b <- simplyFit(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,
                 offset=G$offset,U1=G$U1,Mp = G$Mp,family=family,weights=G$w,
                   control=control,gamma=gamma,scale=1,conv.tol=control$newton$conv.tol,
                   maxNstep=control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf,
-                  printWarn=FALSE,scoreType=scoreType,use.svd=control$newton$use.svd,mustart=mustart,null.coef=G$null.coef,...)
+                  printWarn=FALSE,scoreType=scoreType,mustart=mustart,null.coef=G$null.coef,...)
       if (use.aic) score <- b$object$aic + 2*b$object$trA ## AIC
       else score <- b$score       
       if (f.tau.update) f.tau <- score else f.1tau <- score
@@ -1024,14 +1024,14 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     ## make sure criterion gets set to UBRE
   } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method -- not negbin
     if (optimizer[2]=="bfgs") 
-    b <- bfgs(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp = G$Mp,
+    b <- bfgs(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,null.coef=G$null.coef,...) else
-    b <- newton(lsp=lsp,X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,L=G$L,lsp0=G$lsp0,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,
+                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,...) else
+    b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,use.svd=control$newton$use.svd,null.coef=G$null.coef,...)                
+                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,...)                
                 
     object <- b$object
     object$REML <- object$REML1 <- object$REML2 <-
@@ -1042,7 +1042,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess,score.hist=b$score.hist) ## return info
     object$outer.info <- b   
   } else { ## methods calling gam.fit3 
-    args <- list(X=G$X,y=G$y,S=G$S,rS=G$rS,UrS=G$UrS,off=G$off,H=G$H,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
+    args <- list(X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
              L=G$L,lsp0=G$lsp0,null.coef=G$null.coef)
   
@@ -1115,6 +1115,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   } else reml <- FALSE ## experimental insert
   Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
   # G$U1 <- Ssp$Y       ## range space of penalty
+  G$Eb <- Ssp$E       ## balanced penalty square root for rank determination purrposes 
   G$U1 <- cbind(Ssp$Y,Ssp$Z) ## EXPERIMENTAL: eigen space basis
   G$Mp <- ncol(Ssp$Z) ## null space dimension
   G$UrS <- list()     ## need penalty matrices in overall penalty range space...
@@ -1122,10 +1123,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   if (!is.null(G$H)) { ## then the sqrt fixed penalty matrix H is needed for (RE)ML 
       G$UrS[[i+1]] <- t(Ssp$Y)%*%mroot(G$H)
   }
-#  } else { 
-#    reml <- FALSE
-#    G$UrS <- list(1);G$U1 <- 0;G$Mp <- -1 ## not needed for GCV/AIC
-#  }
+
 
   # is outer looping needed ?
   outer.looping <- ((!G$am && (optimizer[1]=="outer"))||reml||method=="GACV.Cp") ## && length(G$S)>0 && sum(G$sp<0)!=0

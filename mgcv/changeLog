@@ -3,25 +3,9 @@
 
 ISSUES TO CLEAR
 
-* would be better to only re-parameterize when necessary, perhaps when 
-  log sps more than e.g. 4 from values at last repara.
-
-* must test all fixed sp with method="ML" etc, also min sp.
-
 * Function header documentation in gdi.c is a mess.
 
 * Clean gam.fit3 again
-
-* balanced Eb still internal to gam.fit3, which is wasteful.
-
-* modification notes: limited to gdi1 so far, except:
-  1. changed from EE'=S to E'E=S in get_bSb.
-
-* Convergence failures --- with or without upper limits they occur.
-  Need unconditionally stable approach.
-
-  5. estimate.gam needs to *always* add sqrt H to rS list and 
-     find null space of total penalty  
 
 * check help file format in console mode.
 
