@@ -1424,9 +1424,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   if (is.null(L)) L <- diag(length(lsp)) else {
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
-    if (nrow(L)!=length(S)+as.numeric(scoreType%in%c("REML","ML")&&scale==0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
+    if (nrow(L)!=length(lsp0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
   }
-  if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
+  if (is.null(lsp0)) lsp0 <- rep(0,nrow(L)) 
 
   if (reml&&FALSE) { ## DEBUG TEST: (&&FALSE this) is there *any* evidence that limits are needed
     frob.X <- sqrt(sum(X*X))
@@ -1692,9 +1692,9 @@ bfgs <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   if (is.null(L)) L <- diag(length(lsp)) else {
     if (!inherits(L,"matrix")) stop("L must be a matrix.")
     if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
-    if (nrow(L)!=length(S)+as.numeric(scoreType=="REML"&&scale==0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
+    if (nrow(L)!=length(lsp0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
   }
-  if (is.null(lsp0)) lsp0 <- rep(0,ncol(L))
+  if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
   ## initial fit
 
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
