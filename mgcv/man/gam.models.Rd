@@ -252,7 +252,7 @@ b1<-gam(y ~ s(x2,by=as.numeric(fac==1))+s(x2,by=as.numeric(fac==2))+
 plot(b1,pages=1)
 summary(b1)
 
-## repeat, but force all the s(x2) terms to have the same smoothing param
+## repeat forcing all s(x2) terms to have the same smoothing param
 ## (not a very good idea for these data!)
 b2 <- gam(y ~ fac+s(x2,by=fac,id=1)+s(x0),data=dat)
 plot(b2,pages=1)

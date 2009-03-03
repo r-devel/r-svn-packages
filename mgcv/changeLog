@@ -3,15 +3,6 @@
 
 ISSUES TO CLEAR
 
-* Function header documentation in gdi.c is a mess.
-
-* Clean gam.fit3 again
-
-* check help file format in console mode.
-
-* Tidy up newton code --- upper limit stuff just commented out at 
-present!
-
 1.5-0
 
 *** Efficient and general REML/ML smoothing selection implemented. 
@@ -63,7 +54,7 @@ present!
   then step halving towards the null model parameter is employed.
   The null model is as close to constant predicted values as the model
   structure allows (it is estimated up front in estimate.gam, to save 
-  computation)
+  computation).
 
 * `gam.side' now takes account of whether the model has an intercept 
    (or the model model matrix column corresponding to an intercept is 
@@ -110,6 +101,10 @@ present!
   parameters lead to 2 arrays being left unfreed.
 
 * various .Rd file fixes.
+
+1.4-2
+
+* Some minor .Rd file fixes
 
 1.4-1
 

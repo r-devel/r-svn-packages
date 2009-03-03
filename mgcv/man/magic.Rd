@@ -119,7 +119,7 @@ AIC) to the
 problem of smoothing parameter selection in generalized ridge regression problems 
 of the form:
 \deqn{ minimise~ \| { \bf W} ({ \bf Xb - y} ) \|^2 + {\bf b}^\prime {\bf Hb} + \sum_{i=1}^m
-\theta_i {\bf b^\prime S}_i{\bf b} }{ minimise || W (Xb-y) ||^2 + b'Hb +
+\theta_i {\bf b^\prime S}_i{\bf b} }{ min ||W(Xb-y)||^2 + b'Hb +
 theta_1 b'S_1 b + theta_2 b'S_2 b + . . .}
 possibly subject to constraints \eqn{ {\bf Cb}={\bf 0}}{Cb=0}. 
 \eqn{ {\bf X}}{X} is a design matrix, \eqn{\bf b}{b} a parameter vector, 
@@ -219,7 +219,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686
 ## and fit using gam as consistency check
    b <- gam(G=G)
    mgfit$sp;b$sp  # compare smoothing parameter estimates
-   edf <- magic.post.proc(G$X,mgfit,G$w)$edf  # extract e.d.f. per parameter
+   edf <- magic.post.proc(G$X,mgfit,G$w)$edf # get e.d.f. per param
    range(edf-b$edf)  # compare
 
 ## constrain first two smooths to have identical smoothing parameters

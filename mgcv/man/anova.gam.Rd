@@ -34,7 +34,8 @@ used. If only one model is provided then the significance of each model term
 is assessed using Wald tests: see \code{\link{summary.gam}} for details of the
 actual computations.
 In the latter case \code{print.anova.gam} is used as the
-printing method.  Note that the p-values for smooth terms are approximate only.
+printing method.  Note that the p-values for smooth terms are approximate only:
+simulation evidence suggests that they work best with REML or ML smoothness selection. 
 
 }
 

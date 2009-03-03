@@ -56,7 +56,7 @@ x <- runif(n, 0, .9)
 f2 <- function(x) 0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10
 x1 <- x + .1
 
-f <- f2(x) + f2(x1)    ## so response is sum of f at two adjacent x values 
+f <- f2(x) + f2(x1)  ## response is sum of f at two adjacent x values 
 y <- f + rnorm(n)*sig
 
 X <- matrix(c(x,x1),n,2) ## matrix covariate contains both x values
@@ -114,7 +114,7 @@ L1 <- rowSums(L) ## smooths are centred --- need to add in L%*%1
 
 ## fit models to reconstruct `test1'....
 
-b <- gam(y~s(X,Z,by=L)+L1-1)   ## (note L1 and const are confounded here)
+b <- gam(y~s(X,Z,by=L)+L1-1)   ## (L1 and const are confounded here)
 b1 <- gam(y~te(X,Z,by=L)+L1-1) ## tensor product alternative
 
 ## plot results...
@@ -149,7 +149,7 @@ par(mfrow=c(3,3));for (i in 1:9) plot(x,rf(x),type="l",xlab="x")
 
 ## simulate 200 functions and store in rows of L...
 L <- matrix(NA,200,100) 
-for (i in 1:200) L[i,] <- rf()    ## simulate the functional predictors
+for (i in 1:200) L[i,] <- rf()  ## simulate the functional predictors
 
 f2 <- function(x) { ## the coefficient function
   (0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10)/10 

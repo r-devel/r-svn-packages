@@ -4,24 +4,15 @@ void mgcv(double *yd,double *Xd,double *Cd,double *wd,double *Sd,double *pd, dou
           double *edf, double *conv_tol, int *ms_max_half,double *ddiag,int *idiag,double *sdiag, 
           int *direct_mesh,double *min_edf,double *gcvubre,double *target_edf,int *fixed_sp,double *hat);
 
-void update_beta(double *X,double *Sr,double *rS,double *theta,double *w,
+/*void update_beta(double *X,double *Sr,double *rS,double *theta,double *w,
 		 double *w1, double *z,double *z1,int *Srncol,int *rSncol,
 		 int *m, int *n,int *q, int *get_trA,int *deriv,
 		 double *rank_tol,double *beta, double *trA, double *beta1,
-		 double *trA1,double *rV,int *rank_est);
+		 double *trA1,double *rV,int *rank_est);*/
 
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score);
-
-void gdi(double *X,double *E,double *rS,double *UrS,double *U1,
-         double *sp,double *z,double *w,double *mu, double *eta, double *y,
-         double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
-         double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
-         double *P0,double *P1,double *P2,double *trA,
-         double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
-	 int *n,int *q, int *M,int *Mp,int *Encol,int *rSncol,int *deriv,int *use_svd,int *REML,
-         int *fisher,int *fixed_penalty);
 
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 	  double *sp,double *z,double *w,double *wf,double *alpha,double *mu,double *eta, double *y,

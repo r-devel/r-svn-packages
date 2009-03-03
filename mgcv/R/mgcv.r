@@ -1414,9 +1414,15 @@ print.gam<-function (x,...)
   cat("Total model degrees of freedom",sum(x$edf),"\n")
   else
   { edf<-0
+    cat("\nEstimated degrees of freedom:\n")
     for (i in 1:n.smooth)
     edf[i]<-sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
-    cat("\nEstimated degrees of freedom:\n",edf,"  total = ",sum(x$edf),"\n")
+    edf.str <- format(edf,digits=5)
+    for (i in 1:n.smooth) {   
+    cat(edf.str[i]," ",sep="")
+      if (i%%7==0) cat("\n")
+    }
+    cat(" total =",sum(x$edf),"\n")
   }
   if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  
   cat("\n",x$method," score: ",x$gcv.ubre,"\n",sep="")

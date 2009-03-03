@@ -47,7 +47,7 @@ constraints as equality constraints.}
   This solves the problem:
  
 \deqn{ minimise~ \| { \bf W}^{1/2} ({ \bf Xp - y} ) \|^2  +  \sum_{i=1}^m
-\lambda_i {\bf p^\prime S}_i{\bf p} }{ minimise || W^0.5 (Xp-y) ||^2 + 
+\lambda_i {\bf p^\prime S}_i{\bf p} }{ min || W^0.5 (Xp-y) ||^2 + 
 lambda_1 p'S_1 p + lambda_1 p'S_2 p + . . .}
 subject to constraints \eqn{ {\bf Cp}={\bf c}}{Cp=c} and \eqn{ {\bf
     A}_{in}{\bf p}>{\bf b}_{in}}{A_in p > b_in}, w.r.t. \eqn{\bf p}{p} given the
@@ -129,7 +129,8 @@ A0<-Predict.matrix(sm,data.frame(x=xc))
 # ... A0%*%p evaluates spline at xc points
 A1<-Predict.matrix(sm,data.frame(x=xc+1e-6)) 
 A<-(A1-A0)/1e-6    
-# ... approx. constraint matrix (A\%*\%p is -ve spline gradient at points xc)
+##  ... approx. constraint matrix (A\%*\%p is -ve 
+## spline gradient at points xc)
 G<-list(X=sm$X,C=matrix(0,0,0),sp=f.ug$sp,y=y,w=y*0+1,S=sm$S,off=0)
 G$Ain<-A;    # constraint matrix
 G$bin<-rep(0,nc);  # constraint vector

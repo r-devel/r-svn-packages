@@ -3,12 +3,13 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Minimize GCV or UBRE score of a GAM using `outer' iteration}
 \description{Estimation of GAM smoothing parameters is most stable if
-optimization of the UBRE or GCV score is outer to the penalized iteratively
+optimization of the smoothness selection score (GCV, GACV, UBRE/AIC, REML, ML etc) 
+is outer to the penalized iteratively
 re-weighted least squares scheme used to estimate the model given smoothing 
 parameters.
 
-This routine optimizes a GCV or UBRE score in this way. Basically the GCV or
-UBRE score is evaluated for each trial set of smoothing parameters by
+This routine optimizes a smoothness selection score in this way. Basically the 
+score is evaluated for each trial set of smoothing parameters by
 estimating the GAM for those smoothing parameters. The score is minimized
 w.r.t. the parameters numerically, using \code{newton} (default), \code{bfgs}, \code{optim} or \code{nlm}. Exact
 (first and second) derivatives of the score can be used by fitting with

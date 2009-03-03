@@ -88,7 +88,7 @@ of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likel
 \item{optimizer}{An array specifying the numerical optimization method to use to optimize the smoothing 
 parameter estimation criterion (given by \code{method}). \code{"perf"} for performance iteration. \code{"outer"} 
 for the more stable direct approach. \code{"outer"} can use several alternative optimizers, specified in the 
-second element of \code{optimizer}: \code{"newton"} (default), \code{"bfgs"}, \code{"optim"}, \code{"\nlm"} 
+second element of \code{optimizer}: \code{"newton"} (default), \code{"bfgs"}, \code{"optim"}, \code{"nlm"} 
 and \code{"nlm.fd"} (the latter is based entirely on finite differenced derivatives and is very slow). }
 
 \item{scale}{ If this is positive then it is taken as the known scale parameter. Negative signals that the 
@@ -461,7 +461,8 @@ eg <- gamSim(2,n=10000,scale=.5)
 attach(eg)
 
 ind<-sample(1:10000,1000,replace=FALSE)
-b5<-gam(y~s(x,z,k=50),data=data,knots=list(x=data$x[ind],z=data$z[ind]))
+b5<-gam(y~s(x,z,k=50),data=data,
+        knots=list(x=data$x[ind],z=data$z[ind]))
 vis.gam(b5)
 
 ## and a pure "knot based" spline of the same data

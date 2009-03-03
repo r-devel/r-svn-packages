@@ -18,11 +18,6 @@ convergence failure message from \code{magic} when outer iterating, then this
 is what has happened): lower \code{outerPIsteps} in \code{\link{gam.control}}
 to fix this. 
 
-Occasionally, when using a non-canonical link function, the Fisher 
-scoring approach to finding model coeffients can fail to converge. In 
-this case try using \code{fisher=FALSE} in the control argument to 
-\code{gam}: see \code{\link{gam.control}}. Doing this will cause a full 
-Newton approach to be used.
 
 There are three things that you can try to speed up GAM fitting. (i) if you have large 
 numbers of smoothing parameters in the generalized case, then try the \code{"bfgs"} method 

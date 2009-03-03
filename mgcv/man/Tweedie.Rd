@@ -70,7 +70,8 @@ n<-400
 dat <- gamSim(1,n=n,dist="poisson",scale=.2)
 
 ## Fit a `nearby' Tweedie...
-b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.1,power(.1)),data=dat)
+b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.1,power(.1)),
+         data=dat)
 plot(b,pages=1)
 print(b)
 

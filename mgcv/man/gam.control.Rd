@@ -7,7 +7,7 @@ control of the numerical options for fitting a GAM.
 Typically users will want to modify the defaults if model fitting fails to
 converge, or if the warnings are generated which suggest a 
 loss of numerical stability during fitting.  To change the default
-choise of fitting method, see \code{\link{gam} arguments \code{method} and \code{optimizer}}.
+choise of fitting method, see \code{\link{gam}} arguments \code{method} and \code{optimizer}.
 }
 \usage{
 gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
@@ -80,9 +80,7 @@ with the following elements: \code{conv.tol} (default
 length allowed for an element of the Newton search direction (default 5);
 \code{maxSstep} is the maximum length allowed for an element of the steepest
 descent direction (only used if Newton fails - default 2); \code{maxHalf} is
-the maximum number of step halvings to permit before giving up (default 30); 
-\code{use.svd} determines whether to use an SVD step or QR step for the part
-of fitting that determines problem rank, etc. (defaults to \code{FALSE}).
+the maximum number of step halvings to permit before giving up (default 30).
 
 If outer iteration using \code{\link{nlm}} is used for fitting, then the control list
 \code{nlm} stores control arguments for calls to routine

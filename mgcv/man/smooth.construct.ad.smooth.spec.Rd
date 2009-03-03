@@ -68,7 +68,7 @@ This class can not be used as a marginal basis in a tensor product smooth, nor b
 ## library(AdaptFit)
 set.seed(0)
 x <- 1:1000/1000
-mu <- exp(-400*(x-0.6)^2)+5*exp(-500*(x-0.75)^2)/3+2*exp(-500*(x-0.9)^2)
+mu <- exp(-400*(x-.6)^2)+5*exp(-500*(x-.75)^2)/3+2*exp(-500*(x-.9)^2)
 y <- mu+0.5*rnorm(1000)
 
 ##fit with default knots

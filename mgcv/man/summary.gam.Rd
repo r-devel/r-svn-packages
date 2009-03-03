@@ -202,7 +202,8 @@ summary(bc)
 ## p-value check - increase k to make this useful!
 k<-20;n <- 200;p <- rep(NA,k)
 for (i in 1:k)
-{ b<-gam(y~te(x,z),data=data.frame(y=rnorm(n),x=runif(n),z=runif(n)),method="ML")
+{ b<-gam(y~te(x,z),data=data.frame(y=rnorm(n),x=runif(n),z=runif(n)),
+         method="ML")
   p[i]<-summary(b)$s.p[1]
 }
 plot(((1:k)-0.5)/k,sort(p))
