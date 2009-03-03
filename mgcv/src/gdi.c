@@ -1863,7 +1863,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
     *alpha1,*alpha2,*raw,*Q1,*IQ,  d_tol,Rnorm,Enorm,*nulli,ldetI2D;
-  int    i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols,n_b1,n_b2,n_drop,*drop,
+  int    i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols=0,n_b1,n_b2,n_drop,*drop,
     n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
 
  
