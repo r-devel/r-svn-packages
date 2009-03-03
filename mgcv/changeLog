@@ -1,8 +1,6 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-ISSUES TO CLEAR
-
 1.5-0
 
 *** Efficient and general REML/ML smoothing selection implemented. 
