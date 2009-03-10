@@ -1,6 +1,36 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+ISSUES
+------
+* summation convention code is very inefficient for high dimensional spectra, for
+  example. Produces a model matrix with n.coefs*nrow(L)*ncol(L) elements, only to 
+  collapse it to nrow(L) by n.coefs. Consider s(Z,by=L). Could work through rows 
+  of Z, first setting up basis (using all values in Z) and then producing a 
+  prediction matrix, X, for each row of Z. Sum over the rows of X, each multiplied 
+  by an entry from the current row of L, to get the model matrix row. 
+  Alternatively, could just deal with special case when all rows of Z are the 
+  same (usual spectral data setup).  
+
+1.5-1
+
+* The stability of the fitting methods had become substantially greater 
+  than the stability of the edf calculations after fitting. So it was 
+  possible to fit very poor models, and then have non-sensical effective 
+  degrees of freedom reported. This has been fixed by using much more stable 
+  expressions for edf calculation, when outer iteration smoothness
+  selection is empolyed. (Changes are to gam.fit3, gam.outer and a new
+  routine gam.fit3.post.proc).
+
+* edfs in version 1.5-0 were calculated using newton, rather than fisher 
+  weights, in the matrix F=(X'WX+S)^{-1}X'WX, the diagonal of which gives 
+  the edf array. The problem with this is that it is possible for X'WX 
+  not to be +ve definite, and then degrees of freedom can be non-sensical.
+  Fisher weights are always used now (although the original problem is 
+  exceedingly hard to generate an example of).
+
+* Some help file fixes.
+
 1.5-0
 
 *** Efficient and general REML/ML smoothing selection implemented. 

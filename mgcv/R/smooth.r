@@ -1467,7 +1467,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       X <- X + sml[[1]]$X[ind,]
     }
     sml[[1]]$X <- X
-    if (!is.null(offs)) { ## deal with any term specific offset
+    if (!is.null(offs)) { ## deal with any term specific offset (i.e. sum it too)
       offs <- attr(sml[[1]]$X,"offset") ## by variable multiplied version
       ind <- 1:n 
       offX <- offs[ind,]

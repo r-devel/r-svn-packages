@@ -509,7 +509,11 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
        
          if (control$trace) cat("done!\n")
  
-         rV <- matrix(oo$rV,ncol(x),ncol(x))
+         rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
+         
+         K <- matrix(0,nrow(x),ncol(x)) 
+         K[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
+
          coef <- oo$beta;
          trA <- oo$trA;
          scale.est <- dev/(nobs-trA)
@@ -637,7 +641,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     names(mu) <- ynames
     names(eta) <- ynames
     wt <- rep.int(0, nobs)
-    wt[good] <- w
+    if (fisher) wt[good] <- w else wt[good] <- wf  ## note that Fisher weights are returned
     names(wt) <- ynames
     names(weights) <- ynames
     names(y) <- ynames
@@ -659,9 +663,19 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,
-        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est)
+        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=K)
 } ## end gam.fit3
 
+
+gam.fit3.post.proc <- function(X,object) {
+## get edf array and covariance matrices after a gam fit. 
+  Vb <- object$rV%*%t(object$rV)*object$scale.est
+  PKt <- object$rV%*%t(object$K)
+  edf <- rowSums(PKt*t(sqrt(object$weights)*X))
+  Ve <- PKt%*%t(PKt)*object$scale  
+  hat <- rowSums(object$K*object$K)
+  list(Vb=Vb,Ve=Ve,edf=edf,hat=hat)
+}
 
 
 score.transect <- function(ii, x, y, sp, Eb,UrS=list(), 
