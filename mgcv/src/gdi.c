@@ -1594,7 +1594,7 @@ void undrop_cols(double *X,int r,int c, int *drop, int n_drop)
   for (i = 0;i<n;i++,X--,Xs--) *X = *Xs;
   for (i=0;i<r;i++,X--) *X = 0.0; /* insert 0s at col drop[n_drop-1] */
   
-  for (k=n_drop-1;k>0;k++) { /* work through drop */
+  for (k=n_drop-1;k>0;k--) { /* work through drop */
     n = (drop[k] - drop[k-1]-1)*r; /* size of block between cols drop[k-1] and drop[k] */
     for (i=0;i<n;i++,X--,Xs--) *X = *Xs;
     for (i=0;i<r;i++,X--) *X = 0.0; /* insert 0s at col drop[k-1] */
@@ -2394,7 +2394,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
   /* Now unpack K into X -- useful for forming F = PK'W^.5X, diag of which is edf vector... */
   for (p0=X,p1=K,p2=K + rank * *n;p1<p2;p0++,p1++) *p0 = *p1;
-  undrop_cols(X,*n,*q,drop,n_drop);
+  /* fill trailing columns with zero */ 
+  for (p0 = X + rank * *n,p1 = X + *q * *n;p0<p1;p0++) *p0 = 0.0;
 
   if (n_drop) free(drop);
   free(nulli);

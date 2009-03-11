@@ -511,8 +511,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
  
          rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
          
-         K <- matrix(0,nrow(x),ncol(x)) 
-         K[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
+         Kmat <- matrix(0,nrow(x),ncol(x)) 
+         Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
          coef <- oo$beta;
          trA <- oo$trA;
@@ -663,7 +663,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,
-        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=K)
+        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
 
