@@ -1,3 +1,10 @@
+2009-03-12 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 0.8-34 (unreleased).
+	* R/read.{dta,spss}.R: files specified as URLs are downloaded to a
+	temporary file and then read.  (Suggestion of Jeffrey Racine.)
+	* tests/stats_download.R: test for download in read.dta.
+
 2009-03-07 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/avl.[ch]: comment out/remove unused functions, make external
