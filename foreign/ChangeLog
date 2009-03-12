@@ -3,7 +3,9 @@
 	* DESCRIPTION: Version is 0.8-34 (unreleased).
 	* R/read.{dta,spss}.R: files specified as URLs are downloaded to a
 	temporary file and then read.  (Suggestion of Jeffrey Racine.)
-	* tests/stats_download.R: test for download in read.dta.
+	* tests/download.R: tests for download in read.dta and read.spss.
+	* src/sfm-read.c: Remove some warnings that seem innocent (Windows
+	codepages, record type 7 subtype 20).
 
 2009-03-07 Brian Ripley <Brian.Ripley@R-project.org>
 

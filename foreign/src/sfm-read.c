@@ -433,6 +433,10 @@ sfm_read_dictionary (struct file_handle * h, struct sfm_read_info * inf)
 		skip = 1;
 		break;
 
+	      case 20:
+		skip = 1;
+		break;
+
 	      default:
 		warning(_("%s: Unrecognized record type 7, subtype %d encountered in system file"), h->fn, data.subtype);
 		skip = 1;
@@ -543,10 +547,8 @@ We just deal with the cases we know are wrong (2 and 3 are OK).
   if (data[7] == 1 || data[7] == 4)
     lose ((_("%s: File-indicated character representation code (%s) is not ASCII"), h->fn,
        data[7] == 1 ? "EBCDIC" : (data[7] == 4 ? "DEC Kanji" : "Unknown")));
-  if(data[7] == 65001)
-      warning(_("%s: File-indicated character representation code (65001) looks like UTF-8"), h->fn);
-  else if(data[7] >= 500)
-      warning(_("%s: File-indicated character representation code (%d) looks like a Windows codepage"), h->fn, data[7]);
+  if(data[7] >= 200)
+      /* warning(_("%s: File-indicated character representation code (%d) looks like a Windows codepage"), h->fn, data[7]) */;
   else if(data[7] > 4)
       warning(_("%s: File-indicated character representation code (%d) is unknown"), h->fn, data[7]);
   return 1;
