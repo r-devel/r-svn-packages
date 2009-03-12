@@ -53,7 +53,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
                  "CP874" = 874,
                  "CP936" = 936)
 
-    if(grepl("^(http|ftp|https)://", file)) {
+    if(length(grep("^(http|ftp|https)://", file))) {
         tmp <- tempfile()
         download.file(file, tmp, quiet = TRUE, mode = "wb")
         file <- tmp

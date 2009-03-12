@@ -17,7 +17,7 @@ read.dta <- function(file, convert.dates = TRUE,
                      convert.factors = TRUE, missing.type = FALSE,
                      convert.underscore = FALSE, warn.missing.labels = TRUE)
 {
-    if(grepl("^(http|ftp|https)://", file)) {
+    if(length(grep("^(http|ftp|https)://", file))) {
         tmp <- tempfile()
         download.file(file, tmp, quiet = TRUE, mode = "wb")
         file <- tmp
