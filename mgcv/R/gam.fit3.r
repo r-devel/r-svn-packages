@@ -1,12 +1,9 @@
 ## R routines for gam fitting with calculation of derivatives w.r.t. sp.s
-## (c) Simon Wood 2004-2008
+## (c) Simon Wood 2004-2009
 
-## This routine is for type 3 gam fitting. The basic idea is that a P-IRLS
+## These routine is for type 3 gam fitting. The basic idea is that a P-IRLS
 ## is run to convergence, and only then is a scheme for evaluating the 
-## derivatives iterated to convergence. The advantage is that many key
-## quantities are fixed at this stage, including the key decompositions
-## In addition the R side work is simplified considerably.The routine
-## evaluates first and second derivatives of the deviance and tr(A).
+## derivatives via the implicit function theorem used. 
 
 
 gam.reparam <- function(rS,lsp,deriv) 
@@ -81,7 +78,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             control = gam.control(), intercept = TRUE,deriv=2,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),...) 
  
-## Version with new reparameterization and truncation strategy
+## Version with new reparameterization and truncation strategy. 
 ## ISSUES: 
 ## 1. More efficient use of re-parameterization strategy could be employed, 
 ##    as repara is O(nq^2). Could pass in a repara object, containing sp's
