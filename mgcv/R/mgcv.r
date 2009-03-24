@@ -2997,18 +2997,29 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
 
   dnm <- names(list(...))
 
-  v.names <- row.names(attr(delete.response(x$terms),"factors"))
+  v.names  <- row.names(attr(x$terms,"factors"))
+  p.names <- row.names(attr(delete.response(x$pterms),"factors")) ## parametric terms
+  para.term <- v.names%in%p.names ## term is parametric or smooth?
+  names(para.term) <- v.names ## note that para.term relates to all terms, including response
+  
+  v.names <- row.names(attr(delete.response(x$terms),"factors")) ## term names, less response
+ 
   dataClass <- attr(x$terms,"dataClasses")
+  ## Note that in what follows matrices in the parametric part of the model
+  ## require special handling. Matrices arguments to smooths are different
+  ## as they follow the summation convention. 
   if (is.null(view)) # get default view if none supplied
-  { k <- 0;view <- rep("",2)
+  { ## need to find first terms that can be plotted against
+    ## e.g. matrices in the parametric part are out 
+    k <- 0;view <- rep("",2) 
     for (i in 1:length(v.names)) {
-      if (dataClass[v.names[i]]%in%c("numeric","factor")) {
+      if (!para.term[v.names[i]]||dataClass[v.names[i]]%in%c("numeric","factor")) {
         k <- k + 1;view[k] <- v.names[i]
       }
       if (k==2) break;
     }
     if (k<2) stop("Model does not seem to have enough terms to do anything useful")
-  } else if (sum(dataClass[view]%in%c("factor","numeric"))!=2) stop("view variables must be factor or numeric")
+  } else if (sum(dataClass[view]%in%c("factor","numeric")|!para.term[view])!=2) stop("view variables must be factor or numeric")
 
   if (!sum(view%in%names(x$model))) stop(
   paste(c("view variables must be one of",v.names),collapse=", "))
@@ -3019,11 +3030,11 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   marg<-x$model[1,]
   m.name<-names(x$model)
   for (i in 1:length(marg))
-  { ma<-cond[[m.name[i]]][1]
+  { ma<-cond[[m.name[i]]]
     if (is.null(ma)) 
     { if (is.factor(x$model[[i]]))
       marg[[i]]<-factor(levels(x$model[[i]])[1],levels(x$model[[i]]))
-      else if (is.matrix(x$model[[i]])) marg[[i]] <- t(colMeans(x$model[[i]]))
+      else if (para.term[i]&&is.matrix(x$model[[i]])) marg[[i]] <- t(colMeans(x$model[[i]]))
       else marg[[i]]<-mean(x$model[[i]]) 
     } else
     { if (is.factor(x$model[[i]]))
@@ -3044,7 +3055,7 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   
   newd <- data.frame(matrix(0,n.grid*n.grid,0)) ## creating prediction data frame full of conditioning values
   for (i in 1:dim(x$model)[2]) { 
-    if (is.matrix(x$model[[i]])) newd[[i]] <- matrix(marg[[i]],n.grid*n.grid,ncol(x$model[[i]]),byrow=TRUE)
+    if (para.term[i]&&is.matrix(x$model[[i]])) newd[[i]] <- matrix(marg[[i]],n.grid*n.grid,ncol(x$model[[i]]),byrow=TRUE)
     else newd[[i]]<-rep(marg[[i]],n.grid*n.grid)
   }
   row.names <- attr(newd,"row.names")
