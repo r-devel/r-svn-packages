@@ -2718,6 +2718,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   if (m>0) # form test statistics for each smooth
   { if (!freq) { 
       X <- model.matrix(object)
+      X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       ## get corrected edf
       ##  edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
@@ -2996,17 +2997,19 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
 
   dnm <- names(list(...))
 
-  #x$model <- strip.offset(x$model) 
-  ## ... remove "offset(" and ")" from offset column name
-
   v.names <- row.names(attr(delete.response(x$terms),"factors"))
-
+  dataClass <- attr(x$terms,"dataClasses")
   if (is.null(view)) # get default view if none supplied
-  { # v.names<-attr(attr(x$model,"terms"),"term.labels") # BUG... too many of these!!
-   
-    if (length(v.names)<2) stop("Model doesn't seem to have enough terms to do anything useful")
-    view<-v.names[1:2]
-  }
+  { k <- 0;view <- rep("",2)
+    for (i in 1:length(v.names)) {
+      if (dataClass[v.names[i]]%in%c("numeric","factor")) {
+        k <- k + 1;view[k] <- v.names[i]
+      }
+      if (k==2) break;
+    }
+    if (k<2) stop("Model does not seem to have enough terms to do anything useful")
+  } else if (sum(dataClass[view]%in%c("factor","numeric"))!=2) stop("view variables must be factor or numeric")
+
   if (!sum(view%in%names(x$model))) stop(
   paste(c("view variables must be one of",v.names),collapse=", "))
   if (length(unique(x$model[,view[1]]))<=1||length(unique(x$model[,view[2]]))<=1) 
@@ -3019,12 +3022,13 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   { ma<-cond[[m.name[i]]][1]
     if (is.null(ma)) 
     { if (is.factor(x$model[[i]]))
-      marg[i]<-factor(levels(x$model[[i]])[1],levels(x$model[[i]]))
-      else marg[i]<-mean(x$model[[i]]) 
+      marg[[i]]<-factor(levels(x$model[[i]])[1],levels(x$model[[i]]))
+      else if (is.matrix(x$model[[i]])) marg[[i]] <- t(colMeans(x$model[[i]]))
+      else marg[[i]]<-mean(x$model[[i]]) 
     } else
     { if (is.factor(x$model[[i]]))
-      marg[i]<-factor(ma,levels(x$model[[i]]))
-      else marg[i]<-ma
+      marg[[i]]<-factor(ma,levels(x$model[[i]]))
+      else marg[[i]]<-ma
     }
   }
   # marg includes conditioning values for view variables, but these will be ignored
@@ -3037,8 +3041,12 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   m2<-fac.seq(x$model[,view[2]],n.grid)
   else {r2<-range(x$model[,view[2]]);m2<-seq(r2[1],r2[2],length=n.grid)}
   v1<-rep(m1,n.grid);v2<-rep(m2,rep(n.grid,n.grid))
-  newd<-data.frame(v1=rep(marg[[1]],n.grid*n.grid))
-  for (i in 2:dim(x$model)[2]) newd[[i]]<-rep(marg[[i]],n.grid*n.grid)
+  
+  newd <- data.frame(matrix(0,n.grid*n.grid,0)) ## creating prediction data frame full of conditioning values
+  for (i in 1:dim(x$model)[2]) { 
+    if (is.matrix(x$model[[i]])) newd[[i]] <- matrix(marg[[i]],n.grid*n.grid,ncol(x$model[[i]]),byrow=TRUE)
+    else newd[[i]]<-rep(marg[[i]],n.grid*n.grid)
+  }
   row.names <- attr(newd,"row.names")
   attributes(newd) <- attributes(x$model) # done so that handling of offsets etc. works
   attr(newd,"row.names") <- row.names
@@ -3202,7 +3210,7 @@ mroot <- function(A,rank=NULL,method="chol")
     options(op) ## reset default warnings
     piv<-order(attr(L,"pivot"))
     if (is.null(rank)) rank<-attr(L,"rank")
-    L<-L[,piv];L<-t(L[1:rank,])
+    L<-L[,piv,drop=FALSE];L<-t(L[1:rank,,drop=FALSE])
     if (rank <= 1) dim(L) <- c(nrow(A),1)
     return(L)
   } else

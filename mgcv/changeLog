@@ -3,7 +3,15 @@
 
 ISSUES
 ------
-[none known]
+
+1.5-2
+
+* `vis.gam' could not cope with models with matrices in the 
+  parametric part of the model formula. Fixed.
+
+* `summary.gam' failed under na.exclude. Fixed. 
+
+* `mroot' failed on 1 by 1 matrices, Fixed.
 
 1.5-1
 
