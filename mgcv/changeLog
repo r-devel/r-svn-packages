@@ -3,11 +3,23 @@
 
 ISSUES
 ------
+[none known]
 
 1.5-2
 
-* `vis.gam' could not cope with models with matrices in the 
-  parametric part of the model formula. Fixed.
+* Several exported functions had no usage entries in the help files.
+  Everything exported does now.
+
+* `vis.gam' had a bunch of bugs (which could make it fail altogether) 
+   as a result of trying to set default conditioning values from the gam 
+   object model frame. `gam' and `gamm' now obtain summary statistics of 
+   the predictor variables, stored in `var.summary' in the gam object, 
+   which `vis.gam' now uses. As a result `vis.gam' `view' and `cond' 
+   arguments should now contain original variable names, not model frame 
+   term names.
+
+* `data' argument of `gam' no longer stored in the `gam' object, by 
+  default to save memory (can restore this --- see `gam.control').
 
 * `summary.gam' failed under na.exclude. Fixed. 
 
