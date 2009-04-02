@@ -4,7 +4,7 @@ TODO-MM
 DONE-MM
 INDEX-MM
 .*/.*-MM
-Changelog\..*
+Changelog..*
 .*\.log
 .*-warnings
 .*references

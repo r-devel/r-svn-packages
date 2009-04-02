@@ -1,3 +1,7 @@
+2009-03-12  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/daisy.Rd: fix typo/thinko (thanks to Felix Mueller).
+
 2009-01-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/agnes.q (as.dendrogram.agnes): new utility
