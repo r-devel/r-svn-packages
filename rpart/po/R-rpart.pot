@@ -110,7 +110,7 @@ msgstr ""
 msgid "Response must be a survival object - use the Surv() function"
 msgstr ""
 
-msgid "Observation time must be >0"
+msgid "Observation time must be > 0"
 msgstr ""
 
 msgid "No deaths in data set"
@@ -128,7 +128,7 @@ msgstr ""
 msgid "response must be a 2 column matrix or a vector"
 msgstr ""
 
-msgid "Number of events must be >=0"
+msgid "Number of events must be >= 0"
 msgstr ""
 
 msgid "Trees cannot handle interaction terms"

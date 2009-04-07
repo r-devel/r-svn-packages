@@ -118,8 +118,8 @@ msgstr "вместо него использовано умалчиваемое значение 0 "
 msgid "Response must be a survival object - use the Surv() function"
 msgstr "Ответ должен быть survival-объектом -- используйте функцию Surv()"
 
-msgid "Observation time must be >0"
-msgstr "Время наблюдений должно быть >0"
+msgid "Observation time must be > 0"
+msgstr "Время наблюдений должно быть > 0"
 
 msgid "No deaths in data set"
 msgstr "В данный нет смертей"
@@ -136,8 +136,8 @@ msgstr "Неправильное значение сжатия"
 msgid "response must be a 2 column matrix or a vector"
 msgstr "ответ должен быть 2-колоночной матрицей или вектором"
 
-msgid "Number of events must be >=0"
-msgstr "Количество событий должно быть >=0"
+msgid "Number of events must be >= 0"
+msgstr "Количество событий должно быть >= 0"
 
 msgid "Trees cannot handle interaction terms"
 msgstr "Деревья не переносят терминов взаимодействия"
