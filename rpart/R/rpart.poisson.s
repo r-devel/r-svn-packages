@@ -5,11 +5,11 @@ rpart.poisson <- function(y, offset, parms, wt)
             stop("response must be a 2 column matrix or a vector")
 	if (!is.null(offset)) y[, 1L] <- y[, 1L] * exp(offset)
     } else {
-	if (is.null(offset)) y <- cbind(1,y)
+	if (is.null(offset)) y <- cbind(1, y)
 	else  y <- cbind( exp(offset), y)
     }
-    if (any(y[, 1L] < 0))  stop("Number of events must be >= 0")
-    if (any(y[, 2L] <= 0)) stop("Observation time must be > 0")
+    if (any(y[, 1L] <= 0)) stop("Observation time must be > 0")
+    if (any(y[, 2L] < 0))  stop("Number of events must be >= 0")
 
     if (missing(parms)) parms <- c(shrink = 1L, method = 1L)
     else {
@@ -36,13 +36,13 @@ rpart.poisson <- function(y, offset, parms, wt)
     list(y = y, parms = parms, numresp = 2L, numy = 2L,
 	 summary = function(yval, dev, wt, ylevel, digits) {
 	     paste("  events=", formatg(yval[, 2L]),
-                   ",  estimated rate=" , formatg(yval[,1L], digits),
-                   " , mean deviance=",formatg(dev/wt, digits),
+                   ",  estimated rate=" , formatg(yval[, 1L], digits),
+                   " , mean deviance=", formatg(dev/wt, digits),
                    sep = "")
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
 	     if(use.n) paste(formatg(yval[, 1L], digits), "\n",
-                              formatg(yval[, 2L]), "/", n, sep = "") else
-             paste(formatg(yval[, 1L], digits))
+                              formatg(yval[, 2L]), "/", n, sep = "")
+             else paste(formatg(yval[, 1L], digits))
          })
 }
