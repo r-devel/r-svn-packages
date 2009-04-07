@@ -5,10 +5,12 @@
 
 bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
                  gridsize=401L,range.x,truncate=TRUE)
-
-# Last changed: 16/06/95
-
 {
+   # Install safeguard against non-positive bandwidths:
+
+   if (!missing(bandwidth) && bandwidth <= 0)
+       stop("'bandwidth' must be strictly positive")
+
    # Rename common variables
 
    n <- length(x)
@@ -65,6 +67,11 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
    # Compute kernel weights
 
    L <- min(floor(tau*h*(M-1L)/(b-a)),M)
+   if (L == 0) {
+       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameter.")
+       return(list(x=gpoints, y=rep(NA_real_, M)))
+   }
+
    lvec <- (0L:L)
    delta  <- (b-a)/(h*(M-1L))
    if (canonical==FALSE) del0 <- 1
@@ -96,16 +103,18 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
    gcounts <- c(gcounts,rep(0L,P-M))
    kappa <- fft(kappa)
    gcounts <- fft(gcounts)
-   return(list(x=gpoints,y=(Re(fft(kappa*gcounts,TRUE))/P)[1L:M]))
+   list(x=gpoints,y=(Re(fft(kappa*gcounts,TRUE))/P)[1L:M])
 }
 
 
 
 bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
-
-# Last changed: 25/08/95
-
 {
+   # Install safeguard against non-positive bandwidths:
+
+   if (!missing(bandwidth) && min(bandwidth) <= 0)
+      stop("'bandwidth' must be strictly positive")
+
    # Rename common variables
 
    n <- nrow(x)
@@ -154,6 +163,11 @@ bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
    }
    kapp <- kapid[[1L]]%*%(t(kapid[[2L]]))/n
 
+   if (min(L) == 0) {
+       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameters.")
+       return(list(x1=gpoints1, x2=gpoints2, y=rep(NA_real_, prod(M))))
+   }
+
    # Now combine weight and counts using the FFT
    # to obtain estimate
 
@@ -182,15 +196,17 @@ bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
 
    rp <- rp*matrix(as.numeric(rp>0),nrow(rp),ncol(rp))
 
-   return(list(x1=gpoints1,x2=gpoints2,fhat=rp))
+   list(x1=gpoints1,x2=gpoints2,fhat=rp)
 }
 
 
 bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRUE)
-
-# Last changed: 18/12/95
-
 {
+   # Install safeguard against non-positive bandwidths:
+
+   if (!missing(bandwidth) && bandwidth <= 0)
+       stop("'bandwidth' must be strictly positive")
+
    if (missing(range.x)&(binned==FALSE)) range.x <- c(min(x),max(x))
 
    # Rename variables
@@ -223,6 +239,12 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
 
    tau <- 4 + drv
    L <- min(floor(tau*h/delta),M)
+
+   if (L == 0) {
+       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameter.")
+       return(NA_real_)
+   }
+
    lvec <- (0L:L)
    arg <- lvec*delta/h
 
@@ -246,9 +268,7 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
    kappam <- fft(kappam)
    Gcounts <- fft(Gcounts)
 
-   est <- sum(gcounts*(Re(fft(kappam*Gcounts,TRUE))/P)[1L:M])/(n^2)
-
-   return(est)
+   sum(gcounts*(Re(fft(kappam*Gcounts,TRUE))/P)[1L:M])/(n^2)
 }
 ########## S-function: blkest ##########
 
@@ -256,8 +276,6 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
 # quantities required for the "direct plug-in"
 # regression bandwidth selector based on
 # blocked qth degree polynomial fits.
-
-# Last changed: 06/04/95
 
 blkest <- function(x,y,Nval,q)
 {
@@ -292,8 +310,7 @@ blkest <- function(x,y,Nval,q)
                     as.double(qraux),as.double(sigsqe),as.double(th22e),
                     as.double(th24e))
 
-   return(list(sigsqe=out[[13]],th22e=out[[14]],th24e=out[[15]]))
-
+   list(sigsqe=out[[13]],th22e=out[[14]],th24e=out[[15]])
 }
 
 ######### End of S-function blkest ########
@@ -301,9 +318,6 @@ blkest <- function(x,y,Nval,q)
 
 # Chooses the number of blocks for the premilinary
 # step of a plug-in rule using Mallows' C_p.
-
-# Last changed: 06/04/95
-
 cpblock <- function(X,Y,Nmax,q)
 
 {
@@ -337,19 +351,15 @@ cpblock <- function(X,Y,Nmax,q)
                    as.double(qraux),Cpvals=as.double(Cpvals))
 
    Cpvec <- out$Cpvals
-   Nval <- order(Cpvec)[1L]
 
-   return(Nval)
+   order(Cpvec)[1L]
 }
 
 ######### End of S-function cpblock ########
 dpih <- function(x,scalest="minim",level=2,gridsize=401L,range.x=range(x),
                           truncate=TRUE)
-
-# Last changed: 16/06/95
-
 {
-   if (level>5) return("Level should be between 0 and 5")
+   if (level>5) stop("Level should be between 0 and 5")
 
    # Rename variables
 
@@ -379,72 +389,84 @@ dpih <- function(x,scalest="minim",level=2,gridsize=401L,range.x=range(x),
       scalest <- min(scalest,sqrt(var(x)))
    }
 
+   if (scalest == 0) stop("scale estimate is zero for input data")
+
+   # Replace input data by standardised data for numerical
+   # stability:
+
+   sx <- (x-mean(x))/scalest
+   sa <- (a-mean(x))/scalest ; sb <- (b-mean(x))/scalest
+
+   # Set up grid points and bin the data:
+
+   gpoints <- seq(sa,sb,length=M)
+   gcounts <- linbin(sx,gpoints,truncate)
+   delta <- (sb-sa)/(M-1)
+
    # Perform plug-in steps
 
    if (level==0)
    {
-      hpi <- (24*sqrt(pi)/n)^(1/3)*scalest
+      hpi <- (24*sqrt(pi)/n)^(1/3)
    }
    else if (level==1)
    {
-      alpha <- (2/(3*n))^(1/5)*sqrt(2)*scalest   # bandwidth for psi_2
-      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- (2/(3*n))^(1/5)*sqrt(2)          # bandwidth for psi_2
+      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(sa,sb),binned=TRUE)
       hpi <- (6/(-psi2hat*n))^(1/3)
    }
    else if (level==2)
    {
-      alpha <- ((2/(5*n))^(1/7))*sqrt(2)*scalest    # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- ((2/(5*n))^(1/7))*sqrt(2)        # bandwidth for psi_4
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (sqrt(2/pi)/(psi4hat*n))^(1/5)       # bandwidth for psi_2
-      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(a,b),binned=TRUE)
+      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(sa,sb),binned=TRUE)
       hpi <- (6/(-psi2hat*n))^(1/3)
    }
    else if (level==3)
    {
-      alpha <- ((2/(7*n))^(1/9))*sqrt(2)*scalest    # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- ((2/(7*n))^(1/9))*sqrt(2)        # bandwidth for psi_6
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)    # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (sqrt(2/pi)/(psi4hat*n))^(1/5)       # bandwidth for psi_2
-      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(a,b),binned=TRUE)
+      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(sa,sb),binned=TRUE)
       hpi <- (6/(-psi2hat*n))^(1/3)
    }
    else if (level==4)
    {
-      alpha <- ((2/(9*n))^(1/11))*sqrt(2)*scalest    # bandwidth for psi_8
-      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- ((2/(9*n))^(1/11))*sqrt(2)       # bandwidth for psi_8
+      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (15*sqrt(2/pi)/(psi8hat*n))^(1/9)     # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)     # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (sqrt(2/pi)/(psi4hat*n))^(1/5)        # bandwidth for psi_2
-      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(a,b),binned=TRUE)
+      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(sa,sb),binned=TRUE)
       hpi <- (6/(-psi2hat*n))^(1/3)
    }
    else if (level==5)
    {
-      alpha <- ((2/(11*n))^(1/13))*sqrt(2)*scalest
-      psi10hat <- bkfe(gcounts,10,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- ((2/(11*n))^(1/13))*sqrt(2)         # bandwidth for psi_10
+      psi10hat <- bkfe(gcounts,10,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-105*sqrt(2/pi)/(psi10hat*n))^(1/11) # bandwidth for psi_8
-      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(a,b),binned=TRUE)
+      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (15*sqrt(2/pi)/(psi8hat*n))^(1/9)     # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)     # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (sqrt(2/pi)/(psi4hat*n))^(1/5)        # bandwidth for psi_2
-      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(a,b),binned=TRUE)
+      psi2hat <- bkfe(gcounts,2,alpha,range.x=c(sa,sb),binned=TRUE)
       hpi <- (6/(-psi2hat*n))^(1/3)
    }
 
-   return(hpi)
+   scalest*hpi
 }
+
 dpik <- function(x,scalest="minim",level=2,kernel="normal",
                 canonical=FALSE,gridsize=401L,range.x=range(x),truncate=TRUE)
-
-# Last changed: 18/06/97
-
 {
-   if (level>5) return("Level should be between 0 and 5")
+   if (level>5) stop("Level should be between 0 and 5")
 
    # Set kernel constants
 
@@ -472,75 +494,80 @@ dpik <- function(x,scalest="minim",level=2,kernel="normal",
 
    # Compute scale estimate
 
-   if (scalest=="stdev")
-   {
-      scalest <- sqrt(var(x))
-   }
-   else if (scalest=="iqr")
-   {
-      scalest <- (quantile(x,3/4)-quantile(x,1/4))/1.349
-   }
-   else if (scalest=="minim")
-   {
+   if (scalest == "stdev") scalest <- sqrt(var(x))
+   else if (scalest == "iqr") scalest <- (quantile(x,3/4)-quantile(x,1/4))/1.349
+   else if (scalest == "minim") {
       scalest <- (quantile(x,3/4)-quantile(x,1/4))/1.349
       scalest <- min(scalest,sqrt(var(x)))
    }
 
-   # Perform plug-in steps
+   if (scalest == 0) stop("scale estimate is zero for input data.")
+
+   # Replace input data by standardised data for numerical
+   # stability:
+
+   sx <- (x-mean(x))/scalest
+   sa <- (a-mean(x))/scalest ; sb <- (b-mean(x))/scalest
+
+   # Set up grid points and bin the data:
+
+   gpoints <- seq(sa,sb,length=M)
+   gcounts <- linbin(sx,gpoints,truncate)
+   delta <- (sb-sa)/(M-1)
+
+   # Perform plug-in steps:
 
    if (level==0)
    {
-      psi4hat <- 3/(8*sqrt(pi)*scalest^5)
+      psi4hat <- 3/(8*sqrt(pi))
    }
    else if (level==1)
    {
-      alpha <- (2*(sqrt(2)*scalest)^7/(5*n))^(1/7)   # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- (2*(sqrt(2))^7/(5*n))^(1/7)   # bandwidth for psi_4
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
    }
    else if (level==2)
    {
-      alpha <- (2*(sqrt(2)*scalest)^9/(7*n))^(1/9)   # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- (2*(sqrt(2))^9/(7*n))^(1/9)   # bandwidth for psi_6
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)   # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
    }
    else if (level==3)
    {
-      alpha <- (2*(sqrt(2)*scalest)^11/(9*n))^(1/11) # bandwidth for psi_8
-      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- (2*(sqrt(2))^11/(9*n))^(1/11) # bandwidth for psi_8
+      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (15*sqrt(2/pi)/(psi8hat*n))^(1/9)   # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)   # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
    }
    else if (level==4)
    {
-      alpha <- (2*(sqrt(2)*scalest)^13/(11*n))^(1/13) # bandwidth for psi_10
-      psi10hat <- bkfe(gcounts,10,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- (2*(sqrt(2))^13/(11*n))^(1/13) # bandwidth for psi_10
+      psi10hat <- bkfe(gcounts,10,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-105*sqrt(2/pi)/(psi10hat*n))^(1/11)# bandwidth for psi_8
-      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(a,b),binned=TRUE)
+      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (15*sqrt(2/pi)/(psi8hat*n))^(1/9)    # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)    # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
    }
    else if (level==5)
    {
-      alpha <- (2*(sqrt(2)*scalest)^15/(13*n))^(1/15) # bandwidth for psi_12
-      psi12hat <- bkfe(gcounts,12,alpha,range.x=c(a,b),binned=TRUE)
+      alpha <- (2*(sqrt(2))^15/(13*n))^(1/15) # bandwidth for psi_12
+      psi12hat <- bkfe(gcounts,12,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (945*sqrt(2/pi)/(psi12hat*n))^(1/13) # bandwidth for psi_10
-      psi10hat <- bkfe(gcounts,10,alpha,range.x=c(a,b),binned=TRUE)
+      psi10hat <- bkfe(gcounts,10,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-105*sqrt(2/pi)/(psi10hat*n))^(1/11)# bandwidth for psi_8
-      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(a,b),binned=TRUE)
+      psi8hat <- bkfe(gcounts,8,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (15*sqrt(2/pi)/(psi8hat*n))^(1/9)    # bandwidth for psi_6
-      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(a,b),binned=TRUE)
+      psi6hat <- bkfe(gcounts,6,alpha,range.x=c(sa,sb),binned=TRUE)
       alpha <- (-3*sqrt(2/pi)/(psi6hat*n))^(1/7)    # bandwidth for psi_4
-      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(a,b),binned=TRUE)
+      psi4hat <- bkfe(gcounts,4,alpha,range.x=c(sa,sb),binned=TRUE)
    }
 
-   hpi <- del0*(1/(psi4hat*n))^(1/5)
-
-   return(hpi)
+   scalest*del0*(1/(psi4hat*n))^(1/5)
 }
 ########## S-function: dpill ##########
 
@@ -548,9 +575,6 @@ dpik <- function(x,scalest="minim",level=2,kernel="normal",
 # bandwidth for local linear regression as
 # described in the 1996 J. Amer. Statist. Assoc.
 # paper by Ruppert, Sheather and Wand.
-
-# Last changed: 16/06/95
-
 dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
                   gridsize=401L,
                   range.x=range(x),truncate=TRUE)
@@ -574,11 +598,23 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
    M <- gridsize
    a <- range.x[1L]
    b <- range.x[2L]
+   delta <- (b-a)/(M-1)
 
-   # Bin the data
+   # Replace input data by standardised data for numerical
+   # stability:
 
-   gpoints <- seq(a,b,length=M)
-   out <- rlbin(x,y,gpoints,truncate)
+   sdx <- sd(x) ; sdy <- sd(y)
+
+   if (sd(x)==0) stop("x data has zero standard deviation")
+   if (sd(y)==0) stop("y data has zero standard deviation")
+
+   sx <- (x-mean(x))/sdx ; sy <- (y-mean(y))/sdy
+   sa <- (a-mean(x))/sdx ; sb <- (b-mean(x))/sdx
+
+   # Bin the data:
+
+   gpoints <- seq(sa,sb,length=M)
+   out <- rlbin(sx,sy,gpoints,truncate)
    xcounts <- out$xcounts
    ycounts <- out$ycounts
 
@@ -586,24 +622,25 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
 
    Nmax <- max(min(floor(n/divisor),blockmax),1)
 
-   Nval <- cpblock(x,y,Nmax,4)
+   Nval <- cpblock(sx,sy,Nmax,4)
 
    # Estimate sig^2, theta_22 and theta_24 using quartic fits
    # on "Nval" blocks.
 
-   out <- blkest(x,y,Nval,4)
+   out <- blkest(sx,sy,Nval,4)
    sigsqQ <- out$sigsqe
+   th22Q <- out$th22e
    th24Q <- out$th24e
 
    # Estimate theta_22 using a local cubic fit
    # with a "rule-of-thumb" bandwidth: "gamseh"
 
-   gamseh <- (sigsqQ*(b-a)/(abs(th24Q)*n))
+   gamseh <- (sigsqQ*(sb-sa)/(abs(th24Q)*n))
    if (th24Q<0) gamseh <- (3*gamseh/(8*sqrt(pi)))^(1/7)
    if (th24Q>0) gamseh <- (15*gamseh/(16*sqrt(pi)))^(1/7)
 
    mddest <- locpoly(xcounts,ycounts,drv=2L,bandwidth=gamseh,
-                     range.x=range.x,binned=TRUE)$y
+                     range.x=c(sa,sb),binned=TRUE,gridsize=M)$y
 
    llow <- floor(proptrun*M) + 1
    lupp <- M - floor(proptrun*M)
@@ -614,31 +651,29 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
 
    C3K <- (1/2) + 2*sqrt(2) - (4/3)*sqrt(3)
    C3K <- (4*C3K/(sqrt(2*pi)))^(1/9)
-   lamseh <- C3K*(((sigsqQ^2)*(b-a)/((th22kn*n)^2))^(1/9))
+   lamseh <- C3K*(((sigsqQ^2)*(sb-sa)/((th22kn*n)^2))^(1/9))
 
    # Now compute a local linear kernel estimate of
    # the variance.
 
    mest <- locpoly(xcounts,ycounts,bandwidth=lamseh,
-                   range.x=range.x,binned=TRUE)$y
+                   range.x=c(sa,sb),binned=TRUE,gridsize=M)$y
 
    Sdg <- sdiag(xcounts,bandwidth=lamseh,
-                range.x=range.x,binned=TRUE)$y
+                range.x=c(sa,sb),binned=TRUE,gridsize=M)$y
 
    SSTdg <- sstdiag(xcounts,bandwidth=lamseh,
-                    range.x=range.x,binned=TRUE)$y
+                    range.x=c(sa,sb),binned=TRUE,gridsize=M)$y
 
-   sigsqn <- sum(y^2) - 2*sum(mest*ycounts) + sum((mest^2)*xcounts)
+   sigsqn <- sum(sy^2) - 2*sum(mest*ycounts) + sum((mest^2)*xcounts)
 
    sigsqd <- n - 2*sum(Sdg*xcounts) + sum(SSTdg*xcounts)
 
    sigsqkn <- sigsqn/sigsqd
 
-   # Combine to obtain final answer.
+   # Combine to obtain final answer:
 
-   hhat <- (sigsqkn*(b-a)/(2*sqrt(pi)*th22kn*n))^(1/5)
-
-   return(hhat)
+   sdx*(sigsqkn*(sb-sa)/(2*sqrt(pi)*th22kn*n))^(1/5)
 }
 
 ######### End of S-function dpill.S ########
@@ -646,9 +681,6 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
 
 # For application of linear binning to a univariate
 # data set.
-
-# Last changed: 16/06/95
-
 linbin <- function(X,gpoints,truncate=TRUE)
 
 {
@@ -658,10 +690,9 @@ linbin <- function(X,gpoints,truncate=TRUE)
    if (truncate) trun <- 1
    a <- gpoints[1L]
    b <- gpoints[M]
-   out <- .Fortran(F_linbin,as.double(X),as.integer(n),
-           as.double(a),as.double(b),as.integer(M),
-           as.integer(trun),double(M))
-   return(out[[7]])
+   .Fortran(F_linbin,as.double(X),as.integer(n),
+            as.double(a),as.double(b),as.integer(M),
+            as.integer(trun),double(M))[[7]]
 }
 
 ########## End of S-function linbin ##########
@@ -672,9 +703,6 @@ linbin <- function(X,gpoints,truncate=TRUE)
 # contained in "gpoints" using the linear
 # binning strategy. Note that the FORTRAN subroutine
 # "lbtwod" is called.
-
-# Last changed: 25/08/95
-
 linbin2D <- function(X,gpoints1,gpoints2)
 {
    n <- nrow(X)
@@ -688,7 +716,7 @@ linbin2D <- function(X,gpoints1,gpoints2)
    out <- .Fortran(F_lbtwod,as.double(X),as.integer(n),
            as.double(a1),as.double(a2),as.double(b1),as.double(b2),
            as.integer(M1),as.integer(M2),double(M1*M2))
-   return(matrix(out[[9]],M1,M2))
+   matrix(out[[9]],M1,M2)
 }
 
 ######## End of S-function linbin2D ########
@@ -700,14 +728,16 @@ linbin2D <- function(X,gpoints1,gpoints2)
 # The data are discretised on an equally
 # spaced grid. The bandwidths are discretised on a
 # logarithmically spaced grid.
-
-# Last changed: 07/07/95
-
 locpoly <- function(x,y,drv=0L,degree,kernel="normal",
                     bandwidth,gridsize=401L,bwdisc=25,range.x,
                     binned=FALSE,truncate=TRUE)
 
 {
+   # Install safeguard against non-positive bandwidths:
+
+   if (!missing(bandwidth) && bandwidth <= 0)
+       stop("'bandwidth' must be strictly positive")
+
    drv <- as.integer(drv)
    if (missing(degree)) degree <- drv + 1L
    else degree <- as.integer(degree)
@@ -716,12 +746,10 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
    if (missing(y))
    {
       extra <- 0.05*(max(x) - min(x))
-      range.x <- c(min(x)-extra,max(x)+extra)
+      range.x <- c(min(x)-extra, max(x)+extra)
    }
    else
-   {
       range.x <- c(min(x),max(x))
-   }
 
    # Rename common variables
 
@@ -809,9 +837,10 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
       hdisc <- rep(bandwidth,Q)
    }
    else
-   {
-      stop("Bandwidth must be a scalar or an array of length gridsize")
-   }
+      stop("'bandwidth' must be a scalar or an array of length 'gridsize'")
+
+   if (min(Lvec) == 0)
+         stop("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameter.")
 
    # Allocate space for the kernel vector and final estimate
 
@@ -837,7 +866,7 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
 
    curvest <- gamma(drv+1)*out[[19]]
 
-   return(list(x=gpoints,y=curvest))
+   list(x=gpoints,y=curvest)
 }
 
 ########## End of S-function locpoly ##########
@@ -845,9 +874,6 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
 
 # For application of linear binning to a regression
 # data set.
-
-# Last changed: 16/06/95
-
 rlbin <- function(X,Y,gpoints,truncate=TRUE)
 
 {
@@ -860,7 +886,7 @@ rlbin <- function(X,Y,gpoints,truncate=TRUE)
    out <- .Fortran(F_rlbin,as.double(X),as.double(Y),as.integer(n),
            as.double(a),as.double(b),as.integer(M),as.integer(trun),
            double(M),double(M))
-   return(list(xcounts=out[[8]],ycounts=out[[9]]))
+   list(xcounts=out[[8]], ycounts=out[[9]])
 }
 
 ########## End of S-function rlbin ##########
@@ -868,9 +894,6 @@ rlbin <- function(X,Y,gpoints,truncate=TRUE)
 
 # For computing the binned diagonal entries of a smoother
 # matrix for local polynomial kernel regression.
-
-# Last changed: 16/06/95
-
 
 sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
                     bandwidth,gridsize=401L,bwdisc=25,range.x,
@@ -947,9 +970,7 @@ sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
       hdisc <- rep(bandwidth,Q)
    }
    else
-   {
-      stop("Bandwidth must be a scalar or an array of length gridsize")
-   }
+      stop("'bandwidth' must be a scalar or an array of length 'gridsize'")
 
    dimfkap <- 2*sum(Lvec) + Q
    fkap <- rep(0,dimfkap)
@@ -968,9 +989,7 @@ sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
                     as.double(ss),as.double(Smat),as.double(work),
                     as.double(det),as.integer(ipvt),as.double(Sdg))
 
-   Sdg <- out[[17]]
-
-   return(list(x=gpoints,y=Sdg))
+   list(x=gpoints, y=out[[17]])
 }
 
 ######## End of S-function sdiag ########
@@ -980,9 +999,6 @@ sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
 # For computing the binned diagonal entries of SS^T
 # where S is a smoother matrix for local polynomial
 # kernel regression.
-
-# Last changed: 16/06/95
-
 sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
                     bandwidth,gridsize=401L,bwdisc=25,range.x,
                     binned=FALSE,truncate=TRUE)
@@ -1050,7 +1066,7 @@ sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
       }
       else indic <- rep(1,M)
    }
-   else if (length(bandwidth)==1)
+   else if (length(bandwidth) == 1)
    {
       indic <- rep(1,M)
       Q <- 1
@@ -1058,9 +1074,7 @@ sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
       hdisc <- rep(bandwidth,Q)
    }
    else
-   {
-      stop("Bandwidth must be a scalar or an array of length gridsize")
-   }
+      stop("'bandwidth' must be a scalar or an array of length 'gridsize'")
 
    dimfkap <- 2*sum(Lvec) + Q
    fkap <- rep(0,dimfkap)
@@ -1084,22 +1098,13 @@ sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
 
    SSTd <- out[[19]]
 
-   return(list(x=gpoints,y=SSTd))
+  list(x=gpoints, y=SSTd)
 }
 
 ######## End of S-function sstdiag ########
 
-######### S-PLUS function: .First.lib ##########
-
-# S-PLUS .First.lib function for ModuleX
-
 .onLoad <- function(lib, pkg)
-{
-   packageStartupMessage("KernSmooth 2.22 installed")
-   packageStartupMessage("Copyright M. P. Wand 1997")
-}
+   packageStartupMessage("KernSmooth 2.22 installed\nCopyright M. P. Wand 1997")
 
 .onUnload <- function(libpath)
     library.dynam.unload("KernSmooth", libpath)
-
-############# End of .First.lib ###############
