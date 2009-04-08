@@ -68,7 +68,7 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
 
    L <- min(floor(tau*h*(M-1L)/(b-a)),M)
    if (L == 0) {
-       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameter.")
+       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
        return(list(x=gpoints, y=rep(NA_real_, M)))
    }
 
@@ -164,7 +164,7 @@ bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
    kapp <- kapid[[1L]]%*%(t(kapid[[2L]]))/n
 
    if (min(L) == 0) {
-       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameters.")
+       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
        return(list(x1=gpoints1, x2=gpoints2, y=rep(NA_real_, prod(M))))
    }
 
@@ -241,7 +241,7 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
    L <- min(floor(tau*h/delta),M)
 
    if (L == 0) {
-       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameter.")
+       warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
        return(NA_real_)
    }
 
@@ -501,7 +501,7 @@ dpik <- function(x,scalest="minim",level=2,kernel="normal",
       scalest <- min(scalest,sqrt(var(x)))
    }
 
-   if (scalest == 0) stop("scale estimate is zero for input data.")
+   if (scalest == 0) stop("scale estimate is zero for input data")
 
    # Replace input data by standardised data for numerical
    # stability:
@@ -840,7 +840,7 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
       stop("'bandwidth' must be a scalar or an array of length 'gridsize'")
 
    if (min(Lvec) == 0)
-         stop("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize' parameter.")
+         stop("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
 
    # Allocate space for the kernel vector and final estimate
 
