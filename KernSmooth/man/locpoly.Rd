@@ -41,7 +41,7 @@ of \code{drv}. The default value is of \code{degree} is
 \code{drv} + 1.
 }
 \item{kernel}{
-\code{"normal"} - the Gaussian density function.
+\code{"normal"} - the Gaussian density function.  Currently ignored.
 }
 \item{gridsize}{
 number of equally-spaced grid points over which the 
@@ -102,15 +102,16 @@ Chapman and Hall, London.
 }
 \examples{
 data(geyser, package = "MASS")
+# local linear density estimate
 x <- geyser$duration
 est <- locpoly(x, bandwidth = 0.25)
 plot(est, type = "l")
-# local linear density estimate
+
+# local linear regression estimate
 y <- geyser$waiting
 plot(x, y)
 fit <- locpoly(x, y, bandwidth = 0.25)
 lines(fit)
-# local linear regression estimate
 }
 \keyword{smooth}
 \keyword{regression}
