@@ -67,43 +67,32 @@ bkde <- function(x,kernel="normal",canonical=FALSE,bandwidth,
    # Compute kernel weights
 
    L <- min(floor(tau*h*(M-1L)/(b-a)),M)
-   if (L == 0) {
+   if (L == 0)
        warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
-       return(list(x=gpoints, y=rep(NA_real_, M)))
-   }
 
    lvec <- (0L:L)
    delta  <- (b-a)/(h*(M-1L))
    if (canonical==FALSE) del0 <- 1
    if (kernel=="normal")
-   {
       kappa <- dnorm(lvec*delta/del0)/(n*h*del0)
-   }
    else if (kernel=="box")
-   {
       kappa <- 0.5*dbeta(0.5*(lvec*delta/del0+1),1,1)/(n*h*del0)
-   }
    else if (kernel=="epanech")
-   {
       kappa <- 0.5*dbeta(0.5*(lvec*delta/del0+1),2,2)/(n*h*del0)
-   }
    else if (kernel=="biweight")
-   {
       kappa <- 0.5*dbeta(0.5*(lvec*delta/del0+1),3,3)/(n*h*del0)
-   }
    else if (kernel=="triweight")
-   {
       kappa <- 0.5*dbeta(0.5*(lvec*delta/del0+1),4,4)/(n*h*del0)
-   }
 
    # Now combine weight and counts to obtain estimate
 
    P <- 2^(ceiling(log(M+L)/log(2)))
-   kappa <- c(kappa,rep(0,P-2L*L-1L),kappa[(L+1):2])
-   gcounts <- c(gcounts,rep(0L,P-M))
+#   kappa <- c(kappa,rep(0,P-2L*L-1L),kappa[(L+1):2])
+   kappa <- c(kappa, rep(0,P-2L*L-1L), rev(kappa[-1L]))
+   gcounts <- c(gcounts, rep(0L,P-M))
    kappa <- fft(kappa)
    gcounts <- fft(gcounts)
-   list(x=gpoints,y=(Re(fft(kappa*gcounts,TRUE))/P)[1L:M])
+   list(x=gpoints,y=(Re(fft(kappa*gcounts, TRUE))/P)[1L:M])
 }
 
 
@@ -135,9 +124,7 @@ bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
    {
       range.x <- list(0, 0)
       for (id in (1L:2L))
-      {
          range.x[[id]] <- c(min(x[,id])-1.5*h[id],max(x[,id])+1.5*h[id])
-      }
    }
 
    a <- c(range.x[[1L]][1L],range.x[[2L]][1L])
@@ -152,7 +139,7 @@ bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
 
    # Compute kernel weights
 
-   L <- numeric()
+   L <- numeric(2L)
    kapid <- list(0,0)
    for (id in (1L:2L))
    {
@@ -163,10 +150,8 @@ bkde2D <- function(x,bandwidth,gridsize=c(51L,51L),range.x,truncate=TRUE)
    }
    kapp <- kapid[[1L]]%*%(t(kapid[[2L]]))/n
 
-   if (min(L) == 0) {
+   if (min(L) == 0)
        warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
-       return(list(x1=gpoints1, x2=gpoints2, y=rep(NA_real_, prod(M))))
-   }
 
    # Now combine weight and counts using the FFT
    # to obtain estimate
@@ -207,7 +192,7 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
    if (!missing(bandwidth) && bandwidth <= 0)
        stop("'bandwidth' must be strictly positive")
 
-   if (missing(range.x)&(binned==FALSE)) range.x <- c(min(x),max(x))
+   if (missing(range.x) && binned == FALSE) range.x <- c(min(x),max(x))
 
    # Rename variables
 
@@ -240,10 +225,8 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
    tau <- 4 + drv
    L <- min(floor(tau*h/delta),M)
 
-   if (L == 0) {
+   if (L == 0)
        warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
-       return(NA_real_)
-   }
 
    lvec <- (0L:L)
    arg <- lvec*delta/h
@@ -263,14 +246,13 @@ bkfe <- function(x,drv,bandwidth,gridsize=401L,range.x,binned=FALSE,truncate=TRU
    # Now combine weights and counts to obtain estimate
 
    P <- 2^(ceiling(log(M+L)/log(2)))
-   kappam <- c(kappam,rep(0,P-2*L-1),kappam[(L+1):2])
-   Gcounts <- c(gcounts,rep(0,P-M))
+   kappam <- c(kappam, rep(0, P-2L*L-1L), rev(kappam[-1L]))
+   Gcounts <- c(gcounts, rep(0, P-M))
    kappam <- fft(kappam)
    Gcounts <- fft(Gcounts)
 
    sum(gcounts*(Re(fft(kappam*Gcounts,TRUE))/P)[1L:M])/(n^2)
 }
-########## S-function: blkest ##########
 
 # For obtaining preliminary estimates of
 # quantities required for the "direct plug-in"
@@ -313,9 +295,6 @@ blkest <- function(x,y,Nval,q)
    list(sigsqe=out[[13]],th22e=out[[14]],th24e=out[[15]])
 }
 
-######### End of S-function blkest ########
-########## S-function: cpblock ##########
-
 # Chooses the number of blocks for the premilinary
 # step of a plug-in rule using Mallows' C_p.
 cpblock <- function(X,Y,Nmax,q)
@@ -355,7 +334,6 @@ cpblock <- function(X,Y,Nmax,q)
    order(Cpvec)[1L]
 }
 
-######### End of S-function cpblock ########
 dpih <- function(x,scalest="minim",level=2,gridsize=401L,range.x=range(x),
                           truncate=TRUE)
 {
@@ -569,7 +547,6 @@ dpik <- function(x,scalest="minim",level=2,kernel="normal",
 
    scalest*del0*(1/(psi4hat*n))^(1/5)
 }
-########## S-function: dpill ##########
 
 # Computes a direct plug-in selector of the
 # bandwidth for local linear regression as
@@ -676,9 +653,6 @@ dpill <- function(x,y,blockmax=5,divisor=20,trim=0.01,proptrun=0.05,
    sdx*(sigsqkn*(sb-sa)/(2*sqrt(pi)*th22kn*n))^(1/5)
 }
 
-######### End of S-function dpill.S ########
-######## S-function: linbin ########
-
 # For application of linear binning to a univariate
 # data set.
 linbin <- function(X,gpoints,truncate=TRUE)
@@ -694,9 +668,6 @@ linbin <- function(X,gpoints,truncate=TRUE)
             as.double(a),as.double(b),as.integer(M),
             as.integer(trun),double(M))[[7]]
 }
-
-########## End of S-function linbin ##########
-######### S-function: linbin2D #########
 
 # Creates the grid counts from a bivariate data set X
 # over an equally-spaced set of grid points
@@ -719,9 +690,6 @@ linbin2D <- function(X,gpoints1,gpoints2)
    matrix(out[[9]],M1,M2)
 }
 
-######## End of S-function linbin2D ########
-######## S-function: locpoly ########
-
 # For computing a binned local polynomial
 # regression estimator of a univariate regression
 # function or its derivative.
@@ -742,14 +710,11 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
    if (missing(degree)) degree <- drv + 1L
    else degree <- as.integer(degree)
 
-   if (missing(range.x)&(binned==FALSE))
-   if (missing(y))
-   {
-      extra <- 0.05*(max(x) - min(x))
-      range.x <- c(min(x)-extra, max(x)+extra)
-   }
-   else
-      range.x <- c(min(x),max(x))
+   if (missing(range.x) && binned == FALSE)
+       if (missing(y)) {
+           extra <- 0.05*(max(x) - min(x))
+           range.x <- c(min(x)-extra, max(x)+extra)
+       } else range.x <- c(min(x),max(x))
 
    # Rename common variables
 
@@ -869,9 +834,6 @@ locpoly <- function(x,y,drv=0L,degree,kernel="normal",
    list(x=gpoints,y=curvest)
 }
 
-########## End of S-function locpoly ##########
-######## S-function: rlbin ########
-
 # For application of linear binning to a regression
 # data set.
 rlbin <- function(X,Y,gpoints,truncate=TRUE)
@@ -889,9 +851,6 @@ rlbin <- function(X,Y,gpoints,truncate=TRUE)
    list(xcounts=out[[8]], ycounts=out[[9]])
 }
 
-########## End of S-function rlbin ##########
-########## S-function: sdiag ##########
-
 # For computing the binned diagonal entries of a smoother
 # matrix for local polynomial kernel regression.
 
@@ -901,7 +860,7 @@ sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
 
 {
 
-   if (missing(range.x)&(binned==FALSE)) range.x <- c(min(x),max(x))
+   if (missing(range.x) && binned == FALSE) range.x <- c(min(x),max(x))
 
    # Rename common variables
 
@@ -915,7 +874,7 @@ sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
 
    # Bin the data if not already binned
 
-   if (binned==FALSE)
+   if (binned == FALSE)
    {
       gpoints <- seq(a,b,length=M)
       xcounts <- linbin(x,gpoints,truncate)
@@ -992,10 +951,6 @@ sdiag <- function(x,drv=0L,degree=1L,kernel="normal",
    list(x=gpoints, y=out[[17]])
 }
 
-######## End of S-function sdiag ########
-
-########## S-function: sstdiag ##########
-
 # For computing the binned diagonal entries of SS^T
 # where S is a smoother matrix for local polynomial
 # kernel regression.
@@ -1005,7 +960,7 @@ sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
 
 {
 
-   if (missing(range.x)&(binned==FALSE)) range.x <- c(min(x),max(x))
+   if (missing(range.x) && binned == FALSE) range.x <- c(min(x),max(x))
 
    # Rename common variables
 
@@ -1101,10 +1056,8 @@ sstdiag <- function(x,drv=0L,degree=1L,kernel="normal",
   list(x=gpoints, y=SSTd)
 }
 
-######## End of S-function sstdiag ########
-
 .onLoad <- function(lib, pkg)
-   packageStartupMessage("KernSmooth 2.22 installed\nCopyright M. P. Wand 1997")
+   packageStartupMessage("KernSmooth 2.23 installed\nCopyright M. P. Wand 1997-2009")
 
 .onUnload <- function(libpath)
     library.dynam.unload("KernSmooth", libpath)
