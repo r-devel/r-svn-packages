@@ -29,20 +29,12 @@ bkde <- function(x, kernel = "normal", canonical = FALSE, bandwidth,
 
     ## Set default bandwidth
 
-    if (missing(bandwidth)) {
-        bandwidth <- if (canonical) (243/(35*n))^(1/5)*sqrt(var(x))
-        else del0*(243/(35*n))^(1/5)*sqrt(var(x))
-
-    }
-    h <- bandwidth
+    h <- if (missing(bandwidth)) del0 * (243/(35*n))^(1/5)*sqrt(var(x))
+    else if(canonical) del0 * bandwidth else bandwidth
 
     ## Set kernel support values
 
-    tau <- if (canonical) {
-        if (kernel == "normal") 4*del0 else del0
-    } else {
-        if (kernel == "normal") 4 else 1
-    }
+    tau <-  if (kernel == "normal") 4 else 1
 
     if (missing(range.x)) range.x <- c(min(x)-tau*h, max(x)+tau*h)
     a <- range.x[1L]
@@ -55,30 +47,30 @@ bkde <- function(x, kernel = "normal", canonical = FALSE, bandwidth,
 
     ## Compute kernel weights
 
-    L <- min(floor(tau*h*(M-1L)/(b-a)), M)
+    delta  <- (b - a)/(h * (M-1L))
+    L <- min(floor(tau/delta), M)
     if (L == 0)
         warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
 
-    lvec <- (0L:L)
-    delta  <- (b-a)/(h*(M-1L))
-    if (canonical == FALSE) del0 <- 1
+    lvec <- 0L:L
     kappa <- if (kernel == "normal")
-        dnorm(lvec*delta/del0)/(n*h*del0)
+        dnorm(lvec*delta)/(n*h)
     else if (kernel == "box")
-       0.5*dbeta(0.5*(lvec*delta/del0+1), 1, 1)/(n*h*del0)
+        0.5*dbeta(0.5*(lvec*delta+1), 1, 1)/(n*h)
     else if (kernel == "epanech")
-        0.5*dbeta(0.5*(lvec*delta/del0+1), 2, 2)/(n*h*del0)
+        0.5*dbeta(0.5*(lvec*delta+1), 2, 2)/(n*h)
     else if (kernel == "biweight")
-        0.5*dbeta(0.5*(lvec*delta/del0+1), 3, 3)/(n*h*del0)
+        0.5*dbeta(0.5*(lvec*delta+1), 3, 3)/(n*h)
     else if (kernel == "triweight")
-        0.5*dbeta(0.5*(lvec*delta/del0+1), 4, 4)/(n*h*del0)
+        0.5*dbeta(0.5*(lvec*delta+1), 4, 4)/(n*h)
 
     ## Now combine weight and counts to obtain estimate
 
     P <- 2^(ceiling(log(M+L)/log(2)))
     kappa <- c(kappa, rep(0, P-2L*L-1L), rev(kappa[-1L]))
+    tot <- sum(kappa) * (b-a)/(M-1L) * n # should have total weight one
     gcounts <- c(gcounts, rep(0L, P-M))
-    kappa <- fft(kappa)
+    kappa <- fft(kappa/tot)
     gcounts <- fft(gcounts)
     list(x = gpoints, y = (Re(fft(kappa*gcounts, TRUE))/P)[1L:M])
 }
@@ -126,13 +118,16 @@ bkde2D <-
 
     L <- numeric(2L)
     kapid <- list(0, 0)
-    for (id in (1L:2L)) {
-        L[id] <- min(floor(tau*h[id]*(M[id]-1)/(b[id]-a[id])), (M[id]-1))
-        lvecid <- (0:L[id])
-        facid <- (b[id]-a[id])/(h[id]*(M[id]-1))
-        kapid[[id]] <- matrix(dnorm(lvecid*facid)/h[id])
+    for (id in 1L:2L) {
+        L[id] <- min(floor(tau*h[id]*(M[id]-1)/(b[id]-a[id])), M[id] - 1L)
+        lvecid <- 0:L[id]
+        facid <- (b[id] - a[id])/(h[id]*(M[id]-1L))
+        z <- matrix(dnorm(lvecid*facid)/h[id])
+        tot <- sum(c(z, rev(z[-1L]))) * facid * h[id]
+        print(tot)
+        kapid[[id]] <- z/tot
     }
-    kapp <- kapid[[1L]]%*%(t(kapid[[2L]]))/n
+    kapp <- kapid[[1L]] %*% (t(kapid[[2L]]))/n
 
     if (min(L) == 0)
         warning("Binning grid too coarse for current (small) bandwidth: consider increasing 'gridsize'")
