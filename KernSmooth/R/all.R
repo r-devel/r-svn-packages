@@ -124,7 +124,6 @@ bkde2D <-
         facid <- (b[id] - a[id])/(h[id]*(M[id]-1L))
         z <- matrix(dnorm(lvecid*facid)/h[id])
         tot <- sum(c(z, rev(z[-1L]))) * facid * h[id]
-        print(tot)
         kapid[[id]] <- z/tot
     }
     kapp <- kapid[[1L]] %*% (t(kapid[[2L]]))/n
