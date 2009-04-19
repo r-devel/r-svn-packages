@@ -3,7 +3,14 @@
 
 ISSUES
 ------
-[none known]
+* broken some previously working data arguments with raw variable name 
+  pickup (Roger Bivand)
+
+1.5-3
+
+* A type "array" offset could cause gam.fit3 to fail. fixed.
+
+* `variable.summary' bug fixed, which caused gam(y~1) to fail.   
 
 1.5-2
 
