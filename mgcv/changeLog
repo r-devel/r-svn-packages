@@ -1,12 +1,13 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-ISSUES
-------
-* broken some previously working data arguments with raw variable name 
-  pickup (Roger Bivand)
-
 1.5-3
+
+* `gam' now attempts to coerce `data' to a data frame if it is not already
+  a list or a data frame, provided that it is already an object that 
+  model.frame can deal with. This is to support an undocumented feature of  
+  versions prior to 1.5-2 that `data' could actually be something other 
+  than a list or data frame. 
 
 * A type "array" offset could cause gam.fit3 to fail. fixed.
 
@@ -52,7 +53,7 @@ ISSUES
 * The summation convention code could be *very* memory intensive for cases 
   in which the matrix arguments of a smooth feature many repeated values. 
   Code now fixed to make much more efficient use of any repeated rows in  
-  matrix arguments. This enables muc larger signal regression problems to 
+  matrix arguments. This enables much larger signal regression problems to 
   be tackled. 
 
 * Some help file fixes.

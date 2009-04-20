@@ -1338,6 +1338,10 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## note can't use get_all_vars here -- buggy with matrices
     vars <- all.vars(gp$fake.formula[-2]) ## drop response here
     inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
+
+    ## allow a bit of extra flexibility in what `data' is allowed to be (as model.frame actually does)
+    if (!is.list(data)&&!is.data.frame(data)) data <- as.data.frame(data) 
+
     dl <- eval(inp, data, parent.frame())
     names(dl) <- vars ## list of all variables needed
     var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
