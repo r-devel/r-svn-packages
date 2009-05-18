@@ -5,7 +5,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.3.0 / rpart 3.1.43-1\n"
+"Project-Id-Version: rpart 3.1.44\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
 "POT-Creation-Date: 2005-12-08 20:40+0000\n"
 "PO-Revision-Date: 2009-05-04 14:38+0100\n"
@@ -22,47 +22,47 @@ msgstr "Platz im Hauptspeicher reicht nicht aus"
 
 #: poisson.c:41
 msgid "Invalid time point"
-msgstr "Ung??ltiger Zeitpunkt"
+msgstr "Ungültiger Zeitpunkt"
 
 #: poisson.c:45
 msgid "Invalid event count"
-msgstr "Ung??ltige Ereignisanzahl"
+msgstr "Ungültige Ereignisanzahl"
 
 #: rpart_callback.c:47
 msgid "'yback' not found"
-msgstr "??yback?? nicht gefunden"
+msgstr "»yback« nicht gefunden"
 
 #: rpart_callback.c:50
 msgid "'wback' not found"
-msgstr "??wback?? nicht gefunden"
+msgstr "»wback« nicht gefunden"
 
 #: rpart_callback.c:53
 msgid "'xback' not found"
-msgstr "??xback?? nicht gefunden"
+msgstr "»xback« nicht gefunden"
 
 #: rpart_callback.c:56
 msgid "'nback' not found"
-msgstr "??nback?? nicht gefunden"
+msgstr "»nback« nicht gefunden"
 
 #: rpart_callback.c:102
 msgid "return value not a vector"
-msgstr "R??ckgabewert ist kein Vektor"
+msgstr "Rückgabewert ist kein Vektor"
 
 #: rpart_callback.c:105
 msgid "returned value is the wrong length"
-msgstr "R??ckgabewert hat falsche L??nge"
+msgstr "Rückgabewert hat falsche Länge"
 
 #: rpart_callback.c:140
 msgid "the expression expr1 did not return a vector!"
-msgstr "der Ausdruck expr1 gab keinen Vektor zur??ck"
+msgstr "der Ausdruck expr1 gab keinen Vektor zurück"
 
 #: rpart_callback.c:148
 #, c-format
 msgid "the expression expr1 returned a list of %d elements, %d required"
 msgstr ""
-"der Ausdruck expr1 gab eine Liste von %d Elementen zur??ck, %d sind "
+"der Ausdruck expr1 gab eine Liste von %d Elementen zurück, %d sind "
 "erforderlich"
 
 #: s_xpred.c:38
 msgid "invalid value for 'method'"
-msgstr "ung??ltiger Wert f??r ??method??"
+msgstr "ungültiger Wert für »method«"
