@@ -1,7 +1,7 @@
 Package: rpart
 Priority: recommended
 Version: 3.1-44
-Date: 2009-03-09
+Date: 2009-05-18
 DateNote: March 2002 version of rpart
 Author: Terry M Therneau and Beth Atkinson <atkinson@mayo.edu>.
         R port by Brian Ripley.
