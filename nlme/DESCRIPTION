@@ -14,5 +14,4 @@ Depends: graphics, stats, R (>= 2.4.0)
 Imports: lattice
 LazyLoad: yes
 LazyData: yes
-License: GPL (>=2)
-
+License: GPL (>= 2)
