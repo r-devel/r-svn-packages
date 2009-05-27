@@ -1,7 +1,8 @@
-2009-05-24 Brian Ripley <Brian.Ripley@R-project.org>
+2009-05-28 Brian Ripley <Brian.Ripley@R-project.org>
 
         * po/de.po, po/R-de.po: first pass at German translations
 	from Chris Leick
+	* po/fr.po, po/R-fr.po: updates from Phillipe Grosjean
 
 2009-05-11 Brian Ripley <Brian.Ripley@R-project.org>
 
