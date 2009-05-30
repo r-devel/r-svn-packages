@@ -293,7 +293,7 @@ msgid "formulae in params must be of the form \"parameter ~ expr\"."
 msgstr ""
 "les formules dans 'params' doivent être de la forme \"parameter ~ expr\"."
 
-msgid "starting values for parameters are not the correct length"
+msgid "starting values for parameters are not of the correct length"
 msgstr "les valeurs initiales pour les paramètres n'ont pas la taille correcte"
 
 msgid "Step halving factor reduced below minimum in NLS step"
