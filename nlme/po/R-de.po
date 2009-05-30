@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.3.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2007-12-16 11:46\n"
+"POT-Creation-Date: 2009-05-30 08:21\n"
 "PO-Revision-Date: 2009-04-15 11:59+0100\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -17,7 +17,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-
 
 msgid "Not implemented for nlme objects"
 msgstr "Nicht für nlme-Objekte implementiert"
@@ -46,8 +45,7 @@ msgstr "Es ist nicht bekannt, wie man Parameter erhält vom"
 
 msgid "Cannot change the length of the parameter of a corStruct object"
 msgstr ""
-"Die Länge des Parameters eines corStruct-Objekts kann nicht geändert "
-"werden"
+"Die Länge des Parameters eines corStruct-Objekts kann nicht geändert werden"
 
 msgid "Cannot change \"form\"."
 msgstr "»form« kann nicht geändert werden."
@@ -55,8 +53,8 @@ msgstr "»form« kann nicht geändert werden."
 msgid "Need data to calculate covariate of corStruct object"
 msgstr ""
 "Zur Berechnung der Kovariate des corStruct-Objekts werden Daten benötigt"
-# http://www.sozpsy.uni-hannover.de/marienthal/glossar/html/k37.htm
 
+# http://www.sozpsy.uni-hannover.de/marienthal/glossar/html/k37.htm
 msgid "Covariate must have unique values"
 msgstr "Kovariate muss eindeutige Werte haben"
 
@@ -67,8 +65,7 @@ msgid "Unique values of the covariate  for \"corSymm\""
 msgstr "Eindeutige Werte der Kovariate für »corSymm«"
 
 msgid "objects must be a sequence of consecutive integers"
-msgstr ""
-"Objekte müssen eine Sequenz von aufeinanderfolgenden Ganzzahlen sein"
+msgstr "Objekte müssen eine Sequenz von aufeinanderfolgenden Ganzzahlen sein"
 
 msgid "Initial value for corSymm parameters of wrong dimension"
 msgstr "Anfangswert für corSymm-Parameter von falscher Dimension"
@@ -110,8 +107,7 @@ msgid "within groups for corCAR1 objects"
 msgstr "in Gruppen für corCAR1-Objekte"
 
 msgid "Autoregressive order must be a non-negative integer"
-msgstr ""
-"Selbstregressive Reihenfolge muss eine nicht-negative Ganzzahl sein."
+msgstr "Selbstregressive Reihenfolge muss eine nicht-negative Ganzzahl sein."
 
 msgid "Moving average order must be a non-negative integer"
 msgstr ""
@@ -172,10 +168,6 @@ msgstr "Es wird auf 1.1 * min(Entfernung) gesetzt"
 
 msgid "Initial value for corSpher parameters of wrong dimension"
 msgstr "Anfangswert für corSpher-Parameter von falscher Dimension"
-
-# CHECKME
-msgid "Initial value of nugget ratio must be in (0,1)"
-msgstr "Anfangswert von nugget-Verhältnis muss in (0,1) liegen"
 
 msgid "Initial value for corLin parameters of wrong dimension"
 msgstr "Anfangswert für corLin-Parameter von falscher Dimension"
@@ -285,7 +277,7 @@ msgstr "Parameter müssen eine Formel oder eine Liste von Formeln sein."
 msgid "formulae in params must be of the form \"parameter ~ expr\"."
 msgstr "Formeln in Parametern müssen die Form »parameter ~ expr« haben."
 
-msgid "starting values for parameters are not the correct length"
+msgid "starting values for parameters are not of the correct length"
 msgstr "Startwerte für Parameter haben nicht die richtige Länge."
 
 msgid "Step halving factor reduced below minimum in NLS step"
@@ -301,7 +293,9 @@ msgid "not of full rank"
 msgstr "nicht von vollem Rang"
 
 msgid "Cannot calculate REML log-likelihood for gnls objects"
-msgstr "REML Logarithmuswahrscheinlichkeit für gnls-Objekte kann nicht berechnet werden"
+msgstr ""
+"REML Logarithmuswahrscheinlichkeit für gnls-Objekte kann nicht berechnet "
+"werden"
 
 msgid "first argument to groupedData must be a two-sided formula"
 msgstr "erstes Argument für groupedData muss eine zweiseitige Formel sein"
@@ -310,8 +304,7 @@ msgid "Right hand side of first argument must be a conditional expression"
 msgstr "Rechte Seite des ersten Arguments muss ein bedingter Ausdruck sein."
 
 msgid "first argument to nfGroupedData must be a two-sided formula"
-msgstr ""
-"erstes Argument für nfGroupedData muss eine zweiseitige Formel sein"
+msgstr "erstes Argument für nfGroupedData muss eine zweiseitige Formel sein"
 
 msgid "Only one level of grouping allowed"
 msgstr "Nur eine Stufe der Gruppierung erlaubt"
@@ -320,8 +313,7 @@ msgid "second argument to groupedData must inherit from data.frame"
 msgstr "zweites Argument für groupedData muss von data.frame erben"
 
 msgid "first argument to nmGroupedData must be a two-sided formula"
-msgstr ""
-"erstes Argument für nmGroupedData muss eine zweiseitige Formel sein"
+msgstr "erstes Argument für nmGroupedData muss eine zweiseitige Formel sein"
 
 msgid "Subset ignored with single grouping factor"
 msgstr "Subset mit einzelnem Gruppierungsfaktor ignoriert"
@@ -357,8 +349,7 @@ msgid "asTable cannot be used with multilevel grouped data"
 msgstr "asTable kann nicht mit mehrstufig gruppierten Daten benutzt werden"
 
 msgid "asTable can only be used with balanced groupedData objects"
-msgstr ""
-"asTable kann nur mit ausgewogenen groupedData-Objekten benutzt werden"
+msgstr "asTable kann nur mit ausgewogenen groupedData-Objekten benutzt werden"
 
 msgid "Multiple levels not allowed"
 msgstr "Mehrere Stufen nicht erlaubt"
@@ -476,8 +467,7 @@ msgid "First model has a different response from the rest"
 msgstr "Erstes Modell hat eine vom Rest abweichende Antwort"
 
 msgid "All fitted objects must have the same estimation method."
-msgstr ""
-"Alle angepassten Objekte müssen die gleiche Schätzungsmethode haben."
+msgstr "Alle angepassten Objekte müssen die gleiche Schätzungsmethode haben."
 
 msgid "Fitted objects with different fixed effects."
 msgstr "Angepasste Objekte mit unterschiedlichen feststehenden Effekten."
@@ -490,8 +480,7 @@ msgstr "Objekte müssen eine »call«-Komponente oder Attribut haben."
 
 msgid "All fitted objects must use the same number of observations"
 msgstr ""
-"Alle angepassten Objekte müssen die gleiche Zahl von Beobachtungen "
-"benutzen."
+"Alle angepassten Objekte müssen die gleiche Zahl von Beobachtungen benutzen."
 
 msgid "Only single level allowed"
 msgstr "Nur einzelne Stufe erlaubt"
@@ -506,8 +495,7 @@ msgid "Covariate must have a level attribute, when id is a formula"
 msgstr "Kovariate muss ein Stufenattribut haben, wenn id eine Formel ist"
 
 msgid "Covariate must have a level attribute, when idLabels is a formula"
-msgstr ""
-"Kovariate muss ein Stufenattribut haben, wenn idLabels eine Formel ist"
+msgstr "Kovariate muss ein Stufenattribut haben, wenn idLabels eine Formel ist"
 
 msgid "Only single level allowed."
 msgstr "Nur einzelne Stufe erlaubt."
@@ -530,12 +518,10 @@ msgstr "Keine Effekte auf der rechten Seite der Formel erlaubt"
 
 msgid "Cannot evaluate groups for desired levels on \"newdata\""
 msgstr ""
-"Gruppen für gewünschte Stufen auf »newdata« können nicht ausgewertet "
-"werden"
+"Gruppen für gewünschte Stufen auf »newdata« können nicht ausgewertet werden"
 
 msgid "Augmentation of random effects only available for single level"
-msgstr ""
-"Erhöhung von zufälligen Effekten ist nur für einzelne Stufen verfügbar"
+msgstr "Erhöhung von zufälligen Effekten ist nur für einzelne Stufen verfügbar"
 
 msgid "'nint' is not consistent with 'breaks'"
 msgstr "»nint« ist nicht konsistent mit »breaks«"
@@ -667,8 +653,7 @@ msgid "starting values for the fixed component are not the correct length"
 msgstr "Startwerte für die fixed-Komponente haben nicht die richtige Länge"
 
 msgid "Starting values for random effects should be a list, or a matrix"
-msgstr ""
-"Startwerte für Zufallseffekte sollten eine Liste oder eine Matrix sein"
+msgstr "Startwerte für Zufallseffekte sollten eine Liste oder eine Matrix sein"
 
 msgid "List with starting values for random effects must have names"
 msgstr "Liste mit Startwerten für Zufallseffekte muss Namen haben"
@@ -694,7 +679,7 @@ msgstr "Anzahl der Zeilen in Startwerten für Zufallskomponente"
 msgid "at level"
 msgstr "auf Stufe"
 
-#R/nlme.R
+# R/nlme.R
 msgid "should be"
 msgstr "sollte sein"
 
@@ -717,8 +702,7 @@ msgid "names mismatch in random and starting values"
 msgstr "Namen falsch zugeordnet in Zufalls- und Startwerten"
 
 msgid "Step halving factor reduced below minimum in PNLS step"
-msgstr ""
-"Schritthalbierungsfaktor unter das Minimum in PNLS-Schritt vermindert"
+msgstr "Schritthalbierungsfaktor unter das Minimum in PNLS-Schritt vermindert"
 
 msgid "second argument must be a groupedData object"
 msgstr "zweites Argument muss ein groupedData-Objekt sein"
@@ -819,8 +803,7 @@ msgstr "eines pdMat-Objekts zu extrahieren"
 
 msgid "Don't know how to obtain constrained coefficients"
 msgstr ""
-"Es ist nicht bekannt, wie eingeschränkte Koeffizienten bestimmt werden "
-"können"
+"Es ist nicht bekannt, wie eingeschränkte Koeffizienten bestimmt werden können"
 
 msgid "Cannot access the number of columns of"
 msgstr "Auf die Spaltenanzahl von nicht initialisierten"
@@ -853,8 +836,7 @@ msgid "x-y data to splom got botched somehow"
 msgstr "x-y-Daten an splom wurden irgendwie verpfuscht"
 
 msgid "Cannot get the inverse of an uninitialized object"
-msgstr ""
-"Inverse eines nicht initialisierten Objekts kann nicht bestimmt werden"
+msgstr "Inverse eines nicht initialisierten Objekts kann nicht bestimmt werden"
 
 msgid "An object of length"
 msgstr "Ein Objekt der Länge"
@@ -879,8 +861,7 @@ msgstr ""
 
 msgid "Cannot extract the matrix from an uninitialized pdMat object"
 msgstr ""
-"Matrix eines nicht initialisierten pdMat-Objekts kann nicht extrahiert "
-"werden"
+"Matrix eines nicht initialisierten pdMat-Objekts kann nicht extrahiert werden"
 
 msgid "Cannot extract the matrix with uninitialized dimensions"
 msgstr ""
@@ -888,8 +869,7 @@ msgstr ""
 
 msgid "Must give names when initializing pdIdent from parameter."
 msgstr ""
-"Wenn pdIdent vom Parameter initialisiert wird, müssen Namen gegeben "
-"werden."
+"Wenn pdIdent vom Parameter initialisiert wird, müssen Namen gegeben werden."
 
 msgid "without a formula"
 msgstr "ohne eine Formel"
@@ -923,7 +903,7 @@ msgstr "»nam« muss eine Liste sein"
 msgid "\"form\" and \"nam\" have incompatible lengths"
 msgstr "»form« und »nam« haben inkompatible Längen"
 
-#http://einstein.informatik.uni-oldenburg.de/rechnernetze/neue_verfahren.htm
+# http://einstein.informatik.uni-oldenburg.de/rechnernetze/neue_verfahren.htm
 msgid "\"pdClass\" must be a character vector"
 msgstr "»pdClass« mit ein Zeichenvektor sein"
 
@@ -957,8 +937,8 @@ msgstr "Muss Formel haben, wenn keine Namen gegeben sind"
 
 msgid "Must give names when initializing from matrix or parameter"
 msgstr ""
-"Namen müssen vergeben werden, wenn von Matrix oder Parameter "
-"initialisiert wird"
+"Namen müssen vergeben werden, wenn von Matrix oder Parameter initialisiert "
+"wird"
 
 msgid "All elements must have names, when any has names."
 msgstr "Alle Elemente müssen Namen habe, wenn irgendeins einen Namen hat."
@@ -979,8 +959,7 @@ msgid "All elements must have formulas, when any has a formula."
 msgstr "Alle Elemente müssen Formeln habe, wenn irgendeins eine Formel hat."
 
 msgid "All elements of formula must be list of two-sided formulae"
-msgstr ""
-"Alle Elemente der Formel müssen eine Liste zweiseitiger Formeln sein"
+msgstr "Alle Elemente der Formel müssen eine Liste zweiseitiger Formeln sein"
 
 msgid "or two-sided formulae"
 msgstr "oder zweiseitige Formeln"
@@ -1006,9 +985,7 @@ msgid "Elements in object must be formulas or pdMat objects"
 msgstr "Elemente im Objekt müssen Formeln oder pdMat-Objekte sein"
 
 msgid "Cannot change parameter length of initialized objects"
-msgstr ""
-"Parameterlänge von initialisierten Objekten kann nicht geändert "
-"werden"
+msgstr "Parameterlänge von initialisierten Objekten kann nicht geändert werden"
 
 msgid "Can not extract groups formula without a formula"
 msgstr "Gruppenformel ohne eine Formel kann nicht extrahiert werden"
@@ -1033,7 +1010,9 @@ msgstr "Daten müssen von der »groupedData«-Klasse erben,"
 msgid "if random does not define groups"
 msgstr "wenn random keine Gruppen definiert"
 
-msgid "order of arguments in simulate.lme has changed to conform with generic in R-2.2.0"
+msgid ""
+"order of arguments in simulate.lme has changed to conform with generic in R-"
+"2.2.0"
 msgstr ""
 "Reihenfolge der Argumente in »simulate.lme« wurde geändert, um mit "
 "allgemeinem in R-2.2.0 konform zu sein"
@@ -1042,8 +1021,7 @@ msgid "Models with corStruct and/or varFunc objects not allowed."
 msgstr "Modelle mit corStruct- und/oder varFunc-Objekten nicht erlaubt."
 
 msgid "Plot method only implemented for comparing models"
-msgstr ""
-"Grafische Darstellungsmethode nur für Vergleichsmodelle implementiert"
+msgstr "Grafische Darstellungsmethode nur für Vergleichsmodelle implementiert"
 
 msgid "No degrees of freedom specified"
 msgstr "Keine Freiheitsgrade angegeben"
@@ -1066,15 +1044,13 @@ msgstr "Objekt, eine Formel oder eine Zeichenkette"
 
 msgid "Cannot extract parameters of uninitialized object"
 msgstr ""
-"Parameter eines nicht initialisierten Objekts können nicht extrahiert "
-"werden"
+"Parameter eines nicht initialisierten Objekts können nicht extrahiert werden"
 
 msgid "Don't know how to get coefficients for"
 msgstr "Nicht bekannt, wie Koeffizienten erlangt werden für"
 
 msgid "Cannot change the length of covariate in varFunc object"
-msgstr ""
-"Die Länge der Kovariate im varFunc-Objekt kann nicht geändert werden"
+msgstr "Die Länge der Kovariate im varFunc-Objekt kann nicht geändert werden"
 
 msgid "Value must be a one sided formula"
 msgstr "Wert muss eine einseitige Formel sein"
@@ -1086,8 +1062,7 @@ msgid "Ignoring \"groups\" in \"varFixed\" formula"
 msgstr "»groups« in »varFixed«-Formel wird ignoriert"
 
 msgid "All variables used in \"formula\" must be in \"data\""
-msgstr ""
-"Alle in »formula« benutzten Variablen müssen in »data« enthalten sein"
+msgstr "Alle in »formula« benutzten Variablen müssen in »data« enthalten sein"
 
 msgid "Initial values must have group names in varIdent"
 msgstr "Anfangswerte müssen Gruppennamen in varIdent haben"
