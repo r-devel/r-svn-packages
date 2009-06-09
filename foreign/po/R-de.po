@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: R 2.3.0 / foreign 0.8.34-1\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
 "POT-Creation-Date: 2009-05-24 07:59\n"
-"PO-Revision-Date: 2009-05-05 14:55+0100\n"
+"PO-Revision-Date: 2009-05-25 14:50+0100\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -37,30 +37,29 @@ msgstr "(bei Byte-Versatz"
 msgid ") not supported"
 msgstr ") nicht unterstützt"
 
-#, fuzzy
 msgid "Argument 'file' must be a character string or connection."
-msgstr "Argument »file« muss eine Zeichenkette oder Verbindung sein"
+msgstr "Argument »file« muss eine Zeichenkette oder Verbindung sein."
 
 msgid "Invalid attribute specification."
-msgstr ""
+msgstr "Ungültige Attribusangabe."
 
 msgid "Type 'relational' currently not implemented."
-msgstr ""
+msgstr "Typ »relational« derzeit nicht implementiert."
 
 msgid "Missing data section."
-msgstr ""
+msgstr "Fehlender Datenbereich."
 
 msgid "Missing attribute section."
-msgstr ""
+msgstr "Fehlender Attributsbereich."
 
 msgid "Invalid type specification."
-msgstr ""
+msgstr "Ungültige Typangabe."
 
 msgid "Field name:"
-msgstr ""
+msgstr "Feldname:"
 
 msgid "changed to:"
-msgstr ""
+msgstr "geändert zu:"
 
 msgid "cannot handle matrix/array columns"
 msgstr "Matrix-/Arrayspalten können nicht gehandhabt werden"
@@ -72,7 +71,7 @@ msgid ","
 msgstr ","
 
 msgid "character column %d will be truncated to %d bytes"
-msgstr ""
+msgstr "Zeichenspalte %d wird auf %d Bytes gekürzt"
 
 msgid "unknown column type in data frame"
 msgstr "unbekannter Spaltentyp im Datenframe"
@@ -86,9 +85,8 @@ msgstr "NA in Skala"
 msgid "cannot handle unknown type"
 msgstr "unbekannter Typ kann nicht gehandhabt werden"
 
-#, fuzzy
 msgid "'missing.type' only applicable to version >= 8 files"
-msgstr "»missing.type« nur auf Dateien der Version 8 anwendbar"
+msgstr "»missing.type« nur auf Dateien der Version >=8 anwendbar"
 
 msgid "cannot read factor labels from Stata 5 files"
 msgstr "Faktorbeschriftungen von Stata-5-Dateien können nicht gelesen werden"
@@ -102,13 +100,11 @@ msgstr ") für"
 msgid "are missing"
 msgstr "fehlen"
 
-#, fuzzy
 msgid "Version must be 6-10"
-msgstr "Version muss 6-8 sein"
+msgstr "Version muss 6-10 sein"
 
-#, fuzzy
 msgid "Version must be 6-10: using 7"
-msgstr "Version muss 6-8 sein: 7 wird benutzt"
+msgstr "Version muss 6-10 sein: 7 wird benutzt"
 
 msgid "cannot uniquely abbreviate variable names"
 msgstr "Variablennamen können nicht eindeutig abgekürzt werden"
@@ -124,7 +120,7 @@ msgstr "Argument »file« muss eine Zeichenkette oder Verbindung sein"
 
 msgid "file has zero or fewer variables: probably not an EpiInfo file"
 msgstr ""
-"Datei hat Null oder weniger Variablen: Vermutlich ist es keine EpiInfo-Datei"
+"Datei hat null oder weniger Variablen: Vermutlich ist es keine EpiInfo-Datei"
 
 msgid "no records in file"
 msgstr "Keine Datensätze in Datei"
@@ -133,16 +129,17 @@ msgid "wrong number of records"
 msgstr "falsche Anzahl von Datensätzen"
 
 msgid "sectionname %s not found"
-msgstr ""
+msgstr "Bereichsname %s nicht gefunden"
 
 msgid "SAS return code was"
 msgstr "SAS-Rückgabewert war"
 
 msgid "re-encoding from"
-msgstr ""
+msgstr "Zurückkodierung von"
 
+# http://en.wiktionary.org/wiki/missingness
 msgid "missingness type %s is not handled"
-msgstr ""
+msgstr "»missingness«-Typ %s wird nicht verarbeitet"
 
 msgid "I cannot abbreviate the variable names to eight or fewer letters"
 msgstr ""
@@ -154,30 +151,19 @@ msgstr "einige Variablennamen wurden abgekürzt"
 
 msgid "Cannot handle character variables longer than 255"
 msgstr ""
+"Zeichenvariablen, die länger als 255 sind, können nicht gehandhabt werden"
 
-#, fuzzy
 msgid "Cannot uniquely abbreviate the variable names to"
-msgstr "Variablennamen können nicht eindeutig abgekürzt werden"
+msgstr "Variablennamen können nicht eindeutig abgekürzt werden auf"
 
-#, fuzzy
 msgid "or fewer characters"
-msgstr "Datei muss ein Buchstabe sein"
+msgstr "oder weniger Zeichen"
 
-#, fuzzy
 msgid "Cannot uniquely abbreviate format names to conform to"
-msgstr "Variablennamen können nicht eindeutig abgekürzt werden"
+msgstr "Variablennamen können nicht eindeutig abgekürzt werden auf"
 
 msgid "eight-character limit and not ending in a digit"
-msgstr ""
+msgstr "Acht-Zeichen-Begrenzung und nicht in einer Ziffer enden"
 
-#, fuzzy
 msgid "Some variable names were abbreviated or otherwise altered."
-msgstr "Einige Variablennamen wurden abgekürzt."
-
-#~ msgid "argument tz= is no longer needed and will soon be removed"
-#~ msgstr "Argument tz= wird nicht länger benötigt und wird bald entfernt"
-
-#~ msgid "Cannot abbreviate the variable names to eight or fewer letters"
-#~ msgstr ""
-#~ "Die Variablennamen können nicht auf acht oder weniger Zeichen abgekürzt "
-#~ "werden"
+msgstr "Einige Variablennamen wurden abgekürzt oder anders verändert."

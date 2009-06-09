@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: R 2.3.0 / foreign 0.8.34-1\n"
 "Report-Msgid-Bugs-To: bugs@R-project.org\n"
 "POT-Creation-Date: 2009-05-08 14:08+0100\n"
-"PO-Revision-Date: 2009-05-06 12:26+0100\n"
+"PO-Revision-Date: 2009-05-25 14:48+0100\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,7 +16,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# CHECKME
 #: R_systat.c:131
 #, c-format
 msgid "not a rectangular data file (%s mtype is %d)"
@@ -178,9 +177,9 @@ msgid "problem accessing SAS XPORT file"
 msgstr "Problem beim Zugriff auf SAS-XPORT-Datei"
 
 #: SASxport.c:505 SASxport.c:598 spss.c:662 stataread.c:533
-#, fuzzy, c-format
+#, c-format
 msgid "unable to open file: '%s'"
-msgstr "Datei kann nicht geöffnet werden"
+msgstr "Datei kann nicht geöffnet werden: »%s«"
 
 #: SASxport.c:600
 #, c-format
@@ -276,9 +275,9 @@ msgid "non-numeric data types are not yet implemented"
 msgstr "Nicht numerische Datentypen sind noch nicht implementiert"
 
 #: minitab.c:117
-#, fuzzy, c-format
+#, c-format
 msgid "unable to open file '%s': '%s'"
-msgstr "Datei kann nicht geöffnet werden"
+msgstr "Datei »%s« kann nicht geöffnet werden: »%s«"
 
 #: minitab.c:121
 #, c-format
@@ -286,9 +285,8 @@ msgid "file '%s' is not in Minitab Portable Worksheet format"
 msgstr "Datei »%s« ist nicht im Minitab-Portable-Worksheet-Format"
 
 #: minitab.c:124 minitab.c:145 minitab.c:153 minitab.c:160
-#, fuzzy
 msgid "file read error"
-msgstr "Dateizugriffsfehler"
+msgstr "Dateilesefehler"
 
 #: minitab.c:137
 #, c-format
@@ -550,13 +548,13 @@ msgstr ""
 
 # http://de.wikipedia.org/wiki/IEEE_754
 #: sfm-read.c:517
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: Floating-point representation in system file is not IEEE-754.  read.spss "
 "cannot convert between floating-point formats"
 msgstr ""
-"%s: Fließpunktdarstellung in Systemdatei entspricht nicht IEEE-754. PSPP "
-"kann nicht zwischen Fließpunktformaten konvertieren"
+"%s: Gleitkommadarstellung in Systemdatei entspricht nicht IEEE-754. "
+"read.spss kann nicht zwischen Gleitkommaformaten konvertieren"
 
 #: sfm-read.c:536
 #, c-format
@@ -574,10 +572,10 @@ msgstr ""
 "%s: Durch Datei angegebener Zeichendarstellungskode (%s) ist nicht ASCII"
 
 #: sfm-read.c:553
-#, fuzzy, c-format
+#, c-format
 msgid "%s: File-indicated character representation code (%d) is unknown"
 msgstr ""
-"%s: Durch Datei angegebener Zeichendarstellungskode (%s) ist nicht ASCII"
+"%s: Durch Datei angegebener Zeichendarstellungskode (%d) ist unbekannt"
 
 #: sfm-read.c:571
 #, c-format
@@ -605,15 +603,17 @@ msgid ""
 "%s: Bad magic.  Proper system files begin with the four characters `$FL2'. "
 "This file will not be read"
 msgstr ""
+"%s: Falsche »magic«. Ordnungsgemäße Systemdateien beginnen mit den vier "
+"Zeichen »$FL2«. Diese Datei wird nicht gelesen"
 
 #: sfm-read.c:735
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: File layout code has unexpected value %d.  Value should be 2 or 3, in "
 "big-endian or little-endian format"
 msgstr ""
-"%s: Dateilayoutkode hat unerwarteten Wert %d. Wert sollte im Big-endian- "
-"oder Little-endian-Format 2 sein"
+"%s: Dateilayoutkode hat unerwarteten Wert %d. Der Wert sollte 2 oder 3 "
+"sein, entweder im Big-endian- oder im Little-endian-Format."
 
 #: sfm-read.c:750
 #, c-format
@@ -630,9 +630,9 @@ msgstr ""
 "der Elemente pro Fall (%d)"
 
 #: sfm-read.c:762
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Number of cases in file (%d) is not between -1 and %d"
-msgstr "%s: Anzahl der Fälle in Datei (%ld) ist nicht zwischen -1 und %d"
+msgstr "%s: Anzahl der Fälle in Datei (%d) ist nicht zwischen -1 und %d"
 
 #: sfm-read.c:767
 #, c-format
@@ -836,9 +836,9 @@ msgid "%s: System file contains multiple type 6 (document) records"
 msgstr "%s: Systemdatei enthält mehrere Typ-6-Datensätze (Dokument)"
 
 #: sfm-read.c:1344
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Number of document lines (%d) must be greater than 0"
-msgstr "%s: Anzahl der Dokument-Zeilen (%ld) muss größer als 0 sein"
+msgstr "%s: Anzahl der Dokumentzeilen (%d) muss größer als 0 sein"
 
 #: sfm-read.c:1455
 #, c-format
@@ -877,9 +877,8 @@ msgid "a binary read error occurred"
 msgstr "ein binärer Lesefehler ist aufgetreten"
 
 #: stataread.c:220
-#, fuzzy
 msgid "not a Stata version 5-10 .dta file"
-msgstr "keine ».dta«-Stata-Datei der Version 5-8"
+msgstr "keine ».dta«-Stata-Datei der Version 5-10"
 
 #: stataread.c:388
 msgid ""
@@ -920,15 +919,14 @@ msgstr ""
 "Auf dieser Plattform kann Stata-».dta« noch nicht gelesen/geschrieben werden"
 
 #: stataread.c:851
-#, fuzzy, c-format
+#, c-format
 msgid "unable to open file for writing: '%s'"
-msgstr "Datei »%s« kann nicht zum Lesen geöffnet werden"
+msgstr "Datei kann nicht zum Schreiben geöffnet werden: »%s«"
 
 #: stataread.c:855
 msgid "data to be saved must be in a data frame"
 msgstr "Daten zum Sichern müssen in einem Daten-Frame sein"
 
 #: stataread.c:860
-#, fuzzy
 msgid "can only write version 6-10 formats"
-msgstr "nur Formate der Versionen 6-8 können geschrieben werden"
+msgstr "nur Formate der Versionen 6-10 können geschrieben werden"
