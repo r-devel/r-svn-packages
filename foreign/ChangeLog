@@ -1,3 +1,8 @@
+2009-06-09 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 0.8-36
+        * po/de.po, po/R-de.po: updates
+
 2009-05-28 Brian Ripley <Brian.Ripley@R-project.org>
 
         * po/de.po, po/R-de.po: first pass at German translations
