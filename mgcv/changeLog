@@ -1,6 +1,16 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+ISSUES
+------
+
+* Some error message translation files need updating.
+
+1.5-6
+
+* Example of obtaining derivatives of a smooth (with CIs) added to 
+  `predict.gam' help file.
+
 1.5-5
 
 * `gamm.setup' made an assumption about basis dimensions which was not 
