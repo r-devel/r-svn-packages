@@ -11,6 +11,8 @@ ISSUES
 * Example of obtaining derivatives of a smooth (with CIs) added to 
   `predict.gam' help file.
 
+* `newdata.guaranteed' argument to predict.gam didn't work. fixed.
+
 1.5-5
 
 * `gamm.setup' made an assumption about basis dimensions which was not 

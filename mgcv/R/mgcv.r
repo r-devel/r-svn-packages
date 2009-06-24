@@ -1989,7 +1989,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         na.act <- attr(newdata,"na.action")
       }
     }
-  } else {na.act <- NULL}
+  } else { ## newdata.guaranteed == TRUE
+    na.act <- NULL
+    new.data.ok=TRUE ## it's guaranteed!
+  }
   
 
   if (new.data.ok)
