@@ -305,6 +305,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
 ## the constructor for a tensor product basis object
 { m<-length(object$margin)  # number of marginal bases
   Xm<-list();Sm<-list();nr<-r<-d<-array(0,m)
+  C <- NULL
   for (i in 1:m)
   { knt <- dat <- list()
     term <- object$margin[[i]]$term
@@ -320,6 +321,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
     d[i]<-nrow(Sm[[i]])
     r[i]<-object$margin[[i]]$rank
     nr[i]<-object$margin[[i]]$null.space.dim
+    if (!is.null(object$margin[[i]]$C)&&nrow(object$margin[[i]]$C)==0) C <- matrix(0,0,0) ## no centering constraint needed
   }
   XP <- list()
   if (object$np) # reparameterize 

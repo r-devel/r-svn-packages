@@ -8,6 +8,9 @@ ISSUES
 
 1.5-6
 
+* `te' terms are now only subject to centering constraints if all 
+  marginals would usually have a centering constraint. 
+
 * Example of obtaining derivatives of a smooth (with CIs) added to 
   `predict.gam' help file.
 
