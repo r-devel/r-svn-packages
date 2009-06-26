@@ -11,6 +11,10 @@ ISSUES
 * `te' terms are now only subject to centering constraints if all 
   marginals would usually have a centering constraint. 
 
+* `te' no longer resets multi-dimensional marginals to "tp", unless 
+  they have been set to "cr", "cs", "ps" or "cp". This allows tensor
+  products with user supplied smooths.
+
 * Example of obtaining derivatives of a smooth (with CIs) added to 
   `predict.gam' help file.
 

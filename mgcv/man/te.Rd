@@ -39,7 +39,8 @@ basis code is given then this is used for all bases.}
 
 \item{d}{array of marginal basis dimensions. For example if you want a smooth for 3 covariates 
 made up of a tensor product of a 2 dimensional t.p.r.s. basis and a 1-dimensional basis, then 
-set \code{d=c(2,1)}.}
+set \code{d=c(2,1)}. Incompatibilities between built in basis types and dimension will be
+resolved by resetting the basis type.}
 
 \item{by}{a numeric or factor variable of the same dimension as each covariate. 
 In the numeric vector case the elements multiply the smooth evaluated at the corresponding 

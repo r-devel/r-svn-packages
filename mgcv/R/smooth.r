@@ -162,7 +162,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   # now check the basis types
   if (length(bs)==1) bs<-rep(bs,n.bases)
   if (length(bs)!=n.bases) {warning("bs wrong length and ignored.");bs<-rep("cr",n.bases)}
-  bs[d>1&bs!="tp"&bs!="ts"]<-"tp"
+  bs[d>1&(bs=="cr"|bs=="cs"|bs=="ps"|bs=="cp")]<-"tp"
   # finally the penalty orders
   if (length(m)==1) m<-rep(m,n.bases)
   if (length(m)!=n.bases) 
@@ -371,7 +371,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
   }
 
   object$X<-X;object$S<-S;
-
+  object$C <- C ## really just in case a marginal has implies that no cons are needed
   object$df <- ncol(X)
   object$null.space.dim <- prod(nr) # penalty null space rank 
   object$rank<-r
