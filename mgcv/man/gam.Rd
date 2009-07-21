@@ -199,7 +199,7 @@ the scale parameter and
 \eqn{DoF}{DoF} the effective degrees of freedom of the model. Notice that UBRE is effectively
 just AIC rescaled, but is only used when \eqn{s}{s} is known. 
 
-Alternatives are GACV, or a Laplace approximation to REML, there
+Alternatives are GACV, or a Laplace approximation to REML. There
 is some evidence that the latter may actually be the most effective choise. 
 
 Smoothing parameters are chosen to 
@@ -263,7 +263,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686. [Default
 method for additive case (but no longer for generalized)]
 
 Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
-additive models. J.R.Statist.Soc.B 70(3):495-518. [Generalized additive model case]
+additive models. J.R.Statist.Soc.B 70(3):495-518. [Generalized additive model methods]
 
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 
@@ -412,14 +412,13 @@ b4<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
         data=dat,method="GACV.Cp",scale=-1)
 plot(b4,pages=1)
 
-## repeat using REML as in Wood 2008...
+## repeat using REML as in Wood 2009...
 
 b5<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
         data=dat,method="REML")
 plot(b5,pages=1)
 
  
-
 ## a binary example 
 dat <- gamSim(1,n=400,dist="binary",scale=.33)
 

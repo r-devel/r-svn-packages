@@ -4,9 +4,30 @@
 ISSUES
 ------
 
+* Could use R_CheckUserInterrupt() to allow user interupt of
+  mgcv code. (6.12) But then what about memory?
+
+* Should use R memory allocation to gracefully handle out of memory 
+  problems, or at least check for NULL pointer return. How to free on 
+  error/interupt? Note that under linux there is no guarantee that calloc
+  will return a NULL pointer even if the memory requested is not actually 
+  available. See man calloc.
+
+* Should re-do initial.sp to use X'WX with initial W. Also base on 
+  Frobenious norm.
+
+* should set fscale from get.null.coef
+
 * Some error message translation files need updating.
 
 1.5-6
+
+* `gamm' fix: prediction and visualization from `x$gam' where x is a 
+  fitted `gamm' object should not require the random effects to be 
+  provided. Now it doesn't.
+
+* minor bug fix: a model with no penalties except a fixed one would fail
+  with an index error. 
 
 * `te' terms are now only subject to centering constraints if all 
   marginals would usually have a centering constraint. 

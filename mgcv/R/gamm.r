@@ -1128,18 +1128,23 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     gp<-interpret.gam(formula) # interpret the formula 
     ##cl<-match.call() # call needed in gamm object for update to work
     mf<-match.call(expand.dots=FALSE)
-  
-    allvars <- c(cor.vars,random.vars)
-    if (length(allvars))
-    mf$formula<-as.formula(paste(paste(deparse(gp$fake.formula,backtick=TRUE),collapse=""),
-                           "+",paste(allvars,collapse="+")))
-    else mf$formula<-gp$fake.formula
+    mf$formula<-gp$fake.formula
     mf$correlation<-mf$random<-mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$weights<-
     mf$min.sp<-mf$H<-mf$gamma<-mf$fit<-mf$niterPQL<-mf$verbosePQL<-mf$G<-mf$method<-mf$...<-NULL
     mf$drop.unused.levels<-TRUE
     mf[[1]]<-as.name("model.frame")
     pmf <- mf
-    mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
+    gmf <- eval(mf, parent.frame()) # the model frame now contains all the data, for the gam part only 
+    gam.terms <- attr(gmf,"terms") # terms object for `gam' part of fit -- need this for prediction to work properly
+
+    allvars <- c(cor.vars,random.vars)
+    if (length(allvars)) {
+      mf$formula<-as.formula(paste(paste(deparse(gp$fake.formula,backtick=TRUE),collapse=""),
+                           "+",paste(allvars,collapse="+")))
+      mf <- eval(mf, parent.frame()) # the model frame now contains *all* the data
+    }
+    else mf <- gmf
+    rm(gmf)
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
     Terms <- attr(mf,"terms")    
   
@@ -1251,7 +1256,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     # now fake a gam object 
     
     object<-list(model=mf,formula=formula,smooth=G$smooth,nsdf=G$nsdf,family=family,
-                 df.null=nrow(G$X),y=G$y,terms=Terms,pterms=pTerms,xlevels=G$xlevels,
+                 df.null=nrow(G$X),y=G$y,terms=gam.terms,pterms=pTerms,xlevels=G$xlevels,
                  contrasts=G$contrasts,assign=G$assign,na.action=attr(mf,"na.action"),
                  cmX=G$cmX,var.summary=G$var.summary)
     # Transform  parameters back to the original space....

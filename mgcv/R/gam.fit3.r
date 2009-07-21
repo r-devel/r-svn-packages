@@ -285,7 +285,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
               w <- weg*alpha*mevg^2/var.mug
             }
 
-            ## Here a Fortran call has been replaced by update.beta call
+            ## Here a Fortran call has been replaced by pls_fit1 call
            
             if (sum(good)<ncol(x)) stop("Not enough informative observations.")
            

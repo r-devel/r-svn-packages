@@ -252,6 +252,8 @@ b2<-gamm(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
 plot(b2$gam,pages=1)
 fac <- dat$fac
 rm(dat)
+vis.gam(b2$gam)
+
 
 ## now an example with autocorrelated errors....
 n <- 400;sig <- 2
@@ -306,7 +308,7 @@ b <- gamm(y~s(x0,bs="cr")+s(x1,bs="cr")+s(x2,bs="cr")+
   s(x3,bs="cr"),data=dat,random=list(fa=~1,fb=~1),
   correlation=corAR1())
 plot(b$gam,pages=1)
-
+vis.gam(b$gam)
 ## and a "spatial" example...
 library(nlme);set.seed(1);n <- 200
 dat <- gamSim(2,n=n,scale=0) ## standard example
