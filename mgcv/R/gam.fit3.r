@@ -1261,6 +1261,7 @@ bfgs <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     while (score1>score+sc.extra && ii < maxHalf) { ## reject and step halve
       ii <- ii + 1
       step <- step/2
+      sc.extra <- sc.extra/2
       lsp1 <- lsp + step
   
 
@@ -1271,7 +1272,7 @@ bfgs <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
 
       if (reml) {
-          score1 <- b1$REML1
+          score1 <- b1$REML
       } else if (scoreType=="GACV") {
           score1 <- b1$GACV
       } else if (scoreType=="UBRE") {

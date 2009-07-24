@@ -1397,7 +1397,7 @@ ExtractData <- function(object,data,knots) {
 #########################################################################
 
 smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
-                      dataX = NULL,null.space.penalty = FALSE)
+                      dataX = NULL,null.space.penalty = FALSE,sparse.cons=0)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterization used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
@@ -1413,7 +1413,25 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   ## must be done here on original model matrix to ensure same
   ## basis for all `id' linked terms
   if (is.null(sm$C)) {
-    sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
+    if (sparse.cons==0) {
+      sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
+    } else { ## use sparse constraints for sparse terms
+      if (sum(sm$X==0)>.1*sum(sm$X!=0)) { ## treat term as sparse
+        if (sparse.cons==1) {
+          xsd <- apply(sm$X,2,FUN=sd)
+          if (sum(xsd==0)) ## are and columns constant?
+            sm$C <- ((1:length(xsd))[xsd==0])[1] ## index of coef to set to zero
+          else {
+            xz <- colSums(sm$X==0) ## find number of zeroes per column
+            sm$C <- ((1:length(xz))[xz==min(xz)])[1] ## index of coef to set to zero
+          }
+        } else if (sparse.cons==2) {
+            sm$C = -1 ## params sum to zero
+        } else  { stop("unimplemented sparse constraint type requested") }
+      } else { ## it's not sparse anyway 
+        sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
+      }
+    } ## end of sparse constraint handling
     conSupplied <- FALSE
   } else conSupplied <- TRUE
 
@@ -1515,7 +1533,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
           ind <- 0:(q-1)*n
           offs <- attr(sm$X,"offset")
           if (!is.null(offs)) offX <- rep(0,n) else offX <- NULL 
-          sml[[1]]$X <- matrix(0,n,ncol(sm$X))  ## something wrong with this case!!
+          sml[[1]]$X <- matrix(0,n,ncol(sm$X))  
           for (i in 1:n) { ## in this case have to work down the rows
             ind <- ind + 1
             sml[[1]]$X[i,] <- colSums(by[ind]*sm$X[sm$ind[ind],]) 
@@ -1552,29 +1570,59 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   ## absorb constraints.....
   if (absorb.cons)
   { k<-ncol(sm$X)
-    j<-nrow(sm$C)
-    if (j>0) # there are constraints
-    { qrc<-qr(t(sm$C))
-      for (i in 1:length(sml)) { ## loop through smooth list
-        if (length(sm$S)>0)
-        for (l in 1:length(sm$S)) # tensor product terms have > 1 penalty 
-        { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
-          sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,])
+    if (is.matrix(sm$C)) {
+      j<-nrow(sm$C)
+      if (j>0) # there are constraints
+      { qrc<-qr(t(sm$C))
+        for (i in 1:length(sml)) { ## loop through smooth list
+          if (length(sm$S)>0)
+          for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
+          { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
+            sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,])
+          }
+          sml[[i]]$X<-t(qr.qy(qrc,t(sml[[i]]$X))[(j+1):k,])
+          attr(sml[[i]],"qrc") <- qrc
+          attr(sml[[i]],"nCons") <- j;
+          sml[[i]]$C <- NULL
+          sml[[i]]$rank <- pmin(sm$rank,k-j)
+          sml[[i]]$df <- sml[[i]]$df - j
+          ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
+        } ## end smooth list loop
+      } else { ## no constraints
+        for (i in 1:length(sml)) {
+         attr(sml[[i]],"qrc") <- "no constraints"
+         attr(sml[[i]],"nCons") <- 0;
         }
-        sml[[i]]$X<-t(qr.qy(qrc,t(sml[[i]]$X))[(j+1):k,])
-        attr(sml[[i]],"qrc") <- qrc
-        attr(sml[[i]],"nCons") <- j;
-        sml[[i]]$C <- NULL
-        sml[[i]]$rank <- pmin(sm$rank,k-j)
-        sml[[i]]$df <- sml[[i]]$df - j
-        ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
-     } ## end smooth list loop
-   } else { ## no constraints
-     for (i in 1:length(sml)) {
-       attr(sml[[i]],"qrc") <- "no constraints"
-       attr(sml[[i]],"nCons") <- 0;
-     }
-   } ## end else 
+      } ## end else no constraints
+    } else if (sm$C>0) { ## set to zero constraints
+       for (i in 1:length(sml)) { ## loop through smooth list
+          if (length(sm$S)>0)
+          for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
+          { sml[[i]]$S[[l]] <- sml[[i]]$S[[l]][-sm$C,-sm$C]
+          }
+          sml[[i]]$X <- sml[[i]]$X[,-sm$C]
+          attr(sml[[i]],"qrc") <- sm$C
+          attr(sml[[i]],"nCons") <- 1;
+          sml[[i]]$C <- NULL
+          sml[[i]]$rank <- pmin(sm$rank,k-1)
+          sml[[i]]$df <- sml[[i]]$df - 1
+          ## so insert an extra 0 at position sm$C in coef vector to get original
+        } ## end smooth list loop
+    } else if (sm$C <0) { ## params sum to zero 
+       for (i in 1:length(sml)) { ## loop through smooth list
+          if (length(sm$S)>0)
+          for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
+          { sml[[i]]$S[[l]] <- diff(t(diff(sml[[i]]$S[[l]])))
+          }
+          sml[[i]]$X <- t(diff(t(sml[[i]]$X)))
+          attr(sml[[i]],"qrc") <- sm$C
+          attr(sml[[i]],"nCons") <- 1;
+          sml[[i]]$C <- NULL
+          sml[[i]]$rank <- pmin(sm$rank,k-1)
+          sml[[i]]$df <- sml[[i]]$df - 1
+          ## so insert an extra 0 at position sm$C in coef vector to get original
+        } ## end smooth list loop       
+    }
   } else for (i in 1:length(sml)) attr(sml[[i]],"qrc") <-NULL ## no absorption
 
   ## The idea here is that term selection can be accomplished as part of fitting 
@@ -1811,13 +1859,19 @@ PredictMat <- function(object,data,n=nrow(data))
     j <- attr(object,"nCons")
     if (j>0) { ## there were constraints to absorb - need to untransform
       k<-ncol(X)
-      if (sum(is.na(X))) {
-        ind <- !is.na(rowSums(X))
-        X1 <- t(qr.qy(qrc,t(X[ind,]))[(j+1):k,])
-        X <- matrix(NA,nrow(X),ncol(X1))
-        X[ind,] <- X1
-      } else {
-        X <- t(qr.qy(qrc,t(X))[(j+1):k,])
+      if (inherits(qrc,"qr")) {
+        if (sum(is.na(X))) {
+          ind <- !is.na(rowSums(X))
+          X1 <- t(qr.qy(qrc,t(X[ind,]))[(j+1):k,])
+          X <- matrix(NA,nrow(X),ncol(X1))
+          X[ind,] <- X1
+        } else {
+          X <- t(qr.qy(qrc,t(X))[(j+1):k,])
+        }
+      } else if (qrc>0) { ## simple set to zero constraint
+        X <- X[,-qrc]
+      } else if (qrc<0) { ## params sum to zero
+        X <- t(diff(t(X)))
       }
     }
   }

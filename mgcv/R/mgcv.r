@@ -487,7 +487,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
 }
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
-                    min.sp=NULL,H=NULL,absorb.cons=TRUE,select=FALSE,idLinksBases=TRUE,
+                    min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
@@ -574,15 +574,15 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   { # idea here is that terms are set up in accordance with information given in split$smooth.spec
     # appropriate basis constructor is called depending on the class of the smooth
     # constructor returns penalty matrices model matrix and basis specific information
-    ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty) ## old code
+    ## sm[[i]] <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,sparse.cons=sparse.cons) ## old code
     id <- split$smooth.spec[[i]]$id
     if (is.null(id)||!idLinksBases) { ## regular evaluation
       sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,
-                       null.space.penalty=select) 
+                       null.space.penalty=select,sparse.cons=sparse.cons) 
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
-                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,null.space.penalty=select)
+                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,null.space.penalty=select,sparse.cons=sparse.cons)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
@@ -752,7 +752,6 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
  
   ## need to modify L, G$S, G$sp, G$rank and G$off to include any penalties
   ## on parametric stuff, at this point....
-
   if (!is.null(PP)) { ## deal with penalties on parametric terms
     L <- rbind(cbind(L,matrix(0,nrow(L),ncol(PP$L))),
                  cbind(matrix(0,nrow(PP$L),ncol(L)),PP$L))
@@ -760,6 +759,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$S <- c(PP$S,G$S)
     G$rank <- c(PP$rank,G$rank)
     G$sp <- c(PP$sp,G$sp)
+    G$n.paraPen <- length(PP$off)
     if (!is.null(PP$min.sp)) { ## deal with minimum sps
       if (is.null(H)) H <- matrix(0,n.p,n.p)
       for (i in 1:length(PP$S)) {
@@ -767,7 +767,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
         H[ind,ind] <- H[ind,ind] + PP$min.sp[i] * PP$S[[i]]
       }
     } ## min.sp stuff finished
-  }
+  } else G$n.paraPen <- 0
 
 
   ## Now remove columns of L and rows of sp relating to fixed 
@@ -1363,7 +1363,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (!control$keepData) rm(data) ## save space
 
     G<-gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
-                 H=H,absorb.cons=TRUE,select=select,
+                 H=H,absorb.cons=TRUE,sparse.cons=0,select=select,
                  idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
     

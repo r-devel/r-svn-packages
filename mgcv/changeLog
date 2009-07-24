@@ -4,6 +4,10 @@
 ISSUES
 ------
 
+* bfgs doesn't check that both Wolfe conditions are satisfied, 
+  so inverse approx hessian could fail to be +ve def if curvature
+  condition not met.
+
 * Could use R_CheckUserInterrupt() to allow user interupt of
   mgcv code. (6.12) But then what about memory?
 
@@ -20,7 +24,14 @@ ISSUES
 
 * Some error message translation files need updating.
 
+* predict.gam and plot.gam "iterms" and `seWithMean' options
+  don't deal properly with case in which centering constraints 
+  are not conventional sum to zero ones.
+
 1.5-6
+
+* `smoothCon' and `PredictMat' modified so that sparse smooths can
+   optionally have sparse centering constraints applied. 
 
 * `gamm' fix: prediction and visualization from `x$gam' where x is a 
   fitted `gamm' object should not require the random effects to be 
