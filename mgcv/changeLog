@@ -30,6 +30,12 @@ ISSUES
 
 1.5-6
 
+* adaptive smooth constructor is a bit more careful about the ranks 
+  of the penalties.
+
+* 2d adaptive smoother bug fix --- part of penalty was missing due
+  to complete line error.
+
 * `smoothCon' and `PredictMat' modified so that sparse smooths can
    optionally have sparse centering constraints applied. 
 

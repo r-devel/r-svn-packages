@@ -1283,18 +1283,29 @@ variable.summary <- function(pf,dl,n) {
 ## factors in the model formulae in a nice way).
 ## variables with less than `n' entries are discarded
    v.n <- length(dl)
-   if (v.n) for (i in 1:v.n) if (length(dl[[i]])<n) dl[[i]] <- NULL 
+   ## if (v.n) for (i in 1:v.n) if (length(dl[[i]])<n) dl[[i]] <- NULL 
+   
+   v.name <- v.name1 <- names(dl)
+   if (v.n) ## need to strip out names of any variables that are too short.
+   { k <- 0 ## counter for retained variables
+     for (i in 1:v.n) if (length(dl[[i]])>=n) { 
+       k <- k+1
+       v.name[k] <- v.name1[i] ## save names of variables of correct length
+     }
+     if (k>0) v.name <- v.name[1:k] else v.name <- rep("",k)
+   }
 
-   v.name <- names(dl)    ## the variable names
+   ## v.name <- names(dl)    ## the variable names
    p.name <- all.vars(pf[-2]) ## variables in parametric part (not response)
    vs <- list()
    v.n <- length(v.name)
    if (v.n>0) for (i in 1:v.n) {
      if (v.name[i]%in%p.name) para <- TRUE else para <- FALSE ## is variable in the parametric part?
-     x <- dl[[v.name[i]]]
-     if (para&&is.matrix(x)) { ## parametric matrix --- a special case
-       x <- matrix(apply(x,2,quantile,probs=0.5,type=3,na.rm=TRUE),1,ncol(x)) ## nearest to median entries
+
+     if (para&&is.matrix(dl[[v.name[i]]])) { ## parametric matrix --- a special case
+       x <- matrix(apply(dl[[v.name[i]]],2,quantile,probs=0.5,type=3,na.rm=TRUE),1,ncol(dl[[v.name[i]]])) ## nearest to median entries
      } else { ## anything else
+       x <- dl[[v.name[i]]]
        if (is.factor(x)) {
          x <- x[!is.na(x)]
          lx <- levels(x)
