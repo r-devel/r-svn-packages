@@ -3,7 +3,6 @@
 ##  With contributions from Henric Nilsson
 
 
-
 pcls <- function(M)
 # Function to perform penalized constrained least squares.
 # Problem to be solved is:
@@ -1936,7 +1935,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 #  5. Work out required quantities
 # 
 # The splitting into blocks enables blocks of compiled code to be called efficiently
-# using smooth class specific prediciton matrix constructors, without having to 
+# using smooth class specific prediction matrix constructors, without having to 
 # build up potentially enormous prediction matrices.
 # if newdata.guaranteed == TRUE then the data.frame is assumed complete and
 # ready to go, so that only factor levels are checked for sanity.
@@ -2715,13 +2714,16 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
 # summary method for gam object - provides approximate p values for terms + other diagnostics
 # Improved by Henric Nilsson
 { pinv<-function(V,M,rank.tol=1e-6)
-  { D<-La.svd(V)
-    M1<-length(D$d[D$d>rank.tol*D$d[1]])
+  { ##D<-La.svd(V)
+    ##M1<-length(D$d[D$d>rank.tol*D$d[1]])
+    D <- eigen(V,symmetric=TRUE)
+    M1<-length(D$values[D$values>rank.tol*D$values[1]])
     if (M>M1) M<-M1 # avoid problems with zero eigen-values
-    if (M+1<=length(D$d)) D$d[(M+1):length(D$d)]<-1
-    D$d<- 1/D$d
-    if (M+1<=length(D$d)) D$d[(M+1):length(D$d)]<-0
-    res <- D$u%*%diag(D$d)%*%D$v
+    ##if (M+1<=length(D$d)) D$d[(M+1):length(D$d)]<-1
+    if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-1
+    D$values<- 1/D$values
+    if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-0
+    res <- D$vectors%*%(D$values*t(D$vectors))  ##D$u%*%diag(D$d)%*%D$v
     attr(res,"rank") <- M
     res
   }

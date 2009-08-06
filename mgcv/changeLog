@@ -30,6 +30,8 @@ ISSUES
 
 1.5-6
 
+* summary.gam pseudoinversion made slightly more efficient.
+
 * adaptive smooth constructor is a bit more careful about the ranks 
   of the penalties.
 
