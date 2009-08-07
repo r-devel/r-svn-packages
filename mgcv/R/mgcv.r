@@ -648,6 +648,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$smooth[[i]] <- sm[[i]]   
   }
   G$cmX <- colMeans(X) ## useful for componentwise CI construction 
+  G$cmX[-(1:G$nsdf)] <- 0 ## zero the smooth parts here 
   G$X<-X;rm(X)
   n.p<-ncol(G$X) 
   # deal with penalties
@@ -2103,7 +2104,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-            if (type=="iterms"&&inherits(attr(object$smooth[[k]],"qrc"),"qr")) { ## termwise se to "carry the intercept"
+            if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept"
               X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              
@@ -2377,7 +2378,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       if (se) {
         ## test whether mean variability to be added to variability (only for centred terms)
-        if (seWithMean&&inherits(attr(x$smooth[[i]],"qrc"),"qr")) {
+        if (seWithMean && attr(x$smooth[[i]],"nCons")>0) {
           X1 <- matrix(x$cmX,nrow(X),ncol(x$Vp),byrow=TRUE)
           meanL1 <- x$smooth[[i]]$meanL1
           if (!is.null(meanL1)) X1 <- X1 / meanL1
@@ -2424,7 +2425,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       fit <- X%*%p else fit<-X%*%p + offset       # fitted values
       fit[exclude] <- NA                 # exclude grid points too far from data
       if (se) {  
-        if (seWithMean&&inherits(attr(x$smooth[[i]],"qrc"),"qr")) { ## then se to include uncertainty in overall mean
+        if (seWithMean && attr(x$smooth[[i]],"nCons")>0) { ## then se to include uncertainty in overall mean
           X1 <- matrix(x$cmX,nrow(X),ncol(x$Vp),byrow=TRUE)
           meanL1 <- x$smooth[[i]]$meanL1
           if (!is.null(meanL1)) X1 <- X1 / meanL1
@@ -2831,7 +2832,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
           df[i] <- df[i]+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
           chi.sq[i] <- sum((t(D)%*%ft)^2)   
           if (FALSE) { ## full interval inversion  
-            if (inherits(attr(object$smooth[[i]],"qrc"),"qr")) {
+            if (attr(object$smooth[[i]],"nCons")>0) {
               X1 <- matrix(object$cmX,nrow(Xt),ncol(object$Vp),byrow=TRUE)
               meanL1 <- object$smooth[[i]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1
