@@ -2,6 +2,7 @@
 
 	* DESCRIPTION (Version, Date): 3.1-93
 	* R/lmList.R, tests/lmList.R: bug fix for predict.lmList (PR#13788)
+	* R/gls.R, tests/anova.gls.R: bug fix for anova.gls (PR#13567)
 
 2009-05-30  Brian Ripley <Brian.Ripley@R-project.org>
 
