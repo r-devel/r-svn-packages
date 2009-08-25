@@ -1,5 +1,10 @@
 2009-06-13 Brian Ripley <Brian.Ripley@R-project.org>
 
+	* src/spss.c: unitialized codepage in an example from 
+	multcomp's chfls1.Rnw
+	
+2009-06-13 Brian Ripley <Brian.Ripley@R-project.org>
+
 	* DESCRIPTION: Version is 0.8-37, for release with 2.9.2
 
 2009-06-09 Brian Ripley <Brian.Ripley@R-project.org>
