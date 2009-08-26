@@ -61,7 +61,7 @@
 \author{Jose Pinheiro \email{Jose.Pinheiro@pharma.novartis.com} and Douglas Bates \email{bates@stat.wisc.edu}}
 \seealso{\code{\link{Variogram}},
   \code{\link[lattice]{xyplot}},
-  \code{\link[modreg]{loess}}}
+  \code{\link{loess}}}
 \examples{
 fm1 <- lme(follicles ~ sin(2*pi*Time) + cos(2*pi*Time), Ovary)
 plot(Variogram(fm1, form = ~ Time | Mare, maxDist = 0.7))
