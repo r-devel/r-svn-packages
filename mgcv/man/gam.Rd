@@ -391,16 +391,27 @@ b1<-gam(y~s(x0,x1)+s(x2)+s(x3),data=dat)
 par(mfrow=c(2,2))
 plot(b1)
 
-
-
 par(mfrow=c(1,1))
 ## now simulate poisson data...
-dat <- gamSim(1,n=400,dist="poisson",scale=.25)
+dat <- gamSim(1,n=4000,dist="poisson",scale=.1)
 
-b2<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,data=dat)
+## use "cr" basis to save time, with 4000 data...
+b2<-gam(y~s(x0,bs="cr")+s(x1,bs="cr")+s(x2,bs="cr")+
+        s(x3,bs="cr"),family=poisson,data=dat,method="REML")
 plot(b2,pages=1)
 
-## repeat fit using performance iteration
+## drop x3, but initialize sp's from previous fit, to 
+## save more time...
+
+b2a<-gam(y~s(x0,bs="cr")+s(x1,bs="cr")+s(x2,bs="cr"),
+         family=poisson,data=dat,method="REML",
+         in.out=list(sp=b2$sp[1:3],scale=1))
+par(mfrow=c(2,2))
+plot(b2a)
+
+par(mfrow=c(1,1))
+## similar example using performance iteration
+dat <- gamSim(1,n=400,dist="poisson",scale=.25)
 
 b3<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
         data=dat,optimizer="perf")

@@ -666,7 +666,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
 gam.fit3.post.proc <- function(X,object) {
 ## get edf array and covariance matrices after a gam fit. 
-  Vb <- object$rV%*%t(object$rV)*object$scale.est
+  Vb <- object$rV%*%t(object$rV)*object$scale
   PKt <- object$rV%*%t(object$K)
   edf <- rowSums(PKt*t(sqrt(object$weights)*X))
   Ve <- PKt%*%t(PKt)*object$scale  

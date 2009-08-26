@@ -30,6 +30,18 @@ ISSUES
 
 1.5-6
 
+* `in.out' was not working from 1.5 --- fixed.
+
+* loglik.gam now ups parameter count for Tweedie by one to account for 
+  scale estimation.
+
+* There was a bug in the calculation of the Bayesian cov matrix, when the 
+  scale parameter was known: it was always using an estimated sclae 
+  parameter. Makes no statistically meaningful difference for a model  
+  that fits propoerly, of course. 
+
+* Some junk removed from gam object.
+
 * summary.gam pseudoinversion made slightly more efficient.
 
 * adaptive smooth constructor is a bit more careful about the ranks 

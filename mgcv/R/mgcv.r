@@ -1073,8 +1073,10 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$edf<-mv$edf
   object$aic <- object$aic + 2*sum(mv$edf)
   object$nsdf <- G$nsdf
-  object$GCV<-object$GCV1<-object$UBRE<-object$UBRE1<-object$trA<-
-  object$trA1<-object$alpha<-object$alpha1<-object$rV<-object$scale.est<-NULL
+  object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
+  object$GACV <-  object$GACV1 <-  object$GACV2 <-  object$REML <-  object$REML1 <-  object$REML2 <-  
+  object$GCV<-object$GCV1<- object$GCV2 <- object$UBRE <-object$UBRE1 <- object$UBRE2 <- object$trA <-
+  object$trA1<- object$trA2 <- object$alpha <- object$alpha1 <- object$rV <- object$scale.est <- NULL
   object$sig2 <- object$scale
   
   object
@@ -1110,7 +1112,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     reml <- TRUE
   } else reml <- FALSE ## experimental insert
   Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
-  # G$U1 <- Ssp$Y       ## range space of penalty
   G$Eb <- Ssp$E       ## balanced penalty square root for rank determination purrposes 
   G$U1 <- cbind(Ssp$Y,Ssp$Z) ## EXPERIMENTAL: eigen space basis
   G$Mp <- ncol(Ssp$Z) ## null space dimension
@@ -1182,6 +1183,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (!ok) stop("in.out incorrect: see documentation")
     object<-list() # fake enough of a returned fit object for initialization 
     ##object$sp <- in.out$sp[G$all.sp<0] # only use the values for free s.p.s
+    object$sp <- in.out$sp
     object$gcv.ubre <- in.out$scale
     object$sig2 <- 0 ## just means that in.out$scale acts as total scale
   } else ## do performance iteration.... 
@@ -1225,20 +1227,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
                                                 object$sp[-length(object$sp)] ## drop scale estimate from sp array
     object$mgcv.conv <- mgcv.conv 
 
-  } else { ## performance iteration already complete, but check for all fixed sp case ...
-   # if (!G$am && (optimizer[1]=="outer")) {
-   #   ## need to fix up GCV/UBRE score 
-   #   if (criterion=="UBRE") object$gcv.ubre <- object$deviance/G$n - scale +
-   #                          2 * gamma * scale* sum(object$edf)/G$n else 
-   #   if (criterion=="GCV") object$gcv.ubre <- G$n *
-   #                     object$deviance/(G$n-sum(object$edf))^2 else 
-   #   if (criterion=="GACV") { 
-   #     P <- sum(object$weights*object$residuals^2)
-   #     tau <- sum(object$edf)
-   #     object$gcv.ubre <- object$deviance/G$n + 2 * gamma*tau * P / (G$n*(G$n-tau))
-   #   }  
-   # }
-  }
+  } ## finished outer looping
 
   ## correct null deviance if there's an offset ....
 
@@ -1337,7 +1326,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf<-match.call(expand.dots=FALSE)
     mf$formula<-gp$fake.formula 
     mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <-
-               mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$...<-NULL
+               mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$...<-NULL
     mf$drop.unused.levels<-TRUE
     mf[[1]]<-as.name("model.frame")
     pmf <- mf
@@ -3005,7 +2994,7 @@ logLik.gam <- function (object, ...)
         warning("extra arguments discarded")
     fam <- family(object)$family
     p <- sum(object$edf)
-    if (fam %in% c("gaussian", "Gamma", "inverse.gaussian"))
+    if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))
         p <- p + 1
     val <- p - object$aic/2
     attr(val, "df") <- p
