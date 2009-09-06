@@ -23,8 +23,6 @@ ISSUES
 
 * should set fscale from get.null.coef
 
-* Some error message translation files need updating.
-
 * predict.gam and plot.gam "iterms" and `seWithMean' options
   don't deal properly with case in which centering constraints 
   are not conventional sum to zero ones.
@@ -32,6 +30,8 @@ ISSUES
 * summary.gam should subsample, instead of using full X.
 
 1.5-6
+
+* .pot files updated, de translation added.
 
 * `in.out' was not working from 1.5 --- fixed.
 
