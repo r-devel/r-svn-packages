@@ -6,7 +6,8 @@ ISSUES
 
 * bfgs doesn't check that both Wolfe conditions are satisfied, 
   so inverse approx hessian could fail to be +ve def if curvature
-  condition not met.
+  condition not met. - should do this, simplify it to not use Newton,
+  and get its start conditions without using PI.
 
 * Could use R_CheckUserInterrupt() to allow user interupt of
   mgcv code. (6.12) But then what about memory?
@@ -28,6 +29,8 @@ ISSUES
   don't deal properly with case in which centering constraints 
   are not conventional sum to zero ones.
 
+* summary.gam should subsample, instead of using full X.
+
 1.5-6
 
 * `in.out' was not working from 1.5 --- fixed.
@@ -36,7 +39,7 @@ ISSUES
   scale estimation.
 
 * There was a bug in the calculation of the Bayesian cov matrix, when the 
-  scale parameter was known: it was always using an estimated sclae 
+  scale parameter was known: it was always using an estimated scale 
   parameter. Makes no statistically meaningful difference for a model  
   that fits propoerly, of course. 
 
