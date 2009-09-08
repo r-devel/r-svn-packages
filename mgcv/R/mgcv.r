@@ -3638,8 +3638,17 @@ set.mgcv.options <- function()
 
 ###############################################################################
 ### ISSUES.....
-
-
-
-
-
+#
+#* Could use R_CheckUserInterrupt() to allow user interupt of
+#  mgcv code. (6.12) But then what about memory?#
+#
+#* Should use R memory allocation to gracefully handle out of memory
+#  problems, or at least check for NULL pointer return. How to free on
+#  error/interupt? Note that under linux there is no guarantee that calloc
+#  will return a NULL pointer even if the memory requested is not actually
+#  available. See man calloc.
+#
+#* predict.gam and plot.gam "iterms" and `seWithMean' options
+#  don't deal properly with case in which centering constraints
+#  are not conventional sum to zero ones.
+#
