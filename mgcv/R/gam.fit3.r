@@ -1,7 +1,7 @@
 ## R routines for gam fitting with calculation of derivatives w.r.t. sp.s
 ## (c) Simon Wood 2004-2009
 
-## These routine is for type 3 gam fitting. The basic idea is that a P-IRLS
+## These routines are for type 3 gam fitting. The basic idea is that a P-IRLS
 ## is run to convergence, and only then is a scheme for evaluating the 
 ## derivatives via the implicit function theorem used. 
 
@@ -1346,7 +1346,7 @@ bfgs <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   else if (i==200) ct <- "iteration limit reached" 
   else ct <- "full convergence"
   list(score=score,lsp=lsp,lsp.full=L%*%lsp,grad=grad,hess=hess,iter=i,conv =ct,score.hist=score.hist[!is.na(score.hist)],object=b)
-}
+} ## end bfgs
 
 
 

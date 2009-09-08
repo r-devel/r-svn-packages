@@ -1,5 +1,5 @@
 
-##  R routines for the package mgcv (c) Simon Wood 2000-2008
+##  R routines for the package mgcv (c) Simon Wood 2000-2009
 ##  With contributions from Henric Nilsson
 
 
@@ -1091,9 +1091,12 @@ get.null.coef <- function(G) {
   family <- G$family
   eval(family$initialize) ## have to do this to ensure y numeric
   y <- as.numeric(y)
-  null.coef <- qr.coef(qr(G$X),family$linkfun(mean(y)+0*y))
+  mum <- family$linkfun(mean(y)+0*y)
+  null.coef <- qr.coef(qr(G$X),mum)
   null.coef[is.na(null.coef)] <- 0;
-  null.coef
+  ## get a suitable function scale for optimization routines
+  null.scale <- sum(family$dev.resids(y,mum,weights))/nrow(G$X) 
+  list(null.coef=null.coef,null.scale=null.scale)
 }
 
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
@@ -1113,7 +1116,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   } else reml <- FALSE ## experimental insert
   Ssp <- totalPenaltySpace(G$S,G$H,G$off,ncol(G$X))
   G$Eb <- Ssp$E       ## balanced penalty square root for rank determination purrposes 
-  G$U1 <- cbind(Ssp$Y,Ssp$Z) ## EXPERIMENTAL: eigen space basis
+  G$U1 <- cbind(Ssp$Y,Ssp$Z) ## eigen space basis
   G$Mp <- ncol(Ssp$Z) ## null space dimension
   G$UrS <- list()     ## need penalty matrices in overall penalty range space...
   if (length(G$S)>0) for (i in 1:length(G$S)) G$UrS[[i]] <- t(Ssp$Y)%*%G$rS[[i]] else i <- 0
@@ -1176,51 +1179,69 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   } else fixedSteps <- control$maxit+2
   
+  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0))
+  else lsp2 <- rep(0,0)
+
   if (outer.looping && !is.null(in.out)) { # initial s.p.s and scale provided
     ok <- TRUE ## run a few basic checks
     if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
     if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
     if (!ok) stop("in.out incorrect: see documentation")
-    object<-list() # fake enough of a returned fit object for initialization 
+    #object<-list() # fake enough of a returned fit object for initialization 
     ##object$sp <- in.out$sp[G$all.sp<0] # only use the values for free s.p.s
-    object$sp <- in.out$sp
-    object$gcv.ubre <- in.out$scale
-    object$sig2 <- 0 ## just means that in.out$scale acts as total scale
-  } else ## do performance iteration.... 
-  object <- gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
-  
+    #object$sp <- in.out$sp
+    lsp <- log(in.out$sp) 
+    #object$gcv.ubre <- in.out$scale
+    #object$sig2 <- 0 ## just means that in.out$scale acts as total scale
+  } else {## do performance iteration.... 
+    if (fixedSteps>0) { 
+      object <- gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
+      lsp <- log(object$sp) 
+    } else {
+      lsp <- lsp2
+    } 
+  }
   G$family <- family ## restore, in case manipulated for negative binomial 
     
   if (outer.looping)
   { # use perf.iter s.p. estimates from gam.fit or supplied initial s.p.s as starting values...
-    lsp<-log(object$sp) 
+    #lsp<-log(object$sp) 
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
     if (is.null(in.out)&&length(lsp)>0) { ## note no checks if supplied 
-      lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
-      if (!is.null(G$L)) { ## estimate underlying smoothing parameters
-        if (is.null(G$lsp0)) G$lsp0 <- rep(0,nrow(G$L))
-        lsp2 <- as.numeric(coef(lm(lsp2~G$L-1+offset(G$lsp0))))
-      }
+     # lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
+     # if (!is.null(G$L)) { ## estimate underlying smoothing parameters
+     #   if (is.null(G$lsp0)) G$lsp0 <- rep(0,nrow(G$L))
+     #   lsp2 <- as.numeric(coef(lm(lsp2~G$L-1+offset(G$lsp0))))
+     # }
       ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
       ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
-      if (fixedSteps<1) lsp <- lsp2 ## don't use perf iter sp's at all
+      #if (fixedSteps<1) lsp <- lsp2 ## don't use perf iter sp's at all
     }
-    mgcv.conv <- object$mgcv.conv  
+   
+    ## Get an estimate of the coefs corresponding to maximum reasonable deviance,
+    ## and an estimate of the function scale, suitable for optimizers that need this.
   
+    null.stuff  <- get.null.coef(G)  
+    
+    if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
+    
     if (criterion%in%c("REML","ML")&&scale<=0) { ## log(scale) to be estimated as a smoothing parameter
-      log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
+      if (fixedSteps>0) {
+        log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
+      } else {
+        log.scale <- log(null.stuff$null.scale/10)
+      }
       lsp <- c(lsp,log.scale) ## append log initial scale estimate to lsp
       ## extend G$L, if present...
       if (!is.null(G$L)) G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
-    }
+    } 
+          
+    G$null.coef <- null.stuff$null.coef
 
-    ## Get an estimate of the coefs corresponding to maximum reasonable deviance...
-
-    G$null.coef <- get.null.coef(G)
-
-    object <- gam.outer(lsp,fscale=abs(object$gcv.ubre)+object$sig2/length(G$y),family=G$family,
+    object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),
+                        family=G$family,
                         control=control,criterion=criterion,method=method,optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)
     
     if (criterion%in%c("REML","ML")&&scale<=0)  object$sp <- 
@@ -2781,12 +2802,25 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
     }
   } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}
 
+  ## Now deal with the smooth terms....
+
   m<-length(object$smooth) # number of smooth terms
   df <- edf <- s.pv <- chi.sq <- array(0, m)
   if (m>0) # form test statistics for each smooth
   { if (!freq) { 
-      X <- model.matrix(object)
-      X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
+      if (nrow(object$model)>3000) { ## subsample to get X for p-values calc.
+        seed <- get(".Random.seed",envir=.GlobalEnv) ## store RNG seed
+        kind <- RNGkind(NULL)
+        RNGkind("default","default")
+        set.seed(11) ## ensure repeatability
+        ind <- sample(1:nrow(object$model),3000,replace=FALSE)  ## sample these rows from X
+        X <- predict.gam(object,object$model[ind,],type="lpmatrix")
+        RNGkind(kind[1],kind[2])
+        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+      } else { ## don't need to subsample 
+        X <- model.matrix(object)
+        X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
+      }
       ## get corrected edf
       ##  edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
@@ -2815,7 +2849,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
           ## t(ft)%*%ginv(Ats)%*%ft where Ats = Xt%*%Vt%*%t(Xt), efficiently calculated...
           chi.sq[i] <- sum(((t(ed$vectors)%*%ft)*sqrt(iv))^2)
           df[i] <- edf[i] + .5
-        } else { ## experimental version --- problematic
+        } else { ## experimental version 
           df[i] <- min(ncol(Xt),edf[i])
           D <- pinvXVX(Xt,V,df[i])
           df[i] <- df[i]+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
@@ -3365,6 +3399,37 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
   exp(uniroot(ff,c(lower,upper),d=d,target=target)$root)
 }
 
+
+initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL) {
+## initial smoothing parameter values based on approximate matching 
+## of Frob norm of XWX and S. If L is non null then it is assumed
+## that the sps multiplying S elements are given by L%*%sp+lsp0 and 
+## an appropriate regression step is used to find `sp' itself.
+## This routine evaluated initial guesses at W.
+  ## Get the initial weights...
+  if (length(S)==0) return(rep(0,0))
+  start <- etastart <- mustart <- NULL
+  nobs <- nrow(X)
+  eval(family$initialize)
+  w <- weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart)
+  w <- sqrt(w)
+  ## weight X accordingly
+  csX <- colSums((w*X)^2) 
+  lambda <- rep(0,length(S))
+  for (i in 1:length(S)) {
+    ind <- off[i]:(off[i]+ncol(S[[i]])-1)
+    lambda[i] <- sum(csX[ind])/sqrt(sum(S[[i]]^2))
+  }
+  if (!is.null(L)) {
+    lsp <- log(lambda)
+    if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
+    lsp <- as.numeric(coef(lm(lsp~L-1+offset(lsp0))))
+    lambda <- exp(lsp)
+  }
+
+  lambda ## initial values
+
+}
 
 initial.sp <- function(X,S,off,expensive=FALSE)
 # Find initial smoothing parameter guesstimates based on model matrix X 

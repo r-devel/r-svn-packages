@@ -361,7 +361,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   random<-list()
   random.i<-0
 
-  X <- G$X[,1:G$nsdf] # accumulate fixed effects into here
+  X <- G$X[,1:G$nsdf,drop=FALSE] # accumulate fixed effects into here
 
   xlab <- rep("",0)
   if (G$m)

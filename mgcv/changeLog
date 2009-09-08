@@ -18,18 +18,27 @@ ISSUES
   will return a NULL pointer even if the memory requested is not actually 
   available. See man calloc.
 
-* Should re-do initial.sp to use X'WX with initial W. Also base on 
-  Frobenious norm.
-
-* should set fscale from get.null.coef
 
 * predict.gam and plot.gam "iterms" and `seWithMean' options
   don't deal properly with case in which centering constraints 
   are not conventional sum to zero ones.
 
-* summary.gam should subsample, instead of using full X.
-
 1.5-6
+
+* New routine `initial.spg' gets jth initial sp to equalize 
+  Frobenious norm of S_j and cols of sqrt(W)X which it penalizes, 
+  where W are initial fisher weights. This removes the need for a 
+  performance iteration step to get starting values (so 
+  outerPIsteps=0 in gam.control can now bypass PI completely).
+
+* fscale set from get.null.coef (facilitates cleaner initialization).
+
+* For p-value calculation for smooths, summary.gam subsamples rows of 
+  the model matrix if it has more than 3000 rows. This speeds things
+  up for large datasets.
+
+* minor bug fix in `gamm' so that intercept gets correct name, if 
+  it's the only non-smooth fixed effect.
 
 * .pot files updated, de translation added.
 
