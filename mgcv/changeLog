@@ -3,10 +3,17 @@
 
 1.5-6
 
+* "ts" and "cs" modified so that zero eigen values of penalty
+   matrix are reset to 10% of smallest strictly positive eigen
+   value, rather than 1%. This seems to lead to more reliable
+   performance. 
+
 * `bfgs' simplified and improved so that it now checks the Wolfe 
    conditions are met at each step. No longer uses any Newton steps,
    so if it's used with gam.control(outerPIsteps=0) then it's
    first derivative only for smoothing parameter optimization. 
+
+* `outerPIsteps' now defaults to zero in `gam.control'.
 
 * New routine `initial.spg' gets jth initial sp to equalize 
   Frobenious norm of S_j and cols of sqrt(W)X which it penalizes, 
@@ -66,6 +73,8 @@
   `predict.gam' help file.
 
 * `newdata.guaranteed' argument to predict.gam didn't work. fixed.
+
+
 
 1.5-5
 

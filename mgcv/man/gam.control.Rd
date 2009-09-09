@@ -14,7 +14,7 @@ gam.control(irls.reg=0.0,epsilon = 1e-06, maxit = 100,
             mgcv.tol=1e-7,mgcv.half=15, trace = FALSE,
             rank.tol=.Machine$double.eps^0.5,
             nlm=list(),optim=list(),newton=list(),
-            outerPIsteps=1,idLinksBases=TRUE,scalePenalty=TRUE,
+            outerPIsteps=0,idLinksBases=TRUE,scalePenalty=TRUE,
             keepData=FALSE) 
 }
 \arguments{ 
@@ -57,9 +57,7 @@ is used for outer estimation of smoothing parameters (not default). See details.
 used for outer estimation of log smoothing parameters. See details.}
 
 \item{outerPIsteps}{The number of performance interation steps used to
-initialize outer iteration. Less than 1 means
-that only one performance iteration step is taken to get the function scale,
-but the corresponding smoothing parameter estimates are discarded. }
+initialize outer iteration.}
 
 \item{idLinksBases}{If smooth terms have their smoothing parameters linked via 
 the \code{id} mechanism (see \code{\link{s}}), should they also have the same 

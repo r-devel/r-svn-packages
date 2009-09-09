@@ -539,7 +539,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
 smooth.construct.ts.smooth.spec<-function(object,data,knots)
 # implements a class of tprs like smooths with an additional shrinkage
 # term in the penalty... this allows for fully integrated GCV model selection
-{ attr(object,"shrink") <- 1e-2
+{ attr(object,"shrink") <- 1e-1
   object <- smooth.construct.tp.smooth.spec(object,data,knots)
   class(object) <- "ts.smooth"
   object
@@ -654,7 +654,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
 smooth.construct.cs.smooth.spec<-function(object,data,knots)
 # implements a class of cr like smooths with an additional shrinkage
 # term in the penalty... this allows for fully integrated GCV model selection
-{ attr(object,"shrink") <- .01
+{ attr(object,"shrink") <- .1
   object <- smooth.construct.cr.smooth.spec(object,data,knots)
   class(object) <- "cs.smooth"
   object

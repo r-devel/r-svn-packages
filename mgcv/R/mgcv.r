@@ -1091,7 +1091,7 @@ get.null.coef <- function(G) {
   family <- G$family
   eval(family$initialize) ## have to do this to ensure y numeric
   y <- as.numeric(y)
-  mum <- family$linkfun(mean(y)+0*y)
+  mum <- mean(y)+0*y
   null.coef <- qr.coef(qr(G$X),mum)
   null.coef[is.na(null.coef)] <- 0;
   ## get a suitable function scale for optimization routines
@@ -1250,7 +1250,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
   } ## finished outer looping
 
-  ## correct null deviance if there's an offset ....
+  ## correct null deviance if there's an offset [Why not correct calc in gam.fit/3???]....
 
   if (G$intercept&&any(G$offset!=0)) object$null.deviance <-
                                   glm(G$y~offset(G$offset),family=object$family)$deviance
@@ -1514,7 +1514,7 @@ print.gam<-function (x,...)
 gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
-                         nlm=list(),optim=list(),newton=list(),outerPIsteps=1,
+                         nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
                          idLinksBases=TRUE,scalePenalty=TRUE,
                          keepData=FALSE) 
 # Control structure for a gam. 
@@ -3400,7 +3400,7 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 }
 
 
-initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL) {
+initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1) {
 ## initial smoothing parameter values based on approximate matching 
 ## of Frob norm of XWX and S. If L is non null then it is assumed
 ## that the sps multiplying S elements are given by L%*%sp+lsp0 and 
@@ -3413,12 +3413,15 @@ initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL) {
   eval(family$initialize)
   w <- weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart)
   w <- sqrt(w)
-  ## weight X accordingly
-  csX <- colSums((w*X)^2) 
-  lambda <- rep(0,length(S))
-  for (i in 1:length(S)) {
-    ind <- off[i]:(off[i]+ncol(S[[i]])-1)
-    lambda[i] <- sum(csX[ind])/sqrt(sum(S[[i]]^2))
+  if (type==1) { ## what PI would have used
+   lambda <-  initial.sp(w*X,S,off)
+  } else { ## balance frobenius norms
+    csX <- colSums((w*X)^2) 
+    lambda <- rep(0,length(S))
+    for (i in 1:length(S)) {
+      ind <- off[i]:(off[i]+ncol(S[[i]])-1)
+      lambda[i] <- sum(csX[ind])/sqrt(sum(S[[i]]^2))
+    }
   }
   if (!is.null(L)) {
     lsp <- log(lambda)
@@ -3652,3 +3655,7 @@ set.mgcv.options <- function()
 #  don't deal properly with case in which centering constraints
 #  are not conventional sum to zero ones.
 #
+# * add randomized residuals (see Mark B email)?
+#
+# * sort out all the different scale parameters floating around, and explain the 
+#   sp variance link better.
