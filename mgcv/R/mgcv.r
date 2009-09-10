@@ -1541,7 +1541,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
     nlm$ndigit <- round(nlm$ndigit)
     ndigit <- floor(-log10(.Machine$double.eps))
     if (nlm$ndigit>ndigit) nlm$ndigit <- ndigit
-    if (is.null(nlm$gradtol)) nlm$gradtol <- epsilon*100
+    if (is.null(nlm$gradtol)) nlm$gradtol <- epsilon*10
     nlm$gradtol <- abs(nlm$gradtol)
     ## note that nlm will stop after hitting stepmax 5 consecutive times
     ## hence should not be set too small ... 

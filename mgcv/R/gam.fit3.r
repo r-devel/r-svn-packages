@@ -1380,7 +1380,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## `score', `alpha', `dscore', where `dscore' is the derivative of 
   ## the score in the current step direction, `grad' and `mustart'. 
   ## `dscore' will be NULL if the gradiant has yet to be evaluated.
-    while (TRUE) {
+    for (i in 1:40) {
       trial <- list(alpha = (lo$alpha+hi$alpha)/2)
       lsp <- ilsp + step * trial$alpha
       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
@@ -1417,18 +1417,18 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         } else { ## default to deviance based GCV
           trial$grad <- L%*%b$GCV1;
         } 
-        trial$dev <- b$dev;rm(b);gc()
+        trial$dev <- b$dev;rm(b);
         trial$dscore <- sum(step*trial$grad) ## directional derivative
         
-        if (abs(trial$dscore) <= -c2*initial$dscore) break ## met Wolfe 2
+        if (abs(trial$dscore) <= -c2*initial$dscore) return(trial) ## met Wolfe 2
 
         ## failed Wolfe 2 ...
-        if (initial$dscore*(hi$alpha-lo$alpha)>=0) {
+        if (trial$dscore*(hi$alpha-lo$alpha)>=0) {
           hi <- lo }  
         lo <- trial 
       }  
     } ## end while(TRUE)
-  trial
+    return(NULL) ## failed
   } ## end zoom
 
   reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
@@ -1559,9 +1559,11 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       if (trial$alpha == alpha.max) { trial <- NULL;break;} ## step failed
       trial <- list(alpha = min(prev$alpha + 1, alpha.max))
     } ## end of while(TRUE)
+
     ## Now `trial' contains a suitable step, or is NULL on failure to meet Wolfe.  
     if (is.null(trial)) { ## step failed
       lsp <- ilsp
+      break ## failed to move, so nothing more can be done. 
     } else { ## update the Hessian etc...
       
       yg <- trial$grad-initial$grad
@@ -1592,6 +1594,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       initial$alpha <- 0
     }  
   } ## end of iteration loop
+
+
   if (is.null(trial)) { 
     ct <- "step failed"
     lsp <- ilsp

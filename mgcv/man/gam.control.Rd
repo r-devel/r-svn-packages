@@ -91,7 +91,7 @@ If outer iteration using \code{\link{nlm}} is used for fitting, then the control
 the number of significant digits in the GCV/UBRE score - by default this is
 worked out from \code{epsilon}; (ii) \code{gradtol} is the tolerance used to
 judge convergence of the gradient of the GCV/UBRE score to zero - by default
-set to \code{100*epsilon}; (iii) \code{stepmax} is the maximum allowable log
+set to \code{10*epsilon}; (iii) \code{stepmax} is the maximum allowable log
 smoothing parameter step - defaults to 2; (iv) \code{steptol} is the minimum
 allowable step length - defaults to 1e-4; (v) \code{iterlim} is the maximum
 number of optimization steps allowed - defaults to 200; (vi)
