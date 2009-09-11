@@ -23,6 +23,9 @@
 
 * fscale set from get.null.coef (facilitates cleaner initialization).
 
+* large data set rare event logistic regression example added to 
+  ?gam.
+
 * For p-value calculation for smooths, summary.gam subsamples rows of 
   the model matrix if it has more than 3000 rows. This speeds things
   up for large datasets.
