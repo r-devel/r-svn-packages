@@ -383,6 +383,7 @@ print(b0);print(bp)
 
 
 ## now a GAM with 3df regression spline term & 2 penalized terms
+
 b0<-gam(y~s(x0,k=4,fx=TRUE,bs="tp")+s(x1,k=12)+s(x2,k=15),data=dat)
 plot(b0,pages=1)
 
@@ -430,7 +431,8 @@ b5<-gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=poisson,
 plot(b5,pages=1)
 
  
-## a binary example 
+## a binary example (see later for large dataset version)...
+
 dat <- gamSim(1,n=400,dist="binary",scale=.33)
 
 lr.fit <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=binomial,data=dat)
@@ -465,7 +467,10 @@ vis.gam(b4)                     ## persp fit
 detach(eg)
 par(op)
 
-## very large dataset example with user defined knots
+##################################################
+## largish dataset example with user defined knots
+##################################################
+
 par(mfrow=c(1,1))
 eg <- gamSim(2,n=10000,scale=.5)
 attach(eg)
@@ -484,6 +489,8 @@ vis.gam(b6,color="heat")
 b7 <- gam(y~s(x,z,k=50,xt=list(max.knots=1000,seed=2)),data=data)
 vis.gam(b7)
 detach(eg)
+
+
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..
