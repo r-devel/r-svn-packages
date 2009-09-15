@@ -1,3 +1,8 @@
+2009-09-15 Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/spss.R: 'latin-9' is more portable that 'latin9', as libiconv
+	does not know about the latter.
+
 2009-06-13 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/spss.c: unitialized codepage in an example from 
