@@ -1,6 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.6-0
+*** Routine `bam' added for fitting GAMs to very large datasets.
+    See ?bam
+
 1.5-6
 
 * "ts" and "cs" modified so that zero eigen values of penalty

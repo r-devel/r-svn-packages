@@ -76,7 +76,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs),U1=diag(ncol(x)), Mp=-1, family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,
-            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),...) 
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),dev.extra=0,n.true=-1,...) 
  
 ## Version with new reparameterization and truncation strategy. 
 ## ISSUES: 
@@ -96,6 +96,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 ## it deals with weights, rather than sqrt weights.
 ## deriv, sp, S, rS, H added to arg list. 
 ## need to modify family before call.
+## dev.extra is an extra component to add to the deviance in the REML and ML cases only.
+## Similarly, n.true is to be used in place of the length(y) in ML/REML calculations,
+## and the scale.est only.
 {   if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE ##if canonical Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
     if (!scale.known&&scoreType%in%c("REML","ML")) { ## the final element of sp is actually log(scale)
@@ -163,6 +166,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
    
     conv <- FALSE
     n <- nobs <- NROW(y) ## n is just to keep codetools happy
+    if (n.true <= 0) n.true <- nobs ## n.true is used in criteria in place of nobs
     nvars <- ncol(x)
     EMPTY <- nvars == 0
     if (is.null(weights)) 
@@ -513,13 +517,13 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
          coef <- oo$beta;
          trA <- oo$trA;
-         scale.est <- dev/(nobs-trA)
+         scale.est <- (dev+dev.extra)/(n.true-trA)
          reml.scale <- NA  
 
         if (scoreType%in%c("REML","ML")) { ## use Laplace (RE)ML
           
-          ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
-          Dp <- dev + oo$conv.tol
+          ls <- family$ls(y,weights,n,scale)*n.true/nobs ## saturated likelihood and derivatives
+          Dp <- dev + oo$conv.tol + dev.extra
           REML <- Dp/(2*scale) - ls[1] + oo$rank.tol/2 - rp$det/2
           if (deriv) {
             REML1 <- oo$D1/(2*scale) + oo$trA1/2 - rp$det1/2
@@ -529,7 +533,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             }
           }
           if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
-            ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
+            ##ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
             dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale
             d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale
             d2lr.dspphi <- -oo$D1/(2*scale)
@@ -914,7 +918,7 @@ simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
-                   mustart = NULL,null.coef=rep(0,ncol(X)),...)
+                   mustart = NULL,null.coef=rep(0,ncol(X)),dev.extra=0,n.true=-1,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
 ## indefinite Hessian! Main enhancements are: i) always perturbs the Hessian
 ## to +ve definite ii) step halves on step 
@@ -977,8 +981,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## initial fit
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-     control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+     control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+     mustart=mustart,scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
 
   mustart<-b$fitted.values
 
@@ -1060,8 +1064,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
     b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
        offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-       control=control,gamma=gamma,scale=scale,
-       printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+       mustart=mustart,scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
     
     if (reml) {
       score1 <- b$REML
@@ -1111,8 +1115,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,mustart=mustart,
-           scoreType=scoreType,null.coef=null.coef,...)
+           printWarn=FALSE,mustart=mustart,scoreType=scoreType,
+           null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
          
         if (reml) {       
           score1 <- b1$REML
@@ -1125,8 +1129,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         if (score1 <= score) { ## accept
           b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-             control=control,gamma=gamma,scale=scale,
-             printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+             control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+             mustart=mustart,scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
           mustart <- b$fitted.values
           old.score <- score;lsp <- lsp1
          
@@ -1354,7 +1358,7 @@ bfgs0 <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="GCV",
-                   mustart = NULL,null.coef=rep(0,ncol(X)),...)
+                   mustart = NULL,null.coef=rep(0,ncol(X)),dev.extra=0,n.true=-1,...)
 
 ## BFGS optimizer to estimate smoothing parameters of models fitted by
 ## gam.fit3....
@@ -1385,8 +1389,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       lsp <- ilsp + step * trial$alpha
       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
-           control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,mustart=lo$mustart,scoreType=scoreType,null.coef=null.coef,...)
+           control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+           mustart=lo$mustart,scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
 
       trial$mustart <- fitted(b);trial$dev <- b$dev
       if (reml) {
@@ -1405,8 +1409,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
         b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-           control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,mustart=trial$mustart,scoreType=scoreType,null.coef=null.coef,...)
+           control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=trial$mustart,
+           scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
 
         if (reml) {
           trial$grad <- L%*%b$REML1;
@@ -1447,8 +1451,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   b <- gam.fit3(x=X, y=y, sp=L%*%ilsp+lsp0,Eb=Eb,UrS=UrS,
                offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-               control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+               control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=mustart,
+               scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
 
   initial <- list(alpha = 0,mustart=b$fitted.values)
   if (reml) {
@@ -1494,8 +1498,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       lsp <- ilsp + trial$alpha*step
       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
-                    control=control,gamma=gamma,scale=scale,
-                    printWarn=FALSE,mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,...)
+                    control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=prev$mustart,
+                    scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
       if (reml) {
         trial$score <- b$REML; 
       } else if (scoreType=="GACV") {
@@ -1532,8 +1536,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       if (is.null(trial$dscore)) { ## getting gradients
         b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-                      control=control,gamma=gamma,scale=scale,
-                      printWarn=FALSE,mustart=trial$mustart,scoreType=scoreType,null.coef=null.coef,...)
+                      control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=trial$mustart,
+                      scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
         if (reml) {
           trial$grad <- L%*%b$REML1;
         } else if (scoreType=="GACV") {
@@ -1606,8 +1610,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## final fit
   b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                 offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-                control=control,gamma=gamma,scale=scale,
-                printWarn=FALSE,mustart=trial$mustart,scoreType=scoreType,null.coef=null.coef,...)
+                control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=trial$mustart,
+                scoreType=scoreType,null.coef=null.coef,dev.extra=dev.extra,n.true=n.true,...)
   if (reml) {
      score <- b$REML;grad <- L%*%b$REML1;
   } else if (scoreType=="GACV") {

@@ -1,6 +1,6 @@
 useDynLib(mgcv, .registration = TRUE, .fixes = "C_")
 
-export(anova.gam, cSplineDes,
+export(anova.gam, bam, cSplineDes,
        exclude.too.far,extract.lme.cov, extract.lme.cov2,
        formXtViX, full.score, formula.gam,fixDependence,fix.family.link,
        fix.family.var, fix.family.ls,   gam, gam2derivative, 

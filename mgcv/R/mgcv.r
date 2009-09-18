@@ -501,7 +501,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   }  
   else  m<-length(split$smooth.spec) # number of smooth terms
   
-  G<-list(m=m,min.sp=min.sp,H=H)
+  G<-list(m=m,min.sp=min.sp,H=H,dev.extra=0,n.true=-1) ## dev.extra gets added to deviance if REML/ML used in gam.fit3
   
   if (is.null(attr(data,"terms"))) # then data is not a model frame
   mf<-model.frame(split$pf,data,drop.unused.levels=FALSE) # must be false or can end up with wrong prediction matrix!
@@ -1022,11 +1022,11 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     b <- bfgs(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,...) else
+                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,dev.extra=G$dev.extra,n.true=G$n.true,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,...)                
+                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,dev.extra=G$dev.extra,n.true=G$n.true,...)                
                 
     object <- b$object
     object$REML <- object$REML1 <- object$REML2 <-
@@ -1961,6 +1961,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 #                   or glm)
 #              == "na.omit" or "na.exclude" then NA predictors result in
 #                       dropping
+# if GC is TRUE then gc() is called after each block is processed
 
   if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  
   { warning("Unknown type, reset to terms.")
@@ -2159,6 +2160,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         fit[start:stop]<-linkinv(fit[start:stop])
       }
     }
+    rm(X)
+   
   } ## end of prediction block loop
   rn <- rownames(newdata)
   if (type=="lpmatrix") { 
