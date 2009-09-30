@@ -1,8 +1,9 @@
-version 1.2-40 2009-09-??
+version 1.2-40 2009-10-??
 
     Add error message in bca.ci for misuse when all the samples are the same.
-
-version 1.2-40 2009-09-04
+    Add German translation.
+	
+version 1.2-39 2009-09-04
 
     Update boot-Ex.Rout.save for survival change.
 
