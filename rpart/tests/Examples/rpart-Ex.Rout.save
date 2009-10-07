@@ -1,5 +1,5 @@
 
-R version 2.9.1 beta (2009-06-16 r48788)
+R version 2.10.0 alpha (2009-10-06 r49961)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -680,7 +680,8 @@ node), split, n, deviance, yval
       10) Weight>=2747.5 15   60.40000 23.80000 *
       11) Weight< 2747.5 8   39.87500 25.62500 *
    3) Weight< 2567.5 15  186.93330 30.93333 *
-> ## Not run: node), split, n, deviance, yval
+> ## Not run: 
+> ##D node), split, n, deviance, yval
 > ##D       * denotes terminal node
 > ##D 
 > ##D  1) root 60 1354.58300 24.58333  
@@ -1004,7 +1005,7 @@ n= 60
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.61 0.025 0.637 0 0 
+Time elapsed:  0.319 0.012 0.332 0 0 
 > grDevices::dev.off()
 null device 
           1 
