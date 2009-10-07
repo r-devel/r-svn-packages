@@ -2,8 +2,18 @@
 *** denotes really big changes 
 
 1.6-0
+
 *** Routine `bam' added for fitting GAMs to very large datasets.
     See ?bam
+
+** p-value method tweaked again. Reference DoF for testing now 
+  defaults to the alternative EDF estimate (based on 2F - FF where 
+  F = (X'WX+S)^{-1}X'WX). `magic.post.proc' and `gam.fit3.post.proc'
+  changed to provide this. p-values still a bit too small, but only 
+  slightly so, if `method="ML"' is the smoothness selector.
+
+* `summary.gam' bug fix: REML/ML models were always treated as if
+  scale parameter had been estimated.
 
 1.5-6
 

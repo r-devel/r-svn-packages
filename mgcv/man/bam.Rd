@@ -8,7 +8,7 @@
 data set, the term `GAM' being taken to include any quadratically penalized GLM.  
 The degree of smoothness of model terms is estimated as part of
 fitting. In use the function is much like \code{\link{gam}}, except that the numerical methods
-are designed for datasets containing upwards of several 10's of thousands of data.
+are designed for datasets containing upwards of several 10s of thousands of data.
 
 }
 \usage{
@@ -109,7 +109,22 @@ An object of class \code{"gam"} as described in \code{\link{gamObject}}.
 }
 
 
-\details{ 
+\details{ \code{bam} operates by first setting up the basis characteristics for the smooths, using a representative subsample 
+of the data. Then the model matrix is constructed in blocks using \code{\link{predict.gam}}. For each block the factor R,
+from the QR decomposition of the whole model matrix is updated, along with Q'y. and the sum of squares of y. At the end of 
+block processing, fitting takes place, without the need to ever form the whole model matrix. 
+
+In the generalized case, the same trick is used with the weighted model matrix and weighted pseudodata, at each step of the PIRLS.
+Smoothness selection is performed on the working model at each stage (performance oriented iteration), to maintain the 
+small memory footprint. This is easy to 
+justify in the case of GCV or Cp/UBRE/AIC based model selection, and also for REML/ML with known scale parameter. It is slightly 
+less well justified in the REML/ML unknown scale parameter case, but it seems unlikely that this case actaully behaves any less well.
+
+Note that POI is not as stable as the default outer iteration used with \code{\link{gam}}, but that for very large, information rich,
+datasets, this is unlikely to matter much. 
+
+Note that it is possible to spend most of the computational time on basis evaluation, if an expensive basis is used. In practice 
+this means that the default \code{"tp"} basis should be avoided. 
 
 }
 
@@ -125,6 +140,8 @@ An object of class \code{"gam"} as described in \code{\link{gamObject}}.
 }
 
 \section{WARNINGS }{
+
+The routine will be slow if the default \code{"tp"} basis is used.
 
 You must have more unique combinations of covariates than the model has total
 parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 
@@ -143,7 +160,20 @@ This routine is less stable than `gam' for a the same dataset.
  }
 
 \examples{
-## to come
+library(mgcv)
+## following is not *very* large, for obvious reasons...
+
+dat <- gamSim(1,n=15000,dist="normal",scale=20)
+bs <- "ps";k <- 20
+b<-bam(y~s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+         s(x3,bs=bs,k=k),data=dat,method="REML")
+summary(b)
+plot(b,pages=1,rug=F)  ## show partial residuals
+plot(b,pages=1,rug=F) ## `with intercept' CIs
+
+ba<-bam(y~s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+         s(x3,bs=bs,k=k),data=dat) ## use GCV
+summary(ba)
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..

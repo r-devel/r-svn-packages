@@ -457,7 +457,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   gc()
   ## note that predict.gam assumes that it must be ok not to split the 
   ## model frame, if no new data supplied, so need to supply explicitly
-  object$linear.predictors <- predict.gam(object,newdata=object$model,block.size=chunk.size)
+  object$linear.predictors <- as.numeric(predict.gam(object,newdata=object$model,block.size=chunk.size))
   object$fitted.values <- family$linkinv(object$linear.predictors)
   
   object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$weights)) * 

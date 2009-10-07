@@ -980,7 +980,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 # MAJOR STEPS:
 #  1. Call appropriate smoothing parameter optimizer, and extract fitted model
 #    `object'
-#  2. Call `magic.post.proc' to get parameter covariance matrices, edf etc to
+#  2. Call `gam.fit3.post.proc' to get parameter covariance matrices, edf etc to
 #     add to `object' 
 { if (is.null(optimizer[2])) optimizer[2] <- "newton"
   if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimization method.")
@@ -1063,7 +1063,10 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } # end of methods calling gam.fit2
   
   
-  if (scale>0) object$scale <- scale else object$scale <- object$scale.est 
+  if (scale>0) { 
+    object$scale.estimated <- FALSE; object$scale <- scale} else {
+    object$scale <- object$scale.est;object$scale.estimated <- TRUE
+  } 
   
   ## mv<-magic.post.proc(G$X,object,w=object$weights)
   mv <- gam.fit3.post.proc(G$X,object)
@@ -1071,6 +1074,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$hat<-mv$hat
   object$Ve <- mv$Ve
   object$edf<-mv$edf
+  object$edf1 <- mv$edf1
   object$aic <- object$aic + 2*sum(mv$edf)
   object$nsdf <- G$nsdf
   object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
@@ -1271,6 +1275,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   }
   names(object$coefficients) <- term.names  # note - won't work on matrices!!
   names(object$edf) <- term.names
+  names(object$edf1) <- term.names
   object
 }
 
@@ -1737,7 +1742,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     devold <- sum(dev.resids(y, mu, weights))
    
     boundary <- FALSE
-    scale<-G$sig2
+    scale <- G$sig2
 
     msp <- G$sp
     magic.control<-list(tol=G$conv.tol,step.half=G$max.half,maxit=control$maxit+control$globit,
@@ -1916,9 +1921,9 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 	list(coefficients = as.vector(coef), residuals = residuals, fitted.values = mu, 
         family = family,linear.predictors = eta, deviance = dev,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights,  
-        df.null = nulldf, y = y, converged = conv,sig2=G$sig2,edf=G$edf,hat=G$hat,
+        df.null = nulldf, y = y, converged = conv,sig2=G$sig2,edf=G$edf,edf1=mv$edf1,hat=G$hat,
         boundary = boundary,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,mgcv.conv=G$conv,
-        gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev)
+        gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev,scale.estimated = (scale < 0))
 }
 
 
@@ -2746,8 +2751,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   name <- names(object$edf)
   dimnames(covmat) <- list(name, name)
   covmat.unscaled <- covmat/object$sig2
-  est.disp <- TRUE
-  if(object$method == "UBRE") est.disp <- FALSE
+  est.disp <- object$scale.estimated
   if (!is.null(dispersion)) { 
     covmat <- dispersion * covmat.unscaled
     est.disp <- FALSE
@@ -2808,7 +2812,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   ## Now deal with the smooth terms....
 
   m<-length(object$smooth) # number of smooth terms
-  df <- edf <- s.pv <- chi.sq <- array(0, m)
+  df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, m)
   if (m>0) # form test statistics for each smooth
   { if (!freq) { 
       if (nrow(object$model)>3000) { ## subsample to get X for p-values calc.
@@ -2831,49 +2835,24 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
     { start<-object$smooth[[i]]$first.para;stop<-object$smooth[[i]]$last.para
       V <- covmat[start:stop,start:stop] # cov matrix for smooth
       p<-object$coefficients[start:stop]  # params for smooth
-      edf[i]<-sum(object$edf[start:stop]) # edf for this smooth
+      edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
+      ## extract alternative edf estimate for this smooth, if possible...
+      if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
       if (freq) { ## old style frequentist
         M1<-object$smooth[[i]]$df
         M<-min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
         V<-pinv(V,M) # get rank M pseudoinverse of V
         chi.sq[i]<-t(p)%*%V%*%p
         df[i] <- attr(V, "rank")
-      } else { ## Nychka statistics
+      } else { ## Inverted Nychka interval statistics
         Xt <- X[,start:stop] 
         ft <- Xt%*%p
-        if (FALSE) { ## current release version
-          trial.rank <- ceiling(edf[i]) ## R 2.7.0 ceiling is not as advertised!
-          if (edf[i]-trial.rank>0) trial.rank <- trial.rank+1
-     
-          ed <- eigXVX(Xt,V,trial.rank)
-          
-          iv <- 1/ed$values
        
-          ## t(ft)%*%ginv(Ats)%*%ft where Ats = Xt%*%Vt%*%t(Xt), efficiently calculated...
-          chi.sq[i] <- sum(((t(ed$vectors)%*%ft)*sqrt(iv))^2)
-          df[i] <- edf[i] + .5
-        } else { ## experimental version 
-          df[i] <- min(ncol(Xt),edf[i])
-          D <- pinvXVX(Xt,V,df[i])
-          df[i] <- df[i]+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
-          chi.sq[i] <- sum((t(D)%*%ft)^2)   
-          if (FALSE) { ## full interval inversion  
-            if (attr(object$smooth[[i]],"nCons")>0) {
-              X1 <- matrix(object$cmX,nrow(Xt),ncol(object$Vp),byrow=TRUE)
-              meanL1 <- object$smooth[[i]]$meanL1
-              if (!is.null(meanL1)) X1 <- X1 / meanL1
-              X1[,start:stop] <- Xt
-              df[i] <- edf[i]
-              D <- pinvXVX(X1,object$Vp,df[i]+1)
-              #se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
-            } else { ## se in centred (or anyway unconstained) space only
-              df[i] <- edf[i]
-              D <- pinvXVX(Xt,V,df[i])
-            }
-            fm <- sum(D%*%(t(D)%*%ft))/sum(colSums(D)^2) ## re-centering
-            chi.sq[i] <- sum((t(D)%*%(ft-fm))^2)  
-          }
-        } ## end experimental version
+        df[i] <- min(ncol(Xt),edf1[i])
+        D <- pinvXVX(Xt,V,df[i])
+        df[i] <- df[i]+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
+        chi.sq[i] <- sum((t(D)%*%ft)^2)   
+       
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       if (!est.disp)
@@ -3370,13 +3349,17 @@ magic.post.proc <- function(X,object,w=NULL)
     
   } else {WX <- X}
   M <- WX%*%V
-  Ve <- (V%*%t(X))%*%M*object$scale # frequentist cov. matrix
+  ##Ve <- (V%*%t(X))%*%M*object$scale # frequentist cov. matrix
+  XWX <- t(X)%*%WX
+  Ve <- V%*%XWX
+  edf1 <- rowSums(t(Ve)*Ve) ## this is diag(FF), where F is edf matrix
+  Ve <- Ve%*%V*object$scale ## frequentist cov matrix
   B <- X*M
   rm(M)
   hat <- apply(B,1,sum) # diag(X%*%V%*%t(WX))
   edf <- apply(B,2,sum) # diag(V%*%t(X)%*%WX)
   Vb <- V*object$scale;rm(V)
-  list(Ve=Ve,Vb=Vb,hat=hat,edf=edf)
+  list(Ve=Ve,Vb=Vb,hat=hat,edf=edf,edf1=2*edf-edf1)
 }
 
 single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)

@@ -670,12 +670,16 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
 gam.fit3.post.proc <- function(X,object) {
 ## get edf array and covariance matrices after a gam fit. 
-  Vb <- object$rV%*%t(object$rV)*object$scale
+  Vb <- object$rV%*%t(object$rV)*object$scale ## Bayesian cov.
   PKt <- object$rV%*%t(object$K)
-  edf <- rowSums(PKt*t(sqrt(object$weights)*X))
-  Ve <- PKt%*%t(PKt)*object$scale  
+  F <- PKt%*%(sqrt(object$weights)*X)
+  edf <- diag(F) ## effective degrees of freedom
+  edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
+  ## edf <- rowSums(PKt*t(sqrt(object$weights)*X))
+  ## Ve <- PKt%*%t(PKt)*object$scale  ## frequentist cov
+  Ve <- F%*%Vb ## not quite as stable as above, but quicker
   hat <- rowSums(object$K*object$K)
-  list(Vb=Vb,Ve=Ve,edf=edf,hat=hat)
+  list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,hat=hat)
 }
 
 
