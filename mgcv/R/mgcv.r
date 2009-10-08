@@ -643,7 +643,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       else G$offset <- G$offset + Xoff
     }
     ## model matrix accumulation ...
-    X<-cbind(X,sm[[i]]$X);sm[[i]]$X<-NULL
+    X<-cbind2(X,sm[[i]]$X);sm[[i]]$X<-NULL
    
     G$smooth[[i]] <- sm[[i]]   
   }

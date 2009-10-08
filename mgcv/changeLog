@@ -13,7 +13,13 @@
   slightly so, if `method="ML"' is the smoothness selector.
 
 * `summary.gam' bug fix: REML/ML models were always treated as if
-  scale parameter had been estimated.
+  scale parameter had been estimated. gamObject should now contain 
+  `scale.estimated' indicating whether or not scale estimated
+
+* some modifications to smoothCon and gam.setup to allow smooth
+  constructors to return Matrix style sparse model matrices and 
+  penalty matrices.  
+
 
 1.5-6
 

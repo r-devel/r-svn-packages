@@ -12,9 +12,10 @@ are designed for datasets containing upwards of several 10s of thousands of data
 
 }
 \usage{
-bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,
-                offset=NULL,method="REML",control=gam.control(),scale=0,gamma=1,knots=NULL,
-                sp=NULL,min.sp=NULL,paraPen=NULL,freq.cov=FALSE,chunk.size=10000,...)
+bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
+    na.action, offset=NULL,method="REML",control=gam.control(),
+    scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
+    chunk.size=10000,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -96,6 +97,7 @@ if smooths share smoothing parameters).}
 \item{paraPen}{optional list specifying any penalties to be applied to parametric model terms. 
 \code{\link{gam.models}} explains more.}
 
+
 \item{chunk.size}{The model matrix is created in chunks of this size, rather than ever being formed whole.}
 
 
@@ -168,8 +170,8 @@ bs <- "ps";k <- 20
 b<-bam(y~s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
          s(x3,bs=bs,k=k),data=dat,method="REML")
 summary(b)
-plot(b,pages=1,rug=F)  ## show partial residuals
-plot(b,pages=1,rug=F) ## `with intercept' CIs
+plot(b,pages=1,rug=FALSE)  ## show partial residuals
+plot(b,pages=1,rug=FALSE) ## `with intercept' CIs
 
 ba<-bam(y~s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
          s(x3,bs=bs,k=k),data=dat) ## use GCV
