@@ -1,3 +1,7 @@
+2009-10-12  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* po/R-de.po, po/de.po: update
+
 2009-10-07 Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-38, for release with 2.10.0
