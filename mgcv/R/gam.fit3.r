@@ -524,9 +524,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
           
           ls <- family$ls(y,weights,n,scale)*n.true/nobs ## saturated likelihood and derivatives
           Dp <- dev + oo$conv.tol + dev.extra
-          REML <- Dp/(2*scale) - ls[1] + oo$rank.tol/2 - rp$det/2
+          REML <- Dp/(2*scale) - ls[1] + oo$rank.tol/2 - rp$det/2 - Mp/2*log(2*pi*scale)
           if (deriv) {
-            REML1 <- oo$D1/(2*scale) + oo$trA1/2 - rp$det1/2
+            REML1 <- oo$D1/(2*scale) + oo$trA1/2 - rp$det1/2 
             if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp) - rp$det2)/2
             if (sum(!is.finite(REML2))) {
                stop("Non finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")
@@ -534,8 +534,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
           }
           if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
             ##ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
-            dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale
-            d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale
+            dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale - Mp/(2*scale)
+            d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale + Mp/(2*scale*scale)
             d2lr.dspphi <- -oo$D1/(2*scale)
             REML1 <- c(REML1,dlr.dlphi)
             if (deriv==2) {
@@ -552,17 +552,18 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          
           K <- oo$rank.tol/2 - rp$det/2
                  
-          REML <- Dp/(2*phi) - ls[1] + K
+          REML <- Dp/(2*phi) - ls[1] + K - Mp/2*log(2*pi*phi)
+
           if (deriv) {
             phi1 <- oo$P1; Dp1 <- oo$D1; K1 <- oo$trA1/2 - rp$det1/2;
-            REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2) + ls[2]) + K1
+            REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2+Mp/(2*phi)) + ls[2]) + K1
             if (deriv==2) {
                    phi2 <- matrix(oo$P2,nSp,nSp);Dp2 <- matrix(oo$D2,nSp,nSp)
                    K2 <- matrix(oo$trA2,nSp,nSp)/2 - rp$det2/2   
                    REML2 <- 
                    Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
-                   (Dp/phi^3 - ls[3])*outer(phi1,phi1) -
-                   (Dp/(2*phi^2)+ls[2])*phi2 + K2
+                   (Dp/phi^3 - ls[3] + Mp/(2*phi^2))*outer(phi1,phi1) -
+                   (Dp/(2*phi^2)+ls[2]-Mp/(2*phi))*phi2 + K2
             }
           }
  

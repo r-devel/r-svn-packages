@@ -12,6 +12,10 @@
   changed to provide this. p-values still a bit too small, but only 
   slightly so, if `method="ML"' is the smoothness selector.
 
+* Slight fix to RE/ML score calculation in gam.fit3 - 
+  Mp/2*log(2*pi*scale) was missing from RE/ML score, where Mp is
+  total null space dimension for model.
+
 * `summary.gam' bug fix: REML/ML models were always treated as if
   scale parameter had been estimated. gamObject should now contain 
   `scale.estimated' indicating whether or not scale estimated

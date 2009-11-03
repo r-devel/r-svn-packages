@@ -1929,7 +1929,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
 model.matrix.gam <- function(object,...)
 { if (!inherits(object,"gam")) stop("`object' is not of class \"gam\"")
-  predict.gam(object,type="lpmatrix",...)
+  predict(object,type="lpmatrix",...)
 }
 
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
@@ -2821,7 +2821,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
         RNGkind("default","default")
         set.seed(11) ## ensure repeatability
         ind <- sample(1:nrow(object$model),3000,replace=FALSE)  ## sample these rows from X
-        X <- predict.gam(object,object$model[ind,],type="lpmatrix")
+        X <- predict(object,object$model[ind,],type="lpmatrix")
         RNGkind(kind[1],kind[2])
         assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
       } else { ## don't need to subsample 
