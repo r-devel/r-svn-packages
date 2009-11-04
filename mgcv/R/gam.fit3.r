@@ -534,8 +534,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
           }
           if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
             ##ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
-            dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale - Mp/(2*scale)
-            d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale + Mp/(2*scale*scale)
+            dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale - Mp/2
+            d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale
             d2lr.dspphi <- -oo$D1/(2*scale)
             REML1 <- c(REML1,dlr.dlphi)
             if (deriv==2) {
@@ -563,7 +563,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                    REML2 <- 
                    Dp2/(2*phi) - (outer(Dp1,phi1)+outer(phi1,Dp1))/(2*phi^2) +
                    (Dp/phi^3 - ls[3] + Mp/(2*phi^2))*outer(phi1,phi1) -
-                   (Dp/(2*phi^2)+ls[2]-Mp/(2*phi))*phi2 + K2
+                   (Dp/(2*phi^2)+ls[2]+Mp/(2*phi))*phi2 + K2
             }
           }
  
