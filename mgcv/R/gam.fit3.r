@@ -1011,7 +1011,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     grad <- rho$rho1*grad
   }
 
-  score.scale <- b$scale.est + score;    
+  if (reml) score.scale <- abs(log(b$scale.est)) + abs(score) else 
+  score.scale <- b$scale.est + abs(score)    
   uconv.ind <- abs(grad) > score.scale*conv.tol
   ## check for all converged too soon, and undo !
   if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
@@ -1165,7 +1166,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
    
     ## test for convergence
     converged <- TRUE
-    score.scale <- b$scale.est + abs(score);
+    if (reml) score.scale <- abs(log(b$scale.est)) + abs(score) else
+    score.scale <- abs(b$scale.est) + abs(score)
     grad2 <- diag(hess)    
     uconv.ind <- (abs(grad) > score.scale*conv.tol*.1)|(abs(grad2)>score.scale*conv.tol*.1)
     if (sum(abs(grad)>score.scale*conv.tol)) converged <- FALSE
@@ -1233,7 +1235,8 @@ bfgs0 <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   grad <- t(L)%*%grad
   hess <- t(L)%*%hess%*%L
 
-  score.scale <- b$scale.est + score;    
+  if (reml)  score.scale <- abs(log(b$scale.est)) + abs(score)  
+  else score.scale <- b$scale.est + abs(score)    
   uconv.ind <- abs(grad) > score.scale*conv.tol
   ## check for all converged too soon, and undo !
   if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
@@ -1341,7 +1344,8 @@ bfgs0 <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
     ## test for convergence
     converged <- TRUE
-    score.scale <- b$scale.est + abs(score);    
+    if (reml) score.scale <- abs(log(b$scale.est)) + abs(score)
+    else score.scale <- b$scale.est + abs(score);    
     uconv.ind <- abs(grad) > score.scale*conv.tol
     if (sum(uconv.ind)) converged <- FALSE
     if (abs(old.score-score)>score.scale*conv.tol) { 
@@ -1590,7 +1594,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
       ## test for convergence
       converged <- TRUE
-      score.scale <- trial$dev/nrow(X) + abs(trial$score);    
+      if (reml) score.scale <- abs(log(trial$dev/nrow(X))) + abs(trial$score)
+      else score.scale <- trial$dev/nrow(X) + abs(trial$score)    
       uconv.ind <- abs(trial$grad) > score.scale*conv.tol
       if (sum(uconv.ind)) converged <- FALSE
       if (abs(initial$score-trial$score)>score.scale*conv.tol) { 

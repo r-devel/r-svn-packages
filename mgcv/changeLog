@@ -15,6 +15,10 @@
 * bad bug in `get.null.coef' could cause fit failure as a result of 
   initial null coefs predicting infinite deviance.
 
+* REML/ML convergence could be response scale sensitive, because of 
+  innapropriate convergence testing scaling in newton and bfgs - 
+  fixed.
+
 * Slight fix to RE/ML score calculation in gam.fit3 - 
   Mp/2*log(2*pi*scale) was missing from RE/ML score, where Mp is
   total null space dimension for model.
