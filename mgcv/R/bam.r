@@ -472,4 +472,4 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
 
 #### ISSUES:   
-
+## ? negative binomial support --- docs say it's there...

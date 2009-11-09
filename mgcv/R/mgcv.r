@@ -1096,7 +1096,8 @@ get.null.coef <- function(G) {
   eval(family$initialize) ## have to do this to ensure y numeric
   y <- as.numeric(y)
   mum <- mean(y)+0*y
-  null.coef <- qr.coef(qr(G$X),mum)
+  etam <- family$linkfun(mum)
+  null.coef <- qr.coef(qr(G$X),etam)
   null.coef[is.na(null.coef)] <- 0;
   ## get a suitable function scale for optimization routines
   null.scale <- sum(family$dev.resids(y,mum,weights))/nrow(G$X) 

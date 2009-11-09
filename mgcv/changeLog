@@ -12,6 +12,9 @@
   changed to provide this. p-values still a bit too small, but only 
   slightly so, if `method="ML"' is the smoothness selector.
 
+* bad bug in `get.null.coef' could cause fit failure as a result of 
+  initial null coefs predicting infinite deviance.
+
 * Slight fix to RE/ML score calculation in gam.fit3 - 
   Mp/2*log(2*pi*scale) was missing from RE/ML score, where Mp is
   total null space dimension for model.
