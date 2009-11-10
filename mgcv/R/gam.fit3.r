@@ -556,7 +556,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
           if (deriv) {
             phi1 <- oo$P1; Dp1 <- oo$D1; K1 <- oo$trA1/2 - rp$det1/2;
-            REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2+Mp/(2*phi)) + ls[2]) + K1
+            REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2)+Mp/(2*phi) + ls[2]) + K1
             if (deriv==2) {
                    phi2 <- matrix(oo$P2,nSp,nSp);Dp2 <- matrix(oo$D2,nSp,nSp)
                    K2 <- matrix(oo$trA2,nSp,nSp)/2 - rp$det2/2   
