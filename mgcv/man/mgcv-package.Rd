@@ -57,6 +57,9 @@ for modelling correlated data (i.e. where a simple independence model for the
 residual variation is inappropriate). In addition, low level routine \code{\link{magic}}
 can fit models to data with a known correlation structure.
 
+For large datasets (that is large n) see \code{\link{bam}} which is a version of \code{\link{gam}} with 
+a much reduced memory footprint.
+
 Some underlying GAM fitting methods are available as low level fitting
 functions: see \code{\link{magic}} and \code{\link{mgcv}}. But there is little functionality 
 that can not be more conventiently accessed via \code{\link{gam}} . 

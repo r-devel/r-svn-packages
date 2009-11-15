@@ -2,6 +2,20 @@
 ## (c) Simon N. Wood 2009 
 
 
+ls.size <- function(x) {
+## If `x' is a list, return the size of its elements, in bytes, in a named array
+## otherwise return the size of the object
+ if (is.list(x)==FALSE) return(object.size(x))
+
+ xn <- names(x)
+ n <- length(x)
+ sz <- rep(-1,n)
+ for (i in 1:n) sz[i] <- object.size(x[[i]])
+ names(sz) <- xn
+ sz
+}
+
+
 qr.update <- function(Xn,yn,R=matrix(0,0,ncol(Xn)),f=array(0,0),y.norm2=0)
 ## Let X = QR and f = Q'y. This routine updates f and R
 ## when Xn is appended to X and yn appended to y. If R has no rows
@@ -151,7 +165,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
       if (!is.finite(dev)) stop("Non-finite deviance")
 
       ## preparation for working model fit is ready, but need to test for convergence first
-      if (abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+      if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
           conv <- TRUE
           coef <- start
           break
@@ -171,6 +185,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
         G$n <- length(G$y)
         G$offset <- G$y*0
         G$dev.extra <- rss.extra
+        G$pearson.extra <- rss.extra
         G$n.true <- n
         object <- gam(G=G,method=method,gamma=gamma,scale=scale)
         y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
@@ -282,6 +297,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method)
     G$n <- length(G$y)
     G$offset <- G$y*0
     G$dev.extra <- rss.extra
+    G$pearson.extra <- rss.extra
     G$n.true <- n
     object <- gam(G=G,method=method,gamma=gamma,scale=scale)
     y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
@@ -331,7 +347,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   ##family = gaussian() ## no choise here
   if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
   if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
-  if (!method%in%c("GCV.Cp","REML","ML")) stop("un-supported smoothness selection method")
+  if (!method%in%c("GCV.Cp","REML","ML","P-REML","P-ML")) stop("un-supported smoothness selection method")
   gp<-interpret.gam(formula) # interpret the formula 
   cl<-match.call() # call needed in gam object for update to work
   mf<-match.call(expand.dots=FALSE)
@@ -370,7 +386,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   mf0 <- mini.mf(mf,chunk.size)
     
   G<-mgcv:::gam.setup(gp,pterms=pterms,data=mf0,knots=knots,sp=sp,min.sp=min.sp,
-                 H=NULL,absorb.cons=TRUE,sparse.cons=1,select=FALSE,
+                 H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
 
@@ -413,6 +429,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   }
 
   if (control$trace) cat("Fit complete. Finishing gam object.\n")
+
+  if (scale < 0) { object$scale.estimated <- TRUE;object$scale <- object$scale.est} else {
+    object$scale.estimated <- FALSE; object$scale <- scale
+  }
 
   object$assign <- G$assign # applies only to pterms  
   object$boundary <- FALSE  # always FALSE for this case

@@ -19,8 +19,8 @@
   innapropriate convergence testing scaling in newton and bfgs - 
   fixed.
 
-* Slight fix to RE/ML score calculation in gam.fit3 - 
-  Mp/2*log(2*pi*scale) was missing from RE/ML score, where Mp is
+* Slight fix to REML (not ML) score calculation in gam.fit3 - 
+  Mp/2*log(2*pi*scale) was missing from REML score, where Mp is
   total null space dimension for model.
 
 * `summary.gam' bug fix: REML/ML models were always treated as if
@@ -31,6 +31,12 @@
   constructors to return Matrix style sparse model matrices and 
   penalty matrices.  
 
+* fixed misplaced bracket in print.mgcv.version, called on attachment.
+
+* added utility function `ls.list' to give memory usage for elements 
+  of a list.
+
+* added function `rig' to generate inverse Gaussian random deviates. 
 
 1.5-6
 

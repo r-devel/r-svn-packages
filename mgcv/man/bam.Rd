@@ -8,7 +8,9 @@
 data set, the term `GAM' being taken to include any quadratically penalized GLM.  
 The degree of smoothness of model terms is estimated as part of
 fitting. In use the function is much like \code{\link{gam}}, except that the numerical methods
-are designed for datasets containing upwards of several 10s of thousands of data.
+are designed for datasets containing upwards of several tens of thousands of data. The advantage 
+of \code{bam} is much lower memory footprint than \code{\link{gam}}, but it is also much faster, 
+for large datasets.
 
 }
 \usage{
@@ -29,7 +31,8 @@ to the right hand side to specify that the linear predictor depends on smooth fu
 \item{family}{
 This is a family object specifying the distribution and link to use in
 fitting etc. See \code{\link{glm}} and \code{\link{family}} for more
-details. A negative binomial family is provided: see \code{\link{negbin}}.
+details. A negative binomial family is provided: see \code{\link{negbin}}, but
+only the known theta case is supported by \code{bam}.
 } 
 
 \item{data}{ A data frame or list containing the model response variable and 
@@ -120,7 +123,7 @@ In the generalized case, the same trick is used with the weighted model matrix a
 Smoothness selection is performed on the working model at each stage (performance oriented iteration), to maintain the 
 small memory footprint. This is easy to 
 justify in the case of GCV or Cp/UBRE/AIC based model selection, and also for REML/ML with known scale parameter. It is slightly 
-less well justified in the REML/ML unknown scale parameter case, but it seems unlikely that this case actaully behaves any less well.
+less well justified in the REML/ML unknown scale parameter case, but it seems unlikely that this case actually behaves any less well.
 
 Note that POI is not as stable as the default outer iteration used with \code{\link{gam}}, but that for very large, information rich,
 datasets, this is unlikely to matter much. 
@@ -151,6 +154,8 @@ terms less the number of spline terms).
 
 This routine is less stable than `gam' for a the same dataset.
 
+The negbin family is only supported for the *known theta* case.
+
 } 
 
 \seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{smooth.terms}},
@@ -167,15 +172,24 @@ library(mgcv)
 
 dat <- gamSim(1,n=15000,dist="normal",scale=20)
 bs <- "ps";k <- 20
-b<-bam(y~s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
-         s(x3,bs=bs,k=k),data=dat,method="REML")
+b<-bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+           s(x3,bs=bs,k=k),data=dat,method="REML")
 summary(b)
-plot(b,pages=1,rug=FALSE)  ## show partial residuals
-plot(b,pages=1,rug=FALSE) ## `with intercept' CIs
+plot(b,pages=1,rug=FALSE)  ## plot smooths, but not rug
+plot(b,pages=1,rug=FALSE,seWithMean=TRUE) ## `with intercept' CIs
 
-ba<-bam(y~s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
-         s(x3,bs=bs,k=k),data=dat) ## use GCV
+ba<-bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+            s(x3,bs=bs,k=k),data=dat,method="GCV.Cp") ## use GCV
 summary(ba)
+
+## A Poisson example...
+
+dat <- gamSim(1,n=15000,dist="poisson",scale=.1)
+b1<-bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+            s(x3,bs=bs,k=k),data=dat,method="ML",family=poisson())
+b1
+
+
 }
 
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ..

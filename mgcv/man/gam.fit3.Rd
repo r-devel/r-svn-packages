@@ -27,7 +27,7 @@ gam.fit3(x, y, sp, Eb ,UrS=list(),
          Mp = -1, family = gaussian(), control = gam.control(), 
          intercept = TRUE,deriv=2,gamma=1,scale=1,
          printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),
-         dev.extra=0,n.true=-1,...)
+         pearson.extra=0,dev.extra=0,n.true=-1,...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -81,7 +81,11 @@ fitted model, rather than an intermediate used in optimization.}
 \item{null.coef}{coefficients for a model which gives some sort of upper bound on deviance.
 This allows immediate divergence problems to be controlled.}
 
-\item{dev.extra}{Extra component to add to deviance in smoothness selection criteria.}
+\item{pearson.extra}{Extra component to add to numerator of pearson statistic 
+       in P-REML/P-ML smoothness selection criteria.}
+
+
+\item{dev.extra}{Extra component to add to deviance for REML/ML type smoothness selection criteria.}
 
 \item{n.true}{Number of data to assume in smoothness selection criteria. <=0 indicates that it should be the 
 number of rows of \code{X}.}
