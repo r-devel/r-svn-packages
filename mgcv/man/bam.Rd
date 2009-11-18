@@ -9,7 +9,7 @@ data set, the term `GAM' being taken to include any quadratically penalized GLM.
 The degree of smoothness of model terms is estimated as part of
 fitting. In use the function is much like \code{\link{gam}}, except that the numerical methods
 are designed for datasets containing upwards of several tens of thousands of data. The advantage 
-of \code{bam} is much lower memory footprint than \code{\link{gam}}, but it is also much faster, 
+of \code{bam} is much lower memory footprint than \code{\link{gam}}, but it can also be much faster, 
 for large datasets.
 
 }
@@ -125,7 +125,7 @@ small memory footprint. This is easy to
 justify in the case of GCV or Cp/UBRE/AIC based model selection, and also for REML/ML with known scale parameter. It is slightly 
 less well justified in the REML/ML unknown scale parameter case, but it seems unlikely that this case actually behaves any less well.
 
-Note that POI is not as stable as the default outer iteration used with \code{\link{gam}}, but that for very large, information rich,
+Note that POI is not as stable as the default nested iteration used with \code{\link{gam}}, but that for very large, information rich,
 datasets, this is unlikely to matter much. 
 
 Note that it is possible to spend most of the computational time on basis evaluation, if an expensive basis is used. In practice 
