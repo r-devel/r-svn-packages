@@ -1,6 +1,11 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.6-1
+
+* gam.check generated a spurious error when applie to a model with no
+  estimated smoothing parameters. Fixed.
+
 1.6-0
 
 *** Routine `bam' added for fitting GAMs to very large datasets.
