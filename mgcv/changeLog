@@ -3,7 +3,10 @@
 
 1.6-1
 
-* gam.check generated a spurious error when applie to a model with no
+* nasty bug in cSplineDes caused bases to be non-cyclic unless first 
+  knot was at 0. This also affected the "cp" smoother class. Fixed. 
+
+* gam.check generated a spurious error when applied to a model with no
   estimated smoothing parameters. Fixed.
 
 1.6-0

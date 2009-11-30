@@ -57,13 +57,14 @@ cSplineDes <- function (x, knots, ord = 4)
   if (ord<2) stop("order too low")
   if (nk<ord) stop("too few knots")
   knots <- sort(knots)
-  if (min(x)<knots[1]||max(x)>knots[nk]) stop("x out of range")
-  xc <- knots[nk-ord+1] ## wrapping invloved above this point
+  k1 <- knots[1]
+  if (min(x)<k1||max(x)>knots[nk]) stop("x out of range")
+  xc <- knots[nk-ord+1] ## wrapping involved above this point
   ## copy end intervals to start, for wrapping purposes...
-  knots <- c(knots[1]-(knots[nk]-knots[(nk-ord+1):(nk-1)]),knots)
+  knots <- c(k1-(knots[nk]-knots[(nk-ord+1):(nk-1)]),knots)
   ind <- x>xc ## index for x values where wrapping is needed
   X1 <- splineDesign(knots,x,ord,outer.ok=TRUE)
-  x[ind] <- x[ind]-max(knots)
+  x[ind] <- x[ind] - max(knots) + k1
   if (sum(ind)) {
     X2 <- splineDesign(knots,x[ind],ord,outer.ok=TRUE) ## wrapping part
     X1[ind,] <- X1[ind,] + X2
