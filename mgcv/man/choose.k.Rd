@@ -36,7 +36,11 @@ an equivalent, single, smooth to the residuals, using a substantially
 increased \code{k} to see if there is pattern in the residuals that could
 potentially be explained by increasing \code{k}. Examples are provided below.
 
-More sophisticated approaches based on partial residuals are also possible.
+The obvious, but more costly, alternative is simply to increase the suspect \code{k} 
+and refit the original model. If there are no statistically important changes as a result of 
+doing this, then \code{k} was large enough. (Change in the smoothness selection criterion 
+when \code{k} is increased provides the obvious summary measure of whether the fit has changed 
+substantially.)
 
 One scenario that can cause confusion is this: a model is fitted with
 \code{k=10} for a smooth term, and the EDF for the term is estimated as 7.6,
