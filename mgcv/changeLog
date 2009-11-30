@@ -3,8 +3,11 @@
 
 1.6-1
 
-* nasty bug in cSplineDes caused bases to be non-cyclic unless first 
+* Bug in cSplineDes caused bases to be non-cyclic unless first 
   knot was at 0. This also affected the "cp" smoother class. Fixed. 
+
+* null.deviance calculation was wrong for case with offset and 
+  weights. Fixed.
 
 * Built in strictly 1D smoothers now give an informative error message if 
   an attempt is made to use them for multidimensional smoothing.

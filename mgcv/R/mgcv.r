@@ -1273,7 +1273,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   ## correct null deviance if there's an offset [Why not correct calc in gam.fit/3???]....
 
   if (G$intercept&&any(G$offset!=0)) object$null.deviance <-
-                                  glm(G$y~offset(G$offset),family=object$family)$deviance
+         glm(G$y~offset(G$offset),family=object$family,weights=object$prior.weights)$deviance
 
   object$method <- criterion
 
