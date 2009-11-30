@@ -6,6 +6,9 @@
 * nasty bug in cSplineDes caused bases to be non-cyclic unless first 
   knot was at 0. This also affected the "cp" smoother class. Fixed. 
 
+* Built in strictly 1D smoothers now give an informative error message if 
+  an attempt is made to use them for multidimensional smoothing.
+
 * gam.check generated a spurious error when applied to a model with no
   estimated smoothing parameters. Fixed.
 
