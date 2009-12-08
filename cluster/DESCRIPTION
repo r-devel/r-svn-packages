@@ -1,6 +1,6 @@
 Package: cluster
-Version: 1.12.1
-Date: 2009-10-05
+Version: 1.12.2
+Date: 2009-12-05
 Priority: recommended
 Author: Martin Maechler, based on S original by Peter Rousseeuw <rousse@uia.ua.ac.be>,
 	Anja.Struyf@uia.ua.ac.be and Mia.Hubert@uia.ua.ac.be,

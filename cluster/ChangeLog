@@ -1,3 +1,7 @@
+2009-12-05  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* man/daisy.Rd: fix page number for Gower (1971) reference.
+
 2009-10-05  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 1.12.1
