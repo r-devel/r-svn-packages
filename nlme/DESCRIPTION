@@ -15,3 +15,4 @@ Imports: lattice
 LazyLoad: yes
 LazyData: yes
 License: GPL (>= 2)
+BugReports: http://bugs.r-project.org

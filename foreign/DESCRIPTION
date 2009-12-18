@@ -14,3 +14,5 @@ Description: Functions for reading and writing data stored by statistical
 	and for reading and writing .dbf (dBase) files.
 LazyLoad: yes
 License: GPL (>= 2)
+BugReports: http://bugs.r-project.org
+

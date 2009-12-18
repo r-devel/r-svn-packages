@@ -1,3 +1,7 @@
+2009-12-18  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: add BugReports field.
+
 2009-10-12,16  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION (Version, Date): 3.1-96

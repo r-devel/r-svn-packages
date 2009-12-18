@@ -1,3 +1,8 @@
+2009-12-18  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: add BugReports field.
+	* man/read.dta.Rd: Stata 11 uses the same format as Stata 10.
+
 2009-10-12  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* po/R-de.po, po/de.po: update
