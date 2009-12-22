@@ -1,3 +1,7 @@
+2009-12-22  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* man/ACF.gls.Rd: has \seealso to itself: seems ACF.lme was meant.
+
 2009-12-18  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: add BugReports field.
