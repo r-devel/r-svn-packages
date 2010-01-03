@@ -1,5 +1,5 @@
 
-R version 2.10.0 Patched (2009-11-20 r50512)
+R version 2.10.1 (2009-12-14)
 Copyright (C) 2009 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -958,7 +958,7 @@ n= 60
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.569 0.023 0.595 0 0 
+Time elapsed:  0.313 0.017 0.331 0 0 
 > grDevices::dev.off()
 null device 
           1 
