@@ -1,3 +1,8 @@
+2010-01-03  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/read.R.dta, man/write.dta.Rd: Stata 11 uses the same format as
+	Stata 10, so map 11 to 10.
+
 2009-12-18  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: add BugReports field.
