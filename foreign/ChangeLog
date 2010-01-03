@@ -4,6 +4,7 @@
 	* R/read.R.dta, man/write.dta.Rd: Stata 11 uses the same format as
 	Stata 10, so map 11 to 10.
 	* po/R*: update.
+	* tests/octave.Rout.save: update for str() change.
 
 2009-12-18  Brian Ripley <Brian.Ripley@R-project.org>
 
