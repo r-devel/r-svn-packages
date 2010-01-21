@@ -1,6 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.6-2
+
+* fixed problem in welcome message that messed up ESS.
+
 1.6-1
 
 * Bug in cSplineDes caused bases to be non-cyclic unless first 

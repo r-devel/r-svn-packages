@@ -3617,7 +3617,7 @@ print.mgcv.version <- function()
   version <- version[pmatch("Version",version)]
   um <- strsplit(version," ")[[1]]
   version <- um[nchar(um)>0][2]
-  cat(paste("This is mgcv ",version,". For overview type `help(\"mgcv-package\")'.\n",sep=""))
+  cat(paste("This is mgcv ",version,". For overview type 'help(\"mgcv-package\")'.\n",sep=""))
 }
 
 set.mgcv.options <- function()
