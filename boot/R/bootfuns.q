@@ -1,8 +1,13 @@
 # part of R package boot
 # copyright (C) 1997-2001 Angelo J. Canty
-# corrections (C) 1997-2008 B. D. Ripley
+# corrections (C) 1997-2010 B. D. Ripley
 #
 # Unlimited distribution is permitted
+
+# safe version of sample
+# needs R >= 2.9.0
+# only works if size is not specified in R >= 2.11.0, but it always is in boot
+sample0 <- function(x, ...) x[sample.int(length(x), ...)]
 
 antithetic.array <- function(n, R, L, strata)
 #
@@ -13,8 +18,8 @@ antithetic.array <- function(n, R, L, strata)
 {
     inds <- as.integer(names(table(strata)))
     out <- matrix(0L, R, n)
-    for (s in inds)
-    {	gp <- (1L:n)[strata==s]
+    for (s in inds) {
+	gp <- (1L:n)[strata==s]
         out[ ,gp] <- anti.arr(length(gp), R, L[gp], gp)
     }
     out
@@ -34,20 +39,20 @@ anti.arr <- function(n, R, L, inds=1L:n)
             for (i in 1L:length(uniq))
                 if (tab[i] > 1L) {
                     gp <- inds[ranks == uniq[i]]
-                    ranks[gp] <- ssample(inds[sort(ranks) == uniq[i]])
+                    ranks[gp] <- rperm(inds[sort(ranks) == uniq[i]])
                 }
         }
         ranks
     }
     R1 <- floor(R/2)
-    mat1 <- matrix(sample(inds, R1*n, replace=TRUE),R1,n)
+    mat1 <- matrix(sample(inds, R1*n, replace=TRUE), R1, n)
     ranks <- unique.rank(L)
     rev <- inds
     for (i in 1L:n)
         rev[i] <- inds[ranks==(n+1-ranks[i])]
     mat1 <- rbind(mat1,matrix(rev[mat1],R1,n))
     if (R != 2*R1)
-        mat1 <- rbind(mat1,sample(inds,n,replace=TRUE))
+        mat1 <- rbind(mat1,sample(inds, n, replace=TRUE))
     mat1
 }
 
@@ -65,7 +70,7 @@ balanced.array <- function(n, R, strata)
     for(is in inds) {
         group <- c(1L:n)[strata == is]
         if(length(group) > 1L) {
-            g <- matrix(ssample(output[group,  ]), length(group), R)
+            g <- matrix(rperm(output[group,  ]), length(group), R)
             output[group,  ] <- g
         }
     }
@@ -90,8 +95,7 @@ boot <- function(data, statistic, R, sim="ordinary", stype="i",
     }
     if(!exists(".Random.seed", envir=.GlobalEnv, inherits = FALSE)) runif(1)
     seed <- get(".Random.seed", envir=.GlobalEnv, inherits = FALSE)
-    if (isMatrix(data)) n <- nrow(data)
-    else n <- length(data)
+    n <- NROW(data)
     temp.str <- strata
     strata <- tapply(1L:n,as.numeric(strata))
     if ((n == 0) || is.null(n))
@@ -235,9 +239,7 @@ boot.array <- function(boot.out, indices=FALSE) {
         temp <- get(".Random.seed", envir=.GlobalEnv, inherits = FALSE)
     else temp<- NULL
     assign(".Random.seed",  boot.out$seed, envir=.GlobalEnv)
-    if (isMatrix(boot.out$data))
-        n <- nrow(boot.out$data)
-    else	n <- length(boot.out$data)
+    n <- NROW(boot.out$data)
     R <- boot.out$R
     sim <- boot.out$sim
     if (boot.out$call[[1L]]=="tsboot") {
@@ -541,7 +543,7 @@ extra.array <- function(n, R, m, strata=rep(1,n))
 # strata.
 #
 	if (length(m) == 1L)
-		output <- matrix(sample(1L:n, m*R, replace=TRUE), R, m)
+		output <- matrix(sample(seq_len(n), m*R, replace=TRUE), R, m)
 	else
 	{	inds <- as.integer(names(table(strata)))
 		output <- matrix(NA, R, sum(m))
@@ -584,7 +586,7 @@ importance.array <- function(n, R, weights, strata){
         matrix(sample(inds, n*R, replace=TRUE, prob=wts), R, n)
     output <- NULL
     if (!isMatrix(weights))
-        weights <- matrix(weights,nrow=1)
+        weights <- matrix(weights, nrow=1)
     inds <- as.integer(names(table(strata)))
     for (ir in 1L:length(R)) {
         out <- matrix(rep(1L:n, R[ir]), R[ir], n, byrow=TRUE)
@@ -613,7 +615,7 @@ importance.array.bal <- function(n, R, weights, strata) {
         if (any (nRw2 != 0))
             output <- c(output,
                         sample(inds, round(sum(nRw2)), prob=nRw2))
-        matrix(ssample(output), R, n)
+        matrix(rperm(output), R, n)
     }
     output <- NULL
     if (!isMatrix(weights))
@@ -683,9 +685,7 @@ jack.after.boot <- function(boot.out, index=1, t=NULL, L=NULL,
     }
     if (is.null(ylab)) ylab <- "Percentiles of (T*-t)"
     data <- boot.out$data
-    if (isMatrix(data))
-        n <- nrow(data)
-    else	n <- length(data)
+    n <- NROW(data)
     f <- boot.array(boot.out)[fins, , drop=TRUE]
     percentiles <- matrix(data = NA, length(alpha), n)
     J <- numeric(n)
@@ -777,7 +777,7 @@ permutation.array <- function(n, R, strata)
     for(is in inds) {
         group <- c(1L:n)[strata == is]
         if(length(group) > 1L) {
-            g <- apply(output[group,  ], 2L, ssample)
+            g <- apply(output[group,  ], 2L, rperm)
             output[group,  ] <- g
         }
     }
@@ -806,7 +806,7 @@ cv.glm <- function(data, glmfit, cost=function(y,yhat) mean((y-yhat)^2),
         K <- kvals[temp==min(temp)][1L]
     if (K!=K.o) warning("K has been set to ", K)
     f <- ceiling(n/K)
-    s <- sample(rep(1L:K, f),n)
+    s <- sample(rep(1L:K, f), n)
     n.s <- table(s)
 #    glm.f <- formula(glmfit)
     glm.y <- glmfit$y
@@ -1192,7 +1192,7 @@ abc.ci <- function(data, statistic, index=1, strata=rep(1,n), conf=0.95,
 #
 {
     y <- data
-    if (isMatrix(y)) n <- nrow(y) else n <- length(y)
+    n <- NROW(y)
     strata1 <- tapply(strata,as.numeric(strata))
     if (length(index) != 1L) {
 	warning("only first element of index used in abc.ci")
@@ -1457,7 +1457,7 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
         ex <- exp(eta)
         Fh <- 1-outer(F0,ex,"^")
         apply(rbind(0,Fh),2L,function(p,y,R)
-              sample(y, R,prob=diff(p), replace=TRUE), time,R)
+              sample(y, R, prob=diff(p), replace=TRUE), time, R)
     }
     getc1 <- function(n,R,surv,inds) {
 # Sample censoring times from the product-limit estimate of the
@@ -1493,8 +1493,7 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
                         ti <- time[time>data[i,1L]]
                         if (length(ti)==1L)
                             cout[,i] <- ti
-                        else	cout[,i] <- sample(ti, R, prob = pri,
-                                                   replace=TRUE)
+                        else cout[,i] <- sample(ti, R, prob = pri, replace=TRUE)
                     }
         }
         cout
@@ -1572,8 +1571,7 @@ empinf <- function(boot.out=NULL, data=NULL, statistic=NULL,
                 stop("no statistic or bootstrap object specified")
             if (is.null(stype)) stype <- "w"
 	}
-    if (isMatrix(data)) n <- nrow(data)
-    else n <- length(data)
+    n <- NROW(data)
     if (is.null(type)) {
         if (!is.null(t)) type <- "reg"
         else if (stype == "w") type <- "inf"
@@ -1633,8 +1631,7 @@ inf.jack <- function(data, stat, index=1, strata = rep(1, n), eps = 0.001, ...)
 #   Numerical differentiation to get infinitesimal jackknife estimates
 #   of the empirical influence values.
 #
-    if (isMatrix(data)) n <- nrow(data)
-    else n <- length(data)
+    n <- NROW(data)
     L <- 1L:n
     eps <- eps/n
     strata <- tapply(strata,as.numeric(strata))
@@ -1660,9 +1657,7 @@ empinf.reg <- function(boot.out, t=boot.out$t[,1L])
     fins <- (1L:length(t))[is.finite(t)]
     t <- t[fins]
     R <- length(t)
-    if (isMatrix(boot.out$data))
-        n <- nrow(boot.out$data)
-    else	n <- length(boot.out$data)
+    n <- NROW(boot.out$data)
     strata <- boot.out$strata
     if (is.null(strata))
         strata <- rep(1,n)
@@ -1687,8 +1682,7 @@ usual.jack <- function(data, stat, stype="w", index=1, strata=rep(1,n),...)
 #  empirical influence values
 #
 {
-    if (isMatrix(data)) n <- nrow(data)
-    else n <- length(data)
+    n <- NROW(data)
     l <- rep(0,n)
     strata <- tapply(strata,as.numeric(strata))
     if (stype == "w") {
@@ -1732,8 +1726,7 @@ positive.jack <- function(data, stat, stype="w", index=1, strata=rep(1,n), ...)
 #  influence.
 #
     strata <- tapply(strata,as.numeric(strata))
-    if (isMatrix(data)) n <- nrow(data)
-    else n <- length(data)
+    n <- NROW(data)
     L <- rep(0, n)
     if (stype == "w") {
         w0 <- rep(1,n)/table(strata)[strata]
@@ -1830,8 +1823,7 @@ envelope <- function(boot.out=NULL,mat=NULL, level=0.95, index=1L:ncol(mat))
     kfun <- function(x,k1,k2)
 # Local function to find the cut-off points in each column of the matrix.
         sort(x,partial=sort(c(k1,k2)))[c(k1,k2)]
-    if (!is.null(boot.out) && isMatrix(boot.out$t))
-        mat <- boot.out$t
+    if (!is.null(boot.out) && isMatrix(boot.out$t)) mat <- boot.out$t
     if (!isMatrix(mat)) stop("bootstrap output matrix missing")
     n <- ncol(mat)
     if (length(index) < 2L) stop("use boot.ci for scalar parameters")
@@ -2288,8 +2280,7 @@ tilt.boot <- function(data, statistic, R, sim="ordinary",
     if (!tilt && (R[1L] == 0))
         stop("R[1L] must be positive for frequency smoothing")
     call <- match.call()
-    if (isMatrix(data)) n <- nrow(data)
-    else n <- length(data)
+    n <- NROW(data)
     if (R[1L]>0) {
 # If required run an initial bootstrap with equal weights.
         if (is.null(theta) && (length(R) != length(alpha)+1))
@@ -3330,10 +3321,11 @@ ts.array <- function(n, n.sim, R, l, sim, endcorr)
         nn <- ncol(lens)
         st <- matrix(sample(endpt, nn*R, replace=TRUE), R)
     }
-    else {	nn <- ceiling(n.sim/l)
-		lens <- c(rep(l,nn-1), 1+(n.sim-1)%%l)
-		st <- matrix(sample(endpt, nn*R, replace=TRUE), R)
-            }
+    else {
+        nn <- ceiling(n.sim/l)
+        lens <- c(rep(l,nn-1), 1+(n.sim-1)%%l)
+        st <- matrix(sample(endpt, nn*R, replace=TRUE), R)
+    }
     list(starts=st, lengths=lens)
 }
 
@@ -3371,9 +3363,7 @@ tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
         t0 <- statistic(tseries, ...)
     t <- numeric(0)
 #    ts.out <- numeric(0)
-    if (!isMatrix(tseries))
-        ts.orig <- as.matrix(tseries)
-    else 	ts.orig <- tseries
+    ts.orig <- if (!isMatrix(tseries)) as.matrix(tseries) else tseries
     n <- nrow(ts.orig)
     if(missing(n.sim)) n.sim <- n
     class(ts.orig) <- tscl
