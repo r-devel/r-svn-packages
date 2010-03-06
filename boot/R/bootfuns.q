@@ -9,6 +9,12 @@
 # only works if size is not specified in R >= 2.11.0, but it always is in boot
 sample0 <- function(x, ...) x[sample.int(length(x), ...)]
 
+isMatrix <- function(x) length(dim(x)) == 2
+
+## random permutation of x.
+rperm <- function(x) if(length(x) > 1) sample(x) else x
+
+
 antithetic.array <- function(n, R, L, strata)
 #
 #  Create an array of indices by antithetic resampling using the
