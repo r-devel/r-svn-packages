@@ -3,6 +3,12 @@
 
 1.6-2
 
+* New function `bam.update' allows efficient updating of very large
+  strictly additive models fitted by `bam' when additional data become 
+  available. 
+
+* gam.check now accepts graphics parameters.
+
 * fixed problem in welcome message that messed up ESS.
 
 1.6-1

@@ -1175,6 +1175,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     ## REML/ML invalid with quasi families
     if (method=="REML") method <- "P-REML"
     if (method=="ML") method <- "P-ML"
+    warning("RE/ML is not recommended for quasi families")
   }
 
   if (substr(fam.name,1,17)=="Negative Binomial") { 
@@ -1459,16 +1460,16 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 }
 
 
-gam.check <- function(b)
+gam.check <- function(b,...)
 # takes a fitted gam object and produces some standard diagnostic plots
 { if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))
   { old.par<-par(mfrow=c(2,2))
     sc.name<-b$method
-    qqnorm(residuals(b))
+    qqnorm(residuals(b),...)
     plot(b$linear.predictors,residuals(b),main="Resids vs. linear pred.",
-         xlab="linear predictor",ylab="residuals");
-    hist(residuals(b),xlab="Residuals",main="Histogram of residuals");
-    plot(fitted(b),b$y,xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values")
+         xlab="linear predictor",ylab="residuals",...);
+    hist(residuals(b),xlab="Residuals",main="Histogram of residuals",...);
+    plot(fitted(b),b$y,xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
     
     ## now summarize convergence information 
     cat("\nMethod:",b$method,"  Optimizer:",b$optimizer)
@@ -1504,7 +1505,7 @@ gam.check <- function(b)
     cat("\n")
     par(old.par)
   } else ## probably a `gamm' `gam' object
-  plot(b$linear.predictor,residuals(b),xlab="linear predictor",ylab="residuals")
+  plot(b$linear.predictor,residuals(b),xlab="linear predictor",ylab="residuals",...)
 }
 
 print.gam<-function (x,...) 
