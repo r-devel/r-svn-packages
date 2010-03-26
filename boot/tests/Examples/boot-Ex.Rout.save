@@ -1,6 +1,6 @@
 
-R version 2.10.0 Patched (2009-11-20 r50512)
-Copyright (C) 2009 The R Foundation for Statistical Computing
+R version 2.11.0 Under development (unstable) (2010-03-05 r51209)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -503,15 +503,13 @@ Loading required package: splines
 
 Attaching package: 'survival'
 
+The following object(s) are masked _by_ '.GlobalEnv':
 
-	The following object(s) are masked _by_ .GlobalEnv :
+    aml
 
-	 aml 
+The following object(s) are masked from 'package:boot':
 
-
-	The following object(s) are masked from package:boot :
-
-	 aml 
+    aml
 
 > # Example 3.9 of Davison and Hinkley (1997) does a bootstrap on some
 > # remission times for patients with a type of leukaemia.  The patients
@@ -1610,8 +1608,7 @@ Warning in eval(expr, envir, enclos) :
   non-integer counts in a binomial glm!
 Warning in eval(expr, envir, enclos) :
   non-integer counts in a binomial glm!
-Warning in glm.fit(x = X, y = Y, weights = weights, start = start, etastart = etastart,  :
-  fitted probabilities numerically 0 or 1 occurred
+Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 Warning in eval(expr, envir, enclos) :
   non-integer counts in a binomial glm!
 Warning in eval(expr, envir, enclos) :
