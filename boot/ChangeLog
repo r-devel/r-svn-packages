@@ -1,4 +1,4 @@
-version 1.2-42 unreleased
+version 1.2-42 2010-03-28
 
     Various clean ups, including using sample.int for safety
     Update boot-Ex.Rout.save for 2.11.0.

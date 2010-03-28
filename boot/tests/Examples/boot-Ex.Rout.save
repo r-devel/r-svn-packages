@@ -1,5 +1,5 @@
 
-R version 2.11.0 Under development (unstable) (2010-03-05 r51209)
+R version 2.11.0 alpha (2010-03-28 r51461)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -724,6 +724,9 @@ Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
 > 
 > 
 > cleanEx()
+
+detaching ‘package:survival’, ‘package:splines’
+
 > nameEx("control")
 > ### * control
 > 
