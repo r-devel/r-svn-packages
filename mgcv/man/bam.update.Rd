@@ -9,15 +9,15 @@ by simply updateing the QR decomposition on which estimation is based, and re-op
 from the previous estimates. This routine implements this.
 }
 \usage{
-bam.update(b,data,weights=NULL,chunk.size=10000)
+bam.update(b,data,chunk.size=10000)
 }
 %- maybe also `usage' for other objects documented here.
 
 \arguments{ 
 \item{b}{ A \code{gam} object fitted by \code{\link{bam}} and representing a strictly additive model 
 (i.e. \code{gaussian} errors, \code{identity} link).}
-\item{data}{Extra data to augment the original data used to obtain \code{b}.}
-\item{weights}{optional weights for the new data.} 
+\item{data}{Extra data to augment the original data used to obtain \code{b}. Must include a column of weights if the 
+            original fit was weighted.}
 \item{chunk.size}{size of subsets of data to process in one go when getting fitted values.}
 }
 
@@ -27,7 +27,7 @@ An object of class \code{"gam"} as described in \code{\link{gamObject}}.
 
 
 \details{ \code{bam.update} updates the QR decomposition of the (weighted) model matrix of the GAM represented by \code{b} to take 
-acount of the new data. The orthogonal factor multiplied by the response vector is also updated. Given these updates the model 
+account of the new data. The orthogonal factor multiplied by the response vector is also updated. Given these updates the model 
 and smoothing parameters can be re-estimated, as if the whole dataset (original and the new data) had been fitted in one go. 
 
 Note that there may be small numerical differences in fit between fitting the data all at once, and fitting in stages by updating, if the 
@@ -56,6 +56,7 @@ library(mgcv)
 set.seed(8)
 
 dat <- gamSim(1,n=5000,dist="normal",scale=5)
+dat[c(50,13,3000,3005,3100),]<- NA
 dat1 <- dat[4001:5000,]
 dat0 <- dat[1:4000,]
 bs <- "ps";k <- 20

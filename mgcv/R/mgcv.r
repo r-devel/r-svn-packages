@@ -1157,6 +1157,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       else G$sig2 <- -1 #gcv
   } else {G$sig2 <- scale}
 
+  if (fam.name=="quasi"||fam.name=="quasipoisson"||fam.name=="quasibinomial") {
+    ## REML/ML invalid with quasi families
+    if (method=="REML") method <- "P-REML"
+    if (method=="ML") method <- "P-ML"
+    if (method=="P-ML"||method=="P-REML") warning("RE/ML is not recommended for quasi families")
+  }
+
   if (reml) { ## then RE(ML) selection, but which variant?
    criterion <- method
    if (fam.name == "binomial"||fam.name == "poisson") scale <- 1
@@ -1171,12 +1178,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   }
 
-  if (fam.name=="quasi"||fam.name=="quasipoisson"||fam.name=="quasibinomial") {
-    ## REML/ML invalid with quasi families
-    if (method=="REML") method <- "P-REML"
-    if (method=="ML") method <- "P-ML"
-    warning("RE/ML is not recommended for quasi families")
-  }
 
   if (substr(fam.name,1,17)=="Negative Binomial") { 
     scale <- 1; ## no choise

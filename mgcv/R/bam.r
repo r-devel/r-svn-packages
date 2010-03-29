@@ -331,7 +331,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method)
 
 
 
-bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,
+bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
                 offset=NULL,method="REML",control=gam.control(),scale=0,gamma=1,knots=NULL,
                 sp=NULL,min.sp=NULL,paraPen=NULL,chunk.size=10000,...)
 
@@ -476,6 +476,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$weights <- object$prior.weights
   object$xlevels <- G$xlevels
   object$y <- object$model[[gp$response]]
+  object$NA.action <- na.action ## version to use in bam.update
 
   gc()
   ## note that predict.gam assumes that it must be ok not to split the 
@@ -493,7 +494,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 }
 
 
-bam.update <- function(b,data,weights=NULL,chunk.size=10000) {
+bam.update <- function(b,data,chunk.size=10000) {
 ## update the strictly additive model `b' in the light of new data in `data'
 ## Need to update modelframe (b$model) 
   if (is.null(b$qrx)) { 
@@ -501,17 +502,18 @@ bam.update <- function(b,data,weights=NULL,chunk.size=10000) {
   }
   gp<-interpret.gam(b$formula) # interpret the formula 
   
-  X <- predict(b,newdata=data,type="lpmatrix") ## extra part of model matrix
+  X <- predict(b,newdata=data,type="lpmatrix",na.action=b$NA.action) ## extra part of model matrix
   
   cnames <- names(b$coefficients)
 
   ## now get the new data in model frame form...
 
-  if (is.null(weights)) w <- rep(1,nrow(data)) else w <- weights
   if ("(weights)"%in%names(b$model)) { 
-    mf <- model.frame(gp$fake.formula,data,weights=weights,xlev=b$xlev,na.action=attr(b$model,"na.action"))
+    mf <- model.frame(gp$fake.formula,data,weights=weights,xlev=b$xlev,na.action=b$NA.action)
+    w <- mf[["(weights)"]]
   } else {
-    mf <- model.frame(gp$fake.formula,data,xlev=b$xlev,na.action=attr(b$model,"na.action"))
+    mf <- model.frame(gp$fake.formula,data,xlev=b$xlev,na.action=b$NA.action)
+    w <- rep(1,nrow(mf))
   }
 
 

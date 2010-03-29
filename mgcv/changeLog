@@ -7,6 +7,8 @@
   strictly additive models fitted by `bam' when additional data become 
   available. 
 
+* gam now warns if RE/ML used with quasi families.
+
 * gam.check now accepts graphics parameters.
 
 * fixed problem in welcome message that messed up ESS.
