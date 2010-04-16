@@ -3,6 +3,14 @@
 
 1.6-2
 
+* Fix in `gamm.setup' -- models with no fixed effects (except smooths) 
+could fail to fit properly, because of an indexing error (caused odd 
+results with indicator by variables)
+
+* help files have had various misuses on `itemize' fixed. 
+
+* initialization could fail if response was actually a 1D array. fixed.
+
 * New function `bam.update' allows efficient updating of very large
   strictly additive models fitted by `bam' when additional data become 
   available. 

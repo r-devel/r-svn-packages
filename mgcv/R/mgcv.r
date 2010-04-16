@@ -3415,7 +3415,7 @@ initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1) {
   start <- etastart <- mustart <- NULL
   nobs <- nrow(X)
   eval(family$initialize)
-  w <- weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart)
+  w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
   w <- sqrt(w)
   if (type==1) { ## what PI would have used
    lambda <-  initial.sp(w*X,S,off)

@@ -360,8 +360,10 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   G$Xf <- G$X # full GAM model matrix, treating smooths as fixed effects
   random<-list()
   random.i<-0
+  
+  if (G$nsdf>0) ind <- 1:G$nsdf else ind <- rep(0,0)  
 
-  X <- G$X[,1:G$nsdf,drop=FALSE] # accumulate fixed effects into here
+  X <- G$X[,ind,drop=FALSE] # accumulate fixed effects into here
 
   xlab <- rep("",0)
   if (G$m)

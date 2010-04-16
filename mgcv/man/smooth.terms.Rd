@@ -17,7 +17,7 @@ depend on (a discrete approximation to) any linear functional of a smooth term, 
 `summation convention' explained in \code{\link{linear.functional.terms}}.
 
 The single penalty built in smooth classes are summarized as follows
-\itemize{
+\describe{
 \item{Thin plate regression splines}{\code{bs="tp"}. These are low rank isotropic smoothers of any number of covariates. By isotropic is 
 meant that rotation of the covariate co-ordinate system will not change the result of smoothing. By low rank is meant 
 that they have far fewer coefficients than there are data to smooth. They are reduced rank versions of the thin plate splines and use the thin plate spline penalty. They are the default
@@ -41,9 +41,9 @@ derivative.}
 
 \item{P-splines}{\code{bs="ps"}. 
 These are P-splines as proposed by Eilers and Marx (1996). They combine a B-spline basis, with a discrete penalty
-on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mix different orders of basis and penalty.}
+on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mix different orders of basis and penalty.
 
-\code{bs="cs"} gives a cyclic version of a P-spline.
+\code{bs="cs"} gives a cyclic version of a P-spline.}
 }
 
 Broadly speaking the default penalized thin plate regression splines tend to give the best MSE performance, 
