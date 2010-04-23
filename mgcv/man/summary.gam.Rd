@@ -175,7 +175,7 @@ improvements by Henric Nilsson.}
 } 
 
 \seealso{  \code{\link{gam}}, \code{\link{predict.gam}},
-\code{\link{gam.check}}, \code{\link{anova.gam}} }
+\code{\link{gam.check}}, \code{\link{anova.gam}}, \code{\link{gam.vcomp}}, \code{\link{sp.vcov}} }
 
 \examples{
 library(mgcv)

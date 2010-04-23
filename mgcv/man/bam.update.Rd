@@ -2,7 +2,7 @@
 \alias{bam.update}
 
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{Update a strictly additive \code{bam} model for new data.}
+\title{Update a strictly additive bam model for new data.}
 
 \description{ Strictly additive models fitted by \code{\link{bam}} can be efficiently updated as new data becomes available,
 by simply updateing the QR decomposition on which estimation is based, and re-optimizing the smoothing parameters, starting

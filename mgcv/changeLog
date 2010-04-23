@@ -3,9 +3,18 @@
 
 1.6-2
 
+** Random effect support for `gam' improved with the addition of 
+   a random effect "smooth" class, and a function for extracting 
+   variance components. See ?random.effects and links for details. 
+
+* smooths now contain extra elements: S.scale records the scale factor 
+  used in any linear rescaling of a penalty matrix; plot.me indicates 
+  whether `plot.gam' should attempt to plot the term; te.ok indicates 
+  whether the smooth is a suitable marginal for a tensor product.
+
 * Fix in `gamm.setup' -- models with no fixed effects (except smooths) 
-could fail to fit properly, because of an indexing error (caused odd 
-results with indicator by variables)
+  could fail to fit properly, because of an indexing error (caused odd 
+  results with indicator by variables)
 
 * help files have had various misuses on `itemize' fixed. 
 

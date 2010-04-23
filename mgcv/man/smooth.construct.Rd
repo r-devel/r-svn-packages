@@ -116,6 +116,10 @@ for example because they are inverse variance components.  }
 unpenalized and unconstrained). If this is null then \code{smoothCon} will set it to the basis 
 dimension. \code{smoothCon} will reduce this by the number of constraints.}
 
+\item{te.ok}{\code{FALSE} if this term should not be used as a tensor product marginal. Set to \code{TRUE} if \code{NULL}.}
+
+\item{plot.me}{Set to \code{FALSE} if this smooth should not be plotted by \code{\link{plot.gam}}.  Set to \code{TRUE} if \code{NULL}.}
+
 \item{L}{smooths may depend on fewer `underlying' smoothing parameters than there are elements of
 \code{S}. In this case \code{L} is the matrix mapping the vector of underlying log smoothing 
 parameters to the vector of logs of the smoothing parameters actually multiplying the \code{S[[i]]}. 
