@@ -565,7 +565,7 @@ bam.update <- function(b,data,chunk.size=10000) {
     b$G$pearson.extra <- rss.extra
     b$G$n.true <- n
     if (b$scale.estimated) scale <- -1 else scale = b$sig2
-    in.out <- list(sp=b$sp,scale=b$gcv.ubre)
+    in.out <- list(sp=b$sp,scale=b$reml.scale)
     object <- gam(G=b$G,method=method,gamma=b$gamma,scale=scale,in.out=in.out)
     offset -> b$G$offset -> b$offset
     w -> b$G$w -> b$weights -> b$prior.weights; n -> b$G$n

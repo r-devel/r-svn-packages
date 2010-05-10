@@ -1252,7 +1252,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (fixedSteps>0) {
         log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
       } else {
-        log.scale <- log(null.stuff$null.scale/10)
+        if (is.null(in.out)) {
+          log.scale <- log(null.stuff$null.scale/10)
+        } else {
+          log.scale <- log(in.out$scale)
+        }
       }
       lsp <- c(lsp,log.scale) ## append log initial scale estimate to lsp
       ## extend G$L, if present...

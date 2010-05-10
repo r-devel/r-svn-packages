@@ -1,6 +1,14 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.6-3
+
+* bam.update modified for faster updates (initial scale parameter 
+  estimate now supplied in RE/ML case)
+
+* rTweedie added for quick simulation of Tweedie random deviates 
+  when 1<p<2.
+
 1.6-2
 
 ** Random effect support for `gam' improved with the addition of 
@@ -16,7 +24,7 @@
   could fail to fit properly, because of an indexing error (caused odd 
   results with indicator by variables)
 
-* help files have had various misuses on `itemize' fixed. 
+* help files have had various misuses of `itemize' fixed. 
 
 * initialization could fail if response was actually a 1D array. fixed.
 
@@ -123,7 +131,7 @@
 * There was a bug in the calculation of the Bayesian cov matrix, when the 
   scale parameter was known: it was always using an estimated scale 
   parameter. Makes no statistically meaningful difference for a model  
-  that fits propoerly, of course. 
+  that fits properly, of course. 
 
 * Some junk removed from gam object.
 
@@ -156,7 +164,6 @@
   `predict.gam' help file.
 
 * `newdata.guaranteed' argument to predict.gam didn't work. fixed.
-
 
 
 1.5-5
@@ -211,7 +218,7 @@
   possible to fit very poor models, and then have non-sensical effective 
   degrees of freedom reported. This has been fixed by using much more stable 
   expressions for edf calculation, when outer iteration smoothness
-  selection is empolyed. (Changes are to gam.fit3, gam.outer and a new
+  selection is employed. (Changes are to gam.fit3, gam.outer and a new
   routine gam.fit3.post.proc).
 
 * edfs in version 1.5-0 were calculated using newton, rather than fisher 
