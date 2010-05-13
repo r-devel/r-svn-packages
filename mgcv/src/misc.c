@@ -25,7 +25,7 @@ USA. */
 
 
 
-double *psum(double *y, double *x,int *index,int *n) {
+void psum(double *y, double *x,int *index,int *n) {
   /* y is of length max(index). x and index are of the same length, n.
      This routine fills y[index[i]-1] so that it contains the sum of 
      the x[i]'s sharing index[i]. It is assumed that y is cleared to zero

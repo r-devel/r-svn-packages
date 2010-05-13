@@ -3,6 +3,10 @@
 
 1.6-3
 
+* qq.gam added to allow better checking of destribution of residuals.
+
+* gam.check modified to use qq.gam for QQ plots of deviance residuals.
+
 * bam.update modified for faster updates (initial scale parameter 
   estimate now supplied in RE/ML case)
 
