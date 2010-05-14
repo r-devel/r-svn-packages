@@ -27,8 +27,9 @@ convergence diagnostics is simply printed.
 
 The QQ plot produced is usually created by a call to \code{\link{qq.gam}}, and plots deviance residuals 
 against approximate theoretical quantilies of the deviance residual distribution, according to the fitted model. 
-If this looks odd then investigate further using \code{\link{qq.gam}}. Note that raw binary residuals contain no 
-information useul for model checking. 
+If this looks odd then investigate further using \code{\link{qq.gam}}. Note that residuals for models fitted to binary data contain very little 
+information useful for model checking (it is necessary to find some way of aggregating them first), so the QQ plot is unlikely 
+to be useful in this case.
 
 }
 

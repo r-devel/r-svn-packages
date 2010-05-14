@@ -35,17 +35,20 @@ Even if \code{rep} is set to zero, the routine will attempt to simulate quantile
 deviate generating function family is available (e.g. for the quasi families), then a normal QQ-plot is produced. The routine conditions on the 
 fitted model coefficents and the scale parameter estimate. 
 
-The plots are similar in spirit to those proposed in Ben and Yohai (2004), but are substantially cheaper to produce.  
+The plots are very similar to those proposed in Ben and Yohai (2004), but are substantially cheaper to produce (the interpretation of 
+residuals for binary data in Ben and Yohai is not recommended).  
 
-It is important to be aware that plots for raw residuals from fits to binary data contain no useful information 
-about model fit (for example the deviance residuals for binary data depend only on the 
-fitted values and not on the data in any other way). To check distributional 
-assumptions about binary residuals you have to be able to group the data somehow. Binomial models other than binary are ok.   
+Note that plots for raw residuals from fits to binary data contain almost no useful information 
+about model fit. Whether the residual is negative or positive is decided by whether the response is zero or one. The magnitude of the 
+residual, given its sign, is determined entirely by the fitted values. In consequence only the most gross violations of the model 
+are detectable from QQ-plots of residuals for binary data.
+To really check distributional assumptions from residuals for binary data you have to be able to group the data somehow. 
+Binomial models other than binary are ok.  
 }
 
 \references{
 
-M.G. Ben and V.J. Yohai (2004) JCGS 13(1), 36-47. (but note that binary residuals actually contain no information for model checking.)
+M.G. Ben and V.J. Yohai (2004) JCGS 13(1), 36-47.
 
 \url{http://www.maths.bath.ac.uk/~sw283/}
 
@@ -90,6 +93,28 @@ qqnorm(residuals(pif),pch=19,cex=.3)
 qq.gam(pif,pch=19,cex=.3)
 qq.gam(pif,rep=100,level=.9)
 qq.gam(pif,rep=100,level=1,type="pearson",pch=19,cex=.2)
+
+## Example of binary data model violation so gross that you see a problem 
+## on the QQ plot...
+
+y <- c(rep(1,10),rep(0,20),rep(1,40),rep(0,10),rep(1,40),rep(0,40))
+x <- 1:160
+b <- glm(y~x,family=binomial)
+par(mfrow=c(2,2))
+## Note that the next two are not necessarily similar under gross 
+## model violation...
+qq.gam(b)
+qq.gam(b,rep=50,level=1)
+## and a much better plot for detecting the problem
+plot(x,residuals(b),pch=19,cex=.3)
+plot(x,y);lines(x,fitted(b))
+
+## alternative model
+b <- gam(y~s(x,k=5),family=binomial,method="ML")
+qq.gam(b)
+qq.gam(b,rep=50,level=1)
+plot(x,residuals(b),pch=19,cex=.3)
+plot(b,residuals=TRUE,pch=19,cex=.3)
 
 
 }
