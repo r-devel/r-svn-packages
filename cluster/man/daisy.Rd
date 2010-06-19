@@ -127,7 +127,12 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
       dissimilarity is 0 if both values are equal, 1 (or
       \code{weight[j]}) otherwise.  The contribution of other variables
       is the absolute difference of both values, divided by the total
-      range of that variable.  Ordinal variables are first converted to ranks.
+      range of that variable, where \dQuote{standard scoring} is applied
+      to ordinal variables, i.e., they are replaced by their integer
+      codes \code{1:m}.  Note that this is not the same as using their
+      ranks (since there typically are ties).
+      % contrary to what Kaufman & Rousseeuw  write in their book, and
+      % the original help page.
 
       Finally, the dissimilarity is divided by the sum of those \code{weights[j]}
       that were not replaced by 0 in the numerator (see above).
