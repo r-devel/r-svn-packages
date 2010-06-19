@@ -1,3 +1,21 @@
+2010-06-02  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.13.0
+
+	* src/daisy.f (cl_daisy): renamed from daisy
+	* src/init.c, src/*.[chf]: renamed others, so we can use
+	* NAMESPACE (useDynLib): .registration = TRUE
+
+2010-05-28  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/daisy.q (daisy): using variable weights (for gower).
+	* src/daisy.f: ditto
+
+2010-03-29  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.12.3
+	* R/plothier.q (bannerplot): do not use formals(pretty)
+
 2009-12-05  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* man/daisy.Rd: fix page number for Gower (1971) reference.

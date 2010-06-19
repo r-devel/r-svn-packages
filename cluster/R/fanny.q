@@ -73,7 +73,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
 
     ## call Fortran routine
     storage.mode(x2) <- "double"
-    res <- .C("fanny",
+    res <- .C(cl_fanny,
               as.integer(n),
               as.integer(jp),
               k,
@@ -100,8 +100,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
               silinf = if(cluster.only) 0. else matrix(0., n, 4),
               memb.exp = memb.exp,# = 'r'
               tol = as.double(tol),
-              maxit = maxit,
-              PACKAGE = "cluster")
+              maxit = maxit)
 
     if(!(converged <- res$maxit > 0)) {
         warning(sprintf(

@@ -28,17 +28,17 @@ fygur(int kk, int nn,
       double *dss, double *s, double *sylinf);
 
 
-void fanny(int *nn,  /* = number of objects */
-	   int *jpp, /* = number of variables for clustering */
-	   int *kk,  /* = number of clusters */
-	   double *x, double *dss, int *jdyss, double *valmd,
-	   int *jtmd, int *ndyst, int *nsend, int *nelem,
-	   int *negbr, double *syl, double *p, double *dp,
-	   double *pt, int *nfuzz, double *esp, double *ef,
-	   double *dvec, double *ttsyl,
-	   double *obj, /* input/output;  see fuzzy() below */
-	   int *ncluv, double *sylinf,
-	   double *r, double *tol, int *maxit)
+void cl_fanny(int *nn,  /* = number of objects */
+	      int *jpp, /* = number of variables for clustering */
+	      int *kk,  /* = number of clusters */
+	      double *x, double *dss, int *jdyss, double *valmd,
+	      int *jtmd, int *ndyst, int *nsend, int *nelem,
+	      int *negbr, double *syl, double *p, double *dp,
+	      double *pt, int *nfuzz, double *esp, double *ef,
+	      double *dvec, double *ttsyl,
+	      double *obj, /* input/output;  see fuzzy() below */
+	      int *ncluv, double *sylinf,
+	      double *r, double *tol, int *maxit)
 {
     int ktrue, trace_lev = (int) obj[1];
     Rboolean all_stats = (obj[0] == 0.);/* TODO: consider *not* doing caddy() */
@@ -69,7 +69,7 @@ void fanny(int *nn,  /* = number of objects */
 	      negbr, syl, dvec, pt, ttsyl, dss, &s, sylinf);
     }
     return;
-} /* fanny */
+} /* cl_fanny */
 
 
 void dysta3(int *nn, int *p, double *x, double *dys,
