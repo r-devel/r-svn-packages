@@ -10,7 +10,7 @@
 }
 \usage{
 daisy(x, metric = c("euclidean", "manhattan", "gower"),
-      stand = FALSE, type = list())
+      stand = FALSE, type = list(), weights = rep.int(1, p))
 }
 \arguments{
   \item{x}{
@@ -60,6 +60,10 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
     Variables not mentioned in the \code{type} list are interpreted as
     usual (see argument \code{x}).
   }
+  \item{weights}{an optional numeric vector of length \code{ncol(x)}; to
+    be used in \dQuote{case 2} (mixed variables, or \code{metric = "gower"}),
+    specifying a weight for each variable (\code{x[,j]}) instead of
+    \eqn{1} in Gower's original formula.}
 }% end{arg..}
 
 \value{
@@ -82,7 +86,10 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
   ignored and Gower's coefficient will be used as the metric.  This can
   also be activated for purely numeric data by \code{metric = "gower"}.
   With that, each variable (column) is first standardized by dividing
-  each entry by the range of the corresponding variable.
+  each entry by the range of the corresponding variable, after
+  subtracting the minimum value; consequently the rescaled variable has
+  range \eqn{[0,1]}, exactly.
+  %% FIXME: Use something like  "gowerRob" which uses *robust* rescaling
 
   Note that setting the type to \code{symm} (symmetric binary) gives the
   same dissimilarities as using \emph{nominal} (which is chosen for
@@ -90,14 +97,15 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
   efficiently.
 
   Note that \code{daisy} now gives a warning when 2-valued numerical
-  variables don't have an explicit \code{type} specified, because the
+  variables do not have an explicit \code{type} specified, because the
   reference authors recommend to consider using \code{"asymm"}.
 
   In the \code{daisy} algorithm, missing values in a row of x are not
   included in the dissimilarities involving that row.  There are two
   main cases,
   \enumerate{
-    \item If all variables are interval scaled,
+    \item If all variables are interval scaled (and \code{metric} is
+      \emph{not} \code{"gower"}),
       the metric is "euclidean", and ng is the number of columns in which
       neither row i and j have NAs, then the dissimilarity d(i,j) returned is
       sqrt(ncol(x)/ng) times the Euclidean distance between the two vectors
@@ -105,22 +113,29 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
       "manhattan" metric, except that the coefficient is ncol(x)/ng.
       If ng is zero, the dissimilarity is NA.
 
-    \item When some variables have a type other than interval scaled, the
+    \item When some variables have a type other than interval scaled, or
+      if \code{metric = "gower"} is specified, the
       dissimilarity between two rows is the weighted sum of the contributions of
       each variable.\cr
-      The weight becomes zero when that variable is missing in either or both
-      rows, or when the variable is asymmetric binary and both values are
-      zero.  In all other situations, the weight of the variable is 1.
+      The weight becomes zero when that variable, say \code{x[,j]}, is
+      missing in either or both rows, or when the variable is asymmetric
+      binary and both values are zero.  In all other situations, the
+      weight of the variable is 1 (by default), or \code{weight[j]} if
+      \code{weights[]} is specified.
 
       The contribution of a nominal or binary variable to the total
-      dissimilarity is 0 if both values are equal, 1 otherwise.  The
-      contribution of other variables is the absolute difference of both
-      values, divided by the total range of that variable.  Ordinal
-      variables are first converted to ranks.
+      dissimilarity is 0 if both values are equal, 1 (or
+      \code{weight[j]}) otherwise.  The contribution of other variables
+      is the absolute difference of both values, divided by the total
+      range of that variable.  Ordinal variables are first converted to ranks.
 
-      If \code{nok} is the number of nonzero weights, the dissimilarity is
-      multiplied by the factor \code{1/nok} and thus ranges between 0 and 1.
-      If \code{nok = 0}, the dissimilarity is set to \code{\link{NA}}.
+      Finally, the dissimilarity is divided by the sum of those \code{weights[j]}
+      that were not replaced by 0 in the numerator (see above).
+      If all weights were taken as zero,
+      % If \code{nok} is the number of nonzero weights, the dissimilarity is
+      % multiplied by the factor \code{1/nok} and thus ranges between 0 and 1.
+      % If \code{nok = 0},
+      the dissimilarity is set to \code{\link{NA}}.
   }
 }
 \section{Background}{
