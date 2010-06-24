@@ -1,6 +1,6 @@
 
-R version 2.7.0 Under development (unstable) (2007-09-24 r42966)
-Copyright (C) 2007 The R Foundation for Statistical Computing
+R version 2.11.1 Patched (2010-06-23 r52375)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -25,7 +25,7 @@ Type 'q()' to quit R.
 > if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
 Warning message:
 In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
-  Buggy version of Kinderman-Ramage generator used.
+  Buggy version of Kinderman-Ramage generator used
 > 
 > nSim <- 100
 > nCl <- 3 # = no.classes

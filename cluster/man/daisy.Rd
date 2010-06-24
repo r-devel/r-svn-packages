@@ -6,7 +6,10 @@
 \concept{Gower's coefficient}% FIXME: see ../TODO-MM
 \description{
   Compute all the pairwise dissimilarities (distances) between observations
-  in the data set.  The original variables may be of mixed types.
+  in the data set.  The original variables may be of mixed types.  In
+  that case, or whenever \code{metric = "gower"} is set, a
+  generalization of Gower's formula is used, see \sQuote{Details}
+  below.
 }
 \usage{
 daisy(x, metric = c("euclidean", "manhattan", "gower"),
@@ -14,7 +17,8 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
 }
 \arguments{
   \item{x}{
-    numeric matrix or data frame.  Dissimilarities will be computed
+    numeric matrix or data frame, of dimension \eqn{n\times p}{n x p},
+    say.  Dissimilarities will be computed
     between the rows of \code{x}.  Columns of mode \code{numeric}
     (i.e. all columns when \code{x} is a matrix) will be recognized as
     interval scaled variables, columns of class \code{factor} will be
@@ -60,9 +64,9 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
     Variables not mentioned in the \code{type} list are interpreted as
     usual (see argument \code{x}).
   }
-  \item{weights}{an optional numeric vector of length \code{ncol(x)}; to
+  \item{weights}{an optional numeric vector of length \eqn{p}(=\code{ncol(x)}); to
     be used in \dQuote{case 2} (mixed variables, or \code{metric = "gower"}),
-    specifying a weight for each variable (\code{x[,j]}) instead of
+    specifying a weight for each variable (\code{x[,k]}) instead of
     \eqn{1} in Gower's original formula.}
 }% end{arg..}
 
@@ -108,38 +112,47 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
       \emph{not} \code{"gower"}),
       the metric is "euclidean", and ng is the number of columns in which
       neither row i and j have NAs, then the dissimilarity d(i,j) returned is
-      sqrt(ncol(x)/ng) times the Euclidean distance between the two vectors
-      of length ng shortened to exclude NAs.  The rule is similar for the
-      "manhattan" metric, except that the coefficient is ncol(x)/ng.
-      If ng is zero, the dissimilarity is NA.
+      \eqn{\sqrt{p/n_g}}{sqrt(p/n_g)} (\eqn{p=}ncol(x)) times the
+      Euclidean distance between the two vectors of length \eqn{n_g}
+      shortened to exclude NAs.  The rule is similar for the "manhattan"
+      metric, except that the coefficient is \eqn{p/n_g}.  If \eqn{n_g = 0},
+      the dissimilarity is NA.
 
     \item When some variables have a type other than interval scaled, or
       if \code{metric = "gower"} is specified, the
-      dissimilarity between two rows is the weighted sum of the contributions of
-      each variable.\cr
-      The weight becomes zero when that variable, say \code{x[,j]}, is
-      missing in either or both rows, or when the variable is asymmetric
-      binary and both values are zero.  In all other situations, the
-      weight of the variable is 1 (by default), or \code{weight[j]} if
-      \code{weights[]} is specified.
+      dissimilarity between two rows is the weighted mean of the contributions of
+      each variable.  Specifically,
+      \deqn{d_{ij} = d(i,j) = \frac{\sum_{k=1}^p w_k \delta_{ij}^{(k)} d_{ij}^{(k)}}{
+	  \sum_{k=1}^p w_k \delta_{ij}^{(k)}}.
+      }{d_ij = d(i,j) =	sum(k=1:p; w_k delta(ij;k) d(ij,k)) / sum(k=1:p; w_k delta(ij;k)).}
+      In other words, \eqn{d_{ij}}{d_ij} is a weighted mean of
+      \eqn{d_{ij}^{(k)}}{d(ij,k)} with weights \eqn{w_k \delta_{ij}^{(k)}}{w_k delta(ij;k)},
+      where \eqn{w_k}\code{= weigths[k]},
+      \eqn{\delta_{ij}^{(k)}}{delta(ij;k)} is 0 or 1, and
+      \eqn{d_{ij}^{(k)}}{d(ij,k)}, the k-th variable contribution to the
+      total distance, is a distance between \code{x[i,k]} and \code{x[j,k]},
+      see below.
 
-      The contribution of a nominal or binary variable to the total
-      dissimilarity is 0 if both values are equal, 1 (or
-      \code{weight[j]}) otherwise.  The contribution of other variables
-      is the absolute difference of both values, divided by the total
-      range of that variable, where \dQuote{standard scoring} is applied
-      to ordinal variables, i.e., they are replaced by their integer
-      codes \code{1:m}.  Note that this is not the same as using their
-      ranks (since there typically are ties).
+      The 0-1 weight \eqn{\delta_{ij}^{(k)}}{delta(ij;k)} becomes zero
+      when the variable \code{x[,k]} is missing in either or both rows
+      (i and j), or when the variable is asymmetric binary and both
+      values are zero.  In all other situations it is 1.
+
+      The contribution \eqn{d_{ij}^{(k)}}{d(ij,k)} of a nominal or binary variable to the total
+      dissimilarity is 0 if both values are equal, 1 otherwise.
+      The contribution of other variables is the absolute difference of
+      both values, divided by the total range of that variable.  Note
+      that \dQuote{standard scoring} is applied to ordinal variables,
+      i.e., they are replaced by their integer codes \code{1:K}.  Note
+      that this is not the same as using their ranks (since there
+      typically are ties).
       % contrary to what Kaufman & Rousseeuw  write in their book, and
       % the original help page.
 
-      Finally, the dissimilarity is divided by the sum of those \code{weights[j]}
-      that were not replaced by 0 in the numerator (see above).
-      If all weights were taken as zero,
-      % If \code{nok} is the number of nonzero weights, the dissimilarity is
-      % multiplied by the factor \code{1/nok} and thus ranges between 0 and 1.
-      % If \code{nok = 0},
+      As the individual contributions \eqn{d_{ij}^{(k)}}{d(ij,k)} are in
+      \eqn{[0,1]}, the dissimilarity \eqn{d_{ij}}{d_ij} will remain in
+      this range.
+      If all weights \eqn{w_k \delta_{ij}^{(k)}}{w_k delta(ij;k)} are zero,
       the dissimilarity is set to \code{\link{NA}}.
   }
 }

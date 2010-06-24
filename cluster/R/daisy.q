@@ -100,7 +100,8 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
     else { ## mixed case or explicit "gower"
 	if(!missing(metric) && metric != "gower" && !all.I)
 	    warning("with mixed variables, metric \"gower\" is used automatically")
-        ## FIXME: think of a robust alternative scaling to Gower's  (x - min(x)) / (max(x) - min(x))
+        ## FIXME: think of a robust alternative scaling to
+        ##        Gower's  (x - min(x)) / (max(x) - min(x))
 	colR <- apply(x, 2, range, na.rm = TRUE)
 	colmin <- colR[1,]
 	sx <- colR[2,] - colmin

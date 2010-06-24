@@ -1,6 +1,7 @@
 
-R : Copyright 2005, The R Foundation for Statistical Computing
-Version 2.1.1 Patched (2005-07-13), ISBN 3-900051-07-0
+R version 2.11.1 Patched (2010-06-23 r52375)
+Copyright (C) 2010 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -11,7 +12,7 @@ Type 'contributors()' for more information and
 'citation()' on how to cite R or R packages in publications.
 
 Type 'demo()' for some demos, 'help()' for on-line help, or
-'help.start()' for a HTML browser interface to help.
+'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
 > ### Clara with really LARGE data set --- CPU testing
@@ -23,7 +24,8 @@ Type 'q()' to quit R.
 > ## For back-compatibility:
 > if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
 Warning message:
-Buggy version of Kinderman-Ramage generator used. in: RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") 
+In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
+  Buggy version of Kinderman-Ramage generator used
 > set.seed(521)
 > x <- rbind(cbind(rnorm(7*N, 0,8), rnorm(7*N, 0,8)),
 +            cbind(rnorm(8*N,50,8), rnorm(8*N,10,8)))
@@ -109,7 +111,7 @@ Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  82.5 0.58 92.08 0 0 
+Time elapsed:  9.876 0.028 9.98 0 0 
 > ## nb-mm, with cluster 1.6-4 :  85.2 (elapsed 91.7)
 > 
 > ###-- Larger example: 20*N objects, divided into 5 clusters.
@@ -190,7 +192,7 @@ Available components:
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > ## Last Line:
 > cat("Time elapsed: ", proc.time() - .proctime00,"\n")
-Time elapsed:  72.4 0.74 80.55 0 0 
+Time elapsed:  10.303 0.033 10.411 0 0 
 > ## nb-mm, with cluster 1.6-4 : 74.4 (elapsed 88.2)
 > ## ~~~~~  1.7-* quite faster : 67.6 (elapsed 68.7)
 > 
