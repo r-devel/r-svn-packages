@@ -77,7 +77,8 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
   \code{diana}.  For more details, see \code{\link{dissimilarity.object}}.
 }
 \details{
-  \code{daisy} is fully described in chapter 1 of Kaufman and Rousseeuw (1990).
+  The original version of \code{daisy} is fully described in chapter 1
+  of Kaufman and Rousseeuw (1990).
   Compared to \code{\link{dist}} whose input must be numeric
   variables, the main feature of \code{daisy} is its ability to handle
   other variable types as well (e.g. nominal, ordinal, (a)symmetric
@@ -173,6 +174,14 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
   Struyf, A., Hubert, M. and Rousseeuw, P.J. (1997)
   Integrating Robust Clustering Techniques in S-PLUS,
   \emph{Computational Statistics and Data Analysis} \bold{26}, 17--37.
+}
+\author{
+  Anja Struyf, Mia Hubert, and Peter and Rousseeuw, for the original
+  version.
+  \cr
+  Martin Maechler improved the \code{\link{NA}} handling and
+  \code{type} specification checking, and extended functionality to
+  \code{metric = "gower"} and the optional \code{weights} argument.
 }
 \seealso{
   \code{\link{dissimilarity.object}}, \code{\link{dist}},
