@@ -45,7 +45,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 	}
 	dv <- double(1 + (n * (n - 1))/2)
     }
-    res <- .Fortran("twins",
+    res <- .Fortran(twins,
 		    n,
 		    jp,
 		    as.double(x2),
@@ -63,8 +63,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 		    dc = double(1),# care! as.double() is copy-less from 2.6.0
 		    double(1),
 		    merge = matrix(0:0, n - 1, 2), # integer
-		    DUP = FALSE,
-		    PACKAGE = "cluster")
+		    DUP = FALSE)
     if(!diss) {
 	## give warning if some dissimilarities are missing.
 	if(res$ok == -1)

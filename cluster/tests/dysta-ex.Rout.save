@@ -1,6 +1,6 @@
 
-R version 2.4.0 alpha (2006-09-06 r39158)
-Copyright (C) 2006 The R Foundation for Statistical Computing
+R version 2.11.1 Patched (2010-06-23 r52375)
+Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -47,7 +47,7 @@ Type 'q()' to quit R.
 + 
 +     r <-
 +         if(dystaK == "dysta3") {
-+             .C(dystaK,
++             .C(cluster:::dysta3,
 +                n,
 +                jp = p,
 +                x,
@@ -55,10 +55,9 @@ Type 'q()' to quit R.
 +                ndyst= ndyst,
 +                jtmd=  jtmd,
 +                valmd= valmd,
-+                jhalt= integer(1),
-+                PACKAGE = "cluster")[c("dys", "jhalt")]
++ 	       jhalt= integer(1))[c("dys", "jhalt")]
 +         } else {
-+             .Fortran(dystaK,
++             .Fortran(cluster:::dysta,
 +                      n,
 +                      jp = p,
 +                      x,
@@ -66,8 +65,7 @@ Type 'q()' to quit R.
 +                      ndyst= ndyst,
 +                      jtmd=  jtmd,
 +                      valmd= valmd,
-+                      jhalt= integer(1),
-+                      PACKAGE = "cluster")[c("dys", "jhalt")]
++ 		     jhalt= integer(1))[c("dys", "jhalt")]
 +         }
 +     if(r$jhalt) {
 + 	cat("`jhalt' was ", r$jhalt,

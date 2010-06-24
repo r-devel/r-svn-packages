@@ -110,8 +110,8 @@ daisy(x, metric = c("euclidean", "manhattan", "gower"),
   main cases,
   \enumerate{
     \item If all variables are interval scaled (and \code{metric} is
-      \emph{not} \code{"gower"}),
-      the metric is "euclidean", and ng is the number of columns in which
+      \emph{not} \code{"gower"}), the metric is "euclidean", and
+      \eqn{n_g} is the number of columns in which
       neither row i and j have NAs, then the dissimilarity d(i,j) returned is
       \eqn{\sqrt{p/n_g}}{sqrt(p/n_g)} (\eqn{p=}ncol(x)) times the
       Euclidean distance between the two vectors of length \eqn{n_g}

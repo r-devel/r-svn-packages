@@ -275,7 +275,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 		if(verbose)
 		    cat("span & rank2 : calling \"spannel\" ..\n")
 		k <- as.integer(2)
-		res <- .C("spannel",
+		res <- .C(spannel,
 			  aantal,
 			  ndep= k,
 			  dat = cbind(1., x),
@@ -287,8 +287,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 			  double(k+1),
 			  eps = (0.01),## convergence tol.
 			  maxit = as.integer(5000),
-			  ierr = integer(1),
-			  PACKAGE = "cluster")
+			  ierr = integer(1))
 		if(res$ierr != 0)
 		    ## MM : exactmve not available here !
 		    cat("Error in Fortran routine for the spanning ellipsoid,",

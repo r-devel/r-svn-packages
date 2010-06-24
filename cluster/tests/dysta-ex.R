@@ -30,7 +30,7 @@ dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
 
     r <-
         if(dystaK == "dysta3") {
-            .C(dystaK,
+            .C(cluster:::dysta3,
                n,
                jp = p,
                x,
@@ -38,10 +38,9 @@ dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
                ndyst= ndyst,
                jtmd=  jtmd,
                valmd= valmd,
-               jhalt= integer(1),
-               PACKAGE = "cluster")[c("dys", "jhalt")]
+	       jhalt= integer(1))[c("dys", "jhalt")]
         } else {
-            .Fortran(dystaK,
+            .Fortran(cluster:::dysta,
                      n,
                      jp = p,
                      x,
@@ -49,8 +48,7 @@ dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
                      ndyst= ndyst,
                      jtmd=  jtmd,
                      valmd= valmd,
-                     jhalt= integer(1),
-                     PACKAGE = "cluster")[c("dys", "jhalt")]
+		     jhalt= integer(1))[c("dys", "jhalt")]
         }
     if(r$jhalt) {
 	cat("`jhalt' was ", r$jhalt,

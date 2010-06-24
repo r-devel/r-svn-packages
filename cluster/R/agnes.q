@@ -68,7 +68,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     }
     if(keep.diss) jdyss <- jdyss + 10
     ## call Fortran routine
-    res <- .Fortran("twins",
+    res <- .Fortran(twins,
 		    as.integer(n),
 		    as.integer(jp),
 		    x2,
@@ -86,8 +86,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    ac = as.double(0),
                     par.method,
 		    merge = matrix(0:0, n - 1, 2), # integer
-                    DUP = FALSE,
-		    PACKAGE = "cluster")
+                    DUP = FALSE)
     if(!diss) {
 	##give warning if some dissimilarities are missing.
 	if(res$ok == -1)
