@@ -98,8 +98,9 @@ qq.gam <- function(object,rep=0,level=.9,type="deviance",pch=".",rl.col=2,rep.co
       if (level>0) lim <- apply(dm,1,FUN=quantile,p=c(alpha,1-alpha))
     }
   } else {
-    ix <- sort.int(D,index.return=TRUE)$ix
-    U <- (ix-.5)/max(ix,rm.na=TRUE)
+    ## ix <- sort.int(D,index.return=TRUE)$ix ## messes up under multiple ties!
+    ix <- rank(D)
+    U <- (ix-.5)/length(D)
     if (!is.null(fam$qf)) {
       q <- fam$qf(U,object$fitted.values,object$prior.weights,object$sig2)
       #Dq <- sort(fam$dev.resids(q,object$fitted.values,object$prior.weights)^.5*

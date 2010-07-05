@@ -33,7 +33,6 @@ This is a restricted, but faster, version of \code{rtweedie} from the \code{twee
 %- maybe also `usage' for other objects documented here.
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
-modified from Venables and Ripley's \code{negative.binomial} family.
 }
 
 \references{

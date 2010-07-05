@@ -23,7 +23,9 @@ USA. */
 #include "matrix.h"
 #include "mgcv.h"
 
-
+/******************************/
+/* Tweedie distribution stuff */
+/******************************/
 
 void psum(double *y, double *x,int *index,int *n) {
   /* y is of length max(index). x and index are of the same length, n.
@@ -278,3 +280,50 @@ x <- rtweedie(10000,power=1.5,mu=1,phi=1)
   range(d2-log(d1))
 
 */ 
+
+
+/*******************************************************/
+/** Fast re-weighting routines                         */
+/*******************************************************/
+
+void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p) {
+/* Function to recombine rows of n by p matrix X (column ordered).
+   ith row of X' is made up of row[stop[i-1]...stop[i]], weighted by 
+   w[stop[i-1]...stop[i]]. stop[-1]=0 by convention.
+   stop is an n vector.     
+   
+   See rwMatrix in bam.r for call from R. 
+*/
+  int i,j,jump,start=0,end,off;
+  double *X1p,*Xp,weight,*Xpe,*X1;
+  /* create storage for output matrix, cleared to zero */
+  X1 = (double *)calloc((size_t)(*n * *p),sizeof(double));
+  jump = *n;
+  off = *n * *p;
+  for (i=0;i<*n;i++) { /* loop through rows of output X1 */
+    end = stop[i]+1;
+    for (j=start;j<end;j++) { /* loop through the input rows */
+      X1p = X1 + i;    /* pointer to start of row i of output */
+      Xp = X + row[j]; /* pointer to start of source row */
+      weight = w[j];   
+      for (Xpe=Xp+off;Xp<Xpe;Xp+=jump,X1p+=jump) *X1p += weight * *Xp;
+    }
+    start = end;
+  }
+  /* coppy output to input for return...*/
+  for (Xp=X,X1p=X1,Xpe=Xp+off;Xp<Xpe;Xp++,X1p++) *Xp = *X1p;
+  free(X1);
+}
+
+/* Example code for rwMatrix in R....
+   n <- 10;p<-5
+   X <- matrix(runif(n*p),n,p)
+   ## create transform to take AR1(rho) to independence...
+   stop <- c(1:(n-1)*2,2*n-1)
+   row <- rep(1:n,rep(2,n))[-1]
+   rho <- .7;ld <- 1/sqrt(1-rho^2);sd <- -rho*ld
+   w <- c(rep(c(ld,sd),n-1),1)
+   mgcv:::rwMatrix(stop,row,w,X)
+   
+*/
+

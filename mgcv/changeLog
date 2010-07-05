@@ -13,6 +13,9 @@
 * rTweedie added for quick simulation of Tweedie random deviates 
   when 1<p<2.
 
+* smooth.terms help file fixed so cyclic p spline identifies as "cp"
+  and not "cs"!
+
 1.6-2
 
 ** Random effect support for `gam' improved with the addition of 

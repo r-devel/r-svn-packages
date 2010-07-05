@@ -29,6 +29,7 @@ R_CMethodDef CEntries[] = {
     {"get_stableS",(DL_FUNC)&get_stableS,14},
     {"mgcv_tri_diag",(DL_FUNC)&mgcv_tri_diag,3},
     {"mgcv_td_qy",(DL_FUNC)&mgcv_td_qy,7},
+    {"rwMatrix",(DL_FUNC)&rwMatrix,6},
     {NULL, NULL, 0}
 };
 

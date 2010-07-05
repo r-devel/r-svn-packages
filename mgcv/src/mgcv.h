@@ -39,6 +39,7 @@ void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int
 /* various service routines */
 void  tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,double *eps,int *n);
 void psum(double *y, double *x,int *index,int *n);
+void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p);
 
 
 void RQT(double *A,int *r,int *c);

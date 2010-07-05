@@ -43,7 +43,7 @@ derivative.}
 These are P-splines as proposed by Eilers and Marx (1996). They combine a B-spline basis, with a discrete penalty
 on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mix different orders of basis and penalty.
 
-\code{bs="cs"} gives a cyclic version of a P-spline.}
+\code{bs="cp"} gives a cyclic version of a P-spline.}
 
 \item{Random effects}{\code{bs="re"}. These are parametric terms penalized by a ridge penalty (i.e. the identity matrix). When such a smooth has multiple arguments 
 then it represents the parametric interaction of these arguments, with the coefficients penalized by a ridge penalty. The ridge penalty is equivalent to an 
