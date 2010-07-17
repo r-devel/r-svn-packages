@@ -11,6 +11,89 @@
 ## First some useful utilities
 ##############################
 
+nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm=TRUE) {
+## X is an n by p model matrix. S is a p by p
+## +ve semi definite penalty matrix, with the 
+## given rank. type 0 reparameterization leaves
+## the penalty matrix as a diagonal, type 1 
+## reduces it to the identity. 
+## type 2 is not really natural. It simply converts the 
+## penalty to rank deficient identity, with some attempt to
+## control the condition number sensibly. type 2 is most 
+## efficient, but has highest condition.  
+## unit.fnorm == TRUE implies that the model matrix should be
+## rescaled so that its penalized and unpenalized model matrices 
+## both have unit Frobenious norm. 
+## For natural param as in the book, type=0 and unit.fnorm=FALSE.
+  if (type==2) { ## no need for QR step
+    er <- eigen(S,symmetric=TRUE)
+    if (is.null(rank)||rank<1||rank>ncol(S)) { 
+      rank <- sum(er$value>max(er$value)*tol)
+    }
+
+    E <- rep(1,ncol(X));E[1:rank] <- sqrt(er$value[1:rank])
+    X <- X%*%er$vectors
+    col.norm <- colSums(X^2)
+    col.norm <- col.norm/E^2 
+    ## col.norm[i] is now what norm of ith col will be, unless E modified...
+    av.norm <- mean(col.norm[1:rank])
+    for (i in (rank+1):ncol(X)) {
+       E[i] <- sqrt(col.norm[i]/av.norm)
+    }
+    P <- t(t(er$vectors)/E) 
+    X <- t(t(X)/E)
+    if (unit.fnorm) { ## rescale so ||X||_f = 1
+      ind <- 1:rank
+      scale <- 1/sqrt(mean(X[,ind]^2))
+      X[,ind] <- X[,ind]*scale;P[ind,] <- P[ind,]*scale
+      ind <- (rank+1):ncol(X)
+      scalef <- 1/sqrt(mean(X[,ind]^2))
+      X[,ind] <- X[,ind]*scalef;P[ind,] <- P[ind,]*scalef
+    } else scale <- 1
+    ## see end for return list defs
+    return(list(X=X,D=rep(scale^2,rank),P=P,rank=rank,type=type)) ## type of reparameterization
+  }
+
+  qrx <- qr(X)
+  R <- qr.R(qrx,complete=FALSE)
+  RSR <- forwardsolve(t(R),t(forwardsolve(t(R),t(S))))
+  er <- eigen(RSR,symmetric=TRUE)
+  if (is.null(rank)||rank<1||rank>ncol(S)) { 
+    rank <- sum(er$value>max(er$value)*tol)
+  }
+  ## D contains +ve elements of diagonal penalty 
+  ## (zeroes at the end)...
+  D <- er$values[1:rank] 
+  ## X is the model matrix...
+  X <- qr.Q(qrx,complete=FALSE)%*%er$vectors
+  ## P transroms parameters in this parameterization back to 
+  ## original parameters...
+  P <- backsolve(R,er$vectors)
+  if (type==1) { ## penalty should be identity...
+    E <- c(sqrt(D),rep(1,ncol(X)-length(D)))
+    P <- t(t(P)/E)
+    X <- t(t(X)/E)
+    D <- D*0+1
+  }
+  if (unit.fnorm) { ## rescale so ||X||_f = 1 
+    ind <- 1:rank
+    scale <- 1/sqrt(mean(X[,ind]^2))
+    X[,ind] <- X[,ind]*scale;P[ind,] <- P[ind,]*scale
+    D <- D * scale^2
+    ind <- (rank+1):ncol(X)
+    scalef <- 1/sqrt(mean(X[,ind]^2))
+    X[,ind] <- X[,ind]*scalef;P[ind,] <- P[ind,]*scalef
+  } 
+  ## unpenalized always at the end...
+  list(X=X, ## transformed model matrix
+       D=D, ## +ve elements on leading diagonal of penalty
+       P=P, ## transforms parameter estimates back to original parameterization
+            ## postmultiplying original X by P gives reparam version
+       rank=rank, ## penalty rank (number of penalized parameters)
+       type=type) ## type of reparameterization
+} ## end nat.param
+
+
 mono.con<-function(x,up=TRUE,lower=NA,upper=NA)
 # Takes the knot sequence x for a cubic regression spline and returns a list with 
 # 2 elements matrix A and array b, such that if p is the vector of coeffs of the
@@ -32,7 +115,7 @@ mono.con<-function(x,up=TRUE,lower=NA,upper=NA)
   A<-matrix(oo[[1]],dim(A)[1],dim(A)[2])
   b<-array(oo[[2]],dim(A)[1])
   list(A=A,b=b)
-}  
+} ## end mono.con
 
 
 uniquecombs<-function(x) {
@@ -199,7 +282,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   }
   ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np,
             id=id,sp=sp)
-  class(ret)<-"tensor.smooth.spec"
+  class(ret) <- "t2.smooth.spec" ## "tensor.smooth.spec"
   ret
 }
 
@@ -254,9 +337,9 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
   ret
 }
 
-####################################
-## Tensor product methods start here
-####################################
+#############################################################
+## Type 1 tensor product methods start here (i.e. Wood, 2006)
+#############################################################
 
 tensor.prod.model.matrix<-function(X)
 # X is a list of model matrices, from which a tensor product model matrix is to be produced.
@@ -271,7 +354,7 @@ tensor.prod.model.matrix<-function(X)
     X1<-cbind(X1,X[[i]][,j]*X0)
   }
   X1
-}
+} ## end tensor.prod.model.matrix
 
 tensor.prod.penalties <- function(S)
 # Given a list S of penalty matrices for the marginal bases of a tensor product smoother
@@ -298,7 +381,7 @@ tensor.prod.penalties <- function(S)
     TS[[i]]<- (M0+t(M0))/2 # ensure exactly symmetric 
   }
   TS
-}
+}## end tensor.prod.penalties
 
 
 
@@ -352,7 +435,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
     } else XP[[i]]<-NULL
   }
   # scale `nicely' - mostly to avoid problems with lme ...
-  for (i in 1:m)  Sm[[i]] <- Sm[[i]]/svd(Sm[[i]])$d[1] 
+  for (i in 1:m)  Sm[[i]] <- Sm[[i]]/eigen(Sm[[i]],symmetric=TRUE,only.values=TRUE)$values[1] 
   max.rank<-prod(d)
   r<-max.rank*r/d # penalty ranks
   X<-tensor.prod.model.matrix(Xm)
@@ -380,7 +463,7 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
   object$XP <- XP
   class(object)<-"tensor.smooth"
   object
-}
+}## end smooth.construct.tensor.smooth.spec
 
 Predict.matrix.tensor.smooth<-function(object,data)
 ## the prediction method for a tensor product smooth
@@ -398,7 +481,138 @@ Predict.matrix.tensor.smooth<-function(object,data)
   T <- tensor.prod.model.matrix(X)
 
   T
-}
+}## end Predict.matrix.tensor.smooth
+
+#########################################################################
+## Type 2 tensor product methods start here - separate identity penalties
+#########################################################################
+
+t2.model.matrix <- function(Xm,rank) {
+## Xm is a list of marginal model matrices.
+## The first rank[i] columns of Xm[[i]] are penalized, 
+## by a ridge penalty, the remainder are unpenalized. 
+## this routine constructs a tensor product model matrix,
+## subject to a sequence of non-overlapping ridge penalties.
+  Zi <- Xm[[1]][,1:rank[1]]
+  Xi <- Xm[[1]][,(rank[1]+1):ncol(Xm[[1]])]
+  X2 <- list(Zi,Xi) ## working model matrix component list
+  n.m <- length(Xm) ## number of margins
+  X1 <- list()
+  n <- nrow(Xi)
+  if (n.m>1) for (i in 2:n.m) {
+    Zi <- Xm[[i]][,1:rank[i]]
+    Xi <- Xm[[i]][,(rank[i]+1):ncol(Xm[[i]])]
+    X1 <- X2 
+    k <- 1
+    for (i in 1:length(X1)) { ## form products with Zi
+      A <- matrix(0,n,0)
+      for (j in 1:ncol(X1[[i]])) A <- cbind(A,X1[[i]][,j]*Zi)
+      X2[[k]] <- A;k <- k + 1
+    }
+    for (i in 1:length(X1)) { ## form products with Xi
+      A <- matrix(0,n,0)
+      for (j in 1:ncol(X1[[i]])) A <- cbind(A,X1[[i]][,j]*Xi)
+      X2[[k]] <- A;k <- k + 1
+    }
+  } 
+  rm(X1)
+  ## X2 now contains a sequence of model matrices, all but the last
+  ## should have an associated ridge penalty. 
+  xc <- unlist(lapply(X2,ncol)) ## number of columns of sub-matrix
+  X <- matrix(unlist(X2),n,sum(xc))
+  attr(X,"sub.cols") <- xc ## number of columns in each seperately penalized sub matrix (last unpenalized)
+  X
+} ## end t2.model.matrix
+
+smooth.construct.t2.smooth.spec <- function(object,data,knots)
+## the constructor for an ss-anova style tensor product basis object.
+## needs to check `by' variable, to see if a centering constraint
+## is required. If it is, then it must be applied here.
+{ m <- length(object$margin)  # number of marginal bases
+  Xm <- list();Sm <- list();nr <- r <- d <- array(0,m)
+  Pm <- list() ## list for matrices by which to postmultiply raw model matris to get repara version
+  C <- NULL ## potential constraint matrix
+  for (i in 1:m) { ## create marginal model matrices and penalties...
+    ## pick up the required variables....
+    knt <- dat <- list()
+    term <- object$margin[[i]]$term
+    for (j in 1:length(term)) { 
+      dat[[term[j]]] <- data[[term[j]]]
+      knt[[term[j]]] <- knots[[term[j]]] 
+    }
+    ## construct marginal smooth...
+    object$margin[[i]]<-smooth.construct(object$margin[[i]],dat,knt)
+    Xm[[i]]<-object$margin[[i]]$X
+    if (!is.null(object$margin[[i]]$te.ok) && !object$margin[[i]]$te.ok) 
+      stop("attempt to use unsuitable marginal smooth class")
+    if (length(object$margin[[i]]$S)>1) 
+    stop("Sorry, tensor products of smooths with multiple penalties are not supported.")
+    Sm[[i]]<-object$margin[[i]]$S[[1]]
+    d[i]<-nrow(Sm[[i]])
+    r[i]<-object$margin[[i]]$rank ## rank of penalty for this margin
+    nr[i]<-object$margin[[i]]$null.space.dim
+    ## reparameterize so that penalty is identity (and scaling is nice)...
+    np <- nat.param(Xm[[i]],Sm[[i]],rank=r[i],type=2,unit.fnorm=TRUE)
+    Xm[[i]] <- np$X;
+    dS <- rep(0,ncol(Xm[[i]]));dS[1:r[i]] <- 1;
+    Sm[[i]] <- diag(dS) ## penalty now diagonal
+    Pm[[i]] <- np$P ## maps original model matrix to reparameterized
+    if (!is.null(object$margin[[i]]$C)&&
+        nrow(object$margin[[i]]$C)==0) C <- matrix(0,0,0) ## no centering constraint needed
+  } ## margin creation finished
+
+  ## Create the model matrix...
+
+  X <- t2.model.matrix(Xm,r)
+  sub.cols <- attr(X,"sub.cols")
+
+  ## Create penalties, which are simple non-overlapping
+  ## partial identity matrices...
+
+  nsc <- length(sub.cols)
+  S <- list()
+  cxn <- c(0,cumsum(sub.cols))
+  if (nsc>1) for (j in 1:(nsc-1)) {
+    dd <- rep(0,ncol(X));dd[(cxn[j]+1):cxn[j+1]] <- 1
+    S[[j]] <- diag(dd)
+  }
+
+  ## Create identifiability constraint. Key feature is that it 
+  ## only affects the unpenalized parameters...
+  nup <- sum(sub.cols[2:nsc-1]) ## range space rank
+  if (is.null(C)) { ## if not null then already determined that constraint not needed
+    C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X)])),1,ncol(X))
+  }
+
+  object$X <- X
+  object$S <- S
+  object$C <- C ## really just in case a marginal has implied that no cons are needed
+  object$df <- ncol(X)
+  object$null.space.dim <- sub.cols[nsc] ## penalty null space rank 
+  object$rank <- sub.cols[1:(nsc-1)] ## ranks of individual penalties
+  object$P <- Pm
+  class(object)<-"t2.smooth"
+  object
+} ## end of smooth.construct.t2.smooth.spec
+
+Predict.matrix.t2.smooth <- function(object,data)
+## the prediction method for a t2 tensor product smooth
+{ m <- length(object$margin)
+  X <- list()
+  rank <- rep(0,m)
+  for (i in 1:m) { 
+    term <- object$margin[[i]]$term
+    dat <- list()
+    for (j in 1:length(term)) dat[[term[j]]] <- data[[term[j]]]
+    X[[i]]<-Predict.matrix(object$margin[[i]],dat)%*%object$P[[i]]
+    rank[i] <-  object$margin[[i]]$rank
+  }
+  T <- t2.model.matrix(X,rank)
+  T
+} ## end of Predict.matrix.t2.smooth
+
+
+
 
 ##########################################################
 ## Thin plate regression splines (tprs) methods start here
@@ -1467,28 +1681,61 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     sml <- list(sm)
   }
 
-  
-  ## absorb constraints.....
+  ###########################
+  ## absorb constraints.....#
+  ###########################
+
   if (absorb.cons)
   { k<-ncol(sm$X)
     if (is.matrix(sm$C)) {
       j<-nrow(sm$C)
       if (j>0) # there are constraints
-      { qrc<-qr(t(sm$C))
-        for (i in 1:length(sml)) { ## loop through smooth list
-          if (length(sm$S)>0)
-          for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
-          { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
-            sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,])
-          }
-          sml[[i]]$X<-t(qr.qy(qrc,t(sml[[i]]$X))[(j+1):k,])
-          attr(sml[[i]],"qrc") <- qrc
-          attr(sml[[i]],"nCons") <- j;
-          sml[[i]]$C <- NULL
-          sml[[i]]$rank <- pmin(sm$rank,k-j)
-          sml[[i]]$df <- sml[[i]]$df - j
-          ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
-        } ## end smooth list loop
+      { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of zero columnd in C
+        nx <- length(indi)
+        if (nx<ncol(sm$C)) { ## then some parameters are completely constraint free
+          nc <- j ## number of constraints
+          nz <- nx-nc   ## reduced null space dimension
+          qrc <- qr(t(sm$C[,indi,drop=FALSE])) ## gives constraint null space for constrained only
+          for (i in 1:length(sml)) { ## loop through smooth list
+            if (length(sm$S)>0)
+            for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
+            { ZSZ <- sml[[i]]$S[[l]]
+              ZSZ[indi[1:nz],]<-qr.qty(qrc,sml[[i]]$S[[l]][indi,])[(nc+1):nx,] 
+              ZSZ <- ZSZ[-indi[(nz+1):nx],]   
+              ZSZ[,indi[1:nz]]<-t(qr.qty(qrc,t(ZSZ[,indi]))[(nc+1):nx,])
+              sml[[i]]$S[[l]] <- ZSZ[,-indi[(nz+1):nx]]  ## Z'SZ
+
+              ## ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
+              ## sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
+            }
+            sml[[i]]$X[,indi[1:nz]]<-t(qr.qty(qrc,t(sml[[i]]$X[,indi]))[(nc+1):nx,])
+            sml[[i]]$X <- sml[[i]]$X[,-indi[(nz+1):nx]]
+            ## sml[[i]]$X<-t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
+            attr(sml[[i]],"qrc") <- qrc
+            attr(sml[[i]],"nCons") <- j;
+            attr(sml[[i]],"indi") <- indi ## index of constrained parameters
+            sml[[i]]$C <- NULL
+            sml[[i]]$rank <- pmin(sm$rank,k-j)
+            sml[[i]]$df <- sml[[i]]$df - j
+            ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
+          } ## end smooth list loop
+        } else { ## full null space created
+          qrc<-qr(t(sm$C)) 
+          for (i in 1:length(sml)) { ## loop through smooth list
+            if (length(sm$S)>0)
+            for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
+            { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
+              sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
+            }
+            sml[[i]]$X<-t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
+            attr(sml[[i]],"qrc") <- qrc
+            attr(sml[[i]],"nCons") <- j;
+            sml[[i]]$C <- NULL
+            sml[[i]]$rank <- pmin(sm$rank,k-j)
+            sml[[i]]$df <- sml[[i]]$df - j
+            ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
+          } ## end smooth list loop
+        } # end full null space version of constraint
       } else { ## no constraints
         for (i in 1:length(sml)) {
          attr(sml[[i]],"qrc") <- "no constraints"
@@ -1549,178 +1796,6 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 } ## end of smoothCon
 
 
-smoothCon1 <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
-                      dataX = NULL,null.space.penalty = FALSE)
-## original version .... 
-## wrapper function which calls smooth.construct methods, but can then modify
-## the parameterization used. If absorb.cons==TRUE then a constraint free
-## parameterization is used. 
-## Handles `by' variables, and summation convention.
-## Note that `data' must be a data.frame or model.frame, unless n is provided explicitly, 
-## in which case a list will do.
-## If present dataX specifies the data to be used to set up the model matrix, given the 
-## basis set up using data (but n same for both).
-{ sm <- smooth.construct2(object,data,knots)
-  if (!is.null(attr(sm,"qrc"))) warning("smooth objects should not have a qrc attribute.")
- 
- 
-  ## automatically produce centering constraint...
-  ## must be done here on original model matrix to ensure same
-  ## basis for all `id' linked terms
-  if (is.null(sm$C)) {
-    sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
-    conSupplied <- FALSE
-  } else conSupplied <- TRUE
-
-  ## set df fields (pre-constraint)...
-  if (is.null(sm$df)) sm$df <- sm$bs.dim
-
-  ## automatically discard penalties for fixed terms...
-  if (!is.null(object$fixed)&&object$fixed) {
-    sm$S <- NULL
-  }
-
-  ## The following is intended to make scaling `nice' for better gamm performance.
-  ## Note that this takes place before any resetting of the model matrix, and 
-  ## any `by' variable handling. From a `gamm' perspective this is not ideal, 
-  ## but to do otherwise would mess up the meaning of smoothing parameters
-  ## sufficiently that linking terms via `id's would not work properly (they 
-  ## would have the same basis, but different penalties)
-  if (scale.penalty && length(sm$S)>0 && is.null(sm$no.rescale)) # then the penalty coefficient matrix is rescaled
-  {  maXX <- mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
-      for (i in 1:length(sm$S)) {
-        maS <- mean(abs(sm$S[[i]]))
-        sm$S[[i]] <- sm$S[[i]] * maXX / maS
-      }
-  } 
-
-  ## check whether different data to be used for basis setup
-  ## and model matrix... 
-  if (!is.null(dataX)) sm$X <- Predict.matrix2(sm,dataX) 
-
-  ## check whether smooth called with matrix argument
-  if (nrow(sm$X)!=n) matrixArg <- TRUE else matrixArg <- FALSE
-  
-  offs <- NULL
-  ## pick up "by variables" now...
-  if (object$by!="NA"&&is.null(sm$by.done))
-  { if (is.null(dataX)) by <- get.var(object$by,data) 
-    else by <- get.var(object$by,dataX)
-    if (is.null(by)) stop("Can't find by variable")
-    offs <- attr(sm$X,"offset")
-    if (is.factor(by)) { 
-      if (matrixArg) stop("factor `by' variables can not be used with matrix arguments.")
-      sml <- list()
-      lev <- levels(by)
-      for (j in 1:length(lev)) {
-        sml[[j]] <- sm  ## replicate smooth for each factor level
-        by.dum <- as.numeric(lev[j]==by)
-        sml[[j]]$X <- by.dum*sm$X  ## multiply model matrix by dummy for level
-        sml[[j]]$by.level <- lev[j] ## store level
-        sml[[j]]$label <- paste(sm$label,":",object$by,lev[j],sep="") 
-        if (!is.null(offs)) {
-          attr(sml[[j]]$X,"offset") <- offs*by.dum
-        }
-      }
-    } else {
-      sml <- list(sm)
-      if (length(by)!=nrow(sm$X)) stop("`by' variable must be same dimension as smooth arguments")
-      
-      sml[[1]]$X <- as.numeric(by)*sm$X
-      sml[[1]]$label <- paste(sm$label,":",object$by,sep="") 
-      if (!is.null(offs)) {
-        attr(sml[[1]]$X,"offset") <- offs*as.numeric(by)
-      }
-      ## test for cases where no centring constraint on the smooth is needed. 
-      if (!conSupplied) {
-        if (matrixArg) {
-          q <- nrow(sml[[1]]$X)/n
-          L1 <- matrix(by,n,q)%*%rep(1,q)
-          if (sd(L1)>mean(L1)*.Machine$double.eps*1000) sml[[1]]$C <- sm$C <- matrix(0,0,1) 
-          else sml[[1]]$meanL1 <- mean(L1) ## store mean of L1 for use when adding intecept variability
-        } else { ## numeric `by' -- constraint only needed if constant
-          if (sd(by)>mean(by)*.Machine$double.eps*1000) sml[[1]]$C <- sm$C <- matrix(0,0,1)   
-        }
-      } ## end of constraint removal
-    }
-  } else {
-    sml <- list(sm)
-  }
-
-  ## If the smooth had matrix arguments with `q' columns then the model matrix
-  ## is currently `q' model matrices stacked on top of each other which now
-  ## need to be summed...
-  if (matrixArg) {
-    q <- nrow(sml[[1]]$X)/n ## note: can't get here if `by' a factor
-    ind <- 1:n 
-    X <- sml[[1]]$X[ind,]
-    for (i in 2:q) {
-      ind <- ind + n
-      X <- X + sml[[1]]$X[ind,]
-    }
-    sml[[1]]$X <- X
-    if (!is.null(offs)) { ## deal with any term specific offset (i.e. sum it too)
-      offs <- attr(sml[[1]]$X,"offset") ## by variable multiplied version
-      ind <- 1:n 
-      offX <- offs[ind,]
-      for (i in 2:q) {
-        ind <- ind + n
-        offX <- offX + offs[ind,]
-      }
-      attr(sml[[1]]$X,"offset") <- offX
-    } ## end of term specific offset handling
-  }
-  
-  ## absorb constraints.....
-  if (absorb.cons)
-  { k<-ncol(sm$X)
-    j<-nrow(sm$C)
-    if (j>0) # there are constraints
-    { qrc<-qr(t(sm$C))
-      for (i in 1:length(sml)) { ## loop through smooth list
-        if (length(sm$S)>0)
-        for (l in 1:length(sm$S)) # tensor product terms have > 1 penalty 
-        { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
-          sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,])
-        }
-        sml[[i]]$X<-t(qr.qy(qrc,t(sml[[i]]$X))[(j+1):k,])
-        attr(sml[[i]],"qrc") <- qrc
-        attr(sml[[i]],"nCons") <- j;
-        sml[[i]]$C <- NULL
-        sml[[i]]$rank <- pmin(sm$rank,k-j)
-        sml[[i]]$df <- sml[[i]]$df - j
-        ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
-     } ## end smooth list loop
-   } else { ## no constraints
-     for (i in 1:length(sml)) {
-       attr(sml[[i]],"qrc") <- "no constraints"
-       attr(sml[[i]],"nCons") <- 0;
-     }
-   } ## end else 
-  } else for (i in 1:length(sml)) attr(sml[[i]],"qrc") <-NULL ## no absorption
-
-  ## The idea here is that term selection can be accomplished as part of fitting 
-  ## by applying penalties to the null space of the penalty... 
-
-  if (null.space.penalty) { ## then an extra penalty on the un-penalized space should be added 
-    St <- sml[[1]]$S[[1]]
-    if (length(sml[[1]]$S)>1) for (i in 1:length(sml[[1]]$S)) St <- St + sml[[1]]$S[[i]]
-    es <- eigen(St,symmetric=TRUE)
-    ind <- es$values<max(es$values)*.Machine$double.eps^.66
-    if (sum(ind)) { ## then there is an unpenalized space remaining
-      U <- es$vectors[,ind,drop=FALSE]
-      Sf <- U%*%t(U) ## penalty for the unpenalized components
-      M <- length(sm$S)
-      for (i in 1:length(sml)) {
-        sml[[i]]$S[[M+1]] <- Sf
-        sml[[i]]$rank[M+1] <- sum(ind)
-      }
-    }
-  }
-
-  sml
-}
-
 
 
 PredictMat <- function(object,data,n=nrow(data))
@@ -1761,13 +1836,29 @@ PredictMat <- function(object,data,n=nrow(data))
     if (j>0) { ## there were constraints to absorb - need to untransform
       k<-ncol(X)
       if (inherits(qrc,"qr")) {
-        if (sum(is.na(X))) {
-          ind <- !is.na(rowSums(X))
-          X1 <- t(qr.qy(qrc,t(X[ind,]))[(j+1):k,])
-          X <- matrix(NA,nrow(X),ncol(X1))
-          X[ind,] <- X1
-        } else {
-          X <- t(qr.qy(qrc,t(X))[(j+1):k,])
+        indi <- attr(object,"indi") ## index of constrained parameters
+        if (is.null(indi)) {
+          if (sum(is.na(X))) {
+            ind <- !is.na(rowSums(X))
+            X1 <- t(qr.qty(qrc,t(X[ind,]))[(j+1):k,]) ## XZ
+            X <- matrix(NA,nrow(X),ncol(X1))
+            X[ind,] <- X1
+          } else {
+            X <- t(qr.qty(qrc,t(X))[(j+1):k,])
+          }
+        } else { ## only some parameters are subject to constraint
+          nx <- length(indi)
+          nc <- j;nz <- nx - nc
+          if (sum(is.na(X))) {
+            ind <- !is.na(rowSums(X))
+            X[,indi[1:nz]]<-t(qr.qty(qrc,t(X[,indi]))[(nc+1):nx,])
+            X1 <- X[,-indi[(nz+1):nx]]
+            X <- matrix(NA,nrow(X),ncol(X1))
+            X[ind,] <- X1
+          } else { 
+            X[,indi[1:nz]]<-t(qr.qty(qrc,t(X[,indi]))[(nc+1):nx,])
+            X <- X[,-indi[(nz+1):nx]]
+          }
         }
       } else if (qrc>0) { ## simple set to zero constraint
         X <- X[,-qrc]
@@ -1781,5 +1872,5 @@ PredictMat <- function(object,data,n=nrow(data))
   if (!is.null(del.index)) X <- X[,-del.index]
   attr(X,"offset") <- offset
   X
-}
+} ## end of PredictMat
 

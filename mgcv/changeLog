@@ -7,8 +7,15 @@
 
 * gam.check modified to use qq.gam for QQ plots of deviance residuals.
 
+* bam (and bam.update) can now employ an AR1 error model in the 
+  guassian-identity case. 
+
 * bam.update modified for faster updates (initial scale parameter 
   estimate now supplied in RE/ML case)
+
+* Absorption of identifiability constraints modified to allow 
+  constraints that only affect some parameters to leave rest of 
+  parameters completely unchanged.  
 
 * rTweedie added for quick simulation of Tweedie random deviates 
   when 1<p<2.
