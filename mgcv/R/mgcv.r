@@ -216,7 +216,7 @@ interpret.gam <- function (gf)
 # 1. a model formula for the parametric part: pf (and pfok indicating whether it has terms)
 # 2. a list of descriptors for the smooths: smooth.spec
 { p.env<-environment(gf) # environment of formula
-  tf<-terms.formula(gf,specials=c("s","te")) # specials attribute indicates which terms are smooth
+  tf<-terms.formula(gf,specials=c("s","te","t2")) # specials attribute indicates which terms are smooth
  
   terms<-attr(tf,"term.labels") # labels of the model terms 
   nt<-length(terms) # how many terms?
@@ -226,8 +226,9 @@ interpret.gam <- function (gf)
     pf<-rf<-paste(response,"~",sep="")
   }
   else pf<-rf<-"~"
-  sp<-attr(tf,"specials")$s     # array of indices of smooth terms 
-  tp<-attr(tf,"specials")$te    # indices of tensor product terms
+  sp <- attr(tf,"specials")$s     # array of indices of smooth terms 
+  tp <- attr(tf,"specials")$te    # indices of tensor product terms
+  t2p <- attr(tf,"specials")$t2   # indices of type 2 tensor product terms
   off<-attr(tf,"offset") # location of offset in formula
   ## have to translate sp,tp so that they relate to terms,
   ## rather than elements of the formula (26/11/05)
@@ -239,26 +240,32 @@ interpret.gam <- function (gf)
   if (length(tp)>0) for (i in 1:length(tp)) {
     ind <- (1:nt)[as.logical(vtab[tp[i],])]
     tp[i] <- ind # the term that smooth relates to
+  } 
+  if (length(t2p)>0) for (i in 1:length(t2p)) {
+    ind <- (1:nt)[as.logical(vtab[t2p[i],])]
+    t2p[i] <- ind # the term that smooth relates to
   } ## re-referencing is complete
 
-  ns<-length(sp)+length(tp) # number of smooths
-  k<-kt<-ks<-kp<-1 # counters for terms in the 2 formulae
+  ns<-length(sp)+length(tp)+length(t2p) # number of smooths
+  k<-kt<-kt2<-ks<-kp<-1 # counters for terms in the 2 formulae
   len.sp <- length(sp)
   len.tp <- length(tp)
+  len.t2p <- length(t2p)
 
   smooth.spec<-list()
   if (nt)
   for (i in 1:nt) # work through all terms
-  { if (k<=ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i))) # it's a smooth
+  { if (k<=ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) # it's a smooth
     { st<-eval(parse(text=terms[i]),envir=p.env)
       smooth.spec[[k]]<-st
-      if (ks<=len.sp&&sp[ks]==i) ks<-ks+1  # counts s() terms
-      else kt<-kt+1              # counts te() terms
-      k<-k+1     # counts smooth terms 
+      if (ks<=len.sp&&sp[ks]==i) ks <- ks + 1 else # counts s() terms
+      if (kt<=len.tp&&tp[kt]==i) kt <- kt + 1 else # counts te() terms
+      kt2 <- kt2 + 1                           # counts t2() terms
+      k <- k+1      # counts smooth terms 
     } else          # parametric
     { if (kp>1) pf<-paste(pf,"+",terms[i],sep="") # add to parametric formula
       else pf<-paste(pf,terms[i],sep="")
-      kp<-kp+1    # counts parametric terms
+      kp <- kp+1    # counts parametric terms
     }
   }    
   if (!is.null(off)) # deal with offset

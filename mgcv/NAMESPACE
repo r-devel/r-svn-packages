@@ -41,7 +41,7 @@ export(anova.gam, bam, bam.update, cSplineDes,
        smooth.construct.re.smooth.spec,
        smooth.construct.ad.smooth.spec,
        summary.gam,sp.vcov,
-       te,tensor.prod.model.matrix,tensor.prod.penalties,
+       t2,te,tensor.prod.model.matrix,tensor.prod.penalties,
        Tweedie,uniquecombs, vcov.gam, vis.gam)
 
 importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors)
