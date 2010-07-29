@@ -327,7 +327,7 @@ function (stem = "", start, end, thin, quiet = FALSE)
 }
 
 "traceplot" <-
-function (x, smooth = TRUE, col = 1:6, type = "l", ylab = "", 
+function (x, smooth = FALSE, col = 1:6, type = "l", ylab = "", 
     ...) 
 {
   x <- mcmc.list(x)
