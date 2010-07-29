@@ -1,23 +1,29 @@
 \name{qq.gam}
 \alias{qq.gam}
-%- Also NEED an `\alias' for EACH other topic documented here.
 \title{QQ plots for gam model residuals}
-\description{ Takes a fitted \code{gam} object produced by \code{gam()} and produces QQ plots of its residuals (conditional 
-on the fitted model coefficients and scale parameter). If the model distributional assumptions are met then usually these plots should be close to a 
-straight line (although discrete data can yield marked random departures from this line). 
+\description{
+  Takes a fitted \code{gam} object produced by \code{gam()} and produces
+  QQ plots of its residuals (conditional on the fitted model
+  coefficients and scale parameter). If the model distributional
+  assumptions are met then usually these plots should be close to a
+  straight line (although discrete data can yield marked random
+  departures from this line). 
 }
 \usage{
-qq.gam(object,rep=0,level=.9,type="deviance",pch=".",rl.col=2,rep.col="gray80",...)
+qq.gam(object, rep=0, level=.9, 
+       type=c("deviance","pearson","response"),
+       pch=".", rl.col=2, rep.col="gray80", \dots)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{ 
 \item{object}{ a fitted \code{gam} object as produced by \code{gam()} (or a \code{glm} object).}
-\item{rep}{How many replicate datasets to generate to simulate quantiles of the residual distribution. 0 
-           results in an efficient simulation free method for direct calculation, if this is possible for the 
-object family. }
+\item{rep}{How many replicate datasets to generate to simulate quantiles
+  of the residual distribution.  \code{0} results in an efficient
+  simulation free method for direct calculation, if this is possible for
+  the object family.}
 \item{level}{If simulation is used for the quantiles, then reference intervals can be provided for the QQ-plot, this specifies the level. 
              0 or less for no intervals, 1 or more to simply plot the QQ plot for each replicate generated.}
-\item{type}{What sort of residuals should be plotted?}
+\item{type}{what sort of residuals should be plotted?  See
+  \code{\link{residuals.gam}}.}
 \item{pch}{plot character to use. 19 is good.}
 \item{rl.col}{color for the reference line on the plot.}
 \item{rep.col}{color for reference bands or replicate reference plots.}
@@ -119,9 +125,3 @@ plot(b,residuals=TRUE,pch=19,cex=.3)
 
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
-
-
-
-
-
-

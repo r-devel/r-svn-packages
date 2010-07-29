@@ -1,19 +1,24 @@
 \name{gam.check}
 \alias{gam.check}
-%- Also NEED an `\alias' for EACH other topic documented here.
 \title{Some diagnostics for a fitted gam model}
 \description{ Takes a fitted \code{gam} object produced by \code{gam()} and produces some diagnostic information
 about the fitting procedure and results. The default is to produce 4 residual
 plots, and some information about the convergence of the smoothness selection optimization.
 }
 \usage{
-gam.check(b,old.style=FALSE,...)
+gam.check(b, old.style=FALSE,
+          type=c("deviance","pearson","response"),
+          rep=0, level=.9, rl.col=2, rep.col="gray80", \dots)
 }
-%- maybe also `usage' for other objects documented here.
-\arguments{ 
-\item{b}{ a fitted \code{gam} object as produced by \code{gam()}.}
-\item{old.style}{If you want old fashioned plots, exactly as in Wood, 2006, set to \code{TRUE}.}
-\item{...}{extra graphics parameters to pass to plotting functions.}
+\arguments{
+  \item{b}{a fitted \code{gam} object as produced by \code{\link{gam}()}.}
+  \item{old.style}{If you want old fashioned plots, exactly as in Wood, 2006, set to \code{TRUE}.}
+  \item{type}{type of residuals, see \code{\link{residuals.gam}}, used in
+    all plots.}
+  \item{rep, level, rl.col, rep.col}{
+    arguments passed to \code{\link{qq.gam}()} when \code{old.style} is
+    false, see there.}
+  \item{\dots}{extra graphics parameters to pass to plotting functions.}
 }
 
 \value{A vector of reference quantiles for the residual distribution, if these can be computed.}

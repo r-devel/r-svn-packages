@@ -62,26 +62,31 @@ fix.family.rd <- function(fam) {
 }
 
 
-qq.gam <- function(object,rep=0,level=.9,type="deviance",pch=".",rl.col=2,rep.col="gray80",...) {
+qq.gam <- function(object, rep=0, level=.9,
+                   type=c("deviance","pearson","response"),
+                   pch=".", rl.col=2, rep.col="gray80",...) {
 ## get deviance residual quantiles under good fit
-  if (!type%in%c("deviance","pearson","response")) type <- "deviance"
+  type <- match.arg(type)
   if (inherits(object,c("glm","gam"))) {
     if (is.null(object$sig2)) object$sig2 <- summary(object)$dispersion
   } else stop("object is not a glm or gam")
+  ## in case of NA & na.action="na.exclude", we need the "short" residuals:
+  object$na.action <- NULL
   D <- residuals(object,type=type)
   lim <- Dq <- NULL
   if (rep==0) { 
     fam <- fix.family.qf(object$family)
-    if (is.null(fam$qf)) rep <- 50 ## try simulation if quantile function not available
-    level=0
+    if (is.null(fam$qf))
+      rep <- 50 ## try simulation if quantile function not available
+    level <- 0
   }
-  if (rep>0) { ## simulate quantiles
+  if (rep > 0) { ## simulate quantiles
     fam <- fix.family.rd(object$family)
     if (!is.null(fam$rd)) {
       d <- rep(0,0)
       ## simulate deviates...
       for (i in 1:rep) { 
-        yr <- fam$rd(object$fitted,object$prior.weights,object$sig2)
+        yr <- fam$rd(object$fitted.values, object$prior.weights, object$sig2)
         #di <- fam$dev.resids(yr,object$fitted.values,object$prior.weights)^.5*
         #       sign(yr-object$fitted.values)
         object$y <- yr
@@ -89,7 +94,7 @@ qq.gam <- function(object,rep=0,level=.9,type="deviance",pch=".",rl.col=2,rep.co
         d <- c(d,sort(di))
       }
       n <- length(D)
-      Dq <- quantile(d,(1:n-.5)/n) 
+      Dq <- quantile(d,(1:n - .5)/n) 
     
       ## now get simulation limits on QQ plot
       dm <- matrix(d,length(Dq),rep)
@@ -114,7 +119,7 @@ qq.gam <- function(object,rep=0,level=.9,type="deviance",pch=".",rl.col=2,rep.co
 
   if (!is.null(Dq))  
   { qqplot(Dq,D,ylab=ylab,xlab="theoretical quantiles",ylim=range(c(lim,D)),
-           pch=pch,...);
+           pch=pch,...)
     abline(0,1,col=rl.col)
     if (!is.null(lim)) {
       if (level>=1) for (i in 1:rep) lines(Dq,dm[,i],col=rep.col) else {
@@ -129,17 +134,26 @@ qq.gam <- function(object,rep=0,level=.9,type="deviance",pch=".",rl.col=2,rep.co
 }
 
 
-gam.check <- function(b,old.style=FALSE,...)
+gam.check <- function(b, old.style=FALSE,
+		      type=c("deviance","pearson","response"), 
+		      ## arguments passed to qq.gam() {w/o warnings !}:
+		      rep=0, level=.9, rl.col=2, rep.col="gray80", ...)
 # takes a fitted gam object and produces some standard diagnostic plots
-{ if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))
+{
+  type <- match.arg(type)
+  resid <- residuals(b, type=type)
+  linpred <- napredict(b$na.action, b$linear.predictors)
+  if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))
   { old.par<-par(mfrow=c(2,2))
-    sc.name<-b$method
-    if (old.style) qqnorm(residuals(b),...) else
-    qq.gam(b,...)
-    plot(b$linear.predictors,residuals(b),main="Resids vs. linear pred.",
-         xlab="linear predictor",ylab="residuals",...);
-    hist(residuals(b),xlab="Residuals",main="Histogram of residuals",...);
-    plot(fitted(b),b$y,xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
+    if (old.style)
+      qqnorm(resid,...)
+    else
+      qq.gam(b, rep=rep, level=level, type=type, rl.col=rl.col, rep.col=rep.col, ...)
+    plot(linpred, resid,main="Resids vs. linear pred.",
+         xlab="linear predictor",ylab="residuals",...)
+    hist(resid,xlab="Residuals",main="Histogram of residuals",...)
+    plot(fitted(b), napredict(b$na.action, b$y),
+         xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
     
     ## now summarize convergence information 
     cat("\nMethod:",b$method,"  Optimizer:",b$optimizer)
@@ -153,7 +167,7 @@ gam.check <- function(b,old.style=FALSE,...)
         ev <- eigen(boi$hess)$values
         if (min(ev)>0) cat("\nHessian positive definite, ") else cat("\n")
         cat("eigenvalue range [",min(ev),",",max(ev),"].\n",sep="")
-      } else { ## just default print of information...
+      } else { ## just default print of information ..
         cat("\n");print(b$outer.info)
       }
     } else { ## no sp, perf iter or AM case
@@ -165,7 +179,7 @@ gam.check <- function(b,old.style=FALSE,...)
          
         if (!b$mgcv.conv$fully.converged)
         cat(" by steepest\ndescent step failure.\n") else cat(".\n")
-        cat("The RMS",sc.name,"score gradiant at convergence was",b$mgcv.conv$rms.grad,".\n")
+        cat("The RMS",b$method,"score gradiant at convergence was",b$mgcv.conv$rms.grad,".\n")
         if (b$mgcv.conv$hess.pos.def)
         cat("The Hessian was positive definite.\n") else cat("The Hessian was not positive definite.\n")
         cat("The estimated model rank was ",b$mgcv.conv$rank,
@@ -175,7 +189,7 @@ gam.check <- function(b,old.style=FALSE,...)
     cat("\n")
     par(old.par)
   } else ## probably a `gamm' `gam' object
-  plot(b$linear.predictor,residuals(b),xlab="linear predictor",ylab="residuals",...)
+  plot(linpred,resid,xlab="linear predictor",ylab="residuals",...)
 }
 
 plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
