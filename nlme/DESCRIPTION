@@ -12,6 +12,7 @@ Maintainer: R-core <R-core@R-project.org>
 Description: Fit and compare Gaussian linear and nonlinear mixed-effects models.
 Depends: graphics, stats, R (>= 2.4.0)
 Imports: lattice
+Suggests: Hmisc
 LazyLoad: yes
 LazyData: yes
 License: GPL (>= 2)
