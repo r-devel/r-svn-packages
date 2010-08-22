@@ -3,6 +3,8 @@
 
 1.6-3
 
+* mgcv-FAQ.Rd added.
+
 * qq.gam added to allow better checking of distribution of residuals.
 
 * gam.check modified to use qq.gam for QQ plots of deviance residuals.

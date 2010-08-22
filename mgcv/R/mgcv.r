@@ -617,12 +617,18 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   ## worked out...
   idx <- list() ## idx[[id]]$c contains index of first col in L relating to id
   L <- matrix(0,0,0)
-  sp.names <- rep("",0) ## need a list of names to identify sps in global sp array
+  lsp.names <- sp.names <- rep("",0) ## need a list of names to identify sps in global sp array
   if (m>0) for (i in 1:m) {
     id <- sm[[i]]$id
     ## get the L matrix for this smooth...
     length.S <- length(sm[[i]]$S)
     if (is.null(sm[[i]]$L)) Li <- diag(length.S) else Li <- sm[[i]]$L 
+     
+    if (length.S > 0) { ## there are smoothing parameters to name
+        if (length.S == 1) spn <- sm[[i]]$label else 
+          spn <- paste(sm[[i]]$label,1:length.S,sep="")
+    }
+
     ## extend the global L matrix...
     if (is.null(id)||is.null(idx[[id]])) { ## new `id'     
       if (!is.null(id)) { ## create record in `idx'
@@ -632,9 +638,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       L <- rbind(cbind(L,matrix(0,nrow(L),ncol(Li))),
                  cbind(matrix(0,nrow(Li),ncol(L)),Li))
       if (length.S > 0) { ## there are smoothing parameters to name
-        if (length.S == 1) spn <- sm[[i]]$label else 
-          spn <- paste(sm[[i]]$label,1:length.S,sep="")
         sp.names <- c(sp.names,spn) ## extend the sp name vector
+        lsp.names <- c(lsp.names,spn) ## extend full.sp name vector
       }
     } else { ## it's a repeat id => shares existing sp's
       L0 <- matrix(0,nrow(Li),ncol(L))
@@ -643,6 +648,9 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       }
       L0[,idx[[id]]$c:(idx[[id]]$c+ncol(Li)-1)] <- Li
       L <- rbind(L,L0)
+      if (length.S > 0) { ## there are smoothing parameters to name
+        lsp.names <- c(lsp.names,spn) ## extend full.sp name vector
+      }
     }
   }
 
@@ -812,6 +820,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   if (ncol(L)==nrow(L)&&!sum(L!=diag(ncol(L)))) L <- NULL ## it's just the identity
 
   G$L <- L;G$lsp0 <- lsp0
+  names(G$lsp0) <- lsp.names ## names of all smoothing parameters (not just underlying)
 
   # deal with constraints 
    
@@ -1448,7 +1457,10 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object <- estimate.gam(G,method,optimizer,control,in.out,scale,gamma,...)
 
   
-  if (!is.null(G$L)) object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
+  if (!is.null(G$L)) { 
+    object$full.sp <- as.numeric(exp(G$L%*%log(object$sp)+G$lsp0))
+    names(object$full.sp) <- names(G$lsp0)
+  }
   names(object$sp) <- names(G$sp)
   object$formula<-G$formula
   object$var.summary <- G$var.summary 
@@ -2532,19 +2544,37 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
   if (length(x$sp)==0) return
   if (rescale) { ## undo any rescaling of S[[i]] that may have been done
     k <- 1;m <- length(x$smooth)
-    idx <- rep("",0)
+    if (is.null(x$full.sp)) kf <- -1 else kf <- 1 ## place holder in full sp vector
+    idx <- rep("",0) ## vector of ids used
+    idxi <- rep(0,0) ## indexes ids in smooth list
     if (m>0) for (i in 1:m) { ## loop through all smooths
       if (!is.null(x$smooth[[i]]$id)) { ## smooth has an id
         if (x$smooth[[i]]$id%in%idx) { 
           ok <- FALSE ## id already dealt with --- ignore smooth
         } else {
           idx <- c(idx,x$smooth[[i]]$id) ## add id to id list
+          idxi <- c(idxi,i) ## so smooth[[idxi[k]]] is prototype for idx[k]
           ok <- TRUE
         } 
       } else { ok <- TRUE} ## no id so proceed
       if (ok) for (j in 1:length(x$smooth[[i]]$S.scale)) {
-        x$sp[k] <- x$sp[k] / x$smooth[[i]]$S.scale[j]
-        k <- k + 1
+        if (x$smooth[[i]]$sp[j]<0) { ## sp not supplied
+          x$sp[k] <- x$sp[k] / x$smooth[[i]]$S.scale[j]
+          k <- k + 1
+          if (kf>0) {
+            x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[i]]$S.scale[j]
+            kf <- kf + 1
+          }
+        } else { ## sp supplied
+          x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[i]]$S.scale[j]
+          kf <- kf + 1
+        }
+      } else { ## this id already dealt with, but full.sp not scaled yet 
+        ii <- idxi[idx%in%x$smooth[[i]]$id] ## smooth prototype
+        for (j in 1:length(x$smooth[[ii]]$S.scale)) {
+          x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[ii]]$S.scale[j]
+          kf <- kf + 1
+        }
       }
     } ## finished rescaling
   }
@@ -2552,6 +2582,10 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
   vc <- c(scale/x$sp)
   names(vc) <- names(x$sp)
 
+  if (is.null(x$full.sp)) vc.full <- NULL else { 
+    vc.full <- c(scale/x$full.sp)
+    names(vc.full) <- names(x$full.sp)
+  }
   ## If a Hessian exists, get CI's for variance components...
 
   if (x$method%in%c("ML","P-ML","REML","P-REML")&&!is.null(x$outer.info$hess)) {
@@ -2586,9 +2620,14 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
     cat(paste("Standard deviations and",conf.lev,"confidence intervals:\n\n"))
     print(res)
     cat("\nRank: ");cat(rank);cat("/");cat(ncol(H));cat("\n")
+    if (!is.null(vc.full)) { 
+      cat("\nAll smooth components:\n")
+      print(sqrt(vc.full))
+      res <- list(all=sqrt(vc.full),vc=res)
+    }
     invisible(res)
   } else {
-    return(vc)
+    if (is.null(vc.full)) return(sqrt(vc)) else return(list(vc=sqrt(vc),all=sqrt(vc.full)))
   } 
 } ## end of gam.vcomp
 
