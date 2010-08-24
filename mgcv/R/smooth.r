@@ -711,6 +711,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   object$X <- X
   object$S <- S
   object$C <- C 
+  object$Cp <- matrix(colSums(X),1,ncol(X)) ## alternative constraint for prediction
   object$df <- ncol(X)
   
   object$rank <- sub.cols[1:nsc] ## ranks of individual penalties
@@ -1811,10 +1812,23 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 
   if (absorb.cons)
   { k<-ncol(sm$X)
-    if (is.matrix(sm$C)) {
+
+    ## If Cp is present it denotes a constraint to use in place of the fitting constraints
+    ## when predicting. 
+
+    if (!is.null(sm$Cp)&&is.matrix(sm$Cp)) { ## identifiability cons different for prediction
+      pj <- nrow(sm$Cp)
+      qrcp <- qr(t(sm$Cp)) 
+      for (i in 1:length(sml)) { ## loop through smooth list
+        sml[[i]]$Xp <- t(qr.qty(qrcp,t(sml[[i]]$X))[(pj+1):k,]) ## form XZ
+        sml[[i]]$Cp <- NULL 
+      }
+    } else qrcp <- NULL ## rest of Cp processing is after C processing
+
+    if (is.matrix(sm$C)) { ## the fit constraints
       j<-nrow(sm$C)
       if (j>0) # there are constraints
-      { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of zero columnd in C
+      { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of zero columns in C
         nx <- length(indi)
         if (nx<ncol(sm$C)) { ## then some parameters are completely constraint free
           nc <- j ## number of constraints
@@ -1851,13 +1865,15 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
             { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
               sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
             }
-            sml[[i]]$X<-t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
+            sml[[i]]$X <- t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
             attr(sml[[i]],"qrc") <- qrc
             attr(sml[[i]],"nCons") <- j;
             sml[[i]]$C <- NULL
             sml[[i]]$rank <- pmin(sm$rank,k-j)
             sml[[i]]$df <- sml[[i]]$df - j
             ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
+            ## and qr.qy(attr(sm,"qrc"),rbind(rep(0,length(b)),diag(length(b)))) gives 
+            ## null space basis Z, such that Zb are the original params, subject to con. 
           } ## end smooth list loop
         } # end full null space version of constraint
       } else { ## no constraints
@@ -1895,6 +1911,17 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
           ## so insert an extra 0 at position sm$C in coef vector to get original
         } ## end smooth list loop       
     }
+   
+    ## finish of treatment of case where prediction constraints are different
+    if (!is.null(qrcp)) {
+      for (i in 1:length(sml)) { ## loop through smooth list
+        attr(sml[[i]],"qrc") <- qrcp
+        if (pj!=attr(sml[[i]],"nCons")) stop("Number of prediction and fit constraints must match")
+        attr(sml[[i]],"indi") <- NULL ## no index of constrained parameters for Cp
+      }
+    }
+
+
   } else for (i in 1:length(sml)) attr(sml[[i]],"qrc") <-NULL ## no absorption
 
   ## The idea here is that term selection can be accomplished as part of fitting 

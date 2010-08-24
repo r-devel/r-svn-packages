@@ -101,11 +101,15 @@ if the term is to be left un-penalized.}
 
 The following items may be added:
 
-\item{C}{The matrix defining any constraints on the term. If this is \code{NULL} then
+\item{C}{The matrix defining any identifiability constraints on the term, for use when fitting. If this is \code{NULL} then
 \code{smoothCon} will add an identifiability constraint that each term should
 sum to zero over the covariate values. Set to a zero row matrix if no
 constraints are required. Note that a supplied \code{C} is never ignored, even if any
 \code{by} variables of a smooth imply that no constraint is actually needed. }
+
+\item{Cp}{An optional matrix supplying alternative identifiability constraints for use when predicting. By default the 
+fitting constrants are used. This option is useful when some sort of simple sparse constraint is required for fitting, but the 
+usual sum-to-zero constraint is required for prediction so that, e.g. the CIs for model components are as narrow as possible. }
 
 \item{no.rescale}{if this is non-NULL then the penalty coefficient matrix of the smooth will not be 
 rescaled for enhaced numerical stability (rescaling is the default, because \code{\link{gamm}} requires it). 

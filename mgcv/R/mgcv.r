@@ -300,10 +300,11 @@ interpret.gam <- function (gf)
 }
 
 
-fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5)
+fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0)
 # model matrix X2 may be linearly dependent on X1. This 
 # routine finds which columns of X2 should be zeroed to 
-# fix this.
+# fix this. If rank.def>0 then it is taken as the known degree 
+# of dependence of X2 on X1 and tol is ignored.
 { qr1 <- qr(X1,LAPACK=TRUE)
   R11 <- abs(qr.R(qr1)[1,1])
   r<-ncol(X1);n<-nrow(X1)
@@ -311,10 +312,11 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5)
   qr2 <- qr(QtX2,LAPACK=TRUE)
   R <- qr.R(qr2)
   # now final diagonal block of R may be zero, indicating rank 
-  # deficiency. 
-  r0<-r<-nrow(R)
-  while (mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1
-  r0<-r0+1
+  # deficiency.
+  r0 <- r <- nrow(R)
+  if (rank.def > 0 && rank.def <= nrow(R)) r0 <- r - rank.def else ## degree of rank def known
+    while (mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
+  r0 <- r0 + 1
   if (r0>r) return(NULL) else
   qr2$pivot[r0:r] # the columns of X2 to zero in order to get independence
 }
@@ -394,6 +396,14 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5)
           }
           sm[[i]]$df <- ncol(sm[[i]]$X)
           attr(sm[[i]],"del.index") <- ind
+          ## Now deal with case in which prediction constraints differ from fit constraints
+          if (!is.null(sm[[i]]$Xp)) { ## need to get deletion indeces under prediction parameterization
+            ## Note that: i) it doesn't matter what the identifiability con on X1 is
+            ##            ii) the degree of rank deficiency can't be changed by an identifiability con
+            ind <- fixDependence(X1,sm[[i]]$Xp,rank.def=length(ind)) 
+            sm[[i]]$Xp <- sm[[i]]$Xp[,-ind]
+            attr(sm[[i]],"del.index") <- ind ## over-writes original
+          }
         }
         sm[[i]]$vn <- NULL
       } ## end if
@@ -657,8 +667,11 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   ## at this stage, it is neccessary to impose any side conditions required
   ## for identifiability
-  if (m>0) sm<-gam.side(sm,X,tol=.Machine$double.eps^.5)
+  if (m>0) sm <- gam.side(sm,X,tol=.Machine$double.eps^.5)
 
+  ## create the model matrix...
+
+  Xp <- NULL ## model matrix under prediction constraints, if given
   if (m>0) for (i in 1:m) 
   { n.para<-ncol(sm[[i]]$X)
     # define which elements in the parameter vector this smooth relates to....
@@ -672,14 +685,28 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       else G$offset <- G$offset + Xoff
     }
     ## model matrix accumulation ...
-    X<-cbind2(X,sm[[i]]$X);sm[[i]]$X<-NULL
+    
+    ## alternative version under alternative constraint first (prediction only)
+    if (is.null(sm[[i]]$Xp)) {
+      if (!is.null(Xp)) Xp <- cbind2(Xp,sm[[i]]$X)
+    } else { 
+      if (is.null(Xp)) Xp <- X
+      Xp <- cbind2(Xp,sm[[i]]$Xp);sm[[i]]$Xp <- NULL
+    }
+    ## now version to use for fitting ...
+    X <- cbind2(X,sm[[i]]$X);sm[[i]]$X<-NULL
    
     G$smooth[[i]] <- sm[[i]]   
   }
-  G$cmX <- colMeans(X) ## useful for componentwise CI construction 
+  if (is.null(Xp)) {
+    G$cmX <- colMeans(X) ## useful for componentwise CI construction 
+  } else {
+    G$cmX <- colMeans(Xp)
+    G$P <- qr.coef(qr(Xp),X) ## transform from fit params to prediction params
+  }
   G$cmX[-(1:G$nsdf)] <- 0 ## zero the smooth parts here 
-  G$X<-X;rm(X)
-  n.p<-ncol(G$X) 
+  G$X <- X;rm(X)
+  n.p <- ncol(G$X) 
   # deal with penalties
 
 
@@ -1314,6 +1341,13 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   names(object$coefficients) <- term.names  # note - won't work on matrices!!
   names(object$edf) <- term.names
   names(object$edf1) <- term.names
+
+  if (!is.null(G$P)) {
+    object$coefficients <- G$P %*% object$coefficients
+    object$Vp <- G$P %*% object$Vp %*% t(G$P)
+    object$Ve <- G$P %*% object$Ve %*% t(G$P)
+  }
+
   object
 }
 
