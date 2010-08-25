@@ -340,11 +340,11 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,xt=NULL,id=NULL,sp=NUL
     if (!ok) k<-5^d 
   }
   # evaluate fx
-  if (sum(is.na(fx))||is.null(fx)) fx<-rep(FALSE,n.bases)
-  else if (length(fx)==1) fx<-rep(fx,n.bases)
-  else if (length(fx)!=n.bases)
+  if (sum(is.na(fx))||is.null(fx)) fx<-rep(FALSE,2^n.bases-1)
+  else if (length(fx)==1) fx<-rep(fx,2^n.bases-1)
+  else if (length(fx)!=2^n.bases-1)
   { warning("dimension of fx is wrong") 
-    fx<-rep(FALSE,n.bases)
+    fx<-rep(FALSE,2^n.bases-1)
   }
 
   # deal with `xt' extras list
@@ -645,6 +645,7 @@ t2.model.matrix <- function(Xm,rank) {
   X
 } ## end t2.model.matrix
 
+
 smooth.construct.t2.smooth.spec <- function(object,data,knots)
 ## the constructor for an ss-anova style tensor product basis object.
 ## needs to check `by' variable, to see if a centering constraint
@@ -705,7 +706,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   nup <- sum(sub.cols[1:nsc]) ## range space rank
   if (is.null(C)) { ## if not null then already determined that constraint not needed
     if (object$null.space.dim==0) C <- matrix(0,0,0) else ## no null space => no constraint
-    C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X)])),1,ncol(X)) ## constraint on null space
+    C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X),drop=FALSE])),1,ncol(X)) ## constraint on null space
   }
 
   object$X <- X
@@ -715,7 +716,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   object$df <- ncol(X)
   
   object$rank <- sub.cols[1:nsc] ## ranks of individual penalties
-  object$P <- Pm
+  object$P <- Pm ## map original marginal model matrices to reparameterized versions
   class(object)<-"t2.smooth"
   object
 } ## end of smooth.construct.t2.smooth.spec
@@ -736,8 +737,71 @@ Predict.matrix.t2.smooth <- function(object,data)
   T
 } ## end of Predict.matrix.t2.smooth
 
+split.t2.smooth <- function(object) {
+## function to split up a t2 smooth into a list of separate smooths
+  if (!inherits(object,"t2.smooth")) return(object) 
+  ind <- 1:ncol(object$S[[1]])                   ## index of penalty columns 
+  ind.para <- object$first.para:object$last.para ## index of coefficients 
+  sm <- list() ## list to receive split up smooths
+  sm[[1]] <- object ## stores everything in original object
+  St <- object$S[[1]]*0
+  for (i in 1:length(object$S)) { ## work through penalties
+    indi <- ind[diag(object$S[[i]])!=0] ## index of penalized coefs.
+    label <- paste(object$label,".frag",i,sep="")
+    sm[[i]] <- list(S = list(object$S[[i]][indi,indi]), ## the penalty
+                    first.para = min(ind.para[indi]),
+                    last.para = max(ind.para[indi]),
+                    fx=object$fx[i],fixed=object$fx[i],
+                    sp=object$sp[i],
+                    null.space.dim=0,
+                    df = length(indi),
+                    rank=object$rank[i],
+                    label=label,
+                    S.scale=object$S.scale[i] 
+     ) 
+     class(sm[[i]]) <- "t2.frag"
+     St <- St + object$S[[i]]
+   }
+   ## now deal with the null space (alternative would be to append this to one of penalized terms)
+   i <- length(object$S) + 1
+   indi <- ind[diag(St)==0] ## index of unpenalized elements
+   if (length(indi)) { ## then there are unplenalized elements
+      label <- paste(object$label,".frag",i,sep="")
+      sm[[i]] <- list(S = NULL, ## the penalty
+                    first.para = min(ind.para[indi]),
+                    last.para = max(ind.para[indi]),
+                    fx=TRUE,fixed=TRUE,
+                    null.space.dim=0,
+                    label = label,
+                    df = length(indi)
+     ) 
+     class(sm[[i]]) <- "t2.frag"
+   }
+   sm
+}
 
-
+expand.t2.smooths <- function(sm) {
+## takes a list that may contain `t2.smooth' objects, and expands it into 
+## a list of `smooths' with single penalties  
+  m <- length(sm)
+  not.needed <- TRUE
+  for (i in 1:m) if (inherits(sm[[i]],"t2.smooth")&&length(sm[[i]]$S)>1) { not.needed <- FALSE;break}
+  if (not.needed) return(NULL)
+  smr <- list() ## return list
+  k <- 0
+  for (i in 1:m) {
+    if (inherits(sm[[i]],"t2.smooth")) {
+      smi <- split.t2.smooth(sm[[i]])
+      comp.ind <- (k+1):(k+length(smi)) ## index of all fragments making up complete smooth
+      for (j in 1:length(smi)) {
+        k <- k + 1
+        smr[[k]] <- smi[[j]]
+        smr[[k]]$comp.ind <- comp.ind
+      }
+    } else { k <- k+1; smr[[k]] <- sm[[i]] } 
+  }
+  smr ## return expanded list
+}
 
 ##########################################################
 ## Thin plate regression splines (tprs) methods start here
@@ -1828,7 +1892,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     if (is.matrix(sm$C)) { ## the fit constraints
       j<-nrow(sm$C)
       if (j>0) # there are constraints
-      { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of zero columns in C
+      { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of non-zero columns in C
         nx <- length(indi)
         if (nx<ncol(sm$C)) { ## then some parameters are completely constraint free
           nc <- j ## number of constraints
@@ -1838,15 +1902,15 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
             if (length(sm$S)>0)
             for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
             { ZSZ <- sml[[i]]$S[[l]]
-              ZSZ[indi[1:nz],]<-qr.qty(qrc,sml[[i]]$S[[l]][indi,])[(nc+1):nx,] 
+              ZSZ[indi[1:nz],]<-qr.qty(qrc,sml[[i]]$S[[l]][indi,,drop=FALSE])[(nc+1):nx,] 
               ZSZ <- ZSZ[-indi[(nz+1):nx],]   
-              ZSZ[,indi[1:nz]]<-t(qr.qty(qrc,t(ZSZ[,indi]))[(nc+1):nx,])
-              sml[[i]]$S[[l]] <- ZSZ[,-indi[(nz+1):nx]]  ## Z'SZ
+              ZSZ[,indi[1:nz]]<-t(qr.qty(qrc,t(ZSZ[,indi,drop=FALSE]))[(nc+1):nx,])
+              sml[[i]]$S[[l]] <- ZSZ[,-indi[(nz+1):nx],drop=FALSE]  ## Z'SZ
 
               ## ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
               ## sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
             }
-            sml[[i]]$X[,indi[1:nz]]<-t(qr.qty(qrc,t(sml[[i]]$X[,indi]))[(nc+1):nx,])
+            sml[[i]]$X[,indi[1:nz]]<-t(qr.qty(qrc,t(sml[[i]]$X[,indi,drop=FALSE]))[(nc+1):nx,])
             sml[[i]]$X <- sml[[i]]$X[,-indi[(nz+1):nx]]
             ## sml[[i]]$X<-t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
             attr(sml[[i]],"qrc") <- qrc
@@ -1991,22 +2055,22 @@ PredictMat <- function(object,data,n=nrow(data))
         if (is.null(indi)) {
           if (sum(is.na(X))) {
             ind <- !is.na(rowSums(X))
-            X1 <- t(qr.qty(qrc,t(X[ind,]))[(j+1):k,]) ## XZ
+            X1 <- t(qr.qty(qrc,t(X[ind,,drop=FALSE]))[(j+1):k,,drop=FALSE]) ## XZ
             X <- matrix(NA,nrow(X),ncol(X1))
             X[ind,] <- X1
           } else {
-            X <- t(qr.qty(qrc,t(X))[(j+1):k,])
+            X <- t(qr.qty(qrc,t(X))[(j+1):k,,drop=FALSE])
           }
         } else { ## only some parameters are subject to constraint
           nx <- length(indi)
           nc <- j;nz <- nx - nc
           if (sum(is.na(X))) {
             ind <- !is.na(rowSums(X))
-            X[ind,indi[1:nz]]<-t(qr.qty(qrc,t(X[ind,indi]))[(nc+1):nx,])
+            X[ind,indi[1:nz]]<-t(qr.qty(qrc,t(X[ind,indi,drop=FALSE]))[(nc+1):nx,])
             X <- X[,-indi[(nz+1):nx]]
             X[!ind,] <- NA 
           } else { 
-            X[,indi[1:nz]]<-t(qr.qty(qrc,t(X[,indi]))[(nc+1):nx,])
+            X[,indi[1:nz]]<-t(qr.qty(qrc,t(X[,indi,drop=FALSE]))[(nc+1):nx,,drop=FALSE])
             X <- X[,-indi[(nz+1):nx]]
           }
         }

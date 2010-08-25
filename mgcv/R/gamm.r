@@ -366,6 +366,20 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   X <- G$X[,ind,drop=FALSE] # accumulate fixed effects into here
 
   xlab <- rep("",0)
+  
+  ## code to deal with t2 smooths, by splitting up into single terms
+  if (G$m) {
+    sme <- expand.t2.smooths(G$smooth)
+    if (is.null(sme)) G$original.smooth <- NULL else {
+      G$original.smooth <- G$smooth
+      G$smooth <- sme ## G's smooth list is replaced by expanded version, until some time after model fitting is complete
+      rm(sme)
+    }
+    ## G$m is always the length of G$smooth here...
+    G$m <- length(G$smooth)
+  }
+
+
   if (G$m)
   for (i in 1:G$m) 
   { sm <- G$smooth[[i]]
@@ -480,7 +494,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
  
   G$random<-random
   G$X<-X  ## fixed effects model matrix
-
+ 
   G
 }
 
@@ -1035,7 +1049,11 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
                  df.null=nrow(G$X),y=G$y,terms=gam.terms,pterms=pTerms,xlevels=G$xlevels,
                  contrasts=G$contrasts,assign=G$assign,na.action=attr(mf,"na.action"),
                  cmX=G$cmX,var.summary=G$var.summary,scale.estimated=TRUE)
-    # Transform  parameters back to the original space....
+
+    #######################################################
+    ## Transform  parameters back to the original space....
+    #######################################################
+
     bf<-as.numeric(ret$lme$coefficients$fixed)
     br<-as.numeric(unlist(ret$lme$coefficients$random))
     if (G$nsdf) p<-bf[1:G$nsdf] else p<-array(0,0)
@@ -1120,6 +1138,22 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     class(object)<-"gam"
     ##object$full.formula <- G$full.formula
 
+    ## Restore original smooth list, if it was split to deal with t2 terms...
+    if (!is.null(G$original.smooth)) {
+      object$smooth <- G$smooth <- G$original.smooth
+    }
+
+    ## If prediction parameterization differs from fit parameterization, transform now...
+    ## (important for t2 smooths, where fit constraint is not good for component wise 
+    ##  prediction s.e.s)
+
+    if (!is.null(G$P)) {
+      object$coefficients <- G$P %*% object$coefficients
+      object$Vp <- G$P %*% object$Vp %*% t(G$P) 
+      object$Ve <- G$P %*% object$Ve %*% t(G$P) 
+    }
+
+
     object$fitted.values <- predict.gam(object,type="response")
     object$residuals <- residuals(ret$lme) #as.numeric(G$y) - object$fitted.values
 
@@ -1141,6 +1175,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     else object$prior.weights <- weights 
     
     object$weights<-object$prior.weights   
+
 
     ret$gam<-object
     ret

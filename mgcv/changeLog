@@ -1,7 +1,25 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+ISSUES:
+
+* smoothCon does not deal properly with sparse constraints if the null 
+space dimension is less than 2. 
+
+* t2(x) results in an unpenalized smooth.
+
+* t2(x) + t2(z) + t2(x,z) fails with gamm4.
+
+
 1.6-3
+
+* `t2' alternative tensor product smooths added. These can be used with 
+  gamm4. 
+
+* Facilty provided to allow different identifiability constraints to be
+  used for fitting and prediction. This allows t2 smooths to be fitted
+  with a constraint that allows fitting by gamm4, but still perform 
+  inference with the componentwise optimal sum to zero constraints.
 
 * mgcv-FAQ.Rd added.
 
