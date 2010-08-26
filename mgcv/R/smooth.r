@@ -673,8 +673,11 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
     d[i]<-nrow(Sm[[i]])
     r[i]<-object$margin[[i]]$rank ## rank of penalty for this margin
     nr[i]<-object$margin[[i]]$null.space.dim
+   
     ## reparameterize so that penalty is identity (and scaling is nice)...
+   
     np <- nat.param(Xm[[i]],Sm[[i]],rank=r[i],type=2,unit.fnorm=TRUE)
+   
     Xm[[i]] <- np$X;
     dS <- rep(0,ncol(Xm[[i]]));dS[1:r[i]] <- 1;
     Sm[[i]] <- diag(dS) ## penalty now diagonal
@@ -686,15 +689,15 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   ## Create the model matrix...
 
   X <- t2.model.matrix(Xm,r)
-  sub.cols <- attr(X,"sub.cols")
+  sub.cols <- attr(X,"sub.cols") ## size (cols) of penalized sub blocks
 
   ## Create penalties, which are simple non-overlapping
   ## partial identity matrices...
 
-  nsc <- length(sub.cols) ## size (cols) of penalized sub-blocks of X
+  nsc <- length(sub.cols) ## number of penalized sub-blocks of X
   S <- list()
   cxn <- c(0,cumsum(sub.cols))
-  if (nsc>1) for (j in 1:nsc) {
+  if (nsc>0) for (j in 1:nsc) {
     dd <- rep(0,ncol(X));dd[(cxn[j]+1):cxn[j+1]] <- 1
     S[[j]] <- diag(dd)
   }
@@ -706,17 +709,20 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   nup <- sum(sub.cols[1:nsc]) ## range space rank
   if (is.null(C)) { ## if not null then already determined that constraint not needed
     if (object$null.space.dim==0) C <- matrix(0,0,0) else ## no null space => no constraint
+    if (object$null.space.dim==1) C <- ncol(X) else ## might as well use set to zero
     C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X),drop=FALSE])),1,ncol(X)) ## constraint on null space
   }
 
   object$X <- X
   object$S <- S
   object$C <- C 
+  if (is.matrix(C)&&nrow(C)==0) object$Cp <- NULL else
   object$Cp <- matrix(colSums(X),1,ncol(X)) ## alternative constraint for prediction
   object$df <- ncol(X)
   
   object$rank <- sub.cols[1:nsc] ## ranks of individual penalties
   object$P <- Pm ## map original marginal model matrices to reparameterized versions
+  if (m==1) object$fixed <- object$fx[1] ## needed by gamm/4
   class(object)<-"t2.smooth"
   object
 } ## end of smooth.construct.t2.smooth.spec

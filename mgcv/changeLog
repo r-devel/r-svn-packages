@@ -3,6 +3,8 @@
 
 ISSUES:
 
+* t2 fails with soap marginals
+
 * smoothCon does not deal properly with sparse constraints if the null 
 space dimension is less than 2. 
 

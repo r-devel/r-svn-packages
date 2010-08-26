@@ -383,7 +383,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   if (G$m)
   for (i in 1:G$m) 
   { sm <- G$smooth[[i]]
-    sm$X <- G$X[,sm$first.para:sm$last.para]
+    sm$X <- G$X[,sm$first.para:sm$last.para,drop=FALSE]
     if (inherits(sm,"tensor.smooth"))
     { if (sum(sm$fx)==length(sm$fx)) sm$fixed <- TRUE
       else 
