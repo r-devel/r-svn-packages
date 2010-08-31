@@ -635,8 +635,11 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     if (is.null(sm[[i]]$L)) Li <- diag(length.S) else Li <- sm[[i]]$L 
      
     if (length.S > 0) { ## there are smoothing parameters to name
-        if (length.S == 1) spn <- sm[[i]]$label else 
-          spn <- paste(sm[[i]]$label,1:length.S,sep="")
+       if (length.S == 1) spn <- sm[[i]]$label else {
+          Sname <- names(sm[[i]]$S)
+          if (is.null(Sname)) spn <- paste(sm[[i]]$label,1:length.S,sep="") else
+          spn <- paste(sm[[i]]$label,Sname,sep="")
+       }
     }
 
     ## extend the global L matrix...

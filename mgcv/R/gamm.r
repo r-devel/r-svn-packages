@@ -1167,7 +1167,9 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
         k<-k+1
       }
     }
-    names(object$coefficients)<-term.names  # note - won't work on matrices!!
+    names(object$coefficients) <- term.names  # note - won't work on matrices!!
+    names(object$edf) <- term.names
+    names(object$sp) <- names(G$sp)
     if (is.null(weights))
     object$prior.weights <- object$y*0+1
     else if (inherits(weights,"varFunc")) 

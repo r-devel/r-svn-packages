@@ -9,7 +9,7 @@ non-overlapping multiples of identity matrices (with some rows and columns zeroe
 }
 
 \usage{t2(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
-              xt=NULL,id=NULL,sp=NULL)
+              xt=NULL,id=NULL,sp=NULL,full=FALSE)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -68,6 +68,11 @@ length as the number of penalties for this smooth. Positive or zero elements are
 smoothing parameters. Negative elements signal auto-initialization. Over-rides values supplied in 
 \code{sp} argument to \code{\link{gam}}. Ignored by \code{gamm}.}
 
+\item{full}{If \code{TRUE} then there is a separate penalty for each combination of null space column 
+and range space. This gives strict invariance. If \code{FALSE} each combination of null space and 
+range space generates one penalty, but the coulmns of each null space basis are treated as one group. 
+The latter is more parsimonious, but does mean that invariance is only 
+achieved by an arbitrary rescaling of null space basis vectors.}
 
 }
 
