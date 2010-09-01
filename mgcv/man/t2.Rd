@@ -5,6 +5,8 @@
 \description{ Alternative to \code{\link{te}} for defining tensor product smooths
 in a \code{\link{gam}} formula. Results in a construction in which the penalties are 
 non-overlapping multiples of identity matrices (with some rows and columns zeroed). 
+The construction is analogous to Chong Gu's (2002) Smoothing Spline ANOVA, but using 
+low rank penalized regression spline marginals.  
 
 }
 
@@ -85,9 +87,18 @@ This reparameterization results in an unpenalized and a penalized subset of para
 The re-parameterized marginal bases are then combined to produce a basis for a single function of all the covariates 
 (dimension given by the product of the dimensions of the marginal bases). In this set up there are multiple 
 penalty matrices --- all zero, but for a mixture of a constant and zeros on the leading diagonal. No two penalties have 
-a non-zero entry in the same place. There are code{2^d-1} penalties, where \code{d} is the number of marginal bases.
-This is one penalty for each way of combining one  penalized or unpenalized subset of parameters from each marginal, 
-except that there is no penalty corresponding to the combination of all unpenalized subsets. 
+a non-zero entry in the same place. 
+
+Essentially the basis for the tensor product can be thought of as being constructed from a set of
+products of the penalized (range) or unpenalized (null) space bases of the marginal smooths. To construct one of the set, choose either the 
+null space or the range space from each marginal, and from these bases construct a product basis. The result is subject to a ridge 
+penalty (unless it happens to be a product entirely of marginal null spaces). The whole basis for the smooth is constructed from 
+all the different product bases that can be constructed in this way. The separately penalized components of the smooth basis each
+have an interpretation in terms of the ANOVA - decomposition of the term. See \code{\link{pen.edf}} for some further information.
+
+Note that there are two ways to construct the product. When \code{full=FALSE} then the null space bases are treated as a whole in each product,
+but when \code{full=TRUE} each null space column is treated as a separate null space. The latter results in more penalties, but is the strict 
+analog of the SS-ANOVA approach.
 
 Tensor product smooths are especially useful for representing functions of covariates measured in different units, 
 although they are typically not quite as nicely behaved as t.p.r.s. smooths for well scaled covariates.
@@ -186,8 +197,17 @@ n <- 500
 v <- runif(n);w<-runif(n);u<-runif(n)
 f <- test2(u,v,w)
 y <- f + rnorm(n)*0.2
-# tensor product of 2D thin plate regression spline and 1D cr spline
+
+## tensor product of 2D thin plate regression spline and 1D cr spline
+
 b <- gam(y~t2(v,w,u,k=c(30,5),d=c(2,1),bs=c("tp","cr")))
+
+## look at the edf per penalty. "rr" denotes interaction term 
+## (range space range space). "rn" is interaction of null space
+## for u with range space for v,w...
+pen.edf(b) 
+
+## plot results...
 op <- par(mfrow=c(2,2))
 vis.gam(b,cond=list(u=0),color="heat",zlim=c(-0.2,3.5))
 vis.gam(b,cond=list(u=.33),color="heat",zlim=c(-0.2,3.5))
@@ -195,6 +215,11 @@ vis.gam(b,cond=list(u=.67),color="heat",zlim=c(-0.2,3.5))
 vis.gam(b,cond=list(u=1),color="heat",zlim=c(-0.2,3.5))
 par(op)
 
+b <- gam(y~t2(v,w,u,k=c(30,5),d=c(2,1),bs=c("tp","cr"),full=TRUE),
+         method="ML")
+## more penalties now. numbers in labels like "r1" indicate which 
+## basis function of a null space is involved in the term. 
+pen.edf(b) 
 
 }
 

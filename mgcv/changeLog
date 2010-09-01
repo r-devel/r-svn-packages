@@ -3,20 +3,13 @@
 
 ISSUES:
 
-* t2 fails with soap marginals
-
-* smoothCon does not deal properly with sparse constraints if the null 
-space dimension is less than 2. 
-
-* t2(x) results in an unpenalized smooth.
-
-* t2(x) + t2(z) + t2(x,z) fails with gamm4.
-
-
 1.6-3
 
-* `t2' alternative tensor product smooths added. These can be used with 
+** `t2' alternative tensor product smooths added. These can be used with 
   gamm4. 
+
+* `pen.edf' function added to extract EDF associated with each penalty.
+   Useful with t2 smooths. 
 
 * Facilty provided to allow different identifiability constraints to be
   used for fitting and prediction. This allows t2 smooths to be fitted

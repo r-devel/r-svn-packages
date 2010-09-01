@@ -1,5 +1,5 @@
 
-##  R routines for the package mgcv (c) Simon Wood 2000-2009
+##  R routines for the package mgcv (c) Simon Wood 2000-2010
 ##  With contributions from Henric Nilsson
 
 
@@ -326,7 +326,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5)
 # works through a list of smooths, sm, aiming to identify nested or partially
 # nested terms, and impose identifiability constraints on them.
 # Xp is the parametric model matrix. It is needed in order to check whether
-# there is a constant (or equivalent) in the model. If there is then this needs 
+# there is a constant (or equivalent) in the model. If there is, then this needs 
 # to be included when working out side constraints, otherwise dependencies can be 
 # missed. 
 { m <- length(sm)
@@ -390,10 +390,22 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5)
         ## ... the columns to zero to ensure independence
         if (!is.null(ind)) { 
           sm[[i]]$X <- sm[[i]]$X[,-ind]
-          for (j in 1:length(sm[[i]]$S)) { 
+          ## work through list of penalty matrices, applying constraints...
+          for (j in length(sm[[i]]$S):1) { ## working down so that dropping is painless
             sm[[i]]$S[[j]] <- sm[[i]]$S[[j]][-ind,-ind]
-            sm[[i]]$rank[j] <- qr(sm[[i]]$S[[j]],tol=tol,LAPACK=FALSE)$rank
+            if (sum(sm[[i]]$S[[j]]!=0)==0) rank <- 0 else
+            rank <- qr(sm[[i]]$S[[j]],tol=tol,LAPACK=FALSE)$rank
+            if (rank == 0) { ## drop the penalty
+              sm[[i]]$rank <- sm[[i]]$rank[-j]
+              sm[[i]]$S[[j]] <- NULL
+              if (!is.null(sm[[i]]$L)) sm[[i]]$L <- sm[[i]]$L[-j,,drop=FALSE]
+            }
+          } ## penalty matrices finished
+          if (!is.null(sm[[i]]$L)) {
+            ind <- as.numeric(colSums(sm[[i]]$L!=0))!=0
+            sm[[i]]$L <- sm[[i]]$L[,ind,drop=FALSE] ## retain only those sps that influence something!
           }
+
           sm[[i]]$df <- ncol(sm[[i]]$X)
           attr(sm[[i]],"del.index") <- ind
           ## Now deal with case in which prediction constraints differ from fit constraints
@@ -622,6 +634,11 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   
   G$m <- m <- newm ## number of actual smooths
 
+  ## at this stage, it is neccessary to impose any side conditions required
+  ## for identifiability
+  if (m>0) sm <- gam.side(sm,X,tol=.Machine$double.eps^.5)
+
+
   ## The matrix, L, mapping the underlying log smoothing parameters to the
   ## log of the smoothing parameter multiplying the S[[i]] must be
   ## worked out...
@@ -668,9 +685,6 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   }
 
 
-  ## at this stage, it is neccessary to impose any side conditions required
-  ## for identifiability
-  if (m>0) sm <- gam.side(sm,X,tol=.Machine$double.eps^.5)
 
   ## create the model matrix...
 
@@ -2553,6 +2567,36 @@ print.anova.gam <- function(x, digits = max(3, getOption("digits") - 3), ...)
 }
 
 ## End of improved anova and summary code. 
+
+
+pen.edf <- function(x) {
+## obtains the edf associated with each penalty. That is the edf 
+## of the group of coefficients penalized by each penalty.
+## hard to interpret for overlapping penalties. brilliant for t2
+## smooths!
+  if (!inherits(x,"gam")) stop("not a gam object")
+  if (length(x$smooth)==0) return(NULL)
+  k <- 0 ## penalty counter
+  edf <- rep(0,0)
+  edf.name <- rep("",0)
+  for (i in 1:length(x$smooth)) { ## work through smooths
+    if (length(x$smooth[[i]]$S)>0) {
+      pind <- x$smooth[[i]]$first.para:x$smooth[[i]]$last.para ## range of coefs relating to this term
+      Snames <- names(x$smooth[[i]]$S)
+      if (is.null(Snames)) Snames <- as.character(1:length(x$smooth[[i]]$S))
+      if (length(Snames)==1) Snames <- ""
+      for (j in 1:length(x$smooth[[i]]$S)) {
+        ind <- rowSums(x$smooth[[i]]$S[[j]]!=0)!=0 ## index of penalized coefs (within pind)
+        k <- k+1
+        edf[k] <- sum(x$edf[pind[ind]]) 
+        edf.name[k] <- paste(x$smooth[[i]]$label,Snames[j],sep="")
+      }    
+    }
+  } ## finished all penalties
+  names(edf) <- edf.name
+  if (k==0) return(NULL)
+  edf
+} ## end of pen.edf
 
 
 

@@ -788,7 +788,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   
   object$rank <- sub.cols[1:nsc] ## ranks of individual penalties
   object$P <- Pm ## map original marginal model matrices to reparameterized versions
-  if (m==1) object$fixed <- object$fx[1] ## needed by gamm/4
+  object$fixed <- as.logical(sum(object$fx)) ## needed by gamm/4
   class(object)<-"t2.smooth"
   object
 } ## end of smooth.construct.t2.smooth.spec
