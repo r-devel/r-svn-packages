@@ -70,24 +70,26 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
   D <- er$values[1:rank] 
   ## X is the model matrix...
   X <- qr.Q(qrx,complete=FALSE)%*%er$vectors
-  ## P transroms parameters in this parameterization back to 
+  ## P transforms parameters in this parameterization back to 
   ## original parameters...
   P <- backsolve(R,er$vectors)
+
   if (type==1) { ## penalty should be identity...
     E <- c(sqrt(D),rep(1,ncol(X)-length(D)))
     P <- t(t(P)/E)
-    X <- t(t(X)/E)
+    X <- t(t(X)/E) ## X%*%diag(1/E)
     D <- D*0+1
   }
+
   if (unit.fnorm) { ## rescale so ||X||_f = 1 
     ind <- 1:rank
     scale <- 1/sqrt(mean(X[,ind]^2))
-    X[,ind] <- X[,ind]*scale;P[ind,] <- P[ind,]*scale
+    X[,ind] <- X[,ind]*scale;P[,ind] <- P[,ind]*scale
     D <- D * scale^2
     if (null.exists) {
       ind <- (rank+1):ncol(X)
       scalef <- 1/sqrt(mean(X[,ind]^2))
-      X[,ind] <- X[,ind]*scalef;P[ind,] <- P[ind,]*scalef
+      X[,ind] <- X[,ind]*scalef;P[,ind] <- P[,ind]*scalef
     }
   } 
   ## unpenalized always at the end...
@@ -740,7 +742,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
 
   ## Create the model matrix...
 
-  X <- t2.model.matrix(Xm,r,ful=object$full)
+  X <- t2.model.matrix(Xm,r,full=object$full)
 
   sub.cols <- attr(X,"sub.cols") ## size (cols) of penalized sub blocks
 
@@ -805,7 +807,7 @@ Predict.matrix.t2.smooth <- function(object,data)
     X[[i]]<-Predict.matrix(object$margin[[i]],dat)%*%object$P[[i]]
     rank[i] <-  object$margin[[i]]$rank
   }
-  T <- t2.model.matrix(X,rank)
+  T <- t2.model.matrix(X,rank,full=object$full)
   T
 } ## end of Predict.matrix.t2.smooth
 

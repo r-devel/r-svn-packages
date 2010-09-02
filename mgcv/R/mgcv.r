@@ -431,7 +431,7 @@ clone.smooth.spec <- function(specb,spec) {
  ## check dimensions same...
  if (specb$dim!=spec$dim) stop("`id' linked smooths must have same number of arguments") 
  ## Now start cloning...
- if (inherits(specb,"tensor.smooth.spec")) { ##`te' generated base smooth.spec
+ if (inherits(specb,c("tensor.smooth.spec","t2.smooth.spec"))) { ##`te' or `t2' generated base smooth.spec
     specb$term <- spec$term
     specb$label <- spec$label 
     specb$by <- spec$by
@@ -444,7 +444,7 @@ clone.smooth.spec <- function(specb,spec) {
          }
          specb$margin[[i]]$label <- ""
  
-      } else { ## second term was at least `te', so margin cloning is easy
+      } else { ## second term was at least `te'/`t2', so margin cloning is easy
         specb$margin[[i]]$term <- spec$margin[[i]]$term
         specb$margin[[i]]$label <- spec$margin[[i]]$label
         specb$margin[[i]]$xt <- spec$margin[[i]]$xt
@@ -594,6 +594,9 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
         
         ## add data for this term to the data list for basis setup...
         temp.term <- split$smooth.spec[[i]]$term
+       
+        ## note cbind deliberate in next line, as construction will handle matrix argument 
+        ## correctly... 
         for (j in 1:length(temp.term)) id.list[[id]]$data[[j]] <- cbind(id.list[[id]]$data[[j]],
                                                           get.var(temp.term[j],data,vecMat=FALSE))
        
