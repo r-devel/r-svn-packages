@@ -10,7 +10,7 @@ low rank penalized regression spline marginals.
 
 }
 
-\usage{t2(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
+\usage{t2(..., k=NA,bs="cr",m=NA,d=NA,by=NA,
               xt=NULL,id=NULL,sp=NULL,full=FALSE)
 }
 %- maybe also `usage' for other objects documented here.
@@ -49,9 +49,6 @@ In the factor case causes a replicate of the smooth to be produced for
 each factor level. See \code{\link{gam.models}} for further details. May also be a matrix 
 if covariates are matrices: in this case implements linear functional of a smooth 
 (see \code{\link{gam.models}} and \code{\link{linear.functional.terms}} for details).}
-
-\item{fx}{indicates whether the term is a fixed d.f. regression
-  spline (\code{TRUE}) or a penalized regression spline (\code{FALSE}).}
 
 
 

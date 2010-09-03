@@ -294,7 +294,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   ret
 } ## end of te
 
-t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,xt=NULL,id=NULL,sp=NULL,full=FALSE)
+t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FALSE)
 # function for use in gam formulae to specify a type 2 tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -304,7 +304,6 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,xt=NULL,id=NULL,sp=NUL
 # * margin - a list of smooth.spec objects specifying the marginal bases
 # * term   - array of covariate names
 # * by     - the by variable name
-# * fx     - array indicating which margins should be treated as fixed (i.e unpenalized).
 # * label  - label for this term
 { vars<-as.list(substitute(list(...)))[-1] # gets terms to be smoothed without evaluation
   dim<-length(vars) # dimension of smoother
@@ -342,7 +341,7 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,xt=NULL,id=NULL,sp=NUL
     if (!ok) k<-5^d 
   }
 
-  if (sum(is.na(fx))||is.null(fx)) fx <- FALSE
+  fx <- FALSE
 
   # deal with `xt' extras list
   xtra <- list()
