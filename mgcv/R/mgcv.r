@@ -470,6 +470,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   off <- rep(0,0) ## offset array
   rank <- rep(0,0) ## rank array
   sp <- rep(0,0)    ## smoothing param array
+  full.sp.names <- rep("",0) ## names for sp's multiplying penalties (not underlying)
   L <- matrix(0,0,0) 
   k <- 0
   tind <- unique(assign) ## unique term indices
@@ -503,6 +504,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
         L <- rbind(cbind(L,matrix(0,nrow(L),ncol(Li))),
                    cbind(matrix(0,nrow(Li),ncol(L)),Li))
         ind <- (length(sp)+1):(length(sp)+ncol(Li))
+        ind2 <- (length(sp)+1):(length(sp)+nrow(Li)) ## used to produce names for full sp array
         if (is.null(spi)) {
           sp[ind] <- -1 ## auto-initialize
         } else {
@@ -512,6 +514,9 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
         ## add smoothing parameter names....
         if (length(ind)>1) names(sp)[ind] <- paste(term.label,ind-ind[1]+1,sep="") 
         else names(sp)[ind] <- term.label
+        
+        if (length(ind2)>1) full.sp.names[ind2] <- paste(term.label,ind2-ind2[1]+1,sep="") 
+        else full.sp.names[ind2] <- term.label
       }
     } ## end !is.null(P)  
   } ## looped through all terms
@@ -524,7 +529,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   ## S is list of penalty matrices, off[i] is index of first coefficient penalized by each S[[i]]
   ## sp is array of underlying smoothing parameter (-ve to estimate), L is matrix mapping log
   ## underlying smoothing parameters to log smoothing parameters, rank[i] is the rank of S[[i]].
-  list(S=S,off=off,sp=sp,L=L,rank=rank)
+  list(S=S,off=off,sp=sp,L=L,rank=rank,full.sp.names=full.sp.names)
 }
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
@@ -826,7 +831,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     } 
   }
  
-  ## need to modify L, G$S, G$sp, G$rank and G$off to include any penalties
+  ## need to modify L, lsp.names, G$S, G$sp, G$rank and G$off to include any penalties
   ## on parametric stuff, at this point....
   if (!is.null(PP)) { ## deal with penalties on parametric terms
     L <- rbind(cbind(L,matrix(0,nrow(L),ncol(PP$L))),
@@ -835,6 +840,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$S <- c(PP$S,G$S)
     G$rank <- c(PP$rank,G$rank)
     G$sp <- c(PP$sp,G$sp)
+    lsp.names <- c(PP$full.sp.names,lsp.names)
     G$n.paraPen <- length(PP$off)
     if (!is.null(PP$min.sp)) { ## deal with minimum sps
       if (is.null(H)) H <- matrix(0,n.p,n.p)
@@ -856,7 +862,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     ind <- lsp0==0
     lsp0[!ind] <- log(lsp0[!ind])
     lsp0[ind] <- log(.Machine$double.xmin)*1000 ## zero fudge
-    lsp0 <- L[,fix.ind,drop=FALSE]%*%lsp0
+    lsp0 <- as.numeric(L[,fix.ind,drop=FALSE]%*%lsp0)
 
     L <- L[,!fix.ind,drop=FALSE]  
     G$sp <- G$sp[!fix.ind]
@@ -896,6 +902,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   
   ### Should check that there are enough unique covariate combinations to support model dimension
+
+  G$pP <- PP ## return paraPen object, if present
 
   G
 }
@@ -1516,6 +1524,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     names(object$full.sp) <- names(G$lsp0)
   }
   names(object$sp) <- names(G$sp)
+  object$paraPen <- G$pP
   object$formula<-G$formula
   object$var.summary <- G$var.summary 
   object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
@@ -2627,8 +2636,14 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
   if (!is.null(x$reml.scale)&&is.finite(x$reml.scale)) scale <- x$reml.scale else scale <- x$sig2
   if (length(x$sp)==0) return
   if (rescale) { ## undo any rescaling of S[[i]] that may have been done
-    k <- 1;m <- length(x$smooth)
-    if (is.null(x$full.sp)) kf <- -1 else kf <- 1 ## place holder in full sp vector
+    m <- length(x$smooth)
+    if (is.null(x$paraPen)) { 
+      k <- 1;
+      if (is.null(x$full.sp)) kf <- -1 else kf <- 1 ## place holder in full sp vector
+    } else { ## don't rescale paraPen related stuff
+      k <- sum(x$paraPen$sp<0)+1 ## count free sp's for paraPen
+      if (is.null(x$full.sp)) kf <- -1 else kf <- length(x$paraPen$full.sp.names)+1
+    }
     idx <- rep("",0) ## vector of ids used
     idxi <- rep(0,0) ## indexes ids in smooth list
     if (m>0) for (i in 1:m) { ## loop through all smooths

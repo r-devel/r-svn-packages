@@ -23,6 +23,9 @@ ISSUES:
 * gam.check modified to use qq.gam for QQ plots of deviance residuals.
   Also, it now works with gam(*, na.action = "na.replace") and NAs.
 
+* paraPen works properly with `gam.vcomp' and full.sp names returned 
+  correctly.
+
 * bam (and bam.update) can now employ an AR1 error model in the 
   guassian-identity case. 
 
