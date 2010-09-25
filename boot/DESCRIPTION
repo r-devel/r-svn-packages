@@ -1,7 +1,7 @@
 Package: boot
 Priority: recommended
-Version: 1.2-42
-Date: 2010-03-28
+Version: 1.2-43
+Date: 2010-09-25
 Author: S original <http://statwww.epfl.ch/davison/BMA/library.html>
   by Angelo Canty <cantya@mcmaster.ca>.  
   R port by  Brian Ripley <ripley@stats.ox.ac.uk>.
