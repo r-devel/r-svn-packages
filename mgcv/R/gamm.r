@@ -1154,7 +1154,10 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     }
 
 
-    object$fitted.values <- predict.gam(object,type="response")
+#    object$fitted.values <- predict.gam(object,type="response")
+    object$linear.predictors <- predict.gam(object,type="link")
+    object$fitted.values <- object$family$linkinv(object$linear.predictors)  
+ 
     object$residuals <- residuals(ret$lme) #as.numeric(G$y) - object$fitted.values
 
     if (G$nsdf>0) term.names<-colnames(G$X)[1:G$nsdf] else term.names<-array("",0)

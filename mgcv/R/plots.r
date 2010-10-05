@@ -143,8 +143,8 @@ gam.check <- function(b, old.style=FALSE,
   type <- match.arg(type)
   resid <- residuals(b, type=type)
   linpred <- napredict(b$na.action, b$linear.predictors)
-  if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))
-  { old.par<-par(mfrow=c(2,2))
+##  if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","mle.REML","mle.ML","PQL")) { 
+    old.par<-par(mfrow=c(2,2))
     if (old.style)
       qqnorm(resid,...)
     else
@@ -154,7 +154,10 @@ gam.check <- function(b, old.style=FALSE,
     hist(resid,xlab="Residuals",main="Histogram of residuals",...)
     plot(fitted(b), napredict(b$na.action, b$y),
          xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
-    
+    if (!(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))) { ## gamm `gam' object
+       par(old.par)
+       return(invisible())
+    }
     ## now summarize convergence information 
     cat("\nMethod:",b$method,"  Optimizer:",b$optimizer)
     if (!is.null(b$outer.info)) { ## summarize convergence information
@@ -188,8 +191,7 @@ gam.check <- function(b, old.style=FALSE,
     }
     cat("\n")
     par(old.par)
-  } else ## probably a `gamm' `gam' object
-  plot(linpred,resid,xlab="linear predictor",ylab="residuals",...)
+##  } else plot(linpred,resid,xlab="linear predictor",ylab="residuals",...)
 }
 
 plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
