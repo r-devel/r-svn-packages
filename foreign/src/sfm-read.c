@@ -905,6 +905,8 @@ read_variables (struct file_handle * h, struct variable *** var_by_index)
       vv->label = NULL;
       vv->val_lab = NULL;
 
+      /* FIXME: much of this is incorrect if the file is encoded in a MBCS */
+
       /* Copy first character of variable name. */
       if (!isalpha ((unsigned char) sv.name[0])
 	  && sv.name[0] != '@' && sv.name[0] != '#')
