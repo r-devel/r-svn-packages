@@ -42,6 +42,9 @@ ISSUES:
 * smooth.terms help file fixed so cyclic p spline identifies as "cp"
   and not "cs"!
 
+* bug fix in `gamm' so that binomial response can be provided as 2 column 
+  matrix, in standard `glm' way.
+
 1.6-2
 
 ** Random effect support for `gam' improved with the addition of 

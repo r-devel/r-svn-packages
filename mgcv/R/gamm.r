@@ -966,7 +966,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     if (is.null(random)&&n.sr==0) 
     stop("gamm models must have at least 1 smooth with unknown smoothing parameter or at least one other random effect")
 
-    g<-as.factor(G$y*0+1) ## needed, whatever codetools says
+    g <- as.factor(rep(1,G$n)) ##as.factor(G$y*0+1) ## needed, whatever codetools says
 
     offset.name <- attr(mf,"names")[attr(attr(mf,"terms"),"offset")]
 
