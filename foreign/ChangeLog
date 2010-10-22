@@ -1,3 +1,7 @@
+2010-10-22  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* man/read.octave.Rd: Octave changed since 2004. (PR#14420)
+
 2010-09-23  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-41
