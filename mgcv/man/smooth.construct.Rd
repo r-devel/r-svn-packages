@@ -149,13 +149,18 @@ enough to reach the last re-parameterized marginal in the list.
 \code{cs.smooth.spec} (cubic regression splines with shrinkage-to-zero);
 \code{cc.smooth.spec} (cyclic cubic regression splines);
 \code{ps.smooth.spec} (Eilers and Marx (1986) style P-splines: see \code{\link{p.spline}});
-\code{cp.smooth.spec} (cyclic P-splines)
+\code{cp.smooth.spec} (cyclic P-splines);
 \code{ad.smooth.spec} (adaptive smooths of 1 or 2 variables: see \code{\link{adaptive.smooth}});
+\code{re.smooth.spec} (simple random effect terms);
+\code{mrf.smooth.spec} (Markov random field smoothers for smoothing over discrete districts);
 \code{tensor.smooth.spec} (tensor product smooths).
 
 There is an implicit assumption that the basis only depends on the knots and/or the set of unique 
 covariate combinations; i.e. that the basis is the same whether generated from
 the full set of covariates, or just the unique combinations of covariates. 
+
+Plotting of smooths is handled by plot methods for smooth objects. A default \code{mgcv.smooth} method 
+is used if there is no more specific method available. Plot methods can  
 }
 
 
@@ -166,7 +171,7 @@ Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 Wood, S.N. (2006) Low rank scale invariant tensor product smooths for
 generalized additive mixed models. Biometrics 62(4):1025-1036
 
-The P-spline code given in the example is based on those advocated in:
+The code given in the example is based on the smooths advocated in:
 
 Ruppert, D., M.P. Wand and R.J. Carroll (2003) Semiparametric Regression. Cambridge 
 University Press.
@@ -191,7 +196,12 @@ Statistical Science, 11(2):89-121
 \code{"qrc"} or \code{"nCons"} as these are used internally to provide
 constraint free parameterizations.}
 
-\examples{# adding "p-spline" classes and methods
+\examples{
+## Adding a penalized truncated power basis class and methods
+## as favoured by Ruppert, Wand and Carroll (2003) 
+## Semiparametric regression CUP. (No advantage to actually
+## using this, since mgcv can happliy handle non-identity 
+## penalties.)
 
 smooth.construct.tr.smooth.spec<-function(object,data,knots)
 ## a truncated power spline constructor method function

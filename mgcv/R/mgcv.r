@@ -15,6 +15,18 @@ rig <- function(n,mean,scale) {
   x ## E(x) = mean; var(x) = scale*mean^3
 }
 
+strip.offset <- function(x)
+# sole purpose is to take a model frame and rename any "offset(a.name)"
+# columns "a.name"
+{ na <- names(x)
+  for (i in 1:length(na)) {
+    if (substr(na[i],1,7)=="offset(") 
+      na[i] <- substr(na[i],8,nchar(na[i])-1)
+  }
+  names(x) <- na
+  x
+}
+
 
 pcls <- function(M)
 # Function to perform penalized constrained least squares.
@@ -2257,6 +2269,91 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if (type=="terms"||type=="iterms") attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 }
+
+
+concurvity <- function(b,full=TRUE) {
+## b is a gam object
+## full==TRUE means that dependence of each term on rest of model 
+##            is considered.
+## full==FALSE => pairwise comparison.
+  if (!inherits(b,"gam")) stop("requires an object of class gam")
+  m <- length(b$smooth)
+  if (m<1) stop("nothing to do for this model")
+  X <- model.matrix(b)
+  ## this step speeds up remaining computation...
+  X <- qr.R(qr(X,tol=0,LAPACK=FALSE)) 
+  stop <- start <- rep(1,m)
+  lab <- rep("",m)
+  for (i in 1:m) { ## loop through smooths
+    start[i] <- b$smooth[[i]]$first.para
+    stop[i] <- b$smooth[[i]]$last.para
+    lab[i] <- b$smooth[[i]]$label
+  }
+  if (min(start)>1) { ## append parametric terms
+    start <- c(1,start)
+    stop <- c(min(start)-1,stop)
+    lab <- c("para",lab)
+    m <- m + 1
+  }
+
+  n.measures <- 3
+  measure.names <- c("worst","observed","estimate")
+
+  n <- nrow(X)
+  if (full) { ## get dependence of each smooth on all the rest...
+    conc <- matrix(0,n.measures,m)
+    for (i in 1:m) {
+      Xi <- X[,-(start[i]:stop[i]),drop=FALSE]
+      Xj <- X[,start[i]:stop[i],drop=FALSE]
+      r <- ncol(Xi) 
+      R <- qr.R(qr(cbind(Xi,Xj),LAPACK=FALSE,tol=0))[,-(1:r),drop=FALSE] ## No pivoting!!  
+       
+      ##u worst case...
+      Rt <- qr.R(qr(R)) 
+      conc[1,i] <- svd(forwardsolve(t(Rt),t(R[1:r,,drop=FALSE])))$d[1]^2
+       
+      ## observed...
+      beta <- b$coef[start[i]:stop[i]]
+      conc[2,i] <- sum((R[1:r,,drop=FALSE]%*%beta)^2)/sum((Rt%*%beta)^2)
+
+      ## less pessimistic...
+      conc[3,i] <- sum(R[1:r,]^2)/sum(R^2)
+    }
+    colnames(conc) <- lab
+    rownames(conc) <- measure.names
+  } else { ## pairwise measures
+    conc <- list()
+    for (i in 1:n.measures) conc[[i]] <- matrix(1,m,m) ## concurvity matrix
+    for (i in 1:m) { ## concurvity calculation loop
+      Xi <- X[,start[i]:stop[i],drop=FALSE]
+      r <- ncol(Xi)
+      for (j in 1:m) if (i!=j) { 
+        Xj <- X[,start[j]:stop[j],drop=FALSE]
+        R <- qr.R(qr(cbind(Xi,Xj),LAPACK=FALSE,tol=0))[,-(1:r),drop=FALSE] ## No pivoting!!  
+        
+        ## worst case...
+        Rt <- qr.R(qr(R)) 
+        conc[[1]][i,j] <- svd(forwardsolve(t(Rt),t(R[1:r,,drop=FALSE])))$d[1]^2
+       
+        ## observed...
+        beta <- b$coef[start[j]:stop[j]]
+        conc[[2]][i,j] <- sum((R[1:r,,drop=FALSE]%*%beta)^2)/sum((Rt%*%beta)^2)
+
+        ## less pessimistic...
+        conc[[3]][i,j] <- sum(R[1:r,]^2)/sum(R^2)
+        
+        ## Alternative less pessimistic
+       # log.det.R <- sum(log(abs(diag(R[(r+1):nrow(R),,drop=FALSE]))))
+       # log.det.Rt <- sum(log(abs(diag(Rt))))
+       # conc[[4]][i,j] <- 1 - exp(log.det.R-log.det.Rt) 
+        rm(Xj,R,Rt)
+      }
+    } ## end of conc loop
+    for (i in 1:n.measures) rownames(conc[[i]]) <- colnames(conc[[i]]) <- lab
+    names(conc) <- measure.names
+  } ## end of pairwise
+  conc ## 
+} ## end of concurvity
 
 
 residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson", "working", "response"),...)

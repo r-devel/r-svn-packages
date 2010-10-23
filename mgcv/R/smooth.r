@@ -1604,9 +1604,9 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
 }
 
 
-#################################
-# Random effects terms start here
-#################################
+########################################################
+# Random effects terms start here. Plot method in plot.r
+########################################################
 
 
 smooth.construct.re.smooth.spec<-function(object,data,knots)
@@ -1635,7 +1635,7 @@ smooth.construct.re.smooth.spec<-function(object,data,knots)
   ## need to store formula (levels taken care of by calling function)
   object$form <- form
 
-  object$plot.me <- FALSE ## "re" terms should not be plotted by plot.gam
+  ##object$plot.me <- FALSE ## "re" terms should not be plotted by plot.gam
   object$te.ok <- FALSE ## these terms are not suitable as te marginals
 
   class(object)<-"random.effect"  # Give object a class
@@ -1652,6 +1652,172 @@ Predict.matrix.random.effect<-function(object,data)
   X
 }
 
+########################################################
+# Markov random fields start here. Plot method in plot.r
+########################################################
+
+pol2nb <- function(pc) {
+## pc is a list of lists of polygons. i.e. 
+## pc[[i]][[j]]$coords is 2 column matrix defining jth
+## poly for ith area. Routine returns list of neightbours 
+## for each area.
+## Bounding box speed up from a comment in spdep package help.
+## WARNING: neighbours defined by sharing 
+## vertices. So one having vertices on another's line-segment 
+## is not detected!
+
+  k <- 0
+  for (i in 1:length(pc)) for (j in 1:length(pc[[i]])) k <- k + 1
+  n.poly <- k ## total numer of polygons
+
+  ## work through list of list of polygons, computing bounding boxes
+
+  a.ind <- p.ind <- lo1 <- hi1 <- lo2 <- hi2 <- rep(0,n.poly)
+  k <- 0
+  for (i in 1:length(pc)) for (j in 1:length(pc[[i]])) {
+    k <- k + 1
+    ## bounding box limits...
+    lo1[k] <- min(pc[[i]][[j]]$coords[,1])
+    lo2[k] <- min(pc[[i]][[j]]$coords[,2])
+    hi1[k] <- max(pc[[i]][[j]]$coords[,1])
+    hi2[k] <- max(pc[[i]][[j]]$coords[,2])
+    a.ind[k] <- i ## which area does this box belog to
+    p.ind[k] <- j ## which polygon within area
+    ## strip out duplicates
+    pc[[i]][[j]]$coords <- uniquecombs(pc[[i]][[j]]$coords)
+   
+  }
+
+  ## now work through finding neighbours....
+
+  nb <- list() ## nb[[k]] is vector indexing neighbours of k
+  for (i in 1:length(pc)) nb[[i]] <- rep(0,0)
+
+  for (k in 1:n.poly) { ## work through poly list looking for neighbours
+    ol1 <- (lo1[k] <= hi1 & lo1[k] >= lo1)|(hi1[k] <= hi1 & hi1[k] >= lo1)|
+           (lo1 <= hi1[k] & lo1 >= lo1[k])|(hi1 <= hi1[k] & hi1 >= lo1[k])
+    ol2 <- (lo2[k] <= hi2 & lo2[k] >= lo2)|(hi2[k] <= hi2 & hi2[k] >= lo2)|
+           (lo2 <= hi2[k] & lo2 >= lo2[k])|(hi2 <= hi2[k] & hi2 >= lo2[k])
+    ol <- ol1&ol2;ol[k] <- FALSE
+    ind <- (1:n.poly)[ol] ## index of potential neighbours of poly k
+    ## co-ordinates of polygon k...
+    cok <- pc[[a.ind[k]]][[p.ind[[k]]]]$coords
+    for (j in 1:length(ind)) {
+      co <- rbind(pc[[a.ind[ind[j]]]][[p.ind[[ind[j]]]]]$coords,cok) 
+      cou <- uniquecombs(co)
+      n.shared <- nrow(co) - nrow(cou)
+      ## if there are common vertices add area from which j comes
+      ## to vector of neighbour indices 
+      if (n.shared>0) nb[[a.ind[k]]] <- c(nb[[a.ind[k]]],a.ind[ind[j]])
+    }
+  }
+  for (i in 1:length(pc)) nb[[i]] <- unique(nb[[i]])
+  names(nb) <- names(pc)
+  list(nb=nb,xlim=c(min(lo1),max(hi1)),ylim=c(min(lo2),max(hi2)))
+} ## end of pol2nb
+
+
+smooth.construct.mrf.smooth.spec <- function(object, data, knots) { 
+## Argument should be factor or it will be coerced to factor
+## knots = vector of all regions (may include regions with no data)
+## xt must contain at least one of 
+## * `penalty' - a penalty matrix, with row and column names corresponding to the 
+##               levels of the covariate, or the knots.
+## * `polys' - a list of lists of polygons, defining the areas, names(polys) must correspond 
+##             to the levels of the covariate or the knots. polys[[i]][[j]]$coords is 
+##             a 2 column matrix defining the vertices of polygon j of area i's boundary.
+##             polys[[i]][[j]]$hole is true if the polygon is a hole in the region.
+## * `nb' - is a list defining the neighbourhood structure. names(nb) must correspond to
+##          the levels of the covariate or knots. nb[[i]][j] is the index of the jth neighbour 
+##          of area i. i.e. the jth neighbour of area names(nb)[i] is area names(nb)[nb[[i]][j]].
+##          Being a neighbour should be a symmetric state!!
+## `polys' is only stored for subsequent plotting if `nb' or `penalty' are supplied.
+## If `penalty' is supplied it is always used.
+## If `penalty' is not supplied then it is computed from `nb', which is in turn computed 
+## from `polys' if `nb' is missing. 
+## Modified from code by Thomas Kneib.
+ 
+  x <- as.factor(data[[object$term]])
+  k <- knots[[object$term]]
+  if (is.null(k))
+    k <- as.factor(levels(x)) # default knots = all regions in the data
+  else k <- as.factor(k)
+  
+  if (object$bs.dim<0)
+  object$bs.dim <- length(levels(k))
+
+  if (object$bs.dim>length(levels(k))) stop("MRF basis dimension set too high")
+
+  if (sum(!levels(x)%in%levels(k)))
+     stop("data contain regions that are not contained in the knot specification")
+
+  levels(x) <- levels(k) ## to allow for regions with no data
+
+  object$X <- model.matrix(~x-1,) ## model matrix
+ 
+  ## now set up the penalty...
+
+  if(is.null(object$xt))
+    stop("penalty matrix, boundary polygons and/or neighbours list must be supplied in xt")
+  
+  ## actual penalty building...
+  if (is.null(object$xt$penalty)) { ## must construct penalty 
+    if (is.null(object$xt$nb)) { ## no neighbour list... construct one
+       if (is.null(object$xt$polys)) stop("no spatial information provided!")
+       object$xt$nb <- pol2nb(object$xt$polys)$nb 
+    } ## now have a neighbour list
+    a.name <- names(object$xt$nb)
+    if (!all.equal(sort(a.name),sort(levels(k)))) 
+       stop("mismatch between nb/polys supplied area names and data area names")
+    np <- ncol(object$X)
+    S <- matrix(0,np,np)
+    rownames(S) <- colnames(S) <- levels(k)
+    for (i in 1:np) {
+      ind <- object$xt$nb[[i]]
+      S[a.name[i],a.name[i]] <- length(ind)
+      for (j in 1:length(ind)) S[a.name[i],a.name[ind[j]]] <- -1
+    }
+    if (sum(S!=t(S))>0) stop("Something wrong with auto- penalty construction")
+    object$S[[1]] <- S
+  } else { ## penalty given, just need to check it
+    object$S[[1]] <- object$xt$penalty
+    if (ncol(object$S[[1]])!=nrow(object$S[[1]])) stop("supplied penalty not square!")
+    if (ncol(object$S[[1]])!=ncol(object$X)) stop("supplied penalty wrong dimension!")
+    if (!is.null(colnames(object$S[[1]]))&&!all.equal(levels(k),colnames(object$S[[1]])))
+      stop("penalty column names don't match supplied area names!")
+  } ## end of check -- penalty ok if we got this far
+
+  ## Following (optionally) constructs a low rank approximation based on the 
+  ## natural parameterization given in Wood (2006) 4.1.14
+
+  if (object$bs.dim<length(levels(k))) { ## use low rank approx
+    rp <- mgcv:::nat.param(object$X,object$S[[1]],ncol(object$X)-1,type=0)
+    np <- ncol(object$X)
+    ind <- (np-object$bs.dim+1):np
+    object$X <- rp$X[,ind]
+    object$P <- rp$P[,ind]
+    ind <- ind[-object$bs.dim] ## drop last element as zeros not returned in D
+    object$S[[1]] <- diag(c(rp$D[ind],0))
+   
+  }
+
+  object$rank <- ncol(object$X)-1
+  object$null.space.dim <- 1
+  object$knots<-k
+  object$df <- ncol(object$X)
+  ##object$plot.me <- FALSE
+  class(object)<-"mrf.smooth"
+  object
+}
+
+Predict.matrix.mrf.smooth<-function(object, data) { 
+  
+  x <- as.factor(data[[object$term]])
+  levels(x) <- levels(object$knots)
+  X <- model.matrix(~x-1)
+  if (!is.null(object$P)) X <- X%*%object$P
+  X 
+} 
 
 
 
@@ -1676,6 +1842,7 @@ smooth.construct2 <- function(object,data,knots) {
     object$X <- object$X[ind,]
     if (!is.null(offs)) attr(object$X,"offset") <- offs[ind]
   } 
+  class(object) <- c(class(object),"mgcv.smooth")
   object
 }
 
@@ -1692,6 +1859,7 @@ smooth.construct3 <- function(object,data,knots) {
   object <- smooth.construct(object,dk$data,dk$knots)
   ind <- attr(dk$data,"index") ## repeats index 
   object$ind <- ind
+  class(object) <- c(class(object),"mgcv.smooth")
   object
 }
 

@@ -8,6 +8,19 @@ ISSUES:
 ** `t2' alternative tensor product smooths added. These can be used with 
   gamm4. 
 
+** "mrf" smooth class added (at the suggestion of Thomas Kneib). 
+   Implements smoothing over discrete geographic districts using a
+   Markov random field penalty. See ?mrf
+
+* Plot method added for mrf smooths. 
+
+* `concurvity' function added to provide simple concurvity measures.
+
+* `plot.gam' restructured so that smooths are plotted by smooth specific
+  plot methods.
+
+* Plot method added for "random.effect" smooth class.
+
 * `pen.edf' function added to extract EDF associated with each penalty.
    Useful with t2 smooths. 
 
