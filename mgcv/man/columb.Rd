@@ -28,9 +28,11 @@ data(columb.polys)
 
 
 \details{The data frame \code{columb} relates to the districts whose boundaries are coded in \code{columb.polys}.
-\code{columb.polys[[i]]} contains a list, each element of which describes a polygon delineating part of district i, 
-which has identification code \code{names(columb.polys)[i]}. The jth polygon for the ith district is described by the list \code{columb.polys[[i]][[j]]}, which has elements: \code{coords} a two column matrix of co-ordinates of 
-polygon nodes; \code{hole} which is \code{FALSE} if this polygon represents a hole in the district; \code{plotpt} which is a point suitable for treating as a typical location in the district for plotting purposes.
+\code{columb.polys[[i]]} is a 2 column matrix, containing the vertices of the polygons defining the boundary of the ith 
+district. \code{columb.polys[[2]]} has an artificial hole inserted to illustrate how holes in districts can be spefified. Different polygons defining the boundary of a district are separated by NA rows in \code{columb.polys[[1]]}, 
+and a polygon enclosed within another is treated as a hole in that region (a hole should never come first). 
+\code{names(columb.polys)} matches \code{columb$district} (order unimportant).
+
 }
 
 \source{

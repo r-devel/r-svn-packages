@@ -45,12 +45,12 @@ the elements \code{polys}, \code{nb} or \code{penalty}.
              It is a list with as many elements as there are geographic areas. 
              \code{names(polys)} must correspond to
              the levels of the argument of the smooth, in any order (i.e. it gives the area labels). 
-             Since an area may be defined by several polygons, each element 
-             of \code{polys} is itself a list, with one item for each of the polygons defining the area. 
-             i.e. \code{polys[[i]][[j]]} specifies the jth polygon making up the boundary of the ith 
-             geographic area. Each polygon is defined by a list, which must contain at least the named element, 
-             \code{coords}, a two column matrix the rows of which are the polygon vertices. An example 
-             of the structure is provided by \code{\link{columb.polys}}.
+             \code{polys[[i]]} is a 2 column matrix the rows of which specify the vertices of the polygon(s) 
+             defining the boundary of the ith area. A boundary may be made up of several closed loops: these must
+             be separated by \code{NA} rows. A polygon within another is treated as a hole. The first polygon in 
+             any \code{polys[[i]]}  should not be a hole.  An example 
+             of the structure is provided by \code{\link{columb.polys}} (which contains an artificial hole
+             in its second element, for illustration).
              
              Plotting of the smooth is not possible without a \code{polys} object.
 
@@ -76,7 +76,8 @@ If no basis dimension is supplied then the constructor produces a full rank MRF,
 geographic area. Otherwise a low rank approximation is obtained based on truncation of the parameterization given in
 Wood (2006) Section 4.10.4. 
 
-Note that smooths of this class have a built in plot method.
+Note that smooths of this class have a built in plot method, and that the utility function \code{\link{in.out}} 
+can be useful for working with discrete area data.
 
 }
 
@@ -87,7 +88,7 @@ Wood S.N. (2006) Generalized additive models: an intriduction with R CRC.
 \author{ Simon N. Wood \email{simon.wood@r-project.org} and Thomas Kneib
 (Fabian Scheipl prorotyped the low rank MRF idea) } 
 
-\seealso{\code{\link{gam.vcomp}}, \code{\link{gamm}}}
+\seealso{\code{\link{gam.vcomp}}, \code{\link{gamm}}, \code{\link{in.out}}}
 
 \examples{
 library(mgcv)

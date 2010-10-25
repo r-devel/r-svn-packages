@@ -1657,34 +1657,30 @@ Predict.matrix.random.effect<-function(object,data)
 ########################################################
 
 pol2nb <- function(pc) {
-## pc is a list of lists of polygons. i.e. 
-## pc[[i]][[j]]$coords is 2 column matrix defining jth
-## poly for ith area. Routine returns list of neightbours 
+## pc is a list of polygons. i.e. 
+## pc[[i]] is 2 column matrix defining 
+## polygons for ith area (NA separated). Routine returns list of neightbours 
 ## for each area.
 ## Bounding box speed up from a comment in spdep package help.
 ## WARNING: neighbours defined by sharing 
 ## vertices. So one having vertices on another's line-segment 
 ## is not detected!
 
-  k <- 0
-  for (i in 1:length(pc)) for (j in 1:length(pc[[i]])) k <- k + 1
-  n.poly <- k ## total numer of polygons
+  n.poly <- length(pc) ## total numer of polygons
 
   ## work through list of list of polygons, computing bounding boxes
 
   a.ind <- p.ind <- lo1 <- hi1 <- lo2 <- hi2 <- rep(0,n.poly)
   k <- 0
-  for (i in 1:length(pc)) for (j in 1:length(pc[[i]])) {
-    k <- k + 1
+  for (i in 1:n.poly) {
     ## bounding box limits...
-    lo1[k] <- min(pc[[i]][[j]]$coords[,1])
-    lo2[k] <- min(pc[[i]][[j]]$coords[,2])
-    hi1[k] <- max(pc[[i]][[j]]$coords[,1])
-    hi2[k] <- max(pc[[i]][[j]]$coords[,2])
-    a.ind[k] <- i ## which area does this box belog to
-    p.ind[k] <- j ## which polygon within area
+    pc[[i]] <- pc[[i]][!is.na(rowSums(pc[[i]])),] ## strip NA's
+    lo1[i] <- min(pc[[i]][,1])
+    lo2[i] <- min(pc[[i]][,2])
+    hi1[i] <- max(pc[[i]][,1])
+    hi2[i] <- max(pc[[i]][,2])
     ## strip out duplicates
-    pc[[i]][[j]]$coords <- uniquecombs(pc[[i]][[j]]$coords)
+    pc[[i]] <- uniquecombs(pc[[i]])
    
   }
 
@@ -1701,14 +1697,14 @@ pol2nb <- function(pc) {
     ol <- ol1&ol2;ol[k] <- FALSE
     ind <- (1:n.poly)[ol] ## index of potential neighbours of poly k
     ## co-ordinates of polygon k...
-    cok <- pc[[a.ind[k]]][[p.ind[[k]]]]$coords
+    cok <- pc[[k]]
     for (j in 1:length(ind)) {
-      co <- rbind(pc[[a.ind[ind[j]]]][[p.ind[[ind[j]]]]]$coords,cok) 
+      co <- rbind(pc[[ind[j]]],cok) 
       cou <- uniquecombs(co)
       n.shared <- nrow(co) - nrow(cou)
       ## if there are common vertices add area from which j comes
       ## to vector of neighbour indices 
-      if (n.shared>0) nb[[a.ind[k]]] <- c(nb[[a.ind[k]]],a.ind[ind[j]])
+      if (n.shared>0) nb[[k]] <- c(nb[[k]],ind[j])
     }
   }
   for (i in 1:length(pc)) nb[[i]] <- unique(nb[[i]])
@@ -1724,9 +1720,9 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
 ## * `penalty' - a penalty matrix, with row and column names corresponding to the 
 ##               levels of the covariate, or the knots.
 ## * `polys' - a list of lists of polygons, defining the areas, names(polys) must correspond 
-##             to the levels of the covariate or the knots. polys[[i]][[j]]$coords is 
-##             a 2 column matrix defining the vertices of polygon j of area i's boundary.
-##             polys[[i]][[j]]$hole is true if the polygon is a hole in the region.
+##             to the levels of the covariate or the knots. polys[[i]] is 
+##             a 2 column matrix defining the vertices of polygons defining area i's boundary.
+##             If there are several polygons they should be separated by an NA row.
 ## * `nb' - is a list defining the neighbourhood structure. names(nb) must correspond to
 ##          the levels of the covariate or knots. nb[[i]][j] is the index of the jth neighbour 
 ##          of area i. i.e. the jth neighbour of area names(nb)[i] is area names(nb)[nb[[i]][j]].

@@ -1,6 +1,5 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
-
 ISSUES:
 
 1.6-3
@@ -13,6 +12,10 @@ ISSUES:
    Markov random field penalty. See ?mrf
 
 * Plot method added for mrf smooths. 
+
+* in.out function added to test whether points are interior to 
+  a region defined by a set of polygons. Useful when working with 
+  MRFs.
 
 * `concurvity' function added to provide simple concurvity measures.
 

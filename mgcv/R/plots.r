@@ -3,6 +3,23 @@
 ##  With contributions from Henric Nilsson
 
 
+in.out <- function(bnd,x) {
+## tests whether point defined by each row of x is inside 
+## or outside boundary defined by bnd. bnd my be made up of multiple 
+## nested loops.
+  if (!is.matrix(x)) x <- matrix(x,1,2)
+  ## replace NA segment separators with a numeric code 
+  lowLim <- min(bnd,na.rm=TRUE) - mean(abs(bnd),na.rm=TRUE)
+  ind <- is.na(rowSums(bnd))
+  bnd[ind,] <- lowLim
+  n <- nrow(bnd)
+  um <-.C(C_in_out,bx=as.double(bnd[,1]),by=as.double(bnd[,2]),break.code=as.double(lowLim),
+          x=as.double(x[,1]),y=as.double(x[,2]),inside=as.integer(x[,2]*0),nb=as.integer(n),
+          n=as.integer(nrow(x)))
+  as.logical(um$inside)
+}
+
+
 fix.family.qf <- function(fam) {
 ## add quantile function to family object
 
@@ -222,24 +239,36 @@ plot.random.effect <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2
   } ## end of plot production
 } ## end of plot.random.effect
 
+
+poly2 <- function(x,col) {
+## let x be a 2 col matrix defining some polygons. 
+## Different closed loop sections are separated by
+## NA rows. This routine assumes that loops nested within 
+## other loops are holes (further nesting gives and island 
+## in hole, etc). Holes are left unfilled.
+## The first polygon should not be a hole.
+  ind <- (1:nrow(x))[is.na(rowSums(x))] ## where are the splits?
+  if (length(ind)==0|| ind[1]==nrow(x)) polygon(x,col=col,border="black") else {
+    base <- x[1,]
+    xf <- x
+    xf[ind,1] <- base[1]
+    xf[ind,2] <- base[2]
+    polygon(xf,col=col,border=NA,fillOddEven=TRUE)
+    polygon(x,border="black")
+  }
+}
+
 polys.plot <- function(pc,z,colors="heat",lab="") { 
-## pc[[i]] is a list of lists defining polygons defining area i
-## pc[[i]][[j]]$coords is the 2 col matrix of vertex co-ords for jth poly of area i
-## pc[[i]][[j]]$hole is TRUE if the poly is a hole in the domain
+## pc is a list of polygons defining area boundaries
+## pc[[i]] is the 2 col matrix of vertex co-ords for polygons defining 
+## boundary of area i
 ## z gives the value associated with the area
   
-  ## first find the axes ranges, and combine polygons to get 
-  ## correct plotting behaviour...
+  ## first find the axes ranges...
 
   for (i in 1:length(pc)) {
-    k <- length(pc[[i]]) ## length before adding next element!
-    pc[[i]]$coords <- pc[[i]][[1]]$coords
-    if (k>1) for (j in 2:k) {
-      pc[[i]]$coords <- rbind(pc[[i]]$coords,c(NA,NA),
-                              pc[[i]][[j]]$coords)
-    }
-    yr <- range(pc[[i]]$coords[,2],na.rm=TRUE)
-    xr <- range(pc[[i]]$coords[,1],na.rm=TRUE)
+    yr <- range(pc[[i]][,2],na.rm=TRUE)
+    xr <- range(pc[[i]][,1],na.rm=TRUE)
 
     if (i==1) {
       ylim <- yr
@@ -260,19 +289,19 @@ polys.plot <- function(pc,z,colors="heat",lab="") {
   colors <- gray(0:n.col/n.col)
   mar <- par("mar");
   oldpar <- par(mar=c(2,mar[2],2,1)) 
-  zlim <- range(z)
+  zlim <- range(pretty(z))
 
   ## Now want a grey or color scale up the lhs of plot
   ## first scale the y range into the z range for plotting 
 
-  for (i in 1:length(pc)) pc[[i]]$coords[,2] <- zlim[1] + 
-       (zlim[2]-zlim[1])*(pc[[i]]$coords[,2]-ylim[1])/(ylim[2]-ylim[1])
+  for (i in 1:length(pc)) pc[[i]][,2] <- zlim[1] + 
+       (zlim[2]-zlim[1])*(pc[[i]][,2]-ylim[1])/(ylim[2]-ylim[1])
   
   ylim <- zlim
   plot(0,0,ylim=ylim,xlim=xlim,type="n",xaxt="n",bty="n",xlab="",ylab=lab)
   for (i in 1:length(pc)) {
     coli <- round((z[i] - zlim[1])/(zlim[2]-zlim[1])*100)    
-    polygon(pc[[i]]$coords,col=colors[coli],border="black")
+    poly2(pc[[i]],col=colors[coli])
   }
   
   ## now plot the scale bar...

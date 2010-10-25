@@ -50,6 +50,10 @@ then it represents the parametric interaction of these arguments, with the coeff
 assumption that the coefficients are i.i.d. normal random effects. See \code{\link{smooth.construct.re.smooth.spec}}. Note that random effect terms are not suitable 
 for use in tensor product smooths.}
 
+\item{Markov Random Fields}{\code{bs="mrf"}. These are popular when space is split up into disctrete contiguous 
+geographic units (districts of a town, for example). In this case a simple smoothing penalty is constructed
+based on the neighbourhood structure of the geographic units. See \code{\link{mrf}} for details and an example.}
+
 }
 
 Broadly speaking the default penalized thin plate regression splines tend to give the best MSE performance, 
@@ -58,7 +62,8 @@ but they are a little slower to set up than the other bases. The knot based pena
 just a little worse. However the P-splines are useful in non-standard situations.
 
 All the preceding classes (and any user defined smooths with single penalties) may be used as marginal 
-bases for tensor product smooths specified via \code{\link{te}} terms, except for \code{"re"} terms. Tensor product smooths are smooth functions 
+bases for tensor product smooths specified via \code{\link{te}} terms, except for \code{"re"} terms. Tensor 
+product smooths are smooth functions 
 of several variables where the basis is built up from tensor products of bases for smooths of fewer (usually one) 
 variable(s) (marginal bases). The multiple penalties for these smooths are produced automatically from the
 penalties of the marginal smooths. Wood (2006b) give the general recipe for this construction.
