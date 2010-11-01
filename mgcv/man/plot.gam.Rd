@@ -12,7 +12,7 @@
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
          all.terms=FALSE,shade=FALSE,shade.col="gray80",
          shift=0,trans=I,seWithMean=FALSE,by.resids=FALSE,
-         colors="grey",...)
+         scheme="grey",...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -105,7 +105,7 @@ and this is also suggested by simulation.}
 \item{by.resids}{Should partial residuals be plotted for terms with \code{by} variables? 
 Usually the answer is no, they would be meaningless.}
 
-\item{colors}{\code{"grey"} yields greyscale, and \code{"heat"} heatmap colors, for plot methods 
+\item{scheme}{\code{"grey"} yields greyscale, and \code{"heat"} heatmap colors, for plot methods 
               that take any notice of this (e.g. \code{\link{mrf}} smooths).}
 
 \item{...}{ other graphics parameters to pass on to plotting commands.}

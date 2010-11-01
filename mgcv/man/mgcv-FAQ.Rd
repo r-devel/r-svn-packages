@@ -39,10 +39,13 @@ ability to compute smoothing parameters by RE/ML require object level changes. T
 the \code{lme} or \code{lmer} object. Why is this?} There are several reasons for this. The most important is that the 
 models being used are actually different in the two representations. When treating the GAM as a mixed model, you are 
 implicitly assuming that if you gathered a replicate dataset, the smooths in your model would look completely 
-different to the 
-smooths from the original model, except for having the same degree of smoothness. Technically you would expect 
+different to the smooths from the original model, except for having the same degree of smoothness. Technically you would expect 
 the smooths to be drawn afresh from their distribution under the random effects model. When viewing the gam from the 
-usual penalized regression perspective, you would expect smooths to look broadly similar under replication of the data. i.e. you are really using Bayesian model for the smooths, rather than a random effects model. As a result of these very different assumptions about the data generating process, AIC model comparisons can give rather different answers depending on the model adopted. Which you use should depend on which model you really think is appropriate. In addition the computations are 
+usual penalized regression perspective, you would expect smooths to look broadly similar under replication of the data. 
+i.e. you are really using Bayesian model for the smooths, rather than a random effects model (it's just that the frequentist random 
+effects and Bayesian computations happen to coincide for computing the estimates). As a result of the different assumptions 
+about the data generating process, AIC model comparisons can give rather different answers depending on the model adopted. 
+Which you use should depend on which model you really think is appropriate. In addition the computations of the AICs are 
 different. The mixed model AIC uses the marginal liklihood and the corresponding number of model parameters. The gam model 
 uses the penalized likelihood and the effective degrees of freedom. 
 
@@ -55,9 +58,7 @@ from the performance here. Unlike REML/ML, prediction error based smoothness sel
 often produce a small proportion of severe overfits, so careful choise of smoothness selection method can help further. 
 In particular GCV etc. usually result in worse confidence interval and p-value performance than ML or REML. If all this 
 fails, try using a really odd simulation setup for which mgcv is clearly not suited: for example poor performance is almost 
-guaranteed for small noisy datasets with large numbers of predictors. When presenting the results its best to airily claim 
-to have forgotten the exact details in a manner that suggests that such matters are really beneath the dignity of a 
-gentleman to be concerned with. 
+guaranteed for small noisy datasets with large numbers of predictors.
 
 }
 

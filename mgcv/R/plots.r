@@ -219,7 +219,7 @@ plot.random.effect <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
-                     shift=0,trans=I,by.resids=FALSE,colors=NULL,...) {
+                     shift=0,trans=I,by.resids=FALSE,scheme=NULL,...) {
 ## plot method for a "random.effect" smooth class
  
   if (is.null(P)) { ## get plotting information...
@@ -258,7 +258,7 @@ poly2 <- function(x,col) {
   }
 }
 
-polys.plot <- function(pc,z,colors="heat",lab="") { 
+polys.plot <- function(pc,z,scheme="heat",lab="") { 
 ## pc is a list of polygons defining area boundaries
 ## pc[[i]] is the 2 col matrix of vertex co-ords for polygons defining 
 ## boundary of area i
@@ -285,8 +285,8 @@ polys.plot <- function(pc,z,colors="heat",lab="") {
   xlim[1] <- xlim[1] - .1 * (xlim[2]-xlim[1]) ## allow space for scale
 
   n.col <- 100
-  if (colors=="heat") colors <- heat.colors(n.col) else 
-  colors <- gray(0:n.col/n.col)
+  if (scheme=="heat") scheme <- heat.colors(n.col) else 
+  scheme <- gray(0:n.col/n.col)
   mar <- par("mar");
   oldpar <- par(mar=c(2,mar[2],2,1)) 
   zlim <- range(pretty(z))
@@ -301,7 +301,7 @@ polys.plot <- function(pc,z,colors="heat",lab="") {
   plot(0,0,ylim=ylim,xlim=xlim,type="n",xaxt="n",bty="n",xlab="",ylab=lab)
   for (i in 1:length(pc)) {
     coli <- round((z[i] - zlim[1])/(zlim[2]-zlim[1])*100)    
-    poly2(pc[[i]],col=colors[coli])
+    poly2(pc[[i]],col=scheme[coli])
   }
   
   ## now plot the scale bar...
@@ -314,7 +314,7 @@ polys.plot <- function(pc,z,colors="heat",lab="") {
   dy <- (ylim[2]-ylim[1])/n.col 
   poly <- matrix(c(x0,x0,x1,x1,ylim[1],ylim[1]+dy,ylim[1]+dy,ylim[1]),4,2)
   for (i in 1:n.col) {
-    polygon(poly,col=colors[i],border=NA)
+    polygon(poly,col=scheme[i],border=NA)
     poly[,2] <- poly[,2] + dy
   }
   poly <- matrix(c(x0,x0,x1,x1,ylim[1],ylim[2],ylim[2],ylim[1]),4,2)
@@ -328,7 +328,7 @@ plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
-                     shift=0,trans=I,by.resids=FALSE,colors="grey",...) {
+                     shift=0,trans=I,by.resids=FALSE,scheme="grey",...) {
 ## plot method function for mrf.smooth terms, depends heavily on polys.plot, above
   if (is.null(P)) { ## get plotting information...
     if (!x$plot.me||is.null(x$xt$polys)) return(NULL) ## shouldn't or can't plot
@@ -341,7 +341,7 @@ plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
     return(list(X=X,scale=FALSE,se=FALSE,raw=raw,xlab=xlabel,ylab=ylabel,
              main=label))
     } else { ## do plot
-      polys.plot(x$xt$polys,P$fit,colors=colors,lab=P$main)
+      polys.plot(x$xt$polys,P$fit,scheme=scheme,lab=P$main)
     }
 
 }
@@ -351,7 +351,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,shade=FALSE,shade.col="gray80",
-                     shift=0,trans=I,by.resids=FALSE,colors=NULL,...) {
+                     shift=0,trans=I,by.resids=FALSE,scheme=NULL,...) {
 ## default plot method for smooth objects `x' inheriting from "mgcv.smooth"
 ## `x' is a smooth object, usually part of a `gam' fit.
 ## `P' is a list of plot data. 
@@ -607,7 +607,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
 plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,n=100,n2=40,
                      pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,ylab=NULL,main=NULL,
                      ylim=NULL,xlim=NULL,too.far=0.1,all.terms=FALSE,shade=FALSE,shade.col="gray80",
-                     shift=0,trans=I,seWithMean=FALSE,by.resids=FALSE,colors="grey",...)
+                     shift=0,trans=I,seWithMean=FALSE,by.resids=FALSE,scheme="grey",...)
 
 # Create an appropriate plot for each smooth term of a GAM.....
 # x is a gam object
@@ -736,13 +736,17 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     } 
 
     # now figure out number of rows and columns
-    c<-trunc(sqrt(ppp))
-	if (c<1) c<-1
-    r<-ppp%/%c
-    if (r<1) r<-1
-    while (r*c<ppp) r<-r+1
-    while (r*c-ppp >c && r>1) r<-r-1
-    while (r*c-ppp >r && c>1) c<-c-1 
+#    c<-trunc(sqrt(ppp))
+#	if (c<1) c<-1
+#    r<-ppp%/%c
+#    if (r<1) r<-1
+#    while (r*c<ppp) r<-r+1
+#    while (r*c-ppp >c && r>1) r<-r-1
+#    while (r*c-ppp >r && c>1) c<-c-1 
+    c <- r <- trunc(sqrt(ppp))
+    if (c<1) r <- c <- 1
+    if (c*r < ppp) c <- c + 1
+    if (c*r < ppp) r <- r + 1  
     oldpar<-par(mfrow=c(r,c))
   
   } else
@@ -750,7 +754,11 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   
   if ((pages==0&&prod(par("mfcol"))<n.plots&&dev.interactive())||
        pages>1&&dev.interactive()) ask <- TRUE else ask <- FALSE 
-
+  
+  if (!is.null(select)) {
+    ask <- FALSE
+  }
+ 
   if (ask) {
     oask <- devAskNewPage(TRUE)
     on.exit(devAskNewPage(oask))
@@ -797,7 +805,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     plot(x$smooth[[i]],P=pd[[i]],partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,
                      pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,
-                     shift=shift,trans=trans,by.resids=by.resids,colors=colors,...)
+                     shift=shift,trans=trans,by.resids=by.resids,scheme=scheme,...)
 
   } ## end of smooth plotting loop
   

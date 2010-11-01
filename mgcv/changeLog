@@ -2,7 +2,7 @@
 *** denotes really big changes 
 ISSUES:
 
-1.6-3
+1.7-0
 
 ** `t2' alternative tensor product smooths added. These can be used with 
   gamm4. 
@@ -11,13 +11,22 @@ ISSUES:
    Implements smoothing over discrete geographic districts using a
    Markov random field penalty. See ?mrf
 
+* qq.gam added to allow better checking of distribution of residuals.
+
+* gam.check modified to use qq.gam for QQ plots of deviance residuals.
+  Also, it now works with gam(*, na.action = "na.replace") and NAs.
+
+* `concurvity' function added to provide simple concurvity measures.
+
+* plot.gam automatic layout modified to be a bit more sensible (i.e.
+  to recognise that most screens are landscape, and that usually 
+  squarish plots are wanted). 
+
 * Plot method added for mrf smooths. 
 
 * in.out function added to test whether points are interior to 
   a region defined by a set of polygons. Useful when working with 
   MRFs.
-
-* `concurvity' function added to provide simple concurvity measures.
 
 * `plot.gam' restructured so that smooths are plotted by smooth specific
   plot methods.
@@ -33,11 +42,6 @@ ISSUES:
   inference with the componentwise optimal sum to zero constraints.
 
 * mgcv-FAQ.Rd added.
-
-* qq.gam added to allow better checking of distribution of residuals.
-
-* gam.check modified to use qq.gam for QQ plots of deviance residuals.
-  Also, it now works with gam(*, na.action = "na.replace") and NAs.
 
 * paraPen works properly with `gam.vcomp' and full.sp names returned 
   correctly.

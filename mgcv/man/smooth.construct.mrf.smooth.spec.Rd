@@ -106,7 +106,7 @@ plot(b)
 ## An important covariate added...
 b <- gam(crime ~ s(district,bs="mrf",k=20,xt=xt)+s(income),
          data=columb,method="REML")
-plot(b,shade=TRUE,colors="heat")
+plot(b,shade=TRUE,scheme="heat")
 
 }
 \keyword{models} \keyword{regression}%-- one or more ..
