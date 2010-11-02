@@ -50,7 +50,8 @@ the elements \code{polys}, \code{nb} or \code{penalty}.
              be separated by \code{NA} rows. A polygon within another is treated as a hole. The first polygon in 
              any \code{polys[[i]]}  should not be a hole.  An example 
              of the structure is provided by \code{\link{columb.polys}} (which contains an artificial hole
-             in its second element, for illustration).
+             in its second element, for illustration). Any list elements with duplicate names are combined into a 
+             single NA separated matrix.
              
              Plotting of the smooth is not possible without a \code{polys} object.
 

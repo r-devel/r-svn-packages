@@ -420,7 +420,7 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
   # term now contains the names of the covariates for this model term
   # now evaluate all the other 
   k.new <- round(k) # in case user has supplied non-integer basis dimension
-  if (!all.equal(k.new,k)) {warning("argument k of s() should be integer and has been rounded")}
+  if (all.equal(k.new,k)!=TRUE) {warning("argument k of s() should be integer and has been rounded")}
   k <- k.new
   # check for repeated variables in function argument list
   if (length(unique(term))!=d) stop("Repeated variables as arguments of a smooth are not permitted")
@@ -1698,7 +1698,7 @@ pol2nb <- function(pc) {
     ind <- (1:n.poly)[ol] ## index of potential neighbours of poly k
     ## co-ordinates of polygon k...
     cok <- pc[[k]]
-    for (j in 1:length(ind)) {
+    if (length(ind)>0) for (j in 1:length(ind)) {
       co <- rbind(pc[[ind[j]]],cok) 
       cou <- uniquecombs(co)
       n.shared <- nrow(co) - nrow(cou)
@@ -1756,6 +1756,23 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
   if(is.null(object$xt))
     stop("penalty matrix, boundary polygons and/or neighbours list must be supplied in xt")
   
+  ## If polygons supplied as list with duplicated names, then re-format...
+
+  if (!is.null(object$xt$polys)) {
+  a.name <- names(object$xt$polys)
+  d.name <- unique(a.name[duplicated(a.name)]) ## find duplicated names
+  if (length(d.name)) {  ## deal with duplicates
+    for (i in 1:length(d.name)) {
+      ind <- (1:length(a.name))[a.name==d.name[i]] ## index of duplicates 
+      for (j in 2:length(ind)) object$xt$polys[[ind[1]]] <- ## combine matrices for duplicate names
+        rbind(object$xt$polys[[ind[1]]],c(NA,NA),object$xt$polys[[ind[j]]])
+      }
+      ## now delete the un-wanted duplicates...
+      ind <- (1:length(a.name))[duplicated(a.name)]
+      if (length(ind)>0) for (i in length(ind):1) object$xt$polys[[ind[i]]] <- NULL 
+    }
+  } ## polygon list in correct format
+
   ## actual penalty building...
   if (is.null(object$xt$penalty)) { ## must construct penalty 
     if (is.null(object$xt$nb)) { ## no neighbour list... construct one
@@ -1763,15 +1780,16 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
        object$xt$nb <- pol2nb(object$xt$polys)$nb 
     } ## now have a neighbour list
     a.name <- names(object$xt$nb)
-    if (!all.equal(sort(a.name),sort(levels(k)))) 
+    if (all.equal(sort(a.name),sort(levels(k)))!=TRUE) 
        stop("mismatch between nb/polys supplied area names and data area names")
     np <- ncol(object$X)
     S <- matrix(0,np,np)
     rownames(S) <- colnames(S) <- levels(k)
     for (i in 1:np) {
       ind <- object$xt$nb[[i]]
-      S[a.name[i],a.name[i]] <- length(ind)
-      for (j in 1:length(ind)) S[a.name[i],a.name[ind[j]]] <- -1
+      lind <- length(ind)
+      S[a.name[i],a.name[i]] <- lind
+      if (lind>0) for (j in 1:lind) S[a.name[i],a.name[ind[j]]] <- -1
     }
     if (sum(S!=t(S))>0) stop("Something wrong with auto- penalty construction")
     object$S[[1]] <- S
@@ -1779,8 +1797,17 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
     object$S[[1]] <- object$xt$penalty
     if (ncol(object$S[[1]])!=nrow(object$S[[1]])) stop("supplied penalty not square!")
     if (ncol(object$S[[1]])!=ncol(object$X)) stop("supplied penalty wrong dimension!")
-    if (!is.null(colnames(object$S[[1]]))&&!all.equal(levels(k),colnames(object$S[[1]])))
-      stop("penalty column names don't match supplied area names!")
+    if (!is.null(colnames(object$S[[1]]))) {
+      a.name <- colnames(object$S[[1]])
+      if (all.equal(levels(k),sort(a.name))!=TRUE) {
+        stop("penalty column names don't match supplied area names!") 
+      } else {
+        if (all.equal(sort(a.name),a.name)!=TRUE) { ## re-order penalty to match object$X
+          object$S[[1]] <- object$S[[1]][levels(k),]
+          object$S[[1]] <- object$S[[1]][,levels(k)]
+        }
+      }
+    }
   } ## end of check -- penalty ok if we got this far
 
   ## Following (optionally) constructs a low rank approximation based on the 
