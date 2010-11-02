@@ -2001,6 +2001,8 @@ model.matrix.gam <- function(object,...)
   predict(object,type="lpmatrix",...)
 }
 
+
+
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                        block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) 
 {

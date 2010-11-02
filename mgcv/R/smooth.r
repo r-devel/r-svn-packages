@@ -25,13 +25,13 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
 ## rescaled so that its penalized and unpenalized model matrices 
 ## both have unit Frobenious norm. 
 ## For natural param as in the book, type=0 and unit.fnorm=FALSE.
-  null.exists <- rank < ncol(X) ## is there a null space, or is smooth full rank
+
   if (type==2) { ## no need for QR step
     er <- eigen(S,symmetric=TRUE)
     if (is.null(rank)||rank<1||rank>ncol(S)) { 
       rank <- sum(er$value>max(er$value)*tol)
     }
-
+    null.exists <- rank < ncol(X) ## is there a null space, or is smooth full rank
     E <- rep(1,ncol(X));E[1:rank] <- sqrt(er$value[1:rank])
     X <- X%*%er$vectors
     col.norm <- colSums(X^2)
@@ -65,6 +65,7 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
   if (is.null(rank)||rank<1||rank>ncol(S)) { 
     rank <- sum(er$value>max(er$value)*tol)
   }
+  null.exists <- rank < ncol(X) ## is there a null space, or is smooth full rank
   ## D contains +ve elements of diagonal penalty 
   ## (zeroes at the end)...
   D <- er$values[1:rank] 
