@@ -161,7 +161,7 @@ summary.clara <- function(object, ...)
 
 print.summary.clara <- function(x, ...)
 {
-    cat("Object of class `clara' from call:\n", deparse(x$call),
+    cat("Object of class 'clara' from call:\n", deparse(x$call),
 	"\nMedoids:\n");		print(x$medoids, ...)
     cat("Objective function:\t ", format(x$objective, ...),
 	"\nNumerical information per cluster:\n")

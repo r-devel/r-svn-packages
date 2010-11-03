@@ -51,9 +51,9 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	dv <- double(1 + (n * (n - 1))/2)
     }
     if((k <- as.integer(k)) < 1 || k >= n)
-	stop("Number of clusters `k' must be in {1,2, .., n-1}; hence n >= 2")
+	stop("Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2")
     if(is.null(medoids))# default: using "build & swap" to determine medoids"
-        medID <- integer(k)# all 0 -> will be used as `code' in C
+        medID <- integer(k)# all 0 -> will be used as 'code' in C
     else {
         ## 'fixme': consider  sort(medoids) {and rely on it in ../src/pam.c }
 	if(length(medID <- as.integer(medoids)) != k ||
@@ -84,7 +84,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	      integer(if(cluster.only) 1 else n), # nelem[]
 	      double(n),		# radus[]
 	      double(n),		# damer[]
-	      avsil = double(n),	# `ttd'
+	      avsil = double(n),	# 'ttd'
 	      double(n),		# separ[]
 	      ttsil = as.double(0),
 	      obj = as.double(c(cluster.only, trace.lev)),# in & out!

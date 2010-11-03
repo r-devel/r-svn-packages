@@ -59,7 +59,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
         stop("'maxit' must be non-negative integer")
     computeP <- is.null(iniMem.p) # default: determine initial membership in C
     if(computeP)# default: determine initial membership in C
-        iniMem.p <- matrix(0., n, k)# all 0 -> will be used as `code'
+        iniMem.p <- matrix(0., n, k)# all 0 -> will be used as 'code'
     else {
         dm <- dim(iniMem.p)
         if(length(dm) !=2 || !all(dm == c(n,k)) ||
