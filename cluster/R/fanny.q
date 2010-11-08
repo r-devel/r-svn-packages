@@ -226,7 +226,7 @@ as.membership <- function(clustering, keep.names = TRUE) {
     if(keep.names)
 	dimnames(r) <- list(names(clustering), NULL)
     if(any(u != 1:k)) clustering <- match(clustering, u)
-    r[cbind(1:n, clustering)] <- 1:1
+    r[cbind(1:n, clustering)] <- 1L
     r
 }
 

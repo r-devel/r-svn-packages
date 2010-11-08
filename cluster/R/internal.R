@@ -16,7 +16,7 @@ lower.to.upper.tri.inds <- function(n)
 {
     n1 <- as.integer(n - 1)
     if(n1 < 1) stop("'n' must be >= 2")
-    else if(n1 == 1) 1:1
+    else if(n1 == 1) 1L
     else rep(1:n1, 1:n1) +
         c(0, unlist(lapply(2:n1, function(k) cumsum(c(0, (n - 2):(n - k))))))
 }
