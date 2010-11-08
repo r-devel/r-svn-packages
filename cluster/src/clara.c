@@ -63,7 +63,7 @@ void cl_clara(int *n,  /* = number of objects */
     Rboolean nafs, kall, full_sample, lrg_sam, dyst_toomany_NA,
 	has_NA = *mdata;
     int j, jk, jkk, js, jsm, jran, l, n_sam;
-    int nsm, ntt, nad, nadv, rand_k, kans, nrun, n_dys, nsamb, nunfs;
+    int nsm, ntt, rand_k, nrun, n_dys, nsamb, nunfs;
     double rnn, sky, zb, s, sx = -1., zba = -1.;/* Wall */
 
     *jstop = 0;
@@ -124,7 +124,7 @@ void cl_clara(int *n,  /* = number of objects */
 		    nsm = nsel[jk];
 		    jsm = jk;
 		    for (jkk = jk + 1; jkk < *kk; ++jkk) {
-			if (nsel[jkk] < nsm) {
+			if (nsm > nsel[jkk]) {
 			    nsm = nsel[jkk];
 			    jsm = jkk;
 			}
@@ -179,19 +179,18 @@ void cl_clara(int *n,  /* = number of objects */
 		    }
 		}
 		/* insert rand_k into nsel[1:ntt] or after  and increase ntt : */
-		for (kans = 0; kans < ntt; ++kans)
-		    if (nsel[kans] >= rand_k) {
-			if (nsel[kans] == rand_k)
+		for (int ka = 0; ka < ntt; ++ka)
+		    if (nsel[ka] >= rand_k) {
+			if (nsel[ka] == rand_k)
 			    goto L210;
-			else {
-			    for (nad = kans; nad <= ntt; ++nad) {
-				nadv = ntt - nad + kans;
-				nsel[nadv] = nsel[nadv-1];
-			    }
-			    nsel[kans] = rand_k;
+			else {// nsel[ka] > rand_k :
+			    for (int na = ntt; na > ka; --na)
+				nsel[na] = nsel[na-1];
+			    nsel[ka] = rand_k;
 			    /* continue _outer_ loop */ goto L290;
 			}
 		    }
+		// else: rand_k > nsel[ka]  for all ka = 0:(ntt-1) :
 		nsel[ntt] = rand_k;
 
 	    L290:

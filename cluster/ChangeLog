@@ -1,3 +1,8 @@
+2010-11-08  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* src/clara.c (cl_clara): inserting rand_k into nsel[]: simplified
+	and avoiding (typically inconsequential) out_of_bound array access.
+
 2010-10-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 1.13.2  ;  Enhances: MASS

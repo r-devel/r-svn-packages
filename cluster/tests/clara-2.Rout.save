@@ -1,7 +1,8 @@
 
-R version 2.11.1 Patched (2010-06-23 r52375)
+R version 2.12.0 Patched (2010-11-05 r53534)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -34,7 +35,7 @@ In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
 > ## full size sample {should be = pam()}:
 > n0 <- length(iSml <- c(1:70, 701:720))
 > summary(clara0 <- clara(x[iSml,], k = 2, sampsize = n0))
-Object of class `clara' from call:
+Object of class 'clara' from call:
  clara(x = x[iSml, ], k = 2, sampsize = n0) 
 Medoids:
           [,1]       [,2]
@@ -167,7 +168,7 @@ Available components:
 +           )
 > 
 > summary(clara2 <- clara(x, 2))
-Object of class `clara' from call:
+Object of class 'clara' from call:
  clara(x = x, k = 2) 
 Medoids:
           [,1]       [,2]
@@ -1061,7 +1062,7 @@ Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > summary(clara(x5, 5, samples = 50))
-Object of class `clara' from call:
+Object of class 'clara' from call:
  clara(x = x5, k = 5, samples = 50) 
 Medoids:
              [,1]       [,2]        [,3]
@@ -1327,5 +1328,5 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  3.442 0.016 3.505 0 0 
+Time elapsed:  6.77 0.04 6.837 0 0 
 > 
