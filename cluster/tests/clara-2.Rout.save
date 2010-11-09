@@ -1,5 +1,5 @@
 
-R version 2.12.0 Patched (2010-11-05 r53534)
+R version 2.12.0 Patched (2010-11-07 r53537)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -319,7 +319,7 @@ $clusinfo
 +         save(xx, file=ff, compress=TRUE)
 + }
 > print(clara(xx, 2, samples=50, trace = 3)[clInd])
-calling .C(cl_clara, *):
+calling .C(cl_clara, ..., DUP = FALSE):
 C clara(): (nsam,nran,n) = (44,50,1500);
 C clara(): sample 1  finding 1st... new k{ran}:
 .. kall: FALSE, 
@@ -1328,5 +1328,5 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  6.77 0.04 6.837 0 0 
+Time elapsed:  3.44 0.022 3.487 0 0 
 > 

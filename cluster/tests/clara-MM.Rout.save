@@ -1,7 +1,8 @@
 
-R version 2.11.1 Patched (2010-06-23 r52375)
+R version 2.12.0 Patched (2010-11-07 r53537)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -111,7 +112,7 @@ Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  9.876 0.028 9.98 0 0 
+Time elapsed:  9.766 0.013 9.815 0 0 
 > ## nb-mm, with cluster 1.6-4 :  85.2 (elapsed 91.7)
 > 
 > ###-- Larger example: 20*N objects, divided into 5 clusters.
@@ -192,7 +193,7 @@ Available components:
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > ## Last Line:
 > cat("Time elapsed: ", proc.time() - .proctime00,"\n")
-Time elapsed:  10.303 0.033 10.411 0 0 
+Time elapsed:  10.315 0.02 10.361 0 0 
 > ## nb-mm, with cluster 1.6-4 : 74.4 (elapsed 88.2)
 > ## ~~~~~  1.7-* quite faster : 67.6 (elapsed 68.7)
 > 

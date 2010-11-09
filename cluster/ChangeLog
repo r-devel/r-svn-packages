@@ -1,3 +1,7 @@
+2010-11-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/clara.q (clara): allow to disable 'DUP=FALSE' via env variable.
+
 2010-11-08  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/clara.c (cl_clara): inserting rand_k into nsel[]: simplified

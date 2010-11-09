@@ -1,5 +1,5 @@
 
-R version 2.12.0 Patched (2010-11-05 r53534)
+R version 2.12.0 Patched (2010-11-07 r53537)
 Copyright (C) 2010 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -1025,7 +1025,7 @@ Number of objects : 4
 > 
 > ## no problem anymore, since 2002-12-28:
 > clara(ru5, k=3, met="manhattan", sampsize=3,trace=2)[clInS]
-calling .C(cl_clara, *):
+calling .C(cl_clara, ..., DUP = FALSE):
 C clara(): (nsam,nran,n) = (3,5,4); 'large_sample',
 C clara(): sample 1  finding 1st... new k{ran}:
  {295} [ntt=1, nunfs=0]  -> dysta2()
@@ -1067,7 +1067,7 @@ $sample
 [1] "2"  "21" "45"
 
 > clara(ru5, k=3, met="manhattan", sampsize=4,trace=1)[clInS]
-calling .C(cl_clara, *):
+calling .C(cl_clara, ..., DUP = FALSE):
 C clara(): (nsam,nran,n) = (4,5,4); 'full_sample',
 C clara(): sample 1 C clara(): best sample _found_  --> dysta2(nbest), resul(), end
 $objective
@@ -1551,7 +1551,7 @@ $sample
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  6.79 0.04 6.856 0 0 
+Time elapsed:  3.425 0.014 3.459 0 0 
 > ## Lynne (P IV, 1.6 GHz): 18.81; then (no NA; R 1.9.0-alpha): 15.07
 > ## nb-mm (P III,700 MHz): 27.97
 > 
