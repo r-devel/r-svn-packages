@@ -14,9 +14,9 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
     n <- nrow(x)
     if((k <- as.integer(k)) < 1 || k > n - 1)
 	stop("The number of cluster should be at least 1 and at most n-1." )
-    if((sampsize <- as.integer(sampsize)) < max(2,k))
-	stop(gettextf("'sampsize' should be at least %d = max(2, number of clusters)",
-                      max(2,k)), domain=NA)
+    if((sampsize <- as.integer(sampsize)) < max(2,k+1))
+	stop(gettextf("'sampsize' should be at least %d = max(2, 1+ number of clusters)",
+                      max(2,k+1)), domain=NA)
     if(n < sampsize)
 	stop(gettextf("'sampsize' = %d should not be larger than the number of objects, %d",
                       sampsize, n), domain=NA)
