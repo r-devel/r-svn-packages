@@ -101,7 +101,6 @@ void cl_clara(int *n,  /* = number of objects */
 	    Rprintf(" -> k{ran}=%d\n", rand_k);				\
 	}
 
-
 /* __LOOP__ :  random subsamples are drawn and partitioned into kk clusters */
 
     kall = FALSE; /* kall becomes TRUE iff we've found a "valid sample",
@@ -132,7 +131,6 @@ void cl_clara(int *n,  /* = number of objects */
 		    nsel[jsm] = nsel[jk]; nsel[jk] = nsm;
 		}
 		ntt = *kk;
-
 	    }
 	    else { /* no valid sample  _OR_  lrg_sam */
 		if(*trace_lev >= 2) Rprintf(" finding 1st... new k{ran}:\n");
@@ -330,23 +328,19 @@ void dysta2(int nsam, int jpp, int *nsel,
 {
 /* Compute Dissimilarities for the selected sub-sample	---> dys[,] */
 
-    /* Local variables */
-    int j, k, kj, l, lj, ksel, lsel, nlk, npres;
-    double clk, d1, pp = (double) jpp;
-
-    nlk = 0;
+    int nlk = 0;
     dys[0] = 0.;/* very first index; *is* used because ind_2(i,i) |-> 0 ! */
-    for (l = 1; l < nsam; ++l) {
-	lsel = nsel[l];
+    for (int l = 1; l < nsam; ++l) {
+	int lsel = nsel[l];
 	if(lsel <= 0 || lsel > n)
 	    REprintf(" ** dysta2(): nsel[l= %d] = %d is OUT\n", l, lsel);
-	for (k = 0; k < l; ++k) { /* compute d(nsel[l], nsel[k]) {if possible}*/
-	    ksel = nsel[k];
+	for (int k = 0; k < l; ++k) { /* compute d(nsel[l], nsel[k]) {if possible}*/
+	    int ksel = nsel[k];
 	    if(ksel <= 0 || ksel > n)
 		REprintf(" ** dysta2(): nsel[k= %d] = %d is OUT\n", k, ksel);
-	    clk = 0.;
 	    ++nlk;
-	    npres = 0;
+	    int npres = 0, j, lj, kj;
+	    double clk = 0.;
 	    for (j = 0, lj = lsel-1, kj = ksel-1; j < jpp;
 		 ++j, lj += n, kj += n) {
 		if (has_NA && jtmd[j] < 0) { /* x[,j] has some Missing (NA) */
@@ -366,7 +360,7 @@ void dysta2(int nsam, int jpp, int *nsel,
 		*toomany_NA = TRUE;
 		dys[nlk] = -1.;
 	    } else {
-		d1 = clk * (pp / (double) npres);
+		double d1 = clk * (jpp / (double) npres);
 		dys[nlk] = (diss_kind == 1) ? sqrt(d1) : d1 ;
 	    }
 	} /* for( k ) */
@@ -524,7 +518,7 @@ void selec(int kk, int n, int jpp, int diss_kind,
     int j, jk, jj, jp, jnew, ka, kb, jkabc = -1/* -Wall */;
     int newf, nrjk,  npab, nstrt, na, nb, npa, npb, njk, nobs;
 
-    double dsum, pp = (double) (jpp), tra, rns, dnull = -9./* -Wall */;
+    double pp = (double) (jpp), tra;
 
 /* Parameter adjustments */
     --nsel;    --nrepr;
@@ -559,6 +553,7 @@ void selec(int kk, int n, int jpp, int diss_kind,
     newf = 0;
 
     for(jj = 1; jj <= n; jj++) {
+	double dsum, dnull = -9./* -Wall */;
 	if (!has_NA) {
 	    for (jk = 1; jk <= kk; ++jk) {
 		dsum = 0.;
@@ -580,8 +575,7 @@ void selec(int kk, int n, int jpp, int diss_kind,
 	    }
 	}
 	else { /* _has_ missing data */
-	    Rboolean pres;
-	    pres = FALSE;
+	    Rboolean pres = FALSE;
 	    for (jk = 1; jk <= kk; ++jk) {
 		dsum = 0.;
 		nrjk = nr[jk];
@@ -663,7 +657,7 @@ void selec(int kk, int n, int jpp, int diss_kind,
 	radus[jk] = rdnew[jk];
     }
     for (j = 1; j <= kk; ++j) {
-	rns = (double) ns[j];
+	double rns = (double) ns[j];
 	ttd[j] /= rns;
     }
 
