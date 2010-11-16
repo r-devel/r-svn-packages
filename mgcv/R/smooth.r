@@ -12,21 +12,24 @@
 ##############################
 
 nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm=TRUE) {
-## X is an n by p model matrix. S is a p by p
-## +ve semi definite penalty matrix, with the 
-## given rank. type 0 reparameterization leaves
-## the penalty matrix as a diagonal, type 1 
-## reduces it to the identity. 
-## type 2 is not really natural. It simply converts the 
-## penalty to rank deficient identity, with some attempt to
-## control the condition number sensibly. type 2 is most 
-## efficient, but has highest condition.  
+## X is an n by p model matrix. 
+## S is a p by p +ve semi definite penalty matrix, with the 
+## given rank. 
+## * type 0 reparameterization leaves
+##   the penalty matrix as a diagonal, 
+## * type 1 reduces it to the identity. 
+## * type 2 is not really natural. It simply converts the 
+##   penalty to rank deficient identity, with some attempt to
+##   control the condition number sensibly. 
+## * type 3 is type 2, but constructed to force a constant vector
+##   to be the final null space basis function, if possible.
+## type 2 is most efficient, but has highest condition.  
 ## unit.fnorm == TRUE implies that the model matrix should be
 ## rescaled so that its penalized and unpenalized model matrices 
 ## both have unit Frobenious norm. 
 ## For natural param as in the book, type=0 and unit.fnorm=FALSE.
 
-  if (type==2) { ## no need for QR step
+  if (type==2||type==3) { ## no need for QR step
     er <- eigen(S,symmetric=TRUE)
     if (is.null(rank)||rank<1||rank>ncol(S)) { 
       rank <- sum(er$value>max(er$value)*tol)
@@ -44,6 +47,20 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
     }
     P <- t(t(er$vectors)/E) 
     X <- t(t(X)/E)
+    
+    ## if type==3 re-do null space so that a constant vector is the
+    ## final element of the null space basis, if possible...
+    if (null.exists && type==3 && rank < ncol(X)-1) { 
+      ind <- (rank+1):ncol(X)
+      Xn <- X[,ind,drop=FALSE] ## null basis 
+      n <- nrow(Xn)
+      one <- rep(1,n)
+      Xn <- Xn - one%*%t(one)%*%Xn/n
+      um <- eigen(t(Xn)%*%Xn,symmetric=TRUE) 
+      X[,ind] <- X[,ind,drop=FALSE]%*%um$vectors
+      P[,ind] <- P[,ind,drop=FALSE]%*%(um$vectors)      
+    }
+
     if (unit.fnorm) { ## rescale so ||X||_f = 1
       ind <- 1:rank
       scale <- 1/sqrt(mean(X[,ind]^2))
@@ -730,7 +747,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
    
     ## reparameterize so that penalty is identity (and scaling is nice)...
    
-    np <- nat.param(Xm[[i]],Sm[[i]],rank=r[i],type=2,unit.fnorm=TRUE)
+    np <- nat.param(Xm[[i]],Sm[[i]],rank=r[i],type=3,unit.fnorm=TRUE)
    
     Xm[[i]] <- np$X;
     dS <- rep(0,ncol(Xm[[i]]));dS[1:r[i]] <- 1;

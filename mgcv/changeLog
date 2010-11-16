@@ -2,6 +2,11 @@
 *** denotes really big changes 
 ISSUES:
 
+1.7-3
+
+* Slight modification to `t2' marginal reparameterization, so that `main 
+  effects' can be extracted more easily, if required.
+
 1.7-2
 
 * `polys.plot' now exported, to facilitate plotting of results for
