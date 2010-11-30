@@ -1056,6 +1056,29 @@ void RMonoCon(double *Ad,double *bd,double *xd,int *control,double *lower,double
 }
 
 
+void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm) {
+/* interface to lanczos_spd for calling from R.
+   A is n by n symmetric matrix. Let k = m + max(0,lm).
+   U is n by k and D is a k-vector.
+   m is the number of upper eigenvalues required and lm the number of lower.
+   If lm<0 then the m largest magnitude eigenvalues (and their eigenvectors)
+   are returned 
+*/
+  matrix Am,V,va;  
+  int k;
+  Am = Rmatrix(A,*n,*n);
+  k = *m;if (*lm>0) k += *lm;
+  V = initmat(*n,k);
+  va = initmat(k,1);
+  k = lanczos_spd(&Am,&V,&va,*m,*lm);
+  RArrayFromMatrix(U,*n,&V);
+  RArrayFromMatrix(D,k,&va);
+  freemat(va);freemat(V);freemat(Am);
+  *n = k; /* number of iterations taken */
+}
+
+
+
 void RQT(double *A,int *r,int*c)
 
 /* Obtains the QT decomposition of matrix A (stored according to R conventions)

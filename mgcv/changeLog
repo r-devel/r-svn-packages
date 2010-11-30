@@ -4,6 +4,10 @@ ISSUES:
 
 1.7-3
 
+* Efficiency of Lanczos iteration code improved, by restructuring, and 
+  calling LAPACK for the eigen decompostion of the working tri-diagonal
+  matrix.
+
 * Slight modification to `t2' marginal reparameterization, so that `main 
   effects' can be extracted more easily, if required.
 

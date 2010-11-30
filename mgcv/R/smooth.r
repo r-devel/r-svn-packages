@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2009
+##  R routines for the package mgcv (c) Simon Wood 2000-2010
 
 ##  This file is primarily concerned with defining classes of smoother,
 ##  via constructor methods and prediction matrix methods. There are
@@ -28,7 +28,11 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
 ## rescaled so that its penalized and unpenalized model matrices 
 ## both have unit Frobenious norm. 
 ## For natural param as in the book, type=0 and unit.fnorm=FALSE.
-
+## test code:
+##   x <- runif(100)
+##   sm <- smoothCon(s(x,bs="cr"),data=data.frame(x=x),knots=NULL,absorb.cons=FALSE)[[1]]
+##   np <- mgcv:::nat.param(sm$X,sm$S[[1]],type=3)
+##   range(np$X-sm$X%*%np$P)
   if (type==2||type==3) { ## no need for QR step
     er <- eigen(S,symmetric=TRUE)
     if (is.null(rank)||rank<1||rank>ncol(S)) { 
@@ -52,13 +56,16 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
     ## final element of the null space basis, if possible...
     if (null.exists && type==3 && rank < ncol(X)-1) { 
       ind <- (rank+1):ncol(X)
+      rind <- ncol(X):(rank+1)
       Xn <- X[,ind,drop=FALSE] ## null basis 
       n <- nrow(Xn)
       one <- rep(1,n)
       Xn <- Xn - one%*%t(one)%*%Xn/n
       um <- eigen(t(Xn)%*%Xn,symmetric=TRUE) 
-      X[,ind] <- X[,ind,drop=FALSE]%*%um$vectors
-      P[,ind] <- P[,ind,drop=FALSE]%*%(um$vectors)      
+      ## use ind in next 2 lines to have const column last,
+      ## rind to have it first (among null space cols)
+      X[,rind] <- X[,ind,drop=FALSE]%*%um$vectors
+      P[,rind] <- P[,ind,drop=FALSE]%*%(um$vectors)      
     }
 
     if (unit.fnorm) { ## rescale so ||X||_f = 1
@@ -1665,8 +1672,7 @@ smooth.construct.re.smooth.spec<-function(object,data,knots)
 
 Predict.matrix.random.effect<-function(object,data)
 # prediction method function for the p.spline smooth class
-{ require(splines)
-  X <- model.matrix(object$form,data)
+{ X <- model.matrix(object$form,data)
   X
 }
 
@@ -1859,6 +1865,162 @@ Predict.matrix.mrf.smooth<-function(object, data) {
   if (!is.null(object$P)) X <- X%*%object$P
   X 
 } 
+
+
+#############################
+# Splines on the sphere....
+#############################
+
+makeR <- function(la,lo,lak,lok) {
+## construct a matrix R the i,jth element of which is
+## R(p[i],pk[j]) where p[i] is the point given by 
+## la[i], lo[i] and something similar holds for pk[j]. 
+## Wahba (1981) SIAM J Sci. Stat. Comput. 2(1):5-14 is the 
+## key reference, although some expressions are oddly unsimplified 
+## there. There's an errata in 3(3):385-386, but it doesn't
+## change anything here (only higher order penalties)
+
+  pi180 <- pi/180 ## convert to radians
+  la <- la * pi180;lo <- lo * pi180
+  lak <- lak * pi180;lok <- lok * pi180
+
+  og <- expand.grid(lo=lo,lok=lok)
+  ag <- expand.grid(la=la,lak=lak)
+
+  ## get array of angles between points (lo,la) and knots (lok,lak)...
+
+  v <- 1 - cos(ag$la)*cos(og$lo)*cos(ag$lak)*cos(og$lok) - 
+                  cos(ag$la)*sin(og$lo)*cos(ag$lak)*sin(og$lok)-
+                  sin(ag$la)*sin(ag$lak)
+  v[v<0] <- 0  
+
+  gamma <- 2*asin(sqrt(v*0.5))
+  z <- 1 - cos(gamma)
+  eps <- .Machine$double.eps*.0001
+  z[z<eps] <- eps  
+  ## lim q as z -> 0 is 1
+  q <- log(1+sqrt(2/z))*(3*z*z - 2*z) - 6*z^1.5/sqrt(2) + 3*z + 1
+   
+  ## This is Wahba's pseudospline r.k. alternative would be to 
+  ## sum series to get regular spline kernel... 
+  matrix((q/4-1/6)/(2*pi),length(la),length(lak)) ## rk matrix
+  
+}
+
+smooth.construct.sos.smooth.spec<-function(object,data,knots)
+## The constructor for a t.p.r.s. basis object.
+## Assumption: first variable is lat, second is lon!!
+{ ## deal with possible extra arguments of "sos" type smooth
+  xtra <- list()
+
+  if (is.null(object$xt$max.knots)) xtra$max.knots <- 2000 
+  else xtra$max.knots <- object$xt$max.knots 
+  if (is.null(object$xt$seed)) xtra$seed <- 1 
+  else xtra$seed <- object$xt$seed 
+
+  if (object$dim!=2) stop("Can only deal with a sphere")
+
+  ## now collect predictors
+  x<-array(0,0)
+  for (i in 1:2) {
+    xx <- data[[object$term[i]]]
+    if (i==1) n <- length(xx) else 
+    if (n!=length(xx)) stop("arguments of smooth not same dimension")
+    x<-c(x,xx)
+  }
+
+  if (is.null(knots)) { knt<-0;nk<-0}
+  else { 
+    knt<-array(0,0)
+    for (i in 1:2) 
+    { dum <- knots[[object$term[i]]]
+      if (is.null(dum)) {knt<-0;nk<-0;break} # no valid knots for this term
+      knt <- c(knt,dum)
+      nk0 <- length(dum)
+      if (i > 1 && nk != nk0) 
+      stop("components of knots relating to a single smooth must be of same length")
+      nk <- nk0
+    }
+  }
+  if (nk>n) { ## nore knots than data - silly.
+    nk <- 0
+    warning("more knots than data in an sos term: knots ignored.")
+  }
+  ## deal with possibility of large data set
+  if (nk==0) { ## need to create knots
+    xu <- uniquecombs(matrix(x,n,2)) ## find the unique `locations'
+    nu <- nrow(xu)  ## number of unique locations
+    if (n > xtra$max.knots) { ## then there *may* be too many data      
+      if (nu>xtra$max.knots) { ## then there is really a problem 
+        seed <- get(".Random.seed",envir=.GlobalEnv) ## store RNG seed
+        kind <- RNGkind(NULL)
+        RNGkind("default","default")
+        set.seed(xtra$seed) ## ensure repeatability
+        nk <- xtra$max.knots ## going to create nk knots
+        ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
+        knt <- as.numeric(xu[ind,])  ## ... like this
+        RNGkind(kind[1],kind[2])
+        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+      } else { 
+        knt <- xu;nk <- nu
+      } ## end of large data set handling
+    } else { knt <- xu;nk <- nu } ## just set knots to data
+  } 
+
+  if (object$bs.dim[1]<0) object$bs.dim <- 50 # auto-initialize basis dimension
+
+  ## Now get the rk matrix...
+
+  R <- makeR(la=knt[1:nk],lo=knt[-(1:nk)],lak=knt[1:nk],lok=knt[-(1:nk)])
+
+  k <- object$bs.dim   
+
+  if (k<nk) {
+    er <- slanczos(R,k,-1) ## truncated eigen decompostion of R
+
+    D <- diag(er$values) ## penalty matrix
+    ## The constraint is 1' U \gamma = 0. Find null space...
+
+    U1 <- matrix(colSums(er$vectors),k,1)
+  } else { ## no point using eigen-decomp
+    U1 <- matrix(1,k,1) ## constraint
+    D <- R  ## penalty
+    er <- list(vectors=diag(k)) ## U is identity here
+  }
+
+  qru <- qr(U1)  
+
+  ## Q=[Y,Z], where Y is a single column here
+  ## so A%*%Z = (A%*%Q)[,-1] and t(Z)%*%A = (t(Q)%*%A)[-1,]
+ 
+  S <- qr.qty(qru,t(qr.qty(qru,D)[-1,]))[-1,]
+  object$S <- list(S=rbind(cbind(S,rep(0,k-1)),rep(0,k))) ## Z'DZ
+  
+  object$UZ <- t(qr.qty(qru,t(er$vectors))[-1,]) ## UZ - (original params) = UZ %*% (working params)
+
+  object$knt=knt ## save the knots
+  object$df<-object$bs.dim
+  object$null.space.dim <- 1
+  object$rank <- k - 1
+  class(object)<-"sos.smooth"
+
+  object$X <- Predict.matrix.sos.smooth(object,data)
+
+  object
+} ## end of smooth.construct.sos.smooth.spec
+
+
+
+Predict.matrix.sos.smooth<-function(object,data)
+# prediction method function for the p.spline smooth class
+{ 
+  nk <- length(object$knt)/2
+  X <- makeR(la=data[[object$term[1]]],lo=data[[object$term[2]]],
+             lak=object$knt[1:nk],lok=object$knt[-(1:nk)])%*%object$UZ
+  X <- cbind(X,rep(1,nrow(X)))
+  X
+}
+
 
 
 
