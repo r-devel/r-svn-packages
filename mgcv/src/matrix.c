@@ -2925,7 +2925,7 @@ int lanczos_spd(matrix *A, matrix *V, matrix *va,int m,int lm)
 } /* end of lanczos_spd */
 
 
-void Rlanczos1(double *A,double *U,double *D,int *n, int *m, int *lm) {
+void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm) {
 /* Prototype faster lanczos_spd for calling from R.
    A is n by n symmetric matrix. Let k = m + max(0,lm).
    U is n by k and D is a k-vector.
@@ -2938,14 +2938,21 @@ void Rlanczos1(double *A,double *U,double *D,int *n, int *m, int *lm) {
    ISSUE: 1. eps_stop tolerance is set *very* tight.
           2. Currently all eigenvectors of Tj are found, although only the next unconverged one
              is really needed. Might be better to be more selective using dstein from LAPACK. 
+          3. Basing whole thing on dstevx might be faster
+          4. Is random start vector really best? convergence seems very slow. Might be better to 
+             use e.g. a sine wave, and simply change its frequency if it seems to be in null space.
+             Demmel (1997) suggests using a random vector, to avoid any chance of orthogonality with
+             an eigenvector!
+        
 */
   int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,low_conv,high_conv,use_low,conv;
-  double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*Ap,*zp,*qp,normTj,eps_stop=DOUBLE_EPS,max_err;
+  double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*Ap,*zp,*qp,normTj,eps_stop=DOUBLE_EPS*10,max_err;
   unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
   
   if (*lm<0) { biggest=1;*lm=0;} /* get m largest magnitude eigen-values */
   f_check = (*m + *lm)/2; /* how often to get eigen_decomp */
-  kk = (int) floor(*n/20); if (kk<1) k=1;  
+  if (f_check<1) f_check ++;
+  kk = (int) floor(*n/10); if (kk<1) k=1;  
   if (kk<f_check) f_check = kk;
 
   q=(double **)calloc((size_t)(*n+1),sizeof(double *));
@@ -2973,7 +2980,7 @@ void Rlanczos1(double *A,double *U,double *D,int *n, int *m, int *lm) {
   for (j=0;j< *n;j++) 
   { /* form z=Aq[j]=A'q[j], the O(n^2) step ...  */
     for (Ap=A,zp=z,p0=zp+*n;zp<p0;zp++) 
-    for (qp=q[j],p1=qp+*n;qp<p1;qp++,Ap++) *zp += *Ap * *qp;
+      for (*zp=0.0,qp=q[j],p1=qp+*n;qp<p1;qp++,Ap++) *zp += *Ap * *qp;
 
     /* Now form a[j] = q[j]'z.... */
     for (xx=0.0,qp=q[j],p0=qp+*n,zp=z;qp<p0;qp++,zp++) xx += *qp * *zp;
@@ -3020,7 +3027,7 @@ void Rlanczos1(double *A,double *U,double *D,int *n, int *m, int *lm) {
 
     /* Now get the spectral decomposition of T_j.  */
 
-    if (((j>= *m + *lm - 1)&&(j%f_check==0))||(j == *n-1))   /* no  point doing this too early or too often */
+    if (((j>= *m + *lm)&&(j%f_check==0))||(j == *n-1))   /* no  point doing this too early or too often */
     { for (i=0;i<j+1;i++) d[i]=a[i]; /* copy leading diagonal of T_j */
       for (i=0;i<j;i++) g[i]=b[i]; /* copy sub/super diagonal of T_j */   
       /* set up storage for eigen vectors */
@@ -3103,8 +3110,8 @@ void Rlanczos1(double *A,double *U,double *D,int *n, int *m, int *lm) {
   free(err);
   if (vlength) free(v);
   for (i=0;i< *n+1;i++) if (q[i]) free(q[i]);free(q);  
-  *n = k; /* number of iterations taken */
-} /* end of Rlanczos1 */
+  *n = j; /* number of iterations taken */
+} /* end of Rlanczos */
 
 
 
@@ -3138,6 +3145,30 @@ void fprintmat(matrix A,char *fname,char *fmt)
   }
   fclose(f);
 }
+
+void RArrayFromMatrix(double *a,long r,matrix *M)
+
+/* copies matrix *M into R array a where r is the number of rows of A treated as
+  a matrix by R */
+
+{ int i,j;
+  for (i=0;i<M->r;i++) for (j=0;j<M->c;j++) a[i+r*j]=M->M[i][j];
+}
+
+
+matrix Rmatrix(double *A,long r,long c)
+
+/* produces a matrix from the array containing a (default) R matrix stored:
+   A[0,0], A[1,0], A[2,0] .... etc */
+
+{ int i,j;
+  matrix M;
+  M=initmat(r,c);
+  for (i=0;i<r;i++) for (j=0;j<c;j++) M.M[i][j]=A[i+j*r];
+  return(M);
+}
+
+
 
 /*********************************************************************************/
 /* Update Log (started Jan 2000)                                                 */

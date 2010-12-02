@@ -22,13 +22,15 @@ slanczos <- function(A,k=10,kl=-1) {
 ## eigenvalues returned, otherwise k highest and kl lowest.
 ## Eigenvectors are always returned too.
 ## set.seed(1);n <- 1000;A <- matrix(runif(n*n),n,n);A <- A+t(A);er <- slanczos(A,10)
-## um <- eigen(A,symmetric=TRUE);ind <- c(1:5,996:1000)
+## um <- eigen(A,symmetric=TRUE);ind <- c(1:5,(n-5+1):n)
 ## range(er$values-um$values[ind]);range(abs(er$vectors)-abs(um$vectors[,ind]))
 ## It seems that when k (or k+kl) is beyond 10-15% of n
 ## then you might as well use eigen(A,symmetric=TRUE), but the
 ## extra cost is the expensive accumulation of eigenvectors.
 ## Should re-write whole thing using LAPACK routines for eigenvectors. 
+   k <- round(k);kl <- round(kl)
    m <- k + max(0,kl)
+   if (m<1) return(list(values=rep(0,0),vectors=matrix(0,n,0),iter=0))
    n <- nrow(A) 
    if (n != ncol(A)) stop("A not square")
    oo <- .C(C_Rlanczos,A=as.double(A),U=as.double(rep(0,n*m)),D=as.double(rep(0,m)),

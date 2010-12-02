@@ -39,6 +39,11 @@ For details see \code{\link{cubic.regression.spline}} and e.g. Wood (2006a).
 \code{bs="cc"} specifies a cyclic cubic regression splines (see \link{cyclic.cubic.spline}). i.e. a penalized cubic regression splines whose ends match, up to second 
 derivative.}
 
+\item{Splines on the sphere}{\code{bs="sos"}.
+These are two dimensional splines on a sphere. Arguments are latitude and longitude, and they are 
+the analogue of thin plate splines for the sphere. Useful for data sampled over a large portion of the globe, 
+when isotropy is appropriate. See \code{\link{Spherical.Spline}} for details.}
+
 \item{P-splines}{\code{bs="ps"}. 
 These are P-splines as proposed by Eilers and Marx (1996). They combine a B-spline basis, with a discrete penalty
 on the basis coefficients, and any sane combination of penalty and basis order is allowed. Although this penalty has no exact interpretation in terms of function shape, in the way that the derivative penalties do, P-splines perform almost as well as conventional splines in many standard applications, and can perform better in particular cases where it is advantageous to mix different orders of basis and penalty.

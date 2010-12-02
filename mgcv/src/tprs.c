@@ -19,6 +19,7 @@ USA.*/
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include "mgcv.h"
 #include "matrix.h"
 #include "general.h"
 /* Code for thin plate regression splines */
@@ -338,8 +339,8 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
 
 { matrix X1,E,U,v,TU,T,Z,p;
  
-  int l,i,j,M,*yxindex,pure_knot=0;
-  double w,*xc,*XMi,**UZM,*X1V;
+  int l,i,j,M,*yxindex,pure_knot=0,nk,minus=-1,kk;
+  double w,*xc,*XMi,**UZM,*X1V,*Ea,*Ua;
   if (n_knots<k) /* then use the covariate points as knots */
   { *Xu=initmat((long)n,(long)d+1);
     for (i=0;i<n;i++) { for (j=0;j<d;j++) Xu->M[i][j]=x[j][i];Xu->M[i][d]=(double)i;}
@@ -378,11 +379,25 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
     Z=initmat((long)M,T.r);
     QT(Z,TU,0);  /* Still need Z as HH's for later */
   } else
-  { U=initmat(E.r,(long)k); /* eigen-vector matrix for E */
-    v=initmat((long)k,1L);      /* eigen-value matrix for E */
+  { v=initmat((long)k,1L);    /* eigen-value matrix for E */
 
-    i=lanczos_spd(&E,&U,&v,k,-1);      /* get k largest magnitude  eigen-values/vectors of E */
+    /* code to enable use of Rlanczos, in place of lanczos_spd */ 
+    if (1) { /* use newer Lanczos routine */
+      nk = E.r;
+      Ea = (double *) calloc((size_t) nk*nk,sizeof(double));
+      Ua = (double *) calloc((size_t) nk*k,sizeof(double));
+      RArrayFromMatrix(Ea,nk,&E);
+      minus = -1;kk=k; 
+  
+      Rlanczos(Ea,Ua,v.M[0],&nk, &kk, &minus);
+
+      U = Rmatrix(Ua,E.r,k);free(Ea);free(Ua);
     
+      } else { /* older Lanczos routine */
+
+      U=initmat(E.r,(long)k);   /* eigen-vector matrix for E */
+      i=lanczos_spd(&E,&U,&v,k,-1);      /* get k largest magnitude  eigen-values/vectors of E */
+    }
     /* Now form the constraint matrix for the truncated problem T'U */
     TU=initmat((long)M,k);
     matmult(TU,T,U,1,0);

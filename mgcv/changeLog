@@ -4,6 +4,8 @@ ISSUES:
 
 1.7-3
 
+** "sos" (spline on the sphere) smooth class added. See ?Spherical.Spline.
+
 * Efficiency of Lanczos iteration code improved, by restructuring, and 
   calling LAPACK for the eigen decompostion of the working tri-diagonal
   matrix.

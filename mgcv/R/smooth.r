@@ -1871,7 +1871,7 @@ Predict.matrix.mrf.smooth<-function(object, data) {
 # Splines on the sphere....
 #############################
 
-makeR <- function(la,lo,lak,lok) {
+makeR <- function(la,lo,lak,lok,m=2) {
 ## construct a matrix R the i,jth element of which is
 ## R(p[i],pk[j]) where p[i] is the point given by 
 ## la[i], lo[i] and something similar holds for pk[j]. 
@@ -1899,11 +1899,33 @@ makeR <- function(la,lo,lak,lok) {
   eps <- .Machine$double.eps*.0001
   z[z<eps] <- eps  
   ## lim q as z -> 0 is 1
-  q <- log(1+sqrt(2/z))*(3*z*z - 2*z) - 6*z^1.5/sqrt(2) + 3*z + 1
-   
-  ## This is Wahba's pseudospline r.k. alternative would be to 
-  ## sum series to get regular spline kernel... 
-  matrix((q/4-1/6)/(2*pi),length(la),length(lak)) ## rk matrix
+  W <- z/2;C <- sqrt(W)
+  A <- log(1+1/C);C <- C*2
+  if (m==1) { ## order 3/2 penalty
+    q1 <- 2*A*W - C + 1
+    return(matrix((q1-1/2)/(2*pi),length(la),length(lak))) ## rk matrix
+  } 
+
+  W2 <- W*W
+  if (m==2) { ## order 2 penalty
+    q2 <- A*(6*W2-2*W)-3*C*W+3*W+1/2
+    ## This is Wahba's pseudospline r.k. alternative would be to 
+    ## sum series to get regular spline kernel... 
+    return(matrix((q2/2-1/6)/(2*pi),length(la),length(lak))) ## rk matrix
+  }
+
+  W3 <- W2*W
+  if (m==3) { ## order 5/2 penalty
+    q3 <- (A*(60*W3 - 36*W2) + 30*W2 + C*(8*W-30*W2) - 3*W + 1)/3
+    return(matrix( (q3/6-1/24)/(2*pi),length(la),length(lak))) ## rk matrix 
+  }
+
+  W4 <- W3*W
+  if (m==4) { ## order 3 penalty
+    q4 <- A*(70*W4-60*W3 + 6*W2) +35*W3*(1-C) + C*55*W2/3 - 12.5*W2 - W/3 + 1/4
+    return(matrix( (q4/24-1/120)/(2*pi),length(la),length(lak))) ## rk matrix 
+  }
+  
   
 }
 
@@ -1942,7 +1964,7 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
       nk <- nk0
     }
   }
-  if (nk>n) { ## nore knots than data - silly.
+  if (nk>n) { ## more knots than data - silly.
     nk <- 0
     warning("more knots than data in an sos term: knots ignored.")
   }
@@ -1971,7 +1993,12 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
   ## Now get the rk matrix...
 
-  R <- makeR(la=knt[1:nk],lo=knt[-(1:nk)],lak=knt[1:nk],lok=knt[-(1:nk)])
+  if (is.na(object$p.order)) object$p.order <- 1
+  object$p.order <- round(object$p.order)
+  if (object$p.order<1) object$p.order <- 1
+  if (object$p.order>4) object$p.order <- 4
+
+  R <- makeR(la=knt[1:nk],lo=knt[-(1:nk)],lak=knt[1:nk],lok=knt[-(1:nk)],m=object$p.order)
 
   k <- object$bs.dim   
 
