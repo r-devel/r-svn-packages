@@ -799,17 +799,24 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   ## Create identifiability constraint. Key feature is that it 
   ## only affects the unpenalized parameters...
   nup <- sum(sub.cols[1:nsc]) ## range space rank
+  X.shift <- NULL
   if (is.null(C)) { ## if not null then already determined that constraint not needed
-    if (object$null.space.dim==0) C <- matrix(0,0,0) else ## no null space => no constraint
-    if (object$null.space.dim==1) C <- ncol(X) else ## might as well use set to zero
-    C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X),drop=FALSE])),1,ncol(X)) ## constraint on null space
+    if (object$null.space.dim==0) { C <- matrix(0,0,0) } else { ## no null space => no constraint
+      if (object$null.space.dim==1) C <- ncol(X) else ## might as well use set to zero
+      C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X),drop=FALSE])),1,ncol(X)) ## constraint on null space
+      X.shift <- colMeans(X[,1:nup])
+      X[,1:nup] <- sweep(X[,1:nup],2,X.shift) ## make penalized columns orthog to constant col.
+      ## last is fine because it is equivalent to adding the mean of each col. times its parameter
+      ## to intercept... only parameter modified is the intercept.
+    }
   }
 
   object$X <- X
   object$S <- S
   object$C <- C 
-  if (is.matrix(C)&&nrow(C)==0) object$Cp <- NULL else
-  object$Cp <- matrix(colSums(X),1,ncol(X)) ## alternative constraint for prediction
+  object$X.shift <- X.shift
+  ## if (is.matrix(C)&&nrow(C)==0) object$Cp <- NULL else
+  ## object$Cp <- matrix(colSums(X),1,ncol(X)) ## alternative constraint for prediction
   object$df <- ncol(X)
   
   object$rank <- sub.cols[1:nsc] ## ranks of individual penalties
@@ -832,6 +839,10 @@ Predict.matrix.t2.smooth <- function(object,data)
     rank[i] <-  object$margin[[i]]$rank
   }
   T <- t2.model.matrix(X,rank,full=object$full)
+  if (!is.null(object$X.shift)) { ## have to centre columns, as in original constructor
+    nup <- length(object$X.shift)
+    T[,1:nup] <- sweep(T[,1:nup],2,object$X.shift)
+  }
   T
 } ## end of Predict.matrix.t2.smooth
 
@@ -2203,8 +2214,12 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
         sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
       }
     } ## end of sparse constraint handling
-    conSupplied <- FALSE
-  } else conSupplied <- TRUE
+    ## conSupplied <- FALSE
+    alwaysCon <- FALSE
+  } else { 
+    ## should supplied constraint be applied even if not needed? 
+    if (is.null(attr(sm$C,"always.apply"))) alwaysCon <- FALSE else alwaysCon <- TRUE
+  }
 
   ## set df fields (pre-constraint)...
   if (is.null(sm$df)) sm$df <- sm$bs.dim
@@ -2326,7 +2341,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       sml[[1]]$label <- paste(sm$label,":",object$by,sep="") 
      
       ## test for cases where no centring constraint on the smooth is needed. 
-      if (!conSupplied) {
+      if (!alwaysCon) {
         if (matrixArg) {
           ##q <- nrow(sml[[1]]$X)/n
           L1 <- matrix(by,n,q)%*%rep(1,q)

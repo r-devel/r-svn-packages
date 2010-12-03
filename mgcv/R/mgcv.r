@@ -772,12 +772,29 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
    
     G$smooth[[i]] <- sm[[i]]   
   }
+
+  ## Now test if intercept in span of parametric, and centre all smooth
+  ## columns if it is....
+
+  G$Xcentre <- NULL
+  if (G$nsdf>0) { 
+    qrx <- qr(X[,1:G$nsdf,drop=FALSE])
+    one <- rep(1,nrow(X))
+    if (max(abs(one-qr.qy(qrx,qr.qty(qrx,one)))) < .Machine$double.eps^.75 ) {
+      G$Xcentre <- colMeans(X)
+      G$Xcentre[1:G$nsdf] <- 0 
+      if (max(G$Xcentre^2)<.Machine$double.eps^.75) G$Xcentre <- NULL else 
+      X <- sweep(X,2,G$Xcentre)
+    } else G$Xcentre <- NULL
+  }
+  
+
   if (is.null(Xp)) {
     G$cmX <- colMeans(X) ## useful for componentwise CI construction 
   } else {
     G$cmX <- colMeans(Xp)
     ## transform from fit params to prediction params...
-    G$P <- qr.coef(qr(Xp),X) ## old code assumes always full rank!!
+    ## G$P <- qr.coef(qr(Xp),X) ## old code assumes always full rank!!
     
     qrx <- qr(Xp,LAPACK=TRUE)
     R <- qr.R(qrx)
@@ -797,7 +814,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     }
     G$P[qrx$pivot,] <- G$P
   }
-  G$cmX[-(1:G$nsdf)] <- 0 ## zero the smooth parts here 
+  if (G$nsdf>0) G$cmX[-(1:G$nsdf)] <- 0 ## zero the smooth parts here 
+  else G$cmX <- G$cmX * 0
   G$X <- X;rm(X)
   n.p <- ncol(G$X) 
   # deal with penalties
@@ -1608,6 +1626,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$contrasts <- G$contrasts
   object$xlevels <- G$xlevels
   object$offset <- G$offset
+  if (!is.null(G$Xcentre)) object$Xcentre <- G$Xcentre
   if (control$keepData) object$data <- data
   object$df.residual <- nrow(G$X) - sum(object$edf)
   object$min.edf<-G$min.edf
@@ -2229,6 +2248,11 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
       if (type=="terms"||type=="iterms") ColNames[n.pterms+k]<-object$smooth[[k]]$label
     }
+
+    if (!is.null(object$Xcentre)) { ## Apply any column centering
+      X <- sweep(X,2,object$Xcentre)
+    }
+
     # have prediction matrix for this block, now do something with it
     if (type=="lpmatrix") { 
       H[start:stop,]<-X

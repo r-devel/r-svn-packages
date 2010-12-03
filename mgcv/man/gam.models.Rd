@@ -126,8 +126,8 @@ where \eqn{f}{f} is a smooth function, and \eqn{z_i}{z_i} is a numeric variable.
 The appropriate formula is:\cr
 \code{y ~ s(x,by=z)}\cr
 - the \code{by} argument ensures that the smooth function gets multiplied by
-covariate \code{z}. Note that when using factor variables, then the presence of centering constraints usually
-means that the by variable should be included as a parametric term, as well.
+covariate \code{z}. Note that when using factor by variables, centering constraints are applied to the smooths,
+which usually means that the by variable should be included as a parametric term, as well.
 
 The example code below also illustrates the use of factor \code{by} variables.
 
@@ -136,7 +136,7 @@ The example code below also illustrates the use of factor \code{by} variables.
 If a \code{by} variable is present and numeric (rather than a factor) then the corresponding smooth is only subjected 
 to an identifiability constraint if (i) the \code{by} variable is a constant vector, or, (ii) for a matrix 
 \code{by} variable, \code{L}, if \code{L\%*\%rep(1,ncol(L))} is constant or (iii) if a user defined smooth constructor 
-supplies an identifiability constraint explicitly. 
+supplies an identifiability constraint explicitly, and that constraint has an attibute \code{"always.apply"}. 
 }
 
 \section{Linking smooths with `id'}{
