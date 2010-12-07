@@ -1,6 +1,6 @@
 Package: coda
-Version: 0.13-5
-Date: 2010-03-19
+Version: 0.14-1
+Date: 2010-12-07
 Title: Output analysis and diagnostics for MCMC
 Author: Martyn Plummer, Nicky Best, Kate Cowles, Karen Vines
 Maintainer: Martyn Plummer <plummer@iarc.fr>

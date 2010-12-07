@@ -187,6 +187,17 @@
   structure(lapply(x, window.mcmc, ...), class = "mcmc.list")
 }
 
+"head.mcmc.list" <- function (x, ...) 
+{
+  structure(lapply(x, head.mcmc, ...), class = "mcmc.list")
+}
+
+
+"tail.mcmc.list" <- function (x, ...) 
+{
+  structure(lapply(x, tail.mcmc, ...), class = "mcmc.list")
+}
+
 "as.mcmc.list" <- function (x, ...) 
   UseMethod("as.mcmc.list")
 
