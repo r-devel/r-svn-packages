@@ -88,7 +88,7 @@ rpartco <- function(tree, parms =  paste(".rpart.parms", dev.cur(), sep = "."))
     #
     compress <- function(me, depth) {
         lson <- me +1
-	x <- x
+#	x <- x
 	if (is.leaf[lson]) left <- list(left=x[lson], right=x[lson],
 						depth=depth+1, sons=lson)
         else               left <- compress(me+1, depth+1)
@@ -105,7 +105,7 @@ rpartco <- function(tree, parms =  paste(".rpart.parms", dev.cur(), sep = "."))
 	#   But only over depths that they have in common
 	# 1 is a minimum distance allowed
 	slide <- min(right$left[1L:mind] - left$right[1L:mind]) -1
-	if (slide >0) { # slide the right hand node to the left
+	if (slide > 0) { # slide the right hand node to the left
 	    x[right$sons] <- x[right$sons] - slide;
 	    x[me] <- (x[right$sons[1L]] + x[left$sons[1L]])/2
 #	    assign("x", x)
