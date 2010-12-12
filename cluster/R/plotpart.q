@@ -309,7 +309,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 	    oppervlak <- pi * d2[i] * sqrt(cov[1, 1] * cov[2, 2] - cov[1, 2]^2)
 	}
 
-	z[[i]] <- ellipsoidPoints(A[[i]], d2[i], loc[i, ], n= 201)
+	z[[i]] <- ellipsoidPoints(A[[i]], d2[i], loc[i, ], n.half= 201)
 	maxima[i, ] <- z[[i]][201, ]
 	rx <- range(z[[i]][, 1])
 	ry <- range(z[[i]][, 2])
