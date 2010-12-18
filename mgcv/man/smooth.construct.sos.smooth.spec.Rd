@@ -8,9 +8,10 @@
 \description{\code{\link{gam}} can use isotropic smooths on the sphere, via terms like 
 \code{s(la,lo,bs="sos",m=2,k=100)}. There must be exactly 2 arguments to such a smooth. 
 The first is taken to be latitude (in degrees) and the second longitude (in degrees). 
-\code{m} (default 1) is an integer in the range 1 to 4 determining the order of the penalty used. 
-\code{(m+2)/2} is the penalty order, so \code{m=2} is the equivalent to the usual second 
-derivative penalty. \code{k} (default 50) is the basis dimension.
+\code{m} (default 1) is an integer in the range 0 to 4 determining the order of the penalty used. 
+For \code{m>0}, \code{(m+2)/2} is the penalty order, so \code{m=2} is the equivalent to the usual second 
+derivative penalty. \code{m=0} signals to use the 2nd order spline on the sphere, computed by 
+Wendelberger's (1981) method. \code{k} (default 50) is the basis dimension.
  
 
 }
@@ -39,10 +40,11 @@ out duplicate locations).}
 \item{UZ}{The matrix mapping the t.p.r.s. parameters back to the parameters of a full thin plate spline.}
 }
 
-\details{ The smooths implelemented here are based on the pseudosplines on the sphere of Wahba (1981) 
+\details{ For \code{m>0}, the smooths implemented here are based on the pseudosplines on the sphere of Wahba (1981) 
 (there is a correction of table 1 in 1982, but the correction has a misprint in the definition of A --- the A
-given in the 1981 paper is correct). Optimal low rank approximations are obtained using exactly the 
-approach given in Wood (2003). 
+given in the 1981 paper is correct). For \code{m=0} then a second order spline on the sphere is used which is the analogue of 
+a second order thin plate spline in 2D: the computation is based on Chapter 4 of Wendelberger, 1981. 
+Optimal low rank approximations are obtained using exactly the approach given in Wood (2003). 
 
 Note that the null space of the penalty is always the space of constant functions on the sphere, whatever the order of penalty. 
 The order of penalty can be selected by GCV, REML etc, but I have yet to find a case where \code{m=1} was not selected. 
@@ -53,6 +55,8 @@ The order of penalty can be selected by GCV, REML etc, but I have yet to find a 
 Wahba, G. (1981) Spline interpolation and smoothing on the sphere. SIAM J. Sci. Stat. Comput. 2(1):5-16
 
 Wahba, G. (1982) Erratum. SIAM J. Sci. Stat. Comput. 3(3):385-386.
+
+Wendelberger, J. (1981) PhD Thesis, University of Winsconsin.
 
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 }

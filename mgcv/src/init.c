@@ -32,6 +32,7 @@ R_CMethodDef CEntries[] = {
     {"rwMatrix",(DL_FUNC)&rwMatrix,6},
     {"in_out",(DL_FUNC)&in_out,8},
     {"Rlanczos",(DL_FUNC)&Rlanczos,6},
+    {"rksos",(DL_FUNC)&rksos,3},
     {NULL, NULL, 0}
 };
 

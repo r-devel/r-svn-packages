@@ -804,19 +804,20 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
     if (object$null.space.dim==0) { C <- matrix(0,0,0) } else { ## no null space => no constraint
       if (object$null.space.dim==1) C <- ncol(X) else ## might as well use set to zero
       C <- matrix(c(rep(0,nup),colSums(X[,(nup+1):ncol(X),drop=FALSE])),1,ncol(X)) ## constraint on null space
-      X.shift <- colMeans(X[,1:nup])
-      X[,1:nup] <- sweep(X[,1:nup],2,X.shift) ## make penalized columns orthog to constant col.
+    ##  X.shift <- colMeans(X[,1:nup])
+    ##  X[,1:nup] <- sweep(X[,1:nup],2,X.shift) ## make penalized columns orthog to constant col.
       ## last is fine because it is equivalent to adding the mean of each col. times its parameter
       ## to intercept... only parameter modified is the intercept.
+      ## .... amounted to shifting random efects to fixed effects -- not legitimate
     }
   }
 
   object$X <- X
   object$S <- S
   object$C <- C 
-  object$X.shift <- X.shift
-  ## if (is.matrix(C)&&nrow(C)==0) object$Cp <- NULL else
-  ## object$Cp <- matrix(colSums(X),1,ncol(X)) ## alternative constraint for prediction
+  ##object$X.shift <- X.shift
+  if (is.matrix(C)&&nrow(C)==0) object$Cp <- NULL else
+  object$Cp <- matrix(colSums(X),1,ncol(X)) ## alternative constraint for prediction
   object$df <- ncol(X)
   
   object$rank <- sub.cols[1:nsc] ## ranks of individual penalties
@@ -839,10 +840,10 @@ Predict.matrix.t2.smooth <- function(object,data)
     rank[i] <-  object$margin[[i]]$rank
   }
   T <- t2.model.matrix(X,rank,full=object$full)
-  if (!is.null(object$X.shift)) { ## have to centre columns, as in original constructor
-    nup <- length(object$X.shift)
-    T[,1:nup] <- sweep(T[,1:nup],2,object$X.shift)
-  }
+  #if (!is.null(object$X.shift)) { ## have to centre columns, as in original constructor
+  #  nup <- length(object$X.shift)
+  #  T[,1:nup] <- sweep(T[,1:nup],2,object$X.shift)
+  #}
   T
 } ## end of Predict.matrix.t2.smooth
 
@@ -981,7 +982,11 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
     xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
     nu <- nrow(xu)  ## number of unique locations
     if (nu>xtra$max.knots) { ## then there is really a problem 
-      seed <- get(".Random.seed",envir=.GlobalEnv) ## store RNG seed
+      seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+      if (inherits(seed,"try-error")) {
+          runif(1)
+          seed <- get(".Random.seed",envir=.GlobalEnv)
+      }
       kind <- RNGkind(NULL)
       RNGkind("default","default")
       set.seed(xtra$seed) ## ensure repeatability
@@ -1890,6 +1895,7 @@ makeR <- function(la,lo,lak,lok,m=2) {
 ## key reference, although some expressions are oddly unsimplified 
 ## there. There's an errata in 3(3):385-386, but it doesn't
 ## change anything here (only higher order penalties)
+## Return null space basis matrix T as attribute...
 
   pi180 <- pi/180 ## convert to radians
   la <- la * pi180;lo <- lo * pi180
@@ -1900,12 +1906,42 @@ makeR <- function(la,lo,lak,lok,m=2) {
 
   ## get array of angles between points (lo,la) and knots (lok,lak)...
 
-  v <- 1 - cos(ag$la)*cos(og$lo)*cos(ag$lak)*cos(og$lok) - 
-                  cos(ag$la)*sin(og$lo)*cos(ag$lak)*sin(og$lok)-
-                  sin(ag$la)*sin(ag$lak)
-  v[v<0] <- 0  
+  #v <- 1 - cos(ag$la)*cos(og$lo)*cos(ag$lak)*cos(og$lok) - 
+  #                cos(ag$la)*sin(og$lo)*cos(ag$lak)*sin(og$lok)-
+  #                sin(ag$la)*sin(ag$lak)
+  #v[v<0] <- 0  
 
-  gamma <- 2*asin(sqrt(v*0.5))
+  #gamma <- 2*asin(sqrt(v*0.5))
+
+  v <- sin(ag$la)*sin(ag$lak)+cos(ag$la)*cos(ag$lak)*cos(og$lo-og$lok)
+  v[v > 1] <- 1;v[v < -1] <- -1
+  gamma <- acos(v)
+
+  if (m == -1) { ## Jean Duchon's unpublished proposal...
+    z <- 2*sin(gamma/2) ## Euclidean 3 - distance between points
+    eps <- .Machine$double.xmin*10
+    z[z<eps] <- eps
+    R <- matrix(z*z*log(z)/(8*pi),length(la),length(lak)) ## m=2, d=2 tps semi-kernel
+    z <- sin(la) ## z co-ordinate
+    x <- cos(la)*sin(lo) 
+    y <- cos(la)*cos(lo)
+    attr(R,"T") <- matrix(c(z*0+1,x,y,z),nrow(R),4) ## null space    
+    z <- sin(lak) ## z co-ordinate
+    x <- cos(lak)*sin(lok) 
+    y <- cos(lak)*cos(lok)    
+    attr(R,"Tc") <- matrix(c(z*0+1,x,y,z),ncol(R),4) ## constraint    
+    return(R)
+  }
+
+  if (m==0) { ## Jim Wendelberger's order 2 sos
+    z <- cos(gamma)
+    oo<-.C(C_rksos,z = as.double(z),n=as.integer(length(z)),eps=as.double(.Machine$double.eps))
+    R <- matrix(oo$z/(4*pi),length(la),length(lak)) ## rk matrix
+    attr(R,"T") <- matrix(1,nrow(R),1) ## null space
+    attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
+    return(R)
+  }
+
   z <- 1 - cos(gamma)
   eps <- .Machine$double.eps*.0001
   z[z<eps] <- eps  
@@ -1914,7 +1950,10 @@ makeR <- function(la,lo,lak,lok,m=2) {
   A <- log(1+1/C);C <- C*2
   if (m==1) { ## order 3/2 penalty
     q1 <- 2*A*W - C + 1
-    return(matrix((q1-1/2)/(2*pi),length(la),length(lak))) ## rk matrix
+    R <- matrix((q1-1/2)/(2*pi),length(la),length(lak)) ## rk matrix
+    attr(R,"T") <- matrix(1,nrow(R),1)
+    attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
+    return(R)
   } 
 
   W2 <- W*W
@@ -1922,19 +1961,28 @@ makeR <- function(la,lo,lak,lok,m=2) {
     q2 <- A*(6*W2-2*W)-3*C*W+3*W+1/2
     ## This is Wahba's pseudospline r.k. alternative would be to 
     ## sum series to get regular spline kernel... 
-    return(matrix((q2/2-1/6)/(2*pi),length(la),length(lak))) ## rk matrix
+    R <- matrix((q2/2-1/6)/(2*pi),length(la),length(lak)) ## rk matrix
+    attr(R,"T") <- matrix(1,nrow(R),1)
+    attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
+    return(R)
   }
 
   W3 <- W2*W
   if (m==3) { ## order 5/2 penalty
     q3 <- (A*(60*W3 - 36*W2) + 30*W2 + C*(8*W-30*W2) - 3*W + 1)/3
-    return(matrix( (q3/6-1/24)/(2*pi),length(la),length(lak))) ## rk matrix 
+    R <- matrix( (q3/6-1/24)/(2*pi),length(la),length(lak)) ## rk matrix 
+    attr(R,"T") <- matrix(1,nrow(R),1)
+    attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
+    return(R)
   }
 
   W4 <- W3*W
   if (m==4) { ## order 3 penalty
     q4 <- A*(70*W4-60*W3 + 6*W2) +35*W3*(1-C) + C*55*W2/3 - 12.5*W2 - W/3 + 1/4
-    return(matrix( (q4/24-1/120)/(2*pi),length(la),length(lak))) ## rk matrix 
+    R <- matrix( (q4/24-1/120)/(2*pi),length(la),length(lak)) ## rk matrix 
+    attr(R,"T") <- matrix(1,nrow(R),1)
+    attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
+    return(R)
   }
   
   
@@ -1985,7 +2033,11 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu>xtra$max.knots) { ## then there is really a problem 
-        seed <- get(".Random.seed",envir=.GlobalEnv) ## store RNG seed
+        seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+        if (inherits(seed,"try-error")) {
+          runif(1)
+          seed <- get(".Random.seed",envir=.GlobalEnv)
+        }
         kind <- RNGkind(NULL)
         RNGkind("default","default")
         set.seed(xtra$seed) ## ensure repeatability
@@ -2006,11 +2058,12 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
   if (is.na(object$p.order)) object$p.order <- 1
   object$p.order <- round(object$p.order)
-  if (object$p.order<1) object$p.order <- 1
+  if (object$p.order< -1) object$p.order <- -1
   if (object$p.order>4) object$p.order <- 4
 
   R <- makeR(la=knt[1:nk],lo=knt[-(1:nk)],lak=knt[1:nk],lok=knt[-(1:nk)],m=object$p.order)
-
+  T <- attr(R,"Tc") ## constraint matrix
+  ind <- 1:ncol(T)
   k <- object$bs.dim   
 
   if (k<nk) {
@@ -2018,28 +2071,29 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
     D <- diag(er$values) ## penalty matrix
     ## The constraint is 1' U \gamma = 0. Find null space...
-
-    U1 <- matrix(colSums(er$vectors),k,1)
+    U1 <- t(t(T)%*%er$vectors)
+    ##U1 <- matrix(colSums(er$vectors),k,1)
   } else { ## no point using eigen-decomp
-    U1 <- matrix(1,k,1) ## constraint
+    U1 <- T ## constraint
     D <- R  ## penalty
     er <- list(vectors=diag(k)) ## U is identity here
   }
 
   qru <- qr(U1)  
 
-  ## Q=[Y,Z], where Y is a single column here
-  ## so A%*%Z = (A%*%Q)[,-1] and t(Z)%*%A = (t(Q)%*%A)[-1,]
+  ## Q=[Y,Z], where Y is column `ind' here
+  ## so A%*%Z = (A%*%Q)[,-ind] and t(Z)%*%A = (t(Q)%*%A)[-ind,]
  
-  S <- qr.qty(qru,t(qr.qty(qru,D)[-1,]))[-1,]
-  object$S <- list(S=rbind(cbind(S,rep(0,k-1)),rep(0,k))) ## Z'DZ
+  S <- qr.qty(qru,t(qr.qty(qru,D)[-ind,]))[-ind,]
+  object$S <- list(S=rbind(cbind(S,matrix(0,k-length(ind),length(ind))),
+                   matrix(0,length(ind),k))) ## Z'DZ
   
-  object$UZ <- t(qr.qty(qru,t(er$vectors))[-1,]) ## UZ - (original params) = UZ %*% (working params)
+  object$UZ <- t(qr.qty(qru,t(er$vectors))[-ind,]) ## UZ - (original params) = UZ %*% (working params)
 
   object$knt=knt ## save the knots
   object$df<-object$bs.dim
-  object$null.space.dim <- 1
-  object$rank <- k - 1
+  object$null.space.dim <- length(ind)
+  object$rank <- k - length(ind)
   class(object)<-"sos.smooth"
 
   object$X <- Predict.matrix.sos.smooth(object,data)
@@ -2054,8 +2108,8 @@ Predict.matrix.sos.smooth<-function(object,data)
 { 
   nk <- length(object$knt)/2
   X <- makeR(la=data[[object$term[1]]],lo=data[[object$term[2]]],
-             lak=object$knt[1:nk],lok=object$knt[-(1:nk)])%*%object$UZ
-  X <- cbind(X,rep(1,nrow(X)))
+             lak=object$knt[1:nk],lok=object$knt[-(1:nk)],m=object$p.order)
+  X <- cbind(X%*%object$UZ,attr(X,"T"))
   X
 }
 
@@ -2345,10 +2399,16 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
         if (matrixArg) {
           ##q <- nrow(sml[[1]]$X)/n
           L1 <- matrix(by,n,q)%*%rep(1,q)
-          if (sd(L1)>mean(L1)*.Machine$double.eps*1000) sml[[1]]$C <- sm$C <- matrix(0,0,1) 
+          if (sd(L1)>mean(L1)*.Machine$double.eps*1000) { 
+            sml[[1]]$C <- sm$C <- matrix(0,0,1)
+            if (!is.null(sm$Cp)) sml[[1]]$Cp <- sm$Cp <- NULL
+          } 
           else sml[[1]]$meanL1 <- mean(L1) ## store mean of L1 for use when adding intecept variability
         } else { ## numeric `by' -- constraint only needed if constant
-          if (sd(by)>mean(by)*.Machine$double.eps*1000) sml[[1]]$C <- sm$C <- matrix(0,0,1)   
+          if (sd(by)>mean(by)*.Machine$double.eps*1000) { 
+            sml[[1]]$C <- sm$C <- matrix(0,0,1)   
+            if (!is.null(sm$Cp)) sml[[1]]$Cp <- sm$Cp <- NULL
+          }
         }
       } ## end of constraint removal
     }

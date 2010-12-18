@@ -40,7 +40,7 @@ For very large datasets see \code{\link{bam}}, for mixed GAM see \code{\link{gam
 
 gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action,offset=NULL,method="GCV.Cp",
-    optimizer=c("outer","newton"),control=gam.control(),scale=0,
+    optimizer=c("outer","newton"),control=list(...),scale=0,
     select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,
     fit=TRUE,paraPen=NULL,G=NULL,in.out,...)
 }
@@ -79,8 +79,8 @@ that this offset will always be completely ignored when predicting, unlike an of
 included in \code{formula}: this conforms to the behaviour of
 \code{lm} and \code{glm}.}
 
-\item{control}{A list of fit control parameters returned by 
-\code{\link{gam.control}}.}
+\item{control}{A list of fit control parameters to replace defaults returned by 
+\code{\link{gam.control}}. Values not set assume default values. }
 
 \item{method}{The smoothing parameter estimation method. \code{"GCV.Cp"} to use GCV for unknown scale parameter and
 Mallows' Cp/UBRE/AIC for known scale. \code{"GACV.Cp"} is equivalent, but using GACV in place of GCV. \code{"REML"} 

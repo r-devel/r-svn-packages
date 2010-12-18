@@ -773,20 +773,21 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$smooth[[i]] <- sm[[i]]   
   }
 
-  ## Now test if intercept in span of parametric, and centre all smooth
-  ## columns if it is....
-
-  G$Xcentre <- NULL
-  if (G$nsdf>0) { 
-    qrx <- qr(X[,1:G$nsdf,drop=FALSE])
-    one <- rep(1,nrow(X))
-    if (max(abs(one-qr.qy(qrx,qr.qty(qrx,one)))) < .Machine$double.eps^.75 ) {
-      G$Xcentre <- colMeans(X)
-      G$Xcentre[1:G$nsdf] <- 0 
-      if (max(G$Xcentre^2)<.Machine$double.eps^.75) G$Xcentre <- NULL else 
-      X <- sweep(X,2,G$Xcentre)
-    } else G$Xcentre <- NULL
-  }
+## Now test if intercept in span of parametric, and centre all smooth
+## columns if it is....
+## I don't think that this is legitimate --- some smooths have no null
+## space, in which case this trick alters the fit...
+#  G$Xcentre <- NULL
+#  if (G$nsdf>0) { 
+#    qrx <- qr(X[,1:G$nsdf,drop=FALSE])
+#    one <- rep(1,nrow(X))
+#    if (max(abs(one-qr.qy(qrx,qr.qty(qrx,one)))) < .Machine$double.eps^.75 ) {
+#      G$Xcentre <- colMeans(X)
+#      G$Xcentre[1:G$nsdf] <- 0 
+#      if (max(G$Xcentre^2)<.Machine$double.eps^.75) G$Xcentre <- NULL else 
+#      X <- sweep(X,2,G$Xcentre)
+#    } else G$Xcentre <- NULL
+#  }
   
 
   if (is.null(Xp)) {
@@ -1527,14 +1528,15 @@ variable.summary <- function(pf,dl,n) {
 }
 
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
-                method="GCV.Cp",optimizer=c("outer","newton"),control=gam.control(),
+                method="GCV.Cp",optimizer=c("outer","newton"),control=list(...),#gam.control(),
                 scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
                 paraPen=NULL,G=NULL,in.out=NULL,...)
 
 # Routine to fit a GAM to some data. The model is stated in the formula, which is then 
 # interpreted to figure out which bits relate to smooth terms and which to parametric terms.
 
-{  if (is.null(G))
+{  control <- do.call("gam.control",control)
+   if (is.null(G))
    { # create model frame..... 
     gp<-interpret.gam(formula) # interpret the formula 
     cl<-match.call() # call needed in gam object for update to work
@@ -2614,7 +2616,11 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   if (m>0) # form test statistics for each smooth
   { if (!freq) { 
       if (nrow(object$model)>3000) { ## subsample to get X for p-values calc.
-        seed <- get(".Random.seed",envir=.GlobalEnv) ## store RNG seed
+        seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+        if (inherits(seed,"try-error")) {
+          runif(1)
+          seed <- get(".Random.seed",envir=.GlobalEnv)
+        }
         kind <- RNGkind(NULL)
         RNGkind("default","default")
         set.seed(11) ## ensure repeatability
@@ -3290,7 +3296,7 @@ print.mgcv.version <- function()
 set.mgcv.options <- function()
 ## function used to set optional value used in notLog
 ## and notExp...
-{ runif(1) ## ensure there is a seed 
+{ ##runif(1) ## ensure there is a seed (can be removed by user!)
   options(mgcv.vc.logrange=25)
 }
 

@@ -51,7 +51,11 @@ mini.mf <-function(mf,chunk.size) {
 ## basis setup.
   n <- nrow(mf)
   if (n<=chunk.size) return(mf)
-  seed <- get(".Random.seed", envir = .GlobalEnv)
+  seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+  if (inherits(seed,"try-error")) {
+     runif(1)
+     seed <- get(".Random.seed",envir=.GlobalEnv)
+  }
   kind <- RNGkind(NULL)
   RNGkind("default", "default")
   set.seed(66)
@@ -398,7 +402,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0)
 
 
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
-                offset=NULL,method="REML",control=gam.control(),scale=0,gamma=1,knots=NULL,
+                offset=NULL,method="REML",control=list(...),scale=0,gamma=1,knots=NULL,
                 sp=NULL,min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
@@ -406,7 +410,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## parametric terms.
 ## This is a modification of `gam' designed to build the QR decompostion of the model matrix 
 ## up in chunks, to keep memory costs down.
-{ require(mgcv)
+{ control <- do.call("gam.control",control)
   if (is.character(family))
             family <- eval(parse(text = family))
   if (is.function(family))
