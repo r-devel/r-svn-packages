@@ -2616,7 +2616,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
   if (m>0) # form test statistics for each smooth
   { if (!freq) { 
       if (nrow(object$model)>3000) { ## subsample to get X for p-values calc.
-        seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
         if (inherits(seed,"try-error")) {
           runif(1)
           seed <- get(".Random.seed",envir=.GlobalEnv)

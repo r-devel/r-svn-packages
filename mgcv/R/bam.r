@@ -51,7 +51,7 @@ mini.mf <-function(mf,chunk.size) {
 ## basis setup.
   n <- nrow(mf)
   if (n<=chunk.size) return(mf)
-  seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
   if (inherits(seed,"try-error")) {
      runif(1)
      seed <- get(".Random.seed",envir=.GlobalEnv)

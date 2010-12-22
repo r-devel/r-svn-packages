@@ -982,7 +982,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
     xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
     nu <- nrow(xu)  ## number of unique locations
     if (nu>xtra$max.knots) { ## then there is really a problem 
-      seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+      seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
       if (inherits(seed,"try-error")) {
           runif(1)
           seed <- get(".Random.seed",envir=.GlobalEnv)
@@ -2033,7 +2033,7 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu>xtra$max.knots) { ## then there is really a problem 
-        seed <- try(get(".Random.seed",envir=.GlobalEnv)) ## store RNG seed
+        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
         if (inherits(seed,"try-error")) {
           runif(1)
           seed <- get(".Random.seed",envir=.GlobalEnv)
@@ -2078,6 +2078,7 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
     D <- R  ## penalty
     er <- list(vectors=diag(k)) ## U is identity here
   }
+  rm(R)
 
   qru <- qr(U1)  
 
@@ -2105,12 +2106,33 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
 Predict.matrix.sos.smooth<-function(object,data)
 # prediction method function for the p.spline smooth class
-{ 
-  nk <- length(object$knt)/2
-  X <- makeR(la=data[[object$term[1]]],lo=data[[object$term[2]]],
-             lak=object$knt[1:nk],lok=object$knt[-(1:nk)],m=object$p.order)
-  X <- cbind(X%*%object$UZ,attr(X,"T"))
-  X
+{ nk <- length(object$knt)/2 ## number of 'knots'
+  la <- data[[object$term[1]]];lo <- data[[object$term[2]]] ## eval points
+  lak <- object$knt[1:nk];lok <- object$knt[-(1:nk)] ## knots
+  n <- length(la); 
+  if (n > nk) { ## split into chunks to save memory
+    n.chunk <- n %/% nk
+    for (i in 1:n.chunk) { ## build predict matrix in chunks
+      ind <- 1:nk + (i-1)*nk
+      Xc <- makeR(la=la[ind],lo=lo[ind],
+                 lak=lak,lok=lok,m=object$p.order)
+      Xc <- cbind(Xc%*%object$UZ,attr(Xc,"T"))
+      if (i == 1) X <- Xc else { X <- rbind(X,Xc);rm(Xc)}
+    } ## finished size nk chunks
+
+    if (n > ind[nk]) { ## still some left over
+      ind <- (ind[nk]+1):n ## last chunk
+      Xc <- makeR(la=la[ind],lo=lo[ind],
+                 lak=lak,lok=lok,m=object$p.order)
+      Xc <- cbind(Xc%*%object$UZ,attr(Xc,"T"))
+      X <- rbind(X,Xc);rm(Xc)
+    }
+  } else {
+    X <- makeR(la=la,lo=lo,
+             lak=lak,lok=lok,m=object$p.order)
+    X <- cbind(X%*%object$UZ,attr(X,"T"))
+  }
+  X 
 }
 
 
