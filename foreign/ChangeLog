@@ -1,3 +1,7 @@
+2011-01-01  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/sfm-read.c: wrong index reported in error message.  (PR#14465)
+	
 2010-10-22  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* man/read.octave.Rd: Octave changed since 2004. (PR#14420)

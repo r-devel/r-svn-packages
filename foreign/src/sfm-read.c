@@ -937,7 +937,7 @@ read_variables (struct file_handle * h, struct variable *** var_by_index)
 	    vv->name[j] = c;
 	  else
 	    lose ((_("%s: position %d: character `\\%03o' (%c) is not valid in a variable name"),
-		   h->fn, i, c, c));
+		   h->fn, j, c, c)); /* changed from 'i', PR#14465 */
 	}
       vv->name[j] = 0;
 
