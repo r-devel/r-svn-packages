@@ -1,6 +1,7 @@
 2011-01-01  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* src/sfm-read.c: wrong index reported in error message.  (PR#14465)
+	* src/sfm-read.c: wrong index reported in error message. (PR#14465)
+	* tests/stata.Rout.save: update for rounding of < 1970-01-01 dates.
 	
 2010-10-22  Brian Ripley <Brian.Ripley@R-project.org>
 
