@@ -1933,7 +1933,7 @@ makeR <- function(la,lo,lak,lok,m=2) {
     return(R)
   }
 
-  if (m==0) { ## Jim Wendelberger's order 2 sos
+  if (m==0) { ## Jim Wendelberger's order 2 
     z <- cos(gamma)
     oo<-.C(C_rksos,z = as.double(z),n=as.integer(length(z)),eps=as.double(.Machine$double.eps))
     R <- matrix(oo$z/(4*pi),length(la),length(lak)) ## rk matrix
@@ -1984,8 +1984,6 @@ makeR <- function(la,lo,lak,lok,m=2) {
     attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
     return(R)
   }
-  
-  
 }
 
 smooth.construct.sos.smooth.spec<-function(object,data,knots)

@@ -2204,26 +2204,26 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   # setup prediction arrays
   n.smooth<-length(object$smooth)
   if (type=="lpmatrix")
-  { H<-matrix(0,np,nb)
+  { H <- matrix(0,np,nb)
   } else
   if (type=="terms"||type=="iterms")
   { term.labels<-attr(object$pterms,"term.labels")
     if (is.null(attr(object,"para.only"))) para.only <-FALSE else
     para.only <- TRUE  # if true then only return information on parametric part
     n.pterms <- length(term.labels)
-    fit<-array(0,c(np,n.pterms+as.numeric(!para.only)*n.smooth))
-    if (se.fit) se<-fit
-    ColNames<-term.labels
+    fit <- array(0,c(np,n.pterms+as.numeric(!para.only)*n.smooth))
+    if (se.fit) se <- fit
+    ColNames <- term.labels
   } else
-  { fit<-array(0,np)
-    if (se.fit) se<-fit
+  { fit <- array(0,np)
+    if (se.fit) se <- fit
   }
   stop<-0
 
   Terms <- delete.response(object$pterms)
   s.offset <- NULL # to accumulate any smooth term specific offset
   any.soff <- FALSE # indicator of term specific offset existence
-  for (b in 1:n.blocks)  # work through prediction blocks
+  if (n.blocks>0) for (b in 1:n.blocks)  # work through prediction blocks
   { start<-stop+1
     stop<-start+b.size[b]-1
     if (n.blocks==1) data <- newdata else data<-newdata[start:stop,]
@@ -2347,7 +2347,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       }
       H<-list(fit=fit,se.fit=se) 
     } else { 
-      H<-fit
+      H <- fit
       if (is.null(nrow(H))) names(H) <- rn else
       rownames(H)<-rn
       H <- napredict(na.act,H)
