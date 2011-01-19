@@ -85,33 +85,32 @@ void tpsE(matrix *E,matrix *X,int m,int d)
 }
 
 
-void gen_tps_poly_powers(int **pi,int M,int m, int d)
+void gen_tps_poly_powers(int *pi /* **pi */,int *M,int *m, int *d)
 
 /* generates the sequence of powers required to specify the M polynomials spanning the 
-   null space of the penalty of a d-dimensional tps with wiggliness penalty order d 
+   null space of the penalty of a d-dimensional tps with wiggliness penalty order m 
    So, if x_i are the co-ordinates the kth polynomial is x_1^pi[k][1]*x_2^pi[k][2] ....
-   WARNING: the term ordering algorithm used here is also used in mgcv.r... if it is 
-   altered then so must R routines null.space.basis.labels() and null.space.basis.powers(). 
-   The exact sequence matters for putting appropriate side conditions on GAMs like:
-   y~s(x1,x2)+s(x2,x3)....
+ 
+   pi[k][j] actually stored as pi[k + M * j] 
 */
 
 { int *index,i,j,sum;
-  if (2*m<=d) ErrorMessage(_("You must have 2m > d"),1);
-  index=(int *)calloc((size_t)d,sizeof(int));
-  for (i=0;i<M;i++)
+  /*  if (2*m<=d) ErrorMessage(_("You must have 2m > d"),1); caught in R */
+  index=(int *)calloc((size_t) *d,sizeof(int));
+  for (i=0;i < *M;i++)
   { /* copy index to pi */
-    for (j=0;j<d;j++) pi[i][j]=index[j];
+    /* for (j=0;j<d;j++) pi[i][j]=index[j];*/
+    for (j=0;j< *d;j++) pi[i + *M * j]=index[j];
     /* update index.... */
-    sum=0;for (j=0;j<d;j++) sum+=index[j];
-    if (sum<m-1) /* then increase lowest index */
+    sum=0;for (j=0;j< *d;j++) sum += index[j];
+    if (sum< *m-1) /* then increase lowest index */
     index[0]++;
     else         /* pass the problem up */
-    { sum-=index[0];
+    { sum -= index[0];
       index[0]=0;
-      for (j=1;j<d;j++)
+      for (j=1;j< *d;j++)
       { index[j]++;sum++;
-        if (sum==m) { sum-=index[j];index[j]=0;}
+        if (sum== *m) { sum-=index[j];index[j]=0;}
         else break; /* problem resolved! */
       } 
     }
@@ -127,23 +126,28 @@ void tpsT(matrix *T,matrix *X,int m,int d)
    ith row of X is location of ith datum. 
 */
 
-{ int M,i,j,k,**pin,z;
+{ int M,i,j,k,*pin,z;
   double x;
   M=1;
   for (i=0;i<d;i++) M*=d+m-1-i;
   for (i=2;i<=d;i++) M/=i;     /* M = (m+d+1)!/(d!(m-d!) */
-  pin=(int **)calloc((size_t)M,sizeof(int *)); 
-  for (i=0;i<M;i++) pin[i]=(int *)calloc((size_t)d,sizeof(int));
-  gen_tps_poly_powers(pin, M, m, d); /* pin[][] contains powers of polynomials in unpenalized basis */
+
+  /* pin=(int **)calloc((size_t)M,sizeof(int *)); 
+     for (i=0;i<M;i++) pin[i]=(int *)calloc((size_t)d,sizeof(int));*/
+
+  pin = (int *)calloc((size_t) M * d,sizeof(int));
+  gen_tps_poly_powers(pin, &M, &m, &d); /* pin[][] contains powers of polynomials in unpenalized basis */
   
   (*T)=initmat(X->r,(long)M);
   for (i=0;i<T->r;i++)
   for (j=0;j<M;j++)
-  { x=1.0;for (k=0;k<d;k++) for (z=0;z<pin[j][k];z++) x*=X->M[i][k];
+  { x=1.0;/* for (k=0;k<d;k++) for (z=0;z<pin[j][k];z++) x *= X->M[i][k]; */
+    for (k=0;k<d;k++) for (z=0;z<pin[j + M * k];z++) x *= X->M[i][k];
     T->M[i][j]=x;
   }
   
-  for (i=0;i<M;i++) free(pin[i]);free(pin);
+  /*for (i=0;i<M;i++) free(pin[i]);*/
+  free(pin);
 }
 
 
@@ -184,22 +188,23 @@ double tps_g(matrix *X,matrix *p,double *x,int d,int m,matrix *b,int constant)
   - if p.r==0 then the value of the spline is not returned - only b
 */
 
-{ static int sd=0,sm=0,**pin,M;
+{ static int sd=0,sm=0,*pin,M;
   double r,g,z,**XM,*dum,*XMi;
   int i,j,k,off;
   if (sd==0&&d==0) return(0.0); /* There is nothing to clear up and nothing to calculate */
   if (2*m<=d&&d>0) { m=0;while (2*m<d+2) m++;} 
   if (sd!=d||sm!=m) /* then re-calculate the penalty null space basis */
   { if (sd>0&&sm>0) 
-    { for (i=0;i<M;i++) free(pin[i]);free(pin);}
+    { /*for (i=0;i<M;i++) free(pin[i]);*/ free(pin);}
     sd=d;sm=m;
     if (d>0) /* get a new basis for the null space of the penalty */
     { M=1;     /* dimension of penalty null space */
       for (i=0;i<d;i++) M*=d+m-1-i;
       for (i=2;i<=d;i++) M/=i;     /* M = (m+d+1)!/(d!(m-d!) */
-      pin=(int **)calloc((size_t)M,sizeof(int *)); 
-      for (i=0;i<M;i++) pin[i]=(int *)calloc((size_t)d,sizeof(int));
-      gen_tps_poly_powers(pin, M, m, d);
+      /* pin=(int **)calloc((size_t)M,sizeof(int *)); 
+         for (i=0;i<M;i++) pin[i]=(int *)calloc((size_t)d,sizeof(int));*/
+      pin=(int *)calloc((size_t)M*d,sizeof(int)); 
+      gen_tps_poly_powers(pin, &M, &m, &d);
     } else return(0.0);
   }
   g=0.0;XM=X->M;
@@ -214,7 +219,10 @@ double tps_g(matrix *X,matrix *p,double *x,int d,int m,matrix *b,int constant)
   off=1-constant;
   for (i=off;i<M;i++) /* work through null space */
   { r=1.0;
-    for (j=0;j<d;j++) for (k=0;k<pin[i][j];k++) r*=x[j];
+    /* for (j=0;j<d;j++) for (k=0;k<pin[i][j];k++) r*=x[j];*/
+    
+    for (j=0;j<d;j++) for (k=0;k<pin[i+M*j];k++)  r*=x[j];
+    
     b->V[i+X->r-off]=r;
     if (p->r) g+=p->V[i+X->r-off]*r;
   } 

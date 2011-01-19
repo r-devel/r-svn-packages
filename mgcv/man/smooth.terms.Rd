@@ -28,6 +28,11 @@ basis dimension/rank (Wood, 2003). Thin plate regression splines do not have `kn
 \code{bs="ts"} is as \code{"tp"} but with a small ridge penalty added to the smoothing penalty, so that the whole term can be 
 shrunk to zero.}
 
+\item{Duchon splines}{\code{bs="jd"}. These generalize thin plate splines. In particular, for any given number of covariates they 
+allow lower orders of derivative in the penalty than thin plate splines (and hence a smaller null space).
+See \code{\link{Duchon.77}} for further details. 
+}
+
 \item{Cubic regression splines}{\code{bs="cr"}. 
 These have a cubic spline basis defined by a modest sized 
 set of knots spread evenly through the 

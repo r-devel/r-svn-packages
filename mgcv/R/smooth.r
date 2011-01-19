@@ -1987,7 +1987,7 @@ makeR <- function(la,lo,lak,lok,m=2) {
 }
 
 smooth.construct.sos.smooth.spec<-function(object,data,knots)
-## The constructor for a t.p.r.s. basis object.
+## The constructor for a spline on the sphere basis object.
 ## Assumption: first variable is lat, second is lon!!
 { ## deal with possible extra arguments of "sos" type smooth
   xtra <- list()
@@ -2103,7 +2103,7 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
 
 Predict.matrix.sos.smooth<-function(object,data)
-# prediction method function for the p.spline smooth class
+# prediction method function for the spline on the sphere smooth class
 { nk <- length(object$knt)/2 ## number of 'knots'
   la <- data[[object$term[1]]];lo <- data[[object$term[2]]] ## eval points
   lak <- object$knt[1:nk];lok <- object$knt[-(1:nk)] ## knots
@@ -2132,6 +2132,241 @@ Predict.matrix.sos.smooth<-function(object,data)
   }
   X 
 }
+
+
+###########################
+# Duchon 1977.... 
+###########################
+
+poly.pow <- function(m,d) {
+## create matrix containing powers of (m-1)th order polynomials in d dimensions
+## p[i,j] is power for x_j in ith basis component. p has d columns
+  
+  M <- choose(m+d-1,d) ## total basis size
+  p <- matrix(0,M,d)
+  oo <- .C(C_gen_tps_poly_powers,p=as.integer(p),M=as.integer(M),m=as.integer(m),d=as.integer(d))
+  matrix(oo$p,M,d)
+}
+
+DuchonT <- function(x,m=2,n=1) {
+## Get null space basis for Duchon '77 construction...
+## n is dimension in Duchon's notation, so x is a matrix
+## with n columns. m is penalty order.
+  p <- poly.pow(m,n)
+  M <- nrow(p) ## basis size
+  if (!is.matrix(x)) x <- matrix(x,length(x),1)
+  nx <- nrow(x)
+  T <- matrix(0,nx,M)
+  for (i in 1:M) {
+    y <- rep(1,nx)
+    for (j in 1:n) y <- y * x[,j]^p[i,j]
+    T[,i] <- y
+  }
+  T
+}
+
+DuchonE <- function(x,xk,m=2,s=0,n=1) {
+## Get the r.k. matrix for a Duchon '77 construction...
+  ind <- expand.grid(x=1:nrow(x),xk=1:nrow(xk))
+  ## get d[i,j] the Euclidian distance from x[i] to xk[j]... 
+  d <- matrix(sqrt(rowSums((x[ind$x,,drop=FALSE]-xk[ind$xk,,drop=FALSE])^2)),nrow(x),nrow(xk))  
+  k <- 2*m + 2*s - n
+  if (k%%2==0) { ## even 
+    ind <- d==0
+    E <- d
+    E[!ind] <- d[!ind]^k * log(d[!ind])
+  } else {
+    E <- d^k
+  }
+  ## k == 1 => -ve - then sign flips every second k value
+  ## i.e. if floor(k/2+1) is odd then sign is -ve, otherwise +ve
+  signE <- 1-2*((floor(k/2)+1)%%2) 
+  rm(d)
+  E*signE
+}
+
+smooth.construct.jd.smooth.spec<-function(object,data,knots)
+## The constructor for a Duchon 1977 smoother
+{ ## deal with possible extra arguments of "sos" type smooth
+  xtra <- list()
+
+  if (is.null(object$xt$max.knots)) xtra$max.knots <- 2000 
+  else xtra$max.knots <- object$xt$max.knots 
+  if (is.null(object$xt$seed)) xtra$seed <- 1 
+  else xtra$seed <- object$xt$seed 
+
+  ## now collect predictors
+  x<-array(0,0)
+
+  for (i in 1:object$dim) {
+    xx <- data[[object$term[i]]]
+    if (i==1) n <- length(xx) else 
+    if (n!=length(xx)) stop("arguments of smooth not same dimension")
+    x<-c(x,xx)
+  }
+
+  if (is.null(knots)) { knt<-0;nk<-0}
+  else { 
+    knt<-array(0,0)
+    for (i in 1:object$dim) 
+    { dum <- knots[[object$term[i]]]
+      if (is.null(dum)) {knt<-0;nk<-0;break} # no valid knots for this term
+      knt <- c(knt,dum)
+      nk0 <- length(dum)
+      if (i > 1 && nk != nk0) 
+      stop("components of knots relating to a single smooth must be of same length")
+      nk <- nk0
+    }
+  }
+  if (nk>n) { ## more knots than data - silly.
+    nk <- 0
+    warning("more knots than data in an sos term: knots ignored.")
+  }
+  ## deal with possibility of large data set
+  if (nk==0) { ## need to create knots
+    xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
+    nu <- nrow(xu)  ## number of unique locations
+    if (n > xtra$max.knots) { ## then there *may* be too many data      
+      if (nu>xtra$max.knots) { ## then there is really a problem 
+        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+        if (inherits(seed,"try-error")) {
+          runif(1)
+          seed <- get(".Random.seed",envir=.GlobalEnv)
+        }
+        kind <- RNGkind(NULL)
+        RNGkind("default","default")
+        set.seed(xtra$seed) ## ensure repeatability
+        nk <- xtra$max.knots ## going to create nk knots
+        ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
+        knt <- as.numeric(xu[ind,])  ## ... like this
+        RNGkind(kind[1],kind[2])
+        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+      } else { 
+        knt <- xu;nk <- nu
+      } ## end of large data set handling
+    } else { knt <- xu;nk <- nu } ## just set knots to data
+  } 
+
+  if (object$bs.dim[1]<0) object$bs.dim <-  10*3^(object$dim[1]-1) # auto-initialize basis dimension
+
+  ## Check the conditions on Duchon's m, s and n (p.order[1], p.order[2] and dim)... 
+
+  if (is.na(object$p.order[1])) object$p.order[1] <- 2 ## default penalty order 2
+  if (is.na(object$p.order[2])) object$p.order[2] <- 0 ## default s=0 (tps)
+  object$p.order[1] <- round(object$p.order[1])     ## m is integer
+  object$p.order[2] <- round(object$p.order[2]*2)/2 ## s is in halfs
+  if (object$p.order[1]< 1) object$p.order[1] <- 1  ## m > 0
+  ## -n/2 < s < n/2...
+  if (object$p.order[2] >= object$dim/2) { 
+    object$p.order[2] <- (object$dim-1)/2
+    warning("s value reduced")
+  } 
+  if (object$p.order[2] <= -object$dim/2) { 
+    object$p.order[2] <- -(object$dim-1)/2
+    warning("s value increased")
+  }
+
+  ## m + s > n/2 for continuity...
+  if (sum(object$p.order)<=object$dim/2) {
+    object$p.order[2] <- 1/2 + object$dim/2 - object$p.order[1]
+    if (object$p.order[2]>=object$dim/2) stop("No suitable s (i.e. m[2]) try increasing m[1]")
+    warning("s value modified to give continuous function")
+  }
+
+  
+  x <- matrix(x,n,object$dim)
+  knt <- matrix(knt,nk,object$dim)
+  
+  ## centre the covariates...
+
+  object$shift <- colMeans(x)
+  x <- sweep(x,2,object$shift)
+  knt <- sweep(knt,2,object$shift)
+
+  ## Get the E matrix...
+ 
+  E <- DuchonE(knt,knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
+
+  T <- DuchonT(knt,m=object$p.order[1],n=object$dim) ## constraint matrix
+
+  ind <- 1:ncol(T)
+  k <- object$bs.dim   
+
+  if (k<nk) {
+    er <- slanczos(E,k,-1) ## truncated eigen decompostion of R
+
+    D <- diag(er$values) ## penalty matrix
+    ## The constraint is 1' U \gamma = 0. Find null space...
+    U1 <- t(t(T)%*%er$vectors)
+  } else { ## no point using eigen-decomp
+    U1 <- T ## constraint
+    D <- E  ## penalty
+    er <- list(vectors=diag(k)) ## U is identity here
+  }
+  rm(E)
+
+  qru <- qr(U1)  
+
+  ## Q=[Y,Z], where Y is column `ind' here
+  ## so A%*%Z = (A%*%Q)[,-ind] and t(Z)%*%A = (t(Q)%*%A)[-ind,]
+ 
+  S <- qr.qty(qru,t(qr.qty(qru,D)[-ind,]))[-ind,]
+  object$S <- list(S=rbind(cbind(S,matrix(0,k-length(ind),length(ind))),
+                   matrix(0,length(ind),k))) ## Z'DZ
+  
+  object$UZ <- t(qr.qty(qru,t(er$vectors))[-ind,]) ## UZ - (original params) = UZ %*% (working params)
+
+  object$knt=knt ## save the knots
+  object$df<-object$bs.dim
+  object$null.space.dim <- length(ind)
+  object$rank <- k - length(ind)
+  class(object)<-"jd.smooth"
+
+  object$X <- Predict.matrix.jd.smooth(object,data)
+
+  object
+} ## end of smooth.construct.jd.smooth.spec
+
+
+
+Predict.matrix.jd.smooth<-function(object,data)
+# prediction method function for the p.spline smooth class
+{ nk <- nrow(object$knt) ## number of 'knots'
+
+  ## get evaluation points....
+  for (i in 1:object$dim) {
+    xx <- data[[object$term[i]]]
+    if (i==1) { n <- length(xx) 
+      x <- matrix(xx,n,object$dim)
+    } else { 
+      if (n!=length(xx)) stop("arguments of smooth not same dimension")
+      x[,i] <- xx 
+    }
+  }
+  x <- sweep(x,2,object$shift) ## apply centering
+ 
+  if (n > nk) { ## split into chunks to save memory
+    n.chunk <- n %/% nk
+    for (i in 1:n.chunk) { ## build predict matrix in chunks
+      ind <- 1:nk + (i-1)*nk
+      Xc <- DuchonE(x=x[ind,],xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
+      Xc <- cbind(Xc%*%object$UZ,DuchonT(x=x[ind,],m=object$p.order[1],n=object$dim))
+      if (i == 1) X <- Xc else { X <- rbind(X,Xc);rm(Xc)}
+    } ## finished size nk chunks
+
+    if (n > ind[nk]) { ## still some left over
+      ind <- (ind[nk]+1):n ## last chunk
+      Xc <- DuchonE(x=x[ind,],xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
+      Xc <- cbind(Xc%*%object$UZ,DuchonT(x=x[ind,],m=object$p.order[1],n=object$dim))
+      X <- rbind(X,Xc);rm(Xc)
+    }
+  } else {
+    X <- DuchonE(x=x,xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
+    X <- cbind(X%*%object$UZ,DuchonT(x=x,m=object$p.order[1],n=object$dim))
+  }
+  X 
+}
+
 
 
 

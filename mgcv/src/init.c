@@ -33,6 +33,7 @@ R_CMethodDef CEntries[] = {
     {"in_out",(DL_FUNC)&in_out,8},
     {"Rlanczos",(DL_FUNC)&Rlanczos,6},
     {"rksos",(DL_FUNC)&rksos,3},
+    {"gen_tps_poly_powers",(DL_FUNC)&gen_tps_poly_powers,4},
     {NULL, NULL, 0}
 };
 
