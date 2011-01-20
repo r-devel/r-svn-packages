@@ -4,6 +4,8 @@ ISSUES:
 
 1.7-3
 
+** "ds" (Duchon splines) smooth class added. See ?Duchon.spline
+
 ** "sos" (spline on the sphere) smooth class added. See ?Spherical.Spline.
 
 * random subsampling code in bam, sos and tp smooths modified a little, so 

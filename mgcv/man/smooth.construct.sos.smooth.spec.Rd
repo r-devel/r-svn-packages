@@ -11,7 +11,10 @@ The first is taken to be latitude (in degrees) and the second longitude (in degr
 \code{m} (default 1) is an integer in the range 0 to 4 determining the order of the penalty used. 
 For \code{m>0}, \code{(m+2)/2} is the penalty order, so \code{m=2} is the equivalent to the usual second 
 derivative penalty. \code{m=0} signals to use the 2nd order spline on the sphere, computed by 
-Wendelberger's (1981) method. \code{k} (default 50) is the basis dimension.
+Wendelberger's (1981) method. \code{m = -1} results in a \code{\link{Duchon.spline}} being 
+used (with m=2 and s=1/2).
+
+\code{k} (default 50) is the basis dimension.
  
 
 }
@@ -47,7 +50,6 @@ a second order thin plate spline in 2D: the computation is based on Chapter 4 of
 Optimal low rank approximations are obtained using exactly the approach given in Wood (2003). 
 
 Note that the null space of the penalty is always the space of constant functions on the sphere, whatever the order of penalty. 
-The order of penalty can be selected by GCV, REML etc, but I have yet to find a case where \code{m=1} was not selected. 
 
 }
 
@@ -61,7 +63,8 @@ Wendelberger, J. (1981) PhD Thesis, University of Winsconsin.
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 }
 
-\author{ Simon N. Wood \email{simon.wood@r-project.org}}
+\author{ Simon N. Wood \email{simon.wood@r-project.org}, 
+with help from Grace Wahba (m=0 case) and Jean Duchon (m = -1, case).}
 
 \examples{
 set.seed(0)

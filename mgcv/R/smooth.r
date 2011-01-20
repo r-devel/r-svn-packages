@@ -2185,7 +2185,7 @@ DuchonE <- function(x,xk,m=2,s=0,n=1) {
   E*signE
 }
 
-smooth.construct.jd.smooth.spec<-function(object,data,knots)
+smooth.construct.ds.smooth.spec<-function(object,data,knots)
 ## The constructor for a Duchon 1977 smoother
 { ## deal with possible extra arguments of "sos" type smooth
   xtra <- list()
@@ -2320,16 +2320,16 @@ smooth.construct.jd.smooth.spec<-function(object,data,knots)
   object$df<-object$bs.dim
   object$null.space.dim <- length(ind)
   object$rank <- k - length(ind)
-  class(object)<-"jd.smooth"
+  class(object)<-"duchon.spline"
 
-  object$X <- Predict.matrix.jd.smooth(object,data)
+  object$X <- Predict.matrix.duchon.spline(object,data)
 
   object
-} ## end of smooth.construct.jd.smooth.spec
+} ## end of smooth.construct.ds.smooth.spec
 
 
 
-Predict.matrix.jd.smooth<-function(object,data)
+Predict.matrix.duchon.spline <- function(object,data)
 # prediction method function for the p.spline smooth class
 { nk <- nrow(object$knt) ## number of 'knots'
 
@@ -2365,7 +2365,7 @@ Predict.matrix.jd.smooth<-function(object,data)
     X <- cbind(X%*%object$UZ,DuchonT(x=x,m=object$p.order[1],n=object$dim))
   }
   X 
-}
+} ## end of Predict.matrix.duchon.spline
 
 
 
