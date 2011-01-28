@@ -56,7 +56,9 @@ to the right hand side to specify that the linear predictor depends on smooth fu
 \item{family}{
 This is a family object specifying the distribution and link to use in
 fitting etc. See \code{\link{glm}} and \code{\link{family}} for more
-details. A negative binomial family is provided: see \code{\link{negbin}}.
+details. A negative binomial family is provided: see \code{\link{negbin}}. 
+\code{quasi} families actually result in the use of extended quasi-likelihood 
+if \code{method} is set to a RE/ML method (McCullagh and Nelder, 1989, 9.6).
 } 
 
 \item{data}{ A data frame or list containing the model response variable and 
@@ -300,6 +302,8 @@ Gu and Wahba (1991) Minimizing GCV/GML scores with multiple smoothing parameters
 the Newton method. SIAM J. Sci. Statist. Comput. 12:383-398
 
 Gu (2002) Smoothing Spline ANOVA Models, Springer.
+
+McCullagh and Nelder (1989) Generalized Linear Models 2nd ed. Chapman & Hall.
 
 O'Sullivan, Yandall and Raynor (1986) Automatic smoothing of regression
 functions in generalized linear models.

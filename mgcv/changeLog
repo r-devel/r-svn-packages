@@ -8,6 +8,9 @@ ISSUES:
 
 ** "sos" (spline on the sphere) smooth class added. See ?Spherical.Spline.
 
+* Extended quasi-likelihood used with RE/ML smoothness selection and 
+  quasi families. 
+
 * random subsampling code in bam, sos and tp smooths modified a little, so 
   that .Random.seed is set if it doesn't exist. 
 

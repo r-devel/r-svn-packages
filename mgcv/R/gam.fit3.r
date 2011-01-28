@@ -1972,7 +1972,9 @@ fix.family.ls<-function(fam)
     return(fam)
   }
   if (family=="quasi"||family=="quasipoisson"||family=="quasibinomial") {
-    fam$ls <- function(y,w,n,scale) rep(0,3)
+    ## fam$ls <- function(y,w,n,scale) rep(0,3)
+    ## Uses extended quasi-likelihood form...
+    fam$ls <- function(y,w,n,scale) c(-sum(w)*log(scale)/2,-sum(w)/(2*scale),sum(w)/(2*scale*scale))
     return(fam)
   }
   if (family=="inverse.gaussian") {
