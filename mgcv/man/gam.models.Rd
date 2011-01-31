@@ -188,7 +188,8 @@ are provided in
 }
 
 \section{Random effects}{
-  Random effects can be added to \code{gam} models using \code{s(...,bs="re")} terms (see \code{\link{smooth.construct.re.smooth.spec}}), 
+Random effects can be added to \code{gam} models using \code{s(...,bs="re")} terms (see 
+\code{\link{smooth.construct.re.smooth.spec}}), 
 or the \code{paraPen} argument to \code{\link{gam}} covered below. See \code{\link{gam.vcomp}}, \code{\link{random.effects}} and 
 \code{\link{smooth.construct.re.smooth.spec}} for further details. An alternative is to use the approach of \code{\link{gamm}}.
 
@@ -295,7 +296,8 @@ sig.b <- sqrt(rm$sig2/rm$sp[1]);sig.b
 rm1 <- gam(y ~ s(fac,bs="re")+s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="ML")
 gam.vcomp(rm1)
 
-## Simple comparison with lme, using Rail data. See ?random.effects for a simpler method
+## Simple comparison with lme, using Rail data. 
+## See ?random.effects for a simpler method
 require(nlme)
 b0 <- lme(travel~1,data=Rail,~1|Rail,method="ML") 
 Z <- model.matrix(~Rail-1,data=Rail,

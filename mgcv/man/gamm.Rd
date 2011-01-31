@@ -53,7 +53,8 @@ with smooth terms. See example below.}
 structures in \code{\link[nlme]{lme}}. Any grouping factors in the formula for
 this object are assumed to be nested within any random effect grouping
 factors, without the need to make this explicit in the formula (this is 
-slightly different to the behaviour of \code{lme}). See examples below.}
+slightly different to the behaviour of \code{lme}). This 
+is a GEE approach to correlation in the generalized case. See examples below.}
 
 \item{family}{A \code{family} as used in a call to \code{\link{glm}} or \code{\link{gam}}.
 The default \code{gaussian} with identity link causes \code{gamm} to fit by a direct call to
@@ -114,7 +115,8 @@ be performed using general linear mixed effects modelling software such as \code
 approximate inference is so far available, for example using the Penalized Quasi-Likelihood approach of Breslow 
 and Clayton (1993) as implemented in \code{glmmPQL} by Venables and Ripley (2002). 
 One advantage of this approach is that it allows correlated errors to be dealt with via random effects 
-or the correlation structures available in the \code{nlme} library. 
+or the correlation structures available in the \code{nlme} library (using correlation structures beyond the 
+strictly additive case amounts to using a GEE approach to fitting). 
 
 
 Some details of how GAMs are represented as mixed models and estimated using

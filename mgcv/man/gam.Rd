@@ -253,8 +253,8 @@ components to be penalized via argument \code{paraPen} and allows the linear pre
 general linear functionals of smooths, via the summation convention mechanism described in 
 \code{\link{linear.functional.terms}}.
      
-Details of the default underlying fitting methods are given in Wood (2004
-and 2008). Some alternative methods are discussed in Wood (2000 and 2006). 
+Details of the default underlying fitting methods are given in Wood (2011
+and 2004). Some alternative methods are discussed in Wood (2000 and 2006). 
 
  }
 
@@ -263,12 +263,13 @@ and 2008). Some alternative methods are discussed in Wood (2000 and 2006).
 
 Key References on this implementation:
 
+Wood, S.N. (2011) Fast stable restricted maximum likelihood 
+and marginal likelihood estimation of semiparametric generalized linear 
+models. Journal of the Royal Statistical Society (B) 73(1):3-36
+
 Wood, S.N. (2004) Stable and efficient multiple smoothing parameter estimation for
 generalized additive models. J. Amer. Statist. Ass. 99:673-686. [Default
-method for additive case (but no longer for generalized)]
-
-Wood, S.N. (2008) Fast stable direct fitting and smoothness selection for generalized
-additive models. J.R.Statist.Soc.B 70(3):495-518. [Generalized additive model methods]
+method for additive case by GCV (but no longer for generalized)]
 
 Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
 
