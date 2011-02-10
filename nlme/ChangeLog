@@ -1,3 +1,7 @@
+2011-02-10  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION (Version, Date): 3.1-98
+
 2011-02-04  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* data/{MathAchieve,bdf}.rda: resave with xz compression.
