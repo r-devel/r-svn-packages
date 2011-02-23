@@ -9,10 +9,14 @@ BIC.logLik <-
   ## BIC for logLik objects
   function(object, ...)
 {
-  -2 * (c(object) - attr(object, "df") * log(attr(object, "nobs"))/2)
+    if (getRversion() < "2.13.0") {
+        no <- attr(object, "nobs")
+        if(is.null(no)) stop("no \"nobs\" attribute is available")
+    } else no <- stats::nobs(object)
+    -2 * c(object) + attr(object, "df") * log(no)
 }
 
-BIC.lm <- BIC.nls <-
+BIC.default <-
   ## BIC for various fitted objects
   function(object, ...)
 {
