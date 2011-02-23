@@ -9,6 +9,7 @@ BIC(object, \dots)
 }
 \alias{BIC}
 \alias{BIC.default} % not exported
+\alias{BIC.logLik}  % exported
 \arguments{
  \item{object}{a fitted model object, for which there exists a
    \code{logLik} method to extract the corresponding log-likelihood, or
@@ -37,10 +38,13 @@ BIC(object, \dots)
   \emph{Annals of Statistics}, \bold{6}, 461-464.
 }
 \author{Jose Pinheiro \email{Jose.Pinheiro@pharma.novartis.com} and Douglas Bates \email{bates@stat.wisc.edu}}
-\seealso{\code{\link{logLik}}, \code{\link{AIC}}, \code{\link{BIC.logLik}}}
+\seealso{
+  \code{\link{logLik}}, \code{\link{AIC}}
+}
 \examples{
 fm1 <- lm(distance ~ age, data = Orthodont) # no random effects
 BIC(fm1)
+BIC(logLik(fm1))
 %\dontrun{
 fm2 <- lme(distance ~ age, data = Orthodont) # random is ~age
 BIC(fm1, fm2)
