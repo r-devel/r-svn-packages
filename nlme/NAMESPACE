@@ -477,7 +477,8 @@ S3method(varWeights, varFunc)
 S3method(vcov, gls)
 S3method(vcov, lme)
 
-if (TRUE || getRversion() < "2.13.0") {
+if (!exists("BIC", envir=asNamespace("stats"))) {
+    ## pre 2.13.0
     S3method(BIC, default)
     S3method(BIC, logLik)
     export(BIC)

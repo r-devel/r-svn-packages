@@ -5,7 +5,7 @@
 
 ##*## Methods for some of the generics in newGenerics.q for standard classes
 
-if (TRUE || getRversion() < "2.13.0") {
+if (!exists("BIC", envir=asNamespace("stats"))) {
 BIC <-
   ## Return the object's value of the Bayesian Information Criterion
   function(object, ...) UseMethod("BIC")
