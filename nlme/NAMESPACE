@@ -486,4 +486,7 @@ if (!exists("BIC", envir=asNamespace("stats"))) {
     ## re-export as amer, drc, metafor, randomLCA, urca
     ## expected to import from here
     export(BIC)
+    S3method(nobs, gls)
+    S3method(nobs, gnls)
+    S3method(nobs, lme)
 }
