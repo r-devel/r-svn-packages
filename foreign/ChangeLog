@@ -1,3 +1,7 @@
+2011-03-05  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* tests/stata.Rout.save: update for R 2.13.0
+
 2011-02-10  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-42
