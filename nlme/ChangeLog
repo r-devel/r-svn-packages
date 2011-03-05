@@ -1,6 +1,10 @@
 2011-02-23  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* DESCRIPTION: version is 3.1-99 (unreleased),
+	* DESCRIPTION: version is 3.1-100, require R >= 2.13
+
+2011-02-23  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: version is 3.1-99 (unreleased, used for R-devel),
 	remove email addresses of former authors (and JP has moved).
 
 	* R/{new,zz}Methods.R: 
