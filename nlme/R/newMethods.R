@@ -1,6 +1,6 @@
 ###      Methods for generics from newGenerics.q for some standard classes
 ###
-### Copyright 1997-2003  Jose C. Pinheiro <Jose.Pinheiro@pharma.novartis.com>,
+### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 
 ##*## Methods for some of the generics in newGenerics.q for standard classes
