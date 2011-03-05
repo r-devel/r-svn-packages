@@ -2952,7 +2952,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm) {
   if (*lm<0) { biggest=1;*lm=0;} /* get m largest magnitude eigen-values */
   f_check = (*m + *lm)/2; /* how often to get eigen_decomp */
   if (f_check<1) f_check ++;
-  kk = (int) floor(*n/10); if (kk<1) k=1;  
+  kk = (int) floor(*n/10); if (kk<1) kk=1;  
   if (kk<f_check) f_check = kk;
 
   q=(double **)calloc((size_t)(*n+1),sizeof(double *));
