@@ -1,14 +1,14 @@
 Package: rpart
 Priority: recommended
-Version: 3.1-48
-Date: 2010-12-06
+Version: 3.1-49
+Date: 2011-03-06
 DateNote: March 2002 version of rpart
 Author: Terry M Therneau and Beth Atkinson <atkinson@mayo.edu>.
         R port by Brian Ripley.
 Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
 Description: Recursive partitioning and regression trees
 Title: Recursive Partitioning
-Depends: R (>= 2.12.0), graphics, stats, grDevices
+Depends: R (>= 2.13.0), graphics, stats, grDevices
 Suggests: survival
 License: GPL-2 | file LICENCE
 LazyLoad: yes
