@@ -11,7 +11,7 @@
 	* DESCRIPTION: version is 3.1-99 (unreleased, used for R-devel),
 	remove email addresses of former authors (and JP has moved).
 
-	* R/{new,zz}Methods.R: 
+	* R/{new,zz}Methods.R:
 	Put all BIC() methods in one place, as the default method.
 
 	* man/BIC.Rd: remove aliases to methods (not all of which actually
@@ -24,7 +24,7 @@
 	* NAMESPACE, R/newMethods.R: prepare for migration of BIC() to stats.
 
 	* R/{gls,gnls,lme}.R, NAMESPACE: add nobs() methods.
-	
+
 2011-02-10  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION (Version, Date): 3.1-98
