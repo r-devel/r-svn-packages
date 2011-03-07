@@ -1,7 +1,8 @@
 
-R version 2.6.1 Patched (2007-12-18 r43730)
-Copyright (C) 2007 The R Foundation for Statistical Computing
+R version 2.13.0 Under development (unstable) (2011-03-07 r54684)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: i686-pc-linux-gnu (32-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -360,7 +361,7 @@ Available components:
 > spdx <- silhouette(pdx)
 > summary(spdx)
 Silhouette of 250 units in 2 clusters from pam(x = dist(x), k = 2) :
-Cluster sizes and average silhouette widths:
+ Cluster sizes and average silhouette widths:
       120       130 
 0.7196104 0.7148520 
 Individual silhouette widths:
@@ -1039,7 +1040,7 @@ Available components:
  [6] "clusinfo"   "silinfo"    "diss"       "call"       "data"      
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  2.067 0.031 2.115 0 0 
+Time elapsed:  2.023 0.038 2.08 0 0 
 > 
 > ## re-starting with medoids from pv6  shouldn't change:
 > pv6. <- pam(votes.repub, 6, medoids = pv6$id.med, trace = 3)
@@ -1101,8 +1102,8 @@ Medoids:
 Clustering vector:
  [1] 1 2 2 3 4 5 2 2 3 5 2 2 2 3 1 2 2 2 1 1 1 4 5
 Objective function:
-   build     swap 
-1.298890 0.862732 
+    build      swap 
+1.2988899 0.8627319 
 
 Available components:
 [1] "medoids"    "id.med"     "clustering" "objective"  "isolation" 
@@ -1114,6 +1115,6 @@ null device
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  2.079 0.032 2.135 0 0 
+Time elapsed:  2.035 0.04 2.094 0 0 
 > 
 > 
