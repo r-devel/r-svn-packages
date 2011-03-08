@@ -3056,7 +3056,8 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm) {
 	  high_conv=0;i=0; while (i<=j&&err[i]<max_err&&d[i]>=0.0) { i++;high_conv++;}
           conv=high_conv;use_low=0;
           for (i=0;i<low_conv;i++) /* test each of the negatives to see if it should be in the set of largest */
-	  { if (-d[j-i]>=d[high_conv-1]) { conv++;use_low++;}
+	  { if (high_conv==0) {conv++;use_low++;} else
+            if (-d[j-i]>=d[high_conv-1]) { conv++;use_low++;}
           } 
           if (conv >= *m) /* then have enough - need to reset lm and m appropriately and break */
 	  { while (conv > *m) /* drop smallest magnitude terms */ 
