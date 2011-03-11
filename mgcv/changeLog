@@ -2,6 +2,11 @@
 *** denotes really big changes 
 ISSUES:
 
+1.7-5
+
+* fix of a gamm bug whereby a model with no smooths would fail after 
+fitting becuase of a missing smoothing parameter vector.
+
 1.7-4
 
 * Fix for single letter typo bug in C code called by slanczos, could 
