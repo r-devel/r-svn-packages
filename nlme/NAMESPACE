@@ -479,6 +479,3 @@ S3method(varWeights, varComb)
 S3method(varWeights, varFunc)
 S3method(vcov, gls)
 S3method(vcov, lme)
-
-## re-export stats::BIC as amer, metafor expect to import from here
-export(BIC)

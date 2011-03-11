@@ -1,3 +1,11 @@
+2011-05-11  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* Release 3.1-100 for R 2.13.0
+
+	* NAMESPACE: no longer re-export BIC
+
+	* man/BIC.Rd: removed.
+
 2011-02-23  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: version is 3.1-100, require R >= 2.13
