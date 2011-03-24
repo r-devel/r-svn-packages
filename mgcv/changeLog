@@ -4,6 +4,11 @@ ISSUES:
 
 1.7-5
 
+* gam.fit3 modified to converge more reliably with links that don't guarantee
+  feasible mu (e.g poisson(link="identity")). One vulnerability removed + a
+  new approach taken, which restarts the iteration from null model 
+  coefficients if the original start values lead to an infinite deviance.
+    
 * fix so that 'main' is not ignored by plot.gam (got broken in 1.7-0 
   object orientation of smooth plotting)
 
