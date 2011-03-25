@@ -2362,8 +2362,8 @@ Predict.matrix.duchon.spline <- function(object,data)
 
     if (n > ind[nk]) { ## still some left over
       ind <- (ind[nk]+1):n ## last chunk
-      Xc <- DuchonE(x=x[ind,],xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
-      Xc <- cbind(Xc%*%object$UZ,DuchonT(x=x[ind,],m=object$p.order[1],n=object$dim))
+      Xc <- DuchonE(x=x[ind,,drop=FALSE],xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
+      Xc <- cbind(Xc%*%object$UZ,DuchonT(x=x[ind,,drop=FALSE],m=object$p.order[1],n=object$dim))
       X <- rbind(X,Xc);rm(Xc)
     }
   } else {

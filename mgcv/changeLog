@@ -8,6 +8,9 @@ ISSUES:
   feasible mu (e.g poisson(link="identity")). One vulnerability removed + a
   new approach taken, which restarts the iteration from null model 
   coefficients if the original start values lead to an infinite deviance.
+
+* Duchon spline bug fix (could fail to create model matrix if 
+  number of data was one greateer than number of unique data).
     
 * fix so that 'main' is not ignored by plot.gam (got broken in 1.7-0 
   object orientation of smooth plotting)
