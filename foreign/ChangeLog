@@ -1,3 +1,7 @@
+2011-04-04  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* man/read.mtp.Rd: note not for current (>= 15) Minitab
+
 2011-03-05  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* tests/stata.Rout.save: update for R 2.13.0
