@@ -1,6 +1,7 @@
 2011-04-10  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-44
+	* src/R_systat.c: remove set-but-unused variable
 
 2011-04-04  Brian Ripley <Brian.Ripley@R-project.org>
 
