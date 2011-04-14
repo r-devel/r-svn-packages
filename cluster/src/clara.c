@@ -386,7 +386,7 @@ void bswap2(int kk, int nsam, int *nrepr,
 	    double *dysma, double *dysmb, double *beter)
 {
     int j, i, k, ij, kj, kbest = -1, nbest = -1;/* init for -Wall */
-    double small, asky, dzsky, dz;
+    double small, dzsky, dz;
 
     /* Parameter adjustments */
     --nrepr;
@@ -440,7 +440,7 @@ void bswap2(int kk, int nsam, int *nrepr,
     if (kk == 1)
 	return;
 
-    asky = *sky / ((double) nsam);
+// asky = *sky / ((double) nsam);
 
 /* ====== second algorithm: SWAP. ====== */
 
