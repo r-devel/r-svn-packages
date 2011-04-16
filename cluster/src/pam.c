@@ -234,10 +234,10 @@ L60:
 		double dz = 0.;
 		/* dz := T_{ih} := sum_j C_{jih}  [p.104] : */
 		for (j = 1; j <= n; ++j) { /* if (!nrepr[j]) { */
-		    int hj = ind_2(h, j);
-		    ij = ind_2(i, j);
+		    int ij = ind_2(i, j),
+			hj = ind_2(h, j);
 		    if (dys[ij] == dysma[j]) {
-			double small = dysmb[j] > dys[hj]? dys[hj] : dysmb[j];
+			double small = dysmb[j] > dys[hj] ? dys[hj] : dysmb[j];
 			dz += (- dysma[j] + small);
 		    } else if (dys[hj] < dysma[j]) /* 1c. */
 			dz += (- dysma[j] + dys[hj]);

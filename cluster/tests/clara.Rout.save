@@ -1,8 +1,8 @@
 
-R version 2.13.0 Under development (unstable) (2011-03-07 r54684)
+R version 2.13.0 Patched (2011-04-16 r55459)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -1485,7 +1485,7 @@ $sample
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  4.435 0.047 4.5 0 0 
+Time elapsed:  2.83 0 2.82 0 0 
 > ## Lynne (P IV, 1.6 GHz): 18.81; then (no NA; R 1.9.0-alpha): 15.07
 > ## nb-mm (P III,700 MHz): 27.97
 > 
