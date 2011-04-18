@@ -1,9 +1,4 @@
-/* This is a file used to develop and test interfacing routines for 
-   Lapack and Linpack. In particular the aim is to check that I can reproduce
-   R routines such as chol and La.svd by direct calls to Lapack and Linpack.
-
-   They have been tested against R routines, (but R's qr() routine was buggy, so only
-   unpivoted case was testable).
+/* Convenient C wrappers for calling LAPACK and LINPACK 
 
    See R-x/include/R_ext/Lapack.h...
 */
