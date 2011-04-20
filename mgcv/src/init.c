@@ -34,6 +34,9 @@ R_CMethodDef CEntries[] = {
     {"Rlanczos",(DL_FUNC)&Rlanczos,6},
     {"rksos",(DL_FUNC)&rksos,3},
     {"gen_tps_poly_powers",(DL_FUNC)&gen_tps_poly_powers,4},
+    {"sparse_penalty",(DL_FUNC)&sparse_penalty,8},
+    {"k_nn",(DL_FUNC)&k_nn,8},
+    {"kba_nn",(DL_FUNC)&kba_nn,9},
     {NULL, NULL, 0}
 };
 

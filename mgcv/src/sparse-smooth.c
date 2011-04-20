@@ -1,4 +1,6 @@
-/* Code to implement kd tree based nearest neighbour routines in C.
+/* Copyright Simon N. Wood, 2011.
+
+   Code to implement kd tree based nearest neighbour routines in C.
    Based on approach of Press et al Numerical Recipes 3rd ed. 21.2, but 
    re-implemented in vanilla C. Design is based on principles from Press
    et al. but due to licensing, this is a re-write. So results need not
@@ -17,6 +19,7 @@
 #include <Rinternals.h>
 #include <math.h>
 #include <stdlib.h>
+#include "mgcv.h"
 
 typedef struct { /* defines structure for kd-tree box */
   double *lo,*hi;    /* box defining co-ordinates */
@@ -172,7 +175,7 @@ void kd_tree(double *X,int *n, int *d,kdtree_type *kd) {
     k = (np-1)/2;          /* split the box around kth value in box */ 
     /* next line re-orders the point index for this box only.
        after reordering the index is split into two parts, indexing
-       points below and obove the kth largest value */  
+       points below and above the kth largest value */  
  
     k_order(&k,ind+p0,x,&np); 
   
@@ -313,10 +316,11 @@ int xbox(kdtree_type *kd,double *x) {
   d=0;  /* dimension for first split */
   while (box[bi].child1) { /* still not reached the outermost twig - smallest box*/
     b1 = box[bi].child1;
+    if (box[b1].hi[d]!=box[box[bi].child2].lo[d]) Rprintf("child boundary problem\n");
     /* note that points on boundary are in lower box (child1) */
     if (x[d] <= box[b1].hi[d]) bi = b1; else
     bi = box[bi].child2;
-    d ++; if (d == kd->d) d=0;
+    d++; if (d == kd->d) d=0;
   }
   return(bi);
 }
@@ -337,7 +341,7 @@ void p_area(double *a,double *X,kdtree_type kd,int n,int d) {
    then that boundary is shrunk so that the point is enclosed in it.
    Results returned in a.
 */
-  double *wa,*lo,*hi,*x0,*x1,av_vol=0.0,min_w,x;
+  double *wa,*lo,*hi,*x0,*x1,min_w,x;
   int np,bi,i,j,k,ok=1,*count,check;
 
   wa = (double *)calloc((size_t)d,sizeof(double));
@@ -522,8 +526,9 @@ void k_nn_work(kdtree_type kd,double *X,double *dist,int *ni,int *n,int *d,int *
 }
 
 void k_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,int *get_a) {
-/* NOTE: no tie handling... impractical without!
-
+/* NOTE: n modified on exit!!
+         no tie handling... impractical without!
+         
    X is an n by d matrix. Each row is the location of a point
    in some Euclidean d-space.
    Find k nearest neighbours in X of all points in X. 
@@ -565,7 +570,7 @@ void k_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,int *get
 */
   kdtree_type kd; 
   kd_tree(X,n,d,&kd); /* set up the tree */ 
-  if (get_a) p_area(a,X,kd,*n,*d);
+  if (*get_a) p_area(a,X,kd,*n,*d);
   k_nn_work(kd,X,dist,ni,n,d,k);
   free_kdtree(kd);
 }
@@ -582,65 +587,52 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
    3. find k nearest neighbours in set 1 that are not in set 2.
    Step 3 can go through nearest looking for self and largest.  
 */
-  int ii,i,j,nn,d2k,bi,bj,max_i,q,n1,n2;
-  double dx,*x,max_dist,d1,d2,maxnd;
+  int ii,i,j,nn,d2k,bi,bj,max_i,q,n1,n2,*count;
+  double dx,*x,max_dist,d1,d2,maxnd,xj,*db;
   kdtree_type kd; 
   kd_tree(X,n,d,&kd); /* set up the tree */ 
-  if (get_a) p_area(a,X,kd,*n,*d);
+  if (*get_a) p_area(a,X,kd,*n,*d);
   d2k = 2 * *d + *k;
-  nn = *n; /* follwoing modifies n!!*/
+  nn = *n; /* following modifies n!!*/
   k_nn_work(kd,X,dist,ni,&nn,d,&d2k); /* get 2d+k nearest neighbours */
   x = (double *)calloc((size_t) *d,sizeof(double));
+  /* need to get typical box scale */ 
+  db = (double *)calloc((size_t)*d,sizeof(double));
+  count = (int *)calloc((size_t)*d,sizeof(int));
+  for (bi=0;bi<kd.n_box;bi++) {
+    for (j=0;j<*d;j++) 
+    if (kd.box[bi].lo[j] > -kd.huge&&kd.box[bi].hi[j] < kd.huge) {
+      db[j] += kd.box[bi].hi[j] - kd.box[bi].lo[j];
+      count[j] ++;
+    }
+  }
+  for (j=0;j<*d;j++) { 
+    db[j] /= (count[j]+1);
+    if (db[j]==0.0) db[j]=1.0;
+  }
+
   for (i=0;i<*n;i++) { /* work through points */
     for (j=0;j<*d;j++) x[j] = X[i + j * *n];
     bi = which_box(&kd,i);
+    bj = xbox(&kd,x);
+    if (bj!=bi) Rprintf("xbox says x not in own box!!\n");
     for (j=0;j<*d;j++) { /* get the balanced neighbours */
-     /* lower neighbour... */ 
-     if (kd.box[bi].lo[j]!=-kd.huge) { /* then there is a neigbour in this direction */
-        dx = (x[j] - kd.box[bi].lo[j])*1.001;
-        x[j] -= dx;
-        bj = xbox(&kd,x); /* box below bi on axis j*/
-        x[j] += dx;
-        /* now find point closest to point i in box bj */
-      //  Rprintf("bj = %d  p0 = %d  ",bj,kd.box[bj].p0);
-        n1 = kd.ind[kd.box[bj].p0];
-     //   Rprintf("calling ijdist(%d,%d)...\n",i,n1);
-        d1 = ijdist(i,n1,X,*n,*d);
-        if (kd.box[bj].p1>kd.box[bj].p0) { 
-          n2 = kd.ind[kd.box[bj].p1];
-          d2 = ijdist(i,n2,X,*n,*d);
-          if (d2<d1) { d1=d2;n1=n2;}
-        }
-        /* now put n1 into neighbour list in place of furthest neighbour not 
-           itself an already computed balanced box point (later computed points 
-            are no problem) */
-       
-        max_dist=0.0;
-        max_i=0;
-        maxnd=0.0;
-        for (q=0;q < d2k;q++) {
-          ii = i + *n * q;
-          if (dist[ii]>maxnd) maxnd = dist[ii];
-          if (ni[ii] == n1) { /* point is already in neighbour set */
-            ni[ii] == -(n1+1);    /* signal to ignore for replacement */
-            max_i = -1; /* signal that no replacement needed */
-            break; 
-          }
-          if (ni[ii]>0&&dist[ii]>max_dist) { 
-            max_dist = dist[ii];max_i=ii;
-          }
-        }
-        if (max_i>=0 && d1 < *cut_off * maxnd) { /* replace furthest replacable item with n1 */
-          ni[max_i] = -(n1+1); /* signal not to replace later */
-          dist[max_i] = d1;
-        }
-      }
+      xj = x[j]; 
       /* upper neighbour ... */
       if (kd.box[bi].hi[j]!=kd.huge) { /* then there is a neigbour in this direction */
-        dx = (kd.box[bi].hi[j] - x[j])*1.001;
-        x[j] += dx;
+        if (kd.box[bi].lo[j] > -kd.huge) 
+          dx = (kd.box[bi].hi[j] - kd.box[bi].lo[j])*1e-6;
+        else dx = db[j]*1e-6;
+        x[j] = kd.box[bi].hi[j]+dx;
         bj = xbox(&kd,x); /* box above bi on axis j*/
-        x[j] -= dx;
+        if (bj==bi) { 
+          Rprintf("%d upper neighbour claimed to be self d=%d!\n",i,j);
+          for (q=0;q<*d;q++) {
+            Rprintf("%g  %g  %g\n",kd.box[bi].lo[q],x[q],kd.box[bi].hi[q]);
+          }
+          Rprintf("\n");
+        }
+        x[j] = xj;
         /* now get nearest point to i from box bj */
         n1 = kd.ind[kd.box[bj].p0];
         d1 = ijdist(i,n1,X,*n,*d);
@@ -660,11 +652,11 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
           ii = i + *n * q;
           if (dist[ii]>maxnd) maxnd = dist[ii];
           if (ni[ii] == n1) { /* point is already in neighbour set */
-            ni[ii] == -(n1+1);    /* signal to ignore for replacement */
+            ni[ii] = -(n1+1);    /* signal to ignore for replacement */
             max_i = -1; /* signal that no replacement needed */
             break; 
           }
-          if (ni[ii]>0&&dist[ii]>max_dist) { 
+          if (ni[ii]>=0&&dist[ii]>max_dist) { 
             max_dist = dist[ii];max_i=ii;
           }
         }
@@ -672,7 +664,51 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
           ni[max_i] = -(n1+1); /* signal not to replace later */
           dist[max_i] = d1;
         }
-      }
+      } /* upper neighbour done */
+
+     /* lower neighbour... */ 
+     if (kd.box[bi].lo[j]!=-kd.huge) { /* then there is a neigbour in this direction */
+      
+        dx = (xj - kd.box[bi].lo[j])*1.001;
+        x[j] -= dx;
+        bj = xbox(&kd,x); /* box below bi on axis j*/
+        if (bj==bi) Rprintf("neighbour claimed to be self!\n");
+        x[j] = xj;
+        /* now find point closest to point i in box bj */
+     
+        n1 = kd.ind[kd.box[bj].p0];
+    
+        d1 = ijdist(i,n1,X,*n,*d);
+        if (kd.box[bj].p1>kd.box[bj].p0) { 
+          n2 = kd.ind[kd.box[bj].p1];
+          d2 = ijdist(i,n2,X,*n,*d);
+          if (d2<d1) { d1=d2;n1=n2;}
+        }
+        /* now put n1 into neighbour list in place of furthest neighbour not 
+           itself an already computed balanced box point (later computed points 
+            are no problem) */
+       
+        max_dist=0.0;
+        max_i=0;
+        maxnd=0.0;
+        for (q=0;q < d2k;q++) {
+          ii = i + *n * q;
+          if (dist[ii]>maxnd) maxnd = dist[ii];
+          if (ni[ii] == n1) { /* point is already in neighbour set */
+            ni[ii] = -(n1+1);    /* signal to ignore for replacement */
+            max_i = -1; /* signal that no replacement needed */
+            break; 
+          }
+          if (ni[ii]>=0&&dist[ii]>max_dist) { 
+            max_dist = dist[ii];max_i=ii;
+          }
+        }
+        if (max_i>=0 && d1 < *cut_off * maxnd) { /* replace furthest replacable item with n1 */
+          ni[max_i] = -(n1+1); /* signal not to replace later */
+          dist[max_i] = d1;
+        }
+      } /* lower neighbour done */
+
     } /* collected balanced neighbours */
     /* finally reset the negative indices to positive */    
     for (q=0;q < d2k;q++) {
@@ -680,58 +716,83 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
        if (ni[ii]<0) ni[ii] = -ni[ii] - 1; 
     }
   }
-  free(x); free_kdtree(kd);
+  free(x); free_kdtree(kd);free(db);free(count);
 }
 
 
-void sparse_penalty(double *X,int *n,int *d,double *D,int *K,int *k,int *m,int *a_weight) {
-/* X is n by d, and each row of X contains the location of a point. 
+void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight) {
+/* Creates the sqrt penalty matrix entries for a sparse smoother
+
+   X is n by d, and each row of X contains the location of a point. 
    There are no repeat points in X.
 
-   D is n by m*k, where m is the number of derivatives in the penalty
-     and k is the number of neighbours (*including self*) required to 
-     approximate the derivatives. D[i + m*n*l + n*j] is the coefficient 
-     associated with the neighbour referenced by K[i + n*j] and the lth
+   D is n by m*(k+1), where m is the number of derivatives in the penalty
+     and k is the number of neighbours (excluding self) required to 
+     approximate the derivatives. D[i + m*n*l + n*(j+1)] is the coefficient 
+     associated with the neighbour referenced by ni[i + n*j] and the lth
      derivative.   
 
    Set up is general to allow for future extension of this routine, but currently 
    only the d==2, m=3, k=6 TPS like case is dealt with here. 
 
 */
-  int i,j,*ni;
-  double *M, /* matrix mapping derivatives to function values */
-    *dist,*area,cut_off=5;
+  int i,j,true=1,false=0,k1,ii,l,k_add;
+  double *M,*Mi,*Vt,*sv, /* matrix mapping derivatives to function values */
+    *dist,*area,cut_off=5,x,z;
 
-  M = (double *)calloc((size_t) *k * *k,sizeof(double));
+  k1 = *k + 1;
+  M = (double *)calloc((size_t) k1 * k1,sizeof(double));
+  Mi = (double *)calloc((size_t) k1 * k1,sizeof(double)); 
+  Vt = (double *)calloc((size_t) k1 * k1,sizeof(double));
+  sv = (double *)calloc((size_t) k1,sizeof(double));
 
-  (*k)--;
-
-  ni = (int *)calloc((size_t) *n * *k,sizeof(int)); /* neighbour index list */
   dist = (double *)calloc((size_t) *n * *k,sizeof(double)); /* corresponding distances */
   area = (double *)calloc((size_t) *n,sizeof(double)); /* area associated with each point */
 
   /* get a balanced version of the nearest neighbours */
-  kba_nn(X,dist,area,ni,n,d,k,a_weight,&cut_off);
+  /* j=*n;
+     k_nn(X,dist,area,ni,&j,d,k,a_weight);*/ /* pure nearest neighbour code */
+  k_add = *k - 2 * *d; 
+  kba_nn(X,dist,area,ni,n,d,&k_add,a_weight,&cut_off);
+  Rprintf("Starting main loop...\n");
   for (i=0;i<*n;i++) { /* work through all points */ 
     M[0] = 1.0;for (j=1;j<6;j++) M[j*6] = 0.0;
-    for (j=1;i<6;i++) {
+    for (j=1;j<6;j++) {
       M[j] = 1.0;
-      ii = ni[i + (j-1) * *n]; /* neighnour index */
+      ii = ni[i + (j-1) * *n]; /* neighbour index */
       x = X[ii] - X[i];     
       z = X[ii + *n] - X[i + *n];
       M[j + 6] = x;
       M[j + 12] = z;
       M[j + 18] = x*x/2;
       M[j + 24] = z*z/2;
-      M[j + 30] = x*z/2;
+      M[j + 30] = x*z;
     }
     /* Let g = [f,f_x,f_z,f_xx,f_zz,f_xz], then f -> Mg as neighbours
        approach point i. Now invert M, to estimate g using g = M^{-1}f */
     
     /* call mgcv_svd_full to pseudoinvert M */
+    j = 6;
+    mgcv_svd_full(M,Vt,sv,&j,&j);
+    Rprintf("%d done svd...\n",i);
+    for (j=0;j<6;j++) if (sv[j]>sv[1]*0) sv[j] = 1/sv[j];
+    /* Now form V diag(sv) M' */
+    for (ii=0;ii<6;ii++) { 
+      x=sv[ii];
+      for (j=0;j<6;j++) M[j+ii*6] *= x;
+    }
+    j=6;
+    mgcv_mmult(Mi,Vt,M,&true,&true,&j,&j,&j);
+    Rprintf("done mmult...\n");
+    /* Now read coefficients of second derivatives out into D matrix */
+    if (*a_weight) x = sqrt(area[i]); else x = 1.0; 
+    for (l=0;l<3;l++) for (j=0;j<6;j++)
+      D[i + 6 * *n * l + *n * j] = x*Mi[3+l + 6*j];
+    
   }
-  
-
+  /* free memory... */
+  free(M);free(Mi);free(Vt);
+  free(sv);free(dist);free(area);
 }
 
 
