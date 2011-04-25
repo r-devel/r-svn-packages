@@ -66,6 +66,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	dv <- double(1 + (n * (n - 1))/2)
 	jdyss <- 0 # distances to be computed
     }
+    if(n <= 1) stop("need at least 2 objects to cluster")
     if(keep.diss) jdyss <- jdyss + 10
     ## call Fortran routine
     res <- .Fortran(twins,
