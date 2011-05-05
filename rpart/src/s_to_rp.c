@@ -39,7 +39,6 @@ void s_to_rp(Sint *n, 	  Sint *nvarx, 	 Sint *ncat, 	Sint *method,
     ncat[0] = itemp;
     *method = rp.num_unique_cp;
     if (rval==1) *n= -1;   /* signal an error */
-    Free(tree);
     }
 
 /*
