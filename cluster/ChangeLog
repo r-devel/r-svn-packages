@@ -1,3 +1,11 @@
+2011-05-20  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* src/pam.c (cl_pam): trace_lev: also trace the computation of
+	dissimilarities (a very expensive part, for large n).
+
+	* R/pam.q (pam): cluster.only=TRUE: if the *computed*
+	dissimilarities have NA's the necessary error was not signalled.
+
 2011-03-07  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* tests/*.Rout.save: update after R-devel's  "scientific()" patch.
@@ -5,7 +13,7 @@
 
 2011-02-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* DESCRIPTION (Version): 1.13.3
+	* DESCRIPTION (Version): 1.13.3, released to CRAN
 
 2010-12-12  Martin Maechler  <maechler@stat.math.ethz.ch>
 
