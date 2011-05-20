@@ -94,26 +94,27 @@ lik.CI <- function(like, lim ) {
 }
 
 nested.corr <- function(data,w,t0,M) {
-# Statistic for the example nested bootstrap on the cd4 data.
-	corr.fun <- function(d, w=rep(1,nrow(d))/nrow(d)) {
-		w <- w/sum(w)
-		n <- nrow(d)
-		m1 <- sum(d[,1]*w)
-		m2 <- sum(d[,2]*w)
-		v1 <- sum(d[,1]^2*w)-m1^2
-		v2 <- sum(d[,2]^2*w)-m2^2
-		rho <- (sum(d[,1]*d[,2]*w)-m1*m2)/sqrt(v1*v2)
-		i <- rep(1L:n,round(n*w))
-		us <- (d[i,1]-m1)/sqrt(v1)
-		xs <- (d[i,2]-m2)/sqrt(v2)
-		L <- us*xs-0.5*rho*(us^2+xs^2)
-		c(rho, sum(L^2)/nrow(d)^2)
-	}
-	n <- nrow(data)
-	i <- rep(1L:n,round(n*w))
-	t <- corr.fun(data,w)
-	z <- (t[1L]-t0)/sqrt(t[2L])
-	nested.boot <- boot(data[i,],corr.fun,R=M,stype="w")
-	z.nested <- (nested.boot$t[,1]-t[1L])/sqrt(nested.boot$t[,2])
-	c(z,sum(z.nested<z)/(M+1))
+    ## Statistic for the example nested bootstrap on the cd4 data.
+    corr.fun <- function(d, w = rep(1, nrow(d))/nrow(d)) {
+        x <- d[, 1L]; y <- d[, 2L]
+        w <- w/sum(w)
+        n <- nrow(d)
+        m1 <- sum(x * w)
+        m2 <- sum(y * w)
+        v1 <- sum(x^2 * w) - m1^2
+        v2 <- sum(y^2 * w) - m2^2
+        rho <- (sum(x * y * w) - m1 * m2)/sqrt(v1 * v2)
+        i <- rep(1L:n, round(n * w))
+        us <- (x[i] - m1)/sqrt(v1)
+        xs <- (y[i] - m2)/sqrt(v2)
+        L <- us * xs - 0.5 * rho * (us^2 + xs^2)
+        c(rho, sum(L^2)/nrow(d)^2)
+    }
+    n <- nrow(data)
+    i <- rep(1L:n,round(n*w))
+    t <- corr.fun(data,w)
+    z <- (t[1L]-t0)/sqrt(t[2L])
+    nested.boot <- boot(data[i,],corr.fun,R=M,stype="w")
+    z.nested <- (nested.boot$t[,1L]-t[1L])/sqrt(nested.boot$t[,2L])
+    c(z,sum(z.nested<z)/(M+1))
 }
