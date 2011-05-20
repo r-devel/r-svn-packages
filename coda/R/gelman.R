@@ -92,11 +92,7 @@
   R2.estimate <- R2.fixed + R2.random
   R2.upper <- R2.fixed + qf((1 + confidence)/2, B.df, W.df) * R2.random
   psrf <- cbind(sqrt(df.adj * R2.estimate), sqrt(df.adj * R2.upper))
-  dimnames(psrf) <- list(xnames,
-                         c("Point est.",
-                           paste(50 * (1+confidence), "% quantile", sep = ""))
-                         )
-  
+  dimnames(psrf) <- list(xnames, c("Point est.", "Upper C.I."))
   
   out <- list(psrf = psrf, mpsrf=mpsrf)
   class(out) <- "gelman.diag"

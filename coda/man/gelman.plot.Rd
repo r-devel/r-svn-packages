@@ -43,8 +43,8 @@ the bin width, the third contains samples \eqn{1:(50+2n)} and so on.
 
 \references{
 Brooks, S P. and Gelman, A. (1998) General Methods for Monitoring
-Convergence of Iterative Simulations. Journal of Computational and
-Graphical Statistics. 7. p434-455.
+Convergence of Iterative Simulations. \emph{Journal of Computational and
+Graphical Statistics}, \bold{7}, 434-455.
 }
 
 \section{Theory}{
