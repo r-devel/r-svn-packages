@@ -95,6 +95,8 @@ lik.CI <- function(like, lim ) {
 
 nested.corr <- function(data,w,t0,M) {
     ## Statistic for the example nested bootstrap on the cd4 data.
+    ## Indexing a base matrix is much faster
+    data <- unname(as.matrix(data))
     corr.fun <- function(d, w = rep(1, nrow(d))/nrow(d)) {
         x <- d[, 1L]; y <- d[, 2L]
         w <- w/sum(w)
