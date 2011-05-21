@@ -1,6 +1,6 @@
 # part of R package boot
 # copyright (C) 1997-2001 Angelo J. Canty
-# corrections (C) 1997-2007 B. D. Ripley
+# corrections (C) 1997-2011 B. D. Ripley
 #
 # Unlimited distribution is permitted
 
@@ -95,7 +95,7 @@ lik.CI <- function(like, lim ) {
 
 nested.corr <- function(data,w,t0,M) {
     ## Statistic for the example nested bootstrap on the cd4 data.
-    ## Indexing a base matrix is much faster
+    ## Indexing a bare matrix is much faster
     data <- unname(as.matrix(data))
     corr.fun <- function(d, w = rep(1, nrow(d))/nrow(d)) {
         x <- d[, 1L]; y <- d[, 2L]

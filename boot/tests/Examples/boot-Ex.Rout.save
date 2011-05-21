@@ -1,6 +1,6 @@
 
-R version 2.11.0 alpha (2010-03-28 r51461)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 Patched (2011-05-19 r55967)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -116,9 +116,8 @@ Type 'q()' to quit R.
 > ### ** Examples
 > 
 > # usual bootstrap of the ratio of means using the city data
-> ratio <- function(d, w)
-+      sum(d$x * w)/sum(d$u * w)
-> boot(city, ratio, R=999, stype="w")
+> ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
+> boot(city, ratio, R = 999, stype = "w")
 
 ORDINARY NONPARAMETRIC BOOTSTRAP
 
@@ -140,14 +139,12 @@ t1* 1.520313 0.03959996   0.2167146
 +      gp1 <- 1:table(as.numeric(d$series))[1]
 +      m1 <- sum(d[gp1,1] * f[gp1])/sum(f[gp1])
 +      m2 <- sum(d[-gp1,1] * f[-gp1])/sum(f[-gp1])
-+      ss1 <- sum(d[gp1,1]^2 * f[gp1]) - 
-+             (m1 *  m1 * sum(f[gp1]))
-+      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - 
-+             (m2 *  m2 * sum(f[-gp1]))
++      ss1 <- sum(d[gp1,1]^2 * f[gp1]) - (m1 *  m1 * sum(f[gp1]))
++      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
 +      c(m1-m2, (ss1+ss2)/(sum(f)-2))
 + }
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
-> boot(grav1, diff.means, R=999, stype="f", strata=grav1[,2])
+> grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
+> boot(grav1, diff.means, R = 999, stype = "f", strata = grav1[,2])
 
 STRATIFIED BOOTSTRAP
 
@@ -168,44 +165,36 @@ t2* 16.846154 -1.457662791    6.759103
 > #  from Example 6.8 of Davison and Hinkley (1997).  Notice also 
 > #  that two extra arguments to statistic are passed through boot.
 > nuke <- nuclear[,c(1,2,5,7,8,10,11)]
-> nuke.lm <- glm(log(cost)~date+log(cap)+ne+ ct+log(cum.n)+pt, data=nuke)
+> nuke.lm <- glm(log(cost)~date+log(cap)+ne+ ct+log(cum.n)+pt, data = nuke)
 > nuke.diag <- glm.diag(nuke.lm)
 > nuke.res <- nuke.diag$res*nuke.diag$sd
 > nuke.res <- nuke.res-mean(nuke.res)
 > 
-> 
 > #  We set up a new data frame with the data, the standardized 
 > #  residuals and the fitted values for use in the bootstrap.
-> nuke.data <- data.frame(nuke,resid=nuke.res,fit=fitted(nuke.lm))
-> 
+> nuke.data <- data.frame(nuke,resid = nuke.res,fit = fitted(nuke.lm))
 > 
 > #  Now we want a prediction of plant number 32 but at date 73.00
-> new.data <- data.frame(cost=1, date=73.00, cap=886, ne=0,
-+                        ct=0, cum.n=11, pt=1)
+> new.data <- data.frame(cost = 1, date = 73.00, cap = 886, ne = 0,
++                        ct = 0, cum.n = 11, pt = 1)
 > new.fit <- predict(nuke.lm, new.data)
-> 
 > 
 > nuke.fun <- function(dat, inds, i.pred, fit.pred, x.pred)
 + {
-+      assign(".inds", inds, envir=.GlobalEnv)
-+      lm.b <- glm(fit+resid[.inds] ~date+log(cap)+ne+ct+
-+           log(cum.n)+pt, data=dat)
-+      pred.b <- predict(lm.b,x.pred)
-+      remove(".inds", envir=.GlobalEnv)
-+      c(coef(lm.b), pred.b-(fit.pred+dat$resid[i.pred]))
++      lm.b <- glm(fit+resid[inds] ~ date+log(cap)+ne+ct+log(cum.n)+pt,
++                  data = dat)
++      pred.b <- predict(lm.b, x.pred)
++      c(coef(lm.b), pred.b - (fit.pred + dat$resid[i.pred]))
 + }
 > 
-> 
-> nuke.boot <- boot(nuke.data, nuke.fun, R=999, m=1, 
-+      fit.pred=new.fit, x.pred=new.data)
+> nuke.boot <- boot(nuke.data, nuke.fun, R = 999, m = 1, 
++      fit.pred = new.fit, x.pred = new.data)
 > #  The bootstrap prediction error would then be found by
 > mean(nuke.boot$t[,8]^2)
 [1] 0.08815734
 > #  Basic bootstrap prediction limits would be
 > new.fit-sort(nuke.boot$t[,8])[c(975,25)]
 [1] 6.160255 7.298819
-> 
-> 
 > 
 > 
 > #  Finally a parametric bootstrap.  For this example we shall look 
@@ -235,8 +224,8 @@ t2* 16.846154 -1.457662791    6.759103
 +      out
 + }
 > 
-> air.boot <- boot(aircondit, air.fun, R=999, sim="parametric",
-+      ran.gen=air.rg, mle=mean(aircondit$hours))
+> air.boot <- boot(aircondit, air.fun, R = 999, sim = "parametric",
++                  ran.gen = air.rg, mle = mean(aircondit$hours))
 > 
 > 
 > # The bootstrap p-value can then be approximated by
