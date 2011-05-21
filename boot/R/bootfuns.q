@@ -87,7 +87,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
                  stype = c("i", "f", "w"),
                  strata  =  rep(1, n), L = NULL, m = 0, weights = NULL,
 		 ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
-                 ...)
+                 parallel = FALSE, ...)
 {
 #
 # R replicates of bootstrap applied to  statistic(data)
@@ -98,7 +98,9 @@ boot <- function(data, statistic, R, sim = "ordinary",
 #
     call <- match.call()
     stype <- match.arg(stype)
-    if(simple && (sim != "ordinary" || stype != "i" || sum(m))) {
+    if (parallel && !require(multicore, quietly = TRUE))
+        stop("parallel operation requires multicore")
+    if (simple && (sim != "ordinary" || stype != "i" || sum(m))) {
         warning("'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so ignored")
         simple <- FALSE
     }
@@ -109,7 +111,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
         stop("no data in call to boot")
     temp.str <- strata
     strata <- tapply(seq_len(n),as.numeric(strata))
-    if (sim != "parametric") {
+    t0 <- if (sim != "parametric") {
 	if ((sim == "antithetic") && is.null(L))
             L <- empinf(data = data, statistic = statistic,
                         stype = stype, strata = strata, ...)
@@ -125,27 +127,23 @@ boot <- function(data, statistic, R, sim = "ordinary",
             weights <- t(apply(matrix(weights, n, length(R), byrow = TRUE),
                                2L, normalize, strata))
         if (!simple) i <- index.array(n, R, sim, strata, m, L, weights)
+
         original <- if (stype == "f") rep(1, n)
         else if (stype == "w") {
             ns <- tabulate(strata)[strata]
             1/ns
         } else seq_len(n)
-        if (sum(m) > 0)
-            t0 <- statistic(data, original, rep(1, sum(m)), ...)
-        else
-            t0 <- statistic(data, original, ...)
-    } else
-	t0 <- statistic(data, ...)
+
+        if (sum(m) > 0L) statistic(data, original, rep(1, sum(m)), ...)
+        else statistic(data, original, ...)
+    } else # "parametric"
+	statistic(data, ...)
+
     t.star <- matrix(NA, sum(R), length(t0))
     pred.i <- NULL
-    if(sim == "parametric") {
-#  Generate the data and bootstrap replicates for the parametric bootstrap
-        for(r in seq_len(R))
-            t.star[r,] <- statistic(ran.gen(data, mle),...)
-    }
+    fn <- if (sim == "parametric")
+        function(r, ...) statistic(ran.gen(data, mle), ...)
     else {
-#  Calculate the replicate indices and loop over them to calculate the
-#  bootstrap replicates.
         if (!simple && ncol(i) > n) {
             pred.i <- as.matrix(i[ , (n+1L):ncol(i)])
             i <- i[, seq_len(n)]
@@ -153,24 +151,22 @@ boot <- function(data, statistic, R, sim = "ordinary",
         if (stype %in% c("f", "w")) {
             f <- freq.array(i)
             if (stype == "w") f <- f/ns
-            if (sum(m) == 0)
-                for(r in seq_len(sum(R)))
-                    t.star[r,] <- statistic(data, f[r,  ],...)
-            else for(r in seq_len(sum(R)))
-                t.star[r,] <- statistic(data, f[r, ], pred.i[r, ],...)
-        } else if (sum(m) > 0) {
-            for (r in seq_len(sum(R)))
-                t.star[r,] <- statistic(data, i[r, ], pred.i[r,],...)
-        } else if (simple) {
-            for(r in seq_len(sum(R))) {
-                inds <- index.array(n, 1, sim, strata, m, L, weights)
-                t.star[r,] <- statistic(data, inds,...)
-            }
-        } else {
-            for(r in seq_len(sum(R)))
-                t.star[r,] <- statistic(data, i[r, ],...)
-        }
+            if (sum(m) == 0L) function(r, ...) statistic(data, f[r,  ], ...)
+            else function(r, ...) statistic(data, f[r, ], pred.i[r, ], ...)
+        } else if (sum(m) > 0L)
+            function(r, ...) statistic(data, i[r, ], pred.i[r,], ...)
+        else if (simple)
+            fn <- function(r, ...)
+                statistic(data,
+                          index.array(n, 1, sim, strata, m, L, weights), ...)
+        else function(r, ...) statistic(data, i[r, ], ...)
     }
+    RR <- sum(R)
+    res <- if(parallel) mclapply(seq_len(RR), fn, ...)
+    else lapply(seq_len(RR), fn, ...)
+    t.star <- matrix(, RR, length(t0))
+    for(r in seq_len(RR)) t.star[r, ] <- res[[r]]
+
     if (is.null(weights)) weights <- 1/tabulate(strata)[strata]
     boot.return(sim, t0, t.star, temp.str, R, data, statistic, stype, call,
                 seed, L, m, pred.i, weights, ran.gen, mle)

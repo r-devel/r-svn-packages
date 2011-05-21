@@ -16,7 +16,8 @@ Bootstrap Resampling
 \usage{
 boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"), 
      strata = rep(1,n), L = NULL, m = 0, weights = NULL, 
-     ran.gen = function(d, p) d, mle = NULL, simple = FALSE, \dots)
+     ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
+     parallel = FALSE, \dots)
 }
 \arguments{
   \item{data}{
@@ -125,6 +126,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     warning).  By default a \code{n*R} index array is created: this can be
     large and if \code{simple = TRUE} this is avoided by sampling
     separately for each replication, which is slower but uses less memory.
+  }
+  \item{parallel}{
+    logical: should package \pkg{multicore} be used if available?
   }
   \item{...}{
     Any other arguments for \code{statistic} which are passed unchanged
