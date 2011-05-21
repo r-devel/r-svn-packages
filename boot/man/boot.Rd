@@ -9,15 +9,16 @@ Bootstrap Resampling
   parametric and nonparametric resampling are possible.  For the nonparametric
   bootstrap, possible resampling methods are the ordinary bootstrap, the 
   balanced bootstrap, antithetic resampling, and permutation.
-  For nonparametric multi-sample problems stratified resampling is used.  
-  This is specified by including a vector of strata in the call to boot.
+  For nonparametric multi-sample problems stratified resampling is used:
+  this is specified by including a vector of strata in the call to boot.
   Importance resampling weights may be specified.
 }
 \usage{
 boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"), 
      strata = rep(1,n), L = NULL, m = 0, weights = NULL, 
      ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
-     parallel = FALSE, \dots)
+     parallel = c("no", "multicore", "snow"),
+     npus = getOption("boot.ncpus", 1L), \dots)
 }
 \arguments{
   \item{data}{
@@ -128,7 +129,11 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     separately for each replication, which is slower but uses less memory.
   }
   \item{parallel}{
-    logical: should package \pkg{multicore} be used if available?
+    The type of parallel operation to be used (if any).  If missing, the
+    default is taken from the option \code{"boot.parallel"}.
+  }
+  \item{ncpus}{
+    integer: number of processes to be used in parallel operation.
   }
   \item{...}{
     Any other arguments for \code{statistic} which are passed unchanged
@@ -145,7 +150,8 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     The observed value of \code{statistic} applied to \code{data}. 
   }
   \item{t}{
-    A matrix with \code{R} rows each of which is a bootstrap replicate of \code{statistic}.
+    A matrix with \code{R} rows each of which is a bootstrap replicate
+    of the result of calling \code{statistic}.
   }
   \item{R}{
     The value of \code{R} as passed to \code{boot}.
@@ -205,25 +211,40 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
 }
 \details{
   The statistic to be bootstrapped can be as simple or complicated as
-    desired as long as its arguments correspond to the dataset and (for
-    a nonparametric bootstrap) a vector of indices, frequencies or
-    weights.  \code{statistic} is treated as a black box by the
-    \code{boot} function and is not checked to ensure that these
-    conditions are met.
+  desired as long as its arguments correspond to the dataset and (for
+  a nonparametric bootstrap) a vector of indices, frequencies or
+  weights.  \code{statistic} is treated as a black box by the
+  \code{boot} function and is not checked to ensure that these
+  conditions are met.
     
-    The first order balanced bootstrap is described in Davison, Hinkley
-    and Schechtman (1986).  The antithetic bootstrap is described by
-    Hall (1989) and is experimental, particularly when used with strata.
-    The other non-parametric simulation types are the ordinary bootstrap
-    (possibly with unequal probabilities), and permutation which returns
-    random permutations of cases. All of these methods work
-    independently within strata if that argument is supplied.
+  The first order balanced bootstrap is described in Davison, Hinkley
+  and Schechtman (1986).  The antithetic bootstrap is described by
+  Hall (1989) and is experimental, particularly when used with strata.
+  The other non-parametric simulation types are the ordinary bootstrap
+  (possibly with unequal probabilities), and permutation which returns
+  random permutations of cases. All of these methods work
+  independently within strata if that argument is supplied.
     
-    For the parametric bootstrap it is necessary for the user to specify
-    how the resampling is to be conducted.  The best way of
-    accomplishing this is to specify the function \code{ran.gen} which
-    will return a simulated data set from the observed data set and a
-    set of parameter estimates specified in \code{mle}.
+  For the parametric bootstrap it is necessary for the user to specify
+  how the resampling is to be conducted.  The best way of
+  accomplishing this is to specify the function \code{ran.gen} which
+  will return a simulated data set from the observed data set and a
+  set of parameter estimates specified in \code{mle}.
+}
+
+\section{Parallel operation}
+  For parallel operation \emph{via} package \pkg{multicore} the random
+  number seed for the \R session (and recorded in the returned object)
+  is not the one used by the worker processes: rather each chooses its own
+  seed.  Because of the way \pkg{multicore} works, each worker process
+  inherits the environment of the current session, including the
+  workspace and the loaded namespaces and attached packages (but not the
+  random number seed).
+
+  More work is needed when \pkg{snow} is used: the worker processes are
+  newly created \R processes, and \code{statistic} needs to arrange to
+  set up the environment it needs: often a good way to do that is to
+  make use of lexical scoping.
 }
 \references{
 There are many references explaining the bootstrap and its variations.

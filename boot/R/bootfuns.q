@@ -87,7 +87,8 @@ boot <- function(data, statistic, R, sim = "ordinary",
                  stype = c("i", "f", "w"),
                  strata  =  rep(1, n), L = NULL, m = 0, weights = NULL,
 		 ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
-                 parallel = FALSE, ...)
+                 parallel = c("no", "multicore", "snow"),
+                 ncpus = getOption("boot.ncpus", 1L), ...)
 {
 #
 # R replicates of bootstrap applied to  statistic(data)
@@ -98,8 +99,15 @@ boot <- function(data, statistic, R, sim = "ordinary",
 #
     call <- match.call()
     stype <- match.arg(stype)
-    if (parallel && !require(multicore, quietly = TRUE))
-        stop("parallel operation requires multicore")
+    if (missing(parallel)) parallel <- getOption("boot.parallel", "no")
+    parallel <- match.arg(parallel)
+    if (parallel != "no" && ncpus > 1) {
+        if (parallel == "multicore")
+            have_mc <- require("multicore", quietly = TRUE)
+        else if (parallel == "snow")
+            have_snow <- require("snow", quietly = TRUE)
+        if (!have_mc && !have_snow) ncpus <- 1
+    }
     if (simple && (sim != "ordinary" || stype != "i" || sum(m))) {
         warning("'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so ignored")
         simple <- FALSE
@@ -162,8 +170,15 @@ boot <- function(data, statistic, R, sim = "ordinary",
         else function(r, ...) statistic(data, i[r, ], ...)
     }
     RR <- sum(R)
-    res <- if(parallel) mclapply(seq_len(RR), fn, ...)
-    else lapply(seq_len(RR), fn, ...)
+    if (ncpus > 1) {
+        if (have_mc) {
+            res <- mclapply(seq_len(RR), fn, ..., mc.cores = ncpus)
+        } else if (have_snow) {
+            cl <- makeSOCKcluster(rep("localhost", ncpus))
+            res <- parLapply(cl, seq_len(RR), fn, ...)
+            stopCluster(cl)
+        }
+    } else res <- lapply(seq_len(RR), fn, ...)
     t.star <- matrix(, RR, length(t0))
     for(r in seq_len(RR)) t.star[r, ] <- res[[r]]
 
@@ -1486,10 +1501,9 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
 # Find the resampled failure times within strata for failures
         ns <- sum(strata[,1L] == s)
         inds <- Fstart:(Fstr[s]+Fstart-1)
-        if (is.null(cox))
-            y0[,strata[,1L] == s] <- gety1(ns,R,F.surv,inds)
-        else	y0[,strata[,1L] == s] <- gety2(ns,R,F.surv,
-                          cox$linear.predictors[strata[,1L] == s],inds)
+        y0[,strata[,1L] == s] <- if (is.null(cox))
+            gety1(ns,R,F.surv,inds)
+        else  gety2(ns,R,F.surv, cox$linear.predictors[strata[,1L] == s],inds)
         Fstart <- Fstr[s]+Fstart
     }
     c0 <- matrix(NA,R,n)
@@ -1497,10 +1511,9 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
 # Find the resampled censoring times within strata for censoring times
         ns <- sum(strata[,2] == s)
         inds <- Gstart:(Gstr[s]+Gstart-1)
-        if (sim!="cond")
-            c0[,strata[,2] == s] <- getc1(ns,R,G.surv,inds)
-        else	c0[,strata[,2] == s] <- getc2(ns,R,G.surv,inds,
-                          data[strata[,2] == s,index])
+        c0[,strata[,2] == s] <- if (sim != "cond")
+            getc1(ns,R,G.surv,inds)
+        else  getc2(ns,R,G.surv,inds, data[strata[,2] == s,index])
         Gstart <- Gstr[s]+Gstart
     }
     infs <- (is.infinite(y0) & is.infinite(c0))
@@ -1513,12 +1526,12 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
         maxf <- matrix(maxf[strata[,1L]],nrow=R,ncol=n,byrow=TRUE)
         y0[infs] <- maxf[infs]
     }
-    array(c(pmin(y0,c0),1*(y0<=c0)), c(dim(y0),2))
+    array(c(pmin(y0, c0), 1*(y0 <= c0)), c(dim(y0), 2))
 }
 
 empinf <- function(boot.out=NULL, data=NULL, statistic=NULL,
-		type=NULL, stype=NULL ,index=1, t=NULL,
-		strata=rep(1, n), eps=0.001, ...)
+                   type=NULL, stype=NULL ,index=1, t=NULL,
+                   strata=rep(1, n), eps=0.001, ...)
 {
 #
 #   Calculation of empirical influence values.  Possible types are
@@ -2431,20 +2444,20 @@ cum3 <- function(a, b=a, c=a, unbiased=TRUE)
     mult*sum((a - mean(a)) * (b - mean(b)) * (c - mean(c)))
 }
 
-logit <- function(p)
+logit <- function(p) qlogis(p)
 #
 #  Calculate the logit of a proportion in the range [0,1]
 #
-{
-    out <- p
-    inds <- seq_along(p)[!is.na(p)]
-    if (any((p[inds] < 0) | (p[inds] > 1)))
-        stop("invalid proportions input")
-    out[inds] <- log(p[inds]/(1-p[inds]))
-    out[inds][p[inds] == 0] <- -Inf
-    out[inds][p[inds] == 1] <- Inf
-    out
-}
+## {
+##     out <- p
+##     inds <- seq_along(p)[!is.na(p)]
+##     if (any((p[inds] < 0) | (p[inds] > 1)))
+##         stop("invalid proportions input")
+##     out[inds] <- log(p[inds]/(1-p[inds]))
+##     out[inds][p[inds] == 0] <- -Inf
+##     out[inds][p[inds] == 1] <- Inf
+##     out
+## }
 
 inv.logit <- function(x)
 #
@@ -2860,17 +2873,14 @@ saddle <- function(A=NULL, u=NULL, wdist="m", type="simp", d=NULL, d1=1,
                 y <- smp$soln+1e-6
                 A1 <- A[,1L:d1]
                 A2 <- A[,-(1L:d1)]
-                mod1 <- summary(glm(
-                                    cbind(y,1-y)~A1+A2+offset(logit(mu))-1,
-                                    binomial,control=glm.control(maxit=100)))
-                mod2 <- summary(glm(
-                                    cbind(y,1-y)~A2+offset(logit(mu))-1,
-                                    binomial,control=glm.control(maxit=100)))
+                mod1 <- summary(glm(cbind(y,1-y) ~ A1+A2+offset(qlogis(mu))-1,
+                                    binomial, control=glm.control(maxit=100)))
+                mod2 <- summary(glm(cbind(y,1-y) ~ A2+offset(qlogis(mu))-1,
+                                    binomial, control=glm.control(maxit=100)))
                 ahat <- mod1$coefficients[,1L]
                 ahat2 <- mod2$coefficients[,1L]
                 temp1 <- mod2$deviance-mod1$deviance
-                temp2 <- det(mod2$cov.unscaled)/
-                    det(mod1$cov.unscaled)
+                temp2 <- det(mod2$cov.unscaled)/det(mod1$cov.unscaled)
                 gs <- 1/sqrt((2*pi)^d1*temp2)*exp(-temp1/2)
                 if (d1 == 1) {
                     r <- sgn(ahat[1L])*sqrt(temp1)
@@ -3071,24 +3081,23 @@ saddle.distn <- function(A, u=NULL, alpha=NULL, wdist="m",
                     stop("unable to find range")
                 if (is.null(bdl)) {
                     t1 <- 2*t1-t0[1L]
-                    sad<-saddle(A=A, u=c(t1,u),
-                                wdist=wdist, type=type, d=d,
-                                d1=1, init=init, mu=mu, LR=LR,
-                                strata=strata)
-                }
-                else if (is.null(bdu)) {
+                    sad <- saddle(A=A, u=c(t1,u),
+                                  wdist=wdist, type=type, d=d,
+                                  d1=1, init=init, mu=mu, LR=LR,
+                                  strata=strata)
+                } else if (is.null(bdu)) {
                     t1 <- (t0[1L]+bdl)/2
-                    sad<-saddle(A=A, u=c(t1,u),
-                                wdist=wdist, type=type, d=d,
-                                d1=1, init=init, mu=mu, LR=LR,
-                                strata=strata)
+                    sad <- saddle(A=A, u=c(t1,u),
+                                  wdist=wdist, type=type, d=d,
+                                  d1=1, init=init, mu=mu, LR=LR,
+                                  strata=strata)
+                } else {
+                    t1 <- (bdu+bdl)/2
+                    sad <- saddle(A=A, u=c(t1,u),
+                                  wdist=wdist, type=type, d=d,
+                                  d1=1, init=init, mu=mu, LR=LR,
+                                  strata=strata)
                 }
-                else {	t1 <- (bdu+bdl)/2
-                        sad<-saddle(A=A, u=c(t1,u),
-                                    wdist=wdist, type=type, d=d,
-                                    d1=1, init=init, mu=mu, LR=LR,
-                                    strata=strata)
-                    }
             }
             i1 <- i <- i+1
             zeta[i,] <- c(sad$zeta.hat, sad$zeta2.hat)
@@ -3317,11 +3326,6 @@ tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
         l <- NULL
     else if ((is.null(l) || (l <= 0) || (l > n)))
         stop("invalid value of l")
-#    st <- start(tseries)
-#    freq <- frequency(tseries)
-#	un <- units(tseries)
-#	k.un <- attr(tseries, "tspar")$k.units
-#    tsnames <- names(tseries)
     if (sim == "geom") endcorr <- TRUE
     if (sim == "scramble") {
 # Phase scrambling
@@ -3355,19 +3359,6 @@ tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
                 inds <- matrix(unlist(inds)[1L:n.sim],n.sim,1L)
             else inds <- matrix(inds, n.sim, 1L)
             ts.b <- ts.orig[inds,]
-# 			if (is.null(tscl))
-# 				ts.b <- ts(ts.orig[inds,], start=st,
-# 						frequency=freq,names=tsnames)
-# 			else if (any(tscl == "cts"))
-# 				ts.b <- cts(ts.orig[inds,], start=st,
-# 						units=un, k.units=k.un,
-# 						frequency=freq,names=tsnames)
-# 			else if (is.null(un))
-# 				ts.b <- rts(ts.orig[inds,], start=st,
-# 						frequency=freq,names=tsnames)
-# 			else	ts.b <- rts(ts.orig[inds,], start=st,
-# 						units=un, frequency=freq,
-# 						names=tsnames)
             ts.b <- ran.gen(ts.b, n.sim, ran.args)
             tmp <- statistic(ts.b, ...)
             t <- rbind(t, tmp)
@@ -3381,17 +3372,14 @@ tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
 }
 
 
-scramble <- function(ts, norm=TRUE)
+scramble <- function(ts, norm = TRUE)
 #
-#  Phase scramble a time series.  If norm=T then normal margins are
+#  Phase scramble a time series.  If norm = TRUE then normal margins are
 #  used otherwise exact empirical margins are used.
 #
 {
     cl <- class(ts)
-    if (any(cl=="its"))
-        stop("irregular time series not allowed")
-    if (isMatrix(ts))
-        stop("multivariate time series not allowed")
+    if (isMatrix(ts)) stop("multivariate time series not allowed")
     st <- start(ts)
     dt <- deltat(ts)
     frq <- frequency(ts)
