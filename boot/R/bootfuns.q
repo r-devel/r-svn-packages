@@ -125,24 +125,18 @@ boot <- function(data, statistic, R, sim = "ordinary",
             weights <- t(apply(matrix(weights, n, length(R), byrow = TRUE),
                                2L, normalize, strata))
         if (!simple) i <- index.array(n, R, sim, strata, m, L, weights)
-        if (stype == "f")
-            original <- rep(1, n)
+        original <- if (stype == "f") rep(1, n)
         else if (stype == "w") {
             ns <- tabulate(strata)[strata]
-            original <- 1/ns
-        } else original <- seq_len(n)
-        if (sum(m) > 0) {
+            1/ns
+        } else seq_len(n)
+        if (sum(m) > 0)
             t0 <- statistic(data, original, rep(1, sum(m)), ...)
-            lt0 <- length(t0)
-        } else {
+        else
             t0 <- statistic(data, original, ...)
-            lt0 <- length(t0)
-        }
-    } else {
+    } else
 	t0 <- statistic(data, ...)
-        lt0 <- length(t0)
-    }
-    t.star <- matrix(NA,sum(R),lt0)
+    t.star <- matrix(NA, sum(R), length(t0))
     pred.i <- NULL
     if(sim == "parametric") {
 #  Generate the data and bootstrap replicates for the parametric bootstrap
@@ -1232,8 +1226,10 @@ abc.ci <- function(data, statistic, index=1, strata=rep(1,n), conf=0.95,
     out
 }
 
-censboot <- function(data,statistic,R,F.surv,G.surv,strata=matrix(1,n,2),
-	sim="ordinary",cox=NULL,index=c(1,2), ...) {
+censboot <-
+    function(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
+             sim = "ordinary", cox = NULL, index=c(1,2), ...)
+{
 #
 #  Bootstrap replication for survival data.  Possible resampling
 #  schemes are case, model-based, conditional bootstrap (with or without
@@ -1277,24 +1273,22 @@ censboot <- function(data,statistic,R,F.surv,G.surv,strata=matrix(1,n,2),
         stop("F.surv is required but missing")
     if (missing(G.surv) && ((sim == "cond") || (sim == "model")))
         stop("G.surv is required but missing")
-    if (!isMatrix(strata)) {
+    temp.str <- if (!isMatrix(strata)) {
         if (length(strata) != n) stop("strata of wrong length")
-        if ((sim == "weird") || (sim == "ordinary"))
-            temp.str <- strata
-        else 	temp.str <- strata <- cbind(strata,1)
+        if ((sim == "weird") || (sim == "ordinary")) strata
+        else strata <- cbind(strata, 1)
+    } else {
+        if (nrow(strata) != n) stop("strata of wrong length")
+        if ((sim == "weird") || (sim == "ordinary")) strata <- strata[, 1L]
+        else  strata <- strata[, 1L:2L]
     }
-    else {	if (nrow(strata)!=n) stop("strata of wrong length")
-		if ((sim == "weird") || (sim == "ordinary"))
-                    temp.str <- strata <- strata[,1L]
-		else	temp.str <- strata <- strata[,1L:2L]
-            }
     if (isMatrix(strata))
-        strata <- apply(strata,2L,
-			function(s,n) tapply(seq_len(n),as.numeric(s)),n)
-    else	strata <- tapply(seq_len(n),as.numeric(strata))
-    if ((sim == "weird") && !missing(strata))
-        t0 <- statistic(data,temp.str, ...)
-    else	t0 <- statistic(data, ...)
+        strata <- apply(strata, 2L,
+			function(s, n) tapply(seq_len(n), as.numeric(s)), n)
+    else	strata <- tapply(seq_len(n), as.numeric(strata))
+    t0 <- if ((sim == "weird") && !missing(strata))
+        statistic(data, temp.str, ...)
+    else  statistic(data, ...)
 # Calculate the resampled data sets.  For ordinary resampling this
 # involves finding the matrix of indices of the case to be resampled.
 # For the conditional bootstrap or model-based we must find an array
@@ -1302,60 +1296,59 @@ censboot <- function(data,statistic,R,F.surv,G.surv,strata=matrix(1,n,2),
 # censoring indicators.  The data sets for the weird bootstrap must be
 # calculated individually.
     if (sim == "ordinary")
-        bt <- cens.case(n,strata,R)
+        bt <- cens.case(n, strata, R)
     else if (sim!="weird")
-        bt <- cens.resamp(data,R,F.surv,G.surv,strata,index,cox,sim)
-    lt0 <- length(t0)
-    t <- matrix(NA,R,lt0)
-    for (r in 1L:R) {
+        bt <- cens.resamp(data, R, F.surv, G.surv, strata, index, cox, sim)
+    t <- matrix(NA, R, length(t0))
+    for (r in seq_len(R)) {
 # In this loop we find the bootstrap replicates.  We also find each
 # bootstrap dataset for the weird bootstrap if required.
         temp.str1 <- temp.str
         if (sim == "ordinary")
-            bootdata <- data[sort(bt[r,]),]
+            bootdata <- data[sort(bt[r, ]), ]
         else if (sim == "weird") {
-            bootdata <- cens.weird(data,F.surv,strata)
-            temp.str1 <- bootdata[,3]
-            bootdata <- bootdata[,1L:2]
+            bootdata <- cens.weird(data, F.surv, strata)
+            temp.str1 <- bootdata[, 3]
+            bootdata <- bootdata[, 1L:2]
+        } else {
+            bootdata <- data
+            bootdata[, index] <- bt[r, , ]
+            oi <- order(bt[r, , 1L], 1-bt[r, , 2L])
+            bootdata <- bootdata[oi, ]
         }
-        else {	bootdata <- data
-                bootdata[,index] <- bt[r,,]
-                oi <- order(bt[r,,1L],1-bt[r,,2L])
-                bootdata <- bootdata[oi,]
-            }
-        if ((sim == "weird") && !missing(strata))
-            t[r,] <- statistic(bootdata,temp.str1, ...)
-        else	t[r,] <- statistic(bootdata, ...)
+        t[r, ] <- if ((sim == "weird") && !missing(strata))
+            statistic(bootdata, temp.str1, ...)
+        else statistic(bootdata, ...)
     }
-    cens.return(sim,t0,t,temp.str,R,data,statistic,call,seed)
+    cens.return(sim, t0, t, temp.str, R, data, statistic, call, seed)
 }
 
-cens.return <- function(sim,t0,t,strata,R,data,statistic,call,seed) {
+cens.return <- function(sim, t0, t, strata, R, data, statistic, call, seed) {
 #
 #  Create an object of class "boot" from the output of a censored bootstrap.
 #
-    out <- list(t0=t0,t=t,R=R,sim=sim,data=data,seed=seed,
-                statistic=statistic,strata=strata,call=call)
+    out <- list(t0=t0, t=t, R=R, sim=sim, data=data, seed=seed,
+                statistic=statistic, strata=strata, call=call)
     class(out) <- "boot"
     out
 }
 
-cens.case <- function(n,strata,R) {
+cens.case <- function(n, strata, R) {
 #
 #  Simple case resampling.
 #
-    out <- matrix(NA,nrow=R,ncol=n)
+    out <- matrix(NA, nrow=R, ncol=n)
     for (s in seq_along(table(strata))) {
         inds <- seq_len(n)[strata == s]
         ns <- length(inds)
-        out[,inds] <- bsample(inds, ns*R)
+        out[, inds] <- bsample(inds,  ns*R)
     }
     out
 }
 
 
 
-cens.weird <- function(data,surv,strata) {
+cens.weird <- function(data, surv, strata) {
 #
 #  The weird bootstrap.  Censoring times are fixed and the number of
 #  failures at each failure time are sampled from a binomial
@@ -1370,24 +1363,24 @@ cens.weird <- function(data,surv,strata) {
     m <- length(surv$time)
     if (is.null(surv$strata)) {
         nstr <- 1
-        str <- rep(1,m)
+        str <- rep(1, m)
     }
     else {	nstr <- length(surv$strata)
-		str <- rep(1L:nstr,surv$strata)
+		str <- rep(1L:nstr, surv$strata)
             }
-    n.ev <- rbinom(m,surv$n.risk,surv$n.event/surv$n.risk)
-    while (any(tapply(n.ev,str,sum) == 0))
-        n.ev <- rbinom(m,surv$n.risk,surv$n.event/surv$n.risk)
-    times <- rep(surv$time,n.ev)
-    str <- rep(str,n.ev)
+    n.ev <- rbinom(m, surv$n.risk, surv$n.event/surv$n.risk)
+    while (any(tapply(n.ev, str, sum) == 0))
+        n.ev <- rbinom(m, surv$n.risk, surv$n.event/surv$n.risk)
+    times <- rep(surv$time, n.ev)
+    str <- rep(str, n.ev)
     out <- NULL
     for (s in 1L:nstr) {
-        temp <- cbind(times[str == s],1)
+        temp <- cbind(times[str == s], 1)
         temp <- rbind(temp,
-                      as.matrix(data[(strata == s&data[,2] == 0),, drop=FALSE]))
-        temp <- cbind(temp,s)
-        oi <- order(temp[,1L],1-temp[,2L])
-        out <- rbind(out,temp[oi,])
+                      as.matrix(data[(strata == s&data[, 2] == 0), , drop=FALSE]))
+        temp <- cbind(temp, s)
+        oi <- order(temp[, 1L], 1-temp[, 2L])
+        out <- rbind(out, temp[oi, ])
     }
     if (is.data.frame(data)) out <- as.data.frame(out)
     out
@@ -1512,7 +1505,7 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
             c0[,strata[,2] == s] <- getc1(ns,R,G.surv,inds)
         else	c0[,strata[,2] == s] <- getc2(ns,R,G.surv,inds,
                           data[strata[,2] == s,index])
-        Gstart<-Gstr[s]+Gstart
+        Gstart <- Gstr[s]+Gstart
     }
     infs <- (is.infinite(y0) & is.infinite(c0))
     if (sum(infs) > 0) {
@@ -3313,13 +3306,11 @@ tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
 #  post-blackened), model-based resampling and phase scrambling.
 #
     tscl <- class(tseries)
-#	if (!is.null(tscl) && (any(tscl == "its")))
-#		stop("irregular time series cannot be bootstrapped")
-    if (R<=0) stop("R must be positive")
+    if (R <= 0) stop("R must be positive")
     R <- floor(R)
     call <- match.call()
-    if (!exists(".Random.seed", envir=.GlobalEnv, inherits = FALSE)) runif(1)
-    seed <- get(".Random.seed", envir=.GlobalEnv, inherits = FALSE)
+    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) runif(1)
+    seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
     t0 <- if (orig.t) statistic(tseries, ...) else NULL
     t <- numeric()
     ts.orig <- if (!isMatrix(tseries)) as.matrix(tseries) else tseries
