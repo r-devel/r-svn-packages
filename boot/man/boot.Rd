@@ -1,6 +1,7 @@
 \name{boot}
 \alias{boot}
 \alias{boot.return}
+\alias{c.boot}
 \title{
 Bootstrap Resampling 
 }
@@ -18,7 +19,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
      strata = rep(1,n), L = NULL, m = 0, weights = NULL, 
      ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
      parallel = c("no", "multicore", "snow"),
-     npus = getOption("boot.ncpus", 1L), \dots)
+     ncpus = getOption("boot.ncpus", 1L), \dots)
 }
 \arguments{
   \item{data}{
@@ -33,8 +34,8 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     replicate a simulated dataset returned by \code{ran.gen} will be
     passed.  In all other cases \code{statistic} must take at least two
     arguments.  The first argument passed will always be the original
-    data. The second will be a vector of indices, frequencies or weights
-    which define the bootstrap sample. Further, if predictions are
+    data.  The second will be a vector of indices, frequencies or weights
+    which define the bootstrap sample.  Further, if predictions are
     required, then a third argument is required which would be a vector
     of the random indices used to generate the bootstrap predictions.
     Any further arguments can be passed to \code{statistic} through the
@@ -43,7 +44,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   \item{R}{
     The number of bootstrap replicates.  Usually this will be a single
     positive integer.  For importance resampling, some resamples may use
-    one set of weights and others use a different set of weights. In
+    one set of weights and others use a different set of weights.  In
     this case \code{R} would be a vector of integers where each
     component gives the number of resamples from each of the rows of
     weights.
@@ -59,13 +60,13 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   }
   \item{stype}{
     A character string indicating what the second argument of statistic
-    represents. Possible values of stype are \code{"i"} (indices - the
+    represents.  Possible values of stype are \code{"i"} (indices - the
     default), \code{"f"} (frequencies), or \code{"w"} (weights).
   }
   \item{strata}{
     An integer vector or factor specifying the strata for multi-sample
     problems. This may be specified for any simulation, but is ignored
-    when \code{sim} is \code{"parametric"}. When \code{strata} is
+    when \code{sim} is \code{"parametric"}.  When \code{strata} is
     supplied for a nonparametric bootstrap, the simulations are done
     within the specified strata.
   }
@@ -88,7 +89,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     vector of indices of the errors to be used for the predictions.
   }
   \item{weights}{
-    Vector or matrix of importance weights. If a vector then it should
+    Vector or matrix of importance weights.  If a vector then it should
     have as many elements as there are observations in \code{data}.
     When simulation from more than one set of weights is required,
     \code{weights} should be a matrix where each row of the matrix is
@@ -186,7 +187,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     \code{"ordinary"} or \code{"balanced"}.
   }
   \item{pred.i}{
-    If predictions are required (\code{m>0}) this is the matrix of
+    If predictions are required (\code{m > 0}) this is the matrix of
     indices at which predictions were calculated as they were passed to
     statistic.  Omitted if \code{m} is \code{0} or \code{sim} is not
     \code{"ordinary"}. 
@@ -208,6 +209,8 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     \code{"parametric"}.  It is omitted for all other values of
     \code{sim}.
   }
+  
+  There are \code{c}, \code{plot} and \code{print} methods for this class.
 }
 \details{
   The statistic to be bootstrapped can be as simple or complicated as

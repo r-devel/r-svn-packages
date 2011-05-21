@@ -171,7 +171,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
         else function(r, ...) statistic(data, i[r, ], ...)
     }
     RR <- sum(R)
-    if (ncpus > 1) {
+    if (ncpus > 1 && (have_mc || have_snow)) {
         if (have_mc) {
             res <- mclapply(seq_len(RR), fn, ..., mc.cores = ncpus)
         } else if (have_snow) {
@@ -228,6 +228,18 @@ boot.return <- function(sim, t0, t, strata, R, data, stat, stype, call,
         out <- c(out, list(stype=stype, strata=strata))
     class(out) <- "boot"
     out
+}
+
+c.boot <- function (..., recursive = TRUE)
+{
+    args <- list(...)
+    nm <- lapply(args, names)
+    if (!all(sapply(nm, function(x) identical(x, nm[[1]]))))
+        stop("arguments are not all the same type of \"boot\" object")
+    res <- args[[1]]
+    res$R <- sum(sapply(args, "[[", "R"))
+    res$t <- do.call(rbind, lapply(args, "[[", "t"))
+    res
 }
 
 boot.array <- function(boot.out, indices=FALSE) {
