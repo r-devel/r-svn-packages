@@ -232,7 +232,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   set of parameter estimates specified in \code{mle}.
 }
 
-\section{Parallel operation}
+\section{Parallel operation}{
   For parallel operation \emph{via} package \pkg{multicore} the random
   number seed for the \R session (and recorded in the returned object)
   is not the one used by the worker processes: rather each chooses its own
