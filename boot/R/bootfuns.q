@@ -101,6 +101,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
     stype <- match.arg(stype)
     if (missing(parallel)) parallel <- getOption("boot.parallel", "no")
     parallel <- match.arg(parallel)
+    have_mc <- have_snow <- FALSE
     if (parallel != "no" && ncpus > 1) {
         if (parallel == "multicore")
             have_mc <- require("multicore", quietly = TRUE)
