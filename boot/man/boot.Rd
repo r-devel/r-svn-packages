@@ -136,7 +136,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   \item{ncpus}{
     integer: number of processes to be used in parallel operation.
   }
-  \item{...}{
+  \item{\dots}{
     Any other arguments for \code{statistic} which are passed unchanged
     each time it is called.  Any such arguments to \code{statistic} must
     follow the arguments which \code{statistic} is required to have for
@@ -259,6 +259,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   worker processes will either use the same \code{.Random.seed} if one is
   specified in the \R startup files (or in a saved workspace) or seed
   the random number generator based on the wall clock.
+
+  \code{\link{censboot}(sim = "wierd")} is another case where resampling
+  is done in the worker processes.
 }
 \references{
 There are many references explaining the bootstrap and its variations.

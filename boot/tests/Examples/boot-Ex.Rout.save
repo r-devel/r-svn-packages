@@ -1,5 +1,5 @@
 
-R version 2.13.0 Patched (2011-05-19 r55967)
+R version 2.13.0 Patched (2011-05-20 r55971)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 
@@ -495,7 +495,7 @@ Calculations and Intervals on Original Scale
 > 
 > ### ** Examples
 > 
-> data(aml, package="boot")
+> data(aml, package = "boot")
 > library(survival)
 Loading required package: splines
 
@@ -714,11 +714,11 @@ Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
 +      G.surv = mel.cens, cox = mel.cox, strata = mel.str, sim = "model")
 > # To plot the original predictor and a 95% pointwise envelope for it
 > mel.env <- envelope(mel.mod)$point
-> plot(seq(0.25, 10, by = 0.25), mel.env[1, ],  ylim = c(-2, 2),
+> th <- seq(0.25, 10, by = 0.25)
+> plot(th, mel.env[1, ],  ylim = c(-2, 2),
 +      xlab = "thickness (mm)", ylab = "linear predictor", type = "n")
-> lines(seq(0.25, 10, by = 0.25), mel.env[1, ], lty = 2)
-> lines(seq(0.25, 10, by = 0.25), mel.env[2, ], lty = 2)
-> lines(seq(0.25, 10, by = 0.25), mel.mod$t0, lty = 1)
+> lines(th, mel.mod$t0, lty = 1)
+> matlines(th, t(mel.env), lty = 2)
 > 
 > 
 > 
@@ -749,101 +749,9 @@ detaching ‘package:survival’, ‘package:splines’
 > control(air.boot, index = 2, bias.adj = TRUE)
 [1] -6.298101
 > air.cont <- control(air.boot, index = 2)
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
 > # Now let us try the variance on the log scale.
 > air.cont1 <- control(air.boot, t0 = log(air.boot$t0[2]),
 +                      t = log(air.boot$t[, 2]))
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
 > 
 > 
 > 
@@ -1203,50 +1111,6 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > hist(exp.tL, nclass = 50, probability = TRUE)
 > exp.t0 <- c(0,sqrt(var(exp.boot$t)))
 > exp.sp <- saddle.distn(A = exp.L/12,wdist = "m", t0 = exp.t0)
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
 > 
 > # The saddlepoint approximation in this case is to the density of
 > # t-t0 and so t0 must be added for the plot.
@@ -1377,8 +1241,6 @@ Warning in optim(init, K) :
 > # To evaluate the bootstrap distribution of the mean failure time of 
 > # air-conditioning equipment at 80 hours
 > saddle(A = aircondit$hours/12, u = 80)
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
 $spa
        pdf        cdf 
 0.01005866 0.24446677 
@@ -1440,8 +1302,6 @@ $zeta2.hat
 +      abs(sum(dat$u*p)/sum(p))
 + }
 > city.sp1 <- saddle(A = city$x-1.25*city$u, u = 0)
-Warning in optim(init, K) :
-  one-diml optimization by Nelder-Mead is unreliable: use optimize
 > city.sp1$spa[1] <- jacobian(city, 1.25, city.sp1$zeta.hat) * city.sp1$spa[1]
 > city.sp1
 $spa

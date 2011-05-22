@@ -1,6 +1,6 @@
 # part of R package boot
 # copyright (C) 1997-2001 Angelo J. Canty
-# corrections (C) 1997-2010 B. D. Ripley
+# corrections (C) 1997-2011 B. D. Ripley
 #
 # Unlimited distribution is permitted
 
@@ -102,12 +102,12 @@ boot <- function(data, statistic, R, sim = "ordinary",
     if (missing(parallel)) parallel <- getOption("boot.parallel", "no")
     parallel <- match.arg(parallel)
     have_mc <- have_snow <- FALSE
-    if (parallel != "no" && ncpus > 1) {
+    if (parallel != "no" && ncpus > 1L) {
         if (parallel == "multicore")
             have_mc <- require("multicore", quietly = TRUE)
         else if (parallel == "snow")
             have_snow <- require("snow", quietly = TRUE)
-        if (!have_mc && !have_snow) ncpus <- 1
+        if (!have_mc && !have_snow) ncpus <- 1L
     }
     if (simple && (sim != "ordinary" || stype != "i" || sum(m))) {
         warning("'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so ignored")
@@ -173,11 +173,11 @@ boot <- function(data, statistic, R, sim = "ordinary",
     RR <- sum(R)
     if (ncpus > 1 && (have_mc || have_snow)) {
         if (have_mc) {
-            res <- mclapply(seq_len(RR), fn, ..., mc.cores = ncpus)
+            res <- multicore::mclapply(seq_len(RR), fn, ..., mc.cores = ncpus)
         } else if (have_snow) {
-            cl <- makeSOCKcluster(rep("localhost", ncpus))
-            res <- parLapply(cl, seq_len(RR), fn, ...)
-            stopCluster(cl)
+            cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+            res <- snow::parLapply(cl, seq_len(RR), fn, ...)
+            snow::stopCluster(cl)
         }
     } else res <- lapply(seq_len(RR), fn, ...)
     t.star <- matrix(, RR, length(t0))
@@ -280,7 +280,7 @@ boot.array <- function(boot.out, indices=FALSE) {
     }
     else if (boot.out$call[[1L]] == "censboot") {
 #  Recreate the array for an object created by censboot as long
-#  as censboot was called with sim="ordinary"
+#  as censboot was called with sim = "ordinary"
         if (sim == "ordinary") {
             strata <- tapply(seq_len(n), as.numeric(boot.out$strata))
             out <- cens.case(n,strata,R)
@@ -1251,23 +1251,34 @@ abc.ci <- function(data, statistic, index=1, strata=rep(1,n), conf=0.95,
 }
 
 censboot <-
-    function(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
-             sim = "ordinary", cox = NULL, index=c(1,2), ...)
+    function(data, statistic, R, F.surv, G.surv, strata = matrix(1, n, 2),
+             sim = "ordinary", cox = NULL, index = c(1, 2),
+             parallel = c("no", "multicore", "snow"),
+             ncpus = getOption("boot.ncpus", 1L), ...)
 {
 #
 #  Bootstrap replication for survival data.  Possible resampling
 #  schemes are case, model-based, conditional bootstrap (with or without
 #  a model) and the weird bootstrap.
 #
+    mstrata <- missing(strata)
     if (any(is.na(data)))
         stop("missing values not allowed in data")
     if ((sim != "ordinary") && (sim != "model") && (sim != "cond")
-        && (sim != "weird"))
-        stop("unknown value of sim")
-    if ((sim == "model") && (is.null(cox)))
-        sim <- "ordinary"
-    if (!exists(".Random.seed", envir=.GlobalEnv, inherits = FALSE)) runif(1)
-    seed <- get(".Random.seed", envir=.GlobalEnv, inherits = FALSE)
+        && (sim != "weird")) stop("unknown value of 'sim'")
+    if ((sim == "model") && (is.null(cox))) sim <- "ordinary"
+    if (missing(parallel)) parallel <- getOption("boot.parallel", "no")
+    parallel <- match.arg(parallel)
+    have_mc <- have_snow <- FALSE
+    if (parallel != "no" && ncpus > 1L) {
+        if (parallel == "multicore")
+            have_mc <- require("multicore", quietly = TRUE)
+        else if (parallel == "snow")
+            have_snow <- require("snow", quietly = TRUE)
+        if (!have_mc && !have_snow) ncpus <- 1L
+    }
+    if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) runif(1)
+    seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
     call <- match.call()
     if (isMatrix(data)) n <- nrow(data)
     else stop("data must be a matrix with at least 2 columns")
@@ -1283,8 +1294,8 @@ censboot <-
         stop("indices are incompatible with ncol(data)")
     if (sim == "weird") {
         if (!is.null(cox))
-            stop("sim=weird cannot be used with coxph object")
-        if (ncol(data)>2)
+            stop("sim = \"weird\" cannot be used with coxph object")
+        if (ncol(data) > 2L)
             warning("only columns ", index[1L], " and ", index[2L], " of data used")
         data <- data[,index]
     }
@@ -1297,53 +1308,65 @@ censboot <-
         stop("F.surv is required but missing")
     if (missing(G.surv) && ((sim == "cond") || (sim == "model")))
         stop("G.surv is required but missing")
-    temp.str <- if (!isMatrix(strata)) {
-        if (length(strata) != n) stop("strata of wrong length")
-        if ((sim == "weird") || (sim == "ordinary")) strata
-        else strata <- cbind(strata, 1)
+    if (NROW(strata) != n) stop("strata of wrong length")
+    if (!isMatrix(strata)) {
+        if (!((sim == "weird") || (sim == "ordinary")))
+            strata <- cbind(strata, 1)
     } else {
-        if (nrow(strata) != n) stop("strata of wrong length")
         if ((sim == "weird") || (sim == "ordinary")) strata <- strata[, 1L]
         else  strata <- strata[, 1L:2L]
     }
-    if (isMatrix(strata))
-        strata <- apply(strata, 2L,
-			function(s, n) tapply(seq_len(n), as.numeric(s)), n)
-    else	strata <- tapply(seq_len(n), as.numeric(strata))
-    t0 <- if ((sim == "weird") && !missing(strata))
-        statistic(data, temp.str, ...)
+    temp.str <- strata
+    strata <- if (isMatrix(strata))
+        apply(strata, 2L, function(s, n) tapply(seq_len(n), as.numeric(s)), n)
+    else  tapply(seq_len(n), as.numeric(strata))
+    t0 <- if ((sim == "weird") && !mstrata) statistic(data, temp.str, ...)
     else  statistic(data, ...)
-# Calculate the resampled data sets.  For ordinary resampling this
-# involves finding the matrix of indices of the case to be resampled.
-# For the conditional bootstrap or model-based we must find an array
-# consisting of R matrices containing the resampled times and their
-# censoring indicators.  The data sets for the weird bootstrap must be
-# calculated individually.
+    ## Calculate the resampled data sets.  For ordinary resampling this
+    ## involves finding the matrix of indices of the case to be resampled.
+    ## For the conditional bootstrap or model-based we must find an array
+    ## consisting of R matrices containing the resampled times and their
+    ## censoring indicators.  The data sets for the weird bootstrap must be
+    ## calculated individually.
     if (sim == "ordinary")
         bt <- cens.case(n, strata, R)
-    else if (sim!="weird")
+    else if (sim != "weird")
         bt <- cens.resamp(data, R, F.surv, G.surv, strata, index, cox, sim)
-    t <- matrix(NA, R, length(t0))
-    for (r in seq_len(R)) {
-# In this loop we find the bootstrap replicates.  We also find each
-# bootstrap dataset for the weird bootstrap if required.
-        temp.str1 <- temp.str
-        if (sim == "ordinary")
-            bootdata <- data[sort(bt[r, ]), ]
-        else if (sim == "weird") {
-            bootdata <- cens.weird(data, F.surv, strata)
-            temp.str1 <- bootdata[, 3]
-            bootdata <- bootdata[, 1L:2]
-        } else {
+    fn <- if (sim == "ordinary") {
+        function(r, ...) statistic(data[sort(bt[r, ]), ], ...)
+    } else if (sim == "weird") {
+        if (!mstrata) {
+            function(r, ...) {
+                bootdata <- cens.weird(data, F.surv, strata)
+                statistic(bootdata[, 1:2], bootdata[, 3L], ...)
+            }
+        } else  {
+            function(r, ...) {
+                bootdata <- cens.weird(data, F.surv, strata)
+                statistic(bootdata[, 1:2], ...)
+            }
+        }
+    } else {
+        function(r, ...) {
             bootdata <- data
             bootdata[, index] <- bt[r, , ]
             oi <- order(bt[r, , 1L], 1-bt[r, , 2L])
-            bootdata <- bootdata[oi, ]
+            statistic(bootdata[oi, ], ...)
         }
-        t[r, ] <- if ((sim == "weird") && !missing(strata))
-            statistic(bootdata, temp.str1, ...)
-        else statistic(bootdata, ...)
     }
+
+    if (ncpus > 1L && (have_mc || have_snow)) {
+        if (have_mc) {
+            res <- multicore::mclapply(seq_len(R), fn, ..., mc.cores = ncpus)
+        } else if (have_snow) {
+            cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+            res <- snow::parLapply(cl, seq_len(R), fn, ...)
+            snow::stopCluster(cl)
+        }
+    } else res <- lapply(seq_len(R), fn, ...)
+    t <- matrix(, R, length(t0))
+    for(r in seq_len(R)) t[r, ] <- res[[r]]
+
     cens.return(sim, t0, t, temp.str, R, data, statistic, call, seed)
 }
 
@@ -2764,7 +2787,7 @@ saddle <- function(A=NULL, u=NULL, wdist="m", type="simp", d=NULL, d1=1,
         if (is.null(d)) d <- 1
         type <- "simp"
         wdist <- "o"
-        speq <- optim(init, K.adj)
+        speq <- suppressWarnings(optim(init, K.adj))
         if (speq$convergence == 0) {
             ahat <- speq$par
             Khat <- K.adj(ahat)
@@ -2786,12 +2809,11 @@ saddle <- function(A=NULL, u=NULL, wdist="m", type="simp", d=NULL, d1=1,
         if (is.null(strata)) {
             p <- mu/sum(mu)
             para <- list(p,A,u,n)
-#			assign("para",para,frame=1)
             K <- function(al) {
                 w <- para[[1L]]*exp(al%*%t(para[[2L]]))
                 para[[4L]]*log(sum(w))-sum(al*para[[3L]])
             }
-            speq <- optim(init, K)
+            speq <- suppressWarnings(optim(init, K))
             ahat <- speq$par
             w <- as.vector(p*exp(ahat%*%t(A)))
             Khat <- n*log(sum(w))-sum(ahat*u)
@@ -2809,13 +2831,12 @@ saddle <- function(A=NULL, u=NULL, wdist="m", type="simp", d=NULL, d1=1,
             p <- mu/sm
             ns <- table(strata)
             para <- list(p,A,u,strata,ns)
-#	    assign("para",para,frame=1)
             K <- function(al) {
                 w <- para[[1L]]*exp(al%*%t(para[[2L]]))
                 sum(para[[5]]*log(tapply(w,para[[4L]],sum))) -
                     sum(al*para[[3L]])
             }
-            speq <- optim(init, K)
+            speq <- suppressWarnings(optim(init, K))
             ahat <- speq$par
             w <- p*exp(ahat%*%t(A))
             Khat <- sum(ns*log(tapply(w,strata,sum)))-sum(ahat*u)
