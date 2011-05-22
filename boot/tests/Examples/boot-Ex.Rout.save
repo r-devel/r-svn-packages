@@ -1,7 +1,8 @@
 
-R version 2.13.0 Patched (2011-05-20 r55971)
+R version 2.13.0 Patched (2011-05-22 r55972)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -2028,7 +2029,7 @@ t3* 0.000000 -0.8862944    2.208945
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  84.602 0.543 85.389 0 0 
+Time elapsed:  45.013 0.051 45.334 0 0 
 > grDevices::dev.off()
 null device 
           1 
