@@ -247,7 +247,11 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   More work is needed when \pkg{snow} is used: the worker processes are
   newly created \R processes, and \code{statistic} needs to arrange to
   set up the environment it needs: often a good way to do that is to
-  make use of lexical scoping.
+  make use of lexical scoping since when \code{statistic} is sent to the
+  worker process its enclosing environment is also sent.  There is only
+  support for sock clusters on the current machine: \code{parallel =
+  "snow"} is primarily intended to be used on multicore Windows machine
+  where package \code{multicore} is not available.
 
   For most of the \code{boot} methods the resampling is done in the
   master process, but not is \code{simple = TRUE} nor
