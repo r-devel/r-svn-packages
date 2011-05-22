@@ -248,6 +248,17 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   newly created \R processes, and \code{statistic} needs to arrange to
   set up the environment it needs: often a good way to do that is to
   make use of lexical scoping.
+
+  For most of the \code{boot} methods the resampling is done in the
+  master process, but not is \code{simple = TRUE} nor
+  \code{sim = "parametric"}.  In those cases (or where \code{statistic}
+  itself uses random numbers), more care is needed.  For \code{parallel
+  = "multicore"} each worker process uses a separate random number
+  stream but it cannot be specified so the results are not repeatable
+  even if \code{seed} is specified.  For \code{parallel = "snow"} the
+  worker processes will either use the same \code{.Random.seed} if one is
+  specified in the \R startup files (or in a saved workspace) or seed
+  the random number generator based on the wall clock.
 }
 \references{
 There are many references explaining the bootstrap and its variations.

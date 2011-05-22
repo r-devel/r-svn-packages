@@ -3404,25 +3404,25 @@ scramble <- function(ts, norm = TRUE)
     C.f <- Conj(c(0, f[seq(from = n, to = 2, by = -1)]))
     e <- Re(mean(y) + fft((f + C.f)/sqrt(2), inverse = TRUE)/n)
     if (!norm) e <- sort(y)[rank(e)]
-    ts(e,start=st,freq=frq,deltat=dt)
+    ts(e, start=st, freq=frq, deltat=dt)
 }
 
-ts.return <- function(t0,t,R,tseries,seed,stat,sim,endcorr,n.sim,l,
-			ran.gen, ran.args, call, norm) {
+ts.return <- function(t0, t, R, tseries, seed, stat, sim, endcorr,
+                      n.sim, l, ran.gen, ran.args, call, norm) {
 #
 #  Return the results of a time series bootstrap as an object of
 #  class "boot".
 #
-    out <- list(t0=t0,t=t, R=R, data=tseries, seed=seed, statistic=stat,
-		sim=sim, n.sim=n.sim, call=call)
-    if (sim == "scramble")
-        out <- c(out,list(norm=norm))
+    out <- list(t0 = t0,t = t, R = R, data = tseries, seed = seed,
+                statistic = stat, sim = sim, n.sim = n.sim, call = call)
+    if (sim ==  "scramble")
+        out <- c(out, list(norm = norm))
     else if (sim == "model")
-        out <- c(out, list(ran.gen=ran.gen,ran.args=ran.args))
+        out <- c(out, list(ran.gen = ran.gen ,ran.args = ran.args))
     else {
-        out <- c(out, list(l=l,endcorr=endcorr))
+        out <- c(out, list(l = l, endcorr = endcorr))
         if (!is.null(call$ran.gen))
-            out <- c(out,list(ran.gen=ran.gen,ran.args=ran.args))
+            out <- c(out,list(ran.gen = ran.gen, ran.args = ran.args))
     }
     class(out) <- "boot"
     out

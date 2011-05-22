@@ -76,7 +76,7 @@ vfun <- function(d, i)
 exp.boot <- boot(expdata,vfun, R = 9999)
 exp.L <- (expdata-mean(expdata))^2 - exp.boot$t0
 exp.tL <- linear.approx(exp.boot, L = exp.L)
-hist(exp.tL, nclass = 50, prob = TRUE)
+hist(exp.tL, nclass = 50, probability = TRUE)
 exp.t0 <- c(0,sqrt(var(exp.boot$t)))
 exp.sp <- saddle.distn(A = exp.L/12,wdist = "m", t0 = exp.t0)
 

@@ -194,8 +194,8 @@ boot.ci(boot.out, conf = 0.95, type = "all",
 # confidence intervals for the city data
 ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
 city.boot <- boot(city, ratio, R = 999, stype = "w",sim = "ordinary")
-boot.ci(city.boot, conf = c(0.90,0.95),
-        type = c("norm","basic","perc","bca"))
+boot.ci(city.boot, conf = c(0.90, 0.95),
+        type = c("norm", "basic", "perc", "bca"))
 
 # studentized confidence interval for the two sample 
 # difference of means problem using the final two series
@@ -209,9 +209,10 @@ diff.means <- function(d, f)
      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
      c(m1-m2, (ss1+ss2)/(sum(f)-2))
 }
-grav1 <- gravity[as.numeric(gravity[,2])>=7,]
-grav1.boot <- boot(grav1, diff.means, R=999, stype="f", strata=grav1[,2])
-boot.ci(grav1.boot, type=c("stud","norm"))
+grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
+grav1.boot <- boot(grav1, diff.means, R = 999, stype = "f",
+                   strata = grav1[ ,2])
+boot.ci(grav1.boot, type = c("stud", "norm"))
 
 # Nonparametric confidence intervals for mean failure time 
 # of the air-conditioning data as in Example 5.4 of Davison
@@ -222,7 +223,7 @@ mean.fun <- function(d, i)
      v <- (n-1)*var(d$hours[i])/n^2
      c(m, v)
 }
-air.boot <- boot(aircondit, mean.fun, R=999)
+air.boot <- boot(aircondit, mean.fun, R = 999)
 boot.ci(air.boot, type = c("norm", "basic", "perc", "stud"))
 
 # Now using the log transformation
@@ -235,7 +236,7 @@ boot.ci(air.boot, type = c("norm", "basic", "perc", "stud"),
 
 # Method 2
 vt0 <- air.boot$t0[2]/air.boot$t0[1]^2
-vt <- air.boot$t[,2]/air.boot$t[,1]^2
+vt <- air.boot$t[, 2]/air.boot$t[ ,1]^2
 boot.ci(air.boot, type = c("norm", "basic", "perc", "stud"), 
         t0 = log(air.boot$t0[1]), t = log(air.boot$t[,1]),
         var.t0 = vt0, var.t = vt)

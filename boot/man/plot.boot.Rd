@@ -144,9 +144,8 @@ pcorr <- function( x )
      q
 }
 
-
-frets.fun <- function( data, i )
-{    d <- data[i,];
+frets.fun <- function(data, i) {
+     d <- data[i,];
      v <- pcorr( d );
      c(v[1, ], v[2, ], v[3, ], v[4, ])
 }

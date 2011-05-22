@@ -52,7 +52,7 @@ Type 'q()' to quit R.
 +      s2hat <- sum((mn2 - mns^2)/ns)
 +      as.vector(c(mns[2] - mns[1], s2hat, (mns[2] - mns[1] - orig)/sqrt(s2hat)))
 + }
-> grav.z0 <- grav.fun(grav1,rep(1,26),0)
+> grav.z0 <- grav.fun(grav1, rep(1,26), 0)
 > grav.L <- empinf(data = grav1, statistic = grav.fun, stype = "w", 
 +                  strata = grav1[,2], index = 3, orig = grav.z0[1])
 > grav.tilt <- exp.tilt(grav.L,grav.z0[3],strata = grav1[,2])
@@ -103,10 +103,10 @@ Type 'q()' to quit R.
 > # the last two samples in gravity
 > mean.diff <- function(y, w)
 + {    gp1 <- 1:table(as.numeric(y$series))[1]
-+      sum(y[gp1,1] * w[gp1]) - sum(y[-gp1,1] * w[-gp1])
++      sum(y[gp1, 1] * w[gp1]) - sum(y[-gp1, 1] * w[-gp1])
 + }
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
-> abc.ci(grav1, mean.diff, strata=grav1$series)
+> grav1 <- gravity[as.numeric(gravity[, 2]) >= 7, ]
+> abc.ci(grav1, mean.diff, strata = grav1$series)
 [1]  0.9500000 -6.7075791 -0.3939377
 > 
 > 
@@ -257,7 +257,7 @@ t2* 16.846154 -1.457662791    6.759103
 > ### ** Examples
 > 
 > #  A frequency array for a nonparametric bootstrap
-> city.boot <- boot(city, corr, R=40, stype="w")
+> city.boot <- boot(city, corr, R = 40, stype = "w")
 > boot.array(city.boot)
       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
  [1,]    1    1    3    1    1    0    1    0    1     1
@@ -301,10 +301,9 @@ t2* 16.846154 -1.457662791    6.759103
 [39,]    0    0    1    2    3    0    0    2    1     1
 [40,]    0    1    1    0    3    0    2    2    0     1
 > 
-> perm.cor <- function(d,i) 
-+      cor(d$x,d$u[i])
-> city.perm <- boot(city, perm.cor, R=40, sim="permutation")
-> boot.array(city.perm, indices=TRUE)
+> perm.cor <- function(d,i) cor(d$x,d$u[i])
+> city.perm <- boot(city, perm.cor, R = 40, sim = "permutation")
+> boot.array(city.perm, indices = TRUE)
       [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
  [1,]    7    2    8   10    6    4    9    3    1     5
  [2,]   10    4    6    8    5    3    2    1    9     7
@@ -365,8 +364,8 @@ t2* 16.846154 -1.457662791    6.759103
 > # confidence intervals for the city data
 > ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
 > city.boot <- boot(city, ratio, R = 999, stype = "w",sim = "ordinary")
-> boot.ci(city.boot, conf = c(0.90,0.95),
-+         type = c("norm","basic","perc","bca"))
+> boot.ci(city.boot, conf = c(0.90, 0.95),
++         type = c("norm", "basic", "perc", "bca"))
 BOOTSTRAP CONFIDENCE INTERVAL CALCULATIONS
 Based on 999 bootstrap replicates
 
@@ -396,9 +395,10 @@ Calculations and Intervals on Original Scale
 +      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
 +      c(m1-m2, (ss1+ss2)/(sum(f)-2))
 + }
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
-> grav1.boot <- boot(grav1, diff.means, R=999, stype="f", strata=grav1[,2])
-> boot.ci(grav1.boot, type=c("stud","norm"))
+> grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
+> grav1.boot <- boot(grav1, diff.means, R = 999, stype = "f",
++                    strata = grav1[ ,2])
+> boot.ci(grav1.boot, type = c("stud", "norm"))
 BOOTSTRAP CONFIDENCE INTERVAL CALCULATIONS
 Based on 999 bootstrap replicates
 
@@ -419,7 +419,7 @@ Calculations and Intervals on Original Scale
 +      v <- (n-1)*var(d$hours[i])/n^2
 +      c(m, v)
 + }
-> air.boot <- boot(aircondit, mean.fun, R=999)
+> air.boot <- boot(aircondit, mean.fun, R = 999)
 > boot.ci(air.boot, type = c("norm", "basic", "perc", "stud"))
 BOOTSTRAP CONFIDENCE INTERVAL CALCULATIONS
 Based on 999 bootstrap replicates
@@ -460,7 +460,7 @@ Calculations and Intervals on  Transformed Scale
 > 
 > # Method 2
 > vt0 <- air.boot$t0[2]/air.boot$t0[1]^2
-> vt <- air.boot$t[,2]/air.boot$t[,1]^2
+> vt <- air.boot$t[, 2]/air.boot$t[ ,1]^2
 > boot.ci(air.boot, type = c("norm", "basic", "perc", "stud"), 
 +         t0 = log(air.boot$t0[1]), t = log(air.boot$t[,1]),
 +         var.t0 = vt0, var.t = vt)
@@ -515,18 +515,18 @@ The following object(s) are masked from 'package:boot':
 > # those who did not.  Here we are interested in the median remission 
 > # time for the two groups.
 > aml.fun <- function(data) {
-+      surv <- survfit(Surv(time, cens)~group, data=data)
++      surv <- survfit(Surv(time, cens) ~ group, data = data)
 +      out <- NULL
 +      st <- 1
 +      for (s in 1:length(surv$strata)) {
 +           inds <- st:(st+surv$strata[s]-1)
 +           md <- min(surv$time[inds[1-surv$surv[inds]>=0.5]])
 +           st <- st+surv$strata[s]
-+           out <- c(out,md)
++           out <- c(out, md)
 +      }
 +      out
 + }
-> aml.case <- censboot(aml,aml.fun,R=499,strata=aml$group)
+> aml.case <- censboot(aml, aml.fun, R = 499, strata = aml$group)
 Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
   no non-missing arguments to min; returning Inf
 Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
@@ -585,10 +585,10 @@ Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
 > # the survival distribution is stratified but the censoring 
 > # distribution is not. 
 > 
-> aml.s1 <- survfit(Surv(time,cens)~group, data=aml)
-> aml.s2 <- survfit(Surv(time-0.001*cens,1-cens)~1, data=aml)
-> aml.cond <- censboot(aml,aml.fun,R=499,strata=aml$group,
-+      F.surv=aml.s1,G.surv=aml.s2,sim="cond")
+> aml.s1 <- survfit(Surv(time, cens) ~ group, data = aml)
+> aml.s2 <- survfit(Surv(time-0.001*cens, 1-cens) ~ 1, data = aml)
+> aml.cond <- censboot(aml, aml.fun, R = 499, strata = aml$group,
++      F.surv = aml.s1, G.surv = aml.s2, sim = "cond")
 Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
   no non-missing arguments to min; returning Inf
 Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
@@ -649,20 +649,20 @@ Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
 > 
 > # For the weird bootstrap we must redefine our function slightly since
 > # the data will not contain the group number.
-> aml.fun1 <- function(data,str) {
-+      surv <- survfit(Surv(data[,1],data[,2])~str)
+> aml.fun1 <- function(data, str) {
++      surv <- survfit(Surv(data[, 1], data[, 2]) ~ str)
 +      out <- NULL
 +      st <- 1
 +      for (s in 1:length(surv$strata)) {
 +           inds <- st:(st+surv$strata[s]-1)
 +           md <- min(surv$time[inds[1-surv$surv[inds]>=0.5]])
 +           st <- st+surv$strata[s]
-+           out <- c(out,md)
++           out <- c(out, md)
 +      }
 +      out
 + }
-> aml.wei <- censboot(cbind(aml$time,aml$cens),aml.fun1,R=499,
-+      strata=aml$group, F.surv=aml.s1,sim="weird")
+> aml.wei <- censboot(cbind(aml$time, aml$cens), aml.fun1, R = 499,
++      strata = aml$group,  F.surv = aml.s1, sim = "weird")
 Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
   no non-missing arguments to min; returning Inf
 Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
@@ -689,35 +689,36 @@ Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
 > # is different in different age groups.  The statistic of interest
 > # is the linear predictor.  This is returned as the values at a
 > # number of equally spaced points in the range of interest.
-> data(melanoma, package="boot")
+> data(melanoma, package = "boot")
 > library(splines)# for ns
-> mel.cox <- coxph(Surv(time,status==1)~ns(thickness,df=4)+strata(ulcer),
-+      data=melanoma)
+> mel.cox <- coxph(Surv(time, status == 1) ~ ns(thickness, df=4) + strata(ulcer),
++                  data = melanoma)
 > mel.surv <- survfit(mel.cox)
-> agec <- cut(melanoma$age,c(0,39,49,59,69,100))
-> mel.cens <- survfit(Surv(time-0.001*(status==1),status!=1)~
-+      strata(agec),data=melanoma)
+> agec <- cut(melanoma$age, c(0, 39, 49, 59, 69, 100))
+> mel.cens <- survfit(Surv(time - 0.001*(status == 1), status != 1) ~
++                     strata(agec), data = melanoma)
 > mel.fun <- function(d) { 
-+      t1 <- ns(d$thickness,df=4)
-+      cox <- coxph(Surv(d$time,d$status==1) ~ t1+strata(d$ulcer))
++      t1 <- ns(d$thickness, df=4)
++      cox <- coxph(Surv(d$time, d$status == 1) ~ t1+strata(d$ulcer))
 +      ind <- !duplicated(d$thickness)
 +      u <- d$thickness[!ind]
 +      eta <- cox$linear.predictors[!ind]
-+      sp <- smooth.spline(u,eta,df=20)
-+      th <- seq(from=0.25,to=10,by=0.25)
-+      predict(sp,th)$y
++      sp <- smooth.spline(u, eta, df=20)
++      th <- seq(from = 0.25, to = 10, by = 0.25)
++      predict(sp, th)$y
 + }
-> mel.str<-cbind(melanoma$ulcer,agec)
+> mel.str <- cbind(melanoma$ulcer, agec)
+> 
 > # this is slow!
-> mel.mod <- censboot(melanoma,mel.fun,R=999,F.surv=mel.surv,
-+      G.surv=mel.cens,cox=mel.cox,strata=mel.str,sim="model")
+> mel.mod <- censboot(melanoma, mel.fun, R = 499, F.surv = mel.surv,
++      G.surv = mel.cens, cox = mel.cox, strata = mel.str, sim = "model")
 > # To plot the original predictor and a 95% pointwise envelope for it
 > mel.env <- envelope(mel.mod)$point
-> plot(seq(0.25,10,by=0.25),mel.env[1,], ylim=c(-2,2),
-+      xlab="thickness (mm)", ylab="linear predictor",type="n")
-> lines(seq(0.25,10,by=0.25),mel.env[1,],lty=2)
-> lines(seq(0.25,10,by=0.25),mel.env[2,],lty=2)
-> lines(seq(0.25,10,by=0.25),mel.mod$t0,lty=1)
+> plot(seq(0.25, 10, by = 0.25), mel.env[1, ],  ylim = c(-2, 2),
++      xlab = "thickness (mm)", ylab = "linear predictor", type = "n")
+> lines(seq(0.25, 10, by = 0.25), mel.env[1, ], lty = 2)
+> lines(seq(0.25, 10, by = 0.25), mel.env[2, ], lty = 2)
+> lines(seq(0.25, 10, by = 0.25), mel.mod$t0, lty = 1)
 > 
 > 
 > 
@@ -793,8 +794,8 @@ Warning in optim(init, K) :
 Warning in optim(init, K) :
   one-diml optimization by Nelder-Mead is unreliable: use optimize
 > # Now let us try the variance on the log scale.
-> air.cont1 <- control(air.boot, t0=log(air.boot$t0[2]),
-+                      t=log(air.boot$t[,2]))
+> air.cont1 <- control(air.boot, t0 = log(air.boot$t0[2]),
++                      t = log(air.boot$t[, 2]))
 Warning in optim(init, K) :
   one-diml optimization by Nelder-Mead is unreliable: use optimize
 Warning in optim(init, K) :
@@ -862,14 +863,14 @@ Warning in optim(init, K) :
 > # leave-one-out and 6-fold cross-validation prediction error for 
 > # the mammals data set.
 > data(mammals, package="MASS")
-> mammals.glm <- glm(log(brain)~log(body),data=mammals)
-> cv.err <- cv.glm(mammals,mammals.glm)
-> cv.err.6 <- cv.glm(mammals, mammals.glm, K=6)
+> mammals.glm <- glm(log(brain) ~ log(body), data = mammals)
+> cv.err <- cv.glm(mammals, mammals.glm)
+> cv.err.6 <- cv.glm(mammals, mammals.glm, K = 6)
 > 
 > 
 > # As this is a linear model we could calculate the leave-one-out 
 > # cross-validation estimate without any extra model-fitting.
-> muhat <- mammals.glm$fitted
+> muhat <- fitted(mammals.glm)
 > mammals.diag <- glm.diag(mammals.glm)
 > cv.err <- mean((mammals.glm$y-muhat)^2/(1-mammals.diag$h)^2)
 > 
@@ -877,11 +878,11 @@ Warning in optim(init, K) :
 > # leave-one-out and 11-fold cross-validation prediction error for 
 > # the nodal data set.  Since the response is a binary variable an
 > # appropriate cost function is
-> cost <- function(r, pi=0) mean(abs(r-pi)>0.5)
+> cost <- function(r, pi = 0) mean(abs(r-pi) > 0.5)
 > 
-> nodal.glm <- glm(r~stage+xray+acid,binomial,data=nodal)
-> cv.err <- cv.glm(nodal, nodal.glm, cost, K=nrow(nodal))$delta 
-> cv.11.err <- cv.glm(nodal, nodal.glm, cost, K=11)$delta 
+> nodal.glm <- glm(r ~ stage+xray+acid, binomial, data = nodal)
+> cv.err <- cv.glm(nodal, nodal.glm, cost, K = nrow(nodal))$delta 
+> cv.11.err <- cv.glm(nodal, nodal.glm, cost, K = 11)$delta 
 > 
 > 
 > 
@@ -901,11 +902,11 @@ Warning in optim(init, K) :
 > # The empirical influence values for the ratio of means in
 > # the city data.
 > ratio <- function(d, w) sum(d$x *w)/sum(d$u*w)
-> empinf(data=city,statistic=ratio)
+> empinf(data = city, statistic = ratio)
  [1] -1.04367815 -0.58417763 -0.37092459 -0.18958996  0.03164142  0.10544878
  [7]  0.09236345  0.20365074  1.02178280  0.73381132
-> city.boot <- boot(city,ratio,499,stype="w")
-> empinf(boot.out=city.boot,type="reg")
+> city.boot <- boot(city, ratio, 499, stype="w")
+> empinf(boot.out = city.boot, type = "reg")
           1           1           1           1           1           1 
 -1.13619987 -0.69728210 -0.45301061 -0.27615882  0.02108999  0.14896336 
           1           1           1           1 
@@ -916,7 +917,7 @@ Warning in optim(init, K) :
 > # the bootstrap we get replicates of the difference of means and
 > # the variance of that statistic and then want to use this output
 > # to get the empirical influence values of the t-statistic.
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
+> grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
 > grav.fun <- function(dat, w)
 + {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
@@ -925,16 +926,17 @@ Warning in optim(init, K) :
 +      mns <- tapply(d * w, strata, sum)
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      c(mns[2]-mns[1],s2hat)
++      c(mns[2]-mns[1], s2hat)
 + }
 > 
-> grav.boot <- boot(grav1, grav.fun, R=499, stype="w", strata=grav1[,2])
+> grav.boot <- boot(grav1, grav.fun, R = 499, stype = "w",
++                   strata = grav1[, 2])
 > 
 > # Since the statistic of interest is a function of the bootstrap
 > # statistics, we must calculate the bootstrap replicates and pass
 > # them to empinf using the t argument.
 > grav.z <- (grav.boot$t[,1]-grav.boot$t0[1])/sqrt(grav.boot$t[,2])
-> empinf(boot.out=grav.boot,t=grav.z)
+> empinf(boot.out = grav.boot, t = grav.z)
          1          1          1          1          1          1          1 
 -2.9326019 -1.3760327 -2.4400720 -1.2175846  0.2795352 -0.8258764 -0.8156286 
          1          1          1          1          1          1          2 
@@ -962,20 +964,19 @@ Warning in optim(init, K) :
 > # Testing whether the final series of measurements of the gravity data
 > # may come from a normal distribution.  This is done in Examples 4.7 
 > # and 4.8 of Davison and Hinkley (1997).
-> grav1 <- gravity$g[gravity$series==8]
+> grav1 <- gravity$g[gravity$series == 8]
 > grav.z <- (grav1-mean(grav1))/sqrt(var(grav1))
-> grav.gen <- function(dat,mle)
-+      rnorm(length(dat))
-> grav.qqboot <- boot(grav.z,sort,R=999,sim="parametric",ran.gen=grav.gen)
-> grav.qq <- qqnorm(grav.z,plot=FALSE)
-> grav.qq <- lapply(grav.qq,sort)
-> plot(grav.qq,ylim=c(-3.5,3.5),ylab="Studentized Order Statistics",
-+      xlab="Normal Quantiles")
-> grav.env <- envelope(grav.qqboot,level=0.9)
-> lines(grav.qq$x,grav.env$point[1,],lty=4)
-> lines(grav.qq$x,grav.env$point[2,],lty=4)
-> lines(grav.qq$x,grav.env$overall[1,],lty=1)
-> lines(grav.qq$x,grav.env$overall[2,],lty=1)
+> grav.gen <- function(dat,mle) rnorm(length(dat))
+> grav.qqboot <- boot(grav.z, sort, R = 999, sim="parametric", ran.gen = grav.gen)
+> grav.qq <- qqnorm(grav.z, plot.it = FALSE)
+> grav.qq <- lapply(grav.qq, sort)
+> plot(grav.qq, ylim = c(-3.5, 3.5), ylab = "Studentized Order Statistics",
++      xlab = "Normal Quantiles")
+> grav.env <- envelope(grav.qqboot, level = 0.9)
+> lines(grav.qq$x, grav.env$point[1, ], lty = 4)
+> lines(grav.qq$x, grav.env$point[2, ], lty = 4)
+> lines(grav.qq$x, grav.env$overall[1, ], lty = 1)
+> lines(grav.qq$x, grav.env$overall[2, ], lty = 1)
 > 
 > 
 > 
@@ -995,7 +996,7 @@ Warning in optim(init, K) :
 > # Example 9.8 of Davison and Hinkley (1997) requires tilting the resampling
 > # distribution of the studentized statistic to be centred at the observed
 > # value of the test statistic 1.84.  This can be achieved as follows.
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
+> grav1 <- gravity[as.numeric(gravity[,2]) >=7 , ]
 > grav.fun <- function(dat, w, orig)
 + {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
@@ -1004,14 +1005,14 @@ Warning in optim(init, K) :
 +      mns <- tapply(d * w, strata, sum)
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      as.vector(c(mns[2]-mns[1],s2hat,(mns[2]-mns[1]-orig)/sqrt(s2hat)))
++      as.vector(c(mns[2]-mns[1], s2hat, (mns[2]-mns[1]-orig)/sqrt(s2hat)))
 + }
-> grav.z0 <- grav.fun(grav1,rep(1,26),0)
-> grav.L <- empinf(data=grav1, statistic=grav.fun, stype="w", 
-+                  strata=grav1[,2], index=3, orig=grav.z0[1])
-> grav.tilt <- exp.tilt(grav.L, grav.z0[3], strata=grav1[,2])
-> boot(grav1, grav.fun, R=499, stype="w", weights=grav.tilt$p,
-+      strata=grav1[,2], orig=grav.z0[1])
+> grav.z0 <- grav.fun(grav1, rep(1, 26), 0)
+> grav.L <- empinf(data = grav1, statistic = grav.fun, stype = "w", 
++                  strata = grav1[,2], index = 3, orig = grav.z0[1])
+> grav.tilt <- exp.tilt(grav.L, grav.z0[3], strata = grav1[,2])
+> boot(grav1, grav.fun, R = 499, stype = "w", weights = grav.tilt$p,
++      strata = grav1[,2], orig = grav.z0[1])
 
 STRATIFIED WEIGHTED BOOTSTRAP
 
@@ -1044,10 +1045,10 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > 
 > # In this example we look at the leukaemia data which was looked at in 
 > # Example 7.1 of Davison and Hinkley (1997)
-> data(leuk, package="MASS")
-> leuk.mod <- glm(time~ag-1+log10(wbc),family=Gamma(log),data=leuk)
+> data(leuk, package = "MASS")
+> leuk.mod <- glm(time ~ ag-1+log10(wbc), family = Gamma(log), data = leuk)
 > leuk.diag <- glm.diag(leuk.mod)
-> glm.diag.plots(leuk.mod,leuk.diag)
+> glm.diag.plots(leuk.mod, leuk.diag)
 > 
 > 
 > 
@@ -1094,7 +1095,7 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > #  we will concentrate on the partial correlation between head breadth
 > #  for the first son and head length for the second.  This is the 7th
 > #  element in the output of frets.fun so we set index=7
-> jack.after.boot(frets.boot,useJ=FALSE,stinf=FALSE,index=7)
+> jack.after.boot(frets.boot, useJ = FALSE, stinf = FALSE, index = 7)
 > 
 > 
 > 
@@ -1112,9 +1113,8 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > ### ** Examples
 > 
 > #  To estimate the skewness of the ratio of means for the city data.
-> ratio <- function(d,w)
-+      sum(d$x * w)/sum(d$u * w)
-> k3.linear(empinf(data=city,statistic=ratio))
+> ratio <- function(d,w) sum(d$x * w)/sum(d$u * w)
+> k3.linear(empinf(data = city, statistic = ratio))
 [1] 7.831452e-05
 > 
 > 
@@ -1136,44 +1136,42 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > # ratio statistic and its logarithm. We compare these with the 
 > # corresponding plots for the bigcity data 
 > 
-> ratio <- function(d, w)
-+      sum(d$x * w)/sum(d$u * w)
-> city.boot <- boot(city, ratio, R=499, stype="w")
-> bigcity.boot <- boot(bigcity, ratio, R=499, stype="w")
-> par(pty="s")
-> par(mfrow=c(2,2))
+> ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
+> city.boot <- boot(city, ratio, R = 499, stype = "w")
+> bigcity.boot <- boot(bigcity, ratio, R = 499, stype = "w")
+> op <- par(pty="s", mfrow = c(2,2))
 > 
 > # The first plot is for the city data ratio statistic.
 > city.lin1 <- linear.approx(city.boot)
 > lim <- range(c(city.boot$t,city.lin1))
-> plot(city.boot$t, city.lin1, xlim=lim,ylim=lim, 
-+      main="Ratio; n=10", xlab="t*", ylab="tL*")
+> plot(city.boot$t, city.lin1, xlim = lim, ylim = lim, 
++      main = "Ratio; n=10", xlab = "t*", ylab = "tL*")
 > abline(0,1)
 > 
 > # Now for the log of the ratio statistic for the city data.
-> city.lin2 <- linear.approx(city.boot,t0=log(city.boot$t0), 
-+                            t=log(city.boot$t))
+> city.lin2 <- linear.approx(city.boot,t0 = log(city.boot$t0), 
++                            t = log(city.boot$t))
 > lim <- range(c(log(city.boot$t),city.lin2))
-> plot(log(city.boot$t), city.lin2, xlim=lim, ylim=lim, 
-+      main="Log(Ratio); n=10", xlab="t*", ylab="tL*")
+> plot(log(city.boot$t), city.lin2, xlim = lim, ylim = lim, 
++      main = "Log(Ratio); n=10", xlab = "t*", ylab = "tL*")
 > abline(0,1)
 > 
 > # The ratio statistic for the bigcity data.
 > bigcity.lin1 <- linear.approx(bigcity.boot)
 > lim <- range(c(bigcity.boot$t,bigcity.lin1))
-> plot(bigcity.lin1,bigcity.boot$t, xlim=lim,ylim=lim,
-+      main="Ratio; n=49", xlab="t*", ylab="tL*")
+> plot(bigcity.lin1, bigcity.boot$t, xlim = lim, ylim = lim,
++      main = "Ratio; n=49", xlab = "t*", ylab = "tL*")
 > abline(0,1)
 > 
 > # Finally the log of the ratio statistic for the bigcity data.
-> bigcity.lin2 <- linear.approx(bigcity.boot,t0=log(bigcity.boot$t0), 
-+                               t=log(bigcity.boot$t))
+> bigcity.lin2 <- linear.approx(bigcity.boot,t0 = log(bigcity.boot$t0), 
++                               t = log(bigcity.boot$t))
 > lim <- range(c(log(bigcity.boot$t),bigcity.lin2))
-> plot(bigcity.lin2,log(bigcity.boot$t), xlim=lim,ylim=lim,
-+      main="Log(Ratio); n=49", xlab="t*", ylab="tL*")
-> abline(0,1)
+> plot(bigcity.lin2, log(bigcity.boot$t), xlim = lim, ylim = lim,
++      main = "Log(Ratio); n=49", xlab = "t*", ylab = "tL*")
+> abline(0, 1)
 > 
-> par(mfrow=c(1,1))
+> par(op)
 > 
 > 
 > 
@@ -1202,7 +1200,7 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > exp.boot <- boot(expdata,vfun, R = 9999)
 > exp.L <- (expdata-mean(expdata))^2 - exp.boot$t0
 > exp.tL <- linear.approx(exp.boot, L = exp.L)
-> hist(exp.tL, nclass = 50, prob = TRUE)
+> hist(exp.tL, nclass = 50, probability = TRUE)
 > exp.t0 <- c(0,sqrt(var(exp.boot$t)))
 > exp.sp <- saddle.distn(A = exp.L/12,wdist = "m", t0 = exp.t0)
 Warning in optim(init, K) :
@@ -1275,17 +1273,17 @@ Warning in optim(init, K) :
 > air.mean <- mean(aircondit$hours)
 > air.n <- nrow(aircondit)
 > air.v <- air.mean^2/air.n
-> norm.ci(t0=air.mean, var.t0=air.v)
+> norm.ci(t0 = air.mean, var.t0 = air.v)
      conf                  
 [1,] 0.95 46.93055 169.2361
-> exp(norm.ci(t0=log(air.mean), var.t0=1/air.n)[2:3])
+> exp(norm.ci(t0 = log(air.mean), var.t0 = 1/air.n)[2:3])
 [1]  61.38157 190.31782
 > 
 > # Now a more complicated example - the ratio estimate for the city data.
 > ratio <- function(d, w)
 +      sum(d$x * w)/sum(d$u *w)
-> city.v <- var.linear(empinf(data=city, statistic=ratio))
-> norm.ci(t0=ratio(city,rep(0.1,10)), var.t0=city.v)
+> city.v <- var.linear(empinf(data = city, statistic = ratio))
+> norm.ci(t0 = ratio(city,rep(0.1,10)), var.t0 = city.v)
      conf                  
 [1,] 0.95 1.167046 1.873579
 > 
@@ -1353,9 +1351,8 @@ Warning in optim(init, K) :
 +      q
 + }
 > 
-> 
-> frets.fun <- function( data, i )
-+ {    d <- data[i,];
+> frets.fun <- function(data, i) {
++      d <- data[i,];
 +      v <- pcorr( d );
 +      c(v[1, ], v[2, ], v[3, ], v[4, ])
 + }
@@ -1379,7 +1376,7 @@ Warning in optim(init, K) :
 > 
 > # To evaluate the bootstrap distribution of the mean failure time of 
 > # air-conditioning equipment at 80 hours
-> saddle(A=aircondit$hours/12, u=80)
+> saddle(A = aircondit$hours/12, u = 80)
 Warning in optim(init, K) :
   one-diml optimization by Nelder-Mead is unreliable: use optimize
 $spa
@@ -1391,7 +1388,8 @@ $zeta.hat
 
 > 
 > # Alternatively this can be done using a conditional poisson
-> saddle(A=cbind(aircondit$hours/12,1), u=c(80,12), wdist="p", type="cond")
+> saddle(A = cbind(aircondit$hours/12,1), u = c(80, 12),
++        wdist = "p", type = "cond")
 Warning in dpois(y, mu, log = TRUE) : non-integer x = 10.090909
 Warning in dpois(y, mu, log = TRUE) : non-integer x = 1.909091
 Warning in dpois(y, mu, log = TRUE) : non-integer x = 10.090909
@@ -1409,7 +1407,8 @@ $zeta2.hat
 
 > 
 > # To use the Lugananni-Rice approximation to this
-> saddle(A=cbind(aircondit$hours/12,1), u=c(80,12), wdist="p", type="cond", 
+> saddle(A = cbind(aircondit$hours/12,1), u = c(80, 12),
++        wdist = "p", type = "cond", 
 +        LR = TRUE)
 Warning in dpois(y, mu, log = TRUE) : non-integer x = 10.090909
 Warning in dpois(y, mu, log = TRUE) : non-integer x = 1.909091
@@ -1434,13 +1433,13 @@ $zeta2.hat
 > # Instead the statistic is expressed as the solution to a linear 
 > # estimating equation and hence its distribution can be found.  We
 > # get the saddlepoint approximation to the pdf and cdf evaluated at
-> # t=1.25 as follows.
+> # t = 1.25 as follows.
 > jacobian <- function(dat,t,zeta)
 + {
 +      p <- exp(zeta*(dat$x-t*dat$u))
 +      abs(sum(dat$u*p)/sum(p))
 + }
-> city.sp1 <- saddle(A=city$x-1.25*city$u, u=0)
+> city.sp1 <- saddle(A = city$x-1.25*city$u, u = 0)
 Warning in optim(init, K) :
   one-diml optimization by Nelder-Mead is unreliable: use optimize
 > city.sp1$spa[1] <- jacobian(city, 1.25, city.sp1$zeta.hat) * city.sp1$spa[1]
@@ -1933,7 +1932,7 @@ The optimal value of the objective  function is 41400.
 > # distribution of the studentized statistic to be centred at the observed
 > # value of the test statistic 1.84.  In the book exponential tilting was used
 > # but it is also possible to use smooth.f.
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
+> grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
 > grav.fun <- function(dat, w, orig)
 + {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
@@ -1945,21 +1944,19 @@ The optimal value of the objective  function is 41400.
 +      c(mns[2]-mns[1], s2hat, (mns[2]-mns[1]-orig)/sqrt(s2hat))
 + }
 > grav.z0 <- grav.fun(grav1,rep(1,26),0)
-> grav.boot <- boot(grav1, grav.fun, R=499, stype="w", 
-+                   strata=grav1[,2], orig=grav.z0[1])
-> grav.sm <- smooth.f(grav.z0[3], grav.boot, index=3)
-> 
+> grav.boot <- boot(grav1, grav.fun, R = 499, stype = "w", 
++                   strata = grav1[,2], orig = grav.z0[1])
+> grav.sm <- smooth.f(grav.z0[3], grav.boot, index = 3)
 > 
 > # Now we can run another bootstrap using these weights
-> grav.boot2 <- boot(grav1, grav.fun, R=499, stype="w", 
-+                    strata=grav1[,2], orig=grav.z0[1],
-+                    weights=grav.sm)
-> 
+> grav.boot2 <- boot(grav1, grav.fun, R = 499, stype = "w", 
++                    strata = grav1[,2], orig = grav.z0[1],
++                    weights = grav.sm)
 > 
 > # Estimated p-values can be found from these as follows
 > mean(grav.boot$t[,3] >= grav.z0[3])
 [1] 0.01402806
-> imp.prob(grav.boot2,t0=-grav.z0[3],t=-grav.boot2$t[,3])
+> imp.prob(grav.boot2, t0 = -grav.z0[3], t = -grav.boot2$t[,3])
 $t0
         2 
 -1.840118 
@@ -1979,7 +1976,7 @@ $reg
 > # multiply everything by -1 to ensure that we find the correct
 > # probability.  Raw resampling is not reliable for probabilities
 > # greater than 0.5. Thus
-> 1-imp.prob(grav.boot2,index=3,t0=grav.z0[3])$raw
+> 1 - imp.prob(grav.boot2, index = 3, t0 = grav.z0[3])$raw
 [1] -0.009155757
 > # can give very strange results (negative probabilities).
 > 
@@ -2000,9 +1997,8 @@ $reg
 > 
 > # Note that these examples can take a while to run.
 > 
-> 
 > # Example 9.9 of Davison and Hinkley (1997).
-> grav1 <- gravity[as.numeric(gravity[,2])>=7,]
+> grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
 > grav.fun <- function(dat, w, orig)
 + {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
@@ -2013,9 +2009,9 @@ $reg
 +      s2hat <- sum((mn2 - mns^2)/ns)
 +      c(mns[2]-mns[1],s2hat,(mns[2]-mns[1]-orig)/sqrt(s2hat))
 + }
-> grav.z0 <- grav.fun(grav1,rep(1,26),0)
-> tilt.boot(grav1, grav.fun, R=c(249,375,375), stype="w", 
-+           strata=grav1[,2], tilt=TRUE, index=3, orig=grav.z0[1]) 
+> grav.z0 <- grav.fun(grav1, rep(1, 26), 0)
+> tilt.boot(grav1, grav.fun, R = c(249, 375, 375), stype = "w", 
++           strata = grav1[,2], tilt = TRUE, index = 3, orig = grav.z0[1]) 
 
 TILTED BOOTSTRAP
 
@@ -2051,10 +2047,10 @@ t3* 0.000000 -0.8862944    2.208945
 +      sr <- sqrt(sum(tmp^2))/SSx
 +      c(beta.b, sr, (beta.b-bhat)/sr)
 + }
-> acme.b <- acme.fun(acme,1:nrow(acme),0)
-> acme.boot1 <- tilt.boot(acme, acme.fun, R=c(499, 250, 250), 
-+                         stype="i", sim="balanced", alpha=c(0.05, 0.95), 
-+                         tilt=TRUE, index=3, bhat=acme.b[1])
+> acme.b <- acme.fun(acme, 1:nrow(acme), 0)
+> acme.boot1 <- tilt.boot(acme, acme.fun, R = c(499, 250, 250), 
++                         stype = "i", sim = "balanced", alpha = c(0.05, 0.95), 
++                         tilt = TRUE, index = 3, bhat = acme.b[1])
 > 
 > 
 > 
@@ -2071,56 +2067,56 @@ t3* 0.000000 -0.8862944    2.208945
 > 
 > ### ** Examples
 > 
-> lynx.fun <- function(tsb) 
-+ {    ar.fit <- ar(tsb, order.max=25)
+> lynx.fun <- function(tsb) {
++      ar.fit <- ar(tsb, order.max = 25)
 +      c(ar.fit$order, mean(tsb), tsb)
 + }
 > 
 > # the stationary bootstrap with mean block length 20
-> lynx.1 <- tsboot(log(lynx), lynx.fun, R=99, l=20, sim="geom")
+> lynx.1 <- tsboot(log(lynx), lynx.fun, R = 99, l = 20, sim = "geom")
 > 
 > # the fixed block bootstrap with length 20
-> lynx.2 <- tsboot(log(lynx), lynx.fun, R=99, l=20, sim="fixed")
+> lynx.2 <- tsboot(log(lynx), lynx.fun, R = 99, l = 20, sim = "fixed")
 > 
 > # Now for model based resampling we need the original model
 > # Note that for all of the bootstraps which use the residuals as their
 > # data, we set orig.t to FALSE since the function applied to the residual
 > # time series will be meaningless.
 > lynx.ar <- ar(log(lynx))
-> lynx.model <- list(order=c(lynx.ar$order,0,0),ar=lynx.ar$ar)
+> lynx.model <- list(order = c(lynx.ar$order, 0, 0), ar = lynx.ar$ar)
 > lynx.res <- lynx.ar$resid[!is.na(lynx.ar$resid)]
 > lynx.res <- lynx.res - mean(lynx.res)
 > 
 > lynx.sim <- function(res,n.sim, ran.args) {
 + # random generation of replicate series using arima.sim 
 +      rg1 <- function(n, res)
-+           sample(res, n, replace=TRUE)
++           sample(res, n, replace = TRUE)
 +      ts.orig <- ran.args$ts
 +      ts.mod <- ran.args$model
-+      mean(ts.orig)+ts(arima.sim(model=ts.mod, n=n.sim,
-+                       rand.gen=rg1, res=as.vector(res)))
++      mean(ts.orig)+ts(arima.sim(model = ts.mod, n = n.sim,
++                       rand.gen = rg1, res = as.vector(res)))
 + }
 > 
-> lynx.3 <- tsboot(lynx.res, lynx.fun, R=99, sim="model", n.sim=114,
-+                  orig.t=FALSE, ran.gen=lynx.sim, 
-+                  ran.args=list(ts=log(lynx), model=lynx.model))
+> lynx.3 <- tsboot(lynx.res, lynx.fun, R = 99, sim = "model", n.sim = 114,
++                  orig.t = FALSE, ran.gen = lynx.sim, 
++                  ran.args = list(ts = log(lynx), model = lynx.model))
 > 
 > #  For "post-blackening" we need to define another function
 > lynx.black <- function(res, n.sim, ran.args) 
 + {    ts.orig <- ran.args$ts
 +      ts.mod <- ran.args$model
-+      mean(ts.orig) + ts(arima.sim(model=ts.mod,n=n.sim,innov=res))
++      mean(ts.orig) + ts(arima.sim(model = ts.mod,n = n.sim,innov = res))
 + }
 > 
 > # Now we can run apply the two types of block resampling again but this
 > # time applying post-blackening.
-> lynx.1b <- tsboot(lynx.res, lynx.fun, R=99, l=20, sim="fixed",
-+                   n.sim=114, orig.t=FALSE, ran.gen=lynx.black, 
-+                   ran.args=list(ts=log(lynx), model=lynx.model))
+> lynx.1b <- tsboot(lynx.res, lynx.fun, R = 99, l = 20, sim = "fixed",
++                   n.sim = 114, orig.t = FALSE, ran.gen = lynx.black, 
++                   ran.args = list(ts = log(lynx), model = lynx.model))
 > 
-> lynx.2b <- tsboot(lynx.res, lynx.fun, R=99, l=20, sim="geom",
-+                   n.sim=114, orig.t=FALSE, ran.gen=lynx.black, 
-+                   ran.args=list(ts=log(lynx), model=lynx.model))
+> lynx.2b <- tsboot(lynx.res, lynx.fun, R = 99, l = 20, sim = "geom",
++                   n.sim = 114, orig.t = FALSE, ran.gen = lynx.black, 
++                   ran.args = list(ts = log(lynx), model = lynx.model))
 > 
 > # To compare the observed order of the bootstrap replicates we
 > # proceed as follows.
@@ -2163,9 +2159,8 @@ t3* 0.000000 -0.8862944    2.208945
 > ### ** Examples
 > 
 > #  To estimate the variance of the ratio of means for the city data.
-> ratio <- function(d,w)
-+      sum(d$x * w)/sum(d$u * w)
-> var.linear(empinf(data=city,statistic=ratio))
+> ratio <- function(d,w) sum(d$x * w)/sum(d$u * w)
+> var.linear(empinf(data = city, statistic = ratio))
 [1] 0.03248701
 > 
 > 
@@ -2173,7 +2168,7 @@ t3* 0.000000 -0.8862944    2.208945
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  104.074 0.584 104.987 0 0 
+Time elapsed:  84.602 0.543 85.389 0 0 
 > grDevices::dev.off()
 null device 
           1 

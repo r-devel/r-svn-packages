@@ -136,7 +136,7 @@ grav.fun <- function(dat, w, orig)
      s2hat <- sum((mn2 - mns^2)/ns)
      as.vector(c(mns[2] - mns[1], s2hat, (mns[2] - mns[1] - orig)/sqrt(s2hat)))
 }
-grav.z0 <- grav.fun(grav1,rep(1,26),0)
+grav.z0 <- grav.fun(grav1, rep(1,26), 0)
 grav.L <- empinf(data = grav1, statistic = grav.fun, stype = "w", 
                  strata = grav1[,2], index = 3, orig = grav.z0[1])
 grav.tilt <- exp.tilt(grav.L,grav.z0[3],strata = grav1[,2])

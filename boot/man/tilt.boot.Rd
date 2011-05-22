@@ -155,9 +155,8 @@ Hinkley, D.V. and Shi, S. (1989) Importance sampling and the nested bootstrap.
 \examples{
 # Note that these examples can take a while to run.
 
-
 # Example 9.9 of Davison and Hinkley (1997).
-grav1 <- gravity[as.numeric(gravity[,2])>=7,]
+grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
 grav.fun <- function(dat, w, orig)
 {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
      d <- dat[, 1]
@@ -168,9 +167,9 @@ grav.fun <- function(dat, w, orig)
      s2hat <- sum((mn2 - mns^2)/ns)
      c(mns[2]-mns[1],s2hat,(mns[2]-mns[1]-orig)/sqrt(s2hat))
 }
-grav.z0 <- grav.fun(grav1,rep(1,26),0)
-tilt.boot(grav1, grav.fun, R=c(249,375,375), stype="w", 
-          strata=grav1[,2], tilt=TRUE, index=3, orig=grav.z0[1]) 
+grav.z0 <- grav.fun(grav1, rep(1, 26), 0)
+tilt.boot(grav1, grav.fun, R = c(249, 375, 375), stype = "w", 
+          strata = grav1[,2], tilt = TRUE, index = 3, orig = grav.z0[1]) 
 
 
 #  Example 9.10 of Davison and Hinkley (1997) requires a balanced 
@@ -187,10 +186,10 @@ acme.fun <- function(data, i, bhat)
      sr <- sqrt(sum(tmp^2))/SSx
      c(beta.b, sr, (beta.b-bhat)/sr)
 }
-acme.b <- acme.fun(acme,1:nrow(acme),0)
-acme.boot1 <- tilt.boot(acme, acme.fun, R=c(499, 250, 250), 
-                        stype="i", sim="balanced", alpha=c(0.05, 0.95), 
-                        tilt=TRUE, index=3, bhat=acme.b[1])
+acme.b <- acme.fun(acme, 1:nrow(acme), 0)
+acme.boot1 <- tilt.boot(acme, acme.fun, R = c(499, 250, 250), 
+                        stype = "i", sim = "balanced", alpha = c(0.05, 0.95), 
+                        tilt = TRUE, index = 3, bhat = acme.b[1])
 }
 \keyword{nonparametric}
 % Converted by Sd2Rd version 1.15.
