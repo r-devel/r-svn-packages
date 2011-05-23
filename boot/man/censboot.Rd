@@ -11,9 +11,9 @@ resampling using a Cox regression model.
 }
 \usage{
 censboot(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
-         sim = "ordinary", cox = NULL, index = c(1, 2),
+         sim = "ordinary", cox = NULL, index = c(1, 2), \dots,
          parallel = c("no", "multicore", "snow"),
-         ncpus = getOption("boot.ncpus", 1L), \dots)
+         ncpus = getOption("boot.ncpus", 1L))
 }
 \arguments{
   \item{data}{
@@ -87,11 +87,15 @@ censboot(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
     \code{data} which correspond to the times and censoring indicators
     respectively.
   }
+  \item{\dots}{
+    Any other arguments which are passed unchanged to \code{statistic}
+    each time it is called.  Any such arguments to \code{statistic} must
+    follow the arguments which \code{statistic} is required to have for
+    the simulation.  Beware of partial matching to other arguments of
+    \code{censboot}.
+  }
   \item{parallel, ncpus}{
     See the help for \code{\link{boot}}.
-  }
-  \item{\dots}{
-    Any other arguments which are passed to \code{statistic}.
   }
 }
 \value{

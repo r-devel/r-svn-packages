@@ -17,9 +17,9 @@ Bootstrap Resampling
 \usage{
 boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"), 
      strata = rep(1,n), L = NULL, m = 0, weights = NULL, 
-     ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
+     ran.gen = function(d, p) d, mle = NULL, simple = FALSE, ...,
      parallel = c("no", "multicore", "snow"),
-     ncpus = getOption("boot.ncpus", 1L), \dots)
+     ncpus = getOption("boot.ncpus", 1L))
 }
 \arguments{
   \item{data}{
@@ -129,6 +129,12 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     large and if \code{simple = TRUE} this is avoided by sampling
     separately for each replication, which is slower but uses less memory.
   }
+  \item{\dots}{
+    Any other arguments for \code{statistic} which are passed unchanged
+    each time it is called.  Any such arguments to \code{statistic} must
+    follow the arguments which \code{statistic} is required to have for
+    the simulation.  Beware of partial matching to other arguments of
+    \code{boot}.
   \item{parallel}{
     The type of parallel operation to be used (if any).  If missing, the
     default is taken from the option \code{"boot.parallel"}.
@@ -136,11 +142,6 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   \item{ncpus}{
     integer: number of processes to be used in parallel operation.
   }
-  \item{\dots}{
-    Any other arguments for \code{statistic} which are passed unchanged
-    each time it is called.  Any such arguments to \code{statistic} must
-    follow the arguments which \code{statistic} is required to have for
-    the simulation.
   }
 }
 \value{

@@ -86,9 +86,9 @@ balanced.array <- function(n, R, strata)
 boot <- function(data, statistic, R, sim = "ordinary",
                  stype = c("i", "f", "w"),
                  strata  =  rep(1, n), L = NULL, m = 0, weights = NULL,
-		 ran.gen = function(d, p) d, mle = NULL, simple = FALSE,
+		 ran.gen = function(d, p) d, mle = NULL, simple = FALSE, ...,
                  parallel = c("no", "multicore", "snow"),
-                 ncpus = getOption("boot.ncpus", 1L), ...)
+                 ncpus = getOption("boot.ncpus", 1L)
 {
 #
 # R replicates of bootstrap applied to  statistic(data)
@@ -1257,9 +1257,9 @@ abc.ci <- function(data, statistic, index = 1, strata = rep(1, n), conf = 0.95,
 
 censboot <-
     function(data, statistic, R, F.surv, G.surv, strata = matrix(1, n, 2),
-             sim = "ordinary", cox = NULL, index = c(1, 2),
+             sim = "ordinary", cox = NULL, index = c(1, 2), ...,
              parallel = c("no", "multicore", "snow"),
-             ncpus = getOption("boot.ncpus", 1L), ...)
+             ncpus = getOption("boot.ncpus", 1L))
 {
 #
 #  Bootstrap replication for survival data.  Possible resampling
