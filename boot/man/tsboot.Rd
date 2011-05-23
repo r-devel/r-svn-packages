@@ -203,9 +203,8 @@ lynx.res <- lynx.ar$resid[!is.na(lynx.ar$resid)]
 lynx.res <- lynx.res - mean(lynx.res)
 
 lynx.sim <- function(res,n.sim, ran.args) {
-# random generation of replicate series using arima.sim 
-     rg1 <- function(n, res)
-          sample(res, n, replace = TRUE)
+     # random generation of replicate series using arima.sim 
+     rg1 <- function(n, res) sample(res, n, replace = TRUE)
      ts.orig <- ran.args$ts
      ts.mod <- ran.args$model
      mean(ts.orig)+ts(arima.sim(model = ts.mod, n = n.sim,
@@ -217,8 +216,8 @@ lynx.3 <- tsboot(lynx.res, lynx.fun, R = 99, sim = "model", n.sim = 114,
                  ran.args = list(ts = log(lynx), model = lynx.model))
 
 #  For "post-blackening" we need to define another function
-lynx.black <- function(res, n.sim, ran.args) 
-{    ts.orig <- ran.args$ts
+lynx.black <- function(res, n.sim, ran.args) {
+     ts.orig <- ran.args$ts
      ts.mod <- ran.args$model
      mean(ts.orig) + ts(arima.sim(model = ts.mod,n = n.sim,innov = res))
 }
@@ -235,11 +234,11 @@ lynx.2b <- tsboot(lynx.res, lynx.fun, R = 99, l = 20, sim = "geom",
 
 # To compare the observed order of the bootstrap replicates we
 # proceed as follows.
-table(lynx.1$t[,1])
-table(lynx.1b$t[,1])
-table(lynx.2$t[,1])
-table(lynx.2b$t[,1])
-table(lynx.3$t[,1])
+table(lynx.1$t[, 1])
+table(lynx.1b$t[, 1])
+table(lynx.2$t[, 1])
+table(lynx.2b$t[, 1])
+table(lynx.3$t[, 1])
 # Notice that the post-blackened and model-based bootstraps preserve
 # the true order of the model (11) in many more cases than the others.
 }

@@ -193,7 +193,7 @@ boot.ci(boot.out, conf = 0.95, type = "all",
 \examples{
 # confidence intervals for the city data
 ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
-city.boot <- boot(city, ratio, R = 999, stype = "w",sim = "ordinary")
+city.boot <- boot(city, ratio, R = 999, stype = "w", sim = "ordinary")
 boot.ci(city.boot, conf = c(0.90, 0.95),
         type = c("norm", "basic", "perc", "bca"))
 
@@ -207,7 +207,7 @@ diff.means <- function(d, f)
      m2 <- sum(d[-gp1,1] * f[-gp1])/sum(f[-gp1])
      ss1 <- sum(d[gp1,1]^2 * f[gp1]) - (m1 *  m1 * sum(f[gp1]))
      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
-     c(m1-m2, (ss1+ss2)/(sum(f)-2))
+     c(m1 - m2, (ss1 + ss2)/(sum(f) - 2))
 }
 grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
 grav1.boot <- boot(grav1, diff.means, R = 999, stype = "f",

@@ -43,22 +43,22 @@ Type 'q()' to quit R.
 > # we show how certain estimates can be found using resamples taken from
 > # the tilted distribution.
 > grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
-> grav.fun <- function(dat, w, orig)
-+ {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+> grav.fun <- function(dat, w, orig) {
++      strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
 +      ns <- tabulate(strata)
 +      w <- w/tapply(w, strata, sum)[strata]
-+      mns <- tapply(d * w, strata, sum)
++      mns <- as.vector(tapply(d * w, strata, sum)) # drop names
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      as.vector(c(mns[2] - mns[1], s2hat, (mns[2] - mns[1] - orig)/sqrt(s2hat)))
++      c(mns[2] - mns[1], s2hat, (mns[2] - mns[1] - orig)/sqrt(s2hat))
 + }
-> grav.z0 <- grav.fun(grav1, rep(1,26), 0)
+> grav.z0 <- grav.fun(grav1, rep(1, 26), 0)
 > grav.L <- empinf(data = grav1, statistic = grav.fun, stype = "w", 
 +                  strata = grav1[,2], index = 3, orig = grav.z0[1])
-> grav.tilt <- exp.tilt(grav.L,grav.z0[3],strata = grav1[,2])
+> grav.tilt <- exp.tilt(grav.L, grav.z0[3], strata = grav1[, 2])
 > grav.tilt.boot <- boot(grav1, grav.fun, R = 199, stype = "w", 
-+                        strata = grav1[,2], weights = grav.tilt$p,
++                        strata = grav1[, 2], weights = grav.tilt$p,
 +                        orig = grav.z0[1])
 > # Since the weights are needed for all calculations, we shall calculate
 > # them once only.
@@ -125,7 +125,7 @@ Type 'q()' to quit R.
 > 
 > ### ** Examples
 > 
-> # usual bootstrap of the ratio of means using the city data
+> # Usual bootstrap of the ratio of means using the city data
 > ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
 > boot(city, ratio, R = 999, stype = "w")
 
@@ -151,7 +151,7 @@ t1* 1.520313 0.03959996   0.2167146
 +      m2 <- sum(d[-gp1,1] * f[-gp1])/sum(f[-gp1])
 +      ss1 <- sum(d[gp1,1]^2 * f[gp1]) - (m1 *  m1 * sum(f[gp1]))
 +      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
-+      c(m1-m2, (ss1+ss2)/(sum(f)-2))
++      c(m1 - m2, (ss1 + ss2)/(sum(f) - 2))
 + }
 > grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
 > boot(grav1, diff.means, R = 999, stype = "f", strata = grav1[,2])
@@ -169,22 +169,21 @@ Bootstrap Statistics :
 t1* -2.846154  0.002541003    1.546664
 t2* 16.846154 -1.457662791    6.759103
 > 
-> 
-> #  In this example we show the use of boot in a prediction from 
-> #  regression based on the nuclear data.  This example is taken 
-> #  from Example 6.8 of Davison and Hinkley (1997).  Notice also 
-> #  that two extra arguments to statistic are passed through boot.
-> nuke <- nuclear[,c(1,2,5,7,8,10,11)]
-> nuke.lm <- glm(log(cost)~date+log(cap)+ne+ ct+log(cum.n)+pt, data = nuke)
+> # In this example we show the use of boot in a prediction from 
+> # regression based on the nuclear data.  This example is taken 
+> # from Example 6.8 of Davison and Hinkley (1997).  Notice also 
+> # that two extra arguments to 'statistic' are passed through boot.
+> nuke <- nuclear[, c(1, 2, 5, 7, 8, 10, 11)]
+> nuke.lm <- glm(log(cost) ~ date+log(cap)+ne+ct+log(cum.n)+pt, data = nuke)
 > nuke.diag <- glm.diag(nuke.lm)
-> nuke.res <- nuke.diag$res*nuke.diag$sd
-> nuke.res <- nuke.res-mean(nuke.res)
+> nuke.res <- nuke.diag$res * nuke.diag$sd
+> nuke.res <- nuke.res - mean(nuke.res)
 > 
-> #  We set up a new data frame with the data, the standardized 
-> #  residuals and the fitted values for use in the bootstrap.
-> nuke.data <- data.frame(nuke,resid = nuke.res,fit = fitted(nuke.lm))
+> # We set up a new data frame with the data, the standardized 
+> # residuals and the fitted values for use in the bootstrap.
+> nuke.data <- data.frame(nuke, resid = nuke.res, fit = fitted(nuke.lm))
 > 
-> #  Now we want a prediction of plant number 32 but at date 73.00
+> # Now we want a prediction of plant number 32 but at date 73.00
 > new.data <- data.frame(cost = 1, date = 73.00, cap = 886, ne = 0,
 +                        ct = 0, cum.n = 11, pt = 1)
 > new.fit <- predict(nuke.lm, new.data)
@@ -198,45 +197,41 @@ t2* 16.846154 -1.457662791    6.759103
 + }
 > 
 > nuke.boot <- boot(nuke.data, nuke.fun, R = 999, m = 1, 
-+      fit.pred = new.fit, x.pred = new.data)
-> #  The bootstrap prediction error would then be found by
-> mean(nuke.boot$t[,8]^2)
++                   fit.pred = new.fit, x.pred = new.data)
+> # The bootstrap prediction squared error would then be found by
+> mean(nuke.boot$t[, 8]^2)
 [1] 0.08815734
-> #  Basic bootstrap prediction limits would be
-> new.fit-sort(nuke.boot$t[,8])[c(975,25)]
+> # Basic bootstrap prediction limits would be
+> new.fit - sort(nuke.boot$t[, 8])[c(975, 25)]
 [1] 6.160255 7.298819
 > 
 > 
-> #  Finally a parametric bootstrap.  For this example we shall look 
-> #  at the air-conditioning data.  In this example our aim is to test 
-> #  the hypothesis that the true value of the index is 1 (i.e. that 
-> #  the data come from an exponential distribution) against the 
-> #  alternative that the data come from a gamma distribution with
-> #  index not equal to 1.
-> air.fun <- function(data)
-+ {    ybar <- mean(data$hours)
-+      para <- c(log(ybar),mean(log(data$hours)))
+> # Finally a parametric bootstrap.  For this example we shall look 
+> # at the air-conditioning data.  In this example our aim is to test 
+> # the hypothesis that the true value of the index is 1 (i.e. that 
+> # the data come from an exponential distribution) against the 
+> # alternative that the data come from a gamma distribution with
+> # index not equal to 1.
+> air.fun <- function(data) {
++      ybar <- mean(data$hours)
++      para <- c(log(ybar), mean(log(data$hours)))
 +      ll <- function(k) {
-+           if (k <= 0) out <- 1e200 # not NA
-+           else out <- lgamma(k)-k*(log(k)-1-para[1]+para[2])
-+          out
++           if (k <= 0) 1e200 else lgamma(k)-k*(log(k)-1-para[1]+para[2])
 +      }
-+      khat <- nlm(ll,ybar^2/var(data$hours))$estimate
++      khat <- nlm(ll, ybar^2/var(data$hours))$estimate
 +      c(ybar, khat)
 + }
 > 
-> 
-> air.rg <- function(data, mle)
-+ #  Function to generate random exponential variates.  mle will contain 
-+ #  the mean of the original data
-+ {    out <- data
-+      out$hours <- rexp(nrow(out), 1/mle)
-+      out
+> air.rg <- function(data, mle) {
++     # Function to generate random exponential variates.
++     # mle will contain the mean of the original data
++     out <- data
++     out$hours <- rexp(nrow(out), 1/mle)
++     out
 + }
 > 
 > air.boot <- boot(aircondit, air.fun, R = 999, sim = "parametric",
 +                  ran.gen = air.rg, mle = mean(aircondit$hours))
-> 
 > 
 > # The bootstrap p-value can then be approximated by
 > sum(abs(air.boot$t[,2]-1) > abs(air.boot$t0[2]-1))/(1+air.boot$R)
@@ -364,7 +359,7 @@ t2* 16.846154 -1.457662791    6.759103
 > 
 > # confidence intervals for the city data
 > ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
-> city.boot <- boot(city, ratio, R = 999, stype = "w",sim = "ordinary")
+> city.boot <- boot(city, ratio, R = 999, stype = "w", sim = "ordinary")
 > boot.ci(city.boot, conf = c(0.90, 0.95),
 +         type = c("norm", "basic", "perc", "bca"))
 BOOTSTRAP CONFIDENCE INTERVAL CALCULATIONS
@@ -394,7 +389,7 @@ Calculations and Intervals on Original Scale
 +      m2 <- sum(d[-gp1,1] * f[-gp1])/sum(f[-gp1])
 +      ss1 <- sum(d[gp1,1]^2 * f[gp1]) - (m1 *  m1 * sum(f[gp1]))
 +      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
-+      c(m1-m2, (ss1+ss2)/(sum(f)-2))
++      c(m1 - m2, (ss1 + ss2)/(sum(f) - 2))
 + }
 > grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
 > grav1.boot <- boot(grav1, diff.means, R = 999, stype = "f",
@@ -496,15 +491,10 @@ Calculations and Intervals on Original Scale
 > 
 > ### ** Examples
 > 
-> data(aml, package = "boot")
 > library(survival)
 Loading required package: splines
 
 Attaching package: 'survival'
-
-The following object(s) are masked _by_ '.GlobalEnv':
-
-    aml
 
 The following object(s) are masked from 'package:boot':
 
@@ -515,14 +505,15 @@ The following object(s) are masked from 'package:boot':
 > # were divided into those who received maintenance chemotherapy and 
 > # those who did not.  Here we are interested in the median remission 
 > # time for the two groups.
+> data(aml, package = "boot") # not the version in survival.
 > aml.fun <- function(data) {
 +      surv <- survfit(Surv(time, cens) ~ group, data = data)
 +      out <- NULL
 +      st <- 1
 +      for (s in 1:length(surv$strata)) {
-+           inds <- st:(st+surv$strata[s]-1)
-+           md <- min(surv$time[inds[1-surv$surv[inds]>=0.5]])
-+           st <- st+surv$strata[s]
++           inds <- st:(st + surv$strata[s]-1)
++           md <- min(surv$time[inds[1-surv$surv[inds] >= 0.5]])
++           st <- st + surv$strata[s]
 +           out <- c(out, md)
 +      }
 +      out
@@ -655,9 +646,9 @@ Warning in min(surv$time[inds[1 - surv$surv[inds] >= 0.5]]) :
 +      out <- NULL
 +      st <- 1
 +      for (s in 1:length(surv$strata)) {
-+           inds <- st:(st+surv$strata[s]-1)
-+           md <- min(surv$time[inds[1-surv$surv[inds]>=0.5]])
-+           st <- st+surv$strata[s]
++           inds <- st:(st + surv$strata[s] - 1)
++           md <- min(surv$time[inds[1-surv$surv[inds] >= 0.5]])
++           st <- st + surv$strata[s]
 +           out <- c(out, md)
 +      }
 +      out
@@ -773,15 +764,17 @@ detaching ‘package:survival’, ‘package:splines’
 > # the mammals data set.
 > data(mammals, package="MASS")
 > mammals.glm <- glm(log(brain) ~ log(body), data = mammals)
-> cv.err <- cv.glm(mammals, mammals.glm)
-> cv.err.6 <- cv.glm(mammals, mammals.glm, K = 6)
-> 
+> (cv.err <- cv.glm(mammals, mammals.glm)$delta)
+[1] 0.4918650 0.4916571
+> (cv.err.6 <- cv.glm(mammals, mammals.glm, K = 6)$delta)
+[1] 0.4851491 0.4834641
 > 
 > # As this is a linear model we could calculate the leave-one-out 
 > # cross-validation estimate without any extra model-fitting.
 > muhat <- fitted(mammals.glm)
 > mammals.diag <- glm.diag(mammals.glm)
-> cv.err <- mean((mammals.glm$y-muhat)^2/(1-mammals.diag$h)^2)
+> (cv.err <- mean((mammals.glm$y - muhat)^2/(1 - mammals.diag$h)^2))
+[1] 0.491865
 > 
 > 
 > # leave-one-out and 11-fold cross-validation prediction error for 
@@ -790,8 +783,10 @@ detaching ‘package:survival’, ‘package:splines’
 > cost <- function(r, pi = 0) mean(abs(r-pi) > 0.5)
 > 
 > nodal.glm <- glm(r ~ stage+xray+acid, binomial, data = nodal)
-> cv.err <- cv.glm(nodal, nodal.glm, cost, K = nrow(nodal))$delta 
-> cv.11.err <- cv.glm(nodal, nodal.glm, cost, K = 11)$delta 
+> (cv.err <- cv.glm(nodal, nodal.glm, cost, K = nrow(nodal))$delta)
+[1] 0.1886792 0.1886792
+> (cv.11.err <- cv.glm(nodal, nodal.glm, cost, K = 11)$delta)
+[1] 0.2264151 0.2217871
 > 
 > 
 > 
@@ -827,15 +822,15 @@ detaching ‘package:survival’, ‘package:splines’
 > # the variance of that statistic and then want to use this output
 > # to get the empirical influence values of the t-statistic.
 > grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
-> grav.fun <- function(dat, w)
-+ {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+> grav.fun <- function(dat, w) {
++      strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
 +      ns <- tabulate(strata)
 +      w <- w/tapply(w, strata, sum)[strata]
-+      mns <- tapply(d * w, strata, sum)
++      mns <- as.vector(tapply(d * w, strata, sum)) # drop names
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      c(mns[2]-mns[1], s2hat)
++      c(mns[2] - mns[1], s2hat)
 + }
 > 
 > grav.boot <- boot(grav1, grav.fun, R = 499, stype = "w",
@@ -874,9 +869,10 @@ detaching ‘package:survival’, ‘package:splines’
 > # may come from a normal distribution.  This is done in Examples 4.7 
 > # and 4.8 of Davison and Hinkley (1997).
 > grav1 <- gravity$g[gravity$series == 8]
-> grav.z <- (grav1-mean(grav1))/sqrt(var(grav1))
-> grav.gen <- function(dat,mle) rnorm(length(dat))
-> grav.qqboot <- boot(grav.z, sort, R = 999, sim="parametric", ran.gen = grav.gen)
+> grav.z <- (grav1 - mean(grav1))/sqrt(var(grav1))
+> grav.gen <- function(dat, mle) rnorm(length(dat))
+> grav.qqboot <- boot(grav.z, sort, R = 999, sim = "parametric",
++                     ran.gen = grav.gen)
 > grav.qq <- qqnorm(grav.z, plot.it = FALSE)
 > grav.qq <- lapply(grav.qq, sort)
 > plot(grav.qq, ylim = c(-3.5, 3.5), ylab = "Studentized Order Statistics",
@@ -906,15 +902,15 @@ detaching ‘package:survival’, ‘package:splines’
 > # distribution of the studentized statistic to be centred at the observed
 > # value of the test statistic 1.84.  This can be achieved as follows.
 > grav1 <- gravity[as.numeric(gravity[,2]) >=7 , ]
-> grav.fun <- function(dat, w, orig)
-+ {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+> grav.fun <- function(dat, w, orig) {
++      strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
 +      ns <- tabulate(strata)
 +      w <- w/tapply(w, strata, sum)[strata]
-+      mns <- tapply(d * w, strata, sum)
++      mns <- as.vector(tapply(d * w, strata, sum)) # drop names
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      as.vector(c(mns[2]-mns[1], s2hat, (mns[2]-mns[1]-orig)/sqrt(s2hat)))
++      c(mns[2]-mns[1], s2hat, (mns[2]-mns[1]-orig)/sqrt(s2hat))
 + }
 > grav.z0 <- grav.fun(grav1, rep(1, 26), 0)
 > grav.L <- empinf(data = grav1, statistic = grav.fun, stype = "w", 
@@ -976,9 +972,8 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > 
 > #  To draw the jackknife-after-bootstrap plot for the head size data as in
 > #  Example 3.24 of Davison and Hinkley (1997)
-> pcorr <- function( x )
-+ { 
-+ #  function to find the correlations and partial correlations between
+> pcorr <- function(x) { 
++ #  Function to find the correlations and partial correlations between
 + #  the four measurements.
 +      v <- cor(x)
 +      v.d <- diag(var(x))
@@ -988,16 +983,15 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 +      q <- NULL
 +      n <- nrow(v)
 +      for (i in 1:(n-1)) 
-+           q <- rbind( q, c(v[i,1:i],iv[i,(i+1):n]) )
-+      q <- rbind( q, v[n,] )
++           q <- rbind( q, c(v[i, 1:i], iv[i,(i+1):n]) )
++      q <- rbind( q, v[n, ] )
 +      diag(q) <- round(diag(q))
 +      q
 + }
 > 
-> 
-> frets.fun <- function( data, i )
-+ {    d <- data[i,]
-+      v <- pcorr( d )
+> frets.fun <- function(data, i) {
++      d <- data[i, ]
++      v <- pcorr(d)
 +      c(v[1,],v[2,],v[3,],v[4,])
 + }
 > frets.boot <- boot(log(as.matrix(frets)), frets.fun, R=999)
@@ -1022,7 +1016,7 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > ### ** Examples
 > 
 > #  To estimate the skewness of the ratio of means for the city data.
-> ratio <- function(d,w) sum(d$x * w)/sum(d$u * w)
+> ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
 > k3.linear(empinf(data = city, statistic = ratio))
 [1] 7.831452e-05
 > 
@@ -1048,14 +1042,14 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
 > city.boot <- boot(city, ratio, R = 499, stype = "w")
 > bigcity.boot <- boot(bigcity, ratio, R = 499, stype = "w")
-> op <- par(pty="s", mfrow = c(2,2))
+> op <- par(pty = "s", mfrow = c(2, 2))
 > 
 > # The first plot is for the city data ratio statistic.
 > city.lin1 <- linear.approx(city.boot)
 > lim <- range(c(city.boot$t,city.lin1))
 > plot(city.boot$t, city.lin1, xlim = lim, ylim = lim, 
 +      main = "Ratio; n=10", xlab = "t*", ylab = "tL*")
-> abline(0,1)
+> abline(0, 1)
 > 
 > # Now for the log of the ratio statistic for the city data.
 > city.lin2 <- linear.approx(city.boot,t0 = log(city.boot$t0), 
@@ -1063,14 +1057,14 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > lim <- range(c(log(city.boot$t),city.lin2))
 > plot(log(city.boot$t), city.lin2, xlim = lim, ylim = lim, 
 +      main = "Log(Ratio); n=10", xlab = "t*", ylab = "tL*")
-> abline(0,1)
+> abline(0, 1)
 > 
 > # The ratio statistic for the bigcity data.
 > bigcity.lin1 <- linear.approx(bigcity.boot)
 > lim <- range(c(bigcity.boot$t,bigcity.lin1))
 > plot(bigcity.lin1, bigcity.boot$t, xlim = lim, ylim = lim,
 +      main = "Ratio; n=49", xlab = "t*", ylab = "tL*")
-> abline(0,1)
+> abline(0, 1)
 > 
 > # Finally the log of the ratio statistic for the bigcity data.
 > bigcity.lin2 <- linear.approx(bigcity.boot,t0 = log(bigcity.boot$t0), 
@@ -1102,20 +1096,20 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > # Davison and Hinkley (1997) may be produced.  Note the large number of
 > # bootstrap replicates required in this example.
 > expdata <- rexp(12)
-> vfun <- function(d, i) 
-+ {    n <- length(d)
+> vfun <- function(d, i) {
++      n <- length(d)
 +      (n-1)/n*var(d[i])
 + }
 > exp.boot <- boot(expdata,vfun, R = 9999)
-> exp.L <- (expdata-mean(expdata))^2 - exp.boot$t0
+> exp.L <- (expdata - mean(expdata))^2 - exp.boot$t0
 > exp.tL <- linear.approx(exp.boot, L = exp.L)
 > hist(exp.tL, nclass = 50, probability = TRUE)
-> exp.t0 <- c(0,sqrt(var(exp.boot$t)))
+> exp.t0 <- c(0, sqrt(var(exp.boot$t)))
 > exp.sp <- saddle.distn(A = exp.L/12,wdist = "m", t0 = exp.t0)
 > 
 > # The saddlepoint approximation in this case is to the density of
 > # t-t0 and so t0 must be added for the plot.
-> lines(exp.sp,h = function(u,t0) u+t0, J = function(u,t0) 1,
+> lines(exp.sp, h = function(u, t0) u+t0, J = function(u, t0) 1,
 +       t0 = exp.boot$t0)
 > 
 > 
@@ -1179,15 +1173,15 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > # In the difference of means example for the last two series of the 
 > # gravity data
 > grav1 <- gravity[as.numeric(gravity[, 2]) >= 7, ]
-> grav.fun <- function(dat, w)
-+ {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+> grav.fun <- function(dat, w) {
++      strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
 +      ns <- tabulate(strata)
 +      w <- w/tapply(w, strata, sum)[strata]
-+      mns <- tapply(d * w, strata, sum)
++      mns <- as.vector(tapply(d * w, strata, sum)) # drop names
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      c(mns[2]-mns[1], s2hat)
++      c(mns[2] - mns[1], s2hat)
 + }
 > 
 > grav.boot <- boot(grav1, grav.fun, R = 499, stype = "w", strata = grav1[, 2])
@@ -1198,27 +1192,26 @@ t3* 0.000000 -0.5160619    1.314298  1.473456
 > 
 > # In this example we look at the one of the partial correlations for the
 > # head dimensions in the dataset frets.
-> pcorr <- function( x )
-+ { 
+> pcorr <- function(x) { 
 + #  Function to find the correlations and partial correlations between
 + #  the four measurements.
-+      v <- cor(x);
-+      v.d <- diag(var(x));
-+      iv <- solve(v);
-+      iv.d <- sqrt(diag(iv));
-+      iv <- - diag(1/iv.d) %*% iv %*% diag(1/iv.d);
-+      q <- NULL; 
-+      n <- nrow(v);
++      v <- cor(x)
++      v.d <- diag(var(x))
++      iv <- solve(v)
++      iv.d <- sqrt(diag(iv))
++      iv <- - diag(1/iv.d) %*% iv %*% diag(1/iv.d)
++      q <- NULL
++      n <- nrow(v)
 +      for (i in 1:(n-1)) 
-+           q <- rbind( q, c(v[i, 1:i], iv[i, (i+1):n]) );
-+      q <- rbind( q, v[n,] );
-+      diag(q) <- round(diag(q));
++           q <- rbind( q, c(v[i, 1:i], iv[i, (i+1):n]) )
++      q <- rbind( q, v[n, ] )
++      diag(q) <- round(diag(q))
 +      q
 + }
 > 
 > frets.fun <- function(data, i) {
-+      d <- data[i,];
-+      v <- pcorr( d );
++      d <- data[i, ]
++      v <- pcorr(d)
 +      c(v[1, ], v[2, ], v[3, ], v[4, ])
 + }
 > frets.boot <- boot(log(as.matrix(frets)),  frets.fun,  R = 999)
@@ -1749,8 +1742,7 @@ Smoothing spline used 20 points in the range 1.182 to 2.061.
 > 
 > ### ** Examples
 > 
-> #  This example is taken from Exercise 7.5 of Gill, Murray,
-> #  and Wright (1991).
+> # This example is taken from Exercise 7.5 of Gill, Murray and Wright (1991).
 > enj <- c(200, 6000, 3000, -200)
 > fat <- c(800, 6000, 1000, 400)
 > vitx <- c(50, 3, 150, 100)
@@ -1793,34 +1785,33 @@ The optimal value of the objective  function is 41400.
 > # distribution of the studentized statistic to be centred at the observed
 > # value of the test statistic 1.84.  In the book exponential tilting was used
 > # but it is also possible to use smooth.f.
-> grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
-> grav.fun <- function(dat, w, orig)
-+ {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+> grav1 <- gravity[as.numeric(gravity[, 2]) >= 7, ]
+> grav.fun <- function(dat, w, orig) {
++      strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
 +      ns <- tabulate(strata)
 +      w <- w/tapply(w, strata, sum)[strata]
-+      mns <- tapply(d * w, strata, sum)
++      mns <- as.vector(tapply(d * w, strata, sum)) # drop names
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
-+      c(mns[2]-mns[1], s2hat, (mns[2]-mns[1]-orig)/sqrt(s2hat))
++      c(mns[2] - mns[1], s2hat, (mns[2]-mns[1]-orig)/sqrt(s2hat))
 + }
-> grav.z0 <- grav.fun(grav1,rep(1,26),0)
+> grav.z0 <- grav.fun(grav1, rep(1, 26), 0)
 > grav.boot <- boot(grav1, grav.fun, R = 499, stype = "w", 
-+                   strata = grav1[,2], orig = grav.z0[1])
++                   strata = grav1[, 2], orig = grav.z0[1])
 > grav.sm <- smooth.f(grav.z0[3], grav.boot, index = 3)
 > 
 > # Now we can run another bootstrap using these weights
 > grav.boot2 <- boot(grav1, grav.fun, R = 499, stype = "w", 
-+                    strata = grav1[,2], orig = grav.z0[1],
++                    strata = grav1[, 2], orig = grav.z0[1],
 +                    weights = grav.sm)
 > 
 > # Estimated p-values can be found from these as follows
-> mean(grav.boot$t[,3] >= grav.z0[3])
+> mean(grav.boot$t[, 3] >= grav.z0[3])
 [1] 0.01402806
-> imp.prob(grav.boot2, t0 = -grav.z0[3], t = -grav.boot2$t[,3])
+> imp.prob(grav.boot2, t0 = -grav.z0[3], t = -grav.boot2$t[, 3])
 $t0
-        2 
--1.840118 
+[1] -1.840118
 
 $raw
 [1] 0.02163715
@@ -1860,12 +1851,12 @@ $reg
 > 
 > # Example 9.9 of Davison and Hinkley (1997).
 > grav1 <- gravity[as.numeric(gravity[,2]) >= 7, ]
-> grav.fun <- function(dat, w, orig)
-+ {    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+> grav.fun <- function(dat, w, orig) {
++      strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
 +      d <- dat[, 1]
 +      ns <- tabulate(strata)
 +      w <- w/tapply(w, strata, sum)[strata]
-+      mns <- tapply(d * w, strata, sum)
++      mns <- as.vector(tapply(d * w, strata, sum)) # drop names
 +      mn2 <- tapply(d * d * w, strata, sum)
 +      s2hat <- sum((mn2 - mns^2)/ns)
 +      c(mns[2]-mns[1],s2hat,(mns[2]-mns[1]-orig)/sqrt(s2hat))
@@ -1897,8 +1888,8 @@ t3* 0.000000 -0.8862944    2.208945
 > #  Example 9.10 of Davison and Hinkley (1997) requires a balanced 
 > #  importance resampling bootstrap to be run.  In this example we 
 > #  show how this might be run.  
-> acme.fun <- function(data, i, bhat)
-+ {    d <- data[i,]
+> acme.fun <- function(data, i, bhat) {
++      d <- data[i,]
 +      n <- nrow(d)
 +      d.lm <- glm(d$acme~d$market)
 +      beta.b <- coef(d.lm)[2]
@@ -1949,9 +1940,8 @@ t3* 0.000000 -0.8862944    2.208945
 > lynx.res <- lynx.res - mean(lynx.res)
 > 
 > lynx.sim <- function(res,n.sim, ran.args) {
-+ # random generation of replicate series using arima.sim 
-+      rg1 <- function(n, res)
-+           sample(res, n, replace = TRUE)
++      # random generation of replicate series using arima.sim 
++      rg1 <- function(n, res) sample(res, n, replace = TRUE)
 +      ts.orig <- ran.args$ts
 +      ts.mod <- ran.args$model
 +      mean(ts.orig)+ts(arima.sim(model = ts.mod, n = n.sim,
@@ -1963,8 +1953,8 @@ t3* 0.000000 -0.8862944    2.208945
 +                  ran.args = list(ts = log(lynx), model = lynx.model))
 > 
 > #  For "post-blackening" we need to define another function
-> lynx.black <- function(res, n.sim, ran.args) 
-+ {    ts.orig <- ran.args$ts
+> lynx.black <- function(res, n.sim, ran.args) {
++      ts.orig <- ran.args$ts
 +      ts.mod <- ran.args$model
 +      mean(ts.orig) + ts(arima.sim(model = ts.mod,n = n.sim,innov = res))
 + }
@@ -1981,23 +1971,23 @@ t3* 0.000000 -0.8862944    2.208945
 > 
 > # To compare the observed order of the bootstrap replicates we
 > # proceed as follows.
-> table(lynx.1$t[,1])
+> table(lynx.1$t[, 1])
 
  2  3  4  5  7  8 10 11 12 13 14 
 16 19 38  4  6  3  1  9  1  1  1 
-> table(lynx.1b$t[,1])
+> table(lynx.1b$t[, 1])
 
  2  3  4  5  6  7  8 11 12 14 15 
  6  2 22  6  4  6  3 40  7  1  2 
-> table(lynx.2$t[,1])
+> table(lynx.2$t[, 1])
 
  2  3  4  5  6  7  8 10 11 13 
 12 18 51  5  2  3  1  2  4  1 
-> table(lynx.2b$t[,1])
+> table(lynx.2b$t[, 1])
 
  2  3  4  5  6  7  8  9 10 11 12 13 15 21 
  2  1 21  4  1 10  4  1  3 45  3  1  2  1 
-> table(lynx.3$t[,1])
+> table(lynx.3$t[, 1])
 
  2  3  4  5  6  7  8  9 10 11 12 13 14 15 
  4  8 11  2  1  4  2  2  2 54  6  1  1  1 

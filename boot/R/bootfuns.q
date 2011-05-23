@@ -840,15 +840,18 @@ cv.glm <- function(data, glmfit, cost=function(y,yhat) mean((y-yhat)^2),
         cost.0 <- cost.0 - p.alpha *
             cost(glm.y, predict(d.glm, data, type = "response"))
     }
-    list(call=call,K=K,delta=c(CV, CV + cost.0), seed=seed)
+    list(call = call, K = K,
+         delta = as.numeric(c(CV, CV + cost.0)),  # drop any names
+         seed = seed)
 }
 
 
-boot.ci <- function(boot.out,conf=0.95,type="all",
-		    index=1L:min(2L,length(boot.out$t0)),
-		    var.t0=NULL ,var.t=NULL, t0=NULL, t=NULL,
-		    L=NULL, h=function(t) t, hdot=function(t) rep(1,length(t)),
-		    hinv=function(t) t, ...)
+boot.ci <- function(boot.out,conf = 0.95,type = "all",
+		    index = 1L:min(2L, length(boot.out$t0)),
+		    var.t0 = NULL ,var.t = NULL, t0 = NULL, t = NULL,
+		    L = NULL, h = function(t) t,
+                    hdot = function(t) rep(1, length(t)),
+		    hinv = function(t) t, ...)
 #
 #  Main function to calculate bootstrap confidence intervals.
 #  This function calls a number of auxilliary functions to do
@@ -882,7 +885,7 @@ boot.ci <- function(boot.out,conf=0.95,type="all",
             if (is.null(var.t)) var.t <- boot.out$t[,index[2L]]
         }
     }
-    if (const(t, min(1e-8,mean(t, na.rm=TRUE)/1e6))) {
+    if (const(t, min(1e-8, mean(t, na.rm=TRUE)/1e6))) {
         print(paste("All values of t are equal to ", mean(t, na.rm=TRUE),
                     "\n Cannot calculate confidence intervals"))
         return(NULL)
@@ -897,16 +900,15 @@ boot.ci <- function(boot.out,conf=0.95,type="all",
     }
     t <- t[fins]
     R <- length(t)
-    if (!is.null(var.t0)) 	var.t0 <- var.t0*hdot(t0)^2
-    if (!is.null(var.t))	var.t <- var.t*hdot(t)^2
+    if (!is.null(var.t0)) var.t0 <- var.t0*hdot(t0)^2
+    if (!is.null(var.t))  var.t <- var.t*hdot(t)^2
     t0 <- h(t0); t <- h(t)
-    if (missing(L))
-        L <- boot.out$L
-    output <- list(R=R,t0=hinv(t0),call=call)#
+    if (missing(L)) L <- boot.out$L
+    output <- list(R = R, t0 = hinv(t0), call = call)
     #  Now find the actual intervals using the methods listed in type
     if (any(type == "all" | type == "norm"))
         output <- c(output,
-                    list(normal=norm.ci(boot.out, conf,
+                    list(normal = norm.ci(boot.out, conf,
                          index[1L], var.t0=vt0.o, t0=t0.o, t=t.o,
                          L=L, h=h, hdot=hdot, hinv=hinv)))
     if (any(type == "all" | type == "basic"))
@@ -916,7 +918,7 @@ boot.ci <- function(boot.out,conf=0.95,type="all",
             warning("bootstrap variances needed for studentized intervals")
         else
             output <- c(output, list(student=stud.ci(c(t0,var.t0),
-                                     cbind(t,var.t),conf,hinv=hinv)))
+                                     cbind(t ,var.t), conf, hinv=hinv)))
     }
     if (any(type == "all" | type == "perc"))
         output <- c(output, list(percent=perc.ci(t,conf,hinv=hinv)))
@@ -932,7 +934,7 @@ boot.ci <- function(boot.out,conf=0.95,type="all",
     output
 }
 
-print.bootci <- function(x, hinv=NULL, ...) {
+print.bootci <- function(x, hinv = NULL, ...) {
 #
 #  Print the output from boot.ci
 #
@@ -1051,9 +1053,10 @@ print.bootci <- function(x, hinv=NULL, ...) {
     invisible(ci.out)
 }
 
-norm.ci <- function(boot.out=NULL,conf=0.95,index=1,var.t0=NULL, t0=NULL,
-		t=NULL, L=NULL, h=function(t) t, hdot=function(t) 1,
-		hinv=function(t) t)
+norm.ci <-
+    function(boot.out = NULL,conf = 0.95,index = 1,var.t0 = NULL, t0 = NULL,
+             t = NULL, L = NULL, h = function(t) t, hdot = function(t) 1,
+             hinv = function(t) t)
 #
 #  Normal approximation method for confidence intervals.  This can be
 #  used with or without a bootstrap object.  If a bootstrap object is
@@ -1106,23 +1109,23 @@ norm.inter <- function(t,alpha)
     inds <- seq_along(k)
     out <- inds
     kvs <- k[k>0 & k<R]
-    tstar <- sort(t,partial=sort(union(c(1,R),c(kvs,kvs+1))))
+    tstar <- sort(t, partial = sort(union(c(1, R), c(kvs, kvs+1))))
     ints <- (k == rk)
     if (any(ints)) out[inds[ints]] <- tstar[k[inds[ints]]]
     out[k == 0] <- tstar[1L]
     out[k == R] <- tstar[R]
     not <- function(v) xor(rep(TRUE,length(v)),v)
-    temp <- inds[not(ints) & k!=0 & k!=R]
+    temp <- inds[not(ints) & k != 0 & k != R]
     temp1 <- qnorm(alpha[temp])
     temp2 <- qnorm(k[temp]/(R+1))
     temp3 <- qnorm((k[temp]+1)/(R+1))
     tk <- tstar[k[temp]]
     tk1 <- tstar[k[temp]+1L]
     out[temp] <- tk + (temp1-temp2)/(temp3-temp2)*(tk1 - tk)
-    cbind(round(rk,2),out)
+    cbind(round(rk, 2), out)
 }
 
-basic.ci <- function(t0,t,conf=0.95, hinv=function(t) t)
+basic.ci <- function(t0, t, conf = 0.95, hinv = function(t) t)
 #
 #  Basic bootstrap confidence method
 #
@@ -1131,7 +1134,7 @@ basic.ci <- function(t0,t,conf=0.95, hinv=function(t) t)
     cbind(conf, matrix(qq[,1L],ncol=2L), matrix(hinv(2*t0-qq[,2L]),ncol=2L))
 }
 
-stud.ci <- function(tv0,tv,conf=0.95, hinv=function(t) t)
+stud.ci <- function(tv0, tv, conf = 0.95, hinv=function(t) t)
 #
 #  Studentized version of the basic bootstrap confidence interval
 #
@@ -1147,7 +1150,7 @@ stud.ci <- function(tv0,tv,conf=0.95, hinv=function(t) t)
     }
 }
 
-perc.ci <- function(t,conf=0.95, hinv=function(t) t)
+perc.ci <- function(t, conf = 0.95, hinv = function(t) t)
 #
 #  Bootstrap Percentile Confidence Interval Method
 #
@@ -1157,8 +1160,10 @@ perc.ci <- function(t,conf=0.95, hinv=function(t) t)
     cbind(conf,matrix(qq[,1L],ncol=2L),matrix(hinv(qq[,2]),ncol=2L))
 }
 
-bca.ci <- function(boot.out,conf=0.95,index=1,t0=NULL,t=NULL, L=NULL,
-		h=function(t) t, hdot=function(t) 1, hinv=function(t) t, ...)
+bca.ci <-
+    function(boot.out,conf = 0.95,index = 1,t0 = NULL,t = NULL, L = NULL,
+             h = function(t) t, hdot = function(t) 1, hinv = function(t) t,
+             ...)
 #
 #  Adjusted Percentile (BCa) Confidence interval method.  This method
 #  uses quantities calculated from the empirical influence values to
@@ -1188,8 +1193,8 @@ bca.ci <- function(boot.out,conf=0.95,index=1,t0=NULL,t=NULL, L=NULL,
 
 
 
-abc.ci <- function(data, statistic, index=1, strata=rep(1,n), conf=0.95,
-		eps=0.001/n, ...)
+abc.ci <- function(data, statistic, index = 1, strata = rep(1, n), conf = 0.95,
+                   eps = 0.001/n, ...)
 #
 #   Non-parametric ABC method for constructing confidence intervals.
 #
@@ -1374,8 +1379,8 @@ cens.return <- function(sim, t0, t, strata, R, data, statistic, call, seed) {
 #
 #  Create an object of class "boot" from the output of a censored bootstrap.
 #
-    out <- list(t0=t0, t=t, R=R, sim=sim, data=data, seed=seed,
-                statistic=statistic, strata=strata, call=call)
+    out <- list(t0 = t0, t = t, R = R, sim = sim, data = data, seed = seed,
+                statistic = statistic, strata = strata, call = call)
     class(out) <- "boot"
     out
 }
@@ -1384,7 +1389,7 @@ cens.case <- function(n, strata, R) {
 #
 #  Simple case resampling.
 #
-    out <- matrix(NA, nrow=R, ncol=n)
+    out <- matrix(NA, nrow = R, ncol = n)
     for (s in seq_along(table(strata))) {
         inds <- seq_len(n)[strata == s]
         ns <- length(inds)
@@ -1565,9 +1570,9 @@ cens.resamp <- function(data,R,F.surv,G.surv,strata,index=c(1,2),cox=NULL,
     array(c(pmin(y0, c0), 1*(y0 <= c0)), c(dim(y0), 2))
 }
 
-empinf <- function(boot.out=NULL, data=NULL, statistic=NULL,
-                   type=NULL, stype=NULL ,index=1, t=NULL,
-                   strata=rep(1, n), eps=0.001, ...)
+empinf <- function(boot.out = NULL, data = NULL, statistic = NULL,
+                   type = NULL, stype = NULL ,index = 1, t = NULL,
+                   strata = rep(1, n), eps = 0.001, ...)
 {
 #
 #   Calculation of empirical influence values.  Possible types are
@@ -1646,7 +1651,8 @@ empinf <- function(boot.out=NULL, data=NULL, statistic=NULL,
     L
 }
 
-inf.jack <- function(data, stat, index=1, strata = rep(1, n), eps = 0.001, ...)
+inf.jack <-
+    function(data, stat, index = 1, strata  =  rep(1, n), eps  =  0.001, ...)
 {
 #
 #   Numerical differentiation to get infinitesimal jackknife estimates
@@ -1668,7 +1674,7 @@ inf.jack <- function(data, stat, index=1, strata = rep(1, n), eps = 0.001, ...)
     L
 }
 
-empinf.reg <- function(boot.out, t=boot.out$t[,1L])
+empinf.reg <- function(boot.out, t = boot.out$t[,1L])
 #
 #  Function to estimate empirical influence values using regression.
 #  This method regresses the observed bootstrap values on the bootstrap
@@ -1697,7 +1703,8 @@ empinf.reg <- function(boot.out, t=boot.out$t[,1L])
     l
 }
 
-usual.jack <- function(data, stat, stype="w", index=1, strata=rep(1,n), ...)
+usual.jack <- function(data, stat, stype = "w", index = 1,
+                       strata = rep(1, n), ...)
 #
 #  Function to use the normal (delete 1) jackknife method to estimate the
 #  empirical influence values
@@ -1739,7 +1746,8 @@ usual.jack <- function(data, stat, stype="w", index=1, strata=rep(1,n), ...)
     l
 }
 
-positive.jack <- function(data, stat, stype="w", index=1, strata=rep(1,n), ...)
+positive.jack <- function(data, stat, stype = "w", index = 1,
+                          strata = rep(1 ,n), ...)
 {
 #
 #  Use the positive jackknife to estimate the empirical influence values.

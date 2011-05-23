@@ -200,21 +200,21 @@ NSF-241, Dept. of Statistics, Stanford University.
 \code{\link{coxph}}, \code{\link{survfit}}
 }
 \examples{
-data(aml, package = "boot")
 library(survival)
 # Example 3.9 of Davison and Hinkley (1997) does a bootstrap on some
 # remission times for patients with a type of leukaemia.  The patients
 # were divided into those who received maintenance chemotherapy and 
 # those who did not.  Here we are interested in the median remission 
 # time for the two groups.
+data(aml, package = "boot") # not the version in survival.
 aml.fun <- function(data) {
      surv <- survfit(Surv(time, cens) ~ group, data = data)
      out <- NULL
      st <- 1
      for (s in 1:length(surv$strata)) {
-          inds <- st:(st+surv$strata[s]-1)
-          md <- min(surv$time[inds[1-surv$surv[inds]>=0.5]])
-          st <- st+surv$strata[s]
+          inds <- st:(st + surv$strata[s]-1)
+          md <- min(surv$time[inds[1-surv$surv[inds] >= 0.5]])
+          st <- st + surv$strata[s]
           out <- c(out, md)
      }
      out
@@ -239,9 +239,9 @@ aml.fun1 <- function(data, str) {
      out <- NULL
      st <- 1
      for (s in 1:length(surv$strata)) {
-          inds <- st:(st+surv$strata[s]-1)
-          md <- min(surv$time[inds[1-surv$surv[inds]>=0.5]])
-          st <- st+surv$strata[s]
+          inds <- st:(st + surv$strata[s] - 1)
+          md <- min(surv$time[inds[1-surv$surv[inds] >= 0.5]])
+          st <- st + surv$strata[s]
           out <- c(out, md)
      }
      out

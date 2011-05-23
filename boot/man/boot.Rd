@@ -236,25 +236,22 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
 }
 
 \section{Parallel operation}{
-  For parallel operation \emph{via} package \pkg{multicore} the random
-  number seed for the \R session (and recorded in the returned object)
-  is not the one used by the worker processes: rather each chooses its own
-  seed.  Because of the way \pkg{multicore} works, each worker process
+  Because of the way \pkg{multicore} works, each worker process
   inherits the environment of the current session, including the
   workspace and the loaded namespaces and attached packages (but not the
-  random number seed).
+  random number seed: see below).
 
   More work is needed when \pkg{snow} is used: the worker processes are
   newly created \R processes, and \code{statistic} needs to arrange to
   set up the environment it needs: often a good way to do that is to
   make use of lexical scoping since when \code{statistic} is sent to the
-  worker process its enclosing environment is also sent.  There is only
-  support for sock clusters on the current machine: \code{parallel =
-  "snow"} is primarily intended to be used on multicore Windows machine
-  where package \code{multicore} is not available.
+  worker processes its enclosing environment is also sent.  There is
+  only support in \code{boot} for sock clusters on the current machine:
+  \code{parallel = "snow"} is primarily intended to be used on multi-core
+  Windows machine where package \code{multicore} is not available.
 
   For most of the \code{boot} methods the resampling is done in the
-  master process, but not is \code{simple = TRUE} nor
+  master process, but not if \code{simple = TRUE} nor
   \code{sim = "parametric"}.  In those cases (or where \code{statistic}
   itself uses random numbers), more care is needed.  For \code{parallel
   = "multicore"} each worker process uses a separate random number
@@ -305,10 +302,11 @@ John Wiley & Sons.
 \seealso{
   \code{\link{boot.array}}, \code{\link{boot.ci}},
   \code{\link{censboot}}, \code{\link{empinf}},
-  \code{\link{jack.after.boot}}, \code{\link{tilt.boot}}, \code{\link{tsboot}}
+  \code{\link{jack.after.boot}}, \code{\link{tilt.boot}},
+  \code{\link{tsboot}}.
 }
 \examples{
-# usual bootstrap of the ratio of means using the city data
+# Usual bootstrap of the ratio of means using the city data
 ratio <- function(d, w) sum(d$x * w)/sum(d$u * w)
 boot(city, ratio, R = 999, stype = "w")
 
@@ -323,27 +321,26 @@ diff.means <- function(d, f)
      m2 <- sum(d[-gp1,1] * f[-gp1])/sum(f[-gp1])
      ss1 <- sum(d[gp1,1]^2 * f[gp1]) - (m1 *  m1 * sum(f[gp1]))
      ss2 <- sum(d[-gp1,1]^2 * f[-gp1]) - (m2 *  m2 * sum(f[-gp1]))
-     c(m1-m2, (ss1+ss2)/(sum(f)-2))
+     c(m1 - m2, (ss1 + ss2)/(sum(f) - 2))
 }
 grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
 boot(grav1, diff.means, R = 999, stype = "f", strata = grav1[,2])
 
-
-#  In this example we show the use of boot in a prediction from 
-#  regression based on the nuclear data.  This example is taken 
-#  from Example 6.8 of Davison and Hinkley (1997).  Notice also 
-#  that two extra arguments to statistic are passed through boot.
-nuke <- nuclear[,c(1,2,5,7,8,10,11)]
-nuke.lm <- glm(log(cost)~date+log(cap)+ne+ ct+log(cum.n)+pt, data = nuke)
+# In this example we show the use of boot in a prediction from 
+# regression based on the nuclear data.  This example is taken 
+# from Example 6.8 of Davison and Hinkley (1997).  Notice also 
+# that two extra arguments to 'statistic' are passed through boot.
+nuke <- nuclear[, c(1, 2, 5, 7, 8, 10, 11)]
+nuke.lm <- glm(log(cost) ~ date+log(cap)+ne+ct+log(cum.n)+pt, data = nuke)
 nuke.diag <- glm.diag(nuke.lm)
-nuke.res <- nuke.diag$res*nuke.diag$sd
-nuke.res <- nuke.res-mean(nuke.res)
+nuke.res <- nuke.diag$res * nuke.diag$sd
+nuke.res <- nuke.res - mean(nuke.res)
 
-#  We set up a new data frame with the data, the standardized 
-#  residuals and the fitted values for use in the bootstrap.
-nuke.data <- data.frame(nuke,resid = nuke.res,fit = fitted(nuke.lm))
+# We set up a new data frame with the data, the standardized 
+# residuals and the fitted values for use in the bootstrap.
+nuke.data <- data.frame(nuke, resid = nuke.res, fit = fitted(nuke.lm))
 
-#  Now we want a prediction of plant number 32 but at date 73.00
+# Now we want a prediction of plant number 32 but at date 73.00
 new.data <- data.frame(cost = 1, date = 73.00, cap = 886, ne = 0,
                        ct = 0, cum.n = 11, pt = 1)
 new.fit <- predict(nuke.lm, new.data)
@@ -357,43 +354,39 @@ nuke.fun <- function(dat, inds, i.pred, fit.pred, x.pred)
 }
 
 nuke.boot <- boot(nuke.data, nuke.fun, R = 999, m = 1, 
-     fit.pred = new.fit, x.pred = new.data)
-#  The bootstrap prediction error would then be found by
-mean(nuke.boot$t[,8]^2)
-#  Basic bootstrap prediction limits would be
-new.fit-sort(nuke.boot$t[,8])[c(975,25)]
+                  fit.pred = new.fit, x.pred = new.data)
+# The bootstrap prediction squared error would then be found by
+mean(nuke.boot$t[, 8]^2)
+# Basic bootstrap prediction limits would be
+new.fit - sort(nuke.boot$t[, 8])[c(975, 25)]
 
 
-#  Finally a parametric bootstrap.  For this example we shall look 
-#  at the air-conditioning data.  In this example our aim is to test 
-#  the hypothesis that the true value of the index is 1 (i.e. that 
-#  the data come from an exponential distribution) against the 
-#  alternative that the data come from a gamma distribution with
-#  index not equal to 1.
-air.fun <- function(data)
-{    ybar <- mean(data$hours)
-     para <- c(log(ybar),mean(log(data$hours)))
+# Finally a parametric bootstrap.  For this example we shall look 
+# at the air-conditioning data.  In this example our aim is to test 
+# the hypothesis that the true value of the index is 1 (i.e. that 
+# the data come from an exponential distribution) against the 
+# alternative that the data come from a gamma distribution with
+# index not equal to 1.
+air.fun <- function(data) {
+     ybar <- mean(data$hours)
+     para <- c(log(ybar), mean(log(data$hours)))
      ll <- function(k) {
-          if (k <= 0) out <- 1e200 # not NA
-          else out <- lgamma(k)-k*(log(k)-1-para[1]+para[2])
-         out
+          if (k <= 0) 1e200 else lgamma(k)-k*(log(k)-1-para[1]+para[2])
      }
-     khat <- nlm(ll,ybar^2/var(data$hours))$estimate
+     khat <- nlm(ll, ybar^2/var(data$hours))$estimate
      c(ybar, khat)
 }
 
-
-air.rg <- function(data, mle)
-#  Function to generate random exponential variates.  mle will contain 
-#  the mean of the original data
-{    out <- data
-     out$hours <- rexp(nrow(out), 1/mle)
-     out
+air.rg <- function(data, mle) {
+    # Function to generate random exponential variates.
+    # mle will contain the mean of the original data
+    out <- data
+    out$hours <- rexp(nrow(out), 1/mle)
+    out
 }
 
 air.boot <- boot(aircondit, air.fun, R = 999, sim = "parametric",
                  ran.gen = air.rg, mle = mean(aircondit$hours))
-
 
 # The bootstrap p-value can then be approximated by
 sum(abs(air.boot$t[,2]-1) > abs(air.boot$t0[2]-1))/(1+air.boot$R)

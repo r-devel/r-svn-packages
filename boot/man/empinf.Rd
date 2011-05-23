@@ -160,15 +160,15 @@ empinf(boot.out = city.boot, type = "reg")
 # the variance of that statistic and then want to use this output
 # to get the empirical influence values of the t-statistic.
 grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
-grav.fun <- function(dat, w)
-{    strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
+grav.fun <- function(dat, w) {
+     strata <- tapply(dat[, 2], as.numeric(dat[, 2]))
      d <- dat[, 1]
      ns <- tabulate(strata)
      w <- w/tapply(w, strata, sum)[strata]
-     mns <- tapply(d * w, strata, sum)
+     mns <- as.vector(tapply(d * w, strata, sum)) # drop names
      mn2 <- tapply(d * d * w, strata, sum)
      s2hat <- sum((mn2 - mns^2)/ns)
-     c(mns[2]-mns[1], s2hat)
+     c(mns[2] - mns[1], s2hat)
 }
 
 grav.boot <- boot(grav1, grav.fun, R = 499, stype = "w",
