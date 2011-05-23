@@ -135,13 +135,13 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     follow the arguments which \code{statistic} is required to have for
     the simulation.  Beware of partial matching to other arguments of
     \code{boot}.
+  }
   \item{parallel}{
     The type of parallel operation to be used (if any).  If missing, the
     default is taken from the option \code{"boot.parallel"}.
   }
   \item{ncpus}{
     integer: number of processes to be used in parallel operation.
-  }
   }
 }
 \value{
