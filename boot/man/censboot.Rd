@@ -92,7 +92,8 @@ censboot(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
     each time it is called.  Any such arguments to \code{statistic} must
     follow the arguments which \code{statistic} is required to have for
     the simulation.  Beware of partial matching to other arguments of
-    \code{censboot}.
+    \code{censboot}, and that \code{X} and \code{FUN} will clash, as will
+    \code{x} and \code{fun} for \code{parallel = "snow"}.
   }
   \item{parallel, ncpus}{
     See the help for \code{\link{boot}}.

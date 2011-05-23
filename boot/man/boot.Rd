@@ -134,7 +134,8 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     each time it is called.  Any such arguments to \code{statistic} must
     follow the arguments which \code{statistic} is required to have for
     the simulation.  Beware of partial matching to other arguments of
-    \code{boot}.
+    \code{boot}, and that \code{X}, \code{FUN} will clash, as will
+    \code{x} and \code{fun} for \code{parallel = "snow"}.
   }
   \item{parallel}{
     The type of parallel operation to be used (if any).  If missing, the

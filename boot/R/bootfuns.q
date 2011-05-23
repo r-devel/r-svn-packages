@@ -173,13 +173,14 @@ boot <- function(data, statistic, R, sim = "ordinary",
     RR <- sum(R)
     if (ncpus > 1 && (have_mc || have_snow)) {
         if (have_mc) {
-            res <- multicore::mclapply(seq_len(RR), fn, ..., mc.cores = ncpus)
+            res <- multicore::mclapply(X = seq_len(RR), FUN = fn, ...,
+                                       mc.cores = ncpus)
         } else if (have_snow) {
             cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-            res <- snow::parLapply(cl, seq_len(RR), fn, ...)
+            res <- snow::parLapply(cl, x = seq_len(RR), fun = fn, ...)
             snow::stopCluster(cl)
         }
-    } else res <- lapply(seq_len(RR), fn, ...)
+    } else res <- lapply(X = seq_len(RR), FUN = fn, ...)
     t.star <- matrix(, RR, length(t0))
     for(r in seq_len(RR)) t.star[r, ] <- res[[r]]
 
@@ -1362,13 +1363,14 @@ censboot <-
 
     if (ncpus > 1L && (have_mc || have_snow)) {
         if (have_mc) {
-            res <- multicore::mclapply(seq_len(R), fn, ..., mc.cores = ncpus)
+            res <- multicore::mclapply(X = seq_len(R), FUN = fn, ...,
+                                       mc.cores = ncpus)
         } else if (have_snow) {
             cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-            res <- snow::parLapply(cl, seq_len(R), fn, ...)
+            res <- snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
             snow::stopCluster(cl)
         }
-    } else res <- lapply(seq_len(R), fn, ...)
+    } else res <- lapply(X = seq_len(R), FUN = fn, ...)
     t <- matrix(, R, length(t0))
     for(r in seq_len(R)) t[r, ] <- res[[r]]
 
