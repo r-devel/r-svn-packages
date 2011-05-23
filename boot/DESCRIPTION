@@ -9,8 +9,8 @@ Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
 Description: functions and datasets for bootstrapping from the
   book "Bootstrap Methods and Their Applications" by A. C. Davison and 
   D. V. Hinkley (1997, CUP).
-Title: Bootstrap Functions (by Angelo Canty)
-Depends: R (>= 2.9.0), graphics, stats
+Title: Bootstrap Functions (originally by Angelo Canty for S)
+Depends: R (>= 2.10.0), graphics, stats
 Suggests: survival
 Enhances: multicore, snow
 LazyLoad: yes
