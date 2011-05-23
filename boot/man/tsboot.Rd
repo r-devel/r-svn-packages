@@ -10,9 +10,9 @@ replicate time series can be generated using fixed or random block lengths or
 can be model based replicates.   
 }
 \usage{
-tsboot(tseries, statistic, R, l=NULL, sim="model", endcorr=TRUE, 
-       n.sim=NROW(tseries), orig.t=TRUE, ran.gen, 
-       ran.args=NULL, norm=TRUE, \dots)
+tsboot(tseries, statistic, R, l = NULL, sim = "model",
+       endcorr = TRUE, n.sim = NROW(tseries), orig.t = TRUE,
+       ran.gen, ran.args = NULL, norm = TRUE, \dots)
 }
 \arguments{
 \item{tseries}{
@@ -166,7 +166,7 @@ The types of statistic for which this method produces reasonable results is
 very limited and the other methods seem to do better in most situations.
 Other types of resampling in the frequency domain
 can be accomplished using the function \code{boot} with the argument
-\code{sim="parametric"}.
+\code{sim = "parametric"}.
 }
 \references{
 Davison, A.C. and Hinkley, D.V. (1997) 

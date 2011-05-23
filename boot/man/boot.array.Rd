@@ -10,7 +10,7 @@ Bootstrap Resampling Arrays
   resamples.
 }
 \usage{
-boot.array(boot.out, indices=)
+boot.array(boot.out, indices)
 }
 \arguments{
 \item{boot.out}{

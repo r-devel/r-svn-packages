@@ -7,7 +7,7 @@ Linear Variance Estimate
 Estimates the variance of a statistic from its empirical influence values.
 }
 \usage{
-var.linear(L, strata=NULL)
+var.linear(L, strata = NULL)
 }
 \arguments{
 \item{L}{

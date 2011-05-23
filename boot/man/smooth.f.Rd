@@ -10,7 +10,8 @@ interest.  The method results in distributions which vary smoothly with
 \code{theta}.
 }
 \usage{
-smooth.f(theta, boot.out, index=1, t=boot.out$t[, index], width=0.5)
+smooth.f(theta, boot.out, index = 1, t = boot.out$t[, index],
+         width = 0.5)
 }
 \arguments{
 \item{theta}{

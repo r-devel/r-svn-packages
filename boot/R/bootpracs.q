@@ -6,53 +6,51 @@
 
 # empirical log likelihood ---------------------------------------------------------
 
-EL.profile <- function(y, tmin = min(y) + 0.1, tmax = max(y) - 0.1, n.t=25,
- 		u = function(y, t) y - t ) {
+EL.profile <- function(y, tmin = min(y) + 0.1, tmax = max(y) - 0.1, n.t = 25,
+                       u = function(y, t) y - t )
+{
 #  Calculate the profile empirical log likelihood function
-	EL.loglik <- function(lambda) {
-		temp <- 1 + lambda * EL.stuff$u
-		if (any(temp <= 0))
-			out <- NA
-		else	out <- - sum(log(1 + lambda * EL.stuff$u))
-		out
-		}
-	EL.paras <- matrix(NA, n.t, 3)
-	lam <- 0.001
-	for(it in 0:(n.t-1)) {
-        	t <- tmin + ((tmax - tmin) * it)/(n.t-1)
-        	EL.stuff <- list(u = u(y, t))
-#		assign("EL.stuff",EL.stuff, frame=1)
-        	EL.out <- nlm(EL.loglik, lam)
-		i <- 1
-		while (EL.out$code > 2 && (i < 20)) {
-			i <- i+1
-			lam <- lam/5
-			EL.out <- nlm(EL.loglik, lam)
-		}
-        	EL.paras[1 + it,  ] <- c(t, EL.loglik(EL.out$x), EL.out$x)
-		lam <- EL.out$x
-	}
-	EL.paras[,2] <- EL.paras[,2]-max(EL.paras[,2])
-	EL.paras
+    EL.loglik <- function(lambda) {
+        temp <- 1 + lambda * EL.stuff$u
+        if (any(temp <= 0)) NA else - sum(log(1 + lambda * EL.stuff$u))
+    }
+    EL.paras <- matrix(NA, n.t, 3)
+    lam <- 0.001
+    for(it in 0:(n.t-1)) {
+        t <- tmin + ((tmax - tmin) * it)/(n.t-1)
+        EL.stuff <- list(u = u(y, t))
+        EL.out <- nlm(EL.loglik, lam)
+        i <- 1
+        while (EL.out$code > 2 && (i < 20)) {
+            i <- i+1
+            lam <- lam/5
+            EL.out <- nlm(EL.loglik, lam)
+        }
+        EL.paras[1 + it,  ] <- c(t, EL.loglik(EL.out$x), EL.out$x)
+        lam <- EL.out$x
+    }
+    EL.paras[,2] <- EL.paras[,2]-max(EL.paras[,2])
+    EL.paras
 }
 
 
 
 
-EEF.profile <- function( y, tmin=min(y)+0.1, tmax=max(y)-0.1, n.t=25,
-		u=function(y,t) { y-t } ) {
-	EEF.paras <- matrix( NA, n.t+1, 4)
-	for (it in 0:n.t) {
-		t <- tmin + (tmax-tmin)*it/n.t;
-		psi <- as.vector(u( y, t ));
-		fit <- glm(zero~psi -1,poisson(log));
-		f <- fitted(fit);
-		EEF.paras[1+it,] <- c( t, sum(log(f)-log(sum(f))), sum(f-1),
-			coefficients(fit) );
-	}
-	EEF.paras[,2] <- EEF.paras[,2] - max(EEF.paras[,2]);
-	EEF.paras[,3] <- EEF.paras[,3] - max(EEF.paras[,3]);
-	EEF.paras
+EEF.profile <- function(y, tmin = min(y)+0.1, tmax = max(y) - 0.1, n.t = 25,
+                        u = function(y,t) y - t)
+{
+    EEF.paras <- matrix( NA, n.t+1, 4)
+    for (it in 0:n.t) {
+        t <- tmin + (tmax-tmin)*it/n.t
+        psi <- as.vector(u( y, t ))
+        fit <- glm(zero~psi -1,poisson(log))
+        f <- fitted(fit)
+        EEF.paras[1+it,] <- c(t, sum(log(f)-log(sum(f))), sum(f-1),
+                              coefficients(fit))
+    }
+    EEF.paras[,2] <- EEF.paras[,2] - max(EEF.paras[,2])
+    EEF.paras[,3] <- EEF.paras[,3] - max(EEF.paras[,3])
+    EEF.paras
 }
 
 lik.CI <- function(like, lim ) {
@@ -65,30 +63,31 @@ lik.CI <- function(like, lim ) {
 #
 #  Not that the estimate only works for unimodal likelihoods.
 #
-	L <- like[,2]
-	theta <- like[,1]
+	L <- like[, 2]
+	theta <- like[, 1]
 	n <- length(L)
-	i <- min(c(1L:n)[L>lim])
-	if (is.na(i))
-		stop("likelihood never exceeds ",lim)
-	j <- max(c(1L:n)[L>lim])
-	if (i==j)
+	i <- min(c(1L:n)[L > lim])
+	if (is.na(i)) stop("likelihood never exceeds ", lim)
+	j <- max(c(1L:n)[L > lim])
+	if (i ==j )
 		stop("likelihood exceeds ", lim, " at only one point")
-	if (i==1) bot <- -Inf
-	else {	i <- i+c(-1,0,1)
-		x <- theta[i]
-		y <- L[i]-lim;
-		co <- coefficients( lm(y~x+x^2) );
-		bot <- (-co[2L]+sqrt( co[2L]^2-4*co[1L]*co[3L] ) )/(2*co[3L] )
+	if (i == 1) bot <- -Inf
+	else {
+            i <- i + c(-1, 0, 1)
+            x <- theta[i]
+            y <- L[i]-lim
+            co <- coefficients(lm(y ~ x + x^2))
+            bot <- (-co[2L] + sqrt( co[2L]^2 - 4*co[1L]*co[3L]))/(2*co[3L])
 	}
-	if (j==n) top <- Inf
-	else {	j <- j+c(-1,0,1)
-		x <- theta[j]
-		y <- L[j]-lim;
-		co <- coefficients( lm(y~x+x^2) );
-		top <- (-co[2L]-sqrt( co[2L]^2-4*co[1L]*co[3L] ) )/(2*co[3L] );
+	if (j == n) top <- Inf
+	else {
+            j <- j + c(-1, 0, 1)
+            x <- theta[j]
+            y <- L[j] - lim
+            co <- coefficients(lm(y ~ x + x^2))
+            top <- (-co[2L] - sqrt(co[2L]^2 - 4*co[1L]*co[3L]))/(2*co[3L])
 	}
-	out <- c( bot, top )
+	out <- c(bot, top)
 	names(out) <- NULL
 	out
 }

@@ -14,8 +14,9 @@
 \usage{
 boot.ci(boot.out, conf = 0.95, type = "all", 
         index = 1:min(2,length(boot.out$t0)), var.t0 = NULL, 
-        var.t = NULL, t0 = NULL, t = NULL, L = NULL, h = function(t) t,
-        hdot = function(t) rep(1,length(t)), hinv = function(t) t, \dots)
+        var.t = NULL, t0 = NULL, t = NULL, L = NULL,
+        h = function(t) t, hdot = function(t) rep(1,length(t)),
+        hinv = function(t) t, \dots)
 }
 \arguments{
   \item{boot.out}{

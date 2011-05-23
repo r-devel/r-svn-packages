@@ -7,7 +7,7 @@ Linear Skewness Estimate
 Estimates the skewness of a statistic from its empirical influence values.
 }
 \usage{
-k3.linear(L, strata=NULL)
+k3.linear(L, strata = NULL)
 }
 \arguments{
 \item{L}{

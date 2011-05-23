@@ -9,8 +9,8 @@ it calculates the linear approximation to the statistic of interest for
 that bootstrap sample.
 }
 \usage{
-linear.approx(boot.out, L=NULL, index=1, type=NULL, t0=NULL, 
-              t=NULL, \dots)
+linear.approx(boot.out, L = NULL, index = 1, type = NULL,
+              t0 = NULL, t = NULL, \dots)
 }
 \arguments{
 \item{boot.out}{

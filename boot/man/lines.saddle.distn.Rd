@@ -9,7 +9,7 @@
 }
 \usage{
 \method{lines}{saddle.distn}(x, dens = TRUE, h = function(u) u, J = function(u) 1, 
-     npts = 50, lty = 1, \dots)
+      npts = 50, lty = 1, \dots)
 }
 \arguments{
   \item{x}{

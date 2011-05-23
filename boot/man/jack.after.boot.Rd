@@ -8,8 +8,9 @@ This function calculates the jackknife influence values from a bootstrap
 output object and plots the corresponding jackknife-after-bootstrap plot.
 }
 \usage{
-jack.after.boot(boot.out, index=1, t=NULL, L=NULL, useJ=TRUE, 
-                stinf=TRUE, alpha=NULL, main="", ylab=NULL, \dots)
+jack.after.boot(boot.out, index = 1, t = NULL, L = NULL,
+                useJ = TRUE, stinf = TRUE, alpha = NULL,
+                main = "", ylab = NULL, \dots)
 }
 \arguments{
 \item{boot.out}{
@@ -128,10 +129,10 @@ frets.fun <- function(data, i) {
      v <- pcorr(d)
      c(v[1,],v[2,],v[3,],v[4,])
 }
-frets.boot <- boot(log(as.matrix(frets)), frets.fun, R=999)
+frets.boot <- boot(log(as.matrix(frets)), frets.fun, R = 999)
 #  we will concentrate on the partial correlation between head breadth
 #  for the first son and head length for the second.  This is the 7th
-#  element in the output of frets.fun so we set index=7
+#  element in the output of frets.fun so we set index = 7
 jack.after.boot(frets.boot, useJ = FALSE, stinf = FALSE, index = 7)
 }
 \keyword{hplot}

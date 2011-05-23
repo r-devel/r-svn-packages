@@ -9,8 +9,8 @@ such that the resampling distributions of the linear approximation to a
 statistic have the required means.
 }
 \usage{
-exp.tilt(L, theta=NULL, t0=0, lambda=NULL,
-         strata=rep(1, length(L)))
+exp.tilt(L, theta = NULL, t0 = 0, lambda = NULL,
+         strata = rep(1, length(L)))
 }
 \arguments{
 \item{L}{
