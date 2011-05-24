@@ -60,7 +60,7 @@ importFrom(stats,.checkMFClasses,.getXlevels, as.formula, anova,anova.glmlist,co
             predict,printCoefmat ,quantile,qqnorm, reformulate,residuals,rnorm,runif,termplot,terms,terms.formula, uniroot, 
            var,vcov)
 importFrom(nlme,Dim,corMatrix,logDet,pdConstruct,pdFactor,pdMatrix)
-importFrom(Matrix,t,mean,colMeans,colSums)
+importFrom(Matrix,t,mean,colMeans,colSums,chol,solve,diag)
 
 S3method(anova, gam)
 S3method(influence, gam)

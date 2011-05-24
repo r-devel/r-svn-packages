@@ -71,3 +71,159 @@ sparse.pen <- function(X,area.weight=TRUE) {
   Kxz <- sparseMatrix(i=ii,j=jj,x=oo$D[1:ni+2*ni],dims=c(n,n))
   list(Kx=Kx,Kz=Kz,Kxz=Kxz)
 }
+
+tieMatrix <- function(x) {
+## takes matrix x, and produces sparse matrix P that maps list of unique 
+## rows to full set. Matrix of unique rows is returned in xu.
+## If a smoothing penalty matrix, S, is set up based on rows of xu,
+## then P%*%solve(t(P)%*%P + S,t(P)) is hat matrix. 
+  x <- as.matrix(x)
+  n <- nrow(x)
+  xu <- uniquecombs(x)
+  if (nrow(xu)==nrow(x)) return(NULL)
+  ind <- attr(xu,"index")
+  x <- as.matrix(x)
+  n <- nrow(x)
+  P <- sparseMatrix(i=1:n,j=ind,x=rep(1,n),dims=c(n,nrow(xu)))
+  return(list(P=P,xu=xu))
+}
+
+
+## sparse smooths must be initialized with...
+## 1. a set of variable names, a blocking factor and a type.  
+
+
+spasm.construct.spatps <- function(object,data) {
+## entry object inherits from "spatps" & contains:
+## * terms, the name of 2 arguments of the smooth
+## * block, the name of a blocking factor. Can be NULL.
+## return object also has...
+## * nblock - number of blocks.
+## * ind, list where ind[[i]] gives rows to which block i applies.
+## * S, a list where S[[i]] is the ith penalty coefficient matrix.
+## * Ri, an empty list to contain cholski factors later.
+  if (is.null(object$area.weight)) object$area.weight <- FALSE
+  dat <- list()
+  d <- length(object$terms)
+  if (d != 2) stop("sparse tps only deals with 2D data so far") 
+  for (i in 1:length(object$terms)) 
+    dat[[object$term[i]]] <- get.var(object$term[i],data)
+  ind <- list()
+  n <- length(dat[[1]])
+  ## if there is a blocking factor then set up indexes 
+  ## indicating which data go with which block...
+  if (!is.null(object$block)) {
+    block <- as.factor(get.var(object$block,data))
+    nb <- length(levels(block))
+    for (i in 1:nb) { 
+      ind[[i]] <- (1:n)[block==levels(block)[i]]
+    }
+  } else { ## all one block
+    nb <- 1
+    ind[[1]] <- 1:n
+  }
+  object$nblock <- nb
+  object$ind <- ind
+  ## so ind[[i]] indexes the elements operated on by the ith smoother.
+  object$P <- object$S <- list()
+  for (i in 1:nb) {
+    X <- cbind(dat[[1]][ind[[i]]],dat[[2]][ind[[i]]])
+    dup <- tieMatrix(X) ## strip out any dumplicates...
+    if (is.null(dup)) {     
+      um <- sparse.pen(X,object$area.weight)
+    } else {
+      object$P[[i]] <- dup$P ## maps this block's data to unique set
+      um <- sparse.pen(dup$xu,object$area.weight)
+    }
+    object$S[[i]] <- t(um$Kx)%*%um$Kx + t(um$Kz)%*%um$Kz + 2* t(um$Kxz)%*%um$Kxz
+  }
+  object$Ri <- list()
+  class(object) <- "spatps"
+  object
+}
+
+spasm.sp.spatps <- function(object,sp,get.trH=FALSE) { 
+## Set up smooth, given new smoothing parameter.
+## In particular, construct sparse choleski factor of inverse 
+## smoother matrix, for each block. Optionally returns tr(H) and
+## always log|H|. 
+  if (is.null(object$S)) stop("object not fully initialized")
+  trH <- ldetH <- 0
+  for (i in 1:object$nblock) {
+    n <- length(object$ind[[i]])
+    if (length(object$P) < i || is.null(object$P[[i]])) {
+      Hi <- Diagonal(n) + object$S[[i]] * sp 
+    } else {
+      Hi <- t(object$P[[i]])%*%object$P[[i]] + object$S[[i]] * sp 
+    }
+    object$Ri[[i]] <- chol(Hi,pivot=TRUE)
+    ## next line is wrong and doesn't deal with P
+    ldetH <- ldetH - 2*sum(log(diag(object$Ri[[i]]))) ## WRONG det! need |I-H|
+    if (get.trH) {
+      if (length(object$P) < i || is.null(object$P[[i]])) {
+        R <- solve(object$Ri[[i]]) ## most costly part of routine
+      } else {
+        R <- solve(object$Ri[[i]],t(object$P[[i]]))
+      }
+      trH <- trH + sum(R^2)
+    }
+  }
+  if (get.trH) object$trH <- trH
+  object$ldetH <- ldetH 
+  object
+}
+
+spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
+## apply smooth, or its residual operation to X.
+## if block == 0 then apply whole thing, otherwise X must have the correct 
+## number of rows for the smooth block.
+  if (block>0) { 
+    piv <- attr(object$Ri[[block]],"pivot")
+    n <- length(object$ind[[block]])
+    ipiv <- piv
+    ipiv[piv] <- 1:n
+    if (length(object$P) < block || is.null(object$P[[block]])) {
+      P <- Diagonal(n)
+    } else { P <- object$P[[block]] }
+    if (is.matrix(X)) {
+      X1 <- solve(t(object$Ri[[block]]),t(P)%*%X[piv,])
+      X1 <- solve(object$Ri[[block]],X1)[ipiv,] 
+      if (residual) X <- X - P%*%X1 else X <- P%*%X1;
+    } else {
+      X1 <- solve(t(object$Ri[[block]]),t(P)%*%X[piv])
+      X1 <- solve(objectRi[[block]],X1)[ipiv]
+      if (residual) X <- X - as.numeric(P%*%X1) else X <- as.numeric(P%*%X1);
+    }
+  } else for (i in 1:object$nblock) { ## work through all blocks
+    piv <- attr(object$Ri[[i]],"pivot")
+    n <- length(object$ind[[i]])
+    ipiv <- piv
+    ipiv[piv] <- 1:n
+    if (length(object$P) < i || is.null(object$P[[i]])) 
+    if (is.matrix(X)) {
+      Xi <- t(P)%*%X[object$ind[[i]],]
+      X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
+      X1 <- solve(object$Ri[[i]],X1)[ipiv,]
+      if (residual) X1 <- X[object$ind[[i]],] - P%*%X1
+      X[object$ind[[i]],] <- P%*%X1 
+    } else {
+      Xi <- t(P)%*%X[object$ind[[i]]]
+      X1 <- solve(t(object$Ri[[i]]),Xi[piv])
+      X1 <- solve(object$Ri[[i]],X1)[ipiv]
+      if (residual) X1 <- X[object$ind[[i]]] - as.numeric(P%*%X1)
+      X[object$ind[[i]]] <- as.numeric(P%*%X1) 
+    }    
+  }
+  X
+} 
+
+
+
+## generics for sparse smooth classes...
+
+spasm.construct <- function(object,data,knots) UseMethod("spasm.construct")
+spasm.sp <- function(object,sp) UseMethod("spasm.sp")
+
+
+
+
