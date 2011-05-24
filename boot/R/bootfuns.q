@@ -88,7 +88,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
                  strata  =  rep(1, n), L = NULL, m = 0, weights = NULL,
 		 ran.gen = function(d, p) d, mle = NULL, simple = FALSE, ...,
                  parallel = c("no", "multicore", "snow"),
-                 ncpus = getOption("boot.ncpus", 1L))
+                 ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 {
 #
 # R replicates of bootstrap applied to  statistic(data)
@@ -171,16 +171,19 @@ boot <- function(data, statistic, R, sim = "ordinary",
         else function(r, ...) statistic(data, i[r, ], ...)
     }
     RR <- sum(R)
-    if (ncpus > 1 && (have_mc || have_snow)) {
+    res <- if (ncpus > 1 && (have_mc || have_snow)) {
         if (have_mc) {
-            res <- multicore::mclapply(X = seq_len(RR), FUN = fn, ...,
-                                       mc.cores = ncpus)
+            multicore::mclapply(X = seq_len(RR), FUN = fn, ...,
+                                mc.cores = ncpus)
         } else if (have_snow) {
-            cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-            res <- snow::parLapply(cl, x = seq_len(RR), fun = fn, ...)
-            snow::stopCluster(cl)
+            if (is.null(cl)) {
+                cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                res <- snow::parLapply(cl, x = seq_len(RR), fun = fn, ...)
+                snow::stopCluster(cl)
+                res
+            } else snow::parLapply(cl, x = seq_len(RR), fun = fn, ...)
         }
-    } else res <- lapply(X = seq_len(RR), FUN = fn, ...)
+    } else lapply(X = seq_len(RR), FUN = fn, ...)
     t.star <- matrix(, RR, length(t0))
     for(r in seq_len(RR)) t.star[r, ] <- res[[r]]
 
@@ -1260,7 +1263,7 @@ censboot <-
     function(data, statistic, R, F.surv, G.surv, strata = matrix(1, n, 2),
              sim = "ordinary", cox = NULL, index = c(1, 2), ...,
              parallel = c("no", "multicore", "snow"),
-             ncpus = getOption("boot.ncpus", 1L))
+             ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 {
 #
 #  Bootstrap replication for survival data.  Possible resampling
@@ -1361,16 +1364,20 @@ censboot <-
         }
     }
 
-    if (ncpus > 1L && (have_mc || have_snow)) {
+    res <- if (ncpus > 1L && (have_mc || have_snow)) {
         if (have_mc) {
-            res <- multicore::mclapply(X = seq_len(R), FUN = fn, ...,
-                                       mc.cores = ncpus)
+            multicore::mclapply(X = seq_len(R), FUN = fn, ...,
+                                mc.cores = ncpus)
         } else if (have_snow) {
-            cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-            res <- snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
-            snow::stopCluster(cl)
-        }
-    } else res <- lapply(X = seq_len(R), FUN = fn, ...)
+            if (is.null(cl)) {
+                cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                res <- snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+                snow::stopCluster(cl)
+                res
+            } else snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+       }
+    } else lapply(X = seq_len(R), FUN = fn, ...)
+
     t <- matrix(, R, length(t0))
     for(r in seq_len(R)) t[r, ] <- res[[r]]
 
@@ -3331,32 +3338,46 @@ ts.array <- function(n, n.sim, R, l, sim, endcorr)
     list(starts=st, lengths=lens)
 }
 
-make.ends <- function(a, n){
+make.ends <- function(a, n)
+{
 #  Function which takes a matrix of starts and lengths and returns the
-#  indices for a time series simulation.
+#  indices for a time series simulation. (Viewing the series as circular.)
     mod <- function(i, n) 1 + (i - 1) %% n
     if (a[2L] == 0) numeric()
-    else  mod(seq.int(a[1L], a[1L]+a[2L]-1, length.out=a[2L]), n)
+    else  mod(seq.int(a[1L], a[1L] + a[2L] - 1, length.out = a[2L]), n)
 }
 
 
-tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
-                    endcorr = TRUE, n.sim = NROW(tseries), orig.t = TRUE,
-		    ran.gen = function(tser, n.sim, args) tser,
-		    ran.args = NULL, norm=TRUE, ...) {
+tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
+                   endcorr = TRUE, n.sim = NROW(tseries), orig.t = TRUE,
+                   ran.gen = function(tser, n.sim, args) tser,
+                   ran.args = NULL, norm = TRUE, ...,
+                   parallel = c("no", "multicore", "snow"),
+                   ncpus = getOption("boot.ncpus", 1L), cl = NULL)
+{
 #
 #  Bootstrap function for time series data.  Possible resampling methods are
 #  the block bootstrap, the stationary bootstrap (these two can also be
 #  post-blackened), model-based resampling and phase scrambling.
 #
+    if (missing(parallel)) parallel <- getOption("boot.parallel", "no")
+    parallel <- match.arg(parallel)
+    have_mc <- have_snow <- FALSE
+    if (parallel != "no" && ncpus > 1L) {
+        if (parallel == "multicore")
+            have_mc <- require("multicore", quietly = TRUE)
+        else if (parallel == "snow")
+            have_snow <- require("snow", quietly = TRUE)
+        if (!have_mc && !have_snow) ncpus <- 1L
+    }
+
     tscl <- class(tseries)
-    if (R <= 0) stop("R must be positive")
     R <- floor(R)
+    if (R <= 0) stop("R must be positive")
     call <- match.call()
     if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) runif(1)
     seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
     t0 <- if (orig.t) statistic(tseries, ...) else NULL
-    t <- numeric()
     ts.orig <- if (!isMatrix(tseries)) as.matrix(tseries) else tseries
     n <- nrow(ts.orig)
     if (missing(n.sim)) n.sim <- n
@@ -3366,48 +3387,60 @@ tsboot <- function(tseries, statistic, R, l=NULL, sim = "model",
     else if ((is.null(l) || (l <= 0) || (l > n)))
         stop("invalid value of l")
     if (sim == "geom") endcorr <- TRUE
+    res <- vector("list", R)
     if (sim == "scramble") {
-# Phase scrambling
-        for (r in 1L:R) {
-            ts.b <- scramble(tseries,norm)
-            tmp <- statistic(ts.b, ...)
-            t <- rbind(t, tmp)
+        ## Phase scrambling
+        fn <- function(r, ...) {
+            ts.b <- scramble(tseries, norm)
+            statistic(ts.b, ...)
         }
-    }
-    else if (sim == "model") {
-# Model-based resampling
-        for (r in 1L:R) {
+    } else if (sim == "model") {
+        ## Model-based resampling
+        fn <- function(r, ...) {
             ts.b <- ran.gen(tseries, n.sim, ran.args)
-            tmp <- statistic(ts.b, ...)
-            t <- rbind(t, tmp)
+            statistic(ts.b, ...)
         }
-    }
-    else if ((sim == "fixed") || (sim == "geom")) {
-# Otherwise generate an R x n matrix of starts and lengths for blocks.
-# The actual indices of the blocks can then easily be found and these
-# indices used for the resampling.  If ran.gen is present then
-# post-blackening is required when the blocks have been formed.
+    } else if (sim %in% c("fixed", "geom")) {
+        ## Otherwise generate an R x n matrix of starts and lengths for blocks.
+        ## The actual indices of the blocks can then easily be found and these
+        ## indices used for the resampling.  If ran.gen is present then
+        ## post-blackening is required when the blocks have been formed.
 	i.a <- ts.array(n, n.sim, R, l, sim, endcorr)
-        for(r in 1L:R) {
-            if (sim == "geom")
-                ends <- cbind(i.a$starts[r,  ],
-                              i.a$lengths[r,  ])
-            else	ends <- cbind(i.a$starts[r,], i.a$lengths)
+        fn <- function(r, ...) {
+            ends <- if (sim == "geom")
+                cbind(i.a$starts[r,  ], i.a$lengths[r,  ])
+            else  cbind(i.a$starts[r, ], i.a$lengths)
             inds <- apply(ends, 1L, make.ends, n)
             if (is.list(inds))
-                inds <- matrix(unlist(inds)[1L:n.sim],n.sim,1L)
+                inds <- matrix(unlist(inds)[1L:n.sim], n.sim, 1L)
             else inds <- matrix(inds, n.sim, 1L)
-            ts.b <- ts.orig[inds,]
-            ts.b <- ran.gen(ts.b, n.sim, ran.args)
-            tmp <- statistic(ts.b, ...)
-            t <- rbind(t, tmp)
+            ts.b <- ran.gen(ts.orig[inds,], n.sim, ran.args)
+            res[[r]] <- statistic(ts.b, ...)
         }
     } else
         stop("unrecognized value of sim")
-    ts.return(t0=t0, t=t, R=R, tseries=tseries, seed=seed,
-              stat=statistic, sim=sim, endcorr=endcorr, n.sim=n.sim,
-              l=l, ran.gen=ran.gen, ran.args=ran.args, call=call,
-              norm=norm)
+
+    res <- if (ncpus > 1L && (have_mc || have_snow)) {
+        if (have_mc) {
+            multicore::mclapply(X = seq_len(R), FUN = fn, ...,
+                                mc.cores = ncpus)
+        } else if (have_snow) {
+            if (is.null(cl)) {
+                cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                res <- snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+                snow::stopCluster(cl)
+                res
+            } else snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+       }
+    } else lapply(X = seq_len(R), FUN = fn, ...)
+
+    t <- matrix(, R, length(res[[1L]]))
+    for(r in seq_len(R)) t[r, ] <- res[[r]]
+
+    ts.return(t0 = t0, t = t, R = R, tseries = tseries, seed = seed,
+              stat = statistic, sim = sim, endcorr = endcorr, n.sim = n.sim,
+              l = l, ran.gen = ran.gen, ran.args = ran.args, call = call,
+              norm = norm)
 }
 
 

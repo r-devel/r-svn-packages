@@ -19,7 +19,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
      strata = rep(1,n), L = NULL, m = 0, weights = NULL, 
      ran.gen = function(d, p) d, mle = NULL, simple = FALSE, ...,
      parallel = c("no", "multicore", "snow"),
-     ncpus = getOption("boot.ncpus", 1L))
+     ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 }
 \arguments{
   \item{data}{
@@ -144,6 +144,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   \item{ncpus}{
     integer: number of processes to be used in parallel operation.
   }
+  \item{cl}{
+    An optional \pkg{snow} cluster.
+  }
 }
 \value{
   The returned value is an object of class \code{"boot"}, containing the
@@ -247,10 +250,10 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   newly created \R processes, and \code{statistic} needs to arrange to
   set up the environment it needs: often a good way to do that is to
   make use of lexical scoping since when \code{statistic} is sent to the
-  worker processes its enclosing environment is also sent.  There is
-  only support in \code{boot} for sock clusters on the current machine:
+  worker processes its enclosing environment is also sent.
   \code{parallel = "snow"} is primarily intended to be used on multi-core
-  Windows machine where package \code{multicore} is not available.
+  Windows machine where package \code{multicore} is not available, and
+  by default sets up a socket cluster on the local machine.
 
   For most of the \code{boot} methods the resampling is done in the
   master process, but not if \code{simple = TRUE} nor
@@ -264,7 +267,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   the random number generator based on the wall clock.
 
   \code{\link{censboot}(sim = "wierd")} is another case where resampling
-  is done in the worker processes.
+  is done in the worker processes.  This is also true of most of the schemes
+  in \code{\link{censboot}}, the exception being \code{sim == "fixed"}
+  and \code{sim == "geom"} with the default \code{ran.gen}.
 }
 \references{
 There are many references explaining the bootstrap and its variations.

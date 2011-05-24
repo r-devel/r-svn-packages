@@ -13,7 +13,7 @@ resampling using a Cox regression model.
 censboot(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
          sim = "ordinary", cox = NULL, index = c(1, 2), \dots,
          parallel = c("no", "multicore", "snow"),
-         ncpus = getOption("boot.ncpus", 1L))
+         ncpus = getOption("boot.ncpus", 1L), cl = NULL)
 }
 \arguments{
   \item{data}{
@@ -95,7 +95,7 @@ censboot(data, statistic, R, F.surv, G.surv, strata = matrix(1,n,2),
     \code{censboot}, and that \code{X} and \code{FUN} will clash, as will
     \code{x} and \code{fun} for \code{parallel = "snow"}.
   }
-  \item{parallel, ncpus}{
+  \item{parallel, ncpus, cl}{
     See the help for \code{\link{boot}}.
   }
 }
