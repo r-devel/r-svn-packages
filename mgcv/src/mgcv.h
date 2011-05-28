@@ -82,3 +82,8 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
 void k_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,int *get_a);
 void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
             int *get_a,double *cut_off);
+void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
+             double *diagA,double *lb,int *n,double *tol);
+void sspl_apply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol);
+
+

@@ -37,6 +37,8 @@ R_CMethodDef CEntries[] = {
     {"sparse_penalty",(DL_FUNC)&sparse_penalty,8},
     {"k_nn",(DL_FUNC)&k_nn,8},
     {"kba_nn",(DL_FUNC)&kba_nn,9},
+    {"sspl_construct",(DL_FUNC)&sspl_construct,9},
+    {"sspl_apply",(DL_FUNC)&sspl_apply,8},
     {NULL, NULL, 0}
 };
 

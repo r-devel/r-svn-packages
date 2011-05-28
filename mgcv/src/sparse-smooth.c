@@ -796,4 +796,381 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
 }
 
 
+/************************************************************/
+/* Fast stable full rank cubic spline smoothing based on    
+   deHoog and Hutchinson, 1987 and Hutchinson and deHoog,
+   1985.... All O(n) by exploiting band structure. 
+/************************************************************/
+
+void inline QTz(int i,int j,double c,double s, double *z) { 
+/* applies a Givens rotation to z */   
+  double temp;
+  temp=z[i]*c+z[j]*s;
+  z[j]=z[j]*c-z[i]*s;
+  z[i]=temp;
+}
+
+
+void inline givens(double a, double b,double *c,double *s) {
+/* Obtain Givens rotation c and s to annihilate b (setting 
+   a = sqrt(a^2 + b^2))*/
+  double t;
+  if (a==0.0) { *c=1.0;*s=0.0;} else
+  if (fabs(a)<=fabs(b))
+  { t=a/b;
+    *s=1/sqrt(1+t*t);
+    *c= (*s)*t;
+  } else
+  { t=b/a;
+    *c=1/sqrt(1+t*t);
+    *s=(*c)*t;
+  }
+}
+void ss_setup(double *ub,double *lb,double *x,double *w, int *n) {
+/* The upper and lower bands ,ub and lb of the matrix C of H&dH (3.2) are 
+   set up the lower band coming from the Choleski decomposition of H (3.1)*/
+  double *h,*hh,*hh1,*lb1,*ub2,*ub1;
+  int i;
+  h = (double *)calloc((size_t) *n,sizeof(double));
+  hh=(double *)calloc((size_t) *n,sizeof(double));
+  hh1=(double *)calloc((size_t) *n,sizeof(double));
+  for (i=0;i< *n-1;i++) h[i]=x[i+1]-x[i];
+  for (i=0;i< *n-2;i++) hh[i]=2.0*(h[i]+h[i+1])/3.0;
+  for (i=0;i< *n-3;i++) hh1[i]=h[i+1]/3.0;
+ 
+  lb[0] = sqrt(hh[0]);
+  lb1 = lb + *n; /* pointers to second band */
+
+  for (i=1;i< *n-3;i++)
+  { lb[i]= sqrt(hh[i]-lb1[i-1]*lb1[i-1]);
+    lb1[i]= hh1[i]/lb[i];
+  }
+  lb[*n-3] = sqrt(hh[*n-3]-lb1[*n-4]*lb1[*n-4]);
+  ub1 = ub + *n;ub2 = ub1 + *n; 
+  for (i=0;i< *n-2;i++)
+  { ub[i] = w[i]/h[i];
+    ub1[i] = -w[i+1]*(1/h[i]+1/h[i+1]);
+    ub2[i] = w[i+2]/h[i+1];
+  }
+  free(h);free(hh);free(hh1);
+}
+
+
+
+void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
+             double *diagA,double *lb,int *n,double *tol) {
+/* function to set up smoothing spline of data at x weighted by w.
+   x is ordered. dim(x) = n. lambda is the smoothing parameter. 
+
+   w propto 1/stdev(y), where y is the response to be smoothed. This is the 
+   usual convention, but H and deH actually use the reciprocal of this, so 
+   routine converts.
+
+   U and V will each contain n pairs of Givens rotations and are therefor of 
+   length 4*n. They are packed in 4 vectors...
+   [rotation 0 s, rotation 0 c, rotation 1 s, rotation 1 c] 
+   
+   lb is storage for the lower band in dH&H terms. It is needed for computing
+   spline coefficients. Dimension is 2 * n;
+
+   diagA will contain the diagonal elements of the influence matrix on exit. 
+
+   duplicates are dealt with here by deleting duplicate x values and summing the 
+   squared weights for the duplicate set. On exit *n is the number of unique x values.
+   idea is that y's at duplicate x values will be averaged before smoothing.
+  
+   x values within tol of each other are treated as duplicates.
+*/   
+  double *ub,rho,*p,*p1,*ub1,*ub2,*lb1,c,s,*U0s,*U0c,*U1s,*U1c,
+    *V0s,*V0c,*V1s,*V1c,upper,w2,
+    L11,L12,L13,L21,L22,L23,L31,L32,L33,X1,X2,X3,Lt,temp;
+  int i,k,ok;
+  /* first check for duplicates */
+  k=0;ok=1;
+  for (i=1;i<*n;i++) if (x[k] + *tol < x[i]) { 
+     if (!ok) { w[k] = sqrt(w2);}
+     k++;
+     x[k] = x[i]; 
+     w[k] = w[i];ok=1;
+   } else { /* a duplicate */
+     if (ok) { w2 = w[k]*w[k];}
+     w2 += w[i]*w[i];
+     ok=0;
+  }
+  if (!ok) { w[k] = sqrt(w2);} 
+  *n = k+1;
+
+  for (i=0;i<*n;i++) w[i] = 1/w[i];  /* convert to H and de H convention */
+
+  ub = (double *)calloc((size_t)(*n * 3),sizeof(double));
+  ss_setup(ub,lb,x,w,n);
+  rho = sqrt(*lambda);
+  /* multiply the upper band of the matrix by the smoothing parameter */
+  for (p = ub,p1 = ub + *n * 3;p < p1;p++) *p *= rho;
+  /* Now do the QR decomposition of double banded matrix C... */
+  ub1 = ub + *n;ub2 = ub1 + *n;
+  lb1 = lb + *n; 
+  U0s = U;U0c = U + *n;
+  U1s = U + *n * 2;U1c = U + *n *3;
+  V0s = V;V0c = V + *n;
+  V1s = V + *n * 2;V1c = V + *n *3;
+  for (i=0;i<*n-3;i++)
+  { givens(ub[i+1],lb1[i],&c,&s);
+    temp = c*lb[i]-s*ub1[i];
+    ub[i+1]=s*lb1[i]+c*ub[i+1];
+    ub1[i]=s*lb[i]+c*ub1[i];
+    lb[i]=temp;
+    U1s[i] = -s; U1c[i] = c; 
+
+    givens(ub[i],lb[i],&c,&s);
+    ub[i]=c*ub[i]+s*lb[i];
+    U0s[i] = -s; U0c[i] = c; 
+
+    givens(ub[i],ub1[i],&c,&s);
+    ub[i]=c*ub[i]+s*ub1[i];
+    upper=s*ub[i+1];
+    ub[i+1]=c*ub[i+1];
+    V0s[i] = -s;V0c[i] = c;
+
+    givens(ub[i],ub2[i],&c,&s);
+    ub1[i+1]=c*ub1[i+1]-s*upper;
+    if (i!=(*n-4)) ub[i+2]=c*ub[i+2];
+    V1s[i] = -s; V1c[i] = c;
+
+  }
+  i = *n-3;
+  givens(ub[i],lb[i],&c,&s);
+  ub[i]=c*ub[i]+s*lb[i];
+  U0s[i] = -s; U0c[i] = c; 
+
+  givens(ub[i],ub1[i],&c,&s);
+  ub[i]=c*ub[i]+s*ub1[i];
+  V0s[i] = -s;V0c[i] = c;
+
+  givens(ub[i],ub2[i],&c,&s);
+ 
+  V1s[i] = -s; V1c[i] = c;
+
+  /* Now compute the trace of the influence matrix */ 
+
+  V0c += *n-3;V0s += *n-3;
+  V1c += *n-3;V1s += *n-3;
+  U0c += *n-3;U0s += *n-3;
+  U1c += *n-3;U1s += *n-3;
+
+  L31 = *V1c;L33 = - *V1s;
+  L32 = -L31 * *V0s;L31 = L31 * *V0c;
+
+  X3 = -L31 * *U0s;
+  L31 = L31 * *U0c;
+
+  diagA[*n-1] = L33*L33;
+
+  L33 = L32;L32=L31;
+
+  V0c--;V0s--;V1c--;V1s--;U0c--;U0s--;U1c--;U1s--;
+
+  L21 = *V1c;L23 = - *V1s;
+  L31 = L33 * *V1s;
+  L33 = L33 * *V1c;
+  L22 = -L21 * *V0s;
+  L21 = L21 * *V0c;
+  Lt = L31 * *V0c + L32 * *V0s;
+  L32 = L32 * *V0c - L31 * *V0s;
+  L31=Lt;
+
+  X2 = -L21 * *U0s;L21 = L21 * *U0c;
+  X3 = -L31 * *U0s;L31 = L31 * *U0c;
+  L22 = L22 * *U1c + X2 * *U1s;
+  L32 = L32 * *U1c + X3 * *U1s;
+
+  diagA[*n-2]=(L33*L33+L23*L23);
+
+  givens(L21,L31,&c,&s);        /** The succesive rotation  **/
+  L21 = L21*c+L31*s;
+  Lt=L22*c+L32*s;
+  L32=L32*c-L22*s;L22=Lt;
+  L33=L32;L23=L22;L22=L21;
+
+ 
+  for (i = *n-5;i>=0;i--)
+  { V0c--;V0s--;V1c--;V1s--;U0c--;U0s--;U1c--;U1s--;
+    L13 = - *V1s;L11 = *V1c;
+    L21 = L23 * *V1s;L23 *=  *V1c;
+    L31 = L33 * *V1s;L33 *=  *V1c;
+    givens(L11,L31,&c,&s);s = -s; /** Rotation to remove upper
+		  element BEFORE it propagates **/
+    L11 = L11*c - L31*s;
+    L12 =- L11 * *V0s;
+    L11 *= *V0c;
+    Lt = L21 * *V0c + L22 * *V0s;
+    L22 = L22 * *V0c - L21 * *V0s;
+    L21=Lt;
+
+    X1 = -L11 * *U0s;
+    L11 *= *U0c;
+    L12 = L12 * *U1c + X1 * *U1s;
+ 
+    X2 = -L21 * *U0s;
+    L21 *= *U0c;
+    L22 = L22 * *U1c + X2 * *U1s;
+
+    givens(L11,L21,&c,&s);      /** Second rotation removing
+	     upper element **/
+    L11 = L11*c+L21*s;
+    Lt = L12*c+L22*s;
+    L22 = L22*c-L12*s;L12=Lt;
+    
+    diagA[i+2]=L33*L33+L23*L23+L13*L13;
+    if (i!=0)
+    { L33=L22;L23=L12;L22=L11;
+    }
+  }
+  diagA[1]=L22*L22+L12*L12;
+  diagA[0]=L11*L11;
+  for (i=0;i<*n;i++) diagA[i] = 1.0 - diagA[i];
+  free(ub);
+}
+
+
+void sspl_apply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol) {
+/* Apply the smoothing spline stored in U and V to the data in y, 
+   with weights w. The smoothed values are returned in y.
+   
+   x and w are also modified here.
+
+   nf is length of y and x. n is the number of unique x values.
+
+*/
+  int i,k,ok;
+  double *Wy,*U0s,*U0c,*U1s,*U1c,
+    *V0s,*V0c,*V1s,*V1c,*p,*p1,*p2,w2,*xx;
+  if (*nf > *n) { /* deal with duplicates */
+   xx = (double *)calloc((size_t)*nf,sizeof(double));
+   for (p=x,p1=x + *nf,p2=xx;p<p1;p++,p2++) *p2 = *p;
+   k=0;ok=1;
+   for (i=1;i<*nf;i++) if (xx[k] + *tol < xx[i]) { 
+     if (!ok) { w[k] = sqrt(w2);y[k] /= w2;}
+     k++;
+     xx[k] = xx[i];y[k] = y[i];
+     w[k] = w[i];ok=1;
+   } else { /* a duplicate */
+     if (ok) { w2 = w[k]*w[k];y[k] *= w[k]*w[k];}
+     w2 += w[i]*w[i];
+     y[k] += y[i] * w[i] * w[i];
+     ok=0;
+   }
+   if (!ok) { w[k] = sqrt(w2);y[k]/=w2;}
+   free(xx);
+  }
+
+  for (i=0;i<*n;i++) w[i] = 1/w[i];  /* convert to H and de H convention */
+
+  /* ... y now contains weighted averages at unique x values, w corresponding weights */
+  
+  Wy = (double *)calloc((size_t) 2 * *n,sizeof(double));
+  for (i=0;i < *n;i++) Wy[i] = y[i]/w[i];
+  /* set up pointers to various rotation pairs.. */
+  U0s = U;U0c = U + *n;
+  U1s = U + *n * 2;U1c = U + *n *3;
+  V0s = V;V0c = V + *n;
+  V1s = V + *n * 2;V1c = V + *n *3;
+  for (i=0;i<*n-3;i++)
+  { QTz(i+1,*n+i,U1c[i],-U1s[i],Wy);
+
+    QTz(i,*n+i,U0c[i],-U0s[i],Wy);
+   
+    QTz(i,i+1,V0c[i],-V0s[i],Wy);
+  
+    QTz(i,i+2,V1c[i],-V1s[i],Wy);
+  }
+  i= *n-3;
+  QTz(i,*n+i,U0c[i],-U0s[i],Wy);
+ 
+  QTz(i,i+1,V0c[i],-V0s[i],Wy);
+ 
+  QTz(i,i+2,V1c[i],-V1s[i],Wy);
+
+  /* Calculates Weighted Residual */
+
+  for (i = *n-2;i<2 * *n ;i++) Wy[i]=0.0;
+
+  for (i= *n-3;i>=0;i--)
+  { QTz(i,i+2,V1c[i],V1s[i],Wy);
+    QTz(i,i+1,V0c[i],V0s[i],Wy);
+    QTz(i,*n+i,U0c[i],U0s[i],Wy);
+    if (i != *n-3) QTz(i+1,*n+i,U1c[i],U1s[i],Wy);
+  }
+
+  /* get fitted values... */  
+  for (i=0;i<*n;i++) Wy[i] = y[i] - Wy[i]*w[i];
+
+  if (*nf > *n) { /* deal with duplicates */
+   k=0;ok=1;
+   y[0] = Wy[0];
+   for (i=1;i<*nf;i++) if (x[k] + *tol < x[i]) { /* distinct */
+     k++;x[k] = x[i]; y[i] = Wy[k];
+   } else { /* a duplicate */
+     y[i] = Wy[k];
+   }
+  } else {
+    for (i=0;i<*n;i++) y[i] = Wy[i];
+  }
+  free(Wy);
+}
+
+void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol,int *m) {
+/* apply smoothing spline to the m columns of y */
+  int i,xw_store=0;
+  double *xx,*ww,*p,*p1,*p2;
+  if (*m > 1 && *nf != *n) xw_store=1;
+  if (xw_store) { /* must store original x and w */
+    xx = (double *)calloc((size_t)*nf,sizeof(double));
+    ww = (double *)calloc((size_t)*nf,sizeof(double));
+    for (p=xx,p1=xx + *nf,p2=x;p<p1;p++,p2++) *p = *p2;
+    for (p=ww,p1=ww + *nf,p2=w;p<p1;p++,p2++) *p = *p2;
+  } 
+  for (i=0;i < *m;i++) {
+    if (xw_store) { /* sspl_apply modifies x and w... need to reset */
+      for (p=xx,p1=xx + *nf,p2=x;p<p1;p++,p2++) *p2 = *p;
+      for (p=ww,p1=ww + *nf,p2=w;p<p1;p++,p2++) *p2 = *p;
+    }
+    sspl_apply(y,x,w,U,V,n,nf,tol); /* smooth y */
+    y += *nf;
+  }
+  if (xw_store) {free(xx);free(ww);}
+}
+
+void ss_coeffs(double *lb,double *a,double *b,double *c,double *d,double *x, int *n) { 
+/* given smoothed values in a (as computed in ss_apply) and corresponding unique values in
+   x, computes coefficients of piecewise cubics making up spline. Note that ubder duplication
+   what is returned by ss_apply will contain duplicates, this routine requires the unduplicated 
+   version of the smoothed values.
+   if x[i] <= x <= x[i+1] then 
+     f(x) = a[i] + b[i]*(x-x[i]) + c[i]*(x-x[i])^2 + d[i]*(x-x[i])^3
+ */
+  double *GTA,*z,*h,*lb1;
+  int i;
+  GTA=(double *)calloc((size_t)*n,sizeof(double));
+  z=(double *)calloc((size_t)*n,sizeof(double));
+  h=(double *)calloc((size_t)*n-1,sizeof(double));
+  for (i=0;i<*n-1;i++) h[i]=x[i+1]-x[i];
+  for (i=0;i<*n-2;i++)
+  GTA[i]=a[i]/h[i]-a[i+1]*(1/h[i]+1/h[i+1])+a[i+2]/h[i+1];
+  lb1 = lb + *n;
+  z[0]=GTA[0]/lb[0];
+  for (i=1;i<*n-2;i++) z[i]=(GTA[i]-lb1[i-1]*z[i-1])/lb[i];
+  c[*n-2]=z[*n-3]/lb[*n-3];c[*n-1]=0.0;c[0]=0.0;
+  for (i=*n-4;i>=0;i--)
+  c[i+1]=(z[i]-lb1[i]*c[i+2])/lb[i];
+  b[*n-1]=d[*n-1]=0;
+  for (i=0;i<*n-1;i++)
+  { d[i]=(c[i+1]-c[i])/(3*h[i]);
+    b[i]=(a[i+1]-a[i])/h[i]-c[i]*h[i]-d[i]*h[i]*h[i];
+  }
+  free(GTA);free(z);free(h);
+}
+
+
+
 
