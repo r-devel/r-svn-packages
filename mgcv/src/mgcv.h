@@ -84,6 +84,6 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
             int *get_a,double *cut_off);
 void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
              double *diagA,double *lb,int *n,double *tol);
-void sspl_apply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol);
+void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol,int *m);
 
 

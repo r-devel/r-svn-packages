@@ -754,7 +754,7 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
      k_nn(X,dist,area,ni,&j,d,k,a_weight);*/ /* pure nearest neighbour code */
   k_add = *k - 2 * *d; 
   kba_nn(X,dist,area,ni,n,d,&k_add,a_weight,&cut_off);
-  Rprintf("Starting main loop...\n");
+  /*  Rprintf("Starting main loop...\n");*/
   for (i=0;i<*n;i++) { /* work through all points */ 
     M[0] = 1.0;for (j=1;j<6;j++) M[j*6] = 0.0;
     for (j=1;j<6;j++) {
@@ -774,7 +774,7 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
     /* call mgcv_svd_full to pseudoinvert M */
     j = 6;
     mgcv_svd_full(M,Vt,sv,&j,&j);
-    Rprintf("%d done svd...\n",i);
+    /* Rprintf("%d done svd...\n",i);*/
     for (j=0;j<6;j++) if (sv[j]>sv[1]*0) sv[j] = 1/sv[j];
     /* Now form V diag(sv) M' */
     for (ii=0;ii<6;ii++) { 
@@ -783,7 +783,7 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
     }
     j=6;
     mgcv_mmult(Mi,Vt,M,&true,&true,&j,&j,&j);
-    Rprintf("done mmult...\n");
+    /*  Rprintf("done mmult...\n"); */
     /* Now read coefficients of second derivatives out into D matrix */
     if (*a_weight) x = sqrt(area[i]); else x = 1.0; 
     for (l=0;l<3;l++) for (j=0;j<6;j++)

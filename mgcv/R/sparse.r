@@ -158,6 +158,8 @@ spasm.construct.spatps <- function(object,data) {
 ## * ind, list where ind[[i]] gives rows to which block i applies.
 ## * S, a list where S[[i]] is the ith penalty coefficient matrix.
 ## * Ri, an empty list to contain cholski factors later.
+## * e, is a matrix used for efficient estimation of the trace of the 
+##      influence matrix.
   if (is.null(object$area.weight)) object$area.weight <- FALSE
   dat <- list()
   d <- length(object$terms)
@@ -180,11 +182,12 @@ spasm.construct.spatps <- function(object,data) {
   }
   object$nblock <- nb
   object$ind <- ind
+ 
   ## so ind[[i]] indexes the elements operated on by the ith smoother.
-  object$P <- object$S <- list()
+  object$e <- object$P <- object$S <- list()
   for (i in 1:nb) {
     X <- cbind(dat[[1]][ind[[i]]],dat[[2]][ind[[i]]])
-    dup <- tieMatrix(X) ## strip out any dumplicates...
+    dup <- tieMatrix(X) ## strip out any duplicates...
     if (is.null(dup)) {     
       um <- sparse.pen(X,object$area.weight)
     } else {
@@ -192,6 +195,9 @@ spasm.construct.spatps <- function(object,data) {
       um <- sparse.pen(dup$xu,object$area.weight)
     }
     object$S[[i]] <- t(um$Kx)%*%um$Kx + t(um$Kz)%*%um$Kz + 2* t(um$Kxz)%*%um$Kxz
+    ## create random deviates for use in estimation of trace of influence matrix
+    nr <- 50;n <- nrow(X)
+    object$e[[i]] <- matrix(sample(rep(c(-1,1),nr*n),nr*2*n),n,nr*2)
   }
   object$Ri <- list()
   class(object) <- "spatps"
@@ -217,11 +223,13 @@ spasm.sp.spatps <- function(object,sp,get.trH=FALSE) {
     ldetH <- ldetH - 2*sum(log(diag(object$Ri[[i]]))) ## WRONG det! need |I-H|
     if (get.trH) {
       if (length(object$P) < i || is.null(object$P[[i]])) {
-        R <- solve(object$Ri[[i]]) ## most costly part of routine
+        #R <- solve(object$Ri[[i]]) ## most costly part of routine
+        A <- solve(object$Ri[[i]],object$e[[i]]) 
       } else {
-        R <- solve(object$Ri[[i]],t(object$P[[i]]))
+        #R <- solve(object$Ri[[i]],t(object$P[[i]]))
+        A <- solve(object$Ri[[i]],t(obect$P[[i]])%*%object$e[[i]])
       }
-      trH <- trH + sum(R^2)
+      trH <- trH + sum(A^2)/ncol(object$e[[i]])
     }
   }
   if (get.trH) object$trH <- trH
@@ -255,7 +263,9 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
     n <- length(object$ind[[i]])
     ipiv <- piv
     ipiv[piv] <- 1:n
-    if (length(object$P) < i || is.null(object$P[[i]])) 
+    if (length(object$P) < i || is.null(object$P[[i]])){ 
+      P <- Diagonal(n)
+    } else { P <- object$P[[i]] }
     if (is.matrix(X)) {
       Xi <- t(P)%*%X[object$ind[[i]],]
       X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
@@ -273,13 +283,97 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
   X
 } 
 
+#########################################################
+# routines for full rank cubic spline smoothers, based on
+# deHoog and Hutchinson, 1987.
+#########################################################
+
+
+spasm.construct.cus <- function(object,data) {
+## entry object inherits from "cus" & contains:
+## * terms, the name of the argument of the smooth
+## * block, the name of a blocking factor. Can be NULL.
+## return object also has...
+## * nblock - number of blocks.
+## * ind, list where ind[[i]] gives rows to which block i applies.
+## * spl, and empty list which will contain intialised cubic 
+##   spline smoothers for each block, once a smoothing parameter 
+##   has been supplied...
+  dat <- list()
+  d <- length(object$terms)
+  if (d != 1) stop("cubic spline only deals with 1D data") 
+  object$x <- get.var(object$term[1],data)
+  ind <- list()
+  n <- length(object$x)
+  ## if there is a blocking factor then set up indexes 
+  ## indicating which data go with which block...
+  if (!is.null(object$block)) {
+    block <- as.factor(get.var(object$block,data))
+    nb <- length(levels(block))
+    for (i in 1:nb) { 
+      ind[[i]] <- (1:n)[block==levels(block)[i]]
+    }
+  } else { ## all one block
+    nb <- 1
+    ind[[1]] <- 1:n
+  }
+  object$nblock <- nb
+  object$ind <- ind
+ 
+  ## so ind[[i]] indexes the elements operated on by the ith smoother.
+  object$spl <- list()
+  class(object) <- "cus"
+  object
+}
+
+spasm.sp.cus <- function(object,sp,get.trH=FALSE) { 
+## Set up full cubic spline smooth, given new smoothing parameter.
+## In particular, construct the Givens rotations defining the 
+## smooth and compute the trace of the influence matrix. 
+  if (is.null(object$spl)) stop("object not fully initialized")
+  trH <-  0
+  for (i in 1:object$nblock) {
+    n <- length(object$ind[[i]])
+    object$spl[[i]] <- setup.spline(x[object$ind[[i]]],lambda=sp)
+    trH <- trH + object$spl[[i]]$trA
+  }
+  if (get.trH) object$trH <- trH
+  object$ldetH <- NA
+  object
+}
+
+spasm.smooth.cus <- function(object,X,residual=FALSE,block=0) {
+## apply smooth, or its residual operation to X.
+## if block == 0 then apply whole thing, otherwise X must have the correct 
+## number of rows for the smooth block.
+  if (block>0) { 
+
+    n <- length(object$ind[[block]])
+    if (residual) X <- X - apply.spline(object$spl[[block]],X)
+    else X <-  apply.spline(object$spl[[block]],X)
+
+  } else for (i in 1:object$nblock) { ## work through all blocks 
+    if (is.matrix(X)) {
+      ind <- object$ind[[i]]
+      if (residual) X[ind,] <- X[ind,] - apply.spline(object$spl[[i]],X[ind,])
+      else X[ind,] <-  apply.spline(object$spl[[i]],X[ind,])
+    } else {
+      ind <- object$ind[[i]]
+      if (residual) X[ind] <- X[ind] - apply.spline(object$spl[[i]],X[ind])
+      else X[ind] <-  apply.spline(object$spl[[i]],X[ind]) 
+    }    
+  }
+  X
+} 
+
+
 
 
 ## generics for sparse smooth classes...
 
 spasm.construct <- function(object,data,knots) UseMethod("spasm.construct")
 spasm.sp <- function(object,sp) UseMethod("spasm.sp")
-
+spasm.smooth <- function(object,X,residual=FALSE,block=0) UseMethod("spasm.smooth")
 
 
 

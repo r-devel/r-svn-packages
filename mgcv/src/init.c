@@ -38,7 +38,7 @@ R_CMethodDef CEntries[] = {
     {"k_nn",(DL_FUNC)&k_nn,8},
     {"kba_nn",(DL_FUNC)&kba_nn,9},
     {"sspl_construct",(DL_FUNC)&sspl_construct,9},
-    {"sspl_apply",(DL_FUNC)&sspl_apply,8},
+    {"sspl_mapply",(DL_FUNC)&sspl_mapply,9},
     {NULL, NULL, 0}
 };
 
