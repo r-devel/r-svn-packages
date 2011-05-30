@@ -2986,9 +2986,9 @@ saddle.distn <-
         if (!is.function(u)) stop("u must be a function")
         if (is.null(t)) {
             t1 <- t0[1L]-2*t0[2L]
-            sad <- saddle(A=A(t1, ...), u=u(t1, ...),
-                          wdist=wdist, type=type, d1=1,
-                          init=init, mu=mu, LR=LR, strata=strata)
+            sad <- saddle(A = A(t1, ...), u = u(t1, ...),
+                          wdist = wdist, type = type, d1 = 1,
+                          init = init, mu = mu, LR = LR, strata = strata)
             bdu <- bdl <- NULL
             while (is.na(sad$spa[2L]) || (sad$spa[2L] > ep1) ||
                    (sad$spa[2L] < ep1/100)) {
@@ -3006,24 +3006,25 @@ saddle.distn <-
                     stop("unable to find range")
                 if (is.null(bdl)) {
                     t1 <- 2*t1-t0[1L]
-                    sad<-saddle(A=A(t1, ...),
-                                u=u(t1, ...), wdist=wdist,
-                                type=type, d1=1, init=init,
-                                mu=mu, LR=LR, strata=strata)
+                    sad <- saddle(A = A(t1, ...),
+                                u = u(t1, ...), wdist = wdist,
+                                type = type, d1 = 1, init = init,
+                                mu = mu, LR = LR, strata = strata)
                 }
                 else if (is.null(bdu)) {
                     t1 <- (t0[1L]+bdl)/2
-                    sad<-saddle(A=A(t1, ...),
-                                u=u(t1, ...), wdist=wdist,
-                                type=type, d1=1, init=init,
-                                mu=mu, LR=LR, strata=strata)
+                    sad <- saddle(A = A(t1, ...),
+                                u = u(t1, ...), wdist = wdist,
+                                type = type, d1 = 1, init = init,
+                                mu = mu, LR = LR, strata = strata)
                 }
-                else {	t1 <- (bdu+bdl)/2
-                        sad<-saddle(A=A(t1, ...),
-                                    u=u(t1, ...), wdist=wdist,
-                                    type=type, d1=1, init=init,
-                                    mu=mu, LR=LR, strata=strata)
-                    }
+                else {
+                    t1 <- (bdu+bdl)/2
+                    sad <- saddle(A = A(t1, ...),
+                                  u = u(t1, ...), wdist = wdist,
+                                  type = type, d1 = 1, init = init,
+                                  mu = mu, LR = LR, strata = strata)
+                }
             }
             i1 <- i <- i+1
             nsads <- 0
@@ -3031,9 +3032,9 @@ saddle.distn <-
             spa[i,] <- sad$spa
             pts <- c(pts,t1)
             t2 <- t0[1L]+2*t0[2L]
-            sad <- saddle(A=A(t2, ...), u=u(t2, ...),
-                          wdist=wdist, type=type, d1=1, init=init,
-                          mu=mu, LR=LR, strata=strata)
+            sad <- saddle(A = A(t2, ...), u = u(t2, ...),
+                          wdist = wdist, type = type, d1 = 1, init = init,
+                          mu = mu, LR = LR, strata = strata)
             bdu <- bdl <- NULL
             while (is.na(sad$spa[2L]) || (1-sad$spa[2L] > ep2) ||
                    (1-sad$spa[2L] < ep2/100)){
@@ -3047,28 +3048,27 @@ saddle.distn <-
                     bdl <- t2
                 }
                 else	bdu <- t2
-                if (nsads == npts)
+                if (nsads  == npts)
                     stop("unable to find range")
                 if (is.null(bdu)) {
                     t2 <- 2*t2-t0[1L]
-                    sad<-saddle(A=A(t2, ...),
-                                u=u(t2, ...), wdist=wdist,
-                                type=type, d1=1, init=init,
-                                mu=mu, LR=LR, strata=strata)
-                }
-                else if (is.null(bdl)) {
+                    sad <- saddle(A = A(t2, ...),
+                                u = u(t2, ...), wdist = wdist,
+                                type = type, d1 = 1, init = init,
+                                mu = mu, LR = LR, strata = strata)
+                } else if (is.null(bdl)) {
                     t2 <- (t0[1L]+bdu)/2
-                    sad<-saddle(A=A(t2, ...),
-                                u=u(t2, ...), wdist=wdist,
-                                type=type, d1=1, init=init,
-                                mu=mu, LR=LR, strata=strata)
+                    sad <- saddle(A = A(t2, ...),
+                                u = u(t2, ...), wdist = wdist,
+                                type = type, d1 = 1, init = init,
+                                mu = mu, LR = LR, strata = strata)
+                } else {
+                    t2 <- (bdu+bdl)/2
+                    sad <- saddle(A = A(t2, ...),
+                                  u = u(t2, ...), wdist = wdist,
+                                  type = type, d1 = 1, init = init,
+                                  mu = mu, LR = LR, strata = strata)
                 }
-                else {	t2 <- (bdu+bdl)/2
-                        sad<-saddle(A=A(t2, ...),
-                                    u=u(t2, ...), wdist=wdist,
-                                    type=type, d1=1, init=init,
-                                    mu=mu, LR=LR, strata=strata)
-                    }
             }
             i <- i+1
             zeta[i,] <- c(sad$zeta.hat, sad$zeta2.hat)
@@ -3076,25 +3076,25 @@ saddle.distn <-
             pts <- c(pts,t2)
 #  Now divide the rest of the npts points so that about half are at
 #  either side of t0[1L].
-            if ((npts %% 2) == 0) {
-                tt1<- seq.int(t1,t0[1L],length.out=npts/2-i1+2)[-1L]
-                tt2 <- seq.int(t0[1L],t2,length.out=npts/2+i1-i+2)[-1L]
-                t <- c(tt1[-length(tt1)],tt2[-length(tt2)])
+            if ((npts %% 2) ==  0) {
+                tt1<- seq.int(t1, t0[1L], length.out = npts/2-i1+2)[-1L]
+                tt2 <- seq.int(t0[1L], t2, length.out = npts/2+i1-i+2)[-1L]
+                t <- c(tt1[-length(tt1)], tt2[-length(tt2)])
             } else {
                 ex <- 1*(t1+t2 > 2*t0[1L])
                 ll <- floor(npts/2)+2
-                tt1 <- seq.int(t1,t0[1L],length.out=ll-i1+1-ex)[-1L]
-                tt2 <- seq.int(t0[1L],t2,length.out=ll+i1-i+ex)[-1L]
-                t <- c(tt1[-length(tt1)],tt2[-length(tt2)])
+                tt1 <- seq.int(t1, t0[1L], length.out = ll-i1+1-ex)[-1L]
+                tt2 <- seq.int(t0[1L], t2, length.out = ll+i1-i+ex)[-1L]
+                t <- c(tt1[-length(tt1)], tt2[-length(tt2)])
             }
         }
         init1 <- init
         for (j in (i+1):npts) {
 #  Calculate the saddlepoint approximations at the extra points.
-            sad <- saddle(A=A(t[j-i], ...), u=u(t[j-i], ...),
-                          wdist=wdist, type=type, d1=1,
-                          init=init1, mu=mu, LR=LR,
-                          strata=strata)
+            sad <- saddle(A = A(t[j-i], ...), u = u(t[j-i], ...),
+                          wdist = wdist, type = type, d1 = 1,
+                          init = init1, mu = mu, LR = LR,
+                          strata = strata)
             zeta[j,] <- c(sad$zeta.hat, sad$zeta2.hat)
             init1 <- sad$zeta.hat
             spa[j,] <- sad$spa
@@ -3106,9 +3106,9 @@ saddle.distn <-
         if (is.null(t)) {
 #  Find a lower bound on the effective range of the saddlepoint distribution
             t1 <- t0[1L]-2*t0[2L]
-            sad <- saddle(A=A, u=c(t1,u), wdist=wdist, type=type,
-                          d=d, d1=1, init=init, mu=mu, LR=LR,
-                          strata=strata)
+            sad <- saddle(A = A, u = c(t1,u), wdist = wdist, type = type,
+                          d = d, d1 = 1, init = init, mu = mu, LR = LR,
+                          strata = strata)
             bdu <- bdl <- NULL
             while (is.na(sad$spa[2L]) || (sad$spa[2L] > ep1) ||
                    (sad$spa[2L] < ep1/100)) {
@@ -3125,22 +3125,22 @@ saddle.distn <-
                     stop("unable to find range")
                 if (is.null(bdl)) {
                     t1 <- 2*t1-t0[1L]
-                    sad <- saddle(A=A, u=c(t1,u),
-                                  wdist=wdist, type=type, d=d,
-                                  d1=1, init=init, mu=mu, LR=LR,
-                                  strata=strata)
+                    sad <- saddle(A = A, u = c(t1,u),
+                                  wdist = wdist, type = type, d = d,
+                                  d1 = 1, init = init, mu = mu, LR = LR,
+                                  strata = strata)
                 } else if (is.null(bdu)) {
                     t1 <- (t0[1L]+bdl)/2
-                    sad <- saddle(A=A, u=c(t1,u),
-                                  wdist=wdist, type=type, d=d,
-                                  d1=1, init=init, mu=mu, LR=LR,
-                                  strata=strata)
+                    sad <- saddle(A = A, u = c(t1,u),
+                                  wdist = wdist, type = type, d = d,
+                                  d1 = 1, init = init, mu = mu, LR = LR,
+                                  strata = strata)
                 } else {
                     t1 <- (bdu+bdl)/2
-                    sad <- saddle(A=A, u=c(t1,u),
-                                  wdist=wdist, type=type, d=d,
-                                  d1=1, init=init, mu=mu, LR=LR,
-                                  strata=strata)
+                    sad <- saddle(A = A, u = c(t1,u),
+                                  wdist = wdist, type = type, d = d,
+                                  d1 = 1, init = init, mu = mu, LR = LR,
+                                  strata = strata)
                 }
             }
             i1 <- i <- i+1
@@ -3149,18 +3149,17 @@ saddle.distn <-
             pts <- c(pts,t1)
 #  Find an upper bound on the effective range of the saddlepoint distribution
             t2 <- t0[1L]+2*t0[2L]
-            sad <- saddle(A=A, u=c(t2,u), wdist=wdist, type=type,
-                          d=d, d1=1, init=init, mu=mu, LR=LR,
-                          strata=strata)
+            sad <- saddle(A = A, u = c(t2,u), wdist = wdist, type = type,
+                          d = d, d1 = 1, init = init, mu = mu, LR = LR,
+                          strata = strata)
             bdu <- bdl <- NULL
             while (is.na(sad$spa[2L]) || (1-sad$spa[2L] > ep2) ||
-                   (1-sad$spa[2L] < ep2/100)){
+                   (1-sad$spa[2L] < ep2/100)) {
                 if (!is.na(sad$spa[2L])&&(1-sad$spa[2L] > ep2)) {
                     i <- i+1
-                    zeta[i,] <- c(sad$zeta.hat,
-                                  sad$zeta2.hat)
+                    zeta[i,] <- c(sad$zeta.hat, sad$zeta2.hat)
                     spa[i,] <- sad$spa
-                    pts <- c(pts,t2)
+                    pts <- c(pts, t2)
                     bdl <- t2
                 }
                 else	bdu <- t2
@@ -3168,43 +3167,43 @@ saddle.distn <-
                     stop("unable to find range")
                 if (is.null(bdu)) {
                     t2 <- 2*t2-t0[1L]
-                    sad<-saddle(A=A, u=c(t2,u),
-                                wdist=wdist, type=type, d=d,
-                                d1=1, init=init, mu=mu, LR=LR,
-                                strata=strata)
+                    sad <- saddle(A = A, u = c(t2, u),
+                                  wdist = wdist, type = type, d = d,
+                                  d1 = 1, init = init, mu = mu, LR = LR,
+                                  strata = strata)
                 }
                 else if (is.null(bdl)) {
                     t2 <- (t0[1L]+bdu)/2
-                    sad<-saddle(A=A, u=c(t2,u),
-                                wdist=wdist, type=type, d=d,
-                                d1=1, init=init, mu=mu, LR=LR,
-                                strata=strata)
+                    sad <- saddle(A = A, u = c(t2, u),
+                                  wdist = wdist, type = type, d = d,
+                                  d1 = 1, init = init, mu = mu, LR = LR,
+                                  strata = strata)
                 }
                 else {
                     t2 <- (bdu+bdl)/2
-                    sad<-saddle(A=A, u=c(t2,u),
-                                wdist=wdist, type=type, d=d,
-                                d1=1, init=init, mu=mu, LR=LR,
-                                strata=strata)
+                    sad <- saddle(A = A, u = c(t2, u),
+                                  wdist = wdist, type = type, d = d,
+                                  d1 = 1, init = init, mu = mu, LR = LR,
+                                  strata = strata)
                 }
             }
             i <- i+1
             zeta[i,] <- c(sad$zeta.hat, sad$zeta2.hat)
             spa[i,] <- sad$spa
-            pts <- c(pts,t2)
+            pts <- c(pts, t2)
 #  Now divide the rest of the npts points so that about half are at
 #  either side of t0[1L].
             if ((npts %% 2) == 0) {
-                tt1 <- seq.int(t1,t0[1L],length.out=npts/2-i1+2)[-1L]
-                tt2 <- seq.int(t0[1L],t2,length.out=npts/2+i1-i+2)[-1L]
-                t <- c(tt1[-length(tt1)],tt2[-length(tt2)])
+                tt1 <- seq.int(t1, t0[1L], length.out=npts/2-i1+2)[-1L]
+                tt2 <- seq.int(t0[1L], t2, length.out=npts/2+i1-i+2)[-1L]
+                t <- c(tt1[-length(tt1)], tt2[-length(tt2)])
             }
             else {
                 ex <- 1*(t1+t2 > 2*t0[1L])
                 ll <- floor(npts/2)+2
-                tt1 <- seq.int(t1,t0[1L],length.out=ll-i1+1-ex)[-1L]
-                tt2 <- seq.int(t0[1L],t2,length.out=ll+i1-i+ex)[-1L]
-                t <- c(tt1[-length(tt1)],tt2[-length(tt2)])
+                tt1 <- seq.int(t1, t0[1L], length.out=ll-i1+1-ex)[-1L]
+                tt2 <- seq.int(t0[1L], t2, length.out=ll+i1-i+ex)[-1L]
+                t <- c(tt1[-length(tt1)], tt2[-length(tt2)])
             }
         }
         init1 <- init
@@ -3221,25 +3220,26 @@ saddle.distn <-
 #  Omit points too close to the center as the distribution approximation is
 #  not good at those points.
     pts.in <- (1L:npts)[(abs(zeta[,1L]) > 1e-6) &
-                       (abs(spa[,2L]-0.5) < 0.5-1e-10)]
+                       (abs(spa[, 2L] - 0.5) < 0.5 - 1e-10)]
     pts <- c(pts,t)[pts.in]
-    zeta <- as.matrix(zeta[pts.in,])
-    spa <- spa[pts.in,]
+    zeta <- as.matrix(zeta[pts.in, ])
+    spa <- spa[pts.in, ]
 #  Fit a spline to the approximations and predict at the required quantile
 #  values.
-    distn <- smooth.spline(qnorm(spa[,2]),pts)
-    quantiles <- predict(distn,qnorm(alpha))$y
-    quans <- cbind(alpha,quantiles)
+    distn <- smooth.spline(qnorm(spa[,2]), pts)
+    quantiles <- predict(distn, qnorm(alpha))$y
+    quans <- cbind(alpha, quantiles)
     colnames(quans) <- c("alpha", "quantile")
     inds <- order(pts)
-    psa <- cbind(pts[inds],spa[inds,],zeta[inds,])
+    psa <- cbind(pts[inds], spa[inds,], zeta[inds,])
     if (d == 1) anames <- "zeta"
     else {	anames <- rep("",2*d-1)
-		for (j in 1L:d) anames[j] <- paste("zeta1.",j,sep="")
-		for (j in (d+1):(2*d-1)) anames[j] <- paste("zeta2.",j-d,sep="")
+		for (j in 1L:d) anames[j] <- paste("zeta1.", j ,sep = "")
+		for (j in (d+1):(2*d-1)) anames[j] <- paste("zeta2.", j-d, sep = "")
             }
     dimnames(psa) <- list(NULL,c("t", "gs", "Gs", anames))
-    out <- list(quantiles=quans, points=psa, distn=distn, call=call, LR=LR)
+    out <- list(quantiles = quans, points = psa, distn = distn,
+                call = call, LR = LR)
     class(out) <- "saddle.distn"
     out
 }
@@ -3265,8 +3265,8 @@ print.saddle.distn <- function(x, ...) {
     dput(cl, control=NULL)
     cat("\nQuantiles of the Distribution\n")
     cat(t(quans))
-    cat(paste("\n\nSmoothing spline used ",nrow(sad.d$points),
-              " points in the range ",rg[1L]," to ",rg[2L],".\n",sep=""))
+    cat(paste("\n\nSmoothing spline used ", nrow(sad.d$points),
+              " points in the range ", rg[1L]," to ", rg[2L], ".\n", sep=""))
     if (sad.d$LR)
         cat("Lugananni-Rice approximations used\n")
     invisible(sad.d)
@@ -3321,21 +3321,21 @@ ts.array <- function(n, n.sim, R, l, sim, endcorr)
         lens <- NULL
         while (cont) {
 #            inds <- (1L:R)[len.tot < n.sim]
-            temp <- 1+rgeom(R,1/l)
-            temp <- pmin(temp,n.sim-len.tot)
-            lens <- cbind(lens,temp)
-            len.tot <- len.tot+temp
+            temp <- 1+rgeom(R, 1/l)
+            temp <- pmin(temp, n.sim - len.tot)
+            lens <- cbind(lens, temp)
+            len.tot <- len.tot + temp
             cont <- any(len.tot < n.sim)
         }
         dimnames(lens) <- NULL
         nn <- ncol(lens)
-        st <- matrix(sample.int(endpt, nn*R, replace=TRUE), R)
+        st <- matrix(sample.int(endpt, nn*R, replace = TRUE), R)
     } else {
         nn <- ceiling(n.sim/l)
         lens <- c(rep(l,nn-1), 1+(n.sim-1)%%l)
-        st <- matrix(sample.int(endpt, nn*R, replace=TRUE), R)
+        st <- matrix(sample.int(endpt, nn*R, replace = TRUE), R)
     }
-    list(starts=st, lengths=lens)
+    list(starts = st, lengths = lens)
 }
 
 make.ends <- function(a, n)
@@ -3443,7 +3443,6 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
               norm = norm)
 }
 
-
 scramble <- function(ts, norm = TRUE)
 #
 #  Phase scramble a time series.  If norm = TRUE then normal margins are
@@ -3460,10 +3459,10 @@ scramble <- function(ts, norm = TRUE)
     n <- length(e)
     if (!norm) e <- qnorm( rank(e)/(n+1) )
     f <- fft(e) * complex(n, argument = runif(n) * 2 * pi)
-    C.f <- Conj(c(0, f[seq(from = n, to = 2, by = -1)]))
+    C.f <- Conj(c(0, f[seq(from = n, to = 2L, by = -1L)])) # or n:2
     e <- Re(mean(y) + fft((f + C.f)/sqrt(2), inverse = TRUE)/n)
     if (!norm) e <- sort(y)[rank(e)]
-    ts(e, start=st, freq=frq, deltat=dt)
+    ts(e, start = st, freq = frq, deltat = dt)
 }
 
 ts.return <- function(t0, t, R, tseries, seed, stat, sim, endcorr,
@@ -3477,7 +3476,7 @@ ts.return <- function(t0, t, R, tseries, seed, stat, sim, endcorr,
     if (sim ==  "scramble")
         out <- c(out, list(norm = norm))
     else if (sim == "model")
-        out <- c(out, list(ran.gen = ran.gen ,ran.args = ran.args))
+        out <- c(out, list(ran.gen = ran.gen, ran.args = ran.args))
     else {
         out <- c(out, list(l = l, endcorr = endcorr))
         if (!is.null(call$ran.gen))
