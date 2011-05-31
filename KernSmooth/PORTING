@@ -153,5 +153,6 @@ Error in bkfe if gridsize was a power of 2, reported by Barry Rowlingson.
 Version 2.23-6
 ==============
 
-Analogous change to bkde, needed for some rather non-uniform 'x'.
+Analogous change to bkde, needed if gridsize was a power of 2 for some
+'x' where 'range.x' is given (and small).
 
