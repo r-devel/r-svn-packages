@@ -39,7 +39,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     required, then a third argument is required which would be a vector
     of the random indices used to generate the bootstrap predictions.
     Any further arguments can be passed to \code{statistic} through the
-    \code{\dots{}} argument.
+    \code{\dots} argument.
   }
   \item{R}{
     The number of bootstrap replicates.  Usually this will be a single
@@ -130,11 +130,11 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     separately for each replication, which is slower but uses less memory.
   }
   \item{\dots}{
-    Any other arguments for \code{statistic} which are passed unchanged
+    Other named arguments for \code{statistic} which are passed unchanged
     each time it is called.  Any such arguments to \code{statistic} must
     follow the arguments which \code{statistic} is required to have for
     the simulation.  Beware of partial matching to other arguments of
-    \code{boot}, and that \code{X}, \code{FUN} will clash, as will
+    \code{boot}, and that \code{X} and \code{FUN} will conflict, as will
     \code{x} and \code{fun} for \code{parallel = "snow"}.
   }
   \item{parallel}{
