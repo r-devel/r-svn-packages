@@ -66,7 +66,7 @@ bkde <- function(x, kernel = "normal", canonical = FALSE, bandwidth,
 
     ## Now combine weight and counts to obtain estimate
 
-    P <- 2^(ceiling(log(M+L)/log(2)))
+    P <- 2^(ceiling(log(M+L+1L)/log(2)))
     kappa <- c(kappa, rep(0, P-2L*L-1L), rev(kappa[-1L]))
     tot <- sum(kappa) * (b-a)/(M-1L) * n # should have total weight one
     gcounts <- c(gcounts, rep(0L, P-M))
