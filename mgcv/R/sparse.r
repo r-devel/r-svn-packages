@@ -154,6 +154,7 @@ spasm.construct.spatps <- function(object,data) {
 ## * terms, the name of 2 arguments of the smooth
 ## * block, the name of a blocking factor. Can be NULL.
 ## return object also has...
+## * nobs - number of observations
 ## * nblock - number of blocks.
 ## * ind, list where ind[[i]] gives rows to which block i applies.
 ## * S, a list where S[[i]] is the ith penalty coefficient matrix.
@@ -167,6 +168,7 @@ spasm.construct.spatps <- function(object,data) {
   for (i in 1:length(object$terms)) 
     dat[[object$term[i]]] <- get.var(object$term[i],data)
   ind <- list()
+  object$nobs <- nrow(dat)
   n <- length(dat[[1]])
   ## if there is a blocking factor then set up indexes 
   ## indicating which data go with which block...
@@ -185,6 +187,7 @@ spasm.construct.spatps <- function(object,data) {
  
   ## so ind[[i]] indexes the elements operated on by the ith smoother.
   object$e <- object$P <- object$S <- list()
+  rank <- 0
   for (i in 1:nb) {
     X <- cbind(dat[[1]][ind[[i]]],dat[[2]][ind[[i]]])
     dup <- tieMatrix(X) ## strip out any duplicates...
@@ -198,42 +201,47 @@ spasm.construct.spatps <- function(object,data) {
     ## create random deviates for use in estimation of trace of influence matrix
     nr <- 50;n <- nrow(X)
     object$e[[i]] <- matrix(sample(rep(c(-1,1),nr*n),nr*2*n),n,nr*2)
+    rank <- rank + ncol(object$S[[i]])
   }
   object$Ri <- list()
+  object$edf0 <- 3;object$edf1 <- rank
   class(object) <- "spatps"
   object
 }
 
-spasm.sp.spatps <- function(object,sp,get.trH=FALSE) { 
-## Set up smooth, given new smoothing parameter.
+spasm.sp.spatps <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0) { 
+## Set up smooth, given new smoothing parameter and weights.
 ## In particular, construct sparse choleski factor of inverse 
-## smoother matrix, for each block. Optionally returns tr(H) and
-## always log|H|. 
+## smoother matrix, for each block. Optionally returns tr(H).
   if (is.null(object$S)) stop("object not fully initialized")
   trH <- ldetH <- 0
-  for (i in 1:object$nblock) {
+  if (block==0) block <- 1:object$nblock
+  for (i in block) { ## update one or all blocks
     n <- length(object$ind[[i]])
     if (length(object$P) < i || is.null(object$P[[i]])) {
-      Hi <- Diagonal(n) + object$S[[i]] * sp 
+      Hi <- Diagonal(n,w[object$ind[[i]]]^2) + object$S[[i]] * sp 
     } else {
-      Hi <- t(object$P[[i]])%*%object$P[[i]] + object$S[[i]] * sp 
+      Hi <- t(object$P[[i]])%*% Diagonal(n,w[object$ind[[i]]]^2) %*%object$P[[i]] + 
+              object$S[[i]] * sp 
     }
     object$Ri[[i]] <- chol(Hi,pivot=TRUE)
     ## next line is wrong and doesn't deal with P
-    ldetH <- ldetH - 2*sum(log(diag(object$Ri[[i]]))) ## WRONG det! need |I-H|
+    ## ldetH <- ldetH - 2*sum(log(diag(object$Ri[[i]]))) ## WRONG det! need |I-H|
     if (get.trH) {
       if (length(object$P) < i || is.null(object$P[[i]])) {
         #R <- solve(object$Ri[[i]]) ## most costly part of routine
-        A <- solve(object$Ri[[i]],object$e[[i]]) 
+        A <- solve(object$Ri[[i]],w*object$e[[i]]) 
       } else {
         #R <- solve(object$Ri[[i]],t(object$P[[i]]))
-        A <- solve(object$Ri[[i]],t(obect$P[[i]])%*%object$e[[i]])
+        A <- solve(object$Ri[[i]],t(obect$P[[i]])%*%w[object$ind[[i]]]*object$e[[i]])
       }
       trH <- trH + sum(A^2)/ncol(object$e[[i]])
     }
   }
   if (get.trH) object$trH <- trH
-  object$ldetH <- ldetH 
+  object$w <- w
+  object$sp <- sp
+  ## object$ldetH <- ldetH 
   object
 }
 
@@ -250,35 +258,37 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
       P <- Diagonal(n)
     } else { P <- object$P[[block]] }
     if (is.matrix(X)) {
-      X1 <- solve(t(object$Ri[[block]]),t(P)%*%X[piv,])
+      X1 <- solve(t(object$Ri[[block]]),t(P)%*%(object$w[object$ind[[block]]]*X)[piv,])
       X1 <- solve(object$Ri[[block]],X1)[ipiv,] 
       if (residual) X <- X - P%*%X1 else X <- P%*%X1;
     } else {
-      X1 <- solve(t(object$Ri[[block]]),t(P)%*%X[piv])
+      X1 <- solve(t(object$Ri[[block]]),t(P)%*%(object$w[object$ind[[block]]]*X)[piv])
       X1 <- solve(objectRi[[block]],X1)[ipiv]
       if (residual) X <- X - as.numeric(P%*%X1) else X <- as.numeric(P%*%X1);
     }
-  } else for (i in 1:object$nblock) { ## work through all blocks
-    piv <- attr(object$Ri[[i]],"pivot")
-    n <- length(object$ind[[i]])
-    ipiv <- piv
-    ipiv[piv] <- 1:n
-    if (length(object$P) < i || is.null(object$P[[i]])){ 
-      P <- Diagonal(n)
-    } else { P <- object$P[[i]] }
-    if (is.matrix(X)) {
-      Xi <- t(P)%*%X[object$ind[[i]],]
-      X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
-      X1 <- solve(object$Ri[[i]],X1)[ipiv,]
-      if (residual) X1 <- X[object$ind[[i]],] - P%*%X1
-      X[object$ind[[i]],] <- P%*%X1 
-    } else {
-      Xi <- t(P)%*%X[object$ind[[i]]]
-      X1 <- solve(t(object$Ri[[i]]),Xi[piv])
-      X1 <- solve(object$Ri[[i]],X1)[ipiv]
-      if (residual) X1 <- X[object$ind[[i]]] - as.numeric(P%*%X1)
-      X[object$ind[[i]]] <- as.numeric(P%*%X1) 
-    }    
+  } else { 
+    for (i in 1:object$nblock) { ## work through all blocks
+      piv <- attr(object$Ri[[i]],"pivot")
+      n <- length(object$ind[[i]])
+      ipiv <- piv
+      ipiv[piv] <- 1:n
+      if (length(object$P) < i || is.null(object$P[[i]])){ 
+        P <- Diagonal(n)
+      } else { P <- object$P[[i]] }
+      if (is.matrix(X)) {
+        Xi <- t(P)%*%(object$w[object$ind[[i]]]*X[object$ind[[i]],])
+        X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
+        X1 <- solve(object$Ri[[i]],X1)[ipiv,]
+        if (residual) X1 <- X[object$ind[[i]],] - P%*%X1
+        X[object$ind[[i]],] <- P%*%X1 
+      } else {
+        Xi <- t(P)%*%(object$w[object$ind[[i]]]*X[object$ind[[i]]])
+        X1 <- solve(t(object$Ri[[i]]),Xi[piv])
+        X1 <- solve(object$Ri[[i]],X1)[ipiv]
+        if (residual) X1 <- X[object$ind[[i]]] - as.numeric(P%*%X1)
+        X[object$ind[[i]]] <- as.numeric(P%*%X1) 
+      }
+    } ## end of block loop    
   }
   X
 } 
@@ -294,6 +304,7 @@ spasm.construct.cus <- function(object,data) {
 ## * terms, the name of the argument of the smooth
 ## * block, the name of a blocking factor. Can be NULL.
 ## return object also has...
+## * nobs - number of observations in total
 ## * nblock - number of blocks.
 ## * ind, list where ind[[i]] gives rows to which block i applies.
 ## * spl, and empty list which will contain intialised cubic 
@@ -303,6 +314,7 @@ spasm.construct.cus <- function(object,data) {
   d <- length(object$terms)
   if (d != 1) stop("cubic spline only deals with 1D data") 
   object$x <- get.var(object$term[1],data)
+  object$nobs <- length(object$x)
   ind <- list()
   n <- length(object$x)
   ## if there is a blocking factor then set up indexes 
@@ -322,23 +334,28 @@ spasm.construct.cus <- function(object,data) {
  
   ## so ind[[i]] indexes the elements operated on by the ith smoother.
   object$spl <- list()
+  object$edf0 <- 2;object$edf1 <- length(unique(object$x))
   class(object) <- "cus"
   object
 }
 
-spasm.sp.cus <- function(object,sp,get.trH=FALSE) { 
-## Set up full cubic spline smooth, given new smoothing parameter.
+spasm.sp.cus <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0) { 
+## Set up full cubic spline smooth, given new smoothing parameter and weights.
 ## In particular, construct the Givens rotations defining the 
 ## smooth and compute the trace of the influence matrix. 
+## If block is non-zero, then it specifies which block to set up, otherwise
+## all are set up. In either case w is assumed to be for the whole smoother,
+## although only the values for the specified block(s) are used.
   if (is.null(object$spl)) stop("object not fully initialized")
   trH <-  0
-  for (i in 1:object$nblock) {
+  if (block==0) block <- 1:object$nblock
+  for (i in block) {
     n <- length(object$ind[[i]])
-    object$spl[[i]] <- setup.spline(x[object$ind[[i]]],lambda=sp)
+    object$spl[[i]] <- setup.spline(object$x[object$ind[[i]]],w=w[object$ind[[i]]],lambda=sp)
     trH <- trH + object$spl[[i]]$trA
   }
   if (get.trH) object$trH <- trH
-  object$ldetH <- NA
+  object$sp=sp
   object
 }
 
@@ -353,12 +370,11 @@ spasm.smooth.cus <- function(object,X,residual=FALSE,block=0) {
     else X <-  apply.spline(object$spl[[block]],X)
 
   } else for (i in 1:object$nblock) { ## work through all blocks 
-    if (is.matrix(X)) {
-      ind <- object$ind[[i]]
+   ind <- object$ind[[i]]
+   if (is.matrix(X)) {
       if (residual) X[ind,] <- X[ind,] - apply.spline(object$spl[[i]],X[ind,])
       else X[ind,] <-  apply.spline(object$spl[[i]],X[ind,])
     } else {
-      ind <- object$ind[[i]]
       if (residual) X[ind] <- X[ind] - apply.spline(object$spl[[i]],X[ind])
       else X[ind] <-  apply.spline(object$spl[[i]],X[ind]) 
     }    
@@ -366,14 +382,81 @@ spasm.smooth.cus <- function(object,X,residual=FALSE,block=0) {
   X
 } 
 
+#########################################################
+## The default sparse smooth class, which does nothing...
+#########################################################
+
+spasm.construct.default <- function(object,data) {
+## This smooth simply returns 0, onder all circumstances.
+## object might contain....
+## * block, the name of a blocking factor. Can be NULL.
+## return object also has...
+## * nblock - number of blocks.
+## * ind, list where ind[[i]] gives rows to which block i applies.
+ 
+  if (!is.null(object$block)) {
+    block <- as.factor(get.var(object$block,data))
+    nb <- length(levels(block))
+    for (i in 1:nb) { 
+      ind[[i]] <- (1:n)[block==levels(block)[i]]
+    }
+  } else { ## all one block
+    nb <- 1
+    ind[[1]] <- 1:n
+  }
+  object$nblock <- nb
+  object$ind <- ind
+ 
+  ## so ind[[i]] indexes the elements operated on by the ith smoother.
+  class(object) <- "default"
+  object
+}
+
+spasm.sp.default <- function(object,sp,get.trH=FALSE) { 
+## Set up default null smoother. i.e. set trH=0,
+  trH <-  0
+  if (get.trH) object$trH <- trH
+  object$ldetH <- NA
+  object
+}
+
+spasm.smooth.default <- function(object,X,residual=FALSE,block=0) {
+## apply smooth, or its residual operation to X.
+## if block == 0 then apply whole thing, otherwise X must have the correct 
+## number of rows for the smooth block.
+  if (residual) return(X) else return(X*0)
+  X
+} 
+
+
 
 
 
 ## generics for sparse smooth classes...
 
-spasm.construct <- function(object,data,knots) UseMethod("spasm.construct")
-spasm.sp <- function(object,sp) UseMethod("spasm.sp")
+spasm.construct <- function(object,data) UseMethod("spasm.construct")
+spasm.sp <- function(object,sp,w=rep(1,object$nobs),get.trH=TRUE,block=0) UseMethod("spasm.sp")
 spasm.smooth <- function(object,X,residual=FALSE,block=0) UseMethod("spasm.smooth")
 
+spasm.range <- function(object) {
+## get reasonable smoothing parameter range for sparse smooth in object
+  sp <- 1
+  edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
+  while (edf < object$edf0*1.01) { 
+    sp <- sp /100
+    edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
+  }
+  sp1 <- sp ## store smallest known good
+  while (edf > object$edf0*1.01) { 
+    sp <- sp * 100
+    edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
+  }
+  sp0 <- sp
+  while (edf < object$edf1*.9) { 
+    sp1 <- sp1 / 100
+    edf <- spasm.sp(object,sp1,get.trH=TRUE)$trH
+  }
+  c(sp1,sp0) ## small, large
+}
 
 

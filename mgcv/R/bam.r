@@ -1,5 +1,5 @@
 ## routines for very large dataset generalized additive modelling.
-## (c) Simon N. Wood 2009 
+## (c) Simon N. Wood 2009-2011
 
 
 ls.size <- function(x) {
@@ -724,5 +724,5 @@ bam.update <- function(b,data,chunk.size=10000) {
 
 #### ISSUES:   
 ## ? negative binomial support --- docs say it's there...
-## need to add `bam' examples to the test suite, and possibly update the test suite
-## to work through failures, logging them. 
+## offset unused in bam/bgam.fit, also gp only needed for "response",
+## so could efficiently be replaced
