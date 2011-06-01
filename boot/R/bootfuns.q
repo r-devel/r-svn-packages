@@ -178,10 +178,10 @@ boot <- function(data, statistic, R, sim = "ordinary",
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-                res <- snow::parLapply(cl, x = seq_len(RR), fun = fn, ...)
+                res <- snow::parLapply(cl = cl, x = seq_len(RR), fun = fn, ...)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl, x = seq_len(RR), fun = fn, ...)
+            } else snow::parLapply(cl = cl, x = seq_len(RR), fun = fn, ...)
         }
     } else lapply(X = seq_len(RR), FUN = fn, ...)
     t.star <- matrix(, RR, length(t0))
@@ -1371,10 +1371,10 @@ censboot <-
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-                res <- snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+                res <- snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+            } else snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
        }
     } else lapply(X = seq_len(R), FUN = fn, ...)
 
@@ -3427,10 +3427,10 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-                res <- snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+                res <- snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl, x = seq_len(R), fun = fn, ...)
+            } else snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
        }
     } else lapply(X = seq_len(R), FUN = fn, ...)
 

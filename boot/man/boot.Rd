@@ -3,7 +3,7 @@
 \alias{boot.return}
 \alias{c.boot}
 \title{
-Bootstrap Resampling 
+Bootstrap Resampling
 }
 \description{
   Generate \code{R} bootstrap replicates of a statistic applied to data.  Both
@@ -59,14 +59,15 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     \code{"balanced"} in this case.
   }
   \item{stype}{
-    A character string indicating what the second argument of statistic
+    A character string indicating what the second argument of \code{statistic}
     represents.  Possible values of stype are \code{"i"} (indices - the
-    default), \code{"f"} (frequencies), or \code{"w"} (weights).
+    default), \code{"f"} (frequencies), or \code{"w"} (weights).  Not
+    used for \code{sim = "parametric"}.
   }
   \item{strata}{
     An integer vector or factor specifying the strata for multi-sample
-    problems. This may be specified for any simulation, but is ignored
-    when \code{sim} is \code{"parametric"}.  When \code{strata} is
+    problems.  This may be specified for any simulation, but is ignored
+    when \code{sim = "parametric"}.  When \code{strata} is
     supplied for a nonparametric bootstrap, the simulations are done
     within the specified strata.
   }
@@ -79,14 +80,15 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   }
   \item{m}{
     The number of predictions which are to be made at each bootstrap
-    replicate. This is most useful for (generalized) linear models.
+    replicate.  This is most useful for (generalized) linear models.
     This can only be used when \code{sim} is \code{"ordinary"}.
     \code{m} will usually be a single integer but, if there are strata,
     it may be a vector with length equal to the number of strata,
     specifying how many of the errors for prediction should come from
     each strata.  The actual predictions should be returned as the final
-    part of the output of \code{statistic}, which should also take a
-    vector of indices of the errors to be used for the predictions.
+    part of the output of \code{statistic}, which should also take an
+    argument giving the vector of indices of the errors to be used for
+    the predictions.
   }
   \item{weights}{
     Vector or matrix of importance weights.  If a vector then it should
@@ -99,7 +101,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     \code{"balanced"}.
   }
   \item{ran.gen}{
-    This function is used only when \code{sim} is \code{"parametric"}
+    This function is used only when \code{sim = "parametric"}
     when it describes how random values are to be generated.  It should
     be a function of two arguments.  The first argument should be the
     observed data and the second argument consists of any other
@@ -107,7 +109,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     may be a list, allowing any number of items to be passed to
     \code{ran.gen}.  The returned value should be a simulated data set
     of the same form as the observed data which will be passed to
-    statistic to get a bootstrap replicate.  It is important that the
+    \code{statistic} to get a bootstrap replicate.  It is important that the
     returned value be of the same shape and type as the original
     dataset.  If \code{ran.gen} is not specified, the default is a
     function which returns the original \code{data} in which case all
@@ -125,17 +127,19 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   }
   \item{simple}{logical, only allowed to be \code{TRUE} for
     \code{sim = "ordinary", stype = "i", n = 0} (otherwise ignored with a
-    warning).  By default a \code{n*R} index array is created: this can be
-    large and if \code{simple = TRUE} this is avoided by sampling
-    separately for each replication, which is slower but uses less memory.
+    warning).  By default a \code{n} by \code{R} index array is created:
+    this can be large and if \code{simple = TRUE} this is avoided by
+    sampling separately for each replication, which is slower but uses
+    less memory.
   }
   \item{\dots}{
-    Other named arguments for \code{statistic} which are passed unchanged
-    each time it is called.  Any such arguments to \code{statistic} must
-    follow the arguments which \code{statistic} is required to have for
-    the simulation.  Beware of partial matching to other arguments of
-    \code{boot}, and that \code{X} and \code{FUN} will conflict, as will
-    \code{x} and \code{fun} for \code{parallel = "snow"}.
+    Other named arguments for \code{statistic} which are passed
+    unchanged each time it is called.  Any such arguments to
+    \code{statistic} must follow the arguments which \code{statistic} is
+    required to have for the simulation.  Beware of partial matching to
+    other arguments of \code{boot}, and that \code{X} and \code{FUN}
+    will cause conflicts, as will \code{cl}, \code{x} and \code{fun} for
+    \code{parallel = "snow"}.
   }
   \item{parallel}{
     The type of parallel operation to be used (if any).  If missing, the
@@ -145,7 +149,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     integer: number of processes to be used in parallel operation.
   }
   \item{cl}{
-    An optional \pkg{snow} cluster.
+    An optional \pkg{snow} cluster for use if \code{parallel = "snow"}.
+    If not supplied, a socket cluster on the local machine is created
+    for the duration of the \code{boot} call.
   }
 }
 \value{

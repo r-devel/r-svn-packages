@@ -1,9 +1,10 @@
-version 1.3-2 2011-05-24
+version 1.3-2 2011-06-01
 
     'parallel' argument for tsboot().
     Allow a 'snow' cluster to be passed in for parallel operations.
+    Avoid partial matches to 'cl' in parLapply calls.
 
-version 1.3-1 2011-05-22 (formerly 1.22-44)
+version 1.3-1 2011-05-23 (formerly 1.22-44)
 
     Much faster verstion of nested.corr.
     c() method for class "boot".
