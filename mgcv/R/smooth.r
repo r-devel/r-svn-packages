@@ -475,13 +475,13 @@ tensor.prod.model.matrix<-function(X)
 # X is a list of model matrices, from which a tensor product model matrix is to be produced.
 # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
 # column-wise, for efficiency
-{ m<-length(X)
-  X1<-X[[m]]
-  n<-nrow(X1)
+{ m <- length(X)
+  X1 <- X[[m]]
+  n <- nrow(X1)
   if (m>1) for (i in (m-1):1)
-  { X0<-X1;X1<-matrix(0,n,0)
+  { X0 <- X1;X1 <- matrix(0,n,0)
     for (j in 1:ncol(X[[i]]))
-    X1<-cbind(X1,X[[i]][,j]*X0)
+    X1 <- cbind(X1,X[[i]][,j]*X0)
   }
   X1
 } ## end tensor.prod.model.matrix
@@ -1302,12 +1302,12 @@ Predict.matrix.cyclic.smooth<-function(object,data)
     j1<-hj<-j-1
     j[j==n]<-1
     I<-diag(n-1)
-    X<-BD[j1,]*as.numeric(knots[j1+1]-x)^3/as.numeric(6*h[hj])+
-       BD[j,]*as.numeric(x-knots[j1])^3/as.numeric(6*h[hj])-
-       BD[j1,]*as.numeric(h[hj]*(knots[j1+1]-x)/6)-
-       BD[j,]*as.numeric(h[hj]*(x-knots[j1])/6) +
-       I[j1,]*as.numeric((knots[j1+1]-x)/h[hj]) +
-       I[j,]*as.numeric((x-knots[j1])/h[hj])
+    X<-BD[j1,,drop=FALSE]*as.numeric(knots[j1+1]-x)^3/as.numeric(6*h[hj])+
+       BD[j,,drop=FALSE]*as.numeric(x-knots[j1])^3/as.numeric(6*h[hj])-
+       BD[j1,,drop=FALSE]*as.numeric(h[hj]*(knots[j1+1]-x)/6)-
+       BD[j,,drop=FALSE]*as.numeric(h[hj]*(x-knots[j1])/6) +
+       I[j1,,drop=FALSE]*as.numeric((knots[j1+1]-x)/h[hj]) +
+       I[j,,drop=FALSE]*as.numeric((x-knots[j1])/h[hj])
     X
   }
   x <- data[[object$term]]

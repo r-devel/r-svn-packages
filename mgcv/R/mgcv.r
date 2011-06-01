@@ -2560,29 +2560,30 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
     covmat <- dispersion * covmat.unscaled
     est.disp <- FALSE
   } else dispersion <- object$sig2
-  se<-0;for (i in 1:length(object$coefficients)) se[i] <- covmat[i,i]^0.5
+  #se<-0;for (i in 1:length(object$coefficients)) se[i] <- covmat[i,i]^0.5
+  se <- diag(covmat)^0.5
   residual.df<-length(object$y)-sum(object$edf)
   if (object$nsdf>0) # individual parameters
-  { p.coeff<-object$coefficients[1:object$nsdf]
+  { p.coeff <- object$coefficients[1:object$nsdf]
     p.se <- se[1:object$nsdf]
     p.t<-p.coeff/p.se
     if (!est.disp) {
-      p.pv<-2*pnorm(abs(p.t),lower.tail=FALSE)
-      p.table<-cbind(p.coeff, p.se, p.t, p.pv)   
+      p.pv <- 2*pnorm(abs(p.t),lower.tail=FALSE)
+      p.table <- cbind(p.coeff, p.se, p.t, p.pv)   
       dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "z value", "Pr(>|z|)"))
     } else {
-      p.pv<-2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
-      p.table<-cbind(p.coeff, p.se, p.t, p.pv)
+      p.pv <- 2*pt(abs(p.t),df=residual.df,lower.tail=FALSE)
+      p.table <- cbind(p.coeff, p.se, p.t, p.pv)
       dimnames(p.table) <- list(names(p.coeff), c("Estimate", "Std. Error", "t value", "Pr(>|t|)"))
     }    
-  } else {p.coeff<-p.t<-p.pv<-array(0,0)}
+  } else {p.coeff <- p.t <- p.pv <- array(0,0)}
   
   term.labels<-attr(object$pterms,"term.labels")
   nt<-length(term.labels)
   if (nt>0) # individual parametric terms
-  { np<-length(object$assign)
-    Vb<-matrix(covmat[1:np,1:np],np,np)
-    bp<-array(object$coefficients[1:np],np)
+  { np <- length(object$assign)
+    Vb <- covmat[1:np,1:np,drop=FALSE]
+    bp <- array(object$coefficients[1:np],np)
     pTerms.pv <- array(0,nt)
     attr(pTerms.pv,"names") <- term.labels
     pTerms.df <- pTerms.chi.sq <- pTerms.pv
@@ -2600,9 +2601,9 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
         pTerms.chi.sq[i] <- t(b)%*%V%*%b
       }
       if (!est.disp)
-      pTerms.pv[i]<-pchisq(pTerms.chi.sq[i],df=nb,lower.tail=FALSE)
+      pTerms.pv[i] <- pchisq(pTerms.chi.sq[i],df=nb,lower.tail=FALSE)
       else
-      pTerms.pv[i]<-pf(pTerms.chi.sq[i]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
+      pTerms.pv[i] <- pf(pTerms.chi.sq[i]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
     }
     if (!est.disp) {      
       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)   
@@ -2640,20 +2641,20 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
       ##  edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
     for (i in 1:m)
-    { start<-object$smooth[[i]]$first.para;stop<-object$smooth[[i]]$last.para
-      V <- covmat[start:stop,start:stop] # cov matrix for smooth
-      p<-object$coefficients[start:stop]  # params for smooth
+    { start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
+      V <- covmat[start:stop,start:stop,drop=FALSE] # cov matrix for smooth
+      p <- object$coefficients[start:stop]  # params for smooth
       edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
       ## extract alternative edf estimate for this smooth, if possible...
       if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
       if (freq) { ## old style frequentist
-        M1<-object$smooth[[i]]$df
-        M<-min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
-        V<-pinv(V,M) # get rank M pseudoinverse of V
-        chi.sq[i]<-t(p)%*%V%*%p
+        M1 <- object$smooth[[i]]$df
+        M <- min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
+        V <- pinv(V,M) # get rank M pseudoinverse of V
+        chi.sq[i] <- t(p)%*%V%*%p
         df[i] <- attr(V, "rank")
       } else { ## Inverted Nychka interval statistics
-        Xt <- X[,start:stop] 
+        Xt <- X[,start:stop,drop=FALSE] 
         ft <- Xt%*%p
        
         df[i] <- min(ncol(Xt),edf1[i])
@@ -2664,7 +2665,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       if (!est.disp)
-      s.pv[i]<-pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
+      s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
       else
       s.pv[i] <- pf(chi.sq[i]/df[i], df1 = df[i], df2 = residual.df, lower.tail = FALSE)
       ## p-values are meaningless for very small edf. Need to set to NA

@@ -6,6 +6,10 @@ ISSUES:
 
 unstable
 
+* 'cc' Predict.matrix bug fix - prediction failed for single points.
+
+* summary.gam failed for single coefficient random effects. fixed.
+
 1.7-6
 
 ** factor `by' variable handling extended: if a by variable is an
