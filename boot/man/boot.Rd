@@ -275,6 +275,11 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   is done in the worker processes.  This is also true of most of the schemes
   in \code{\link{tsboot}}, the exceptions being \code{sim == "fixed"}
   and \code{sim == "geom"} with the default \code{ran.gen}.
+
+  When using \pkg{snow} with one of the cases where resampling is done
+  in the worker processes it would be wise to set up your own cluster
+  (as argument \code{cl}) and call \code{clusterSetupRNG} to set up the
+  random-number generation on the cluster.
 }
 \references{
 There are many references explaining the bootstrap and its variations.
@@ -338,9 +343,9 @@ diff.means <- function(d, f)
 grav1 <- gravity[as.numeric(gravity[,2]) >= 7,]
 boot(grav1, diff.means, R = 999, stype = "f", strata = grav1[,2])
 
-# In this example we show the use of boot in a prediction from 
-# regression based on the nuclear data.  This example is taken 
-# from Example 6.8 of Davison and Hinkley (1997).  Notice also 
+# In this example we show the use of boot in a prediction from
+# regression based on the nuclear data.  This example is taken
+# from Example 6.8 of Davison and Hinkley (1997).  Notice also
 # that two extra arguments to 'statistic' are passed through boot.
 nuke <- nuclear[, c(1, 2, 5, 7, 8, 10, 11)]
 nuke.lm <- glm(log(cost) ~ date+log(cap)+ne+ct+log(cum.n)+pt, data = nuke)

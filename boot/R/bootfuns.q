@@ -151,9 +151,14 @@ boot <- function(data, statistic, R, sim = "ordinary",
 	statistic(data, ...)
 
     pred.i <- NULL
-    fn <- if (sim == "parametric")
-        function(r) statistic(ran.gen(data, mle), ...)
-    else {
+    fn <- if (sim == "parametric") {
+        ## force promises, so values get sent by snow
+        ran.gen; data; mle
+        function(r) {
+            dd <- ran.gen(data, mle)
+            statistic(dd, ...)
+        }
+    } else {
         if (!simple && ncol(i) > n) {
             pred.i <- as.matrix(i[ , (n+1L):ncol(i)])
             i <- i[, seq_len(n)]
@@ -1342,6 +1347,8 @@ censboot <-
         bt <- cens.case(n, strata, R)
         function(r) statistic(data[sort(bt[r, ]), ], ...)
     } else if (sim == "weird") {
+        ## force promises
+        data; F.surv
         if (!mstrata) {
             function(r) {
                 bootdata <- cens.weird(data, F.surv, strata)
@@ -1370,10 +1377,14 @@ censboot <-
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                snow::clusterEvalQ(cl, library(survival))
                 res <- snow::parLapply(cl, seq_len(R), fn)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl, seq_len(R), fn)
+            } else {
+                snow::clusterEvalQ(cl, library(survival))
+                snow::parLapply(cl, seq_len(R), fn)
+            }
        }
     } else lapply(seq_len(R), fn)
 
@@ -1407,7 +1418,6 @@ cens.case <- function(n, strata, R) {
 }
 
 
-
 cens.weird <- function(data, surv, strata) {
 #
 #  The weird bootstrap.  Censoring times are fixed and the number of
@@ -1424,10 +1434,10 @@ cens.weird <- function(data, surv, strata) {
     if (is.null(surv$strata)) {
         nstr <- 1
         str <- rep(1, m)
+    } else {
+        nstr <- length(surv$strata)
+        str <- rep(1L:nstr, surv$strata)
     }
-    else {	nstr <- length(surv$strata)
-		str <- rep(1L:nstr, surv$strata)
-            }
     n.ev <- rbinom(m, surv$n.risk, surv$n.event/surv$n.risk)
     while (any(tapply(n.ev, str, sum) == 0))
         n.ev <- rbinom(m, surv$n.risk, surv$n.event/surv$n.risk)
@@ -1437,7 +1447,7 @@ cens.weird <- function(data, surv, strata) {
     for (s in 1L:nstr) {
         temp <- cbind(times[str == s], 1)
         temp <- rbind(temp,
-                      as.matrix(data[(strata == s&data[, 2] == 0), , drop=FALSE]))
+                      as.matrix(data[(strata == s&data[, 2L] == 0), , drop=FALSE]))
         temp <- cbind(temp, s)
         oi <- order(temp[, 1L], 1-temp[, 2L])
         out <- rbind(out, temp[oi, ])
@@ -3370,6 +3380,9 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         if (!have_mc && !have_snow) ncpus <- 1L
     }
 
+    ## This does not necessarily call statistic, so we force a promise.
+    statistic
+
     tscl <- class(tseries)
     R <- floor(R)
     if (R <= 0) stop("R must be positive")
@@ -3392,6 +3405,8 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
     } else if (sim == "model") {
         rm(ts.orig)
         ## Model-based resampling
+        ## force promises
+        ran.gen; ran.args
         function(r) statistic(ran.gen(tseries, n.sim, ran.args), ...)
     } else if (sim %in% c("fixed", "geom")) {
         ## Otherwise generate an R x n matrix of starts and lengths for blocks.
@@ -3400,6 +3415,8 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         ## post-blackening is required when the blocks have been formed.
         if (sim == "geom") endcorr <- TRUE
 	i.a <- ts.array(n, n.sim, R, l, sim, endcorr)
+        ## force promises
+        ran.gen; ran.args
         function(r) {
             ends <- if (sim == "geom")
                 cbind(i.a$starts[r,  ], i.a$lengths[r,  ])
