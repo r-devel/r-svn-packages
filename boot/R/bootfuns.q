@@ -143,8 +143,10 @@ boot <- function(data, statistic, R, sim = "ordinary",
             1/ns
         } else seq_len(n)
 
-        if (sum(m) > 0L) statistic(data, original, rep(1, sum(m)), ...)
+        t0 <- if (sum(m) > 0L) statistic(data, original, rep(1, sum(m)), ...)
         else statistic(data, original, ...)
+        rm(original)
+        t0
     } else # "parametric"
 	statistic(data, ...)
 
@@ -158,13 +160,14 @@ boot <- function(data, statistic, R, sim = "ordinary",
         }
         if (stype %in% c("f", "w")) {
             f <- freq.array(i)
+            rm(i)
             if (stype == "w") f <- f/ns
             if (sum(m) == 0L) function(r) statistic(data, f[r,  ], ...)
             else function(r) statistic(data, f[r, ], pred.i[r, ], ...)
         } else if (sum(m) > 0L)
             function(r) statistic(data, i[r, ], pred.i[r,], ...)
         else if (simple)
-            fn <- function(r)
+            function(r)
                 statistic(data,
                           index.array(n, 1, sim, strata, m, L, weights), ...)
         else function(r) statistic(data, i[r, ], ...)
@@ -1335,11 +1338,8 @@ censboot <-
     ## consisting of R matrices containing the resampled times and their
     ## censoring indicators.  The data sets for the weird bootstrap must be
     ## calculated individually.
-    if (sim == "ordinary")
-        bt <- cens.case(n, strata, R)
-    else if (sim != "weird")
-        bt <- cens.resamp(data, R, F.surv, G.surv, strata, index, cox, sim)
     fn <- if (sim == "ordinary") {
+        bt <- cens.case(n, strata, R)
         function(r) statistic(data[sort(bt[r, ]), ], ...)
     } else if (sim == "weird") {
         if (!mstrata) {
@@ -1354,6 +1354,7 @@ censboot <-
             }
         }
     } else {
+        bt <- cens.resamp(data, R, F.surv, G.surv, strata, index, cox, sim)
         function(r) {
             bootdata <- data
             bootdata[, index] <- bt[r, , ]
@@ -1361,6 +1362,7 @@ censboot <-
             statistic(bootdata[oi, ], ...)
         }
     }
+    rm(mstrata)
 
     res <- if (ncpus > 1L && (have_mc || have_snow)) {
         if (have_mc) {
@@ -3383,36 +3385,29 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         l <- NULL
     else if ((is.null(l) || (l <= 0) || (l > n)))
         stop("invalid value of l")
-    if (sim == "geom") endcorr <- TRUE
-    res <- vector("list", R)
-    if (sim == "scramble") {
+    fn <- if (sim == "scramble") {
+        rm(ts.orig)
         ## Phase scrambling
-        fn <- function(r) {
-            ts.b <- scramble(tseries, norm)
-            statistic(ts.b, ...)
-        }
+        function(r) statistic(scramble(tseries, norm), ...)
     } else if (sim == "model") {
+        rm(ts.orig)
         ## Model-based resampling
-        fn <- function(r) {
-            ts.b <- ran.gen(tseries, n.sim, ran.args)
-            statistic(ts.b, ...)
-        }
+        function(r) statistic(ran.gen(tseries, n.sim, ran.args), ...)
     } else if (sim %in% c("fixed", "geom")) {
         ## Otherwise generate an R x n matrix of starts and lengths for blocks.
         ## The actual indices of the blocks can then easily be found and these
         ## indices used for the resampling.  If ran.gen is present then
         ## post-blackening is required when the blocks have been formed.
+        if (sim == "geom") endcorr <- TRUE
 	i.a <- ts.array(n, n.sim, R, l, sim, endcorr)
-        fn <- function(r) {
+        function(r) {
             ends <- if (sim == "geom")
                 cbind(i.a$starts[r,  ], i.a$lengths[r,  ])
             else  cbind(i.a$starts[r, ], i.a$lengths)
             inds <- apply(ends, 1L, make.ends, n)
-            if (is.list(inds))
-                inds <- matrix(unlist(inds)[1L:n.sim], n.sim, 1L)
-            else inds <- matrix(inds, n.sim, 1L)
-            ts.b <- ran.gen(ts.orig[inds,], n.sim, ran.args)
-            res[[r]] <- statistic(ts.b, ...)
+            inds <- if (is.list(inds)) matrix(unlist(inds)[1L:n.sim], n.sim, 1L)
+            else matrix(inds, n.sim, 1L)
+            statistic(ran.gen(ts.orig[inds, ], n.sim, ran.args), ...)
         }
     } else
         stop("unrecognized value of sim")

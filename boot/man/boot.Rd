@@ -273,7 +273,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
 
   \code{\link{censboot}(sim = "wierd")} is another case where resampling
   is done in the worker processes.  This is also true of most of the schemes
-  in \code{\link{censboot}}, the exception being \code{sim == "fixed"}
+  in \code{\link{tsboot}}, the exceptions being \code{sim == "fixed"}
   and \code{sim == "geom"} with the default \code{ran.gen}.
 }
 \references{
