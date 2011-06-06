@@ -183,7 +183,11 @@ boot <- function(data, statistic, R, sim = "ordinary",
             multicore::mclapply(seq_len(RR), fn, mc.cores = ncpus)
         } else if (have_snow) {
             if (is.null(cl)) {
+                setRNG <- function()
+                    set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
+                environment(setRNG) <- baseenv()
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                snow::clusterCall(cl, setRNG)
                 res <- snow::parLapply(cl, seq_len(RR), fn)
                 snow::stopCluster(cl)
                 res
@@ -1376,7 +1380,11 @@ censboot <-
             multicore::mclapply(seq_len(R), fn, ..., mc.cores = ncpus)
         } else if (have_snow) {
             if (is.null(cl)) {
+                setRNG <- function()
+                    set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
+                environment(setRNG) <- baseenv()
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                snow::clusterCall(cl, setRNG)
                 snow::clusterEvalQ(cl, library(survival))
                 res <- snow::parLapply(cl, seq_len(R), fn)
                 snow::stopCluster(cl)
@@ -3434,7 +3442,11 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
             multicore::mclapply(seq_len(R), fn, mc.cores = ncpus)
         } else if (have_snow) {
             if (is.null(cl)) {
+                setRNG <- function()
+                    set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
+                environment(setRNG) <- baseenv()
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
+                snow::clusterCall(cl, setRNG)
                 res <- snow::parLapply(cl, seq_len(R), fn)
                 snow::stopCluster(cl)
                 res

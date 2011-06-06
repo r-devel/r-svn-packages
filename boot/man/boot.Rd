@@ -261,15 +261,12 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   by default sets up a socket cluster on the local machine.
 
   For most of the \code{boot} methods the resampling is done in the
-  master process, but not if \code{simple = TRUE} nor
-  \code{sim = "parametric"}.  In those cases (or where \code{statistic}
-  itself uses random numbers), more care is needed.  For \code{parallel
-  = "multicore"} each worker process uses a separate random number
-  stream but it cannot be specified so the results are not repeatable
-  even if \code{seed} is specified.  For \code{parallel = "snow"} the
-  worker processes will either use the same \code{.Random.seed} if one is
-  specified in the \R startup files (or in a saved workspace) or seed
-  the random number generator based on the wall clock.
+  master process, but not if \code{simple = TRUE} nor \code{sim =
+  "parametric"}.  In those cases (or where \code{statistic} itself uses
+  random numbers), more care is needed.  For \code{parallel =
+  "multicore"} each worker process uses a separate random number stream
+  (based on its process ID) but it cannot be specified so the results
+  are not repeatable.
 
   \code{\link{censboot}(sim = "wierd")} is another case where resampling
   is done in the worker processes.  This is also true of most of the schemes
@@ -279,7 +276,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   When using \pkg{snow} with one of the cases where resampling is done
   in the worker processes it would be wise to set up your own cluster
   (as argument \code{cl}) and call \code{clusterSetupRNG} to set up the
-  random-number generation on the cluster.
+  random-number generation on the cluster.  But if the default
+  \pkg{snow} cluster is used, the random number seed in each worker
+  proces is set based on its process ID and the current time.
 }
 \references{
 There are many references explaining the bootstrap and its variations.
