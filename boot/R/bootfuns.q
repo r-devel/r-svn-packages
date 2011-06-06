@@ -148,10 +148,9 @@ boot <- function(data, statistic, R, sim = "ordinary",
     } else # "parametric"
 	statistic(data, ...)
 
-    t.star <- matrix(NA, sum(R), length(t0))
     pred.i <- NULL
     fn <- if (sim == "parametric")
-        function(r, ...) statistic(ran.gen(data, mle), ...)
+        function(r) statistic(ran.gen(data, mle), ...)
     else {
         if (!simple && ncol(i) > n) {
             pred.i <- as.matrix(i[ , (n+1L):ncol(i)])
@@ -160,30 +159,29 @@ boot <- function(data, statistic, R, sim = "ordinary",
         if (stype %in% c("f", "w")) {
             f <- freq.array(i)
             if (stype == "w") f <- f/ns
-            if (sum(m) == 0L) function(r, ...) statistic(data, f[r,  ], ...)
-            else function(r, ...) statistic(data, f[r, ], pred.i[r, ], ...)
+            if (sum(m) == 0L) function(r) statistic(data, f[r,  ], ...)
+            else function(r) statistic(data, f[r, ], pred.i[r, ], ...)
         } else if (sum(m) > 0L)
-            function(r, ...) statistic(data, i[r, ], pred.i[r,], ...)
+            function(r) statistic(data, i[r, ], pred.i[r,], ...)
         else if (simple)
-            fn <- function(r, ...)
+            fn <- function(r)
                 statistic(data,
                           index.array(n, 1, sim, strata, m, L, weights), ...)
-        else function(r, ...) statistic(data, i[r, ], ...)
+        else function(r) statistic(data, i[r, ], ...)
     }
     RR <- sum(R)
     res <- if (ncpus > 1 && (have_mc || have_snow)) {
         if (have_mc) {
-            multicore::mclapply(X = seq_len(RR), FUN = fn, ...,
-                                mc.cores = ncpus)
+            multicore::mclapply(seq_len(RR), fn, mc.cores = ncpus)
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-                res <- snow::parLapply(cl = cl, x = seq_len(RR), fun = fn, ...)
+                res <- snow::parLapply(cl, seq_len(RR), fn)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl = cl, x = seq_len(RR), fun = fn, ...)
+            } else snow::parLapply(cl, seq_len(RR), fn)
         }
-    } else lapply(X = seq_len(RR), FUN = fn, ...)
+    } else lapply(seq_len(RR), fn)
     t.star <- matrix(, RR, length(t0))
     for(r in seq_len(RR)) t.star[r, ] <- res[[r]]
 
@@ -1342,21 +1340,21 @@ censboot <-
     else if (sim != "weird")
         bt <- cens.resamp(data, R, F.surv, G.surv, strata, index, cox, sim)
     fn <- if (sim == "ordinary") {
-        function(r, ...) statistic(data[sort(bt[r, ]), ], ...)
+        function(r) statistic(data[sort(bt[r, ]), ], ...)
     } else if (sim == "weird") {
         if (!mstrata) {
-            function(r, ...) {
+            function(r) {
                 bootdata <- cens.weird(data, F.surv, strata)
                 statistic(bootdata[, 1:2], bootdata[, 3L], ...)
             }
         } else  {
-            function(r, ...) {
+            function(r) {
                 bootdata <- cens.weird(data, F.surv, strata)
                 statistic(bootdata[, 1:2], ...)
             }
         }
     } else {
-        function(r, ...) {
+        function(r) {
             bootdata <- data
             bootdata[, index] <- bt[r, , ]
             oi <- order(bt[r, , 1L], 1-bt[r, , 2L])
@@ -1366,17 +1364,16 @@ censboot <-
 
     res <- if (ncpus > 1L && (have_mc || have_snow)) {
         if (have_mc) {
-            multicore::mclapply(X = seq_len(R), FUN = fn, ...,
-                                mc.cores = ncpus)
+            multicore::mclapply(seq_len(R), fn, ..., mc.cores = ncpus)
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-                res <- snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
+                res <- snow::parLapply(cl, seq_len(R), fn)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
+            } else snow::parLapply(cl, seq_len(R), fn)
        }
-    } else lapply(X = seq_len(R), FUN = fn, ...)
+    } else lapply(seq_len(R), fn)
 
     t <- matrix(, R, length(t0))
     for(r in seq_len(R)) t[r, ] <- res[[r]]
@@ -3390,13 +3387,13 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
     res <- vector("list", R)
     if (sim == "scramble") {
         ## Phase scrambling
-        fn <- function(r, ...) {
+        fn <- function(r) {
             ts.b <- scramble(tseries, norm)
             statistic(ts.b, ...)
         }
     } else if (sim == "model") {
         ## Model-based resampling
-        fn <- function(r, ...) {
+        fn <- function(r) {
             ts.b <- ran.gen(tseries, n.sim, ran.args)
             statistic(ts.b, ...)
         }
@@ -3406,7 +3403,7 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         ## indices used for the resampling.  If ran.gen is present then
         ## post-blackening is required when the blocks have been formed.
 	i.a <- ts.array(n, n.sim, R, l, sim, endcorr)
-        fn <- function(r, ...) {
+        fn <- function(r) {
             ends <- if (sim == "geom")
                 cbind(i.a$starts[r,  ], i.a$lengths[r,  ])
             else  cbind(i.a$starts[r, ], i.a$lengths)
@@ -3422,17 +3419,16 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
 
     res <- if (ncpus > 1L && (have_mc || have_snow)) {
         if (have_mc) {
-            multicore::mclapply(X = seq_len(R), FUN = fn, ...,
-                                mc.cores = ncpus)
+            multicore::mclapply(seq_len(R), fn, mc.cores = ncpus)
         } else if (have_snow) {
             if (is.null(cl)) {
                 cl <- snow::makeSOCKcluster(rep("localhost", ncpus))
-                res <- snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
+                res <- snow::parLapply(cl, seq_len(R), fn)
                 snow::stopCluster(cl)
                 res
-            } else snow::parLapply(cl = cl, x = seq_len(R), fun = fn, ...)
+            } else snow::parLapply(cl, seq_len(R), fn)
        }
-    } else lapply(X = seq_len(R), FUN = fn, ...)
+    } else lapply(seq_len(R), fn)
 
     t <- matrix(, R, length(res[[1L]]))
     for(r in seq_len(R)) t[r, ] <- res[[r]]
