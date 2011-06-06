@@ -161,7 +161,7 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
     The observed value of \code{statistic} applied to \code{data}. 
   }
   \item{t}{
-    A matrix with \code{R} rows each of which is a bootstrap replicate
+    A matrix with \code{sum(R)} rows each of which is a bootstrap replicate
     of the result of calling \code{statistic}.
   }
   \item{R}{
