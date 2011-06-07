@@ -5,7 +5,7 @@
 clara <- function(x, k, metric = "euclidean", stand = FALSE,
 		  samples = 5, sampsize = min(n, 40 + 2 * k), trace = 0,
                   medoids.x = TRUE, keep.data = medoids.x, rngR = FALSE,
-                  pamLike = FALSE) ## -- "FIXME" : change to TRUE
+                  pamLike = FALSE)
 {
     ## check type of input matrix and values of input numbers
     if(inherits(x, "dist"))# catch user error

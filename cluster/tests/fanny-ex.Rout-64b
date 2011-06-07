@@ -1,7 +1,8 @@
 
-R version 2.11.1 Patched (2010-06-23 r52375)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.13.0 Patched (2011-06-06 r56067)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -16,10 +17,15 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > .libPaths() # show full library tree {also as check of R CMD check!}
-[1] "/sfs/u/staff/maechler/R/Pkgs/cluster.Rcheck"  
-[2] "/usr/local/app/R/R_local/library"             
-[3] "/usr/local/app/R/Bioconductor/library"        
-[4] "/u/maechler/R/D/r-patched/F11-64-inst/library"
+[1] "/tmp/cluster.Rcheck"                                    
+[2] "/sfs/u/staff/maechler/R/BioCore/library"                
+[3] "/sfs/u/staff/maechler/R/library/64-linux-MM-only"       
+[4] "/sfs/u/staff/maechler/R/library/64-linux"               
+[5] "/sfs/u/staff/maechler/R/library/Linux"                  
+[6] "/sfs/u/staff/sfs/R/library/64-linux"                    
+[7] "/sfs/u/staff/sfs/R/library/Linux"                       
+[8] "/sfs/s/linux/rhel3_amd64/app/R/R_local/library"         
+[9] "/sfs/u/staff/maechler/R/D/r-patched/F13-64-inst/library"
 > library(cluster)
 > 
 > ####---------- Tests for FANNY  i.e., fanny() --------------------------
@@ -1063,7 +1069,7 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.103 0.01 0.125 0 0 
+Time elapsed:  0.082 0.011 0.102 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are ``completely fuzzy'' -- and now give a warnings
@@ -1330,5 +1336,5 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.272 0.011 0.299 0 0 
+Time elapsed:  0.25 0.016 0.274 0 0 
 > 

@@ -1,3 +1,16 @@
+2011-06-07  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.14.0, released to CRAN
+
+	* R/plotpart.q (clusplot.default): use message() and warning()
+	appropriately instead of just cat().  Further, add a 'add = FALSE'
+	argument which allows *adding* ellipses to an existing plot.
+
+2011-06-06  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/plotpart.q (clusplot.default): new 'cex' and 'cex.txt', the
+	latter for the "point" labels.
+
 2011-05-20  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/pam.c (cl_pam): trace_lev: also trace the computation of

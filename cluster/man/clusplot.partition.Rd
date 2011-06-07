@@ -31,25 +31,12 @@ clusplot(x, \dots)
   a 2-dimensional clusplot is created on the current graphics device.
 }
 \value{
-  For the \code{partition} method: An invisible list with components
-  \item{Distances}{
-    When option lines is 1 or 2 we optain a k by k matrix (k is the number of
-    clusters). The element at row j and column s is the distance between
-    ellipse j and ellipse s.  If lines=0, then the value of this
-    component is NA.
-  }
-  \item{Shading}{
-    A vector of length k (where k is the number of clusters), containing
-    the amount of shading per cluster.  Let y be a vector where element
-    i is the ratio between the number of objects in cluster i and the
-    area of ellipse i.  When the cluster i is a line segment, y[i] and
-    the density of the cluster are set to NA.  Let z be the sum of all
-    the elements of y without the NAs.  Then we put shading = y/z *37 + 3.
-  }
+  For the \code{partition} (and \code{default}) method: An invisible
+  list with components \code{Distances} and \code{Shading}, as for
+  \code{\link{clusplot.default}}, see there.
 }
 \details{
-  This \code{clusplot.partition()} method relies on
-  \code{\link{clusplot.default}}.
+  The \code{clusplot.partition()} method relies on \code{\link{clusplot.default}}.
 
   If the clustering algorithms \code{pam}, \code{fanny} and \code{clara}
   are applied to a data matrix of observations-by-variables then a
@@ -68,7 +55,8 @@ clusplot(x, \dots)
   \code{\link{clara.object}}, \code{\link{fanny}},
   \code{\link{fanny.object}}, \code{\link{par}}.
 }
-\examples{
+\examples{ ## For more, see ?clusplot.default
+
 ## generate 25 objects, divided into 2 clusters.
 x <- rbind(cbind(rnorm(10,0,0.5), rnorm(10,0,0.5)),
            cbind(rnorm(15,5,0.5), rnorm(15,5,0.5)))
