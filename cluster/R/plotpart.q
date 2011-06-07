@@ -148,7 +148,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 	 shade = FALSE, color = FALSE, labels = 0, plotchar = TRUE,
 	 col.p = "dark green", # was 5 (= shaded col)
 	 col.txt = col.p, col.clus = if(color) c(2, 4, 6, 3) else 5,
-	 cex = par("cex"), cex.txt = par("cex"),
+	 cex = 1, cex.txt = cex,
 	 span = TRUE, add = FALSE,  xlim = NULL, ylim = NULL,
 	 main = paste("CLUSPLOT(", deparse(substitute(x)),")"),
 	 sub = paste("These two components explain",

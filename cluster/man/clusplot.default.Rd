@@ -12,8 +12,7 @@
           lines = 2, shade = FALSE, color = FALSE,
           labels= 0, plotchar = TRUE,
           col.p = "dark green", col.txt = col.p,
-          col.clus = if(color) c(2, 4, 6, 3) else 5,
-          cex = par("cex"), cex.txt = par("cex"),
+          col.clus = if(color) c(2, 4, 6, 3) else 5, cex = 1, cex.txt = cex,
           span = TRUE,
           add = FALSE,
           xlim = NULL, ylim = NULL,
@@ -211,14 +210,16 @@
 ## partitioning into 2 clusters
 data(votes.repub)
 votes.diss <- daisy(votes.repub)
-votes.clus <- pam(votes.diss, 2, diss = TRUE)$clustering
+pamv <- pam(votes.diss, 2, diss = TRUE)
+clusplot(pamv, shade = TRUE)
+## is the same as
+votes.clus <- pamv$clustering
 clusplot(votes.diss, votes.clus, diss = TRUE, shade = TRUE)
-clusplot(votes.diss, votes.clus, diss = TRUE,
-         col.p = votes.clus, labels = 4)# color points and label ellipses
+
+clusplot(pamv, col.p = votes.clus, labels = 4)# color points and label ellipses
 # "simple" cheap ellipses: larger than minimum volume:
 # here they are *added* to the previous plot:
-clusplot(votes.diss, votes.clus, diss = TRUE,
-         span = FALSE, add = TRUE, col.clus = "midnightblue")
+clusplot(pamv, span = FALSE, add = TRUE, col.clus = "midnightblue")
 
 ## a work-around for setting a small label size:
 clusplot(votes.diss, votes.clus, diss = TRUE)
