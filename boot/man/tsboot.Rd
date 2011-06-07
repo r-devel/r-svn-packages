@@ -102,7 +102,8 @@ tsboot(tseries, statistic, R, l = NULL, sim = "model",
     corresponding to the exact empirical margins are used.
   }
   \item{...}{
-    Any extra arguments to \code{statistic} may be supplied here.
+    Extra named arguments to \code{statistic} may be supplied here.
+    Beware of partial matching to the arguments of \code{tsboot} listed above.
   }
   \item{parallel, ncpus, cl}{
     See the help for \code{\link{boot}}.
@@ -146,13 +147,13 @@ tsboot(tseries, statistic, R, l = NULL, sim = "model",
   \item{ran.gen}{
     The \code{ran.gen} function used for generating the series or for
     \sQuote{post-blackening}.
-}
-\item{ran.args}{
-The extra arguments passed to \code{ran.gen}.
-}
-\item{call}{
-The original call to \code{tsboot}.
-}
+  }
+  \item{ran.args}{
+    The extra arguments passed to \code{ran.gen}.
+  }
+  \item{call}{
+    The original call to \code{tsboot}.
+  }
 }
 \details{
   If \code{sim} is \code{"fixed"} then each replicate time series is

@@ -135,17 +135,19 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   \item{\dots}{
     Other named arguments for \code{statistic} which are passed
     unchanged each time it is called.  Any such arguments to
-    \code{statistic} must follow the arguments which \code{statistic} is
+    \code{statistic} should follow the arguments which \code{statistic} is
     required to have for the simulation.  Beware of partial matching to
-    other arguments of \code{boot}, and that \code{X} and \code{FUN}
-    may cause conflicts.
+    arguments of \code{boot} listed above, and that arguments named
+    \code{X} and \code{FUN} cause conflicts in some versions of
+    \pkg{boot} (but not this one).
   }
   \item{parallel}{
     The type of parallel operation to be used (if any).  If missing, the
     default is taken from the option \code{"boot.parallel"}.
   }
   \item{ncpus}{
-    integer: number of processes to be used in parallel operation.
+    integer: number of processes to be used in parallel operation:
+    typically one would chose this to the number of available CPUs.
   }
   \item{cl}{
     An optional \pkg{snow} cluster for use if \code{parallel = "snow"}.
@@ -246,19 +248,22 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
 }
 
 \section{Parallel operation}{
-  Because of the way \pkg{multicore} works, each worker process
-  inherits the environment of the current session, including the
-  workspace and the loaded namespaces and attached packages (but not the
-  random number seed: see below).
+  When \pkg{multicore} is used, each worker process inherits the
+  environment of the current session, including the workspace and the
+  loaded namespaces and attached packages (but not the random number
+  seed: see below).
 
   More work is needed when \pkg{snow} is used: the worker processes are
   newly created \R processes, and \code{statistic} needs to arrange to
   set up the environment it needs: often a good way to do that is to
   make use of lexical scoping since when \code{statistic} is sent to the
-  worker processes its enclosing environment is also sent.
-  \code{parallel = "snow"} is primarily intended to be used on multi-core
-  Windows machine where package \code{multicore} is not available, and
-  by default sets up a socket cluster on the local machine.
+  worker processes its enclosing environment is also sent.  (E.g. see
+  the example for \code{\link{jack.after.boot}} where ancillary
+  functions are nested inside the \code{statistic} function.)
+  \code{parallel = "snow"} is primarily intended to be used on
+  multi-core Windows machine where package \code{multicore} is not
+  available, and by default sets up a socket cluster on the local
+  machine.
 
   For most of the \code{boot} methods the resampling is done in the
   master process, but not if \code{simple = TRUE} nor \code{sim =
@@ -275,10 +280,10 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
 
   When using \pkg{snow} with one of the cases where resampling is done
   in the worker processes it would be wise to set up your own cluster
-  (as argument \code{cl}) and call \code{clusterSetupRNG} to set up the
-  random-number generation on the cluster.  But if the default
+  (as argument \code{cl}) and call \code{snow::clusterSetupRNG} to set up the
+  random-number generation on the cluster.  However if the default
   \pkg{snow} cluster is used, the random number seed in each worker
-  proces is set based on its process ID and the current time.
+  proces is initialized based on its process ID and the current time.
 }
 \references{
 There are many references explaining the bootstrap and its variations.
