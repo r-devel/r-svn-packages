@@ -1,15 +1,20 @@
-\name{clusplot.partition}
+\name{clusplot}
+\alias{clusplot}
 \alias{clusplot.partition}
-\title{Bivariate Clusplot of a Partitioning Object}
+\title{Bivariate Cluster Plot (of a Partitioning Object)}
 \description{
-  Clusplot (Clustering Plot) method for an object of class \code{partition}.
+  Draws a 2-dimensional \dQuote{clusplot} (clustering plot) on the
+  current graphics device.
+  The generic function has a default and a \code{partition} method.
 }
 \usage{
+clusplot(x, \dots)
+
 \method{clusplot}{partition}(x, main = NULL, dist = NULL, \dots)
 }
 \arguments{
-  \item{x}{
-    an object of class \code{"partition"}, e.g. created by the functions
+  \item{x}{an \R object, here, specifically an object of class
+    \code{"partition"}, e.g. created by one of the functions
     \code{\link{pam}}, \code{\link{clara}}, or \code{\link{fanny}}.}
   \item{main}{title for the plot; when \code{NULL} (by default), a title
     is constructed, using \code{x$call}.}
@@ -17,14 +22,16 @@
     \code{data} component, e.g., for \code{\link{pam}(dist(*),
       keep.diss=FALSE)}, \code{dist} must specify the dissimilarity for the
     clusplot.}
-  \item{\dots}{all optional arguments available for the
-    \code{\link{clusplot.default}} function (except for the \code{diss}
-    one) may also be supplied to this function.  Graphical parameters
-    (see \code{\link{par}}) may also be supplied as arguments to this
-    function.}
+  \item{\dots}{optional arguments passed to methods, notably the
+    \code{\link{clusplot.default}} method (except for the \code{diss}
+    one) may also be supplied to this function.  Many graphical parameters
+    (see \code{\link{par}}) may also be supplied as arguments here.}
+}
+\section{Side Effects}{
+  a 2-dimensional clusplot is created on the current graphics device.
 }
 \value{
-  An invisible list with components
+  For the \code{partition} method: An invisible list with components
   \item{Distances}{
     When option lines is 1 or 2 we optain a k by k matrix (k is the number of
     clusters). The element at row j and column s is the distance between
