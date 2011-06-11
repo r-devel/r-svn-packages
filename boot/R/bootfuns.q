@@ -182,6 +182,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
         if (have_mc) {
             multicore::mclapply(seq_len(RR), fn, mc.cores = ncpus)
         } else if (have_snow) {
+            list(...) # evaluate any promises
             if (is.null(cl)) {
                 setRNG <- function()
                     set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
@@ -1379,6 +1380,7 @@ censboot <-
         if (have_mc) {
             multicore::mclapply(seq_len(R), fn, ..., mc.cores = ncpus)
         } else if (have_snow) {
+            list(...) # evaluate any promises
             if (is.null(cl)) {
                 setRNG <- function()
                     set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
@@ -3441,6 +3443,7 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         if (have_mc) {
             multicore::mclapply(seq_len(R), fn, mc.cores = ncpus)
         } else if (have_snow) {
+            list(...) # evaluate any promises
             if (is.null(cl)) {
                 setRNG <- function()
                     set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
