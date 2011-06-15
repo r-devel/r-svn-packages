@@ -10,6 +10,8 @@ unstable
 
 * summary.gam failed for single coefficient random effects. fixed.
 
+* gam returns rV, where t(rV)%*%rV*scale is Bayesian cov matrix.
+ 
 1.7-6
 
 ** factor `by' variable handling extended: if a by variable is an

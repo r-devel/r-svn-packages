@@ -78,10 +78,11 @@ void construct_tprs(double *x,int *d,int *n,double *knt,int *nk,int *m,int *k,do
 void gen_tps_poly_powers(int *pi,int *M,int *m, int *d);
 
 /* sparse smooth related routines */
-void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight);
+void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight,double *kappa);
 void k_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,int *get_a);
 void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
             int *get_a,double *cut_off);
+void Rkdtree(double *X,int *n, int *d,double *lo,double *hi,int *ind, int *rind);
 void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
              double *diagA,double *lb,int *n,double *tol);
 void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol,int *m);

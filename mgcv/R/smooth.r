@@ -431,7 +431,7 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
 { vars<-as.list(substitute(list(...)))[-1] # gets terms to be smoothed without evaluation
 
   d<-length(vars) # dimension of smoother
-  term<-deparse(vars[[d]],backtick=TRUE,width.cutoff=500) # last term in the ... arguments
+# term<-deparse(vars[[d]],backtick=TRUE,width.cutoff=500) # last term in the ... arguments
   by.var<-deparse(substitute(by),backtick=TRUE,width.cutoff=500) #getting the name of the by variable
   if (by.var==".") stop("by=. not allowed")
   term<-deparse(vars[[1]],backtick=TRUE,width.cutoff=500) # first covariate

@@ -29,10 +29,12 @@ slanczos <- function(A,k=10,kl=-1) {
 ## extra cost is the expensive accumulation of eigenvectors.
 ## Should re-write whole thing using LAPACK routines for eigenvectors. 
    k <- round(k);kl <- round(kl)
-   m <- k + max(0,kl)
-   if (m<1) return(list(values=rep(0,0),vectors=matrix(0,n,0),iter=0))
+   if (k<0) stop("argument k must be positive.")
+   m <- k + max(0,kl) 
    n <- nrow(A) 
+   if (m<1) return(list(values=rep(0,0),vectors=matrix(0,n,0),iter=0)) 
    if (n != ncol(A)) stop("A not square")
+   if (m>n) stop("Can not have more eigenvalues than nrow(A)")
    oo <- .C(C_Rlanczos,A=as.double(A),U=as.double(rep(0,n*m)),D=as.double(rep(0,m)),
             n=as.integer(n),m=as.integer(k),ml=as.integer(kl))
    list(values = oo$D,vectors = matrix(oo$U,n,m),iter=oo$n) 
@@ -1253,7 +1255,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
   object$GACV <-  object$GACV1 <-  object$GACV2 <-  object$REML <-  object$REML1 <-  object$REML2 <-  
   object$GCV<-object$GCV1<- object$GCV2 <- object$UBRE <-object$UBRE1 <- object$UBRE2 <- object$trA <-
-  object$trA1<- object$trA2 <- object$alpha <- object$alpha1 <- object$rV <- object$scale.est <- NULL
+  object$trA1<- object$trA2 <- object$alpha <- object$alpha1 <- object$scale.est <- NULL
   object$sig2 <- object$scale
   
   object
@@ -1426,8 +1428,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     G$null.coef <- null.stuff$null.coef
 
     object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),
-                        family=G$family,
-                        control=control,criterion=criterion,method=method,optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)
+                        family=G$family,control=control,criterion=criterion,method=method,
+                        optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)
     
     if (criterion%in%c("REML","ML")&&scale<=0)  object$sp <- 
                                                 object$sp[-length(object$sp)] ## drop scale estimate from sp array
@@ -2075,7 +2077,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         family = family,linear.predictors = eta, deviance = dev,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights,  
         df.null = nulldf, y = y, converged = conv,sig2=G$sig2,edf=G$edf,edf1=mv$edf1,hat=G$hat,
-        boundary = boundary,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,mgcv.conv=G$conv,
+        boundary = boundary,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,rV=mr$rV,mgcv.conv=G$conv,
         gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev,scale.estimated = (scale < 0))
 }
 

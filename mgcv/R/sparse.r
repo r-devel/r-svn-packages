@@ -1,8 +1,6 @@
 ## (c) Simon N. Wood 2011
 ## functions for sparse smoothing.
 
-
-
 ## Efficient stable full rank cubic spline routines, based on    
 ## deHoog and Hutchinson, 1987 and Hutchinson and deHoog,
 ## 1985....
@@ -59,6 +57,28 @@ apply.spline <- function(spl,y) {
 
 ## Routines for sparse thin plate splines...
 
+kd.vis <- function(X,cex=.5) {
+## code obtains and visualizes a kd tree for points in rows of X
+  if (ncol(X)!=2) stop("only deals with 2D case")
+  n <- nrow(X)
+  d <- ncol(X)
+  ind <- rind <- rep(0,n)
+  m <- 2;
+  while (m<n) m <- m*2
+  nb <- min(m-1,2*n-m/2-1)
+  lo <- hi <- rep(0,nb*d)
+  oo <- .C(C_Rkdtree,as.double(X),as.integer(n),as.integer(d),lo = as.double(lo),hi =  as.double(hi),
+           ind = as.integer(ind), rind = as.integer(rind));
+  lo <- matrix(oo$lo,nb,d)
+  hi <- matrix(oo$hi,nb,d)
+  plot(X[,1],X[,2],pch=19,cex=cex,col=2)
+  for (i in 1:nb) {
+    rect(lo[i,1],lo[i,2],hi[i,1],hi[i,2])
+  }
+  #points(X[,1],X[,2],pch=19,cex=cex,col=2)
+
+}
+
 nearest <- function(k,X,get.a=FALSE,balanced=FALSE,cut.off=5) {
 ## The rows of X contain coordinates of points.
 ## For each point, this routine finds its k nearest 
@@ -75,6 +95,7 @@ nearest <- function(k,X,get.a=FALSE,balanced=FALSE,cut.off=5) {
 ## if closer than cut.off*max(k nearest distances).
   require(mgcv)
   Xu <- uniquecombs(X);ind <- attr(Xu,"index") ## Xu[ind,] == X
+  nobs <- length(ind)
   n <- nrow(Xu)
   d <- ncol(Xu)
   dist <- matrix(0,n,k)
@@ -90,8 +111,8 @@ nearest <- function(k,X,get.a=FALSE,balanced=FALSE,cut.off=5) {
                     n=as.integer(n),d=as.integer(d),k=as.integer(k),get.a=as.integer(get.a))
   }
   dist <- matrix(oo$dist,n,k)[ind,]
-  rind <- 1:n
-  rind[ind] <- 1:n
+  rind <- 1:nobs
+  rind[ind] <- 1:nobs
   ni <- matrix(rind[oo$ni+1],n,k)[ind,]
   list(ni=ni,dist=dist,a=oo$a[ind])
 }
@@ -108,11 +129,12 @@ sparse.pen <- function(X,area.weight=TRUE) {
   D <- matrix(0,n,6*m)
   k <- 5
   ni <- matrix(0,n,k)
- 
+  kappa <- rep(0,n) ## condition numbers
   ## Get the sqrt penalty matrix entries...
 
   oo <- .C(C_sparse_penalty,as.double(X),as.integer(n),as.integer(d),D=as.double(D),
-           ni=as.integer(ni),as.integer(k),as.integer(m),as.integer(area.weight))
+           ni=as.integer(ni),as.integer(k),as.integer(m),as.integer(area.weight),kappa=
+           as.double(kappa))
 
   ## Now make put the entries into sparse matrices...
 
@@ -168,7 +190,7 @@ spasm.construct.spatps <- function(object,data) {
   for (i in 1:length(object$terms)) 
     dat[[object$term[i]]] <- get.var(object$term[i],data)
   ind <- list()
-  object$nobs <- nrow(dat)
+  object$nobs <- length(dat[[1]])
   n <- length(dat[[1]])
   ## if there is a blocking factor then set up indexes 
   ## indicating which data go with which block...
@@ -204,7 +226,7 @@ spasm.construct.spatps <- function(object,data) {
     rank <- rank + ncol(object$S[[i]])
   }
   object$Ri <- list()
-  object$edf0 <- 3;object$edf1 <- rank
+  object$edf0 <- 3*nb;object$edf1 <- rank
   class(object) <- "spatps"
   object
 }
@@ -334,7 +356,7 @@ spasm.construct.cus <- function(object,data) {
  
   ## so ind[[i]] indexes the elements operated on by the ith smoother.
   object$spl <- list()
-  object$edf0 <- 2;object$edf1 <- length(unique(object$x))
+  object$edf0 <- 2*nb;object$edf1 <- length(unique(object$x))
   class(object) <- "cus"
   object
 }

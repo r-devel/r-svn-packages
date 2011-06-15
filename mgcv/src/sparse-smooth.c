@@ -31,12 +31,28 @@ typedef struct { /* defines structure for kd-tree box */
 
 typedef struct {
   box_type *box;
-  int *ind, /* index of points in coordinate matrix tree relates to */
+  int *ind, /* index of points in coordinate matrix which tree relates to */
       *rind, /* where is ith row of X in ind? */
       n_box, /* number of boxes */
       d; /* dimension */
   double huge; /* number indicating an open boundary */
 } kdtree_type;
+
+void kd_sanity(kdtree_type kd) {
+  int ok=1,i,*count,n=0;
+  for (i=0;i<kd.n_box;i++) if (kd.box[i].p1>n) n = kd.box[i].p1;
+  count = (int *)calloc((size_t)n,sizeof(int));
+  for (i=0;i<kd.n_box;i++) if (!kd.box[i].child1) { /* terminal node */
+    if (kd.box[i].p1-kd.box[i].p0>1) { Rprintf("More than 2 points in a box!!\n");ok=0;}
+    count[kd.box[i].p0]++;
+    if (kd.box[i].p1!=kd.box[i].p0) count[kd.box[i].p1]++;
+  }
+  for (i=0;i<n;i++) {
+    if (count[i]!=1) { Rprintf("point %d in %d boxes!\n",i,count[i]);ok=0;}
+  }
+  if (ok) Rprintf("kd tree sanity checks\n");
+  free(count);
+}
 
 void k_order(int *k,int *ind,double *x,int *n) {
 /* ind is of length n.
@@ -92,21 +108,28 @@ void k_order(int *k,int *ind,double *x,int *n) {
       /* so pivot is xp = x[ind[l+1]]. start proccess of shuffling array into
          two partitions containing all the values less than xp, and all 
          those larger than xp... */ 
-      ri = r-1;  /* start searching down partition from here for wrongly located 
+      ri = r;  /* start searching down partition from here for wrongly located 
                     values (pos r above pivot already) */
-      li = l+2; /* start searching up from here (pos l is already below pivot, l+1 is pivot)*/
+      li = l+1; /* start searching up from here (pos l is already below pivot, l+1 is pivot)*/
       while (1) {
-        while(x[ind[li]]<xp) li++; /* move up until value on wrong side found */
-        while(x[ind[ri]]>xp) ri--; /* move down until value on wrong side found */
-        if (ri<=li) break; /* partitions correct now */
+	/* BUG: can get stuck in here, when there are tied values, so that li and ri
+	   stay unmodified, but ri > li... changing to <= >= allows ri and li to 
+           move out of [0,n], which causes segfault!*/
+        li++;ri--; /* always move by one, or you can get stuck */
+        while(x[ind[li]] < xp) li++; /* move up until value on wrong side (or equal) found */
+        while(x[ind[ri]] > xp) ri--; /* move down until value on wrong side (or equal) found */
+        if (ri < 0) Rprintf("ri<0!!\n");
+        if (li >= *n) Rprintf("li >= n!!\n");       
+        if (ri<li) break; /* partitions correct now */
         dum = ind[ri];ind[ri] = ind[li];ind[li] = dum; /* swap ri and li (to correct sides) */
       } /* end of partitioning loop */
       /* now put pivot into right place (and value in that place in correct partition) */
       ind[l+1] = ind[ri];
       ind[ri] = ip;
       /* Now select the partition in which kth largest must lie, by setting new end points */
-      if (ri > *k) r = ri - 1; else l = li;
-    } else { /* the partition can only contain 1 or 2 points */
+      if (ri >= *k ) r = ri - 1; /*else l=li;*//* if (ri <= *k + 1)  l = li;*/ /* had else l=li; here */
+      if (ri <= *k ) l = li; 
+   } else { /* the partition can only contain 1 or 2 points */
       if (r == l+1 && x[ind[r]] < x[ind[l]]) { /* contains two points, but in wrong order */
          dum = ind[r];ind[r] = ind[l];ind[l] = dum; /* so swap indices */
       } 
@@ -232,7 +255,7 @@ void Rkdtree(double *X,int *n, int *d,double *lo,double *hi,int *ind, int *rind)
      m <- 2;
      while (m<n) m <- m*2
      nb <- min(m-1,2*n-m/2-1)
-     hi and lo are nb by k matrices
+     hi and lo are nb by d matrices
      ind and rind are n vectors
      X is an n by d matrix
 */
@@ -248,7 +271,8 @@ void Rkdtree(double *X,int *n, int *d,double *lo,double *hi,int *ind, int *rind)
 }
 
 
-inline void update_heap(double *h,int *ind,int n) {
+//inline 
+void update_heap(double *h,int *ind,int n) {
 /* h contains n numbers, such that h[i] > h[2*i+1] and
    h[i] > h[2*i+2] (each applying whenever elements exist).
    The exception is that h[0], may not obey these conditions. 
@@ -276,7 +300,8 @@ inline void update_heap(double *h,int *ind,int n) {
   ind[i0] = ind0;
 }
 
-inline double box_dist(box_type *box,double *x,int d) {
+//inline 
+double box_dist(box_type *box,double *x,int d) {
 /* find distance from d dimensional box to point x */
   double d2 = 0.0,z,*bl,*bh,*xd;
   for (xd=x+d,bl=box->lo,bh=box->hi; x < xd;x++,bl++,bh++) {
@@ -286,7 +311,8 @@ inline double box_dist(box_type *box,double *x,int d) {
   return(sqrt(d2));
 }
 
-inline int which_box(kdtree_type *kd,int j) {
+//inline 
+int which_box(kdtree_type *kd,int j) {
 /* Finds smallest box in kd tree containing jth point 
    from point set used to create tree */ 
   int i,bi,b1;
@@ -297,7 +323,7 @@ inline int which_box(kdtree_type *kd,int j) {
    
     b1 = kd->box[bi].child1;   /* index of first child */
     if (kd->box[b1].p1>=i) bi = b1; /* point is in child1 */
-    else bi = kd->box[bi].child2; /* mkd->box[bi].child1ust be in child2 */
+    else bi = kd->box[bi].child2; /* kd->box[bi].child1 must be in child2 */
   }
   return(bi); /* index of smallest box containing jth point */
 }
@@ -318,7 +344,7 @@ int xbox(kdtree_type *kd,double *x) {
     b1 = box[bi].child1;
     if (box[b1].hi[d]!=box[box[bi].child2].lo[d]) Rprintf("child boundary problem\n");
     /* note that points on boundary are in lower box (child1) */
-    if (x[d] <= box[b1].hi[d]) bi = b1; else
+    if (x[d] <= box[b1].hi[d]) bi = b1; else 
     bi = box[bi].child2;
     d++; if (d == kd->d) d=0;
   }
@@ -326,7 +352,8 @@ int xbox(kdtree_type *kd,double *x) {
 }
 
 
-inline double ijdist(int i, int j, double *X,int n,int d) {
+// inline 
+double ijdist(int i, int j, double *X,int n,int d) {
 /* return Euclidian distance between ith and jth rows of n by d 
    matrix X */
   double *pi,*pj,*pil,dist=0.0,x;
@@ -334,6 +361,67 @@ inline double ijdist(int i, int j, double *X,int n,int d) {
   return(sqrt(dist));
 } 
 
+double xidist(double *x,double *X,int i,int d, int n) {
+/* distance between point x and point in ith row of X */
+  double dist=0.0,z;
+  int j;
+  for (j=0;j<d;j++) { 
+    z = x[j] - X[j*n+i];
+    dist += z*z;
+  }
+  return(sqrt(dist));
+}
+
+int closest(kdtree_type *kd, double *X,double *x,int n) {
+/* Find the point in the kd tree which is closest to the point
+   with co-ordinates given by x. kd->d is dimension. */
+  int bx,ni,j,d,todo[100],bi,*ind,item;
+  double nd,d1,dix; 
+  box_type *box;  
+  bx = xbox(kd,x); /* box containing x */
+  /* get closest point within that box */
+  d = kd->d;
+  ni = kd->ind[kd->box[bx].p0];
+  nd = xidist(x,X,ni,d,n);
+  j = kd->ind[kd->box[bx].p1];
+  if (ni!=j) {
+    d1 = xidist(x,X,j,d,n);
+    if (d1<nd) {
+      nd = d1;ni=j;
+    }
+  } 
+  /* now look for closer points in any box that could be better */
+  todo[0] = 0; /* index of root box... first to check */
+  item = 0; 
+  box = kd->box;
+  ind = kd->ind;
+  while (item>=0) { /* items on the todo list */
+    if (todo[item]==bx) { /* this is the initializing box - already dealt with */
+       item--;
+    } else {
+      bi = todo[item]; /* box to deal with now */
+      item--;
+      if (box_dist(box+bi,x,d)<nd) { /* box edge is closer than existing best point 
+                                             -- need to check further */
+        if (box[bi].child1) { /* box has children --- add to todo list */
+           item++;
+           todo[item] = box[bi].child1;
+           item++;
+           todo[item] = box[bi].child2;
+        } else { /* at smallest box end of tree */
+          for (j=box[bi].p0;j<=box[bi].p1;j++) {
+            dix = xidist(x,X,ind[j],d,n);/* distance between points x and ind[j] */ 
+            if (dix<nd) { /* point closer than existing best */
+              nd = dix; /* best distance */
+              ni = ind[j]; /* best distance index */  
+            } /* end of point addition */
+          } /* done the one or two points in this box */
+        } /* finished with this small box */
+      } /* finished with possible candiate box */
+    } /* end of else branch */
+  } /* todo list end */
+  return(ni);
+}
 
 void p_area(double *a,double *X,kdtree_type kd,int n,int d) {
 /* Associates the volume of its kd box with each point. If the point 
@@ -587,14 +675,19 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
    3. find k nearest neighbours in set 1 that are not in set 2.
    Step 3 can go through nearest looking for self and largest.  
 */
-  int ii,i,j,nn,d2k,bi,bj,max_i,q,n1,n2,*count;
-  double dx,*x,max_dist,d1,d2,maxnd,xj,*db;
+  int ii,i,j,nn,d2k,bi,bj,max_i,q,n1,n2,*count,method=1;
+  double dx,*x,max_dist,d1,d2,maxnd,xj,*db,*p,*p1,d0;
   kdtree_type kd; 
   kd_tree(X,n,d,&kd); /* set up the tree */ 
+  kd_sanity(kd); /* DEBUG only */
   if (*get_a) p_area(a,X,kd,*n,*d);
   d2k = 2 * *d + *k;
   nn = *n; /* following modifies n!!*/
   k_nn_work(kd,X,dist,ni,&nn,d,&d2k); /* get 2d+k nearest neighbours */
+  
+  /* d0 = average of distance to 2d+k nearest neighbours - a useful basic length scale */
+  for (d0=0.0,p=dist,p1=dist+ *n * d2k;p<p1;p++) d0 += *p;d0 /= *n * d2k;
+
   x = (double *)calloc((size_t) *d,sizeof(double));
   /* need to get typical box scale */ 
   db = (double *)calloc((size_t)*d,sizeof(double));
@@ -612,18 +705,37 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
   }
 
   for (i=0;i<*n;i++) { /* work through points */
-    for (j=0;j<*d;j++) x[j] = X[i + j * *n];
+    if (i==112) {
+      Rprintf("hello\n");
+    }
+
     bi = which_box(&kd,i);
-    bj = xbox(&kd,x);
-    if (bj!=bi) Rprintf("xbox says x not in own box!!\n");
-    for (j=0;j<*d;j++) { /* get the balanced neighbours */
+    /* get centre of box containing i, if possible. This leads to fewer occasions on
+       which same box turns up twice as a balanced neighbour. */
+   if (method==0) {
+     for (j=0;j<*d;j++) {
+        if (kd.box[bi].hi[j] < kd.huge && kd.box[bi].lo[j] > -kd.huge) 
+       	x[j] = (kd.box[bi].hi[j] + kd.huge && kd.box[bi].lo[j])*0.5; else
+        x[j] = X[i + j * *n];
+      }
+   } else {
+     for (j=0;j<*d;j++) x[j] = X[i + j * *n];
+   }
+ 
+    for (j=0;j<*d;j++) { /* get the balanced neighbours, j indexes dimension */
       xj = x[j]; 
       /* upper neighbour ... */
-      if (kd.box[bi].hi[j]!=kd.huge) { /* then there is a neigbour in this direction */
-        if (kd.box[bi].lo[j] > -kd.huge) 
-          dx = (kd.box[bi].hi[j] - kd.box[bi].lo[j])*1e-6;
-        else dx = db[j]*1e-6;
-        x[j] = kd.box[bi].hi[j]+dx;
+      if (kd.box[bi].hi[j]!=kd.huge) { /* then there is a neighbour in this direction */
+        if (method==0) {
+          if (kd.box[bi].lo[j] > -kd.huge) 
+            dx = (kd.box[bi].hi[j] - kd.box[bi].lo[j])*1e-6;
+          else dx = db[j]*1e-6;
+          if (dx <=0) dx = db[j]*1e-6;
+          x[j] = kd.box[bi].hi[j]+dx;
+        } else { /* idea here is to avoid e.g. neighbours that have same co-ord in this direction */
+          x[j] += d0;
+          if (x[j] <= kd.box[bi].hi[j]) x[j] = kd.box[bi].hi[j] + d0;
+        }
         bj = xbox(&kd,x); /* box above bi on axis j*/
         if (bj==bi) { 
           Rprintf("%d upper neighbour claimed to be self d=%d!\n",i,j);
@@ -647,20 +759,28 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
       
         max_dist=0.0;
         max_i=0;
-        maxnd=0.0;
+        maxnd=0.0; /* largest distance to neighbour */
         for (q=0;q < d2k;q++) {
-          ii = i + *n * q;
-          if (dist[ii]>maxnd) maxnd = dist[ii];
+          ii = i + *n * q; /* index of distance from i to qth neighbour */
+          if (dist[ii] > maxnd) maxnd = dist[ii];
           if (ni[ii] == n1) { /* point is already in neighbour set */
             ni[ii] = -(n1+1);    /* signal to ignore for replacement */
             max_i = -1; /* signal that no replacement needed */
             break; 
           }
+          /* it is not impossible for the same point to turn up twice as an upper
+             and lower neighbour. This can happen when a point is right on the 
+             box boundary, so that an upper neighbour is also detected as a side neighbour */
+          if (n1== -ni[ii]-1) { /* point already in set and marked no replace*/
+            max_i = -1;  /* signal that no replacement needed */
+            break;
+          } 
+          /* find furthest point among replaceables */
           if (ni[ii]>=0&&dist[ii]>max_dist) { 
             max_dist = dist[ii];max_i=ii;
           }
         }
-        if (max_i>=0 && d1 < *cut_off * maxnd) { /* replace furthest replacable item with n1 */
+        if (max_i >= 0 && d1 < *cut_off * maxnd) { /* replace furthest replacable item with n1 */
           ni[max_i] = -(n1+1); /* signal not to replace later */
           dist[max_i] = d1;
         }
@@ -668,11 +788,21 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
 
      /* lower neighbour... */ 
      if (kd.box[bi].lo[j]!=-kd.huge) { /* then there is a neigbour in this direction */
+        if (method==0) {       
+          if (kd.box[bi].hi[j] < kd.huge) 
+            dx = (kd.box[bi].hi[j] - kd.box[bi].lo[j])*1e-6;
+          else dx = db[j]*1e-6;
+          if (dx <=0) dx = db[j]*1e-6;
       
-        dx = (xj - kd.box[bi].lo[j])*1.001;
-        x[j] -= dx;
+          x[j] = kd.box[bi].lo[j] - dx; 
+        } else {
+          x[j] -= d0;
+          if (x[j] >= kd.box[bi].lo[j]) x[j] = kd.box[bi].lo[j] - d0;
+        }
         bj = xbox(&kd,x); /* box below bi on axis j*/
-        if (bj==bi) Rprintf("neighbour claimed to be self!\n");
+        if (bj==bi) {
+          Rprintf("lower neighbour claimed to be self!\n");
+        }
         x[j] = xj;
         /* now find point closest to point i in box bj */
      
@@ -698,7 +828,11 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
             ni[ii] = -(n1+1);    /* signal to ignore for replacement */
             max_i = -1; /* signal that no replacement needed */
             break; 
-          }
+          } 
+          if (n1== -ni[ii]-1) { /* point already in set and marked no replace*/
+            max_i = -1;  /* signal that no replacement needed */
+            break;
+          }  
           if (ni[ii]>=0&&dist[ii]>max_dist) { 
             max_dist = dist[ii];max_i=ii;
           }
@@ -720,7 +854,7 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
 }
 
 
-void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight) {
+void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight,double *kappa) {
 /* Creates the sqrt penalty matrix entries for a sparse smoother
 
    X is n by d, and each row of X contains the location of a point. 
@@ -736,7 +870,7 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
    only the d==2, m=3, k=6 TPS like case is dealt with here. 
 
 */
-  int i,j,true=1,false=0,k1,ii,l,k_add;
+  int i,j,true=1,k1,ii,l,k_add;
   double *M,*Mi,*Vt,*sv, /* matrix mapping derivatives to function values */
     *dist,*area,cut_off=5,x,z;
 
@@ -775,7 +909,8 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
     j = 6;
     mgcv_svd_full(M,Vt,sv,&j,&j);
     /* Rprintf("%d done svd...\n",i);*/
-    for (j=0;j<6;j++) if (sv[j]>sv[1]*0) sv[j] = 1/sv[j];
+    kappa[i] = sv[0]/sv[5]; /* condition number */
+    for (j=0;j<6;j++) if (sv[j]>sv[0]*0) sv[j] = 1/sv[j]; 
     /* Now form V diag(sv) M' */
     for (ii=0;ii<6;ii++) { 
       x=sv[ii];
@@ -799,10 +934,10 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
 /************************************************************/
 /* Fast stable full rank cubic spline smoothing based on    
    deHoog and Hutchinson, 1987 and Hutchinson and deHoog,
-   1985.... All O(n) by exploiting band structure. 
+   1985.... All O(n) by exploiting band structure. */ 
 /************************************************************/
-
-void inline QTz(int i,int j,double c,double s, double *z) { 
+// inline
+void QTz(int i,int j,double c,double s, double *z) { 
 /* applies a Givens rotation to z */   
   double temp;
   temp=z[i]*c+z[j]*s;
@@ -810,8 +945,8 @@ void inline QTz(int i,int j,double c,double s, double *z) {
   z[i]=temp;
 }
 
-
-void inline givens(double a, double b,double *c,double *s) {
+//inline 
+void givens(double a, double b,double *c,double *s) {
 /* Obtain Givens rotation c and s to annihilate b (setting 
    a = sqrt(a^2 + b^2))*/
   double t;
@@ -883,7 +1018,7 @@ void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
 */   
   double *ub,rho,*p,*p1,*ub1,*ub2,*lb1,c,s,*U0s,*U0c,*U1s,*U1c,
     *V0s,*V0c,*V1s,*V1c,upper,w2,
-    L11,L12,L13,L21,L22,L23,L31,L32,L33,X1,X2,X3,Lt,temp;
+    L11=0.0,L12=0.0,L13,L21,L22,L23,L31,L32,L33,X1,X2,X3,Lt,temp;
   int i,k,ok;
   /* first check for duplicates */
   k=0;ok=1;
