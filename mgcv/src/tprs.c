@@ -348,7 +348,9 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
 { matrix X1,E,U,v,TU,T,Z,p;
  
   int l,i,j,M,*yxindex,pure_knot=0,nk,minus=-1,kk;
-  double w,*xc,*XMi,**UZM,*X1V,*Ea,*Ua;
+  double w,*xc,*XMi,**UZM,*X1V,*Ea,*Ua,tol=DOUBLE_EPS;
+  tol = pow(tol,.7);
+
   if (n_knots<k) /* then use the covariate points as knots */
   { *Xu=initmat((long)n,(long)d+1);
     for (i=0;i<n;i++) { for (j=0;j<d;j++) Xu->M[i][j]=x[j][i];Xu->M[i][d]=(double)i;}
@@ -397,7 +399,7 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
       RArrayFromMatrix(Ea,nk,&E);
       minus = -1;kk=k; 
   
-      Rlanczos(Ea,Ua,v.M[0],&nk, &kk, &minus);
+      Rlanczos(Ea,Ua,v.M[0],&nk, &kk, &minus,&tol);
 
       U = Rmatrix(Ua,E.r,k);free(Ea);free(Ua);
     

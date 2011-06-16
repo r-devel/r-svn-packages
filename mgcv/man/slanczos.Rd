@@ -6,7 +6,7 @@
 }
 
 \usage{
-slanczos(A,k=10,kl=-1)
+slanczos(A,k=10,kl=-1,tol=.Machine$double.eps^.5)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -20,6 +20,9 @@ eigenvectors are also returned.}
 \item{kl}{If \code{kl} is non-negative then the \code{kl} lowest eigenvalues are returned together with their 
 corresponding eigenvectors (in addition to the \code{k} highest eignevalues + vectors). 
 negative \code{kl} signals that the \code{k} largest magnitude eigenvalues should be returned, with eigenvectors.}
+
+\item{tol}{tolerance to use for convergence testing of eigenvalues. Error in eigenvalues will be less 
+    than the magnitude of the dominant eigenvalue multiplied by \code{tol} (or the machine precision!).}
 
 }
 

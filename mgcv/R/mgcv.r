@@ -16,7 +16,7 @@ Rrank <- function(R,tol=.Machine$double.eps^.9) {
   rank
 }
  
-slanczos <- function(A,k=10,kl=-1) {
+slanczos <- function(A,k=10,kl=-1,tol=.Machine$double.eps^.5) {
 ## Computes truncated eigen decomposition of symmetric A by 
 ## Lanczos iteration. If kl < 0 then k largest magnitude
 ## eigenvalues returned, otherwise k highest and kl lowest.
@@ -28,6 +28,7 @@ slanczos <- function(A,k=10,kl=-1) {
 ## then you might as well use eigen(A,symmetric=TRUE), but the
 ## extra cost is the expensive accumulation of eigenvectors.
 ## Should re-write whole thing using LAPACK routines for eigenvectors. 
+   if (tol<=0||tol>.01) stop("silly tolerance supplied")
    k <- round(k);kl <- round(kl)
    if (k<0) stop("argument k must be positive.")
    m <- k + max(0,kl) 
@@ -36,7 +37,7 @@ slanczos <- function(A,k=10,kl=-1) {
    if (n != ncol(A)) stop("A not square")
    if (m>n) stop("Can not have more eigenvalues than nrow(A)")
    oo <- .C(C_Rlanczos,A=as.double(A),U=as.double(rep(0,n*m)),D=as.double(rep(0,m)),
-            n=as.integer(n),m=as.integer(k),ml=as.integer(kl))
+            n=as.integer(n),m=as.integer(k),ml=as.integer(kl),tol=as.double(tol))
    list(values = oo$D,vectors = matrix(oo$U,n,m),iter=oo$n) 
 }
 

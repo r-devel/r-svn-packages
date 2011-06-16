@@ -6,6 +6,10 @@ ISSUES:
 
 unstable
 
+* slanczos bug fixes --- could segfault if k negative. Could also fail to 
+  return correct values when k small and kl < 0 (due to a convergence 
+  testing bug, now fixed)
+
 * 'cc' Predict.matrix bug fix - prediction failed for single points.
 
 * summary.gam failed for single coefficient random effects. fixed.

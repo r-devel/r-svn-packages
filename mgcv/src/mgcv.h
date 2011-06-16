@@ -41,7 +41,7 @@ void  tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,
 void psum(double *y, double *x,int *index,int *n);
 void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p);
 void in_out(double *bx, double *by, double *break_code, double *x,double *y,int *in, int *nb, int *n);
-void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm);
+void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol);
 void RQT(double *A,int *r,int *c);
 void RuniqueCombs(double *X,int *ind,int *r, int *c);
 void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,double *Afd,double *Hd,double *Sd,int *off,int *dim,double *theta, int *m,int *nar);

@@ -31,7 +31,7 @@ R_CMethodDef CEntries[] = {
     {"mgcv_td_qy",(DL_FUNC)&mgcv_td_qy,7},
     {"rwMatrix",(DL_FUNC)&rwMatrix,6},
     {"in_out",(DL_FUNC)&in_out,8},
-    {"Rlanczos",(DL_FUNC)&Rlanczos,6},
+    {"Rlanczos",(DL_FUNC)&Rlanczos,7},
     {"rksos",(DL_FUNC)&rksos,3},
     {"gen_tps_poly_powers",(DL_FUNC)&gen_tps_poly_powers,4},
     {"sparse_penalty",(DL_FUNC)&sparse_penalty,9},
