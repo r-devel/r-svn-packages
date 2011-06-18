@@ -372,29 +372,39 @@ double xidist(double *x,double *X,int i,int d, int n) {
   return(sqrt(dist));
 }
 
-int closest(kdtree_type *kd, double *X,double *x,int n) {
+int closest(kdtree_type *kd, double *X,double *x,int n,int *ex,int nex) {
 /* Find the point in the kd tree which is closest to the point
-   with co-ordinates given by x. kd->d is dimension. */
-  int bx,ni,j,d,todo[100],bi,*ind,item;
+   with co-ordinates given by x. kd->d is dimension. n is number
+   of rows in X. rows of X are points in tree. 
+   if nex>0 then ex is a list of points to exclude.
+*/
+  int bx,ni,i,j,k,d,todo[100],bi,*ind,item,ok=0;
   double nd,d1,dix; 
-  box_type *box;  
+  box_type *box;
+  if (nex<0) nex=0;  
+  nd = kd->huge; 
   bx = xbox(kd,x); /* box containing x */
   /* get closest point within that box */
   d = kd->d;
-  ni = kd->ind[kd->box[bx].p0];
-  nd = xidist(x,X,ni,d,n);
-  j = kd->ind[kd->box[bx].p1];
-  if (ni!=j) {
-    d1 = xidist(x,X,j,d,n);
-    if (d1<nd) {
-      nd = d1;ni=j;
+  box = kd->box;
+  ind = kd->ind;
+  ni = -1;
+  while (ni<0) { /* open larger boxes until one contains a non-excluded neighbour */
+    for (j=box[bx].p0;j<box[bx].p1;j++) { /* work through points in this box */
+      k = ind[j]; /* candidate neighbour */
+      /* is k on the exclusion list? */
+      ok = 1;for (i=0;i<nex;i++) if (k == ex[i]) {ok = 0;break;}
+      if (ok) { /* is it closest in this box? */
+        d1 = xidist(x,X,k,d,n);
+        if (d1<nd) { nd=d1;ni=k;}
+      }
     }
+    if (ni < 0&& bx!=0) bx = box[bx].parent; /* still need bigger box */
   } 
   /* now look for closer points in any box that could be better */
   todo[0] = 0; /* index of root box... first to check */
   item = 0; 
-  box = kd->box;
-  ind = kd->ind;
+ 
   while (item>=0) { /* items on the todo list */
     if (todo[item]==bx) { /* this is the initializing box - already dealt with */
        item--;
@@ -410,17 +420,42 @@ int closest(kdtree_type *kd, double *X,double *x,int n) {
            todo[item] = box[bi].child2;
         } else { /* at smallest box end of tree */
           for (j=box[bi].p0;j<=box[bi].p1;j++) {
-            dix = xidist(x,X,ind[j],d,n);/* distance between points x and ind[j] */ 
-            if (dix<nd) { /* point closer than existing best */
-              nd = dix; /* best distance */
-              ni = ind[j]; /* best distance index */  
-            } /* end of point addition */
+            k = ind[j];
+            /* check if k on exclusion list */
+            ok = 1;for (i=0;i<nex;i++) if (k == ex[i]) {ok = 0;break;}
+            if (ok) { /* check distance if not an excluded point */
+              dix = xidist(x,X,k,d,n);/* distance between points x and ind[j] */ 
+              if (dix<nd) { /* point closer than existing best */
+                nd = dix; /* best distance */
+                ni = k; /* best distance index */  
+              } /* end of point addition */
+            } /* end if ok */
           } /* done the one or two points in this box */
         } /* finished with this small box */
       } /* finished with possible candiate box */
     } /* end of else branch */
   } /* todo list end */
   return(ni);
+}
+
+void star(kdtree_type *kd, double *X,int n,int i0,int *ni,double dist) {
+ /* find indices of 5 points near points of a star centred on point i0
+    and return these in ni. points are unique and do not include i0.
+    start points are at dist from i0.
+    kd is kd tree, relating to points stored in n rows of X.
+ */
+  double pi25,dx,dy,x0[2],x[2];
+  int i,ex[6];
+  if (kd->d!=2) Rprintf("\n star only useful in 2D\n");
+  pi25 = asin(1)*4/5;
+  x0[0] = X[i0];x0[1] = X[i0 + n];
+  ex[0] = i0;
+  for (i=0;i<5;i++) {
+    dx = dist*sin(pi25*i);dy = dist*cos(pi25*i);
+    x[0] = x0[0] + dx;x[1] = x0[1] + dy; /* current star point */
+    /* find closest point in X/kd, not in exclusion list */
+    ex[i+1] = ni[i] = closest(kd,X,x,n,ex,i+1);
+  }
 }
 
 void p_area(double *a,double *X,kdtree_type kd,int n,int d) {
@@ -857,6 +892,109 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
 void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight,double *kappa) {
 /* Creates the sqrt penalty matrix entries for a sparse smoother
 
+   This version examines conditioning when choosing meighbours.
+   A 5 pointed star is proposed around each point, and the closest points to the
+   star points are taken as neighbours, disallowing repeats and the central point.  
+
+   X is n by d, and each row of X contains the location of a point. 
+   There are no repeat points in X.
+
+   D is n by m*(k+1), where m is the number of derivatives in the penalty
+     and k is the number of neighbours (excluding self) required to 
+     approximate the derivatives. D[i + m*n*l + n*(j+1)] is the coefficient 
+     associated with the neighbour referenced by ni[i + n*j] and the lth
+     derivative.   
+
+   Set up is general to allow for future extension of this routine, but currently 
+   only the d==2, m=3, k=6 TPS like case is dealt with here. 
+
+*/
+  int i,j,kk,true=1,k1,ii,l,ni5[5];
+  double *M,*Mi,*Vt,*sv, /* matrix mapping derivatives to function values */
+    *dist,*area,x,z,avd,*p,*p1,md,ll;
+  kdtree_type kd; 
+
+  k1 = *k + 1;
+  M = (double *)calloc((size_t) k1 * k1,sizeof(double));
+  Mi = (double *)calloc((size_t) k1 * k1,sizeof(double)); 
+  Vt = (double *)calloc((size_t) k1 * k1,sizeof(double));
+  sv = (double *)calloc((size_t) k1,sizeof(double));
+
+  dist = (double *)calloc((size_t) *n * *k,sizeof(double)); /* corresponding distances */
+  area = (double *)calloc((size_t) *n,sizeof(double)); /* area associated with each point */
+
+  /* get the nearest neighbours */ 
+  j=*n;
+  kd_tree(X,&j,d,&kd); /* set up the tree */ 
+  if (*a_weight) p_area(area,X,kd,*n,*d);
+  k_nn_work(kd,X,dist,ni,&j,d,k);
+ 
+  /* now find the average distance to the nearest neighbours */
+  for (md=avd=0.0,p=dist,p1=dist + *n * *k;p<p1;p++) { avd += *p;if (*p > md) md= *p;}
+  avd /= *n * *k;  
+  md /= 2; /* half maximum neighbour distance */
+
+  /*  Rprintf("Starting main loop...\n");*/
+  for (i=0;i<*n;i++) { /* work through all points */
+    /* get local length scale */
+    /* for (md=0.0,j=0;j<5;j++) { z=dist[i + j * *n]; if (z>md) md=z;}
+       md /= 2;*/ 
+    /* find the star neighbours of the ith point */
+    for (kk=1;kk<4;kk++) { /* try expanding star at most 3 times */
+      star(&kd,X,*n,i,ni5,md); 
+
+      M[0] = 1.0;for (j=1;j<6;j++) M[j*6] = 0.0;
+      for (ll=0.0,j=1;j<6;j++) {
+        M[j] = 1.0;
+        ii = ni5[j-1]; /* neighbour index */
+        x = X[ii] - X[i];     
+        z = X[ii + *n] - X[i + *n];
+        ll += sqrt(x*x+z*z); /* distance to this neighbour */
+        M[j + 6] = x;
+        M[j + 12] = z;
+        M[j + 18] = x*x/2;
+        M[j + 24] = z*z/2;
+        M[j + 30] = x*z;
+      }
+      /* Let g = [f,f_x,f_z,f_xx,f_zz,f_xz], then f -> Mg as neighbours
+       approach point i. Now invert M, to estimate g using g = M^{-1}f */
+      ll <- ll/5; /* average distance */
+      area[i] = ll*ll; /* rough measure of area associated with this */ 
+      /* call mgcv_svd_full to pseudoinvert M */
+      j = 6;
+      mgcv_svd_full(M,Vt,sv,&j,&j);
+      /* Rprintf("%d done svd...\n",i);*/
+      kappa[i] = sv[0]/sv[5]; /* condition number */
+      if (kappa[i]<1e6) break; /* happy with conditioning */
+      md *= 2; /* expand star */
+    }
+    
+    for (j=0;j<6;j++) if (sv[j]>sv[0]*1e-7) sv[j] = 1/sv[j]; else {sv[j]=0.0;} 
+    /* Now form V diag(sv) M' */
+    for (ii=0;ii<6;ii++) { 
+      x=sv[ii];
+      for (j=0;j<6;j++) M[j+ii*6] *= x;
+    }
+    j=6;
+    mgcv_mmult(Mi,Vt,M,&true,&true,&j,&j,&j);
+    /*  Rprintf("done mmult...\n"); */
+    /* Now read coefficients of second derivatives out into D matrix */
+    if (*a_weight) x = sqrt(area[i]); else x = 1.0; 
+    for (l=0;l<3;l++) for (j=0;j<6;j++)
+      D[i + 6 * *n * l + *n * j] = x*Mi[3+l + 6*j];
+    
+  }
+  /* free memory... */ 
+  free_kdtree(kd);
+  free(M);free(Mi);free(Vt);
+  free(sv);free(dist);free(area);
+} /* end of sparse_penalty */
+
+
+
+void sparse_penalty1(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight,double *kappa) {
+/* Creates the sqrt penalty matrix entries for a sparse smoother
+
    X is n by d, and each row of X contains the location of a point. 
    There are no repeat points in X.
 
@@ -928,7 +1066,7 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
   /* free memory... */
   free(M);free(Mi);free(Vt);
   free(sv);free(dist);free(area);
-}
+} /* end of sparse_penalty1 */
 
 
 /************************************************************/

@@ -208,7 +208,7 @@ spasm.construct.spatps <- function(object,data) {
   object$ind <- ind
  
   ## so ind[[i]] indexes the elements operated on by the ith smoother.
-  object$e <- object$P <- object$S <- list()
+  object$Pt <- object$wu <- object$e <- object$P <- object$S <- list()
   rank <- 0
   for (i in 1:nb) {
     X <- cbind(dat[[1]][ind[[i]]],dat[[2]][ind[[i]]])
@@ -243,21 +243,28 @@ spasm.sp.spatps <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0
     if (length(object$P) < i || is.null(object$P[[i]])) {
       Hi <- Diagonal(n,w[object$ind[[i]]]^2) + object$S[[i]] * sp 
     } else {
-      Hi <- t(object$P[[i]])%*% Diagonal(n,w[object$ind[[i]]]^2) %*%object$P[[i]] + 
-              object$S[[i]] * sp 
+      ww <- as.numeric(w[object$ind[[i]]]^2) ## all weights for this block
+      object$wu[[i]] <- as.numeric(t(object$P[[i]])%*%ww) ## weights for unique points
+      nu <- length(object$wu[[i]]) ## number unique
+      ## get matrix that averages duplicates correctly
+      object$Pt[[i]] <- Diagonal(nu,1/object$wu[[i]])%*%t(object$P[[i]])%*%Diagonal(n,ww)
+      Hi <- Diagonal(nu,object$wu[[i]]) + object$S[[i]] * sp 
     }
     object$Ri[[i]] <- chol(Hi,pivot=TRUE)
     ## next line is wrong and doesn't deal with P
     ## ldetH <- ldetH - 2*sum(log(diag(object$Ri[[i]]))) ## WRONG det! need |I-H|
     if (get.trH) {
+      piv <- attr(object$Ri[[i]],"pivot")
       if (length(object$P) < i || is.null(object$P[[i]])) {
         #R <- solve(object$Ri[[i]]) ## most costly part of routine
-        A <- solve(object$Ri[[i]],w*object$e[[i]]) 
+        A <- solve(object$Ri[[i]],(w*object$e[[i]])[piv,]) 
+        trH <- trH + sum(A^2)/ncol(object$e[[i]])
       } else {
         #R <- solve(object$Ri[[i]],t(object$P[[i]]))
-        A <- solve(object$Ri[[i]],t(obect$P[[i]])%*%w[object$ind[[i]]]*object$e[[i]])
+        A <- solve(object$Ri[[i]],(t(object$P[[i]])%*%(w[object$ind[[i]]]*object$e[[i]]))[piv,])
+        A1 <- solve(object$Ri[[i]],(object$Pt[[i]]%*%(w[object$ind[[i]]]*object$e[[i]]))[piv,])
+        trH <- trH + sum(A*A1)/ncol(object$e[[i]])
       }
-      trH <- trH + sum(A^2)/ncol(object$e[[i]])
     }
   }
   if (get.trH) object$trH <- trH
@@ -273,42 +280,43 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
 ## number of rows for the smooth block.
   if (block>0) { 
     piv <- attr(object$Ri[[block]],"pivot")
-    n <- length(object$ind[[block]])
+    n <- ncol(object$Ri[[block]])
     ipiv <- piv
     ipiv[piv] <- 1:n
     if (length(object$P) < block || is.null(object$P[[block]])) {
-      P <- Diagonal(n)
-    } else { P <- object$P[[block]] }
+      Pt <- P <- Diagonal(n)
+    } else { P <- object$P[[block]];Pt <- object$Pt[[block]] }
     if (is.matrix(X)) {
-      X1 <- solve(t(object$Ri[[block]]),t(P)%*%(object$w[object$ind[[block]]]*X)[piv,])
+      X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]*X)[piv,])
       X1 <- solve(object$Ri[[block]],X1)[ipiv,] 
       if (residual) X <- X - P%*%X1 else X <- P%*%X1;
     } else {
-      X1 <- solve(t(object$Ri[[block]]),t(P)%*%(object$w[object$ind[[block]]]*X)[piv])
+      X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]*X)[piv])
       X1 <- solve(objectRi[[block]],X1)[ipiv]
       if (residual) X <- X - as.numeric(P%*%X1) else X <- as.numeric(P%*%X1);
     }
   } else { 
     for (i in 1:object$nblock) { ## work through all blocks
       piv <- attr(object$Ri[[i]],"pivot")
-      n <- length(object$ind[[i]])
+      #n <- length(object$ind[[i]])
+      n <- nrow(object$Ri[[i]])
       ipiv <- piv
       ipiv[piv] <- 1:n
       if (length(object$P) < i || is.null(object$P[[i]])){ 
-        P <- Diagonal(n)
-      } else { P <- object$P[[i]] }
+        Pt <- P <- Diagonal(n)
+      } else { P <- object$P[[i]];Pt <- object$Pt[[i]] }
       if (is.matrix(X)) {
-        Xi <- t(P)%*%(object$w[object$ind[[i]]]*X[object$ind[[i]],])
+        Xi <- Pt%*%(object$w[object$ind[[i]]]*X[object$ind[[i]],])
         X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
         X1 <- solve(object$Ri[[i]],X1)[ipiv,]
-        if (residual) X1 <- X[object$ind[[i]],] - P%*%X1
-        X[object$ind[[i]],] <- P%*%X1 
+        if (residual) X[object$ind[[i]],] <- X[object$ind[[i]],] - as.matrix(P%*%X1)
+        else X[object$ind[[i]],] <- as.matrix(P%*%X1) 
       } else {
-        Xi <- t(P)%*%(object$w[object$ind[[i]]]*X[object$ind[[i]]])
+        Xi <- Pt%*%(object$w[object$ind[[i]]]*X[object$ind[[i]]])
         X1 <- solve(t(object$Ri[[i]]),Xi[piv])
         X1 <- solve(object$Ri[[i]],X1)[ipiv]
-        if (residual) X1 <- X[object$ind[[i]]] - as.numeric(P%*%X1)
-        X[object$ind[[i]]] <- as.numeric(P%*%X1) 
+        if (residual) X[object$ind[[i]]] <- X[object$ind[[i]]] - as.numeric(P%*%X1)
+        else X[object$ind[[i]]] <- as.numeric(P%*%X1) 
       }
     } ## end of block loop    
   }
@@ -460,7 +468,7 @@ spasm.construct <- function(object,data) UseMethod("spasm.construct")
 spasm.sp <- function(object,sp,w=rep(1,object$nobs),get.trH=TRUE,block=0) UseMethod("spasm.sp")
 spasm.smooth <- function(object,X,residual=FALSE,block=0) UseMethod("spasm.smooth")
 
-spasm.range <- function(object) {
+spasm.range <- function(object,upper.prop=.5) {
 ## get reasonable smoothing parameter range for sparse smooth in object
   sp <- 1
   edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
@@ -474,8 +482,13 @@ spasm.range <- function(object) {
     edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
   }
   sp0 <- sp
-  while (edf < object$edf1*.9) { 
+  while (edf < object$edf1*upper.prop) { 
     sp1 <- sp1 / 100
+    edf <- spasm.sp(object,sp1,get.trH=TRUE)$trH
+  }
+
+  while (edf > object$edf1*upper.prop) { 
+    sp1 <- sp1 * 4
     edf <- spasm.sp(object,sp1,get.trH=TRUE)$trH
   }
   c(sp1,sp0) ## small, large
