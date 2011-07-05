@@ -14,6 +14,8 @@ ISSUES:
 
 unstable
 
+* gam.fit3 bug. Could fail on immediate divergence as null.eta was matrix.
+
 * slanczos bug fixes --- could segfault if k negative. Could also fail to 
   return correct values when k small and kl < 0 (due to a convergence 
   testing bug, now fixed)

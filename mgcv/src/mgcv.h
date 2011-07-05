@@ -84,6 +84,8 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
             int *get_a,double *cut_off);
 void Rkdtree(double *X,int *n, int *d,double *lo,double *hi,int *ind, int *rind);
 void tri2nei(int *t,int *nt,int *n,int *d,int *off);
+void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
+		 int *m,int *a_weight,double *kappa);
 void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
              double *diagA,double *lb,int *n,double *tol);
 void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol,int *m);

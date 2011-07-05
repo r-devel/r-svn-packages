@@ -41,6 +41,7 @@ R_CMethodDef CEntries[] = {
     {"sspl_construct",(DL_FUNC)&sspl_construct,9},
     {"sspl_mapply",(DL_FUNC)&sspl_mapply,9},
     {"tri2nei",(DL_FUNC)&tri2nei,5},
+    { "nei_penalty",(DL_FUNC)&nei_penalty, 10},
     {NULL, NULL, 0}
 };
 

@@ -257,7 +257,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         ## need an initial `null deviance' to test for initial divergence... 
         ## null.coef <- qr.coef(qr(x),family$linkfun(mean(y)+0*y))
         ## null.coef[is.na(null.coef)] <- 0 
-        null.eta <- x%*%null.coef + as.numeric(offset)
+        null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
         old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights)) + t(null.coef)%*%St%*%null.coef 
         ## ... if the deviance exceeds this then there is an immediate problem
     

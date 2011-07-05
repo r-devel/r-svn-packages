@@ -10,9 +10,33 @@ tri2nei <- function(T) {
   n <- max(T)
   oo <- .C(C_tri2nei,T=as.integer(cbind(T-1,T*0)),as.integer(nrow(T)),as.integer(n),as.integer(ncol(T)-1),
                                     off=as.integer(rep(0,n)));
-  ## ne[1:off[1]] gives neighbours of point 1. 
-  ## ne[(off[i-1]+1):off[i]] give neighbours of point i>1
-  return(list(ne = oo$T[1:oo$off[n]]+1,off=oo$off))
+  ## ni[1:off[1]] gives neighbours of point 1. 
+  ## ni[(off[i-1]+1):off[i]] give neighbours of point i>1
+  return(list(ni = oo$T[1:oo$off[n]]+1,off=oo$off))
+}
+
+tri.pen <- function(X,T) {
+## finds a sparse approximate TPS penalty, based on the points in X, 
+## with triangulation T. Rows of X are points. Rows of T index vertices 
+## of triangles in X.
+
+  nn <- tri2nei(T) ## get neighbour list from T
+  ## now obtain generalized FD penalty...
+  n <- nrows(X);d <- ncol(X);
+  D <- rep(0,3*nn$off[n])
+  oo <- .C(C_nei_penalty,as.double(X),as.integer(n),as.integer(d),D=as.double(D),
+           ni=as.integer(nn$ni),ii=as.integer(nn$off*0),off=as.integer(nn$off),
+           as.integer(2),as.integer(0),kappa=as.double(rep(0,n)));
+  ## BUG: ni doesn't include self at present --- all wrong!
+  ## unpack into sparse matrices...
+  ii <- oo$ii+1
+  jj <- c(1:n,oo$ni+1) ## col index
+  
+  ni <- length(ii)
+  Kx <- sparseMatrix(i=ii,j=jj,x=oo$D[1:ni],dims=c(n,n))
+  Kz <- sparseMatrix(i=ii,j=jj,x=oo$D[1:ni+ni],dims=c(n,n))
+  Kxz <- sparseMatrix(i=ii,j=jj,x=oo$D[1:ni+2*ni],dims=c(n,n))
+  list(Kx=Kx,Kz=Kz,Kxz=Kxz)
 }
 
 
