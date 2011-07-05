@@ -311,6 +311,80 @@ double box_dist(box_type *box,double *x,int d) {
   return(sqrt(d2));
 }
 
+double sector_box_dist(box_type *box,double *x,double theta0,double theta1,double na_code) {
+/* find distance from 2 dimensional box to point x, if the box has some part overlapping the 
+   segment through x starting at angle theta0 and extending to theta1. Angles are on 
+   [0,2 pi] and 0 is angle denotes the x axis. 
+   na_code is the number to use to signify that the box is out of sector.
+*/
+  double d2 = 0.0,z,*bl,*bh,*xd,thetaU,thetaL,x0,x1,y0,y1;
+  int ok;
+  bl = box->lo;bh = box->hi; 
+  /* first determine the co-ordinates of the relevant corners */
+  if (x[0]<bl[0]) { /* box right of point */
+    if (x[1]<bl[1]) { /* box above point */
+      x0 = bh[0];y0 = bl[1];
+      x1 = bl[0];y1 = bh[1];
+    } else if (x[1]>bh[1]) { /* box below point */
+      x0 = bl[0];y0 = bl[1];
+      x1 = bh[0];y1 = bh[1];
+    } else { /* box straddles vertically */
+      x0 = bl[0];y0 = bl[1];
+      x1 = bl[0];y1 = bh[1];
+    } 
+  } else if (x[0]>bh[0]) { /* box left of point */
+    if (x[1]<bl[1]) { /* box above point */
+      x0 = bh[0];y0 = bh[1];
+      x1 = bl[0];y1 = bl[1];
+    } else if (x[1]>bh[1]) { /* box below point */
+      x0 = bl[0];y0 = bh[1];
+      x1 = bh[0];y1 = bl[1];
+    } else { /* box straddles vertically */
+      x0 = bh[0];y0 = bh[1];
+      x1 = bh[0];y1 = bl[1];
+    } 
+  } else { /* box straddles horizontally */
+     if (x[1]<bl[1]) { /* box above point */
+      x0 = bh[0];y0 = bl[1];
+      x1 = bl[0];y1 = bl[1];
+    } else if (x[1]>bh[1]) { /* box below point */
+      x0 = bl[0];y0 = bh[1];
+      x1 = bh[0];y1 = bh[1];
+    } else { /* box straddles vertically */
+       return(0.0); /* point is in box, min distance is zero */ 
+    } 
+  } /* determined locations of outermost (angular) box points relative to x */
+  
+  /* Now have to determine whether box overlaps relevant sector */
+  x0 -= x[0];z = x0*x0;
+  y0 -= x[1];z += y0*y0; z = sqrt(z);
+  thetaL = acos(x0/z);
+  if (y0<0) thetaL = 2*PI - thetaL;
+ 
+  x1 -= x[0];z = x1*x1;
+  y1 -= x[1];z += y1*y1; z = sqrt(z);
+  thetaU = acos(x1/z);
+  if (y1<0) thetaU = 2*PI - thetaU;
+  
+  ok = 0;
+  if ((thetaL<theta0&&theta0<=thetaU)||((thetaU<thetaL)&&(theta0<thetaL||theta0>=thetaU))) ok = 1;
+  if ((thetaL<theta1&&theta1<=thetaU)||((thetaU<thetaL)&&(theta1<thetaL||theta1>=thetaU))) ok = 1;
+
+  if ((theta0<thetaL&&thetaL<=theta1)||((theta1<theta0)&&(thetaL<theta0||thetaL>=theta1))) ok = 1;
+  if ((theta0<thetaU&&thetaU<=theta1)||((theta1<theta0)&&(thetaU<theta0||thetaU>=theta1))) ok = 1;
+  
+  if (ok) { /* then the box is within sector, so distance is computed */
+    for (xd=x+2; x < xd;x++,bl++,bh++) {
+      if (*x < *bl) { z = *x - *bl;d2 += z*z;}
+      if (*x > *bh) { z = *x - *bh;d2 += z*z;}
+    }  
+    return(sqrt(d2));
+  } else {
+    return(na_code);
+  }				     
+}
+
+
 //inline 
 int which_box(kdtree_type *kd,int j) {
 /* Finds smallest box in kd tree containing jth point 
@@ -371,6 +445,21 @@ double xidist(double *x,double *X,int i,int d, int n) {
   }
   return(sqrt(dist));
 }
+
+
+double sector_xidist(double *x,double *X,int i, int n,double theta0,double theta1,double na_code) {
+/* distance between point x and point in ith row of X, provided that the point is in the 
+   sector between theta0 and theta1 with origin at x. theta0/1 are in [0,2 pi]. 
+*/
+  double r,theta,x0,y0;
+  x0 = x[0] - X[i];y0 = x[1] - X[i + n];
+  r = sqrt(x0*x0+y0*y0); theta = acos(x0/r);
+  if (y0 < 0) theta = 2*PI - theta;
+  if ((theta0<theta && theta<=theta1)||((theta1<theta0)&&(theta<theta0||theta>=theta1))) return(r); 
+  else return(na_code);
+}
+
+
 
 int closest(kdtree_type *kd, double *X,double *x,int n,int *ex,int nex) {
 /* Find the point in the kd tree which is closest to the point
@@ -437,6 +526,8 @@ int closest(kdtree_type *kd, double *X,double *x,int n,int *ex,int nex) {
   } /* todo list end */
   return(ni);
 }
+
+
 
 void star(kdtree_type *kd, double *X,int n,int i0,int *ni,double dist) {
  /* find indices of 5 points near points of a star centred on point i0
@@ -889,7 +980,211 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
 }
 
 
-void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight,double *kappa) {
+void tri2nei(int *t,int *nt,int *n,int *d,int *off) {
+/* Takes a triangulation of n points in d dimensions, and turns this into a 
+   neighbours list. t is nt by d+1 and contains the indices of triangle 
+   vertices in its rows, on entry. The indices must run from 0 to n-1.  
+   off is an n vector. On exit t[0..off[0]-1] contains the neighbours of point 0,
+   and t[off[i-1] .. off[i]-1] contain the neigbours of point i if i>0.
+   IMPORTANT: 
+   t should be initialised to double its actual size (triangulation packed first).
+*/
+  int i,j,k,l,ii,jj,*p,*p1,*nn,k0,k1;
+  /* count d times the number of triangles each point is part of... */
+  for (p=off,p1=off + *n;p<p1;p++) *p = 0;
+  for (p=t,p1=t + *nt * (*d+1);p<p1;p++) off[*p] += *d; /* at most *d neighbours */ 
+  /* now turn off into an intial version of the final off vector */
+  for (i=1;i< *n ;i++) off[i] += off[i-1]; 
+  /* create oversized storage for neighbour lists */ 
+  nn = (int *)calloc((size_t)off[*n-1],sizeof(int));
+  for (p=nn,p1 = nn + off[*n-1];p<p1;p++) *p = -1; /* -1 codes unused space */
+  /* now work through triangles, adding vertices to relevant neighbour lists */
+  for (i=0;i<*nt;i++) { /* triangle loop */
+    for (j=0;j<*d+1;j++) { /* j indexes point of interest */
+      ii = t[i + j * *nt]; /* focus point */
+      if (ii==0) k0=0; else k0=off[ii-1];
+      k1=off[ii];
+      /* now check whether elements of current triangle should be added to 
+         the neighbour list for point ii */
+      for (l=0;l<*d+1;l++) if (l!=j) {
+        jj = t[i + l * *nt]; /* neighbour */
+	for (k=k0;k<k1;k++) { 
+          if (nn[k]<0) { nn[k] = jj;break;} /* added to list */
+          if (nn[k]==jj) break; /* already listed */
+	} 
+      }
+    } /* finished triangle i */
+  } /* end of triangle loop */
+  /* At this stage nn includes all the nearest neighbours, but also a bunch of -1
+     entries. Need to compress the storage */ 
+  j= k0 = 0;
+  for (i=0;i<*n;i++) { /* loop through points */
+    k1=off[i];
+    for (k=k0;k<k1;k++) {
+      if (nn[k]<0) break;
+      t[j] = nn[k];j++;
+    }
+    off[i]=j;
+    k0 = k1;
+  }
+  /* so now neighbour lists are stored in t and indexed by off */
+  free(nn);
+} /* end of tri2nei */
+
+void ni_dist_filter(double *X,int *n,int *d,int *ni,int *off,double *mult) {
+/* ni, off store the neighbour list for points stored in rows of X. 
+    This routine strips out any neighbours more than mult times the 
+    average neighbour distance.
+    A revised ni, off is returned
+*/
+  int i,j,k,i0,i1;
+  double *dist,z,z2,md;
+  dist = (double *)calloc((size_t) off[*n-1],sizeof(double)); /* interpoint distances */
+
+  /* now find the average distance to neighbours */
+  i0 = 0;
+  for (j=0;j<*n;j++) {
+    i1 = off[j];
+  
+    for (i=i0;i<i1;i++) {
+      z=0.0;
+      for (k=0;k<*d;k++) {
+        z = (X[i + *d * k] - X[ni[i] + *d * k]);
+        z2 += z*z;
+      }
+      md += dist[i] = sqrt(z2);
+    }
+    i0=i1;
+  }
+  md/=i0; /* average neighbour distance */
+  
+  /* now remove distant neighbours... */
+  k = i0 = 0;
+  for (j=0;j<*n;j++) { /* loop through points */
+    i1=off[j];
+    for (i=i0;i<i1;i++) {
+      if (dist[i]< md * *mult) { /* near enough */
+	ni[k] = ni[i];k++;
+      }
+    }
+    off[j]=k; /* reset off[i] to how far we actually got */
+    i0 = i1;
+  }
+  free(dist);
+}
+
+void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
+                                  int *m,int *a_weight,double *kappa) {
+/* Creates the sqrt penalty matrix entries for a sparse smoother, given a 
+   neighbourhood structure, specified in ni and off and point locations given 
+   in X. 
+
+   Each row of n by d matrix X is a point. 
+   ni is a list indices of neighbours.
+   off (length n) indicates where, in ne, the neighbours of each point lie.
+   i.e. ni[0:(off[i]-1)] contains indices neighbours of point 0.
+        ni[off[i-1]:(off[i]-1)] contains indices of neighbours of i>1.
+   on exit ii[off[i-1]:(off[i]-1)] == i 
+
+   X is n by d, and each row of X contains the location of a point. 
+   There are no repeat points in X.
+
+   D contains the finite difference approximation coefficients.
+     D[i] is the coeff in row ii[i], col ni[i]
+
+   This routine uses least squares/min norm solutions if there are 
+   more/fewer points in neighbourhood than are required for FD approximation.
+
+   Set up is general to allow for future extension of this routine, but currently 
+   only the d==2, m=3, k=6 TPS like case is dealt with here. 
+
+*/
+  int i,j,k,true=1,kk,l,i0,i1,max_nn=0,jj,di,doff;
+  double *M,*Mi,*Vt,*sv, /* matrix mapping derivatives to function values */
+    x,z; 
+  
+  /* first strip out distant neighbours */
+  z = 10.0;
+  ni_dist_filter(X,n,d,ni,off,&z);
+
+  /* now find the maximum number of neighbours */
+  i0 = 0;
+  for (j=0;j<*n;j++) {
+    i1 = off[j];
+    if (i1-i0>max_nn) max_nn = i1-i0; /* maximum number of neighbours */
+    i0=i1;
+  }
+
+  M = (double *)calloc((size_t) 6 * max_nn,sizeof(double));
+  Mi = (double *)calloc((size_t) 6 * max_nn,sizeof(double)); 
+  Vt = (double *)calloc((size_t) 6 * max_nn,sizeof(double));
+  sv = (double *)calloc((size_t) 6,sizeof(double));
+
+  /*  Rprintf("Starting main loop...\n");*/
+  di = i0 = 0;
+  doff = off[*n];
+  for (j=0;j<*n;j++) { /* work through all points */
+    i1 = off[j]; /* neighbours of i are i0..i1-1 */
+    k = kk = i1-i0 + 1; /* number of neighbours + self */
+    if (kk<6) kk=6;
+    l=0; /* row index */
+    /* NOTE: d= 2 hard coded! */ 
+    M[0] = 1.0;for (i=1;i<6;i++) M[i*kk] = 0.0; /* self row */
+    for (i=i0;i<i1;i++) {
+      ii[i] = j;
+      l++; /* up row index */    
+      jj = ni[i]; /* current neighbour index */   
+      x = X[jj] - X[j];     
+      z = X[jj + *n] - X[j + *n];
+      M[l] = 1.0; /* intercept */
+      M[l + kk] = x;
+      M[l + 2*kk] = z;
+      M[l + 3*kk] = x*x/2;
+      M[l + 4*kk] = z*z/2;
+      M[l + 5*kk] = x*z;
+    }  
+    /* Let g = [f,f_x,f_z,f_xx,f_zz,f_xz], then f -> Mg as neighbours
+       approach point i. Now pseudo invert M, to estimate g using g = M^{-}f */
+     
+    /* call mgcv_svd_full to pseudoinvert M */
+    i = 6;
+    mgcv_svd_full(M,Vt,sv,&kk,&i); 
+
+    /* Rprintf("%d done svd...\n",i);*/
+    kappa[i] = sv[0]/sv[k-1]; /* condition number */
+
+    for (i=0;i<k;i++) if (sv[i]>sv[0]*1e-10) sv[i] = 1/sv[i]; else sv[i]=0.0; 
+    /* if k < kk, need to remove trailing rows of M */
+    if (k<kk) {
+      jj=0;
+      for (i=0;i<6;i++) for (l=0;l<kk;l++)  if (l < k) { M[jj] = M[l + kk * i];jj++;}
+      for (i=k;i<kk;i++) sv[i] = 0.0; /* set machine zeroes to zero */
+    }
+
+    /* Now form V diag(sv) M' */
+    for (i=0;i<6;i++) { 
+      x=sv[i];
+      for (l=0;l<k;l++) M[l+i*k] *= x;
+    }
+    i=6;
+    mgcv_mmult(Mi,Vt,M,&true,&true,&i,&k,&i);
+    /*  Rprintf("done mmult...\n"); */
+    /* Now read coefficients of second derivatives out into D matrix */
+    /* if (*a_weight) x = sqrt(area[i]); else */ x = 1.0;
+    for (l=0;l<3;l++) for (j=0;j<k;j++) { 
+      D[di + doff * l] = Mi[3 + l + 6 * j];
+      di++;
+    }
+    i0=i1;
+  }
+  /* free memory... */ 
+  free(M);free(Mi);free(Vt);
+  free(sv);
+} /* end of tri_penalty */
+
+
+void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,
+                                  int *m,int *a_weight,double *kappa) {
 /* Creates the sqrt penalty matrix entries for a sparse smoother
 
    This version examines conditioning when choosing meighbours.
@@ -958,7 +1253,7 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int 
       }
       /* Let g = [f,f_x,f_z,f_xx,f_zz,f_xz], then f -> Mg as neighbours
        approach point i. Now invert M, to estimate g using g = M^{-1}f */
-      ll <- ll/5; /* average distance */
+      ll = ll/5; /* average distance */
       area[i] = ll*ll; /* rough measure of area associated with this */ 
       /* call mgcv_svd_full to pseudoinvert M */
       j = 6;

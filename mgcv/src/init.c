@@ -40,6 +40,7 @@ R_CMethodDef CEntries[] = {
     {"Rkdtree",(DL_FUNC)&Rkdtree,7},
     {"sspl_construct",(DL_FUNC)&sspl_construct,9},
     {"sspl_mapply",(DL_FUNC)&sspl_mapply,9},
+    {"tri2nei",(DL_FUNC)&tri2nei,5},
     {NULL, NULL, 0}
 };
 

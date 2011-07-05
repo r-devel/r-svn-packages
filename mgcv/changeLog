@@ -2,6 +2,14 @@
 *** denotes really big changes 
 ISSUES:
 
+* REML estimation can fail when estimating scale, with extreme weights.
+  Rescaling weights works!
+
+* gamm4 isn't handling NA's properly with formulae like y~factor(z). 
+  When inserting z into dataframe, it fails to drop. It (like gamm) can
+  also run out of memory when computing the cov matrix, if dataset is large 
+  with few levels of random factor...
+
 1.7-7
 
 unstable
@@ -9,6 +17,9 @@ unstable
 * slanczos bug fixes --- could segfault if k negative. Could also fail to 
   return correct values when k small and kl < 0 (due to a convergence 
   testing bug, now fixed)
+
+* gamm bug --- could fail if only smooth was a fixed one, by looking for
+  non-existent sp vector. fixed.
 
 * 'cc' Predict.matrix bug fix - prediction failed for single points.
 

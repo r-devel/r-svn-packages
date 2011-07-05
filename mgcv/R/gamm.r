@@ -1171,7 +1171,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
           k<-k+1
         }
       }
-      names(object$sp) <- names(G$sp)
+      if (!is.null(object$sp)) names(object$sp) <- names(G$sp)
     }
 
     names(object$coefficients) <- term.names  # note - won't work on matrices!!

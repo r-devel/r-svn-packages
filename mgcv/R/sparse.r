@@ -1,6 +1,21 @@
 ## (c) Simon N. Wood 2011
 ## functions for sparse smoothing.
 
+
+tri2nei <- function(T) {
+## Each row of matrix T gives the indices of a the points making up
+## one triangle in d dimensions. T has d+1 columns. This routine 
+## finds the neighbours of each point in that triangulation.
+## indices start at 1.  
+  n <- max(T)
+  oo <- .C(C_tri2nei,T=as.integer(cbind(T-1,T*0)),as.integer(nrow(T)),as.integer(n),as.integer(ncol(T)-1),
+                                    off=as.integer(rep(0,n)));
+  ## ne[1:off[1]] gives neighbours of point 1. 
+  ## ne[(off[i-1]+1):off[i]] give neighbours of point i>1
+  return(list(ne = oo$T[1:oo$off[n]]+1,off=oo$off))
+}
+
+
 ## Efficient stable full rank cubic spline routines, based on    
 ## deHoog and Hutchinson, 1987 and Hutchinson and deHoog,
 ## 1985....
