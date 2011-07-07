@@ -10,6 +10,9 @@ ISSUES:
   also run out of memory when computing the cov matrix, if dataset is large 
   with few levels of random factor...
 
+* current sparse code uses geometry library for Delaunay tesselation.
+  Have to code a replacement if released.
+
 1.7-7
 
 unstable

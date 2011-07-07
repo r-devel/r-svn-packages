@@ -8,8 +8,8 @@ tri2nei <- function(T) {
 ## finds the neighbours of each point in that triangulation.
 ## indices start at 1.  
   n <- max(T)
-  oo <- .C(C_tri2nei,T=as.integer(cbind(T-1,T*0)),as.integer(nrow(T)),as.integer(n),as.integer(ncol(T)-1),
-                                    off=as.integer(rep(0,n)));
+  oo <- .C(C_tri2nei,T=as.integer(cbind(T-1,T*0)),as.integer(nrow(T)),
+           as.integer(n),as.integer(ncol(T)-1),off=as.integer(rep(0,n)));
   ## ni[1:off[1]] gives neighbours of point 1. 
   ## ni[(off[i-1]+1):off[i]] give neighbours of point i>1
   return(list(ni = oo$T[1:oo$off[n]]+1,off=oo$off))
@@ -19,18 +19,19 @@ tri.pen <- function(X,T) {
 ## finds a sparse approximate TPS penalty, based on the points in X, 
 ## with triangulation T. Rows of X are points. Rows of T index vertices 
 ## of triangles in X.
-
+  require(Matrix)
   nn <- tri2nei(T) ## get neighbour list from T
   ## now obtain generalized FD penalty...
-  n <- nrows(X);d <- ncol(X);
-  D <- rep(0,3*nn$off[n])
+  n <- nrow(X);d <- ncol(X);
+  D <- rep(0,3*(nn$off[n]+n)) ## storage for 
   oo <- .C(C_nei_penalty,as.double(X),as.integer(n),as.integer(d),D=as.double(D),
-           ni=as.integer(nn$ni),ii=as.integer(nn$off*0),off=as.integer(nn$off),
+           ni=as.integer(nn$ni-1),ii=as.integer(nn$ni*0),off=as.integer(nn$off),
            as.integer(2),as.integer(0),kappa=as.double(rep(0,n)));
-  ## BUG: ni doesn't include self at present --- all wrong!
+  
   ## unpack into sparse matrices...
-  ii <- oo$ii+1
-  jj <- c(1:n,oo$ni+1) ## col index
+  ni <- oo$off[n]
+  ii <- c(1:n,oo$ii[1:ni]+1) ## row index
+  jj <- c(1:n,oo$ni[1:ni]+1) ## col index
   
   ni <- length(ii)
   Kx <- sparseMatrix(i=ii,j=jj,x=oo$D[1:ni],dims=c(n,n))
@@ -39,6 +40,13 @@ tri.pen <- function(X,T) {
   list(Kx=Kx,Kz=Kz,Kxz=Kxz)
 }
 
+sparse.pen2 <- function(X,area.weights=FALSE) {
+## version of sparse pen based on Delauney triangulation. Requires 
+## geometry package at present. 
+  require(geometry)
+  T <- delaunayn(X)
+  mgcv:::tri.pen(X,T)
+}
 
 ## Efficient stable full rank cubic spline routines, based on    
 ## deHoog and Hutchinson, 1987 and Hutchinson and deHoog,
@@ -253,14 +261,14 @@ spasm.construct.spatps <- function(object,data) {
     X <- cbind(dat[[1]][ind[[i]]],dat[[2]][ind[[i]]])
     dup <- tieMatrix(X) ## strip out any duplicates...
     if (is.null(dup)) {     
-      um <- sparse.pen(X,object$area.weight)
+      um <- sparse.pen2(X,object$area.weight)
     } else {
       object$P[[i]] <- dup$P ## maps this block's data to unique set
-      um <- sparse.pen(dup$xu,object$area.weight)
+      um <- sparse.pen2(dup$xu,object$area.weight)
     }
     object$S[[i]] <- t(um$Kx)%*%um$Kx + t(um$Kz)%*%um$Kz + 2* t(um$Kxz)%*%um$Kxz
     ## create random deviates for use in estimation of trace of influence matrix
-    nr <- 50;n <- nrow(X)
+    nr <- 150;n <- nrow(X)
     object$e[[i]] <- matrix(sample(rep(c(-1,1),nr*n),nr*2*n),n,nr*2)
     rank <- rank + ncol(object$S[[i]])
   }
@@ -274,6 +282,7 @@ spasm.sp.spatps <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0
 ## Set up smooth, given new smoothing parameter and weights.
 ## In particular, construct sparse choleski factor of inverse 
 ## smoother matrix, for each block. Optionally returns tr(H).
+## Note: w propto 1/std.dev(response)
   if (is.null(object$S)) stop("object not fully initialized")
   trH <- ldetH <- 0
   if (block==0) block <- 1:object$nblock
@@ -326,11 +335,11 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
       Pt <- P <- Diagonal(n)
     } else { P <- object$P[[block]];Pt <- object$Pt[[block]] }
     if (is.matrix(X)) {
-      X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]*X)[piv,])
+      X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]^2*X)[piv,])
       X1 <- solve(object$Ri[[block]],X1)[ipiv,] 
       if (residual) X <- X - P%*%X1 else X <- P%*%X1;
     } else {
-      X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]*X)[piv])
+      X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]^2*X)[piv])
       X1 <- solve(objectRi[[block]],X1)[ipiv]
       if (residual) X <- X - as.numeric(P%*%X1) else X <- as.numeric(P%*%X1);
     }
@@ -345,13 +354,13 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
         Pt <- P <- Diagonal(n)
       } else { P <- object$P[[i]];Pt <- object$Pt[[i]] }
       if (is.matrix(X)) {
-        Xi <- Pt%*%(object$w[object$ind[[i]]]*X[object$ind[[i]],])
+        Xi <- Pt%*%(object$w[object$ind[[i]]]^2*X[object$ind[[i]],])
         X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
         X1 <- solve(object$Ri[[i]],X1)[ipiv,]
         if (residual) X[object$ind[[i]],] <- X[object$ind[[i]],] - as.matrix(P%*%X1)
         else X[object$ind[[i]],] <- as.matrix(P%*%X1) 
       } else {
-        Xi <- Pt%*%(object$w[object$ind[[i]]]*X[object$ind[[i]]])
+        Xi <- Pt%*%(object$w[object$ind[[i]]]^2*X[object$ind[[i]]])
         X1 <- solve(t(object$Ri[[i]]),Xi[piv])
         X1 <- solve(object$Ri[[i]],X1)[ipiv]
         if (residual) X[object$ind[[i]]] <- X[object$ind[[i]]] - as.numeric(P%*%X1)
@@ -415,6 +424,7 @@ spasm.sp.cus <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0) {
 ## If block is non-zero, then it specifies which block to set up, otherwise
 ## all are set up. In either case w is assumed to be for the whole smoother,
 ## although only the values for the specified block(s) are used.
+## Note: w propto 1/std.dev(response)
   if (is.null(object$spl)) stop("object not fully initialized")
   trH <-  0
   if (block==0) block <- 1:object$nblock
@@ -505,6 +515,8 @@ spasm.smooth.default <- function(object,X,residual=FALSE,block=0) {
 
 spasm.construct <- function(object,data) UseMethod("spasm.construct")
 spasm.sp <- function(object,sp,w=rep(1,object$nobs),get.trH=TRUE,block=0) UseMethod("spasm.sp")
+## Note that w is assumed proportional to 1/std.dev(response) 
+
 spasm.smooth <- function(object,X,residual=FALSE,block=0) UseMethod("spasm.smooth")
 
 spasm.range <- function(object,upper.prop=.5) {

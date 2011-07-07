@@ -171,7 +171,7 @@ void mgcv_svd(double *x,double *u,double *d,int *r,int *c)
 
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c)
 /* call LA_PACK svd routine to form x=UDV'. U returned in x. V' returned in vt.
-   assumed r > c. U is r by c. D is length c. V is c by c.
+   assumed r >= c. U is r by c. D is length c. V is c by c.
 
 # Here is R test code.....
 library(mgcv)

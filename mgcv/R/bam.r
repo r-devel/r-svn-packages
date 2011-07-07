@@ -544,7 +544,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$model <- mf;rm(mf);gc()
   object$na.action <- attr(object$model,"na.action") # how to deal with NA's
   object$nsdf <- G$nsdf
-  names(object$coefficients)[1:G$nsdf] <- colnamesX[1:G$nsdf]
+  if (G$nsdf>0) names(object$coefficients)[1:G$nsdf] <- colnamesX[1:G$nsdf]
   object$offset <- G$offset
   object$prior.weights <- G$w
   object$pterms <- G$pterms

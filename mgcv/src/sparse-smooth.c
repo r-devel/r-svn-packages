@@ -1038,7 +1038,7 @@ void ni_dist_filter(double *X,int *n,int *d,int *ni,int *off,double *mult) {
     A revised ni, off is returned
 */
   int i,j,k,i0,i1;
-  double *dist,z,z2,md;
+  double *dist,z,z2,md=0.0;
   dist = (double *)calloc((size_t) off[*n-1],sizeof(double)); /* interpoint distances */
 
   /* now find the average distance to neighbours */
@@ -1047,12 +1047,13 @@ void ni_dist_filter(double *X,int *n,int *d,int *ni,int *off,double *mult) {
     i1 = off[j];
   
     for (i=i0;i<i1;i++) {
-      z=0.0;
+      z2=0.0;
       for (k=0;k<*d;k++) {
-        z = (X[i + *d * k] - X[ni[i] + *d * k]);
+        z = (X[j + *n * k] - X[ni[i] + *n * k]);
         z2 += z*z;
       }
-      md += dist[i] = sqrt(z2);
+      dist[i] = sqrt(z2);
+      md += dist[i];
     }
     i0=i1;
   }
@@ -1114,19 +1115,24 @@ void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
     if (i1-i0>max_nn) max_nn = i1-i0; /* maximum number of neighbours */
     i0=i1;
   }
+  max_nn++; /* self! */
+  if (max_nn<6) max_nn=6;
 
   M = (double *)calloc((size_t) 6 * max_nn,sizeof(double));
   Mi = (double *)calloc((size_t) 6 * max_nn,sizeof(double)); 
-  Vt = (double *)calloc((size_t) 6 * max_nn,sizeof(double));
+  Vt = (double *)calloc((size_t) 6 * 6,sizeof(double));
   sv = (double *)calloc((size_t) 6,sizeof(double));
 
   /*  Rprintf("Starting main loop...\n");*/
   di = i0 = 0;
-  doff = off[*n];
+  doff = off[*n-1] + *n; /* total number of neighbours + selves */
   for (j=0;j<*n;j++) { /* work through all points */
     i1 = off[j]; /* neighbours of i are i0..i1-1 */
     k = kk = i1-i0 + 1; /* number of neighbours + self */
-    if (kk<6) kk=6;
+    if (kk<6) { /* will need to pack M with zero rows */ 
+      kk=6;
+      for (i=0;i<6*kk;i++) M[i]=0.0;
+    }
     l=0; /* row index */
     /* NOTE: d= 2 hard coded! */ 
     M[0] = 1.0;for (i=1;i<6;i++) M[i*kk] = 0.0; /* self row */
@@ -1150,10 +1156,11 @@ void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
     i = 6;
     mgcv_svd_full(M,Vt,sv,&kk,&i); 
 
-    /* Rprintf("%d done svd...\n",i);*/
-    kappa[i] = sv[0]/sv[k-1]; /* condition number */
-
-    for (i=0;i<k;i++) if (sv[i]>sv[0]*1e-10) sv[i] = 1/sv[i]; else sv[i]=0.0; 
+    /* Rprintf("%d done svd...\n",i);*/ 
+    jj = k; if (jj>6) jj=6;
+    kappa[i] = sv[0]/sv[jj-1]; /* condition number */
+    
+    for (i=0;i<jj;i++) if (sv[i]>sv[0]*1e-10) sv[i] = 1/sv[i]; else sv[i]=0.0; 
     /* if k < kk, need to remove trailing rows of M */
     if (k<kk) {
       jj=0;
@@ -1168,17 +1175,34 @@ void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
     }
     i=6;
     mgcv_mmult(Mi,Vt,M,&true,&true,&i,&k,&i);
+
+    /* g = Mi f, where g = [f_0,f_x,f_z,f_zz,f_zz,f_xz] in obvious 
+       notation, while f = [f_0,f_neighbours]. So first column of 
+       Mi gives the dependence on the self node, f_0. */
+
+
     /*  Rprintf("done mmult...\n"); */
     /* Now read coefficients of second derivatives out into D matrix */
     /* if (*a_weight) x = sqrt(area[i]); else */ x = 1.0;
-    for (l=0;l<3;l++) for (j=0;j<k;j++) { 
-      D[di + doff * l] = Mi[3 + l + 6 * j];
+    
+    /* issue here is that off and ii don't include references to self,
+       don't want to handle this with an interleaving convention as
+       it's a mess to code, and will increase memory footprint. Better 
+       to do all self nodes at start and then work through nodes indexed 
+       by off and ii */ 
+    for (l=0;l<3;l++) 
+      D[j + doff * l] = Mi[3 + l]; /* self nodes are first in each block */
+ 
+    for (i=1;i<k;i++) {  /* now neighbours in off, ii order */ 
+      for (l=0;l<3;l++) D[di + doff * l + *n] = Mi[3 + l + 6 * i];
       di++;
     }
     i0=i1;
   }
   /* free memory... */ 
-  free(M);free(Mi);free(Vt);
+  free(M);
+  free(Mi);
+  free(Vt);
   free(sv);
 } /* end of tri_penalty */
 
