@@ -278,7 +278,7 @@ spasm.construct.spatps <- function(object,data) {
   object
 }
 
-spasm.sp.spatps <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0) { 
+spasm.sp.spatps <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0,centre=FALSE) { 
 ## Set up smooth, given new smoothing parameter and weights.
 ## In particular, construct sparse choleski factor of inverse 
 ## smoother matrix, for each block. Optionally returns tr(H).
@@ -307,15 +307,24 @@ spasm.sp.spatps <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0
         #R <- solve(object$Ri[[i]]) ## most costly part of routine
         A <- solve(object$Ri[[i]],(w*object$e[[i]])[piv,]) 
         trH <- trH + sum(A^2)/ncol(object$e[[i]])
+        if (centre) { ## correct EDF for centring
+          trH <- trH - sum(solve(object$Ri[[i]],w[piv])^2)/n
+        }
       } else {
         #R <- solve(object$Ri[[i]],t(object$P[[i]]))
         A <- solve(object$Ri[[i]],(t(object$P[[i]])%*%(w[object$ind[[i]]]*object$e[[i]]))[piv,])
         A1 <- solve(object$Ri[[i]],(object$Pt[[i]]%*%(w[object$ind[[i]]]*object$e[[i]]))[piv,])
-        trH <- trH + sum(A*A1)/ncol(object$e[[i]])
+        trH <- trH + sum(A*A1)/ncol(object$e[[i]]) 
+        if (centre) { ## correct EDF for centring
+          A <- solve(object$Ri[[i]],(t(object$P[[i]])%*%w[object$ind[[i]]])[piv,])
+          A1 <- solve(object$Ri[[i]],(object$Pt[[i]]%*%w[object$ind[[i]]])[piv,])
+          trH <- trH - sum(A*A1)/n
+        }
       }
     }
   }
   if (get.trH) object$trH <- trH
+  object$centre <- centre
   object$w <- w
   object$sp <- sp
   ## object$ldetH <- ldetH 
@@ -336,12 +345,16 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
     } else { P <- object$P[[block]];Pt <- object$Pt[[block]] }
     if (is.matrix(X)) {
       X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]^2*X)[piv,])
-      X1 <- solve(object$Ri[[block]],X1)[ipiv,] 
-      if (residual) X <- X - P%*%X1 else X <- P%*%X1;
+      X1 <-  P%*%solve(object$Ri[[block]],X1)[ipiv,] 
+      if (object$centre) { ## have to centre smooth
+        X1 <- sweep(X1,2,colMeans(X1))
+      }
+      if (residual) X <- X - X1 else X <- X1;
     } else {
       X1 <- solve(t(object$Ri[[block]]),Pt%*%(object$w[object$ind[[block]]]^2*X)[piv])
-      X1 <- solve(objectRi[[block]],X1)[ipiv]
-      if (residual) X <- X - as.numeric(P%*%X1) else X <- as.numeric(P%*%X1);
+      X1 <-  as.numeric(P%*%solve(objectRi[[block]],X1)[ipiv])
+      if (object$centre) X1 <- X1 - mean(X1) ## centre smooth
+      if (residual) X <- X - X1 else X <- X1;
     }
   } else { 
     for (i in 1:object$nblock) { ## work through all blocks
@@ -356,15 +369,17 @@ spasm.smooth.spatps <- function(object,X,residual=FALSE,block=0) {
       if (is.matrix(X)) {
         Xi <- Pt%*%(object$w[object$ind[[i]]]^2*X[object$ind[[i]],])
         X1 <- solve(t(object$Ri[[i]]),Xi[piv,])
-        X1 <- solve(object$Ri[[i]],X1)[ipiv,]
-        if (residual) X[object$ind[[i]],] <- X[object$ind[[i]],] - as.matrix(P%*%X1)
-        else X[object$ind[[i]],] <- as.matrix(P%*%X1) 
+        X1 <-  as.matrix(P%*%solve(object$Ri[[i]],X1)[ipiv,])
+        if (object$centre) X1 <- sweep(X1,2,colMeans(X1)) ## centre
+        if (residual) X[object$ind[[i]],] <- X[object$ind[[i]],] - X1
+        else X[object$ind[[i]],] <- X1
       } else {
         Xi <- Pt%*%(object$w[object$ind[[i]]]^2*X[object$ind[[i]]])
         X1 <- solve(t(object$Ri[[i]]),Xi[piv])
-        X1 <- solve(object$Ri[[i]],X1)[ipiv]
-        if (residual) X[object$ind[[i]]] <- X[object$ind[[i]]] - as.numeric(P%*%X1)
-        else X[object$ind[[i]]] <- as.numeric(P%*%X1) 
+        X1 <-  as.numeric(P%*%solve(object$Ri[[i]],X1)[ipiv])
+        if (object$centre) X1 <- X1 - mean(X1) ## centre smooth
+        if (residual) X[object$ind[[i]]] <- X[object$ind[[i]]] - X1
+        else X[object$ind[[i]]] <- X1
       }
     } ## end of block loop    
   }
@@ -417,13 +432,15 @@ spasm.construct.cus <- function(object,data) {
   object
 }
 
-spasm.sp.cus <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0) { 
+spasm.sp.cus <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0,centre=FALSE) { 
 ## Set up full cubic spline smooth, given new smoothing parameter and weights.
 ## In particular, construct the Givens rotations defining the 
 ## smooth and compute the trace of the influence matrix. 
 ## If block is non-zero, then it specifies which block to set up, otherwise
 ## all are set up. In either case w is assumed to be for the whole smoother,
 ## although only the values for the specified block(s) are used.
+## If centre == TRUE then the spline is set up for centred smoothing, i.e.
+## the results sum to zero. 
 ## Note: w propto 1/std.dev(response)
   if (is.null(object$spl)) stop("object not fully initialized")
   trH <-  0
@@ -433,8 +450,16 @@ spasm.sp.cus <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0) {
     object$spl[[i]] <- setup.spline(object$x[object$ind[[i]]],w=w[object$ind[[i]]],lambda=sp)
     trH <- trH + object$spl[[i]]$trA
   }
-  if (get.trH) object$trH <- trH
   object$sp=sp
+  if (get.trH) { 
+    if (centre) { ## require correction for DoF lost by centring...
+       one <- rep(1,object$nobs)
+       object$centre <- FALSE
+       trH <- trH - mean(spasm.smooth(object,one))
+    }
+    object$trH <- trH
+  }
+  object$centre <- centre
   object
 }
 
@@ -443,19 +468,30 @@ spasm.smooth.cus <- function(object,X,residual=FALSE,block=0) {
 ## if block == 0 then apply whole thing, otherwise X must have the correct 
 ## number of rows for the smooth block.
   if (block>0) { 
-
-    n <- length(object$ind[[block]])
-    if (residual) X <- X - apply.spline(object$spl[[block]],X)
-    else X <-  apply.spline(object$spl[[block]],X)
-
+    ## n <- length(object$ind[[block]])
+    if (object$centre) {
+      X0 <- apply.spline(object$spl[[block]],X)
+      if (is.matrix(X0)) {
+        x0 <- colMeans(X0)
+        X0 <- sweep(X0,2,x0)
+      } else X0 <- X0 - mean(X0)
+      if (residual) X <- X - X0 else X <- X0
+    } else {
+      if (residual) X <- X - apply.spline(object$spl[[block]],X)
+      else X <-  apply.spline(object$spl[[block]],X)
+    }
   } else for (i in 1:object$nblock) { ## work through all blocks 
    ind <- object$ind[[i]]
    if (is.matrix(X)) {
-      if (residual) X[ind,] <- X[ind,] - apply.spline(object$spl[[i]],X[ind,])
-      else X[ind,] <-  apply.spline(object$spl[[i]],X[ind,])
+      X0 <- apply.spline(object$spl[[i]],X[ind,])
+      if (object$centre) X0 <- sweep(X0,2,colMeans(X0))
+      if (residual) X[ind,] <- X[ind,] - X0
+      else X[ind,] <-  X0
     } else {
-      if (residual) X[ind] <- X[ind] - apply.spline(object$spl[[i]],X[ind])
-      else X[ind] <-  apply.spline(object$spl[[i]],X[ind]) 
+      X0 <- apply.spline(object$spl[[i]],X[ind])
+      if (object$centre) X0 <- X0 - mean(X0)
+      if (residual) X[ind] <- X[ind] - X0
+      else X[ind] <- X0 
     }    
   }
   X
@@ -466,7 +502,7 @@ spasm.smooth.cus <- function(object,X,residual=FALSE,block=0) {
 #########################################################
 
 spasm.construct.default <- function(object,data) {
-## This smooth simply returns 0, onder all circumstances.
+## This smooth simply returns 0, under all circumstances.
 ## object might contain....
 ## * block, the name of a blocking factor. Can be NULL.
 ## return object also has...
@@ -514,7 +550,7 @@ spasm.smooth.default <- function(object,X,residual=FALSE,block=0) {
 ## generics for sparse smooth classes...
 
 spasm.construct <- function(object,data) UseMethod("spasm.construct")
-spasm.sp <- function(object,sp,w=rep(1,object$nobs),get.trH=TRUE,block=0) UseMethod("spasm.sp")
+spasm.sp <- function(object,sp,w=rep(1,object$nobs),get.trH=TRUE,block=0,centre=FALSE) UseMethod("spasm.sp")
 ## Note that w is assumed proportional to 1/std.dev(response) 
 
 spasm.smooth <- function(object,X,residual=FALSE,block=0) UseMethod("spasm.smooth")
