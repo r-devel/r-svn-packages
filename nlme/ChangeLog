@@ -1,3 +1,8 @@
+2011-07-11  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* COPYING: rename to GPL-2
+	* LICENCE, inst/LICENCE: adjust wording accordingly
+
 2011-05-30  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/newFunc.R: name arguments to lapply() when ... is present.
