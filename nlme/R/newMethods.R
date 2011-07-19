@@ -29,9 +29,10 @@ getData.nls <-
   ## avoid partial matches here.
   data <- eval(if("data" %in% names(object)) object$data else mCall$data)
   if (is.null(data)) return(data)
-  naAct <- eval(mCall$na.action)
+  naAct <- object[["na.action"]]
+##  naAct <- eval(mCall$na.action)
   if (!is.null(naAct)) {
-    data <- naAct(data)
+      data <- if (inherits(naAct, "omit")) data[-naAct, ] else naresid(naAct, data)
   }
   subset <- mCall$subset
   if (!is.null(subset)) {

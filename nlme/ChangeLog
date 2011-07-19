@@ -1,6 +1,13 @@
-2011-07-11  Brian Ripley <Brian.Ripley@R-project.org>
+2011-07-19  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: version is 3.1-102
+	* R/newMethods.R: getData.nls (aka getData.lme) used the na.action
+	of the call on the whole data and not on the model frame: should
+	have used the na.action component of the result.
+	* man/simulate.lme: document as method.
+
+2011-07-11  Brian Ripley <Brian.Ripley@R-project.org>
+
 	* COPYING: rename to GPL-2
 	* LICENCE, inst/LICENCE: adjust wording accordingly
 
