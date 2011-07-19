@@ -4,6 +4,7 @@
 	* R/newMethods.R: getData.nls (aka getData.lme) used the na.action
 	of the call on the whole data and not on the model frame: should
 	have used the na.action component of the result.
+	* tests/{lme.R,lme.Rout.save,ss2.rda}: test for above.
 	* man/simulate.lme: document as method.
 
 2011-07-11  Brian Ripley <Brian.Ripley@R-project.org>
