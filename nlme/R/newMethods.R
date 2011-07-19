@@ -30,9 +30,11 @@ getData.nls <-
   data <- eval(if("data" %in% names(object)) object$data else mCall$data)
   if (is.null(data)) return(data)
   naAct <- object[["na.action"]]
-##  naAct <- eval(mCall$na.action)
   if (!is.null(naAct)) {
-      data <- if (inherits(naAct, "omit")) data[-naAct, ] else naresid(naAct, data)
+      ## guessing here: known values (omit, exclude) work.
+      data <- if (inherits(naAct, "omit")) data[-naAct, ]
+      else if (inherits(naAct, "exclude")) data
+      else eval(mCall$na.action)(data)
   }
   subset <- mCall$subset
   if (!is.null(subset)) {
