@@ -415,19 +415,22 @@ spasm.construct.cus <- function(object,data) {
   if (!is.null(object$block)) {
     block <- as.factor(get.var(object$block,data))
     nb <- length(levels(block))
-    for (i in 1:nb) { 
+    edf1 <- 0
+    for (i in 1:nb) {
       ind[[i]] <- (1:n)[block==levels(block)[i]]
+      edf1 <- edf1 + length(unique(object$x[ind[[i]]])) ## max edf for this block 
     }
   } else { ## all one block
     nb <- 1
     ind[[1]] <- 1:n
+    edf1 <- length(unique(object$x))
   }
   object$nblock <- nb
   object$ind <- ind
  
   ## so ind[[i]] indexes the elements operated on by the ith smoother.
   object$spl <- list()
-  object$edf0 <- 2*nb;object$edf1 <- length(unique(object$x))
+  object$edf0 <- 2*nb;object$edf1 <- edf1
   class(object) <- "cus"
   object
 }
@@ -453,9 +456,11 @@ spasm.sp.cus <- function(object,sp,w=rep(1,object$nobs),get.trH=FALSE,block=0,ce
   object$sp=sp
   if (get.trH) { 
     if (centre) { ## require correction for DoF lost by centring...
-       one <- rep(1,object$nobs)
-       object$centre <- FALSE
-       trH <- trH - mean(spasm.smooth(object,one))
+       for (i in block) {
+         one <- rep(1,length(object$ind[[i]]))
+         object$centre <- FALSE
+         trH <- trH - mean(spasm.smooth(object,one,block=i))
+       }
     }
     object$trH <- trH
   }
@@ -555,28 +560,28 @@ spasm.sp <- function(object,sp,w=rep(1,object$nobs),get.trH=TRUE,block=0,centre=
 
 spasm.smooth <- function(object,X,residual=FALSE,block=0) UseMethod("spasm.smooth")
 
-spasm.range <- function(object,upper.prop=.5) {
+spasm.range <- function(object,upper.prop=.5,centre=TRUE) {
 ## get reasonable smoothing parameter range for sparse smooth in object
   sp <- 1
-  edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
+  edf <- spasm.sp(object,sp,get.trH=TRUE,centre=centre)$trH
   while (edf < object$edf0*1.01) { 
     sp <- sp /100
-    edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
+    edf <- spasm.sp(object,sp,get.trH=TRUE,centre=centre)$trH
   }
   sp1 <- sp ## store smallest known good
   while (edf > object$edf0*1.01) { 
     sp <- sp * 100
-    edf <- spasm.sp(object,sp,get.trH=TRUE)$trH
+    edf <- spasm.sp(object,sp,get.trH=TRUE,centre=centre)$trH
   }
   sp0 <- sp
   while (edf < object$edf1*upper.prop) { 
     sp1 <- sp1 / 100
-    edf <- spasm.sp(object,sp1,get.trH=TRUE)$trH
+    edf <- spasm.sp(object,sp1,get.trH=TRUE,centre=centre)$trH
   }
 
   while (edf > object$edf1*upper.prop) { 
     sp1 <- sp1 * 4
-    edf <- spasm.sp(object,sp1,get.trH=TRUE)$trH
+    edf <- spasm.sp(object,sp1,get.trH=TRUE,centre=centre)$trH
   }
   c(sp1,sp0) ## small, large
 }

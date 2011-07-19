@@ -2,6 +2,14 @@
 *** denotes really big changes 
 ISSUES:
 
+* vis.gam ignores offset?
+
+* s(x,by=id,id=1) for gamm/4
+
+* Point processes....
+
+* Integrate out selected terms in ML/REML...
+
 * REML estimation can fail when estimating scale, with extreme weights.
   Rescaling weights works!
 

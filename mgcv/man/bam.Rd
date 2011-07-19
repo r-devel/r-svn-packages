@@ -123,9 +123,8 @@ block processing, fitting takes place, without the need to ever form the whole m
 
 In the generalized case, the same trick is used with the weighted model matrix and weighted pseudodata, at each step of the PIRLS.
 Smoothness selection is performed on the working model at each stage (performance oriented iteration), to maintain the 
-small memory footprint. This is easy to 
-justify in the case of GCV or Cp/UBRE/AIC based model selection, and also for REML/ML with known scale parameter. It is slightly 
-less well justified in the REML/ML unknown scale parameter case, but it seems unlikely that this case actually behaves any less well.
+small memory footprint. This is trivial to justify in the case of GCV or Cp/UBRE/AIC based model selection, and 
+for REML/ML is justified via the asymptotic multivariate normality of Q'z where z is the IRLS pseudodata. 
 
 Note that POI is not as stable as the default nested iteration used with \code{\link{gam}}, but that for very large, information rich,
 datasets, this is unlikely to matter much. 

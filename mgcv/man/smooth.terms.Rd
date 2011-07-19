@@ -60,7 +60,7 @@ then it represents the parametric interaction of these arguments, with the coeff
 assumption that the coefficients are i.i.d. normal random effects. See \code{\link{smooth.construct.re.smooth.spec}}. Note that random effect terms are not suitable 
 for use in tensor product smooths.}
 
-\item{Markov Random Fields}{\code{bs="mrf"}. These are popular when space is split up into disctrete contiguous 
+\item{Markov Random Fields}{\code{bs="mrf"}. These are popular when space is split up into discrete contiguous 
 geographic units (districts of a town, for example). In this case a simple smoothing penalty is constructed
 based on the neighbourhood structure of the geographic units. See \code{\link{mrf}} for details and an example.}
 
