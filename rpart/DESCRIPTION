@@ -5,6 +5,8 @@ Date: 2011-04-09
 DateNote: March 2002 version of rpart
 Author: Terry M Therneau and Beth Atkinson <atkinson@mayo.edu>.
         R port by Brian Ripley.
+        Note that maintainers are not available to give advice on using a
+        package they did not author.
 Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
 Description: Recursive partitioning and regression trees
 Title: Recursive Partitioning
