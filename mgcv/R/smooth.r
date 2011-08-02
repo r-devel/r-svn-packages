@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2010
+##  R routines for the package mgcv (c) Simon Wood 2000-2011
 
 ##  This file is primarily concerned with defining classes of smoother,
 ##  via constructor methods and prediction matrix methods. There are
@@ -840,10 +840,6 @@ Predict.matrix.t2.smooth <- function(object,data)
     rank[i] <-  object$margin[[i]]$rank
   }
   T <- t2.model.matrix(X,rank,full=object$full)
-  #if (!is.null(object$X.shift)) { ## have to centre columns, as in original constructor
-  #  nup <- length(object$X.shift)
-  #  T[,1:nup] <- sweep(T[,1:nup],2,object$X.shift)
-  #}
   T
 } ## end of Predict.matrix.t2.smooth
 
@@ -1381,8 +1377,7 @@ smooth.construct.cp.smooth.spec<-function(object,data,knots)
 
 Predict.matrix.cpspline.smooth<-function(object,data)
 ## prediction method function for the cpspline smooth class
-{ require(splines)
-  X <- cSplineDes(data[[object$term]],object$knots,object$m[1]+2)
+{ X <- cSplineDes(data[[object$term]],object$knots,object$m[1]+2)
   X
 }
 
@@ -1444,6 +1439,144 @@ Predict.matrix.pspline.smooth<-function(object,data)
   X <- spline.des(object$knots,data[[object$term]],object$m[1]+2)$design
   X
 }
+
+#######################################################################
+# Smooth-factor interactions. Efficient alternative to s(x,by=fac,id=1) 
+#######################################################################
+
+smooth.construct.sf.smooth.spec<-function(object,data,knots) {
+## Smooths in which one covariate is a factor. Generates a smooth
+## for each level of the factor, with penalties on null space 
+## components. Smooths are not centred. xt element specifies basis
+## to use for smooths. Only one smoothing parameter for the whole term.
+## If called from gamm, is set up for efficient computation by nesting
+## smooth within factor.
+## Unsuitable for tensor products if used from gamm. 
+
+  gamm <- FALSE ## NOTE: temporary --- needs to be passed in, eventually
+
+  if (is.null(object$xt)) object$base.bs <- "tp" ## default smooth class
+  else if (is.list(object$xt)) {
+    if (is.null(object$xt$bs)) object$base.bs <- "tp" else
+    object$base.bs <- object$xt$bs 
+  } else { 
+    object$base.bs <- object$xt
+    object$xt <- NULL ## avoid messing up call to base constructor
+  }
+  object$base.bs <- paste(object$base.bs,".smooth.spec",sep="")
+
+  fterm <- NULL ## identify the factor variable
+  for (i in 1:length(object)) if (is.factor(data[[object$term[i]]])) { 
+    if (is.null(fterm)) fterm <- object$term[i] else
+    stop("sf smooths can only have one factor argument") 
+  }
+  
+  ## deal with no factor case, just base smooth constructor
+  if (is.null(fterm)) {
+    class(object) <- object$base.bs
+    return(smooth.construct(object,data,knots))
+  }
+
+  ## deal with factor only case, just transfer to "re" class
+  if (length(object$term)==1) {
+    class(object) <- "re.smooth.spec"
+    return(smooth.construct(object,data,knots))
+  } 
+
+  ## Now remove factor term from data...
+  fac <- data[[fterm]] 
+  data[[fterm]] <- NULL
+  k <- 1
+  oterm <- object$term
+
+  for (i in 1:object$dim) if (object$term[i]!=fterm) {
+    object$term[k] <- object$term[i]
+    k <- k + 1
+  }
+  object$term <- object$term[-object$dim]
+  object$dim <- length(object$term)
+
+  
+  ## call base constructor...
+  class(object) <- object$base.bs
+  object <- smooth.construct(object,data,knots)
+
+  ## save some base smooth information
+
+  object$base <- list(bs=class(object),bs.dim=object$bs.dim,
+                      rank=object$rank,null.space.dim=object$null.space.dim,
+                      term=object$term)
+  object$term <- oterm ## restore original term list
+  ## Re-parameterize to separate out null space.  
+  rp <- nat.param(object$X,object$S[[1]],rank=object$rank,type=3)
+  
+  ## copy range penalty and create null space penalties...
+  null.d <- ncol(object$X) - object$rank ## null space dim
+  object$S[[1]] <- diag(c(rp$D,rep(0,null.d))) ## range space penalty
+  for (i in 1:null.d) { ## create null space element penalties
+    object$S[[i+1]] <- object$S[[1]]*0
+    object$S[[i+1]][object$rank+i,object$rank+i] <- 1  
+  }
+  
+  object$P <- rp$P ## X' = X%*%P, where X is original version
+  object$fterm <- fterm ## the factor name...
+  object$flev <- levels(fac)
+
+  ## Now the model matrix 
+  if (gamm) { ## no duplication, gamm will handle this by nesting
+    object$X <- rp$X 
+    object$fac <- fac ## gamm should use this for grouping
+    object$te.ok <- FALSE ## would break special handling
+    ## rank??
+    
+  } else { ## duplicate model matrix columns, and penalties...
+    nf <- length(object$flev)
+    ## creating the model matrix...
+    object$X <- rp$X * as.numeric(fac==object$flev[1])
+    if (nf>1) for (i in 2:nf) { 
+      object$X <- cbind(object$X,rp$X * as.numeric(fac==object$flev[i]))
+    } 
+    ## now penalties...
+    object$S[[1]] <- diag(rep(c(rp$D,rep(0,null.d)),nf)) ## range space penalties
+    for (i in 1:null.d) { ## null space penalties
+      um <- rep(0,ncol(rp$X));um[object$rank+i] <- 1
+      object$S[[i+1]] <- diag(rep(um,nf))
+    }
+   
+    object$bs.dim <- ncol(object$X)
+    object$te.ok <- TRUE
+    object$rank <- c(object$rank*nf,rep(nf,null.d))
+  }
+ 
+  object$null.space.dim <- 0
+  object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix
+  object$plot.me <- TRUE
+  #object$base.bs <- class(object) ## base smoother class
+  class(object) <- "sf.interaction"
+  object
+} ## end of smooth.construct.sf.smooth.spec
+
+
+Predict.matrix.sf.interaction <- function(object,data)
+# prediction method function for the smooth-factor interaction class
+{ ## first remove factor from the data...  
+  fac <- data[[object$fterm]]
+  data[[object$fterm]] <- NULL
+
+  ## now get base prediction matrix...
+  class(object) <- object$base$bs
+  object$rank <- object$base$rank
+  object$null.space.dim <- object$base$null.space.dim
+  object$bs.dim <- object$base$bs.dim
+  object$term <- object$base$term
+  Xb <- Predict.matrix(object,data)%*%object$P
+  X <- matrix(0,nrow(Xb),0)
+  for (i in 1:length(object$flev)) {
+    X <- cbind(X,Xb * as.numeric(fac==object$flev[i]))
+  }
+  X
+}
+
 
 ##########################################
 ## Adaptive smooth constructors start here
@@ -1960,7 +2093,7 @@ makeR <- function(la,lo,lak,lok,m=2) {
   if (m==2) { ## order 2 penalty
     q2 <- A*(6*W2-2*W)-3*C*W+3*W+1/2
     ## This is Wahba's pseudospline r.k. alternative would be to 
-    ## sum series to get regular spline kernel... 
+    ## sum series to get regular spline kernel, as in m=0 case above
     R <- matrix((q2/2-1/6)/(2*pi),length(la),length(lak)) ## rk matrix
     attr(R,"T") <- matrix(1,nrow(R),1)
     attr(R,"Tc") <- matrix(1,ncol(R),1) ## constraint
@@ -2336,7 +2469,7 @@ smooth.construct.ds.smooth.spec<-function(object,data,knots)
 
 
 Predict.matrix.duchon.spline <- function(object,data)
-# prediction method function for the p.spline smooth class
+# prediction method function for the Duchon smooth class
 { nk <- nrow(object$knt) ## number of 'knots'
 
   ## get evaluation points....
@@ -2484,7 +2617,7 @@ ExtractData <- function(object,data,knots) {
 
 #########################################################################
 ## What follows are the wrapper functions that gam.setup actually
-## calls for basis construction, and other functions call for prediction
+## calls for basis construction, and other functions used for prediction
 #########################################################################
 
 smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
@@ -2594,7 +2727,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     }
     if (is.null(by)) stop("Can't find by variable")
     offs <- attr(sm$X,"offset")
-    if (is.factor(by)) { 
+    if (is.factor(by)) { ## generates smooth for each level of by
       if (matrixArg) stop("factor `by' variables can not be used with matrix arguments.")
       sml <- list()
       lev <- levels(by)

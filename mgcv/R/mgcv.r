@@ -627,8 +627,6 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
       min.sp <- min.sp[-ind]
     } 
   }
-    
-##  if (parametric.only) { G$X<-X;return(G)}
   
   # next work through smooth terms (if any) extending model matrix.....
   
