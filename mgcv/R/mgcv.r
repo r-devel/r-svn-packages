@@ -586,7 +586,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
-                    scale.penalty=TRUE,paraPen=NULL)
+                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
 { # split the formula if the object being passed is a formula, otherwise it's already split
@@ -633,6 +633,9 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$smooth<-list()
   G$S<-list()
  
+  if (gamm.call) { ## flag that this is a call from gamm --- some smoothers need to now!
+    if (m>0) for (i in 1:m) attr(split$smooth.spec[[i]],"gamm") <- TRUE
+  }
 
   if (m>0 && idLinksBases) { ## search smooth.spec[[]] for terms linked by common id's
     id.list <- list() ## id information list

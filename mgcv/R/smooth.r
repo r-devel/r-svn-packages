@@ -60,7 +60,7 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
       Xn <- X[,ind,drop=FALSE] ## null basis 
       n <- nrow(Xn)
       one <- rep(1,n)
-      Xn <- Xn - one%*%t(one)%*%Xn/n
+      Xn <- Xn - one%*%(t(one)%*%Xn)/n
       um <- eigen(t(Xn)%*%Xn,symmetric=TRUE) 
       ## use ind in next 2 lines to have const column last,
       ## rind to have it first (among null space cols)
@@ -1451,9 +1451,10 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
 ## to use for smooths. Only one smoothing parameter for the whole term.
 ## If called from gamm, is set up for efficient computation by nesting
 ## smooth within factor.
-## Unsuitable for tensor products if used from gamm. 
+## Unsuitable for tensor products. 
 
-  gamm <- FALSE ## NOTE: temporary --- needs to be passed in, eventually
+  if (!is.null(attr(object,"gamm"))) gamm <- TRUE else ## signals call from gamm
+  gamm <- FALSE 
 
   if (is.null(object$xt)) object$base.bs <- "tp" ## default smooth class
   else if (is.list(object$xt)) {
@@ -1466,7 +1467,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
   object$base.bs <- paste(object$base.bs,".smooth.spec",sep="")
 
   fterm <- NULL ## identify the factor variable
-  for (i in 1:length(object)) if (is.factor(data[[object$term[i]]])) { 
+  for (i in 1:length(object$term)) if (is.factor(data[[object$term[i]]])) { 
     if (is.null(fterm)) fterm <- object$term[i] else
     stop("sf smooths can only have one factor argument") 
   }
@@ -1500,6 +1501,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
   ## call base constructor...
   class(object) <- object$base.bs
   object <- smooth.construct(object,data,knots)
+  if (length(object$S)>1) stop("\"sf\" smooth cannot use a multiply penalized basis (wrong basis in xt)")
 
   ## save some base smooth information
 
@@ -1524,6 +1526,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
 
   ## Now the model matrix 
   if (gamm) { ## no duplication, gamm will handle this by nesting
+    if (object$fixed==TRUE) stop("\"sf\" terms can not be fixed here")
     object$X <- rp$X 
     object$fac <- fac ## gamm should use this for grouping
     object$te.ok <- FALSE ## would break special handling
@@ -1544,7 +1547,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
     }
    
     object$bs.dim <- ncol(object$X)
-    object$te.ok <- TRUE
+    object$te.ok <- FALSE
     object$rank <- c(object$rank*nf,rep(nf,null.d))
   }
  

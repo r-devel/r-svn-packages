@@ -338,18 +338,28 @@ summary.pdIdnot <-
 ### end of pdIdnot class
 
 
-gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),knots=NULL,
+gamm.setup0<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),knots=NULL,
                      parametric.only=FALSE,absorb.cons=FALSE)
-# set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
-# needed for a gamm fit.
-# NOTE: lme can't deal with offset terms.
-# There is an implicit assumption that any rank deficient penalty does not penalize 
-# the constant term in a basis. 
+## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
+## needed for a gamm fit.
+## NOTE: lme can't deal with offset terms.
+## There is an implicit assumption that any rank deficient penalty does not penalize 
+## the constant term in a basis. 
+## 1. Calls gam.setup, as for a gam to produce object G suitable for estimating a gam.
+## 2. Works through smooth list, G$smooth, modifying so that... 
+##    i) Smooths are reparameterized to have identity, or tensor, penalty matrices,
+##       and separated fixed and random components with transform information 
+##       stored in the smooth.
+##   ii) The smooth stores the index range of its coefficients in overall
+##       fixed and r.e. coef vectors.
+##   iii) pdIdnot or pdTens terms are stored in a separate `G$random' list, which
+##        refers, by name, to r.e. model matrices stored directly in G.
+##   iv) an overall fixed effect matrix X is accumulated.   
 { 
   ## first simply call `gam.setup'....
 
   G <- gam.setup(formula,pterms,data=data,knots=knots,sp=NULL,
-                    min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0)
+                 min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,gamm.call=TRUE)
  
   if (!is.null(G$L)) stop("gamm can not handle linked smoothing parameters (probably from use of `id' or adaptive smooths)")
   # now perform re-parameterization...
@@ -494,7 +504,347 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
   G$X <- X  ## fixed effects model matrix
  
   G
+} ## end of gamm.setup0
+
+
+
+
+smooth2random <- function(object,vnames,type=1) UseMethod("smooth2random")
+
+smooth2random.sf.interaction <- function(object,vnames,type=1) {
+## conversion method for smooth-factor random interactions.
+## For use with gamm4, this needs to generate a sparse version of
+## each full model matrix, with smooth coefs re-ordered so that the 
+## penalties are not interwoven, but blocked (i.e. this ordering is 
+## as for gamm case). 
+  if (object$fixed) return(list(fixed=TRUE,Xf=object$X))
+
+  diagU <- rep(1,ncol(object$X))
+  ind <- 1:ncol(object$X)
+  random <- list()
+  for (i in 1:length(object$S)) { ## work through penalties
+    indi <- ind[diag(object$S[[i]])!=0] ## index of penalized cols
+    X <- object$X[,indi,drop=FALSE] ## model matrix for this component
+    D <- diag(object$S[[i]])[indi]
+    diagU[indi] <- 1/sqrt(D) ## transform that reduces penalty to identity
+    X <- X%*%diag(diagU[indi],ncol=length(indi))
+    term.name <- new.name("Xr",vnames)
+    vnames <- c(vnames,term.name)
+    form <- as.formula(paste("~",term.name,"-1",sep=""))
+    random[[i]] <- pdIdnot(form)
+    names(random)[i] <- object$fterm         ## supplied factor name
+    attr(random[[i]],"group") <- object$fac  ## factor supplied as part of term 
+    attr(random[[i]],"Xr.name") <- term.name
+    attr(random[[i]],"Xr") <- X
+  }
+  Xf <- matrix(0,nrow(object$X),0)
+  list(rand=random,U=diag(diagU),Xf=Xf,fixed=FALSE)
 }
+
+smooth2random.t2.smooth <- function(object,vnames,type=1) {
+## takes a smooth object and turns it into a form suitable for estimation as a random effect
+## vnames is a list of names to avoid when assigning variable names.
+## type==1 indicates an lme random effect.
+## Returns 1. a list of random effects, including grouping factors, and 
+##            a fixed effects matrix. Grouping factors, model matrix and 
+##            model matrix name attached as attributes, to each element. 
+##         2. A matrix, U, that transforms coefs, in order [rand1, rand2,... fix]
+##            back to original parameterization. If null, then not needed.
+##         3. A matrix Xf for the fixed effects, if any.
+##         4. fixed TRUE/FALSE if its fixed or not. If fixed the other stuff is
+##            not returned.
+## This version deals only with t2 smooths conditioned on a whole 
+## dataset dummy factor.
+## object must contain model matrix for smooth.
+  if (object$fixed) return(list(fixed=TRUE,Xf=object$X))
+
+  fixed <- rep(TRUE,ncol(object$X))
+  random <- list()
+  diagU <- rep(1,ncol(object$X))
+  ind <- 1:ncol(object$X)
+  for (i in 1:length(object$S)) { ## work through penalties
+    indi <- ind[diag(object$S[[i]])!=0] ## index of penalized cols
+    X <- object$X[,indi,drop=FALSE] ## model matrix for this component
+    D <- diag(object$S[[i]])[indi]
+    diagU[indi] <- 1/sqrt(D) ## transform that reduces penalty to identity
+    X <- X%*%diag(diagU[indi])
+    fixed[indi] <- FALSE
+    term.name <- new.name("Xr",vnames)
+    group.name <- new.name("g",vnames)
+    vnames <- c(vnames,term.name,group.name)
+    form <- as.formula(paste("~",term.name,"-1",sep=""))
+    random[[i]] <- pdIdnot(form)
+    names(random)[i] <- group.name
+    attr(random[[i]],"group") <- factor(rep(1,nrow(X)))
+    attr(random[[i]],"Xr.name") <- term.name
+    attr(random[[i]],"Xr") <- X
+  }
+  if (sum(fixed)) { ## then there are fixed effects!
+    Xf <- object$X[,fixed,drop=FALSE]
+  } else Xf <- matrix(0,ncol(object$X),0)
+  list(rand=random,U=diag(diagU),Xf=Xf,fixed=FALSE)
+}
+
+smooth2random.mgcv.smooth <- function(object,vnames,type=1) {
+## takes a smooth object and turns it into a form suitable for estimation as a random effect
+## vnames is a list of names to avoid when assigning variable names.
+## type==1 indicates an lme random effect.
+## Returns 1. a list of random effects, including grouping factors, and 
+##            a fixed effects matrix. Grouping factors, model matrix and 
+##            model matrix name attached as attributes, to each element. 
+##         2. A matrix, U, that transforms coefs, in order [rand1, rand2,... fix]
+##            back to original parameterization. If null, then not needed.
+##         3. A matrix Xf for the fixed effects, if any.
+##         4. fixed TRUE/FALSE if its fixed or not. If fixed the other stuff is
+##            not returned.
+## This version deals only with single penalty smooths conditioned on a whole 
+## dataset dummy factor.
+## object must contain model matrix for smooth.
+  if (object$fixed) return(list(fixed=TRUE,Xf=object$X))
+
+  if (length(object$S)>1) stop("Can not convert this smooth class to a random effect")
+
+  ## reparameterize so that unpenalized basis is separated out and at end...
+  ev <- eigen(object$S[[1]],symmetric=TRUE)
+  null.rank <- object$df - object$rank
+  p.rank <- object$rank
+  if (p.rank>ncol(object$X)) p.rank <- ncol(object$X)
+  U <- ev$vectors
+  D <- c(ev$values[1:p.rank],rep(1,null.rank))
+  D <- 1/sqrt(D)
+  U <- t(t(U)*D)      ## U%*%[b,beta] returns coefs in original parameterization 
+  X <- object$X%*%U 
+  if (p.rank<object$df) Xf <- X[,(p.rank+1):object$df,drop=FALSE] else 
+                        Xf <- matrix(0,nrow(object$X),0) # no fixed terms left
+  
+  term.name <- new.name("Xr",vnames)
+  form <- as.formula(paste("~",term.name,"-1",sep=""))
+  random <- list(pdIdnot(form))
+  group.name <- new.name("g",vnames)
+  names(random) <- group.name
+  attr(random[[1]],"group") <- factor(rep(1,nrow(X)))
+  attr(random[[1]],"Xr.name") <- term.name
+  attr(random[[1]],"Xr") <- X[,1:p.rank,drop=FALSE]
+  list(rand=random, ## the random effects for this term
+         Xf=Xf, ## the fixed effect model matrix for this term
+         U=U,   ## the matrix mapping coefs back to original parameterization 
+         fixed=FALSE)
+} ## end smooth2random.mgcv.smooth
+
+
+smooth2random.tensor.smooth <- function(object,vnames,type=1) {
+## takes a smooth object and turns it into a form suitable for estimation as a random effect
+## vnames is a list of names to avoid when assigning variable names.
+## type==1 indicates an lme random effect.
+## Returns 1. a list of random effects, including grouping factors, and 
+##            a fixed effects matrix. Grouping factors, model matrix and 
+##            model matrix name attached as attributes, to each element. 
+##         2. A matrix, U, that transforms coefs, in order [rand1, rand2,... fix]
+##            back to original parameterization. If null, then not needed.
+##         3. A matrix Xf for the fixed effects, if any.
+##         4. fixed TRUE/FALSE if its fixed or not. If fixed the other stuff is
+##            not returned.
+## This version deals only with te smooths conditioned on a whole 
+## dataset dummy factor.
+## object must contain model matrix for smooth.
+  if (sum(object$fx)==length(object$fx)) return(list(fixed=TRUE,Xf=object$X)) else
+  if (sum(object$fx)!=0) warning("gamm can not fix only some margins of tensor product.")
+     
+  ## first sort out the re-parameterization...
+  sum.S <- object$S[[1]]/mean(abs(object$S[[1]]))
+  null.rank <- ncol(object$margin[[1]]$X)-object$margin[[1]]$rank ## null space rank
+  bs.dim <- object$margin[[1]]$bs.dim
+  if (length(object$S)>1) for (l in 2:length(object$S)) { 
+    sum.S <- sum.S + object$S[[l]]/mean(abs(object$S[[l]]))
+    dfl <- ncol(object$margin[[l]]$X) ## actual df of term (`df' may not be set by constructor)
+    null.rank <- null.rank * (dfl-object$margin[[l]]$rank) 
+    bs.dim <- bs.dim * dfl
+  }
+  null.rank <- null.rank - bs.dim + object$df
+  ##sum.S <- (sum.S+t(sum.S))/2 # ensure symmetry
+  ev <- eigen(sum.S,symmetric=TRUE)
+ 
+  p.rank <- ncol(object$X) - null.rank
+  if (p.rank>ncol(object$X)) p.rank <- ncol(object$X)
+  U <- ev$vectors
+  D <- c(ev$values[1:p.rank],rep(1,null.rank))
+  if (sum(D<=0)) stop(
+  "Tensor product penalty rank appears to be too low: please email Simon.Wood@R-project.org with details.")
+  ## D <- 1/sqrt(D)
+  U <- U ## maps coefs back to untransformed versions
+  X <- object$X%*%U
+  if (p.rank<ncol(X)) Xf <- X[,(p.rank+1):ncol(X),drop=FALSE] else 
+                      Xf <- matrix(0,nrow(X),0) # no fixed terms left
+ 
+  for (l in 1:length(object$S)) {   # transform penalty explicitly
+    object$S[[l]] <- (t(U)%*%object$S[[l]]%*%U)[1:p.rank,1:p.rank]
+    object$S[[l]] <- (object$S[[l]]+t(object$S[[l]]))/2
+  }
+  
+  term.name <- new.name("Xr",names(data))
+  form <- as.formula(paste("~",term.name,"-1",sep=""))
+  attr(form,"S") <- object$S   ## this class needs penalty matrices to be supplied
+  random <- list(pdTens(form)) ## lme random effect class
+
+  group.name <- new.name("g",vnames)
+  names(random) <- group.name ## grouping factor name
+  attr(random[[1]],"group") <- factor(rep(1,nrow(X))) ## grouping factor
+  attr(random[[1]],"Xr.name") <- term.name           ## random effect matrix name 
+  attr(random[[1]],"Xr") <- X[,1:p.rank,drop=FALSE] ## random effect model matrix
+  list(rand=random, ## the random effects for this term
+         Xf=Xf, ## the fixed effect model matrix for this term
+         U=U,   ## the matrix mapping coefs back to original parameterization   
+         fixed=FALSE)
+} ## end smooth2random.tensor.smooth
+
+
+
+gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),knots=NULL,
+                     parametric.only=FALSE,absorb.cons=FALSE)
+## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
+## needed for a gamm fit.
+## NOTE: lme can't deal with offset terms.
+## There is an implicit assumption that any rank deficient penalty does not penalize 
+## the constant term in a basis. 
+## 1. Calls gam.setup, as for a gam to produce object G suitable for estimating a gam.
+## 2. Works through smooth list, G$smooth, modifying so that... 
+##    i) Smooths are reparameterized to have identity, or tensor, penalty matrices,
+##       and separated fixed and random components with transform information 
+##       stored in the smooth.
+##   ii) The smooth stores the index range of its coefficients in overall
+##       fixed and r.e. coef vectors.
+##   iii) pdIdnot or pdTens terms are stored in a separate `G$random' list, which
+##        refers, by name, to r.e. model matrices stored directly in G.
+##   iv) an overall fixed effect matrix X is accumulated.   
+{ 
+  ## first simply call `gam.setup'....
+
+  G <- gam.setup(formula,pterms,data=data,knots=knots,sp=NULL,
+                 min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,gamm.call=TRUE)
+ 
+  if (!is.null(G$L)) stop("gamm can not handle linked smoothing parameters (probably from use of `id' or adaptive smooths)")
+  # now perform re-parameterization...
+
+  first.f.para <- G$nsdf+1 
+  first.r.para <- 1
+ 
+  G$Xf <- G$X # full GAM model matrix, treating smooths as fixed effects
+  random <- list()
+  
+  if (G$nsdf>0) ind <- 1:G$nsdf else ind <- rep(0,0)  
+  X <- G$X[,ind,drop=FALSE] # accumulate fixed effects into here
+
+  xlab <- rep("",0)
+  
+  ## first have to create a processing order, so that any smooths conditional on 
+  ## multi-level factors are processed last, and hence end up at the end of the 
+  ## random list (right is nested in left in this list!)
+
+  pord <- 1:G$m
+  done <- rep(FALSE,length(pord))
+  k <- 0
+  f.name <- NULL
+  for (i in 1:G$m) if (is.null(G$smooth[[i]]$fac)) { 
+       k <- k + 1
+       pord[k] <- i 
+       done[i] <- TRUE
+  } else {
+    if (is.null(f.name)) f.name <- G$smooth[[i]]$fterm
+    else if (f.name!=G$smooth[[i]]$fterm) stop("only one level of smooth nesting is supported by gamm")
+  }   
+  if (k < G$m) pord[(k+1):G$m] <- (1:G$m)[!done] 
+  ## .... ordered so that nested smooths are last
+
+
+  if (G$m) for (i in 1:G$m) { ## work through the smooths
+    
+    sm <- G$smooth[[pord[i]]]
+    sm$X <- G$X[,sm$first.para:sm$last.para,drop=FALSE]
+    rasm <- smooth2random(sm,names(data)) ## convert smooth to random effect and fixed effects
+
+    sm$fixed <- rasm$fixed
+  
+    if (!is.null(sm$fac)) { 
+      flev <- levels(sm$fac) ## grouping factor for smooth
+      n.lev <- length(flev)
+    } else n.lev <- 1
+ 
+    ## now append constructed variables to model frame and random effects to main list
+    n.para <- 0 ## count random coefficients
+    rinc <- rind <- rep(0,0)
+    if (!sm$fixed) {
+      kk <- 1;
+      for (k in 1:length(rasm$rand)) {
+         group.name <- names(rasm$rand)[k]
+         group <- attr(rasm$rand[[k]],"group")
+         Xr.name <- attr(rasm$rand[[k]],"Xr.name")
+         Xr <- attr(rasm$rand[[k]],"Xr")
+         attr(rasm$rand[[k]],"group") <- attr(rasm$rand[[k]],"Xr") <- 
+         attr(rasm$rand[[k]],"Xr.name") <- NULL
+         rind <- c(rind,kk:(kk+ncol(Xr)-1))
+         rinc <- c(rinc,rep(ncol(Xr),ncol(Xr))) ## increment for rind
+         kk <- kk + n.lev * ncol(Xr)
+         n.para <- n.para + ncol(Xr)
+         data[[group.name]] <- group
+         data[[Xr.name]] <- Xr
+      }
+      random <- c(random,rasm$rand)
+      sm$U <- rasm$U ## matrix mapping fit coefs back to original
+    }
+
+    if (ncol(rasm$Xf)) { ## lme requires names
+      Xfnames <- rep("",ncol(rasm$Xf)) 
+      k <- length(xlab)+1
+      for (j in 1:ncol(rasm$Xf)) {
+        xlab[k] <- Xfnames[j] <-
+        new.name(paste(sm$label,"Fx",j,sep=""),xlab)
+        k <- k + 1
+      } 
+      colnames(rasm$Xf) <- Xfnames
+    }
+
+    X <- cbind(X,rasm$Xf) # add fixed model matrix to overall fixed X
+
+    ## update the counters indicating which elements of the whole model 
+    ## fixed and random coef vectors contain the coefs for this smooth.
+    ## note convention that smooth coefs are [random, fixed]    
+
+    sm$first.f.para <- first.f.para
+    first.f.para <- first.f.para + ncol(rasm$Xf)
+    sm$last.f.para <- first.f.para - 1 ## note less than sm$first.f.para => no fixed
+
+    sm$rind <- rind - 1 + first.r.para
+    sm$rinc <- rinc 
+ #   sm$first.r.para <- first.r.para
+    first.r.para <- first.r.para+n.para
+ #   sm$last.r.para <- first.r.para-1
+
+    sm$n.para <- n.para
+
+    ## convention is that random coefs for grouped smooths will be 
+    ## packed [coefs for level 1, coefs for level 2, ...]
+    ## n.para is number of random paras at each level.
+    ## so coefs for ith level will be indexed by 
+    ## rind + (i-1)*n.para
+    ## first.r.para:last.r.para + (i-1)*n.para
+
+    if (!is.null(sm$fac)) { ## there is a grouping factor for this smooth
+      ## have to up this first.r.para to allow a copy of coefs for each level of fac...
+      first.r.para <- first.r.para + n.para*(length(flev)-1) 
+    }   
+ 
+    sm$X <- NULL ## delete model matrix
+  
+    G$smooth[[pord[i]]] <- sm  ## replace smooth object with extended version 
+  }
+ 
+  G$random <- random
+  G$X <- X  ## fixed effects model matrix
+  G$data <- data
+  G$pord <- pord ## gamm needs to run through smooths in same order as here
+
+  G
+} ## end of gamm.setup
 
 
 
@@ -560,7 +910,7 @@ extract.lme.cov2<-function(b,data,start.level=1)
   } else {n.cg <- 1;Cind<-1:n}
   if (is.null(b$modelStruct$varStruct)) w<-rep(b$sigma,n) ### 
   else 
-  { w<-1/nlme::varWeights(b$modelStruct$varStruct) 
+  { w <- 1/nlme::varWeights(b$modelStruct$varStruct) 
     # w is not in data.frame order - it's in inner grouping level order
     group.name<-names(b$groups) # b$groups[[i]] doesn't always retain factor ordering
     order.txt <- paste("ind<-order(data[[\"",group.name[1],"\"]]",sep="")
@@ -569,7 +919,7 @@ extract.lme.cov2<-function(b,data,start.level=1)
     order.txt <- paste(order.txt,")")
     eval(parse(text=order.txt))
     w[ind] <- w # into data frame order
-    w<-w*b$sigma
+    w <- w*b$sigma
   }
   w <- w[Cind] # re-order in coarse group order
   if (is.null(b$modelStruct$corStruct)) V<-array(1,n) 
@@ -629,14 +979,14 @@ extract.lme.cov2<-function(b,data,start.level=1)
   # group order
   
   ## Now work on the random effects ..... 
-  X<-list()
-  grp.dims<-b$dims$ncol # number of Zt columns for each grouping level (inner levels first)
+  X <- list()
+  grp.dims <- b$dims$ncol # number of Zt columns for each grouping level (inner levels first)
   # inner levels are first in Zt
-  Zt<-model.matrix(b$modelStruct$reStruct,data)  # a sort of proto - Z matrix
+  Zt <- model.matrix(b$modelStruct$reStruct,data)  # a sort of proto - Z matrix
   # b$groups and cov (defined below have the inner levels last)
-  cov<-as.matrix(b$modelStruct$reStruct) # list of estimated covariance matrices (inner level last)
+  cov <- as.matrix(b$modelStruct$reStruct) # list of estimated covariance matrices (inner level last)
   i.col<-1
-  Z<-matrix(0,n,0) # Z matrix
+  Z <- matrix(0,n,0) # Z matrix
   if (start.level<=n.levels)
   { for (i in 1:(n.levels-start.level+1)) # work through the r.e. groupings inner to outer
     { # get matrix with columns that are indicator variables for ith set of groups...
@@ -673,7 +1023,7 @@ extract.lme.cov2<-function(b,data,start.level=1)
         V <- V+Z%*%Vr%*%t(Z)
       } else V <- diag(V) + Z%*%Vr%*%t(Z) 
     } else { # V has a block - diagonal structure
-      j0<-1
+      j0 <- 1
       Vz <- list()
       for (i in 1:n.cg) {
         j1 <- size.cg[i] + j0 -1
@@ -788,7 +1138,7 @@ formXtViX <- function(V,X)
 { X <- X[V$ind,,drop=FALSE] # have to re-order X according to V ordering
   if (is.list(V$V)) {     ### block diagonal case
     Z <- X
-    j0<-1
+    j0 <- 1
     for (i in 1:length(V$V))
     { Cv <- chol(V$V[[i]])
       j1 <- j0+nrow(V$V[[i]])-1
@@ -889,7 +1239,6 @@ gammPQL <- function (fixed, random, family, data, correlation, weights,
 
 
 
-
 gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=list(),weights=NULL,
       subset=NULL,na.action,knots=NULL,control=list(niterEM=0,optimMethod="L-BFGS-B"),
       niterPQL=20,verbosePQL=TRUE,method="ML",...)
@@ -911,11 +1260,365 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
       else stop("gamm() can only handle random effects defined as named lists")
       random.vars<-c(unlist(lapply(random, function(x) all.vars(formula(x)))),r.names)
     } else random.vars<-NULL
+
     if (!is.null(correlation))
     { cor.for<-attr(correlation,"formula")
       if (!is.null(cor.for))
       cor.vars<-all.vars(cor.for)
     } else cor.vars<-NULL
+
+    # create model frame.....
+    gp<-interpret.gam(formula) # interpret the formula 
+    ##cl<-match.call() # call needed in gamm object for update to work
+    mf <- match.call(expand.dots=FALSE)
+    mf$formula <- gp$fake.formula
+    mf$correlation <- mf$random <- mf$family <- mf$control <- mf$scale <- mf$knots <- mf$sp <- mf$weights <-
+    mf$min.sp <- mf$H <- mf$gamma <- mf$fit <- mf$niterPQL <- mf$verbosePQL <- mf$G <- mf$method <- mf$... <- NULL
+    mf$drop.unused.levels <- TRUE
+    mf[[1]] <- as.name("model.frame")
+    pmf <- mf
+    gmf <- eval(mf, parent.frame()) # the model frame now contains all the data, for the gam part only 
+    gam.terms <- attr(gmf,"terms") # terms object for `gam' part of fit -- need this for prediction to work properly
+
+    allvars <- c(cor.vars,random.vars)
+    if (length(allvars)) {
+      mf$formula <- as.formula(paste(paste(deparse(gp$fake.formula,backtick=TRUE),collapse=""),
+                           "+",paste(allvars,collapse="+")))
+      mf <- eval(mf, parent.frame()) # the model frame now contains *all* the data
+    }
+    else mf <- gmf
+    rm(gmf)
+    if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
+    Terms <- attr(mf,"terms")    
+  
+    ## summarize the *raw* input variables
+    ## note can't use get_all_vars here -- buggy with matrices
+    vars <- all.vars(gp$fake.formula[-2]) ## drop response here
+    inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
+    dl <- eval(inp, data, parent.frame())
+    names(dl) <- vars ## list of all variables needed
+    var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
+    rm(dl) ## save space 
+
+    pmf$formula <- gp$pf
+    pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part 
+
+    pTerms <- attr(pmf,"terms")
+
+    if (is.character(family)) family<-eval(parse(text=family))
+    if (is.function(family)) family <- family()
+    if (is.null(family$family)) stop("family not recognized")
+  
+    # now call gamm.setup 
+
+    G <- gamm.setup(gp,pterms=pTerms,data=mf,knots=knots,parametric.only=FALSE,absorb.cons=TRUE)
+    G$var.summary <- var.summary    
+    mf <- G$data
+
+    n.sr <- length(G$random) # number of random smooths (i.e. s(...,fx=FALSE,...) terms)
+
+    if (is.null(random)&&n.sr==0) 
+    stop("gamm models must have at least 1 smooth with unknown smoothing parameter or at least one other random effect")
+
+    offset.name <- attr(mf,"names")[attr(attr(mf,"terms"),"offset")]
+
+    yname <- new.name("y",names(mf))
+    eval(parse(text=paste("mf$",yname,"<-G$y",sep="")))
+    Xname <- new.name("X",names(mf))
+    eval(parse(text=paste("mf$",Xname,"<-G$X",sep="")))
+    
+    fixed.formula <- paste(yname,"~",Xname,"-1")
+    if (length(offset.name)) {
+      fixed.formula <- paste(fixed.formula,"+",offset.name) 
+    }
+    fixed.formula <- as.formula(fixed.formula)
+    
+    ## Add any explicit random effects to the smooth induced r.e.s 
+    rand <- G$random  
+    if (!is.null(random))
+    { r.m <- length(random)
+      r.names <- c(names(rand),names(random))
+      for (i in 1:r.m) rand[[n.sr+i]]<-random[[i]]   
+      names(rand) <- r.names
+    }
+
+    ## need to modify the correlation structure formula, in order that any
+    ## grouping factors for correlation get nested within at least the 
+    ## constructed dummy grouping factors.
+
+    if (length(formula(correlation))) # then modify the correlation formula
+    { # first get the existing grouping structure ....
+      corGroup <- paste(names(rand),collapse="/")
+      groupForm<-nlme::getGroupsFormula(correlation)
+      if (!is.null(groupForm)) {
+        groupFormNames <- all.vars(groupForm)
+        exind <- groupFormNames %in% names(rand)
+        groupFormNames <- groupFormNames[!exind] ## dumping duplicates 
+        if (length(groupFormNames)) corGroup <- 
+             paste(corGroup,paste(groupFormNames,collapse="/"),sep="/")
+      }
+      # now make a new formula for the correlation structure including these groups
+      corForm <- as.formula(paste(deparse(nlme::getCovariateFormula(correlation)),"|",corGroup))
+      attr(correlation,"formula") <- corForm
+    }
+
+    ### Actually do fitting ....
+ 
+    ret <- list()
+
+    if (family$family=="gaussian"&&family$link=="identity"&&
+    length(offset.name)==0) lme.used <- TRUE else lme.used <- FALSE
+    if (lme.used&&!is.null(weights)&&!inherits(weights,"varFunc")) lme.used <- FALSE   
+
+    if (lme.used)
+    { ## following construction is a work-around for problem in nlme 3-1.52 
+      eval(parse(text=paste("ret$lme<-lme(",deparse(fixed.formula),
+          ",random=rand,data=strip.offset(mf),correlation=correlation,",
+          "control=control,weights=weights,method=method)"
+            ,sep=""    ))) 
+      ##ret$lme<-lme(fixed.formula,random=rand,data=mf,correlation=correlation,control=control)
+    } else
+    { ## Again, construction is a work around for nlme 3-1.52
+      if (inherits(weights,"varFunc")) 
+      stop("weights must be like glm weights for generalized case")
+      if (verbosePQL) cat("\n Maximum number of PQL iterations: ",niterPQL,"\n")
+      eval(parse(text=paste("ret$lme<-gammPQL(",deparse(fixed.formula),
+          ",random=rand,data=strip.offset(mf),family=family,",
+          "correlation=correlation,control=control,",
+            "weights=weights,niter=niterPQL,verbose=verbosePQL)",sep=""))) 
+     
+      ##ret$lme<-glmmPQL(fixed.formula,random=rand,data=mf,family=family,correlation=correlation,
+      ##                 control=control,niter=niterPQL,verbose=verbosePQL)
+    }
+
+    ### .... fitting finished
+
+    # now fake a gam object 
+    
+    object <- list(model=mf,formula=formula,smooth=G$smooth,nsdf=G$nsdf,family=family,
+                 df.null=nrow(G$X),y=G$y,terms=gam.terms,pterms=pTerms,xlevels=G$xlevels,
+                 contrasts=G$contrasts,assign=G$assign,na.action=attr(mf,"na.action"),
+                 cmX=G$cmX,var.summary=G$var.summary,scale.estimated=TRUE)
+
+    #######################################################
+    ## Transform  parameters back to the original space....
+    #######################################################
+
+    bf <- as.numeric(ret$lme$coefficients$fixed)
+
+#    br <- as.numeric(unlist(ret$lme$coefficients$random))
+
+    ## Grouped random coefs are returned in matrices. Each row relates to one 
+    ## level of the grouping factor. So to get coefs in order, with all coefs
+    ## for each grouping factor level contoguous, requires the following...
+ 
+    br <- as.numeric(unlist(lapply(ret$lme$coefficients$random,t)))
+
+    if (G$nsdf) p <- bf[1:G$nsdf] else p <- array(0,0)
+    if (G$m>0) for (i in 1:G$m)
+    { fx <- G$smooth[[i]]$fixed 
+      first <- G$smooth[[i]]$first.f.para;last <- G$smooth[[i]]$last.f.para
+      if (first <=last) beta <- bf[first:last] else beta <- array(0,0) ## fixed coefs
+      if (fx) p <- c(p, beta) else { ## not fixed so need to undo transform of random effects etc. 
+        ind <- G$smooth[[i]]$rind ##G$smooth[[i]]$first.r.para:G$smooth[[i]]$last.r.para
+        if (!is.null(G$smooth[[i]]$fac)) { ## nested term, need to unpack coefs at each level of fac
+          if (first<=last) stop("Nested smooths must be fully random")
+          flev <- levels(G$smooth[[i]]$fac)
+          for (j in 1:length(flev)) {
+            b <- br[ind] 
+            if (!is.null(G$smooth[[i]]$U)) b <- G$smooth[[i]]$U%*%b
+            ind <- ind + G$smooth[[i]]$rinc
+            p <- c(p,b)
+          }
+        } else { ## single level
+          b <- c(br[ind],beta)
+          if (!is.null(G$smooth[[i]]$U)) b <- G$smooth[[i]]$U%*%b 
+          p <- c(p,b)
+        }
+      }
+    }
+ 
+    var.param <- coef(ret$lme$modelStruct$reStruct)
+    n.v <- length(var.param) 
+    # k <- 1
+    spl <- list()
+    if (G$m>0) for (i in 1:G$m) # var.param in reverse term order, but forward order within terms!!
+    { ii <- G$pord[i]
+      n.sp <- length(object$smooth[[ii]]$S) # number of s.p.s for this term 
+      if (n.sp>0) {
+        if (inherits(object$smooth[[ii]],"tensor.smooth")) ## ... really mean pdTens used here...
+        ## object$sp[k:(k+n.sp-1)] 
+          spl[[ii]] <- notExp2(var.param[(n.v-n.sp+1):n.v])
+        else ## object$sp[k:(k+n.sp-1)] 
+          spl[[ii]] <- 1/notExp2(var.param[n.v:(n.v-n.sp+1)])  
+      }
+      # k <- k + n.sp
+      n.v <- n.v - n.sp
+    }
+    
+    object$sp <- rep(0,0)
+    for (i in 1:length(spl)) if (!is.null(spl[[i]])) object$sp <- c(object$sp,spl[[i]]) 
+    if (length(object$sp)==0) object$sp <- NULL  
+
+    object$coefficients <- p
+    
+    V <- extract.lme.cov2(ret$lme,mf,n.sr+1) # the data covariance matrix, excluding smooths
+ 
+    ## from here not dealing with nested smooths yet....
+
+    ## obtain XVX and S....
+
+    ## First create expanded Xf...
+    Xf <- G$Xf[,1:G$nsdf,drop=FALSE] 
+    first.para <- last.para <- rep(0,G$m) ## collect first and last para info relevant to expanded Xf
+    if (G$m>0) for (i in 1:G$m) {# Accumulate the total model matrix
+      ind <- object$smooth[[i]]$first.para:object$smooth[[i]]$last.para
+      if (is.null(object$smooth[[i]]$fac)) { ## normal smooth
+         first.para[i] <- ncol(Xf)+1
+         Xf <- cbind(Xf,G$Xf[,ind])
+         last.para[i] <- ncol(Xf)
+      } else { ## smooth conditioned on multilevel factor. Expand Xf
+        flev <- levels(object$smooth[[i]]$fac)
+        first.para[i] <- ncol(Xf)+1
+        for (k in 1:length(flev)) {
+          Xf <- cbind(Xf,G$Xf[,ind]*as.numeric(object$smooth[[i]]$fac==flev[k]))
+        }
+        last.para[i] <- ncol(Xf)
+      }
+    }
+
+    XVX <- formXtViX(V,Xf) ## inefficient, if there are smooth conditioned on factors
+    
+    ## Now S...
+    S <- matrix(0,ncol(Xf),ncol(Xf)) ## penalty matrix
+    first <- G$nsdf+1
+    k <- 1
+    if (G$m>0) for (i in 1:G$m) {# Accumulate the total penalty matrix 
+      if (is.null(object$smooth[[i]]$fac)) { ## simple regular smooth...
+        ind <- first.para[i]:last.para[i]
+        for (l in 1:length(object$smooth[[i]]$S)) { 
+           S[ind,ind] <- S[ind,ind] + 
+                  object$smooth[[i]]$S[[l]]*object$sp[k]
+           k <- k+1
+        }
+      } else { ## smooth conditioned on factor
+        flev <- levels(object$smooth[[i]]$fac)
+        ind <- first.para[i]:(first.para[i]+object$smooth[[i]]$n.para-1)
+        ns <- length(object$smooth[[i]]$S)
+        for (j in 1:length(flev)) {
+           for (l in 1:ns) { 
+             S[ind,ind] <- S[ind,ind] + 
+                    object$smooth[[i]]$S[[l]]*object$sp[k]
+             k <- k+1
+           }
+           k <- k - ns ## same smoothing parameters repeated for each factor level
+           ind <- ind + object$smooth[[i]]$n.para
+        }
+        k <- k + ns
+      }
+    }
+    S <- S/ret$lme$sigma^2 # X'V^{-1}X divided by \sigma^2, so should S be
+    
+    ## now replace original first.para and last.para with expanded versions...
+    if (G$m) for (i in 1:G$m) { 
+      object$smooth[[i]]$first.para <- first.para[i]
+      object$smooth[[i]]$last.para <- last.para[i] 
+    }
+    ## stable computation of coefficient covariance matrix...
+    ev <- eigen(XVX+S,symmetric=TRUE)
+    ind <- ev$values != 0
+    iv <- ev$values;iv[ind] <- 1/ev$values[ind]
+    Vb <- ev$vectors%*%(iv*t(ev$vectors))    
+
+    object$edf<-rowSums(Vb*t(XVX))   
+    
+    object$sig2 <- ret$lme$sigma^2
+    if (lme.used) { object$method <- paste("lme.",method,sep="")} 
+    else { object$method <- "PQL"}
+
+    if (!lme.used||method=="ML") Vb <- Vb*length(G$y)/(length(G$y)-G$nsdf)
+    object$Vp <- Vb
+    object$Ve <- Vb%*%XVX%*%Vb
+    
+    object$prior.weights <- weights
+    class(object) <- "gam"
+
+    ## If prediction parameterization differs from fit parameterization, transform now...
+    ## (important for t2 smooths, where fit constraint is not good for component wise 
+    ##  prediction s.e.s)
+
+    if (!is.null(G$P)) {
+      object$coefficients <- G$P %*% object$coefficients
+      object$Vp <- G$P %*% object$Vp %*% t(G$P) 
+      object$Ve <- G$P %*% object$Ve %*% t(G$P) 
+    }
+
+    object$linear.predictors <- predict.gam(object,type="link")
+    object$fitted.values <- object$family$linkinv(object$linear.predictors)  
+ 
+    object$residuals <- residuals(ret$lme) #as.numeric(G$y) - object$fitted.values
+
+    if (G$nsdf>0) term.names<-colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
+    n.smooth <- length(G$smooth) 
+    if (n.smooth) {
+      for (i in 1:n.smooth)
+      { k <- 1
+        for (j in object$smooth[[i]]$first.para:object$smooth[[i]]$last.para)
+        { term.names[j] <- paste(object$smooth[[i]]$label,".",as.character(k),sep="")
+          k <- k+1
+        }
+      }
+      if (!is.null(object$sp)) names(object$sp) <- names(G$sp)
+    }
+
+    names(object$coefficients) <- term.names  # note - won't work on matrices!!
+    names(object$edf) <- term.names
+    if (is.null(weights))
+    object$prior.weights <- object$y*0+1
+    else if (inherits(weights,"varFunc")) 
+    object$prior.weights <- varWeights.dfo(ret$lme,mf)^2
+    else object$prior.weights <- weights 
+    
+    object$weights<-object$prior.weights   
+
+    if (!is.null(G$Xcentre)) object$Xcentre <- G$Xcentre ## column centering values
+
+    ret$gam <- object
+    ret
+
+} ## end gamm
+
+
+
+
+gamm0 <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=list(),weights=NULL,
+      subset=NULL,na.action,knots=NULL,control=list(niterEM=0,optimMethod="L-BFGS-B"),
+      niterPQL=20,verbosePQL=TRUE,method="ML",...)
+# Routine to fit a GAMM to some data. Fixed and smooth terms are defined in the formula, but the wiggly 
+# parts of the smooth terms are treated as random effects. The onesided formula random defines additional 
+# random terms. correlation describes the correlation structure. This routine is basically an interface
+# between the basis constructors provided in mgcv and the gammPQL routine used to estimate the model.
+# NOTE: need to fill out the gam object properly
+{
+  if (!require("nlme")) stop("gamm() requires package nlme to be installed")
+  control <- do.call("lmeControl",control) 
+    # check that random is a named list
+    if (!is.null(random))
+    { if (is.list(random)) 
+      { r.names<-names(random)
+        if (is.null(r.names)) stop("random argument must be a *named* list.")
+        else if (sum(r.names=="")) stop("all elements of random list must be named")
+      }
+      else stop("gamm() can only handle random effects defined as named lists")
+      random.vars<-c(unlist(lapply(random, function(x) all.vars(formula(x)))),r.names)
+    } else random.vars<-NULL
+
+    if (!is.null(correlation))
+    { cor.for<-attr(correlation,"formula")
+      if (!is.null(cor.for))
+      cor.vars<-all.vars(cor.for)
+    } else cor.vars<-NULL
+
     # create model frame.....
     gp<-interpret.gam(formula) # interpret the formula 
     ##cl<-match.call() # call needed in gamm object for update to work
@@ -996,12 +1699,14 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     if (!is.null(random)) # add explicit random effects
     { r.m<-length(random)
       r.names<-c(names(rand),names(random))
-      for (i in 1:r.m) rand[[n.sr+i]]<-random[[i]] # this line had G$m not n.sr <1.3-12    
+      for (i in 1:r.m) rand[[n.sr+i]]<-random[[i]]   
       names(rand)<-r.names
     }
+
     ## need to modify the correlation structure formula, in order that any
     ## grouping factors for correlation get nested within at least the 
     ## constructed dummy grouping factors.
+
     if (length(formula(correlation))) # then modify the correlation formula
     { # first get the existing grouping structure ....
       corGroup <- paste(names(rand),collapse="/")
@@ -1061,20 +1766,20 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     bf <- as.numeric(ret$lme$coefficients$fixed)
     br <- as.numeric(unlist(ret$lme$coefficients$random))
     if (G$nsdf) p <- bf[1:G$nsdf] else p <- array(0,0)
-    n.pen <- 0 # count up the penalties
+    # n.pen <- 0 # count up the penalties
     if (G$m>0) for (i in 1:G$m)
     { fx <- G$smooth[[i]]$fixed 
-      first<-G$smooth[[i]]$first.f.para;last<-G$smooth[[i]]$last.f.para
+      first <- G$smooth[[i]]$first.f.para;last<-G$smooth[[i]]$last.f.para
       if (first <=last) beta<-bf[first:last] else beta<-array(0,0)
       if (fx) b <- beta 
-      else # not fixed so need to undo transform of random effects etc. 
-      { dum <- length(G$smooth[[i]]$S) # number of penalties for this term
-        n.pen <- n.pen + dum
+      else ## not fixed so need to undo transform of random effects etc. 
+      { # dum <- length(G$smooth[[i]]$S) # number of penalties for this term
+        # n.pen <- n.pen + dum
         if (inherits(G$smooth[[i]],"tensor.smooth")) mult.pen <- TRUE else mult.pen <- FALSE
-        b<-br[G$smooth[[i]]$first.r.para:G$smooth[[i]]$last.r.para]     
+        b <- br[G$smooth[[i]]$first.r.para:G$smooth[[i]]$last.r.para]     
         if (mult.pen) b <- c(b,beta) # tensor product penalties not reduced to identity
         else b <- c(G$smooth[[i]]$D*b,beta) # single penalty case
-        b<-G$smooth[[i]]$U%*%b 
+        b <- G$smooth[[i]]$U%*%b 
       }
       ## if (is.null(G$smooth[[i]]$C)) nc <- 0 else nc <- nrow(G$smooth[[i]]$C) 
       ## if (nc) b <- qr.qy(G$smooth[[i]]$qrc,c(rep(0,nc),b))
@@ -1089,9 +1794,9 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     if (G$m>0) for (i in 1:G$m) # var.param in reverse term order, but forward order within terms!!
     { n.sp <- length(object$smooth[[i]]$S) # number of s.p.s for this term 
       if (n.sp>0) {
-        if (inherits(object$smooth[[i]],"tensor.smooth"))
+        if (inherits(object$smooth[[i]],"tensor.smooth")) ## really means "used pdTens class"
         object$sp[k:(k+n.sp-1)] <- notExp2(var.param[(n.v-n.sp+1):n.v])
-        else object$sp[k:(k+n.sp-1)] <- 1/notExp2(var.param[(n.v-n.sp+1):n.v])  
+        else object$sp[k:(k+n.sp-1)] <- 1/notExp2(var.param[n.v:(n.v-n.sp+1)])  
       }
       k <- k + n.sp
       n.v <- n.v - n.sp
@@ -1100,8 +1805,9 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     object$coefficients<-p
     
     V <- extract.lme.cov2(ret$lme,mf,n.sr+1) # the data covariance matrix, excluding smooths
+ 
     XVX <- formXtViX(V,G$Xf)
-    S<-matrix(0,ncol(G$Xf),ncol(G$Xf)) # penalty matrix
+    S <- matrix(0,ncol(G$Xf),ncol(G$Xf)) # penalty matrix
     first <- G$nsdf+1
     k <- 1
     if (G$m>0) for (i in 1:G$m) # Accumulate the total penalty matrix
@@ -1186,7 +1892,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     ret$gam<-object
     ret
 
-}
+} ## end gamm0
 
 
 test.gamm <- function(control=nlme::lmeControl(niterEM=3,tolerance=1e-11,msTol=1e-11))
