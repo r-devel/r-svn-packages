@@ -4,8 +4,6 @@ ISSUES:
 
 * vis.gam ignores offset?
 
-* s(x,by=id,id=1) for gamm/4
-
 * Point processes....
 
 * Integrate out selected terms in ML/REML...
@@ -24,6 +22,13 @@ ISSUES:
 1.7-7
 
 unstable
+
+* "sf" smooth factor interaction class introduced, for smooth factor 
+  interactions where smoothing parameters are same at each factor level.
+  Very efficient with gamm, so good for e.g. individual subject smooths.
+
+* gamm and gamm.setup code restructured to allow smooths nested in factors
+  and for cleaner object oriented converion of smooths to random effects.
 
 * gam.fit3 bug. Could fail on immediate divergence as null.eta was matrix.
 
