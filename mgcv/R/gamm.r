@@ -639,7 +639,7 @@ smooth2random.t2.smooth <- function(object,vnames,type=1) {
   }
   if (sum(fixed)) { ## then there are fixed effects!
     Xf <- object$X[,fixed,drop=FALSE]
-  } else Xf <- matrix(0,ncol(object$X),0)
+  } else Xf <- matrix(0,nrow(object$X),0)
   list(rand=random,trans.D=diagU,Xf=Xf,fixed=FALSE,
        rind=1:n.para,rinc=rep(n.para,n.para),pen.ind=pen.ind)
 }
