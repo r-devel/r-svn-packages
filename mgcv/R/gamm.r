@@ -511,7 +511,7 @@ gamm.setup0<-function(formula,pterms,data=stop("No data supplied to gamm.setup")
 
 smooth2random <- function(object,vnames,type=1) UseMethod("smooth2random")
 
-smooth2random.sf.interaction <- function(object,vnames,type=1) {
+smooth2random.fs.interaction <- function(object,vnames,type=1) {
 ## conversion method for smooth-factor random interactions.
 ## For use with gamm4, this needs to generate a sparse version of
 ## each full model matrix, with smooth coefs re-ordered so that the 
@@ -1498,7 +1498,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
  
     br <- as.numeric(unlist(lapply(ret$lme$coefficients$random,t)))
 
-    sf.present <- FALSE
+    fs.present <- FALSE
 
     if (G$nsdf) p <- bf[1:G$nsdf] else p <- array(0,0)
     if (G$m>0) for (i in 1:G$m)
@@ -1508,7 +1508,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
       if (fx) p <- c(p, beta) else { ## not fixed so need to undo transform of random effects etc. 
         ind <- G$smooth[[i]]$rind ##G$smooth[[i]]$first.r.para:G$smooth[[i]]$last.r.para
         if (!is.null(G$smooth[[i]]$fac)) { ## nested term, need to unpack coefs at each level of fac
-          sf.present <- TRUE
+          fs.present <- TRUE
           if (first<=last) stop("Nested smooths must be fully random")
           flev <- levels(G$smooth[[i]]$fac)
           for (j in 1:length(flev)) {
@@ -1557,7 +1557,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
 
     ## obtain XVX and S....
     first.para <- last.para <- rep(0,G$m) ## collect first and last para info relevant to expanded Xf
-    if (sf.present) { ## First create expanded Xf...
+    if (fs.present) { ## First create expanded Xf...
       Xf <- G$Xf[,1:G$nsdf,drop=FALSE] 
       if (G$m>0) for (i in 1:G$m) {# Accumulate the total model matrix
         ind <- object$smooth[[i]]$first.para:object$smooth[[i]]$last.para

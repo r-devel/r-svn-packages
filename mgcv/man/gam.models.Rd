@@ -113,7 +113,7 @@ which is a numeric or factor variable of the same dimension as the covariates of
 If a \code{by} variable is numeric, then its \eqn{i^{th}}{ith} element multiples the  \eqn{i^{th}}{ith}
 row of the model matrix corresponding to the smooth term concerned. 
 
-Smooth factor interactions (see also \code{\link{smooth.factor.interaction}}).
+Factor smooth interactions (see also \code{\link{factor.smooth.interaction}}).
  If a \code{by} variable is a \code{\link{factor}} then it 
 generates an indicator vector for each level 
 of the factor, unless it is an \code{\link{ordered}} factor.

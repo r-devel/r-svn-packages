@@ -1444,7 +1444,7 @@ Predict.matrix.pspline.smooth<-function(object,data)
 # Smooth-factor interactions. Efficient alternative to s(x,by=fac,id=1) 
 #######################################################################
 
-smooth.construct.sf.smooth.spec<-function(object,data,knots) {
+smooth.construct.fs.smooth.spec<-function(object,data,knots) {
 ## Smooths in which one covariate is a factor. Generates a smooth
 ## for each level of the factor, with penalties on null space 
 ## components. Smooths are not centred. xt element specifies basis
@@ -1469,7 +1469,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
   fterm <- NULL ## identify the factor variable
   for (i in 1:length(object$term)) if (is.factor(data[[object$term[i]]])) { 
     if (is.null(fterm)) fterm <- object$term[i] else
-    stop("sf smooths can only have one factor argument") 
+    stop("fs smooths can only have one factor argument") 
   }
   
   ## deal with no factor case, just base smooth constructor
@@ -1501,7 +1501,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
   ## call base constructor...
   class(object) <- object$base.bs
   object <- smooth.construct(object,data,knots)
-  if (length(object$S)>1) stop("\"sf\" smooth cannot use a multiply penalized basis (wrong basis in xt)")
+  if (length(object$S)>1) stop("\"fs\" smooth cannot use a multiply penalized basis (wrong basis in xt)")
 
   ## save some base smooth information
 
@@ -1526,7 +1526,7 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
 
   ## Now the model matrix 
   if (gamm) { ## no duplication, gamm will handle this by nesting
-    if (object$fixed==TRUE) stop("\"sf\" terms can not be fixed here")
+    if (object$fixed==TRUE) stop("\"fs\" terms can not be fixed here")
     object$X <- rp$X 
     object$fac <- fac ## gamm should use this for grouping
     object$te.ok <- FALSE ## would break special handling
@@ -1555,12 +1555,12 @@ smooth.construct.sf.smooth.spec<-function(object,data,knots) {
   object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix
   object$plot.me <- TRUE
   #object$base.bs <- class(object) ## base smoother class
-  class(object) <- "sf.interaction"
+  class(object) <- "fs.interaction"
   object
-} ## end of smooth.construct.sf.smooth.spec
+} ## end of smooth.construct.fs.smooth.spec
 
 
-Predict.matrix.sf.interaction <- function(object,data)
+Predict.matrix.fs.interaction <- function(object,data)
 # prediction method function for the smooth-factor interaction class
 { ## first remove factor from the data...  
   fac <- data[[object$fterm]]

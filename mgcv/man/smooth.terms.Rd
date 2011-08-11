@@ -95,9 +95,9 @@ data contain sufficient information to be able to estimate the appropriate varia
 achieved by splitting the penalty into several `basis penalties' these terms are not suitable as components of tensor 
 product smooths, and are not supported by \code{gamm}.
 
-\item{Smooth Factor interactions}{\code{bs="sf"}}
+\item{Factor smooth interactions}{\code{bs="fs"}}
 Smooth factor interactions are often produced using \code{by} variables (see \code{\link{gam.models}}), but a special smoother
-class (see \code{\link{smooth.factor.interaction}}) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. The \code{"sf"} smoothers are set up to be efficient when used with \code{\link{gamm}}, and have penalties on each null sapce component (i.e. they are fully `random effects'). 
+class (see \code{\link{factor.smooth.interaction}}) is available for the case in which a smooth is required at each of a large number of factor levels (for example a smooth for each patient in a study), and each smooth should have the same smoothing parameter. The \code{"fs"} smoothers are set up to be efficient when used with \code{\link{gamm}}, and have penalties on each null sapce component (i.e. they are fully `random effects'). 
 
 }
 
