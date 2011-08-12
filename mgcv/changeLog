@@ -23,6 +23,9 @@ ISSUES:
 
 unstable
 
+* argument sparse added to bam to allow exploitation of sparsity in fitting,
+  but results disappointing.
+
 * "sf" smooth factor interaction class introduced, for smooth factor 
   interactions where smoothing parameters are same at each factor level.
   Very efficient with gamm, so good for e.g. individual subject smooths.
