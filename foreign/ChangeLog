@@ -1,3 +1,7 @@
+2011-08-28  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/dbfopen.c: Use REprintf.
+
 2011-07-12  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-45
