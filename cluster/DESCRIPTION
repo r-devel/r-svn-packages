@@ -13,4 +13,5 @@ Depends: R (>= 2.9.0), stats, graphics, utils
 Enhances: MASS
 LazyLoad: yes
 LazyData: yes
+BuildResaveData: no
 License: GPL (>= 2)
