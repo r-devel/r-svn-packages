@@ -158,9 +158,9 @@ op <- par(mfrow= c(3,2), oma= c(0,0, 3, 0),
 for(k in 2:6)
    plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE)
 mtext("PAM(Ruspini) as in Kaufman & Rousseeuw, p.101",
-      outer = TRUE, font = par("font.main"), cex = par("cex.main"))
+      outer = TRUE, font = par("font.main"), cex = par("cex.main")); frame()
 
-frame()## with colours:
+## the same with cluster-wise colours:
 c6 <- c("tomato", "forest green", "dark blue", "purple2", "goldenrod4", "gray20")
 for(k in 2:6)
    plot(silhouette(pam(ruspini, k=k)), main = paste("k = ",k), do.n.k=FALSE,
