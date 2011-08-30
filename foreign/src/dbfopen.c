@@ -721,14 +721,14 @@ static void *DBFReadAttribute(DBFHandle psDBF, int hEntity, int iField,
 
 	if( fseek( psDBF->fp, nRecordOffset, 0 ) != 0 )
 	{
-	    REprintf("fseek(%d) failed on DBF file.\n", nRecordOffset);
+	    REprintf("fseek(%d) failed on DBF file", nRecordOffset);
 	    return NULL;
 	}
 
 	if( fread( psDBF->pszCurrentRecord, psDBF->nRecordLength,
 		   1, psDBF->fp ) != 1 )
 	{
-	    REprintf("fread(%d) failed on DBF file.\n", psDBF->nRecordLength );
+	    REprintf("fread(%d) failed on DBF file", psDBF->nRecordLength );
 	    return NULL;
 	}
 
