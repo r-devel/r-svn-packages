@@ -23,6 +23,8 @@ ISSUES:
 
 unstable
 
+* qq.gam default method modified for increased power.
+
 * argument sparse added to bam to allow exploitation of sparsity in fitting,
   but results disappointing.
 

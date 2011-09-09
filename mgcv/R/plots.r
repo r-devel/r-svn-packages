@@ -124,11 +124,17 @@ qq.gam <- function(object, rep=0, level=.9,
     ix <- rank(D)
     U <- (ix-.5)/length(D)
     if (!is.null(fam$qf)) {
-      q <- fam$qf(U,object$fitted.values,object$prior.weights,object$sig2)
+      q0 <- fam$qf(U,object$fitted.values,object$prior.weights,object$sig2)
       #Dq <- sort(fam$dev.resids(q,object$fitted.values,object$prior.weights)^.5*
       #         sign(q-object$fitted.values))
-      object$y <- q
-      Dq <- sort(residuals(object,type=type))
+      object$y <- q0
+      Dq <- sort(residuals(object,type=type)) ## original proposal
+      
+      nd <- length(Dq)
+      q1 <- fam$qf(1-U,object$fitted.values,object$prior.weights,object$sig2)
+      object$y <- q1
+      Dq <- sort(c(Dq,residuals(object,type=type)))
+      Dq <- (Dq[(1:nd)*2]+Dq[(1:nd)*2-1])*.5 ## more powerful alternative 
     }
   }
  
