@@ -471,6 +471,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 	    identify(x1, labels = labels1, col = col.txt[1])
 	}
 	else {
+### FIXME --- 'cex.txt' but also allow to specify 'cex' (for the points) ???
 	    Stext <- function(xy, labs, ...) {
 		## FIXME: these displacements are not quite ok!
 		xy[, 1] <- xy[, 1] + diff(x.range)/130
