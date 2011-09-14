@@ -435,11 +435,6 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0)
     n.block <- n%/%chunk.size ## number of full sized blocks
     stub <- n%%chunk.size ## size of end block
     if (stub>0) n.block <- n.block + 1
-#    start <- 0:(n.block-1)*chunk.size + 1 ## block starts
-#    end <- start + chunk.size;           ## block ends
-#    if (rho==0) end <- end - 1  ## otherwise most blocks go to 1 beyond block end
-#    end[n.block] <- n           ## block ends
-
     start <- 0:(n.block-1)*chunk.size    ## block starts
     end <- start + chunk.size;           ## block ends
     end[n.block] <- n
@@ -451,11 +446,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0)
       ind <- start[i]:end[i] 
       if (rho!=0) {
         N <- end[i]-start[i]+1
-        ## following are alternative form (harder to update)...       
-        #row <- rep(1:N,rep(2,N))[-1]
-        #weight <- c(rep(c(ld,sd),N-1),ld)
-        #if (end[i]==n) weight[2*N-1] <- 1
-        #stop <- c(1:(N-1)*2,2*N-1)
+
         row <- c(1,rep(1:N,rep(2,N))[-c(1,2*N)])
         weight <- c(1,rep(c(sd,ld),N-1))
         stop <- c(1,1:(N-1)*2+1)
@@ -467,13 +458,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0)
       y <- w*(G$model[[gp$response]] - G$offset[ind])
       if (rho!=0) {
         ## Apply transform...
-     #   if (end[i]==n) {
-     #     X <- rwMatrix(stop,row,weight,X)
-     #     y <- rwMatrix(stop,row,weight,y)
-     #   } else {
-     #     X <- rwMatrix(stop,row,weight,X)[-N,]
-     #     y <- rwMatrix(stop,row,weight,y)[-N]
-     #   }
+ 
         if (end[i]==n) yX.last <- c(y[nrow(X)],X[nrow(X),]) ## store final row, in case of update
         if (i==1) {
            X <- rwMatrix(stop,row,weight,X)

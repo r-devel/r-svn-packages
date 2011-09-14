@@ -79,7 +79,7 @@ fix.family.rd <- function(fam) {
 }
 
 
-qq.gam <- function(object, rep=0, level=.9,
+qq.gam <- function(object, rep=0, level=.9,s.rep=10,
                    type=c("deviance","pearson","response"),
                    pch=".", rl.col=2, rep.col="gray80",...) {
 ## get deviance residual quantiles under good fit
@@ -96,45 +96,52 @@ qq.gam <- function(object, rep=0, level=.9,
     if (is.null(fam$qf))
       rep <- 50 ## try simulation if quantile function not available
     level <- 0
-  }
+  } 
+  n <- length(D)
   if (rep > 0) { ## simulate quantiles
     fam <- fix.family.rd(object$family)
     if (!is.null(fam$rd)) {
       d <- rep(0,0)
-      ## simulate deviates...
+      ## simulate deviates... 
+      dm <- matrix(0,n,rep)
       for (i in 1:rep) { 
         yr <- fam$rd(object$fitted.values, object$prior.weights, object$sig2)
         #di <- fam$dev.resids(yr,object$fitted.values,object$prior.weights)^.5*
         #       sign(yr-object$fitted.values)
         object$y <- yr
-        di <- residuals(object,type=type)
-        d <- c(d,sort(di))
+        dm[,i] <- sort(residuals(object,type=type))
+        #d <- c(d,sort(di))
       }
-      n <- length(D)
-      Dq <- quantile(d,(1:n - .5)/n) 
+      # n <- length(D)
+      Dq <- quantile(as.numeric(dm),(1:n - .5)/n) 
     
       ## now get simulation limits on QQ plot
-      dm <- matrix(d,length(Dq),rep)
+      #dm <- matrix(d,length(Dq),rep)
       alpha <- (1-level)/2
       if (alpha>.5||alpha<0) alpha <- .05
-      if (level>0) lim <- apply(dm,1,FUN=quantile,p=c(alpha,1-alpha))
+      if (level>0&&level<1) lim <- apply(dm,1,FUN=quantile,p=c(alpha,1-alpha)) else
+      if (level >= 1) lim <- level 
     }
   } else {
     ## ix <- sort.int(D,index.return=TRUE)$ix ## messes up under multiple ties!
     ix <- rank(D)
     U <- (ix-.5)/length(D)
-    if (!is.null(fam$qf)) {
-      q0 <- fam$qf(U,object$fitted.values,object$prior.weights,object$sig2)
-      #Dq <- sort(fam$dev.resids(q,object$fitted.values,object$prior.weights)^.5*
-      #         sign(q-object$fitted.values))
-      object$y <- q0
-      Dq <- sort(residuals(object,type=type)) ## original proposal
-      
-      nd <- length(Dq)
-      q1 <- fam$qf(1-U,object$fitted.values,object$prior.weights,object$sig2)
-      object$y <- q1
-      Dq <- sort(c(Dq,residuals(object,type=type)))
-      Dq <- (Dq[(1:nd)*2]+Dq[(1:nd)*2-1])*.5 ## more powerful alternative 
+    if (!is.null(fam$qf)) { 
+      dm <- matrix(0,n,s.rep)
+      for (i in 1:s.rep) { 
+        U <- sample(U,n) ## randomize uniform quantiles w.r.t. obs
+        q0 <- fam$qf(U,object$fitted.values,object$prior.weights,object$sig2)
+        object$y <- q0
+        dm[,i] <- sort(residuals(object,type=type)) ## original proposal
+      }
+      Dq <- sort(rowMeans(dm))
+     # Dq <- quantile(as.numeric(dm),(1:n - .5)/n)
+
+     # nd <- length(Dq)
+     # q1 <- fam$qf(1-U,object$fitted.values,object$prior.weights,object$sig2)
+     # object$y <- q1
+     # Dq <- sort(c(Dq,residuals(object,type=type)))
+     # Dq <- (Dq[(1:nd)*2]+Dq[(1:nd)*2-1])*.5 ## more powerful alternative 
     }
   }
  
