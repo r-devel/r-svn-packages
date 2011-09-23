@@ -189,6 +189,7 @@
 #include "shapefil.h"
 #include <R_ext/Arith.h> /* for NA_INTEGER, NA_REAL */
 #include <R_ext/Error.h>
+#include <R_ext/Print.h>
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
