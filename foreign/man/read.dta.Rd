@@ -73,6 +73,9 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
 
 \author{Thomas Lumley and R-core members}
 \seealso{
+  A different approach is available in package \pkg{memisc}: see its
+  help for \code{Stata.file}.
+\seealso{
   \code{\link{write.dta}},
   \code{\link{attributes}}
   \code{\link{Date}}
