@@ -23,6 +23,9 @@ ISSUES:
 
 unstable
 
+* minor mroot fix/gam.reparam fix. Could declare symmetric matrix 
+  not symmetric...
+
 * qq.gam default method modified for increased power.
 
 * argument sparse added to bam to allow exploitation of sparsity in fitting,

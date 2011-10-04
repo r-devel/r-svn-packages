@@ -40,10 +40,13 @@ gam.reparam <- function(rS,lsp,deriv)
                   r.tol = as.double(r.tol),
                   fixed_penalty = as.integer(fixed.penalty))
   S <- matrix(oo$S,q,q)
+  S <- (S+t(S))*.5
   p <- abs(diag(S))^.5            ## by Choleski, p can not be zero if S +ve def
   p[p==0] <- 1                    ## but it's possible to make a mistake!!
   ##E <-  t(t(chol(t(t(S/p)/p)))*p) 
-  E <- t(mroot(t(t(S/p)/p),rank=q)*p) ## the square root S, with column separation
+  S <- t(t(S/p)/p)
+  S <- (S + t(S))*.5 ## force exact symmetry -- avoids very rare mroot fails 
+  E <- t(mroot(S,rank=q)*p) ## the square root S, with column separation
   Qs <- matrix(oo$Qs,q,q)         ## the reparameterization matrix t(Qs)%*%S%*%Qs -> S
   k0 <- 1
   for (i in 1:length(rS)) { ## unpack the rS in the new space

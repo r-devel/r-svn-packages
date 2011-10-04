@@ -3001,7 +3001,7 @@ mroot <- function(A,rank=NULL,method="chol")
 # given rank. B is returned where BB'=A. A assumed non-negative definite. 
 # Current methods "chol", "svd". "svd" is much slower, but much better at getting the 
 # correct rank if it isn't known in advance. 
-{ if (!all.equal(A,t(A))) stop("Supplied matrix not symmetric")
+{ if (!isTRUE(all.equal(A,t(A)))) stop("Supplied matrix not symmetric")
   if (method=="svd")
   { um<-La.svd(A)
     if (sum(um$d!=sort(um$d,decreasing=TRUE))>0) 
@@ -3017,12 +3017,12 @@ mroot <- function(A,rank=NULL,method="chol")
     return(t(t(um$u[,1:rank])*as.vector(d))) # note recycling rule used for efficiency
   } else
   if (method=="chol")
-  { op<-options(warn=-1) ## don't want to be warned it's not +ve def
-    L<-chol(A,pivot=TRUE)
+  { op <- options(warn=-1) ## don't want to be warned it's not +ve def
+    L <- chol(A,pivot=TRUE)
     options(op) ## reset default warnings
-    piv<-order(attr(L,"pivot"))
-    if (is.null(rank)) rank<-attr(L,"rank")
-    L<-L[,piv,drop=FALSE];L<-t(L[1:rank,,drop=FALSE])
+    piv <- order(attr(L,"pivot"))
+    if (is.null(rank)) rank <- attr(L,"rank")
+    L <- L[,piv,drop=FALSE];L <- t(L[1:rank,,drop=FALSE])
     if (rank <= 1) dim(L) <- c(nrow(A),1)
     return(L)
   } else
@@ -3208,9 +3208,9 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
   # get square roots of penalties using supplied ranks or estimated 
   if (n.p>0)
   { for (i in 1:n.p) 
-    { if (is.null(rank)) B<-mroot(S[[i]],method="svd") 
-      else B<-mroot(S[[i]],rank=rank[i],method="chol")
-      m<-dim(B)[2]
+    { if (is.null(rank)) B <- mroot(S[[i]],method="svd") 
+      else B <- mroot(S[[i]],rank=rank[i],method="chol")
+      m <- dim(B)[2]
       R<-matrix(0,n.b,m)
       R[off[i]:(off[i]+dim(B)[1]-1),]<-B
       S[[i]]<-R
