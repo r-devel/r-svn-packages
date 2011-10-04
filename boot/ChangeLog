@@ -1,5 +1,6 @@
-version 1.3-3 2011-07-12
+version 1.3-3 2011-10-03
 
+    Use package 'parallel' rather than multicore/snow.
     Update tests/Examples/boot-Ex.Rout.save for byte-compiled R >= 2.14.0.
     Try to force promises in the ... argument when snow is in use.
 
