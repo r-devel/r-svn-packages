@@ -251,16 +251,15 @@ void dumpmat(M,filename) matrix M;char *filename;
 void readmat(M,filename) matrix *M;char *filename;
 
 { FILE *in;long i,j,k;char str[200];
-  size_t kr;
   in=fopen(filename,"rb");
   if (in==NULL)
   { sprintf(str,_("\n%s not found, nothing read!"),filename);
     ErrorMessage(str,1);}
-  kr = fread(&i,sizeof(long),1,in);
-  kr = fread(&j,sizeof(long),1,in);
+    fread(&i,sizeof(long),1,in);
+    fread(&j,sizeof(long),1,in);
   (*M)=initmat(i,j);
   for (k=0L;k<M->r;k++)
-  { kr = fread((*M).M[k],sizeof(double),(size_t)M->c,in);
+  { fread((*M).M[k],sizeof(double),(size_t)M->c,in);
   }
   fclose(in);
 }
@@ -637,9 +636,9 @@ void tricholeski(matrix *T,matrix *l0,matrix *l1)
  */
 
 { double **TM,*l1V,*l0V,z=1.0;
-  long k1,k,tr1;
+  long k1,k;
   TM=T->M;l0V=l0->V;l1V=l1->V;
-  l0V[0]=sqrt(TM[0][0]);tr1=T->r-1;
+  l0V[0]=sqrt(TM[0][0]);
   for (k=1;k<T->r;k++)
   { k1=k-1;
     if (z>0.0) l1V[k1]=TM[k][k1]/l0V[k1];   /* no problem */
@@ -1963,7 +1962,7 @@ void gettextmatrix(M,name) matrix M;char *name;
 /* reads a text file with M.r rows and M.c columns into matrix M */
 
 { FILE *f;
-  long i,j,k;
+  long i,j;
   char c,str[200];
   f=fopen(name,"rt");
   if (!f)
@@ -1971,7 +1970,7 @@ void gettextmatrix(M,name) matrix M;char *name;
     ErrorMessage(str,1);}
   for (i=0;i<M.r;i++)
   { for (j=0;j<M.c;j++)
-    { k = fscanf(f,"%lf",M.M[i]+j);
+    { fscanf(f,"%lf",M.M[i]+j);
     }
     c=' ';while ((c!='\n')&&(!feof(f))) c=(char)fgetc(f);
   }
@@ -2355,10 +2354,9 @@ matrix A,B,U,W;
    NOTE: B must be +ve definite.
 */
 
-{ matrix L,M,MA,MAM,T;
+{ matrix L,M,MA,MAM;
   long i,j,k;
   double *p,temp,*p1,**MM,**LM;
-  T=initmat(A.r,A.r);
 /* first get choleski factor of B */
   L=initmat(B.r,B.r);
   choleski(B,L,0,0); /* L contains choleski factor */
@@ -3137,12 +3135,12 @@ void printmat(matrix A,char *fmt)
   double n;
   n=matrixnorm(A);
   for (i=0;i<A.r;i++)
-  { printf("\n");
+  { Rprintf("\n");
     for (j=0;j<A.c;j++) 
-    if (fabs(A.M[i][j])>1e-14*n) printf(fmt,A.M[i][j]);
-    else printf(fmt,0.0);
+    if (fabs(A.M[i][j])>1e-14*n) Rprintf(fmt,A.M[i][j]);
+    else Rprintf(fmt,0.0);
   }
-  printf("\n");
+  Rprintf("\n");
 }
 
 void fprintmat(matrix A,char *fname,char *fmt)

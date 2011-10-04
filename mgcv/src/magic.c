@@ -66,8 +66,8 @@ void mgcv_AtA(double *AA,double *A,int *q,int *n)
               as.integer(n),PACKAGE="mgcv")[[1]],q,q)
 */
 { double xx,*p,*p1,*p2,*p3,*p4;
-  int nq,i,j;
-  nq= *n * *q;
+  int i,j;
+  /*nq= *n * *q;*/
   for (i=0,p=A;i < *q;p+= *n,i++) for (j=i,p1=p;j< *q;p1+= *n,j++)
   { for (xx=0.0,p2=p,p3=p1,p4=p+ *n;p2<p4;p2++,p3++) xx += *p2 * *p3;
     AA[i * *q + j] = AA[ j * *q + i]=xx;

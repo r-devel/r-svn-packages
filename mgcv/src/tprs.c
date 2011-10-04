@@ -34,13 +34,12 @@ double eta(int m,int d,double r)
    wiggliness penalty. */
 
 { static int first=1;
-  static double pi,rpi,Ghalf;
+  static double pi,Ghalf;
   double f;
   int i,k;
   if (first)
   { first=0;
     pi=asin(1.0)*2.0; 
-    rpi=sqrt(pi);
     Ghalf=sqrt(pi);   /* Gamma function of 0.5 */
   }
   if (2*m<=d) ErrorMessage(_("You must have 2m>d for a thin plate spline."),1);
@@ -256,12 +255,10 @@ int *Xd_strip(matrix *Xd)
 */
 
 { int *yxindex,start,stop,ok,i;
-  long Xdor;
   double xi,**dum;
   yxindex = (int *)calloc((size_t)Xd->r,sizeof(int));
   dum = (double **)calloc((size_t)Xd->r,sizeof(double *));
   msort(*Xd);
-  Xdor=Xd->r; /* keep record of original length of Xd */
   start=stop=0;ok=1;
   while(ok)
   { /* look for start of run of equal rows ..... */

@@ -33,10 +33,6 @@ export(anova.gam, bam, bam.update, concurvity, cSplineDes,
        qq.gam,
        residuals.gam,rig,rTweedie, s,
        slanczos,
-       smooth2random,smooth2random.mgcv.smooth,
-       smooth2random.fs.interaction,
-       smooth2random.tensor.smooth,
-       smooth2random.t2.smooth,
        smoothCon,smooth.construct,smooth.construct2,
        smooth.construct.cc.smooth.spec,
        smooth.construct.cp.smooth.spec,
@@ -53,8 +49,6 @@ export(anova.gam, bam, bam.update, concurvity, cSplineDes,
        smooth.construct.ad.smooth.spec,
        summary.gam,sp.vcov,
        spasm.construct,spasm.sp,spasm.smooth,
-       spasm.construct.cus,spasm.sp.cus,spasm.smooth.cus,
-       spasm.construct.spatps,spasm.sp.spatps,spasm.smooth.spatps,
        t2,te,tensor.prod.model.matrix,tensor.prod.penalties,
        Tweedie,uniquecombs, vcov.gam, vis.gam)
 
@@ -121,6 +115,11 @@ S3method(Predict.matrix,cyclic.smooth)
 S3method(Predict.matrix,tensor.smooth)
 S3method(Predict.matrix,tprs.smooth)
 
+S3method(spasm.construct,cus)
+S3method(spasm.sp,cus)
+S3method(spasm.smooth,cus)
 
-
-
+S3method(smooth2random,mgcv.smooth)
+S3method(smooth2random,fs.interaction)
+S3method(smooth2random,tensor.smooth)
+S3method(smooth2random,t2.smooth)
