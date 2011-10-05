@@ -4,13 +4,6 @@ ISSUES:
 
 * vis.gam ignores offset?
 
-* Point processes....
-
-* Integrate out selected terms in ML/REML...
-
-* REML estimation can fail when estimating scale, with extreme weights.
-  Rescaling weights works!
-
 * gamm4 isn't handling NA's properly with formulae like y~factor(z). 
   When inserting z into dataframe, it fails to drop. It (like gamm) can
   also run out of memory when computing the cov matrix, if dataset is large 
@@ -19,6 +12,12 @@ ISSUES:
 1.7-7
 
 unstable
+
+* log saturated likelihoods modified w.r.t. weight handling, so that weights
+  are treated as modifying the scale parameter, when scale parameter is free.
+  i.e. obs specific scale parameter is overall scale parameter divided by 
+  obs weight. This ensures that when the scale parameter is free, RE/ML based
+  inference is invariant to multiplicative rescaling of weights. 
 
 * minor mroot fix/gam.reparam fix. Could declare symmetric matrix 
   not symmetric and halt gam fit.

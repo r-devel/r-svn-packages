@@ -94,8 +94,6 @@ S3method(pdMatrix,pdIdnot)
 S3method(solve,pdIdnot)
 S3method(summary,pdIdnot)
 
-
-
 S3method(smooth.construct,ad.smooth.spec)
 S3method(smooth.construct,ps.smooth.spec)
 S3method(smooth.construct,cp.smooth.spec)
