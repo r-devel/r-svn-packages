@@ -182,11 +182,9 @@ boot <- function(data, statistic, R, sim = "ordinary",
         } else if (have_snow) {
             list(...) # evaluate any promises
             if (is.null(cl)) {
-                setRNG <- function()
-                    set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
-                environment(setRNG) <- baseenv()
                 cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                parallel::clusterCall(cl, setRNG)
+                if(RNGkind()[1L] == "L'Ecuyer-CMRG")
+                    parallel::clusterSetRNGStream(cl)
                 res <- parallel::parLapply(cl, seq_len(RR), fn)
                 parallel::stopCluster(cl)
                 res
@@ -1378,11 +1376,9 @@ censboot <-
         } else if (have_snow) {
             list(...) # evaluate any promises
             if (is.null(cl)) {
-                setRNG <- function()
-                    set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
-                environment(setRNG) <- baseenv()
                 cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                parallel::clusterCall(cl, setRNG)
+                if(RNGkind()[1L] == "L'Ecuyer-CMRG")
+                    parallel::clusterSetRNGStream(cl)
                 parallel::clusterEvalQ(cl, library(survival))
                 res <- parallel::parLapply(cl, seq_len(R), fn)
                 parallel::stopCluster(cl)
@@ -3439,11 +3435,9 @@ tsboot <- function(tseries, statistic, R, l = NULL, sim = "model",
         } else if (have_snow) {
             list(...) # evaluate any promises
             if (is.null(cl)) {
-                setRNG <- function()
-                    set.seed((Sys.getpid() + as.integer(Sys.time())) %%1024)
-                environment(setRNG) <- baseenv()
                 cl <- parallel::makePSOCKcluster(rep("localhost", ncpus))
-                parallel::clusterCall(cl, setRNG)
+                if(RNGkind()[1L] == "L'Ecuyer-CMRG")
+                    parallel::clusterSetRNGStream(cl)
                 res <- parallel::parLapply(cl, seq_len(R), fn)
                 parallel::stopCluster(cl)
                 res
