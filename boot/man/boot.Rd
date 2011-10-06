@@ -281,7 +281,9 @@ boot(data, statistic, R, sim = "ordinary", stype = c("i", "f", "w"),
   is used if \code{\link{RNGkind}("L'Ecuyer-CMRG")} has been selected.
   In that approach each worker gets a different subsequence of the RNG
   stream based on the seed at the time the worker is spawned and so the
-  results will be reproducible if \code{ncpus} is unchanged.
+  results will be reproducible if \code{ncpus} is unchanged, and for
+  \code{parallel = "multicore"} if \code{parallel::\link{mc.reset.stream}()} is
+  called: see the examples for \code{\link{mclapply}}.
 }
 \references{
   There are many references explaining the bootstrap and its variations.
