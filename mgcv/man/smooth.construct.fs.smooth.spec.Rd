@@ -88,6 +88,9 @@ plot(bm$gam,pages=1)
 ## Could also use...
 ## b <- gam(y~s(x0)+ s(x1,fac,bs="fs",k=5)+s(x2,k=20),method="ML")
 ## ... but its slower (increasingly so with increasing nf)
+## b <- gam(y~s(x0)+ t2(x1,fac,bs=c("tp","re"),k=5,full=TRUE)+
+##        s(x2,k=20),method="ML"))
+## ... is exactly equivalent. 
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

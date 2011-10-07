@@ -219,7 +219,9 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
 # are rank 4 cubic regression splines with m ignored.  
-# k, bs,m,d and fx can be supplied as single numbers or arrays with an element for each basis.
+# k, bs,d and fx can be supplied as single numbers or arrays with an element for each basis.
+# m can be a single number, and array with one element for each basis, or a list, with an 
+#   array for each basis
 # Returns a list consisting of:
 # * margin - a list of smooth.spec objects specifying the marginal bases
 # * term   - array of covariate names
@@ -232,9 +234,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   by.var<-deparse(substitute(by),backtick=TRUE) #getting the name of the by variable
   term<-deparse(vars[[1]],backtick=TRUE) # first covariate
   if (dim>1) # then deal with further covariates
-  for (i in 2:dim)
-  { term[i]<-deparse(vars[[i]],backtick=TRUE)
-  }
+  for (i in 2:dim) term[i]<-deparse(vars[[i]],backtick=TRUE)
   for (i in 1:dim) term[i] <- attr(terms(reformulate(term[i])),"term.labels")
   # term now contains the names of the covariates for this model term
   
@@ -262,6 +262,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
     else if (length(k)!=n.bases) ok<-FALSE
     if (!ok) k<-5^d 
   }
+
   # evaluate fx
   if (sum(is.na(fx))||is.null(fx)) fx<-rep(FALSE,n.bases)
   else if (length(fx)==1) fx<-rep(fx,n.bases)
@@ -280,23 +281,27 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   if (length(bs)==1) bs<-rep(bs,n.bases)
   if (length(bs)!=n.bases) {warning("bs wrong length and ignored.");bs<-rep("cr",n.bases)}
   bs[d>1&(bs=="cr"|bs=="cs"|bs=="ps"|bs=="cp")]<-"tp"
-  # finally the penalty orders
-  if (length(m)==1) m<-rep(m,n.bases)
-  if (length(m)!=n.bases) 
-  { warning("m wrong length and ignored.");m<-rep(0,n.bases)}
-  m[m<0]<-0
+
+  # finally the spline/penalty orders
+  if (!is.list(m)&&length(m)==1) m <- rep(m,n.bases)
+  if (length(m)!=n.bases) { 
+    warning("m wrong length and ignored.");
+    m <- rep(0,n.bases)
+  }
+  if (!is.list(m)) m[m<0] <- 0 ## Duchon splines can have -ve elements in a vector m
+
   # check for repeated variables in function argument list
   if (length(unique(term))!=dim) stop("Repeated variables as arguments of a smooth are not permitted")
   # Now construct smooth.spec objects for the margins
-  j<-1 # counter for terms
-  margin<-list()
+  j <- 1 # counter for terms
+  margin <- list()
   for (i in 1:n.bases)
   { j1<-j+d[i]-1
     if (is.null(xt)) xt1 <- NULL else xt1 <- xtra[[i]]
     stxt<-"s("
     for (l in j:j1) stxt<-paste(stxt,term[l],",",sep="")
     stxt<-paste(stxt,"k=",deparse(k[i],backtick=TRUE),",bs=",deparse(bs[i],backtick=TRUE),
-                ",m=",deparse(m[i],backtick=TRUE),",xt=xt1", ")")
+                ",m=",deparse(m[[i]],backtick=TRUE),",xt=xt1", ")")
     margin[[i]]<- eval(parse(text=stxt))  # NOTE: fx and by not dealt with here!
     j<-j1+1
   }
@@ -378,11 +383,15 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
   if (length(bs)==1) bs<-rep(bs,n.bases)
   if (length(bs)!=n.bases) {warning("bs wrong length and ignored.");bs<-rep("cr",n.bases)}
   bs[d>1&(bs=="cr"|bs=="cs"|bs=="ps"|bs=="cp")]<-"tp"
-  # finally the penalty orders
-  if (length(m)==1) m<-rep(m,n.bases)
-  if (length(m)!=n.bases) 
-  { warning("m wrong length and ignored.");m<-rep(0,n.bases)}
-  m[m<0]<-0
+
+  # finally the spline/penalty orders
+  if (!is.list(m)&&length(m)==1) m <- rep(m,n.bases)
+  if (length(m)!=n.bases) { 
+    warning("m wrong length and ignored.");
+    m <- rep(0,n.bases)
+  }
+  if (!is.list(m)) m[m<0] <- 0 ## Duchon splines can have -ve elements in a vector m
+
   # check for repeated variables in function argument list
   if (length(unique(term))!=dim) stop("Repeated variables as arguments of a smooth are not permitted")
   # Now construct smooth.spec objects for the margins
@@ -394,7 +403,7 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
     stxt<-"s("
     for (l in j:j1) stxt<-paste(stxt,term[l],",",sep="")
     stxt<-paste(stxt,"k=",deparse(k[i],backtick=TRUE),",bs=",deparse(bs[i],backtick=TRUE),
-                ",m=",deparse(m[i],backtick=TRUE),",xt=xt1", ")")
+                ",m=",deparse(m[[i]],backtick=TRUE),",xt=xt1", ")")
     margin[[i]]<- eval(parse(text=stxt))  # NOTE: fx and by not dealt with here!
     j<-j1+1
   }
@@ -520,8 +529,9 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
 { m<-length(object$margin)  # number of marginal bases
   Xm<-list();Sm<-list();nr<-r<-d<-array(0,m)
   C <- NULL
-  for (i in 1:m)
-  { knt <- dat <- list()
+  object$plot.me <- TRUE 
+  for (i in 1:m) { 
+    knt <- dat <- list()
     term <- object$margin[[i]]$term
     for (j in 1:length(term)) { 
       dat[[term[j]]] <- data[[term[j]]]
@@ -529,7 +539,10 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
     }
     object$margin[[i]]<-smooth.construct(object$margin[[i]],dat,knt)
     Xm[[i]]<-object$margin[[i]]$X
-    if (!is.null(object$margin[[i]]$te.ok) && !object$margin[[i]]$te.ok) stop("attempt to use unsuitable marginal smooth class")
+    if (!is.null(object$margin[[i]]$te.ok)) {
+      if (object$margin[[i]]$te.ok == 0) stop("attempt to use unsuitable marginal smooth class")
+      if (object$margin[[i]]$te.ok == 2) object$plot.me <- FALSE ## margin has declared itself unplottable in a te term
+    }
     if (length(object$margin[[i]]$S)>1) 
     stop("Sorry, tensor products of smooths with multiple penalties are not supported.")
     Sm[[i]]<-object$margin[[i]]$S[[1]]
@@ -541,8 +554,9 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
   XP <- list()
   if (object$np) # reparameterize 
   for (i in 1:m)
-  { if (object$margin[[i]]$dim==1) {
-      if (!inherits(object$margin[[i]],c("cs.smooth","cr.smooth","cyclic.smooth"))) { # these classes already optimal
+  { if (object$margin[[i]]$dim==1) { 
+      # only do classes not already optimal (or otherwise excluded)
+      if (!inherits(object$margin[[i]],c("cs.smooth","cr.smooth","cyclic.smooth","random.effect"))) {
         x <- get.var(object$margin[[i]]$term,data)
         np <- ncol(object$margin[[i]]$X) ## number of params
         ## note: to avoid extrapolating wiggliness measure
@@ -732,6 +746,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
   Xm <- list();Sm <- list();nr <- r <- d <- array(0,m)
   Pm <- list() ## list for matrices by which to postmultiply raw model matris to get repara version
   C <- NULL ## potential constraint matrix
+  object$plot.me <- TRUE
   for (i in 1:m) { ## create marginal model matrices and penalties...
     ## pick up the required variables....
     knt <- dat <- list()
@@ -743,8 +758,10 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
     ## construct marginal smooth...
     object$margin[[i]]<-smooth.construct(object$margin[[i]],dat,knt)
     Xm[[i]]<-object$margin[[i]]$X
-    if (!is.null(object$margin[[i]]$te.ok) && !object$margin[[i]]$te.ok) 
-      stop("attempt to use unsuitable marginal smooth class")
+    if (!is.null(object$margin[[i]]$te.ok)) {
+      if (object$margin[[i]]$te.ok==0) stop("attempt to use unsuitable marginal smooth class")
+      if (object$margin[[i]]$te.ok==2) object$plot.me <- FALSE ## margin declared itself unplottable
+    }
     if (length(object$margin[[i]]$S)>1) 
     stop("Sorry, tensor products of smooths with multiple penalties are not supported.")
     Sm[[i]]<-object$margin[[i]]$S[[1]]
@@ -1529,7 +1546,7 @@ smooth.construct.fs.smooth.spec<-function(object,data,knots) {
     if (object$fixed==TRUE) stop("\"fs\" terms can not be fixed here")
     object$X <- rp$X 
     object$fac <- fac ## gamm should use this for grouping
-    object$te.ok <- FALSE ## would break special handling
+    object$te.ok <- 0 ## would break special handling
     ## rank??
     
   } else { ## duplicate model matrix columns, and penalties...
@@ -1547,7 +1564,7 @@ smooth.construct.fs.smooth.spec<-function(object,data,knots) {
     }
    
     object$bs.dim <- ncol(object$X)
-    object$te.ok <- FALSE
+    object$te.ok <- 0
     object$rank <- c(object$rank*nf,rep(nf,null.d))
   }
  
@@ -1776,9 +1793,9 @@ smooth.construct.ad.smooth.spec<-function(object,data,knots)
       } ## adaptive penalty finished
     } ## penalized case finished
   } 
-  pspl$te.ok <- FALSE ## not suitable as a tensor product marginal
+  pspl$te.ok <- 0 ## not suitable as a tensor product marginal
   pspl
-}
+} ## end of smooth.construct.ad.smooth.spec
 
 
 ########################################################
@@ -1812,8 +1829,9 @@ smooth.construct.re.smooth.spec<-function(object,data,knots)
   ## need to store formula (levels taken care of by calling function)
   object$form <- form
 
-  ##object$plot.me <- FALSE ## "re" terms should not be plotted by plot.gam
-  object$te.ok <- FALSE ## these terms are not suitable as te marginals
+  object$plot.me <- TRUE ## "re" terms can be plotted by plot.gam
+  object$te.ok <- 2 ## these terms are  suitable as te marginals, but 
+                    ##   can not be plotted
 
   class(object)<-"random.effect"  # Give object a class
 
@@ -1999,10 +2017,11 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
     object$S[[1]] <- diag(c(rp$D[ind],0))
    
   }
-
-  object$rank <- ncol(object$X)-1
-  object$null.space.dim <- 1
-  object$knots<-k
+  ## numerically evaluate mrf penalty rank... 
+  ev <- eigen(object$S[[1]],symmetric=TRUE,only.values=TRUE)$values
+  object$rank <- sum(ev >.Machine$double.eps^.8*max(ev)) ## ncol(object$X)-1
+  object$null.space.dim <- ncol(object$X) - object$rank
+  object$knots <- k
   object$df <- ncol(object$X)
   ##object$plot.me <- FALSE
   class(object)<-"mrf.smooth"

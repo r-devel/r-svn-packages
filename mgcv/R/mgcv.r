@@ -447,6 +447,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5)
             sm[[i]]$S[[j]] <- sm[[i]]$S[[j]][-ind,-ind]
             if (sum(sm[[i]]$S[[j]]!=0)==0) rank <- 0 else
             rank <- qr(sm[[i]]$S[[j]],tol=tol,LAPACK=FALSE)$rank
+            sm[[i]]$rank[j] <- rank ## replace previous rank with new rank
             if (rank == 0) { ## drop the penalty
               sm[[i]]$rank <- sm[[i]]$rank[-j]
               sm[[i]]$S[[j]] <- NULL

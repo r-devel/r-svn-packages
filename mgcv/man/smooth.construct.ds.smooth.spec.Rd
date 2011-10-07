@@ -61,12 +61,12 @@ To use for basis setup it is recommended to use \code{\link{smooth.construct2}}.
 
 For these classes the specification \code{object} will contain
 information on how to handle large datasets in their \code{xt} field. The default is to randomly
-subsample 2000 `knots' from which to produce a tprs basis, if the number of
-unique predictor variable combinations in excess of 2000. The default can be
+subsample 2000 `knots' from which to produce a reduced rank eigen approximation to the full basis, 
+if the number of unique predictor variable combinations in excess of 2000. The default can be
 modified via the \code{xt} argument to \code{\link{s}}. This is supplied as a
 list with elements \code{max.knots} and \code{seed} containing a number
 to use in place of 2000, and the random number seed to use (either can be
-missing). 
+missing). Note that the random sampling will not effect the state of R's RNG. 
 
 For these bases \code{knots} has two uses. Firstly, as mentioned already, for large datasets 
 the calculation of the \code{tp} basis can be time-consuming. The user can retain most of the advantages of the 
