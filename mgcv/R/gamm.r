@@ -1681,6 +1681,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     if (!is.null(G$Xcentre)) object$Xcentre <- G$Xcentre ## column centering values
 
     ret$gam <- object
+    class(ret) <- c("gamm","list")
     ret
 
 } ## end gamm
