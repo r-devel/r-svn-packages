@@ -8,6 +8,7 @@
 
 * gamm gives returned object a class "gamm"
 
+
 1.7-7
 
 * "fs" smooth factor interaction class introduced, for smooth factor 
