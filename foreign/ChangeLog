@@ -1,3 +1,8 @@
+2011-10-15  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* R/read.dta.R, man/read.data.Rd, src/stataread.c: read Stata 12
+	files as if they were format_114: the description is unchanged.
+
 2011-09-26  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* man/read.dta.Rd: refer to package 'memisc'.
