@@ -1,7 +1,8 @@
 
-R version 2.11.1 Patched (2010-06-23 r52375)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.14.0 alpha (2011-10-06 r57181)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -68,7 +69,7 @@ Type 'q()' to quit R.
 + 		     jhalt= integer(1))[c("dys", "jhalt")]
 +         }
 +     if(r$jhalt) {
-+ 	cat("`jhalt' was ", r$jhalt,
++ 	cat("'jhalt' was ", r$jhalt,
 + 	    " -- some dissimilarities will be missing.\n")
 + 	r$dys[r$dys == -1.] <- NA
 +     }
@@ -86,18 +87,18 @@ Type 'q()' to quit R.
 [7,]    6    9
 [8,]   NA    8
 > dysta(x)
-`jhalt' was  1  -- some dissimilarities will be missing.
+'jhalt' was  1  -- some dissimilarities will be missing.
  [1]  0.000000  1.414214  2.828427  1.414214  6.708204  5.385165  1.414214
  [8]  5.656854  4.242641  2.828427  1.414214  8.602325  7.211103  4.242641
 [15]  2.236068  1.414214 10.000000  8.602325  5.656854  3.605551  2.828427
 [22]  1.414214  9.899495  8.485281        NA  1.414214        NA  0.000000
 [29]  1.414214
 > (d1 <- dysta(x, kind = "m"))
-`jhalt' was  1  -- some dissimilarities will be missing.
+'jhalt' was  1  -- some dissimilarities will be missing.
  [1]  0  2  4  2  9  7  2  8  6  4  2 12 10  6  3  2 14 12  8  5  4  2 14 12 NA
 [26]  2 NA  0  2
 > (d3 <- dysta(x, kind = "m",dystaK = "dysta3"))
-`jhalt' was  1  -- some dissimilarities will be missing.
+'jhalt' was  1  -- some dissimilarities will be missing.
  [1]  2  4  9  8 12 14 14  2  7  6 10 12 12  2  4  6  8 NA  2  3  5  2  2  4 NA
 [26]  2  0  2  0
 > 
@@ -144,6 +145,6 @@ Type 'q()' to quit R.
 [1] TRUE
 > identical(dysta(x, dystaK="dysta3")[-length(d3)],
 + 	  c(dist(x,"euclidean")))# !
-`jhalt' was  1  -- some dissimilarities will be missing.
+'jhalt' was  1  -- some dissimilarities will be missing.
 [1] TRUE
 > 

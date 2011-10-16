@@ -1,6 +1,6 @@
 
-R version 2.12.0 Patched (2010-11-07 r53537)
-Copyright (C) 2010 The R Foundation for Statistical Computing
+R version 2.14.0 alpha (2011-10-06 r57181)
+Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -17,7 +17,7 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > #### These are *NOT* compared with output in the released version of
-> ###  `cluster'  currently
+> ###  'cluster'  currently
 > 
 > library(cluster)
 > 

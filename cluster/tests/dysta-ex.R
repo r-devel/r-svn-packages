@@ -51,7 +51,7 @@ dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
 		     jhalt= integer(1))[c("dys", "jhalt")]
         }
     if(r$jhalt) {
-	cat("`jhalt' was ", r$jhalt,
+	cat("'jhalt' was ", r$jhalt,
 	    " -- some dissimilarities will be missing.\n")
 	r$dys[r$dys == -1.] <- NA
     }
