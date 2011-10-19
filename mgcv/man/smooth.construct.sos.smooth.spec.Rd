@@ -54,7 +54,17 @@ to zero we recover a "normal" thin plate spline on the tangent space). This is a
 Duchon.
 
 Note that the null space of the penalty is always the space of constant functions on the sphere, whatever the order of penalty. 
+This class has a plot method, with 3 schemes. \code{scheme==0} plots one hemisphere of the sphere, projected onto a circle.
+The plotting sphere has the north pole at the top, and the 0 meridian running down the middle of the plot, and towards 
+the viewer. The smoothing sphere is rotated within the plotting sphere, by specifying the location of its pole in the 
+co-ordinates of the viewing sphere. \code{theta}, code{phi} give the longitude and latitude of the smoothing sphere pole
+within the plotting sphere (in plotting sphere co-ordinates). (You can visualize the smoothing sphere as a globe, free to 
+rotate within the transparent fixed plotting sphere.) The value of the smooth is shown by a heat map overliad with a 
+contour plot, and lat, lon gridlines are also plotted. 
 
+\code{scheme==1} is as \code{scheme==0}, but in black and white, without the image plot. \code{scheme>1} calls the default 
+plotting method with \code{scheme} decremented by 2.
+ 
 }
 
 \references{
@@ -98,8 +108,6 @@ zm <- matrix(fz,30,60)
 require(mgcv)
 dat <- data.frame(la = la *180/pi,lo = lo *180/pi,y=y)
 
-method <- "GCV.Cp";m <- 3
-
 ## fit spline on sphere model...
 bp <- gam(y~s(la,lo,bs="sos",k=60),data=dat)
 
@@ -116,9 +124,11 @@ cor(fitted(b),ff)
 pd <- data.frame(la=gr$la*180/pi,lo=gr$lo*180/pi)
 fv <- matrix(predict(b,pd),30,60)
 
-par(mfrow=c(2,1),mar=c(4,4,1,1))
+par(mfrow=c(2,2),mar=c(4,4,1,1))
 contour(lom,lam,t(zm))
 contour(lom,lam,t(fv))
+plot(bp,rug=FALSE)
+plot(bp,scheme=1,theta=-30,phi=20,pch=19,cex=.5)
 
 }
 \keyword{models} \keyword{regression}%-- one or more ..
