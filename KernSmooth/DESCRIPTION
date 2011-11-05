@@ -1,6 +1,6 @@
 Package: KernSmooth
 Priority: recommended
-Version: 2.23-6
+Version: 2.23-7
 Date: 2011-05-31
 Title: Functions for kernel smoothing for Wand & Jones (1995)
 Author: Matt Wand <Matt.Wand@uts.edu.au>

@@ -403,7 +403,7 @@ dpik <- function(x, scalest = "minim", level = 2L, kernel = "normal",
     del0 <- if (canonical) 1 else switch(kernel,
                                          "normal" = 1/((4*pi)^(1/10)),
                                          "box" = (9/2)^(1/5),
-                                         "epanechh" = 15^(1/5),
+                                         "epanech" = 15^(1/5),
                                          "biweight" = 35^(1/5),
                                          "triweight" = (9450/143)^(1/5))
 
