@@ -64,23 +64,23 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   The value labels in attribute \code{"val.labels"} name a table for
   each variable, or are an empty string.  The tables are elements of the
   named list attribute \code{"label.table"}: each is an integer vector with
-  names,
+  names.
 }
 \references{
   Stata Users Manual (versions 5 & 6), Programming manual (version 7),
   or online help (version 8 and later) describe the format of the files.
   Or at \url{http://www.stata.com/help.cgi?dta} and
-  \url{http://www.stata.com/help.cgi?dta_113}
+  \url{http://www.stata.com/help.cgi?dta_113}.
 }
 
 \author{Thomas Lumley and R-core members}
 \seealso{
   A different approach is available in package \pkg{memisc}: see its
   help for \code{Stata.file}.
-\seealso{
+
   \code{\link{write.dta}},
-  \code{\link{attributes}}
-  \code{\link{Date}}
+  \code{\link{attributes}},
+  \code{\link{Date}},
   \code{\link{factor}}
 }
 \examples{
