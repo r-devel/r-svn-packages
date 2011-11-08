@@ -1,3 +1,7 @@
+2011-11-08  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: Version is 0.8-47, use Authors@R field
+
 2011-10-15  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* R/read.dta.R, man/read.data.Rd, src/stataread.c: read Stata 12

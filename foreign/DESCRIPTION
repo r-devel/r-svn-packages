@@ -1,13 +1,15 @@
 Package: foreign
 Priority: recommended
-Version: 0.8-46
-Date: 2011-09-23
+Version: 0.8-47
+Date: 2011-11-08
 Title: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, dBase, ...
 Depends: R (>= 2.13.0), stats
 Imports: methods, utils
-Authors@R: c(person("R-core", email = "R-core@R-project.org", role = c("aut", "cre")),
+Authors@R: c(person("R-core", email = "R-core@R-project.org",
+                    role = c("aut", "cre")),
 	     person("Saikat", "DebRoy", role = "ctb"),
-	     person("Roger", "Bivand", role = "ctb", email = "Roger.Bivand@nhh.no"),
+	     person("Roger", "Bivand", role = "ctb",
+                    email = "Roger.Bivand@nhh.no"),
 	     person("others", role = "ctb", 
                     comment = "see COPYRIGHTS file in the sources"))
 Maintainer: R-core <R-core@r-project.org>
