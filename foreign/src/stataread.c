@@ -46,6 +46,8 @@
 #define VERSION_7SE 111
 #define VERSION_8 113
 #define VERSION_114 114
+#define VERSION_115 115
+
 /*
 http://statacorp.com/statalist/archive/2007-06/msg01021.html
 says 113 is versions 8-9, 114 is version 10.
