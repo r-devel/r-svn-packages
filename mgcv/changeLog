@@ -1,6 +1,12 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-11
+
+* plot.mrf.smooth modified to allow passing '...' argument.
+
+* 'negbin' modified to avoid spurious warnings on initialization call.
+
 1.7-10
 
 * fix stupid bug in 1.7-9 that lost term labels in plot.gam.

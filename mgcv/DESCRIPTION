@@ -1,5 +1,5 @@
 Package: mgcv
-Version: 1.7-10
+Version: 1.7-11
 Author: Simon Wood <simon.wood@r-project.org>
 Maintainer: Simon Wood <simon.wood@r-project.org>
 Title: GAMs with GCV/AIC/REML smoothness estimation and GAMMs by PQL

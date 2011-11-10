@@ -2642,8 +2642,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE,alpha=0, ...)
         assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
       } else { ## don't need to subsample 
         X <- model.matrix(object)
-        X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       }
+      X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       ## get corrected edf
       ##  edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
