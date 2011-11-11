@@ -3,6 +3,9 @@
 
 1.7-11
 
+* smoothCon bug fix to avoid NA labels for matrix arguments when 
+  no by variable provided. 
+
 * modification to p-value computation in summary.gam: `alpha' argument 
   removed (was set to zero anyway); computation now deals with possibility
   of rank deficiency computing psuedo-inverse of cov matrix for statistic. 
