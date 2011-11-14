@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2010
+##  R routines for the package mgcv (c) Simon Wood 2000-2011
 ##  With contributions from Henric Nilsson
 
 
@@ -2496,22 +2496,45 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
   list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
 }
 
-pinvXVX <- function(X,V,rank=NULL) {
+pinvXVX <- function(X,V,rank=NULL,type=0) {
 ## Routine for forming fractionally trunctated
 ## pseudoinverse of XVX'. Returns as D where
 ## DD' gives the pseudoinverse itself.
 ## truncates to numerical rank, if this is
 ## less than supplied rank+1.
-  k <- max(0,floor(rank))
-  nu <- abs(rank - k)
-#  if (k < 1) { k <- 1; nu <- 0}
-  if (nu>0) k1 <- k+1 else k1 <- k
+## The type argument specifies the type of truncation to use.
+## on entry `rank' should be an edf estimate
+## 0. Default using the fractionally truncated pinv.
+## 1. Round down to k if k<= rank < k+0.05, otherwise up.
+## 2. Naive rounding.
+## 3. Round up.
+## 4. Numerical rank estimation, tol=1e-3
+ 
 
   qrx <- qr(X)
   R <- qr.R(qrx)
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
+
+  k <- max(0,floor(rank)) 
+  nu <- abs(rank - k)     ## fractional part of supplied edf
+  if (type==1) { ## round up is more than .05 above lower
+    if (rank > k + .05||k==0) k <- k + 1
+    nu <- 0;rank <- k
+  } else if (type==2) { ## naive round
+    nu <- 0;rank <- k <- max(1,round(rank))
+    warning("p-values may give low power in some circumstances")
+  } else if (type==3) { ## round up
+    nu <- 0; rank <- k <- max(1,ceiling(rank))
+    warning("p-values un-reliable")
+  } else if (type==4) { ## rank estimation
+    rank <- k <- max(sum(ed$values>1e-3*max(ed$values)),1) 
+    nu <- 0
+    warning("p-values may give very low power")
+  }
+
+  if (nu>0) k1 <- k+1 else k1 <- k
 
   ## check that actual rank is not below supplied rank+1
   r.est <- sum(ed$values > max(ed$values)*.Machine$double.eps^.9)
@@ -2548,7 +2571,7 @@ pinvXVX <- function(X,V,rank=NULL) {
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...) 
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...) 
 # summary method for gam object - provides approximate p values for terms + other diagnostics
 # Improved by Henric Nilsson
 { pinv<-function(V,M,rank.tol=1e-6)
@@ -2675,7 +2698,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...)
         ft <- Xt%*%p
        
         df[i] <- min(ncol(Xt),edf1[i])
-        D <- pinvXVX(Xt,V,df[i])
+        D <- pinvXVX(Xt,V,df[i],type=p.type)
         df[i] <- attr(D,"rank") ## df[i] ##+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
         chi.sq[i] <- sum((t(D)%*%ft)^2)   
        
