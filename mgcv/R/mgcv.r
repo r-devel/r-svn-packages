@@ -2496,6 +2496,28 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
   list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
 }
 
+smoothTest <- function(b,X,V,z) {
+## Forms Cox, Koh, etc type test statistic, and
+## obtains null distribution by simulation...
+## if b are coefs f=Xb, cov(b) = V. z is a vector of 
+## i.i.d. N(0,1) deviates
+  qrx <- qr(X)
+  R <- qr.R(qrx)
+  V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
+  V <- (V + t(V))/2
+  ed <- eigen(V,symmetric=TRUE)
+  f <- t(ed$vectors)%*%R%*%b
+  t <- sum(f^2)
+  k <- ncol(X)
+  n.rep <- floor(length(z)/k)
+  lambda <- as.numeric(ed$values)
+  T <- colSums(lambda*matrix(z[1:(n.rep*k)]^2,k,n.rep))
+  pval <- sum(T>=t)
+  #if (pval==0) pval <- .5
+  pval <- pval/n.rep
+  list(stat=t,pval=pval)  
+} 
+
 pinvXVX <- function(X,V,rank=NULL,type=0) {
 ## Routine for forming fractionally trunctated
 ## pseudoinverse of XVX'. Returns as D where
@@ -2653,8 +2675,19 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
   } else { pTerms.df<-pTerms.chi.sq<-pTerms.pv<-array(0,0)}
 
   ## Now deal with the smooth terms....
+  m <- length(object$smooth) # number of smooth terms
+  
+  if (p.type < 0 ) {
+    kmax <- 0  
+    for (i in 1:m) { 
+      start <- object$smooth[[i]]$first.para
+      stop <- object$smooth[[i]]$last.para
+      k <- stop-start+1
+      if (k>kmax) kmax <- k 
+    }
+    z <- rnorm(kmax*100000) ## N(0,1) deviates to drive null simulation
+  }
 
-  m<-length(object$smooth) # number of smooth terms
   df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, m)
   if (m>0) # form test statistics for each smooth
   { if (!freq) { 
@@ -2695,21 +2728,31 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         df[i] <- attr(V, "rank")
       } else { ## Inverted Nychka interval statistics
         Xt <- X[,start:stop,drop=FALSE] 
-        ft <- Xt%*%p
+        if (p.type < 0) {
+          if (p.type == -2) Xt <- diag(length(p))
+          res <- smoothTest(p,Xt,V,z)
+          df[i] <- edf[i] ## not really used
+          chi.sq[i] <- res$stat
+          s.pv[i] <- res$pval
+        } else {
+          ft <- Xt%*%p
        
-        df[i] <- min(ncol(Xt),edf1[i])
-        D <- pinvXVX(Xt,V,df[i],type=p.type)
-        df[i] <- attr(D,"rank") ## df[i] ##+alpha*sum(object$smooth[[i]]$sp<0) ## i.e. alpha * (number free sp's)
-        chi.sq[i] <- sum((t(D)%*%ft)^2)   
-       
+          df[i] <- min(ncol(Xt),edf1[i])
+          D <- pinvXVX(Xt,V,df[i],type=p.type)
+          df[i] <- attr(D,"rank") 
+          chi.sq[i] <- sum((t(D)%*%ft)^2)
+        }   
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
-      if (!est.disp)
-      s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
-      else
-      s.pv[i] <- pf(chi.sq[i]/df[i], df1 = df[i], df2 = residual.df, lower.tail = FALSE)
-      ## p-values are meaningless for very small edf. Need to set to NA
-      if (df[i] < 0.5) s.pv[i] <- NA
+      
+      if (p.type> -.5||freq) {
+        if (!est.disp)
+         s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
+        else
+         s.pv[i] <- pf(chi.sq[i]/df[i], df1 = df[i], df2 = residual.df, lower.tail = FALSE)
+         ## p-values are meaningless for very small edf. Need to set to NA
+        if (df[i] < 0.5) s.pv[i] <- NA
+      }
     }
     if (!est.disp) {
       if (freq) {
