@@ -2588,7 +2588,84 @@ pinvXVX <- function(X,V,rank=NULL,type=0) {
   }
   attr(vec,"rank") <- rank ## actual rank
   vec ## vec%*%t(vec) is the pseudoinverse
-}
+} ## end of pinvXVX
+
+testStat <- function(p,X,V,rank=NULL,type=0) {
+## Routine for forming fractionally trunctated
+## pseudoinverse of XVX'. And returning 
+## p'X'(XVX)^-Xp.
+## Truncates to numerical rank, if this is
+## less than supplied rank+1.
+## The type argument specifies the type of truncation to use.
+## on entry `rank' should be an edf estimate
+## 0. Default using the fractionally truncated pinv.
+## 1. Round down to k if k<= rank < k+0.05, otherwise up.
+## 2. Naive rounding.
+## 3. Round up.
+## 4. Numerical rank estimation, tol=1e-3
+
+  qrx <- qr(X)
+  R <- qr.R(qrx)
+  V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
+  V <- (V + t(V))/2
+  ed <- eigen(V,symmetric=TRUE)
+
+  k <- max(0,floor(rank)) 
+  nu <- abs(rank - k)     ## fractional part of supplied edf
+  if (type==1) { ## round up is more than .05 above lower
+    if (rank > k + .05||k==0) k <- k + 1
+    nu <- 0;rank <- k
+  } else if (type==2) { ## naive round
+    nu <- 0;rank <- k <- max(1,round(rank))
+    warning("p-values may give low power in some circumstances")
+  } else if (type==3) { ## round up
+    nu <- 0; rank <- k <- max(1,ceiling(rank))
+    warning("p-values un-reliable")
+  } else if (type==4) { ## rank estimation
+    rank <- k <- max(sum(ed$values>1e-3*max(ed$values)),1) 
+    nu <- 0
+    warning("p-values may give very low power")
+  }
+
+  if (nu>0) k1 <- k+1 else k1 <- k
+
+  ## check that actual rank is not below supplied rank+1
+  r.est <- sum(ed$values > max(ed$values)*.Machine$double.eps^.9)
+  if (r.est<k1) {k1 <- k <- r.est;nu <- 0;rank <- r.est}
+
+  ## Get the eigenvectors...
+  # vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
+  vec <- ed$vectors
+  if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
+  if (k==0) {
+     vec <- t(t(vec)*sqrt(nu/ed$val[1]))
+     attr(vec,"rank") <- rank
+     return(vec)
+  }
+ 
+  ## deal with the fractional part of the pinv...
+  if (nu>0) {
+     if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
+     b12 <- .5*nu*(1-nu)
+     if (b12<0) b12 <- 0
+     b12 <- sqrt(b12)
+     B <- matrix(c(1,b12,b12,nu),2,2)
+     ev <- diag(ed$values[k:k1]^-.5)
+     B <- ev%*%B%*%ev
+     eb <- eigen(B,symmetric=TRUE)
+     rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
+     vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
+  } else {
+    vec <- t(t(vec)/sqrt(ed$val[1:k]))
+  }
+  ##attr(vec,"rank") <- rank ## actual rank
+  #d <- t(vec)%*%(X%*%p)
+  d <- t(vec)%*%(R%*%p)
+  d <- sum(d^2) 
+  attr(d,"rank") <- rank ## actual rank
+  ##vec ## vec%*%t(vec) is the pseudoinverse
+  d
+} ## end of testStat
 
 
 
@@ -2729,18 +2806,19 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       } else { ## Inverted Nychka interval statistics
         Xt <- X[,start:stop,drop=FALSE] 
         if (p.type < 0) {
-          if (p.type == -2) Xt <- diag(length(p))
+          ##if (p.type == -2) Xt <- diag(length(p)) ## amazingly poor
           res <- smoothTest(p,Xt,V,z)
           df[i] <- edf[i] ## not really used
           chi.sq[i] <- res$stat
           s.pv[i] <- res$pval
         } else {
-          ft <- Xt%*%p
+          #ft <- Xt%*%p
        
           df[i] <- min(ncol(Xt),edf1[i])
-          D <- pinvXVX(Xt,V,df[i],type=p.type)
-          df[i] <- attr(D,"rank") 
-          chi.sq[i] <- sum((t(D)%*%ft)^2)
+          ##D <- pinvXVX(Xt,V,df[i],type=p.type)
+          chi.sq[i] <- Tp <- testStat(p,Xt,V,df[i],type=p.type)
+          df[i] <- attr(Tp,"rank") ##attr(D,"rank") 
+          ## chi.sq[i] <- sum((t(D)%*%ft)^2)
         }   
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
@@ -2812,7 +2890,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
 }
 
 
-anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)
+anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0)
 # improved by Henric Nilsson
 {   # adapted from anova.glm: R stats package
     dotargs <- list(...)
@@ -2831,7 +2909,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)
             test = test))
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
-    sg <- summary(object, dispersion = dispersion, freq = freq)
+    sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type)
     class(sg) <- "anova.gam"
     sg
 }

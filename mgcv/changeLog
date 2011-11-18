@@ -3,7 +3,11 @@
 
 1.7-12
 
-* summary.gam p-value computation options modified.
+* summary.gam p-value computation options modified (default remains the 
+  same).
+
+* summary.gam default p-value computation made more computationally 
+  efficient.
 
 1.7-11
 
