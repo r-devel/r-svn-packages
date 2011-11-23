@@ -1,3 +1,13 @@
+2011-11-23  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* configure, configure.ac, src/Makevars.in, src/swap_bytes.h.in,
+	cleanup:  The header has always #undef-ed HAVE_GLIBC_SWAP, so
+	remove never-used code branches.  This means that 'long long' is
+	never used and so no warning needs to be suppressed, so
+	src/Makevars is not needed.
+
+	* src/var.h.in: actually use the values found by configure.
+
 2011-11-08  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-47, use Authors@R field
