@@ -1,4 +1,0 @@
-#! /bin/sh
-
-rm -f ./config.* src/var.h
-rm -rf ./autom4te.cache
