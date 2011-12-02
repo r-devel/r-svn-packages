@@ -114,6 +114,101 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc);
 } /* end mgcv_mmult */
 
+void getXtX0(double *XtX,double *X,int *r,int *c)
+/* form X'X (nearly) as efficiently as possible - BLAS free*/
+{ double *p0,*p1,*p2,*p3,*p4,x;
+  int i,j;
+  for (p0=X,i=0;i<*c;i++,p0 += *r) 
+  for (p1=X,j=0;j<=i;j++,p1 += *r) {
+    for (x=0.0,p2=p0,p3=p1,p4=p0 + *r;p2<p4;p2++,p3++) x += *p2 * *p3;    
+    XtX[i + j * *c] = XtX[j + i * *c] = x;
+  }
+}
+
+void getXtX(double *XtX,double *X,int *r,int *c)
+/* form X'X (nearly) as efficiently as possible - uses BLAS*/
+{ double alpha=1.0,beta=0.0;
+  int i,j;
+  char uplo = 'L',trans='T';
+  F77_NAME(dsyrk)(&uplo,&trans,c, r, & alpha,X,r,&beta,XtX,c);
+  /* fill in upper triangle from lower */
+  for (i=0;i<*c;i++) 
+  for (j=0;j<i;j++)  XtX[j + i * *c] = XtX[i + j * *c];
+ 
+}
+
+
+void getXtWX0(double *XtWX, double *X,double *w,int *r,int *c,double *work)
+/* Original BLAS free version...
+   forms X'WX as efficiently as possible, where W = diag(w)
+   and X is an r by c matrix stored column wise. 
+   work should be an r-vector (longer is no problem).
+*/ 
+{ int i,j;
+  double *p,*p1,*p2,*pX0,*pX1,xx;
+  pX0=X;
+  for (i=0;i< *c;i++) { 
+    p2 = work + *r;
+    for (p=w,p1=work;p1<p2;p++,p1++,pX0++) *p1 = *pX0 * *p; 
+    for (pX1=X,j=0;j<=i;j++) {
+      for (xx=0.0,p=work;p<p2;p++,pX1++) xx += *p * *pX1;
+      XtWX[i * *c + j] = XtWX[j * *c + i] = xx;
+    }
+  }
+}
+
+void getXtWX(double *XtWX, double *X,double *w,int *r,int *c,double *work)
+/* BLAS version...
+   forms X'WX as efficiently as possible, where W = diag(w)
+   and X is an r by c matrix stored column wise. 
+   work should be an r-vector (longer is no problem).
+*/ 
+{ int i,j,one=1;
+  char trans='T';
+  double *p,*p1,*p2,*pX0,xx,*w2,alpha=1.0,beta=0.0;
+  pX0=X;
+  w2 = XtWX; /* use first column as work space until end */
+  for (i=0;i< *c;i++) { 
+    p2 = work + *r;
+    /* form work=WX[,i]... */
+    for (p=w,p1=work;p1<p2;p++,p1++,pX0++) *p1 = *pX0 * *p;  
+    /* Now form X[,1:i]'work ... */
+    j = i+1; /* number of columns of X to use */
+    F77_NAME(dgemv)(&trans, r, &j,&alpha,X, r,work,&one,&beta,w2, &one);
+    if (i==0) xx = w2[0]; /* save the 0,0 element of XtWX (since its in use as workspace) */
+    else for (j=0;j<=i;j++) XtWX[i * *c + j] = w2[j];
+  }
+  /* now fill in the other triangle */
+  *XtWX = xx;
+  for (i=0;i< *c;i++) for (j=0;j<i;j++) XtWX[j * *c + i] =  XtWX[i * *c + j];
+}
+
+
+void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work)
+/* BLAS free version (currently no BLAS version as this is only used on 
+   small matrices).
+   forms X'MX as efficiently as possible, where M is a symmetric matrix
+   and X is an r by c matrix. X and M are stored column wise. 
+   work should be an r-vector (longer is no problem).
+*/
+
+{ int i,j;
+  double *p,*p1,*p2,*pX0,*pX1,xx,*pM;
+  pX0=X;
+  for (i=0;i< *c;i++) { 
+    /* first form MX[:,i] */
+    p2 = work + *r;pM=M;
+    for (p1=work;p1<p2;pM++,p1++) *p1 = *pX0 * *pM;pX0++;
+    for (j=1;j< *r;j++,pX0++) 
+    for (p1=work;p1<p2;pM++,p1++) *p1 += *pX0 * *pM;
+    /* now form ith row and column of X'MX */
+    for (pX1=X,j=0;j<=i;j++) {
+      for (xx=0.0,p=work;p<p2;p++,pX1++) xx += *p * *pX1;
+      XtMX[i * *c + j] = XtMX[j * *c + i] = xx;
+    }
+  }
+}
+
 
 
 void mgcv_chol(double *a,int *pivot,int *n,int *rank)
@@ -282,8 +377,9 @@ void mgcv_tri_diag(double *S,int *n,double *tau)
 }
 
 
-void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
-/* Finds C = R^{-1} B where R is the c by c matrix stored in the upper triangle 
+void mgcv_backsolve0(double *R,int *r,int *c,double *B,double *C, int *bc) 
+/* BLAS free version
+   Finds C = R^{-1} B where R is the c by c matrix stored in the upper triangle 
    of r by c argument R. B is c by bc. (Possibility of non square argument
    R facilitates use with output from mgcv_qr). This is just a standard back 
    substitution loop.
@@ -301,8 +397,23 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
   }
 }
 
-void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
-/* Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
+void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
+/* BLAS version
+   Finds C = R^{-1} B where R is the c by c matrix stored in the upper triangle 
+   of r by c argument R. B is c by bc. (Possibility of non square argument
+   R facilitates use with output from mgcv_qr). This is just a standard back 
+   substitution loop.
+*/  
+{ double *pR,*pC,alpha=1.0;
+  char side='L',uplo='U',transa='N',diag='N';
+  for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
+  F77_NAME(dtrsm)(&side,&uplo,&transa, &diag,c, bc, &alpha,R, r,C,c);
+}
+
+
+void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc) 
+/* BLAS free version
+   Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
    of r by c argument R. B is c by bc. (Possibility of non square argument
    R facilitates use with output from mgcv_qr). This is just a standard forward 
    substitution loop.
@@ -316,6 +427,19 @@ void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
       C[i + j * *c] = (B[i + j * *c] - x) / R[i + i * *r]; 
     }
   }
+}
+
+void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc) 
+/* BLAS version
+   Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
+   of r by c argument R. B is c by bc. (Possibility of non square argument
+   R facilitates use with output from mgcv_qr). This is just a standard forward 
+   substitution loop.
+*/  
+{ double *pR,*pC,alpha=1.0;
+  char side='L',uplo='U',transa='T',diag='N';
+  for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
+  F77_NAME(dtrsm)(&side,&uplo,&transa, &diag,c, bc, &alpha,R, r,C,c);
 }
 
 

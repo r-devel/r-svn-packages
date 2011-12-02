@@ -177,7 +177,7 @@ mini.mf <-function(mf,chunk.size) {
 
 bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NULL,
     mustart = NULL, offset = rep(0, nobs),
-    control = gam.control(), intercept = TRUE, n.threads=1)
+    control = gam.control(), intercept = TRUE, cl = NULL)
 {   y <- mf[[gp$response]]
     weights <- G$w
     conv <- FALSE
@@ -224,16 +224,20 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
 
     ## set up cluster for parallel coputation...
 
-    if (n.threads < 1) { ## auto-detect cores and use all of them
-      require(parallel)
-      n.threads <- detectCores()
-      if (is.na(n.threads)) n.threads <- 1
-    }
-    if (n.threads>1) {
-      require(parallel)
-      if (.Platform$OS.type=="windows") cl <- makeCluster(n.threads) else
-      cl <- makeForkCluster(n.threads)
-    }
+    if (!is.null(cl)&&inherits(cl,"cluster")) {
+      n.threads <- length(cl)
+    } else n.threads <- 1
+
+ #   if (n.threads < 1) { ## auto-detect cores and use all of them
+ #     require(parallel)
+ #     n.threads <- detectCores()
+ #     if (is.na(n.threads)) n.threads <- 1
+ #   }
+ #   if (n.threads>1) {
+ #     require(parallel)
+ #     if (.Platform$OS.type=="windows") cl <- makeCluster(n.threads) else
+ #     cl <- makeForkCluster(n.threads)
+ #   }
 
     if (n.threads>1) { ## set up thread argument lists
       ## number of obs per thread
@@ -470,7 +474,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
   #      sum(weights * y)/sum(weights)
   #  else linkinv(offset)
   #  nulldev <- sum(dev.resids(y, wtdmu, weights))
-  if (n.threads!=1) stopCluster(cl)
+  # if (n.threads!=1) stopCluster(cl)
   object$wt <- wt
   rm(G);gc()
   object
@@ -638,7 +642,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
 
 
 
-bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,n.threads=1) 
+bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL) 
 ## function that does big additive model fit in strictly additive case
 {  ## first perform the QR decomposition, blockwise....
    n <- nrow(mf)
@@ -658,16 +662,21 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,n.threads=1)
     if (rho==0) start <- start + 1  ## otherwise most blocks go to 1 before block start
     start[1] <- 1  
      
-    if (n.threads < 1) { ## auto-detect cores and use all of them
+    if (!is.null(cl)&&inherits(cl,"cluster")) { 
       require(parallel)
-      n.threads <- detectCores()
-      if (is.na(n.threads)) n.threads <- 1
-    }
-    if (n.threads>1) {
-      require(parallel)
-      if (.Platform$OS.type=="windows") cl <- makeCluster(n.threads) else
-      cl <- makeForkCluster(n.threads)
-    }
+      n.threads <- length(cl)
+    } else n.threads <- 1
+
+#    if (n.threads < 1) { ## auto-detect cores and use all of them
+#      require(parallel)
+#      n.threads <- detectCores()
+#      if (is.na(n.threads)) n.threads <- 1
+#    }
+#    if (n.threads>1) {
+#      require(parallel)
+#      if (.Platform$OS.type=="windows") cl <- makeCluster(n.threads) else
+#      cl <- makeForkCluster(n.threads)
+#    }
     
     if (n.threads==1) { ## use original single thread method...
       qrx <- list(R=matrix(0,0,ncol(G$X)),f=array(0,0),y.norm2=0) ## initial empty qr object
@@ -823,11 +832,11 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,n.threads=1)
     object$yX.last <- yX.last
   }
   
-  if (n.threads!=1) stopCluster(cl)
+  #if (n.threads!=1) stopCluster(cl)
 
   object$gamma <- gamma;object$G <- G;object$qrx <- qrx ## to allow updating of the model
   object
-}
+} # end of bam.fit
 
 sparse.model.matrix <- function(G,mf,chunk.size) {
 ## create a whole sparse model matrix
@@ -864,7 +873,7 @@ sparse.model.matrix <- function(G,mf,chunk.size) {
 
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
                 offset=NULL,method="REML",control=list(),scale=0,gamma=1,knots=NULL,
-                sp=NULL,min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,sparse=FALSE,n.threads=1,...)
+                sp=NULL,min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,sparse=FALSE,cluster=NULL,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
@@ -888,7 +897,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   mf<-match.call(expand.dots=FALSE)
   mf$formula<-gp$fake.formula 
   mf$method <-  mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp <-
-  mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$n.threads <- mf$...<-NULL
+  mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$cluster <- mf$...<-NULL
   mf$drop.unused.levels<-TRUE
   mf[[1]]<-as.name("model.frame")
   pmf <- mf
@@ -968,12 +977,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                        control = control,...)
   } else if (am) {
     if (nrow(mf)>chunk.size) G$X <- matrix(0,0,ncol(G$X)); gc() 
-    object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,n.threads=n.threads)
+    object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster)
   } else {
     G$X  <- matrix(0,0,ncol(G$X)); gc()
     if (rho!=0) warning("AR1 parameter rho unused with generalized model")
     object <- bgam.fit(G, mf, chunk.size, gp ,scale ,gamma,method=method,
-                       control = control,n.threads=n.threads,...)
+                       control = control,cl=cluster,...)
   }
 
   gc()

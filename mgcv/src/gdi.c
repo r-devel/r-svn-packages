@@ -25,58 +25,6 @@ USA. */
 #include "mgcv.h"
 
 
-void getXtX(double *XtX,double *X,int *r,int *c)
-/* form X'X (nearly) as efficiently as possible */
-{ double *p0,*p1,*p2,*p3,*p4,x;
-  int i,j;
-  for (p0=X,i=0;i<*c;i++,p0 += *r) 
-  for (p1=X,j=0;j<=i;j++,p1 += *r) {
-    for (x=0.0,p2=p0,p3=p1,p4=p0 + *r;p2<p4;p2++,p3++) x += *p2 * *p3;    
-    XtX[i + j * *c] = XtX[j + i * *c] = x;
-  }
-}
-
-void getXtWX(double *XtWX, double *X,double *w,int *r,int *c,double *work)
-/* forms X'WX as efficiently as possible, where W = diag(w)
-   and X is an r by c matrix stored column wise. 
-   work should be an r-vector (longer is no problem).
-*/ 
-{ int i,j;
-  double *p,*p1,*p2,*pX0,*pX1,xx;
-  pX0=X;
-  for (i=0;i< *c;i++) { 
-    p2 = work + *r;
-    for (p=w,p1=work;p1<p2;p++,p1++,pX0++) *p1 = *pX0 * *p; 
-    for (pX1=X,j=0;j<=i;j++) {
-      for (xx=0.0,p=work;p<p2;p++,pX1++) xx += *p * *pX1;
-      XtWX[i * *c + j] = XtWX[j * *c + i] = xx;
-    }
-  }
-}
-
-void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work)
-/* forms X'MX as efficiently as possible, where M is a symmetric matrix
-   and X is an r by c matrix. X and M are stored column wise. 
-   work should be an r-vector (longer is no problem).
-*/
-
-{ int i,j;
-  double *p,*p1,*p2,*pX0,*pX1,xx,*pM;
-  pX0=X;
-  for (i=0;i< *c;i++) { 
-    /* first form MX[:,i] */
-    p2 = work + *r;pM=M;
-    for (p1=work;p1<p2;pM++,p1++) *p1 = *pX0 * *pM;pX0++;
-    for (j=1;j< *r;j++,pX0++) 
-    for (p1=work;p1<p2;pM++,p1++) *p1 += *pX0 * *pM;
-    /* now form ith row and column of X'MX */
-    for (pX1=X,j=0;j<=i;j++) {
-      for (xx=0.0,p=work;p<p2;p++,pX1++) xx += *p * *pX1;
-      XtMX[i * *c + j] = XtMX[j * *c + i] = xx;
-    }
-  }
-}
-
 double trBtAB(double *A,double *B,int *n,int*m) 
 /* form tr(B'AB) where A is n by n and B is n by m, m < n,
    basic point is that this is sum_ijk A_ik B_ij B_kj
