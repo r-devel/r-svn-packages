@@ -222,17 +222,17 @@ if (detectCores()>1) { ## no point otherwise
   ## could also use makeForkCluster, but read warnings first!
 } else cl <- NULL
   
-system.time(b1 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+system.time(b2 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
        s(x3,bs=bs,k=k),data=dat,method="ML",family=poisson(),cluster=cl))
 
 if (!is.null(cl)) stopCluster(cl)
-
+b2
 
 ## Sparse smoothers example...
-b2 <- bam(y ~ te(x0,x1,bs="ps",k=10,np=FALSE)+s(x2,bs="ps",k=30)+
+b3 <- bam(y ~ te(x0,x1,bs="ps",k=10,np=FALSE)+s(x2,bs="ps",k=30)+
             s(x3,bs="ps",k=30),data=dat,method="ML",
             family=poisson(),sparse=TRUE)
-b2
+b3
 
 }
 
