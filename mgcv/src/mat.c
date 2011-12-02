@@ -8,10 +8,13 @@
 #include <R.h>
 #include <R_ext/Linpack.h>
 #include <R_ext/Lapack.h>
+#include <R_ext/BLAS.h>
 /*#include <dmalloc.h>*/
 
-void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n)
-/* Forms r by c product of B and C, transposing each according to bt and ct.
+void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n)
+/* This code doesn't rely on the BLAS...
+ 
+   Forms r by c product of B and C, transposing each according to bt and ct.
    n is the common dimension of the two matrices, which are stored in R 
    default column order form. Algorithm is inner loop optimized in each case 
    (i.e. inner loops only update pointers by 1, rather than jumping).
@@ -87,8 +90,29 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
       }
     }
   }
-} 
+} /* end mgcv_mmult0*/
 
+void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n) {
+  /* BLAS version A is c, B is a, C is b, bt is transa ct is transb 
+     r is m, c is n, n is k,
+  */
+  char transa='N',transb='N';
+  int lda,ldb,ldc;
+  double alpha=1.0,beta=0.0;
+  if (*bt) { /* so B is n by r */
+    transa = 'T';  
+    lda = *n;
+  } else  lda = *r; /* B is r by n */
+
+  if (*ct) { /* C is c by n */ 
+    transb = 'T';
+    ldb = *c;
+  } else ldb = *n; /* C is n by c */
+  
+  ldc = *r;
+  F77_NAME(dgemm)(&transa,&transb,r,c,n, &alpha,
+		B, &lda,C, &ldb,&beta, A, &ldc);
+} /* end mgcv_mmult */
 
 
 
@@ -559,3 +583,218 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
    free(work);free(iwork);
    *n=info; /* zero is success */
 }
+
+
+
+void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol) {
+/* Prototype faster lanczos_spd for calling from R.
+   A is n by n symmetric matrix. Let k = m + max(0,lm).
+   U is n by k and D is a k-vector.
+   m is the number of upper eigenvalues required and lm the number of lower.
+   If lm<0 then the m largest magnitude eigenvalues (and their eigenvectors)
+   are returned 
+
+   Matrices are stored in R (and LAPACK) format (1 column after another).
+
+   ISSUE: 1. eps_stop tolerance is set *very* tight.
+          2. Currently all eigenvectors of Tj are found, although only the next unconverged one
+             is really needed. Might be better to be more selective using dstein from LAPACK. 
+          3. Basing whole thing on dstevx might be faster
+          4. Is random start vector really best? convergence seems very slow. Might be better to 
+             use e.g. a sine wave, and simply change its frequency if it seems to be in null space.
+             Demmel (1997) suggests using a random vector, to avoid any chance of orthogonality with
+             an eigenvector!
+        
+*/
+  int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,neg_conv,pos_conv,ni,pi,neg_closed,pos_closed,converged,incx=1;
+  double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*Ap,*zp,*qp,normTj,eps_stop=DOUBLE_EPS,max_err,alpha=1.0,beta=0.0;
+  unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
+  const char uplo='U';
+  eps_stop = *tol; 
+
+  if (*lm<0) { biggest=1;*lm=0;} /* get m largest magnitude eigen-values */
+  f_check = (*m + *lm)/2; /* how often to get eigen_decomp */
+  if (f_check<10) f_check =10;
+  kk = (int) floor(*n/10); if (kk<1) kk=1;  
+  if (kk<f_check) f_check = kk;
+
+  q=(double **)calloc((size_t)(*n+1),sizeof(double *));
+
+  /* "randomly" initialize first q vector */
+  q[0]=(double *)calloc((size_t)*n,sizeof(double));
+  b=q[0];bt=0.0;
+  for (i=0;i < *n;i++)   /* somewhat randomized start vector!  */
+  { jran=(jran*ia+ic) % im;   /* quick and dirty generator to avoid too regular a starting vector */
+    xx=(double) jran / (double) im -0.5; 
+    b[i]=xx;xx=-xx;bt+=b[i]*b[i];
+  } 
+  bt=sqrt(bt); 
+  for (i=0;i < *n;i++) b[i]/=bt;
+
+  /* initialise vectors a and b - a is leading diagonal of T, b is sub/super diagonal */
+  a=(double *)calloc((size_t) *n,sizeof(double));
+  b=(double *)calloc((size_t) *n,sizeof(double));
+  g=(double *)calloc((size_t) *n,sizeof(double));
+  d=(double *)calloc((size_t) *n,sizeof(double)); 
+  z=(double *)calloc((size_t) *n,sizeof(double));
+  err=(double *)calloc((size_t) *n,sizeof(double));
+  for (i=0;i< *n;i++) err[i]=1e300;
+  /* The main loop. Will break out on convergence. */
+  for (j=0;j< *n;j++) 
+  { /* form z=Aq[j]=A'q[j], the O(n^2) step ...  */
+    /*for (Ap=A,zp=z,p0=zp+*n;zp<p0;zp++) 
+      for (*zp=0.0,qp=q[j],p1=qp+*n;qp<p1;qp++,Ap++) *zp += *Ap * *qp;*/
+    /*  BLAS versions y := alpha*A*x + beta*y, */
+    F77_NAME(dsymv)(&uplo,n,&alpha,
+		A,n,
+		q[j],&incx,
+		&beta,z,&incx);
+    /* Now form a[j] = q[j]'z.... */
+    for (xx=0.0,qp=q[j],p0=qp+*n,zp=z;qp<p0;qp++,zp++) xx += *qp * *zp;
+    a[j] = xx;
+ 
+    /* Update z..... */
+    if (!j)
+    { /* z <- z - a[j]*q[j] */
+      for (zp=z,p0=zp+*n,qp=q[j];zp<p0;qp++,zp++) *zp -= xx * *qp;
+    } else
+    { /* z <- z - a[j]*q[j] - b[j-1]*q[j-1] */
+      yy=b[j-1];      
+      for (zp=z,p0=zp + *n,qp=q[j],p1=q[j-1];zp<p0;zp++,qp++,p1++) *zp -= xx * *qp + yy * *p1;    
+  
+      /* Now stabilize by full re-orthogonalization.... */
+      
+
+
+      for (i=0;i<=j;i++) 
+      { /* form xx= z'q[i] */
+        /*for (xx=0.0,qp=q[i],p0=qp + *n,zp=z;qp<p0;zp++,qp++) xx += *zp * *qp;*/
+        xx = -F77_NAME(ddot)(n,z,&incx,q[i],&incx); /* BLAS version */
+        /* z <- z - xx*q[i] */
+        /*for (qp=q[i],zp=z;qp<p0;qp++,zp++) *zp -= xx * *qp;*/
+        F77_NAME(daxpy)(n,&xx,q[i],&incx,z,&incx); /* BLAS version */
+      } 
+      
+      /* exact repeat... */
+      for (i=0;i<=j;i++) 
+      { /* form xx= z'q[i] */
+        /* for (xx=0.0,qp=q[i],p0=qp + *n,zp=z;qp<p0;zp++,qp++) xx += *zp * *qp; */
+        xx = -F77_NAME(ddot)(n,z,&incx,q[i],&incx); /* BLAS version */
+        /* z <- z - xx*q[i] */
+        /* for (qp=q[i],zp=z;qp<p0;qp++,zp++) *zp -= xx * *qp; */
+        F77_NAME(daxpy)(n,&xx,q[i],&incx,z,&incx); /* BLAS version */
+      } 
+      /* ... stabilized!! */
+    } /* z update complete */
+    
+
+    /* calculate b[j]=||z||.... */
+    for (xx=0.0,zp=z,p0=zp+*n;zp<p0;zp++) xx += *zp * *zp;b[j]=sqrt(xx); 
+  
+    /*if (b[j]==0.0&&j< *n-1) ErrorMessage(_("Lanczos failed"),1);*/ /* Actually this isn't really a failure => rank(A)<l+lm */
+    /* get q[j+1]      */
+    if (j < *n-1)
+    { q[j+1]=(double *)calloc((size_t) *n,sizeof(double));
+      for (xx=b[j],qp=q[j+1],p0=qp + *n,zp=z;qp<p0;qp++,zp++) *qp = *zp/xx; /* forming q[j+1]=z/b[j] */
+    }
+
+    /* Now get the spectral decomposition of T_j.  */
+
+    if (((j>= *m + *lm)&&(j%f_check==0))||(j == *n-1))   /* no  point doing this too early or too often */
+    { for (i=0;i<j+1;i++) d[i]=a[i]; /* copy leading diagonal of T_j */
+      for (i=0;i<j;i++) g[i]=b[i]; /* copy sub/super diagonal of T_j */   
+      /* set up storage for eigen vectors */
+      if (vlength) free(v); /* free up first */
+      vlength=j+1; 
+      v = (double *)calloc((size_t)vlength*vlength,sizeof(double));
+ 
+      /* obtain eigen values/vectors of T_j in O(j^2) flops */
+    
+      kk = j + 1;
+      mgcv_trisymeig(d,g,v,&kk,1,1);
+      /* ... eigenvectors stored one after another in v, d[i] are eigenvalues */
+
+      /* Evaluate ||Tj|| .... */
+      normTj=fabs(d[0]);if (fabs(d[j])>normTj) normTj=fabs(d[j]);
+
+      for (k=0;k<j+1;k++) /* calculate error in each eigenvalue d[i] */
+      { err[k]=b[j]*v[k * vlength + j]; /* bound on kth e.v. is b[j]* (jth element of kth eigenvector) */
+        err[k]=fabs(err[k]);
+      }
+      /* and check for termination ..... */
+      if (j >= *m + *lm)
+      { max_err=normTj*eps_stop;
+        if (biggest) { /* getting m largest magnitude eigen values */
+          /* Finished only when the smallest element of the positive converged set and the 
+             smallest element of the negative converged set are both not in the largest magnitude 
+             set, or these sets are finished, and the largest magnitude set is of size *m, or when the total number 
+             converged equals the matrix dimension */
+	  pos_closed=neg_closed=0;
+          neg_conv=0;i=j; while (i>=0&&err[i]<max_err&&d[i]<0.0) { neg_conv++;i--;}
+          if (i>=0&&err[i]<max_err) neg_closed=1; /* all negatives found */
+	  pos_conv=0;i=0; while (i<=j&&err[i]<max_err&&d[i]>=0.0) { i++;pos_conv++;}
+          if (i<=j&&err[i]<max_err) pos_closed=1; /* all positives found */
+ 
+          if (neg_conv+pos_conv >= *m) { /* some chance of having finished */
+            pi=0;ni=0; /* counters for how many of neg and pos converged to include in largest set */
+            while (pi+ni < *m) {
+              if ((d[pi] > -d[j-ni]&&pi<pos_conv)||ni>=neg_conv) pi++; else ni++;
+            }
+            /* now pi and ni are the number of terms to include in the largest m 
+               from the +ve and -ve converged sets */
+            converged=1;
+            if (!pos_closed&&pi==pos_conv) converged=0; /* don't know that there is not a larger value to come */            
+            if (!neg_closed&&ni==neg_conv) converged=0; /* ditto */
+          } else converged = 0;
+ 
+          if (converged) {
+            *m = pi;
+            *lm = ni;
+            j++;break;
+          }
+        } else
+        { ok=1;
+          for (i=0;i < *m;i++) if (err[i]>max_err) ok=0;
+          for (i=j;i > j - *lm;i--) if (err[i]>max_err) ok=0;
+          if (ok) 
+          { j++;break;}
+        }
+      }
+    }
+  }
+  /* At this stage, complete construction of the eigen vectors etc. */
+  
+  /* Do final polishing of Ritz vectors and load va and V..... */
+  /*  for (k=0;k < *m;k++) // create any necessary new Ritz vectors 
+  { va->V[k]=d[k];
+    for (i=0;i<n;i++) 
+    { V->M[i][k]=0.0; for (l=0;l<j;l++) V->M[i][k]+=q[l][i]*v[k][l];}
+  }*/
+
+  /* assumption that U is zero on entry! */
+
+  for (k=0;k < *m;k++) /* create any necessary new Ritz vectors */
+  { D[k]=d[k];
+    for (l=0;l<j;l++)
+    for (xx=v[l + k * vlength],p0=U + k * *n,p1 = p0 + *n,qp=q[l];p0<p1;p0++,qp++) *p0 += *qp * xx;
+  }
+
+  for (k= *m;k < *lm + *m;k++) /* create any necessary new Ritz vectors */
+  { kk=j-(*lm + *m - k); /* index for d and v */
+    D[k]=d[kk];
+    for (l=0;l<j;l++)
+    for (xx=v[l + kk * vlength],p0=U + k * *n,p1 = p0 + *n,qp=q[l];p0<p1;p0++,qp++) *p0 += *qp * xx;
+  }
+ 
+  /* clean up..... */
+  free(a);
+  free(b);
+  free(g);
+  free(d);
+  free(z);
+  free(err);
+  if (vlength) free(v);
+  for (i=0;i< *n+1;i++) if (q[i]) free(q[i]);free(q);  
+  *n = j; /* number of iterations taken */
+} /* end of Rlanczos */
+

@@ -114,6 +114,33 @@ qr.accumulate <- function(arg) {
   } ## additive case done.
 }
 
+qr.up <- function(arg) {
+## function for smarter parallel QR update...
+  wt <- rep(0,0) 
+  dev <- 0    
+  for (b in 1:arg$n.block) {
+    ind <- arg$start[b]:arg$stop[b]
+    arg$G$model <- arg$mf[ind,]
+    X <- predict(arg$G,type="lpmatrix")
+    if (is.null(arg$coef)) eta1 <- arg$eta[ind] else eta1 <- drop(X%*%arg$coef) + arg$offset[ind]
+    mu <- arg$linkinv(eta1) 
+    y <- arg$G$model[[arg$response]] 
+    weights <- arg$G$w[ind]
+    mu.eta.val <- arg$mu.eta(eta1)
+    good <- (weights > 0) & (mu.eta.val != 0)
+    z <- (eta1 - arg$offset[ind])[good] + (y - mu)[good]/mu.eta.val[good]
+    w <- (weights[good] * mu.eta.val[good]^2)/arg$variance(mu)[good]
+    dev <- dev + sum(arg$dev.resids(y,mu,weights))
+    wt <- c(wt,w)
+    w <- sqrt(w)
+    if (b == 1) qrx <- qr.update(w*X[good,],w*z) 
+    else qrx <- qr.update(w*X[good,],w*z,qrx$R,qrx$f,qrx$y.norm2)
+    rm(X);gc() ## X can be large: remove and reclaim
+  }
+  qrx$dev <- dev;qrx$wt <- wt
+  qrx
+}
+
 mini.mf <-function(mf,chunk.size) {
 ## takes a model frame and produces a representative subset of it, suitable for 
 ## basis setup.
@@ -191,28 +218,12 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
        stop("cannot find valid starting values: please specify some")
     dev <- sum(dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
     boundary <- conv <- FALSE
-    ## construct indices for splitting up model matrix construction... 
-    n.block <- nobs%/%chunk.size ## number of full sized blocks
-    stub <- nobs%%chunk.size ## size of end block
-    if (n.block>0) {
-      start <- (0:(n.block-1))*chunk.size+1
-      stop <- (1:n.block)*chunk.size
-      if (stub>0) {
-        start[n.block+1] <- stop[n.block]+1
-        stop[n.block+1] <- nobs
-        n.block <- n.block+1
-      } 
-    } else {
-      n.block <- 1
-      start <- 1
-      stop <- nobs
-    }
- 
+   
     G$coefficients <- rep(0,ncol(G$X))
     class(G) <- "gam"  
 
-    conv <- FALSE
- 
+    ## set up cluster for parallel coputation...
+
     if (n.threads < 1) { ## auto-detect cores and use all of them
       require(parallel)
       n.threads <- detectCores()
@@ -224,6 +235,57 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
       cl <- makeForkCluster(n.threads)
     }
 
+    if (n.threads>1) { ## set up thread argument lists
+      ## number of obs per thread
+      nt <- rep(ceiling(nobs/n.threads),n.threads)
+      nt[n.threads] <- nobs - sum(nt[-n.threads])
+      arg <- list()
+      n1 <- 0
+      for (i in 1:n.threads) {
+        n0 <- n1+1;n1 <- n1+nt[i]
+        ind <- n0:n1 ## this threads data block from mf
+        n.block <- nt[i]%/%chunk.size ## number of full sized blocks
+        stub <- nt[i]%%chunk.size ## size of end block
+        if (n.block>0) {
+          start <- (0:(n.block-1))*chunk.size+1
+          stop <- (1:n.block)*chunk.size
+          if (stub>0) {
+            start[n.block+1] <- stop[n.block]+1
+            stop[n.block+1] <- nt[i]
+            n.block <- n.block+1
+          } 
+        } else {
+          n.block <- 1
+          start <- 1
+          stop <- nt[i]
+        }
+        arg[[i]] <- list(nobs= nt[i],start=start,stop=stop,n.block=n.block,
+                         linkinv=linkinv,dev.resids=dev.resids,
+                         mu.eta=mu.eta,variance=variance,mf = mf[ind,],
+                         eta = eta[ind],offset = offset[ind],G = G,response=gp$response)
+        arg[[i]]$G$w <- G$w[ind];arg[[i]]$G$model <- NULL
+      }
+    } else { ## single thread, requires single indices
+      ## construct indices for splitting up model matrix construction... 
+      n.block <- nobs%/%chunk.size ## number of full sized blocks
+      stub <- nobs%%chunk.size ## size of end block
+      if (n.block>0) {
+        start <- (0:(n.block-1))*chunk.size+1
+        stop <- (1:n.block)*chunk.size
+        if (stub>0) {
+          start[n.block+1] <- stop[n.block]+1
+          stop[n.block+1] <- nobs
+          n.block <- n.block+1
+        } 
+      } else {
+        n.block <- 1
+        start <- 1
+        stop <- nobs
+      }
+   } ## single thread indices complete
+ 
+    conv <- FALSE
+ 
     for (iter in 1L:control$maxit) { ## main fitting loop
        ## accumulate the QR decomposition of the weighted model matrix
        wt <- rep(0,0) 
@@ -250,7 +312,26 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
            else qrx <- qr.update(w*X[good,],w*z,qrx$R,qrx$f,qrx$y.norm2)
            rm(X);gc() ## X can be large: remove and reclaim
         }
-      } else { ## use parallel accumulation 
+      } else if (TRUE) { ## use new parallel accumulation 
+        if (iter>1) for (i in 1:length(arg)) arg[[i]]$coef <- coef
+         res <- parLapply(cl,arg,qr.up) 
+         ## single thread debugging version 
+        # res <- list()
+        # for (i in 1:length(arg)) {
+        #   res[[i]] <- qr.up(arg[[i]])
+        # }
+        ## now consolidate the results from the parallel threads...
+        R <- res[[1]]$R;f <- res[[1]]$f;dev <- res[[1]]$dev
+        wt <- res[[1]]$wt;y.norm2 <- res[[1]]$y.norm2
+        for (i in 2:n.threads) {
+          R <- rbind(R,res[[i]]$R); f <- c(f,res[[i]]$f)
+          wt <- c(wt,res[[i]]$wt); dev <- dev + res[[i]]$dev
+          y.norm2 <- y.norm2 + res[[i]]$y.norm2
+        }         
+        qrx <- qr(R,tol=0) 
+        f <- qr.qty(qrx,f)[1:ncol(R)]
+        qrx <- list(R=qr.R(qrx),f=f,y.norm2=y.norm2)
+      } else { ## use old parallel accumulation 
         ok <- TRUE
         b <- 1 ## block counter
         np <- length(G$coefficients)

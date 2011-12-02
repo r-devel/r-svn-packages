@@ -3,6 +3,10 @@
 
 1.7-12
 
+* lanczos routine now calls BLAS for the O(n^2) bit.
+
+* methods generally make more use of BLAS, to gain more from a tuned BLAS.
+
 * summary.gam p-value computation options modified (default remains the 
   same).
 

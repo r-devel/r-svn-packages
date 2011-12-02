@@ -28,20 +28,20 @@ USA.*/
 
 void ErrorMessage(char *msg, int fatal);
 
-double eta(int m,int d,double r)
+inline double eta(int m,int d,double r)
 
 /* the basis functions for a thin plate spline for d- dimensional data, with an mth order 
    wiggliness penalty. */
 
-{ static int first=1;
-  static double pi,Ghalf;
+{ /*static int first=1;*/
+  double pi=PI,Ghalf=1.772453850905515881919; /* Gamma function of 0.5 = sqrt(pi) */
   double f;
   int i,k;
-  if (first)
+  /*if (first)
   { first=0;
     pi=asin(1.0)*2.0; 
-    Ghalf=sqrt(pi);   /* Gamma function of 0.5 */
-  }
+    Ghalf=sqrt(pi);  
+    }*/
   if (2*m<=d) ErrorMessage(_("You must have 2m>d for a thin plate spline."),1);
   if (r<=0.0) return(0.0); /* this is safe: even if eta() gets inlined so that r comes in in an fp register! */
   if (d%2==0) /* then d even */
