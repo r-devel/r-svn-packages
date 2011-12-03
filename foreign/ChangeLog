@@ -1,3 +1,8 @@
+2011-12-03  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/writeForeignSAS.R, man/write.foreign.Rd: add 'libpath'
+	argument contributed by Xiaobo Gu.
+
 2011-11-23  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/var.h.in: this assumed values for sizes, ignoring those
