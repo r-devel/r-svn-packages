@@ -144,7 +144,8 @@ mkCheckX <- function(x, diss) {
 }
 
 clusplot.default <-
-function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
+function(x, clus, diss = FALSE, s.x.2d = mkCheckX(x, diss),
+         stand = FALSE, lines = 2,
 	 shade = FALSE, color = FALSE, labels = 0, plotchar = TRUE,
 	 col.p = "dark green", # was 5 (= shaded col)
 	 col.txt = col.p, col.clus = if(color) c(2, 4, 6, 3) else 5,
@@ -153,6 +154,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 	 main = paste("CLUSPLOT(", deparse(substitute(x)),")"),
 	 sub = paste("These two components explain",
 	       round(100 * var.dec, digits = 2), "% of the point variability."),
+	 xlab = "Component 1", ylab = "Component 2",
 	 verbose = getOption("verbose"),
 	 ...)
 {
@@ -161,11 +163,11 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 	x <- data.matrix(x)
     if(!is.numeric(x))
 	stop("x is not numeric")
-
-    rx <- mkCheckX(x, diss)
-    n <- nrow(x1 <- rx[["x"]])
-    labels1 <- rx[["labs"]]
-    var.dec <- rx[["var.dec"]]
+    stopifnot(is.list(s.x.2d),
+	      c("x","labs","var.dec") %in% names(s.x.2d),
+              (n <- nrow(x1 <- s.x.2d[["x"]])) > 0)
+    labels1 <- s.x.2d[["labs"]]
+    var.dec <- s.x.2d[["var.dec"]]
     ## --- The 2D space is setup and points are in x1[,]  (n x 2) ---
 
     clus <- as.vector(clus)
@@ -344,7 +346,7 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
     ## "Main plot" --
     if(!add) {
 	plot(x1, xlim = xlim, ylim = ylim,
-	     xlab = "Component 1", ylab = "Component 2", main = main,
+	     xlab = xlab, ylab = ylab, main = main,
 	     type = if(plotchar) "n" else "p", # if(plotchar) add points later
 	     col = col.p, cex = cex, ...)
 	if(!is.null(sub) && !is.na(sub) && nchar(sub) > 0)
@@ -384,8 +386,8 @@ function(x, clus, diss = FALSE, cor = TRUE, stand = FALSE, lines = 2,
 	## utilities for computing ellipse intersections:
 	clas.snijpunt <- function(x, loc, m, n, p)
 	{
-	    if(	    loc[n, m] <= x[1, m] && x[1, m] <= loc[p, m]) x[1, ]
-	    else if(loc[n, m] <= x[2, m] && x[2, m] <= loc[p, m]) x[2, ]
+	    if (    !is.na(xm <- x[1,m]) && loc[n, m] <= xm && xm <= loc[p, m]) x[1, ]
+	    else if(!is.na(xm <- x[2,m]) && loc[n, m] <= xm && xm <= loc[p, m]) x[2, ]
 	    else NA
 	}
 	coord.snijp1 <- function(x, gemid)
