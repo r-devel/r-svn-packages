@@ -10,7 +10,7 @@ The degree of smoothness of model terms is estimated as part of
 fitting. In use the function is much like \code{\link{gam}}, except that the numerical methods
 are designed for datasets containing upwards of several tens of thousands of data. The advantage 
 of \code{bam} is much lower memory footprint than \code{\link{gam}}, but it can also be much faster, 
-for large datasets.
+for large datasets. \code{bam} can also compute on a cluster set up by the \link[parallel]{parallel} package.
 
 }
 \usage{
@@ -138,14 +138,10 @@ for REML/ML is justified via the asymptotic multivariate normality of Q'z where 
 Note that POI is not as stable as the default nested iteration used with \code{\link{gam}}, but that for very large, information rich,
 datasets, this is unlikely to matter much. 
 
-Note also that it is possible to spend most of the computational time on basis evaluation, if an expensive basis is used. In practice 
-this means that the default \code{"tp"} basis should be avoided: almost any other basis (e.g. \code{"cr"} or \code{"ps"}) 
+Note also that it is possible to spend most of the computational time on basis evaluation, if an expensive basis is used. In practice this means that the default \code{"tp"} basis should be avoided: almost any other basis (e.g. \code{"cr"} or \code{"ps"}) 
 can be used in the 1D case, and tensor product smooths (\code{te}) are typically much less costly in the multi-dimensional case. 
 
-If \code{cluster} is provided as a cluster set up using \code{\link[parallel]{makeCluster}} (or \code{\link[parallel]{makeForkCluster}})
-from the \code{parallel} package, then the 
-rate limiting QR decomposition of the model matrix is performed in parallel using this cluster. Note that the speed ups are often not that great. On a multi-core machine it is usually best to set the cluster size to the number of physical cores, which is often less than 
-what is reported by \code{\link[parallel]{detectCores}}. Using more than the number of physical cores can result in no speed up at all (or even a slow down). Note that a better parallelization strategy is used in the GAM case than in the strictly additive case. Also note that a highly parallel BLAS may negate all advantage from using a cluster of cores. See examples.
+If \code{cluster} is provided as a cluster set up using \code{\link[parallel]{makeCluster}} (or \code{\link[parallel]{makeForkCluster}}) from the \code{parallel} package, then the rate limiting QR decomposition of the model matrix is performed in parallel using this cluster. Note that the speed ups are often not that great. On a multi-core machine it is usually best to set the cluster size to the number of physical cores, which is often less than what is reported by \code{\link[parallel]{detectCores}}. Using more than the number of physical cores can result in no speed up at all (or even a slow down). Note that a highly parallel BLAS may negate all advantage from using a cluster of cores. Computing in parallel of course requires more memory than computing in series. See examples.
 
 If the argument \code{sparse=TRUE} then QR updating is replaced by an alternative scheme, in which the model matrix is stored whole
  as a sparse matrix. This only makes sense if all smooths are P-splines and all tensor products are of the 
