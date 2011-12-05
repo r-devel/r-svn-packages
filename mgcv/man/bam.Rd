@@ -17,7 +17,7 @@ for large datasets. \code{bam} can also compute on a cluster set up by the \link
 bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action=na.omit, offset=NULL,method="REML",control=list(),
     scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
-    chunk.size=10000,rho=0,sparse=FALSE,cluster=NULL,...)
+    chunk.size=10000,rho=0,sparse=FALSE,cluster=NULL,gc.level=1,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -114,7 +114,8 @@ In practice the speed up is disappointing, and the computation is less well cond
 from the \code{parallel} package, if it is supplied with a cluster on which to do this (a cluster here can be some cores of a 
 single machine). See details and example code. 
 }
-
+\item{gc.level}{to keep the memory footprint down, it helps to call the garbage collector often, but this takes 
+a substatial amount of time. Setting this to zero means that garbage collection only happens when R decides it should. Setting to 2 gives frequent garbage collection. 1 is in between.}
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
 
@@ -218,6 +219,11 @@ if (detectCores()>1) { ## no point otherwise
   ## could also use makeForkCluster, but read warnings first!
 } else cl <- NULL
   
+system.time(b2 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
+       s(x3,bs=bs,k=k),data=dat,method="ML",family=poisson(),cluster=cl))
+
+## ... first call has startup overheads, repeat shows speed up...
+
 system.time(b2 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
        s(x3,bs=bs,k=k),data=dat,method="ML",family=poisson(),cluster=cl))
 
