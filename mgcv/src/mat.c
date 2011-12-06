@@ -44,7 +44,7 @@ void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
 */
 
 { double xx,*bp,*cp,*cp1,*cp2,*cp3,*ap,*ap1;
-  int br,cr,i,j;
+  int cr,i,j;
   if (*bt)
   { if (*ct) /* A=B'C' */
     { /* this one is really awkward: have to use first row of C' as working storage
@@ -62,7 +62,7 @@ void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
         A++;
       } 
     } else /* A=B'C - easiest case: move most slowly through A*/
-    { br= *n;cr= *n;cp2 = C + *c * cr;
+    { /*br= *n;*/cr= *n;cp2 = C + *c * cr;
       for (ap=A,cp1=C;cp1< cp2;cp1+=cr) for (bp=B,i=0;i< *r;i++,ap++)  
       { for (xx=0.0,cp=cp1,cp3=cp1+ *n;cp< cp3;cp++,bp++) xx += *cp * *bp; /* B[k+br*i]*C[k+cr*j];*/
         *ap=xx;
@@ -733,7 +733,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
         
 */
   int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,neg_conv,pos_conv,ni,pi,neg_closed,pos_closed,converged,incx=1;
-  double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*Ap,*zp,*qp,normTj,eps_stop=DOUBLE_EPS,max_err,alpha=1.0,beta=0.0;
+  double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*zp,*qp,normTj,eps_stop=DOUBLE_EPS,max_err,alpha=1.0,beta=0.0;
   unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
   const char uplo='U';
   eps_stop = *tol; 

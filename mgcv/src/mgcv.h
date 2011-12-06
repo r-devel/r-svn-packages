@@ -58,7 +58,7 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau);
 void update_qr(double *Q,double *R,int *n, int *q,double *lam, int *k);
-void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
+extern void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd, int *get_vectors,int *descending);
 void mroot(double *A,int *rank,int *n);
