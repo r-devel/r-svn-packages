@@ -2639,12 +2639,12 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
   if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
   if (k==0) {
      vec <- t(t(vec)*sqrt(nu/ed$val[1]))
-     attr(vec,"rank") <- rank
-     return(vec)
+     ##attr(vec,"rank") <- rank
+     ##return(vec)
   }
  
   ## deal with the fractional part of the pinv...
-  if (nu>0) {
+  if (nu>0&&k>0) {
      if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
      b12 <- .5*nu*(1-nu)
      if (b12<0) b12 <- 0

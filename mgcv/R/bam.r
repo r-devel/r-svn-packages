@@ -58,7 +58,7 @@ qr.up <- function(arg) {
     X <- predict(arg$G,type="lpmatrix")
     if (is.null(arg$coef)) eta1 <- arg$eta[ind] else eta1 <- drop(X%*%arg$coef) + arg$offset[ind]
     mu <- arg$linkinv(eta1) 
-    y <- arg$G$model[[arg$response]] 
+    y <- arg$G$y[ind] ## arg$G$model[[arg$response]] 
     weights <- arg$G$w[ind]
     mu.eta.val <- arg$mu.eta(eta1)
     good <- (weights > 0) & (mu.eta.val != 0)
@@ -156,6 +156,11 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
    
     G$coefficients <- rep(0,ncol(G$X))
     class(G) <- "gam"  
+    
+    ## need to reset response and weights to post initialization values
+    ## in particular to deal with binomial properly...
+    G$y <- y
+    G$w <- weights
 
     ## set up cluster for parallel coputation...
 
@@ -192,8 +197,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
         arg[[i]] <- list(nobs= nt[i],start=start,stop=stop,n.block=n.block,
                          linkinv=linkinv,dev.resids=dev.resids,gc.level=gc.level,
                          mu.eta=mu.eta,variance=variance,mf = mf[ind,],
-                         eta = eta[ind],offset = offset[ind],G = G,response=gp$response)
+                         eta = eta[ind],offset = offset[ind],G = G)
         arg[[i]]$G$w <- G$w[ind];arg[[i]]$G$model <- NULL
+        arg[[i]]$G$y <- G$y[ind]
       }
     } else { ## single thread, requires single indices
       ## construct indices for splitting up model matrix construction... 
@@ -229,7 +235,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
            X <- predict(G,type="lpmatrix")
            if (iter>1) eta1 <- drop(X%*%coef) + offset[ind] else eta1 <- eta[ind]
            mu <- linkinv(eta1) 
-           y <- G$model[[gp$response]] ## - G$offset[ind]
+           y <- G$y[ind] ## G$model[[gp$response]] ## - G$offset[ind]
            weights <- G$w[ind]
            mu.eta.val <- mu.eta(eta1)
            good <- (weights > 0) & (mu.eta.val != 0)
@@ -264,7 +270,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
       } 
 
       G$n <- nobs
-      G$y <- mf[[gp$response]]
+      #G$y <- mf[[gp$response]]
    
       rss.extra <- qrx$y.norm2 - sum(qrx$f^2)
       
@@ -349,6 +355,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
   #  nulldev <- sum(dev.resids(y, wtdmu, weights))
   # if (n.threads!=1) stopCluster(cl)
   object$wt <- wt
+  object$y <- G$y
   rm(G);if (gc.level>0) gc()
   object
 } ## end bgam.fit
@@ -403,6 +410,10 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
 
     G$n <- nobs
     X <- G$X 
+    ## need to reset response and weights to post initialization values
+    ## in particular to deal with binomial properly...
+    G$y <- y
+    G$w <- weights
 
     conv <- FALSE
     for (iter in 1L:control$maxit) { ## main fitting loop
@@ -509,6 +520,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
       
   
   object$wt <- w
+  object$y <- G$y
   rm(G);gc()
   object
 } ## end bgam.fit2
@@ -742,9 +754,9 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
      object$yX.last <- yX.last
    }
   
-  #if (n.threads!=1) stopCluster(cl)
-
+ 
    object$gamma <- gamma;object$G <- G;object$qrx <- qrx ## to allow updating of the model
+   object$y <- mf[[gp$response]]
    object
 } # end of bam.fit
 
@@ -944,7 +956,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
  
   object$weights <- object$prior.weights
   object$xlevels <- G$xlevels
-  object$y <- object$model[[gp$response]]
+  #object$y <- object$model[[gp$response]]
   object$NA.action <- na.action ## version to use in bam.update
 
   rm(G);if (gc.level>0) gc()

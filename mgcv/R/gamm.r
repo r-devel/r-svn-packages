@@ -1290,7 +1290,7 @@ gammPQL <- function (fixed, random, family, data, correlation, weights,
  
   data[[zz.name]] <- zz ## pseudodata to `data' 
   
-  ## find non-clashing name fro inverse weights, and make 
+  ## find non-clashing name for inverse weights, and make 
   ## varFixed formula using it...
   
   invwt.name <- new.name("invwt",names(data))
@@ -1317,6 +1317,7 @@ gammPQL <- function (fixed, random, family, data, correlation, weights,
     data[[invwt.name]] <- 1/wz
   } ## end i in 1:niter
   if (!converged) warning("gamm not converged, try increasing niterPQL")
+  fit$y <- fit0$y
   fit
 }
 
@@ -1469,7 +1470,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
           ",random=rand,data=strip.offset(mf),family=family,",
           "correlation=correlation,control=control,",
             "weights=weights,niter=niterPQL,verbose=verbosePQL)",sep=""))) 
-     
+      G$y <- ret$lme$y ## makes sure that binomial response is returned as a vector!
       ##ret$lme<-glmmPQL(fixed.formula,random=rand,data=mf,family=family,correlation=correlation,
       ##                 control=control,niter=niterPQL,verbose=verbosePQL)
     }
