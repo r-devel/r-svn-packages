@@ -19,6 +19,7 @@ USA. */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <R.h>
 #define ANSI
 /*#define DEBUG*/
 #include "matrix.h"
@@ -1123,7 +1124,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
 */
 
 { double *diagKKt,*diagKKtKKt,xx,*KtTK,*KtTKKtK,*KKtK,*KtK,*work,*pTk,*pTm,*pdKKt,*pdKKtKKt,*p0,*p1,*p2,*p3,*pd,
-    *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*PtSPKtK, *KtKPtrSm, *KKtKPtrSm,*Ip,*IpK;
+    *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*PtSPKtK, *KtKPtrSm, *KKtKPtrSm,*Ip,*IpK/*,lowK,hiK*/;
   int i,m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2,neg_w=0;
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* Get the sign array for negative w_i */
@@ -1149,8 +1150,19 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
     IpK = (double *)calloc((size_t) *r * *n,sizeof(double));
     for (p0=IpK,p3=K,i=0;i<*r;i++) 
       for (p1=Ip,p2=p1 + *n;p1<p2;p1++,p0++,p3++) *p0 = *p1 * *p3; 
-  } else IpK = K;
+  } else { 
+    IpK = (double *)calloc((size_t) *r * *n,sizeof(double));
+    for (p0=IpK,p1=K,p2=K+ *n * *r;p1<p2;p0++,p1++) *p0 = *p1; 
+    /*IpK = K;*/
+  }
+  /*  lowK=hiK=*K;
+
+  for (p1=K,i=0;i<*n;i++) for (j=0;j<*r;j++,p1++) {
+      if (*p1>hiK) hiK= *p1; else if (*p1<lowK) lowK = *p1;
+    }
+    Rprintf("K range = %g - %g\n",lowK,hiK);*/
   bt=1;ct=0;mgcv_mmult(KtK,K,IpK,&bt,&ct,r,r,n);  
+  if (neg_w) free(IpK); else free(IpK);
   KKtK = (double *)calloc((size_t)*n * *r,sizeof(double));
   bt=0;ct=0;mgcv_mmult(KKtK,K,KtK,&bt,&ct,n,r,r);  
 
@@ -1267,7 +1279,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
    /* clear up */
    free(PtrSm);free(KPtrSm);free(PtSP);free(KtKPtrSm);free(diagKPtSPKt);
    free(diagKPtSPKtKKt);free(work);free(KtK);free(KKtK);free(PtSPKtK);free(KKtKPtrSm);
-   free(Ip);if (neg_w) free(IpK);  
+   free(Ip);  
 } /* end get_trA2 */
 
 

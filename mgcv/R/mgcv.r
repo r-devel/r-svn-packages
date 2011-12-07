@@ -2277,9 +2277,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (n.pterms)  # work through parametric part
       for (i in 1:n.pterms)
       { ii <- ind[object$assign==i]
-        fit[start:stop,i] <- as.matrix(X[,ii])%*%object$coefficients[ii]
+        fit[start:stop,i] <- X[,ii,drop=FALSE]%*%object$coefficients[ii]
         if (se.fit) se[start:stop,i]<-
-        sqrt(rowSums((as.matrix(X[,ii])%*%object$Vp[ii,ii])*as.matrix(X[,ii])))
+        sqrt(rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE]))
       }
 
       if (n.smooth&&!para.only) 

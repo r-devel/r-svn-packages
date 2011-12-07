@@ -3,18 +3,21 @@
 
 1.7-12
 
-* Greater use of BLAS routines in the underlying method code. In particular 
-  all leading order operations count steps for gam fitting now use BLAS. 
-  You'll need R to be using a rather fancy BLAS to see much difference, 
-  however. Do heed the warnings in the R Installation and Administration 
-  manual about pre-built ATLAS distributions: mgcv requires eigen routines, 
-  in particular, to do exactly what they are documented to do. 
- 
-
 * bam can now compute the leading order QR decomposition on a cluster
   set up using the parallel package.
 
+* Greater use of BLAS routines in the underlying method code. In particular 
+  all leading order operations count steps for gam fitting now use BLAS. 
+  You'll need R to be using a rather fancy BLAS to see much difference, 
+  however. 
 
+* Amusingly, some highly tuned blas libraries can result in lapack not always 
+  giving identical eigenvalues when called twice with the same matrix. The 
+  `newton' optimizer had assumed this wouldn't happen: not any more.
+
+* Now byte compiled by default. Turn this off in DESCRIPTION if it interferes
+  with debugging.
+ 
 * summary.gam p-value computation options modified (default remains the 
   same).
 

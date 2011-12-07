@@ -92,7 +92,7 @@ void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
   }
 } /* end mgcv_mmult0*/
 
-inline void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n) {
+void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n) {
   /* BLAS version A is c (result), B is a, C is b, bt is transa ct is transb 
      r is m, c is n, n is k.
      Does nothing if r,c or n <= zero.
@@ -101,6 +101,10 @@ inline void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int 
   int lda,ldb,ldc;
   double alpha=1.0,beta=0.0;
   if (*r<=0||*c<=0||*n<=0) return;
+  if (B==C) {
+    if (*bt&&(!*ct)&&(*r==*c)) { getXtX(A,B,n,r);return;} 
+    else if (*ct&&(!*bt)&&(*r==*c)) { getXXt(A,B,c,n);return;}
+  }
   if (*bt) { /* so B is n by r */
     transa = 'T';  
     lda = *n;
@@ -132,10 +136,22 @@ void getXtX(double *XtX,double *X,int *r,int *c)
 { double alpha=1.0,beta=0.0;
   int i,j;
   char uplo = 'L',trans='T';
-  F77_NAME(dsyrk)(&uplo,&trans,c, r, & alpha,X,r,&beta,XtX,c);
+  F77_NAME(dsyrk)(&uplo,&trans,c, r, &alpha,X,r,&beta,XtX,c);
   /* fill in upper triangle from lower */
   for (i=0;i<*c;i++) 
   for (j=0;j<i;j++)  XtX[j + i * *c] = XtX[i + j * *c];
+ 
+}
+
+void getXXt(double *XXt,double *X,int *r,int *c)
+/* form XX' (nearly) as efficiently as possible - uses BLAS*/
+{ double alpha=1.0,beta=0.0;
+  int i,j;
+  char uplo = 'L',trans='N';
+  F77_NAME(dsyrk)(&uplo,&trans,r, c, &alpha,X,r,&beta,XXt,r);
+  /* fill in upper triangle from lower */
+  for (i=0;i<*r;i++) 
+  for (j=0;j<i;j++)  XXt[j + i * *r] = XXt[i + j * *r];
  
 }
 

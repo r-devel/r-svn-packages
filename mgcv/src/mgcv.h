@@ -59,6 +59,7 @@ void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau);
 void update_qr(double *Q,double *R,int *n, int *q,double *lam, int *k);
 extern void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
+void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd, int *get_vectors,int *descending);
 void mroot(double *A,int *rank,int *n);
@@ -69,6 +70,7 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
 void getXtWX(double *XtWX, double *X,double *w,int *r,int *c,double *work);
 void getXtX(double *XtX,double *X,int *r,int *c);
 void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work);
+void getXXt(double *XXt,double *X,int *r,int *c);
 
 /* basis constructor/prediction routines*/
 
