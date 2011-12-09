@@ -6,6 +6,10 @@
 * bam can now compute the leading order QR decomposition on a cluster
   set up using the parallel package.
 
+* Default k for "tp" and "ds" modified so that it doesn't exceed the 100 + 
+  the null space dimension (to avoid complaints from those too busy to read 
+  the help pages).
+
 * Greater use of BLAS routines in the underlying method code. In particular 
   all leading order operations count steps for gam fitting now use BLAS. 
   You'll need R to be using a rather fancy BLAS to see much difference, 
