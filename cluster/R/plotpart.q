@@ -2,7 +2,7 @@
 plot.partition <-
 function(x, ask = FALSE, which.plots = NULL,
 	 nmax.lab = 40, max.strlen = 5, data = x$data, dist = NULL,
-	 cor = TRUE, stand = FALSE, lines = 2,
+	 stand = FALSE, lines = 2,
 	 shade = FALSE, color = FALSE, labels = 0, plotchar = TRUE,
 	 span = TRUE, xlim = NULL, ylim = NULL, main = NULL, ...)
 {
@@ -29,7 +29,7 @@ function(x, ask = FALSE, which.plots = NULL,
 		   ,
 		   do.all <- TRUE# 1 : All
 		   ,
-		   clusplot(x, cor = cor, stand = stand, lines = lines,
+		   clusplot(x, stand = stand, lines = lines,
 			    shade = shade, color = color, labels = labels,
 			    plotchar = plotchar, span = span,
 			    xlim = xlim, ylim = ylim, main = main, ...)
@@ -45,7 +45,7 @@ function(x, ask = FALSE, which.plots = NULL,
 	if(ask) { op <- par(ask = TRUE); on.exit(par(op)) }
 	for(i in which.plots)
 	switch(i,
-	       clusplot(x, cor = cor, stand = stand, lines = lines,
+	       clusplot(x, stand = stand, lines = lines,
 			shade = shade, color = color, labels = labels,
 			plotchar = plotchar, span = span,
 			xlim = xlim, ylim = ylim, main = main, ...)
@@ -285,7 +285,7 @@ function(x, clus, diss = FALSE, s.x.2d = mkCheckX(x, diss),
 	    else { ## span and rank2
 		if(verbose)
 		    cat("span & rank2 : calling \"spannel\" ..\n")
-		k <- as.integer(2)
+		k <- 2L
 		res <- .C(spannel,
 			  aantal,
 			  ndep= k,
@@ -297,7 +297,7 @@ function(x, clus, diss = FALSE, s.x.2d = mkCheckX(x, diss),
 			  prob = double(aantal),
 			  double(k+1),
 			  eps = (0.01),## convergence tol.
-			  maxit = as.integer(5000),
+			  maxit = 5000L,
 			  ierr = integer(1))
 		if(res$ierr != 0)
 		    ## MM : exactmve not available here !

@@ -27,7 +27,7 @@
   \item{dist}{when \code{x} does not have a \code{diss} component as for
     \code{\link{pam}(*, keep.diss=FALSE)}, \code{dist} must be the
     dissimilarity if a clusplot is desired.}
-  \item{cor,stand,lines,shade,color,labels,plotchar,span,xlim,ylim,main, \dots}{
+  \item{stand,lines,shade,color,labels,plotchar,span,xlim,ylim,main, \dots}{
     All optional arguments available for the \code{\link{clusplot.default}}
     function (except for the \code{diss} one) and graphical parameters
     (see \code{\link{par}}) may also be supplied as arguments to this function.}
