@@ -68,8 +68,8 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     }
     if(n <= 1) stop("need at least 2 objects to cluster")
     if(keep.diss) jdyss <- jdyss + 10
-    ## call Fortran routine
-    res <- .Fortran(twins,
+    ## call C routine
+    res <- .C(twins,
 		    as.integer(n),
 		    as.integer(jp),
 		    x2,
@@ -79,14 +79,14 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    if(mdata) valmd else double(1),
 		    if(mdata) jtmd else integer(jp),
 		    as.integer(ndyst),
-		    as.integer(1),# jalg = 1 <==> AGNES
+		    1L,# jalg = 1 <==> AGNES
 		    meth,# integer
 		    integer(n),
 		    ner = integer(n),
 		    ban = double(n),
 		    ac = as.double(0),
                     par.method,
-		    merge = matrix(0:0, n - 1, 2), # integer
+		    merge = matrix(0L, n - 1, 2), # integer
                     DUP = FALSE)
     if(!diss) {
 	##give warning if some dissimilarities are missing.
@@ -161,5 +161,5 @@ print.summary.agnes <- function(x, ...)
     invisible(x)
 }
 
-as.dendrogram.agnes <- function(object, ...) ## ... : really only 'hang'
+as.dendrogram.twins <- function(object, ...) ## ... : really only 'hang'
     as.dendrogram(as.hclust(object), ...)

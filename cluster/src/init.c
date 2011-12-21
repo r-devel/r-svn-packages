@@ -42,6 +42,14 @@ static R_NativePrimitiveArgType sildist_t[] = {
     /* si: */ REALSXP, INTSXP, LGLSXP
 };
 
+static R_NativePrimitiveArgType twins_t[17] = {
+    INTSXP, INTSXP, REALSXP, REALSXP, REALSXP,
+    /* jdiss: */ INTSXP, REALSXP,
+    INTSXP, INTSXP, INTSXP, INTSXP,
+    /* kwan: */ INTSXP, INTSXP, REALSXP, REALSXP,
+    REALSXP, INTSXP
+};
+
 /* is only .C()-called from ../tests/sweep-ex.R : */
 static R_NativePrimitiveArgType sweep_t[5] = {
     REALSXP, INTSXP, INTSXP, INTSXP, REALSXP
@@ -56,6 +64,7 @@ static const R_CMethodDef CEntries[]  = {
     {"spannel", (DL_FUNC) &spannel, 12, spannel_t},
     {"cl_sweep", (DL_FUNC) &cl_sweep, 5, sweep_t},
     CDEF(sildist),
+    {"twins", (DL_FUNC) &twins, 17, twins_t},
     {NULL, NULL, 0}
 };
 
@@ -68,7 +77,6 @@ static R_FortranMethodDef FortEntries[] = {
     {"bncoef", (DL_FUNC) &F77_SUB(bncoef), 3},/* ./twins.f */
     {"cl_daisy", (DL_FUNC) &F77_SUB(cldaisy), 11},
     {"cl_mona", (DL_FUNC) &F77_SUB(clmona), 9},
-    {"twins", (DL_FUNC) &F77_SUB(twins), 17},
     {"dysta", (DL_FUNC) &F77_SUB(dysta), 8},
     {NULL, NULL, 0}
 };

@@ -169,13 +169,12 @@ int F77_NAME(clmona)(int *nn, int *pp, int *x, int *jerr,
 		      int *nban, int *ner, int *kwan, int *lava, int *jlack);
 
 /* -------- ./twins.f ---------------------------------- */
-int F77_NAME(bncoef)(int *nn, int *jpp, double *x, double *dys, int *ndyst,
-		    int *jtmd, double *valmd, int *jhalt);
+int F77_NAME(bncoef)(int *nn, double *ban, double *cf);
 
-int F77_NAME(twins)(int *nn, int *jpp, double *x,
-		    double *dys, double *dys2, int *jdyss, double *valmd,
-		    int *jtmd, int *ndyst, int *jalg, int *method,
-		    int *kwan, int *ner, double *ban, double *coef,
-		    double *alpha, int *merge);
+void twins(int *nn, int *jpp, double *x,
+	   double *dys, double *dys2, int *jdyss, double *valmd,
+	   int *jtmd, int *ndyst, int *jalg, int *method,
+	   int *kwan, int *ner, double *ban, double *coef,
+	   double *alpha, int *merge);
 
 
