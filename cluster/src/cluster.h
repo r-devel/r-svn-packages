@@ -168,8 +168,9 @@ int F77_NAME(meet)(int *l, int *j);
 int F77_NAME(clmona)(int *nn, int *pp, int *x, int *jerr,
 		      int *nban, int *ner, int *kwan, int *lava, int *jlack);
 
-/* -------- ./twins.f ---------------------------------- */
-int F77_NAME(bncoef)(int *nn, double *ban, double *cf);
+/* -------- ./twins.c ---------------------------------- */
+void R_bncoef(int *nn, double *ban, double *cf);
+double bncoef(int  nn, double *ban);
 
 void twins(int *nn, int *jpp, double *x,
 	   double *dys, double *dys2, int *jdyss, double *valmd,

@@ -5,17 +5,14 @@
  */
 
 #include <math.h>
+#include <Rmath.h>
 #include "cluster.h"
 #include "ind_2.h"
 
 // the auxiliary routines
-static void averl_(int *nn, int *kwan, int *ner, double *ban, double *dys, int *method, double *alpha, int *merge);
-static void splyt_(int *nn, int *kwan, int *ner, double *ban, double *dys, int *merge);
+static void averl_(int nn, int *kwan, int *ner, double *ban, double *dys, int method, double *alpha, int *merge);
+static void splyt_(int nn, int *kwan, int *ner, double *ban, double *dys, int *merge);
 static double min_dis(double dys[], int ka, int kb, int ner[]);
-
-/* Table of constant values */
-
-static int c__1 = 1;
 
 /*     This program performs agglomerative nesting (AGNES) using the */
 /*     group average method (_or others_) of Sokal and Michener (1958), */
@@ -41,8 +38,8 @@ void twins(int *nn, // = maximal number of objects
 	*jpp = 1;
     } else { // compute distances
 	int jhalt = 0;
-	dysta_(nn, jpp, x, dys, ndyst, jtmd, valmd, &jhalt);
-	/*---- in ./dysta.f */
+	F77_CALL(dysta)(nn, jpp, x, dys, ndyst, jtmd, valmd, &jhalt);
+	/*       ------ in ./dysta.f */
 	if (jhalt != 0) { *jdyss = -1; return; }
     }
     if (*jdyss >= 10) { /*        save distances for S */
@@ -50,28 +47,28 @@ void twins(int *nn, // = maximal number of objects
     }
     if (*jalg != 2) {
 	// AGNES
-	averl_(nn, kwan, ner, ban, dys, method, alpha, merge);
+	averl_(*nn, kwan, ner, ban, dys, *method, alpha, merge);
     } else {
 	// DIANA
-	splyt_(nn, kwan, ner, ban, dys,                merge);
+	splyt_(*nn, kwan, ner, ban, dys,                 merge);
     }
     // Compute agglomerative/divisive coefficient from banner:
-    bncoef_(nn, ban, coef);
+    *coef = bncoef(*nn, ban);
     return;
 } /* twins */
 
 /*     ----------------------------------------------------------- */
 /*     AGNES agglomeration */
 static void
-averl_(int *nn, int *kwan, int *ner,
-       double *ban, double *dys, int *method, double *alpha, int *merge)
+averl_(int nn, int *kwan, int *ner,
+       double *ban, double *dys, int method, double *alpha, int *merge)
 {
 
 /* VARs */
     double akb, smald;
-    int j, k, l1, l2, la, lb, lq, nab, lka, nlj,
-	nclu, lnum, lput, lenda, lendb, lnext, n_1 = *nn - 1,
-	llast = -1, lfyrs = -1, // <- against (unnecessary) warnings [-Wall]
+    int j, k, l1, l2, lq, nab, lka, nlj,
+	nclu, lnum, lput, lenda, lendb, lnext, n_1 = nn - 1,
+	la = -1, lb = -1, llast = -1, lfyrs = -1, // <- against (unnecessary) warnings [-Wall]
 	nmerge;
 
     /* System generated locals */
@@ -80,7 +77,6 @@ averl_(int *nn, int *kwan, int *ner,
 
     /* Parameter adjustments */
     merge -= merge_offset;
-    --dys;
     --ban;
     --ner;
     --kwan;
@@ -88,7 +84,7 @@ averl_(int *nn, int *kwan, int *ner,
 
 /*     initialization: */
 /*       Starting with nn clusters, kwan(j) = #{obj} in cluster j */
-    for (j = 1; j <= *nn; ++j) { /* f2c-clean: s {i__1} {*nn} */
+    for (j = 1; j <= nn; ++j) {
 	kwan[j] = 1;
 	ner[j] = j;
     }
@@ -101,10 +97,10 @@ L80:
 	++j;
 	if (kwan[j] == 0) goto L80;
 
-	smald = dys[meet_(&c__1, &j)] * 1.1f + 1.;
+	smald = dys[ind_2(1, j)] * 1.1f + 1.;
 	for (k = 1; k <= n_1; ++k) if (kwan[k] > 0) {
-		for (j = k + 1; j <= *nn; ++j) if (kwan[j] > 0) {
-			nlj = meet_(&k, &j);
+		for (j = k + 1; j <= nn; ++j) if (kwan[j] > 0) {
+			nlj = ind_2(k, j);
 			if (smald >= dys[nlj]) { // Note: also when "==" !
 			    smald =  dys[nlj];
 			    la = k;
@@ -127,7 +123,7 @@ L80:
 
 /*     determine lfyrs and llast */
 
-	for (k = 1; k <= *nn; ++k) {
+	for (k = 1; k <= nn; ++k) {
 	    if (ner[k] == la) lfyrs = k;
 	    if (ner[k] == lb) llast = k;
 	}
@@ -157,18 +153,17 @@ L80:
 
 /*     We will merge A & B into  A_{new} */
 
-/*     Calculate new dissimilarities d(q, A_{new}) */
+	// Calculate new dissimilarities d(q, A_{new})
+	for (lq = 1; lq <= nn; ++lq) { //  for each other cluster 'q'
 
-	for (lq = 1; lq <= *nn; ++lq) {
-/*          for each other cluster 'q' */
 	    double dnew, ta, tb, tq, fa, fb, fc;
 	    if (lq == la || lq == lb || kwan[lq] == 0)
 		continue;
 
-	    int naq = meet_(&la, &lq);
-	    int nbq = meet_(&lb, &lq);
+	    int naq = ind_2(la, lq);
+	    int nbq = ind_2(lb, lq);
 
-	    switch(*method) {
+	    switch(method) {
 	    case 1: /*     1: group average method */
 		ta = (double) kwan[la];
 		tb = (double) kwan[lb];
@@ -195,7 +190,7 @@ L80:
 		fa = (ta + tq) / (ta + tb + tq);
 		fb = (tb + tq) / (ta + tb + tq);
 		fc = -tq / (ta + tb + tq);
-		nab = meet_(&la, &lb);
+		nab = ind_2(la, lb);
 		dys[naq] = sqrt(fa * dys[naq] * dys[naq] +
 				fb * dys[nbq] * dys[nbq] +
 				fc * dys[nab] * dys[nab]);
@@ -206,19 +201,18 @@ L80:
 		break;
 	    case 6: /*     6: "Flexible Strategy" (K+R p.236 f) extended to 'Lance-Williams' */
 		dys[naq] = alpha[1] * dys[naq] + alpha[2] * dys[nbq] +
-		    alpha[3] * dys[meet_(&la, &lb)] +
+		    alpha[3] * dys[ind_2(la, lb)] +
 		    alpha[4] * fabs(dys[naq] - dys[nbq]);
 		/* Lance-Williams would allow alpha(1:2) to *depend* on |cluster|
 		 * could also include the extensions of Jambu(1978) --
 		 * See Gordon A.D. (1999) "Classification" (2nd ed.) p.78 ff */
 		break;
 	    default:
-		error(_("invalid method (code %d"), *method);
+		error(_("invalid method (code %d"), method);
 	    }
 	}
 	kwan[la] += kwan[lb];
 	kwan[lb] = 0;
-/* L100: */
     }
     return;
 } /* averl_ */
@@ -227,61 +221,51 @@ L80:
 
 /*       cf = ac := "Agglomerative Coefficient" from AGNES banner */
 /*  or   cf = dc := "Divisive Coefficient"      from DIANA banner */
-/* Subroutine */ int bncoef_(int *nn, double *ban, double *cf)
+
+void R_bncoef(int *nn, double *ban, double *cf) {
+    *cf = bncoef(*nn, ban);
+}
+
+double bncoef(int nn, double *ban)
 {
 /* VARs */
     int k, kafte, kearl;
-    double rnn, sup, syze;
+    double sup, syze, cf;
 
     /* Parameter adjustments */
     --ban;
 
-    /* Function Body */
-    sup = 0.;
-    for (k = 2; k <= *nn; ++k) {
-	if (ban[k] > sup) {
+    // sup := max_k ban[k]
+    for(sup = 0., k = 2; k <= nn; ++k) {
+	if (sup < ban[k])
 	    sup = ban[k];
-	}
     }
-    *cf = 0.;
-/* d      call intpr("bncoef(nn=", -1, nn,1) */
-    for (k = 1; k <= *nn; ++k) { /* f2c-clean: s {i__1} {*nn} */
-	kearl = k;
-	if (k == 1) {
-	    kearl = 2;
-	}
-	kafte = k + 1;
-	if (k == *nn) {
-	    kafte = *nn;
-	}
-/*       syze:= min( ban[kearl], bank[kafte] ) */
-	syze = ban[kearl];
-	if(ban[kafte] < syze)
-	    syze = ban[kafte];
-	*cf = *cf + 1. - syze / sup;
-/* d         call dblepr("(", -1, syze,1) */
-/* d         call dblepr(",", -1, cf,1) */
-/* L80: */
+    cf = 0.;
+    for (k = 1; k <= nn; ++k) {
+	kearl = (k > 1 ) ? k : 2;
+	kafte = (k < nn) ? (k + 1) : nn;
+	syze = fmin2(ban[kearl], ban[kafte]);
+	cf += (1. - syze / sup);
     }
-    rnn = (double) (*nn);
-    *cf /= rnn;
-    return 0;
-} /* bncoef_ */
+    return cf / nn;
+} /* bncoef */
 
 /*     ----------------------------------------------------------- */
 /*     DIANA "splitting" */
 
 static void
-splyt_(int *nn, int *kwan, int *ner,
+splyt_(int nn, int *kwan, int *ner,
        double *ban, double *dys, int *merge)
 {
     /* Local variables */
     int j, ja, jb, k, l;
-    int nj, jma, jan, jbn, jmb, nlj, lmm, llq, lxf, lxg, lmz,
-	lxx, lxy, lmma, lmmb, lgrb, jner, lner, nclu, lxxa;
-    int lxxp, lchan, nhalf, lndsd, jaway, nmerge, n_1 = *nn - 1;
-    double da, db, cs, sd;
-    double dyff, rest, bdyff, bygsd, splyn;
+    int jma, jmb, lmm, llq, lmz,
+	lxx, lxy, lmma, lmmb, lner, nclu;
+    int lchan, nhalf, nmerge, n_1 = nn - 1, splyn;
+    /* against (unnecessary) warnings [-Wall]: */
+    int jaway = -1, lndsd = -1;
+
+    double da, db, cs, sd, dyff;
 
     /* System generated locals */
     int merge_dim1 = n_1;
@@ -293,21 +277,16 @@ splyt_(int *nn, int *kwan, int *ner,
     --ner;
     --kwan;
 
-    /* against (unnecessary) warnings [-Wall]: */
-    jaway = -1;
-    lndsd = -1;
-    lxg = -1;
-    nj = -1;
 
     /*     initialization */
     nclu = 1;
-    nhalf = *nn * n_1 / 2 + 1;
-    for (l = 1; l <= *nn; ++l) {
+    nhalf = nn * n_1 / 2 + 1;
+    for (l = 1; l <= nn; ++l) {
 	kwan[l] = 0;
 	ban[l] = 0.;
 	ner[l] = l;
     }
-    kwan[1] = *nn;
+    kwan[1] = nn;
     ja = 1;
 
 /*     cs :=  diameter of data set */
@@ -324,6 +303,7 @@ L20:
 
 /*     prepare for splitting */
 
+//____________ Big Loop _________________________________________________
 L30:
     jb = ja + kwan[ja] - 1;
     jma = jb;
@@ -333,21 +313,16 @@ L30:
     if (kwan[ja] == 2) {
 	kwan[ja] = 1;
 	kwan[jb] = 1;
-	jan = ner[ja];
-	jbn = ner[jb];
-	ban[jb] = dys[ind_2(jan, jbn)];
+	ban [jb] = dys[ind_2(ner[ja], ner[jb])];
     }
     else {
 	/*     finding first object to be shifted */
-	bygsd = -1.;
+	double bygsd = -1.;
 	for (l = ja; l <= jb; ++l) {
 	    lner = ner[l];
 	    sd = 0.;
-	    for (j = ja; j <= jb; ++j) {
-		jner = ner[j];
-		nlj = ind_2(lner, jner);
-		sd += dys[nlj];
-	    }
+	    for (j = ja; j <= jb; ++j)
+		sd += dys[ind_2(lner, ner[j])];
 	    if (bygsd < sd) {
 		bygsd = sd;
 		lndsd = l;
@@ -366,101 +341,86 @@ L30:
 	    }
 	    ner[jb] = lchan;
 	}
-	splyn = 0.;
+	splyn = 0;
 	jma = jb - 1;
 
 /*     finding the next object to be shifted */
 
-L120:
-	splyn += 1.;
-	rest = (double) (jma - ja);
-	bdyff = -1.;
-	for (l = ja; l <= jma; ++l) {
-	    lner = ner[l];
-	    da = 0.;
-	    for (j = ja; j <= jma; ++j) {
-		jner = ner[j];
-		nlj = ind_2(lner, jner);
-		da += dys[nlj];
-	    }
-	    da /= rest;
-	    db = 0.;
+	do {
+	    splyn++;
+	    int rest = (jma - ja);
+	    double bdyff = -1.;
+	    for (l = ja; l <= jma; ++l) {
+		lner = ner[l];
+		da = 0.;
+		for (j = ja; j <= jma; ++j)
+		    da += dys[ind_2(lner, ner[j])];
+		da /= rest;
+		db = 0.;
+		for (j = jma + 1; j <= jb; ++j)
+		    db += dys[ind_2(lner, ner[j])];
+		db /= splyn;
+		dyff = da - db;
+		if (bdyff < dyff) {
+		    bdyff = dyff;
+		    jaway = l;
+		}
+	    } /* end for(l ..) */
 	    jmb = jma + 1;
-	    for (j = jmb; j <= jb; ++j) {
-		jner = ner[j];
-		nlj = ind_2(lner, jner);
-		db += dys[nlj];
-	    }
-	    db /= splyn;
-	    dyff = da - db;
-	    if (bdyff < dyff) {
-		bdyff = dyff;
-		jaway = l;
-	    }
-	} /* end for(l ..) */
-	jmb = jma + 1;
 
 /*     shifting the next object when necessary */
 
-	if (bdyff <= 0.) {
-	    goto L200;
-	}
-	if (jma == jaway) {
-	    goto L165;
-	}
-	lchan = ner[jaway];
-	lmz = jma - 1;
-	for (lxx = jaway; lxx <= lmz; ++lxx) {
-	    lxxp = lxx + 1;
-	    ner[lxx] = ner[lxxp];
-	}
-	ner[jma] = lchan;
-L165:
-	for (lxx = jmb; lxx <= jb; ++lxx) {
-	    lxy = lxx - 1;
-	    if (ner[lxy] < ner[lxx])
-		break;
-	    lchan = ner[lxy];
-	    ner[lxy] = ner[lxx];
-	    ner[lxx] = lchan;
-	}
+	    if (bdyff <= 0.) {
+		goto L200;
+	    }
+	    if (jma != jaway) {
+		lchan = ner[jaway];
+		lmz = jma - 1;
+		for (lxx = jaway; lxx <= lmz; ++lxx)
+		    ner[lxx] = ner[lxx + 1];
+		ner[jma] = lchan;
+	    }
+	    for (lxx = jmb; lxx <= jb; ++lxx) {
+		lxy = lxx - 1;
+		if (ner[lxy] < ner[lxx])
+		    break;
+		lchan = ner[lxy]; ner[lxy] = ner[lxx]; ner[lxx] = lchan;
+	    }
 
-	--kwan[ja];
-	kwan[jma] = kwan[jmb] + 1;
-	kwan[jmb] = 0;
-	--jma;
-	jmb = jma + 1;
-	if (jma != ja) {
-	    goto L120;
-	}
+	    --kwan[ja];
+	    kwan[jma] = kwan[jmb] + 1;
+	    kwan[jmb] = 0;
+	    --jma;
+	    jmb = jma + 1;
+
+	} while (jma != ja);
+
 
 /*     switch the two parts when necessary */
-
 L200:
-	if (ner[ja] < ner[jmb]) {
-	    goto L300;
-	}
-	lxxa = ja;
-	for (lgrb = jmb; lgrb <= jb; ++lgrb) {
-	    ++lxxa;
-	    lchan = ner[lgrb];
-	    for (lxy = lxxa; lxy <= lgrb; ++lxy) {
-		lxf = lgrb - lxy + lxxa;
-		lxg = lxf - 1;
-		ner[lxf] = ner[lxg];
+	if (ner[ja] >= ner[jmb]) {
+	    int lxxa = ja;
+	    for (int lgrb = jmb; lgrb <= jb; ++lgrb) {
+		++lxxa;
+		lchan = ner[lgrb];
+		int lxg = -1;
+		for (lxy = lxxa; lxy <= lgrb; ++lxy) {
+		    int lxf = lgrb - lxy + lxxa;
+		    lxg = lxf - 1;
+		    ner[lxf] = ner[lxg];
+		}
+		ner[lxg] = lchan;
 	    }
-	    ner[lxg] = lchan;
+	    llq = kwan[jmb];
+	    kwan[jmb] = 0;
+	    jma = ja + jb - jma - 1;
+	    jmb = jma + 1;
+	    kwan[jmb] = kwan[ja];
+	    kwan[ja] = llq;
 	}
-	llq = kwan[jmb];
-	kwan[jmb] = 0;
-	jma = ja + jb - jma - 1;
-	jmb = jma + 1;
-	kwan[jmb] = kwan[ja];
-	kwan[ja] = llq;
 
-/*     compute level for banner */
+/* 300 :    compute level for banner */
 
-L300:
 	if (nclu == 1) {
 	    ban[jmb] = cs;
 	} else {
@@ -469,33 +429,31 @@ L300:
 
     }
 
-    if (++nclu < *nn) { /* continue splitting until all objects are separated */
-	if (jb == *nn) {
-	    goto L430;
-	}
-L420:
-	ja += kwan[ja];
-	if (ja <= *nn) {
-	    if (kwan[ja] <= 1) {
-		goto L420;
+    if (++nclu < nn) { /* continue splitting until all objects are separated */
+	if (jb != nn) {
+ L420:
+	    ja += kwan[ja];
+	    if (ja <= nn) {
+		if (kwan[ja] <= 1) {
+		    goto L420;
+		}
+		goto L30;
 	    }
-	    goto L30;
 	}
-L430:
 	ja = 1;
 	if (kwan[ja] == 1) {
 	    goto L420;
 	}
 	goto L30;
     }
+//____________ End Big Loop _________________________________________________
 
-/* 500 */
-/*     merge-structure for plotting tree in S */
+/* 500 :  merge-structure for plotting tree in S */
 
     for (nmerge = 1; nmerge <= n_1; ++nmerge) {
-	int l1, l2;
+	int nj = -1, l1, l2;
 	double dmin = cs;
-	for (j = 2; j <= *nn; ++j) {
+	for (j = 2; j <= nn; ++j) {
 	    if (kwan[j] >= 0 && dmin >= ban[j]) {
 		dmin = ban[j];
 		nj = j;

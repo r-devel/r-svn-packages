@@ -12,7 +12,7 @@ export(bannerplot, ellipsoidhull, ellipsoidPoints,
 
 ## Methods also useful as 'standalone functions':
 export(predict.ellipsoid)
-export(coef.hclust)
+export(coef.hclust, coefHier)
 
 ## things from (ex-)mva -- not really needed..
 #importFrom(stats, as.hclust, as.dist, as.dendrogram, cutree)

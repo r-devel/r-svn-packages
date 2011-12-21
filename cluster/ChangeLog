@@ -1,5 +1,7 @@
 2011-12-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
+	* R/coef.R (coefHier): newly export coefHier(), interfacing to C's bncoef().
+
 	* tests/diana-boots.R (dianaBoot): add a "bootstrap", for considerably more tests.
 	* tests/diana-ex.R: reorganized
 
