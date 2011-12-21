@@ -26,7 +26,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
 	dv <- as.double(c(x, 0))# add extra one
 	jp <- 1
 	mdata <- FALSE
-	ndyst <- 0:0
+	ndyst <- 0L
 	x2 <- double(n)
 	jdyss <- 1
     }
@@ -221,7 +221,7 @@ as.membership <- function(clustering, keep.names = TRUE) {
     stopifnot(is.numeric(clustering), clustering == round(clustering))
     n <- length(clustering)
     k <- length(u <- sort(unique(clustering)))
-    r <- matrix(0:0, n, k)
+    r <- matrix(0L, n, k)
     if(k == 0 || n == 0) return(r)
     if(keep.names)
 	dimnames(r) <- list(names(clustering), NULL)

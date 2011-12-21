@@ -24,10 +24,13 @@ src/.*-Li
 src/.*-log
 src/.*-21retro
 src/clara\.f.*
+src/twins\.f.*
 src/SAFE
+tests/diana-boots.Rout.*
 tests/ellipsoid-ex.Rout-.*
 tests/fanny-ex.Rout.*
 tests/.*.Rout.save-[3264].*
+tests/.*.Rout-[3264].*
 tests/.*.Rout.save-R[1-9].*
 tests/swaplink-.*
 tests/to-.*

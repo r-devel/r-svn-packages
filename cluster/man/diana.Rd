@@ -150,6 +150,8 @@ dv0 <- diana(votes.repub, stand = TRUE) # default: Euclidean
 dv.2 <- cutree(as.hclust(dv0), k = 2)
 table(dv2 == dv.2)## identical group assignments
 
+str(as.dendrogram(dv0)) # {via as.dendrogram.twins() method}
+
 data(agriculture)
 ## Plot similar to Figure 8 in ref
 \dontrun{plot(diana(agriculture), ask = TRUE)}

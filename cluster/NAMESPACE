@@ -34,7 +34,7 @@ S3method(volume, ellipsoid)
 
 ## register all the method for generics elsewhere in case namespace is
 ## loaded but not currently attached.
-S3method(as.dendrogram, agnes)
+S3method(as.dendrogram, twins)
 S3method(coef, hclust)
 S3method(coef, twins)
 

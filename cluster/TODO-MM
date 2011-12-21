@@ -158,3 +158,4 @@ TODO  (were in ./README_MM which is now eliminated)
 10) Implement the plot for "fuzzy cluster membership" of section 5.4,
     from Kauf+Rouss p. 195 ff :
     I.e. PCA of the membership matrix for the points + "the pure clusters"
+   <---> Export  as.membership() and toCrisp()  in  ./R/fanny.q

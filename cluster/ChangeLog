@@ -1,3 +1,14 @@
+2011-12-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* tests/diana-boots.R (dianaBoot): add a "bootstrap", for considerably more tests.
+	* tests/diana-ex.R: reorganized
+
+	* src/twins.c: newly translated from Fortran, for more future flexibility
+	* src/twins.f: no longer there
+
+	* R/agnes.q (as.dendrogram.twins): define for 'twins' rather than
+	just 'agnes'.
+
 2011-12-03  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/plotpart.q (clusplot.default): xlab, and ylab arguments;
@@ -15,7 +26,7 @@
 
 2011-08-29  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* DESCRIPTION (Version): 1.14.1, (not yet released)
+	* DESCRIPTION (Version): 1.14.1, released to CRAN, 2011-10-16
 
 	* R/silhouette.R (plot.silhouette): col = <one per cluster> had
 	ordering bug.

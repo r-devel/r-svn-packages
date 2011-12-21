@@ -1,5 +1,5 @@
 
-R version 2.13.0 Patched (2011-06-06 r56067)
+R version 2.14.1 RC (2011-12-20 r57943)
 Copyright (C) 2011 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
@@ -25,7 +25,7 @@ Type 'q()' to quit R.
 [6] "/sfs/u/staff/sfs/R/library/64-linux"                    
 [7] "/sfs/u/staff/sfs/R/library/Linux"                       
 [8] "/sfs/s/linux/rhel3_amd64/app/R/R_local/library"         
-[9] "/sfs/u/staff/maechler/R/D/r-patched/F13-64-inst/library"
+[9] "/sfs/u/staff/maechler/R/D/r-patched/F15-64-inst/library"
 > library(cluster)
 > 
 > ####---------- Tests for FANNY  i.e., fanny() --------------------------
@@ -689,7 +689,7 @@ Available components:
  [1] "membership"  "coeff"       "memb.exp"    "clustering"  "k.crisp"    
  [6] "objective"   "convergence" "diss"        "call"        "silinfo"    
 [11] "data"       
-> summary(fanny(ruspini, 4), digits = 9)# `correct' #{clusters}
+> summary(fanny(ruspini, 4), digits = 9)# 'correct' #{clusters}
 Fuzzy Clustering object of class 'fanny' :                      
 m.ship.expon.        2
 objective     422.8389
@@ -1069,10 +1069,10 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.082 0.011 0.102 0 0 
+Time elapsed:  0.094 0.019 0.127 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
-> ## The first two are ``completely fuzzy'' -- and now give a warnings
+> ## The first two are "completely fuzzy" -- and now give a warnings
 > f4.20 <- fanny(chorSub, k = 4, trace.lev = 1) ; f4.20$coef
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 8277.57
@@ -1336,5 +1336,5 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.25 0.016 0.274 0 0 
+Time elapsed:  0.252 0.027 0.297 0 0 
 > 
