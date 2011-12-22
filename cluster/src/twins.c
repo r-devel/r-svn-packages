@@ -370,9 +370,9 @@ L30:
 
 /*     shifting the next object when necessary */
 
-	    if (bdyff <= 0.) {
-		goto L200;
-	    }
+	    if (bdyff <= 0.)
+		break; // out of  "object shifting"  while(.) loop
+
 	    if (jma != jaway) {
 		lchan = ner[jaway];
 		lmz = jma - 1;
@@ -396,8 +396,8 @@ L30:
 	} while (jma != ja);
 
 
-/*     switch the two parts when necessary */
-L200:
+// 200:     switch the two parts when necessary 
+
 	if (ner[ja] >= ner[jmb]) {
 	    int lxxa = ja;
 	    for (int lgrb = jmb; lgrb <= jb; ++lgrb) {
@@ -434,17 +434,17 @@ L200:
  L420:
 	    ja += kwan[ja];
 	    if (ja <= nn) {
-		if (kwan[ja] <= 1) {
+		if (kwan[ja] <= 1)
 		    goto L420;
-		}
-		goto L30;
+		else
+		    goto L30;
 	    }
 	}
 	ja = 1;
-	if (kwan[ja] == 1) {
+	if (kwan[ja] == 1)
 	    goto L420;
-	}
-	goto L30;
+	else
+	    goto L30;
     }
 //____________ End Big Loop _________________________________________________
 

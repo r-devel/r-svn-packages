@@ -10,15 +10,6 @@
 #define _(String) (String)
 #endif
 
-
-/* in ./meet.f --- called from most source files: */
-/* NO LONGER:
- * int F77_NAME(meet)(int *, int *);
-
- * Instead include *inline" definition in
- * ./ind_2.h
- *   ~~~~~~~ */
-
 /* --------- ./clara.c ------------------*/
 
 double randm(int *nrun);
@@ -160,9 +151,6 @@ int F77_NAME(cldaisy)(int *nn, int *jpp, double *x,
 /* R-level: called only from ../tests/dysta-ex.R  (now via .C()): */
 void dysta3(int *nn, int *p, double *x, double *dys,
 	    int *ndyst, int *jtmd, double *valmd, int *jhalt);
-
-/* -------- ./meet.f ---------------------------------- */
-int F77_NAME(meet)(int *l, int *j);
 
 /* -------- ./mona.f ---------------------------------- */
 int F77_NAME(clmona)(int *nn, int *pp, int *x, int *jerr,
