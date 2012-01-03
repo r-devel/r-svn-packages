@@ -1,3 +1,7 @@
+2011-12-25  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: needs Suggests: MASS for data(package=)
+	
 2011-07-19  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: version is 3.1-102
