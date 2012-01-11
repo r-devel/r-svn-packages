@@ -1,3 +1,6 @@
+2012 ??? ??	3.1-51	Change description of 'margin' in ?plot.rpart
+			as suggested by Bill Venables.
+
 2011 Apr 09	3.1-50	Change licence to GPL-2 | GPL-3
 	                Remove set-but-unused variable in src/xval.c
 
