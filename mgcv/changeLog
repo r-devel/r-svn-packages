@@ -1,6 +1,14 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-13
+
+* "re" smooths are no longer subject to side constraint under nesting (since
+  this is almost alway un-necessary and undesirable, and often unexpected).
+
+* side.con modified to allow smooths to be excluded and to allow side 
+  constraint computation to take acount of penalties (unused at present).
+
 1.7-12
 
 * bam can now compute the leading order QR decomposition on a cluster
