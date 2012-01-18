@@ -8,7 +8,7 @@
 }
 \usage{
 diana(x, diss = inherits(x, "dist"), metric = "euclidean", stand = FALSE,
-      keep.diss = n < 100, keep.data = !diss)
+      keep.diss = n < 100, keep.data = !diss, trace.lev = 0)
 }
 \arguments{
   \item{x}{
@@ -50,6 +50,9 @@ diana(x, diss = inherits(x, "dist"), metric = "euclidean", stand = FALSE,
     and/or input data \code{x} should be kept in the result.  Setting
     these to \code{FALSE} can give much smaller results and hence even save
     memory allocation \emph{time}.}
+  \item{trace.lev}{integer specifying a trace level for printing
+    diagnostics during the algorithm.  Default \code{0} does not print
+    anything; higher values print increasingly more.}
 }
 \value{
   an object of class \code{"diana"} representing the clustering;
@@ -57,9 +60,9 @@ diana(x, diss = inherits(x, "dist"), metric = "euclidean", stand = FALSE,
   \code{print}, \code{summary}, \code{plot}.
 
   Further, the class \code{"diana"} inherits from
-  \code{"twins"}.  Therefore, the generic function \code{pltree} can be
-  used on a \code{diana} object, and an \code{\link{as.hclust}} method
-  is available.
+  \code{"twins"}.  Therefore, the generic function \code{\link{pltree}} can be
+  used on a \code{diana} object, and \code{\link{as.hclust}} and
+  \code{\link{as.dendrogram}} methods are available.
 
   A legitimate \code{diana} object is a list with the following components:
   \item{order}{
