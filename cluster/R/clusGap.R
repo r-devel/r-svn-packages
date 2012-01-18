@@ -6,7 +6,7 @@
 ####  "function corresponds to function gap in package SAGx"
 
 ## MM: SAGx is now in Bioconductor --- 1.10.1{devel} or 1.11.1{release}
-##     had gap() *corrected* to re-cluster using FUNcluster
+##     had gap() *corrected* to re-cluster using FUNcluster --> see ./gap-SAGx.R.~orig~
 ##
 ## MM: Package 'lga' -- has gap() and lga and robust lga [-> UBC]
 ##    - it uses  boot() nicely  [2012-01: ORPHANED because  Justin Harrington is amiss]
@@ -65,39 +65,4 @@ clusGap <- function (x, FUNcluster, K.max, B=500, verbose = 1, ...)
               list(Tab = cbind(logW, E.logW, gap = E.logW - logW, SE.sim),
                    ## K.max == nrow(T)
                    n = n, B = B, FUNcluster=FUNcluster))
-}
-
-if(FALSE)##-- SAGx/R/gap.r (May 31, 2007 SAGX_1.10-1.tar.gz {development version})
-# Tibshirani, Walther and Hastie (2000) #
-# Check added 02JUL04;correction to uniform sampling 15MAY06    #
-# Tibshirani, Walther and Hastie (2000) #
-# Check added 02JUL04;correction to uniform sampling 15MAY06    #
-# se added 10SEP06, bug correction 14NOV06
-# bug correction 22MAY07
-gap <- function(data=swiss,class=g,B=500, cluster.func = myclus){
-# data = swiss; class = cl$cluster; B = 100
-library(stats)
-class.tab <- table(class)
-nclus <- length(class.tab)
-if (min(class.tab)==1) stop("Singleton clusters not allowed")
-if(!(length(class)==nrow(data))) stop("Length of class vector differs from nrow of data")
-data <- as.matrix(data)
-data <- scale(data, center = TRUE, scale = FALSE)
-temp1 <- log(sum(by(data,factor(class),intern <- function(x)sum(dist(x)/ncol(x))/2)))
-veigen <- svd(data)$v
-x1 <- crossprod(t(data),veigen) # project data to pc-dimensions #
-z1 <- matrix(data = NA, nrow = nrow(x1), ncol = ncol(x1))
-tots <- vector(length = B)
-for (k in 1:B){
-   for (j in 1:ncol(x1)){
-         min.x <- min(x1[,j]);max.x <- max(x1[,j])
-         z1[,j] <- runif(nrow(x1), min = min.x, max = max.x) # x1[sample(1:nrow(x1),nrow(x1),replace=TRUE),j]
-      }
-z <- crossprod(t(z1),t(veigen))
-new.clus <- cluster.func(data = z, k = nclus)
-new.class <- new.clus$cluster
-tots[k] <- log(sum(by(z, factor(new.class),intern <- function(x) sum(dist(x)/ncol(x))/2)))
-}
-out <- c(mean(tots)-temp1, sqrt(1+1/B)*sd(tots));names(out) <- c("Gap statistic", "one SE of simulation")
-return(out)
 }
