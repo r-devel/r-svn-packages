@@ -1,3 +1,10 @@
+2012-01-17  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/clusGap.R: new clusGap() for computing the cluster gap statistic.
+
+TODO ------ plot() and print() method
+	 
+
 2011-12-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/coef.R (coefHier): newly export coefHier(), interfacing to C's bncoef().
