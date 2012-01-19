@@ -3,6 +3,9 @@
 
 1.7-13
 
+* Namespace modified to import from methods. Dependency on stats and graphics
+  made explicit.
+
 * "re" smooths are no longer subject to side constraint under nesting (since
   this is almost alway un-necessary and undesirable, and often unexpected).
 
@@ -15,8 +18,8 @@
   set up using the parallel package.
 
 * Default k for "tp" and "ds" modified so that it doesn't exceed the 100 + 
-  the null space dimension (to avoid complaints from those too busy to read 
-  the help pages).
+  the null space dimension (to avoid complaints from users smoothing in 
+  quite alot of dimensions). Also defualt sub-sample size reduced to 2000.
 
 * Greater use of BLAS routines in the underlying method code. In particular 
   all leading order operations count steps for gam fitting now use BLAS. 

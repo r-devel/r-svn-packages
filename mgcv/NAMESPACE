@@ -62,7 +62,9 @@ importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,
 #           predict,printCoefmat ,quantile,qqnorm, reformulate,residuals,rnorm,
 #           runif,termplot,terms,terms.formula, uniroot, 
 #           var,vcov)
-#import(stats)
+
+importFrom(stats,anova,influence,cooks.distance,logLik,vcov,residuals,predict,
+           model.matrix)
 importFrom(nlme,Dim,corMatrix,logDet,pdConstruct,pdFactor,pdMatrix)
 #importFrom(Matrix,t,mean,colMeans,colSums,chol,solve,diag)
 import(Matrix)
