@@ -3517,6 +3517,10 @@ set.mgcv.options <- function()
   options(mgcv.vc.logrange=25)
 }
 
+.onLoad <- function(...) {
+  set.mgcv.options()
+}
+
 .onAttach <- function(...) { 
   print.mgcv.version()
   set.mgcv.options()
@@ -3524,11 +3528,12 @@ set.mgcv.options <- function()
 
 .onUnload <- function(libpath) library.dynam.unload("mgcv", libpath)
 
-.First.lib <- function(lib, pkg) {
-  library.dynam("mgcv", pkg, lib)
-  print.mgcv.version()
-  set.mgcv.options()
-}
+#.First.lib <- function(lib, pkg) {
+  ## defunct
+#  library.dynam("mgcv", pkg, lib)
+#  print.mgcv.version()
+#  set.mgcv.options()
+#}
 
 
 ###############################################################################
