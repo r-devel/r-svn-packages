@@ -3,6 +3,12 @@
 
 1.7-13
 
+** The Lanczos routine in mat.c was using a stupidly inefficient check for 
+  convergence of the largest magnitude eigenvectors. This resulted in 
+  far too many Lanczos steps being used in setting up thin plate regression 
+  splines, and a noticeable speed penalty. This is now fixed, with many thanks
+  David Shavlik for reporting the slow down.  
+
 * Namespace modified to import from methods. Dependency on stats and graphics
   made explicit.
 
