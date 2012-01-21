@@ -94,6 +94,8 @@ x <- rbind(matrix(rnorm(150,           sd = 0.1), ncol = 3),
 
 ## note we can  pass 'nstart = 20' to kmeans() :
 gskmn <- clusGap(x, FUN = kmeans, nstart = 20, K.max = 8, B = 60)
+gskmn #-> its print() method
+plot(gskmn, main = "clusGap(., FUN = kmeans, n.start=20, B= 60)")
 set.seed(12)
 system.time(
   gsPam0 <- clusGap(x, FUN = pam, K.max = 8, B = 60)

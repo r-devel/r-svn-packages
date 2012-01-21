@@ -66,3 +66,46 @@ clusGap <- function (x, FUNcluster, K.max, B=500, verbose = 1, ...)
                    ## K.max == nrow(T)
                    n = n, B = B, FUNcluster=FUNcluster))
 }
+
+## FIXME(?)  lga/R/gap.R contains a
+## has for Tibshirani et al (2001):
+        ## ElogWks[k,] <- c(mean(BootOutput), sqrt(var(BootOutput)*(1+1/B)))
+        ## GAP[k] <- ElogWks[k,1] - logWks[k]
+        ## if (k > 1)
+        ##     if(GAP[k-1] >= GAP[k]-ElogWks[k,2] & !doall)
+        ##         finished <- TRUE
+## MM: <==> diff(GAP) = GAP[k] - GAP[k-1] <= +SE.sim[k]
+
+## criteria.DandF() -- Dudoit and Fridlyand (2002)
+## Which should be
+    ## y <- x$data
+    ## crit <- diff(y[which.max(y[,"Gap"]), c("Sks", "Gap")])
+    ## nclust <- min(which(y[,"Gap"] > crit))
+    ## return(ifelse(nclust == nrow(y), NA, nclust))
+
+print.clusGap <- function(x, ...) {
+    stopifnot((K <- nrow(T <- x$Tab)) >= 1)
+    cat("Clustering Gap statistic [\"clusGap\"].\n",
+        sprintf("B=%d simulated reference sets, k = 1..%d\n",x$B, K), sep="")
+    gap <- T[,"gap"]
+    nc <- which(diff(gap) <= T[-1,"SE.sim"])[1] #-> NA if there's none
+    cat(" --> Number of clusters (maximal gap 'modulo' 1 S.E. rule):", nc, "\n")
+    print(T, ...)
+    invisible(x)
+}
+
+plot.clusGap <- function(x, type="b", xlab = "k", ylab = expression(Gap[k]),
+                         do.arrows=TRUE,
+                         arrowArgs = list(col="red3", length=1/16, angle=90, code=3),
+                         ...)
+{
+    stopifnot(is.matrix(Tab <- x$Tab), is.numeric(Tab))
+    K <- nrow(Tab)
+    k <- seq_len(K) # == 1,2,... k
+    gap <- Tab[, "gap"]
+    plot(k, gap, type=type, xlab=xlab, ylab=ylab, ...)
+    if(do.arrows)
+	do.call(arrows,
+		c(list(k, gap+ Tab[, "SE.sim"], k, gap- Tab[, "SE.sim"]), arrowArgs))
+    invisible()
+}
