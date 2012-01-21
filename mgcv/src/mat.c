@@ -746,7 +746,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
           4. Could use selective orthogonalization, but cost of full orth is only 2nj, while n^2 of method is
              unavoidable, so probably not worth it.  
 */
-  int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,neg_conv,pos_conv,ni,pi,neg_closed,pos_closed,converged,incx=1;
+  int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,ni,pi,converged,incx=1;
   double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*zp,*qp,normTj,eps_stop,max_err,alpha=1.0,beta=0.0;
   unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
   const char uplo='U';
