@@ -67,8 +67,9 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
     memory allocation \emph{time}.}
 }
 \value{
-  an object of class \code{"agnes"} representing the clustering.
-  See \code{\link{agnes.object}} for details.
+  an object of class \code{"agnes"} (which extends \code{"twins"})
+  representing the clustering.  See \code{\link{agnes.object}} for
+  details, and methods applicable.
 }
 \details{
   \code{agnes} is fully described in chapter 5 of Kaufman and Rousseeuw (1990).
@@ -174,9 +175,21 @@ agnS <- agnes(votes.repub, method = "flexible", par.meth = 0.6)
 plot(agnS)
 par(op)
 
+## Exploring the dendrogram structure
+(d2 <- as.dendrogram(agn2)) # two main branches
+d2[[1]] # the first branch
+d2[[2]] # the 2nd one  { 8 + 42  = 50 }
+d2[[1]][[1]]# first sub-branch of branch 1 .. and shorter form
+identical(d2[[c(1,1)]],
+          d2[[1]][[1]])
+## a "textual picture" of the dendrogram :
+str(d2)
+
 data(agriculture)
+
 ## Plot similar to Figure 7 in ref
-\dontrun{ plot(agnes(agriculture), ask = TRUE)}
+\dontrun{plot(agnes(agriculture), ask = TRUE)
+}
 \testonly{plot(agnes(agriculture))}
 }
 \keyword{cluster}
