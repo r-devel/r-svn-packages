@@ -21,19 +21,17 @@ clusGap <- function (x, FUNcluster, K.max, B=500, verbose = 1, ...)
 
     if(is.data.frame(x))
         x <- as.matrix(x)
-
+    ii <- seq_len(n)
     W.k <- function(X, kk) {
         clus <- if(kk > 1) FUNcluster(X, kk, ...)$cluster else rep.int(1L, nrow(X))
+### Just for debugging
+###        clus <- if(kk > 1) FUNcluster(X, kk)$cluster else rep.int(1L, nrow(X))
         ##                 ---------- =  =       -------- kmeans() has 'cluster'; pam() 'clustering'
-        ## FIXME: instead of by(), use tapply(1:n, factor(clustering), function(x) ..)
-        ## i.e.   vapply(split(x, clustering), function(x) ..,  0.)
-        0.5* sum(by(X, factor(clus),
-                    function(x) ##D { cat(sprintf(" inside W.k: (n, p) = (%d, %d)\n", nrow(x),ncol(x)))
-                                 sum(dist(x)/nrow(x)) ## MM{FIXED}: had ncol(x) !
-                             ##D}
-                    ))
+	## FIXME(still): instead of tapply(), use
+	## i.e.	  vapply(split(.., clustering), function(x) ..,	 0.)
+	0.5* sum(tapply(ii, clus,
+			function(I) { xs <- X[I,, drop=FALSE] ; sum(dist(xs)/nrow(xs)) }))
     }
-
     logW <- E.logW <- SE.sim <- numeric(K.max)
     if(verbose) cat("Clustering k = 1,2,..., K.max (= ",K.max,"): .. ", sep='')
     for(k in 1:K.max)
@@ -83,13 +81,17 @@ clusGap <- function (x, FUNcluster, K.max, B=500, verbose = 1, ...)
     ## nclust <- min(which(y[,"Gap"] > crit))
     ## return(ifelse(nclust == nrow(y), NA, nclust))
 
-print.clusGap <- function(x, ...) {
-    stopifnot((K <- nrow(T <- x$Tab)) >= 1)
+print.clusGap <- function(x, SE.factor = 1, ...) {
+    stopifnot((K <- nrow(T <- x$Tab)) >= 1, SE.factor >= 0)
     cat("Clustering Gap statistic [\"clusGap\"].\n",
         sprintf("B=%d simulated reference sets, k = 1..%d\n",x$B, K), sep="")
     gap <- T[,"gap"]
-    nc <- which(diff(gap) <= T[-1,"SE.sim"])[1] #-> NA if there's none
-    cat(" --> Number of clusters (maximal gap 'modulo' 1 S.E. rule):", nc, "\n")
+    ## TODO?  Instead of just SE.factor, allow even more general "k_opt" rules
+    nc <- which.max(gap)
+    if(any(ii <- gap[seq_len(nc - 1)] >= gap[nc] - SE.factor * T[nc,"SE.sim"]))
+	nc <- which(ii)[1]
+    cat(sprintf(" --> Number of clusters (= maximal gap 'modulo'  %g S.E. rule): %d\n",
+                SE.factor, nc))
     print(T, ...)
     invisible(x)
 }
