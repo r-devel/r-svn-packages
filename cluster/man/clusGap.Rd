@@ -1,6 +1,8 @@
 \name{clusGap}
-\alias{clusGap}
 \title{Gap Statistic for Estimating the Number of Clusters}
+\alias{clusGap}
+\alias{print.clusGap}
+\alias{plot.clusGap}
 \description{
   Calculates a goodness of clustering measure, the \dQuote{gap}
   statistic.  For each number of clusters \eqn{k}, it compares
@@ -10,6 +12,8 @@
 }
 \usage{
 clusGap(x, FUNcluster, K.max, B = 500, verbose=1, \dots)
+
+\S3method{print}{clusGap}(x, SE.factor = 1, \dots)
 }
 \arguments{
   \item{x}{numeric matrix or \code{\link{data.frame}}.}
@@ -28,6 +32,10 @@ clusGap(x, FUNcluster, K.max, B = 500, verbose=1, \dots)
     sample.}
   \item{\dots}{optionally further arguments for \code{FUNcluster()}, see
     \code{kmeans} example below.}
+  \item{SE.factor}{for the \code{print()} method only: When determining
+    the optimal number of clusters, Tibshirani et al. proposed the
+    \dQuote{1 S.E.}-rule.  Using an \code{SE.factor} \eqn{f}, the
+    \dQuote{f S.E.}-rule is used, more generally.}
 }
 \details{
   The main result \code{<res>$Tab[,"gap"]} of course is from
@@ -35,9 +43,8 @@ clusGap(x, FUNcluster, K.max, B = 500, verbose=1, \dots)
   equivalently, depending on the initial random seed (see
   \code{\link{set.seed}()}).
   On the other hand, in our experience, using \code{B = 500} gives
-  quite precise results such that the gap plot
-  % FIXME: give example, use method  plot.clusGap() ...
-  is basically unchanged after an another run.
+  quite precise results such that the gap plot is basically unchanged
+  after an another run.
 }
 \value{
   an object of S3 class \code{"clusGap"}, basically a list with
@@ -108,14 +115,18 @@ system.time(
 )
 ## and show that it gives the same:
 stopifnot(identical(gsPam1[-4], gsPam0[-4]))
+gsPam1
 
-%% FIXME: write and showplot method
 gs.pam.RU <- clusGap(ruspini, FUN = pam1, K.max = 8, B = 60)
-with(gs.pam.RU, {
- plot(1:8, Tab[, "gap"], xlab = "k", ylab = expression(Gap[k]), type="b")
- arrows(1:8, Tab[, "gap"]+ Tab[, "SE.sim"],
-	1:8, Tab[, "gap"]- Tab[, "SE.sim"],
-	col="red3",  angle=90,  code=3, length=1/16)
-})
+gs.pam.RU
+plot(gs.pam.RU)
+
+\donttest{## This takes a minute..
+## No clustering ==> k = 1 ("one cluster") should be optimal:
+Z <- matrix(rnorm(256*3), 256,3)
+gsP.Z <- clusGap(Z, FUN = pam1, K.max = 8, B = 200)
+plot(gsP.Z)
+gsP.Z
+}% dont
 }
 \keyword{cluster}
