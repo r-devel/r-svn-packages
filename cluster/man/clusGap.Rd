@@ -119,7 +119,8 @@ gsPam1
 
 gs.pam.RU <- clusGap(ruspini, FUN = pam1, K.max = 8, B = 60)
 gs.pam.RU
-plot(gs.pam.RU)
+plot(gs.pam.RU, main = "Gap statistic for the 'ruspini' data")
+mtext("k = 4 is best .. and  k = 5  pretty close")
 
 \donttest{## This takes a minute..
 ## No clustering ==> k = 1 ("one cluster") should be optimal:
