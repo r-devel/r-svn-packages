@@ -12,7 +12,7 @@
 ##    - it uses  boot() nicely  [2012-01: ORPHANED because  Justin Harrington is amiss]
 ## MM: renamed arguments, and changed almost everything
 
-clusGap <- function (x, FUNcluster, K.max, B=500, verbose = 1, ...)
+clusGap <- function (x, FUNcluster, K.max, B = 100, verbose = interactive(), ...)
 {
     stopifnot(is.function(FUNcluster), length(dim(x)) == 2, K.max >= 2,
               (n <- nrow(x)) >= 1, (p <- ncol(x)) >= 1)
@@ -72,15 +72,19 @@ clusGap <- function (x, FUNcluster, K.max, B=500, verbose = 1, ...)
         ## if (k > 1)
         ##     if(GAP[k-1] >= GAP[k]-ElogWks[k,2] & !doall)
         ##         finished <- TRUE
+##  so they effectively only look for the *first* (local) maximum which ..
 ## MM: <==> diff(GAP) = GAP[k] - GAP[k-1] <= +SE.sim[k]
 
+
 ## criteria.DandF() -- Dudoit and Fridlyand (2002)
-## Which should be
+## ---------------- looks at the *global* maximum and then to the left..
     ## y <- x$data
     ## crit <- diff(y[which.max(y[,"Gap"]), c("Sks", "Gap")])
     ## nclust <- min(which(y[,"Gap"] > crit))
     ## return(ifelse(nclust == nrow(y), NA, nclust))
 
+## FIXME, at least two methods to find k_{opt} -- should provide *function*
+## to estimate that, and then call the function from the print() method
 print.clusGap <- function(x, SE.factor = 1, ...) {
     stopifnot((K <- nrow(T <- x$Tab)) >= 1, SE.factor >= 0)
     cat("Clustering Gap statistic [\"clusGap\"].\n",

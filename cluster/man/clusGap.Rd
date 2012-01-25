@@ -11,8 +11,10 @@
   distribution.
 }
 \usage{
-clusGap(x, FUNcluster, K.max, B = 500, verbose=1, \dots)
+clusGap(x, FUNcluster, K.max, B = 100, verbose = interactive(), \dots)
 
+%% FIXME, at least two methods to find k_{opt} -- should provide *function*
+%% to estimate that, and then call the function from the print() method
 \S3method{print}{clusGap}(x, SE.factor = 1, \dots)
 }
 \arguments{
@@ -36,6 +38,10 @@ clusGap(x, FUNcluster, K.max, B = 500, verbose=1, \dots)
     the optimal number of clusters, Tibshirani et al. proposed the
     \dQuote{1 S.E.}-rule.  Using an \code{SE.factor} \eqn{f}, the
     \dQuote{f S.E.}-rule is used, more generally.}
+%%% FIXME --- we currently use the "global maximum - 1 SE rule"
+%%% -----  (as Dudoit and Fridlyand depicted GAP)
+%%% ----- However Tibshirani et al only looked (left of) the
+%% *FIRST* local maximum... MM. I think that is "dangerous"..
 }
 \details{
   The main result \code{<res>$Tab[,"gap"]} of course is from
