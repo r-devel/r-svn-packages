@@ -1,13 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-issues... tprs setup still very inefficient: contains steps that made 
-prediction almost as slow as setup... could really do with complete re-write 
-elliminating old matrix libraries. 
-
 1.7-14
 
-* TPRS prediction code made more efficient, partly by use of BLAS.
+* TPRS prediction code made more efficient, partly by use of BLAS. Large
+  dataset setup also made more efficient using BLAS.
 
 1.7-13
 
