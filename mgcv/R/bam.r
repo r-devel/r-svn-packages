@@ -32,18 +32,16 @@ qr.update <- function(Xn,yn,R=matrix(0,0,ncol(Xn)),f=array(0,0),y.norm2=0)
 ## Let X = QR and f = Q'y. This routine updates f and R
 ## when Xn is appended to X and yn appended to y. If R has no rows
 ## then initial QR of Xn is performed. ||y||^2 is accumulated as well
-{ #qrx <- qr(Xn)
-  p <- ncol(Xn)
-  #fn <- qr.qty(qrx,yn)[1:p] 
+{ p <- ncol(Xn) 
   y.norm2 <- y.norm2+sum(yn*yn)
   if (nrow(R)) {
     Xn <- rbind(R,Xn)
     yn <- c(f,yn)
   }
-  qrx <- qr(Xn,tol=0)
+  qrx <- qr(Xn,tol=0,LAPACK=TRUE)
   fn <- qr.qty(qrx,yn)[1:p]
-
-  list(R = qr.R(qrx),f=fn,y.norm2=y.norm2)
+  rp <- qrx$pivot;rp[rp] <- 1:p # reverse pivot
+  list(R = qr.R(qrx)[,rp],f=fn,y.norm2=y.norm2)
 }
 
 
@@ -264,9 +262,10 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
           wt <- c(wt,res[[i]]$wt); dev <- dev + res[[i]]$dev
           y.norm2 <- y.norm2 + res[[i]]$y.norm2
         }         
-        qrx <- qr(R,tol=0) 
+        qrx <- qr(R,tol=0,LAPACK=TRUE) 
         f <- qr.qty(qrx,f)[1:ncol(R)]
-        qrx <- list(R=qr.R(qrx),f=f,y.norm2=y.norm2)
+        rp <- qrx$pivot;rp[rp] <- 1:ncol(R) # reverse pivot
+        qrx <- list(R=qr.R(qrx)[,rp],f=f,y.norm2=y.norm2)
       } 
 
       G$n <- nobs
@@ -683,9 +682,10 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
          R <- rbind(R,res[[i]]$R); f <- c(f,res[[i]]$f)
          y.norm2 <- y.norm2 + res[[i]]$y.norm2
        }         
-       qrx <- qr(R,tol=0) 
+       qrx <- qr(R,tol=0,LAPACK=TRUE) 
        f <- qr.qty(qrx,f)[1:ncol(R)]
-       qrx <- list(R=qr.R(qrx),f=f,y.norm2=y.norm2)
+       rp <- qrx$pivot;rp[rp] <- 1:ncol(R) # reverse pivot
+       qrx <- list(R=qr.R(qrx)[,rp],f=f,y.norm2=y.norm2)
        yX.last <- res[[n.threads]]$yX.last
      } 
      G$n <- n

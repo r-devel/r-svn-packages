@@ -6,6 +6,9 @@
 * TPRS prediction code made more efficient, partly by use of BLAS. Large
   dataset setup also made more efficient using BLAS.
 
+* bam now uses LAPACK version of qr, for model matrix QR, since it's 
+  faster and uses BLAS.
+
 1.7-13
 
 ** The Lanczos routine in mat.c was using a stupidly inefficient check for 
