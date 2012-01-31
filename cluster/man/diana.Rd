@@ -158,6 +158,6 @@ str(as.dendrogram(dv0)) # {via as.dendrogram.twins() method}
 data(agriculture)
 ## Plot similar to Figure 8 in ref
 \dontrun{plot(diana(agriculture), ask = TRUE)}
-\testonly{plot(diana(agriculture))}
+\dontshow{plot(diana(agriculture))}
 }
 \keyword{cluster}

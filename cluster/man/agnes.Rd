@@ -142,10 +142,10 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
   \emph{Finding Groups in Data: An Introduction to Cluster Analysis}.
   Wiley, New York.
 
-  Anja Struyf, Mia Hubert & Peter J. Rousseeuw (1996):
+  Anja Struyf, Mia Hubert & Peter J. Rousseeuw (1996)
   Clustering in an Object-Oriented Environment.
-  \emph{Journal of Statistical Software}, \bold{1}.
-  \url{http://www.stat.ucla.edu/journals/jss/}
+  \emph{Journal of Statistical Software} \bold{1}.
+  \url{http://www.jstatsoft.org/v01/i04}
 
   Struyf, A., Hubert, M. and Rousseeuw, P.J. (1997). Integrating
   Robust Clustering Techniques in S-PLUS,
@@ -188,8 +188,7 @@ str(d2)
 data(agriculture)
 
 ## Plot similar to Figure 7 in ref
-\dontrun{plot(agnes(agriculture), ask = TRUE)
-}
-\testonly{plot(agnes(agriculture))}
+\dontrun{plot(agnes(agriculture), ask = TRUE)}
+\dontshow{plot(agnes(agriculture))}
 }
 \keyword{cluster}
