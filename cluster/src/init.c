@@ -29,11 +29,12 @@ static R_NativePrimitiveArgType cl_fanny_t[27] = {
     /*obj: */ REALSXP, INTSXP, REALSXP, REALSXP, REALSXP, INTSXP
 };
 
-static R_NativePrimitiveArgType cl_pam_t[23] = {
+static R_NativePrimitiveArgType cl_pam_t[24] = {
     INTSXP, INTSXP, INTSXP, REALSXP, REALSXP,
     /*jdyss: */ INTSXP, REALSXP, INTSXP,  INTSXP, INTSXP,
     /*nrepr: */ LGLSXP, INTSXP, /*radus: */ REALSXP, REALSXP, REALSXP, REALSXP,
-    /*ttsyl: */ REALSXP, REALSXP, INTSXP, INTSXP,  REALSXP, REALSXP, INTSXP
+    /*ttsyl: */ REALSXP, REALSXP, INTSXP, INTSXP,  REALSXP, REALSXP, INTSXP,
+    /*optim: */ INTSXP
 };
 
 static R_NativePrimitiveArgType spannel_t[12] = { // ./spannel.c :

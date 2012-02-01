@@ -1,6 +1,11 @@
 Things that were on my TODO list and have been accomplished
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ (newest 1st)
 
+o Incorporate the PAM speedup patches by Matthias Studer (unige.ch).
+  It's based on a good paper etc
+  ---> ~/R/MM/Pkg-ex/cluster/pamonce-mail.txt
+  ---> ~/R/MM/Pkg-ex/cluster/pamonce.R
+
 o  daisy() -- now allows 'metric = "gower"'
 	  which allows to use "Gower's formula" also for the
 	  all-continuous case.

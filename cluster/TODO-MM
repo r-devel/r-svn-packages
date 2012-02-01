@@ -3,6 +3,13 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
+o clusGap() : print() method: note that Tibshirani et al. proposed
+    (see their large data example !)
+              a different method than the one we implemnt currently
+   --> provide both(!)
+
+
+
 o clara() to work with *daisy*-like distances, not just L2 & L1.
 
 o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)

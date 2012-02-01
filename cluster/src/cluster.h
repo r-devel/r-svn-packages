@@ -86,12 +86,13 @@ void cl_pam(int *nn, int *jpp, int *kk, double *x, double *dys,
 	    int *ndyst, int *nsend, int *nrepr, int *nelem,
 	    double *radus, double *damer, double *ttd, double *separ,
 	    double *ttsyl, double *obj, int *med, int *ncluv,
-	    double *clusinf, double *sylinf, int *nisol);
+	    double *clusinf, double *sylinf, int *nisol, int* optim);
 
 void bswap(int kk, int nsam, int *nrepr,
+	   /* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */
 	   Rboolean med_given, Rboolean do_swap, int trace_lev,
 	   double *dysma, double *dysmb, double *beter,
-	   double *dys, double *sky, double s, double *obj);
+	   double *dys, double s, double *obj, int *pamonce);
 
 void cstat(int *kk, int *nn, int *nsend, int *nrepr, Rboolean all_stats,
 	   double *radus, double *damer, double *ttd, double *separ, double *s,
