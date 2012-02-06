@@ -24,13 +24,9 @@ clusGap <- function (x, FUNcluster, K.max, B = 100, verbose = interactive(), ...
     ii <- seq_len(n)
     W.k <- function(X, kk) {
         clus <- if(kk > 1) FUNcluster(X, kk, ...)$cluster else rep.int(1L, nrow(X))
-### Just for debugging
-###        clus <- if(kk > 1) FUNcluster(X, kk)$cluster else rep.int(1L, nrow(X))
         ##                 ---------- =  =       -------- kmeans() has 'cluster'; pam() 'clustering'
-	## FIXME(still): instead of tapply(), use
-	## i.e.	  vapply(split(.., clustering), function(x) ..,	 0.)
-	0.5* sum(tapply(ii, clus,
-			function(I) { xs <- X[I,, drop=FALSE] ; sum(dist(xs)/nrow(xs)) }))
+	0.5* sum(vapply(split(ii, clus),
+			function(I) { xs <- X[I,, drop=FALSE] ; sum(dist(xs)/nrow(xs)) }, 0.))
     }
     logW <- E.logW <- SE.sim <- numeric(K.max)
     if(verbose) cat("Clustering k = 1,2,..., K.max (= ",K.max,"): .. ", sep='')
@@ -65,8 +61,7 @@ clusGap <- function (x, FUNcluster, K.max, B = 100, verbose = interactive(), ...
                    n = n, B = B, FUNcluster=FUNcluster))
 }
 
-## FIXME(?)  lga/R/gap.R contains a
-## has for Tibshirani et al (2001):
+## lga/R/gap.R   --- has for Tibshirani et al (2001):
         ## ElogWks[k,] <- c(mean(BootOutput), sqrt(var(BootOutput)*(1+1/B)))
         ## GAP[k] <- ElogWks[k,1] - logWks[k]
         ## if (k > 1)
@@ -83,19 +78,56 @@ clusGap <- function (x, FUNcluster, K.max, B = 100, verbose = interactive(), ...
     ## nclust <- min(which(y[,"Gap"] > crit))
     ## return(ifelse(nclust == nrow(y), NA, nclust))
 
-## FIXME, at least two methods to find k_{opt} -- should provide *function*
-## to estimate that, and then call the function from the print() method
-print.clusGap <- function(x, SE.factor = 1, ...) {
+maxSE <- function(f, SE.f,
+		  method = c("firstSEmax", "Tibs2001SEmax",
+		  "globalSEmax", "firstmax", "globalmax"),
+		  SE.factor = 1)
+{
+    method <- match.arg(method)
+    stopifnot((K <- length(f)) >= 1, K == length(SE.f), SE.f >= 0, SE.factor >= 0)
+    fSE <- SE.factor * SE.f
+    switch(method,
+	   "firstmax" = { ## the first local maximum  (== firstSEmax with SE.factor == 0)
+	       decr <- (dg <- diff(f)) <= 0 # length K-1
+	       if(any(decr)) which.max(decr) else K # the first TRUE, or K
+	   },
+	   "globalmax" = {
+	       which.max(f)
+	   },
+	   "Tibs2001SEmax" = { ## The one Tibshirani et al (2001) proposed:
+	       ## "the smallest k such that f(k) >= f(k+1) - s_{k+1}"
+	       g.s <- f - fSE
+	       if(any(mp <- f[-K] >= g.s[-1])) which.max(mp) else K
+	   },
+	   "firstSEmax" = { ## M.Maechler(2012): rather ..
+	       ## look at the first *local* maximum and then to the left ..:
+	       decr <- (dg <- diff(f)) <= 0 # length K-1
+	       nc <- if(any(decr)) which.max(decr) else K # the first TRUE, or K
+	       if(any(mp <- f[seq_len(nc - 1)] >= f[nc] - fSE[nc]))
+		   which(mp)[1]
+	       else nc
+	   },
+	   "globalSEmax" = { ## Dudoit and Fridlyand (2002) *thought* Tibshirani proposed..
+	       ## in 'lga', see criteria.DandF():
+	       ## looks at the *global* maximum and then to the left..
+	       nc <- which.max(f)
+	       if(any(mp <- f[seq_len(nc - 1)] >= f[nc] - fSE[nc]))
+		   which(mp)[1]
+	       else nc
+	   })
+}
+
+print.clusGap <- function(x, method="firstSEmax", SE.factor = 1, ...)
+{
+    method <- match.arg(method, choices = eval(formals(maxSE)$method))
     stopifnot((K <- nrow(T <- x$Tab)) >= 1, SE.factor >= 0)
     cat("Clustering Gap statistic [\"clusGap\"].\n",
         sprintf("B=%d simulated reference sets, k = 1..%d\n",x$B, K), sep="")
-    gap <- T[,"gap"]
-    ## TODO?  Instead of just SE.factor, allow even more general "k_opt" rules
-    nc <- which.max(gap)
-    if(any(ii <- gap[seq_len(nc - 1)] >= gap[nc] - SE.factor * T[nc,"SE.sim"]))
-	nc <- which(ii)[1]
-    cat(sprintf(" --> Number of clusters (= maximal gap 'modulo'  %g S.E. rule): %d\n",
-                SE.factor, nc))
+    nc <- maxSE(f = T[,"gap"], SE.f = T[,"SE.sim"],
+                method=method, SE.factor=SE.factor)
+    cat(sprintf(" --> Number of clusters (method '%s'%s): %d\n",
+		method, if(grepl("SE", method))
+		sprintf(", SE.factor=%g",SE.factor) else "", nc))
     print(T, ...)
     invisible(x)
 }

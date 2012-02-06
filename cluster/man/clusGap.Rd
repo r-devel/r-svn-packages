@@ -1,21 +1,32 @@
 \name{clusGap}
 \title{Gap Statistic for Estimating the Number of Clusters}
 \alias{clusGap}
+\alias{maxSE}
 \alias{print.clusGap}
 \alias{plot.clusGap}
 \description{
-  Calculates a goodness of clustering measure, the \dQuote{gap}
-  statistic.  For each number of clusters \eqn{k}, it compares
-  \eqn{\log(W(k))} with \eqn{E^*[\log(W(k))]} where the latter is
-  defined via bootstrapping, i.e. simulating from a reference
+  \code{clusGap()} calculates a goodness of clustering measure, the
+  \dQuote{gap} statistic.  For each number of clusters \eqn{k}, it
+  compares \eqn{\log(W(k))} with \eqn{E^*[\log(W(k))]} where the latter
+  is defined via bootstrapping, i.e. simulating from a reference
   distribution.
+
+  \code{maxSE(f, SE.f)} determines the location of the \bold{maximum}
+  of \code{f}, taking a \dQuote{1-SE rule} into account for the
+  \code{*SE*} methods.  The default method looks for the first (local)
+  maximum which is at least 1 standard error larger than the previous
+  values.  This corresponds to Tibshirani et al's recommendation of
+  determining the number of clusters from the gap statistics and their
+  standard deviations.
 }
 \usage{
 clusGap(x, FUNcluster, K.max, B = 100, verbose = interactive(), \dots)
 
-%% FIXME, at least two methods to find k_{opt} -- should provide *function*
-%% to estimate that, and then call the function from the print() method
-\S3method{print}{clusGap}(x, SE.factor = 1, \dots)
+maxSE(f, SE.f,
+      method = c("firstSEmax", "Tibs2001SEmax", "globalSEmax",
+                 "firstmax", "globalmax"),
+      SE.factor = 1)
+\S3method{print}{clusGap}(x, method = "firstSEmax", SE.factor = 1, \dots)
 }
 \arguments{
   \item{x}{numeric matrix or \code{\link{data.frame}}.}
@@ -34,14 +45,40 @@ clusGap(x, FUNcluster, K.max, B = 100, verbose = interactive(), \dots)
     sample.}
   \item{\dots}{optionally further arguments for \code{FUNcluster()}, see
     \code{kmeans} example below.}
-  \item{SE.factor}{for the \code{print()} method only: When determining
+  \item{f}{numeric vector of \sQuote{function values}, of length
+      \eqn{K}, whose (\dQuote{1 SE respected}) maximum we want.}
+  \item{SE.f}{numeric vector of length \eqn{K} of standard errors of \code{f}.}
+  \item{method}{character string indicating how the \dQuote{optimal}
+    number of clusters, \eqn{\hat k}{k^}, is computed from the gap
+    statistics (and their standard deviations), or more generally how
+    the location \eqn{\hat k}{k^} of the maximum of \eqn{f_k}{f[k]}
+    should be determined.
+
+    %% -> ../R/clusGap.R
+    \describe{
+      \item{\code{"globalmax"}:}{simply corresponds to the global maximum,
+	i.e., is \code{which.max(f)}}
+      \item{\code{"firstmax"}:}{gives the location of the first \emph{local}
+	maximum.}
+      \item{\code{"Tibs2001SEmax"}:}{uses the criterion, Tibshirani et
+	al(2001) proposed: \dQuote{the smallest \eqn{k} such that \eqn{f(k)
+	    \ge f(k+1) - s_{k+1}}}.  Note that this chooses \eqn{k = 1}
+	when all standard deviations are larger than the differences
+	\eqn{f(k+1) - f(k)}.}
+      \item{\code{"localSEmax"}:}{location of the first \eqn{f()} value
+	which is not larger than the first \emph{local} maximum minus
+	\code{SE.factor * SE.f[]}, i.e, within an \dQuote{f S.E.} range
+	of the maximum (see also \code{SE.factor}).}
+      \item{\code{"globalSEmax"}:}{location of the first \eqn{f()} value
+	which is not larger than the first \emph{local} maximum minus
+	\code{SE.factor * SE.f[]}, i.e, within an \dQuote{f S.E.} range
+	of the maximum (see also \code{SE.factor}).}
+    }
+  }
+  \item{SE.factor}{[When \code{method} contains \code{"SE"}] Determining
     the optimal number of clusters, Tibshirani et al. proposed the
     \dQuote{1 S.E.}-rule.  Using an \code{SE.factor} \eqn{f}, the
     \dQuote{f S.E.}-rule is used, more generally.}
-%%% FIXME --- we currently use the "global maximum - 1 SE rule"
-%%% -----  (as Dudoit and Fridlyand depicted GAP)
-%%% ----- However Tibshirani et al only looked (left of) the
-%% *FIRST* local maximum... MM. I think that is "dangerous"..
 }
 \details{
   The main result \code{<res>$Tab[,"gap"]} of course is from
@@ -57,15 +94,18 @@ clusGap(x, FUNcluster, K.max, B = 100, verbose = interactive(), \dots)
   components
   \item{Tab}{a matrix with \code{K.max} rows and 4 columns, named
     "logW", "E.logW", "gap", and "SE.sim",
-    where \code{gap = E.logW - logW}
-    ...... %% FIXME
+    where \code{gap = E.logW - logW}, and \code{SE.sim} corresponds to
+    the standard error of \code{gap}, \code{SE.sim[k]=}\eqn{s_k}{s[k]},
+    where \eqn{s_k := \sqrt{1 + 1/B} sd^*(gap_j)}{s[k] := sqrt(1 + 1/B)
+    sd^*(gap[])}, and \eqn{sd^*()} is the standard deviation of the
+    simulated (\dQuote{bootstrapped}) gap values.
   }
   \item{n}{number of observations, i.e., \code{nrow(x)}.}
   \item{B}{input \code{B}}
   \item{FUNcluster}{input function \code{FUNcluster}}
 }
 \references{
-  T. Hastie, R. Tibshirani and G. Walther (2001)
+  Tibshirani, R., Walther, G. and Hastie, T. (2001).
   Estimating the number of data clusters via the Gap statistic.
   \emph{Journal of the Royal Statistical Society B}, \bold{63}, 411--423.
 
@@ -96,6 +136,17 @@ clusGap(x, FUNcluster, K.max, B = 100, verbose = interactive(), \dots)
   %\code{\link[SGAx]{gap}} in Bioconductor package \pkg{SGAx}.
 }
 \examples{
+### --- maxSE() methods -------------------------------------------
+(mets <- eval(formals(maxSE)$method))
+fk <- c(2,3,5,4,7,8,5,4)
+sk <- c(1,1,2,1,1,3,1,1)/2
+## use plot.clusGap():
+plot(structure(class="clusGap", list(Tab = cbind(gap=fk, SE.sim=sk))))
+## Note that 'firstmax' and 'globalmax' are always at 3 and 6 :
+sapply(c(1/4, 1,2,4), function(SEf)
+        sapply(mets, function(M) maxSE(fk, sk, method = M, SE.factor = SEf)))
+
+### --- clusGap() -------------------------------------------------
 ## ridiculously nicely separated clusters in 3 D :
 x <- rbind(matrix(rnorm(150,           sd = 0.1), ncol = 3),
            matrix(rnorm(150, mean = 1, sd = 0.1), ncol = 3),
@@ -122,6 +173,8 @@ system.time(
 ## and show that it gives the same:
 stopifnot(identical(gsPam1[-4], gsPam0[-4]))
 gsPam1
+print(gsPam1, method="globalSEmax")
+print(gsPam1, method="globalmax")
 
 gs.pam.RU <- clusGap(ruspini, FUN = pam1, K.max = 8, B = 60)
 gs.pam.RU
@@ -134,6 +187,6 @@ Z <- matrix(rnorm(256*3), 256,3)
 gsP.Z <- clusGap(Z, FUN = pam1, K.max = 8, B = 200)
 plot(gsP.Z)
 gsP.Z
-}% dont
+}%end{dont..}
 }
 \keyword{cluster}

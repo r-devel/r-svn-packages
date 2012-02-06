@@ -7,7 +7,7 @@ export(clusplot, pltree, silhouette, volume)
 export(agnes, clara, daisy, diana, fanny, mona, pam)
 ## and the rest
 export(bannerplot, ellipsoidhull, ellipsoidPoints,
-       clusGap,
+       clusGap, maxSE,
        lower.to.upper.tri.inds, upper.to.lower.tri.inds,
        meanabsdev, sizeDiss, sortSilhouette)
 

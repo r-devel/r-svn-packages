@@ -1,3 +1,8 @@
+2012-02-06  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/clusGap.R (maxSE): with 5 methods to compute "maximal gap",
+	used also in print() method.
+
 2012-01-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/clusGap.R (print.clusGap, plot.clusGap): added
