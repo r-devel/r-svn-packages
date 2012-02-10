@@ -585,7 +585,10 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
   X<-tensor.prod.model.matrix(Xm)
   if (object$mp) # multiple penalties
   { S<-tensor.prod.penalties(Sm)
-    for (i in m:1) if (object$fx[i]) S[[i]]<-NULL # remove penalties for un-penalized margins
+    for (i in m:1) if (object$fx[i]) { 
+      S[[i]]<-NULL # remove penalties for un-penalized margins
+      r <- r[-i]   # remove corresponding rank from list
+    }
   } else # single penalty
   { S<-Sm[[1]];r<-object$margin[[i]]$rank
     if (m>1) for (i in 2:m) 

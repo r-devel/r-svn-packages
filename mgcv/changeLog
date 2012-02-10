@@ -3,6 +3,9 @@
 
 1.7-14
 
+* minor change to te constructor. Any unpenalized margin now has 
+  corresponding penalty rank dropped along with penalty.
+
 * Code for handling sp's fixed at exactly zero was badly thought out, and 
   could easily fail. fixed.
 
