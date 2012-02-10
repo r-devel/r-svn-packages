@@ -3,6 +3,9 @@
 
 1.7-14
 
+* Code for handling sp's fixed at exactly zero was badly thought out, and 
+  could easily fail. fixed.
+
 * TPRS prediction code made more efficient, partly by use of BLAS. Large
   dataset setup also made more efficient using BLAS.
 

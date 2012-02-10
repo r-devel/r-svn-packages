@@ -885,7 +885,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 ## L into columns relating to free log smoothing parameters,
 ## and columns, L0, corresponding to values supplied in sp.
 ## lsp0 = L0%*%log(sp[sp>=0]) [need to fudge sp==0 case by
-## setting log(0) to, e.g. 10*log(.Machine$double.xmin)]
+## setting log(0) to log(effective zero) computed case-by-case]
 
 
   ## following deals with supplied and estimated smoothing parameters...
@@ -1004,9 +1004,15 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   if (sum(fix.ind)) {
     lsp0 <- G$sp[fix.ind]
-    ind <- lsp0==0
+    ind <- lsp0==0 ## find the zero s.p.s
+    ef0 <- indi <- (1:length(ind))[ind]
+    if (length(indi)>0) for (i in 1:length(indi)) {
+      ## find "effective zero" to replace each zero s.p. with
+      ii <- G$off[i]:(G$off[i]+ncol(G$S[[i]])-1) 
+      ef0[i] <- norm(G$X[,ii],type="F")^2/norm(G$S[[i]],type="F")*.Machine$double.eps*.1
+    }
     lsp0[!ind] <- log(lsp0[!ind])
-    lsp0[ind] <- log(.Machine$double.xmin)*1000 ## zero fudge
+    lsp0[ind] <- log(ef0) ##log(.Machine$double.xmin)*1000 ## zero fudge
     lsp0 <- as.numeric(L[,fix.ind,drop=FALSE]%*%lsp0)
 
     L <- L[,!fix.ind,drop=FALSE]  
