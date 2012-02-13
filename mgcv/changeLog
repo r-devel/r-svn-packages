@@ -3,6 +3,10 @@
 
 1.7-14
 
+* smooth2random.tensor.smooth had a bug that could produce a nonsensical
+  penalty null space rank and an error, in some cases (e.g. "cc" basis)
+  causing te terms to fail in gamm. Fixed.
+
 * minor change to te constructor. Any unpenalized margin now has 
   corresponding penalty rank dropped along with penalty.
 
