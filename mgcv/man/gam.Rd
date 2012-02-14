@@ -279,7 +279,11 @@ generalized additive mixed models. Biometrics 62(4):1025-1036
 Wood S.N. (2006b) Generalized Additive Models: An Introduction with R. Chapman
 and Hall/CRC Press.
 
-Wood, S.N. (2006c) On confidence intervals for generalized additive models based on penalized regression splines. Australian and New Zealand Journal of Statistics. 48(4): 445-464.
+Wood S.N., F. Scheipl and J.J. Faraway (2012) Straightforward intermediate rank tensor product smoothing
+in mixed models. Statistical Computing.
+
+Marra, G and S.N. Wood (2012) Coverage Properties of Confidence Intervals for Generalized Additive
+Model Components. Scandinavian Journal of Statistics.
 
 
 Key Reference on GAMs and related models:

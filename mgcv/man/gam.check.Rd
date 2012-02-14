@@ -40,6 +40,9 @@ to be useful in this case.
 
 \references{
 
+N.H. Augustin, E-A Sauleaub, S.N. Wood (2012) On quantile quantile plots for generalized linear models
+Computational Statistics & Data Analysis.
+
 Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman
 and Hall/CRC Press.
 
