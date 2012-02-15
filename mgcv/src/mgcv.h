@@ -1,14 +1,4 @@
 /* main method routines */
-void mgcv(double *yd,double *Xd,double *Cd,double *wd,double *Sd,double *pd, double *sp,
-          int *offd,int *dimd,int *md,int *nd,int *qd,int *rd,double *sig2d, double *Vpd, 
-          double *edf, double *conv_tol, int *ms_max_half,double *ddiag,int *idiag,double *sdiag, 
-          int *direct_mesh,double *min_edf,double *gcvubre,double *target_edf,int *fixed_sp,double *hat);
-
-/*void update_beta(double *X,double *Sr,double *rS,double *theta,double *w,
-		 double *w1, double *z,double *z1,int *Srncol,int *rSncol,
-		 int *m, int *n,int *q, int *get_trA,int *deriv,
-		 double *rank_tol,double *beta, double *trA, double *beta1,
-		 double *trA1,double *rV,int *rank_est);*/
 
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,

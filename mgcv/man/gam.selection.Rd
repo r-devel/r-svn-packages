@@ -129,8 +129,9 @@ and hoping that automatic selection will find the right structure is not often s
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 \references{
-Marra, G. and S.N. Wood (2011) Practical variable selection for generalized additive models
-Computational Statistics and Data Analysis 55,2372–2387
+
+Marra, G. and S.N. Wood (2011) Practical variable selection for generalized additive models.
+Computational Statistics and Data Analysis 55,2372-2387.
 
 Craven and Wahba (1979) Smoothing Noisy Data with Spline Functions. Numer. Math. 31:377-403
 

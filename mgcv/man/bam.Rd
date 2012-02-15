@@ -184,7 +184,7 @@ The negbin family is only supported for the *known theta* case.
 \code{\link{linear.functional.terms}}, \code{\link{s}},
 \code{\link{te}} \code{\link{predict.gam}},
 \code{\link{plot.gam}}, \code{\link{summary.gam}}, \code{\link{gam.side}},
-\code{\link{gam.selection}},\code{\link{mgcv}}, \code{\link{gam.control}}
+\code{\link{gam.selection}}, \code{\link{gam.control}}
 \code{\link{gam.check}}, \code{\link{linear.functional.terms}} \code{\link{negbin}}, \code{\link{magic}},\code{\link{vis.gam}}
  }
 

@@ -39,7 +39,7 @@ that they tend to perform a little better than prediction error criteria, for mo
 
 \references{
 Marra, G. and S.N. Wood (2011) Practical variable selection for generalized additive models
-Computational Statistics and Data Analysis 55,2372–2387
+Computational Statistics and Data Analysis 55,2372-2387
 
 }
 

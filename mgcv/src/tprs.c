@@ -424,8 +424,6 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
   }
   if (Xu->r==k) pure_knot=1; /* basis dimension is number of knots - don't need eigen step */
 
-
-  /*i=lanczos_spd(&E,&U,&v,ek,d+1);*/      /* error - was keeping -ve's under all circumstances */
   if (pure_knot) /* don't need the lanczos step, but need to "fake" various matrices to make up for it! */
   { *UZ=initmat(T.r+M-1+constant,T.r);
     UZ->r=T.r;
@@ -438,8 +436,7 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
   } else
   { v=initmat((long)k,1L);    /* eigen-value matrix for E */
 
-    /* code to enable use of Rlanczos, in place of lanczos_spd */ 
-    if (1) { /* use newer Lanczos routine */
+  
       nk = E.r;
       Ea = (double *) calloc((size_t) nk*nk,sizeof(double));
       Ua = (double *) calloc((size_t) nk*k,sizeof(double));
@@ -450,11 +447,7 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
 
       U = Rmatrix(Ua,E.r,k);free(Ea);free(Ua);
     
-      } else { /* older Lanczos routine */
-
-      U=initmat(E.r,(long)k);   /* eigen-vector matrix for E */
-      i=lanczos_spd(&E,&U,&v,k,-1);      /* get k largest magnitude  eigen-values/vectors of E */
-    }
+  
     /* Now form the constraint matrix for the truncated problem T'U */
     TU=initmat((long)M,k);
     matmult(TU,T,U,1,0);

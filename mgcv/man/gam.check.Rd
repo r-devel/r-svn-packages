@@ -53,7 +53,7 @@ and Hall/CRC Press.
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{ \code{\link{choose.k}},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
+\seealso{ \code{\link{choose.k}},  \code{\link{gam}}, \code{\link{magic}}}
 
 \examples{
 library(mgcv)

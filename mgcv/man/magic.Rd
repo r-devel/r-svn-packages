@@ -202,8 +202,7 @@ generalized additive models. J. Amer. Statist. Ass. 99:673-686
 
 
 \seealso{  
-\code{\link{magic.post.proc}},
-\code{\link{mgcv}},\code{\link{gam}}
+\code{\link{magic.post.proc}},\code{\link{gam}}
 }
 
 \examples{

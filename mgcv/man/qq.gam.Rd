@@ -64,7 +64,7 @@ M.G. Ben and V.J. Yohai (2004) JCGS 13(1), 36-47.
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
 
-\seealso{ \code{\link{choose.k}},  \code{\link{gam}}, \code{\link{mgcv}}, \code{\link{magic}}}
+\seealso{ \code{\link{choose.k}},  \code{\link{gam}}}
 
 \examples{
 
