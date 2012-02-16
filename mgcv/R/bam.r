@@ -1,5 +1,5 @@
 ## routines for very large dataset generalized additive modelling.
-## (c) Simon N. Wood 2009-2011
+## (c) Simon N. Wood 2009-2012
 
 
 ls.size <- function(x) {
@@ -219,7 +219,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
    } ## single thread indices complete
  
     conv <- FALSE
- 
+
+    if (method=="REML") Sl <- Sl.setup(G) ## setup block diagonal penalty object
+   
     for (iter in 1L:control$maxit) { ## main fitting loop
        ## accumulate the QR decomposition of the weighted model matrix
        wt <- rep(0,0) 
@@ -291,7 +293,31 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
                       extra.rss=rss.extra,n.score=G$n)
  
          post <- magic.post.proc(qrx$R,fit,qrx$f*0+1) 
-      } else { ## method is "REML" or "ML"
+      } else if (method=="REML") { ## use fast REML code
+        ## block diagonal penalty object, Sl, set up before loop
+        um <- Sl.Xprep(Sl,qrx$R)
+        lambda.0 <- initial.sp(qrx$R,G$S,G$off)
+        lsp0 <- log(lambda.0) ## initial s.p.
+        if (scale<=0) log.phi <- log(var(G$y)*.05) else ## initial phi guess
+                      log.phi <- log(scale)
+        fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
+                             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
+                             nobs =G$n,Mp=um$Mp)
+        res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE)
+        object <- list(coefficients=res$beta,full.sp = exp(fit$rho.full),
+                       gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
+                       message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
+                       Ve=NULL)
+        if (scale<=0) { ## get sp's and scale estimate
+          nsp <- length(fit$rho)
+          object$sig2 <- object$scale <- exp(fit$rho[nsp])
+          object$sp <- exp(fit$rho[-nsp]) 
+        } else { ## get sp's
+          object$sig2 <- object$scale <- scale  
+          object$sp <- exp(fit$rho)
+        }
+        class(object)<-c("gam")               
+      } else { ## method is one of "ML", "P-REML" etc...
         y <- G$y; w <- G$w; n <- G$n;offset <- G$offset
         G$y <- qrx$f
         G$w <- G$y*0+1
@@ -331,7 +357,14 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NUL
                   iter)
           break
       }
-    } ## fitting iteration
+    } ## end fitting iteration
+
+    if (method=="REML") { ## do expensive cov matrix cal only at end
+      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
+      object$edf <- res$edf
+      object$hat <- res$hat
+      object$Vp <- res$V
+    }
 
     if (!conv)
        warning("algorithm did not converge")
@@ -713,7 +746,38 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
                 extra.rss=rss.extra,n.score=G$n)
  
      post <- magic.post.proc(qrx$R,fit,qrx$f*0+1) 
-   } else { ## method is "REML" or "ML"
+   } else if (method=="REML"){ ## use fast REML code
+     Sl <- Sl.setup(G) ## setup block diagonal penalty object
+     um <- Sl.Xprep(Sl,qrx$R)
+     lambda.0 <- initial.sp(qrx$R,G$S,G$off)
+     lsp0 <- log(lambda.0) ## initial s.p.
+     if (scale<=0) log.phi <- log(var(G$y)*.05) else ## initial phi guess
+                   log.phi <- log(scale)
+     fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
+            log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
+            nobs =n,Mp=um$Mp)
+     res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
+     object <- list(coefficients=res$beta,edf=res$edf,full.sp = exp(fit$rho.full),
+                    gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
+                    message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
+                    Ve=NULL,Vp=res$V)
+     if (scale<=0) { ## get sp's and scale estimate
+       nsp <- length(fit$rho)
+       object$sig2 <- object$scale <- exp(fit$rho[nsp])
+       object$sp <- exp(fit$rho[-nsp]) 
+     } else { ## get sp's
+       object$sig2 <- object$scale <- scale  
+       object$sp <- exp(fit$rho)
+     }
+     
+     if (rho!=0) { ## correct RE/ML score for AR1 transform
+       object$gcv.ubre <- object$gcv.ubre - (n-1)*log(ld)
+     }
+
+     G$X <- qrx$R;G$dev.extra <- rss.extra
+     G$pearson.extra <- rss.extra;G$n.true <- n
+     class(object)<-c("gam")
+   } else { ## method is "ML", "P-REML" or similar
      y <- G$y; w <- G$w; n <- G$n;offset <- G$offset
      G$y <- qrx$f
      G$w <- G$y*0+1
