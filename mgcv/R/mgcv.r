@@ -711,22 +711,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     G$smooth[[i]] <- sm[[i]]   
   }
 
-## Now test if intercept in span of parametric, and centre all smooth
-## columns if it is....
-## I don't think that this is legitimate --- some smooths have no null
-## space, in which case this trick alters the fit...
-#  G$Xcentre <- NULL
-#  if (G$nsdf>0) { 
-#    qrx <- qr(X[,1:G$nsdf,drop=FALSE])
-#    one <- rep(1,nrow(X))
-#    if (max(abs(one-qr.qy(qrx,qr.qty(qrx,one)))) < .Machine$double.eps^.75 ) {
-#      G$Xcentre <- colMeans(X)
-#      G$Xcentre[1:G$nsdf] <- 0 
-#      if (max(G$Xcentre^2)<.Machine$double.eps^.75) G$Xcentre <- NULL else 
-#      X <- sweep(X,2,G$Xcentre)
-#    } else G$Xcentre <- NULL
-#  }
-  
+
 
   if (is.null(Xp)) {
     G$cmX <- colMeans(X) ## useful for componentwise CI construction 
@@ -928,6 +913,20 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 
   if (is.null(data$"(weights)")) G$w<-rep(1,G$n)
   else G$w<-data$"(weights)"  
+
+  ## Create names for model coefficients... 
+
+  if (G$nsdf>0) term.names <- colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
+  n.smooth <- length(G$smooth)
+  if (n.smooth)
+  for (i in 1:n.smooth)
+  { k<-1
+    for (j in G$smooth[[i]]$first.para:G$smooth[[i]]$last.para)
+    { term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
+      k<-k+1
+    }
+  }
+  G$term.names <- term.names
 
   # now run some checks on the arguments
 
@@ -1259,13 +1258,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       else G$sig2 <- -1 #gcv
   } else {G$sig2 <- scale}
 
-## Following removed since extended quasi-likelihood coded up...
-#  if (fam.name=="quasi"||fam.name=="quasipoisson"||fam.name=="quasibinomial") {
-#    ## REML/ML invalid with quasi families
-#    if (method=="REML") method <- "P-REML"
-#    if (method=="ML") method <- "P-ML"
-#    if (method=="P-ML"||method=="P-REML") warning("RE/ML is not recommended for quasi families")
-#  }
 
   if (reml) { ## then RE(ML) selection, but which variant?
    criterion <- method
@@ -1388,28 +1380,27 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
   object$smooth<-G$smooth
   # now re-assign variable names to coefficients etc. 
-  if (G$nsdf>0) term.names<-colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
-  n.smooth<-length(G$smooth)
-  if (n.smooth)
-  for (i in 1:n.smooth)
-  { k<-1
-    for (j in G$smooth[[i]]$first.para:G$smooth[[i]]$last.para)
-    { term.names[j]<-paste(G$smooth[[i]]$label,".",as.character(k),sep="")
-      k<-k+1
-    }
-  }
-  ##names(object$coefficients) <- term.names  # note - won't work on matrices!!
-  names(object$edf) <- term.names
-  names(object$edf1) <- term.names
+#  if (G$nsdf>0) term.names<-colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
+#  n.smooth<-length(G$smooth)
+#  if (n.smooth)
+#  for (i in 1:n.smooth)
+#  { k<-1
+#    for (j in G$smooth[[i]]$first.para:G$smooth[[i]]$last.para)
+#    { term.names[j]<-paste(G$smooth[[i]]$label,".",as.character(k),sep="")
+#      k<-k+1
+#    }
+#  }
+  names(object$edf) <- G$term.names
+  names(object$edf1) <- G$term.names
 
   if (!is.null(G$P)) {
     object$coefficients <- as.numeric(G$P %*% object$coefficients)
     object$Vp <- G$P %*% object$Vp %*% t(G$P)
     object$Ve <- G$P %*% object$Ve %*% t(G$P)
-    rownames(object$Vp) <- colnames(object$Vp) <- term.names
-    rownames(object$Ve) <- colnames(object$Ve) <- term.names
+    rownames(object$Vp) <- colnames(object$Vp) <- G$term.names
+    rownames(object$Ve) <- colnames(object$Ve) <- G$term.names
   }
-  names(object$coefficients) <- term.names 
+  names(object$coefficients) <- G$term.names 
   
   object
 }

@@ -6,6 +6,8 @@
 * routine mgcv removed, it now being many years since there has been any 
   reason to use it. C source code heavily pruned as a result. 
 
+* coefficient name generation moved from estimate.gam to gam.setup.
+
 * smooth2random.tensor.smooth had a bug that could produce a nonsensical
   penalty null space rank and an error, in some cases (e.g. "cc" basis)
   causing te terms to fail in gamm. Fixed.

@@ -1031,6 +1031,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$xlevels <- G$xlevels
   #object$y <- object$model[[gp$response]]
   object$NA.action <- na.action ## version to use in bam.update
+  names(object$sp) <- names(G$sp)
+  if (!is.null(object$full.sp)) names(object$full.sp) <- names(G$lsp0)
+
+  names(object$coefficients) <- G$term.names
+  names(object$edf) <- G$term.names
 
   rm(G);if (gc.level>0) gc()
 
