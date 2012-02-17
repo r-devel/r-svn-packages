@@ -3,6 +3,9 @@
 
 1.7-14
 
+** bam now has method="fREML" option which uses faster REML optimizer: 
+   can make a big difference on parameter rich models.
+
 * routine mgcv removed, it now being many years since there has been any 
   reason to use it. C source code heavily pruned as a result. 
 
