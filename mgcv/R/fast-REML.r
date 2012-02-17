@@ -538,7 +538,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
 
   if (is.null(nobs)) nobs <- nrow(X)
   np <- ncol(X)
-  if (nobs > np) { ## might as well do an initial QR step
+  if (nrow(X) > np) { ## might as well do an initial QR step
     qrx <- qr(X,LAPACK=TRUE)
     rp <- qrx$pivot
     rp[rp] <- 1:np

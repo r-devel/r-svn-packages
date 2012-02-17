@@ -15,7 +15,7 @@ for large datasets. \code{bam} can also compute on a cluster set up by the \link
 }
 \usage{
 bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
-    na.action=na.omit, offset=NULL,method="REML",control=list(),
+    na.action=na.omit, offset=NULL,method="fREML",control=list(),
     scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
     chunk.size=10000,rho=0,sparse=FALSE,cluster=NULL,gc.level=1,...)
 }
@@ -60,7 +60,8 @@ included in \code{formula}: this conforms to the behaviour of
 \item{method}{The smoothing parameter estimation method. \code{"GCV.Cp"} to use GCV for unknown scale parameter and
 Mallows' Cp/UBRE/AIC for known scale. \code{"GACV.Cp"} is equivalent, but using GACV in place of GCV. \code{"REML"} 
 for REML estimation, including of unknown scale, \code{"P-REML"} for REML estimation, but using a Pearson estimate 
-of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likelihood in place of REML. }
+of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likelihood in place of REML. Default 
+\code{"fREML"} uses fast REML computation.}
 
 \item{control}{A list of fit control parameters to replace defaults returned by 
 \code{\link{gam.control}}. Any control parameters not supplied stay at their default values.}
