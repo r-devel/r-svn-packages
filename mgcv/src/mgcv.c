@@ -1,7 +1,7 @@
 /* Source code for mgcv.dll/.so multiple smoothing parameter estimation code,
 suitable for interfacing to R 
 
-Copyright (C) 2000-2005 Simon N. Wood  simon.wood@r-project.org
+Copyright (C) 2000-2012 Simon N. Wood  simon.wood@r-project.org
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -36,6 +36,8 @@ USA. */
 #include "matrix.h"
 #include "qp.h"
 #include "general.h"
+#include <R_ext/Lapack.h>
+#include <R_ext/BLAS.h>
 
 #define round(a) ((a)-floor(a) <0.5 ? (int)floor(a):(int) floor(a)+1)
 
@@ -110,71 +112,6 @@ void RPackSarray(int m,matrix *S,double *RS)
   }
 
 }
-
-
-
-
-/********** The following are from spline.c (rather plodding coding) ***********/
-
-/* The next 4 functions are basis functions for the 1st derivative
-   representation of a cubic spline */
-
-double b0(x0,x1,x) double x0,x1,x;
-
-/* multiplies function value at x0 */
-
-{ double res,h,xx1;
-  if (x<x0) return(1.0);
-  if (x>x1) return(0.0);
-  h=x1-x0;xx1=x-x1;
-  res=2.0*(x-x0+0.5*h)*xx1*xx1/(h*h*h);
-  return(res);
-}
-
-
-double b1(x0,x1,x) double x0,x1,x;
-
-/* multiplies function value at x1 */
-
-{ double res,h,xx0;
-  if (x<x0) return(0.0);
-  if (x>x1) return(1.0);
-  h=x1-x0;xx0=x-x0;
-  res= -2.0*(x-x1-0.5*h)*xx0*xx0/(h*h*h);
-  return(res);
-}
-
-double d0(x0,x1,x) double x0,x1,x;
-
-/* multiplies gradient at x0 */
-
-{ double res,h,xx1;
-  if (x<x0) res=x-x0;  /* before start of interval - use linear extrapolation */
-  else 
-  if (x>x1) res=0.0;  /* after end of interval - d0 plays no part */
-  else                /* within interval */
-  { h=x1-x0;xx1=x-x1;
-    res=(x-x0)*xx1*xx1/(h*h);
-  }
-  return(res);
-}
-
-double d1(x0,x1,x) double x0,x1,x;
-
-/* multiplies gradient at x1 */
-
-{ double res,h,xx0;
-  if (x<x0) res=0.0; /* d1 plays no part */
-  else
-  if (x>x1) res=x-x1; /* linear extrapolation after end of interval */
-  else                /* in interval */
-  { h=x1-x0;xx0=x-x0;
-    res=xx0*xx0*(x-x1)/(h*h);
-  }
-  return(res);
-}
-
-
 
 
 matrix getD(h,nak) matrix h;int nak;
@@ -286,307 +223,139 @@ void MonoCon(matrix *A,matrix *b,matrix *x,int control,double lower,double upper
 }
 
 
-void tmap(matrix tm,matrix t,double time,int kill)
- /* to release static matrix allocation set kill to 1 otherwise 0 and
-	     prepare for a new sequence of knot positions in t*/
+void getFS(double *x,int n,double *S,double *F) {
+/* x contains ascending knot seqence for a cubic regression spline
+   Routine finds wigglness penalty S and F such that F' maps function 
+   values at knots to second derivatives. See Wood 2006 section 4.1.2.
+   F and S are n by n. F is F' in 4.1.2 notation.
+*/
+  double *D,*ldB,*sdB,*h,*Di,*Di1,*Di2,*Fp,*Sp,a,b,c;
+  int i,j,n1,n2;
+  /* create knot spacing vector h */
+  h = (double *)calloc((size_t)(n-1),sizeof(double));
+  for (i=1;i<n;i++) h[i-1] = x[i]-x[i-1];
 
-/* tm maps values of a function at the t values contained in vector t to
-   the value of a spline through those points at 'time' ;tgm does the same
-   for the gradient of the spline */
-
-{ static matrix D;static char first=1;
-  matrix h;
-  double **DM,*dum,*tmV,*DMi,*DMi1,d0v,d1v,x,xx0,xx1,xx02,xx12,h1,h2,h3,b0v,b1v,x0,x1;
-  long i,k,tr;
-  if (first)
-  { first=0;h=initmat(t.r-1,1L);
-    for (i=0L;i<t.r-1;i++) h.V[i]=t.V[i+1]-t.V[i];
-    D=getD(h,0); /* time trajectories always have natural end conditions */
-    freemat(h);
+  /* create n-2 by n matrix D: D[i,i] = 1/h[i], D[i,i+1] = -1/h[i]-1/h[i+1]
+     D[i,i+2] = 1/h[i+1], for i=0..(n-3). D is n-2 by n. */
+  D = (double *)calloc((size_t)(n*(n-2)),sizeof(double));
+  n1 = n-1;n2=n-2;
+  for (Di=D,Di1=D+n2,Di2=Di1+n2,i=0;i<n2;i++,Di+=n1,Di1+=n1,Di2+=n1) {
+    *Di = 1/h[i];*Di2 = 1/h[i+1];*Di1 = - *Di - *Di2;
   }
-  if (t.r==1L)
-  { tm.V[0]=1.0;}
-  else
-  { DM=D.M;dum=t.V;
-    i=0L;tr=t.r-2;dum++;
-    while ((time > *dum)&&(i<tr)) {i++;dum++;}
-    tr=t.r;tmV=tm.V;
-    DMi=DM[i];DMi1=DM[i+1];
-    x0=t.V[i];x1=t.V[i+1];
-    x=time;
-    h1=x1-x0;h2=h1*h1;h3=h2*h1;
-    xx0=x-x0;xx1=x-x1;
-    xx02=xx0*xx0;xx12=xx1*xx1;
-   
-    if (x<x0) 
-    { d0v=xx0;  
-      d1v=0.0;
-      b0v=1.0;
-      b1v=0.0;
-    }
-    else if (x>x1) 
-    { d0v=0.0;  
-      d1v=xx1;
-      b0v=0.0;
-      b1v=1.0;
-    }else                /* within interval */
-    { d0v=xx0*xx12/h2;d1v=xx02*xx1/h2;
-      b0v=2.0*(xx0+0.5*h1)*xx12/h3;
-      b1v= -2.0*(xx1-0.5*h1)*xx02/h3;
-    }
+  /* create leading diagonal of B*/
+  ldB = (double *)calloc((size_t)(n2),sizeof(double));
+  for (i=0;i<n2;i++) ldB[i] = (h[i]+h[i+1])/3;
+  sdB = (double *)calloc((size_t)(n2-1),sizeof(double));
+  for (i=1;i<n2;i++) sdB[i-1] = h[i]/6;
+  /* Now find B^{-1}D using LAPACK routine DPTSV (result in D) */
+  F77_NAME(dptsv)(&n2,&n,ldB,sdB,D,&n2,&i);
+
+  /* copy B^{-1}D into appropriate part of F */
+  Di=D;
+  for (i=0;i<n;i++) {
+    Fp = F+i; /* point to row i of F */
+    *Fp=0.0;Fp+=n;
+    /* col i of D copied to row i of F */
+    for (j=0;j<n2;j++,Fp+=n,Di++) *Fp = *Di; 
+    *Fp=0.0;
+  }
+
+  /* now create D'B^{-1}D efficiently */
+  a = 1/h[0];  /* row 0 */
+  for (Sp=S,Di=D,i=0;i<n;i++,Sp+=n,Di+=n2) *Sp = *Di * a;
+  a = -1/h[0] - 1/h[1];b = 1/h[1]; /* row 1 */
+  for (Sp=S+1,Di1=D+1,Di=D,i=0;i<n;i++,Sp+=n,Di+=n2,Di1+=n2) *Sp = *Di * a + *Di1 * b;
+  for (j=2;j<n2;j++) { /* rows 2 to n-3 */
+    a = 1/h[j-1];c = 1/h[j];b = -a -c; 
+    for (Sp=S+j,Di=D+j-2,Di1 = D +j-1,Di2=D + j,i=0;i<n;i++,Sp+=n,Di+=n2,Di1+=n2,Di2+=n2) 
+      *Sp = *Di * a + *Di1 * b + *Di2 * c;
+  }
+  j = n2; /* n-2 */
+  a = 1/h[j-1]; b = -1/h[j-1] - 1/h[j]; /* row n-2 */
+  for (Sp=S+n2,Di1=D+n2-1,Di=D+n2-2,i=0;i<n;i++,Sp+=n,Di+=n2,Di1+=n2) *Sp = *Di * a + *Di1 * b;
+  a = 1/h[j]; /* row n-1 */
+  for (Sp=S+n1,Di=D+n2-1,i=0;i<n;i++,Sp+=n,Di+=n2) *Sp = *Di * a;
+
+  free(ldB);free(sdB);free(h);free(D);
+} /* end of getFS*/
+
+
+void crspl(double *x,int *n,double *xk, int *nk,double *X,double *S, double *F,int *Fsupplied) {
+/* Routine to compute model matrix and optionally penalty matrix for cubic regression spline.
+   * nk knots are supplied in an increasing sequence in xk. 
+   * n data are in x (arbitrary order).
+   * If Fsupplied!=0 then F' is matrix mapping function values at knots to second derivs,
+     otherwise F and the penalty matrix S are computed and returned, along with X.         
+*/
+  int i,j,k,extrapolate,jup,jmid;
+  double xlast=0.0,h,xi,kmax,kmin,ajm,ajp,cjm,cjp,*Fp,*Fp1,*Xp,xj,xj1,xik;
+  if (! *Fsupplied) getFS(xk,*nk,S,F);
+  kmax = xk[*nk-1];kmin = xk[0];
+  for (i=0;i<*n;i++) { /* loop through x */
+    xi = x[i];extrapolate=0;
+    /* find interval containing x[i] */
+    if (xi < kmin||xi>kmax) {
+      extrapolate=1;
+    } else if (i>0 && fabs(xlast-xi) < 2*h) { /* use simple direct search */
+      while (xi<xk[j]&&j>0) j--;
+      while (xi>xk[j+1] && j+1 < *nk-1) j++;
+      /* now xk[j] <= x[i] <= xk[j+1] */ 
+    } else { /* bisection search required */ 
+      j=0;jup=*nk-1;
+      while (jup-j>1) {
+        jmid = (jup+j) >> 1; /* a midpoint */
+        if (xi > xk[jmid]) j = jmid; else jup = jmid;
+      }
+      /* now xk[j] <= x[i] <= xk[j+1] */ 
+    } /* end of bisection */
     
-    for (k=0;k<t.r;k++,tmV++,DMi++,DMi1++)
-    { *tmV = *DMi * d0v + *DMi1 * d1v;
-    }
-    tm.V[i] += b0v;
-    tm.V[i+1] += b1v;
-   
-  }
-  if (kill)
-  { first=1;
-   freemat(D);
-  }
-}
-
-void tmap2(matrix tm,matrix t,double time,int kill)
- /* to release static matrix allocation set kill to 1 otherwise 0 and
-	     prepare for a new sequence of knot positions in t*/
-
-/* tm maps values of a function at the t values contained in vector t to
-   the value of a spline through those points at 'time' ;tgm does the same
-   for the gradient of the spline */
-
-{ static matrix D;static char first=1;
-  matrix h;
-  long i,k;
-  if (first)
-  { first=0;h=initmat(t.r-1,1L);
-    for (i=0L;i<t.r-1;i++) h.V[i]=t.V[i+1]-t.V[i];
-    D=getD(h,0); /* time trajectories always have natural end conditions */
-    freemat(h);
-  }
-  if (t.r==1L)
-  { tm.V[0]=1.0;}
-  else
-  { i=0L;while((time>t.V[i+1])&&(i<t.r-2)) i++;
-    for (k=0;k<t.r;k++)
-    tm.V[k]=D.M[i][k]*d0(t.V[i],t.V[i+1],time)+
-	    D.M[i+1][k]*d1(t.V[i],t.V[i+1],time);
-    tm.V[i]+=b0(t.V[i],t.V[i+1],time);
-    tm.V[i+1]+=b1(t.V[i],t.V[i+1],time);
-   
-  }
-  if (kill)
-  { first=1;
-    freemat(D);
-  }
-}
-
-void getHBH(HBH,h,nak,rescale) matrix *HBH,h;int nak,rescale;
-
-/* Generates the wiggliness measure matrix for vector h; nak=0 for natural
-   end conditions or nak=1 to use the not a knot condition at the lower end;
-   set rescale=1 to produce a measure rescaled for the unit interval, set to
-   zero otherwise */
-
-{ long n,i,j;
-  matrix C,B,BI,H,hn;
-  double interval=0.0;
-  n=h.r;
-  if (rescale)
-  { for (i=0;i<h.r;i++) interval+=h.V[i];
-    hn=initmat(h.r,1L);
-    for (i=0;i<h.r;i++) hn.V[i]=h.V[i]/interval;
-  } else hn=h;
-  (*HBH)=initmat(n+1,n+1);
-  if (!nak)
-  { C=initmat(n-1,n+1);
-    B=initmat(n-1,n-1);
-    H=initmat(n-1,n+1);
-    for (i=0;i<n-1;i++)
-    { for (j=0;j<n-1;j++)
-      { B.M[i][j]=0.0;
-	     H.M[i][j]=0.0;
+    /* knot interval containing x[i] now known. Compute spline basis */ 
+    if (extrapolate) { /* x[i] is outside knot range */
+      if (xi<kmin) {
+        j = 0;
+        h = xk[1] - kmin;
+        xik = xi - kmin;
+        cjm = -xik*h/3;
+        cjp = -xik*h/6;
+        Xp = X + i; /* ith row of X */
+        for (Fp = F,Fp1 = F + *nk,k=0;k < *nk;k++,Xp += *n,Fp++,Fp1++) *Xp = cjm * *Fp + cjp * *Fp1 ;
+        X[i] += 1 - xik/h;
+        X[i + *n] += xik/h;
+      } else { /* xi>kmax */
+        j = *nk-1;
+        h = kmax - xk[j-1];
+        xik = xi - kmax;
+        cjm= xik*h/6;
+        cjp = xik*h/3;
+        Xp = X + i; /* ith row of X */
+        for (Fp1 = F+ j * *nk,Fp = Fp1 - *nk,k=0;k < *nk;k++,Xp += *n,Fp++) 
+             *Xp = cjm * *Fp + cjp * *Fp1  ;
+        X[i + *n * (*nk-2)] += - xik/h;
+        X[i + *n * (*nk-1)] += 1+ xik/h;
       }
-      H.M[i][n-1]=0.0;
-      H.M[i][n]=0.0;
-    }
-    for (i=0;i<n-1;i++)
-    { B.M[i][i]=(hn.V[i]+hn.V[i+1])/3.0;
-      H.M[i][i]=1.0/hn.V[i];
-      H.M[i][i+1]= -1.0/hn.V[i]-1.0/hn.V[i+1];
-      H.M[i][i+2]=1.0/hn.V[i+1];
-    }
-    for (i=0;i<n-2;i++)
-    { B.M[i][i+1]=hn.V[i+1]/6.0;
-      B.M[i+1][i]=hn.V[i+1]/6.0;
-    }
-    invert(&B);
-    matmult(C,B,H,0,0);
-    matmult((*HBH),H,C,1,0);
-    freemat(C);freemat(B);freemat(H);
-  } else
-  { H=initmat(n,n+1);
-    BI=initmat(n,n);B=initmat(n,n);
-    for (i=0;i<H.r;i++) for (j=0;j<H.c;j++) H.M[i][j]=0.0;
-    for (i=1;i<n;i++)
-    { H.M[i][i-1]=1.0/hn.V[i-1];H.M[i][i]= -1.0/hn.V[i-1]-1.0/hn.V[i];
-      H.M[i][i+1]=1.0/hn.V[i];
-    }
-    for (i=0;i<n;i++) for (j=0;j<n;j++)
-    { BI.M[i][j]=0.0;B.M[i][j]=0.0;}
-    for (i=1;i<n;i++)
-    { B.M[i][i-1]=hn.V[i-1]/6.0;B.M[i][i]=(hn.V[i-1]+hn.V[i])/3.0;
-      if (i<(n-1))
-      { B.M[i][i+1]=hn.V[i]/6.0;
-	BI.M[i][i+1]=B.M[i][i+1];
-      }
-      for (j=0;j<2;j++) BI.M[i][j+i-1]=B.M[i][j+i-1];
-    }
-    B.M[0][0]= -hn.V[1];B.M[0][1]=hn.V[0]+hn.V[1];
-    B.M[0][2]= -hn.V[0];
-    BI.M[0][0]=hn.V[0]/3.0;BI.M[0][1]=hn.V[0]/6.0;
-    C=initmat(n,n);
-    invert(&B);
-    matmult(C,BI,B,0,0);
-    matmult(BI,B,C,1,0);
-    freemat(B);freemat(C);
-    C=initmat(n,n+1);
-    matmult(C,BI,H,0,0);
-    matmult((*HBH),H,C,1,0);
-    freemat(C);freemat(BI);freemat(H);
+    } else { /* routine evaluation */
+      xj = xk[j];xj1=xk[j+1];
+      h = xj1-xj; /* interval width */
+      ajm = (xj1 - xi);ajp = (xi-xj);
+      cjm = (ajm*(ajm*ajm/h - h))/6;
+      cjp = (ajp*(ajp*ajp/h - h))/6;
+      ajm /= h;ajp /= h;
+      
+      Xp = X + i; /* ith row of X */
+
+      for (Fp = F+ j * *nk, Fp1 = F+(j+1)* *nk,k=0;k < *nk;k++,Xp += *n,Fp++,Fp1++) 
+        *Xp = cjm * *Fp + cjp * *Fp1;
+
+      Xp = X + i + j * *n;
+      *Xp += ajm; Xp += *n; *Xp += ajp;
+    } 
+    /* basis computation complete */
+    xlast=xi;
   }
-  if (rescale) freemat(hn);
-}
+
+} /* end crspl */
 
 
-void getSmooth(S,x,rescale) matrix *S,x;int rescale;
-
-/* gets a natural wiggliness measure for a spline with knots at the elements
-   of vector x. Set rescale not zero to pretend that the domain is the unit
-   interval. */
-
-{ matrix h;
-  long i;
-  h=initmat(x.r-1L,1L);
-  for (i=0;i<x.r-1;i++) h.V[i]=x.V[i+1]-x.V[i];
-  getHBH(S,h,0,rescale);
-  freemat(h);
-}
-
-
-void crspline(double *x,int n,int knots,matrix *X,matrix *S, matrix *C, matrix *xp,int control)
-
-/* Sets up a cubic regression spline, by specifying a set of knot locations 
-   spread evenly throughout the covariate values, and using cubic hermite
-   polynomials to represent the spline.
-
-   This is a very fast way of setting up 1-d regression splines, but the
-   basis provided by tprs() will be better. This code gives the basis used
-   in mgcv prior to version 0.6.
-
-   The inputs are:
-   x - the array of covariate values
-   n - the length of x
-   knots - the number of knots
-
-   The outputs are:
-
-   X - design matrix 
-   S - wiggliness penalty matrix
-   C - constraint matrix 
-   xp - knot position vector - can also be supplied as input
-
-   control 0 indicates full call as above
-   control 1 indicates prediction call: xp *must* be supplied and only X 
-             calculated
-
-   so that a penalized regression spline could be fitted by minimising:
-
-       ||Xb-y||^2 + \lambda b'Sb
-
-   subject to Cb=0 if the sum of the values of the spline at the xp values 
-   is to be zero - a constraint that is useful in GAM modelling, to ensure
-   model identifiability.
-*/
-
-{ int j,i,k;
-  matrix y,my;
-  double dx,xx;
-  /* sort x values into order and get list of unique x values .... */
-  if (control==0)
-  { if (xp->V[0]>=xp->V[1]) /* then knot positions have not been supplied */
-    { y=initmat((long)n,1L);
-      for (j=0;j<n;j++) y.V[j]=x[j];
-      y.r=(long)n;
-      sort(y); /* next reduce to list of unique values..... */
-      k=0;for (i=0;i<n;i++) if (y.V[k]!=y.V[i]) { k++;y.V[k]=y.V[i];} y.r=(long)k+1;
-      dx=(y.r-1)/(knots-1.0);
-      /* now place the knots..... */
-      xp->V[0]=y.V[0];
-      for (i=1;i<knots-1;i++)  /* place knots */
-      { xx=dx*i;
-        k=(int)floor(xx);
-        xx -= k;
-        xp->V[i]=(1-xx)*y.V[k]+xx*y.V[k+1];
-      } 
-      xp->V[knots-1]=y.V[y.r-1];
-      freemat(y);
-    }
- 
-    /* create the wiggliness measure matrix...... */
-    getSmooth(S,*xp,0);
- 
-    /* create the constraint matrix ...... */
-    *C=initmat(1L,(long)knots);
-    for (i=0;i<knots;i++) C->M[0][i]=1.0;
-    /* and finally, create the design matrix ...... */
-  }
-  *X=initmat((long)n,xp->r);
-  my=initmat(xp->r,1L);
-  for (j=0;j<n;j++)
-  { tmap(my,*xp,x[j],0);
-    for (i=0;i<my.r;i++) X->M[j][i]=my.V[i];
-  }   
-  tmap(my,*xp,x[0],1); /* kill matrix allocation in tmap */
- 
-  freemat(my);
-}
-
-void construct_cr(double *x,int *nx,double *k,int *nk,double *X,double *S,double *C,int *control)
-
-/* Routine to be called from R to set up a cubic regression spline basis given
-   x - array of x values (un-ordered)
-   nx - number of x values
-   k - array of/for knot locations. Should be in ascending order - if first two are not then 
-       locations are generated automatically
-   nk - number of knots
-   The routine returns the knot locations in k plus
-   X - the model matrix       n by nk
-   S - the penalty matrix     nk by nk
-   C - the constraint matrix  1 by nk
-   
-   control is an array of control constant:
-   0 indicates full set up as above
-   1 indicates prediction call, in which case k *must* be supplied and only X is returned
-   
-*/
-
-{ matrix Xm,Sm,Cm,xp;
-  int i;
-  xp=initmat((long)*nk,1L);
-  for (i=0;i<xp.r;i++) xp.V[i]=k[i];
-  /* following initializes Xm and also Sm and Cm if *control ==0 */
-  crspline(x,*nx,*nk,&Xm,&Sm,&Cm,&xp,*control);
-  for (i=0;i<xp.r;i++) k[i]=xp.V[i];
-  RArrayFromMatrix(X,Xm.r,&Xm);
-  freemat(Xm);freemat(xp);
-  if (*control==0)
-  { RArrayFromMatrix(S,Sm.r,&Sm);
-    RArrayFromMatrix(C,Cm.r,&Cm);
-    freemat(Sm);freemat(Cm);
-  }
-} 
 
 
 

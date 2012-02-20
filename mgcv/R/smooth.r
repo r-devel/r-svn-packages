@@ -1118,17 +1118,16 @@ Predict.matrix.ts.smooth<-function(object,data)
 #############################################
 
 
-smooth.construct.cr.smooth.spec<-function(object,data,knots)
+smooth.construct.cr.smooth.spec<-function(object,data,knots) {
 # this routine is the constructor for cubic regression spline basis objects
 # It takes a cubic regression spline specification object and returns the 
-# corresponding basis object.
-{ shrink <- attr(object,"shrink")
+# corresponding basis object. Efficient code.
+  shrink <- attr(object,"shrink")
   if (length(object$term)!=1) stop("Basis only handles 1D smooths")
   x <- data[[object$term]]
-  nx<-length(x)
-  if (is.null(knots)) ok <- FALSE
-  else 
-  { k <- knots[[object$term]]
+  nx <- length(x)
+  if (is.null(knots)) ok <- FALSE else { 
+    k <- knots[[object$term]]
     if (is.null(k)) ok <- FALSE
     else ok<-TRUE
   }
@@ -1138,37 +1137,34 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
   if (object$bs.dim <3) { object$bs.dim <- 3
     warning("basis dimension, k, increased to minimum possible\n")
   }
+ 
+  xu <- unique(x)
 
   nk <- object$bs.dim
-  if (!ok) { k <- rep(0,nk);k[2]<- -1}
-  
-  if (length(k)!=nk) stop("number of supplied knots != k for a cr smooth")
 
-  X <- rep(0,nx*nk);S<-rep(0,nk*nk);C<-rep(0,nk);control<-0
-  
-  if (length(unique(x))<nk) 
+  if (length(xu)<nk) 
   { msg <- paste(object$term," has insufficient unique values to support ",
                  nk," knots: reduce k.",sep="")
     stop(msg)
   }
 
-  oo <- .C(C_construct_cr,as.double(x),as.integer(nx),as.double(k),
-           as.integer(nk),as.double(X),as.double(S),
-           as.double(C),as.integer(control))
+  if (!ok) { k <- quantile(xu,seq(0,1,length=nk))} ## generate knots
+  
+  if (length(k)!=nk) stop("number of supplied knots != k for a cr smooth")
 
-  object$X <- matrix(oo[[5]],nx,nk)
+  X <- rep(0,nx*nk);F <- S <- rep(0,nk*nk);F.supplied <- 0
+  
+  oo <- .C(C_crspl,x=as.double(x),n=as.integer(nx),xk=as.double(k),
+           nk=as.integer(nk),X=as.double(X),S=as.double(S),
+           F=as.double(F),Fsupplied=as.integer(F.supplied))
 
-  object$S<-list()     # only return penalty if term not fixed
-  if (!object$fixed) 
-  { object$S[[1]] <- matrix(oo[[6]],nk,nk)
+  object$X <- matrix(oo$X,nx,nk)
+
+  object$S <- list()     # only return penalty if term not fixed
+  if (!object$fixed) {
+    object$S[[1]] <- matrix(oo$S,nk,nk)
     object$S[[1]]<-(object$S[[1]]+t(object$S[[1]]))/2 # ensure exact symmetry
-    if (!is.null(shrink)) # then add shrinkage term to penalty 
-    { ## Following is pre-1.5 code. Approach was not general enough
-      ## as identity term could dominate the small eigenvalues
-      ## and really ness up the penalty
-      ## norm <- mean(object$S[[1]]^2)^0.5
-      ## object$S[[1]] <- object$S[[1]] + diag(nk)*norm*abs(shrink)
-      
+    if (!is.null(shrink)) { # then add shrinkage term to penalty 
       ## Modify the penalty by increasing the penalty on the 
       ## unpenalized space from zero... 
       es <- eigen(object$S[[1]],symmetric=TRUE)
@@ -1183,12 +1179,16 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots)
     object$rank <- nk-2 
   } else object$rank <- nk   # penalty rank
 
-  object$df<-object$bs.dim # degrees of freedom,  unconstrained and unpenalized
+
+  object$df <- object$bs.dim # degrees of freedom,  unconstrained and unpenalized
   object$null.space.dim <- 2
-  object$xp <- oo[[3]]  # knot positions 
+  object$xp <- k  # knot positions
+  object$F <- oo$F # f'' = t(F)%*%f (at knots) - helps prediction 
   class(object) <- "cr.smooth"
   object
-}
+} # end smooth.construct.cr.smooth.spec
+
+
 
 smooth.construct.cs.smooth.spec<-function(object,data,knots)
 # implements a class of cr like smooths with an additional shrinkage
@@ -1199,23 +1199,26 @@ smooth.construct.cs.smooth.spec<-function(object,data,knots)
   object
 }
 
+Predict.matrix.cr.smooth<-function(object,data) {
+# this is the prediction method for a cubic regression spline, efficient code.
 
-Predict.matrix.cr.smooth<-function(object,data)
-# this is the prediction method for a cubic regression spline
-{
   x <- data[[object$term]]
   if (length(x)<1) stop("no data to predict at")
-  nx<-length(x)
-  nk<-object$bs.dim
-  X <- rep(0,nx*nk);S<-rep(0,nk*nk);C<-rep(0,nk);control<-0
-
-  oo <- .C(C_construct_cr,as.double(x),as.integer(nx),as.double(object$xp),
-            as.integer(object$bs.dim),as.double(X),as.double(S),
-                   as.double(C),as.integer(control))
-  X<-matrix(oo[[5]],nx,nk) # the prediction matrix
+  nx <- length(x)
+  nk <- object$bs.dim
+  X <- rep(0,nx*nk) 
+  S <- 1 ## unused
+  F.supplied <- 1
+ 
+  oo <- .C(C_crspl,x=as.double(x),n=as.integer(nx),xk=as.double(object$xp),
+           nk=as.integer(nk),X=as.double(X),S=as.double(S),
+           F=as.double(object$F),Fsupplied=as.integer(F.supplied))
+  
+  X <- matrix(oo$X,nx,nk) # the prediction matrix
 
   X
 }
+
 
 Predict.matrix.cs.smooth<-function(object,data)
 # this is the prediction method for a cubic regression spline 

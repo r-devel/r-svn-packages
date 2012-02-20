@@ -237,7 +237,7 @@ double qr_ldet_inv(double *X,int *r,double *Xi,int *get_inv)
 /* Obtains the log|X| and the inverse of X (r by r), by pivoted QR decomposition. 
    The inverse is returned (unpivoted) in Xi. 
    The function returns log|X| as its value.
-   X is overwirtten in the process
+   X is overwritten in the process
 */
 { double *tau,ldet,*p,*Qt;
   int *pivot,i,TRUE=1,j;
