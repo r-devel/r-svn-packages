@@ -353,8 +353,13 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         um <- Sl.Xprep(Sl,qrx$R)
         lambda.0 <- initial.sp(qrx$R,G$S,G$off)
         lsp0 <- log(lambda.0) ## initial s.p.
-        if (scale<=0) log.phi <- log(var(G$y)*.05) else ## initial phi guess
-                      log.phi <- log(scale)
+        ## carry forward scale estimate if possible...
+        if (scale>0) log.phi <- log(scale) else {
+          if (iter>1) log.phi <- log(object$scale) else {
+            if (is.null(coef)||qrx$y.norm2==0) log.phi <- log(var(G$y)*.05) else
+               log.phi <- log(qrx$y.norm2/(nobs+nobs.extra))
+          }
+        }
         fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
                              log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
                              nobs =nobs+nobs.extra,Mp=um$Mp)
@@ -1056,8 +1061,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       if (length(ind)<2*ncol(G$X)) warning("samfrac too small - ignored") else {
         Gw <- G$w;Goffset <- G$offset
         G$w <- G$w[ind];G$offset <- G$offset[ind]
-        object <- bgam.fit(G, mf[ind,], chunk.size, gp ,scale ,gamma,method=method,nobs=nrow(mf),
-                       control = control,cl=cluster,gc.level=gc.level,use.chol=use.chol,samfrac=samfrac,...)
+        control1 <- control
+        control1$epsilon <- 1e-2
+        object <- bgam.fit(G, mf[ind,], chunk.size, gp ,scale ,gamma,method=method,nobs.extra=0,
+                       control = control1,cl=cluster,gc.level=gc.level,use.chol=use.chol,samfrac=1,...)
         G$w <- Gw;G$offset <- Goffset
         coef <- object$coefficients
       }
