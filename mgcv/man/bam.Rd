@@ -17,7 +17,8 @@ for large datasets. \code{bam} can also compute on a cluster set up by the \link
 bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action=na.omit, offset=NULL,method="fREML",control=list(),
     scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
-    chunk.size=10000,rho=0,sparse=FALSE,cluster=NULL,gc.level=1,...)
+    chunk.size=10000,rho=0,sparse=FALSE,cluster=NULL,gc.level=1,
+    use.chol=FALSE,samfrac=1,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -117,6 +118,14 @@ single machine). See details and example code.
 }
 \item{gc.level}{to keep the memory footprint down, it helps to call the garbage collector often, but this takes 
 a substatial amount of time. Setting this to zero means that garbage collection only happens when R decides it should. Setting to 2 gives frequent garbage collection. 1 is in between.}
+
+\item{use.chol}{By default \code{bam} uses a very stable QR update approach to obtaining the QR decomposition
+of the model matrix. For well conditioned models an alternative accumulates the crossproduct of the model matrix
+and then finds its Choleski decomposition, at the end. This is somewhat more efficient, computationally.}
+
+\item{samfrac}{For very large sample size Generalized additive models the number of iterations needed for the model fit can 
+be reduced by first fitting a model to a random sample of the data, and using the results to supply starting values. This initial fit is run with sloppy convergence tolerances, so is typically very low cost. \code{samfrac} is the sampling fraction to use. 0.1 is often reasonable. }
+
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }
 

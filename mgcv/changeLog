@@ -6,6 +6,9 @@
 ** bam now has method="fREML" option which uses faster REML optimizer: 
    can make a big difference on parameter rich models.
 
+* More efficient `sweep and drop' centering constraints added as default.
+  Constaint null space unchanged, but computation is faster.
+
 * underlying "cr" basis code re-written for greater efficiency.
 
 * routine mgcv removed, it now being many years since there has been any 

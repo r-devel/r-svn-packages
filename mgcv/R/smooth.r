@@ -2686,9 +2686,12 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   ## automatically produce centering constraint...
   ## must be done here on original model matrix to ensure same
   ## basis for all `id' linked terms
+  drop <- -1 ## signals not to use sweep and drop
   if (is.null(sm$C)) {
     if (sparse.cons==0) {
-      sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
+      sm$C <- matrix(colMeans(sm$X),1,ncol(sm$X))
+      vcol <- apply(sm$X,2,var) ## drop least variable column
+      drop <- min((1:length(vcol))[vcol==min(vcol)])
     } else { ## use sparse constraints for sparse terms
       if (sum(sm$X==0)>.1*sum(sm$X!=0)) { ## treat term as sparse
         if (sparse.cons==1) {
@@ -2892,7 +2895,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       if (j>0) # there are constraints
       { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of non-zero columns in C
         nx <- length(indi)
-        if (nx<ncol(sm$C)) { ## then some parameters are completely constraint free
+        if (nx < ncol(sm$C)) { ## then some parameters are completely constraint free
           nc <- j ## number of constraints
           nz <- nx-nc   ## reduced null space dimension
           qrc <- qr(t(sm$C[,indi,drop=FALSE])) ## gives constraint null space for constrained only
@@ -2920,22 +2923,38 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
             ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
           } ## end smooth list loop
         } else { ## full null space created
-          qrc<-qr(t(sm$C)) 
-          for (i in 1:length(sml)) { ## loop through smooth list
-            if (length(sm$S)>0)
-            for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
-            { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
-              sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
+          if (drop>0) { ## sweep and drop constraints
+            qrc <- c(drop,as.numeric(sm$C)[-drop])
+            class(qrc) <- "sweepDrop"
+            for (i in 1:length(sml)) { ## loop through smooth list
+              ## sml[[i]]$X <- sweep(sml[[i]]$X[,-drop],2,qrc[-1])
+              sml[[i]]$X <- sml[[i]]$X[,-drop] - 
+                            matrix(qrc[-1],nrow(sml[[i]]$X),ncol(sml[[i]]$X)-1,byrow=TRUE)
+              if (length(sm$S)>0)
+              for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
+                sml[[i]]$S[[l]]<-sml[[i]]$S[[l]][-drop,-drop]
+              }
             }
-            sml[[i]]$X <- t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
+          } else { ## full QR based approach
+            qrc<-qr(t(sm$C)) 
+            for (i in 1:length(sml)) { ## loop through smooth list
+              if (length(sm$S)>0)
+              for (l in 1:length(sm$S)) # some smooths have > 1 penalty 
+              { ZSZ<-qr.qty(qrc,sm$S[[l]])[(j+1):k,]
+                sml[[i]]$S[[l]]<-t(qr.qty(qrc,t(ZSZ))[(j+1):k,]) ## Z'SZ
+              }
+              sml[[i]]$X <- t(qr.qty(qrc,t(sml[[i]]$X))[(j+1):k,]) ## form XZ
+            }  
+            ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
+            ## and qr.qy(attr(sm,"qrc"),rbind(rep(0,length(b)),diag(length(b)))) gives 
+            ## null space basis Z, such that Zb are the original params, subject to con. 
+          }
+          for (i in 1:length(sml)) { ## loop through smooth list
             attr(sml[[i]],"qrc") <- qrc
             attr(sml[[i]],"nCons") <- j;
             sml[[i]]$C <- NULL
             sml[[i]]$rank <- pmin(sm$rank,k-j)
             sml[[i]]$df <- sml[[i]]$df - j
-            ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
-            ## and qr.qy(attr(sm,"qrc"),rbind(rep(0,length(b)),diag(length(b)))) gives 
-            ## null space basis Z, such that Zb are the original params, subject to con. 
           } ## end smooth list loop
         } # end full null space version of constraint
       } else { ## no constraints
@@ -3072,6 +3091,11 @@ PredictMat <- function(object,data,n=nrow(data))
             X <- X[,-indi[(nz+1):nx]]
           }
         }
+      } else if (inherits(qrc,"sweepDrop")) {
+        ## Sweep and drop constraints. First element is index to drop. 
+        ## Remainder are constants to be swept out of remaining columns 
+        ## X <- sweep(X[,-qrc[1],drop=FALSE],2,qrc[-1])
+        X <- X[,-qrc[1],drop=FALSE] - matrix(qrc[-1],nrow(X),ncol(X)-1,byrow=TRUE)
       } else if (qrc>0) { ## simple set to zero constraint
         X <- X[,-qrc]
       } else if (qrc<0) { ## params sum to zero
