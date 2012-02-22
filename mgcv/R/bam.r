@@ -652,6 +652,45 @@ ar.qr.up <- function(arg) {
   qrx
 }
 
+predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
+                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
+                        cl=NULL,...) {
+## function for prediction from a bam object, possibly in parallel
+  if (!is.null(cl)&&inherits(cl,"cluster")) { 
+     require(parallel)
+     n.threads <- length(cl)
+  } else n.threads <- 1
+  if (n.threads==1) { ## single threaded call
+    if (is.null(newdata)) return(
+      predict.gam(object,newdata=object$model,type=type,se.fit=se.fit,terms=terms,
+                        block.size=block.size,newdata.guaranteed=newdata.guaranteed,
+                        na.action=na.action,...)
+    ) else return(
+      predict.gam(object,newdata=newdata,type=type,se.fit=se.fit,terms=terms,
+                        block.size=block.size,newdata.guaranteed=newdata.guaranteed,
+                        na.action=na.action,...))
+  } else { ## parallel call...
+    nt <- rep(floor(n/n.threads),n.threads)
+    nt[1] <- n - sum(nt[-1])
+    arg <- list()
+    n1 <- 0
+    for (i in 1:n.threads) if (nt[i]) { 
+      n0 <- n1+1;n1 <- n1+nt[i]
+      ind <- n0:n1 ## this thread's data block from mf
+      arg[[i]] <- list(object=object,type=type,se.fit=se.fit,terms=terms,
+                        block.size=block.size,newdata.guaranteed=newdata.guaranteed,
+                        na.action=na.action)
+      arg[[i]]$object$model <- object$model[1:2,] ## save space
+      if (is.null(newdata)) {
+        arg[[i]]$newdata <- object$model[ind,]
+      } else {
+        arg[[i]]$newdata <- newdata[ind,]
+      }
+      
+    }
+  }
+} ## end predict.bam 
+
 bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level=0,use.chol=FALSE) 
 ## function that does big additive model fit in strictly additive case
 {  ## first perform the QR decomposition, blockwise....
@@ -1002,8 +1041,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   ## need mini.mf for basis setup, then accumulate full X, y, w and offset
   mf0 <- mini.mf(mf,chunk.size)
     
-  G <- mgcv:::gam.setup(gp,pterms=pterms,data=mf0,knots=knots,sp=sp,min.sp=min.sp,
-                 H=NULL,absorb.cons=TRUE,sparse.cons=as.numeric(sparse)*2,select=FALSE,
+  if (sparse) sparse.cons <- 2 else sparse.cons <- -1
+
+  G <- gam.setup(gp,pterms=pterms,data=mf0,knots=knots,sp=sp,min.sp=min.sp,
+                 H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
 
@@ -1140,7 +1181,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$aic <- family$aic(object$y,1,object$fitted.values,object$weights,object$deviance) +
                 2*sum(object$edf)
   object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$weights))
-  class(object) <- c("gam","glm","lm")
+  class(object) <- c("bam","gam","glm","lm")
   object
 } ## end of bam
 

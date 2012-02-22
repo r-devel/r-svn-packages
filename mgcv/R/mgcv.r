@@ -619,7 +619,8 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
-                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,null.space.penalty=select,sparse.cons=sparse.cons)
+                       absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,
+                       null.space.penalty=select,sparse.cons=sparse.cons)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
