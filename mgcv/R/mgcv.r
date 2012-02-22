@@ -2109,6 +2109,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   } else { ## newdata.guaranteed == TRUE
     na.act <- NULL
     new.data.ok=TRUE ## it's guaranteed!
+    if (!is.null(attr(newdata,"terms"))) nd.is.mf <- TRUE
   }
   
 

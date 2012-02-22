@@ -84,8 +84,8 @@ qr.up <- function(arg) {
   dev <- 0    
   for (b in 1:arg$n.block) {
     ind <- arg$start[b]:arg$stop[b]
-    arg$G$model <- arg$mf[ind,]
-    X <- predict(arg$G,type="lpmatrix")
+    ##arg$G$model <- arg$mf[ind,]
+    X <- predict(arg$G,newdata=arg$mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
     if (is.null(arg$coef)) eta1 <- arg$eta[ind] else eta1 <- drop(X%*%arg$coef) + arg$offset[ind]
     mu <- arg$linkinv(eta1) 
     y <- arg$G$y[ind] ## arg$G$model[[arg$response]] 
@@ -263,8 +263,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
          for (b in 1:n.block) {
         
            ind <- start[b]:stop[b]
-           G$model <- mf[ind,]
-           X <- predict(G,type="lpmatrix")
+           ##G$model <- mf[ind,]
+           X <- predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
            if (is.null(coef)) eta1 <- eta[ind] else eta1 <- drop(X%*%coef) + offset[ind]
            mu <- linkinv(eta1) 
            y <- G$y[ind] ## G$model[[gp$response]] ## - G$offset[ind]
@@ -628,9 +628,9 @@ ar.qr.up <- function(arg) {
        weight <- c(1,rep(c(sd,ld),N-1))
        stop <- c(1,1:(N-1)*2+1)
      } 
-     arg$G$model <- arg$mf[ind,]
+     ## arg$G$model <- arg$mf[ind,]
      w <- sqrt(arg$G$w[ind])
-     X <- w*predict(arg$G,type="lpmatrix")
+     X <- w*predict(arg$G,newdata=arg$mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
      y <- w*(arg$G$model[[arg$response]] - arg$offset[ind])
      if (arg$rho!=0) {
        ## Apply transform...
@@ -732,9 +732,9 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
            weight <- c(1,rep(c(sd,ld),N-1))
            stop <- c(1,1:(N-1)*2+1)
          } 
-         G$model <- mf[ind,]
+         #G$model <- mf[ind,]
          w <- sqrt(G$w[ind])
-         X <- w*predict(G,type="lpmatrix")
+         X <- w*predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
          y <- w*(G$model[[gp$response]] - G$offset[ind])
          if (rho!=0) {
            ## Apply transform...
@@ -923,8 +923,8 @@ sparse.model.matrix <- function(G,mf,chunk.size) {
   X <- Matrix(0,nobs,ncol(G$X))   
   for (b in 1:n.block) {    
     ind <- start[b]:stop[b]
-    G$model <- mf[ind,]
-    X[ind,] <- as(predict(G,type="lpmatrix"),"dgCMatrix")
+    #G$model <- mf[ind,]
+    X[ind,] <- as(predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,blocksize=length(ind)),"dgCMatrix")
     gc()
   }
   X

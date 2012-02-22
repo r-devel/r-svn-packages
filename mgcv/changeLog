@@ -6,6 +6,9 @@
 ** bam now has method="fREML" option which uses faster REML optimizer: 
    can make a big difference on parameter rich models.
 
+* bam now uses newnata.guaranteed=TRUE option when predicting as part
+  of model matrix decomposition accumulation. Speeds things up. 
+
 * More efficient `sweep and drop' centering constraints added as default.
   Constaint null space unchanged, but computation is faster.
 
