@@ -2690,8 +2690,10 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   if (is.null(sm$C)) {
     if (sparse.cons==0) {
       sm$C <- matrix(colMeans(sm$X),1,ncol(sm$X))
-      vcol <- apply(sm$X,2,var) ## drop least variable column
-      drop <- min((1:length(vcol))[vcol==min(vcol)])
+     ## following 2 lines implement sweep and drop constraints,
+     ## which are computationally faster than QR null space 
+     # vcol <- apply(sm$X,2,var) ## drop least variable column
+     # drop <- min((1:length(vcol))[vcol==min(vcol)])
     } else { ## use sparse constraints for sparse terms
       if (sum(sm$X==0)>.1*sum(sm$X!=0)) { ## treat term as sparse
         if (sparse.cons==1) {
