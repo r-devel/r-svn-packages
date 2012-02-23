@@ -3,16 +3,21 @@
 
 1.7-14
 
+** predict.bam now added as a wrapper for predict.gam, allowing parallel 
+   computation
+
 ** bam now has method="fREML" option which uses faster REML optimizer: 
    can make a big difference on parameter rich models.
 
-* bam now uses newnata.guaranteed=TRUE option when predicting as part
+* bam returns objects of class "bam" inheriting from "gam"
+
+* bam now uses newdata.guaranteed=TRUE option when predicting as part
   of model matrix decomposition accumulation. Speeds things up. 
 
-* More efficient `sweep and drop' centering constraints added as default.
-  Constaint null space unchanged, but computation is faster.
+* More efficient `sweep and drop' centering constraints added as default for
+  bam. Constaint null space unchanged, but computation is faster.
 
-* underlying "cr" basis code re-written for greater efficiency.
+* Underlying "cr" basis code re-written for greater efficiency.
 
 * routine mgcv removed, it now being many years since there has been any 
   reason to use it. C source code heavily pruned as a result. 

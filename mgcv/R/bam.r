@@ -192,7 +192,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     G$y <- y
     G$w <- weights
 
-    ## set up cluster for parallel coputation...
+    ## set up cluster for parallel computation...
 
     if (!is.null(cl)&&inherits(cl,"cluster")) {
       n.threads <- length(cl)
@@ -631,7 +631,7 @@ ar.qr.up <- function(arg) {
      ## arg$G$model <- arg$mf[ind,]
      w <- sqrt(arg$G$w[ind])
      X <- w*predict(arg$G,newdata=arg$mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
-     y <- w*(arg$G$model[[arg$response]] - arg$offset[ind])
+     y <- w*(arg$mf[ind,arg$response] - arg$offset[ind]) ## w*(arg$G$model[[arg$response]] - arg$offset[ind])
      if (arg$rho!=0) {
        ## Apply transform...
        if (arg$last&&arg$end[i]==arg$nobs) yX.last <- 
@@ -652,14 +652,24 @@ ar.qr.up <- function(arg) {
   qrx
 }
 
+pabapr <- function(arg) {
+## function for parallel calling of predict.gam
+## QUERY: ... handling?
+  predict.gam(arg$object,newdata=arg$newdata,type=arg$type,se.fit=arg$se.fit,terms=arg$terms,
+                        block.size=arg$block.size,newdata.guaranteed=arg$newdata.guaranteed,
+                        na.action=arg$na.action)
+}
+
 predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
-                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
-                        cl=NULL,...) {
+                        block.size=10000,newdata.guaranteed=FALSE,na.action=na.pass,
+                        cluster=NULL,...) {
 ## function for prediction from a bam object, possibly in parallel
-  if (!is.null(cl)&&inherits(cl,"cluster")) { 
+  if (!is.null(cluster)&&inherits(cluster,"cluster")) { 
      require(parallel)
-     n.threads <- length(cl)
+     n.threads <- length(cluster)
   } else n.threads <- 1
+  n <- nrow(newdata)
+  if (n < 100*n.threads) n.threads <- 1 ## not worth the overheads
   if (n.threads==1) { ## single threaded call
     if (is.null(newdata)) return(
       predict.gam(object,newdata=object$model,type=type,se.fit=se.fit,terms=terms,
@@ -674,7 +684,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     nt[1] <- n - sum(nt[-1])
     arg <- list()
     n1 <- 0
-    for (i in 1:n.threads) if (nt[i]) { 
+    for (i in 1:n.threads) { 
       n0 <- n1+1;n1 <- n1+nt[i]
       ind <- n0:n1 ## this thread's data block from mf
       arg[[i]] <- list(object=object,type=type,se.fit=se.fit,terms=terms,
@@ -686,8 +696,36 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       } else {
         arg[[i]]$newdata <- newdata[ind,]
       }
-      
-    }
+    } ## finished setting up arguments
+    res <- parLapply(cluster,arg,pabapr) ## perform parallel prediction
+    ## and splice results back together...
+    if (type=="lpmatrix") {
+      X <- res[[1]]
+      for (i in 2:length(res)) X <- rbind(X,res[[i]])
+      return(X)
+    } else if (se.fit==TRUE) {
+      rt <- list(fit = res[[1]]$fit,se.fit = res[[1]]$se.fit)
+      if (type=="terms") {
+        for (i in 2:length(res)) { 
+          rt$fit <- rbind(rt$fit,res[[i]]$fit)
+          rt$se.fit <- rbind(rt$se.fit,res[[i]]$se.fit)
+        }
+      } else {
+        for (i in 2:length(res)) { 
+          rt$fit <- c(rt$fit,res[[i]]$fit)
+          rt$se.fit <- c(rt$se.fit,res[[i]]$se.fit)
+        }
+      }
+      return(rt)
+    } else { ## no se's returned
+      rt <- res[[1]]
+       if (type=="terms") {
+        for (i in 2:length(res)) rt <- rbind(rt,res[[i]])
+      } else {
+        for (i in 2:length(res)) rt <- c(rt,res[[i]])
+      }
+      return(rt)
+    } 
   }
 } ## end predict.bam 
 
@@ -774,7 +812,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
          #G$model <- mf[ind,]
          w <- sqrt(G$w[ind])
          X <- w*predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
-         y <- w*(G$model[[gp$response]] - G$offset[ind])
+         y <- w*(mf[ind,gp$response]-G$offset[ind])  ## w*(G$model[[gp$response]] - G$offset[ind])
          if (rho!=0) {
            ## Apply transform...
            if (end[i]==n) yX.last <- c(y[nrow(X)],X[nrow(X),]) ## store final row, in case of update
@@ -1172,7 +1210,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   ## note that predict.gam assumes that it must be ok not to split the 
   ## model frame, if no new data supplied, so need to supply explicitly
-  object$linear.predictors <- as.numeric(predict.gam(object,newdata=object$model,block.size=chunk.size))
+  class(object) <- c("bam","gam","glm","lm")
+  object$linear.predictors <- as.numeric(predict.bam(object,newdata=object$model,block.size=chunk.size,cluster=cluster))
   object$fitted.values <- family$linkinv(object$linear.predictors)
   
   object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$weights)) * 
@@ -1181,7 +1220,6 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$aic <- family$aic(object$y,1,object$fitted.values,object$weights,object$deviance) +
                 2*sum(object$edf)
   object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$weights))
-  class(object) <- c("bam","gam","glm","lm")
   object
 } ## end of bam
 
