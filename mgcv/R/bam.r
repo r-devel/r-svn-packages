@@ -668,10 +668,10 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
      require(parallel)
      n.threads <- length(cluster)
   } else n.threads <- 1
-  if (is.null(newdata)) n <- nrow(object$model) else n <- nrow(newdata)
+  if (missing(newdata)) n <- nrow(object$model) else n <- nrow(newdata)
   if (n < 100*n.threads) n.threads <- 1 ## not worth the overheads
   if (n.threads==1) { ## single threaded call
-    if (is.null(newdata)) return(
+    if (missing(newdata)) return(
       predict.gam(object,newdata=object$model,type=type,se.fit=se.fit,terms=terms,
                         block.size=block.size,newdata.guaranteed=newdata.guaranteed,
                         na.action=na.action,...)
@@ -691,7 +691,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                         block.size=block.size,newdata.guaranteed=newdata.guaranteed,
                         na.action=na.action)
       arg[[i]]$object$model <- object$model[1:2,] ## save space
-      if (is.null(newdata)) {
+      if (missing(newdata)) {
         arg[[i]]$newdata <- object$model[ind,]
       } else {
         arg[[i]]$newdata <- newdata[ind,]
