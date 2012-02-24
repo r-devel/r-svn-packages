@@ -668,7 +668,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
      require(parallel)
      n.threads <- length(cluster)
   } else n.threads <- 1
-  if (is.null(newdata) n <- nrow(object$model) else n <- nrow(newdata)
+  if (is.null(newdata)) n <- nrow(object$model) else n <- nrow(newdata)
   if (n < 100*n.threads) n.threads <- 1 ## not worth the overheads
   if (n.threads==1) { ## single threaded call
     if (is.null(newdata)) return(
