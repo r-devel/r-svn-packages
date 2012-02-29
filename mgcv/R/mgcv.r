@@ -2426,7 +2426,40 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
   list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
 }
 
-smoothTest <- function(b,X,V,z) {
+ruben <- function(x,a,maxit=1000,tol=1e-10,lower.tail=TRUE) {
+## evaluates Pr[sum_i a_i \chi^2_1 < x] for vector x, a +ve, using Ruben 1962, Thm 2. 
+## See Thm 1 and 3 for non-central cases, and slower Imhof 1961 for not nec +ve def.
+## R package CompQuadForm collects some standard code. 
+  c <- g <- rep(0,maxit+1)
+  n <- length(a)
+  p <- 2*prod(range(a))/sum(range(a)) ## see p0, final paragraph of Ruben, 1962
+  c[1] <- prod(sqrt(p/a)) ## c0 in Ruben thm 2
+  prb <- c[1]*pgamma(x/p,shape=n/2,scale=2,lower.tail=lower.tail)
+  ompa <- 1-p/a ## one minus p / a 
+  ompam <- 1    ## (1-p/a)^m
+  ok <- 0
+  max.adp <- 0*prb ## largest term size
+  for (i in 1:maxit) {
+    ompam <- ompa*ompam ## up m in (1-p/a)^m by 1
+    g[i] <- sum(ompam)  ## g_m for recursion for c
+    indc <- 1:i;indg <- i:1
+    c[i+1] <- sum(c[indc]*g[indg])/(2*i) ## get next c by Ruben (3.39)
+    ## now the the next term in Ruben thm 2 series (3.36)
+    dprb <- c[i+1] * pgamma(x/p,shape=n/2+i,scale=2,lower.tail=lower.tail)
+    prb <- prb + dprb
+    max.adp <- pmax(max.adp,abs(dprb))
+    if (sum(abs(dprb)>=max.adp)==0) { ## terms not increasing
+      if (sum(abs(dprb)>tol*prb)==0) ok <- ok + 1 else ok <- 0
+      if (ok>1&&i>10) break
+    } else ok <- 0
+  }
+  ##if (i==maxit) warning("reached maxit")
+  ##cat("iter=", i, "\n")
+  return(prb)
+} ## end of Ruben
+
+
+smoothTest <- function(b,X,V,eps=.Machine$double.eps^.25) {
 ## Forms Cox, Koh, etc type test statistic, and
 ## obtains null distribution by simulation...
 ## if b are coefs f=Xb, cov(b) = V. z is a vector of 
@@ -2439,12 +2472,14 @@ smoothTest <- function(b,X,V,z) {
   f <- t(ed$vectors)%*%R%*%b
   t <- sum(f^2)
   k <- ncol(X)
-  n.rep <- floor(length(z)/k)
+  ##n.rep <- floor(length(z)/k)
   lambda <- as.numeric(ed$values)
-  T <- colSums(lambda*matrix(z[1:(n.rep*k)]^2,k,n.rep))
-  pval <- sum(T>=t)
+  lambda <- lambda[lambda>eps]
+  ##T <- colSums(lambda*matrix(z[1:(n.rep*k)]^2,k,n.rep))
+  pval <- 1 - ruben(t,lambda)
+  ##pval <- sum(T>=t)
   #if (pval==0) pval <- .5
-  pval <- pval/n.rep
+  ##pval <- pval/n.rep
   list(stat=t,pval=pval)  
 } 
 
@@ -2692,7 +2727,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       k <- stop-start+1
       if (k>kmax) kmax <- k 
     }
-    z <- rnorm(kmax*100000) ## N(0,1) deviates to drive null simulation
+    #z <- rnorm(kmax*100000) ## N(0,1) deviates to drive null simulation
   }
 
   df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, m)
@@ -2737,7 +2772,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         Xt <- X[,start:stop,drop=FALSE] 
         if (p.type < 0) {
           ##if (p.type == -2) Xt <- diag(length(p)) ## amazingly poor
-          res <- smoothTest(p,Xt,V,z)
+          res <- smoothTest(p,Xt,V)
           df[i] <- edf[i] ## not really used
           chi.sq[i] <- res$stat
           s.pv[i] <- res$pval

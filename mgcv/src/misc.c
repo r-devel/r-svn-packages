@@ -108,6 +108,137 @@ void in_out(double *bx, double *by, double *break_code, double *x,double *y,int 
 } /* end of in_out */
 
 
+/****************************************************/
+/* CDF of  mixture of (possibly non-central)
+   Chi^2 using Farebrother 1984 JRSSC 33(3),332-229,
+   based in turn on Ruben, 1962. */
+/***************************************************/
+
+void ruben(double *x,int *nx,double *lambda,double *delta,int *mult,int *n,
+           double *dnsty,double *eps,int *maxit,double *mode) {
+/* x is a vector of length nx. Want to evaluate Pr(sum_i \chi^2_i lambda_i < x_j) for all
+   j, returning result in x. If there are multiple lambda with same value then only
+   unique values should be in lambda, with multiplicities in mult. *n is dimension of lambda.
+   lambda > 0, mult > 0, delta > 0, x >=0
+   * dnsty and x are nx vectors, pdf and cdf are returned in these.
+   * lambda, mult and delta are n vectors.
+*/ 
+
+  double beta,sum,sum1,hold,hold2,hp,lsp2,a0,root2,tol=-200.0,
+    a0inv,eps2,*a,*b,*gamma,*theta,*lans,*dans,*pans,*prb;
+  int i,j,k,ii,ok=0,conv=0,m;
+  a = (double *)calloc((size_t)*maxit,sizeof(double));
+  b = (double *)calloc((size_t)*maxit,sizeof(double));
+  lans =  (double *)calloc((size_t)*nx,sizeof(double));
+  dans =  (double *)calloc((size_t)*nx,sizeof(double));
+  pans =  (double *)calloc((size_t)*nx,sizeof(double));
+  gamma =  (double *)calloc((size_t)*n,sizeof(double));
+  theta =  (double *)calloc((size_t)*n,sizeof(double));
+  prb =  (double *)calloc((size_t)*nx,sizeof(double));
+  lsp2 = log(sqrt(asin(1.0))); /* log(sqrt(pi/2)) */
+  root2 = sqrt(2.0);
+  beta = sum = lambda[0];
+  for (i=0;i<*n;i++) {
+    hold=lambda[i];
+    if (beta>hold) beta = hold;
+    if (sum<hold) sum = hold;
+  }
+  if (*mode>0.0) beta = *mode * beta; else 
+    beta = 2.0/(1.0/beta + 1.0/sum); /* Ruben's proposal */
+  
+  k=0;sum=1.0;sum1=0.0;
+
+  for (i=0;i< *n;i++) {
+    hold = beta / lambda[i];
+    gamma[i] = 1 - hold;
+    for (j=0;j<mult[i];j++) sum *= hold;
+    sum1 = sum1 + delta[i];
+    k = k + mult[i];
+    theta[i] = 1.0;
+  }
+
+  a0 = exp(0.5*(log(sum)-sum1));
+  if (a0<=0) { /* non -fatal underflow */
+    free(a);free(b);free(lans);free(dans);free(pans);free(gamma);free(theta);free(prb);
+    for (i=0;i<*n;i++) x[i] = 0.0;
+    return;
+  } 
+  
+  for (i=0;i<*nx;i++) x[i] /= beta;
+
+  if ((k%2) == 0) {
+    ii = 2;
+    for (i=0;i<*nx;i++) {
+      lans[i] = -0.5 * x[i];
+      dans[i] = exp(lans[i]);
+      pans[i] = 1 - dans[i];
+    }
+  } else {
+    ii = 1;
+    for (i=0;i<*nx;i++) {
+      lans[i] = -0.5 * (x[i]+log(x[i])) - lsp2;
+      dans[i] = exp(lans[i]);
+      pans[i] = erf(x[i]/root2);
+    }
+  }
+  k = k-2;
+  for (i=ii;i<=k;i++) {
+    for (j=0;j<*nx;j++) { /* loop over x */
+      if (lans[j]<tol) {
+        lans[j] += log(x[j]/i);dans[j] = exp(lans[j]);
+      } else dans[j] = dans[j] * x[j] / i;
+      pans[j] = pans[j] - dans[j];
+    } /* end x loop */
+  }
+
+  /* now turn to evaluation of expansion, itself */
+
+  for (i=0;i<*nx;i++) {
+    prb[i] = pans[i];dnsty[i] = dans[i];
+  }
+  eps2 = *eps/a0;a0inv = 1.0/a0;
+  sum = a0inv - 1.0;
+  for (m=0;m<*maxit;m++) { /* main loop */
+    /* first update the constants.... */
+    sum1=0.0;
+    for (i=0;i<*n;i++) {
+      hold = theta[i];
+      theta[i] = hold2 = hold*gamma[i];
+      sum1 = sum1 + hold2 * mult[i] + (m+1) * delta[i] * (hold-hold2);
+    }
+    b[m] = sum1 = 0.5 * sum1;
+
+    for (i=m-1;i>=0;i--) sum1 += b[i] * a[m-i-1];
+    
+    a[m] = sum1 = sum1/(m+1);k += 2; 
+    sum -= sum1;
+    /* now add next term to expansion ... */
+    for (i=0;i<*nx;i++) {
+      if (lans[i]<tol) {
+        lans[i] += log(x[i]/k);
+        dans[i] = exp(lans[i]);
+      } else dans[i] *= x[i]/k;
+      pans[i] -= dans[i];
+      dnsty[i] += dans[i]*sum1;
+      prb[i] += pans[i]*sum1;
+    }
+    /* error checking, if ok ends up at zero, then have to leave */
+    ok = 1;
+    for (i=0;i<*nx;i++) {
+      if (prb[i] < -a0inv) ok = 0;
+    }
+    if (!ok) break;
+    /* convergence checking */
+    conv=1;
+    for (i=0;i<*nx;i++) 
+      if (abs(sum*pans[i])>eps2||abs(sum1*pans[i])>eps2) conv = 0;
+    if (conv) break;
+  } /* end of main loop */
+  if (!ok) for (i=0;i<*nx;i++) x[i] = -1.0; else 
+  for (i=0;i<*nx;i++) x[i] = prb[i];
+  free(a);free(b);free(lans);free(dans);free(pans);free(gamma);free(theta);free(prb);
+}
+
 
 
 /******************************/
