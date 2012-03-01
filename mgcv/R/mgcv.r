@@ -2426,44 +2426,14 @@ eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
   list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
 }
 
-ruben <- function(x,a,maxit=1000,tol=1e-10,lower.tail=TRUE) {
-## evaluates Pr[sum_i a_i \chi^2_1 < x] for vector x, a +ve, using Ruben 1962, Thm 2. 
-## See Thm 1 and 3 for non-central cases, and slower Imhof 1961 for not nec +ve def.
-## R package CompQuadForm collects some standard code. 
-  c <- g <- rep(0,maxit+1)
-  n <- length(a)
-  p <- 2*prod(range(a))/sum(range(a)) ## see p0, final paragraph of Ruben, 1962
-  c[1] <- prod(sqrt(p/a)) ## c0 in Ruben thm 2
-  prb <- c[1]*pgamma(x/p,shape=n/2,scale=2,lower.tail=lower.tail)
-  ompa <- 1-p/a ## one minus p / a 
-  ompam <- 1    ## (1-p/a)^m
-  ok <- 0
-  max.adp <- 0*prb ## largest term size
-  for (i in 1:maxit) {
-    ompam <- ompa*ompam ## up m in (1-p/a)^m by 1
-    g[i] <- sum(ompam)  ## g_m for recursion for c
-    indc <- 1:i;indg <- i:1
-    c[i+1] <- sum(c[indc]*g[indg])/(2*i) ## get next c by Ruben (3.39)
-    ## now the the next term in Ruben thm 2 series (3.36)
-    dprb <- c[i+1] * pgamma(x/p,shape=n/2+i,scale=2,lower.tail=lower.tail)
-    prb <- prb + dprb
-    max.adp <- pmax(max.adp,abs(dprb))
-    if (sum(abs(dprb)>=max.adp)==0) { ## terms not increasing
-      if (sum(abs(dprb)>tol*prb)==0) ok <- ok + 1 else ok <- 0
-      if (ok>1&&i>10) break
-    } else ok <- 0
-  }
-  ##if (i==maxit) warning("reached maxit")
-  ##cat("iter=", i, "\n")
-  return(prb)
-} ## end of Ruben
 
 
-smoothTest <- function(b,X,V,eps=.Machine$double.eps^.25) {
+smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
 ## Forms Cox, Koh, etc type test statistic, and
 ## obtains null distribution by simulation...
 ## if b are coefs f=Xb, cov(b) = V. z is a vector of 
 ## i.i.d. N(0,1) deviates
+  require(CompQuadForm)
   qrx <- qr(X)
   R <- qr.R(qrx)
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
@@ -2474,9 +2444,9 @@ smoothTest <- function(b,X,V,eps=.Machine$double.eps^.25) {
   k <- ncol(X)
   ##n.rep <- floor(length(z)/k)
   lambda <- as.numeric(ed$values)
-  lambda <- lambda[lambda>eps]
+  #lambda <- lambda[lambda>eps]
   ##T <- colSums(lambda*matrix(z[1:(n.rep*k)]^2,k,n.rep))
-  pval <- 1 - ruben(t,lambda)
+  pval <- davies(t,lambda)$Qq
   ##pval <- sum(T>=t)
   #if (pval==0) pval <- .5
   ##pval <- pval/n.rep
@@ -2610,6 +2580,7 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
  
   ## deal with the fractional part of the pinv...
   if (nu>0&&k>0) {
+     if (FALSE) {
      if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
      b12 <- .5*nu*(1-nu)
      if (b12<0) b12 <- 0
@@ -2620,6 +2591,14 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
      eb <- eigen(B,symmetric=TRUE)
      rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
      vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
+     } else {
+     val <- ed$val[1:k1]
+     rp <- nu+1
+     alpha <- 0.7 ## proportion of 2nd order to use
+     val[k] <- alpha*(rp + sqrt(rp*(2-rp)))/2 + (1-alpha)
+     val[k1] <- alpha*(rp - val[k]) + (1-alpha)*nu
+     vec <- t(t(vec[,1:k1])/sqrt(ed$val[1:k1]))
+     }
   } else {
     vec <- t(t(vec)/sqrt(ed$val[1:k]))
   }
@@ -2761,7 +2740,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       p <- object$coefficients[start:stop]  # params for smooth
       edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
       ## extract alternative edf estimate for this smooth, if possible...
-      if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
+      #if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
       if (freq) { ## old style frequentist
         M1 <- object$smooth[[i]]$df
         M <- min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
