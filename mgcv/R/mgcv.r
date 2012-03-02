@@ -2594,7 +2594,7 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
      } else {
      val <- ed$val[1:k1]
      rp <- nu+1
-     alpha <- 0.7 ## proportion of 2nd order to use
+     alpha <- 1.0 ## proportion of 2nd order to use
      val[k] <- alpha*(rp + sqrt(rp*(2-rp)))/2 + (1-alpha)
      val[k1] <- alpha*(rp - val[k]) + (1-alpha)*nu
      vec <- t(t(vec[,1:k1])/sqrt(ed$val[1:k1]))
@@ -2732,7 +2732,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       ##if (alpha>0) X <- diag(ncol(X))
       ## get corrected edf
-      ##  edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
+       edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
     for (i in 1:m)
     { start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
