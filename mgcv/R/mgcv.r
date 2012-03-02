@@ -2439,11 +2439,15 @@ smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
-  f <- t(ed$vectors)%*%R%*%b
+  k <- n <- length(ed$values)
+  ## could truncate, but it doesn't improve power in correlated case!
+  ##k <- sum(ed$values>.5*max(ed$values))
+  ##if (k<n) k <- k + 1
+  f <- t(ed$vectors[,1:k])%*%R%*%b
   t <- sum(f^2)
   k <- ncol(X)
   ##n.rep <- floor(length(z)/k)
-  lambda <- as.numeric(ed$values)
+  lambda <- as.numeric(ed$values[1:k])
   #lambda <- lambda[lambda>eps]
   ##T <- colSums(lambda*matrix(z[1:(n.rep*k)]^2,k,n.rep))
   pval <- davies(t,lambda)$Qq
@@ -2525,7 +2529,22 @@ pinvXVX <- function(X,V,rank=NULL,type=0) {
   vec ## vec%*%t(vec) is the pseudoinverse
 } ## end of pinvXVX
 
-testStat <- function(p,X,V,rank=NULL,type=0) {
+simf <- function(x,a,df,nq=50) {
+## suppose T = sum(a_i \chi^2_1)/(chi^2_df/df). We need
+## Pr[T>x] = Pr(sum(a_i \chi^2_1) > x *chi^2_df/df). Quadrature 
+## used here. So, e.g.
+## 1-pf(4/3,3,40);simf(4,rep(1,3),40);1-pchisq(4,3)
+  require(CompQuadForm)
+  p <- (1:nq-.5)/nq
+  q <- qchisq(p,df)
+  x <- x*q/df
+  pr <- 0
+  for (i in 1:nq) pr <- pr + davies(x[i],a)$Qq
+  pr/nq 
+}
+
+
+testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 ## Routine for forming fractionally trunctated
 ## pseudoinverse of XVX'. And returning 
 ## p'X'(XVX)^-Xp.
@@ -2538,6 +2557,8 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
 ## 2. Naive rounding.
 ## 3. Round up.
 ## 4. Numerical rank estimation, tol=1e-3
+## res.df is residual dof used to estimate scale. <=0 implies
+## fixed scale.
 
   qrx <- qr(X)
   R <- qr.R(qrx)
@@ -2580,7 +2601,7 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
  
   ## deal with the fractional part of the pinv...
   if (nu>0&&k>0) {
-     if (FALSE) {
+     if (TRUE) { 
      if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
      b12 <- .5*nu*(1-nu)
      if (b12<0) b12 <- 0
@@ -2606,9 +2627,21 @@ testStat <- function(p,X,V,rank=NULL,type=0) {
   #d <- t(vec)%*%(X%*%p)
   d <- t(vec)%*%(R%*%p)
   d <- sum(d^2) 
-  attr(d,"rank") <- rank ## actual rank
+ # attr(d,"rank") <- rank ## actual rank
   ##vec ## vec%*%t(vec) is the pseudoinverse
-  d
+  if (nu>0) { ## mixture of chi^2 ref dist
+     val <- rep(1,k1)##ed$val[1:k1]
+     rp <- nu+1
+     val[k] <- (rp + sqrt(rp*(2-rp)))/2
+     val[k1] <- (rp - val[k])
+     require(CompQuadForm)
+     if (res.df <= 0) pval <- davies(d,val)$Qq else
+     pval <- simf(d,val,res.df)
+  } else { 
+    if (res.df <= 0) pval <- pchisq(d,df=rank,lower.tail=FALSE) else
+    pval <- pf(d/rank,rank,res.df,lower.tail=FALSE)
+  }
+  list(stat=d,pval=pval,rank=rank)
 } ## end of testStat
 
 
@@ -2732,7 +2765,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       ##if (alpha>0) X <- diag(ncol(X))
       ## get corrected edf
-       edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
+      # edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
     for (i in 1:m)
     { start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
@@ -2760,14 +2793,16 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
        
           df[i] <- min(ncol(Xt),edf1[i])
           ##D <- pinvXVX(Xt,V,df[i],type=p.type)
-          chi.sq[i] <- Tp <- testStat(p,Xt,V,df[i],type=p.type)
-          df[i] <- attr(Tp,"rank") ##attr(D,"rank") 
+          res <- testStat(p,Xt,V,df[i],type=p.type)
+          df[i] <- res$rank
+          chi.sq[i] <- res$stat
+          s.pv[i] <- res$pval 
           ## chi.sq[i] <- sum((t(D)%*%ft)^2)
         }   
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       
-      if (p.type> -.5||freq) {
+      if (freq) {
         if (!est.disp)
          s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
         else
