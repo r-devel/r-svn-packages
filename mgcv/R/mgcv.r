@@ -2641,7 +2641,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
     if (res.df <= 0) pval <- pchisq(d,df=rank,lower.tail=FALSE) else
     pval <- pf(d/rank,rank,res.df,lower.tail=FALSE)
   }
-  list(stat=d,pval=pval,rank=rank)
+  list(stat=d,pval=min(1,pval),rank=rank)
 } ## end of testStat
 
 
@@ -2765,7 +2765,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       ##if (alpha>0) X <- diag(ncol(X))
       ## get corrected edf
-      # edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
+      edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
     for (i in 1:m)
     { start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
@@ -2793,7 +2793,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
        
           df[i] <- min(ncol(Xt),edf1[i])
           ##D <- pinvXVX(Xt,V,df[i],type=p.type)
-          res <- testStat(p,Xt,V,df[i],type=p.type)
+          if (est.disp) rdf <- residual.df else rdf <- -1
+          res <- testStat(p,Xt,V,df[i],type=p.type,res.df = rdf)
           df[i] <- res$rank
           chi.sq[i] <- res$stat
           s.pv[i] <- res$pval 
