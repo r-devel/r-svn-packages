@@ -9,6 +9,8 @@
 ** bam now has method="fREML" option which uses faster REML optimizer: 
    can make a big difference on parameter rich models.
 
+* p-value reference distribution approximations improved.
+
 * bam returns objects of class "bam" inheriting from "gam"
 
 * bam now uses newdata.guaranteed=TRUE option when predicting as part

@@ -2390,7 +2390,6 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
 { type <- match.arg(type)
   y <- object$y
   mu <- object$fitted.values
-##  family <- object$family
   wts <- object$prior.weights
   res<- switch(type,working = object$residuals,
          scaled.pearson = (y-mu)*sqrt(wts)/sqrt(object$sig2*object$family$variance(mu)),
@@ -2406,25 +2405,6 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
 
 ## Start of anova and summary (with contributions from Henric Nilsson) ....
 
-eigXVX <- function(X,V,rank=NULL,tol=.Machine$double.eps^.5) {
-## forms truncated eigen-decomposition of XVX', efficiently,
-## where V is symmetric, and X has more rows than columns
-## first `rank' eigen values/vectors are returned, where `rank'
-## is the smaller of any non-NULL supplied value, and the rank
-## estimated using `tol'
-  qrx <- qr(X)
-  R <- qr.R(qrx)
-  V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
-  V <- (V + t(V))/2
-  ed <- eigen(V,symmetric=TRUE)
-  ind <- abs(ed$values) > max(abs(ed$values))*tol
-  erank <- sum(ind) ## empirical rank
-  if (is.null(rank)) {
-    rank <- erank
-  } else { if (rank<erank) ind <- 1:rank else rank <- erank }
-  vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
-  list(values=ed$values[ind],vectors=vec[,ind],rank=rank)
-}
 
 
 
@@ -2433,7 +2413,7 @@ smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
 ## obtains null distribution by simulation...
 ## if b are coefs f=Xb, cov(b) = V. z is a vector of 
 ## i.i.d. N(0,1) deviates
-  require(CompQuadForm)
+
   qrx <- qr(X)
   R <- qr.R(qrx)
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
@@ -2441,103 +2421,27 @@ smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
   ed <- eigen(V,symmetric=TRUE)
   k <- n <- length(ed$values)
   ## could truncate, but it doesn't improve power in correlated case!
-  ##k <- sum(ed$values>.5*max(ed$values))
-  ##if (k<n) k <- k + 1
   f <- t(ed$vectors[,1:k])%*%R%*%b
   t <- sum(f^2)
   k <- ncol(X)
-  ##n.rep <- floor(length(z)/k)
   lambda <- as.numeric(ed$values[1:k])
-  #lambda <- lambda[lambda>eps]
-  ##T <- colSums(lambda*matrix(z[1:(n.rep*k)]^2,k,n.rep))
-  pval <- davies(t,lambda)$Qq
-  ##pval <- sum(T>=t)
-  #if (pval==0) pval <- .5
-  ##pval <- pval/n.rep
+  pval <- liu2(t,lambda) ## should really use Davies
   list(stat=t,pval=pval)  
 } 
 
-pinvXVX <- function(X,V,rank=NULL,type=0) {
-## Routine for forming fractionally trunctated
-## pseudoinverse of XVX'. Returns as D where
-## DD' gives the pseudoinverse itself.
-## truncates to numerical rank, if this is
-## less than supplied rank+1.
-## The type argument specifies the type of truncation to use.
-## on entry `rank' should be an edf estimate
-## 0. Default using the fractionally truncated pinv.
-## 1. Round down to k if k<= rank < k+0.05, otherwise up.
-## 2. Naive rounding.
-## 3. Round up.
-## 4. Numerical rank estimation, tol=1e-3
- 
-
-  qrx <- qr(X)
-  R <- qr.R(qrx)
-  V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
-  V <- (V + t(V))/2
-  ed <- eigen(V,symmetric=TRUE)
-
-  k <- max(0,floor(rank)) 
-  nu <- abs(rank - k)     ## fractional part of supplied edf
-  if (type==1) { ## round up is more than .05 above lower
-    if (rank > k + .05||k==0) k <- k + 1
-    nu <- 0;rank <- k
-  } else if (type==2) { ## naive round
-    nu <- 0;rank <- k <- max(1,round(rank))
-    warning("p-values may give low power in some circumstances")
-  } else if (type==3) { ## round up
-    nu <- 0; rank <- k <- max(1,ceiling(rank))
-    warning("p-values un-reliable")
-  } else if (type==4) { ## rank estimation
-    rank <- k <- max(sum(ed$values>1e-3*max(ed$values)),1) 
-    nu <- 0
-    warning("p-values may give very low power")
-  }
-
-  if (nu>0) k1 <- k+1 else k1 <- k
-
-  ## check that actual rank is not below supplied rank+1
-  r.est <- sum(ed$values > max(ed$values)*.Machine$double.eps^.9)
-  if (r.est<k1) {k1 <- k <- r.est;nu <- 0;rank <- r.est}
-
-  ## Get the eigenvectors...
-  vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
-  if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
-  if (k==0) {
-     vec <- t(t(vec)*sqrt(nu/ed$val[1]))
-     attr(vec,"rank") <- rank
-     return(vec)
-  }
- 
-  ## deal with the fractional part of the pinv...
-  if (nu>0) {
-     if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
-     b12 <- .5*nu*(1-nu)
-     if (b12<0) b12 <- 0
-     b12 <- sqrt(b12)
-     B <- matrix(c(1,b12,b12,nu),2,2)
-     ev <- diag(ed$values[k:k1]^-.5)
-     B <- ev%*%B%*%ev
-     eb <- eigen(B,symmetric=TRUE)
-     rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
-     vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
-  } else {
-    vec <- t(t(vec)/sqrt(ed$val[1:k]))
-  }
-  attr(vec,"rank") <- rank ## actual rank
-  vec ## vec%*%t(vec) is the pseudoinverse
-} ## end of pinvXVX
 
 liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # Evaluate Pr[sum_i \lambda_i \chi^2_h_i < x] approximately.
 # Code adapted from CompQuadForm package of Pierre Lafaye de Micheaux 
+# and directly from....
 # H. Liu, Y. Tang, H.H. Zhang, A new chi-square approximation to the 
 # distribution of non-negative definite quadratic forms in non-central 
 # normal variables, Computational Statistics and Data Analysis, Volume 53, 
-# (2009), 853-856
+# (2009), 853-856. Actually, this is just Pearson (1959) given that
+# the chi^2 variables are central. 
+# Note that this can be rubiish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
-  if (FALSE) { ## use Davies method in place of Liu et al approx.
+  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
     require(CompQuadForm)
     r <- x
     for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
@@ -2587,9 +2491,7 @@ simf <- function(x,a,df,nq=50) {
   p <- (1:nq-.5)/nq
   q <- qchisq(p,df)
   x <- x*q/df
-  pr <- sum(liu2(x,a))
-  ## pr <- 0
-  ## for (i in 1:nq) pr <- pr + davies(x[i],a)$Qq
+  pr <- sum(liu2(x,a)) ## Pearson/Liu approx to chi^2 mixture
   pr/nq 
 }
 
@@ -2649,8 +2551,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
   if (k==0) {
      vec <- t(t(vec)*sqrt(1/ed$val[1]))
-     ##attr(vec,"rank") <- rank
-     ##return(vec)
+    
   }
  
   ## deal with the fractional part of the pinv...
@@ -2677,12 +2578,10 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   } else {
     vec <- t(t(vec)/sqrt(ed$val[1:k]))
   }
-  ##attr(vec,"rank") <- rank ## actual rank
-  #d <- t(vec)%*%(X%*%p)
+ 
   d <- t(vec)%*%(R%*%p)
   d <- sum(d^2) 
- # attr(d,"rank") <- rank ## actual rank
-  ##vec ## vec%*%t(vec) is the pseudoinverse
+
   if (nu>0) { ## mixture of chi^2 ref dist
      if (k1==1) val <- 1 else { 
        val <- rep(1,k1)##ed$val[1:k1]
@@ -2690,10 +2589,14 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
        val[k] <- (rp + sqrt(rp*(2-rp)))/2
        val[k1] <- (rp - val[k])
      }
-     require(CompQuadForm)
+   
      if (res.df <= 0) pval <- liu2(d,val) else ##  pval <- davies(d,val)$Qq else
      pval <- simf(d,val,res.df)
-  } else { 
+  } else { pval <- 1 }
+  ## integer case still needs computing, also liu/pearson approx only good in 
+  ## upper tail. In lower tail, 2 moment approximation is better (Can check this 
+  ## by simply plotting the whole interesting range as a contour plot!)
+  if (pval > .5) {
     if (res.df <= 0) pval <- pchisq(d,df=rank,lower.tail=FALSE) else
     pval <- pf(d/rank,rank,res.df,lower.tail=FALSE)
   }
@@ -2707,12 +2610,11 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
 # summary method for gam object - provides approximate p values for terms + other diagnostics
 # Improved by Henric Nilsson
 { pinv<-function(V,M,rank.tol=1e-6)
-  { ##D<-La.svd(V)
-    ##M1<-length(D$d[D$d>rank.tol*D$d[1]])
+  {
     D <- eigen(V,symmetric=TRUE)
     M1<-length(D$values[D$values>rank.tol*D$values[1]])
     if (M>M1) M<-M1 # avoid problems with zero eigen-values
-    ##if (M+1<=length(D$d)) D$d[(M+1):length(D$d)]<-1
+  
     if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-1
     D$values<- 1/D$values
     if (M+1<=length(D$values)) D$values[(M+1):length(D$values)]<-0
@@ -2730,7 +2632,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
     covmat <- dispersion * covmat.unscaled
     est.disp <- FALSE
   } else dispersion <- object$sig2
-  #se<-0;for (i in 1:length(object$coefficients)) se[i] <- covmat[i,i]^0.5
+ 
   se <- diag(covmat)^0.5
   residual.df<-length(object$y)-sum(object$edf)
   if (object$nsdf>0) # individual parameters
@@ -2795,7 +2697,6 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       k <- stop-start+1
       if (k>kmax) kmax <- k 
     }
-    #z <- rnorm(kmax*100000) ## N(0,1) deviates to drive null simulation
   }
 
   df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, m)
@@ -2819,7 +2720,6 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         X <- model.matrix(object)
       }
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
-      ##if (alpha>0) X <- diag(ncol(X))
       ## get corrected edf
       edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
@@ -2839,22 +2739,19 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       } else { ## Inverted Nychka interval statistics
         Xt <- X[,start:stop,drop=FALSE] 
         if (p.type < 0) {
-          ##if (p.type == -2) Xt <- diag(length(p)) ## amazingly poor
           res <- smoothTest(p,Xt,V)
           df[i] <- edf[i] ## not really used
           chi.sq[i] <- res$stat
           s.pv[i] <- res$pval
         } else {
-          #ft <- Xt%*%p
-       
+         
           df[i] <- min(ncol(Xt),edf1[i])
-          ##D <- pinvXVX(Xt,V,df[i],type=p.type)
+        
           if (est.disp) rdf <- residual.df else rdf <- -1
           res <- testStat(p,Xt,V,df[i],type=p.type,res.df = rdf)
           df[i] <- res$rank
           chi.sq[i] <- res$stat
           s.pv[i] <- res$pval 
-          ## chi.sq[i] <- sum((t(D)%*%ft)^2)
         }   
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
