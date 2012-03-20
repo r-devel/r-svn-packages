@@ -2529,17 +2529,67 @@ pinvXVX <- function(X,V,rank=NULL,type=0) {
   vec ## vec%*%t(vec) is the pseudoinverse
 } ## end of pinvXVX
 
+liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
+# Evaluate Pr[sum_i \lambda_i \chi^2_h_i < x] approximately.
+# Code adapted from CompQuadForm package of Pierre Lafaye de Micheaux 
+# H. Liu, Y. Tang, H.H. Zhang, A new chi-square approximation to the 
+# distribution of non-negative definite quadratic forms in non-central 
+# normal variables, Computational Statistics and Data Analysis, Volume 53, 
+# (2009), 853-856
+  
+  if (FALSE) { ## use Davies method in place of Liu et al approx.
+    require(CompQuadForm)
+    r <- x
+    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
+    return(r)
+  }
+
+  if (length(h) != length(lambda)) stop("lambda and h should have the same length!")
+ 
+  lh <- lambda*h
+  muQ <- sum(lh)
+  
+  lh <- lh*lambda
+  c2 <- sum(lh)
+  
+  lh <- lh*lambda
+  c3 <- sum(lh)
+  
+  s1 <- c3/c2^1.5
+  s2 <- sum(lh*lambda)/c2^2
+
+  sigQ <- sqrt(2*c2)
+
+  t <- (x-muQ)/sigQ
+
+  if (s1^2>s2) {
+    a <- 1/(s1-sqrt(s1^2-s2))
+    delta <- s1*a^3-a^2
+    l <- a^2-2*delta
+  } else {
+    a <- 1/s1
+    delta <- 0
+    l <- c2^3/c3^2
+  }
+
+  muX <- l+delta
+  sigX <- sqrt(2)*a
+  
+  return(pchisq(t*sigX+muX,df=l,ncp=delta,lower.tail=lower.tail))
+
+}
+
 simf <- function(x,a,df,nq=50) {
 ## suppose T = sum(a_i \chi^2_1)/(chi^2_df/df). We need
 ## Pr[T>x] = Pr(sum(a_i \chi^2_1) > x *chi^2_df/df). Quadrature 
 ## used here. So, e.g.
 ## 1-pf(4/3,3,40);simf(4,rep(1,3),40);1-pchisq(4,3)
-  require(CompQuadForm)
   p <- (1:nq-.5)/nq
   q <- qchisq(p,df)
   x <- x*q/df
-  pr <- 0
-  for (i in 1:nq) pr <- pr + davies(x[i],a)$Qq
+  pr <- sum(liu2(x,a))
+  ## pr <- 0
+  ## for (i in 1:nq) pr <- pr + davies(x[i],a)$Qq
   pr/nq 
 }
 
@@ -2565,7 +2615,11 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
-
+  
+  if (max(ed$values) < 1-.Machine$double.eps^.5) {
+    rank <- max(rank,sum(ed$values>.5*max(ed$values)))
+  }
+ 
   k <- max(0,floor(rank)) 
   nu <- abs(rank - k)     ## fractional part of supplied edf
   if (type==1) { ## round up is more than .05 above lower
@@ -2594,7 +2648,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   vec <- ed$vectors
   if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
   if (k==0) {
-     vec <- t(t(vec)*sqrt(nu/ed$val[1]))
+     vec <- t(t(vec)*sqrt(1/ed$val[1]))
      ##attr(vec,"rank") <- rank
      ##return(vec)
   }
@@ -2630,12 +2684,14 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
  # attr(d,"rank") <- rank ## actual rank
   ##vec ## vec%*%t(vec) is the pseudoinverse
   if (nu>0) { ## mixture of chi^2 ref dist
-     val <- rep(1,k1)##ed$val[1:k1]
-     rp <- nu+1
-     val[k] <- (rp + sqrt(rp*(2-rp)))/2
-     val[k1] <- (rp - val[k])
+     if (k1==1) val <- 1 else { 
+       val <- rep(1,k1)##ed$val[1:k1]
+       rp <- nu+1
+       val[k] <- (rp + sqrt(rp*(2-rp)))/2
+       val[k1] <- (rp - val[k])
+     }
      require(CompQuadForm)
-     if (res.df <= 0) pval <- davies(d,val)$Qq else
+     if (res.df <= 0) pval <- liu2(d,val) else ##  pval <- davies(d,val)$Qq else
      pval <- simf(d,val,res.df)
   } else { 
     if (res.df <= 0) pval <- pchisq(d,df=rank,lower.tail=FALSE) else
@@ -2773,7 +2829,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       p <- object$coefficients[start:stop]  # params for smooth
       edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
       ## extract alternative edf estimate for this smooth, if possible...
-      #if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
+      if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
       if (freq) { ## old style frequentist
         M1 <- object$smooth[[i]]$df
         M <- min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
