@@ -2517,9 +2517,10 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
-  
-  if (max(ed$values) < 1-.Machine$double.eps^.5) {
-    rank <- max(rank,sum(ed$values>.5*max(ed$values)))
+  lp <- 2*ed$values - ed$values^2
+  k <- ceiling(rank) ## reset rank if failing to catch important terms...
+  if (k < length(lp)&&lp[k+1]>max(lp)*0.5) {
+    rank <- max(rank,sum(lp>.5*max(lp)))
   }
  
   k <- max(0,floor(rank)) 
@@ -2556,7 +2557,6 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
  
   ## deal with the fractional part of the pinv...
   if (nu>0&&k>0) {
-     if (TRUE) { 
      if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
      b12 <- .5*nu*(1-nu)
      if (b12<0) b12 <- 0
@@ -2567,16 +2567,9 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
      eb <- eigen(B,symmetric=TRUE)
      rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
      vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
-     } else {
-     val <- ed$val[1:k1]
-     rp <- nu+1
-     alpha <- 1.0 ## proportion of 2nd order to use
-     val[k] <- alpha*(rp + sqrt(rp*(2-rp)))/2 + (1-alpha)
-     val[k1] <- alpha*(rp - val[k]) + (1-alpha)*nu
-     vec <- t(t(vec[,1:k1])/sqrt(ed$val[1:k1]))
-     }
   } else {
     vec <- t(t(vec)/sqrt(ed$val[1:k]))
+    rank <- 1
   }
  
   d <- t(vec)%*%(R%*%p)
