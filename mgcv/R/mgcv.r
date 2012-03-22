@@ -2517,7 +2517,9 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
-  lp <- 2*ed$values - ed$values^2
+
+  lp <- ed$values/max(ed$values)
+  lp <- 2*lp - lp^2
   k <- ceiling(rank) ## reset rank if failing to catch important terms...
   if (k < length(lp)&&lp[k+1]>max(lp)*0.5) {
     rank <- max(rank,sum(lp>.5*max(lp)))
@@ -2569,7 +2571,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
      vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
   } else {
     vec <- t(t(vec)/sqrt(ed$val[1:k]))
-    rank <- 1
+    if (k==1) rank <- 1
   }
  
   d <- t(vec)%*%(R%*%p)
