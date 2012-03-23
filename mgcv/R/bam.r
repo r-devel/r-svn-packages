@@ -42,7 +42,7 @@ chol2qr <- function(XX,Xy) {
     }
     if (ok) break; ## success
   }
-  if (i==20 && !ok) error("Choleski based method failed, switch to QR")
+  if (i==20 && !ok) stop("Choleski based method failed, switch to QR")
   list(R=R,f=f)
 }
 
@@ -661,7 +661,7 @@ pabapr <- function(arg) {
 }
 
 predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
-                        block.size=10000,newdata.guaranteed=FALSE,na.action=na.pass,
+                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
                         cluster=NULL,...) {
 ## function for prediction from a bam object, possibly in parallel
   if (!is.null(cluster)&&inherits(cluster,"cluster")) { 

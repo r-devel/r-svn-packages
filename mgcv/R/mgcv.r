@@ -2441,12 +2441,12 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # the chi^2 variables are central. 
 # Note that this can be rubiish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
-  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
-    require(CompQuadForm)
-    r <- x
-    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
-    return(r)
-  }
+#  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
+#    require(CompQuadForm)
+#    r <- x
+#    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
+#    return(r)
+#  }
 
   if (length(h) != length(lambda)) stop("lambda and h should have the same length!")
  
@@ -2716,7 +2716,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       }
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
       ## get corrected edf
-      edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
+      #edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
     }
     for (i in 1:m)
     { start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
