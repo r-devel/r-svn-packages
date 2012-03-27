@@ -1834,7 +1834,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     scale <- G$sig2
 
     msp <- G$sp
-    magic.control<-list(tol=G$conv.tol,step.half=G$max.half,maxit=control$maxit+control$globit,
+    magic.control<-list(tol=G$conv.tol,step.half=G$max.half,#maxit=control$maxit+control$globit,
                           rank.tol=control$rank.tol)
 
     for (iter in 1:(control$maxit)) 
@@ -3252,7 +3252,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
 
 
 magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gcv=TRUE,
-                ridge.parameter=NULL,control=list(maxit=50,tol=1e-6,step.half=25,
+                ridge.parameter=NULL,control=list(tol=1e-6,step.half=25,
                 rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
 # Wrapper for C routine magic. Deals with constraints weights and square roots of 
 # penalties. 
@@ -3275,7 +3275,12 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
 # `extra.rss' is an additive constant by which the RSS is modified in the
 #  GCV/UBRE or scale calculations, n.score is the `n' to use in the GCV/UBRE
 #  score calcualtions (Useful for dealing with huge datasets).
-{ n.p<-length(S)
+{ if (is.null(control)) control <- list()
+  if (is.null(control$tol)) control$tol <- 1e-6
+  if (is.null(control$step.half)) control$step.half <- 25
+  if (is.null(control$rank.tol)) control$rank.tol <- .Machine$double.eps^0.5
+
+  n.p<-length(S)
   n.b<-dim(X)[2] # number of parameters
   # get initial estimates of smoothing parameters, using better method than is
   # built in to C code. This must be done before application of general 
@@ -3310,7 +3315,7 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
   if (!is.null(C)) # then impose constraints 
    { n.con<-dim(C)[1]
     ns.qr<-qr(t(C)) # last n.b-n.con columns of Q are the null space of C
-    X<-t(qr.qty(ns.qr,t(X)))[,(n.con+1):n.b] # last n.b-n.con cols of XQ (=(Q'X')')
+    X<-t(qr.qty(ns.qr,t(X)))[,(n.con+1):n.b,drop=FALSE] # last n.b-n.con cols of XQ (=(Q'X')')
     # need to work through penalties forming Z'S_i^0.5 's
     if (n.p>0) for (i in 1:n.p) { 
       S[[i]]<-qr.qty(ns.qr,S[[i]])[(n.con+1):n.b,,drop=FALSE]
@@ -3321,8 +3326,8 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
     }
     # and Z'HZ too
     if (!is.null(H))
-    { H<-qr.qty(ns.qr,H)[(n.con+1):n.b,] # Z'H
-      H<-t(qr.qty(ns.qr,t(H))[(n.con+1):n.b,]) # Z'HZ = (Z'[Z'H]')' 
+    { H<-qr.qty(ns.qr,H)[(n.con+1):n.b,,drop=FALSE] # Z'H
+      H<-t(qr.qty(ns.qr,t(H))[(n.con+1):n.b,,drop=FALSE]) # Z'HZ = (Z'[Z'H]')' 
     }
     full.rank=n.b-n.con
   } else full.rank=n.b
@@ -3338,17 +3343,24 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
       X<-as.vector(w)*X # use recycling rule to form diag(w)%*%X cheaply
     }
   }
-  if (is.null(dim(X))) # lost dimensions as result of being single columned! 
-  { n<-length(y)
+  if (is.null(dim(X))) { # lost dimensions as result of being single columned! 
+    n <- length(y)
     if (n!=length(X)) stop("X lost dimensions in magic!!")
-    dim(X)<-c(n,1)
+    dim(X) <- c(n,1)
   }
   # call real mgcv engine...
   Si<-array(0,0);cS<-0
-  if (n.p>0) for (i in 1:n.p) 
-  { Si<-c(Si,S[[i]]);
-    cS[i]<-dim(S[[i]])[2]
+  if (n.p>0) for (i in 1:n.p) { 
+    Si <- c(Si,S[[i]]);
+    cS[i] <- dim(S[[i]])[2]
   }
+  rdef <- ncol(X) - nrow(X)
+  if (rdef>0) { ## need to zero pad model matrix
+    n.score <- n.score ## force evaluation *before* y lengthened
+    X <- rbind(X,matrix(0,rdef,ncol(X)))
+    y <- c(y,rep(0,rdef))
+  }
+
   icontrol<-as.integer(gcv);icontrol[2]<-length(y);q<-icontrol[3]<-dim(X)[2];
   if (!is.null(ridge.parameter)&&ridge.parameter>0)
   { if(is.null(H)) H<-diag(ridge.parameter,q) else H<-H+diag(ridge.parameter,q)}
@@ -3367,12 +3379,12 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
   gcv.info<-list(full.rank=full.rank,rank=um$info[1],fully.converged=as.logical(um$info[2]),
       hess.pos.def=as.logical(um$info[3]),iter=um$info[4],score.calls=um$info[5],rms.grad=um$rms.grad)
   res$gcv.info<-gcv.info
-  if (!is.null(C)) # need image of constrained parameter vector in full space
-  { b<-c(rep(0,n.con),res$b)
-    res$b<-qr.qy(ns.qr,b) # Zb 
-    b<-matrix(0,n.b,dim(res$rV)[2])
-    b[(n.con+1):n.b,]<-res$rV 
-    res$rV<-qr.qy(ns.qr,b)# ZrV
+  if (!is.null(C)) { # need image of constrained parameter vector in full space
+    b <- c(rep(0,n.con),res$b)
+    res$b <- qr.qy(ns.qr,b) # Zb 
+    b <- matrix(0,n.b,dim(res$rV)[2])
+    b[(n.con+1):n.b,] <- res$rV 
+    res$rV <- qr.qy(ns.qr,b)# ZrV
   } 
   res
 }
