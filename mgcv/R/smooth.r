@@ -2636,7 +2636,6 @@ ExtractData <- function(object,data,knots) {
    if (!is.null(attr(dat[[1]],"matrix"))) { ## strip down to unique covariate combinations
      n <- length(dat[[1]])
      X <- matrix(unlist(dat),n,m)
-     
      if (is.numeric(X)) {
        X <- uniquecombs(X)
        if (nrow(X)<n*.9) { ## worth the hassle

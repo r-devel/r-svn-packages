@@ -3,7 +3,8 @@
 \title{Some diagnostics for a fitted gam model}
 \description{ Takes a fitted \code{gam} object produced by \code{gam()} and produces some diagnostic information
 about the fitting procedure and results. The default is to produce 4 residual
-plots, and some information about the convergence of the smoothness selection optimization.
+plots, some information about the convergence of the smoothness selection optimization, and to run 
+diagnostic tests of whether the basis dimension choises are adequate. 
 }
 \usage{
 gam.check(b, old.style=FALSE,
@@ -23,12 +24,17 @@ gam.check(b, old.style=FALSE,
 
 \value{A vector of reference quantiles for the residual distribution, if these can be computed.}
 
-\details{ This function plots 4 standard diagnostic plots, and some other
-convergence diagnostics. Usually the 4 plots are various residual plots. The
-printed information relates to the optimization used to select smoothing
-parameters. For the default optimization methods the information is summarized in a
+\details{ This function plots 4 standard diagnostic plots,  some smoothing parameter estimation
+convergence information and the results of tests which may indicate if the smoothing basis dimension
+for a term is too low.  
+
+Usually the 4 plots are various residual plots. For the default optimization methods the convergence information is summarized in a
 readable way, but for other optimization methods, whatever is returned by way of
-convergence diagnostics is simply printed.
+convergence diagnostics is simply printed. 
+
+The test of whether the basis dimension for a smooth is adequate is based on computing an estimate of the residual variance 
+based on differencing residuals that are near neighbours according to the covariates of the smooth. This estimate divided by the residual variance is the \code{k-index} reported. The further below 1 this is, the more likely it is that there is missed pattern left in the residuals. The \code{p-value} is computed by simulation: the residuals are randomly re-shuffled many times to obtain the null distribution of the differencing variance estimator, if there is no pattern in the residuals. For models fitted to more than 2000 data, the tests are based of 2000 randomly sampled data. Low p-values may indicate that the basis dimension, \code{k}, has been set too low, especially if the reported
+\code{edf} is close to \code{k\'}, the maximum possible EDF for the term. Doubling a suspect \code{k} and re-fitting is sensible: if the reported \code{edf} increases substantially then you may have been missing something in the first fit. Of course on occasion p-values will be low for  reasons other than a too low \code{k}. 
 
 The QQ plot produced is usually created by a call to \code{\link{qq.gam}}, and plots deviance residuals 
 against approximate theoretical quantilies of the deviance residual distribution, according to the fitted model. 

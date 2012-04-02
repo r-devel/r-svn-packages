@@ -163,6 +163,76 @@ qq.gam <- function(object, rep=0, level=.9,s.rep=10,
 }
 
 
+k.check <- function(b,n.rep=400) {
+## function to check k in a gam fit... 
+## does a randomization test looking for evidence of residual 
+## pattern attributable to covariates of each smooth. 
+  m <- length(b$smooth)
+  rsd <- residuals(b)
+  nr <- length(rsd)
+  ve <- rep(0,n.rep)
+  p.val<-v.obs <- kc <- edf<- rep(0,m)
+  snames <- rep("",m)
+  n <- nrow(b$model)
+  if (n>2000) modf <- b$model[sample(1:n,2000),] else modf <- b$model
+  for (k in 1:m) { ## work through smooths
+    dat <- as.data.frame(mgcv:::ExtractData(b$smooth[[k]],modf,NULL)$data)
+    snames[k] <- b$smooth[[k]]$label
+    ind <- b$smooth[[k]]$first.para:b$smooth[[k]]$last.para
+    kc[k] <- length(ind)
+    edf[k] <- sum(b$edf[ind])
+    if (!is.null(attr(dat[[1]],"matrix"))) {
+      p.val[k] <- v.obs[k] <- NA ## can't do this test with summation convention
+    } else { ## normal term
+      nc <- b$smooth[[k]]$dim
+      if (nc==1) { ## 1-D term
+        e <- diff(rsd[order(dat[,1])])
+        v.obs[k] <- mean(e^2)/2
+        for (i in 1:n.rep) {
+          e <- diff(rsd[sample(1:nr,nr)]) ## shuffle 
+          ve[i] <-  mean(e^2)/2
+        }
+        p.val[k] <- mean(ve<v.obs[k])
+        v.obs[k] <- v.obs[k]/mean(rsd^2)
+      } else { ## multi-D 
+        if (!is.null(b$smooth[[k]]$margin)) { ## tensor product (have to consider scaling)
+          ## get the scale factors...
+          beta <- coef(b)[ind]
+          f0 <- PredictMat(b$smooth[[k]],dat)%*%beta
+          gr.f <- rep(0,ncol(dat))
+          for (i in 1:nc) {
+            datp <- dat;dx <- diff(range(dat[,i]))/1000
+            datp[,i] <- datp[,i] + dx
+            fp <- PredictMat(b$smooth[[k]],datp)%*%beta
+            gr.f[i] <- mean(abs(fp-f0))/dx
+          }
+          for (i in 1:nc) { ## rescale distances
+            dat[,i] <- dat[,i] - min(dat[,i])
+            dat[,i] <- gr.f[i]*dat[,i]/max(dat[,i])
+          }
+        }
+        nn <- 3
+        ni <- mgcv:::nearest(nn,as.matrix(dat))$ni
+        e <- rsd - rsd[ni[,1]]
+        for (j in 2:nn) e <- c(e,rsd-rsd[ni[,j]])
+        v.obs[k] <- mean(e^2)/2
+        for (i in 1:n.rep) {
+          rsdr <- rsd[sample(1:nr,nr)] ## shuffle
+          e <- rsdr - rsdr[ni[,1]]
+          for (j in 2:nn) e <- c(e,rsdr-rsdr[ni[,j]])
+          ve[i] <-  mean(e^2)/2
+        }
+        p.val[k] <- mean(ve<v.obs[k])
+        v.obs[k] <- v.obs[k]/mean(rsd^2)
+      }
+    }
+  }
+  k.table <- cbind(kc,edf,v.obs, p.val)
+  dimnames(k.table) <- list(snames, c("k\'","edf","k-index", "p-value"))
+  k.table
+} ## end of k.check
+
+
 gam.check <- function(b, old.style=FALSE,
 		      type=c("deviance","pearson","response"), 
 		      ## arguments passed to qq.gam() {w/o warnings !}:
@@ -219,6 +289,9 @@ gam.check <- function(b, old.style=FALSE,
       }
     }
     cat("\n")
+    cat("Basis dimension (k) checking results. Low p-value (k-index<1) may\n") 
+    cat("indicate that k is too low, especially if edf is close to k\'.\n\n")
+    printCoefmat(k.check(b,n.rep=200),digits=3);
     par(old.par)
 ##  } else plot(linpred,resid,xlab="linear predictor",ylab="residuals",...)
 } ## end of gam.check

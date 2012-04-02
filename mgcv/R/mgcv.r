@@ -2,6 +2,7 @@
 ##  With contributions from Henric Nilsson
 
 
+
 Rrank <- function(R,tol=.Machine$double.eps^.9) {
 ## Finds rank of upper triangular matrix R, by estimating condition
 ## number of upper rank by rank block, and reducing rank until this is 
