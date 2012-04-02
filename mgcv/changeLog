@@ -9,6 +9,8 @@
 ** bam now has method="fREML" option which uses faster REML optimizer: 
    can make a big difference on parameter rich models.
 
+* check of adequacy of basis dimensions added to gam.check
+
 * magic can now deal with model matrices with more columns than rows.
 
 * p-value reference distribution approximations improved.
