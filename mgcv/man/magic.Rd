@@ -17,7 +17,7 @@ value decomposition approach.
 \usage{
 magic(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,
       w=NULL,gamma=1,scale=1,gcv=TRUE,ridge.parameter=NULL,
-      control=list(maxit=50,tol=1e-6,step.half=25,
+      control=list(tol=1e-6,step.half=25,
       rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
 }
 %- maybe also `usage' for other objects documented here.
@@ -85,7 +85,6 @@ parameter value.}
 \item{control}{ is a list of iteration control constants with the following elements:
 
 \describe{
-\item{maxit}{The maximum number of iterations of the magic algorithm to allow.}
 
 \item{tol}{The tolerance to use in judging convergence.}
 

@@ -43,6 +43,9 @@
 * TPRS prediction code made more efficient, partly by use of BLAS. Large
   dataset setup also made more efficient using BLAS.
 
+* smooth.construct.tensor.smooth.spec now handles marginals with factor
+  arguments properly (there was a knot generation bug in this case)
+
 * bam now uses LAPACK version of qr, for model matrix QR, since it's 
   faster and uses BLAS.
 

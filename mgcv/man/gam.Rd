@@ -283,7 +283,7 @@ Wood S.N., F. Scheipl and J.J. Faraway (2012) Straightforward intermediate rank 
 in mixed models. Statistical Computing.
 
 Marra, G and S.N. Wood (2012) Coverage Properties of Confidence Intervals for Generalized Additive
-Model Components. Scandinavian Journal of Statistics.
+Model Components. Scandinavian Journal of Statistics, 39(1), 53-74.
 
 
 Key Reference on GAMs and related models:

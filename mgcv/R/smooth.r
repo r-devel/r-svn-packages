@@ -561,8 +561,13 @@ smooth.construct.tensor.smooth.spec<-function(object,data,knots)
         np <- ncol(object$margin[[i]]$X) ## number of params
         ## note: to avoid extrapolating wiggliness measure
         ## must include extremes as eval points
-#        knt <- quantile(unique(x),(0:(np-1))/(np-1)) 
-        knt <- seq(min(x),max(x),length=np) ## evaluation points
+##        knt <- quantile(unique(x),(0:(np-1))/(np-1)) 
+        knt <- if(is.factor(x)) {
+                  unique(x)
+          } else { 
+                 seq(min(x), max(x), length=np)
+          } 
+        ## knt <- seq(min(x),max(x),length=np) ## evaluation points
         pd <- data.frame(knt)
         names(pd) <- object$margin[[i]]$term
         sv <- svd(Predict.matrix(object$margin[[i]],pd))
