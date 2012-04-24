@@ -9,6 +9,7 @@ diagnostic tests of whether the basis dimension choises are adequate.
 \usage{
 gam.check(b, old.style=FALSE,
           type=c("deviance","pearson","response"),
+          k.sample=5000,k.rep=200,
           rep=0, level=.9, rl.col=2, rep.col="gray80", \dots)
 }
 \arguments{
@@ -16,6 +17,8 @@ gam.check(b, old.style=FALSE,
   \item{old.style}{If you want old fashioned plots, exactly as in Wood, 2006, set to \code{TRUE}.}
   \item{type}{type of residuals, see \code{\link{residuals.gam}}, used in
     all plots.}
+  \item{k.sample}{Above this k testing uses a random sub-sample of data.}
+  \item{k.rep}{how many re-shuffles to do to get p-value for k testing.}
   \item{rep, level, rl.col, rep.col}{
     arguments passed to \code{\link{qq.gam}()} when \code{old.style} is
     false, see there.}

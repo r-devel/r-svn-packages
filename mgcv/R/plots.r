@@ -163,18 +163,23 @@ qq.gam <- function(object, rep=0, level=.9,s.rep=10,
 }
 
 
-k.check <- function(b,n.rep=400) {
+k.check <- function(b,subsample=5000,n.rep=400) {
 ## function to check k in a gam fit... 
 ## does a randomization test looking for evidence of residual 
 ## pattern attributable to covariates of each smooth. 
   m <- length(b$smooth)
   rsd <- residuals(b)
-  nr <- length(rsd)
+ 
   ve <- rep(0,n.rep)
   p.val<-v.obs <- kc <- edf<- rep(0,m)
   snames <- rep("",m)
   n <- nrow(b$model)
-  if (n>2000) modf <- b$model[sample(1:n,2000),] else modf <- b$model
+  if (n>subsample) { ## subsample to avoid excessive cost
+    ind <- sample(1:n,subsample)
+    modf <- b$model[ind,] 
+    rsd <- rsd[ind]
+  } else modf <- b$model
+  nr <- length(rsd)
   for (k in 1:m) { ## work through smooths
     dat <- as.data.frame(mgcv:::ExtractData(b$smooth[[k]],modf,NULL)$data)
     snames[k] <- b$smooth[[k]]$label
@@ -235,6 +240,7 @@ k.check <- function(b,n.rep=400) {
 
 gam.check <- function(b, old.style=FALSE,
 		      type=c("deviance","pearson","response"), 
+                      k.sample=5000,k.rep=200,
 		      ## arguments passed to qq.gam() {w/o warnings !}:
 		      rep=0, level=.9, rl.col=2, rep.col="gray80", ...)
 # takes a fitted gam object and produces some standard diagnostic plots
@@ -253,7 +259,7 @@ gam.check <- function(b, old.style=FALSE,
     hist(resid,xlab="Residuals",main="Histogram of residuals",...)
     plot(fitted(b), napredict(b$na.action, b$y),
          xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
-    if (!(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML"))) { ## gamm `gam' object
+    if (!(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML"))) { ## gamm `gam' object
        par(old.par)
        return(invisible())
     }
@@ -291,7 +297,7 @@ gam.check <- function(b, old.style=FALSE,
     cat("\n")
     cat("Basis dimension (k) checking results. Low p-value (k-index<1) may\n") 
     cat("indicate that k is too low, especially if edf is close to k\'.\n\n")
-    printCoefmat(k.check(b,n.rep=200),digits=3);
+    printCoefmat(k.check(b,subsample=k.sample,n.rep=k.rep),digits=3);
     par(old.par)
 ##  } else plot(linpred,resid,xlab="linear predictor",ylab="residuals",...)
 } ## end of gam.check
