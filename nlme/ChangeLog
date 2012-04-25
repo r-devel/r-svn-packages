@@ -1,6 +1,10 @@
+2012-04-25  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/nlmefit.c: type mismatch shown by -Wconversion
+
 2012-03-29  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* src/nlOptimizer.c: increase PROTECTIion (reported by Andrew Runnalls).
+	* src/nlOptimizer.c: increase PROTECTion (reported by Andrew Runnalls).
 
 2012-02-15  Brian Ripley <Brian.Ripley@R-project.org>
 
@@ -8,7 +12,7 @@
 
 2012-01-14  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* DESCRIPTION: version is 3.1-102
+	* DESCRIPTION: version is 3.1-103
 
 2011-12-25  Brian Ripley <Brian.Ripley@R-project.org>
 

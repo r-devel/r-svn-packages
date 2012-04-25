@@ -143,7 +143,7 @@ dimFree(dimPTR this)
     Free(this);
 }
 
-size_t
+int
 count_DmHalf_pars( dimPTR dd, longint *pdClass )
 {
     int i, result;
