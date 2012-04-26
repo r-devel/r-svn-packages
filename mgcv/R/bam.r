@@ -366,8 +366,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE)
         object <- list(coefficients=res$beta,full.sp = exp(fit$rho.full),
                        gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
-                       message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
-                       Ve=NULL,scale.estimated = scale<=0)
+                       message=fit$conv),rank=ncol(um$X),
+                       Ve=NULL,scale.estimated = scale<=0,outer.info=fit$outer.info,
+                        optimizer=c("perf","newton"))
         if (scale<=0) { ## get sp's and scale estimate
           nsp <- length(fit$rho)
           object$sig2 <- object$scale <- exp(fit$rho[nsp])
@@ -908,8 +909,9 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
      object <- list(coefficients=res$beta,edf=res$edf,full.sp = exp(fit$rho.full),
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
-                    message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
-                    Ve=NULL,Vp=res$V,scale.estimated = scale<=0)
+                    message=fit$conv),rank=ncol(um$X),
+                    Ve=NULL,Vp=res$V,scale.estimated = scale<=0,outer.info=fit$outer.info,
+                    optimizer=c("perf","newton"))
      if (scale<=0) { ## get sp's and scale estimate
        nsp <- length(fit$rho)
        object$sig2 <- object$scale <- exp(fit$rho[nsp])
