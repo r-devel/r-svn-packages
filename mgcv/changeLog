@@ -9,6 +9,13 @@
 ** bam now has method="fREML" option which uses faster REML optimizer: 
    can make a big difference on parameter rich models.
 
+* bam can now use a cross product and Choleski based method to accumulate
+  the required model matrix factorization. Faster, but less stable than 
+  the QR based default.
+
+* bam can now obtain starting values using a random sub sample of the data. 
+  Useful for seriously large datasets. 
+
 * check of adequacy of basis dimensions added to gam.check
 
 * magic can now deal with model matrices with more columns than rows.
