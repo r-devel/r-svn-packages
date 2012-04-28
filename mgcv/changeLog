@@ -1,6 +1,11 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-16
+
+* There was an unitialized variable bug in the 1.7-14 re-written "cr" basis 
+  code for the case k=3. Fixed.
+
 1.7-15
 
 * Several packages had documentation linking to the 'mgcv' function
