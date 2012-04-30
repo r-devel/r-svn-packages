@@ -6,6 +6,9 @@
 * There was an unitialized variable bug in the 1.7-14 re-written "cr" basis 
   code for the case k=3. Fixed.
 
+* gam.check modified slightly so that k test only applied to smooths of
+  numeric variables, not factors.
+
 1.7-15
 
 * Several packages had documentation linking to the 'mgcv' function
