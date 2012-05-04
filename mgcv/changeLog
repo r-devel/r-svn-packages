@@ -11,6 +11,10 @@
 
 * bam could fail if the response vector was of class matrix. fixed.
 
+* reduced rank mrf smooths with supplied penalty could use the incorrect
+  penalty rank when computing the reduced rank basis and fail. fixed 
+  thanks to Fabian Scheipl.
+
 1.7-16
 
 * There was an unitialized variable bug in the 1.7-14 re-written "cr" basis 

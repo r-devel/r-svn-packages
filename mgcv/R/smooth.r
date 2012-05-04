@@ -2023,22 +2023,24 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
   ## natural parameterization given in Wood (2006) 4.1.14
 
   if (object$bs.dim<length(levels(k))) { ## use low rank approx
-    rp <- mgcv:::nat.param(object$X,object$S[[1]],ncol(object$X)-1,type=0)
+    rp <- mgcv:::nat.param(object$X,object$S[[1]],type=0)
     np <- ncol(object$X)
+    ## now retain only bs.dim least penalized elements
+    ## of basis, which are the final bs.dim cols of rp$X
     ind <- (np-object$bs.dim+1):np
-    object$X <- rp$X[,ind]
-    object$P <- rp$P[,ind]
-    ind <- ind[-object$bs.dim] ## drop last element as zeros not returned in D
-    object$S[[1]] <- diag(c(rp$D[ind],0))
-   
+    object$X <- rp$X[,ind] ## model matrix
+    object$P <- rp$P[,ind] ## re-para matrix
+    ind <- ind[ind <= rp$rank] ## drop last element as zeros not returned in D
+    object$S[[1]] <- diag(c(rp$D[ind],rep(0,object$bs.dim-rp$rank)))
+    object$rank <- rp$rank ## penalty rank
+  } else { ## full rank basis, but need to 
+           ## numerically evaluate mrf penalty rank... 
+    ev <- eigen(object$S[[1]],symmetric=TRUE,only.values=TRUE)$values
+    object$rank <- sum(ev >.Machine$double.eps^.8*max(ev)) ## ncol(object$X)-1
   }
-  ## numerically evaluate mrf penalty rank... 
-  ev <- eigen(object$S[[1]],symmetric=TRUE,only.values=TRUE)$values
-  object$rank <- sum(ev >.Machine$double.eps^.8*max(ev)) ## ncol(object$X)-1
   object$null.space.dim <- ncol(object$X) - object$rank
   object$knots <- k
   object$df <- ncol(object$X)
-  ##object$plot.me <- FALSE
   class(object)<-"mrf.smooth"
   object
 }
