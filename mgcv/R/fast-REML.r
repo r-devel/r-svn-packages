@@ -569,7 +569,8 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
     rho.0 <- c(rho.0,0)
     L <- rbind(cbind(L,L[,1]*0),c(L[1,]*0,1))
   }
-  grad <- t(L)%*% best$reml1;hess <- t(L)%*% best$reml2%*%L
+  grad <- as.numeric(t(L)%*% best$reml1)
+  hess <- t(L)%*% best$reml2%*%L
   grad2 <- diag(hess)  
 
   ## create and index for the unconverged... 
@@ -581,7 +582,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
   for (iter in 1:200) { ## the Newton loop
     ## Work only with unconverged (much quicker under indefiniteness)
     hess <- (t(L)%*% best$reml2%*%L)[uconv.ind,uconv.ind]
-    grad <- (t(L)%*%best$reml1)[uconv.ind]
+    grad <- as.numeric(t(L)%*%best$reml1)[uconv.ind]
     ## check that Hessian is +ve def. Fix if not. 
     eh <- eigen(hess,symmetric=TRUE)
     ## flip negative eigenvalues to get +ve def...
@@ -616,7 +617,8 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
     ## At this stage the step has been successful. 
     ## Need to test for convergence...
     converged <- TRUE
-    grad <- t(L)%*%trial$reml1;hess <- t(L)%*%trial$reml2%*%L;grad2 <- diag(hess)
+    grad <- as.numeric(t(L)%*%trial$reml1)
+    hess <- t(L)%*%trial$reml2%*%L;grad2 <- diag(hess)
     ## idea in following is only to exclude terms with zero first and second derivative
     ## from optimization, as it is only these that slow things down if included...    
     uconv.ind <- (abs(grad) > reml.scale*conv.tol*.1)|(abs(grad2)>reml.scale*conv.tol*.1)

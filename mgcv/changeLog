@@ -1,6 +1,16 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-17
+
+* Prediction with matrix arguments (i.e. for models using summation 
+  convention) could be very memory hungry. This in turn meant that
+  bam could run out of memory when fitting models with such terms.
+  The problem was memory inefficient hhandling of duplicate evaluations.
+  Now fixed by modification of PredictMat
+
+* bam could fail if the response vector was of class matrix. fixed.
+
 1.7-16
 
 * There was an unitialized variable bug in the 1.7-14 re-written "cr" basis 

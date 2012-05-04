@@ -356,7 +356,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         ## carry forward scale estimate if possible...
         if (scale>0) log.phi <- log(scale) else {
           if (iter>1) log.phi <- log(object$scale) else {
-            if (is.null(coef)||qrx$y.norm2==0) log.phi <- log(var(G$y)*.05) else
+            if (is.null(coef)||qrx$y.norm2==0) log.phi <- log(var(as.numeric(G$y))*.05) else
                log.phi <- log(qrx$y.norm2/(nobs+nobs.extra))
           }
         }
@@ -901,7 +901,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
      um <- Sl.Xprep(Sl,qrx$R)
      lambda.0 <- initial.sp(qrx$R,G$S,G$off)
      lsp0 <- log(lambda.0) ## initial s.p.
-     if (scale<=0) log.phi <- log(var(G$y)*.05) else ## initial phi guess
+     if (scale<=0) log.phi <- log(var(as.numeric(G$y))*.05) else ## initial phi guess
                    log.phi <- log(scale)
      fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
