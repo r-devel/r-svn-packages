@@ -2030,8 +2030,8 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
     ind <- (np-object$bs.dim+1):np
     object$X <- rp$X[,ind] ## model matrix
     object$P <- rp$P[,ind] ## re-para matrix
-    ind <- ind[ind <= rp$rank] ## drop last element as zeros not returned in D
-    object$S[[1]] <- diag(c(rp$D[ind],rep(0,object$bs.dim-rp$rank)))
+    ##ind <- ind[ind <= rp$rank] ## drop last element as zeros not returned in D
+    object$S[[1]] <- diag(c(rp$D[ind[ind <= rp$rank]],rep(0,sum(ind>rp$rank))))
     object$rank <- rp$rank ## penalty rank
   } else { ## full rank basis, but need to 
            ## numerically evaluate mrf penalty rank... 
