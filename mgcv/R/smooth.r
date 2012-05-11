@@ -1848,6 +1848,17 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   object$te.ok <- 2 ## these terms are  suitable as te marginals, but 
                     ##   can not be plotted
 
+  ## The Nychka inversion argument for p-values does not apply to 
+  ## random effects, because the eigen spectrum of the penalty is too 
+  ## uniform for the truncation argument to work in all cases,
+  ## and because the interpretation of the Bayesian cov matrix
+  ## as including accross the function bias is also not right, 
+  ## since these are proper random effects (i.e. what is there to
+  ## be biased here)! The theoretical problems can result in very
+  ## low power in practice. 
+ 
+  object$fr.pval <- TRUE ## use full rank frequentist p-value
+
   class(object)<-"random.effect"  # Give object a class
 
   object
