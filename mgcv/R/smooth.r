@@ -1158,7 +1158,7 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots) {
   if (length(k)!=nk) stop("number of supplied knots != k for a cr smooth")
 
   X <- rep(0,nx*nk);F <- S <- rep(0,nk*nk);F.supplied <- 0
-  
+
   oo <- .C(C_crspl,x=as.double(x),n=as.integer(nx),xk=as.double(k),
            nk=as.integer(nk),X=as.double(X),S=as.double(S),
            F=as.double(F),Fsupplied=as.integer(F.supplied))
@@ -1215,6 +1215,8 @@ Predict.matrix.cr.smooth<-function(object,data) {
   S <- 1 ## unused
   F.supplied <- 1
  
+  if (is.null(object$F)) stop("F is missing from cr smooth - refit model with current mgcv")
+
   oo <- .C(C_crspl,x=as.double(x),n=as.integer(nx),xk=as.double(object$xp),
            nk=as.integer(nk),X=as.double(X),S=as.double(S),
            F=as.double(object$F),Fsupplied=as.integer(F.supplied))

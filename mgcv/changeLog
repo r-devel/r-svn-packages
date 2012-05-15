@@ -4,7 +4,7 @@
 1.7-17
 
 * Approximate p-values from summary.gam could have very low power for random
-  effects s(...,bs="re"). This was because such term were incorrectly treated 
+  effects s(...,bs="re"). This was because such term were treated 
   just like any other smooth for the computation of p-values. This was wrong 
   because the theory justifying p-values for smooths relies i) on a version of 
   Nychka's (1988) results on the behaviour of Bayesian CI's which does not 
