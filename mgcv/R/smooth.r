@@ -939,7 +939,7 @@ expand.t2.smooths <- function(sm) {
 ##########################################################
 
 null.space.dimension<-function(d,m)
-# vectorized function for calculating null space dimension for penalties of order m
+# vectorized function for calculating null space dimension for tps penalties of order m
 # for dimension d data M=(m+d-1)!/(d!(m-1)!). Any m not satisfying 2m>d is reset so 
 # that 2m>d+1 (assuring "visual" smoothness) 
 { if (sum(d<0)) stop("d can not be negative in call to null.space.dimension().")
@@ -1068,14 +1068,13 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   Xu.len <- oo$n.Xu*object$dim
   object$Xu<-matrix(oo$Xu[1:Xu.len],oo$n.Xu,object$dim)  # unique covariate combinations
 
-  object$df<-object$bs.dim                   # DoF unconstrained and unpenalized
+  object$df <- object$bs.dim                   # DoF unconstrained and unpenalized
   object$shift<-shift                          # covariate shifts
-  if (is.null(shrink)) { 
-    object$rank <- k-M 
-  } else object$rank <- k                             # penalty rank
-  object$null.space.dim<-M
+  if (!is.null(shrink)) M <- 0  ## null space now rank zero
+  object$rank <- k - M                           # penalty rank
+  object$null.space.dim <- M
 
-  class(object)<-"tprs.smooth"
+  class(object) <- "tprs.smooth"
   object
 }
 
@@ -1181,9 +1180,12 @@ smooth.construct.cr.smooth.spec<-function(object,data,knots) {
     }
   }
   if (is.null(shrink)) { 
-    object$rank <- nk-2 
-  } else object$rank <- nk   # penalty rank
-
+    object$rank <- nk-2;
+    object$null.space.dim <- 2
+  } else { 
+    object$rank <- nk   # penalty rank
+    object$null.space.dim <- 0
+  }
 
   object$df <- object$bs.dim # degrees of freedom,  unconstrained and unpenalized
   object$null.space.dim <- 2
@@ -2943,6 +2945,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
             sml[[i]]$C <- NULL
             sml[[i]]$rank <- pmin(sm$rank,k-j)
             sml[[i]]$df <- sml[[i]]$df - j
+            sml[[i]]$null.space.dim <- max(0,sml[[i]]$null.space.dim - j)
             ## ... so qr.qy(attr(sm,"qrc"),c(rep(0,nrow(sm$C)),b)) gives original para.'s
           } ## end smooth list loop
         } else { ## full null space created
@@ -2978,6 +2981,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
             sml[[i]]$C <- NULL
             sml[[i]]$rank <- pmin(sm$rank,k-j)
             sml[[i]]$df <- sml[[i]]$df - j
+            sml[[i]]$null.space.dim <- max(0,sml[[i]]$null.space.dim-j)
           } ## end smooth list loop
         } # end full null space version of constraint
       } else { ## no constraints
@@ -2998,6 +3002,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
           sml[[i]]$C <- NULL
           sml[[i]]$rank <- pmin(sm$rank,k-1)
           sml[[i]]$df <- sml[[i]]$df - 1
+          sml[[i]]$null.space.dim <- max(sml[[i]]$null.space.dim-1,0)
           ## so insert an extra 0 at position sm$C in coef vector to get original
         } ## end smooth list loop
     } else if (sm$C <0) { ## params sum to zero 
@@ -3012,6 +3017,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
           sml[[i]]$C <- NULL
           sml[[i]]$rank <- pmin(sm$rank,k-1)
           sml[[i]]$df <- sml[[i]]$df - 1
+          sml[[i]]$null.space.dim <- max(sml[[i]]$null.space.dim-1,0)
           ## so insert an extra 0 at position sm$C in coef vector to get original
         } ## end smooth list loop       
     }

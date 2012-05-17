@@ -3,15 +3,14 @@
 
 1.7-17
 
-* Approximate p-values from summary.gam could have very low power for random
-  effects s(...,bs="re"). This was because such term were treated 
-  just like any other smooth for the computation of p-values. This was wrong 
-  because the theory justifying p-values for smooths relies i) on a version of 
-  Nychka's (1988) results on the behaviour of Bayesian CI's which does not 
-  apply to random effects (the idea of smoothing bias is meaningless), and ii)
-  on an eigen truncation which can not be justified for a penalty that shrinks
-  fitted values uniformly towards zero. "re" term approximate p-values are now 
-  based on a full rank Wald statistic. 
+** p-values for terms with no un-penalized component were poor. The theory on 
+  which the p-value computation for other terms is based shows why this is, 
+  and allows fixes to be made. These are now implemented.
+
+* smoothCon now adjusts null.space.dim on constraint absorption.
+
+* summary p value bug fix --- smooths with no null space had a bug in 
+  lower tail of p-value computation, yielding far too low values. Fixed.
 
 * Prediction with matrix arguments (i.e. for models using summation 
   convention) could be very memory hungry. This in turn meant that

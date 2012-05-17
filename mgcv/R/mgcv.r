@@ -378,6 +378,16 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
               if (!is.null(sm[[i]]$L)) sm[[i]]$L <- sm[[i]]$L[-j,,drop=FALSE]
             }
           } ## penalty matrices finished
+          ## Now we need to establish null space rank for the term
+          m <- length(sm[[i]]$S)
+          if (m>0) {
+            St <- sm[[i]]$S[[1]]/norm(sm[[i]]$S[[1]],type="F")
+            if (m>1) for (j in 1:m) St <- St + 
+                  sm[[i]]$S[[j]]/norm(sm[[i]]$S[[j]],type="F")
+            es <- eigen(St,symmetric=TRUE,only.values=TRUE)
+            sm[[i]]$null.space.dim <- sum(es$values<max(es$values)*.Machine$double.eps^.75) 
+          } ## rank found
+
           if (!is.null(sm[[i]]$L)) {
             ind <- as.numeric(colSums(sm[[i]]$L!=0))!=0
             sm[[i]]$L <- sm[[i]]$L[,ind,drop=FALSE] ## retain only those sps that influence something!
@@ -2440,7 +2450,7 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # normal variables, Computational Statistics and Data Analysis, Volume 53, 
 # (2009), 853-856. Actually, this is just Pearson (1959) given that
 # the chi^2 variables are central. 
-# Note that this can be rubiish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
+# Note that this can be rubbish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
 #  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
 #    require(CompQuadForm)
@@ -2519,12 +2529,14 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
 
-  lp <- ed$values/max(ed$values)
-  lp <- 2*lp - lp^2
-  k <- ceiling(rank) ## reset rank if failing to catch important terms...
-  if (k < length(lp)&&lp[k+1]>max(lp)*0.5) {
-    rank <- max(rank,sum(lp>.5*max(lp)))
-  }
+if (rank<1) rank <- 1 ## EXPERIMENTAL
+
+#  lp <- ed$values/max(ed$values)
+#  lp <- 2*lp - lp^2
+#  k <- ceiling(rank) ## reset rank if failing to catch important terms...
+#  if (k < length(lp)&&lp[k+1]>max(lp)*0.5) {
+#    rank <- max(rank,sum(lp>.5*max(lp)))
+#  }
  
   k <- max(0,floor(rank)) 
   nu <- abs(rank - k)     ## fractional part of supplied edf
@@ -2578,9 +2590,11 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   d <- t(vec)%*%(R%*%p)
   d <- sum(d^2) 
 
+  rank1 <- rank ## rank for lower tail pval computation below
+
   if (nu>0) { ## mixture of chi^2 ref dist
-     if (k1==1) val <- 1 else { 
-       val <- rep(1,k1)##ed$val[1:k1]
+     if (k1==1) rank1 <- val <- 1 else { 
+       val <- rep(1,k1) ##ed$val[1:k1]
        rp <- nu+1
        val[k] <- (rp + sqrt(rp*(2-rp)))/2
        val[k1] <- (rp - val[k])
@@ -2593,8 +2607,8 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   ## upper tail. In lower tail, 2 moment approximation is better (Can check this 
   ## by simply plotting the whole interesting range as a contour plot!)
   if (pval > .5) {
-    if (res.df <= 0) pval <- pchisq(d,df=rank,lower.tail=FALSE) else
-    pval <- pf(d/rank,rank,res.df,lower.tail=FALSE)
+    if (res.df <= 0) pval <- pchisq(d,df=rank1,lower.tail=FALSE) else
+    pval <- pf(d/rank1,rank1,res.df,lower.tail=FALSE)
   }
   list(stat=d,pval=min(1,pval),rank=rank)
 } ## end of testStat
@@ -2752,7 +2766,7 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, p.type=0, ...) 
 
       start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
 
-      if (p.type==5||fr.pval) { ## use frequentist cov matrix for smooth
+      if (p.type==5||fr.pval||object$smooth[[i]]$null.space.dim==0) { ## use frequentist cov matrix 
         V <- object$Ve[start:stop,start:stop,drop=FALSE] 
       } else V <- object$Vp[start:stop,start:stop,drop=FALSE] ## Bayesian
       
@@ -2762,11 +2776,12 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, p.type=0, ...) 
       ## extract alternative edf estimate for this smooth, if possible...
       if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
  
-      if (fr.pval) { ## smooth requires full rank frequentist p-value
-        V <- pinv(V,object$smooth[[i]]$df) # get (pseudo)inverse of V
-        chi.sq[i] <- t(p)%*%V%*%p
-        df[i] <- attr(V, "rank")
-      } else if (p.type==5) { ## old style frequentist
+      #if (fr.pval) { ## smooth requires full rank frequentist p-value
+      #  V <- pinv(V,object$smooth[[i]]$df) # get (pseudo)inverse of V
+      #  chi.sq[i] <- t(p)%*%V%*%p
+      #  df[i] <- attr(V, "rank")
+      #} else 
+      if (p.type==5) { ## old style frequentist
         M1 <- object$smooth[[i]]$df
         M <- min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
         V <- pinv(V,M) # get rank M pseudoinverse of V
@@ -2782,7 +2797,9 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, p.type=0, ...) 
         } else {
          
           df[i] <- min(ncol(Xt),edf1[i])
-        
+          if (df[i]<1) df[i] <- 1
+          if (fr.pval) df[i] <- ncol(Xt) ## full rank frequentist          
+
           if (est.disp) rdf <- residual.df else rdf <- -1
           res <- testStat(p,Xt,V,df[i],type=p.type,res.df = rdf)
           df[i] <- res$rank
@@ -2792,7 +2809,8 @@ summary.gam <- function (object, dispersion = NULL, freq = TRUE, p.type=0, ...) 
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       
-      if (fr.pval || p.type == 5) {
+      ## if (fr.pval || 
+      if (p.type == 5) {
         if (!est.disp)
          s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
         else
