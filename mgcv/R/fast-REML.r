@@ -756,13 +756,17 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
     PP <- matrix(0,np,np)
     PP[undrop,undrop] <-  Sl.repara(fit$rp,fit$PP,inverse=TRUE)
     PP <- Sl.initial.repara(Sl,PP,inverse=TRUE)
-    XPP <- crossprod(t(X0),PP)*X0
-    hat <- rowSums(XPP)
-    edf <- colSums(XPP)
+    #XPP <- crossprod(t(X0),PP)*X0
+    #hat <- rowSums(XPP);edf <- colSums(XPP)
+    XPP <- crossprod(t(X0),PP)
+    hat <- rowSums(XPP*X0)
+    F <- crossprod(XPP,X0)
+    edf <- diag(F)
+    edf1 <- 2*edf - rowSums(t(F)*F) 
     ## edf <- rowSums(PP*crossprod(X0)) ## diag(PP%*%(t(X0)%*%X0))
     if (scale<=0) scale <- fit$rss/(fit$nobs - sum(edf))
-    V <- PP * scale ## cov matrix
-    return(list(beta=beta,V=V,edf=edf,hat=hat))
+    Vp <- PP * scale ## cov matrix
+    return(list(beta=beta,Vp=Vp,Ve=F%*%Vp,edf=edf,edf1=edf1,hat=hat))
   } else return(list(beta=beta))
 }
 

@@ -12,7 +12,7 @@ to zero. See details.
 }
 \usage{
 \method{anova}{gam}(object, ..., dispersion = NULL, test = NULL,
-                    freq = FALSE,p.type=0)
+                    freq = TRUE,p.type=0)
 \method{print}{anova.gam}(x, digits = max(3, getOption("digits") - 3),...)
 }
 %- maybe also `usage' for other objects documented here.
@@ -32,17 +32,19 @@ p-values. See \code{\link{summary.gam}} for details.}
 used, with the difference in model degrees of freedom being taken as the difference 
 in effective degress of freedom. The p-values resulting from this are only approximate, 
 and must be used with care. The approximation is most accurate when the comparison 
-relates to unpenalized terms or smoothers with a null space of dimension greater than zero.
+relates to unpenalized terms, or smoothers with a null space of dimension greater than zero.
 (Basically we require that the difference terms could be well approximated by unpenalized 
 terms with degrees of freedom approximately the effective degrees of freedom). In simualtions the 
-p-values are usually slightly to low. For terms with a zero-dimensional null space (i.e. those which can be penalized to zero) the approximation is often very poor, and significance can be greatly overstated: p-values are often substantially too low. This case applies to random effect terms. 
+p-values are usually slightly to low. For terms with a zero-dimensional null space 
+(i.e. those which can be penalized to zero) the approximation is often very poor, and significance 
+can be greatly overstated: i.e. p-values are often substantially too low. This case applies to random effect terms. 
 
 Note also that in the multi-model call to \code{anova.gam}, it is quite possible for a model with more terms to end up with lower effective degrees of freedom, but better fit, than the notionally null model with fewer terms. In such cases it is very rare that it makes sense to perform any sort of test, since there is then no basis on which to accept the notional null model. 
 
 If only one model is provided then the significance of each model term
 is assessed using Wald tests: see \code{\link{summary.gam}} for details. The p-values 
 provided here are better justified than in the multi model case, and have close to the 
-correct distribution under the null for smooths with a non-zero dimensional null space (i.e. terms that can-not be penalized to zero). ML or REML smoothing parameter selection leads to the best results in simulations as it tends to avoid occasional severe undersmoothing. In this case \code{print.anova.gam} is used as the
+correct distribution under the null for smooths with a non-zero dimensional null space (i.e. terms that can-not be penalized to zero). ML or REML smoothing parameter selection leads to the best results in simulations as they tend to avoid occasional severe undersmoothing. In the single model case \code{print.anova.gam} is used as the
 printing method. 
 
 }

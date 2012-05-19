@@ -395,7 +395,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       if (method=="GCV.Cp") { 
         object <- list()
         object$coefficients <- fit$b
-        object$edf <- post$edf
+        object$edf <- post$edf 
+        object$edf1 <- post$edf1
         object$full.sp <- fit$sp.full
         object$gcv.ubre <- fit$score
         object$hat <- post$hat
@@ -423,8 +424,10 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     if (method=="fREML") { ## do expensive cov matrix cal only at end
       res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
       object$edf <- res$edf
+      object$edf1 <- res$edf1
       object$hat <- res$hat
-      object$Vp <- res$V
+      object$Vp <- res$Vp
+      object$Ve <- res$Ve
     }
 
     if (!conv)
@@ -567,6 +570,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
         object <- list()
         object$coefficients <- fit$b
         object$edf <- post$edf
+        object$edf1 <- post$edf1
         object$full.sp <- fit$sp.full
         object$gcv.ubre <- fit$score
         object$hat <- post$hat
@@ -907,10 +911,10 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp)
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
-     object <- list(coefficients=res$beta,edf=res$edf,full.sp = exp(fit$rho.full),
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,full.sp = exp(fit$rho.full),
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
                     message=fit$conv),rank=ncol(um$X),
-                    Ve=NULL,Vp=res$V,scale.estimated = scale<=0,outer.info=fit$outer.info,
+                    Ve=res$Ve,Vp=res$Vp,scale.estimated = scale<=0,outer.info=fit$outer.info,
                     optimizer=c("perf","newton"))
      if (scale<=0) { ## get sp's and scale estimate
        nsp <- length(fit$rho)
@@ -949,6 +953,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
      object <- list()
      object$coefficients <- fit$b
      object$edf <- post$edf
+     object$edf1 <- post$edf1
      object$full.sp <- fit$sp.full
      object$gcv.ubre <- fit$score
      object$hat <- post$hat
