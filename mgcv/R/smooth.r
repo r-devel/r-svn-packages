@@ -938,23 +938,23 @@ expand.t2.smooths <- function(sm) {
 ## Thin plate regression splines (tprs) methods start here
 ##########################################################
 
-null.space.dimension<-function(d,m)
+null.space.dimension <- function(d,m)
 # vectorized function for calculating null space dimension for tps penalties of order m
 # for dimension d data M=(m+d-1)!/(d!(m-1)!). Any m not satisfying 2m>d is reset so 
 # that 2m>d+1 (assuring "visual" smoothness) 
 { if (sum(d<0)) stop("d can not be negative in call to null.space.dimension().")
-  ind<-2*m<d+1
+  ind <- 2*m < d+1
   if (sum(ind)) # then default m required for some elements
-  { m[ind]<-1;ind<-2*m<d+2
-    while (sum(ind)) { m[ind]<-m[ind]+1;ind<-2*m<d+2;}
+  { m[ind] <- 1;ind <- 2*m < d+2
+    while (sum(ind)) { m[ind]<-m[ind]+1;ind <- 2*m < d+2;}
   }
-  M<-m*0+1;ind<-M==1;i<-0
+  M <- m*0+1;ind <- M==1;i <- 0
   while(sum(ind))
-  { M[ind]<-M[ind]*(d[ind]+m[ind]-1-i);i<-i+1;ind<-i<d
+  { M[ind] <- M[ind]*(d[ind]+m[ind]-1-i);i <- i+1;ind <- i<d
   }
-  ind<-d>1;i<-2
+  ind <- d>1;i <- 2
   while(sum(ind))
-  { M[ind]<-M[ind]/i;ind<-d>i;i<-i+1   
+  { M[ind] <- M[ind]/i;ind <- d>i;i <- i+1   
   }
   M
 }
@@ -1100,10 +1100,12 @@ Predict.matrix.tprs.smooth<-function(object,data)
   }
 
   by<-0;by.exists<-FALSE
+  ## following used to be object$null.space.dim, but this is now *post constraint*
+  M <- null.space.dimension(object$dim,object$p.order)
 
   X<-matrix(0,n,object$bs.dim)
   oo<-.C(C_predict_tprs,as.double(x),as.integer(object$dim),as.integer(n),as.integer(object$p.order),
-      as.integer(object$bs.dim),as.integer(object$null.space.dim),as.double(object$Xu),
+      as.integer(object$bs.dim),as.integer(M),as.double(object$Xu),
       as.integer(nrow(object$Xu)),as.double(object$UZ),as.double(by),as.integer(by.exists),X=as.double(X))
   X<-matrix(oo$X,n,object$bs.dim)
 
