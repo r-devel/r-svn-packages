@@ -3113,7 +3113,7 @@ PredictMat <- function(object,data,n=nrow(data))
       if (!is.null(offset)) {
         get.off <- TRUE
         offs <- offset[ind]
-      }
+      } else { get.off <- FALSE;offs <- NULL}
       for (i in 2:q) {
         ind <- ind + n
         Xs <- Xs + X[ind,]
