@@ -1,6 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-18
+
+* bam and negbin examples speeded up
+
 1.7-17
 
 ** p-values for terms with no un-penalized components were poor. The theory on 
