@@ -1,3 +1,9 @@
+2012-05-23  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* DESCRIPTION: version is 3.1-104
+	* src/gnls.c, src/nlme.c, src/nlmefit.[ch]:
+	type mismatches shown by clang's -Wconversion
+
 2012-04-25  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* src/nlmefit.c: type mismatch shown by -Wconversion

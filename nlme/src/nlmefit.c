@@ -158,7 +158,7 @@ count_DmHalf_pars( dimPTR dd, longint *pdClass )
 	case 3: result += 2;
 	}
     }
-    return (size_t) result;
+    return result;
 }
 
 double *
