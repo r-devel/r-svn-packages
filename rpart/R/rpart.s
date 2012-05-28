@@ -139,7 +139,8 @@ rpart <- function(formula, data, weights, subset,
 	if (is.matrix(x)) rep(is.ordered(x), ncol(x))
 	else is.ordered(x)
     }
-    isord <- unlist(lapply(m[attr(Terms, 'term.labels')], tfun))
+    labs <- sub("^`(.*)`$", "\\1", attr(Terms, 'term.labels'))
+    isord <- unlist(lapply(m[labs], tfun))
     rpfit <- .C(C_s_to_rp,
 		    n = as.integer(nobs),
 		    nvarx = as.integer(nvar),
