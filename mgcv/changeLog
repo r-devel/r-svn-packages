@@ -5,6 +5,12 @@
 
 * bam and negbin examples speeded up
 
+* predict.gam could fail for models of the form y~1 when newdata are supplied.
+  (Could make some model averaging methods fail). Fixed.
+
+* plot.gam had an overzealous check for availibility of variance estimates,
+  which could make rank deficient models fail to plot CIs. fixed.
+
 1.7-17
 
 ** p-values for terms with no un-penalized components were poor. The theory on 
