@@ -2617,7 +2617,7 @@ if (rank<1) rank <- 1 ## EXPERIMENTAL
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = TRUE, p.type=0, ...) {
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -2878,7 +2878,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
 }
 
 
-anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=TRUE,p.type=0)
+anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0)
 # improved by Henric Nilsson
 {   # adapted from anova.glm: R stats package
     dotargs <- list(...)
