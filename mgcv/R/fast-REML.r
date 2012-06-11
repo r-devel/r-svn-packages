@@ -644,7 +644,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
   best$iter <- iter
   best$outer.info <- list(conv = best$conv, iter = best$iter,grad = grad,hess = hess)
   best$rho <- rho
-  best$rho.full <-  L%*%rho+rho.0
+  best$rho.full <-  as.numeric(L%*%rho+rho.0)
   best ## return the best fit (note that it will need post-processing to be useable)
 } ## end fast.REML.fit
 

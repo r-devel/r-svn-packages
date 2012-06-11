@@ -2839,8 +2839,10 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
     }
   }
   w <- object$prior.weights
+  mean.y <- sum(w*object$y)/sum(w)
+  w <- sqrt(w)
   nobs <- nrow(object$model)
-  r.sq<- 1 - var(w*(object$y-object$fitted.values))*(nobs-1)/(var(w*object$y)*residual.df) 
+  r.sq<- 1 - var(w*(object$y-object$fitted.values))*(nobs-1)/(var(w*(object$y-mean.y))*residual.df) 
   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
   ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
        s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
@@ -3030,7 +3032,7 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
   }
   ## If a Hessian exists, get CI's for variance components...
 
-  if (x$method%in%c("ML","P-ML","REML","P-REML")&&!is.null(x$outer.info$hess)) {
+  if (x$method%in%c("ML","P-ML","REML","P-REML","fREML")&&!is.null(x$outer.info$hess)) {
     H <- x$outer.info$hess ## the hessian w.r.t. log sps and log scale
     if (ncol(H)>length(x$sp)) scale.est <- TRUE else scale.est <- FALSE
     
