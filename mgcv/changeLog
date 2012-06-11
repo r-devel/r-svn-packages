@@ -129,7 +129,7 @@
   made explicit.
 
 * "re" smooths are no longer subject to side constraint under nesting (since
-  this is almost alway un-necessary and undesirable, and often unexpected).
+  this is almost always un-necessary and undesirable, and often unexpected).
 
 * side.con modified to allow smooths to be excluded and to allow side 
   constraint computation to take account of penalties (unused at present).
