@@ -6,15 +6,16 @@
 * Embarrassingly, the adjusted r^2 computation in summary.gam was wrong
   for models with prior weights. Now fixed, thanks to Antony Unwin.
 
-* bam(...,method="fREML") made fully compatible with gam.vcomp.
-
 * bam(...,method="fREML") could give incorrect edfs for "re" terms as a 
-  result of a matrix indexing error in Sl.initial.repara. Now fixed.
+  result of a matrix indexing error in Sl.initial.repara. Now fixed. 
+  Thanks to Martijn Wieling for reporting this.
 
 * summary.gam had freq=TRUE set as default in 1.7-17. This gave better 
   p-values for paraPen terms, but spoiled p-values for fixed effects in the
   presence of "re" terms (a rather more common setup). Default now reset to
   freq=FALSE.
+
+* bam(...,method="fREML") made fully compatible with gam.vcomp.
 
 * bam and negbin examples speeded up
 
