@@ -1,6 +1,17 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+ISSUES:
+
+* bam fails with single fixed sp and fREML.
+
+1.7-19
+
+* By default summary.gam and anova.gam no longer report p-values for "re" 
+  terms, since these only work well in rather simple cases without random 
+  effect nesting, and it seems better not to rely on users studying the 
+  help files in detail for this. Can be turned back on with all.p=TRUE.  
+
 1.7-18
 
 * Embarrassingly, the adjusted r^2 computation in summary.gam was wrong

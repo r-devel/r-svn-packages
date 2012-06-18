@@ -401,6 +401,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         object$coefficients <- fit$b
         object$edf <- post$edf 
         object$edf1 <- post$edf1
+        object$F <- post$F
         object$full.sp <- fit$sp.full
         object$gcv.ubre <- fit$score
         object$hat <- post$hat
@@ -429,6 +430,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
       object$edf <- res$edf
       object$edf1 <- res$edf1
+      object$F <- res$F
       object$hat <- res$hat
       object$Vp <- res$Vp
       object$Ve <- res$Ve
@@ -575,6 +577,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
         object$coefficients <- fit$b
         object$edf <- post$edf
         object$edf1 <- post$edf1
+        object$F <- post$F
         object$full.sp <- fit$sp.full
         object$gcv.ubre <- fit$score
         object$hat <- post$hat
@@ -915,7 +918,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp)
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
-     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,F=res$F,
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
                     message=fit$conv),rank=ncol(um$X),
                     Ve=res$Ve,Vp=res$Vp,scale.estimated = scale<=0,outer.info=fit$outer.info,
@@ -961,6 +964,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
      object$coefficients <- fit$b
      object$edf <- post$edf
      object$edf1 <- post$edf1
+     object$F <- post$F
      object$full.sp <- fit$sp.full
      object$gcv.ubre <- fit$score
      object$hat <- post$hat
@@ -1337,7 +1341,7 @@ bam.update <- function(b,data,chunk.size=10000) {
      res <- Sl.postproc(b$Sl,fit,um$undrop,b$qrx$R,cov=TRUE,scale=scale)
 
 
-     object <- list(coefficients=res$beta,edf=res$edf,
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,F=res$F,
                     gcv.ubre=fit$reml,hat=res$hat,outer.info=list(iter=fit$iter,
                     message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
                     Ve=NULL,Vp=res$V,scale.estimated = scale<=0)
@@ -1386,6 +1390,8 @@ bam.update <- function(b,data,chunk.size=10000) {
 
     b$coefficients <- fit$b
     b$edf <- post$edf
+    b$edf1 <- post$edf1
+    b$F <- post$F
     b$full.sp <- fit$sp.full
     b$gcv.ubre <- fit$score
     b$hat <- post$hat
@@ -1400,6 +1406,8 @@ bam.update <- function(b,data,chunk.size=10000) {
   } else { ## REML or ML
     b$coefficients <- object$coefficients
     b$edf <- object$edf
+    b$edf1 <- object$edf1
+    b$F <- object$F
     b$full.sp <- object$sp.full
     b$gcv.ubre <- object$gcv.ubre
     b$hat <- object$hat

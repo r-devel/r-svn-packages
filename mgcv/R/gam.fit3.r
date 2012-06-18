@@ -712,7 +712,8 @@ gam.fit3.post.proc <- function(X,object) {
   ## Ve <- PKt%*%t(PKt)*object$scale  ## frequentist cov
   Ve <- F%*%Vb ## not quite as stable as above, but quicker
   hat <- rowSums(object$K*object$K)
-  list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,hat=hat)
+  ##bias = as.numeric(object$coefficients - F%*%object$coefficients)
+  list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,hat=hat,F=F)
 }
 
 

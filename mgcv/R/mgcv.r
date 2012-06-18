@@ -1203,6 +1203,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$Ve <- mv$Ve
   object$edf<-mv$edf
   object$edf1 <- mv$edf1
+  object$F <- mv$F
   object$aic <- object$aic + 2*sum(mv$edf)
   object$nsdf <- G$nsdf
   object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
@@ -2022,6 +2023,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         family = family,linear.predictors = eta, deviance = dev,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights,  
         df.null = nulldf, y = y, converged = conv,sig2=G$sig2,edf=G$edf,edf1=mv$edf1,hat=G$hat,
+        F=mv$F,
         boundary = boundary,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,rV=mr$rV,mgcv.conv=G$conv,
         gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev,scale.estimated = (scale < 0))
 }
@@ -2035,8 +2037,8 @@ model.matrix.gam <- function(object,...)
 
 
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
-                       block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) 
-{
+                       block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) {
+
 # This function is used for predicting from a GAM. object is a gam object, newdata a dataframe to
 # be used in prediction......
 #
@@ -2308,7 +2310,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   }
   if (type=="terms"||type=="iterms") attr(H,"constant") <- object$coefficients[1]
   H # ... and return
-}
+} ## end of gam.fit
 
 
 concurvity <- function(b,full=TRUE) {
@@ -2530,7 +2532,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
 
-if (rank<1) rank <- 1 ## EXPERIMENTAL
+## if (rank<1) rank <- 1 ## EXPERIMENTAL
 
 #  lp <- ed$values/max(ed$values)
 #  lp <- 2*lp - lp^2
@@ -2566,10 +2568,10 @@ if (rank<1) rank <- 1 ## EXPERIMENTAL
   # vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
   vec <- ed$vectors
   if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
-  if (k==0) {
-     vec <- t(t(vec)*sqrt(1/ed$val[1]))
-    
-  }
+#  if (k==0) {
+#     vec <- t(t(vec)*sqrt(1/ed$val[1]))
+#    
+#  }## this was in wrong place, so vec could be scaled twice
  
   ## deal with the fractional part of the pinv...
   if (nu>0&&k>0) {
@@ -2584,6 +2586,7 @@ if (rank<1) rank <- 1 ## EXPERIMENTAL
      rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
      vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
   } else {
+    if (k==0) vec <- t(t(vec)*sqrt(1/ed$val[1])) else
     vec <- t(t(vec)/sqrt(ed$val[1:k]))
     if (k==1) rank <- 1
   }
@@ -2592,6 +2595,9 @@ if (rank<1) rank <- 1 ## EXPERIMENTAL
   d <- sum(d^2) 
 
   rank1 <- rank ## rank for lower tail pval computation below
+
+  ## note that for <1 edf then d is not weighted by EDF, and instead is 
+  ## simply refered to a chi-squared 1
 
   if (nu>0) { ## mixture of chi^2 ref dist
      if (k1==1) rank1 <- val <- 1 else { 
@@ -2603,11 +2609,11 @@ if (rank<1) rank <- 1 ## EXPERIMENTAL
    
      if (res.df <= 0) pval <- liu2(d,val) else ##  pval <- davies(d,val)$Qq else
      pval <- simf(d,val,res.df)
-  } else { pval <- 1 }
+  } else { pval <- 2 }
   ## integer case still needs computing, also liu/pearson approx only good in 
   ## upper tail. In lower tail, 2 moment approximation is better (Can check this 
   ## by simply plotting the whole interesting range as a contour plot!)
-  if (pval > .5) {
+  if (pval > .5) { 
     if (res.df <= 0) pval <- pchisq(d,df=rank1,lower.tail=FALSE) else
     pval <- pf(d/rank1,rank1,res.df,lower.tail=FALSE)
   }
@@ -2617,7 +2623,7 @@ if (rank<1) rank <- 1 ## EXPERIMENTAL
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...) {
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,all.p=FALSE, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -2757,8 +2763,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         X <- model.matrix(object)
       }
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
-      ## get corrected edf
-      #edf1 <- 2*object$edf - rowSums(object$Ve*(t(X)%*%X))/object$sig2
+    
     } ## end if (p.type<5)
 
     for (i in 1:m) { ## loop through smooths
@@ -2777,11 +2782,6 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       ## extract alternative edf estimate for this smooth, if possible...
       if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
  
-      #if (fr.pval) { ## smooth requires full rank frequentist p-value
-      #  V <- pinv(V,object$smooth[[i]]$df) # get (pseudo)inverse of V
-      #  chi.sq[i] <- t(p)%*%V%*%p
-      #  df[i] <- attr(V, "rank")
-      #} else 
       if (p.type==5) { ## old style frequentist
         M1 <- object$smooth[[i]]$df
         M <- min(M1,ceiling(2*sum(object$edf[start:stop]))) ## upper limit of 2*edf on rank
@@ -2798,7 +2798,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         } else {
          
           df[i] <- min(ncol(Xt),edf1[i])
-          if (df[i]<1) df[i] <- 1
+         ## if (df[i]<1) df[i] <- 1 ## line not needed - testStat behaviour as if this true anyway
           if (fr.pval) df[i] <- ncol(Xt) ## full rank frequentist          
 
           if (est.disp) rdf <- residual.df else rdf <- -1
@@ -2806,11 +2806,11 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
           df[i] <- res$rank
           chi.sq[i] <- res$stat
           s.pv[i] <- res$pval 
+          if (fr.pval&&!all.p)  s.pv[i] <- NA
         }   
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       
-      ## if (fr.pval || 
       if (p.type == 5) {
         if (!est.disp)
          s.pv[i] <- pchisq(chi.sq[i], df = df[i], lower.tail = FALSE)
@@ -2852,7 +2852,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
  
   class(ret)<-"summary.gam"
   ret
-}
+} ## end summary.gam
 
 print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3), 
                               signif.stars = getOption("show.signif.stars"), ...)
@@ -2880,7 +2880,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
 }
 
 
-anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0)
+anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0,all.p=FALSE)
 # improved by Henric Nilsson
 {   # adapted from anova.glm: R stats package
     dotargs <- list(...)
@@ -2899,7 +2899,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,
             test = test))
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
-    sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type)
+    sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type,all.p=all.p)
     class(sg) <- "anova.gam"
     sg
 }
@@ -3195,7 +3195,8 @@ magic.post.proc <- function(X,object,w=NULL)
   M <- WX%*%V
   ##Ve <- (V%*%t(X))%*%M*object$scale # frequentist cov. matrix
   XWX <- t(X)%*%WX
-  Ve <- V%*%XWX
+  F <- Ve <- V%*%XWX
+  ##bias <- as.numeric(object$b - Ve%*%object$b) ## estimated beta bias
   edf1 <- rowSums(t(Ve)*Ve) ## this is diag(FF), where F is edf matrix
   Ve <- Ve%*%V*object$scale ## frequentist cov matrix
   B <- X*M
@@ -3203,7 +3204,7 @@ magic.post.proc <- function(X,object,w=NULL)
   hat <- apply(B,1,sum) # diag(X%*%V%*%t(WX))
   edf <- apply(B,2,sum) # diag(V%*%t(X)%*%WX)
   Vb <- V*object$scale;rm(V)
-  list(Ve=Ve,Vb=Vb,hat=hat,edf=edf,edf1=2*edf-edf1)
+  list(Ve=Ve,Vb=Vb,hat=hat,edf=edf,edf1=2*edf-edf1,F=F)
 }
 
 single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)

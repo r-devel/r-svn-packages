@@ -7,7 +7,7 @@
 summaries from it. (See \code{\link{sink}} to divert output to a file.)
 }
 \usage{
-\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, p.type = 0, ...)
+\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, p.type = 0,all.p, ...)
 
 \method{print}{summary.gam}(x,digits = max(3, getOption("digits") - 3), 
                   signif.stars = getOption("show.signif.stars"),...)
@@ -28,8 +28,10 @@ the frequentist covariance matrix of the parameters is used instead. }
 \item{p.type}{determines how p-values are computed for smooth terms. 0 uses a test statistic with 
 distribution determined by the un-rounded edf of the term. 1 uses upwardly biased rounding of the edf and -1
 uses a version of the test statistic with a null distribution that has to be simulated. 5 is the approximation 
-in Wood (2006). Other options are poor, generate a warning, and are only of research interest. See details.
-}
+in Wood (2006). Other options are poor, generate a warning, and are only of research interest. See details.}
+
+\item{all.p}{by default no attempt is made to find p-values for random effects (or other 
+smooths with \code{fr.pval} field set to \code{TRUE}). Set to \code{TRUE} to change this.}
 
 \item{digits}{controls number of digits printed in output.}
 
@@ -54,7 +56,11 @@ Unless \code{p.type=5}, p-values for smooth terms are usually based on a
 test statistic motivated by an extension of Nychka's (1988) analysis of the frequentist properties 
 of Bayesian confidence intervals for smooths. 
 These have better frequentist performance (in terms of power and distribution under the null) 
-than the alternative strictly frequentist approximation. Let \eqn{\bf f}{f} denote the vector of 
+than the alternative strictly frequentist approximation. When the Bayesian intervals have good 
+across the function properties then the p-values have close to the correct null distribtion 
+and reasonable power (but there are no optimality results for the power). 
+
+Let \eqn{\bf f}{f} denote the vector of 
 values of a smooth term evaluated at the original 
 covariate values and let \eqn{{\bf V}_f}{V_f} denote the corresponding Bayesian covariance matrix. Let 
 \eqn{{\bf V}_f^{r-}}{V*_f} denote the rank \eqn{r}{r} pseudoinverse of \eqn{{\bf V}_f}{V_f}, where \eqn{r}{r} is the 
@@ -68,14 +74,15 @@ The non-integer rank truncated inverse is constructed to give an
 approximation varying smoothly between the bounding integer rank approximations, while yielding test statistics with the correct mean and variance under the null. Alternatively (\code{p.type==1}) \eqn{r}{r} is obtained by 
 biased rounding of the EDF: values less than .05 above the preceding integer are rounded down, while other values are rounded up. Another option (\code{p.type==-1}) uses a statistic of formal rank given by the number of coefficients for the smooth, but with its terms weighted by the eigenvalues of the covariance matrix, so that penalized terms are down-weighted, but the null distribution requires simulation. Other options for \code{p.type} are 2 (naive rounding), 3 (round up), 4 (numerical rank determination): these are poor options for theoretically known reasons, and will generate a warning. 
 
-The resulting p-value also has a  Bayesian interpretation: 
+The default p-values also have a  Bayesian interpretation: 
 the probability of observing an \eqn{\bf f}{f} less probable than \eqn{\bf 0}{0}, 
 under the approximation for the posterior for \eqn{\bf f}{f} implied by the truncation used in the test statistic.
 
 Note that for terms with no unpenalized terms the Nychka (1988) requirement for smoothing bias to be substantially 
-less than variance breaks down (see e.g. appendix of Marra and Wood, 2012), and this results in incorrect null distribution 
-for p-values computed using the above approach. In this case it is necessary to fall back on slightly cruder frequentist approximations 
-(which may overstate significance a little). The frequentist covariance matrix is used in place of the Bayesian version, and the statistic rank is set to 1 for EDF < 1. In the case of random effects, a further modification is required, since the eigen spectrum of the penalty is then flat and a good unpenalized approximation with rank given by the EDF of the term is not generally available, further breaking the theory used for other smoothers. In this case the rank of the test statistic is set to the full rank of the term, and the p-value relates to testing whether the individual random effects were in fact all zero (despite the estimated posterior modes being those observed). 
+less than variance breaks down (see e.g. appendix of Marra and Wood, 2012), and this results in incorrect null 
+distribution for p-values computed using the above approach. In this case it is necessary to fall back on slightly cruder frequentist approximations (which may overstate significance a little). The frequentist covariance matrix is used in place of the Bayesian version, and the statistic rank is set to 1 for EDF < 1. These p-values should always be treated with more caution than the p-values for terms with an unplenalized component. 
+
+In the case of random effects, a further modification is required, since the eigen spectrum of the penalty is then flat and a good unpenalized approximation with rank given by the EDF of the term is not generally available, further breaking the theory used for other smoothers. In this case the rank of the test statistic is set to the full rank of the term, and the p-value relates to testing whether the individual random effects were in fact all zero (despite the estimated posterior modes being those observed). This works well only for simple random effects with no nesting present (so it is poor for random effect interactions, for example). As a result these p-values are only reported if \code{all.p=TRUE}. Generally, it is probably better to look at the output from \code{\link{gam.vcomp}}, rather than p-values, for random effects. 
 
 In simulations the p-values have best behaviour under ML smoothness selection, with REML coming second. 
 
@@ -217,6 +224,17 @@ bc<-gam(y~s(x0,k=b.d[1],fx=TRUE)+s(x1,k=b.d[2],fx=TRUE)+
 plot(bc,pages=1)
 summary(bc)
 
+## Example where some p-values are less reliable...
+dat <- gamSim(6,n=200,scale=2)
+b <- gam(y~s(x0,m=1)+s(x1)+s(x2)+s(x3)+s(fac,bs="re"),data=dat)
+## Here s(x0,m=1) can be penalized to zero, so p-value approximation
+## cruder than usual...
+summary(b) 
+## Now force summary to report approximate p-value for "re" 
+## terms as well. In this case the p-value is OK, since the
+## random effect structure is so simple.
+summary(b,all.p=TRUE) 
+
 ## p-value check - increase k to make this useful!
 k<-20;n <- 200;p <- rep(NA,k)
 for (i in 1:k)
@@ -227,6 +245,8 @@ for (i in 1:k)
 plot(((1:k)-0.5)/k,sort(p))
 abline(0,1,col=2)
 ks.test(p,"punif") ## how close to uniform are the p-values?
+
+
 
 }
 \keyword{models} \keyword{smooth} \keyword{regression}%-- one or more ...
