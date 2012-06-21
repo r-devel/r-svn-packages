@@ -3,14 +3,25 @@
 
 ISSUES:
 
+* currently exporting F and R in gam object. Are both/either needed?
+  -- magic now exports R - doc?
+
+
 * bam fails with single fixed sp and fREML.
 
 1.7-19
+
+* testStat bug fix. qr was called with default arguments, which includes 
+  tol=1e-7! This could occasionally lead to substantial underestimation of 
+  p-values, at least for factors and random effects.
 
 * By default summary.gam and anova.gam no longer report p-values for "re" 
   terms, since these only work well in rather simple cases without random 
   effect nesting, and it seems better not to rely on users studying the 
   help files in detail for this. Can be turned back on with all.p=TRUE.  
+
+* bam now correctly returns fitting weights (rather than prior) in weights 
+  field.
 
 1.7-18
 

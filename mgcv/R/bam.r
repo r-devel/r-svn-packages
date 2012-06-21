@@ -448,7 +448,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
             if (any(mu < eps))
                 warning("fitted rates numerically 0 occurred")
     }
-      
+  object$R <- qrx$R    
   object$iter <- iter 
   object$wt <- wt
   object$y <- G$y
@@ -617,6 +617,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
       
   object$iter <- iter  
   object$wt <- w
+  object$R <- qrx$R
   object$y <- G$y
   rm(G);gc()
   object
@@ -986,7 +987,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,cl=NULL,gc.level
      object$yX.last <- yX.last
    }
   
- 
+   object$R <- qrx$R
    object$gamma <- gamma;object$G <- G;object$qrx <- qrx ## to allow updating of the model
    object$y <- mf[[gp$response]]
    object$iter <- 1
@@ -1213,8 +1214,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   object$terms <- G$terms
   object$var.summary <- G$var.summary 
- 
-  object$weights <- object$prior.weights
+  if (is.null(object$wt)) object$weights <- object$prior.weights else
+  object$weights <- object$wt
   object$xlevels <- G$xlevels
   #object$y <- object$model[[gp$response]]
   object$NA.action <- na.action ## version to use in bam.update
@@ -1422,6 +1423,8 @@ bam.update <- function(b,data,chunk.size=10000) {
     }
   }
 
+
+  b$R <- b$qrx$R
   b$G$X <- NULL
   b$linear.predictors <- as.numeric(predict.gam(b,newdata=b$model,block.size=chunk.size))
   b$fitted.values <- b$linear.predictor ## strictly additive only!

@@ -1203,7 +1203,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$Ve <- mv$Ve
   object$edf<-mv$edf
   object$edf1 <- mv$edf1
-  object$F <- mv$F
+  object$F <- mv$F ## DoF matrix --- probably not needed
+  object$R <- mv$R ## qr.R(sqrt(W)X)
   object$aic <- object$aic + 2*sum(mv$edf)
   object$nsdf <- G$nsdf
   object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
@@ -1416,7 +1417,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   names(object$coefficients) <- G$term.names 
   
   object
-}
+} ## end estimate.gam
 
 variable.summary <- function(pf,dl,n) {
 ## routine to summarize all the variables in dl, which is a list
@@ -1474,7 +1475,7 @@ variable.summary <- function(pf,dl,n) {
      vs[[v.name[i]]] <- x
    }
    vs
-}
+} ## end variable.summary
 
 
 ## don't be tempted to change to control=list(...) --- messes up passing on other stuff via ...
@@ -2023,7 +2024,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         family = family,linear.predictors = eta, deviance = dev,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights,  
         df.null = nulldf, y = y, converged = conv,sig2=G$sig2,edf=G$edf,edf1=mv$edf1,hat=G$hat,
-        F=mv$F,
+        F=mv$F,R=mr$R,
         boundary = boundary,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,rV=mr$rV,mgcv.conv=G$conv,
         gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev,scale.estimated = (scale < 0))
 }
@@ -2510,6 +2511,74 @@ simf <- function(x,a,df,nq=50) {
 }
 
 
+recov <- function(b,re=rep(0,0)) {
+## b is a fitted gam object. re is an array of indices of 
+## smooth terms to be treated as fully random....
+## Returns frequentist Cov matrix based on the given
+## mapping from data to params, but with dist of data
+## corresponding to that implied by treating terms indexed
+## by re as random effects... (would be usual frequentist 
+## if nothing treated as random)
+  if (!inherits(b,"gam")) stop("recov works with fitted gam objects only")
+  if (length(re)<1) return(b$Ve) ## X'WX
+  ## partition R into R1 ("fixed") and R2 ("random"), with S1 and S2
+  p <- length(b$coefficients)
+  rind <- rep(FALSE,p) ## random coefficient index
+  for (i in 1:length(re)) {
+    rind[b$smooth[[re[i]]]$first:b$smooth[[re[i]]]$last] <- TRUE
+  }
+  p2 <- sum(rind) ## number random
+  p1 <- p - p2 ## number fixed
+  map <- rep(0,p) ## remaps param indices to indices in split version
+  map[rind] <- 1:p2 ## random
+  map[!rind] <- 1:p1 ## fixed
+  
+  ## split R...
+  R1 <- b$R[,!rind]  ## fixed effect columns
+  R2 <- b$R[,rind]   ## random effect columns
+  ## seit ihr ich dich kennen, hab ich ein probleme,
+  ## du redest ohne punkt und komma...
+
+  ## assemble S1 and S2
+  S1 <- matrix(0,p1,p1);S2 <- matrix(0,p2,p2)
+  if (is.null(b$full.sp)) sp <- b$sp else sp <- b$full.sp
+  k <- 1
+  for (i in 1:length(b$smooth)) { 
+    ns <- length(b$smooth[[i]]$S)
+    ind <- map[b$smooth[[i]]$first:b$smooth[[i]]$last]
+    is.random <- i%in%re
+    if (ns>0) for (j in 1:ns) {
+      if (is.random) S2[ind,ind] <- S2[ind,ind] +  sp[k]*b$smooth[[i]]$S[[j]] else
+         S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
+      k <- k + 1
+    }
+  }
+  ## pseudoinvert S2
+  if (nrow(S2)==1) {
+    S2[1,1] <- 1/S2[1,1]
+  } else if (max(abs(diag(diag(S2))-S2))==0) {
+    ds2 <- diag(S2)
+    ind <- ds2 > max(ds2)*.Machine$double.eps^.8
+    ds2[ind] <- 1/ds2[ind];ds2[!ind] <- 0
+    diag(S2) <- ds2
+  } else {
+    ev <- eigen(S2,symmetric=TRUE)
+    ind <- ev$values > max(ev$values)*.Machine$double.eps^.8
+    ev$values[ind] <- 1/ev$values[ind];ev$values[!ind] <- 0 
+    S2 <- ev$vectors%*%(ev$values*t(ev$vectors))
+  }
+  ## choleski of cov matrix....
+  L <- chol(diag(p)+R2%*%S2%*%t(R2)) ## L'L = I + R2 S2^- R2'
+ 
+  Ve <- b$Vp%*%crossprod(L%*%b$R)%*%b$Vp/b$sig2 ## Frequentist cov matrix
+ 
+ # mapi <- (1:p)[!rind] ## indexes mapi[j] is index of total coef vector to which jth row/col of Vb/e relates
+
+} ## end of recov
+
+
+
+
 testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 ## Routine for forming fractionally trunctated
 ## pseudoinverse of XVX'. And returning 
@@ -2526,7 +2595,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 ## res.df is residual dof used to estimate scale. <=0 implies
 ## fixed scale.
 
-  qrx <- qr(X)
+  qrx <- qr(X,tol=0)
   R <- qr.R(qrx)
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
@@ -3433,11 +3502,12 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
  
   b<-array(0,icontrol[3])
   # argument names in call refer to returned values.
-  um<-.C(C_magic,as.double(y),as.double(X),sp=as.double(sp),as.double(def.sp),as.double(Si),as.double(H),as.double(L),
+  um<-.C(C_magic,as.double(y),X=as.double(X),sp=as.double(sp),as.double(def.sp),as.double(Si),as.double(H),as.double(L),
           lsp0=as.double(lsp0),score=as.double(gamma),scale=as.double(scale),info=as.integer(icontrol),as.integer(cS),
           as.double(control$rank.tol),rms.grad=as.double(control$tol),b=as.double(b),rV=double(q*q),
           as.double(extra.rss),as.integer(n.score))
   res<-list(b=um$b,scale=um$scale,score=um$score,sp=um$sp,sp.full=as.numeric(exp(L%*%log(um$sp))))
+  res$R <- matrix(um$X[1:q^2],q,q)
   res$rV<-matrix(um$rV[1:(um$info[1]*q)],q,um$info[1])
   gcv.info<-list(full.rank=full.rank,rank=um$info[1],fully.converged=as.logical(um$info[2]),
       hess.pos.def=as.logical(um$info[3]),iter=um$info[4],score.calls=um$info[5],rms.grad=um$rms.grad)
