@@ -1863,7 +1863,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   ## be biased here)! The theoretical problems can result in very
   ## low power in practice. 
  
-  object$fr.pval <- TRUE ## use full rank frequentist p-value
+  object$random <- TRUE ## treat as a random effect for p-value comp.
 
   class(object)<-"random.effect"  # Give object a class
 

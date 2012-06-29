@@ -2570,14 +2570,37 @@ recov <- function(b,re=rep(0,0)) {
   ## choleski of cov matrix....
   L <- chol(diag(p)+R2%*%S2%*%t(R2)) ## L'L = I + R2 S2^- R2'
  
-  Ve <- b$Vp%*%crossprod(L%*%b$R)%*%b$Vp/b$sig2 ## Frequentist cov matrix
+  Ve <- crossprod(L%*%b$R%*%b$Vp)/b$sig2 ## Frequentist cov matrix
  
  # mapi <- (1:p)[!rind] ## indexes mapi[j] is index of total coef vector to which jth row/col of Vb/e relates
 
 } ## end of recov
 
 
-
+reTest <- function(b,m) {
+## Test the mth smooth for equality to zero, using f'f as statistic,
+## and accounting for all random effects in model 
+  
+  ## find indices of random effects other than m
+  rind <- rep(0,0)
+  for (i in 1:length(b$smooth)) if (!is.null(b$smooth[[i]]$random)&&b$smooth[[i]]$random&&i!=m) rind <- c(rind,i)
+  ## get frequentist cov matrix of effects treating smooth terms in rind as random
+  Ve <- recov(b,rind) 
+  ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
+  B <- mroot(Ve[ind,ind]) ## BB'=Ve
+  Rm <- b$R[,ind]
+  b.hat <- coef(b)[ind]
+  d <- Rm%*%b.hat
+  stat <- sum(d^2)/b$sig2
+  ev <- eigen(crossprod(Rm%*%B)/b$sig2,symmetric=TRUE,only.values=TRUE)$values
+  ev[ev<0] <- 0
+  rank <- sum(ev>max(ev)*.Machine$double.eps^.8)
+  
+  if (b$scale.estimated) {
+    pval <- simf(stat,ev,b$df.residual)
+  } else { pval <- liu2(stat,ev) }
+  list(stat=stat,pval=pval,rank=rank)
+} ## end reTest
 
 testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 ## Routine for forming fractionally trunctated
@@ -2601,18 +2624,14 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
 
-## if (rank<1) rank <- 1 ## EXPERIMENTAL
 
-#  lp <- ed$values/max(ed$values)
-#  lp <- 2*lp - lp^2
-#  k <- ceiling(rank) ## reset rank if failing to catch important terms...
-#  if (k < length(lp)&&lp[k+1]>max(lp)*0.5) {
-#    rank <- max(rank,sum(lp>.5*max(lp)))
-#  }
- 
   k <- max(0,floor(rank)) 
   nu <- abs(rank - k)     ## fractional part of supplied edf
-  if (type==1) { ## round up is more than .05 above lower
+  if (type < -.5) { ## Crude modification of Cox and Koh
+    res <- smoothTest(p,Xt,V)
+    res$rank <- rank
+    return(res)
+  } else  if (type==1) { ## round up is more than .05 above lower
     if (rank > k + .05||k==0) k <- k + 1
     nu <- 0;rank <- k
   } else if (type==2) { ## naive round
@@ -2637,11 +2656,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   # vec <- qr.qy(qrx,rbind(ed$vectors,matrix(0,nrow(X)-ncol(X),ncol(X))))
   vec <- ed$vectors
   if (k1<ncol(vec)) vec <- vec[,1:k1,drop=FALSE]
-#  if (k==0) {
-#     vec <- t(t(vec)*sqrt(1/ed$val[1]))
-#    
-#  }## this was in wrong place, so vec could be scaled twice
- 
+
   ## deal with the fractional part of the pinv...
   if (nu>0&&k>0) {
      if (k>1) vec[,1:(k-1)] <- t(t(vec[,1:(k-1)])/sqrt(ed$val[1:(k-1)]))
@@ -2692,7 +2707,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,all.p=FALSE, ...) {
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -2707,9 +2722,9 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,all.p
 ##   4 Bayesian numerical rank
 ##   5 Wood (2006) frequentist
 ##   -1 Modified Cox et al.
-## If a smooth has a field 'fr.pval' and it is set to TRUE then 
-## its p-value is based on the full rank frequentist Wald statistic. 
-## This option is appropriate for random effects. 
+## If a smooth has a field 'random' and it is set to TRUE then 
+## it is treated as a random effect for some p-value dist calcs 
+
 
   pinv<-function(V,M,rank.tol=1e-6) {
   ## a local pseudoinverse function
@@ -2836,12 +2851,10 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,all.p
     } ## end if (p.type<5)
 
     for (i in 1:m) { ## loop through smooths
-      fr.pval <- object$smooth[[i]]$fr.pval  ## should full rank frequentist p-value be used?
-      if (is.null(fr.pval)) fr.pval <- FALSE 
 
       start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
 
-      if (p.type==5||fr.pval||object$smooth[[i]]$null.space.dim==0) { ## use frequentist cov matrix 
+      if (p.type==5) { ## use frequentist cov matrix 
         V <- object$Ve[start:stop,start:stop,drop=FALSE] 
       } else V <- object$Vp[start:stop,start:stop,drop=FALSE] ## Bayesian
       
@@ -2857,26 +2870,18 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,all.p
         V <- pinv(V,M) # get rank M pseudoinverse of V
         chi.sq[i] <- t(p)%*%V%*%p
         df[i] <- attr(V, "rank")
-      } else { ## Inverted Nychka interval statistics
+      } else { ## Better founded alternatives...
         Xt <- X[,start:stop,drop=FALSE] 
-        if (p.type < 0) {
-          res <- smoothTest(p,Xt,V)
-          df[i] <- edf[i] ## not really used
-          chi.sq[i] <- res$stat
-          s.pv[i] <- res$pval
-        } else {
-         
+        if (object$smooth[[i]]$null.space.dim==0) { ## random effect or fully penalized term
+          res <- reTest(object,i)
+        } else { ## Inverted Nychka interval statistics
           df[i] <- min(ncol(Xt),edf1[i])
-         ## if (df[i]<1) df[i] <- 1 ## line not needed - testStat behaviour as if this true anyway
-          if (fr.pval) df[i] <- ncol(Xt) ## full rank frequentist          
-
           if (est.disp) rdf <- residual.df else rdf <- -1
           res <- testStat(p,Xt,V,df[i],type=p.type,res.df = rdf)
-          df[i] <- res$rank
-          chi.sq[i] <- res$stat
-          s.pv[i] <- res$pval 
-          if (fr.pval&&!all.p)  s.pv[i] <- NA
-        }   
+        }
+        df[i] <- res$rank
+        chi.sq[i] <- res$stat
+        s.pv[i] <- res$pval 
       }
       names(chi.sq)[i]<- object$smooth[[i]]$label
       
