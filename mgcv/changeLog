@@ -6,14 +6,24 @@ ISSUES:
 * currently exporting F and R in gam object. Are both/either needed?
   -- magic now exports R - doc?
 
+* Probably, the un-penalized inverse cov matrix in the re test stat
+  should be based on the dist including the r.e.s left out
 
 * bam fails with single fixed sp and fREML.
 
 1.7-19
 
+** summary.gam and anova.gam now use an improved p-value computation for 
+  smooth terms with a zero dimensional penalty null space (including 
+  random effects). The new scheme has been tested by full replication 
+  of the simulation study in Scheipl (2008,CSDA) to compare it to the best 
+  method there-in. In these tests it is at least as powerful as the best 
+  method given there. The only deviation from the correct null was found 
+  at small sample size (50) with many random effects, where the p-values 
+  were slightly too low. 
+
 * testStat bug fix. qr was called with default arguments, which includes 
-  tol=1e-7! This could occasionally lead to substantial underestimation of 
-  p-values, at least for factors and random effects.
+  tol=1e-7! 
 
 * By default summary.gam and anova.gam no longer report p-values for "re" 
   terms, since these only work well in rather simple cases without random 

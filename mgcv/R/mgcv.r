@@ -2511,7 +2511,7 @@ simf <- function(x,a,df,nq=50) {
 }
 
 
-recov <- function(b,re=rep(0,0)) {
+recov <- function(b,re=rep(0,0),m=0) {
 ## b is a fitted gam object. re is an array of indices of 
 ## smooth terms to be treated as fully random....
 ## Returns frequentist Cov matrix based on the given
@@ -2519,8 +2519,26 @@ recov <- function(b,re=rep(0,0)) {
 ## corresponding to that implied by treating terms indexed
 ## by re as random effects... (would be usual frequentist 
 ## if nothing treated as random)
+## if m>0, then this is indexes a term, not in re, whose
+## unpenalized cov matrix is required, with the elements of re
+## dropped.
   if (!inherits(b,"gam")) stop("recov works with fitted gam objects only")
-  if (length(re)<1) return(b$Ve) ## X'WX
+  if (length(re)<1) {  
+    er <- eigen(crossprod(b$R))
+    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+    er$values[!ii] <- 0
+    er$values[ii] <- 1/sqrt(er$values[ii])
+    ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
+    Vu <- crossprod(er$values*t(er$vector))[ind,ind] 
+    er <- eigen(Vu,symmetric=TRUE)
+    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+    er$values[!ii] <- 0
+    er$values[ii] <- 1/sqrt(er$values[ii])
+    Rm <- er$values*t(er$vectors)
+    return(list(Ve=b$Ve,Rm=Rm)) 
+  }
+
+  if (m%in%re) stop("m can't be in re")
   ## partition R into R1 ("fixed") and R2 ("random"), with S1 and S2
   p <- length(b$coefficients)
   rind <- rep(FALSE,p) ## random coefficient index
@@ -2536,9 +2554,20 @@ recov <- function(b,re=rep(0,0)) {
   ## split R...
   R1 <- b$R[,!rind]  ## fixed effect columns
   R2 <- b$R[,rind]   ## random effect columns
-  ## seit ihr ich dich kennen, hab ich ein probleme,
-  ## du redest ohne punkt und komma...
-
+  ## seitdem ich dich kennen, hab ich ein probleme,
+  if (m>0) {
+    er <- eigen(crossprod(R1),symmetric=TRUE)
+    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+    er$values[!ii] <- 0
+    er$values[ii] <- 1/sqrt(er$values[ii])
+    ind <- map[b$smooth[[m]]$first:b$smooth[[m]]$last]
+    Vu <- crossprod(er$values*t(er$vector))[ind,ind]
+    er <- eigen(Vu,symmetric=TRUE)
+    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+    er$values[!ii] <- 0
+    er$values[ii] <- 1/sqrt(er$values[ii])
+    Rm <- er$values*t(er$vectors)
+  } else Rm <- NULL
   ## assemble S1 and S2
   S1 <- matrix(0,p1,p1);S2 <- matrix(0,p2,p2)
   if (is.null(b$full.sp)) sp <- b$sp else sp <- b$full.sp
@@ -2570,10 +2599,10 @@ recov <- function(b,re=rep(0,0)) {
   ## choleski of cov matrix....
   L <- chol(diag(p)+R2%*%S2%*%t(R2)) ## L'L = I + R2 S2^- R2'
  
-  Ve <- crossprod(L%*%b$R%*%b$Vp)/b$sig2 ## Frequentist cov matrix
- 
+  list(Ve= crossprod(L%*%b$R%*%b$Vp)/b$sig2, ## Frequentist cov matrix
+       Rm=Rm)
  # mapi <- (1:p)[!rind] ## indexes mapi[j] is index of total coef vector to which jth row/col of Vb/e relates
-
+  
 } ## end of recov
 
 
@@ -2585,10 +2614,28 @@ reTest <- function(b,m) {
   rind <- rep(0,0)
   for (i in 1:length(b$smooth)) if (!is.null(b$smooth[[i]]$random)&&b$smooth[[i]]$random&&i!=m) rind <- c(rind,i)
   ## get frequentist cov matrix of effects treating smooth terms in rind as random
-  Ve <- recov(b,rind) 
+  rc <- mgcv:::recov(b,rind,m) 
+  Ve <- rc$Ve
   ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
   B <- mroot(Ve[ind,ind]) ## BB'=Ve
-  Rm <- b$R[,ind]
+  if (FALSE) { 
+    ## (R'R)^- is unpenalized cov matrix
+    ev <- eigen(crossprod(b$R),symmetric=TRUE)
+    ii <- ev$values>max(ev$values)*.Machine$double.eps^.8
+    ev$values[ii] <- 1/ev$values[ii]
+    ev$values[!ii] <- 0
+    Vu <- crossprod(sqrt(ev$values)*t(ev$vectors))
+    ev <- eigen(Vu[ind,ind])
+    ii <- ev$values>max(ev$values)*.Machine$double.eps^.8
+    ev$values[ii] <- 1/ev$values[ii]
+    ev$values[!ii] <- 0
+    Rm <- sqrt(ev$values)*t(ev$vectors) ## Rm'Rm is inv unp cov
+  } else { 
+    #Rm <- b$R[,ind]
+    #Rm <- t(mroot(b$smooth[[m]]$S[[1]])) ## CHECK: te etc.!!
+    #Rm <- t(mroot(b$Ve[ind,ind]/b$sig2))
+    Rm <- rc$Rm
+  }
   b.hat <- coef(b)[ind]
   d <- Rm%*%b.hat
   stat <- sum(d^2)/b$sig2
@@ -2597,8 +2644,8 @@ reTest <- function(b,m) {
   rank <- sum(ev>max(ev)*.Machine$double.eps^.8)
   
   if (b$scale.estimated) {
-    pval <- simf(stat,ev,b$df.residual)
-  } else { pval <- liu2(stat,ev) }
+    pval <- mgcv:::simf(stat,ev,b$df.residual)
+  } else { pval <- mgcv:::liu2(stat,ev) }
   list(stat=stat,pval=pval,rank=rank)
 } ## end reTest
 

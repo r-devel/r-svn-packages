@@ -1019,8 +1019,14 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
     }
   } ## end of large data set handling
   ##if (object$bs.dim[1]<0) object$bs.dim <- 10*3^(object$dim-1) # auto-initialize basis dimension
+
   object$p.order[is.na(object$p.order)] <- 0 ## auto-initialize
-  M<-null.space.dimension(object$dim,object$p.order) 
+
+  M <- null.space.dimension(object$dim,object$p.order[1]) 
+
+  if (length(object$p.order)>1&&object$p.order[2]==0) object$drop.null <- M else 
+  object$drop.null <- 0
+
   def.k <- c(8,27,100) ## default penalty range space dimension for different dimensions 
   dd <- min(object$dim,length(def.k))
   if (object$bs.dim[1]<0) object$bs.dim <- M+def.k[dd] ##10*3^(object$dim-1) # auto-initialize basis dimension
@@ -1049,12 +1055,7 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   { object$S[[1]]<-matrix(oo$S,k,k)         # penalty matrix
     object$S[[1]]<-(object$S[[1]]+t(object$S[[1]]))/2 # ensure exact symmetry
     if (!is.null(shrink)) # then add shrinkage term to penalty 
-    { ## pre- 1.5 code the identity term could dominate the small eigenvales
-      ## and really mess up the penalty...
-      ## norm <- mean(object$S[[1]]^2)^0.5
-      ## object$S[[1]] <- object$S[[1]] + diag(k)*norm*abs(shrink)
-      
-      ## Modify the penalty by increasing the penalty on the 
+    { ## Modify the penalty by increasing the penalty on the 
       ## unpenalized space from zero... 
       es <- eigen(object$S[[1]],symmetric=TRUE)
       ## now add a penalty on the penalty null space
@@ -1073,7 +1074,24 @@ smooth.construct.tp.smooth.spec<-function(object,data,knots)
   if (!is.null(shrink)) M <- 0  ## null space now rank zero
   object$rank <- k - M                           # penalty rank
   object$null.space.dim <- M
-
+  if (object$drop.null>0) {
+    ind <- 1:(k-M)
+    if (FALSE) { ## nat param version
+      np <- nat.param(object$X,object$S[[1]],rank=k-M,type=0)
+      object$P <- np$P
+      object$S[[1]] <- diag(np$D) 
+      object$X <- np$X[,ind]
+    } else { ## original param
+      object$S[[1]] <- object$S[[1]][ind,ind]
+      object$X <- object$X[,ind]
+      object$cmX <- colMeans(object$X)
+      object$X <- sweep(object$X,2,object$cmX)
+    }
+    object$null.space.dim <- 0
+    object$df <- object$df - M
+    object$bs.dim <- object$bs.dim -M
+    object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix
+  }
   class(object) <- "tprs.smooth"
   object
 }
@@ -1101,14 +1119,24 @@ Predict.matrix.tprs.smooth<-function(object,data)
 
   by<-0;by.exists<-FALSE
   ## following used to be object$null.space.dim, but this is now *post constraint*
-  M <- null.space.dimension(object$dim,object$p.order)
+  M <- null.space.dimension(object$dim,object$p.order[1])
+  
+  ind <- 1:object$bs.dim
+  if (object$drop.null>0) object$bs.dim <- object$bs.dim + M  
 
   X<-matrix(0,n,object$bs.dim)
-  oo<-.C(C_predict_tprs,as.double(x),as.integer(object$dim),as.integer(n),as.integer(object$p.order),
+  oo<-.C(C_predict_tprs,as.double(x),as.integer(object$dim),as.integer(n),as.integer(object$p.order[1]),
       as.integer(object$bs.dim),as.integer(M),as.double(object$Xu),
       as.integer(nrow(object$Xu)),as.double(object$UZ),as.double(by),as.integer(by.exists),X=as.double(X))
   X<-matrix(oo$X,n,object$bs.dim)
-
+  if (object$drop.null>0) {
+    if (FALSE) { ## nat param
+      X <- (X%*%object$P)[,ind] ## drop null space
+    } else { ## original
+      X <- X[,ind]
+      X <- sweep(X,2,object$cmX)
+    }
+  }
   X
 }
 
