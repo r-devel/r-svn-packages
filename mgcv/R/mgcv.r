@@ -2522,19 +2522,43 @@ recov <- function(b,re=rep(0,0),m=0) {
 ## if m>0, then this is indexes a term, not in re, whose
 ## unpenalized cov matrix is required, with the elements of re
 ## dropped.
-  if (!inherits(b,"gam")) stop("recov works with fitted gam objects only")
-  if (length(re)<1) {  
-    er <- eigen(crossprod(b$R))
-    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
-    er$values[!ii] <- 0
-    er$values[ii] <- 1/sqrt(er$values[ii])
-    ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
-    Vu <- crossprod(er$values*t(er$vector))[ind,ind] 
-    er <- eigen(Vu,symmetric=TRUE)
-    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
-    er$values[!ii] <- 0
-    er$values[ii] <- 1/sqrt(er$values[ii])
-    Rm <- er$values*t(er$vectors)
+  if (!inherits(b,"gam")) stop("recov works with fitted gam objects only") 
+  if (is.null(b$full.sp)) sp <- b$sp else sp <- b$full.sp
+  llr <- TRUE
+  if (length(re)<1) { 
+    if (m>0) {
+    if (llr) { ## llr
+      ## annoyingly, need total penalty  
+      np <- length(coef(b))
+      k <- 1;S1 <- matrix(0,np,np)
+      for (i in 1:length(b$smooth)) { 
+        ns <- length(b$smooth[[i]]$S)
+        ind <- b$smooth[[i]]$first:b$smooth[[i]]$last
+        if (ns>0) for (j in 1:ns) {
+          S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
+        }
+        k <- k + 1
+      }
+      LRB <- rbind(b$R,t(mroot(S1)))
+      ii <- b$smooth[[m]]$first:b$smooth[[m]]$last 
+      ## ii is cols of LRB related to smooth m, which need 
+      ## to be moved to the end...
+      LRB <- cbind(LRB[,-ii],LRB[,ii])
+      Rm <- qr.R(qr(LRB,tol=0,LAPACK=FALSE))[ii,ii] ## unpivoted QR
+    } else {
+      er <- eigen(crossprod(b$R))
+      ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+      er$values[!ii] <- 0
+      er$values[ii] <- 1/sqrt(er$values[ii])
+      ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
+      Vu <- crossprod(er$values*t(er$vector))[ind,ind] 
+      er <- eigen(Vu,symmetric=TRUE)
+      ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+      er$values[!ii] <- 0
+      er$values[ii] <- 1/sqrt(er$values[ii])
+      Rm <- er$values*t(er$vectors)
+    }
+    } else Rm <- NULL
     return(list(Ve=b$Ve,Rm=Rm)) 
   }
 
@@ -2558,7 +2582,7 @@ recov <- function(b,re=rep(0,0),m=0) {
 
   ## assemble S1 and S2
   S1 <- matrix(0,p1,p1);S2 <- matrix(0,p2,p2)
-  if (is.null(b$full.sp)) sp <- b$sp else sp <- b$full.sp
+ 
   k <- 1
   for (i in 1:length(b$smooth)) { 
     ns <- length(b$smooth[[i]]$S)
@@ -2587,20 +2611,29 @@ recov <- function(b,re=rep(0,0),m=0) {
   ## choleski of cov matrix....
   L <- chol(diag(p)+R2%*%S2%*%t(R2)) ## L'L = I + R2 S2^- R2'
  
-  ## now we need the squre root of the unpenalized
+  ## now we need the square root of the unpenalized
   ## cov matrix for m
   if (m>0) {
-    er <- eigen(crossprod(L%*%R1),symmetric=TRUE)
-    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
-    er$values[!ii] <- 0
-    er$values[ii] <- 1/sqrt(er$values[ii])
-    ind <- map[b$smooth[[m]]$first:b$smooth[[m]]$last]
-    Vu <- crossprod(er$values*t(er$vector))[ind,ind]
-    er <- eigen(Vu,symmetric=TRUE)
-    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
-    er$values[!ii] <- 0
-    er$values[ii] <- 1/sqrt(er$values[ii])
-    Rm <- er$values*t(er$vectors)
+    if (llr) { ## llr version
+      LRB <- rbind(L%*%R1,t(mroot(S1)))
+      ii <- map[b$smooth[[m]]$first:b$smooth[[m]]$last] 
+      ## ii is cols of LRB related to smooth m, which need 
+      ## to be moved to the end...
+      LRB <- cbind(LRB[,-ii],LRB[,ii])
+      Rm <- qr.R(qr(LRB,tol=0,LAPACK=FALSE))[ii,ii] ## unpivoted QR
+    } else { ## original inverse unpenalized cov version
+      er <- eigen(crossprod(L%*%R1),symmetric=TRUE)
+      ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+      er$values[!ii] <- 0
+      er$values[ii] <- 1/sqrt(er$values[ii])
+      ind <- map[b$smooth[[m]]$first:b$smooth[[m]]$last]
+      Vu <- crossprod(er$values*t(er$vector))[ind,ind]
+      er <- eigen(Vu,symmetric=TRUE)
+      ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+      er$values[!ii] <- 0
+      er$values[ii] <- 1/sqrt(er$values[ii])
+      Rm <- er$values*t(er$vectors)
+    }
   } else Rm <- NULL
 
   list(Ve= crossprod(L%*%b$R%*%b$Vp)/b$sig2, ## Frequentist cov matrix
