@@ -2555,19 +2555,7 @@ recov <- function(b,re=rep(0,0),m=0) {
   R1 <- b$R[,!rind]  ## fixed effect columns
   R2 <- b$R[,rind]   ## random effect columns
   ## seitdem ich dich kennen, hab ich ein probleme,
-  if (m>0) {
-    er <- eigen(crossprod(R1),symmetric=TRUE)
-    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
-    er$values[!ii] <- 0
-    er$values[ii] <- 1/sqrt(er$values[ii])
-    ind <- map[b$smooth[[m]]$first:b$smooth[[m]]$last]
-    Vu <- crossprod(er$values*t(er$vector))[ind,ind]
-    er <- eigen(Vu,symmetric=TRUE)
-    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
-    er$values[!ii] <- 0
-    er$values[ii] <- 1/sqrt(er$values[ii])
-    Rm <- er$values*t(er$vectors)
-  } else Rm <- NULL
+
   ## assemble S1 and S2
   S1 <- matrix(0,p1,p1);S2 <- matrix(0,p2,p2)
   if (is.null(b$full.sp)) sp <- b$sp else sp <- b$full.sp
@@ -2599,6 +2587,22 @@ recov <- function(b,re=rep(0,0),m=0) {
   ## choleski of cov matrix....
   L <- chol(diag(p)+R2%*%S2%*%t(R2)) ## L'L = I + R2 S2^- R2'
  
+  ## now we need the squre root of the unpenalized
+  ## cov matrix for m
+  if (m>0) {
+    er <- eigen(crossprod(L%*%R1),symmetric=TRUE)
+    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+    er$values[!ii] <- 0
+    er$values[ii] <- 1/sqrt(er$values[ii])
+    ind <- map[b$smooth[[m]]$first:b$smooth[[m]]$last]
+    Vu <- crossprod(er$values*t(er$vector))[ind,ind]
+    er <- eigen(Vu,symmetric=TRUE)
+    ii <- er$values>max(er$values)*.Machine$double.eps^0.8
+    er$values[!ii] <- 0
+    er$values[ii] <- 1/sqrt(er$values[ii])
+    Rm <- er$values*t(er$vectors)
+  } else Rm <- NULL
+
   list(Ve= crossprod(L%*%b$R%*%b$Vp)/b$sig2, ## Frequentist cov matrix
        Rm=Rm)
  # mapi <- (1:p)[!rind] ## indexes mapi[j] is index of total coef vector to which jth row/col of Vb/e relates
