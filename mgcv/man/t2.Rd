@@ -5,8 +5,8 @@
 \description{ Alternative to \code{\link{te}} for defining tensor product smooths
 in a \code{\link{gam}} formula. Results in a construction in which the penalties are 
 non-overlapping multiples of identity matrices (with some rows and columns zeroed). 
-The construction is analogous to Chong Gu's (2002) Smoothing Spline ANOVA, but using 
-low rank penalized regression spline marginals. The main advantage of this construction 
+The construction, which is due to Fabian Scheipl, is analogous to Smoothing Spline ANOVA 
+(Gu, 2002), but using low rank penalized regression spline marginals. The main advantage of this construction 
 is that it is useable with \code{gamm4} from package \code{gamm4}.
 }
 
