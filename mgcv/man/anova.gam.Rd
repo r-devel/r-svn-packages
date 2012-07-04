@@ -68,6 +68,10 @@ which is in fact an object returned from \code{\link{summary.gam}}.
 
 }
 
+\references{
+
+Wood, S.N. (2012) On p-values for smooth componentes of an extended generalized additive model. in press Biometrika
+}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org} with substantial
 improvements by Henric Nilsson.}
