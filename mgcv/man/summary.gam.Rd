@@ -7,7 +7,7 @@
 summaries from it. (See \code{\link{sink}} to divert output to a file.)
 }
 \usage{
-\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, p.type = 0,all.p, ...)
+\method{summary}{gam}(object, dispersion=NULL, freq=FALSE, p.type = 0, ...)
 
 \method{print}{summary.gam}(x,digits = max(3, getOption("digits") - 3), 
                   signif.stars = getOption("show.signif.stars"),...)
@@ -29,9 +29,6 @@ the frequentist covariance matrix of the parameters is used instead. }
 distribution determined by the un-rounded edf of the term. 1 uses upwardly biased rounding of the edf and -1
 uses a version of the test statistic with a null distribution that has to be simulated. 5 is the approximation 
 in Wood (2006). Other options are poor, generate a warning, and are only of research interest. See details.}
-
-\item{all.p}{by default no attempt is made to find p-values for random effects (or other 
-smooths with \code{fr.pval} field set to \code{TRUE}). Set to \code{TRUE} to change this.}
 
 \item{digits}{controls number of digits printed in output.}
 

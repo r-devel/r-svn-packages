@@ -3,6 +3,11 @@
 
 ISSUES:
 
+* gamm and gamm4 gam objects are not compatible with summary at present.
+  No R returned, and anyway what happens about random effects not
+  supplied via s(...,"re")????? Should be o.k. to compute R of r.e. weighted
+  X?
+
 * Should handle old versions of "cr" basis.
 
 * currently exporting F and R in gam object. Are both/either needed?
@@ -17,9 +22,7 @@ ISSUES:
   random effects). The new scheme has been tested by full replication 
   of the simulation study in Scheipl (2008,CSDA) to compare it to the best 
   method there-in. In these tests it is at least as powerful as the best 
-  method given there. The only deviation from the correct null was found 
-  at small sample size (50) with many random effects, where the p-values 
-  were slightly too low. 
+  method given there. 
 
 * testStat bug fix. qr was called with default arguments, which includes 
   tol=1e-7! 

@@ -2712,7 +2712,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   k <- max(0,floor(rank)) 
   nu <- abs(rank - k)     ## fractional part of supplied edf
   if (type < -.5) { ## Crude modification of Cox and Koh
-    res <- smoothTest(p,Xt,V)
+    res <- smoothTest(p,X,V)
     res$rank <- rank
     return(res)
   } else  if (type==1) { ## round up is more than .05 above lower
@@ -3038,7 +3038,7 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
 }
 
 
-anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0,all.p=FALSE)
+anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,p.type=0)
 # improved by Henric Nilsson
 {   # adapted from anova.glm: R stats package
     dotargs <- list(...)
@@ -3057,7 +3057,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,
             test = test))
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
-    sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type,all.p=all.p)
+    sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type)
     class(sg) <- "anova.gam"
     sg
 }

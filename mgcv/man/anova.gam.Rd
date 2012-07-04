@@ -12,7 +12,7 @@ to zero. See details.
 }
 \usage{
 \method{anova}{gam}(object, ..., dispersion = NULL, test = NULL,
-                    freq = FALSE,p.type=0,all.p=FALSE)
+                    freq = FALSE,p.type=0)
 \method{print}{anova.gam}(x, digits = max(3, getOption("digits") - 3),...)
 }
 %- maybe also `usage' for other objects documented here.
@@ -26,8 +26,6 @@ to zero. See details.
 p-values. See \code{\link{summary.gam}} for details.}
 \item{p.type}{selects exact test statistic to use for single smooth term p-values. See
  \code{\link{summary.gam}} for details.}
-\item{all.p}{by default no attempt is made to find p-values for random effects (or other 
-smooths with \code{fr.pval} field set to \code{TRUE}). Set to \code{TRUE} to change this.}
 \item{digits}{number of digits to use when printing output.}
 }
 \details{ If more than one fitted model is provided than \code{anova.glm} is
