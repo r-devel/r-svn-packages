@@ -24,6 +24,11 @@ ISSUES:
   method there-in. In these tests it is at least as powerful as the best 
   method given there. 
 
+* fixDependence modified. It was using an algorithm that assumed that the 
+  matrices tested were of full rank, but gam.side could call it with 
+  matrices violating this assumption. Led to strange results with 
+  nested terms.
+
 * print.gam modified to print effective degrees of freedom more prettily,
 
 * testStat bug fix. qr was called with default arguments, which includes 

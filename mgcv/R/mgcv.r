@@ -233,7 +233,7 @@ interpret.gam <- function (gf)
 }
 
 
-fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0)
+fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0,strict=FALSE)
 # model matrix X2 may be linearly dependent on X1. This 
 # routine finds which columns of X2 should be zeroed to 
 # fix this. If rank.def>0 then it is taken as the known degree 
@@ -241,17 +241,50 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0)
 { qr1 <- qr(X1,LAPACK=TRUE)
   R11 <- abs(qr.R(qr1)[1,1])
   r<-ncol(X1);n<-nrow(X1)
-  QtX2 <- qr.qty(qr1,X2)[(r+1):n,] # Q'X2
-  qr2 <- qr(QtX2,LAPACK=TRUE)
-  R <- qr.R(qr2)
-  # now final diagonal block of R may be zero, indicating rank 
-  # deficiency.
-  r0 <- r <- nrow(R)
-  if (rank.def > 0 && rank.def <= nrow(R)) r0 <- r - rank.def else ## degree of rank def known
-    while (mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
-  r0 <- r0 + 1
-  if (r0>r) return(NULL) else
-  qr2$pivot[r0:r] # the columns of X2 to zero in order to get independence
+  if (strict) { ## only delete columns of X2 individually dependent on X1
+    ## Project columns of X2 into space of X1 and look at difference
+    ## to orignal X2 to check for deficiency...  
+    QtX2 <- qr.qty(qr1,X2)
+    QtX2[-(1:r),] <- 0
+    mdiff <- colMeans(abs(X2 - qr.qy(qr1,QtX2)))
+    if (rank.def>0) ind <- (1:ncol(X2))[rank(mdiff) <= rank.def] else
+    ind <- (1:ncol(X2))[mdiff < R11*tol]
+    if (length(ind)<1) ind <- NULL
+  } else { ## make X2 full rank given X1
+    QtX2 <- qr.qty(qr1,X2)[(r+1):n,] # Q'X2
+    qr2 <- qr(QtX2,LAPACK=TRUE)
+    R <- qr.R(qr2)
+    # now final diagonal block of R may be zero, indicating rank 
+    # deficiency.
+    r0 <- r <- nrow(R)
+    if (rank.def > 0 && rank.def <= nrow(R)) r0 <- r - rank.def else ## degree of rank def known
+      while (mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
+    r0 <- r0 + 1
+    if (r0>r) return(NULL) else
+    ind <- qr2$pivot[r0:r] # the columns of X2 to zero in order to get independence
+    ## now we may need to refine the selection, confirming that all the 
+    ## dropped columns are strictly dependent on X1
+    ok <- FALSE 
+    if (!ok&&rank.def==0) {
+      Xd <- X2[,ind] ## the deleted set
+      QtX2 <- qr.qty(qr1,Xd)[(ncol(X1)+1):n,] # Q'Xd
+      qr2 <- qr(QtX2,LAPACK=TRUE)
+      R <- qr.R(qr2)
+      # now final diagonal block of R should be zero, indicating rank 
+      # deficiency.
+      r0 <- r <- nrow(R)
+      while (r0>0&&mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
+      r0 <- r0 + 1
+      ## so if r0 gets down to 1 then all elements of Xd really are dependent 
+      ## on X1, and we are done, otherwise some elements were dependent on X2
+      ## and we are not...
+      if (r0==1) ok <- TRUE else { ## delete some not dependent 
+        ind2 <- qr2$pivot[r0:r] ## still dependent
+        ind <- ind[ind2] ## retain only dependent
+      }
+    }
+  }
+  ind
 }
 
 
