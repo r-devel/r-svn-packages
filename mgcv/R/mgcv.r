@@ -279,6 +279,8 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
 # there is a constant (or equivalent) in the model. If there is, then this needs 
 # to be included when working out side constraints, otherwise dependencies can be 
 # missed. 
+# Note that with.pen is quite extreme, since you then ptetty much only pick
+# up dependencies in the null spaces
 { m <- length(sm)
   if (m==0) return(sm)
   v.names<-array("",0);maxDim<-1
