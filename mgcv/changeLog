@@ -24,6 +24,9 @@ ISSUES:
   method there-in. In these tests it is at least as powerful as the best 
   method given there. 
 
+** gam.side has been modified to only drop terms which are un-identifiable 
+   even under penalization, by default. 
+
 * fixDependence modified. It was using an algorithm that assumed that the 
   matrices tested were of full rank, but gam.side could call it with 
   matrices violating this assumption. Led to strange results with 

@@ -3079,6 +3079,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       for (i in 1:length(sml)) {
         sml[[i]]$S[[M+1]] <- Sf
         sml[[i]]$rank[M+1] <- sum(ind)
+        sml[[i]]$null.space.dim <- 0
       }
     }
   }

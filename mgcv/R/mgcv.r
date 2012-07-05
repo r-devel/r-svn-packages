@@ -262,27 +262,6 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0,strict=FAL
     r0 <- r0 + 1
     if (r0>r) return(NULL) else
     ind <- qr2$pivot[r0:r] # the columns of X2 to zero in order to get independence
-    ## now we may need to refine the selection, confirming that all the 
-    ## dropped columns are strictly dependent on X1
-    ok <- FALSE 
-    if (!ok&&rank.def==0) {
-      Xd <- X2[,ind] ## the deleted set
-      QtX2 <- qr.qty(qr1,Xd)[(ncol(X1)+1):n,] # Q'Xd
-      qr2 <- qr(QtX2,LAPACK=TRUE)
-      R <- qr.R(qr2)
-      # now final diagonal block of R should be zero, indicating rank 
-      # deficiency.
-      r0 <- r <- nrow(R)
-      while (r0>0&&mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
-      r0 <- r0 + 1
-      ## so if r0 gets down to 1 then all elements of Xd really are dependent 
-      ## on X1, and we are done, otherwise some elements were dependent on X2
-      ## and we are not...
-      if (r0==1) ok <- TRUE else { ## delete some not dependent 
-        ind2 <- qr2$pivot[r0:r] ## still dependent
-        ind <- ind[ind2] ## retain only dependent
-      }
-    }
   }
   ind
 }
@@ -295,24 +274,29 @@ augment.smX <- function(sm,nobs,np) {
   if (ns==0) { ## nothing to do
     return(rbind(sm$X),matrix(0,np,np))
   }
-  St <- sm$S[[1]]    ## total scaled penalty
-  St <- St/sqrt(sum(St^2))
-  if (ns>1) for (i in 2:ns) St <- St +  sm$S[[i]]/sqrt(sum(sm$S[[i]]^2))
+  ind <- colMeans(abs(sm$S[[1]]))!=0
+  sqrmaX  <- mean(abs(sm$X[,ind]))^2
+  alpha <- sqrmaX/mean(abs(sm$S[[1]][ind,ind]))
+  St <- sm$S[[1]]*alpha
+  if (ns>1) for (i in 2:ns) { 
+    ind <- colMeans(abs(sm$S[[i]]))!=0
+    alpha <- sqrmaX/mean(abs(sm$S[[i]][ind,ind]))
+    St <- St +  sm$S[[i]]*alpha
+  }
   rS <- mroot(St,rank=ncol(St)) ## get sqrt of penalty
-  rS <- rS/sqrt(mean(rS^2))
-  X <- rbind(sm$X/sqrt(mean(sm$X^2)),matrix(0,np,ncol(sm$X))) ## create augmented model matrix
+  X <- rbind(sm$X,matrix(0,np,ncol(sm$X))) ## create augmented model matrix
   X[nobs+sm$p.ind,] <- t(rS) ## add in 
   X ## scaled augmented model matrix
 }
 
-gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
+gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=TRUE)
 # works through a list of smooths, sm, aiming to identify nested or partially
 # nested terms, and impose identifiability constraints on them.
 # Xp is the parametric model matrix. It is needed in order to check whether
 # there is a constant (or equivalent) in the model. If there is, then this needs 
 # to be included when working out side constraints, otherwise dependencies can be 
 # missed. 
-# Note that with.pen is quite extreme, since you then ptetty much only pick
+# Note that with.pen is quite extreme, since you then pretty much only pick
 # up dependencies in the null spaces
 { m <- length(sm)
   if (m==0) return(sm)
