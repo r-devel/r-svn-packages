@@ -24,6 +24,8 @@ ISSUES:
   method there-in. In these tests it is at least as powerful as the best 
   method given there. 
 
+* print.gam modified to print effective degrees of freedom more prettily,
+
 * testStat bug fix. qr was called with default arguments, which includes 
   tol=1e-7! 
 

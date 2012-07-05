@@ -5,7 +5,9 @@
 \title{Approximate hypothesis tests related to  GAM fits}
 \description{ Performs hypothesis tests relating to one or more fitted
 \code{gam} objects. For a single fitted \code{gam} object, Wald tests of
-the significance of each parametric and smooth term are performed. Otherwise
+the significance of each parametric and smooth term are performed, so interpretation 
+is analogous to \code{\link{drop1}} rather than \code{anova.lm} (i.e. it's like type III ANOVA, 
+rather than a sequential type I ANOVA). Otherwise
 the fitted models are compared using an analysis of deviance table: this latter approach 
 should not be use to test the significance of terms which can be penalized 
 to zero. See details.
@@ -79,6 +81,8 @@ p values from anova(a,b) are unreliable, and usually much too low.
 
 Default P-values will usually be wrong for parametric terms penalized using `paraPen': use freq=TRUE
 to obtain better p-values when the penalties are full rank and represent conventional random effects.
+
+For a single model, interpretation is similar to drop1, not anova.lm.
 } 
 
 \seealso{  \code{\link{gam}}, \code{\link{predict.gam}},
