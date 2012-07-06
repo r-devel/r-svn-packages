@@ -2555,14 +2555,15 @@ recov <- function(b,re=rep(0,0),m=0) {
         ind <- b$smooth[[i]]$first:b$smooth[[i]]$last
         if (ns>0) for (j in 1:ns) {
           S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
+          k <- k + 1
         }
-        k <- k + 1
       }
       LRB <- rbind(b$R,t(mroot(S1)))
       ii <- b$smooth[[m]]$first:b$smooth[[m]]$last 
       ## ii is cols of LRB related to smooth m, which need 
       ## to be moved to the end...
       LRB <- cbind(LRB[,-ii],LRB[,ii])
+      ii <- (ncol(LRB)-length(ii)+1):ncol(LRB)
       Rm <- qr.R(qr(LRB,tol=0,LAPACK=FALSE))[ii,ii] ## unpivoted QR
     } else {
       er <- eigen(crossprod(b$R))
@@ -2639,6 +2640,7 @@ recov <- function(b,re=rep(0,0),m=0) {
       ## ii is cols of LRB related to smooth m, which need 
       ## to be moved to the end...
       LRB <- cbind(LRB[,-ii],LRB[,ii])
+      ii <- (ncol(LRB)-length(ii)+1):ncol(LRB) ## need to pick up final block
       Rm <- qr.R(qr(LRB,tol=0,LAPACK=FALSE))[ii,ii] ## unpivoted QR
     } else { ## original inverse unpenalized cov version
       er <- eigen(crossprod(L%*%R1),symmetric=TRUE)
