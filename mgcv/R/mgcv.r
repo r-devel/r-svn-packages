@@ -1,8 +1,6 @@
 ##  R routines for the package mgcv (c) Simon Wood 2000-2011
 ##  With contributions from Henric Nilsson
 
-
-
 Rrank <- function(R,tol=.Machine$double.eps^.9) {
 ## Finds rank of upper triangular matrix R, by estimating condition
 ## number of upper rank by rank block, and reducing rank until this is 
@@ -289,7 +287,7 @@ augment.smX <- function(sm,nobs,np) {
   X ## scaled augmented model matrix
 }
 
-gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=TRUE)
+gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
 # works through a list of smooths, sm, aiming to identify nested or partially
 # nested terms, and impose identifiability constraints on them.
 # Xp is the parametric model matrix. It is needed in order to check whether

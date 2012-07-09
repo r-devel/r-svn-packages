@@ -732,15 +732,16 @@ smooth2random.tensor.smooth <- function(object,vnames,type=1) {
      
   ## first sort out the re-parameterization...
   sum.S <- object$S[[1]]/mean(abs(object$S[[1]]))
-  null.rank <- ncol(object$margin[[1]]$X)-object$margin[[1]]$rank ## null space rank
+  #null.rank <- ncol(object$margin[[1]]$X)-object$margin[[1]]$rank ## null space rank
   bs.dim <- ncol(object$margin[[1]]$X)
   if (length(object$S)>1) for (l in 2:length(object$S)) { 
     sum.S <- sum.S + object$S[[l]]/mean(abs(object$S[[l]]))
     dfl <- ncol(object$margin[[l]]$X) ## actual df of term (`df' may not be set by constructor)
-    null.rank <- null.rank * (dfl-object$margin[[l]]$rank) 
+    #null.rank <- null.rank * (dfl-object$margin[[l]]$rank) 
     bs.dim <- bs.dim * dfl
   }
-  null.rank <- null.rank - bs.dim + object$df
+  null.rank <- object$null.space.dim
+  #null.rank <- null.rank - bs.dim + object$df
   ##sum.S <- (sum.S+t(sum.S))/2 # ensure symmetry
   ev <- eigen(sum.S,symmetric=TRUE)
  
