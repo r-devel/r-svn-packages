@@ -733,12 +733,12 @@ smooth2random.tensor.smooth <- function(object,vnames,type=1) {
   ## first sort out the re-parameterization...
   sum.S <- object$S[[1]]/mean(abs(object$S[[1]]))
   #null.rank <- ncol(object$margin[[1]]$X)-object$margin[[1]]$rank ## null space rank
-  bs.dim <- ncol(object$margin[[1]]$X)
+  # bs.dim <- ncol(object$margin[[1]]$X)
   if (length(object$S)>1) for (l in 2:length(object$S)) { 
     sum.S <- sum.S + object$S[[l]]/mean(abs(object$S[[l]]))
-    dfl <- ncol(object$margin[[l]]$X) ## actual df of term (`df' may not be set by constructor)
+    #dfl <- ncol(object$margin[[l]]$X) ## actual df of term (`df' may not be set by constructor)
     #null.rank <- null.rank * (dfl-object$margin[[l]]$rank) 
-    bs.dim <- bs.dim * dfl
+    #bs.dim <- bs.dim * dfl
   }
   null.rank <- object$null.space.dim
   #null.rank <- null.rank - bs.dim + object$df
@@ -762,7 +762,7 @@ smooth2random.tensor.smooth <- function(object,vnames,type=1) {
     object$S[[l]] <- (object$S[[l]]+t(object$S[[l]]))/2
   }
   
-  term.name <- new.name("Xr",names(data))
+  term.name <- new.name("Xr",vnames)
   form <- as.formula(paste("~",term.name,"-1",sep=""))
   attr(form,"S") <- object$S   ## this class needs penalty matrices to be supplied
   random <- list(pdTens(form)) ## lme random effect class

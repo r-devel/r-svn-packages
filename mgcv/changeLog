@@ -8,9 +8,6 @@ ISSUES:
   supplied via s(...,"re")????? Should be o.k. to compute R of r.e. weighted
   X?
 
-* bug in gamm with te(x)+te(z)+te(x,z) --- problem may originate in 
-  smooth2random, or be older. nesting test should be added to mgcvTest
-
 * Should handle old versions of "cr" basis.
 
 * currently exporting F and R in gam object. Are both/either needed?
@@ -30,6 +27,9 @@ ISSUES:
 ** gam.side has been modified to only drop terms which are un-identifiable 
    even under penalization, by default. STOP: reversed this: t2 nesting 
    really dumb then.
+
+* Fix of vicious little but in gamm tensor product handling that could have 
+  a te term pick up the wrong model matrix and fail. 
 
 * fixDependence modified. It was using an algorithm that assumed that the 
   matrices tested were of full rank, but gam.side could call it with 
