@@ -10,8 +10,8 @@ The construction, which is due to Fabian Scheipl, is analogous to Smoothing Spli
 is that it is useable with \code{gamm4} from package \code{gamm4}.
 }
 
-\usage{t2(..., k=NA,bs="cr",m=NA,d=NA,by=NA,
-              xt=NULL,id=NULL,sp=NULL,full=FALSE)
+\usage{t2(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,
+               id=NULL,sp=NULL,full=FALSE,ord=NULL)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -76,6 +76,8 @@ range space generates one penalty, but the coulmns of each null space basis are 
 The latter is more parsimonious, but does mean that invariance is only 
 achieved by an arbitrary rescaling of null space basis vectors.}
 
+\item{ord}{an array giving the orders of terms to retain. Here order means number of marginal range spaces
+used in the construction of the component. \code{NULL} to retain everything. }
 }
 
 \details{ Smooths of several covariates can be constructed from tensor products of the bases

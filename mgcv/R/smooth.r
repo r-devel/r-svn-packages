@@ -324,7 +324,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   ret
 } ## end of te
 
-t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FALSE)
+t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FALSE,ord=NULL)
 # function for use in gam formulae to specify a type 2 tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -407,6 +407,15 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
     margin[[i]]<- eval(parse(text=stxt))  # NOTE: fx and by not dealt with here!
     j<-j1+1
   }
+  # check ord argument
+  if (!is.null(ord)) {
+    if (sum(ord%in%0:n.bases)==0) {
+      ord <- NULL
+      warning("ord is wrong. reset to NULL.")
+    }
+    if (sum(ord<0)>0||sum(ord>n.bases)>0) warning("ord contains out of range orders (which will be ignored)")
+  }
+
   # assemble term.label 
  
   full.call<-paste("t2(",term[1],sep="")
@@ -422,7 +431,7 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
   full <- as.logical(full)
   if (is.na(full)) full <- FALSE
   ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,
-            id=id,sp=sp,full=full)
+            id=id,sp=sp,full=full,ord=ord)
   class(ret) <- "t2.smooth.spec" 
   ret
 } ## end of t2
@@ -639,7 +648,7 @@ Predict.matrix.tensor.smooth<-function(object,data)
 ## Type 2 tensor product methods start here - separate identity penalties
 #########################################################################
 
-t2.model.matrix <- function(Xm,rank,full=TRUE) {
+t2.model.matrix <- function(Xm,rank,full=TRUE,ord=NULL) {
 ## Xm is a list of marginal model matrices.
 ## The first rank[i] columns of Xm[[i]] are penalized, 
 ## by a ridge penalty, the remainder are unpenalized. 
@@ -650,8 +659,11 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
 ## the construction. Otherwise there is an element of arbitrariness
 ## in the invariance, as it depends on scaling of the null space 
 ## columns. 
+## ord is the list of term orders to include. NULL indicates all
+## terms are to be retained.
   Zi <- Xm[[1]][,1:rank[1],drop=FALSE] ## range space basis for first margin
   X2 <- list(Zi)
+  order <- 1 ## record order of component (number of range space components)
   lab2 <- "r" ## list of term labels "r" denotes range space
   null.exists <- rank[1] < ncol(Xm[[1]]) ## does null exist for margin 1
   no.null <- FALSE
@@ -664,7 +676,7 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
     }
     X2[[2]] <- Xi ## working model matrix component list
     lab2[2]<- "n" ## "n" is null space
-   
+    order[2] <- 0
   } else no.null <- TRUE ## tensor product will have *no* null space...  
 
   n.m <- length(Xm) ## number of margins
@@ -680,6 +692,7 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
     X1 <- X2 
     if (full) pen1 <- pen2
     lab1 <- lab2 ## labels
+    order1 <- order
     k <- 1
     for (ii in 1:length(X1)) { ## form products with Zi
       if (!full || pen1[ii]) { ## X1[[ii]] is penalized and treated as a whole
@@ -688,12 +701,14 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
         X2[[k]] <- A
         if (full) pen2[k] <- TRUE
         lab2[k] <- paste(lab1[ii],"r",sep="")
+        order[k] <- order1[ii] + 1
         k <- k + 1
       } else { ## X1[[ii]] is un-penalized, columns to be treated separately 
         cnx1 <- colnames(X1[[ii]])
         for (j in 1:ncol(X1[[ii]])) {
           X2[[k]] <- X1[[ii]][,j]*Zi
           lab2[k] <- paste(cnx1[j],"r",sep="")
+          order[k] <- order1[ii] + 1
           pen2[k] <- TRUE
           k <- k + 1
         }
@@ -714,6 +729,7 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
           }
           if (full) colnames(A) <- cnx2
           lab2[k] <- paste(lab1[ii],"n",sep="")
+          order[k] <- order1[ii]
           X2[[k]] <- A;
           if (full) pen2[k] <- FALSE ## if full, you only get to here when pen1[i] FALSE
           k <- k + 1
@@ -721,7 +737,8 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
            cnxi <- colnames(Xi) 
            for (j in 1:ncol(Xi)) {
              X2[[k]] <- X1[[ii]]*Xi[,j]
-             lab2[k] <- paste(lab1[ii],cnxi[j],sep="")
+             lab2[k] <- paste(lab1[ii],cnxi[j],sep="") ## null space labels => order unchanged 
+             order[k] <- order1[ii]
              pen2[k] <- TRUE
              k <- k + 1
           }
@@ -729,10 +746,17 @@ t2.model.matrix <- function(Xm,rank,full=TRUE) {
       }
     } ## finished dealing with null space for this margin
   } ## finished working through margins
-
+  
   rm(X1)
   ## X2 now contains a sequence of model matrices, all but the last
   ## should have an associated ridge penalty. 
+  if (!is.null(ord)) { ## may need to drop some terms
+    ii <- order %in% ord ## terms to retain
+    X2 <- X2[ii]
+    lab2 <- lab2[ii]
+    if (sum(ord==0)==0) no.null <- TRUE ## null space dropped
+  }
+
   xc <- unlist(lapply(X2,ncol)) ## number of columns of sub-matrix
   X <- matrix(unlist(X2),n,sum(xc))
   if (!no.null) { 
@@ -791,7 +815,7 @@ smooth.construct.t2.smooth.spec <- function(object,data,knots)
 
   ## Create the model matrix...
 
-  X <- t2.model.matrix(Xm,r,full=object$full)
+  X <- t2.model.matrix(Xm,r,full=object$full,ord=object$ord)
 
   sub.cols <- attr(X,"sub.cols") ## size (cols) of penalized sub blocks
 
@@ -864,7 +888,7 @@ Predict.matrix.t2.smooth <- function(object,data)
     X[[i]]<-Predict.matrix(object$margin[[i]],dat)%*%object$P[[i]]
     rank[i] <-  object$margin[[i]]$rank
   }
-  T <- t2.model.matrix(X,rank,full=object$full)
+  T <- t2.model.matrix(X,rank,full=object$full,ord=object$ord)
   T
 } ## end of Predict.matrix.t2.smooth
 
