@@ -1,31 +1,8 @@
-# All this catalog "translates" are quotation characters.
-# The msgids must be ASCII and therefore cannot contain real quotation
-# characters, only substitutes like grave accent (0x60), apostrophe (0x27)
-# and double quote (0x22). These substitutes look strange; see
-# http://www.cl.cam.ac.uk/~mgk25/ucs/quotes.html
-#
-# This catalog translates grave accent (0x60) and apostrophe (0x27) to
-# left single quotation mark (U+2018) and right single quotation mark (U+2019).
-# It also translates pairs of apostrophe (0x27) to
-# left single quotation mark (U+2018) and right single quotation mark (U+2019)
-# and pairs of quotation mark (0x22) to
-# left double quotation mark (U+201C) and right double quotation mark (U+201D).
-#
-# When output to an UTF-8 terminal, the quotation characters appear perfectly.
-# When output to an ISO-8859-1 terminal, the single quotation marks are
-# transliterated to apostrophes (by iconv in glibc 2.2 or newer) or to
-# grave/acute accent (by libiconv), and the double quotation marks are
-# transliterated to 0x22.
-# When output to an ASCII terminal, the single quotation marks are
-# transliterated to apostrophes, and the double quotation marks are
-# transliterated to 0x22.
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.16.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-27 09:22\n"
-"PO-Revision-Date: 2012-06-27 09:22\n"
+"Project-Id-Version: boot 1.3-5\n"
+"POT-Creation-Date: 2012-07-14 16:30\n"
+"PO-Revision-Date: 2012-07-14 16:30\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -38,7 +15,8 @@ msgid ""
 "'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so "
 "ignored"
 msgstr ""
-"‘simple=TRUE’ is only valid for 'sim=“ordinary”, stype=“i”, n=0, so ignored"
+"‘simple=TRUE’ is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so "
+"ignored"
 
 msgid "no data in call to boot"
 msgstr "no data in call to boot"
@@ -53,7 +31,7 @@ msgid "dimensions of R and weights do not match"
 msgstr "dimensions of R and weights do not match"
 
 msgid "arguments are not all the same type of \"boot\" object"
-msgstr "arguments are not all the same type of “boot” object"
+msgstr "arguments are not all the same type of \"boot\" object"
 
 msgid "index array not defined for model-based resampling"
 msgstr "index array not defined for model-based resampling"
@@ -131,7 +109,7 @@ msgid "indices are incompatible with ncol(data)"
 msgstr "indices are incompatible with ncol(data)"
 
 msgid "sim = \"weird\" cannot be used with coxph object"
-msgstr "sim = “weird” cannot be used with coxph object"
+msgstr "sim = \"weird\" cannot be used with coxph object"
 
 msgid "only columns"
 msgstr "only columns"
@@ -164,19 +142,19 @@ msgid "no statistic or bootstrap object specified"
 msgstr "no statistic or bootstrap object specified"
 
 msgid "'stype' must be \"w\" for type=\"inf\""
-msgstr "‘stype’ must be “w” for type=“inf”"
+msgstr "‘stype’ must be \"w\" for type=\"inf\""
 
 msgid "input t ignored; type=\"inf\""
-msgstr "input t ignored; type=“inf”"
+msgstr "input t ignored; type=\"inf\""
 
 msgid "bootstrap object needed for type=\"reg\""
-msgstr "bootstrap object needed for type=“reg”"
+msgstr "bootstrap object needed for type=\"reg\""
 
 msgid "input t ignored; type=\"jack\""
-msgstr "input t ignored; type=“jack”"
+msgstr "input t ignored; type=\"jack\""
 
 msgid "input t ignored; type=\"pos\""
-msgstr "input t ignored; type=“pos”"
+msgstr "input t ignored; type=\"pos\""
 
 msgid "input t0 ignored: neither t nor L supplied"
 msgstr "input t0 ignored: neither t nor L supplied"

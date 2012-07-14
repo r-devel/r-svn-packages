@@ -1,8 +1,7 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.11.0\n"
-"Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2010-01-03 10:12\n"
+"Project-Id-Version: foreign 0.8-50\n"
+"POT-Creation-Date: 2012-07-14 16:31\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -95,10 +94,13 @@ msgstr ""
 msgid "are missing"
 msgstr ""
 
-msgid "Version must be 6-11"
+msgid "The object \"dataframe\" must have class data.frame"
 msgstr ""
 
-msgid "Version must be 6-11: using 7"
+msgid "Version must be 6-12"
+msgstr ""
+
+msgid "Version must be 6-12: using 7"
 msgstr ""
 
 msgid "cannot uniquely abbreviate variable names"
