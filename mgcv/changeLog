@@ -3,7 +3,7 @@
 
 ISSUES:
 
-* gamm and gamm4 gam objects are not compatible with summary at present.
+* gamm4 gam objects are not compatible with summary at present.
   No R returned, and anyway what happens about random effects not
   supplied via s(...,"re")????? Should be o.k. to compute R of r.e. weighted
   X?
@@ -17,6 +17,9 @@ ISSUES:
 
 * bam fails with single fixed sp and fREML.
 
+* still not really happy with nesting constraints, especially under rank
+  deficiency.
+
 1.7-19
 
 ** summary.gam and anova.gam now use an improved p-value computation for 
@@ -24,19 +27,11 @@ ISSUES:
   random effects). The new scheme has been tested by full replication 
   of the simulation study in Scheipl (2008,CSDA) to compare it to the best 
   method there-in. In these tests it is at least as powerful as the best 
-  method given there. 
-
-** gam.side has been modified to only drop terms which are un-identifiable 
-   even under penalization, by default. STOP: reversed this: t2 nesting 
-   really dumb then.
+  method given there, and usually indistinguishable, but it gives slightly 
+  too low null p-values when smoothing parameters are very poorly identified. 
 
 * Fix of vicious little but in gamm tensor product handling that could have 
   a te term pick up the wrong model matrix and fail. 
-
-* fixDependence modified. It was using an algorithm that assumed that the 
-  matrices tested were of full rank, but gam.side could call it with 
-  matrices violating this assumption. Led to strange results with 
-  nested terms.
 
 * print.gam modified to print effective degrees of freedom more prettily,
 

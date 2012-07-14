@@ -2550,14 +2550,14 @@ recov <- function(b,re=rep(0,0),m=0) {
       k <- 1;S1 <- matrix(0,np,np)
       for (i in 1:length(b$smooth)) { 
         ns <- length(b$smooth[[i]]$S)
-        ind <- b$smooth[[i]]$first:b$smooth[[i]]$last
+        ind <- b$smooth[[i]]$first.para:b$smooth[[i]]$last.para
         if (ns>0) for (j in 1:ns) {
           S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
           k <- k + 1
         }
       }
       LRB <- rbind(b$R,t(mroot(S1)))
-      ii <- b$smooth[[m]]$first:b$smooth[[m]]$last 
+      ii <- b$smooth[[m]]$first.para:b$smooth[[m]]$last.para 
       ## ii is cols of LRB related to smooth m, which need 
       ## to be moved to the end...
       LRB <- cbind(LRB[,-ii],LRB[,ii])
@@ -2568,7 +2568,7 @@ recov <- function(b,re=rep(0,0),m=0) {
       ii <- er$values>max(er$values)*.Machine$double.eps^0.8
       er$values[!ii] <- 0
       er$values[ii] <- 1/sqrt(er$values[ii])
-      ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
+      ind <- b$smooth[[m]]$first.para:b$smooth[[m]]$last.para
       Vu <- crossprod(er$values*t(er$vector))[ind,ind] 
       er <- eigen(Vu,symmetric=TRUE)
       ii <- er$values>max(er$values)*.Machine$double.eps^0.8
@@ -2585,7 +2585,7 @@ recov <- function(b,re=rep(0,0),m=0) {
   p <- length(b$coefficients)
   rind <- rep(FALSE,p) ## random coefficient index
   for (i in 1:length(re)) {
-    rind[b$smooth[[re[i]]]$first:b$smooth[[re[i]]]$last] <- TRUE
+    rind[b$smooth[[re[i]]]$first.para:b$smooth[[re[i]]]$last.para] <- TRUE
   }
   p2 <- sum(rind) ## number random
   p1 <- p - p2 ## number fixed
@@ -2604,7 +2604,7 @@ recov <- function(b,re=rep(0,0),m=0) {
   k <- 1
   for (i in 1:length(b$smooth)) { 
     ns <- length(b$smooth[[i]]$S)
-    ind <- map[b$smooth[[i]]$first:b$smooth[[i]]$last]
+    ind <- map[b$smooth[[i]]$first.para:b$smooth[[i]]$last.para]
     is.random <- i%in%re
     if (ns>0) for (j in 1:ns) {
       if (is.random) S2[ind,ind] <- S2[ind,ind] +  sp[k]*b$smooth[[i]]$S[[j]] else
@@ -2634,7 +2634,7 @@ recov <- function(b,re=rep(0,0),m=0) {
   if (m>0) {
     if (llr) { ## llr version
       LRB <- rbind(L%*%R1,t(mroot(S1)))
-      ii <- map[b$smooth[[m]]$first:b$smooth[[m]]$last] 
+      ii <- map[b$smooth[[m]]$first.para:b$smooth[[m]]$last.para] 
       ## ii is cols of LRB related to smooth m, which need 
       ## to be moved to the end...
       LRB <- cbind(LRB[,-ii],LRB[,ii])
@@ -2645,7 +2645,7 @@ recov <- function(b,re=rep(0,0),m=0) {
       ii <- er$values>max(er$values)*.Machine$double.eps^0.8
       er$values[!ii] <- 0
       er$values[ii] <- 1/sqrt(er$values[ii])
-      ind <- map[b$smooth[[m]]$first:b$smooth[[m]]$last]
+      ind <- map[b$smooth[[m]]$first.para:b$smooth[[m]]$last.para]
       Vu <- crossprod(er$values*t(er$vector))[ind,ind]
       er <- eigen(Vu,symmetric=TRUE)
       ii <- er$values>max(er$values)*.Machine$double.eps^0.8
@@ -2670,9 +2670,9 @@ reTest <- function(b,m) {
   rind <- rep(0,0)
   for (i in 1:length(b$smooth)) if (!is.null(b$smooth[[i]]$random)&&b$smooth[[i]]$random&&i!=m) rind <- c(rind,i)
   ## get frequentist cov matrix of effects treating smooth terms in rind as random
-  rc <- mgcv:::recov(b,rind,m) 
+  rc <- recov(b,rind,m) 
   Ve <- rc$Ve
-  ind <- b$smooth[[m]]$first:b$smooth[[m]]$last
+  ind <- b$smooth[[m]]$first.para:b$smooth[[m]]$last.para
   B <- mroot(Ve[ind,ind]) ## BB'=Ve
   if (FALSE) { 
     ## (R'R)^- is unpenalized cov matrix
@@ -2700,8 +2700,8 @@ reTest <- function(b,m) {
   rank <- sum(ev>max(ev)*.Machine$double.eps^.8)
   
   if (b$scale.estimated) {
-    pval <- mgcv:::simf(stat,ev,b$df.residual)
-  } else { pval <- mgcv:::liu2(stat,ev) }
+    pval <- simf(stat,ev,b$df.residual)
+  } else { pval <- liu2(stat,ev) }
   list(stat=stat,pval=pval,rank=rank)
 } ## end reTest
 
@@ -3015,11 +3015,11 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
       }
     }
   }
-  w <- object$prior.weights
+  w <- as.numeric(object$prior.weights)
   mean.y <- sum(w*object$y)/sum(w)
   w <- sqrt(w)
   nobs <- nrow(object$model)
-  r.sq<- 1 - var(w*(object$y-object$fitted.values))*(nobs-1)/(var(w*(object$y-mean.y))*residual.df) 
+  r.sq<- 1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df) 
   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
   ret<-list(p.coeff=p.coeff,se=se,p.t=p.t,p.pv=p.pv,residual.df=residual.df,m=m,chi.sq=chi.sq,
        s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
