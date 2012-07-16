@@ -1146,6 +1146,9 @@ Predict.matrix.tprs.smooth<-function(object,data)
   M <- null.space.dimension(object$dim,object$p.order[1])
   
   ind <- 1:object$bs.dim
+
+  if (is.null(object$drop.null)) object$drop.null <- 0 ## pre 1.7_19 compatibility
+
   if (object$drop.null>0) object$bs.dim <- object$bs.dim + M  
 
   X<-matrix(0,n,object$bs.dim)

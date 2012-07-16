@@ -21,6 +21,12 @@ ISSUES:
   Thanks to Martijn Wieling for pointing out how bad the p-values for regular
   smooths could be with random effects.
 
+* t2 terms now take an argument `ord' that allows orders of interaction to 
+  be selected.
+
+* "tp" smooths can now drop the null space from their construction via
+  a vector m argument, to allow testing against polynomial in the null space.
+
 * Fix of vicious little bug in gamm tensor product handling that could have 
   a te term pick up the wrong model matrix and fail. 
 
