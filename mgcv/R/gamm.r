@@ -964,8 +964,8 @@ extract.lme.cov2<-function(b,data,start.level=1)
 # V is either returned as an array, if it's diagonal, a matrix if it is
 # a full matrix or a list of matrices if it is block diagonal.
 { if (!inherits(b,"lme")) stop("object does not appear to be of class lme")
-  grps<-nlme::getGroups(b) # labels of the innermost groupings - in data frame order
-  n<-length(grps)    # number of data
+  grps <- nlme::getGroups(b) # labels of the innermost groupings - in data frame order
+  n <- length(grps)    # number of data
   n.levels <- length(b$groups) # number of levels of grouping
   if (n.levels<start.level) ## then examine correlation groups
   { if (is.null(b$modelStruct$corStruct)) n.corlevels <- 0 else
@@ -1607,6 +1607,8 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
       XVX <- crossprod(object$R)
       nxf <- ncol(G$Xf)
     }
+
+    object$R <- object$R*ret$lme$sigma ## correction to what is required by summary.gam
 
     ## Now S...
     S <- matrix(0,nxf,nxf) ## penalty matrix

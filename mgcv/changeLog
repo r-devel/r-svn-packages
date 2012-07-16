@@ -3,19 +3,7 @@
 
 ISSUES:
 
-* gamm4 gam objects are not compatible with summary at present.
-  No R returned, and anyway what happens about random effects not
-  supplied via s(...,"re")????? Should be o.k. to compute R of r.e. weighted
-  X?
-
-* gam.vcomp can fail with nested terms??
-
-* Should handle old versions of "cr" basis.
-
-* currently exporting F and R in gam object. Are both/either needed?
-  -- magic now exports R - doc?
-
-* bam fails with single fixed sp and fREML.
+* F needed in gam object?
 
 * still not really happy with nesting constraints, especially under rank
   deficiency.
@@ -29,19 +17,21 @@ ISSUES:
   method there-in. In these tests it is at least as powerful as the best 
   method given there, and usually indistinguishable, but it gives slightly 
   too low null p-values when smoothing parameters are very poorly identified. 
+  Note that the new p-values can not be computed from old fitted gam objects.
+  Thanks to Martijn Wieling for pointing out how bad the p-values for regular
+  smooths could be with random effects.
 
-* Fix of vicious little but in gamm tensor product handling that could have 
+* Fix of vicious little bug in gamm tensor product handling that could have 
   a te term pick up the wrong model matrix and fail. 
+
+* bam now resets method="fREML" to "REML" if there are no free smoothing 
+  parameters, since there is no advantage to the "fREML" optimizer in this 
+  case, and it assumes there is at least one free smoothing parameter.
 
 * print.gam modified to print effective degrees of freedom more prettily,
 
 * testStat bug fix. qr was called with default arguments, which includes 
   tol=1e-7! 
-
-* By default summary.gam and anova.gam no longer report p-values for "re" 
-  terms, since these only work well in rather simple cases without random 
-  effect nesting, and it seems better not to rely on users studying the 
-  help files in detail for this. Can be turned back on with all.p=TRUE.  
 
 * bam now correctly returns fitting weights (rather than prior) in weights 
   field.

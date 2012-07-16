@@ -1105,6 +1105,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
 
+  ## no advantage to "fREML" with no free smooths...
+  if (((!is.null(G$L)&&ncol(G$L) < 1)||(length(G$sp)==0))&&method=="fREML") method <- "REML"
+
   G$var.summary <- var.summary
   G$family <- family
   G$terms<-terms;G$pterms<-pterms

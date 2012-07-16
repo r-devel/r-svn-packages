@@ -54,7 +54,7 @@ test statistic motivated by an extension of Nychka's (1988) analysis of the freq
 of Bayesian confidence intervals for smooths. 
 These have better frequentist performance (in terms of power and distribution under the null) 
 than the alternative strictly frequentist approximation. When the Bayesian intervals have good 
-across the function properties then the p-values have close to the correct null distribtion 
+across the function properties then the p-values have close to the correct null distribution 
 and reasonable power (but there are no optimality results for the power). 
 
 Let \eqn{\bf f}{f} denote the vector of 
@@ -63,9 +63,8 @@ covariate values and let \eqn{{\bf V}_f}{V_f} denote the corresponding Bayesian 
 \eqn{{\bf V}_f^{r-}}{V*_f} denote the rank \eqn{r}{r} pseudoinverse of \eqn{{\bf V}_f}{V_f}, where \eqn{r}{r} is the 
 EDF for the term. The statistic used is then 
 \deqn{T = {\bf f}^T {\bf V}_f^{r-}{\bf f}}{T = f'V*_f f}
-(this can be calculated efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to an approximation to an appropriate mizture of chi-squared distributions with degrees of freedom given by the EDF for the term, 
-or \eqn{T}{T} is used as a component in an F ratio statistic if the 
-scale parameter has been estimated.  
+(this can be calculated efficiently without forming the pseudoinverse explicitly). \eqn{T}{T} is compared to an approximation to
+ an appropriate weighted sum of chi-squared random variables.
 
 The non-integer rank truncated inverse is constructed to give an 
 approximation varying smoothly between the bounding integer rank approximations, while yielding test statistics with the correct mean and variance under the null. Alternatively (\code{p.type==1}) \eqn{r}{r} is obtained by 
@@ -77,11 +76,18 @@ under the approximation for the posterior for \eqn{\bf f}{f} implied by the trun
 
 Note that for terms with no unpenalized terms the Nychka (1988) requirement for smoothing bias to be substantially 
 less than variance breaks down (see e.g. appendix of Marra and Wood, 2012), and this results in incorrect null 
-distribution for p-values computed using the above approach. In this case it is necessary to fall back on slightly cruder frequentist approximations (which may overstate significance a little). The frequentist covariance matrix is used in place of the Bayesian version, and the statistic rank is set to 1 for EDF < 1. These p-values should always be treated with more caution than the p-values for terms with an unplenalized component. 
+distribution for p-values computed using the above approach. In this case it is necessary to use an alternative 
+approach designed for random effects variance components.
 
-In the case of random effects, a further modification is required, since the eigen spectrum of the penalty is then flat and a good unpenalized approximation with rank given by the EDF of the term is not generally available, further breaking the theory used for other smoothers. In this case the rank of the test statistic is set to the full rank of the term, and the p-value relates to testing whether the individual random effects were in fact all zero (despite the estimated posterior modes being those observed). This works well only for simple random effects with no nesting present (so it is poor for random effect interactions, for example). As a result these p-values are only reported if \code{all.p=TRUE}. Generally, it is probably better to look at the output from \code{\link{gam.vcomp}}, rather than p-values, for random effects. 
+In this zero-dimensional null space/random effects case, the p-values are again conditional on the smoothing parameters/variance component estimates,
+and may therefore be somewhat too low when these are subject to large uncertainty. The idea is to condition on the smoothing parameter estimates, and 
+then to use the likelihood ratio test statistic conditional on those estimates. The distribution of this test statistic under the null is computable as a weighted sum of chi-squared random variables. 
 
-In simulations the p-values have best behaviour under ML smoothness selection, with REML coming second. 
+
+In simulations the p-values have best behaviour under ML smoothness selection, with REML coming second. In general the p-values 
+behave well, but conditioning on the smoothing parameters means that they may be somewhat too low when smoothing parameters are 
+highly uncertain. High uncertainty happens in particular when smoothing parameters are poorly identified, which can occur with 
+nested smooths or highly correlated covariates (high concurvity).
 
 If \code{p.type=5} then the frequentist approximation for p-values of smooth terms described in section
 4.8.5 of Wood (2006) is used. The approximation is not great.  If \eqn{ {\bf p}_i}{p_i} 
@@ -133,7 +139,7 @@ residual variance are both estimated using unbiased estimators. This quantity ca
 parameter constant model, and can be higher for the smaller of two nested models! The proportion null deviance 
 explained is probably more appropriate for non-normal errors. Note that \code{r.sq} does not include any offset in the one parameter model.}
 
-\item{dev.expl}{The proportion of the null deviance explained by the model. The null deviance is computed taking acount of any offset, so 
+\item{dev.expl}{The proportion of the null deviance explained by the model. The null deviance is computed taking account of any offset, so 
 \code{dev.expl} can be substantially lower than \code{r.sq} when an offset is present.}
 
 \item{edf}{array of estimated degrees of freedom for the model terms.}
@@ -145,7 +151,7 @@ explained is probably more appropriate for non-normal errors. Note that \code{r.
 \item{method}{The smoothing selection criterion used.}
 
 \item{sp.criterion}{The minimized value of the smoothness selection criterion. Note that for ML and REML methods, 
-what is reported is the negative log maginal likelihood or negative log restricted likelihood. }
+what is reported is the negative log marginal likelihood or negative log restricted likelihood. }
 
 \item{scale}{estimated (or given) scale parameter.}
 
@@ -155,7 +161,7 @@ what is reported is the negative log maginal likelihood or negative log restrict
 
 \item{dispersion}{the scale parameter.}
 
-\item{pTerms.df}{the degrees of freedom associated with each parameteric term
+\item{pTerms.df}{the degrees of freedom associated with each parametric term
 (excluding the constant).}
 
 \item{pTerms.chi.sq}{a Wald statistic for testing the null hypothesis that the
@@ -182,7 +188,7 @@ by scale parameter.}
 
 \references{
 
-Wood, S.N. (2012) On p-values for smooth componentes of an extended generalized additive model. in press Biometrika
+Wood, S.N. (2012) On p-values for smooth component es of an extended generalized additive model. in press Biometrika
 
 Marra, G and S.N. Wood (2012) Coverage Properties of Confidence Intervals for Generalized Additive
 Model Components. Scandinavian Journal of Statistics, 39(1), 53-74.
@@ -198,9 +204,11 @@ and Hall/CRC Press.
 \author{ Simon N. Wood \email{simon.wood@r-project.org} with substantial
 improvements by Henric Nilsson.}
 
-\section{WARNING }{ The p-values are approximate (especially for terms that can be penalized to zero): do read the details section.
+\section{WARNING }{ 
+The p-values are approximate and conditional on the smoothing parameters, they are likely to be somewhat too low 
+when smoothing parameter estimates are highly uncertain: do read the details section. 
 
-P-values for terms penalized via `paraPen' will not be correct unless `freq=TRUE' (and maybe not even then).
+P-values for terms penalized via `paraPen' are unlikely to be correct.
 } 
 
 \seealso{  \code{\link{gam}}, \code{\link{predict.gam}},

@@ -392,6 +392,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
             if (rank == 0) { ## drop the penalty
               sm[[i]]$rank <- sm[[i]]$rank[-j]
               sm[[i]]$S[[j]] <- NULL
+              sm[[i]]$S.scale <- sm[[i]]$S.scale[-j]
               if (!is.null(sm[[i]]$L)) sm[[i]]$L <- sm[[i]]$L[-j,,drop=FALSE]
             }
           } ## penalty matrices finished
@@ -1623,7 +1624,7 @@ print.gam<-function (x,...)
     cat("\nEstimated degrees of freedom:\n")
     for (i in 1:n.smooth)
     edf[i]<-sum(x$edf[x$smooth[[i]]$first.para:x$smooth[[i]]$last.para])
-    edf.str <- format(round(edf,digits=3),digits=2,scientific=FALSE)
+    edf.str <- format(round(edf,digits=4),digits=3,scientific=FALSE)
     for (i in 1:n.smooth) {   
     cat(edf.str[i]," ",sep="")
       if (i%%7==0) cat("\n")
@@ -2473,11 +2474,11 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # the chi^2 variables are central. 
 # Note that this can be rubbish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
-#  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
+#  if (TRUE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
 #    require(CompQuadForm)
 #    r <- x
 #    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
-#    return(r)
+#    return(pmin(r,1))
 #  }
 
   if (length(h) != length(lambda)) stop("lambda and h should have the same length!")
@@ -2843,6 +2844,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
     res
   } ## end of pinv
   
+  if (is.null(object$R)) warning("p-values for any terms that can be penalized to zero will be unreliable: refit model to fix this.")
+
   p.table <- pTerms.table <- s.table <- NULL
 
   if (freq) covmat <- object$Ve else covmat <- object$Vp
@@ -2975,7 +2978,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         df[i] <- attr(V, "rank")
       } else { ## Better founded alternatives...
         Xt <- X[,start:stop,drop=FALSE] 
-        if (object$smooth[[i]]$null.space.dim==0) { ## random effect or fully penalized term
+        if (object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
           res <- reTest(object,i)
         } else { ## Inverted Nychka interval statistics
           df[i] <- min(ncol(Xt),edf1[i])
