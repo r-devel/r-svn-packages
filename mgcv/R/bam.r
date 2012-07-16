@@ -1236,12 +1236,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$linear.predictors <- as.numeric(predict.bam(object,newdata=object$model,block.size=chunk.size,cluster=cluster))
   object$fitted.values <- family$linkinv(object$linear.predictors)
   
-  object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$weights)) * 
+  object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$prior.weights)) * 
                       sign(object$y-object$fitted.values)
   object$deviance <- sum(object$residuals^2)
-  object$aic <- family$aic(object$y,1,object$fitted.values,object$weights,object$deviance) +
+  object$aic <- family$aic(object$y,1,object$fitted.values,object$prior.weights,object$deviance) +
                 2*sum(object$edf)
-  object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$weights))
+  object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$prior.weights))
   if (!is.null(object$full.sp)) {
     if (length(object$full.sp)==length(object$sp)&&
         all.equal(object$sp,object$full.sp)==TRUE) object$full.sp <- NULL
@@ -1432,11 +1432,11 @@ bam.update <- function(b,data,chunk.size=10000) {
   b$linear.predictors <- as.numeric(predict.gam(b,newdata=b$model,block.size=chunk.size))
   b$fitted.values <- b$linear.predictor ## strictly additive only!
   
-  b$residuals <- sqrt(b$family$dev.resids(b$y,b$fitted.values,b$weights)) * 
+  b$residuals <- sqrt(b$family$dev.resids(b$y,b$fitted.values,b$prior.weights)) * 
                       sign(b$y-b$fitted.values)
   b$deviance <- sum(b$residuals^2)
-  b$aic <- b$family$aic(b$y,1,b$fitted.values,b$weights,b$deviance) + 2 * sum(b$edf)
-  b$null.deviance <- sum(b$family$dev.resids(b$y,mean(b$y),b$weights))
+  b$aic <- b$family$aic(b$y,1,b$fitted.values,b$prior.weights,b$deviance) + 2 * sum(b$edf)
+  b$null.deviance <- sum(b$family$dev.resids(b$y,mean(b$y),b$prior.weights))
   names(b$coefficients) <- names(b$edf) <- cnames
   b
 } ## end of bam.update
