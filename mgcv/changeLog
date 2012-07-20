@@ -37,7 +37,7 @@ ISSUES:
 * print.gam modified to print effective degrees of freedom more prettily,
 
 * testStat bug fix. qr was called with default arguments, which includes 
-  tol=1e-7! 
+  tol=1e-7... 
 
 * bam now correctly returns fitting weights (rather than prior) in weights 
   field.
