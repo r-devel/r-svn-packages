@@ -3,7 +3,7 @@
 \title{Probability density function estimate from MCMC output}
 
 \usage{densplot(x, show.obs = TRUE, bwf, 
-                main = "", ylim, xlab, ylab = "", type="l", \ldots)}
+                ylim, xlab, ylab = "", type="l", \ldots)}
 
 \arguments{
   \item{x}{An \code{mcmc} or \code{mcmc.list} object}
@@ -12,7 +12,6 @@
     the bandwidth is calculate by 1.06 times the minimum of the standard
     deviation and the interquartile range divided by 1.34 times the sample
     size to the negative one fifth power}
-  \item{main}{Main title. By default, this is blank.  See \code{title}}
   \item{ylim}{Limits on y axis.  See \code{plot.window}}
   \item{xlab}{X-axis label. By default this will show the sample size
     and the bandwidth used for smoothing. See \code{plot}}

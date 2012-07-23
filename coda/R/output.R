@@ -105,8 +105,7 @@ function (x, col = topo.colors(10), ...)
 }
 
 "densplot" <-
-function (x, show.obs = TRUE, bwf,
-          main = "", ylim, xlab, ylab = "", type = "l", ...) 
+function (x, show.obs = TRUE, bwf, ylim, xlab, ylab = "", type = "l", ...) 
 {
     xx <- as.matrix(x)
     for (i in 1:nvar(x)) {
@@ -129,7 +128,7 @@ function (x, show.obs = TRUE, bwf,
             if (missing(ylim)) {
                 ylim <- NULL
             }
-            hist(y, prob = TRUE, main = main, xlab=xlab, ylab=ylab,
+            hist(y, prob = TRUE, xlab=xlab, ylab=ylab,
                  ylim=ylim, ...)
         }
         else {
@@ -174,7 +173,7 @@ function (x, show.obs = TRUE, bwf,
                 }
             }
 
-            plot(dens, xlab=xlab, ylab = ylab, main = main, type = type, 
+            plot(dens, xlab=xlab, ylab = ylab, type = type, 
                  ylim = ylim, ...)
 
             if (show.obs) {
