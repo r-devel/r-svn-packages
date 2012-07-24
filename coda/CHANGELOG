@@ -1,6 +1,7 @@
 0.15-2
 - Allow default plotting parameters to be overridden in densplot and traceplot.
 - Stop overplotting of user-supplied title in densplot.
+- Fix xyplot for univariate chains.
 
 0.15-1
 - Use Authors@R field in DESCRIPTION 
