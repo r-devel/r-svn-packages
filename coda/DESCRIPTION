@@ -1,5 +1,5 @@
 Package: coda
-Version: 0.15-2
+Version: 0.15-3
 Date: 2012-07-24
 Title: Output analysis and diagnostics for MCMC
 Authors@R: c(person("Martyn", "Plummer", role=c("aut","cre","trl"),
