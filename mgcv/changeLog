@@ -8,6 +8,11 @@ ISSUES:
 * still not really happy with nesting constraints, especially under rank
   deficiency.
 
+1.7-20
+
+* polys.plot colour/grey scale bug. Could ask for colour 0 from colour 
+  scheme, and therefore fail. Fixed.
+
 1.7-19
 
 ** summary.gam and anova.gam now use an improved p-value computation for 

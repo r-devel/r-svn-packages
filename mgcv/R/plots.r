@@ -574,7 +574,7 @@ polys.plot <- function(pc,z=NULL,scheme="heat",lab="",...) {
     xlim[1] <- xlim[1] - .1 * (xlim[2]-xlim[1]) ## allow space for scale
 
     n.col <- 100
-    if (scheme=="heat") scheme <- heat.colors(n.col) else 
+    if (scheme=="heat") scheme <- heat.colors(n.col+1) else 
     scheme <- gray(0:n.col/n.col)
    
     zlim <- range(pretty(z))
@@ -588,7 +588,7 @@ polys.plot <- function(pc,z=NULL,scheme="heat",lab="",...) {
     ylim <- zlim
     plot(0,0,ylim=ylim,xlim=xlim,type="n",xaxt="n",bty="n",xlab="",ylab=lab,...)
     for (i in 1:length(pc)) {
-      coli <- round((z[i] - zlim[1])/(zlim[2]-zlim[1])*100)    
+      coli <- round((z[i] - zlim[1])/(zlim[2]-zlim[1])*n.col)+1    
       poly2(pc[[i]],col=scheme[coli])
     }
   
