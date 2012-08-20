@@ -1,0 +1,433 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: cluster 1.14.2\n"
+"Report-Msgid-Bugs-To: bugs.r-project.org\n"
+"POT-Creation-Date: 2012-08-20 16:13\n"
+"PO-Revision-Date: 2012-07-22 13:15+0100\n"
+"Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
+"Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2)\n"
+"X-Poedit-Language: polish\n"
+"X-Poedit-Country: POLAND\n"
+"X-Poedit-SourceCharset: iso-8859-1\n"
+
+msgid "invalid clustering method"
+msgstr "niepoprawna metoda grupowania"
+
+msgid "ambiguous clustering method"
+msgstr "niejednoznaczna metoda grupowania"
+
+msgid "'par.method' must be of length 1, 3, or 4"
+msgstr "'par.method' musi być długości 1, 3, lub 4"
+
+msgid "NAdiss"
+msgstr "wartość NA odmieności"
+
+msgid "non.diss"
+msgstr "nieodmienne"
+
+msgid "x is not a numeric dataframe or matrix."
+msgstr "'x' nie jest ramką liczbową ani też macierzą"
+
+msgid "need at least 2 objects to cluster"
+msgstr "potrzeba co najmniej 2 obiektów do grupowania"
+
+msgid "No clustering performed, NA-values in the dissimilarity matrix."
+msgstr "Nie wykonano grupowania, wartości NA w macierzy różnic."
+
+msgid "'x' is a \"dist\" object, but should be a data matrix or frame"
+msgstr "'x' jest obiektem \"dist\", ale powinien być macierzą lub ramką danych"
+
+msgid "The number of cluster should be at least 1 and at most n-1."
+msgstr "Liczba grup powinna wynosić conajmniej 1 oraz co najwyżej n-1."
+
+msgid "'sampsize' should be at least %d = max(2, 1+ number of clusters)"
+msgstr "'sampsize' powinien być co najmniej %d = max(2, 1+ liczba grup)"
+
+msgid "'sampsize' = %d should not be larger than the number of objects, %d"
+msgstr "'sampsize' = %d nie powinien być większy niż liczba obiektów, %d"
+
+msgid "'samples' should be at least 1"
+msgstr "'samples' powinno wynosić przynajmniej 1"
+
+msgid "when 'medoids.x' is FALSE, 'keep.data' must be too"
+msgstr "kiedy 'medoids.x' jest FALSE, 'keep.data' musi być również FALSE"
+
+# clara.q; 91; stop(ngettext(nNA, sprintf("Observation %d has *only* NAs --> omit it for clustering",  i[1]), paste(if(nNA < 13) sprintf("Observations %s", pasteC(i))
+#  else sprintf("%d observations (%s ...)", nNA, pasteC(i[1:12])), "\thave *only* NAs --> na.omit() them for clustering!",
+#  sep = "\n
+# ))
+msgid "Observation %d has *only* NAs --> omit it for clustering"
+msgstr ""
+"Obserwacja %d posiada *tylko* wartości NA --> pomijanie jej w grupowaniu"
+
+# clara.q; 91; stop(ngettext(nNA, sprintf("Observation %d has *only* NAs --> omit it for clustering",  i[1]), paste(if(nNA < 13) sprintf("Observations %s", pasteC(i))
+#  else sprintf("%d observations (%s ...)", nNA, pasteC(i[1:12])), "\thave *only* NAs --> na.omit() them for clustering!",
+#  sep = "\n
+# ))
+msgid "Observations %s"
+msgstr "Obserwacje %s"
+
+# clara.q; 91; stop(ngettext(nNA, sprintf("Observation %d has *only* NAs --> omit it for clustering",  i[1]), paste(if(nNA < 13) sprintf("Observations %s", pasteC(i))
+#  else sprintf("%d observations (%s ...)", nNA, pasteC(i[1:12])), "\thave *only* NAs --> na.omit() them for clustering!",
+#  sep = "\n
+# ))
+msgid "%d observations (%s ...)"
+msgstr "%d obserwacji (%s ...)"
+
+# clara.q; 91; stop(ngettext(nNA, sprintf("Observation %d has *only* NAs --> omit it for clustering",  i[1]), paste(if(nNA < 13) sprintf("Observations %s", pasteC(i))
+#  else sprintf("%d observations (%s ...)", nNA, pasteC(i[1:12])), "\thave *only* NAs --> na.omit() them for clustering!",
+#  sep = "\n
+# ))
+msgid "have *only* NAs --> na.omit() them for clustering!"
+msgstr ""
+"posiada *tylko* wartości NA --> wykonywanie na nich funkcji 'na.omit()' w "
+"grupowaniu!"
+
+# clara.q; 101; stop("Each of the random samples contains objects between which\n", " no distance can be computed.")
+msgid "Each of the random samples contains objects between which"
+msgstr "Każda z losowych próbek zawiera obiekty pomiędzy którymi"
+
+# clara.q; 101; stop("Each of the random samples contains objects between which\n", " no distance can be computed.")
+msgid "no distance can be computed."
+msgstr "odległość nie może być obliczona."
+
+# clara.q; 104; stop("For each of the ", samples,
+#  " samples, at least one object was found which\n could not", " be assigned to a cluster (because of missing values).")
+msgid "For each of the"
+msgstr "Dla każdej z"
+
+# clara.q; 104; stop("For each of the ", samples,
+#  " samples, at least one object was found which\n could not", " be assigned to a cluster (because of missing values).")
+msgid ""
+"samples, at least one object was found which\n"
+" could not"
+msgstr ""
+"próbek, co najmniej jeden obiekt został znaleziony, który\n"
+"nie mógł"
+
+# clara.q; 104; stop("For each of the ", samples,
+#  " samples, at least one object was found which\n could not", " be assigned to a cluster (because of missing values).")
+msgid "be assigned to a cluster (because of missing values)."
+msgstr "zostać przypisany do grupy (z powodu brakujących wartości)."
+
+msgid "invalid 'jstop' from .C(cl_clara,.):"
+msgstr "niepoprawny 'jstop' z .C(cl_clara,.):"
+
+msgid "'B' has to be a positive integer"
+msgstr "'B' musi być dodatnią liczbą całkowitą"
+
+msgid "invalid 'twins' object"
+msgstr "niepoprawny obiekt 'twins'"
+
+msgid "x is not a dataframe or a numeric matrix."
+msgstr "'x' nie jest ramką ani też macierzą liczbową"
+
+# stop("invalid ", sQuote("type"),"; must be named list")
+msgid "invalid"
+msgstr "niepoprawny"
+
+# stop("invalid ", sQuote("type"),"; must be named list")
+msgid "type"
+msgstr "'type'"
+
+# stop("invalid ", sQuote("type"),"; must be named list")
+msgid "; must be named list"
+msgstr "; musi być nazwaną listą"
+
+# stop("type$", nt, " has invalid column names")
+# stop("type$", nt, " must be in 1:ncol(x)")
+# stop("type$", nt, " must contain column names or numbers")
+msgid "type$"
+msgstr "type$"
+
+# stop("type$", nt, " has invalid column names")
+msgid "has invalid column names"
+msgstr "posiada niepoprawne nazwy kolumn"
+
+# stop("type$", nt, " must be in 1:ncol(x)")
+msgid "must be in 1:ncol(x)"
+msgstr "musi być w przedziale 1:ncol(x)"
+
+# stop("type$", nt, " must contain column names or numbers")
+msgid "must contain column names or numbers"
+msgstr "musi zawierać nazwy kolumn lub liczby"
+
+msgid "at least one binary variable has more than 2 levels."
+msgstr "przynajmniej jedna zmienna binarna posiada więcej niż 2 poziomy."
+
+msgid "at least one binary variable has not 2 different levels."
+msgstr "przynajmniej jedna zmienna binarna nie posiada 2 różnych poziomów."
+
+msgid "at least one binary variable has values not in {0,1,NA}"
+msgstr "przynajmniej jedna zmienna binarna posiada wartości poza {0, 1, NA}"
+
+# warning("binary variable(s) ", pColl(which(tI)[iBin]),
+#  " treated as interval scaled")
+msgid "binary variable(s)"
+msgstr "zmienne binarne"
+
+# warning("binary variable(s) ", pColl(which(tI)[iBin]),
+#  " treated as interval scaled")
+msgid "treated as interval scaled"
+msgstr "traktowane jako wewnętrzne zostały przeskalowane"
+
+# warning("setting 'logical' variable",if(sum(ilog)>1)"s " else " ", pColl(which(ilog)), " to type 'asymm'")
+msgid "setting 'logical' variable"
+msgstr "ustawianie zmiennej 'logical'"
+
+# warning("setting 'logical' variable",if(sum(ilog)>1)"s " else " ", pColl(which(ilog)), " to type 'asymm'")
+msgid "s"
+msgstr " "
+
+# warning("setting 'logical' variable",if(sum(ilog)>1)"s " else " ", pColl(which(ilog)), " to type 'asymm'")
+msgid "to type 'asymm'"
+msgstr "na typ 'asymm'"
+
+# warning(sQuote("x"), " has constant columns ",
+#  pColl(which(sx == 0)), "; these are standardized to 0")
+msgid "x"
+msgstr "x"
+
+# warning(sQuote("x"), " has constant columns ", pColl(which(sx == 0)), "; these are standardized to 0")
+msgid "has constant columns"
+msgstr "posiada stałe kolumny"
+
+# warning(sQuote("x"), " has constant columns ",
+#  pColl(which(sx == 0)), "; these are standardized to 0")
+msgid "; these are standardized to 0"
+msgstr "; zostały one ustandaryzowane do zera"
+
+# warning("with mixed variables, metric \"gower\" is used automatically")
+msgid "with mixed variables, metric \"gower\" is used automatically"
+msgstr "z mieszanymi zmiennymi, metryka \"gower\" jest używana automatycznie"
+
+# stop("'weights' must be of length p (or 1)")
+msgid "'weights' must be of length p (or 1)"
+msgstr "'weights' musi być o długości p (lub 1)"
+
+# stop("invalid type ", type2[ina], " for column numbers ", pColl(which(is.na)))
+msgid "invalid type"
+msgstr "niepoprawny typ"
+
+# stop("invalid type ", type2[ina], " for column numbers ", pColl(which(is.na)))
+msgid "for column numbers"
+msgstr "dla liczb kolumn"
+
+# stop("No clustering performed, NA's in dissimilarity matrix.\n
+msgid "No clustering performed, NA's in dissimilarity matrix."
+msgstr "Nie wykonano grupowania, wartości NA w macierzy różnic"
+
+# stop("'x' must be numeric  n x p matrix")
+msgid "'x' must be numeric  n x p matrix"
+msgstr "'x' musi być liczbową macierzą n x p"
+
+# warning("omitting NAs")
+msgid "omitting NAs"
+msgstr "omijanie wartości NA"
+
+# stop("no points without missing values")
+msgid "no points without missing values"
+msgstr "brak punktów bez brakujących wartości"
+
+# stop("computed some negative or all 0 'prob'abilities")
+msgid "computed some negative or all 0 'prob'abilities"
+msgstr ""
+"niektóre wyliczone prawdopodobieństwa są ujemne lub wszystkie są zerami"
+
+# warning("possibly not converged in ", maxit, " iterations")
+msgid "possibly not converged in"
+msgstr "prawdopodobnie nie uzbieżnił się w"
+
+# warning("possibly not converged in ", maxit, " iterations")
+msgid "iterations"
+msgstr "iteracjach"
+
+# stop("'A' must be p x p  cov-matrix defining an ellipsoid")
+msgid "'A' must be p x p  cov-matrix defining an ellipsoid"
+msgstr "'A' musi być macierzą kowariancji p x p określającą elipsoidę"
+
+# stop("ellipsoidPoints() not yet implemented for p >= 3 dim.")
+msgid "ellipsoidPoints() not yet implemented for p >= 3 dim."
+msgstr ""
+"ellipsoidPoints() nie została jeszcze zaimplementowana dla p >= 3 wymiary."
+
+# fanny.q; 54; stop("'k' (number of clusters) must be in {1,2, .., n/2 -1}")
+msgid "'k' (number of clusters) must be in {1,2, .., n/2 -1}"
+msgstr "'k' (liczba grup) musi mieścić się w przedziale {1,2, .., n/2 -1}"
+
+msgid "'memb.exp' must be a finite number > 1"
+msgstr "'memb.exp' musi być skończoną liczbą > 1"
+
+msgid "'maxit' must be non-negative integer"
+msgstr "'maxit' musi być nieujemną liczbą całkowitą"
+
+# stop("'iniMem.p' must be a nonnegative n * k matrix with rowSums == 1")
+msgid "'iniMem.p' must be a nonnegative n * k matrix with rowSums == 1"
+msgstr "'iniMem.p' musi być nieujemną maceirzą n x k z rowSums == 1"
+
+# warning(sprintf("FANNY algorithm has not converged in 'maxit' = %d iterations", maxit))
+msgid "FANNY algorithm has not converged in 'maxit' = %d iterations"
+msgstr "algorytm FANNY nie uzbieżnił się w 'maxit' = %d iteracjach"
+
+# warning("the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?")
+msgid "the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?"
+msgstr "przynależności są bardzo bliskie 1/k. Może zmniejszyć 'memb.exp'?"
+
+# fanny.q; 240; stop("'m', a membership matrix, must be nonnegative with rowSums == 1")
+msgid "'m', a membership matrix, must be nonnegative with rowSums == 1"
+msgstr "macierz przynależności 'm' musi być nieujemna z rowSums == 1"
+
+msgid "'n' must be >= 2"
+msgstr "'n' musi być >= 2"
+
+msgid "x must be a matrix or data frame."
+msgstr "'x' musi być macierzą lub ramką danych."
+
+# mona.q; 10; stop("All variables must be binary (factor with 2 levels).")
+msgid "All variables must be binary (factor with 2 levels)."
+msgstr "Wszystkie zmienne muszą być binarne (czynnik z dwoma poziomami)"
+
+# ch <- "No clustering performed, "
+# mona.q; 41; stop(ch,"an object was found with all values missing.")
+msgid "an object was found with all values missing."
+msgstr "znaleziono obiekt któremu brakowało wszystkich wartości."
+
+# ch <- "No clustering performed, "
+# mona.q; 43; stop(ch,"a variable was found with at least 50% missing values.")
+msgid "a variable was found with at least 50% missing values."
+msgstr "znaleziono zmienną z co najmniej 50% brakujących wartości."
+
+# ch <- "No clustering performed, "
+# mona.q; 45; stop(ch,"a variable was found with all non missing values identical.")
+msgid "a variable was found with all non missing values identical."
+msgstr "znaleziono zmienną z identycznymi niebrakującymi wartościami."
+
+# ch <- "No clustering performed, "
+# mona.q; 47; stop(ch,"all variables have at least one missing value.")
+msgid "all variables have at least one missing value."
+msgstr "wszystkie zmienne mają co najmniej jedną brakującą wartość."
+
+# pam.q; 55; stop("Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2")
+msgid "Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2"
+msgstr ""
+"Liczba grup 'k' musi zawierać się w zbiorze {1,2, .., n-1}; tak więc n >= 2"
+
+msgid "'medoids' must be NULL or vector of"
+msgstr "'medoids' musi być wartością NULL lub wektorem"
+
+msgid "distinct indices in {1,2, .., n}, n="
+msgstr "różne indeksy w {1,2, .., n}, n="
+
+# stop("No clustering performed, NA-values in the dissimilarity matrix.")
+msgid "No clustering performed, NAs in the computed dissimilarity matrix."
+msgstr "Nie wykonano grupowania, wyliczono wartości NA w macierzy różnic."
+
+# pam.q; 116; stop("error from .C(cl_pam, *): invalid medID's")
+msgid "error from .C(cl_pam, *): invalid medID's"
+msgstr "błąd w .C(cl_pam, *): niepoprawne medID"
+
+msgid "NA-values are not allowed in dist-like 'x'."
+msgstr "wartości NA nie są dozwolone w 'x' typu odległości."
+
+# plotpart.q; 79; stop("Distances must be result of dist or a square matrix.")
+msgid "Distances must be result of dist or a square matrix."
+msgstr "Odległości muszą być wynikiem 'dist' lub macierzy kwadratowej."
+
+# plotpart.q; 81; stop("the square matrix is not symmetric.")
+msgid "the square matrix is not symmetric."
+msgstr "macierz kwadratowa nie jest symetryczna."
+
+msgid ">>>>> funny case in clusplot.default() -- please report!"
+msgstr ""
+">>>>> zabawny przypadek w 'clusplot.default()' -- proszę zgłosić raport!"
+
+msgid "x is not a data matrix"
+msgstr "'x' nie jest macierzą danych"
+
+# plotpart.q; 120; stop("one or more objects contain only missing values")
+msgid "one or more objects contain only missing values"
+msgstr "jeden lub więcej obiektów zawierają jedynie wartości brakujące"
+
+# plotpart.q; 122; stop("one or more variables contain only missing values")
+msgid "one or more variables contain only missing values"
+msgstr "jeden lub więcej zmiennych zawiera jedynie wartości brakujące"
+
+# plotpart.q; 125; message("Missing values were displaced by the median of the corresponding variable(s)")
+msgid ""
+"Missing values were displaced by the median of the corresponding variable(s)"
+msgstr ""
+"Brakujące wartości zostały zastąpione przez medianę odpowiednich zmiennych"
+
+msgid "x is not numeric"
+msgstr "'x' nie jest liczbą"
+
+# plotpart.q; 175; stop("The clustering vector is of incorrect length")
+msgid "The clustering vector is of incorrect length"
+msgstr "Wektor grupujący posiada niepoprawną długość"
+
+# plotpart.q; 178; stop("NA-values are not allowed in clustering vector")
+msgid "NA-values are not allowed in clustering vector"
+msgstr "wartości NA są niedozwolone w wektorze grupującym"
+
+# warning("Error in Fortran routine for the spanning ellipsoid,", "\n
+# ank problem??")
+msgid "Error in Fortran routine for the spanning ellipsoid,"
+msgstr "Błąd w procedurze Fortran dla elipsoidy obejmującej,"
+
+# warning("Error in Fortran routine for the spanning ellipsoid,", "\n
+# ank problem??")
+msgid "rank problem??"
+msgstr "problem rang??"
+
+# plotpart.q; 357; stop("'col.clus' should have length 4 when color is TRUE")
+msgid "'col.clus' should have length 4 when color is TRUE"
+msgstr "'col.clus' powinien mieć długość 4, gdy 'color' ma wartość TRUE"
+
+# plotpart.q; 512; stop("no diss nor data found, nor the original argument of ",
+#  deparse(x$call))
+msgid "no diss nor data found, nor the original argument of"
+msgstr "nie znaleziono różnic ani danych, ani oryginalnego argumentu"
+
+# plotpart.q; 519; stop("no diss nor data found for clusplot()'")
+msgid "no diss nor data found for clusplot()'"
+msgstr "nie znaleziono różnic ani danych dla 'clusplot()'"
+
+msgid "invalid partition object"
+msgstr "niepoprawny obiekt podziału"
+
+msgid "full silhouette is only available for results of"
+msgstr "pełna sylwetka jest dostępna jedynie dla wyników"
+
+msgid "'clara(*, keep.data = TRUE)'"
+msgstr "'clara(*, keep.data = TRUE)'"
+
+msgid "'x' must only have integer codes"
+msgstr "'x' musi posiadać tylko kody będące liczbami całkowitymi"
+
+# silhouette.R; 43; stop("Need either a dissimilarity 'dist' or diss.matrix 'dmatrix'")
+msgid "Need either a dissimilarity 'dist' or diss.matrix 'dmatrix'"
+msgstr "Potrzeba albo różnic 'dist' lub diss.matrix 'dmatrix'"
+
+# silhouette.R; 45; stop("'dmatrix' is not a dissimilarity matrix compatible to 'x'")
+msgid "'dmatrix' is not a dissimilarity matrix compatible to 'x'"
+msgstr "'dmatrix' nie jest macierzą różnic kompatybilną z 'x'"
+
+# silhouette.R; 49; stop("clustering 'x' and dissimilarity 'dist' are incompatible")
+msgid "clustering 'x' and dissimilarity 'dist' are incompatible"
+msgstr "grupowane 'x' oraz różnice 'dist' nie są kompatybilne"
+
+msgid "invalid silhouette structure"
+msgstr "niepoprana struktura 'silhouette'"
+
+msgid "invalid 'silhouette' object"
+msgstr "niepoprawny obiekt 'silhouette'"
+
+# silhouette.R; 202; stop("No valid silhouette information (#{clusters} =? 1)")
+msgid "No valid silhouette information (#{clusters} =? 1)"
+msgstr "Brak poprawnej informacji o sylwetce (czy liczba grup =? 1)"
