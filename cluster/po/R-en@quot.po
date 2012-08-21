@@ -24,8 +24,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.1\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-08-20 16:13\n"
-"PO-Revision-Date: 2012-08-20 16:13\n"
+"POT-Creation-Date: 2012-08-21 22:49\n"
+"PO-Revision-Date: 2012-08-21 22:49\n"
 "Last-Translator: Automatically generated\n"
 "Language-Team: none\n"
 "MIME-Version: 1.0\n"
@@ -75,18 +75,6 @@ msgstr "‘samples’ should be at least 1"
 
 msgid "when 'medoids.x' is FALSE, 'keep.data' must be too"
 msgstr "when ‘medoids.x’ is FALSE, ‘keep.data’ must be too"
-
-msgid "Observation %d has *only* NAs --> omit it for clustering"
-msgstr "Observation %d has *only* NAs --> omit it for clustering"
-
-msgid "Observations %s"
-msgstr "Observations %s"
-
-msgid "%d observations (%s ...)"
-msgstr "%d observations (%s ...)"
-
-msgid "have *only* NAs --> na.omit() them for clustering!"
-msgstr "have *only* NAs --> na.omit() them for clustering!"
 
 msgid "Each of the random samples contains objects between which"
 msgstr "Each of the random samples contains objects between which"
@@ -154,15 +142,6 @@ msgstr "binary variable(s)"
 
 msgid "treated as interval scaled"
 msgstr "treated as interval scaled"
-
-msgid "setting 'logical' variable"
-msgstr "setting ‘logical’ variable"
-
-msgid "s"
-msgstr "s"
-
-msgid "to type 'asymm'"
-msgstr "to type ‘asymm’"
 
 msgid "x"
 msgstr "x"
@@ -241,6 +220,9 @@ msgstr "x must be a matrix or data frame."
 
 msgid "All variables must be binary (factor with 2 levels)."
 msgstr "All variables must be binary (factor with 2 levels)."
+
+msgid "No clustering performed,"
+msgstr "No clustering performed,"
 
 msgid "an object was found with all values missing."
 msgstr "an object was found with all values missing."
@@ -348,3 +330,8 @@ msgstr "invalid ‘silhouette’ object"
 
 msgid "No valid silhouette information (#{clusters} =? 1)"
 msgstr "No valid silhouette information (#{clusters} =? 1)"
+
+msgid "setting 'logical' variable %s to type 'asymm'"
+msgid_plural "setting 'logical' variables %s to type 'asymm'"
+msgstr[0] "setting ‘logical’ variable %s to type ‘asymm’"
+msgstr[1] "setting ‘logical’ variables %s to type ‘asymm’"
