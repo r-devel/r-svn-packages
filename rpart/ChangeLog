@@ -1,3 +1,5 @@
+2012 ??? ??	3.1-55	Force use of registered symbols in R >= 2.16.0
+
 2012 Jun 27	3.1-54	Add Polish tranlations.
 
 2012 Jun 01	3.1-53	rpart, rpart.matrix: allow backticks in formulae.
