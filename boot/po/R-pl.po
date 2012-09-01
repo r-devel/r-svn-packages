@@ -1,22 +1,22 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: boot 1.3-4\n"
+"Project-Id-Version: boot 1.3-5\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
 "POT-Creation-Date: 2012-06-27 09:22\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
-"Language: \n"
+"Language: pl_PL\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "na-Revision-Date: 2012-05-29 07:55+0100\n"
-"X-Poedit-Language: Polish\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2)\n"
-"X-Poedit-Country: POLAND\n"
 "X-Poedit-SourceCharset: iso-8859-1\n"
 
+# Recommended/boot/R/bootfuns.q: 111
+# warning("'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so ignored")
 msgid ""
 "'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so "
 "ignored"
@@ -24,252 +24,451 @@ msgstr ""
 "'simple=TRUE' jest poprawne jedynie dla 'sim=\"ordinary\", stype=\"i\", n=0, "
 "tak więc zignorowano"
 
+# Recommended/boot/R/bootfuns.q: 118
+# stop("no data in call to boot")
 msgid "no data in call to boot"
 msgstr "brak danych w wywołaniu 'boot'"
 
+# Recommended/boot/R/bootfuns.q: 126
+# stop("negative value of m supplied")
 msgid "negative value of m supplied"
 msgstr "dostarczono ujemną wartość 'm'"
 
+# Recommended/boot/R/bootfuns.q: 128
+# stop("length of m incompatible with strata")
 msgid "length of m incompatible with strata"
 msgstr "długość 'm' jest niekompatybilna z wastwami"
 
+# Recommended/boot/R/bootfuns.q: 131
+# stop("dimensions of R and weights do not match")
 msgid "dimensions of R and weights do not match"
 msgstr "wymiary R oraz wagi nie zgadzają się"
 
+# Recommended/boot/R/bootfuns.q: 249
+# stop("arguments are not all the same type of \"boot\" object")
 msgid "arguments are not all the same type of \"boot\" object"
-msgstr ""
+msgstr "argumenty nie są wszystkie tego samego typu obiektu 'boot'"
 
+# Recommended/boot/R/bootfuns.q: 275
+# stop("index array not defined for model-based resampling")
 msgid "index array not defined for model-based resampling"
 msgstr ""
 "tablica indeksów nie jest zdefiniowana dla próbkowania opartego na modelu"
 
+# Recommended/boot/R/bootfuns.q: 299
+# stop("boot.array not implemented for this object")
 msgid "boot.array not implemented for this object"
 msgstr "'boot.array' nie został zaimplementowany dla tego obiektu"
 
+# Recommended/boot/R/bootfuns.q: 304
+# stop("array cannot be found for parametric bootstrap")
 msgid "array cannot be found for parametric bootstrap"
 msgstr "nie można znaleźć tablicy dla parametrycznego bootstrapu"
 
+# Recommended/boot/R/bootfuns.q: 359
+# warning(sQuote(qdist), " distribution not supported using normal instead")
 msgid "distribution not supported using normal instead"
-msgstr "rozkład nie jest wspierany, w zamian używanie rozkładu normalnego"
+msgstr ": rozkład nie jest wspierany, w zamian używanie rozkładu normalnego"
 
+# Recommended/boot/R/bootfuns.q: 700
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 1636
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 1648
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 1658
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 1666
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 1821
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 2146
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 2202
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 2243
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 2271
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 2400
+# warning("only first element of index used")
+# Recommended/boot/R/bootfuns.q: 2421
+# warning("only first element of index used")
 msgid "only first element of index used"
 msgstr "tylko pierwszy element indeksu został użyty"
 
+# Recommended/boot/R/bootfuns.q: 823
+# stop("K outside allowable range")
 msgid "K outside allowable range"
 msgstr "'K' poza dozwolonym zakresem"
 
+# Recommended/boot/R/bootfuns.q: 830
+# warning("K has been set to ", K)
 msgid "K has been set to"
 msgstr "'K' został ustawiony na"
 
+# Recommended/boot/R/bootfuns.q: 877
+# stop("t and t0 must be supplied together")
 msgid "t and t0 must be supplied together"
 msgstr "t oraz t0 muszą zostać dostarczone razem"
 
+# Recommended/boot/R/bootfuns.q: 887
+# warning("index out of bounds; minimum index only used.")
 msgid "index out of bounds; minimum index only used."
 msgstr "indeks poza zakresem; użyto minimalnego indeksu."
 
+# Recommended/boot/R/bootfuns.q: 905
+# stop(paste("t must of length",boot.out$R))
 msgid "t must of length"
 msgstr "'t' musi być długości"
 
+# Recommended/boot/R/bootfuns.q: 929
+# warning("bootstrap variances needed for studentized intervals")
 msgid "bootstrap variances needed for studentized intervals"
 msgstr "potrzebne są bootstrapowe wariancje dla studentyzowanych przedziałów"
 
+# Recommended/boot/R/bootfuns.q: 938
+# warning("BCa intervals not defined for time series bootstraps.")
 msgid "BCa intervals not defined for time series bootstraps."
 msgstr ""
 "przedziały BC nie są zdefiniowane dla bootstrapowych szeregów czasowych"
 
+# Recommended/boot/R/bootfuns.q: 1080
+# stop("bootstrap output object or 't0' required")
 msgid "bootstrap output object or 't0' required"
 msgstr "wymagany jest obiekt wyjściowy bootstrapu albo 't0'"
 
+# Recommended/boot/R/bootfuns.q: 1091
+# stop("unable to calculate var.t0")
 msgid "unable to calculate var.t0"
 msgstr "nie można wyliczyć 'var.t0'"
 
+# Recommended/boot/R/bootfuns.q: 1118
+# warning("extreme order statistics used as endpoints")
 msgid "extreme order statistics used as endpoints"
 msgstr "ekstremalnie uporządkowana statystyka użyta jako punkty końcowe"
 
+# Recommended/boot/R/bootfuns.q: 1154
+# warning("variance required for Studentized CI's")
 msgid "variance required for Studentized CI's"
-msgstr "wariancja jest wymagana dla studentaryzowanego CI"
+msgstr "wariancja jest wymagana dla studentyzowanych przedziałów ufności"
 
+# Recommended/boot/R/bootfuns.q: 1193
+# stop("estimated adjustment 'w' is infinite")
 msgid "estimated adjustment 'w' is infinite"
 msgstr "oszacowana korekta 'w' wynosi nieskończoność"
 
+# Recommended/boot/R/bootfuns.q: 1199
+# stop("estimated adjustment 'a' is NA")
 msgid "estimated adjustment 'a' is NA"
 msgstr "oszacowana korekta 'a' wynosi 'NA'"
 
+# Recommended/boot/R/bootfuns.q: 1217
+# warning("only first element of index used in abc.ci")
 msgid "only first element of index used in abc.ci"
 msgstr "tylko pierwszy element indeksu został użyty w 'abc.ci'"
 
+# Recommended/boot/R/bootfuns.q: 1282
+# stop("missing values not allowed in data")
 msgid "missing values not allowed in data"
 msgstr "brakujące wartości nie są dozwolone w danych"
 
-#, fuzzy
+# Recommended/boot/R/bootfuns.q: 1284
+# stop("unknown value of 'sim'")
 msgid "unknown value of 'sim'"
 msgstr "nieznana wartość 'sim'"
 
+# Recommended/boot/R/bootfuns.q: 1298
+# stop("data must be a matrix with at least 2 columns")
+# Recommended/boot/R/bootfuns.q: 1300
+# stop("data must be a matrix with at least 2 columns")
 msgid "data must be a matrix with at least 2 columns"
 msgstr "dane muszą być macierzą o co najmniej 2 kolumnach"
 
+# Recommended/boot/R/bootfuns.q: 1302
+# stop("index must contain 2 elements")
 msgid "index must contain 2 elements"
 msgstr "indeks musi zawierać 2 elementy"
 
+# Recommended/boot/R/bootfuns.q: 1304
+# warning("only first 2 elements of index used")
 msgid "only first 2 elements of index used"
 msgstr "tylko pierwsze 2 elementy indeksu zostały użyte"
 
+# Recommended/boot/R/bootfuns.q: 1308
+# stop("indices are incompatible with ncol(data)")
 msgid "indices are incompatible with ncol(data)"
-msgstr "indeksy są niekompatybine z  'ncol(data)'"
+msgstr "indeksy są niezgodne z 'ncol(data)'"
 
-#, fuzzy
+# Recommended/boot/R/bootfuns.q: 1311
+# stop("sim = \"weird\" cannot be used with coxph object")
 msgid "sim = \"weird\" cannot be used with coxph object"
 msgstr "'sim=weird' nie może być użyte z obiektem 'coxph'"
 
+# Recommended/boot/R/bootfuns.q: 1313
+# warning("only columns ", index[1L], " and ", index[2L], " of data used")
 msgid "only columns"
 msgstr "tylko kolumny"
 
+# Recommended/boot/R/bootfuns.q: 1313
+# warning("only columns ", index[1L], " and ", index[2L], " of data used")
 msgid "and"
 msgstr "oraz"
 
+# Recommended/boot/R/bootfuns.q: 1313
+# warning("only columns ", index[1L], " and ", index[2L], " of data used")
 msgid "of data used"
 msgstr "danych zostały użyte"
 
+# Recommended/boot/R/bootfuns.q: 1318
+# warning("no coefficients in cox model -- model ignored")
 msgid "no coefficients in cox model -- model ignored"
-msgstr ""
-"brak współczynnikóww modjeli 'cox' brak koefficijentow -- modjel brakująca"
+msgstr "brak współczynników w modelu 'cox' -- model został zignorowany"
 
+# Recommended/boot/R/bootfuns.q: 1322
+# stop("F.surv is required but missing")
 msgid "F.surv is required but missing"
 msgstr "'F.surv' jest wymagany, ale jest nieobecny"
 
+# Recommended/boot/R/bootfuns.q: 1324
+# stop("G.surv is required but missing")
 msgid "G.surv is required but missing"
 msgstr "'G.surv' jest wymagany, ale jest nieobecny"
 
+# Recommended/boot/R/bootfuns.q: 1325
+# stop("strata of wrong length")
 msgid "strata of wrong length"
 msgstr "warstwy o niepoprawnej długości"
 
+# Recommended/boot/R/bootfuns.q: 1605
+# stop("influence values cannot be found from a parametric bootstrap")
 msgid "influence values cannot be found from a parametric bootstrap"
 msgstr ""
-"wartości wpływu nie mogą zostać znalezione z parametryzcnego bootstrapu"
+"wartości wpływu nie mogą zostać znalezione z parametrycznego bootstrapu"
 
+# Recommended/boot/R/bootfuns.q: 1617
+# stop("no data or bootstrap object specified")
 msgid "no data or bootstrap object specified"
 msgstr "brak danych lub określonego obiektu bootstrapu"
 
+# Recommended/boot/R/bootfuns.q: 1619
+# stop("no statistic or bootstrap object specified")
 msgid "no statistic or bootstrap object specified"
 msgstr "brak statystyki lub określonego obiektu bootstrapu"
 
+# Recommended/boot/R/bootfuns.q: 1634
+# stop("'stype' must be \"w\" for type=\"inf\"")
 msgid "'stype' must be \"w\" for type=\"inf\""
 msgstr "'stype' musi być \"w\" dla type=\"inf\""
 
+# Recommended/boot/R/bootfuns.q: 1640
+# warning("input t ignored; type=\"inf\"")
 msgid "input t ignored; type=\"inf\""
-msgstr "wejście 't' zignornowano; type=\"inf\""
+msgstr "wejście 't' zostało zignornowane; type=\"inf\""
 
+# Recommended/boot/R/bootfuns.q: 1645
+# stop("bootstrap object needed for type=\"reg\"")
 msgid "bootstrap object needed for type=\"reg\""
 msgstr "obiekt bootstrapu jest potrzebny dla type=\"reg\""
 
+# Recommended/boot/R/bootfuns.q: 1656
+# warning("input t ignored; type=\"jack\"")
 msgid "input t ignored; type=\"jack\""
-msgstr "wejście 't' zignornowano; type=\"jack\""
+msgstr "wejście 't' zostało zignornowane; type=\"jack\""
 
+# Recommended/boot/R/bootfuns.q: 1664
+# warning("input t ignored; type=\"pos\"")
 msgid "input t ignored; type=\"pos\""
-msgstr "wejście 't' zignornowano; type=\"pos\""
+msgstr "wejście 't' zostało zignorowane; type=\"pos\""
 
+# Recommended/boot/R/bootfuns.q: 1829
+# warning("input t0 ignored: neither t nor L supplied")
 msgid "input t0 ignored: neither t nor L supplied"
-msgstr "wejście 't0' zignornowano: nie dostarczono ani 't' ani 'L'"
+msgstr "wejście 't0' zostało zignornowane: nie dostarczono ani 't' ani 'L'"
 
+# Recommended/boot/R/bootfuns.q: 1871
+# stop("bootstrap output matrix missing")
 msgid "bootstrap output matrix missing"
 msgstr "brakuje wyjściowej macierzy bootstrapu"
 
+# Recommended/boot/R/bootfuns.q: 1873
+# stop("use boot.ci for scalar parameters")
 msgid "use boot.ci for scalar parameters"
 msgstr "użyj 'boot.ci' dla skalarnych parametrów"
 
+# Recommended/boot/R/bootfuns.q: 1885
+# warning("unable to achieve requested overall error rate.")
 msgid "unable to achieve requested overall error rate."
 msgstr "nie można uzyskać zażądanego ogólnego wskaźnika błędu."
 
+# Recommended/boot/R/bootfuns.q: 2073
+# stop("unable to find multiplier for ", theta[i])
 msgid "unable to find multiplier for"
 msgstr "nie można znaleźć mnożnika dla"
 
+# Recommended/boot/R/bootfuns.q: 2077
+# stop("theta or lambda required")
 msgid "theta or lambda required"
 msgstr "theta lub lambda są wymagane"
 
+# Recommended/boot/R/bootfuns.q: 2105
+# stop("0 elements not allowed in q")
 msgid "0 elements not allowed in q"
 msgstr "0 elementów nie jest dozwolone w 'q'"
 
+# Recommended/boot/R/bootfuns.q: 2140
+# stop("bootstrap replicates must be supplied")
+# Recommended/boot/R/bootfuns.q: 2195
+# stop("bootstrap replicates must be supplied")
+# Recommended/boot/R/bootfuns.q: 2237
+# stop("bootstrap replicates must be supplied")
 msgid "bootstrap replicates must be supplied"
 msgstr "bootstrapowane repliki muszą zostać dostarczone"
 
+# Recommended/boot/R/bootfuns.q: 2144
+# stop("either boot.out or w must be specified.")
+# Recommended/boot/R/bootfuns.q: 2200
+# stop("either boot.out or w must be specified.")
+# Recommended/boot/R/bootfuns.q: 2241
+# stop("either boot.out or w must be specified.")
 msgid "either boot.out or w must be specified."
-msgstr "jedno z'boot.out' lub 'w' musi zostać dostarczone."
+msgstr "jedno z 'boot.out' lub 'w' musi zostać dostarczone."
 
+# Recommended/boot/R/bootfuns.q: 2275
+# warning("only first column of t used")
 msgid "only first column of t used"
 msgstr "tylko pierwsza kolumna 't' została użyta"
 
+# Recommended/boot/R/bootfuns.q: 2323
+# stop("invalid value of sim supplied")
 msgid "invalid value of sim supplied"
 msgstr "dostarczono niepoprawną wartość 'sim'"
 
+# Recommended/boot/R/bootfuns.q: 2325
+# stop("R and theta have incompatible lengths")
 msgid "R and theta have incompatible lengths"
 msgstr "R oraz theta mają niekompatybilne długości"
 
+# Recommended/boot/R/bootfuns.q: 2327
+# stop("R[1L] must be positive for frequency smoothing")
 msgid "R[1L] must be positive for frequency smoothing"
 msgstr "R[1L] musi być dodatnia dla wygładzania częstotliwości"
 
+# Recommended/boot/R/bootfuns.q: 2333
+# stop("R and alpha have incompatible lengths")
 msgid "R and alpha have incompatible lengths"
 msgstr "R oraz alpha mają niekompatybilne długości"
 
+# Recommended/boot/R/bootfuns.q: 2338
+# warning("extreme values used for quantiles")
 msgid "extreme values used for quantiles"
 msgstr "ekstremalne wartości użyte dla kwantyli"
 
+# Recommended/boot/R/bootfuns.q: 2347
+# stop("theta must be supplied if R[1L] = 0")
 msgid "theta must be supplied if R[1L] = 0"
 msgstr "theta musi zostać dostarczona jeśli R[1L] = 0"
 
+# Recommended/boot/R/bootfuns.q: 2349
+# warning("alpha ignored; R[1L]=0")
 msgid "alpha ignored; R[1L]=0"
-msgstr "alpha zignornowano; R[1L]=0"
+msgstr "alpha zostało zignornowane; R[1L]=0"
 
+# Recommended/boot/R/bootfuns.q: 2388
+# stop("control methods undefined when boot.out has weights")
 msgid "control methods undefined when boot.out has weights"
 msgstr "metody kontroli nie są zdefiniowane gdy 'boot.out' posiada wagi"
 
+# Recommended/boot/R/bootfuns.q: 2803
+# stop(paste("number of columns of A (", d,
+#                        ") not equal to length of u (", length(u),")",
+#                        sep=""))
 msgid "number of columns of A ("
 msgstr "liczba kolumn A ("
 
+# Recommended/boot/R/bootfuns.q: 2803
+# stop(paste("number of columns of A (", d,
+#                        ") not equal to length of u (", length(u),")",
+#                        sep=""))
 msgid ") not equal to length of u ("
 msgstr ") nie równa się długości 'u' ("
 
 msgid ")"
 msgstr ")"
 
+# Recommended/boot/R/bootfuns.q: 2808
+# stop("either A and u or K.adj and K2 must be supplied")
 msgid "either A and u or K.adj and K2 must be supplied"
-msgstr "albo A oraz u, albo K.adj oraz K2 muszą zostać dostarczone"
+msgstr "albo 'A' oraz 'u', albo 'K.adj' oraz 'K2' muszą zostać dostarczone"
 
+# Recommended/boot/R/bootfuns.q: 2920
+# stop("this type not implemented for Poisson")
 msgid "this type not implemented for Poisson"
-msgstr "ten typ nie jest zaimplementowany rozkładu Poisson'a"
+msgstr "ten typ nie jest zaimplementowany dla rozkładu Poisson'a"
 
+# Recommended/boot/R/bootfuns.q: 2954
+# stop("this type not implemented for Binary")
 msgid "this type not implemented for Binary"
-msgstr "ten typ nie jest zaimplementowany rozkładu Bernoulliego"
+msgstr "ten typ nie jest zaimplementowany dla rozkładu Bernoulliego"
 
+# Recommended/boot/R/bootfuns.q: 2982
+# stop("one of t or t0 required")
 msgid "one of t or t0 required"
-msgstr "jeden z t lub t0 jest wymagany"
+msgstr "jeden z 't' lub 't0' jest wymagany"
 
+# Recommended/boot/R/bootfuns.q: 2996
+# stop("function u missing")
 msgid "function u missing"
 msgstr "brakuje funkcji 'u'"
 
+# Recommended/boot/R/bootfuns.q: 2997
+# stop("u must be a function")
 msgid "u must be a function"
 msgstr "'u' musi być funkcją"
 
+# Recommended/boot/R/bootfuns.q: 3017
+# stop("unable to find range")
+# Recommended/boot/R/bootfuns.q: 3063
+# stop("unable to find range")
+# Recommended/boot/R/bootfuns.q: 3136
+# stop("unable to find range")
+# Recommended/boot/R/bootfuns.q: 3178
+# stop("unable to find range")
 msgid "unable to find range"
 msgstr "nie można znaleźć zakresu"
 
+# Recommended/boot/R/bootfuns.q: 3388
+# stop("R must be positive")
 msgid "R must be positive"
-msgstr "R musi być dodatnie"
+msgstr "'R' musi być dodatnie"
 
+# Recommended/boot/R/bootfuns.q: 3400
+# stop("invalid value of l")
 msgid "invalid value of l"
 msgstr "niepoprawna wartość 'l'"
 
+# Recommended/boot/R/bootfuns.q: 3430
+# stop("unrecognized value of sim")
 msgid "unrecognized value of sim"
 msgstr "nierozpoznana wartość 'sim'"
 
+# Recommended/boot/R/bootfuns.q: 3464
+# stop("multivariate time series not allowed")
 msgid "multivariate time series not allowed"
 msgstr "wielowymiarowe szeregi czasowe nie są dozwolone"
 
+# Recommended/boot/R/bootpracs.q: 70
+# stop("likelihood never exceeds ", lim)
 msgid "likelihood never exceeds"
 msgstr "funkcja wiarygodności nigdy nie przekracza"
 
+# Recommended/boot/R/bootpracs.q: 73
+# stop("likelihood exceeds ", lim, " at only one point")
 msgid "likelihood exceeds"
 msgstr "funkcja wiarygodności przekracza"
 
+# Recommended/boot/R/bootpracs.q: 73
+# stop("likelihood exceeds ", lim, " at only one point")
 msgid "at only one point"
 msgstr "tylko w jednym punkcie"
 
