@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.0 / boot 1.2-40\n"
+"Project-Id-Version: R 2.15.2 / boot 1.3-5\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
 "POT-Creation-Date: 2012-06-27 09:22\n"
-"PO-Revision-Date: 2009-10-11 13:03+0200\n"
+"PO-Revision-Date: 2012-09-10 15:14+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
 "Language: de\n"
@@ -37,14 +37,14 @@ msgid "dimensions of R and weights do not match"
 msgstr "Dimensionen von R und Gewichten stimmen nicht überein"
 
 msgid "arguments are not all the same type of \"boot\" object"
-msgstr ""
+msgstr "Argumente waren nicht all vom selben Typ des \"boot\" Objekts"
 
 # http://de.wikipedia.org/wiki/Resampling
 msgid "index array not defined for model-based resampling"
 msgstr "Index-Array nicht für Modell-basiertes Resampling definiert"
 
 msgid "boot.array not implemented for this object"
-msgstr "»boot.array« nicht für dieses Objekt implementiert"
+msgstr "»boot.array' nicht für dieses Objekt implementiert"
 
 # http://de.wikipedia.org/wiki/Bootstrapping_(Statistik)
 msgid "array cannot be found for parametric bootstrap"
@@ -81,7 +81,7 @@ msgid "BCa intervals not defined for time series bootstraps."
 msgstr "BCa-Intervalle nicht für Zeitserien-Bootstraps definiert."
 
 msgid "bootstrap output object or 't0' required"
-msgstr "Bootstrap-Ausgabeobjekt oder »t0« benötigt"
+msgstr "Bootstrap-Ausgabeobjekt oder't0' benötigt"
 
 msgid "unable to calculate var.t0"
 msgstr "var.t0 kann nicht berechnet werden"
@@ -98,7 +98,7 @@ msgid "estimated adjustment 'w' is infinite"
 msgstr "geschätzte Anpassung 'w' ist unendlich"
 
 msgid "estimated adjustment 'a' is NA"
-msgstr "geschätzte Einstellung »a« ist NA"
+msgstr "geschätzte Einstellung'a' ist NA"
 
 msgid "only first element of index used in abc.ci"
 msgstr "nur erstes Element des Index wird in abc.ci benutzt"
@@ -106,9 +106,8 @@ msgstr "nur erstes Element des Index wird in abc.ci benutzt"
 msgid "missing values not allowed in data"
 msgstr "fehlende Werte in Daten nicht erlaubt"
 
-#, fuzzy
 msgid "unknown value of 'sim'"
-msgstr "unbekannter Wert von »sim«"
+msgstr "unbekannter Wert von 'sim'"
 
 msgid "data must be a matrix with at least 2 columns"
 msgstr "Daten müssen eine Matrix mit mindestens 2 Spalten sein"
@@ -122,9 +121,8 @@ msgstr "nur die beiden ersten Elemente des Index werden benutzt"
 msgid "indices are incompatible with ncol(data)"
 msgstr "Indizes sind inkompatibel mit ncol(Daten)"
 
-#, fuzzy
 msgid "sim = \"weird\" cannot be used with coxph object"
-msgstr "sim=weird kann nicht mit coxph-Objekt benutzt werden"
+msgstr "sim = \"weird\" kann nicht mit coxph-Objekt benutzt werden"
 
 msgid "only columns"
 msgstr "nur die Spalten"
@@ -136,7 +134,7 @@ msgid "of data used"
 msgstr "der Daten werden benutzt"
 
 msgid "no coefficients in cox model -- model ignored"
-msgstr "keine Koeffizienten im »cox«-Modell -- Modell ignoriert"
+msgstr "keine Koeffizienten im 'cox'-Modell -- Modell ignoriert"
 
 msgid "F.surv is required but missing"
 msgstr "F.surv wird benötigt, fehlt jedoch"
@@ -159,19 +157,19 @@ msgid "no statistic or bootstrap object specified"
 msgstr "kein Statistik- oder Bootstrap-Objekt angegeben"
 
 msgid "'stype' must be \"w\" for type=\"inf\""
-msgstr "»stype« muss für type=»inf« »w« sein"
+msgstr "'stype' muss für type='inf' 'w' sein"
 
 msgid "input t ignored; type=\"inf\""
-msgstr "Eingabe t ignoriert. type=»inf«"
+msgstr "Eingabe t ignoriert. type='inf'"
 
 msgid "bootstrap object needed for type=\"reg\""
-msgstr "Bootstrap-Objekt für type=»reg« benötigt"
+msgstr "Bootstrap-Objekt für type='reg' benötigt"
 
 msgid "input t ignored; type=\"jack\""
-msgstr "Eingabe t ignoriert. type=»jack«"
+msgstr "Eingabe t ignoriert. type='jack'"
 
 msgid "input t ignored; type=\"pos\""
-msgstr "Eingabe t ignoriert. type=»pos«"
+msgstr "Eingabe t ignoriert. type='pos'"
 
 msgid "input t0 ignored: neither t nor L supplied"
 msgstr "Eingabe t0 ignoriert: Weder t noch L angegeben"
