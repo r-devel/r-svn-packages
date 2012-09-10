@@ -11,6 +11,9 @@ ISSUES:
 
 1.7-20
 
+* plot methods for smooths modified slightly to allow methods to return 
+  plot data directly, without a prediction matrix.
+
 * '...' now passd to termplot by plot.gam (thanks Andreas Eckner).
 
 * fix to null deviance computation for binomial when n>1, matrix response 

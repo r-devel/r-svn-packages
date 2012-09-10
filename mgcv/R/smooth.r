@@ -2422,7 +2422,7 @@ DuchonE <- function(x,xk,m=2,s=0,n=1) {
   E*signE
 }
 
-smooth.construct.ds.smooth.spec<-function(object,data,knots)
+smooth.construct.ds.smooth.spec <- function(object,data,knots)
 ## The constructor for a Duchon 1977 smoother
 { ## deal with possible extra arguments of "sos" type smooth
   xtra <- list()
