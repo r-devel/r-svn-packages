@@ -11,6 +11,8 @@ ISSUES:
 
 1.7-20
 
+* soap film smoother class added.
+
 * plot methods for smooths modified slightly to allow methods to return 
   plot data directly, without a prediction matrix.
 
