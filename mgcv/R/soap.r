@@ -153,6 +153,7 @@ crunch.knots <- function(G,knots,x0,y0,dx,dy)
 { nk <- length(knots$x)
   nx <- ncol(G);ny <- nrow(G)
   ki <- rep(0,nk)
+  if (nk==0) return(ki)
   for (k in 1:nk) {
     i <- round((knots$x[k]-x0)/dx)+1
     j <- round((knots$y[k]-y0)/dy)+1
@@ -170,7 +171,7 @@ crunch.knots <- function(G,knots,x0,y0,dx,dy)
 setup.soap <- function(bnd,knots,nmax=100,k=10,bndSpec=NULL) {
 ## setup soap film  smooth - nmax is number of grid cells for longest side
 ## it's important that grid cells are square!
-  require(mgcv);require(Matrix)
+  require(Matrix)
 
   ## check boundary...
 
@@ -279,7 +280,7 @@ soap.basis <- function(sd,x=NA,y=NA,film=TRUE,wiggly=TRUE,penalty=TRUE,plot=FALS
     ## Some constraints result in the need to add a constant
     ## to the field (e.g. sweep and drop)
     cnst <- attr(beta,"constant")
-    if (is.null(cnst)) cnst <- 0
+    if (is.null(cnst)) cnst <- 0 else cnst <- -cnst
   }
   offset.needed <- FALSE;
   nc <- length(sd$ki)*as.numeric(wiggly) ## number of interior knots 
@@ -751,7 +752,7 @@ plot.soap.film <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
 ## plot method function for soap.smooth terms
   if (scheme==3) {  
     if (is.null(P)) outline <- FALSE else outline <- TRUE   
-            P0 <- mgcv:::plot.mgcv.smooth(x=x,P=P,data=data,label=label,se1.mult=se1.mult,se2.mult=se2.mult,
+            P0 <- plot.mgcv.smooth(x=x,P=P,data=data,label=label,se1.mult=se1.mult,se2.mult=se2.mult,
                      partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,
                      pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,

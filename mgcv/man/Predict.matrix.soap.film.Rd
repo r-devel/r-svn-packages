@@ -44,9 +44,9 @@ the contribution from any known boundary conditions on the smooth.
 \seealso{\code{\link{smooth.construct.so.smooth.spec}}}
 
 \examples{
-## This is a lower level example based on the ?soap-package 
-## example. The basis and penalties are obtained explicitly 
-## and using `magic' is used as the fitting routine...
+## This is a lower level example. The basis and 
+## penalties are obtained explicitly 
+## and `magic' is used as the fitting routine...
 
 require(mgcv)
 set.seed(66)

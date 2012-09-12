@@ -13,9 +13,9 @@ closed boundary. Unless smoothing very heavily, the film is distorted towards
 the data. The smooths are designed not to smooth across boundary features (peninsulas,
 for example).
  
-The \code{so} version sets up the full smooth. The \code{sf} version setps up just the boundary interpolating 
+The \code{so} version sets up the full smooth. The \code{sf} version sets up just the boundary interpolating 
 soap film, while the \code{sw} version sets up the wiggly component of a soap film (zero on the boundary).
-The latter two are useful for forming tensor products with soap films. To use these to simply set up a basis, then call via the wrapper  \code{\link{smooth.construct2}} or \code{\link{smoothCon}}.
+The latter two are useful for forming tensor products with soap films, and can be used with \code{\link{gamm}} and \code{gamm4}. To use these to simply set up a basis, then call via the wrapper  \code{\link{smooth.construct2}} or \code{\link{smoothCon}}.
 }
 
 \usage{
@@ -72,15 +72,17 @@ Currently the code will not deal with more than one level of nesting of loops, o
 separate loops without an outer enclosing loop: if there are known boundary conditions 
 (identifiability constraints get awkward).
 
-Model set up, and prediction, involves evaluating basis functions which are defined as the solution to PDSe. The 
-PDEs are solved numerically on a grid using sparse matrix methods, with bilinear interpolation used to obtain 
-values at any location within the smoothing domain. The dimension of the PDE solution grid can be controlled 
-via element \code{nmax} of the list supplied as argument \code{xt} of \code{s} in a \code{gam} formula: it gives the number of cells to use on the longest grid side. 
-
 Note that the function \code{\link{locator}} provides a simple means for defining boundaries
 graphically, using something like \code{bnd <-as.data.frame(locator(type="l"))}, 
-after producing a plot of the domain of interest (right click to stop). 
+after producing a plot of the domain of interest (right click to stop). If the real boundary is 
+very complicated, it is probably better to use a simpler smooth boundary enclosing the true boundary, 
+which represents the major boundary features that you don't want to smooth across, but doesn't follow 
+every tiny detail.
 
+Model set up, and prediction, involves evaluating basis functions which are defined as the solution to PDEs. The 
+PDEs are solved numerically on a grid using sparse matrix methods, with bilinear interpolation used to obtain 
+values at any location within the smoothing domain. The dimension of the PDE solution grid can be controlled 
+via element \code{nmax} (default 200) of the list supplied as argument \code{xt} of \code{s} in a \code{gam} formula: it gives the number of cells to use on the longest grid side. 
 
 A little theory: the soap film smooth \eqn{f(x,y)}{f(x,y)} is defined as the solution of
 \deqn{f_{xx} + f_{yy} = g}{f_xx+f_yy = g}
@@ -215,9 +217,11 @@ names(fsb[[1]]) <- c("v","w")
 ind <- inSide(fsb,x=v,y=w) ## remove outsiders
 y <- y[ind];v <- v[ind]; w <- w[ind]; t <- t[ind] 
 n <- length(y)
-y <- y + rnorm(n)*.0 ## add noise
-names(fsb[[1]]) <- c("v","w")
+y <- y + rnorm(n)*.05 ## add noise
+knots <- data.frame(v=rep(seq(-.5,3,by=.5),4),
+                    w=rep(c(-.6,-.3,.3,.6),rep(8,4)))
 
+## notice NULL element in 'xt' list - to indicate no xt object for "cr" basis...
 bk <- gam(y~ 
  te(v,w,t,bs=c("sf","cr"),k=c(25,4),d=c(2,1),xt=list(list(bnd=fsb,nmax=nmax),NULL))+
  te(v,w,t,bs=c("sw","cr"),k=c(25,4),d=c(2,1),xt=list(list(bnd=fsb,nmax=nmax),NULL))
