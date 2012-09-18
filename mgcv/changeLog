@@ -45,7 +45,7 @@ ISSUES:
   smooth terms with a zero dimensional penalty null space (including 
   random effects). The new scheme has been tested by full replication 
   of the simulation study in Scheipl (2008,CSDA) to compare it to the best 
-  method there-in. In these tests it is at least as powerful as the best 
+  method therein. In these tests it is at least as powerful as the best 
   method given there, and usually indistinguishable, but it gives slightly 
   too low null p-values when smoothing parameters are very poorly identified. 
   Note that the new p-values can not be computed from old fitted gam objects.
@@ -56,7 +56,7 @@ ISSUES:
   be selected.
 
 * "tp" smooths can now drop the null space from their construction via
-  a vector m argument, to allow testing against polynomial in the null space.
+  a vector m argument, to allow testing against polynomials in the null space.
 
 * Fix of vicious little bug in gamm tensor product handling that could have 
   a te term pick up the wrong model matrix and fail. 

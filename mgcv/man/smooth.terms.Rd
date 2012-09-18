@@ -64,7 +64,7 @@ for use in tensor product smooths.}
 geographic units (districts of a town, for example). In this case a simple smoothing penalty is constructed
 based on the neighbourhood structure of the geographic units. See \code{\link{mrf}} for details and an example.}
 
-\item{Soap film smooths}{\code{bs="so"} (actually not single penaltied, but \code{bs="sw"} and \code{bs="sf"} allows splitting into single penalty components for use in tensor product smoothing). These are finite area smoothers designed to smooth within complicated geographical boundaries, where the boundary matters (e.g. you do not want to smooth across boundary features). See \code{\link{soap.film}} for details.}
+\item{Soap film smooths}{\code{bs="so"} (actually not single penaltied, but \code{bs="sw"} and \code{bs="sf"} allows splitting into single penalty components for use in tensor product smoothing). These are finite area smoothers designed to smooth within complicated geographical boundaries, where the boundary matters (e.g. you do not want to smooth across boundary features). See \code{\link{soap}} for details.}
 
 }
 
@@ -102,8 +102,10 @@ class (see \code{\link{factor.smooth.interaction}}) is available for the case in
 
 }
 
-\seealso{\code{\link{s}}, \code{\link{te}}, \code{\link{t2}} \code{\link{tprs}}, \code{\link{cubic.regression.spline}},
-\code{\link{p.spline}}, \code{\link{adaptive.smooth}}, \code{\link{user.defined.smooth}}}
+\seealso{\code{\link{s}}, \code{\link{te}}, \code{\link{t2}} \code{\link{tprs}},\code{\link{Duchon.spline}}, 
+\code{\link{cubic.regression.spline}},\code{\link{p.spline}}, \code{\link{mrf}}, code{\link{soap}}, 
+code{\link{Spherical.Spline}}, \code{\link{adaptive.smooth}}, \code{\link{user.defined.smooth}},
+code{\link{smooth.construct.re.smooth.spec}}, code{\link{factor.smooth.interaction}}}
 
 \author{
 Simon Wood <simon.wood@r-project.org>
