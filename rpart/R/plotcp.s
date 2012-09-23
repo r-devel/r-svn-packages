@@ -5,11 +5,11 @@ plotcp <- function(x, minline = TRUE, lty = 3, col = 1,
 		   upper = c("size", "splits", "none"), ...)
 {
   dots <- list(...)
-  if(!inherits(x, "rpart")) stop("Not legitimate rpart object")
+  if(!inherits(x, "rpart")) stop("Not legitimate 'rpart' object")
   upper <- match.arg(upper)
   p.rpart <- x$cptable
   if(ncol(p.rpart) < 5L)
-    stop("cptable does not contain cross-validation results")
+    stop("'cptable' does not contain cross-validation results")
   xstd <- p.rpart[, 5L]
   xerror <- p.rpart[, 4L]
   nsplit <- p.rpart[, 2L]

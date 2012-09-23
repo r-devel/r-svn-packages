@@ -2,7 +2,7 @@
 # print out the cptable, along with some summary of the tree
 printcp <- function(x, digits=getOption("digits")-2)
 {
-    if (!inherits(x, 'rpart')) stop ("Must be an rpart x")
+    if (!inherits(x, 'rpart')) stop ("'x' must be an 'rpart' object")
     cat(switch(x$method,anova = "\nRegression tree:\n" ,
 			class = "\nClassification tree:\n" ,
 			poisson="\nRates regression tree:\n",

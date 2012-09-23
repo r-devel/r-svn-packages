@@ -1,7 +1,7 @@
 #SCCS  @(#)summary.rpart.s	1.18 07/05/01
 summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 {
-    if(!inherits(object, "rpart")) stop("Not legitimate rpart object")
+    if(!inherits(object, "rpart")) stop("Not legitimate 'rpart' object")
 
     # If this is an older-style rpart object, convert it
     #  either way, rename it to "x" to save typing

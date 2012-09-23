@@ -5,11 +5,11 @@
 rpconvert <- function(x)
 {
     if (!inherits(x, "rpart"))
-        stop("x does not appear to be an rpart object")
+        stop("x does not appear to be an 'rpart' object")
     ff <- x$frame
     if (is.null(ff$splits)) {
         # this appears to be a new style one already
-	warning("x not converted")
+	warning("'x' not converted")
 	return(x)
     }
     ff$splits <- NULL

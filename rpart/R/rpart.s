@@ -86,7 +86,8 @@ rpart <- function(formula, data, weights, subset,
 	controlargs <- names(formals(rpart.control))  #legal arg names
 	indx <- match(names(extraArgs), controlargs, nomatch=0)
 	if (any(indx==0))
-            stop("Argument ", names(extraArgs)[indx==0], "not matched")
+            stop(gettextf("Argument %s not matched", names(extraArgs)[indx==0]),
+                 domain = NA)
     }
 
     controls <- rpart.control(...)
@@ -263,7 +264,7 @@ rpart <- function(formula, data, weights, subset,
     else if (init$numresp >1L) frame$yval2 <- rp$dnode[,-(1L:3L), drop = FALSE]
 
     if (is.null(init$summary))
-	    stop("Initialization routine is missing the summary function")
+	    stop("Initialization routine is missing the 'summary' function")
     if (is.null(init$print))
 	    functions <- list(summary=init$summary)
     else    functions <- list(summary=init$summary, print=init$print)

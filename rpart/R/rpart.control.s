@@ -5,11 +5,11 @@ rpart.control <-
 	   surrogatestyle =0, maxdepth=30, ... ) {
 
 	if (maxcompete<0) {
-	    warning("The value of maxcompete supplied is <0; the value 0 was used instead")
+	    warning("The value of 'maxcompete' supplied is < 0; the value 0 was used instead")
 	    maxcompete <-0
 	    }
 	if (any(xval<0)) {
-	    warning("The value of xval supplied is <0; the value 0 was used instead")
+	    warning("The value of 'xval' supplied is < 0; the value 0 was used instead")
 	    xval <-0
 	    }
 	if (maxdepth > 30) stop("Maximum depth is 30")
@@ -18,8 +18,7 @@ rpart.control <-
 	if (missing(minsplit) && !missing(minbucket)) minsplit <- minbucket*3
 
 	if((usesurrogate < 0) || (usesurrogate > 2)) {
-	    warning("The value of usesurrogate supplied was out of range," ,
-		    "the default value of 2 is used instead.")
+	    warning("The value of 'usesurrogate' supplied was out of range, the default value of 2 is used instead.")
 	    usesurrogate <- 2
 	    }
 	if((surrogatestyle < 0) || (surrogatestyle > 1)) {

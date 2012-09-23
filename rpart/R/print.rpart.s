@@ -1,7 +1,7 @@
 #SCCS  @(#)print.rpart.s	1.15 06/06/01
 print.rpart <- function(x, minlength=0, spaces=2, cp,
                digits=getOption("digits"), ...) {
-    if(!inherits(x, "rpart")) stop("Not legitimate rpart object")
+    if(!inherits(x, "rpart")) stop("Not legitimate 'rpart' object")
     if (!is.null(x$frame$splits)) x <- rpconvert(x)  #help for old objects
 
     if (!missing(cp)) x <- prune.rpart(x, cp=cp)

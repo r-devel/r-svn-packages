@@ -2,7 +2,7 @@
 residuals.rpart <- function(object, type = c("usual", "pearson", "deviance"), ...)
     {
     if(!inherits(object, "rpart"))
-	    stop("Not legitimate rpart object")
+	    stop("Not legitimate 'rpart' object")
 
     y <- object$y
     if (is.null(y)) y <- model.extract(model.frame(object), "response")

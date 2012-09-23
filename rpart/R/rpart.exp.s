@@ -13,7 +13,7 @@
 rpart.exp <- function(y, offset, parms, wt) {
 
     if (!inherits(y, "Surv"))
-	   stop("Response must be a survival object - use the Surv() function")
+	   stop("Response must be a 'survival' object - use the 'Surv()' function")
 
     ny <- ncol(y)
     n  <- nrow(y)
@@ -120,7 +120,8 @@ rpart.exp <- function(y, offset, parms, wt) {
         parmsNames <- c("method", "shrink")
         indx <- pmatch(names(parms), parmsNames, nomatch= 0L)
         if (any(indx==0L))
-            stop("'parms' component not matched: ", names(parms)[indx==0L])
+            stop(gettextf("'parms' component not matched: %s",
+                          names(parms)[indx == 0L]), domain = NA)
 	else names(parms) <- parmsNames[indx]
 
 	if (is.null(parms$method)) method <- 1L

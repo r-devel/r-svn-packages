@@ -9,7 +9,7 @@
 #
 formatg <- function(x, digits= unlist(options('digits')),
 		         format= paste("%.", digits, "g", sep='')) {
-    if (!is.numeric(x)) stop("x must be a numeric vector")
+    if (!is.numeric(x)) stop("'x' must be a numeric vector")
 
     n <- length(x)
     #

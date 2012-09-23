@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-53\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-27 09:22\n"
+"POT-Creation-Date: 2012-09-23 17:50\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -17,7 +17,8 @@ msgstr ""
 
 # Recommended/rpart/R/formatg.s: 12
 # stop("x must be a numeric vector")
-msgid "x must be a numeric vector"
+#, fuzzy
+msgid "'x' must be a numeric vector"
 msgstr "'x' musi być wektorem liczbowym"
 
 # Recommended/rpart/R/labels.rpart.s: 68
@@ -37,7 +38,8 @@ msgstr ""
 # stop("Not legitimate rpart object")
 # Recommended/rpart/R/meanvar.rpart.s: 7
 # stop("Not legitimate rpart object")
-msgid "Not legitimate rpart object"
+#, fuzzy
+msgid "Not legitimate 'rpart' object"
 msgstr "Niepoprawny obiekt 'rpart'"
 
 # Recommended/rpart/R/meanvar.rpart.s: 9
@@ -56,7 +58,8 @@ msgstr "Brak poprawnego drzewa"
 # stop("Not an rpart object")
 # Recommended/rpart/R/plot.rpart.s: 4
 # stop("Not an rpart object")
-msgid "Not an rpart object"
+#, fuzzy
+msgid "Not an 'rpart' object"
 msgstr "to nie jest obiekt 'rpart'"
 
 # Recommended/rpart/R/text.rpart.s: 14
@@ -68,7 +71,8 @@ msgstr "dopasowanie nie jest drzewem tylko korzeniem"
 
 # Recommended/rpart/R/plotcp.s: 12
 # stop("cptable does not contain cross-validation results")
-msgid "cptable does not contain cross-validation results"
+#, fuzzy
+msgid "'cptable' does not contain cross-validation results"
 msgstr "'cptable' nie zawiera wyników krzyżowej walidacji"
 
 # Recommended/rpart/R/pred.rpart.s: 16
@@ -78,13 +82,17 @@ msgstr "Drzewo posiada zmienne nie znalezione w nowych danych"
 
 # Recommended/rpart/R/predict.rpart.s: 43
 # stop("Invalid prediction for rpart object")
-msgid "Invalid prediction for rpart object"
+#, fuzzy
+msgid "Invalid prediction for 'rpart' object"
 msgstr "Niepoprawna predykcja dla obiektu \"rpart\""
 
-# Recommended/rpart/R/printcp.s: 5
-# stop ("Must be an rpart x")
-msgid "Must be an rpart x"
-msgstr "Potrzeba 'x' typu 'rpart'"
+# Recommended/rpart/R/snip.rpart.s: 6
+# stop("Not an rpart object")
+# Recommended/rpart/R/plot.rpart.s: 4
+# stop("Not an rpart object")
+#, fuzzy
+msgid "'x' must be an 'rpart' object"
+msgstr "to nie jest obiekt 'rpart'"
 
 # Recommended/rpart/R/residuals.rpart.s: 12
 # stop("Do not know about this type of residual")
@@ -107,7 +115,8 @@ msgstr "Lista parametrów musi mieć nazwy"
 # stop("'parms' component not matched: ", names(parms)[indx == 0L])
 # Recommended/rpart/R/rpart.class.s: 17
 # stop("'parms' component not matched: ", names(parms)[temp==0L])
-msgid "'parms' component not matched:"
+#, fuzzy
+msgid "'parms' component not matched: %s"
 msgstr "komponent 'parms' nie zgadza się z:"
 
 # Recommended/rpart/R/rpart.class.s: 23
@@ -157,12 +166,14 @@ msgstr "Argument parametru musi być listą"
 
 # Recommended/rpart/R/rpart.control.s: 8
 # warning("The value of maxcompete supplied is <0; the value 0 was used instead")
-msgid "The value of maxcompete supplied is <0; the value 0 was used instead"
+#, fuzzy
+msgid "The value of 'maxcompete' supplied is < 0; the value 0 was used instead"
 msgstr "Wartość dostarczonego 'maxcompete' <0; zamiast niego użyto 0"
 
 # Recommended/rpart/R/rpart.control.s: 12
 # warning("The value of xval supplied is <0; the value 0 was used instead")
-msgid "The value of xval supplied is <0; the value 0 was used instead"
+#, fuzzy
+msgid "The value of 'xval' supplied is < 0; the value 0 was used instead"
 msgstr "Dostarczona wartość 'xval' <0; zamiast niego użyto 0"
 
 # Recommended/rpart/R/rpart.control.s: 15
@@ -178,14 +189,11 @@ msgstr "Maksymalna głębokość musi być równa przynajmniej 1"
 # Recommended/rpart/R/rpart.control.s: 21
 # warning("The value of usesurrogate supplied was out of range," ,
 # 		    "the default value of 2 is used instead.")
-msgid "The value of usesurrogate supplied was out of range,"
+#, fuzzy
+msgid ""
+"The value of 'usesurrogate' supplied was out of range, the default value of "
+"2 is used instead."
 msgstr "Dostarczona wartość 'usesurrogate' była poza zakesem,"
-
-# Recommended/rpart/R/rpart.control.s: 21
-# warning("The value of usesurrogate supplied was out of range," ,
-# 		    "the default value of 2 is used instead.")
-msgid "the default value of 2 is used instead."
-msgstr "wzamian użyto domyślnej wartości 2."
 
 # Recommended/rpart/R/rpart.control.s: 26
 # warning("The value of surrogatestyle supplied was out of range,",
@@ -201,7 +209,8 @@ msgstr "wzamian użyto domyślnej wartości 0."
 
 # Recommended/rpart/R/rpart.exp.s: 16
 # stop("Response must be a survival object - use the Surv() function")
-msgid "Response must be a survival object - use the Surv() function"
+#, fuzzy
+msgid "Response must be a 'survival' object - use the 'Surv()' function"
 msgstr "Zmienna zależna musi być obiektem 'survival' - użyj funkcji 'Surv()'"
 
 # Recommended/rpart/R/rpart.exp.s: 22
@@ -259,12 +268,8 @@ msgstr "Niepoprawna metoda"
 
 # Recommended/rpart/R/rpart.s: 89
 # stop("Argument ", names(extraArgs)[indx==0], "not matched")
-msgid "Argument"
-msgstr "Argument"
-
-# Recommended/rpart/R/rpart.s: 89
-# stop("Argument ", names(extraArgs)[indx==0], "not matched")
-msgid "not matched"
+#, fuzzy
+msgid "Argument %s not matched"
 msgstr "nie został dopasowany"
 
 # Recommended/rpart/R/rpart.s: 118
@@ -290,7 +295,8 @@ msgstr "Wektor kosztów musi być dodatni"
 
 # Recommended/rpart/R/rpart.s: 266
 # stop("Initialization routine is missing the summary function")
-msgid "Initialization routine is missing the summary function"
+#, fuzzy
+msgid "Initialization routine is missing the 'summary' function"
 msgstr "Brak funkcji podsumowującej w procedurze inicjalizacji"
 
 # Recommended/rpart/R/rpartcallback.s: 8
@@ -300,62 +306,72 @@ msgstr "Metody użytkownika muszą mieć 3 funkcje"
 
 # Recommended/rpart/R/rpartcallback.s: 10
 # stop("User written method does not contain an init function")
-msgid "User written method does not contain an init function"
+#, fuzzy
+msgid "User written method does not contain an 'init' function"
 msgstr "Metoda użytkownika nie zawiera funkcji inicjalizującej"
 
 # Recommended/rpart/R/rpartcallback.s: 12
 # stop("User written method does not contain a split function")
-msgid "User written method does not contain a split function"
+#, fuzzy
+msgid "User written method does not contain a 'split' function"
 msgstr "Metod użytkownika nie zawiera funkcji 'split'"
 
 # Recommended/rpart/R/rpartcallback.s: 14
 # stop("User written method does not contain an eval function")
-msgid "User written method does not contain an eval function"
+#, fuzzy
+msgid "User written method does not contain an 'eval' function"
 msgstr "Metoda użytkownika nie zawiera funkcji 'eval'"
 
 # Recommended/rpart/R/rpartcallback.s: 37
 # stop("User eval function returned invalid label")
 # Recommended/rpart/R/rpartcallback.s: 69
 # stop("User eval function returned invalid label")
-msgid "User eval function returned invalid label"
+#, fuzzy
+msgid "User 'eval' function returned invalid label"
 msgstr "Funkcja użytkownika 'eval' zwróciła niepoprawną etykietę"
 
 # Recommended/rpart/R/rpartcallback.s: 39
 # stop("User eval function returned invalid deviance")
 # Recommended/rpart/R/rpartcallback.s: 71
 # stop("User eval function returned invalid deviance")
-msgid "User eval function returned invalid deviance"
+#, fuzzy
+msgid "User 'eval' function returned invalid deviance"
 msgstr "Funkcja użytkownika 'eval' zwróciła niepoprawne odchylenie"
 
 # Recommended/rpart/R/rpartcallback.s: 50
 # stop("Invalid return from categorical split fcn")
 # Recommended/rpart/R/rpartcallback.s: 83
 # stop("Invalid return from categorical split fcn")
-msgid "Invalid return from categorical split fcn"
+#, fuzzy
+msgid "Invalid return from categorical 'split' fcn"
 msgstr "Niepoprawny wynik z kategorycznej funkcji 'split'"
 
 # Recommended/rpart/R/rpartcallback.s: 57
 # stop("User split function returned invalid goodness")
 # Recommended/rpart/R/rpartcallback.s: 90
 # stop("User split function returned invalid goodness")
-msgid "User split function returned invalid goodness"
+#, fuzzy
+msgid "User 'split' function returned invalid goodness"
 msgstr "Funkcja użytkownika 'split' zwróciła niepoprawną dobroć"
 
 # Recommended/rpart/R/rpartcallback.s: 59
 # stop("User split function returned invalid direction")
 # Recommended/rpart/R/rpartcallback.s: 92
 # stop("User split function returned invalid direction")
-msgid "User split function returned invalid direction"
+#, fuzzy
+msgid "User 'split' function returned invalid direction"
 msgstr "Funkcja użytkownika 'split' zwróciła niepoprawny kierunek"
 
 # Recommended/rpart/R/rpconvert.s: 8
 # stop("x does not appear to be an rpart object")
-msgid "x does not appear to be an rpart object"
+#, fuzzy
+msgid "x does not appear to be an 'rpart' object"
 msgstr "'x' nie wygląda na obiekt \"rpart\""
 
 # Recommended/rpart/R/rpconvert.s: 12
 # warning("x not converted")
-msgid "x not converted"
+#, fuzzy
+msgid "'x' not converted"
 msgstr "'x' nie został przekształcony"
 
 # Recommended/rpart/R/rsq.rpart.s: 8
@@ -367,15 +383,11 @@ msgstr "Brak poprawnego 'rpart'"
 
 # Recommended/rpart/R/snip.rpart.s: 20
 # warning("Nodes ", toss[toss.idx==0L], " are not in this tree")
-msgid "Nodes"
-msgstr "Węzły"
-
-# Recommended/rpart/R/snip.rpart.s: 20
-# warning("Nodes ", toss[toss.idx==0L], " are not in this tree")
 # Recommended/rpart/R/zzz.R: 25
 # warning("supplied nodes ", paste(bad, collapse = ","),
 #                 " are not in this tree")
-msgid "are not in this tree"
+#, fuzzy
+msgid "Nodes %s are not in this tree"
 msgstr "nie są w tym drzewie"
 
 # Recommended/rpart/R/text.rpart.s: 24
@@ -388,20 +400,51 @@ msgstr "argument 'label' jest aktualnie nieużyty"
 msgid "Invalid fit object"
 msgstr "niepoprawny obiekt dopasowania"
 
+# Recommended/rpart/R/snip.rpart.s: 20
+# warning("Nodes ", toss[toss.idx==0L], " are not in this tree")
+# Recommended/rpart/R/zzz.R: 25
+# warning("supplied nodes ", paste(bad, collapse = ","),
+#                 " are not in this tree")
+#, fuzzy
+msgid "supplied nodes %s are not in this tree"
+msgstr "nie są w tym drzewie"
+
 # Recommended/rpart/R/zzz.R: 25
 # warning("supplied nodes ", paste(bad, collapse = ","),
 #                 " are not in this tree")
 # Recommended/rpart/R/zzz.R: 29
 # warning("supplied nodes ",
 #                 paste(good[leaves], collapse = ","), " are leaves")
-msgid "supplied nodes"
+#, fuzzy
+msgid "supplied nodes %s are leaves"
 msgstr "dostarczone węzły"
 
-msgid ","
-msgstr ","
+# Recommended/rpart/R/printcp.s: 5
+# stop ("Must be an rpart x")
+#~ msgid "Must be an rpart x"
+#~ msgstr "Potrzeba 'x' typu 'rpart'"
+
+# Recommended/rpart/R/rpart.control.s: 21
+# warning("The value of usesurrogate supplied was out of range," ,
+# 		    "the default value of 2 is used instead.")
+#~ msgid "the default value of 2 is used instead."
+#~ msgstr "wzamian użyto domyślnej wartości 2."
+
+# Recommended/rpart/R/rpart.s: 89
+# stop("Argument ", names(extraArgs)[indx==0], "not matched")
+#~ msgid "Argument"
+#~ msgstr "Argument"
+
+# Recommended/rpart/R/snip.rpart.s: 20
+# warning("Nodes ", toss[toss.idx==0L], " are not in this tree")
+#~ msgid "Nodes"
+#~ msgstr "Węzły"
+
+#~ msgid ","
+#~ msgstr ","
 
 # Recommended/rpart/R/zzz.R: 29
 # warning("supplied nodes ",
 #                 paste(good[leaves], collapse = ","), " are leaves")
-msgid "are leaves"
-msgstr "są liśćmi"
+#~ msgid "are leaves"
+#~ msgstr "są liśćmi"

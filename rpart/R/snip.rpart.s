@@ -3,7 +3,7 @@
 #  This routine "throws away" branches
 #
 snip.rpart <- function(x, toss) {
-    if (!inherits(x, 'rpart')) stop("Not an rpart object")
+    if (!inherits(x, 'rpart')) stop("Not an 'rpart' object")
 
     if (missing(toss) || length(toss)==0L) {
         toss <- snip.rpart.mouse(x)
@@ -17,7 +17,8 @@ snip.rpart <- function(x, toss) {
     toss <- unique(toss)
     toss.idx <- match(toss, id, nomatch=0) #the rows of the named nodes
     if (any(toss.idx ==0L)) {
-	warning("Nodes ", toss[toss.idx==0L], " are not in this tree")
+        warning(gettext("Nodes %s are not in this tree", toss[toss.idx==0L]),
+                domain = NA)
 	toss <- toss[toss.idx>0L]
         toss.idx <- toss.idx[toss.idx>0L]
         }

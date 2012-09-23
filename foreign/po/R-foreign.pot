@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: foreign 0.8-50\n"
-"POT-Creation-Date: 2012-07-14 16:31\n"
+"POT-Creation-Date: 2012-09-23 17:34\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -13,7 +13,7 @@ msgstr ""
 msgid "only one file"
 msgstr ""
 
-msgid "file must be character"
+msgid "'file' must be character"
 msgstr ""
 
 msgid "internal error - illegal S code value"
@@ -22,13 +22,7 @@ msgstr ""
 msgid "not an S object"
 msgstr ""
 
-msgid "S mode"
-msgstr ""
-
-msgid "(near byte offset"
-msgstr ""
-
-msgid ") not supported"
+msgid "S mode %s (near byte offset %s) not supported"
 msgstr ""
 
 msgid "Argument 'file' must be a character string or connection."
@@ -49,19 +43,10 @@ msgstr ""
 msgid "Invalid type specification."
 msgstr ""
 
-msgid "Field name:"
-msgstr ""
-
-msgid "changed to:"
+msgid "Field name: %s changed to: %s"
 msgstr ""
 
 msgid "cannot handle matrix/array columns"
-msgstr ""
-
-msgid "data frame contains columns of unsupported class(es)"
-msgstr ""
-
-msgid ","
 msgstr ""
 
 msgid "character column %d will be truncated to %d bytes"
@@ -76,7 +61,7 @@ msgstr ""
 msgid "NA in scale"
 msgstr ""
 
-msgid "cannot handle unknown type"
+msgid "cannot handle unknown type %s"
 msgstr ""
 
 msgid "'missing.type' only applicable to version >= 8 files"
@@ -85,13 +70,7 @@ msgstr ""
 msgid "cannot read factor labels from Stata 5 files"
 msgstr ""
 
-msgid "value labels ("
-msgstr ""
-
-msgid ") for"
-msgstr ""
-
-msgid "are missing"
+msgid "value labels (%s) for %s are missing"
 msgstr ""
 
 msgid "The object \"dataframe\" must have class data.frame"
@@ -127,10 +106,10 @@ msgstr ""
 msgid "sectionname %s not found"
 msgstr ""
 
-msgid "SAS return code was"
+msgid "SAS return code was %d"
 msgstr ""
 
-msgid "re-encoding from"
+msgid "re-encoding from %s"
 msgstr ""
 
 msgid "missingness type %s is not handled"
@@ -145,10 +124,7 @@ msgstr ""
 msgid "Cannot handle character variables longer than 255"
 msgstr ""
 
-msgid "Cannot uniquely abbreviate the variable names to"
-msgstr ""
-
-msgid "or fewer characters"
+msgid "Cannot uniquely abbreviate the variable names to %d or fewer characters"
 msgstr ""
 
 msgid "Cannot uniquely abbreviate format names to conform to"
@@ -159,3 +135,8 @@ msgstr ""
 
 msgid "Some variable names were abbreviated or otherwise altered."
 msgstr ""
+
+msgid        "data frame contains columns of unsupported class %s"
+msgid_plural "data frame contains columns of unsupported classes %s"
+msgstr[0]    ""
+msgstr[1]    ""

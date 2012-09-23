@@ -40,7 +40,7 @@ function(object, newdata = list(),
 	pred <- frame$yval2[where, 1L + nclass + 1L:nclass, drop = FALSE]
 	dimnames(pred) <- list(names(where), ylevels)
     }
-    else stop("Invalid prediction for rpart object")
+    else stop("Invalid prediction for 'rpart' object")
 
     # Expand out the missing values in the result
     # But only if operating on the original dataset

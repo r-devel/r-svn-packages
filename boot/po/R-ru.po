@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-06-27 09:22\n"
+"POT-Creation-Date: 2012-09-23 18:13\n"
 "PO-Revision-Date: 2009-10-15 02:26-0500\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
 "Language-Team: Russian\n"
@@ -28,16 +28,20 @@ msgstr ""
 "'simple=TRUE' правильно только для 'sim=\"ordinary\", stype=\"i\", n=0, "
 "поэтому пропускается"
 
-msgid "no data in call to boot"
+#, fuzzy
+msgid "no data in call to 'boot'"
 msgstr "нет данных в вызове boot"
 
-msgid "negative value of m supplied"
+#, fuzzy
+msgid "negative value of 'm' supplied"
 msgstr "указано отрицательное значение m"
 
-msgid "length of m incompatible with strata"
+#, fuzzy
+msgid "length of 'm' incompatible with 'strata'"
 msgstr "длина m несовместима со слоем"
 
-msgid "dimensions of R and weights do not match"
+#, fuzzy
+msgid "dimensions of 'R' and 'weights' do not match"
 msgstr "измерения R и веса не соответствуют"
 
 msgid "arguments are not all the same type of \"boot\" object"
@@ -52,25 +56,31 @@ msgstr "'boot.array' для этого объекта не разработан"
 msgid "array cannot be found for parametric bootstrap"
 msgstr "не могу найти матрицу для параметрического бутстрепа"
 
-msgid "distribution not supported using normal instead"
+#, fuzzy
+msgid "%s distribution not supported using normal instead"
 msgstr "распределение не поддерживается, использую нормальное"
 
-msgid "only first element of index used"
+#, fuzzy
+msgid "only first element of 'index' used"
 msgstr "использован лишь первый элемент индекса"
 
-msgid "K outside allowable range"
+#, fuzzy
+msgid "'K' outside allowable range"
 msgstr "K вне допустимого промежутка"
 
-msgid "K has been set to"
+#, fuzzy
+msgid "'K' has been set to %f"
 msgstr "K установлен в"
 
-msgid "t and t0 must be supplied together"
+#, fuzzy
+msgid "'t' and 't0' must be supplied together"
 msgstr "t и t0 должны быть указаны вместе"
 
 msgid "index out of bounds; minimum index only used."
 msgstr "индекс вне границ; использован лишь минимальный индекс."
 
-msgid "t must of length"
+#, fuzzy
+msgid "'t' must of length %d"
 msgstr "t должен быть длиной"
 
 msgid "bootstrap variances needed for studentized intervals"
@@ -82,7 +92,8 @@ msgstr "BCa интервалы не определены для бутстрепа временных рядов."
 msgid "bootstrap output object or 't0' required"
 msgstr "требуется объект вывода бутстрепа либо 't0'"
 
-msgid "unable to calculate var.t0"
+#, fuzzy
+msgid "unable to calculate 'var.t0'"
 msgstr "не могу посчитать var.t0"
 
 msgid "extreme order statistics used as endpoints"
@@ -97,10 +108,12 @@ msgstr "предполагаемая корректировка 'w' -- infinite"
 msgid "estimated adjustment 'a' is NA"
 msgstr "предполагаемая корректировка 'a' -- это NA"
 
-msgid "only first element of index used in abc.ci"
+#, fuzzy
+msgid "only first element of 'index' used in 'abc.ci'"
 msgstr "лишь первый элемент индекса использован в abc.ci"
 
-msgid "missing values not allowed in data"
+#, fuzzy
+msgid "missing values not allowed in 'data'"
 msgstr "пропущенные значения в данных не разрешены"
 
 #, fuzzy
@@ -113,35 +126,36 @@ msgstr "данные должны быть матрицей по меньшей мере из 2 колонок"
 msgid "index must contain 2 elements"
 msgstr "индекс должен содержать 2 элемента"
 
-msgid "only first 2 elements of index used"
+#, fuzzy
+msgid "only first 2 elements of 'index' used"
 msgstr "лишь первые 2 элемента индекса использованы"
 
-msgid "indices are incompatible with ncol(data)"
+#, fuzzy
+msgid "indices are incompatible with 'ncol(data)'"
 msgstr "индексы несовместимы с ncol(data)"
 
 #, fuzzy
-msgid "sim = \"weird\" cannot be used with coxph object"
+msgid "sim = \"weird\" cannot be used with a 'coxph' object"
 msgstr "sim=weird не может быть использован для объекта 'coxph'"
 
-msgid "only columns"
-msgstr "только колонки"
+#, fuzzy
+msgid "only columns %s and %s of data used"
+msgstr "использована только первая колонка t"
 
-msgid "and"
-msgstr "и"
-
-msgid "of data used"
-msgstr "данных использованы"
-
-msgid "no coefficients in cox model -- model ignored"
+#, fuzzy
+msgid "no coefficients in Cox model -- model ignored"
 msgstr "в модели 'cox' нет коэффициентов -- модель пропущена"
 
-msgid "F.surv is required but missing"
+#, fuzzy
+msgid "'F.surv' is required but missing"
 msgstr "F.surv требуется, но пропущен"
 
-msgid "G.surv is required but missing"
+#, fuzzy
+msgid "'G.surv' is required but missing"
 msgstr "G.surv требуется, но пропущен"
 
-msgid "strata of wrong length"
+#, fuzzy
+msgid "'strata' of wrong length"
 msgstr "слой неправильной длины"
 
 msgid "influence values cannot be found from a parametric bootstrap"
@@ -156,82 +170,94 @@ msgstr "нет статистики или указан бутстреп-объект"
 msgid "'stype' must be \"w\" for type=\"inf\""
 msgstr "'stype' должен быть \"w\" для type=\"inf\""
 
-msgid "input t ignored; type=\"inf\""
+#, fuzzy
+msgid "input 't' ignored; type=\"inf\""
 msgstr "ввод t пропущен; type=\"inf\""
 
 msgid "bootstrap object needed for type=\"reg\""
 msgstr "для type=\"reg\" нужен бутстреп-объект"
 
-msgid "input t ignored; type=\"jack\""
+#, fuzzy
+msgid "input 't' ignored; type=\"jack\""
 msgstr "ввод t пропущен; type=\"jack\""
 
-msgid "input t ignored; type=\"pos\""
+#, fuzzy
+msgid "input 't' ignored; type=\"pos\""
 msgstr "ввод t пропущен; type=\"pos\""
 
-msgid "input t0 ignored: neither t nor L supplied"
+#, fuzzy
+msgid "input 't0' ignored: neither 't' nor 'L' supplied"
 msgstr "ввод t0 пропущен: не указано ни t, ни L"
 
 msgid "bootstrap output matrix missing"
 msgstr "пропущена матрица бутстреп-вывода"
 
-msgid "use boot.ci for scalar parameters"
+#, fuzzy
+msgid "use 'boot.ci' for scalar parameters"
 msgstr "использую 'boot.ci' для скалярных параметров"
 
 msgid "unable to achieve requested overall error rate."
 msgstr "не могу достичь требуемого общего соотношения ошибок."
 
-msgid "unable to find multiplier for"
+#, fuzzy
+msgid "unable to find multiplier for %f"
 msgstr "не могу найти множитель для"
 
-msgid "theta or lambda required"
+#, fuzzy
+msgid "'theta' or 'lambda' required"
 msgstr "требуется theta или lambda"
 
-msgid "0 elements not allowed in q"
+#, fuzzy
+msgid "0 elements not allowed in 'q'"
 msgstr "0 элементов в q не разрешено"
 
 msgid "bootstrap replicates must be supplied"
 msgstr "надо указать бутстреп-репликаты"
 
-msgid "either boot.out or w must be specified."
+#, fuzzy
+msgid "either 'boot.out' or 'w' must be specified."
 msgstr "надо указать либо boot.out, либо w."
 
-msgid "only first column of t used"
+#, fuzzy
+msgid "only first column of 't' used"
 msgstr "использована только первая колонка t"
 
-msgid "invalid value of sim supplied"
+#, fuzzy
+msgid "invalid value of 'sim' supplied"
 msgstr "указано неправильное значение sim"
 
-msgid "R and theta have incompatible lengths"
+#, fuzzy
+msgid "'R' and 'theta' have incompatible lengths"
 msgstr "у R и theta -- несовместимые длины"
 
 msgid "R[1L] must be positive for frequency smoothing"
 msgstr "R[1L] должен быть положительным для частотного сглаживания"
 
-msgid "R and alpha have incompatible lengths"
+#, fuzzy
+msgid "'R' and 'alpha' have incompatible lengths"
 msgstr "R и alpha должны иметь совместимые длины"
 
 msgid "extreme values used for quantiles"
 msgstr "экстремальные значения использованы для квантилей"
 
-msgid "theta must be supplied if R[1L] = 0"
+#, fuzzy
+msgid "'theta' must be supplied if R[1L] = 0"
 msgstr "надо указать theta, если R[1L] = 0"
 
-msgid "alpha ignored; R[1L]=0"
+#, fuzzy
+msgid "'alpha' ignored; R[1L] = 0"
 msgstr "alpha пропущен; R[1L]=0"
 
-msgid "control methods undefined when boot.out has weights"
+#, fuzzy
+msgid "control methods undefined when 'boot.out' has weights"
 msgstr "методы контроля не определены в то время как у 'boot.out' есть веса"
 
-msgid "number of columns of A ("
-msgstr "количество колонок A ("
-
-msgid ") not equal to length of u ("
+#, fuzzy
+msgid "number of columns of A (%d) not equal to length of u (%d)"
 msgstr ") не равно длине u ("
 
-msgid ")"
-msgstr ")"
-
-msgid "either A and u or K.adj and K2 must be supplied"
+#, fuzzy
+msgid "either 'A' and 'u' or 'K.adj' and 'K2' must be supplied"
 msgstr "надо указать либо A и u, либо K.adj и K2"
 
 msgid "this type not implemented for Poisson"
@@ -240,38 +266,61 @@ msgstr "этот тип не разработан для распределения Пуассона"
 msgid "this type not implemented for Binary"
 msgstr "этот тип не разработан для бинарного распределения"
 
-msgid "one of t or t0 required"
+#, fuzzy
+msgid "one of 't' or 't0' required"
 msgstr "требуется одно t или t0"
 
-msgid "function u missing"
+#, fuzzy
+msgid "function 'u' missing"
 msgstr "функция u пропущена"
 
-msgid "u must be a function"
+#, fuzzy
+msgid "'u' must be a function"
 msgstr "u должна быть функцией"
 
 msgid "unable to find range"
 msgstr "не могу найти размах"
 
-msgid "R must be positive"
+#, fuzzy
+msgid "'R' must be positive"
 msgstr "R должен быть положительным"
 
-msgid "invalid value of l"
+#, fuzzy
+msgid "invalid value of 'l'"
 msgstr "неправильное значение l"
 
-msgid "unrecognized value of sim"
+#, fuzzy
+msgid "unrecognized value of 'sim'"
 msgstr "нераспознанное значение sim"
 
 msgid "multivariate time series not allowed"
 msgstr "многомерные временные ряды не разрешены"
 
-msgid "likelihood never exceeds"
+#, fuzzy
+msgid "likelihood never exceeds %f"
 msgstr "правдоподобие никогда не превышает"
 
-msgid "likelihood exceeds"
+#, fuzzy
+msgid "likelihood exceeds %f at only one point"
 msgstr "правдоподобие превышает"
 
-msgid "at only one point"
-msgstr "только в одной точке"
+#~ msgid "only columns"
+#~ msgstr "только колонки"
+
+#~ msgid "and"
+#~ msgstr "и"
+
+#~ msgid "of data used"
+#~ msgstr "данных использованы"
+
+#~ msgid "number of columns of A ("
+#~ msgstr "количество колонок A ("
+
+#~ msgid ")"
+#~ msgstr ")"
+
+#~ msgid "at only one point"
+#~ msgstr "только в одной точке"
 
 #~ msgid "invalid proportions input"
 #~ msgstr "неправильный ввод пропорций"
