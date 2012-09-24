@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boot 1.3-5\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-09-23 18:13\n"
+"POT-Creation-Date: 2012-09-24 15:15\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -72,7 +72,7 @@ msgstr "nie można znaleźć tablicy dla parametrycznego bootstrapu"
 # Recommended/boot/R/bootfuns.q: 359
 # warning(sQuote(qdist), " distribution not supported using normal instead")
 #, fuzzy
-msgid "%s distribution not supported using normal instead"
+msgid "%s distribution not supported: using normal instead"
 msgstr ": rozkład nie jest wspierany, w zamian używanie rozkładu normalnego"
 
 # Recommended/boot/R/bootfuns.q: 700
@@ -139,7 +139,8 @@ msgstr "potrzebne są bootstrapowe wariancje dla studentyzowanych przedziałów"
 
 # Recommended/boot/R/bootfuns.q: 938
 # warning("BCa intervals not defined for time series bootstraps.")
-msgid "BCa intervals not defined for time series bootstraps."
+#, fuzzy
+msgid "BCa intervals not defined for time series bootstraps"
 msgstr ""
 "przedziały BC nie są zdefiniowane dla bootstrapowych szeregów czasowych"
 
@@ -161,7 +162,8 @@ msgstr "ekstremalnie uporządkowana statystyka użyta jako punkty końcowe"
 
 # Recommended/boot/R/bootfuns.q: 1154
 # warning("variance required for Studentized CI's")
-msgid "variance required for Studentized CI's"
+#, fuzzy
+msgid "variance required for studentized internals"
 msgstr "wariancja jest wymagana dla studentyzowanych przedziałów ufności"
 
 # Recommended/boot/R/bootfuns.q: 1193
@@ -195,12 +197,14 @@ msgstr "nieznana wartość 'sim'"
 # stop("data must be a matrix with at least 2 columns")
 # Recommended/boot/R/bootfuns.q: 1300
 # stop("data must be a matrix with at least 2 columns")
-msgid "data must be a matrix with at least 2 columns"
+#, fuzzy
+msgid "'data' must be a matrix with at least 2 columns"
 msgstr "dane muszą być macierzą o co najmniej 2 kolumnach"
 
 # Recommended/boot/R/bootfuns.q: 1302
 # stop("index must contain 2 elements")
-msgid "index must contain 2 elements"
+#, fuzzy
+msgid "'index' must contain 2 elements"
 msgstr "indeks musi zawierać 2 elementy"
 
 # Recommended/boot/R/bootfuns.q: 1304
@@ -218,13 +222,13 @@ msgstr "indeksy są niezgodne z 'ncol(data)'"
 # Recommended/boot/R/bootfuns.q: 1311
 # stop("sim = \"weird\" cannot be used with coxph object")
 #, fuzzy
-msgid "sim = \"weird\" cannot be used with a 'coxph' object"
+msgid "sim = \"weird\" cannot be used with a \"coxph\" object"
 msgstr "'sim=weird' nie może być użyte z obiektem 'coxph'"
 
 # Recommended/boot/R/bootfuns.q: 2275
 # warning("only first column of t used")
 #, fuzzy
-msgid "only columns %s and %s of data used"
+msgid "only columns %s and %s of 'data' used"
 msgstr "tylko pierwsza kolumna 't' została użyta"
 
 # Recommended/boot/R/bootfuns.q: 1318
@@ -259,12 +263,14 @@ msgstr ""
 
 # Recommended/boot/R/bootfuns.q: 1617
 # stop("no data or bootstrap object specified")
-msgid "no data or bootstrap object specified"
+#, fuzzy
+msgid "neither 'data' nor bootstrap object specified"
 msgstr "brak danych lub określonego obiektu bootstrapu"
 
 # Recommended/boot/R/bootfuns.q: 1619
 # stop("no statistic or bootstrap object specified")
-msgid "no statistic or bootstrap object specified"
+#, fuzzy
+msgid "neither 'statistic' nor bootstrap object specified"
 msgstr "brak statystyki lub określonego obiektu bootstrapu"
 
 # Recommended/boot/R/bootfuns.q: 1634
@@ -314,7 +320,8 @@ msgstr "użyj 'boot.ci' dla skalarnych parametrów"
 
 # Recommended/boot/R/bootfuns.q: 1885
 # warning("unable to achieve requested overall error rate.")
-msgid "unable to achieve requested overall error rate."
+#, fuzzy
+msgid "unable to achieve requested overall error rate"
 msgstr "nie można uzyskać zażądanego ogólnego wskaźnika błędu."
 
 # Recommended/boot/R/bootfuns.q: 2073
@@ -411,7 +418,7 @@ msgstr "metody kontroli nie są zdefiniowane gdy 'boot.out' posiada wagi"
 #                        ") not equal to length of u (", length(u),")",
 #                        sep=""))
 #, fuzzy
-msgid "number of columns of A (%d) not equal to length of u (%d)"
+msgid "number of columns of 'A' (%d) not equal to length of 'u' (%d)"
 msgstr ") nie równa się długości 'u' ("
 
 # Recommended/boot/R/bootfuns.q: 2808

@@ -356,7 +356,7 @@ plot.boot <- function(x,index=1, t0=NULL, t=NULL, jack=FALSE,
     }
     else {
 	if (qdist!="norm")
-            warning(gettextf("%s distribution not supported using normal instead", sQuote(qdist)), domain = NA)
+            warning(gettextf("%s distribution not supported: using normal instead", sQuote(qdist)), domain = NA)
         qq <- qnorm((seq_len(R))/(R+1))
         qlab <-"Quantiles of Standard Normal"
     }
@@ -934,7 +934,7 @@ boot.ci <- function(boot.out,conf = 0.95,type = "all",
         output <- c(output, list(percent=perc.ci(t,conf,hinv=hinv)))
     if (any(type == "all" | type == "bca")) {
         if (as.character(boot.out$call[1L]) == "tsboot")
-            warning("BCa intervals not defined for time series bootstraps.")
+            warning("BCa intervals not defined for time series bootstraps")
         else
             output <- c(output, list(bca=bca.ci(boot.out,conf,
                                      index[1L],L=L,t=t.o, t0=t0.o,
@@ -1150,7 +1150,7 @@ stud.ci <- function(tv0, tv, conf = 0.95, hinv=function(t) t)
 #
 {
     if ((length(tv0) < 2) || (ncol(tv) < 2)) {
-        warning("variance required for Studentized CI's")
+        warning("variance required for studentized internals")
         NA
     } else {
         z <- (tv[,1L]-tv0[1L])/sqrt(tv[,2L])
@@ -1294,11 +1294,11 @@ censboot <-
     seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
     call <- match.call()
     if (isMatrix(data)) n <- nrow(data)
-    else stop("data must be a matrix with at least 2 columns")
+    else stop("'data' must be a matrix with at least 2 columns")
     if (ncol(data) < 2L)
-        stop("data must be a matrix with at least 2 columns")
+        stop("'data' must be a matrix with at least 2 columns")
     if (length(index) < 2L)
-        stop("index must contain 2 elements")
+        stop("'index' must contain 2 elements")
     if (length(index) > 2L) {
         warning("only first 2 elements of 'index' used")
         index <- index[1L:2L]
@@ -1307,9 +1307,9 @@ censboot <-
         stop("indices are incompatible with 'ncol(data)'")
     if (sim == "weird") {
         if (!is.null(cox))
-            stop("sim = \"weird\" cannot be used with a 'coxph' object")
+            stop("sim = \"weird\" cannot be used with a \"coxph\" object")
         if (ncol(data) > 2L)
-            warning(gettextf("only columns %s and %s of data used",
+            warning(gettextf("only columns %s and %s of 'data' used",
                              index[1L], index[2L]), domain = NA)
         data <- data[,index]
     }
@@ -1614,9 +1614,9 @@ empinf <- function(boot.out = NULL, data = NULL, statistic = NULL,
     else
     {
 	if (is.null(data))
-            stop("no data or bootstrap object specified")
+            stop("neither 'data' nor bootstrap object specified")
         if (is.null(statistic))
-            stop("no statistic or bootstrap object specified")
+            stop("neither 'statistic' nor bootstrap object specified")
         if (is.null(stype)) stype <- "w"
     }
     n <- NROW(data)
@@ -1882,7 +1882,7 @@ envelope <-
     ee <- err.pt
     al <- 1-level[2L]
     if (ov[3L] > al)
-        warning("unable to achieve requested overall error rate.")
+        warning("unable to achieve requested overall error rate")
     else {
         continue <- !(ee[3L] < al)
         while(continue) {
@@ -2801,7 +2801,7 @@ saddle <-
         A <- as.matrix(A)
         d <- ncol(A)
         if (length(u) != d)
-            stop(gettextf("number of columns of A (%d) not equal to length of u (%d)",
+            stop(gettextf("number of columns of 'A' (%d) not equal to length of 'u' (%d)",
                           d, length(u)), domain = NA)
         n <- nrow(A)
     } else if (is.null(K.adj))
