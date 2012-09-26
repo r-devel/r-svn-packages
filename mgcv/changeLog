@@ -9,6 +9,11 @@ ISSUES:
 * still not really happy with nesting constraints, especially under rank
   deficiency.
 
+1.7-22
+
+* missing drop=FALSE in reTest called by summary.gam caused 1-D random effect
+  p-value computation to fail. Fixed (thanks Silje Skår).
+
 1.7-21
 
 ** soap film smoother class added. See ?soap

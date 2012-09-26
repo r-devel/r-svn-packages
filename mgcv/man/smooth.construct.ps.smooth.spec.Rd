@@ -65,6 +65,7 @@ Statistical Science, 11(2):89-121
 \examples{
 ## see ?gam
 ## cyclic example ...
+  require(mgcv)
   set.seed(6)
   x <- sort(runif(200)*10)
   z <- runif(200)
