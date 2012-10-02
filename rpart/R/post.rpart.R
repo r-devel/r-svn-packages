@@ -1,4 +1,4 @@
-#
+##
 post.rpart <- function(tree, title.,
 		       filename=paste(deparse(substitute(tree)),".ps",sep=""),
 		       digits=getOption("digits") - 3, pretty=TRUE,
@@ -8,11 +8,10 @@ post.rpart <- function(tree, title.,
 	postscript(file = filename, horizontal=horizontal, ...)
 	par(mar=c(2,2,4,2)+.1)
 	on.exit(dev.off())
-	}
-    else {
+    } else {
 	oldpar <- par(mar=c(2,2,4,2)+.1)
 	on.exit(invisible(par(oldpar)))
-	}
+    }
 
     plot(tree, uniform=TRUE, branch=.2, compress=TRUE, margin=.1)
     text(tree, all=TRUE, use.n=use.n, fancy=TRUE, digits=digits, pretty=pretty)
@@ -20,7 +19,7 @@ post.rpart <- function(tree, title.,
     if(missing(title.)) {
         temp  <- attr(tree$terms,"variables")[2L]
         title(paste("Endpoint =",temp), cex=.8)
-	}
-    else if (title. !="") title(title., cex=.8)
     }
+    else if (title. !="") title(title., cex=.8)
+}
 

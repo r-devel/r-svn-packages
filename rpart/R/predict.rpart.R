@@ -3,8 +3,7 @@ function(object, newdata = list(),
 	 type = c("vector", "prob", "class", "matrix"), na.action = na.pass,
          ...)
 {
-    if(!inherits(object, "rpart"))
-	    stop("Not a legitimate \"rpart\" object")
+    if(!inherits(object, "rpart")) stop("Not a legitimate \"rpart\" object")
 
     mtype <- missing(type)
     type <- match.arg(type)
@@ -14,7 +13,7 @@ function(object, newdata = list(),
 	if(is.null(attr(newdata, "terms"))) {
 	    Terms <- delete.response(object$terms)
 	    newdata <- model.frame(Terms, newdata, na.action = na.action,
-                                      xlev=attr(object, "xlevels"))
+                                   xlev=attr(object, "xlevels"))
             if (!is.null(cl <- attr(Terms, "dataClasses")))
                 .checkMFClasses(cl, newdata, TRUE)
         }

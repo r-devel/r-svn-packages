@@ -25,16 +25,16 @@ rpartco <- function(tree, parms =  paste(".rpart.parms", dev.cur(), sep = "."))
         parent <- match(floor(node/2), node)
         sibling <- match(ifelse(node %% 2, node - 1, node + 1), node)
 
-	# assign the depths
+	## assign the depths
         for(i in temp[-1L]) {
 	    temp2 <- dev[parent[i]] - (dev[i] + dev[sibling[i]])
             y[i] <- y[parent[i]] - temp2
         }
-	#
-	# For some problems, classification & loss matrices in particular
-	#   the gain from a split may be 0.  This is ugly on the plot.
-	# Hence the "fudge" factor of  .3* the average step
-	#
+	##
+	## For some problems, classification & loss matrices in particular
+	##   the gain from a split may be 0.  This is ugly on the plot.
+	## Hence the "fudge" factor of  .3* the average step
+	##
 	fudge <-  minbranch * diff(range(y)) / max(depth)
         for(i in temp[-1L]) {
 	    temp2 <- dev[parent[i]] - (dev[i] + dev[sibling[i]])
@@ -44,44 +44,44 @@ rpartco <- function(tree, parms =  paste(".rpart.parms", dev.cur(), sep = "."))
 	y <- y / (max(y))
     }
 
-    # Now compute the x coordinates, by spacing out the leaves and then
-    #   filling in
+    ## Now compute the x coordinates, by spacing out the leaves and then
+    ##   filling in
     x   <-  double(length(node))         #allocate, then fill it in below
     x[is.leaf] <- seq(sum(is.leaf))      # leaves at 1, 2, 3, ....
     left.child <- match(node * 2, node)
     right.child <- match(node * 2 + 1, node)
 
-    # temp is a list of non-is.leaf, by depth
+    ## temp is a list of non-is.leaf, by depth
     temp <- split(seq(node)[!is.leaf], depth[!is.leaf])
     for(i in rev(temp))
         x[i] <- 0.5 * (x[left.child[i]] + x[right.child[i]])
 
     if (nspace < 0) return(list(x=x, y=y))
 
-    #
-    # Now we get fancy, and try to do overlapping
-    #
-    #  The basic algorithm is, at each node:
-    #      1: get the left & right edges, by depth, for the left and
-    #           right sons, of the x-coordinate spacing.
-    #      2: find the minimal free spacing.  If this is >0, slide the
-    #           right hand son over to the left
-    #      3: report the left & right extents of the new tree up to the
-    #           parent
-    #   A way to visualize steps 1 and 2 is to imagine, for a given node,
-    #      that the left son, with all its descendants, is drawn on a
-    #      slab of wood.  The left & right edges, per level, give the
-    #      width of this board.  (The board is not a rectangle, it has
-    #      'stair step' edges). Do the same for the right son.  Now
-    #      insert some spacers, one per level, and slide right hand
-    #      board over until they touch.  Glue the boards and spacer
-    #      together at that point.
-    #
-    #  If a node has children, its 'space' is considered to extend left
-    #    and right by the amount "nspace", which accounts for space
-    #    used by the arcs from this node to its children.  For
-    #    horseshoe connections nspace usually is 1.
-    #
+    ##
+    ## Now we get fancy, and try to do overlapping
+    ##
+    ##  The basic algorithm is, at each node:
+    ##      1: get the left & right edges, by depth, for the left and
+    ##           right sons, of the x-coordinate spacing.
+    ##      2: find the minimal free spacing.  If this is >0, slide the
+    ##           right hand son over to the left
+    ##      3: report the left & right extents of the new tree up to the
+    ##           parent
+    ##   A way to visualize steps 1 and 2 is to imagine, for a given node,
+    ##      that the left son, with all its descendants, is drawn on a
+    ##      slab of wood.  The left & right edges, per level, give the
+    ##      width of this board.  (The board is not a rectangle, it has
+    ##      'stair step' edges). Do the same for the right son.  Now
+    ##      insert some spacers, one per level, and slide right hand
+    ##      board over until they touch.  Glue the boards and spacer
+    ##      together at that point.
+    ##
+    ##  If a node has children, its 'space' is considered to extend left
+    ##    and right by the amount "nspace", which accounts for space
+    ##    used by the arcs from this node to its children.  For
+    ##    horseshoe connections nspace usually is 1.
+    ##
     compress <- function(x, me, depth)
     {
         lson <- me + 1L
@@ -103,16 +103,16 @@ rpartco <- function(tree, parms =  paste(".rpart.parms", dev.cur(), sep = "."))
 	maxd <- max(left$depth, right$depth) - depth
         mind <- min(left$depth, right$depth) - depth
 
-	# Find the smallest distance between the two subtrees
-	#   But only over depths that they have in common
-	# 1 is a minimum distance allowed
+	## Find the smallest distance between the two subtrees
+	##   But only over depths that they have in common
+	## 1 is a minimum distance allowed
 	slide <- min(right$left[1L:mind] - left$right[1L:mind]) - 1L
 	if (slide > 0) { # slide the right hand node to the left
-	    x[right$sons] <- x[right$sons] - slide;
+	    x[right$sons] <- x[right$sons] - slide
 	    x[me] <- (x[right$sons[1L]] + x[left$sons[1L]])/2
         } else slide <- 0
 
-	# report back
+	## report back
         if (left$depth > right$depth) {
 	    templ <- left$left
             tempr <- left$right

@@ -1,6 +1,6 @@
-#This routine sets up the callback code for user-written split
-#  routines in rpart
-#
+## This routine sets up the callback code for user-written split
+##  routines in rpart
+##
 rpartcallback <- function(mlist, nobs, init)
 {
     if (length(mlist) < 3L)
@@ -19,16 +19,16 @@ rpartcallback <- function(mlist, nobs, init)
     numy <-  init$numy
     parms <- init$parms
 
-    #
-    # expr2 is an expression that will call the user "evaluation"
-    #   function, and check that what comes back is valid
-    # expr1 does the same for the user "split" function
-    #
-    # For speed in the C interface, yback, xback, and wback are
-    #  fixed S vectors of a fixed size, and nback tells us how
-    #  much of the vector is actually being used on this particular
-    #  callback.
-    #
+    ##
+    ## expr2 is an expression that will call the user "evaluation"
+    ##   function, and check that what comes back is valid
+    ## expr1 does the same for the user "split" function
+    ##
+    ## For speed in the C interface, yback, xback, and wback are
+    ##  fixed S vectors of a fixed size, and nback tells us how
+    ##  much of the vector is actually being used on this particular
+    ##  callback.
+    ##
     if (numy==1L) {
         expr2 <- quote({
             temp <- user.eval(yback[1:nback], wback[1:nback], parms)
@@ -39,7 +39,7 @@ rpartcallback <- function(mlist, nobs, init)
             as.numeric(as.vector(c(temp$deviance, temp$label)))
         })
         expr1 <- quote({
-            if (nback <0) { #categorical variable
+            if (nback < 0L) { #categorical variable
                 n2 <- -1*nback
                 temp  <- user.split(yback[1L:n2], wback[1L:n2],
                                     xback[1L:n2], parms, FALSE)
@@ -71,7 +71,7 @@ rpartcallback <- function(mlist, nobs, init)
             as.numeric(as.vector(c(temp$deviance, temp$label)))
         })
         expr1 <- quote({
-            if (nback <0L) { #categorical variable
+            if (nback < 0L) { #categorical variable
                 n2 <- -1*nback
                 tempy <- matrix(yback[1L:(n2*numy)], ncol=numy)
                 temp  <- user.split(tempy, wback[1L:n2], xback[1L:n2],
@@ -93,13 +93,13 @@ rpartcallback <- function(mlist, nobs, init)
             as.numeric(as.vector(c(temp$goodness, temp$direction)))
         })
     }
-    #
-    #  The vectors nback, wback, xback and yback will have their
-    #  contents constantly re-inserted by C code.  It's one way to make
-    #  things very fast.  It is dangerous to do this, so they
-    #  are tossed into a separate frame to isolate them.  Evaluations of
-    #  the above expressions occur in that frame.
-    #
+    ##
+    ##  The vectors nback, wback, xback and yback will have their
+    ##  contents constantly re-inserted by C code.  It's one way to make
+    ##  things very fast.  It is dangerous to do this, so they
+    ##  are tossed into a separate frame to isolate them.  Evaluations of
+    ##  the above expressions occur in that frame.
+    ##
     rho <- new.env()
     assign("nback", integer(1), envir = rho)
     assign("wback", double(nobs), envir = rho)

@@ -1,6 +1,6 @@
-# This is a modification of text.tree.
-# Fancy option has been added in (to mimic post.tree)
-#
+## This is a modification of text.tree.
+## Fancy option has been added in (to mimic post.tree)
+##
 
 text.rpart <-
     function(x, splits = TRUE, label, FUN = text, all=FALSE,
@@ -103,7 +103,7 @@ text.rpart <-
         if(fheight<1) b.length <- fheight*cxy[2L]*maxht
         else b.length <- fheight*cxy[2L]
 
-### create ovals and rectangles here
+        ## create ovals and rectangles here
         ## sqrt(2) creates the smallest oval that fits around the
         ## best fitting rectangle
         for(i in parent) oval(xy$x[i],xy$y[i],

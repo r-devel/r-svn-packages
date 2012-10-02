@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-24\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-02 14:53\n"
+"POT-Creation-Date: 2012-10-02 16:31\n"
 "PO-Revision-Date: 2005-12-08 00:57+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -72,8 +72,7 @@ msgid "Cost vector must be positive"
 msgstr "Le vecteur de coût doit être positif"
 
 msgid "Initialization routine is missing the 'summary' function"
-msgstr ""
-"La routine d'initialisation ne trouve pas la fonction 'summary'"
+msgstr "La routine d'initialisation ne trouve pas la fonction 'summary'"
 
 msgid "No offset allowed in classification models"
 msgstr "Aucun décalage n'est autorisé pour les modèles de classification"
@@ -139,7 +138,8 @@ msgid ""
 msgstr "La valeur de 'usesurrogate' fournie est hors plage,"
 
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
-msgstr "'Response' doit être un objet 'survival' - utilisez la fonction 'Surv()'"
+msgstr ""
+"'Response' doit être un objet 'survival' - utilisez la fonction 'Surv()'"
 
 msgid "Observation time must be > 0"
 msgstr "Le temps associé aux observations doit être > 0"
@@ -191,13 +191,15 @@ msgstr ""
 msgid "User 'split' function returned invalid direction"
 msgstr "La fonction 'split' personnalisée a renvoyé une direction incorrecte"
 
-msgid "x does not appear to be an 'rpart' object"
+#, fuzzy
+msgid "x does not appear to be an \"rpart\" object"
 msgstr "'x' ne semble pas être un objet \"rpart\""
 
 msgid "'x' not converted"
 msgstr "'x' n'a pas convergé"
 
-msgid "Not an 'rpart' object"
+#, fuzzy
+msgid "Not an \"rpart\" object"
 msgstr "Ceci n'est pas un objet \"rpart\""
 
 #, fuzzy

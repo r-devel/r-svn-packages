@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R-2.10.0 / rpart 3.1-45\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-02 14:53\n"
+"POT-Creation-Date: 2012-10-02 16:31\n"
 "PO-Revision-Date: 2009-10-11 14:14+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -196,7 +196,7 @@ msgid "User 'split' function returned invalid direction"
 msgstr "Benutzerfunktion split gab ungültige Richtung zurück"
 
 #, fuzzy
-msgid "x does not appear to be an 'rpart' object"
+msgid "x does not appear to be an \"rpart\" object"
 msgstr "x scheint kein rpart-Objekt zu sein"
 
 #, fuzzy
@@ -204,7 +204,7 @@ msgid "'x' not converted"
 msgstr "x nicht konvertiert"
 
 #, fuzzy
-msgid "Not an 'rpart' object"
+msgid "Not an \"rpart\" object"
 msgstr "Kein rpart-Objekt"
 
 #, fuzzy

@@ -2,25 +2,25 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 {
     if(!inherits(object, "rpart")) stop("Not a legitimate \"rpart\" object")
 
-    # If this is an older-style rpart object, convert it
-    #  either way, rename it to "x" to save typing
+    ## If this is an older-style rpart object, convert it
+    ##  either way, rename it to "x" to save typing
     if (!is.null(object$frame$splits)) x <- rpconvert(object)
     else  x <- object
 
     if (!missing(file)) {
-	  sink(file)
-	  on.exit(sink())
-	  }
+        sink(file)
+        on.exit(sink())
+    }
 
     if(!is.null(x$call)) {
         cat("Call:\n")
         dput(x$call, control=NULL)
-        }
+    }
 
     omit <- x$na.action
     n <- x$frame$n
     if (length(omit))
-          cat("  n=", n[1L], " (", naprint(omit), ")\n\n", sep="")
+        cat("  n=", n[1L], " (", naprint(omit), ")\n\n", sep="")
     else cat("  n=", n[1L], "\n\n")
 
     print(x$cptable, digits=digits)
@@ -41,14 +41,16 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
         temp <- x$splits[ ,2L]
         for (i in 1L:length(cuts)) {
             if (temp[i] == -1L)
-                cuts[i] <-paste("<", format(signif(x$splits[i,4], digits=digits)))
+                cuts[i] <- paste("<",
+                                 format(signif(x$splits[i,4L], digits=digits)))
             else if (temp[i] ==1L)
-                cuts[i] <-paste("<", format(signif(x$splits[i,4], digits=digits)))
+                cuts[i] <- paste("<",
+                                 format(signif(x$splits[i,4L], digits=digits)))
             else cuts[i]<- paste("splits as ",
-                                 paste(c("L", "-", "R")[x$csplit[x$splits[i,4], 1L:temp[i]]],
+                                 paste(c("L", "-", "R")[x$csplit[x$splits[i,4L], 1:temp[i]]],
                                        collapse='', sep=''), collapse='')
         }
-    # S-PLUS 4.0 can't handle null vectors here
+
         if(any(temp<2)) cuts[temp<2 ] <- format(cuts[temp<2],justify="left")
         cuts <- paste(cuts, ifelse(temp >=2, ",",
                                    ifelse(temp==1, " to the right,", " to the left, ")),
@@ -81,7 +83,7 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 	    else if (j==1L) cat(", 1 observation remains\n")
 	    else     cat("\n")
 	    cat("  Primary splits:\n")
-	    j <- seq(index[i], length.out=1L+ff$ncompete[i])
+	    j <- seq(index[i], length.out = 1L + ff$ncompete[i])
 	    if (all(nchar(cuts[j], "w") < 25))
                 temp <- format(cuts[j], justify="left")
 	    else  temp <- cuts[j]
@@ -91,7 +93,8 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
                 sep="\n")
 	    if (ff$nsurrogate[i] >0L) {
 		cat("  Surrogate splits:\n")
-		j <- seq(1 +index[i] + ff$ncompete[i], length.out=ff$nsurrogate[i])
+		j <- seq(1L +index[i] + ff$ncompete[i],
+                         length.out = ff$nsurrogate[i])
 		agree <- x$splits[j,3L]
 		if (all(nchar(cuts[j], "w") < 25))
                     temp <- format(cuts[j], justify="left")
@@ -105,7 +108,7 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 			      ", (", x$splits[j,1L], " split)", sep=''),
 			sep="\n")
                 }
-		else {                  #an older style rpart object -- no adj value present
+		else { #an older style rpart object -- no adj value present
 		    cat(paste("      ", format(sname[j], justify="left"), " ",
 			      temp,
 			      " agree=", format(round(agree, 3)),

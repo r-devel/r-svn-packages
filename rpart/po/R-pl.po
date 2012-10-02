@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-53\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-02 14:53\n"
+"POT-Creation-Date: 2012-10-02 16:31\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -334,7 +334,8 @@ msgstr "Funkcja użytkownika 'split' zwróciła niepoprawny kierunek"
 
 # Recommended/rpart/R/rpconvert.s: 8
 # stop("x does not appear to be an rpart object")
-msgid "x does not appear to be an 'rpart' object"
+#, fuzzy
+msgid "x does not appear to be an \"rpart\" object"
 msgstr "'x' nie wygląda na obiekt \"rpart\""
 
 # Recommended/rpart/R/rpconvert.s: 12
@@ -346,7 +347,8 @@ msgstr "'x' nie został przekształcony"
 # stop("Not an rpart object")
 # Recommended/rpart/R/plot.rpart.s: 4
 # stop("Not an rpart object")
-msgid "Not an 'rpart' object"
+#, fuzzy
+msgid "Not an \"rpart\" object"
 msgstr "to nie jest obiekt 'rpart'"
 
 # Recommended/rpart/R/snip.rpart.s: 20

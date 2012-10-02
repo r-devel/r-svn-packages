@@ -1,5 +1,7 @@
 #
-#  Get a set of cross-validated predictions
+##  Get a set of cross-validated predictions
+##  Most of the setup is identical to the rpart routine
+##
 xpred.rpart <- function(fit, xval=10, cp)
 {
     if (!inherits(fit, 'rpart')) stop("Invalid fit object")
@@ -65,7 +67,7 @@ xpred.rpart <- function(fit, xval=10, cp)
     ncp <- length(cp)
 
     if (length(xval)==1L) {
-                                        # make random groups
+	## make random groups
 	xgroups <- sample(rep(1:xval, length=nobs), nobs, replace=FALSE)
     }
     else if (length(xval) == nrow(Y)) {

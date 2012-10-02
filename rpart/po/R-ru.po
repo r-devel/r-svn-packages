@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.7.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-02 14:53\n"
+"POT-Creation-Date: 2012-10-02 16:31\n"
 "PO-Revision-Date: 2008-04-06 23:54-0500\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
 "Language-Team: Russian\n"
@@ -196,14 +196,15 @@ msgid "User 'split' function returned invalid direction"
 msgstr "Пользовательская функция 'split' вернула неправильное направление"
 
 #, fuzzy
-msgid "x does not appear to be an 'rpart' object"
+msgid "x does not appear to be an \"rpart\" object"
 msgstr "похоже, что x -- не rpart-объект"
 
 #, fuzzy
 msgid "'x' not converted"
 msgstr "x не преобразован"
 
-msgid "Not an 'rpart' object"
+#, fuzzy
+msgid "Not an \"rpart\" object"
 msgstr "Не объект 'rpart'"
 
 #, fuzzy

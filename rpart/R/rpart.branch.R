@@ -1,6 +1,8 @@
-# Compute the "branches" to be drawn for an rpart object
-#
-rpart.branch <- function(x, y, node, branch) {
+##
+## Compute the "branches" to be drawn for an rpart object
+##
+rpart.branch <- function(x, y, node, branch)
+{
     if (missing(branch)) {
 	if (exists(parms <-paste(".rpart.parms", dev.cur(), sep="." ),
                    envir=.GlobalEnv)) {
@@ -9,11 +11,11 @@ rpart.branch <- function(x, y, node, branch) {
             branch <- parms$branch
 	    }
 	else branch <- 0
-        }
+    }
 
-    # Draw a series of horseshoes, left son, up, over, down to right son
-    #   NA's in the vector cause lines() to "lift the pen"
-    is.left <- (node%%2 ==0)        #left hand sons
+    ## Draw a series of horseshoes, left son, up, over, down to right son
+    ##   NA's in the vector cause lines() to "lift the pen"
+    is.left <- (node%%2 ==0)            #left hand sons
     node.left <- node[is.left]
     parent <- match(node.left/2, node)
     sibling <- match(node.left+1, node)
@@ -22,4 +24,4 @@ rpart.branch <- function(x, y, node, branch) {
                 x[sibling]- temp, x[sibling], NA)
     yy <- rbind(y[is.left], y[parent], y[parent], y[sibling], NA)
     list(x=xx, y=yy)
-    }
+}
