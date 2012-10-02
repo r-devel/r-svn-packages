@@ -69,9 +69,8 @@ msgstr "NA in Genauigkeit"
 msgid "NA in scale"
 msgstr "NA in Skala"
 
-#, fuzzy
 msgid "cannot handle unknown type %s"
-msgstr "unbekannter Typ kann nicht gehandhabt werden"
+msgstr "unbekannter Typ %s kann nicht gehandhabt werden"
 
 msgid "'missing.type' only applicable to version >= 8 files"
 msgstr "»missing.type« nur auf Dateien der Version >=8 anwendbar"
@@ -116,13 +115,11 @@ msgstr "falsche Anzahl von Datensätzen"
 msgid "sectionname %s not found"
 msgstr "Bereichsname %s nicht gefunden"
 
-#, fuzzy
 msgid "SAS return code was %d"
-msgstr "SAS-Rückgabewert war"
+msgstr "SAS-Rückgabewert war %d"
 
-#, fuzzy
 msgid "re-encoding from %s"
-msgstr "Zurückkodierung von"
+msgstr "Zurückkodierung von %s"
 
 # http://en.wiktionary.org/wiki/missingness
 msgid "missingness type %s is not handled"

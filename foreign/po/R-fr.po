@@ -69,9 +69,8 @@ msgstr "NA dans pr?cision"
 msgid "NA in scale"
 msgstr "NA dans scale"
 
-#, fuzzy
 msgid "cannot handle unknown type %s"
-msgstr "impossible de traiter un type inconnu"
+msgstr "impossible de traiter un type inconnu %s"
 
 msgid "'missing.type' only applicable to version >= 8 files"
 msgstr "'missing.type' est seulement applicable pour des fichiers version >= 8"
@@ -119,13 +118,11 @@ msgstr "nombre d'enregistrements incorrect"
 msgid "sectionname %s not found"
 msgstr "nom de section %s non trouv?e"
 
-#, fuzzy
 msgid "SAS return code was %d"
-msgstr "Le code renvoy? par SAS est"
+msgstr "Le code renvoy? par SAS est %d"
 
-#, fuzzy
 msgid "re-encoding from %s"
-msgstr "r?encodage depuis"
+msgstr "r?encodage depuis %s"
 
 msgid "missingness type %s is not handled"
 msgstr "type de valeur manquante %s non pris en compte"

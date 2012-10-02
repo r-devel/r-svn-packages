@@ -24,21 +24,17 @@ msgstr ""
 "'simple=TRUE' gilt nur für 'sim=\"ordinary\", stype=\"i\", n=0, wird hier "
 "also ignoriert"
 
-#, fuzzy
 msgid "no data in call to 'boot'"
-msgstr "keine Daten im Aufruf von boot"
+msgstr "keine Daten im Aufruf von 'boot'"
 
-#, fuzzy
 msgid "negative value of 'm' supplied"
 msgstr "negativer Wert von m angegeben"
 
-#, fuzzy
 msgid "length of 'm' incompatible with 'strata'"
 msgstr "Länge von m inkompatibel mit Schichten"
 
-#, fuzzy
 msgid "dimensions of 'R' and 'weights' do not match"
-msgstr "Dimensionen von R und Gewichten stimmen nicht überein"
+msgstr "Dimensionen von 'R' und 'weights' stimmen nicht überein"
 
 msgid "arguments are not all the same type of \"boot\" object"
 msgstr "Argumente waren nicht all vom selben Typ des \"boot\" Objekts"
@@ -60,28 +56,23 @@ msgid "%s distribution not supported: using normal instead"
 msgstr ""
 "Verteilung nicht unterstützt, stattdessen wird Normalverteilung benutzt"
 
-#, fuzzy
 msgid "only first element of 'index' used"
-msgstr "nur erstes Element des Index benutzt"
+msgstr "nur erstes Element des 'index' benutzt"
 
-#, fuzzy
 msgid "'K' outside allowable range"
-msgstr "K außerhalb des erlaubbaren Bereichs"
+msgstr "'K' außerhalb des erlaubbaren Bereichs"
 
-#, fuzzy
 msgid "'K' has been set to %f"
-msgstr "K wurde gesetzt auf"
+msgstr "'K' wurde gesetzt auf %f"
 
-#, fuzzy
 msgid "'t' and 't0' must be supplied together"
-msgstr "t und t0 müssen zusammen angegeben werden"
+msgstr "'t' und 't0' müssen zusammen angegeben werden"
 
 msgid "index out of bounds; minimum index only used."
 msgstr "Index außerhalb des Rands. Minimalindex wird benutzt."
 
-#, fuzzy
 msgid "'t' must of length %d"
-msgstr "t muss folgende Länge haben:"
+msgstr "'t' muss folgende Länge haben: %d"
 
 # http://de.wikipedia.org/wiki/Studentisierung
 msgid "bootstrap variances needed for studentized intervals"

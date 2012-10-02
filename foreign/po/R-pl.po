@@ -101,9 +101,8 @@ msgstr "wartość NA w skali"
 
 # Recommended/foreign/R/octave.R: 169
 # warning("cannot handle unknown type ", sQuote(type))
-#, fuzzy
 msgid "cannot handle unknown type %s"
-msgstr "nie można obsłużyć nieznanego typu"
+msgstr "nie można obsłużyć nieznanego typu %s"
 
 # Recommended/foreign/R/read.dta.R: 60
 # warning("'missing.type' only applicable to version >= 8 files")
@@ -121,13 +120,11 @@ msgstr ""
 msgid "The object \"dataframe\" must have class data.frame"
 msgstr ""
 
-#, fuzzy
 msgid "Version must be 6-12"
-msgstr "Wersja musi wynosić 6-11"
+msgstr "Wersja musi wynosić 6-12"
 
-#, fuzzy
 msgid "Version must be 6-12: using 7"
-msgstr "Wersja musi wynosić 6-11: używając 7"
+msgstr "Wersja musi wynosić 6-12: używając 7"
 
 # Recommended/foreign/R/read.dta.R: 128
 # stop("cannot uniquely abbreviate variable names")
@@ -173,15 +170,13 @@ msgstr "nie znaleziono nazwy sekcji %s"
 
 # Recommended/foreign/R/read.ssd.R: 115
 # warning("SAS return code was ", sysret)
-#, fuzzy
 msgid "SAS return code was %d"
-msgstr "kod zwrotny SAS wyniósł"
+msgstr "kod zwrotny SAS wyniósł %d"
 
 # Recommended/foreign/R/spss.R: 85
 # message("re-encoding from ", cp)
-#, fuzzy
 msgid "re-encoding from %s"
-msgstr "ponowne kodowanie z"
+msgstr "ponowne kodowanie z %s"
 
 # Recommended/foreign/R/spss.R: 141
 # warning(gettextf("missingness type %s is not handled", tp),

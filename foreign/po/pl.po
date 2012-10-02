@@ -1338,9 +1338,8 @@ msgid "a binary read error occurred"
 msgstr "wystąpił błąd odczytu binarnego"
 
 #: stataread.c:228
-#, fuzzy
 msgid "not a Stata version 5-12 .dta file"
-msgstr "to nie jest plik .dta Stata wersja 5-10"
+msgstr "to nie jest plik .dta Stata wersja 5-12"
 
 # Recommended/foreign/src/stataread.c: 398
 # error(_("something strange in the file\n

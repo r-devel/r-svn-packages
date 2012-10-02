@@ -907,9 +907,8 @@ msgid "a binary read error occurred"
 msgstr "une erreur de lecture binaire s'est produite"
 
 #: stataread.c:228
-#, fuzzy
 msgid "not a Stata version 5-12 .dta file"
-msgstr "ceci n'est pas un fichier .dta Stata version 5-10"
+msgstr "ceci n'est pas un fichier .dta Stata version 5-12"
 
 #: stataread.c:398
 msgid ""
