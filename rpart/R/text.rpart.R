@@ -13,12 +13,6 @@ text.rpart <-
         stop("fit is not a tree, just a root")
 
     frame <- x$frame
-    # col <- names(frame)
-    # ylevels <- attr(x,'ylevels')
-    # if(!is.null(ylevels <- attr(x, "ylevels")))
-    #    col <- c(col, ylevels)
-    # if(is.na(match(label, col)))
-    #    stop("Label must be a column label of the frame component of the tree")
     if(!missing(label))
         warning("argument 'label' is currently unused")
     cxy <- par("cxy")                   #character width and height

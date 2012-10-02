@@ -4,7 +4,7 @@ rpart <- function(formula, data, weights, subset,
 		   na.action=na.rpart, method, model=FALSE, x=FALSE, y=TRUE,
 		   parms, control, cost, ...)
 {
-    call <- match.call()
+    Call <- match.call()
     if (is.data.frame(model)) {
 	m <- model
 	model <- FALSE
@@ -22,8 +22,8 @@ rpart <- function(formula, data, weights, subset,
     if(any(attr(Terms, "order") > 1L))
 	stop("Trees cannot handle interaction terms")
 
-    Y <- model.extract(m, "response")
-    wt <- model.extract(m, "weights")
+    Y <- model.response(m)
+    wt <- model.weights(m)
     if(length(wt)==0L) wt <- rep(1.0, nrow(m))
     offset <- attr(Terms, "offset")
     X <- rpart.matrix(m)
@@ -32,15 +32,15 @@ rpart <- function(formula, data, weights, subset,
 
     if (missing(method)) {
 	if (is.factor(Y) || is.character(Y))      method <- "class"
-        else if (inherits(Y, "Surv"))   method <- "exp"
-	else if (is.matrix(Y)) method<- "poisson"
-	else                   method<- "anova"
-	}
+        else if (inherits(Y, "Surv")) method <- "exp"
+	else if (is.matrix(Y)) method <- "poisson"
+	else                   method <- "anova"
+    }
 
     if (is.list(method)) {
-	# User written split methods
+	## User written split methods
 	mlist <- method
-	method <- 'user'
+	method <- "user"
 
 	init <- if (missing(parms)) mlist$init(Y, offset, wt=wt)
 	else  mlist$init(Y, offset, parms, wt)
@@ -76,9 +76,9 @@ rpart <- function(formula, data, weights, subset,
             unlist(lapply(xlevels, length))
     }
 
-    # We want to pass any ... args to rpart.control, but not pass things
-    #  like "dats=mydata" where someone just made a typo.  The use of ...
-    #  is just to allow things like "cp=.05" with easier typing
+    ## We want to pass any ... args to rpart.control, but not pass things
+    ##  like "dats=mydata" where someone just made a typo.  The use of ...
+    ##  is just to allow things like "cp=.05" with easier typing
     extraArgs <- list(...)
     if (length(extraArgs)) {
 	controlargs <- names(formals(rpart.control))  #legal arg names
@@ -95,15 +95,15 @@ rpart <- function(formula, data, weights, subset,
     if (is.null(xval) || (length(xval)==1L && xval==0) || method=="user") {
 	xgroups <-0
 	xval <- 0
-	}
+    }
     else if (length(xval)==1L) {
 	# make random groups
         xgroups <- sample(rep(1L:xval, length=nobs), nobs, replace=FALSE)
-	}
+    }
     else if (length(xval) == nobs) {
 	xgroups <- xval
 	xval <- length(unique(xgroups))
-	}
+    }
     else {
 	# Check to see if observations were removed due to missing
 	if (!is.null(attr(m, "na.action"))) {
@@ -115,13 +115,13 @@ rpart <- function(formula, data, weights, subset,
 		xval <- length(unique(xgroups))
 		}
 	    else stop("Wrong length for 'xval'")
-	    }
+        }
 	else stop("Wrong length for 'xval'")
     }
 
-    #
-    # Incorporate costs
-    #
+    ##
+    ## Incorporate costs
+    ##
     if (missing(cost)) cost <- rep(1.0, nvar)
     else {
 	if (length(cost) != nvar)
@@ -129,11 +129,11 @@ rpart <- function(formula, data, weights, subset,
 	if (any(cost <=0)) stop("Cost vector must be positive")
     }
 
-    #
-    # Have s_to_rp consider ordered categories as continuous
-    #  A right-hand side variable that is a matrix forms a special case
-    # for the code.
-    #
+    ##
+    ## Have s_to_rp consider ordered categories as continuous
+    ##  A right-hand side variable that is a matrix forms a special case
+    ## for the code.
+    ##
     tfun <- function(x) {
 	if (is.matrix(x)) rep(is.ordered(x), ncol(x))
 	else is.ordered(x)
@@ -141,23 +141,23 @@ rpart <- function(formula, data, weights, subset,
     labs <- sub("^`(.*)`$", "\\1", attr(Terms, 'term.labels'))
     isord <- unlist(lapply(m[labs], tfun))
     rpfit <- .C(C_s_to_rp,
-		    n = as.integer(nobs),
-		    nvarx = as.integer(nvar),
-		    ncat = as.integer(cats* !isord),
-		    method= as.integer(method.int),
-		    as.double(unlist(controls)),
-		    parms = as.double(unlist(init$parms)),
-		    as.integer(xval),
-		    as.integer(xgroups),
-		    as.double(t(init$y)),
-		    as.double(X),
-		    as.integer(!is.finite(X)), # R lets Infs through
-		    error = character(1),
-		    wt = as.double(wt),
-		    as.integer(init$numy),
-		    as.double(cost),
-		    NAOK=TRUE)
-    if (rpfit$n == -1)  stop(rpfit$error)
+                n = as.integer(nobs),
+                nvarx = as.integer(nvar),
+                ncat = as.integer(cats* !isord),
+                method= as.integer(method.int),
+                as.double(unlist(controls)),
+                parms = as.double(unlist(init$parms)),
+                as.integer(xval),
+                as.integer(xgroups),
+                as.double(t(init$y)),
+                as.double(X),
+                as.integer(!is.finite(X)), # R lets Infs through
+                error = character(1),
+                wt = as.double(wt),
+                as.integer(init$numy),
+                as.double(cost),
+                NAOK = TRUE)
+    if (rpfit$n == -1L)  stop(rpfit$error)
 
     # rpfit$newX[1:n] contains the final sorted order of the observations
     nodes <- rpfit$n          # total number of nodes
@@ -172,20 +172,20 @@ rpart <- function(formula, data, weights, subset,
     else         catmat <- matrix(integer(1), ncat, max(cats))
 
     rp    <- .C(C_s_to_rp2,
-		       as.integer(nobs),
-		       as.integer(nsplit),
-		       as.integer(nodes),
-		       as.integer(ncat),
-		       as.integer(cats *!isord),
-		       as.integer(max(cats)),
-		       as.integer(xval),
-		       which = integer(nobs),
-		       cptable = matrix(double(numcp*cpcol), nrow=cpcol),
-		       dsplit =  matrix(double(1),  nsplit,3),
-		       isplit =  matrix(integer(1), nsplit,3),
-		       csplit =  catmat,
-		       dnode  =  matrix(double(1),  nodes, 3+numresp),
-		       inode  =  matrix(integer(1), nodes, 6))
+                as.integer(nobs),
+                as.integer(nsplit),
+                as.integer(nodes),
+                as.integer(ncat),
+                as.integer(cats *!isord),
+                as.integer(max(cats)),
+                as.integer(xval),
+                which = integer(nobs),
+                cptable = matrix(double(numcp*cpcol), nrow=cpcol),
+                dsplit =  matrix(double(1),  nsplit,3),
+                isplit =  matrix(integer(1), nsplit,3),
+                csplit =  catmat,
+                dnode  =  matrix(double(1),  nodes, 3+numresp),
+                inode  =  matrix(integer(1), nodes, 6))
     tname <- c("<leaf>", dimnames(X)[[2]])
 
     if (cpcol==3) temp <- c("CP", "nsplit", "rel error")
@@ -267,7 +267,7 @@ rpart <- function(formula, data, weights, subset,
 	    functions <- list(summary=init$summary)
     else    functions <- list(summary=init$summary, print=init$print)
     if (!is.null(init$text)) functions <- c(functions, list(text=init$text))
-    if (method=='user')	functions <- c(functions, mlist)
+    if (method=="user")	functions <- c(functions, mlist)
 
     where <- rp$which
     names(where) <- row.names(m)
@@ -275,7 +275,7 @@ rpart <- function(formula, data, weights, subset,
     if (nsplit == 0L) {  # no 'splits' component
 	ans <- list(frame = frame,
 		    where = where,
-		    call=call, terms=Terms,
+		    call=Call, terms=Terms,
 		    cptable =  t(rp$cptable),
 		    method = method,
 		    parms  = init$parms,
@@ -284,7 +284,7 @@ rpart <- function(formula, data, weights, subset,
     } else {
 	ans <- list(frame = frame,
 		    where = where,
-		    call=call, terms=Terms,
+		    call=Call, terms=Terms,
 		    cptable =  t(rp$cptable),
 		    splits = splits,
 		    method = method,
@@ -307,7 +307,6 @@ rpart <- function(formula, data, weights, subset,
         ans$na.action <- attr(m, "na.action")
     if (!is.null(xlevels)) attr(ans, "xlevels") <- xlevels
     if(method=="class") attr(ans, "ylevels") <- init$ylevels
-#    if (length(xgroups)) ans$xgroups <- xgroups
     class(ans) <- "rpart"
     ans
 }
