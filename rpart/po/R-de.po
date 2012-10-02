@@ -17,14 +17,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#, fuzzy
 msgid "'x' must be a numeric vector"
-msgstr "x muss ein numerischer Vektor sein"
+msgstr "'x' muss ein numerischer Vektor sein"
 
 msgid "more than 52 levels in a predicting factor, truncated for printout"
 msgstr "mehr als 52 Stufen in einem Vorhersagefaktor, für Ausdruck reduziert"
 
-#, fuzzy
 msgid "Not a legitimate \"rpart\" object"
 msgstr "Kein rechtmäßiges rpart-Objekt"
 
@@ -35,14 +33,12 @@ msgstr "Darstellung nicht nützlich für Klassifizierung oder Poisson-Bäume"
 msgid "fit is not a tree, just a root"
 msgstr "Näherung ist kein Baum, nur eine Wurzel"
 
-#, fuzzy
 msgid "'cptable' does not contain cross-validation results"
-msgstr "cptable enthält keine Über-Bestätigungsergebnisse"
+msgstr "'cptable enthält keine Über-Bestätigungsergebnisse"
 
 msgid "Tree has variables not found in new data"
 msgstr "Baum hat Variablen, die in neuen Daten nicht gefunden wurden"
 
-#, fuzzy
 msgid "Invalid prediction for \"rpart\" object"
 msgstr "Ungültige Vorhersage für rpart-Objekt"
 
@@ -64,9 +60,8 @@ msgstr "Ungültige Methode"
 msgid "Argument %s not matched"
 msgstr "nicht passend"
 
-#, fuzzy
 msgid "Wrong length for 'xval'"
-msgstr "Falsche Länge für xval"
+msgstr "Falsche Länge für 'xval'"
 
 msgid "Cost vector is the wrong length"
 msgstr "Kostenvektor hat die falsche Länge"
@@ -74,9 +69,8 @@ msgstr "Kostenvektor hat die falsche Länge"
 msgid "Cost vector must be positive"
 msgstr "Kostenvektor muss positiv sein"
 
-#, fuzzy
 msgid "Initialization routine is missing the 'summary' function"
-msgstr "Der Initialisierungsroutine fehlt die Zusammenfassungsfunktion"
+msgstr "Der Initialisierungsroutine fehlt die 'summary' Funktion"
 
 msgid "No offset allowed in classification models"
 msgstr "Kein Versatz in Klassifizierungsmodellen erlaubt"
@@ -84,9 +78,8 @@ msgstr "Kein Versatz in Klassifizierungsmodellen erlaubt"
 msgid "The parms list must have names"
 msgstr "Die parms-Liste muss Namen haben"
 
-#, fuzzy
 msgid "'parms' component not matched: %s"
-msgstr "»parms«-Komponente passt nicht:"
+msgstr "»parms«-Komponente passt nicht: %s"
 
 msgid "Priors must sum to 1"
 msgstr "Priors müssen sich zu 1 summieren"
@@ -115,16 +108,14 @@ msgstr "Ungültige Aufteilungsregel"
 msgid "Parameter argument must be a list"
 msgstr "Parameterargument muss eine Liste sein"
 
-#, fuzzy
 msgid "The value of 'maxcompete' supplied is < 0; the value 0 was used instead"
 msgstr ""
-"Der für maxcompete angegebene Wert ist <0. Stattdessen wird der Wert 0 "
+"Der für 'maxcompete' angegebene Wert ist < 0. Stattdessen wird der Wert 0 "
 "benutzt"
 
-#, fuzzy
 msgid "The value of 'xval' supplied is < 0; the value 0 was used instead"
 msgstr ""
-"Der für xval angegebene Wert ist <0. Stattdessen wird der Wert 0 benutzt"
+"Der für 'xval' angegebene Wert ist < 0. Stattdessen wird der Wert 0 benutzt"
 
 msgid "Maximum depth is 30"
 msgstr "Maximale Tiefe ist 30"
@@ -144,10 +135,9 @@ msgid ""
 "of 0 is used instead."
 msgstr "Der für usesurrogate angegebene Wert liegt außerhalb des Bereichs,"
 
-#, fuzzy
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
 msgstr ""
-"Antwort muss ein survival-Objekt sein - benutzen Sie die Funktion Surv()"
+"Antwort muss ein survival-Objekt sein - benutzen Sie die Funktion 'Surv()'"
 
 msgid "Observation time must be > 0"
 msgstr "Beobachtungszeit muss > 0 sein"
@@ -194,9 +184,8 @@ msgstr "Benutzerfunktion eval gab ungültige Bezeichnung zurück"
 msgid "User 'eval' function returned invalid deviance"
 msgstr "Benutzerfunktion eval gab ungültige Abweichung zurück"
 
-#, fuzzy
 msgid "Invalid return from categorical 'split' function"
-msgstr "Ungültige Rückgabe von grundsätzlichen split-fcn"
+msgstr "Ungültige Rückgabe von grundsätzlichen 'split' funktion"
 
 #, fuzzy
 msgid "User 'split' function returned invalid goodness"

@@ -17,7 +17,6 @@ msgstr ""
 
 # Recommended/rpart/R/formatg.s: 12
 # stop("x must be a numeric vector")
-#, fuzzy
 msgid "'x' must be a numeric vector"
 msgstr "'x' musi być wektorem liczbowym"
 
@@ -38,9 +37,8 @@ msgstr ""
 # stop("Not legitimate rpart object")
 # Recommended/rpart/R/meanvar.rpart.s: 7
 # stop("Not legitimate rpart object")
-#, fuzzy
 msgid "Not a legitimate \"rpart\" object"
-msgstr "Niepoprawny obiekt 'rpart'"
+msgstr "Niepoprawny obiekt \"rpart\""
 
 # Recommended/rpart/R/meanvar.rpart.s: 9
 # stop("Plot not useful for classification or poisson trees")
@@ -56,7 +54,6 @@ msgstr "dopasowanie nie jest drzewem tylko korzeniem"
 
 # Recommended/rpart/R/plotcp.s: 12
 # stop("cptable does not contain cross-validation results")
-#, fuzzy
 msgid "'cptable' does not contain cross-validation results"
 msgstr "'cptable' nie zawiera wyników krzyżowej walidacji"
 
@@ -67,7 +64,6 @@ msgstr "Drzewo posiada zmienne nie znalezione w nowych danych"
 
 # Recommended/rpart/R/predict.rpart.s: 43
 # stop("Invalid prediction for rpart object")
-#, fuzzy
 msgid "Invalid prediction for \"rpart\" object"
 msgstr "Niepoprawna predykcja dla obiektu \"rpart\""
 
@@ -109,7 +105,6 @@ msgstr "nie został dopasowany"
 # stop("Wrong length for xval")
 # Recommended/rpart/R/xpred.rpart.s: 88
 # stop("Wrong length for xval")
-#, fuzzy
 msgid "Wrong length for 'xval'"
 msgstr "Niepoprawna długość dla 'xval'"
 
@@ -145,9 +140,8 @@ msgstr "Lista parametrów musi mieć nazwy"
 # stop("'parms' component not matched: ", names(parms)[indx == 0L])
 # Recommended/rpart/R/rpart.class.s: 17
 # stop("'parms' component not matched: ", names(parms)[temp==0L])
-#, fuzzy
 msgid "'parms' component not matched: %s"
-msgstr "komponent 'parms' nie zgadza się z:"
+msgstr "komponent 'parms' nie zgadza się z: %s"
 
 # Recommended/rpart/R/rpart.class.s: 23
 # stop("Priors must sum to 1")
@@ -196,15 +190,13 @@ msgstr "Argument parametru musi być listą"
 
 # Recommended/rpart/R/rpart.control.s: 8
 # warning("The value of maxcompete supplied is <0; the value 0 was used instead")
-#, fuzzy
 msgid "The value of 'maxcompete' supplied is < 0; the value 0 was used instead"
-msgstr "Wartość dostarczonego 'maxcompete' <0; zamiast niego użyto 0"
+msgstr "Wartość dostarczonego 'maxcompete' < 0; zamiast niego użyto 0"
 
 # Recommended/rpart/R/rpart.control.s: 12
 # warning("The value of xval supplied is <0; the value 0 was used instead")
-#, fuzzy
 msgid "The value of 'xval' supplied is < 0; the value 0 was used instead"
-msgstr "Dostarczona wartość 'xval' <0; zamiast niego użyto 0"
+msgstr "Dostarczona wartość 'xval' < 0; zamiast niego użyto 0"
 
 # Recommended/rpart/R/rpart.control.s: 15
 # stop("Maximum depth is 30")
@@ -236,7 +228,6 @@ msgstr "Dostarczona wartość 'usesurrogate' była poza zakesem,"
 
 # Recommended/rpart/R/rpart.exp.s: 16
 # stop("Response must be a survival object - use the Surv() function")
-#, fuzzy
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
 msgstr "Zmienna zależna musi być obiektem 'survival' - użyj funkcji 'Surv()'"
 
@@ -296,13 +287,11 @@ msgstr "Metoda użytkownika nie zawiera funkcji inicjalizującej"
 
 # Recommended/rpart/R/rpartcallback.s: 12
 # stop("User written method does not contain a split function")
-#, fuzzy
 msgid "User written method does not contain a 'split' function"
 msgstr "Metod użytkownika nie zawiera funkcji 'split'"
 
 # Recommended/rpart/R/rpartcallback.s: 14
 # stop("User written method does not contain an eval function")
-#, fuzzy
 msgid "User written method does not contain an 'eval' function"
 msgstr "Metoda użytkownika nie zawiera funkcji 'eval'"
 
@@ -326,7 +315,6 @@ msgstr "Funkcja użytkownika 'eval' zwróciła niepoprawne odchylenie"
 # stop("Invalid return from categorical split fcn")
 # Recommended/rpart/R/rpartcallback.s: 83
 # stop("Invalid return from categorical split fcn")
-#, fuzzy
 msgid "Invalid return from categorical 'split' function"
 msgstr "Niepoprawny wynik z kategorycznej funkcji 'split'"
 
@@ -334,7 +322,6 @@ msgstr "Niepoprawny wynik z kategorycznej funkcji 'split'"
 # stop("User split function returned invalid goodness")
 # Recommended/rpart/R/rpartcallback.s: 90
 # stop("User split function returned invalid goodness")
-#, fuzzy
 msgid "User 'split' function returned invalid goodness"
 msgstr "Funkcja użytkownika 'split' zwróciła niepoprawną dobroć"
 
@@ -342,19 +329,16 @@ msgstr "Funkcja użytkownika 'split' zwróciła niepoprawną dobroć"
 # stop("User split function returned invalid direction")
 # Recommended/rpart/R/rpartcallback.s: 92
 # stop("User split function returned invalid direction")
-#, fuzzy
 msgid "User 'split' function returned invalid direction"
 msgstr "Funkcja użytkownika 'split' zwróciła niepoprawny kierunek"
 
 # Recommended/rpart/R/rpconvert.s: 8
 # stop("x does not appear to be an rpart object")
-#, fuzzy
 msgid "x does not appear to be an 'rpart' object"
 msgstr "'x' nie wygląda na obiekt \"rpart\""
 
 # Recommended/rpart/R/rpconvert.s: 12
 # warning("x not converted")
-#, fuzzy
 msgid "'x' not converted"
 msgstr "'x' nie został przekształcony"
 
@@ -362,7 +346,6 @@ msgstr "'x' nie został przekształcony"
 # stop("Not an rpart object")
 # Recommended/rpart/R/plot.rpart.s: 4
 # stop("Not an rpart object")
-#, fuzzy
 msgid "Not an 'rpart' object"
 msgstr "to nie jest obiekt 'rpart'"
 

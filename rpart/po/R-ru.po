@@ -21,16 +21,14 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#, fuzzy
 msgid "'x' must be a numeric vector"
-msgstr "x должен быть числовым вектором"
+msgstr "'x' должен быть числовым вектором"
 
 msgid "more than 52 levels in a predicting factor, truncated for printout"
 msgstr "больше 52 уровней предсказующего фактора, обрезано для печати"
 
-#, fuzzy
 msgid "Not a legitimate \"rpart\" object"
-msgstr "Неправильный rpart-объект"
+msgstr "Неправильный \"rpart\" объект"
 
 msgid "Plot not useful for classification or poisson trees"
 msgstr "График бесполезен для классификации или пуассоновских деревьев"
@@ -38,16 +36,14 @@ msgstr "График бесполезен для классификации или пуассоновских деревьев"
 msgid "fit is not a tree, just a root"
 msgstr "подгонка -- не дерево, а просто корень"
 
-#, fuzzy
 msgid "'cptable' does not contain cross-validation results"
-msgstr "cptable не содержит результатов перекрестной проверки"
+msgstr "'cptable' не содержит результатов перекрестной проверки"
 
 msgid "Tree has variables not found in new data"
 msgstr "У дерева есть переменные, не найденные в данных"
 
-#, fuzzy
 msgid "Invalid prediction for \"rpart\" object"
-msgstr "Неправильное предсказание для rpart-объекта"
+msgstr "Неправильное предсказание для \"rpart\" объекта"
 
 #, fuzzy
 msgid "'x' must be an \"rpart\" object"
@@ -67,9 +63,8 @@ msgstr "Неправильный метод"
 msgid "Argument %s not matched"
 msgstr "не соответствует"
 
-#, fuzzy
 msgid "Wrong length for 'xval'"
-msgstr "Неправильная длина xval"
+msgstr "Неправильная длина 'xval'"
 
 msgid "Cost vector is the wrong length"
 msgstr "Cost-вектор неправильной длины"
@@ -77,9 +72,8 @@ msgstr "Cost-вектор неправильной длины"
 msgid "Cost vector must be positive"
 msgstr "Cost-вектор должен быть положительным"
 
-#, fuzzy
 msgid "Initialization routine is missing the 'summary' function"
-msgstr "Подпрограмма инициализации для функции summary пропущена"
+msgstr "Подпрограмма инициализации для функции 'summary' пропущена"
 
 msgid "No offset allowed in classification models"
 msgstr "Смещение в моделях классификации не разрешено"
@@ -87,9 +81,8 @@ msgstr "Смещение в моделях классификации не разрешено"
 msgid "The parms list must have names"
 msgstr "Параметры должны иметь имена"
 
-#, fuzzy
 msgid "'parms' component not matched: %s"
-msgstr "'parms'-компонент не соответствует:"
+msgstr "'parms'-компонент не соответствует: %s"
 
 msgid "Priors must sum to 1"
 msgstr "А приори должны быть в сумме 1"
@@ -118,13 +111,11 @@ msgstr "Неправильное правило разделения"
 msgid "Parameter argument must be a list"
 msgstr "Аргумент параметра должен быть списком"
 
-#, fuzzy
 msgid "The value of 'maxcompete' supplied is < 0; the value 0 was used instead"
-msgstr "Указанное значение maxcompete <0; вместо него использован 0"
+msgstr "Указанное значение 'maxcompete' < 0; вместо него использован 0"
 
-#, fuzzy
 msgid "The value of 'xval' supplied is < 0; the value 0 was used instead"
-msgstr "Указанное значение xval <0; вместо него использован 0"
+msgstr "Указанное значение 'xval' < 0; вместо него использован 0"
 
 msgid "Maximum depth is 30"
 msgstr "Максимальная глубина -- 30"
@@ -201,9 +192,8 @@ msgid "User 'split' function returned invalid goodness"
 msgstr ""
 "Пользовательская функция split вернула неправильную доброкачественность"
 
-#, fuzzy
 msgid "User 'split' function returned invalid direction"
-msgstr "Пользовательская функция split вернула неправильное направление"
+msgstr "Пользовательская функция 'split' вернула неправильное направление"
 
 #, fuzzy
 msgid "x does not appear to be an 'rpart' object"
@@ -213,9 +203,8 @@ msgstr "похоже, что x -- не rpart-объект"
 msgid "'x' not converted"
 msgstr "x не преобразован"
 
-#, fuzzy
 msgid "Not an 'rpart' object"
-msgstr "Не объект rpart"
+msgstr "Не объект 'rpart'"
 
 #, fuzzy
 msgid "Nodes %s are not in this tree"

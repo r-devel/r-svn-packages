@@ -17,17 +17,15 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#, fuzzy
 msgid "'x' must be a numeric vector"
-msgstr "x doit être un vecteur numérique"
+msgstr "'x' doit être un vecteur numérique"
 
 msgid "more than 52 levels in a predicting factor, truncated for printout"
 msgstr ""
 "plus de 52 niveaux dans la variable facteur prédictive, sorties tronquées"
 
-#, fuzzy
 msgid "Not a legitimate \"rpart\" object"
-msgstr "Ceci n'est pas un objet rpart valide"
+msgstr "Ceci n'est pas un objet \"rpart\" valide"
 
 msgid "Plot not useful for classification or poisson trees"
 msgstr ""
@@ -36,16 +34,14 @@ msgstr ""
 msgid "fit is not a tree, just a root"
 msgstr "l'ajustement n'est pas un arbre, juste une racine"
 
-#, fuzzy
 msgid "'cptable' does not contain cross-validation results"
 msgstr "'cptable' ne contients aucuns résultats de validation croisée"
 
 msgid "Tree has variables not found in new data"
 msgstr "L'arbre a des variables introuvables dans le nouveau jeu de données"
 
-#, fuzzy
 msgid "Invalid prediction for \"rpart\" object"
-msgstr "Prédiction incorrecte pour un objet rpart"
+msgstr "Prédiction incorrecte pour un objet \"rpart\""
 
 #, fuzzy
 msgid "'x' must be an \"rpart\" object"
@@ -75,10 +71,9 @@ msgstr "le vecteur de coût n'est pas de la bonne taille"
 msgid "Cost vector must be positive"
 msgstr "Le vecteur de coût doit être positif"
 
-#, fuzzy
 msgid "Initialization routine is missing the 'summary' function"
 msgstr ""
-"La routine d'initialisation ne trouve pas la fonction de résumé (summary)"
+"La routine d'initialisation ne trouve pas la fonction 'summary'"
 
 msgid "No offset allowed in classification models"
 msgstr "Aucun décalage n'est autorisé pour les modèles de classification"
@@ -86,9 +81,8 @@ msgstr "Aucun décalage n'est autorisé pour les modèles de classification"
 msgid "The parms list must have names"
 msgstr "La liste des 'parms' doit être nommée"
 
-#, fuzzy
 msgid "'parms' component not matched: %s"
-msgstr "Composants de 'parms' inconnus"
+msgstr "Composants de 'parms' inconnus: %s"
 
 msgid "Priors must sum to 1"
 msgstr "la somme des 'priors' doit être 1"
@@ -117,13 +111,11 @@ msgstr "Règle de séparation des groupes incorrecte"
 msgid "Parameter argument must be a list"
 msgstr "L'argument 'parameter' doit être une liste"
 
-#, fuzzy
 msgid "The value of 'maxcompete' supplied is < 0; the value 0 was used instead"
 msgstr ""
 "La valeur de 'maxcompete' fournie est < 0 ; La valeur 0 sera utilisée à la "
 "place"
 
-#, fuzzy
 msgid "The value of 'xval' supplied is < 0; the value 0 was used instead"
 msgstr ""
 "La valeur de 'xval' fournie est < 0 ; La valeur 0 sera utilisée à la place"
@@ -146,9 +138,8 @@ msgid ""
 "of 0 is used instead."
 msgstr "La valeur de 'usesurrogate' fournie est hors plage,"
 
-#, fuzzy
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
-msgstr "'Response' doit être un objet 'survival' - utilisez la fonction Surv()"
+msgstr "'Response' doit être un objet 'survival' - utilisez la fonction 'Surv()'"
 
 msgid "Observation time must be > 0"
 msgstr "Le temps associé aux observations doit être > 0"
@@ -174,15 +165,12 @@ msgstr "Le nombre d'événements doit être >= 0"
 msgid "User written methods must have 3 functions"
 msgstr "Les méthodes personnalisées doivent avoir 3 fonctions"
 
-#, fuzzy
 msgid "User written method does not contain an 'init' function"
 msgstr "La méthode personnalisée ne contient pas de fonction 'init'"
 
-#, fuzzy
 msgid "User written method does not contain a 'split' function"
 msgstr "La méthode personnalisée ne contient pas de fonction 'split'"
 
-#, fuzzy
 msgid "User written method does not contain an 'eval' function"
 msgstr "La méthode personnalisée ne contient pas de fonction 'eval'"
 
@@ -190,34 +178,27 @@ msgstr "La méthode personnalisée ne contient pas de fonction 'eval'"
 msgid "User 'eval' function returned invalid label"
 msgstr "La fonction 'eval' personnalisée a renvoyé une étiquette incorrecte"
 
-#, fuzzy
 msgid "User 'eval' function returned invalid deviance"
 msgstr "La fonction 'eval' personnalisée a renvoyé un écart incorrect"
 
-#, fuzzy
 msgid "Invalid return from categorical 'split' function"
 msgstr "Retour incorrect de la fonction 'split'"
 
-#, fuzzy
 msgid "User 'split' function returned invalid goodness"
 msgstr ""
 "La fonction 'split' personnalisée a renvoyé une qualité (goodness) incorrecte"
 
-#, fuzzy
 msgid "User 'split' function returned invalid direction"
 msgstr "La fonction 'split' personnalisée a renvoyé une direction incorrecte"
 
-#, fuzzy
 msgid "x does not appear to be an 'rpart' object"
-msgstr "'x' ne semble pas être un objet rpart"
+msgstr "'x' ne semble pas être un objet \"rpart\""
 
-#, fuzzy
 msgid "'x' not converted"
 msgstr "'x' n'a pas convergé"
 
-#, fuzzy
 msgid "Not an 'rpart' object"
-msgstr "Ceci n'est pas un objet rpart"
+msgstr "Ceci n'est pas un objet \"rpart\""
 
 #, fuzzy
 msgid "Nodes %s are not in this tree"
