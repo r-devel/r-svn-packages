@@ -1,4 +1,3 @@
-# SCCS %W% %G%
 #
 #  Interactively snip off part of a tree
 #

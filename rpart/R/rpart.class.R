@@ -1,4 +1,3 @@
-#SCCS @(#)rpart.class.s	1.7 07/05/01
 rpart.class <- function(y, offset, parms, wt) {
     if (!is.null(offset)) stop("No offset allowed in classification models")
     fy <- as.factor(y)
@@ -13,7 +12,7 @@ rpart.class <- function(y, offset, parms, wt) {
     else if (is.list(parms)) {
 	if (is.null(names(parms))) stop("The parms list must have names")
 	temp <- pmatch(names(parms), c("prior", "loss", "split"), nomatch=0L)
-	if (any(temp == 0L))
+	if (any(temp==0L))
             stop(gettextf("'parms' component not matched: %s",
                           names(parms)[temp == 0L]), domain = NA)
 	names(parms) <- c("prior", "loss", "split")[temp]
@@ -80,9 +79,9 @@ rpart.class <- function(y, offset, parms, wt) {
 	     temp1 <- formatg(counts, format="%5g")
 	     temp2 <- formatg(yprob,  format="%5.3f")
 	     if (nclass >1) {
-		 temp1 <- apply(matrix(temp1, ncol=nclass), 1,
+		 temp1 <- apply(matrix(temp1, ncol=nclass), 1L,
 				    paste, collapse=' ')
-		 temp2 <- apply(matrix(temp2, ncol=nclass), 1,
+		 temp2 <- apply(matrix(temp2, ncol=nclass), 1L,
 				    paste, collapse=' ')
 		 }
 	     paste("  predicted class=", format(group, justify='left'),
@@ -100,7 +99,7 @@ rpart.class <- function(y, offset, parms, wt) {
 
 	     temp1 <- formatg(counts, digits)
 	     if (nclass >1) {
-		 temp1 <- apply(matrix(temp1, ncol=nclass), 1,
+		 temp1 <- apply(matrix(temp1, ncol=nclass), 1L,
 				    paste, collapse='/')
 		 }
 

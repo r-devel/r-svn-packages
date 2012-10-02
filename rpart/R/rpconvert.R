@@ -1,4 +1,3 @@
-# SCCS @(#)rpconvert.s	1.3 06/08/01
 # Convert from the orginial style rpart object to the newer
 #  style object (the changes made when user-written splits were added)
 #

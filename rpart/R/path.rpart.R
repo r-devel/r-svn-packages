@@ -3,7 +3,7 @@
 path.rpart <- function(tree, nodes, pretty = 0, print.it = TRUE)
 {
         if(!inherits(tree, "rpart"))
-                stop("Not legitimate tree")
+                stop("Not a legitimate \"rpart\" object")
         splits <- labels.rpart(tree, pretty = pretty)
         frame <- tree$frame
         n <- row.names(frame)

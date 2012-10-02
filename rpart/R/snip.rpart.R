@@ -1,5 +1,3 @@
-#SCCS  @(#)snip.rpart.s	1.10 10/30/01
-#
 #  This routine "throws away" branches
 #
 snip.rpart <- function(x, toss) {

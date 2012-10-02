@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R-2.10.0 / rpart 3.1-45\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-09-23 17:50\n"
+"POT-Creation-Date: 2012-10-02 14:53\n"
 "PO-Revision-Date: 2009-10-11 14:14+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -25,19 +25,12 @@ msgid "more than 52 levels in a predicting factor, truncated for printout"
 msgstr "mehr als 52 Stufen in einem Vorhersagefaktor, für Ausdruck reduziert"
 
 #, fuzzy
-msgid "Not legitimate 'rpart' object"
+msgid "Not a legitimate \"rpart\" object"
 msgstr "Kein rechtmäßiges rpart-Objekt"
 
 # http://de.wikipedia.org/wiki/Poisson_Verteilung
 msgid "Plot not useful for classification or poisson trees"
 msgstr "Darstellung nicht nützlich für Klassifizierung oder Poisson-Bäume"
-
-msgid "Not legitimate tree"
-msgstr "kein rechtmäßiger Baum"
-
-#, fuzzy
-msgid "Not an 'rpart' object"
-msgstr "Kein rpart-Objekt"
 
 msgid "fit is not a tree, just a root"
 msgstr "Näherung ist kein Baum, nur eine Wurzel"
@@ -50,15 +43,40 @@ msgid "Tree has variables not found in new data"
 msgstr "Baum hat Variablen, die in neuen Daten nicht gefunden wurden"
 
 #, fuzzy
-msgid "Invalid prediction for 'rpart' object"
+msgid "Invalid prediction for \"rpart\" object"
 msgstr "Ungültige Vorhersage für rpart-Objekt"
 
 #, fuzzy
-msgid "'x' must be an 'rpart' object"
+msgid "'x' must be an \"rpart\" object"
 msgstr "Kein rpart-Objekt"
 
-msgid "Do not know about this type of residual"
+#, fuzzy
+msgid "Invalid type of residual"
 msgstr "Es ist nichts über diesen Residuen-Typ bekannt"
+
+msgid "Trees cannot handle interaction terms"
+msgstr "Bäume können keine Interaktions-Terme handhaben"
+
+msgid "Invalid method"
+msgstr "Ungültige Methode"
+
+#, fuzzy
+msgid "Argument %s not matched"
+msgstr "nicht passend"
+
+#, fuzzy
+msgid "Wrong length for 'xval'"
+msgstr "Falsche Länge für xval"
+
+msgid "Cost vector is the wrong length"
+msgstr "Kostenvektor hat die falsche Länge"
+
+msgid "Cost vector must be positive"
+msgstr "Kostenvektor muss positiv sein"
+
+#, fuzzy
+msgid "Initialization routine is missing the 'summary' function"
+msgstr "Der Initialisierungsroutine fehlt die Zusammenfassungsfunktion"
 
 msgid "No offset allowed in classification models"
 msgstr "Kein Versatz in Klassifizierungsmodellen erlaubt"
@@ -120,11 +138,11 @@ msgid ""
 "2 is used instead."
 msgstr "Der für usesurrogate angegebene Wert liegt außerhalb des Bereichs,"
 
-msgid "The value of surrogatestyle supplied was out of range,"
-msgstr "Der für surrogatestyle angegebene Wert liegt außerhalb des Bereichs,"
-
-msgid "the default value of 0 is used instead."
-msgstr "der Standardwert von 0 wird an dessen Stelle benutzt."
+#, fuzzy
+msgid ""
+"The value of 'surrogatestyle' supplied was out of range, the default value "
+"of 0 is used instead."
+msgstr "Der für usesurrogate angegebene Wert liegt außerhalb des Bereichs,"
 
 #, fuzzy
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
@@ -153,29 +171,6 @@ msgstr "Antwort muss eine 2-spaltige Matrix oder Vektor sein"
 msgid "Number of events must be >= 0"
 msgstr "Anzahl der Ereignisse muss >= 0 sein"
 
-msgid "Trees cannot handle interaction terms"
-msgstr "Bäume können keine Interaktions-Terme handhaben"
-
-msgid "Invalid method"
-msgstr "Ungültige Methode"
-
-#, fuzzy
-msgid "Argument %s not matched"
-msgstr "nicht passend"
-
-msgid "Wrong length for xval"
-msgstr "Falsche Länge für xval"
-
-msgid "Cost vector is the wrong length"
-msgstr "Kostenvektor hat die falsche Länge"
-
-msgid "Cost vector must be positive"
-msgstr "Kostenvektor muss positiv sein"
-
-#, fuzzy
-msgid "Initialization routine is missing the 'summary' function"
-msgstr "Der Initialisierungsroutine fehlt die Zusammenfassungsfunktion"
-
 msgid "User written methods must have 3 functions"
 msgstr "Vom Benutzer geschriebene Methoden müssen 3 Funktionen haben"
 
@@ -200,7 +195,7 @@ msgid "User 'eval' function returned invalid deviance"
 msgstr "Benutzerfunktion eval gab ungültige Abweichung zurück"
 
 #, fuzzy
-msgid "Invalid return from categorical 'split' fcn"
+msgid "Invalid return from categorical 'split' function"
 msgstr "Ungültige Rückgabe von grundsätzlichen split-fcn"
 
 #, fuzzy
@@ -219,8 +214,9 @@ msgstr "x scheint kein rpart-Objekt zu sein"
 msgid "'x' not converted"
 msgstr "x nicht konvertiert"
 
-msgid "Not legitimate rpart"
-msgstr "Kein rechtmäßiger rpart"
+#, fuzzy
+msgid "Not an 'rpart' object"
+msgstr "Kein rpart-Objekt"
 
 #, fuzzy
 msgid "Nodes %s are not in this tree"
@@ -239,6 +235,28 @@ msgstr "sind nicht in diesem Baum"
 #, fuzzy
 msgid "supplied nodes %s are leaves"
 msgstr "angegebene Knoten"
+
+#, fuzzy
+#~ msgid "'parms' component not matched:"
+#~ msgstr "»parms«-Komponente passt nicht:"
+
+#, fuzzy
+#~ msgid "Not a legitimate tree"
+#~ msgstr "kein rechtmäßiger Baum"
+
+#, fuzzy
+#~ msgid "Not a legitimate 'rpart' object"
+#~ msgstr "Kein rechtmäßiges rpart-Objekt"
+
+#~ msgid "The value of surrogatestyle supplied was out of range,"
+#~ msgstr ""
+#~ "Der für surrogatestyle angegebene Wert liegt außerhalb des Bereichs,"
+
+#~ msgid "the default value of 0 is used instead."
+#~ msgstr "der Standardwert von 0 wird an dessen Stelle benutzt."
+
+#~ msgid "Not legitimate rpart"
+#~ msgstr "Kein rechtmäßiger rpart"
 
 #~ msgid "Must be an rpart x"
 #~ msgstr "Muss ein rpart-x sein"

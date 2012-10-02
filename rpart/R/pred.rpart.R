@@ -1,5 +1,3 @@
-# SCCS @(#)pred.rpart.s	1.3 09/03/97
-#
 # Do Rpart predictions given a tree and a matrix of predictors
 pred.rpart <- function(fit, x) {
 

@@ -1,4 +1,3 @@
-#SCCS @(#)prune.rpart.s	1.9 10/30/01
 prune.rpart <- function(tree, cp, ...)
 {
     ff <- tree$frame

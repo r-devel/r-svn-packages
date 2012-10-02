@@ -1,4 +1,3 @@
-# SCCS 05/11/01 @(#)post.rpart.s	1.13
 #
 post.rpart <- function(tree, title.,
 		       filename=paste(deparse(substitute(tree)),".ps",sep=""),
@@ -19,8 +18,9 @@ post.rpart <- function(tree, title.,
     text(tree, all=TRUE, use.n=use.n, fancy=TRUE, digits=digits, pretty=pretty)
 
     if(missing(title.)) {
-        temp  <- attr(tree$terms,'variables')[2L]
-        title(paste("Endpoint =",temp),cex=.8)
-    } else if (title. !="") title(title.,cex=.8)
-}
+        temp  <- attr(tree$terms,"variables")[2L]
+        title(paste("Endpoint =",temp), cex=.8)
+	}
+    else if (title. !="") title(title., cex=.8)
+    }
 

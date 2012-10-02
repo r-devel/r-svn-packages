@@ -1,4 +1,3 @@
-#SCCS @(#)rpart.control.s	1.10 07/05/01
 rpart.control <-
   function(minsplit=20, minbucket= round(minsplit/3), cp=.01,
 	   maxcompete=4, maxsurrogate=5, usesurrogate=2, xval=10,
@@ -22,8 +21,7 @@ rpart.control <-
 	    usesurrogate <- 2
 	    }
 	if((surrogatestyle < 0) || (surrogatestyle > 1)) {
-	    warning("The value of surrogatestyle supplied was out of range,",
-		    "the default value of 0 is used instead.")
+	    warning("The value of 'surrogatestyle' supplied was out of range, the default value of 0 is used instead.")
 	    surrogatestyle <- 0
 	    }
 

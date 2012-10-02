@@ -1,7 +1,6 @@
-#SCCS  @(#)summary.rpart.s	1.18 07/05/01
 summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 {
-    if(!inherits(object, "rpart")) stop("Not legitimate 'rpart' object")
+    if(!inherits(object, "rpart")) stop("Not a legitimate \"rpart\" object")
 
     # If this is an older-style rpart object, convert it
     #  either way, rename it to "x" to save typing
@@ -31,7 +30,7 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
     parent.id <- ifelse(id==1,1, floor(id/2))
     parent.cp <- ff$complexity[match(parent.id, id)]
     rows <- (1L:length(id))[parent.cp > cp]
-    if (length(rows)>0) rows <- rows[order(id[rows])]
+    if (length(rows)>0L) rows <- rows[order(id[rows])]
     else rows <- 1L
     is.leaf <- (ff$var=='<leaf>')
     index <- cumsum(c(1, ff$ncompete + ff$nsurrogate + 1*(!is.leaf)))
@@ -97,7 +96,7 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
 		if (all(nchar(cuts[j], "w") < 25))
                     temp <- format(cuts[j], justify="left")
 		else  temp <- cuts[j]
-		if (ncol(x$splits)==5) {
+		if (ncol(x$splits)==5L) {
 		    adj   <- x$splits[j,5L]
 		    cat(paste("      ", format(sname[j], justify="left"), " ",
 			      temp,

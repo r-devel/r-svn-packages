@@ -1,5 +1,3 @@
-# SCCS  @(#)rpart.s	1.35 07/05/01
-#
 #  The recursive partitioning function, for S
 #
 rpart <- function(formula, data, weights, subset,
@@ -33,11 +31,11 @@ rpart <- function(formula, data, weights, subset,
     nvar <- ncol(X)
 
     if (missing(method)) {
-	if (is.factor(Y) || is.character(Y))      method <- 'class'
-        else if (inherits(Y, "Surv"))   method <- 'exp'
-	else if (is.matrix(Y)) method <- 'poisson'
-	else                   method <- 'anova'
-    }
+	if (is.factor(Y) || is.character(Y))      method <- "class"
+        else if (inherits(Y, "Surv"))   method <- "exp"
+	else if (is.matrix(Y)) method<- "poisson"
+	else                   method<- "anova"
+	}
 
     if (is.list(method)) {
 	# User written split methods
@@ -72,9 +70,9 @@ rpart <- function(formula, data, weights, subset,
     Y <- init$y
 
     xlevels <- attr(X, "column.levels")
-    cats <- rep(0,ncol(X))
+    cats <- rep(0L, ncol(X))
     if(!is.null(xlevels)) {
-	cats[match(names(xlevels), dimnames(X)[[2]])] <-
+	cats[match(names(xlevels), dimnames(X)[[2L]])] <-
             unlist(lapply(xlevels, length))
     }
 
@@ -84,9 +82,9 @@ rpart <- function(formula, data, weights, subset,
     extraArgs <- list(...)
     if (length(extraArgs)) {
 	controlargs <- names(formals(rpart.control))  #legal arg names
-	indx <- match(names(extraArgs), controlargs, nomatch=0)
-	if (any(indx==0))
-            stop(gettextf("Argument %s not matched", names(extraArgs)[indx==0]),
+	indx <- match(names(extraArgs), controlargs, nomatch=0L)
+	if (any(indx==0L))
+            stop(gettextf("Argument %s not matched", names(extraArgs)[indx==0L]),
                  domain = NA)
     }
 
@@ -94,13 +92,13 @@ rpart <- function(formula, data, weights, subset,
     if (!missing(control)) controls[names(control)] <- control
 
     xval <- controls$xval
-    if (is.null(xval) || (length(xval)==1L && xval==0) || method=='user') {
+    if (is.null(xval) || (length(xval)==1L && xval==0) || method=="user") {
 	xgroups <-0
 	xval <- 0
 	}
     else if (length(xval)==1L) {
 	# make random groups
-        xgroups <- sample(rep(1:xval, length=nobs), nobs, replace=FALSE)
+        xgroups <- sample(rep(1L:xval, length=nobs), nobs, replace=FALSE)
 	}
     else if (length(xval) == nobs) {
 	xgroups <- xval
@@ -108,17 +106,17 @@ rpart <- function(formula, data, weights, subset,
 	}
     else {
 	# Check to see if observations were removed due to missing
-	if (!is.null(attr(m, 'na.action'))) {
+	if (!is.null(attr(m, "na.action"))) {
 	    # if na.rpart was used, then na.action will be a vector
-	    temp <- as.integer(attr(m, 'na.action'))
+	    temp <- as.integer(attr(m, "na.action"))
 	    xval <- xval[-temp]
 	    if (length(xval) == nobs) {
 		xgroups <- xval
 		xval <- length(unique(xgroups))
 		}
-	    else stop("Wrong length for xval")
+	    else stop("Wrong length for 'xval'")
 	    }
-	else stop("Wrong length for xval")
+	else stop("Wrong length for 'xval'")
     }
 
     #
@@ -307,8 +305,8 @@ rpart <- function(formula, data, weights, subset,
     ans$ordered <- isord
     if(!is.null(attr(m, "na.action")))
         ans$na.action <- attr(m, "na.action")
-    if (!is.null(xlevels)) attr(ans, 'xlevels') <- xlevels
-    if(method=='class') attr(ans, "ylevels") <- init$ylevels
+    if (!is.null(xlevels)) attr(ans, "xlevels") <- xlevels
+    if(method=="class") attr(ans, "ylevels") <- init$ylevels
 #    if (length(xgroups)) ans$xgroups <- xgroups
     class(ans) <- "rpart"
     ans

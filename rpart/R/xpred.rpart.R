@@ -1,4 +1,3 @@
-# SCCS @(#)xpred.rpart.s	1.18 07/05/01
 #
 #  Get a set of cross-validated predictions
 xpred.rpart <- function(fit, xval=10, cp)
@@ -83,9 +82,9 @@ xpred.rpart <- function(fit, xval=10, cp)
 		xgroups <- xval
 		xval <- length(unique(xgroups))
             }
-	    else stop("Wrong length for xval")
+	    else stop("Wrong length for 'xval'")
         }
-	else stop("Wrong length for xval")
+	else stop("Wrong length for 'xval'")
     }
 
     costs <- fit$call$costs

@@ -1,5 +1,3 @@
-#SCCS  @(#)rpart.matrix.s	1.6 04/02/01
-#
 # This differs from tree.matrix in xlevels -- we don't keep NULLS in
 #   the list for all of the non-categoricals
 #
@@ -26,7 +24,7 @@ rpart.matrix <- function(frame)
 	    }
 	if(!is.null(removals)) predictors <- predictors[ - removals]
         labels <- a$term.labels
-	if(abs(length(labels)-length(predictors))>0)
+	if(abs(length(labels)-length(predictors))>0L)
 	  predictors <- predictors[match(labels,predictors)]
 	}
 

@@ -1,8 +1,7 @@
-#SCCS  @(#)printcp.s	1.6 01/20/00
 # print out the cptable, along with some summary of the tree
 printcp <- function(x, digits=getOption("digits")-2)
 {
-    if (!inherits(x, 'rpart')) stop ("'x' must be an 'rpart' object")
+    if (!inherits(x, 'rpart')) stop ("'x' must be an \"rpart\" object")
     cat(switch(x$method,anova = "\nRegression tree:\n" ,
 			class = "\nClassification tree:\n" ,
 			poisson="\nRates regression tree:\n",
@@ -25,7 +24,7 @@ printcp <- function(x, digits=getOption("digits")-2)
 
 
     cat("Root node error: ", format(frame$dev[1L], digits=digits), '/',
-        frame$n[1], ' = ',
+        frame$n[1L], ' = ',
         format(frame$dev[1L]/frame$n[1L], digits=digits),
         '\n\n', sep='')
 

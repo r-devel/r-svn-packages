@@ -1,5 +1,3 @@
-#SCCS @(#)rpart.branch.s	1.2 01/25/97
-#
 # Compute the "branches" to be drawn for an rpart object
 #
 rpart.branch <- function(x, y, node, branch) {

@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-55\n"
-"POT-Creation-Date: 2012-09-30 22:08\n"
+"POT-Creation-Date: 2012-10-02 14:53\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,16 +16,10 @@ msgstr ""
 msgid "more than 52 levels in a predicting factor, truncated for printout"
 msgstr ""
 
-msgid "Not legitimate 'rpart' object"
+msgid "Not a legitimate \"rpart\" object"
 msgstr ""
 
 msgid "Plot not useful for classification or poisson trees"
-msgstr ""
-
-msgid "Not legitimate tree"
-msgstr ""
-
-msgid "Not an 'rpart' object"
 msgstr ""
 
 msgid "fit is not a tree, just a root"
@@ -37,13 +31,34 @@ msgstr ""
 msgid "Tree has variables not found in new data"
 msgstr ""
 
-msgid "Invalid prediction for 'rpart' object"
+msgid "Invalid prediction for \"rpart\" object"
 msgstr ""
 
-msgid "'x' must be an 'rpart' object"
+msgid "'x' must be an \"rpart\" object"
 msgstr ""
 
-msgid "Do not know about this type of residual"
+msgid "Invalid type of residual"
+msgstr ""
+
+msgid "Trees cannot handle interaction terms"
+msgstr ""
+
+msgid "Invalid method"
+msgstr ""
+
+msgid "Argument %s not matched"
+msgstr ""
+
+msgid "Wrong length for 'xval'"
+msgstr ""
+
+msgid "Cost vector is the wrong length"
+msgstr ""
+
+msgid "Cost vector must be positive"
+msgstr ""
+
+msgid "Initialization routine is missing the 'summary' function"
 msgstr ""
 
 msgid "No offset allowed in classification models"
@@ -97,10 +112,7 @@ msgstr ""
 msgid "The value of 'usesurrogate' supplied was out of range, the default value of 2 is used instead."
 msgstr ""
 
-msgid "The value of surrogatestyle supplied was out of range,"
-msgstr ""
-
-msgid "the default value of 0 is used instead."
+msgid "The value of 'surrogatestyle' supplied was out of range, the default value of 0 is used instead."
 msgstr ""
 
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
@@ -127,27 +139,6 @@ msgstr ""
 msgid "Number of events must be >= 0"
 msgstr ""
 
-msgid "Trees cannot handle interaction terms"
-msgstr ""
-
-msgid "Invalid method"
-msgstr ""
-
-msgid "Argument %s not matched"
-msgstr ""
-
-msgid "Wrong length for xval"
-msgstr ""
-
-msgid "Cost vector is the wrong length"
-msgstr ""
-
-msgid "Cost vector must be positive"
-msgstr ""
-
-msgid "Initialization routine is missing the 'summary' function"
-msgstr ""
-
 msgid "User written methods must have 3 functions"
 msgstr ""
 
@@ -166,7 +157,7 @@ msgstr ""
 msgid "User 'eval' function returned invalid deviance"
 msgstr ""
 
-msgid "Invalid return from categorical 'split' fcn"
+msgid "Invalid return from categorical 'split' function"
 msgstr ""
 
 msgid "User 'split' function returned invalid goodness"
@@ -181,7 +172,7 @@ msgstr ""
 msgid "'x' not converted"
 msgstr ""
 
-msgid "Not legitimate rpart"
+msgid "Not an 'rpart' object"
 msgstr ""
 
 msgid "Nodes %s are not in this tree"

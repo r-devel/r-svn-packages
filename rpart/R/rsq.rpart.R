@@ -1,11 +1,9 @@
 ## This function plots the approximate r-square for the different
 ## splits (assumes using anova method).
 
-## SCCS @(#)rsq.rpart.s	1.6 08/28/97
-
 rsq.rpart <- function(x) {
 
-  if(!inherits(x,'rpart')) stop("Not legitimate rpart")
+  if(!inherits(x,'rpart')) stop("Not a legitimate \"rpart\" object")
 
   p.rpart <- printcp(x)
   xstd <- p.rpart[,5L]

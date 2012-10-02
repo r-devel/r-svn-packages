@@ -1,4 +1,3 @@
-#  SCCS %W% %G%
 #This routine sets up the callback code for user-written split
 #  routines in rpart
 #
@@ -47,7 +46,7 @@ rpartcallback <- function(mlist, nobs, init)
                 ncat <- length(unique(xback[1L:n2]))
                 if (length(temp$goodness) != ncat-1L ||
                     length(temp$direction) != ncat)
-                    stop("Invalid return from categorical 'split' fcn")
+                    stop("Invalid return from categorical 'split' function")
             }
 
             else {
@@ -80,7 +79,7 @@ rpartcallback <- function(mlist, nobs, init)
                 ncat <- length(unique(xback[1L:n2]))
                 if (length(temp$goodness) != ncat-1L ||
                     length(temp$direction) != ncat)
-                    stop("Invalid return from categorical 'split' fcn")
+                    stop("Invalid return from categorical 'split' function")
             }
             else {
                 tempy <- matrix(yback[1L:(nback*numy)], ncol=numy)

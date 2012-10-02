@@ -1,4 +1,3 @@
-# SCCS @(#)text.rpart.s	1.12 06/06/01
 # This is a modification of text.tree.
 # Fancy option has been added in (to mimic post.tree)
 #
@@ -8,9 +7,9 @@ text.rpart <-
              pretty = NULL, digits = getOption("digits") - 3,
              use.n=FALSE, fancy=FALSE, fwidth=.8, fheight =.8, ...)
 {
-    if(!inherits(x, "rpart")) stop("Not legitimate rpart")
+    if(!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
     if(!is.null(x$frame$splits)) x <- rpconvert(x)#Backwards compatability
-    if (nrow(x$frame) <= 1)
+    if (nrow(x$frame) <= 1L)
         stop("fit is not a tree, just a root")
 
     frame <- x$frame

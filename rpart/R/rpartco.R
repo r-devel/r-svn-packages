@@ -1,4 +1,3 @@
-#SCCS @(#)rpartco.s	1.7 02/07/00
 # Compute the x-y coordinates for a tree
 rpartco <- function(tree, parms =  paste(".rpart.parms", dev.cur(), sep = "."))
 {

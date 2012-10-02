@@ -1,4 +1,3 @@
-#SCCS @(#)rpart.exp.s	1.8 07/05/01
 # rescaled exponential splitting
 #  The survival object 'y' is rescaled so that
 #    a. overall death rate is 1.0

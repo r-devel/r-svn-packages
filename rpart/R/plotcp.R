@@ -1,11 +1,9 @@
-# SCCS @(#)plotcp.s	1.1 02/08/98
 # Contributed by B.D. Ripley 97/07/17
-#
 plotcp <- function(x, minline = TRUE, lty = 3, col = 1,
 		   upper = c("size", "splits", "none"), ...)
 {
   dots <- list(...)
-  if(!inherits(x, "rpart")) stop("Not legitimate 'rpart' object")
+  if(!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
   upper <- match.arg(upper)
   p.rpart <- x$cptable
   if(ncol(p.rpart) < 5L)
