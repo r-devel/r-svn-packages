@@ -3,9 +3,10 @@
 ##
 
 text.rpart <-
-    function(x, splits = TRUE, label, FUN = text, all=FALSE,
+    function(x, splits = TRUE, label, FUN = text, all = FALSE,
              pretty = NULL, digits = getOption("digits") - 3,
-             use.n=FALSE, fancy=FALSE, fwidth=.8, fheight =.8, ...)
+             use.n = FALSE, fancy = FALSE, fwidth = 0.8, fheight = 0.8,
+             bg = par("bg"), ...)
 {
     if(!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
     if(!is.null(x$frame$splits)) x <- rpconvert(x)#Backwards compatability
@@ -13,8 +14,7 @@ text.rpart <-
         stop("fit is not a tree, just a root")
 
     frame <- x$frame
-    if(!missing(label))
-        warning("argument 'label' is currently unused")
+    if(!missing(label)) warning("argument 'label' is no longer used")
     cxy <- par("cxy")                   #character width and height
     if(!is.null(srt <- list(...)$srt) && srt == 90)
         cxy <- rev(cxy)
@@ -25,8 +25,7 @@ text.rpart <-
     node.left <- node[is.left]
     parent <- match(node.left/2, node)
 
-    ##Put left splits at the parent node
-
+    ## Put left splits at the parent node
     if(splits) {
         left.child <- match(2 * node, node)
         right.child <- match(node * 2 + 1, node)
@@ -49,6 +48,7 @@ text.rpart <-
 
         else FUN(xy$x, xy$y + 0.5 * cxy[2L], rows[left.child], ...)
     }
+
     leaves <- if(all) rep(TRUE, nrow(frame)) else frame$var == "<leaf>"
 
     ylevels <- attr(x,'ylevels')
@@ -66,45 +66,45 @@ text.rpart <-
                          n=frame$n[leaves], use.n=use.n)
 
 
-    oval <- function(middlex,middley,a,b) {
-
-        theta <- seq(0,2*pi,pi/30)
-        newx <- middlex + a*cos(theta)
-        newy <- middley + b*sin(theta)
-
-        polygon(newx,newy,border=TRUE,col=0)
-        ##	     polygon(newx,newy,border=T)
-    }
-
-    rectangle <- function(middlex, middley,a,b) {
-
-        newx <- middlex + c(a,a,-a,-a)
-        newy <- middley + c(b,-b,-b,b)
-
-        polygon(newx,newy,border=TRUE,col=0)
-        ##	  polygon(newx,newy,border=T)
-    }
 
     if(fancy) {
+        if(col2rgb(bg, alpha = TRUE)[4L, 1L] < 255) bg <- "white"
+        oval <- function(middlex, middley, a, b)
+        {
+            theta <- seq(0, 2*pi, pi/30)
+            newx <- middlex + a*cos(theta)
+            newy <- middley + b*sin(theta)
+
+            polygon(newx, newy, border = TRUE, col = bg)
+            ##        polygon(newx, newy, border=TRUE, density=0)
+        }
+
+        rectangle <- function(middlex, middley, a, b)
+        {
+            newx <- middlex + c(a, a, -a, -a)
+            newy <- middley + c(b, -b, -b, b)
+
+            polygon(newx, newy, border = TRUE, col = bg)
+            ##        polygon(newx, newy, border=TRUE, density=0)
+        }
 
         ## find maximum length of stat
         maxlen <- max(string.bounding.box(stat)$columns) + 1L
         maxht <- max(string.bounding.box(stat)$rows) + 1L
 
-        if(fwidth<1)  a.length <- fwidth*cxy[1L]*maxlen
-        else a.length <- fwidth*cxy[1L]
+        a.length <- if(fwidth < 1)  fwidth*cxy[1L]*maxlen else fwidth*cxy[1L]
 
-        if(fheight<1) b.length <- fheight*cxy[2L]*maxht
-        else b.length <- fheight*cxy[2L]
+        b.length <- if(fheight < 1) fheight*cxy[2L]*maxht else fheight*cxy[2L]
 
         ## create ovals and rectangles here
         ## sqrt(2) creates the smallest oval that fits around the
         ## best fitting rectangle
-        for(i in parent) oval(xy$x[i],xy$y[i],
-                              a=sqrt(2)*a.length/2, b=sqrt(2)*b.length/2)
-        child <- match(node[frame$var=="<leaf>"],node)
-        for(i in child) rectangle(xy$x[i],xy$y[i],
-                                  a=a.length/2,b=b.length/2)
+        for(i in parent)
+            oval(xy$x[i], xy$y[i], a = sqrt(2)*a.length/2,
+                 b = sqrt(2)*b.length/2)
+        child <- match(node[frame$var == "<leaf>"], node)
+        for(i in child)
+            rectangle(xy$x[i], xy$y[i], a = a.length/2, b = b.length/2)
     }
 
     ##if FUN=text then adj=1 puts the split label to the left of the

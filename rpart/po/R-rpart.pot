@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-55\n"
-"POT-Creation-Date: 2012-10-02 16:31\n"
+"POT-Creation-Date: 2012-10-03 15:19\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -178,7 +178,7 @@ msgstr ""
 msgid "Nodes %s are not in this tree"
 msgstr ""
 
-msgid "argument 'label' is currently unused"
+msgid "argument 'label' is no longer used"
 msgstr ""
 
 msgid "Invalid fit object"
