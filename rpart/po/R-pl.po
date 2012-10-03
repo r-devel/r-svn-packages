@@ -71,13 +71,11 @@ msgstr "Niepoprawna predykcja dla obiektu \"rpart\""
 # stop("Not an rpart object")
 # Recommended/rpart/R/plot.rpart.s: 4
 # stop("Not an rpart object")
-#, fuzzy
 msgid "'x' must be an \"rpart\" object"
-msgstr "to nie jest obiekt 'rpart'"
+msgstr "'x' to nie jest obiekt 'rpart'"
 
 # Recommended/rpart/R/residuals.rpart.s: 12
 # stop("Do not know about this type of residual")
-#, fuzzy
 msgid "Invalid type of residual"
 msgstr "Nic nie wiadomo o tym typie reszt"
 
@@ -93,9 +91,8 @@ msgstr "Niepoprawna metoda"
 
 # Recommended/rpart/R/rpart.s: 89
 # stop("Argument ", names(extraArgs)[indx==0], "not matched")
-#, fuzzy
 msgid "Argument %s not matched"
-msgstr "nie został dopasowany"
+msgstr "Argument %s nie został dopasowany"
 
 # Recommended/rpart/R/rpart.s: 118
 # stop("Wrong length for xval")
@@ -211,20 +208,20 @@ msgstr "Maksymalna głębokość musi być równa przynajmniej 1"
 # Recommended/rpart/R/rpart.control.s: 21
 # warning("The value of usesurrogate supplied was out of range," ,
 # 		    "the default value of 2 is used instead.")
-#, fuzzy
 msgid ""
 "The value of 'usesurrogate' supplied was out of range, the default value of "
 "2 is used instead."
 msgstr "Dostarczona wartość 'usesurrogate' była poza zakesem,"
+"wzamian użyto domyślnej wartości 2."
 
 # Recommended/rpart/R/rpart.control.s: 21
 # warning("The value of usesurrogate supplied was out of range," ,
 # 		    "the default value of 2 is used instead.")
-#, fuzzy
 msgid ""
 "The value of 'surrogatestyle' supplied was out of range, the default value "
 "of 0 is used instead."
 msgstr "Dostarczona wartość 'usesurrogate' była poza zakesem,"
+"wzamian użyto domyślnej wartości 0."
 
 # Recommended/rpart/R/rpart.exp.s: 16
 # stop("Response must be a survival object - use the Surv() function")
@@ -299,7 +296,6 @@ msgstr "Metoda użytkownika nie zawiera funkcji 'eval'"
 # stop("User eval function returned invalid label")
 # Recommended/rpart/R/rpartcallback.s: 69
 # stop("User eval function returned invalid label")
-#, fuzzy
 msgid "User 'eval' function returned invalid label"
 msgstr "Funkcja użytkownika 'eval' zwróciła niepoprawną etykietę"
 
@@ -307,7 +303,6 @@ msgstr "Funkcja użytkownika 'eval' zwróciła niepoprawną etykietę"
 # stop("User eval function returned invalid deviance")
 # Recommended/rpart/R/rpartcallback.s: 71
 # stop("User eval function returned invalid deviance")
-#, fuzzy
 msgid "User 'eval' function returned invalid deviance"
 msgstr "Funkcja użytkownika 'eval' zwróciła niepoprawne odchylenie"
 
@@ -334,7 +329,6 @@ msgstr "Funkcja użytkownika 'split' zwróciła niepoprawny kierunek"
 
 # Recommended/rpart/R/rpconvert.s: 8
 # stop("x does not appear to be an rpart object")
-#, fuzzy
 msgid "x does not appear to be an \"rpart\" object"
 msgstr "'x' nie wygląda na obiekt \"rpart\""
 
@@ -347,7 +341,6 @@ msgstr "'x' nie został przekształcony"
 # stop("Not an rpart object")
 # Recommended/rpart/R/plot.rpart.s: 4
 # stop("Not an rpart object")
-#, fuzzy
 msgid "Not an \"rpart\" object"
 msgstr "to nie jest obiekt 'rpart'"
 
@@ -356,9 +349,8 @@ msgstr "to nie jest obiekt 'rpart'"
 # Recommended/rpart/R/zzz.R: 25
 # warning("supplied nodes ", paste(bad, collapse = ","),
 #                 " are not in this tree")
-#, fuzzy
 msgid "Nodes %s are not in this tree"
-msgstr "nie są w tym drzewie"
+msgstr "Węzły %s nie są w tym drzewie"
 
 # Recommended/rpart/R/text.rpart.s: 24
 # warning("argument 'label' is currently unused")
@@ -375,9 +367,8 @@ msgstr "niepoprawny obiekt dopasowania"
 # Recommended/rpart/R/zzz.R: 25
 # warning("supplied nodes ", paste(bad, collapse = ","),
 #                 " are not in this tree")
-#, fuzzy
 msgid "supplied nodes %s are not in this tree"
-msgstr "nie są w tym drzewie"
+msgstr "dostarczone węzły %s nie są w tym drzewie"
 
 # Recommended/rpart/R/zzz.R: 25
 # warning("supplied nodes ", paste(bad, collapse = ","),
@@ -385,9 +376,8 @@ msgstr "nie są w tym drzewie"
 # Recommended/rpart/R/zzz.R: 29
 # warning("supplied nodes ",
 #                 paste(good[leaves], collapse = ","), " are leaves")
-#, fuzzy
 msgid "supplied nodes %s are leaves"
-msgstr "dostarczone węzły"
+msgstr "dostarczone węzły %s są liśćmi"
 
 # Recommended/rpart/R/rpart.exp.s: 123
 # stop("'parms' component not matched: ", names(parms)[indx==0L])

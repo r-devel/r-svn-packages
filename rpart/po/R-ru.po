@@ -49,7 +49,6 @@ msgstr "Неправильное предсказание для \"rpart\" объекта"
 msgid "'x' must be an \"rpart\" object"
 msgstr "Не объект rpart"
 
-#, fuzzy
 msgid "Invalid type of residual"
 msgstr "Не знаю о таком типе остатков"
 
@@ -59,9 +58,8 @@ msgstr "Деревья не переносят терминов взаимодействия"
 msgid "Invalid method"
 msgstr "Неправильный метод"
 
-#, fuzzy
 msgid "Argument %s not matched"
-msgstr "не соответствует"
+msgstr "Аргумент %s не соответствует"
 
 msgid "Wrong length for 'xval'"
 msgstr "Неправильная длина 'xval'"
@@ -123,21 +121,20 @@ msgstr "Максимальная глубина -- 30"
 msgid "Maximum depth must be at least 1"
 msgstr "Максимальная глубина должна быть по меньшей мере 1"
 
-#, fuzzy
 msgid ""
 "The value of 'usesurrogate' supplied was out of range, the default value of "
 "2 is used instead."
 msgstr "Указанное значение usesurrogate было вне размаха,"
+"вместо него использовано умалчиваемое значение 2 "
 
-#, fuzzy
 msgid ""
 "The value of 'surrogatestyle' supplied was out of range, the default value "
 "of 0 is used instead."
 msgstr "Указанное значение usesurrogate было вне размаха,"
+"вместо него использовано умалчиваемое значение 0 "
 
-#, fuzzy
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
-msgstr "Ответ должен быть survival-объектом -- используйте функцию Surv()"
+msgstr "Ответ должен быть survival-объектом -- используйте функцию 'Surv()'"
 
 msgid "Observation time must be > 0"
 msgstr "Время наблюдений должно быть > 0"
@@ -163,49 +160,39 @@ msgstr "Количество событий должно быть >= 0"
 msgid "User written methods must have 3 functions"
 msgstr "Методы пользователя должны иметь по 3 функции"
 
-#, fuzzy
 msgid "User written method does not contain an 'init' function"
-msgstr "Метод пользователя не имеет функции init"
+msgstr "Метод пользователя не имеет функции 'init'"
 
-#, fuzzy
 msgid "User written method does not contain a 'split' function"
-msgstr "Метод пользователя не имеет функции split"
+msgstr "Метод пользователя не имеет функции 'split'"
 
-#, fuzzy
 msgid "User written method does not contain an 'eval' function"
-msgstr "Метод пользователя не имеет функции eval"
+msgstr "Метод пользователя не имеет функции 'eval'"
 
-#, fuzzy
 msgid "User 'eval' function returned invalid label"
-msgstr "Пользовательская функция eval вернула неправильную метку"
+msgstr "Пользовательская функция 'eval' вернула неправильную метку"
 
-#, fuzzy
 msgid "User 'eval' function returned invalid deviance"
-msgstr "Пользовательская функция eval вернула неправильное отклонение"
+msgstr "Пользовательская функция 'eval' вернула неправильное отклонение"
 
-#, fuzzy
 msgid "Invalid return from categorical 'split' function"
-msgstr "Неправильный результат categorical split fcn"
+msgstr "Неправильный результат categorical функции 'split"
 
-#, fuzzy
 msgid "User 'split' function returned invalid goodness"
 msgstr ""
-"Пользовательская функция split вернула неправильную доброкачественность"
+"Пользовательская функция 'split' вернула неправильную доброкачественность"
 
 msgid "User 'split' function returned invalid direction"
 msgstr "Пользовательская функция 'split' вернула неправильное направление"
 
-#, fuzzy
 msgid "x does not appear to be an \"rpart\" object"
-msgstr "похоже, что x -- не rpart-объект"
+msgstr "похоже, что x -- не \"rpart\"-объект"
 
-#, fuzzy
 msgid "'x' not converted"
-msgstr "x не преобразован"
+msgstr "'x' не преобразован"
 
-#, fuzzy
 msgid "Not an \"rpart\" object"
-msgstr "Не объект 'rpart'"
+msgstr "Не объект \"rpart\""
 
 #, fuzzy
 msgid "Nodes %s are not in this tree"
@@ -217,13 +204,11 @@ msgstr "аргумент 'label' сейчас не используется"
 msgid "Invalid fit object"
 msgstr "Неправильный объект подгонки"
 
-#, fuzzy
 msgid "supplied nodes %s are not in this tree"
-msgstr "не в этом дереве"
+msgstr "указанные узлы %s не в этом дереве"
 
-#, fuzzy
 msgid "supplied nodes %s are leaves"
-msgstr "указанные узлы"
+msgstr "указанные узлы %s листья"
 
 #, fuzzy
 #~ msgid "'parms' component not matched:"
@@ -264,6 +249,6 @@ msgstr "указанные узлы"
 #~ msgid "are leaves"
 #~ msgstr "листья"
 
-#, fuzzy
+#, Fuzzy
 #~ msgid "Observation time must be >0"
 #~ msgstr "Время наблюдений должно быть > 0"

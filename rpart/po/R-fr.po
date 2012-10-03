@@ -47,7 +47,6 @@ msgstr "Prédiction incorrecte pour un objet \"rpart\""
 msgid "'x' must be an \"rpart\" object"
 msgstr "Ceci n'est pas un objet rpart"
 
-#, fuzzy
 msgid "Invalid type of residual"
 msgstr "Type de résidus inconnus"
 
@@ -57,11 +56,9 @@ msgstr "Les arbres ne peuvent prendre en compte les termes d'interaction"
 msgid "Invalid method"
 msgstr "Methode incorrecte"
 
-#, fuzzy
 msgid "Argument %s not matched"
-msgstr "est inconnu"
+msgstr "L'argument %s est inconnu"
 
-#, fuzzy
 msgid "Wrong length for 'xval'"
 msgstr "Longueur incorrecte de 'xval'"
 
@@ -125,17 +122,17 @@ msgstr "La profondeur maximale est de 30"
 msgid "Maximum depth must be at least 1"
 msgstr "La profondeur maximale doit être au moins 1"
 
-#, fuzzy
 msgid ""
 "The value of 'usesurrogate' supplied was out of range, the default value of "
 "2 is used instead."
 msgstr "La valeur de 'usesurrogate' fournie est hors plage,"
+"la valeur par défaut de 2 est utilisée à la place."
 
-#, fuzzy
 msgid ""
 "The value of 'surrogatestyle' supplied was out of range, the default value "
 "of 0 is used instead."
 msgstr "La valeur de 'usesurrogate' fournie est hors plage,"
+"la valeur par défaut de 0 est utilisée à la place."
 
 msgid "Response must be a 'survival' object - use the 'Surv()' function"
 msgstr ""
@@ -174,7 +171,6 @@ msgstr "La méthode personnalisée ne contient pas de fonction 'split'"
 msgid "User written method does not contain an 'eval' function"
 msgstr "La méthode personnalisée ne contient pas de fonction 'eval'"
 
-#, fuzzy
 msgid "User 'eval' function returned invalid label"
 msgstr "La fonction 'eval' personnalisée a renvoyé une étiquette incorrecte"
 
@@ -191,20 +187,17 @@ msgstr ""
 msgid "User 'split' function returned invalid direction"
 msgstr "La fonction 'split' personnalisée a renvoyé une direction incorrecte"
 
-#, fuzzy
 msgid "x does not appear to be an \"rpart\" object"
 msgstr "'x' ne semble pas être un objet \"rpart\""
 
 msgid "'x' not converted"
 msgstr "'x' n'a pas convergé"
 
-#, fuzzy
 msgid "Not an \"rpart\" object"
 msgstr "Ceci n'est pas un objet \"rpart\""
 
-#, fuzzy
 msgid "Nodes %s are not in this tree"
-msgstr "ne sont pas dans l'arbre"
+msgstr "Les noeuds %s ne sont pas dans l'arbre"
 
 msgid "argument 'label' is currently unused"
 msgstr ""
@@ -212,13 +205,11 @@ msgstr ""
 msgid "Invalid fit object"
 msgstr "Objet 'fit' incorrect"
 
-#, fuzzy
 msgid "supplied nodes %s are not in this tree"
-msgstr "ne sont pas dans l'arbre"
+msgstr "les noeuds fournis %s ne sont pas dans l'arbre"
 
-#, fuzzy
 msgid "supplied nodes %s are leaves"
-msgstr "les noeuds fournis"
+msgstr "les noeuds fournis %s sont des feuilles"
 
 #, fuzzy
 #~ msgid "'parms' component not matched:"
