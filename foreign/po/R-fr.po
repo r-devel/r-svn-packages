@@ -137,9 +137,8 @@ msgid "Cannot handle character variables longer than 255"
 msgstr ""
 "Les cha?nes de caract?res plus longues que 255 ne sont pas prises en compte"
 
-#, fuzzy
 msgid "Cannot uniquely abbreviate the variable names to %d or fewer characters"
-msgstr "Impossible d'abbr?ger de mani?re unique les noms de variables vers"
+msgstr "Impossible d'abbr?ger de mani?re unique les noms de variables vers %d ou moins de caract?res"
 
 msgid "Cannot uniquely abbreviate format names to conform to"
 msgstr ""
@@ -151,13 +150,12 @@ msgstr "limite de 8 caract?res et sans terminer par un chiffre"
 msgid "Some variable names were abbreviated or otherwise altered."
 msgstr "Quelques noms de variables on ?t? abbr?g?es ou alt?r?es."
 
-#, fuzzy
 msgid "data frame contains columns of unsupported class %s"
 msgid_plural "data frame contains columns of unsupported classes %s"
 msgstr[0] ""
-"le tableau de donn?es contient des colonnes de classe(s) non support?e(s)"
+"le tableau de donn?es contient des colonnes de classe non support?e %s"
 msgstr[1] ""
-"le tableau de donn?es contient des colonnes de classe(s) non support?e(s)"
+"le tableau de donn?es contient des colonnes de classes non support?es %s"
 
 #~ msgid "S mode"
 #~ msgstr "mode S"

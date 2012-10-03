@@ -22,19 +22,15 @@ msgid ""
 "ignored"
 msgstr ""
 
-#, fuzzy
 msgid "no data in call to 'boot'"
-msgstr "pas de données lors de l'appel à boot"
+msgstr "pas de données lors de l'appel à 'boot'"
 
-#, fuzzy
 msgid "negative value of 'm' supplied"
 msgstr "valeur négative donnée pour 'm'"
 
-#, fuzzy
 msgid "length of 'm' incompatible with 'strata'"
 msgstr "longueur de 'm' incompatible avec 'strata'"
 
-#, fuzzy
 msgid "dimensions of 'R' and 'weights' do not match"
 msgstr "les dimensions de 'R' et 'weights' ne sont pas conformes"
 
@@ -56,34 +52,28 @@ msgid "%s distribution not supported: using normal instead"
 msgstr ""
 "distribution non supportée, utilisation d'une distribution normale à la place"
 
-#, fuzzy
 msgid "only first element of 'index' used"
 msgstr "seul le premier élément d''index' est utilisé"
 
-#, fuzzy
 msgid "'K' outside allowable range"
 msgstr "'K' en dehors de la plage admise"
 
-#, fuzzy
 msgid "'K' has been set to %f"
-msgstr "'K' est fixé à"
+msgstr "'K' est fixé à %f"
 
-#, fuzzy
 msgid "'t' and 't0' must be supplied together"
 msgstr "'t' et 't0' doivent être fixés simultanément"
 
 msgid "index out of bounds; minimum index only used."
 msgstr "indice hors plage ; l'indice le plus petit est utilisé"
 
-#, fuzzy
 msgid "'t' must of length %d"
-msgstr "'t' doit être de longueur"
+msgstr "'t' doit être de longueur %d"
 
 msgid "bootstrap variances needed for studentized intervals"
 msgstr ""
 "les variances de bootstrap sont nécessaires pour les intervalles studentisés"
 
-#, fuzzy
 msgid "BCa intervals not defined for time series bootstraps"
 msgstr ""
 "les intervalles BCa ne sont pas définis pour les bootstraps sur les séries "
@@ -92,14 +82,12 @@ msgstr ""
 msgid "bootstrap output object or 't0' required"
 msgstr "objet résultat d'un bootstrap ou 't0' requis"
 
-#, fuzzy
 msgid "unable to calculate 'var.t0'"
-msgstr "impossible de calculer var.t0"
+msgstr "impossible de calculer 'var.t0'"
 
 msgid "extreme order statistics used as endpoints"
 msgstr "statistiques d'ordre extrême utilisées comme points finaux"
 
-#, fuzzy
 msgid "variance required for studentized internals"
 msgstr "variance requise pour les intervalles de confiance studentisés"
 
@@ -110,22 +98,18 @@ msgstr "l'ajustement de 'a' estimé est NA"
 msgid "estimated adjustment 'a' is NA"
 msgstr "l'ajustement de 'a' estimé est NA"
 
-#, fuzzy
 msgid "only first element of 'index' used in 'abc.ci'"
-msgstr "seul le premier élément de l'indice est utilisé dans abc.in"
+msgstr "seul le premier élément de 'index' est utilisé dans 'abc.ci'"
 
-#, fuzzy
 msgid "missing values not allowed in 'data'"
-msgstr "valeurs manquantes non autorisées dans les données"
+msgstr "valeurs manquantes non autorisées dans 'data'"
 
-#, fuzzy
 msgid "unknown value of 'sim'"
 msgstr "valeur inconnue de 'sim'"
 
-#, fuzzy
 msgid "'data' must be a matrix with at least 2 columns"
 msgstr ""
-"les données doivent être dans une matrice contenant au moins 2 colonnes"
+"'data' doivent être dans une matrice contenant au moins 2 colonnes"
 
 #, fuzzy
 msgid "'index' must contain 2 elements"
@@ -135,130 +119,106 @@ msgstr "les indices doivent contenir 2 éléments"
 msgid "only first 2 elements of 'index' used"
 msgstr "seuls les deux premiers éléments d'indices sont utilisés"
 
-#, fuzzy
 msgid "indices are incompatible with 'ncol(data)'"
 msgstr "les indices sont incompatibles avec ncol(data)"
 
-#, fuzzy
 msgid "sim = \"weird\" cannot be used with a \"coxph\" object"
-msgstr "sim=weird ne peut être utilisé avec un object 'coxph'"
+msgstr "sim = \"weird\" ne peut être utilisé avec un object 'coxph'"
 
 #, fuzzy
 msgid "only columns %s and %s of 'data' used"
 msgstr "seule la première colonne de 't' est utilisée"
 
-#, fuzzy
 msgid "no coefficients in Cox model -- model ignored"
-msgstr "pas de coefficients dans le modèle cox -- modèle ignoré"
+msgstr "pas de coefficients dans le modèle Cox -- modèle ignoré"
 
-#, fuzzy
 msgid "'F.surv' is required but missing"
-msgstr "F.surv est requis mais manquant"
+msgstr "'F.surv' est requis mais manquant"
 
-#, fuzzy
 msgid "'G.surv' is required but missing"
-msgstr "G.surv est requis mais manquant"
+msgstr "'G.surv' est requis mais manquant"
 
-#, fuzzy
 msgid "'strata' of wrong length"
-msgstr "strates de mauvaise longueur"
+msgstr "'strata' de mauvaise longueur"
 
 msgid "influence values cannot be found from a parametric bootstrap"
 msgstr ""
 "les valeurs d'influence ne peuvent être trouvées à partir d'un bootstrap "
 "paramétrique"
 
-#, fuzzy
 msgid "neither 'data' nor bootstrap object specified"
-msgstr "pas de données ou d'objet bootstrap spécifié"
+msgstr "pas de 'data' ou d'objet bootstrap spécifié"
 
-#, fuzzy
 msgid "neither 'statistic' nor bootstrap object specified"
-msgstr "pas de statistique ou d'objet 'bootstrap' spécifié"
+msgstr "pas de 'statistic' ou d'objet 'bootstrap' spécifié"
 
 msgid "'stype' must be \"w\" for type=\"inf\""
 msgstr "'stype' doit être \"w\" pour type=\"inf\""
 
-#, fuzzy
 msgid "input 't' ignored; type=\"inf\""
 msgstr "entrée 't' ignorée ; type=\"inf\""
 
 msgid "bootstrap object needed for type=\"reg\""
 msgstr "objet 'bootstrap' requis pour type=\"reg\""
 
-#, fuzzy
 msgid "input 't' ignored; type=\"jack\""
 msgstr "entrée 't' ignorée ; type=\"jack\""
 
-#, fuzzy
 msgid "input 't' ignored; type=\"pos\""
 msgstr "entrée 't' ignorée ; type=\"pos\""
 
-#, fuzzy
 msgid "input 't0' ignored: neither 't' nor 'L' supplied"
 msgstr "entrée 't0' ignorée : ni 't', ni 'L' n'est fourni"
 
 msgid "bootstrap output matrix missing"
 msgstr "matrice manquante dans la sortie bootstrap"
 
-#, fuzzy
 msgid "use 'boot.ci' for scalar parameters"
-msgstr "utilisez boot.ci pour des paramètres scalaires"
+msgstr "utilisez 'boot.ci' pour des paramètres scalaires"
 
 #, fuzzy
 msgid "unable to achieve requested overall error rate"
 msgstr "impossible d'atteindre le taux global d'erreur spécifié"
 
-#, fuzzy
 msgid "unable to find multiplier for %f"
-msgstr "impossible de trouver un multiplicateur pour"
+msgstr "impossible de trouver un multiplicateur pour %f"
 
-#, fuzzy
 msgid "'theta' or 'lambda' required"
 msgstr "'theta' ou 'lambda' requis"
 
-#, fuzzy
 msgid "0 elements not allowed in 'q'"
 msgstr "0 éléments non permis pour 'q'"
 
 msgid "bootstrap replicates must be supplied"
 msgstr "les réplications de bootstrap doivent être fournies"
 
-#, fuzzy
 msgid "either 'boot.out' or 'w' must be specified."
 msgstr "soit 'boot.out', soit 'w' doit être spécifié"
 
-#, fuzzy
 msgid "only first column of 't' used"
 msgstr "seule la première colonne de 't' est utilisée"
 
-#, fuzzy
 msgid "invalid value of 'sim' supplied"
 msgstr "valeur incorrecte spécifiée pour 'sim'"
 
-#, fuzzy
 msgid "'R' and 'theta' have incompatible lengths"
 msgstr "'R' et 'theta' ont des longueurs non conformes"
 
 msgid "R[1L] must be positive for frequency smoothing"
 msgstr "R[1L] doit être positif pour un lissage des fréquences"
 
-#, fuzzy
 msgid "'R' and 'alpha' have incompatible lengths"
 msgstr "'R' et 'alpha' ont des longueurs non conformes"
 
 msgid "extreme values used for quantiles"
 msgstr "valeurs extrêmes utilisées pour les quantiles"
 
-#, fuzzy
 msgid "'theta' must be supplied if R[1L] = 0"
 msgstr "'theta' doit être fourni si R[1L] = 0"
 
-#, fuzzy
 msgid "'alpha' ignored; R[1L] = 0"
 msgstr "'alpha' ignoré ; R[1L]=0"
 
-#, fuzzy
 msgid "control methods undefined when 'boot.out' has weights"
 msgstr "méthodes de contrôle non définies lorsque 'boot.out' est pondéré"
 
@@ -266,7 +226,6 @@ msgstr "méthodes de contrôle non définies lorsque 'boot.out' est pondéré"
 msgid "number of columns of 'A' (%d) not equal to length of 'u' (%d)"
 msgstr ") n'est pas égal à la longueur de u ("
 
-#, fuzzy
 msgid "either 'A' and 'u' or 'K.adj' and 'K2' must be supplied"
 msgstr "soit 'A' et 'u', soit 'K.adj' et 'K2' doivent être fournis"
 
@@ -276,43 +235,35 @@ msgstr "ce type n'est pas implémenté pour 'Poisson'"
 msgid "this type not implemented for Binary"
 msgstr "ce type n'est pas implémenté pour 'Binary'"
 
-#, fuzzy
 msgid "one of 't' or 't0' required"
 msgstr "soit 't', soit 't0' est requis"
 
-#, fuzzy
 msgid "function 'u' missing"
 msgstr "fonction 'u' manquante"
 
-#, fuzzy
 msgid "'u' must be a function"
 msgstr "'u' doit être une fonction"
 
 msgid "unable to find range"
 msgstr "impossible de trouver l'étendue des valeurs"
 
-#, fuzzy
 msgid "'R' must be positive"
 msgstr "'R' doit être positif"
 
-#, fuzzy
 msgid "invalid value of 'l'"
 msgstr "valeur de 'l' incorrecte"
 
-#, fuzzy
 msgid "unrecognized value of 'sim'"
 msgstr "valeur de 'sim' non reconnue"
 
 msgid "multivariate time series not allowed"
 msgstr "séries temporelles multivariées non admises"
 
-#, fuzzy
 msgid "likelihood never exceeds %f"
-msgstr "la vraissemblance n'a jamais excédé"
+msgstr "la vraissemblance n'a jamais excédé %f"
 
-#, fuzzy
 msgid "likelihood exceeds %f at only one point"
-msgstr "la vraissemblance excède"
+msgstr "la vraissemblance excède %f à seulement un point"
 
 #~ msgid "only columns"
 #~ msgstr "seulement des colonnes"
