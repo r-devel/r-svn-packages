@@ -13,7 +13,7 @@
 */
 #include "rpart.h"
 
-void rpartexp(Sint *n2, double *y, double *wt, double *newy, double *wtemp)
+void rpartexp(int *n2, double *y, double *wt, double *newy, double *wtemp)
 {
     int n;
     double *stop, *event;

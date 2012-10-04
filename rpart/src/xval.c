@@ -29,9 +29,8 @@
 static int debug = 0;   /*if it is odd, print out every tree */
 			/*if >= 2, print out every risk value we see */
 
-void xval(int n_xval,  struct cptable *cptable_head,  Sint *x_grp,
-	  int maxcat,  char **error,                  double * parms,
-	  int *savesort)
+void xval(int n_xval, struct cptable *cptable_head, int *x_grp,
+	  int maxcat,  char **error, double * parms, int *savesort)
 {
     int i,j,k, ii, jj;
     int last;

@@ -51,7 +51,7 @@ EXTERN struct {
     double *lwt;
     double *rwt;            /*scratch double vectors, of length ncat */
     double *vcost;          /* variable costs */
-    Sint    *numcat;        /* variable type: 0=cont, 1+  =#categories */
+    int    *numcat;        /* variable type: 0=cont, 1+  =#categories */
     int   **sorts;          /* matrix of sort indices */
     int    n;              /* total number of subjects  */
     int    num_y;          /* number of y variables */
