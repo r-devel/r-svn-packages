@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: boot 1.2-23\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
 "POT-Creation-Date: 2012-09-24 15:15\n"
-"PO-Revision-Date: 2005-12-07 23:55+0100\n"
+"PO-Revision-Date: 2012-10-03 15:35+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "Language: fr\n"
@@ -16,11 +16,14 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 1.5.3\n"
 
 msgid ""
 "'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so "
 "ignored"
 msgstr ""
+"'simple=TRUE' n'est seulement valable que pour 'sim=\"ordinary\", stype=\"i"
+"\", n=0' ; il est donc ignoré"
 
 msgid "no data in call to 'boot'"
 msgstr "pas de données lors de l'appel à 'boot'"
@@ -35,7 +38,7 @@ msgid "dimensions of 'R' and 'weights' do not match"
 msgstr "les dimensions de 'R' et 'weights' ne sont pas conformes"
 
 msgid "arguments are not all the same type of \"boot\" object"
-msgstr ""
+msgstr "les arguments ne sont pas tous du même type pour l'objet \"boot\""
 
 msgid "index array not defined for model-based resampling"
 msgstr ""
@@ -47,10 +50,10 @@ msgstr "boot.array non implémenté pour cet objet"
 msgid "array cannot be found for parametric bootstrap"
 msgstr "tableau non trouvé pour un bootstrap pamétrique"
 
-#, fuzzy
 msgid "%s distribution not supported: using normal instead"
 msgstr ""
-"distribution non supportée, utilisation d'une distribution normale à la place"
+"%s distribution non supportée, utilisation d'une distribution normale à la "
+"place"
 
 msgid "only first element of 'index' used"
 msgstr "seul le premier élément d''index' est utilisé"
@@ -91,9 +94,8 @@ msgstr "statistiques d'ordre extrême utilisées comme points finaux"
 msgid "variance required for studentized internals"
 msgstr "variance requise pour les intervalles de confiance studentisés"
 
-#, fuzzy
 msgid "estimated adjustment 'w' is infinite"
-msgstr "l'ajustement de 'a' estimé est NA"
+msgstr "l'ajustement de 'w' est infini"
 
 msgid "estimated adjustment 'a' is NA"
 msgstr "l'ajustement de 'a' estimé est NA"
@@ -108,26 +110,22 @@ msgid "unknown value of 'sim'"
 msgstr "valeur inconnue de 'sim'"
 
 msgid "'data' must be a matrix with at least 2 columns"
-msgstr ""
-"'data' doivent être dans une matrice contenant au moins 2 colonnes"
+msgstr "'data' doit être une matrice contenant au moins 2 colonnes"
 
-#, fuzzy
 msgid "'index' must contain 2 elements"
-msgstr "les indices doivent contenir 2 éléments"
+msgstr "'index' doit contenir 2 éléments"
 
-#, fuzzy
 msgid "only first 2 elements of 'index' used"
-msgstr "seuls les deux premiers éléments d'indices sont utilisés"
+msgstr "seuls les deux premiers éléments d''index' sont utilisés"
 
 msgid "indices are incompatible with 'ncol(data)'"
-msgstr "les indices sont incompatibles avec ncol(data)"
+msgstr "les indices sont incompatibles avec 'ncol(data)'"
 
 msgid "sim = \"weird\" cannot be used with a \"coxph\" object"
-msgstr "sim = \"weird\" ne peut être utilisé avec un object 'coxph'"
+msgstr "sim=\"weird\" ne peut être utilisé avec un object \"coxph\""
 
-#, fuzzy
 msgid "only columns %s and %s of 'data' used"
-msgstr "seule la première colonne de 't' est utilisée"
+msgstr "seule les colonnes %s et %s de 'data' sont utilisées"
 
 msgid "no coefficients in Cox model -- model ignored"
 msgstr "pas de coefficients dans le modèle Cox -- modèle ignoré"
@@ -150,7 +148,7 @@ msgid "neither 'data' nor bootstrap object specified"
 msgstr "pas de 'data' ou d'objet bootstrap spécifié"
 
 msgid "neither 'statistic' nor bootstrap object specified"
-msgstr "pas de 'statistic' ou d'objet 'bootstrap' spécifié"
+msgstr "pas de 'statistic' ou d'objet bootstrap spécifié"
 
 msgid "'stype' must be \"w\" for type=\"inf\""
 msgstr "'stype' doit être \"w\" pour type=\"inf\""
@@ -176,7 +174,6 @@ msgstr "matrice manquante dans la sortie bootstrap"
 msgid "use 'boot.ci' for scalar parameters"
 msgstr "utilisez 'boot.ci' pour des paramètres scalaires"
 
-#, fuzzy
 msgid "unable to achieve requested overall error rate"
 msgstr "impossible d'atteindre le taux global d'erreur spécifié"
 
@@ -217,14 +214,14 @@ msgid "'theta' must be supplied if R[1L] = 0"
 msgstr "'theta' doit être fourni si R[1L] = 0"
 
 msgid "'alpha' ignored; R[1L] = 0"
-msgstr "'alpha' ignoré ; R[1L]=0"
+msgstr "'alpha' ignoré ; R[1L] = 0"
 
 msgid "control methods undefined when 'boot.out' has weights"
 msgstr "méthodes de contrôle non définies lorsque 'boot.out' est pondéré"
 
-#, fuzzy
 msgid "number of columns of 'A' (%d) not equal to length of 'u' (%d)"
-msgstr ") n'est pas égal à la longueur de u ("
+msgstr ""
+"le nombre de colonnes de 'A' (%d) n'est pas égal à la longueur de 'u' (%d)"
 
 msgid "either 'A' and 'u' or 'K.adj' and 'K2' must be supplied"
 msgstr "soit 'A' et 'u', soit 'K.adj' et 'K2' doivent être fournis"
@@ -263,7 +260,7 @@ msgid "likelihood never exceeds %f"
 msgstr "la vraissemblance n'a jamais excédé %f"
 
 msgid "likelihood exceeds %f at only one point"
-msgstr "la vraissemblance excède %f à seulement un point"
+msgstr "la vraissemblance excède %f a seulement un point"
 
 #~ msgid "only columns"
 #~ msgstr "seulement des colonnes"
