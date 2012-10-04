@@ -1,20 +1,23 @@
-plot.rpart <- function(x, uniform=FALSE, branch=1, compress=FALSE,
-			     nspace, margin=0, minbranch=.3, ...){
+plot.rpart <- function(x, uniform = FALSE, branch = 1, compress = FALSE,
+                       nspace, margin = 0, minbranch = 0.3, ...)
+{
     if(!inherits(x, "rpart"))
-	    stop("Not a legitimate \"rpart\" object")
+        stop("Not a legitimate \"rpart\" object")
     if (!is.null(x$frame$splits)) x <- rpconvert(x)  #help for old objects
     if (nrow(x$frame) <= 1L)
         stop("fit is not a tree, just a root")
 
     if (compress & missing(nspace)) nspace <- branch
     if (!compress) nspace <- -1L     #means no compression
-    if (dev.cur() == 1L) dev.new()
-    assign(paste(".rpart.parms", dev.cur(), sep = "."),
-            list(uniform=uniform, branch=branch, nspace=nspace,
-		 minbranch=minbranch), envir=.GlobalEnv)
+    ## if (dev.cur() == 1L) dev.new() # not needed in R
 
-    #define the plot region
-    temp <- rpartco(x)
+    # Save information per device.
+    parms <- list(uniform = uniform, branch = branch, nspace = nspace,
+                 minbranch = minbranch)
+    assign(paste0("device", dev.cur()), parms, envir = rpart_env)
+
+    ## define the plot region
+    temp <- rpartco(x, parms)
     xx <- temp$x
     yy <- temp$y
     temp1 <- range(xx) + diff(range(xx))*c(-margin, margin)
@@ -28,7 +31,7 @@ plot.rpart <- function(x, uniform=FALSE, branch=1, compress=FALSE,
 
     if (branch > 0) text(xx[1L], yy[1L], '|')
     lines(c(temp$x), c(temp$y))
-    invisible(list(x=xx, y=yy))
+    invisible(list(x = xx, y = yy))
 }
 
 
