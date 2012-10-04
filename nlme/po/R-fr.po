@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: nlme 3.1-65\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
 "POT-Creation-Date: 2012-09-24 14:21\n"
-"PO-Revision-Date: 2005-12-08 18:58+0100\n"
+"PO-Revision-Date: 2012-10-03 16:45+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
 "Language: fr\n"
@@ -16,288 +16,255 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 1.5.3\n"
 
-#, fuzzy
 msgid "not implemented for \"nlme\" objects"
-msgstr "Pas implémenté pour des objets nlme"
+msgstr "Pas implémenté pour des objets \"nlme\""
 
-#, fuzzy
 msgid "not implemented for multiple levels of nesting"
 msgstr "Pas implémenté pour des niveaux multiples d'imbrication"
 
-#, fuzzy
 msgid "individual %s was not used in the fit"
-msgstr "n'a pas été utilisé dans l'ajustement."
+msgstr "l'individu %s n'a pas été utilisé dans l'ajustement"
 
-#, fuzzy
 msgid "do not know how to calculate correlation matrix of %s object"
-msgstr "Incapable de calculer la matrice de corrélation de"
+msgstr "Incapable de calculer la matrice de corrélation de l'objet %s"
 
-#, fuzzy
 msgid "\"corStruct\" object must have a \"fixed\" attribute"
-msgstr "l'objet 'corStruct' doit avoir un attribut \"fixed\"."
+msgstr "l'objet \"corStruct\" doit avoir un attribut \"fixed\""
 
-#, fuzzy
 msgid "do not know how to obtain parameters of %s object"
-msgstr "Incapable d'obtenir les paramètres de"
+msgstr "incapable d'obtenir les paramètres de l'objet %s"
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corStruct\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+"impossible de changer la longueur des paramètres d'un objet \"corStruct\""
 
-#, fuzzy
 msgid "cannot change 'form'"
-msgstr "Impossible de changer \"form\"."
+msgstr "Impossible de changer 'form'"
 
-#, fuzzy
 msgid "need data to calculate covariate of \"corStruct\" object"
 msgstr ""
-"Des données sont nécessaires pour calculer les covariables d'un objet "
-"'corStruct'"
+"des données sont nécessaires pour calculer les covariables d'un objet "
+"\"corStruct\""
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corSymm\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+"impossible de changer la longueur des paramètres d'un objet \"corSymm\""
 
-#, fuzzy
 msgid "covariate must have unique values within groups for \"corSymm\" objects"
-msgstr "La covariable doit avoir des valeurs uniques"
+msgstr ""
+"La covariable doit avoir des valeurs uniques à l'intérieur des groupes pour "
+"les objets \"corSymm\""
 
-#, fuzzy
 msgid ""
 "unique values of the covariate  for \"corSymm\" objects must be a sequence "
 "of consecutive integers"
-msgstr "les objets doivent être une séquence d'entiers consécutifs"
+msgstr ""
+"les valeurs uniques des covariables pour les objets \"corSymm\" doivent être "
+"des séquences d'entiers consécutifs"
 
-#, fuzzy
 msgid "initial value for \"corSymm\" parameters of wrong dimension"
 msgstr ""
-"La valeur initiale pour les paramètres de 'corSymm' n'ont pas les bonnes "
+"La valeur initiale pour les paramètres de \"corSymm\" n'ont pas les bonnes "
 "dimensions"
 
-#, fuzzy
 msgid "initial values for \"corSymm\" must be between -1 and 1"
-msgstr "Les valeurs initiales pour 'corSymm' doivent se situer entre -1 et 1"
+msgstr "Les valeurs initiales pour \"corSymm\" doivent se situer entre -1 et 1"
 
-#, fuzzy
 msgid ""
 "initial values for \"corSymm\" do not define a positive-definite correlation "
 "structure"
-msgstr "une structure de corrélation positive-définie"
+msgstr ""
+"les valeurs initiales pour \"corSymm\" ne définissent pas une structure de "
+"corrélation positive-définie"
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corNatural\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+"impossible de changer la longueur des paramètres d'un objet \"corNatural\""
 
-#, fuzzy
 msgid ""
 "covariate must have unique values within groups for \"corNatural\" objects"
-msgstr "intragroupes pour les objets 'corNatural'"
+msgstr ""
+"la cavariable doit avoir des valeurs uniques pour les intragroupes des "
+"objets 'corNatural'"
 
-#, fuzzy
 msgid ""
 "unique values of the covariate for \"corNatural\" objects must be a sequence "
 "of consecutive integers"
-msgstr "les objets doivent être une séquence d'entiers consécutifs"
+msgstr ""
+"les valeurs uniques pour la covariables des objets \"corNatural\" doivent "
+"être une séquence d'entiers consécutifs"
 
-#, fuzzy
 msgid "initial value for \"corNatural\" parameters of wrong dimension"
 msgstr ""
-"La valeur initiale pour les paramètres 'corNatural' n'a pas la bonne "
+"La valeur initiale pour les paramètres \"corNatural\" n'a pas la bonne "
 "dimension"
 
-#, fuzzy
 msgid "initial values for \"corNatural\" must be between -1 and 1"
 msgstr ""
-"Les valeurs initiales pour 'corNatural' doivent se situer entre -1 et 1"
+"Les valeurs initiales pour \"corNatural\" doivent se situer entre -1 et 1"
 
-#, fuzzy
 msgid ""
 "initial values for \"corNatural\" do not define a positive-definite "
 "correlation structure"
-msgstr "Les valeurs initiales pour 'corNatural' ne sont pas définies"
+msgstr ""
+"Les valeurs initiales pour \"corNatural\" ne sont pas définies sous forme "
+"d'une structure de corrélation positive-définie"
 
-#, fuzzy
 msgid "parameter in AR(1) structure must be between -1 and 1"
 msgstr "Le paramètre dans la structure AR(1) doit se situer entre - 1 et 1"
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corAR1\" object"
-msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+msgstr "Impossible de changer la longueur des paramètres d'un objet \"corAR1\""
 
-#, fuzzy
 msgid "covariate must have unique values within groups for \"corAR1\" objects"
-msgstr "La covariable doit avoir des valeurs uniques"
+msgstr ""
+"La covariable doit avoir des valeurs uniques pour les intragroupes des "
+"objets \"corAR1\""
 
-#, fuzzy
 msgid "parameter in CAR(1) structure must be between 0 and 1"
 msgstr "Le paramètre dans la structure CAR(1) doit se situer entre -1 et 1"
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corCAR1\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+"Impossible de changer la longueur des paramètres d'un objet \"corCAR1\""
 
-#, fuzzy
 msgid "covariate must have unique values within groups for \"corCAR1\" objects"
-msgstr "La covariable doit avoir des valeurs uniques"
+msgstr ""
+"la covariable doit avoir des valeurs uniques pour les intragroupes des "
+"objets \"corCAR1\""
 
-#, fuzzy
 msgid "autoregressive order must be a non-negative integer"
-msgstr "L'ordre autorégressif doit être un entier positif ou nul"
+msgstr "l'ordre autorégressif doit être un entier positif ou nul"
 
-#, fuzzy
 msgid "moving average order must be a non-negative integer"
-msgstr "L'ordre de la moyenne mobile doit être un entier positif ou nul"
+msgstr "l'ordre de la moyenne mobile doit être un entier positif ou nul"
 
-#, fuzzy
 msgid "initial value for parameter of wrong length"
-msgstr "La valeur initiale du paramètre est de la mauvaise taille"
+msgstr "la valeur initiale du paramètre est de la mauvaise taille"
 
-#, fuzzy
 msgid "parameters in ARMA structure must be < 1 in absolute value"
-msgstr "Les paramètres d'une structure ARMA doivent être < 1 en valeur absolue"
+msgstr "les paramètres d'une structure ARMA doivent être < 1 en valeur absolue"
 
 msgid "'object' has not been Initialize()d"
-msgstr ""
+msgstr "'object' n'a pas été initialisé ; utilisez Initialize()"
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corARMA\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+"impossible de changer la longueur des paramètres d'un objet \"corARMA\""
 
-#, fuzzy
 msgid "covariate must have unique values within groups for \"corARMA\" objects"
-msgstr "La covariable doit avoir des valeurs uniques"
+msgstr ""
+"la covariable doit avoir des valeurs uniques pour les intragroupes des "
+"objets \"corARMA\""
 
-#, fuzzy
 msgid "parameter in \"corCompSymm\" structure must be < 1 in absolute value"
-msgstr "Les paramètres d'une structure ARMA doivent être < 1 en valeur absolue"
+msgstr ""
+"les paramètres d'une structure \"corCompSymm\" doivent être < 1 en valeur "
+"absolue"
 
-#, fuzzy
 msgid "cannot change the length of the parameter of a \"corCompSymm\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres d'un objet 'corStruct'"
+"impossible de changer la longueur des paramètres d'un objet \"corCompSymm\""
 
-#, fuzzy
 msgid "initial value in \"corCompSymm\" must be greater than %s"
-msgstr "La valeur initiale dans 'corCompSymm' doit être > à"
+msgstr "La valeur initiale dans \"corCompSymm\" doit être plus grande que %s"
 
-#, fuzzy
 msgid "cannot change the length of the parameter after initialization"
-msgstr "Impossible de changer la longueur du paramètre après l'initialisation"
+msgstr "impossible de changer la longueur du paramètre après l'initialisation"
 
-#, fuzzy
 msgid "need data to calculate covariate"
-msgstr "Des données sont nécessaires pour calculer la covariable"
+msgstr "des données sont nécessaires pour calculer la covariable"
 
-#, fuzzy
 msgid "cannot have zero distances in \"corSpatial\""
-msgstr "Distances nulles non autorisées dans \"corSpatial\""
+msgstr "distances nulles non autorisées dans \"corSpatial\""
 
-#, fuzzy
 msgid "'range' must be > 0 in \"corSpatial\" initial value"
-msgstr "L'étendue des valeurs initiales dans \"corSpatial\" doit être > 0 "
+msgstr ""
+"l'étendue des valeurs initiales ('range') dans \"corSpatial\" doit être > 0 "
 
-#, fuzzy
 msgid "initial value for \"corSpatial\" parameters of wrong dimension"
 msgstr ""
-"La valeur initiale pour les paramètres corSpatial n'ont pas la bonne taille"
+"la valeur initiale pour les paramètres \"corSpatial\" n'ont pas la bonne "
+"taille"
 
-#, fuzzy
 msgid "initial value of nugget ratio must be between 0 and 1"
 msgstr ""
-"La valeur initiale du coefficient de pépite doit être comprise entre 0 et 1"
+"la valeur initiale du coefficient de pépite doit être comprise entre 0 et 1"
 
-#, fuzzy
 msgid "'range' must be > 0 in \"corLin\" initial value"
-msgstr "L'étendue doit être > 0 pour les valeurs initiales dans \"corLin\""
+msgstr ""
+"l'étendue ('range') doit être > 0 pour les valeurs initiales dans \"corLin\""
 
-#, fuzzy
 msgid ""
 "initial value for 'range' less than minimum distance. Setting it to 1.1 * min"
 "(distance)"
 msgstr ""
-"La valeur initiale pour l'étendue est inférieure à la distance minimale."
+"la valeur initiale pour l'étendue ('range') est inférieure à la distance "
+"minimale. Elle est fixée à 1.1 * min(distance)"
 
-#, fuzzy
 msgid "initial value for \"corLin\" parameters of wrong dimension"
 msgstr ""
-"La valeur initiale pour les paramètres 'corLin' n'ont pas la bonne taille"
+"la valeur initiale pour les paramètres \"corLin\" n'ont pas la bonne taille"
 
-#, fuzzy
 msgid "range must be > 0 in \"corSpher\" initial value"
-msgstr "L'étendue des valeurs intiales dans \"corSpher\" doit être > 0"
+msgstr "l'étendue des valeurs initiales dans \"corSpher\" doit être > 0"
 
-#, fuzzy
 msgid "initial value for \"corSpher\" parameters of wrong dimension"
 msgstr ""
-"La valeur initiale pour les paramètres 'corSpher' sont de la mauvaise taille"
+"la valeur initiale pour les paramètres \"corSpher\" sont de la mauvaise "
+"taille"
 
-#, fuzzy
 msgid "negative control$nlmStepMax - using default value"
 msgstr "control$nlmStepMax négatif - utilisation de la valeur par défaut"
 
-#, fuzzy
 msgid "model must be a formula of the form \"resp ~ pred\""
-msgstr "Le modèle doit être une formule de la forme \"rep ~ pred\""
+msgstr "le modèle doit être une formule de la forme \"resp ~ pred\""
 
 msgid "no coefficients to fit"
-msgstr ""
+msgstr "pas de coefficients à ajuster"
 
-#, fuzzy
 msgid "maximum number of iterations reached without convergence"
-msgstr "Le numbre maximum d'itérations est atteint, mais pas la convergence"
+msgstr "le nombre maximum d'itérations est atteint, mais pas la convergence"
 
-#, fuzzy
 msgid "computed \"gls\" fit is singular, rank %s"
-msgstr "l'ajustement 'gls' calculé est singulier, de rang"
+msgstr "l'ajustement \"gls\" calculé est singulier, de rang %s"
 
-#, fuzzy
 msgid "object must inherit from class \"gls\""
-msgstr "L'objet doit hériter de la classe \"gls\""
+msgstr "l'objet doit hériter de la classe \"gls\""
 
-#, fuzzy
 msgid "'Terms' must be between 1 and %d"
-msgstr "Les termes doivent être entre 1 et"
+msgstr "'Terms' doivent être compris entre 1 et %d"
 
-#, fuzzy
 msgid "terms can only be integers or characters"
 msgstr ""
 "Les termes peuvent être seulement des entiers ou des chaînes de caractères"
 
-#, fuzzy
 msgid "data in %s call must evaluate to a data frame"
-msgstr "l'appel doit être évalué comme un tableau de données"
+msgstr ""
+"les données dans l'appel %s doivent être évaluées comme un tableau de "
+"données (\"data frame\")"
 
-#, fuzzy
 msgid ""
 "%s without \"primary\" can only be used with fits of \"groupedData\" objects"
 msgstr ""
-"sans \"primary\" ne peut être utilisé avec des ajustement d'objets "
-"'groupedData'"
+"%s sans \"primary\" ne peut être utilisé avec des ajustement d'objets "
+"\"groupedData\""
 
-#, fuzzy
 msgid "only one level allowed for predictions"
-msgstr "Seul un niveau est permis pour les prédictions"
+msgstr "seul un niveau est permis pour les prédictions"
 
-#, fuzzy
 msgid "%s and %s must have the same group levels"
-msgstr "doivent avoir les mêmes niveaux de groupes"
+msgstr "%s et %s doivent avoir les mêmes niveaux de groupes"
 
-#, fuzzy
 msgid "wrong group levels"
-msgstr "Niveaux de groupes erronés"
+msgstr "niveaux de groupes erronés"
 
-#, fuzzy
 msgid "cannot get confidence intervals on var-cov components: %s"
 msgstr ""
-"Impossible de calculer un intervalle de confiance sur les composantes var-"
-"cov :"
+"impossible de calculer un intervalle de confiance sur les composantes var-"
+"cov : %s"
 
 msgid "need an object with call component"
 msgstr "nécessite un objet avec une composante 'call'"
@@ -305,249 +272,204 @@ msgstr "nécessite un objet avec une composante 'call'"
 msgid "'nint' is not consistent with 'breaks'"
 msgstr "'nint' n'est pas consistant avec 'breaks'"
 
-#, fuzzy
 msgid "'object' must be a formula"
-msgstr "\"object\" doit être une formule"
+msgstr "'object' doit être une formule"
 
 msgid "object formula must be of the form \"resp ~ pred\""
 msgstr "l'objet formule doit être de la forme \"rep ~ pred\""
 
-#, fuzzy
 msgid "'data' must be given explicitly to use 'nls' to get initial estimates"
-msgstr "\"data\" doit être fourni de manière explicite pour utiliser \"nls\""
+msgstr ""
+"'data' doit être fourni de manière explicite pour utiliser 'nls' afin "
+"d'obtenir les estimateurs initiaux"
 
-#, fuzzy
 msgid "no initial values for model parameters"
-msgstr "Pas de valeurs initiales pour les paramètres du modèle"
+msgstr "pas de valeurs initiales pour les paramètres du modèle"
 
-#, fuzzy
 msgid "starting estimates must have names when 'params' is missing"
 msgstr ""
-"Les estimations intiales doivent être nommés lorsque \"params\" est manquant"
+"les estimations initiales doivent être nommés lorsque 'params' est manquant"
 
-#, fuzzy
 msgid "'params' must be a formula or list of formulae"
 msgstr "'params' doit être une formule ou une liste de formules"
 
-#, fuzzy
 msgid "formulae in 'params' must be of the form \"parameter ~ expr\""
 msgstr ""
-"les formules dans 'params' doivent être de la forme \"parameter ~ expr\"."
+"les formules dans 'params' doivent être de la forme \"parameter ~ expr\""
 
 msgid "starting values for parameters are not of the correct length"
 msgstr "les valeurs initiales pour les paramètres n'ont pas la taille correcte"
 
-#, fuzzy
 msgid "step halving factor reduced below minimum in NLS step"
 msgstr ""
-"Le facteur de division par deux du pas est réduit en dessous du minimum dans "
+"le facteur de division par deux du pas est réduit en dessous du minimum dans "
 "un pas NLS"
 
-#, fuzzy
 msgid "approximate covariance matrix for parameter estimates not of full rank"
-msgstr "Approx. matrice de covariance pour les estimateurs de paramètres"
+msgstr ""
+"matrice de covariance approximative pour les estimateurs de paramètres qui "
+"ne sont pas de rang complet"
 
-#, fuzzy
 msgid "cannot calculate REML log-likelihood for \"gnls\" objects"
 msgstr ""
-"Impossible de calculer la log-vraissemblance REML pour les objets 'gnls'"
+"impossible de calculer la log-vraissemblance REML pour les objets \"gnls\""
 
-#, fuzzy
 msgid "first argument to 'groupedData' must be a two-sided formula"
 msgstr ""
 "le premier argument à 'groupedData' doit être une formule à deux membres"
 
-#, fuzzy
 msgid "right-hand side of first argument must be a conditional expression"
 msgstr ""
-"Le membre de droite du premier argument doit être une expression "
+"le membre de droite du premier argument doit être une expression "
 "conditionnelle"
 
-#, fuzzy
 msgid "first argument to 'nfGroupedData' must be a two-sided formula"
 msgstr ""
 "le premier argument de 'nfGroupedData' doit être une formule à deux membres"
 
-#, fuzzy
 msgid "only one level of grouping allowed"
-msgstr "Seul un niveau de regroupement est autorisé"
+msgstr "seul un niveau de regroupement est autorisé"
 
-#, fuzzy
 msgid "second argument to 'groupedData' must inherit from data.frame"
-msgstr "le second argument de 'nfGroupedData' doit hériter d'un 'data.frame'"
+msgstr "le second argument de 'groupedData' doit hériter d'un data.frame"
 
-#, fuzzy
 msgid "first argument to 'nmGroupedData' must be a two-sided formula"
 msgstr ""
 "le premier argument de 'nmGroupedData' doit être une formule à deux membres"
 
-#, fuzzy
 msgid "'subset' ignored with single grouping factor"
 msgstr ""
-"Sous-ensemble ignoré lors de l'utilisation d'un seul facteur pour le "
-"regroupement"
+"'subset' ignoré lors de l'utilisation d'un seul facteur pour le regroupement"
 
-#, fuzzy
 msgid "'subset' must be a list"
-msgstr "\"Subset\" doit être une liste"
+msgstr "'subset' doit être une liste"
 
-#, fuzzy
 msgid "undefined group declared in 'subset'"
-msgstr "Groupe non déclaré dans \"subset\""
+msgstr "groupe non déclaré dans 'subset'"
 
-#, fuzzy
 msgid "only one display level allowed"
-msgstr "Un seul niveau d'affichage est permis"
+msgstr "un seul niveau d'affichage est permis"
 
-#, fuzzy
 msgid "undefined display level %s for %s"
-msgstr "Niveau d'affichage non défini"
+msgstr "niveau d'affichage non défini %s pour %s"
 
-#, fuzzy
 msgid "undefined collapsing level %s for %s"
-msgstr "Niveau de fusion non défini"
+msgstr "niveau de fusion non défini %s pour %s"
 
-#, fuzzy
 msgid ""
 "collapsing level cannot be smaller than display level; setting it to the "
 "display level"
 msgstr ""
-"Le niveau de fusion ne peut être plus petit que le niveau d'affichage ;"
+"le niveau de fusion ne peut être plus petit que le niveau d'affichage ; il "
+"est fixé au niveau d'affichage"
 
-#, fuzzy
 msgid "'preserve' must be a two-sided formula"
-msgstr "\"Preserve\" doit être une formule à deux membres"
+msgstr "'preserve' doit être une formule à deux membres"
 
-#, fuzzy
 msgid "'asTable' cannot be used with multilevel grouped data"
 msgstr ""
 "'asTable' ne peut être utilisé avec des données à groupements multiniveaux"
 
-#, fuzzy
 msgid "'asTable' can only be used with balanced 'groupedData' objects"
 msgstr ""
 "'asTable' ne peut être utilisé qu'avec des objets 'groupedData' balancés"
 
-#, fuzzy
 msgid "multiple levels not allowed"
-msgstr "Niveaux multiples non permis"
+msgstr "niveaux multiples non permis"
 
-#, fuzzy
 msgid "'data' must be a \"groupedData\" object if 'groups' argument is missing"
 msgstr ""
-"'data' doit être un objet 'groupedData' si l'argument 'groups' est manquant"
+"'data' doit être un objet \"groupedData\" si l'argument 'groups' est manquant"
 
-#, fuzzy
 msgid "'data' in %s call must evaluate to a data frame"
-msgstr "l'appel doit être évalué comme un tableau de données"
+msgstr "'data dans l'appel %s doit être évalué comme un data.frame"
 
-#, fuzzy
 msgid "nonexistent groups requested in 'subset'"
-msgstr "Groupes inexistants demandés dans \"subset\""
+msgstr "groupes inexistants demandés dans 'subset'"
 
-#, fuzzy
 msgid "'subset' can only be character or integer"
 msgstr ""
-"'Subset' ne peut qu'être une chaîne de caractères ou une valeur numérique"
+"'subset' ne peut qu'être une chaîne de caractères ou une valeur numérique"
 
-#, fuzzy
 msgid "log-likelihood not available with NULL fits"
-msgstr "La log-vraissemblance n'est pas disponible avec des ajustements NULL."
+msgstr "la log-vraissemblance n'est pas disponible avec des ajustements NULL"
 
-#, fuzzy
 msgid "'form' must be a formula"
-msgstr "\"Form\" doit être une formule"
+msgstr "'form' doit être une formule"
 
-#, fuzzy
 msgid "'form' must be a one-sided formula"
-msgstr "\"Form\" doit être une formule à un seul membre"
+msgstr "'form' doit être une formule à un seul membre"
 
-#, fuzzy
 msgid "covariate must be a data frame"
-msgstr "La covariable doit être un tableau de données (data.frame)"
+msgstr "la covariable doit être un tableau de données (data.frame)"
 
-#, fuzzy
 msgid "cannot do pairs of just one variable"
-msgstr "Impossible d'apparier avec seulement une variable"
+msgstr "impossible d'apparier avec seulement une variable"
 
-#, fuzzy
 msgid "'id' must be between 0 and 1"
-msgstr "'Id' doit être compris entre 0 et 1"
+msgstr "'id' doit être compris entre 0 et 1"
 
-#, fuzzy
 msgid "'id' can only be a formula or numeric"
-msgstr "\"Id\" doit être une formule ou une valeur numérique."
+msgstr "'id' doit être une formule ou une valeur numérique"
 
-#, fuzzy
 msgid "'idLabels' of incorrect length"
-msgstr "\"IdLabels\" de longueur inconnue"
+msgstr "'idLabels' de longueur incorrecte"
 
-#, fuzzy
 msgid "'idLabels' can only be a formula or a vector"
-msgstr "\"IdLabels\" ne peut être qu'une formule ou un vecteur"
+msgstr "'idLabels' ne peut être qu'une formule ou un vecteur"
 
-#, fuzzy
 msgid "covariate must be numeric"
-msgstr "La covariable doit être numérique"
+msgstr "la covariable doit être numérique"
 
-#, fuzzy
 msgid "nonexistent group in 'newdata'"
-msgstr "Groupe inexistant dans \"newdata\""
+msgstr "groupe inexistant dans 'newdata'"
 
-#, fuzzy
 msgid "nonexistent group requested in 'subset'"
-msgstr "Groupe inexistant mais requis dans \"subset\""
+msgstr "groupe inexistant mais requis dans 'subset'"
 
-#, fuzzy
 msgid "only residuals and random effects allowed"
-msgstr "Seuls les résidus et les effets aléatoires sont permis"
+msgstr "seuls les résidus et les effets aléatoires sont permis"
 
-#, fuzzy
 msgid "can only fit \"lmList\" objects with single grouping variable"
 msgstr ""
-"Seuls les objets 'lmList' peuvent être ajustés avec une seule variable de "
+"seuls les objets \"lmList\" peuvent être ajustés avec une seule variable de "
 "groupe"
 
-#, fuzzy
 msgid "'lme.lmList' will redefine 'data'"
-msgstr "'lme.lmList' va redéfinir \"data\""
+msgstr "'lme.lmList' va redéfinir 'data'"
 
-#, fuzzy
 msgid "initial value for \"reStruct\" overwritten in 'lme.lmList'"
-msgstr "La valeur initiale de 'reStruct' est remplacée dans 'lme.lmList'"
+msgstr "la valeur initiale de \"reStruct\" est remplacée dans 'lme.lmList'"
 
-#, fuzzy
 msgid "fixed-effects model must be a formula of the form \"resp ~ pred\""
 msgstr ""
-"Un modèle à effet fixe doit être une formule de la forme \"resp ~ pred\""
+"un modèle à effet fixe doit être une formule de la forme \"resp ~ pred\""
 
-#, fuzzy
 msgid "incompatible lengths for 'random' and grouping factors"
-msgstr "Tailles incompatibles entre \"random\" et les facteurs de regroupement"
+msgstr "tailles incompatibles entre 'random' et les facteurs de regroupement"
 
-#, fuzzy
 msgid "incompatible formulas for groups in 'random' and 'correlation'"
-msgstr "Formules incompatibles entre les groupes dans \"random\""
+msgstr ""
+"formules incompatibles entre les groupes dans 'random' et 'correlation'"
 
 msgid ""
 "cannot use smaller level of grouping for 'correlation' than for 'random'. "
 "Replacing the former with the latter."
 msgstr ""
+"impossible d'utiliser un niveau plus petit pour le regroupement de "
+"'correlation' par rapport à 'random'. Replacement du premier par le second."
 
-#, fuzzy
 msgid "fewer observations than random effects in all level %s grups"
 msgstr ""
-"Moins d'observations qu'il n'y a d'effets aléatoires dans tous les groupes"
+"moins d'observations qu'il n'y a d'effets aléatoires dans les niveaux des "
+"groupes %s"
 
-#, fuzzy
 msgid "object must inherit from class \"lme\""
-msgstr "L'objet doit hériter de la classe \"lme\""
+msgstr "l'objet doit hériter de la classe \"lme\""
 
-#, fuzzy
 msgid "'Terms; must be between 1 and %d"
-msgstr "Les termes doivent être entre 1 et"
+msgstr "'Terms;  doivent être compris entre 1 et %d"
 
-#, fuzzy
 msgid "terms must all have the same denominator DF"
 msgstr ""
 "Les termes doivent tous avoir le même nombre de degrés de liberté au "
@@ -558,308 +480,260 @@ msgstr ""
 "'L' ne peut que prendre en compte des effets fixes ayant même degré de "
 "liberté au dénominateur"
 
-#, fuzzy
 msgid ""
 "objects must inherit from classes \"gls\", \"gnls\" \"lm\",\"lmList\", \"lme"
 "\",\"nlme\",\"nlsList\", or \"nls\""
-msgstr "\"lm\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", ou \"nls\""
+msgstr ""
+"les objets doivent hériter des classes \"gls\", \"gnls\", \"lm\",\"lmList\", "
+"\"lme\",\"nlme\",\"nlsList\", ou \"nls\""
 
-#, fuzzy
 msgid ""
 "some fitted objects deleted because response differs from the first model"
-msgstr "leur réponse diffère du premier modèle"
+msgstr ""
+"certains objets ajustés sont éliminés parce que leur réponse diffère du "
+"premier modèle"
 
-#, fuzzy
 msgid "first model has a different response from the rest"
-msgstr "Le premier modèle a une réponse différente du reste"
+msgstr "le premier modèle a une réponse différente du reste"
 
-#, fuzzy
 msgid "all fitted objects must have the same estimation method"
 msgstr ""
-"Tous les objets ajustés doivent l'être à l'aide de la même méthode "
-"d'estimation."
+"tous les objets ajustés doivent l'être à l'aide de la même méthode "
+"d'estimation"
 
-#, fuzzy
 msgid "fitted objects with different fixed effects."
-msgstr "Les objets ont été ajustés avec différents effets fixes."
+msgstr "les objets ont été ajustés avec différents effets fixes"
 
 msgid "REML comparisons are not meaningful."
 msgstr "Les comparaisons REML n'ont pas de sens."
 
-#, fuzzy
 msgid "objects must have a \"call\" component or attribute"
-msgstr "Les objets doivent avoir une composante ou un attribut \"call\""
+msgstr "les objets doivent avoir une composante ou un attribut \"call\""
 
-#, fuzzy
 msgid "all fitted objects must use the same number of observations"
-msgstr "Tous les objets ajustés doivent utiliser le même nombre d'observations"
+msgstr "tous les objets ajustés doivent utiliser le même nombre d'observations"
 
-#, fuzzy
 msgid "only single level allowed"
-msgstr "Seul un niveau est autorisé"
+msgstr "seul un niveau est autorisé"
 
-#, fuzzy
 msgid "covariate must have a level attribute when groups are present"
 msgstr ""
-"La covariable doit avoir un attribut 'level', lorsque des groupes sont "
-"absents"
+"la covariable doit avoir un attribut 'level', lorsque des groupes sont "
+"présents"
 
-#, fuzzy
 msgid "covariate must have a level attribute when 'id' is a formula"
 msgstr ""
-"La covariable doit avoir un attribut 'level', lorsque 'id' est une formule"
+"la covariable doit avoir un attribut 'level', lorsque 'id' est une formule"
 
-#, fuzzy
 msgid "covariate must have a level attribute when 'idLabels' is a formula"
 msgstr ""
-"La covariable doit avoir un attribut 'level', lorsque 'idLabels' est une "
+"la covariable doit avoir un attribut 'level', lorsque 'idLabels' est une "
 "formule"
 
-#, fuzzy
 msgid "'form' must be a formula when not NULL"
-msgstr "'Form' doit être une formule, lorsqu'il n'est pas NULL."
+msgstr "'form' doit être une formule, lorsqu'il n'est pas NULL."
 
-#, fuzzy
 msgid "only single effects allowed in left side of 'form'"
-msgstr "Seul un effet est permis dans le membre de gauche de 'form'."
+msgstr "seul un effet est permis dans le membre de gauche de 'form'"
 
-#, fuzzy
 msgid "%s is not a valid effect name"
-msgstr "n'est pas un nom valide pour un effet"
+msgstr "%s n'est pas un nom valide pour un effet"
 
-#, fuzzy
 msgid "no effects allowed in right side of formula"
-msgstr "Aucun effet n'est autorisé dans le membre de droite de la formule"
+msgstr "aucun effet n'est autorisé dans le membre de droite de la formule"
 
-#, fuzzy
 msgid "cannot evaluate groups for desired levels on 'newdata'"
-msgstr ""
-"Impossible d'évaluer les groupes pour les niveaux désirés de \"newdata\""
+msgstr "impossible d'évaluer les groupes pour les niveaux désirés de 'newdata'"
 
-#, fuzzy
 msgid "'Id' must be between 0 and 1"
-msgstr "'Id' doit être compris entre 0 et 1"
+msgstr "'id' doit être compris entre 0 et 1"
 
-#, fuzzy
 msgid "augmentation of random effects only available for single level"
 msgstr ""
-"L'augmentation des effets aléatoires n'est disponible que pour un seul niveau"
+"l'augmentation des effets aléatoires n'est disponible que pour un seul niveau"
 
-#, fuzzy
 msgid "no condensed linear model"
-msgstr "Modèle linéaire non condensé"
+msgstr "aucun modèle linéaire condensé"
 
-#, fuzzy
 msgid "no fitted \"lme\" object"
-msgstr "Pas d'objet 'lme' ajusté"
+msgstr "pas d'objet \"lme\" ajusté"
 
-#, fuzzy
 msgid "objects must have coefficients with same row names"
-msgstr "Les objets doivent avoir des coefficients qui ont mêmes noms de lignes"
+msgstr "les objets doivent avoir des coefficients qui ont mêmes noms de lignes"
 
-#, fuzzy
 msgid "object must inherit from \"data.frame\""
-msgstr "L'objet doit hériter de la classe 'data.frame'"
+msgstr "l'objet doit hériter de la classe \"data.frame\""
 
-#, fuzzy
 msgid "only one level allowed in 'gapply'"
-msgstr "Seul un niveau est autorisé pour 'gapply'"
+msgstr "seul un niveau est autorisé pour 'gapply'"
 
-#, fuzzy
 msgid "'which' must be between 1 and %d"
-msgstr "Celui-ci doit être compris entre 1 et"
+msgstr "'which' doit être compris entre 1 et %d"
 
-#, fuzzy
 msgid "'which' can only be character or integer"
-msgstr "Celui-ci ne peut être qu'une chaîne de caractères ou un entier."
+msgstr "'which' ne peut être qu'une chaîne de caractères ou un entier"
 
 msgid "formula(object) must return a formula"
 msgstr "formula(object) doit renvoyer une formule"
 
-#, fuzzy
 msgid "'form' must be a two-sided formula"
-msgstr "\"Form\" doit être une formule à deux membres"
+msgstr "'formf doit être une formule à deux membres"
 
-#, fuzzy
 msgid "only one level allowed in 'gsummary'"
-msgstr "Seul un niveau est permis dans 'gsummary'"
+msgstr "seul un niveau est permis dans 'gsummary'"
 
-#, fuzzy
 msgid "'FUN' can only be a function or a list of functions"
 msgstr "'FUN' ne peut qu'être une fonction ou une liste de fonctions"
 
-#, fuzzy
 msgid "cannot omit grouping factor without 'form'"
-msgstr ""
-"Le facteur utilisé pour le regroupement ne peut être omis sans \"form\""
+msgstr "le facteur utilisé pour le regroupement ne peut être omis sans 'form'"
 
-#, fuzzy
 msgid "object must inherit from class \"lmList\""
-msgstr "L'objet doit hériter de la classe \"lmList\""
+msgstr "l'objet doit hériter de la classe \"lmList\""
 
-#, fuzzy
 msgid "no degrees of freedom for estimating std. dev."
-msgstr "Aucun nombre de degrés de liberté pour l'estimation de l'écart type."
+msgstr "aucun nombre de degrés de liberté pour l'estimation de l'écart type"
 
-#, fuzzy
 msgid ""
 "data argument to \"data.frame\" method for 'getGroups' does not make sense"
 msgstr ""
-"l'argument 'data' pour la méthode 'data.frame' de 'getGroups' n'a pas de sens"
+"l'argument 'data' pour la méthode \"data.frame\" de 'getGroups' n'a pas de "
+"sens"
 
-#, fuzzy
 msgid "invalid formula for groups"
-msgstr "Formule incorrecte pour les groupes"
+msgstr "formule incorrecte pour les groupes"
 
-#, fuzzy
 msgid "'form' must have all components as formulas"
-msgstr "'Form' doit avoir tous ses composantes sous forme de formules"
+msgstr "'form' doit avoir tous ses composantes sous forme de formules"
 
-#, fuzzy
 msgid "'form' can only be a formula, or a list of formulas"
-msgstr "'From' ne peut être qu'une formule, ou une liste de formules"
+msgstr "'form' ne peut être qu'une formule, ou une liste de formules"
 
-#, fuzzy
 msgid "level of %s does not match formula"
-msgstr "ne correspond pas à la formule \""
+msgstr "le niveau de %s ne correspond pas à la formule"
 
-#, fuzzy
 msgid "'form' argument must be a formula"
-msgstr "L'argument \"form\" doit être une formule"
+msgstr "l'argument 'form' doit être une formule"
 
-#, fuzzy
 msgid "at least two coefficients are needed"
-msgstr "Il faut au moins deux coefficients."
+msgstr "il faut au moins deux coefficients"
 
-#, fuzzy
 msgid "no model variogram available with 'showModel = TRUE'"
 msgstr ""
-"Aucun variogramme n'est disponible pour le modèle avec showModel = TRUE"
+"aucun variogramme n'est disponible pour le modèle avec 'showModel = TRUE'"
 
-#, fuzzy
 msgid "only residuals allowed"
-msgstr "Seuls les résidus sont autorisés"
+msgstr "seuls les résidus sont autorisés"
 
-#, fuzzy
 msgid "'distance' and 'object' have incompatible lengths"
-msgstr "La distance et l'objet ont des tailles incompatibles"
+msgstr "'distance' et 'object' ont des tailles incompatibles"
 
-#, fuzzy
 msgid "'nlme.nlsList' will redefine 'fixed', 'data', and 'start'"
-msgstr "'nlme.nlsList' va redéfinir \"fixed\","
+msgstr "'nlme.nlsList' va redéfinir 'fixed', 'data', et 'start'"
 
-#, fuzzy
 msgid "can only fit \"nlsList\" objects with single grouping variable"
 msgstr ""
-"Seuls les objets 'lmList' peuvent être ajustés avec une seule variable de "
+"seuls les objets \"nlsList\" peuvent être ajustés avec une seule variable de "
 "groupe"
 
-#, fuzzy
 msgid "initial value for 'reStruct' overwritten in 'nlme.nlsList'"
-msgstr "La valeur initiale pour 'reStruct' est remplacée dans 'nlme.nlsList'"
+msgstr "la valeur initiale pour 'reStruct' est remplacée dans 'nlme.nlsList'"
 
-#, fuzzy
 msgid "'model' must be a formula"
-msgstr "\"model\" doit être une formule"
+msgstr "'model' doit être une formule"
 
 msgid "model formula must be of the form \"resp ~ pred\""
 msgstr "la formule du modèle doit être de la forme \"rep ~ pred\""
 
-#, fuzzy
 msgid "'data' must be given explicitly to use 'nlsList'"
-msgstr "\"data\" doit être fourni explicitement pour utiliser \"nlsList()\""
+msgstr "'data' doit être fourni explicitement pour utiliser 'nlsList'"
 
-#, fuzzy
 msgid "'fixed' must be a formula or list of formulae"
 msgstr "'fixed' doit être une formule ou une liste de formules"
 
-#, fuzzy
 msgid "formulae in 'fixed' must be of the form \"parameter ~ expr\""
 msgstr ""
 "les formules dans 'fixed' doivent être de la forme \"paramètre ~ expression\""
 
-#, fuzzy
 msgid "'random' must be a formula or list of formulae"
-msgstr "'params' doit être une formule ou une liste de formules"
+msgstr "'random' doit être une formule ou une liste de formules"
 
-#, fuzzy
 msgid "formulae in 'random' must be of the form \"parameter ~ expr\""
 msgstr ""
 "les formules dans 'random' doivent être de la forme \"paramètre ~ expression"
 "\""
 
-#, fuzzy
 msgid "incompatible formulas for groups in \"random\" and \"correlation\""
-msgstr "Formules incompatibles entre les groupes dans \"random\""
+msgstr ""
+"formules incompatibles entre les groupes dans \"random\" et \"correlation\""
 
 msgid ""
 "cannot use smaller level of grouping for \"correlation\" than for \"random"
 "\". Replacing the former with the latter."
 msgstr ""
+"impossible d'utiliser un niveau plus petit pour le regroupement de "
+"\"correlation\" par rapport à \"random\". Replacement du premier par le "
+"second."
 
-#, fuzzy
 msgid "'start' must have a component called 'fixed'"
-msgstr "'start' doit avoir une composante nommée \"fixed\""
+msgstr "'start' doit avoir une composante nommée 'fixed'"
 
-#, fuzzy
 msgid "starting values for the 'fixed' component are not the correct length"
 msgstr ""
-"les valeurs de départ pour la composante fixe n'ont pas la bonne taille"
+"les valeurs de départ pour la composante 'fixed' n'ont pas la bonne taille"
 
-#, fuzzy
 msgid "starting values for random effects should be a list, or a matrix"
 msgstr ""
-"Les valeurs de départ pour les effets aléatoires doivent être dans une liste "
+"les valeurs de départ pour les effets aléatoires doivent être dans une liste "
 "ou dans une matrice"
 
-#, fuzzy
 msgid ""
 "list with starting values for random effects must have names or be of length "
 "%d"
 msgstr ""
-"La liste contenant les valeurs de départ pour les effets aléatoires doit "
-"être nommées"
+"la liste contenant les valeurs de départ pour les effets aléatoires doit "
+"être nommées ou de longueur %d"
 
-#, fuzzy
 msgid "starting values for the random components should be a list of matrices"
-msgstr "les valeurs de départ pour les composantes aléatoires devraient être"
+msgstr ""
+"les valeurs de départ pour les composantes aléatoires devraient être un "
+"liste de matrices"
 
-#, fuzzy
 msgid ""
 "number of rows in starting values for random component at level %s should be "
 "%d"
 msgstr ""
-"le nombre de lignes dans les valeurs de départ pour la composante aléatoire"
+"le nombre de lignes dans les valeurs de départ pour la composante aléatoire "
+"au niveau %s doit être %d"
 
-#, fuzzy
 msgid ""
 "number of columns in starting values for random component at level %s should "
 "be %d"
 msgstr ""
-"le nombre de lignes dans les valeurs de départ pour la composante aléatoire"
+"le nombre de colonnes dans les valeurs de départ pour la composante "
+"aléatoire au niveau %s doit être %d"
 
 msgid "starting values for random effects must include group levels"
 msgstr ""
 "les valeurs de départ pour les effets aléatoires doivent inclure les niveaux "
 "de groupe"
 
-#, fuzzy
 msgid ""
 "groups levels mismatch in 'random' and starting values for 'random' at level "
 "%s"
 msgstr ""
-"incohérence de noms entre les effets aléatoires et les valeurs de départ"
+"niveaux de groupes incohérents dans 'random' et dans les valeurs de départ "
+"pour 'random' au niveau %s"
 
-#, fuzzy
 msgid ""
 "names mismatch in 'random' and starting values  for 'random' at level %s"
 msgstr ""
-"incohérence de noms entre les effets aléatoires et les valeurs de départ"
+"incohérence de noms entre 'random' et les valeurs de départ pour 'random' au "
+"niveau %s"
 
-#, fuzzy
 msgid "step halving factor reduced below minimum in PNLS step"
 msgstr ""
-"Le facteur de réduction à chaque étape est abaissé en dessous du minimum à "
+"le facteur de réduction à chaque étape est abaissé en dessous du minimum à "
 "une étape PNLS"
 
 msgid "second argument must be a groupedData object"
@@ -868,577 +742,491 @@ msgstr "le second argument doit être un objet 'groupedData'"
 msgid "cannot use an anonymous function for the model"
 msgstr "impossible d'utiliser une formule anonyme pour le modèle"
 
-#, fuzzy
 msgid ""
 "'data' must be a \"groupedData\" object if 'formula' does not include groups"
 msgstr ""
-"Les données doivent être dans un objet 'groupedData' s'il s'agit d'une "
-"formule"
+"'data' doit être dans un objet \"groupedData\" si 'formula' n'inclus pas de "
+"groupes"
 
-#, fuzzy
 msgid "missing call attribute in \"nlsList\" object"
-msgstr "aqttribut'call' manquant dans l'objet 'nlsList'"
+msgstr "attribut d'appel manquant dans l'objet \"nlsList\""
 
-#, fuzzy
 msgid "cannot access the matrix of uninitialized objects"
-msgstr "Impossible d'accéder à la matrice d'objets non initialisés"
+msgstr "impossible d'accéder à la matrice d'objets non initialisés"
 
-#, fuzzy
 msgid "ignoring argument 'form'"
-msgstr "L'argument \"form\" est ignoré"
+msgstr "L'argument 'form' est ignoré"
 
-#, fuzzy
 msgid "ignoring argument 'nam'"
-msgstr "L'argument \"form\" est ignoré"
+msgstr "L'argument 'nam' est ignoré"
 
-#, fuzzy
 msgid "'value' must be a square matrix"
-msgstr "\"value\" doit être une matrice carrée"
+msgstr "'value' doit être une matrice carrée"
 
-#, fuzzy
 msgid "dimnames of 'value' must match or be NULL"
 msgstr ""
-"les noms de dimensions (dimnames) des valeurs doivent correspondre ou bien "
+"les noms de dimensions ('dimnames') des valeurs doivent correspondre ou bien "
 "être NULL"
 
-#, fuzzy
 msgid "names of 'value' are not consistent with 'nam' argument"
-msgstr "Les noms de \"value\" ne sont pas conformes"
+msgstr "Les noms de 'value' ne sont pas conformes avec l'argument 'nam'"
 
-#, fuzzy
 msgid "%s is not a valid object for \"pdMat\""
-msgstr "n'est pas un objet correct pour \"pdMat\""
+msgstr "%s n'est pas un objet correct pour \"pdMat\""
 
-#, fuzzy
 msgid "all elements of 'form' list must be two-sided formulas"
 msgstr ""
-"Tous les éléments de la liste \"form\" doivent être des formules à double "
-"membre"
+"tous les éléments de la liste 'form' doivent être des formules à double "
+"membres"
 
-#, fuzzy
 msgid "'form' can only be a formula or a list of formulae"
-msgstr "\"form\" ne peut qu'être une formule ou une liste de formules"
+msgstr "'form' ne peut qu'être une formule ou une liste de formules"
 
-#, fuzzy
 msgid "'form' not consistent with 'nam'"
-msgstr "\"form\" non conforme avec \"nam\""
+msgstr "'form' non conforme avec 'nam'"
 
-#, fuzzy
 msgid "length of 'nam' not consistent with dimensions of initial value"
-msgstr "La longueur de \"nam\" ne correspond pas aux dimensions"
+msgstr "la longueur de 'nam' ne correspond pas aux dimensions initiales"
 
-#, fuzzy
 msgid "no default method for extracting the square root of a \"pdMat\" object"
-msgstr "Pas de méthode par défaut pour extraire la"
+msgstr ""
+"pas de méthode par défaut pour extraire la racine carrée de l'objet \"pdMat\""
 
-#, fuzzy
 msgid "do not know how to obtain constrained coefficients"
-msgstr "Impossible d'obtenir les coefficients de contrainte"
+msgstr "impossible d'obtenir les coefficients de contrainte"
 
-#, fuzzy
 msgid ""
 "cannot access the number of columns of uninitialized objects without names"
-msgstr "Impossible de changer le nombre de colonnes d'un objet initialisé"
+msgstr ""
+"impossible de changer le nombre de colonnes d'un objet non initialisé et "
+"sans noms"
 
-#, fuzzy
 msgid "cannot extract the log of the determinant from an uninitialized object"
-msgstr "Impossible d'extraire la matrice d'un objet non initialisé"
+msgstr ""
+"impossible d'extraire le logarithme du déterminant d'un objet non initialisé"
 
-#, fuzzy
 msgid "cannot change dimensions on an initialized \"pdMat\" object"
-msgstr "Impossible de changer les dimensions d'un objet 'pdMat' initialisé"
+msgstr "impossible de changer les dimensions d'un objet \"pdMat\" initialisé"
 
-#, fuzzy
 msgid "Length of names should be %d"
-msgstr "La longueur des noms devrait être"
+msgstr "La longueur des noms devrait être %d"
 
-#, fuzzy
 msgid ""
 "names being assigned do not correspond to a permutation of previous names"
-msgstr "Les noms affecté ne correspondent pas à une permutation"
+msgstr ""
+"les noms affecté ne correspondent pas à une permutation des noms de départ"
 
 msgid "x-y data to splom got botched somehow"
 msgstr "les données x-y de 'splom' ont été corrompus"
 
-#, fuzzy
 msgid "cannot get the inverse of an uninitialized object"
-msgstr "Impossible d'obtenir l'inverse d'un objet non initialisé"
+msgstr "impossible d'obtenir l'inverse d'un objet non initialisé"
 
-#, fuzzy
 msgid "an object of length %d does not match the required parameter size"
-msgstr "ne correpond pas à la taille requise du paramètre"
+msgstr ""
+"un objet de longeur %d ne correspond pas à la taille requise du paramètre"
 
-#, fuzzy
 msgid "cannot extract matrix from an uninitialized object"
-msgstr "Impossible d'extraire une matrice pour un objet non initialisé"
+msgstr "impossible d'extraire une matrice pour un objet non initialisé"
 
-#, fuzzy
 msgid "cannot extract the inverse from an uninitialized object"
-msgstr "Impossible d'extraire l'inverse d'un objet non initialisé"
+msgstr "impossible d'extraire l'inverse d'un objet non initialisé"
 
-#, fuzzy
 msgid "an object of length %d does not match a Cholesky factor"
-msgstr "ne correspond pas à une factorisation de Cholesky"
+msgstr ""
+"un objet de longueur %d ne correspond pas à une factorisation de Cholesky"
 
-#, fuzzy
 msgid "cannot extract the matrix from an uninitialized object"
-msgstr "Impossible d'extraire la matrice d'un objet non initialisé"
+msgstr "impossible d'extraire la matrice d'un objet non initialisé"
 
-#, fuzzy
 msgid "cannot extract the matrix from an uninitialized \"pdIdent\" object"
-msgstr "Impossible d'extraire la matrice d'un objet 'pdMat' non initialisé"
+msgstr "impossible d'extraire la matrice d'un objet \"pdIdent\" non initialisé"
 
-#, fuzzy
 msgid "cannot extract the matrix with uninitialized dimensions"
 msgstr ""
-"Impossible d'extraire la matrice en utilisant des dimensions non initialisées"
+"impossible d'extraire la matrice en utilisant des dimensions non initialisées"
 
-#, fuzzy
 msgid ""
 "must give names when initializing \"pdIdent\" from parameter without a "
 "formula"
 msgstr ""
-"Il faut fournir les noms lorsqu'un 'pdIdent' est initialisé depuis un "
-"paramètre."
+"il faut fournir les noms lorsqu'un objet \"pdIdent\" est initialisé depuis "
+"un paramètre sans fournir de formule"
 
-#, fuzzy
 msgid "cannot extract the dimensions"
-msgstr "Impossible d'extraire les dimensions"
+msgstr "impossible d'extraire les dimensions"
 
-#, fuzzy
 msgid "cannot extract the matrix from an uninitialized \"pdCompSymm\" object"
-msgstr "Impossible d'extraire la matrice d'un objet 'pdMat' non initialisé"
+msgstr ""
+"impossible d'extraire la matrice d'un objet \"pdCompSymm\" non initialisé"
 
-#, fuzzy
 msgid "initializing \"pdCompSymm\" object is not positive definite"
-msgstr "L'initialisation d'un objet 'pdCompSymm' n'est pas fini et positif"
+msgstr "l'initialisation d'un objet \"pdCompSymm\" n'est pas fini et positif"
 
-#, fuzzy
 msgid ""
 "must give names when initializing \"pdCompSymm\" from parameter without a "
 "formula"
 msgstr ""
-"Il faut fournir les noms lors de l'initialisation de 'pdCompSymm' depuis un "
-"paramètre."
+"il faut fournir les noms lors de l'initialisation de \"pdCompSymm\" depuis "
+"un paramètre sans fournir de formule"
 
-#, fuzzy
 msgid "cannot obtain constrained coefficients with uninitialized dimensions"
-msgstr "Impossible d'obtenir les coefficients de contrainte avec"
+msgstr ""
+"impossible d'obtenir les coefficients de contrainte avec des dimensions non "
+"initialisées"
 
-#, fuzzy
 msgid "cannot access the matrix of object without names"
 msgstr ""
-"Impossible d'accéder à la matrice d'un objet dont les noms ne sont pas "
+"impossible d'accéder à la matrice d'un objet dont les noms ne sont pas "
 "définis"
 
-#, fuzzy
 msgid "'form' must be a list"
-msgstr "\"form\" doit être une liste"
+msgstr "'form' doit être une liste"
 
-#, fuzzy
 msgid "'nam' must be a list"
-msgstr "\"nam\" doit être une liste"
+msgstr "'nam' doit être une liste"
 
-#, fuzzy
 msgid "'form' and 'nam' have incompatible lengths"
-msgstr "\"form\" et \"nam\" ont des tailles incompatibles"
+msgstr "'form' et 'nam' ont des tailles incompatibles"
 
-#, fuzzy
 msgid "'pdClass' must be a character vector"
-msgstr "\"pdClass\" doit être un vecteur de chaînes de caractères"
+msgstr "'pdClass' doit être un vecteur de chaînes de caractères"
 
-#, fuzzy
 msgid "'form' and 'pdClass' have incompatible lengths"
-msgstr "\"form\" et \"pdClass\" ont des longueurs incompatibles"
+msgstr "'form' et 'pdClass' ont des longueurs incompatibles"
 
-#, fuzzy
 msgid "'nam' and 'pdClass' have incompatible lengths"
-msgstr "\"nam\" et \"pdClass\" ont des longueurs incompatibles"
+msgstr "'nam' et 'pdClass' ont des longueurs incompatibles"
 
-#, fuzzy
 msgid "LNone of the arguments specify more than one block"
 msgstr "Aucun des arguments ne spécifie plus d'un bloc"
 
-#, fuzzy
 msgid "'object' must be a list when not missing, not a matrix, and not numeric"
-msgstr "\"object\" doit être une liste, lorsqu'il n'est pas manquant,"
+msgstr ""
+"'object' doit être une liste, lorsqu'il n'est pas manquant, pas une matrice "
+"ou un nombre"
 
-#, fuzzy
 msgid "arguments imply different number of blocks"
-msgstr "Les arguments impliquent des nombres différents de blocs"
+msgstr "les arguments impliquent des nombres différents de blocs"
 
-#, fuzzy
 msgid "all elements in the argument must generate \"pdMat\" objects"
-msgstr "tous les éléments dans l'argument doivent générer des objets 'pdMat'"
+msgstr "tous les éléments dans l'argument doivent générer des objets \"pdMat\""
 
-#, fuzzy
 msgid "cannot have duplicated column names in a \"pdMat\" object"
 msgstr ""
-"Les noms de colonnes dupliqués ne sont pas permis dans un objet 'pdMat'"
+"les noms de colonnes dupliqués ne sont pas permis dans un objet \"pdMat\""
 
-#, fuzzy
 msgid "must have formula when no names are given"
-msgstr "Une formule est nécessaire lorsque les noms ne sont pas fournis"
+msgstr "une formule est nécessaire lorsque les noms ne sont pas fournis"
 
-#, fuzzy
 msgid "must give names when initializing from matrix or parameter"
 msgstr ""
-"Lors de l'initialisation depuis une matrice ou un paramètre, il faut fournir "
+"lors de l'initialisation depuis une matrice ou un paramètre, il faut fournir "
 "les noms"
 
-#, fuzzy
 msgid "all elements must have names when any has names"
-msgstr "Tous les éléments doivent être nommés, lorqu'au moins un l'est."
+msgstr "tous les éléments doivent être nommés, lorsqu'au moins un l'est"
 
-#, fuzzy
 msgid "all elements must have a non-zero size"
-msgstr "Tous les éléments doivent avoir une taille non nulle"
+msgstr "tous les éléments doivent avoir une taille non nulle"
 
-#, fuzzy
 msgid "cannot change the parameter when length of parameters is undefined"
-msgstr "la longueur des paramètres n'est pas définie"
+msgstr ""
+"le paramètre ne peut être modifié lorsque la longueur des paramètres est "
+"indéfinie"
 
-#, fuzzy
 msgid "cannot change parameter length of initialized \"pdMat\" object"
 msgstr ""
-"Impossible de changer la longueur des paramètres dans un objet 'pdMat' "
+"impossible de changer la longueur des paramètres dans un objet \"pdMat\" "
 "initialisé"
 
-#, fuzzy
 msgid "all elements must have formulas when any has a formula"
 msgstr ""
-"Tous les éléments doivent contenir des formules, si au moins l'un d'eux en "
-"contient une."
+"tous les éléments doivent contenir des formules, si au moins l'un d'eux en "
+"contient une"
 
-#, fuzzy
 msgid ""
 "all elements of formula must be list of two-sided formulae or two-sided "
 "formulae"
-msgstr "Tous les éléments de type formule doivent être des listes de fomules"
+msgstr ""
+"tous les éléments de type formule doivent être des listes de formules à deux "
+"membres ou des formules à deux membres"
 
-#, fuzzy
 msgid "cannot change the number of columns on an initialized object"
-msgstr "Impossible de changer le nombre de colonnes d'un objet initialisé"
+msgstr "impossible de changer le nombre de colonnes d'un objet initialisé"
 
-#, fuzzy
 msgid "names of object and value must match"
-msgstr "Les noms de l'objet et ses valeurs ne correspondent pas."
+msgstr "les noms de l'objet et ses valeurs ne correspondent pas"
 
-#, fuzzy
 msgid "\"pdMat\" element must have a formula"
-msgstr "l'élément 'pdMat' doit contenir une formule"
+msgstr "l'élément \"pdMat\" doit contenir une formule"
 
-#, fuzzy
 msgid "'object' must be a list or a formula"
-msgstr "L'objet doit être une liste ou une formule"
+msgstr "'object' doit être une liste ou une formule"
 
-#, fuzzy
 msgid "\"pdMat\" elements must have a formula"
-msgstr "les éléments de 'pdMat' doivent contenir des formules"
+msgstr "les éléments de \"pdMat\" doivent contenir des formules"
 
-#, fuzzy
 msgid "elements in 'object' must be formulas or \"pdMat\" objects"
 msgstr ""
-"Les éléments dans l'objet doivent être des formules ou des objets 'pdMat'"
+"les éléments dans 'object' doivent être des formules ou des objets \"pdMat\""
 
-#, fuzzy
 msgid "cannot change the parameter when ength of parameters is undefined"
-msgstr "la longueur des paramètres n'est pas définie"
+msgstr ""
+"le paramètre ne peut être modifié lorsque la longueur des paramètres n'est "
+"pas définie"
 
-#, fuzzy
 msgid "cannot change parameter length of initialized objects"
-msgstr "Impossible de modifier la taille du paramètre d'objets initialisés"
+msgstr ""
+"la longueur du paramètre ne peut être modifiée dans les objets initialisés"
 
-#, fuzzy
 msgid "cannot extract groups formula without a formula"
-msgstr "Impossible d'extraire les groupes sans une formule à disposition"
+msgstr "impossible d'extraire les groupes sans une formule à disposition"
 
-#, fuzzy
 msgid "all elements of a \"reStruct\" object must have a non-zero size"
 msgstr ""
-"Tous les éléments d'un objet 'reStruct' doivent avoir une taille non nulle"
+"tous les éléments d'un objet \"reStruct\" doivent avoir une taille non nulle"
 
-#, fuzzy
 msgid "cannot change the length of 'object'"
-msgstr "Impossible de modifier la taille d'un objet"
+msgstr "impossible de modifier la taille de 'object'"
 
-#, fuzzy
 msgid "cannot extract model matrix without formula"
 msgstr ""
-"Impossible d'extraire la matrice du modèle sans une formule à disposition"
+"impossible d'extraire la matrice du modèle sans une formule à disposition"
 
-#, fuzzy
 msgid "incompatible lengths for object names"
-msgstr "Longueurs non compatibles pour les noms de l'objet"
+msgstr "longueurs non compatibles pour les noms de l'objet"
 
-#, fuzzy
 msgid ""
 "'data' must inherit from \"groupedData\" class if 'random' does not define "
 "groups"
-msgstr "Les données doivent hériter de la classe \"groupedData\""
+msgstr ""
+"'data' doit hériter de la classe \"groupedData\" si 'random' ne définit pas "
+"les groupes"
 
-#, fuzzy
 msgid "models with \"corStruct\" and/or \"varFunc\" objects not allowed"
 msgstr ""
-"Les modèles avec objets 'corStruct' et / ou 'varFunc' ne sont pas autorisés."
+"les modèles avec objets \"corStruct\" et / ou \"varFunc\" ne sont pas "
+"autorisés"
 
-#, fuzzy
 msgid "plot method only implemented for comparing models"
-msgstr "La méthode 'plot' n'est implémentée que pour la comparaison de modèles"
+msgstr "la méthode 'plot' n'est implémentée que pour la comparaison de modèles"
 
-#, fuzzy
 msgid "no degrees of freedom specified"
-msgstr "Aucun degré de liberté n'est spécifié"
+msgstr "aucun degré de liberté n'est spécifié"
 
-#, fuzzy
 msgid "degrees of freedom and weights must have the same length"
-msgstr "Les degrés de liberté et les pondérations doivent avoir la même taille"
+msgstr "les degrés de liberté et les pondérations doivent avoir la même taille"
 
-#, fuzzy
 msgid "negative degrees of freedom not allowed"
-msgstr "Des degrés de liberté négatifs ne sont pas permis"
+msgstr "des degrés de liberté négatifs ne sont pas permis"
 
-#, fuzzy
 msgid "more than one degree of freedom is needed when one them is zero."
 msgstr ""
-"Plus d'un degré de liberté est nécessaire lorsque l'un d'entre eux vaut zéro."
+"plus d'un degré de liberté est nécessaire lorsque l'un d'entre eux vaut zéro."
 
-#, fuzzy
 msgid ""
 "can only construct \"varFunc\" object from another \"varFunc\" object, a "
 "formula, or a character string"
-msgstr "Un objet 'varfunc' ne peut être construit qu'à partir d'un autre objet"
+msgstr ""
+"un objet \"varFunc\" ne peut être construit qu'à partir d'un autre objet "
+"\"varFunc\", une formula ou une chaîne de caractères"
 
-#, fuzzy
 msgid "cannot extract parameters of uninitialized object"
-msgstr "Impossible d'extraire les paramètres d'objets non initialisés"
+msgstr "impossible d'extraire les paramètres d'objets non initialisés"
 
-#, fuzzy
 msgid "do not know how to get coefficients for %s object"
-msgstr "Impossible d'obtenir les coefficients de"
+msgstr "impossible d'obtenir les coefficients de l'objet %s"
 
-#, fuzzy
 msgid "cannot change the length of covariate in \"varFunc\" object"
 msgstr ""
-"Impossible de changer la longueur de la covariable dans l'objet 'varFunc'"
+"impossible de changer la longueur de la covariable dans l'objet \"varFunc\""
 
-#, fuzzy
 msgid "'value' must be a one sided formula"
 msgstr "'value' doit être une formule à un seul membre"
 
-#, fuzzy
 msgid "'form' must have a covariate"
-msgstr "\"form\" doit avoir une covariable"
+msgstr "'form' doit avoir une covariable"
 
-#, fuzzy
 msgid "ignoring 'group' in \"varFixed\" formula"
-msgstr "\"groups\" est ignoré dans la formule \"varFixed\""
+msgstr "'group' est ignoré dans la formule \"varFixed\""
 
-#, fuzzy
 msgid "all variables used in 'formula' must be in 'data'"
 msgstr ""
-"Toutes les variables utilisées dans \"formula\" doivent aussi se retrouver "
-"dans \"data\""
+"toutes les variables utilisées dans 'formula' doivent aussi se retrouver "
+"dans 'data'"
 
-#, fuzzy
 msgid "initial values must have group names in 'varIdent'"
 msgstr ""
-"Les valeurs initiales doivent avoir des noms de groupes dans 'varIdent'"
+"les valeurs initiales doivent avoir des noms de groupes dans 'varIdent'"
 
-#, fuzzy
 msgid "initial values for 'varIdent' must be > 0"
-msgstr "Les valeurs initiales pour \"varIdent\" doivent être > 0."
+msgstr "les valeurs initiales pour 'varIdent' doivent être > 0"
 
-#, fuzzy
 msgid "fixed parameters must have names in 'varIdent'"
-msgstr "Les paramètres fixés doivent avoir leurs noms dans 'varIdent'"
+msgstr "les paramètres fixés doivent avoir leurs noms dans 'varIdent'"
 
-#, fuzzy
 msgid ""
 "cannot change the length of the \"varIdent\" parameter after initialization"
-msgstr "Impossible de changer la longueur du paramètre après l'initialisation"
+msgstr ""
+"impossible de changer la longueur du paramètre \"varIdent\" après "
+"l'initialisation"
 
-#, fuzzy
 msgid "fixed parameter names in 'varIdent' must be a subset of group names"
-msgstr "Les paramètres fixés doivent avoir des noms de groupes"
+msgstr ""
+"les noms des paramètres fixés dans 'varIdent' doivent être un sous-ensemble "
+"des noms de groupes"
 
-#, fuzzy
 msgid "cannot fix variances in all groups"
-msgstr "Impossible de fixer les variances de tous les groupes"
+msgstr "impossible de fixer les variances de tous les groupes"
 
-#, fuzzy
 msgid "initial value for \"varIdent\" should be of length %d"
-msgstr "La valeur initiale de \"varIdent\" doit être de longueur"
+msgstr "la valeur initiale de \"varIdent\" doit être de longueur %d"
 
-#, fuzzy
 msgid ""
 "names of starting value for \"varIdent\" object must contain all but one of "
 "the stratum levels"
-msgstr "doivent contenir tous les niveaux stratifiés sauf un"
-
-#, fuzzy
-msgid "nonexistent group names for initial values in 'varIdent'"
 msgstr ""
-"Noms de groupes iniexistants pour les valeurs initiales dans 'varIdent'"
+"les noms des valeurs de départ pour \"varIdent\" doivent contenir tous les "
+"niveaux stratifiés sauf un"
 
-#, fuzzy
+msgid "nonexistent group names for initial values in 'varIdent'"
+msgstr "noms de groupes inexistants pour les valeurs initiales dans 'varIdent'"
+
 msgid "initial values must have group names in 'varPower'"
 msgstr ""
-"Les valeurs initiales doivent avoir des noms de groupes dans 'varPower'"
+"les valeurs initiales doivent avoir des noms de groupes dans 'varPower'"
 
-#, fuzzy
 msgid "fixed parameters must have group names in 'varPower'"
-msgstr "Les paramètres fixés doivent avoir des noms de groupes dans 'varPower'"
+msgstr "les paramètres fixés doivent avoir des noms de groupes dans 'varPower'"
 
-#, fuzzy
 msgid ""
 "cannot change the length of the \"varStruct\" parameter after initialization"
-msgstr "Impossible de changer la longueur du paramètre après l'initialisation"
+msgstr ""
+"impossible de changer la longueur du paramètre \"varStruct\" après "
+"l'initialisation"
 
-#, fuzzy
 msgid ""
 "cannot change coefficients before initialization or when all parameters are "
 "fixed"
-msgstr "Impossible de changer les coefficients avant initialisation ou"
-
-#, fuzzy
-msgid "fixed parameters must have group names"
-msgstr "Les paramètres fixés doivent avoir des noms de groupes"
-
-#, fuzzy
-msgid "mismatch between group names and fixed values names"
-msgstr "Incohérence entre les noms de groupes et les noms des valeurs fixées"
-
-#, fuzzy
-msgid "initial value for \"varPower\" should be of length %d"
-msgstr "La valeur initiale pour \"varPower\" devrait être de longueur"
-
-#, fuzzy
-msgid "nonexistent group names for initial values in \"varPower\""
-msgstr "Noms de groupes inexistants pour les valeurs initiales de 'varPower'"
-
-#, fuzzy
-msgid "initial value for \"varPower\" should be of length 1"
-msgstr "La valeur intiale pour \"varPower\" devrait être de taille 1."
-
-#, fuzzy
-msgid "initial values must have group names in 'varExp'"
 msgstr ""
-"Les valeurs initiales doivent avoir des noms de groupes dans 'varPower'"
+"impossible de changer les coefficients avant initialisation ou lorsque tous "
+"les paramètres sont fixés"
 
-#, fuzzy
+msgid "fixed parameters must have group names"
+msgstr "les paramètres fixés doivent avoir des noms de groupes"
+
+msgid "mismatch between group names and fixed values names"
+msgstr "incohérence entre les noms de groupes et les noms des valeurs fixées"
+
+msgid "initial value for \"varPower\" should be of length %d"
+msgstr "la valeur initiale pour \"varPower\" devrait être de longueur %d"
+
+msgid "nonexistent group names for initial values in \"varPower\""
+msgstr "noms de groupes inexistants pour les valeurs initiales de \"varPower\""
+
+msgid "initial value for \"varPower\" should be of length 1"
+msgstr "la valeur initiale pour \"varPower\" devrait être de longueur 1"
+
+msgid "initial values must have group names in 'varExp'"
+msgstr "les valeurs initiales doivent avoir des noms de groupes dans 'varExp'"
+
 msgid "fixed parameters must have group names in 'varExp'"
-msgstr "Les paramètres fixes doivent avoir des noms de groupes dans 'varPower'"
+msgstr "les paramètres fixes doivent avoir des noms de groupes dans 'varExp'"
 
-#, fuzzy
 msgid ""
 "cannot change the length of the \"varExp\" parameter after initialization"
-msgstr "Impossible de changer la longueur du paramètre après l'initialisation"
+msgstr ""
+"impossible de changer la longueur du paramètre \"varExp\" après "
+"l'initialisation"
 
-#, fuzzy
 msgid "initial value for \"varExp\" should be of length %d"
-msgstr "La valeur initiale pour \"varExp\" doit être de longueur"
+msgstr "la valeur initiale pour \"varExp\" doit être de longueur %d"
 
-#, fuzzy
 msgid "nonexistent group names for initial values in \"varExp\""
-msgstr "Noms de groupes inexistants pour les valeurs initiales de 'varExp'"
+msgstr "noms de groupes inexistants pour les valeurs initiales de \"varExp\""
 
-#, fuzzy
 msgid "initial value for \"varExp\" should be of length 1"
-msgstr "La valeur initiale pour \"varExp\" devrait être de longueur 1"
+msgstr "la valeur initiale pour \"varExp\" devrait être de longueur 1"
 
-#, fuzzy
 msgid "%s can have at most two components"
-msgstr "peut avoir jusqu'à deux composantes"
+msgstr "%s peut avoir jusqu'à deux composantes"
 
-#, fuzzy
 msgid "%s can only have names \"const\" and \"power\""
-msgstr "ne peut avoir que les noms \"const\" et \"power\""
+msgstr "%s ne peut avoir que les noms \"const\" et \"power\""
 
-#, fuzzy
 msgid "%s can only be a list or numeric"
-msgstr "ne peut qu'être une liste, ou un nombre"
+msgstr "%s ne peut qu'être une liste, ou un nombre"
 
-#, fuzzy
 msgid "%s must have group names in 'varConstPower'"
-msgstr "doit avoir des noms de groupes dans 'varconstPower'"
+msgstr "%s doit avoir des noms de groupes dans 'varConstPower'"
 
-#, fuzzy
 msgid "constant in \"varConstPower\" structure must be > 0"
-msgstr "La constante dans la structure 'varConstPower' doit être > O"
+msgstr "la constante dans la structure \"varConstPower\" doit être > O"
 
-#, fuzzy
 msgid "initial value should be of length %d"
-msgstr "La valeur initiale doit être de longueur"
+msgstr "la valeur initiale doit être de longueur %d"
 
-#, fuzzy
 msgid "nonexistent group names for initial values"
-msgstr "Noms de groupes inexistants pour les valeurs intiales"
+msgstr "noms de groupes inexistants pour les valeurs initiales"
 
-#, fuzzy
 msgid "all arguments to 'varComb' must be of class \"varFunc\"."
-msgstr "Tous les arguments de \"varComb\" doivent être de classe \"varFunc\"."
+msgstr "tous les arguments de 'varComb' doivent être de classe \"varFunc\"."
 
-#, fuzzy
 msgid "cannot change parameter length of initialized \"varComb\" object"
 msgstr ""
-"Impossible de modifier la longueur du paramètre pour des objets 'varcomb' "
-"initialisés."
+"impossible de modifier la longueur du paramètre pour des objets \"varComb\" "
+"initialisés"
 
-#, fuzzy
 msgid "term %s not matched"
 msgid_plural "terms %s not matched"
-msgstr[0] "non assortis"
-msgstr[1] "non assortis"
+msgstr[0] "le terme %s est incohérent"
+msgstr[1] "les termes %s sont incohérents"
 
-#, fuzzy
 msgid "'L' must have at most %d column"
 msgid_plural "'L' must have at most %d columns"
-msgstr[0] "L doit avoir au moins"
-msgstr[1] "L doit avoir au moins"
+msgstr[0] "'L' doit avoir au moins %d colonne"
+msgstr[1] "'L' doit avoir au moins %d colonnes"
 
-#, fuzzy
 msgid "effect %s not matched"
 msgid_plural "effects %s not matched"
-msgstr[0] "non assortis"
-msgstr[1] "non assortis"
+msgstr[0] "effet %s incohérent"
+msgstr[1] "effets %s incohérent"
 
-#, fuzzy
 msgid "level %s not allowed for %s"
 msgid_plural "levels %s not allowed for %s"
-msgstr[0] "non autorisés pour"
-msgstr[1] "non autorisés pour"
+msgstr[0] "le niveau %s non autorisés pour %s"
+msgstr[1] "les niveaux %s sont non autorisés pour %s"
 
-#, fuzzy
 msgid "%s not found in data"
 msgid_plural "%s not found in data"
-msgstr[0] "non trouvé dans les données"
-msgstr[1] "non trouvé dans les données"
+msgstr[0] "%s non trouvé dans les données"
+msgstr[1] "%s non trouvé dans les données"
 
-#, fuzzy
 msgid "nonexistent level %s"
 msgid_plural "nonexistent levels %s"
-msgstr[0] "Niveau(x) inexistant(s)"
-msgstr[1] "Niveau(x) inexistant(s)"
+msgstr[0] "niveau inexistant %s"
+msgstr[1] "niveaux inexistants %s"
 
-#, fuzzy
 msgid "%s not available for plotting"
 msgid_plural "%s not available for plotting"
-msgstr[0] "non disponible pour le graphe"
-msgstr[1] "non disponible pour le graphe"
+msgstr[0] "%s non disponible pour le graphe"
+msgstr[1] "%s non disponibles pour le graphe"
 
-#, fuzzy
 msgid "%s not matched"
 msgid_plural "%s not matched"
-msgstr[0] "non assortis"
-msgstr[1] "non assortis"
+msgstr[0] "%s non assorti"
+msgstr[1] "%s non assortis"
 
-#, fuzzy
 msgid "group name not matched in starting values for random effects: %s"
 msgid_plural ""
 "group names not matched in starting values for random effects: %s"
-msgstr[0] "Les noms des groupes ne correspondent pas aux valeurs de départ"
-msgstr[1] "Les noms des groupes ne correspondent pas aux valeurs de départ"
+msgstr[0] ""
+"le nom de groupe ne correspond pas aux valeurs de départ pour les effets "
+"aléatoires : %s"
+msgstr[1] ""
+"les noms des groupes ne correspondent pas aux valeurs de départ pour les "
+"effets aléatoires : %s"
 
 #~ msgid "at level"
 #~ msgstr "au niveau"
