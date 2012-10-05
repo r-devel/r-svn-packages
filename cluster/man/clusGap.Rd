@@ -13,11 +13,12 @@
 
   \code{maxSE(f, SE.f)} determines the location of the \bold{maximum}
   of \code{f}, taking a \dQuote{1-SE rule} into account for the
-  \code{*SE*} methods.  The default method looks for the first (local)
-  maximum which is at least 1 standard error larger than the previous
-  values.  This corresponds to Tibshirani et al's recommendation of
-  determining the number of clusters from the gap statistics and their
-  standard deviations.
+  \code{*SE*} methods.  The default method \code{"firstSEmax"} looks for
+  the smallest \eqn{k} such that its value \eqn{f(k)} is not more than 1
+  standard error away from the first local maximum.
+  This is similar but not the same as \code{"Tibs2001SEmax"}, Tibshirani
+  et al's recommendation of determining the number of clusters from the
+  gap statistics and their standard deviations.
 }
 \usage{
 clusGap(x, FUNcluster, K.max, B = 100, verbose = interactive(), \dots)
@@ -65,15 +66,18 @@ maxSE(f, SE.f,
 	    \ge f(k+1) - s_{k+1}}}.  Note that this chooses \eqn{k = 1}
 	when all standard deviations are larger than the differences
 	\eqn{f(k+1) - f(k)}.}
-      \item{\code{"localSEmax"}:}{location of the first \eqn{f()} value
+      \item{\code{"firstSEmax"}:}{location of the first \eqn{f()} value
 	which is not larger than the first \emph{local} maximum minus
 	\code{SE.factor * SE.f[]}, i.e, within an \dQuote{f S.E.} range
-	of the maximum (see also \code{SE.factor}).}
-      \item{\code{"globalSEmax"}:}{location of the first \eqn{f()} value
-	which is not larger than the first \emph{local} maximum minus
-	\code{SE.factor * SE.f[]}, i.e, within an \dQuote{f S.E.} range
-	of the maximum (see also \code{SE.factor}).}
+	of that maximum (see also \code{SE.factor}).}
+      \item{\code{"globalSEmax"}:}{(used in Dudoit and Fridlyand (2002),
+	supposedly following Tibshirani's proposition):
+	location of the first \eqn{f()} value which is not larger than
+	the \emph{global} maximum minus \code{SE.factor * SE.f[]}, i.e,
+	within an \dQuote{f S.E.} range of that maximum (see also
+	\code{SE.factor}).}
     }
+    See the examples for a comparison in a simple case.
   }
   \item{SE.factor}{[When \code{method} contains \code{"SE"}] Determining
     the optimal number of clusters, Tibshirani et al. proposed the
