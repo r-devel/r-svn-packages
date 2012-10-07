@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-53\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-04 13:11\n"
+"POT-Creation-Date: 2012-10-05 09:17\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -85,7 +85,7 @@ msgstr "Nic nie wiadomo o tym typie reszt"
 msgid "Not legitimate \"rpart\" tree and endpoint not a 2 level-factor"
 msgstr ""
 
-msgid "A formula argument is required"
+msgid "a 'formula' argument is required"
 msgstr ""
 
 # Recommended/rpart/R/rpart.s: 25

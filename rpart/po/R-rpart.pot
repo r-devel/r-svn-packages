@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: rpart 4.0-4\n"
-"POT-Creation-Date: 2012-10-04 13:11\n"
+"Project-Id-Version: rpart 4.0-0\n"
+"POT-Creation-Date: 2012-10-05 09:17\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -46,7 +46,7 @@ msgstr ""
 msgid "Not legitimate \"rpart\" tree and endpoint not a 2 level-factor"
 msgstr ""
 
-msgid "A formula argument is required"
+msgid "a 'formula' argument is required"
 msgstr ""
 
 msgid "Trees cannot handle interaction terms"
