@@ -11,10 +11,8 @@ plot.rpart <- function(x, uniform = FALSE, branch = 1, compress = FALSE,
     if (!compress) nspace <- -1L     #means no compression
     ## if (dev.cur() == 1L) dev.new() # not needed in R
 
-    # Save information per device.
     parms <- list(uniform = uniform, branch = branch, nspace = nspace,
                  minbranch = minbranch)
-    assign(paste0("device", dev.cur()), parms, envir = rpart_env)
 
     ## define the plot region
     temp <- rpartco(x, parms)
@@ -23,6 +21,8 @@ plot.rpart <- function(x, uniform = FALSE, branch = 1, compress = FALSE,
     temp1 <- range(xx) + diff(range(xx))*c(-margin, margin)
     temp2 <- range(yy) + diff(range(yy))*c(-margin, margin)
     plot(temp1, temp2, type='n', axes=FALSE, xlab='', ylab='', ...)
+    ## Save information per device, once a new device is opened.
+    assign(paste0("device", dev.cur()), parms, envir = rpart_env)
 
     # Draw a series of horseshoes or V's, left son, up, down to right son
     #   NA's in the vector cause lines() to "lift the pen"
