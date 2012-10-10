@@ -15,6 +15,9 @@ ISSUES:
 
 1.7-22
 
+* Predict.matrix.pspline.smooth now allows prediction outside range of knots, 
+  and uses linear extrapolation in this case.
+
 * missing drop=FALSE in reTest called by summary.gam caused 1-D random effect
   p-value computation to fail. Fixed (thanks Silje Skår).
 
