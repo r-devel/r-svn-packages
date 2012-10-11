@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.10.0\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-11 14:23\n"
+"POT-Creation-Date: 2012-10-11 15:21\n"
 "PO-Revision-Date: 2012-09-30 14:28-0600\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza@gmail.com>\n"
 "Language-Team: Russian\n"
@@ -92,7 +92,7 @@ msgid "extreme order statistics used as endpoints"
 msgstr "'extreme order statistics' использована в конечных точках"
 
 #, fuzzy
-msgid "variance required for studentized internals"
+msgid "variance required for studentized intervals"
 msgstr "для CI Стьюдент-типа нужна варианса"
 
 msgid "estimated adjustment 'w' is infinite"

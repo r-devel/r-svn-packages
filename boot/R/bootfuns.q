@@ -1150,7 +1150,7 @@ stud.ci <- function(tv0, tv, conf = 0.95, hinv=function(t) t)
 #
 {
     if ((length(tv0) < 2) || (ncol(tv) < 2)) {
-        warning("variance required for studentized internals")
+        warning("variance required for studentized intervals")
         NA
     } else {
         z <- (tv[,1L]-tv0[1L])/sqrt(tv[,2L])

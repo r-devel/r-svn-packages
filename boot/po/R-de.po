@@ -2,13 +2,13 @@
 # Copyright (C) 2005 The R Foundation
 # This file is distributed under the same license as the boot package.
 # Copyright (C) of this file 2009-2012 Chris Leick <c.leick@vollbio.de>.
-#
+# 2012 Detlef Steuer <steuer@hsu-hh.de>
 msgid ""
 msgstr ""
 "Project-Id-Version: R 2.15.2 / boot 1.3-6-\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-11 14:23\n"
-"PO-Revision-Date: 2012-10-11 13:30+0200\n"
+"POT-Creation-Date: 2012-10-11 15:21\n"
+"PO-Revision-Date: 2012-10-11 16:01+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
 "Language: de\n"
@@ -17,14 +17,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# FIXME missing single quote
-#, fuzzy
 msgid ""
 "'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0', so "
 "ignored"
 msgstr ""
-"'simple=TRUE' gilt nur für 'sim=\"ordinary\", stype=\"i\", n=0' – wird daher "
-"hier ignoriert"
+"'simple=TRUE' gilt nur für 'sim=\"ordinary\", stype=\"i\", n=0' und wird "
+"daher hier ignoriert"
 
 msgid "no data in call to 'boot'"
 msgstr "keine Daten im Aufruf von 'boot'"
@@ -53,10 +51,9 @@ msgid "array cannot be found for parametric bootstrap"
 msgstr "Array kann nicht für parametrisches Bootstrapping gefunden werden"
 
 # R/bootfuns.q
-#, fuzzy
 msgid "%s distribution not supported: using normal instead"
 msgstr ""
-"%s-Verteilung nicht unterstützt, stattdessen wird Normalverteilung benutzt"
+"%s Verteilung nicht unterstützt, stattdessen wird Normalverteilung benutzt"
 
 msgid "only first element of 'index' used"
 msgstr "nur erstes Element von 'index' benutzt"
@@ -80,9 +77,8 @@ msgstr "'t' muss die Länge %d haben"
 msgid "bootstrap variances needed for studentized intervals"
 msgstr "Bootstrap-Varianzen für studentisierte Intervalle benötigt"
 
-#, fuzzy
 msgid "BCa intervals not defined for time series bootstraps"
-msgstr "BCa-Intervalle nicht für Zeitserien-Bootstraps definiert."
+msgstr "BCa Intervalle nicht für Zeitreihenbootstrap definiert."
 
 msgid "bootstrap output object or 't0' required"
 msgstr "Bootstrap-Ausgabeobjekt oder 't0' benötigt"
@@ -94,9 +90,8 @@ msgstr "'var.t0' kann nicht berechnet werden"
 msgid "extreme order statistics used as endpoints"
 msgstr "Extremwertstatistiken werden als Endpunkte benutzt"
 
-#, fuzzy
-msgid "variance required for studentized internals"
-msgstr "Varianz für studentisierte CIs benötigt"
+msgid "variance required for studentized intervals"
+msgstr "Varianz für studentisierte Intervalle benötigt"
 
 msgid "estimated adjustment 'w' is infinite"
 msgstr "geschätzte Anpassung 'w' ist unendlich"
@@ -113,13 +108,11 @@ msgstr "fehlende Werte in 'data' nicht erlaubt"
 msgid "unknown value of 'sim'"
 msgstr "unbekannter Wert von 'sim'"
 
-#, fuzzy
 msgid "'data' must be a matrix with at least 2 columns"
-msgstr "Daten müssen eine Matrix mit mindestens 2 Spalten sein"
+msgstr "'data' muss eine Matrix mit mindestens 2 Spalten sein"
 
-#, fuzzy
 msgid "'index' must contain 2 elements"
-msgstr "Index muss 2 Elemente enthalten"
+msgstr "'index' muss 2 Elemente enthalten"
 
 msgid "only first 2 elements of 'index' used"
 msgstr "nur die beiden ersten Elemente von 'index' werden benutzt"
@@ -127,11 +120,9 @@ msgstr "nur die beiden ersten Elemente von 'index' werden benutzt"
 msgid "indices are incompatible with 'ncol(data)'"
 msgstr "Indizes sind inkompatibel mit 'ncol(data)'"
 
-#, fuzzy
 msgid "sim = \"weird\" cannot be used with a \"coxph\" object"
-msgstr "sim = \"weird\" kann nicht mit einem 'coxph'-Objekt benutzt werden"
+msgstr "sim = \"weird\" kann nicht mit einem \"coxph\" Objekt benutzt werden"
 
-#, fuzzy
 msgid "only columns %s and %s of 'data' used"
 msgstr "nur die Spalten %s und %s von 'data' werden benutzt"
 
@@ -152,13 +143,11 @@ msgstr ""
 "es können keine beeinflussenden Werte von einem parametrischen Bootstrap "
 "gefunden werden"
 
-#, fuzzy
 msgid "neither 'data' nor bootstrap object specified"
-msgstr "kein Daten- oder Bootstrap-Objekt angegeben"
+msgstr "weder 'data' noch Bootstrap-Objekt angegeben"
 
-#, fuzzy
 msgid "neither 'statistic' nor bootstrap object specified"
-msgstr "kein Statistik- oder Bootstrap-Objekt angegeben"
+msgstr "weder 'statistic' noch Bootstrap-Objekt angegeben"
 
 msgid "'stype' must be \"w\" for type=\"inf\""
 msgstr "'stype' muss für type=\"inf\" 'w' sein"
@@ -184,9 +173,8 @@ msgstr "Bootstrap-Ausgabematrix fehlt"
 msgid "use 'boot.ci' for scalar parameters"
 msgstr "benutzen Sie 'boot.ci' für skalare Parameter"
 
-#, fuzzy
 msgid "unable to achieve requested overall error rate"
-msgstr "gesamte angefragte Fehlerquote kann nicht erreicht werden"
+msgstr "geforderte overall Fehlerquote kann nicht erreicht werden"
 
 msgid "unable to find multiplier for %f"
 msgstr "Es kann kein Multiplikator für %f gefunden werden"
@@ -230,9 +218,9 @@ msgstr "'alpha' ignoriert; R[1L]=0"
 msgid "control methods undefined when 'boot.out' has weights"
 msgstr "Kontrollmethoden undefiniert, wenn 'boot.out' Gewichte hat"
 
-#, fuzzy
 msgid "number of columns of 'A' (%d) not equal to length of 'u' (%d)"
-msgstr "Anzahl der Spalten von A (%d) ist nicht gleich der Länge von u (%d)"
+msgstr ""
+"Anzahl der Spalten von 'A' (%d) ist nicht gleich der Länge von 'u' (%d)"
 
 msgid "either 'A' and 'u' or 'K.adj' and 'K2' must be supplied"
 msgstr "entweder 'A' und 'u' oder 'K.adj' und 'K2' müssen angegeben werden"
