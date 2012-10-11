@@ -289,7 +289,7 @@ lme.formula <-
   ## checking if enough observations per group to estimate ranef
   tmpDims <- attr(lmeSt, "conLin")$dims
   if (max(tmpDims$ZXlen[[1]]) < tmpDims$qvec[1]) {
-      warning(gettextf("fewer observations than random effects in all level %s grups",
+      warning(gettextf("fewer observations than random effects in all level %s groups",
                        Q), domain = NA)
   }
   ## degrees of freedom for testing fixed effects
@@ -877,7 +877,7 @@ anova.lme <-
       if (Lmiss) {                 # terms is given
         if (is.numeric(Terms) && all(Terms == as.integer(Terms))) {
           if (min(Terms) < 1 || max(Terms) > nTerms) {
-              stop(gettextf("'Terms; must be between 1 and %d", nTerms),
+              stop(gettextf("'Terms' must be between 1 and %d", nTerms),
                    domain = NA)
           }
         } else {
@@ -968,7 +968,7 @@ anova.lme <-
     object <- list(object, ...)
     termsClass <- unlist(lapply(object, data.class))
     if(!all(match(termsClass, c("gls", "gnls", "lm", "lmList", "lme","nlme","nlsList","nls"), 0))) {
-      stop("objects must inherit from classes \"gls\", \"gnls\" \"lm\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", or \"nls\"")
+      stop("objects must inherit from classes \"gls\", \"gnls\",\"lm\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", or \"nls\"")
     }
     resp <- unlist(lapply(object,
 		  function(el) deparse(getResponseFormula(el)[[2]])))

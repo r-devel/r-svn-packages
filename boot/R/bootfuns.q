@@ -108,7 +108,7 @@ boot <- function(data, statistic, R, sim = "ordinary",
         if (!have_mc && !have_snow) ncpus <- 1L
     }
     if (simple && (sim != "ordinary" || stype != "i" || sum(m))) {
-        warning("'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0, so ignored")
+        warning("'simple=TRUE' is only valid for 'sim=\"ordinary\", stype=\"i\", n=0', so ignored")
         simple <- FALSE
     }
     if (!exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) runif(1)

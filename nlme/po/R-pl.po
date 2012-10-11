@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-104\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-09-24 14:21\n"
+"POT-Creation-Date: 2012-10-11 14:13\n"
 "PO-Revision-Date: 2012-10-06 16:10+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -860,7 +860,7 @@ msgstr ""
 # nlme/R/nlme.R: 559
 # warning(gettextf("fewer observations than random effects in all level %s grups",
 #                      Q), domain = NA)
-msgid "fewer observations than random effects in all level %s grups"
+msgid "fewer observations than random effects in all level %s groups"
 msgstr ""
 "mniej obserwacji niż losowych efektów we wszystkich grupach w poziomie %s"
 
@@ -868,12 +868,6 @@ msgstr ""
 # stop("object must inherit from class \"lme\" ")
 msgid "object must inherit from class \"lme\""
 msgstr "obiekt musi dziedziczyć z klasy \"lme\""
-
-# nlme/R/lme.R: 880
-# stop(gettextf("'Terms; must be between 1 and %d", nTerms),
-#                    domain = NA)
-msgid "'Terms; must be between 1 and %d"
-msgstr "'Terms' muszą być pomiędzy 1 a %d"
 
 # nlme/R/lme.R: 898
 # stop("terms must all have the same denominator DF")
@@ -888,7 +882,7 @@ msgstr "'L' może zawierać jedynie stałe efekty z tym samym mianownikem DF"
 # nlme/R/lme.R: 971
 # stop("objects must inherit from classes \"gls\", \"gnls\" \"lm\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", or \"nls\"")
 msgid ""
-"objects must inherit from classes \"gls\", \"gnls\" \"lm\",\"lmList\", \"lme"
+"objects must inherit from classes \"gls\", \"gnls\",\"lm\",\"lmList\", \"lme"
 "\",\"nlme\",\"nlsList\", or \"nls\""
 msgstr ""
 "obiekty muszą dziedziczyć z klas \"lm\",\"lmList\", \"lme\",\"nlme\","
@@ -2209,3 +2203,9 @@ msgstr[1] ""
 msgstr[2] ""
 "nazwy grup nie zgadzają się z początkowymi wartościami dla efektów losowych: "
 "%s"
+
+# nlme/R/lme.R: 880
+# stop(gettextf("'Terms; must be between 1 and %d", nTerms),
+#                    domain = NA)
+#~ msgid "'Terms; must be between 1 and %d"
+#~ msgstr "'Terms' muszą być pomiędzy 1 a %d"

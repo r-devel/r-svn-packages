@@ -1,14 +1,14 @@
 # Translation of src/library/foreign/po/R-foreign.pot to German
-# Copyright (C) 2005-2009 The R Foundation
+# Copyright (C) 2005-2012 The R Foundation
 # This file is distributed under the same license as the foreign package.
-# Chris Leick <c.leick@vollbio.de>, 2009.
+# Copyright (C) of this file 2009-2012 Chris Leick <c.leick@vollbio.de>.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.10.0 / foreign 0.8-38\n"
+"Project-Id-Version: R 2.15.2 / foreign 0.8-38\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
 "POT-Creation-Date: 2012-09-23 17:34\n"
-"PO-Revision-Date: 2009-10-11 13:19+0200\n"
+"PO-Revision-Date: 2012-10-11 13:35+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
 "Language: de\n"
@@ -20,9 +20,8 @@ msgstr ""
 msgid "only one file"
 msgstr "nur eine Datei"
 
-#, fuzzy
 msgid "'file' must be character"
-msgstr "Datei muss ein Buchstabe sein"
+msgstr "'file' muss ein Buchstabe sein."
 
 msgid "internal error - illegal S code value"
 msgstr "interner Fehler - unerlaubter S-Kodewert"
@@ -31,28 +30,28 @@ msgid "not an S object"
 msgstr "kein S-Objekt"
 
 msgid "S mode %s (near byte offset %s) not supported"
-msgstr ""
+msgstr "S-Modus %s (bei Byte-Versatz %s) nicht unterstützt"
 
 msgid "Argument 'file' must be a character string or connection."
-msgstr "Argument »file« muss eine Zeichenkette oder Verbindung sein."
+msgstr "Argument 'file' muss eine Zeichenkette oder Verbindung sein."
 
 msgid "Invalid attribute specification."
-msgstr "Ungültige Attribusangabe."
+msgstr "ungültige Attributsangabe"
 
 msgid "Type 'relational' currently not implemented."
-msgstr "Typ »relational« derzeit nicht implementiert."
+msgstr "Typ 'relational' derzeit nicht implementiert"
 
 msgid "Missing data section."
-msgstr "Fehlender Datenbereich."
+msgstr "fehlender Datenbereich"
 
 msgid "Missing attribute section."
-msgstr "Fehlender Attributsbereich."
+msgstr "fehlender Attributsbereich"
 
 msgid "Invalid type specification."
-msgstr "Ungültige Typangabe."
+msgstr "ungültige Typangabe"
 
 msgid "Field name: %s changed to: %s"
-msgstr ""
+msgstr "Feldname: %s geändert zu: %s"
 
 msgid "cannot handle matrix/array columns"
 msgstr "Matrix-/Arrayspalten können nicht gehandhabt werden"
@@ -73,16 +72,16 @@ msgid "cannot handle unknown type %s"
 msgstr "unbekannter Typ %s kann nicht gehandhabt werden"
 
 msgid "'missing.type' only applicable to version >= 8 files"
-msgstr "»missing.type« nur auf Dateien der Version >=8 anwendbar"
+msgstr "'missing.type' nur auf Dateien der Version >=8 anwendbar"
 
 msgid "cannot read factor labels from Stata 5 files"
 msgstr "Faktorbeschriftungen von Stata-5-Dateien können nicht gelesen werden"
 
 msgid "value labels (%s) for %s are missing"
-msgstr ""
+msgstr "Wertbeschriftungen (%s) für %s fehlen"
 
 msgid "The object \"dataframe\" must have class data.frame"
-msgstr ""
+msgstr "Das Objekt 'dataframe' muss die Klasse 'data.frame' haben"
 
 msgid "Version must be 6-12"
 msgstr "Version muss 6-12 sein"
@@ -100,7 +99,7 @@ msgid "cannot handle multicolumn columns"
 msgstr "mehrspaltige Spalten können nicht gehandhabt werden"
 
 msgid "argument 'file' must be a character string or connection"
-msgstr "Argument »file« muss eine Zeichenkette oder Verbindung sein"
+msgstr "Argument 'file' muss eine Zeichenkette oder Verbindung sein"
 
 msgid "file has zero or fewer variables: probably not an EpiInfo file"
 msgstr ""
@@ -123,7 +122,7 @@ msgstr "Zurückkodierung von %s"
 
 # http://en.wiktionary.org/wiki/missingness
 msgid "missingness type %s is not handled"
-msgstr "»missingness«-Typ %s wird nicht verarbeitet"
+msgstr "'missingness'-Typ %s wird nicht verarbeitet"
 
 msgid "I cannot abbreviate the variable names to eight or fewer letters"
 msgstr ""
@@ -138,7 +137,9 @@ msgstr ""
 "Zeichenvariablen, die länger als 255 sind, können nicht gehandhabt werden"
 
 msgid "Cannot uniquely abbreviate the variable names to %d or fewer characters"
-msgstr "Variablennamen können nicht eindeutig abgekürzt werden auf %d oder weniger Zeichen"
+msgstr ""
+"Variablennamen können nicht eindeutig auf %d oder weniger Zeichen abgekürzt "
+"werden auf"
 
 msgid "Cannot uniquely abbreviate format names to conform to"
 msgstr "Variablennamen können nicht eindeutig abgekürzt werden auf"
@@ -151,35 +152,5 @@ msgstr "Einige Variablennamen wurden abgekürzt oder anders verändert."
 
 msgid "data frame contains columns of unsupported class %s"
 msgid_plural "data frame contains columns of unsupported classes %s"
-msgstr[0] "Datenframe enthält Spalten nicht unterstützter Klasse %s"
-msgstr[1] "Datenframe enthält Spalten nicht unterstützter Klassen %s"
-
-#~ msgid "S mode"
-#~ msgstr "S-Modus"
-
-#~ msgid "(near byte offset"
-#~ msgstr "(bei Byte-Versatz"
-
-#~ msgid ") not supported"
-#~ msgstr ") nicht unterstützt"
-
-#~ msgid "Field name:"
-#~ msgstr "Feldname:"
-
-#~ msgid "changed to:"
-#~ msgstr "geändert zu:"
-
-#~ msgid ","
-#~ msgstr ","
-
-#~ msgid "value labels ("
-#~ msgstr "Wertbeschriftungen ("
-
-#~ msgid ") for"
-#~ msgstr ") für"
-
-#~ msgid "are missing"
-#~ msgstr "fehlen"
-
-#~ msgid "or fewer characters"
-#~ msgstr "oder weniger Zeichen"
+msgstr[0] "Datenframe enthält Spalten der nicht unterstützen Klasse %s"
+msgstr[1] "Datenframe enthält Spalten der nicht unterstützen Klassen %s"

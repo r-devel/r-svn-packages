@@ -556,7 +556,7 @@ nlme.formula <-
   ncols <- c(rlength, fLen, 1)
   Dims <- MEdims(grpShrunk, ncols)
   if (max(Dims$ZXlen[[1]]) < Dims$qvec[1]) {
-    warning(gettextf("fewer observations than random effects in all level %s grups",
+    warning(gettextf("fewer observations than random effects in all level %s groups",
                      Q), domain = NA)
 }
   sran <- vector("list", Q)

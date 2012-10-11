@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-105\n"
-"POT-Creation-Date: 2012-10-04 09:31\n"
+"POT-Creation-Date: 2012-10-11 14:13\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -358,13 +358,10 @@ msgstr ""
 msgid "cannot use smaller level of grouping for 'correlation' than for 'random'. Replacing the former with the latter."
 msgstr ""
 
-msgid "fewer observations than random effects in all level %s grups"
+msgid "fewer observations than random effects in all level %s groups"
 msgstr ""
 
 msgid "object must inherit from class \"lme\""
-msgstr ""
-
-msgid "'Terms; must be between 1 and %d"
 msgstr ""
 
 msgid "terms must all have the same denominator DF"
@@ -373,7 +370,7 @@ msgstr ""
 msgid "L may only involve fixed effects with the same denominator DF"
 msgstr ""
 
-msgid "objects must inherit from classes \"gls\", \"gnls\" \"lm\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", or \"nls\""
+msgid "objects must inherit from classes \"gls\", \"gnls\",\"lm\",\"lmList\", \"lme\",\"nlme\",\"nlsList\", or \"nls\""
 msgstr ""
 
 msgid "some fitted objects deleted because response differs from the first model"
