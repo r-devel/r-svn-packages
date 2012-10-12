@@ -1,6 +1,6 @@
 
-R version 2.13.0 Patched (2011-06-06 r56067)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 2.15.1 Patched (2012-10-12 r60924) -- "Roasted Marshmallows"
+Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -1601,5 +1601,8 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  3.479 0.025 3.521 0 0 
+Time elapsed:  2.868 0.024 2.9 0 0 
 > 
+> proc.time()
+   user  system elapsed 
+  3.036   0.048   3.087 
