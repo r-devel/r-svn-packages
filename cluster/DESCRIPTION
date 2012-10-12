@@ -1,6 +1,6 @@
 Package: cluster
-Version: 1.14.3
-Date: 2012-10-05
+Version: 1.14.4
+Date: 2012-..-..
 Priority: recommended
 Author: Martin Maechler, based on S original by Peter Rousseeuw <rousse@uia.ua.ac.be>,
 	Anja.Struyf@uia.ua.ac.be and Mia.Hubert@uia.ua.ac.be,
@@ -14,5 +14,6 @@ Suggests: MASS
 SuggestsNote: two small examples using MASS' cov.rob() and mvrnorm()
 LazyLoad: yes
 LazyData: yes
+ByteCompile: yes
 BuildResaveData: no
 License: GPL (>= 2)
