@@ -157,6 +157,12 @@ x <- rbind(matrix(rnorm(150,           sd = 0.1), ncol = 3),
            matrix(rnorm(150, mean = 2, sd = 0.1), ncol = 3),
            matrix(rnorm(150, mean = 3, sd = 0.1), ncol = 3))
 
+## Slightly faster way to use pam (see below)
+pam1 <- function(x,k) list(cluster = pam(x,k, cluster.only=TRUE))
+
+doExtras <- cluster:::doExtras()
+## or set it explicitly to TRUE for the following
+if(doExtras) {
 ## Note we use  B = 60 in the following examples to keep them "speedy".
 ## ---- rather keep the default B = 500 for your analysis!
 
@@ -164,14 +170,10 @@ x <- rbind(matrix(rnorm(150,           sd = 0.1), ncol = 3),
 gskmn <- clusGap(x, FUN = kmeans, nstart = 20, K.max = 8, B = 60)
 gskmn #-> its print() method
 plot(gskmn, main = "clusGap(., FUN = kmeans, n.start=20, B= 60)")
-set.seed(12)
-system.time(
+set.seed(12); system.time(
   gsPam0 <- clusGap(x, FUN = pam, K.max = 8, B = 60)
 )
-## Slightly faster way to use pam:
-pam1 <- function(x,k) list(cluster = pam(x,k, cluster.only=TRUE))
-set.seed(12)
-system.time(
+set.seed(12); system.time(
   gsPam1 <- clusGap(x, FUN = pam1, K.max = 8, B = 60)
 )
 ## and show that it gives the same:
@@ -179,6 +181,7 @@ stopifnot(identical(gsPam1[-4], gsPam0[-4]))
 gsPam1
 print(gsPam1, method="globalSEmax")
 print(gsPam1, method="globalmax")
+}% end {doExtras}
 
 gs.pam.RU <- clusGap(ruspini, FUN = pam1, K.max = 8, B = 60)
 gs.pam.RU
