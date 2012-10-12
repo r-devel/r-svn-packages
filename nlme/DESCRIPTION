@@ -16,10 +16,10 @@ Author: Jose Pinheiro (S version),
 	the R Core team.
 Maintainer: R-core <R-core@R-project.org>
 Description: Fit and compare Gaussian linear and nonlinear mixed-effects models.
-Depends: graphics, stats, R (>= 2.13)
+Depends: graphics, stats, R (>= 2.14.0)
 Imports: lattice
 Suggests: Hmisc, MASS
-LazyLoad: yes
 LazyData: yes
+ByteCompile: yes
 License: GPL (>= 2)
 BugReports: http://bugs.r-project.org
