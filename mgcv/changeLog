@@ -3,6 +3,9 @@
 
 ISSUES:
 
+* initial.sp failure reported in weird situation: 
+  see mgcv-related/bugs/initial.sp
+
 * users can use as.factor(a) in formula, and variable.summary won't know 
   about it - causes a problem is a is character, for example. Could coerce
   character to factor, but is that general enough? what about if a was numeric
