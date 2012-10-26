@@ -1,8 +1,9 @@
-2012 Oct ??	4.0-?	Merge in updates from TMT: see inst/NEWS.Rd 
+2012 Oct 26	4.0-1	Merge in updates from TMT: see inst/NEWS.Rd 
 	                and Changelog.TMT.
 	                Use .Call for all C code.
-	                Use an environment in the package for parms from
+	                Use an environment in the package for 'parms' from
 	                plot.rpart().
+	                Force byte-compilation for consistency.
 
 2012 Oct 03	3.1-55	Force use of registered symbols in R >= 2.16.0
 	                Update Polish translations.
