@@ -1,4 +1,5 @@
 2012 Nov ??	4.0-2	Add importance() from TMT.
+	                Not use paste0() so R 2.14.x works.
 
 2012 Oct 26	4.0-1	Merge in updates from TMT: see inst/NEWS.Rd 
 	                and Changelog.TMT.
