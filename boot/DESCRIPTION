@@ -13,6 +13,8 @@ Author: S original <http://statwww.epfl.ch/davison/BMA/library.html>
         Note that maintainers are not available to give advice on using a
         package they did not author.
 Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
+Note: Maintainers are not available to give advice on 
+      using a package they did not author.
 Description: functions and datasets for bootstrapping from the
   book "Bootstrap Methods and Their Applications" by A. C. Davison and 
   D. V. Hinkley (1997, CUP).
