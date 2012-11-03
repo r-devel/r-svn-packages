@@ -1,3 +1,5 @@
+2012 Nov ??	4.0-2	Add importance() from TMT.
+
 2012 Oct 26	4.0-1	Merge in updates from TMT: see inst/NEWS.Rd 
 	                and Changelog.TMT.
 	                Use .Call for all C code.

@@ -1,7 +1,7 @@
 Package: rpart
 Priority: recommended
-Version: 4.0-1
-Date: 2012-10-26
+Version: 4.0-2
+Date: 2012-11-02
 Authors@R: c(person("Terry", "Therneau", role = "aut",
 	             email = "therneau@mayo.edu"),
              person("Beth", "Atkinson", role = "aut",	
