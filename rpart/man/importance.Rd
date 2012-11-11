@@ -40,7 +40,7 @@ Variable importance for an \code{rpart} fit.
 \author{Terry Therneau}
 \seealso{\code{\link{rpart}}}
 \examples{
-fit <- rpart(HP ~ ., data = car.test.frame)
+fit <- rpart(HP ~ ., data = car90)
 importance(fit)
 }
 \keyword{tree}

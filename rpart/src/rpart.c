@@ -310,7 +310,7 @@ SEXP rpart(SEXP ncat2,   SEXP method2,  SEXP opt2,
     else ccsplit = NULL;
 
     rpmatrix(tree, rp.numcat, ddsplit, iisplit, ccsplit, ddnode, iinode, 1);
-//    free_tree(tree, 0);  /* let the memory go */
+    free_tree(tree, 0);  /* let the memory go */
 
     /*
     ** Fix up the which array

@@ -3,6 +3,12 @@
 \section{Changes in version 4.0-2}{
   \itemize{
     \item New function \code{importance()}.
+
+    \item Added dataset \code{car90}, a corrected version of the S-PLUS dataset
+    \code{car.all} (used with permission).
+
+    \item This version does not use \code{paste0{}} and so works again
+    with \R 2.14.x.
   }
 }
     
