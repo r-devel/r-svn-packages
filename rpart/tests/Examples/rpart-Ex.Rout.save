@@ -126,26 +126,6 @@ Node number 11: 8 observations
 > 
 > 
 > cleanEx()
-> nameEx("importance")
-> ### * importance
-> 
-> flush(stderr()); flush(stdout())
-> 
-> ### Name: importance
-> ### Title: Variable Importance for an rpart Fit
-> ### Aliases: importance
-> ### Keywords: tree
-> 
-> ### ** Examples
-> 
-> fit <- rpart(HP ~ ., data = car90)
-> importance(fit)
-       Disp2        Tires     Front.Hd        Price Rear.Seating        Gear2 
-          63           16           13            4            2            2 
-> 
-> 
-> 
-> cleanEx()
 > nameEx("kyphosis")
 > ### * kyphosis
 > 
@@ -980,7 +960,7 @@ n= 60
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.635 0.028 0.672 0 0 
+Time elapsed:  0.614 0.027 0.648 0 0 
 > grDevices::dev.off()
 null device 
           1 

@@ -1,4 +1,7 @@
-2012 Nov 11	4.0-2	Add importance() and car90 from TMT.
+2012 Nov 11	4.0-2	Add car90 from TMT.
+	                'agree' in choose_surg.c needs to be double
+	                for fractional weights.
+	                Commenting out free.tree in rpart.c was TMT's error.
 	                Not use paste0() so R 2.14.x works.
 
 2012 Oct 26	4.0-1	Merge in updates from TMT: see inst/NEWS.Rd 
