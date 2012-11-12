@@ -8,6 +8,8 @@
     NB: Other packages (including \pkg{AICcmodavg}, \pkg{RRF},
     \pkg{labdsv}, \pkg{obliqueRF} and \pkg{randomForest}) already have a
     function of that name.
+
+    \item Some memory leaks have been plugged.
   }
 }
 

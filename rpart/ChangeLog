@@ -1,4 +1,8 @@
 2012 Nov ??	4.0-3	Add importance() function from TMT.
+	                free_tree was commented out in rpart.c, and
+	                could crash as the structure was not zeroed.
+	                s_xpred.c did not free the first instance of a tree.
+	                The choose_surg.c change was broken.
 
 2012 Nov 11	4.0-2	Add car90 dataset from TMT.
 	                'agree' in choose_surg.c needs to be double
