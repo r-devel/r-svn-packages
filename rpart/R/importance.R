@@ -5,7 +5,7 @@
 #
 importance <- function(fit, rescale = TRUE)
 {
-    if (class(fit) != "rpart") stop("Must be applied to an rpart object")
+    if (class(fit) != "rpart") stop("'fit' must be an \"rpart\" object")
 
     ff <- fit$frame
     fpri <- which(ff$var != "<leaf>")  #points to primary splits in ff
@@ -36,6 +36,6 @@ importance <- function(fit, rescale = TRUE)
 
     import <- tapply(c(scaled.imp, unlist(sval)),
                      c(as.character(ff$var[fpri]), unlist(sname)), sum)
-    import <- rev(sort(import))
+    import <- sort(import, decreasing = TRUE)
     if (rescale) round(100*import/sum(import)) else import
 }

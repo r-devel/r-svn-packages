@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-24\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-05 09:17\n"
+"POT-Creation-Date: 2012-11-11 16:58\n"
 "PO-Revision-Date: 2012-10-03 14:18+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -20,6 +20,10 @@ msgstr ""
 
 msgid "'x' must be a numeric vector"
 msgstr "'x' doit être un vecteur numérique"
+
+#, fuzzy
+msgid "'fit' must be an \"rpart\" object"
+msgstr "'x' doit être un objet \"rpart\""
 
 msgid "more than 52 levels in a predicting factor, truncated for printout"
 msgstr ""

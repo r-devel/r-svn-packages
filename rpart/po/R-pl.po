@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-53\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2012-10-05 09:17\n"
+"POT-Creation-Date: 2012-11-11 16:58\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -20,6 +20,12 @@ msgstr ""
 # stop("'x' must be a numeric vector")
 msgid "'x' must be a numeric vector"
 msgstr "'x' musi być wektorem liczbowym"
+
+# rpart/R/printcp.s: 5
+# stop ("'x' must be an 'rpart' object")
+#, fuzzy
+msgid "'fit' must be an \"rpart\" object"
+msgstr "'x' musi być obiektem \"rpart\""
 
 # rpart/R/labels.rpart.s: 68
 # warning("more than 52 levels in a predicting factor, truncated for printout")
