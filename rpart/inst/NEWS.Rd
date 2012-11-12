@@ -1,6 +1,16 @@
 \name{NEWS}
 \title{NEWS file for the rpart package}
-%    \item New function \code{importance()}.
+
+\section{Changes in version 4.0-3}{
+  \itemize{
+    \item New function \code{importance()}.
+
+    NB: Other packages (including \pkg{AICcmodavg}, \pkg{RRF},
+    \pkg{labdsv}, \pkg{obliqueRF} and \pkg{randomForest}) already have a
+    function of that name.
+  }
+}
+
 \section{Changes in version 4.0-2}{
   \itemize{
     \item Added dataset \code{car90}, a corrected version of the
