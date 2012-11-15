@@ -2353,6 +2353,14 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
   object$X <- Predict.matrix.sos.smooth(object,data)
 
+  ## now re-parameterize to improve the conditioning of X...
+  xs <- as.numeric(apply(object$X,2,sd))
+  xs[xs==min(xs)] <- 1
+  xs <- 1/xs
+  object$X <- t(t(object$X)*xs)
+  object$S[[1]] <- t(t(xs*object$S[[1]])*xs)
+  object$xc.scale <- xs
+
   object
 } ## end of smooth.construct.sos.smooth.spec
 
@@ -2386,6 +2394,8 @@ Predict.matrix.sos.smooth<-function(object,data)
              lak=lak,lok=lok,m=object$p.order)
     X <- cbind(X%*%object$UZ,attr(X,"T"))
   }
+  if (!is.null(object$xc.scale))
+  X <- t(t(X)*object$xc.scale) ## apply column scaling
   X 
 }
 

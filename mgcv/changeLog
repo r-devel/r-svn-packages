@@ -3,6 +3,20 @@
 
 ISSUES:
 
+* bam - allow a blocking covariate for AR1?
+
+* warn about, or at least report, rank deficiency?
+
+* vis.gam --- set "re" terms to zero by default?? (clearly better - easy?)
+
+* let t2's expand by penalty in summary/anova??
+
+* convergence failure *windows only* with mack example - see Freiburg
+  course. (sos smooth has high condition number)
+
+* gam.check is using qq.gam on gamm models with random effects and cor struct
+  - can't be right - need a warning.
+
 * initial.sp failure reported in weird situation: 
   see mgcv-related/bugs/initial.sp
 
@@ -15,6 +29,10 @@ ISSUES:
 
 * still not really happy with nesting constraints, especially under rank
   deficiency.
+
+1.7-23
+
+* sos smooth model matrix re-scaled for better conditioning.
 
 1.7-22
 
