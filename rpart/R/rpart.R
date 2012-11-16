@@ -192,6 +192,8 @@ rpart <- function(formula, data, weights, subset,
 	newc <- matrix(1L, nadd, max(cats))
 	cvar <- rpfit$isplit[, 1L]
 	indx <- isord[cvar]             # vector of TRUE/FALSE
+        ## splits for 0 counts are not actually computed.
+        splits[indx & (splits[, 1L] == 0), 4L] <- 1.5
 	cdir <- splits[indx, 2L]        # which direction splits went
 	ccut <- floor(splits[indx, 4L]) # cut point
 	splits[indx, 2L] <- cats[cvar[indx]] # Now, # of categories instead

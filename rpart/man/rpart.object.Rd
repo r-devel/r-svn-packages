@@ -50,13 +50,15 @@ the data used to fit the \code{rpart} object.
   \code{ncat}, the number of categories or levels for the variable
   (\code{+/-1} for a continuous variable), \code{improve}, which is the
   improvement in deviance given by this split, or, for surrogates, the
-  concordance of the surrogate with the primary, and \code{split}, the
+  concordance of the surrogate with the primary, and \code{index}, the
   numeric split point.  The last column \code{adj} gives the adjusted
-  concordance for surrogate splits.  For a factor, the \code{split}
+  concordance for surrogate splits.  For a factor, the \code{index}
   column contains the row number of the csplit matrix.  For a continuous
   variable, the sign of \code{ncat} determines whether the subset
   \code{x < cutpoint} or \code{x > cutpoint} is sent to the left.
- 
+  
+  For rows with zero \code{count} the rest of the row should be ignored
+  as no split was computed.
 }
 \item{csplit}{
   this will be present only if one of the split variables is a factor. There
