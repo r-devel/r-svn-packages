@@ -24,6 +24,13 @@ summary.rpart <- function(object, cp=0, digits=getOption("digits"), file,  ...)
     else cat("  n=", n[1L], "\n\n")
 
     print(x$cptable, digits=digits)
+    if (!is.null(x$variable.importance)) {
+        temp <- round(100* x$variable.importance/sum(x$variable.importance))
+        if (any(temp > 0)) {
+            cat("\nVariable importance\n")
+            print(temp[temp > 0])
+        }
+    }
     ff <- x$frame
     ylevel <- attr(x,'ylevels')
     id <- as.integer(row.names(ff))

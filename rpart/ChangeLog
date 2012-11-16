@@ -1,4 +1,4 @@
-2012 Nov ??	4.0-3	Add importance() function from TMT.
+2012 Nov 16	4.0-3	Add importance to summary(): from TMT.
 	                free_tree was commented out in rpart.c, and
 	                could crash as the structure was not zeroed.
 	                s_xpred.c did not free the first instance of a tree.

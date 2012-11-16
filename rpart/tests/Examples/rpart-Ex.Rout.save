@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-11-10 r61101) -- "Unsuffered Consequences"
+R Under development (unstable) (2012-11-14 r61121) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin11.4.2/x86_64 (64-bit)
@@ -48,6 +48,10 @@ rpart(formula = Mileage ~ Weight, data = car.test.frame)
 2 0.13452819      1 0.4046509 0.4875114 0.07613003
 3 0.01282843      2 0.2701227 0.3802248 0.06685452
 4 0.01000000      3 0.2572943 0.3945980 0.06605572
+
+Variable importance
+Weight 
+   100 
 
 Node number 1: 60 observations,    complexity param=0.5953491
   mean=24.58333, MSE=22.57639 
@@ -122,26 +126,6 @@ Node number 11: 8 observations
 > fit <- rpart(Price ~ Mileage + Type + Country, cu.summary)
 > plot(fit, compress=TRUE)
 > text(fit, use.n=TRUE)
-> 
-> 
-> 
-> cleanEx()
-> nameEx("importance")
-> ### * importance
-> 
-> flush(stderr()); flush(stdout())
-> 
-> ### Name: importance
-> ### Title: Variable Importance for an rpart Fit
-> ### Aliases: importance
-> ### Keywords: tree
-> 
-> ### ** Examples
-> 
-> fit <- rpart(HP ~ ., data = car90)
-> importance(fit)
-       Disp2        Tires     Front.Hd        Price Rear.Seating        Gear2 
-          63           16           13            4            2            2 
 > 
 > 
 > 
@@ -881,6 +865,10 @@ rpart(formula = Mileage ~ Weight, data = car.test.frame)
 3 0.01282843      2 0.2701227 0.3802248 0.06685452
 4 0.01000000      3 0.2572943 0.3945980 0.06605572
 
+Variable importance
+Weight 
+   100 
+
 Node number 1: 60 observations,    complexity param=0.5953491
   mean=24.58333, MSE=22.57639 
   left son=2 (45 obs) right son=3 (15 obs)
@@ -980,7 +968,7 @@ n= 60
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.634 0.028 0.676 0 0 
+Time elapsed:  0.661 0.028 0.695 0 0 
 > grDevices::dev.off()
 null device 
           1 

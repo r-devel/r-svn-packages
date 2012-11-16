@@ -26,6 +26,7 @@ rpart <- function(formula, data, weights, subset,
 
     Y <- model.response(m)
     wt <- model.weights(m)
+    if (any(wt < 0)) stop("negative weights not allowed")
     if(length(wt) == 0L) wt <- rep(1.0, nrow(m))
     offset <- model.offset(m)
     X <- rpart.matrix(m)
@@ -61,6 +62,10 @@ rpart <- function(formula, data, weights, subset,
 	method <- c("anova", "poisson", "class", "exp")[method.int]
 	if (method.int == 4L) method.int <- 2L
 
+        # If this function is being retrieved from the rpart library, then
+        #   preferentially "get" the init function from there.  But don't
+        #   lock in the rpart library otherwise, so that we can still do
+        #   standalone debugging.
 	if (missing(parms))
             init <- (get(paste("rpart", method, sep='.')))(Y, offset, ,wt)
 	else
@@ -73,7 +78,7 @@ rpart <- function(formula, data, weights, subset,
 
     Y <- init$y
 
-    xlevels <- attr(X, "column.levels")
+    xlevels <- .getXlevels(Terms, m)
     cats <- rep(0L, ncol(X))
     if(!is.null(xlevels)) {
 	cats[match(names(xlevels), dimnames(X)[[2L]])] <-
@@ -284,6 +289,8 @@ rpart <- function(formula, data, weights, subset,
              numresp = init$numresp)
     }
     if (ncat > 0L) ans$csplit <- catmat + 2L
+    if (nsplit > 0L) ans$variable.importance <- importance(ans)
+
     if (model) {
 	ans$model <- m
 	if (missing(y)) y <- FALSE

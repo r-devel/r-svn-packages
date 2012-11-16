@@ -3,11 +3,12 @@
 
 \section{Changes in version 4.0-3}{
   \itemize{
-    \item New function \code{importance()}.
+    \item The \code{summary()} now includes the \sQuote{importance}.
 
-    NB: Other packages (including \pkg{AICcmodavg}, \pkg{RRF},
-    \pkg{labdsv}, \pkg{obliqueRF} and \pkg{randomForest}) already have a
-    function of that name.
+    \item The \code{text()} method gains a \code{minlength} argument,
+    link the \code{labels()} method.
+
+    \item Handling of fits with fractional weights has been improved.
 
     \item Some memory leaks have been plugged.
   }

@@ -3,10 +3,10 @@
 # Each primary split is credited with the value of splits$improve
 # Each surrogate split gets split$adj times the primary split's value
 #
-importance <- function(fit, rescale = TRUE)
+# Called only internally by rpart
+#
+importance <- function(fit)
 {
-    if (class(fit) != "rpart") stop("'fit' must be an \"rpart\" object")
-
     ff <- fit$frame
     fpri <- which(ff$var != "<leaf>")  #points to primary splits in ff
     spri <- 1 + cumsum(c(0, 1 + ff$ncompete[fpri] + ff$nsurrogate[fpri]))
@@ -36,6 +36,5 @@ importance <- function(fit, rescale = TRUE)
 
     import <- tapply(c(scaled.imp, unlist(sval)),
                      c(as.character(ff$var[fpri]), unlist(sname)), sum)
-    import <- sort(import, decreasing = TRUE)
-    if (rescale) round(100*import/sum(import)) else import
+    sort(c(import), decreasing = TRUE)  # return a named vector
 }

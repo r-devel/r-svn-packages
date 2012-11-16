@@ -8,7 +8,7 @@ This function provides labels for the branches of an
  \code{rpart} tree.
 }
 \usage{
-\method{labels}{rpart}(object, digits=4, minlength=1L, pretty, collapse=TRUE, ...)
+\method{labels}{rpart}(object, digits = 4, minlength = 1L, pretty, collapse = TRUE, ...)
 }
 \arguments{
 \item{object}{
@@ -31,16 +31,16 @@ If the value is greater than 1, the
 \code{abbreviate} function is used.
 }
 \item{pretty}{
-an argument included for backwards compatibility:
-\code{pretty=0} implies \code{minlength=0},
-\code{pretty=NULL} implies \code{minlength=1}, and
-\code{pretty=TRUE} implies \code{minlength=4}.
+an argument included for compatibility with the \pkg{tree} package:
+\code{pretty = 0} implies \code{minlength = 0},
+\code{pretty = NULL} implies \code{minlength = 1}, and
+\code{pretty = TRUE} implies \code{minlength = 4}.
 }
 \item{collapse}{
 logical.
 The returned set of labels is always of the same length as the number
 of nodes in the tree.  
-If \code{collapse=TRUE} (default), 
+If \code{collapse = TRUE} (default), 
 the returned value is a vector of labels for the branch leading into
 each node, with \code{"root"} as the label for the top node.
 If \code{FALSE}, the returned value is a two

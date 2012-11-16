@@ -72,6 +72,9 @@ the data used to fit the \code{rpart} object.
 \item{cptable}{
   the table of optimal prunings based on a complexity parameter. 
 }
+\item{variable.importance}{
+  a vector giving the imporance of each variable.  When printed by
+  \code{summary} these are rescaled to add to 100.}
 \item{terms}{
   an object of mode \code{expression} and class \code{term} summarizing the formula. 
   Used by various methods, but typically not of direct relevance to users. 
