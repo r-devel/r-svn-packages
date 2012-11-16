@@ -3,14 +3,19 @@
 
 \section{Changes in version 4.0-3}{
   \itemize{
-    \item The \code{summary()} now includes the \sQuote{importance}.
+    \item A class \samp{"rpart"} object now contains a component for
+    variable \sQuote{importance}, which is reported by the
+    \code{summary()} method.
 
     \item The \code{text()} method gains a \code{minlength} argument,
-    link the \code{labels()} method.
+    like the \code{labels()} method.
 
-    \item Handling of fits with fractional weights has been improved.
+    \item Handling of fits with zero and fractional weights has been
+    improved.
 
     \item Some memory leaks have been plugged.
+
+    \item There is a second vignette, \file{longintro.Rnw}.
   }
 }
 

@@ -90,8 +90,8 @@ rpart(formula = Surv(pgtime, pgstat) ~ age + eet + g2 + grade +
 9 0.000000      9    0.6533 1.0077 0.08952
 
 Variable importance
-  grade      g2     age gleason 
-     41      39      12       9 
+  grade      g2 gleason  ploidy     age     eet 
+     26      26      22      15      10       1 
 
 Node number 1: 146 observations,    complexity param=0.1284
   events=54,  estimated rate=0.05849 , mean deviance=1.325 
@@ -274,8 +274,8 @@ rpart(formula = Surv(pgtime, pgstat) ~ age + eet + g2 + grade +
 8 0.01000      8    0.7285 1.0090 0.09135
 
 Variable importance
-  grade      g2     age gleason 
-     46      33      12      10 
+  grade gleason      g2  ploidy     age     eet 
+     27      25      22      15      10       1 
 
 Node number 1: 146 observations,    complexity param=0.1295
   events=54,  estimated rate=1 , mean deviance=1.316 
@@ -441,8 +441,8 @@ rpart(formula = income ~ population + region + illiteracy + life +
 9 0.01000      8    0.2055 0.8117 0.2640
 
 Variable importance
-   hs.grad population       life     region      frost 
-        61         17         17          3          2 
+   hs.grad       life illiteracy     murder     region population      frost 
+        28         22         13         12         12          9          5 
 
 Node number 1: 50 observations,    complexity param=0.4283
   mean=4436, MSE=3.7e+05 
@@ -657,8 +657,8 @@ rpart(formula = factor(pgstat) ~ age + eet + g2 + grade + gleason +
 6 0.01000      9    0.4408 0.8639 0.08599
 
 Variable importance
-  grade      g2  ploidy gleason     age 
-     43      42       7       4       3 
+     g2   grade gleason  ploidy     age     eet 
+     28      26      20      18       6       2 
 
 Node number 1: 146 observations,    complexity param=0.3986
   predicted class=0  expected loss=0.5  P(node) =1
@@ -863,8 +863,8 @@ rpart(formula = Reliability ~ Price + Country + Mileage + Type,
 5 0.01000      4    0.5254 0.6780 0.07800
 
 Variable importance
-Country    Type 
-     73      27 
+Country    Type   Price 
+     66      22      12 
 
 Node number 1: 85 observations,    complexity param=0.3051
   predicted class=average      expected loss=0.6941  P(node) =1
@@ -943,4 +943,4 @@ Node number 23: 8 observations
 > 
 > proc.time()
    user  system elapsed 
-  0.490   0.038   0.515 
+  0.481   0.039   0.505 

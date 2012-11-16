@@ -24,7 +24,7 @@ importance <- function(fit)
         fit$splits[spri, "improve"] * ff$dev[fpri]
     else fit$splits[spri, "improve"]
 
-    sdim <- nrow(fit$splits)
+    sdim <- rownames(fit$splits)
     for (i in seq_along(fpri)) {
         ## points to surrogates
         if (nsurr[i] > 0L) {
@@ -36,5 +36,5 @@ importance <- function(fit)
 
     import <- tapply(c(scaled.imp, unlist(sval)),
                      c(as.character(ff$var[fpri]), unlist(sname)), sum)
-    sort(c(import), decreasing = TRUE)  # return a named vector
+    sort(c(import), decreasing = TRUE) # a named vector
 }
