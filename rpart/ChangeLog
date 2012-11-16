@@ -1,8 +1,9 @@
-2012 Nov 16	4.0-3	Add importance to summary(): from TMT.
+2012 Nov 16	4.0-3	Add importance to rpart object and to summary(): from TMT.
 	                free_tree was commented out in rpart.c, and
 	                could crash as the structure was not zeroed.
 	                s_xpred.c did not free the first instance of a tree.
-	                The choose_surg.c change was broken.
+	                The choose_surg.c change was tickled other
+	                problems with zero weights in anova splits.
 
 2012 Nov 11	4.0-2	Add car90 dataset from TMT.
 	                'agree' in choose_surg.c needs to be double
