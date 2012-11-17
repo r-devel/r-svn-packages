@@ -7,7 +7,7 @@
   Returns a detailed listing of a fitted \code{rpart} object.
 }
 \usage{
-\method{summary}{rpart}(object, cp=0, digits=getOption("digits"), file, \dots)
+\method{summary}{rpart}(object, cp = 0, digits = getOption("digits"), file, \dots)
 }
 \arguments{
 \item{object}{

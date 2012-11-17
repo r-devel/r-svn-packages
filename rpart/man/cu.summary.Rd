@@ -53,10 +53,13 @@ cu.summary
   \emph{Statistical Models in S}, Wadsworth and Brooks/Cole,
   Pacific Grove, CA 1992, pp. 46--47.
 }
-\seealso{\code{\link{car.test.frame}}}
+\seealso{
+  \code{\link{car.test.frame}},
+  \code{\link{car90}}
+}
 \examples{
 fit <- rpart(Price ~ Mileage + Type + Country, cu.summary)
-plot(fit, compress=TRUE)
-text(fit, use.n=TRUE)
+plot(fit, compress = TRUE)
+text(fit, use.n = TRUE)
 }
 \keyword{datasets}

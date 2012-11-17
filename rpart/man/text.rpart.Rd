@@ -35,8 +35,10 @@
 }
 \item{minlength}{
   the length to use for factor labels.  A value of 1 causes them to be
-  printed as 'a', 'b', other values use contractions of the label names.
-  See the \code{labels.rpart} function for details.}
+  printed as \sQuote{a}, \sQuote{b}, \dots..
+  Larger values use abbreviations of the label names.
+  See the \code{labels.rpart} function for details.
+}
 
 \item{pretty}{
   an alternative to the \code{minlength} argument, see
@@ -67,8 +69,8 @@
   \code{fheight > 1} then it represents the number of character heights 
   (for current graphical device) to use.
 }
-\item{bg}{The color used to paint the backgound to annotations if
-  \code{fancy = TRUE}.
+\item{bg}{
+  The color used to paint the background to annotations if \code{fancy = TRUE}.
 }
 \item{\dots}{
   Graphical parameters may also be supplied as arguments to this
@@ -86,6 +88,6 @@
 \examples{
 freen.tr <- rpart(y ~ ., freeny)
 plot(freen.tr)
-text(freen.tr, use.n=TRUE, all=TRUE)
+text(freen.tr, use.n = TRUE, all = TRUE)
 }
 \keyword{tree}

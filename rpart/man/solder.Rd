@@ -61,7 +61,7 @@ a numeric vector giving the number of visible solder skips.
 }
 \examples{
 fit <- rpart(skips ~ Opening + Solder + Mask + PadType + Panel,
-       data=solder, method='anova')
+            data = solder, method = "anova")
 summary(residuals(fit))
 plot(predict(fit),residuals(fit))
 }
