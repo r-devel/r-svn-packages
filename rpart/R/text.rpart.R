@@ -6,7 +6,7 @@ text.rpart <-
     function(x, splits = TRUE, label, FUN = text, all = FALSE,
              pretty = NULL, digits = getOption("digits") - 3,
              use.n = FALSE, fancy = FALSE, fwidth = 0.8, fheight = 0.8,
-             bg = par("bg"), minlength = 1,  ...)
+             bg = par("bg"), minlength = 1L,  ...)
 {
     if(!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
     if(!is.null(x$frame$splits)) x <- rpconvert(x) #Backwards compatability

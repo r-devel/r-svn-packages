@@ -180,15 +180,15 @@ rpart <- function(formula, data, weights, subset,
     dimnames(rpfit$cptable) <- list(temp, 1:numcp)
 
     tname <- c("<leaf>", dimnames(X)[[2]])
-    splits<- matrix(c(rpfit$isplit[, 2:3], rpfit$dsplit), ncol = 5L,
-                    dimnames=list(tname[rpfit$isplit[, 1L] + 1L],
-                    c("count", "ncat", "improve", "index", "adj")))
-    index <- rpfit$inode[,2]  #points to the first split for each node
+    splits <- matrix(c(rpfit$isplit[, 2:3], rpfit$dsplit), ncol = 5L,
+                     dimnames = list(tname[rpfit$isplit[, 1L] + 1L],
+                     c("count", "ncat", "improve", "index", "adj")))
+    index <- rpfit$inode[, 2L]  #points to the first split for each node
 
-    ## Now, make ordered categories look like categories again (a printout
-    ##  choice)
+    ## Now, make ordered factors look like factors again
+    ## (a printout choice)
     nadd <- sum(isord[rpfit$isplit[, 1L]])
-    if (nadd > 0L) {
+    if (nadd > 0L) { # number of splits at an ordered factor.
 	newc <- matrix(1L, nadd, max(cats))
 	cvar <- rpfit$isplit[, 1L]
 	indx <- isord[cvar]             # vector of TRUE/FALSE
@@ -206,7 +206,7 @@ rpart <- function(formula, data, weights, subset,
         }
 	catmat <- if (ncat == 0L) newc
         else {
-            ## newc have more cols than existing categorical splits
+            ## newc may have more cols than existing categorical splits
             cs <- rpfit$csplit
             ncs <- ncol(cs); ncc <- ncol(newc)
             if (ncs < ncc) cs <- cbind(cs, matrix(1L, nrow(cs), ncc - ncs))

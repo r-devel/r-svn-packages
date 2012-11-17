@@ -1,14 +1,14 @@
 Package: rpart
 Priority: recommended
 Version: 4.0-3
-Date: 2012-11-16
+Date: 2012-11-17
 Authors@R: c(person("Terry", "Therneau", role = "aut",
 	             email = "therneau@mayo.edu"),
              person("Beth", "Atkinson", role = "aut",	
 	             email = "atkinson@mayo.edu"),
              person("Brian", "Ripley", role = c("aut", "trl", "cre"),
                     email = "ripley@stats.ox.ac.uk",
-		    comment = "author of R port"))
+		   comment = "author of R port"))
 Description: Recursive partitioning and regression trees
 Title: Recursive Partitioning
 Depends: R (>= 2.14.0), graphics, stats, grDevices
