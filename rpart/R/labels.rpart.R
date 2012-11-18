@@ -58,40 +58,29 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
 	## crow the row number in "csplit"
 	## and cindex the index on the "xlevels" list
 	##
-	jrow <- (seq_along(ncat))[ncat>1L]
-	crow <- object$splits[irow[ncat>1L],4L] #row number in csplit
-	cindex <- (match(vnames, names(xlevels)))[ncat >1L]
+	jrow <- seq_along(ncat)[ncat > 1L]
+	crow <- object$splits[irow[ncat > 1L], 4L] #row number in csplit
+	cindex <- (match(vnames, names(xlevels)))[ncat > 1L]
 
 	## Now, abbreviate the levels
 	if (minlength == 1L) {
 	    if (any(ncat > 52L))
-		warning("more than 52 levels in a predicting factor, truncated for printout")
-	    xlevels <- lapply(xlevels,
-                              function(z) {
-                                  k <- length(z)
-                                  k <- pmin(1L:k, 52L)
-                                  c(letters, LETTERS)[k]
-                              })
-        }
-	else if (minlength > 1L)
+		warning("more than 52 levels in a predicting factor, truncated for printout",
+                        domain = NA)
+	    xlevels <- lapply(xlevels, function(z) c(letters, LETTERS)[pmin(seq_along(z), 52L)])
+        } else if (minlength > 1L)
 	    xlevels <- lapply(xlevels, abbreviate, minlength, ...)
 
 	## Now tuck in the labels
 	## I'll let some other clever person vectorize this
 	for (i in seq_along(jrow)) {
 	    j <- jrow[i]
-	    splits <- object$csplit[crow[i],]
+	    splits <- object$csplit[crow[i], ]
 	    ## splits will contain 1=left, 3=right, 2= neither
-            ## FIXME: use logical directly
-	    ltemp <- seq_along(splits)[splits == 1L]
-	    rtemp <- seq_along(splits)[splits == 3L]
-	    if (minlength == 1L) {
-		lsplit[j] <- paste((xlevels[[cindex[i]]])[ltemp], collapse = "")
-		rsplit[j] <- paste((xlevels[[cindex[i]]])[rtemp], collapse = "")
-            } else {
-		lsplit[j] <-paste((xlevels[[cindex[i]]])[ltemp], collapse = ",")
-		rsplit[j] <-paste((xlevels[[cindex[i]]])[rtemp], collapse = ",")
-            }
+            lsplit[j] <- paste((xlevels[[cindex[i]]])[splits == 1L],
+                               collapse = if(minlength == 1L) "" else ",")
+            rsplit[j] <- paste((xlevels[[cindex[i]]])[splits == 3L],
+                               collapse = if(minlength == 1L) "" else ",")
         }
     }
 
