@@ -6,8 +6,8 @@
 #	  format(x) = "123.00000", "1.23000", "0.00123"
 #  but formatg does not add all of those zeros to the first two numbers
 #
-formatg <- function(x, digits= unlist(options('digits')),
-                    format= paste("%.", digits, "g", sep=''))
+formatg <- function(x, digits = unlist(options('digits')),
+                    format = paste0("%.", digits, "g"))
 {
     if (!is.numeric(x)) stop("'x' must be a numeric vector")
 
@@ -17,6 +17,6 @@ formatg <- function(x, digits= unlist(options('digits')),
     ##   assume that digits =4,  -0.dddde+104 is a worst case, where
     #   dddd are the 4 significant digits.
     temp <- sprintf(format, x)
-    if (is.matrix(x)) matrix(temp, nrow=nrow(x))
+    if (is.matrix(x)) matrix(temp, nrow = nrow(x))
     else temp
 }

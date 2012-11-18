@@ -16,7 +16,7 @@ rpart <- function(formula, data, weights, subset,
         if (indx[1] == 0L) stop("a 'formula' argument is required")
         temp <- Call[c(1L, indx)]        # only keep the arguments we wanted
         temp$na.action <- na.action    # This one has a default
-        temp[[1L]] <- as.name('model.frame') # change the function called
+        temp[[1L]] <- as.name("model.frame") # change the function called
         m <- eval(temp, parent.frame()) # or eval.parent
     }
 
@@ -62,14 +62,14 @@ rpart <- function(formula, data, weights, subset,
 	method <- c("anova", "poisson", "class", "exp")[method.int]
 	if (method.int == 4L) method.int <- 2L
 
-        # If this function is being retrieved from the rpart library, then
+        # If this function is being retrieved from the rpart package, then
         #   preferentially "get" the init function from there.  But don't
-        #   lock in the rpart library otherwise, so that we can still do
+        #   lock in the rpart package otherwise, so that we can still do
         #   standalone debugging.
-	if (missing(parms))
-            init <- (get(paste("rpart", method, sep='.')))(Y, offset, ,wt)
+	init <- if (missing(parms))
+            get(paste("rpart", method, sep="."))(Y, offset, , wt)
 	else
-            init <- (get(paste("rpart", method, sep='.')))(Y, offset, parms, wt)
+            get(paste("rpart", method, sep="."))(Y, offset, parms, wt)
         ns <- asNamespace("rpart")
         if(!is.null(init$print)) environment(init$print) <- ns
         if(!is.null(init$summary)) environment(init$summary) <- ns
@@ -81,7 +81,7 @@ rpart <- function(formula, data, weights, subset,
     xlevels <- .getXlevels(Terms, m)
     cats <- rep(0L, ncol(X))
     if(!is.null(xlevels)) {
-	cats[match(names(xlevels), dimnames(X)[[2L]])] <-
+	cats[match(names(xlevels), colnames(X))] <-
             unlist(lapply(xlevels, length))
     }
 
@@ -147,7 +147,7 @@ rpart <- function(formula, data, weights, subset,
 	if (is.matrix(x)) rep(is.ordered(x), ncol(x))
 	else is.ordered(x)
     }
-    labs <- sub("^`(.*)`$", "\\1", attr(Terms, 'term.labels')) #beware backticks
+    labs <- sub("^`(.*)`$", "\\1", attr(Terms, "term.labels")) #beware backticks
     isord <- unlist(lapply(m[labs], tfun))
 
     storage.mode(X) <- "double"
@@ -179,7 +179,7 @@ rpart <- function(formula, data, weights, subset,
     else  c("CP", "nsplit", "rel error", "xerror", "xstd")
     dimnames(rpfit$cptable) <- list(temp, 1:numcp)
 
-    tname <- c("<leaf>", dimnames(X)[[2]])
+    tname <- c("<leaf>", colnames(X))
     splits <- matrix(c(rpfit$isplit[, 2:3], rpfit$dsplit), ncol = 5L,
                      dimnames = list(tname[rpfit$isplit[, 1L] + 1L],
                      c("count", "ncat", "improve", "index", "adj")))

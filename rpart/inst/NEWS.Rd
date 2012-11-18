@@ -1,6 +1,13 @@
 \name{NEWS}
 \title{NEWS file for the rpart package}
 
+\section{Changes in version 4.1-0}{
+  \itemize{
+    \item The old compatibility function \code{rpconvert()} has been removed.
+  }
+}
+
+
 \section{Changes in version 4.0-3}{
   \itemize{
     \item A fit of class \samp{"rpart"} now contains a component for

@@ -36,17 +36,16 @@ rpart.poisson <- function(y, offset, parms, wt)
 
     list(y = y, parms = parms, numresp = 2L, numy = 2L,
 	 summary = function(yval, dev, wt, ylevel, digits) {
-	     paste("  events=", formatg(yval[, 2L]),
+	     paste0("  events=", formatg(yval[, 2L]),
                    ",  estimated rate=" , formatg(yval[, 1L], digits),
-                   " , mean deviance=", formatg(dev/wt, digits),
-                   sep = "")
+                   " , mean deviance=", formatg(dev/wt, digits))
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
              ## fix for when there are no splits
              if(!is.matrix(yval)) yval <- matrix(yval, nrow = 1L)
 
-             if(use.n) paste(formatg(yval[, 1L], digits),"\n",
-                             formatg(yval[, 2L]), "/", n, sep="")
+             if(use.n) paste0(formatg(yval[, 1L], digits),"\n",
+                              formatg(yval[, 2L]), "/", n)
              else paste(formatg(yval[, 1L], digits))
          })
 }

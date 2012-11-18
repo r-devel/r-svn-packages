@@ -8,7 +8,7 @@ path.rpart <- function(tree, nodes, pretty = 0, print.it = TRUE)
     frame <- tree$frame
     n <- row.names(frame)
     node <- as.numeric(n)
-    which <- descendants(node)          #ancestors are columns
+    which <- descendants(node)          # ancestors are columns
     path <- list()
     if(missing(nodes)) {
         xy <- rpartco(tree)
@@ -22,13 +22,13 @@ path.rpart <- function(tree, nodes, pretty = 0, print.it = TRUE)
     } else {
         if(length(nodes <- node.match(nodes, node)) == 0L)
             return(invisible())
-        for(i in nodes)
-        { path[[n[i]]] <- path.i <- splits[which[, i]]
-          if(print.it) {
-              cat("\n", "node number:", n[i], "\n")
-              cat(paste("  ", path.i), sep = "\n")
-          }
-      }
+        for(i in nodes) {
+            path[[n[i]]] <- path.i <- splits[which[, i]]
+            if(print.it) {
+                cat("\n", "node number:", n[i], "\n")
+                cat(paste("  ", path.i), sep = "\n")
+            }
+        }
     }
     invisible(path)
 }

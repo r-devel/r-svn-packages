@@ -40,19 +40,19 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
     ## Now to work: first create labels for the left and right splits,
     ##  but not for leaves of course
     ##
-    lsplit <- rsplit <- vector(mode = 'character', length =  length(irow))
+    lsplit <- rsplit <- character(length(irow))
 
     if (any(ncat < 2L)) {               # any continuous vars ?
 	jrow <- irow[ncat < 2L]
 	cutpoint <- formatg(object$splits[jrow, 4L], digits)
 	temp1 <- (ifelse(ncat < 0, "< ", ">="))[ncat < 2L]
 	temp2 <- (ifelse(ncat < 0, ">=", "< "))[ncat < 2L]
-	lsplit[ncat<2L] <- paste(temp1, cutpoint, sep = '')
-	rsplit[ncat<2L] <- paste(temp2, cutpoint, sep = '')
+	lsplit[ncat<2L] <- paste0(temp1, cutpoint)
+	rsplit[ncat<2L] <- paste0(temp2, cutpoint)
     }
 
     if (any(ncat > 1L)) {               # any categorical variables ?
-	xlevels <- attr(object, 'xlevels')
+	xlevels <- attr(object, "xlevels")
 	##
 	## jrow will be the row numbers of factors within lsplit and rsplit
 	## crow the row number in "csplit"
@@ -86,11 +86,11 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
 	    ltemp <- seq_along(splits)[splits == 1L]
 	    rtemp <- seq_along(splits)[splits == 3L]
 	    if (minlength == 1L) {
-		lsplit[j] <- paste((xlevels[[cindex[i]]])[ltemp], collapse = '')
-		rsplit[j] <- paste((xlevels[[cindex[i]]])[rtemp], collapse = '')
+		lsplit[j] <- paste((xlevels[[cindex[i]]])[ltemp], collapse = "")
+		rsplit[j] <- paste((xlevels[[cindex[i]]])[rtemp], collapse = "")
             } else {
-		lsplit[j] <-paste((xlevels[[cindex[i]]])[ltemp], collapse = ',')
-		rsplit[j] <-paste((xlevels[[cindex[i]]])[rtemp], collapse = ',')
+		lsplit[j] <-paste((xlevels[[cindex[i]]])[ltemp], collapse = ",")
+		rsplit[j] <-paste((xlevels[[cindex[i]]])[rtemp], collapse = ",")
             }
         }
     }
@@ -102,8 +102,8 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
 	return(cbind(ltemp, rtemp))
     }
 
-    lsplit <- paste(ifelse(ncat < 2L, "", "="), lsplit, sep = '')
-    rsplit <- paste(ifelse(ncat < 2L, "", "="), rsplit, sep = '')
+    lsplit <- paste0(ifelse(ncat < 2L, "", "="), lsplit)
+    rsplit <- paste0(ifelse(ncat < 2L, "", "="), rsplit)
 
     ##
     ## Now match them up to node numbers
@@ -112,12 +112,12 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
     ##
     varname <- (as.character(vnames))
     node <- as.numeric(row.names(ff))
-    parent <- match(node %/% 2, node[whichrow])
-    odd <- (as.logical(node %%2))
+    parent <- match(node %/% 2L, node[whichrow])
+    odd <- (as.logical(node %% 2L))
 
-    labels <- vector('character', length = n)
-    labels[odd] <- paste(varname[parent[odd]], rsplit[parent[odd]], sep = "")
-    labels[!odd]<- paste(varname[parent[!odd]], lsplit[parent[!odd]], sep = "")
+    labels <- character(n)
+    labels[odd] <- paste0(varname[parent[odd]], rsplit[parent[odd]])
+    labels[!odd]<- paste0(varname[parent[!odd]], lsplit[parent[!odd]])
     labels[1L] <- "root"
     labels
 }

@@ -2,7 +2,7 @@
 rpartco <- function(tree, parms)
 {
     if (missing(parms)) {
-        pn <- paste("device", dev.cur(), sep = "")
+        pn <- paste0("device", dev.cur())
         if (!exists(pn, envir = rpart_env, inherits = FALSE))
             stop("no information available on parameters from previous call to plot()")
         parms <- get(pn, envir = rpart_env, inherits = FALSE)
@@ -23,12 +23,12 @@ rpartco <- function(tree, parms)
     }
 
     if(uniform)
-        y <- (1 + max(depth) -depth) / max(depth,4)
+        y <- (1 + max(depth) - depth) / max(depth, 4L)
     else {                    #make y- (parent y) = change in deviance
 	y <- dev <- frame$dev
         temp <- split(seq(node), depth)     #depth 0 nodes, then 1, then ...
-        parent <- match(floor(node/2), node)
-        sibling <- match(ifelse(node %% 2, node - 1, node + 1), node)
+        parent <- match(floor(node/2L), node)
+        sibling <- match(ifelse(node %% 2L, node - 1L, node + 1L), node)
 
         ## assign the depths
         for(i in temp[-1L]) {

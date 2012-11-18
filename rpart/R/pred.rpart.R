@@ -10,7 +10,7 @@ pred.rpart <- function(fit, x)
     frame$index <- 1L + c(0L, cumsum((frame$var != "<leaf>") +
                                      nc[[1L]] + nc[[2L]]))[-(nrow(frame)+1L)]
     frame$index[frame$var == "<leaf>"] <- 0L
-    vnum <- match(dimnames(fit$split)[[1L]], dimnames(x)[[2L]])
+    vnum <- match(rownames(fit$split), colnames(x))
     if (any(is.na(vnum)))
         stop("Tree has variables not found in new data")
     temp <- .Call(C_pred_rpart,
@@ -22,7 +22,7 @@ pred.rpart <- function(fit, x)
                   as.integer(unlist(frame[, c('n', 'ncompete', 'nsurrogate', 'index')])),
                   as.integer(vnum),
                   as.double(fit$splits),
-                  as.integer(fit$csplit - 2L),
+                  as.integer(fit$csplit - 2L), # we added 2 in rpart.R
                   as.integer((fit$control)$usesurrogate),
                   as.double(x),
                   as.integer(is.na(x)))

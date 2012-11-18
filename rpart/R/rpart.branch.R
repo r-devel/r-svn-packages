@@ -5,7 +5,7 @@
 rpart.branch <- function(x, y, node, branch)
 {
     if (missing(branch)) {
-        pn <- paste("device", dev.cur(), sep = "")
+        pn <- paste0("device", dev.cur())
         if (!exists(pn, envir = rpart_env, inherits = FALSE))
             stop("no information available on parameters from previous call to plot()")
         parms <- get(pn, envir = rpart_env, inherits = FALSE)
