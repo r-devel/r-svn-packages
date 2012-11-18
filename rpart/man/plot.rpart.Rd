@@ -78,6 +78,7 @@ The y-coordinate of the top node of the tree will always be 1.
 }
 \examples{
 fit <- rpart(Price ~ Mileage + Type + Country, cu.summary)
+par(xpd = TRUE)
 plot(fit, compress = TRUE)
 text(fit, use.n = TRUE)
 }

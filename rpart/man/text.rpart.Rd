@@ -87,6 +87,7 @@
 }
 \examples{
 freen.tr <- rpart(y ~ ., freeny)
+par(xpd = TRUE)
 plot(freen.tr)
 text(freen.tr, use.n = TRUE, all = TRUE)
 }

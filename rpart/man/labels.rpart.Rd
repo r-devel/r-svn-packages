@@ -23,9 +23,10 @@
 }
 \item{minlength}{
   the minimum length for abbreviation of character or factor variables.
-  If 0 no abbreviation is done; if 1 then single letters are used with
-  \code{"a"} for the first level, \code{"b"} for the second and so on.
-  If the value is greater than 1, the \code{\link{abbreviate}} function is used.
+  If 0 no abbreviation is done; if 1 then single English letters are
+  used, first lower case than upper case (with a maximum of 52
+  levels). If the value is greater than 1, the \code{\link{abbreviate}}
+  function is used.
 }
 \item{pretty}{
   an argument included for compatibility with the \pkg{tree} package:

@@ -189,7 +189,7 @@ rpart <- function(formula, data, weights, subset,
     ## (a printout choice)
     nadd <- sum(isord[rpfit$isplit[, 1L]])
     if (nadd > 0L) { # number of splits at an ordered factor.
-	newc <- matrix(1L, nadd, max(cats))
+	newc <- matrix(0L, nadd, max(cats))
 	cvar <- rpfit$isplit[, 1L]
 	indx <- isord[cvar]             # vector of TRUE/FALSE
         ## splits for 0 counts are not actually computed.
@@ -207,9 +207,11 @@ rpart <- function(formula, data, weights, subset,
 	catmat <- if (ncat == 0L) newc
         else {
             ## newc may have more cols than existing categorical splits
+            ## the documentation says that levels which do no exist are '2'
+            ## and we add 2 later.
             cs <- rpfit$csplit
             ncs <- ncol(cs); ncc <- ncol(newc)
-            if (ncs < ncc) cs <- cbind(cs, matrix(1L, nrow(cs), ncc - ncs))
+            if (ncs < ncc) cs <- cbind(cs, matrix(0L, nrow(cs), ncc - ncs))
             rbind(cs, newc)
         }
 	ncat <- ncat + nadd
@@ -228,7 +230,7 @@ rpart <- function(formula, data, weights, subset,
 			    nsurrogate = 0L)
     } else {
 	temp <- ifelse(index == 0, 1, index)
-	svar <- ifelse(index == 0, 0, rpfit$isplit[temp,1L]) #var number
+	svar <- ifelse(index == 0, 0, rpfit$isplit[temp,1L]) # var number
 	frame <- data.frame(row.names=rpfit$inode[,1],
 			    var =  factor(svar, 0:ncol(X), tname),
 			    n =   rpfit$inode[, 5L],

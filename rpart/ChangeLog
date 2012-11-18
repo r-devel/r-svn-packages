@@ -1,4 +1,4 @@
-2012 Nov 17	4.0-3	Add 'importance' to rpart object and to summary():
+2012 Nov 18	4.0-3	Add 'importance' to rpart object and to summary():
 	                from TMT.
 
 	                'minlength' arg for tree() method.
@@ -14,10 +14,10 @@
 
 	                make_cp_list used calloc but did not free.
 
-	                The choose_surg.c change tickled other
-	                problems with zero weights in anova splits.
+	                Spell-check help pages and vignettes.
 
-	               Spell-check vignettes.
+			Several examples needed par(xpd = TRUE) at
+			default plotting sizes.
 
 2012 Nov 11	4.0-2	Add car90 dataset from TMT.
 
