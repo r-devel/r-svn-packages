@@ -18,7 +18,7 @@ string.bounding.box <- function(s)
 
 node.match <- function(nodes, nodelist, leaves, print.it = TRUE)
 {
-    node.index <- match(nodes, nodelist, nomatch = 0L)
+    node.index <- match(nodes, nodelist, 0L)
     bad <- nodes[node.index == 0L]
     ## FIXME: plurals?
     if(length(bad) > 0 && print.it)

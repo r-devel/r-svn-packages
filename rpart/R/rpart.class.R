@@ -15,7 +15,7 @@ rpart.class <- function(y, offset, parms, wt)
 		      split = 1)
     else if (is.list(parms)) {
 	if (is.null(names(parms))) stop("The parms list must have names")
-	temp <- pmatch(names(parms), c("prior", "loss", "split"), nomatch = 0L)
+	temp <- pmatch(names(parms), c("prior", "loss", "split"), 0L)
 	if (any(temp == 0L)) # FIXME plural?
             stop(gettextf("'parms' component not matched: %s",
                           names(parms)[temp == 0L]), domain = NA)

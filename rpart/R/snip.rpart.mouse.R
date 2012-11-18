@@ -44,12 +44,12 @@ snip.rpart.mouse <- function(tree, parms)
 	    id  <- node[choose]
 	    id2 <- node
 	    while (any(id2 > 1L)) {
-		id2 <- floor(id2/2L)
-		temp  <- match(id2, id, nomatch = 0L) > 0L
+		id2 <- id2 %/% 2L
+		temp  <- match(id2, id, 0L) > 0L
   	        id <- c(id, node[temp])
 		id2[temp] <- 0L
             }
-	    temp <- match(id, node[ff$var != '<leaf>'], nomatch = 0L)
+	    temp <- match(id, node[ff$var != '<leaf>'], 0L)
 	    lines(c(draw$x[,temp]), c(draw$y[,temp]), col = 0L)
 	    toss <- c(toss, node[choose])
         }

@@ -27,7 +27,7 @@ rpartco <- function(tree, parms)
     else {                    #make y- (parent y) = change in deviance
 	y <- dev <- frame$dev
         temp <- split(seq(node), depth)     #depth 0 nodes, then 1, then ...
-        parent <- match(floor(node/2L), node)
+        parent <- match(node %/% 2L, node)
         sibling <- match(ifelse(node %% 2L, node - 1L, node + 1L), node)
 
         ## assign the depths

@@ -32,7 +32,7 @@ summary.rpart <-
     ff <- x$frame
     ylevel <- attr(x, 'ylevels')
     id <- as.integer(row.names(ff))
-    parent.id <- ifelse(id == 1L, 1L, floor(id/2)) # or id %/% 2L
+    parent.id <- ifelse(id == 1L, 1L, id %/% 2L)
     parent.cp <- ff$complexity[match(parent.id, id)]
     rows <- seq_along(id)[parent.cp > cp]
     rows <- if (length(rows)) rows[order(id[rows])] else 1L

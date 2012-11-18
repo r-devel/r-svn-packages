@@ -111,7 +111,7 @@ rpart.exp <- function(y, offset, parms, wt)
 	parms <- as.list(parms)
         if(is.null(names(parms))) stop("You must input a named list for parms")
         parmsNames <- c("method", "shrink")
-        indx <- pmatch(names(parms), parmsNames, nomatch = 0L)
+        indx <- pmatch(names(parms), parmsNames, 0L)
         if (any(indx == 0L))
             stop(gettextf("'parms' component not matched: %s",
                           names(parms)[indx == 0L]), domain = NA)

@@ -15,7 +15,7 @@ snip.rpart <- function(x, toss)
     ff.n  <- length(id)
 
     toss <- unique(toss)
-    toss.idx <- match(toss, id, nomatch = 0L) #the rows of the named nodes
+    toss.idx <- match(toss, id, 0L) #the rows of the named nodes
     if (any(toss.idx == 0L)) {
         ## FIXME: plural?
         warning(gettext("Nodes %s are not in this tree", toss[toss.idx == 0L]),
@@ -37,24 +37,24 @@ snip.rpart <- function(x, toss)
     ##     found children.  The loop should take <  log_2(maxdepth)/2 steps
     id2 <- id
     while (any(id2 > 1L)) {
-	id2 <- floor(id2/2)
-	xx <- (match(id2, toss, nomatch = 0L) > 0L)
+	id2 <- id2 %/% 2L
+	xx <- (match(id2, toss, 0L) > 0L)
 	toss <- c(toss, id[xx])
         id2[xx] <- 0L
     }
 
     ## Now "toss" contains all of the nodes that should not be splits
-    temp <- match(floor(toss/2) , toss, nomatch=0) #which are leaves?
+    temp <- match(toss %/% 2L , toss, 0L) # which are leaves?
     newleaf <- match(toss[temp == 0L], id)       # row numbers, leaves
     keepit <- (1:ff.n)[is.na(match(id, toss))] # row numbers to be let be
 
     ## Compute the parent row for each row in the splits structure
     ##  Then "thin out" the splits and csplit components
     n.split <- rep(1L:ff.n, ff$ncompete + ff$nsurrogate + (ff$var != "<leaf>"))
-    split <- x$splits[match(n.split, keepit, nomatch = 0L) > 0L, ,drop = FALSE]
+    split <- x$splits[match(n.split, keepit, 0L) > 0L, , drop = FALSE]
     temp <- split[, 2L] > 1L           # which rows point to categoricals?
     if (any(temp)) {
-        x$csplit <- x$csplit[split[temp, 4L], ,drop = FALSE]
+        x$csplit <- x$csplit[split[temp, 4L], , drop = FALSE]
 	split[temp, 4L] <- 1L
         if(is.matrix(x$csplit)) split[temp, 4L] <- 1L:nrow(x$csplit)
     } else x$csplit <- NULL
@@ -70,10 +70,10 @@ snip.rpart <- function(x, toss)
     ##
     id2 <- id[x$where]                  #the list of old leaf nodes
     id3 <- id[sort(c(keepit, newleaf))]
-    temp <- match(id2, id3, nomatch = 0L)
+    temp <- match(id2, id3, 0L)
     while (any(temp == 0L)) {
-	id2[temp == 0L] <- floor(id2[temp == 0L]/2)
-	temp <- match(id2, id3, nomatch = 0L)
+	id2[temp == 0L] <- id2[temp == 0L] %/% 2L
+	temp <- match(id2, id3, 0L)
     }
     x$where <- match(id2, id3)
 
