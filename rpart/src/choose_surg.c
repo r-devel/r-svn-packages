@@ -21,17 +21,17 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
     int ll, lr, rr, rl;
     double llwt, lrwt, rrwt, rlwt;   /* sum of weights for each */
     int defdir;
-    double lastx =0.0;
+    double lastx = 0.0;
     int  *left, *right;
     double *lwt, *rwt;
     double majority, total_wt;
 
     left = rp.left;
-    right =rp.right;
-    lwt   =rp.lwt;
-    rwt   =rp.rwt;
+    right = rp.right;
+    lwt   = rp.lwt;
+    rwt   = rp.rwt;
 
-    if (ncat==0) {  /* continuous case */
+    if (ncat == 0) {  /* continuous case */
 	/*
 	** ll = y's that go left that are also sent left by my split
 	** lr = y's that go left that I send right
@@ -44,11 +44,11 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
 	** I enforce that at least 2 obs must go each way, to avoid having an
 	**  uncorrelated surrogate beat the "null" surrogate too easily
 	*/
-	ll = rl =0;
-	llwt =0; rlwt =0;
-	for (i=n2-1; i>=n1; i--) { /*start with me sending all to the left */
+	ll = rl = 0;
+	llwt = 0; rlwt = 0;
+	for (i = n2 - 1; i >= n1; i--) { /*start with me sending all to the left */
 	    j = order[i];
-	    if (j>=0) {
+	    if (j >= 0) {
 		lastx = x[j];        /*this is why I run the loop backwards*/
 		switch( y[j]) {
 		case LEFT : ll++;
@@ -62,8 +62,8 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
 	    }
 	}
 
-	lr = rr =0;
-	lrwt =0; rrwt=0;
+	lr = rr = 0;
+	lrwt = 0; rrwt = 0;
 	if (llwt > rlwt) agree = llwt;
 	else             agree = rlwt;
 
@@ -74,12 +74,12 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
 	**    the "lastx" code is caring for ties in the x var
 	**    (The loop above sets it to the first unique x value).
 	*/
-	for (i=n1; (ll+rl)>=2; i++) {
+	for (i = n1; (ll+rl) >= 2; i++) {
 	    j = order[i];
-	    if (j >=0) {       /* not a missing value */
-		if ((lr+rr)>=2  &&  x[j] != lastx) {
+	    if (j >= 0) {       /* not a missing value */
+		if ((lr+rr) >= 2  &&  x[j] != lastx) {
 		    /* new x found, evaluate the split */
-		    if ((llwt +rrwt) > agree) {
+		    if ((llwt + rrwt) > agree) {
 			agree = llwt + rrwt;
 			csplit[0] = RIGHT;       /* < goes to the right */
 			*split = (x[j] + lastx)/2;
@@ -108,9 +108,9 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
     }
 
     else {     /* categorical predictor */
-	for (i=0; i<ncat; i++) {
-	    left[i] =0;
-	    right[i]=0;
+	for (i = 0; i < ncat; i++) {
+	    left[i] = 0;
+	    right[i] = 0;
 	    lwt[i] = 0;
 	    rwt[i] = 0;
 	}
@@ -120,10 +120,10 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
 	**  so left[2] will be the number of x==2's that went left,
 	**  and lwt[2] the sum of the weights for those observations.
 	*/
-	for (i=n1; i<n2; i++) {
+	for (i = n1; i < n2; i++) {
 	    j = order[i];
-	    if (j >=0) {
-		k = (int)x[j] -1;
+	    if (j >= 0) {
+		k = (int)x[j] - 1;
 		switch( y[j]) {
 		case LEFT : left[k]++;
 		    lwt[k] += rp.wt[j];
@@ -139,20 +139,20 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
 	/*
 	**  Compute which is better: everyone to the right, or all go left
 	*/
-	lcount=0; rcount=0;
-	llwt =0;  rrwt =0;
-	for (i=0; i<ncat; i++) {
+	lcount = 0; rcount = 0;
+	llwt = 0;  rrwt = 0;
+	for (i = 0; i < ncat; i++) {
 	    lcount += left[i];
 	    rcount += right[i];
 	    llwt += lwt[i];
 	    rrwt += rwt[i];
 	}
 	if (llwt > rrwt) {
-	    defdir= LEFT;
-	    majority= llwt;
+	    defdir = LEFT;
+	    majority = llwt;
 	}
 	else {
-	    defdir= RIGHT;
+	    defdir = RIGHT;
 	    majority =rrwt;
 	}
 	total_wt  = llwt + rrwt;
@@ -161,12 +161,12 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
 	** We can calculate the best split category by category--- send each
 	**  x value individually to its better direction
 	*/
-	agree =0;
-	for (i=0; i<ncat; i++) {
-	    if (left[i]==0 && right[i]==0) csplit[i]=0;
+	agree = 0;
+	for (i = 0; i < ncat; i++) {
+	    if (left[i] == 0 && right[i] == 0) csplit[i] = 0;
 	    else {
-		if (lwt[i]< rwt[i] || (lwt[i]==rwt[i] && defdir==RIGHT)) {
-		    agree+= rwt[i];
+		if (lwt[i] < rwt[i] || (lwt[i] == rwt[i] && defdir == RIGHT)) {
+		    agree += rwt[i];
 		    csplit[i] = RIGHT;
 		}
 		else {
@@ -184,13 +184,13 @@ void choose_surg(int n1, int n2, int *y,         double *x,     int *order,
     **    preference), or only the y's for non-missing x (CART book)?
     **    If the former, need to reset some totals.
     */
-    if (rp.sur_agree ==0) { /* use total table */
+    if (rp.sur_agree == 0) { /* use total table */
 	total_wt = tleft + tright;
-	if (tleft > tright) majority=tleft;
-	else                majority=tright;
+	if (tleft > tright) majority = tleft;
+	else                majority = tright;
     }
 
     *agreement = agree/ total_wt;
     majority /= total_wt;
-    *adj = (*agreement -majority)/ (1-majority);
+    *adj = (*agreement - majority)/ (1. - majority);
 }

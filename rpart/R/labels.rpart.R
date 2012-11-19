@@ -77,10 +77,11 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
 	    j <- jrow[i]
 	    splits <- object$csplit[crow[i], ]
 	    ## splits will contain 1=left, 3=right, 2= neither
-            lsplit[j] <- paste((xlevels[[cindex[i]]])[splits == 1L],
-                               collapse = if(minlength == 1L) "" else ",")
-            rsplit[j] <- paste((xlevels[[cindex[i]]])[splits == 3L],
-                               collapse = if(minlength == 1L) "" else ",")
+            cl <-  if(minlength == 1L) "" else ","
+            lsplit[j] <-
+                paste((xlevels[[cindex[i]]])[splits == 1L], collapse = cl)
+            rsplit[j] <-
+                paste((xlevels[[cindex[i]]])[splits == 3L], collapse = cl)
         }
     }
 

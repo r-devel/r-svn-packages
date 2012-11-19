@@ -33,12 +33,12 @@ void bsplit(struct node *me, int n1, int n2)
     ** test out the variables 1 at at time
     */
     me->primary = (struct split *)0;
-    for (i=0; i<rp.nvar; i++) {
+    for (i = 0; i < rp.nvar; i++) {
 	index = rp.sorts[i];
 	nc = rp.numcat[i];
 	/* extract x and y data */
-	k =0;
-	for (j=n1; j<n2; j++) {
+	k = 0;
+	for (j = n1; j < n2; j++) {
 	    kk = index[j];
 	    if (kk >= 0 && rp.wt[kk] > 0) {  /* x data not missing  and wt >0*/
 		xtemp[k] = rp.xdata[i][kk];
@@ -48,8 +48,8 @@ void bsplit(struct node *me, int n1, int n2)
 	    }
 	}
 
-	if (k==0 ||
-	    (nc==0 &&  xtemp[0]==xtemp[k-1])) continue;  /*no place to split */
+	if (k == 0 ||
+	    (nc == 0 &&  xtemp[0] == xtemp[k-1])) continue;  /*no place to split */
 
 	(*rp_choose)(k, ytemp, xtemp, nc, rp.min_node, &improve,
 		     &split, rp.csplit, me->risk, wtemp);
@@ -63,16 +63,16 @@ void bsplit(struct node *me, int n1, int n2)
 	if (improve > (rp.iscale * 1e-10)) {
 	    improve /= rp.vcost[i];   /* scale the improvement */
 	    tsplit = insert_split(&(me->primary), nc, improve, rp.maxpri);
-	    if (tsplit !=0) {
+	    if (tsplit != 0) {
 		tsplit->improve = improve;
 		tsplit->var_num = i;
 		tsplit->spoint  = split;
 		tsplit->count   = k;
-		if (nc ==0) {
+		if (nc == 0) {
 		    tsplit->spoint = split;
-		    tsplit->csplit[0]= rp.csplit[0];
-		}
-		else for (k=0; k<nc; k++) tsplit->csplit[k] = rp.csplit[k];
+		    tsplit->csplit[0] = rp.csplit[0];
+		} else 
+		    for (k = 0; k < nc; k++) tsplit->csplit[k] = rp.csplit[k];
 	    }
 	}
     }

@@ -11,7 +11,7 @@ void fix_cp(struct node *me, double parent_cp)
 {
     if (me->complexity > parent_cp)  me->complexity = parent_cp;
 
-    if (me->leftson != 0) {
+    if (me->leftson) {
 	fix_cp(me->leftson, me->complexity);
 	fix_cp(me->rightson,me->complexity);
     }

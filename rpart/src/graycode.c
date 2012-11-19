@@ -24,9 +24,8 @@ void graycode_init1(int numcat, int *count)
     int i;
 
     maxc = numcat;
-    for (i=0; i<maxc; i++) {
-	if (count[i] !=0) gray[i] =1;
-	else              gray[i] =0;
+    for (i = 0; i < maxc; i++) {
+	if (count[i] != 0) gray[i] = 1; else gray[i] = 0;
     }
     gsave = -2;
 }
@@ -42,19 +41,18 @@ void graycode_init2(int numcat, int *count, double *val)
     **   sort categories with no members first
     **   then order by val
     */
-    gray[0]=0;
-    if (count[0] ==0) k=1; else k=0;
-    for (i=1; i<maxc; i++) {
-	if (count[i] ==0) {
-	    for (j=i-1; j>=k; j--) {
+    gray[0] = 0;
+    if (count[0] == 0) k = 1; else k = 0;
+    for (i = 1; i < maxc; i++) {
+	if (count[i] == 0) {
+	    for (j = i-1; j >= k; j--) {
 		gray[j+1] = gray[j];
 		val[j+1] = val[j];
 	    }
-	    gray[k++] =i;
-	}
-	else {
+	    gray[k++] = i;
+	} else {
 	    temp = val[i];
-	    for (j=i-1; j>=k && val[j]>temp; j--) {
+	    for (j = i - 1; j >= k && val[j] > temp; j--) {
 		gray[j+1] = gray[j];
 		val[j+1] = val[j];
 	    }
@@ -88,9 +86,9 @@ int graycode(void)
 	**  The outer loop only goes up to maxc-1: we know for rpart that
 	**    changing the allegiance of the last subject is never necessary
 	*/
-	for (i=0; i< (maxc-1); i++) {
-	    if (gray[i] ==1 ) {
-		gray[i] =2;
+	for (i = 0; i < (maxc-1); i++) {
+	    if (gray[i] == 1) {
+		gray[i] = 2;
 		return(i);
 	    }
 	    else if (gray[i]==2) gray[i] =1;
