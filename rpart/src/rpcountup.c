@@ -19,9 +19,8 @@ void rpcountup(struct node *me, int *nnode, int *nsplit, int *ncat)
 	*nnode = 1;
 	*nsplit = 0;
 	*ncat = 0;
-    }
-    else {
-	i=0; j=0; k=0;
+    } else {
+	i = 0; j = 0; k = 0;
 	for (ss = me->primary; ss != 0; ss = ss->nextsplit) {
 	    i++;
 	    if (rp.numcat[ss->var_num] > 0) k++;

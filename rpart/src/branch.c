@@ -23,7 +23,7 @@ struct node *branch(struct node *tree, int obs)
     struct node *me;
     struct split *tsplit;
     double **xdata;
-    if (tree->leftson == 0) return(0);
+    if (!tree->leftson) return NULL;
 
     me = tree;
     xdata = rp.xdata;
@@ -48,7 +48,7 @@ struct node *branch(struct node *tree, int obs)
 	}
     }
 
-    if (rp.usesurrogate == 0) return(0);
+    if (rp.usesurrogate == 0) return NULL;
     /*
     ** use the surrogates
     */
@@ -69,7 +69,7 @@ struct node *branch(struct node *tree, int obs)
     }
 
 
-    if (rp.usesurrogate < 2) return(0);
+    if (rp.usesurrogate < 2) return NULL;
     /*
     ** split it by default
     */

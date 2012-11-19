@@ -19,10 +19,12 @@ static double *awt,
 	      *rate;
 static double (*impurity)();
 
-static double gini_impure1(p) double p; {  return(p*(1.0-p)); }
+static double gini_impure1(double p) {  return p*(1.0-p); }
 
-static double gini_impure2(p)
-double p; { if (p==0) return(0.0); else return(-p*log(p)); }
+static double gini_impure2(double p)
+{ 
+    if (p == 0) return 0.0; else return -p*log(p); 
+}
 
 int giniinit(int n,        double **y, int maxcat, char **error,
 	     double *parm, int *size,  int who,    double *wt)
@@ -53,15 +55,15 @@ int giniinit(int n,        double **y, int maxcat, char **error,
 	    graycode_init0(maxcat);
 	    // FIXME: cannot happen
 	    ccnt  = (double **) ALLOC(numclass, sizeof(double *));
-	    if (ccnt == 0) {*error=_("Out of memory"); return(1);}
+	    if (ccnt == 0) {*error=_("Out of memory"); return 1;}
 	    ccnt[0] = (double *) ALLOC(numclass*maxcat, sizeof(double));
-	    if (ccnt[0] == 0) {*error=_("Out of memory"); return(1);}
+	    if (ccnt[0] == 0) {*error=_("Out of memory"); return 1;}
 	    for (i = 1; i < numclass; i++) ccnt[i] = ccnt[i-1] + maxcat;
 	}
 
 	i = 3*numclass + numclass*numclass;
 	prior = (double *) ALLOC(i, sizeof (double));
-	if (prior == 0) {*error=_("Out of memory"); return(1);}
+	if (prior == 0) {*error=_("Out of memory"); return 1;}
 	aprior = prior + numclass;
 	freq   = aprior+ numclass;
 	loss   = freq  + numclass;

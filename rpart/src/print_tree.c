@@ -23,9 +23,9 @@ void print_tree(struct node *me, int maxdepth)
     int i;
 
     printme(me, 1);
-    for (i=2; i<=maxdepth; i++) {
-	if (me->leftson  !=0) print_tree2(me->leftson, 2, 2, i);
-	if (me->rightson !=0) print_tree2(me->rightson,3, 2, i);
+    for (i = 2; i <= maxdepth; i++) {
+	if (me->leftson) print_tree2(me->leftson, 2, 2, i);
+	if (me->rightson) print_tree2(me->rightson,3, 2, i);
     }
 }
 
@@ -66,28 +66,25 @@ static void printme(struct node *me, int id)
     else Rprintf("\n");
 
     Rprintf("  Primary splits:\n");
-    for (ss=me->primary; ss!=0; ss= ss->nextsplit) {
+    for (ss = me->primary; ss != 0; ss = ss->nextsplit) {
 	j = ss->var_num;
-	if (rp.numcat[j]==0) {
+	if (rp.numcat[j] == 0) {
 	    if (ss->csplit[0] == LEFT)
 		Rprintf("\tvar%d < %5g to the left, improve=%5.3f,  (%d missing)\n",
-			j, ss->spoint,
-			ss->improve, me->num_obs - ss->count);
+			j, ss->spoint, ss->improve, me->num_obs - ss->count);
 	    else
 		Rprintf("\tvar%d > %5g to the left, improve=%5.3f, (%d missing)\n",
-			j, ss->spoint,
-			ss->improve, me->num_obs - ss->count);
-	}
-	else {
+			j, ss->spoint, ss->improve, me->num_obs - ss->count);
+	} else {
 	    Rprintf("\tvar%d splits as ", j);
-	    for (k=0; k<rp.numcat[j]; k++) {
+	    for (k = 0; k < rp.numcat[j]; k++) {
 		switch(ss->csplit[k]) {
 		case LEFT:  Rprintf("L"); break;
 		case RIGHT: Rprintf("R"); break;
 		case 0    : Rprintf("-");
 		}
 	    }
-	    if (rp.numcat[j]<7)
+	    if (rp.numcat[j] < 7)
 		Rprintf(",\timprove=%5.3f, (%d missing)\n",
 			ss->improve, (me->num_obs - ss->count));
 	    else  Rprintf(", improve=%5.3f, (%d missing)\n",
@@ -98,27 +95,26 @@ static void printme(struct node *me, int id)
     /*
     ** Now print the surrogate splits. 
     */
-    if (me->surrogate !=0) Rprintf("  Surrogate splits:\n");
-    for (ss= me->surrogate; ss!=0; ss= ss->nextsplit) {
+    if (me->surrogate != 0) Rprintf("  Surrogate splits:\n");
+    for (ss = me->surrogate; ss != 0; ss = ss->nextsplit) {
 	j = ss->var_num;
-	if (rp.numcat[j]==0) {
+	if (rp.numcat[j] == 0) {
 	    if (ss->csplit[0] == LEFT)
 		Rprintf("\tvar%d < %5g to the left, agree=%5.3f, (%d split)\n",
 			j, ss->spoint, ss->improve, ss->count);
 	    else
 		Rprintf("\tvar%d > %5g to the left, agree=%5.3f, (%d split)\n",
 			j, ss->spoint, ss->improve, ss->count);
-	}
-	else {
+	} else {
 	    Rprintf("\tvar%d splits as ", j);
-	    for (k=0; k<rp.numcat[j]; k++) {
+	    for (k = 0; k < rp.numcat[j]; k++) {
 		switch(ss->csplit[k]) {
 		case LEFT:  Rprintf("L"); break;
 		case RIGHT: Rprintf("R"); break;
 		case 0    : Rprintf("-");
 		}
 	    }
-	    if (rp.numcat[j] <7)
+	    if (rp.numcat[j] < 7)
 		Rprintf(",\tagree=%5.3f, (%d split)\n",
 			ss->improve, ss->count);
 	    else Rprintf (", agree=%5.3f, (%d split)\n",

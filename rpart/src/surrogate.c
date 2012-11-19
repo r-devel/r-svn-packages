@@ -42,35 +42,33 @@ void surrogate(struct node *me, int n1, int n2)
     **  last surrogate (or to the right, if larger).
     */
     var = (me->primary)->var_num;
-    if (rp.numcat[var]==0)  {  /* continuous variable */
+    if (rp.numcat[var] == 0)  {  /* continuous variable */
 	split = (me->primary)->spoint;
 	extra = (me->primary)->csplit[0];
-	for (i=n1; i<n2; i++) {
+	for (i = n1; i < n2; i++) {
 	    j = sorts[var][i];
-	    if (j<0) tempy[-(j+1)]=0;
+	    if (j < 0) tempy[-(j+1)] = 0;
 	    else {
-		if (xdata[var][j] < split)
-		    tempy[j] = extra;
-		else
-		    tempy[j] =  -extra;
+		if (xdata[var][j] < split) tempy[j] = extra; 
+		else tempy[j] =  -extra;
 	    }
 	}
     }
 
     else {  /* categorical variable */
 	index = (me->primary)->csplit;
-	for (i=n1; i<n2; i++) {
+	for (i = n1; i < n2; i++) {
 	    j = sorts[var][i];
-	    if (j<0)    tempy[-(j+1)] =0;
-	    else        tempy[j] = index[(int)xdata[var][j] -1];
+	    if (j < 0) tempy[-(j+1)] = 0;
+	    else tempy[j] = index[(int)xdata[var][j] -1];
 	}
     }
 
     /* count the total number sent left and right */
-    lcount=0; rcount=0;
-    for (i=n1; i<n2; i++) {
+    lcount = 0; rcount = 0;
+    for (i = n1; i < n2; i++) {
 	j = sorts[var][i];
-	if (j <0) j= -(1+j);
+	if (j < 0) j = -(1+j);
 	switch(tempy[j]) {
 	case LEFT : lcount += rp.wt[j];  break;
 	case RIGHT: rcount += rp.wt[j];  break;
@@ -81,14 +79,14 @@ void surrogate(struct node *me, int n1, int n2)
     if (lcount < rcount)     me->lastsurrogate = RIGHT;
     else {
 	if (lcount > rcount) me->lastsurrogate = LEFT;
-	else		     me->lastsurrogate =0 ;  /* no default */
+	else		     me->lastsurrogate = 0 ;  /* no default */
     }
 
     /*
     ** Now walk through the variables
     */
-me->surrogate = (struct split *) 0;
-    for (i=0; i<rp.nvar; i++) {
+    me->surrogate = (struct split *) 0;
+    for (i = 0; i < rp.nvar; i++) {
 	if (var == i) continue;
 	ncat = rp.numcat[i];
 
@@ -96,20 +94,20 @@ me->surrogate = (struct split *) 0;
 		    &improve, &split, rp.csplit,   lcount, rcount,
 		    &adj_agree);
 
-	if (adj_agree <=0) continue;  /*no better than default */
+	if (adj_agree <= 0) continue;  /*no better than default */
 
 	/*  sort it onto the list of surrogates */
 	ss = insert_split( &(me->surrogate), ncat, improve, rp.maxsur);
-	if (ss !=0) {
+	if (ss != 0) {
 	    ss->improve  = improve;
 	    ss->var_num   = i;
 	    ss->count     = 0;       /*corrected by nodesplit() */
 	    ss->adj       = adj_agree;
-	    if (rp.numcat[i]==0) {
+	    if (rp.numcat[i] == 0) {
 		ss->spoint    = split;
 		ss->csplit[0] = rp.csplit[0];
-	    }
-	    else for (k=0; k<rp.numcat[i]; k++) ss->csplit[k] = rp.csplit[k];
+	    } else 
+		for (k = 0; k < rp.numcat[i]; k++) ss->csplit[k] = rp.csplit[k];
 	}
     }
 }

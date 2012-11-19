@@ -11,7 +11,7 @@ static double *uscratch; /* variously used scratch vector */
 int usersplit_init(int n,  double *y[],  int maxcat, char **error,
 		   double *parm, int *size,    int who,    double *wt)
 {
-    if (who==1) {
+    if (who == 1) {
 	/* If who==0 we are being called internally via xval, and don't
 	**   need to rerun the initialization.
 	** Call-back to the C code to get the number of columns for y and
@@ -20,12 +20,12 @@ int usersplit_init(int n,  double *y[],  int maxcat, char **error,
 	*/
 	rpart_callback0(&n_return);
 
-	if ((n_return+1) > 2*n)
-	    uscratch = (double *) ALLOC(n_return +1, sizeof(double));
+	if (n_return + 1 > 2*n)
+	    uscratch = (double *) ALLOC(n_return + 1, sizeof(double));
 	else uscratch = (double *) ALLOC(2*n, sizeof(double));
     }
     *size = n_return;
-    return(0);
+    return 0;
 }
 /*
 ** The user evaluation function
@@ -37,9 +37,7 @@ void usersplit_eval(int n, double *y[], double *value, double *risk,
 
     rpart_callback1(n, y, wt, uscratch);
     *risk = uscratch[0];
-    for (i=0; i< n_return; i++) {
-	value[i] = uscratch[i+1];
-    }
+    for (i = 0; i < n_return; i++) value[i] = uscratch[i+1];
 }
 
 /*
@@ -52,7 +50,7 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
     int i, j, k;
     int m;
     int left_n,  right_n;
-    int where=0;
+    int where = 0;
     double best;
     double *dscratch;
     double ftemp;
@@ -62,10 +60,9 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
     **    (Completely tied continuous is caught earlier than this).
     ** (This isn't common, but callbacks are expensive).
     */
-    if (nclass>0) {
+    if (nclass > 0) {
 	ftemp = x[0];
-	for (i=1; i<n; i++)
-	    if (x[i] != ftemp) break;
+	for (i = 1; i < n; i++) if (x[i] != ftemp) break;
 	if (i ==n) {
 	    *improve =0.0;
 	    return;
@@ -80,7 +77,7 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
     */
     rpart_callback2(n, nclass, y, wt, x, uscratch);
 
-    if (nclass==0) {
+    if (nclass == 0) {
 	/*
 	**  Find the split point that has the best goodness, subject
 	**   to the edge criteria, and tied x's
@@ -89,19 +86,19 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
 	**  The 'direction' vector is returned pasted onto the end of
 	**   uscratch.
 	*/
-	dscratch = uscratch +n -1;
+	dscratch = uscratch + n - 1;
 	best = 0;
 
-	for (i=edge-1; i < n-edge; i++) {
-	    if ((x[i]< x[i+1]) && (uscratch[i] > best)) {
+	for (i = edge - 1; i < n - edge; i++) {
+	    if ((x[i] < x[i+1]) && (uscratch[i] > best)) {
 		best = uscratch[i];
 		where =i;
 	    }
 	}
 
-	if (best>0) {   /* found something */
+	if (best > 0) {   /* found something */
 	    csplit[0] = (int) dscratch[where];
-	    *split = (x[where] + x[where+1]) /2;
+	    *split = (x[where] + x[where+1])/2;
 	}
     }
 
@@ -114,21 +111,21 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
 	**   in order, and the assurance that the best split is one of
 	**   those that use categories in that order.
 	*/
-	for (i=0; i<nclass; i++) csplit[i] =0;
-	best =0;
+	for (i = 0; i < nclass; i++) csplit[i] = 0;
+	best = 0;
 	m = (int) uscratch[0];
 	dscratch = uscratch + m;
 
 	where = -1;
 	left_n = 0;
-	for (i=1; i< m; i++){
+	for (i = 1; i < m; i++){
 	    k = (int)dscratch[i-1];   /* the next group of interest */
-	    for (j=0; j<n; j++) if(x[j]==k) left_n++;
+	    for (j = 0; j < n; j++) if(x[j] == k) left_n++;
 	    right_n = n - left_n;
 	    if (right_n < edge) break;
-	    if (where<0 || uscratch[i] > best) {
+	    if (where < 0 || uscratch[i] > best) {
 		best = uscratch[i];
-		where =i;
+		where = i;
 	    }
 	}
 	/*
@@ -136,11 +133,10 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
 	**   If there was no way to split it with at least 'edge' in each
 	**   group, best will still =0.
 	*/
-	if (best >0) {
-	    for (i=0; i<m ; i++) {
+	if (best > 0) {
+	    for (i = 0; i < m ; i++) {
 		k = (int)dscratch[i];     /* the next group of interest */
-		if (i < where) csplit[k-1] = LEFT;
-		else           csplit[k-1] = RIGHT;
+		if (i < where) csplit[k-1] = LEFT; else csplit[k-1] = RIGHT;
 	    }
 	}
     }
@@ -155,5 +151,5 @@ void usersplit(int n,    double *y[],     double *x,     int nclass,
 */
 double usersplit_pred(double *y, double *yhat)
 {
-    return(0.0);
+    return 0.0;
 }

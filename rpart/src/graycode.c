@@ -75,8 +75,7 @@ int graycode(void)
 
     if (gsave > -2) {  /* ordered data */
 	gsave++;
-	if (gsave < maxc) return(gray[gsave]);
-	else return (maxc);
+	if (gsave < maxc) return gray[gsave]; else return maxc;
     } else {
 	/*
 	** Form next subgroup.  We do this using the classic Gray code.
@@ -89,10 +88,10 @@ int graycode(void)
 	for (i = 0; i < (maxc-1); i++) {
 	    if (gray[i] == 1) {
 		gray[i] = 2;
-		return(i);
+		return i;
 	    }
-	    else if (gray[i]==2) gray[i] =1;
+	    else if (gray[i] == 2) gray[i] = 1;
 	}
-	return(maxc);  /* signal "done" */
+	return maxc;  /* signal "done" */
     }
 }

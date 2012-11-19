@@ -19,13 +19,13 @@ void mysort(int start, int stop, double *x, int *cvec)
 	/*
 	** first-- if the list is short, do an ordinary insertion sort
 	*/
-	if ((stop-start)<11) {
-	    for (i=start+1; i<=stop; i++) {
+	if ((stop-start) < 11) {
+	    for (i = start+1; i <= stop; i++) {
 		temp = x[i];
-		tempd= cvec[i];
-		j=i-1;
+		tempd = cvec[i];
+		j = i - 1;
 
-		while (j>=start && (x[j]>temp)) {
+		while (j >= start && x[j] > temp) {
 		    x[j+1] = x[j];
 		    cvec[j+1] = cvec[j];
 		    j--;
@@ -40,21 +40,18 @@ void mysort(int start, int stop, double *x, int *cvec)
 	** list is longer -- split it into two
 	**  I use the median of 3 values as the split point
 	*/
-	i=start;
-	j=stop;
+	i = start;
+	j = stop;
 	k = (start + stop)/2;
 
 	median = x[k];
 	if (x[i] >= x[k]) {      /* one of j or k is smallest */
 	    if (x[j] > x[k]) {   /* k is smallest */
-		if (x[i] > x[j])  median = x[j];
-		else median= x[i];
+		if (x[i] > x[j])  median = x[j]; else median = x[i];
 	    }
-	}
-	else {
+	} else {
 	    if (x[j] < x[k]) {
-		if (x[i] > x[j]) median = x[i];
-		else median = x[j];
+		if (x[i] > x[j]) median = x[i]; else median = x[j];
 	    }
 	}
 
@@ -71,7 +68,7 @@ void mysort(int start, int stop, double *x, int *cvec)
 	**   quicksort.
 	**
 	*/
-	while (i<j) {
+	while (i < j) {
 	    /*
 	    ** top pointer down till it points at something too large
 	    */
@@ -82,12 +79,12 @@ void mysort(int start, int stop, double *x, int *cvec)
 	    */
 	    while(x[j] > median) j--;
 
-	    if (i<j) {
+	    if (i < j) {
 		if (x[i] > x[j]) {  /* swap */
 		    temp = x[i];
 		    x[i] = x[j];
 		    x[j] = temp;
-		    tempd= cvec[i];   cvec[i] =cvec[j];  cvec[j] =tempd;
+		    tempd = cvec[i];   cvec[i] = cvec[j];  cvec[j] = tempd;
 		}
 		i++; j--;
 	    }
@@ -99,8 +96,8 @@ void mysort(int start, int stop, double *x, int *cvec)
 	**  the top and bottom ones need further attention.
 	** The ">=" is needed because i may be  == to j
 	*/
-	while (x[i] >= median && i>start) i--;
-	while (x[j] <= median && j<stop ) j++;
+	while (x[i] >= median && i > start) i--;
+	while (x[j] <= median && j < stop ) j++;
 
 	/*
 	** list has been split, now do a recursive call
@@ -108,12 +105,12 @@ void mysort(int start, int stop, double *x, int *cvec)
 	**       depth of nested calls to less than log_base2(n).
 	*/
 	if ((i-start) < (stop-j)) { /* top list is shorter */
-	    if ((i-start)>0) mysort(start,i, x, cvec);
+	    if ((i - start) > 0) mysort(start, i, x, cvec);
 	    start =j;
 	}
 
 	else {    /* bottom list is shorter */
-	    if ((stop -j)>0) mysort(j,stop, x, cvec);
+	    if ((stop -j) > 0) mysort(j, stop, x, cvec);
 	    stop=i;
 	}
     }

@@ -22,13 +22,13 @@ struct split *insert_split(struct split **listhead, int ncat,
 				    (ncat-1)*sizeof(int));
 	s3->nextsplit = 0;
 	*listhead = s3;
-	return(s3);
+	return s3;
     }
 
     if (max < 2) {
 	/* user asked for only 1 to be retained! */
 	s3 = *listhead;
-	if (improve <= s3->improve) return(0);
+	if (improve <= s3->improve) return NULL;
 	if (ncat > 1) {
 	    Free(s3);
 	    s3 = (struct split *)CALLOC(1, sizeof(struct split)+
@@ -36,7 +36,7 @@ struct split *insert_split(struct split **listhead, int ncat,
 	    s3->nextsplit = 0;
 	    *listhead = s3;
 	}
-	return(s3);
+	return s3;
     }
 
     /*set up --- nlist = length of list, s4=last element, s3=next to last */
@@ -54,11 +54,11 @@ struct split *insert_split(struct split **listhead, int ncat,
     }
 
     if (nlist == max) {
-	if (s2 == 0)  return(0);        /* not good enough */
-	if (ncat > 1) {
-	    Free(s4);         /*get new memory-- this chunk may be too small */
+	if (s2 == 0)  return NULL;        /* not good enough */
+	if (ncat > 1) { // FIXME: realloc
+	    Free(s4);         /*get new memory -- this chunk may be too small */
 	    s4 = (struct split *)CALLOC(1, sizeof(struct split) +
-					(ncat-2)*sizeof(int));
+					(ncat - 2)*sizeof(int));
 	}
 	if (s1 == s3)   s4->nextsplit = 0;
 	else {
@@ -70,5 +70,5 @@ struct split *insert_split(struct split **listhead, int ncat,
 	s4->nextsplit = s2;
     }
     if (s2 == *listhead) *listhead = s4; else s1->nextsplit = s4;
-    return(s4);
+    return s4;
 }

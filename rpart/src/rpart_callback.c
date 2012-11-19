@@ -56,7 +56,7 @@ SEXP init_rpcallback(SEXP rhox, SEXP ny, SEXP nr,
     if(!stemp) error(_("'nback' not found"));
     ndata = INTEGER(stemp);
 
-    return(R_NilValue);
+    return R_NilValue;
 }
 
 /*

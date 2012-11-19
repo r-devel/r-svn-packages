@@ -19,26 +19,22 @@ void rundown2(struct node *tree, int obs, double *cp, double *xpred, int nresp)
     **   predictor.
     */
     otree = tree;
-    k=0;
-    for (i=0; i<rp.num_unique_cp; i++) {
-	while ( cp[i] < tree->complexity) {
+    k = 0;
+    for (i = 0; i < rp.num_unique_cp; i++) {
+	while (cp[i] < tree->complexity) {
 	    tree = branch(tree, obs);
-	    if (tree ==0) goto oops;
+	    if (tree == 0) goto oops;
 	    otree = tree;
 	}
-	for (j=0; j<nresp; j++) {
-	    xpred[k++] =  tree->response_est[j];
-	}
+	for (j = 0; j < nresp; j++) xpred[k++] =  tree->response_est[j];
     }
 
     return;
 
 oops:;
-    if (rp.usesurrogate <2) { /*must have hit a missing value */
-	for (; i<rp.num_unique_cp; i++) {
-	    for (j=0; j<nresp; j++)
-		xpred[k++] =  otree->response_est[j];
-	}
+    if (rp.usesurrogate < 2) { /* must have hit a missing value */
+	for (; i < rp.num_unique_cp; i++)
+	    for (j = 0; j < nresp; j++) xpred[k++] =  otree->response_est[j];
 	return;
     }
     /*

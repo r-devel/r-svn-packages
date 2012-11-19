@@ -39,5 +39,5 @@ struct cptable *make_cp_table(struct node *me, double parent, int nsplit)
 	cplist = cplist->back;
     }
 
-    return(cplist);
+    return cplist ;
 }

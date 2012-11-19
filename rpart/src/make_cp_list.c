@@ -38,7 +38,7 @@ void make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
     if (me->complexity > parent) me->complexity = parent;
     me_cp = me->complexity;
     if (me_cp < rp.alpha) me_cp = rp.alpha;    /* table should go no lower */
-    if (me->leftson != 0) {
+    if (me->leftson) {
 	make_cp_list(me->leftson, me_cp, cptable_head);
 	make_cp_list(me->rightson, me_cp, cptable_head);
     }

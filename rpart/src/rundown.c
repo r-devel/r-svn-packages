@@ -14,7 +14,7 @@ void rundown(struct node *tree,  int obs,     double *cp,
     struct node *otree;
 
     if (obs < 0) obs2 = -(1+obs);
-    else  obs2 = obs;
+    else obs2 = obs;
 
     /*
     ** Now, repeat the following: for the cp of interest, run down the tree
@@ -23,10 +23,10 @@ void rundown(struct node *tree,  int obs,     double *cp,
     **   predictor.
     */
     otree = tree;
-    for (i=0; i<rp.num_unique_cp; i++) {
-	while ( cp[i] < tree->complexity) {
+    for (i = 0; i < rp.num_unique_cp; i++) {
+	while (cp[i] < tree->complexity) {
 	    tree = branch(tree, obs);
-	    if (tree ==0) goto oops;
+	    if (tree == 0) goto oops;
 	    otree = tree;
 	}
 	xpred[i] =  tree->response_est[0];
@@ -36,9 +36,9 @@ void rundown(struct node *tree,  int obs,     double *cp,
     return;
 
 oops:;
-    if (rp.usesurrogate <2) { /*must have hit a missing value */
-	for (; i<rp.num_unique_cp; i++)
-	    xpred[i] =  otree->response_est[0];
+    if (rp.usesurrogate < 2) { /*must have hit a missing value */
+	for (; i < rp.num_unique_cp; i++)
+	    xpred[i] =otree->response_est[0];
 	xtemp[i] = (*rp_error)(rp.ydata[obs2], otree->response_est);
 	return;
     }
