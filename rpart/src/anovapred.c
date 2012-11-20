@@ -1,10 +1,11 @@
 /*
 ** The error function for anova splitting
 */
-double anovapred(double *y, double *yhat)
+double
+anovapred(double *y, double *yhat)
 {
-    double temp;
+    double          temp;
 
     temp = y[0] - *yhat;
-    return temp*temp;
+    return temp * temp;
 }

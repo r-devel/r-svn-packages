@@ -30,41 +30,47 @@
 #include "node.h"
 #include "rpartproto.h"
 
-void make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
+void
+make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
 {
-    double me_cp;
+    double          me_cp;
     struct cptable *cplist, *cptemp = NULL;
 
-    if (me->complexity > parent) me->complexity = parent;
+    if (me->complexity > parent)
+        me->complexity = parent;
     me_cp = me->complexity;
-    if (me_cp < rp.alpha) me_cp = rp.alpha;    /* table should go no lower */
+    if (me_cp < rp.alpha)
+        me_cp = rp.alpha;       /* table should go no lower */
     if (me->leftson) {
-	make_cp_list(me->leftson, me_cp, cptable_head);
-	make_cp_list(me->rightson, me_cp, cptable_head);
+        make_cp_list(me->leftson, me_cp, cptable_head);
+        make_cp_list(me->rightson, me_cp, cptable_head);
     }
+    if (me_cp < parent) {       /* if not, then it can't be unique */
+        for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
+            /* am I tied? */
+            if (me_cp == cplist->cp)
+                return;         /* exact ties */
 
-    if (me_cp < parent) {  /*if not, then it can't be unique */
-	for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
-	    /* am I tied? */
-	    if (me_cp == cplist->cp) return;  /* exact ties */
+            if (me_cp > cplist->cp)
+                break;
+            cptemp = cplist;
+        }
 
-	    if (me_cp > cplist->cp) break;
-	    cptemp = cplist;
-	}
-
-	/* insert new stuff after cptemp */
-	/* was CALLOC and not cleaned up */
-	cplist = (struct cptable *) ALLOC(1, sizeof(struct cptable));
-	memset(cplist, 0, sizeof(struct cptable)); /* zeros risk and nsplit */
-	cplist->cp = me_cp;
-	cplist->xrisk =  0;
-	cplist->xstd  = 0;
-	cplist->back = cptemp;
-	cplist->forward = cptemp->forward;
-	if (cptemp->forward != 0) (cptemp->forward)->back = cplist;
-	else  cptable_tail = cplist;
-	cptemp->forward = cplist;
-	rp.num_unique_cp++;
-	return;
+        /* insert new stuff after cptemp */
+        /* was CALLOC and not cleaned up */
+        cplist = (struct cptable *)ALLOC(1, sizeof(struct cptable));
+        memset(cplist, 0, sizeof(struct cptable));      /* zeros risk and nsplit */
+        cplist->cp = me_cp;
+        cplist->xrisk = 0;
+        cplist->xstd = 0;
+        cplist->back = cptemp;
+        cplist->forward = cptemp->forward;
+        if (cptemp->forward != 0)
+            (cptemp->forward)->back = cplist;
+        else
+            cptable_tail = cplist;
+        cptemp->forward = cplist;
+        rp.num_unique_cp++;
+        return;
     }
 }

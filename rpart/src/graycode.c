@@ -11,30 +11,36 @@
 */
 #include "rpart.h"
 #include "rpartproto.h"
-static int *gray;
-static int maxc, gsave;
+static int     *gray;
+static int      maxc, gsave;
 
-void graycode_init0( int maxcat)
+void
+graycode_init0(int maxcat)
 {
-    gray = (int *) ALLOC(maxcat, sizeof(int));
+    gray = (int *)ALLOC(maxcat, sizeof(int));
 }
 
-void graycode_init1(int numcat, int *count)
+void
+graycode_init1(int numcat, int *count)
 {
-    int i;
+    int             i;
 
     maxc = numcat;
     for (i = 0; i < maxc; i++) {
-	if (count[i] != 0) gray[i] = 1; else gray[i] = 0;
+        if (count[i] != 0)
+            gray[i] = 1;
+        else
+            gray[i] = 0;
     }
     gsave = -2;
 }
 
 
-void graycode_init2(int numcat, int *count, double *val)
+void
+graycode_init2(int numcat, int *count, double *val)
 {
-    int i,j,k;
-    double temp;
+    int             i, j, k;
+    double          temp;
     maxc = numcat;
 
     /*
@@ -42,25 +48,28 @@ void graycode_init2(int numcat, int *count, double *val)
     **   then order by val
     */
     gray[0] = 0;
-    if (count[0] == 0) k = 1; else k = 0;
+    if (count[0] == 0)
+        k = 1;
+    else
+        k = 0;
     for (i = 1; i < maxc; i++) {
-	if (count[i] == 0) {
-	    for (j = i-1; j >= k; j--) {
-		gray[j+1] = gray[j];
-		val[j+1] = val[j];
-	    }
-	    gray[k++] = i;
-	} else {
-	    temp = val[i];
-	    for (j = i - 1; j >= k && val[j] > temp; j--) {
-		gray[j+1] = gray[j];
-		val[j+1] = val[j];
-	    }
-	    val[j+1] = temp;
-	    gray[j+1] =i;
-	}
+        if (count[i] == 0) {
+            for (j = i - 1; j >= k; j--) {
+                gray[j + 1] = gray[j];
+                val[j + 1] = val[j];
+            }
+            gray[k++] = i;
+        } else {
+            temp = val[i];
+            for (j = i - 1; j >= k && val[j] > temp; j--) {
+                gray[j + 1] = gray[j];
+                val[j + 1] = val[j];
+            }
+            val[j + 1] = temp;
+            gray[j + 1] = i;
+        }
     }
-    gsave = k-1;
+    gsave = k - 1;
 }
 
 /*
@@ -69,13 +78,17 @@ void graycode_init2(int numcat, int *count, double *val)
 **  change allegiance.
 ** A value of maxc means that we're done.
 */
-int graycode(void)
+int
+graycode(void)
 {
-    int i;
+    int             i;
 
-    if (gsave > -2) {  /* ordered data */
-	gsave++;
-	if (gsave < maxc) return gray[gsave]; else return maxc;
+    if (gsave > -2) {           /* ordered data */
+        gsave++;
+        if (gsave < maxc)
+            return gray[gsave];
+        else
+            return maxc;
     } else {
 	/*
 	** Form next subgroup.  We do this using the classic Gray code.
@@ -85,7 +98,7 @@ int graycode(void)
 	**  The outer loop only goes up to maxc-1: we know for rpart that
 	**    changing the allegiance of the last subject is never necessary
 	*/
-	for (i = 0; i < (maxc-1); i++) {
+	for (i = 0; i < maxc - 1; i++) {
 	    if (gray[i] == 1) {
 		gray[i] = 2;
 		return i;

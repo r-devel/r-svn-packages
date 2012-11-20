@@ -19,7 +19,8 @@ static const R_CallMethodDef CallEntries[] = {
 };
 
 #include <Rversion.h>
-void R_init_rpart(DllInfo *dll)
+void
+R_init_rpart(DllInfo * dll)
 {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
