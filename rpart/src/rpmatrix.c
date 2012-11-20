@@ -69,9 +69,8 @@ rpmatrix(struct node *me, int *numcat, double **dsplit,
             if (numcat[j] == 0) {
                 dsplit[1][scnt] = spl->spoint;
                 isplit[2][scnt] = spl->csplit[0];
-            } else {
-                //categorical
-                    dsplit[1][scnt] = ccnt + 1;
+            } else {/* categorical */
+		dsplit[1][scnt] = ccnt + 1;
                 isplit[2][scnt] = numcat[j];
                 for (k = 0; k < numcat[j]; k++)
                     csplit[k][ccnt] = spl->csplit[k];

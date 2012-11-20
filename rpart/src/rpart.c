@@ -55,10 +55,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     double         *dptr;       /* temp */
     int            *iptr;
     /*
-     * * pointers to R objects
+     * pointers to R objects
      */
     int            *ncat, *xgrp;
-    //int          *which;
     int             xvals;
     double         *wt, *parms;
 
@@ -237,9 +236,8 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     if (tree->rightson) {
         make_cp_list(tree, tree->complexity, cptable);
         make_cp_table(tree, tree->complexity, 0);
-        if (xvals > 1 && tree->rightson != 0)
-    //FIXME:already conditional
-                xval(xvals, cptable, xgrp, maxcat, &errmsg, parms, savesort);
+        if (xvals > 1)
+	    xval(xvals, cptable, xgrp, maxcat, &errmsg, parms, savesort);
     }
     /*
     ** all done, create the return list for R
@@ -247,25 +245,17 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     */
     scale = 1 / tree->risk;
     i = 0;
-//FIXME:combine
-        if (xvals > 1) {
-        cptable3 = PROTECT(allocMatrix(REALSXP, 5, rp.num_unique_cp));
-        dptr = REAL(cptable3);
-        for (cp = cptable; cp != 0; cp = cp->forward) {
-            dptr[i++] = cp->cp * scale;
-            dptr[i++] = cp->nsplit;
-            dptr[i++] = cp->risk * scale;
-            dptr[i++] = cp->xrisk * scale;
-            dptr[i++] = cp->xstd * scale;
-        }
-    } else {
-        cptable3 = PROTECT(allocMatrix(REALSXP, 3, rp.num_unique_cp));
-        dptr = REAL(cptable3);
-        for (cp = cptable; cp != 0; cp = cp->forward) {
-            dptr[i++] = cp->cp * scale;
-            dptr[i++] = cp->nsplit;
-            dptr[i++] = cp->risk * scale;
-        }
+    cptable3 = PROTECT(allocMatrix(REALSXP, xvals > 1 ? 5 :3,
+				   rp.num_unique_cp));
+    dptr = REAL(cptable3);
+    for (cp = cptable; cp != 0; cp = cp->forward) {
+	dptr[i++] = cp->cp * scale;
+	dptr[i++] = cp->nsplit;
+	dptr[i++] = cp->risk * scale;
+	if (xvals > 1) {
+	    dptr[i++] = cp->xrisk * scale;
+	    dptr[i++] = cp->xstd * scale;
+	}
     }
 
     /*
@@ -340,13 +330,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     }
 
     /* Create the output list */
-    if (catcount > 0) {
-        rlist = PROTECT(allocVector(VECSXP, 7));
-        rname = PROTECT(allocVector(STRSXP, 7));
-    } else {
-        rlist = PROTECT(allocVector(VECSXP, 6));
-        rname = PROTECT(allocVector(STRSXP, 6));
-    }
+    int nout = catcount > 0 ? 7 : 6;
+    rlist = PROTECT(allocVector(VECSXP, nout));
+    rname = PROTECT(allocVector(STRSXP, nout));
     SET_VECTOR_ELT(rlist, 0, which3);
     SET_STRING_ELT(rname, 0, mkChar("which"));
     SET_VECTOR_ELT(rlist, 1, cptable3);
@@ -365,9 +351,6 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     }
     setAttrib(rlist, R_NamesSymbol, rname);
 
-    if (catcount > 0)
-        UNPROTECT(9);
-    else
-        UNPROTECT(8);
+    UNPROTECT(2 + nout);
     return rlist;
 }

@@ -165,8 +165,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
                 cplist = cplist->forward;
             }
         }
-        free_tree(xtree, 1);
-        //Calloc - ed
+        free_tree(xtree, 1); // Calloc - ed
     }
 
     for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
