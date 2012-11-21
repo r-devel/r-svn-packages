@@ -192,8 +192,6 @@ rpart <- function(formula, data, weights, subset,
 	newc <- matrix(0L, nadd, max(cats))
 	cvar <- rpfit$isplit[, 1L]
 	indx <- isord[cvar]             # vector of TRUE/FALSE
-        ## splits for 0 counts are not actually computed.
-        splits[indx & (splits[, 1L] == 0), 4L] <- 1.5
 	cdir <- splits[indx, 2L]        # which direction splits went
 	ccut <- floor(splits[indx, 4L]) # cut point
 	splits[indx, 2L] <- cats[cvar[indx]] # Now, # of categories instead
@@ -218,7 +216,7 @@ rpart <- function(formula, data, weights, subset,
     }
     else catmat <- rpfit$csplit
 
-    if (nsplit == 0L) {                    #tree with no splits
+    if (nsplit == 0L) {                    # tree with no splits
 	frame <- data.frame(row.names = 1L,
 			    var =  "<leaf>",
 			    n = rpfit$inode[, 5L],
@@ -231,7 +229,7 @@ rpart <- function(formula, data, weights, subset,
     } else {
 	temp <- ifelse(index == 0, 1, index)
 	svar <- ifelse(index == 0, 0, rpfit$isplit[temp,1L]) # var number
-	frame <- data.frame(row.names=rpfit$inode[,1],
+	frame <- data.frame(row.names = rpfit$inode[,1],
 			    var =  factor(svar, 0:ncol(X), tname),
 			    n =   rpfit$inode[, 5L],
 			    wt =   rpfit$dnode[, 3L],
@@ -255,8 +253,7 @@ rpart <- function(formula, data, weights, subset,
         yprob <- temp /rowSums(temp)    #necessary with altered priors
         yval2 <- matrix(rpfit$dnode[, 4L+(0L:numclass)], ncol=numclass+1)
 	frame$yval2 <- cbind(yval2, yprob, nodeprob)
-    }
-    else if (init$numresp > 1L)
+    } else if (init$numresp > 1L)
         frame$yval2 <- rpfit$dnode[,-(1L:3L), drop=FALSE]
 
     if (is.null(init$summary))

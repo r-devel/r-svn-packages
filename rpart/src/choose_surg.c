@@ -36,11 +36,11 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 	/*
 	 * ll = y's that go left that are also sent left by my split
 	 * lr = y's that go left that I send right
-	 * rl= y's that go right that I send to the left
-	 * rr= y's that go right that I send to the right
+	 * rl = y's that go right that I send to the left
+	 * rr = y's that go right that I send to the right
 	 *
-	 * The agreement is max(ll+rr, lr+rl), if weights were =1;
-	 *   actually max(llwt + rrwt, lrwt + rlwt)/ denominator
+	 * The agreement is max(ll+rr, lr+rl), if weights were = 1;
+	 *   actually max(llwt + rrwt, lrwt + rlwt) / denominator
 	 *
 	 * I enforce that at least 2 obs must go each way, to avoid having an
 	 *  uncorrelated surrogate beat the "null" surrogate too easily
@@ -48,7 +48,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
         ll = rl = 0;
         llwt = 0;
         rlwt = 0;
-        for (i = n2 - 1; i >= n1; i--) {        /*start with me sending all to the left */
+        for (i = n2 - 1; i >= n1; i--) {  /* start with me sending all to the left */
             j = order[i];
             if (j >= 0) {
                 lastx = x[j];   /*this is why I run the loop backwards */
@@ -66,21 +66,26 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
             }
         }
 
-        lr = rr = 0;
-        lrwt = 0;
-        rrwt = 0;
         if (llwt > rlwt)
             agree = llwt;
         else
             agree = rlwt;
 
-        majority = agree;       /*worst possible agreement */
+        majority = agree;       /* worst possible agreement */
         total_wt = llwt + rlwt;
+
+        lr = rr = 0;
+        lrwt = 0;
+        rrwt = 0;
 	/*
 	 *  March across, moving things from the right to the left
 	 *    the "lastx" code is caring for ties in the x var
 	 *    (The loop above sets it to the first unique x value).
 	 */
+	/* NB: the code below may never set csplit[0] or split,
+	   since there may be no non-missing value with positive weight */
+	csplit[0] = LEFT;
+	*split = lastx;
         for (i = n1; (ll + rl) >= 2; i++) {
             j = order[i];
             if (j >= 0) {       /* not a missing value */
@@ -172,7 +177,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 	 * We can calculate the best split category by category--- send each
 	 *  x value individually to its better direction
 	 */
-        agree = 0;
+        agree = 0.0;
         for (i = 0; i < ncat; i++) {
             if (left[i] == 0 && right[i] == 0)
                 csplit[i] = 0;

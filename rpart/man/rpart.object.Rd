@@ -46,22 +46,20 @@
 \item{splits}{
   a numeric matrix describing the splits.  The row label is the name of
   the split variable, and columns are \code{count}, the number of
-  observations sent left or right by the split (for competitor splits
-  this is the number that would have been sent left or right had this
-  split been used, for surrogate splits it is the number missing the
-  primary split variable which were decided using this surrogate),
-  \code{ncat}, the number of categories or levels for the variable
-  (\code{+/-1} for a continuous variable), \code{improve}, which is the
-  improvement in deviance given by this split, or, for surrogates, the
-  concordance of the surrogate with the primary, and \code{index}, the
-  numeric split point.  The last column \code{adj} gives the adjusted
-  concordance for surrogate splits.  For a factor, the \code{index}
-  column contains the row number of the csplit matrix.  For a continuous
-  variable, the sign of \code{ncat} determines whether the subset
-  \code{x < cutpoint} or \code{x > cutpoint} is sent to the left.
-  
-  For rows with zero \code{count} the rest of the row should be ignored
-  as no split was computed.
+  observations (which are not missing and are of positive weight) sent
+  left or right by the split (for competitor splits this is the number
+  that would have been sent left or right had this split been used, for
+  surrogate splits it is the number missing the primary split variable
+  which were decided using this surrogate), \code{ncat}, the number of
+  categories or levels for the variable (\code{+/-1} for a continuous
+  variable), \code{improve}, which is the improvement in deviance given
+  by this split, or, for surrogates, the concordance of the surrogate
+  with the primary, and \code{index}, the numeric split point.  The last
+  column \code{adj} gives the adjusted concordance for surrogate splits.
+  For a factor, the \code{index} column contains the row number of the
+  csplit matrix.  For a continuous variable, the sign of \code{ncat}
+  determines whether the subset \code{x < cutpoint} or \code{x >
+  cutpoint} is sent to the left.
 }
 \item{csplit}{
   an integer matrix.  This will be present only if one of the split

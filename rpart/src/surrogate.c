@@ -109,12 +109,12 @@ surrogate(struct node *me, int n1, int n2)
         choose_surg(n1, n2, tempy, xdata[i], sorts[i], ncat,
                     &improve, &split, rp.csplit, lcount, rcount, &adj_agree);
 
-        if (adj_agree <= 0)
+        if (adj_agree <= 1e-10)    /* was 0 */
             continue;           /* no better than default */
 
 	/* sort it onto the list of surrogates */
         ss = insert_split(&(me->surrogate), ncat, improve, rp.maxsur);
-        if (ss != 0) {
+        if (ss) {
             ss->improve = improve;
             ss->var_num = i;
             ss->count = 0;      /* corrected by nodesplit() */
