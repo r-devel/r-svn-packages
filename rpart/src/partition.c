@@ -72,7 +72,7 @@ partition(int nodenum, struct node *splitnode, double *sumrisk,
      * Guess I have to do the split
      */
     bsplit(me, n1, n2);
-    if (me->primary == 0) {
+    if (!me->primary) {
 	/*
 	 * This is rather rare -- but I couldn't find a split worth doing
 	 */
