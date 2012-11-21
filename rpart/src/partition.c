@@ -62,10 +62,10 @@ partition(int nodenum, struct node *splitnode, double *sumrisk,
         ** make sure the split doesn't have random pointers to somewhere
         ** i.e., don't trust that whoever allocated memory set it to zero
         */
-        me->leftson = (struct node *) 0;
-        me->rightson = (struct node *) 0;
-        me->primary = (struct split *) 0;
-        me->surrogate = (struct split *) 0;
+        me->leftson = (struct node *) NULL;
+        me->rightson = (struct node *) NULL;
+        me->primary = (struct split *) NULL;
+        me->surrogate = (struct split *) NULL;
         return 0;
     }
    /*
@@ -77,10 +77,10 @@ partition(int nodenum, struct node *splitnode, double *sumrisk,
         * This is rather rare -- but I couldn't find a split worth doing
         */
         me->complexity = rp.alpha;
-        me->leftson = (struct node *) 0;
-        me->rightson = (struct node *) 0;
-        me->primary = (struct split *) 0;
-        me->surrogate = (struct split *) 0;
+        me->leftson = (struct node *) NULL;
+        me->rightson = (struct node *) NULL;
+        me->primary = (struct split *) NULL;
+        me->surrogate = (struct split *) NULL;
         *sumrisk = me->risk;
         return 0;
     }
@@ -90,7 +90,7 @@ partition(int nodenum, struct node *splitnode, double *sumrisk,
     if (rp.maxsur > 0)
         surrogate(me, n1, n2);
     else
-        me->surrogate = (struct split *) 0;
+        me->surrogate = (struct split *) NULL;
     nodesplit(me, nodenum, n1, n2, &nleft, &nright);
 
    /*

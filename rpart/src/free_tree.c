@@ -29,9 +29,9 @@ free_tree(struct node *node, int freenode)
         Free(node);
     else {
        /* don't point to things I just freed */
-        node->primary = (struct split *) 0;
-        node->surrogate = (struct split *) 0;
-        node->rightson = (struct node *) 0;
-        node->leftson = (struct node *) 0;
+        node->primary = (struct split *) NULL;
+        node->surrogate = (struct split *) NULL;
+        node->rightson = (struct node *) NULL;
+        node->leftson = (struct node *) NULL;
     }
 }

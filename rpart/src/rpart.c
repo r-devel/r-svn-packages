@@ -63,10 +63,8 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
    /*
     * Return objects for R -- end in "3" to avoid overlap with internal names
     */
-    SEXP rlist, rname;          /* return list and its names */
-    SEXP which3, cptable3;
-    SEXP dsplit3, isplit3, csplit3 = R_NilValue /* -Wall */ ;
-    SEXP dnode3, inode3;
+    SEXP which3, cptable3, dsplit3, isplit3, csplit3 = R_NilValue, /* -Wall */
+	dnode3, inode3;
 
    /* work arrays for the return process */
     int nodecount, catcount, splitcount;
@@ -330,8 +328,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
 
    /* Create the output list */
     int nout = catcount > 0 ? 7 : 6;
-    rlist = PROTECT(allocVector(VECSXP, nout));
-    rname = PROTECT(allocVector(STRSXP, nout));
+    SEXP rlist = PROTECT(allocVector(VECSXP, nout));
+    SEXP rname = allocVector(STRSXP, nout);
+    setAttrib(rlist, R_NamesSymbol, rname);
     SET_VECTOR_ELT(rlist, 0, which3);
     SET_STRING_ELT(rname, 0, mkChar("which"));
     SET_VECTOR_ELT(rlist, 1, cptable3);
@@ -348,8 +347,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
         SET_VECTOR_ELT(rlist, 6, csplit3);
         SET_STRING_ELT(rname, 6, mkChar("csplit"));
     }
-    setAttrib(rlist, R_NamesSymbol, rname);
 
-    UNPROTECT(2 + nout);
+    UNPROTECT(1 + nout);
     return rlist;
 }
