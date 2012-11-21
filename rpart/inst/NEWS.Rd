@@ -4,6 +4,9 @@
 \section{Changes in version 4.1-0}{
   \itemize{
     \item The old compatibility function \code{rpconvert()} has been removed.
+    
+    \item The cross-validation functions allow for user interrupt at the
+    end of evaluating each split.
   }
 }
 
@@ -26,7 +29,7 @@
     \item Some memory leaks have been plugged.
 
     \item There is a second vignette, \file{longintro.Rnw}, a version of
-    the original Mayo Tecnical Report on \code{rpart}.
+    the original Mayo Tecnical Report on \pkg{rpart}.
   }
 }
 
@@ -53,9 +56,9 @@
     
     \item The other major change was an error for asymmetric loss
     matrices, prompted by a user query.  With L=loss asymmetric, the
-    altered priors were computed wrong -- they were using L' instead of
-    L.  Upshot -- the tree would not not necessarily choose optimal
-    splits for the given loss matrix.  Once chosen, splits were
+    altered priors were computed incorrectly -- they were using L'
+    instead of L.  Upshot -- the tree would not not necessarily choose
+    optimal splits for the given loss matrix.  Once chosen, splits were
     evaluated correctly.  The printed \dQuote{improvement} values are of
     course the wrong ones as well.  It is interesting that for my little
     test case, with L quite asymmetric, the early splits in the tree are
@@ -112,6 +115,3 @@
     as suggested by Bill Venables.
   }
 }
-
-
-
