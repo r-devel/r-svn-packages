@@ -292,6 +292,7 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
         }
 
         free_tree(xtree, 0);
+	R_CheckUserInterrupt();
     }
 
     UNPROTECT(1);

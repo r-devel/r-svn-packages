@@ -310,9 +310,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     free_tree(tree, 0);         /* let the memory go */
 
     /*
-     * Fix up the which array
+     * Fix up the 'which' array
      *  Nodes are sometimes trimmed during the
-     *  tree building, and "which" is not updated in that case
+     *  tree building, and 'which' is not updated in that case
      */
     for (i = 0; i < n; i++) {
         k = rp.which[i];

@@ -239,5 +239,6 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
         }
 
         free_tree(xtree, 1);    // Calloc-ed inside loop
+	R_CheckUserInterrupt();
     }
 }

@@ -164,6 +164,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
             }
         }
         free_tree(xtree, 1);    // Calloc-ed
+	R_CheckUserInterrupt();
     }
 
     for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
