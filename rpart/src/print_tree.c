@@ -18,6 +18,7 @@
 
 static void printme(struct node *me, int id);
 static void print_tree2(struct node *me, int id, int mydepth, int target);
+
 void
 print_tree(struct node *me, int maxdepth)
 {

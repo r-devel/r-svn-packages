@@ -99,8 +99,8 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.min_node = (int) dptr[1];
     rp.min_split = (int) dptr[0];
     rp.complexity = dptr[2];
-    rp.maxpri = (int) dptr[3] + 1;      /* max primary splits = max
-                                         * competitors + 1 */
+    rp.maxpri = (int) dptr[3] + 1;      /* max primary splits = 
+					   max competitors + 1 */
     if (rp.maxpri < 1)
         rp.maxpri = 1;
     rp.maxsur = (int) dptr[4];

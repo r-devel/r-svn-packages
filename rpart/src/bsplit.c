@@ -42,8 +42,7 @@ bsplit(struct node *me, int n1, int n2)
         k = 0;
         for (j = n1; j < n2; j++) {
             kk = index[j];
-            if (kk >= 0 && rp.wt[kk] > 0) {     /* x data not missing  and wt
-                                                 * >0 */
+            if (kk >= 0 && rp.wt[kk] > 0) {  /* x data not missing  and wt > 0 */
                 xtemp[k] = rp.xdata[i][kk];
                 ytemp[k] = rp.ydata[kk];
                 wtemp[k] = rp.wt[kk];
@@ -58,7 +57,7 @@ bsplit(struct node *me, int n1, int n2)
                       &split, rp.csplit, me->risk, wtemp);
 
        /*
-        * Originally, this just said "if (improve >0)", but rounding
+        * Originally, this just said "if (improve > 0)", but rounding
         * error will sometimes create a non zero that should be 0.  Yet we
         * want to retain invariance to the scale of "improve".
         */

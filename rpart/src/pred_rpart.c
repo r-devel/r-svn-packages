@@ -64,7 +64,8 @@ pred_rpart0(const int *dimx, int nnode, int nsplit, const int *dimc,
 
     for (i = 0; i < n; i++) {
         node = 1;               /* current node of the tree */
-next:  for (npos = 0; nnum[npos] != node; npos++);     /* position of the node */
+next:  
+	for (npos = 0; nnum[npos] != node; npos++);  /* position of the node */
        /* walk down the tree */
         nspl = nodes[3][npos] - 1;      /* index of primary split */
         if (nspl >= 0) {        /* not a leaf node */

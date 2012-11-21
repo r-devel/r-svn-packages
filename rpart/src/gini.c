@@ -189,8 +189,7 @@ gini(int n, double *y[], double *x, int numcat,
     ltot = 0;
     for (i = 0; i < n; i++) {
         j = (int) *y[i] - 1;
-        rwt += aprior[j] * wt[i];       /* altered weight = prior *
-                                         * case_weight */
+        rwt += aprior[j] * wt[i];  /* altered weight = prior * case_weight */
         right[j] += wt[i];
         rtot++;
     }
@@ -199,8 +198,7 @@ gini(int n, double *y[], double *x, int numcat,
         temp = aprior[i] * right[i] / rwt;      /* p(class=i, given node A) */
         total_ss += rwt * (*impurity) (temp);   /* p(A) * I(A) */
     }
-    best = total_ss;            /* total weight of right * impurity of right
-                                 * + 0 *0 */
+    best = total_ss;  /* total weight of right * impurity of right + 0 *0 */
 
     /*
      * at this point we split into 2 disjoint paths

@@ -100,7 +100,7 @@ surrogate(struct node *me, int n1, int n2)
     /*
      * Now walk through the variables
      */
-    me->surrogate = (struct split *) 0;
+    me->surrogate = (struct split *) NULL;
     for (i = 0; i < rp.nvar; i++) {
         if (var == i)
             continue;

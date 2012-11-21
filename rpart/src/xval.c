@@ -65,12 +65,9 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
     * Make the list of CPs that I will compare against
     */
     cp[0] = 10 * cptable_head->cp;      /* close enough to infinity */
-    i = 1;
-    for (cplist = cptable_head; i < rp.num_unique_cp;
-         cplist = cplist->forward) {
+    for (cplist = cptable_head, i = 1; i < rp.num_unique_cp;
+	 cplist = cplist->forward, i++)
         cp[i] = sqrt(cplist->cp * (cplist->forward)->cp);
-        i++;
-    }
     total_wt = 0;
     for (i = 0; i < rp.n; i++)
         total_wt += rp.wt[i];
@@ -136,8 +133,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
         xtree = (struct node *) CALLOC(1, nodesize);
         xtree->num_obs = k;
         (*rp_init) (k, rp.ytemp, maxcat, errmsg, parms, &temp, 2, rp.wtemp);
-        (*rp_eval) (k, rp.ytemp, xtree->response_est, &(xtree->risk),
-                    rp.wtemp);
+        (*rp_eval) (k, rp.ytemp, xtree->response_est, &(xtree->risk), rp.wtemp);
         xtree->complexity = xtree->risk;
         partition(1, xtree, &temp, 0, k);
         fix_cp(xtree, xtree->complexity);
@@ -167,7 +163,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
                 cplist = cplist->forward;
             }
         }
-        free_tree(xtree, 1);    // Calloc - ed
+        free_tree(xtree, 1);    // Calloc-ed
     }
 
     for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {

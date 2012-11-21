@@ -307,7 +307,7 @@ categorical:;
 
     *improve = -2 * (dev - best);
 
-    /* (if improve=0, csplit will never be looked at by the calling routine) */
+    /* if improve = 0, csplit will never be looked at by the calling routine */
     for (i = 0; i < nclass; i++)
         csplit[i] = 0;
     for (i = 0; i <= where; i++)

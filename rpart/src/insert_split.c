@@ -16,7 +16,7 @@ insert_split(struct split **listhead, int ncat, double improve, int max)
     struct split *s1, *s2, *s3 = NULL, *s4;
 
     if (ncat == 0)
-        ncat = 1;               /* ensure "ncat-1" below never gives a
+        ncat = 1;               /* ensure "ncat - 1" below never gives a
                                  * negative */
     if (*listhead == 0) {
        /* first call to a new list */
@@ -59,7 +59,7 @@ insert_split(struct split **listhead, int ncat, double improve, int max)
         if (s2 == 0)
             return NULL;        /* not good enough */
         if (ncat > 1) {
-           //FIXME:realloc
+           // FIXME: use Realloc
             Free(s4);           /* get new memory -- this chunk may be too
                                  * small */
             s4 = (struct split *) CALLOC(1, sizeof(struct split) +

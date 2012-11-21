@@ -115,9 +115,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
                 lastx = x[j];
             }
         }
-    }
-
-    else {                      /* categorical predictor */
+    } else {                      /* categorical predictor */
         for (i = 0; i < ncat; i++) {
             left[i] = 0;
             right[i] = 0;
