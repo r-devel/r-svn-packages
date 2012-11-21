@@ -16,28 +16,29 @@
 #include "node.h"
 #include "rpartproto.h"
 
-struct cptable *make_cp_table(struct node *me, double parent, int nsplit)
+struct cptable *
+make_cp_table(struct node *me, double parent, int nsplit)
 {
     struct cptable *cplist;
 
-    if (me->leftson) {  /* if there are splits below */
-	/*
-	** The 2 lines below are perhaps devious
-	**  1) Since the return value depends on ones parent, both calls will
-	**       return the same thing.
-	**  2) I send 0 to the left to keep the current split (me) from
-	**       being counted twice, once by each child.
-	*/
-	make_cp_table(me->leftson, me->complexity, 0);
-	cplist = make_cp_table(me->rightson, me->complexity, nsplit+1);
-    }
-    else cplist = cptable_tail;
+    if (me->leftson) {          /* if there are splits below */
+       /*
+        ** The 2 lines below are perhaps devious
+        **  1) Since the return value depends on ones parent, both calls will
+        **       return the same thing.
+        **  2) I send 0 to the left to keep the current split (me) from
+        **       being counted twice, once by each child.
+        */
+        make_cp_table(me->leftson, me->complexity, 0);
+        cplist = make_cp_table(me->rightson, me->complexity, nsplit + 1);
+    } else
+        cplist = cptable_tail;
 
     while (cplist->cp < parent) {
-	cplist->risk += me->risk;
-	cplist->nsplit += nsplit;
-	cplist = cplist->back;
+        cplist->risk += me->risk;
+        cplist->nsplit += nsplit;
+        cplist = cplist->back;
     }
 
-    return cplist ;
+    return cplist;
 }

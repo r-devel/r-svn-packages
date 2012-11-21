@@ -11,19 +11,19 @@
 */
 #include "rpart.h"
 #include "rpartproto.h"
-static int     *gray;
-static int      maxc, gsave;
+static int *gray;
+static int maxc, gsave;
 
 void
 graycode_init0(int maxcat)
 {
-    gray = (int *)ALLOC(maxcat, sizeof(int));
+    gray = (int *) ALLOC(maxcat, sizeof(int));
 }
 
 void
 graycode_init1(int numcat, int *count)
 {
-    int             i;
+    int i;
 
     maxc = numcat;
     for (i = 0; i < maxc; i++) {
@@ -39,11 +39,11 @@ graycode_init1(int numcat, int *count)
 void
 graycode_init2(int numcat, int *count, double *val)
 {
-    int             i, j, k;
-    double          temp;
+    int i, j, k;
+    double temp;
     maxc = numcat;
 
-    /*
+   /*
     **   sort categories with no members first
     **   then order by val
     */
@@ -81,7 +81,7 @@ graycode_init2(int numcat, int *count, double *val)
 int
 graycode(void)
 {
-    int             i;
+    int i;
 
     if (gsave > -2) {           /* ordered data */
         gsave++;
@@ -90,21 +90,21 @@ graycode(void)
         else
             return maxc;
     } else {
-	/*
-	** Form next subgroup.  We do this using the classic Gray code.
-	**  The initial subset has everyone in the right group.  Each
-	**  subset varies from the prior by only one member -- the
-	**  following item changes groups: 1,2,1,4,1,2,1,8,1,2,1,4,1,...
-	**  The outer loop only goes up to maxc-1: we know for rpart that
-	**    changing the allegiance of the last subject is never necessary
-	*/
-	for (i = 0; i < maxc - 1; i++) {
-	    if (gray[i] == 1) {
-		gray[i] = 2;
-		return i;
-	    }
-	    else if (gray[i] == 2) gray[i] = 1;
-	}
-	return maxc;  /* signal "done" */
+       /*
+        ** Form next subgroup.  We do this using the classic Gray code.
+        **  The initial subset has everyone in the right group.  Each
+        **  subset varies from the prior by only one member -- the
+        **  following item changes groups: 1,2,1,4,1,2,1,8,1,2,1,4,1,...
+        **  The outer loop only goes up to maxc-1: we know for rpart that
+        **    changing the allegiance of the last subject is never necessary
+        */
+        for (i = 0; i < maxc - 1; i++) {
+            if (gray[i] == 1) {
+                gray[i] = 2;
+                return i;
+            } else if (gray[i] == 2)
+                gray[i] = 1;
+        }
+        return maxc;            /* signal "done" */
     }
 }

@@ -11,10 +11,10 @@
 void
 rpcountup(struct node *me, int *nnode, int *nsplit, int *ncat)
 {
-    int             node2, split2;
-    int             cat2;
-    int             i, j, k;
-    struct split   *ss;
+    int node2, split2;
+    int cat2;
+    int i, j, k;
+    struct split *ss;
 
     if (me->complexity <= rp.alpha || me->leftson == 0) {       /* no kids */
         *nnode = 1;

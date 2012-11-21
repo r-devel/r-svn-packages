@@ -18,20 +18,20 @@ void
 nodesplit(struct node *me, int nodenum, int n1, int n2,
           int *nnleft, int *nnright)
 {
-    int             i, j, k;
-    struct split   *tsplit;
-    int             var, extra, lastisleft, someleft;
-    int             i1, i2, i3;
-    int             leftson, rightson;
-    int             pvar;
-    double          psplit;
-    int            *index;
-    int            *which;
-    int           **sorts;
-    int            *sindex;     /* sindex[i] is a shorthand for sorts[var][i] */
-    double        **xdata;
-    int             nleft, nright;
-    //int           dummy;      /* debugging */
+    int i, j, k;
+    struct split *tsplit;
+    int var, extra, lastisleft, someleft;
+    int i1, i2, i3;
+    int leftson, rightson;
+    int pvar;
+    double psplit;
+    int *index;
+    int *which;
+    int **sorts;
+    int *sindex;                /* sindex[i] is a shorthand for sorts[var][i] */
+    double **xdata;
+    int nleft, nright;
+   //int           dummy;      /* debugging */
 
     which = rp.which;
     sorts = rp.sorts;
@@ -39,7 +39,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
     leftson = 2 * nodenum;      /* the label that will go with the left son */
     rightson = leftson + 1;
 
-    /*
+   /*
     ** Walk through the variables (primary, then surrogate 1, then surr 2...)
     **   and reassign "which"
     */
@@ -56,7 +56,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
             if (j < 0)
                 someleft++;     /* missing value */
             else
-                switch (index[(int)xdata[pvar][j] - 1]) {
+                switch (index[(int) xdata[pvar][j] - 1]) {
                 case LEFT:
                     which[j] = leftson;
                     nleft++;
@@ -68,7 +68,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
                 }
         }
     } else {
-        psplit = tsplit->spoint;/* value of split point */
+        psplit = tsplit->spoint;        /* value of split point */
         extra = tsplit->csplit[0];
         for (i = n1; i < n2; i++) {
             j = sorts[pvar][i];
@@ -90,7 +90,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
         }
     }
 
-    /*
+   /*
     ** Now the surrogates 
     **   Usually, there aren't a lot of observations that need to
     **   be split.  So it is more efficient to make one 1:n pass,
@@ -103,25 +103,26 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
                 continue;       /* already split */
 
             j = -(j + 1);       /* obs number - search for surrogates */
-            for (tsplit = me->surrogate; tsplit != 0; tsplit = tsplit->nextsplit) {
+            for (tsplit = me->surrogate; tsplit != 0;
+                 tsplit = tsplit->nextsplit) {
                 var = tsplit->var_num;
                 if (!R_FINITE(xdata[var][j]))
                     continue;
-                /* surrogate not missing - process it */
+               /* surrogate not missing - process it */
 
                 if (rp.numcat[var] > 0) {       /* categorical surrogate */
                     index = tsplit->csplit;
-                    k = (int)xdata[var][j];     /* the value of the surrogate  */
-                    /*
-                     * * The need for the if stmt below may not be obvious.
-                     * The surrogate's value must not be missing, AND there
-                     * must have been at least 1 person with both this
-                     * level of the surrogate and a primary split value
-                     * somewhere in the node.  If everyone in this node
-                     * with level k of the surrogate also had a missing
-                     * value of the primary variable, then index[k-1] will
-                     * be zero.
-                     */
+                    k = (int) xdata[var][j];    /* the value of the surrogate  */
+                   /*
+                    * The need for the if stmt below may not be obvious.
+                    * The surrogate's value must not be missing, AND there
+                    * must have been at least 1 person with both this
+                    * level of the surrogate and a primary split value
+                    * somewhere in the node.  If everyone in this node
+                    * with level k of the surrogate also had a missing
+                    * value of the primary variable, then index[k-1] will
+                    * be zero.
+                    */
                     if (index[k - 1] != 0) {
                         tsplit->count++;
                         if (index[k - 1] == LEFT) {
@@ -156,7 +157,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
         }
     }
     if (someleft > 0 && rp.usesurrogate == 2) {
-        /* all surrogates missing, use the default */
+       /* all surrogates missing, use the default */
         i = me->lastsurrogate;
         if (i != 0) {           /* 50-50 splits are possible - there is no
                                  * "default" */
@@ -170,11 +171,11 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
 
             for (i = n1; i < n2; i++) {
                 j = sorts[pvar][i];
-                /*
-                 * only those who weren't split by the primary (j < 0) and
-                 * weren't split by a surrogate (which == nodenum) need to be
-                 * assigned
-                 */
+               /*
+                * only those who weren't split by the primary (j < 0) and
+                * weren't split by a surrogate (which == nodenum) need to be
+                * assigned
+                */
                 if (j < 0) {
                     j = -(j + 1);
                     if (which[j] == nodenum)
@@ -183,7 +184,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
             }
         }
     }
-    /*
+   /*
     ** Last part of the work is to update the sorts matrix
     **
     ** Say that n1=5, n2=12, 4 go left, 3 go right, and one obs

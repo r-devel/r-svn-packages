@@ -5,16 +5,16 @@
 #include "rpart.h"
 #include "rpartproto.h"
 
-static int      numclass;
-static double  *left,           /* left branch n (weighted) */
-               *right, **ccnt;
-static double  *prior, *aprior, /* altered priors */
-               *freq, *loss;    /* loss matrix */
-static int     *tsplit, *countn;
-static double  *awt, *rate;
-static double   (*impurity) ();
+static int numclass;
+static double *left,            /* left branch n (weighted) */
+ *right, **ccnt;
+static double *prior, *aprior,  /* altered priors */
+ *freq, *loss;                  /* loss matrix */
+static int *tsplit, *countn;
+static double *awt, *rate;
+static double (*impurity) ();
 
-static double 
+static double
 gini_impure1(double p)
 {
     return p * (1.0 - p);
@@ -30,46 +30,48 @@ int
 giniinit(int n, double **y, int maxcat, char **error,
          double *parm, int *size, int who, double *wt)
 {
-    int             i, j, k;
-    double          temp;
+    int i, j, k;
+    double temp;
 
-    /* allocate memory  and setup losses */
+   /* allocate memory  and setup losses */
     if (who == 1) {
         numclass = 0;           /* number of classes */
         for (i = 0; i < n; i++)
-            if (*y[i] > numclass) numclass = (int)*y[i];
+            if (*y[i] > numclass)
+                numclass = (int) *y[i];
 
         if (parm[numclass + numclass * numclass] == 2)
             impurity = gini_impure2;
         else
             impurity = gini_impure1;
 
-        left = (double *)ALLOC(numclass * 2, sizeof(double));
+        left = (double *) ALLOC(numclass * 2, sizeof(double));
         right = left + numclass;
 
-        tsplit = (int *)ALLOC(maxcat * 2, sizeof(int));
+        tsplit = (int *) ALLOC(maxcat * 2, sizeof(int));
         countn = tsplit + maxcat;
 
-        awt = (double *)ALLOC(maxcat * 2, sizeof(double));
+        awt = (double *) ALLOC(maxcat * 2, sizeof(double));
         rate = awt + maxcat;
 
         if (maxcat > 0) {
             graycode_init0(maxcat);
-	    ccnt = (double **)ALLOC(numclass, sizeof(double *));
-            ccnt[0] = (double *)ALLOC(numclass * maxcat, sizeof(double));
+            ccnt = (double **) ALLOC(numclass, sizeof(double *));
+            ccnt[0] = (double *) ALLOC(numclass * maxcat, sizeof(double));
             for (i = 1; i < numclass; i++)
                 ccnt[i] = ccnt[i - 1] + maxcat;
         }
         i = 3 * numclass + numclass * numclass;
-        prior = (double *)ALLOC(i, sizeof(double));
+        prior = (double *) ALLOC(i, sizeof(double));
         aprior = prior + numclass;
         freq = aprior + numclass;
         loss = freq + numclass;
 
-        for (i = 0; i < numclass; i++) freq[i] = 0;
+        for (i = 0; i < numclass; i++)
+            freq[i] = 0;
         temp = 0;
         for (i = 0; i < n; i++) {
-            j = (int)*y[i] - 1;
+            j = (int) *y[i] - 1;
             freq[j] += wt[i];
             temp += wt[i];      /* sum total of weights */
         }
@@ -102,30 +104,31 @@ giniinit(int n, double **y, int maxcat, char **error,
 ** Compute the predicted response and the classification error
 **   This is R(T) (this node's contribution) in the paper.
 */
-void 
+void
 ginidev(int n, double **y, double *value, double *risk, double *wt)
 {
-    int             i, j, max = 0;
-    double          temp, dev = 0;
-    double          prob;
+    int i, j, max = 0;
+    double temp, dev = 0;
+    double prob;
 
-    /*
+   /*
     ** count up number in each class,
     **   and P(T), the probability of reaching this branch of the tree
     */
-    for (i = 0; i < numclass; i++) freq[i] = 0;
+    for (i = 0; i < numclass; i++)
+        freq[i] = 0;
     temp = 0;
     for (i = 0; i < n; i++) {
-        j = (int)y[i][0] - 1;
+        j = (int) y[i][0] - 1;
         freq[j] += wt[i];
         temp += wt[i] * prior[j];
     }
     prob = temp;                /* this is actually P(T)*n; R code will fix
                                  * it up */
 
-    /*
-     ** Now compute best class and its error
-     */
+   /*
+    ** Now compute best class and its error
+    */
     for (i = 0; i < numclass; i++) {    /* assume class i were the prediction */
         temp = 0;
         for (j = 0; j < numclass; j++)
@@ -137,7 +140,8 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
     }
 
     value[0] = max + 1;         /* remember: external groups start at 1 */
-    for (i = 0; i < numclass; i++) value[i + 1] = freq[i];
+    for (i = 0; i < numclass; i++)
+        value[i + 1] = freq[i];
     value[numclass + 1] = prob;
     *risk = dev;
 }
@@ -149,10 +153,10 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
 double
 ginipred(double *y, double *pred)
 {
-    int             i, j;
-    double          temp;
-    i = (int)y[0] - 1;
-    j = (int)*pred - 1;
+    int i, j;
+    double temp;
+    i = (int) y[0] - 1;
+    j = (int) *pred - 1;
     temp = prior[i] * loss[i * numclass + j];
     return temp;
 }
@@ -168,12 +172,12 @@ gini(int n, double *y[], double *x, int numcat,
      int edge, double *improve, double *split, int *csplit, double my_risk,
      double *wt)
 {
-    int             i, j, k;
-    double          lwt, rwt;
-    int             rtot, ltot;
-    int             direction = LEFT, where = 0;
-    double          total_ss, best, temp, p;
-    double          lmean, rmean;       /* used to decide direction */
+    int i, j, k;
+    double lwt, rwt;
+    int rtot, ltot;
+    int direction = LEFT, where = 0;
+    double total_ss, best, temp, p;
+    double lmean, rmean;        /* used to decide direction */
 
     for (i = 0; i < numclass; i++) {
         left[i] = 0;
@@ -184,7 +188,7 @@ gini(int n, double *y[], double *x, int numcat,
     rtot = 0;
     ltot = 0;
     for (i = 0; i < n; i++) {
-        j = (int)*y[i] - 1;
+        j = (int) *y[i] - 1;
         rwt += aprior[j] * wt[i];       /* altered weight = prior *
                                          * case_weight */
         right[j] += wt[i];
@@ -198,13 +202,14 @@ gini(int n, double *y[], double *x, int numcat,
     best = total_ss;            /* total weight of right * impurity of right
                                  * + 0 *0 */
 
-    /*
-     ** at this point we split into 2 disjoint paths
-     */
-    if (numcat > 0) goto categorical;
+   /*
+    ** at this point we split into 2 disjoint paths
+    */
+    if (numcat > 0)
+        goto categorical;
 
     for (i = 0; rtot > edge; i++) {
-        j = (int)*y[i] - 1;
+        j = (int) *y[i] - 1;
         rwt -= aprior[j] * wt[i];
         lwt += aprior[j] * wt[i];
         rtot--;
@@ -227,7 +232,7 @@ gini(int n, double *y[], double *x, int numcat,
             if (temp < best) {
                 best = temp;
                 where = i;
-		direction = lmean < rmean ? LEFT : RIGHT;
+                direction = lmean < rmean ? LEFT : RIGHT;
             }
         }
     }
@@ -240,7 +245,7 @@ gini(int n, double *y[], double *x, int numcat,
     return;
 
 categorical:;
-    /*
+   /*
     ** First collapse the data into a numclass x numcat array
     **  ccnt[i][j] = number of class i obs, category j of the predictor
     */
@@ -251,8 +256,8 @@ categorical:;
             ccnt[i][j] = 0;
     }
     for (i = 0; i < n; i++) {
-        j = (int)*y[i] - 1;
-        k = (int)x[i] - 1;
+        j = (int) *y[i] - 1;
+        k = (int) x[i] - 1;
         awt[k] += aprior[j] * wt[i];
         countn[k]++;
         ccnt[j][k] += wt[i];
@@ -273,7 +278,7 @@ categorical:;
         graycode_init1(numcat, countn);
 
     while ((i = graycode()) < numcat) {
-        /* item i changes groups */
+       /* item i changes groups */
         if (tsplit[i] == LEFT) {
             tsplit[i] = RIGHT;
             rwt += awt[i];

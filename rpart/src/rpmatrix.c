@@ -6,15 +6,14 @@
 #include "rpartproto.h"
 
 /* These four preserve from call to call */
-static int      ncnt, scnt, ccnt;
-static double   cp_scale;
+static int ncnt, scnt, ccnt;
+static double cp_scale;
 
 void
 rpmatrix(struct node *me, int *numcat, double **dsplit,
-         int **isplit, int **csplit, double **dnode,
-         int **inode, int id)
+         int **isplit, int **csplit, double **dnode, int **inode, int id)
 {
-    /*
+   /*
     ** dsplit  0: improvement
     **         1: split point if continuous; index into csplit if not
     **         2: surrogate: adjusted agreement,  primary: nothing
@@ -35,8 +34,8 @@ rpmatrix(struct node *me, int *numcat, double **dsplit,
     **         5: # obs for which this is the final resting place
     */
 
-    int             i, j, k;
-    struct split   *spl;
+    int i, j, k;
+    struct split *spl;
 
     if (id == 1) {              /* this is the top node */
         cp_scale = 1 / me->risk;
@@ -69,8 +68,8 @@ rpmatrix(struct node *me, int *numcat, double **dsplit,
             if (numcat[j] == 0) {
                 dsplit[1][scnt] = spl->spoint;
                 isplit[2][scnt] = spl->csplit[0];
-            } else {/* categorical */
-		dsplit[1][scnt] = ccnt + 1;
+            } else {            /* categorical */
+                dsplit[1][scnt] = ccnt + 1;
                 isplit[2][scnt] = numcat[j];
                 for (k = 0; k < numcat[j]; k++)
                     csplit[k][ccnt] = spl->csplit[k];

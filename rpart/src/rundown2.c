@@ -10,10 +10,10 @@
 void
 rundown2(struct node *tree, int obs, double *cp, double *xpred, int nresp)
 {
-    int             i, j, k;
-    struct node    *otree;
+    int i, j, k;
+    struct node *otree;
 
-    /*
+   /*
     ** Now, repeat the following: for the cp of interest, run down the tree
     **   until I find a node with smaller complexity.  The parent node will
     **   not have collapsed, but this split will have, so this is my
@@ -41,7 +41,7 @@ oops:;
                 xpred[k++] = otree->response_est[j];
         return;
     }
-    /*
+   /*
     ** I never really expect to get to this code.  It can only happen if
     **  the last cp on my list is smaller than the terminal cp of the
     **  xval tree just built.  This is impossible (I think).  But just in

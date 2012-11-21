@@ -4,10 +4,10 @@
 #include <math.h>
 #include "rpart.h"
 
-static double   exp_alpha, exp_beta;
-static double  *death, *wtime, *rate;
-static int     *countn, *order, *order2;
-static int      which_pred;
+static double exp_alpha, exp_beta;
+static double *death, *wtime, *rate;
+static int *countn, *order, *order2;
+static int which_pred;
 /*
  * initialize the necessary common variables for poisson fits
  */
@@ -15,19 +15,19 @@ int
 poissoninit(int n, double *y[], int maxcat, char **error,
             double *param, int *size, int who, double *wt)
 {
-    int             i;
-    double          event, time;
+    int i;
+    double event, time;
 
-    /* allocate memory for scratch */
+   /* allocate memory for scratch */
     if (who == 1 && maxcat > 0) {
-        death = (double *)ALLOC(3 * maxcat, sizeof(double));
+        death = (double *) ALLOC(3 * maxcat, sizeof(double));
         rate = death + maxcat;
         wtime = rate + maxcat;
-        order = (int *)ALLOC(3 * maxcat, sizeof(int));
+        order = (int *) ALLOC(3 * maxcat, sizeof(int));
         order2 = order + maxcat;
         countn = order2 + maxcat;
     }
-    /* check data */
+   /* check data */
     if (who == 1) {
         for (i = 0; i < n; i++) {
             if (y[i][0] <= 0) {
@@ -40,7 +40,7 @@ poissoninit(int n, double *y[], int maxcat, char **error,
             }
         }
     }
-    /* compute the overall hazard rate */
+   /* compute the overall hazard rate */
     event = 0;
     time = 0;
     for (i = 0; i < n; i++) {
@@ -48,7 +48,7 @@ poissoninit(int n, double *y[], int maxcat, char **error,
         time += y[i][0] * wt[i];
     }
 
-    /*
+   /*
     ** Param[0] will contain the desired CV.  If is is <=0, no shrinking
     **   is desired.  The CV determines alpha, and beta is set so that
     **   the gamma prior has the correct mean.
@@ -60,7 +60,7 @@ poissoninit(int n, double *y[], int maxcat, char **error,
         exp_alpha = 1 / (param[0] * param[0]);
         exp_beta = exp_alpha / (event / time);
     }
-    /*
+   /*
     ** Param[1] contains the xval rule:  1=deviance, 2=square root
     */
     which_pred = (int) param[1];
@@ -78,7 +78,7 @@ poissoninit(int n, double *y[], int maxcat, char **error,
 double
 poissonpred(double *y, double *lambda)
 {
-    double          temp, dev;
+    double temp, dev;
 
     if (which_pred == 1) {
         temp = y[1];
@@ -88,10 +88,10 @@ poissonpred(double *y, double *lambda)
 
         return -2 * dev;
     } else {
-        /*
-         * A version based on square roots, which is the variance
-         * stabilizing transform
-         */
+       /*
+        * A version based on square roots, which is the variance
+        * stabilizing transform
+        */
         temp = sqrt(y[1]) - sqrt(*lambda * y[0]);       /* sqrt(obs) - sqrt(exp) */
         return temp * temp;
     }
@@ -106,17 +106,17 @@ poissonpred(double *y, double *lambda)
 void
 poissondev(int n, double **y, double *value, double *risk, double *wt)
 {
-    int             i;
-    double          death, time;
-    double          lambda, dev;
-    double          temp;
+    int i;
+    double death, time;
+    double lambda, dev;
+    double temp;
 
     death = 0;
     time = 0;
 
-    /*
-     * first get the overall estimate of lambda
-     */
+   /*
+    * first get the overall estimate of lambda
+    */
     for (i = 0; i < n; i++) {
         death += y[i][1] * wt[i];
         time += y[i][0] * wt[i];
@@ -148,23 +148,23 @@ poissondev(int n, double **y, double *value, double *risk, double *wt)
 **   where d_l = weigthed sum of deaths for the left son, d_r = right,
 **   d_t = total, and lambda_l etc are the estimated response rates
 */
-void 
-poisson(int n, double **y,  double *x, int nclass,
-	int edge, double *improve, double *split,
-	int *csplit, double my_risk, double *wt)
+void
+poisson(int n, double **y, double *x, int nclass,
+        int edge, double *improve, double *split,
+        int *csplit, double my_risk, double *wt)
 {
-    int             i, j;
-    int             left_n, right_n;
-    double          left_time, right_time;
-    double          left_d, right_d;
-    double          dev;        /* dev of the parent node (me) */
-    double          lambda1, lambda2;
-    double          best, temp;
-    int             direction = LEFT;
-    int             where = 0;
-    int             ncat;
+    int i, j;
+    int left_n, right_n;
+    double left_time, right_time;
+    double left_d, right_d;
+    double dev;                 /* dev of the parent node (me) */
+    double lambda1, lambda2;
+    double best, temp;
+    int direction = LEFT;
+    int where = 0;
+    int ncat;
 
-    /*
+   /*
     ** Get the total deaths and the total time
     */
     right_d = 0;
@@ -175,7 +175,7 @@ poisson(int n, double **y,  double *x, int nclass,
         right_time += y[i][0] * wt[i];
     }
 
-    /*
+   /*
     ** Compute the overall lambda and dev
     */
     lambda2 = right_d / right_time;
@@ -185,9 +185,9 @@ poisson(int n, double **y,  double *x, int nclass,
     }
     dev = right_d * log(lambda2);
 
-    /*
-     * at this point we split into 2 disjoint paths
-     */
+   /*
+    * at this point we split into 2 disjoint paths
+    */
     if (nclass > 0)
         goto categorical;
 
@@ -235,16 +235,16 @@ categorical:;
     }
 
     for (i = 0; i < n; i++) {
-        j = (int)(x[i] - 1);
+        j = (int) (x[i] - 1);
         countn[j]++;            /* number per group */
         death[j] += y[i][1] * wt[i];
         wtime[j] += y[i][0] * wt[i];    /* sum of time */
     }
 
-    /*
-     * Rank the rates  - each is scored as the number of others that it
-     * is smaller than.  Ignore the categories which had no representatives.
-     */
+   /*
+    * Rank the rates  - each is scored as the number of others that it
+    * is smaller than.  Ignore the categories which had no representatives.
+    */
     ncat = 0;                   /* may be less than nclass if not all
                                  * categories are present */
     for (i = 0; i < nclass; i++) {
@@ -262,14 +262,14 @@ categorical:;
             }
         }
     }
-    /*
+   /*
     ** order2 will point to the largest, second largest, etc
     */
     for (i = 0; i < nclass; i++)
         if (countn[i] > 0)
             order2[order[i]] = i;
 
-    /*
+   /*
     ** Now find the split that we want
     **    starting with everyone in the right hand group
     */
@@ -307,7 +307,7 @@ categorical:;
 
     *improve = -2 * (dev - best);
 
-    /* (if improve=0, csplit will never be looked at by the calling routine) */
+   /* (if improve=0, csplit will never be looked at by the calling routine) */
     for (i = 0; i < nclass; i++)
         csplit[i] = 0;
     for (i = 0; i <= where; i++)

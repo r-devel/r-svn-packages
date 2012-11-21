@@ -3,25 +3,25 @@
 */
 struct split {
     double improve;
-    double adj;           /* for surrogates only, adjusted agreement */
-    double spoint;    /*only used if it is continuous */
+    double adj;                 /* for surrogates only, adjusted agreement */
+    double spoint;              /*only used if it is continuous */
     struct split *nextsplit;
     int var_num;
     int count;
-    int csplit[2];     /*the actual length will be longer for a categorical */
-};                 /*   predictor with >2 levels */
+    int csplit[2];              /*the actual length will be longer for a categorical */
+};                              /*   predictor with >2 levels */
 
 struct node {
-    double  risk;       /*risk for the node */
-    double complexity;  /* complexity at which it will collapse */
-    double sum_wt;      /* sum of the weights for the node  */
+    double risk;                /*risk for the node */
+    double complexity;          /* complexity at which it will collapse */
+    double sum_wt;              /* sum of the weights for the node  */
     struct split *primary;
     struct split *surrogate;
     struct node *rightson;
     struct node *leftson;
     int num_obs;
     int lastsurrogate;
-    double response_est[2];  /*actual length depends on splitting rule */
+    double response_est[2];     /*actual length depends on splitting rule */
 };
 
 struct cptable {

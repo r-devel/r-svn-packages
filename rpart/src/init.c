@@ -5,9 +5,9 @@
 
 SEXP init_rpcallback(SEXP rhox, SEXP ny, SEXP nr, SEXP expr1x, SEXP expr2x);
 SEXP rpartexp2(SEXP dtimes, SEXP seps);
-SEXP pred_rpart(SEXP dimx, SEXP nnode,	SEXP nsplit, SEXP dimc,
-		SEXP nnum,  SEXP nodes2, SEXP vnum,  SEXP split2,
-		SEXP csplit2, SEXP usesur, SEXP xdata2, SEXP xmiss2);
+SEXP pred_rpart(SEXP dimx, SEXP nnode, SEXP nsplit, SEXP dimc,
+                SEXP nnum, SEXP nodes2, SEXP vnum, SEXP split2,
+                SEXP csplit2, SEXP usesur, SEXP xdata2, SEXP xmiss2);
 
 static const R_CallMethodDef CallEntries[] = {
     {"init_rpcallback", (DL_FUNC) &init_rpcallback, 5},

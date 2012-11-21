@@ -19,25 +19,25 @@
 void
 surrogate(struct node *me, int n1, int n2)
 {
-    int             i, j, k;
-    int             var;        /* the primary split variable */
-    double          split;
-    double          improve;
-    double          lcount, rcount;     /* weight sent left and right by
-                                         * primary */
-    int             extra;
-    struct split   *ss;
-    int            *index;
-    int            *tempy;
-    int           **sorts;
-    double        **xdata;
-    int             ncat;
-    double          adj_agree;
+    int i, j, k;
+    int var;                    /* the primary split variable */
+    double split;
+    double improve;
+    double lcount, rcount;      /* weight sent left and right by
+                                 * primary */
+    int extra;
+    struct split *ss;
+    int *index;
+    int *tempy;
+    int **sorts;
+    double **xdata;
+    int ncat;
+    double adj_agree;
 
     tempy = rp.tempvec;
     sorts = rp.sorts;
     xdata = rp.xdata;
-    /*
+   /*
     ** First construct, in tempy, the "y" variable for this calculation.
     ** It will be LEFT:goes left, 0:missing, RIGHT:goes right.
     **  Count up the number of obs the primary sends to the left, as my
@@ -65,11 +65,11 @@ surrogate(struct node *me, int n1, int n2)
             if (j < 0)
                 tempy[-(j + 1)] = 0;
             else
-                tempy[j] = index[(int)xdata[var][j] - 1];
+                tempy[j] = index[(int) xdata[var][j] - 1];
         }
     }
 
-    /* count the total number sent left and right */
+   /* count the total number sent left and right */
     lcount = 0;
     rcount = 0;
     for (i = n1; i < n2; i++) {
@@ -97,23 +97,22 @@ surrogate(struct node *me, int n1, int n2)
             me->lastsurrogate = 0;      /* no default */
     }
 
-    /*
-     * * Now walk through the variables
-     */
-    me->surrogate = (struct split *)0;
+   /*
+    * * Now walk through the variables
+    */
+    me->surrogate = (struct split *) 0;
     for (i = 0; i < rp.nvar; i++) {
         if (var == i)
             continue;
         ncat = rp.numcat[i];
 
         choose_surg(n1, n2, tempy, xdata[i], sorts[i], ncat,
-                    &improve, &split, rp.csplit, lcount, rcount,
-                    &adj_agree);
+                    &improve, &split, rp.csplit, lcount, rcount, &adj_agree);
 
         if (adj_agree <= 0)
             continue;           /* no better than default */
 
-        /* sort it onto the list of surrogates */
+       /* sort it onto the list of surrogates */
         ss = insert_split(&(me->surrogate), ncat, improve, rp.maxsur);
         if (ss != 0) {
             ss->improve = improve;

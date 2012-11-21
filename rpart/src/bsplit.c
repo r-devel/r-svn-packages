@@ -15,30 +15,30 @@
 void
 bsplit(struct node *me, int n1, int n2)
 {
-    int             i, j, k;
-    int             kk;
-    int             nc;
-    double          improve;
-    double          split = 0.0;
-    struct split   *tsplit;
-    int            *index;
-    double         *xtemp;      /* these 3 because I got tired of typeing
+    int i, j, k;
+    int kk;
+    int nc;
+    double improve;
+    double split = 0.0;
+    struct split *tsplit;
+    int *index;
+    double *xtemp;              /* these 3 because I got tired of typeing
                                  * "rp.xtemp", etc */
-    double        **ytemp;
-    double         *wtemp;
+    double **ytemp;
+    double *wtemp;
 
     xtemp = rp.xtemp;
     ytemp = rp.ytemp;
     wtemp = rp.wtemp;
 
-    /*
+   /*
     ** test out the variables 1 at at time
     */
-    me->primary = (struct split *)0;
+    me->primary = (struct split *) 0;
     for (i = 0; i < rp.nvar; i++) {
         index = rp.sorts[i];
         nc = rp.numcat[i];
-        /* extract x and y data */
+       /* extract x and y data */
         k = 0;
         for (j = n1; j < n2; j++) {
             kk = index[j];
@@ -51,20 +51,19 @@ bsplit(struct node *me, int n1, int n2)
             }
         }
 
-        if (k == 0 ||
-            (nc == 0 && xtemp[0] == xtemp[k - 1]))
+        if (k == 0 || (nc == 0 && xtemp[0] == xtemp[k - 1]))
             continue;           /* no place to split */
 
         (*rp_choose) (k, ytemp, xtemp, nc, rp.min_node, &improve,
                       &split, rp.csplit, me->risk, wtemp);
 
-        /*
-         * * Originally, this just said "if (improve >0)", but rounding *
-         * error will sometimes create a non zero that should be 0.  Yet we *
-         * want to retain invariance to the scale of "improve".
-         */
+       /*
+        * Originally, this just said "if (improve >0)", but rounding
+        * error will sometimes create a non zero that should be 0.  Yet we
+        * want to retain invariance to the scale of "improve".
+        */
         if (improve > rp.iscale)
-            rp.iscale = improve;/* largest seen so far */
+            rp.iscale = improve;        /* largest seen so far */
         if (improve > (rp.iscale * 1e-10)) {
             improve /= rp.vcost[i];     /* scale the improvement */
             tsplit = insert_split(&(me->primary), nc, improve, rp.maxpri);

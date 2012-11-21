@@ -1,6 +1,8 @@
 2012 Nov ??	4.1-0	Reguire R >= 2.15.0 so paste0() can be used.
      	 		Remove rpconvert().
 			Clean up a lot of the R code.
+			C code reformatted with GNU indent and
+			-i4 -nut -ncdb -d1 -br -ce -il0 -npcs -brs
 
 
 2012 Nov 18	4.0-3	Add 'importance' to rpart object and to summary():

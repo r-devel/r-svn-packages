@@ -33,7 +33,7 @@
 void
 make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
 {
-    double          me_cp;
+    double me_cp;
     struct cptable *cplist, *cptemp = NULL;
 
     if (me->complexity > parent)
@@ -47,7 +47,7 @@ make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
     }
     if (me_cp < parent) {       /* if not, then it can't be unique */
         for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
-            /* am I tied? */
+           /* am I tied? */
             if (me_cp == cplist->cp)
                 return;         /* exact ties */
 
@@ -56,9 +56,9 @@ make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
             cptemp = cplist;
         }
 
-        /* insert new stuff after cptemp */
-        /* was CALLOC and not cleaned up */
-        cplist = (struct cptable *)ALLOC(1, sizeof(struct cptable));
+       /* insert new stuff after cptemp */
+       /* was CALLOC and not cleaned up */
+        cplist = (struct cptable *) ALLOC(1, sizeof(struct cptable));
         memset(cplist, 0, sizeof(struct cptable));      /* zeros risk and nsplit */
         cplist->cp = me_cp;
         cplist->xrisk = 0;

@@ -4,10 +4,10 @@
 #include "rpart.h"
 #include "rpartproto.h"
 
-static double  *mean, *sums;
-static double  *wts;
-static int     *countn;
-static int     *tsplit;
+static double *mean, *sums;
+static double *wts;
+static int *countn;
+static int *tsplit;
 
 int
 anovainit(int n, double *y[], int maxcat, char **error,
@@ -15,23 +15,25 @@ anovainit(int n, double *y[], int maxcat, char **error,
 {
     if (who == 1 && maxcat > 0) {
         graycode_init0(maxcat);
-        countn = (int *)ALLOC(2 * maxcat, sizeof(int));
+        countn = (int *) ALLOC(2 * maxcat, sizeof(int));
         tsplit = countn + maxcat;
-        mean = (double *)ALLOC(3 * maxcat, sizeof(double));
+        mean = (double *) ALLOC(3 * maxcat, sizeof(double));
         wts = mean + maxcat;
         sums = wts + maxcat;
     }
     *size = 1;
     return 0;
 }
+
 /*
 ** The anova evaluation function.  Return the mean and the ss.
 */
-void anovass(int n, double *y[], double *value, double *risk, double *wt)
+void
+anovass(int n, double *y[], double *value, double *risk, double *wt)
 {
-    int             i;
-    double          temp = 0., twt = 0.;        /* sum of the weights */
-    double          mean, ss;
+    int i;
+    double temp = 0., twt = 0.; /* sum of the weights */
+    double mean, ss;
 
     for (i = 0; i < n; i++) {
         temp += *y[i] * wt[i];
@@ -60,16 +62,16 @@ anova(int n, double *y[], double *x, int nclass,
       int edge, double *improve, double *split, int *csplit,
       double myrisk, double *wt)
 {
-    int             i, j;
-    double          temp;
-    double          left_sum, right_sum;
-    double          left_wt, right_wt;
-    int             left_n, right_n;
-    double          grandmean, best;
-    int             direction = LEFT;
-    int             where = 0;
+    int i, j;
+    double temp;
+    double left_sum, right_sum;
+    double left_wt, right_wt;
+    int left_n, right_n;
+    double grandmean, best;
+    int direction = LEFT;
+    int where = 0;
 
-    /*
+   /*
     ** The improvement of a node is SS - (SS_L + SS_R), where
     **   SS = sum of squares in a node = \sum w_i (x_i - \bar x)^2, where
     ** of course \bar x is a weighted mean \sum w_i x_i / \sum w_i
@@ -122,9 +124,9 @@ anova(int n, double *y[], double *x, int nclass,
             *split = (x[where] + x[where + 1]) / 2;
         }
     }
- /*
-  * * Categorical predictor
-  */
+   /*
+    * Categorical predictor
+    */
     else {
         for (i = 0; i < nclass; i++) {
             sums[i] = 0;
@@ -132,9 +134,9 @@ anova(int n, double *y[], double *x, int nclass,
             wts[i] = 0;
         }
 
-    /* rank the classes by their mean y value */
+       /* rank the classes by their mean y value */
         for (i = 0; i < n; i++) {
-            j = (int)x[i] - 1;
+            j = (int) x[i] - 1;
             countn[j]++;
             wts[j] += wt[i];
             sums[j] += (*y[i] - grandmean) * wt[i];
@@ -148,9 +150,9 @@ anova(int n, double *y[], double *x, int nclass,
         }
         graycode_init2(nclass, countn, mean);
 
-    /*
-     * * Now find the split that we want
-     */
+       /*
+        * Now find the split that we want
+        */
         left_wt = 0;
         left_sum = 0;
         right_sum = 0;
@@ -171,11 +173,9 @@ anova(int n, double *y[], double *x, int nclass,
                 if (temp > best) {
                     best = temp;
                     if ((left_sum / left_wt) > (right_sum / right_wt))
-                        for (i = 0; i < nclass; i++)
-                            csplit[i] = -tsplit[i];
+                        for (i = 0; i < nclass; i++) csplit[i] = -tsplit[i];
                     else
-                        for (i = 0; i < nclass; i++)
-                            csplit[i] = tsplit[i];
+                        for (i = 0; i < nclass; i++) csplit[i] = tsplit[i];
                 }
             }
         }

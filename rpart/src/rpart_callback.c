@@ -15,17 +15,17 @@
 #endif
 
 
-static int      ysave;          /* number of columns of y  */
-static int      rsave;          /* the length of the returned "mean" from the
+static int ysave;               /* number of columns of y  */
+static int rsave;               /* the length of the returned "mean" from the
                                  * user's eval routine */
-static SEXP     expr1;          /* the evaluation expression for splits */
-static SEXP     expr2;          /* the evaluation expression for values */
-static SEXP     rho;
+static SEXP expr1;              /* the evaluation expression for splits */
+static SEXP expr2;              /* the evaluation expression for values */
+static SEXP rho;
 
-static double  *ydata;          /* pointer to the data portion of yback */
-static double  *xdata;          /* pointer to the data portion of xback */
-static double  *wdata;          /* pointer to the data portion of wback */
-static int     *ndata;          /* pointer to the data portion of nback */
+static double *ydata;           /* pointer to the data portion of yback */
+static double *xdata;           /* pointer to the data portion of xback */
+static double *wdata;           /* pointer to the data portion of wback */
+static int *ndata;              /* pointer to the data portion of nback */
 
 /*
 ** The first routine saves away the parameters, the location
@@ -35,7 +35,7 @@ static int     *ndata;          /* pointer to the data portion of nback */
 SEXP
 init_rpcallback(SEXP rhox, SEXP ny, SEXP nr, SEXP expr1x, SEXP expr2x)
 {
-    SEXP            stemp;
+    SEXP stemp;
 
     rho = rhox;
     ysave = asInteger(ny);
@@ -68,8 +68,8 @@ init_rpcallback(SEXP rhox, SEXP ny, SEXP nr, SEXP expr1x, SEXP expr2x)
 **  For the "hardcoded" user routines, this is a constant written into
 **  their init routine, but here we need to grab it from outside.
 */
-void 
-rpart_callback0(int *nr) 
+void
+rpart_callback0(int *nr)
 {
     *nr = rsave;
 }
@@ -80,11 +80,11 @@ rpart_callback0(int *nr)
 void
 rpart_callback1(int n, double *y[], double *wt, double *z)
 {
-    int             i, j, k;
-    SEXP            value;
-    double         *dptr;
+    int i, j, k;
+    SEXP value;
+    double *dptr;
 
-    /* Copy n and wt into the parent frame */
+   /* Copy n and wt into the parent frame */
     k = 0;
     for (i = 0; i < ysave; i++) {
         for (j = 0; j < n; j++) {
@@ -98,13 +98,13 @@ rpart_callback1(int n, double *y[], double *wt, double *z)
     }
     ndata[0] = n;
 
-    /*
+   /*
     **  Evaluate the saved expression in the parent frame
     **   The result should be a vector of numerics containing the
     **   "deviance" followed by the "mean"
     */
 
-    /* no need to protect as no memory allocation (or error) below */
+   /* no need to protect as no memory allocation (or error) below */
     value = eval(expr2, rho);
     if (!isReal(value)) {
         error(_("return value not a vector"));
@@ -124,9 +124,9 @@ void
 rpart_callback2(int n, int ncat, double *y[], double *wt,
                 FLOAT * x, double *good)
 {
-    int             i, j, k;
-    SEXP            goodness;
-    double         *dptr;
+    int i, j, k;
+    SEXP goodness;
+    double *dptr;
 
     k = 0;
     for (i = 0; i < ysave; i++) {
@@ -146,31 +146,31 @@ rpart_callback2(int n, int ncat, double *y[], double *wt,
     } else
         ndata[0] = n;
 
-    /* no need to protect as no memory allocation (or error) below */
+   /* no need to protect as no memory allocation (or error) below */
     goodness = eval(expr1, rho);
     if (!isReal(goodness))
         error(_("the expression expr1 did not return a vector!"));
     j = LENGTH(goodness);
 
-    /*
-     * yes, the lengths have already been checked in the C code  --- call
-     * this extra documenation then
-     */
+   /*
+    * yes, the lengths have already been checked in the C code  --- call
+    * this extra documenation then
+    */
     if (ncat == 0) {
         if (j != 2 * (n - 1))
-            error(
-                  _("the expression expr1 returned a list of %d elements, %d required"),
+            error(_
+                  ("the expression expr1 returned a list of %d elements, %d required"),
                   j, 2 * (n - 1));
 
         dptr = REAL(goodness);
         for (i = 0; i < j; i++)
             good[i] = dptr[i];
     } else {
-        /*
-         * If not all categories were present in X, then the return list 
-         * will have 2(#categories present) -1 elements
-	 * The first element of "good" contains the number of groups found
-         */
+       /*
+        * If not all categories were present in X, then the return list 
+        * will have 2(#categories present) -1 elements
+        * The first element of "good" contains the number of groups found
+        */
         dptr = REAL(goodness);
         good[0] = (j + 1) / 2;
         for (i = 0; i < j; i++)
@@ -178,10 +178,10 @@ rpart_callback2(int n, int ncat, double *y[], double *wt,
     }
 
 
-    /*
-     * There is a memory growth here (yes?) -- should release the goodness *
-     * object right now.  There will be LOTS of them, and they won't *  go
-     * away until the parent routine is done. But there is no *  public macro
-     * to do it.
-     */
+   /*
+    *  There is a memory growth here (yes?) -- should release the goodness
+    *  object right now.  There will be LOTS of them, and they won't
+    *  go away until the parent routine is done. But there is no
+    *  public macro to do it.
+    */
 }

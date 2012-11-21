@@ -13,11 +13,11 @@
 static void
 Rpartexp2(int n, double *y, double eps, int *keep)
 {
-    double          delta;
-    int             i, j;
-    double          lasty;
+    double delta;
+    int i, j;
+    double lasty;
 
-    /* let delta = eps * interquartile range */
+   /* let delta = eps * interquartile range */
 
     i = n / 4;
     j = (3 * n) / 4;
@@ -25,9 +25,9 @@ Rpartexp2(int n, double *y, double eps, int *keep)
 
 
     /*
-     * * make sure that each y is at least "delta" greater than * the last y
-     * that we have decided to keep
-     */
+    ** make sure that each y is at least "delta" greater than
+    ** the last y that we have decided to keep
+    */
     lasty = y[0];
     keep[0] = 1;
     for (i = 1; i < n; i++) {
@@ -43,8 +43,8 @@ Rpartexp2(int n, double *y, double eps, int *keep)
 SEXP
 rpartexp2(SEXP dtimes, SEXP eps)
 {
-    int             n = LENGTH(dtimes);
-    SEXP            keep = PROTECT(allocVector(INTSXP, n));
+    int n = LENGTH(dtimes);
+    SEXP keep = PROTECT(allocVector(INTSXP, n));
     Rpartexp2(n, REAL(dtimes), asReal(eps), INTEGER(keep));
     UNPROTECT(1);
     return keep;
