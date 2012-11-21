@@ -1,5 +1,5 @@
 /*
-** The four routines for anova splitting
+* The four routines for anova splitting
 */
 #include "rpart.h"
 #include "rpartproto.h"
@@ -26,7 +26,7 @@ anovainit(int n, double *y[], int maxcat, char **error,
 }
 
 /*
-** The anova evaluation function.  Return the mean and the ss.
+* The anova evaluation function.  Return the mean and the ss.
 */
 void
 anovass(int n, double *y[], double *value, double *risk, double *wt)
@@ -52,11 +52,11 @@ anovass(int n, double *y[], double *value, double *risk, double *wt)
 }
 
 /*
-** The anova splitting function.  Find that split point in x such that
-**  the sum of squares of y within the two groups is decreased as much
-**  as possible.  It is not necessary to actually calculate the SS, the
-**  improvement involves only means in the two groups.
-*/
+ * The anova splitting function.  Find that split point in x such that 
+ *  the sum of squares of y within the two groups is decreased as much
+ *  as possible.  It is not necessary to actually calculate the SS, the
+ *  improvement involves only means in the two groups.
+ */
 void
 anova(int n, double *y[], double *x, int nclass,
       int edge, double *improve, double *split, int *csplit,
@@ -72,14 +72,14 @@ anova(int n, double *y[], double *x, int nclass,
     int where = 0;
 
    /*
-    ** The improvement of a node is SS - (SS_L + SS_R), where
-    **   SS = sum of squares in a node = \sum w_i (x_i - \bar x)^2, where
-    ** of course \bar x is a weighted mean \sum w_i x_i / \sum w_i
-    ** Using the identity
-    **    \sum w_i(x_ - \bar x)^2 = \sum w_i (x_i-c)^2 - (\sum w_i)(c-\bar x)^2
-    ** the improvement = w_l*(left mean - grand mean)^2
-    **                  +w_r*(right mean- grand mean)^2
-    ** where w_l is the sum of weights in the left node, w_r similarly.
+    * The improvement of a node is SS - (SS_L + SS_R), where
+    *   SS = sum of squares in a node = \sum w_i (x_i - \bar x)^2, where
+    * of course \bar x is a weighted mean \sum w_i x_i / \sum w_i
+    * Using the identity
+    *    \sum w_i(x_ - \bar x)^2 = \sum w_i (x_i-c)^2 - (\sum w_i)(c-\bar x)^2
+    * the improvement = w_l*(left mean - grand mean)^2
+    *                  +w_r*(right mean- grand mean)^2
+    * where w_l is the sum of weights in the left node, w_r similarly.
     */
     right_wt = 0;
     right_n = n;
@@ -124,9 +124,9 @@ anova(int n, double *y[], double *x, int nclass,
             *split = (x[where] + x[where + 1]) / 2;
         }
     }
-   /*
-    * Categorical predictor
-    */
+    /*
+     * Categorical predictor
+     */
     else {
         for (i = 0; i < nclass; i++) {
             sums[i] = 0;
@@ -150,9 +150,9 @@ anova(int n, double *y[], double *x, int nclass,
         }
         graycode_init2(nclass, countn, mean);
 
-       /*
-        * Now find the split that we want
-        */
+	/*
+	 * Now find the split that we want
+	 */
         left_wt = 0;
         left_sum = 0;
         right_sum = 0;

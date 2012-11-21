@@ -1,30 +1,30 @@
 /*
-** This routine creates the list of unique complexity parameters.
-** The list is maintained in sorted order.  If two parameters are within
-** "cplist_epsilon" of one another, then only the larger of them is
-** retained.
-**       CHANGE: 7/2000, the "cplist-epsilon" logic moved to S code
-**   I want the list sorted with the largest cp at the top of the list, since
-** that is the order that the CP table will be printed in.
-**
-**    After the partition routine is done, each node is labeled with the
-** complexity parameter appropriate if that node were the top of the tree.
-** However, if there is a more vunerable node further up, the node in
-** question will actually have the smaller complexity parameter; it will
-** be removed when its parent collapses. So this routine also adjusts each
-** C.P. to = minimum(my C.P., parent's C.P.).
-**
-**   This routine is called at the top level by rpart, after rpart has
-** initialized the first member of the linked cp-list, set its number of
-** splits to zero, and its risk to that for no splits at all.  This routine
-** allocates and links in the rest of the cp-list.  The make_cp_table
-** routine then fills in the rest of the variables in the list.
-**
-**  node *me;         pointer to my node structure
-**  double parent;    complexity of my parent node
-**
-**   When it comes time to cross-validate, we fill in xrisk and xstd
-*/
+ * This routine creates the list of unique complexity parameters.
+ * The list is maintained in sorted order.  If two parameters are within
+ * "cplist_epsilon" of one another, then only the larger of them is
+ * retained.
+ *       CHANGE: 7/2000, the "cplist-epsilon" logic moved to S code
+ *   I want the list sorted with the largest cp at the top of the list, since
+ * that is the order that the CP table will be printed in.
+ *
+ *    After the partition routine is done, each node is labeled with the
+ * complexity parameter appropriate if that node were the top of the tree.
+ * However, if there is a more vunerable node further up, the node in
+ * question will actually have the smaller complexity parameter; it will
+ * be removed when its parent collapses. So this routine also adjusts each
+ * C.P. to = minimum(my C.P., parent's C.P.).
+ *
+ *   This routine is called at the top level by rpart, after rpart has
+ * initialized the first member of the linked cp-list, set its number of
+ * splits to zero, and its risk to that for no splits at all.  This routine
+ * allocates and links in the rest of the cp-list.  The make_cp_table
+ * routine then fills in the rest of the variables in the list.
+ *
+ *  node *me;         pointer to my node structure
+ *  double parent;    complexity of my parent node
+ *
+ *   When it comes time to cross-validate, we fill in xrisk and xstd
+ */
 #include <math.h>
 #include "rpart.h"
 #include "node.h"

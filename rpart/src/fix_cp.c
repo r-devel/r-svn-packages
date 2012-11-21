@@ -1,8 +1,8 @@
 /*
-** When partition is done, each node is labeled with the complexity
-**  appropriate if it were the top of the tree.  Actually, the complexity
-**  should be min(me, any-node-above-me).  This routine fixes that.
-*/
+ * When partition is done, each node is labeled with the complexity
+ *  appropriate if it were the top of the tree.  Actually, the complexity
+ *  should be min(me, any-node-above-me).  This routine fixes that.
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"

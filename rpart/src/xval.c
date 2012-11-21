@@ -1,25 +1,25 @@
 /*
-** Cross validate a model.  This routine is responsible for filling in
-**  two vectors -- xrisk = cross-validated risk estimate
-**                 xstd  = std of xrisk
-**
-** Basic method is to use a stratified partitioning of the data (NOT random)
-**  into n_xval subgroups.  One by one, each of these groups is left out of
-**  the partitioning by setting 'which' to 0.  After partitioning, the risk
-**  of each left out subject is determined, under each of the unique
-**  complexity parameters.
-** The x-groups are set by the calling S-routine, so they can actually be
-**  random, non-random, or whatever, as far as this routine is concerned.
-**
-**  n_xval: number of cross-validation subsets
-**  cptable: head of the complexity parameter table, were results will be
-**              stored
-**  x_grp(n): defines the groups.  Integers from 1 to n_xval
-**  maxcat  : max # categories, in any given categorical variable
-**  errmsg   : possible error message
-**  parms   : vector of input parameters, initializers for the splitting rule
-**  savesort: saved version of rp.sorts
-*/
+ * Cross validate a model.  This routine is responsible for filling in
+ *  two vectors -- xrisk = cross-validated risk estimate
+ *                 xstd  = std of xrisk
+ *
+ * Basic method is to use a stratified partitioning of the data (NOT random)
+ *  into n_xval subgroups.  One by one, each of these groups is left out of
+ *  the partitioning by setting 'which' to 0.  After partitioning, the risk
+ *  of each left out subject is determined, under each of the unique
+ *  complexity parameters.
+ * The x-groups are set by the calling S-routine, so they can actually be
+ *  random, non-random, or whatever, as far as this routine is concerned.
+ *
+ *  n_xval: number of cross-validation subsets
+ *  cptable: head of the complexity parameter table, were results will be
+ *              stored
+ *  x_grp(n): defines the groups.  Integers from 1 to n_xval
+ *  maxcat  : max # categories, in any given categorical variable
+ *  errmsg   : possible error message
+ *  parms   : vector of input parameters, initializers for the splitting rule
+ *  savesort: saved version of rp.sorts
+ */
 #include <math.h>
 #include "rpart.h"
 #include "node.h"
@@ -52,7 +52,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
     alphasave = rp.alpha;
 
    /*
-    * * Allocate a set of temporary arrays
+    * Allocate a set of temporary arrays
     */
     xtemp = (double *) CALLOC(3 * rp.num_unique_cp, sizeof(double));
     xpred = xtemp + rp.num_unique_cp;
@@ -62,7 +62,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
         savew[i] = rp.which[i]; /* restore at the end */
 
    /*
-    * * Make the list of CPs that I will compare against
+    * Make the list of CPs that I will compare against
     */
     cp[0] = 10 * cptable_head->cp;      /* close enough to infinity */
     i = 1;
@@ -77,13 +77,13 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
     old_wt = total_wt;
 
    /*
-    * * do the validations
+    * do the validations
     */
     k = 0;                      /* -Wall */
     for (xgroup = 0; xgroup < n_xval; xgroup++) {
        /*
-        * * restore rp.sorts, with the data for this run at the top *   this
-        * requires one pass per variable
+        * restore rp.sorts, with the data for this run at the top 
+	* this requires one pass per variable
         */
         for (j = 0; j < rp.nvar; j++) {
             k = 0;
@@ -103,7 +103,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
         }
 
        /*
-        * *  Fix up the y vector, and save a list of "left out" obs *   in
+        *  Fix up the y vector, and save a list of "left out" obs *   in
         * the tail, unused end of rp.sorts[0][i];
         */
         last = k;
@@ -131,7 +131,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
 
 
        /*
-        * * partition the new tree
+        * partition the new tree
         */
         xtree = (struct node *) CALLOC(1, nodesize);
         xtree->num_obs = k;
@@ -143,7 +143,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
         fix_cp(xtree, xtree->complexity);
 
        /*
-        * * run the extra data down the new tree
+        * run the extra data down the new tree
         */
         for (i = k; i < rp.n; i++) {
             j = rp.sorts[0][i];

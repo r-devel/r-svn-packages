@@ -1,6 +1,6 @@
 /*
-** free up all of the memory associated with a tree
-*/
+ * free up all of the memory associated with a tree
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"

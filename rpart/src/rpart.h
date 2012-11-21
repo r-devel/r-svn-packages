@@ -1,8 +1,8 @@
 /*
-** commom variables for the rpart routine
-**
-** Start with things that depend on R.h
-*/
+ * commom variables for the rpart routine
+ *
+ * Start with things that depend on R.h
+ */
 #include <R.h>
 #include <Rinternals.h>
 
@@ -14,11 +14,11 @@
 #endif
 
 /*
-** Memory defined with S_alloc is removed automatically
-**  That with "CALLOC" I have to remove myself.  Use the
-**  latter for objects that need to persist between the 
-**  s_to_rp1 and s_to_rp2 calls
-*/
+ * Memory defined with R_alloc is removed automatically
+ *  That with "CALLOC" I have to remove myself.  Use the
+ *  latter for objects that need to persist between the 
+ *  s_to_rp1 and s_to_rp2 calls
+ */
 #define ALLOC(a,b)  R_alloc(a,b)
 #define CALLOC(a,b) R_chk_calloc((size_t)(a), b)
 #define RPARTNA(a) ISNAN(a)
@@ -35,8 +35,8 @@
 #endif
 
 /* As a sop to S, I need to keep the total number of external symbols
-**  somewhat smaller.  So, pack most of them all into a structure.
-*/
+ *  somewhat smaller.  So, pack most of them all into a structure.
+ */
 EXTERN struct {
     double complexity;
     double alpha;
@@ -79,13 +79,13 @@ EXTERN double (*rp_error) ();   /*set to the prediction error routine */
 EXTERN int nodesize;
 
 /*
-** The user inputs his complexity parameter as a percentage. and the
-**   printout is also scaled in this way.  The book and the computations all
-**   have an easier time with absolute cp.  So complex = what the user
-**   typed and alpha = complex * (risk of top node) = what is used
-**   internally.
-** The variable 'complex' in node.h is also on the internal scale.
-**
-** Categorical variables must be coded as 1,2,3, ..., and there may be
-**  missing categories.  The upper limit is determined on the fly.
-*/
+ * The user inputs his complexity parameter as a percentage. and the
+ *   printout is also scaled in this way.  The book and the computations all
+ *   have an easier time with absolute cp.  So complex = what the user
+ *   typed and alpha = complex * (risk of top node) = what is used
+ *   internally.
+ * The variable 'complex' in node.h is also on the internal scale.
+ *
+ * Categorical variables must be coded as 1,2,3, ..., and there may be
+ *  missing categories.  The upper limit is determined on the fly.
+ */

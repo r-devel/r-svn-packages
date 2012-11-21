@@ -1,9 +1,9 @@
 /*
-** count up the number of nodes and splits in the final result
-**
-**  Gather the counts for myself, add in those of my children, and
-**    pass the total back to my parent
-*/
+ * count up the number of nodes and splits in the final result
+ *
+ *  Gather the counts for myself, add in those of my children, and
+ *    pass the total back to my parent
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"

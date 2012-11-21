@@ -1,14 +1,14 @@
 /*
-** The table of implimented splitting functions
-**
-**  init_split   - Will be called before a tree is started.  May do very
-**                  little, but empirical Bayes like methods will need to set
-**                  some global variables.
-**  choose_split - function to find the best split
-**  eval         - function to calculate the response estimate and risk
-**  error        - Function that returns the prediction error.
-**  num_y        - Number of columns needed to represent y (usually 1)
-*/
+ * The table of implimented splitting functions
+ *
+ *  init_split   - Will be called before a tree is started.  May do very
+ *                  little, but empirical Bayes like methods will need to set
+ *                  some global variables.
+ *  choose_split - function to find the best split
+ *  eval         - function to calculate the response estimate and risk
+ *  error        - Function that returns the prediction error.
+ *  num_y        - Number of columns needed to represent y (usually 1)
+ */
 
 extern int anovainit(int n, double *y[], int maxcat, char **error,
                      double *parm, int *size, int who, double *wt);

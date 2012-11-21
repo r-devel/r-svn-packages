@@ -1,6 +1,6 @@
 /*
-** The routines for gini-classification
-*/
+ * The routines for gini-classification
+ */
 #include <math.h>
 #include "rpart.h"
 #include "rpartproto.h"
@@ -101,9 +101,9 @@ giniinit(int n, double **y, int maxcat, char **error,
 }
 
 /*
-** Compute the predicted response and the classification error
-**   This is R(T) (this node's contribution) in the paper.
-*/
+ * Compute the predicted response and the classification error
+ *   This is R(T) (this node's contribution) in the paper.
+ */
 void
 ginidev(int n, double **y, double *value, double *risk, double *wt)
 {
@@ -112,8 +112,8 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
     double prob;
 
    /*
-    ** count up number in each class,
-    **   and P(T), the probability of reaching this branch of the tree
+    * count up number in each class,
+    *   and P(T), the probability of reaching this branch of the tree
     */
     for (i = 0; i < numclass; i++)
         freq[i] = 0;
@@ -127,7 +127,7 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
                                  * it up */
 
    /*
-    ** Now compute best class and its error
+    * Now compute best class and its error
     */
     for (i = 0; i < numclass; i++) {    /* assume class i were the prediction */
         temp = 0;
@@ -148,7 +148,7 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
 
 
 /*
-** return the error for a particular point
+* return the error for a particular point
 */
 double
 ginipred(double *y, double *pred)
@@ -163,10 +163,10 @@ ginipred(double *y, double *pred)
 
 
 /*
-** The gini splitting function.  Find that split point in x such that
-**  the rss within the two groups is decreased as much
-**  as possible.
-*/
+ * The gini splitting function.  Find that split point in x such that
+ *  the rss within the two groups is decreased as much
+ *  as possible.
+ */
 void
 gini(int n, double *y[], double *x, int numcat,
      int edge, double *improve, double *split, int *csplit, double my_risk,
@@ -202,9 +202,9 @@ gini(int n, double *y[], double *x, int numcat,
     best = total_ss;            /* total weight of right * impurity of right
                                  * + 0 *0 */
 
-   /*
-    ** at this point we split into 2 disjoint paths
-    */
+    /*
+     * at this point we split into 2 disjoint paths
+     */
     if (numcat > 0)
         goto categorical;
 
@@ -245,10 +245,10 @@ gini(int n, double *y[], double *x, int numcat,
     return;
 
 categorical:;
-   /*
-    ** First collapse the data into a numclass x numcat array
-    **  ccnt[i][j] = number of class i obs, category j of the predictor
-    */
+    /*
+     * First collapse the data into a numclass x numcat array
+     *  ccnt[i][j] = number of class i obs, category j of the predictor
+     */
     for (j = 0; j < numcat; j++) {
         awt[j] = 0;
         countn[j] = 0;

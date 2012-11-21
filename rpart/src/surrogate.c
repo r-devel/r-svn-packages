@@ -1,17 +1,17 @@
 /*
-** Calculate the surrogate splits for a node and its primary
-**    (This routine is an awful lot like bsplit)
-**
-** Input :      node
-**              start and stop indices for the arrays (which obs apply)
-**
-** Output:      Fills in the node's
-**                      surrogate splits
-**                      lastsurrogate value
-**
-** Uses:        The global vector tempvec (integer) as a temporary, assumed
-**                to be of length n.
-*/
+ * Calculate the surrogate splits for a node and its primary
+ *    (This routine is an awful lot like bsplit)
+ *
+ * Input :      node
+ *              start and stop indices for the arrays (which obs apply)
+ *
+ * Output:      Fills in the node's
+ *                      surrogate splits
+ *                      lastsurrogate value
+ *
+ * Uses:        The global vector tempvec (integer) as a temporary, assumed
+ *                to be of length n.
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"
@@ -37,12 +37,12 @@ surrogate(struct node *me, int n1, int n2)
     tempy = rp.tempvec;
     sorts = rp.sorts;
     xdata = rp.xdata;
-   /*
-    ** First construct, in tempy, the "y" variable for this calculation.
-    ** It will be LEFT:goes left, 0:missing, RIGHT:goes right.
-    **  Count up the number of obs the primary sends to the left, as my
-    **  last surrogate (or to the right, if larger).
-    */
+    /*
+     * First construct, in tempy, the "y" variable for this calculation.
+     * It will be LEFT:goes left, 0:missing, RIGHT:goes right.
+     *  Count up the number of obs the primary sends to the left, as my
+     *  last surrogate (or to the right, if larger).
+     */
     var = (me->primary)->var_num;
     if (rp.numcat[var] == 0) {  /* continuous variable */
         split = (me->primary)->spoint;
@@ -69,7 +69,7 @@ surrogate(struct node *me, int n1, int n2)
         }
     }
 
-   /* count the total number sent left and right */
+    /* count the total number sent left and right */
     lcount = 0;
     rcount = 0;
     for (i = n1; i < n2; i++) {
@@ -97,9 +97,9 @@ surrogate(struct node *me, int n1, int n2)
             me->lastsurrogate = 0;      /* no default */
     }
 
-   /*
-    * * Now walk through the variables
-    */
+    /*
+     * Now walk through the variables
+     */
     me->surrogate = (struct split *) 0;
     for (i = 0; i < rp.nvar; i++) {
         if (var == i)
@@ -112,7 +112,7 @@ surrogate(struct node *me, int n1, int n2)
         if (adj_agree <= 0)
             continue;           /* no better than default */
 
-       /* sort it onto the list of surrogates */
+	/* sort it onto the list of surrogates */
         ss = insert_split(&(me->surrogate), ncat, improve, rp.maxsur);
         if (ss != 0) {
             ss->improve = improve;

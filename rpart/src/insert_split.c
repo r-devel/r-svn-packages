@@ -1,10 +1,10 @@
 /*
-** sort a new split into a linked list, based on its "improvement"
-**
-**  allocates new memory as needed
-**   returns 0 if the new element isn't good enough,
-**   the address of the new element otherwise
-*/
+ * sort a new split into a linked list, based on its "improvement"
+ *
+ *  allocates new memory as needed
+ *   returns 0 if the new element isn't good enough,
+ *   the address of the new element otherwise
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"

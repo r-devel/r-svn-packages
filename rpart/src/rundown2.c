@@ -1,8 +1,8 @@
 /*
-** Run an observation down the tree, and return the predicted value,
-**    for several CP values at once.
-** (A subset of rundown.c, which also returns the prediction error).
-*/
+ * Run an observation down the tree, and return the predicted value,
+ *    for several CP values at once.
+ * (A subset of rundown.c, which also returns the prediction error).
+ */
 #include "node.h"
 #include "rpart.h"
 #include "rpartproto.h"
@@ -13,12 +13,12 @@ rundown2(struct node *tree, int obs, double *cp, double *xpred, int nresp)
     int i, j, k;
     struct node *otree;
 
-   /*
-    ** Now, repeat the following: for the cp of interest, run down the tree
-    **   until I find a node with smaller complexity.  The parent node will
-    **   not have collapsed, but this split will have, so this is my
-    **   predictor.
-    */
+    /*
+     * Now, repeat the following: for the cp of interest, run down the tree
+     *   until I find a node with smaller complexity.  The parent node will
+     *   not have collapsed, but this split will have, so this is my
+     *   predictor.
+     */
     otree = tree;
     k = 0;
     for (i = 0; i < rp.num_unique_cp; i++) {
@@ -41,11 +41,11 @@ oops:;
                 xpred[k++] = otree->response_est[j];
         return;
     }
-   /*
-    ** I never really expect to get to this code.  It can only happen if
-    **  the last cp on my list is smaller than the terminal cp of the
-    **  xval tree just built.  This is impossible (I think).  But just in
-    **  case I put a message here.
-    */
+    /*
+     * I never really expect to get to this code.  It can only happen if
+     *  the last cp on my list is smaller than the terminal cp of the
+     *  xval tree just built.  This is impossible (I think).  But just in
+     *  case I put a message here.
+     */
     warning("Warning message--see rundown2.c");
 }

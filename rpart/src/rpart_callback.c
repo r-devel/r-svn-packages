@@ -1,7 +1,6 @@
 /*
-**  SCCS @(#)rpart_callback.c	1.4 08/13/01
-** callback routines for "user" splitting functions in rpart
-*/
+ * callback routines for "user" splitting functions in rpart
+ */
 #include <R.h>
 #include <Rinternals.h>
 #define FLOAT double
@@ -28,10 +27,10 @@ static double *wdata;           /* pointer to the data portion of wback */
 static int *ndata;              /* pointer to the data portion of nback */
 
 /*
-** The first routine saves away the parameters, the location
-**   of the evaluation frame and the 2 expressions to be computed within it,
-**   and ferrets away the memory location of the 4 "callback" objects.
-*/
+ * The first routine saves away the parameters, the location
+ *   of the evaluation frame and the 2 expressions to be computed within it,
+ *   and ferrets away the memory location of the 4 "callback" objects.
+ */
 SEXP
 init_rpcallback(SEXP rhox, SEXP ny, SEXP nr, SEXP expr1x, SEXP expr2x)
 {
@@ -64,10 +63,10 @@ init_rpcallback(SEXP rhox, SEXP ny, SEXP nr, SEXP expr1x, SEXP expr2x)
 }
 
 /*
-** This is called by the usersplit init function
-**  For the "hardcoded" user routines, this is a constant written into
-**  their init routine, but here we need to grab it from outside.
-*/
+ * This is called by the usersplit init function
+ *  For the "hardcoded" user routines, this is a constant written into
+ *  their init routine, but here we need to grab it from outside.
+ */
 void
 rpart_callback0(int *nr)
 {
@@ -75,8 +74,8 @@ rpart_callback0(int *nr)
 }
 
 /*
-** This is called by the evaluation function
-*/
+ * This is called by the evaluation function
+ */
 void
 rpart_callback1(int n, double *y[], double *wt, double *z)
 {
@@ -84,7 +83,7 @@ rpart_callback1(int n, double *y[], double *wt, double *z)
     SEXP value;
     double *dptr;
 
-   /* Copy n and wt into the parent frame */
+    /* Copy n and wt into the parent frame */
     k = 0;
     for (i = 0; i < ysave; i++) {
         for (j = 0; j < n; j++) {
@@ -98,13 +97,13 @@ rpart_callback1(int n, double *y[], double *wt, double *z)
     }
     ndata[0] = n;
 
-   /*
-    **  Evaluate the saved expression in the parent frame
-    **   The result should be a vector of numerics containing the
-    **   "deviance" followed by the "mean"
-    */
+    /*
+     *  Evaluate the saved expression in the parent frame
+     *   The result should be a vector of numerics containing the
+     *   "deviance" followed by the "mean"
+     */
 
-   /* no need to protect as no memory allocation (or error) below */
+    /* no need to protect as no memory allocation (or error) below */
     value = eval(expr2, rho);
     if (!isReal(value)) {
         error(_("return value not a vector"));
@@ -127,6 +126,7 @@ rpart_callback2(int n, int ncat, double *y[], double *wt,
     int i, j, k;
     SEXP goodness;
     double *dptr;
+    void *vmax = vmaxget();
 
     k = 0;
     for (i = 0; i < ysave; i++) {
@@ -176,12 +176,7 @@ rpart_callback2(int n, int ncat, double *y[], double *wt,
         for (i = 0; i < j; i++)
             good[i + 1] = dptr[i];
     }
-
-
-   /*
-    *  There is a memory growth here (yes?) -- should release the goodness
-    *  object right now.  There will be LOTS of them, and they won't
-    *  go away until the parent routine is done. But there is no
-    *  public macro to do it.
-    */
+    
+    /* release 'goodness' for GC */
+    vmaxset(vmax);
 }

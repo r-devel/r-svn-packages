@@ -1,12 +1,12 @@
 /*
-** A particular split routine, optimized for the surrogate variable
-**  search.  The "goodness" of a split is the total weights of concordant
-**  observations between the surrogate and the primary split.
-**  Note that the CART folks use the %concordance, which factors missing
-**  values into the equations somewhat differently.
-**
-**  y is coded as  +1=left, -1=right, 0=missing
-**
+ * A particular split routine, optimized for the surrogate variable
+ *  search.  The "goodness" of a split is the total weights of concordant
+ *  observations between the surrogate and the primary split.
+ *  Note that the CART folks use the %concordance, which factors missing
+ *  values into the equations somewhat differently.
+ *
+ *  y is coded as  +1=left, -1=right, 0=missing
+ *
 */
 #include "rpart.h"
 #include "rpartproto.h"
@@ -33,18 +33,18 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
     rwt = rp.rwt;
 
     if (ncat == 0) {            /* continuous case */
-       /*
-        ** ll = y's that go left that are also sent left by my split
-        ** lr = y's that go left that I send right
-        ** rl= y's that go right that I send to the left
-        ** rr= y's that go right that I send to the right
-        **
-        ** The agreement is max(ll+rr, lr+rl), if weights were =1;
-        **   actually max(llwt + rrwt, lrwt + rlwt)/ denominator
-        **
-        ** I enforce that at least 2 obs must go each way, to avoid having an
-        **  uncorrelated surrogate beat the "null" surrogate too easily
-        */
+	/*
+	 * ll = y's that go left that are also sent left by my split
+	 * lr = y's that go left that I send right
+	 * rl= y's that go right that I send to the left
+	 * rr= y's that go right that I send to the right
+	 *
+	 * The agreement is max(ll+rr, lr+rl), if weights were =1;
+	 *   actually max(llwt + rrwt, lrwt + rlwt)/ denominator
+	 *
+	 * I enforce that at least 2 obs must go each way, to avoid having an
+	 *  uncorrelated surrogate beat the "null" surrogate too easily
+	 */
         ll = rl = 0;
         llwt = 0;
         rlwt = 0;
@@ -76,11 +76,11 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 
         majority = agree;       /*worst possible agreement */
         total_wt = llwt + rlwt;
-       /*
-        **  March across, moving things from the right to the left
-        **    the "lastx" code is caring for ties in the x var
-        **    (The loop above sets it to the first unique x value).
-        */
+	/*
+	 *  March across, moving things from the right to the left
+	 *    the "lastx" code is caring for ties in the x var
+	 *    (The loop above sets it to the first unique x value).
+	 */
         for (i = n1; (ll + rl) >= 2; i++) {
             j = order[i];
             if (j >= 0) {       /* not a missing value */
@@ -125,11 +125,11 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
             rwt[i] = 0;
         }
 
-       /* First step:
-        **  left = table(x[y goes left]), right= table(x[y goes right])
-        **  so left[2] will be the number of x==2's that went left,
-        **  and lwt[2] the sum of the weights for those observations.
-        */
+	/* First step:
+	 *  left = table(x[y goes left]), right= table(x[y goes right])
+	 *  so left[2] will be the number of x==2's that went left,
+	 *  and lwt[2] the sum of the weights for those observations.
+	 */
         for (i = n1; i < n2; i++) {
             j = order[i];
             if (j >= 0) {
@@ -149,7 +149,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
         }
 
        /*
-        **  Compute which is better: everyone to the right, or all go left
+        *  Compute which is better: everyone to the right, or all go left
         */
         lcount = 0;
         rcount = 0;
@@ -170,10 +170,10 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
         }
         total_wt = llwt + rrwt;
 
-       /*
-        ** We can calculate the best split category by category--- send each
-        **  x value individually to its better direction
-        */
+	/*
+	 * We can calculate the best split category by category--- send each
+	 *  x value individually to its better direction
+	 */
         agree = 0;
         for (i = 0; i < ncat; i++) {
             if (left[i] == 0 && right[i] == 0)
@@ -190,13 +190,13 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
         }
     }
 
-   /*
-    **  Now we have the total agreement.  Calculate the %agreement and
-    **    the adjusted agreement
-    **  For both, do I use the total y vector as my denominator (my
-    **    preference), or only the y's for non-missing x (CART book)?
-    **    If the former, need to reset some totals.
-    */
+    /*
+     *  Now we have the total agreement.  Calculate the %agreement and
+     *    the adjusted agreement
+     *  For both, do I use the total y vector as my denominator (my
+     *    preference), or only the y's for non-missing x (CART book)?
+     *    If the former, need to reset some totals.
+     */
     if (rp.sur_agree == 0) {    /* use total table */
         total_wt = tleft + tright;
         if (tleft > tright)

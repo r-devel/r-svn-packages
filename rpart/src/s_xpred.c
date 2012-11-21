@@ -1,10 +1,10 @@
 /*
-** An S interface to "cross validated predictions"
-**    99% of this routine is a copy of s_to_rp and rpart.c and xval.c
-** Note that nresp is the length of the response vector that is desired
-**   and will be returned, not necessarily the actual length.  It is common
-**   to only request the first element of a long response vector.
-*/
+ * An S interface to "cross validated predictions"
+ *    99% of this routine is a copy of s_to_rp and rpart.c and xval.c
+ * Note that nresp is the length of the response vector that is desired
+ *   and will be returned, not necessarily the actual length.  It is common
+ *   to only request the first element of a long response vector.
+ */
 #include "rpart.h"
 #include "node.h"
 #include "func_table.h"
@@ -31,9 +31,9 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
     int *si, *savesort;
     int xgroup;
 
-   /*
-    ** initialize the splitting functions from the function table
-    */
+    /*
+     * initialize the splitting functions from the function table
+     */
     if (*method <= NUM_METHODS) {
         i = *method - 1;
         rp_init = func_table[i].init_split;
@@ -47,13 +47,13 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
         return;
     }
 
-   /*
-    ** Set other parameters
-    **
-    **  The opt string is in the order of control.rpart()
-    **    minsplit, minbucket, cp, maxcomptete, maxsurrogate, usesurrogate,
-    **    and xval
-    */
+    /*
+     * Set other parameters
+     *
+     *  The opt string is in the order of control.rpart()
+     *    minsplit, minbucket, cp, maxcomptete, maxsurrogate, usesurrogate,
+     *    and xval
+     */
     n = *sn;
     nresp = *nresp2;
     nvar = *nvarx;
@@ -76,11 +76,11 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
     rp.maxnode = (int) pow((double) 2.0, opt[7]) - 1;
     rp.vcost = cost;
 
-   /*
-    ** create the "ragged array" pointers to the matrix
-    **   x and missmat are in column major order
-    **   y is in row major order
-    */
+    /*
+     * create the "ragged array" pointers to the matrix
+     *   x and missmat are in column major order
+     *   y is in row major order
+     */
     rp.xdata = (double **) ALLOC(nvar, sizeof(double *));
     for (i = 0; i < nvar; i++)
         rp.xdata[i] = &(xmat[i * n]);
@@ -88,21 +88,21 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
     for (i = 0; i < n; i++)
         rp.ydata[i] = &(ymat[i * rp.num_y]);
 
-   /*
-    ** allocate some scratch
-    */
+    /*
+     * allocate some scratch
+     */
     rp.tempvec = (int *) ALLOC(2 * n, sizeof(int));
     rp.which = rp.tempvec + n;
     rp.xtemp = (double *) ALLOC(n, sizeof(double));
     rp.ytemp = (double **) ALLOC(n, sizeof(double *));
     rp.wtemp = (double *) ALLOC(n, sizeof(double));
 
-   /*
-    ** create a matrix of sort indices, one for each continuous variable
-    **   This sort is "once and for all".  The result is stored on top
-    **   of the 'missmat' array.
-    ** I don't have to sort the categoricals.
-    */
+    /*
+     * create a matrix of sort indices, one for each continuous variable
+     *   This sort is "once and for all".  The result is stored on top
+     *   of the 'missmat' array.
+     * I don't have to sort the categoricals.
+     */
     rp.sorts = (int **) ALLOC(nvar, sizeof(int *));
     rp.sorts[0] = (int *) ALLOC(nvar * n, sizeof(int));
     maxcat = 0;
@@ -118,7 +118,7 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
             }
         }
         if (ncat[i] == 0) {
-           /* We want to leave the x matrix alone, and only get indices */
+	    /* We want to leave the x matrix alone, and only get indices */
             mysort(0, n - 1, rp.xtemp, rp.tempvec);
         } else if (ncat[i] > maxcat)
             maxcat = ncat[i];
@@ -126,18 +126,18 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
             rp.sorts[i][k] = rp.tempvec[k];
     }
 
-   /*
-    ** save away a copy of the rp.sorts
-    */
+    /*
+     * save away a copy of the rp.sorts
+     */
     savesort = (int *) ALLOC(n * nvar, sizeof(int));
     si = savesort;
     sj = rp.sorts[0];
     for (i = 0; i < n * rp.nvar; i++)
         *si++ = *sj++;
 
-   /*
-    ** And now the last of my scratch space
-    */
+    /*
+     * And now the last of my scratch space
+     */
     if (maxcat > 0) {
         rp.csplit = (int *) ALLOC(3 * maxcat, sizeof(int));
         rp.left = rp.csplit + maxcat;
@@ -150,9 +150,9 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
     (*rp_init) (n, rp.ydata, maxcat, error, parms, &rp.num_resp, 1, rp.wt);
     nodesize = sizeof(struct node) + (rp.num_resp - 2) * sizeof(double);
 
-   /*
-    ** I need the risk of the full tree, to scale alpha
-    */
+    /*
+     * I need the risk of the full tree, to scale alpha
+     */
     xtree = (struct node *) ALLOC(1, nodesize);
     memset(xtree, 0, sizeof(struct node));
     (*rp_eval) (n, rp.ydata, xtree->response_est, &(xtree->risk), rp.wt);
@@ -160,9 +160,9 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
 
     free_tree(xtree, 0);
 
-   /*
-    ** do the validations
-    */
+    /*
+     * do the validations
+     */
     total_wt = 0;
     for (i = 0; i < rp.n; i++)
         total_wt += rp.wt[i];
@@ -170,10 +170,10 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
 
     k = 0;                      /* -Wall */
     for (xgroup = 0; xgroup < *xvals; xgroup++) {
-       /*
-        ** restore rp.sorts, with the data for this run at the top
-        **   this requires one pass per variable
-        */
+	/*
+	 * restore rp.sorts, with the data for this run at the top
+	 *   this requires one pass per variable
+	 */
         for (j = 0; j < rp.nvar; j++) {
             k = 0;
             for (i = 0; i < rp.n; i++) {
@@ -181,20 +181,20 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
                 if (ii < 0)
                     ii = -(1 + ii);     /* missings move too */
                 if (x_grp[ii] != (xgroup + 1)) {
-                   /*
-                    ** this obs is left in --
-                    **  copy to the front half of rp.sorts
-                    */
+		    /*
+		     * this obs is left in --
+		     *  copy to the front half of rp.sorts
+		     */
                     rp.sorts[j][k] = savesort[j * n + i];
                     k++;
                 }
             }
         }
 
-       /*
-        **  Fix up the y vector, and save a list of "left out" obs
-        **   in the tail, unused end of rp.sorts[0][i];
-        */
+	/*
+	 *  Fix up the y vector, and save a list of "left out" obs
+	 *   in the tail, unused end of rp.sorts[0][i];
+	 */
         last = k;
         k = 0;
         temp = 0;
@@ -210,16 +210,16 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
             }
         }
 
-       /* at this point k = #obs in the xval group */
-       /* rescale the cp */
+	/* at this point k = #obs in the xval group */
+	/* rescale the cp */
         for (j = 0; j < rp.num_unique_cp; j++)
             cp[j] *= temp / old_wt;
         rp.alpha *= temp / old_wt;
         old_wt = temp;
 
-       /*
-        ** partition the new tree
-        */
+	/*
+	 * partition the new tree
+	 */
         xtree = (struct node *) CALLOC(1, nodesize);
         xtree->num_obs = k;
         (*rp_init) (k, rp.ytemp, maxcat, error, parms, &temp, 2, rp.wtemp);
@@ -229,10 +229,10 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
         partition(1, xtree, &temp, 0, k);
         fix_cp(xtree, xtree->complexity);
 
-       /* if (xgroup==0) print_tree(xtree, 1, 0, 0, 0); debug line */
-       /*
-        ** run the extra data down the new tree
-        */
+	/* if (xgroup==0) print_tree(xtree, 1, 0, 0, 0); debug line */
+	/*
+	 * run the extra data down the new tree
+	 */
         for (i = k; i < rp.n; i++) {
             j = rp.sorts[0][i];
             rundown2(xtree, j, cp, (predict + j * (*ncp) * nresp), nresp);

@@ -1,28 +1,28 @@
 /*
-**  Do rpart predictions given the matrix form of the tree.
-**
-**  Input
-**      dimx        : # of rows and columns in the new data
-**      nnode       : # of nodes in the tree
-**      nsplit      : # of split structures
-**      dimc        : dimension of the categorical splits matrix
-**      nnum        : node number for each row of 'nodes'
-**      nodes       : matrix of node info
-**                      row 0= count, 1=index of primary, 2=#competitors,
-**                          3= number of surrogates
-**      vnum        : variable number of each split
-**      split       : matrix of split info
-**                  :   row 0=useage count, 1= #categories if >1, otherwise
-**                         the split parity, 2= utility, 3= index to csplit
-**                         or numeric split point
-**      csplit      : matrix of categorical split info
-**      usesur      : at what level to use surrogates
-**      xdata       : the new data
-**      xmiss       : shows missings in the new data
-**
-**  Output
-**      where       : the "final" row in nodes for each observation
-*/
+ *  Do rpart predictions given the matrix form of the tree.
+ *
+ *  Input
+ *      dimx        : # of rows and columns in the new data
+ *      nnode       : # of nodes in the tree
+ *      nsplit      : # of split structures
+ *      dimc        : dimension of the categorical splits matrix
+ *      nnum        : node number for each row of 'nodes'
+ *      nodes       : matrix of node info
+ *                      row 0= count, 1=index of primary, 2=#competitors,
+ *                          3= number of surrogates
+ *      vnum        : variable number of each split
+ *      split       : matrix of split info
+ *                  :   row 0=usage count, 1= #categories if >1, otherwise
+ *                         the split parity, 2= utility, 3= index to csplit
+ *                         or numeric split point
+ *      csplit      : matrix of categorical split info
+ *      usesur      : at what level to use surrogates
+ *      xdata       : the new data
+ *      xmiss       : shows missings in the new data
+ *
+ *  Output
+ *      where       : the "final" row in nodes for each observation
+ */
 #include "rpart.h"
 #include "rpartproto.h"
 

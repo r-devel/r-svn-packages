@@ -1,13 +1,13 @@
 /*
-** The routine which will find the best split for a node
-**
-** Input :      node
-**              node number
-**
-** Output:      Fills in the node's
-**                      primary splits
-**                      competitor splits
-*/
+ * The routine which will find the best split for a node
+ *
+ * Input :      node
+ *              node number
+ *
+ * Output:      Fills in the node's
+ *                      primary splits
+ *                      competitor splits
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"
@@ -31,9 +31,9 @@ bsplit(struct node *me, int n1, int n2)
     ytemp = rp.ytemp;
     wtemp = rp.wtemp;
 
-   /*
-    ** test out the variables 1 at at time
-    */
+    /*
+     * test out the variables 1 at at time
+     */
     me->primary = (struct split *) NULL;
     for (i = 0; i < rp.nvar; i++) {
         index = rp.sorts[i];

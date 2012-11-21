@@ -1,8 +1,8 @@
 /*
-** prototypes for all of the rpart functions
-**   This helps the ansi compiler do tight checking.
-**
-*/
+ * prototypes for all of the rpart functions
+ *   This helps the ansi compiler do tight checking.
+ *
+ */
 struct node *branch(struct node *tree, int obs);
 
 void bsplit(struct node *me, int n1, int n2);

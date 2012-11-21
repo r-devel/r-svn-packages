@@ -1,15 +1,15 @@
 /*
-**  rescale an Survival time so that it is essentially exponential
-**   each interval between deaths has the same number of person-years
-**
-**	n	number of observations
-**	y	survival object, sorted by death times
-**	wt      vector of weights, sorted
-** output
-**      newy    rescaled time vector
-** scratch
-**      wtemp(n)
-*/
+ *  rescale an Survival time so that it is essentially exponential
+ *   each interval between deaths has the same number of person-years
+ *
+ *	n	number of observations
+ *	y	survival object, sorted by death times
+ *	wt      vector of weights, sorted
+ * output
+ *      newy    rescaled time vector
+ * scratch
+ *      wtemp(n)
+ */
 #include "rpart.h"
 
 void
@@ -39,14 +39,14 @@ rpartexp(int *n2, double *y, double *wt, double *newy, double *wtemp)
     rtime = 0;                  /* rescaled time, cumulative */
     while (last < n) {
        /*
-        * * look ahead to find the next death
+        * look ahead to find the next death
         */
         psum = 0;
         for (i = last; i < n && event[i] == 0; i++)
             psum += wt[i] * (stop[i] - ltime);  /* partial intervals */
 
        /*
-        * * Found it (or the end of the data)
+        * Found it (or the end of the data)
         */
         if (i > n) {            /* no more deaths */
             for (i = last; i < n; i++)
@@ -54,7 +54,7 @@ rpartexp(int *n2, double *y, double *wt, double *newy, double *wtemp)
             last = n;
         } else {                /* rescale this interval */
            /*
-            * * count up the sum of the weighted deaths
+            * count up the sum of the weighted deaths
             */
             dsum = 0;
             time = stop[i];

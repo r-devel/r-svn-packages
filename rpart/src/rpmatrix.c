@@ -1,6 +1,6 @@
 /*
-**  For S's usage, convert the linked list data into matrix form
-*/
+ *  For S's usage, convert the linked list data into matrix form
+ */
 #include "rpart.h"
 #include "node.h"
 #include "rpartproto.h"
@@ -13,26 +13,26 @@ void
 rpmatrix(struct node *me, int *numcat, double **dsplit,
          int **isplit, int **csplit, double **dnode, int **inode, int id)
 {
-   /*
-    ** dsplit  0: improvement
-    **         1: split point if continuous; index into csplit if not
-    **         2: surrogate: adjusted agreement,  primary: nothing
-    ** isplit  0: variable #
-    **         1: count
-    **         2: if continuous: direction -1=left, 1=right
-    **            if categorical: # of categories
-    ** csplit[i]: -1=left, 0=missing category, 1=right
-    ** dnode   0: risk
-    **         1: complexity threshold
-    **         2: sum of weights
-    **         3, ...: response estimate
-    ** inode   0: node number
-    **         1: index of the first primary, in the split list
-    **         2: #primary    ==0 if this is a terminal node
-    **         3: #surrogates
-    **         4: # observations
-    **         5: # obs for which this is the final resting place
-    */
+    /*
+     * dsplit  0: improvement
+     *         1: split point if continuous; index into csplit if not
+     *         2: surrogate: adjusted agreement,  primary: nothing
+     * isplit  0: variable #
+     *         1: count
+     *         2: if continuous: direction -1=left, 1=right
+     *            if categorical: # of categories
+     * csplit[i]: -1=left, 0=missing category, 1=right
+     * dnode   0: risk
+     *         1: complexity threshold
+     *         2: sum of weights
+     *         3, ...: response estimate
+     * inode   0: node number
+     *         1: index of the first primary, in the split list
+     *         2: #primary    ==0 if this is a terminal node
+     *         3: #surrogates
+     *         4: # observations
+     *         5: # obs for which this is the final resting place
+     */
 
     int i, j, k;
     struct split *spl;

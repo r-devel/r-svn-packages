@@ -1,14 +1,14 @@
 /*
-** Walk through subsets in an ordered way.
-**   For all subsets, this is the classic gray code.
-**
-** Graycode_init0 is called once at the very beginning with
-**   the maximum number of categories.  It allocates a scratch vector.
-**
-** Graycode_init1 is called once for each unordered variable.
-** Graycode_init2 is called once for each orderable variable,
-**   the second argument is a vector that will be used to rank the variables
-*/
+ * Walk through subsets in an ordered way.
+ *   For all subsets, this is the classic gray code.
+ *
+ * Graycode_init0 is called once at the very beginning with
+ *   the maximum number of categories.  It allocates a scratch vector.
+ *
+ * Graycode_init1 is called once for each unordered variable.
+ * Graycode_init2 is called once for each orderable variable,
+ *   the second argument is a vector that will be used to rank the variables
+ */
 #include "rpart.h"
 #include "rpartproto.h"
 static int *gray;
@@ -43,10 +43,10 @@ graycode_init2(int numcat, int *count, double *val)
     double temp;
     maxc = numcat;
 
-   /*
-    **   sort categories with no members first
-    **   then order by val
-    */
+    /*
+     *   sort categories with no members first
+     *   then order by val
+     */
     gray[0] = 0;
     if (count[0] == 0)
         k = 1;
@@ -73,10 +73,10 @@ graycode_init2(int numcat, int *count, double *val)
 }
 
 /*
-** Everyone starts in the right hand group
-** This routine returns the next subject who needs to
-**  change allegiance.
-** A value of maxc means that we're done.
+* Everyone starts in the right hand group
+* This routine returns the next subject who needs to
+*  change allegiance.
+* A value of maxc means that we're done.
 */
 int
 graycode(void)
@@ -90,14 +90,14 @@ graycode(void)
         else
             return maxc;
     } else {
-       /*
-        ** Form next subgroup.  We do this using the classic Gray code.
-        **  The initial subset has everyone in the right group.  Each
-        **  subset varies from the prior by only one member -- the
-        **  following item changes groups: 1,2,1,4,1,2,1,8,1,2,1,4,1,...
-        **  The outer loop only goes up to maxc-1: we know for rpart that
-        **    changing the allegiance of the last subject is never necessary
-        */
+	/*
+	 * Form next subgroup.  We do this using the classic Gray code.
+	 *  The initial subset has everyone in the right group.  Each
+	 *  subset varies from the prior by only one member -- the
+	 *  following item changes groups: 1,2,1,4,1,2,1,8,1,2,1,4,1,...
+	 *  The outer loop only goes up to maxc-1: we know for rpart that
+	 *    changing the allegiance of the last subject is never necessary
+	 */
         for (i = 0; i < maxc - 1; i++) {
             if (gray[i] == 1) {
                 gray[i] = 2;

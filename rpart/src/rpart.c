@@ -1,35 +1,35 @@
 /*
-** The main entry point for recursive partitioning routines.
-**
-** Input variables:
-**      ncat    = # categories for each var, 0 for continuous variables.
-**      method  = 1 - anova
-**                2 - exponential survival
-**		  3 - classification
-**	          4 - user defined callback
-**      opt     = vector of options.  Same order as rpart.control, as a vector
-**                   of doubles.
-**      parms   = extra parameters for the split function, e.g. poissoninit
-**      xvals    = number of cross-validations to do
-**      xgrp     = indices for the cross-validations
-**      ymat    = vector of response variables
-**      xmat    = matrix of continuous variables
-**      ny      = number of columns of the y matrix (it is passed in as a
-**                  vector)
-**      wt       = vector of case weights
-**
-** Returned: a list with elements
-**      which = vector of final node numbers for each input obs
-**      cptable = the complexity table
-**      dsplit = for each split, numeric variables (doubles)
-**      isplit = for each split, integer variables
-**      dnode =  for each node, numeric variables
-**      inode =  for each node, integer variables
-**
-** Naming convention: ncat = pointer to an integer vector, ncat2 = the
-**   input S object (SEXP) containing that vector, ncat3 = an output S object
-**   containing that vector.
-*/
+ * The main entry point for recursive partitioning routines.
+ *
+ * Input variables:
+ *      ncat    = # categories for each var, 0 for continuous variables.
+ *      method  = 1 - anova
+ *                2 - exponential survival
+ *		  3 - classification
+ *	          4 - user defined callback
+ *      opt     = vector of options.  Same order as rpart.control, as a vector
+ *                   of doubles.
+ *      parms   = extra parameters for the split function, e.g. poissoninit
+ *      xvals    = number of cross-validations to do
+ *      xgrp     = indices for the cross-validations
+ *      ymat    = vector of response variables
+ *      xmat    = matrix of continuous variables
+ *      ny      = number of columns of the y matrix (it is passed in as a
+ *                  vector)
+ *      wt       = vector of case weights
+ *
+ * Returned: a list with elements
+ *      which = vector of final node numbers for each input obs
+ *      cptable = the complexity table
+ *      dsplit = for each split, numeric variables (doubles)
+ *      isplit = for each split, integer variables
+ *      dnode =  for each node, numeric variables
+ *      inode =  for each node, integer variables
+ *
+ * Naming convention: ncat = pointer to an integer vector, ncat2 = the
+ *   input R object (SEXP) containing that vector, ncat3 = an output S object
+ *   containing that vector.
+ */
 #define MAINRP
 #include <math.h>
 #include "rpart.h"
@@ -53,20 +53,20 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     int *si, *savesort = NULL /* -Wall */ ;
     double *dptr;               /* temp */
     int *iptr;
-   /*
-    * pointers to R objects
-    */
+    /*
+     * pointers to R objects
+     */
     int *ncat, *xgrp;
     int xvals;
     double *wt, *parms;
 
-   /*
-    * Return objects for R -- end in "3" to avoid overlap with internal names
-    */
+    /*
+     * Return objects for R -- end in "3" to avoid overlap with internal names
+     */
     SEXP which3, cptable3, dsplit3, isplit3, csplit3 = R_NilValue, /* -Wall */
 	dnode3, inode3;
 
-   /* work arrays for the return process */
+    /* work arrays for the return process */
     int nodecount, catcount, splitcount;
     double **ddnode, *ddsplit[3];
     int *iinode[6], *iisplit[3];
@@ -79,9 +79,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     xvals = asInteger(xvals2);
     wt = REAL(wt2);
     parms = REAL(parms2);
-   /*
-    ** initialize the splitting functions from the function table
-    */
+    /*
+     * initialize the splitting functions from the function table
+     */
     if (asInteger(method2) <= NUM_METHODS) {
         i = asInteger(method2) - 1;
         rp_init = func_table[i].init_split;
@@ -92,9 +92,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     } else
         error(_("Invalid value for 'method'"));
 
-   /*
-    ** set some other parameters
-    */
+    /*
+     * set some other parameters
+     */
     dptr = REAL(opt2);
     rp.min_node = (int) dptr[1];
     rp.min_split = (int) dptr[0];
@@ -116,11 +116,11 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.iscale = 0.0;
     rp.vcost = REAL(cost2);
 
-   /*
-    ** create the "ragged array" pointers to the matrix
-    **   x and missmat are in column major order
-    **   y is in row major order
-    */
+    /*
+     * create the "ragged array" pointers to the matrix
+     *   x and missmat are in column major order
+     *   y is in row major order
+     */
     dptr = REAL(xmat2);
     rp.xdata = (double **) ALLOC(rp.nvar, sizeof(double *));
     for (i = 0; i < rp.nvar; i++) {
@@ -134,19 +134,19 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
         rp.ydata[i] = dptr;
         dptr += rp.num_y;
     }
-   /*
-    ** allocate some scratch
-    */
+    /*
+     * allocate some scratch
+     */
     rp.tempvec = (int *) ALLOC(n, sizeof(int));
     rp.xtemp = (double *) ALLOC(n, sizeof(double));
     rp.ytemp = (double **) ALLOC(n, sizeof(double *));
     rp.wtemp = (double *) ALLOC(n, sizeof(double));
 
-   /*
-    ** create a matrix of sort indices, one for each continuous variable
-    **   This sort is "once and for all".
-    ** I don't have to sort the categoricals.
-    */
+    /*
+     * create a matrix of sort indices, one for each continuous variable
+     *   This sort is "once and for all".
+     * I don't have to sort the categoricals.
+     */
     rp.sorts = (int **) ALLOC(rp.nvar, sizeof(int *));
     rp.sorts[0] = (int *) ALLOC(n * rp.nvar, sizeof(int));
     maxcat = 0;
@@ -169,9 +169,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
             rp.sorts[i][k] = rp.tempvec[k];
     }
 
-   /*
-    ** save away a copy of the rp.sorts, if needed for xval
-    */
+    /*
+     * save away a copy of the rp.sorts, if needed for xval
+     */
     if (xvals > 1) {
         savesort = (int *) ALLOC(n * rp.nvar, sizeof(int));
         si = savesort;
@@ -180,9 +180,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
             *si++ = *sj++;
     }
 
-   /*
-    ** And now the last of my scratch space
-    */
+    /*
+     * And now the last of my scratch space
+     */
     if (maxcat > 0) {
         rp.csplit = (int *) ALLOC(3 * maxcat, sizeof(int));
         rp.lwt = (double *) ALLOC(2 * maxcat, sizeof(double));
@@ -192,9 +192,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     } else
         rp.csplit = (int *) ALLOC(1, sizeof(int));
 
-   /*
-    ** initialize the top node of the tree
-    */
+    /*
+     * initialize the top node of the tree
+     */
     errmsg = _("unknown error");
     which3 = PROTECT(allocVector(INTSXP, n));
     rp.which = INTEGER(which3);
@@ -217,9 +217,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     tree->complexity = tree->risk;
     rp.alpha = rp.complexity * tree->risk;
 
-   /*
-    * * Do the basic tree
-    */
+    /*
+     * Do the basic tree
+     */
     partition(1, tree, &temp, 0, n);
     cptable = (struct cptable *) ALLOC(1, sizeof(struct cptable));
     cptable->cp = tree->complexity;
@@ -236,10 +236,10 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
         if (xvals > 1)
             xval(xvals, cptable, xgrp, maxcat, &errmsg, parms, savesort);
     }
-   /*
-    ** all done, create the return list for R
-    ** first the cp table
-    */
+    /*
+     * all done, create the return list for R
+     * first the cp table
+     */
     scale = 1 / tree->risk;
     i = 0;
     cptable3 = PROTECT(allocMatrix(REALSXP, xvals > 1 ? 5 : 3,
@@ -255,12 +255,12 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
         }
     }
 
-   /*
-    ** Return the body of the tree
-    **  For each component we first create a vector to hold the
-    **  result, then a ragged array index into the vector.
-    ** The rpmatrix routine then fills everything in.
-    */
+    /*
+     * Return the body of the tree
+     *  For each component we first create a vector to hold the
+     *  result, then a ragged array index into the vector.
+     * The rpmatrix routine then fills everything in.
+     */
     rpcountup(tree, &nodecount, &splitcount, &catcount);
     dnode3 = PROTECT(allocMatrix(REALSXP, nodecount, (3 + rp.num_resp)));
     ddnode = (double **) ALLOC(3 + rp.num_resp, sizeof(double *));
@@ -309,11 +309,11 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rpmatrix(tree, rp.numcat, ddsplit, iisplit, ccsplit, ddnode, iinode, 1);
     free_tree(tree, 0);         /* let the memory go */
 
-   /*
-    ** Fix up the which array
-    **  Nodes are sometimes trimmed during the
-    **  tree building, and "which" is not updated in that case
-    */
+    /*
+     * Fix up the which array
+     *  Nodes are sometimes trimmed during the
+     *  tree building, and "which" is not updated in that case
+     */
     for (i = 0; i < n; i++) {
         k = rp.which[i];
         do {
@@ -326,7 +326,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
         } while (j >= nodecount);
     }
 
-   /* Create the output list */
+    /* Create the output list */
     int nout = catcount > 0 ? 7 : 6;
     SEXP rlist = PROTECT(allocVector(VECSXP, nout));
     SEXP rname = allocVector(STRSXP, nout);

@@ -1,11 +1,11 @@
 /*
-** quick sort routine : sort a vector of floats, and carry along an int
-**
-**  x:     vector to sort on
-**  start: first element of x to sort
-**  stop:  last element of x to sort
-**  cvec:  a vector to carry along
-*/
+ * quick sort routine : sort a vector of floats, and carry along an int
+ *
+ *  x:     vector to sort on
+ *  start: first element of x to sort
+ *  stop:  last element of x to sort
+ *  cvec:  a vector to carry along
+ */
 #include "rpart.h"
 #include "rpartproto.h"
 
@@ -36,10 +36,10 @@ mysort(int start, int stop, double *x, int *cvec)
             }
             return;
         }
-       /*
- 	** list is longer -- split it into two
-	**  I use the median of 3 values as the split point
-        */
+	/*
+	 * list is longer -- split it into two
+	 *  I use the median of 3 values as the split point
+	 */
         i = start;
         j = stop;
         k = (start + stop) / 2;
@@ -61,19 +61,19 @@ mysort(int start, int stop, double *x, int *cvec)
             }
         }
 
-       /*
-	**  Now actually do the partitioning
-	**   Because we must have at least one element >= median, "i"
-	**   will never run over the end of the array.  Similar logic
-	**   applies to j.
-	** A note on the use of "<" rather than "<=".  If a list has lots
-	**   of identical elements, e.g. 80/100 are "3.5", then we will
-	**   often go to the swap step with x[i]=x[j]=median.  But we will
-	**   get the pointers i and j to meet approximately in the middle of
-	**   the list, and that is THE important condition for speed in a
-	**   quicksort.
-	**
-        */
+	/*
+	 *  Now actually do the partitioning
+	 *   Because we must have at least one element >= median, "i"
+	 *   will never run over the end of the array.  Similar logic
+	 *   applies to j.
+	 * A note on the use of "<" rather than "<=".  If a list has lots
+	 *   of identical elements, e.g. 80/100 are "3.5", then we will
+	 *   often go to the swap step with x[i]=x[j]=median.  But we will
+	 *   get the pointers i and j to meet approximately in the middle of
+	 *   the list, and that is THE important condition for speed in a
+	 *   quicksort.
+	 *
+	 */
         while (i < j) {
            /*
             * top pointer down till it points at something too large
@@ -101,22 +101,22 @@ mysort(int start, int stop, double *x, int *cvec)
             }
         }
 
-       /*
-	** The while() step helps if there are lots of ties.  It will break
-	**  the list into 3 parts: < median, ==median, >=median, of which only
-	**  the top and bottom ones need further attention.
-	** The ">=" is needed because i may be  == to j
-        */
+	/*
+	 * The while() step helps if there are lots of ties.  It will break
+	 *  the list into 3 parts: < median, ==median, >=median, of which only
+	 *  the top and bottom ones need further attention.
+	 * The ">=" is needed because i may be  == to j
+	 */
         while (x[i] >= median && i > start)
             i--;
         while (x[j] <= median && j < stop)
             j++;
 
-       /*
-	** list has been split, now do a recursive call
-	**   always recur on the shorter list, as this keeps the total
-	**       depth of nested calls to less than log_base2(n).
-        */
+	/*
+	 * list has been split, now do a recursive call
+	 *   always recur on the shorter list, as this keeps the total
+	 *       depth of nested calls to less than log_base2(n).
+	 */
         if ((i - start) < (stop - j)) { /* top list is shorter */
             if ((i - start) > 0)
                 mysort(start, i, x, cvec);

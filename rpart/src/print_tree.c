@@ -1,17 +1,17 @@
 /*
-** print out the tree, in all it's glory
-** 
-** This routine exists in the S source only for debugging purposes -
-**   you will see occasional commented out calls to it in the code
-**
-** It makes for the nicest printout if the tree is printed out by depth,
-**  rather than by the usual recursive search.  That is, print it out the
-**  way it would be drawn: top node, then the two children of the top node,
-**  then the four grandchildren of the top node, etc.  In order to do
-**  this we run up and down the tree like crazy.
-**
-** maxdepth = max depth to print, 1= top node only, etc.
-*/
+ * print out the tree, in all it's glory
+ * 
+ * This routine exists in the sources only for debugging purposes -
+ *   you will see occasional commented out calls to it in the code
+ *
+ * It makes for the nicest printout if the tree is printed out by depth,
+ *  rather than by the usual recursive search.  That is, print it out the
+ *  way it would be drawn: top node, then the two children of the top node,
+ *  then the four grandchildren of the top node, etc.  In order to do
+ *  this we run up and down the tree like crazy.
+ *
+ * maxdepth = max depth to print, 1= top node only, etc.
+ */
 #include <stdio.h>
 #include "node.h"
 #include "rpart.h"
@@ -33,7 +33,7 @@ print_tree(struct node *me, int maxdepth)
 }
 
 /*
- * * Recursively run down and find children of the right depth
+ * Recursively run down and find children of the right depth
  */
 static void
 print_tree2(struct node *me, int id, int mydepth, int target)

@@ -1,7 +1,7 @@
 /*
-** These routines interface via the rpart_callback routine to
-**   provide for user-written split functions
-*/
+ * These routines interface via the rpart_callback routine to
+ *   provide for user-written split functions
+ */
 #include "rpart.h"
 #include "rpartproto.h"
 
@@ -13,12 +13,12 @@ usersplit_init(int n, double *y[], int maxcat, char **error,
                double *parm, int *size, int who, double *wt)
 {
     if (who == 1) {
-       /* If who==0 we are being called internally via xval, and don't
-        **   need to rerun the initialization.
-        ** Call-back to the C code to get the number of columns for y and
-        **   the length of the return vector
-        **  the scratch vector needed is of length max(2n, nreturn +1)
-        */
+	/* If who==0 we are being called internally via xval, and don't
+	 *   need to rerun the initialization.
+	 * Call-back to the C code to get the number of columns for y and
+	 *   the length of the return vector
+	 *  the scratch vector needed is of length max(2n, nreturn +1)
+	 */
         rpart_callback0(&n_return);
 
         if (n_return + 1 > 2 * n)
@@ -31,7 +31,7 @@ usersplit_init(int n, double *y[], int maxcat, char **error,
 }
 
 /*
-** The user evaluation function
+* The user evaluation function
 */
 void
 usersplit_eval(int n, double *y[], double *value, double *risk, double *wt)
@@ -60,11 +60,11 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
     double *dscratch;
     double ftemp;
 
-   /*
-    ** If it's categorical, and all are tied, don't bother to callback.
-    **    (Completely tied continuous is caught earlier than this).
-    ** (This isn't common, but callbacks are expensive).
-    */
+    /*
+     * If it's categorical, and all are tied, don't bother to callback.
+     *    (Completely tied continuous is caught earlier than this).
+     * (This isn't common, but callbacks are expensive).
+     */
     if (nclass > 0) {
         ftemp = x[0];
         for (i = 1; i < n; i++)
@@ -75,21 +75,21 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
             return;
         }
     }
-   /*
-    ** get the vector of "goodness of split"
-    **  on return uscratch contains the goodness for each split
-    **  followed by the 'direction'
-    */
+    /*
+     * get the vector of "goodness of split"
+     *  on return uscratch contains the goodness for each split
+     *  followed by the 'direction'
+     */
     rpart_callback2(n, nclass, y, wt, x, uscratch);
 
     if (nclass == 0) {
-       /*
-        * Find the split point that has the best goodness, subject
-        * to the edge criteria, and tied x's *Remember, uscratch[0]
-        * contains the goodnes for x[0] left, and all others right,
-        * so has n-1 real elements. *The 'direction' vector is
-        * returned pasted onto the end of uscratch.
-        */
+	/*
+	 * Find the split point that has the best goodness, subject
+	 * to the edge criteria, and tied x's *Remember, uscratch[0]
+	 * contains the goodnes for x[0] left, and all others right,
+	 * so has n-1 real elements. *The 'direction' vector is
+	 * returned pasted onto the end of uscratch.
+	 */
         dscratch = uscratch + n - 1;
         best = 0;
 
@@ -105,14 +105,14 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
             *split = (x[where] + x[where + 1]) / 2;
         }
     } else {
-       /*
-        * *  Categorical -- somewhat more work to be done here to *
-        * guarrantee the edge criteria. *  The return vector uscratch has
-        * first the number of categories *   that were found (call it m),
-        * then m-1 goodnesses, then m labels *   in order, and the assurance
-        * that the best split is one of *   those that use categories in
-        * that order.
-        */
+	/*
+	 * Categorical -- somewhat more work to be done here to
+	 * guarantee the edge criteria.
+	 * The return vector uscratch has first the number of categories
+	 * that were found (call it m), then m-1 goodnesses, then m labels
+	 * in order, and the assurance that the best split is one of
+	 * those that use categories in that order.
+	 */
         for (i = 0; i < nclass; i++)
             csplit[i] = 0;
         best = 0;
@@ -134,11 +134,11 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
                 where = i;
             }
         }
-       /*
-        * * Now mark the groups as to left/right *   If there was no way to
-        * split it with at least 'edge' in each *   group, best will still
-        * =0.
-        */
+	/*
+	 * * Now mark the groups as to left/right *   If there was no way to
+	 * split it with at least 'edge' in each *   group, best will still
+	 * =0.
+	 */
         if (best > 0) {
             for (i = 0; i < m; i++) {
                 k = (int) dscratch[i];  /* the next group of interest */
@@ -153,11 +153,11 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
 }
 
 /*
-**  We don't do in-C cross validation for user splits, so there
-**    is no prediction routine.
-**  (Because of the structure of the calls, it's faster to make
-**    use of xpred.rpart for user-written split routines).
-*/
+ *  We don't do in-C cross validation for user splits, so there
+ *    is no prediction routine.
+ *  (Because of the structure of the calls, it's faster to make
+ *    use of xpred.rpart for user-written split routines).
+ */
 double
 usersplit_pred(double *y, double *yhat)
 {
