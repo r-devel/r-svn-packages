@@ -11,11 +11,10 @@ snip.rpart <- function(x, toss)
     }
 
     ff <- x$frame
-    id  <- as.integer(row.names(ff))
-    ff.n  <- length(id)
-
+    id <- as.integer(row.names(ff))
+    ff.n <- length(id)
     toss <- unique(toss)
-    toss.idx <- match(toss, id, 0L) #the rows of the named nodes
+    toss.idx <- match(toss, id, 0L) # the rows of the named nodes
     if (any(toss.idx == 0L)) {
         ## FIXME: plural?
         warning(gettext("Nodes %s are not in this tree", toss[toss.idx == 0L]),
@@ -68,7 +67,7 @@ snip.rpart <- function(x, toss)
     ## Now do the 'parents' loop one more time, to fix up the "where" vector
     ## This pass requires log_2(depth) iterations
     ##
-    id2 <- id[x$where]                  #the list of old leaf nodes
+    id2 <- id[x$where]                  # the list of old leaf nodes
     id3 <- id[sort(c(keepit, newleaf))]
     temp <- match(id2, id3, 0L)
     while (any(temp == 0L)) {

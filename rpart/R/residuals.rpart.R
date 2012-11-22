@@ -30,20 +30,19 @@ residuals.rpart <-
 	lambda <- (object$frame$yval)[object$where]
 	time   <- y[, 1L]               # observation time in new data
 	events <- y[, 2L]               # number of events, in new data
-	expect <- lambda * time        #expected number of events
-	temp <- ifelse(expect == 0, 0.0001, 0) #failsafe for log(0)
+	expect <- lambda * time         # expected number of events
+	temp <- ifelse(expect == 0, 0.0001, 0) # failsafe for log(0)
 
 	switch(type,
                usual = events - expect,
                pearson = (events - expect)/sqrt(temp),
-               deviance= sign(events- expect) *
-               sqrt(2*(events*log(events/temp) - (events-expect)))
+               deviance = sign(events- expect) *
+                   sqrt(2 * (events*log(events/temp) - (events - expect)))
                )
-    } else y - frame$yval[object$where]
+    } else
+        y - frame$yval[object$where]
 
     names(resid) <- names(y)
     ## Expand out the missing values in the result
-    if (!is.null(object$na.action))
-	resid <- naresid(object$na.action, resid)
-    resid
+    if (!is.null(object$na.action)) naresid(object$na.action, resid) else resid
 }

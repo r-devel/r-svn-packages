@@ -12,13 +12,13 @@
 rpart.exp <- function(y, offset, parms, wt)
 {
     if (!inherits(y, "Surv"))
-	   stop("Response must be a 'survival' object - use the 'Surv()' function")
+        stop("Response must be a 'survival' object - use the 'Surv()' function")
 
     ny <- ncol(y)
-    n  <- nrow(y)
+    n <- nrow(y)
 
     status <- y[,ny]
-    if (any(y[,1L] <= 0)) stop("Observation time must be > 0")
+    if (any(y[, 1L] <= 0)) stop("Observation time must be > 0")
     if (all(status == 0)) stop("No deaths in data set")
     time <- y[ , ny - 1L]
 
@@ -50,7 +50,7 @@ rpart.exp <- function(y, offset, parms, wt)
 	## How to tell -- list the pyears function, and see whether it's
 	##  call to pyears2 has weights in the argument list.
 	##
-	time <- y[, ny-1L]
+	time <- y[, ny - 1L]
 	status <- y[, ny]
 	ilength <- diff(itable)         #lengths of intervals
 	ngrp <- length(ilength)         #number of intervals
@@ -79,18 +79,18 @@ rpart.exp <- function(y, offset, parms, wt)
 	## By construction, I know that there is at least 1 obs in each of the
 	##  intervals, so tab1 is of a determined length
 	tab1 <- table(index)
-	temp <- rev(cumsum(rev(tab1))) #cumsum, counting from the right
+	temp <- rev(cumsum(rev(tab1))) # cumsum, counting from the right
 	pyears <- ilength * c(temp[-1L], 0) + tapply(itime, index, sum)
 	if (ny == 3L) {
 	    ## subtract off the time before "start"
-	    tab2 <- table(index2, levels = 1:ngrp) #force the length of tab2
+	    tab2 <- table(index2, levels = 1:ngrp) # force the length of tab2
 	    temp <- rev(cumsum(rev(tab2)))
 	    py2  <-  ilength * c(0, temp[-ngrp]) + tapply(itime2, index2, sum)
 	    pyears <- pyears - py2
         }
 
 	deaths <- tapply(status, index, sum)
-	rate <- deaths/pyears           #hazard rate in each interval
+	rate <- deaths/pyears           # hazard rate in each interval
 	rate
     }
 
@@ -100,13 +100,13 @@ rpart.exp <- function(y, offset, parms, wt)
     ## The cumulative hazard over each interval is rate*length(interval),
     ##  and is the basis of the rescaling.
     rate <- drate2(n, ny, y, wt, itable)
-    cumhaz <- cumsum(c(0, rate*diff(itable)))
+    cumhaz <- cumsum(c(0, rate * diff(itable)))
     newy <- approx(itable, cumhaz, time)$y
     if (ny == 3L) newy <- newy - approx(itable, cumhaz, y[, 1L])$y
 
     if (length(offset) == n)  newy <- newy * exp(offset)
 
-    if (missing(parms)) parms <- c(shrink=1L, method=1L)
+    if (missing(parms)) parms <- c(shrink = 1L, method = 1L)
     else {
 	parms <- as.list(parms)
         if(is.null(names(parms))) stop("You must input a named list for parms")
@@ -125,7 +125,7 @@ rpart.exp <- function(y, offset, parms, wt)
 	else shrink <- parms$shrink
 	if (!is.numeric(shrink) || shrink < 0L)
             stop("Invalid shrinkage value")
-	parms <- c(shrink = shrink, method = method)
+        parms <- c(shrink = shrink, method = method)
     }
     list(y = cbind(newy, y[, 2L]), parms = parms, numresp = 2L, numy = 2L,
 	 summary = function(yval, dev, wt, ylevel, digits) {
@@ -134,8 +134,8 @@ rpart.exp <- function(y, offset, parms, wt)
                    " , mean deviance=",formatg(dev/wt, digits))
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
-	     if(use.n) paste0(formatg(yval[,1L],digits),"\n",
-                              formatg(yval[,2L]) ,"/", n)
-             else paste(formatg(yval[,1L], digits))
+	     if(use.n) paste0(formatg(yval[, 1L],digits),"\n",
+                              formatg(yval[, 2L]) ,"/", n)
+             else paste(formatg(yval[, 1L], digits))
          })
 }

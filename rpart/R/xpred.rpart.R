@@ -19,8 +19,8 @@ xpred.rpart <- function(fit, xval = 10L, cp, return.all = FALSE)
     if (is.null(Y) || is.null(X)) {
 	m <- fit$model
 	if (is.null(m)) {
-	    m <-fit$call[match(c("", "formula", "data", "weights", "subset",
-                                 "na.action"), names(fit$call), 0L)]
+	    m <- fit$call[match(c("", "formula", "data", "weights", "subset",
+                                  "na.action"), names(fit$call), 0L)]
 	    if (is.null(m$na.action)) m$na.action<- na.rpart
 	    m[[1]] <- as.name("model.frame")
 	    m <- eval(m, parent.frame())
@@ -32,27 +32,27 @@ xpred.rpart <- function(fit, xval = 10L, cp, return.all = FALSE)
 	    Y <- model.extract(m, "response")
             offset <- attr(Terms, "offset")
 	    if (method != "user") {
-		init <- get(paste("rpart", method, sep = "."))(Y,offset, NULL)
+		init <- get(paste("rpart", method, sep = "."))(Y, offset, NULL)
 		Y <- init$y
-		if (is.matrix(Y)) numy <- ncol(Y) else numy <- 1L
+		numy <- if (is.matrix(Y)) ncol(Y) else 1L
             }
         } else {
 	    yflag <- FALSE
-            if (is.matrix(Y)) numy <- ncol(Y) else numy <- 1L
+            numy <- if (is.matrix(Y)) ncol(Y) else 1L
         }
     } else {
 	yflag <- FALSE
-        if (is.matrix(Y)) numy <- ncol(Y) else numy <- 1L
+        numy <- if (is.matrix(Y)) ncol(Y) else 1L
 	offset <- 0L
     }
 
     nobs <- nrow(X)
     nvar <- ncol(X)
-    if (length(wt) == 0) wt <- rep(1.0, nobs)
+    if (length(wt) == 0) wt <- rep(1, nobs)
 
     cats <- rep(0, nvar)
     xlevels <- attr(fit, "xlevels")
-    if (!is.null(xlevels)){
+    if (!is.null(xlevels)) {
         cats[match(names(xlevels), colnames(X))] <-
             unlist(lapply(xlevels, length))
     }
@@ -85,24 +85,24 @@ xpred.rpart <- function(fit, xval = 10L, cp, return.all = FALSE)
     }
 
     costs <- fit$call$costs
-    if (is.null(costs)) costs <- rep(1.0, nvar)
+    if (is.null(costs)) costs <- rep(1, nvar)
 
     parms <- fit$parms
     if (method == "user") {
 	mlist <- fit$functions
 
-	## If yflag==TRUE, then y was retrieved from the original data and we
+	## If yflag == TRUE, then y was retrieved from the original data and we
         ##   need to call init to check and possibly transform it.
         ## If false, then we have one of the few differences with the
         ##  rpart setup
         if (yflag) {
-            init <- if (length(parms) == 0L) mlist$init(Y, offset,,wt)
+            init <- if (length(parms) == 0L) mlist$init(Y, offset, , wt)
             else mlist$init(Y, offset, parms, wt)
             Y <- init$Y
             numy <- init$numy
             parms <- init$parms
         } else {
-            if (is.matrix(Y)) numy <- ncol(Y) else numy <- 1L
+            numy <- if (is.matrix(Y)) ncol(Y) else 1L
             init <- list(numresp = numresp, numy = numy, parms = parms)
         }
         keep <- rpartcallback(mlist, nobs, init) # assign to a variable to
@@ -115,7 +115,7 @@ xpred.rpart <- function(fit, xval = 10L, cp, return.all = FALSE)
     storage.mode(X) <- "double"
     storage.mode(wt) <- "double"
     temp <- as.double(unlist(parms))
-    if (length(temp) == 0L) temp <- 0.0    #if NULL, pass a dummy
+    if (length(temp) == 0L) temp <- 0    #if NULL, pass a dummy
     pred <- .Call(C_xpred,
                   ncat = as.integer(cats* !fit$ordered),
                   method = as.integer(method.int),
@@ -137,7 +137,7 @@ xpred.rpart <- function(fit, xval = 10L, cp, return.all = FALSE)
         temp <- array(pred, dim = c(numresp, length(cp), nrow(X)),
                       dimnames = list(NULL, format(cp), rownames(X)))
         aperm(temp)                     # flip the dimensions
-    }
-    else matrix(pred, nrow = nrow(X), byrow = TRUE,
-                dimnames = list(rownames(X), format(cp)))
+    } else
+        matrix(pred, nrow = nrow(X), byrow = TRUE,
+               dimnames = list(rownames(X), format(cp)))
 }

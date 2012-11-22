@@ -8,7 +8,12 @@
 			-i4 -nut -ncdb -d1 -br -ce -il0 -npcs -brs
 
 			Call R_CheckUserInterrupts at each phase of
-			cross-vailidation.
+			cross-validation.
+
+2012 Nov 23	4.0-4	Final release for R 2.14.x.
+
+			Ensure that surrogates really are better than the
+			default split (adj > 1e-10).
 
 2012 Nov 18	4.0-3	Add 'importance' to rpart object and to summary():
 	                from TMT.

@@ -148,7 +148,7 @@ rpart <-
     storage.mode(X) <- "double"
     storage.mode(wt) <- "double"
     temp <- as.double(unlist(init$parms))
-    if(!length(temp)) temp <- 0.0    # if parms is NULL pass a dummy
+    if(!length(temp)) temp <- 0    # if parms is NULL pass a dummy
     rpfit <- .Call(C_rpart,
                    ncat = as.integer(cats * !isord),
                    method = as.integer(method.int),
@@ -171,13 +171,13 @@ rpart <-
     numcp <- ncol(rpfit$cptable)
     temp <- if(nrow(rpfit$cptable) == 3L) c("CP", "nsplit", "rel error")
             else c("CP", "nsplit", "rel error", "xerror", "xstd")
-    dimnames(rpfit$cptable) <- list(temp, 1:numcp)
+    dimnames(rpfit$cptable) <- list(temp, 1L:numcp)
 
     tname <- c("<leaf>", colnames(X))
     splits <- matrix(c(rpfit$isplit[, 2:3], rpfit$dsplit), ncol = 5L,
                      dimnames = list(tname[rpfit$isplit[, 1L] + 1L],
                      c("count", "ncat", "improve", "index", "adj")))
-    index <- rpfit$inode[, 2L]  #points to the first split for each node
+    index <- rpfit$inode[, 2L]  # points to the first split for each node
 
     ## Now, make ordered factors look like factors again (a printout choice)
     nadd <- sum(isord[rpfit$isplit[, 1L]])
@@ -215,21 +215,23 @@ rpart <-
 			    wt = rpfit$dnode[, 3L],
 			    dev =  rpfit$dnode[, 1L],
 			    yval = rpfit$dnode[, 4L],
-			    complexity =rpfit$dnode[, 2L],
+			    complexity = rpfit$dnode[, 2L],
 			    ncompete  = 0L,
-			    nsurrogate = 0L)
+			    nsurrogate = 0L,
+                            stringsAsFactors = FALSE)
     } else {
-	temp <- ifelse(index == 0, 1L, index)
-	svar <- ifelse(index == 0, 0, rpfit$isplit[temp,1L]) # var number
-	frame <- data.frame(row.names = rpfit$inode[,1],
-			    var = factor(svar, 0:ncol(X), tname),
+	temp <- ifelse(index == 0L, 1L, index)
+	svar <- ifelse(index == 0L, 0L, rpfit$isplit[temp, 1L]) # var number
+	frame <- data.frame(row.names = rpfit$inode[, 1L],
+			    var = tname[svar + 1L],
 			    n =  rpfit$inode[, 5L],
 			    wt = rpfit$dnode[, 3L],
 			    dev = rpfit$dnode[, 1L],
 			    yval = rpfit$dnode[, 4L],
 			    complexity = rpfit$dnode[, 2L],
 			    ncompete = pmax(0L, rpfit$inode[, 3L] - 1L),
-			    nsurrogate = rpfit$inode[, 4L])
+			    nsurrogate = rpfit$inode[, 4L],
+                            stringsAsFactors = FALSE)
     }
     if(method.int == 3L) {
         ## Create the class probability vector from the class counts, and

@@ -8,7 +8,7 @@ pred.rpart <- function(fit, x)
 
     nc <- frame[, c('ncompete', 'nsurrogate')]
     frame$index <- 1L + c(0L, cumsum((frame$var != "<leaf>") +
-                                     nc[[1L]] + nc[[2L]]))[-(nrow(frame)+1L)]
+                                     nc[[1L]] + nc[[2L]]))[-(nrow(frame) + 1L)]
     frame$index[frame$var == "<leaf>"] <- 0L
     vnum <- match(rownames(fit$split), colnames(x))
     if (any(is.na(vnum)))

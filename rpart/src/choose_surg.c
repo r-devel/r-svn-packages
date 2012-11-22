@@ -85,7 +85,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 	/* NB: the code below may never set csplit[0] or split,
 	   since there may be no non-missing value with positive weight */
 	csplit[0] = LEFT;
-	*split = lastx;
+	*split = lastx; // a valid splitting value
         for (i = n1; (ll + rl) >= 2; i++) {
             j = order[i];
             if (j >= 0) {       /* not a missing value */
@@ -115,7 +115,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
                     rlwt -= rp.wt[j];
                     rrwt += rp.wt[j];
                     break;
-                default:;      /*ignore missing y's */
+                default:;      /* ignore missing y's */
                 }
                 lastx = x[j];
             }
@@ -152,7 +152,7 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
         }
 
        /*
-        *  Compute which is better: everyone to the right, or all go left
+        *  Compute which is better: everyone to the right or left
         */
         lcount = 0;
         rcount = 0;

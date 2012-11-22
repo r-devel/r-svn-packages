@@ -4,7 +4,7 @@ post.rpart <- function(tree, title.,
 		       digits=  getOption("digits") -2, pretty=TRUE,
 		       use.n=TRUE,  horizontal=TRUE, ...)
 {
-    if(filename !=""){
+    if(filename != ""){
 	postscript(file = filename, horizontal=horizontal, ...)
 	par(mar = c(2,2,4,2) + 0.1)
 	on.exit(dev.off())
@@ -20,6 +20,6 @@ post.rpart <- function(tree, title.,
     if(missing(title.)) {
         temp  <- attr(tree$terms,"variables")[2L]
         title(paste("Endpoint =",temp), cex = .8)
-    } else if (title. != "") title(title., cex = .8)
+    } else if (nzchar(title.)) title(title., cex = .8)
 }
 

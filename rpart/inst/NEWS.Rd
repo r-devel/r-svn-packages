@@ -3,10 +3,15 @@
 
 \section{Changes in version 4.1-0}{
   \itemize{
+    \item The C and R code has been reformatted for legibility.
+    
     \item The old compatibility function \code{rpconvert()} has been removed.
     
     \item The cross-validation functions allow for user interrupt at the
     end of evaluating each split.
+
+    \item The \code{var} column of the \code{frame} component of the fit
+    is now a character vector.
   }
 }
 
@@ -15,6 +20,11 @@
   \itemize{
     \item Variable \code{Reliability} in data set \code{car90} is
     corrected to be an ordered factor, as documented.
+
+    \item Surrogate splits which improve only by rounding error over the
+    default split are no longer returned.  Where weights and missing
+    values are present, the \code{splits} component for some of these
+    was not returned correctly.
   }
 }
 

@@ -17,12 +17,10 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
                          collapse = TRUE, ...)
 {
     if (missing(minlength) && !missing(pretty)) {
-	if (is.null(pretty)) minlength <- 1L
+	minlength <- if (is.null(pretty)) 1L
 	else if (is.logical(pretty)) {
-	    if (pretty) minlength <- 4L
-	    else        minlength <- 0L
-        }
-	else minlength <- 0L
+	    if (pretty) 4L else 0L
+        } else 0L
     }
 
     ff <- object$frame
@@ -33,7 +31,7 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
     whichrow <- !is.leaf
     vnames <- ff$var[whichrow] #the variable names for the primary splits
 
-    index <- cumsum(c(1, ff$ncompete + ff$nsurrogate + 1*(!is.leaf)))
+    index <- cumsum(c(1, ff$ncompete + ff$nsurrogate + !is.leaf))
     irow  <- index[c(whichrow, FALSE)] #we only care about the primary split
     ncat  <- object$splits[irow, 2L]
 
@@ -95,11 +93,9 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
     lsplit <- paste0(ifelse(ncat < 2L, "", "="), lsplit)
     rsplit <- paste0(ifelse(ncat < 2L, "", "="), rsplit)
 
-    ##
     ## Now match them up to node numbers
     ##   The output will have one label per row of object$frame, each
     ##   corresponding the the line segement joining this node to its parent
-    ##
     varname <- (as.character(vnames))
     node <- as.numeric(row.names(ff))
     parent <- match(node %/% 2L, node[whichrow])

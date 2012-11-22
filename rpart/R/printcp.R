@@ -19,7 +19,7 @@ printcp <- function(x, digits = getOption("digits") - 2L)
 
     if(!is.null(used)) {
         cat("Variables actually used in tree construction:\n")
-        print(sort(as.character(used)), quote=FALSE)
+        print(sort(as.character(used)), quote = FALSE)
         cat("\n")
     }
 
@@ -34,8 +34,6 @@ printcp <- function(x, digits = getOption("digits") - 2L)
     omit <- x$na.action
     if (length(omit)) cat("n=", n[1L], " (", naprint(omit), ")\n\n", sep = "")
     else cat("n=", n[1L], "\n\n")
-
-    print (x$cptable, digits = digits)
+    print(x$cptable, digits = digits)
     invisible(x$cptable)
 }
-

@@ -32,8 +32,3 @@ path.rpart <- function(tree, nodes, pretty = 0, print.it = TRUE)
     }
     invisible(path)
 }
-
-
-
-
-

@@ -14,14 +14,12 @@ rpart.control <-
     }
     if (maxdepth > 30L) stop("Maximum depth is 30")
     if (maxdepth < 1L)  stop("Maximum depth must be at least 1")
-
     if (missing(minsplit) && !missing(minbucket)) minsplit <- minbucket * 3L
-
-    if((usesurrogate < 0L) || (usesurrogate > 2L)) {
+    if ((usesurrogate < 0L) || (usesurrogate > 2L)) {
         warning("The value of 'usesurrogate' supplied was out of range, the default value of 2 is used instead.")
         usesurrogate <- 2L
     }
-    if((surrogatestyle < 0L) || (surrogatestyle > 1L)) {
+    if ((surrogatestyle < 0L) || (surrogatestyle > 1L)) {
         warning("The value of 'surrogatestyle' supplied was out of range, the default value of 0 is used instead.")
         surrogatestyle <- 0L
     }
@@ -32,5 +30,5 @@ rpart.control <-
     list(minsplit = minsplit, minbucket = minbucket, cp = cp,
          maxcompete = maxcompete, maxsurrogate = maxsurrogate,
          usesurrogate = usesurrogate,
-         surrogatestyle = surrogatestyle, maxdepth = maxdepth, xval = xval )
+         surrogatestyle = surrogatestyle, maxdepth = maxdepth, xval = xval)
 }

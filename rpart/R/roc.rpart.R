@@ -21,21 +21,21 @@ roc.rpart <- function(object,plot.ok=TRUE,x.orient=1)
     last.r <- dim(pred.np)[1L]
     last.c <- dim(pred.np)[2L]
     if(sum(pred.np[last.r, ])  < last.c) {
-        pred.np <- rbind(pred.np,matrix(TRUE, nrow = 1L, ncol = last.c))
+        pred.np <- rbind(pred.np, matrix(TRUE, nrow = 1L, ncol = last.c))
 	cutoffs <- c(cutoffs, NA)
     }
 
     cutoff.n <- length(cutoffs)
     ## set up some empty matrices ##
-    sensitivity <- matrix(0, nrow = cutoff.n, ncol = 1)
-    specificity <- matrix(0, nrow = cutoff.n, ncol = 1)
-    negpred <- matrix(0, nrow = cutoff.n, ncol = 1)
-    pospred <- matrix(0, nrow = cutoff.n, ncol = 1)
-    tpcp<- matrix(0, nrow = cutoff.n, ncol = 1)
-    tncp<- matrix(0, nrow = cutoff.n, ncol = 1)
-    tpcn<- matrix(0, nrow = cutoff.n, ncol = 1)
-    tncn<- matrix(0, nrow = cutoff.n, ncol = 1)
-    ss.table <- array(0, c(cutoff.n, 2, 2))
+    sensitivity <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    specificity <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    negpred <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    pospred <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    tpcp <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    tncp <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    tpcn <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    tncn <- matrix(0, nrow = cutoff.n, ncol = 1L)
+    ss.table <- array(0, c(cutoff.n, 2L, 2L))
 
     for (i in 1:cutoff.n) {
         ss.table <- matrix(0, nrow = 2L, ncol = 2L)
@@ -49,20 +49,20 @@ roc.rpart <- function(object,plot.ok=TRUE,x.orient=1)
         specificity[i] <- ss.table[1L, 1L]/(ss.table[1L, 1L] + ss.table[2L, 1L])
         negpred[i] <- ss.table[1L, 1L]/(ss.table[1L, 1L] + ss.table[1L, 2L])
         pospred[i] <- ss.table[2L, 2L]/(ss.table[2L, 2L] + ss.table[2L, 1L])
-        tpcp[i]<-ss.table[2L, 2L]
-        tncp[i]<-ss.table[2L, 1L]
-        tpcn[i]<-ss.table[1L, 2L]
-        tncn[i]<-ss.table[1L, 1L]
+        tpcp[i] <- ss.table[2L, 2L]
+        tncp[i] <- ss.table[2L, 1L]
+        tpcn[i] <- ss.table[1L, 2L]
+        tncn[i] <- ss.table[1L, 1L]
     }
 
     if(plot.ok) {
         o.par <- par(pty = "s")
         on.exit(par(o.par))
-        if(x.orient == 1){
+        if(x.orient == 1L){
             plot(1-specificity, sensitivity, type = "o",  xlim = c(0, 1),
                  ylim = c(0, 1), ylab = "Sensitivity", xlab = "1-Specificity")
         }
-        if(x.orient==2L){
+        if(x.orient == 2L){
             plot(specificity, sensitivity, type = "o",  xlim = c(0, 1),
                  ylim = c(0, 1), ylab = "Sensitivity", xlab = "Specificity")
         }
