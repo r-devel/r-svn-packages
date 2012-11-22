@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2012-11-17 r61127) -- "Unsuffered Consequences"
+R Under development (unstable) (2012-11-19 r61131) -- "Unsuffered Consequences"
 Copyright (C) 2012 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-apple-darwin11.4.2/x86_64 (64-bit)
@@ -791,11 +791,11 @@ n= 60
 > ### ** Examples
 > 
 > fit <- rpart(skips ~ Opening + Solder + Mask + PadType + Panel,
-+             data = solder, method = "anova")
++              data = solder, method = "anova")
 > summary(residuals(fit))
     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
 -13.8000  -1.0360  -0.6833   0.0000   0.9639  16.2000 
-> plot(predict(fit),residuals(fit))
+> plot(predict(fit), residuals(fit))
 > 
 > 
 > 
@@ -1064,7 +1064,7 @@ n= 60
 > ### * <FOOTER>
 > ###
 > cat("Time elapsed: ", proc.time() - get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  0.646 0.029 0.683 0 0 
+Time elapsed:  0.667 0.029 0.7 0 0 
 > grDevices::dev.off()
 null device 
           1 

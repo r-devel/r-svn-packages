@@ -7,6 +7,9 @@
     
     \item The cross-validation functions allow for user interrupt at the
     end of evaluating each split.
+
+    \item Variable \code{Reliability} in data set \code{car90} is
+    corrected to be an ordered factor, as documented.
   }
 }
 

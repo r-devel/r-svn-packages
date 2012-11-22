@@ -5,8 +5,7 @@ na.rpart <- function(x)
     if (yvar == 0L) {
 	xmiss <- is.na(x)
 	keep <-  (xmiss %*% rep(1,ncol(xmiss))) < ncol(xmiss)
-    }
-    else {
+    } else {
 	xmiss <- is.na(x[-yvar])
 	ymiss <- is.na(x[[yvar]])
 	keep <- if (is.matrix(ymiss))
