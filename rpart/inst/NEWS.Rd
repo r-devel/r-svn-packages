@@ -7,12 +7,16 @@
     
     \item The cross-validation functions allow for user interrupt at the
     end of evaluating each split.
+  }
+}
 
+
+\section{Changes in version 4.0-4}{
+  \itemize{
     \item Variable \code{Reliability} in data set \code{car90} is
     corrected to be an ordered factor, as documented.
   }
 }
-
 
 \section{Changes in version 4.0-3}{
   \itemize{

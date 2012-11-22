@@ -35,7 +35,7 @@
   the class probabilities (classification trees).
 }
 \item{where}{
-  an integer vector ofthe same length as the number of observations in the
+  an integer vector of the same length as the number of observations in the
   root node, containing the row number of \code{frame} corresponding to
   the leaf node that each observation falls into. 
 }
