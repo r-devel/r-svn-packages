@@ -191,7 +191,7 @@ rpart <-
 
         ## Next 4 lines can be done without a loop, but become indecipherable
 	for (i in 1L:nadd) {
-	    newc[i, 1L:(cats[(cvar[indx])[i]])] <- -1*as.integer(cdir[i])
+	    newc[i, 1L:(cats[(cvar[indx])[i]])] <- -as.integer(cdir[i])
 	    newc[i, 1L:ccut[i]] <- as.integer(cdir[i])
         }
 	catmat <- if (ncat == 0L) newc

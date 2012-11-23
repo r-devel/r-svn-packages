@@ -37,7 +37,7 @@ residuals.rpart <-
                usual = events - expect,
                pearson = (events - expect)/sqrt(temp),
                deviance = sign(events- expect) *
-                   sqrt(2 * (events*log(events/temp) - (events - expect)))
+                   sqrt(2 * (events * log(events/temp) - (events - expect)))
                )
     } else
         y - frame$yval[object$where]

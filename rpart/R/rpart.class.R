@@ -72,11 +72,11 @@ rpart.class <- function(y, offset, parms, wt)
 	     temp
          },
 	 summary = function(yval, dev, wt, ylevel, digits) {
-	     nclass <- (ncol(yval) - 2L) /2
+	     nclass <- (ncol(yval) - 2L) /2L
 	     group <- yval[, 1L]
 	     counts <- yval[, 1L + (1L:nclass)]
 	     yprob <- yval[, 1L + nclass + 1L:nclass]
-             nodeprob <- yval[, 2L*nclass + 2L]
+             nodeprob <- yval[, 2L * nclass + 2L]
 	     if (!is.null(ylevel)) group <- ylevel[group]
 
 	     temp1 <- formatg(counts, format = "%5g")
@@ -87,7 +87,7 @@ rpart.class <- function(y, offset, parms, wt)
 		 temp2 <- apply(matrix(temp2, ncol = nclass), 1L,
                                 paste, collapse = " ")
              }
-             dev <- dev/(wt[1L]*nodeprob)
+             dev <- dev/(wt[1L] * nodeprob)
 	     paste0("  predicted class=", format(group, justify = "left"),
                     "  expected loss=", formatg(dev, digits),
                     "  P(node) =", formatg(nodeprob, digits), "\n",
@@ -95,7 +95,7 @@ rpart.class <- function(y, offset, parms, wt)
                     "   probabilities: ", temp2)
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
-	     nclass <- (ncol(yval)-2) /2
+	     nclass <- (ncol(yval) - 2L)/2L
 	     group <- yval[, 1L]
 	     counts <- yval[, 1L+ (1L:nclass)]
 	     if (!is.null(ylevel)) group <- ylevel[group]

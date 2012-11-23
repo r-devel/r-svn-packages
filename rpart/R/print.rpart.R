@@ -16,21 +16,18 @@ print.rpart <- function(x, minlength = 0L, spaces = 2L, cp,
     } else paste0(format(node), ")")
 
     tfun <- (x$functions)$print
-    if (!is.null(tfun)) {
-	yval <- if (is.null(frame$yval2)) tfun(frame$yval, ylevel, digits)
+    yval <- if (!is.null(tfun)) {
+	if (is.null(frame$yval2)) tfun(frame$yval, ylevel, digits)
 	else tfun(frame$yval2, ylevel, digits)
-    }
-    else yval <- format(signif(frame$yval, digits = digits))
+    } else format(signif(frame$yval, digits))
     term <- rep(" ", length(depth))
     term[frame$var == "<leaf>"] <- "*"
     z <- labels(x, digits = digits, minlength = minlength, ...)
     n <- frame$n
-    z <- paste(indent, z, n, format(signif(frame$dev, digits = digits)),
-               yval, term)
+    z <- paste(indent, z, n, format(signif(frame$dev, digits)), yval, term)
 
     omit <- x$na.action
-    if (length(omit))
-        cat("n=", n[1L], " (", naprint(omit), ")\n\n", sep = "")
+    if (length(omit)) cat("n=", n[1L], " (", naprint(omit), ")\n\n", sep = "")
     else cat("n=", n[1L], "\n\n")
 
     ## This is stolen, unabashedly, from print.tree

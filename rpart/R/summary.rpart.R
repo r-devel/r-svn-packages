@@ -23,7 +23,7 @@ summary.rpart <-
 
     print(x$cptable, digits = digits)
     if (!is.null(temp <- x$variable.importance)) {
-        temp <- round(100*temp/sum(temp))
+        temp <- round(100 * temp/sum(temp))
         if (any(temp > 0)) {
             cat("\nVariable importance\n")
             print(temp[temp > 0])
@@ -45,9 +45,9 @@ summary.rpart <-
         temp <- x$splits[ , 2L]
         for (i in seq_along(cuts)) {
             cuts[i] <- if (temp[i] == -1L)
-                paste("<", format(signif(x$splits[i, 4L], digits = digits)))
+                paste("<", format(signif(x$splits[i, 4L], digits)))
             else if (temp[i] == 1L)
-                paste("<", format(signif(x$splits[i, 4L], digits = digits)))
+                paste("<", format(signif(x$splits[i, 4L], digits)))
             else paste("splits as ",
                        paste(c("L", "-", "R")[x$csplit[x$splits[i, 4L], 1:temp[i]]],
                              collapse = "", sep = ""),
@@ -75,7 +75,7 @@ summary.rpart <-
 
 	cat(tprint[ii], "\n")
 	if (ff$complexity[i] > cp && !is.leaf[i] ){
-	    sons <- 2L*id[i] + c(0L, 1L)
+	    sons <- 2L * id[i] + c(0L, 1L)
 	    sons.n <- ff$n[match(sons, id)]
 	    cat("  left son=", sons[1L], " (", sons.n[1L], " obs)",
 		" right son=", sons[2L], " (", sons.n[2L], " obs)", sep = "")
@@ -94,7 +94,7 @@ summary.rpart <-
                 sep = "\n")
 	    if (ff$nsurrogate[i] > 0L) {
 		cat("  Surrogate splits:\n")
-		j <- seq(1L +index[i] + ff$ncompete[i],
+		j <- seq(1L + index[i] + ff$ncompete[i],
                          length.out = ff$nsurrogate[i])
 		agree <- x$splits[j, 3L]
 		temp <- if (all(nchar(cuts[j], "w") < 25L))
@@ -103,8 +103,8 @@ summary.rpart <-
                 adj <- x$splits[j, 5L]
                 cat(paste("      ", format(sname[j], justify = "left"), " ",
                           temp,
-                          " agree=", format(round(agree, 3)),
-                          ", adj=" , format(round(adj, 3)),
+                          " agree=", format(round(agree, 3L)),
+                          ", adj=" , format(round(adj, 3L)),
                           ", (", x$splits[j, 1L], " split)", sep = ""),
                     sep = "\n")
             }

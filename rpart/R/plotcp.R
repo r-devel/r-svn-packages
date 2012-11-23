@@ -33,6 +33,6 @@ plotcp <- function(x, minline = TRUE, lty = 3, col = 1,
                mtext("number of splits", side = 3, line = 3)
            })
     minpos <- min(seq_along(xerror)[xerror == min(xerror)])
-    if (minline) abline(h = (xerror+xstd)[minpos], lty = lty, col = col)
+    if (minline) abline(h = (xerror + xstd)[minpos], lty = lty, col = col)
     invisible()
 }

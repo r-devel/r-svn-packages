@@ -59,7 +59,7 @@ rpartcallback <- function(mlist, nobs, init)
         })
     } else {
         expr2 <- quote({
-            tempy <- matrix(yback[1L:(nback*numy)], ncol = numy)
+            tempy <- matrix(yback[1L:(nback * numy)], ncol = numy)
             temp <- user.eval(tempy, wback[1L:nback], parms)
             if (length(temp$label) != numresp)
                 stop("User 'eval' function returned invalid label")
@@ -70,20 +70,20 @@ rpartcallback <- function(mlist, nobs, init)
         expr1 <- quote({
             if (nback < 0L) { #categorical variable
                 n2 <- -nback
-                tempy <- matrix(yback[1L:(n2*numy)], ncol = numy)
+                tempy <- matrix(yback[1L:(n2 * numy)], ncol = numy)
                 temp <- user.split(tempy, wback[1L:n2], xback[1L:n2],
                                    parms, FALSE)
                 ncat <- length(unique(xback[1L:n2]))
-                if (length(temp$goodness) != ncat-1L ||
+                if (length(temp$goodness) != ncat - 1L ||
                     length(temp$direction) != ncat)
                     stop("Invalid return from categorical 'split' function")
             } else {
-                tempy <- matrix(yback[1L:(nback*numy)], ncol = numy)
+                tempy <- matrix(yback[1L:(nback * numy)], ncol = numy)
                 temp <- user.split(tempy, wback[1:nback], xback[1L:nback],
                                    parms, TRUE)
-                if (length(temp$goodness) != (nback-1L))
+                if (length(temp$goodness) != (nback - 1L))
                     stop("User 'split' function returned invalid goodness")
-                if (length(temp$direction) != (nback-1L))
+                if (length(temp$direction) != (nback - 1L))
                     stop("User 'split' function returned invalid direction")
             }
             as.numeric(as.vector(c(temp$goodness, temp$direction)))
@@ -100,7 +100,7 @@ rpartcallback <- function(mlist, nobs, init)
     assign("nback", integer(1L), envir = rho)
     assign("wback", double(nobs), envir = rho)
     assign("xback", double(nobs), envir = rho)
-    assign("yback", double(nobs*numy), envir = rho)
+    assign("yback", double(nobs * numy), envir = rho)
     assign("user.eval", user.eval, envir = rho)
     assign("user.split", user.split, envir = rho)
     assign("numy", numy, envir = rho)

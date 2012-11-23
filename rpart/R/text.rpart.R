@@ -39,9 +39,9 @@ text.rpart <-
             rightptx <- (xytmp$x[3L, ] + xytmp$x[4L, ])/2
             rightpty <- (xytmp$y[3L, ] + xytmp$y[4L, ])/2
 
-            FUN(leftptx, leftpty + 0.52*cxy[2L],
+            FUN(leftptx, leftpty + 0.52 * cxy[2L],
                 rows[left.child[!is.na(left.child)]], ...)
-            FUN(rightptx, rightpty - 0.52*cxy[2L],
+            FUN(rightptx, rightpty - 0.52 * cxy[2L],
                 rows[right.child[!is.na(right.child)]], ...)
         } else
             FUN(xy$x, xy$y + 0.5 * cxy[2L], rows[left.child], ...)
@@ -60,9 +60,9 @@ text.rpart <-
         if (col2rgb(bg, alpha = TRUE)[4L, 1L] < 255) bg <- "white"
         oval <- function(middlex, middley, a, b)
         {
-            theta <- seq(0, 2*pi, pi/30)
-            newx <- middlex + a*cos(theta)
-            newy <- middley + b*sin(theta)
+            theta <- seq(0, 2 * pi, pi/30)
+            newx <- middlex + a * cos(theta)
+            newy <- middley + b * sin(theta)
             polygon(newx, newy, border = TRUE, col = bg)
         }
 
@@ -78,15 +78,15 @@ text.rpart <-
         maxlen <- max(string.bounding.box(stat)$columns) + 1L
         maxht <- max(string.bounding.box(stat)$rows) + 1L
 
-        a.length <- if (fwidth < 1)  fwidth*cxy[1L]*maxlen else fwidth*cxy[1L]
+        a.length <- if (fwidth < 1)  fwidth * cxy[1L] * maxlen else fwidth * cxy[1L]
 
-        b.length <- if (fheight < 1) fheight*cxy[2L]*maxht else fheight*cxy[2L]
+        b.length <- if (fheight < 1) fheight * cxy[2L] * maxht else fheight * cxy[2L]
 
         ## create ovals and rectangles here
         ## sqrt(2) creates the smallest oval that fits around the
         ## best fitting rectangle
         for (i in parent)
-            oval(xy$x[i], xy$y[i], sqrt(2)*a.length/2, sqrt(2)*b.length/2)
+            oval(xy$x[i], xy$y[i], sqrt(2) * a.length/2, sqrt(2) * b.length/2)
         child <- match(node[frame$var == "<leaf>"], node)
         for (i in child)
             rectangle(xy$x[i], xy$y[i], a.length/2, b.length/2)

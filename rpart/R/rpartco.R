@@ -130,9 +130,9 @@ rpartco <- function(tree, parms)
         }
 
 	list(x = x,
-             left = c(x[me]- nspace*(x[me] -x[lson]), templ),
-	     right = c(x[me]- nspace*(x[me] -x[rson]), tempr),
-	     depth = maxd+ depth, sons=c(me, left$sons, right$sons))
+             left = c(x[me] - nspace * (x[me] - x[lson]), templ),
+	     right = c(x[me] - nspace * (x[me] - x[rson]), tempr),
+	     depth = maxd + depth, sons = c(me, left$sons, right$sons))
     }
     x <- compress(x, 1L, 1L)$x
     list(x = x, y = y)

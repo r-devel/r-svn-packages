@@ -15,8 +15,8 @@ plot.rpart <- function(x, uniform = FALSE, branch = 1, compress = FALSE,
     temp <- rpartco(x, parms)
     xx <- temp$x
     yy <- temp$y
-    temp1 <- range(xx) + diff(range(xx))*c(-margin, margin)
-    temp2 <- range(yy) + diff(range(yy))*c(-margin, margin)
+    temp1 <- range(xx) + diff(range(xx)) * c(-margin, margin)
+    temp2 <- range(yy) + diff(range(yy)) * c(-margin, margin)
     plot(temp1, temp2, type = "n", axes = FALSE, xlab = "", ylab = "", ...)
     ## Save information per device, once a new device is opened.
     assign(paste0("device", dev.cur()), parms, envir = rpart_env)
