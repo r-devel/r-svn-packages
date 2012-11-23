@@ -1,7 +1,7 @@
 summary.rpart <-
     function(object, cp = 0, digits = getOption("digits"), file,  ...)
 {
-    if(!inherits(object, "rpart")) stop("Not a legitimate \"rpart\" object")
+    if (!inherits(object, "rpart")) stop("Not a legitimate \"rpart\" object")
 
     ## rename it to "x" to save typing
     x <- object
@@ -11,7 +11,7 @@ summary.rpart <-
         on.exit(sink())
     }
 
-    if(!is.null(x$call)) {
+    if (!is.null(x$call)) {
         cat("Call:\n")
         dput(x$call, control = NULL)
     }
@@ -39,7 +39,7 @@ summary.rpart <-
     is.leaf <- ff$var == '<leaf>'
     index <- cumsum(c(1L, ff$ncompete + ff$nsurrogate + !is.leaf))
 
-    if( !all(is.leaf)) { # skip these lines for a "no splits" tree
+    if ( !all(is.leaf)) { # skip these lines for a "no splits" tree
         sname <- rownames(x$splits)
         cuts <- character(nrow(x$splits))
         temp <- x$splits[ , 2L]
@@ -49,12 +49,12 @@ summary.rpart <-
             else if (temp[i] == 1L)
                 paste("<", format(signif(x$splits[i, 4L], digits = digits)))
             else paste("splits as ",
-                       paste(c("L", "-", "R")[x$csplit[x$splits[i,4L], 1:temp[i]]],
+                       paste(c("L", "-", "R")[x$csplit[x$splits[i, 4L], 1:temp[i]]],
                              collapse = "", sep = ""),
                        collapse = "")
         }
 
-        if(any(temp < 2L))
+        if (any(temp < 2L))
             cuts[temp < 2L ] <- format(cuts[temp < 2L], justify = "left")
         cuts <- paste0(cuts, ifelse(temp >= 2L, ",",
                                    ifelse(temp == 1L, " to the right,", " to the left, ")))
@@ -97,10 +97,10 @@ summary.rpart <-
 		j <- seq(1L +index[i] + ff$ncompete[i],
                          length.out = ff$nsurrogate[i])
 		agree <- x$splits[j, 3L]
-		temp <- if (all(nchar(cuts[j],"w") < 25))
+		temp <- if (all(nchar(cuts[j], "w") < 25L))
                     format(cuts[j], justify = "left")
 		else cuts[j]
-                adj   <- x$splits[j, 5L]
+                adj <- x$splits[j, 5L]
                 cat(paste("      ", format(sname[j], justify = "left"), " ",
                           temp,
                           " agree=", format(round(agree, 3)),

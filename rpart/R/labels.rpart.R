@@ -8,9 +8,9 @@
 ##                    the left and right descendants of each node
 ##              TRUE = return a vector of 1 column, with the label of the parent
 ##   pretty: for historical compatability
-##               0   -> minlength =0
-##              NULL -> minlength =1
-##               TRUE   -> minlength =4
+##               0   -> minlength = 0
+##              NULL -> minlength = 1
+##               TRUE   -> minlength = 4
 ##   ... = other args for abbreviate()
 ##
 labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
@@ -24,16 +24,16 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
     }
 
     ff <- object$frame
-    n  <- nrow(ff)
-    if (n == 1L) return("root")            #special case of no splits
+    n <- nrow(ff)
+    if (n == 1L) return("root")            # special case of no splits
 
     is.leaf <- (ff$var == "<leaf>")
     whichrow <- !is.leaf
-    vnames <- ff$var[whichrow] #the variable names for the primary splits
+    vnames <- ff$var[whichrow] # the variable names for the primary splits
 
     index <- cumsum(c(1, ff$ncompete + ff$nsurrogate + !is.leaf))
-    irow  <- index[c(whichrow, FALSE)] #we only care about the primary split
-    ncat  <- object$splits[irow, 2L]
+    irow <- index[c(whichrow, FALSE)] # we only care about the primary split
+    ncat <- object$splits[irow, 2L]
 
     ## Now to work: first create labels for the left and right splits,
     ##  but not for leaves of course
@@ -75,7 +75,7 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
 	    j <- jrow[i]
 	    splits <- object$csplit[crow[i], ]
 	    ## splits will contain 1=left, 3=right, 2= neither
-            cl <-  if(minlength == 1L) "" else ","
+            cl <- if (minlength == 1L) "" else ","
             lsplit[j] <-
                 paste((xlevels[[cindex[i]]])[splits == 1L], collapse = cl)
             rsplit[j] <-
@@ -103,7 +103,7 @@ labels.rpart <- function(object, digits = 4, minlength = 1L, pretty,
 
     labels <- character(n)
     labels[odd] <- paste0(varname[parent[odd]], rsplit[parent[odd]])
-    labels[!odd]<- paste0(varname[parent[!odd]], lsplit[parent[!odd]])
+    labels[!odd] <- paste0(varname[parent[!odd]], lsplit[parent[!odd]])
     labels[1L] <- "root"
     labels
 }

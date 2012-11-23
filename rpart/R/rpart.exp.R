@@ -17,7 +17,7 @@ rpart.exp <- function(y, offset, parms, wt)
     ny <- ncol(y)
     n <- nrow(y)
 
-    status <- y[,ny]
+    status <- y[, ny]
     if (any(y[, 1L] <= 0)) stop("Observation time must be > 0")
     if (all(status == 0)) stop("No deaths in data set")
     time <- y[ , ny - 1L]
@@ -33,8 +33,8 @@ rpart.exp <- function(y, offset, parms, wt)
     temp <- .Call(C_rpartexp2, as.double(dtimes), as.double(.Machine$double.eps))
     dtimes <- dtimes[temp == 1]
 
-    ## For the sake of speed, restrict the number of intervals to be <1000.
-    ##   (Actually, anything >100 is probably overkill for the
+    ## For the sake of speed, restrict the number of intervals to be < 1000.
+    ##   (Actually, anything > 100 is probably overkill for the
     ##   actual task at hand, which is to approximately scale to exponential).
     if (length(dtimes) > 1000) dtimes <- quantile(dtimes, 0:1000/1000)
 
@@ -68,8 +68,8 @@ rpart.exp <- function(y, offset, parms, wt)
 	    ##  compute the amount of time NOT spent in the interval that
 	    ##  the start time lies in.
 	    stime <- y[, 1L]             #start time for each interval
-	    index2<- unclass(cut(stime, itable, include.lowest = TRUE))
-	    itime2<- stime - itable[index2]
+	    index2 <- unclass(cut(stime, itable, include.lowest = TRUE))
+	    itime2 <- stime - itable[index2]
         }
 
 	## Compute the amount of person-years in each of the intervals
@@ -85,7 +85,7 @@ rpart.exp <- function(y, offset, parms, wt)
 	    ## subtract off the time before "start"
 	    tab2 <- table(index2, levels = 1:ngrp) # force the length of tab2
 	    temp <- rev(cumsum(rev(tab2)))
-	    py2  <-  ilength * c(0, temp[-ngrp]) + tapply(itime2, index2, sum)
+	    py2 <- ilength * c(0, temp[-ngrp]) + tapply(itime2, index2, sum)
 	    pyears <- pyears - py2
         }
 
@@ -109,7 +109,7 @@ rpart.exp <- function(y, offset, parms, wt)
     if (missing(parms)) parms <- c(shrink = 1L, method = 1L)
     else {
 	parms <- as.list(parms)
-        if(is.null(names(parms))) stop("You must input a named list for parms")
+        if (is.null(names(parms))) stop("You must input a named list for parms")
         parmsNames <- c("method", "shrink")
         indx <- pmatch(names(parms), parmsNames, 0L)
         if (any(indx == 0L))
@@ -131,11 +131,11 @@ rpart.exp <- function(y, offset, parms, wt)
 	 summary = function(yval, dev, wt, ylevel, digits) {
 	     paste0("  events=", formatg(yval[, 2L]),
                    ",  estimated rate=" , formatg(yval[, 1L], digits),
-                   " , mean deviance=",formatg(dev/wt, digits))
+                   " , mean deviance=", formatg(dev/wt, digits))
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
-	     if(use.n) paste0(formatg(yval[, 1L],digits),"\n",
-                              formatg(yval[, 2L]) ,"/", n)
+	     if (use.n) paste0(formatg(yval[, 1L], digits), "\n",
+                              formatg(yval[, 2L]) , "/", n)
              else paste(formatg(yval[, 1L], digits))
          })
 }

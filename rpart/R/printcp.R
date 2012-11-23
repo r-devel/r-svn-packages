@@ -5,11 +5,11 @@ printcp <- function(x, digits = getOption("digits") - 2L)
     cat(switch(x$method,
                anova = "\nRegression tree:\n" ,
                class = "\nClassification tree:\n" ,
-               poisson="\nRates regression tree:\n",
+               poisson = "\nRates regression tree:\n",
                exp = "\nSurvival regression tree:\n")
         )
 
-    if(!is.null(cl <- x$call)) {
+    if (!is.null(cl <- x$call)) {
 	dput(cl, control = NULL)
 	cat("\n")
     }
@@ -17,7 +17,7 @@ printcp <- function(x, digits = getOption("digits") - 2L)
     leaves <- frame$var == "<leaf>"
     used <- unique(frame$var[!leaves])
 
-    if(!is.null(used)) {
+    if (!is.null(used)) {
         cat("Variables actually used in tree construction:\n")
         print(sort(as.character(used)), quote = FALSE)
         cat("\n")

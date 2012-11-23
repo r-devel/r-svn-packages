@@ -8,7 +8,7 @@ rpart.matrix <- function(frame)
 {
     ## First line is just a failsafe: this should always be called with
     ##   a model frame.
-    if(!inherits(frame, "data.frame") ||
+    if (!inherits(frame, "data.frame") ||
        is.null(attr(frame, "terms")))  return(as.matrix(frame))
 
     ## turn other classes into numerics.

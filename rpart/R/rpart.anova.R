@@ -7,7 +7,7 @@ rpart.anova <- function(y, offset, parms, wt)
                     ", MSE=" , formatg(dev/wt, digits))
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n ) {
-	     if(use.n) paste0(formatg(yval,digits), "\nn=", n) else
+	     if (use.n) paste0(formatg(yval, digits), "\nn=", n) else
              formatg(yval, digits)
          })
 }

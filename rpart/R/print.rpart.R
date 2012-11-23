@@ -1,16 +1,16 @@
-print.rpart <- function(x, minlength=0, spaces=2, cp,
-               digits=getOption("digits"), ...)
+print.rpart <- function(x, minlength = 0L, spaces = 2L, cp,
+               digits = getOption("digits"), ...)
 {
-    if(!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
+    if (!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
 
-    if (!missing(cp)) x <- prune.rpart(x, cp=cp)
+    if (!missing(cp)) x <- prune.rpart(x, cp = cp)
     frame <- x$frame
     ylevel <- attr(x, "ylevels")
     node <- as.numeric(row.names(frame))
     depth <- tree.depth(node)
     indent <- paste(rep(" ", spaces * 32L), collapse = "")
     ## 32 is the maximal depth
-    indent <- if(length(node) > 1L) {
+    indent <- if (length(node) > 1L) {
         indent <- substring(indent, 1L, spaces * seq(depth))
         paste0(c("", indent[depth]), format(node), ")")
     } else paste0(format(node), ")")
@@ -23,7 +23,7 @@ print.rpart <- function(x, minlength=0, spaces=2, cp,
     else yval <- format(signif(frame$yval, digits = digits))
     term <- rep(" ", length(depth))
     term[frame$var == "<leaf>"] <- "*"
-    z <- labels(x, digits=digits, minlength=minlength, ...)
+    z <- labels(x, digits = digits, minlength = minlength, ...)
     n <- frame$n
     z <- paste(indent, z, n, format(signif(frame$dev, digits = digits)),
                yval, term)

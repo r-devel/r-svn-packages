@@ -17,7 +17,7 @@ pred.rpart <- function(fit, x)
                   as.integer(dim(x)),
                   as.integer(dim(frame)[1L]),
                   as.integer(dim(fit$splits)),
-                  as.integer(if(is.null(fit$csplit)) rep(0L, 2L) else dim(fit$csplit)),
+                  as.integer(if (is.null(fit$csplit)) rep(0L, 2L) else dim(fit$csplit)),
                   as.integer(row.names(frame)),
                   as.integer(unlist(frame[, c('n', 'ncompete', 'nsurrogate', 'index')])),
                   as.integer(vnum),

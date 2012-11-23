@@ -4,7 +4,7 @@
 rsq.rpart <- function(x)
 {
 
-    if(!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
+    if (!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
 
     p.rpart <- printcp(x)
     xstd <- p.rpart[, 5L]

@@ -1,21 +1,21 @@
 residuals.rpart <-
     function(object, type = c("usual", "pearson", "deviance"), ...)
 {
-    if(!inherits(object, "rpart"))
+    if (!inherits(object, "rpart"))
         stop("Not a legitimate \"rpart\" object")
 
     y <- object$y
     if (is.null(y)) y <- model.extract(model.frame(object), "response")
     frame <- object$frame
     type <- match.arg(type)
-    if(is.na(match(type, c("usual", "pearson", "deviance"))))
+    if (is.na(match(type, c("usual", "pearson", "deviance"))))
         stop("Invalid type of residual")
 
     resid <- if (object$method == "class") {
 	ylevels <- attr(object, "ylevels")
 	nclass <- length(ylevels)
 
-        if(type == "usual") {
+        if (type == "usual") {
             yhat <- frame$yval[object$where]
             loss <- object$parms$loss
         } else {
@@ -28,7 +28,7 @@ residuals.rpart <-
                deviance = -2 * log(yhat))
     } else if (object$method == "poisson" || object$method == "exp") {
 	lambda <- (object$frame$yval)[object$where]
-	time   <- y[, 1L]               # observation time in new data
+	time <- y[, 1L]               # observation time in new data
 	events <- y[, 2L]               # number of events, in new data
 	expect <- lambda * time         # expected number of events
 	temp <- ifelse(expect == 0, 0.0001, 0) # failsafe for log(0)

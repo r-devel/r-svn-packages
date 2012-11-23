@@ -14,7 +14,7 @@ importance <- function(fit)
     nsurr <- ff$nsurrogate[fpri]  # number of surrogates each has
 
     sname <- vector("list", length(fpri))
-    sval  <- sname
+    sval <- sname
 
     ## The importance for primary splits needs to be scaled
     ## It was a printout choice for the anova method to list % improvement in
@@ -30,7 +30,7 @@ importance <- function(fit)
         if (nsurr[i] > 0L) {
             indx <- spri[i] + ff$ncompete[fpri[i]] + seq_len(nsurr[i])
             sname[[i]] <- sdim[indx]
-            sval[[i]] <-  scaled.imp[i] * fit$splits[indx, "adj"]
+            sval[[i]] <- scaled.imp[i] * fit$splits[indx, "adj"]
         }
     }
 

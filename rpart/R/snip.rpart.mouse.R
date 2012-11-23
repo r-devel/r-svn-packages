@@ -19,7 +19,7 @@ snip.rpart.mouse <- function(tree, parms)
     else branch <- 1L
 
     node <- as.integer(row.names(tree$frame))
-    draw <- rpart.branch(xy$x,xy$y, node, branch)
+    draw <- rpart.branch(xy$x, xy$y, node, branch)
 
     lastchoice <- 0L
     while (length(choose <- identify(xy, n = 1L, plot = FALSE))) {
@@ -34,23 +34,23 @@ snip.rpart.mouse <- function(tree, parms)
 	    cat("    response=", format(ff$yval[choose]))
 	    if (is.null(ff$yval2)) cat ("\n")
 	    else if (is.matrix(ff$yval2))
-                cat(" (", format(ff$yval2[choose,]), ")\n")
+                cat(" (", format(ff$yval2[choose, ]), ")\n")
 	    else  cat(" (", format(ff$yval2[choose]), ")\n")
 	    cat("    Error (dev) = ", format(ff$dev[choose]), "\n")
 	    lastchoice <- choose
         } else {
 	    ## second click-- erase all of the descendants
 	    ##   (stolen from snip.tree)
-	    id  <- node[choose]
+	    id <- node[choose]
 	    id2 <- node
 	    while (any(id2 > 1L)) {
 		id2 <- id2 %/% 2L
-		temp  <- match(id2, id, 0L) > 0L
+		temp <- match(id2, id, 0L) > 0L
   	        id <- c(id, node[temp])
 		id2[temp] <- 0L
             }
 	    temp <- match(id, node[ff$var != '<leaf>'], 0L)
-	    lines(c(draw$x[,temp]), c(draw$y[,temp]), col = 0L)
+	    lines(c(draw$x[, temp]), c(draw$y[, temp]), col = 0L)
 	    toss <- c(toss, node[choose])
         }
     }

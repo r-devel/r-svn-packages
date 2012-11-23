@@ -67,7 +67,7 @@ rpart.class <- function(y, offset, parms, wt)
                  yprob <- matrix(yprob, nrow = 1L)
              ## FIXME: improve code
 	     temp <- paste0(temp, " (", yprob[, 1L])
-	     for(i in 2L:ncol(yprob)) temp  <- paste(temp, yprob[, i], sep = " ")
+	     for (i in 2L:ncol(yprob)) temp <- paste(temp, yprob[, i], sep = " ")
 	     temp <- paste0(temp, ")")
 	     temp
          },
@@ -75,9 +75,9 @@ rpart.class <- function(y, offset, parms, wt)
 	     nclass <- (ncol(yval) - 2L) /2
 	     group <- yval[, 1L]
 	     counts <- yval[, 1L + (1L:nclass)]
-	     yprob  <- yval[, 1L + nclass + 1L:nclass]
+	     yprob <- yval[, 1L + nclass + 1L:nclass]
              nodeprob <- yval[, 2L*nclass + 2L]
-	     if(!is.null(ylevel)) group <- ylevel[group]
+	     if (!is.null(ylevel)) group <- ylevel[group]
 
 	     temp1 <- formatg(counts, format = "%5g")
 	     temp2 <- formatg(yprob,  format = "%5.3f")
@@ -91,20 +91,20 @@ rpart.class <- function(y, offset, parms, wt)
 	     paste0("  predicted class=", format(group, justify = "left"),
                     "  expected loss=", formatg(dev, digits),
                     "  P(node) =", formatg(nodeprob, digits), "\n",
-                    "    class counts: ", temp1,"\n",
+                    "    class counts: ", temp1, "\n",
                     "   probabilities: ", temp2)
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
 	     nclass <- (ncol(yval)-2) /2
 	     group <- yval[, 1L]
 	     counts <- yval[, 1L+ (1L:nclass)]
-	     if(!is.null(ylevel)) group <- ylevel[group]
+	     if (!is.null(ylevel)) group <- ylevel[group]
 
 	     temp1 <- formatg(counts, digits)
 	     if (nclass > 1L)
 		 temp1 <- apply(matrix(temp1, ncol = nclass), 1L,
                                 paste, collapse = "/")
-	     if(use.n)  paste0(format(group, justify = "left"),"\n", temp1)
+	     if (use.n)  paste0(format(group, justify = "left"), "\n", temp1)
              else format(group, justify = "left")
          })
 }

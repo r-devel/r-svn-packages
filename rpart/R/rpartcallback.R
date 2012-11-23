@@ -16,7 +16,7 @@ rpartcallback <- function(mlist, nobs, init)
     user.split <- mlist$split
 
     numresp <- init$numresp
-    numy <-  init$numy
+    numy <- init$numy
     parms <- init$parms
 
     ##
@@ -34,32 +34,32 @@ rpartcallback <- function(mlist, nobs, init)
             temp <- user.eval(yback[1:nback], wback[1:nback], parms)
             if (length(temp$label) != numresp)
                 stop("User 'eval' function returned invalid label")
-            if (length(temp$deviance) !=1L)
+            if (length(temp$deviance) != 1L)
                 stop("User 'eval' function returned invalid deviance")
             as.numeric(as.vector(c(temp$deviance, temp$label)))
         })
         expr1 <- quote({
             if (nback < 0L) { #categorical variable
                 n2 <- -nback
-                temp  <- user.split(yback[1L:n2], wback[1L:n2],
-                                    xback[1L:n2], parms, FALSE)
+                temp <- user.split(yback[1L:n2], wback[1L:n2],
+                                   xback[1L:n2], parms, FALSE)
                 ncat <- length(unique(xback[1L:n2]))
-                if (length(temp$goodness) != ncat-1L ||
+                if (length(temp$goodness) != ncat - 1L ||
                     length(temp$direction) != ncat)
                     stop("Invalid return from categorical 'split' function")
             } else {
                 temp <- user.split(yback[1L:nback], wback[1L:nback],
                                    xback[1L:nback], parms, TRUE)
-                if (length(temp$goodness) != (nback-1L))
+                if (length(temp$goodness) != (nback - 1L))
                     stop("User 'split' function returned invalid goodness")
-                if (length(temp$direction) != (nback-1L))
+                if (length(temp$direction) != (nback - 1L))
                     stop("User 'split' function returned invalid direction")
             }
             as.numeric(as.vector(c(temp$goodness, temp$direction)))
         })
     } else {
         expr2 <- quote({
-            tempy <- matrix(yback[1L:(nback*numy)], ncol=numy)
+            tempy <- matrix(yback[1L:(nback*numy)], ncol = numy)
             temp <- user.eval(tempy, wback[1L:nback], parms)
             if (length(temp$label) != numresp)
                 stop("User 'eval' function returned invalid label")
@@ -71,8 +71,8 @@ rpartcallback <- function(mlist, nobs, init)
             if (nback < 0L) { #categorical variable
                 n2 <- -nback
                 tempy <- matrix(yback[1L:(n2*numy)], ncol = numy)
-                temp  <- user.split(tempy, wback[1L:n2], xback[1L:n2],
-                                    parms, FALSE)
+                temp <- user.split(tempy, wback[1L:n2], xback[1L:n2],
+                                   parms, FALSE)
                 ncat <- length(unique(xback[1L:n2]))
                 if (length(temp$goodness) != ncat-1L ||
                     length(temp$direction) != ncat)

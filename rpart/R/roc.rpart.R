@@ -1,7 +1,7 @@
-roc.rpart <- function(object,plot.ok=TRUE,x.orient=1)
+roc.rpart <- function(object, plot.ok = TRUE, x.orient = 1L)
 {
 
-    if(!inherits(object, "rpart") || object$method != "class" ||
+    if (!inherits(object, "rpart") || object$method != "class" ||
        length(attr(object, "ylevels")) != 2L)
         stop('Not legitimate \"rpart\" tree and endpoint not a 2 level-factor')
 
@@ -14,13 +14,13 @@ roc.rpart <- function(object,plot.ok=TRUE,x.orient=1)
 
     last.r <- dim(pred.np)[1L]
     last.c <- dim(pred.np)[2L]
-    if(sum(pred.np[1L,]  ) > 0L) {
+    if (sum(pred.np[1L, ]  ) > 0L) {
         pred.np <- rbind(matrix(FALSE, nrow = 1L, ncol = last.c), pred.np)
 	cutoffs <- c(NA, cutoffs)
     }
     last.r <- dim(pred.np)[1L]
     last.c <- dim(pred.np)[2L]
-    if(sum(pred.np[last.r, ])  < last.c) {
+    if (sum(pred.np[last.r, ])  < last.c) {
         pred.np <- rbind(pred.np, matrix(TRUE, nrow = 1L, ncol = last.c))
 	cutoffs <- c(cutoffs, NA)
     }
@@ -55,14 +55,14 @@ roc.rpart <- function(object,plot.ok=TRUE,x.orient=1)
         tncn[i] <- ss.table[1L, 1L]
     }
 
-    if(plot.ok) {
+    if (plot.ok) {
         o.par <- par(pty = "s")
         on.exit(par(o.par))
-        if(x.orient == 1L){
+        if (x.orient == 1L){
             plot(1-specificity, sensitivity, type = "o",  xlim = c(0, 1),
                  ylim = c(0, 1), ylab = "Sensitivity", xlab = "1-Specificity")
         }
-        if(x.orient == 2L){
+        if (x.orient == 2L){
             plot(specificity, sensitivity, type = "o",  xlim = c(0, 1),
                  ylim = c(0, 1), ylab = "Sensitivity", xlab = "Specificity")
         }

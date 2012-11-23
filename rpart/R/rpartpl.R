@@ -1,7 +1,7 @@
-rpartpl <-function(x, y, node, erase = FALSE, ...)
+rpartpl <- function(x, y, node, erase = FALSE, ...)
 {
 
-    if(!is.null(x$x) && !is.null(x$y)) {
+    if (!is.null(x$x) && !is.null(x$y)) {
         node <- y
         y <- x$y
         x <- x$x
@@ -10,7 +10,7 @@ rpartpl <-function(x, y, node, erase = FALSE, ...)
     sibling <- match(ifelse(node %% 2L, node - 1L, node + 1L), node)
     xx <- rbind(x, x, x[sibling], x[sibling], NA)
     yy <- rbind(y, y[parent], y[parent], y[sibling], NA)
-    if(any(erase)) {
+    if (any(erase)) {
         ## erase denotes the set of nodes to be erased
         lines(c(xx[, erase]), c(yy[, erase]), col = 0L)
         return(x = x[!erase], y = y[!erase])

@@ -14,7 +14,7 @@ rpart.poisson <- function(y, offset, parms, wt)
     if (missing(parms)) parms <- c(shrink = 1L, method = 1L)
     else {
 	parms <- as.list(parms)
-	if(is.null(names(parms))) stop("You must input a named list for parms")
+	if (is.null(names(parms))) stop("You must input a named list for parms")
 	parmsNames <- c("method", "shrink")
 	indx <- pmatch(names(parms), parmsNames, 0L)
 	if (any(indx == 0L))
@@ -42,9 +42,9 @@ rpart.poisson <- function(y, offset, parms, wt)
          },
 	 text = function(yval, dev, wt, ylevel, digits, n, use.n) {
              ## fix for when there are no splits
-             if(!is.matrix(yval)) yval <- matrix(yval, nrow = 1L)
+             if (!is.matrix(yval)) yval <- matrix(yval, nrow = 1L)
 
-             if(use.n) paste0(formatg(yval[, 1L], digits),"\n",
+             if (use.n) paste0(formatg(yval[, 1L], digits), "\n",
                               formatg(yval[, 2L]), "/", n)
              else paste(formatg(yval[, 1L], digits))
          })

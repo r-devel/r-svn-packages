@@ -55,14 +55,14 @@ snip.rpart <- function(x, toss)
     if (any(temp)) {
         x$csplit <- x$csplit[split[temp, 4L], , drop = FALSE]
 	split[temp, 4L] <- 1L
-        if(is.matrix(x$csplit)) split[temp, 4L] <- 1L:nrow(x$csplit)
+        if (is.matrix(x$csplit)) split[temp, 4L] <- 1L:nrow(x$csplit)
     } else x$csplit <- NULL
     x$splits <- split
 
     ## Thin out unneeded rows in the frame component
     ff$ncompete[newleaf] <- ff$nsurrogate[newleaf] <- 0L
     ff$var[newleaf] <- "<leaf>"
-    x$frame <- ff[sort(c(keepit, newleaf)),]
+    x$frame <- ff[sort(c(keepit, newleaf)), ]
 
     ## Now do the 'parents' loop one more time, to fix up the "where" vector
     ## This pass requires log_2(depth) iterations

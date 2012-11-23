@@ -11,8 +11,8 @@ Generates a PostScript presentation plot of an \code{rpart} object.
 post(tree, \dots)
 
 \method{post}{rpart}(tree, title., 
-     filename = paste(deparse(substitute(tree)), ".ps", sep = ""), 
-     digits = getOption("digits") -2, pretty = TRUE,
+     filename = paste0(deparse(substitute(tree)), ".ps"), 
+     digits = getOption("digits") - 2, pretty = TRUE,
      use.n = TRUE, horizontal = TRUE, \dots)
 }
 \arguments{
