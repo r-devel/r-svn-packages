@@ -4,9 +4,9 @@
 
 text.rpart <-
     function(x, splits = TRUE, label, FUN = text, all = FALSE,
-             pretty = NULL, digits = getOption("digits") - 3,
+             pretty = NULL, digits = getOption("digits") - 3L,
              use.n = FALSE, fancy = FALSE, fwidth = 0.8, fheight = 0.8,
-             bg = par("bg"), minlength = 1L,  ...)
+             bg = par("bg"), minlength = 1L, ...)
 {
     if (!inherits(x, "rpart")) stop("Not a legitimate \"rpart\" object")
     if (nrow(x$frame) <= 1L) stop("fit is not a tree, just a root")

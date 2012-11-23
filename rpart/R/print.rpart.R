@@ -17,8 +17,8 @@ print.rpart <- function(x, minlength = 0L, spaces = 2L, cp,
 
     tfun <- (x$functions)$print
     if (!is.null(tfun)) {
-	yval <- if (is.null(frame$yval2)) tfun(frame$yval,  ylevel, digits)
-	else tfun(frame$yval2,  ylevel, digits)
+	yval <- if (is.null(frame$yval2)) tfun(frame$yval, ylevel, digits)
+	else tfun(frame$yval2, ylevel, digits)
     }
     else yval <- format(signif(frame$yval, digits = digits))
     term <- rep(" ", length(depth))

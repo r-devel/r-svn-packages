@@ -11,7 +11,7 @@ rpartco <- function(tree, parms)
     frame <- tree$frame
     node <- as.numeric(row.names(frame))
     depth <- tree.depth(node)
-    is.leaf <- (frame$var == '<leaf>')
+    is.leaf <- (frame$var == "<leaf>")
     if (length(parms)) {
 	uniform <- parms$uniform
 	nspace <- parms$nspace

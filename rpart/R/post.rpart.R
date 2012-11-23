@@ -2,7 +2,7 @@
 post.rpart <- function(tree, title.,
 		       filename = paste0(deparse(substitute(tree)), ".ps"),
 		       digits = getOption("digits") - 2, pretty = TRUE,
-		       use.n = TRUE,  horizontal = TRUE, ...)
+		       use.n = TRUE, horizontal = TRUE, ...)
 {
     if (filename != "") {
 	postscript(file = filename, horizontal = horizontal, ...)

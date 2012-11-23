@@ -6,7 +6,7 @@ pred.rpart <- function(fit, x)
     if (nrow(frame) == 1L)                # root only tree
         return(structure(rep(1, nrow(x), names = rownames(x))))
 
-    nc <- frame[, c('ncompete', 'nsurrogate')]
+    nc <- frame[, c("ncompete", "nsurrogate")]
     frame$index <- 1L + c(0L, cumsum((frame$var != "<leaf>") +
                                      nc[[1L]] + nc[[2L]]))[-(nrow(frame) + 1L)]
     frame$index[frame$var == "<leaf>"] <- 0L
@@ -19,7 +19,7 @@ pred.rpart <- function(fit, x)
                   as.integer(dim(fit$splits)),
                   as.integer(if (is.null(fit$csplit)) rep(0L, 2L) else dim(fit$csplit)),
                   as.integer(row.names(frame)),
-                  as.integer(unlist(frame[, c('n', 'ncompete', 'nsurrogate', 'index')])),
+                  as.integer(unlist(frame[, c("n", "ncompete", "nsurrogate", "index")])),
                   as.integer(vnum),
                   as.double(fit$splits),
                   as.integer(fit$csplit - 2L), # we added 2 in rpart.R

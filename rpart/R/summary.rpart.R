@@ -1,5 +1,5 @@
 summary.rpart <-
-    function(object, cp = 0, digits = getOption("digits"), file,  ...)
+    function(object, cp = 0, digits = getOption("digits"), file, ...)
 {
     if (!inherits(object, "rpart")) stop("Not a legitimate \"rpart\" object")
 
@@ -30,13 +30,13 @@ summary.rpart <-
         }
     }
     ff <- x$frame
-    ylevel <- attr(x, 'ylevels')
+    ylevel <- attr(x, "ylevels")
     id <- as.integer(row.names(ff))
     parent.id <- ifelse(id == 1L, 1L, id %/% 2L)
     parent.cp <- ff$complexity[match(parent.id, id)]
     rows <- seq_along(id)[parent.cp > cp]
     rows <- if (length(rows)) rows[order(id[rows])] else 1L
-    is.leaf <- ff$var == '<leaf>'
+    is.leaf <- ff$var == "<leaf>"
     index <- cumsum(c(1L, ff$ncompete + ff$nsurrogate + !is.leaf))
 
     if ( !all(is.leaf)) { # skip these lines for a "no splits" tree

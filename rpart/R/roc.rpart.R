@@ -59,11 +59,11 @@ roc.rpart <- function(object, plot.ok = TRUE, x.orient = 1L)
         o.par <- par(pty = "s")
         on.exit(par(o.par))
         if (x.orient == 1L){
-            plot(1-specificity, sensitivity, type = "o",  xlim = c(0, 1),
+            plot(1-specificity, sensitivity, type = "o", xlim = c(0, 1),
                  ylim = c(0, 1), ylab = "Sensitivity", xlab = "1-Specificity")
         }
         if (x.orient == 2L){
-            plot(specificity, sensitivity, type = "o",  xlim = c(0, 1),
+            plot(specificity, sensitivity, type = "o", xlim = c(0, 1),
                  ylim = c(0, 1), ylab = "Sensitivity", xlab = "Specificity")
         }
     }

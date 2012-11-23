@@ -15,4 +15,4 @@ meanvar.rpart <- function(tree, xlab = "ave(y)", ylab = "ave(deviance)", ...)
     invisible(list(x = x, y = y, label = label))
 }
 
-meanvar <- function(tree, ...) UseMethod('meanvar')
+meanvar <- function(tree, ...) UseMethod("meanvar")

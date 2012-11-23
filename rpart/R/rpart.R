@@ -16,7 +16,7 @@ rpart <-
         temp <- Call[c(1L, indx)]      # only keep the arguments we wanted
         temp$na.action <- na.action    # This one has a default
         temp[[1L]] <- as.name("model.frame") # change the function called
-        m <- eval(temp, parent.frame()) # or eval.parent
+        m <- eval.parent(temp)
     }
 
     Terms <- attr(m, "terms")
@@ -81,10 +81,9 @@ rpart <-
 
     xlevels <- .getXlevels(Terms, m)
     cats <- rep(0L, ncol(X))
-    if (!is.null(xlevels)) {
+    if (!is.null(xlevels))
 	cats[match(names(xlevels), colnames(X))] <-
             unlist(lapply(xlevels, length))
-    }
 
     ## We want to pass any ... args to rpart.control, but not pass things
     ##  like "dats = mydata" where someone just made a typo.  The use of ...

@@ -23,7 +23,7 @@ snip.rpart.mouse <- function(tree, parms)
 
     lastchoice <- 0L
     while (length(choose <- identify(xy, n = 1L, plot = FALSE))) {
-	if (ff$var[choose] == '<leaf>') {
+	if (ff$var[choose] == "<leaf>") {
             cat("Terminal node -- try again\n")
             next
         }
@@ -49,7 +49,7 @@ snip.rpart.mouse <- function(tree, parms)
   	        id <- c(id, node[temp])
 		id2[temp] <- 0L
             }
-	    temp <- match(id, node[ff$var != '<leaf>'], 0L)
+	    temp <- match(id, node[ff$var != "<leaf>"], 0L)
 	    lines(c(draw$x[, temp]), c(draw$y[, temp]), col = 0L)
 	    toss <- c(toss, node[choose])
         }

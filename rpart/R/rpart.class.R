@@ -80,7 +80,7 @@ rpart.class <- function(y, offset, parms, wt)
 	     if (!is.null(ylevel)) group <- ylevel[group]
 
 	     temp1 <- formatg(counts, format = "%5g")
-	     temp2 <- formatg(yprob,  format = "%5.3f")
+	     temp2 <- formatg(yprob, format = "%5.3f")
 	     if (nclass >1) {
 		 temp1 <- apply(matrix(temp1, ncol = nclass), 1L,
                                 paste, collapse = " ")
