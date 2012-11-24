@@ -12,14 +12,12 @@
 
     \item The \code{var} column of the \code{frame} component of the fit
     is now a character vector.
-  }
-}
-
-
-\section{Changes in version 4.0-4}{
-  \itemize{
+    
     \item Variable \code{Reliability} in data set \code{car90} is
     corrected to be an ordered factor, as documented.
+
+    \item Surrogate splits are now considered only if they send two or
+    more cases \emph{with non-zero weight} each way.
 
     \item Surrogate splits which improve only by rounding error over the
     default split are no longer returned.  Where weights and missing
@@ -27,6 +25,7 @@
     was not returned correctly.
   }
 }
+
 
 \section{Changes in version 4.0-3}{
   \itemize{

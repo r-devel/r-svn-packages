@@ -1,6 +1,4 @@
-2012 Nov ??	4.1-0	Reguire R >= 2.15.0 so paste0() can be used.
-	
-     	 		Remove rpconvert() (converts rpart2 trees).
+2012 Nov ??	4.1-0	Remove rpconvert() (converts rpart2 trees).
 	
 			Clean up a lot of the R code.
 	
@@ -9,8 +7,6 @@
 
 			Call R_CheckUserInterrupts at each phase of
 			cross-validation.
-
-2012 Nov 23	4.0-4	Final release for R 2.14.x.
 
 			Ensure that surrogates really are better than the
 			default split (adj > 1e-10).

@@ -1,6 +1,6 @@
 ##
 post.rpart <- function(tree, title.,
-		       filename = paste0(deparse(substitute(tree)), ".ps"),
+		       filename = paste(deparse(substitute(tree)), ".ps", sep = ""),
 		       digits = getOption("digits") - 2, pretty = TRUE,
 		       use.n = TRUE, horizontal = TRUE, ...)
 {
