@@ -11,7 +11,7 @@
     end of evaluating each split.
 
     \item The \code{var} column of the \code{frame} component of the fit
-    is now a character vector.
+    is now a character vector (rather than a factor).
     
     \item Variable \code{Reliability} in data set \code{car90} is
     corrected to be an ordered factor, as documented.
