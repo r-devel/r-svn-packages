@@ -207,6 +207,7 @@ rpart <-
 	ncat <- ncat + nadd
     } else catmat <- rpfit$csplit
 
+    ## NB: package adabag depends on 'var' being a factor.
     if (nsplit == 0L) {                    # tree with no splits
 	frame <- data.frame(row.names = 1L,
 			    var = "<leaf>",
@@ -216,12 +217,12 @@ rpart <-
 			    yval = rpfit$dnode[, 4L],
 			    complexity = rpfit$dnode[, 2L],
 			    ncompete = 0L,
-			    nsurrogate = 0L,
-                            stringsAsFactors = FALSE)
+			    nsurrogate = 0L)
     } else {
 	temp <- ifelse(index == 0L, 1L, index)
 	svar <- ifelse(index == 0L, 0L, rpfit$isplit[temp, 1L]) # var number
 	frame <- data.frame(row.names = rpfit$inode[, 1L],
+                            ## maybe better to specify tname as the level?
 			    var = tname[svar + 1L],
 			    n = rpfit$inode[, 5L],
 			    wt = rpfit$dnode[, 3L],
@@ -229,8 +230,7 @@ rpart <-
 			    yval = rpfit$dnode[, 4L],
 			    complexity = rpfit$dnode[, 2L],
 			    ncompete = pmax(0L, rpfit$inode[, 3L] - 1L),
-			    nsurrogate = rpfit$inode[, 4L],
-                            stringsAsFactors = FALSE)
+			    nsurrogate = rpfit$inode[, 4L])
     }
     if (method.int == 3L) {
         ## Create the class probability vector from the class counts, and

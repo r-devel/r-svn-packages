@@ -9,15 +9,14 @@
     
     \item The cross-validation functions allow for user interrupt at the
     end of evaluating each split.
-
-    \item The \code{var} column of the \code{frame} component of the fit
-    is now a character vector (rather than a factor).
     
     \item Variable \code{Reliability} in data set \code{car90} is
     corrected to be an ordered factor, as documented.
 
     \item Surrogate splits are now considered only if they send two or
-    more cases \emph{with non-zero weight} each way.
+    more cases \emph{with non-zero weight} each way.  For
+    numeric/ordinal variables the restriction to non-zero weights is
+    new: for categorical variables this is a new restriction.
 
     \item Surrogate splits which improve only by rounding error over the
     default split are no longer returned.  Where weights and missing

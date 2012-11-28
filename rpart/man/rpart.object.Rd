@@ -17,9 +17,8 @@
   The \code{row.names} of \code{frame} contain the (unique) node numbers that
   follow a binary ordering indexed by node depth.
   Columns of \code{frame} include
-  \code{var}, a character vector giving the names of the variables used
-  in the split at each node (leaf nodes are denoted by the string
-  \code{"<leaf>"}),
+  \code{var}, a factor giving the names of the variables used in the
+  split at each node (leaf nodes are denoted by the level \code{"<leaf>"}), 
   \code{n}, the number of observations reaching the node,
   \code{wt}, the sum of case weights for observations reaching the node,
   \code{dev}, the deviance of the node,
