@@ -2248,7 +2248,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (n.smooth&&!para.only) 
       { for (k in 1:n.smooth) # work through the smooth terms 
         { first<-object$smooth[[k]]$first.para;last<-object$smooth[[k]]$last.para
-          fit[start:stop,n.pterms+k]<-X[,first:last]%*%object$coefficients[first:last] + Xoff[,k]
+          fit[start:stop,n.pterms+k]<-X[,first:last,drop=FALSE]%*%object$coefficients[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
             if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept"
               X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
@@ -2257,7 +2257,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
               X1[,first:last] <- X[,first:last]
               se[start:stop,n.pterms+k] <- sqrt(rowSums((X1%*%object$Vp)*X1))
             } else se[start:stop,n.pterms+k] <- ## terms strictly centred
-            sqrt(rowSums((X[,first:last]%*%object$Vp[first:last,first:last])*X[,first:last]))
+            sqrt(rowSums((X[,first:last,drop=FALSE]%*%
+                          object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE]))
           } ## end if (se.fit)
         }
         colnames(fit) <- ColNames
