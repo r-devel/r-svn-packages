@@ -27,8 +27,7 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
     int maxpri;
     struct node *xtree;
     double old_wt, total_wt;
-    int *sj;
-    int *si, *savesort;
+    int *savesort;
     int xgroup;
 
     /*
@@ -130,10 +129,7 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
      * save away a copy of the rp.sorts
      */
     savesort = (int *) ALLOC(n * nvar, sizeof(int));
-    si = savesort;
-    sj = rp.sorts[0];
-    for (i = 0; i < n * rp.nvar; i++)
-        *si++ = *sj++;
+    memcpy(savesort, rp.sorts[0], n * nvar * sizeof(int));
 
     /*
      * And now the last of my scratch space

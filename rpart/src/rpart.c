@@ -49,8 +49,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     int i, j, k, n;
     int maxcat;
     double temp;
-    int *sj;
-    int *si, *savesort = NULL /* -Wall */ ;
+    int *savesort = NULL /* -Wall */ ;
     double *dptr;               /* temp */
     int *iptr;
     /*
@@ -174,10 +173,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      */
     if (xvals > 1) {
         savesort = (int *) ALLOC(n * rp.nvar, sizeof(int));
-        si = savesort;
-        sj = rp.sorts[0];
-        for (i = 0; i < n * rp.nvar; i++)
-            *si++ = *sj++;
+	memcpy(savesort, rp.sorts[0], n * rp.nvar * sizeof(int));
     }
 
     /*

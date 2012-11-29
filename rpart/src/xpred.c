@@ -42,8 +42,7 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
     int maxcat, ncp;
     int xgroup;
     double temp, total_wt, old_wt;
-    int *sj;
-    int *si, *savesort;
+    int *savesort;
     double *dptr;               /* temp */
     int nresp;
     double toprisk;
@@ -171,10 +170,7 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
      * save away a copy of the rp.sorts
      */
     savesort = (int *) ALLOC(n * rp.nvar, sizeof(int));
-    si = savesort;
-    sj = rp.sorts[0];
-    for (i = 0; i < n * rp.nvar; i++)
-        *si++ = *sj++;
+    memcpy(savesort, rp.sorts[0], n * rp.nvar * sizeof(int));
 
     /*
      * And now the last of my scratch space
