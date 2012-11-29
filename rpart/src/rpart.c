@@ -38,25 +38,12 @@
 #include "rpartproto.h"
 
 SEXP
-rpart(SEXP ncat2, SEXP method2, SEXP opt2,
-      SEXP parms2, SEXP xvals2, SEXP xgrp2,
-      SEXP ymat2, SEXP xmat2, SEXP wt2, SEXP ny2, SEXP cost2)
+rpart(SEXP ncat2, SEXP method2, SEXP opt2, SEXP parms2, SEXP xvals2, 
+      SEXP xgrp2, SEXP ymat2, SEXP xmat2, SEXP wt2, SEXP ny2, SEXP cost2)
 {
-
-    pNode tree;          /* top node of the tree */
-    char *errmsg;
-    int i, j, k, n;
-    int maxcat;
-    double temp;
     int *savesort = NULL /* -Wall */ ;
     double *dptr;               /* temp */
     int *iptr;
-    /*
-     * pointers to R objects
-     */
-    int *ncat, *xgrp;
-    int xvals;
-    double *wt, *parms;
 
     /*
      * Return objects for R -- end in "3" to avoid overlap with internal names
@@ -72,16 +59,16 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     double scale;
     CpTable cp;
 
-    ncat = INTEGER(ncat2);
-    xgrp = INTEGER(xgrp2);
-    xvals = asInteger(xvals2);
-    wt = REAL(wt2);
-    parms = REAL(parms2);
+    int *ncat = INTEGER(ncat2);
+    int *xgrp = INTEGER(xgrp2);
+    int xvals = asInteger(xvals2);
+    double *wt = REAL(wt2);
+    double *parms = REAL(parms2);
     /*
      * initialize the splitting functions from the function table
      */
     if (asInteger(method2) <= NUM_METHODS) {
-	i = asInteger(method2) - 1;
+	int i = asInteger(method2) - 1;
 	rp_init = func_table[i].init_split;
 	rp_choose = func_table[i].choose_split;
 	rp_eval = func_table[i].eval;
@@ -106,7 +93,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.sur_agree = (int) dptr[6];
     rp.maxnode = (int) pow((double) 2.0, (double) dptr[7]) - 1;
     rp.n = nrows(xmat2);
-    n = rp.n;                   /* I get tired of typing "rp.n" 100 times
+    int n = rp.n;                   /* I get tired of typing "rp.n" 100 times
 				 * below */
     rp.nvar = ncols(xmat2);
     rp.numcat = INTEGER(ncat2);
@@ -121,14 +108,14 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      */
     dptr = REAL(xmat2);
     rp.xdata = (double **) ALLOC(rp.nvar, sizeof(double *));
-    for (i = 0; i < rp.nvar; i++) {
+    for (int i = 0; i < rp.nvar; i++) {
 	rp.xdata[i] = dptr;
 	dptr += n;
     }
     rp.ydata = (double **) ALLOC(n, sizeof(double *));
 
     dptr = REAL(ymat2);
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
 	rp.ydata[i] = dptr;
 	dptr += rp.num_y;
     }
@@ -147,10 +134,10 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      */
     rp.sorts = (int **) ALLOC(rp.nvar, sizeof(int *));
     rp.sorts[0] = (int *) ALLOC(n * rp.nvar, sizeof(int));
-    maxcat = 0;
-    for (i = 0; i < rp.nvar; i++) {
+    int maxcat = 0;
+    for (int i = 0; i < rp.nvar; i++) {
 	rp.sorts[i] = rp.sorts[0] + i * n;
-	for (k = 0; k < n; k++) {
+	for (int k = 0; k < n; k++) {
 	    if (!R_FINITE(rp.xdata[i][k])) {
 		rp.tempvec[k] = -(k + 1);       /* this variable is missing */
 		rp.xtemp[k] = 0;        /* avoid weird numerics in S's NA */
@@ -163,7 +150,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
 	    mysort(0, n - 1, rp.xtemp, rp.tempvec);
 	else if (ncat[i] > maxcat)
 	    maxcat = ncat[i];
-	for (k = 0; k < n; k++)
+	for (int k = 0; k < n; k++)
 	    rp.sorts[i][k] = rp.tempvec[k];
     }
 
@@ -190,20 +177,21 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     /*
      * initialize the top node of the tree
      */
-    errmsg = _("unknown error");
+    char *errmsg = _("unknown error");
     which3 = PROTECT(allocVector(INTSXP, n));
     rp.which = INTEGER(which3);
-    temp = 0;
-    for (i = 0; i < n; i++) {
+    double temp = 0;
+    for (int i = 0; i < n; i++) {
 	rp.which[i] = 1;
 	temp += wt[i];
     }
-    i = (*rp_init) (n, rp.ydata, maxcat, &errmsg, parms, &rp.num_resp, 1, wt);
-    if (i > 0)
+    int res = 
+	(*rp_init) (n, rp.ydata, maxcat, &errmsg, parms, &rp.num_resp, 1, wt);
+    if (res > 0)
 	error(errmsg);
 
     nodesize = sizeof(Node) + (rp.num_resp - 2) * sizeof(double);
-    tree = (pNode) ALLOC(1, nodesize);
+    pNode tree = (pNode) ALLOC(1, nodesize);
     memset(tree, 0, nodesize);
     tree->num_obs = n;
     tree->sum_wt = temp;
@@ -237,10 +225,10 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      * first the cp table
      */
     scale = 1 / tree->risk;
-    i = 0;
     cptable3 = PROTECT(allocMatrix(REALSXP, xvals > 1 ? 5 : 3,
 				   rp.num_unique_cp));
     dptr = REAL(cptable3);
+    int i = 0;
     for (cp = cptable; cp; cp = cp->forward) {
 	dptr[i++] = cp->cp * scale;
 	dptr[i++] = cp->nsplit;
@@ -261,7 +249,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     dnode3 = PROTECT(allocMatrix(REALSXP, nodecount, (3 + rp.num_resp)));
     ddnode = (double **) ALLOC(3 + rp.num_resp, sizeof(double *));
     dptr = REAL(dnode3);
-    for (i = 0; i < 3 + rp.num_resp; i++) {
+    for (int i = 0; i < 3 + rp.num_resp; i++) {
 	ddnode[i] = dptr;
 	dptr += nodecount;
     }
@@ -271,20 +259,20 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     for (i = 0; i < 3; i++) {
 	ddsplit[i] = dptr;
 	dptr += splitcount;
-	for (j = 0; j < splitcount; j++)
+	for (int j = 0; j < splitcount; j++)
 	    ddsplit[i][j] = 0.0;
     }
 
     inode3 = PROTECT(allocMatrix(INTSXP, nodecount, 6));
     iptr = INTEGER(inode3);
-    for (i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; i++) {
 	iinode[i] = iptr;
 	iptr += nodecount;
     }
 
     isplit3 = PROTECT(allocMatrix(INTSXP, splitcount, 3));
     iptr = INTEGER(isplit3);
-    for (i = 0; i < 3; i++) {
+    for (int i = 0; i < 3; i++) {
 	iisplit[i] = iptr;
 	iptr += splitcount;
     }
@@ -293,10 +281,10 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
 	csplit3 = PROTECT(allocMatrix(INTSXP, catcount, maxcat));
 	ccsplit = (int **) ALLOC(maxcat, sizeof(int *));
 	iptr = INTEGER(csplit3);
-	for (i = 0; i < maxcat; i++) {
+	for (int i = 0; i < maxcat; i++) {
 	    ccsplit[i] = iptr;
 	    iptr += catcount;
-	    for (j = 0; j < catcount; j++)
+	    for (int j = 0; j < catcount; j++)
 		ccsplit[i][j] = 0;      /* zero it out */
 	}
     } else
@@ -310,8 +298,9 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      *  Nodes are sometimes trimmed during the
      *  tree building, and 'which' is not updated in that case
      */
-    for (i = 0; i < n; i++) {
-	k = rp.which[i];
+    for (int i = 0; i < n; i++) {
+	int k = rp.which[i];
+	int j;
 	do {
 	    for (j = 0; j < nodecount; j++)
 		if (iinode[0][j] == k) {

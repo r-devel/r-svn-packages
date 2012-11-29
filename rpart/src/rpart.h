@@ -72,10 +72,17 @@ EXTERN struct {
 } rp;
 
 EXTERN struct cptable *cptable_tail;
-EXTERN int (*rp_init) ();       /*called to initialize a splitting function */
-EXTERN void (*rp_choose) ();    /*set to the splitting function */
-EXTERN void (*rp_eval) ();      /*set to the evaluation routine */
-EXTERN double (*rp_error) ();   /*set to the prediction error routine */
+/* called to initialize a splitting function */
+EXTERN int (*rp_init) (int n, double **y, int maxcat, char **error,
+		       double *parm, int *size, int who, double *wt);
+/* set to the splitting function */ 
+EXTERN void (*rp_choose) (int n, double *y[], double *x, int nclass,
+			  int edge, double *improve, double *split,
+			  int *csplit, double myrisk, double *wt);
+/* set to the evaluation routine */   
+EXTERN void (*rp_eval) (int n, double **y, double *value, double *risk, double *wt);
+/* set to the prediction error routine */
+EXTERN double (*rp_error) (double *y, double *pred);
 EXTERN int nodesize;
 
 /*

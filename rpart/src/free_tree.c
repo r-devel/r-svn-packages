@@ -14,7 +14,7 @@ free_split(pSplit spl)
     }
 }
 
-/* use freenode if the tree was CALLOC-ed, from xval.c */
+/* use freenode if the node was CALLOC-ed  (branches) */
 void
 free_tree(pNode node, int freenode)
 {
