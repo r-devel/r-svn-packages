@@ -1,6 +1,6 @@
 /*
- * An S interface to "cross validated predictions"
- *    99% of this routine is a copy of s_to_rp and rpart.c and xval.c
+ * An R interface to "cross validated predictions"
+ *    99% of this routine is a copy of rpart.c and xval.c
  * Note that nresp is the length of the response vector that is desired
  *   and will be returned, not necessarily the actual length.  It is common
  *   to only request the first element of a long response vector.
@@ -143,13 +143,13 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
 	rp.csplit = (int *) ALLOC(1, sizeof(int));
 
     (*rp_init) (n, rp.ydata, maxcat, error, parms, &rp.num_resp, 1, rp.wt);
-    nodesize = sizeof(struct node) + (rp.num_resp - 2) * sizeof(double);
+    nodesize = sizeof(Node) + (rp.num_resp - 2) * sizeof(double);
 
     /*
      * I need the risk of the full tree, to scale alpha
      */
     xtree = (pNode) ALLOC(1, nodesize);
-    memset(xtree, 0, sizeof(struct node));
+    memset(xtree, 0, nodesize);
     (*rp_eval) (n, rp.ydata, xtree->response_est, &(xtree->risk), rp.wt);
     rp.alpha = rp.complexity * (xtree)->risk;
 
@@ -218,8 +218,7 @@ s_xpred(int *sn, int *nvarx, int *ncat, int *method,
 	xtree = (pNode) CALLOC(1, nodesize);
 	xtree->num_obs = k;
 	(*rp_init) (k, rp.ytemp, maxcat, error, parms, &temp, 2, rp.wtemp);
-	(*rp_eval) (k, rp.ytemp, xtree->response_est, &(xtree->risk),
-		    rp.wtemp);
+	(*rp_eval) (k, rp.ytemp, xtree->response_est, &(xtree->risk), rp.wtemp);
 	xtree->complexity = xtree->risk;
 	partition(1, xtree, &temp, 0, k);
 	fix_cp(xtree, xtree->complexity);
