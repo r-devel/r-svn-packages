@@ -1,6 +1,6 @@
 /*
-** The error function for anova splitting
-*/
+ * The error function for anova splitting
+ */
 double
 anovapred(double *y, double *yhat)
 {

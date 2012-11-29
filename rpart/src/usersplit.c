@@ -133,9 +133,9 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
 	    }
 	}
 	/*
-	 * * Now mark the groups as to left/right *   If there was no way to
-	 * split it with at least 'edge' in each *   group, best will still
-	 * =0.
+	 * Now mark the groups as to left/right
+	 *   If there was no way to split it with at least 'edge' in each
+	 *   group, best will still = 0.
 	 */
 	if (best > 0) {
 	    for (i = 0; i < m; i++) {
