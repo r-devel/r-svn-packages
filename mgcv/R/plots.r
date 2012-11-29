@@ -1063,7 +1063,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
           X1[,first:last] <- P$X
           se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
         } else se.fit <- ## se in centred (or anyway unconstained) space only
-        sqrt(rowSums((P$X%*%x$Vp[first:last,first:last])*P$X))
+        sqrt(rowSums((P$X%*%x$Vp[first:last,first:last,drop=FALSE])*P$X))
         if (!is.null(P$exclude)) P$se.fit[P$exclude] <- NA
       } ## standard errors for fit completed
       if (partial.resids) { P$p.resid <- fv.terms[,length(order)+i] + w.resid }
