@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 2.7.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-22 09:24+0000\n"
+"POT-Creation-Date: 2012-11-29 14:15+0000\n"
 "PO-Revision-Date: 2008-04-06 23:54-0500\n"
 "Last-Translator: Alexey Shipunov <dactylorhiza at gmail>\n"
 "Language-Team: Russian\n"
@@ -34,12 +34,12 @@ msgstr "Неправильный счетчик событий"
 msgid "Invalid error rule"
 msgstr ""
 
-#: rpart.c:93 s_xpred.c:45 xpred.c:90
+#: rpart.c:91 s_xpred.c:43 xpred.c:89
 #, fuzzy
 msgid "Invalid value for 'method'"
 msgstr "неправильное значение 'method'"
 
-#: rpart.c:198
+#: rpart.c:193
 msgid "unknown error"
 msgstr ""
 
@@ -67,7 +67,7 @@ msgstr "возвращенное значение -- не вектор"
 msgid "returned value is the wrong length"
 msgstr "возвращенное значение -- неправильной длины"
 
-#: rpart_callback.c:141
+#: rpart_callback.c:138
 msgid "the expression expr1 did not return a vector!"
 msgstr "выражение expr1 не вернуло вектор!"
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 4.1-0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-22 09:24+0000\n"
+"POT-Creation-Date: 2012-11-29 14:15+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,11 +29,11 @@ msgstr ""
 msgid "Invalid error rule"
 msgstr ""
 
-#: rpart.c:93 s_xpred.c:45 xpred.c:90
+#: rpart.c:91 s_xpred.c:43 xpred.c:89
 msgid "Invalid value for 'method'"
 msgstr ""
 
-#: rpart.c:198
+#: rpart.c:193
 msgid "unknown error"
 msgstr ""
 
@@ -61,6 +61,6 @@ msgstr ""
 msgid "returned value is the wrong length"
 msgstr ""
 
-#: rpart_callback.c:141
+#: rpart_callback.c:138
 msgid "the expression expr1 did not return a vector!"
 msgstr ""

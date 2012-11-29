@@ -17,7 +17,7 @@ usersplit_init(int n, double *y[], int maxcat, char **error,
 	 *   need to rerun the initialization.
 	 * Call-back to the C code to get the number of columns for y and
 	 *   the length of the return vector
-	 *  the scratch vector needed is of length max(2n, nreturn +1)
+	 *  the scratch vector needed is of length max(2n, nreturn+1)
 	 */
 	rpart_callback0(&n_return);
 

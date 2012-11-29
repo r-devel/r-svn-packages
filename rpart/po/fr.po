@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-24\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-22 09:24+0000\n"
+"POT-Creation-Date: 2012-11-29 14:15+0000\n"
 "PO-Revision-Date: 2005-12-07 02:43+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -29,12 +29,12 @@ msgstr "Dénombrement d'événements incorrect"
 msgid "Invalid error rule"
 msgstr ""
 
-#: rpart.c:93 s_xpred.c:45 xpred.c:90
+#: rpart.c:91 s_xpred.c:43 xpred.c:89
 #, fuzzy
 msgid "Invalid value for 'method'"
 msgstr "valeur incorrecte pour 'method'"
 
-#: rpart.c:198
+#: rpart.c:193
 msgid "unknown error"
 msgstr ""
 
@@ -62,7 +62,7 @@ msgstr "la valeur renvoyée n'est pas un vecteur"
 msgid "returned value is the wrong length"
 msgstr "la valeur renvoyée n'a pas la bonne longueur"
 
-#: rpart_callback.c:141
+#: rpart_callback.c:138
 msgid "the expression expr1 did not return a vector!"
 msgstr "l'expression 'expr1' n'a pas renvoyé un vecteur!"
 

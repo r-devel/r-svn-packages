@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-53\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-22 09:24+0000\n"
+"POT-Creation-Date: 2012-11-29 14:15+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -33,12 +33,12 @@ msgstr ""
 
 # Recommended/rpart/src/s_xpred.c: 38
 #  _("invalid value for 'method'")
-#: rpart.c:93 s_xpred.c:45 xpred.c:90
+#: rpart.c:91 s_xpred.c:43 xpred.c:89
 #, fuzzy
 msgid "Invalid value for 'method'"
 msgstr "niepoprawna wartość dla 'method'"
 
-#: rpart.c:198
+#: rpart.c:193
 msgid "unknown error"
 msgstr ""
 
@@ -80,7 +80,7 @@ msgstr "zwrócona wartość ma błędną długość"
 
 # Recommended/rpart/src/rpart_callback.c: 140
 # error(_("the expression expr1 did not return a vector!"))
-#: rpart_callback.c:141
+#: rpart_callback.c:138
 msgid "the expression expr1 did not return a vector!"
 msgstr "wyrażenie 'expr1' nie zwróciło wektora!"
 

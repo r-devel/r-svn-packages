@@ -48,8 +48,8 @@ make_cp_list(pNode me, double parent, CpTable cptable_head)
     if (me_cp < parent) {       /* if not, then it can't be unique */
 	for (cplist = cptable_head; cplist; cplist = cplist->forward) {
 	   /* am I tied? */
-	    if (me_cp == cplist->cp)
-		return;         /* exact ties */
+	    if (me_cp == cplist->cp) /* exact ties */
+		return;         
 
 	    if (me_cp > cplist->cp)
 		break;
@@ -58,11 +58,10 @@ make_cp_list(pNode me, double parent, CpTable cptable_head)
 
        /* insert new stuff after cptemp */
        /* was CALLOC and not cleaned up */
-	cplist = (struct cptable *) ALLOC(1, sizeof(struct cptable));
-	memset(cplist, 0, sizeof(struct cptable));      /* zeros risk and nsplit */
+	cplist = (CpTable) ALLOC(1, sizeof(cpTable));
 	cplist->cp = me_cp;
-	cplist->xrisk = 0;
-	cplist->xstd = 0;
+	cplist->risk = cplist->xrisk = cplist->xstd = 0;
+	cplist->nsplit = 0;
 	cplist->back = cptemp;
 	cplist->forward = cptemp->forward;
 	if (cptemp->forward)
