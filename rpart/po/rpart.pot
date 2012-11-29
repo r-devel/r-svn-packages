@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 4.1-0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-29 14:15+0000\n"
+"POT-Creation-Date: 2012-11-29 14:21+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,7 @@ msgstr ""
 msgid "Invalid error rule"
 msgstr ""
 
-#: rpart.c:91 s_xpred.c:43 xpred.c:89
+#: rpart.c:91 xpred.c:89
 msgid "Invalid value for 'method'"
 msgstr ""
 
