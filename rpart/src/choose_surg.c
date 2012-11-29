@@ -13,8 +13,8 @@
 
 void
 choose_surg(int n1, int n2, int *y, double *x, int *order,
-            int ncat, double *agreement, double *split, int *csplit,
-            double tleft, double tright, double *adj)
+	    int ncat, double *agreement, double *split, int *csplit,
+	    double tleft, double tright, double *adj)
 {
     int *left = rp.left, *right = rp.right;
     double *lwt = rp.lwt, *rwt = rp.rwt;
@@ -39,40 +39,40 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 	 */
 	double lastx = 0.0;
 	int ll, lr, rr, rl;
-        ll = rl = 0;
-        llwt = 0;
-        rlwt = 0;
-        for (int i = n2 - 1; i >= n1; i--) {  /* start with me sending all to the left */
-            int j = order[i];
-            if (j >= 0) {
-                lastx = x[j];   /*this is why I run the loop backwards */
-                switch (y[j]) {
-                case LEFT:
-                    if (rp.wt[j] > 0)
-                        ll++;
-                    llwt += rp.wt[j];
-                    break;
-                case RIGHT:
-                    if (rp.wt[j] > 0)
-                        rl++;
-                    rlwt += rp.wt[j];
-                    break;
-                default:;
-                }
-            }
-        }
+	ll = rl = 0;
+	llwt = 0;
+	rlwt = 0;
+	for (int i = n2 - 1; i >= n1; i--) {  /* start with me sending all to the left */
+	    int j = order[i];
+	    if (j >= 0) {
+		lastx = x[j];   /*this is why I run the loop backwards */
+		switch (y[j]) {
+		case LEFT:
+		    if (rp.wt[j] > 0)
+			ll++;
+		    llwt += rp.wt[j];
+		    break;
+		case RIGHT:
+		    if (rp.wt[j] > 0)
+			rl++;
+		    rlwt += rp.wt[j];
+		    break;
+		default:;
+		}
+	    }
+	}
 
-        if (llwt > rlwt)
-            agree = llwt;
-        else
-            agree = rlwt;
+	if (llwt > rlwt)
+	    agree = llwt;
+	else
+	    agree = rlwt;
 
-        majority = agree;       /* worst possible agreement */
-        total_wt = llwt + rlwt;
+	majority = agree;       /* worst possible agreement */
+	total_wt = llwt + rlwt;
 
-        lr = rr = 0;
-        lrwt = 0;
-        rrwt = 0;
+	lr = rr = 0;
+	lrwt = 0;
+	rrwt = 0;
 	/*
 	 *  March across, moving things from the right to the left
 	 *    the "lastx" code is caring for ties in the x var
@@ -81,55 +81,55 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 	/* NB: might never set csplit[0] or split */
 	csplit[0] = LEFT;
 	*split = lastx; // a valid splitting value
-        for (int i = n1; (ll + rl) >= 2; i++) {
-            int j = order[i];
-            if (j >= 0) {       /* not a missing value */
-                if ((lr + rr) >= 2 && x[j] != lastx) {
-                   /* new x found, evaluate the split */
-                    if ((llwt + rrwt) > agree) {
-                        success = 1;
-                        agree = llwt + rrwt;
-                        csplit[0] = RIGHT;      /* < goes to the right */
-                        *split = (x[j] + lastx) / 2;
-                    } else if ((lrwt + rlwt) > agree) {
-                        success = 1;
-                        agree = lrwt + rlwt;
-                        csplit[0] = LEFT;
-                        *split = (x[j] + lastx) / 2;
-                    }
-                }
+	for (int i = n1; (ll + rl) >= 2; i++) {
+	    int j = order[i];
+	    if (j >= 0) {       /* not a missing value */
+		if ((lr + rr) >= 2 && x[j] != lastx) {
+		   /* new x found, evaluate the split */
+		    if ((llwt + rrwt) > agree) {
+			success = 1;
+			agree = llwt + rrwt;
+			csplit[0] = RIGHT;      /* < goes to the right */
+			*split = (x[j] + lastx) / 2;
+		    } else if ((lrwt + rlwt) > agree) {
+			success = 1;
+			agree = lrwt + rlwt;
+			csplit[0] = LEFT;
+			*split = (x[j] + lastx) / 2;
+		    }
+		}
 
-                switch (y[j]) { /* update numbers */
-                case LEFT:
-                    if (rp.wt[j] > 0) {
-                        ll--;
-                        lr++;
-                    }
-                    llwt -= rp.wt[j];
-                    lrwt += rp.wt[j];
-                    break;
-                case RIGHT:
-                    if (rp.wt[j] > 0) {
-                        rl--;
-                        rr++;
-                    }
-                    rlwt -= rp.wt[j];
-                    rrwt += rp.wt[j];
-                    break;
-                default:;      /* ignore missing y's */
-                }
-                lastx = x[j];
-            }
-        }
+		switch (y[j]) { /* update numbers */
+		case LEFT:
+		    if (rp.wt[j] > 0) {
+			ll--;
+			lr++;
+		    }
+		    llwt -= rp.wt[j];
+		    lrwt += rp.wt[j];
+		    break;
+		case RIGHT:
+		    if (rp.wt[j] > 0) {
+			rl--;
+			rr++;
+		    }
+		    rlwt -= rp.wt[j];
+		    rrwt += rp.wt[j];
+		    break;
+		default:;      /* ignore missing y's */
+		}
+		lastx = x[j];
+	    }
+	}
     } else {                      /* categorical predictor */
 	int defdir;
 	int lcount = 0, rcount = 0;
-        for (int i = 0; i < ncat; i++) {
-            left[i] = 0;
-            right[i] = 0;
-            lwt[i] = 0;
-            rwt[i] = 0;
-        }
+	for (int i = 0; i < ncat; i++) {
+	    left[i] = 0;
+	    right[i] = 0;
+	    lwt[i] = 0;
+	    rwt[i] = 0;
+	}
 
 	/* First step:
 	 *  left = table(x[y goes left]), right= table(x[y goes right])
@@ -137,66 +137,66 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
 	 *  and lwt[2] the sum of the weights for those observations.
 	 * Only those with weight > 0 count in the totals
 	 */
-        for (int i = n1; i < n2; i++) {
-            int j = order[i];
-            if (j >= 0) {
-                int k = (int) x[j] - 1;
-                switch (y[j]) {
-                case LEFT:
-                    if (rp.wt[j] > 0)
-                        left[k]++;
-                    lwt[k] += rp.wt[j];
-                    break;
-                case RIGHT:
-                    if (rp.wt[j] > 0)
-                        right[k]++;
-                    rwt[k] += rp.wt[j];
-                    break;
-                default:;
-                }
-            }
-        }
+	for (int i = n1; i < n2; i++) {
+	    int j = order[i];
+	    if (j >= 0) {
+		int k = (int) x[j] - 1;
+		switch (y[j]) {
+		case LEFT:
+		    if (rp.wt[j] > 0)
+			left[k]++;
+		    lwt[k] += rp.wt[j];
+		    break;
+		case RIGHT:
+		    if (rp.wt[j] > 0)
+			right[k]++;
+		    rwt[k] += rp.wt[j];
+		    break;
+		default:;
+		}
+	    }
+	}
 
        /*
-        *  Compute which is better: everyone to the right or left
-        */
-        llwt = 0;
-        rrwt = 0;
-        for (int i = 0; i < ncat; i++) {
-            llwt += lwt[i];
-            rrwt += rwt[i];
-        }
-        if (llwt > rrwt) {
-            defdir = LEFT;
-            majority = llwt;
-        } else {
-            defdir = RIGHT;
-            majority = rrwt;
-        }
-        total_wt = llwt + rrwt;
+	*  Compute which is better: everyone to the right or left
+	*/
+	llwt = 0;
+	rrwt = 0;
+	for (int i = 0; i < ncat; i++) {
+	    llwt += lwt[i];
+	    rrwt += rwt[i];
+	}
+	if (llwt > rrwt) {
+	    defdir = LEFT;
+	    majority = llwt;
+	} else {
+	    defdir = RIGHT;
+	    majority = rrwt;
+	}
+	total_wt = llwt + rrwt;
 
 	/*
 	 * We can calculate the best split category by category--- send each
 	 *  x value individually to its better direction
 	 */
-        agree = 0.0;
-        for (int i = 0; i < ncat; i++) {
-            if (left[i] == 0 && right[i] == 0)
-                csplit[i] = 0;
-            else {
-                if (lwt[i] < rwt[i] || (lwt[i] == rwt[i] && defdir == RIGHT)) {
-                    agree += rwt[i];
-                    csplit[i] = RIGHT;
-                    lcount += left[i];
-                    rcount += right[i];
-                } else {
-                    agree += lwt[i];
-                    csplit[i] = LEFT;
-                    lcount += right[i];
-                    rcount += left[i];
-                }
-            }
-        }
+	agree = 0.0;
+	for (int i = 0; i < ncat; i++) {
+	    if (left[i] == 0 && right[i] == 0)
+		csplit[i] = 0;
+	    else {
+		if (lwt[i] < rwt[i] || (lwt[i] == rwt[i] && defdir == RIGHT)) {
+		    agree += rwt[i];
+		    csplit[i] = RIGHT;
+		    lcount += left[i];
+		    rcount += right[i];
+		} else {
+		    agree += lwt[i];
+		    csplit[i] = LEFT;
+		    lcount += right[i];
+		    rcount += left[i];
+		}
+	    }
+	}
 	success = lcount > 1 && rcount > 1; /* sends at least 2 each way */
     }
 
@@ -209,9 +209,9 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
      */
 
     if (!success) {
-        *agreement = 0.0;
-        *adj = 0.0;
-        return;
+	*agreement = 0.0;
+	*adj = 0.0;
+	return;
     }
 
     /*
@@ -222,11 +222,11 @@ choose_surg(int n1, int n2, int *y, double *x, int *order,
      *    If the former, need to reset some totals.
      */
     if (rp.sur_agree == 0) {    /* use total table */
-        total_wt = tleft + tright;
-        if (tleft > tright)
-            majority = tleft;
-        else
-            majority = tright;
+	total_wt = tleft + tright;
+	if (tleft > tright)
+	    majority = tleft;
+	else
+	    majority = tright;
     }
 
     *agreement = agree / total_wt;

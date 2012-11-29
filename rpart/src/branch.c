@@ -8,7 +8,7 @@
  * obs  :  the observation number.  This will be negative iff the primary
  *           split is missing.
  *
- * This is the one routine that accesses the tree by observation number, 
+ * This is the one routine that accesses the tree by observation number,
  *  without the mediation of the rp.sorts array.  For missing value
  *  information it thus has to look at X directly using a macro.
  */
@@ -16,13 +16,13 @@
 #include "node.h"
 #include "rpartproto.h"
 
-struct node *
-branch(struct node *tree, int obs)
+pNode
+branch(pNode tree, int obs)
 {
     int j, dir;
     int category;               /* for categorical variables */
-    struct node *me;
-    struct split *tsplit;
+    pNode me;
+    pSplit tsplit;
     double **xdata;
 
     if (!tree->leftson) return NULL;
@@ -37,43 +37,43 @@ branch(struct node *tree, int obs)
     tsplit = me->primary;
     j = tsplit->var_num;
     if (R_FINITE(xdata[j][obs])) {
-        if (rp.numcat[j] == 0) {        /* continuous */
-	    dir = (xdata[j][obs] < tsplit->spoint) ? 
+	if (rp.numcat[j] == 0) {        /* continuous */
+	    dir = (xdata[j][obs] < tsplit->spoint) ?
 		tsplit->csplit[0] : -tsplit->csplit[0];
-            goto down;
-        } else {                /* categorical predictor */
-            category = (int) xdata[j][obs];     /* factor predictor -- which
-                                                 * level? */
-            dir = (tsplit->csplit)[category - 1];
-            if (dir)
-                goto down;
-        }
+	    goto down;
+	} else {                /* categorical predictor */
+	    category = (int) xdata[j][obs];     /* factor predictor -- which
+						 * level? */
+	    dir = (tsplit->csplit)[category - 1];
+	    if (dir)
+		goto down;
+	}
     }
     if (rp.usesurrogate == 0)
-        return NULL;
+	return NULL;
    /*
     * use the surrogates
     */
     for (tsplit = me->surrogate; tsplit; tsplit = tsplit->nextsplit) {
-        j = tsplit->var_num;
-        if (R_FINITE(xdata[j][obs])) {  /* not missing */
-            if (rp.numcat[j] == 0) {
+	j = tsplit->var_num;
+	if (R_FINITE(xdata[j][obs])) {  /* not missing */
+	    if (rp.numcat[j] == 0) {
 		dir = (rp.xdata[j][obs] < tsplit->spoint) ?
-                    tsplit->csplit[0] : -tsplit->csplit[0];
-                goto down;
-            } else {
-                category = (int) xdata[j][obs]; /* factor predictor -- which
-                                                 * level */
-                dir = (tsplit->csplit)[category - 1];
-                if (dir)
-                    goto down;
-            }
-        }
+		    tsplit->csplit[0] : -tsplit->csplit[0];
+		goto down;
+	    } else {
+		category = (int) xdata[j][obs]; /* factor predictor -- which
+						 * level */
+		dir = (tsplit->csplit)[category - 1];
+		if (dir)
+		    goto down;
+	    }
+	}
     }
 
 
     if (rp.usesurrogate < 2)
-        return NULL;
+	return NULL;
     /*
      * split it by default
      */

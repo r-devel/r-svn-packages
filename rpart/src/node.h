@@ -1,38 +1,41 @@
+#ifndef RPART_NODE_H
+#define RPART_NODE_H
 /*
 ** definition of a node in the tree
 */
-struct split {
+typedef struct split {
     double improve;
     double adj;                 /* for surrogates only, adjusted agreement */
-    double spoint;              /*only used if it is continuous */
+    double spoint;              /* only used if it is continuous */
     struct split *nextsplit;
     int var_num;
     int count;
-    int csplit[2];              /*the actual length will be longer for a categorical */
-};                              /*   predictor with >2 levels */
+    int csplit[2];              /* the actual length will be longer for a
+				   categorical predictor with > 2 levels */
+} Split, *pSplit;
 
-struct node {
-    double risk;                /*risk for the node */
+typedef struct node {
+    double risk;                /* risk for the node */
     double complexity;          /* complexity at which it will collapse */
     double sum_wt;              /* sum of the weights for the node  */
-    struct split *primary;
-    struct split *surrogate;
+    pSplit primary, surrogate;
     struct node *rightson;
     struct node *leftson;
     int num_obs;
     int lastsurrogate;
-    double response_est[2];     /*actual length depends on splitting rule */
-};
+    double response_est[2];     /* actual length depends on splitting rule */
+} Node, *pNode;
 
-struct cptable {
+
+typedef struct cptable {
     double cp;
     double risk;
     double xrisk;
     double xstd;
     int nsplit;
-    struct cptable *forward;
-    struct cptable *back;
-};
+    struct cptable *forward, *back;
+} cpTable, *CpTable;
+
 
 /**************************************************************************
 *
@@ -88,3 +91,4 @@ struct cptable {
 *              all the surrogates are missing.  (The child with the greatest
 *		sum of weights).
 */
+#endif

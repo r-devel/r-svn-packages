@@ -16,7 +16,7 @@
 /*
  * Memory defined with R_alloc is removed automatically
  *  That with "CALLOC" I have to remove myself.  Use the
- *  latter for objects that need to persist between the 
+ *  latter for objects that need to persist between the
  *  s_to_rp1 and s_to_rp2 calls
  */
 #define ALLOC(a,b)  R_alloc(a,b)

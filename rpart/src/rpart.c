@@ -43,8 +43,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
       SEXP ymat2, SEXP xmat2, SEXP wt2, SEXP ny2, SEXP cost2)
 {
 
-    struct cptable *cptable;
-    struct node *tree;          /* top node of the tree */
+    pNode tree;          /* top node of the tree */
     char *errmsg;
     int i, j, k, n;
     int maxcat;
@@ -71,7 +70,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     int *iinode[6], *iisplit[3];
     int **ccsplit;
     double scale;
-    struct cptable *cp;
+    CpTable cp;
 
     ncat = INTEGER(ncat2);
     xgrp = INTEGER(xgrp2);
@@ -82,14 +81,14 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      * initialize the splitting functions from the function table
      */
     if (asInteger(method2) <= NUM_METHODS) {
-        i = asInteger(method2) - 1;
-        rp_init = func_table[i].init_split;
-        rp_choose = func_table[i].choose_split;
-        rp_eval = func_table[i].eval;
-        rp_error = func_table[i].error;
-        rp.num_y = asInteger(ny2);
+	i = asInteger(method2) - 1;
+	rp_init = func_table[i].init_split;
+	rp_choose = func_table[i].choose_split;
+	rp_eval = func_table[i].eval;
+	rp_error = func_table[i].error;
+	rp.num_y = asInteger(ny2);
     } else
-        error(_("Invalid value for 'method'"));
+	error(_("Invalid value for 'method'"));
 
     /*
      * set some other parameters
@@ -98,17 +97,17 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.min_node = (int) dptr[1];
     rp.min_split = (int) dptr[0];
     rp.complexity = dptr[2];
-    rp.maxpri = (int) dptr[3] + 1;      /* max primary splits = 
+    rp.maxpri = (int) dptr[3] + 1;      /* max primary splits =
 					   max competitors + 1 */
     if (rp.maxpri < 1)
-        rp.maxpri = 1;
+	rp.maxpri = 1;
     rp.maxsur = (int) dptr[4];
     rp.usesurrogate = (int) dptr[5];
     rp.sur_agree = (int) dptr[6];
     rp.maxnode = (int) pow((double) 2.0, (double) dptr[7]) - 1;
     rp.n = nrows(xmat2);
     n = rp.n;                   /* I get tired of typing "rp.n" 100 times
-                                 * below */
+				 * below */
     rp.nvar = ncols(xmat2);
     rp.numcat = INTEGER(ncat2);
     rp.wt = wt;
@@ -123,15 +122,15 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     dptr = REAL(xmat2);
     rp.xdata = (double **) ALLOC(rp.nvar, sizeof(double *));
     for (i = 0; i < rp.nvar; i++) {
-        rp.xdata[i] = dptr;
-        dptr += n;
+	rp.xdata[i] = dptr;
+	dptr += n;
     }
     rp.ydata = (double **) ALLOC(n, sizeof(double *));
 
     dptr = REAL(ymat2);
     for (i = 0; i < n; i++) {
-        rp.ydata[i] = dptr;
-        dptr += rp.num_y;
+	rp.ydata[i] = dptr;
+	dptr += rp.num_y;
     }
     /*
      * allocate some scratch
@@ -150,29 +149,29 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.sorts[0] = (int *) ALLOC(n * rp.nvar, sizeof(int));
     maxcat = 0;
     for (i = 0; i < rp.nvar; i++) {
-        rp.sorts[i] = rp.sorts[0] + i * n;
-        for (k = 0; k < n; k++) {
-            if (!R_FINITE(rp.xdata[i][k])) {
-                rp.tempvec[k] = -(k + 1);       /* this variable is missing */
-                rp.xtemp[k] = 0;        /* avoid weird numerics in S's NA */
-            } else {
-                rp.tempvec[k] = k;
-                rp.xtemp[k] = rp.xdata[i][k];
-            }
-        }
-        if (ncat[i] == 0)
-            mysort(0, n - 1, rp.xtemp, rp.tempvec);
-        else if (ncat[i] > maxcat)
-            maxcat = ncat[i];
-        for (k = 0; k < n; k++)
-            rp.sorts[i][k] = rp.tempvec[k];
+	rp.sorts[i] = rp.sorts[0] + i * n;
+	for (k = 0; k < n; k++) {
+	    if (!R_FINITE(rp.xdata[i][k])) {
+		rp.tempvec[k] = -(k + 1);       /* this variable is missing */
+		rp.xtemp[k] = 0;        /* avoid weird numerics in S's NA */
+	    } else {
+		rp.tempvec[k] = k;
+		rp.xtemp[k] = rp.xdata[i][k];
+	    }
+	}
+	if (ncat[i] == 0)
+	    mysort(0, n - 1, rp.xtemp, rp.tempvec);
+	else if (ncat[i] > maxcat)
+	    maxcat = ncat[i];
+	for (k = 0; k < n; k++)
+	    rp.sorts[i][k] = rp.tempvec[k];
     }
 
     /*
      * save away a copy of the rp.sorts, if needed for xval
      */
     if (xvals > 1) {
-        savesort = (int *) ALLOC(n * rp.nvar, sizeof(int));
+	savesort = (int *) ALLOC(n * rp.nvar, sizeof(int));
 	memcpy(savesort, rp.sorts[0], n * rp.nvar * sizeof(int));
     }
 
@@ -180,13 +179,13 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      * And now the last of my scratch space
      */
     if (maxcat > 0) {
-        rp.csplit = (int *) ALLOC(3 * maxcat, sizeof(int));
-        rp.lwt = (double *) ALLOC(2 * maxcat, sizeof(double));
-        rp.left = rp.csplit + maxcat;
-        rp.right = rp.left + maxcat;
-        rp.rwt = rp.lwt + maxcat;
+	rp.csplit = (int *) ALLOC(3 * maxcat, sizeof(int));
+	rp.lwt = (double *) ALLOC(2 * maxcat, sizeof(double));
+	rp.left = rp.csplit + maxcat;
+	rp.right = rp.left + maxcat;
+	rp.rwt = rp.lwt + maxcat;
     } else
-        rp.csplit = (int *) ALLOC(1, sizeof(int));
+	rp.csplit = (int *) ALLOC(1, sizeof(int));
 
     /*
      * initialize the top node of the tree
@@ -196,15 +195,15 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.which = INTEGER(which3);
     temp = 0;
     for (i = 0; i < n; i++) {
-        rp.which[i] = 1;
-        temp += wt[i];
+	rp.which[i] = 1;
+	temp += wt[i];
     }
     i = (*rp_init) (n, rp.ydata, maxcat, &errmsg, parms, &rp.num_resp, 1, wt);
     if (i > 0)
-        error(errmsg);
+	error(errmsg);
 
     nodesize = sizeof(struct node) + (rp.num_resp - 2) * sizeof(double);
-    tree = (struct node *) ALLOC(1, nodesize);
+    tree = (pNode) ALLOC(1, nodesize);
     memset(tree, 0, sizeof(struct node));
     tree->num_obs = n;
     tree->sum_wt = temp;
@@ -217,7 +216,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      * Do the basic tree
      */
     partition(1, tree, &temp, 0, n);
-    cptable = (struct cptable *) ALLOC(1, sizeof(struct cptable));
+    CpTable cptable = (CpTable) ALLOC(1, sizeof(cpTable));
     cptable->cp = tree->complexity;
     cptable->risk = tree->risk;
     cptable->nsplit = 0;
@@ -227,10 +226,11 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.num_unique_cp = 1;
 
     if (tree->rightson) {
-        make_cp_list(tree, tree->complexity, cptable);
-        make_cp_table(tree, tree->complexity, 0);
-        if (xvals > 1)
-            xval(xvals, cptable, xgrp, maxcat, &errmsg, parms, savesort);
+	make_cp_list(tree, tree->complexity, cptable);
+	make_cp_table(tree, tree->complexity, 0);
+	if (xvals > 1) {
+	    xval(xvals, cptable, xgrp, maxcat, &errmsg, parms, savesort);
+	}
     }
     /*
      * all done, create the return list for R
@@ -239,16 +239,16 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     scale = 1 / tree->risk;
     i = 0;
     cptable3 = PROTECT(allocMatrix(REALSXP, xvals > 1 ? 5 : 3,
-                                   rp.num_unique_cp));
+				   rp.num_unique_cp));
     dptr = REAL(cptable3);
     for (cp = cptable; cp; cp = cp->forward) {
-        dptr[i++] = cp->cp * scale;
-        dptr[i++] = cp->nsplit;
-        dptr[i++] = cp->risk * scale;
-        if (xvals > 1) {
-            dptr[i++] = cp->xrisk * scale;
-            dptr[i++] = cp->xstd * scale;
-        }
+	dptr[i++] = cp->cp * scale;
+	dptr[i++] = cp->nsplit;
+	dptr[i++] = cp->risk * scale;
+	if (xvals > 1) {
+	    dptr[i++] = cp->xrisk * scale;
+	    dptr[i++] = cp->xstd * scale;
+	}
     }
 
     /*
@@ -262,45 +262,45 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     ddnode = (double **) ALLOC(3 + rp.num_resp, sizeof(double *));
     dptr = REAL(dnode3);
     for (i = 0; i < 3 + rp.num_resp; i++) {
-        ddnode[i] = dptr;
-        dptr += nodecount;
+	ddnode[i] = dptr;
+	dptr += nodecount;
     }
 
     dsplit3 = PROTECT(allocMatrix(REALSXP, splitcount, 3));
     dptr = REAL(dsplit3);
     for (i = 0; i < 3; i++) {
-        ddsplit[i] = dptr;
-        dptr += splitcount;
-        for (j = 0; j < splitcount; j++)
-            ddsplit[i][j] = 0.0;
+	ddsplit[i] = dptr;
+	dptr += splitcount;
+	for (j = 0; j < splitcount; j++)
+	    ddsplit[i][j] = 0.0;
     }
 
     inode3 = PROTECT(allocMatrix(INTSXP, nodecount, 6));
     iptr = INTEGER(inode3);
     for (i = 0; i < 6; i++) {
-        iinode[i] = iptr;
-        iptr += nodecount;
+	iinode[i] = iptr;
+	iptr += nodecount;
     }
 
     isplit3 = PROTECT(allocMatrix(INTSXP, splitcount, 3));
     iptr = INTEGER(isplit3);
     for (i = 0; i < 3; i++) {
-        iisplit[i] = iptr;
-        iptr += splitcount;
+	iisplit[i] = iptr;
+	iptr += splitcount;
     }
 
     if (catcount > 0) {
-        csplit3 = PROTECT(allocMatrix(INTSXP, catcount, maxcat));
-        ccsplit = (int **) ALLOC(maxcat, sizeof(int *));
-        iptr = INTEGER(csplit3);
-        for (i = 0; i < maxcat; i++) {
-            ccsplit[i] = iptr;
-            iptr += catcount;
-            for (j = 0; j < catcount; j++)
-                ccsplit[i][j] = 0;      /* zero it out */
-        }
+	csplit3 = PROTECT(allocMatrix(INTSXP, catcount, maxcat));
+	ccsplit = (int **) ALLOC(maxcat, sizeof(int *));
+	iptr = INTEGER(csplit3);
+	for (i = 0; i < maxcat; i++) {
+	    ccsplit[i] = iptr;
+	    iptr += catcount;
+	    for (j = 0; j < catcount; j++)
+		ccsplit[i][j] = 0;      /* zero it out */
+	}
     } else
-        ccsplit = NULL;
+	ccsplit = NULL;
 
     rpmatrix(tree, rp.numcat, ddsplit, iisplit, ccsplit, ddnode, iinode, 1);
     free_tree(tree, 0);         /* let the memory go */
@@ -311,15 +311,15 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
      *  tree building, and 'which' is not updated in that case
      */
     for (i = 0; i < n; i++) {
-        k = rp.which[i];
-        do {
-            for (j = 0; j < nodecount; j++)
-                if (iinode[0][j] == k) {
-                    rp.which[i] = j + 1;
-                    break;
-                }
-            k /= 2;
-        } while (j >= nodecount);
+	k = rp.which[i];
+	do {
+	    for (j = 0; j < nodecount; j++)
+		if (iinode[0][j] == k) {
+		    rp.which[i] = j + 1;
+		    break;
+		}
+	    k /= 2;
+	} while (j >= nodecount);
     }
 
     /* Create the output list */
@@ -340,8 +340,8 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     SET_VECTOR_ELT(rlist, 5, inode3);
     SET_STRING_ELT(rname, 5, mkChar("inode"));
     if (catcount > 0) {
-        SET_VECTOR_ELT(rlist, 6, csplit3);
-        SET_STRING_ELT(rname, 6, mkChar("csplit"));
+	SET_VECTOR_ELT(rlist, 6, csplit3);
+	SET_STRING_ELT(rname, 6, mkChar("csplit"));
     }
 
     UNPROTECT(1 + nout);

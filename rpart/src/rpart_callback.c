@@ -15,7 +15,7 @@
 
 static int ysave;               /* number of columns of y  */
 static int rsave;               /* the length of the returned "mean" from the
-                                 * user's eval routine */
+				 * user's eval routine */
 static SEXP expr1;              /* the evaluation expression for splits */
 static SEXP expr2;              /* the evaluation expression for values */
 static SEXP rho;
@@ -43,19 +43,19 @@ init_rpcallback(SEXP rhox, SEXP ny, SEXP nr, SEXP expr1x, SEXP expr2x)
 
     stemp = findVarInFrame(rho, install("yback"));
     if (!stemp)
-        error(_("'yback' not found"));
+	error(_("'yback' not found"));
     ydata = REAL(stemp);
     stemp = findVarInFrame(rho, install("wback"));
     if (!stemp)
-        error(_("'wback' not found"));
+	error(_("'wback' not found"));
     wdata = REAL(stemp);
     stemp = findVarInFrame(rho, install("xback"));
     if (!stemp)
-        error(_("'xback' not found"));
+	error(_("'xback' not found"));
     xdata = REAL(stemp);
     stemp = findVarInFrame(rho, install("nback"));
     if (!stemp)
-        error(_("'nback' not found"));
+	error(_("'nback' not found"));
     ndata = INTEGER(stemp);
 
     return R_NilValue;
@@ -84,12 +84,12 @@ rpart_callback1(int n, double *y[], double *wt, double *z)
 
     /* Copy n and wt into the parent frame */
     for (i = 0, k = 0; i < ysave; i++)
-        for (j = 0; j < n; j++)
-            ydata[k++] = y[j][i];
+	for (j = 0; j < n; j++)
+	    ydata[k++] = y[j][i];
 
 
     for (i = 0; i < n; i++)
-        wdata[i] = wt[i];
+	wdata[i] = wt[i];
     ndata[0] = n;
 
     /*
@@ -101,12 +101,12 @@ rpart_callback1(int n, double *y[], double *wt, double *z)
     /* no need to protect as no memory allocation (or error) below */
     value = eval(expr2, rho);
     if (!isReal(value))
-        error(_("return value not a vector"));
+	error(_("return value not a vector"));
     if (LENGTH(value) != (1 + rsave))
-        error(_("returned value is the wrong length"));
+	error(_("returned value is the wrong length"));
     dptr = REAL(value);
     for (i = 0; i <= rsave; i++)
-        z[i] = dptr[i];
+	z[i] = dptr[i];
 }
 
 /*
@@ -115,27 +115,27 @@ rpart_callback1(int n, double *y[], double *wt, double *z)
  */
 void
 rpart_callback2(int n, int ncat, double *y[], double *wt,
-                double *x, double *good)
+		double *x, double *good)
 {
     int i, j, k;
     SEXP goodness;
     double *dptr;
 
     for (i = 0, k = 0; i < ysave; i++)
-        for (j = 0; j < n; j++)
-            ydata[k++] = y[j][i];
+	for (j = 0; j < n; j++)
+	    ydata[k++] = y[j][i];
 
     for (i = 0; i < n; i++) {
-        wdata[i] = wt[i];
-        xdata[i] = x[i];
+	wdata[i] = wt[i];
+	xdata[i] = x[i];
     }
     ndata[0] = (ncat > 0) ? -n : n;
-        /* the negative serves as a marker for rpart.R */
+	/* the negative serves as a marker for rpart.R */
 
     /* no need to protect as no memory allocation (or error) below */
     goodness = eval(expr1, rho);
     if (!isReal(goodness))
-        error(_("the expression expr1 did not return a vector!"));
+	error(_("the expression expr1 did not return a vector!"));
     j = LENGTH(goodness);
     dptr = REAL(goodness);
 
@@ -144,20 +144,20 @@ rpart_callback2(int n, int ncat, double *y[], double *wt,
      * this extra documenation then
      */
     if (ncat == 0) {
-        if (j != 2 * (n - 1))
-            error("the expression expr1 returned a list of %d elements, %d required",
-                  j, 2 * (n - 1));
+	if (j != 2 * (n - 1))
+	    error("the expression expr1 returned a list of %d elements, %d required",
+		  j, 2 * (n - 1));
 
-        for (i = 0; i < j; i++)
-            good[i] = dptr[i];
+	for (i = 0; i < j; i++)
+	    good[i] = dptr[i];
     } else {
        /*
-        * If not all categories were present in X, then the return list 
-        * will have 2(#categories present) - 1 elements
-        * The first element of "good" contains the number of groups found
-        */
-        good[0] = (j + 1) / 2;
-        for (i = 0; i < j; i++)
-            good[i + 1] = dptr[i];
-    }    
+	* If not all categories were present in X, then the return list
+	* will have 2(#categories present) - 1 elements
+	* The first element of "good" contains the number of groups found
+	*/
+	good[0] = (j + 1) / 2;
+	for (i = 0; i < j; i++)
+	    good[i + 1] = dptr[i];
+    }
 }

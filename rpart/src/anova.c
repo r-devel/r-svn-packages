@@ -11,15 +11,15 @@ static int *tsplit;
 
 int
 anovainit(int n, double *y[], int maxcat, char **error,
-          double *parm, int *size, int who, double *wt)
+	  double *parm, int *size, int who, double *wt)
 {
     if (who == 1 && maxcat > 0) {
-        graycode_init0(maxcat);
-        countn = (int *) ALLOC(2 * maxcat, sizeof(int));
-        tsplit = countn + maxcat;
-        mean = (double *) ALLOC(3 * maxcat, sizeof(double));
-        wts = mean + maxcat;
-        sums = wts + maxcat;
+	graycode_init0(maxcat);
+	countn = (int *) ALLOC(2 * maxcat, sizeof(int));
+	tsplit = countn + maxcat;
+	mean = (double *) ALLOC(3 * maxcat, sizeof(double));
+	wts = mean + maxcat;
+	sums = wts + maxcat;
     }
     *size = 1;
     return 0;
@@ -36,15 +36,15 @@ anovass(int n, double *y[], double *value, double *risk, double *wt)
     double mean, ss;
 
     for (i = 0; i < n; i++) {
-        temp += *y[i] * wt[i];
-        twt += wt[i];
+	temp += *y[i] * wt[i];
+	twt += wt[i];
     }
     mean = temp / twt;
 
     ss = 0;
     for (i = 0; i < n; i++) {
-        temp = *y[i] - mean;
-        ss += temp * temp * wt[i];
+	temp = *y[i] - mean;
+	ss += temp * temp * wt[i];
     }
 
     *value = mean;
@@ -52,7 +52,7 @@ anovass(int n, double *y[], double *value, double *risk, double *wt)
 }
 
 /*
- * The anova splitting function.  Find that split point in x such that 
+ * The anova splitting function.  Find that split point in x such that
  *  the sum of squares of y within the two groups is decreased as much
  *  as possible.  It is not necessary to actually calculate the SS, the
  *  improvement involves only means in the two groups.
@@ -85,101 +85,101 @@ anova(int n, double *y[], double *x, int nclass,
     right_n = n;
     right_sum = 0;
     for (i = 0; i < n; i++) {
-        right_sum += *y[i] * wt[i];
-        right_wt += wt[i];
+	right_sum += *y[i] * wt[i];
+	right_wt += wt[i];
     }
     grandmean = right_sum / right_wt;
 
     if (nclass == 0) {          /* continuous predictor */
-        left_sum = 0;           /* No data in left branch, to start */
-        left_wt = 0;
-        left_n = 0;
-        right_sum = 0;          /* after subracting grand mean, it's zero */
-        best = 0;
-        for (i = 0; right_n > edge; i++) {
-            left_wt += wt[i];
-            right_wt -= wt[i];
-            left_n++;
-            right_n--;
-            temp = (*y[i] - grandmean) * wt[i];
-            left_sum += temp;
-            right_sum -= temp;
-            if (x[i + 1] != x[i] && left_n >= edge) {
-                temp = left_sum * left_sum / left_wt +
-                    right_sum * right_sum / right_wt;
-                if (temp > best) {
-                    best = temp;
-                    where = i;
-                    if (left_sum < right_sum)
-                        direction = LEFT;
-                    else
-                        direction = RIGHT;
-                }
-            }
-        }
+	left_sum = 0;           /* No data in left branch, to start */
+	left_wt = 0;
+	left_n = 0;
+	right_sum = 0;          /* after subracting grand mean, it's zero */
+	best = 0;
+	for (i = 0; right_n > edge; i++) {
+	    left_wt += wt[i];
+	    right_wt -= wt[i];
+	    left_n++;
+	    right_n--;
+	    temp = (*y[i] - grandmean) * wt[i];
+	    left_sum += temp;
+	    right_sum -= temp;
+	    if (x[i + 1] != x[i] && left_n >= edge) {
+		temp = left_sum * left_sum / left_wt +
+		    right_sum * right_sum / right_wt;
+		if (temp > best) {
+		    best = temp;
+		    where = i;
+		    if (left_sum < right_sum)
+			direction = LEFT;
+		    else
+			direction = RIGHT;
+		}
+	    }
+	}
 
-        *improve = best / myrisk;
-        if (best > 0) {         /* found something */
-            csplit[0] = direction;
-            *split = (x[where] + x[where + 1]) / 2;
-        }
+	*improve = best / myrisk;
+	if (best > 0) {         /* found something */
+	    csplit[0] = direction;
+	    *split = (x[where] + x[where + 1]) / 2;
+	}
     }
     /*
      * Categorical predictor
      */
     else {
-        for (i = 0; i < nclass; i++) {
-            sums[i] = 0;
-            countn[i] = 0;
-            wts[i] = 0;
-        }
+	for (i = 0; i < nclass; i++) {
+	    sums[i] = 0;
+	    countn[i] = 0;
+	    wts[i] = 0;
+	}
 
        /* rank the classes by their mean y value */
-        for (i = 0; i < n; i++) {
-            j = (int) x[i] - 1;
-            countn[j]++;
-            wts[j] += wt[i];
-            sums[j] += (*y[i] - grandmean) * wt[i];
-        }
-        for (i = 0; i < nclass; i++) {
-            if (countn[i] > 0) {
-                tsplit[i] = RIGHT;
-                mean[i] = sums[i] / wts[i];
-            } else
-                tsplit[i] = 0;
-        }
-        graycode_init2(nclass, countn, mean);
+	for (i = 0; i < n; i++) {
+	    j = (int) x[i] - 1;
+	    countn[j]++;
+	    wts[j] += wt[i];
+	    sums[j] += (*y[i] - grandmean) * wt[i];
+	}
+	for (i = 0; i < nclass; i++) {
+	    if (countn[i] > 0) {
+		tsplit[i] = RIGHT;
+		mean[i] = sums[i] / wts[i];
+	    } else
+		tsplit[i] = 0;
+	}
+	graycode_init2(nclass, countn, mean);
 
 	/*
 	 * Now find the split that we want
 	 */
-        left_wt = 0;
-        left_sum = 0;
-        right_sum = 0;
-        left_n = 0;
-        best = 0;
-        where = 0;
-        while ((j = graycode()) < nclass) {
-            tsplit[j] = LEFT;
-            left_n += countn[j];
-            right_n -= countn[j];
-            left_wt += wts[j];
-            right_wt -= wts[j];
-            left_sum += sums[j];
-            right_sum -= sums[j];
-            if (left_n >= edge && right_n >= edge) {
-                temp = left_sum * left_sum / left_wt +
-                    right_sum * right_sum / right_wt;
-                if (temp > best) {
-                    best = temp;
-                    if ((left_sum / left_wt) > (right_sum / right_wt))
-                        for (i = 0; i < nclass; i++) csplit[i] = -tsplit[i];
-                    else
-                        for (i = 0; i < nclass; i++) csplit[i] = tsplit[i];
-                }
-            }
-        }
+	left_wt = 0;
+	left_sum = 0;
+	right_sum = 0;
+	left_n = 0;
+	best = 0;
+	where = 0;
+	while ((j = graycode()) < nclass) {
+	    tsplit[j] = LEFT;
+	    left_n += countn[j];
+	    right_n -= countn[j];
+	    left_wt += wts[j];
+	    right_wt -= wts[j];
+	    left_sum += sums[j];
+	    right_sum -= sums[j];
+	    if (left_n >= edge && right_n >= edge) {
+		temp = left_sum * left_sum / left_wt +
+		    right_sum * right_sum / right_wt;
+		if (temp > best) {
+		    best = temp;
+		    if ((left_sum / left_wt) > (right_sum / right_wt))
+			for (i = 0; i < nclass; i++) csplit[i] = -tsplit[i];
+		    else
+			for (i = 0; i < nclass; i++) csplit[i] = tsplit[i];
+		}
+	    }
+	}
 
-        *improve = best / myrisk;       /* % improvement */
+	*improve = best / myrisk;       /* % improvement */
     }
 }

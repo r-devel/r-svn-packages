@@ -15,10 +15,10 @@
 #include "node.h"
 #include "rpartproto.h"
 
-struct cptable *
-make_cp_table(struct node *me, double parent, int nsplit)
+CpTable
+make_cp_table(pNode me, double parent, int nsplit)
 {
-    struct cptable *cplist;
+    CpTable cplist;
 
     if (me->leftson) {          /* if there are splits below */
 	/*
@@ -28,15 +28,15 @@ make_cp_table(struct node *me, double parent, int nsplit)
 	 *  2) I send 0 to the left to keep the current split (me) from
 	 *       being counted twice, once by each child.
 	 */
-        make_cp_table(me->leftson, me->complexity, 0);
-        cplist = make_cp_table(me->rightson, me->complexity, nsplit + 1);
+	make_cp_table(me->leftson, me->complexity, 0);
+	cplist = make_cp_table(me->rightson, me->complexity, nsplit + 1);
     } else
-        cplist = cptable_tail;
+	cplist = cptable_tail;
 
     while (cplist->cp < parent) {
-        cplist->risk += me->risk;
-        cplist->nsplit += nsplit;
-        cplist = cplist->back;
+	cplist->risk += me->risk;
+	cplist->nsplit += nsplit;
+	cplist = cplist->back;
     }
 
     return cplist;

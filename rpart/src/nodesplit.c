@@ -15,11 +15,10 @@
 #include <stdio.h>
 
 void
-nodesplit(struct node *me, int nodenum, int n1, int n2,
-          int *nnleft, int *nnright)
+nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
 {
     int i, j, k;
-    struct split *tsplit;
+    pSplit tsplit;
     int var, extra, lastisleft, someleft;
     int i1, i2, i3;
     int leftson, rightson;
@@ -50,68 +49,68 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
     nright = 0;
 
     if (rp.numcat[pvar] > 0) {  /* categorical primary variable */
-        index = tsplit->csplit;
-        for (i = n1; i < n2; i++) {
-            j = sorts[pvar][i];
-            if (j < 0)
-                someleft++;     /* missing value */
-            else
-                switch (index[(int) xdata[pvar][j] - 1]) {
-                case LEFT:
-                    which[j] = leftson;
-                    nleft++;
-                    break;
-                case RIGHT:
-                    which[j] = leftson + 1;
-                    nright++;
-                    break;
-                }
-        }
+	index = tsplit->csplit;
+	for (i = n1; i < n2; i++) {
+	    j = sorts[pvar][i];
+	    if (j < 0)
+		someleft++;     /* missing value */
+	    else
+		switch (index[(int) xdata[pvar][j] - 1]) {
+		case LEFT:
+		    which[j] = leftson;
+		    nleft++;
+		    break;
+		case RIGHT:
+		    which[j] = leftson + 1;
+		    nright++;
+		    break;
+		}
+	}
     } else {
-        psplit = tsplit->spoint;        /* value of split point */
-        extra = tsplit->csplit[0];
-        for (i = n1; i < n2; i++) {
-            j = sorts[pvar][i];
-            if (j < 0)
-                someleft++;
-            else {
-                if (xdata[pvar][j] < psplit)
-                    k = extra;
-                else
-                    k = -extra;
-                if (k == LEFT) {
-                    which[j] = leftson;
-                    nleft++;
-                } else {
-                    which[j] = leftson + 1;
-                    nright++;
-                }
-            }
-        }
+	psplit = tsplit->spoint;        /* value of split point */
+	extra = tsplit->csplit[0];
+	for (i = n1; i < n2; i++) {
+	    j = sorts[pvar][i];
+	    if (j < 0)
+		someleft++;
+	    else {
+		if (xdata[pvar][j] < psplit)
+		    k = extra;
+		else
+		    k = -extra;
+		if (k == LEFT) {
+		    which[j] = leftson;
+		    nleft++;
+		} else {
+		    which[j] = leftson + 1;
+		    nright++;
+		}
+	    }
+	}
     }
 
     /*
-     * Now the surrogates 
+     * Now the surrogates
      *   Usually, there aren't a lot of observations that need to
      *   be split.  So it is more efficient to make one 1:n pass,
      *   with multiple runs through the surrogate list.
      */
     if (someleft > 0 && rp.usesurrogate > 0) {
-        for (i = n1; i < n2; i++) {
-            j = rp.sorts[pvar][i];
-            if (j >= 0)
-                continue;       /* already split */
+	for (i = n1; i < n2; i++) {
+	    j = rp.sorts[pvar][i];
+	    if (j >= 0)
+		continue;       /* already split */
 
-            j = -(j + 1);       /* obs number - search for surrogates */
-            for (tsplit = me->surrogate; tsplit; tsplit = tsplit->nextsplit) {
-                var = tsplit->var_num;
-                if (!R_FINITE(xdata[var][j]))
-                    continue;
+	    j = -(j + 1);       /* obs number - search for surrogates */
+	    for (tsplit = me->surrogate; tsplit; tsplit = tsplit->nextsplit) {
+		var = tsplit->var_num;
+		if (!R_FINITE(xdata[var][j]))
+		    continue;
 		/* surrogate not missing - process it */
 
-                if (rp.numcat[var] > 0) {       /* categorical surrogate */
-                    index = tsplit->csplit;
-                    k = (int) xdata[var][j];    /* the value of the surrogate  */
+		if (rp.numcat[var] > 0) {       /* categorical surrogate */
+		    index = tsplit->csplit;
+		    k = (int) xdata[var][j];    /* the value of the surrogate  */
 		    /*
 		     * The need for the if stmt below may not be obvious.
 		     * The surrogate's value must not be missing, AND there
@@ -122,66 +121,66 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
 		     * value of the primary variable, then index[k-1] will
 		     * be zero.
 		     */
-                    if (index[k - 1]) {
-                        tsplit->count++;
-                        if (index[k - 1] == LEFT) {
-                            which[j] = leftson;
-                            nleft++;
-                        } else {
-                            which[j] = leftson + 1;
-                            nright++;
-                        }
-                        someleft--;
-                        break;
-                    }
-                } else {
-                    psplit = tsplit->spoint;    /* continuous surrogate */
-                    extra = tsplit->csplit[0];
-                    tsplit->count++;
-                    if (xdata[var][j] < psplit)
-                        k = extra;
-                    else
-                        k = -extra;
-                    if (k == LEFT) {
-                        which[j] = leftson;
-                        nleft++;
-                    } else {
-                        which[j] = rightson;
-                        nright++;
-                    }
-                    someleft--;
-                    break;
-                }
-            }
-        }
+		    if (index[k - 1]) {
+			tsplit->count++;
+			if (index[k - 1] == LEFT) {
+			    which[j] = leftson;
+			    nleft++;
+			} else {
+			    which[j] = leftson + 1;
+			    nright++;
+			}
+			someleft--;
+			break;
+		    }
+		} else {
+		    psplit = tsplit->spoint;    /* continuous surrogate */
+		    extra = tsplit->csplit[0];
+		    tsplit->count++;
+		    if (xdata[var][j] < psplit)
+			k = extra;
+		    else
+			k = -extra;
+		    if (k == LEFT) {
+			which[j] = leftson;
+			nleft++;
+		    } else {
+			which[j] = rightson;
+			nright++;
+		    }
+		    someleft--;
+		    break;
+		}
+	    }
+	}
     }
     if (someleft > 0 && rp.usesurrogate == 2) {
 	/* all surrogates missing, use the default */
-        i = me->lastsurrogate;
-        if (i) {           /* 50-50 splits are possible - there is no
+	i = me->lastsurrogate;
+	if (i) {           /* 50-50 splits are possible - there is no
 			    * "default" */
-            if (i < 0) {
-                lastisleft = leftson;
-                nleft += someleft;
-            } else {
-                lastisleft = rightson;
-                nright += someleft;
-            }
+	    if (i < 0) {
+		lastisleft = leftson;
+		nleft += someleft;
+	    } else {
+		lastisleft = rightson;
+		nright += someleft;
+	    }
 
-            for (i = n1; i < n2; i++) {
-                j = sorts[pvar][i];
+	    for (i = n1; i < n2; i++) {
+		j = sorts[pvar][i];
 		/*
 		 * only those who weren't split by the primary (j < 0) and
 		 * weren't split by a surrogate (which == nodenum) need to be
 		 * assigned
 		 */
-                if (j < 0) {
-                    j = -(j + 1);
-                    if (which[j] == nodenum)
-                        which[j] = lastisleft;
-                }
-            }
-        }
+		if (j < 0) {
+		    j = -(j + 1);
+		    if (which[j] == nodenum)
+			which[j] = lastisleft;
+		}
+	    }
+	}
     }
     /*
      * Last part of the work is to update the sorts matrix
@@ -192,7 +191,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
      *   sorts[var][5] = 17    which[17]= 17 = 2*nodenum +1 = rightson
      *       "            4    which[4] = 16 = 2*nodenum    = leftson
      *                   21          21   16
-     *                    6           6   17 
+     *                    6           6   17
      *      "		  7           7   16
      *                   30          30   17
      *                    8           8   16
@@ -207,7 +206,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
      *    order within the "stay here" group doesn't matter since they
      *    won't be looked at again for splitting.
      *  So the result in this case should be
-     *       4, 21, 7, 8,   17, 6, 30,  -11 
+     *       4, 21, 7, 8,   17, 6, 30,  -11
      *  The algorithm is the opposite of a merge sort.
      *
      *  Footnote: if no surrogate variables were used, then one could
@@ -216,25 +215,25 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
      *   the bother of checking, however.
      */
     for (k = 0; k < rp.nvar; k++) {
-        sindex = rp.sorts[k];   /* point to variable k */
-        i1 = n1;
-        i2 = i1 + nleft;
-        i3 = i2 + nright;
-        for (i = n1; i < n2; i++) {
-            j = sindex[i];
-            if (j < 0)
-                j = -(j + 1);
-            if (which[j] == leftson)
-                sindex[i1++] = sindex[i];
-            else {
-                if (which[j] == rightson)
-                    rp.tempvec[i2++] = sindex[i];
-                else
-                    rp.tempvec[i3++] = sindex[i];       /* went nowhere */
-            }
-        }
-        for (i = n1 + nleft; i < n2; i++)
-            sindex[i] = rp.tempvec[i];
+	sindex = rp.sorts[k];   /* point to variable k */
+	i1 = n1;
+	i2 = i1 + nleft;
+	i3 = i2 + nright;
+	for (i = n1; i < n2; i++) {
+	    j = sindex[i];
+	    if (j < 0)
+		j = -(j + 1);
+	    if (which[j] == leftson)
+		sindex[i1++] = sindex[i];
+	    else {
+		if (which[j] == rightson)
+		    rp.tempvec[i2++] = sindex[i];
+		else
+		    rp.tempvec[i3++] = sindex[i];       /* went nowhere */
+	    }
+	}
+	for (i = n1 + nleft; i < n2; i++)
+	    sindex[i] = rp.tempvec[i];
     }
 
     *nnleft = nleft;

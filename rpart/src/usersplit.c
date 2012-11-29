@@ -10,7 +10,7 @@ static double *uscratch;        /* variously used scratch vector */
 
 int
 usersplit_init(int n, double *y[], int maxcat, char **error,
-               double *parm, int *size, int who, double *wt)
+	       double *parm, int *size, int who, double *wt)
 {
     if (who == 1) {
 	/* If who==0 we are being called internally via xval, and don't
@@ -19,7 +19,7 @@ usersplit_init(int n, double *y[], int maxcat, char **error,
 	 *   the length of the return vector
 	 *  the scratch vector needed is of length max(2n, nreturn +1)
 	 */
-        rpart_callback0(&n_return);
+	rpart_callback0(&n_return);
 
 	uscratch =  (double *) ALLOC(n_return + 1 > 2 * n ? n_return + 1 : 2 *n,
 				     sizeof(double));
@@ -39,7 +39,7 @@ usersplit_eval(int n, double *y[], double *value, double *risk, double *wt)
     rpart_callback1(n, y, wt, uscratch);
     *risk = uscratch[0];
     for (i = 0; i < n_return; i++)
-        value[i] = uscratch[i + 1];
+	value[i] = uscratch[i + 1];
 }
 
 /*
@@ -47,8 +47,8 @@ usersplit_eval(int n, double *y[], double *value, double *risk, double *wt)
  */
 void
 usersplit(int n, double *y[], double *x, int nclass, int edge,
-          double *improve, double *split, int *csplit, double myrisk,
-          double *wt)
+	  double *improve, double *split, int *csplit, double myrisk,
+	  double *wt)
 {
     int i, j, k;
     int m;
@@ -64,14 +64,14 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
      * (This isn't common, but callbacks are expensive).
      */
     if (nclass > 0) {
-        ftemp = x[0];
-        for (i = 1; i < n; i++)
-            if (x[i] != ftemp)
-                break;
-        if (i == n) {
-            *improve = 0.0;
-            return;
-        }
+	ftemp = x[0];
+	for (i = 1; i < n; i++)
+	    if (x[i] != ftemp)
+		break;
+	if (i == n) {
+	    *improve = 0.0;
+	    return;
+	}
     }
     /*
      * get the vector of "goodness of split"
@@ -88,20 +88,20 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
 	 * so has n-1 real elements. *The 'direction' vector is
 	 * returned pasted onto the end of uscratch.
 	 */
-        dscratch = uscratch + n - 1;
-        best = 0;
+	dscratch = uscratch + n - 1;
+	best = 0;
 
-        for (i = edge - 1; i < n - edge; i++) {
-            if ((x[i] < x[i + 1]) && (uscratch[i] > best)) {
-                best = uscratch[i];
-                where = i;
-            }
-        }
+	for (i = edge - 1; i < n - edge; i++) {
+	    if ((x[i] < x[i + 1]) && (uscratch[i] > best)) {
+		best = uscratch[i];
+		where = i;
+	    }
+	}
 
-        if (best > 0) {         /* found something */
-            csplit[0] = (int) dscratch[where];
-            *split = (x[where] + x[where + 1]) / 2;
-        }
+	if (best > 0) {         /* found something */
+	    csplit[0] = (int) dscratch[where];
+	    *split = (x[where] + x[where + 1]) / 2;
+	}
     } else {
 	/*
 	 * Categorical -- somewhat more work to be done here to
@@ -111,41 +111,41 @@ usersplit(int n, double *y[], double *x, int nclass, int edge,
 	 * in order, and the assurance that the best split is one of
 	 * those that use categories in that order.
 	 */
-        for (i = 0; i < nclass; i++)
-            csplit[i] = 0;
-        best = 0;
-        m = (int) uscratch[0];
-        dscratch = uscratch + m;
+	for (i = 0; i < nclass; i++)
+	    csplit[i] = 0;
+	best = 0;
+	m = (int) uscratch[0];
+	dscratch = uscratch + m;
 
-        where = -1;
-        left_n = 0;
-        for (i = 1; i < m; i++) {
-            k = (int) dscratch[i - 1];  /* the next group of interest */
-            for (j = 0; j < n; j++)
-                if (x[j] == k)
-                    left_n++;
-            right_n = n - left_n;
-            if (right_n < edge)
-                break;
-            if (where < 0 || uscratch[i] > best) {
-                best = uscratch[i];
-                where = i;
-            }
-        }
+	where = -1;
+	left_n = 0;
+	for (i = 1; i < m; i++) {
+	    k = (int) dscratch[i - 1];  /* the next group of interest */
+	    for (j = 0; j < n; j++)
+		if (x[j] == k)
+		    left_n++;
+	    right_n = n - left_n;
+	    if (right_n < edge)
+		break;
+	    if (where < 0 || uscratch[i] > best) {
+		best = uscratch[i];
+		where = i;
+	    }
+	}
 	/*
 	 * * Now mark the groups as to left/right *   If there was no way to
 	 * split it with at least 'edge' in each *   group, best will still
 	 * =0.
 	 */
-        if (best > 0) {
-            for (i = 0; i < m; i++) {
-                k = (int) dscratch[i];  /* the next group of interest */
-                if (i < where)
-                    csplit[k - 1] = LEFT;
-                else
-                    csplit[k - 1] = RIGHT;
-            }
-        }
+	if (best > 0) {
+	    for (i = 0; i < m; i++) {
+		k = (int) dscratch[i];  /* the next group of interest */
+		if (i < where)
+		    csplit[k - 1] = LEFT;
+		else
+		    csplit[k - 1] = RIGHT;
+	    }
+	}
     }
     *improve = best;
 }

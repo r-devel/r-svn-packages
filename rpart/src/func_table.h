@@ -11,35 +11,35 @@
  */
 
 extern int anovainit(int n, double *y[], int maxcat, char **error,
-                     double *parm, int *size, int who, double *wt);
+		     double *parm, int *size, int who, double *wt);
 extern int poissoninit(int n, double *y[], int maxcat, char **error,
-                       double *parm, int *size, int who, double *wt);
+		       double *parm, int *size, int who, double *wt);
 extern int giniinit(int n, double *y[], int maxcat, char **error,
-                    double *parm, int *size, int who, double *wt);
+		    double *parm, int *size, int who, double *wt);
 extern int usersplit_init(int n, double *y[], int maxcat, char **error,
-                          double *parm, int *size, int who, double *wt);
+			  double *parm, int *size, int who, double *wt);
 
 extern void anovass(int n, double *y[], double *value, double *risk,
-                    double *wt);
+		    double *wt);
 extern void poissondev(int n, double *y[], double *value, double *risk,
-                       double *wt);
+		       double *wt);
 extern void ginidev(int n, double *y[], double *value, double *risk,
-                    double *wt);
+		    double *wt);
 extern void usersplit_eval(int n, double *y[], double *value, double *risk,
-                           double *wt);
+			   double *wt);
 
 extern void anova(int n, double *y[], double *x, int nclass,
-                  int edge, double *improve, double *split, int *csplit,
-                  double myrisk, double *wt);
+		  int edge, double *improve, double *split, int *csplit,
+		  double myrisk, double *wt);
 extern void poisson(int n, double *y[], double *x, int nclass,
-                    int edge, double *improve, double *split, int *csplit,
-                    double myrisk, double *wt);
+		    int edge, double *improve, double *split, int *csplit,
+		    double myrisk, double *wt);
 extern void gini(int n, double *y[], double *x, int nclass,
-                 int edge, double *improve, double *split, int *csplit,
-                 double myrisk, double *wt);
+		 int edge, double *improve, double *split, int *csplit,
+		 double myrisk, double *wt);
 extern void usersplit(int n, double *y[], double *x, int nclass,
-                      int edge, double *improve, double *split, int *csplit,
-                      double myrisk, double *wt);
+		      int edge, double *improve, double *split, int *csplit,
+		      double myrisk, double *wt);
 
 extern double anovapred(double *y, double *yhat);
 extern double ginipred(double *y, double *yhat);
