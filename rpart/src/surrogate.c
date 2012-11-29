@@ -51,12 +51,8 @@ surrogate(struct node *me, int n1, int n2)
             j = sorts[var][i];
             if (j < 0)
                 tempy[-(j + 1)] = 0;
-            else {
-                if (xdata[var][j] < split)
-                    tempy[j] = extra;
-                else
-                    tempy[j] = -extra;
-            }
+            else
+		tempy[j] = (xdata[var][j] < split) ? extra : -extra;
         }
     } else {                    /* categorical variable */
         index = (me->primary)->csplit;

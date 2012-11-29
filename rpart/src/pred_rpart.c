@@ -79,7 +79,7 @@ next:
                     dir = ncat;
                 else
                     dir = -ncat;
-                if (dir != 0) {
+                if (dir) {
                     if (dir == -1)
                         node = 2 * node;
                     else
@@ -100,7 +100,7 @@ next:
                             dir = ncat;
                         else
                             dir = -ncat;
-                        if (dir != 0) {
+                        if (dir) {
                             if (dir == -1)
                                 node = 2 * node;
                             else

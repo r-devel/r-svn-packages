@@ -167,7 +167,7 @@ xval(int n_xval, struct cptable *cptable_head, int *x_grp,
 	R_CheckUserInterrupt();
     }
 
-    for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
+    for (cplist = cptable_head; cplist; cplist = cplist->forward) {
         cplist->xstd = sqrt(cplist->xstd -
                             cplist->xrisk * cplist->xrisk / total_wt);
     }

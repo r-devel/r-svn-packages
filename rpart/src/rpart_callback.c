@@ -129,11 +129,8 @@ rpart_callback2(int n, int ncat, double *y[], double *wt,
         wdata[i] = wt[i];
         xdata[i] = x[i];
     }
-    if (ncat > 0)
-        ndata[0] = -n;          /* the negative serves as a marker for
-                                 * rpart.R */
-    else
-        ndata[0] = n;
+    ndata[0] = (ncat > 0) ? -n : n;
+        /* the negative serves as a marker for rpart.R */
 
     /* no need to protect as no memory allocation (or error) below */
     goodness = eval(expr1, rho);

@@ -10,8 +10,8 @@
 void
 rundown2(struct node *tree, int obs, double *cp, double *xpred, int nresp)
 {
-    int i, j, k;
-    struct node *otree;
+    int i, j, k = 0;
+    struct node *otree = tree;
 
     /*
      * Now, repeat the following: for the cp of interest, run down the tree
@@ -19,8 +19,6 @@ rundown2(struct node *tree, int obs, double *cp, double *xpred, int nresp)
      *   not have collapsed, but this split will have, so this is my
      *   predictor.
      */
-    otree = tree;
-    k = 0;
     for (i = 0; i < rp.num_unique_cp; i++) {
         while (cp[i] < tree->complexity) {
             tree = branch(tree, obs);

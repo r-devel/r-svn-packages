@@ -24,12 +24,12 @@ rpcountup(struct node *me, int *nnode, int *nsplit, int *ncat)
         i = 0;
         j = 0;
         k = 0;
-        for (ss = me->primary; ss != 0; ss = ss->nextsplit) {
+        for (ss = me->primary; ss; ss = ss->nextsplit) {
             i++;
             if (rp.numcat[ss->var_num] > 0)
                 k++;
         }
-        for (ss = me->surrogate; ss != 0; ss = ss->nextsplit) {
+        for (ss = me->surrogate; ss; ss = ss->nextsplit) {
             j++;
             if (rp.numcat[ss->var_num] > 0)
                 k++;

@@ -42,14 +42,14 @@ insert_split(struct split **listhead, int ncat, double improve, int max)
     }
    /* set up --- nlist = length of list, s4=last element, s3=next to last */
     nlist = 1;
-    for (s4 = *listhead; s4->nextsplit != 0; s4 = s4->nextsplit) {
+    for (s4 = *listhead; s4->nextsplit; s4 = s4->nextsplit) {
         s3 = s4;
         nlist++;
     }
 
    /* now set up so that the "to be added" is between s1 and s2 */
     s1 = *listhead;
-    for (s2 = *listhead; s2 != 0; s2 = s2->nextsplit) {
+    for (s2 = *listhead; s2; s2 = s2->nextsplit) {
         if (improve > s2->improve)
             break;
         s1 = s2;

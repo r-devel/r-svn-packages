@@ -245,7 +245,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2,
     cptable3 = PROTECT(allocMatrix(REALSXP, xvals > 1 ? 5 : 3,
                                    rp.num_unique_cp));
     dptr = REAL(cptable3);
-    for (cp = cptable; cp != 0; cp = cp->forward) {
+    for (cp = cptable; cp; cp = cp->forward) {
         dptr[i++] = cp->cp * scale;
         dptr[i++] = cp->nsplit;
         dptr[i++] = cp->risk * scale;

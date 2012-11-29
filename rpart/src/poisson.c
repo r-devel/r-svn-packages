@@ -107,12 +107,7 @@ void
 poissondev(int n, double **y, double *value, double *risk, double *wt)
 {
     int i;
-    double death, time;
-    double lambda, dev;
-    double temp;
-
-    death = 0;
-    time = 0;
+    double death = 0, time = 0, lambda, dev = 0, temp;
 
     /*
      * first get the overall estimate of lambda
@@ -123,7 +118,6 @@ poissondev(int n, double **y, double *value, double *risk, double *wt)
     }
     lambda = (death + exp_alpha) / (time + exp_beta);
 
-    dev = 0;
     for (i = 0; i < n; i++) {
         temp = y[i][1];
         dev -= (lambda * y[i][0] - temp) * wt[i];
@@ -212,10 +206,7 @@ poisson(int n, double **y, double *x, int nclass,
             if (temp > best) {
                 best = temp;
                 where = i;
-                if (lambda1 < lambda2)
-                    direction = LEFT;
-                else
-                    direction = RIGHT;
+		direction = (lambda1 < lambda2) ? LEFT : RIGHT;
             }
         }
     }
@@ -297,10 +288,7 @@ categorical:;
             if (temp > best) {
                 best = temp;
                 where = i;
-                if (lambda1 < lambda2)
-                    direction = LEFT;
-                else
-                    direction = RIGHT;
+		direction = (lambda1 < lambda2) ?  LEFT : RIGHT;
             }
         }
     }

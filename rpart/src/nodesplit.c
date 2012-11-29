@@ -103,8 +103,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
                 continue;       /* already split */
 
             j = -(j + 1);       /* obs number - search for surrogates */
-            for (tsplit = me->surrogate; tsplit != 0;
-                 tsplit = tsplit->nextsplit) {
+            for (tsplit = me->surrogate; tsplit; tsplit = tsplit->nextsplit) {
                 var = tsplit->var_num;
                 if (!R_FINITE(xdata[var][j]))
                     continue;
@@ -123,7 +122,7 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
 		     * value of the primary variable, then index[k-1] will
 		     * be zero.
 		     */
-                    if (index[k - 1] != 0) {
+                    if (index[k - 1]) {
                         tsplit->count++;
                         if (index[k - 1] == LEFT) {
                             which[j] = leftson;
@@ -159,8 +158,8 @@ nodesplit(struct node *me, int nodenum, int n1, int n2,
     if (someleft > 0 && rp.usesurrogate == 2) {
 	/* all surrogates missing, use the default */
         i = me->lastsurrogate;
-        if (i != 0) {           /* 50-50 splits are possible - there is no
-                                 * "default" */
+        if (i) {           /* 50-50 splits are possible - there is no
+			    * "default" */
             if (i < 0) {
                 lastisleft = leftson;
                 nleft += someleft;

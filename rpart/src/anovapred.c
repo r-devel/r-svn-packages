@@ -4,8 +4,6 @@
 double
 anovapred(double *y, double *yhat)
 {
-    double temp;
-
-    temp = y[0] - *yhat;
+    double temp = y[0] - *yhat;
     return temp * temp;
 }

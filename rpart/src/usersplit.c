@@ -21,10 +21,8 @@ usersplit_init(int n, double *y[], int maxcat, char **error,
 	 */
         rpart_callback0(&n_return);
 
-        if (n_return + 1 > 2 * n)
-            uscratch = (double *) ALLOC(n_return + 1, sizeof(double));
-        else
-            uscratch = (double *) ALLOC(2 * n, sizeof(double));
+	uscratch =  (double *) ALLOC(n_return + 1 > 2 * n ? n_return + 1 : 2 *n,
+				     sizeof(double));
     }
     *size = n_return;
     return 0;

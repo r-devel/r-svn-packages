@@ -26,12 +26,8 @@ graycode_init1(int numcat, int *count)
     int i;
 
     maxc = numcat;
-    for (i = 0; i < maxc; i++) {
-        if (count[i] != 0)
-            gray[i] = 1;
-        else
-            gray[i] = 0;
-    }
+    for (i = 0; i < maxc; i++)
+	gray[i] = count[i] ? 1 : 0;
     gsave = -2;
 }
 

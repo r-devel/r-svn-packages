@@ -38,16 +38,14 @@ branch(struct node *tree, int obs)
     j = tsplit->var_num;
     if (R_FINITE(xdata[j][obs])) {
         if (rp.numcat[j] == 0) {        /* continuous */
-            if (xdata[j][obs] < tsplit->spoint)
-                dir = tsplit->csplit[0];
-            else
-                dir = -tsplit->csplit[0];
+	    dir = (xdata[j][obs] < tsplit->spoint) ? 
+		tsplit->csplit[0] : -tsplit->csplit[0];
             goto down;
         } else {                /* categorical predictor */
             category = (int) xdata[j][obs];     /* factor predictor -- which
-                                                 * level */
+                                                 * level? */
             dir = (tsplit->csplit)[category - 1];
-            if (dir != 0)
+            if (dir)
                 goto down;
         }
     }
@@ -56,20 +54,18 @@ branch(struct node *tree, int obs)
    /*
     * use the surrogates
     */
-    for (tsplit = me->surrogate; tsplit != 0; tsplit = tsplit->nextsplit) {
+    for (tsplit = me->surrogate; tsplit; tsplit = tsplit->nextsplit) {
         j = tsplit->var_num;
         if (R_FINITE(xdata[j][obs])) {  /* not missing */
             if (rp.numcat[j] == 0) {
-                if (rp.xdata[j][obs] < tsplit->spoint)
-                    dir = tsplit->csplit[0];
-                else
-                    dir = -tsplit->csplit[0];
+		dir = (rp.xdata[j][obs] < tsplit->spoint) ?
+                    tsplit->csplit[0] : -tsplit->csplit[0];
                 goto down;
             } else {
                 category = (int) xdata[j][obs]; /* factor predictor -- which
                                                  * level */
                 dir = (tsplit->csplit)[category - 1];
-                if (dir != 0)
+                if (dir)
                     goto down;
             }
         }
@@ -84,8 +80,5 @@ branch(struct node *tree, int obs)
     dir = me->lastsurrogate;
 
 down:
-    if (dir == LEFT)
-        return me->leftson;
-    else
-        return me->rightson;
+    return (dir == LEFT) ? me->leftson : me->rightson;
 }

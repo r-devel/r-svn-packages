@@ -66,7 +66,7 @@ bsplit(struct node *me, int n1, int n2)
         if (improve > (rp.iscale * 1e-10)) {
             improve /= rp.vcost[i];     /* scale the improvement */
             tsplit = insert_split(&(me->primary), nc, improve, rp.maxpri);
-            if (tsplit != 0) {
+            if (tsplit) {
                 tsplit->improve = improve;
                 tsplit->var_num = i;
                 tsplit->spoint = split;

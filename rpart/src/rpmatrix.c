@@ -61,7 +61,7 @@ rpmatrix(struct node *me, int *numcat, double **dsplit,
         inode[1][ncnt] = scnt + 1;      /* S has 1 based, not 0 based
                                          * subscripts */
         i = 0;
-        for (spl = me->primary; spl != 0; spl = spl->nextsplit) {
+        for (spl = me->primary; spl; spl = spl->nextsplit) {
             i++;
             j = spl->var_num;
             dsplit[0][scnt] = spl->improve;
@@ -82,7 +82,7 @@ rpmatrix(struct node *me, int *numcat, double **dsplit,
         inode[2][ncnt] = i;
 
         i = 0;
-        for (spl = me->surrogate; spl != 0; spl = spl->nextsplit) {
+        for (spl = me->surrogate; spl; spl = spl->nextsplit) {
             i++;
             j = spl->var_num;
             dsplit[0][scnt] = spl->improve;

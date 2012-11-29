@@ -46,7 +46,7 @@ make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
         make_cp_list(me->rightson, me_cp, cptable_head);
     }
     if (me_cp < parent) {       /* if not, then it can't be unique */
-        for (cplist = cptable_head; cplist != 0; cplist = cplist->forward) {
+        for (cplist = cptable_head; cplist; cplist = cplist->forward) {
            /* am I tied? */
             if (me_cp == cplist->cp)
                 return;         /* exact ties */
@@ -65,7 +65,7 @@ make_cp_list(struct node *me, double parent, struct cptable *cptable_head)
         cplist->xstd = 0;
         cplist->back = cptemp;
         cplist->forward = cptemp->forward;
-        if (cptemp->forward != 0)
+        if (cptemp->forward)
             (cptemp->forward)->back = cplist;
         else
             cptable_tail = cplist;

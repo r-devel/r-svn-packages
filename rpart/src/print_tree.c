@@ -75,7 +75,7 @@ printme(struct node *me, int id)
         Rprintf("\n");
 
     Rprintf("  Primary splits:\n");
-    for (ss = me->primary; ss != 0; ss = ss->nextsplit) {
+    for (ss = me->primary; ss; ss = ss->nextsplit) {
         j = ss->var_num;
         if (rp.numcat[j] == 0) {
             if (ss->csplit[0] == LEFT)
@@ -112,9 +112,9 @@ printme(struct node *me, int id)
    /*
     * Now print the surrogate splits.
     */
-    if (me->surrogate != 0)
+    if (me->surrogate)
         Rprintf("  Surrogate splits:\n");
-    for (ss = me->surrogate; ss != 0; ss = ss->nextsplit) {
+    for (ss = me->surrogate; ss; ss = ss->nextsplit) {
         j = ss->var_num;
         if (rp.numcat[j] == 0) {
             if (ss->csplit[0] == LEFT)
