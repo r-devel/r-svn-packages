@@ -7,9 +7,9 @@
 
 static int numclass;
 static double *left,            /* left branch n (weighted) */
- *right, **ccnt;
+    *right, **ccnt;
 static double *prior, *aprior,  /* altered priors */
- *freq, *loss;                  /* loss matrix */
+    *freq, *loss;               /* loss matrix */
 static int *tsplit, *countn;
 static double *awt, *rate;
 static double (*impurity) ();
@@ -33,7 +33,7 @@ giniinit(int n, double **y, int maxcat, char **error,
     int i, j, k;
     double temp;
 
-   /* allocate memory  and setup losses */
+   /* allocate memory and set up losses */
     if (who == 1) {
 	numclass = 0;           /* number of classes */
 	for (i = 0; i < n; i++)

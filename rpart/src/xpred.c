@@ -2,6 +2,8 @@
  *  This has almost exactly the same inputs are rpart, but returns
  *   cross-validated predictions instead of the fitted tree.
  *
+ *  Called from xval.c
+ *
  * Input variables:
  *      ncat    = # categories for each var, 0 for continuous variables.
  *      method  = 1 - anova
@@ -31,55 +33,31 @@
 #include "rpartproto.h"
 
 SEXP
-xpred(SEXP ncat2, SEXP method2, SEXP opt2,
-      SEXP parms2, SEXP xvals2, SEXP xgrp2,
-      SEXP ymat2, SEXP xmat2, SEXP wt2,
-      SEXP ny2, SEXP cost2, SEXP all2, SEXP cp2, SEXP toprisk2, SEXP nresp2)
+xpred(SEXP ncat2, SEXP method2, SEXP opt2, SEXP parms2, SEXP xvals2, 
+      SEXP xgrp2, SEXP ymat2, SEXP xmat2, SEXP wt2, SEXP ny2, SEXP cost2, 
+      SEXP all2, SEXP cp2, SEXP toprisk2, SEXP nresp2)
 {
-    char *errmsg;
-    int i, j, k, n;
-    int last, ii;
-    int maxcat, ncp;
-    int xgroup;
-    double temp, total_wt, old_wt;
-    int *savesort;
-    double *dptr;               /* temp */
-    int nresp;
-    double toprisk;
-
-    pNode xtree;
-    /*
-     * pointers to R objects
-     */
-    int *ncat, *xgrp;
-    int xvals;
-    double *wt, *parms;
-    double *predict;
-    double *cp;
-
-    /*
-     *        Return objects for R
-     */
-    SEXP predict2;
+    int k;
+    double total_wt, old_wt;
 
     /*
      *  the first half of the routine is almost identical to rpart.c
      * first get copies of some input variables
      */
-    ncat = INTEGER(ncat2);
-    xgrp = INTEGER(xgrp2);
-    xvals = asInteger(xvals2);
-    wt = REAL(wt2);
-    parms = REAL(parms2);
-    ncp = LENGTH(cp2);
-    cp = REAL(cp2);
-    toprisk = asReal(toprisk2);
+    int *ncat = INTEGER(ncat2);
+    int *xgrp = INTEGER(xgrp2);
+    int xvals = asInteger(xvals2);
+    double *wt = REAL(wt2);
+    double *parms = REAL(parms2);
+    int ncp = LENGTH(cp2);
+    double *cp = REAL(cp2);
+    double toprisk = asReal(toprisk2);
 
     /*
      * initialize the splitting functions from the function table
      */
     if (asInteger(method2) <= NUM_METHODS) {
-	i = asInteger(method2) - 1;
+	int i = asInteger(method2) - 1;
 	rp_init = func_table[i].init_split;
 	rp_choose = func_table[i].choose_split;
 	rp_eval = func_table[i].eval;
@@ -91,12 +69,12 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
     /*
      * set some other parameters
      */
-    dptr = REAL(opt2);
+    double *dptr = REAL(opt2);
     rp.min_node = (int) dptr[1];
     rp.min_split = (int) dptr[0];
     rp.complexity = dptr[2];
-    rp.maxpri = (int) dptr[3] + 1;      /* max primary splits = max
-					 * competitors + 1 */
+    rp.maxpri = (int) dptr[3] + 1;      /* max primary splits =
+					   max competitors + 1 */
     if (rp.maxpri < 1)
 	rp.maxpri = 1;
     rp.maxsur = (int) dptr[4];
@@ -104,7 +82,7 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
     rp.sur_agree = (int) dptr[6];
     rp.maxnode = (int) pow((double) 2.0, (double) dptr[7]) - 1;
     rp.n = nrows(xmat2);
-    n = rp.n;                   /* I get tired of typing "rp.n" 100 times
+    int n = rp.n;               /* I get tired of typing "rp.n" 100 times
 				 * below */
     rp.nvar = ncols(xmat2);
     rp.numcat = INTEGER(ncat2);
@@ -120,14 +98,14 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
      */
     dptr = REAL(xmat2);
     rp.xdata = (double **) ALLOC(rp.nvar, sizeof(double *));
-    for (i = 0; i < rp.nvar; i++) {
+    for (int i = 0; i < rp.nvar; i++) {
 	rp.xdata[i] = dptr;
 	dptr += n;
     }
-    rp.ydata = (double **) ALLOC(n, sizeof(double *));
 
+    rp.ydata = (double **) ALLOC(n, sizeof(double *));
     dptr = REAL(ymat2);
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
 	rp.ydata[i] = dptr;
 	dptr += rp.num_y;
     }
@@ -146,10 +124,10 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
      */
     rp.sorts = (int **) ALLOC(rp.nvar, sizeof(int *));
     rp.sorts[0] = (int *) ALLOC(n * rp.nvar, sizeof(int));
-    maxcat = 0;
-    for (i = 0; i < rp.nvar; i++) {
+    int maxcat = 0;
+    for (int i = 0; i < rp.nvar; i++) {
 	rp.sorts[i] = rp.sorts[0] + i * n;
-	for (k = 0; k < n; k++) {
+	for (int k = 0; k < n; k++) {
 	    if (!R_FINITE(rp.xdata[i][k])) {
 		rp.tempvec[k] = -(k + 1);       /* this variable is missing */
 		rp.xtemp[k] = 0;        /* avoid weird numerics in S's NA */
@@ -162,14 +140,14 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
 	    mysort(0, n - 1, rp.xtemp, rp.tempvec);
 	else if (ncat[i] > maxcat)
 	    maxcat = ncat[i];
-	for (k = 0; k < n; k++)
+	for (int k = 0; k < n; k++)
 	    rp.sorts[i][k] = rp.tempvec[k];
     }
 
     /*
-     * save away a copy of the rp.sorts
+     * save a copy of rp.sorts
      */
-    savesort = (int *) ALLOC(n * rp.nvar, sizeof(int));
+    int savesort[n * rp.nvar];
     memcpy(savesort, rp.sorts[0], n * rp.nvar * sizeof(int));
 
     /*
@@ -189,44 +167,42 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
      */
 
     rp.which = (int *) ALLOC(n, sizeof(int));
-    xtree = (pNode) ALLOC(1, nodesize);
+    pNode xtree = (pNode) ALLOC(1, nodesize);
+    char *errmsg;
     (*rp_init) (n, rp.ydata, maxcat, &errmsg, parms, &rp.num_resp, 1, wt);
 
     /*
      * From this point on we look much more like xval.c
      */
     rp.alpha = rp.complexity * toprisk;
-    for (i = 0; i < ncp; i++)
+    for (int i = 0; i < ncp; i++)
 	cp[i] *= toprisk;       /* scale to internal units */
 
     /*
      *        allocate the output vector
      */
-    if (asInteger(all2) == 1)
-	nresp = rp.num_resp;    /* number returned */
-    else
-	nresp = 1;
-    predict2 = PROTECT(allocVector(REALSXP, n * ncp * nresp));
-    predict = REAL(predict2);
+    int nresp = (asInteger(all2) == 1) ? rp.num_resp : 1;
+    SEXP predict2 = PROTECT(allocVector(REALSXP, n * ncp * nresp));
+    double *predict = REAL(predict2);
 
     /*
      * do the validations
      */
     total_wt = 0;
-    for (i = 0; i < rp.n; i++)
+    for (int i = 0; i < rp.n; i++)
 	total_wt += rp.wt[i];
     old_wt = total_wt;
 
     k = 0;                      /* -Wall */
-    for (xgroup = 0; xgroup < xvals; xgroup++) {
+    for (int xgroup = 0; xgroup < xvals; xgroup++) {
 	/*
 	 * restore rp.sorts, with the data for this run at the top
 	 * this requires one pass per variable
 	 */
-	for (j = 0; j < rp.nvar; j++) {
+	for (int j = 0; j < rp.nvar; j++) {
 	    k = 0;
-	    for (i = 0; i < rp.n; i++) {
-		ii = savesort[j * n + i];       /* walk through the variables
+	    for (int i = 0; i < rp.n; i++) {
+		int ii = savesort[j * n + i];   /* walk through the variables
 						 * in order */
 		if (ii < 0)
 		    ii = -(1 + ii);     /* missings move too */
@@ -245,10 +221,10 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
 	 * Fix up the y vector, and save a list of "left out" obs in
 	 * the tail, unused end of rp.sorts[0][i];
 	 */
-	last = k;
+	int last = k;
 	k = 0;
-	temp = 0;
-	for (i = 0; i < n; i++) {
+	double temp = 0;
+	for (int i = 0; i < n; i++) {
 	    rp.which[i] = 1;    /* everyone starts in the top node */
 	    if (xgrp[i] == xgroup + 1) {
 		rp.sorts[0][last] = i;
@@ -263,7 +239,7 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
 
 	/* at this point k = #obs in the prediction group */
 	/* rescale the cp */
-	for (j = 0; j < rp.num_unique_cp; j++)
+	for (int j = 0; j < rp.num_unique_cp; j++)
 	    cp[j] *= temp / old_wt;
 	rp.alpha *= temp / old_wt;
 	old_wt = temp;
@@ -272,7 +248,8 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
 	 * partition the new tree
 	 */
 	xtree->num_obs = k;
-	(*rp_init) (k, rp.ytemp, maxcat, &errmsg, parms, &ii, 2, rp.wtemp);
+	int size;
+	(*rp_init) (k, rp.ytemp, maxcat, &errmsg, parms, &size, 2, rp.wtemp);
 	(*rp_eval) (k, rp.ytemp, xtree->response_est, &(xtree->risk), rp.wtemp);
 	xtree->complexity = xtree->risk;
 	partition(1, xtree, &temp, 0, k);
@@ -282,8 +259,8 @@ xpred(SEXP ncat2, SEXP method2, SEXP opt2,
 	/*
 	 * run the extra data down the new tree
 	 */
-	for (i = k; i < rp.n; i++) {
-	    j = rp.sorts[0][i];
+	for (int i = k; i < rp.n; i++) {
+	    int j = rp.sorts[0][i];
 	    rundown2(xtree, j, cp, (predict + j * ncp * nresp), nresp);
 	}
 

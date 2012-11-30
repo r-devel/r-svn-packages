@@ -93,7 +93,7 @@ rpart(SEXP ncat2, SEXP method2, SEXP opt2, SEXP parms2, SEXP xvals2,
     rp.sur_agree = (int) dptr[6];
     rp.maxnode = (int) pow((double) 2.0, (double) dptr[7]) - 1;
     rp.n = nrows(xmat2);
-    int n = rp.n;                   /* I get tired of typing "rp.n" 100 times
+    int n = rp.n;               /* I get tired of typing "rp.n" 100 times
 				 * below */
     rp.nvar = ncols(xmat2);
     rp.numcat = INTEGER(ncat2);

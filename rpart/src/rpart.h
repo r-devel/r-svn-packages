@@ -83,6 +83,8 @@ EXTERN void (*rp_choose) (int n, double *y[], double *x, int nclass,
 EXTERN void (*rp_eval) (int n, double **y, double *value, double *risk, double *wt);
 /* set to the prediction error routine */
 EXTERN double (*rp_error) (double *y, double *pred);
+
+/* set in rpart.c, used in partition.c, xpred.c, xcal.c */
 EXTERN int nodesize;
 
 /*
