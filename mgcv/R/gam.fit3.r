@@ -549,6 +549,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
           ls <- family$ls(y,weights,n,scale)*n.true/nobs ## saturated likelihood and derivatives
           Dp <- dev + oo$conv.tol + dev.extra
           REML <- Dp/(2*scale) - ls[1] + oo$rank.tol/2 - rp$det/2 - remlInd*Mp/2*log(2*pi*scale)
+          attr(REML,"Dp") <- Dp/(2*scale)
           if (deriv) {
             REML1 <- oo$D1/(2*scale) + oo$trA1/2 - rp$det1/2 
             if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp) - rp$det2)/2
@@ -581,7 +582,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
           K <- oo$rank.tol/2 - rp$det/2
                  
           REML <- Dp/(2*phi) - ls[1] + K - Mp/2*log(2*pi*phi)*remlInd
-
+          attr(REML,"Dp") <- Dp/(2*phi)
           if (deriv) {
             phi1 <- oo$P1; Dp1 <- oo$D1; K1 <- oo$trA1/2 - rp$det1/2;
             REML1 <- Dp1/(2*phi) - phi1*(Dp/(2*phi^2)+Mp/(2*phi)*remlInd + ls[2]) + K1

@@ -374,7 +374,9 @@ repole <- function(lo,la,lop,lap) {
   ## get distances to meridian point
   d <- sqrt((x-xm)^2+(y-ym)^2+(z-zm)^2)
   ## angles to meridian plane (i.e. plane containing origin, meridian point and pole)...
-  theta <- acos((1+cos(phi)^2-d^2)/(2*cos(phi)))
+  theta <- (1+cos(phi)^2-d^2)/(2*cos(phi))
+  theta[theta < -1] <- -1; theta[theta > 1] <- 1
+  theta <- acos(theta)
   
   ## now decide which side of meridian plane...
 

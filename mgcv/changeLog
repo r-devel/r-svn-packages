@@ -3,7 +3,7 @@
 
 ISSUES:
 
-* bam - allow a blocking covariate for AR1?
+* bam - allow a blocking covariate for AR1? ARp?
 
 * warn about, or at least report, rank deficiency?
 
@@ -21,7 +21,7 @@ ISSUES:
   see mgcv-related/bugs/initial.sp
 
 * users can use as.factor(a) in formula, and variable.summary won't know 
-  about it - causes a problem is a is character, for example. Could coerce
+  about it - causes a problem if a is character, for example. Could coerce
   character to factor, but is that general enough? what about if a was numeric
   then summary doesn't reflect how it's used?  
 
@@ -33,6 +33,9 @@ ISSUES:
 1.7-23
 
 * sos smooth model matrix re-scaled for better conditioning.
+
+* sos plot method could produce NaNs by a rounding error in argument to 
+  acos - fixed. 
 
 1.7-22
 

@@ -1179,7 +1179,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     object$GACV <- object$D2 <- object$P2 <- object$UBRE2 <- object$trA2 <- 
     object$GACV1 <- object$GACV2 <- object$GCV2 <- object$D1 <- object$P1 <- NULL
     object$sp <- as.numeric(exp(b$lsp))
-    object$gcv.ubre <- as.numeric(b$score)
+    #object$gcv.ubre <- as.numeric(b$score)
+    object$gcv.ubre <- b$score
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess,score.hist=b$score.hist) ## return info
     object$outer.info <- b   
   } else { ## methods calling gam.fit3 
@@ -2475,12 +2476,12 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # the chi^2 variables are central. 
 # Note that this can be rubbish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
-#  if (TRUE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
-#    require(CompQuadForm)
-#    r <- x
-#    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
-#    return(pmin(r,1))
-#  }
+  if (TRUE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
+    require(CompQuadForm)
+    r <- x
+    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
+    return(pmin(r,1))
+  }
 
   if (length(h) != length(lambda)) stop("lambda and h should have the same length!")
  
