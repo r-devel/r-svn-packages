@@ -1,4 +1,4 @@
-2012-09-24  Brian Ripley <Brian.Ripley@R-project.org>
+2012-11-28  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* NAMESPACE: import selectively from lattice and stats.
 
