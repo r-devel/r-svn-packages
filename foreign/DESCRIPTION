@@ -24,5 +24,6 @@ Description: Functions for reading and writing data stored by statistical
         packages such as Minitab, S, SAS, SPSS, Stata, Systat, ...,
 	and for reading and writing dBase files.
 ByteCompile: yes
+Biarch: yes
 License: GPL (>= 2)
 BugReports: http://bugs.r-project.org
