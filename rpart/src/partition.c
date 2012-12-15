@@ -16,24 +16,16 @@
 int
 partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
 {
-    pNode me;
     double tempcp;
-    int i, j, k;
-    double tempcp2;
-    double left_risk, right_risk;
-    int left_split, right_split;
-    double twt;
-    int nleft, nright;
-    int n;
 
-    me = splitnode;
-    n = n2 - n1;                /* total number of observations */
+    pNode me = splitnode;
+    int n = n2 - n1;                /* total number of observations */
 
     if (nodenum > 1) {
-	twt = 0;
-	k = 0;
-	for (i = n1; i < n2; i++) {
-	    j = rp.sorts[0][i]; /* any variable would do, use first */
+	double twt = 0;
+	int k = 0;
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[0][i]; /* any variable would do, use first */
 	    if (j < 0)
 		j = -(1 + j);   /* if missing, value = -(1+ true index) */
 	    rp.wtemp[k] = rp.wt[j];
@@ -90,6 +82,7 @@ partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
 	surrogate(me, n1, n2);
     else
 	me->surrogate = (pSplit) NULL;
+    int nleft, nright;
     nodesplit(me, nodenum, n1, n2, &nleft, &nright);
 
     /*
@@ -97,14 +90,15 @@ partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
      */
     me->leftson = (pNode) CALLOC(1, nodesize);
     (me->leftson)->complexity = tempcp - rp.alpha;
-    left_split =
+    double left_risk, right_risk;
+    int left_split =
 	partition(2 * nodenum, me->leftson, &left_risk, n1, n1 + nleft);
 
     /*
      * Update my estimate of cp, and split the right son.
      */
     tempcp = (me->risk - left_risk) / (left_split + 1);
-    tempcp2 = (me->risk - (me->leftson)->risk);
+    double tempcp2 = (me->risk - (me->leftson)->risk);
     if (tempcp < tempcp2)
 	tempcp = tempcp2;
     if (tempcp > me->complexity)
@@ -112,8 +106,9 @@ partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
 
     me->rightson = (pNode) CALLOC(1, nodesize);
     (me->rightson)->complexity = tempcp - rp.alpha;
-    right_split = partition(1 + 2 * nodenum, me->rightson, &right_risk,
-			    n1 + nleft, n1 + nleft + nright);
+    int right_split = 
+	partition(1 + 2 * nodenum, me->rightson, &right_risk,
+		  n1 + nleft, n1 + nleft + nright);
 
     /*
      * Now calculate my actual C.P., which depends on children nodes, and
@@ -161,8 +156,8 @@ partition(int nodenum, pNode splitnode, double *sumrisk, int n1, int n2)
 	 */
 	free_tree(me, 0);
 	*sumrisk = me->risk;
-	for (i = n1; i < n2; i++) {
-	    j = rp.sorts[0][i];
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[0][i];
 	    if (j < 0)
 		j = -(1 + j);
 	    rp.which[j] = nodenum;      /* revert to the old nodenumber */

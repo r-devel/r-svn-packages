@@ -17,72 +17,50 @@
 void
 nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
 {
-    int i, j, k;
-    pSplit tsplit;
-    int var, extra, lastisleft, someleft;
-    int i1, i2, i3;
-    int leftson, rightson;
-    int pvar;
-    double psplit;
-    int *index;
-    int *which;
-    int **sorts;
-    int *sindex;                /* sindex[i] is a shorthand for sorts[var][i] */
-    double **xdata;
-    int nleft, nright;
-    //int           dummy;      /* debugging */
-
-    which = rp.which;
-    sorts = rp.sorts;
-    xdata = rp.xdata;
-    leftson = 2 * nodenum;      /* the label that will go with the left son */
-    rightson = leftson + 1;
+    pSplit tsplit = me->primary;
+    int someleft = 0;
+    int leftson = 2 * nodenum;  /* the label that will go with the left son */
+    int rightson = leftson + 1;
 
     /*
      * Walk through the variables (primary, then surrogate 1, then surr 2...)
-     *   and reassign "which"
+     *   and reassign "rp.which"
      */
-    tsplit = me->primary;
-    pvar = tsplit->var_num;     /* primary variable */
-    someleft = 0;
-    nleft = 0;
-    nright = 0;
+    int pvar = tsplit->var_num;     /* primary variable */
 
+    int nleft = 0, nright = 0;
     if (rp.numcat[pvar] > 0) {  /* categorical primary variable */
-	index = tsplit->csplit;
-	for (i = n1; i < n2; i++) {
-	    j = sorts[pvar][i];
+	int *index = tsplit->csplit;
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[pvar][i];
 	    if (j < 0)
 		someleft++;     /* missing value */
 	    else
-		switch (index[(int) xdata[pvar][j] - 1]) {
+		switch (index[(int) rp.xdata[pvar][j] - 1]) {
 		case LEFT:
-		    which[j] = leftson;
+		    rp.which[j] = leftson;
 		    nleft++;
 		    break;
 		case RIGHT:
-		    which[j] = leftson + 1;
+		    rp.which[j] = leftson + 1;
 		    nright++;
 		    break;
 		}
 	}
     } else {
-	psplit = tsplit->spoint;        /* value of split point */
-	extra = tsplit->csplit[0];
-	for (i = n1; i < n2; i++) {
-	    j = sorts[pvar][i];
+	double psplit = tsplit->spoint;        /* value of split point */
+	int extra = tsplit->csplit[0];
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[pvar][i];
 	    if (j < 0)
 		someleft++;
 	    else {
-		if (xdata[pvar][j] < psplit)
-		    k = extra;
-		else
-		    k = -extra;
+		int k = (rp.xdata[pvar][j] < psplit) ? extra : -extra;
 		if (k == LEFT) {
-		    which[j] = leftson;
+		    rp.which[j] = leftson;
 		    nleft++;
 		} else {
-		    which[j] = leftson + 1;
+		    rp.which[j] = leftson + 1;
 		    nright++;
 		}
 	    }
@@ -96,21 +74,21 @@ nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
      *   with multiple runs through the surrogate list.
      */
     if (someleft > 0 && rp.usesurrogate > 0) {
-	for (i = n1; i < n2; i++) {
-	    j = rp.sorts[pvar][i];
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[pvar][i];
 	    if (j >= 0)
 		continue;       /* already split */
 
 	    j = -(j + 1);       /* obs number - search for surrogates */
 	    for (tsplit = me->surrogate; tsplit; tsplit = tsplit->nextsplit) {
-		var = tsplit->var_num;
-		if (!R_FINITE(xdata[var][j]))
+		int var = tsplit->var_num;
+		if (!R_FINITE(rp.xdata[var][j]))
 		    continue;
 		/* surrogate not missing - process it */
 
 		if (rp.numcat[var] > 0) {       /* categorical surrogate */
-		    index = tsplit->csplit;
-		    k = (int) xdata[var][j];    /* the value of the surrogate  */
+		    int *index = tsplit->csplit;
+		    int k = (int) rp.xdata[var][j]; /* the value of the surrogate  */
 		    /*
 		     * The need for the if stmt below may not be obvious.
 		     * The surrogate's value must not be missing, AND there
@@ -124,28 +102,25 @@ nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
 		    if (index[k - 1]) {
 			tsplit->count++;
 			if (index[k - 1] == LEFT) {
-			    which[j] = leftson;
+			    rp.which[j] = leftson;
 			    nleft++;
 			} else {
-			    which[j] = leftson + 1;
+			    rp.which[j] = leftson + 1;
 			    nright++;
 			}
 			someleft--;
 			break;
 		    }
 		} else {
-		    psplit = tsplit->spoint;    /* continuous surrogate */
-		    extra = tsplit->csplit[0];
+		    double psplit = tsplit->spoint;  /* continuous surrogate */
+		    int extra = tsplit->csplit[0];
 		    tsplit->count++;
-		    if (xdata[var][j] < psplit)
-			k = extra;
-		    else
-			k = -extra;
+		    int k = (rp.xdata[var][j] < psplit) ? extra : -extra;
 		    if (k == LEFT) {
-			which[j] = leftson;
+			rp.which[j] = leftson;
 			nleft++;
 		    } else {
-			which[j] = rightson;
+			rp.which[j] = rightson;
 			nright++;
 		    }
 		    someleft--;
@@ -156,9 +131,10 @@ nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
     }
     if (someleft > 0 && rp.usesurrogate == 2) {
 	/* all surrogates missing, use the default */
-	i = me->lastsurrogate;
+	int i = me->lastsurrogate;
 	if (i) {           /* 50-50 splits are possible - there is no
 			    * "default" */
+	    int lastisleft;
 	    if (i < 0) {
 		lastisleft = leftson;
 		nleft += someleft;
@@ -167,38 +143,38 @@ nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
 		nright += someleft;
 	    }
 
-	    for (i = n1; i < n2; i++) {
-		j = sorts[pvar][i];
+	    for (int i = n1; i < n2; i++) {
+		int j = rp.sorts[pvar][i];
 		/*
 		 * only those who weren't split by the primary (j < 0) and
-		 * weren't split by a surrogate (which == nodenum) need to be
+		 * weren't split by a surrogate (rp.which == nodenum) need to be
 		 * assigned
 		 */
 		if (j < 0) {
 		    j = -(j + 1);
-		    if (which[j] == nodenum)
-			which[j] = lastisleft;
+		    if (rp.which[j] == nodenum)
+			rp.which[j] = lastisleft;
 		}
 	    }
 	}
     }
     /*
-     * Last part of the work is to update the sorts matrix
+     * Last part of the work is to update the rp.sorts matrix
      *
      * Say that n1=5, n2=12, 4 go left, 3 go right, and one obs
      *   stays home, and the data looks like this:
      *
-     *   sorts[var][5] = 17    which[17]= 17 = 2*nodenum +1 = rightson
-     *       "            4    which[4] = 16 = 2*nodenum    = leftson
+     *   sorts[var][5] = 17    rp.which[17]= 17 = 2*nodenum +1 = rightson
+     *       "            4    rp.which[4] = 16 = 2*nodenum    = leftson
      *                   21          21   16
      *                    6           6   17
      *      "		  7           7   16
      *                   30          30   17
      *                    8           8   16
-     *	sorts[var][12]=	-11    which[11] = 8 = nodenum  (X = missing)
+     *	sorts[var][12]=	-11    rp.which[11] = 8 = nodenum  (X = missing)
      *
      *  Now, every one of the rows of the sorts contains these same
-     *    elements -- 4,6,7,8,11,17,21,30 -- in some order, which
+     *    elements -- 4,6,7,8,11,17,21,30 -- in some order, rp.which
      *    represents both how they are sorted and any missings via
      *    negative numbers.
      *  We need to reorder this as {{goes left}, {goes right}, {stays
@@ -214,25 +190,23 @@ nodesplit(pNode me, int nodenum, int n1, int n2, int *nnleft, int *nnright)
      *   portion of "sorts" would remain unchanged.  It's not worth
      *   the bother of checking, however.
      */
-    for (k = 0; k < rp.nvar; k++) {
-	sindex = rp.sorts[k];   /* point to variable k */
-	i1 = n1;
-	i2 = i1 + nleft;
-	i3 = i2 + nright;
-	for (i = n1; i < n2; i++) {
-	    j = sindex[i];
+    for (int k = 0; k < rp.nvar; k++) {
+	int *sindex = rp.sorts[k];   /* point to variable k */
+	int i1 = n1,i2 = i1 + nleft, i3 = i2 + nright;
+	for (int i = n1; i < n2; i++) {
+	    int j = sindex[i];
 	    if (j < 0)
 		j = -(j + 1);
-	    if (which[j] == leftson)
+	    if (rp.which[j] == leftson)
 		sindex[i1++] = sindex[i];
 	    else {
-		if (which[j] == rightson)
+		if (rp.which[j] == rightson)
 		    rp.tempvec[i2++] = sindex[i];
 		else
 		    rp.tempvec[i3++] = sindex[i];       /* went nowhere */
 	    }
 	}
-	for (i = n1 + nleft; i < n2; i++)
+	for (int i = n1 + nleft; i < n2; i++)
 	    sindex[i] = rp.tempvec[i];
     }
 

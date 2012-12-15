@@ -23,10 +23,8 @@ graycode_init0(int maxcat)
 void
 graycode_init1(int numcat, int *count)
 {
-    int i;
-
     maxc = numcat;
-    for (i = 0; i < maxc; i++)
+    for (int i = 0; i < maxc; i++)
 	gray[i] = count[i] ? 1 : 0;
     gsave = -2;
 }
@@ -35,8 +33,6 @@ graycode_init1(int numcat, int *count)
 void
 graycode_init2(int numcat, int *count, double *val)
 {
-    int i, j, k;
-    double temp;
     maxc = numcat;
 
     /*
@@ -44,19 +40,17 @@ graycode_init2(int numcat, int *count, double *val)
      *   then order by val
      */
     gray[0] = 0;
-    if (count[0] == 0)
-	k = 1;
-    else
-	k = 0;
-    for (i = 1; i < maxc; i++) {
+    int k = (count[0] == 0) ?  1 : 0;
+    for (int i = 1; i < maxc; i++) {
 	if (count[i] == 0) {
-	    for (j = i - 1; j >= k; j--) {
+	    for (int j = i - 1; j >= k; j--) {
 		gray[j + 1] = gray[j];
 		val[j + 1] = val[j];
 	    }
 	    gray[k++] = i;
 	} else {
-	    temp = val[i];
+	    int j;
+	    double temp = val[i];
 	    for (j = i - 1; j >= k && val[j] > temp; j--) {
 		gray[j + 1] = gray[j];
 		val[j + 1] = val[j];

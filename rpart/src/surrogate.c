@@ -19,60 +19,42 @@
 void
 surrogate(pNode me, int n1, int n2)
 {
-    int i, j, k;
-    int var;                    /* the primary split variable */
-    double split;
-    double improve;
-    double lcount, rcount;      /* weight sent left and right by
-				 * primary */
-    int extra;
-    pSplit ss;
-    int *index;
-    int *tempy;
-    int **sorts;
-    double **xdata;
-    int ncat;
-    double adj_agree;
+    int var = (me->primary)->var_num;  /* the primary split variable */
 
-    tempy = rp.tempvec;
-    sorts = rp.sorts;
-    xdata = rp.xdata;
     /*
-     * First construct, in tempy, the "y" variable for this calculation.
+     * First construct, in rp.tempvec, the "y" variable for this calculation.
      * It will be LEFT:goes left, 0:missing, RIGHT:goes right.
      *  Count up the number of obs the primary sends to the left, as my
      *  last surrogate (or to the right, if larger).
      */
-    var = (me->primary)->var_num;
     if (rp.numcat[var] == 0) {  /* continuous variable */
-	split = (me->primary)->spoint;
-	extra = (me->primary)->csplit[0];
-	for (i = n1; i < n2; i++) {
-	    j = sorts[var][i];
+	double split = (me->primary)->spoint;
+	int extra = (me->primary)->csplit[0];
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[var][i];
 	    if (j < 0)
-		tempy[-(j + 1)] = 0;
+		rp.tempvec[-(j + 1)] = 0;
 	    else
-		tempy[j] = (xdata[var][j] < split) ? extra : -extra;
+		rp.tempvec[j] = (rp.xdata[var][j] < split) ? extra : -extra;
 	}
     } else {                    /* categorical variable */
-	index = (me->primary)->csplit;
-	for (i = n1; i < n2; i++) {
-	    j = sorts[var][i];
+	int *index = (me->primary)->csplit;
+	for (int i = n1; i < n2; i++) {
+	    int j = rp.sorts[var][i];
 	    if (j < 0)
-		tempy[-(j + 1)] = 0;
+		rp.tempvec[-(j + 1)] = 0;
 	    else
-		tempy[j] = index[(int) xdata[var][j] - 1];
+		rp.tempvec[j] = index[(int) rp.xdata[var][j] - 1];
 	}
     }
 
-    /* count the total number sent left and right */
-    lcount = 0;
-    rcount = 0;
-    for (i = n1; i < n2; i++) {
-	j = sorts[var][i];
+    /* weight sent left and right by primary */
+    double lcount = 0, rcount = 0;      
+    for (int i = n1; i < n2; i++) {
+	int j = rp.sorts[var][i];
 	if (j < 0)
 	    j = -(1 + j);
-	switch (tempy[j]) {
+	switch (rp.tempvec[j]) {
 	case LEFT:
 	    lcount += rp.wt[j];
 	    break;
@@ -97,19 +79,20 @@ surrogate(pNode me, int n1, int n2)
      * Now walk through the variables
      */
     me->surrogate = (pSplit) NULL;
-    for (i = 0; i < rp.nvar; i++) {
-	if (var == i)
+    for (int i = 0; i < rp.nvar; i++) {
+	if (i == var)
 	    continue;
-	ncat = rp.numcat[i];
 
-	choose_surg(n1, n2, tempy, xdata[i], sorts[i], ncat,
+	int ncat = rp.numcat[i];
+	double split, improve, adj_agree;
+	choose_surg(n1, n2, rp.tempvec, rp.xdata[i], rp.sorts[i], ncat,
 		    &improve, &split, rp.csplit, lcount, rcount, &adj_agree);
 
 	if (adj_agree <= 1e-10)    /* was 0 */
 	    continue;           /* no better than default */
 
 	/* sort it onto the list of surrogates */
-	ss = insert_split(&(me->surrogate), ncat, improve, rp.maxsur);
+	pSplit ss = insert_split(&(me->surrogate), ncat, improve, rp.maxsur);
 	if (ss) {
 	    ss->improve = improve;
 	    ss->var_num = i;
@@ -119,7 +102,7 @@ surrogate(pNode me, int n1, int n2)
 		ss->spoint = split;
 		ss->csplit[0] = rp.csplit[0];
 	    } else
-		for (k = 0; k < rp.numcat[i]; k++)
+		for (int k = 0; k < rp.numcat[i]; k++)
 		    ss->csplit[k] = rp.csplit[k];
 	}
     }

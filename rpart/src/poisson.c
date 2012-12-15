@@ -15,7 +15,6 @@ int
 poissoninit(int n, double *y[], int maxcat, char **error,
 	    double *param, int *size, int who, double *wt)
 {
-    int i;
     double event, time;
 
     /* allocate memory for scratch */
@@ -29,7 +28,7 @@ poissoninit(int n, double *y[], int maxcat, char **error,
     }
     /* check data */
     if (who == 1) {
-	for (i = 0; i < n; i++) {
+	for (int i = 0; i < n; i++) {
 	    if (y[i][0] <= 0) {
 		*error = _("Invalid time point");
 		return 1;
@@ -43,13 +42,13 @@ poissoninit(int n, double *y[], int maxcat, char **error,
     /* compute the overall hazard rate */
     event = 0;
     time = 0;
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
 	event += y[i][1] * wt[i];
 	time += y[i][0] * wt[i];
     }
 
     /*
-     * Param[0] will contain the desired CV.  If is is <=0, no shrinking
+     * Param[0] will contain the desired CV.  If it is <= 0, no shrinking
      *   is desired.  The CV determines alpha, and beta is set so that
      *   the gamma prior has the correct mean.
      */
@@ -78,11 +77,9 @@ poissoninit(int n, double *y[], int maxcat, char **error,
 double
 poissonpred(double *y, double *lambda)
 {
-    double temp, dev;
 
     if (which_pred == 1) {
-	temp = y[1];
-	dev = temp - *lambda * y[0];
+	double temp = y[1], dev = temp - *lambda * y[0];
 	if (temp > 0)
 	    dev += temp * log(*lambda * y[0] / temp);
 
@@ -92,7 +89,7 @@ poissonpred(double *y, double *lambda)
 	 * A version based on square roots, which is the variance
 	 * stabilizing transform
 	 */
-	temp = sqrt(y[1]) - sqrt(*lambda * y[0]);       /* sqrt(obs) - sqrt(exp) */
+	double temp = sqrt(y[1]) - sqrt(*lambda * y[0]); /* sqrt(obs) - sqrt(exp) */
 	return temp * temp;
     }
 }
@@ -106,20 +103,19 @@ poissonpred(double *y, double *lambda)
 void
 poissondev(int n, double **y, double *value, double *risk, double *wt)
 {
-    int i;
-    double death = 0, time = 0, lambda, dev = 0, temp;
+    double death = 0, time = 0, lambda, dev = 0;
 
     /*
      * first get the overall estimate of lambda
      */
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
 	death += y[i][1] * wt[i];
 	time += y[i][0] * wt[i];
     }
     lambda = (death + exp_alpha) / (time + exp_beta);
 
-    for (i = 0; i < n; i++) {
-	temp = y[i][1];
+    for (int i = 0; i < n; i++) {
+	double temp = y[i][1];
 	dev -= (lambda * y[i][0] - temp) * wt[i];
 	if (temp > 0)
 	    dev += (temp * log(lambda * y[i][0] / temp)) * wt[i];
@@ -147,24 +143,18 @@ poisson(int n, double **y, double *x, int nclass,
 	int edge, double *improve, double *split,
 	int *csplit, double my_risk, double *wt)
 {
-    int i, j;
     int left_n, right_n;
-    double left_time, right_time;
-    double left_d, right_d;
+    double left_time = 0., right_time = 0., left_d = 0., right_d = 0.;
     double dev;                 /* dev of the parent node (me) */
     double lambda1, lambda2;
     double best, temp;
     int direction = LEFT;
-    int where = 0;
-    int ncat;
 
     /*
      * Get the total deaths and the total time
      */
-    right_d = 0;
-    right_time = 0;
     right_n = n;
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
 	right_d += y[i][1] * wt[i];
 	right_time += y[i][0] * wt[i];
     }
@@ -185,11 +175,9 @@ poisson(int n, double **y, double *x, int nclass,
     if (nclass > 0)
 	goto categorical;
 
-    left_time = 0;
-    left_d = 0;
-    where = -1;
+    int where = -1;
     best = dev;
-    for (i = 0; i < n - edge; i++) {
+    for (int i = 0; i < n - edge; i++) {
 	left_d += y[i][1] * wt[i];
 	right_d -= y[i][1] * wt[i];
 	left_time += y[i][0] * wt[i];
@@ -219,14 +207,14 @@ poisson(int n, double **y, double *x, int nclass,
     return;
 
 categorical:;
-    for (i = 0; i < nclass; i++) {
+    for (int i = 0; i < nclass; i++) {
 	wtime[i] = 0;
 	death[i] = 0;
 	countn[i] = 0;
     }
 
-    for (i = 0; i < n; i++) {
-	j = (int) (x[i] - 1);
+    for (int i = 0; i < n; i++) {
+	int j = (int) (x[i] - 1);
 	countn[j]++;            /* number per group */
 	death[j] += y[i][1] * wt[i];
 	wtime[j] += y[i][0] * wt[i];    /* sum of time */
@@ -236,14 +224,14 @@ categorical:;
      * Rank the rates  - each is scored as the number of others that it
      * is smaller than.  Ignore the categories which had no representatives.
      */
-    ncat = 0;                   /* may be less than nclass if not all
+    int ncat = 0;               /* may be less than nclass if not all
 				 * categories are present */
-    for (i = 0; i < nclass; i++) {
+    for (int i = 0; i < nclass; i++) {
 	order[i] = 0;
 	if (countn[i] > 0) {
 	    ncat++;
 	    rate[i] = death[i] / wtime[i];
-	    for (j = i - 1; j >= 0; j--) {
+	    for (int j = i - 1; j >= 0; j--) {
 		if (countn[j] > 0) {
 		    if (rate[i] > rate[j])
 			order[j]++;
@@ -256,7 +244,7 @@ categorical:;
     /*
      * order2 will point to the largest, second largest, etc
      */
-    for (i = 0; i < nclass; i++)
+    for (int i = 0; i < nclass; i++)
 	if (countn[i] > 0)
 	    order2[order[i]] = i;
 
@@ -269,8 +257,8 @@ categorical:;
     left_time = 0;
     best = dev;
     where = 0;
-    for (i = 0; i < ncat - 1; i++) {
-	j = order2[i];
+    for (int i = 0; i < ncat - 1; i++) {
+	int j = order2[i];
 	left_n += countn[j];
 	right_n -= countn[j];
 	left_time += wtime[j];
@@ -296,6 +284,7 @@ categorical:;
     *improve = -2 * (dev - best);
 
     /* if improve = 0, csplit will never be looked at by the calling routine */
+    int i;
     for (i = 0; i < nclass; i++)
 	csplit[i] = 0;
     for (i = 0; i <= where; i++)
