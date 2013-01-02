@@ -43,12 +43,14 @@ src/avl.h
 
 Copyright (C) 1998-9, 2000 Free Software Foundation, Inc.
 Written by Ben Pfaff <blp@gnu.org> (for libAVL:
-<http://www.stanford.edu/~blp/avl/index.html>)
+then <http://www.stanford.edu/~blp/avl/index.html>, now
+<http://adtinfo.org/index.html>)
 Modified for R foreign package by Saikat DebRoy <saikat@stat.wisc.edu>.
 
 
-The following files are based on PSPP
-<http://www.stanford.edu/~blp/projects.html>
+The following files are based on an early version of PSPP
+(then <http://www.stanford.edu/~blp/projects.html>, now
+<http://benpfaff.org/projects.html>).
 
 src/file-handle.c
 src/file-handle.h

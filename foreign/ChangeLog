@@ -1,11 +1,15 @@
 2013-01-02  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* DESCRIPTION: Move copyright info to 'Copyright' field, and for
+	* DESCRIPTION: move copyright info to 'Copyright' field, and for
 	completeness arrange to install it.
+
+	* COPYRIGHTS: update links to libavl and PSPP.
+
+	* src/init.c: update test to R >= 3.0.0
 
 2012-12-14  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* DESCRIPTION: Add Biarch field
+	* DESCRIPTION: add 'Biarch' field
 
 2012-10-08  Brian Ripley <Brian.Ripley@R-project.org>
 
