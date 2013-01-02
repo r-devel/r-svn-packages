@@ -7,6 +7,14 @@
 
 	* src/init.c: update test to R >= 3.0.0
 
+	* man/read.spss.Rd: use 'max.value.labels' consistently
+
+	* R/spss.R: patch from
+	<https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=15073>
+	contributed by Peggy Overcashier.
+
+	* tests/mval_bug.{R,sav,Rout.save}: tests for above.
+
 2012-12-14  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: add 'Biarch' field
