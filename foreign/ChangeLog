@@ -1,6 +1,7 @@
 2013-01-02  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* DESCRIPTION: Move copyright info to 'Copyright' field.
+	* DESCRIPTION: Move copyright info to 'Copyright' field, and for
+	completeness arrange to install it.
 
 2012-12-14  Brian Ripley <Brian.Ripley@R-project.org>
 
