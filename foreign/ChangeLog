@@ -1,5 +1,7 @@
 2013-01-02  Brian Ripley <Brian.Ripley@R-project.org>
 
+	* DESCRIPTION: Version is 0.8-52.
+
 	* DESCRIPTION: move copyright info to 'Copyright' field, and for
 	completeness arrange to install it.
 
