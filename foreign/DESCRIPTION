@@ -18,8 +18,8 @@ Authors@R: structure(
     person("Ben", "Pfaff", role = "ctb"),
     person("Frank", "Warmerdam", role = c("ctb", "cph")),
     person("Stephen", "Weigand", role = c("ctb", "cph")),
-    person("Free Software Foundation, Inc.", role = "cph")),
-  footer = "See the COPYRIGHTS file in the sources for details on contributions and copyrights.")
+    person("Free Software Foundation, Inc.", role = "cph")))
+Copyright: see file COPYRIGHTS
 Description: Functions for reading and writing data stored by statistical
         packages such as Minitab, S, SAS, SPSS, Stata, Systat, ...,
 	and for reading and writing dBase files.
