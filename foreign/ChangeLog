@@ -5,6 +5,8 @@
 
 	* COPYRIGHTS: update links to libavl and PSPP.
 
+	* R/zzz.R: remove unused .First.lib
+
 	* src/init.c: update test to R >= 3.0.0
 
 	* man/read.spss.Rd: use 'max.value.labels' consistently
