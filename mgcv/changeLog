@@ -32,6 +32,9 @@ ISSUES:
 
 1.7-23
 
+* fixDependence related negative index failures for completely confounded 
+  terms - now fixed.
+
 * sos smooth model matrix re-scaled for better conditioning.
 
 * sos plot method could produce NaNs by a rounding error in argument to 

@@ -2041,7 +2041,7 @@ fix.family.ls<-function(fam)
 negbin <- function (theta = stop("'theta' must be specified"), link = "log") { 
 ## modified from Venables and Ripley's MASS library to work with gam.fit3,
 ## and to allow a range of `theta' values to be specified
-## single `theta' to specify fixed value; 2 theta values (first smaller that second)
+## single `theta' to specify fixed value; 2 theta values (first smaller than second)
 ## are limits within which to search for theta; otherwise supplied values make up 
 ## search set.
 ## Note: to avoid warnings, get(".Theta")[1] is used below. Otherwise the initialization

@@ -256,7 +256,7 @@ fixDependence <- function(X1,X2,tol=.Machine$double.eps^.5,rank.def=0,strict=FAL
     # deficiency.
     r0 <- r <- nrow(R)
     if (rank.def > 0 && rank.def <= nrow(R)) r0 <- r - rank.def else ## degree of rank def known
-      while (mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
+      while (r0>0 && mean(abs(R[r0:r,r0:r]))< R11*tol) r0 <- r0 -1 ## compute rank def
     r0 <- r0 + 1
     if (r0>r) return(NULL) else
     ind <- qr2$pivot[r0:r] # the columns of X2 to zero in order to get independence
@@ -424,7 +424,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
               Xpa <- augment.smX(smi,nobs,np)
               ind <- fixDependence(X1,Xpa,rank.def=length(ind)) 
             } else ind <- fixDependence(X1,sm[[i]]$Xp,rank.def=length(ind)) 
-            sm[[i]]$Xp <- sm[[i]]$Xp[,-ind]
+            sm[[i]]$Xp <- sm[[i]]$Xp[,-ind,drop=FALSE]
             attr(sm[[i]],"del.index") <- ind ## over-writes original
           }
         }
@@ -949,11 +949,12 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   if (G$nsdf>0) term.names <- colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
   n.smooth <- length(G$smooth)
   if (n.smooth)
-  for (i in 1:n.smooth)
-  { k<-1
-    for (j in G$smooth[[i]]$first.para:G$smooth[[i]]$last.para)
-    { term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
-      k<-k+1
+  for (i in 1:n.smooth) { ## create coef names, if smooth has any coefs!
+    k<-1
+    jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para
+    if (G$smooth[[i]]$df > 0) for (j in jj) {
+      term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
+      k <- k+1
     }
   }
   G$term.names <- term.names
