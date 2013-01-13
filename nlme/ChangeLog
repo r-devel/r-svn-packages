@@ -1,5 +1,7 @@
-2013-01-12  Brian Ripley
+2013-01-13  Brian Ripley
 
+	* DESCRIPTION: add accent on JCP's name (and declare UTF-8 encoding).
+	Add EISPACK authors.
 	* src/rs.f: minimal version of eigen.f containing just RS and
 	ancillaries.
 
