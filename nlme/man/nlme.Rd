@@ -126,6 +126,11 @@ nlme(model, data, fixed, random, groups, start, correlation, weights,
   \code{resid}, \code{coef}, \code{fitted}, \code{fixed.effects}, and
   \code{random.effects}  can be used to extract some of its components.
 }
+\note{
+  The function does not do any scaling internally: the optimization will
+  work best when the response is scaled so its variance is of the order
+  of one.
+}
 \references{
  The model formulation and computational methods are described in
  Lindstrom, M.J. and Bates, D.M. (1990). The variance-covariance
@@ -164,7 +169,7 @@ nlme(model, data, fixed, random, groups, start, correlation, weights,
  S-plus", 2nd Edition, Springer-Verlag.
 }
 
-\author{Jose Pinheiro and Douglas Bates \email{bates@stat.wisc.edu}}
+\author{José Pinheiro and Douglas Bates \email{bates@stat.wisc.edu}}
 \seealso{
   \code{\link{nlmeControl}}, \code{\link{nlme.nlsList}},
   \code{\link{nlmeObject}}, \code{\link{nlsList}},

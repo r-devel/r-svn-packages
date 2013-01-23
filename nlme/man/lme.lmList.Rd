@@ -108,7 +108,7 @@
 }
 
 \author{
-  Jose Pinheiro and Douglas
+  José Pinheiro and Douglas
   Bates \email{bates@stat.wisc.edu}
 }
 
