@@ -313,13 +313,10 @@ lme.formula <-
   repeat {
     oldPars <- coef(lmeSt)
     optRes <- if (controlvals$opt == "nlminb") {
-        rel.tol <- controlvals$reltol
-        if(is.null(rel.tol))  rel.tol <- 1e-10
         control <- list(iter.max = controlvals$msMaxIter,
                         eval.max = controlvals$msMaxEval,
-                        trace = controlvals$msVerbose,
-                        rel.tol = if(numIter == 0) controlvals$msTol else rel.tol)
-        keep <- c("abs.tol", "x.tol", "xf.tol", "step.min",
+                        trace = controlvals$msVerbose)
+        keep <- c("abs.tol", "rel.tol", "x.tol", "xf.tol", "step.min",
                   "step.max", "sing.tol", "scale.init", "diff.g")
         control <- c(control, controlvals[names(controlvals) %in% keep])
         nlminb(c(coef(lmeSt)), function(lmePars) -logLik(lmeSt, lmePars),
