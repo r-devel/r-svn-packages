@@ -1,6 +1,5 @@
 2013-01-23  Brian Ripley
 
-	* DESCRIPTION: version is 3.1-108 (unreleased)
 	* man/[n]lme.Rd: add a note about the need to scale the response.
 	* man/lmeControl.Rd: correct description of 'msTol' argument.
 	* man/[n]lmeControl.Rd: correct description of 'opt' argument (it is
@@ -8,13 +7,16 @@
 	* man/*.Rd: s/Jose/José/
 	* R/[n]lme.R, man/[n]lmeControl.Rd: allow '...' for further
 	control arguments to be based though to nlminb() and optim().
+	As for opt = "optim", set a looser tolerance for the first
+	iteration of lme() when opt = "nlminb" (the default) to avoid
+	spurious reports of false convergence.
 
 2013-01-13  Brian Ripley
 
 	* DESCRIPTION: add accent on JCP's first name (and declare
 	UTF-8 encoding). Add EISPACK authors.
 	* src/rs.f: minimal version of eigen.f containing just RS and
-	ancillaries.
+	ancillaries (replacing eigen.f).
 
 2013-01-12  Brian Ripley
 

@@ -25,8 +25,8 @@ lmeControl(maxIter, msMaxIter, tolerance, niterEM, msMaxEval, msTol,
    coefficients. Default is 25.}
  \item{msMaxEval}{maximum number of evaluations of the objective
    function permitted for nlminb. Default is 200. }
- \item{msTol}{tolerance for the convergence criterion the first iteration
-   when \code{opt = "optim"}. Default is 1e-7. }
+ \item{msTol}{tolerance for the convergence criterion the first
+   iteration.  Default is 1e-7. }
  \item{msScale}{scale function passed as the \code{scale} argument to
    the \code{nlm} function (see documentation on that function). Default
    is \code{lmeScale}.}
@@ -67,7 +67,7 @@ lmeControl(maxIter, msMaxIter, tolerance, niterEM, msMaxEval, msTol,
  \item{\dots}{Further named control arguments to be passed to
    \code{\link{nlminb}} (those from \code{abs.tol} down)
    or \code{\link{optim}} (those except \code{trace} and \code{maxit};
-   \code{reltol}: is used only from the second iteration) .}
+   \code{reltol}: is used only from the second iteration).}
 }
 \description{
   The values supplied in the function call replace the defaults and a
