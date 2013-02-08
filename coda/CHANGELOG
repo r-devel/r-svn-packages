@@ -1,3 +1,8 @@
+0.16-1
+- Fixed main title bug in densplot
+- Substitute spectrum0.ar for spectrum0 internally
+- densplot parameters fixed when drawing multiple plots 
+
 0.15-3
 - Correct x axis labelling in xyplot. Thanks to Pavel Krivitsky.
 
