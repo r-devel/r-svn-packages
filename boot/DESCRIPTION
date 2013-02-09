@@ -1,7 +1,7 @@
 Package: boot
 Priority: recommended
-Version: 1.3-7
-Date: 2012-10-12
+Version: 1.3-8
+Date: 2013-02-09
 Authors@R: c(person("Angelo", "Canty", role = "aut",
 	             email = "cantya@mcmaster.ca"),
              person("Brian", "Ripley", role = c("aut", "trl", "cre"),
@@ -10,8 +10,6 @@ Authors@R: c(person("Angelo", "Canty", role = "aut",
 Author: S original <http://statwww.epfl.ch/davison/BMA/library.html>
         by Angelo Canty <cantya@mcmaster.ca>.  
         R port and many enhancements by Brian Ripley <ripley@stats.ox.ac.uk>.
-        Note that maintainers are not available to give advice on using a
-        package they did not author.
 Maintainer: Brian Ripley <ripley@stats.ox.ac.uk>
 Note: Maintainers are not available to give advice on 
       using a package they did not author.
@@ -19,7 +17,7 @@ Description: functions and datasets for bootstrapping from the
   book "Bootstrap Methods and Their Applications" by A. C. Davison and 
   D. V. Hinkley (1997, CUP).
 Title: Bootstrap Functions (originally by Angelo Canty for S)
-Depends: R (>= 2.14.0), graphics, stats
+Depends: R (>= 3.0.0), graphics, stats
 Suggests: MASS, survival
 LazyData: yes
 ByteCompile: yes
