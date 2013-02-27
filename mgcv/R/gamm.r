@@ -1242,6 +1242,7 @@ formXtViX <- function(V,X)
   }
   qrz <- qr(Z,LAPACK=TRUE)
   R <- qr.R(qrz);R[,qrz$pivot] <- R
+  colnames(R) <- colnames(X)
   #res <- crossprod(R)
   #res
   R

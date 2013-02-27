@@ -32,6 +32,8 @@ ISSUES:
 
 1.7-23
 
+* formXtViX documentation fixed + return matrix labels.
+
 * fixDependence related negative index failures for completely confounded 
   terms - now fixed.
 
