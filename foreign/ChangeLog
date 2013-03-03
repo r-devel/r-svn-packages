@@ -1,3 +1,7 @@
+2013-03-03  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* inst/LICENCE: remove old file (LICENCE gets installed).
+
 2013-01-02  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-52.
