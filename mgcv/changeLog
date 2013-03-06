@@ -3,6 +3,13 @@
 
 ISSUES:
 
+* each element of a "names" attribute has at least 96 bytes of storage.
+  This can make the storage of "hat", "fitted.values" and "linear.predictors" 
+  collosal. Can they just be stripped out? (when and why are they put on?)
+  Also, if smooth p-values used the R trick used for random effect testing 
+  then could model frame's use within predict be replaced with something 
+  less memory intensive. 
+
 * bam - allow a blocking covariate for AR1? ARp?
 
 * warn about, or at least report, rank deficiency?
