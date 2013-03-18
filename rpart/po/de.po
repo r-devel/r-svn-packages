@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R-2.15.2 / rpart 3.1-55\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-11-29 14:21+0000\n"
+"POT-Creation-Date: 2013-03-18 09:48+0000\n"
 "PO-Revision-Date: 2012-10-10 22:21+0200\n"
 "Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
 "Language-Team: German <debian-l10n-german@lists.debian.org>\n"
@@ -17,24 +17,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: poisson.c:34
+#: poisson.c:33
 msgid "Invalid time point"
 msgstr "ungültiger Zeitpunkt"
 
-#: poisson.c:38
+#: poisson.c:37
 msgid "Invalid event count"
 msgstr "ungültige Ereignisanzahl"
 
-#: poisson.c:68
+#: poisson.c:67
 msgid "Invalid error rule"
 msgstr ""
 
-#: rpart.c:91 xpred.c:89
+#: rpart.c:78 xpred.c:67
 #, fuzzy
 msgid "Invalid value for 'method'"
 msgstr "ungültiger Wert für 'method'"
 
-#: rpart.c:193
+#: rpart.c:180
 msgid "unknown error"
 msgstr ""
 
