@@ -7,9 +7,9 @@
 
 static int numclass;
 static double *left,            /* left branch n (weighted) */
-    *right, **ccnt;
+ *right, **ccnt;
 static double *prior, *aprior,  /* altered priors */
-    *freq, *loss;               /* loss matrix */
+ *freq, *loss;                  /* loss matrix */
 static int *tsplit, *countn;
 static double *awt, *rate;
 static double (*impurity) ();
@@ -30,12 +30,13 @@ int
 giniinit(int n, double **y, int maxcat, char **error,
 	 double *parm, int *size, int who, double *wt)
 {
+    int i, j, k;
     double temp;
 
-   /* allocate memory and set up losses */
+   /* allocate memory  and setup losses */
     if (who == 1) {
 	numclass = 0;           /* number of classes */
-	for (int i = 0; i < n; i++)
+	for (i = 0; i < n; i++)
 	    if (*y[i] > numclass)
 		numclass = (int) *y[i];
 
@@ -57,38 +58,38 @@ giniinit(int n, double **y, int maxcat, char **error,
 	    graycode_init0(maxcat);
 	    ccnt = (double **) ALLOC(numclass, sizeof(double *));
 	    ccnt[0] = (double *) ALLOC(numclass * maxcat, sizeof(double));
-	    for (int i = 1; i < numclass; i++)
+	    for (i = 1; i < numclass; i++)
 		ccnt[i] = ccnt[i - 1] + maxcat;
 	}
-	prior = (double *) ALLOC(3 * numclass + numclass * numclass,
-				 sizeof(double));
+	i = 3 * numclass + numclass * numclass;
+	prior = (double *) ALLOC(i, sizeof(double));
 	aprior = prior + numclass;
 	freq = aprior + numclass;
 	loss = freq + numclass;
 
-	for (int i = 0; i < numclass; i++)
+	for (i = 0; i < numclass; i++)
 	    freq[i] = 0;
 	temp = 0;
-	for (int i = 0; i < n; i++) {
-	    int j = (int) *y[i] - 1;
+	for (i = 0; i < n; i++) {
+	    j = (int) *y[i] - 1;
 	    freq[j] += wt[i];
 	    temp += wt[i];      /* sum total of weights */
 	}
-	for (int i = 0; i < numclass; i++)
+	for (i = 0; i < numclass; i++)
 	    freq[i] /= temp;    /* relative frequency */
 
 	temp = 0;
-	for (int i = 0; i < numclass; i++) {
+	for (i = 0; i < numclass; i++) {
 	    prior[i] = parm[i];
 	    aprior[i] = 0;
-	    for (int j = 0; j < numclass; j++) {
-		int k = numclass * j + i;
+	    for (j = 0; j < numclass; j++) {
+		k = numclass * j + i;
 		loss[k] = parm[numclass + k];
 		temp += loss[k] * prior[i];
 		aprior[i] += loss[k] * prior[i];
 	    }
 	}
-	for (int i = 0; i < numclass; i++) {
+	for (i = 0; i < numclass; i++) {
 	    if (freq[i] > 0) {  /* watch out for a missing class */
 		prior[i] /= freq[i];
 		aprior[i] /= (temp * freq[i]);  /* pi_i / n_i */
@@ -106,28 +107,31 @@ giniinit(int n, double **y, int maxcat, char **error,
 void
 ginidev(int n, double **y, double *value, double *risk, double *wt)
 {
+    int i, j, max = 0;
+    double temp, dev = 0;
+    double prob;
+
    /*
     * count up number in each class,
     *   and P(T), the probability of reaching this branch of the tree
     */
-    for (int i = 0; i < numclass; i++)
+    for (i = 0; i < numclass; i++)
 	freq[i] = 0;
-    double prob = 0;     /* this is actually P(T)*n; R code will fix it up */
-
-    for (int i = 0; i < n; i++) {
-	int j = (int) y[i][0] - 1;
+    temp = 0;
+    for (i = 0; i < n; i++) {
+	j = (int) y[i][0] - 1;
 	freq[j] += wt[i];
-	prob += wt[i] * prior[j];
+	temp += wt[i] * prior[j];
     }
+    prob = temp;                /* this is actually P(T)*n; R code will fix
+				 * it up */
 
    /*
     * Now compute best class and its error
     */
-    int max = 0;
-    double dev = 0;
-    for (int i = 0; i < numclass; i++) { /* assume class i was the prediction */
-	double temp = 0;
-	for (int j = 0; j < numclass; j++)
+    for (i = 0; i < numclass; i++) {    /* assume class i were the prediction */
+	temp = 0;
+	for (j = 0; j < numclass; j++)
 	    temp += freq[j] * loss[i * numclass + j] * prior[j];
 	if (i == 0 || temp < dev) {
 	    max = i;
@@ -136,7 +140,7 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
     }
 
     value[0] = max + 1;         /* remember: external groups start at 1 */
-    for (int i = 0; i < numclass; i++)
+    for (i = 0; i < numclass; i++)
 	value[i + 1] = freq[i];
     value[numclass + 1] = prob;
     *risk = dev;
@@ -149,8 +153,12 @@ ginidev(int n, double **y, double *value, double *risk, double *wt)
 double
 ginipred(double *y, double *pred)
 {
-    int i = (int) y[0] - 1, j = (int) *pred - 1;
-    return prior[i] * loss[i * numclass + j];
+    int i, j;
+    double temp;
+    i = (int) y[0] - 1;
+    j = (int) *pred - 1;
+    temp = prior[i] * loss[i * numclass + j];
+    return temp;
 }
 
 
@@ -164,24 +172,30 @@ gini(int n, double *y[], double *x, int numcat,
      int edge, double *improve, double *split, int *csplit, double my_risk,
      double *wt)
 {
+    int i, j, k;
+    double lwt, rwt;
+    int rtot, ltot;
     int direction = LEFT, where = 0;
-    double total_ss, best, p;
+    double total_ss, best, temp, p;
+    double lmean, rmean;        /* used to decide direction */
 
-    for (int i = 0; i < numclass; i++) {
+    for (i = 0; i < numclass; i++) {
 	left[i] = 0;
 	right[i] = 0;
     }
-    double lwt = 0., rwt = 0.;
-    int ltot = 0, rtot = 0;
-    for (int i = 0; i < n; i++) {
-	int j = (int) *y[i] - 1;
+    lwt = 0;
+    rwt = 0;
+    rtot = 0;
+    ltot = 0;
+    for (i = 0; i < n; i++) {
+	j = (int) *y[i] - 1;
 	rwt += aprior[j] * wt[i];  /* altered weight = prior * case_weight */
 	right[j] += wt[i];
 	rtot++;
     }
     total_ss = 0;
-    for (int i = 0; i < numclass; i++) {
-	double temp = aprior[i] * right[i] / rwt; /* p(class=i, given node A) */
+    for (i = 0; i < numclass; i++) {
+	temp = aprior[i] * right[i] / rwt;      /* p(class=i, given node A) */
 	total_ss += rwt * (*impurity) (temp);   /* p(A) * I(A) */
     }
     best = total_ss;  /* total weight of right * impurity of right + 0 *0 */
@@ -192,8 +206,8 @@ gini(int n, double *y[], double *x, int numcat,
     if (numcat > 0)
 	goto categorical;
 
-    for (int i = 0; rtot > edge; i++) {
-	int j = (int) *y[i] - 1;
+    for (i = 0; rtot > edge; i++) {
+	j = (int) *y[i] - 1;
 	rwt -= aprior[j] * wt[i];
 	lwt += aprior[j] * wt[i];
 	rtot--;
@@ -202,7 +216,9 @@ gini(int n, double *y[], double *x, int numcat,
 	left[j] += wt[i];
 
 	if (x[i + 1] != x[i] && (ltot >= edge)) {
-	    double temp = 0., lmean = 0., rmean = 0.;
+	    temp = 0;
+	    lmean = 0;
+	    rmean = 0;
 	    for (j = 0; j < numclass; j++) {
 		p = aprior[j] * left[j] / lwt;  /* p(j | left) */
 		temp += lwt * (*impurity) (p);  /* p(left) * I(left) */
@@ -231,20 +247,21 @@ categorical:;
      * First collapse the data into a numclass x numcat array
      *  ccnt[i][j] = number of class i obs, category j of the predictor
      */
-    for (int j = 0; j < numcat; j++) {
+    for (j = 0; j < numcat; j++) {
 	awt[j] = 0;
 	countn[j] = 0;
-	for (int i = 0; i < numclass; i++)
+	for (i = 0; i < numclass; i++)
 	    ccnt[i][j] = 0;
     }
-    for (int i = 0; i < n; i++) {
-	int j = (int) *y[i] - 1, k = (int) x[i] - 1;
+    for (i = 0; i < n; i++) {
+	j = (int) *y[i] - 1;
+	k = (int) x[i] - 1;
 	awt[k] += aprior[j] * wt[i];
 	countn[k]++;
 	ccnt[j][k] += wt[i];
     }
 
-    for (int i = 0; i < numcat; i++) {
+    for (i = 0; i < numcat; i++) {
 	if (awt[i] == 0)
 	    tsplit[i] = 0;
 	else {
@@ -258,7 +275,6 @@ categorical:;
     else
 	graycode_init1(numcat, countn);
 
-    int i;
     while ((i = graycode()) < numcat) {
        /* item i changes groups */
 	if (tsplit[i] == LEFT) {
@@ -267,7 +283,7 @@ categorical:;
 	    lwt -= awt[i];
 	    rtot += countn[i];
 	    ltot -= countn[i];
-	    for (int j = 0; j < numclass; j++) {
+	    for (j = 0; j < numclass; j++) {
 		right[j] += ccnt[j][i];
 		left[j] -= ccnt[j][i];
 	    }
@@ -277,15 +293,17 @@ categorical:;
 	    lwt += awt[i];
 	    rtot -= countn[i];
 	    ltot += countn[i];
-	    for (int j = 0; j < numclass; j++) {
+	    for (j = 0; j < numclass; j++) {
 		right[j] -= ccnt[j][i];
 		left[j] += ccnt[j][i];
 	    }
 	}
 
 	if (ltot >= edge && rtot >= edge) {
-	    double temp = 0., lmean = 0., rmean = 0.;
-	    for (int j = 0; j < numclass; j++) {
+	    temp = 0;
+	    lmean = 0;
+	    rmean = 0;
+	    for (j = 0; j < numclass; j++) {
 		p = aprior[j] * left[j] / lwt;
 		temp += lwt * (*impurity) (p);
 		lmean += p * j;
@@ -296,9 +314,9 @@ categorical:;
 	    if (temp < best) {
 		best = temp;
 		if (lmean < rmean)
-		    for (int j = 0; j < numcat; j++) csplit[j] = tsplit[j];
+		    for (j = 0; j < numcat; j++) csplit[j] = tsplit[j];
 		else
-		    for (int j = 0; j < numcat; j++) csplit[j] = -tsplit[j];
+		    for (j = 0; j < numcat; j++) csplit[j] = -tsplit[j];
 	    }
 	}
     }

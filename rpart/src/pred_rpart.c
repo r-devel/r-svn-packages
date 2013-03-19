@@ -32,35 +32,38 @@ pred_rpart0(const int *dimx, int nnode, int nsplit, const int *dimc,
 	    const double *split2, const int *csplit2, const int *usesur,
 	    const double *xdata2, const int *xmiss2, int *where)
 {
+    int i, j;
+    int n;
     int ncat;
     int node, nspl, var, dir;
+    int lcount, rcount;
+    int npos;
+    double temp;
     const int *nodes[4];
     const double *split[4];
     const int **csplit = NULL, **xmiss;
     const double **xdata;
 
-    int n = dimx[0];
-    for (int i = 0; i < 4; i++) {
+    n = dimx[0];
+    for (i = 0; i < 4; i++) {
 	nodes[i] = &(nodes2[nnode * i]);
 	split[i] = &(split2[nsplit * i]);
     }
 
     if (dimc[1] > 0) {
 	csplit = (const int **) ALLOC((int) dimc[1], sizeof(int *));
-	for (int i = 0; i < dimc[1]; i++)
+	for (i = 0; i < dimc[1]; i++)
 	    csplit[i] = &(csplit2[i * dimc[0]]);
     }
     xmiss = (const int **) ALLOC((int) dimx[1], sizeof(int *));
     xdata = (const double **) ALLOC((int) dimx[1], sizeof(double *));
-    for (int i = 0; i < dimx[1]; i++) {
+    for (i = 0; i < dimx[1]; i++) {
 	xmiss[i] = &(xmiss2[i * dimx[0]]);
 	xdata[i] = &(xdata2[i * dimx[0]]);
     }
 
-    for (int i = 0; i < n; i++) {
-	int npos;
+    for (i = 0; i < n; i++) {
 	node = 1;               /* current node of the tree */
-// FIXME replace by repeat{}
 next:
 	for (npos = 0; nnum[npos] != node; npos++);  /* position of the node */
        /* walk down the tree */
@@ -69,7 +72,7 @@ next:
 	    var = vnum[nspl] - 1;
 	    if (xmiss[var][i] == 0) {   /* primary var not missing */
 		ncat = (int) split[1][nspl];
-		double temp = split[3][nspl];
+		temp = split[3][nspl];
 		if (ncat >= 2)
 		    dir = csplit[(int) xdata[var][i] - 1][(int) temp - 1];
 		else if (xdata[var][i] < temp)
@@ -77,17 +80,20 @@ next:
 		else
 		    dir = -ncat;
 		if (dir) {
-		    node = (dir == -1) ? 2 * node : 2 * node + 1;
+		    if (dir == -1)
+			node = 2 * node;
+		    else
+			node = 2 * node + 1;
 		    goto next;
 		}
 	    }
 	    if (*usesur > 0) {
-		for (int j = 0; j < nodes[2][npos]; j++) {
+		for (j = 0; j < nodes[2][npos]; j++) {
 		    nspl = nodes[1][npos] + nodes[3][npos] + j;
 		    var = vnum[nspl] - 1;
 		    if (xmiss[var][i] == 0) {   /* surrogate not missing */
 			ncat = (int) split[1][nspl];
-			double temp = split[3][nspl];
+			temp = split[3][nspl];
 			if (ncat >= 2)
 			    dir = csplit[(int)xdata[var][i] - 1][(int)temp - 1];
 			else if (xdata[var][i] < temp)
@@ -95,20 +101,25 @@ next:
 			else
 			    dir = -ncat;
 			if (dir) {
-			    node = (dir == -1) ? 2 * node : 2 * node + 1;
+			    if (dir == -1)
+				node = 2 * node;
+			    else
+				node = 2 * node + 1;
 			    goto next;
 			}
 		    }
 		}
 	    }
 	    if (*usesur > 1) {  /* go with the majority */
-		int j;
 		for (j = 0; nnum[j] != (2 * node); j++);
-		int lcount = nodes[0][j];
+		lcount = nodes[0][j];
 		for (j = 0; nnum[j] != (1 + 2 * node); j++);
-		int rcount = nodes[0][j];
+		rcount = nodes[0][j];
 		if (lcount != rcount) {
-		    node = (lcount > rcount) ? 2 * node : 2 * node + 1;
+		    if (lcount > rcount)
+			node = 2 * node;
+		    else
+			node = 2 * node + 1;
 		    goto next;
 		}
 	    }

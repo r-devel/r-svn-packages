@@ -37,43 +37,55 @@ void
 xval(int n_xval, CpTable cptable_head, int *x_grp,
      int maxcat, char **errmsg, double *parms, int *savesort)
 {
-    int k = 0;
+    int i, j, k, ii, jj;
+    int last;
+    int xgroup;
+    double *xtemp, *xpred;
+    int *savew;
+    double *cp;
+    double alphasave;
+    pNode xtree;
     CpTable cplist;
-    double old_wt, total_wt, alphasave = rp.alpha;
+    double temp;
+    double old_wt, total_wt;
 
-    double xtemp[rp.num_unique_cp], 
-	xpred[rp.num_unique_cp],
-	cp[rp.num_unique_cp];
-    int savew[rp.n];
-    memcpy(savew, rp.which, sizeof(savew));
+    alphasave = rp.alpha;
+
+   /*
+    * Allocate a set of temporary arrays
+    */
+    xtemp = (double *) CALLOC(3 * rp.num_unique_cp, sizeof(double));
+    xpred = xtemp + rp.num_unique_cp;
+    cp = xpred + rp.num_unique_cp;
+    savew = (int *) CALLOC(rp.n, sizeof(int));
+    for (i = 0; i < rp.n; i++)
+	savew[i] = rp.which[i]; /* restore at the end */
 
    /*
     * Make the list of CPs that I will compare against
     */
     cp[0] = 10 * cptable_head->cp;      /* close enough to infinity */
-    cplist = cptable_head;
-    for (int i = 1; i < rp.num_unique_cp; cplist = cplist->forward, i++)
+    for (cplist = cptable_head, i = 1; i < rp.num_unique_cp;
+	 cplist = cplist->forward, i++)
 	cp[i] = sqrt(cplist->cp * (cplist->forward)->cp);
     total_wt = 0;
-    for (int i = 0; i < rp.n; i++)
+    for (i = 0; i < rp.n; i++)
 	total_wt += rp.wt[i];
     old_wt = total_wt;
-
-    /* allocate root node once */
-    pNode xtree = (pNode) ALLOC(1, nodesize);
 
    /*
     * do the validations
     */
-    for (int xgroup = 0; xgroup < n_xval; xgroup++) {
+    k = 0;                      /* -Wall */
+    for (xgroup = 0; xgroup < n_xval; xgroup++) {
        /*
 	* restore rp.sorts, with the data for this run at the top
 	* this requires one pass per variable
 	*/
-	for (int j = 0; j < rp.nvar; j++) {
+	for (j = 0; j < rp.nvar; j++) {
 	    k = 0;
-	    for (int i = 0; i < rp.n; i++) {
-		int ii = savesort[j * rp.n + i];
+	    for (i = 0; i < rp.n; i++) {
+		ii = savesort[j * rp.n + i];
 		if (ii < 0)
 		    ii = -(1 + ii);     /* missings move too */
 		if (x_grp[ii] != xgroup + 1) {
@@ -91,10 +103,10 @@ xval(int n_xval, CpTable cptable_head, int *x_grp,
 	*  Fix up the y vector, and save a list of "left out" obs *   in
 	* the tail, unused end of rp.sorts[0][i];
 	*/
-	int last = k;
+	last = k;
 	k = 0;
-	double temp = 0;
-	for (int i = 0; i < rp.n; i++) {
+	temp = 0;
+	for (i = 0; i < rp.n; i++) {
 	    rp.which[i] = 1;    /* everyone starts in group 1 */
 	    if (x_grp[i] == xgroup + 1) {
 		rp.sorts[0][last] = i;
@@ -109,7 +121,7 @@ xval(int n_xval, CpTable cptable_head, int *x_grp,
 
        /* at this point k = #obs in the xval group */
        /* rescale the cp */
-	for (int j = 0; j < rp.num_unique_cp; j++)
+	for (j = 0; j < rp.num_unique_cp; j++)
 	    cp[j] *= temp / old_wt;
 	rp.alpha *= temp / old_wt;
 	old_wt = temp;
@@ -118,10 +130,9 @@ xval(int n_xval, CpTable cptable_head, int *x_grp,
        /*
 	* partition the new tree
 	*/
-	memset(xtree, 0, nodesize);
+	xtree = (pNode) CALLOC(1, nodesize);
 	xtree->num_obs = k;
-	int size;
-	(*rp_init) (k, rp.ytemp, maxcat, errmsg, parms, &size, 2, rp.wtemp);
+	(*rp_init) (k, rp.ytemp, maxcat, errmsg, parms, &temp, 2, rp.wtemp);
 	(*rp_eval) (k, rp.ytemp, xtree->response_est, &(xtree->risk), rp.wtemp);
 	xtree->complexity = xtree->risk;
 	partition(1, xtree, &temp, 0, k);
@@ -130,16 +141,18 @@ xval(int n_xval, CpTable cptable_head, int *x_grp,
        /*
 	* run the extra data down the new tree
 	*/
-	for (int i = k; i < rp.n; i++) {
-	    int j = rp.sorts[0][i];
+	for (i = k; i < rp.n; i++) {
+	    j = rp.sorts[0][i];
 	    rundown(xtree, j, cp, xpred, xtemp);
 #if DEBUG > 1
-	    if (debug > 1)
-		Rprintf("\nObs %d, y=%f \n", j + 1, rp.ydata[j][0]);
+	    if (debug > 1) {
+		jj = j + 1;
+		Rprintf("\nObs %d, y=%f \n", jj, rp.ydata[j][0]);
+	    }
 #endif
 	   /* add it in to the risk */
 	    cplist = cptable_head;
-	    for (int jj = 0; jj < rp.num_unique_cp; jj++) {
+	    for (jj = 0; jj < rp.num_unique_cp; jj++) {
 		cplist->xrisk += xtemp[jj] * rp.wt[j];
 		cplist->xstd += xtemp[jj] * xtemp[jj] * rp.wt[j];
 #if DEBUG > 1
@@ -150,7 +163,7 @@ xval(int n_xval, CpTable cptable_head, int *x_grp,
 		cplist = cplist->forward;
 	    }
 	}
-	free_tree(xtree, 0);
+	free_tree(xtree, 1);    // Calloc-ed
 	R_CheckUserInterrupt();
     }
 
@@ -159,5 +172,8 @@ xval(int n_xval, CpTable cptable_head, int *x_grp,
 			    cplist->xrisk * cplist->xrisk / total_wt);
     }
     rp.alpha = alphasave;
-    memcpy(rp.which, savew, sizeof(savew));
+    for (i = 0; i < rp.n; i++)
+	rp.which[i] = savew[i];
+    Free(savew);
+    Free(xtemp);
 }
