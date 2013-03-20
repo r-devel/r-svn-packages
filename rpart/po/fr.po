@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-24\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-18 09:48+0000\n"
+"POT-Creation-Date: 2013-03-20 07:25+0000\n"
 "PO-Revision-Date: 2005-12-07 02:43+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: French <R-core@r-project.org>\n"
@@ -17,24 +17,24 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: poisson.c:33
+#: poisson.c:34
 msgid "Invalid time point"
 msgstr "Point temporel incorrect"
 
-#: poisson.c:37
+#: poisson.c:38
 msgid "Invalid event count"
 msgstr "Dénombrement d'événements incorrect"
 
-#: poisson.c:67
+#: poisson.c:68
 msgid "Invalid error rule"
 msgstr ""
 
-#: rpart.c:78 xpred.c:67
+#: rpart.c:91 xpred.c:89
 #, fuzzy
 msgid "Invalid value for 'method'"
 msgstr "valeur incorrecte pour 'method'"
 
-#: rpart.c:180
+#: rpart.c:193
 msgid "unknown error"
 msgstr ""
 

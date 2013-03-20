@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 3.1-53\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-18 09:48+0000\n"
+"POT-Creation-Date: 2013-03-20 07:25+0000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -17,28 +17,28 @@ msgstr ""
 
 # Recommended/rpart/src/poisson.c: 41
 #  _("Invalid time point")
-#: poisson.c:33
+#: poisson.c:34
 msgid "Invalid time point"
 msgstr "Niepoprawny punkt czasowy"
 
 # Recommended/rpart/src/poisson.c: 45
 #  _("Invalid event count")
-#: poisson.c:37
+#: poisson.c:38
 msgid "Invalid event count"
 msgstr "błędne zliczenia zdarzenia"
 
-#: poisson.c:67
+#: poisson.c:68
 msgid "Invalid error rule"
 msgstr ""
 
 # Recommended/rpart/src/s_xpred.c: 38
 #  _("invalid value for 'method'")
-#: rpart.c:78 xpred.c:67
+#: rpart.c:91 xpred.c:89
 #, fuzzy
 msgid "Invalid value for 'method'"
 msgstr "niepoprawna wartość dla 'method'"
 
-#: rpart.c:180
+#: rpart.c:193
 msgid "unknown error"
 msgstr ""
 

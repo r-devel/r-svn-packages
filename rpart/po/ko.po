@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: rpart 4.1-0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2013-03-18 09:48+0000\n"
+"POT-Creation-Date: 2013-03-20 07:25+0000\n"
 "PO-Revision-Date: 2013-03-11 13:53-0600\n"
 "Last-Translator: Chel Hee Lee <gnustats@gmail.com>\n"
 "Language-Team: R Development Translation Teams (Korean) <gnustats@korea.gnu."
@@ -25,23 +25,23 @@ msgstr ""
 "X-Poedit-Country: KOREA, REPUBLIC OF\n"
 "X-Poedit-SourceCharset: utf-8\n"
 
-#: poisson.c:33
+#: poisson.c:34
 msgid "Invalid time point"
 msgstr "유효하지 않은 타임 포인트입니다"
 
-#: poisson.c:37
+#: poisson.c:38
 msgid "Invalid event count"
 msgstr "유효하지 않은 이벤트 카운트입니다"
 
-#: poisson.c:67
+#: poisson.c:68
 msgid "Invalid error rule"
 msgstr "유효하지 않은 error rule입니다"
 
-#: rpart.c:78 xpred.c:67
+#: rpart.c:91 xpred.c:89
 msgid "Invalid value for 'method'"
 msgstr "'method'에 유효하지 않은 값입니다"
 
-#: rpart.c:180
+#: rpart.c:193
 msgid "unknown error"
 msgstr "알 수 없는 에러입니다"
 
