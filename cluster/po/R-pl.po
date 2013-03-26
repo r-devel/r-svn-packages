@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cluster 1.14.2\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2012-08-21 22:49\n"
+"POT-Creation-Date: 2013-03-26 19:09\n"
 "PO-Revision-Date: 2012-08-21 11:03+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -375,34 +375,40 @@ msgstr "'x' musi być macierzą lub ramką danych."
 
 # Recommended/cluster/R/mona.q: 10
 # stop("All variables must be binary (factor with 2 levels).")
-msgid "All variables must be binary (factor with 2 levels)."
+#, fuzzy
+msgid "All variables must be binary (e.g., factor with 2 levels)."
 msgstr "Wszystkie zmienne muszą być binarne (czynnik z dwoma poziomami)"
 
-# Recommended/cluster/R/agnes.q: 10
-# stop("ambiguous clustering method")
-#, fuzzy
-msgid "No clustering performed,"
-msgstr "niejednoznaczna metoda grupowania"
-
 # Recommended/cluster/R/mona.q: 41
-# stop(ch,"an object was found with all values missing.")
-msgid "an object was found with all values missing."
-msgstr "znaleziono obiekt któremu brakowało wszystkich wartości."
+# stop("No clustering performed, an object was found with all values missing.")
+msgid "No clustering performed, an object was found with all values missing."
+msgstr ""
+"Nie wykonano grupowania, znaleziono obiekt któremu brakowało wszystkich "
+"wartości."
 
 # Recommended/cluster/R/mona.q: 43
-# stop(ch,"a variable was found with at least 50% missing values.")
-msgid "a variable was found with at least 50% missing values."
-msgstr "znaleziono zmienną z co najmniej 50% brakujących wartości."
+# stop("No clustering performed, found variable with more than half values missing.")
+msgid ""
+"No clustering performed, found variable with more than half values missing."
+msgstr ""
+"Nie wykonano grupowania, znaleziono zmienną z co najmniej 50 .pct. "
+"brakujących wartości."
 
 # Recommended/cluster/R/mona.q: 45
-# stop(ch,"a variable was found with all non missing values identical.")
-msgid "a variable was found with all non missing values identical."
-msgstr "znaleziono zmienną z identycznymi niebrakującymi wartościami."
+# stop("No clustering performed, a variable was found with all non missing values identical")
+msgid ""
+"No clustering performed, a variable was found with all non missing values "
+"identical."
+msgstr ""
+"Nie wykonano grupowania, znaleziono zmienną z identycznymi niebrakującymi "
+"wartościami."
 
 # Recommended/cluster/R/mona.q: 47
-# stop(ch,"all variables have at least one missing value.")
-msgid "all variables have at least one missing value."
-msgstr "wszystkie zmienne mają co najmniej jedną brakującą wartość."
+# stop("No clustering performed, all variables have at least one missing value.")
+msgid "No clustering performed, all variables have at least one missing value."
+msgstr ""
+"Nie wykonano grupowania, wszystkie zmienne mają co najmniej jedną brakującą "
+"wartość."
 
 # Recommended/cluster/R/pam.q: 55
 # stop("Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2")
@@ -589,6 +595,20 @@ msgid_plural "setting 'logical' variables %s to type 'asymm'"
 msgstr[0] "ustawianie zmiennej 'logical'"
 msgstr[1] "ustawianie zmiennej 'logical'"
 msgstr[2] "ustawianie zmiennej 'logical'"
+
+# Recommended/cluster/R/mona.q: 43
+# stop(ch,"a variable was found with at least 50% missing values.")
+#, fuzzy
+#~ msgid ""
+#~ "No clustering performed, a variable was found with at least 50% missing "
+#~ "values."
+#~ msgstr "znaleziono zmienną z co najmniej 50% brakujących wartości."
+
+# Recommended/cluster/R/agnes.q: 10
+# stop("ambiguous clustering method")
+#, fuzzy
+#~ msgid "No clustering performed,"
+#~ msgstr "niejednoznaczna metoda grupowania"
 
 # Recommended/cluster/R/clara.q: 91
 # stop(ngettext(nNA,
