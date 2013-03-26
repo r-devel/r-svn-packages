@@ -1,6 +1,6 @@
 
-R version 2.15.1 Patched (2012-10-12 r60924) -- "Roasted Marshmallows"
-Copyright (C) 2012 The R Foundation for Statistical Computing
+R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -26,7 +26,7 @@ Type 'q()' to quit R.
 > if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
 Warning message:
 In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
-  Buggy version of Kinderman-Ramage generator used
+  buggy version of Kinderman-Ramage generator used
 > set.seed(521)
 > x <- rbind(cbind(rnorm(7*N, 0,8), rnorm(7*N, 0,8)),
 +            cbind(rnorm(8*N,50,8), rnorm(8*N,10,8)))
@@ -112,7 +112,7 @@ Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  8.54 0.004 8.568 0 0 
+Time elapsed:  13.134 0.009 13.193 0 0 
 > ## nb-mm, with cluster 1.6-4 :  85.2 (elapsed 91.7)
 > 
 > ###-- Larger example: 20*N objects, divided into 5 clusters.
@@ -193,10 +193,10 @@ Available components:
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > ## Last Line:
 > cat("Time elapsed: ", proc.time() - .proctime00,"\n")
-Time elapsed:  8.237 0.012 8.271 0 0 
+Time elapsed:  13.98 0.014 14.048 0 0 
 > ## nb-mm, with cluster 1.6-4 : 74.4 (elapsed 88.2)
 > ## ~~~~~  1.7-* quite faster : 67.6 (elapsed 68.7)
 > 
 > proc.time()
    user  system elapsed 
- 17.173   0.056  17.269 
+  27.72    0.07   27.97 

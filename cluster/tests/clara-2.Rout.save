@@ -1,6 +1,6 @@
 
-R version 2.15.1 Patched (2012-10-12 r60924) -- "Roasted Marshmallows"
-Copyright (C) 2012 The R Foundation for Statistical Computing
+R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -22,7 +22,7 @@ Type 'q()' to quit R.
 > if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
 Warning message:
 In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
-  Buggy version of Kinderman-Ramage generator used
+  buggy version of Kinderman-Ramage generator used
 > set.seed(264)
 > x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
 +            cbind(rnorm(800,50,8), rnorm(800,10,8)))
@@ -1601,8 +1601,8 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  2.868 0.024 2.9 0 0 
+Time elapsed:  4.527 0.016 4.593 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  3.036   0.048   3.087 
+  4.784   0.061   4.964 

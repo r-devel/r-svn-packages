@@ -1,8 +1,8 @@
 
-R version 2.14.1 RC (2011-12-20 r57943)
-Copyright (C) 2011 The R Foundation for Statistical Computing
+R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
-Platform: i686-pc-linux-gnu (32-bit)
+Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,14 +17,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > .libPaths() # show full library tree {also as check of R CMD check!}
-[1] "/tmp/cluster.Rcheck"                                    
-[2] "/sfs/u/staff/maechler/R/BioCore/library"                
-[3] "/sfs/u/staff/maechler/R/Exp-library/Linux"              
-[4] "/sfs/u/staff/sfs/R/library/Linux"                       
-[5] "/sfs/u/staff/maechler/R/library/Linux-MM-only"          
-[6] "/sfs/u/staff/maechler/R/library/Linux"                  
-[7] "/sfs/s/linux/9/app/R/R_local/library"                   
-[8] "/sfs/u/staff/maechler/R/D/r-patched/F15-32-inst/library"
+[1] "/tmp/Rtmpbau9Hq/RLIBS_4dac77b45b0c"                 
+[2] "/sfs/u/maechler/R/D/r-pre-rel/64-linux-inst/library"
 > library(cluster)
 > 
 > ####---------- Tests for FANNY  i.e., fanny() --------------------------
@@ -215,7 +209,7 @@ Fuzzy Clustering object of class 'fanny' :
 m.ship.expon.        2
 objective      9.39325
 tolerance        1e-15
-iterations          42
+iterations          43
 converged            1
 maxit              500
 n                   28
@@ -1068,21 +1062,21 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.156 0.029 0.193 0 0 
+Time elapsed:  0.12 0.013 0.143 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are "completely fuzzy" -- and now give a warnings
 > f4.20 <- fanny(chorSub, k = 4, trace.lev = 1) ; f4.20$coef
 fanny()'s fuzzy(n = 61, k = 4):
 fuzzy(): initial obj = 8277.57
-Converged after 44 iterations,  obj =             2665.982
+Converged after 46 iterations,  obj =             2665.982
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
 In fanny(chorSub, k = 4, trace.lev = 1) :
   the memberships are all very close to 1/k. Maybe decrease 'memb.exp' ?
   dunn_coeff   normalized 
-2.500000e-01 3.404684e-15 
+2.500000e-01 1.850372e-15 
 > f4.18  <- fanny(chorSub, k = 4,   memb.exp = 1.8) # same problem
 Warning message:
 In fanny(chorSub, k = 4, memb.exp = 1.8) :
@@ -1102,7 +1096,7 @@ fuzzy(): initial obj = 4641.75
 	    ef[]= ( 15405.8, 15405.8, 15405.8, 15405.8)
 	    esp[]= ( 6.63795, 6.63795, 6.63795, 6.63795)
   m == n:  obj =      4641.7451124068
-Converged after 1 iterations,  obj = 4641.7451124068129502
+Converged after 1 iterations,  obj = 4641.7451124068084027
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 2 < k (= 4) !!
 Warning message:
@@ -1124,8 +1118,8 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4638.7561402053  not converged: it = 7
   m == n:  obj =      4637.0268537669  not converged: it = 8
   m == n:  obj =      4635.8286004555  not converged: it = 9
-  m == n:  obj =      4634.9880315171  not converged: it = 10
-  m == n:  obj =      4634.3943437633  not converged: it = 11
+  m == n:  obj =      4634.9880315172  not converged: it = 10
+  m == n:  obj =      4634.3943437634  not converged: it = 11
   m == n:  obj =      4633.9736501112  not converged: it = 12
   m == n:  obj =      4633.6751509742  not converged: it = 13
   m == n:  obj =      4633.4632343974  not converged: it = 14
@@ -1134,55 +1128,55 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4633.1290071452  not converged: it = 17
   m == n:  obj =      4633.0740913561  not converged: it = 18
   m == n:  obj =      4633.0343739482  not converged: it = 19
-  m == n:  obj =      4633.0053552140  not converged: it = 20
+  m == n:  obj =      4633.0053552141  not converged: it = 20
   m == n:  obj =      4632.9838809909  not converged: it = 21
   m == n:  obj =      4632.9677467724  not converged: it = 22
   m == n:  obj =      4632.9554145804  not converged: it = 23
   m == n:  obj =      4632.9458119538  not converged: it = 24
   m == n:  obj =      4632.9381902596  not converged: it = 25
   m == n:  obj =      4632.9320254723  not converged: it = 26
-  m == n:  obj =      4632.9269490797  not converged: it = 27
+  m == n:  obj =      4632.9269490798  not converged: it = 27
   m == n:  obj =      4632.9227001877  not converged: it = 28
   m == n:  obj =      4632.9190924339  not converged: it = 29
   m == n:  obj =      4632.9159911876  not converged: it = 30
   m == n:  obj =      4632.9132978577  not converged: it = 31
-  m == n:  obj =      4632.9109390973  not converged: it = 32
-  m == n:  obj =      4632.9088593705  not converged: it = 33
+  m == n:  obj =      4632.9109390974  not converged: it = 32
+  m == n:  obj =      4632.9088593706  not converged: it = 33
   m == n:  obj =      4632.9070158249  not converged: it = 34
   m == n:  obj =      4632.9053747439  not converged: it = 35
   m == n:  obj =      4632.9039090813  not converged: it = 36
   m == n:  obj =      4632.9025967379  not converged: it = 37
   m == n:  obj =      4632.9014193477  not converged: it = 38
   m == n:  obj =      4632.9003614151  not converged: it = 39
-  m == n:  obj =      4632.8994096945  not converged: it = 40
+  m == n:  obj =      4632.8994096946  not converged: it = 40
   m == n:  obj =      4632.8985527385  not converged: it = 41
   m == n:  obj =      4632.8977805631  not converged: it = 42
   m == n:  obj =      4632.8970843966  not converged: it = 43
   m == n:  obj =      4632.8964564866  not converged: it = 44
   m == n:  obj =      4632.8958899491  not converged: it = 45
-  m == n:  obj =      4632.8953786490  not converged: it = 46
+  m == n:  obj =      4632.8953786491  not converged: it = 46
   m == n:  obj =      4632.8949171027  not converged: it = 47
-  m == n:  obj =      4632.8945003974  not converged: it = 48
+  m == n:  obj =      4632.8945003975  not converged: it = 48
   m == n:  obj =      4632.8941241248  not converged: it = 49
-  m == n:  obj =      4632.8937843231  not converged: it = 50
+  m == n:  obj =      4632.8937843232  not converged: it = 50
   m == n:  obj =      4632.8934774285  not converged: it = 51
-  m == n:  obj =      4632.8932002320  not converged: it = 52
+  m == n:  obj =      4632.8932002321  not converged: it = 52
   m == n:  obj =      4632.8929498430  not converged: it = 53
   m == n:  obj =      4632.8927236555  not converged: it = 54
   m == n:  obj =      4632.8925193198  not converged: it = 55
   m == n:  obj =      4632.8923347162  not converged: it = 56
   m == n:  obj =      4632.8921679323  not converged: it = 57
-  m == n:  obj =      4632.8920172420  not converged: it = 58
+  m == n:  obj =      4632.8920172421  not converged: it = 58
   m == n:  obj =      4632.8918810877  not converged: it = 59
   m == n:  obj =      4632.8917580628  not converged: it = 60
   m == n:  obj =      4632.8916468978  not converged: it = 61
   m == n:  obj =      4632.8915464462  not converged: it = 62
-  m == n:  obj =      4632.8914556727  not converged: it = 63
+  m == n:  obj =      4632.8914556728  not converged: it = 63
   m == n:  obj =      4632.8913736426  not converged: it = 64
   m == n:  obj =      4632.8912995115  not converged: it = 65
   m == n:  obj =      4632.8912325169  not converged: it = 66
   m == n:  obj =      4632.8911719701  not converged: it = 67
-  m == n:  obj =      4632.8911172489  not converged: it = 68
+  m == n:  obj =      4632.8911172490  not converged: it = 68
   m == n:  obj =      4632.8910677916  not converged: it = 69
   m == n:  obj =      4632.8910230905  not converged: it = 70
   m == n:  obj =      4632.8909826870  not converged: it = 71
@@ -1226,12 +1220,12 @@ fuzzy(): initial obj = 7365.64
   m == n:  obj =      4632.8906100750  not converged: it = 109
   m == n:  obj =      4632.8906092711  not converged: it = 110
   m == n:  obj =      4632.8906085435  not converged: it = 111
-  m == n:  obj =      4632.8906078848  not converged: it = 112
-  m == n:  obj =      4632.8906072886  not converged: it = 113
+  m == n:  obj =      4632.8906078849  not converged: it = 112
+  m == n:  obj =      4632.8906072887  not converged: it = 113
   m == n:  obj =      4632.8906067489  not converged: it = 114
   m == n:  obj =      4632.8906062603  not converged: it = 115
   m == n:  obj =      4632.8906058180
-Converged after 116 iterations,  obj = 4632.8906058179545653
+Converged after 116 iterations,  obj = 4632.8906058179682077
 fanny()'s caddy(*, k = 4):
  -> k_true (crisp) = 4
 > stopifnot(f4.16$clustering == f4.16.2$clustering,
@@ -1335,5 +1329,8 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.405 0.034 0.447 0 0 
+Time elapsed:  0.388 0.014 0.414 0 0 
 > 
+> proc.time()
+   user  system elapsed 
+  0.662   0.041   0.771 

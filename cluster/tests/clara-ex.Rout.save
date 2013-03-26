@@ -1,6 +1,6 @@
 
-R version 2.15.1 Patched (2012-10-12 r60924) -- "Roasted Marshmallows"
-Copyright (C) 2012 The R Foundation for Statistical Computing
+R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
 ISBN 3-900051-07-0
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
@@ -26,7 +26,7 @@ Type 'q()' to quit R.
 > if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
 Warning message:
 In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
-  Buggy version of Kinderman-Ramage generator used
+  buggy version of Kinderman-Ramage generator used
 > 
 > nSim <- 100
 > nCl <- 3 # = no.classes
@@ -63,4 +63,4 @@ obs     1  2  3
 > 
 > proc.time()
    user  system elapsed 
-  0.544   0.024   0.559 
+  0.800   0.037   0.911 
