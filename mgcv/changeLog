@@ -39,6 +39,11 @@ ISSUES:
 
 1.7-23
 
+* plot.soap.film could switch axis ranges. Fixed.
+
+* plot.mgcv.smooth now sets smooth plot range on basis of xlim and 
+  ylim if present.
+
 * formXtViX documentation fixed + return matrix labels.
 
 * fixDependence related negative index failures for completely confounded 

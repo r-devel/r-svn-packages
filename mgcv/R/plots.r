@@ -780,7 +780,8 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
     if (!x$plot.me||x$dim>2) return(NULL) ## shouldn't or can't plot
     if (x$dim==1) { ## get basic plotting data for 1D terms 
       raw <- data[x$term][[1]]
-      xx<-seq(min(raw),max(raw),length=n) # generate x sequence for prediction
+      if (is.null(xlim)) xx <- seq(min(raw),max(raw),length=n) else # generate x sequence for prediction
+      xx <- seq(xlim[1],xlim[2],length=n)
       if (x$by!="NA")         # deal with any by variables
       { by<-rep(1,n);dat<-data.frame(x=xx,by=by)
         names(dat)<-c(x$term,x$by)
@@ -801,8 +802,10 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
       raw <- data.frame(x=as.numeric(data[xterm][[1]]),
                         y=as.numeric(data[yterm][[1]]))
       n2 <- max(10,n2)
-      xm <- seq(min(raw$x),max(raw$x),length=n2)
-      ym <- seq(min(raw$y),max(raw$y),length=n2)  
+      if (is.null(xlim)) xm <- seq(min(raw$x),max(raw$x),length=n2) else 
+        xm <- seq(xlim[1],xlim[2],length=n2)
+      if (is.null(ylim)) ym <- seq(min(raw$y),max(raw$y),length=n2) else
+        ym <- seq(ylim[1],ylim[2],length=n2)
       xx <- rep(xm,n2)
       yy <- rep(ym,rep(n2,n2))
       if (too.far>0)
