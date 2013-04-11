@@ -3,8 +3,8 @@
 
 ISSUES:
 
-* see email from gavin simpson Re: Using `predict()` with "re" smooths
-  - weird by var result reported.
+* see email from gavin simpson 10/04/13 "fs" class messes up summary.gam
+  - run example at end of fs help and then summary(bm$gam). fails 
 
 * each element of a "names" attribute has at least 96 bytes of storage.
   This can make the storage of "hat", "fitted.values" and "linear.predictors" 
