@@ -1,3 +1,9 @@
+2013-04-25  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/stataread.c, man/write.dta.Rd: allow write.dta to write
+	value labels, and for read.dta to read all the labels (contributed
+	by bquistorff@gmail.com).
+	
 2013-03-20  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-53.

@@ -52,6 +52,10 @@ write.dta(dataframe, file, version = 7L,
   only available method and is provided largely for backwards
   compatibility.
 
+  If the \code{"val.labels"} attribute is a character vector with
+  a string label for each variable then this is written as the variable
+  labels.  Otherwise the variable names are repeated as variable labels.
+
   For Stata 8 or later use the default \code{version=7} -- the only
   advantage of Stata 8 format is that it can represent multiple
   different missing value types, and \R doesn't have them.  Stata 10/11
