@@ -1618,7 +1618,8 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     if (G$m>0) for (i in 1:G$m) {# Accumulate the total penalty matrix 
       if (is.null(object$smooth[[i]]$fac)) { ## simple regular smooth...
         ind <- first.para[i]:last.para[i]
-        for (l in 1:length(object$smooth[[i]]$S)) { 
+        ns <-length(object$smooth[[i]]$S) 
+        if (ns) for (l in 1:ns) { 
            S[ind,ind] <- S[ind,ind] + 
                   object$smooth[[i]]$S[[l]]*object$sp[k]
            k <- k+1
@@ -1628,7 +1629,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
         ind <- first.para[i]:(first.para[i]+object$smooth[[i]]$n.para-1)
         ns <- length(object$smooth[[i]]$S)
         for (j in 1:length(flev)) {
-           for (l in 1:ns) { 
+           if (ns) for (l in 1:ns) { 
              S[ind,ind] <- S[ind,ind] + 
                     object$smooth[[i]]$S[[l]]*object$sp[k]
              k <- k+1

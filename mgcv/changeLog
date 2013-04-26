@@ -3,6 +3,9 @@
 
 ISSUES:
 
+* gamm indexing errors with correlation structures - see 
+  gamm-bugs/index-errors
+
 * see email from gavin simpson 10/04/13 "fs" class messes up summary.gam
   - run example at end of fs help and then summary(bm$gam). fails 
 
@@ -41,6 +44,10 @@ ISSUES:
   deficiency.
 
 1.7-23
+
+* gamm could fail with fixed smooths while assembling total 
+  penalty matrix, by attempting to access non-existent penalty 
+  matrix.
 
 * plot.soap.film could switch axis ranges. Fixed.
 

@@ -82,8 +82,8 @@ nat.param <- function(X,S,rank=NULL,type=0,tol=.Machine$double.eps^.8,unit.fnorm
     return(list(X=X,D=rep(scale^2,rank),P=P,rank=rank,type=type)) ## type of reparameterization
   }
 
-  qrx <- qr(X)
-  R <- qr.R(qrx,complete=FALSE)
+  qrx <- qr(X,tol=.Machine$double.eps^.8)
+  R <- qr.R(qrx)
   RSR <- forwardsolve(t(R),t(forwardsolve(t(R),t(S))))
   er <- eigen(RSR,symmetric=TRUE)
   if (is.null(rank)||rank<1||rank>ncol(S)) { 
