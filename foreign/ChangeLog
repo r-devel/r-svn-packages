@@ -1,8 +1,13 @@
-2013-04-25  Brian Ripley <Brian.Ripley@R-project.org>
+2013-04-28  Brian Ripley <Brian.Ripley@R-project.org>
 
-	* src/stataread.c, man/write.dta.Rd: allow write.dta to write
-	value labels, and for read.dta to read all the labels (contributed
-	by bquistorff@gmail.com).
+	[UNFINISHED]
+
+	* src/stataread.c, man/{read,write}.dta.Rd: allow write.dta() to
+	write value labels, and read.dta() to read all the
+	labels (contributed by Brian Quistorff).
+	
+	* tests/stata.R, tests/stata.Rout.save, 
+	tests/MLLabelsWithNotesChar.dta: regression tests for above.
 	
 2013-03-20  Brian Ripley <Brian.Ripley@R-project.org>
 
