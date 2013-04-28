@@ -308,7 +308,7 @@ In read.dta("pc5.dta") : cannot read factor labels from Stata 5 files
 > bq <- read.dta("MLLabelsWithNotesChar.dta")
 Warning message:
 In read.dta("MLLabelsWithNotesChar.dta") :
-  value labels (female_lbl_def) for female are missing
+  value labels ('female_lbl_def') for 'female' are missing
 > str(bq)
 'data.frame':	0 obs. of  1 variable:
  $ female: int 
