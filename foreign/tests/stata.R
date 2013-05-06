@@ -32,9 +32,8 @@ str(stata8)
 
 bq <- read.dta("MLLabelsWithNotesChar.dta")
 str(bq)
-if(FALSE) {
 write.dta(bq, "bq.dta", version = 12)
 str(read.dta('bq.dta'))
-}
+unlink("bq.dta")
 
 q()

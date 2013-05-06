@@ -511,12 +511,12 @@ SEXP R_LoadStataData(FILE *fp)
 	    nlabels = InIntegerBinary(fp, 1, swapends);
 	    totlen = InIntegerBinary(fp, 1, swapends);
 	    off =  Calloc((size_t) nlabels, int);
-	    PROTECT(levels = allocVector(REALSXP, nlabels));
+	    PROTECT(levels = allocVector(INTSXP, nlabels));
 	    PROTECT(labels = allocVector(STRSXP, nlabels));
 	    for(i = 0; i < nlabels; i++)
 		off[i] = InIntegerBinary(fp, 1, swapends);
 	    for(i = 0; i < nlabels; i++)
-		REAL(levels)[i] = (double) InIntegerBinary(fp, 0, swapends);
+		INTEGER(levels)[i] = (double) InIntegerBinary(fp, 0, swapends);
 	    txt =  Calloc((size_t) totlen, char);
 	    InStringBinary(fp, totlen, txt);
 	    for(i = 0; i < nlabels; i++)
@@ -660,6 +660,11 @@ writeStataValueLabel(const char *labelName, const SEXP theselabels,
     if(!isString(theselabels))
 	return FALSE;
 
+    if (!isNull(theselevels) && 
+	((TYPEOF(theselevels)!=INTSXP && TYPEOF(theselevels)!=REALSXP)  || 
+	 LENGTH(theselabels)!=LENGTH(theselevels)))
+	return FALSE;
+
     len = 4*2*(length(theselabels)+1);
     txtlen = 0;
     for (i = 0; i < length(theselabels); i++)
@@ -685,10 +690,14 @@ writeStataValueLabel(const char *labelName, const SEXP theselabels,
 	    OutIntegerBinary(i+1, fp, 0);
     }
     else{
-	if(TYPEOF(theselevels)!=INTSXP || LENGTH(theselabels)==LENGTH(theselevels))
-	    return FALSE;
-	for (i = 0; i < length(theselevels); i++)
-	    OutIntegerBinary(INTEGER(theselevels)[i], fp, 0);
+	if(TYPEOF(theselevels)==INTSXP){
+		for (i = 0; i < length(theselevels); i++)
+		    OutIntegerBinary(INTEGER(theselevels)[i], fp, 0);
+	}
+	else{
+		for (i = 0; i < length(theselevels); i++)
+		    OutIntegerBinary((int) REAL(theselevels)[i], fp, 0);
+	}
     }
     /* the actual labels */
     for(i = 0; i < length(theselabels); i++){

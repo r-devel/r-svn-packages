@@ -1,5 +1,5 @@
 
-R version 3.0.0 Patched (2013-04-28 r62683) -- "Masked Marvel"
+R version 3.0.0 Patched (2013-05-02 r62711) -- "Masked Marvel"
 Copyright (C) 2013 The R Foundation for Statistical Computing
 Platform: x86_64-apple-darwin12.3.0 (64-bit)
 
@@ -288,7 +288,7 @@ In read.dta("pc5.dta") : cannot read factor labels from Stata 5 files
  - attr(*, "var.labels")= chr  "Make and Model" "Price" "Mileage (mpg)" "Repair Record 1978" ...
  - attr(*, "version")= int 8
  - attr(*, "label.table")=List of 1
-  ..$ origin: Named num  0 1
+  ..$ origin: Named int  0 1
   .. ..- attr(*, "names")= chr  "Domestic" "Foreign"
  - attr(*, "missing")=List of 13
   ..$ make        : NULL
@@ -332,11 +332,34 @@ In read.dta("MLLabelsWithNotesChar.dta") :
   ..$ : chr  "_dta" "_lang_list" "default spanish"
  - attr(*, "version")= int 12
  - attr(*, "label.table")=List of 1
-  ..$ female_lbl_es: Named num  0 1
+  ..$ female_lbl_es: Named int  0 1
   .. ..- attr(*, "names")= chr  "No" "Si"
-> if(FALSE) {
-+ write.dta(bq, "bq.dta", version = 12)
-+ str(read.dta('bq.dta'))
-+ }
+> write.dta(bq, "bq.dta", version = 12)
+> str(read.dta('bq.dta'))
+'data.frame':	0 obs. of  1 variable:
+ $ female: int 
+ - attr(*, "datalabel")= chr "datalabelBQ"
+ - attr(*, "time.stamp")= chr ""
+ - attr(*, "formats")= chr "%9.0g"
+ - attr(*, "types")= int 253
+ - attr(*, "val.labels")= chr ""
+ - attr(*, "var.labels")= chr "female"
+ - attr(*, "expansion.fields")=List of 11
+  ..$ : chr  "female" "question" "Are you Female?"
+  ..$ : chr  "_dta" "_lang_c" "default"
+  ..$ : chr  "_dta" "_lang_v_spanish" "etiqdataBQ"
+  ..$ : chr  "female" "_lang_l_spanish" "female_lbl_es"
+  ..$ : chr  "female" "_lang_v_spanish" "Femenino"
+  ..$ : chr  "_dta" "note1" "datasetNoteTxt"
+  ..$ : chr  "_dta" "note0" "1"
+  ..$ : chr  "female" "note2" "FemaleNote2Txt"
+  ..$ : chr  "female" "note0" "2"
+  ..$ : chr  "female" "note1" "FemaleNoteTxt"
+  ..$ : chr  "_dta" "_lang_list" "default spanish"
+ - attr(*, "version")= int 12
+ - attr(*, "label.table")=List of 1
+  ..$ female_lbl_es: Named int  0 1
+  .. ..- attr(*, "names")= chr  "No" "Si"
+> unlink("bq.dta")
 > 
 > q()
