@@ -7,12 +7,9 @@ ISSUES:
   gamm-bugs/index-errors
 
 * see email from gavin simpson 10/04/13 "fs" class messes up summary.gam
-  - run example at end of fs help and then summary(bm$gam). fails 
+  - run example at end of fs help and then summary(bm$gam). 
 
-* each element of a "names" attribute has at least 96 bytes of storage.
-  This can make the storage of "hat", "fitted.values" and "linear.predictors" 
-  collosal. Can they just be stripped out? (when and why are they put on?)
-  Also, if smooth p-values used the R trick used for random effect testing 
+* If smooth p-values used the R trick used for random effect testing 
   then could model frame's use within predict be replaced with something 
   less memory intensive. 
 
@@ -22,7 +19,7 @@ ISSUES:
 
 * vis.gam --- set "re" terms to zero by default?? (clearly better - easy?)
 
-* let t2's expand by penalty in summary/anova??
+* let t2's expand by penalty in summary/anova/plot and predict??
 
 * convergence failure *windows only* with mack example - see Freiburg
   course. (sos smooth has high condition number)
@@ -51,6 +48,9 @@ ISSUES:
 * gamm could fail with fixed smooths while assembling total 
   penalty matrix, by attempting to access non-existent penalty 
   matrix. (Thanks Ainars Aunins for reporting this.)
+
+* stripped rownames from model matrix, eta, linear predictor etc. Saves
+  memory and time.
 
 * plot.soap.film could switch axis ranges. Fixed.
 

@@ -584,6 +584,7 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   # construct strictly parametric model matrix.... 
   
   X <- model.matrix(pterms,mf)
+  rownames(X) <- NULL ## save memory
   G$nsdf <- ncol(X)
   G$contrasts <- attr(X,"contrasts")
   G$xlevels <- .getXlevels(pterms,mf)
