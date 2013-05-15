@@ -147,7 +147,7 @@ interpret.gam <- function (gf)
 # 1. a model formula for the parametric part: pf (and pfok indicating whether it has terms)
 # 2. a list of descriptors for the smooths: smooth.spec
 { p.env<-environment(gf) # environment of formula
-  tf<-terms.formula(gf,specials=c("s","te","t2")) # specials attribute indicates which terms are smooth
+  tf<-terms.formula(gf,specials=c("s","te","ti","t2")) # specials attribute indicates which terms are smooth
  
   terms<-attr(tf,"term.labels") # labels of the model terms 
   nt<-length(terms) # how many terms?
@@ -156,9 +156,10 @@ interpret.gam <- function (gf)
   { response<-as.character(attr(tf,"variables")[2])
     pf<-rf<-paste(response,"~",sep="")
   }
-  else pf<-rf<-"~"
+  else pf <- rf <- "~"
   sp <- attr(tf,"specials")$s     # array of indices of smooth terms 
   tp <- attr(tf,"specials")$te    # indices of tensor product terms
+  tip <- attr(tf,"specials")$ti   # indices of tensor product pure interaction terms
   t2p <- attr(tf,"specials")$t2   # indices of type 2 tensor product terms
   off<-attr(tf,"offset") # location of offset in formula
   ## have to translate sp,tp so that they relate to terms,
@@ -172,58 +173,66 @@ interpret.gam <- function (gf)
     ind <- (1:nt)[as.logical(vtab[tp[i],])]
     tp[i] <- ind # the term that smooth relates to
   } 
+  if (length(tip)>0) for (i in 1:length(tip)) {
+    ind <- (1:nt)[as.logical(vtab[tip[i],])]
+    tip[i] <- ind # the term that smooth relates to
+  } 
   if (length(t2p)>0) for (i in 1:length(t2p)) {
     ind <- (1:nt)[as.logical(vtab[t2p[i],])]
     t2p[i] <- ind # the term that smooth relates to
   } ## re-referencing is complete
 
-  ns<-length(sp)+length(tp)+length(t2p) # number of smooths
-  k<-kt<-kt2<-ks<-kp<-1 # counters for terms in the 2 formulae
+  ##ns <- length(sp) + length(tp) + length(tip) + length(t2p) # number of smooths
+  k <- kt <- kti <- kt2 <- ks <- kp <- 1 # counters for terms in the 2 formulae
   len.sp <- length(sp)
   len.tp <- length(tp)
+  len.tip <- length(tip)
   len.t2p <- length(t2p)
+  ns <- len.sp + len.tp + len.tip + len.t2p # number of smooths
 
-  smooth.spec<-list()
+  smooth.spec <- list()
   if (nt)
   for (i in 1:nt) # work through all terms
-  { if (k<=ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) # it's a smooth
-    { st<-eval(parse(text=terms[i]),envir=p.env)
-      smooth.spec[[k]]<-st
+  { if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||
+                  (kti<=len.tip&&tip[kti]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) # it's a smooth
+    { st <- eval(parse(text=terms[i]),envir=p.env)
+      smooth.spec[[k]] <- st
       if (ks<=len.sp&&sp[ks]==i) ks <- ks + 1 else # counts s() terms
       if (kt<=len.tp&&tp[kt]==i) kt <- kt + 1 else # counts te() terms
+      if (kti<=len.tip&&tip[kti]==i) kti <- kti + 1 else # counts ti() terms
       kt2 <- kt2 + 1                           # counts t2() terms
-      k <- k+1      # counts smooth terms 
+      k <- k + 1      # counts smooth terms 
     } else          # parametric
-    { if (kp>1) pf<-paste(pf,"+",terms[i],sep="") # add to parametric formula
-      else pf<-paste(pf,terms[i],sep="")
+    { if (kp>1) pf <- paste(pf,"+",terms[i],sep="") # add to parametric formula
+      else pf <- paste(pf,terms[i],sep="")
       kp <- kp+1    # counts parametric terms
     }
   }    
   if (!is.null(off)) # deal with offset
-  { if (kp>1) pf<-paste(pf,"+",sep="")
-    if (kp>1||k>1) rf<-paste(rf,"+",sep="")
-    pf<-paste(pf,as.character(attr(tf,"variables")[1+off]),sep="")
-    kp<-kp+1          
+  { if (kp>1) pf <- paste(pf,"+",sep="")
+    if (kp>1||k>1) rf <- paste(rf,"+",sep="")
+    pf <- paste(pf,as.character(attr(tf,"variables")[1+off]),sep="")
+    kp <- kp+1          
   }
-  if (attr(tf,"intercept")==0) 
-  { pf<-paste(pf,"-1",sep="")
-    if (kp>1) pfok<-1 else pfok<-0
+  if (attr(tf,"intercept")==0) {
+    pf <- paste(pf,"-1",sep="")
+    if (kp>1) pfok <- 1 else pfok <- 0
   } else { 
-    pfok<-1;if (kp==1) { 
-    pf<-paste(pf,"1"); 
+    pfok <- 1;if (kp==1) { 
+      pf <- paste(pf,"1"); 
     }
   }
   
-  fake.formula<-pf
+  fake.formula <- pf
   if (length(smooth.spec)>0) 
   for (i in 1:length(smooth.spec))
-  { nt<-length(smooth.spec[[i]]$term)
-    ff1<-paste(smooth.spec[[i]]$term[1:nt],collapse="+")
-    fake.formula<-paste(fake.formula,"+",ff1)
+  { nt <- length(smooth.spec[[i]]$term)
+    ff1 <- paste(smooth.spec[[i]]$term[1:nt],collapse="+")
+    fake.formula <- paste(fake.formula,"+",ff1)
     if (smooth.spec[[i]]$by!="NA")
-    fake.formula<-paste(fake.formula,"+",smooth.spec[[i]]$by)
+    fake.formula <- paste(fake.formula,"+",smooth.spec[[i]]$by)
   }
-  fake.formula<-as.formula(fake.formula,p.env)
+  fake.formula <- as.formula(fake.formula,p.env)
   ret<-list(pf=as.formula(pf,p.env),pfok=pfok,smooth.spec=smooth.spec,##full.formula=as.formula(rf,p.env),
             fake.formula=fake.formula,response=response)
   class(ret)<-"split.gam.formula"
@@ -2477,7 +2486,7 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # the chi^2 variables are central. 
 # Note that this can be rubbish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
-  if (TRUE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
+  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
     require(CompQuadForm)
     r <- x
     for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq

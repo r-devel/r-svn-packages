@@ -47,7 +47,7 @@ ISSUES:
 
 * gamm could fail with fixed smooths while assembling total 
   penalty matrix, by attempting to access non-existent penalty 
-  matrix.
+  matrix. (Thanks Ainars Aunins for reporting this.)
 
 * plot.soap.film could switch axis ranges. Fixed.
 
