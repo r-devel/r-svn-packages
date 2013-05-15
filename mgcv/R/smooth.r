@@ -224,6 +224,7 @@ ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
   object <- te(...,k=k,bs=bs,m=m,d=d,fx=fx,np=np,xt=xt,id=id,sp=sp)
   object$inter <- TRUE
   object$by <- by.var
+  substr(object$label,2,2) <- "i"
   object
 }
 

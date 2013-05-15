@@ -40,10 +40,13 @@ ISSUES:
 
 * F needed in gam object?
 
-* still not really happy with nesting constraints, especially under rank
-  deficiency.
-
 1.7-23
+
+** 'ti' smooth spefification introduced, which provides a much better (and 
+  very simple) way of allowing nested models based on 'te' type tensor 
+  product smooths. 'ti' terms are used to set up smooth interactions 
+  excluding main effects (so ti(x,z) is like x:z while te(x,z) is more
+  like x*z, although the analogy is not exact). 
 
 * gamm could fail with fixed smooths while assembling total 
   penalty matrix, by attempting to access non-existent penalty 
