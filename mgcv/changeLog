@@ -1,6 +1,12 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+REMOVAL PENDING:
+
+* 'p.type' option for summary.gam
+
+* single penalty option for 'te'
+
 ISSUES:
 
 * gamm indexing errors with correlation structures - see 

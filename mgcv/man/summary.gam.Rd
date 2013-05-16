@@ -188,7 +188,7 @@ by scale parameter.}
 
 \references{
 
-Wood, S.N. (2012) On p-values for smooth component es of an extended generalized additive model. in press Biometrika
+Wood, S.N. (2013) On p-values for smooth components of an extended generalized additive model. Biometrika 100:221-228
 
 Marra, G and S.N. Wood (2012) Coverage Properties of Confidence Intervals for Generalized Additive
 Model Components. Scandinavian Journal of Statistics, 39(1), 53-74.

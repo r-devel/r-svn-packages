@@ -2487,12 +2487,12 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # the chi^2 variables are central. 
 # Note that this can be rubbish in lower tail (e.g. lambda=c(1.2,.3), x = .15)
   
-  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
-    require(CompQuadForm)
-    r <- x
-    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
-    return(pmin(r,1))
-  }
+#  if (FALSE) { ## use Davies exact method in place of Liu et al/ Pearson approx.
+#    require(CompQuadForm)
+#    r <- x
+#    for (i in 1:length(x)) r[i] <- davies(x[i],lambda,h)$Qq
+#    return(pmin(r,1))
+#  }
 
   if (length(h) != length(lambda)) stop("lambda and h should have the same length!")
  
@@ -2679,11 +2679,7 @@ reTest <- function(b,m) {
 } ## end reTest
 
 testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
-## Routine for forming fractionally trunctated
-## pseudoinverse of XVX'. And returning 
-## p'X'(XVX)^-Xp.
-## Truncates to numerical rank, if this is
-## less than supplied rank+1.
+## Implements Wood (2013) Biometrika 100(1), 221-228
 ## The type argument specifies the type of truncation to use.
 ## on entry `rank' should be an edf estimate
 ## 0. Default using the fractionally truncated pinv.
@@ -2783,7 +2779,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...) {
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,useR=TRUE, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -2817,6 +2813,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
   } ## end of pinv
   
   if (is.null(object$R)) warning("p-values for any terms that can be penalized to zero will be unreliable: refit model to fix this.")
+  
+  if (p.type!=0) warning("p.type!=0 is deprecated, and liable to be removed in future")
 
   p.table <- pTerms.table <- s.table <- NULL
 
@@ -2925,6 +2923,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         X <- model.matrix(object)
       }
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
+      if (useR) X <- object$R
     
     } ## end if (p.type<5)
 
