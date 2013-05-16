@@ -21,7 +21,8 @@ ISSUES:
 
 * bam - allow a blocking covariate for AR1? ARp?
 
-* warn about, or at least report, rank deficiency?
+* warn about, or at least report, rank deficiency, also warn or report if
+  side conditions needed?
 
 * vis.gam --- set "re" terms to zero by default?? (clearly better - easy?)
 
