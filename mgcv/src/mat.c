@@ -466,7 +466,7 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 /* call LA_PACK to get pivoted QR decomposition of x
    tau is an array of length min(r,c)
    pivot is array of length c, zeroed on entry, pivoting order on return.
-   On exist upper triangle of x is R. Below upper triangle plus tau 
+   On exit upper triangle of x is R. Below upper triangle plus tau 
    represent reflectors making up Q.
    pivoting is always performed (not just when matrix is rank deficient), so
    leading diagonal of R is in descending order of magnitude.
@@ -480,6 +480,7 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 { int info,lwork=-1,*ip;
   double work1,*work;
   /* workspace query */
+  /* Args: M, N, A, LDA, JPVT, TAU, WORK, LWORK, INFO */
   F77_CALL(dgeqp3)(r,c,x,r,pivot,tau,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
   work=(double *)calloc((size_t)lwork,sizeof(double));
@@ -490,8 +491,34 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
   for (ip=pivot;ip < pivot + *c;ip++) (*ip)--;
   /* ... for 'tis C in which we work and not the 'cursed Fortran... */
   
-}
+} /* end mgcv_qr */
 
+void mgcv_qr2(double *x, int *r, int *c,int *pivot,double *tau)
+/* call LA_PACK to get  QR decomposition of x
+   tau is an array of length min(r,c)
+   pivot is array of length c, zeroed on entry, pivoting order on return.
+   On exit upper triangle of x is R. Below upper triangle plus tau 
+   represent reflectors making up Q.
+   pivoting is not performed in this case, but the pivoting index is returned anyway. 
+   library(mgcv)
+   r<-4;c<-3
+   X<-matrix(rnorm(r*c),r,c)
+   pivot<-rep(1,c);tau<-rep(0,c)
+   um<-.C("mgcv_qr",as.double(X),as.integer(r),as.integer(c),as.integer(pivot),as.double(tau))
+   qr.R(qr(X));matrix(um[[1]],r,c)[1:c,1:c]
+*/
+{ int info,*ip,i;
+  double *work;
+  work=(double *)calloc((size_t)*r,sizeof(double));
+   /* actual call */
+  /* Args: M, N, A, LDA, TAU, WORK, INFO */
+  F77_CALL(dgeqr2)(r,c,x,r,tau,work,&info); 
+  free(work);
+  /*if (*r<*c) lwork= *r; else lwork= *c;*/ 
+  for (i=0,ip=pivot;ip < pivot + *c;ip++,i++) *ip = i;
+  /* ... pivot index equivalent to no pivoting */
+  
+} /* end mgcv_qr2 */
 
 void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp)
 /* applies k reflectors of Q of a QR decomposition to r by c matrix b.
@@ -519,6 +546,7 @@ void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,in
   if (! *left) { side='R';lda = *c;} else lda= *r;
   if ( *tp) trans='T'; 
   /* workspace query */
+  
   F77_CALL(dormqr)(&side,&trans,r,c,k,a,&lda,tau,b,r,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
   work=(double *)calloc((size_t)lwork,sizeof(double));
