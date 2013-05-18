@@ -46,6 +46,12 @@ ISSUES:
 
 1.7-23
 
+*** Fix of severe bug introduced with R 2.15.2 LAPACK change. The shipped
+  version of dsyevr can fail to produce orthogonal eigenvectors when 
+  uplo='U' (upper triangular storage), as opposed to 'L'. This led to 
+  many gam smoothing parameter estimation convergence failures, as the 
+  key stabilizing re-parameterization was substantially degraded.
+
 ** 'ti' smooth spefification introduced, which provides a much better (and 
   very simple) way of allowing nested models based on 'te' type tensor 
   product smooths. 'ti' terms are used to set up smooth interactions 

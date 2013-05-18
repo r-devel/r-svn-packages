@@ -63,6 +63,8 @@ void getXtWX(double *XtWX, double *X,double *w,int *r,int *c,double *work);
 void getXtX(double *XtX,double *X,int *r,int *c);
 void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work);
 void getXXt(double *XXt,double *X,int *r,int *c);
+void read_mat(double *M,int *r,int*c, char *path);
+
 
 /* basis constructor/prediction routines*/
 

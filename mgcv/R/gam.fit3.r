@@ -2162,17 +2162,19 @@ totalPenaltySpace <- function(S,H,off,p)
 
 
 
-mini.roots <- function(S,off,np)
+mini.roots <- function(S,off,np,rank=NULL)
 # function to obtain square roots, B[[i]], of S[[i]]'s having as few
 # columns as possible. S[[i]]=B[[i]]%*%t(B[[i]]). np is the total number
-# of parameters. S is in packed form. 
+# of parameters. S is in packed form. rank[i] is optional supplied rank 
+# of S[[i]], rank[i] < 1, or rank=NULL to estimate.
 { m<-length(S)
   if (m<=0) return(list())
   B<-S
+  if (is.null(rank)) rank <- rep(-1,m)
   for (i in 1:m)
-  { b<-mroot(S[[i]])
-    B[[i]]<-matrix(0,np,ncol(b))
-    B[[i]][off[i]:(off[i]+nrow(b)-1),]<-b
+  { b <- mroot(S[[i]],rank=rank[i]) 
+    B[[i]] <- matrix(0,np,ncol(b))
+    B[[i]][off[i]:(off[i]+nrow(b)-1),] <- b
   }
   B
 }

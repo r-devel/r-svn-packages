@@ -245,10 +245,7 @@ double qr_ldet_inv(double *X,int *r,double *Xi,int *get_inv)
   pivot = (int *)calloc((size_t)*r,sizeof(int));
   tau = (double *)calloc((size_t)*r,sizeof(double));
   
-  /* This version NOT actually pivoting, as a result of problem in 
-     LAPACK 3.4.1...
-  */
-  mgcv_qr2(X,r,r,pivot,tau); /* get QR=X itself */
+  mgcv_qr(X,r,r,pivot,tau); /* get QR=X itself */
 
   /* evaluate log|X| = sum_i log(|R_ii|) ...*/
   for (ldet=0.0,p=X,i=0;i<*r;i++,p += *r+1) ldet += log(fabs(*p));

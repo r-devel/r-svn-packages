@@ -1270,7 +1270,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
 
-  G$rS <- mini.roots(G$S,G$off,ncol(G$X))
+  G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
 
   if (method%in%c("REML","P-REML","ML","P-ML")) {
     if (optimizer[1]=="perf") {
@@ -3299,7 +3299,8 @@ mroot <- function(A,rank=NULL,method="chol")
 # given rank. B is returned where BB'=A. A assumed non-negative definite. 
 # Current methods "chol", "svd". "svd" is much slower, but much better at getting the 
 # correct rank if it isn't known in advance. 
-{ if (!isTRUE(all.equal(A,t(A)))) stop("Supplied matrix not symmetric")
+{ if (rank < 1) rank <- NULL 
+  if (!isTRUE(all.equal(A,t(A)))) stop("Supplied matrix not symmetric")
   if (method=="svd")
   { um<-La.svd(A)
     if (sum(um$d!=sort(um$d,decreasing=TRUE))>0) 
