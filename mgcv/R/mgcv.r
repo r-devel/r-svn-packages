@@ -3299,14 +3299,14 @@ mroot <- function(A,rank=NULL,method="chol")
 # given rank. B is returned where BB'=A. A assumed non-negative definite. 
 # Current methods "chol", "svd". "svd" is much slower, but much better at getting the 
 # correct rank if it isn't known in advance. 
-{ if (rank < 1) rank <- NULL 
+{ if (is.null(rank)) rank <- 0 
   if (!isTRUE(all.equal(A,t(A)))) stop("Supplied matrix not symmetric")
   if (method=="svd")
   { um<-La.svd(A)
     if (sum(um$d!=sort(um$d,decreasing=TRUE))>0) 
     stop("singular values not returned in order")
-    if (is.null(rank)) # have to work out rank
-    { rank<-dim(A)[1]
+    if (rank < 1) # have to work out rank
+    { rank <- dim(A)[1]
       if (um$d[1]<=0) rank <- 1 else
       while (rank>0&&(um$d[rank]/um$d[1]<.Machine$double.eps||
                            all.equal(um$u[,rank],um$vt[rank,])!=TRUE)) rank<-rank-1 
@@ -3320,9 +3320,9 @@ mroot <- function(A,rank=NULL,method="chol")
     L <- chol(A,pivot=TRUE)
     options(op) ## reset default warnings
     piv <- order(attr(L,"pivot"))
-    if (is.null(rank)) rank <- attr(L,"rank")
+    if (rank < 1) rank <- attr(L,"rank")
     L <- L[,piv,drop=FALSE];L <- t(L[1:rank,,drop=FALSE])
-    if (rank <= 1) dim(L) <- c(nrow(A),1)
+    #if (rank <= 1) dim(L) <- c(nrow(A),1)
     return(L)
   } else
   stop("method not recognised.")
