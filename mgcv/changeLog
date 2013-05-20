@@ -12,9 +12,6 @@ ISSUES:
 * gamm indexing errors with correlation structures - see 
   gamm-bugs/index-errors
 
-* see email from gavin simpson 10/04/13 "fs" class messes up summary.gam
-  - run example at end of fs help and then summary(bm$gam). 
-
 * If smooth p-values used the R trick used for random effect testing 
   then could model frame's use within predict be replaced with something 
   less memory intensive. 
@@ -30,9 +27,6 @@ ISSUES:
 
 * convergence failure *windows only* with mack example - see Freiburg
   course. (sos smooth has high condition number)
-
-* gam.check is using qq.gam on gamm models with random effects and cor struct
-  - can't be right - need a warning.
 
 * initial.sp failure reported in weird situation: 
   see mgcv-related/bugs/initial.sp
@@ -62,6 +56,14 @@ ISSUES:
   for smooths, using the factor R from the QR factorization of the weighted 
   model matrix. This is a weighted version of the Wood (2013) statistic used
   previously - simulations in that paper essentially unchanged by the change. 
+
+* summary.gam now deals gracefully with terms such as "fs" smooths 
+  estimated using gamm, for which p-values can no be computed. (thanks to 
+  Gavin Simpson).
+
+* gam.check/qq.gam now uses a normal QQ-plot when the model has been fitted 
+  using gamm or gamm4, since qq.gam cannot compute corrext quantiles in 
+  the presence of random effects in these cases. 
 
 * gamm could fail with fixed smooths while assembling total 
   penalty matrix, by attempting to access non-existent penalty 

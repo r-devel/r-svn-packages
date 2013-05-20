@@ -2654,6 +2654,14 @@ reTest <- function(b,m) {
 ## Test the mth smooth for equality to zero
 ## and accounting for all random effects in model 
   
+  ## check that smooth penalty matrices are full size.  
+  ## e.g. "fs" type smooths estimated by gamm do not 
+  ## have full sized S matrices, and we can't compute 
+  ## p=values here....
+  if (ncol(b$smooth[[m]]$S[[1]]) != b$smooth[[m]]$last.para-b$smooth[[m]]$first.para+1) {
+    return(list(stat=NA,pval=NA,rank=NA)) 
+  }
+
   ## find indices of random effects other than m
   rind <- rep(0,0)
   for (i in 1:length(b$smooth)) if (!is.null(b$smooth[[i]]$random)&&b$smooth[[i]]$random&&i!=m) rind <- c(rind,i)

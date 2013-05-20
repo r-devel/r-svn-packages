@@ -1653,6 +1653,13 @@ smooth.construct.fs.smooth.spec<-function(object,data,knots) {
   object$fterm <- fterm ## the factor name...
   object$flev <- levels(fac)
 
+  ## now full penalties ...
+  #fullS <- list()
+  #fullS[[1]] <- diag(rep(c(rp$D,rep(0,null.d)),nf)) ## range space penalties
+  #for (i in 1:null.d) { ## null space penalties
+  #    um <- rep(0,ncol(rp$X));um[object$rank+i] <- 1
+  #    fullS[[i+1]] <- diag(rep(um,nf))
+  #}
   ## Now the model matrix 
   if (gamm) { ## no duplication, gamm will handle this by nesting
     if (object$fixed==TRUE) stop("\"fs\" terms can not be fixed here")
@@ -1669,6 +1676,7 @@ smooth.construct.fs.smooth.spec<-function(object,data,knots) {
       object$X <- cbind(object$X,rp$X * as.numeric(fac==object$flev[i]))
     } 
     ## now penalties...
+    #object$S <- fullS
     object$S[[1]] <- diag(rep(c(rp$D,rep(0,null.d)),nf)) ## range space penalties
     for (i in 1:null.d) { ## null space penalties
       um <- rep(0,ncol(rp$X));um[object$rank+i] <- 1

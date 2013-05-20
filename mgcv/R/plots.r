@@ -83,12 +83,23 @@ qq.gam <- function(object, rep=0, level=.9,s.rep=10,
                    pch=".", rl.col=2, rep.col="gray80",...) {
 ## get deviance residual quantiles under good fit
   type <- match.arg(type)
+  ylab <- paste(type,"residuals")
+
   if (inherits(object,c("glm","gam"))) {
     if (is.null(object$sig2)) object$sig2 <- summary(object)$dispersion
   } else stop("object is not a glm or gam")
+
   ## in case of NA & na.action="na.exclude", we need the "short" residuals:
   object$na.action <- NULL
   D <- residuals(object,type=type)
+
+  if (object$method %in% c("PQL","lme.ML","lme.REML","lmer.REML","lmer.ML","glmer.ML")) {
+    ## then it's come out of a gamm fitter and qq.gam can't see the random effects
+    ## that would be necessary to get quantiles. Fall back to normal QQ plot.
+    qqnorm(D,ylab=ylab,pch=pch,...)
+    return()
+  }
+
   lim <- Dq <- NULL
   if (rep==0) { 
     fam <- fix.family.qf(object$family)
@@ -144,8 +155,6 @@ qq.gam <- function(object, rep=0, level=.9,s.rep=10,
     }
   }
  
-  ylab <- paste(type,"residuals")
-
   if (!is.null(Dq))  
   { qqplot(Dq,D,ylab=ylab,xlab="theoretical quantiles",ylim=range(c(lim,D)),
            pch=pch,...)
