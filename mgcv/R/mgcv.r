@@ -2779,7 +2779,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,useR=TRUE, ...) {
+summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -2794,6 +2794,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,useR=
 ##   4 Bayesian numerical rank
 ##   5 Wood (2006) frequentist
 ##   -1 Modified Cox et al.
+##   -2 old style p-values based on X not R
 ## If a smooth has a field 'random' and it is set to TRUE then 
 ## it is treated as a random effect for some p-value dist calcs 
 
@@ -2812,8 +2813,13 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,useR=
     res
   } ## end of pinv
   
-  if (is.null(object$R)) warning("p-values for any terms that can be penalized to zero will be unreliable: refit model to fix this.")
-  
+  if (is.null(object$R)) { 
+    warning("p-values for any terms that can be penalized to zero will be unreliable: refit model to fix this.")
+    useR <- FALSE
+  } else useR <- TRUE
+
+  if (p.type < -1) useR <- FALSE
+
   if (p.type!=0) warning("p.type!=0 is deprecated, and liable to be removed in future")
 
   p.table <- pTerms.table <- s.table <- NULL
@@ -2905,26 +2911,26 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0,useR=
   df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, m)
   if (m>0) # form test statistics for each smooth
   { if (p.type < 5) { ## Bayesian p-values required 
-      sub.samp <- max(1000,2*length(object$coefficients)) 
-      if (nrow(object$model)>sub.samp) { ## subsample to get X for p-values calc.
-        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-        if (inherits(seed,"try-error")) {
-          runif(1)
-          seed <- get(".Random.seed",envir=.GlobalEnv)
+      if (useR)  X <- object$R else {
+        sub.samp <- max(1000,2*length(object$coefficients)) 
+        if (nrow(object$model)>sub.samp) { ## subsample to get X for p-values calc.
+          seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+          if (inherits(seed,"try-error")) {
+            runif(1)
+            seed <- get(".Random.seed",envir=.GlobalEnv)
+          }
+          kind <- RNGkind(NULL)
+          RNGkind("default","default")
+          set.seed(11) ## ensure repeatability
+          ind <- sample(1:nrow(object$model),sub.samp,replace=FALSE)  ## sample these rows from X
+          X <- predict(object,object$model[ind,],type="lpmatrix")
+          RNGkind(kind[1],kind[2])
+          assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+        } else { ## don't need to subsample 
+          X <- model.matrix(object)
         }
-        kind <- RNGkind(NULL)
-        RNGkind("default","default")
-        set.seed(11) ## ensure repeatability
-        ind <- sample(1:nrow(object$model),sub.samp,replace=FALSE)  ## sample these rows from X
-        X <- predict(object,object$model[ind,],type="lpmatrix")
-        RNGkind(kind[1],kind[2])
-        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
-      } else { ## don't need to subsample 
-        X <- model.matrix(object)
-      }
-      X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
-      if (useR) X <- object$R
-    
+        X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)
+      }    
     } ## end if (p.type<5)
 
     for (i in 1:m) { ## loop through smooths
