@@ -1,52 +1,22 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-REMOVAL PENDING:
-
-* 'p.type' option for summary.gam
-
-* single penalty option for 'te'
-
-ISSUES:
-
-* gamm indexing errors with correlation structures - see 
-  gamm-bugs/index-errors
-
-* If smooth p-values used the R trick used for random effect testing 
-  then could model frame's use within predict be replaced with something 
-  less memory intensive. 
-
-* bam - allow a blocking covariate for AR1? ARp?
-
-* warn about, or at least report, rank deficiency, also warn or report if
-  side conditions needed?
-
-* vis.gam --- set "re" terms to zero by default?? (clearly better - easy?)
-
-* let t2's expand by penalty in summary/anova/plot and predict??
-
-* convergence failure *windows only* with mack example - see Freiburg
-  course. (sos smooth has high condition number)
-
-* initial.sp failure reported in weird situation: 
-  see mgcv-related/bugs/initial.sp
-
-* users can use as.factor(a) in formula, and variable.summary won't know 
-  about it - causes a problem if a is character, for example. Could coerce
-  character to factor, but is that general enough? what about if a was numeric
-  then summary doesn't reflect how it's used?  
-
-* F needed in gam object?
-
 1.7-23
 
 *** Fix of severe bug introduced with R 2.15.2 LAPACK change. The shipped
   version of dsyevr can fail to produce orthogonal eigenvectors when 
-  uplo='U' (upper triangular storage), as opposed to 'L'. This led to 
-  many gam smoothing parameter estimation convergence failures, as the 
-  key stabilizing re-parameterization was substantially degraded.
+  uplo='U' (upper triangle of symmetric matrix used), as opposed to 'L'. 
+  This led to a substantial number of gam smoothing parameter estimation 
+  convergence failures, as the key stabilizing re-parameterization was 
+  substantially degraded. The issue did not affect gaussian additive models
+  with GCV model selection. Other models could fail to converge any further 
+  as soon as any smoothing parameter became `large', as happens when a 
+  smooth is estimated as a straight line. check.gam reported the lack of full 
+  convergence, but the issue could also generate complete fit failures.
+  Picked up late as full test suite had only been run on R > 2.15.1 with an 
+  external LAPACK.
 
-** 'ti' smooth spefification introduced, which provides a much better (and 
+** 'ti' smooth specification introduced, which provides a much better (and 
   very simple) way of allowing nested models based on 'te' type tensor 
   product smooths. 'ti' terms are used to set up smooth interactions 
   excluding main effects (so ti(x,z) is like x:z while te(x,z) is more
@@ -54,8 +24,9 @@ ISSUES:
 
 * summary.gam now uses a more efficient approach to p-value computation 
   for smooths, using the factor R from the QR factorization of the weighted 
-  model matrix. This is a weighted version of the Wood (2013) statistic used
-  previously - simulations in that paper essentially unchanged by the change. 
+  model matrix produced during fitting. This is a weighted version of the 
+  Wood (2013) statistic used previously - simulations in that paper 
+  essentially unchanged by the change. 
 
 * summary.gam now deals gracefully with terms such as "fs" smooths 
   estimated using gamm, for which p-values can no be computed. (thanks to 
