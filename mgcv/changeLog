@@ -1,6 +1,12 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-24
+
+* Fix of bug in extract.lme.cov2, which could cause gamm to fail when
+  a correlation structure was nested inside a grouping factor finer than
+  the finest random effect grouping factor. 
+
 1.7-23
 
 *** Fix of severe bug introduced with R 2.15.2 LAPACK change. The shipped

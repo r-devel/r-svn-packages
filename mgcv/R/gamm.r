@@ -966,12 +966,12 @@ extract.lme.cov2<-function(b,data,start.level=1)
 { if (!inherits(b,"lme")) stop("object does not appear to be of class lme")
   grps <- nlme::getGroups(b) # labels of the innermost groupings - in data frame order
   n <- length(grps)    # number of data
-  n.levels <- length(b$groups) # number of levels of grouping
-  if (n.levels<start.level) ## then examine correlation groups
-  { if (is.null(b$modelStruct$corStruct)) n.corlevels <- 0 else
+  n.levels <- length(b$groups) # number of levels of grouping (random effects only)
+#  if (n.levels<start.level) { ## then examine correlation groups
+    if (is.null(b$modelStruct$corStruct)) n.corlevels <- 0 else
     n.corlevels <-
     length(all.vars(nlme::getGroupsFormula(b$modelStruct$corStruct)))
-  } else n.corlevels <- 0 ## used only to signal irrelevance
+#  } else n.corlevels <- 0 ## used only to signal irrelevance
   ## so at this stage n.corlevels > 0 iff it determines the coarsest grouping
   ## level if > start.level. 
   if (n.levels<n.corlevels) ## then cor groups are finest
