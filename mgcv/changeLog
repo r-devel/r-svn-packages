@@ -7,6 +7,16 @@
   a correlation structure was nested inside a grouping factor finer than
   the finest random effect grouping factor. 
 
+* Fix for an interesting feature of lme that getGroups applied to the 
+  corStruct that is part of the fitted lme object returns groups in 
+  sorted order, not data frame order, and without an index from one order 
+  to the other. (Oddly, the same corStruct Initialized outside lme has its 
+  groups  in data frame order.) This feature could cause gamm to fail,
+  complaining that the grouping factors for the correlation did not appear 
+  to be nested inside the correlation structure of the random effects. A 
+  bunch of ordering sensitivity tests have been added to the mgcv test suite.
+  Thanks to Dave Miller for reporting the bug. 
+
 1.7-23
 
 *** Fix of severe bug introduced with R 2.15.2 LAPACK change. The shipped
