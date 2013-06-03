@@ -3,6 +3,9 @@
 
 1.7-24
 
+* Fix for bug in fast REML code that could cause bam to fail with ti/te only
+  models. Thanks to Martijn Wieling.
+
 * Fix of bug in extract.lme.cov2, which could cause gamm to fail when
   a correlation structure was nested inside a grouping factor finer than
   the finest random effect grouping factor. 
