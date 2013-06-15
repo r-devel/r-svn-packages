@@ -289,11 +289,11 @@ void mgcv_chol(double *a,int *pivot,int *n,int *rank)
 */
 { double *work,*p1,*p2,*p;
   int piv=1;
-  work=(double *)calloc((size_t) *n,sizeof(double));
+  work=(double *)R_chk_calloc((size_t) *n,sizeof(double));
   F77_CALL(dchdc)(a,n,n,work,pivot,&piv,rank);
   /* zero stuff below the leading diagonal */
   for (p2=a+ *n,p1=a+1;p2<a+ *n * *n;p1+= *n+1,p2+= *n) for (p=p1;p<p2;p++) *p=0.0;
-  free(work);
+  R_chk_free(work);
 }
 
 void mroot(double *A,int *rank,int *n)
@@ -311,11 +311,11 @@ void mroot(double *A,int *rank,int *n)
 */
 { int *pivot,erank,i,j;
   double *pi,*pj,*p0,*p1,*B;
-  pivot=(int *)calloc((size_t)*n,sizeof(int));
+  pivot=(int *)R_chk_calloc((size_t)*n,sizeof(int));
   mgcv_chol(A,pivot,n,&erank);
   if (*rank<=0) *rank = erank;
   /* unscramble the returned choleski factor */ 
-  B=calloc((size_t)(*n * *n),sizeof(double));
+  B=R_chk_calloc((size_t)(*n * *n),sizeof(double));
   /* copy A to B and zero A */
   for (p0=A,p1=B,i=0;i< *n;i++,p0+= *n,p1+= *n)
   for (pi=p0,pj=p1;pi<=p0+i;pi++,pj++) { *pj = *pi; *pi=0.0;}
@@ -325,7 +325,7 @@ void mroot(double *A,int *rank,int *n)
   /* remove trailing rows from choleski factor */
   for (pi=A,p0=A,i=0;i< *n;i++,p0+= *n)
   for (pj=p0;pj<p0+ *rank;pj++,pi++) *pi = *pj; 
-  free(pivot);free(B);
+  R_chk_free(pivot);R_chk_free(B);
 }
 
 
@@ -343,11 +343,11 @@ void mgcv_svd(double *x,double *u,double *d,int *r,int *c)
   		   &work1, &lwork, &info);
   lwork=(int)floor(work1);
   if (work1-lwork>0.5) lwork++;
-  work=(double *)calloc((size_t)lwork,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
   /* actual call */
   F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
   		   work, &lwork, &info);
-  free(work);
+  R_chk_free(work);
 }
 
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c)
@@ -376,11 +376,11 @@ matrix(um[[2]],q,q);er$v
   		   &work1, &lwork, &info);
   lwork=(int)floor(work1);
   if (work1-lwork>0.5) lwork++;
-  work=(double *)calloc((size_t)lwork,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
   /* actual call */
   F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
   		   work, &lwork, &info);
-  free(work);
+  R_chk_free(work);
 }
 
 
@@ -400,10 +400,10 @@ void mgcv_td_qy(double *S,double *tau,int *m,int *n, double *B,int *left,int *tr
   /* workspace query ... */
   F77_CALL(dormtr)(&side,&uplo,&trans,m,n,S,&nq,tau,B,m,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)calloc((size_t)lwork,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
   /* actual call ... */
   F77_CALL(dormtr)(&side,&uplo,&trans,m,n,S,&nq,tau,B,m,work,&lwork,&info);
-  free(work);
+  R_chk_free(work);
 }
 
 void mgcv_tri_diag(double *S,int *n,double *tau)
@@ -427,15 +427,15 @@ void mgcv_tri_diag(double *S,int *n,double *tau)
 { int lwork=-1,info;
   double *work,work1,*e,*d;
   char uplo='U';
-  d = (double *)calloc((size_t)*n,sizeof(double));
-  e = (double *)calloc((size_t)*n-1,sizeof(double));
+  d = (double *)R_chk_calloc((size_t)*n,sizeof(double));
+  e = (double *)R_chk_calloc((size_t)*n-1,sizeof(double));
   /* work space query... */
   F77_CALL(dsytrd)(&uplo,n,S,n,d,e,tau,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)calloc((size_t)lwork,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
   /* Actual call... */
   F77_CALL(dsytrd)(&uplo,n,S,n,d,e,tau,work,&lwork,&info);
-  free(work);free(d);free(e);
+  R_chk_free(work);R_chk_free(d);R_chk_free(e);
 }
 
 
@@ -526,10 +526,10 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
   /* Args: M, N, A, LDA, JPVT, TAU, WORK, LWORK, INFO */
   F77_CALL(dgeqp3)(r,c,x,r,pivot,tau,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)calloc((size_t)lwork,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
    /* actual call */
   F77_CALL(dgeqp3)(r,c,x,r,pivot,tau,work,&lwork,&info); 
-  free(work);
+  R_chk_free(work);
   /*if (*r<*c) lwork= *r; else lwork= *c;*/ 
   for (ip=pivot;ip < pivot + *c;ip++) (*ip)--;
   /* ... for 'tis C in which we work and not the 'cursed Fortran... */
@@ -552,11 +552,11 @@ void mgcv_qr2(double *x, int *r, int *c,int *pivot,double *tau)
 */
 { int info,*ip,i;
   double *work;
-  work=(double *)calloc((size_t)*r,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)*r,sizeof(double));
    /* actual call */
   /* Args: M, N, A, LDA, TAU, WORK, INFO */
   F77_CALL(dgeqr2)(r,c,x,r,tau,work,&info); 
-  free(work);
+  R_chk_free(work);
   /*if (*r<*c) lwork= *r; else lwork= *c;*/ 
   for (i=0,ip=pivot;ip < pivot + *c;ip++,i++) *ip = i;
   /* ... pivot index equivalent to no pivoting */
@@ -592,10 +592,10 @@ void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,in
   
   F77_CALL(dormqr)(&side,&trans,r,c,k,a,&lda,tau,b,r,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)calloc((size_t)lwork,sizeof(double));
+  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
   /* actual call */
   F77_CALL(dormqr)(&side,&trans,r,c,k,a,&lda,tau,b,r,work,&lwork,&info); 
-  free(work);
+  R_chk_free(work);
    
 }
 
@@ -642,8 +642,8 @@ qr.R(qr(Xa,tol=0))
 */
 
 { double *x,*work,c,s,r,x0,x1,m,*xip,*xjp,*riip,*rijp,*Qp,*wp;
-  x=(double *)calloc((size_t)*q,sizeof(double)); 
-  work=(double *)calloc((size_t)*n,sizeof(double)); /* working extra column of Q */
+  x=(double *)R_chk_calloc((size_t)*q,sizeof(double)); 
+  work=(double *)R_chk_calloc((size_t)*n,sizeof(double)); /* working extra column of Q */
   x[*k] = *lam;
   /* conceptually i runs from k to q in the following loop */
   for (Qp=Q+ *k * *n,riip=R+ *k * *q + *k,xip=x+ *k ;xip< x+ *q;xip++,riip+= *q+1)
@@ -671,7 +671,7 @@ qr.R(qr(Xa,tol=0))
       *wp = s*x1+c* *wp;
     }
   }
-  free(x);free(work);
+  R_chk_free(x);R_chk_free(work);
 }
 
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
@@ -708,7 +708,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
   double work1,*work,dum1=0,abstol=0.0,*Z,*dum2,x,*p,*p1,*p2,*Acopy;
   int lwork = -1,liwork = -1,iwork1,info,*iwork,dumi=0,n_eval=0,*isupZ,i,j,k,debug=0;
   if (debug && *get_vectors) { /* need a copy to dump in case of trouble */
-    Acopy = (double *)calloc((size_t)*n * *n,sizeof(double));
+    Acopy = (double *)R_chk_calloc((size_t)*n * *n,sizeof(double));
     for (p2=Acopy,p=A,p1=A+ *n * *n;p<p1;p++,p2++) *p2 = *p;
   }
 
@@ -716,10 +716,10 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
   if (*use_dsyevd)
   { F77_CALL(dsyevd)(&jobz,&uplo,n,A,n,ev,&work1,&lwork,&iwork1,&liwork,&info);
     lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-    work=(double *)calloc((size_t)lwork,sizeof(double));
-    liwork = iwork1;iwork= (int *)calloc((size_t)liwork,sizeof(int));
+    work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+    liwork = iwork1;iwork= (int *)R_chk_calloc((size_t)liwork,sizeof(int));
     F77_CALL(dsyevd)(&jobz,&uplo,n,A,n,ev,work,&lwork,iwork,&liwork,&info);
-    free(work);free(iwork);
+    R_chk_free(work);R_chk_free(iwork);
     if (*descending) for (i=0;i<*n/2;i++) {
         /* work in from left and right swapping cols */
 	p = A + i * *n; /* start of left col */ 
@@ -729,20 +729,20 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
         }
     }
   } else
-  { Z=(double *)calloc((size_t)(*n * *n),sizeof(double)); /* eigen-vector storage */
-    isupZ=(int *)calloc((size_t)(2 * *n),sizeof(int)); /* eigen-vector support */
+  { Z=(double *)R_chk_calloc((size_t)(*n * *n),sizeof(double)); /* eigen-vector storage */
+    isupZ=(int *)R_chk_calloc((size_t)(2 * *n),sizeof(int)); /* eigen-vector support */
     F77_CALL(dsyevr)(&jobz,&range,&uplo,
 		   n,A,n,&dum1,&dum1,&dumi,&dumi,
 		   &abstol,&n_eval,ev, 
     		   Z,n,isupZ, &work1,&lwork,&iwork1,&liwork,&info);
     lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-    work=(double *)calloc((size_t)lwork,sizeof(double));
-    liwork = iwork1;iwork= (int *)calloc((size_t)liwork,sizeof(int));
+    work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+    liwork = iwork1;iwork= (int *)R_chk_calloc((size_t)liwork,sizeof(int));
     F77_CALL(dsyevr)(&jobz,&range,&uplo,
 		   n,A,n,&dum1,&dum1,&dumi,&dumi,
 		   &abstol,&n_eval,ev, 
     		     Z,n,isupZ, work,&lwork,iwork,&liwork,&info);
-    free(work);free(iwork);
+    R_chk_free(work);R_chk_free(iwork);
     
     /* if (*descending) for (i=0;i<*n/2;i++) { 
       x = ev[i]; ev[i] = ev[*n-i-1];ev[*n-i-1] = x;
@@ -760,13 +760,13 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
       }
     }
     A = p1;
-    free(Z);free(isupZ);
+    R_chk_free(Z);R_chk_free(isupZ);
   }
   if (*descending) for (i=0;i<*n/2;i++) { /* reverse the eigenvalues */
        x = ev[i]; ev[i] = ev[*n-i-1];ev[*n-i-1] = x;
   }
   if (debug && *get_vectors) { /* are the eigenvectors really orthogonal?? */
-    p = (double *)calloc((size_t)*n * *n,sizeof(double));
+    p = (double *)R_chk_calloc((size_t)*n * *n,sizeof(double));
     getXtX(p,A,n,n); /* cross prod of eigenvec matrix - should be I */
     x=0.0;k=0;
     for (i=0;i<*n;i++) for (j=0;j<i;j++)  if (fabs(p[i + *n * j])>1e-14) { 
@@ -781,7 +781,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
     }
     if (k) Rprintf("Eigenvectors not normalized %d %g\n",k,x/k);
     if (k+j>0) dump_mat(Acopy,n,n,"/home/sw283/tmp/badmat.dat");
-    free(p);free(Acopy);
+    R_chk_free(p);R_chk_free(Acopy);
   }
 
 }
@@ -814,9 +814,9 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
 		   &iwork1, &liwork, &info);
 
    lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-   work=(double *)calloc((size_t)lwork,sizeof(double));
+   work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
    liwork = iwork1;
-   iwork= (int *)calloc((size_t)liwork,sizeof(int));
+   iwork= (int *)R_chk_calloc((size_t)liwork,sizeof(int));
 
    /* and the actual call... */
    F77_CALL(dstedc)(&compz,n,
@@ -836,7 +836,7 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
      }
    }
 
-   free(work);free(iwork);
+   R_chk_free(work);R_chk_free(iwork);
    *n=info; /* zero is success */
 }
 
@@ -872,10 +872,10 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
   kk = (int) floor(*n/10); if (kk<1) kk=1;  
   if (kk<f_check) f_check = kk;
 
-  q=(double **)calloc((size_t)(*n+1),sizeof(double *));
+  q=(double **)R_chk_calloc((size_t)(*n+1),sizeof(double *));
 
   /* "randomly" initialize first q vector */
-  q[0]=(double *)calloc((size_t)*n,sizeof(double));
+  q[0]=(double *)R_chk_calloc((size_t)*n,sizeof(double));
   b=q[0];bt=0.0;
   for (i=0;i < *n;i++)   /* somewhat randomized start vector!  */
   { jran=(jran*ia+ic) % im;   /* quick and dirty generator to avoid too regular a starting vector */
@@ -886,12 +886,12 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
   for (i=0;i < *n;i++) b[i]/=bt;
 
   /* initialise vectors a and b - a is leading diagonal of T, b is sub/super diagonal */
-  a=(double *)calloc((size_t) *n,sizeof(double));
-  b=(double *)calloc((size_t) *n,sizeof(double));
-  g=(double *)calloc((size_t) *n,sizeof(double));
-  d=(double *)calloc((size_t) *n,sizeof(double)); 
-  z=(double *)calloc((size_t) *n,sizeof(double));
-  err=(double *)calloc((size_t) *n,sizeof(double));
+  a=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  b=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  g=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  d=(double *)R_chk_calloc((size_t) *n,sizeof(double)); 
+  z=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  err=(double *)R_chk_calloc((size_t) *n,sizeof(double));
   for (i=0;i< *n;i++) err[i]=1e300;
   /* The main loop. Will break out on convergence. */
   for (j=0;j< *n;j++) 
@@ -946,7 +946,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
     /*if (b[j]==0.0&&j< *n-1) ErrorMessage(_("Lanczos failed"),1);*/ /* Actually this isn't really a failure => rank(A)<l+lm */
     /* get q[j+1]      */
     if (j < *n-1)
-    { q[j+1]=(double *)calloc((size_t) *n,sizeof(double));
+    { q[j+1]=(double *)R_chk_calloc((size_t) *n,sizeof(double));
       for (xx=b[j],qp=q[j+1],p0=qp + *n,zp=z;qp<p0;qp++,zp++) *qp = *zp/xx; /* forming q[j+1]=z/b[j] */
     }
 
@@ -956,9 +956,9 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
     { for (i=0;i<j+1;i++) d[i]=a[i]; /* copy leading diagonal of T_j */
       for (i=0;i<j;i++) g[i]=b[i]; /* copy sub/super diagonal of T_j */   
       /* set up storage for eigen vectors */
-      if (vlength) free(v); /* free up first */
+      if (vlength) R_chk_free(v); /* free up first */
       vlength=j+1; 
-      v = (double *)calloc((size_t)vlength*vlength,sizeof(double));
+      v = (double *)R_chk_calloc((size_t)vlength*vlength,sizeof(double));
  
       /* obtain eigen values/vectors of T_j in O(j^2) flops */
     
@@ -1028,14 +1028,14 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
   }
  
   /* clean up..... */
-  free(a);
-  free(b);
-  free(g);
-  free(d);
-  free(z);
-  free(err);
-  if (vlength) free(v);
-  for (i=0;i< *n+1;i++) if (q[i]) free(q[i]);free(q);  
+  R_chk_free(a);
+  R_chk_free(b);
+  R_chk_free(g);
+  R_chk_free(d);
+  R_chk_free(z);
+  R_chk_free(err);
+  if (vlength) R_chk_free(v);
+  for (i=0;i< *n+1;i++) if (q[i]) R_chk_free(q[i]);R_chk_free(q);  
   *n = j; /* number of iterations taken */
 } /* end of Rlanczos */
 

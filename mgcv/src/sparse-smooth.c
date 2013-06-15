@@ -41,7 +41,7 @@ typedef struct {
 void kd_sanity(kdtree_type kd) {
   int ok=1,i,*count,n=0;
   for (i=0;i<kd.n_box;i++) if (kd.box[i].p1>n) n = kd.box[i].p1;
-  count = (int *)calloc((size_t)n,sizeof(int));
+  count = (int *)R_chk_calloc((size_t)n,sizeof(int));
   for (i=0;i<kd.n_box;i++) if (!kd.box[i].child1) { /* terminal node */
     if (kd.box[i].p1-kd.box[i].p0>1) { Rprintf("More than 2 points in a box!!\n");ok=0;}
     count[kd.box[i].p0]++;
@@ -51,7 +51,7 @@ void kd_sanity(kdtree_type kd) {
     if (count[i]!=1) { Rprintf("point %d in %d boxes!\n",i,count[i]);ok=0;}
   }
   if (ok) Rprintf("kd tree sanity checks\n");
-  free(count);
+  R_chk_free(count);
 }
 
 void k_order(int *k,int *ind,double *x,int *n) {
@@ -140,9 +140,9 @@ void k_order(int *k,int *ind,double *x,int *n) {
 
 void free_kdtree(kdtree_type kd) {
 /* free a kdtree */
-  free(kd.ind);free(kd.rind);
-  free(kd.box[0].lo); /* storage for box coordinates */
-  free(kd.box);
+  R_chk_free(kd.ind);R_chk_free(kd.rind);
+  R_chk_free(kd.box[0].lo); /* storage for box coordinates */
+  R_chk_free(kd.box);
 }
 
 void kd_tree(double *X,int *n, int *d,kdtree_type *kd) {
@@ -160,16 +160,16 @@ void kd_tree(double *X,int *n, int *d,kdtree_type *kd) {
   box_type *box;
   double huge=1e100,*pd,*x,*dum1,*dum2,*dum3;
   /* create index for points... */
-  ind = (int *)calloc((size_t) *n,sizeof(int)); 
+  ind = (int *)R_chk_calloc((size_t) *n,sizeof(int)); 
   for (i=0,p=ind;i < *n;i++,p++) *p = i; 
   /* Find the number of boxes in the tree */
   m=2;while (m < *n) m *= 2;
   nb = *n * 2 - m / 2 - 1;
   if (nb > m-1) nb = m - 1; 
   /* Now make an array of boxes (all cleared to zero)... */
-  box = (box_type *)calloc((size_t)nb,sizeof(box_type));
+  box = (box_type *)R_chk_calloc((size_t)nb,sizeof(box_type));
   /* allocate storage for box defining coordinates... */ 
-  pd = (double *)calloc((size_t)nb * (2 * *d),sizeof(double));
+  pd = (double *)R_chk_calloc((size_t)nb * (2 * *d),sizeof(double));
   for (i=0;i<nb;i++) {
     box[i].lo = pd;pd += *d;
     box[i].hi = pd;pd += *d;
@@ -241,7 +241,7 @@ void kd_tree(double *X,int *n, int *d,kdtree_type *kd) {
     }
   }  
   if (bi!=nb-1) Rprintf("bi not equal to nb-1 %d %d\n",bi,nb-1);
-  rind = (int *)calloc((size_t) *n,sizeof(int));
+  rind = (int *)R_chk_calloc((size_t) *n,sizeof(int));
   /* now create index of where ith row of X is in ind */
   for (i=0;i<*n;i++) rind[ind[i]]=i; 
   /* now put tree into kd object */
@@ -558,12 +558,12 @@ void p_area(double *a,double *X,kdtree_type kd,int n,int d) {
   double *wa,*lo,*hi,*x0,*x1,min_w,x;
   int np,bi,i,j,k,ok=1,*count,check;
 
-  wa = (double *)calloc((size_t)d,sizeof(double));
-  lo = (double *)calloc((size_t)d,sizeof(double));
-  hi = (double *)calloc((size_t)d,sizeof(double));
-  x0 = (double *)calloc((size_t)d,sizeof(double));
-  x1 = (double *)calloc((size_t)d,sizeof(double));
-  count = (int *)calloc((size_t)d,sizeof(int));
+  wa = (double *)R_chk_calloc((size_t)d,sizeof(double));
+  lo = (double *)R_chk_calloc((size_t)d,sizeof(double));
+  hi = (double *)R_chk_calloc((size_t)d,sizeof(double));
+  x0 = (double *)R_chk_calloc((size_t)d,sizeof(double));
+  x1 = (double *)R_chk_calloc((size_t)d,sizeof(double));
+  count = (int *)R_chk_calloc((size_t)d,sizeof(int));
 
   /* get average box widths, for fallback purposes */
   for (bi=0;bi<kd.n_box;bi++) {
@@ -634,8 +634,8 @@ void p_area(double *a,double *X,kdtree_type kd,int n,int d) {
     x /= np; /* share it out */
     a[i] = x; /* store it */ 
   }
-  free(count);
-  free(x0);free(x1);free(lo);free(hi);free(wa);
+  R_chk_free(count);
+  R_chk_free(x0);R_chk_free(x1);R_chk_free(lo);R_chk_free(hi);R_chk_free(wa);
 }
 
 
@@ -650,9 +650,9 @@ void k_nn_work(kdtree_type kd,double *X,double *dist,int *ni,int *n,int *d,int *
   ind = kd.ind;
   box = kd.box;
 
-  dk = (double *)calloc((size_t)*k,sizeof(double)); /* distance k-array */
-  ik = (int *)calloc((size_t)*k,sizeof(int)); /* corresponding index array */
-  x = (double *)calloc((size_t)*n,sizeof(double)); /* array for current point */    
+  dk = (double *)R_chk_calloc((size_t)*k,sizeof(double)); /* distance k-array */
+  ik = (int *)R_chk_calloc((size_t)*k,sizeof(int)); /* corresponding index array */
+  x = (double *)R_chk_calloc((size_t)*n,sizeof(double)); /* array for current point */    
   pcount=0;
 
   for (i=0;i < *n;i++) { /* work through all the points in X */
@@ -733,9 +733,9 @@ void k_nn_work(kdtree_type kd,double *X,double *dist,int *ni,int *n,int *d,int *
     }     
   } /* end of points loop (i) */
  
-  free(dk);
-  free(ik);
-  free(x);
+  R_chk_free(dk);
+  R_chk_free(ik);
+  R_chk_free(x);
   *n = pcount;
 }
 
@@ -814,10 +814,10 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
   /* d0 = average of distance to 2d+k nearest neighbours - a useful basic length scale */
   for (d0=0.0,p=dist,p1=dist+ *n * d2k;p<p1;p++) d0 += *p;d0 /= *n * d2k;
 
-  x = (double *)calloc((size_t) *d,sizeof(double));
+  x = (double *)R_chk_calloc((size_t) *d,sizeof(double));
   /* need to get typical box scale */ 
-  db = (double *)calloc((size_t)*d,sizeof(double));
-  count = (int *)calloc((size_t)*d,sizeof(int));
+  db = (double *)R_chk_calloc((size_t)*d,sizeof(double));
+  count = (int *)R_chk_calloc((size_t)*d,sizeof(int));
   for (bi=0;bi<kd.n_box;bi++) {
     for (j=0;j<*d;j++) 
     if (kd.box[bi].lo[j] > -kd.huge&&kd.box[bi].hi[j] < kd.huge) {
@@ -976,7 +976,7 @@ void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
        if (ni[ii]<0) ni[ii] = -ni[ii] - 1; 
     }
   }
-  free(x); free_kdtree(kd);free(db);free(count);
+  R_chk_free(x); free_kdtree(kd);R_chk_free(db);R_chk_free(count);
 }
 
 
@@ -996,7 +996,7 @@ void tri2nei(int *t,int *nt,int *n,int *d,int *off) {
   /* now turn off into an intial version of the final off vector */
   for (i=1;i< *n ;i++) off[i] += off[i-1]; 
   /* create oversized storage for neighbour lists */ 
-  nn = (int *)calloc((size_t)off[*n-1],sizeof(int));
+  nn = (int *)R_chk_calloc((size_t)off[*n-1],sizeof(int));
   for (p=nn,p1 = nn + off[*n-1];p<p1;p++) *p = -1; /* -1 codes unused space */
   /* now work through triangles, adding vertices to relevant neighbour lists */
   for (i=0;i<*nt;i++) { /* triangle loop */
@@ -1028,7 +1028,7 @@ void tri2nei(int *t,int *nt,int *n,int *d,int *off) {
     k0 = k1;
   }
   /* so now neighbour lists are stored in t and indexed by off */
-  free(nn);
+  R_chk_free(nn);
 } /* end of tri2nei */
 
 void ni_dist_filter(double *X,int *n,int *d,int *ni,int *off,double *mult) {
@@ -1039,7 +1039,7 @@ void ni_dist_filter(double *X,int *n,int *d,int *ni,int *off,double *mult) {
 */
   int i,j,k,i0,i1;
   double *dist,z,z2,md=0.0;
-  dist = (double *)calloc((size_t) off[*n-1],sizeof(double)); /* interpoint distances */
+  dist = (double *)R_chk_calloc((size_t) off[*n-1],sizeof(double)); /* interpoint distances */
 
   /* now find the average distance to neighbours */
   i0 = 0;
@@ -1071,7 +1071,7 @@ void ni_dist_filter(double *X,int *n,int *d,int *ni,int *off,double *mult) {
     off[j]=k; /* reset off[i] to how far we actually got */
     i0 = i1;
   }
-  free(dist);
+  R_chk_free(dist);
 }
 
 void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
@@ -1118,10 +1118,10 @@ void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
   max_nn++; /* self! */
   if (max_nn<6) max_nn=6;
 
-  M = (double *)calloc((size_t) 6 * max_nn,sizeof(double));
-  Mi = (double *)calloc((size_t) 6 * max_nn,sizeof(double)); 
-  Vt = (double *)calloc((size_t) 6 * 6,sizeof(double));
-  sv = (double *)calloc((size_t) 6,sizeof(double));
+  M = (double *)R_chk_calloc((size_t) 6 * max_nn,sizeof(double));
+  Mi = (double *)R_chk_calloc((size_t) 6 * max_nn,sizeof(double)); 
+  Vt = (double *)R_chk_calloc((size_t) 6 * 6,sizeof(double));
+  sv = (double *)R_chk_calloc((size_t) 6,sizeof(double));
 
   /*  Rprintf("Starting main loop...\n");*/
   di = i0 = 0;
@@ -1200,10 +1200,10 @@ void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
     i0=i1;
   }
   /* free memory... */ 
-  free(M);
-  free(Mi);
-  free(Vt);
-  free(sv);
+  R_chk_free(M);
+  R_chk_free(Mi);
+  R_chk_free(Vt);
+  R_chk_free(sv);
 } /* end of tri_penalty */
 
 
@@ -1234,13 +1234,13 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,
   kdtree_type kd; 
 
   k1 = *k + 1;
-  M = (double *)calloc((size_t) k1 * k1,sizeof(double));
-  Mi = (double *)calloc((size_t) k1 * k1,sizeof(double)); 
-  Vt = (double *)calloc((size_t) k1 * k1,sizeof(double));
-  sv = (double *)calloc((size_t) k1,sizeof(double));
+  M = (double *)R_chk_calloc((size_t) k1 * k1,sizeof(double));
+  Mi = (double *)R_chk_calloc((size_t) k1 * k1,sizeof(double)); 
+  Vt = (double *)R_chk_calloc((size_t) k1 * k1,sizeof(double));
+  sv = (double *)R_chk_calloc((size_t) k1,sizeof(double));
 
-  dist = (double *)calloc((size_t) *n * *k,sizeof(double)); /* corresponding distances */
-  area = (double *)calloc((size_t) *n,sizeof(double)); /* area associated with each point */
+  dist = (double *)R_chk_calloc((size_t) *n * *k,sizeof(double)); /* corresponding distances */
+  area = (double *)R_chk_calloc((size_t) *n,sizeof(double)); /* area associated with each point */
 
   /* get the nearest neighbours */ 
   j=*n;
@@ -1305,8 +1305,8 @@ void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,
   }
   /* free memory... */ 
   free_kdtree(kd);
-  free(M);free(Mi);free(Vt);
-  free(sv);free(dist);free(area);
+  R_chk_free(M);R_chk_free(Mi);R_chk_free(Vt);
+  R_chk_free(sv);R_chk_free(dist);R_chk_free(area);
 } /* end of sparse_penalty */
 
 
@@ -1332,13 +1332,13 @@ void sparse_penalty1(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int
     *dist,*area,cut_off=5,x,z;
 
   k1 = *k + 1;
-  M = (double *)calloc((size_t) k1 * k1,sizeof(double));
-  Mi = (double *)calloc((size_t) k1 * k1,sizeof(double)); 
-  Vt = (double *)calloc((size_t) k1 * k1,sizeof(double));
-  sv = (double *)calloc((size_t) k1,sizeof(double));
+  M = (double *)R_chk_calloc((size_t) k1 * k1,sizeof(double));
+  Mi = (double *)R_chk_calloc((size_t) k1 * k1,sizeof(double)); 
+  Vt = (double *)R_chk_calloc((size_t) k1 * k1,sizeof(double));
+  sv = (double *)R_chk_calloc((size_t) k1,sizeof(double));
 
-  dist = (double *)calloc((size_t) *n * *k,sizeof(double)); /* corresponding distances */
-  area = (double *)calloc((size_t) *n,sizeof(double)); /* area associated with each point */
+  dist = (double *)R_chk_calloc((size_t) *n * *k,sizeof(double)); /* corresponding distances */
+  area = (double *)R_chk_calloc((size_t) *n,sizeof(double)); /* area associated with each point */
 
   /* get a balanced version of the nearest neighbours */
   /* j=*n;
@@ -1383,8 +1383,8 @@ void sparse_penalty1(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int
     
   }
   /* free memory... */
-  free(M);free(Mi);free(Vt);
-  free(sv);free(dist);free(area);
+  R_chk_free(M);R_chk_free(Mi);R_chk_free(Vt);
+  R_chk_free(sv);R_chk_free(dist);R_chk_free(area);
 } /* end of sparse_penalty1 */
 
 
@@ -1423,9 +1423,9 @@ void ss_setup(double *ub,double *lb,double *x,double *w, int *n) {
    set up the lower band coming from the Choleski decomposition of H (3.1)*/
   double *h,*hh,*hh1,*lb1,*ub2,*ub1;
   int i;
-  h = (double *)calloc((size_t) *n,sizeof(double));
-  hh=(double *)calloc((size_t) *n,sizeof(double));
-  hh1=(double *)calloc((size_t) *n,sizeof(double));
+  h = (double *)R_chk_calloc((size_t) *n,sizeof(double));
+  hh=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  hh1=(double *)R_chk_calloc((size_t) *n,sizeof(double));
   for (i=0;i< *n-1;i++) h[i]=x[i+1]-x[i];
   for (i=0;i< *n-2;i++) hh[i]=2.0*(h[i]+h[i+1])/3.0;
   for (i=0;i< *n-3;i++) hh1[i]=h[i+1]/3.0;
@@ -1444,7 +1444,7 @@ void ss_setup(double *ub,double *lb,double *x,double *w, int *n) {
     ub1[i] = -w[i+1]*(1/h[i]+1/h[i+1]);
     ub2[i] = w[i+2]/h[i+1];
   }
-  free(h);free(hh);free(hh1);
+  R_chk_free(h);R_chk_free(hh);R_chk_free(hh1);
 }
 
 
@@ -1494,7 +1494,7 @@ void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
 
   for (i=0;i<*n;i++) w[i] = 1/w[i];  /* convert to H and de H convention */
 
-  ub = (double *)calloc((size_t)(*n * 3),sizeof(double));
+  ub = (double *)R_chk_calloc((size_t)(*n * 3),sizeof(double));
   ss_setup(ub,lb,x,w,n);
   rho = sqrt(*lambda);
   /* multiply the upper band of the matrix by the smoothing parameter */
@@ -1621,7 +1621,7 @@ void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
   diagA[1]=L22*L22+L12*L12;
   diagA[0]=L11*L11;
   for (i=0;i<*n;i++) diagA[i] = 1.0 - diagA[i];
-  free(ub);
+  R_chk_free(ub);
 }
 
 
@@ -1638,7 +1638,7 @@ void sspl_apply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf
   double *Wy,*U0s,*U0c,*U1s,*U1c,
     *V0s,*V0c,*V1s,*V1c,*p,*p1,*p2,w2,*xx;
   if (*nf > *n) { /* deal with duplicates */
-   xx = (double *)calloc((size_t)*nf,sizeof(double));
+   xx = (double *)R_chk_calloc((size_t)*nf,sizeof(double));
    for (p=x,p1=x + *nf,p2=xx;p<p1;p++,p2++) *p2 = *p;
    k=0;ok=1;
    for (i=1;i<*nf;i++) if (xx[k] + *tol < xx[i]) { 
@@ -1653,14 +1653,14 @@ void sspl_apply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf
      ok=0;
    }
    if (!ok) { w[k] = sqrt(w2);y[k]/=w2;}
-   free(xx);
+   R_chk_free(xx);
   }
 
   for (i=0;i<*n;i++) w[i] = 1/w[i];  /* convert to H and de H convention */
 
   /* ... y now contains weighted averages at unique x values, w corresponding weights */
   
-  Wy = (double *)calloc((size_t) 2 * *n,sizeof(double));
+  Wy = (double *)R_chk_calloc((size_t) 2 * *n,sizeof(double));
   for (i=0;i < *n;i++) Wy[i] = y[i]/w[i];
   /* set up pointers to various rotation pairs.. */
   U0s = U;U0c = U + *n;
@@ -1708,7 +1708,7 @@ void sspl_apply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf
   } else {
     for (i=0;i<*n;i++) y[i] = Wy[i];
   }
-  free(Wy);
+  R_chk_free(Wy);
 }
 
 void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *nf,double *tol,int *m) {
@@ -1717,8 +1717,8 @@ void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *n
   double *xx,*ww,*p,*p1,*p2;
   if (*m > 1 && *nf != *n) xw_store=1;
   if (xw_store) { /* must store original x and w */
-    xx = (double *)calloc((size_t)*nf,sizeof(double));
-    ww = (double *)calloc((size_t)*nf,sizeof(double));
+    xx = (double *)R_chk_calloc((size_t)*nf,sizeof(double));
+    ww = (double *)R_chk_calloc((size_t)*nf,sizeof(double));
     for (p=xx,p1=xx + *nf,p2=x;p<p1;p++,p2++) *p = *p2;
     for (p=ww,p1=ww + *nf,p2=w;p<p1;p++,p2++) *p = *p2;
   } 
@@ -1730,7 +1730,7 @@ void sspl_mapply(double *y,double *x,double *w,double *U,double *V,int *n,int *n
     sspl_apply(y,x,w,U,V,n,nf,tol); /* smooth y */
     y += *nf;
   }
-  if (xw_store) {free(xx);free(ww);}
+  if (xw_store) {R_chk_free(xx);R_chk_free(ww);}
 }
 
 void ss_coeffs(double *lb,double *a,double *b,double *c,double *d,double *x, int *n) { 
@@ -1743,9 +1743,9 @@ void ss_coeffs(double *lb,double *a,double *b,double *c,double *d,double *x, int
  */
   double *GTA,*z,*h,*lb1;
   int i;
-  GTA=(double *)calloc((size_t)*n,sizeof(double));
-  z=(double *)calloc((size_t)*n,sizeof(double));
-  h=(double *)calloc((size_t)*n-1,sizeof(double));
+  GTA=(double *)R_chk_calloc((size_t)*n,sizeof(double));
+  z=(double *)R_chk_calloc((size_t)*n,sizeof(double));
+  h=(double *)R_chk_calloc((size_t)*n-1,sizeof(double));
   for (i=0;i<*n-1;i++) h[i]=x[i+1]-x[i];
   for (i=0;i<*n-2;i++)
   GTA[i]=a[i]/h[i]-a[i+1]*(1/h[i]+1/h[i+1])+a[i+2]/h[i+1];
@@ -1760,7 +1760,7 @@ void ss_coeffs(double *lb,double *a,double *b,double *c,double *d,double *x, int
   { d[i]=(c[i+1]-c[i])/(3*h[i]);
     b[i]=(a[i+1]-a[i])/h[i]-c[i]*h[i]-d[i]*h[i]*h[i];
   }
-  free(GTA);free(z);free(h);
+  R_chk_free(GTA);R_chk_free(z);R_chk_free(h);
 }
 
 

@@ -29,9 +29,9 @@ double ***array3d(int ni,int nj,int nk)
 /* allocate 3d array */
 { double ***a,***p,**p1,*p2;
   int j;
-  a=(double ***)calloc((size_t)(ni),sizeof(double **));
-  *a=(double **)calloc((size_t)(ni*nj),sizeof(double *));
-  **a=(double *)calloc((size_t)(ni*nj*nk),sizeof(double));
+  a=(double ***)R_chk_calloc((size_t)(ni),sizeof(double **));
+  *a=(double **)R_chk_calloc((size_t)(ni*nj),sizeof(double *));
+  **a=(double *)R_chk_calloc((size_t)(ni*nj*nk),sizeof(double));
   p2 = **a; p1= *a;p=a;
   for (p=a;p<a+ni;p++) 
   { *p = p1; /* a[i]=a[0]+i*nj   */
@@ -41,19 +41,19 @@ double ***array3d(int ni,int nj,int nk)
 }
 
 void free3d(double ***a)
-{ free(**a);free(*a);free(a);
+{ R_chk_free(**a);R_chk_free(*a);R_chk_free(a);
 }
 
 double **array2d(int ni,int nj)
 
 { double **a,*p,**dum;
-  a=(double **)calloc((size_t)ni,sizeof(double *));
-  *a=(double *)calloc((size_t)(ni*nj),sizeof(double));
+  a=(double **)R_chk_calloc((size_t)ni,sizeof(double *));
+  *a=(double *)R_chk_calloc((size_t)(ni*nj),sizeof(double));
   for (p= *a,dum=a;dum<a+ni;dum++,p+=nj) *dum = p; 
   return(a);
 }
 
-void free2d(double **a) {free(*a);free(a);}
+void free2d(double **a) {R_chk_free(*a);R_chk_free(a);}
 
 void fit_magic(double *X,double *sp,double **S,double *H,double *gamma,double *scale,
                int *control,double rank_tol,double yy,double *y0,double *y1,double *U1,
@@ -102,7 +102,7 @@ void fit_magic(double *X,double *sp,double **S,double *H,double *gamma,double *s
   int i,j,k,m,n,q,rank_S=-1,r;
   m=control[4];n=control[1];q=control[2];
   /* first form S = H + \sum_i \theta_i S_i */
-  St=(double *)calloc((size_t)(q*q),sizeof(double));
+  St=(double *)R_chk_calloc((size_t)(q*q),sizeof(double));
   if (control[3]) /* then there is a non null H */
   for (p=St;p<St+q*q;p++,H++) *p = *H; 
   for (k=0;k<m;k++) { xx=exp(sp[k]);for (p=St,p1=S[k];p<St+q*q;p++,p1++) *p += *p1 * xx;}
@@ -112,12 +112,12 @@ void fit_magic(double *X,double *sp,double **S,double *H,double *gamma,double *s
  
   /* Now form the augmented R matrix [R',St']' */
   r=rank_S+q;
-  R=(double *)calloc((size_t)(r*q),sizeof(double));  
+  R=(double *)R_chk_calloc((size_t)(r*q),sizeof(double));  
   for (j=0;j<q;j++) for (i=0;i<=j;i++) R[i+r*j]=X[i+n*j];
   for (j=0;j<q;j++) for (i=q;i<r;i++) R[i+r*j]=St[(i-q)+rank_S*j];
   /* Get singular value decomposition, and hang the expense */
-  a=(double *)calloc((size_t)q,sizeof(double));
-  Vt=(double *)calloc((size_t)(q*q),sizeof(double));
+  a=(double *)R_chk_calloc((size_t)q,sizeof(double));
+  Vt=(double *)R_chk_calloc((size_t)(q*q),sizeof(double));
   mgcv_svd_full(R,Vt,d,&r,&q);  
   /* now truncate the svd in order to deal with rank deficiency */
   *rank=q;xx=d[0]*rank_tol;
@@ -145,7 +145,7 @@ void fit_magic(double *X,double *sp,double **S,double *H,double *gamma,double *s
   xx = n - *gamma * trA;*delta=xx;
   if (control[0]) {*score = n* (*norm+*norm_const)/(xx*xx);*scale= (*norm + *norm_const)/(n-trA);} /* use GCV */
   else {*score = (*norm + *norm_const) / n - 2* *scale / n * xx + *scale; } /* UBRE/ approximate AIC */  
-  free(a);free(Vt);free(R);free(St);
+  R_chk_free(a);R_chk_free(Vt);R_chk_free(R);R_chk_free(St);
 }
 
 double *crude_grad(double *X,double *sp,double **Si,double *H,double *gamma,double *scale,
@@ -156,7 +156,7 @@ double *crude_grad(double *X,double *sp,double **Si,double *H,double *gamma,doub
 { double ftol=1e-6,*grad,sc1,sc0,ds;
   int i;
   fit_magic(X,sp,Si,H,gamma,scale,control,rank_tol,yy,y0,y1,U1,V,d,b,&sc0,norm,delta,rank,norm_const,n_score);
-  grad=(double *)calloc((size_t)control[4],sizeof(double));
+  grad=(double *)R_chk_calloc((size_t)control[4],sizeof(double));
   for (i=0;i<control[4];i++)
   { ds=fabs(sp[i])*ftol;
     sp[i] += ds;
@@ -348,8 +348,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   gcv=control[0];q=control[2];n=control[1];m=control[4];max_half=control[5];mp=control[6];
   
   /* first get the QR decomposition of X */
-  tau=(double *)calloc((size_t)q,sizeof(double)); /* part of reflector storage */
-  pivot=(int *)calloc((size_t)q,sizeof(int));
+  tau=(double *)R_chk_calloc((size_t)q,sizeof(double)); /* part of reflector storage */
+  pivot=(int *)R_chk_calloc((size_t)q,sizeof(int));
   /* Accuracy can be improved by pivoting on some occasions even though it's not going to be 
      `used' as such here - see Golub and Van Loan (1983) section 6.4. page 169 for reference. */
   mgcv_qr(X,&n,&q,pivot,tau);
@@ -360,7 +360,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   */
   
   ScS=0;for (pi=cS;pi<cS+m;pi++) ScS+= *pi;  /* total columns of input S */
-  work=(double *)calloc((size_t)q,sizeof(double)); 
+  work=(double *)R_chk_calloc((size_t)q,sizeof(double)); 
   for (p=S,i=0;i<ScS;i++,p+=q) /* work across columns */
   { for (pi=pivot,p2=work;p2<work+q;pi++,p2++) *p2 = p[*pi];  /* apply pivot into work */
     for (p1=p,p2=work;p1<p+q;p1++,p2++) *p1 = *p2;  /* copy back into S */
@@ -379,7 +379,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
 
   /* form y_1 = Q_1'y */
  
-  y0=(double *)calloc((size_t)n,sizeof(double));
+  y0=(double *)R_chk_calloc((size_t)n,sizeof(double));
   for (p=y,p1=y0;p<y+n;p++,p1++) *p1 = *p;
   left=1;tp=1;i=1;mgcv_qrqy(y0,X,tau,&n,&i,&q,&left,&tp); /* first q elements are y1 */
   /* form y'y */
@@ -397,7 +397,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
 
   if (mp<0) { L_exists=0;mp=m;} else L_exists=1;
 
-  if (m>0) sp = (double *)calloc((size_t)m,sizeof(double)); /* to hold actual log(sp[i]) terms multiplying penalties */
+  if (m>0) sp = (double *)R_chk_calloc((size_t)m,sizeof(double)); /* to hold actual log(sp[i]) terms multiplying penalties */
 
   autoinit=0;for (p=sp0;p<sp0+mp;p++) if (*p <=0.0) { autoinit=1;break;} /* autoinitialize s.p.s? */ 
   def_supplied=1; for (p=def_sp;p<def_sp+mp;p++) if (*p <=0.0) { def_supplied=0;break;} 
@@ -408,7 +408,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
  
 
   if (m>0&&!def_supplied) /* generate default sp's (only possible if there is no L)*/
-  { rSms=(double *)calloc((size_t)m,sizeof(double));
+  { rSms=(double *)R_chk_calloc((size_t)m,sizeof(double));
     /* first get some sort of norm for X */
     Xms=0.0;for (j=0;j<q;j++) for (i=0;i<=j;i++) { xx=X[i+n*j];Xms+=xx*xx;}
     p=S;Xms/=n*q;
@@ -430,28 +430,28 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   }
 /*  for (i=0;i<m;i++) Rprintf("%g  ",exp(sp[i]));Rprintf("\n");*/
 
-  y1=(double *)calloc((size_t)q,sizeof(double)); /* Storage for U_1'Q_1'y */
-  U1=(double *)calloc((size_t)(q*q),sizeof(double));
-  V=(double *)calloc((size_t)(q*q),sizeof(double));
-  d=(double *)calloc((size_t)q,sizeof(double));
+  y1=(double *)R_chk_calloc((size_t)q,sizeof(double)); /* Storage for U_1'Q_1'y */
+  U1=(double *)R_chk_calloc((size_t)(q*q),sizeof(double));
+  V=(double *)R_chk_calloc((size_t)(q*q),sizeof(double));
+  d=(double *)R_chk_calloc((size_t)q,sizeof(double));
   if (mp>0) /* allocate derivative related storage */
-  { M=array2d(m,q*q);K=array2d(m,q*q);VS=(double *)calloc((size_t)(q*q),sizeof(double));
+  { M=array2d(m,q*q);K=array2d(m,q*q);VS=(double *)R_chk_calloc((size_t)(q*q),sizeof(double));
     My=array2d(m,q);Ky=array2d(m,q);yK=array2d(m,q);
     hess=array2d(m,m);
-    grad=(double *)calloc((size_t)mp,sizeof(double));
-    grad1=(double *)calloc((size_t)m,sizeof(double));
-    dnorm=(double *)calloc((size_t)m,sizeof(double));
-    ddelta=(double *)calloc((size_t)m,sizeof(double));
-    nsp=(double *)calloc((size_t)mp,sizeof(double));
+    grad=(double *)R_chk_calloc((size_t)mp,sizeof(double));
+    grad1=(double *)R_chk_calloc((size_t)m,sizeof(double));
+    dnorm=(double *)R_chk_calloc((size_t)m,sizeof(double));
+    ddelta=(double *)R_chk_calloc((size_t)m,sizeof(double));
+    nsp=(double *)R_chk_calloc((size_t)mp,sizeof(double));
     d2norm=array2d(m,m);d2delta=array2d(m,m);
-    ev=(double *)calloc((size_t)mp,sizeof(double));
-    u=(double *)calloc((size_t)(m*m),sizeof(double));
-    u0=(double *)calloc((size_t)(m*mp),sizeof(double));
-    U1U1=(double *)calloc((size_t)(q*q),sizeof(double));
-    spok=(int *)calloc((size_t)m,sizeof(int));
-    /*dir_sp=(int *)calloc((size_t)m,sizeof(int));*/
-    bsp=(double *)calloc((size_t)m,sizeof(double));
-    bag=(double *)calloc((size_t)m,sizeof(double));
+    ev=(double *)R_chk_calloc((size_t)mp,sizeof(double));
+    u=(double *)R_chk_calloc((size_t)(m*m),sizeof(double));
+    u0=(double *)R_chk_calloc((size_t)(m*mp),sizeof(double));
+    U1U1=(double *)R_chk_calloc((size_t)(q*q),sizeof(double));
+    spok=(int *)R_chk_calloc((size_t)m,sizeof(int));
+    /*dir_sp=(int *)R_chk_calloc((size_t)m,sizeof(int));*/
+    bsp=(double *)R_chk_calloc((size_t)m,sizeof(double));
+    bag=(double *)R_chk_calloc((size_t)m,sizeof(double));
   } else 
   { M=K=My=Ky=yK=hess=d2norm=d2delta=NULL;
     u0=VS=grad1=grad=dnorm=ddelta=nsp=ev=u=U1U1=bsp=bag=NULL;
@@ -496,8 +496,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   
 
   min_score=score;
-  sd_step=(double *)calloc((size_t)mp,sizeof(double));
-  n_step=(double *)calloc((size_t)mp,sizeof(double));
+  sd_step=(double *)R_chk_calloc((size_t)mp,sizeof(double));
+  n_step=(double *)R_chk_calloc((size_t)mp,sizeof(double));
  
   if (autoinit&&!def_supplied) /* can't get here if L exists */
   { /* second guesses are scale*rank(S_i) / b'S_ib */
@@ -620,9 +620,9 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
    
     /* free search related memory */
     free2d(M);free2d(K);free2d(My);free2d(Ky);free2d(yK);free2d(hess);
-    free2d(d2norm);free2d(d2delta);free(U1U1);free(rSms);free(u);
-    free(VS);free(grad);free(dnorm);free(ddelta);free(nsp);free(ev);
-    free(bsp);free(bag);free(spok);free(grad1);free(u0);
+    free2d(d2norm);free2d(d2delta);R_chk_free(U1U1);R_chk_free(rSms);R_chk_free(u);
+    R_chk_free(VS);R_chk_free(grad);R_chk_free(dnorm);R_chk_free(ddelta);R_chk_free(nsp);R_chk_free(ev);
+    R_chk_free(bsp);R_chk_free(bag);R_chk_free(spok);R_chk_free(grad1);R_chk_free(u0);
   } /* end of smoothness selection (if (mp>0) {... )*/
 
   /* prepare ``outputs''... */
@@ -643,7 +643,7 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   control[3]=iter; /* iterations used */
   control[4]=fit_call; /* number of evaluations of GCV/UBRE score */
 
-  if (m>0) {free(sp);free2d(Si);}
+  if (m>0) {R_chk_free(sp);free2d(Si);}
   
   /* unpivot R from QR factor of X */
   for (i=0;i<q;i++) { 
@@ -654,8 +654,8 @@ void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,do
   pivoter(V,&q,&q,pivot,&TRUE,&TRUE); /* unpivoting the columns of R1 */
   for (p1=X,p2=V,p=V+q*q;p2<p;p1++,p2++) *p1 = *p2; /* copy back to X */
 
-  free(tau);free(pivot);free(work);free(y0);free(y1);free(U1);free(V);free(d);free(sd_step);
-  free(n_step);
+  R_chk_free(tau);R_chk_free(pivot);R_chk_free(work);R_chk_free(y0);R_chk_free(y1);R_chk_free(U1);R_chk_free(V);R_chk_free(d);R_chk_free(sd_step);
+  R_chk_free(n_step);
     
  /* dmalloc_verify(NULL);dmalloc_log_stats();*/
 }

@@ -3664,9 +3664,9 @@ set.mgcv.options <- function()
 #
 #* Should use R memory allocation to gracefully handle out of memory
 #  problems, or at least check for NULL pointer return. How to free on
-#  error/interupt? Note that under linux there is no guarantee that calloc
+#  error/interupt? Note that under linux there is no guarantee that malloc
 #  will return a NULL pointer even if the memory requested is not actually
-#  available. See man calloc.
+#  available, but calloc will (since it has to access mem to 0 it). See man calloc.
 #
 #* predict.gam and plot.gam "iterms" and `seWithMean' options
 #  don't deal properly with case in which centering constraints
