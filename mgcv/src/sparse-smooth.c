@@ -12,6 +12,7 @@
    to build.
    dyn.load("kd-tree.so")
    to load into R.
+
 */
 
 #include <R.h>
@@ -20,6 +21,35 @@
 #include <math.h>
 #include <stdlib.h>
 #include "mgcv.h"
+
+/* 
+  kd-tree tasks:
+  1. Build and return kd tree.
+  2. Find nearest neighbour of points x in given kd tree.
+  3. Find k nearest neighbours of points x in given kd tree.
+  4. Build kd tree, compute k nearest neighbours for all nodes,
+     return these, and optionally tree.
+  5. Find all points in given tree within r-ball of each point 
+     in x. 
+
+
+  key routines:
+   * kd_tree and free_kdtree for creating and freeing kd trees.
+   * closest - find closest point in kd tree to a new point x.
+   * k_nn_work finds k nearest neighbours of each node in kd tree
+   * k_nn forms kd tree and then obtains k nearest neighbours
+  
+   * kd_sizes, kd_dump, kd_read are concerned with encoding 
+     kd tree in form suitable for storage in R and reading 
+     from this format.
+ 
+   needed: 
+   * k_closest - find k nearest neighbours in kd tree to points not 
+                 in kd tree.
+   * r_ball - find points in kd tree within  r-balls around points 
+              not in kd tree. 
+
+*/
 
 typedef struct { /* defines structure for kd-tree box */
   double *lo,*hi;    /* box defining co-ordinates */
@@ -37,6 +67,83 @@ typedef struct {
       d; /* dimension */
   double huge; /* number indicating an open boundary */
 } kdtree_type;
+
+
+void kd_sizes(kdtree_type kd,int *ni,int *nd) {
+/* reports size of integer array and double array (ni and nd)
+   required to hold full kd tree in packed storage for passing 
+   back to R */
+  *nd = 1 + kd.d * kd.n_box * 2; /* to hold huge, lo and hi data for boxes */
+  *ni = 2 + /* n_box and d */
+    7 * kd.n_box; /* ind,rind,parent,child1,child2,p0,p1*/        
+}
+
+void kd_dump(kdtree_type kd,int *idat,int *ddat) {
+/* writes a kdtree structure to arrays idat and ddat, initialized
+   to the sizes determined by kd_sizes for kd. The point is that
+   these are suitable for passing to R, say. */
+  int *p,*p0,*p1,i,nb,d,*pc1,*pc2,*pp;
+  double *pd,*pd1;
+  nb = idat[0] = kd.n_box; /* number of boxes */
+  d = idat[1] = kd.d; /* dimension of boxes/points */
+  /* copy kd.ind... */
+  for (p=idat+2,p0=kd.ind,p1=p0+nb;p0<p1;p++,p0++) *p = *p0;
+  /* copy kd.rind... */
+  for (p0=kd.rind,p1=p0+nb;p0<p1;p++,p0++) *p = *p0;
+  /* now work through boxes dumping contents */
+  pp = idat + 2 + 2*nb; /* parents */
+  pc1 = pp + nb; /* child1 */
+  pc2 = pc1 + nb; /* child2 */
+  p0 = pc2 + nb; /* p0 */
+  p1 = p0 + nb; /* p1 */
+  for (i=0;i<nb;i++) {
+    /* copy d array kd.box[i].lo... */
+    for (pd=kd.box[i].lo,pd1=pd+d;pd<pd1;pd++,ddat++) *ddat = *pd;
+    /* copy  kd.box[i].hi... */
+    for (pd=kd.box[i].hi,pd1=pd+d;pd<pd1;pd++,ddat++) *ddat = *pd;
+    *pp = kd.box[i].parent;pp++;
+    *pc1 = kd.box[i].child1;pc1++;
+    *pc2 = kd.box[i].child2;pc2++;
+    *p0 = kd.box[i].p0;p0++;
+    *p1 = kd.box[i].p1;p1++;
+  }
+}
+
+void kd_read(kdtree_type *kd,int *idat,double *ddat) {
+/* creates a kd tree from the information packed into idat and ddat by
+   kd_dump. Note that ind, rind, and kd.box[0].lo should not be freed 
+   when freeing this structure, as no storage is allocated for these.
+   Only kd.box, should be freed!!
+
+   Point of this is that kd_dump can be used to export structure to R for 
+   storage, and this routine then reads in again.
+*/
+  int nb,d,*pp,*pc1,*pc2,*p0,*p1,i;
+  box_type *box;
+  nb = kd->n_box = idat[0]; /* number of boxes */
+  d = kd->d = idat[1]; /* dimensions of boxes etc. */
+  kd->ind = idat + 2;
+  kd->rind = idat + 2 + nb;
+  /* Now make an array of boxes (all cleared to zero)... */
+  kd->box = (box_type *)R_chk_calloc((size_t)nb,sizeof(box_type));
+  /* now work through boxes loading contents */
+  pp = idat + 2 + 2*nb; /* parents */
+  pc1 = pp + nb; /* child1 */
+  pc2 = pc1 + nb; /* child2 */
+  p0 = pc2 + nb; /* p0 */
+  p1 = p0 + nb; /* p1 */
+  box = kd->box;
+  for (i=0;i<nb;i++,box++) {
+    box->lo = ddat;ddat += d;
+    box->hi = ddat;ddat += d;
+    box->parent = *pp;pp++;
+    box->child1 = *pc1;pc1++;
+    box->child2 = *pc2;pc2++;
+    box->p0 = *p0;p0++;
+    box->p1 = *p1;p1++;
+  }
+}
+
 
 void kd_sanity(kdtree_type kd) {
   int ok=1,i,*count,n=0;
@@ -311,78 +418,6 @@ double box_dist(box_type *box,double *x,int d) {
   return(sqrt(d2));
 }
 
-double sector_box_dist(box_type *box,double *x,double theta0,double theta1,double na_code) {
-/* find distance from 2 dimensional box to point x, if the box has some part overlapping the 
-   segment through x starting at angle theta0 and extending to theta1. Angles are on 
-   [0,2 pi] and 0 is angle denotes the x axis. 
-   na_code is the number to use to signify that the box is out of sector.
-*/
-  double d2 = 0.0,z,*bl,*bh,*xd,thetaU,thetaL,x0,x1,y0,y1;
-  int ok;
-  bl = box->lo;bh = box->hi; 
-  /* first determine the co-ordinates of the relevant corners */
-  if (x[0]<bl[0]) { /* box right of point */
-    if (x[1]<bl[1]) { /* box above point */
-      x0 = bh[0];y0 = bl[1];
-      x1 = bl[0];y1 = bh[1];
-    } else if (x[1]>bh[1]) { /* box below point */
-      x0 = bl[0];y0 = bl[1];
-      x1 = bh[0];y1 = bh[1];
-    } else { /* box straddles vertically */
-      x0 = bl[0];y0 = bl[1];
-      x1 = bl[0];y1 = bh[1];
-    } 
-  } else if (x[0]>bh[0]) { /* box left of point */
-    if (x[1]<bl[1]) { /* box above point */
-      x0 = bh[0];y0 = bh[1];
-      x1 = bl[0];y1 = bl[1];
-    } else if (x[1]>bh[1]) { /* box below point */
-      x0 = bl[0];y0 = bh[1];
-      x1 = bh[0];y1 = bl[1];
-    } else { /* box straddles vertically */
-      x0 = bh[0];y0 = bh[1];
-      x1 = bh[0];y1 = bl[1];
-    } 
-  } else { /* box straddles horizontally */
-     if (x[1]<bl[1]) { /* box above point */
-      x0 = bh[0];y0 = bl[1];
-      x1 = bl[0];y1 = bl[1];
-    } else if (x[1]>bh[1]) { /* box below point */
-      x0 = bl[0];y0 = bh[1];
-      x1 = bh[0];y1 = bh[1];
-    } else { /* box straddles vertically */
-       return(0.0); /* point is in box, min distance is zero */ 
-    } 
-  } /* determined locations of outermost (angular) box points relative to x */
-  
-  /* Now have to determine whether box overlaps relevant sector */
-  x0 -= x[0];z = x0*x0;
-  y0 -= x[1];z += y0*y0; z = sqrt(z);
-  thetaL = acos(x0/z);
-  if (y0<0) thetaL = 2*PI - thetaL;
- 
-  x1 -= x[0];z = x1*x1;
-  y1 -= x[1];z += y1*y1; z = sqrt(z);
-  thetaU = acos(x1/z);
-  if (y1<0) thetaU = 2*PI - thetaU;
-  
-  ok = 0;
-  if ((thetaL<theta0&&theta0<=thetaU)||((thetaU<thetaL)&&(theta0<thetaL||theta0>=thetaU))) ok = 1;
-  if ((thetaL<theta1&&theta1<=thetaU)||((thetaU<thetaL)&&(theta1<thetaL||theta1>=thetaU))) ok = 1;
-
-  if ((theta0<thetaL&&thetaL<=theta1)||((theta1<theta0)&&(thetaL<theta0||thetaL>=theta1))) ok = 1;
-  if ((theta0<thetaU&&thetaU<=theta1)||((theta1<theta0)&&(thetaU<theta0||thetaU>=theta1))) ok = 1;
-  
-  if (ok) { /* then the box is within sector, so distance is computed */
-    for (xd=x+2; x < xd;x++,bl++,bh++) {
-      if (*x < *bl) { z = *x - *bl;d2 += z*z;}
-      if (*x > *bh) { z = *x - *bh;d2 += z*z;}
-    }  
-    return(sqrt(d2));
-  } else {
-    return(na_code);
-  }				     
-}
 
 
 //inline 
@@ -444,19 +479,6 @@ double xidist(double *x,double *X,int i,int d, int n) {
     dist += z*z;
   }
   return(sqrt(dist));
-}
-
-
-double sector_xidist(double *x,double *X,int i, int n,double theta0,double theta1,double na_code) {
-/* distance between point x and point in ith row of X, provided that the point is in the 
-   sector between theta0 and theta1 with origin at x. theta0/1 are in [0,2 pi]. 
-*/
-  double r,theta,x0,y0;
-  x0 = x[0] - X[i];y0 = x[1] - X[i + n];
-  r = sqrt(x0*x0+y0*y0); theta = acos(x0/r);
-  if (y0 < 0) theta = 2*PI - theta;
-  if ((theta0<theta && theta<=theta1)||((theta1<theta0)&&(theta<theta0||theta>=theta1))) return(r); 
-  else return(na_code);
 }
 
 
