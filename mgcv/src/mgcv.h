@@ -81,11 +81,9 @@ void gridder(double *z,double *x,double *y,int *n,double *g, int *G,int *nx, int
 void pde_coeffs(int *G,double *x,int *ii,int *jj,int *n,int *nx,int *ny,double *dx,double *dy);
 
 /* sparse smooth related routines */
-void sparse_penalty(double *X,int *n,int *d,double *D,int *ni,int *k,int *m,int *a_weight,double *kappa);
 void k_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,int *get_a);
-void kba_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,
-            int *get_a,double *cut_off);
-void Rkdtree(double *X,int *n, int *d,double *lo,double *hi,int *ind, int *rind);
+void Rkdtree(double *X,int *n, int *d,int *idat,double *ddat);
+void Rkdnearest(double *X,int *idat,double *ddat,int *n,double *x, int *m, int *ni, double *dist,int *k);
 void tri2nei(int *t,int *nt,int *n,int *d,int *off);
 void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,
 		 int *m,int *a_weight,double *kappa);
