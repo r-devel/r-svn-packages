@@ -666,6 +666,97 @@ void p_area(double *a,double *X,kdtree_type kd,int n,int d) {
 } /* p_area */
 
 
+void k_radius(double r, kdtree_type kd, double *X,double *x,int *list,int *nlist) {
+/* Find all points in kd tree defined by kd, X within radius r of point x,
+   and return these in list (initialized to length n.) on output nlist is
+   number of points returned. Could be made more efficient by checking if
+   boxes are completely inside r-ball, and simply adding, rather than opening, 
+   if they are. 
+*/
+  int todo[100],item,bi,bi_old,dim,d,c1,c2,*ind,n,i;
+  box_type *box;
+  box = kd.box;
+  d = kd.d;
+  n = kd.n;
+  ind = kd.ind;
+  *nlist = 0; /* neighbour counter */
+  bi = 0; /* box index */
+  dim = 0; /* box dividing dimension (cycles as we move down tree) */
+  /* find the index, bi, of the smallest box completely enclosing r-ball around x... */ 
+  while (box[bi].child1) { /* box has children */
+    bi_old = bi; 
+    c1 = box[bi].child1;c2 = box[bi].child2;
+    /* need to find out if r ball around x could be contained in one
+       of the children. Idea is that we know it's in bi, so only need
+       both children, if r-ball cuts the divider between children. */
+    if (x[dim]+r <= box[c1].hi[dim]) bi = c1; /* r-ball is completely inside child 1 */     
+    else if (x[dim]-2 >= box[c2].lo[dim]) bi = c2; /* r-ball completely in child 2 */
+    dim++; if (dim==d) dim = 0;
+    if (bi==bi_old) break; /* neither child contained whole r-ball, so use box[bi] */
+  }
+  /* box[bi] completely encloses the r-ball around x. Now check whether its points
+     lie within r-ball around x... */  
+  item=0;  /* index of end of task list */
+  todo[0] = bi; /* initial task - box bi */
+  while (item>=0) {
+    bi = todo[item];item--;
+    if (box_dist(box+bi,x,d) < r) { /* box could contain a point in r-ball so check */
+      if (box[bi].child1) { /* box has children, so add them to todo list */
+        item++;todo[item] = box[bi].child1;
+        item++;todo[item] = box[bi].child2;
+      } else { /* reached small end of tree - check actual points */
+        for (i=box[bi].p0;i<=box[bi].p1;i++) {
+          if (xidist(x,X,ind[i],d,n) < r) {
+            list[*nlist] = ind[i]; (*nlist)++;             
+          }
+        }
+      }
+    }
+  }
+} /* k_radius */
+
+
+void Rkradius(double *r,int *idat,double *ddat,double *X,double *x,int *m,int *off,int *ni,int *op) {
+/* Given kd tree defined by idat, ddat and X, from R, this routine finds all points in  
+   the tree less than distance r from each point in x. x contains the points stored end-to-end.
+   Routine must be called twice. First with op==0, which does the work, but only returns the 
+   length required for ni, in off[m+1].
+   The second call must have op==1, and ni initialized to the correct length. Then neighbour
+   information is returned in off, ni.
+   neighbours of ith point are in ni[off[i]:(off[i+1]-1)], where off is an m+1 vector. All indexes
+   0 based (C style). Add one to off and ni to get R style.
+ */
+  static int *nei,nn; 
+  kdtree_type kd;
+  double *xx;
+  int d,i,j,n_buff=0,nlist,*list;
+  if (*op) { /* output saved nei data */
+    for (i=0;i<nn;i++) ni[i]=nei[i];
+    R_chk_free(nei);nn=0;
+    return;
+  }
+  kd_read(&kd,idat,ddat); /* unpack kd tree */
+  d = kd.d; /* dimension */
+  /* get the r-radius neighbour information... */
+  list = (int *)R_chk_calloc((size_t)kd.n,sizeof(int)); /* list of neighbours of ith point */
+  n_buff = kd.n*10;
+  nei = (int *)R_chk_calloc((size_t)n_buff,sizeof(int)); /* global list of neighbours */
+  xx=x;nn=0;off[0]=0;
+  for (i=0;i<*m;i++) { /* work through points in x */
+    k_radius(*r, kd, X,xx,list,&nlist);
+    if (nn+nlist>n_buff) { /* expand nei */
+      n_buff *= 2;
+      nei = (int *)R_chk_realloc(nei,(size_t)n_buff*sizeof(int));
+    }
+    for (j=nn;j<nn+nlist;j++) nei[j] = list[j-nn];
+    nn += nlist;
+    off[i+1] = nn;
+    xx += d; /* next point */
+  }
+  R_chk_free(list);
+  R_chk_free(kd.box); /* free storage created by kd_read */
+}
+
 void k_newn_work(double *Xm,kdtree_type kd,double *X,double *dist,int *ni,int*m,int *n,int *d,int *k) {
 /* Given a kd tree, this routine does the actual work of finding the nearest neighbours
    within the tree (defined by kd, X), to a new set of m points in x

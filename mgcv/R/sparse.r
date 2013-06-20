@@ -178,13 +178,31 @@ kd.nearest <- function(kd,X,x,k) {
 ## k nearest neighbours in X, to the points in the rows of x.
 ## outputs: ni[i,] lists k nearest neighbours of X[i,].
 ##          dost[i,] is distance to those neighbours.
+## note R indexing of output
   n <- nrow(X)
   m <- nrow(x)
   ni <- matrix(0,m,k)
   oo <- .C(C_Rkdnearest,as.double(X),as.integer(kd$idat),as.double(kd$ddat),as.integer(n),as.double(x), 
            as.integer(m), ni=as.integer(ni), dist=as.double(ni),as.integer(k))
-  list(ni=matrix(oo$ni,m,k),dist=matrix(oo$dist,m,k))
+  list(ni=matrix(oo$ni+1,m,k),dist=matrix(oo$dist,m,k))
 }
+
+kd.radius <- function(kd,X,x,r) {
+## find all points in kd tree (kd,X) in radius r of points in x.
+## kd should come from kd.tree(X).
+## neighbours of x[i,] in X are the rows given by ni[off[i]:(off[i+1]-1)]
+   m <- nrow(x);
+   off <- rep(0,m+1)
+   ## do the work...
+   oo <- .C(C_Rkradius,as.double(r),as.integer(kd$idat),as.double(kd$ddat),as.double(X),as.double(t(x)),
+         as.integer(m),off=as.integer(off),ni=as.integer(0),op=as.integer(0))
+   off <- oo$off
+   ni <- rep(0,off[m+1])
+   ## extract to R and clean up...
+   oo <- .C(C_Rkradius,as.double(r),as.integer(kd$idat),as.double(kd$ddat),as.double(X),as.double(t(x)),
+         as.integer(m),off=as.integer(off),ni=as.integer(ni),op=as.integer(1))
+   list(off=off+1,ni=oo$ni+1) ## note R indexing here.
+} ## kd.radius
 
 tieMatrix <- function(x) {
 ## takes matrix x, and produces sparse matrix P that maps list of unique 
