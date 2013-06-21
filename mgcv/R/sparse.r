@@ -1,4 +1,4 @@
-## (c) Simon N. Wood 2011
+## (c) Simon N. Wood 2011-2013
 ## functions for sparse smoothing.
 
 
