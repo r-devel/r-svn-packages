@@ -404,12 +404,12 @@ spasm.range <- function(object,upper.prop=.5,centre=TRUE) {
 ## get reasonable smoothing parameter range for sparse smooth in object
   sp <- 1
   edf <- spasm.sp(object,sp,get.trH=TRUE,centre=centre)$trH
-  while (edf < object$edf0*1.01) { 
+  while (edf < object$edf0*1.01+.5) { 
     sp <- sp /100
     edf <- spasm.sp(object,sp,get.trH=TRUE,centre=centre)$trH
   }
   sp1 <- sp ## store smallest known good
-  while (edf > object$edf0*1.01) { 
+  while (edf > object$edf0*1.01+.5) { 
     sp <- sp * 100
     edf <- spasm.sp(object,sp,get.trH=TRUE,centre=centre)$trH
   }
