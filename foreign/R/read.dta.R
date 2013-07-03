@@ -160,9 +160,10 @@ write.dta <-
     shortlevels <- function(f) {
         ll <- levels(f)
         if (is.null(ll)) return(NULL)
-        abbreviate(ll, 80L)
+        ## avoid warning if non-ASCII strings are used (unwisely)
+        if (all(nchar(ll, "bytes") <= 80L)) ll else abbreviate(ll, 80L)
     }
-    leveltable <- lapply(dataframe,shortlevels)
+    leveltable <- lapply(dataframe, shortlevels)
 
     if (any(sapply(dataframe, function(x) {
         d <- dim(x)
