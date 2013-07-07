@@ -1,8 +1,12 @@
-2013-05-18  Brian Ripley <Brian.Ripley@R-project.org>
+2013-07-07  Brian Ripley <Brian.Ripley@R-project.org>
+
+	* src/SASxport.c, tests/testEmpty.R: fix for PR#15346 (empty datasets).
+
+2013-05-07  Brian Ripley <Brian.Ripley@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-54.
 
-	* R/read.dta.R: avoid abbreviate() in write.dta if not needed.
+	* R/read.dta.R: avoid abbreviate() in write.dta() if not needed.
 
 2013-04-28, 2013-05-06  Brian Ripley <Brian.Ripley@R-project.org>
 
