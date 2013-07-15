@@ -940,6 +940,8 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 	    case STRSXP:
 		/* Up to 244 bytes should be written, zero-padded */
 		k = length(STRING_ELT(VECTOR_ELT(df, j), i));
+		if (k == 0)
+		    error("empty string is not valid in Stata's documented format");
 		if(k > 244) k = 244;
 		OutStringBinary(CHAR(STRING_ELT(VECTOR_ELT(df, j), i)), fp, k);
 		for(l = INTEGER(types)[j]-k; l > 0; l--) OutByteBinary(0, fp);
