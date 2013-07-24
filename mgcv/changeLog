@@ -6,6 +6,9 @@
 * Compiled code now uses R_chck_calloc and R_chk_free for memory management
   to avoid the possibility of unfriendly exit on running out of memory. 
 
+* fix in gam.side which would fail with unpenalized interactions in the 
+  presence of main effects. 
+
 1.7-24
 
 * Examples pruned in negbin, smooth.construct.ad.smooth.spec and bam help 

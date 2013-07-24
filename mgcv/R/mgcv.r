@@ -394,7 +394,8 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
         if (!is.null(ind)) { 
           sm[[i]]$X <- sm[[i]]$X[,-ind]
           ## work through list of penalty matrices, applying constraints...
-          for (j in length(sm[[i]]$S):1) { ## working down so that dropping is painless
+          nsmS <- length(sm[[i]]$S)
+          if (nsmS>0) for (j in nsmS:1) { ## working down so that dropping is painless
             sm[[i]]$S[[j]] <- sm[[i]]$S[[j]][-ind,-ind]
             if (sum(sm[[i]]$S[[j]]!=0)==0) rank <- 0 else
             rank <- qr(sm[[i]]$S[[j]],tol=tol,LAPACK=FALSE)$rank
