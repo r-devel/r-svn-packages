@@ -13,7 +13,7 @@ rpartpl <- function(x, y, node, erase = FALSE, ...)
     if (any(erase)) {
         ## erase denotes the set of nodes to be erased
         lines(c(xx[, erase]), c(yy[, erase]), col = 0L)
-        return(x = x[!erase], y = y[!erase])
+        return(list(x = x[!erase], y = y[!erase]))
     }
     plot(range(x), range(y), type = "n", axes = FALSE, xlab = "", ylab = "")
     text(x[1L], y[1L], "|", ...)
