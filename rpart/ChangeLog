@@ -1,7 +1,7 @@
 2013 ??? ??	4.1-2	Replace calls to as.name().
 	                Remove unused and un-exported rpartpl().
 	                Correct plot.rpart.Rd as to where things are stored.
-	                Increase version dependence to >= 3.0.0,
+	                Increase version dependence to >= 2.15.0,
 	                remove conditional paste0 from this package.
 
 2013 Mar 20	4.1-1	Add ko translations, update reference output for 3.0.0.
