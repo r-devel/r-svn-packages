@@ -11,7 +11,7 @@ Authors@R: c(person("Terry", "Therneau", role = "aut",
 		   comment = "author of R port"))
 Description: Recursive partitioning and regression trees
 Title: Recursive Partitioning
-Depends: R (>= 2.14.0), graphics, stats, grDevices
+Depends: R (>= 3.0.0), graphics, stats, grDevices
 Suggests: survival
 License: GPL-2 | GPL-3
 LazyData: yes
