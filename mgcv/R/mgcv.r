@@ -3062,8 +3062,10 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,
         "glm")))
     dotargs <- dotargs[is.glm]
     if (length(dotargs) > 0)
-        return(anova.glmlist(c(list(object), dotargs), dispersion = dispersion,
-            test = test))
+     return(anova(structure(c(list(object), dotargs), class="glmlist"), 
+            dispersion = dispersion, test = test)) 
+       # return(anova.glmlist(c(list(object), dotargs), dispersion = dispersion,
+       #     test = test)) ## modified at BDR's suggestion 19/08/13
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
     sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type)
