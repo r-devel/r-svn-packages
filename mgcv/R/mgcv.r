@@ -1125,7 +1125,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
   object$outer.info <- b
   object$gcv.ubre <- as.numeric(b.est$score)
   object
-}
+} ## gam.negbin
 
 
 
@@ -1141,6 +1141,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 #     add to `object' 
 { if (is.null(optimizer[2])) optimizer[2] <- "newton"
   if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimization method.")
+
+  # if (!optimizer[2]%in%c("nlm","optim","nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
+
   if (length(lsp)==0) { ## no sp estimation to do -- run a fit instead
     optimizer[2] <- "no.sps" ## will cause gam2objective to be called, below
   }
@@ -1650,7 +1653,7 @@ print.gam<-function (x,...)
   invisible(x)
 }
 
-gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
+gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-06, maxit = 100,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
@@ -1665,7 +1668,8 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
 # rank.tol is the tolerance to use for rank determination
 # outerPIsteps is the number of performance iteration steps used to intialize
 #                         outer iteration
-{  
+{   
+    if (!is.numeric(nthreads) || nthreads <1) stop("nthreads must be a positive integer") 
     if (!is.numeric(irls.reg) || irls.reg <0.0) stop("IRLS regularizing parameter must be a non-negative number.")
     if (!is.numeric(epsilon) || epsilon <= 0) 
         stop("value of epsilon must be > 0")
@@ -1705,7 +1709,7 @@ gam.control <- function (irls.reg=0.0,epsilon = 1e-06, maxit = 100,
     if (is.null(optim$factr)) optim$factr <- 1e7
     optim$factr <- abs(optim$factr)
 
-    list(irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
+    list(nthreads=round(nthreads),irls.reg=irls.reg,epsilon = epsilon, maxit = maxit,
          trace = trace, mgcv.tol=mgcv.tol,mgcv.half=mgcv.half,
          rank.tol=rank.tol,nlm=nlm,
          optim=optim,newton=newton,outerPIsteps=outerPIsteps,

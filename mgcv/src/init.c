@@ -18,7 +18,7 @@ R_CMethodDef CEntries[] = {
     {"MinimumSeparation", (DL_FUNC) &MinimumSeparation, 7},
     {"magic", (DL_FUNC) &magic, 18},
     {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
-    {"gdi1",(DL_FUNC) &gdi1,45},
+    {"gdi1",(DL_FUNC) &gdi1,46},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
     {"pls_fit",(DL_FUNC)&pls_fit,10},
     {"pls_fit1",(DL_FUNC)&pls_fit1,11},

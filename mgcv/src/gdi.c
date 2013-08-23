@@ -1,4 +1,4 @@
-/* Copyright (C) 2007,2008,2009 Simon N. Wood  simon.wood@r-project.org
+/* Copyright (C) 2007-2013 Simon N. Wood  simon.wood@r-project.org
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -20,6 +20,10 @@ USA. */
 #include <stdio.h>
 #include <math.h>
 #include <R.h>
+#include <Rconfig.h>
+#ifdef SUPPORT_OPENMP
+#include <omp.h>
+#endif
 #define ANSI
 /*#define DEBUG*/
 #include "matrix.h"
@@ -788,7 +792,8 @@ void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int
 
 
 void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
-             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *deriv)
+             double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,
+		   int *deriv,int nthreads)
 
 /* obtains derivatives of |X'WX + S| wrt the log smoothing parameters, as required for REML. 
    The determinant itself has to be obtained during intial decompositions: see gdi().
@@ -803,7 +808,17 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 */
 
 { double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1;
-  int m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2,max_col;
+  int m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,max_col;
+  int tid;
+  if (nthreads<1) nthreads = 1;
+#ifndef SUPPORT_OPENMP
+  nthreads = 1; /* reset nthreads to 1 if no openMP support */ 
+#endif
+#ifdef SUPPORT_OPENMP
+  m = omp_get_num_procs(); /* detected number of processors */
+  if (nthreads>m) nthreads=m; /* no point in more threads than m */
+  omp_set_num_threads(nthreads); /* must precede sections */
+#endif
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* obtain diag(KK') */ 
   if (*deriv) {
@@ -813,17 +828,28 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
       return;
   }
   /* set up work space */
-  work =  (double *)R_chk_calloc((size_t)*n,sizeof(double));
-
+  work =  (double *)R_chk_calloc((size_t)*n * nthreads,sizeof(double));
+  tid=0; /* thread identifier defaults to zero if openMP not available */
   /* now loop through the smoothing parameters to create K'TkK */
   if (deriv2) {
     KtTK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
+#ifdef SUPPORT_OPENMP
+#pragma omp parallel private(k,j,tid)
+#endif
+{ 
+#ifdef SUPPORT_OPENMP
+#pragma omp for
+#endif
     for (k=0;k < *M;k++) {
+#ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+#endif    
       j = k * *r * *r;
-      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work);
+      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work + *n * tid);
     }
+} /* end of parallel section */
   } else { KtTK=(double *)NULL;} /* keep compiler happy */
-  
+
   /* start first derivative */ 
   bt=1;ct=0;mgcv_mmult(det1,Tk,diagKKt,&bt,&ct,M,&one,n); /* tr(TkKK') */ 
 
@@ -832,50 +858,79 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   max_col = *q;
   for (j=0;j<*M;j++) if (max_col<rSncol[j]) max_col=rSncol[j]; /* under ML can have q < max(rSncol) */
 
-  PtrSm = (double *)R_chk_calloc((size_t)(*r * max_col ),sizeof(double)); /* storage for P' rSm */
+  PtrSm = (double *)R_chk_calloc((size_t)(*r * max_col * nthreads),sizeof(double)); /* storage for P' rSm */
   trPtSP = (double *)R_chk_calloc((size_t) *M,sizeof(double));
 
   if (deriv2) {
     PtSP = (double *)R_chk_calloc((size_t)(*M * *r * *r ),sizeof(double));
   } else { PtSP = (double *) NULL;}
-
-  for (rSoff=0,m=0;m < *M;m++) { /* loop through penalty matrices */
-     bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
-     rSoff += rSncol[m];
-     trPtSP[m] = sp[m] * diagABt(work,PtrSm,PtrSm,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
+  
+  
+  rSoff =  (int *)R_chk_calloc((size_t)*M,sizeof(int));
+  rSoff[0] = 0;for (m=0;m < *M-1;m++) rSoff[m+1] = rSoff[m] + rSncol[m];
+  tid = 0;
+#ifdef SUPPORT_OPENMP
+#pragma omp parallel private(m,bt,ct,tid)
+#endif
+{ 
+#ifdef SUPPORT_OPENMP
+#pragma omp for
+#endif
+  for (m=0;m < *M;m++) { /* loop through penalty matrices */
+#ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+#endif    
+     bt=1;ct=0;mgcv_mmult(PtrSm + tid * *r * max_col,P,rS+rSoff[m] * *q,&bt,&ct,r,rSncol+m,q);
+     /*rSoff += rSncol[m];*/
+     trPtSP[m] = sp[m] * diagABt(work + *n * tid,PtrSm + tid * *r * max_col,
+                                 PtrSm + tid * *r * max_col,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
      det1[m] += trPtSP[m]; /* completed first derivative */
      if (deriv2) { /* get P'S_mP */
-       bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm,PtrSm,&bt,&ct,r,r,rSncol+m);
+       bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm + tid * *r * max_col,
+                            PtrSm+ tid * *r * max_col ,&bt,&ct,r,r,rSncol+m);
      }
   }
-
+} /* end of parallel section */
+  R_chk_free(rSoff);
   /* Now accumulate the second derivatives */
 
-  if (deriv2) for (m=0;m < *M;m++) for (k=m;k < *M;k++){
+#ifdef SUPPORT_OPENMP
+#pragma omp parallel private(m,k,km,mk,xx,tid)
+#endif
+{ 
+  if (deriv2) 
+#ifdef SUPPORT_OPENMP
+#pragma omp for
+#endif
+   for (m=0;m < *M;m++) {
+#ifdef SUPPORT_OPENMP
+     tid = omp_get_thread_num(); /* thread running this bit */
+#endif       
+     for (k=m;k < *M;k++) {
      km=k * *M + m;mk=m * *M + k;
      /* tr(Tkm KK') */
      for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
      det2[km] = xx;
 
      /* - tr(KTkKK'TmK) */
-     det2[km] -= diagABt(work,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+     det2[km] -= diagABt(work + *n * tid,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
      /* sp[k]*tr(P'S_kP) */
      if (k==m) det2[km] += trPtSP[m];
 
      /* -sp[m]*tr(K'T_kKP'S_mP) */
-     det2[km] -= sp[m]*diagABt(work,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
+     det2[km] -= sp[m]*diagABt(work + *n * tid,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
      
      /* -sp[k]*tr(K'T_mKP'S_kP) */
-     det2[km] -= sp[k]*diagABt(work,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
+     det2[km] -= sp[k]*diagABt(work + *n * tid,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
  
      /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
-     det2[km] -= sp[m]*sp[k]*diagABt(work,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
+     det2[km] -= sp[m]*sp[k]*diagABt(work + *n * tid,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
 
-     det2[mk] = det2[km];     
+     det2[mk] = det2[km];
+    }     
   }
-
-
+} /* end of parallel section */
  
   /* free up some memory */
   if (deriv2) {R_chk_free(PtSP);R_chk_free(KtTK);}
@@ -1321,8 +1376,9 @@ void undrop_rows(double *X,int r,int c,int *drop,int n_drop)
 
 
 
-double MLpenalty1(double *det1,double *det2,double *Tk,double *Tkm,double *nulli, double *R,double *Q, int *nind,double *sp,
-                 double *rS,int *rSncol,int *q,int *n,int *Ms,int *M,int *neg_w,double *rank_tol,int *deriv) {
+double MLpenalty1(double *det1,double *det2,double *Tk,double *Tkm,double *nulli, 
+double *R,double *Q, int *nind,double *sp,double *rS,int *rSncol,int *q,int *n,
+int *Ms,int *M,int *neg_w,double *rank_tol,int *deriv,int *nthreads) {
 /* Routine to obtain the version of log|X'WX+S| that applies to ML, rather than REML.
    This version assumes that we are working in an already truncated range-null separated space.
 
@@ -1450,7 +1506,7 @@ double MLpenalty1(double *det1,double *det2,double *Tk,double *Tkm,double *nulli
   /* Now we have all the ingredients to obtain required derivatives of the log determinant... */
   
   if (*deriv)
-    get_ddetXWXpS(det1,det2,P,K,sp,rS,rSncol,Tk,Tkm,n,&qM,&qM,M,deriv);
+    get_ddetXWXpS(det1,det2,P,K,sp,rS,rSncol,Tk,Tkm,n,&qM,&qM,M,deriv,*nthreads);
 
   R_chk_free(P);R_chk_free(K);R_chk_free(drop);
   return(ldetXWXS);
@@ -1474,7 +1530,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
-	 int *REML,int *fisher,int *fixed_penalty)     
+	  int *REML,int *fisher,int *fixed_penalty,int *nthreads)     
 /* 
    Version of gdi, based on derivative ratios and Implicit Function Theorem 
    calculation of the derivatives of beta. Assumption is that Fisher is only used 
@@ -1543,6 +1599,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     * non-zero `fixed_penalty' inticates that S includes a fixed penalty component,
       the range space projected square root of which is in the final element of `UrS'.
       This information is used by get_detS2().
+    * nthreads tells routine how many threads to use for parallel code sections.
 
    The method has 4 main parts:
 
@@ -1632,7 +1689,6 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
   pivoter(R1,q,q,pivot,&TRUE,&TRUE); /* unpivoting the columns of R1 */
  
-  
   /* Form a nicely scaled version of [R',Es']' for rank determination */ 
   Rnorm = frobenius_norm(R1,q,q);
   Enorm =  frobenius_norm(Es,Enrow,q);
@@ -1922,7 +1978,6 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
     /* Note that PKtz used as pivoted version of beta, but not clear that PKtz really essential if IFT used */
 
-   
     ift1(R,Vt,X,rS,PKtz,sp,w,a1,b1,b2,eta1,eta2,n,&rank,M,rSncol,&deriv2,&neg_w,&nr);
   
     /* Now use IFT based derivatives to obtain derivatives of W and hence the T_* terms */
@@ -2037,7 +2092,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   if (*REML>0) { /* It's REML */
     /* Now deal with log|X'WX+S| */   
     reml_penalty = ldetXWXS;
-    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,deriv); /* trA1/2 really contain det derivs */
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,deriv,*nthreads); /* trA1/2 really contain det derivs */
   } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
 
   if (*REML<0) { /* it's ML, and more complicated */
@@ -2045,7 +2100,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* get derivs of ML log det in trA1 and trA2... */
 
     reml_penalty =  MLpenalty1(trA1,trA2,Tk,Tkm,nulli,R,Q1,nind,sp,rS,rSncol,
-                           &rank,n,Mp,M,&neg_w,rank_tol,deriv);
+			       &rank,n,Mp,M,&neg_w,rank_tol,deriv,nthreads);
     
     R_chk_free(R);R_chk_free(Q1);R_chk_free(nind);
   } /* note that rS scrambled from here on... */

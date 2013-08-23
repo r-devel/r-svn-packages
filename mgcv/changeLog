@@ -3,6 +3,9 @@
 
 1.7-25
 
+* some code added to allow openMP based multi-threading in gam fits (see
+  ?gam.control). Limited so far. 
+
 * anova.glmlist no longer called.
 
 * Compiled code now uses R_chck_calloc and R_chk_free for memory management

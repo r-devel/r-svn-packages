@@ -11,7 +11,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
          double *P0, double *P1,double *P2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
-	  int *REML,int *fisher,int *fixed_penalty);     
+	  int *REML,int *fisher,int *fixed_penalty,int *nthreads);     
 
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);
