@@ -505,6 +505,162 @@ void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
 }
 
 
+void row_block_reorder(double *x,int *r,int *c,int *nb) {
+/* x contains an r by c matrix, which is to be split into k = ceil(r/nb)
+   row-wise blocks each containing nb rows, except for the last. The 
+   storage for x must actually have at least c * nb * k elements. 
+
+   This routine re-orders these k submatrices, so that they occur one after 
+   another in x. This is done largely in-situ, with the aid of 2 indexing
+   arrays. 
+
+   The elements of one column belonging to one block are referred to as a 
+   segment.
+*/
+  int *a,*s,k,nbf=0,i,j,q,si,ti,ns,ns_main,ns_extra;
+  double *x0,*x1,tmp,*extra=NULL;
+  k = *r / *nb; /* number of blocks */
+  if (*r > *nb * k) {
+    nbf = *r - *nb * k;k++; /* nbf number of rows in final block */
+  }
+  /* first task is to pad the end block segments, so that all segments
+     have equal length, otherwise efficient segment swapping is not
+     possible... */
+  ns = k * *c; /* total number of segements */
+  if (nbf) { /* only do this if final block shorter than rest */
+    ns_main = (*r * *c) / *nb; /* full segments fitting in x */
+    ns_extra = ns - ns_main; /* segments requiring extra storage */
+    extra = (double *) R_chk_calloc((size_t) *nb * ns_extra,sizeof(double));
+    /* first copy the end segments into extra */
+    x0 = extra + *nb * ns_extra - 1; /* end of extra */ 
+    x1 = x + *r * *c -1 ; /* end of x */
+    for (i=ns-1;i>=ns_main;i--) { /* work down through segments */
+      if (i%(k-1)) { /* not a short segment */     
+        for (j = 0;j < *nb;j++,x0--,x1--) *x0 = *x1;
+      } else {
+        x0 -= (*nb - nbf); /* skip padding in target */
+        for (j = 0;j < nbf;j++,x0--,x1--) *x0 = *x1; /* fill rest from source */
+      }
+    }
+    /* now copy segments into x with padding ... */
+    x0 = x + ns_main * *nb - 1; /* end of main block segment storage */
+    for (;i>=0;i--) { /* continue down through segments */
+      if (i%(k-1)) { /* not a short segment */     
+        for (j = 0;j < *nb;j++,x0--,x1--) *x0 = *x1;
+      } else {
+        x0 -= (*nb - nbf);
+        for (j = 0;j < nbf;j++,x0--,x1--) *x0 = *x1;
+      }
+    }
+  } /* finished padding segments to equal length */
+
+  /* now re-arrange row-block wise... */
+
+  /* a[i] is original segment now in segment i... */ 
+  a = (int *) R_chk_calloc((size_t) k * *c,sizeof(int));
+  /* s[i] is segment now containing original segment i */
+  s = (int *) R_chk_calloc((size_t) k * *c,sizeof(int));
+  for (i=0;i<k * *c;i++) s[i] = a[i] = i;
+  ti=0; /* target segment */
+  for (i=0;i<k;i++) for (j=0;j<*c;j++,ti++) {
+      si = s[i + j * k]; /* source segment */
+      if (ti < ns_main) x0 = x + ti * *nb; /* segment in main storage */
+      else x0 = extra + (ti - ns_main) * *nb; /* target segment in extra storage */ 
+      if (si < ns_main) x1 = x + si * *nb;
+      else x1 = extra + (si - ns_main) * *nb;
+      /* swap segment contents... */
+      for (q=0;q < *nb;q++,x0++,x1++) tmp = *x0;*x0 = *x1;*x1 = tmp;
+      /*  update indices... */
+      q = a[si]; a[si] = a[ti]; a[ti] = q;
+      s[a[si]] = si;s[a[ti]]=ti;
+  }  
+
+  /* now it only remains to delete padding from end block */
+  x1 = x0 = x + (k-1) * *c * *nb; /* address of first target (and first source) */
+  si = *c * (k-1); /* source segment index */
+  for (i=0;i < *c;i++,si++,x1+=(*nb-nbf)) {
+    if (si == ns_main) x1 = extra;  /* reset source blocks to extra */
+    for (j=0;j<nbf;j++,x0++,x1++) *x0 = *x1;   
+  } 
+
+  R_chk_free(a); R_chk_free(s);if (nbf) R_chk_free(extra);
+} /* row_block_reorder */
+
+
+int get_qpr_k(int *r,int *c,int *nt) {
+/* For a machine with nt available cores, computes k the best number of threads to 
+   use for a parrallel QR.
+*/
+  int k;double kd;
+  kd = sqrt(*r/(double)*c); /* theoretical optimum */
+  if (kd <= 1.0) k = 1; else
+    if (kd > *nt) k = *nt; else
+      if (*r / ceil(kd) + ceil(kd) * *c < *r / floor(kd) + floor(kd) * *c) 
+        k = (int)ceil(kd); else k = (int)floor(kd);
+  return(k);
+}
+
+void getRpqr(double *R,double *x,int *r, int *c,double *tau,int *nt) {
+/* x contains qr decomposition of r by c matrix as computed by mgcv_pqr 
+   This routine simply extracts the R factor into R.  
+*/
+  int i,j,k,n;
+  double *Rs;
+  k = get_qpr_k(r,c,nt); /* number of blocks used */
+  if (k==1) { /* actually just a regular serial QR */ 
+    Rs = x;n = *r;
+  } else {
+    n = k * *c; /* rows of R */ 
+    Rs = x + *r * *c; /* source R */
+  }
+  for (i=0;i<*c;i++) for (j=0;j<*c;j++) if (i>j) R[i + *c * j] = 0; else
+	R[i + *c * j] = Rs[i + n * j];
+}
+
+void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *left,int *tp,int *nt) {
+/* Applies factor Q of a QR factor computed in parallel to b. b is r by cb. facro
+
+*/ 
+
+} 
+
+void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
+/* parallel qr decomposition using up to nt threads. 
+   * x is an r*c+nt*c^2 array. On entry first r*c entries is matrix to decompose.
+   * pivot is a c vector and tau is a (nt+1)*c vector.
+   On exit x, pivot and tau contain decompostion information in packed form
+   for use by getRpqr and mgcv_pqrqy
+   Routine first computes k, the optimal number of threads to use from 1 to nt.
+*/
+
+  int i,j,k,l,*piv,nb,nbf,n,TRUE=1; /* number of threads to use */
+  double *R,*R1;
+  k = get_qpr_k(r,c,nt);
+ 
+  if (k==1) mgcv_qr(x,r,c,pivot,tau); else { /* multi-threaded version */
+    nb = *r/k; /* block size */
+    nbf = *r - (k-1)*nb; /* end block size */
+    /* need to re-arrange row blocks so that they can be split between qr calls */
+    row_block_reorder(x,r,c,&nb); /* NOTE: x - size?? */
+    piv = (int *)R_chk_calloc((size_t) k * *c,sizeof(int));
+    R = x + *r * *c ; /* pointer to combined unpivoted R matrix */
+    for (i=0;i<k;i++) { /* QR the blocks */
+      if (i==k-1) n = nbf; else n = nb; 
+      mgcv_qr(x + nb * i * *c,&n,c,piv + i * *c,tau + i * *c);
+      /* and copy the R factors, unpivoted into a new matrix */
+      R1 = (double *)R_chk_calloc((size_t)*c * *c,sizeof(double));
+      for (l=0;l<*c;l++) for (j=l;j<*c;j++) R1[l + *c * j] = x[l + n * j]; 
+      /* What if final nbf is less than c? - can't happen  */
+      pivoter(R1,c,c,piv + i * *c,&TRUE,&TRUE); /* unpivoting the columns of R1 */
+      for (l=0;l<*c;l++) for (j=0;j<*c;j++) R[i * *c +l,j] = R1[l,j];
+      R_chk_free(R1);
+    }
+    R_chk_free(piv);
+    n = k * *c;
+    mgcv_qr(R,&n,c,pivot,tau + k * *c); /* final pivoted QR */
+  }
+}
+
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 /* call LA_PACK to get pivoted QR decomposition of x
    tau is an array of length min(r,c)
