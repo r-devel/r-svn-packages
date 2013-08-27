@@ -16,7 +16,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,double *eta,
              double *penalty,double *rank_tol);
 void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,int *rE,double *eta,
-	      double *penalty,double *rank_tol);
+	      double *penalty,double *rank_tol,int *nt);
 
 void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
                double *det, double *det1, double *det2, double *d_tol,
@@ -40,7 +40,7 @@ void MinimumSeparation(double *gx,double *gy,int *gn,double *dx,double *dy, int 
 void rksos(double *x,int *n,double *eps);
 void pivoter(double *x,int *r,int *c,int *pivot, int *col, int *reverse);
 
-/* Routines for direct access to linpack and lapack */
+/* Routines for linear algebra with direct access to linpack and lapack */
 
 void mgcv_chol(double *a,int *pivot,int *n,int *rank);
 void mgcv_svd(double *x,double *u, double *d,int *r,int *c);
@@ -64,7 +64,10 @@ void getXtX(double *XtX,double *X,int *r,int *c);
 void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work);
 void getXXt(double *XXt,double *X,int *r,int *c);
 void read_mat(double *M,int *r,int*c, char *path);
-
+void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse);
+void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt);
+void getRpqr(double *R,double *x,int *r, int *c,int *nt);
+void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt);
 
 /* basis constructor/prediction routines*/
 

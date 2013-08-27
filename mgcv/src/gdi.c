@@ -811,14 +811,14 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   int m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,max_col;
   int tid;
   if (nthreads<1) nthreads = 1;
-#ifndef SUPPORT_OPENMP
-  nthreads = 1; /* reset nthreads to 1 if no openMP support */ 
-#endif
-#ifdef SUPPORT_OPENMP
-  m = omp_get_num_procs(); /* detected number of processors */
-  if (nthreads>m) nthreads=m; /* no point in more threads than m */
-  omp_set_num_threads(nthreads); /* must precede sections */
-#endif
+  #ifndef SUPPORT_OPENMP
+    nthreads = 1; /* reset nthreads to 1 if no openMP support */ 
+  #endif
+  #ifdef SUPPORT_OPENMP
+    m = omp_get_num_procs(); /* detected number of processors */
+    if (nthreads>m) nthreads=m; /* no point in more threads than m */
+    omp_set_num_threads(nthreads); /* must precede sections */
+  #endif
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* obtain diag(KK') */ 
   if (*deriv) {
@@ -833,21 +833,21 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   /* now loop through the smoothing parameters to create K'TkK */
   if (deriv2) {
     KtTK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
-#ifdef SUPPORT_OPENMP
-#pragma omp parallel private(k,j,tid)
-#endif
-{ 
-#ifdef SUPPORT_OPENMP
-#pragma omp for
-#endif
-    for (k=0;k < *M;k++) {
-#ifdef SUPPORT_OPENMP
-      tid = omp_get_thread_num(); /* thread running this bit */
-#endif    
-      j = k * *r * *r;
-      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work + *n * tid);
-    }
-} /* end of parallel section */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel private(k,j,tid)
+    #endif
+    { /* open parallel section */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp for
+      #endif
+      for (k=0;k < *M;k++) {
+      #ifdef SUPPORT_OPENMP
+        tid = omp_get_thread_num(); /* thread running this bit */
+      #endif    
+        j = k * *r * *r;
+        getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work + *n * tid);
+      }
+    } /* end of parallel section */
   } else { KtTK=(double *)NULL;} /* keep compiler happy */
 
   /* start first derivative */ 
@@ -869,68 +869,68 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   rSoff =  (int *)R_chk_calloc((size_t)*M,sizeof(int));
   rSoff[0] = 0;for (m=0;m < *M-1;m++) rSoff[m+1] = rSoff[m] + rSncol[m];
   tid = 0;
-#ifdef SUPPORT_OPENMP
-#pragma omp parallel private(m,bt,ct,tid)
-#endif
-{ 
-#ifdef SUPPORT_OPENMP
-#pragma omp for
-#endif
-  for (m=0;m < *M;m++) { /* loop through penalty matrices */
-#ifdef SUPPORT_OPENMP
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(m,bt,ct,tid)
+  #endif
+  { /* parallel section start */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (m=0;m < *M;m++) { /* loop through penalty matrices */
+      #ifdef SUPPORT_OPENMP
       tid = omp_get_thread_num(); /* thread running this bit */
-#endif    
-     bt=1;ct=0;mgcv_mmult(PtrSm + tid * *r * max_col,P,rS+rSoff[m] * *q,&bt,&ct,r,rSncol+m,q);
-     /*rSoff += rSncol[m];*/
-     trPtSP[m] = sp[m] * diagABt(work + *n * tid,PtrSm + tid * *r * max_col,
+      #endif    
+      bt=1;ct=0;mgcv_mmult(PtrSm + tid * *r * max_col,P,rS+rSoff[m] * *q,&bt,&ct,r,rSncol+m,q);
+      /*rSoff += rSncol[m];*/
+      trPtSP[m] = sp[m] * diagABt(work + *n * tid,PtrSm + tid * *r * max_col,
                                  PtrSm + tid * *r * max_col,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
-     det1[m] += trPtSP[m]; /* completed first derivative */
-     if (deriv2) { /* get P'S_mP */
-       bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm + tid * *r * max_col,
+      det1[m] += trPtSP[m]; /* completed first derivative */
+      if (deriv2) { /* get P'S_mP */
+        bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm + tid * *r * max_col,
                             PtrSm+ tid * *r * max_col ,&bt,&ct,r,r,rSncol+m);
-     }
-  }
-} /* end of parallel section */
+      }
+    }
+  } /* end of parallel section */
   R_chk_free(rSoff);
   /* Now accumulate the second derivatives */
 
-#ifdef SUPPORT_OPENMP
-#pragma omp parallel private(m,k,km,mk,xx,tid)
-#endif
-{ 
-  if (deriv2) 
-#ifdef SUPPORT_OPENMP
-#pragma omp for
-#endif
-   for (m=0;m < *M;m++) {
-#ifdef SUPPORT_OPENMP
-     tid = omp_get_thread_num(); /* thread running this bit */
-#endif       
-     for (k=m;k < *M;k++) {
-     km=k * *M + m;mk=m * *M + k;
-     /* tr(Tkm KK') */
-     for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
-     det2[km] = xx;
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(m,k,km,mk,xx,tid)
+  #endif
+  { /* start of parallel section */ 
+    if (deriv2) 
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (m=0;m < *M;m++) {
+      #ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+      #endif       
+      for (k=m;k < *M;k++) {
+        km=k * *M + m;mk=m * *M + k;
+        /* tr(Tkm KK') */
+        for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
+        det2[km] = xx;
 
-     /* - tr(KTkKK'TmK) */
-     det2[km] -= diagABt(work + *n * tid,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+        /* - tr(KTkKK'TmK) */
+        det2[km] -= diagABt(work + *n * tid,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
 
-     /* sp[k]*tr(P'S_kP) */
-     if (k==m) det2[km] += trPtSP[m];
+        /* sp[k]*tr(P'S_kP) */
+        if (k==m) det2[km] += trPtSP[m];
 
-     /* -sp[m]*tr(K'T_kKP'S_mP) */
-     det2[km] -= sp[m]*diagABt(work + *n * tid,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
+        /* -sp[m]*tr(K'T_kKP'S_mP) */
+        det2[km] -= sp[m]*diagABt(work + *n * tid,KtTK + k * *r * *r,PtSP + m * *r * *r,r,r);
      
-     /* -sp[k]*tr(K'T_mKP'S_kP) */
-     det2[km] -= sp[k]*diagABt(work + *n * tid,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
+        /* -sp[k]*tr(K'T_mKP'S_kP) */
+        det2[km] -= sp[k]*diagABt(work + *n * tid,KtTK + m * *r * *r,PtSP + k * *r * *r,r,r);
  
-     /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
-     det2[km] -= sp[m]*sp[k]*diagABt(work + *n * tid,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
+        /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+        det2[km] -= sp[m]*sp[k]*diagABt(work + *n * tid,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
 
-     det2[mk] = det2[km];
-    }     
-  }
-} /* end of parallel section */
+        det2[mk] = det2[km];
+      }     
+    }
+  } /* end of parallel section */
  
   /* free up some memory */
   if (deriv2) {R_chk_free(PtSP);R_chk_free(KtTK);}
@@ -2417,17 +2417,19 @@ void pls_fit(double *y,double *X,double *w,double *E,int *n,int *q,int *cE,doubl
 
 
 void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,int *rE,double *eta,
-             double *penalty,double *rank_tol)
+	      double *penalty,double *rank_tol,int *nt)
 /* Fast but stable PLS fitter. Obtains linear predictor, eta, of weighted penalized linear model,
    without evaluating the coefficients, but also returns coefficients in case they are needed. 
    
    Note that here E'E = S, while Es'Es = `well scaled version of S'   
 
-
    In this version the w_i are the w_i in \sum_i w_i (y_i - X_i \beta)^2
    rather than being the square root of these. Some w_i may be negative (as
    may occur when using Newton, rather than Fisher updates on IRLS). Note that it is still 
    assumed that any zero weighted data will have been dropped before the call.
+
+   If nt>1 and openMP is available then routine computes with the optimal number of threads up 
+   to nt.
 
    On return:
    
@@ -2445,7 +2447,10 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 { int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1,nz;
   double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
     *R1,*tau1,Rnorm,Enorm,*R;
-  
+   
+  #ifndef SUPPORT_OPENMP
+  *nt = 1; /* no openMP support - turn off threading */
+  #endif
   nr = *q + *rE;
   nz = *n; if (nz<nr) nz=nr; /* possible for nr to be more than n */
   z = (double *)R_chk_calloc((size_t) nz,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
@@ -2464,7 +2469,8 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
   for (i=0;i<neg_w;i++) {k=nind[i];z[k] = -z[k];} 
 
-  WX = (double *) R_chk_calloc((size_t) ( *n * *q),sizeof(double));
+  //st WX = (double *) R_chk_calloc((size_t) ( *n * *q),sizeof(double));
+  WX = (double *) R_chk_calloc((size_t) ( (*n + *nt * *q) * *q),sizeof(double));
   for (p0=WX,j=0;j<*q;j++) { 
     for (p1=raw,i=0;i<*n;i++,p1++,p0++,X++) { /* form WX */
       *p0 = *X * *p1;
@@ -2473,17 +2479,21 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
     }
   } 
   /* get the QR decomposition of WX */
-  tau=(double *)R_chk_calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
- 
+  //st tau=(double *)R_chk_calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
+  tau=(double *)R_chk_calloc((size_t) *q * (*nt + 1),sizeof(double)); 
+  
   pivot=(int *)R_chk_calloc((size_t)*q,sizeof(int));
   
-  mgcv_qr(WX,n,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
+  //st mgcv_qr(WX,n,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
+  mgcv_pqr(WX,n,q,pivot,tau,nt);
+
   /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
   
-   /* copy out upper triangular factor R, and unpivot it */
+  /* copy out upper triangular factor R, and unpivot it */
   R1 = (double *)R_chk_calloc((size_t)*q * *q,sizeof(double));
-  for (i=0;i<*q;i++) for (j=i;j<*q;j++) R1[i + *q * j] = WX[i + *n * j]; 
-
+  //st for (i=0;i<*q;i++) for (j=i;j<*q;j++) R1[i + *q * j] = WX[i + *n * j]; 
+  getRpqr(R1,WX,n,q,nt);
+  
   pivoter(R1,q,q,pivot,&TRUE,&TRUE); /* unpivoting the columns of R1 */
  
   /* Form a nicely scaled version of [R',Es']' for rank determination */ 
@@ -2542,8 +2552,11 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
     left=1;tp=0;mgcv_qrqy(Q,R,tau1,&nr,&rank,&rank,&left,&tp); /* Q from the second QR decomposition */
 
     Q1 = (double *)R_chk_calloc((size_t) *n * rank,sizeof(double)); 
-    for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *n * j] = Q[i + nr * j];
-    left=1;tp=0;mgcv_qrqy(Q1,WX,tau,n,&rank,q,&left,&tp); /* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */   
+    //st for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *n * j] = Q[i + nr * j];
+    //st left=1;tp=0;mgcv_qrqy(Q1,WX,tau,n,&rank,q,&left,&tp); /* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */   
+    for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *q * j] = Q[i + nr * j];
+    tp=0;mgcv_pqrqy(Q1,WX,tau,n,q,&rank,&tp,nt);
+    
     R_chk_free(Q);
 
     if (neg_w < rank+1) k = rank+1; else k = neg_w;
@@ -2562,7 +2575,8 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
       d[i] = 1 - 2*d[i]*d[i];
       if (d[i]< - *rank_tol) { /* X'WX not +ve definite, clean up and abort */
         *n = -1; 
-        R_chk_free(Vt);R_chk_free(d);R_chk_free(pivot);R_chk_free(tau);R_chk_free(nind);R_chk_free(raw);R_chk_free(z);R_chk_free(WX);
+        R_chk_free(Vt);R_chk_free(d);R_chk_free(pivot);R_chk_free(tau);
+        R_chk_free(nind);R_chk_free(raw);R_chk_free(z);R_chk_free(WX);
         R_chk_free(tau1);R_chk_free(pivot1);R_chk_free(R);if (n_drop) R_chk_free(drop);
         return;
       }
@@ -2573,8 +2587,11 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   /* The -ve w_i correction is now complete */
 
   /* Now get the fitted values X \beta, *without* finding \beta */
-  left=1;tp=1;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); /* z = Q'z */
+  //st left=1;tp=1;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); /* z = Q'z */
+  tp=1;mgcv_pqrqy(z,WX,tau,n,q,&one,&tp,nt);
+
   for (i=rank;i<nz;i++) z[i]=0.0;
+
 
   left=1,tp=1; mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1'Q'z, where Q1 is the first rank rows of second orth factor */
 
@@ -2594,8 +2611,9 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
   for (i=rank;i < *n;i++) z[i]=0.0;
 
-  left=1;tp=0;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); /* z = Q Q1 Q1'Q z */
-  
+  //st left=1;tp=0;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); /* z = Q Q1 Q1'Q z */
+  tp=0;mgcv_pqrqy(z,WX,tau,n,q,&one,&tp,nt);
+
   for (i=0;i<*n;i++) eta[i] = z[i]/raw[i]; /* the linear predictor */
 
   /* now find  \hat \beta = R^{-1}Q'z, which are needed if P-IRLS starts to diverge

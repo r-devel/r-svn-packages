@@ -2,6 +2,7 @@
 ## functions for sparse smoothing.
 
 
+
 tri2nei <- function(T) {
 ## Each row of matrix T gives the indices of the points making up
 ## one triangle in d dimensions. T has d+1 columns. This routine 

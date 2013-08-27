@@ -314,7 +314,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
-                     penalty=as.double(1),rank.tol=as.double(rank.tol))
+                     penalty=as.double(1),rank.tol=as.double(rank.tol),nt=as.integer(control$nthreads))
             if (control$trace) tc <- tc + sum((proc.time()-t1)[c(1,4)])
 
             if (!fisher&&oo$n<0) { ## likelihood indefinite - switch to Fisher for this step
@@ -324,7 +324,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
               oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                        E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                        q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
-                       penalty=as.double(1),rank.tol=as.double(rank.tol))
+                       penalty=as.double(1),rank.tol=as.double(rank.tol),nt=as.integer(control$nthreads))
               if (control$trace) tc <- tc + sum((proc.time()-t1)[c(1,4)])
             }
 

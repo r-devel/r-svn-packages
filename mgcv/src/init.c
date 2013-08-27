@@ -21,7 +21,7 @@ R_CMethodDef CEntries[] = {
     {"gdi1",(DL_FUNC) &gdi1,46},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
     {"pls_fit",(DL_FUNC)&pls_fit,10},
-    {"pls_fit1",(DL_FUNC)&pls_fit1,11},
+    {"pls_fit1",(DL_FUNC)&pls_fit1,12},
     {"tweedious",(DL_FUNC)&tweedious,8},
     {"psum",(DL_FUNC)&psum,4},
     {"get_detS2",(DL_FUNC)&get_detS2,12},
@@ -46,6 +46,10 @@ R_CMethodDef CEntries[] = {
     {"boundary",(DL_FUNC)&boundary, 14},
     {"pde_coeffs",(DL_FUNC)&pde_coeffs, 9},
     {"gridder",(DL_FUNC)&gridder, 13},
+    {"row_block_reorder",(DL_FUNC)&row_block_reorder,5},
+    {"mgcv_pqr",(DL_FUNC)&mgcv_pqr,6},
+    {"getRpqr",(DL_FUNC)&getRpqr,5},
+    {"mgcv_pqrqy",(DL_FUNC)&mgcv_pqrqy,8},
     {NULL, NULL, 0}
 };
 
