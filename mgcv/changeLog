@@ -3,8 +3,8 @@
 
 1.7-25
 
-* some code added to allow openMP based multi-threading in gam fits (see
-  ?gam.control). Limited so far. 
+* code added to allow openMP based multi-threading in gam fits (see
+  ?gam.control). Most progress on REML/ML based fitting.
 
 * anova.glmlist no longer called.
 

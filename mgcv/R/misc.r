@@ -21,7 +21,7 @@ block.reorder <- function(x,n.blocks=1,reverse=FALSE) {
 
 pqr <- function(x,nt=1) {
 ## parallel QR decomposition, using openMP in C, and up to nt threads (only if worthwhile)
-## library(mgcv);n <- 10;p<-4;X <- matrix(runif(n*p),n,p);er <- mgcv:::pqr(X,nt=2)
+## library(mgcv);n <- 20;p<-4;X <- matrix(runif(n*p),n,p);er <- mgcv:::pqr(X,nt=2)
   x.c <- ncol(x);r <- nrow(x)
   oo <- .C(C_mgcv_pqr,x=as.double(c(x,rep(0,nt*x.c^2))),as.integer(r),as.integer(x.c),
            pivot=as.integer(rep(0,x.c)), tau=as.double(rep(0,(nt+1)*x.c)),as.integer(nt)) 

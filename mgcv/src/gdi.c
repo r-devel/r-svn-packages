@@ -235,8 +235,6 @@ void pivoter(double *x,int *r,int *c,int *pivot, int *col, int *reverse)
 } /* end pivoter */
 
 
-
-
 double qr_ldet_inv(double *X,int *r,double *Xi,int *get_inv) 
 /* Obtains the log|X| and the inverse of X (r by r), by pivoted QR decomposition. 
    The inverse is returned (unpivoted) in Xi. 
@@ -1530,7 +1528,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
-	  int *REML,int *fisher,int *fixed_penalty,int *nthreads)     
+	  int *REML,int *fisher,int *fixed_penalty,int *nt)     
 /* 
    Version of gdi, based on derivative ratios and Implicit Function Theorem 
    calculation of the derivatives of beta. Assumption is that Fisher is only used 
@@ -1640,10 +1638,12 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
          *pb2, *dev_grad,*dev_hess=NULL,Rcond,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
     *alpha1,*alpha2,*raw,*Q1,*IQ, Rnorm,Enorm,*nulli,ldetI2D;
-  int    i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,n_2dCols=0,n_b1,n_b2,n_drop,*drop,
-    n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
+  int i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,
+    n_2dCols=0,n_b1,n_b2,n_drop,*drop,nt1,
+      n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
 
- 
+  nt1 = *nt; /* allows threading to be switched off for QR for debugging*/ 
+
   if (*deriv==2) deriv2=1; else deriv2=0;
 
   ScS=0;for (pi=rSncol;pi<rSncol + *M;pi++) ScS+= *pi;  /* total columns of input rS */
@@ -1667,7 +1667,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   for (i=0;i<neg_w;i++) { k=nind[i];zz[k] = -zz[k];} 
 
   
-  WX = (double *) R_chk_calloc((size_t) ( *n * *q),sizeof(double));
+  //st WX = (double *) R_chk_calloc((size_t) ( *n * *q),sizeof(double));
+  WX = (double *) R_chk_calloc((size_t) ( (*n + *nt * *q) * *q),sizeof(double));
   for (j=0;j<*q;j++) 
   { for (i=0;i<*n;i++) /* form WX */
     { k = i + *n * j;
@@ -1675,17 +1676,20 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     }
   }
   /* get the QR decomposition of WX */
-  tau=(double *)R_chk_calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
- 
+  //tau=(double *)R_chk_calloc((size_t)*q,sizeof(double)); /* part of reflector storage */
+  tau=(double *)R_chk_calloc((size_t) *q * (*nt + 1),sizeof(double)); 
+
   pivot=(int *)R_chk_calloc((size_t)*q,sizeof(int));
   
-  mgcv_qr(WX,n,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
-  
+  //st mgcv_qr(WX,n,q,pivot,tau); /* WX and tau now contain the QR decomposition information */
+  mgcv_pqr(WX,n,q,pivot,tau,&nt1);
+
   /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
   
   /* copy out upper triangular factor R, and unpivot it */
   R1 = (double *)R_chk_calloc((size_t)*q * *q,sizeof(double));
-  for (i=0;i<*q;i++) for (j=i;j<*q;j++) R1[i + *q * j] = WX[i + *n * j]; 
+  //st for (i=0;i<*q;i++) for (j=i;j<*q;j++) R1[i + *q * j] = WX[i + *n * j]; 
+  getRpqr(R1,WX,n,q,&nt1);
 
   pivoter(R1,q,q,pivot,&TRUE,&TRUE); /* unpivoting the columns of R1 */
  
@@ -1760,9 +1764,10 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   left=1;tp=0;mgcv_qrqy(Q,R,tau1,&nr,&rank,&rank,&left,&tp); /* Q from the second QR decomposition */
 
   Q1 = (double *)R_chk_calloc((size_t) *n * rank,sizeof(double)); 
-  for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *n * j] = Q[i + nr * j];
-  left=1;tp=0;mgcv_qrqy(Q1,WX,tau,n,&rank,q,&left,&tp); /* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */
-
+  //st for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *n * j] = Q[i + nr * j];
+  //st left=1;tp=0;mgcv_qrqy(Q1,WX,tau,n,&rank,q,&left,&tp); /* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */
+  for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *q * j] = Q[i + nr * j];
+  tp=0;mgcv_pqrqy(Q1,WX,tau,n,q,&rank,&tp,&nt1);
   /* so, at this stage WX = Q1 R, dimension n by rank */
 
   Ri =  (double *)R_chk_calloc((size_t) rank * rank,sizeof(double)); 
@@ -2092,7 +2097,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   if (*REML>0) { /* It's REML */
     /* Now deal with log|X'WX+S| */   
     reml_penalty = ldetXWXS;
-    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,deriv,*nthreads); /* trA1/2 really contain det derivs */
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,deriv,*nt); /* trA1/2 really contain det derivs */
   } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
 
   if (*REML<0) { /* it's ML, and more complicated */
@@ -2100,7 +2105,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* get derivs of ML log det in trA1 and trA2... */
 
     reml_penalty =  MLpenalty1(trA1,trA2,Tk,Tkm,nulli,R,Q1,nind,sp,rS,rSncol,
-			       &rank,n,Mp,M,&neg_w,rank_tol,deriv,nthreads);
+			       &rank,n,Mp,M,&neg_w,rank_tol,deriv,nt);
     
     R_chk_free(R);R_chk_free(Q1);R_chk_free(nind);
   } /* note that rS scrambled from here on... */
@@ -2145,7 +2150,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   } else { /* Need expected value versions of everything for EDF calculation */
     /* form sqrt(wf)X augmented with E */
     nr = *n + *Enrow;
-    WX = (double *)R_chk_calloc((size_t)nr * rank,sizeof(double));
+    //st WX = (double *)R_chk_calloc((size_t)nr * rank,sizeof(double));
+    WX = (double *) R_chk_calloc((size_t) ( (nr + *nt * rank) * rank),sizeof(double));
     for (p0=w,p1=w + *n,p2=wf;p0<p1;p0++,p2++) *p0 = sqrt(*p2);
     for (p3=X,p0 = WX,i=0;i<rank;i++) {
       for (p1=w,p2=w+*n;p1<p2;p1++,p0++,p3++) *p0 = *p3 * *p1;
@@ -2153,15 +2159,26 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     }
     /* QR decompose it and hence get new P and K */
     pivot = (int *)R_chk_calloc((size_t)rank,sizeof(int));
-    tau = (double *)R_chk_calloc((size_t)rank,sizeof(double));
-    mgcv_qr(WX,&nr,&rank,pivot,tau);
-   
-    Rinv(P,WX,&rank,&nr,&rank); /* P= R^{-1} */
+    //st tau = (double *)R_chk_calloc((size_t)rank,sizeof(double));
+    tau = (double *)R_chk_calloc((size_t)rank*(*nt+1),sizeof(double));
+    //st mgcv_qr(WX,&nr,&rank,pivot,tau);
+    mgcv_pqr(WX,&nr,&rank,pivot,tau,nt);
+
+    //st Rinv(P,WX,&rank,&nr,&rank); /* P= R^{-1} */
+    R1 = (double *)R_chk_calloc((size_t)rank*rank,sizeof(double));
+    getRpqr(R1,WX,&nr,&rank,nt);
+
+    Rinv(P,R1,&rank,&rank,&rank);
+    R_chk_free(R1); 
+
     /* there's something about the way you taste that makes me want to clear my throat, 
        there's a method to your madness, that really gets my goat */
     Q = (double *)R_chk_calloc((size_t) nr * rank,sizeof(double)); 
-    for (i=0;i< rank;i++) Q[i * nr + i] = 1.0;
-    left=1;tp=0;mgcv_qrqy(Q,WX,tau,&nr,&rank,&rank,&left,&tp); /* Q from the second QR decomposition */
+    // st for (i=0;i< rank;i++) Q[i * nr + i] = 1.0;
+    //st left=1;tp=0;mgcv_qrqy(Q,WX,tau,&nr,&rank,&rank,&left,&tp); /* Q from the second QR decomposition */
+    for (i=0;i< rank;i++) Q[i * rank + i] = 1.0;
+    tp=0;mgcv_pqrqy(Q,WX,tau,&nr,&rank,&rank,&tp,nt);
+
     for (p1=Q,p0=K,j=0;j<rank;j++,p1 += *Enrow) for (i=0;i<*n;i++,p1++,p0++) *p0 = *p1;
     R_chk_free(Q);R_chk_free(WX);R_chk_free(tau);
     if (*deriv)  pivoter(rS,&rank,&ScS,pivot,&FALSE,&FALSE); /* apply the latest pivoting to rows of rS */

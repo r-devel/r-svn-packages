@@ -677,7 +677,8 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
   k = get_qpr_k(r,c,nt); /* number of blocks in use */
   if (k==1) { /* single block case */ 
     if (*tp == 0 ) {/* re-arrange so b is a full matrix */
-      x0 = b + *r * *cb -1;x1 = b + *c * *cb -1;
+      x0 = b + *r * *cb -1; /* end of full b (target) */
+      x1 = b + *c * *cb -1; /* end of used block (source) */
       for (j= *cb;j>0;j--) { /* work down columns */
         //for (i = *r;i > *c;i--,x0--) *x0 = 0.0; /* clear unused */
         x0 -= *r - *c; /* skip unused */
@@ -695,6 +696,9 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
     }
     return;
   }
+  
+  /* multi-block case starts here */
+
   nb = (int)ceil(*r/(double)k); /* block size - in rows */
   nbf = *r - (k-1)*nb; /* end block size */ 
   Qb = (double *)R_chk_calloc((size_t) k * *c * *cb,sizeof(double));
@@ -733,7 +737,10 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
     x0=Qb; /* target */
     x1=b;
     for (i=0;i<*cb;i++) {
-      for (j=0;j<*c;j++,x0++,x1++) *x0 = *x1;
+      for (j=0;j<*c;j++,x0++,x1++) {
+        *x0 = *x1;
+        *x1=0.0; /* erase or left in below */
+      }
       x0 += (k-1) * *c; /* skip rows of Qb */ 
     }
     /* now apply the combined Q factor */
@@ -749,7 +756,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
       for (i=0;i<k;i++) {
         if (i == k-1) n = nbf; else n = nb; /* number of rows in this block */
         x0 = b + nb * *cb * i; /* target block start */
-        x1 = Qb + i * *c; /* source start */
+        x1 = Qb + i * *c; /* source row start */
         for (j=0;j < *cb;j++) { /* across the cols */
           for (l=0;l< *c;l++,x0++,x1++) *x0 = *x1;
           x0 += n - *c; /* to start of next column */
