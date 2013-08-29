@@ -939,7 +939,8 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
 
 
 void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *sp,
-	      double *rS,int *rSncol,double *Tk,double *Tkm,double *w,int *n,int *q,int *r,int *M,int *deriv)
+	      double *rS,int *rSncol,double *Tk,double *Tkm,double *w,int *n,int *q,
+              int *r,int *M,int *deriv,int *nt)
 
 /* obtains trA and its first two derivatives wrt the log smoothing parameters 
    * P is q by r
@@ -959,7 +960,10 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
 
 { double *diagKKt,*diagKKtKKt,xx,*KtTK,*KtTKKtK,*KKtK,*KtK,*work,*pTk,*pTm,*pdKKt,*pdKKtKKt,*p0,*p1,*p2,*p3,*pd,
     *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*PtSPKtK, *KtKPtrSm, *KKtKPtrSm,*Ip,*IpK/*,lowK,hiK*/;
-  int i,m,k,bt,ct,j,one=1,km,mk,rSoff,deriv2,neg_w=0;
+    int i,m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,neg_w=0,tid=0;
+  #ifdef SUPPORT_OPENMP
+  omp_set_num_threads(*nt); /* must precede sections */
+  #endif
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* Get the sign array for negative w_i */
   Ip = (double *)R_chk_calloc((size_t)*n,sizeof(double));
@@ -977,7 +981,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
   }
 
   /* set up work space */
-  work =  (double *)R_chk_calloc((size_t)*n,sizeof(double));
+  work =  (double *)R_chk_calloc((size_t)*n * *nt,sizeof(double));
   /* Get K'IpK and KK'IpK  */
   KtK = (double *)R_chk_calloc((size_t)*r * *r,sizeof(double));
   if (neg_w) { 
@@ -1008,11 +1012,22 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
   if (deriv2) {
     KtTK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
     KtTKKtK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
-    for (k=0;k < *M;k++) {
-      j = k * *r * *r;
-      getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work);
-      bt=ct=0;mgcv_mmult(KtTKKtK + k * *r * *r ,KtTK + j,KtK,&bt,&ct,r,r,r);
-    }
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel private(k,j,tid)
+    #endif
+    { /* open parallel section */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp for
+      #endif
+      for (k=0;k < *M;k++) {
+        #ifdef SUPPORT_OPENMP
+        tid = omp_get_thread_num(); /* thread running this bit */
+        #endif      
+        j = k * *r * *r;
+        getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work + tid * *n);
+        bt=ct=0;mgcv_mmult(KtTKKtK + k * *r * *r ,KtTK + j,KtK,&bt,&ct,r,r,r);
+      }
+    } /* parallel section end */
   } else { KtTK=KtTKKtK=(double *)NULL;}
   
   /* evaluate first and last terms in first derivative of tr(F) */
@@ -1046,36 +1061,53 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
   R_chk_free(diagKKtKKt);R_chk_free(diagKKt);
 
   /* create KP'rSm, KK'KP'rSm and P'SmP */
-  PtrSm = (double *)R_chk_calloc((size_t)(*r * *q ),sizeof(double)); /* transient storage for P' rSm */
-  KPtrSm = (double *)R_chk_calloc((size_t)(*n * *q),sizeof(double)); /* transient storage for K P' rSm */
+  PtrSm = (double *)R_chk_calloc((size_t)(*r * *q * *nt),sizeof(double)); /* transient storage for P' rSm */
+  KPtrSm = (double *)R_chk_calloc((size_t)(*n * *q * *nt),sizeof(double)); /* transient storage for K P' rSm */
   diagKPtSPKt = (double *)R_chk_calloc((size_t)(*n * *M),sizeof(double));
   if (deriv2) {
     PtSP = (double *)R_chk_calloc((size_t)(*M * *r * *r ),sizeof(double));
     PtSPKtK = (double *)R_chk_calloc((size_t)(*M * *r * *r ),sizeof(double));
-    KtKPtrSm = (double *)R_chk_calloc((size_t)(*r * *q),sizeof(double));/* transient storage for K'K P'rSm */ 
-    KKtKPtrSm = (double *)R_chk_calloc((size_t)(*n * *q),sizeof(double));/* transient storage for K'K P'rSm */ 
+    KtKPtrSm = (double *)R_chk_calloc((size_t)(*r * *q * *nt),sizeof(double));/* transient storage for K'K P'rSm */ 
+    KKtKPtrSm = (double *)R_chk_calloc((size_t)(*n * *q * *nt),sizeof(double));/* transient storage for K'K P'rSm */ 
     diagKPtSPKtKKt = (double *)R_chk_calloc((size_t)(*n * *M),sizeof(double));
   } else {  KKtKPtrSm=PtSPKtK= PtSP=KtKPtrSm=diagKPtSPKtKKt=(double *)NULL; }
-  for (rSoff=0,m=0;m < *M;m++) {
-    bt=1;ct=0;mgcv_mmult(PtrSm,P,rS+rSoff * *q,&bt,&ct,r,rSncol+m,q);
-    bt=0;ct=0;mgcv_mmult(KPtrSm,K,PtrSm,&bt,&ct,n,rSncol+m,r); 
-    if (deriv2) {
-      bt=0;ct=0;mgcv_mmult(KtKPtrSm,KtK,PtrSm,&bt,&ct,r,rSncol+m,r); 
-      bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm,PtrSm,&bt,&ct,r,r,rSncol+m);
+  
+  rSoff =  (int *)R_chk_calloc((size_t)*M,sizeof(int));
+  rSoff[0] = 0;for (m=0;m < *M-1;m++) rSoff[m+1] = rSoff[m] + rSncol[m];
+  tid = 0;
+  #ifdef SUPPORT_OPENMP
+#pragma omp parallel private(m,bt,ct,tid,xx,p0,p1,p2)
+  #endif
+  { /* open parallel section */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (m=0;m < *M;m++) { 
+      #ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+      #endif
+      bt=1;ct=0;mgcv_mmult(PtrSm + *r * *q * tid,P,rS+rSoff[m] * *q,&bt,&ct,r,rSncol+m,q);
+      bt=0;ct=0;mgcv_mmult(KPtrSm + *n * *q * tid,K,PtrSm + *r * *q * tid ,&bt,&ct,n,rSncol+m,r); 
+      if (deriv2) {
+        bt=0;ct=0;mgcv_mmult(KtKPtrSm + *r * *q * tid,KtK,PtrSm + *r * *q * tid,&bt,&ct,r,rSncol+m,r); 
+        bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm + *r * *q * tid,PtrSm + *r * *q * tid,&bt,&ct,r,r,rSncol+m);
     
-      bt=0;ct=0;mgcv_mmult(KKtKPtrSm,KKtK,PtrSm,&bt,&ct,n,rSncol+m,r);      
-      bt=0;ct=1;mgcv_mmult(PtSPKtK + m * *r * *r,PtrSm,KtKPtrSm,&bt,&ct,r,r,rSncol+m); 
-      xx = diagABt(diagKPtSPKtKKt+ m * *n,KPtrSm,KKtKPtrSm,n,rSncol+m);
-    }
-    rSoff += rSncol[m];
-    xx = sp[m] * diagABt(diagKPtSPKt+ m * *n,KPtrSm,KPtrSm,n,rSncol+m);
-       if (neg_w) { /* have to correct xx for negative w_i */
-      for (xx=0.0,p0=diagKPtSPKt+m * *n,p1=p0 + *n,p2=Ip;p0<p1;p0++,p2++) xx += *p0 * *p2;
-      xx *= sp[m];
-    }
-    trA1[m] -= xx; /* finishing trA1 */
-    if (deriv2) trA2[m * *M + m] -=xx; /* the extra diagonal term of trA2 */
-  }
+        bt=0;ct=0;mgcv_mmult(KKtKPtrSm + *n * *q * tid,KKtK,PtrSm + *r * *q * tid,&bt,&ct,n,rSncol+m,r);      
+        bt=0;ct=1;mgcv_mmult(PtSPKtK + m * *r * *r,PtrSm + *r * *q * tid,KtKPtrSm+ *r * *q * tid,&bt,&ct,r,r,rSncol+m); 
+        xx = diagABt(diagKPtSPKtKKt+ m * *n,KPtrSm + *n * *q * tid,KKtKPtrSm + *n * *q * tid,n,rSncol+m);
+      }
+      xx = sp[m] * diagABt(diagKPtSPKt+ m * *n,KPtrSm + *n * *q * tid,KPtrSm + *n * *q * tid,n,rSncol+m);
+      if (neg_w) { /* have to correct xx for negative w_i */
+        for (xx=0.0,p0=diagKPtSPKt+m * *n,p1=p0 + *n,p2=Ip;p0<p1;p0++,p2++) xx += *p0 * *p2;
+        xx *= sp[m];
+      }
+      trA1[m] -= xx; /* finishing trA1 */
+      if (deriv2) trA2[m * *M + m] -=xx; /* the extra diagonal term of trA2 */
+    } 
+  } /* end of parallel section */
+  R_chk_free(rSoff);
+  
+
   if (!deriv2) { /* trA1 finished, so return */
     R_chk_free(PtrSm);R_chk_free(KPtrSm);R_chk_free(diagKPtSPKt);
     R_chk_free(work);R_chk_free(KtK);R_chk_free(KKtK);
@@ -1641,6 +1673,13 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   int i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,
     n_2dCols=0,n_b1,n_b2,n_drop,*drop,nt1,
       n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
+  
+  #ifdef SUPPORT_OPENMP
+    m = omp_get_num_procs(); /* detected number of processors */
+    if (*nt>m) *nt = m; /* no point in more threads than m */
+  #else
+  *nt = 1; /* can't use more than one thread if OpenMP not supported */
+  #endif
 
   nt1 = *nt; /* allows threading to be switched off for QR for debugging*/ 
 
@@ -2187,7 +2226,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
  
   if (*REML) i=0; else i = *deriv;
-  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tfk,Tfkm,wf,n,&rank,&rank,M,&i);
+  get_trA2(trA,trA1,trA2,P,K,sp,rS,rSncol,Tfk,Tfkm,wf,n,&rank,&rank,M,&i,nt);
 
 
   /* unpivot P into rV.... */
