@@ -191,7 +191,7 @@ k.check <- function(b,subsample=5000,n.rep=400) {
   } else modf <- b$model
   nr <- length(rsd)
   for (k in 1:m) { ## work through smooths
-    dat <- as.data.frame(mgcv:::ExtractData(b$smooth[[k]],modf,NULL)$data)
+    dat <- as.data.frame(ExtractData(b$smooth[[k]],modf,NULL)$data)
     snames[k] <- b$smooth[[k]]$label
     ind <- b$smooth[[k]]$first.para:b$smooth[[k]]$last.para
     kc[k] <- length(ind)
@@ -230,7 +230,7 @@ k.check <- function(b,subsample=5000,n.rep=400) {
           }
         }
         nn <- 3
-        ni <- mgcv:::nearest(nn,as.matrix(dat))$ni
+        ni <- nearest(nn,as.matrix(dat))$ni
         e <- rsd - rsd[ni[,1]]
         for (j in 2:nn) e <- c(e,rsd-rsd[ni[,j]])
         v.obs[k] <- mean(e^2)/2

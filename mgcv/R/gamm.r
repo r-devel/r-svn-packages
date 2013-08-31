@@ -989,7 +989,7 @@ extract.lme.cov2<-function(b,data,start.level=1)
     ## The above has been tested at nlme_3.1-109
     ## grps <- nlme::getGroups(b$modelStruct$corStruct) # replace grps (but not n.levels)
     getGroupsFormula(b$modelStruct$corStruct)
-    vnames <- all.vars(nlme:::getGroupsFormula(b$modelStruct$corStruct))
+    vnames <- all.vars(nlme::getGroupsFormula(b$modelStruct$corStruct))
     ## attr(b$modelStruct$corStruct,"formula") # would include covariates
     lab <- paste(eval(parse(text=vnames[1]),envir=b$data))
     if (length(vnames)>1) for (i in 2:length(vnames)) {

@@ -524,9 +524,9 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
       dev <- sum(dev.resids(y,mu,G$w))
       W <- Diagonal(length(w),sqrt(w))
       if (sum(good)<nobs) {
-        XWX <- as(Matrix:::crossprod(W%*%X[good,]),"matrix")
+        XWX <- as(Matrix::crossprod(W%*%X[good,]),"matrix")
       } else {
-        XWX <- as(Matrix:::crossprod(W%*%X),"matrix")
+        XWX <- as(Matrix::crossprod(W%*%X),"matrix")
       }      
       qrx <- list(R = chol(XWX))
       Wz <- W%*%z
@@ -1094,7 +1094,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   dl <- eval(inp, data, parent.frame())
   if (!control$keepData) { rm(data);gc()} ## save space
   names(dl) <- vars ## list of all variables needed
-  var.summary <- mgcv:::variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
+  var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
   rm(dl); if (gc.level>0) gc() ## save space    
 
   ## need mini.mf for basis setup, then accumulate full X, y, w and offset
