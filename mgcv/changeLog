@@ -4,10 +4,10 @@
 1.7-25
 
 * code added to allow openMP based multi-threading in gam fits (see
-  ?gam.control). Most progress on REML/ML based fitting.
+  ?gam.control and ?"mgcv-parallel"). 
 
 * bam now allows AR1 error model to be split blockwise. See argument 
-  'AR.start'
+  'AR.start'.
 
 * magic.post.proc made more efficient (one of two O(np^2) steps removed).
 
@@ -23,7 +23,7 @@
   does not make it fail, via fix.family patching function.
 
 * bug fix in plot method for "fs" basis - ignored any side conditions.
-  Thanks to Martijn Weiling and ***
+  Thanks to Martijn Weiling and Jacolien van Rij.
 
 * gamm now checks whether smooths nested in factors have illegal side 
   conditions, and halts if so (re-ordering formula can help).
