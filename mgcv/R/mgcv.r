@@ -1231,7 +1231,6 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     object$scale <- object$scale.est;object$scale.estimated <- TRUE
   } 
   
-  ## mv<-magic.post.proc(G$X,object,w=object$weights)
   mv <- gam.fit3.post.proc(G$X,object)
   object$Vp <- mv$Vb
   object$hat<-mv$hat
@@ -1251,12 +1250,12 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object
 }
 
-get.null.coef <- function(G) {
+get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 ## Get an estimate of the coefs corresponding to maximum reasonable deviance...
   y <- G$y
   weights <- G$w
   nobs <- G$n
-  start <- etastart <- mustart <- NULL
+  ##start <- etastart <- mustart <- NULL
   family <- G$family
   eval(family$initialize) ## have to do this to ensure y numeric
   y <- as.numeric(y)
@@ -1274,7 +1273,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   
   if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
-
+  G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
 
   if (method%in%c("REML","P-REML","ML","P-ML")) {
@@ -1345,7 +1344,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   } else fixedSteps <- control$maxit+2
   
-  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0))
+  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0,...))
   else lsp2 <- rep(0,0)
 
   if (outer.looping && !is.null(in.out)) { # initial s.p.s and scale provided
@@ -1388,7 +1387,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     ## Get an estimate of the coefs corresponding to maximum reasonable deviance,
     ## and an estimate of the function scale, suitable for optimizers that need this.
   
-    null.stuff  <- get.null.coef(G)  
+    null.stuff  <- get.null.coef(G,...)  
     
     if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
     
@@ -1496,6 +1495,7 @@ variable.summary <- function(pf,dl,n) {
        x <- matrix(apply(dl[[v.name[i]]],2,quantile,probs=0.5,type=3,na.rm=TRUE),1,ncol(dl[[v.name[i]]])) ## nearest to median entries
      } else { ## anything else
        x <- dl[[v.name[i]]]
+       if (is.character(x)) x <- as.factor(x)
        if (is.factor(x)) {
          x <- x[!is.na(x)]
          lx <- levels(x)
@@ -1611,6 +1611,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
   object$control <- control
   object$terms <- G$terms
+  pvars <- all.vars(delete.response(object$terms))
+  object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else NULL
   object$pterms <- G$pterms
   object$assign <- G$assign # applies only to pterms
   object$contrasts <- G$contrasts
@@ -1793,13 +1795,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 # fixedSteps < its default causes at most fixedSteps iterations to be taken,
 # without warning if convergence has not been achieved. This is useful for
 # obtaining starting values for outer iteration.
-{   fisher <- TRUE
-    if (!fisher) { ## Newton needs extra derivatives...
-      family <- fix.family.link(family)
-      family <- fix.family.var(family)
-      if (family$link==family$canonical) fisher <- TRUE
-    }
-    intercept<-G$intercept
+{   intercept<-G$intercept
     conv <- FALSE
     n <- nobs <- NROW(G$y) ## n just there to keep codetools happy
     nvars <- NCOL(G$X) # check this needed
@@ -1909,15 +1905,8 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         weg <- weights[good];etag <- eta[good]
         var.mug<-variance(mug)
 
-        if (fisher) { ## Conventional Fisher scoring
-              G$y <- z <- (eta - offset)[good] + (yg - mug)/mevg
-              w <- sqrt((weg * mevg^2)/var.mug)
-        } else { ## full Newton (actually this is a problem as w can be negative!!)
-              c <- yg - mug
-              e <- mevg*(1 + c*(family$dvar(mug)/mevg+var.mug*family$d2link(mug))*mevg/var.mug)
-              G$y <- z <- (eta - offset)[good] + c/e ## offset subtracted as eta = X%*%beta + offset
-              w <- sqrt(weg*e*mevg/var.mug)
-        }
+        G$y <- z <- (eta - offset)[good] + (yg - mug)/mevg
+        w <- sqrt((weg * mevg^2)/var.mug)
         
         G$w<-w
         G$X<-X[good,,drop=FALSE]  # truncated design matrix       
@@ -1931,13 +1920,13 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
         ## solve the working weighted penalized LS problem ...
 
-        mr<-magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
-                    ridge.parameter=control$irls.reg,control=magic.control,n.score=n.score)
+        mr <- magic(G$y,G$X,msp,G$S,G$off,L=G$L,lsp0=G$lsp0,G$rank,G$H,G$C,G$w,gamma=gamma,G$sig2,G$sig2<0,
+                    ridge.parameter=control$irls.reg,control=magic.control,n.score=n.score,nthreads=control$nthreads)
         G$p<-mr$b;msp<-mr$sp;G$sig2<-mr$scale;G$gcv.ubre<-mr$score;
 
         if (find.theta) {# then family is negative binomial with unknown theta - estimate it here from G$sig2
             ##  need to get edf array
-          mv<-magic.post.proc(G$X,mr,w=G$w^2)
+          mv <- magic.post.proc(G$X,mr,w=G$w^2)
           G$edf <- mv$edf
 
           Theta<-mgcv.find.theta(Theta,T.max,T.min,weights,good,mu,mu.eta.val,G,.Machine$double.eps^0.5)
@@ -2041,7 +2030,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     
     ## Extract a little more information from the fit....
 
-    mv<-magic.post.proc(G$X,mr,w=G$w^2)
+    mv <- magic.post.proc(G$X,mr,w=G$w^2)
     G$Vp<-mv$Vb;G$hat<-mv$hat;
     G$Ve <- mv$Ve # frequentist cov. matrix
     G$edf<-mv$edf
@@ -2148,7 +2137,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         Terms <- delete.response(terms(object))
         allNames <- all.vars(Terms)
         if (length(allNames) > 0) { 
-          ff <- reformulate(allNames) 
+          ff <- if (is.null(object$pred.formula)) reformulate(allNames) else  object$pred.formula
           if (sum(!(allNames%in%names(newdata)))) { 
           warning("not all required variables have been supplied in  newdata!\n")}
           ## note that `xlev' argument not used here, otherwise `as.factor' in 
@@ -3360,23 +3349,24 @@ magic.post.proc <- function(X,object,w=NULL)
 # hat the leading diagonal of the hat/influence matrix 
 # NOTE: W=diag(w) if w non-matrix, otherwise w is a matrix square root. 
 # flop count is O(nq^2) if X is n by q... this is why routine not part of magic
-{ V<-object$rV%*%t(object$rV)
+{ ## V<-object$rV%*%t(object$rV)
+  V <- tcrossprod(object$rV)
   if (!is.null(w)) 
   { if (is.matrix(w)) WX <- X <- w%*%X else 
     WX <- as.vector(w)*X # use recycling rule to form diag(w)%*%X cheaply 
     
   } else {WX <- X}
-  M <- WX%*%V
+  ##if (nthreads <= 1) M <- WX%*%V else M <- pmmult(WX,V,tA=FALSE,tB=FALSE,nt=nthreads)
+  M <- WX%*%V  ## O(np^2) part
   ##Ve <- (V%*%t(X))%*%M*object$scale # frequentist cov. matrix
-  XWX <- t(X)%*%WX
+  XWX <- crossprod(object$R) #t(X)%*%WX
   F <- Ve <- V%*%XWX
-  ##bias <- as.numeric(object$b - Ve%*%object$b) ## estimated beta bias
   edf1 <- rowSums(t(Ve)*Ve) ## this is diag(FF), where F is edf matrix
   Ve <- Ve%*%V*object$scale ## frequentist cov matrix
   B <- X*M
   rm(M)
-  hat <- apply(B,1,sum) # diag(X%*%V%*%t(WX))
-  edf <- apply(B,2,sum) # diag(V%*%t(X)%*%WX)
+  hat <- rowSums(B) #apply(B,1,sum) # diag(X%*%V%*%t(WX))
+  edf <- colSums(B) #apply(B,2,sum) # diag(V%*%t(X)%*%WX)
   Vb <- V*object$scale;rm(V)
   list(Ve=Ve,Vb=Vb,hat=hat,edf=edf,edf1=2*edf-edf1,F=F)
 }
@@ -3405,7 +3395,7 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 }
 
 
-initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1) {
+initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,start=NULL,mustart=NULL,etastart=NULL,...) {
 ## initial smoothing parameter values based on approximate matching 
 ## of Frob norm of XWX and S. If L is non null then it is assumed
 ## that the sps multiplying S elements are given by L%*%sp+lsp0 and 
@@ -3413,9 +3403,14 @@ initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1) {
 ## This routine evaluated initial guesses at W.
   ## Get the initial weights...
   if (length(S)==0) return(rep(0,0))
-  start <- etastart <- mustart <- NULL
-  nobs <- nrow(X)
-  eval(family$initialize)
+  ## start <- etastart <- mustart <- NULL
+  nobs <- nrow(X) 
+  if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
+  eval(family$initialize) 
+  if (is.null(mukeep)) {
+    if (!is.null(start)) etastart <- drop(X%*%start)
+    if (!is.null(etastart)) mustart <- family$linkinv(etastart)
+  } else mustart <- mukeep
   w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
   w <- sqrt(w)
   if (type==1) { ## what PI would have used
@@ -3490,7 +3485,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
 
 magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gcv=TRUE,
                 ridge.parameter=NULL,control=list(tol=1e-6,step.half=25,
-                rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y))
+                rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y),nthreads=1)
 # Wrapper for C routine magic. Deals with constraints weights and square roots of 
 # penalties. 
 # y is data vector, X is model matrix, sp is array of smoothing parameters,
@@ -3607,10 +3602,13 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
  
   b<-array(0,icontrol[3])
   # argument names in call refer to returned values.
-  um<-.C(C_magic,as.double(y),X=as.double(X),sp=as.double(sp),as.double(def.sp),as.double(Si),as.double(H),as.double(L),
+  if (nthreads<1) nthreads <- 1 ## can't set up storage without knowing nthreads
+  if (nthreads>1) extra.x <- q^2 * nthreads else extra.x <- 0 
+  um<-.C(C_magic,as.double(y),X=as.double(c(X,rep(0,extra.x))),sp=as.double(sp),as.double(def.sp),
+          as.double(Si),as.double(H),as.double(L),
           lsp0=as.double(lsp0),score=as.double(gamma),scale=as.double(scale),info=as.integer(icontrol),as.integer(cS),
           as.double(control$rank.tol),rms.grad=as.double(control$tol),b=as.double(b),rV=double(q*q),
-          as.double(extra.rss),as.integer(n.score))
+          as.double(extra.rss),as.integer(n.score),as.integer(nthreads))
   res<-list(b=um$b,scale=um$scale,score=um$score,sp=um$sp,sp.full=as.numeric(exp(L%*%log(um$sp))))
   res$R <- matrix(um$X[1:q^2],q,q)
   res$rV<-matrix(um$rV[1:(um$info[1]*q)],q,um$info[1])

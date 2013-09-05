@@ -18,8 +18,6 @@
 
 /*#include <dmalloc.h>*/
 
-
-
 void dump_mat(double *M,int *r,int*c,const char *path) {
   /* dump r by c matrix M to path - intended for debugging use only */
   FILE *mf;
@@ -55,6 +53,7 @@ void read_mat(double *M,int *r,int*c,char *path) {
  } else {
    j=fread(r,sizeof(int),1,mf); j=fread(c,sizeof(int),1,mf);
    j=fread(M,sizeof(double),*r * *c,mf);
+   if (j!= *r * *c)  Rprintf("\nfile dim problem\n");
  }
  fclose(mf);
 }
@@ -142,9 +141,10 @@ void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
 } /* end mgcv_mmult0*/
 
 void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n) {
-  /* BLAS version A is c (result), B is a, C is b, bt is transa ct is transb 
+  /* Forms A = B C transposing B and C according to bt and ct.
+     BLAS version A is c (result), B is a, C is b, bt is transa ct is transb 
      r is m, c is n, n is k.
-     Does nothing if r,c or n <= zero.
+     Does nothing if r,c or n <= zero. 
   */
   char transa='N',transb='N';
   int lda,ldb,ldc;
@@ -168,6 +168,120 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
   F77_CALL(dgemm)(&transa,&transb,r,c,n, &alpha,
 		B, &lda,C, &ldb,&beta, A, &ldc);
 } /* end mgcv_mmult */
+
+void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n,int *nt) {
+  /* 
+     Forms r by c product, A, of B and C, transposing each according to bt and ct.
+     n is the common dimension of the two matrices, which are stored in R 
+     default column order form.
+   
+     This version uses openMP parallelization. nt is number of threads to use. 
+     The strategy is rather simple, and this routine is really only useful when 
+     B and C have numbers of rows and columns somewhat higher than the number of 
+     threads. Assumes number of threads already set on entry and nt reset to 1
+     if no openMP support.
+
+     BLAS version A is c (result), B is a, C is b, bt is transa ct is transb 
+     r is m, c is n, n is k.
+     Does nothing if r,c or n <= zero. 
+  */
+  char transa='N',transb='N';
+  int lda,ldb,ldc,cpt,cpf,c1,i;
+  double alpha=1.0,beta=0.0;
+  if (*r<=0||*c<=0||*n<=0) return;
+  if (B==C) { /* this is serial, unfortunately. note case must be caught as B can be re-ordered!  */
+    if (*bt&&(!*ct)&&(*r==*c)) { getXtX(A,B,n,r);return;} 
+    else if (*ct&&(!*bt)&&(*r==*c)) { getXXt(A,B,c,n);return;}
+  }
+  #ifndef SUPPORT_OPENMP
+  *nt = 1;
+  #endif
+  if (*nt == 1) {
+    mgcv_mmult(A,B,C,bt,ct,r,c,n); /* use single thread version */
+    return;
+  }
+  if (*bt) { /* so B is n by r */
+    transa = 'T';  
+    lda = *n;
+  } else  lda = *r; /* B is r by n */
+
+  if (*ct) { /* C is c by n */ 
+    transb = 'T';
+    ldb = *c;
+  } else ldb = *n; /* C is n by c */
+
+  ldc = *r;
+
+  if (*ct) { /* have to split on B, which involves re-ordering */
+    if (*bt) { /* can split on columns of n by r matrix B, but A then needs re-ordering */
+      cpt = *r / *nt; /* cols per thread */
+      if (cpt * *nt < *r) cpt++; 
+      cpf = *r - cpt * (*nt-1); /* columns on final block */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp parallel private(i,c1)
+      #endif
+      { /* open parallel section */
+        c1 = cpt;
+        #ifdef SUPPORT_OPENMP
+        #pragma omp for
+        #endif
+        for (i=0;i<*nt;i++) {
+          if (i == *nt-1) c1 = cpf;
+          /* note integer after each matrix is its leading dimension */
+          if (c1>0) F77_CALL(dgemm)(&transa,&transb,&c1,c,n, &alpha,
+		B + i * cpt * *n, n ,C, c,&beta, A + i * cpt * *c, &c1);
+        }
+      } /* parallel section ends */
+      /* now re-order the r by c matrix A, which currently contains the sequential
+         blocks corresponding to each cpt rows of A */
+      row_block_reorder(A,r,c,&cpt,bt); /* bt used here for 'reverse' as it contains a 1 */
+    } else { /* worst case - have to re-order r by n mat B and then reverse re-ordering of B and A at end */
+      cpt = *r / *nt; /* cols per thread */
+      if (cpt * *nt < *r) cpt++; 
+      cpf = *r - cpt * (*nt - 1); /* columns on final block */
+      /* re-order cpt-row blocks of B into sequential cpt by n matrices (in B) */ 
+      row_block_reorder(B,r,n,&cpt,bt); /* bt contains a zero - forward mode here */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp parallel private(i,c1)
+      #endif
+      { /* open parallel section */
+        c1 = cpt;
+        #ifdef SUPPORT_OPENMP
+        #pragma omp for
+        #endif
+        for (i=0;i<*nt;i++) {
+          if (i == *nt-1) c1 = cpf;
+          if (c1>0) F77_CALL(dgemm)(&transa,&transb,&c1,c,n, &alpha,
+		B + i * cpt * *n, &c1,C,c,&beta, A + i * cpt * *c, &c1);
+        }
+      } /* parallel ends */
+      /* now reverse the re-ordering */
+      row_block_reorder(B,r,n,&cpt,ct);
+      row_block_reorder(A,r,c,&cpt,ct);
+    }
+  } else { /* can split on columns of n by c matrix C, which avoids re-ordering */
+    cpt = *c / *nt; /* cols per thread */
+    if (cpt * *nt < *c) cpt++; 
+    cpf = *c - cpt * (*nt - 1); /* columns on final block */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel private(i,c1)
+    #endif
+    { /* open parallel section */
+      c1 = cpt;
+      #ifdef SUPPORT_OPENMP
+      #pragma omp for
+      #endif
+      for (i=0;i< *nt;i++) {
+        if (i == *nt-1) c1 = cpf; /* how many columns in this block */
+        if (c1>0) F77_CALL(dgemm)(&transa,&transb,r,&c1,n, &alpha,
+		B, &lda,C + i * *n * cpt, &ldb,&beta, A + i * *r * cpt, &ldc);
+      }
+    } /* end parallel */
+  }
+
+} /* end mgcv_pmmult */
+
+
 
 void getXtX0(double *XtX,double *X,int *r,int *c)
 /* form X'X (nearly) as efficiently as possible - BLAS free*/
@@ -232,7 +346,7 @@ void getXtWX(double *XtWX, double *X,double *w,int *r,int *c,double *work)
 */ 
 { int i,j,one=1;
   char trans='T';
-  double *p,*p1,*p2,*pX0,xx,*w2,alpha=1.0,beta=0.0;
+  double *p,*p1,*p2,*pX0,xx=0.0,*w2,alpha=1.0,beta=0.0;
   pX0=X;
   w2 = XtWX; /* use first column as work space until end */
   for (i=0;i< *c;i++) { 
@@ -649,9 +763,10 @@ int get_qpr_k(int *r,int *c,int *nt) {
   #endif
 }
 
-void getRpqr(double *R,double *x,int *r, int *c,int *nt) {
+void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt) {
 /* x contains qr decomposition of r by c matrix as computed by mgcv_pqr 
-   This routine simply extracts the R factor into R.  
+   This routine simply extracts the c by c R factor into R. 
+   R has rr rows, where rr == c if R is square. 
 */
   int i,j,k,n;
   double *Rs;
@@ -662,8 +777,8 @@ void getRpqr(double *R,double *x,int *r, int *c,int *nt) {
     n = k * *c; /* rows of R */ 
     Rs = x + *r * *c; /* source R */
   }
-  for (i=0;i<*c;i++) for (j=0;j<*c;j++) if (i>j) R[i + *c * j] = 0; else
-	R[i + *c * j] = Rs[i + n * j];
+  for (i=0;i<*c;i++) for (j=0;j<*c;j++) if (i>j) R[i + *rr * j] = 0; else
+	R[i + *rr * j] = Rs[i + n * j];
 }
 
 void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt) {

@@ -289,7 +289,7 @@ void gridder(double *z,double *x,double *y,int *n,double *g, int *G,int *nx, int
    times with same geometry. 
 */
   int i,ix,iy,ok,Gthresh,Gk,k,ok00,ok01,ok10,ok11;
-  double xx,yy,xx0,yy0,dmax,xa,ya,g00,g01,g10,g11,b0,b1,b2,b3,dist,d1;
+  double xx,yy,xx0,yy0,dmax,xa,ya,g00=0.0,g01=0.0,g10=0.0,g11=0.0,b0,b1,b2,b3,dist,d1;
   dmax = (*dx * *dx + *dy * *dy)*2;
   xx0 = *x0;yy0 = *y0;
   Gthresh = - *nx * *ny; /* G below with implies out of area */

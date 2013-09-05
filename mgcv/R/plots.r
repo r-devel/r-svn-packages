@@ -660,7 +660,8 @@ plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=
     fac <- rep(x$flev,rep(n,nf))
     dat <- data.frame(fac,xx)
     names(dat) <- c(x$fterm,x$base$term)
-    X <- Predict.matrix.fs.interaction(x,dat)
+#    X <- Predict.matrix.fs.interaction(x,dat)
+    X <- PredictMat(x,dat)
     if (is.null(xlab)) xlabel <- x$base$term else xlabel <- xlab
     if (is.null(ylab)) ylabel <- label else ylabel <- ylab
     return(list(X=X,scale=TRUE,se=FALSE,raw=raw,xlab=xlabel,ylab=ylabel,

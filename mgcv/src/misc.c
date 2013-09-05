@@ -20,8 +20,6 @@ USA. */
 #include <stdio.h>
 #include <math.h>
 #include <R.h>
-#define ANSI
-#include "matrix.h"
 #include "mgcv.h"
 
 /* Compute reproducing kernel for spline on the sphere */

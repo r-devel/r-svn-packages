@@ -2,7 +2,7 @@
 
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
-	   double *tol,double *b,double *rV,double *norm_const,int *n_score);
+	   double *tol,double *b,double *rV,double *norm_const,int *n_score,int *nt);
 
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 	  double *sp,double *z,double *w,double *wf,double *alpha,double *mu,double *eta, double *y,
@@ -32,7 +32,6 @@ void psum(double *y, double *x,int *index,int *n);
 void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p);
 void in_out(double *bx, double *by, double *break_code, double *x,double *y,int *in, int *nb, int *n);
 void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol);
-void RQT(double *A,int *r,int *c);
 void RuniqueCombs(double *X,int *ind,int *r, int *c);
 void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,double *Afd,double *Hd,double *Sd,int *off,int *dim,double *theta, int *m,int *nar);
 void RMonoCon(double *Ad,double *bd,double *xd,int *control,double *lower,double *upper,int *n);
@@ -51,6 +50,7 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau);
 void mgcv_qr2(double *x, int *r, int *c,int *pivot,double *tau);
 void update_qr(double *Q,double *R,int *n, int *q,double *lam, int *k);
 extern void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
+void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n,int *nt);
 void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd, int *get_vectors,int *descending);
@@ -66,7 +66,7 @@ void getXXt(double *XXt,double *X,int *r,int *c);
 void read_mat(double *M,int *r,int*c, char *path);
 void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse);
 void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt);
-void getRpqr(double *R,double *x,int *r, int *c,int *nt);
+void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt);
 void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt);
 
 /* basis constructor/prediction routines*/

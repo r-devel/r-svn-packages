@@ -16,8 +16,9 @@ R_CMethodDef CEntries[] = {
     {"crspl", (DL_FUNC) &crspl,8},
     {"predict_tprs", (DL_FUNC) &predict_tprs, 12},
     {"MinimumSeparation", (DL_FUNC) &MinimumSeparation, 7},
-    {"magic", (DL_FUNC) &magic, 18},
+    {"magic", (DL_FUNC) &magic, 19},
     {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
+    {"mgcv_pmmult", (DL_FUNC) &mgcv_mmult,9},
     {"gdi1",(DL_FUNC) &gdi1,46},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
     {"pls_fit",(DL_FUNC)&pls_fit,10},
@@ -48,7 +49,7 @@ R_CMethodDef CEntries[] = {
     {"gridder",(DL_FUNC)&gridder, 13},
     {"row_block_reorder",(DL_FUNC)&row_block_reorder,5},
     {"mgcv_pqr",(DL_FUNC)&mgcv_pqr,6},
-    {"getRpqr",(DL_FUNC)&getRpqr,5},
+    {"getRpqr",(DL_FUNC)&getRpqr,6},
     {"mgcv_pqrqy",(DL_FUNC)&mgcv_pqrqy,8},
     {NULL, NULL, 0}
 };

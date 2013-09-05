@@ -202,7 +202,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         valideta <- function(eta) TRUE
     validmu <- family$validmu
     if (is.null(validmu)) 
-        validmu <- function(mu) TRUE
+       validmu <- function(mu) TRUE
     if (is.null(mustart)) {
         eval(family$initialize)
     }
@@ -2054,6 +2054,19 @@ fix.family.ls<-function(fam)
     return(fam)
   }
   stop("family not recognised")
+}
+
+fix.family <- function(fam) {
+## allows families to be patched...
+   if (fam$family[1]=="gaussian") { ## sensible starting values given link...
+     fam$initialize <- expression({
+     n <- rep.int(1, nobs)
+     if (family$link == "inverse") mustart <- y + (y==0)*sd(y)*.01 else
+     if (family$link == "log") mustart <- pmax(y,.01*sd(y)) else
+     mustart <- y
+     })
+  }
+  fam
 }
 
 

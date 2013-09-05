@@ -6,6 +6,28 @@
 * code added to allow openMP based multi-threading in gam fits (see
   ?gam.control). Most progress on REML/ML based fitting.
 
+* bam now allows AR1 error model to be split blockwise. See argument 
+  'AR.start'
+
+* magic.post.proc made more efficient (one of two O(np^2) steps removed).
+
+* var.summary now coerces character to factor. 
+
+* bugs fixed whereby etastart etc were not passed to initial.spg and
+  get.null.coefs. Thanks to Gavin Simpson.
+
+* reformulate removed from predict.gam to avoid (slow) repeated parser 
+  calls.
+
+* gaussian(link="log") initialization fixed so that negative data 
+  does not make it fail, via fix.family patching function.
+
+* bug fix in plot method for "fs" basis - ignored any side conditions.
+  Thanks to Martijn Weiling and ***
+
+* gamm now checks whether smooths nested in factors have illegal side 
+  conditions, and halts if so (re-ordering formula can help).
+ 
 * anova.glmlist no longer called.
 
 * Compiled code now uses R_chck_calloc and R_chk_free for memory management

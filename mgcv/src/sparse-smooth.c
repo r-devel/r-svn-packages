@@ -380,7 +380,6 @@ void Rkdtree(double *X,int *n, int *d,int *idat,double *ddat) {
 
 */
   kdtree_type kd;
-  int i,j;
   kd_tree(X,n,d,&kd); /* create kd tree */
   kd_dump(kd,idat,ddat); /* dump it to idat,ddat */
   free_kdtree(kd); /* free structure */
@@ -1530,7 +1529,7 @@ void sspl_construct(double *lambda,double *x,double *w,double *U,double *V,
    x values within tol of each other are treated as duplicates.
 */   
   double *ub,rho,*p,*p1,*ub1,*ub2,*lb1,c,s,*U0s,*U0c,*U1s,*U1c,
-    *V0s,*V0c,*V1s,*V1c,upper,w2,
+    *V0s,*V0c,*V1s,*V1c,upper,w2=0.0,
     L11=0.0,L12=0.0,L13,L21,L22,L23,L31,L32,L33,X1,X2,X3,Lt,temp;
   int i,k,ok;
   /* first check for duplicates */

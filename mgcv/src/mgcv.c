@@ -19,14 +19,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
 USA. */
 
-    /*#define WINDOWS*/ 
-
-#ifdef WINDOWS
-#include <windows.h>   /* For easy self window porting, without neading everything R.h needs */
-#include <stdarg.h>
-#else
 #include <R.h>
-#endif
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,46 +35,13 @@ USA. */
 #define round(a) ((a)-floor(a) <0.5 ? (int)floor(a):(int) floor(a)+1)
 
 
-#ifdef WINDOWS
-/* following routine provides a version of Rprintf that outputs to a file instead 
-   of console, to facilitate debugging under windows.....
-*/
-typedef struct{
-double a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20;
-} _dodgy_print_storage;
 
-void Rprintf(char *str,...)
-{ _dodgy_print_storage ug; 
-  FILE *f;
-  va_list argptr;
-  f=fopen("d:/simon/Rdump.txt","at");
-  va_start(argptr,str);
-  ug=va_arg(argptr,_dodgy_print_storage);
-  fprintf(f,str,ug);
-  va_end(argptr);
-  fclose(f);
-}
-#endif
 
 void ErrorMessage(char *msg,int fatal)
 
-{ 
-#ifdef WINDOWS
-  MessageBox(HWND_DESKTOP,msg,"Info!",MB_ICONEXCLAMATION|MB_OK); 
-#else  
-if (fatal) error("%s",msg);else warning("%s",msg);
-#endif
+{ if (fatal) error("%s",msg);else warning("%s",msg);
 }
 
-void infobox(char *msg)
-
-{ 
-#ifdef WINDOWS
-MessageBox(HWND_DESKTOP,msg,"Info!",MB_ICONEXCLAMATION|MB_OK); 
-#else
-warning("%s",msg);
-#endif
-}
 
 /* The following are some rather ancient routines used to set up an example
    additive model using regression (cubic) splines, via RGAMsetup(). */
@@ -293,8 +253,8 @@ void crspl(double *x,int *n,double *xk, int *nk,double *X,double *S, double *F,i
    * If Fsupplied!=0 then F' is matrix mapping function values at knots to second derivs,
      otherwise F and the penalty matrix S are computed and returned, along with X.         
 */
-  int i,j,k,extrapolate,jup,jmid;
-  double xlast=0.0,h,xi,kmax,kmin,ajm,ajp,cjm,cjp,*Fp,*Fp1,*Xp,xj,xj1,xik;
+  int i,j=0,k,extrapolate,jup,jmid;
+  double xlast=0.0,h=0.0,xi,kmax,kmin,ajm,ajp,cjm,cjp,*Fp,*Fp1,*Xp,xj,xj1,xik;
   if (! *Fsupplied) getFS(xk,*nk,S,F);
   kmax = xk[*nk-1];kmin = xk[0];
   for (i=0;i<*n;i++) { /* loop through x */
@@ -406,13 +366,11 @@ void RuniqueCombs(double *X,int *ind,int *r, int *c)
   RArrayFromMatrix(X,Xd.r,&Xd);  /* NOTE: not sure about rows here!!!! */
   *r = (int)Xd.r; 
   freemat(Xd);R_chk_free(ind1);
-#ifdef MEM_CHECK
-  dmalloc_log_unfreed();  dmalloc_verify(NULL);
-#endif 
+
 }
 
 void RMonoCon(double *Ad,double *bd,double *xd,int *control,double *lower,double *upper,int *n)
-/* obtains coefficient matrices for imposing monotoicity (and optionally bounds) on a 
+/* obtains coefficient matrices for imposing monotonicity (and optionally bounds) on a 
    cubic regression spline with n knots located as specified in xd. 
    
    control indicates type of constraints:
@@ -438,66 +396,9 @@ void RMonoCon(double *Ad,double *bd,double *xd,int *control,double *lower,double
   RArrayFromMatrix(bd,b.r,&b);
  
   freemat(x);freemat(A);freemat(b);  
-#ifdef MEM_CHECK
-  dmalloc_log_unfreed();  dmalloc_verify(NULL);
-#endif 
+
 }
 
-
-
-void RQT(double *A,int *r,int*c)
-
-/* Obtains the QT decomposition of matrix A (stored according to R conventions)
-   AQ=[0,T] where T is reverse lower triangular (upper left is zero). r<c and 
-   first c-r columns of Q are basis vectors for the null space of A 
-   (Q orthogonal). Let this null space basis be Z. It is actually stored as 
-   a series of r Householder rotations over the rows of A. Let u_i be the ith
-   row of A (A[i,], i>=1) then the last i-1 elements of u_i are zero, while if 
-   H_i=(I-u_i u_i') then Q=H_1 H_2 H_3 ...H_r.
-   
-   The main purpose of this routine *was* to provide a suitable representation 
-   of the null space of any equality constraints on the problem addressed by 
-   mgcv(). So if the constraints are Cp=0, RQT() was called to get an 
-   appropriate null space basis in A. The non-obvious representation usually 
-   saves much computing, since there are usually few constraints, resulting in 
-   a high dimensional null space - in this case the Householder representation
-   is very efficient. 
-
-   However, the current version of mgcv() expects to get the constraint matrix    itself and not the null space. 
-*/
-
-{ matrix Q,B;
-  B=Rmatrix(A,(long)(*r),(long)(*c));
-  Q=initmat(B.r,B.c);
-  QT(Q,B,0);
-  RArrayFromMatrix(A,(long)(*r),&Q);
-  freemat(Q);freemat(B); 
-#ifdef MEM_CHECK
-  dmalloc_log_unfreed();  dmalloc_verify(NULL);
-#endif
-}
-
-
-
-
-
-
-
-void RprintM(matrix *A)
-
-{ 
-#ifdef WINDOWS
-#else
-int i,j;
-  if (A->c==1L) 
-  { for (i=0;i<A->r;i++) 
-   Rprintf("%8.3g ",A->V[i]);Rprintf("\n");
-  } 
-else
- for (i=0;i<A->r;i++)
-     { for (j=0;j<A->c;j++) Rprintf("%8.3g ",A->M[i][j]);Rprintf("\n");}
-#endif
-}
 
 void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,
             double *Afd,double *Hd,double *Sd,

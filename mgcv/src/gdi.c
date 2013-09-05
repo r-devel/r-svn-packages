@@ -26,7 +26,6 @@ USA. */
 #endif
 #define ANSI
 /*#define DEBUG*/
-#include "matrix.h"
 #include "mgcv.h"
 
 
@@ -803,20 +802,15 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
  
    * Note that P and K are as in Wood (2008) JRSSB 70, 495-518.
 
+   * uses nthreads via openMP - assumes nthreads already set and nthreads already reset to 1
+     if openMP not present
 */
 
-{ double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1;
+{ double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1,*pTkm;
   int m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,max_col;
   int tid;
   if (nthreads<1) nthreads = 1;
-  #ifndef SUPPORT_OPENMP
-    nthreads = 1; /* reset nthreads to 1 if no openMP support */ 
-  #endif
-  #ifdef SUPPORT_OPENMP
-    m = omp_get_num_procs(); /* detected number of processors */
-    if (nthreads>m) nthreads=m; /* no point in more threads than m */
-    omp_set_num_threads(nthreads); /* must precede sections */
-  #endif
+
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* obtain diag(KK') */ 
   if (*deriv) {
@@ -839,9 +833,9 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
       #pragma omp for
       #endif
       for (k=0;k < *M;k++) {
-      #ifdef SUPPORT_OPENMP
+	#ifdef SUPPORT_OPENMP
         tid = omp_get_thread_num(); /* thread running this bit */
-      #endif    
+	#endif    
         j = k * *r * *r;
         getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work + *n * tid);
       }
@@ -893,7 +887,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   /* Now accumulate the second derivatives */
 
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(m,k,km,mk,xx,tid)
+  #pragma omp parallel private(m,k,km,mk,xx,tid,pdKK,p1,pTkm)
   #endif
   { /* start of parallel section */ 
     if (deriv2) 
@@ -903,11 +897,13 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
     for (m=0;m < *M;m++) {
       #ifdef SUPPORT_OPENMP
       tid = omp_get_thread_num(); /* thread running this bit */
-      #endif       
+      #endif
+      if (m==0) pTkm = Tkm; else pTkm = Tkm + (m * *M - (m*(m-1))/2) * *n;        
       for (k=m;k < *M;k++) {
         km=k * *M + m;mk=m * *M + k;
         /* tr(Tkm KK') */
-        for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
+        //for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
+        for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,pTkm++) xx += *pTkm * *pdKK;
         det2[km] = xx;
 
         /* - tr(KTkKK'TmK) */
@@ -956,14 +952,14 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
      of the parameters, but this seems to be wrong. It gives the edfs for R \beta, where
      R is (pseudo) inverse of P. 
 
+     * uses nt threads via openMP. Assumes thread number already set on entry and nt already reset to
+       1 if no openMP support.
 */
 
 { double *diagKKt,*diagKKtKKt,xx,*KtTK,*KtTKKtK,*KKtK,*KtK,*work,*pTk,*pTm,*pdKKt,*pdKKtKKt,*p0,*p1,*p2,*p3,*pd,
     *PtrSm,*PtSP,*KPtrSm,*diagKPtSPKt,*diagKPtSPKtKKt,*PtSPKtK, *KtKPtrSm, *KKtKPtrSm,*Ip,*IpK/*,lowK,hiK*/;
     int i,m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,neg_w=0,tid=0;
-  #ifdef SUPPORT_OPENMP
-  omp_set_num_threads(*nt); /* must precede sections */
-  #endif
+
   if (*deriv==2) deriv2=1; else deriv2=0;
   /* Get the sign array for negative w_i */
   Ip = (double *)R_chk_calloc((size_t)*n,sizeof(double));
@@ -999,10 +995,10 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
       if (*p1>hiK) hiK= *p1; else if (*p1<lowK) lowK = *p1;
     }
     Rprintf("K range = %g - %g\n",lowK,hiK);*/
-  bt=1;ct=0;mgcv_mmult(KtK,K,IpK,&bt,&ct,r,r,n);  
+  bt=1;ct=0;mgcv_pmmult(KtK,K,IpK,&bt,&ct,r,r,n,nt);  
   if (neg_w) R_chk_free(IpK); else R_chk_free(IpK);
   KKtK = (double *)R_chk_calloc((size_t)*n * *r,sizeof(double));
-  bt=0;ct=0;mgcv_mmult(KKtK,K,KtK,&bt,&ct,n,r,r);  
+  bt=0;ct=0;mgcv_pmmult(KKtK,K,KtK,&bt,&ct,n,r,r,nt);  
 
   /* obtain diag(KK'KK') */
   diagKKtKKt = (double *)R_chk_calloc((size_t)*n,sizeof(double));
@@ -1672,15 +1668,15 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     *alpha1,*alpha2,*raw,*Q1,*IQ, Rnorm,Enorm,*nulli,ldetI2D;
   int i,j,k,*pivot,*pivot1,ScS,*pi,rank,left,tp,bt,ct,iter=0,m,one=1,
     n_2dCols=0,n_b1,n_b2,n_drop,*drop,nt1,
-      n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0;
+      n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0; 
   
   #ifdef SUPPORT_OPENMP
-    m = omp_get_num_procs(); /* detected number of processors */
-    if (*nt>m) *nt = m; /* no point in more threads than m */
+  m = omp_get_num_procs(); /* detected number of processors */
+  if (*nt > m || *nt < 1) *nt = m; /* no point in more threads than m */
+  omp_set_num_threads(*nt); /* set number of threads to use */
   #else
-  *nt = 1; /* can't use more than one thread if OpenMP not supported */
+  *nt = 1;
   #endif
-
   nt1 = *nt; /* allows threading to be switched off for QR for debugging*/ 
 
   if (*deriv==2) deriv2=1; else deriv2=0;
@@ -1728,7 +1724,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   /* copy out upper triangular factor R, and unpivot it */
   R1 = (double *)R_chk_calloc((size_t)*q * *q,sizeof(double));
   //st for (i=0;i<*q;i++) for (j=i;j<*q;j++) R1[i + *q * j] = WX[i + *n * j]; 
-  getRpqr(R1,WX,n,q,&nt1);
+  getRpqr(R1,WX,n,q,q,&nt1);
 
   pivoter(R1,q,q,pivot,&TRUE,&TRUE); /* unpivoting the columns of R1 */
  
@@ -1860,10 +1856,10 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     for (p1=d,p2=d+rank;p1<p2;p1++,p0++) *p0 *= *p1;
 
     /* Form K */
-    bt=0;ct=1;mgcv_mmult(K,Q1,Vt,&bt,&ct,n,&rank,&rank);
+    bt=0;ct=1;mgcv_pmmult(K,Q1,Vt,&bt,&ct,n,&rank,&rank,nt);
    
     /* Form P */
-    bt=0;ct=1;mgcv_mmult(P,Ri,Vt,&bt,&ct,&rank,&rank,&rank);
+    bt=0;ct=1;mgcv_pmmult(P,Ri,Vt,&bt,&ct,&rank,&rank,&rank,nt);
    
    
 
@@ -2201,11 +2197,11 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     //st tau = (double *)R_chk_calloc((size_t)rank,sizeof(double));
     tau = (double *)R_chk_calloc((size_t)rank*(*nt+1),sizeof(double));
     //st mgcv_qr(WX,&nr,&rank,pivot,tau);
-    mgcv_pqr(WX,&nr,&rank,pivot,tau,nt);
+    mgcv_pqr(WX,&nr,&rank,pivot,tau,&nt1);
 
     //st Rinv(P,WX,&rank,&nr,&rank); /* P= R^{-1} */
     R1 = (double *)R_chk_calloc((size_t)rank*rank,sizeof(double));
-    getRpqr(R1,WX,&nr,&rank,nt);
+    getRpqr(R1,WX,&nr,&rank,&rank,&nt1);
 
     Rinv(P,R1,&rank,&rank,&rank);
     R_chk_free(R1); 
@@ -2216,7 +2212,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     // st for (i=0;i< rank;i++) Q[i * nr + i] = 1.0;
     //st left=1;tp=0;mgcv_qrqy(Q,WX,tau,&nr,&rank,&rank,&left,&tp); /* Q from the second QR decomposition */
     for (i=0;i< rank;i++) Q[i * rank + i] = 1.0;
-    tp=0;mgcv_pqrqy(Q,WX,tau,&nr,&rank,&rank,&tp,nt);
+    tp=0;mgcv_pqrqy(Q,WX,tau,&nr,&rank,&rank,&tp,&nt1);
 
     for (p1=Q,p0=K,j=0;j<rank;j++,p1 += *Enrow) for (i=0;i<*n;i++,p1++,p0++) *p0 = *p1;
     R_chk_free(Q);R_chk_free(WX);R_chk_free(tau);
@@ -2501,12 +2497,18 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 */
 
 { int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1,nz;
-  double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
+  double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,m,
     *R1,*tau1,Rnorm,Enorm,*R;
-   
-  #ifndef SUPPORT_OPENMP
+  
+
+  #ifdef SUPPORT_OPENMP
+  m = omp_get_num_procs(); /* detected number of processors */
+  if (*nt > m || *nt < 1) *nt = m; /* no point in more threads than m */
+  omp_set_num_threads(*nt); /* set number of threads to use */
+  #else
   *nt = 1; /* no openMP support - turn off threading */
   #endif
+
   nr = *q + *rE;
   nz = *n; if (nz<nr) nz=nr; /* possible for nr to be more than n */
   z = (double *)R_chk_calloc((size_t) nz,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
@@ -2548,7 +2550,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   /* copy out upper triangular factor R, and unpivot it */
   R1 = (double *)R_chk_calloc((size_t)*q * *q,sizeof(double));
   //st for (i=0;i<*q;i++) for (j=i;j<*q;j++) R1[i + *q * j] = WX[i + *n * j]; 
-  getRpqr(R1,WX,n,q,nt);
+  getRpqr(R1,WX,n,q,q,nt);
   
   pivoter(R1,q,q,pivot,&TRUE,&TRUE); /* unpivoting the columns of R1 */
  
@@ -2611,7 +2613,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
     //st for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *n * j] = Q[i + nr * j];
     //st left=1;tp=0;mgcv_qrqy(Q1,WX,tau,n,&rank,q,&left,&tp); /* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */   
     for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *q * j] = Q[i + nr * j];
-    tp=0;mgcv_pqrqy(Q1,WX,tau,n,q,&rank,&tp,nt);
+    tp=0;mgcv_pqrqy(Q1,WX,tau,n,q,&rank,&tp,nt);/* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */   
     
     R_chk_free(Q);
 

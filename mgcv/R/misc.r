@@ -34,7 +34,7 @@ pqr.R <- function(x) {
 ## R <- mgcv:::pqr.R(er); R0 <- qr.R(qr(X,tol=0))
 ## svd(R)$d;svd(R0)$d
   oo <- .C(C_getRpqr,R=as.double(rep(0,x$c^2)),as.double(x$x),as.integer(x$r),as.integer(x$c),
-           as.integer(x$nt))
+           as.integer(x$c),as.integer(x$nt))
   matrix(oo$R,x$c,x$c)
 }
 
@@ -63,3 +63,18 @@ pqr.qy <- function(x,a,tr=FALSE) {
   return(matrix(oo$a,x$r,a.c))
 }
 
+pmmult <- function(A,B,tA=FALSE,tB=FALSE,nt=1) {
+## parallel matrix multiplication (not for use on vectors or thin matrices)
+## library(mgcv);r <- 10;c <- 5;n <- 8
+## A <- matrix(runif(r*n),r,n);B <- matrix(runif(n*c),n,c);range(A%*%B-mgcv:::pmmult(A,B,nt=1))
+## A <- matrix(runif(r*n),n,r);B <- matrix(runif(n*c),n,c);range(t(A)%*%B-mgcv:::pmmult(A,B,TRUE,FALSE,nt=1))
+## A <- matrix(runif(r*n),n,r);B <- matrix(runif(n*c),c,n);range(t(A)%*%t(B)-mgcv:::pmmult(A,B,TRUE,TRUE,nt=1))
+## A <- matrix(runif(r*n),r,n);B <- matrix(runif(n*c),c,n);range(A%*%t(B)-mgcv:::pmmult(A,B,FALSE,TRUE,nt=1))
+
+ if (tA) { n = nrow(A);r = ncol(A)} else {n = ncol(A);r = nrow(A)}
+ if (tB) { c = nrow(B)} else {c = ncol(B)}
+ C <- rep(0,r * c) 
+ oo <- .C(C_mgcv_pmmult,C=as.double(C),as.double(A),as.double(B),as.integer(tA),as.integer(tB),as.integer(r),
+          as.integer(c),as.integer(n),as.integer(nt));
+ matrix(oo$C,r,c)
+}

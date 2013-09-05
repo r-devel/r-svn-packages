@@ -783,7 +783,7 @@ smooth2random.tensor.smooth <- function(object,vnames,type=1) {
 
 
 
-gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),knots=NULL,
+gamm.setup <- function(formula,pterms,data=stop("No data supplied to gamm.setup"),knots=NULL,
                      parametric.only=FALSE,absorb.cons=FALSE)
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 ## needed for a gamm fit.
@@ -835,6 +835,7 @@ gamm.setup<-function(formula,pterms,data=stop("No data supplied to gamm.setup"),
     } else {
       if (is.null(f.name)) f.name <- G$smooth[[i]]$fterm
       else if (f.name!=G$smooth[[i]]$fterm) stop("only one level of smooth nesting is supported by gamm")
+      if (!is.null(attr(G$smooth[[i]],"del.index"))) stop("side conditions not allowed for nested smooths")
     }   
     if (k < G$m) pord[(k+1):G$m] <- (1:G$m)[!done] 
     ## .... ordered so that nested smooths are last
@@ -1526,6 +1527,9 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
                  df.null=nrow(G$X),y=G$y,terms=gam.terms,pterms=pTerms,xlevels=G$xlevels,
                  contrasts=G$contrasts,assign=G$assign,na.action=attr(mf,"na.action"),
                  cmX=G$cmX,var.summary=G$var.summary,scale.estimated=TRUE)
+    
+    pvars <- all.vars(delete.response(object$terms))
+    object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else NULL
 
     #######################################################
     ## Transform  parameters back to the original space....
