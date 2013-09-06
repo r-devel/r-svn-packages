@@ -759,7 +759,7 @@ int get_qpr_k(int *r,int *c,int *nt) {
     }
   return(k);
   #else
-  return(1) /* can only use 1 thread if no openMP support */ 
+  return(1); /* can only use 1 thread if no openMP support */ 
   #endif
 }
 
