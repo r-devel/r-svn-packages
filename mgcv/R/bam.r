@@ -1175,7 +1175,6 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   colnamesX <- colnames(G$X)  
 
   if (sparse) { ## Form a sparse model matrix...
-    require(Matrix)
     if (sum(G$X==0)/prod(dim(G$X))<.5) warning("model matrix too dense for any possible benefit from sparse")
     if (nrow(mf)<=chunk.size) G$X <- as(G$X,"dgCMatrix") else 
       G$X <- sparse.model.matrix(G,mf,chunk.size)

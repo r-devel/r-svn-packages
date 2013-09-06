@@ -518,7 +518,7 @@ smooth2random.fs.interaction <- function(object,vnames,type=1) {
 ## penalties are not interwoven, but blocked (i.e. this ordering is 
 ## as for gamm case). 
   if (object$fixed) return(list(fixed=TRUE,Xf=object$X))
-  if (type == 2) require(Matrix)
+  ##if (type == 2) require(Matrix)
   colx <- ncol(object$X) 
   diagU <- rep(1,colx)
   ind <- 1:colx 
@@ -1363,7 +1363,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
 # between the basis constructors provided in mgcv and the gammPQL routine used to estimate the model.
 # NOTE: need to fill out the gam object properly
 {
-  if (!require("nlme")) stop("gamm() requires package nlme to be installed")
+  ##if (!require("nlme")) stop("gamm() requires package nlme to be installed")
   control <- do.call("lmeControl",control) 
     # check that random is a named list
     if (!is.null(random))

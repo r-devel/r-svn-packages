@@ -20,7 +20,6 @@ tri.pen <- function(X,T) {
 ## finds a sparse approximate TPS penalty, based on the points in X, 
 ## with triangulation T. Rows of X are points. Rows of T index vertices 
 ## of triangles in X.
-  require(Matrix)
   nn <- tri2nei(T) ## get neighbour list from T
   ## now obtain generalized FD penalty...
   n <- nrow(X);d <- ncol(X);
