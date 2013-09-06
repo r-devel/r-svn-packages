@@ -134,7 +134,7 @@ nearest <- function(k,X,gt.zero = FALSE,get.a=FALSE) {
 ## ties are broken arbitrarily.
 ## gt.zero indicates that neighbours must have distances greater
 ## than zero...
-  require(mgcv)
+ 
   if (gt.zero) {
     Xu <- uniquecombs(X);ind <- attr(Xu,"index") ## Xu[ind,] == X
   } else { Xu <- X; ind <- 1:nrow(X)}
