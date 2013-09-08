@@ -5,8 +5,8 @@
 2013-08-15  Brian Ripley
 
 	* DESCRIPTION: version is 3.1-111,
-	* R/lmList.R: Adjust to cope with singular fits returned by lm()
-	(Contributed by Ruth Ripley.)
+	* R/lmList.R: Adjust to cope with failed fits and fits with 
+	fewer coefficients returned by lm().  (Contributed by Ruth Ripley.)
 
 2013-07-02  Brian Ripley
 
