@@ -25,7 +25,7 @@ pqr <- function(x,nt=1) {
   x.c <- ncol(x);r <- nrow(x)
   oo <- .C(C_mgcv_pqr,x=as.double(c(x,rep(0,nt*x.c^2))),as.integer(r),as.integer(x.c),
            pivot=as.integer(rep(0,x.c)), tau=as.double(rep(0,(nt+1)*x.c)),as.integer(nt)) 
-  list(x=oo$x,r=r,c=x.c,tau=oo$tau,pivot=oo$pivot,nt=nt)
+  list(x=oo$x,r=r,c=x.c,tau=oo$tau,pivot=oo$pivot+1,nt=nt)
 }
 
 pqr.R <- function(x) {

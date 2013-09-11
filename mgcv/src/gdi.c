@@ -826,7 +826,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   if (deriv2) {
     KtTK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
     #ifdef SUPPORT_OPENMP
-    #pragma omp parallel private(k,j,tid)
+    #pragma omp parallel private(k,j,tid) num_threads(nthreads)
     #endif
     { /* open parallel section */
       #ifdef SUPPORT_OPENMP
@@ -862,7 +862,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   rSoff[0] = 0;for (m=0;m < *M-1;m++) rSoff[m+1] = rSoff[m] + rSncol[m];
   tid = 0;
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(m,bt,ct,tid)
+  #pragma omp parallel private(m,bt,ct,tid) num_threads(nthreads)
   #endif
   { /* parallel section start */
     #ifdef SUPPORT_OPENMP
@@ -887,7 +887,7 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
   /* Now accumulate the second derivatives */
 
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(m,k,km,mk,xx,tid,pdKK,p1,pTkm)
+  #pragma omp parallel private(m,k,km,mk,xx,tid,pdKK,p1,pTkm) num_threads(nthreads)
   #endif
   { /* start of parallel section */ 
     if (deriv2) 
@@ -1009,7 +1009,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
     KtTK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
     KtTKKtK = (double *)R_chk_calloc((size_t)(*r * *r * *M),sizeof(double));
     #ifdef SUPPORT_OPENMP
-    #pragma omp parallel private(k,j,tid)
+    #pragma omp parallel private(k,j,tid) num_threads(*nt)
     #endif
     { /* open parallel section */
       #ifdef SUPPORT_OPENMP
@@ -1072,7 +1072,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
   rSoff[0] = 0;for (m=0;m < *M-1;m++) rSoff[m+1] = rSoff[m] + rSncol[m];
   tid = 0;
   #ifdef SUPPORT_OPENMP
-#pragma omp parallel private(m,bt,ct,tid,xx,p0,p1,p2)
+  #pragma omp parallel private(m,bt,ct,tid,xx,p0,p1,p2) num_threads(*nt)
   #endif
   { /* open parallel section */
     #ifdef SUPPORT_OPENMP

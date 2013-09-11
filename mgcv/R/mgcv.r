@@ -1231,6 +1231,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     object$scale <- object$scale.est;object$scale.estimated <- TRUE
   } 
   
+  object$control <- control
   mv <- gam.fit3.post.proc(G$X,object)
   object$Vp <- mv$Vb
   object$hat<-mv$hat
@@ -1248,7 +1249,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$sig2 <- object$scale
   
   object
-}
+} ## gam.outer
 
 get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 ## Get an estimate of the coefs corresponding to maximum reasonable deviance...

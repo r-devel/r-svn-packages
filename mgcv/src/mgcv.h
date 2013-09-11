@@ -1,5 +1,5 @@
 /* main method routines */
-
+#include <Rinternals.h>
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score,int *nt);
@@ -51,6 +51,7 @@ void mgcv_qr2(double *x, int *r, int *c,int *pivot,double *tau);
 void update_qr(double *Q,double *R,int *n, int *q,double *lam, int *k);
 extern void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
 void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n,int *nt);
+SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads);
 void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n);
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c);
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd, int *get_vectors,int *descending);

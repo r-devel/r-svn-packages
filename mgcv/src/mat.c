@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <R.h>
+#include <Rinternals.h>
 #include <R_ext/Linpack.h> /* only needed for pivoted chol - see note in mgcv_chol */
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
@@ -169,6 +170,41 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc);
 } /* end mgcv_mmult */
 
+SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
+/* parallel matrix multiplication using .Call inteface */
+  double *A,*B,*C;
+  int r,col,n,nt,Ct,Bt,m;
+  SEXP a; 
+ 
+  nt = asInteger(nthreads);
+  Bt = asInteger(bt);
+  Ct = asInteger(ct);
+ 
+  if (Bt) {
+    r = ncols(b);
+    n = nrows(b);
+  } else {
+    r = nrows(b);
+    n = ncols(b);
+  }
+ 
+  if (Ct) col = nrows(c);
+  else col = ncols(c);
+  /* Rprintf("nt = %d, Bt = %d, Ct = %d, r = %d, c = %d, n = %d\n",nt,Bt,Ct,r,col,n);*/
+  B = REAL(b);C=REAL(c);
+  a = PROTECT(allocMatrix(REALSXP,r,col));
+  A = REAL(a);
+  #ifdef SUPPORT_OPENMP
+  m = omp_get_num_procs(); /* detected number of processors */
+  if (nt > m || nt < 1) nt = m; /* no point in more threads than m */
+  #else
+  nt = 1; /* no openMP support - turn off threading */
+  #endif
+  mgcv_pmmult(A,B,C,&Bt,&Ct,&r,&col,&n,&nt);
+  UNPROTECT(1);
+  return(a);
+}
+
 void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n,int *nt) {
   /* 
      Forms r by c product, A, of B and C, transposing each according to bt and ct.
@@ -218,7 +254,7 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
       if (cpt * *nt < *r) cpt++; 
       cpf = *r - cpt * (*nt-1); /* columns on final block */
       #ifdef SUPPORT_OPENMP
-      #pragma omp parallel private(i,c1)
+      #pragma omp parallel private(i,c1) num_threads(*nt)
       #endif
       { /* open parallel section */
         c1 = cpt;
@@ -242,7 +278,7 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
       /* re-order cpt-row blocks of B into sequential cpt by n matrices (in B) */ 
       row_block_reorder(B,r,n,&cpt,bt); /* bt contains a zero - forward mode here */
       #ifdef SUPPORT_OPENMP
-      #pragma omp parallel private(i,c1)
+      #pragma omp parallel private(i,c1) num_threads(*nt)
       #endif
       { /* open parallel section */
         c1 = cpt;
@@ -264,7 +300,7 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
     if (cpt * *nt < *c) cpt++; 
     cpf = *c - cpt * (*nt - 1); /* columns on final block */
     #ifdef SUPPORT_OPENMP
-    #pragma omp parallel private(i,c1)
+    #pragma omp parallel private(i,c1) num_threads(*nt)
     #endif
     { /* open parallel section */
       c1 = cpt;
@@ -824,7 +860,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
       row_block_reorder(b,r,cb,&nb,&FALSE);
     }
     #ifdef SUPPORT_OPENMP
-    #pragma omp parallel private(i,j,l,n,x1)
+    #pragma omp parallel private(i,j,l,n,x1) num_threads(k)
     #endif
     { /* open parallel section */
       #ifdef SUPPORT_OPENMP
@@ -862,7 +898,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
     mgcv_qrqy(Qb,a + *r * *c,tau + k * *c,&nq,cb,c,&left,tp);
     /* the blocks of Qb now have to be copied into separate blocks in b */
     #ifdef SUPPORT_OPENMP
-    #pragma omp parallel private(i,j,l,n,x0,x1)
+    #pragma omp parallel private(i,j,l,n,x0,x1) num_threads(k)
     #endif
     { /* open parallel section */
       #ifdef SUPPORT_OPENMP
@@ -896,10 +932,10 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
    Routine first computes k, the optimal number of threads to use from 1 to nt.
 */
 
-  int i,j,k,l,*piv,nb,nbf,n,TRUE=1,FALSE=0,nr; /* number of threads to use */
+  int i,j,k,l,*piv,nb,nbf,n,TRUE=1,FALSE=0,nr; 
   double *R,*R1,*xi; 
  
-  k = get_qpr_k(r,c,nt);
+  k = get_qpr_k(r,c,nt);/* number of threads to use */
  
   if (k==1) mgcv_qr(x,r,c,pivot,tau); else { /* multi-threaded version */
     nb = (int)ceil(*r/(double)k); /* block size */
@@ -910,7 +946,7 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
     R = x + *r * *c ; /* pointer to combined unpivoted R matrix */
     nr = *c * k; /* number of rows in R */
     #ifdef SUPPORT_OPENMP
-    #pragma omp parallel private(i,j,l,n,xi,R1)
+    #pragma omp parallel private(i,j,l,n,xi,R1) num_threads(k)
     #endif
     { /* open parallel section */
       #ifdef SUPPORT_OPENMP

@@ -1,6 +1,11 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-27
+
+* Further multi-threading in gam fits - final two leading order matrix
+  operations parallelized using openMP. 
+
 1.7-26
 
 * Namespace fixes.
