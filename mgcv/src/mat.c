@@ -143,6 +143,7 @@ void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
 
 void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int *n) {
   /* Forms A = B C transposing B and C according to bt and ct.
+     A is r by c. Common dimension is n;
      BLAS version A is c (result), B is a, C is b, bt is transa ct is transb 
      r is m, c is n, n is k.
      Does nothing if r,c or n <= zero. 

@@ -39,7 +39,7 @@ gam.reparam <- function(rS,lsp,deriv)
                   d.tol = as.double(d.tol),
                   r.tol = as.double(r.tol),
                   fixed_penalty = as.integer(fixed.penalty))
-  S <- matrix(oo$S,q,q)
+  S <- matrix(oo$S,q,q)  
   S <- (S+t(S))*.5
   p <- abs(diag(S))^.5            ## by Choleski, p can not be zero if S +ve def
   p[p==0] <- 1                    ## but it's possible to make a mistake!!
@@ -409,7 +409,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
              }
              while (pdev -old.pdev > div.thresh)  
              { ## step halve until pdev <= old.pdev
-                if (ii > 200) 
+                if (ii > 100) 
                    stop("inner loop 3; can't correct step size")
                 ii <- ii + 1
                 start <- (start + coefold)/2 

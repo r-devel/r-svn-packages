@@ -25,7 +25,6 @@ R_CMethodDef CEntries[] = {
     {"mgcv_pmmult", (DL_FUNC) &mgcv_pmmult,9},
     {"gdi1",(DL_FUNC) &gdi1,46},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
-    {"pls_fit",(DL_FUNC)&pls_fit,10},
     {"pls_fit1",(DL_FUNC)&pls_fit1,12},
     {"tweedious",(DL_FUNC)&tweedious,8},
     {"psum",(DL_FUNC)&psum,4},
