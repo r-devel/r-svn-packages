@@ -1335,7 +1335,8 @@ void ift1(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,doub
 } /* end ift1 */
 
 void ift2(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,double *theta,
-          double *Det_th,double *Det2_th,double *Det3,double *Det_th2,double *b1, double *b2,double *eta1,double *eta2,
+          double *Det_th,double *Det2_th,double *Det3,double *Det_th2,double *b1, double *b2,
+          double *eta1,double *eta2,
 	  int *n,int *r, int *M,int *n_theta,int *rSncol,int *deriv2,int *neg_w,int *nr)
 
 /* Uses the implicit function theorem to get derivatives of beta wrt rho = log(sp) 
@@ -1351,7 +1352,7 @@ void ift2(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,doub
    b1 is r by (M+n_theta)
    b2 is r by n_2dCols 
 */
-{ int n_2dCols,i,j,k,one=1,bt,ct,ntot;
+{ int n_2dCols,i,j,k,one=1,bt,ct,ntot,kk;
   double *work,*Db_th,*pp,*p0,*p1,*work1;
   work = (double *) R_chk_calloc((size_t)*n,sizeof(double));
   work1 = (double *) R_chk_calloc((size_t)*n,sizeof(double));
@@ -1371,26 +1372,42 @@ void ift2(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,doub
     applyP(b1 + i * *r,work,R,Vt,*neg_w,*nr,*r,1);   
   } /* first derivatives of beta finished */
 
-  bt=0;ct=0;mgcv_mmult(eta1,X,b1,&bt,&ct,n,M,r); /* first deriv of eta */
+  bt=0;ct=0;mgcv_mmult(eta1,X,b1,&bt,&ct,n,&ntot,r); /* first deriv of eta */
 
-  //  if (*deriv2) { /* then second derivatives needed */
-  //  pp = b2;   
-  //  for (i=0;i<*M;i++) for (k=i;k<*M;k++) { 
-  //    p0 = eta1 + *n * i;p1 = eta1 + *n * k;
-  //    for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * dwdeta[j];
-  //    bt=1;ct=0;mgcv_mmult(Skb,X,work,&bt,&ct,r,&one,n); /* X'f */
-  //    multSk(work,b1+k* *r,&one,i,rS,rSncol,r,work1); /* get S_i dbeta/drho_k */
-  //    for (j=0;j<*r;j++) Skb[j] += -sp[i]*work[j];
-  //    multSk(work,b1+i* *r,&one,k,rS,rSncol,r,work1); /* get S_k dbeta/drho_i */
-  //    for (j=0;j<*r;j++) Skb[j] += -sp[k]*work[j];
-  //    applyPt(work,Skb,R,Vt,*neg_w,*nr,*r,1);
-  //    applyP(pp,work,R,Vt,*neg_w,*nr,*r,1);
-  //    if (i==k) for (j=0;j< *r;j++) pp[j] += b1[i * *r + j];
-  //    pp += *r;
-  //  }
-
-  //  bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,r); /* second derivatives of eta */
-  //}
+  if (*deriv2) { /* then second derivatives needed */
+    pp = b2; /* pointer to the second derivative of beta array */
+    kk = 0; /* column counter for the second derivative arrays */
+    for (i=0;i<ntot;i++) for (k=i;k<ntot;k++) { 
+      /* first term */
+      p0 = eta1 + *n * i;p1 = eta1 + *n * k; 
+      for (j=0;j<*n;j++,p0++,p1++) work[j] = *p0 * *p1 * Det3[j];
+      bt=1;ct=0;mgcv_mmult(Db_th,X,work,&bt,&ct,r,&one,n); /* D_bbb^lpq db_q/dtheta_j db_p/dtheta_k */
+      /* second term */
+      if (i < *n_theta) { 
+        p0 = Det2_th + *n * i;
+        p1 = eta1 + *n * k; 
+        for (j=0;j<*n;j++,p0++,p1++) work[j] = *p0 * *p1;
+        bt=1;ct=0;mgcv_mmult(work1,X,work,&bt,&ct,r,&one,n); 
+      } else {
+        multSk(work1,b1+ k * *r,&one,i - *n_theta,rS,rSncol,r,work);
+        for (j=0;j<*r;j++) work1[j] *= 2*sp[i - *n_theta]; 
+      }
+      for (j=0;j<*r;j++) Db_th[j] +=  work1[j];
+      /* final term */
+      if (i<k&&j<k) {
+        p0 = Det_th2 + *n * kk;
+        bt=1;ct=0;mgcv_mmult(work,X,p0,&bt,&ct,r,&one,n);
+        for (j=0;j<*r;j++) Db_th[j] -=  work1[j];
+      } else if (i==k) {
+        multSk(work1,beta,&one,i - *n_theta,rS,rSncol,r,work); /* get S_i \beta */
+        for (j=0;j<*r;j++) Db_th[j] -= work1[j] * sp[i - *n_theta];
+      }
+      applyPt(work,Db_th,R,Vt,*neg_w,*nr,*r,1);
+      applyP(pp,work,R,Vt,*neg_w,*nr,*r,1);
+      pp += *r;kk++;
+    }
+    bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,r); /* second derivatives of eta */
+  }
 
   R_chk_free(work);R_chk_free(Db_th);R_chk_free(work1);
 } /* end ift2 */
@@ -1815,7 +1832,12 @@ void gdiPK(double *work,double *X,double *E,double *Es,double *rS,double *U1,dou
 
 void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 	  double *sp,double *theta,double *z,double *w,
-          double *beta,double *D1,double *rank_tol,int *rank_est,
+          double *Dth,double *Det,double *Det2,double *Dth2,double *Det_th,
+          double *Det2_th,double *Det3,double *Det_th2,
+          double *Det4, double *Det3_th, double *Det2_th2,
+          double *beta,double *D1,double *D2,double *P0,double *P1,double *P2,
+          double *ldet, double *ldet1,double *ldet2,
+          double *rank_tol,int *rank_est,
 	  int *n,int *q, int *M,int *n_theta, int *Mp,int *Enrow,int *rSncol,int *deriv,
 	  int *fixed_penalty,int *nt)     
 /* Extended GAM derivative function, for independent data beyond exponential family.
@@ -1885,16 +1907,16 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
      iii) v2[off+k] is the required derivative.       
 
 */
-{ double *WX,*tau,*work,*p0,*p1,*p2,*p3,*K=NULL,
-    *R1,*Vt,xx,*b1,*b2,*P,*Q,
+{ double *work,*p0,*p1,*p2,*p3,*p4,*K=NULL,
+    *Vt,*b1,*b2,*P,
     *af1=NULL,*af2=NULL,*a1,*a2,*eta1=NULL,*eta2=NULL,
     *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk=NULL,*Tfkm=NULL,
          *pb2, *dev_grad,*dev_hess=NULL,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
-    *alpha1,*alpha2,*raw,*Q1,*nulli;
-  int i,j,k,*pivot=NULL,*pivot1,ScS,*pi,rank,tp,bt,ct,iter=0,m,one=1,
-    n_2dCols=0,n_b1,n_b2,n_drop,*drop,nt1,
-      n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0; 
+         *raw,*Q1,*nulli;
+  int i,j,k,*pivot1,ScS,*pi,rank,tp,bt,ct,m,one=1,
+    ntot,n_2dCols=0,n_drop,*drop,nt1,
+      n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0; 
   
   #ifdef SUPPORT_OPENMP
   m = omp_get_num_procs(); /* detected number of processors */
@@ -1938,7 +1960,8 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
     k=0;for (i=0;i< *n;i++) if (w[i]<0) { nind[k]=i;k++;}
   } else { nind = (int *)NULL; Vt = (double *)NULL;}
   
-  /* get  R,nulli,dev_hess,P,K,Vt,PKtz,Q1, nind,pivot1,drop,rank,n_drop,ldetXWXS */
+  /* get  R,nulli,dev_hess,P,K,Vt,PKtz (== beta),Q1, nind,pivot1,drop,rank,n_drop,ldetXWXS */
+ 
   gdiPK(work,X,E,Es,rS,U1,z,raw,
         R,nulli,dev_hess,P,K,Vt,PKtz,Q1,
         nind,pivot1,drop,
@@ -1949,7 +1972,42 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
        
   R_chk_free(raw);
 
+  /* now call ift2 to get derivatives of coefs w.r.t. smoothing/theta parameters */
+  ntot = *M + *n_theta;
+  n_2dCols = (ntot  * (1 + ntot))/2;
+  if (*deriv) {
+    b1 = (double *)R_chk_calloc((size_t) rank * ntot,sizeof(double)); 
+    eta1 = (double *)R_chk_calloc((size_t) *n * ntot,sizeof(double)); 
+    if (deriv2) {
+      b2 = (double *)R_chk_calloc((size_t) rank * n_2dCols,sizeof(double)); 
+      eta2 = (double *)R_chk_calloc((size_t) *n * n_2dCols,sizeof(double)); 
+    }
+    ift2(R,Vt,X,rS,PKtz,sp,theta,
+          Det_th,Det2_th,Det3,Det_th2,
+          b1,b2,eta1,eta2,
+          n,&rank,M,n_theta,rSncol,&deriv2,&neg_w,&nr);
   
+    /* compute the grad and hessian of the deviance */
+    for (p4 = Dth,p0=D1,p1=eta1,i=0;i < *n_theta;i++,p0++) {
+      for (*p0=0.0,p2 = Det,p3=Det + *n;p2<p3;p2++,p1++,p4++) *p0 += *p1 * *p2 + *p4;
+    }
+    for (;i<ntot;i++,p0++) {
+      for (*p0=0.0,p2 = Det,p3=Det + *n;p2<p3;p2++,p1++) *p0 += *p1 * *p2;
+    }
+  } /* if (*deriv) */
+
+  if (*deriv) { 
+    R_chk_free(b1);R_chk_free(eta1);
+    if (deriv2) {
+      R_chk_free(b2);R_chk_free(eta2);
+    }
+  }
+  if (neg_w) {
+    R_chk_free(Vt);R_chk_free(nind);
+  }
+  R_chk_free(PKtz);R_chk_free(nulli);R_chk_free(drop);
+  R_chk_free(work);R_chk_free(R);R_chk_free(pivot1);R_chk_free(K);
+  R_chk_free(P);R_chk_free(Q1);
 
 } /* gdi2 */
 

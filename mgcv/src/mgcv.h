@@ -12,6 +12,18 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
 	  int *REML,int *fisher,int *fixed_penalty,int *nthreads);     
+
+void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
+	  double *sp,double *theta,double *z,double *w,
+          double *Dth,double *Det,double *Det2,double *Dth2,double *Det_th,
+          double *Det2_th,double *Det3,double *Det_th2,
+          double *Det4, double *Det3_th, double *Det2_th2,
+          double *beta,double *D1,double *D2,double *P,double *P1,double *P2,
+          double *ldet, double *ldet1,double *ldet2,
+          double *rank_tol,int *rank_est,
+	  int *n,int *q, int *M,int *n_theta, int *Mp,int *Enrow,int *rSncol,int *deriv,
+	  int *fixed_penalty,int *nt);
+
 void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,int *rE,double *eta,
 	      double *penalty,double *rank_tol,int *nt);
 
