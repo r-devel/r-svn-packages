@@ -787,8 +787,7 @@ void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int
 
 
 
-
-void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
+void get_ddetXWXpS0(double *det1,double *det2,double *P,double *K,double *sp,
              double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,
 		   int *deriv,int nthreads)
 
@@ -920,6 +919,159 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
  
         /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
         det2[km] -= sp[m]*sp[k]*diagABt(work + *n * tid,PtSP + k * *r * *r,PtSP + m * *r * *r,r,r);
+
+        det2[mk] = det2[km];
+      }     
+    }
+  } /* end of parallel section */
+ 
+  /* free up some memory */
+  if (deriv2) {R_chk_free(PtSP);R_chk_free(KtTK);}
+  R_chk_free(diagKKt);R_chk_free(work);
+  R_chk_free(PtrSm);R_chk_free(trPtSP);
+
+} /* end get_ddetXWXpS0 */
+
+
+void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
+      double *rS,int *rSncol,double *Tk,double *Tkm,int *n,int *q,int *r,int *M,int *M0,
+		   int *deriv,int nthreads)
+
+/* obtains derivatives of |X'WX + S| wrt the log smoothing parameters, as required for REML. 
+   The determinant itself has to be obtained during intial decompositions: see gdi().
+
+   * P is q by r
+   * K is n by r
+  
+   * sp is of length M0 + M, and there are M penalties. The last M sp's relate the to these 
+     penalties. The first M0 elements of sp are parameters of the likelihood but are not
+     smoothing parameters. 
+
+   * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
+ 
+   * Note that P and K are as in Wood (2008) JRSSB 70, 495-518.
+
+   * uses nthreads via openMP - assumes nthreads already set and nthreads already reset to 1
+     if openMP not present
+*/
+
+{ double *diagKKt,xx,*KtTK,*PtrSm,*PtSP,*trPtSP,*work,*pdKK,*p1,*pTkm;
+    int m,k,bt,ct,j,one=1,km,mk,*rSoff,deriv2,max_col,Mtot;
+  int tid;
+  if (nthreads<1) nthreads = 1;
+  
+  Mtot = *M0 + *M; /* total length of sp */
+
+  if (*deriv==2) deriv2=1; else deriv2=0;
+  /* obtain diag(KK') */ 
+  if (*deriv) {
+    diagKKt = (double *)R_chk_calloc((size_t)*n,sizeof(double));
+    xx = diagABt(diagKKt,K,K,n,r); 
+  } else { /* nothing to do */
+      return;
+  }
+  /* set up work space */
+  work =  (double *)R_chk_calloc((size_t)*n * nthreads,sizeof(double));
+  tid=0; /* thread identifier defaults to zero if openMP not available */
+  /* now loop through the smoothing parameters to create K'TkK */
+  if (deriv2) {
+    KtTK = (double *)R_chk_calloc((size_t)(*r * *r * Mtot),sizeof(double));
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel private(k,j,tid) num_threads(nthreads)
+    #endif
+    { /* open parallel section */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp for
+      #endif
+      for (k=0;k < Mtot;k++) {
+	#ifdef SUPPORT_OPENMP
+        tid = omp_get_thread_num(); /* thread running this bit */
+	#endif    
+        j = k * *r * *r;
+        getXtWX(KtTK+ j,K,Tk + k * *n,n,r,work + *n * tid);
+      }
+    } /* end of parallel section */
+  } else { KtTK=(double *)NULL;} /* keep compiler happy */
+
+  /* start first derivative */ 
+  bt=1;ct=0;mgcv_mmult(det1,Tk,diagKKt,&bt,&ct,&Mtot,&one,n); /* tr(TkKK') */ 
+
+  /* Finish first derivative and create create P'SmP if second derivs needed */
+  
+  max_col = *q;
+  for (j=0;j<*M;j++) if (max_col<rSncol[j]) max_col=rSncol[j]; /* under ML can have q < max(rSncol) */
+
+  PtrSm = (double *)R_chk_calloc((size_t)(*r * max_col * nthreads),sizeof(double)); /* storage for P' rSm */
+  trPtSP = (double *)R_chk_calloc((size_t) *M,sizeof(double));
+
+  if (deriv2) {
+    PtSP = (double *)R_chk_calloc((size_t)(*M * *r * *r ),sizeof(double));
+  } else { PtSP = (double *) NULL;}
+  
+  
+  rSoff =  (int *)R_chk_calloc((size_t)*M,sizeof(int));
+  rSoff[0] = 0;for (m=0;m < *M-1;m++) rSoff[m+1] = rSoff[m] + rSncol[m];
+  tid = 0;
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(m,bt,ct,tid) num_threads(nthreads)
+  #endif
+  { /* parallel section start */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (m=0;m < *M;m++) { /* loop through penalty matrices */
+      #ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+      #endif    
+      bt=1;ct=0;mgcv_mmult(PtrSm + tid * *r * max_col,P,rS+rSoff[m] * *q,&bt,&ct,r,rSncol+m,q);
+      /*rSoff += rSncol[m];*/
+      trPtSP[m] = sp[m] * diagABt(work + *n * tid,PtrSm + tid * *r * max_col,
+                                 PtrSm + tid * *r * max_col,r,rSncol+m); /* sp[m]*tr(P'S_mP) */ 
+      det1[m + *M0] += trPtSP[m]; /* completed first derivative */
+      if (deriv2) { /* get P'S_mP */
+        bt=0;ct=1;mgcv_mmult(PtSP+ m * *r * *r,PtrSm + tid * *r * max_col,
+                            PtrSm+ tid * *r * max_col ,&bt,&ct,r,r,rSncol+m);
+      }
+    }
+  } /* end of parallel section */
+  R_chk_free(rSoff);
+  /* Now accumulate the second derivatives */
+
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(m,k,km,mk,xx,tid,pdKK,p1,pTkm) num_threads(nthreads)
+  #endif
+  { /* start of parallel section */ 
+    if (deriv2) 
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (m=0;m < Mtot;m++) {
+      #ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+      #endif
+      if (m==0) pTkm = Tkm; else pTkm = Tkm + (m * Mtot - (m*(m-1))/2) * *n;        
+      for (k=m;k < Mtot;k++) {
+        km=k * Mtot + m;mk=m * Mtot + k;
+        /* tr(Tkm KK') */
+        //for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,Tkm++) xx += *Tkm * *pdKK;
+        for (xx=0.0,pdKK=diagKKt,p1=pdKK + *n;pdKK<p1;pdKK++,pTkm++) xx += *pTkm * *pdKK;
+        det2[km] = xx;
+
+        /* - tr(KTkKK'TmK) */
+        det2[km] -= diagABt(work + *n * tid,KtTK + k * *r * *r,KtTK+ m * *r * *r,r,r);
+
+        /* sp[k]*tr(P'S_kP) */
+        if (k >= *M0 && k==m) det2[km] += trPtSP[m - *M0];
+
+        /* -sp[m]*tr(K'T_kKP'S_mP) */
+        if (m >= *M0) det2[km] -= sp[m - *M0]*diagABt(work + *n * tid,KtTK + k * *r * *r,PtSP + (m - *M0) * *r * *r,r,r);
+     
+        /* -sp[k]*tr(K'T_mKP'S_kP) */
+        if (k >= *M0) det2[km] -= sp[k - *M0]*diagABt(work + *n * tid,KtTK + m * *r * *r,PtSP + (k - *M0) * *r * *r,r,r);
+ 
+        /* -sp[m]*sp[k]*tr(P'S_kPP'S_mP) */
+        if (k >= *M0 && m >= *M0) det2[km] -= sp[m - *M0]*sp[k - *M0]*
+                                  diagABt(work + *n * tid,PtSP + (k - *M0) * *r * *r,PtSP + (m - *M0) * *r * *r,r,r);
 
         det2[mk] = det2[km];
       }     
@@ -1364,10 +1516,13 @@ void ift2(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,doub
   for (i=0;i < ntot ;i++) { /* first derivative loop */
     if (i < *n_theta) { /* Db_th is from direct dependence of deviance on theta */
       bt=1;ct=0;mgcv_mmult(Db_th,X,Det_th + i * *n,&bt,&ct,r,&one,n);
+      for (j=0;j<*r;j++) Db_th[j] *= -.5;
     } else { /* Db_th is from dependence of penalty on sp */
       multSk(Db_th,beta,&one,i - *n_theta,rS,rSncol,r,work); /* get S_i \beta */
-      for (j=0;j<*r;j++) Db_th[j] *= -sp[i - *n_theta];
+      for (j=0;j<*r;j++) Db_th[j] *=  - sp[i - *n_theta];
     } 
+    /* note that PPt = (X'WX+S)^{-1} i.e. *twice* the inverse Hessian,
+       hence the factors of 0.5 introduced in Db_th above */ 
     applyPt(work,Db_th,R,Vt,*neg_w,*nr,*r,1);
     applyP(b1 + i * *r,work,R,Vt,*neg_w,*nr,*r,1);   
   } /* first derivatives of beta finished */
@@ -1376,42 +1531,54 @@ void ift2(double *R,double *Vt,double *X,double *rS,double *beta,double *sp,doub
 
   if (*deriv2) { /* then second derivatives needed */
     pp = b2; /* pointer to the second derivative of beta array */
-    kk = 0; /* column counter for the second derivative arrays */
+    kk = 0; /* column counter for the second derivative of D wrt theta arrays */
     for (i=0;i<ntot;i++) for (k=i;k<ntot;k++) { 
       /* first term */
       p0 = eta1 + *n * i;p1 = eta1 + *n * k; 
-      for (j=0;j<*n;j++,p0++,p1++) work[j] = *p0 * *p1 * Det3[j];
+      for (j=0;j<*n;j++,p0++,p1++) work[j] = - *p0 * *p1 * Det3[j];
       bt=1;ct=0;mgcv_mmult(Db_th,X,work,&bt,&ct,r,&one,n); /* D_bbb^lpq db_q/dtheta_j db_p/dtheta_k */
       /* second term */
+      if (k < *n_theta) { 
+        p0 = Det2_th + *n * k;
+        p1 = eta1 + *n * i; 
+        for (j=0;j<*n;j++,p0++,p1++) work[j] = *p0 * *p1 ;
+        bt=1;ct=0;mgcv_mmult(work1,X,work,&bt,&ct,r,&one,n); 
+      } else {
+        multSk(work1,b1+ i * *r,&one,k - *n_theta,rS,rSncol,r,work);
+        for (j=0;j<*r;j++) work1[j] *=  sp[k - *n_theta] * 2; 
+      }
+      for (j=0;j<*r;j++) Db_th[j] -=  work1[j];
+
+      /* third term */
       if (i < *n_theta) { 
         p0 = Det2_th + *n * i;
         p1 = eta1 + *n * k; 
-        for (j=0;j<*n;j++,p0++,p1++) work[j] = *p0 * *p1;
+        for (j=0;j<*n;j++,p0++,p1++) work[j] = *p0 * *p1 ;
         bt=1;ct=0;mgcv_mmult(work1,X,work,&bt,&ct,r,&one,n); 
       } else {
         multSk(work1,b1+ k * *r,&one,i - *n_theta,rS,rSncol,r,work);
-        for (j=0;j<*r;j++) work1[j] *= 2*sp[i - *n_theta]; 
+        for (j=0;j<*r;j++) work1[j] *=  sp[i - *n_theta] * 2; 
       }
-      for (j=0;j<*r;j++) Db_th[j] +=  work1[j];
+      for (j=0;j<*r;j++) Db_th[j] -=  work1[j];
       /* final term */
-      if (i<k&&j<k) {
+      if (i< *n_theta && k < *n_theta) {
         p0 = Det_th2 + *n * kk;
         bt=1;ct=0;mgcv_mmult(work,X,p0,&bt,&ct,r,&one,n);
-        for (j=0;j<*r;j++) Db_th[j] -=  work1[j];
+        for (j=0;j<*r;j++) Db_th[j] -=  work[j];kk++;
       } else if (i==k) {
         multSk(work1,beta,&one,i - *n_theta,rS,rSncol,r,work); /* get S_i \beta */
-        for (j=0;j<*r;j++) Db_th[j] -= work1[j] * sp[i - *n_theta];
+        for (j=0;j<*r;j++) Db_th[j] -= work1[j] * sp[i - *n_theta] *2 ;
       }
+      for (j=0;j<*r;j++) Db_th[j] *= .5; /* since PPt is twice inv Hessian */
       applyPt(work,Db_th,R,Vt,*neg_w,*nr,*r,1);
       applyP(pp,work,R,Vt,*neg_w,*nr,*r,1);
-      pp += *r;kk++;
+      pp += *r;
     }
     bt=0;ct=0;mgcv_mmult(eta2,X,b2,&bt,&ct,n,&n_2dCols,r); /* second derivatives of eta */
   }
 
   R_chk_free(work);R_chk_free(Db_th);R_chk_free(work1);
 } /* end ift2 */
-
 
 
 
@@ -1611,7 +1778,7 @@ int *Ms,int *M,int *neg_w,double *rank_tol,int *deriv,int *nthreads) {
   /* Now we have all the ingredients to obtain required derivatives of the log determinant... */
   
   if (*deriv)
-    get_ddetXWXpS(det1,det2,P,K,sp,rS,rSncol,Tk,Tkm,n,&qM,&qM,M,deriv,*nthreads);
+    get_ddetXWXpS(det1,det2,P,K,sp,rS,rSncol,Tk,Tkm,n,&qM,&qM,M,&FALSE,deriv,*nthreads);
 
   R_chk_free(P);R_chk_free(K);R_chk_free(drop);
   return(ldetXWXS);
@@ -1907,12 +2074,12 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
      iii) v2[off+k] is the required derivative.       
 
 */
-{ double *work,*p0,*p1,*p2,*p3,*p4,*K=NULL,
-    *Vt,*b1,*b2,*P,
+{ double *work,*p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*p8,*p9,*K=NULL,
+    *Vt,*b1,*b2,*P,xx=0.0,
     *af1=NULL,*af2=NULL,*a1,*a2,*eta1=NULL,*eta2=NULL,
     *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk=NULL,*Tfkm=NULL,
          *pb2, *dev_grad,*dev_hess=NULL,
-         ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
+         reml_penalty=0.0,bSb=0.0,*R,
          *raw,*Q1,*nulli;
   int i,j,k,*pivot1,ScS,*pi,rank,tp,bt,ct,m,one=1,
     ntot,n_2dCols=0,n_drop,*drop,nt1,
@@ -1968,7 +2135,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
         n,q,Mp,neg_w,nt,Enrow,
         &rank,&n_drop,
         deriv2,ScS,&TRUE,
-        rank_tol,&ldetXWXS);
+        rank_tol,ldet);
        
   R_chk_free(raw);
 
@@ -1987,14 +2154,94 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
           b1,b2,eta1,eta2,
           n,&rank,M,n_theta,rSncol,&deriv2,&neg_w,&nr);
   
-    /* compute the grad and hessian of the deviance */
+    /* compute the grad of the deviance... */
     for (p4 = Dth,p0=D1,p1=eta1,i=0;i < *n_theta;i++,p0++) {
       for (*p0=0.0,p2 = Det,p3=Det + *n;p2<p3;p2++,p1++,p4++) *p0 += *p1 * *p2 + *p4;
     }
     for (;i<ntot;i++,p0++) {
       for (*p0=0.0,p2 = Det,p3=Det + *n;p2<p3;p2++,p1++) *p0 += *p1 * *p2;
     }
+
+    if (deriv2) { /* get the Hessian as well */
+       p0 = eta2;p6 = Dth2;
+       for (i=0;i<ntot;i++) for (k=i;k<ntot;k++) {
+           p1 = eta1 + i * *n; p2 = eta1 + k * *n;
+           p3 = Det2; p4 = Det; p5 = Det + *n;
+           for (xx=0.0;p4<p5;p0++,p1++,p2++,p3++,p4++) xx +=  *p3 * *p1 * *p2 + *p4 * *p0;
+           if (k < *n_theta) {
+	      for (j=0;j<*n;j++,p6++) xx += *p6; 
+           }
+           if (i < *n_theta) {
+             p1 = Det_th + *n * i;p2 = p1 + *n;
+             p3 = eta1 + *n *k;
+             for (;p1<p2;p1++,p3++) xx += *p1 * *p3;
+           }
+           if (k < *n_theta) {
+             p1 = Det_th + *n * k;p2 = p1 + *n;
+             p3 = eta1 + *n *i;
+             for (;p1<p2;p1++,p3++) xx += *p1 * *p3;
+           }
+           D2[i + ntot * k] = D2[k + ntot * i] = xx;
+       }
+    }
   } /* if (*deriv) */
+  /* Obtain the derivatives of the weights w.r.t. theta, sp */
+  
+  if (*deriv) {
+    /* first derivs... */
+    p0 = w1 = (double *)R_chk_calloc((size_t) *n * ntot,sizeof(double)); 
+    p3 = Det2_th;p4 = eta1;
+    for (i=0;i<ntot;i++) {
+      p1=Det3;p2 = p1 + *n;
+      if (i < *n_theta) { 
+	for (;p1<p2;p0++,p1++,p3++,p4++) *p0 = (*p1 * *p4 + *p3 ) * .5; 
+      } else {
+        for (;p1<p2;p0++,p1++,p4++) *p0 = *p1 * *p4 * .5;
+      }
+    }
+    if (deriv2) { /* second derivs... */ 
+      p0 = w2 = (double *)R_chk_calloc((size_t)  *n * n_2dCols,sizeof(double)); 
+      p1 = Det2_th2;p2 = eta2;
+      for (i=0;i<ntot;i++) for (k=i;k<ntot;k++) {
+      	p3 = Det3;p4 = Det4; 
+        p5 = eta1 + i * *n;p6 = eta1 + k * *n;p7 = p3 + *n;
+        for (;p3<p7;p0++,p2++,p3++,p4++,p5++,p6++) 
+	   *p0 = *p4 * *p5 * *p6 + *p3 * *p2;
+        if (i < *n_theta) {
+           p0 -= *n;p3 = Det3_th + i * *n;
+           p4 = eta1 + k * *n;p5 = p0 + *n;
+           for (;p0 < p5;p0++,p3++,p4++) *p0 += *p3 * *p4;
+        }
+        if (k < *n_theta) {
+           p0 -= *n;p3 = Det3_th + k * *n;
+           p4 = eta1 + i * *n;p5 = p0 + *n;
+           for (;p0 < p5;p0++,p3++,p4++) *p0 += *p3 * *p4;
+           if (i < *n_theta) {
+             p0 -= *n;
+             for (;p0 < p5;p0++,p1++) *p0 += *p1;
+           }
+	}
+        p0 -= *n;p5 = p0 + *n;
+        for (;p0 < p5;p0++) *p0 *= .5;
+      }
+    } /* end of 2nd derivs */
+ 
+    /* a useful array for Tk and Tkm */
+    wi=(double *)R_chk_calloc((size_t)*n,sizeof(double)); 
+    for (i=0;i< *n;i++) { wi[i]=1/fabs(w[i]);}
+
+    /* get Tk and Tkm */
+    Tk = (double *)R_chk_calloc((size_t) *n * ntot,sizeof(double)); 
+    rc_prod(Tk,wi,w1,&ntot,n); 
+    if (deriv2) { 
+      Tkm = (double *)R_chk_calloc((size_t)  *n * n_2dCols,sizeof(double));
+      rc_prod(Tkm,wi,w2,&n_2dCols,n);
+    }
+    R_chk_free(wi);
+  } /* end of w derivs */
+
+  // replace sp 
+  get_ddetXWXpS(ldet1,ldet2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,n_theta,deriv,*nt); /* trA1/2 really contain det derivs */
 
   if (*deriv) { 
     R_chk_free(b1);R_chk_free(eta1);
@@ -2404,7 +2651,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   if (*REML>0) { /* It's REML */
     /* Now deal with log|X'WX+S| */   
     reml_penalty = ldetXWXS;
-    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,deriv,*nt); /* trA1/2 really contain det derivs */
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,&FALSE,deriv,*nt); /* trA1/2 really contain det derivs */
   } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
 
   if (*REML<0) { /* it's ML, and more complicated */
@@ -3108,7 +3355,7 @@ void gdi1_0(double *X,double *E,double *Es,double *rS,double *U1,
   if (*REML>0) { /* It's REML */
     /* Now deal with log|X'WX+S| */   
     reml_penalty = ldetXWXS;
-    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,deriv,*nt); /* trA1/2 really contain det derivs */
+    get_ddetXWXpS(trA1,trA2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,&FALSE,deriv,*nt); /* trA1/2 really contain det derivs */
   } /* So trA1 and trA2 actually contain the derivatives for reml_penalty */
 
   if (*REML<0) { /* it's ML, and more complicated */
