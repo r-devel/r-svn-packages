@@ -180,7 +180,10 @@ void get_bSb0(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
              double *rS,int *rSncol,int *Enrow, int *q,int *M,int *M0,
              double *beta, double *b1, double *b2,int *deriv)
-/* Routine to obtain beta'Sbeta and its derivatives w.r.t. the log smoothing 
+/* BUGGY!!! ignores dependence on theta via b1 and b2!!!!!!!!!!!!!!!!!
+
+
+  Routine to obtain beta'Sbeta and its derivatives w.r.t. the log smoothing 
    parameters, this is part of REML calculation... 
    
    sp is of length M, but b1 and b2 contain derivative w.r.t. to M0 + M 
@@ -207,7 +210,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
 { double *Sb,*Skb,*work,*work1,*p1,*p0,*p2,xx;
   int i,j,bt,ct,one=1,m,k,rSoff,mk,km,Mtot; 
   
-  work = (double *)R_chk_calloc((size_t)*q,sizeof(double)); 
+  work = (double *)R_chk_calloc((size_t)*q+*M0,sizeof(double)); 
   Sb = (double *)R_chk_calloc((size_t)*q,sizeof(double));
   bt=0;ct=0;mgcv_mmult(work,E,beta,&bt,&ct,Enrow,&one,q);
   bt=1;ct=0;mgcv_mmult(Sb,E,work,&bt,&ct,q,&one,Enrow); /* S \hat \beta */
@@ -220,7 +223,7 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
   Skb = (double *)R_chk_calloc((size_t)*M * *q,sizeof(double));
  
   for (p1=Skb,rSoff=0,i=0;i<*M;i++) { /* first part of first derivatives */
-     /* form S_k \beta * sp[i]... */
+     /* form S_k \beta * sp[k]... */
      bt=1;ct=0;mgcv_mmult(work,rS + rSoff ,beta,&bt,&ct,rSncol+i,&one,q);
      for (j=0;j<rSncol[i];j++) work[j] *= sp[i]; 
      bt=0;ct=0;mgcv_mmult(p1,rS + rSoff ,work,&bt,&ct,q,&one,rSncol+i);
@@ -230,45 +233,45 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
      for (xx=0.0,j=0;j<*q;j++,p1++) xx += beta[j] * *p1;
      bSb1[i + *M0] = xx; 
   }
-
+  for (i=0;i<*M0;i++) bSb1[i] = 0.0;
   Mtot = *M + *M0;  
 
-  if (*deriv>1)  for (m=0;m < *M;m++) { /* Hessian */
-     bt=0;ct=0;mgcv_mmult(work1,E,b1+ (m + *M0) * *q,&bt,&ct,Enrow,&one,q);
+  if (*deriv>1)  for (m=0;m < Mtot;m++) { /* Hessian */
+     bt=0;ct=0;mgcv_mmult(work1,E,b1 + m * *q,&bt,&ct,Enrow,&one,q);
      bt=1;ct=0;mgcv_mmult(work,E,work1,&bt,&ct,q,&one,Enrow);  /* S dbeta/drho_m */
 
-    for (k=m;k < *M;k++) {
-      km=(k + *M0) * Mtot + m + *M0;
-      mk=(m + *M0) * Mtot + k + *M0;  /* second derivatives needed */
+    for (k=m;k < Mtot;k++) {
+      km= k * Mtot + m ;
+      mk= m * Mtot + k ;  /* second derivatives needed */
       /* d2beta'/drho_k drho_m S beta */
       for (xx=0.0,p0=Sb,p1=Sb + *q;p0<p1;p0++,b2++) xx += *b2 * *p0;
       bSb2[km] = 2*xx; 
        
-      /* dbeta'/drho_k S d2beta/drho_m */
-      for (xx=0.0,p0=b1+(k + *M0) * *q,p1=p0 + *q,p2=work;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      /* dbeta'/drho_k S dbeta/drho_m */
+      for (xx=0.0,p0=b1+ k  * *q,p1=p0 + *q,p2=work;p0<p1;p0++,p2++) xx += *p2 * *p0;
       bSb2[km] += 2*xx;
 
-      /* dbeta'/drho_k S_m beta sp[m] */
-      for (xx=0.0,p0=Skb + k * *q,p1=p0 + *q,p2= b1+(m + *M0) * *q;p0<p1;p0++,p2++) xx += *p2 * *p0;
-      bSb2[km] += 2*xx;
- 
       /* dbeta'/drho_m S_k beta sp[k] */
-      for (xx=0.0,p0=Skb + m * *q,p1=p0 + *q,p2= b1 + (k + *M0) * *q;p0<p1;p0++,p2++) xx += *p2 * *p0;
-      bSb2[km] += 2*xx;
+      if (k >= *M0) {
+        for (xx=0.0,p0=Skb + (k- *M0) * *q,p1=p0 + *q,p2= b1+ m  * *q;p0<p1;p0++,p2++) 
+             xx += *p2 * *p0;
+        bSb2[km] += 2*xx;
+      }
+      /* dbeta'/drho_k S_m beta sp[m] */
+      if (m >= *M0) {
+        for (xx=0.0,p0=Skb + (m - *M0) * *q,p1=p0 + *q,p2= b1 + k  * *q;p0<p1;p0++,p2++) 
+             xx += *p2 * *p0;
+        bSb2[km] += 2*xx;
+      }
 
       if (k==m) bSb2[km] += bSb1[k]; else bSb2[mk] = bSb2[km];
     }
   } /* done Hessian */
 
-  /* then zero any elements of bSb1 and bSb2 that must be zero */
-  for (i=0;i<*M0;i++) {
-    bSb1[i] = 0.0;
-    for (j=0;j< Mtot;j++) bSb2[i + Mtot * j] = bSb2[j + Mtot * i] = 0.0;
-  }
-
+    
   /* Now finish off the first derivatives */
-  bt=1;ct=0;mgcv_mmult(work,b1,Sb,&bt,&ct,M,&one,q);
-  for (i=0;i<*M;i++) bSb1[i + *M0] += 2*work[i + *M0];
+  bt=1;ct=0;mgcv_mmult(work,b1,Sb,&bt,&ct,&Mtot,&one,q);
+  for (i=0;i<Mtot;i++) bSb1[i] += 2*work[i];
   
   R_chk_free(Sb);R_chk_free(work);R_chk_free(Skb);R_chk_free(work1);
 
@@ -2171,16 +2174,13 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
      iii) v2[off+k] is the required derivative.       
 
 */
-{ double *work,*p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*p8,*p9,*K=NULL,
-    *Vt,*b1,*b2,*P,xx=0.0,*thesp,
-    *af1=NULL,*af2=NULL,*a1,*a2,*eta1=NULL,*eta2=NULL,
-    *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk=NULL,*Tfkm=NULL,
-         *pb2, *dev_grad,*dev_hess=NULL,
-         reml_penalty=0.0,bSb=0.0,*R,
-         *raw,*Q1,*nulli;
-  int i,j,k,*pivot1,ScS,*pi,rank,tp,bt,ct,m,one=1,
-    ntot,n_2dCols=0,n_drop,*drop,nt1,
-      n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0; 
+{ double *work,*p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*K=NULL,
+    *Vt,*b1=NULL,*b2=NULL,*P,xx=0.0,*eta1=NULL,*eta2=NULL,
+    *PKtz,*wi=NULL,*w1=NULL,*w2=NULL,*Tk=NULL,*Tkm=NULL,
+    *dev_hess=NULL,*R,*raw,*Q1,*nulli;
+  int i,j,k,*pivot1,ScS,*pi,rank,m,
+    ntot,n_2dCols=0,n_drop,*drop,
+    n_work,deriv2,neg_w=0,*nind,nr,TRUE=1; 
   
   #ifdef SUPPORT_OPENMP
   m = omp_get_num_procs(); /* detected number of processors */
@@ -2189,8 +2189,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   #else
   *nt = 1;
   #endif
-  nt1 = *nt; /* allows threading to be switched off for QR for debugging*/ 
-
+ 
   if (*deriv==2) deriv2=1; else deriv2=0;
 
   ScS=0;for (pi=rSncol;pi<rSncol + *M;pi++) ScS+= *pi;  /* total columns of input rS */
@@ -2346,9 +2345,11 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   get_bSb(P0,P1,P2,sp,E,rS,rSncol,Enrow,&rank,M,n_theta,PKtz,b1,b2,deriv);
 
   if (*deriv) { 
-    R_chk_free(b1);R_chk_free(eta1);
+    R_chk_free(b1);R_chk_free(eta1);R_chk_free(Tk);
+    R_chk_free(w1);
     if (deriv2) {
-      R_chk_free(b2);R_chk_free(eta2);
+      R_chk_free(b2);R_chk_free(eta2);R_chk_free(w2);
+      R_chk_free(Tkm);R_chk_free(dev_hess);
     }
   }
   if (neg_w) {
