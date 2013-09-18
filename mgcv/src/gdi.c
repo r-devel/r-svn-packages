@@ -91,8 +91,7 @@ double trAB(double *A,double *B,int *n, int *m)
   return(tr);
 }
 
-
-void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
+void get_bSb0(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
              double *rS,int *rSncol,int *Enrow, int *q,int *M,double *beta, 
              double *b1, double *b2,int *deriv)
 /* Routine to obtain beta'Sbeta and its derivatives w.r.t. the log smoothing 
@@ -172,6 +171,104 @@ void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
   /* Now finish off the first derivatives */
   bt=1;ct=0;mgcv_mmult(work,b1,Sb,&bt,&ct,M,&one,q);
   for (i=0;i<*M;i++) bSb1[i] += 2*work[i];
+  
+  R_chk_free(Sb);R_chk_free(work);R_chk_free(Skb);R_chk_free(work1);
+
+} /* end get_bSb0 */
+
+
+void get_bSb(double *bSb,double *bSb1, double *bSb2,double *sp,double *E,
+             double *rS,int *rSncol,int *Enrow, int *q,int *M,int *M0,
+             double *beta, double *b1, double *b2,int *deriv)
+/* Routine to obtain beta'Sbeta and its derivatives w.r.t. the log smoothing 
+   parameters, this is part of REML calculation... 
+   
+   sp is of length M, but b1 and b2 contain derivative w.r.t. to M0 + M 
+   parameter [theta,log sp] where theta are parameters of the likelihood,
+   but not the penalties.  The returned bSb1 and bSb2 should contain 
+   derivatives w.r.t. theta as well as log sp (although these derivatives 
+   will be zero). 
+
+   b1 and b2 contain first and second derivatives of q-vector beta w.r.t. 
+   \pho_k. They are packed as follows....
+
+   * b1 will contain dbeta/d\rho_0, dbeta/d\rho_1 etc. So, for example, dbeta_i/d\rho_j
+     (indices starting at zero) is located in b1[q*j+i].
+   
+   * b2 will contain d^2beta/d\rho_0d\rho_0, d^2beta/d\rho_1d\rho_0,... but rows will not be
+     stored if they duplicate an existing row (e.g. d^2beta/d\rho_0d\rho_1 would not be 
+     stored as it already exists and can be accessed by interchanging the sp indices).
+     So to get d^2beta_k/d\rho_id\rho_j: 
+     i)   if i<j interchange the indices
+     ii)  off = (j*m-(j+1)*j/2+i)*q (m is number of sp's) 
+     iii) v2[off+k] is the required derivative.       
+
+*/
+{ double *Sb,*Skb,*work,*work1,*p1,*p0,*p2,xx;
+  int i,j,bt,ct,one=1,m,k,rSoff,mk,km,Mtot; 
+  
+  work = (double *)R_chk_calloc((size_t)*q,sizeof(double)); 
+  Sb = (double *)R_chk_calloc((size_t)*q,sizeof(double));
+  bt=0;ct=0;mgcv_mmult(work,E,beta,&bt,&ct,Enrow,&one,q);
+  bt=1;ct=0;mgcv_mmult(Sb,E,work,&bt,&ct,q,&one,Enrow); /* S \hat \beta */
+
+  for (*bSb=0.0,i=0;i<*q;i++) *bSb += beta[i] * Sb[i]; /* \hat \beta' S \hat \beta */
+
+  if (*deriv <=0) {R_chk_free(work);R_chk_free(Sb);return;}
+
+  work1 = (double *)R_chk_calloc((size_t)*q,sizeof(double));
+  Skb = (double *)R_chk_calloc((size_t)*M * *q,sizeof(double));
+ 
+  for (p1=Skb,rSoff=0,i=0;i<*M;i++) { /* first part of first derivatives */
+     /* form S_k \beta * sp[i]... */
+     bt=1;ct=0;mgcv_mmult(work,rS + rSoff ,beta,&bt,&ct,rSncol+i,&one,q);
+     for (j=0;j<rSncol[i];j++) work[j] *= sp[i]; 
+     bt=0;ct=0;mgcv_mmult(p1,rS + rSoff ,work,&bt,&ct,q,&one,rSncol+i);
+     rSoff += *q * rSncol[i];
+
+     /* now the first part of the first derivative */
+     for (xx=0.0,j=0;j<*q;j++,p1++) xx += beta[j] * *p1;
+     bSb1[i + *M0] = xx; 
+  }
+
+  Mtot = *M + *M0;  
+
+  if (*deriv>1)  for (m=0;m < *M;m++) { /* Hessian */
+     bt=0;ct=0;mgcv_mmult(work1,E,b1+ (m + *M0) * *q,&bt,&ct,Enrow,&one,q);
+     bt=1;ct=0;mgcv_mmult(work,E,work1,&bt,&ct,q,&one,Enrow);  /* S dbeta/drho_m */
+
+    for (k=m;k < *M;k++) {
+      km=(k + *M0) * Mtot + m + *M0;
+      mk=(m + *M0) * Mtot + k + *M0;  /* second derivatives needed */
+      /* d2beta'/drho_k drho_m S beta */
+      for (xx=0.0,p0=Sb,p1=Sb + *q;p0<p1;p0++,b2++) xx += *b2 * *p0;
+      bSb2[km] = 2*xx; 
+       
+      /* dbeta'/drho_k S d2beta/drho_m */
+      for (xx=0.0,p0=b1+(k + *M0) * *q,p1=p0 + *q,p2=work;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      bSb2[km] += 2*xx;
+
+      /* dbeta'/drho_k S_m beta sp[m] */
+      for (xx=0.0,p0=Skb + k * *q,p1=p0 + *q,p2= b1+(m + *M0) * *q;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      bSb2[km] += 2*xx;
+ 
+      /* dbeta'/drho_m S_k beta sp[k] */
+      for (xx=0.0,p0=Skb + m * *q,p1=p0 + *q,p2= b1 + (k + *M0) * *q;p0<p1;p0++,p2++) xx += *p2 * *p0;
+      bSb2[km] += 2*xx;
+
+      if (k==m) bSb2[km] += bSb1[k]; else bSb2[mk] = bSb2[km];
+    }
+  } /* done Hessian */
+
+  /* then zero any elements of bSb1 and bSb2 that must be zero */
+  for (i=0;i<*M0;i++) {
+    bSb1[i] = 0.0;
+    for (j=0;j< Mtot;j++) bSb2[i + Mtot * j] = bSb2[j + Mtot * i] = 0.0;
+  }
+
+  /* Now finish off the first derivatives */
+  bt=1;ct=0;mgcv_mmult(work,b1,Sb,&bt,&ct,M,&one,q);
+  for (i=0;i<*M;i++) bSb1[i + *M0] += 2*work[i + *M0];
   
   R_chk_free(Sb);R_chk_free(work);R_chk_free(Skb);R_chk_free(work1);
 
@@ -943,9 +1040,9 @@ void get_ddetXWXpS(double *det1,double *det2,double *P,double *K,double *sp,
    * P is q by r
    * K is n by r
   
-   * sp is of length M0 + M, and there are M penalties. The last M sp's relate the to these 
-     penalties. The first M0 elements of sp are parameters of the likelihood but are not
-     smoothing parameters. 
+   * sp is of length M, and there are M penalties, but derivatives are required w.r.t. M0 + M
+     parameters [theta,sp] and Tk, Tkm contain derivatives w.r.t. all of these. The parameters
+     theta are parameters of the likelihood, but are not involved in penalties.
 
    * this routine assumes that sp contains smoothing parameters, rather than log smoothing parameters.
  
@@ -2075,7 +2172,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 
 */
 { double *work,*p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*p8,*p9,*K=NULL,
-    *Vt,*b1,*b2,*P,xx=0.0,
+    *Vt,*b1,*b2,*P,xx=0.0,*thesp,
     *af1=NULL,*af2=NULL,*a1,*a2,*eta1=NULL,*eta2=NULL,
     *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk=NULL,*Tfkm=NULL,
          *pb2, *dev_grad,*dev_hess=NULL,
@@ -2240,8 +2337,13 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
     R_chk_free(wi);
   } /* end of w derivs */
 
-  // replace sp 
-  get_ddetXWXpS(ldet1,ldet2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,n_theta,deriv,*nt); /* trA1/2 really contain det derivs */
+  /* Now get the derivatives of log|X'WX+S| w.r.t. all parameters [theta,sp] */ 
+ 
+  get_ddetXWXpS(ldet1,ldet2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,n_theta,deriv,*nt); 
+
+  /* and the derivatives of b'S'b w.r.t. all parameters [theta,sp] */
+  
+  get_bSb(P0,P1,P2,sp,E,rS,rSncol,Enrow,&rank,M,n_theta,PKtz,b1,b2,deriv);
 
   if (*deriv) { 
     R_chk_free(b1);R_chk_free(eta1);
@@ -2615,7 +2717,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
      Store bSb in bSb, bSb1 in trA1 and bSb2 in trA2.
   */
   if (*REML) {
-    get_bSb(&bSb,trA1,trA2,sp,E,rS,rSncol,Enrow,&rank,M,PKtz,b1,b2,deriv);
+    get_bSb(&bSb,trA1,trA2,sp,E,rS,rSncol,Enrow,&rank,M,&FALSE,PKtz,b1,b2,deriv);
     if (*deriv) for (p2=D2,p1=trA2,i = 0; i< *M;i++) { /* penalized deviance derivs needed */
         D1[i] += trA1[i];
         if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
@@ -3319,7 +3421,7 @@ void gdi1_0(double *X,double *E,double *Es,double *rS,double *U1,
      Store bSb in bSb, bSb1 in trA1 and bSb2 in trA2.
   */
   if (*REML) {
-    get_bSb(&bSb,trA1,trA2,sp,E,rS,rSncol,Enrow,&rank,M,PKtz,b1,b2,deriv);
+    get_bSb(&bSb,trA1,trA2,sp,E,rS,rSncol,Enrow,&rank,M,&FALSE,PKtz,b1,b2,deriv);
     if (*deriv) for (p2=D2,p1=trA2,i = 0; i< *M;i++) { /* penalized deviance derivs needed */
         D1[i] += trA1[i];
         if (deriv2) for (j=0;j<*M;j++,p1++,p2++) *p2 += *p1;   
