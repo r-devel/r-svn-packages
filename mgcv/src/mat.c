@@ -208,10 +208,14 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
 
 
 int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
-/* do the work for parallel QR */
+/* Do the work for parallel QR: 
+   Key is to inline the expensive step that is parallelized, noting
+   that housholder ops are not in BLAS, but are LAPACK auxilliary 
+   routines (so no loss in re-writing)
+*/
 
-  int i,k,r,nh,j,one=1,cpt,nth,cpf;
-  double *c,*p0,*p1,*p2,xx,tau,*work;
+  int i,k,r,nh,j,one=1,cpt,nth,cpf,ii;
+  double *c,*p0,*p1,*p2,xx,tau,*work,zz,*v,*z,*z1,br;
   const char side = 'L';
 
   #ifndef SUPPORT_OPENMP
@@ -230,13 +234,14 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   }
   r = -1;
   nh = n; /* householder length */
+  
   while (tau > 0) {
     r++;
     i=piv[r]; piv[r] = piv[k];piv[k] = i;
     /* swap r with k O(n) */
     xx = c[r];c[r] = c[k];c[k] = xx;
     for (p0 = x + n * r, p1 = x + n * k,p2 = p0 + n;p0<p2;p0++,p1++) {
-      xx = *p0; *p0 = *p1; *p1 = xx;
+          xx = *p0; *p0 = *p1; *p1 = xx;
     }
     /* now generate the householder reflector for column r O(n)*/
     p0 = x + r * n + r; /* first element of column */
@@ -245,55 +250,64 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
     F77_CALL(dlarfg)(&nh,&xx,p1,&one,beta+r);
     
     /* next apply the rotation to the remaining columns of x O(np) */
-    //F77_CALL(dlarf)( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
+        //F77_CALL(dlarf)( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
     *p0 = 1.0;j=p-r-1;
     
     /* now distribute the j columns between nt threads */
     if (j) {
-      cpt = j / nt; /* cols per thread */
-      if (cpt * nt < j) cpt++; 
-      nth = j/cpt; /* actual number of threads */
-      if (nth * cpt < j) nth++;
-      cpf = j - cpt * (nth-1); /* columns on final block */
-      //Rprintf("j = %d  nth = %d, cpt = %d  cpf = %d\n",j,nth,cpt,cpf);
-      #ifdef SUPPORT_OPENMP
-      #pragma omp parallel private(i,j) num_threads(nth)
-      #endif
-      { /* open parallel section */
-        j = cpt;
+          cpt = j / nt; /* cols per thread */
+          if (cpt * nt < j) cpt++; 
+          nth = j/cpt; /* actual number of threads */
+          if (nth * cpt < j) nth++;
+          cpf = j - cpt * (nth-1); /* columns on final block */
+          //Rprintf("j = %d  nth = %d, cpt = %d  cpf = %d\n",j,nth,cpt,cpf);
+    } else nth=cpf=cpt=0;
+
+    br = beta[r];
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel private(i,j,p1,v,z,z1,zz,ii) num_threads(nt)
+    #endif
+    { j = cpt;
+      if (j) {        
         #ifdef SUPPORT_OPENMP
         #pragma omp for
         #endif
         for (i=0;i<nth;i++) {
-          if (i == nth-1) j = cpf;
-          F77_CALL(dlarfx)(&side, &nh, &j, p0, beta+r, p0 + n + n * cpt * i , &n , work + p * i);
+	    if (i == nth-1) j = cpf;
+            p1 = p0 + n + n * cpt *i; 
+            z1=p1+nh;
+            for (ii =0;ii<j;ii++,p1+=n,z1+=n) {
+            for (zz=0.0,v=p0,z=p1;z<z1;z++,v++) zz += *z * *v * br;
+            for (z=p1,v=p0;z<z1;z++,v++) *z -= zz * *v;
+	   }
+          //F77_CALL(dlarfx)(&side, &nh, &j, p0, beta+r, p0 + n + n * cpt * i , &n , work + p * i);
         }
-      } /* end parallel section */
-    } /* if (j) */
+      } /* if (j) */
+    } /* end parallel */ 
     nh--;
     *p0 = xx;
     /* update c, get new k... */
     k = r + 1;
     for (tau=0.0,p0+=n,i=r+1;i<p;i++,p0+=n) { 
-      c[i] -= *p0 * *p0;
-      if (c[i]>tau) { 
-        tau = c[i];
-        k=i;
-      }
-    }
-    if (r==n-1) tau = 0.0; 
-  } /* end while (tau > 0) */
-
+          c[i] -= *p0 * *p0;
+          if (c[i]>tau) { 
+            tau = c[i];
+            k=i;
+          }
+     }
+     if (r==n-1) tau = 0.0;
+    
+    } /* end while (tau > 0) */
+  
   R_chk_free(c); R_chk_free(work);
   return(r+1);
 }
 
 SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
 /* routine to QR decompose N by P matrix X with pivoting using routine
-   dlarg to generate housholder and dlarf to apply. This is direct 
+   dlarg to generate housholder. This is direct 
    implementation of 5.4.1 from Golub and van Loan (with correction 
-   of the pivot pivoting!). Aim is to parallelize 
-   using openMP. */
+   of the pivot pivoting!). */
   int n,p,nt,*piv,r,*rrp;
   double *x,*beta;
   SEXP rr;

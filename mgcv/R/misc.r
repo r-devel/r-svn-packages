@@ -8,8 +8,9 @@ pqr2 <- function(x,nt=1) {
 ## householder routines...
 ## library(mgcv); n <- 10000;p<-1000;x <- matrix(runif(n*p),n,p)
 ## system.time(qrx <- qr(x,LAPACK=TRUE))
-## system.time(qrx2 <- mgcv:::pqr2(x)) 
-## range(qrx2$qr-qrx2$qr)
+## system.time(qrx2 <- mgcv:::pqr2(x,2)) 
+## system.time(qrx3 <- mgcv:::pqr(x,2)) 
+## range(qrx2$qr-qrx$qr)
   p <- ncol(x)
   beta <- rep(0.0,p)
   piv <- as.integer(rep(0,p))
