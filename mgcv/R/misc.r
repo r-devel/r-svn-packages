@@ -3,6 +3,24 @@
 ## for testing purposes
 
 
+pqr2 <- function(x,nt=1) {
+## Function for parallel pivoted qr decomposition of a matrix using LAPACK
+## householder routines...
+## library(mgcv); n <- 10000;p<-1000;x <- matrix(runif(n*p),n,p)
+## system.time(qrx <- qr(x,LAPACK=TRUE))
+## system.time(qrx2 <- mgcv:::pqr2(x)) 
+## range(qrx2$qr-qrx2$qr)
+  p <- ncol(x)
+  beta <- rep(0.0,p)
+  piv <- as.integer(rep(0,p))
+  xc <- x*1
+  rank <- .Call(C_mgcv_Rpiqr,xc,beta,piv,nt)
+  ret <- list(qr=xc,rank=rank,qraux=beta,pivot=piv+1)
+  attr(ret,"useLAPACK") <- TRUE
+  class(ret) <- "qr"
+  ret
+}
+
 block.reorder <- function(x,n.blocks=1,reverse=FALSE) {
 ## takes a matrix x divides it into n.blocks row-wise blocks, and re-orders 
 ## so that the blocks are stored one after the other. 
