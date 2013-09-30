@@ -1,6 +1,6 @@
 % File nlme/man/plot.Variogram.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: plot.Variogram.Rd,v 1.9.2.1 2003/04/17 22:28:45 bates Exp $
 \name{plot.Variogram}

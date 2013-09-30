@@ -1,6 +1,6 @@
 % File nlme/man/pairs.lme.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: pairs.lme.Rd,v 1.10 2002/04/16 14:28:53 bates Exp $
 \name{pairs.lme}

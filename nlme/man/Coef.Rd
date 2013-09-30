@@ -1,6 +1,6 @@
 % File nlme/man/Coef.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: Coef.Rd,v 1.2.2.1 2003/04/17 22:28:45 bates Exp $
 \name{Coef}

@@ -1,6 +1,6 @@
 % File nlme/man/predict.gnls.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: predict.gnls.Rd,v 1.8.2.1 2003/05/17 22:00:48 bates Exp $
 \name{predict.gnls}

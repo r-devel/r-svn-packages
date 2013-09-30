@@ -1,6 +1,6 @@
 % File nlme/man/logLik.gnls.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 \name{logLik.gnls}
 \title{Log-Likelihood of a gnls Object}

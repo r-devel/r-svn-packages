@@ -1,6 +1,6 @@
 % File nlme/man/logDet.pdMat.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: logDet.pdMat.Rd,v 1.8.2.2 2003/04/17 22:29:35 bates Exp $
 \name{logDet.pdMat}

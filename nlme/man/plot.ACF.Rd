@@ -1,6 +1,6 @@
 % File nlme/man/plot.ACF.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: plot.ACF.Rd,v 1.9 2002/04/16 14:28:53 bates Exp $
 \name{plot.ACF}

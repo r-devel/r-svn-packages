@@ -1,6 +1,6 @@
 % File nlme/man/ranef.lmList.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 % $Id: ranef.lmList.Rd,v 1.4.2.1 2003/06/12 14:59:10 bates Exp $
 \name{ranef.lmList}

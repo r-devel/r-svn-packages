@@ -1,6 +1,6 @@
 % File nlme/man/ranef.lme.Rd
 % Part of the nlme package for R
-% Distributed under GPL 2 or later: see nlme/LICENCE
+% Distributed under GPL 2 or later: see nlme/LICENCE.note
 
 \name{ranef.lme}
 \title{Extract lme Random Effects}
