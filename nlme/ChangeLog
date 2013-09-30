@@ -1,8 +1,17 @@
 2013-09-30  Brian Ripley
 
+	* DESCRIPTION: version is 3.1-112
+
 	* R/gls.R, man/glsControl.Rd, man/Initialize.glsStruct.Rd.
 	Remove 'qrTol', which was unused and set to the non-existent
 	.Machine$single.eps, that is to NULL.
+
+	* NAMESPACE, man/gls-internal.Rd: export glsApVar and glsEstimate
+	for use in package rms.
+
+	* R/gls.R: more use of integer constants.
+
+	* man/{gls, *.glsStruct}.Rd: classes in quotes, more links.
 
 2013-08-17  Brian Ripley
 
@@ -10,7 +19,7 @@
 
 2013-08-15  Brian Ripley
 
-	* DESCRIPTION: version is 3.1-111,
+	* DESCRIPTION: version is 3.1-111
 	* R/lmList.R: Adjust to cope with failed fits and fits with 
 	fewer coefficients returned by lm().  (Contributed by Ruth Ripley.)
 

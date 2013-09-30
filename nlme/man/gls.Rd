@@ -66,10 +66,10 @@ gls(model, data, correlation, weights, subset, method, na.action,
   variances.  
 }
 \value{
-  an object of class \code{gls} representing the linear model
+  an object of class \code{"gls"} representing the linear model
   fit. Generic functions such as \code{print}, \code{plot}, and 
   \code{summary} have methods to show the results of the fit. See
-  \code{glsObject} for the components of the fit. The functions
+  \code{\link{glsObject}} for the components of the fit. The functions
   \code{resid}, \code{coef}, and \code{fitted} can be used to extract
   some of its components. 
 }

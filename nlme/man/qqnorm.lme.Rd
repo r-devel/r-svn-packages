@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE
 
-% $Id: qqnorm.lme.Rd,v 1.8.2.1 2003/04/17 22:28:45 bates Exp $
 \name{qqnorm.lme}
 \title{Normal Plot of Residuals or Random Effects from an lme Object}
 \usage{
@@ -13,8 +12,8 @@
 \alias{qqnorm.lmList}
 \alias{qqnorm.nls}
 \arguments{
- \item{y}{an object inheriting from class \code{lme}, representing
-   a fitted linear mixed-effects model or from class \code{lmList},
+ \item{y}{an object inheriting from class \code{"\link{lme}"}, representing
+   a fitted linear mixed-effects model or from class \code{"\link{lmList}"},
    representing a list of \code{lm} objects, or from class \code{lm},
    representing a fitted linear model, or from class \code{nls},
    representing a nonlinear least squares fitted model.}

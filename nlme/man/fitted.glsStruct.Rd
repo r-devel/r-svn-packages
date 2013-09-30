@@ -10,9 +10,9 @@
 }
 \alias{fitted.glsStruct}
 \arguments{
- \item{object}{an object inheriting from class \code{glsStruct},
+ \item{object}{an object inheriting from class \code{"\link{glsStruct}"},
    representing a list of linear model components, such as
-   \code{corStruct} and \code{varFunc} objects.}
+   \code{corStruct} and \code{"\link{varFunc}"} objects.}
  \item{glsFit}{an optional list with components \code{logLik}
    (log-likelihood), \code{beta} (coefficients), \code{sigma} (standard
    deviation for error term), \code{varBeta} (coefficients' covariance

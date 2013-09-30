@@ -11,8 +11,8 @@
 }
 \alias{residuals.lme}
 \arguments{
-  \item{object}{an object inheriting from class \code{lme}, representing
-    a fitted linear mixed-effects model.}
+ \item{object}{an object inheriting from class \code{"\link{lme}"}, representing
+   a fitted linear mixed-effects model.}
   \item{level}{an optional integer vector giving the level(s) of grouping
     to be used in extracting the residuals from \code{object}. Level
     values increase from outermost to innermost grouping, with

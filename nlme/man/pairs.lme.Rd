@@ -10,7 +10,7 @@
 }
 \alias{pairs.lme}
 \arguments{
- \item{x}{an object inheriting from class \code{lme}, representing
+ \item{x}{an object inheriting from class \code{"\link{lme}"}, representing
    a fitted linear mixed-effects model.}
  \item{form}{an optional one-sided formula specifying the desired type of
    plot. Any variable present in the original data frame used to obtain

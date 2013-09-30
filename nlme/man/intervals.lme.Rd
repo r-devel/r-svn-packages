@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE
 
-% $Id: intervals.lme.Rd,v 1.8 2002/03/05 14:59:39 bates Exp $
 \name{intervals.lme}
 \title{Confidence Intervals on lme Parameters}
 \usage{
@@ -11,7 +10,7 @@
 \alias{intervals.lme}
 \alias{print.intervals.lme}
 \arguments{
- \item{object}{an object inheriting from class \code{lme}, representing
+ \item{object}{an object inheriting from class \code{"\link{lme}"}, representing
    a fitted linear mixed-effects model.}
  \item{level}{an optional numeric value with the confidence level for
    the intervals. Defaults to 0.95.} 

@@ -12,8 +12,8 @@
 \alias{print.simulate.lme}
 \arguments{
   \item{object}{
-    an object inheriting from class \code{lme}, representing a fitted
-    linear mixed-effects model, or a list containing an lme model
+    an object inheriting from class \code{"\link{lme}"}, representing a fitted
+    linear mixed-effects model, or a list containing an \code{lme} model
     specification.  If given as a list, it should contain
     components \code{fixed}, \code{data}, and \code{random}
     with values suitable for a call to \code{\link{lme}}. This argument

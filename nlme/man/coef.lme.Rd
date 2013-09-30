@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE
 
-% $Id: coef.lme.Rd,v 1.9.2.1 2003/05/17 21:50:21 bates Exp $
 \name{coef.lme}
 \title{Extract lme Coefficients}
 \usage{
@@ -11,7 +10,7 @@
 }
 \alias{coef.lme}
 \arguments{
- \item{object}{an object inheriting from class \code{lme}, representing
+ \item{object}{an object inheriting from class \code{"\link{lme}"}, representing
    a fitted linear mixed-effects model.}
  \item{augFrame}{an optional logical value. If \code{TRUE}, the returned
    data frame is augmented with variables defined in \code{data}; else,

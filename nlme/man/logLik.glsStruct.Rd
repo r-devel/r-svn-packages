@@ -11,9 +11,9 @@
 \alias{logLik.glsStruct}
 
 \arguments{
- \item{object}{an object inheriting from class \code{glsStruct},
+ \item{object}{an object inheriting from class \code{"\link{glsStruct}"},
    representing a list of linear model components, such as
-   \code{corStruct} and \code{varFunc} objects.}
+   \code{corStruct} and \code{"\link{varFunc}"} objects.}
  \item{Pars}{the parameter values at which the (restricted)
    log-likelihood is to be evaluated.}
  \item{conLin}{an optional condensed linear model object, consisting of

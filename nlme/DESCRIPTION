@@ -1,6 +1,6 @@
 Package: nlme
-Version: 3.1-111
-Date: 2013-08-05
+Version: 3.1-112
+Date: 2013-10-01
 Priority: recommended
 Title: Linear and Nonlinear Mixed Effects Models
 Authors@R: c(person("José", "Pinheiro", role = "aut",

@@ -12,8 +12,8 @@
 \method{print}{anova.lme}(x, verbose, \dots)
 }
 \arguments{
- \item{object}{a fitted model object inheriting from class \code{lme},
-   representing a mixed-effects model.}
+ \item{object}{an object inheriting from class \code{"\link{lme}"}, representing
+   a fitted linear mixed-effects model.}
  \item{\dots}{other optional fitted model objects inheriting from
    classes \code{gls}, \code{gnls}, \code{lm}, \code{lme},
    \code{lmList}, \code{nlme}, \code{nlsList}, or \code{nls}.}
