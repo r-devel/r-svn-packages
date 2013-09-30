@@ -188,8 +188,8 @@ SEXP R_LoadStataData(FILE *fp)
 
     /** first read the header **/
 
-    abyte = RawByteBinary(fp, 1);   /* release version */
-    version = 0;			/* -Wall */
+    abyte = (unsigned char) RawByteBinary(fp, 1);   /* release version */
+    version = 0;		/* -Wall */
     varnamelength = 0;		/* -Wall */
     labeltable = R_NilValue;	/* -Wall */
     switch (abyte) {
@@ -274,7 +274,7 @@ SEXP R_LoadStataData(FILE *fp)
     PROTECT(types = allocVector(INTSXP, nvar));
     if (version > 0){
 	for(i = 0; i < nvar; i++){
-	    abyte = RawByteBinary(fp, 1);
+	    abyte = (unsigned char) RawByteBinary(fp, 1);
 	    INTEGER(types)[i] = abyte;
 	    switch (abyte) {
 	    case STATA_FLOAT:
@@ -295,7 +295,7 @@ SEXP R_LoadStataData(FILE *fp)
 	}
     } else {
 	for(i = 0; i < nvar; i++){
-	    abyte = RawByteBinary(fp, 1);
+	    abyte = (unsigned char) RawByteBinary(fp, 1);
 	    INTEGER(types)[i] = abyte;
 	    switch (abyte) {
 	    case STATA_SE_FLOAT:
@@ -501,7 +501,7 @@ SEXP R_LoadStataData(FILE *fp)
 	PROTECT(tmp = allocVector(STRSXP, 0));
 	for(j = 0; ; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
-	    res = fread((int *) aname, sizeof(int), 1, fp);
+	    res = (int) fread((int *) aname, sizeof(int), 1, fp);
 	    if (feof(fp)) break;
 	    if (res != 1) warning(_("a binary read error occurred"));
 
@@ -524,7 +524,7 @@ SEXP R_LoadStataData(FILE *fp)
 	    for(i = 0; i < nlabels; i++)
 		off[i] = InIntegerBinary(fp, 1, swapends);
 	    for(i = 0; i < nlabels; i++)
-		INTEGER(levels)[i] = (double) InIntegerBinary(fp, 0, swapends);
+		INTEGER(levels)[i] = InIntegerBinary(fp, 0, swapends);
 	    txt =  Calloc((size_t) totlen, char);
 	    InStringBinary(fp, totlen, txt);
 	    for(i = 0; i < nlabels; i++)
@@ -614,11 +614,11 @@ static void OutShortIntBinary(int i,FILE * fp)
   unsigned char first,second;
 
 #ifdef WORDS_BIGENDIAN
-    first= (i>>8);
-    second=i & 0xff;
+    first = (i >> 8);
+    second = i & 0xff;
 #else
-    first=i & 0xff;
-    second=i>>8;
+    first = i & 0xff;
+    second = i >> 8;
 #endif
   if (fwrite(&first, sizeof(char), 1, fp) != 1)
     error(_("a binary write error occurred"));
@@ -658,7 +658,8 @@ static Rboolean
 writeStataValueLabel(const char *labelName, const SEXP theselabels,
 		     const SEXP theselevels, const int namelength, FILE *fp)
 {
-    int i,len,txtlen; 
+    int i, txtlen; 
+    size_t len;
 
     if(!isString(theselabels))
 	return FALSE;
@@ -788,7 +789,7 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 		/* NB: there is a 244 byte limit on strings */
 		charlen = 0;
 		for(j = 0; j < nobs; j++){
-		    k = strlen(CHAR(STRING_ELT(VECTOR_ELT(df, i), j)));
+		    k = (int) strlen(CHAR(STRING_ELT(VECTOR_ELT(df, i), j)));
 		    if (k > charlen) charlen = k;
 		}
 		if(charlen > 244)
@@ -818,7 +819,7 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 		/* NB: there is a 244 byte limit on strings */
 		charlen = 0;
 		for(j = 0;j < nobs; j++){
-		    k = strlen(CHAR(STRING_ELT(VECTOR_ELT(df, i),j)));
+		    k = (int) strlen(CHAR(STRING_ELT(VECTOR_ELT(df, i),j)));
 		    if (k > charlen) charlen = k;
 		}
 		if(charlen > 244)

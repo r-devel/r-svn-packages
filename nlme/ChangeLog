@@ -1,3 +1,9 @@
+2013-09-30  Brian Ripley
+
+	* R/gls.R, man/glsControl.Rd, man/Initialize.glsStruct.Rd.
+	Remove 'qrTol', which was unused and set to the non-existent
+	.Machine$single.eps, that is to NULL.
+
 2013-08-17  Brian Ripley
 
 	* add start on ko translations.

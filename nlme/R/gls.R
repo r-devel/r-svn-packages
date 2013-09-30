@@ -109,7 +109,7 @@ gls <-
              dims = list(N = N, p = p, REML = as.integer(REML)), logLik = 0)
 
     ## initialization
-    glsEstControl <- controlvals[c("singular.ok","qrTol")]
+    glsEstControl <- controlvals["singular.ok"]
     glsSt <- Initialize(glsSt, dataMod, glsEstControl)
     parMap <- attr(glsSt, "pmap")
 
@@ -300,7 +300,7 @@ glsApVar <-
 
 glsEstimate <-
     function(object, conLin = attr(object, "conLin"),
-             control = list(singular.ok = FALSE, qrTol = .Machine$single.eps))
+             control = list(singular.ok = FALSE))
 {
     dd <- conLin$dims
     p <- dd$p
@@ -1286,8 +1286,7 @@ fitted.glsStruct <-
 }
 
 Initialize.glsStruct <-
-    function(object, data, control = list(singular.ok = FALSE,
-                           qrTol = .Machine$single.eps), ...)
+    function(object, data, control = list(singular.ok = FALSE), ...)
 {
     if (length(object)) {
         object[] <- lapply(object, Initialize, data)
@@ -1342,7 +1341,7 @@ glsControl <-
     ## Control parameters for gls
     function(maxIter = 50, msMaxIter = 200, tolerance = 1e-6, msTol = 1e-7,
              msScale = lmeScale, msVerbose = FALSE, singular.ok = FALSE,
-             qrTol = .Machine$single.eps, returnObject = FALSE,
+             returnObject = FALSE,
              apVar = TRUE, .relStep = (.Machine$double.eps)^(1/3),
              nlmStepMax = 100.0,
 	     opt = c("nlminb", "optim"),  optimMethod = "BFGS",
@@ -1350,11 +1349,9 @@ glsControl <-
 {
     list(maxIter = maxIter, msMaxIter = msMaxIter, tolerance = tolerance,
          msTol = msTol, msScale = msScale, msVerbose = msVerbose,
-         singular.ok = singular.ok, qrTol = qrTol,
+         singular.ok = singular.ok,
          returnObject = returnObject, apVar = apVar,
          minAbsParApVar = minAbsParApVar, .relStep = .relStep,
          nlmStepMax = nlmStepMax, opt = match.arg(opt),
 	 optimMethod = optimMethod, natural = natural)
 }
-
-### local generics for objects inheriting from class lme
