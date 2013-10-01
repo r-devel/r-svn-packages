@@ -22,7 +22,7 @@
 \alias{summary.corSymm}
 
 \arguments{
- \item{object}{an object inheriting from class \code{corStruct},
+ \item{object}{an object inheriting from class \code{"\link{corStruct}"},
    representing a correlation structure.}
  \item{structName}{an optional character string defining the type of
    correlation structure associated with \code{object}, to be used in

@@ -9,8 +9,8 @@
 }
 \alias{as.matrix.pdMat}
 \arguments{
- \item{x}{an object inheriting from class \code{pdMat}, representing a
-   positive-definite matrix.}
+  \item{x}{an object inheriting from class \code{"\link{pdMat}"},
+    representing a positive-definite matrix.}
  \item{\dots}{further arguments passed from other methods.}
 }
 \description{

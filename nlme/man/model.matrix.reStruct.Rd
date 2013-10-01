@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: model.matrix.reStruct.Rd,v 1.7 2002/03/05 14:59:39 bates Exp $
 \name{model.matrix.reStruct}
 \title{reStruct Model Matrix}
 \usage{
@@ -10,7 +9,7 @@
 }
 \alias{model.matrix.reStruct}
 \arguments{
- \item{object}{an object inheriting from class \code{reStruct},
+ \item{object}{an object inheriting from class \code{"\link{reStruct}"},
    representing a random effects structure and consisting of a list of
    \code{pdMat} objects.} 
  \item{data}{a data frame in which to evaluate the variables defined in

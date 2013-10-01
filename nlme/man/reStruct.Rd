@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: reStruct.Rd,v 1.6.2.1 2003/04/17 22:28:45 bates Exp $
 \name{reStruct}
 \title{Random Effects Structure}
 \usage{

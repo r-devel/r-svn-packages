@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: nlsList.Rd,v 1.7 2002/01/28 03:44:17 bates Exp $
 \name{nlsList}
 \title{List of nls Objects with a Common Model}
 \usage{

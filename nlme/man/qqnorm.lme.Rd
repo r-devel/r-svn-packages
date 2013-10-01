@@ -14,8 +14,8 @@
 \arguments{
  \item{y}{an object inheriting from class \code{"\link{lme}"}, representing
    a fitted linear mixed-effects model or from class \code{"\link{lmList}"},
-   representing a list of \code{lm} objects, or from class \code{lm},
-   representing a fitted linear model, or from class \code{nls},
+   representing a list of \code{lm} objects, or from class \code{"lm"},
+   representing a fitted linear model, or from class \code{"nls"},
    representing a nonlinear least squares fitted model.}
  \item{form}{an optional one-sided formula specifying the desired type of
    plot. Any variable present in the original data frame used to obtain

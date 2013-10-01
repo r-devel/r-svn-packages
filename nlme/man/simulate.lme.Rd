@@ -52,7 +52,7 @@
     the optimization algorithm in the \code{ms} function. If
     \code{FALSE}, the default algorithm in \code{ms} for functions that
     do not incorporate gradient and Hessian attributes is used. Default
-    depends on the \code{pdMat} classes used in \code{m1} and \code{m2}:
+    depends on the \code{"\link{pdMat}"} classes used in \code{m1} and \code{m2}:
     if both are standard classes (see \code{\link{pdClasses}}) then
     defaults to \code{TRUE}, otherwise defaults to \code{FALSE}.
   }

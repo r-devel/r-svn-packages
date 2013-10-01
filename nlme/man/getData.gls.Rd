@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: getData.gls.Rd,v 1.7 2002/03/05 14:59:39 bates Exp $
 \name{getData.gls}
 \title{Extract gls Object Data}
 \usage{

@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: residuals.lme.Rd,v 1.7 2002/03/05 14:59:39 bates Exp $
 \name{residuals.lme}
 \title{Extract lme Residuals}
 \usage{

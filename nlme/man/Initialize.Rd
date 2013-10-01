@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: Initialize.Rd,v 1.1.2.2 2003/04/17 22:28:45 bates Exp $
 \name{Initialize}
 \title{Initialize Object}
 \usage{

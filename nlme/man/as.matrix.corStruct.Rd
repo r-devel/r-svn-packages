@@ -9,7 +9,7 @@
 }
 \alias{as.matrix.corStruct}
 \arguments{
- \item{x}{an object inheriting from class \code{corStruct},
+ \item{x}{an object inheriting from class \code{"\link{corStruct}"},
    representing a correlation structure.}
  \item{\dots}{further arguments passed from other methods.}
 }

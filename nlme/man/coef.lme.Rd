@@ -61,10 +61,10 @@
   groups.  
 }
 \value{
-  a data frame inheriting from class \code{coef.lme} with the estimated
+  a data frame inheriting from class \code{"coef.lme"} with the estimated
   coefficients at level \code{level} and, optionally, other covariates
   summarized over groups. The returned object also inherits from classes
-  \code{ranef.lme} and \code{data.frame}.
+  \code{"ranef.lme"} and \code{"data.frame"}.
 }
 \references{
    Pinheiro, J. C. and Bates, D. M. (2000), \emph{Mixed-Effects Models in S

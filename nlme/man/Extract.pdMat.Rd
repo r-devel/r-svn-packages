@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: Extract.pdMat.Rd,v 1.4 2002/03/05 14:59:39 bates Exp $
 \name{[.pdMat}
 \title{Subscript a pdMat Object}
 \usage{
@@ -13,7 +12,7 @@
 \alias{[.pdBlocked}
 \alias{[<-.pdMat}
 \arguments{
- \item{x}{an object inheriting from class \code{pdMat} representing a
+ \item{x}{an object inheriting from class \code{"\link{pdMat}"} representing a
    positive-definite matrix.}
  \item{i, j}{optional subscripts applying respectively to the rows
    and columns of the positive-definite matrix represented by

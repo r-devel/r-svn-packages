@@ -9,7 +9,7 @@
 }
 \alias{Initialize.glsStruct}
 \arguments{
- \item{object}{an object inheriting from class \code{glsStruct},
+ \item{object}{an object inheriting from class \code{"\link{glsStruct}"},
    representing a list of linear model components, such as
    \code{corStruct} and \code{varFunc} objects.}
  \item{data}{a data frame in which to evaluate the variables defined in

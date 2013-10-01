@@ -10,7 +10,7 @@
 \alias{residuals.gls}
 \alias{residuals.gnls}
 \arguments{
- \item{object}{an object inheriting from class \code{gls}, representing
+ \item{object}{an object inheriting from class \code{"\link{gls}"}, representing
    a generalized least squares fitted linear model, or from class
    \code{gnls}, representing a generalized nonlinear least squares
    fitted linear model.}

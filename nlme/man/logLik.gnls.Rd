@@ -9,7 +9,7 @@
 }
 \alias{logLik.gnls}
 \arguments{
- \item{object}{an object inheriting from class \code{gnls}, representing
+ \item{object}{an object inheriting from class \code{"\link{gnls}"}, representing
    a generalized nonlinear least squares fitted model.}
  \item{REML}{an logical value for consistency with \code{logLik,gls},
    but only \code{FALSE} is accepted.. }

@@ -11,7 +11,7 @@
 
 	* R/gls.R: more use of integer constants.
 
-	* man/{gls, *.glsStruct}.Rd: classes in quotes, more links.
+	* man/*.Rd: classes in quotes, more links, remove CVS lines.
 
 2013-08-17  Brian Ripley
 

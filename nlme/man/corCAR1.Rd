@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: corCAR1.Rd,v 1.5.2.1 2002/08/09 19:45:29 bates Exp $
 \name{corCAR1}
 \title{Continuous AR(1) Correlation Structure}
 \usage{

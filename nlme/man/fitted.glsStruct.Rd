@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: fitted.glsStruct.Rd,v 1.6.2.2 2003/05/17 21:51:26 bates Exp $
 \name{fitted.glsStruct}
 \title{Calculate glsStruct Fitted Values}
 \usage{

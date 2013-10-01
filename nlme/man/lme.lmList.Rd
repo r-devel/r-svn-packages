@@ -10,7 +10,7 @@
 }
 \alias{lme.lmList}
 \arguments{
-  \item{fixed}{an object inheriting from class \code{lmList},
+  \item{fixed}{an object inheriting from class \code{"\link{lmList}."},
     representing a list of \code{lm} fits with a common model.}
   \item{data}{this argument is included for consistency with the generic
     function. It is ignored in this method function.}

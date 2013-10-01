@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: gls.Rd,v 1.6 2002/01/28 03:44:17 bates Exp $
 \name{gls}
 \title{Fit Linear Model Using Generalized Least Squares}
 \alias{gls}
@@ -13,7 +12,7 @@ gls(model, data, correlation, weights, subset, method, na.action,
 \method{update}{gls}(object, model., \dots, evaluate = TRUE)
 }
 \arguments{
- \item{object}{an object inheriting from class \code{gls}, representing
+ \item{object}{an object inheriting from class \code{"gls"}, representing
    a generalized least squares fitted linear model.}
   \item{model}{a two-sided linear formula object describing the
     model, with the response on the left of a \code{~} operator and the

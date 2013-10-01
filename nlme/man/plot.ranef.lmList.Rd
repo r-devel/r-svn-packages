@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: plot.ranef.lmList.Rd,v 1.9.2.1 2003/04/17 22:28:45 bates Exp $
 \name{plot.ranef.lmList}
 \title{Plot a ranef.lmList Object}
 \usage{
@@ -11,7 +10,7 @@
 \alias{plot.ranef.lmList}
 \arguments{
  \item{x}{an object inheriting from class
-   \code{ranef.lmList}, representing the estimated coefficients or
+   \code{"\link{ranef.lmList}"}, representing the estimated coefficients or
    estimated random effects for the \code{lmList} object from which it was
    produced.
  } 

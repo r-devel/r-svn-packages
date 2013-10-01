@@ -2,7 +2,6 @@
 % Part of the nlme package for R
 % Distributed under GPL 2 or later: see nlme/LICENCE.note
 
-% $Id: intervals.Rd,v 1.4.2.1 2003/04/17 22:28:45 bates Exp $
 \name{intervals}
 \title{Confidence Intervals on Coefficients}
 \usage{
