@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2011
+##  R routines for the package mgcv (c) Simon Wood 2000-2013
 ##  With contributions from Henric Nilsson
 
 Rrank <- function(R,tol=.Machine$double.eps^.9) {

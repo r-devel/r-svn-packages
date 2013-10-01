@@ -216,7 +216,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
 
   int i,k,r,nh,j,one=1,cpt,nth,cpf,ii;
   double *c,*p0,*p1,*p2,xx,tau,*work,zz,*v,*z,*z1,br;
-  const char side = 'L';
+  /* const char side = 'L';*/
 
   #ifndef SUPPORT_OPENMP
   nt = 1;
@@ -250,7 +250,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
     F77_CALL(dlarfg)(&nh,&xx,p1,&one,beta+r);
     
     /* next apply the rotation to the remaining columns of x O(np) */
-        //F77_CALL(dlarf)( SIDE, M, N, V, INCV, TAU, C, LDC, WORK )
+       
     *p0 = 1.0;j=p-r-1;
     
     /* now distribute the j columns between nt threads */
@@ -260,7 +260,6 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
           nth = j/cpt; /* actual number of threads */
           if (nth * cpt < j) nth++;
           cpf = j - cpt * (nth-1); /* columns on final block */
-          //Rprintf("j = %d  nth = %d, cpt = %d  cpf = %d\n",j,nth,cpt,cpf);
     } else nth=cpf=cpt=0;
 
     br = beta[r];
@@ -280,7 +279,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
             for (zz=0.0,v=p0,z=p1;z<z1;z++,v++) zz += *z * *v * br;
             for (z=p1,v=p0;z<z1;z++,v++) *z -= zz * *v;
 	   }
-          //F77_CALL(dlarfx)(&side, &nh, &j, p0, beta+r, p0 + n + n * cpt * i , &n , work + p * i);
+	   /*F77_CALL(dlarfx)(&side, &nh, &j, p0, beta+r, p0 + n + n * cpt * i , &n , work + p * i);*/
         }
       } /* if (j) */
     } /* end parallel */ 
@@ -301,7 +300,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   
   R_chk_free(c); R_chk_free(work);
   return(r+1);
-}
+  } /* mgcv_piqr */
 
 SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
 /* routine to QR decompose N by P matrix X with pivoting using routine
@@ -958,7 +957,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
       x0 = b + *r * *cb -1; /* end of full b (target) */
       x1 = b + *c * *cb -1; /* end of used block (source) */
       for (j= *cb;j>0;j--) { /* work down columns */
-        //for (i = *r;i > *c;i--,x0--) *x0 = 0.0; /* clear unused */
+        /*for (i = *r;i > *c;i--,x0--) *x0 = 0.0;*/ /* clear unused */
         x0 -= *r - *c; /* skip unused */
         for (i = *c;i>0;i--,x0--,x1--) { 
           *x0 = *x1; /* copy */
