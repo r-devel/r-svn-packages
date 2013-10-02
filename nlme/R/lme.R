@@ -708,11 +708,18 @@ MEestimate <-
   p <- nc[Q + 1L]
   N <- dd$N - REML * p
   dimE <- dim(estimates)
-  list(logLik = N * (log(N) - (1 + log(2 * pi)))/2 + rConLin$logLik,
-       b = rev(val),
-       beta = resp[dimE[1L] - (p:1)],
-       sigma = abs(resp[dimE[1L]])/sqrt(N),
-       varFix = t(solve(estimates[dimE[1L]-(p:1), dimE[2L]-(p:1), drop = FALSE])))
+  if(p)
+      list(logLik = N * (log(N) - (1 + log(2 * pi)))/2 + rConLin$logLik,
+           b = rev(val),
+           beta = resp[dimE[1L] - (p:1)],
+           sigma = abs(resp[dimE[1L]])/sqrt(N),
+           varFix = t(solve(estimates[dimE[1L]-(p:1), dimE[2L]-(p:1), drop = FALSE])))
+  else
+      list(logLik = N * (log(N) - (1 + log(2 * pi)))/2 + rConLin$logLik,
+           b = rev(val),
+           beta = double(),
+           sigma = abs(resp[dimE[1L]])/sqrt(N),
+           varFix = matrix(,p,p))
 }
 
 MEdims <-
