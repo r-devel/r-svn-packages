@@ -17,9 +17,14 @@ lme(fixed, data, random, correlation, weights, subset, method,
   \item{fixed}{a two-sided linear formula object describing the
     fixed-effects part of the model, with the response on the left of a
     \code{~} operator and the terms, separated by \code{+} operators, on
-    the right, an \code{lmList} object, or a \code{groupedData}
-    object. The method functions \code{lme.lmList} and
-    \code{lme.groupedData} are documented separately.}
+    the right, an \code{"\link{lmList}"} object, or a
+    \code{"\link{groupedData}"} object.
+
+    There is limited support for formulae such as \code{resp ~ 1} and
+    \code{resp ~ 0}, and less prior to version \samp{3.1-112}.
+
+    The method functions \code{\link{lme.lmList}} and
+    \code{\link{lme.groupedData}} are documented separately.}
  \item{fixed.}{Changes to the fixed-effects formula -- see
    \code{update.formula} for details.}
  \item{data}{an optional data frame containing the variables named in

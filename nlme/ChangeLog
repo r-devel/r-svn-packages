@@ -1,3 +1,7 @@
+2013-10-03  Brian Ripley
+
+	* man/lme.Rd: add links, warn on no-covariate formulae.
+
 2013-09-30, 2013-10-02  Brian Ripley
 
 	* DESCRIPTION: version is 3.1-112
