@@ -157,7 +157,8 @@ double *backward_buf(double *buf,int *jal,int *j0,int *j_lo,int *j_hi,int update
 
 
 
-void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
+void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,
+double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
 /* Routine to perform tedious series summation needed for Tweedie distribution
    evaluation, following Dunn & Smyth (2005) Statistics and Computing 15:267-280.
    Notation as in that paper. 
@@ -165,8 +166,16 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
    log W returned in w. (where W means sum_j W_j)
    d logW / dphi in w1, 
    d2 logW / d phi2 in w2.
- 
+   d logW / dp in w1p
+   d2 logW / dp2 in w2p
+   d2 logW / dp dphi in W2pp
+
    *Only* suitable for 1<p<2 (inequalities strict). 
+
+   The somewhat involved approach is all about avoiding overflow or underflow. 
+   Extensive use is made of 
+        log { sum_j exp(x_j)} = log { sum_j exp(x_j-x_max) } + x_max
+   digamma and trigamma functions are from Rmath.h
 
    NOTE: still some redundancy for readability 
  
@@ -175,8 +184,8 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
   double x,xx,ymax,ymin,alpha,*alogy,*p1,*p2,*p3,*p4,*p5,
     *wb,*wb1,*wb2,*wp1,*wp2,*wpp,
     w_base,wp_base,wp2_base,wpp_base,wp1j,wp2j,wj_scaled,dW_scaled,wdlogwdp,
-    wdlogwdp2,wdW2d2W,dWpp,
-    wmax,w1max,w2max,wp1max,wp2max,wppmax,wmin,w1min,w2min,wp1min,wp2min,wppmin,
+    wdW2d2W,dWpp,
+    wmax,w1max,w2max,wmin,w1min,w2min,
     wi,w1i,w2i,
     log_eps,wj,w1j,w2j,jalogy,onep,onep2,*logy1p2,*logy1p3;
   
@@ -266,15 +275,12 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
     
     j = j_max+j0;
     jalogy = j*alogy[i];
-    wdW2d2W= wdlogwdp2= wdlogwdp=dWpp=0;
+    wdW2d2W= wdlogwdp=dWpp=0.0;
     wi=w1i=w2i=0.0; // 1.0;
     wmax = wb[j_max] - jalogy;wmin = wmax + log_eps; 
     w1max = wb1[j_max] - jalogy;w1min = w1max + log_eps;    
     w2max = wb2[j_max] - jalogy;w2min = w2max + log_eps;
-    //wp1max = wp1[j_max] - j * logy1p2[i];wp1min = wp1max + log_eps;    
-    //wp2max = wp2[j_max] - j * logy1p3[i];wp2min = wp2max + log_eps;    
-    //wppmax = wpp[j_max];wppmin = wppmax + log_eps;    
-
+ 
     /* start upsweep to convergence or end of available buffered values */
     ok = 0;
     for (j=j_max+j0,jb=j_max;jb<=j_hi;jb++,j++) { // note initially wi etc initialized to 1 and summation starts 1 later
@@ -289,11 +295,9 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
       w1i += exp(w1j-w1max);
       w2i += exp(w2j-w2max);
      
-      dW_scaled = exp(w1j-wmax); /* note scaling by wmax not w1max */
- 
+      dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
       x = wj_scaled*wp1j;
       wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-      //wdlogwdp2 += x*x; /* sum_j (W_j dlogW_j/dp)^2 */
       wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
       dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */  
 
@@ -323,11 +327,9 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
         wi += wj_scaled;
         w1i += exp(w1j-w1max);
         w2i += exp(w2j-w2max);
-        dW_scaled = exp(w1j-wmax); /* note scaling by wmax not w1max */
- 
+        dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
         x = wj_scaled*wp1j;
         wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-        //wdlogwdp2 += x*x; /* sum_j (W_j dlogW_j/dp)^2 */
         wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
         dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
 
@@ -358,11 +360,9 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
       wi += wj_scaled;
       w1i += exp(w1j-w1max);
       w2i += exp(w2j-w2max); 
-      dW_scaled = exp(w1j-wmax); /* note scaling by wmax not w1max */
- 
+      dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
       x = wj_scaled*wp1j;
       wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-      //wdlogwdp2 += x*x; /* sum_j (W_j dlogW_j/dp)^2 */
       wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
       dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
      
@@ -394,11 +394,10 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
         wi += wj_scaled;
         w1i += exp(w1j-w1max);
         w2i += exp(w2j-w2max); 
-        dW_scaled = exp(w1j-wmax); /* note scaling by wmax not w1max */
- 
+        dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
         x = wj_scaled*wp1j;
         wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-        //wdlogwdp2 += x*x; /* sum_j (W_j dlogW_j/dp)^2 */
+    
         wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
         dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
   
@@ -427,7 +426,7 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,double *w
     x= wdlogwdp/wi;
     w1p[i] = x; /* d log sum w_j/ dp */
     w2p[i] = wdW2d2W/wi - x*x;/* d^2 log sum w_j/ dp^2 */
-    xx = exp(log(w1i)+w1max-wmax); /* need to re-scale dW/dphi */
+    xx = -exp(w1i-wmax); /* need to re-scale dW/dphi */
     w2pp[i] = dWpp/wi - x*(xx/wi);/* d^2 log sum w_j/ dp d phi */
 
   } /* end of looping through y */

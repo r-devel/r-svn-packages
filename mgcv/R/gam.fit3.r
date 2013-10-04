@@ -2271,27 +2271,27 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
            w2pp=as.double(y*0),y=as.double(y),
            phi=as.double(phi),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
   
-  check.derivs <- TRUE
-  if (check.derivs) {
-    eps <- 1e-6
-    oo1 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-           w2pp=as.double(y*0),y=as.double(y),
-           phi=as.double(phi+eps),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
-    w1.fd <- (oo1$w-oo$w)/eps
-    print(oo$w1);print(w1.fd)
-    w2.fd <- (oo1$w1-oo$w1)/eps
-    print(oo$w2);print(w2.fd)
-    oo2 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-           w2pp=as.double(y*0),y=as.double(y),
-           phi=as.double(phi),p=as.double(p+eps),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
-    w1p.fd <- (oo2$w-oo$w)/eps
-    print(oo$w1p);print(w1p.fd)
-    w2p.fd <- (oo2$w1p-oo$w1p)/eps
-    print(oo$w2p);print(w2p.fd)
-    w2pp.fd <- (oo2$w1-oo$w1)/eps
-    print(oo$w2pp);print(w2pp.fd) 
-    w2pp.fd <- (oo1$w1p-oo$w1p)/eps;print(w2pp.fd)
-  }  
+#  check.derivs <- TRUE
+#  if (check.derivs) {
+#    eps <- 1e-9
+#    oo1 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+#           w2pp=as.double(y*0),y=as.double(y),
+#           phi=as.double(phi+eps),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+#    w1.fd <- (oo1$w-oo$w)/eps
+#    print(oo$w1);print(w1.fd)
+#    w2.fd <- (oo1$w1-oo$w1)/eps
+#    print(oo$w2);print(w2.fd)
+#    oo2 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+#           w2pp=as.double(y*0),y=as.double(y),
+#           phi=as.double(phi),p=as.double(p+eps),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+#    w1p.fd <- (oo2$w-oo$w)/eps
+#    print(oo$w1p);print(w1p.fd)
+#    w2p.fd <- (oo2$w1p-oo$w1p)/eps
+#    print(oo$w2p);print(w2p.fd)
+#    w2pp.fd <- (oo2$w1-oo$w1)/eps
+#    print(oo$w2pp);print(w2pp.fd) 
+#    w2pp.fd <- (oo1$w1p-oo$w1p)/eps;print(w2pp.fd)
+#  }  
 
   theta <- mu^(1-p)
   k.theta <- mu*theta/(2-p)
