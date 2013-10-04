@@ -2225,7 +2225,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
  
   if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
   if (p<1||p>2) stop("p must be in [1,2]")
-  ld <- cbind(y,y,y)
+  ld <- cbind(y,y,y);ld <- cbind(ld,ld*NA)
   if (p == 2) { ## It's Gamma
     if (sum(y<=0)) stop("y must be strictly positive for a Gamma density")
     ld[,1] <- dgamma(y, shape = 1/phi,rate = 1/(phi * mu),log=TRUE)
@@ -2256,25 +2256,42 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   ind <- y==0
  
   ld[ind,1] <- -mu[ind]^(2-p)/(phi*(2-p))
-  ld[ind,2] <- -ld[ind,1]/phi
-  ld[ind,3] <- -2*ld[ind,2]/phi
+  ld[ind,2] <- -ld[ind,1]/phi  ## dld/d phi 
+  ld[ind,3] <- -2*ld[ind,2]/phi ## d2ld/dphi2
+  ld[ind,4] <- -ld[ind,1] * (log(mu[ind]) - 1/(2-p)) ## dld/dp
+  ld[ind,5] <- 2*ld[ind,4]/(2-p) + ld[ind,1]*log(mu[ind])^2 ## d2ld/dp2
+  ld[ind,6] <- -ld[ind,4]/phi ## d2ld/dphidp
 
   if (sum(!ind)==0) return(ld)
 
   ## now the non-zeros
   y <- y[!ind];mu <- mu[!ind]
   w <- w1 <- w2 <- y*0
-  oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),y=as.double(y),
+  oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+           w2pp=as.double(y*0),y=as.double(y),
            phi=as.double(phi),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
   
-#  check.derivs <- TRUE
-#  if (check.derivs) {
-#    eps <- 1e-6
-#    oo1 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),y=as.double(y),
-#           phi=as.double(phi+eps),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
-#    w2.fd <- (oo1$w1-oo$w1)/eps
-#    print(oo$w2);print(w2.fd)
-#  }  
+  check.derivs <- TRUE
+  if (check.derivs) {
+    eps <- 1e-6
+    oo1 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+           w2pp=as.double(y*0),y=as.double(y),
+           phi=as.double(phi+eps),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+    w1.fd <- (oo1$w-oo$w)/eps
+    print(oo$w1);print(w1.fd)
+    w2.fd <- (oo1$w1-oo$w1)/eps
+    print(oo$w2);print(w2.fd)
+    oo2 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+           w2pp=as.double(y*0),y=as.double(y),
+           phi=as.double(phi),p=as.double(p+eps),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+    w1p.fd <- (oo2$w-oo$w)/eps
+    print(oo$w1p);print(w1p.fd)
+    w2p.fd <- (oo2$w1p-oo$w1p)/eps
+    print(oo$w2p);print(w2p.fd)
+    w2pp.fd <- (oo2$w1-oo$w1)/eps
+    print(oo$w2pp);print(w2pp.fd) 
+    w2pp.fd <- (oo1$w1p-oo$w1p)/eps;print(w2pp.fd)
+  }  
 
   theta <- mu^(1-p)
   k.theta <- mu*theta/(2-p)

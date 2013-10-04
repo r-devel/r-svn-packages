@@ -36,7 +36,8 @@ void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int
 		 double *r_tol,int *fixed_penalty);
 
 /* various service routines */
-void  tweedious(double *w,double *w1,double *w2,double *y,double *phi,double *p,double *eps,int *n);
+void tweedious(double *w,double *w1,double *w2, double *w1p,double *w2p,double *w2pp, 
+                double *y,double *phi,double *p,double *eps,int *n);
 void psum(double *y, double *x,int *index,int *n);
 void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p);
 void in_out(double *bx, double *by, double *break_code, double *x,double *y,int *in, int *nb, int *n);
