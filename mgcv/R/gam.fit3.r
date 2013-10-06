@@ -2293,14 +2293,19 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
 #    w2pp.fd <- (oo1$w1p-oo$w1p)/eps;print(w2pp.fd)
 #  }  
 
+  log.mu <- log(mu)
   theta <- mu^(1-p)
   k.theta <- mu*theta/(2-p)
   theta <- theta/(1-p)
   l.base <-  (y*theta-k.theta)/phi
-  ld[!ind,1] <- l.base - log(y) + oo$w
-  ld[!ind,2] <- -l.base/phi + oo$w1   
-  ld[!ind,3] <- 2*l.base/(phi*phi) + oo$w2
-  
+  ld[!ind,1] <- l.base - log(y) + oo$w ## log density
+  ld[!ind,2] <- -l.base/phi + oo$w1   ## d log f / dphi
+  ld[!ind,3] <- 2*l.base/(phi*phi) + oo$w2 ## d2 logf / dphi2
+  x <- theta*y*(1/(1-p) - log.mu)/phi + k.theta*(log.mu-1/(2-p))/phi
+  ld[!ind,4] <- oo$w1p + x
+  ld[!ind,5] <- oo$w2p + theta * y * (log.mu^2 - 2*log.mu/(1-p) + 2/(1-p)^2)/phi -
+                k.theta * (log.mu^2 - 2*log.mu/(2-p) + 2/(2-p)^2)/phi ## d2 logf / dp2
+  ld[!ind,6] <- oo$w2pp - x/phi ## d2 logf / dphi dp
   ld
 }
 
