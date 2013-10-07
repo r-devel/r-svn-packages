@@ -20,8 +20,14 @@
   (c) 1999, 2000, 2001, 2002 Thomas Lumley.
   2000 Saikat DebRoy
 
-  The format of Stata files is documented under 'file formats'
-  in the Stata manual.
+  Patches by the R Core Team and Brian Quistorff.
+
+  Frozen 2013-10-07 at Stata version 10 aka 114 (11 is the same as 10,
+  and 12 seems compatible despite being described separately as 115).
+
+  The format of Stata files is documented under 'file formats' in the
+  Stata manual and at http://www.stata.com/help.cgi?dta (with,
+  currently, links to various versions).
 
   This code currently does not make use of the print format information in
    a .dta file (except for dates). It cannot handle files with 'int'
@@ -50,7 +56,7 @@
 
 /*
 http://statacorp.com/statalist/archive/2007-06/msg01021.html
-says 113 is versions 8-9, 114 is version 10.
+says 113 is versions 8-9, 114 is version 10/11.
 */
 
 /* Stata format constants */
