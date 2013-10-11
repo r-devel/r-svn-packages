@@ -2253,7 +2253,8 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   ## .. otherwise need the full series thing....
   ## first deal with the zeros  
   
-  ind <- y==0
+  ind <- y==0;ld[ind,] <- 0
+  ind <- ind & mu>0 ## need mu condition otherwise may try to find log(0)
  
   ld[ind,1] <- -mu[ind]^(2-p)/(phi*(2-p))
   ld[ind,2] <- -ld[ind,1]/phi  ## dld/d phi 
@@ -2265,6 +2266,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   if (sum(!ind)==0) return(ld)
 
   ## now the non-zeros
+  ind <- y==0
   y <- y[!ind];mu <- mu[!ind]
   w <- w1 <- w2 <- y*0
   oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
