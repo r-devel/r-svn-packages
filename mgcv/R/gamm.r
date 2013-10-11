@@ -1385,8 +1385,16 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     wisvf <- try(inherits(weights,"varFunc"),silent=TRUE)
     if (inherits(wisvf,"try-error")) wisvf <- FALSE
     if (wisvf) { ## collect its variables
-      vf.for<-attr(weights,"formula")
-      if (!is.null(vf.for)) vf.vars<-all.vars(vf.for)
+      if (inherits(weights,"varComb")) { ## actually a list of varFuncs
+        vf.vars <- rep("",0)
+        for (i in 1:length(weights)) {
+          vf.vars <- c(vf.vars,all.vars(attr(weights[[i]],"formula")))
+        }
+        vf.vars <- unique(vf.vars)
+      } else { ## single varFunc
+        vf.for<-attr(weights,"formula")
+        if (!is.null(vf.for)) vf.vars<-all.vars(vf.for)
+      }
     } else vf.vars <- NULL
 
     # create model frame.....

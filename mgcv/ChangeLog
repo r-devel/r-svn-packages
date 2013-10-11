@@ -1,6 +1,14 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.7-28
+
+* ldTweedie now returns derivatives w.r.t. p as well as w.r.t scale 
+  parameter phi.
+
+* gamm can now handle 'varComb' variance functions (thanks Sven Neulinger
+  for reporting that it didn't).
+
 1.7-27
 
 * Further multi-threading in gam fits - final two leading order matrix

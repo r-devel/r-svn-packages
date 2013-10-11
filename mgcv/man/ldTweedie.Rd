@@ -3,7 +3,7 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Log Tweedie density evaluation}
 \description{A function to evaluate the log of the Tweedie density for variance powers between 1 and 2, inclusive.
-Also evaluates first and second derivatives of log density w.r.t. its scale parameter.
+Also evaluates first and second derivatives of log density w.r.t. its scale parameter and p.
 }
 
 \usage{
@@ -20,8 +20,9 @@ be between 1 and 2. 1 is Poisson like (exactly Poisson if \code{phi=1}), 2 is ga
 \item{phi}{The scale parameter. Variance of \code{y} is \code{phi*mu^p}.}
 
 }
-\value{ A matrix with 3 columns. The first is the log density of \code{y} (log probability if \code{p=1}). 
-The second and third are the first and second derivatives of the log density w.r.t. \code{phi}.}
+\value{ A matrix with 6 columns. The first is the log density of \code{y} (log probability if \code{p=1}). 
+The second and third are the first and second derivatives of the log density w.r.t. \code{phi}. 4th and 5th 
+columns are first and second derivative w.r.t. \code{p}, final column is second derivative w.r.t. \code{phi} and \code{p}.}
 
 \details{ A Tweedie random variable with 1<p<2 is a sum of \code{N} gamma random variables 
 where \code{N} has a Poisson distribution. The p=1 case is a generalization of a Poisson distribution and is a discrete 
@@ -29,7 +30,8 @@ distribution supported on integer multiples of the scale parameter. For 1<p<2 th
 positive reals with a point mass at zero. p=2 is a gamma distribution. As p gets very close to 1 the continuous 
 distribution begins to converge on the discretely supported limit at p=1. 
 
-\code{ldTweedie} is based on the series evaluation method of Dunn and Smyth (2005). Without the restriction on \code{p} the calculation of Tweedie densities is less straightforward. If you really need this 
+\code{ldTweedie} is based on the series evaluation method of Dunn and Smyth (2005). Without 
+the restriction on \code{p} the calculation of Tweedie densities is less straightforward. If you really need this 
 case then the \code{tweedie} package is the place to start.
 }
 
