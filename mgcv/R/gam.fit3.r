@@ -113,6 +113,14 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 ## and compute a smoothness selection score along with its derivatives.
 ##
     if (control$trace) { t0 <- proc.time();tc <- 0} 
+  
+    if (inherits(family,"extended.family")) { ## then actually gam.fit4 is needed
+      return(gam.fit4(x, y, sp, Eb,UrS=UrS,
+            weights = weights, start = start, etastart = etastart, 
+            mustart = mustart, offset = offset,U1=U1, Mp=Mp, family = family, 
+            control = control, deriv=deriv,
+            scale=scale,scoreType="REML",null.coef=null.coef,...))
+    }
 
     if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE 
     ## ... if canonical Newton = Fisher, but Fisher cheaper!
@@ -1936,7 +1944,8 @@ fix.family.var<-function(fam)
 # adds dvar the derivative of the variance function w.r.t. mu
 # to the family supplied, as well as d2var the 2nd derivative of 
 # the variance function w.r.t. the mean. (All checked numerically). 
-{ if (!inherits(fam,"family")) stop("fam not a family object")
+{ if (inherits(fam,"extended.family")) return(fam)
+  if (!inherits(fam,"family")) stop("fam not a family object")
   if (!is.null(fam$dvar)&&!is.null(fam$d2var)&&!is.null(fam$d3var)) return(fam) 
   family <- fam$family
   if (family=="gaussian") {

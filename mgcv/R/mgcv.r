@@ -1272,6 +1272,11 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 ## Do gam estimation and smoothness selection...
   
+  if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
+    method <- "REML" ## any method you like as long as it's REML
+    if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
+  }
+
   if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
@@ -1311,9 +1316,12 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   if (reml) { ## then RE(ML) selection, but which variant?
    criterion <- method
    if (fam.name == "binomial"||fam.name == "poisson") scale <- 1
+   if (inherits(G$family,"extended.family")) {
+     scale <- if (is.null(G$family$scale)) 1 else G$family$scale
+   }
   } else {
     if (scale==0) { 
-      if (fam.name=="binomial"||fam.name=="poisson") scale<-1 #ubre
+      if (fam.name=="binomial"||fam.name=="poisson") scale <- 1 #ubre
       else scale <- -1 #gcv
     }
     if (scale > 0) criterion <- "UBRE"
@@ -1407,7 +1415,20 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$L)) G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
     } 
-          
+      
+    if (inherits(G$family,"extended.family")) { ## then there may be extra parameters to estimate
+      th0 <- G$family$getTheta() ## additional (initial) parameters of likelihood 
+      nth <- length(th0)
+      ind <- 1:length(lsp) + nth
+      lsp <- c(th0,lsp) ## append to start of lsp
+      ## extend G$L, G$lsp0 if present...
+      if (!is.null(G$L)&&nth>0) { 
+        L <- diag(length(lsp));L[ind,ind] <- G$L;G$L <- L
+      }
+      if (!is.null(G$lsp0)) G$lsp0 <- c(th0*0,G$lsp0)
+    } 
+
+    
     G$null.coef <- null.stuff$null.coef
 
     object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),
@@ -1416,6 +1437,9 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     
     if (criterion%in%c("REML","ML")&&scale<=0)  object$sp <- 
                                                 object$sp[-length(object$sp)] ## drop scale estimate from sp array
+    
+    if (inherits(G$family,"extended.family")&&nth>0) object$sp <- object$sp[-(1:nth)] ## drop theta params
+ 
     object$mgcv.conv <- mgcv.conv 
 
   } ## finished outer looping
@@ -3417,7 +3441,10 @@ initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,start=N
     if (!is.null(start)) etastart <- drop(X%*%start)
     if (!is.null(etastart)) mustart <- family$linkinv(etastart)
   } else mustart <- mukeep
-  w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
+  if (inherits(family,"extended.family")) {
+    theta <- family$getTheta()
+    w <- .5 * family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2  
+  } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
   w <- sqrt(w)
   if (type==1) { ## what PI would have used
    lambda <-  initial.sp(w*X,S,off)
