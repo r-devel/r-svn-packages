@@ -463,7 +463,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    wt <- rep.int(0, nobs)
    wt[good] <- wf 
 
-   aic.model <- family$aic(y, n, mu, weights, dev) # note: incomplete 2*edf needs to be added
+   aic.model <- family$aic(y, mu, theta, weights, dev) # note: incomplete 2*edf needs to be added
  
   ## fitted values might not just be mu....
    if (!is.null(family$fv)) mu <- family$fv(mu,theta) 
