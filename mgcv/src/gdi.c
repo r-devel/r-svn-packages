@@ -2096,12 +2096,12 @@ void gdiPK(double *work,double *X,double *E,double *Es,double *rS,double *U1,dou
 
 
 void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
-	  double *sp,double *theta,double *z,double *w,
+	  double *sp,double *theta,double *z,double *w,double *wf,
           double *Dth,double *Det,double *Det2,double *Dth2,double *Det_th,
           double *Det2_th,double *Det3,double *Det_th2,
           double *Det4, double *Det3_th, double *Det2_th2,
           double *beta,double *D1,double *D2,double *P0,double *P1,double *P2,
-          double *ldet, double *ldet1,double *ldet2,
+          double *ldet, double *ldet1,double *ldet2,double *rV,
           double *rank_tol,int *rank_est,
 	  int *n,int *q, int *M,int *n_theta, int *Mp,int *Enrow,int *rSncol,int *deriv,
 	  int *fixed_penalty,int *nt)     
@@ -2175,10 +2175,10 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 { double *work,*p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*K=NULL,
     *Vt,*b1=NULL,*b2=NULL,*P,xx=0.0,*eta1=NULL,*eta2=NULL,
     *PKtz,*wi=NULL,*w1=NULL,*w2=NULL,*Tk=NULL,*Tkm=NULL,
-    *dev_hess=NULL,*R,*raw,*Q1,*nulli;
-  int i,j,k,*pivot1,ScS,*pi,rank,m,
-    ntot,n_2dCols=0,n_drop,*drop,
-    n_work,deriv2,neg_w=0,*nind,nr,TRUE=1; 
+    *dev_hess=NULL,*R,*raw,*Q1,*Q,*nulli,*WX,*tau,*R1;
+  int i,j,k,*pivot1,ScS,*pi,rank,m,*pivot,
+    ntot,n_2dCols=0,n_drop,*drop,tp,
+    n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0; 
   
   #ifdef SUPPORT_OPENMP
   m = omp_get_num_procs(); /* detected number of processors */
@@ -2341,6 +2341,48 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   /* and the derivatives of b'S'b w.r.t. all parameters [theta,sp] */
   
   get_bSb(P0,P1,P2,sp,E,rS,rSncol,Enrow,&rank,M,n_theta,PKtz,b1,b2,deriv);
+
+  /* get rV and K using E(W)... these things are needed in order to compute 
+     effective degrees of freedom safely, and for posterior inference, */
+    
+  /* form sqrt(wf)X augmented with E */
+  nr = *n + *Enrow;
+  WX = (double *) R_chk_calloc((size_t) ( (nr + *nt * rank) * rank),sizeof(double));
+  for (p0=w,p1=w + *n,p2=wf;p0<p1;p0++,p2++) *p0 = sqrt(*p2);
+  for (p3=X,p0 = WX,i=0;i<rank;i++) {
+    for (p1=w,p2=w+*n;p1<p2;p1++,p0++,p3++) *p0 = *p3 * *p1;
+    for (j=0;j<*Enrow;j++,E++,p0++) *p0 = *E;
+  }
+  /* QR decompose it and hence get new P and K */
+  pivot = (int *)R_chk_calloc((size_t)rank,sizeof(int));
+  tau = (double *)R_chk_calloc((size_t)rank*(*nt+1),sizeof(double));
+  mgcv_pqr(WX,&nr,&rank,pivot,tau,nt);
+  R1 = (double *)R_chk_calloc((size_t)rank*rank,sizeof(double));
+  getRpqr(R1,WX,&nr,&rank,&rank,nt);
+  Rinv(P,R1,&rank,&rank,&rank);
+  R_chk_free(R1); 
+  Q = (double *)R_chk_calloc((size_t) nr * rank,sizeof(double)); 
+  for (i=0;i< rank;i++) Q[i * rank + i] = 1.0;
+  tp=0;mgcv_pqrqy(Q,WX,tau,&nr,&rank,&rank,&tp,nt);
+  for (p1=Q,p0=K,j=0;j<rank;j++,p1 += *Enrow) for (i=0;i<*n;i++,p1++,p0++) *p0 = *p1;
+  R_chk_free(Q);R_chk_free(WX);R_chk_free(tau);
+  pivoter(P,&rank,&rank,pivot,&FALSE,&TRUE); /* unpivoting the rows of P */
+  R_chk_free(pivot);
+  for (p1=P,i=0;i < rank; i++) for (j=0;j<rank;j++,p1++) rV[pivot1[j] + i * rank] = *p1;
+  undrop_rows(rV,*q,rank,drop,n_drop); /* zero rows inserted */
+  p0 = rV + *q * rank;p1 = rV + *q * *q;
+  for (p2=p0;p2<p1;p2++) *p2 = 0.0; /* padding any trailing columns of rV with zeroes */
+
+  /* Now unpack K into X -- useful for forming F = PK'W^.5X, diag of which is edf vector... */
+  for (p0=X,p1=K,p2=K + rank * *n;p1<p2;p0++,p1++) *p0 = *p1;
+  /* fill trailing columns with zero */ 
+  for (p0 = X + rank * *n,p1 = X + *q * *n;p0<p1;p0++) *p0 = 0.0;
+
+  /* ... now X contains K and rV%*%t(rV)*scale is the covariance matrix */
+  
+  /* and tidy up */
+
+  *rank_est = rank;
 
   if (*deriv) { 
     R_chk_free(b1);R_chk_free(eta1);R_chk_free(Tk);

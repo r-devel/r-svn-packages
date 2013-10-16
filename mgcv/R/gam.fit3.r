@@ -59,7 +59,7 @@ gam.reparam <- function(rS,lsp,deriv)
   if (deriv > 0) det1 <- oo$det1 else det1 <- NULL
   if (deriv > 1) det2 <- matrix(oo$det2,M,M) else det2 <- NULL  
   list(S=S,E=E,Qs=Qs,rS=rS,det=oo$det,det1=det1,det2=det2,fixed.penalty = fixed.penalty)
-}
+} ## gam.reparam
 
 
 get.Eb <- function(rS,rank) 
@@ -74,7 +74,7 @@ get.Eb <- function(rS,rank)
     S <- S + Si/sqrt(sum(Si^2)) 
   }
   t(mroot(S,rank=rank)) ## E such that E'E = S
-}
+} ## get.Eb
 
 gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
@@ -747,7 +747,7 @@ gam.fit3.post.proc <- function(X,object) {
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
   ##bias = as.numeric(object$coefficients - F%*%object$coefficients)
   list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,hat=hat,F=F,R=R)
-}
+} ## gam.fit3.post.proc
 
 
 score.transect <- function(ii, x, y, sp, Eb,UrS=list(), 
@@ -782,7 +782,7 @@ score.transect <- function(ii, x, y, sp, Eb,UrS=list(),
   plot(spi[1:(np-1)],score[2:np]-score[1:(np-1)],type="l",ylab="differences")
   plot(spi,score,ylim=c(score[1]-.1,score[1]+.1),type="l")
   plot(spi,score,ylim=c(score[np]-.1,score[np]+.1),type="l")
-}
+} ## score.transect
 
 deriv.check <- function(x, y, sp, Eb,UrS=list(), 
             weights = rep(1, length(y)), start = NULL, etastart = NULL, 
@@ -912,7 +912,7 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
      cat("fd.hess\n");print(fd.hess)
    }
    NULL
-}
+} ## deriv.check
 
 
 rt <- function(x,r1) {
@@ -935,7 +935,7 @@ rt <- function(x,r1) {
   rho1[ind] <- 1
   rho2[ind] <- 0
   list(rho=rho,rho1=rho1,rho2=rho2)
-}
+} ## rt
 
 rti <- function(r,r1) {
 ## inverse of rti.
@@ -949,7 +949,7 @@ rti <- function(r,r1) {
   ind <- is.na(r1)
   x[ind] <- r[ind]
   x
-}
+} ## rti
 
 simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
@@ -983,7 +983,7 @@ simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=NULL,hess=NULL,score.hist=NULL,iter=0,conv =NULL,object=b)
 
-}
+} ## simplyFit
 
 
 newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
