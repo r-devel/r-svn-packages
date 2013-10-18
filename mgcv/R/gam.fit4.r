@@ -251,7 +251,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ## need an initial `null deviance' to test for initial divergence...
    null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
    old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
-   boundary <- FALSE
+   conv <-  boundary <- FALSE
  
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
@@ -482,10 +482,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         aic=aic.model,
         rank=oo$rank.est,
         K=Kmat,control=control
-       # D1=oo$D1,D2=D2,
-       # ldet=oo$ldet,ldet1=oo$ldet1,ldet2=ldet2,
-       # bSb=oo$P,bSb1=oo$P1,bSb2=bSb2,
-       # ls=ls$ls,ls1=ls$lsth1,ls2=ls$lsth2
+        ,D1=oo$D1,D2=D2,
+        ldet=oo$ldet,ldet1=oo$ldet1,ldet2=ldet2,
+        bSb=oo$P,bSb1=oo$P1,bSb2=bSb2,
+        ls=ls$ls,ls1=ls$lsth1,ls2=ls$lsth2
        )
  
 } ## gam.fit4
