@@ -2327,10 +2327,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       fit[start:stop]<-X%*%object$coefficients + rowSums(Xoff)
       if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
       if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp)*X))
-      if (type=="response") # transform    
-      { fam<-object$family;linkinv<-fam$linkinv;dmu.deta<-fam$mu.eta  
-        if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
-        fit[start:stop]<-linkinv(fit[start:stop])
+      if (type=="response") { # transform    
+        fam<-object$family;linkinv <- fam$linkinv
+        if (is.null(fam$fv)) {
+          dmu.deta <- fam$mu.eta  
+          if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
+          fit[start:stop] <- linkinv(fit[start:stop])
+        } else {
+          fit[start:stop] <- fam$fv(linkinv(fit[start:stop]))
+          if (se.fit) se[start:stop] <- NA ## not available in this case
+        }
       }
     }
     rm(X)
@@ -2462,13 +2468,26 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
   y <- object$y
   mu <- object$fitted.values
   wts <- object$prior.weights
-  res<- switch(type,working = object$residuals,
-         scaled.pearson = (y-mu)*sqrt(wts)/sqrt(object$sig2*object$family$variance(mu)),
-              pearson = (y-mu)*sqrt(wts)/sqrt(object$family$variance(mu)),
-              deviance = { d.res<-sqrt(pmax(object$family$dev.resids(y,mu,wts),0))
-                           ifelse(y>mu , d.res, -d.res)             
-                         },
-              response = y - mu)
+  if (type == "working") { 
+    res <- object$residuals 
+  } else if (type == "response") {
+    if (is.null(object$family$fv)) res <- y - mu else {
+       res <- y - object$family$fv(mu)
+    }
+  } else if (type == "deviance") {
+    res <- object$family$dev.resids(y,mu,wts)
+    s <- attr(res,"sign")
+    if (is.null(s)) s <- sign(y-mu)
+    res <- sqrt(pmax(res,0)) * s 
+  } else { ## some sort of Pearson
+    var <- object$family$variance
+    if (is.null(var)) {
+      warning("Pearson residuals not available for this family - returning deviance residuals")
+      return(residuals.gam(object))
+    }
+    res <- (y-mu)*sqrt(wts)/sqrt(var(mu))
+    if (type == "scaled.pearson") res <- res/sqrt(object$sig2)
+  }
   res <- naresid(object$na.action,res)
   res
 }

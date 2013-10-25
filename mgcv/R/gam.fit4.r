@@ -466,11 +466,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    aic.model <- family$aic(y, mu, theta, weights, dev) # note: incomplete 2*edf needs to be added
  
   ## fitted values might not just be mu....
-   if (!is.null(family$fv)) mu <- family$fv(mu,theta) 
-
+  ## if (!is.null(family$fv)) mu <- family$fv(mu,theta) 
+  ## .... actually, probably do not want to return fv values here
 
    list(coefficients = coef,residuals=residuals,fitted.values = mu,
-        family=family, linear.predicters = eta,deviance=dev,
+        family=family, linear.predictors = eta,deviance=dev,
         null.deviance=nulldev,iterr=iter,
         weights=wf, ## note that these are Fisher type weights 
         prior.weights=weights,
