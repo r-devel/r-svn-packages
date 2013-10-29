@@ -1,3 +1,8 @@
+2013-10-29 Martyn Plummer
+	* DESCRIPTION: Version is 0.8-57
+
+	* src/stataread.c: Fix for PR#15477
+
 2013-10-27 Brian Ripley
 
 	* man/read.dta: Add comment on Stata's confusion on v12 format.
