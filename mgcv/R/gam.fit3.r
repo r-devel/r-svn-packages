@@ -1124,7 +1124,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     low.d <- max(d)*.Machine$double.eps^.7
     ind <- d < low.d
     d[ind] <- low.d 
-    d <- 1/d
+    ind <- d != 0
+    d[ind] <- 1/d[ind]
     
     Nstep <- 0 * grad
     Nstep[uconv.ind] <- -drop(U%*%(d*(t(U)%*%grad1))) # (modified) Newton direction

@@ -9,6 +9,9 @@
 * gamm can now handle 'varComb' variance functions (thanks Sven Neulinger
   for reporting that it didn't).
 
+* fix of a bug which could cause bam to seg fault for a model with no smooths 
+  (insufficient storage allocated in C in this case). Thanks Martijn Weiling.
+
 1.7-27
 
 * Further multi-threading in gam fits - final two leading order matrix

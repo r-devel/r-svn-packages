@@ -2540,9 +2540,10 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   nulli = (double *)R_chk_calloc((size_t)*q,sizeof(double)); /* keep track of the params in null space */   
   drop = (int *)R_chk_calloc((size_t)*q,sizeof(int)); /* original locations of dropped parameters */
   raw = (double *)R_chk_calloc((size_t) *n,sizeof(double)); /* storage for sqrt(|w|) */
-  n_work = (4 * *n + 2 * *q) * *M + 2 * *n;
-  k = (*M * (1 + *M))/2 * *n;
-  if (n_work < k) n_work = k;
+  n_work = (4 * *n + 2 * *q) * *M + 2 * *n; 
+  k = 5 * *q; if (n_work < k) n_work = k;
+  k = (*M * (1 + *M))/2 * *n; if (n_work < k) n_work = k;
+ 
   work = (double *)R_chk_calloc((size_t) n_work,sizeof(double)); /* work space for several routines*/
   nr = *q + *Enrow;
   R = (double *)R_chk_calloc((size_t)*q * nr,sizeof(double));
