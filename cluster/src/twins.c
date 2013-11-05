@@ -170,7 +170,7 @@ L80:
 	    int nbq = ind_2(lb, lq);
 
 	    switch(method) {
-	    case 1: /*     1: group average method */
+	    case 1: /*     1: unweighted pair-]group average method, UPGMA */
 		ta = (double) kwan[la];
 		tb = (double) kwan[lb];
 		fa = ta / (ta + tb);

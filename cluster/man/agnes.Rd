@@ -51,10 +51,12 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
   }
   \item{method}{
     character string defining the clustering method.  The six methods
-    implemented are "average" ([unweighted pair-]group average method, UPGMA),
+    implemented are
+    "average" ([unweighted pair-]group [arithMetic] average method, UPGMA),
     "single" (single linkage), "complete" (complete linkage),
-    "ward" (Ward's method), "weighted" (weighted average linkage) and
-    its generalization \code{"flexible"} which uses (a constant version of)
+    "ward" (Ward's method),
+    "weighted" (weighted average linkage, aka WPGMA) and its generalization
+    \code{"flexible"} which uses (a constant version of)
     the Lance-Williams formula and the \code{par.method} argument.  Default
     is "average".
   }
@@ -100,7 +102,7 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
 
   The \code{method = "flexible"} allows (and requires) more details:
   The Lance-Williams formula specifies how dissimilarities are
-  computed when clusters are agglomerated (equation (32) in K.\&R.,
+  computed when clusters are agglomerated (equation (32) in K&R(1990),
   p.237).  If clusters \eqn{C_1} and \eqn{C_2} are agglomerated into a
   new cluster, the dissimilarity between their union and another
   cluster \eqn{Q} is given by
@@ -113,14 +115,14 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
 
   If \code{par.method} is of length 1,
   say \eqn{= \alpha}, \code{par.method} is extended to
-  give the \dQuote{Flexible Strategy} (K. \& R., p.236 f) with
+  give the \dQuote{Flexible Strategy} (K&R(1990), p.236 f) with
   Lance-Williams coefficients \eqn{(\alpha_1 = \alpha_2 = \alpha, \beta =
     1 - 2\alpha, \gamma=0)}.\cr
   If of length 3, \eqn{\gamma = 0} is used.
 
-  \bold{Care} and expertise is probably needed when using \code{method
-    = "flexible"} particularly for the case when \code{par.method} is
-  specified of longer length than one.
+  \bold{Care} and expertise is probably needed when using \code{method = "flexible"}
+  particularly for the case when \code{par.method} is specified of
+  longer length than one.
   The \emph{weighted average} (\code{method="weighted"}) is the same as
   \code{method="flexible", par.method = 0.5}.
 }
@@ -138,11 +140,11 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
     }
 }
 \references{
-  Kaufman, L. and Rousseeuw, P.J. (1990).
+  Kaufman, L. and Rousseeuw, P.J. (1990). (=: \dQuote{K&R(1990)})
   \emph{Finding Groups in Data: An Introduction to Cluster Analysis}.
   Wiley, New York.
 
-  Anja Struyf, Mia Hubert & Peter J. Rousseeuw (1996)
+  Anja Struyf, Mia Hubert and Peter J. Rousseeuw (1996)
   Clustering in an Object-Oriented Environment.
   \emph{Journal of Statistical Software} \bold{1}.
   \url{http://www.jstatsoft.org/v01/i04}

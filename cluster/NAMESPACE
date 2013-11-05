@@ -15,12 +15,12 @@ export(bannerplot, ellipsoidhull, ellipsoidPoints,
 export(predict.ellipsoid)
 export(coef.hclust, coefHier)
 
-## things from (ex-)mva -- not really needed..
-#importFrom(stats, as.hclust, as.dist, as.dendrogram, cutree)
-importFrom(stats, as.hclust, as.dendrogram)
+importFrom(stats, as.hclust, as.dist, as.dendrogram)
 
 importFrom(graphics, plot)
 importFrom(grDevices, dev.interactive)
+
+importFrom(utils, str)
 
 ###---- Methods ---- all documented but not exported
 

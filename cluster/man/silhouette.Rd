@@ -136,7 +136,7 @@ sortSilhouette(object, \dots)
   Silhouettes: A graphical aid to the interpretation and validation of
   cluster analysis. \emph{J. Comput. Appl. Math.}, \bold{20}, 53--65.
 
-  chapter 2 of Kaufman, L. and Rousseeuw, P.J. (1990), see
+  chapter 2 of Kaufman and Rousseeuw (1990), see
   the references in \code{\link{plot.agnes}}.
 }
 \seealso{\code{\link{partition.object}}, \code{\link{plot.partition}}.
