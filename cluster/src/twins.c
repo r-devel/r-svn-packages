@@ -72,10 +72,11 @@ agnes(int nn, int *kwan, int *ner, double *ban,
 
 /* VARs */
     double akb, d_min;
-    int j, k, l1, l2, lq, nab, lka,
+    int j, k, l1, l2, lq,
 	nclu, lnum, lput, lenda, lendb, lnext, n_1 = nn - 1,
 	la = -1, lb = -1, llast = -1, lfyrs = -1, // <- against (unnecessary) warnings [-Wall]
 	nmerge;
+    Rboolean has_a4 = FALSE;// is alpha[4] == 0 -- for Lance-Williams
 
     /* System generated locals */
     int merge_dim1 = n_1;
@@ -88,7 +89,12 @@ agnes(int nn, int *kwan, int *ner, double *ban,
     --kwan;
     --alpha;
 
-/*     initialization: */
+    if(method == 6 || method == 7) {
+	// 6: "flexible": "Flexible Strategy" (K+R p.236 f) extended to 'Lance-Williams'
+	// 7: "gaverage" aka Flexible UPGMA (Belbin et al., 1992)
+	has_a4 = (alpha[4] != 0.);
+    }
+
 //  Starting with nn clusters, kwan[j] := #{obj} in cluster j
     for (j = 1; j <= nn; ++j) {
 	kwan[j] = 1;
@@ -99,10 +105,8 @@ agnes(int nn, int *kwan, int *ner, double *ban,
 /*     find closest clusters */
     nmerge = 1;
     for (nclu = n_1; nclu >= 1; --nclu) {
-	j = 1;
-L80:
-	++j;
-	if (kwan[j] == 0) goto L80;
+	// j := min_j { kwan[j] > 0} = first non-empty cluster
+	j = 1; do { j++; } while(kwan[j] == 0);
 
 	d_min = dys[ind_2(1, j)] * 1.1f + 1.;
 	for (k = 1; k <= n_1; ++k) if (kwan[k] > 0) {
@@ -144,7 +148,7 @@ L80:
 	    lput = lfyrs + kwan[la];
 	    lnum = llast - lput;
 	    for (k = 1; k <= lnum; ++k) {
-		lka = ner[lput];
+		int lka = ner[lput];
 		akb = ban[lput];
 		lenda = llast + kwan[lb] - 2;
 		lendb = lenda + 1;
@@ -190,7 +194,7 @@ L80:
 		fa = (ta + tq) / (ta + tb + tq);
 		fb = (tb + tq) / (ta + tb + tq);
 		fc = -tq / (ta + tb + tq);
-		nab = ind_2(la, lb);
+		int nab = ind_2(la, lb);
 		dys[naq] = sqrt(fa * dys[naq] * dys[naq] +
 				fb * dys[nbq] * dys[nbq] +
 				fc * dys[nab] * dys[nab]);
@@ -199,13 +203,23 @@ L80:
 	    case 5: /*     5: weighted average linkage */
 		dys[naq] = (dys[naq] + dys[nbq]) / 2.;
 		break;
-	    case 6: /*     6: "Flexible Strategy" (K+R p.236 f) extended to 'Lance-Williams' */
+	    case 6: //     6: "Flexible Strategy" (K+R p.236 f) extended to 'Lance-Williams'
 		dys[naq] = alpha[1] * dys[naq] + alpha[2] * dys[nbq] +
-		    alpha[3] * dys[ind_2(la, lb)] +
-		    alpha[4] * fabs(dys[naq] - dys[nbq]);
+		    alpha[3] * dys[ind_2(la, lb)];
+		if(has_a4) dys[naq] += alpha[4] * fabs(dys[naq] - dys[nbq]);
 		/* Lance-Williams would allow alpha(1:2) to *depend* on |cluster|
 		 * could also include the extensions of Jambu(1978) --
 		 * See Gordon A.D. (1999) "Classification" (2nd ed.) p.78 ff */
+		break;
+	    case 7: /*     7: generalized "average" = Flexible UPGMA (Belbin et al., 1992)
+		     * Applies the flexible Lance-Williams formula to the UPGMA, aka
+		     * "average" case 1 above, i.e., alpha_{1,2} depend on cluster sizes: */
+		ta = (double) kwan[la];
+		tb = (double) kwan[lb];
+		fa = alpha[1] * ta / (ta + tb);
+		fb = alpha[2] * tb / (ta + tb);
+		dys[naq] = fa * dys[naq] + fb * dys[nbq] + alpha[3] * dys[ind_2(la, lb)];
+		if(has_a4) dys[naq] += alpha[4] * fabs(dys[naq] - dys[nbq]);
 		break;
 	    default:
 		error(_("invalid method (code %d"), method);

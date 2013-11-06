@@ -1,4 +1,5 @@
 library(cluster)
+sessionInfo()# {for the package maintainer; do here, as don't use *.Rout.save}
 
 ## generate 1500 objects, divided into 2 clusters.
 set.seed(264)

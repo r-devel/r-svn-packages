@@ -1,6 +1,12 @@
+2013-11-06  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 1.15.0;  also using  Authors@R
+
+	* R/agnes.q (agnes): method "gaverage" contributed by Pierre Roudier.
+
 2013-03-26  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* DESCRIPTION (Version): 1.14.5
+	* DESCRIPTION (Version): 1.14.5, never released
 
 2013-03-26  Martin Maechler  <maechler@stat.math.ethz.ch>
 
