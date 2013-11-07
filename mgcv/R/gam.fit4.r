@@ -410,7 +410,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             ldet=as.double(0),ldet1 = as.double(rep(0,ntot)), ldet2 = as.double(rep(0,ntot^2)),
             rV=as.double(rep(0,ncol(x)^2)),
             rank.tol=as.double(.Machine$double.eps^.75),rank.est=as.integer(0),
-	    n=as.integer(sum(good)),q=as.integer(ncol(x)),M=as.integer(length(UrS)),
+	    n=as.integer(sum(good)),q=as.integer(ncol(x)),M=as.integer(nSp),
             n.theta=as.integer(length(theta)), Mp=as.integer(Mp),Enrow=as.integer(rows.E),
             rSncol=as.integer(rSncol),deriv=as.integer(deriv),
 	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),PACKAGE="mgcv")
