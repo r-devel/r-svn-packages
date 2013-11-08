@@ -3,6 +3,9 @@
 
 1.7-28
 
+* prediction for "cc" and "cp" classes is now cyclic - values outside the
+  range of knots are wrapped back into the interval.
+
 * ldTweedie now returns derivatives w.r.t. p as well as w.r.t scale 
   parameter phi.
 

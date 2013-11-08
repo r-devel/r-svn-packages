@@ -1394,6 +1394,21 @@ smooth.construct.cc.smooth.spec<-function(object,data,knots)
   object
 }
 
+cwrap <- function(x0,x1,x) {
+## map x onto [x0,x1] in manner suitable for cyclic smooth on
+## [x0,x1].
+  h <- x1-x0
+  if (max(x)>x1) {
+    ind <- x>x1
+    x[ind] <- x0 + (x[ind]-x1)%%h
+  }
+  if (min(x)<x0) {
+    ind <- x<x0
+    x[ind] <- x1 - (x0-x[ind])%%h
+  }
+  x
+}
+
 Predict.matrix.cyclic.smooth<-function(object,data)
 # this is the prediction method for a cyclic cubic regression spline
 { pred.mat<-function(x,knots,BD)
@@ -1402,8 +1417,8 @@ Predict.matrix.cyclic.smooth<-function(object,data)
   { j<-x
     n<-length(knots)
     h<-knots[2:n]-knots[1:(n-1)]
-    if (max(x)>max(knots)||min(x)<min(knots)) 
-    stop("can't predict outside range of knots with periodic smoother")
+    if (max(x)>max(knots)||min(x)<min(knots)) x <- cwrap(min(knots),max(knots),x)
+    ## stop("can't predict outside range of knots with periodic smoother")
     for (i in n:2) j[x<=knots[i]]<-i
     j1<-hj<-j-1
     j[j==n]<-1
@@ -1487,7 +1502,10 @@ smooth.construct.cp.smooth.spec<-function(object,data,knots)
 
 Predict.matrix.cpspline.smooth<-function(object,data)
 ## prediction method function for the cpspline smooth class
-{ X <- cSplineDes(data[[object$term]],object$knots,object$m[1]+2)
+{ x <- data[[object$term]] 
+  k0 <- min(object$knots);k1 <- max(object$knots) 
+  if (min(x)<k0||max(x)>k1) x <- cwrap(k0,k1,x)
+  X <- cSplineDes(x,object$knots,object$m[1]+2)
   X
 }
 

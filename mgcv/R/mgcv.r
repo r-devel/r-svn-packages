@@ -1419,11 +1419,14 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (inherits(G$family,"extended.family")) { ## then there may be extra parameters to estimate
       th0 <- G$family$getTheta() ## additional (initial) parameters of likelihood 
       nth <- length(th0)
-      ind <- 1:length(lsp) + nth
+      nlsp <- length(lsp)
+      ind <- 1:nlsp + nth ## only used if nlsp>0
       lsp <- c(th0,lsp) ## append to start of lsp
       ## extend G$L, G$lsp0 if present...
       if (!is.null(G$L)&&nth>0) { 
-        L <- diag(length(lsp));L[ind,ind] <- G$L;G$L <- L
+        L <- rbind(cbind(diag(nth),matrix(0,nth,ncol(G$L))),
+                   cbind(matrix(0,nrow(G$L),nth),G$L))
+        G$L <- L
       }
       if (!is.null(G$lsp0)) G$lsp0 <- c(th0*0,G$lsp0)
     } 

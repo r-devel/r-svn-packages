@@ -197,6 +197,7 @@ k.check <- function(b,subsample=5000,n.rep=400) {
     kc[k] <- length(ind)
     edf[k] <- sum(b$edf[ind]) 
     nc <- b$smooth[[k]]$dim
+    if (ncol(dat)>nc) dat <- dat[,1:nc] ## drop any by variables
     ok <- TRUE
     for (j in 1:nc) if (is.factor(dat[[j]])) ok <- FALSE 
     if (!is.null(attr(dat[[1]],"matrix"))) ok <- FALSE
