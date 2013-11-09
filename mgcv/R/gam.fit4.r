@@ -170,14 +170,14 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   nSp <- length(sp) 
   rank.tol <- .Machine$double.eps*100 ## tolerance to use for rank deficiency
   q <- ncol(x)
-  nobs <- nrow(x)  
+  n <- nobs <- nrow(x)  
   
   xnames <- dimnames(x)[[2]]
   ynames <- if (is.matrix(y)) rownames(y) else names(y)
   ## Now a stable re-parameterization is needed....
 
   if (length(UrS)) {
-      rp <- mgcv:::gam.reparam(UrS,sp,deriv)
+      rp <- gam.reparam(UrS,sp,deriv)
       T <- diag(q)
       T[1:ncol(rp$Qs),1:ncol(rp$Qs)] <- rp$Qs
       T <- U1%*%T ## new params b'=T'b old params

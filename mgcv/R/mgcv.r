@@ -560,7 +560,7 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
 
 gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
-                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE)
+                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE)
 # set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 # needed for a gam fit.
 { # split the formula if the object being passed is a formula, otherwise it's already split
@@ -584,9 +584,17 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
   G$offset <- model.offset(mf)   # get the model offset (if any)
 
   # construct strictly parametric model matrix.... 
-  
+  if (drop.intercept) attr(pterms,"intercept") <- 1 ## ensure there is an intercept to drop
   X <- model.matrix(pterms,mf)
+  if (drop.intercept) { ## some extended families require intercept to be dropped 
+    xat <- attributes(X);ind <- xat$assign>0 
+    X <- X[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
+    xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
+    xat$dim[2] <- xat$dim[2]-1;attributes(X) <- xat
+    G$intercept <- FALSE
+  } 
   rownames(X) <- NULL ## save memory
+  
   G$nsdf <- ncol(X)
   G$contrasts <- attr(X,"contrasts")
   G$xlevels <- .getXlevels(pterms,mf)
@@ -1595,10 +1603,13 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
     if (!control$keepData) rm(data) ## save space
 
-    G<-gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
+    ## check whether family requires intercept to be dropped...
+    drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
+
+    G <- gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
                  H=H,absorb.cons=TRUE,sparse.cons=0,select=select,
                  idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
-                 paraPen=paraPen)
+                 paraPen=paraPen,drop.intercept=drop.intercept)
     
     G$var.summary <- var.summary
     G$family <- family
@@ -2227,7 +2238,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (se.fit) se <- fit
   }
   stop <- 0
-
+  ## check if extended family required intercept to be dropped...
+  drop.intercept <- FALSE 
+  if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
+    drop.intercept <- TRUE; 
+    attr(Terms,"intercept") <- 1 ## make sure intecept explicitly included, so it can be cleanly dropped
+  } 
   Terms <- delete.response(object$pterms)
   s.offset <- NULL # to accumulate any smooth term specific offset
   any.soff <- FALSE # indicator of term specific offset existence
@@ -2249,7 +2265,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       Xp <- model.matrix(Terms,object$model)
       mf <- newdata # needed in case of offset, below
     }
-    
+    if (drop.intercept) { 
+      xat <- attributes(Xp);ind <- xat$assign>0 
+      Xp <- Xp[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
+      xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
+      xat$dim[2] <- xat$dim[2]-1;attributes(Xp) <- xat 
+    }
     if (object$nsdf) X[,1:object$nsdf] <- Xp
     if (n.smooth) for (k in 1:n.smooth) {
       Xfrag <- PredictMat(object$smooth[[k]],data)		 
