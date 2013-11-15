@@ -1439,7 +1439,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$lsp0)) G$lsp0 <- c(th0*0,G$lsp0)
     } 
 
+    ## extended family may need to manipulate G...
     
+    if (!is.null(G$family$preinitialize)) eval(G$family$preinitialize)
+
     G$null.coef <- null.stuff$null.coef
 
     object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),

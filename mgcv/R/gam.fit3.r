@@ -32,7 +32,7 @@ gam.reparam <- function(rS,lsp,deriv)
 
   r.tol <- .Machine$double.eps^.75 ## This is a bit delicate -- too large and penalty range space can be supressed.
 
-  oo <- .C("get_stableS",S=as.double(matrix(0,q,q)),Qs=as.double(matrix(0,q,q)),sp=as.double(exp(lsp)),
+  oo <- .C(C_get_stableS,S=as.double(matrix(0,q,q)),Qs=as.double(matrix(0,q,q)),sp=as.double(exp(lsp)),
                   rS=as.double(unlist(rS)), rSncol = as.integer(rSncol), q = as.integer(q),
                   M = as.integer(M), deriv=as.integer(deriv), det = as.double(0), 
                   det1 = as.double(rep(0,M)),det2 = as.double(matrix(0,M,M)), 

@@ -185,8 +185,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       null.coef <- t(T)%*%null.coef  
      
       ## form x%*%T in parallel 
-      x <- .Call("mgcv_pmmult2",x,T,0,0,control$nthreads,PACKAGE="mgcv")
-      ## x <- .Call(C_mgcv_pmmult2,x,T,0,0,control$nthreads) ## within package version
+      ## x <- .Call("mgcv_pmmult2",x,T,0,0,control$nthreads,PACKAGE="mgcv")
+      x <- .Call(C_mgcv_pmmult2,x,T,0,0,control$nthreads) ## within package version
       ## x <- x%*%T   ## model matrix 0(nq^2)
       rS <- list()
       for (i in 1:length(UrS)) {
@@ -253,30 +253,53 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
    conv <-  boundary <- FALSE
  
+ #  Utoo <- !is.null(family$U) ## is U penalty present or not
+ #  if (Utoo) { 
+ #     Xp <- attr(x,"pinv")
+ #     start <- Xp%*%mu
+ #     Sb <- crossprod(Eb)
+ #  }
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
       good <- dd$Deta2 != 0
       w <- dd$Deta2[good] * .5
       z <- eta[good] - .5 * dd$Deta[good] / w
-      oo <- .C("pls_fit1",   ##C_pls_fit1, reinstate for use in mgcv
+#      if (Utoo) { ## extra penalty term is present...
+#        u <- family$U(y,mu,x,weights,TRUE)
+#        z <- z + (Xp[good,]%*%(u$Ubb%*%start - u$Ub))/w
+#        ## need to add U to penalties...
+#        tut <- t(T)%*%u$U%*%T ## Hessian of U function in current parameterization
+#        rows.E <- ncol(St) 
+#        Sr <- t(mroot(St + tut,rank=rows.E))
+#        Eb <- t(mroot(Sb + tut/sqrt(sum(tut^2)),rank=rows.E))
+#      }
+      oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
                y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
-                     nt=as.integer(control$nthreads),PACKAGE="mgcv") ## delete PACKAGE in mgcv
+                     nt=as.integer(control$nthreads))
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
         good <- dd$Deta2 > 0
         w <- dd$Deta2[good] * .5
         z <- eta[good] - .5 * dd$Deta[good] / w
-        oo <- .C("pls_fit1", ##C_pls_fit1,
+        #if (Utoo) {
+        #  z <- z + (Xp[good,]%*%(u$Ubb%*%start - u$Ub))/w
+        #}
+        oo <- .C(C_pls_fit1, ##C_pls_fit1,
                   y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
-                     nt=as.integer(control$nthreads),PACKAGE="mgcv")
+                     nt=as.integer(control$nthreads))
       }
       start <- oo$y[1:ncol(x)] ## current coefficient estimates
       penalty <- oo$penalty ## size of penalty
+
+      #if (Utoo) { ## correct penalty by removing hessian of U term
+      #  penalty <- penalty - start%*%(tut%*%start)
+      #}
+
       eta <- drop(x%*%start) ## the linear predictor
 
       if (any(!is.finite(start))) { ## test for breakdown
@@ -288,6 +311,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      
       mu <- linkinv(eta <- eta + offset)
       dev <- sum(dev.resids(y, mu, weights,theta))
+      #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
+    
 
       ## now step halve under non-finite deviance...
       if (!is.finite(dev)) {
@@ -310,6 +335,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                eta <- (eta + etaold)/2               
                mu <- linkinv(eta)
                dev <- sum(dev.resids(y, mu, weights,theta))
+               #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
          }
          boundary <- TRUE
          if (control$trace) 
@@ -331,6 +357,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          }
          boundary <- TRUE
          dev <- sum(dev.resids(y, mu, weights))
+         #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
+    
          if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
       } ## end of invalid mu/eta handling
@@ -355,6 +383,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
            eta <- (eta + etaold)/2               
            mu <- linkinv(eta)
            dev <- sum(dev.resids(y, mu, weights,theta))
+           #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
+    
            pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
            if (control$trace) 
                   cat("Step halved: new penalized deviance =", pdev, "\n")
@@ -398,7 +428,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ntot <- length(theta) + length(sp)
    if (deriv>1) n2d <- ntot*(1+ntot)/2 else n2d <- 0 
    rSncol <- unlist(lapply(UrS,ncol))
-   oo <- .C("gdi2", ## C_gdi2,
+   oo <- .C(C_gdi2,
             X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
             U1 = as.double(U1),sp=as.double(exp(sp)),theta=as.double(theta),
             z=as.double(z),w=as.double(w),wf=as.double(wf),Dth=as.double(dd$Dth),Det=as.double(dd$Deta),
@@ -413,7 +443,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	    n=as.integer(sum(good)),q=as.integer(ncol(x)),M=as.integer(nSp),
             n.theta=as.integer(length(theta)), Mp=as.integer(Mp),Enrow=as.integer(rows.E),
             rSncol=as.integer(rSncol),deriv=as.integer(deriv),
-	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),PACKAGE="mgcv")
+	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads))
 
    rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
    rV <- T %*% rV   
@@ -453,7 +483,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       }
    }
 
-   ## for the moment return the deviance and its derivatives, only...
+  
    names(coef) <- xnames
    names(residuals) <- ynames
    wtdmu <- sum(weights * y)/sum(weights)

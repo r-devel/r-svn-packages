@@ -3,6 +3,10 @@
 
 1.7-28
 
+* Constant in tps basis computation was different to published version 
+  for odd dimensions - makes no difference to fit, but annoying if you 
+  are trying to test a re-implementation. Thanks to Weijie Cai at SAS. 
+
 * prediction for "cc" and "cp" classes is now cyclic - values outside the
   range of knots are wrapped back into the interval.
 
