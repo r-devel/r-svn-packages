@@ -31,16 +31,29 @@ chol2qr <- function(XX,Xy) {
 ## takes X'X and X'y and returns R and f
 ## equivalent to qr update. Uses simple
 ## regularization if XX not +ve def. 
+
+  #d <- diag(XX)
+  #ind <- d>0
+  #d[!ind] <- 1;d[ind] <- 1/sqrt(d[ind])
+  #XX <- t(d*t(d*XX)) ## diagonal pre-conditioning
+
   XXeps <- norm(XX)*.Machine$double.eps^.9
   n <- ncol(XX)
   for (i in 0:20) {
     ok <- TRUE
-    R <- try(chol(XX+diag(n)*XXeps*i),silent=TRUE) ## R'R = X'X
+    R <- try(chol(XX+diag(n)*XXeps*i,pivot=TRUE),silent=TRUE) ## R'R = X'X
     if (inherits(R,"try-error")) ok <- FALSE else {
-      f <- try(forwardsolve(t(R),Xy),silent=TRUE)
+      ipiv <- piv <- attr(R,"pivot") 
+      #f <- try(forwardsolve(t(R),(Xy*d)[piv]),silent=TRUE) 
+      f <- try(forwardsolve(t(R),Xy[piv]),silent=TRUE)
       if (inherits(f,"try-error")) ok <- FALSE
     }
-    if (ok) break; ## success
+    if (ok) { 
+      ipiv[piv] <- 1:ncol(R)
+      #R <- t(t(R[,ipiv])/d)
+      R <- R[,ipiv]
+      break; ## success
+    }
   }
   if (i==20 && !ok) stop("Choleski based method failed, switch to QR")
   list(R=R,f=f)
