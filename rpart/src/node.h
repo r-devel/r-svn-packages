@@ -5,6 +5,7 @@
 *
 ** The actual size of these structures when allocated in insert_split.c
 ** depends on the split.
+** csplit[0] gets used even for continuous splits.
 */
 typedef struct split {
     double improve;
@@ -16,6 +17,7 @@ typedef struct split {
     int csplit[20];            /* the actual length depends on splitting rule */
 } Split, *pSplit;
 
+/* The real 'nodesize' is set in rpart.c */
 typedef struct node {
     double risk;                /* risk for the node */
     double complexity;          /* complexity at which it will collapse */
