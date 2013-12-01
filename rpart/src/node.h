@@ -4,7 +4,7 @@
 ** definition of a node in the tree
 *
 ** The actual size of these structures when allocated in insert_split.c
-** depends on the split.  Set large value to prevent false reports from UBSan
+** depends on the split.
 */
 typedef struct split {
     double improve;
@@ -13,7 +13,7 @@ typedef struct split {
     struct split *nextsplit;
     int var_num;
     int count;
-    int csplit[256];            /* the actual length depends on splitting rule */
+    int csplit[20];            /* the actual length depends on splitting rule */
 } Split, *pSplit;
 
 typedef struct node {
@@ -25,7 +25,7 @@ typedef struct node {
     struct node *leftson;
     int num_obs;
     int lastsurrogate;
-    double response_est[256];   /* actual length depends on splitting rule */
+    double response_est[20];   /* actual length depends on splitting rule */
 } Node, *pNode;
 
 
