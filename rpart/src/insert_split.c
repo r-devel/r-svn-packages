@@ -15,7 +15,7 @@ insert_split(pSplit *listhead, int ncat, double improve, int max)
     int nlist;
     pSplit s1, s2, s3 = NULL, s4;
 
-//    if (ncat == 0) ncat = 1; 
+    if (ncat == 0) ncat = 1; 
     int splitsize = sizeof(Split) + (ncat - 20) * sizeof(int);
 
     // The Split structure is sized for 2 categpries.
