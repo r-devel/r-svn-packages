@@ -4,7 +4,7 @@
 ** definition of a node in the tree
 *
 ** The actual size of these structures when allocated in insert_split.c
-** depends on the split.  Set large value to prevent false values from UBSan
+** depends on the split.  Set large value to prevent false reports from UBSan
 */
 typedef struct split {
     double improve;
