@@ -109,9 +109,10 @@ Sl.setup <- function(G) {
         for (j in 1:m) {
           Sl[[b]] <- list()
           ind <- sbStart[j]:sbStop[j]
-          Sl[[b]]$S <- list(G$smooth[[i]]$S[[j]][ind,ind])
+          Sl[[b]]$S <- list(G$smooth[[i]]$S[[j]][ind,ind,drop=FALSE])
           Sl[[b]]$start <- G$smooth[[i]]$first.para + sbStart[j]-1
           Sl[[b]]$stop <- G$smooth[[i]]$first.para + sbStop[j]-1
+          Sl[[b]]$rank <- G$smooth[[i]]$rank[j]
           b <- b + 1
         }
       } else { ## not possible to split
@@ -396,11 +397,11 @@ Sl.termMult <- function(Sl,A,full=FALSE) {
       ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
       if (full) { ## return zero answer with all zeroes in place
         B <- A*0
-        if (Amat) B[ind,] <- Sl[[b]]$lambda*A[ind,] else  
+        if (Amat) B[ind,] <- Sl[[b]]$lambda*A[ind,,drop=FALSE] else  
                   B[ind] <- Sl[[b]]$lambda*A[ind]
         SA[[k]] <- B
       } else { ## strip zero rows from answer
-        if (Amat) SA[[k]] <- Sl[[b]]$lambda*A[ind,] else
+        if (Amat) SA[[k]] <- Sl[[b]]$lambda*A[ind,,drop=FALSE] else
                   SA[[k]] <- as.numeric(Sl[[b]]$lambda*A[ind])
         attr(SA[[k]],"ind") <- ind
       }
@@ -410,11 +411,11 @@ Sl.termMult <- function(Sl,A,full=FALSE) {
         k <- k + 1
         if (full) { ## return answer with all zeroes in place
           B <- A*0
-          if (Amat) B[ind,] <- Sl[[b]]$Srp[[i]]%*%A[ind,] else  
+          if (Amat) B[ind,] <- Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else  
                     B[ind] <- Sl[[b]]$Srp[[i]]%*%A[ind]
           SA[[k]] <- B
         } else { ## strip zero rows from answer
-          if (Amat) SA[[k]] <- Sl[[b]]$Srp[[i]]%*%A[ind,] else
+          if (Amat) SA[[k]] <- Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else
                     SA[[k]] <- as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
           attr(SA[[k]],"ind") <- ind
         }
@@ -435,7 +436,7 @@ d.detXXS <- function(Sl,PP) {
     d1[i] <- sum(diag(SPP[[i]][,indi,drop=FALSE]))
     for (j in i:nd) {
       indj <- attr(SPP[[j]],"ind")
-      d2[i,j] <- d2[j,i] <- -sum(t(SPP[[i]][,indj])*SPP[[j]][,indi])
+      d2[i,j] <- d2[j,i] <- -sum(t(SPP[[i]][,indj,drop=FALSE])*SPP[[j]][,indi,drop=FALSE])
     }
     d2[i,i] <- d2[i,i] + d1[i]
   }

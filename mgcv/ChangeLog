@@ -3,6 +3,10 @@
 
 1.7-28
 
+* bam models could fail if a penalty matrix was 1 by 1, or if multiple 
+  penalties on a smooth were in fact seperable into single penalties. 
+  Fixed. Thanks to Martijn weiling for reporting.
+
 * Constant in tps basis computation was different to published version 
   for odd dimensions - makes no difference to fit, but annoying if you 
   are trying to test a re-implementation. Thanks to Weijie Cai at SAS. 

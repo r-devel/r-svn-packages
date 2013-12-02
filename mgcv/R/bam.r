@@ -1166,7 +1166,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   G$offset <- model.offset(mf)  
   if (is.null(G$offset)) G$offset <- rep(0,n)
 
-  if (ncol(G$X)>nrow(mf)+nrow(G$C)) stop("Model has more coefficients than data")
+  if (ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data")      ##+nrow(G$C)) stop("Model has more coefficients than data")
  
   G$cl<-cl;
   G$am <- am
