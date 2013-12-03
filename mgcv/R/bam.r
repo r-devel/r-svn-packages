@@ -1153,12 +1153,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   mf$use.chol <- mf$samfrac <- mf$...<-NULL
   mf$drop.unused.levels<-TRUE
   mf[[1]]<-as.name("model.frame")
-  #pmf <- mf
+  pmf <- mf
  
-  #pmf$formula <- gp$pf
-  #pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
-  #pterms <- attr(pmf,"terms") ## pmf only used for this
-  #rm(pmf);
+  pmf$formula <- gp$pf
+  pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
+  pterms <- attr(pmf,"terms") ## pmf only used for this
+  rm(pmf);
 
   if (gc.level>0) gc()
 
@@ -1188,7 +1188,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
   if (sparse) sparse.cons <- 2 else sparse.cons <- -1
 
-  G <- gam.setup(gp,#pterms=pterms,
+  G <- gam.setup(gp,pterms=pterms,
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,

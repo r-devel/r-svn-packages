@@ -154,9 +154,9 @@ interpret.gam0 <- function (gf,textra=NULL)
   
   if (attr(tf,"response") > 0) {  # start the replacement formulae
     response <- as.character(attr(tf,"variables")[2])
-    pf <- rf <- paste(response,"~",sep="")
+    #pf <-  paste(response,"~",sep="")
   } else { 
-    pf <- rf <- "~"
+    #pf <-  "~"
     response <- NULL
   }
   sp <- attr(tf,"specials")$s     # array of indices of smooth terms 
@@ -192,7 +192,7 @@ interpret.gam0 <- function (gf,textra=NULL)
   len.tip <- length(tip)
   len.t2p <- length(t2p)
   ns <- len.sp + len.tp + len.tip + len.t2p # number of smooths
-
+  av <- rep("",0)
   smooth.spec <- list()
   if (nt) for (i in 1:nt) { # work through all terms
     if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||
@@ -210,17 +210,20 @@ interpret.gam0 <- function (gf,textra=NULL)
       kt2 <- kt2 + 1                           # counts t2() terms
       k <- k + 1      # counts smooth terms 
     } else {          # parametric
-      if (kp>1) pf <- paste(pf,"+",terms[i],sep="") # add to parametric formula
-      else pf <- paste(pf,terms[i],sep="")
+      #if (kp>1) pf <- paste(pf,"+",terms[i],sep="") # add to parametric formula
+      #else pf <- paste(pf,terms[i],sep="")
+      av[kp] <- terms[i] ## element kp on rhs of parametric
       kp <- kp+1    # counts parametric terms
     }
   }    
   if (!is.null(off)) # deal with offset
-  { if (kp>1) pf <- paste(pf,"+",sep="")
-    if (kp>1||k>1) rf <- paste(rf,"+",sep="")
-    pf <- paste(pf,as.character(attr(tf,"variables")[1+off]),sep="")
+  { #if (kp>1) pf <- paste(pf,"+",sep="")
+    #pf <- paste(pf,as.character(attr(tf,"variables")[1+off]),sep="")
+    av[kp] <- as.character(attr(tf,"variables")[1+off])
     kp <- kp+1          
   }
+
+  pf <- paste(response,"~",paste(av,collapse=" + "))
   if (attr(tf,"intercept")==0) {
     pf <- paste(pf,"-1",sep="")
     if (kp>1) pfok <- 1 else pfok <- 0
@@ -229,19 +232,28 @@ interpret.gam0 <- function (gf,textra=NULL)
       pf <- paste(pf,"1"); 
     }
   }
-  
+  #if (kp>0) { ## there are parametric predictors - need to include all raw versions in fake formula 
+  # av <- unique(c(av,all.vars(as.formula(pf)))) ## want raw variables for parametric part in fake formula
+  #  fake.formula <- paste(response,"~",paste(av,collapse=" + ")) 
+  #} else fake.formula <- pf
+
+  #if (attr(tf,"intercept")==0) fake.formula <- paste(fake.formula,"-1",sep="")
+
   fake.formula <- pf
+
   if (length(smooth.spec)>0) 
   for (i in 1:length(smooth.spec)) {
     nt <- length(smooth.spec[[i]]$term)
     ff1 <- paste(smooth.spec[[i]]$term[1:nt],collapse="+")
     fake.formula <- paste(fake.formula,"+",ff1)
-    if (smooth.spec[[i]]$by!="NA")
-    fake.formula <- paste(fake.formula,"+",smooth.spec[[i]]$by)
+    if (smooth.spec[[i]]$by!="NA") {
+      fake.formula <- paste(fake.formula,"+",smooth.spec[[i]]$by)
+      av <- c(av,smooth.spec[[i]]$term,smooth.spec[[i]]$by)
+    } else av <- c(av,smooth.spec[[i]]$term)
   }
   fake.formula <- as.formula(fake.formula,p.env)
   ret <- list(pf=as.formula(pf,p.env),pfok=pfok,smooth.spec=smooth.spec,
-            fake.formula=fake.formula,response=response)
+            fake.formula=fake.formula,response=response,fake.names=av)
   class(ret) <- "split.gam.formula"
   ret
 } ## interpret.gam0
@@ -258,10 +270,10 @@ interpret.gam <- function(gf) {
     for (i in 1:d) {
       textra <- if (i==1) NULL else paste(".",i-1,sep="") ## modify smooth labels to identify to predictor  
       ret[[i]] <- interpret.gam0(gf[[i]],textra)
-      av <- c(av,all.vars(ret[[i]]$fake.formula)) ## accumulate all required variable names
+      av <- c(av,ret[[i]]$fake.names) ## accumulate all required variable names 
     } 
-    av <- unique(av) ## strip out dumplicate variable names
-    ret$fake.formula <- reformulate(av[-1],response=av[1]) ## create fake formula containing all variables
+    av <- unique(av) ## strip out duplicate variable names
+    ret$fake.formula <- reformulate(av,response=ret[[1]]$response) ## create fake formula containing all variables
     ret$response <- ret[[1]]$response 
     class(ret) <- "split.gam.formula"
     return(ret)
@@ -587,9 +599,45 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   list(S=S,off=off,sp=sp,L=L,rank=rank,full.sp.names=full.sp.names)
 } ## parametricPenalty
 
+gam.setup.list <- function(formula,pterms,
+                     data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
+                    min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
+                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE) {
+## version of gam.setup for when gam is called with a list of formulae, specifying several linear predictors...
+  if (!is.null(paraPen)) stop("paraPen not supported for multi-formula models")
+  d <- length(pterms) ## number of linear predictors
+  G <- gam.setup(formula[[1]],pterms[[1]],
+              data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
+  G$pterms <- pterms
+  G$offset <- list(G$offset)
+  G$contrasts <- list(G$contrasts)
+  G$xlevels <- list(G$xlevels)
+  G$assign <- list(G$assign)
+  lpi <- list(1:ncol(G$X)) ## lpi[[j]] is index of cols for jth linear predictor 
+  pof <- ncol(G$X) ## 
+  for (i in 2:d) {
+    if (is.null(formula[[i]]$response)) formula[[i]]$response <- formula$response ## keep gam.setup happy
+    spind <- (G$m+1):length(sp)
+    um <- gam.setup(formula[[i]],pterms[[i]],
+              data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
+    lpi[[i]] <- pof + 1:ncol(um$X)
+    G$offset[[i]] <- um$offset
+    G$contrasts[[i]] <- um$contrasts
+    G$xlevels[[i]] <- um$xlevels
+    G$assign[[i]] <- um$assign
 
+    G$X <- cbind(G$X,um$X) ## extend model matrix
+    G$m <- G$m + um$m ## number of smooths
+    G$nsdf <- G$nsdf + um$nsdf ## or list??
+    ## what about dimensions of sp and min.sp here??
+  }
+  
 
-gam.setup <- function(formula,##pterms,
+}
+
+gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE)
@@ -627,7 +675,7 @@ gam.setup <- function(formula,##pterms,
 { # split the formula if the object being passed is a formula, otherwise it's already split
 
   if (inherits(formula,"split.gam.formula")) split <- formula else
-  if (inherits(formula,"formula")||(is.list(formula)&&inherits(formula[[1]],"formula"))) split <- interpret.gam(formula) 
+  if (inherits(formula,"formula")) split <- interpret.gam(formula) 
   else stop("First argument is no sort of formula!") 
   
   if (length(split$smooth.spec)==0) {
@@ -635,9 +683,9 @@ gam.setup <- function(formula,##pterms,
     m <- 0
   } else  m <- length(split$smooth.spec) # number of smooth terms
   
-  pmf <- data
-  pmf$formula <- gp$pf
-  pterms <- attr(eval(pmf,mf),"terms") # pmf contains all data for parametric part
+  #pmf <- data
+  #pmf$formula <- split$pf
+  #pterms <- attr(model.frame(split$pf,data,drop.unused.levels=TRUE),"terms") # pmf contains all data for parametric part
 
   G <- list(m=m,min.sp=min.sp,H=H,pearson.extra=0,
             dev.extra=0,n.true=-1,pterms=pterms) ## dev.extra gets added to deviance if REML/ML used in gam.fit3
@@ -1635,7 +1683,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$...<-NULL
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    # pmf <- mf
+    pmf <- mf
     mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
     terms <- attr(mf,"terms")
@@ -1653,11 +1701,21 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
     rm(dl) ## save space    
 
+    ## pterms are terms objects for the parametric model components used in 
+    ## model setup - don't try obtaining by evaluating pf in mf - doesn't
+    ## work in general (e.g. with offset)...
 
-    #pmf$formula <- gp$pf
-    #pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
-    #pterms <- attr(pmf,"terms") ## pmf only used for this
-
+    if (is.list(formula)) {
+      pterms <- list()
+      for (i in 1:length(formula)) {
+        pmf$formula <- gp[[i]]$pf 
+        pterms[[i]] <- attr(eval(pmf, parent.frame()),"terms")
+      }
+    } else {
+      pmf$formula <- gp$pf
+      pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
+      pterms <- attr(pmf,"terms") ## pmf only used for this
+    }
     if (is.character(family)) family<-eval(parse(text=family))
     if (is.function(family)) family <- family()
     if (is.null(family$family)) stop("family not recognized")
@@ -1670,16 +1728,19 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## check whether family requires intercept to be dropped...
     drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
 
-    G <- gam.setup(gp,##pterms=pterms,
+    gsname <- if (is.list(formula)) "gam.setup.list" else "gam.setup" 
+
+    G <- do.call(gsname,list(formula=gp,pterms=pterms,
                  data=mf,knots=knots,sp=sp,min.sp=min.sp,
                  H=H,absorb.cons=TRUE,sparse.cons=0,select=select,
                  idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
-                 paraPen=paraPen,drop.intercept=drop.intercept)
+                 paraPen=paraPen,drop.intercept=drop.intercept))
     
     G$var.summary <- var.summary
     G$family <- family
    
-    if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") ## +nrow(G$C)) stop("Model has more coefficients than data")
+    if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
+        ## +nrow(G$C)) stop("Model has more coefficients than data")
 
     G$terms<-terms;##G$pterms<-pterms
     G$mf<-mf;G$cl<-cl;

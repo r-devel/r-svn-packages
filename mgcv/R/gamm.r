@@ -611,7 +611,7 @@ smooth2random.tensor.smooth <- function(object,vnames,type=1) {
 
 
 
-gamm.setup <- function(formula,##pterms,
+gamm.setup <- function(formula,pterms,
                       data=stop("No data supplied to gamm.setup"),knots=NULL,
                      parametric.only=FALSE,absorb.cons=FALSE)
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
@@ -632,7 +632,7 @@ gamm.setup <- function(formula,##pterms,
 { 
   ## first simply call `gam.setup'....
 
-  G <- gam.setup(formula,##pterms,
+  G <- gam.setup(formula,pterms,
                  data=data,knots=knots,sp=NULL,
                  min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,gamm.call=TRUE)
  
@@ -1241,7 +1241,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     }
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    #pmf <- mf
+    pmf <- mf
     gmf <- eval(mf, parent.frame()) # the model frame now contains all the data, for the gam part only 
     gam.terms <- attr(gmf,"terms") # terms object for `gam' part of fit -- need this for prediction to work properly
 
@@ -1267,9 +1267,9 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
     rm(dl) ## save space 
 
-    #pmf$formula <- gp$pf
-    #pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part 
-    #pTerms <- attr(pmf,"terms")
+    pmf$formula <- gp$pf
+    pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part 
+    pTerms <- attr(pmf,"terms")
 
     if (is.character(family)) family<-eval(parse(text=family))
     if (is.function(family)) family <- family()
@@ -1277,7 +1277,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
   
     # now call gamm.setup 
 
-    G <- gamm.setup(gp,##pterms=pTerms,
+    G <- gamm.setup(gp,pterms=pTerms,
                     data=mf,knots=knots,parametric.only=FALSE,absorb.cons=TRUE)
     #G$pterms <- pTerms
     G$var.summary <- var.summary    
