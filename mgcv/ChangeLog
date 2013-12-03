@@ -3,6 +3,12 @@
 
 1.7-28
 
+* re-write of mini.mf function used by bam to generate a reduced size 
+  model frame for model setup. New version ensures that all factor levels 
+  are present in reduced frame, and avoids production of unrealistic
+  combinations of variables in multi-dimensional smooths which could occur
+  with old version. 
+
 * bam models could fail if a penalty matrix was 1 by 1, or if multiple 
   penalties on a smooth were in fact seperable into single penalties. 
   Fixed. Thanks to Martijn weiling for reporting.

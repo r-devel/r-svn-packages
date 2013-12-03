@@ -323,7 +323,7 @@ augment.smX <- function(sm,nobs,np) {
   X <- rbind(sm$X,matrix(0,np,ncol(sm$X))) ## create augmented model matrix
   X[nobs+sm$p.ind,] <- t(rS) ## add in 
   X ## scaled augmented model matrix
-}
+} ## augment.smX
 
 gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
 # works through a list of smooths, sm, aiming to identify nested or partially
@@ -587,7 +587,10 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   list(S=S,off=off,sp=sp,L=L,rank=rank,full.sp.names=full.sp.names)
 } ## parametricPenalty
 
-gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
+
+
+gam.setup <- function(formula,##pterms,
+                     data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE)
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
@@ -597,8 +600,30 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
 ## * min.sp - minimum smoothing parameters
 ## * H supplied H matrix
 ## * pearson.extra, dev.extra, n.true --- entries to hold these quantities
+## * pterms - terms object for parametric terms
 ## * intercept TRUE if intercept present
-## * offset 
+## * offset - the model offset
+## * nsdf - number of strictly parameteric coefs
+## * contrasts 
+## * xlevels - records levels of factors
+## * assign - indexes which parametric model matrix columns map to which term in pterms
+## * smooth - list of smooths
+## * S - penalties (non-zero block only)
+## * off - first coef penalized by each element of S
+## * cmX - col mean of X
+## * P - maps parameters in fit constraint parameterization to those in prediction parameterization
+## * X - model matrix
+## * sp
+## * rank
+## * n.paraPen
+## * L 
+## * lsp0
+## * y - response
+## * C - constraint matrix - only if absorb.cons==FALSE
+## * n - dim(y)
+## * w - weights
+## * term.names
+## * nP
 { # split the formula if the object being passed is a formula, otherwise it's already split
 
   if (inherits(formula,"split.gam.formula")) split <- formula else
@@ -610,7 +635,12 @@ gam.setup <- function(formula,pterms,data=stop("No data supplied to gam.setup"),
     m <- 0
   } else  m <- length(split$smooth.spec) # number of smooth terms
   
-  G <- list(m=m,min.sp=min.sp,H=H,pearson.extra=0,dev.extra=0,n.true=-1) ## dev.extra gets added to deviance if REML/ML used in gam.fit3
+  pmf <- data
+  pmf$formula <- gp$pf
+  pterms <- attr(eval(pmf,mf),"terms") # pmf contains all data for parametric part
+
+  G <- list(m=m,min.sp=min.sp,H=H,pearson.extra=0,
+            dev.extra=0,n.true=-1,pterms=pterms) ## dev.extra gets added to deviance if REML/ML used in gam.fit3
   
   if (is.null(attr(data,"terms"))) # then data is not a model frame
   mf <- model.frame(split$pf,data,drop.unused.levels=FALSE) # must be false or can end up with wrong prediction matrix!
@@ -1595,8 +1625,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 # interpreted to figure out which bits relate to smooth terms and which to parametric terms.
 
 {  control <- do.call("gam.control",control)
-   if (is.null(G))
-   { # create model frame..... 
+   if (is.null(G)) {
+    ## create model frame..... 
     gp <- interpret.gam(formula) # interpret the formula 
     cl <- match.call() # call needed in gam object for update to work
     mf <- match.call(expand.dots=FALSE)
@@ -1605,7 +1635,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$...<-NULL
     mf$drop.unused.levels <- TRUE
     mf[[1]] <- as.name("model.frame")
-    pmf <- mf
+    # pmf <- mf
     mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
     terms <- attr(mf,"terms")
@@ -1624,10 +1654,9 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     rm(dl) ## save space    
 
 
-    pmf$formula <- gp$pf
-    pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
-
-    pterms <- attr(pmf,"terms") ## pmf only used for this
+    #pmf$formula <- gp$pf
+    #pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
+    #pterms <- attr(pmf,"terms") ## pmf only used for this
 
     if (is.character(family)) family<-eval(parse(text=family))
     if (is.function(family)) family <- family()
@@ -1641,7 +1670,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## check whether family requires intercept to be dropped...
     drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
 
-    G <- gam.setup(gp,pterms=pterms,data=mf,knots=knots,sp=sp,min.sp=min.sp,
+    G <- gam.setup(gp,##pterms=pterms,
+                 data=mf,knots=knots,sp=sp,min.sp=min.sp,
                  H=H,absorb.cons=TRUE,sparse.cons=0,select=select,
                  idLinksBases=control$idLinksBases,scale.penalty=control$scalePenalty,
                  paraPen=paraPen,drop.intercept=drop.intercept)
@@ -1651,7 +1681,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
    
     if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") ## +nrow(G$C)) stop("Model has more coefficients than data")
 
-    G$terms<-terms;G$pterms<-pterms
+    G$terms<-terms;##G$pterms<-pterms
     G$mf<-mf;G$cl<-cl;
     G$am <- am
 
