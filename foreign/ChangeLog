@@ -1,3 +1,8 @@
+2013-12-04 Brian Ripley
+
+	* R/writeForeignCode.R: correction to writeForeignSPSS.
+	(PR#15583) Also layout/legibility.
+
 2013-11-27 Brian Ripley
 
 	* man/read.ssd: Mention problems with long 'sectionnames' on
