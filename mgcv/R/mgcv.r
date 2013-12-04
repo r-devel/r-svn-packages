@@ -605,6 +605,7 @@ gam.setup.list <- function(formula,pterms,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE) {
 ## version of gam.setup for when gam is called with a list of formulae, specifying several linear predictors...
   if (!is.null(paraPen)) stop("paraPen not supported for multi-formula models")
+  if (!absorb.cons) stop("absorb.cons must be TRUE for multi-formula models")
   d <- length(pterms) ## number of linear predictors
   G <- gam.setup(formula[[1]],pterms[[1]],
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
@@ -627,14 +628,47 @@ gam.setup.list <- function(formula,pterms,
     G$contrasts[[i]] <- um$contrasts
     G$xlevels[[i]] <- um$xlevels
     G$assign[[i]] <- um$assign
-
+    G$rank <- c(G$rank,um$rank)
     G$X <- cbind(G$X,um$X) ## extend model matrix
+    ## deal with the smooths...
+    k <- G$m
+    if (length(um$m)) for (j in 1:um$m) {
+      um$smooth[[j]]$first.para <- um$smooth[[j]]$first.para + pof
+      um$smooth[[j]]$last.para <- um$smooth[[j]]$last.para + pof
+      k <- k + 1 
+      G$smooth[[k]] <- um$smooth[[j]]
+    }
+    ## L, S and off...
+    ks <- length(G$S)
+    M <- length(um$S)
+ 
+    if (!is.null(um$L)||!is.null(G$L)) {
+      if (is.null(G$L)) G$L <- diag(1,nrow=ks)
+      if (is.null(um$L)) um$L <- diag(1,nrow=M)
+      G$L <- rbind(cbind(G$L,matrix(0,ks,M)),cbind(matrix(0,M,ks),um$L))
+    }
+
+    G$off <- c(G$off,um$off+pof)
+    if (M) for (i in 1:M) {
+      ks <- ks + 1
+      G$S[[ks]] <- um$S[[i]]
+    }
+ 
     G$m <- G$m + um$m ## number of smooths
     G$nsdf <- G$nsdf + um$nsdf ## or list??
-    ## what about dimensions of sp and min.sp here??
-  }
-  
+    if (!is.null(um$P)||!is.null(G$P)) {
+      if (is.null(G$P)) G$P <- diag(1,nrow=pof)
+      k <- ncol(um$X)
+      if (is.null(um$P)) um$P <- diag(1,nrow=k)
+      G$P <- rbind(cbind(G$P,matrix(0,pof,k)),cbind(matrix(0,k,pof),um$P))
+    }
+    G$cmX <- c(G$cmX,um$cmX)
+    G$term.names <- c(G$term.names,um$term.names)
 
+    pof <- ncol(G$x)
+  }
+  attr(G$X,"lpi") <- lpi
+  G
 }
 
 gam.setup <- function(formula,pterms,
@@ -1739,6 +1773,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     G$var.summary <- var.summary
     G$family <- family
    
+    if ((is.list(formula)&&(is.null(family$nlp))||family$nlp!=length(formula))) stop("incorrect number of linear predictors for family")
+
     if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
         ## +nrow(G$C)) stop("Model has more coefficients than data")
 
