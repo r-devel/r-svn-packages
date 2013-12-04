@@ -81,7 +81,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             mustart = NULL, offset = rep(0, nobs),U1=diag(ncol(x)), Mp=-1, family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,
             gamma=1,scale=1,printWarn=TRUE,scoreType="REML",null.coef=rep(0,ncol(x)),
-            pearson.extra=0,dev.extra=0,n.true=-1,...) {
+            pearson.extra=0,dev.extra=0,n.true=-1,Sl=NULL,...) {
 ## Inputs:
 ## * x model matrix
 ## * y response
@@ -114,7 +114,11 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 ##
     if (control$trace) { t0 <- proc.time();tc <- 0} 
   
-    if (inherits(family,"extended.family")) { ## then actually gam.fit4 is needed
+    if (inherits(family,"extended.family")) { ## then actually gam.fit4/5 is needed
+      if (inherits(family,"general.family")) {
+        return(gam.fit5(x,y,sp,Sl=Sl,weights=weights,offset=offset,deriv=deriv,
+                        family=family,control=control,Mp=Mp,start=start))
+      } else
       return(gam.fit4(x, y, sp, Eb,UrS=UrS,
             weights = weights, start = start, etastart = etastart, 
             mustart = mustart, offset = offset,U1=U1, Mp=Mp, family = family, 
@@ -1266,183 +1270,6 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   else ct <- "full convergence"
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,conv =ct,score.hist = score.hist[!is.na(score.hist)],object=b)
 } ## newton
-
-bfgs0 <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
-                   control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="GCV",
-                   mustart = NULL,null.coef=rep(0,ncol(X)),...)
-## This optimizer is experimental... The main feature is to alternate infrequent 
-## Newton steps with BFGS Quasi-Newton steps. In theory this should be faster 
-## than Newton, because of the cost of full Hessian calculation, but
-## in practice the extra steps required by QN tends to mean that the advantage
-## is not realized...
-## Newton optimizer for GAM gcv/aic optimization that can cope with an 
-## indefinite Hessian, and alternates BFGS and Newton steps for speed reasons
-## Main enhancements are: i) always peturbs the Hessian
-## to +ve definite ii) step halves on step 
-## failure, without obtaining derivatives until success; (iii) carries start
-## values forward from one evaluation to next to speed convergence.    
-## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
-## parameters actually multiplying the S[[i]]'s
-{ 
-  reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
-
-  ## sanity check L
-  if (is.null(L)) L <- diag(length(lsp)) else {
-    if (!inherits(L,"matrix")) stop("L must be a matrix.")
-    if (nrow(L)<ncol(L)) stop("L must have at least as many rows as columns.")
-    if (nrow(L)!=length(lsp0)||ncol(L)!=length(lsp)) stop("L has inconsistent dimensions.")
-  }
-  if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
-  ## initial fit
-
-  b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
-     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-     control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
-
-  mustart<-b$fitted.values
-
-  QNsteps <- floor(length(UrS)/2) ## how often to Newton should depend on cost...
-
-  if (reml) {
-     score <- b$REML;grad <- b$REML1;hess <- b$REML2 
-  } else if (scoreType=="GACV") {
-    old.score <- score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2 
-  } else if (scoreType=="UBRE"){
-    old.score <- score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
-  } else { ## default to deviance based GCV
-    old.score <- score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2
-  }
-  
-  grad <- t(L)%*%grad
-  hess <- t(L)%*%hess%*%L
-
-  if (reml)  score.scale <- abs(log(b$scale.est)) + abs(score)  
-  else score.scale <- b$scale.est + abs(score)    
-  uconv.ind <- abs(grad) > score.scale*conv.tol
-  ## check for all converged too soon, and undo !
-  if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
-  kk <- 0 ## counter for QN steps between Newton steps
-  score.hist <- rep(NA,200)
-  for (i in 1:200) {
-   
-    if (kk==0) { ## time to reset B
-      eh <- eigen(hess,symmetric=TRUE)
-      d <- eh$values;U <- eh$vectors
-      ind <- d < 0
-      d[ind] <- -d[ind] ## see Gill Murray and Wright p107/8
-      d <- 1/d
-      d[d==0] <- min(d)*.Machine$double.eps^.5
-      B <- U%*%(d*t(U)) ## Newton based inverse Hessian
-    }
-     
-    kk <- kk + 1
-    if (kk > QNsteps) kk <- 0 
- 
-    ## get the trial step ...
-    
-    Nstep <- 0 * grad
-    Nstep[uconv.ind] <- -drop(B[uconv.ind,uconv.ind]%*%grad[uconv.ind]) # (modified) Newton direction
-    
-    ms <- max(abs(Nstep))
-    if (ms>maxNstep) Nstep <- maxNstep * Nstep/ms
-
-    ## try the step ...
-    sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
-    ii <- 0 ## step halving counter
-    step <- Nstep*2
-    score1 <- abs(score)*2
-    while (score1>score+sc.extra && ii < maxHalf) { ## reject and step halve
-      ii <- ii + 1
-      step <- step/2
-      sc.extra <- sc.extra/2
-      lsp1 <- lsp + step
-  
-
-      if (kk!=0||ii==1) deriv <- 1 else deriv <- 0
-      b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
-          control=control,gamma=gamma,scale=scale,
-          printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
-
-      if (reml) {
-          score1 <- b1$REML
-      } else if (scoreType=="GACV") {
-          score1 <- b1$GACV
-      } else if (scoreType=="UBRE") {
-          score1 <- b1$UBRE
-      } else score1 <- b1$GCV
-    } ## accepted step or step failed to lead to decrease
-
-    if (ii < maxHalf) { ## step succeeded 
-      mustart <- b1$fitted.values
-      if (kk==0) { ## time for a full Newton step ...
-
-        b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-               control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
-
-        mustart <- b$fitted.values
-        old.score <- score;lsp <- lsp1
-        if (reml) {
-           score <- b$REML;grad <- b$REML1;hess <- b$REML2 
-        } else if (scoreType=="GACV") {
-          score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
-        } else if (scoreType=="UBRE") {
-          score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
-        } else { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2}
-        grad <- t(L)%*%grad
-        hess <- t(L)%*%hess%*%L
-      } else { ## just a BFGS update
-        ## first derivatives only.... 
-
-         if (ii==1) b <- b1 else  
-         b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-               control=control,gamma=gamma,scale=scale,
-               printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
-
-        mustart <- b$fitted.values
-        old.score <- score;lsp <- lsp1
-        old.grad <- grad
-        if (reml) {
-          score <- b$REML;grad <- b$REML1 
-        } else if (scoreType=="GACV") {
-          score <- b$GACV;grad <- b$GACV1
-        } else if (scoreType=="UBRE") {
-          score <- b$UBRE;grad <- b$UBRE1
-        } else { score <- b$GCV;grad <- b$GCV1}
-        grad <- t(L)%*%grad
-        ## BFGS update of the inverse Hessian...
-        yg <- grad-old.grad
-        rho <- 1/sum(yg*step)
-        B <- B - rho*step%*%(t(yg)%*%B)
-        B <- B - rho*(B%*%yg)%*%t(step) + rho*step%*%t(step)
-      } ## end of BFGS
-    } ## end of successful step updating
-    ## record current score
-    score.hist[i] <- score
-
-    ## test for convergence
-    converged <- TRUE
-    if (reml) score.scale <- abs(log(b$scale.est)) + abs(score)
-    else score.scale <- b$scale.est + abs(score);    
-    uconv.ind <- abs(grad) > score.scale*conv.tol
-    if (sum(uconv.ind)) converged <- FALSE
-    if (abs(old.score-score)>score.scale*conv.tol) { 
-      if (converged) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
-      converged <- FALSE      
-    }
-    if (ii==maxHalf) converged <- TRUE ## step failure
-    if (converged) break
-  } ## end of iteration loop
-  if (ii==maxHalf) ct <- "step failed"
-  else if (i==200) ct <- "iteration limit reached" 
-  else ct <- "full convergence"
-  list(score=score,lsp=lsp,lsp.full=L%*%lsp,grad=grad,hess=hess,iter=i,conv =ct,score.hist=score.hist[!is.na(score.hist)],object=b)
-} ## end bfgs0
 
 
 

@@ -667,6 +667,7 @@ gam.setup.list <- function(formula,pterms,
 
     pof <- ncol(G$x)
   }
+ 
   attr(G$X,"lpi") <- lpi
   G
 }
@@ -1427,6 +1428,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
     method <- "REML" ## any method you like as long as it's REML
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
+    if (inherits(G$family,"general.family")) {
+       G$Sl <- Sl.setup(G) ## prepare penalty sequence
+       G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
+    }
   }
 
   if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
