@@ -90,9 +90,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 ## * UrS list of penalty square roots in range space of overall penalty. UrS[[i]]%*%t(UrS[[i]]) 
 ##   is penalty. See 'estimate.gam' for more.
 ## * weights prior weights (reciprocal variance scale)
-## * start initial values for parameters
+## * start initial values for parameters. ignored if etastart or mustart present (although passed on).
 ## * etastart initial values for eta
-## * mustart initial values for mu... only one of last## * control - control list.
+## * mustart initial values for mu. discarded if etastart present.
+## * control - control list.
 ## * intercept - indicates whether model has one.
 ## * deriv - order 0,1 or 2 derivatives are to be returned (lower is cheaper!)
 ## * gamma - multiplier for effective degrees of freedom in GCV/UBRE.
@@ -220,8 +221,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
        validmu <- function(mu) TRUE
     if (is.null(mustart)) {
         eval(family$initialize)
-    }
-    else {
+    } else {
+        start <- NULL ## if mustart was supplied then ignore start
         mukeep <- mustart
         eval(family$initialize)
         mustart <- mukeep
@@ -800,14 +801,15 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
             weights = rep(1, length(y)), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, length(y)),U1,Mp,family = gaussian(), 
             control = gam.control(), intercept = TRUE,deriv=2,
-            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,null.coef=rep(0,ncol(x)),...)
+            gamma=1,scale=1,printWarn=TRUE,scoreType="REML",eps=1e-7,
+            null.coef=rep(0,ncol(x)),Sl=Sl,...)
 ## FD checking of derivatives: basically a debugging routine
 {  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
    if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    b<-gam.fit3(x=x, y=y, sp=sp,Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
 
    P0 <- b$P;fd.P1 <- P10 <- b$P1;  if (deriv==2) fd.P2 <- P2 <- b$P2 
    trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
@@ -832,13 +834,13 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
      bf<-gam.fit3(x=x, y=y, sp=sp1,Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
       
      sp1 <- sp;sp1[i] <- sp[i]-eps/2
      bb<-gam.fit3(x=x, y=y, sp=sp1, Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
       control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
       
    
       if (!reml) {
@@ -966,7 +968,7 @@ rti <- function(r,r1) {
 simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
-                   mustart = NULL,null.coef=rep(0,ncol(X)),...)
+                   mustart = NULL,null.coef=rep(0,ncol(X)),Sl=Sl,...)
 ## function with same argument list as `newton' and `bfgs' which simply fits
 ## the model given the supplied smoothing parameters...
 { reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
@@ -983,7 +985,7 @@ simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
      control=control,gamma=gamma,scale=scale,
-     printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,...)
+     printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
 
   if (reml) {       
           score <- b$REML
@@ -1002,7 +1004,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra,
-                   dev.extra=0,n.true=-1,...)
+                   dev.extra=0,n.true=-1,Sl=NULL,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
 ## indefinite Hessian! Main enhancements are: i) always perturbs the Hessian
 ## to +ve definite ii) step halves on step 
@@ -1010,6 +1012,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 ## values forward from one evaluation to next to speed convergence.    
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
+## NOTE: an obvious acceleration would use db/dsp to produce improved
+##       starting values at each iteration... 
 {  
   reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
 
@@ -1048,7 +1052,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,mustart=mustart,
-         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
   }
 
 #  ii <- 0
@@ -1067,9 +1071,10 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,printWarn=FALSE,
      mustart=mustart,scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-     dev.extra=dev.extra,n.true=n.true,...)
+     dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
-  mustart<-b$fitted.values
+  mustart <- b$fitted.values
+  start <- b$coefficients
 
   if (reml) {
      old.score <- score <- b$REML;grad <- b$REML1;hess <- b$REML2 
@@ -1106,7 +1111,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,mustart=mustart,
-         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
+         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
     }
 #    ii <- 0
 #    if (ii>0) {
@@ -1156,7 +1161,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
        offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
        control=control,gamma=gamma,scale=scale,printWarn=FALSE,
        mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-       pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
+       pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
     
     if (reml) {
       score1 <- b$REML
@@ -1208,7 +1213,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
            control=control,gamma=gamma,scale=scale,
            printWarn=FALSE,mustart=mustart,scoreType=scoreType,
            null.coef=null.coef,pearson.extra=pearson.extra,
-           dev.extra=dev.extra,n.true=n.true,...)
+           dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
          
         if (reml) {       
           score1 <- b1$REML
@@ -1223,8 +1228,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,printWarn=FALSE,
              mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-             pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
-          mustart <- b$fitted.values
+             pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl...)
+          mustart <- b$fitted.values 
+          start <- b$coefficients
           old.score <- score;lsp <- lsp1
          
           if (reml) {
@@ -1277,7 +1283,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="GCV",
-                   mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra=0,dev.extra=0,n.true=-1,...)
+                   mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra=0,
+                   dev.extra=0,n.true=-1,Sl=NULL,...)
 
 ## BFGS optimizer to estimate smoothing parameters of models fitted by
 ## gam.fit3....

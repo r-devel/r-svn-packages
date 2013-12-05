@@ -549,21 +549,24 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   q <- ncol(x)
   n <- nobs <- length(y)
 
-  null.coef <- rep(0,q) ### REPLACE!!!
-
+  ## now call initialization code, but make sure that any 
+  ## supplied 'start' vector is not overwritten...
+  start0 <- start
+  
+  eval(family$initialize)
+   
+  if (!is.null(start0)) start <- start0 
+  coef <- start
+  
   ## the stability reparameterization + log|S|_+ and derivs... 
   ## NOTE: what if no smooths??
   rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
   x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
+  coef <- Sl.repara(rp$rp,coef,inverse=TRUE) ## and to coef
   St <- crossprod(rp$E) ## total penalty matrix
 
   if (is.null(weights)) weights <- rep.int(1, nobs)
   if (is.null(offset)) offset <- rep.int(0, nobs)
-
-  ##  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  ##  NOTE: require initial parameters (in current parameterization)
-  if (is.null(start)) null.coef <-coef <- rep(0,q) else ## REPLACE!!!!
-     null.coef <- coef <- start
  
   ## get log likelihood, grad and Hessian...
   ll <- family$ll(y,x,coef,weights,family,deriv=1)
@@ -636,7 +639,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
               k <- 0
               for (i in 1:length(lpi)) {
                 kk <- sum(lpi[[i]]%in%drop==FALSE) ## how many left undropped?
-                lpi[[i]] <- 1:kk + k ## new index - note strong assumtptions on structure here
+                lpi[[i]] <- 1:kk + k ## new index - note strong assumptions on structure here
                 k <- k + kk
               }
             } ## lpi adjustment done
@@ -759,8 +762,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   REML <- ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2 - ldetHp/2 + Mp*log(2*pi)/2
   REML1 <- d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2
   REML2 <- d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2
-  #coef <- as.numeric(T %*% coef) ## DEBUG outcomment only!!
-  list(coef=coef,REML=REML,REML1=REML1,REML2=REML2,
+  coef <- Sl.repara(rp$rp,coef) ## undo re-parameterization of coef
+  list(coefficients=coef,
+       fitted.values=NULL, ## NOTE: temporary
+       scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
+       REML=as.numeric(REML),REML1=as.numeric(REML1),REML2=REML2,
        l= ll$l,l1 =d1l,l2 =d2l,
        bSb = t(coef)%*%St%*%coef, bSb1 =  d1bSb,bSb2 =  d2bSb,
        S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,

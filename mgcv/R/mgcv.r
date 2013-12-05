@@ -1336,19 +1336,18 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,
-                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,...) else
+                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,
-                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,...)                
+                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,...)                
                 
     object <- b$object
     object$REML <- object$REML1 <- object$REML2 <-
     object$GACV <- object$D2 <- object$P2 <- object$UBRE2 <- object$trA2 <- 
     object$GACV1 <- object$GACV2 <- object$GCV2 <- object$D1 <- object$P1 <- NULL
     object$sp <- as.numeric(exp(b$lsp))
-    #object$gcv.ubre <- as.numeric(b$score)
     object$gcv.ubre <- b$score
     b <- list(conv=b$conv,iter=b$iter,grad=b$grad,hess=b$hess,score.hist=b$score.hist) ## return info
     object$outer.info <- b   
@@ -1552,8 +1551,9 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
    
     ## Get an estimate of the coefs corresponding to maximum reasonable deviance,
     ## and an estimate of the function scale, suitable for optimizers that need this.
+    ## Doesn't make sense for general families that have to initialize coefs directly.
   
-    null.stuff  <- get.null.coef(G,...)  
+    null.stuff  <- if(inherits(G$family,"general.family")) list() else get.null.coef(G,...)  
     
     if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
     
@@ -1573,7 +1573,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
     } 
       
-    if (inherits(G$family,"extended.family")) { ## then there may be extra parameters to estimate
+    if (inherits(G$family,"extended.family")&&!inherits(G$family,"general.family")) { ## then there may be extra parameters to estimate
       th0 <- G$family$getTheta() ## additional (initial) parameters of likelihood 
       nth <- length(th0)
       nlsp <- length(lsp)
@@ -1706,12 +1706,24 @@ variable.summary <- function(pf,dl,n) {
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 method="GCV.Cp",optimizer=c("outer","newton"),control=list(),#gam.control(),
                 scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
-                paraPen=NULL,G=NULL,in.out=NULL,...)
-
-# Routine to fit a GAM to some data. The model is stated in the formula, which is then 
-# interpreted to figure out which bits relate to smooth terms and which to parametric terms.
-
-{  control <- do.call("gam.control",control)
+                paraPen=NULL,G=NULL,in.out=NULL,...) {
+## Routine to fit a GAM to some data. The model is stated in the formula, which is then 
+## interpreted to figure out which bits relate to smooth terms and which to parametric terms.
+## Basic steps:
+## 1. Formula is split up into parametric and non-parametric parts,
+##    and a fake formula constructed to be used to pick up data for
+##    model frame. pterms "terms" object(s) created for parametric 
+##    components, model frame created along with terms object.
+## 2. 'gam.setup' called to do most of basis construction and other
+##    elements of model setup.
+## 3. 'estimate.gam' is called to estimate the model. This performs further 
+##    pre- and post- fitting steps and calls either 'gam.fit' (performance
+##    iteration) or 'gam.outer' (default method). 'gam.outer' calls the actual 
+##    smoothing parameter optimizer ('newton' by default) and then any post 
+##    processing. The optimizer calls 'gam.fit3/4/5' to estimate the model 
+##    coefficients and obtain derivatives w.r.t. the smoothing parameters.
+## 4. Finished 'gam' object assembled.
+   control <- do.call("gam.control",control)
    if (is.null(G)) {
     ## create model frame..... 
     gp <- interpret.gam(formula) # interpret the formula 
@@ -1778,7 +1790,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     G$var.summary <- var.summary
     G$family <- family
    
-    if ((is.list(formula)&&(is.null(family$nlp))||family$nlp!=length(formula))) stop("incorrect number of linear predictors for family")
+    if ((is.list(formula)&&(is.null(family$nlp)||family$nlp!=length(formula)))||
+        (!is.list(formula)&&!is.null(family$npl)&&(family$npl>1))) stop("incorrect number of linear predictors for family")
 
     if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
         ## +nrow(G$C)) stop("Model has more coefficients than data")
@@ -3636,7 +3649,8 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 }
 
 
-initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,start=NULL,mustart=NULL,etastart=NULL,...) {
+initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
+                        start=NULL,mustart=NULL,etastart=NULL,...) {
 ## initial smoothing parameter values based on approximate matching 
 ## of Frob norm of XWX and S. If L is non null then it is assumed
 ## that the sps multiplying S elements are given by L%*%sp+lsp0 and 
@@ -3645,26 +3659,37 @@ initial.spg <- function(X,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,start=N
   ## Get the initial weights...
   if (length(S)==0) return(rep(0,0))
   ## start <- etastart <- mustart <- NULL
-  nobs <- nrow(X) 
+  nobs <- nrow(x) 
   if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
   eval(family$initialize) 
-  if (is.null(mukeep)) {
-    if (!is.null(start)) etastart <- drop(X%*%start)
-    if (!is.null(etastart)) mustart <- family$linkinv(etastart)
-  } else mustart <- mukeep
-  if (inherits(family,"extended.family")) {
-    theta <- family$getTheta()
-    w <- .5 * family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2  
-  } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
-  w <- sqrt(w)
-  if (type==1) { ## what PI would have used
-   lambda <-  initial.sp(w*X,S,off)
-  } else { ## balance frobenius norms
-    csX <- colSums((w*X)^2) 
+  if (inherits(family,"general.family")) { ## Cox, gamlss etc...
+    lbb <- family$ll(y,x,start,weights,family,deriv=1)$lbb ## initial Hessian 
     lambda <- rep(0,length(S))
+    ## choose lambda so that corresponding elements of lbb and S[[i]]
+    ## are roughly in balance...
     for (i in 1:length(S)) {
-      ind <- off[i]:(off[i]+ncol(S[[i]])-1)
-      lambda[i] <- sum(csX[ind])/sqrt(sum(S[[i]]^2))
+      ind <- off[i]:(off[i]+ncol(S[[1]])-1)
+      lambda[i] <- norm(lbb[ind,ind])/norm(S[[i]])
+    }
+  } else { ## some sort of conventional regression
+    if (is.null(mukeep)) {
+      if (!is.null(start)) etastart <- drop(X%*%start)
+      if (!is.null(etastart)) mustart <- family$linkinv(etastart)
+    } else mustart <- mukeep
+    if (inherits(family,"extended.family")) {
+      theta <- family$getTheta()
+      w <- .5 * family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2  
+    } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
+    w <- sqrt(w)
+    if (type==1) { ## what PI would have used
+      lambda <-  initial.sp(w*x,S,off)
+    } else { ## balance frobenius norms
+      csX <- colSums((w*x)^2) 
+      lambda <- rep(0,length(S))
+      for (i in 1:length(S)) {
+        ind <- off[i]:(off[i]+ncol(S[[i]])-1)
+        lambda[i] <- sum(csX[ind])/sqrt(sum(S[[i]]^2))
+      }
     }
   }
   if (!is.null(L)) {
