@@ -1,7 +1,10 @@
-2013-12-04 Brian Ripley
+2013-12-05 Brian Ripley
 
-	* R/writeForeignCode.R: correction to writeForeignSPSS.
-	(PR#15583) Also layout/legibility.
+	* R/writeForeignCode.R: correction to write.foreign(package =
+	"SPSS") when writing data frames with character columns. (PR#15483)  
+	Also layout/legibility.
+	* tests/writeForeignCode.{R,Rout.save}, tests/keep: regression
+	test for above.
 
 2013-11-27 Brian Ripley
 
