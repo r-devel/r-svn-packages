@@ -64,7 +64,7 @@ writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL)
         cat("\nVALUE LABELS\n", file = codefile, append = TRUE)
         for(v in which(factors)){
             cat("/\n", file = codefile, append = TRUE)
-            cat(varnames[v]," \n", file = codefile, append = TRUE)
+            cat(varnames[v]," \n", file = codefile, append = TRUE, sep = "")
             levs <- levels(df[[v]])
             cat(paste(seq_along(levs), adQuote(levs), "\n", sep = " "),
                 file = codefile, append = TRUE)
