@@ -1002,7 +1002,7 @@ simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
 newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="deviance",
+                   maxHalf=30,printWarn=FALSE,scoreType="deviance",start=NULL,
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra,
                    dev.extra=0,n.true=-1,Sl=NULL,...)
 ## Newton optimizer for GAM gcv/aic optimization that can cope with an 
@@ -1069,7 +1069,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## initial fit
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-     control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
      mustart=mustart,scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
      dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
@@ -1110,7 +1110,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
-         printWarn=FALSE,mustart=mustart,
+         printWarn=FALSE,mustart=mustart,start=start,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
     }
 #    ii <- 0
@@ -1159,7 +1159,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
     b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
        offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+       control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
        mustart=mustart,scoreType=scoreType,null.coef=null.coef,
        pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
     
@@ -1211,7 +1211,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
            control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,mustart=mustart,scoreType=scoreType,
+           printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
            null.coef=null.coef,pearson.extra=pearson.extra,
            dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
          
@@ -1226,7 +1226,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         if (score1 <= score) { ## accept
           b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-             control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+             control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
              mustart=mustart,scoreType=scoreType,null.coef=null.coef,
              pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl...)
           mustart <- b$fitted.values 

@@ -552,17 +552,20 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ## now call initialization code, but make sure that any 
   ## supplied 'start' vector is not overwritten...
   start0 <- start
-  
-  eval(family$initialize)
+
+  ## Assumption here is that the initialization code is fine with
+  ## initially re-parameterized x...
+
+  eval(family$initialize) 
    
   if (!is.null(start0)) start <- start0 
-  coef <- start
+  coef <- as.numeric(start)
   
   ## the stability reparameterization + log|S|_+ and derivs... 
   ## NOTE: what if no smooths??
   rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
   x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
-  coef <- Sl.repara(rp$rp,coef,inverse=TRUE) ## and to coef
+  coef <- Sl.repara(rp$rp,coef) ## and to coef
   St <- crossprod(rp$E) ## total penalty matrix
 
   if (is.null(weights)) weights <- rep.int(1, nobs)
@@ -762,12 +765,17 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   REML <- ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2 - ldetHp/2 + Mp*log(2*pi)/2
   REML1 <- d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2
   REML2 <- d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2
-  coef <- Sl.repara(rp$rp,coef) ## undo re-parameterization of coef
+  coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef
   list(coefficients=coef,
        fitted.values=NULL, ## NOTE: temporary
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
        REML=as.numeric(REML),REML1=as.numeric(REML1),REML2=REML2,
+       rank=rank,
        l= ll$l,l1 =d1l,l2 =d2l,
+       llb = ll$lbb, ## Hessian of log likelihood
+       L=L, ## chol factor of pre-conditioned penalized hessian
+       bdrop=bdrop, ## logical index of dropped parameters
+       D=D, ## diagonal preconditioning matrix
        bSb = t(coef)%*%St%*%coef, bSb1 =  d1bSb,bSb2 =  d2bSb,
        S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
@@ -776,6 +784,66 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
 } ## end of gam.fit5
 
+gam.fit5.post.proc <- function(object,Sl) {
+## object is object returned by gam.fit5,
+## Computes:
+## R - unpivoted Choleski of estimated expected hessian of ll 
+## Vb - the Bayesian cov matrix,
+## Ve - "frequentist" alternative
+## F - the EDF matrix
+## edf = diag(F) and edf2 = diag(2F-FF)
+## Main issue is that lbb and lbb + St must be +ve definite for
+## F to make sense.
+## NOTE: what comes in is in stabilizing parameterization from 
+##       gam.fit5, and may have had parameters dropped. 
+##       possibly initial reparam needs to be undone here as well
+##       before formation of F....
+  llb <- -object$llb ## jessain of log likelihood in fit parameterization
+  R <- chol(llb,pivot=TRUE) 
+  p <- ncol(llb)
+  if (attr(R,"rank") < ncol(R)) { 
+    ## The hessian of the -ve log likelihood is not +ve definite
+    ## Find the "nearest" +ve semi-definite version and use that
+    retry <- TRUE;tol<-0
+    eh <- eigen(llb,symmetric=TRUE)
+    mev <- max(eh$values);dtol <- 1e-7
+    while (retry) {
+      eh$values[eh$values<tol*mev] <- tol*mev
+      R <- sqrt(eh$values)*t(eh$vectors)
+      llb <- crossprod(R)
+      Hp <- llb + object$St
+      ## Now try to invert it by Choleski with diagonal pre-cond,
+      ## to get Vb
+      
+      ## If this fails make more +ve def
+      tol <- tol + dtol;dtol <- dtol*10
+    } ## retry 
+    ## compute 
+ 
+  } else { ## hessian +ve def, so can simply use what comes from fit directly
+    ipiv <- piv <- attr(R,"pivot")
+    ipiv[piv] <- 1:p
+    R <- R[,ipiv] ## so now t(R)%*%R = lbb
+    ## now DL'LD = penalized Hessian, which needs to be inverted
+    ## to DiLiLi'Di = Vb
+    ipiv <- piv <- attr(object$L,"pivot")
+    ipiv[piv] <- 1:p
+    Vb <- crossprod(backsolve(object$L,diag(1/object$D,nrow=p)[piv,])[ipiv,])
+  }
+  ## Insert any zeroes required as a result of dropping 
+  ## unidentifiable parameters...
+  if (sum(object$bdrop)) { ## some coefficients were dropped...
+    q <- length(object$bdrop)
+    Vtemp <- Vb; Vb <- matrix(0,q,q)
+    Vb[!bdrop,!bdrop] <- Vtemp
+    Rtemp <- R; R <- matrix(0,q,q)
+    R[!bdrop,!bdrop] <- Rtemp
+  }  
+  ## reverse the various re-parameterizations...
+  Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
+  Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
+  ## what is appropriate for llb and R?
 
+} ## gam.fit5.post.proc
 
 

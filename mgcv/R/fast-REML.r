@@ -300,9 +300,11 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE) {
 } ## end ldetS
 
 Sl.repara <- function(rp,X,inverse=FALSE) {
-## Apply re-parameterization from ldetS to X, blockwise
-## if inverse==TRUE applies the inverse of the re-para to
-## vector X or cov matrix X...
+## Apply re-parameterization from ldetS to X, blockwise.
+## If X is a matrix it is assumed to be a model matrix
+## whereas if X is a vector it is assumed to be a parameter vector.
+## If inverse==TRUE applies the inverse of the re-para to
+## parameter vector X or cov matrix X...
   nr <- length(rp);if (nr==0) return(X)
   if (inverse) {
     if (is.matrix(X)) { ## X is a cov matrix
@@ -316,7 +318,11 @@ Sl.repara <- function(rp,X,inverse=FALSE) {
      for (i in 1:nr) X[rp[[i]]$ind]  <- rp[[i]]$Qs %*% X[rp[[i]]$ind]
     }
   } else { ## apply re-para to X
-    for (i in 1:nr) X[,rp[[i]]$ind]  <- X[,rp[[i]]$ind]%*%rp[[i]]$Qs
+    if (is.matrix(X)) {
+      for (i in 1:nr) X[,rp[[i]]$ind]  <- X[,rp[[i]]$ind]%*%rp[[i]]$Qs
+    } else {
+      for (i in 1:nr) X[rp[[i]]$ind]  <- t(rp[[i]]$Qs) %*% X[rp[[i]]$ind]
+    }
   }
   X
 } ## end Sl.repara
