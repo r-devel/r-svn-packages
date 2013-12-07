@@ -199,20 +199,21 @@ Sl.setup <- function(G) {
   Sl ## the penalty list
 } ## end of Sl.setup
 
-Sl.initial.repara <- function(Sl,X,inverse=FALSE) {
+Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE) {
 ## Routine to apply initial Sl re-parameterization to model matrix X,
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
-## or cov matrix
+## or cov matrix. if inverse is TRUE and both.sides=FALSE then 
+## re-para only applied to rhs, as appropriate for a choleski factor.
   if (inverse) { ## apply inverse re-para
     if (is.matrix(X)) { ## then assume it's a covariance matrix
       for (b in 1:length(Sl)) { 
         ind <- Sl[[b]]$start:Sl[[b]]$stop
         if (is.matrix(Sl[[b]]$D)) { 
-          X[ind,] <- Sl[[b]]$D%*%X[ind,,drop=FALSE]
+          if (both.sides) X[ind,] <- Sl[[b]]$D%*%X[ind,,drop=FALSE]
           X[,ind] <- X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) 
         } else {
           X[,ind] <- t(Sl[[b]]$D * t(X[,ind,drop=FALSE]))
-          X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
+          if (both.sides) X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
         } 
       }
     } else { ## it's a parameter vector
@@ -299,7 +300,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE) {
   list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E)
 } ## end ldetS
 
-Sl.repara <- function(rp,X,inverse=FALSE) {
+Sl.repara <- function(rp,X,inverse=FALSE,both.sides=TRUE) {
 ## Apply re-parameterization from ldetS to X, blockwise.
 ## If X is a matrix it is assumed to be a model matrix
 ## whereas if X is a vector it is assumed to be a parameter vector.
@@ -309,7 +310,7 @@ Sl.repara <- function(rp,X,inverse=FALSE) {
   if (inverse) {
     if (is.matrix(X)) { ## X is a cov matrix
       for (i in 1:nr) {
-        X[rp[[i]]$ind,]  <- 
+        if (both.sides) X[rp[[i]]$ind,]  <- 
                      rp[[i]]$Qs %*% X[rp[[i]]$ind,,drop=FALSE]
         X[,rp[[i]]$ind]  <- 
                      X[,rp[[i]]$ind,drop=FALSE] %*% t(rp[[i]]$Qs)

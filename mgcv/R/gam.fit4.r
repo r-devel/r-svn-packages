@@ -776,6 +776,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        L=L, ## chol factor of pre-conditioned penalized hessian
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
+       St=St, ## total penalty matrix
        bSb = t(coef)%*%St%*%coef, bSb1 =  d1bSb,bSb2 =  d2bSb,
        S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
@@ -798,9 +799,14 @@ gam.fit5.post.proc <- function(object,Sl) {
 ##       gam.fit5, and may have had parameters dropped. 
 ##       possibly initial reparam needs to be undone here as well
 ##       before formation of F....
-  llb <- -object$llb ## jessain of log likelihood in fit parameterization
-  R <- chol(llb,pivot=TRUE) 
+  llb <- -object$llb ## Hessain of log likelihood in fit parameterization
   p <- ncol(llb)
+  ipiv <- piv <- attr(object$L,"pivot")
+  ipiv[piv] <- 1:p
+  Vb0 <- crossprod(backsolve(object$L,diag(object$D,nrow=p)[piv,])[ipiv,])
+
+  R <- suppressWarnings(chol(llb,pivot=TRUE)) 
+  
   if (attr(R,"rank") < ncol(R)) { 
     ## The hessian of the -ve log likelihood is not +ve definite
     ## Find the "nearest" +ve semi-definite version and use that
@@ -814,22 +820,26 @@ gam.fit5.post.proc <- function(object,Sl) {
       Hp <- llb + object$St
       ## Now try to invert it by Choleski with diagonal pre-cond,
       ## to get Vb
-      
-      ## If this fails make more +ve def
-      tol <- tol + dtol;dtol <- dtol*10
-    } ## retry 
-    ## compute 
- 
+      object$D <- D <- diag(Hp)^-.5 ## diagonal pre-conditioner
+      Hp <- D*t(D*Hp) ## pre-condition Hp   
+      object$L <- suppressWarnings(chol(Hp,pivot=TRUE))
+      if (attr(object$L,"rank")==ncol(Hp)) {
+        retry <- FALSE
+      } else { ##  failure: make more +ve def
+        tol <- tol + dtol;dtol <- dtol*10
+      }
+    } ## retry  
   } else { ## hessian +ve def, so can simply use what comes from fit directly
     ipiv <- piv <- attr(R,"pivot")
     ipiv[piv] <- 1:p
     R <- R[,ipiv] ## so now t(R)%*%R = lbb
-    ## now DL'LD = penalized Hessian, which needs to be inverted
-    ## to DiLiLi'Di = Vb
-    ipiv <- piv <- attr(object$L,"pivot")
-    ipiv[piv] <- 1:p
-    Vb <- crossprod(backsolve(object$L,diag(1/object$D,nrow=p)[piv,])[ipiv,])
-  }
+  } 
+  ## DL'LD = penalized Hessian, which needs to be inverted
+  ## to DiLiLi'Di = Vb, the Bayesian cov matrix...
+  ipiv <- piv <- attr(object$L,"pivot")
+  ipiv[piv] <- 1:p
+  Vb <- crossprod(backsolve(object$L,diag(object$D,nrow=p)[piv,])[ipiv,])
+
   ## Insert any zeroes required as a result of dropping 
   ## unidentifiable parameters...
   if (sum(object$bdrop)) { ## some coefficients were dropped...
@@ -838,12 +848,32 @@ gam.fit5.post.proc <- function(object,Sl) {
     Vb[!bdrop,!bdrop] <- Vtemp
     Rtemp <- R; R <- matrix(0,q,q)
     R[!bdrop,!bdrop] <- Rtemp
+    lbbt <- lbb;lbb <- matrix(0,q,q)
+    lbb[!bdrop,!bdrop] <- lbb
   }  
-  ## reverse the various re-parameterizations...
+
+  F <- Vb%*%llb ## EDF matrix
+  Ve <- F%*%Vb ## 'frequentist' cov matrix
+
+  ## reverse the various re-parameterizations.
+  ## counter-intuitively the reparameterization 
+  ## for F and Vb are the same (as is that for llb)
+  ## suppose initially X <- XT, T orthogonal, so 
+  ## params ent b <- T'b. When reversing this
+  ## Vb <- TVbT' (since params go b <- Tb), 
+  ## while llb <- TllbT'. R <- RT'. 
+
+  Ve <- Sl.repara(object$rp,Ve,inverse=TRUE)
+  Ve <-  Sl.initial.repara(Sl,Ve,inverse=TRUE)
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
   Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
-  ## what is appropriate for llb and R?
-
+  F <- Sl.repara(object$rp,F,inverse=TRUE)
+  F <-  Sl.initial.repara(Sl,F,inverse=TRUE)
+  R <- Sl.repara(object$rp,R,inverse=TRUE,both.sides=FALSE)
+  R <-  Sl.initial.repara(Sl,R,inverse=TRUE,both.sides=FALSE)
+  edf <- diag(F);edf1 <- 2*edf - rowSums(t(F)*F)
+  ## note hat not possible here...
+  list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,F=F,R=R)
 } ## gam.fit5.post.proc
 
 

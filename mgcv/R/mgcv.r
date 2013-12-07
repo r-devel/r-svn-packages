@@ -1384,7 +1384,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } 
   
   object$control <- control
-  mv <- gam.fit3.post.proc(G$X,object)
+  if (inherits(family,"general.family")) {
+    mv <- gam.fit5.post.proc(object,G$Sl)
+  } else mv <- gam.fit3.post.proc(G$X,object)
   object$Vp <- mv$Vb
   object$hat<-mv$hat
   object$Ve <- mv$Ve
