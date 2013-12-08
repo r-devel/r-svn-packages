@@ -664,7 +664,7 @@ gam.setup.list <- function(formula,pterms,
     }
     G$cmX <- c(G$cmX,um$cmX)
     G$term.names <- c(G$term.names,um$term.names)
-
+    G$lsp0 <- c(G$lsp0,um$lsp0)
     pof <- ncol(G$x)
   }
  
@@ -1386,6 +1386,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$control <- control
   if (inherits(family,"general.family")) {
     mv <- gam.fit5.post.proc(object,G$Sl)
+    object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
   } else mv <- gam.fit3.post.proc(G$X,object)
   object$Vp <- mv$Vb
   object$hat<-mv$hat
@@ -1511,7 +1512,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   } else fixedSteps <- control$maxit+2
   
-  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0,...))
+  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0,E=G$Eb,...))
   else lsp2 <- rep(0,0)
 
   if (outer.looping && !is.null(in.out)) { # initial s.p.s and scale provided
@@ -1588,7 +1589,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
         G$L <- L
       }
       if (!is.null(G$lsp0)) G$lsp0 <- c(th0*0,G$lsp0)
-    } 
+    } else nth <- 0
 
     ## extended family may need to manipulate G...
     
@@ -1611,7 +1612,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
   ## correct null deviance if there's an offset [Why not correct calc in gam.fit/3???]....
 
-  if (G$intercept&&any(G$offset!=0)) object$null.deviance <-
+  if (!inherits(G$family,"extended.family")&&G$intercept&&any(G$offset!=0)) object$null.deviance <-
          glm(object$y~offset(G$offset),family=object$family,weights=object$prior.weights)$deviance
 
   object$method <- criterion
@@ -3652,7 +3653,7 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 
 
 initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
-                        start=NULL,mustart=NULL,etastart=NULL,...) {
+                        start=NULL,mustart=NULL,etastart=NULL,E=NULL,...) {
 ## initial smoothing parameter values based on approximate matching 
 ## of Frob norm of XWX and S. If L is non null then it is assumed
 ## that the sps multiplying S elements are given by L%*%sp+lsp0 and 
@@ -3665,12 +3666,14 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
   if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
   eval(family$initialize) 
   if (inherits(family,"general.family")) { ## Cox, gamlss etc...
+    ## create balanced sqrt penalty for initialization purposes...
+    
     lbb <- family$ll(y,x,start,weights,family,deriv=1)$lbb ## initial Hessian 
     lambda <- rep(0,length(S))
     ## choose lambda so that corresponding elements of lbb and S[[i]]
     ## are roughly in balance...
     for (i in 1:length(S)) {
-      ind <- off[i]:(off[i]+ncol(S[[1]])-1)
+      ind <- off[i]:(off[i]+ncol(S[[i]])-1)
       lambda[i] <- norm(lbb[ind,ind])/norm(S[[i]])
     }
   } else { ## some sort of conventional regression

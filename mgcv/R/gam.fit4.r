@@ -548,29 +548,34 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   rank.tol <- .Machine$double.eps*100 ## tolerance to use for rank deficiency
   q <- ncol(x)
   n <- nobs <- length(y)
+ 
+  E <- attr(Sl,"E") ## balanced penalty sqrt
 
   ## now call initialization code, but make sure that any 
   ## supplied 'start' vector is not overwritten...
   start0 <- start
-
+  
   ## Assumption here is that the initialization code is fine with
-  ## initially re-parameterized x...
+  ##  re-parameterized x...
 
   eval(family$initialize) 
    
   if (!is.null(start0)) start <- start0 
   coef <- as.numeric(start)
-  
+
+ 
   ## the stability reparameterization + log|S|_+ and derivs... 
   ## NOTE: what if no smooths??
   rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
   x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
+  E <- Sl.repara(rp$rp,E) ## 
   coef <- Sl.repara(rp$rp,coef) ## and to coef
   St <- crossprod(rp$E) ## total penalty matrix
 
   if (is.null(weights)) weights <- rep.int(1, nobs)
   if (is.null(offset)) offset <- rep.int(0, nobs)
  
+
   ## get log likelihood, grad and Hessian...
   ll <- family$ll(y,x,coef,weights,family,deriv=1)
   ll0 <- ll$l - t(coef)%*%St%*%coef/2
@@ -626,7 +631,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
           break
         } else { ## check rank
           rank.checked <- TRUE
-          Sb <- crossprod(attr(Sl,"E")) ## balanced penalty
+          Sb <- crossprod(E) ## balanced penalty
           Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
           qrh <- qr(Hb,LAPACK=TRUE)
           rank <- Rrank(qr.R(qrh))
