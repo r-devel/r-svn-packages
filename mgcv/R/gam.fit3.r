@@ -1228,7 +1228,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
              control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
              mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-             pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl...)
+             pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
           mustart <- b$fitted.values 
           start <- b$coefficients
           old.score <- score;lsp <- lsp1

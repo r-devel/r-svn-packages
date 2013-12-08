@@ -769,7 +769,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   list(coefficients=coef,
        fitted.values=NULL, ## NOTE: temporary
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
-       REML=as.numeric(REML),REML1=as.numeric(REML1),REML2=REML2,
+       REML= -as.numeric(REML),REML1= -as.numeric(REML1),REML2= -REML2,
        rank=rank,
        l= ll$l,l1 =d1l,l2 =d2l,
        llb = ll$lbb, ## Hessian of log likelihood
@@ -803,7 +803,7 @@ gam.fit5.post.proc <- function(object,Sl) {
   p <- ncol(llb)
   ipiv <- piv <- attr(object$L,"pivot")
   ipiv[piv] <- 1:p
-  Vb0 <- crossprod(backsolve(object$L,diag(object$D,nrow=p)[piv,])[ipiv,])
+  Vb0 <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
 
   R <- suppressWarnings(chol(llb,pivot=TRUE)) 
   
@@ -838,7 +838,7 @@ gam.fit5.post.proc <- function(object,Sl) {
   ## to DiLiLi'Di = Vb, the Bayesian cov matrix...
   ipiv <- piv <- attr(object$L,"pivot")
   ipiv[piv] <- 1:p
-  Vb <- crossprod(backsolve(object$L,diag(object$D,nrow=p)[piv,])[ipiv,])
+  Vb <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
 
   ## Insert any zeroes required as a result of dropping 
   ## unidentifiable parameters...
@@ -852,25 +852,14 @@ gam.fit5.post.proc <- function(object,Sl) {
     lbb[!bdrop,!bdrop] <- lbb
   }  
 
-  F <- Vb%*%llb ## EDF matrix
-  Ve <- F%*%Vb ## 'frequentist' cov matrix
-
-  ## reverse the various re-parameterizations.
-  ## counter-intuitively the reparameterization 
-  ## for F and Vb are the same (as is that for llb)
-  ## suppose initially X <- XT, T orthogonal, so 
-  ## params ent b <- T'b. When reversing this
-  ## Vb <- TVbT' (since params go b <- Tb), 
-  ## while llb <- TllbT'. R <- RT'. 
-
-  Ve <- Sl.repara(object$rp,Ve,inverse=TRUE)
-  Ve <-  Sl.initial.repara(Sl,Ve,inverse=TRUE)
+  ## reverse the various re-parameterizations...
+ 
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
   Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
-  F <- Sl.repara(object$rp,F,inverse=TRUE)
-  F <-  Sl.initial.repara(Sl,F,inverse=TRUE)
   R <- Sl.repara(object$rp,R,inverse=TRUE,both.sides=FALSE)
-  R <-  Sl.initial.repara(Sl,R,inverse=TRUE,both.sides=FALSE)
+  R <-  Sl.initial.repara(Sl,R,inverse=TRUE,both.sides=FALSE,cov=FALSE)
+  F <- Vb%*%crossprod(R)
+  Ve <- F%*%Vb ## 'frequentist' cov matrix
   edf <- diag(F);edf1 <- 2*edf - rowSums(t(F)*F)
   ## note hat not possible here...
   list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,F=F,R=R)

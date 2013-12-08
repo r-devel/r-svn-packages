@@ -3675,7 +3675,7 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
     }
   } else { ## some sort of conventional regression
     if (is.null(mukeep)) {
-      if (!is.null(start)) etastart <- drop(X%*%start)
+      if (!is.null(start)) etastart <- drop(x%*%start)
       if (!is.null(etastart)) mustart <- family$linkinv(etastart)
     } else mustart <- mukeep
     if (inherits(family,"extended.family")) {

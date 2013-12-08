@@ -19,7 +19,7 @@ Sl.setup <- function(G) {
 ##   - Applies to cols/params from start:stop.
 ##   - If numeric then X[,start:stop]%*%diag(D) is repara X[,start:stop],
 ##     b.orig = D*b.repara
-##   - If matrix then X[,start:stop]%*%diag(D) is repara X[,start:stop],
+##   - If matrix then X[,start:stop]%*%D is repara X[,start:stop],
 ##     b.orig = D%*%b.repara
 ## The penalties in Sl are in the same order as those in G
 ## Also returns attribute "E" a square root of the well scaled total
@@ -152,9 +152,11 @@ Sl.setup <- function(G) {
         ind <- rep(FALSE,length(D))
         ind[1:Sl[[b]]$rank] <- TRUE ## index penalized elements
         D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1
-        D <- t(D*t(U)) ## D <- U%*%diag(D)
+        Sl[[b]]$D <- t(D*t(U)) ## D <- U%*%diag(D)
+        Sl[[b]]$Di <- t(U)/D
         ## so if X is smooth model matrix X%*%D is re-parameterized form 
-        Sl[[b]]$D <- D; Sl[[b]]$ind <- ind
+        ## Sl[[b]]$D <- D; 
+        Sl[[b]]$ind <- ind
       }
       ## add penalty square root into E  
       ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
@@ -199,21 +201,36 @@ Sl.setup <- function(G) {
   Sl ## the penalty list
 } ## end of Sl.setup
 
-Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE) {
+Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
 ## Routine to apply initial Sl re-parameterization to model matrix X,
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
 ## or cov matrix. if inverse is TRUE and both.sides=FALSE then 
 ## re-para only applied to rhs, as appropriate for a choleski factor.
   if (inverse) { ## apply inverse re-para
-    if (is.matrix(X)) { ## then assume it's a covariance matrix
-      for (b in 1:length(Sl)) { 
-        ind <- Sl[[b]]$start:Sl[[b]]$stop
-        if (is.matrix(Sl[[b]]$D)) { 
-          if (both.sides) X[ind,] <- Sl[[b]]$D%*%X[ind,,drop=FALSE]
-          X[,ind] <- X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) 
-        } else {
-          X[,ind] <- t(Sl[[b]]$D * t(X[,ind,drop=FALSE]))
-          if (both.sides) X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
+    if (is.matrix(X)) { 
+      if (cov) { ## then it's a covariance matrix
+        for (b in 1:length(Sl)) { 
+          ind <- Sl[[b]]$start:Sl[[b]]$stop
+          if (is.matrix(Sl[[b]]$D)) { 
+            if (both.sides) X[ind,] <- Sl[[b]]$D%*%X[ind,,drop=FALSE]
+            X[,ind] <- X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) 
+          } else { ## Diagonal D
+            X[,ind] <- t(Sl[[b]]$D * t(X[,ind,drop=FALSE]))
+            if (both.sides) X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
+          } 
+        } 
+      } else { ## regular matrix: need to use Di
+         for (b in 1:length(Sl)) { 
+          ind <- Sl[[b]]$start:Sl[[b]]$stop
+          if (is.matrix(Sl[[b]]$D)) { 
+            Di <- if(is.null(Sl[[b]]$Di)) t(Sl[[b]]$D) else Sl[[b]]$Di
+            if (both.sides) X[ind,] <- t(Di)%*%X[ind,,drop=FALSE]
+            X[,ind] <- X[,ind,drop=FALSE]%*%Di 
+          } else { ## Diagonal D
+            Di <- 1/Sl[[b]]$D
+            X[,ind] <- t(Di * t(X[,ind,drop=FALSE]))
+            if (both.sides) X[ind,] <- Di * X[ind,,drop=FALSE]
+          } 
         } 
       }
     } else { ## it's a parameter vector
