@@ -769,20 +769,21 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ## get grad and Hessian of REML score...
   REML <- ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2 - ldetHp/2 + Mp*log(2*pi)/2
   REML1 <- d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2
-  REML2 <- d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2
+  REML2 <- d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2 
+  bSb <- t(coef)%*%St%*%coef
   coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef
-  list(coefficients=coef,
+  list(coefficients=coef,family=family,
        fitted.values=NULL, ## NOTE: temporary
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
        REML= -as.numeric(REML),REML1= -as.numeric(REML1),REML2= -REML2,
        rank=rank,
        l= ll$l,l1 =d1l,l2 =d2l,
-       llb = ll$lbb, ## Hessian of log likelihood
+       lbb = ll$lbb, ## Hessian of log likelihood
        L=L, ## chol factor of pre-conditioned penalized hessian
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
        St=St, ## total penalty matrix
-       bSb = t(coef)%*%St%*%coef, bSb1 =  d1bSb,bSb2 =  d2bSb,
+       bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        b1 = d1b,b2 = d2b,
@@ -804,25 +805,25 @@ gam.fit5.post.proc <- function(object,Sl) {
 ##       gam.fit5, and may have had parameters dropped. 
 ##       possibly initial reparam needs to be undone here as well
 ##       before formation of F....
-  llb <- -object$llb ## Hessain of log likelihood in fit parameterization
-  p <- ncol(llb)
+  lbb <- -object$lbb ## Hessian of log likelihood in fit parameterization
+  p <- ncol(lbb)
   ipiv <- piv <- attr(object$L,"pivot")
   ipiv[piv] <- 1:p
-  Vb0 <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
+  ##  Vb0 <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
 
-  R <- suppressWarnings(chol(llb,pivot=TRUE)) 
+  R <- suppressWarnings(chol(lbb,pivot=TRUE)) 
   
   if (attr(R,"rank") < ncol(R)) { 
     ## The hessian of the -ve log likelihood is not +ve definite
     ## Find the "nearest" +ve semi-definite version and use that
     retry <- TRUE;tol<-0
-    eh <- eigen(llb,symmetric=TRUE)
+    eh <- eigen(lbb,symmetric=TRUE)
     mev <- max(eh$values);dtol <- 1e-7
     while (retry) {
       eh$values[eh$values<tol*mev] <- tol*mev
       R <- sqrt(eh$values)*t(eh$vectors)
-      llb <- crossprod(R)
-      Hp <- llb + object$St
+      lbb <- crossprod(R)
+      Hp <- lbb + object$St
       ## Now try to invert it by Choleski with diagonal pre-cond,
       ## to get Vb
       object$D <- D <- diag(Hp)^-.5 ## diagonal pre-conditioner
@@ -849,12 +850,13 @@ gam.fit5.post.proc <- function(object,Sl) {
   ## unidentifiable parameters...
   if (sum(object$bdrop)) { ## some coefficients were dropped...
     q <- length(object$bdrop)
+    ibd <- !object$bdrop
     Vtemp <- Vb; Vb <- matrix(0,q,q)
-    Vb[!bdrop,!bdrop] <- Vtemp
+    Vb[ibd,ibd] <- Vtemp
     Rtemp <- R; R <- matrix(0,q,q)
-    R[!bdrop,!bdrop] <- Rtemp
+    R[ibd,ibd] <- Rtemp
     lbbt <- lbb;lbb <- matrix(0,q,q)
-    lbb[!bdrop,!bdrop] <- lbb
+    lbb[ibd,ibd] <- lbbt
   }  
 
   ## reverse the various re-parameterizations...

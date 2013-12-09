@@ -619,7 +619,7 @@ gam.setup.list <- function(formula,pterms,
   pof <- ncol(G$X) ## 
   for (i in 2:d) {
     if (is.null(formula[[i]]$response)) formula[[i]]$response <- formula$response ## keep gam.setup happy
-    spind <- (G$m+1):length(sp)
+    spind <- if (is.null(sp)) 1 else (G$m+1):length(sp)
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
@@ -632,7 +632,7 @@ gam.setup.list <- function(formula,pterms,
     G$X <- cbind(G$X,um$X) ## extend model matrix
     ## deal with the smooths...
     k <- G$m
-    if (length(um$m)) for (j in 1:um$m) {
+    if (um$m) for (j in 1:um$m) {
       um$smooth[[j]]$first.para <- um$smooth[[j]]$first.para + pof
       um$smooth[[j]]$last.para <- um$smooth[[j]]$last.para + pof
       k <- k + 1 
@@ -1504,14 +1504,19 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
   family <- G$family  
-  if (outer.looping) { 
-    fixedSteps <- control$outerPIsteps      ## how many performance iteration steps to use for initialization
+  if (outer.looping) {     
+    ## how many performance iteration steps to use for initialization...
+    fixedSteps <- if (inherits(G$family,"extended.family")) 0 else control$outerPIsteps  
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       scale <- G$sig2 <- 1
       G$family <- negbin(max(family$getTheta()),link=family$link)
     }
   } else fixedSteps <- control$maxit+2
   
+  ## extended family may need to manipulate G...
+    
+  if (!is.null(G$family$preinitialize)) eval(G$family$preinitialize)
+
   if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0,E=G$Eb,...))
   else lsp2 <- rep(0,0)
 
@@ -1520,12 +1525,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (is.null(in.out$sp)||is.null(in.out$scale)) ok <- FALSE
     if (length(in.out$sp)!=length(G$sp)) ok <- FALSE
     if (!ok) stop("in.out incorrect: see documentation")
-    #object<-list() # fake enough of a returned fit object for initialization 
-    ##object$sp <- in.out$sp[G$all.sp<0] # only use the values for free s.p.s
-    #object$sp <- in.out$sp
     lsp <- log(in.out$sp) 
-    #object$gcv.ubre <- in.out$scale
-    #object$sig2 <- 0 ## just means that in.out$scale acts as total scale
   } else {## do performance iteration.... 
     if (fixedSteps>0) { 
       object <- gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
@@ -1536,20 +1536,12 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   }
   G$family <- family ## restore, in case manipulated for negative binomial 
     
-  if (outer.looping)
-  { # use perf.iter s.p. estimates from gam.fit or supplied initial s.p.s as starting values...
-    #lsp<-log(object$sp) 
+  if (outer.looping) {
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may
     # get stuck on flat portions of GCV/UBRE score....
     if (is.null(in.out)&&length(lsp)>0) { ## note no checks if supplied 
-     # lsp2 <- log(initial.sp(G$X,G$S,G$off)) 
-     # if (!is.null(G$L)) { ## estimate underlying smoothing parameters
-     #   if (is.null(G$lsp0)) G$lsp0 <- rep(0,nrow(G$L))
-     #   lsp2 <- as.numeric(coef(lm(lsp2~G$L-1+offset(G$lsp0))))
-     # }
       ind <- lsp > lsp2+5;lsp[ind] <- lsp2[ind]+5
       ind <- lsp < lsp2-5;lsp[ind] <- lsp2[ind]-5 
-      #if (fixedSteps<1) lsp <- lsp2 ## don't use perf iter sp's at all
     }
    
     ## Get an estimate of the coefs corresponding to maximum reasonable deviance,
@@ -1591,10 +1583,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$lsp0)) G$lsp0 <- c(th0*0,G$lsp0)
     } else nth <- 0
 
-    ## extended family may need to manipulate G...
-    
-    if (!is.null(G$family$preinitialize)) eval(G$family$preinitialize)
-
+   
     G$null.coef <- null.stuff$null.coef
 
     object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),
@@ -1856,7 +1845,8 @@ print.gam<-function (x,...)
 # default print function for gam objects
 { print(x$family)
   cat("Formula:\n")
-  print(x$formula)
+  if (is.list(x$formula)) for (i in 1:length(x$formula)) print(x$formula[[i]]) else
+     print(x$formula)
   n.smooth<-length(x$smooth)
   if (n.smooth==0)
   cat("Total model degrees of freedom",sum(x$edf),"\n")
@@ -2426,7 +2416,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   drop.intercept <- FALSE 
   if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
     drop.intercept <- TRUE; 
-    attr(Terms,"intercept") <- 1 ## make sure intecept explicitly included, so it can be cleanly dropped
+    attr(Terms,"intercept") <- 1 ## make sure intercept explicitly included, so it can be cleanly dropped
   } 
   Terms <- delete.response(object$pterms)
   s.offset <- NULL # to accumulate any smooth term specific offset
@@ -3275,8 +3265,11 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
                               signif.stars = getOption("show.signif.stars"), ...)
 # print method for gam summary method. Improved by Henric Nilsson
 { print(x$family)
-  cat("Formula:\n")
-  print(x$formula)
+  cat("Formula:\n") 
+
+  if (is.list(x$formula)) for (i in 1:length(x$formula)) print(x$formula[[i]]) else
+     print(x$formula)
+
   if (length(x$p.coeff)>0)
   { cat("\nParametric coefficients:\n")
     printCoefmat(x$p.table, digits = digits, signif.stars = signif.stars, na.print = "NA", ...)
