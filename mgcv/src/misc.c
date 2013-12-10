@@ -181,11 +181,11 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
  
 */
 { int j_max,i,j_lo,j_hi,jb,jal,j0,j,ok;
-  double x,xx,ymax,ymin,alpha,*alogy,*p1,*p2,*p3,*p4,*p5,
+  double x,x1,x2,xx,ymax,ymin,alpha,*alogy,*p1,*p2,*p3,*p4,*p5,
     *wb,*wb1,*wb2,*wp1,*wp2,*wpp,
     w_base,wp_base,wp2_base,wpp_base,wp1j,wp2j,wj_scaled,dW_scaled,wdlogwdp,
     wdW2d2W,dWpp,
-    wmax,w1max,w2max,wmin,w1min,w2min,
+    wmax,w1max,w2max,wmin,w1min,w2min,wp1jmin,wdW2min,Wppmin,
     wi,w1i,w2i,
     log_eps,wj,w1j,w2j,jalogy,onep,onep2,*logy1p2,*logy1p3;
   
@@ -255,7 +255,7 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
     wb2[jb] = wb[jb]  + log(x*(x-1/ *phi));
     xx = j/onep2;
     x = xx*digamma(-j*alpha);
-    wp1[jb] = j * wp_base + x;
+    wp1[jb] = j * wp_base + x; /* base for d logW_j/dp */
     xx = trigamma(-j*alpha) * xx * xx;
     wp2[jb] = j * wp2_base + 2*x/onep - xx;
     wpp[jb] = j * wpp_base;
@@ -280,7 +280,13 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
     wmax = wb[j_max] - jalogy;wmin = wmax + log_eps; 
     w1max = wb1[j_max] - jalogy;w1min = w1max + log_eps;    
     w2max = wb2[j_max] - jalogy;w2min = w2max + log_eps;
- 
+    /* now compute approx largest magnitude elements in sums relating to mixed second deriv terms, 
+       in order to get size of element to judge as converged.
+       Note largest wj_scaled approx 1.  */ 
+    x = fabs(wp1[j_max] - j * logy1p2[i]);
+    wp1jmin = x * *eps;
+    wdW2min = fabs(x*x + wp2[j_max] - 2 * j * logy1p3[i]) * *eps;
+    Wppmin = fabs(wpp[j_max] + x*exp(wb1[j_max]-jalogy-wmax)) * *eps;
     /* start upsweep to convergence or end of available buffered values */
     ok = 0;
     for (j=j_max+j0,jb=j_max;jb<=j_hi;jb++,j++) { // note initially wi etc initialized to 1 and summation starts 1 later
@@ -298,10 +304,13 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
       dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
       x = wj_scaled*wp1j;
       wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-      wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
-      dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */  
+      x1 = wj_scaled*(wp1j*wp1j + wp2j);
+      wdW2d2W += x1;  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
+      x2 = dW_scaled*wp1j + wj_scaled*wpp[jb];
+      dWpp += x2; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */  
 
-      if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)) { ok=1;break;} /* converged on upsweep */
+      if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)&&
+          (fabs(x) < wp1jmin)&&(fabs(x1) < wdW2min)&&(fabs(x2) < Wppmin)) { ok=1;break;} /* converged on upsweep */
     } /* end of upsweep to buffer end */ 
 
     while (!ok) { /* while upsweep unconverged need to fill in more buffer */
@@ -330,10 +339,13 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
         dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
         x = wj_scaled*wp1j;
         wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-        wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
-        dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
+        x1 = wj_scaled*(wp1j*wp1j + wp2j);
+        wdW2d2W += x1;  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */    
+        x2 = dW_scaled*wp1j + wj_scaled*wpp[jb]; 
+        dWpp += x2; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
 
-        if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)) { ok=1;break;} /* converged on upsweep */
+        if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)&&
+          (fabs(x) < wp1jmin)&&(fabs(x1) < wdW2min)&&(fabs(x2) < Wppmin)) { ok=1;break;} /* converged on upsweep */
         
       } 
       j_hi = jb; if (j_hi > jal-1) j_hi = jal-1; /* set j_hi to last element filled */
@@ -363,10 +375,13 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
       dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
       x = wj_scaled*wp1j;
       wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-      wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
-      dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
+      x1 = wj_scaled*(wp1j*wp1j + wp2j);
+      wdW2d2W += x1;  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
+      x2 = dW_scaled*wp1j + wj_scaled*wpp[jb];
+      dWpp += x2; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
      
-      if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)) { ok=1;break;} /* converged on downsweep */
+      if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)&&
+          (fabs(x) < wp1jmin)&&(fabs(x1) < wdW2min)&&(fabs(x2) < Wppmin)) { ok=1;break;} /* converged on downsweep */
     } /* end of downsweep to buffer end */ 
    
     if (j<=1&&j_lo==0) ok=1; /* don't care about element size if reached base */
@@ -397,11 +412,13 @@ double *w2pp,double *y,double *phi,double *p,double *eps,int *n)
         dW_scaled = -exp(w1j-wmax); /* note scaling by wmax not w1max */
         x = wj_scaled*wp1j;
         wdlogwdp += x;    /* sum_j W_j dlogW_j/dp */
-    
-        wdW2d2W += wj_scaled*(wp1j*wp1j + wp2j);  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */     
-        dWpp += dW_scaled*wp1j + wj_scaled*wpp[jb]; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
+        x1 = wj_scaled*(wp1j*wp1j + wp2j);
+        wdW2d2W += x1;  /* sum_j  (dlog W_j/dp)^2 + W_j d^2logW_j/dp^2 */  
+        x2 = dW_scaled*wp1j + wj_scaled*wpp[jb]; 
+        dWpp += x2; /* sum_j dW_j/dphi dlog W_j/dp + W_j d^2logW_j/dpdphi */ 
   
-        if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)) { ok=1;break;} /* converged on downsweep */
+        if ((wj < wmin)&&(w1j < w1min)&&(w2j < w2min)&&
+          (fabs(x) < wp1jmin)&&(fabs(x1) < wdW2min)&&(fabs(x2) < Wppmin)) { ok=1;break;} /* converged on downsweep */
       } 
       if (j<=1) ok=1; /* don't care about element size if reached base */
 

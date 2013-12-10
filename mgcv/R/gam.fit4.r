@@ -184,6 +184,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
     
       null.coef <- t(T)%*%null.coef  
      
+      if (!is.null(start)) start <- t(T)%*%start
+
       ## form x%*%T in parallel 
       ## x <- .Call("mgcv_pmmult2",x,T,0,0,control$nthreads,PACKAGE="mgcv")
       x <- .Call(C_mgcv_pmmult2,x,T,0,0,control$nthreads) ## within package version
@@ -231,7 +233,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                   " and correspond to initial coefs for ", deparse(xnames))
               else {
                   coefold <- start
-                  offset + as.vector(if (NCOL(x) == 1) 
+                  etaold <- offset + as.vector(if (NCOL(x) == 1) 
                   x * start
                   else x %*% start)
               }

@@ -174,12 +174,13 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
       T <- U1%*%T ## new params b'=T'b old params
     
       null.coef <- t(T)%*%null.coef  
-     
+ 
+      if (!is.null(start)) start <- t(T)%*%start
+    
       ## form x%*%T in parallel 
       x <- .Call(C_mgcv_pmmult2,x,T,0,0,control$nthreads)
       ## x <- x%*%T   ## model matrix 0(nq^2)
    
-
       rS <- list()
       for (i in 1:length(UrS)) {
         rS[[i]] <- rbind(rp$rS[[i]],matrix(0,Mp,ncol(rp$rS[[i]])))
