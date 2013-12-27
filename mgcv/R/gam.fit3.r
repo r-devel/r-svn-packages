@@ -2064,11 +2064,33 @@ mini.roots <- function(S,off,np,rank=NULL)
 }
 
 
-ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
+ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 ## evaluates log Tweedie density for 1<=p<=2, using series summation of
 ## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
- 
-  if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
+
+  if (!is.na(rho)&&!is.na(theta)) { ## use rho and theta and get derivs w.r.t. these
+    if (length(rho)>1||length(theta)>1) stop("only scalar `rho' and `theta' allowed.")
+    if (a>=b||a<=1||b>=2) stop("1<a<b<2 (strict) required")
+    work.param <- TRUE
+    th <- theta;phi <- exp(rho)
+    p <- if (th>0) (b+a*exp(-th))/(1+exp(-th)) else (b*exp(th)+a)/(exp(th)+1) 
+    dpth1 <- if (th>0) exp(-th)*(b-a)/(1+exp(-th))^2 else exp(th)*(b-a)/(exp(th)+1)^2
+    dpth2 <- if (th>0) ((a-b)*exp(-th)+(b-a)*exp(-2*th))/(exp(-th)+1)^3 else
+                   ((a-b)*exp(2*th)+(b-a)*exp(th))/(exp(th)+1)^3
+  } else { ## still need working params for tweedious call...
+    work.param <- FALSE 
+    if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
+    rho <- log(phi)
+    if (p>1&&p<2) {
+      if (p<a) a <- (1+p)/2
+      if (p>b) b <- (2+p)/2
+      pabp <- (p-a)/(b-p)
+      theta <- log((p-a)/(b-p))
+      dthp1 <- (1+pabp)/(p-a)
+      dthp2 <- (pabp+1)/((p-a)*(b-p)) -(pabp+1)/(p-a)^2
+    }
+  }
+
   if (p<1||p>2) stop("p must be in [1,2]")
   ld <- cbind(y,y,y);ld <- cbind(ld,ld*NA)
   if (p == 2) { ## It's Gamma
@@ -2115,9 +2137,17 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
   y <- y[!ind];mu <- mu[!ind]
   w <- w1 <- w2 <- y*0
   oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-           w2pp=as.double(y*0),y=as.double(y),
-           phi=as.double(phi),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
+           w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps*1e-6),n=as.integer(length(y)),
+           th=as.double(theta),rho=as.double(rho),a=as.double(a),b=as.double(b))
   
+  if (!work.param) { ## transform working param derivatives to p/phi derivs...
+    oo$w2 <- oo$w2/phi^2 - oo$w1/phi^2
+    oo$w1 <- oo$w1/phi
+    oo$w2p <- oo$w2p*dthp1^2 + dthp2 * oo$w1p
+    oo$w1p <- oo$w1p*dthp1
+    oo$wpp <- oo$wpp*dthp1/phi
+  }
+
 #  check.derivs <- TRUE
 #  if (check.derivs) {
 #    eps <- 1e-9
@@ -2142,17 +2172,43 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1) {
 
   log.mu <- log(mu)
   theta <- mu^(1-p)
-  k.theta <- mu*theta/(2-p)
-  theta <- theta/(1-p)
+  k.theta <- mu*theta/(2-p) ## mu^(2-p)/(2-p)
+  theta <- theta/(1-p) ## mu^(1-p)/(1-p)
   l.base <-  (y*theta-k.theta)/phi
-  ld[!ind,1] <- l.base - log(y) + oo$w ## log density
-  ld[!ind,2] <- -l.base/phi + oo$w1   ## d log f / dphi
-  ld[!ind,3] <- 2*l.base/(phi*phi) + oo$w2 ## d2 logf / dphi2
+  ld[!ind,1] <- l.base - log(y) ## log density
+  ld[!ind,2] <- -l.base/phi  ## d log f / dphi
+  ld[!ind,3] <- 2*l.base/(phi*phi)  ## d2 logf / dphi2
   x <- theta*y*(1/(1-p) - log.mu)/phi + k.theta*(log.mu-1/(2-p))/phi
-  ld[!ind,4] <- oo$w1p + x
-  ld[!ind,5] <- oo$w2p + theta * y * (log.mu^2 - 2*log.mu/(1-p) + 2/(1-p)^2)/phi -
+  ld[!ind,4] <- x
+  ld[!ind,5] <- theta * y * (log.mu^2 - 2*log.mu/(1-p) + 2/(1-p)^2)/phi -
                 k.theta * (log.mu^2 - 2*log.mu/(2-p) + 2/(2-p)^2)/phi ## d2 logf / dp2
-  ld[!ind,6] <- oo$w2pp - x/phi ## d2 logf / dphi dp
+  ld[!ind,6] <- - x/phi ## d2 logf / dphi dp
+
+  if (work.param) { ## transform derivs to derivs wrt working
+    ld[,3] <- ld[,3]*phi^2 + ld[,2]*phi
+    ld[,2] <- ld[,2]*phi
+    ld[,5] <- ld[,5]*dpth1^2 + ld[,4]*dpth2
+    ld[,4] <- ld[,4]*dpth1
+    ld[,6] <- ld[,6]*dpth1*phi
+  }
+
+if (TRUE) { ## DEBUG disconnetion of a terms
+  ld[!ind,1] <- ld[!ind,1] + oo$w ## log density
+  ld[!ind,2] <- ld[!ind,2] + oo$w1   ## d log f / dphi
+  ld[!ind,3] <- ld[!ind,3] + oo$w2 ## d2 logf / dphi2
+  ld[!ind,4] <- ld[!ind,4] + oo$w1p 
+  ld[!ind,5] <- ld[!ind,5] + oo$w2p  ## d2 logf / dp2
+  ld[!ind,6] <- ld[!ind,6] + oo$w2pp ## d2 logf / dphi dp
+} 
+if (FALSE) { ## DEBUG disconnetion of density terms
+  ld[!ind,1] <-  oo$w ## log density
+  ld[!ind,2] <-  oo$w1   ## d log f / dphi
+  ld[!ind,3] <-  oo$w2 ## d2 logf / dphi2
+  ld[!ind,4] <-  oo$w1p 
+  ld[!ind,5] <-  oo$w2p  ## d2 logf / dp2
+  ld[!ind,6] <-  oo$w2pp ## d2 logf / dphi dp
+} 
+
   ld
 }
 
