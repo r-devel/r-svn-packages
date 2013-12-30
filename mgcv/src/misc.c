@@ -185,7 +185,8 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,
 */
 { int j_max,i,j_lo,j_hi,jb,jal,j0,j,ok;
   double x,x1,x2,xx,ymax,ymin,alpha,*alogy,*p1,*p2,*p3,*p4,*p5,
-    *wb,*wb1,*wb2,*wp1,*wp2,*wpp,dpth1=0,dpth2=0,//xmax,x1max,x2max,
+    *wb,*wb1,//*wb2,
+    *wp1,*wp2,*wpp,dpth1=0,dpth2=0,//xmax,x1max,x2max,
     w_base,wp_base,wp2_base,wp1j,wp2j,wppj,wj_scaled,wdlogwdp,
     wdW2d2W,dWpp,exp_th,
     wmax,wmin,
@@ -378,7 +379,7 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,
         /*Rprintf("forward buffer expansion\n");*/
         wb = forward_buf(wb,&jal,0);
         wb1 = forward_buf(wb1,&jal,0);
-        wb2 = forward_buf(wb2,&jal,0);
+	// wb2 = forward_buf(wb2,&jal,0);
         wp1 = forward_buf(wp1,&jal,0);
         wp2 = forward_buf(wp2,&jal,0);
         wpp = forward_buf(wpp,&jal,1);
@@ -462,7 +463,7 @@ void tweedious(double *w,double *w1,double *w2,double *w1p,double *w2p,
         /*Rprintf("backward buffer expansion\n");*/
         wb = backward_buf(wb,&jal,&j0,&j_lo,&j_hi,0);
         wb1 = backward_buf(wb1,&jal,&j0,&j_lo,&j_hi,0);
-        wb2 = backward_buf(wb2,&jal,&j0,&j_lo,&j_hi,0);
+	// wb2 = backward_buf(wb2,&jal,&j0,&j_lo,&j_hi,0);
         wp1 = backward_buf(wp1,&jal,&j0,&j_lo,&j_hi,0);
         wp2 = backward_buf(wp2,&jal,&j0,&j_lo,&j_hi,0);
         wpp = backward_buf(wpp,&jal,&j0,&j_lo,&j_hi,1); /* final '1' updates jal,j0 etc. */

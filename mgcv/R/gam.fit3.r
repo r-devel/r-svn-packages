@@ -2137,7 +2137,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
   y <- y[!ind];mu <- mu[!ind]
   w <- w1 <- w2 <- y*0
   oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-           w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps*1e-6),n=as.integer(length(y)),
+           w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
            th=as.double(theta),rho=as.double(rho),a=as.double(a),b=as.double(b))
   
   if (!work.param) { ## transform working param derivatives to p/phi derivs...
@@ -2145,36 +2145,15 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
     oo$w1 <- oo$w1/phi
     oo$w2p <- oo$w2p*dthp1^2 + dthp2 * oo$w1p
     oo$w1p <- oo$w1p*dthp1
-    oo$wpp <- oo$wpp*dthp1/phi
+    oo$w2pp <- oo$w2pp*dthp1/phi ## this appears to be wrong
   }
 
-#  check.derivs <- TRUE
-#  if (check.derivs) {
-#    eps <- 1e-9
-#    oo1 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-#           w2pp=as.double(y*0),y=as.double(y),
-#           phi=as.double(phi+eps),p=as.double(p),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
-#    w1.fd <- (oo1$w-oo$w)/eps
-#    print(oo$w1);print(w1.fd)
-#    w2.fd <- (oo1$w1-oo$w1)/eps
-#    print(oo$w2);print(w2.fd)
-#    oo2 <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-#           w2pp=as.double(y*0),y=as.double(y),
-#           phi=as.double(phi),p=as.double(p+eps),eps=as.double(.Machine$double.eps),n=as.integer(length(y)))
-#    w1p.fd <- (oo2$w-oo$w)/eps
-#    print(oo$w1p);print(w1p.fd)
-#    w2p.fd <- (oo2$w1p-oo$w1p)/eps
-#    print(oo$w2p);print(w2p.fd)
-#    w2pp.fd <- (oo2$w1-oo$w1)/eps
-#    print(oo$w2pp);print(w2pp.fd) 
-#    w2pp.fd <- (oo1$w1p-oo$w1p)/eps;print(w2pp.fd)
-#  }  
 
   log.mu <- log(mu)
-  theta <- mu^(1-p)
+  mu1p <- theta <- mu^(1-p)
   k.theta <- mu*theta/(2-p) ## mu^(2-p)/(2-p)
   theta <- theta/(1-p) ## mu^(1-p)/(1-p)
-  l.base <-  (y*theta-k.theta)/phi
+  l.base <-  mu1p*(y/(1-p)-mu/(2-p))/phi
   ld[!ind,1] <- l.base - log(y) ## log density
   ld[!ind,2] <- -l.base/phi  ## d log f / dphi
   ld[!ind,3] <- 2*l.base/(phi*phi)  ## d2 logf / dphi2
@@ -2200,6 +2179,7 @@ if (TRUE) { ## DEBUG disconnetion of a terms
   ld[!ind,5] <- ld[!ind,5] + oo$w2p  ## d2 logf / dp2
   ld[!ind,6] <- ld[!ind,6] + oo$w2pp ## d2 logf / dphi dp
 } 
+
 if (FALSE) { ## DEBUG disconnetion of density terms
   ld[!ind,1] <-  oo$w ## log density
   ld[!ind,2] <-  oo$w1   ## d log f / dphi
