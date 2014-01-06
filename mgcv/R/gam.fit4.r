@@ -588,11 +588,13 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     grad <- ll$lb - St%*%coef 
     Hp <- -ll$lbb+St
     D <- diag(Hp)
+    indefinite <- FALSE
     if (sum(D <= 0)) { ## Hessian indefinite, for sure
       D <- rep(1,ncol(Hp))
       Ib <- diag(rank)*abs(min(D))
       Ip <- diag(rank)*abs(max(D)*.Machine$double.eps^.5)
       Hp <- Hp  + Ip + Ib
+      indefinite <- TRUE
     } else { ## Hessian could be +ve def in which case Choleski is cheap!
       D <- D^-.5 ## diagonal pre-conditioner
       Hp <- D*t(D*Hp) ## pre-condition Hp
@@ -602,6 +604,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     while (attr(L,"rank") < rank) { ## rank deficient - add ridge penalty
       L <- suppressWarnings(chol(Hp+Ip,pivot=TRUE))
       Ip <- Ip * 10 ## increase regularization penalty
+      indefinite <- TRUE
     }
 
     piv <- attr(L,"pivot")
@@ -628,13 +631,21 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       # convergence test...
       if (iter==control$maxit||(abs(ll1-ll0) < control$epsilon*abs(ll0) 
           && max(abs(grad)) < .Machine$double.eps^.5*abs(ll0))) {
-        if (rank.checked) {
+        if (rank.checked||!indefinite) {
+          if (!rank.checked) { ## was never indefinite
+            drop <- NULL;bdrop <- rep(FALSE,q)
+          }
           converged <- TRUE
           break
-        } else { ## check rank
+        } else { ## check rank, as fit appears indefinite...
           rank.checked <- TRUE
           Sb <- crossprod(E) ## balanced penalty
           Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
+          ## apply pre-conditioning, otherwise badly scaled problems can result in
+          ## wrong coefs being dropped...
+          D <- abs(diag(Hb))
+          D[D<1e-50] <- 1;D <- D^-.5
+          Hb <- t(D*Hb)*D
           qrh <- qr(Hb,LAPACK=TRUE)
           rank <- Rrank(qr.R(qrh))
           if (rank < q) { ## rank deficient. need to drop and continue to adjust other params
@@ -813,25 +824,29 @@ gam.fit5.post.proc <- function(object,Sl) {
   ipiv[piv] <- 1:p
   ##  Vb0 <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
 
+  ## need to pre-condition lbb before testing rank...
+  lbb <- object$D*t(object$D*lbb)
+ 
   R <- suppressWarnings(chol(lbb,pivot=TRUE)) 
   
   if (attr(R,"rank") < ncol(R)) { 
     ## The hessian of the -ve log likelihood is not +ve definite
     ## Find the "nearest" +ve semi-definite version and use that
-    retry <- TRUE;tol<-0
+    retry <- TRUE;tol <- 0
     eh <- eigen(lbb,symmetric=TRUE)
     mev <- max(eh$values);dtol <- 1e-7
     while (retry) {
       eh$values[eh$values<tol*mev] <- tol*mev
       R <- sqrt(eh$values)*t(eh$vectors)
       lbb <- crossprod(R)
-      Hp <- lbb + object$St
+      Hp <- lbb + object$D*t(object$D*object$St) ## pre-conditioned Hp
       ## Now try to invert it by Choleski with diagonal pre-cond,
       ## to get Vb
-      object$D <- D <- diag(Hp)^-.5 ## diagonal pre-conditioner
-      Hp <- D*t(D*Hp) ## pre-condition Hp   
+      #object$D <- D <- diag(Hp)^-.5 ## diagonal pre-conditioner
+      #Hp <- D*t(D*Hp) ## pre-condition Hp   
       object$L <- suppressWarnings(chol(Hp,pivot=TRUE))
       if (attr(object$L,"rank")==ncol(Hp)) {
+        R <- t(t(R)/object$D) ## so R'R = lbb (original)
         retry <- FALSE
       } else { ##  failure: make more +ve def
         tol <- tol + dtol;dtol <- dtol*10
@@ -840,7 +855,7 @@ gam.fit5.post.proc <- function(object,Sl) {
   } else { ## hessian +ve def, so can simply use what comes from fit directly
     ipiv <- piv <- attr(R,"pivot")
     ipiv[piv] <- 1:p
-    R <- R[,ipiv] ## so now t(R)%*%R = lbb
+    R <- t(t(R[,ipiv])/object$D) ## so now t(R)%*%R = lbb (original)
   } 
   ## DL'LD = penalized Hessian, which needs to be inverted
   ## to DiLiLi'Di = Vb, the Bayesian cov matrix...

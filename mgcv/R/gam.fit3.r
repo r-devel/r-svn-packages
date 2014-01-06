@@ -1264,7 +1264,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     score.scale <- abs(b$scale.est) + abs(score)
     grad2 <- diag(hess)    
     uconv.ind <- (abs(grad) > score.scale*conv.tol*.1)|(abs(grad2)>score.scale*conv.tol*.1)
-    if (sum(abs(grad)>score.scale*conv.tol)) converged <- FALSE
+    if (sum(abs(grad)>score.scale*conv.tol*5)) converged <- FALSE
     if (abs(old.score-score)>score.scale*conv.tol) { 
       if (converged) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
       converged <- FALSE      
