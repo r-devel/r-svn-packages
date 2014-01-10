@@ -649,13 +649,14 @@ gam.setup.list <- function(formula,pterms,
     }
 
     G$off <- c(G$off,um$off+pof)
-    if (M) for (i in 1:M) {
+    if (M) for (j in 1:M) {
       ks <- ks + 1
-      G$S[[ks]] <- um$S[[i]]
+      G$S[[ks]] <- um$S[[j]]
     }
  
     G$m <- G$m + um$m ## number of smooths
-    G$nsdf <- G$nsdf + um$nsdf ## or list??
+    ##G$nsdf <- G$nsdf + um$nsdf ## or list??
+    G$nsdf[i] <- um$nsdf
     if (!is.null(um$P)||!is.null(G$P)) {
       if (is.null(G$P)) G$P <- diag(1,nrow=pof)
       k <- ncol(um$X)
@@ -663,6 +664,7 @@ gam.setup.list <- function(formula,pterms,
       G$P <- rbind(cbind(G$P,matrix(0,pof,k)),cbind(matrix(0,k,pof),um$P))
     }
     G$cmX <- c(G$cmX,um$cmX)
+    if (um$nsdf>0) um$term.names[1:um$nsdf] <- paste(um$term.names[1:um$nsdf],i-1,sep=".")
     G$term.names <- c(G$term.names,um$term.names)
     G$lsp0 <- c(G$lsp0,um$lsp0)
     pof <- ncol(G$x)
@@ -670,7 +672,7 @@ gam.setup.list <- function(formula,pterms,
  
   attr(G$X,"lpi") <- lpi
   G
-}
+} ## gam.setup.list
 
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
@@ -1428,9 +1430,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 ## Do gam estimation and smoothness selection...
   
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
-    method <- "REML" ## any method you like as long as it's REML
+    if (!(method%in%c("REML","ML"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
+       method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
     }
@@ -3321,7 +3324,8 @@ print.anova.gam <- function(x, digits = max(3, getOption("digits") - 3), ...)
 { # print method for class anova.gam resulting from single
   # gam model calls to anova. Improved by Henric Nilsson.
   print(x$family)
-  cat("Formula:\n")
+  cat("Formula:\n") 
+  if (is.list(x$formula)) for (i in 1:length(x$formula)) print(x$formula[[i]]) else
   print(x$formula)
   if (length(x$pTerms.pv)>0)
   { cat("\nParametric Terms:\n")

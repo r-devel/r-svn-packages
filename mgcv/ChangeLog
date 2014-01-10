@@ -3,6 +3,16 @@
 
 1.7-28
 
+* Change in smoothCon, so that sweep and drop constraints (default for bam
+  for efficiency reasons) are no longer allowed with by variables and matrix 
+  arguments (could lead to confusing results with factor by variables in bam). 
+
+* 'ti' terms now allow control of which marginals to constrain, via 'mc'.
+  Allows e.g. y ~ ti(x) + ti(x,z,mc=c(0,1)) - for experts only! 
+
+* tensor.prod.model.matrix re-written to call C code. Around 5-10 times
+  faster than old version for large data sets.
+
 * re-write of mini.mf function used by bam to generate a reduced size 
   model frame for model setup. New version ensures that all factor levels 
   are present in reduced frame, and avoids production of unrealistic
@@ -20,8 +30,8 @@
 * prediction for "cc" and "cp" classes is now cyclic - values outside the
   range of knots are wrapped back into the interval.
 
-* ldTweedie now returns derivatives w.r.t. p as well as w.r.t scale 
-  parameter phi.
+* ldTweedie now returns derivatives w.r.t. a transform of p as well as 
+  w.r.t log of scale parameter phi.
 
 * gamm can now handle 'varComb' variance functions (thanks Sven Neulinger
   for reporting that it didn't).

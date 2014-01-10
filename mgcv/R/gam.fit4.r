@@ -255,26 +255,12 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
    conv <-  boundary <- FALSE
  
- #  Utoo <- !is.null(family$U) ## is U penalty present or not
- #  if (Utoo) { 
- #     Xp <- attr(x,"pinv")
- #     start <- Xp%*%mu
- #     Sb <- crossprod(Eb)
- #  }
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
       good <- dd$Deta2 != 0
       w <- dd$Deta2[good] * .5
       z <- eta[good] - .5 * dd$Deta[good] / w
-#      if (Utoo) { ## extra penalty term is present...
-#        u <- family$U(y,mu,x,weights,TRUE)
-#        z <- z + (Xp[good,]%*%(u$Ubb%*%start - u$Ub))/w
-#        ## need to add U to penalties...
-#        tut <- t(T)%*%u$U%*%T ## Hessian of U function in current parameterization
-#        rows.E <- ncol(St) 
-#        Sr <- t(mroot(St + tut,rank=rows.E))
-#        Eb <- t(mroot(Sb + tut/sqrt(sum(tut^2)),rank=rows.E))
-#      }
+
       oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
                y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
@@ -285,9 +271,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         good <- dd$Deta2 > 0
         w <- dd$Deta2[good] * .5
         z <- eta[good] - .5 * dd$Deta[good] / w
-        #if (Utoo) {
-        #  z <- z + (Xp[good,]%*%(u$Ubb%*%start - u$Ub))/w
-        #}
+       
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
                   y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
@@ -297,10 +281,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       }
       start <- oo$y[1:ncol(x)] ## current coefficient estimates
       penalty <- oo$penalty ## size of penalty
-
-      #if (Utoo) { ## correct penalty by removing hessian of U term
-      #  penalty <- penalty - start%*%(tut%*%start)
-      #}
 
       eta <- drop(x%*%start) ## the linear predictor
 
@@ -312,9 +292,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       }        
      
       mu <- linkinv(eta <- eta + offset)
-      dev <- sum(dev.resids(y, mu, weights,theta))
-      #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
-    
+      dev <- sum(dev.resids(y, mu, weights,theta)) 
 
       ## now step halve under non-finite deviance...
       if (!is.finite(dev)) {
@@ -359,8 +337,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          }
          boundary <- TRUE
          dev <- sum(dev.resids(y, mu, weights))
-         #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
-    
+       
          if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
       } ## end of invalid mu/eta handling
@@ -385,8 +362,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
            eta <- (eta + etaold)/2               
            mu <- linkinv(eta)
            dev <- sum(dev.resids(y, mu, weights,theta))
-           #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
-    
+       
            pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
            if (control$trace) 
                   cat("Step halved: new penalized deviance =", pdev, "\n")
@@ -439,7 +415,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             Det4 = as.double(dd$Deta4),Det3.th=as.double(dd$Deta3th), Deta2.th2=as.double(dd$Deta2th2),
             beta=as.double(coef),D1=as.double(rep(0,ntot)),D2=as.double(rep(0,ntot^2)),
             P=as.double(0),P1=as.double(rep(0,ntot)),P2 = as.double(rep(0,ntot^2)),
-            ldet=as.double(0),ldet1 = as.double(rep(0,ntot)), ldet2 = as.double(rep(0,ntot^2)),
+            ldet=as.double(1-2*(scoreType=="ML")),ldet1 = as.double(rep(0,ntot)), 
+            ldet2 = as.double(rep(0,ntot^2)),
             rV=as.double(rep(0,ncol(x)^2)),
             rank.tol=as.double(.Machine$double.eps^.75),rank.est=as.integer(0),
 	    n=as.integer(sum(good)),q=as.integer(ncol(x)),M=as.integer(nSp),
@@ -459,7 +436,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    nt <- length(theta)
    lsth1 <- ls$lsth1[1:nt];
    lsth2 <- as.matrix(ls$lsth2)[1:nt,1:nt] ## exclude any derivs w.r.t log scale here
-   REML <- (dev+oo$P)/(2*scale) - ls$ls + (oo$ldet - rp$det)/2 - Mp * log(2*pi*scale)/2
+   REML <- (dev+oo$P)/(2*scale) - ls$ls + (oo$ldet - rp$det)/2 - 
+           as.numeric(scoreType=="REML") * Mp * log(2*pi*scale)/2
    REML1 <- REML2 <- NULL
    if (deriv) {
      ind <- 1:nSp + length(theta)

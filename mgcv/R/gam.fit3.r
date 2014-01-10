@@ -124,7 +124,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             weights = weights, start = start, etastart = etastart, 
             mustart = mustart, offset = offset,U1=U1, Mp=Mp, family = family, 
             control = control, deriv=deriv,
-            scale=scale,scoreType="REML",null.coef=null.coef,...))
+            scale=scale,scoreType=scoreType,null.coef=null.coef,...))
     }
 
     if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE 
