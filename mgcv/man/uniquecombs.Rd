@@ -7,7 +7,8 @@ This routine returns a matrix containing all the unique rows of the
 matrix supplied as its argument. That is, all the duplicate rows are
 stripped out. Note that the ordering of the rows on exit is not the same
 as on entry. It also returns an index attribute for relating the result back 
-to the original matrix.
+to the original matrix. When written this was much quicker than using \code{\link{unique}}
+with \code{\link{duplicate}}, but that no longer seems to be the case. 
 }
 \usage{
 uniquecombs(x)
@@ -30,8 +31,8 @@ matrix that contains row i of the original matrix.
  
 }
 
-\seealso{\code{\link{unique}} can do the same thing, including for non-numeric matrices, but more 
-         slowly and without returning the index.}
+\seealso{\code{\link{unique}}, with \code{\link{duplicate}} can do the same thing, 
+ and now seems to be quicker than this routine.}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 

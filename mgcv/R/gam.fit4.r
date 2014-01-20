@@ -529,8 +529,19 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   q <- ncol(x)
   n <- nobs <- length(y)
  
-  E <- attr(Sl,"E") ## balanced penalty sqrt
+  Eb <- attr(Sl,"E") ## balanced penalty sqrt
+ 
+  ## the stability reparameterization + log|S|_+ and derivs... 
+  ## NOTE: what if no smooths??
+  rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
+  x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
+  Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty 
+  St <- crossprod(rp$E) ## total penalty matrix
+  E <- rp$E ## root total penalty
+  attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be furhter scaled   
 
+  if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
+ 
   ## now call initialization code, but make sure that any 
   ## supplied 'start' vector is not overwritten...
   start0 <- start
@@ -543,14 +554,6 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   if (!is.null(start0)) start <- start0 
   coef <- as.numeric(start)
 
- 
-  ## the stability reparameterization + log|S|_+ and derivs... 
-  ## NOTE: what if no smooths??
-  rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
-  x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
-  E <- Sl.repara(rp$rp,E) ## 
-  coef <- Sl.repara(rp$rp,coef) ## and to coef
-  St <- crossprod(rp$E) ## total penalty matrix
 
   if (is.null(weights)) weights <- rep.int(1, nobs)
   if (is.null(offset)) offset <- rep.int(0, nobs)
@@ -560,7 +563,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ll <- family$ll(y,x,coef,weights,family,deriv=1)
   ll0 <- ll$l - t(coef)%*%St%*%coef/2
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
-  rank <- q
+  rank <- q;drop <- NULL
+  eigen.fix <- FALSE
+  converged <- FALSE
   for (iter in 1:(2*control$maxit)) { ## main iteration
     ## get Newton step... 
     grad <- ll$lb - St%*%coef 
@@ -569,9 +574,16 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     indefinite <- FALSE
     if (sum(D <= 0)) { ## Hessian indefinite, for sure
       D <- rep(1,ncol(Hp))
-      Ib <- diag(rank)*abs(min(D))
-      Ip <- diag(rank)*abs(max(D)*.Machine$double.eps^.5)
-      Hp <- Hp  + Ip + Ib
+      if (eigen.fix) {
+        eh <- eigen(Hp,symmetric=TRUE);ev <- eh$values
+        thresh <- min(ev[ev>0])
+        ev[ev<thresh] <- thresh
+        Hp <- eh$vectors%*%(ev*t(eh$vectors))
+      } else {
+        Ib <- diag(rank)*abs(min(D))
+        Ip <- diag(rank)*abs(max(D)*.Machine$double.eps^.5)
+        Hp <- Hp  + Ip + Ib
+      }
       indefinite <- TRUE
     } else { ## Hessian could be +ve def in which case Choleski is cheap!
       D <- D^-.5 ## diagonal pre-conditioner
@@ -579,16 +591,32 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       Ip <- diag(rank)*.Machine$double.eps^.5   
     }
     L <- suppressWarnings(chol(Hp,pivot=TRUE))
-    while (attr(L,"rank") < rank) { ## rank deficient - add ridge penalty
-      L <- suppressWarnings(chol(Hp+Ip,pivot=TRUE))
-      Ip <- Ip * 10 ## increase regularization penalty
+    mult <- 1
+    while (attr(L,"rank") < rank) { ## rank deficient - add ridge penalty 
+      if (eigen.fix) {
+        eh <- eigen(Hp,symmetric=TRUE);ev <- eh$values
+        thresh <- max(min(ev[ev>0]),max(ev)*1e-6)*mult
+        mult <- mult*10
+        ev[ev<thresh] <- thresh
+        Hp <- eh$vectors%*%(ev*t(eh$vectors)) 
+        L <- suppressWarnings(chol(Hp,pivot=TRUE))
+      } else {
+        L <- suppressWarnings(chol(Hp+Ip,pivot=TRUE))
+        Ip <- Ip * 100 ## increase regularization penalty
+      }
       indefinite <- TRUE
     }
 
     piv <- attr(L,"pivot")
     ipiv <- piv;ipiv[piv] <- 1:ncol(L)
     step <- D*(backsolve(L,forwardsolve(t(L),(D*grad)[piv]))[ipiv])
-    
+
+    c.norm <- sum(coef^2)
+    if (c.norm>0) { ## limit step length to .1 of coef length
+      s.norm <- sqrt(sum(step^2))
+      c.norm <- sqrt(c.norm)
+      if (s.norm > .1*c.norm) step <- step*0.1*c.norm/s.norm
+    }
     ## try the Newton step...
     coef1 <- coef + step 
     ll <- family$ll(y,x,coef1,weights,family,deriv=1) 
@@ -617,7 +645,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
           break
         } else { ## check rank, as fit appears indefinite...
           rank.checked <- TRUE
-          Sb <- crossprod(E) ## balanced penalty
+          Sb <- crossprod(Eb) ## balanced penalty
           Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
           ## apply pre-conditioning, otherwise badly scaled problems can result in
           ## wrong coefs being dropped...
@@ -654,12 +682,14 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       } else ll0 <- ll1
     } else { ## step failed.
       converged  <- FALSE
+      warning(paste("step failed: max abs grad =",max(abs(grad))))
       break
     }
   } ## end of main fitting iteration
   ## at this stage the Hessian should be +ve definite,
   ## so that the pivoted Choleski factor should exist...
- 
+  if (iter == 2*control$maxit&&converged==FALSE) warning(paste("iteration limit reached: max abs grad =",max(abs(grad))))
+
   ldetHp <- 2*sum(log(diag(L))) - 2 * sum(log(D)) ## log |Hp|
 
   if (!is.null(drop)) { ## create full version of coef with zeros for unidentifiable 

@@ -137,7 +137,7 @@ pcls <- function(M)
   p <- array(o[[2]],length(M$p))
   if (qra.exist) p <- qr.qy(qra,c(rep(0,j),p))
   p
-}  
+} ## pcls
 
 
 interpret.gam0 <- function (gf,textra=NULL)
@@ -671,6 +671,7 @@ gam.setup.list <- function(formula,pterms,
   }
  
   attr(G$X,"lpi") <- lpi
+  attr(G$nsdf,"pstart") <- unlist(lapply(lpi,min))
   G
 } ## gam.setup.list
 
@@ -2281,7 +2282,7 @@ model.matrix.gam <- function(object,...)
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
                        block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) {
 
-# This function is used for predicting from a GAM. object is a gam object, newdata a dataframe to
+# This function is used for predicting from a GAM. 'object' is a gam object, newdata a dataframe to
 # be used in prediction......
 #
 # Type == "link"     - for linear predictor
@@ -2415,13 +2416,31 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (se.fit) se <- fit
   }
   stop <- 0
+  if (is.list(object$pterms)) { ## multiple linear predictors
+    if (type=="iterms") {
+      warning("type iterms not available for multiple predictor cases")
+      type <- "terms"
+    }
+    pstart <- attr(object$nsdf,"pstart") ## starts of parametric blocks in coef vector
+    pind <- rep(0,0) ## index of parametric coefs
+    Terms <- list();pterms <- object$pterms
+    for (i in 1:length(object$nsdf)) {
+      Terms[[i]] <- delete.response(object$pterms[[i]])
+      if (object$nsdf[i]>0) pind <- c(pind,pstart[i]-1+1:object$nsdf[i])
+    }
+  } else { ## normal single predictor case
+    Terms <- list(delete.response(object$pterms))
+    pterms <- list(object$pterms)
+    pstart <- 1
+    pind <- 1:object$nsdf ## index of parameteric coefficients
+  }
   ## check if extended family required intercept to be dropped...
   drop.intercept <- FALSE 
   if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
-    drop.intercept <- TRUE; 
-    attr(Terms,"intercept") <- 1 ## make sure intercept explicitly included, so it can be cleanly dropped
+    drop.intercept <- TRUE;
+    for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 ## make sure intercept explicitly included, so it can be cleanly dropped
   } 
-  Terms <- delete.response(object$pterms)
+  
   s.offset <- NULL # to accumulate any smooth term specific offset
   any.soff <- FALSE # indicator of term specific offset existence
   if (n.blocks > 0) for (b in 1:n.blocks) { # work through prediction blocks
@@ -2430,25 +2449,27 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (n.blocks==1) data <- newdata else data <- newdata[start:stop,]
     X <- matrix(0,b.size[b],nb)
     Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
-    ## implements safe prediction for parametric part as described in
-    ## http://developer.r-project.org/model-fitting-functions.txt
-    if (new.data.ok) {
-      if (nd.is.mf) mf <- model.frame(data,xlev=object$xlevels) else
-      { mf <- model.frame(Terms,data,xlev=object$xlevels)
-        if (!is.null(cl <- attr(object$pterms,"dataClasses"))) .checkMFClasses(cl,mf)
-      } 
-      Xp <- model.matrix(Terms,mf,contrasts=object$contrasts) 
-    } else { 
-      Xp <- model.matrix(Terms,object$model)
-      mf <- newdata # needed in case of offset, below
+    for (i in 1:length(Terms)) {
+      ## implements safe prediction for parametric part as described in
+      ## http://developer.r-project.org/model-fitting-functions.txt
+      if (new.data.ok) {
+        if (nd.is.mf) mf <- model.frame(data,xlev=object$xlevels) else {
+          mf <- model.frame(Terms[[i]],data,xlev=object$xlevels)
+          if (!is.null(cl <- attr(pterms[[i]],"dataClasses"))) .checkMFClasses(cl,mf)
+        } 
+        Xp <- model.matrix(Terms[[i]],mf,contrasts=object$contrasts) 
+      } else { 
+        Xp <- model.matrix(Terms[[i]],object$model)
+        mf <- newdata # needed in case of offset, below
+      }
+      if (drop.intercept) { 
+        xat <- attributes(Xp);ind <- xat$assign>0 
+        Xp <- Xp[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
+        xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
+        xat$dim[2] <- xat$dim[2]-1;attributes(Xp) <- xat 
+      }
+      if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
     }
-    if (drop.intercept) { 
-      xat <- attributes(Xp);ind <- xat$assign>0 
-      Xp <- Xp[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
-      xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
-      xat$dim[2] <- xat$dim[2]-1;attributes(Xp) <- xat 
-    }
-    if (object$nsdf) X[,1:object$nsdf] <- Xp
     if (n.smooth) for (k in 1:n.smooth) {
       Xfrag <- PredictMat(object$smooth[[k]],data)		 
       X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
@@ -2482,8 +2503,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         { first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-            if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept"
-              X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
+            if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept 
+             X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              
               X1[,first:last] <- X[,first:last]
@@ -2512,24 +2533,19 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         if (sum(!(terms %in%colnames(fit)))) 
           warning("non-existent terms requested - ignoring")
         else { 
-          #names(term.labels) <- term.labels
-          #term.labels <- term.labels[terms]  # names lost if only one col
-          ##fit <- as.matrix(as.matrix(fit)[,terms])
           fit <- fit[,terms,drop=FALSE]
-          #colnames(fit) <- term.labels
           if (se.fit) {## se <- as.matrix(as.matrix(se)[,terms])
             se <- se[,terms,drop=FALSE]
-            #colnames(se) <- term.labels
           }
         }
       }
     } else { # "link" or "response"
-      k<-attr(attr(object$model,"terms"),"offset")
-      fit[start:stop]<-X%*%object$coefficients + rowSums(Xoff)
-      if (!is.null(k)) fit[start:stop]<-fit[start:stop]+model.offset(mf) + rowSums(Xoff)
-      if (se.fit) se[start:stop]<-sqrt(rowSums((X%*%object$Vp)*X))
+      k <- attr(attr(object$model,"terms"),"offset")
+      fit[start:stop] <- X%*%object$coefficients + rowSums(Xoff)
+      if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) + rowSums(Xoff)
+      if (se.fit) se[start:stop] <- sqrt(rowSums((X%*%object$Vp)*X))
       if (type=="response") { # transform    
-        fam<-object$family;linkinv <- fam$linkinv
+        fam <- object$family;linkinv <- fam$linkinv
         if (is.null(fam$fv)) {
           dmu.deta <- fam$mu.eta  
           if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
@@ -2551,6 +2567,11 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       attr(H,"offset") <- s.offset
     }
     H <- napredict(na.act,H)
+    if (length(object$nsdf)>1) { ## add "lpi" attribute if more than one l.p.
+      lpi <- list();pstart <- c(pstart,ncol(H))
+      for (i in 1:(length(pstart)-1)) lpi[[i]] <- pstart[i]:pstart[i+1]  
+      attr(H,"lpi") <- lpi
+    }
   } else { 
     if (se.fit) { 
       if (is.null(nrow(fit))) {
@@ -2575,6 +2596,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if (type=="terms"||type=="iterms") attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 } ## end of gam.fit
+
+
 
 
 concurvity <- function(b,full=TRUE) {
@@ -3094,9 +3117,15 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
 
   se <- diag(covmat)^0.5
   residual.df<-length(object$y)-sum(object$edf)
-  if (object$nsdf>0) # individual parameters
-  { p.coeff <- object$coefficients[1:object$nsdf]
-    p.se <- se[1:object$nsdf]
+  if (sum(object$nsdf) > 0) { # individual parameters
+    if (length(object$nsdf)>1) { ## several linear predictors 
+      pstart <- attr(object$nsdf,"pstart")
+      ind <- rep(0,0)
+      for (i in 1:length(object$nsdf)) if (object$nsdf[i]>0) ind <- 
+          c(ind,pstart[i]:(pstart[i]+object$nsdf[i]-1))
+    } else { pstart <- 1;ind <- 1:object$nsdf} ## only one lp
+    p.coeff <- object$coefficients[ind]
+    p.se <- se[ind]
     p.t<-p.coeff/p.se
     if (!est.disp) {
       p.pv <- 2*pnorm(abs(p.t),lower.tail=FALSE)
@@ -3111,33 +3140,50 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
 
   ## Next the p-values for parametric terms, so that factors are treated whole... 
   
-  term.labels<-attr(object$pterms,"term.labels")
-  nt<-length(term.labels)
-  if (nt>0) # individual parametric terms
-  { np <- length(object$assign)
-    Vb <- covmat[1:np,1:np,drop=FALSE]
-    bp <- array(object$coefficients[1:np],np)
-    pTerms.pv <- array(0,nt)
+  pterms <- if (is.list(object$pterms)) object$pterms else list(object$pterms)
+  if (!is.list(object$assign)) object$assign <- list(object$assign)
+  npt <- length(unlist(lapply(pterms,attr,"term.labels")))
+  if (npt>0)  pTerms.df <- pTerms.chi.sq <- pTerms.pv <- array(0,npt)
+  term.labels <- rep("",0)
+  k <- 0 ## total term counter
+  for (j in 1:length(pterms)) {
+    ##term.labels <- attr(object$pterms,"term.labels")
+    tlj <- attr(pterms[[j]],"term.labels") 
+    nt <- length(tlj)
+    if (j>1 && nt>0) tlj <- paste(tlj,j-1,sep=".")
+    term.labels <- c(term.labels,tlj)
+    if (nt>0) { # individual parametric terms
+      np <- length(object$assign[[j]])
+      ind <- pstart[j] - 1 + 1:np 
+      Vb <- covmat[ind,ind,drop=FALSE]
+      bp <- array(object$coefficients[ind],np)
+      #pTerms.pv <- if (j==1) array(0,nt) else c(pTerms.pv,array(0,nt))
+      #attr(pTerms.pv,"names") <- term.labels
+      #pTerms.df <- pTerms.chi.sq <- pTerms.pv
+      for (i in 1:nt) { 
+        k <- k + 1
+        ind <- object$assign[[j]]==i
+        b <- bp[ind];V <- Vb[ind,ind]
+        ## pseudo-inverse needed in case of truncation of parametric space 
+        if (length(b)==1) { 
+          V <- 1/V 
+          pTerms.df[k] <- nb <- 1      
+          pTerms.chi.sq[k] <- V*b*b
+        } else {
+          V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
+          pTerms.df[k] <- nb <- attr(V,"rank")      
+          pTerms.chi.sq[k] <- t(b)%*%V%*%b
+        }
+        if (!est.disp)
+        pTerms.pv[k] <- pchisq(pTerms.chi.sq[k],df=nb,lower.tail=FALSE)
+        else
+        pTerms.pv[k] <- pf(pTerms.chi.sq[k]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
+      } ## for (i in 1:nt)
+    } ## if (nt>0)
+  }
+
+  if (npt) {
     attr(pTerms.pv,"names") <- term.labels
-    pTerms.df <- pTerms.chi.sq <- pTerms.pv
-    for (i in 1:nt)
-    { ind <- object$assign==i
-      b <- bp[ind];V <- Vb[ind,ind]
-      ## pseudo-inverse needed in case of truncation of parametric space 
-      if (length(b)==1) { 
-        V <- 1/V 
-        pTerms.df[i] <- nb <- 1      
-        pTerms.chi.sq[i] <- V*b*b
-      } else {
-        V <- pinv(V,length(b),rank.tol=.Machine$double.eps^.5)
-        pTerms.df[i] <- nb <- attr(V,"rank")      
-        pTerms.chi.sq[i] <- t(b)%*%V%*%b
-      }
-      if (!est.disp)
-      pTerms.pv[i] <- pchisq(pTerms.chi.sq[i],df=nb,lower.tail=FALSE)
-      else
-      pTerms.pv[i] <- pf(pTerms.chi.sq[i]/nb,df1=nb,df2=residual.df,lower.tail=FALSE)      
-    }
     if (!est.disp) {      
       pTerms.table <- cbind(pTerms.df, pTerms.chi.sq, pTerms.pv)   
       dimnames(pTerms.table) <- list(term.labels, c("df", "Chi.sq", "p-value"))
@@ -3662,16 +3708,19 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
   nobs <- nrow(x) 
   if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
   eval(family$initialize) 
-  if (inherits(family,"general.family")) { ## Cox, gamlss etc...
-    ## create balanced sqrt penalty for initialization purposes...
-    
+  if (inherits(family,"general.family")) { ## Cox, gamlss etc...   
     lbb <- family$ll(y,x,start,weights,family,deriv=1)$lbb ## initial Hessian 
     lambda <- rep(0,length(S))
     ## choose lambda so that corresponding elements of lbb and S[[i]]
     ## are roughly in balance...
     for (i in 1:length(S)) {
       ind <- off[i]:(off[i]+ncol(S[[i]])-1)
-      lambda[i] <- norm(lbb[ind,ind])/norm(S[[i]])
+      lami <- 1
+      dlb <- -diag(lbb[ind,ind]);dS <- diag(S[[i]])
+      while (mean(dlb/(dlb + lami * dS)) > 0.4) lami <- lami*5
+      while (mean(dlb/(dlb + lami * dS)) < 0.4) lami <- lami/5
+      lambda[i] <- lami 
+      ## norm(lbb[ind,ind])/norm(S[[i]])
     }
   } else { ## some sort of conventional regression
     if (is.null(mukeep)) {

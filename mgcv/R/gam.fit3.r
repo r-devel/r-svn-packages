@@ -1177,6 +1177,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     if (score1<score) { ## accept
       old.score <- score 
       mustart <- b$fitted.values
+      start <- b$coefficients
       lsp <- lsp1
       if (reml) {
           score <- b$REML;grad <- b$REML1;hess <- b$REML2 
