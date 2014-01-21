@@ -1,4 +1,5 @@
-2013 ??? ??	4.1-x	Change node.h to avoid false positives from
+2013 Dec 10	4.1-4	Change pre-defined structure sizes to avoid 
+	                false positives from
 			Undefined Behaviour Sanitizer.
 	
 2013 Sep 01	4.1-3	Document TMT change to predict() output.
