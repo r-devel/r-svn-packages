@@ -66,6 +66,12 @@ read.dta <- function(file, convert.dates = TRUE,
         ## Stata 12 introduced 'business dates'
         ## 'Formats beginning with %t or %-t are Stata's date and time formats.'
         ## but it seems some are earlier.
+        ## The dta_115 description suggests this is too inclusive:
+        ## Stata has an old *%d* format notation and some datasets
+        ## still have them. Format *%d*... is equivalent to modern
+        ## format *%td*... and *%-d*... is equivalent to *%-td*...
+        ## So maybe grep('^%d|^%-d|^%td|^%-td', ff) ?
+
         dates <- if (attr(rval, "version") >= 8L) grep('%-*d|^%t|%-t', ff)
         else grep("%-*d", ff)
         ## avoid as.Date in case strptime is messed up
