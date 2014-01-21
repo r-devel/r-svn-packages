@@ -1,3 +1,10 @@
+2014-01-21 Brian Ripley
+
+	* DESCRIPTION: Version is 0.8-58
+
+	* R/read.dta.R, man/read.dta.Rd: attempt to convert Stata's newer
+	%[-]t date formats if convert.dates = TRUE. (Wish of PR#15517.)
+
 2013-12-05 Brian Ripley
 
 	* R/writeForeignCode.R: correction to write.foreign(package =
