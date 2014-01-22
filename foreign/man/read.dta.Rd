@@ -37,7 +37,7 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   variable labels, timestamp, and variable/dataset characteristics
   are stored as attributes of the data frame.
 
-  By default Stata dates (\%d and \%t formats) are converted to \R's
+  By default Stata dates (\%d and \%td formats) are converted to \R's
   \code{Date} class, and variables with Stata value labels are
   converted to factors.  Ordinarily, \code{read.dta} will not convert
   a variable to a factor unless a label is present for every level.  Use
@@ -47,13 +47,15 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   necessary use \code{convert.dates = FALSE} and examine the attributes
   to work out how to post-process the dates.
   
-  Stata 8.0 introduced a system of 27 different missing data values.  If
+  Stata 8 introduced a system of 27 different missing data values.  If
   \code{missing.type} is \code{TRUE} a separate list is created with the
   same variable names as the loaded data.  For string variables the list
   value is \code{NULL}.  For other variables the value is \code{NA}
   where the observation is not missing and 0--26 when the observation is
   missing.  This is attached as the \code{"missing"} attribute of the
   returned value.
+
+  Stata document that version 13 uses the same file format as 12.
 }
 \value{
   A data frame with attributes.  These will include \code{"datalabel"},
@@ -62,9 +64,8 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   include \code{"label.table"} and \code{"expansion.table"}.  
   Possible versions are \code{5, 6, 7},
   \code{-7} (Stata 7SE, \sQuote{format-111}), \code{8} (Stata 8 and 9,
-  \sQuote{format-113}) and \code{10} (Stata 10 and 11, \sQuote{format-114}).
-  Stata 12 by default uses \sQuote{format-115}, which is read as
-  \sQuote{format-114}.
+  \sQuote{format-113}), \code{10} (Stata 10 and 11, \sQuote{format-114}).
+  and \code{12} (Stata 12 and 13, \sQuote{format-115}).
   
   The value labels in attribute \code{"val.labels"} name a table for
   each variable, or are an empty string.  The tables are elements of the
@@ -75,7 +76,8 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   Stata Users Manual (versions 5 & 6), Programming manual (version 7),
   or online help (version 8 and later) describe the format of the files.
   Or directly at \url{http://www.stata.com/help.cgi?dta_114} and
-  \url{http://www.stata.com/help.cgi?dta_113}.
+  \url{http://www.stata.com/help.cgi?dta_113}, but note that these have
+  been changed since first published.
 }
 
 \author{
@@ -95,5 +97,16 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
 data(swiss)
 write.dta(swiss,swissfile <- tempfile())
 read.dta(swissfile)
+
+## post-processing of date-time columns.
+## Stata docuementation is muddy as to whether it is
+## %tc or %tC which counts leap-seconds.
+## So one will be a few seconds out on recent date-times.
+convert_dt <- function(x) {
+    dt <- grep("^\%t[cC]", attr(x, "formats"))
+    for(v in dt) ## workaround rounding errors in division
+        x[[v]] <- as.POSIXct((x[[v]]+0.1)/1000, origin = "1960-01-01")
+    x
+}
 }
 \keyword{file}

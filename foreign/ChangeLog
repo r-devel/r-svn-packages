@@ -1,3 +1,8 @@
+2014-01-22 Brian Ripley
+
+	* man/read.dta.Rd: mention that Stata say v13 uses the same format
+	as v12.
+
 2014-01-21 Brian Ripley
 
 	* DESCRIPTION: Version is 0.8-58
