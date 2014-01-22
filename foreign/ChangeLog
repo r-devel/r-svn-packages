@@ -2,6 +2,10 @@
 
 	* man/read.dta.Rd: mention that Stata say v13 uses the same format
 	as v12.
+	* tests/download.R: remove defunct URL.
+	* tests/sas.R: comment that URL was unresponsive.
+	* src/{file.handle.c,minitab.c,pfm-read.c,sfm-read.c,spss.c,stataread.c}: 
+	add casts or correct types.
 
 2014-01-21 Brian Ripley
 
