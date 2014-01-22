@@ -146,6 +146,7 @@ interpret.gam0 <- function (gf,textra=NULL)
 # and returns:
 # 1. a model formula for the parametric part: pf (and pfok indicating whether it has terms)
 # 2. a list of descriptors for the smooths: smooth.spec
+# this is function does the work, and is called by in interpret.gam
 { p.env <- environment(gf) # environment of formula
   tf <- terms.formula(gf,specials=c("s","te","ti","t2")) # specials attribute indicates which terms are smooth
  
@@ -2411,9 +2412,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     fit <- array(0,c(np,n.pterms+as.numeric(!para.only)*n.smooth))
     if (se.fit) se <- fit
     ColNames <- term.labels
-  } else {
+  } else { ## "response" or "lp"
     fit <- array(0,np)
     if (se.fit) se <- fit
+    fit1 <- NULL ## "response" returned by fam$fv can be non-vector 
   }
   stop <- 0
   if (is.list(object$pterms)) { ## multiple linear predictors
@@ -2551,14 +2553,30 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
           fit[start:stop] <- linkinv(fit[start:stop])
         } else {
-          fit[start:stop] <- fam$fv(linkinv(fit[start:stop]))
-          if (se.fit) se[start:stop] <- NA ## not available in this case
+          sev <- if (se.fit) se[start:stop] else NULL 
+          ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
+          if (is.null(fit1)&&is.matrix(ffv[[1]])) {
+            fit1 <- matrix(0,np,ncol(ffv[[1]]))
+            if (se.fit) se1 <- fit1
+          }
+          if (is.null(fit1)) {
+            fit[start:stop] <- ffv[[1]]
+            if (se.fit) se[start:stop] <- ffv[[2]]
+          } else {
+            fit1[start:stop,] <- ffv[[1]]
+            if (se.fit) se1[start:stop,] <- ffv[[2]]
+          }
         }
       }
     }
     rm(X)
    
   } ## end of prediction block loop
+  if (type=="response"&&!is.null(fit1)) {
+    fit <- fit1
+    if (se.fit) se <- se1
+  }
+
   rn <- rownames(newdata)
   if (type=="lpmatrix") { 
     colnames(H) <- names(object$coefficients);rownames(H)<-rn
@@ -3575,32 +3593,32 @@ logLik.gam <- function (object, ...)
 
 
 
-exclude.too.far<-function(g1,g2,d1,d2,dist)
+#exclude.too.far<-function(g1,g2,d1,d2,dist)
 # if g1 and g2 are the co-ordinates of grid modes and d1,d2 are co-ordinates of data
 # then this routine returns a vector with TRUE if the grid node is too far from
 # any data and FALSE otherwise. Too far is judged using dist: a positive number indicating
 # distance on the unit square into which the grid is scaled prior to calculation
-{ mig<-min(g1)
-  d1<-d1-mig;g1<-g1-mig
-  mag<-max(g1)
-  d1<-d1/mag;g1<-g1/mag
-  mig<-min(g2)
-  d2<-d2-mig;g2<-g2-mig
-  mag<-max(g2)
-  d2<-d2/mag;g2<-g2/mag
-  # all now in unit square
-  n<-length(g1)
-  m<-length(d1)
-  if (length(g2)!=n) stop("grid vectors are different lengths")
-  if (m!=length(d2)) stop("data vectors are of different lengths")
-  if (dist<0) stop("supplied dist negative")
-  distance<-array(0,n)
-  o<-.C(C_MinimumSeparation,as.double(g1),as.double(g2),as.integer(n),as.double(d1),as.double(d2),
-         as.integer(m),distance=as.double(distance))  
-  res<-rep(FALSE,n)
-  res[o$distance > dist] <-TRUE
-  res
-}
+#{ mig<-min(g1)
+#  d1<-d1-mig;g1<-g1-mig
+#  mag<-max(g1)
+#  d1<-d1/mag;g1<-g1/mag
+#  mig<-min(g2)
+#  d2<-d2-mig;g2<-g2-mig
+#  mag<-max(g2)
+#  d2<-d2/mag;g2<-g2/mag
+#  # all now in unit square
+#  n<-length(g1)
+#  m<-length(d1)
+#  if (length(g2)!=n) stop("grid vectors are different lengths")
+#  if (m!=length(d2)) stop("data vectors are of different lengths")
+#  if (dist<0) stop("supplied dist negative")
+#  distance<-array(0,n)
+#  o<-.C(C_MinimumSeparation,as.double(g1),as.double(g2),as.integer(n),as.double(d1),as.double(d2),
+#         as.integer(m),distance=as.double(distance))  
+#  res<-rep(FALSE,n)
+#  res[o$distance > dist] <-TRUE
+#  res
+#}
 
 
 # From here on is the code for magic.....

@@ -191,16 +191,17 @@ k.check <- function(b,subsample=5000,n.rep=400) {
   } else modf <- b$model
   nr <- length(rsd)
   for (k in 1:m) { ## work through smooths
-    dat <- as.data.frame(ExtractData(b$smooth[[k]],modf,NULL)$data)
+    ok <- TRUE
+    dat <- ExtractData(b$smooth[[k]],modf,NULL)$data
+    if (!is.null(attr(dat,"index"))||!is.null(attr(dat[[1]],"matrix"))||is.matrix(dat[[1]])) ok <- FALSE
+    if (ok) dat <- as.data.frame(dat)
     snames[k] <- b$smooth[[k]]$label
     ind <- b$smooth[[k]]$first.para:b$smooth[[k]]$last.para
     kc[k] <- length(ind)
     edf[k] <- sum(b$edf[ind]) 
     nc <- b$smooth[[k]]$dim
-    if (ncol(dat)>nc) dat <- dat[,1:nc] ## drop any by variables
-    ok <- TRUE
+    if (ok && ncol(dat)>nc) dat <- dat[,1:nc] ## drop any by variables
     for (j in 1:nc) if (is.factor(dat[[j]])) ok <- FALSE 
-    if (!is.null(attr(dat[[1]],"matrix"))) ok <- FALSE
     if (!ok) {
       p.val[k] <- v.obs[k] <- NA ## can't do this test with summation convention/factors
     } else { ## normal term
@@ -1226,9 +1227,12 @@ exclude.too.far<-function(g1,g2,d1,d2,dist)
   if (m!=length(d2)) stop("data vectors are of different lengths")
   if (dist<0) stop("supplied dist negative")
   distance<-array(0,n)
-  o<-.C(C_MinimumSeparation,as.double(g1),as.double(g2),as.integer(n),as.double(d1),as.double(d2),
-         as.integer(m),distance=as.double(distance))  
-  res<-rep(FALSE,n)
+  o<-.C(C_MinimumSeparation,x=as.double(cbind(g1,g2)),n=as.integer(n), d=as.integer(2),
+                            t=as.double(cbind(d1,d2)),m=as.integer(m),distance=as.double(distance))
+
+  #o<-.C(C_MinimumSeparation,as.double(g1),as.double(g2),as.integer(n),as.double(d1),as.double(d2),
+  #       as.integer(m),distance=as.double(distance))  
+  res <- rep(FALSE,n)
   res[o$distance > dist] <-TRUE
   res
 }

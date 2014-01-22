@@ -46,7 +46,8 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
 void RuniqueCombs(double *X,int *ind,int *r, int *c);
 void  RPCLS(double *Xd,double *pd,double *yd, double *wd,double *Aind,double *bd,double *Afd,double *Hd,double *Sd,int *off,int *dim,double *theta, int *m,int *nar);
 void RMonoCon(double *Ad,double *bd,double *xd,int *control,double *lower,double *upper,int *n);
-void MinimumSeparation(double *gx,double *gy,int *gn,double *dx,double *dy, int *dn,double *dist);
+/*void MinimumSeparation(double *gx,double *gy,int *gn,double *dx,double *dy, int *dn,double *dist);*/
+void MinimumSeparation(double *x,int *n, int *d,double *t,int *m,double *dist);
 void rksos(double *x,int *n,double *eps);
 void pivoter(double *x,int *r,int *c,int *pivot, int *col, int *reverse);
 
@@ -98,10 +99,33 @@ void gridder(double *z,double *x,double *y,int *n,double *g, int *G,int *nx, int
 void pde_coeffs(int *G,double *x,int *ii,int *jj,int *n,int *nx,int *ny,double *dx,double *dy);
 
 /* sparse smooth related routines */
+typedef struct { /* defines structure for kd-tree box */
+  double *lo,*hi;    /* box defining co-ordinates */
+  int parent,child1,child2, /* indices of parent and 2 offspring */
+      p0,p1;         /* indices of first and last point in box */
+} box_type; 
+
+
+
+typedef struct {
+  box_type *box;
+  int *ind, /* index of points in coordinate matrix which tree relates to */
+      *rind, /* where is ith row of X in ind? */
+      n_box, /* number of boxes */
+      d, /* dimension */
+    n; /* number of points that tree relates to */
+  double huge; /* number indicating an open boundary */
+} kdtree_type;
+
+void k_newn_work(double *Xm,kdtree_type kd,double *X,double *dist,int *ni,int*m,int *n,int *d,int *k);
 void k_nn(double *X,double *dist,double *a,int *ni,int *n,int *d,int *k,int *get_a);
 void Rkdtree(double *X,int *n, int *d,int *idat,double *ddat);
 void Rkdnearest(double *X,int *idat,double *ddat,int *n,double *x, int *m, int *ni, double *dist,int *k);
 void Rkradius(double *r,int *idat,double *ddat,double *X,double *x,int *m,int *off,int *ni,int *op);
+double xidist(double *x,double *X,int i,int d, int n);
+int closest(kdtree_type *kd, double *X,double *x,int n,int *ex,int nex);
+void kd_tree(double *X,int *n, int *d,kdtree_type *kd);
+void free_kdtree(kdtree_type kd);
 
 void tri2nei(int *t,int *nt,int *n,int *d,int *off);
 void nei_penalty(double *X,int *n,int *d,double *D,int *ni,int *ii,int *off,

@@ -256,6 +256,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    conv <-  boundary <- FALSE
  
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
+      if (control$trace) cat(iter," ")
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
       good <- dd$Deta2 != 0
       w <- dd$Deta2[good] * .5

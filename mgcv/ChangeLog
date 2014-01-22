@@ -3,6 +3,9 @@
 
 1.7-28
 
+* exclude.too.far updated to use kd-tree instead of inefficient search for 
+  neighbours.
+
 * Change in smoothCon, so that sweep and drop constraints (default for bam
   for efficiency reasons) are no longer allowed with by variables and matrix 
   arguments (could lead to confusing results with factor by variables in bam). 

@@ -7,8 +7,7 @@ This routine returns a matrix containing all the unique rows of the
 matrix supplied as its argument. That is, all the duplicate rows are
 stripped out. Note that the ordering of the rows on exit is not the same
 as on entry. It also returns an index attribute for relating the result back 
-to the original matrix. When written this was much quicker than using \code{\link{unique}}
-with \code{\link{duplicate}}, but that no longer seems to be the case. 
+to the original matrix.
 }
 \usage{
 uniquecombs(x)
@@ -20,8 +19,12 @@ uniquecombs(x)
 \details{ Models with more parameters than unique combinations of
   covariates are not identifiable. This routine provides a means of
   evaluating the number of unique combinations of coavariates in a
-  model. The routine calls compiled C code.
+  model. The routine calls compiled C code, and is based on sorting, 
+  with consequent O(nlog(n)) cost. In principle a hash table based solution 
+  should be only O(n).
    
+ \code{\link{unique}} and \code{\link{duplicated}}, can sometimes be used 
+ in place of this, if the full index is not needed. Relative performance is variable. 
 }
 \value{
 A matrix consisting of the unique rows of \code{x} (in arbitrary order).
@@ -31,8 +34,7 @@ matrix that contains row i of the original matrix.
  
 }
 
-\seealso{\code{\link{unique}}, with \code{\link{duplicate}} can do the same thing, 
- and now seems to be quicker than this routine.}
+\seealso{\code{\link{unique}}, \code{\link{duplicated}}.}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
