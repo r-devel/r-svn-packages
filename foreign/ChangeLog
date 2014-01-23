@@ -5,10 +5,9 @@
 	* R/read.dta.R, man/read.dta.Rd: add support for Stata date-times,
 	improve detection of date columns.
 
-2014-01-22 Brian Ripley
+	* tests/stata.{R,Rout.save}, tests/xxx12.dta: add regression test.
 
-	* man/read.dta.Rd: mention that Stata say v13 uses the same format
-	as v12.
+2014-01-22 Brian Ripley
 
 	* tests/download.R: remove defunct URL.
 
