@@ -16,7 +16,8 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
 }
 \arguments{
   \item{file}{a filename or URL as a character string.}
-  \item{convert.dates}{Convert Stata dates to \code{Date} class?}
+  \item{convert.dates}{Convert Stata dates to \code{Date} class, and
+    date-times to \code{POSIXct} class?}
   \item{convert.factors}{Use Stata value labels to create factors?
     (Version 6.0 or later).}
   \item{missing.type}{For version 8 or later, store information about
@@ -54,8 +55,6 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   where the observation is not missing and 0--26 when the observation is
   missing.  This is attached as the \code{"missing"} attribute of the
   returned value.
-
-  Stata document that version 13 uses the same file format as 12.
 }
 \value{
   A data frame with attributes.  These will include \code{"datalabel"},
@@ -65,7 +64,7 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   Possible versions are \code{5, 6, 7},
   \code{-7} (Stata 7SE, \sQuote{format-111}), \code{8} (Stata 8 and 9,
   \sQuote{format-113}), \code{10} (Stata 10 and 11, \sQuote{format-114}).
-  and \code{12} (Stata 12 and 13, \sQuote{format-115}).
+  and \code{12} (Stata 12, \sQuote{format-115}).
   
   The value labels in attribute \code{"val.labels"} name a table for
   each variable, or are an empty string.  The tables are elements of the

@@ -60,6 +60,16 @@ read.dta <- function(file, convert.dates = TRUE,
             warning("'missing.type' only applicable to version >= 8 files")
     }
 
+    convert_dt_c <- function(x)
+        as.POSIXct((x+0.1)/1000, origin = "1960-01-01") # avoid rounding down
+
+    convert_dt_C <- function(x) {
+        ls <- .leap.seconds + seq_along(.leap.seconds)
+        z <- (x+0.1)/1000 # avoid rounding down
+        z <- z - rowSums(outer(z, ls, ">="))
+        as.POSIXct(z, origin = "1960-01-01")
+    }
+
     if (convert.dates) {
         ff <- attr(rval, "formats")
         ## dates <- grep("%-*d", ff)
@@ -75,7 +85,10 @@ read.dta <- function(file, convert.dates = TRUE,
         else grep("%-*d", ff)
         ## avoid as.Date in case strptime is messed up
         base <- structure(-3653L, class = "Date")
-        for(v in dates) rval[[v]] <- base + rval[[v]]
+        for(v in dates) rval[[v]] <- structure(base + rval[[v]], class = "Date")
+
+        for(v in grep("%tc", ff)) rval[[v]] <- convert_dt_c(rval[[v]])
+        for(v in grep("%tC", ff)) rval[[v]] <- convert_dt_C(rval[[v]])
     }
     if (convert.factors %in% c(TRUE, NA)) {
         if (attr(rval, "version") == 5L)
