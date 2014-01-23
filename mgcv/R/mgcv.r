@@ -1753,17 +1753,23 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## model setup - don't try obtaining by evaluating pf in mf - doesn't
     ## work in general (e.g. with offset)...
 
-    if (is.list(formula)) {
+    if (is.list(formula)) { ## then there are several linear predictors
       pterms <- list()
+      tlab <- rep("",0)
       for (i in 1:length(formula)) {
         pmf$formula <- gp[[i]]$pf 
         pterms[[i]] <- attr(eval(pmf, parent.frame()),"terms")
+        tlabi <- attr(pterms[[i]],"term.labels")
+        if (i>1&&length(tlabi)>0) tlabi <- paste(tlabi,i-1,sep=".")
+        tlab <- c(tlab,tlabi)
       }
-    } else {
+      attr(pterms,"term.labels") <- tlab ## labels for all parametric terms, distinguished by predictor
+    } else { ## single linear predictor case
       pmf$formula <- gp$pf
       pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
       pterms <- attr(pmf,"terms") ## pmf only used for this
     }
+
     if (is.character(family)) family<-eval(parse(text=family))
     if (is.function(family)) family <- family()
     if (is.null(family$family)) stop("family not recognized")
@@ -2321,9 +2327,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     type<-"terms"
   }
   if (!inherits(object,"gam")) stop("predict.gam can only be used to predict from gam objects")
+
   ## to mimic behaviour of predict.lm, some resetting is required ...
-  if (missing(newdata)) na.act <- object$na.action else
-  { if (is.null(na.action)) na.act <- NULL 
+  if (missing(newdata)) na.act <- object$na.action else {
+    if (is.null(na.action)) na.act <- NULL 
     else {
       na.txt <- "na.pass"
       if (is.character(na.action))
@@ -2334,10 +2341,11 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       na.act <- na.action
     }
   } ## ... done
+
   # get data from which to predict.....  
   nd.is.mf <- FALSE # need to flag if supplied newdata is already a model frame
-  if (newdata.guaranteed==FALSE)
-  { if (missing(newdata)) { # then "fake" an object suitable for prediction 
+  if (newdata.guaranteed==FALSE) {
+    if (missing(newdata)) { # then "fake" an object suitable for prediction 
       newdata <- object$model
       new.data.ok <- FALSE
       nd.is.mf <- TRUE
@@ -2371,9 +2379,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (!is.null(attr(newdata,"terms"))) nd.is.mf <- TRUE
   }
   
+  ## now check the factor levels and split into blocks...
 
-  if (new.data.ok)
-  { ## check factor levels are right ...
+  if (new.data.ok) {
+    ## check factor levels are right ...
     names(newdata)->nn # new data names
     colnames(object$model)->mn # original names
     for (i in 1:length(newdata)) 
@@ -2390,17 +2399,19 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     n.blocks <- np %/% block.size
     b.size <- rep(block.size,n.blocks)
     last.block <- np-sum(b.size)
-    if (last.block>0) 
-    { n.blocks <- n.blocks+1  
+    if (last.block>0) {
+      n.blocks <- n.blocks+1  
       b.size[n.blocks] <- last.block
     }
-  } else # no new data, just use object$model
-  { np <- nrow(object$model)
+  } else { # no new data, just use object$model
+    np <- nrow(object$model)
     nb <- length(object$coefficients)
     n.blocks <- 1
     b.size <- array(np,1)
   }
-  # setup prediction arrays
+
+  # setup prediction arrays...
+
   n.smooth<-length(object$smooth)
   if (type=="lpmatrix") {
     H <- matrix(0,np,nb)
@@ -2412,8 +2423,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     fit <- array(0,c(np,n.pterms+as.numeric(!para.only)*n.smooth))
     if (se.fit) se <- fit
     ColNames <- term.labels
-  } else { ## "response" or "lp"
-    fit <- array(0,np)
+  } else { ## "response" or "link"
+    ## get number of linear predictors, in case it's more than 1...
+    nlp <- if (is.list(object$formula)) length(object$formula) else 1
+    fit <- if (nlp>1) matrix(0,np,nlp) else array(0,np)
     if (se.fit) se <- fit
     fit1 <- NULL ## "response" returned by fam$fv can be non-vector 
   }
@@ -2431,18 +2444,24 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (object$nsdf[i]>0) pind <- c(pind,pstart[i]-1+1:object$nsdf[i])
     }
   } else { ## normal single predictor case
-    Terms <- list(delete.response(object$pterms))
+    Terms <- list(delete.response(object$pterms)) ## make into a list anyway
     pterms <- list(object$pterms)
     pstart <- 1
     pind <- 1:object$nsdf ## index of parameteric coefficients
   }
+
   ## check if extended family required intercept to be dropped...
   drop.intercept <- FALSE 
   if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
     drop.intercept <- TRUE;
-    for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 ## make sure intercept explicitly included, so it can be cleanly dropped
+    ## make sure intercept explicitly included, so it can be cleanly dropped...
+    for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 
   } 
   
+  ####################################
+  ## Actual prediction starts here...
+  ####################################
+
   s.offset <- NULL # to accumulate any smooth term specific offset
   any.soff <- FALSE # indicator of term specific offset existence
   if (n.blocks > 0) for (b in 1:n.blocks) { # work through prediction blocks
@@ -2451,7 +2470,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (n.blocks==1) data <- newdata else data <- newdata[start:stop,]
     X <- matrix(0,b.size[b],nb)
     Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
-    for (i in 1:length(Terms)) {
+    for (i in 1:length(Terms)) { ## loop for parametric components (1 per lp)
       ## implements safe prediction for parametric part as described in
       ## http://developer.r-project.org/model-fitting-functions.txt
       if (new.data.ok) {
@@ -2471,37 +2490,41 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         xat$dim[2] <- xat$dim[2]-1;attributes(Xp) <- xat 
       }
       if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
-    }
-    if (n.smooth) for (k in 1:n.smooth) {
+    } ## end of parametric part
+
+    if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths
       Xfrag <- PredictMat(object$smooth[[k]],data)		 
       X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
       Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
       if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
       if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- object$smooth[[k]]$label
-    }
+    } ## smooths done
 
     if (!is.null(object$Xcentre)) { ## Apply any column centering
       X <- sweep(X,2,object$Xcentre)
     }
 
-    # have prediction matrix for this block, now do something with it
+    # Now have prediction matrix, X, for this block, need to do something with it...
+
     if (type=="lpmatrix") { 
       H[start:stop,] <- X
       if (any.soff) s.offset <- rbind(s.offset,Xoff)
-    } else 
-    if (type=="terms"||type=="iterms")
-    {
-      ind <- 1:length(object$assign)
-      if (n.pterms)  # work through parametric part
-      for (i in 1:n.pterms)
-      { ii <- ind[object$assign==i]
-        fit[start:stop,i] <- X[,ii,drop=FALSE]%*%object$coefficients[ii]
-        if (se.fit) se[start:stop,i] <-
-        sqrt(rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE]))
+    } else if (type=="terms"||type=="iterms") { ## split results into terms
+      lass <- if (is.list(object$assign)) object$assign else list(object$assign)
+      k <- 0
+      for (j in 1:length(lass)) { ## work through assign list
+        ind <- 1:length(lass[[j]]) ## index vector for coefs involved
+        nptj <- max(lass[[j]]) ## numer of terms involved here
+        if (nptj>0) for (i in 1:nptj) { ## work through parametric part
+          k <- k + 1 ## counts total number of parametric terms
+          ii <- ind[lass[[j]]==i] + pstart[j] - 1 
+          fit[start:stop,k] <- X[,ii,drop=FALSE]%*%object$coefficients[ii]
+          if (se.fit) se[start:stop,k] <-
+          sqrt(rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE]))
+        }
       }
-
-      if (n.smooth&&!para.only) 
-      { for (k in 1:n.smooth) # work through the smooth terms 
+      if (n.smooth&&!para.only) {
+        for (k in 1:n.smooth) # work through the smooth terms 
         { first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
@@ -2518,11 +2541,17 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         }
         colnames(fit) <- ColNames
         if (se.fit) colnames(se) <- ColNames
-      } else { # para.only
+      } else {
+        if (para.only&&is.list(object$pterms)) { 
+          ## have to use term labels that match original data, or termplot fails 
+          ## to plot. This only applies for 'para.only' calls which are 
+          ## designed for use from termplot called from plot.gam
+          term.labels <- unlist(lapply(object$pterms,attr,"term.labels"))
+        }
         colnames(fit) <- term.labels
         if (se.fit) colnames(se) <- term.labels
         # retain only terms of order 1 - this is to make termplot work
-        order <- attr(object$pterms,"order")
+        order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order")
         term.labels <- term.labels[order==1]
         ## fit <- as.matrix(as.matrix(fit)[,order==1])
         fit <- fit[,order==1,drop=FALSE]
@@ -2541,33 +2570,55 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           }
         }
       }
-    } else { # "link" or "response"
+    } else { ## "link" or "response" case
       k <- attr(attr(object$model,"terms"),"offset")
-      fit[start:stop] <- X%*%object$coefficients + rowSums(Xoff)
-      if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) + rowSums(Xoff)
-      if (se.fit) se[start:stop] <- sqrt(rowSums((X%*%object$Vp)*X))
-      if (type=="response") { # transform    
-        fam <- object$family;linkinv <- fam$linkinv
-        if (is.null(fam$fv)) {
-          dmu.deta <- fam$mu.eta  
-          if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
-          fit[start:stop] <- linkinv(fit[start:stop])
-        } else {
-          sev <- if (se.fit) se[start:stop] else NULL 
-          ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
-          if (is.null(fit1)&&is.matrix(ffv[[1]])) {
-            fit1 <- matrix(0,np,ncol(ffv[[1]]))
-            if (se.fit) se1 <- fit1
+      if (nlp>1) { ## multiple linear predictor case
+        pstart <- c(pstart,ncol(X))
+        ## get index of smooths with an offset...
+        off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
+        for (j in 1:nlp) { ## looping over the linear predictors
+          ind <- pstart[j]:(pstart[j+1]-1)
+          fit[start:stop,j] <- X[,ind,drop=FALSE]%*%object$coefficients[ind]
+          if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
+            if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
           }
-          if (is.null(fit1)) {
-            fit[start:stop] <- ffv[[1]]
-            if (se.fit) se[start:stop] <- ffv[[2]]
+          if (se.fit) se[start:stop,j] <- sqrt(rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE]))
+          ## model offset only handled for first predictor...
+          if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
+          if (type=="response") { ## need to transform lp to response scale
+            linfo <- object$family$linfo[[j]] ## link information
+            if (se.fit) se[start:stop,j] <- se[start:stop,j]*abs(linfo$mu.eta(fit[start:stop,j]))
+            fit[start:stop,j] <- linfo$linkinv(fit[start:stop,j])
+          }
+        } ## end of lp loop
+      } else { ## single linear predictor
+       # k <- attr(attr(object$model,"terms"),"offset")
+        fit[start:stop] <- X%*%object$coefficients + rowSums(Xoff)
+        if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) ## + rowSums(Xoff)
+        if (se.fit) se[start:stop] <- sqrt(rowSums((X%*%object$Vp)*X))
+        if (type=="response") { # transform    
+          fam <- object$family;linkinv <- fam$linkinv
+          if (is.null(fam$fv)) {
+            dmu.deta <- fam$mu.eta  
+            if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
+            fit[start:stop] <- linkinv(fit[start:stop])
           } else {
-            fit1[start:stop,] <- ffv[[1]]
-            if (se.fit) se1[start:stop,] <- ffv[[2]]
+            sev <- if (se.fit) se[start:stop] else NULL 
+            ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
+            if (is.null(fit1)&&is.matrix(ffv[[1]])) {
+              fit1 <- matrix(0,np,ncol(ffv[[1]]))
+              if (se.fit) se1 <- fit1
+            }
+            if (is.null(fit1)) {
+              fit[start:stop] <- ffv[[1]]
+              if (se.fit) se[start:stop] <- ffv[[2]]
+            } else {
+              fit1[start:stop,] <- ffv[[1]]
+              if (se.fit) se1[start:stop,] <- ffv[[2]]
+            }
           }
         }
-      }
+      } ## single lp done
     }
     rm(X)
    

@@ -50,7 +50,7 @@ definition causes the edf's to add up properly! An alternative version of EDF is
 
 P-values for smooth terms are usually based on a 
 test statistic motivated by an extension of Nychka's (1988) analysis of the frequentist properties 
-of Bayesian confidence intervals for smooths. 
+of Bayesian confidence intervals for smooths (Marra and Wood, 2012). 
 These have better frequentist performance (in terms of power and distribution under the null) 
 than the alternative strictly frequentist approximation. When the Bayesian intervals have good 
 across the function properties then the p-values have close to the correct null distribution 
@@ -58,7 +58,7 @@ and reasonable power (but there are no optimality results for the power). Full d
 although what is computed is actually a slight variant in which the components of the test statistic are weighted by the iterative fitting weights. 
 
 Note that for terms with no unpenalized terms (such as Gaussian random effects) the Nychka (1988) requirement for smoothing bias to be substantially less than variance breaks down (see e.g. appendix of Marra and Wood, 2012), and this results in incorrect null distribution for p-values computed using the above approach. In this case it is necessary to use an alternative 
-approach designed for random effects variance components, and this is done. See Wood (2013a) for details: the test is based on a likelihood ratio statistic (with the reference distribution appropriate for the null hypothesis on the boundary of the parameter spoace).
+approach designed for random effects variance components, and this is done. See Wood (2013a) for details: the test is based on a likelihood ratio statistic (with the reference distribution appropriate for the null hypothesis on the boundary of the parameter space).
 
 All p-values are computed without considering uncertainty in the smoothing parameter estimates.
 
@@ -151,15 +151,16 @@ by scale parameter.}
 
 \references{
 
-Wood, S.N. (2013a) A simple test for random effects in regression models. Biometrika 100:1005-1010
-
-Wood, S.N. (2013b) On p-values for smooth components of an extended generalized additive model. Biometrika 100:221-228
 
 Marra, G and S.N. Wood (2012) Coverage Properties of Confidence Intervals for Generalized Additive
 Model Components. Scandinavian Journal of Statistics, 39(1), 53-74.
 
 Nychka (1988) Bayesian Confidence Intervals for Smoothing Splines. 
 Journal of the American Statistical Association 83:1134-1143.
+
+Wood, S.N. (2013a) A simple test for random effects in regression models. Biometrika 100:1005-1010
+
+Wood, S.N. (2013b) On p-values for smooth components of an extended generalized additive model. Biometrika 100:221-228
 
 Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman
 and Hall/CRC Press.

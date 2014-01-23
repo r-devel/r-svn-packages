@@ -1023,7 +1023,8 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     scheme <- rep(scheme[1],m)
   }
 
-  order <- attr(x$pterms,"order") # array giving order of each parametric term
+  ## array giving order of each parametric term...
+  order <- if (is.list(x$pterms))  unlist(lapply(x$pterms,attr,"order")) else attr(x$pterms,"order")
 
   if (all.terms) # plot parametric terms as well
   n.para <- sum(order==1) # plotable parametric terms   
@@ -1189,9 +1190,11 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   { class(x) <- c("gam","glm","lm") # needed to get termplot to call model.frame.glm 
     if (is.null(select)) {
       attr(x,"para.only") <- TRUE
-      termplot(x,se=se,rug=rug,col.se=1,col.term=1,...)
+      termplot(x,se=se,rug=rug,col.se=1,col.term=1,main=attr(x$pterms,"term.labels"),...)
     } else { # figure out which plot is required
       if (select > m) { 
+        ## can't figure out how to get this to work with more than first linear predictor
+        ## as termplots relies on matching terms to names in original data... 
         select <- select - m # i.e. which parametric term
         term.labels <- attr(x$pterms,"term.labels")
         term.labels <- term.labels[order==1]
