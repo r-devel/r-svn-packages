@@ -46,7 +46,7 @@
 #define BLANK24 "                        "
 
 #define GET_RECORD(rec, fp, len) \
-	  fread((rec), sizeof(char), (size_t) (len), (fp))
+    (int) fread((rec), sizeof(char), (size_t) (len), (fp))
 
 #define IS_SASNA_CHAR(c) ((c) == 0x5f || (c) == 0x2e || \
 			  (0x41 <= (c) && (c) <= 0x5a))
@@ -258,7 +258,7 @@ init_mem_info(FILE *fp, char *name)
     sscanf(record+54, "%d", &length);
 
     tmp = strchr(mem_head->sas_dsname, ' ');
-    n = tmp - mem_head->sas_dsname;
+    n = (int)(tmp - mem_head->sas_dsname);
     if(n > 0) {
 	if (n > 8)
 	    n = 8;

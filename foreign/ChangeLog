@@ -1,5 +1,14 @@
 2014-01-24 Brian Ripley
 
+	* man/write.dta.Rd: Add section with more explanation on date-times.
+
+	* src/{R_systat,SASxport.c,dbfopen.c,swap_bytes.h},:
+	add casts or correct types.
+
+	* src/stataread.c: legibility.
+
+2014-01-24 Brian Ripley
+
 	* DESCRIPTION: Version is 0.8-59
 
 	* R/read.dta.R, man/read.dta.Rd: add support for Stata date-times,
