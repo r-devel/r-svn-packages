@@ -55,6 +55,9 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   where the observation is not missing and 0--26 when the observation is
   missing.  This is attached as the \code{"missing"} attribute of the
   returned value.
+
+  The default file format for Stata 13, \code{format-115}, is
+  substantially different from those for Stata 5--12.
 }
 \value{
   A data frame with attributes.  These will include \code{"datalabel"},
@@ -85,7 +88,8 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
 }
 \seealso{
   A different approach is available in package \pkg{memisc}: see its
-  help for \code{Stata.file}.
+  help for \code{Stata.file}, at the time of writing not for Stata 12 or
+  later.
 
   \code{\link{write.dta}},
   \code{\link{attributes}},
@@ -96,16 +100,5 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
 data(swiss)
 write.dta(swiss,swissfile <- tempfile())
 read.dta(swissfile)
-
-## post-processing of date-time columns.
-## Stata docuementation is muddy as to whether it is
-## %tc or %tC which counts leap-seconds.
-## So one will be a few seconds out on recent date-times.
-convert_dt <- function(x) {
-    dt <- grep("^\%t[cC]", attr(x, "formats"))
-    for(v in dt) ## workaround rounding errors in division
-        x[[v]] <- as.POSIXct((x[[v]]+0.1)/1000, origin = "1960-01-01")
-    x
-}
 }
 \keyword{file}

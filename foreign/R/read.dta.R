@@ -84,7 +84,7 @@ read.dta <- function(file, convert.dates = TRUE,
         dates <- if (attr(rval, "version") >= 8L) grep('^%(-|)(d|td)', ff)
         else grep("%-*d", ff)
         ## avoid as.Date in case strptime is messed up
-        base <- structure(-3653L, class = "Date")
+        base <- structure(-3653L, class = "Date") # Stata dates are integer vars
         for(v in dates) rval[[v]] <- structure(base + rval[[v]], class = "Date")
 
         for(v in grep("%tc", ff)) rval[[v]] <- convert_dt_c(rval[[v]])
