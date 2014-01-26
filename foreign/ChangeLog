@@ -1,3 +1,7 @@
+2014-01-26 Brian Ripley
+
+	* tests/spss.{R,Rout.save}: avoid partial match in all.equal().
+
 2014-01-24 Brian Ripley
 
 	* man/write.dta.Rd: Add section with more explanation on date-times.
