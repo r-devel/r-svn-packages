@@ -174,7 +174,7 @@ mini.mf <-function(mf,chunk.size) {
 ## problems with the following are...
 ## 1. you can produce model frame rows that are wholly un-representative of the 
 ##    data for multi dimensional smooths this way, by pairing extreme values
-##    with values of other variabels that they never occur near.
+##    with values of other variables that they never occur near.
 ## 2. Nothing is done to ensure that all factor levels are present.  
 #  mf0 <- mf[ind,] ## random sample of rows
   ## now need to ensure that max and min are in sample for each element of mf0

@@ -4,7 +4,7 @@
 1.7-28
 
 * exclude.too.far updated to use kd-tree instead of inefficient search for 
-  neighbours.
+  neighbours. This can make plot.gam *much* faster for large datasets.
 
 * Change in smoothCon, so that sweep and drop constraints (default for bam
   for efficiency reasons) are no longer allowed with by variables and matrix 

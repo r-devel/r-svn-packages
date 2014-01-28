@@ -2083,8 +2083,8 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
     if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
     rho <- log(phi)
     if (p>1&&p<2) {
-      if (p<a) a <- (1+p)/2
-      if (p>b) b <- (2+p)/2
+      if (p <= a) a <- (1+p)/2
+      if (p >= b) b <- (2+p)/2
       pabp <- (p-a)/(b-p)
       theta <- log((p-a)/(b-p))
       dthp1 <- (1+pabp)/(p-a)
