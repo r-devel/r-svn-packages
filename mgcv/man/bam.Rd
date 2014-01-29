@@ -204,14 +204,17 @@ The negbin family is only supported for the *known theta* case.
 
 \examples{
 library(mgcv)
+## See help("mgcv-parallel") for using bam in parallel
+
 ## Some examples are marked 'Not run' purely to keep 
 ## checking load on CRAN down. Sample sizes are small for 
 ## the same reason.
+
 set.seed(3)
-dat <- gamSim(1,n=15000,dist="normal",scale=20)
-bs <- "cr";k <- 20
-b <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
-           s(x3,bs=bs,k=k),data=dat)
+dat <- gamSim(1,n=25000,dist="normal",scale=20)
+bs <- "cr";k <- 12
+b <- bam(y ~ s(x0,bs=bs)+s(x1,bs=bs)+s(x2,bs=bs,k=k)+
+           s(x3,bs=bs),data=dat)
 summary(b)
 plot(b,pages=1,rug=FALSE)  ## plot smooths, but not rug
 plot(b,pages=1,rug=FALSE,seWithMean=TRUE) ## `with intercept' CIs
@@ -224,33 +227,12 @@ summary(ba)}
 ## A Poisson example...
 
 k <- 15
-dat <- gamSim(1,n=11000,dist="poisson",scale=.1)
-system.time(b1 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k),
+dat <- gamSim(1,n=21000,dist="poisson",scale=.1)
+
+system.time(b1 <- bam(y ~ s(x0,bs=bs)+s(x1,bs=bs)+s(x2,bs=bs,k=k),
             data=dat,family=poisson()))
 b1
 
-## repeat on a cluster (need much larger n to be worthwhile!)
-require(parallel)  
-nc <- 2   ## cluster size, set for example portability
-if (detectCores()>1) { ## no point otherwise
-  cl <- makeCluster(nc) 
-  ## could also use makeForkCluster, but read warnings first!
-} else cl <- NULL
-  
-system.time(b2 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)
-            ,data=dat,family=poisson(),cluster=cl))
-
-## ... first call has startup overheads, repeat shows speed up...
-
-\dontrun{
-system.time(b2 <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)
-            ,data=dat,family=poisson(),cluster=cl))
-}
-
-fv <- predict(b2,cluster=cl) ## parallel prediction
-
-if (!is.null(cl)) stopCluster(cl)
-b2
 
 ## Sparse smoother example...
 \dontrun{
