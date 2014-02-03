@@ -2387,7 +2387,13 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     colnames(object$model)->mn # original names
     for (i in 1:length(newdata)) 
     if (nn[i]%in%mn && is.factor(object$model[,nn[i]])) { # then so should newdata[[i]] be 
-      newdata[[i]]<-factor(newdata[[i]],levels=levels(object$model[,nn[i]])) # set prediction levels to fit levels
+      levm <- levels(object$model[,nn[i]]) ## original levels
+      levn <- levels(factor(newdata[[i]])) ## new levels
+      if (sum(!levn%in%levm)>0) { ## check not trying to sneak in new levels 
+        msg <- paste(paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
+        stop(msg)
+      }
+      newdata[[i]] <- factor(newdata[[i]],levels=levm) # set prediction levels to fit levels
     }
 
     # split prediction into blocks, to avoid running out of memory
@@ -2593,18 +2599,21 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         } ## end of lp loop
       } else { ## single linear predictor
        # k <- attr(attr(object$model,"terms"),"offset")
-        fit[start:stop] <- X%*%object$coefficients + rowSums(Xoff)
-        if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) ## + rowSums(Xoff)
+        offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf)
+        fit[start:stop] <- X%*%object$coefficients + offs
+        #if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) ## + rowSums(Xoff)
         if (se.fit) se[start:stop] <- sqrt(rowSums((X%*%object$Vp)*X))
         if (type=="response") { # transform    
           fam <- object$family;linkinv <- fam$linkinv
-          if (is.null(fam$fv)) {
+          if (is.null(fam$predict)) {
             dmu.deta <- fam$mu.eta  
             if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
             fit[start:stop] <- linkinv(fit[start:stop])
-          } else {
-            sev <- if (se.fit) se[start:stop] else NULL 
-            ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
+          } else { ## family has its own prediction code for response case
+            ffv <- fam$predict(fam,se.fit,X=X,beta=object$coefficients,off=offs,
+                               Vb=object$Vp,family.data=object$family.data)
+            ##sev <- if (se.fit) se[start:stop] else NULL 
+            ##ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
               fit1 <- matrix(0,np,ncol(ffv[[1]]))
               if (se.fit) se1 <- fit1
@@ -2756,17 +2765,22 @@ concurvity <- function(b,full=TRUE) {
 
 
 residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson", "working", "response"),...)
-# calculates residuals for gam object - default for glm (from which this is adapted) seems to be buggy
+## calculates residuals for gam object 
 { type <- match.arg(type)
+  ## if family has its own residual function, then use that...
+  if (!is.null(object$family$residuals)) {
+    res <- object$family$residuals(object,type,...)
+    res <- naresid(object$na.action,res)
+    return(res)
+  }
+  ## default computations...
   y <- object$y
   mu <- object$fitted.values
   wts <- object$prior.weights
   if (type == "working") { 
     res <- object$residuals 
   } else if (type == "response") {
-    if (is.null(object$family$fv)) res <- y - mu else {
-       res <- y - object$family$fv(mu)
-    }
+    res <- y - mu 
   } else if (type == "deviance") {
     res <- object$family$dev.resids(y,mu,wts)
     s <- attr(res,"sign")
