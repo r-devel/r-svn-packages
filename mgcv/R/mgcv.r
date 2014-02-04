@@ -1626,7 +1626,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   names(object$edf) <- G$term.names
   names(object$edf1) <- G$term.names
 
-  if (!is.null(G$P)) {
+  ## extended family may need to manipulate fit object...
+    
+  if (!is.null(G$family$postproc)) eval(G$family$postproc)
+
+  if (!is.null(G$P)) { ## matrix transforming from fit to predcition parameterization
     object$coefficients <- as.numeric(G$P %*% object$coefficients)
     object$Vp <- G$P %*% object$Vp %*% t(G$P)
     object$Ve <- G$P %*% object$Ve %*% t(G$P)
@@ -1834,7 +1838,9 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$control <- control
   object$terms <- G$terms
   pvars <- all.vars(delete.response(object$terms))
-  object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else NULL
+  object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else ~1
+  attr(object$pred.formula,"full") <- reformulate(all.vars(object$terms))
+  
   object$pterms <- G$pterms
   object$assign <- G$assign # applies only to pterms
   object$contrasts <- G$contrasts
@@ -2292,11 +2298,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 # This function is used for predicting from a GAM. 'object' is a gam object, newdata a dataframe to
 # be used in prediction......
 #
-# Type == "link"     - for linear predictor
-#      == "response" - for fitted values
+# Type == "link"     - for linear predictor (may be several for extended case)
+#      == "response" - for fitted values: may be several if several linear predictors,
+#                      and may return something other than inverse link of l.p. for some families
 #      == "terms"    - for individual terms on scale of linear predictor 
 #      == "iterms"   - exactly as "terms" except that se's include uncertainty about mean  
-#      == "lpmatrix" - for matrix mapping parameters to l.p.
+#      == "lpmatrix" - for matrix mapping parameters to l.p. - has "lpi" attribute if multiple l.p.s
 # Steps are:
 #  1. Set newdata to object$model if no newdata supplied
 #  2. split up newdata into manageable blocks if too large
@@ -2343,12 +2350,15 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   } ## ... done
 
   # get data from which to predict.....  
-  nd.is.mf <- FALSE # need to flag if supplied newdata is already a model frame
+  nd.is.mf <- FALSE # need to flag if supplied newdata is already a model frame 
+  ## get name of response...
+  yname <- all.vars(object$terms)[attr(object$terms,"response")]
   if (newdata.guaranteed==FALSE) {
     if (missing(newdata)) { # then "fake" an object suitable for prediction 
       newdata <- object$model
       new.data.ok <- FALSE
       nd.is.mf <- TRUE
+      response <- newdata[[yname]]
     } else {  # do an R ``standard'' evaluation to pick up data
       new.data.ok <- TRUE
       if (is.data.frame(newdata)&&!is.null(attr(newdata,"terms"))) { # it's a model frame
@@ -2360,7 +2370,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         ## below, and to allow checking that all variables are in newdata ...
 
         ## get names of required variables, less response, but including offset variable
-        Terms <- delete.response(terms(object))
+        ## see ?terms.object and ?terms for more information on terms objects
+        yname <- all.vars(object$terms)[attr(object$terms,"response")]
+        if (!is.null(newdata[[yname]])) { ## response provided...
+          if (!is.null(object$pred.formula)) object$pred.formula <- attr(object$pred.formula,"full")
+          response <- TRUE
+          Terms <- terms(object)
+        } else { ## response not provided
+          response <- FALSE 
+          Terms <- delete.response(terms(object))
+        }
         allNames <- all.vars(Terms)
         if (length(allNames) > 0) { 
           ff <- if (is.null(object$pred.formula)) reformulate(allNames) else  object$pred.formula
@@ -2369,14 +2388,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           ## note that `xlev' argument not used here, otherwise `as.factor' in 
           ## formula can cause a problem ... levels reset later.
           newdata <- eval(model.frame(ff,data=newdata,na.action=na.act),parent.frame()) 
-        } ## otherwise it's intecept only and newdata can be left alone
+        } ## otherwise it's intercept only and newdata can be left alone
         na.act <- attr(newdata,"na.action")
+        response <- if (response) newdata[[yname]] else NULL
       }
     }
   } else { ## newdata.guaranteed == TRUE
     na.act <- NULL
     new.data.ok=TRUE ## it's guaranteed!
     if (!is.null(attr(newdata,"terms"))) nd.is.mf <- TRUE
+    response <- newdata[[yname]]
   }
   
   ## now check the factor levels and split into blocks...
@@ -2610,8 +2631,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
             if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
             fit[start:stop] <- linkinv(fit[start:stop])
           } else { ## family has its own prediction code for response case
-            ffv <- fam$predict(fam,se.fit,X=X,beta=object$coefficients,off=offs,
-                               Vb=object$Vp,family.data=object$family.data)
+            ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,off=offs,Vb=object$Vp,family.data=object$family.data)
             ##sev <- if (se.fit) se[start:stop] else NULL 
             ##ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
@@ -2764,7 +2784,7 @@ concurvity <- function(b,full=TRUE) {
 } ## end of concurvity
 
 
-residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson", "working", "response"),...)
+residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson", "working", "response","martingale"),...)
 ## calculates residuals for gam object 
 { type <- match.arg(type)
   ## if family has its own residual function, then use that...
@@ -2773,6 +2793,7 @@ residuals.gam <-function(object, type = c("deviance", "pearson","scaled.pearson"
     res <- naresid(object$na.action,res)
     return(res)
   }
+  if (type == "martingale") stop("martingale residuals not available")
   ## default computations...
   y <- object$y
   mu <- object$fitted.values

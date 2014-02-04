@@ -793,9 +793,20 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   REML1 <- d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2
   REML2 <- d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2 
   bSb <- t(coef)%*%St%*%coef
+  lpi <- attr(x,"lpi")
+  if (is.null(lpi)) { 
+    linear.predictors <- as.numeric(x%*%coef)
+    fitted.values <- family$linkinv(linear.predictors) 
+  } else {
+    fitted.values <- linear.predictors <- matrix(0,nrow(x),length(lpi))
+    for (j in 1:length(lpi)) {
+      linear.predictors[,j] <- as.numeric(x[,lpi[[j]],drop=FALSE] %*% coef[lpi[[j]]])
+      fitted.values[,j] <- family$linfo[[j]]$linkinv( linear.predictors[,j]) 
+    }
+  }
   coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef
-  list(coefficients=coef,family=family,
-       fitted.values=NULL, ## NOTE: temporary
+  list(coefficients=coef,family=family,y=y,prior.weights=weights,
+       fitted.values=fitted.values, linear.predictors=linear.predictors,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
        REML= -as.numeric(REML),REML1= -as.numeric(REML1),REML2= -REML2,
        rank=rank,
