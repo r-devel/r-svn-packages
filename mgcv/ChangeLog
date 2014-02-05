@@ -3,6 +3,9 @@
 
 1.7-29
 
+*** Cox Proportional Hazard family 'coxph' added as example of general
+  penalized likelihood families now useable with 'gam'.
+
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.
 

@@ -35,7 +35,19 @@ void get_stableS(double *S,double *Qf,double *sp,double *sqrtS, int *rSncol, int
                double *det, double *det1, double *det2, double *d_tol,
 		 double *r_tol,int *fixed_penalty);
 
+/* cox model routines */
+
+void coxpred(double *X,double *t,double *beta,double *Vb,double *a,double *h,double *q,
+             double *tr,int *n,int *p, int *nt,double *s,double *se);
+void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q, 
+	   int *n,int *p, int *nt);
+void coxlpl(double *eta,double *X,int *r, int *d,double *tr, 
+            int *n,int *p, int *nt,double *lp,double *g,double *H,
+            double *d1beta,double *d1H,double *d2beta,
+            double *d2H,int *n_sp,int *deriv);
+
 /* various service routines */
+
 void tweedious(double *w,double *w1,double *w2, double *w1p,double *w2p,double *w2pp, 
 	       double *y,double *eps,int *n,
                double *th,double *rho,double *a, double *b);
