@@ -6,6 +6,10 @@
 *** Cox Proportional Hazard family 'coxph' added as example of general
   penalized likelihood families now useable with 'gam'.
 
+* gam now defaults to the Pearson estimator of the scale parameter to avoid
+  poor scale estimates in the quasipoisson case with low counts (and possibly
+  elsewhere) NEED TO RE-RUN p-value tests!!
+
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.
 

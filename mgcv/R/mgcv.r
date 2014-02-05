@@ -1405,7 +1405,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$GACV <-  object$GACV1 <-  object$GACV2 <-  object$REML <-  object$REML1 <-  object$REML2 <-  
   object$GCV<-object$GCV1<- object$GCV2 <- object$UBRE <-object$UBRE1 <- object$UBRE2 <- object$trA <-
   object$trA1<- object$trA2 <- object$alpha <- object$alpha1 <- object$scale.est <- NULL
-  object$sig2 <- object$scale
+  object$sig2 <- object$scale.est
   
   object
 } ## gam.outer

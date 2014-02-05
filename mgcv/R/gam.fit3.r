@@ -573,7 +573,11 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
          coef <- oo$beta;
          trA <- oo$trA;
-         scale.est <- (dev+dev.extra)/(n.true-trA)
+         pearson <- sum((y-mu)^2/family$variance(mu)) ## Pearson statistic
+
+         scale.est <- (pearson+dev.extra)/(n.true-trA)
+
+         #scale.est <- (dev+dev.extra)/(n.true-trA)
          reml.scale <- NA  
 
         if (scoreType%in%c("REML","ML")) { ## use Laplace (RE)ML
@@ -741,7 +745,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 gam.fit3.post.proc <- function(X,object) {
 ## get edf array and covariance matrices after a gam fit. 
 ## X is original model matrix
-  Vb <- object$rV%*%t(object$rV)*object$scale ## Bayesian cov.
+  Vb <- object$rV%*%t(object$rV)*object$scale.est ## Bayesian cov.
   # PKt <- object$rV%*%t(object$K)
   PKt <- .Call(C_mgcv_pmmult2,object$rV,object$K,0,1,object$control$nthreads)
   # F <- PKt%*%(sqrt(object$weights)*X)
