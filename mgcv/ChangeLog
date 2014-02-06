@@ -1,14 +1,20 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-1.7-29
+1.8-0
 
 *** Cox Proportional Hazard family 'coxph' added as example of general
   penalized likelihood families now useable with 'gam'.
 
+*** 'ocat', 'tw' and 'nb' families added for ordered categorical data,
+  Tweedie with estimation of 'p' and negative binomial with (fast) estimation
+  of 'theta'. These are all examples of 'extended families' now useable 
+  with 'gam'.
+
 * gam now defaults to the Pearson estimator of the scale parameter to avoid
   poor scale estimates in the quasipoisson case with low counts (and possibly
-  elsewhere) NEED TO RE-RUN p-value tests!!
+  elsewhere). Gaussian, Poisson and binomial inference invariant to change. 
+  Thanks to Greg Dropkin, for reporting the issue.
 
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.

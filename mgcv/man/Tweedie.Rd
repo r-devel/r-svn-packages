@@ -1,14 +1,20 @@
 \name{Tweedie}
 \alias{Tweedie}
+\alias{tw}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{GAM Tweedie family}
-\description{A Tweedie family, designed for use with \code{\link{gam}} from the \code{mgcv} library.
+\title{GAM Tweedie families}
+\description{Tweedie families, designed for use with \code{\link{gam}} from the \code{mgcv} library.
 Restricted to variance function powers between 1 and 2. A useful alternative to \code{\link{quasi}} when a
-full likelihood is desirable.
+full likelihood is desirable. \code{Tweedie} is for use with fixed \code{p}. \code{tw} is for use when \code{p}
+is to be estimated during fitting. For fixed \code{p} between 1 and 2 the Tweedie is an exponential family 
+distribution with variance given by the mean to the power \code{p}.
+
+\code{tw} is only useable with \code{\link{gam}}, not \code{bam} or \code{gamm}.
 }
 
 \usage{
 Tweedie(p=1, link = power(0))
+tw(theta = NULL, link = "log",a=1.01,b=1.99)
 }
 \arguments{
 \item{p}{the variance of an observation is proportional to its mean to the power \code{p}. \code{p} must
@@ -17,13 +23,21 @@ be greater than 1 and less than or equal to 2. 1 would be Poisson, 2 is gamma. }
 \item{link}{The link function: one of \code{"log"}, \code{"identity"}, \code{"inverse"}, \code{"sqrt"}, or a 
 \code{\link{power}} link.}
 
+\item{theta}{p=exp(a+b*exp(theta))/(1+exp(theta)).}
+
+\item{a}{lower limit on \code{p} for optimization.}
+
+\item{b}{upper limit on \code{p} for optimization.}
+
 }
 \value{
- An object inheriting from class \code{family}, with additional elements
+ For \code{Tweedie}, an object inheriting from class \code{family}, with additional elements
 \item{dvar}{the function giving the first derivative of the variance function w.r.t. \code{mu}.}
 \item{d2var}{the function giving the second derivative of the variance function w.r.t. \code{mu}.}
 \item{ls}{A function returning a 3 element array: the saturated log likelihood followed by its first 2 derivatives
 w.r.t. the scale parameter.}
+
+For \code{tw}, an object of class \code{extended.family}.
 }
 
 \details{ A Tweedie random variable with 1<p<2 is a sum of \code{N} gamma random variables 
@@ -80,6 +94,13 @@ b1 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.1,power(.1)),
           data=dat,method="REML")
 plot(b1,pages=1)
 print(b1)
+
+## estimate p as part of fitting
+
+b2 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=tw(),
+          data=dat,method="REML")
+plot(b2,pages=1)
+print(b2)
 
 rm(dat)
 }
