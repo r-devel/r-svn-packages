@@ -683,6 +683,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       } else ll0 <- ll1
     } else { ## step failed.
       converged  <- FALSE
+      if (is.null(drop)) bdrop <- rep(FALSE,q)
       warning(paste("step failed: max abs grad =",max(abs(grad))))
       break
     }
