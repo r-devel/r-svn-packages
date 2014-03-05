@@ -3,7 +3,7 @@
 
 1.8-0
 
-*** Cox Proportional Hazard family 'coxph' added as example of general
+*** Cox Proportional Hazard family 'cox.ph' added as example of general
   penalized likelihood families now useable with 'gam'.
 
 *** 'ocat', 'tw' and 'nb' families added for ordered categorical data,
@@ -18,6 +18,9 @@
 
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.
+
+* 'bfgs' now uses a finite difference approximation for the initial inverse 
+  Hessian. 
 
 1.7-28
 

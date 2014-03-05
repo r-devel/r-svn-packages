@@ -482,7 +482,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    list(coefficients = coef,residuals=residuals,fitted.values = mu,
         family=family, linear.predictors = eta,deviance=dev,
-        null.deviance=nulldev,iterr=iter,
+        null.deviance=nulldev,iter=iter,
         weights=wf, ## note that these are Fisher type weights 
         prior.weights=weights,
         df.null = nulldf, y = y, converged = conv,
@@ -560,8 +560,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   if (is.null(offset)) offset <- rep.int(0, nobs)
  
 
-  ## get log likelihood, grad and Hessian...
-  ll <- family$ll(y,x,coef,weights,family,deriv=1)
+  ## get log likelihood, grad and Hessian (w.r.t. coefs - not s.p.s) ...
+  ll <- family$ll(y,x,coef,weights,family,deriv=1) 
   ll0 <- ll$l - t(coef)%*%St%*%coef/2
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
   rank <- q;drop <- NULL
@@ -688,7 +688,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       break
     }
   } ## end of main fitting iteration
-  ## at this stage the Hessian should be +ve definite,
+
+  ## at this stage the Hessian (of pen lik. w.r.t. coefs) should be +ve definite,
   ## so that the pivoted Choleski factor should exist...
   if (iter == 2*control$maxit&&converged==FALSE) warning(paste("iteration limit reached: max abs grad =",max(abs(grad))))
 
@@ -698,101 +699,114 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     fcoef <- rep(0,length(bdrop));fcoef[!bdrop] <- coef
   } else fcoef <- coef
 
-  ## Implicit differentiation for first derivs...
+  d1l <- d2l <- d1bSb <- d2bSb <- d1b <- d2b <- d1ldetH <- d2ldetH <- d1b <- d2b <- NULL
 
-  m <- nSp
-  d1b <- matrix(0,rank,m)
-  Sib <- Sl.termMult(rp$Sl,fcoef,full=TRUE) ## list of penalties times coefs
-  if (nSp) for (i in 1:m) d1b[,i] <- 
-     -D*(backsolve(L,forwardsolve(t(L),(D*Sib[[i]][!bdrop])[piv]))[ipiv])
+  if (deriv>0) {  ## Implicit differentiation for derivs...
+
+    m <- nSp
+    d1b <- matrix(0,rank,m)
+    Sib <- Sl.termMult(rp$Sl,fcoef,full=TRUE) ## list of penalties times coefs
+    if (nSp) for (i in 1:m) d1b[,i] <- 
+       -D*(backsolve(L,forwardsolve(t(L),(D*Sib[[i]][!bdrop])[piv]))[ipiv])
   
-  if (!is.null(drop)) { ## create full version of d1b with zeros for unidentifiable 
-    fd1b <-  matrix(0,q,m)
-    fd1b[!bdrop,] <- d1b
-  } else fd1b <- d1b
+    if (!is.null(drop)) { ## create full version of d1b with zeros for unidentifiable 
+      fd1b <-  matrix(0,q,m)
+      fd1b[!bdrop,] <- d1b
+    } else fd1b <- d1b
 
-  ## Now call the family again to get first derivative of Hessian w.r.t
-  ## smoothing parameters, in list d1H...
+    ## Now call the family again to get first derivative of Hessian w.r.t
+    ## smoothing parameters, in list d1H...
 
-  ll <- family$ll(y,x,coef,weights,family,deriv=3,d1b=d1b)
+    ll <- family$ll(y,x,coef,weights,family,deriv=3,d1b=d1b)
+    d1l <- colSums(ll$lb*d1b)
+    
+    if (deriv>1) { ## Implicit differentiation for the second derivatives is now possible...
 
-  ## Implicit differentiation for the second derivatives is now possible...
-
-  d2b <- matrix(0,rank,m*(m+1)/2)
-  k <- 0
-  for (i in 1:m) for (j in i:m) {
-    k <- k + 1
-    v <- -ll$d1H[[i]]%*%d1b[,j] + Sl.mult(rp$Sl,fd1b[,j],i)[!bdrop] + Sl.mult(rp$Sl,fd1b[,i],j)[!bdrop]
-    d2b[,k] <- -D*(backsolve(L,forwardsolve(t(L),(D*v)[piv]))[ipiv])
-    if (i==j) d2b[,k] <- d2b[,k] + d1b[,i]
-  } 
+      d2b <- matrix(0,rank,m*(m+1)/2)
+      k <- 0
+      for (i in 1:m) for (j in i:m) {
+        k <- k + 1
+        v <- -ll$d1H[[i]]%*%d1b[,j] + Sl.mult(rp$Sl,fd1b[,j],i)[!bdrop] + Sl.mult(rp$Sl,fd1b[,i],j)[!bdrop]
+        d2b[,k] <- -D*(backsolve(L,forwardsolve(t(L),(D*v)[piv]))[ipiv])
+        if (i==j) d2b[,k] <- d2b[,k] + d1b[,i]
+      } 
   
-  ## Now call family for last time to get trHid2H the tr(H^{-1} d^2 H / drho_i drho_j)...
+      ## Now call family for last time to get trHid2H the tr(H^{-1} d^2 H / drho_i drho_j)...
 
-  llr <- family$ll(y,x,coef,weights,family,deriv=4,d1b=d1b,d2b=d2b,
-         Hp=Hp,rank=rank,fh = L,D=D)
+      llr <- family$ll(y,x,coef,weights,family,deriv=4,d1b=d1b,d2b=d2b,
+                       Hp=Hp,rank=rank,fh = L,D=D)
 
-  ## Now compute Hessian of log lik w.r.t. log sps using chain rule
-  d1l <- colSums(ll$lb*d1b) 
-  d2la <- colSums(ll$lb*d2b)
-  k <- 0
-  d2l <- matrix(0,m,m)
-  for (i in 1:m) for (j in i:m) {
-    k <- k + 1
-    d2l[j,i] <- d2l[i,j] <- d2la[k] + t(d1b[,i])%*%ll$lbb%*%d1b[,j] 
-  }
+      ## Now compute Hessian of log lik w.r.t. log sps using chain rule
+       
+      d2la <- colSums(ll$lb*d2b)
+      k <- 0
+      d2l <- matrix(0,m,m)
+      for (i in 1:m) for (j in i:m) {
+        k <- k + 1
+        d2l[j,i] <- d2l[i,j] <- d2la[k] + t(d1b[,i])%*%ll$lbb%*%d1b[,j] 
+      }
+    } ## if (deriv > 1)
+  } ## if (deriv > 0)
 
   ## Compute the derivatives of log|H+S|... 
-  d1ldetH <- rep(0,m)
-  d1Hp <- list()
-  for (i in 1:m) {
-    A <- -ll$d1H[[i]] + Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop]
-    d1Hp[[i]] <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,])  
-    d1ldetH[i] <- sum(diag(d1Hp[[i]]))
-  }
+  if (deriv > 0) {
+    d1ldetH <- rep(0,m)
+    d1Hp <- list()
+    for (i in 1:m) {
+      A <- -ll$d1H[[i]] + Sl.mult(rp$Sl,diag(q),i)[!bdrop,!bdrop]
+      d1Hp[[i]] <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,])  
+      d1ldetH[i] <- sum(diag(d1Hp[[i]]))
+    }
+  } ## if (deriv > 0)
 
-  d2ldetH <- matrix(0,m,m)
-  k <- 0
-  for (i in 1:m) for (j in i:m) {
-    k <- k + 1
-    d2ldetH[i,j] <- -sum(d1Hp[[i]]*t(d1Hp[[j]])) - llr$trHid2H[k] 
-    if (i==j) { ## need to add term relating to smoothing penalty
-      A <- t(Sl.mult(rp$Sl,diag(q),i,full=FALSE))
-      bind <- rowSums(A)!=0
-      ind <- which(bind)
-      bind <- bind[!bdrop]
-      A <- A[!bdrop,!bdrop[ind]]
-      A <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,])
-      d2ldetH[i,j] <- d2ldetH[i,j] + sum(diag(A[bind,]))
-    } else d2ldetH[j,i] <- d2ldetH[i,j]
-  }
+  if (deriv > 1) {
+    d2ldetH <- matrix(0,m,m)
+    k <- 0
+    for (i in 1:m) for (j in i:m) {
+      k <- k + 1
+      d2ldetH[i,j] <- -sum(d1Hp[[i]]*t(d1Hp[[j]])) - llr$trHid2H[k] 
+      if (i==j) { ## need to add term relating to smoothing penalty
+        A <- t(Sl.mult(rp$Sl,diag(q),i,full=FALSE))
+        bind <- rowSums(A)!=0
+        ind <- which(bind)
+        bind <- bind[!bdrop]
+        A <- A[!bdrop,!bdrop[ind]]
+        A <- D*(backsolve(L,forwardsolve(t(L),(D*A)[piv,]))[ipiv,])
+        d2ldetH[i,j] <- d2ldetH[i,j] + sum(diag(A[bind,]))
+      } else d2ldetH[j,i] <- d2ldetH[i,j]
+    }
+  } ## if (deriv > 1)
 
   ## Compute derivs of b'Sb...
 
-  Sb <- St%*%coef
-  Skb <- Sl.termMult(rp$Sl,fcoef,full=TRUE)
-  d1bSb <- rep(0,m)
-  for (i in 1:m) { 
-    Skb[[i]] <- Skb[[i]][!bdrop]
-    d1bSb[i] <- 2*sum(d1b[,i]*Sb) + sum(coef*Skb[[i]])
+  if (deriv>0) {
+    Sb <- St%*%coef
+    Skb <- Sl.termMult(rp$Sl,fcoef,full=TRUE)
+    d1bSb <- rep(0,m)
+    for (i in 1:m) { 
+      Skb[[i]] <- Skb[[i]][!bdrop]
+      d1bSb[i] <- 2*sum(d1b[,i]*Sb) + sum(coef*Skb[[i]])
+    }
   }
  
-  d2bSb <- matrix(0,m,m)
-  k <- 0
-  for (i in 1:m) {
-    Sd1b <- St%*%d1b[,i] 
-    for (j in i:m) {
-      k <- k + 1
-      d2bSb[j,i] <- d2bSb[i,j] <- 2*sum(d2b[,k]*Sb + 
+  if (deriv>1) {
+    d2bSb <- matrix(0,m,m)
+    k <- 0
+    for (i in 1:m) {
+      Sd1b <- St%*%d1b[,i] 
+      for (j in i:m) {
+        k <- k + 1
+        d2bSb[j,i] <- d2bSb[i,j] <- 2*sum(d2b[,k]*Sb + 
          d1b[,i]*Skb[[j]] + d1b[,j]*Skb[[i]] + d1b[,j]*Sd1b)
+      }
+      d2bSb[i,i] <-  d2bSb[i,i] + sum(coef*Skb[[i]]) 
     }
-    d2bSb[i,i] <-  d2bSb[i,i] + sum(coef*Skb[[i]]) 
   }
 
   ## get grad and Hessian of REML score...
-  REML <- ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2 - ldetHp/2 + Mp*log(2*pi)/2
-  REML1 <- d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2
-  REML2 <- d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2 
+  REML <- -as.numeric(ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2 - ldetHp/2 + Mp*log(2*pi)/2)
+  REML1 <- if (deriv>0) -as.numeric(d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2) else NULL
+  REML2 <- if (deriv>1) -(d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2) else NULL 
   bSb <- t(coef)%*%St%*%coef
   lpi <- attr(x,"lpi")
   if (is.null(lpi)) { 
@@ -809,7 +823,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   list(coefficients=coef,family=family,y=y,prior.weights=weights,
        fitted.values=fitted.values, linear.predictors=linear.predictors,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
-       REML= -as.numeric(REML),REML1= -as.numeric(REML1),REML2= -REML2,
+       REML= REML,REML1= REML1,REML2=REML2,
        rank=rank,
        l= ll$l,l1 =d1l,l2 =d2l,
        lbb = ll$lbb, ## Hessian of log likelihood
@@ -820,8 +834,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
-       b1 = d1b,b2 = d2b,
-       H = llr$lbb,dH = llr$d1H,d2H=llr$d2H)
+       b1 = d1b,b2 = d2b)
+       #H = llr$lbb,dH = llr$d1H,d2H=llr$d2H)
 
 } ## end of gam.fit5
 

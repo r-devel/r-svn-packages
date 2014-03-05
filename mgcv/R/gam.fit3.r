@@ -1056,7 +1056,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
-         printWarn=FALSE,mustart=mustart,
+         printWarn=FALSE,start=start,mustart=mustart,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
   }
 
@@ -1288,7 +1288,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
 bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
-                   maxHalf=30,printWarn=FALSE,scoreType="GCV",
+                   maxHalf=30,printWarn=FALSE,scoreType="GCV",start=NULL,
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra=0,
                    dev.extra=0,n.true=-1,Sl=NULL,...)
 
@@ -1321,11 +1321,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       lsp <- ilsp + step * trial$alpha
       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
-           control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+           control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=lo$start,
            mustart=lo$mustart,scoreType=scoreType,null.coef=null.coef,
-           pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
+           pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
-      trial$mustart <- fitted(b);trial$dev <- b$dev
+      trial$mustart <- fitted(b)
+      trial$scale.est <- b$scale.est ## previously dev, but this differs from newton
+      trial$start <- coef(b)
       if (reml) {
         trial$score <- b$REML; 
       } else if (scoreType=="GACV") {
@@ -1342,8 +1344,10 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
         b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-           control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=trial$mustart,
-           scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
+           control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+           start=trial$start,mustart=trial$mustart,
+           scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
+           dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
         if (reml) {
           trial$grad <- L%*%b$REML1;
@@ -1354,7 +1358,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         } else { ## default to deviance based GCV
           trial$grad <- L%*%b$GCV1;
         } 
-        trial$dev <- b$dev;rm(b);
+        trial$scale.est <- b$scale.est;rm(b);
         trial$dscore <- sum(step*trial$grad) ## directional derivative
         
         if (abs(trial$dscore) <= -c2*initial$dscore) return(trial) ## met Wolfe 2
@@ -1384,11 +1388,12 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   b <- gam.fit3(x=X, y=y, sp=L%*%ilsp+lsp0,Eb=Eb,UrS=UrS,
                offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-               control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=mustart,
+               control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+               start=start,mustart=mustart,
                scoreType=scoreType,null.coef=null.coef,
-               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
+               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
-  initial <- list(alpha = 0,mustart=b$fitted.values)
+  initial <- list(alpha = 0,mustart=b$fitted.values,start=coef(b))
   if (reml) {
      score <- b$REML;grad <- L%*%b$REML1;
   } else if (scoreType=="GACV") {
@@ -1399,11 +1404,38 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      score <- b$GCV;grad <- L%*%b$GCV1;
   } 
   initial$score <- score;initial$grad <- grad;
-
+  initial$scale.est <- b$scale.est
   rm(b)
 
   B <- diag(length(initial$grad)) ## initial Hessian
-
+  feps <- 1e-4
+  for (i in 1:length(lsp)) { ## loop to FD for Hessian
+     ilsp <- lsp;ilsp[i] <- ilsp[i] + feps 
+     b <- gam.fit3(x=X, y=y, sp=L%*%ilsp+lsp0,Eb=Eb,UrS=UrS,
+               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
+               control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+               start=start,mustart=mustart,
+               scoreType=scoreType,null.coef=null.coef,
+               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...) 
+     if (reml) {
+       grad1 <- L%*%b$REML1;
+     } else if (scoreType=="GACV") {
+       grad1 <- L%*%b$GACV1; 
+     } else if (scoreType=="UBRE"){
+       grad1 <- L%*%b$UBRE1  
+     } else { ## default to deviance based GCV
+       grad1 <- L%*%b$GCV1;
+     } 
+     B[i,] <- (grad1-grad)/feps 
+     rm(b)
+  } ## end of FD Hessian loop
+  ## force initial Hessian to +ve def and invert... 
+  B <- (B+t(B))/2
+  eb <- eigen(B,symmetric=TRUE)
+  thresh <- max(abs(eb$values))*1e-4
+  eb$values[eb$values<thresh] <- thresh
+  B <- eb$vectors%*%(t(eb$vectors)/eb$values)
+  ilsp <- lsp
   max.step <- 200
 
   c1 <- 1e-4;c2 <- .9 ## Wolfe condition constants
@@ -1432,9 +1464,9 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       lsp <- ilsp + trial$alpha*step
       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
-                    control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=prev$mustart,
-                    scoreType=scoreType,null.coef=null.coef,
-                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
+                    control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
+                    mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
+                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
       if (reml) {
         trial$score <- b$REML; 
       } else if (scoreType=="GACV") {
@@ -1459,7 +1491,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         deriv <- 0 
       } else trial$grad <- trial$dscore <- NULL
       trial$mustart <- b$fitted.values
-      trial$dev <- b$dev
+      trial$start <- b$coefficients
+      trial$scale.est <- b$scale.est
       
       rm(b)
 
@@ -1471,9 +1504,10 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       if (is.null(trial$dscore)) { ## getting gradients
         b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-                      control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=trial$mustart,
+                      control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+                      start=trial$start,mustart=trial$mustart,
                       scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
-                      dev.extra=dev.extra,n.true=n.true,...)
+                      dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
         if (reml) {
           trial$grad <- L%*%b$REML1;
         } else if (scoreType=="GACV") {
@@ -1484,7 +1518,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           trial$grad <- L%*%b$GCV1;
         } 
         trial$dscore <- sum(trial$grad*step)
-        trial$dev <- b$dev
+        trial$scale.est <- b$scale.est
         rm(b)
       }
 
@@ -1521,8 +1555,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
       ## test for convergence
       converged <- TRUE
-      if (reml) score.scale <- abs(log(trial$dev/nrow(X))) + abs(trial$score)
-      else score.scale <- trial$dev/nrow(X) + abs(trial$score)    
+      if (reml) score.scale <- abs(trial$scale.est) + abs(trial$score) ## abs(log(trial$dev/nrow(X))) + abs(trial$score)
+      else score.scale <- abs(trial$scale.est) + abs(trial$score)  ##trial$dev/nrow(X) + abs(trial$score)    
       uconv.ind <- abs(trial$grad) > score.scale*conv.tol
       if (sum(uconv.ind)) converged <- FALSE
       if (abs(initial$score-trial$score)>score.scale*conv.tol) { 
@@ -1547,8 +1581,10 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## final fit
   b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                 offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
-                control=control,gamma=gamma,scale=scale,printWarn=FALSE,mustart=trial$mustart,
-                scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,...)
+                control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+                start=trial$start,mustart=trial$mustart,
+                scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
+                dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
   if (reml) {
      score <- b$REML;grad <- L%*%b$REML1;
   } else if (scoreType=="GACV") {
@@ -1595,7 +1631,7 @@ gam2derivative <- function(lsp,args,...)
   } else { ret <- b$GCV1}
   if (!is.null(args$L)) ret <- t(args$L)%*%ret
   ret
-}
+} ## gam2derivative
 
 gam2objective <- function(lsp,args,...)
 ## Performs IRLS GAM fitting for smoothing parameters given in lsp 
@@ -1619,7 +1655,7 @@ gam2objective <- function(lsp,args,...)
   } else { ret <- b$GCV}
   attr(ret,"full.fit") <- b
   ret
-}
+} ## gam2objective
 
 
 
@@ -1651,14 +1687,14 @@ gam4objective <- function(lsp,args,...)
 
   attr(ret,"gradient") <- at
   ret
-}
+} ## gam4objective
 
 ##
 ## The following fix up family objects for use with gam.fit3
 ##
 
 
-fix.family.link<-function(fam)
+fix.family.link <- function(fam)
 # adds d2link the second derivative of the link function w.r.t. mu
 # to the family supplied, as well as a 3rd derivative function 
 # d3link...
@@ -1778,10 +1814,10 @@ fix.family.link<-function(fam)
     return(fam)
   }
   stop("link not recognised")
-}
+} ## fix.family.link
 
 
-fix.family.var<-function(fam)
+fix.family.var <- function(fam)
 # adds dvar the derivative of the variance function w.r.t. mu
 # to the family supplied, as well as d2var the 2nd derivative of 
 # the variance function w.r.t. the mean. (All checked numerically). 
@@ -1842,7 +1878,7 @@ fix.family.var<-function(fam)
     return(fam)
   }
   stop("family not recognised")
-}
+} ## fix.family.var
 
 
 fix.family.ls<-function(fam)
@@ -1911,7 +1947,7 @@ fix.family.ls<-function(fam)
     return(fam)
   }
   stop("family not recognised")
-}
+} ## fix.family.ls
 
 fix.family <- function(fam) {
 ## allows families to be patched...
@@ -1924,7 +1960,7 @@ fix.family <- function(fam) {
      })
   }
   fam
-}
+} ## fix.family
 
 
 negbin <- function (theta = stop("'theta' must be specified"), link = "log") { 
@@ -2021,7 +2057,7 @@ totalPenalty <- function(S,H,off,theta,p)
     St[k0:k1,k0:k1] <- St[k0:k1,k0:k1] + S[[i]] * theta[i]
   }
   St
-}
+} ## totalPenalty
 
 totalPenaltySpace <- function(S,H,off,p)
 { ## function to obtain (orthogonal) basis for the null space and 
@@ -2047,7 +2083,7 @@ totalPenaltySpace <- function(S,H,off,p)
   Z <- es$vectors[,!ind,drop=FALSE] ## null space - ncol(Z) is null space dimension
   E <- sqrt(as.numeric(es$values[ind]))*t(Y) ## E'E = St
   list(Y=Y,Z=Z,E=E)
-}
+} ## totalPenaltySpace
 
 
 
@@ -2195,7 +2231,9 @@ if (FALSE) { ## DEBUG disconnetion of density terms
 } 
 
   ld
-}
+} ## ldTweedie
+
+
 
 Tweedie <- function(p=1,link=power(0)) {
 ## a restricted Tweedie family
@@ -2269,7 +2307,7 @@ Tweedie <- function(p=1,link=power(0)) {
         valideta = stats$valideta,dvar=dvar,d2var=d2var,d3var=d3var,ls=ls,rd=rd,canonical="none"), class = "family")
 
 
-}
+} ## Tweedie
 
 
 
@@ -2307,4 +2345,4 @@ rTweedie <- function(mu,p=1.5,phi=1) {
   ## sum up each gamma sharing a label. 0 deviate if label does not occur
   o <- .C(C_psum,y=as.double(rep(0,n.sim)),as.double(y),as.integer(lab),as.integer(length(lab)))  
   o$y
-}
+} ## rTweedie

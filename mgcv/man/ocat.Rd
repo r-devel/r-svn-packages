@@ -26,8 +26,9 @@ ocat(theta=NULL,link="identity",R=NULL)
 An object of class \code{extended.family}.
 }
 
-\details{Such cumulative threshold models are only identifiable up to an intecept, or one of the cut points. 
-Rather than remove the intercept, \code{ocat} simply sets the first cut point to -1.
+\details{Such cumulative threshold models are only identifiable up to an intercept, or one of the cut points. 
+Rather than remove the intercept, \code{ocat} simply sets the first cut point to -1. Use \code{link{predict.gam}} with 
+\code{type="response"} to get the predicted probabilities in each category.
 }
 
 %- maybe also `usage' for other objects documented here.
@@ -67,8 +68,10 @@ b
 plot(b,pages=1)
 gam.check(b)
 summary(b)
-b$family$getTheta(TRUE) ## the estiamted cut points
+b$family$getTheta(TRUE) ## the estimated cut points
 
+## predict probabilities of being in each category
+predict(b,dat[1:2,],type="response",se=TRUE)
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

@@ -17,7 +17,7 @@ Two approaches to estimating \code{theta} are available (with \code{\link{gam}} 
 parameter is as close as possible to 1, the value that the scale parameter should have.
 
 \item If `outer iteration' is used for smoothing parameter selection with the \code{nb} family then 
-\code{theta} is estimated alonside the smoothing parameters by ML or REML.
+\code{theta} is estimated alongside the smoothing parameters by ML or REML.
 
 }
 To use the first option, set the \code{optimizer} argument of \code{\link{gam}} to \code{"perf"} (it can sometimes fail to converge).
