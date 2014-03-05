@@ -820,23 +820,25 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     }
   }
   coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef
-  list(coefficients=coef,family=family,y=y,prior.weights=weights,
+ 
+  ret <- list(coefficients=coef,family=family,y=y,prior.weights=weights,
        fitted.values=fitted.values, linear.predictors=linear.predictors,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
        REML= REML,REML1= REML1,REML2=REML2,
-       rank=rank,
+       rank=rank,aic = -2*ll$l, ## 2*edf needs to be added
        l= ll$l,l1 =d1l,l2 =d2l,
        lbb = ll$lbb, ## Hessian of log likelihood
        L=L, ## chol factor of pre-conditioned penalized hessian
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
-       St=St, ## total penalty matrix
-       bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
-       S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
-       Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
-       b1 = d1b,b2 = d2b)
+       St=St) ## total penalty matrix
+       #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
+       #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
+       #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
+       #b1 = d1b,b2 = d2b)
        #H = llr$lbb,dH = llr$d1H,d2H=llr$d2H)
-
+    #ret$dev <- if (is.null(family$residuals)) NA else sum(family$residuals(ret,"deviance")^2)
+    ret
 } ## end of gam.fit5
 
 gam.fit5.post.proc <- function(object,Sl) {

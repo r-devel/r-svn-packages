@@ -1391,6 +1391,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   if (inherits(family,"general.family")) {
     mv <- gam.fit5.post.proc(object,G$Sl)
     object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
+  
   } else mv <- gam.fit3.post.proc(G$X,object)
   object$Vp <- mv$Vb
   object$hat<-mv$hat
@@ -1853,6 +1854,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (G$am&&!(method%in%c("REML","ML","P-ML","P-REML"))) object$optimizer <- "magic" else object$optimizer <- optimizer
   object$call <- G$cl # needed for update() to work
   class(object) <- c("gam","glm","lm")
+  if (is.null(object$deviance)) object$deviance <- sum(residuals(object,"deviance")^2)
   object
 }
 

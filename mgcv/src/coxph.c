@@ -101,9 +101,9 @@ void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,
       gamma_i = gamma[i];
       gamma_p[j] +=  gamma_i;
       dc[j] += d[i]; /* count the events */
-      i++; /* increase the data counter */
       /* accumulate gamma[i]*X[i,] into bj */
-      for (p1=bj,p2=p1 + *p,Xp = X + i;p1<p2;p1++,Xp += *n) *bj += *Xp * gamma_i;
+      for (p1=bj,p2=p1 + *p,Xp = X + i;p1<p2;p1++,Xp += *n) *bj += *Xp * gamma_i; 
+      i++; /* increase the data counter */
     }
     bj += *p; /* move on to next b^+ vector */
   } /* back in time loop done */
