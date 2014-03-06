@@ -1,4 +1,5 @@
-## (c) Simon N. Wood (2013) coxph model extended family...
+## (c) Simon N. Wood (2013, 2014) coxph model extended family. 
+## Released under GPL2 ...
 
 cox.ph <- function (link = "identity") { 
 ## Extended family object for Cox PH.

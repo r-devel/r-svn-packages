@@ -1,6 +1,7 @@
-## (c) Simon N. Wood 2013. Released under GPL2.
+## (c) Simon N. Wood (ocat, tw, nb) & Natalya Pya (t.scaled, beta, zip), 
+## 2013, 2014. Released under GPL2.
 
-## extended families for mgcv...
+## extended families for mgcv ...
 
 ## extended family object for ordered categorical
 
@@ -871,3 +872,703 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         class = c("extended.family","family"))
 } ## tw
 
+##################################
+## Natalya Pya code from here....
+##################################
+
+
+Beta <- function (theta = NULL, link = "logit") { 
+## Extended family object for beta regression
+## length(theta)=1; log theta supplied
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("logit", "probit", "cloglog", "cauchit", "log")) stats <- make.link(linktemp)
+  else if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    if (inherits(link, "link-glm")) {
+       stats <- link
+            if (!is.null(stats$name))
+                linktemp <- stats$name
+        }
+        else stop(linktemp, " link not available for beta regression; available links are  \"logit\", \"probit\", \"cloglog\", \"log\" and \"cauchit\"")
+    }
+   
+    Theta <-  NULL
+    if (!is.null(theta)&&theta!=0) {
+      if (theta>0) Theta <- log(theta) ## fixed theta supplied
+      else iniTheta <- log(-theta) ## initial theta supplied
+    } else iniTheta <- 0 ##  inital log theta value
+    
+    env <- new.env(parent = .GlobalEnv)
+    assign(".Theta", iniTheta, envir = env)
+    getTheta <- function(trans=FALSE) if (trans) exp(.Theta) else .Theta # get(".Theta")
+    putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
+
+    variance <- function(mu) { 
+        th <- get(".Theta")
+        mu*(1 - mu)/(1+exp(th))
+    }
+  
+    validmu <- function(mu) all(mu > 0 & mu < 1)
+
+    dev.resids <- function(y, mu, wt,theta=NULL) {
+      if (is.null(theta)) theta <- get(".Theta")
+      theta <- exp(theta) ## note log theta supplied
+      2 * wt * (lgamma(mu*theta) - lgamma(y*theta) + lgamma((1-mu)*theta) - lgamma((1-y)*theta)+
+       theta*(y-mu)*(log(y)-log(1-y))) 
+    }
+    
+    Dd <- function(y, mu, theta, wt, level=0) {
+    ## derivatives of the deviance...
+      ltheta <- theta
+      theta <- exp(theta)
+      onemu <- 1 - mu;  oney <- 1 - y
+      muth <- mu*theta; yth <- y*theta
+      onemuth <- onemu*theta; oneyth <- oney*theta
+      psi0.muth <- digamma(muth) 
+      psi0.onemuth <- digamma(onemuth)
+      psi0.yth <- digamma(yth)
+      psi0.oneyth  <- digamma(oneyth)
+      psi1.muth <- trigamma(muth)
+      psi1.onemuth <- trigamma(onemuth)
+      psi1.oneyth <- trigamma(oneyth)
+      psi2.muth <- psigamma(muth,2)
+      psi2.onemuth <- psigamma(onemuth,2)
+      psi3.muth <- psigamma(muth,3)
+      psi3.onemuth <- psigamma(onemuth,3)
+      r <- list()
+      ## get the quantities needed for IRLS. 
+      ## Dmu2eta2 is deriv of D w.r.t mu twice and eta twice,
+      ## Dmu is deriv w.r.t. mu once, etc...
+      r$Dmu <- 2 * wt * theta* (psi0.muth - psi0.onemuth - log(y)+log(oney))
+      r$Dmu2 <- 2 * wt * theta^2*(psi1.muth+psi1.onemuth)
+      r$EDmu2 <- r$Dmu2
+      if (level>0) { ## quantities needed for first derivatives
+        r$Dth <- 2 * wt *theta*(mu*psi0.muth-y*psi0.yth+onemu*psi0.onemuth
+          - oney*psi0.oneyth+(y-mu)*(log(y)-log(oney))) 
+        r$Dmuth <- 2 * wt * theta*(psi0.muth+muth*psi1.muth-psi0.onemuth -
+             theta*onemu*psi1.onemuth-log(y)+log(oney))
+        r$Dmu3 <- 2 * wt *theta^3 * (psi2.muth - psi2.onemuth) 
+        r$Dmu2th <- 2* r$Dmu2 + 2 * wt * theta^3* (mu*psi2.muth + onemu*psi2.onemuth)
+      } 
+      if (level>1) { ## whole damn lot
+        r$Dmu4 <- 2 * wt *theta^4 * (psi3.muth+psi3.onemuth) 
+        r$Dth2 <- r$Dth +2 * wt *theta^2* (-y^2*trigamma(yth)-oney^2*psi1.oneyth+
+              mu^2*psi1.muth+ onemu^2*psi1.onemuth)
+        r$Dmuth2 <- r$Dmuth + 2 * wt *theta^2* (2*mu*psi1.muth+ muth*mu*psi2.muth-
+                  2*onemu*psi1.onemuth-theta*onemu^2*psi2.onemuth)
+        r$Dmu2th2 <- 2*r$Dmu2th + 6 * wt * theta^3* (mu*psi2.muth+ onemu*psi2.onemuth) + 
+                 2*wt*theta^4*(mu^2*psi3.muth + onemu^2*psi3.onemuth)
+        r$Dmu3th <- 3*r$Dmu3 + 2 * wt *theta^4*(mu*psi3.muth-onemu*psi3.onemuth)
+      }
+      r
+    }
+
+    aic <- function(y, mu, theta=NULL, wt, dev) {
+        if (is.null(theta)) theta <- get(".Theta")
+        Theta <- exp(theta)
+        term <- -lgamma(Theta)+lgamma(mu*Theta)+lgamma((1-mu)*Theta)-(mu*Theta-1)*log(y)-
+               ((1-mu)*Theta-1)*log(1-y) ## `-' log likelihood for each observation
+        2 * sum(term * wt)
+    }
+    
+    ls <- function(y,w,n,theta,scale) {
+       ## the log saturated likelihood function.
+       Theta <- exp(theta)
+       oney <- 1-y
+       term <- lgamma(Theta) - lgamma(y*Theta)- lgamma(oney*Theta) + (y*Theta-1)*log(y) +
+               (oney*Theta-1)*log(oney)
+       ls <- sum(term*w)
+       ## first derivative wrt theta...
+       term <- Theta * (digamma(Theta)-y*digamma(y*Theta) - oney*digamma(oney*Theta)+
+              y*log(y) +oney*log(oney))
+       lsth <- sum(term*w)
+       ## second deriv...
+       term <- term + Theta^2 * (trigamma(Theta)-y^2*trigamma(y*Theta) - 
+                oney^2*trigamma(oney*Theta))        
+       lsth2 <- sum(term*w)
+       list(ls=ls,## saturated log likelihood
+            lsth1=lsth,  ## first deriv vector w.r.t theta - last element relates to scale, not done??
+            lsth2=lsth2) ##Hessian w.r.t. theta
+     }
+
+  #  preinitialize <- expression({
+   #    ## initialize theta from raw observations..
+   #    Theta <- log(sum(G$y*(1 - G$y))/length(G$y)/var(G$y)-1)  ##
+   #    G$family$putTheta(Theta)
+   # })
+
+    initialize <- expression({
+        if (any(y <= 0 | y >= 1)) stop("Values outside the interval (0,1) not allowed for the beta regression")
+        n <- rep(1, nobs)
+        mustart <- y 
+    })
+
+    rd <- function(mu,wt,scale) {
+     ## simulate data given fitted latent variable in mu 
+      Theta <- exp(get(".Theta"))
+      rbeta(mu,shape1=Theta*mu,shape2=Theta*(1-mu))
+    }
+
+    qf <- function(p,mu,wt,scale) {
+      Theta <- exp(get(".Theta"))
+      qbeta(p,shape1=Theta*mu,shape2=Theta*(1-mu))
+    }
+
+    environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
+    environment(rd)<- environment(qf) <- environment(variance) <- environment(putTheta) <- env
+
+    structure(list(family = "beta regression", link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, variance=variance,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls, 
+        validmu = validmu, valideta = stats$valideta, n.theta=1,  # canonical="logit",
+        ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,rd=rd,qf=qf), 
+        class = c("extended.family","family"))
+} ## beta
+
+
+  
+## scaled t ...
+
+t.scaled <- function (theta = NULL, link = "identity") { 
+## Extended family object for scaled t distribution
+## length(theta)=2; log theta supplied
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("identity", "log", "inverse")) stats <- make.link(linktemp)
+  else if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    if (inherits(link, "link-glm")) {
+       stats <- link
+            if (!is.null(stats$name))
+                linktemp <- stats$name
+        }
+        else stop(linktemp, " link not available for scaled t distribution; available links are \"identity\", \"log\",  and \"inverse\"")
+    }
+    Theta <-  NULL
+    if (!is.null(theta)&&sum(theta==0)==0) {
+      if (sum(theta<0)) iniTheta <- c(log(abs(theta[1])-2),log(abs(theta[2]))) ## initial theta supplied
+      else iniTheta <- Theta <- c(log(theta[1]-2),log(theta[2])) ## fixed theta supplied
+    } else iniTheta <- c(-2,-1) ## inital log theta value
+               
+    env <- new.env(parent = .GlobalEnv)
+    assign(".Theta", iniTheta, envir = env)
+    getTheta <- function(trans=FALSE) { 
+    ## trans transforms to the original scale...
+      th <- get(".Theta")
+      if (trans) { th <- exp(th); th[1] <- th[1] + 2  }
+      th
+    }
+    putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
+
+    variance <- function(mu) { 
+        th <- get(".Theta")
+        nu <- exp(th[1])+2; sig <- exp(th[2])
+        sig^2*nu/(nu-2)
+    }
+
+   validmu <- function(mu) all(is.finite(mu))
+
+   dev.resids <- function(y, mu, wt,theta=NULL) {
+      if (is.null(theta)) theta <- get(".Theta")
+      nu <- exp(theta[1])+2; sig <- exp(theta[2])
+      wt * (nu + 1)*log(1+(1/nu)*((y-mu)/sig)^2)
+    }
+    
+    Dd <- function(y, mu, theta, wt, level=0) {
+    ## derivatives of the deviance...
+      ltheta <- theta
+    #  theta <- exp(theta); nu <- theta[1]; sig <- theta[2]
+      nu <- exp(theta[1])+2; sig <- exp(theta[2])
+      nu1 <- nu + 1;  ym <- y - mu; nu2 <- nu - 2;
+      a <- 1 + (ym/sig)^2/nu
+      oo <- list()
+      ## get the quantities needed for IRLS. 
+      ## Dmu2eta2 is deriv of D w.r.t mu twice and eta twice,
+      ## Dmu is deriv w.r.t. mu once, etc...
+      nu1ym <- nu1*ym
+      sig2a <- sig^2*a
+      nusig2a <- nu*sig2a
+      f <- nu1ym/nusig2a
+      f1 <- ym/nusig2a
+      oo$Dmu <- -2 * wt * f
+      oo$Dmu2 <- 2 * wt * nu1*(1/nusig2a- 2*f1^2)  # - 2*ym^2/(nu^2*sig^4*a^2)
+      term <- 2*nu1/sig^2/(nu+3)
+      n <- length(y) 
+      oo$EDmu2 <- rep(term,n)
+      if (level>0) { ## quantities needed for first derivatives
+        nu1nusig2a <- nu1/nusig2a
+        nu2nu <- nu2/nu
+        fym <- f*ym; ff1 <- f*f1; f1ym <- f1*ym; fymf1 <- fym*f1
+        ymsig2a <- ym/sig2a
+        oo$Dmu2th <- oo$Dmuth <- oo$Dth <- matrix(0,n,2)
+        oo$Dth[,1] <- 1 * wt * nu2 * (log(a) - fym/nu) 
+        oo$Dth[,2] <- -2 * wt * fym    
+        oo$Dmuth[,1] <- 2 * wt *(f - ymsig2a - fymf1)*nu2nu
+      #  oo$Dmuth[,2] <- 8*wt*nu1*ym*(1/(nu*sig^2*a)- ym^2/(nu^2*sig^4*a^2))
+        oo$Dmuth[,2] <- 4* wt* f* (1- f1ym)
+      #  oo$Dmu3 <- 8 * wt *nu1*ym * (3/(nu^2*sig^4*a^2) - 4*ym^2/(nu^3*sig^6*a^3)) 
+        oo$Dmu3 <- 4 * wt * f * (3/nusig2a - 4*f1^2) 
+        oo$Dmu2th[,1] <- 2* wt * (-nu1nusig2a + 1/sig2a + 5*ff1- 2*f1ym/sig2a - 4*fymf1*f1)*nu2nu
+      # oo$Dmu2th[,2] <- 8*wt*nu1*(-1/(nu*sig^2*a) + 5*ym^2/(nu^2*sig^4*a^2) - 4*ym^4/(nu^3*sig^6*a^3))
+        oo$Dmu2th[,2] <- 4*wt*(-nu1nusig2a + ff1*5 - 4*ff1*f1ym)
+      } 
+      if (level>1) { ## whole lot
+        nu1nu2 <- nu1*nu2; nu1nu <- nu1/nu
+        fymf1ym <- fym*f1ym; f1ymf1 <- f1ym*f1
+        oo$Dmu4 <- 12 * wt * (-nu1nusig2a/nusig2a + 8*ff1/nusig2a - 8*ff1 *f1^2) 
+        n2d <- 3 # number of the 2nd order derivatives
+        oo$Dmu3th <- matrix(0,n,2)
+        oo$Dmu2th2 <- oo$Dmuth2 <- oo$Dth2 <- matrix(0,n,n2d)
+        oo$Dmu3th[,1] <- 4*wt*(-6*f/nusig2a + 3*f1/sig2a + 18*ff1*f1 - 4*f1ymf1/sig2a - 12*nu1ym*f1^4)*nu2nu
+        oo$Dmu3th[,2] <- 48*wt* f* (- 1/nusig2a + 3*f1^2 -  2*f1ymf1*f1)
+        
+        oo$Dth2[,1] <- 1*wt *(nu2*log(a) +nu2nu*ym^2*(-2*nu2-nu1+ 2*nu1*nu2nu - nu1*nu2nu*f1ym)/nusig2a) ## deriv of D w.r.t. theta1 theta1 
+  
+        oo$Dth2[,2] <- 2*wt*(fym - ym*ymsig2a - fymf1ym)*nu2nu  ## deriv of D wrt theta1 theta2
+        oo$Dth2[,3] <- 4 * wt * fym *(1 - f1ym)  ## deriv of D wrt theta2 theta2
+
+        term <- 2*nu2nu - 2*nu1nu*nu2nu -1 + nu1nu
+        oo$Dmuth2[,1] <- 2*wt*f1*nu2*(term - 2*nu2nu*f1ym + 4*fym*nu2nu/nu - fym/nu - 2*fymf1ym*nu2nu/nu)
+ 
+        oo$Dmuth2[,2] <- 4*wt* (-f + ymsig2a + 3*fymf1 - ymsig2a*f1ym - 2*fymf1*f1ym)*nu2nu
+
+        oo$Dmuth2[,3] <- 8*wt* f * (-1 + 3*f1ym - 2*f1ym^2)
+
+        oo$Dmu2th2[,1] <- 2*wt*nu2*(-term + 10*nu2nu*f1ym -
+               16*fym*nu2nu/nu - 2*f1ym + 5*nu1nu*f1ym - 8*nu2nu*f1ym^2 + 26*fymf1ym*nu2nu/nu - 
+               4*nu1nu*f1ym^2 - 12*nu1nu*nu2nu*f1ym^3)/nusig2a
+       
+        oo$Dmu2th2[,2] <- 4*wt*(nu1nusig2a - 1/sig2a - 11*nu1*f1^2 + 5*f1ym/sig2a + 22*nu1*f1ymf1*f1 - 
+                    4*f1ym^2/sig2a - 12*nu1*f1ymf1^2)*nu2nu
+        oo$Dmu2th2[,3] <- 8*wt * (nu1nusig2a - 11*nu1*f1^2 + 22*nu1*f1ymf1*f1 - 12*nu1*f1ymf1^2)
+
+       #  term <- nu1nusig2a - 11*nu1*f1^2 + 22*nu1*f1ymf1*f1 - 12*nu1*f1ymf1^2
+       #  oo$Dmu2th2[,2] <- 8*wt*(term - 1/sig2a + 5*f1ym/sig2a - 4*f1ym^2/sig2a)*nu2nu
+       #  oo$Dmu2th2[,3] <- 16*wt * term
+      }
+      oo
+    }  ## end of Dd
+
+    aic <- function(y, mu, theta=NULL, wt, dev) {
+        if (is.null(theta)) theta <- get(".Theta")
+        nu <- exp(theta[1])+2; sig <- exp(theta[2])
+        term <- -lgamma((nu+1)/2)+ lgamma(nu/2) + log(sig*(pi*nu)^.5) +
+           (nu+1)*log(1 + ((y-mu)/sig)^2/nu)/2  ## `-'log likelihood for each observation
+        2 * sum(term * wt)
+    }
+    
+    ls <- function(y,w,n,theta,scale) {
+       ## the log saturated likelihood function.
+     #  Theta <- exp(theta);  nu <- Theta[1]; sig <- Theta[2]
+       nu <- exp(theta[1])+2; sig <- exp(theta[2]); nu2 <- nu-2;
+       nu2nu <- nu2/nu; nu12 <- (nu+1)/2
+       term <- lgamma(nu12) - lgamma(nu/2) - log(sig*(pi*nu)^.5)
+       ls <- sum(term*w) 
+       ## first derivative wrt theta...
+       lsth <- rep(0,2) 
+       lsth2 <- matrix(0,2,2)  ## rep(0, 3)
+       term <- nu2 * digamma(nu12)/2- nu2 * digamma(nu/2)/2 - 0.5*nu2nu
+       lsth[1] <- sum(w*term)
+       lsth[2] <- sum(-1*w)
+       
+       ## second deriv...      
+       term <-  nu2^2 * trigamma(nu12)/4 + nu2 * digamma(nu12)/2 -
+           nu2^2 * trigamma(nu/2)/4 - nu2 * digamma(nu/2)/2 + 0.5*(nu2nu)^2 - 0.5*nu2nu
+       lsth2[1,1] <- sum(term*w)
+       lsth2[1,2] <- lsth2[2,1] <- lsth2[2,2] <- 0
+       list(ls=ls,## saturated log likelihood
+            lsth1=lsth, ## first derivative vector wrt theta
+            lsth2=lsth2) ## Hessian wrt theta
+    }
+
+    preinitialize <- expression({
+      ## initialize theta from raw observations..
+       Theta <- c(-1, log(0.2*var(G$y)^.5))
+       G$family$putTheta(Theta)
+    })
+
+    initialize <- expression({
+        if (any(is.na(y))) stop("NA values not allowed for the scaled t family")
+        n <- rep(1, nobs)
+        mustart <- y + (y == 0)*.1
+    })
+
+    rd <- function(mu,wt,scale) {
+     ## simulate data given fitted latent variable in mu 
+      theta <- get(".Theta")
+      nu <- exp(theta[1])+2; sig <- exp(theta[2])
+      n <- length(mu)
+      stats::rt(n=n,df=nu)*sig + mu
+    }
+
+    environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
+    environment(rd)<- environment(variance) <- environment(putTheta) <- env
+
+    structure(list(family = "scaled t", link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls, preinitialize=preinitialize,
+        validmu = validmu, valideta = stats$valideta,n.theta=2,   # canonical="identity",
+        ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta, rd=rd),
+        class = c("extended.family","family"))
+} ## t.scaled
+
+
+
+## zero inflated Poisson...
+
+
+ziP <- function (theta = NULL, link = "log") { 
+## Extended family object for zero inflated distribution
+## n.theta=2; log theta supplied
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("log")) stats <- make.link(linktemp) ## done only for the "log" link at the moment
+  else if (is.character(link)) {
+    stats <- make.link(link)
+    linktemp <- link
+  } else {
+    if (inherits(link, "link-glm")) {
+       stats <- link
+            if (!is.null(stats$name))
+                linktemp <- stats$name
+        }
+        else stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"log\"")
+    }
+    Theta <-  NULL
+    if (!is.null(theta)&&sum(theta==0)==0) {
+      if (sum(theta<0)) iniTheta <- log(abs(theta)) ## initial theta supplied
+      else iniTheta <- Theta <- log(theta) ## fixed theta supplied
+    } else iniTheta <- c(1,-10) ## inital theta value
+           
+    
+    env <- new.env(parent = .GlobalEnv)
+    assign(".Theta", iniTheta, envir = env)
+    getTheta <- function(trans=FALSE) { 
+     ## trans transforms to the original scale...
+      th <- get(".Theta")
+      if (trans)  th[2] <- exp(th[2])
+      th
+    }
+    putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
+
+   # variance <- function(mu) { 
+   #    th <- get(".Theta")
+   #    f <- th[1] - exp(th[2])*mu
+   #    mu + exp(f)*mu^2
+   # }
+
+   validmu <- function(mu) all(mu > 0)
+
+   dev.resids <- function(y, mu, wt,theta=NULL) {
+      if (is.null(theta)) theta <- get(".Theta")
+      ## note: log theta_2 supplied and working on `lambda' scale rather than `mu'
+      th1 <- theta[1]; th2 <- exp(theta[2]); la <- mu;
+      if (length(la)==1) la <- rep(mu,length(y))
+      yzero <- y == 0
+      dr <- rep(0,length(y))
+      f <- th1 - th2*la[yzero]; ela <- exp(-la[yzero]);
+      h <- ind <- f >0 
+      h[ind] <- (1 + ela[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
+      f <- exp(f[!ind])
+      h[!ind] <- (f + ela[!ind])/(1+f)
+      
+      f <- th1 - th2*y[yzero]; ela <- exp(-y[yzero]);
+      h0 <- ind <- f >0; 
+      h0[ind] <- (1 + ela[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
+      f <- exp(f[!ind])
+      h0[!ind] <- (f + ela[!ind])/(1+f)
+      dr[yzero] <- log(h0) - log(h);
+      dr[!yzero] <- -log(1+exp(th1-th2*y[!yzero])) + log(1+exp(th1-th2*la[!yzero])) - y[!yzero] + 
+          la[!yzero] + y[!yzero]*log(y[!yzero]) - y[!yzero]*log(la[!yzero])
+      2*dr*wt
+    }
+    
+    Dd <- function(y, mu, theta, wt=NULL, level=0) {
+    ## derivatives of the deviance...
+      ltheta <- theta
+      th1 <- theta[1]; th2 <- exp(theta[2]); la <- mu;
+      ## notations for the first terms when y == 0...
+      yzero <- y == 0
+      f1 <- th1-th2*la[yzero]; 
+      a1 <- a2 <- d2 <- t1 <- ind <- f1 > 0
+      emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); efa <- exp(f1);
+      a1[ind] <- 1/(1+emf); a1[!ind] <- ef/(1+ef)
+      b1 <- exp(-la[yzero])
+      a2[ind] <- emf/(1+emf)^2; a2[!ind] <- ef/(1+ef)^2;
+      d2[ind] <- emf/(1+emf*b1[ind])^2; d2[!ind] <- ef/(b1[!ind]+ef)^2;
+      t1[ind] <- (th2 + emf*b1[ind])/(1+emf*b1[ind]); t1[!ind] <- (th2*ef + b1[!ind])/(b1[!ind]+ef);
+      
+      ## notations for the second terms when y > 0...
+      f1.s <- th1-th2*la[!yzero]; 
+      a1.s <- a2.s <- ind <- f1.s > 0
+      emf.s <- exp(-f1.s[ind]); ef.s <- exp(f1.s[!ind]); efa.s <- exp(f1.s);
+      a1.s[ind] <- 1/(1+emf.s); a1.s[!ind] <- ef.s/(1+ef.s)
+      a2.s[ind] <- emf.s/(1+emf.s)^2; a2.s[!ind] <- ef.s/(1+ef.s)^2;
+      
+      oo <- list()
+      ## get the quantities needed for IRLS. 
+      ## Dmu2eta2 is deriv of D w.r.t mu twice and eta twice,
+      ## Dmu is deriv w.r.t. mu once, etc...
+      n <- length(y)
+      ath <- a1*th2; ath.s <- a1.s*th2
+            
+      oo$Dmu <- oo$Dmu2 <- rep(0,n)
+      oo$Dmu[yzero] <- 2*(-ath + t1)
+      oo$Dmu[!yzero] <- 2*(-y[!yzero]/la[!yzero] - ath.s +1)
+      oo$Dmu2[yzero] <-  2*(a2*th2^2 - d2*b1*(th2-1)^2)
+      oo$Dmu2[!yzero] <-  2*(y[!yzero]/la[!yzero]^2 + a2.s*th2^2)
+      f <- th1-th2*la
+      a <- aa <- ind <- f > 0
+      b <- exp(-la);
+      emf <- exp(-f[ind]); ef <- exp(f[!ind]); efa <- exp(f);
+      a[ind] <- 1/(1+emf); a[!ind] <- ef/(1+ef)
+      c <- 1/(efa + b); s <- 1/(1+efa);
+      aa[ind] <- emf/(1+emf)^2; aa[!ind] <- ef/(1+ef)^2;
+      oo$EDmu2 <- 2*(aa*th2^2 + s/la- a*b*c*(th2-1)^2)
+
+      if (level>0) { ## quantities needed for first derivatives
+        ## notations for the first terms when y == 0...
+        a3 <- a23 <- d1 <- t2 <- t3 <-  g1 <- g12 <- ind <- f1 > 0
+        emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); efa <- exp(f1);
+        c1 <- 1/(efa + b1); s1 <- 1/(1+efa);
+      
+        a3[ind] <- emf^2/(1+emf)^3; a3[!ind] <- ef/(1+ef)^3; 
+        a23[ind] <- emf/(1+emf)^3; a23[!ind] <- ef^2/(1+ef)^3;
+        d1[ind] <- 1/(1+emf*b1[ind]); d1[!ind] <- ef/(b1[!ind]+ef);
+        t2[ind] <- (th2^2 + emf*b1[ind])/(1+emf*b1[ind]); t2[!ind] <- (th2^2*ef + b1[!ind])/(b1[!ind]+ef);   
+        t3[ind] <- (th2^3 + emf*b1[ind])/(1+emf*b1[ind]); t3[!ind] <- (th2^3*ef + b1[!ind])/(b1[!ind]+ef);
+        g1 <- a1 - d1; g12 <- a1^2 - d1^2;
+
+        f0 <- th1-th2*y[yzero]; 
+        a0 <- a20 <- b0 <- c0 <-  d0 <- g0 <- g02 <- ind <- f0 > 0
+        emf0 <- exp(-f0[ind]); ef0 <- exp(f0[!ind]); efa0 <- exp(f0);
+        b0 <- exp(-y[yzero])
+        c0 <- 1/(efa0 + b0); 
+        a0[ind] <- 1/(1+emf0); a0[!ind] <- ef0/(1+ef0) 
+        d0[ind] <- 1/(1+ b0[ind]*emf0); d0[!ind] <- ef0/(b0[!ind]+ef0);
+        a20[ind] <- emf0/(1+emf0)^2; a20[!ind] <- ef0/(1+ef0)^2;
+        g0 <- a0 - d0; g02 <- a0^2 - d0^2
+        lath <- la[yzero]*th2; olath <- 1 - lath; tlath <- 2 - lath
+ 
+        ## notations for the second terms when y > 0...
+        a3.s <- a23.s <- ind <- f1.s > 0
+        a3.s[ind] <- emf.s^2/(1+emf.s)^3; a3.s[!ind] <- ef.s/(1+ef.s)^3; 
+        a23.s[ind] <- emf.s/(1+emf.s)^3; a23.s[!ind] <- ef.s^2/(1+ef.s)^3;
+       
+        f0.s <- th1-th2*y[!yzero]; 
+        a0.s <- a20.s <- ind <- f0.s > 0
+        emf0 <- exp(-f0.s[ind]); ef0 <- exp(f0.s[!ind]); efa0 <- exp(f0.s);
+        a0.s[ind] <- 1/(1+emf0); a0.s[!ind] <- ef0/(1+ef0) 
+        a20.s[ind] <- emf0/(1+emf0)^2; a20.s[!ind] <- ef0/(1+ef0)^2;
+        lath.s <- la[!yzero]*th2; olath.s <- 1 - lath.s; tlath.s <- 2 - lath.s
+
+        oo$Dmu2th <- oo$Dmuth <- oo$Dth <- matrix(0,n,2)
+        b0m <- 1 - b0; b1m <- 1 - b1;
+        a2th.s <- a2.s * th2
+        d1t1 <- d1 * t1
+
+        oo$Dth[yzero,1] <- 2*(a0*c0*b0m - a1*b1m*c1)
+        oo$Dth[!yzero,1] <- 2*(a1.s - a0.s)
+        oo$Dth[yzero,2] <- 2*( -y[yzero]*a0*th2*c0*b0m + lath*a1*b1m*c1)
+        oo$Dth[!yzero,2] <- 2*(y[!yzero]*a0.s*th2 - lath.s*a1.s)
+
+        oo$Dmuth[yzero,1] <- 2 * (-th2*g1 + th2*a1^2 - d1t1)
+        oo$Dmuth[!yzero,1] <- -2*a2th.s
+        oo$Dmuth[yzero,2] <- 2 *(-th2*olath*g1 + lath*d1t1 -lath*th2*a1^2)
+        oo$Dmuth[!yzero,2] <- -2*th2*(a2.s +a1.s^2 - lath.s*a2.s)
+
+        oo$Dmu3[yzero] <- 2*(-ath*th2^2 + t3+ 3*ath^2*th2 - 2*ath^3 - 3*t1*t2 + 2*t1^3)
+        oo$Dmu3[!yzero] <- 2*(-2*y[!yzero]/la[!yzero]^3 - th2^3*(a3.s - a23.s))
+        oo$Dmu2th[yzero,1] <- 2*(-2*d1t1*t1 + th2^2*g1 - 3*ath^2 +2*ath^2*a1 + 3*th2^2*d1^2 + 2*th2*b1*d2 + b1*d2)
+        oo$Dmu2th[!yzero,1] <- 2 * th2 * ath.s*(1 - 3*a1.s +2*a1.s^2)
+        oo$Dmu2th[yzero,2] <- 2* (-lath*d1*t2 + th2^2*tlath*g1 + 2*th2*olath*d1t1 + 2*lath*d1t1*t1 -
+            2*lath*ath^2*a1 - ath^2*(2-3*lath))
+        oo$Dmu2th[!yzero,2] <- 2*th2^2*(tlath.s*a1.s + a1.s^2*(3*lath.s - 2) - 2*lath.s*a1.s^3)
+      } 
+      if (level>1) { ## whole damn lot
+        d1t2 <- d1*t2              
+        term1 <- -d1*th2^4 -b1*c1 + ath*th2^3 + 12*ath^3*th2 - 6*ath^4 
+        term2 <- - 7*ath^2*th2^2 + 4*t1*t3 + 3*t2^2 - 12*t1^2*t2 + 6*t1^4
+        oo$Dmu4[yzero] <- 2*(term1 + term2)
+        oo$Dmu4[!yzero] <- 2*(6*y[!yzero]/la[!yzero]^4 + a2th.s*th2^3 - 6*a1.s^2*th2^4 + 12*a23.s*a1.s*th2^4 
+               + 6*ath.s^4) 
+        n2d <- 3 # number of 2nd order derivatives
+        oo$Dmu3th <- matrix(0,n,2)
+        oo$Dmu2th2 <- oo$Dmuth2 <- oo$Dth2 <- matrix(0,n,n2d)
+        term1 <- -6*d1t1*t1^2 + 6*th2*d1t1*t1 + th2^3*(d1 - a1+ 7*a1^2 -12*a1^3 + 6*a1^4)
+        term2 <- -d1*t3 - 3*th2*d1t2 + 6*d1t1*t2 - 3*th2^2*d1t1
+        oo$Dmu3th[yzero,1] <- 2*(term1 + term2)
+        oo$Dmu3th[!yzero,1] <- 2*th2^3 *a1.s * (-1 + 7*a1.s - 12*a1.s^2 + 6*a1.s^3)
+
+        oo$Dmu3th[yzero,2] <- 2 * (th2^3*((lath-3)*g1 + 3*a1^2*(3-2*lath) - 6*a1^3*olath) - 3*th2*olath*d1t2 + lath*d1*t3 - 6*lath*d1t1*t2 -3*th2^2*tlath*d1t1 + 6*lath*d1t1*t1^2 + 6*th2*olath*d1t1*t1 + 
+             lath*th2^3*a1^2*(6*a1 - 6*a1^2 - 1))
+        oo$Dmu3th[!yzero,2] <- 2*ath.s*th2^2*(-3 +lath.s +(9-7*lath.s)*a1.s - 
+                6*(1-2*lath.s)*a1.s^2 - 6*lath.s*a1.s^3)
+
+        oo$Dth2[yzero,1] <- 2* (a20*b0m*b0*c0^2 -a20*b0m*d0^2 - a2*b1m*b1*c1^2 + a2*b1m*d1^2)  ## deriv of D w.r.t. theta1 theta1
+        oo$Dth2[!yzero,1] <- 2 * (- a20.s +a2.s)
+        
+        y0th <- y[yzero]*th2; y1th <- y[!yzero]*th2;
+        oo$Dth2[yzero,2] <- 2*(y0th*g0 - y0th*g02 - lath*g1 + lath*g12 )## deriv of D wrt theta1 theta2
+        oo$Dth2[!yzero,2] <- 2*(y1th*a0.s*(1 - a0.s) - lath.s*a1.s*(1 - a1.s) )    
+
+        oo$Dth2[yzero,3] <- 2*(y0th*(1-y0th)*g0 + y0th^2*g02^2 -
+           lath*olath*g1 - lath^2*g12) ## deriv of D wrt theta2 theta2
+        oo$Dth2[!yzero,3] <- 2*(y1th*(1-y1th)*a0.s + (y1th*a0.s)^2 - lath.s*a1.s*olath.s - (lath.s*a1.s)^2 )    
+
+        oo$Dmuth2[yzero,1] <- 2* (th2*d1*(1 - 3*d1) - d2*b1 + 2*d1^2*t1 - ath*(1- 3*a1 + 2*a1^2))
+        oo$Dmuth2[!yzero,1] <- 2*ath.s*(-1 +3*a1.s - 2*a1.s^2)
+
+        oo$Dmuth2[yzero,2] <- 2* (lath*d1t1*(1-2*d1) -th2*olath*(g1 +d1^2) + lath*th2*(2*a1^3 - g12) +
+           th2*(1-2*lath)*a1^2 )
+        oo$Dmuth2[!yzero,2] <- 2*ath.s*( -olath.s +(1-3*lath.s)*a1.s + 2*lath.s*a1.s^2)
+
+        oo$Dmuth2[yzero,3] <- 2*th2*(lath*g1 + la[yzero]*olath*d1t1 - olath^2*g1 - 2*lath^2*a1^3 + 
+           2*lath*la[yzero]*d1t1*d1 + lath*olath*(2*d1^2 - 3*a1^2))
+        oo$Dmuth2[!yzero,3] <- 2*ath.s*(lath.s - olath.s^2 - 3*lath.s*a1.s*olath.s - 2*lath.s^2*a1.s^2)
+  
+        d1d2b1 <- d1*d2*b1
+        term1 <- -th2^2*d1*(1 - 4*d1+ 10*d1^2) + d1t2 + 2*th2*d1t1 - 8*th2*d1d2b1 - 2*d1d2b1 -
+            2*d1t1*t1 + 6*d1t1^2 
+        term2 <- th2^2*a1*(1 - 7*a1 + 12*a1^2 - 6*a1^3)
+        oo$Dmu2th2[yzero,1] <- 2* (term1 + term2)
+        oo$Dmu2th2[!yzero,1] <- 2*th2*ath.s*(1 - 7*a1.s + 12*a1.s^2 - 6*a1.s^3)
+
+        oo$Dmu2th2[yzero,2] <- 2 * (lath*d1t2*(2*d1-1) + tlath*th2^2*g1 + 2*th2*olath*d1t1 -
+           4*th2*olath*d1^2*t1 + 2*lath*d1*t1^2 - 6*lath*d1^2*t1^2 - 6*lath*th2^2*a1^3*(1-a1) +
+           4*lath*th2*d1^2*t1 +lath*th2^2*g12 + th2^2*(4-3*lath)*d1^2 - 6*th2^2*olath*a1^2 +
+           2*th2^2*(2-3*lath)*a1^3 )
+        oo$Dmu2th2[!yzero,2] <- 2 * th2^2*a1.s*(tlath.s + (7*lath.s-6)*a1.s + 4*(1-3*lath.s)*a1.s^2 
+            + 6*lath.s*a1.s^3)   
+
+    #    term1 <- lath*(-th2^2*g1 - 2*lath*d1t2*d1 - 2*th2*d1t1 + 6*lath*d1t1^2 - 2*th2^2*tlath*d1^2) 
+    #       + lath*olath*(-d1t2 + 2*d1t1*t1 + 8*th2*d1t1*d1)
+        term2 <-  th2^2*tlath^2*g1 + 2*th2*olath^2*d1t1 + 2*lath^2*th2^2*a1^3*(1-3*a1) +
+          lath*th2^2*a1^2*(-10*olath*a1 + 7-3*lath) + 2*th2^2*olath^2*(d1^2 - 2*a1^2)
+  #      oo$Dmu2th2[yzero,3] <- 2* (term1 + term2 )
+        
+        oo$Dmu2th2[yzero,3] <- 2* ( lath*(-th2^2*g1 - 2*lath*d1t2*d1 - 2*th2*d1t1 + 6*lath*d1t1^2 - 2*th2^2*tlath*d1^2)  + lath*olath*(-d1t2 + 2*d1t1*t1 + 8*th2*d1t1*d1)  + term2 )
+
+        oo$Dmu2th2[!yzero,3] <- 2*ath.s*th2* (-lath.s + tlath.s^2 + lath.s*a1.s*(7-3*lath.s) +
+            2*a1.s^2*lath.s^2 - 10*lath.s*a1.s^2*olath.s - 6*lath.s^2*a1.s^3 - 4*a1.s*olath.s^2) 
+      }
+      oo
+    }  ## end of Dd
+
+    aic <- function(y, mu, theta=NULL, wt, dev) {
+        if (is.null(theta)) theta <- get(".Theta")
+        th1 <- theta[1]; th2 <- exp(theta[2]); la <- mu;
+        yzero <- y == 0
+        term <- rep(0,length(y))  ## log likelihood for each observation
+        f <- th1 - th2*la[yzero]; ela <- exp(-la[yzero]);
+        h <- ind <- f >0 
+        h[ind] <- (1 + ela[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
+        f <- exp(f[!ind])
+        h[!ind] <- (f + ela[!ind])/(1+f)
+        term[yzero] <- log(h)
+        f <- exp(th1-th2*la[!yzero])
+        term[!yzero] <- -log(1+f) -la[!yzero] +y[!yzero]*log(la[!yzero]) -
+                 lfactorial(y[!yzero]) 
+        -2 * sum(term * wt)
+    }
+    
+    ls <- function(y,w,n,theta,scale) {
+       ## the log saturated likelihood function.
+       th1 <- theta[1]; th2 <- exp(theta[2]); 
+       yzero <- y == 0
+       term <- rep(0,length(y))  ## saturated log likelihood for each observation
+       f <- th1 - th2*y[yzero]; ey <- exp(-y[yzero]);
+       h <- ind <- f >0 
+       h[ind] <- (1 + ey[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
+       f <- exp(f[!ind])
+       h[!ind] <- (f + ey[!ind])/(1+f)
+       term[yzero] <- log(h)
+       f <- exp(th1-th2*y[!yzero])
+       term[!yzero] <- -log(1+f) - y[!yzero] +y[!yzero]*log(y[!yzero]) -
+                 lfactorial(y[!yzero]) 
+       ls <- sum(term*w) 
+       ## first derivatives wrt theta...
+       lsth <- rep(0,2) 
+       f <- th1 - th2*y[yzero]
+       a0 <- a20 <- b0 <- c0 <- d0 <- ind <- f > 0
+       emf <- exp(-f[ind]); ef <- exp(f[!ind]); efa <- exp(f);
+       b0 <- exp(-y[yzero])
+       c0 <- 1/(efa + b0); 
+       a0[ind] <- 1/(1+emf); a0[!ind] <- ef/(1+ef) 
+       a20[ind] <- emf/(1+emf)^2; a20[!ind] <- ef/(1+ef)^2;    
+       d0[ind] <- 1/(1+ b0[ind]*emf); d0[!ind] <- ef/(b0[!ind]+ef);   
+       
+       f0.s <- th1-th2*y[!yzero]; 
+       a0.s <- a20.s <- ind <- f0.s > 0
+       emf0 <- exp(-f0.s[ind]); ef0 <- exp(f0.s[!ind]); efa0 <- exp(f0.s);
+       a0.s[ind] <- 1/(1+emf0); a0.s[!ind] <- ef0/(1+ef0) 
+       a20.s[ind] <- emf0/(1+emf0)^2; a20.s[!ind] <- ef0/(1+ef0)^2;
+
+       term <- rep(0,length(y))
+       term[yzero] <- a0*(1-b0)*c0;  term[!yzero] <- -a0.s
+       lsth[1] <- sum(w*term)
+       term[yzero] <- y[yzero]*th2*a0*(b0-1)*c0
+       term[!yzero] <- y[!yzero]*th2*a0.s
+       lsth[2] <- sum(w*term)
+       
+       ## second deriv...      
+       lsth2 <- matrix(0,2,2)  
+       term[yzero] <- tt <- (1-b0)*a20 * (b0*c0^2 - d0^2)
+       term[!yzero] <- -a20.s 
+       lsth2[1,1] <- sum(term*w)
+       term[yzero] <- -y[yzero]*th2*tt
+       term[!yzero] <- y[!yzero]*th2*a20.s
+       lsth2[1,2] <- lsth2[2,1] <- sum(term*w)
+       
+       term[yzero] <- y[yzero]*th2*(b0-1)*a20*(d0^2 + a0*b0*c0^2) + (y[yzero]*th2)^2*tt
+       term[!yzero] <- y[!yzero]*th2* (a20.s + a0.s^2 - th2*y[!yzero]*a20.s)
+       lsth2[2,2] <- sum(term*w)
+       list(ls=ls,## saturated log likelihood
+         lsth1=lsth,lsth2=lsth2) ## its first and second derivs wrt theta
+    }
+
+    initialize <- expression({
+        if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
+        n <- rep(1, nobs)
+        mustart <- y +exp(-y) # + (y==0)/5
+    })
+    
+    fv <- function(mu,theta=NULL) {
+    ## optional function to give fitted values - idea is that 
+    ## predict.gam(...,type="response") will use this, as well
+    ## as residuals(...,type="response")...
+      if (is.null(theta)) theta <- get(".Theta")
+      th1 <- theta[1]; th2 <- exp(theta[2]); 
+      p <- exp(th1- th2*mu)/(1 + exp(th1- th2*mu)) 
+      fv <- (1 - p)* mu      
+      fv
+    } ## fv
+
+    rd <- function(mu,wt,scale) {
+    ## simulate data given fitted latent variable in mu 
+      theta <- get(".Theta") 
+      th1 <- theta[1]; th2 <- exp(theta[2]); 
+      n.sim <- length(mu)
+      p <- exp(th1- th2*lambda)/(1 + exp(th1- th2*lambda)) 
+      z <- y <- runif(n.sim)
+      y <- rep(0,n.sim)
+      good <- z >= p
+      y[good] <- rpois(sum(good),mu[good])
+      y
+    }
+   
+    environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
+    environment(putTheta) <- environment(rd) <- environment(fv) <- env
+
+    structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,fv=fv,
+        validmu = validmu, valideta = stats$valideta,n.theta=2,  # canonical="none",
+        ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
+        class = c("extended.family","family"))
+} ## zip
