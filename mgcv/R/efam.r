@@ -1026,7 +1026,7 @@ Beta <- function (theta = NULL, link = "logit") {
         validmu = validmu, valideta = stats$valideta, n.theta=1,  # canonical="logit",
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,rd=rd,qf=qf), 
         class = c("extended.family","family"))
-} ## beta
+} ## Beta
 
 
   
