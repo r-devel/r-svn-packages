@@ -38,7 +38,7 @@ given potential presence is modelled with a second linear predictor.
 
 %- maybe also `usage' for other objects documented here.
 
-\author{ Simon N. Wood (s.wood@r-project.org)
+\author{ Simon N. Wood (s.wood@r-project.org) & Natalya Pya
 }
 
 \references{

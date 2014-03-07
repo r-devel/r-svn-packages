@@ -541,8 +541,8 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
         preinitialize = preinitialize, ls=ls,rd=rd,residuals=residuals,
         validmu = validmu, valideta = stats$valideta,n.theta=R-2,
-        ini.theta = iniTheta,putTheta=putTheta,predict=predict,
-        getTheta=getTheta), class = c("extended.family","family"),step = 1)
+        ini.theta = iniTheta,putTheta=putTheta,predict=predict,step = 1,
+        getTheta=getTheta,no.r.sq=TRUE), class = c("extended.family","family"))
 } ## end of ocat
 
 #######################

@@ -3412,7 +3412,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
   mean.y <- sum(w*object$y)/sum(w)
   w <- sqrt(w)
   nobs <- nrow(object$model)
-  r.sq <- if (inherits(object$family,"general.family")) NULL else  
+  r.sq <- if (inherits(object$family,"general.family")||!is.null(object$family$no.r.sq)) NULL else  
           1 - var(w*(as.numeric(object$y)-object$fitted.values))*(nobs-1)/(var(w*(as.numeric(object$y)-mean.y))*residual.df) 
   dev.expl<-(object$null.deviance-object$deviance)/object$null.deviance
   if (object$method%in%c("REML","ML")) object$method <- paste("-",object$method,sep="")
@@ -3444,11 +3444,11 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   { cat("Approximate significance of smooth terms:\n")
     printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, has.Pvalue = TRUE, na.print = "NA",cs.ind=1, ...)
   }
-  if (!is.null(x$r.sq)) cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5))
-  if (length(x$dev.expl)>0) cat("   Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%\n",sep="")
-  
+  if (!is.null(x$r.sq)) cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5),"  ")
+  if (length(x$dev.expl)>0) cat("Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%",sep="")
+  cat("\n")
   if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  
-    cat(" ",x$method," = ",formatC(x$sp.criterion,digits=5),sep="")
+    cat(x$method," = ",formatC(x$sp.criterion,digits=5),sep="")
  
   cat("  Scale est. = ",formatC(x$scale,digits=5,width=8,flag="-"),"  n = ",x$n,"\n",sep="")
   invisible(x)
