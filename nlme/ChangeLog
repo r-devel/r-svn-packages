@@ -1,9 +1,21 @@
+2014-03-08  Brian Ripley
+
+	* DESCRIPTION: version is 3.1-114
+
+	* R/new-methods.R: labeling of fitted() was sometimes wrong as the
+	'groups' component lost row names. (PR#15678)
+
+	* tests/fitted.R: add regression test.
+
+	* R/lme.R: clean up
+
+	* man/{lmeControl,lmeScale}.Rd: update..
+
 2013-11-17  Brian Ripley
 
 	* DESCRIPTION: version is 3.1-113
 
 	* src/{matrix,nlOptimizer}.h: typos in guard names (clang 3.4)
-	
 
 2013-10-21  Martin Maechler
 
