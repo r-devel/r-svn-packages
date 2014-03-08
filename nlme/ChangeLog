@@ -1,5 +1,10 @@
 2014-03-08  Brian Ripley
 
+	* R/{gls,gnls,lme,nmle}.R, man/{lmeScale,*Control}.Rd:
+	remove msScale and nlmStepMax arguments which were used for nlm().
+
+2014-03-08  Brian Ripley
+
 	* DESCRIPTION: version is 3.1-114
 
 	* R/new-methods.R: labeling of fitted() was sometimes wrong as the
