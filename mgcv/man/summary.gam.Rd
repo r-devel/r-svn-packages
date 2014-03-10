@@ -111,6 +111,10 @@ explained is probably more appropriate for non-normal errors. Note that \code{r.
 
 \item{n}{number of data.}
 
+\item{np}{number of model coefficients (regression coefficients, not smoothing parameters or other parameters of likelihood).}
+
+\item{rank}{apparent model rank.}
+
 \item{method}{The smoothing selection criterion used.}
 
 \item{sp.criterion}{The minimized value of the smoothness selection criterion. Note that for ML and REML methods, 

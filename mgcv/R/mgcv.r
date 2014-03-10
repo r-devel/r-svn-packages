@@ -1889,7 +1889,9 @@ print.gam<-function (x,...)
     cat(" total =",round(sum(x$edf),digits=2),"\n")
   }
   if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  
-  cat("\n",x$method," score: ",x$gcv.ubre,"\n",sep="")
+  cat("\n",x$method," score: ",x$gcv.ubre,"     ",sep="")
+  if (!is.null(x$rank) && x$rank< length(x$coefficients)) cat("rank: ",x$rank,"/",length(x$coefficients),sep="") 
+  cat("\n")
   invisible(x)
 }
 
@@ -3420,7 +3422,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
        s.pv=s.pv,scale=dispersion,r.sq=r.sq,family=object$family,formula=object$formula,n=nobs,
        dev.expl=dev.expl,edf=edf,dispersion=dispersion,pTerms.pv=pTerms.pv,pTerms.chi.sq=pTerms.chi.sq,
        pTerms.df = pTerms.df, cov.unscaled = covmat.unscaled, cov.scaled = covmat, p.table = p.table,
-       pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre)
+       pTerms.table = pTerms.table, s.table = s.table,method=object$method,sp.criterion=object$gcv.ubre,
+       rank=object$rank,np=length(object$coefficients))
  
   class(ret)<-"summary.gam"
   ret
@@ -3444,7 +3447,9 @@ print.summary.gam <- function(x, digits = max(3, getOption("digits") - 3),
   { cat("Approximate significance of smooth terms:\n")
     printCoefmat(x$s.table, digits = digits, signif.stars = signif.stars, has.Pvalue = TRUE, na.print = "NA",cs.ind=1, ...)
   }
-  if (!is.null(x$r.sq)) cat("\nR-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5),"  ")
+  cat("\n")
+  if (!is.null(x$rank) && x$rank< x$np) cat("Rank: ",x$rank,"/",x$np,"\n",sep="") 
+  if (!is.null(x$r.sq)) cat("R-sq.(adj) = ",formatC(x$r.sq,digits=3,width=5),"  ")
   if (length(x$dev.expl)>0) cat("Deviance explained = ",formatC(x$dev.expl*100,digits=3,width=4),"%",sep="")
   cat("\n")
   if (!is.null(x$method)&&!(x$method%in%c("PQL","lme.ML","lme.REML")))  

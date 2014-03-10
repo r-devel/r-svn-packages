@@ -2935,6 +2935,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   /* fill trailing columns with zero */ 
   for (p0 = X + rank * *n,p1 = X + *q * *n;p0<p1;p0++) *p0 = 0.0;
 
+  *rank_est = rank;
+
   R_chk_free(drop);
   R_chk_free(nulli);
   R_chk_free(pivot1);

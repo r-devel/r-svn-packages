@@ -48,8 +48,12 @@ cox.ph <- function (link = "identity") {
     ## baseline hazard estimation...
       ## first get the estimated hazard and prediction information...
       object$family.data <- G$family$hazard(G$y,G$X,object$coefficients,G$w)
-      ## now get put the survivor function in object$fitted
+      ## now put the survivor function in object$fitted
       object$fitted.values <- exp(-object$family.data$h[object$family.data$r]*exp(object$linear.predictors))
+      ## compute the null deviance...
+      s.base <- exp(-object$family.data$h[object$family.data$r]) ## baseline survival
+      object$null.deviance <- ## sum of squares of null deviance residuals
+      2*sum(abs((object$prior.weights + log(s.base) + object$prior.weights*(log(-log(s.base)))))) 
       ## and undo the re-ordering...
       object$linear.predictors[y.order] <- object$linear.predictors
       object$fitted.values[y.order] <- object$fitted.values
@@ -68,10 +72,10 @@ cox.ph <- function (link = "identity") {
     ## = censoring)
       tr <- unique(y);r <- match(y,tr);nt <- length(tr)
       oo <- .C("coxpp",as.double(X%*%beta),A=as.double(X),as.integer(r),d=as.integer(wt),
-               h=as.double(rep(0,nt)),q=as.double(rep(0,nt)),n=as.integer(nrow(X)),p=as.integer(ncol(X)),
+               h=as.double(rep(0,nt)),q=as.double(rep(0,nt)),km=as.double(rep(0,nt)),n=as.integer(nrow(X)),p=as.integer(ncol(X)),
                nt=as.integer(nt),PACKAGE="mgcv")
       p <- ncol(X)
-      list(tr=tr,h=oo$h,q=oo$q,a=matrix(oo$A[p*nt],p,nt),nt=nt,r=r)
+      list(tr=tr,h=oo$h,q=oo$q,a=matrix(oo$A[p*nt],p,nt),nt=nt,r=r,km=oo$km)
     }
 
     residuals <- function(object,type=c("deviance","martingale")) {
@@ -81,6 +85,7 @@ cox.ph <- function (link = "identity") {
       if (type=="deviance") res <- sign(res)*sqrt(-2*(res + w * log(-log.s)))
       res 
     }
+
 
     predict <- function(family,se=FALSE,eta=NULL,y=NULL,
                X=NULL,beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {

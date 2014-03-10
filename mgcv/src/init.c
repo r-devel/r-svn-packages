@@ -16,7 +16,7 @@ R_CallMethodDef CallMethods[] = {
 
 R_CMethodDef CEntries[] = {
     {"coxpred", (DL_FUNC) &coxpred, 13},
-    {"coxpp", (DL_FUNC) &coxpp, 9},
+    {"coxpp", (DL_FUNC) &coxpp, 10},
     {"coxlpl", (DL_FUNC) &coxlpl, 17},
     {"RMonoCon", (DL_FUNC) &RMonoCon, 7},
     {"RuniqueCombs", (DL_FUNC) &RuniqueCombs, 4},

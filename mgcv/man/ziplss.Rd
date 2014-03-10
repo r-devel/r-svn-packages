@@ -29,6 +29,9 @@ and the second column is the probability of potential presence.
 Predictions using \code{\link{predict.gam}} will also produce 2 column matrices for \code{type} 
 \code{"link"} and \code{"response"}.
 
+The null deviance computed for this model assumes that the probabilities of presence are as estiamted, but the Poisson mean takes the same 
+value for all observations.
+
 }
 
 \references{

@@ -57,7 +57,7 @@ void coxpred(double *X,double *t,double *beta,double *Vb,double *a,double *h,dou
   R_chk_free(v);
 } /* coxpred */
 
-void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q, 
+void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,double *km, 
             int *n,int *p, int *nt) {
 /* Cox PH post-processing code computing 
    1. Baseline hazard + variance
@@ -74,6 +74,7 @@ void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,
    *  X is over written with the 'a' vectors. Each is length 'p' and all
       'nt' are stored one after the other. 
    * h is the cumulative hazard (h[i] at tr[i]) - an nt vector.
+   * km is the basic Kaplan Meier hazard estimate
    * q is the variance of the hazard - an nt vector.
 
    - note that in R terms the log survivor function for the fit data is 
@@ -82,24 +83,25 @@ void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,
    These ingredients are to be supplied to 'coxpred' to obtain the predicted 
    survivor function for. 
 */
-  double *b,*gamma_p,*gamma,*bj,*bj1,*p1,*p2,gamma_i,*Xp,*aj,*aj1,x;
+  double *b,*gamma_p,*gamma,*gamma_np,*bj,*bj1,*p1,*p2,gamma_i,*Xp,*aj,*aj1,x,y;
   int *dc,i,j;
   b = (double *)R_chk_calloc((size_t) *nt * *p,sizeof(double)); /* storage for the b vectors */
   gamma_p = (double *)R_chk_calloc((size_t) *nt,sizeof(double)); 
+  gamma_np = (double *)R_chk_calloc((size_t) *nt,sizeof(double));
   dc = (int *)R_chk_calloc((size_t) *nt,sizeof(int)); /* storage for event counts at each time*/
   gamma = (double *)R_chk_calloc((size_t)*n,sizeof(double)); 
   for (i=0;i<*n;i++) gamma[i] = exp(eta[i]);
-  
+
   bj1 = bj = b;
   for (i=0,j=0;j<*nt;j++) { /* work back in time */
     if (j>0) {
-      gamma_p[j] = gamma_p[j-1];
+      gamma_p[j] = gamma_p[j-1]; gamma_np[j] = gamma_np[j-1];
       /* copy b^+_{j-1}, bj1, into b^+_j, bj */
       for (p1=bj,p2=p1 + *p;p1<p2;p1++,bj1++) *p1 = *bj1;
     }
     while (i < *n && r[i]==j+1) { /* accumulating this event's information */
       gamma_i = gamma[i];
-      gamma_p[j] +=  gamma_i;
+      gamma_p[j] +=  gamma_i; gamma_np[j] += 1.0;
       dc[j] += d[i]; /* count the events */
       /* accumulate gamma[i]*X[i,] into bj */
       for (p1=bj,p2=p1 + *p,Xp = X + i;p1<p2;p1++,Xp += *n) *bj += *Xp * gamma_i; 
@@ -111,21 +113,24 @@ void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,
   /* with gamma_p, dc and b computed, we can now do time forward accumulations 
      of h, q and a... */
   j = *nt - 1;
-  x =  dc[j]/gamma_p[j];h[j] = x;
+  x =  dc[j]/gamma_p[j];h[j] = x;km[j] = dc[j]/gamma_np[j];
   x /= gamma_p[j];q[j] = x;
   i = j * *p;
   for (aj=X+i,p1=aj+ *p,p2=b+i;aj<p1;p2++,aj++) *aj = *p1 * x;
   for (j--;j>=0;j--) { /* back recursion, forwards in time */
-    x = dc[j]/gamma_p[j];
+    y = dc[j];
+    x = y/gamma_p[j];
+    y/=gamma_np[j];
     h[j] = h[j+1] + x;
+    km[j] = km[j+1] + y; /* kaplan meier hazard estimate */
     x /= gamma_p[j];
     q[j] = q[j+1] + x;
     /* now accumulate the a vectors into X for return */
     i = j * *p;
     for (aj=X+i,aj1=p1=aj+ *p,p2=b+i;aj<p1;p2++,aj++) *aj = *aj1 + *p1 * x; 
   }
-  R_chk_free(b);
-
+  R_chk_free(b);R_chk_free(gamma);R_chk_free(dc);
+  R_chk_free(gamma_p);R_chk_free(gamma_np);
 } /* coxpp */
 
 

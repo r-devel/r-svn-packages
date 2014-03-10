@@ -355,6 +355,10 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
       if (type=="response") return(rsd) else
       return((rsd*object$fitted[,2])) ## (y-mu)/sigma 
     }
+  postproc <- expression({
+    ## code to evaluate in estimate.gam, to evaluate null deviance
+    object$null.deviance <- sum(((object$y-mean(object$y))*object$fitted[,2])^2)
+  })
 
   ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
   ## function defining the gamlss Gaussian model log lik. 
@@ -472,12 +476,15 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 
   structure(list(family="gaulss",ll=ll,link=paste(link),nlp=2,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
-    initialize=initialize,residuals=residuals,
+    initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1 ## signals that ls not needed here
     ),class = c("general.family","extended.family","family"))
 } ## end gaulss
+
+
+
 
 pen.reg <- function(x,e,y) {
 ## get coefficients of penalized regression of y on matrix x
@@ -540,16 +547,26 @@ ziplss <-  function(link=list("log","logit")) {
       type <- match.arg(type)
       rsd <- p <- object$fitted[,2];lam <- object$fitted[,1]
 
-      if (type=="response") rsd <- object$y - p*lam
+      rsd <- object$y - p*lam
+      if (type=="response") return(rsd)
       else {
+        sgn <- sign(rsd)
         ind <- object$y == 0 
         rsd[ind] <- - log(1-p[ind]*(1-exp(-lam[ind])))
         rsd[!ind] <- object$y[!ind]*(log(object$y[!ind])-log(lam[!ind])-1) - log(p[!ind]) + lam[!ind]
-        rsd <- sqrt(rsd)
+        rsd <- sqrt(rsd)*sgn
       }
       rsd
   }
-
+  postproc <- expression({
+    ## code to evaluate in estimate.gam, to evaluate null deviance
+    rsd <- p <- object$fitted[,2];
+    lambda <- mean(object$y/p,na.rm=TRUE)
+    ind <- object$y == 0 
+    rsd[ind] <- - log(1-p[ind]*(1-exp(-lambda)))
+    rsd[!ind] <- object$y[!ind]*(log(object$y[!ind])-log(lambda)-1) - log(p[!ind]) + lambda
+    object$null.deviance <- sum(rsd)
+  })
   ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
   ## function defining the gamlss ZIP model log lik. 
   ## Firt l.p. defines Poisson mean, given presence (lambda)
@@ -686,7 +703,7 @@ ziplss <-  function(link=list("log","logit")) {
 
   structure(list(family="ziplss",ll=ll,link=paste(link),nlp=2,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
-    initialize=initialize,residuals=residuals,
+    initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1 ## signals that ls not needed here

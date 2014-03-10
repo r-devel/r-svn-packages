@@ -6,15 +6,25 @@
 *** Cox Proportional Hazard family 'cox.ph' added as example of general
   penalized likelihood families now useable with 'gam'.
 
-*** 'ocat', 'tw' and 'nb' families added for ordered categorical data,
-  Tweedie with estimation of 'p' and negative binomial with (fast) estimation
-  of 'theta'. These are all examples of 'extended families' now useable 
-  with 'gam'.
+*** 'ocat', 'tw', 'nb', 'Beta', 'ziP' and 't.scaled' families added for 
+  ordered categorical data, Tweedie with estimation of 'p', negative binomial 
+  with (fast) estimation of 'theta', beta regression for proportions, simple
+  zero inflated Poisson regression and heavy tailed regression. These are all 
+  examples of 'extended families' now useable with 'gam'.
+
+*** gaulss and ziplss families, implementing modles with multiple linear 
+  predictors. For gaulss there is a linear predictor for the Gaussian mean
+  and another for the stnadard deviation. For ziplss there is a linear
+  predictor controlling `potential presense' and another controlling 
+  the Poisson mean, given presence. 
 
 * gam now defaults to the Pearson estimator of the scale parameter to avoid
   poor scale estimates in the quasipoisson case with low counts (and possibly
   elsewhere). Gaussian, Poisson and binomial inference invariant to change. 
   Thanks to Greg Dropkin, for reporting the issue.
+
+* 'print.gam' and 'summary.gam' now report the rank of the model if it is
+   rank deficient.
 
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.

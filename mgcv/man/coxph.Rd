@@ -31,10 +31,11 @@ residuals can be extracted. The \code{fitted.values} stored in the model object 
 subject at their event/censoring time. 
 
 Estimation of model coefficients is by maximising the log-partial likelihood penalized by the smoothing penalties. See e.g. 
-Hastie and Tibshirani, 1990, section 8.3. for the partial likelihood used (with Peto's approximation fo ties), but note that 
+Hastie and Tibshirani, 1990, section 8.3. for the partial likelihood used (with Peto's approximation for ties), but note that 
 optimization of the partial likelihood does not follow Hastie and Tibshirani. See Klein amd Moeschberger (2003) for 
 estimation of residuals, the baseline hazard, survival function and associated standard errors.  
 
+The percentage deviance explained reported for Cox PH models is based on the sum of squares of the deviance residuals, as the model deviance, and the sum of squares of the deviance residuals when the covariate effects are set to zero, as the null deviance. The same baseline hazard estimate is used for both.
 }
 
 \references{
@@ -79,7 +80,7 @@ plot(b$family.data$tr,exp(-b$family.data$h),type="l",ylim=c(0,1),
      xlab="time",ylab="survival")
 lines(b$family.data$tr,exp(-b$family.data$h + 2*b$family.data$q^.5),col=2)
 lines(b$family.data$tr,exp(-b$family.data$h - 2*b$family.data$q^.5),col=2)
-
+lines(b$family.data$tr,exp(-b$family.data$km),lty=2) ## Kaplan Meier
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

@@ -27,6 +27,8 @@ The fitted values for this family will be a two column matrix. The first column 
 standard deviation. Predictions using \code{\link{predict.gam}} will also produce 2 column matrices for \code{type} 
 \code{"link"} and \code{"response"}.
 
+The null deviance reported for this family is the sum of squares of the difference between the response and the mean response divided by the standard deviation of the response according to the model. The deviance is the sum of squares of residuals divided by model standard deviations. 
+
 }
 
 \references{
