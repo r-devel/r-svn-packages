@@ -177,7 +177,7 @@ plot(silhouette(cl3))# only of the "best" subset of 46
 sf <- silhouette(cl3, full = TRUE) ## this is the same as
 s.full <- silhouette(cl3$clustering, daisy(xc1k))
 if(paste(R.version$major, R.version$minor, sep=".") >= "2.3.0")
-   stopifnot(all.equal(sf, s.full, check.attributes = FALSE, tol = 0))
+   stopifnot(all.equal(sf, s.full, check.attributes = FALSE, tolerance = 0))
 ## color dependent on original "3 groups of each 1000":
 plot(sf, col = 2+ as.integer(names(cl3$clustering) ) \%/\% 1000,
      main ="plot(silhouette(clara(.), full = TRUE))")
