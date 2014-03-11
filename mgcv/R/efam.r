@@ -451,7 +451,8 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       res <- object$family$dev.resids(y,mu,wts)
       s <- attr(res,"sign")
       if (is.null(s)) s <- sign(y-mu)
-      res <- sqrt(pmax(res,0)) * s 
+      res <- as.numeric(sqrt(pmax(res,0)) * s) 
+      
     }
     res
   } ## residuals

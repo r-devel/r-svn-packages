@@ -176,7 +176,7 @@ cox.ph <- function (link = "identity") {
         aic = aic, mu.eta = stats$mu.eta, 
         initialize = initialize,preinitialize=preinitialize,postproc=postproc,
         hazard=hazard,predict=predict,residuals=residuals,
-        validmu = validmu, valideta = stats$valideta,n.theta=1, 
+        validmu = validmu, valideta = stats$valideta, 
         rd=rd,qf=qf,drop.intercept = TRUE,
         ls=1 ## signal ls not needed
         ),

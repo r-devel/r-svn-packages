@@ -200,7 +200,7 @@ k.check <- function(b,subsample=5000,n.rep=400) {
     kc[k] <- length(ind)
     edf[k] <- sum(b$edf[ind]) 
     nc <- b$smooth[[k]]$dim
-    if (ok && ncol(dat)>nc) dat <- dat[,1:nc] ## drop any by variables
+    if (ok && ncol(dat)>nc) dat <- dat[,1:nc,drop=FALSE] ## drop any by variables
     for (j in 1:nc) if (is.factor(dat[[j]])) ok <- FALSE 
     if (!ok) {
       p.val[k] <- v.obs[k] <- NA ## can't do this test with summation convention/factors

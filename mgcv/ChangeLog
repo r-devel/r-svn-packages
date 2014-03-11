@@ -26,6 +26,9 @@
 * 'print.gam' and 'summary.gam' now report the rank of the model if it is
    rank deficient.
 
+* fix of bug in 'k.check' called by 'gam.check' that gave an error for 
+  smooths with by variables.
+
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.
 

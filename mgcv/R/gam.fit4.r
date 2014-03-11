@@ -157,6 +157,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
     sp <- sp[-ind]   ## log smoothing parameters
   }
 
+  penalized <- if (length(UrS)>0) TRUE else FALSE
+
   if (scale>0) scale.known <- TRUE else {
     ## unknown scale parameter, trial value supplied as 
     ## final element of sp. 
@@ -201,9 +203,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   } else { 
       T <- diag(q); 
       St <- matrix(0,q,q) 
-      rSncol <- sp <- rows.E <- Eb <- Sr <- 0   
+      rSncol <- rows.E <- Eb <- Sr <- 0   
       rS <- list(0)
-      rp <- list(det=0,det1 = rep(0,0),det2 = rep(0,0),fixed.penalty=FALSE)
+      rp <- list(det=0,det1 = 0,det2 = 0,fixed.penalty=FALSE)
   }
 
   ## re-parameterization complete. Initialization....
@@ -441,12 +443,15 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
            as.numeric(scoreType=="REML") * Mp * log(2*pi*scale)/2
    REML1 <- REML2 <- NULL
    if (deriv) {
-     ind <- 1:nSp + length(theta)
-     det1 <- oo$ldet1;det1[ind] <- det1[ind] - rp$det1
+     det1 <- oo$ldet1
+     if (nSp) {
+       ind <- 1:nSp + length(theta)
+       det1[ind] <- det1[ind] - rp$det1
+     }
      REML1 <- (oo$D1+oo$P1)/(2*scale) - c(lsth1,rep(0,length(sp))) + (det1)/2
      if (deriv>1) {
        ls2 <- D2*0;ls2[1:nt,1:nt] <- lsth2 
-       ldet2[ind,ind] <- ldet2[ind,ind] - rp$det2
+       if (nSp) ldet2[ind,ind] <- ldet2[ind,ind] - rp$det2
        REML2 <- (D2+bSb2)/(2*scale) - ls2 + ldet2/2
      }
    } 
@@ -523,26 +528,31 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 ## while preconditioning and step 1 take care of extreme smoothing parameters
 ## related problems. 
 
+  penalized <- if (length(Sl)>0) TRUE else FALSE
 
   nSp <- length(lsp)
   sp <- exp(lsp) 
   rank.tol <- .Machine$double.eps*100 ## tolerance to use for rank deficiency
   q <- ncol(x)
   n <- nobs <- length(y)
+  
+  if (penalized) {
+    Eb <- attr(Sl,"E") ## balanced penalty sqrt
  
-  Eb <- attr(Sl,"E") ## balanced penalty sqrt
- 
-  ## the stability reparameterization + log|S|_+ and derivs... 
-  ## NOTE: what if no smooths??
-  rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
-  x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
-  Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty 
-  St <- crossprod(rp$E) ## total penalty matrix
-  E <- rp$E ## root total penalty
-  attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be furhter scaled   
+    ## the stability reparameterization + log|S|_+ and derivs... 
+    rp <- ldetS(Sl,rho=lsp,fixed=rep(FALSE,length(lsp)),np=q,root=TRUE) 
+    x <- Sl.repara(rp$rp,x) ## apply re-parameterization to x
+    Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty 
+    St <- crossprod(rp$E) ## total penalty matrix
+    E <- rp$E ## root total penalty
+    attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be furhter scaled   
 
-  if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
- 
+    if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
+  } else { ## unpenalized so now derivatives resquired
+    deriv <- 0 
+    rp <- list(ldetS=0)
+    St <- matrix(0,q,q)
+  }
   ## now call initialization code, but make sure that any 
   ## supplied 'start' vector is not overwritten...
   start0 <- start
@@ -646,8 +656,10 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
           break
         } else { ## check rank, as fit appears indefinite...
           rank.checked <- TRUE
-          Sb <- crossprod(Eb) ## balanced penalty
-          Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
+          if (penalized) {
+            Sb <- crossprod(Eb) ## balanced penalty
+            Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
+          } else Hb <- -ll$lbb/norm(ll$lbb,"F")
           ## apply pre-conditioning, otherwise badly scaled problems can result in
           ## wrong coefs being dropped...
           D <- abs(diag(Hb))

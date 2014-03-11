@@ -3616,7 +3616,12 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
   ## If a Hessian exists, get CI's for variance components...
 
   if (x$method%in%c("ML","P-ML","REML","P-REML","fREML")&&!is.null(x$outer.info$hess)) {
-    H <- x$outer.info$hess ## the hessian w.r.t. log sps and log scale
+    if (is.null(x$family$n.theta)||x$family$n.theta<=0) H <- x$outer.info$hess ## the hessian w.r.t. log sps and log scale
+    else {
+      ind <- 1:x$family$n.theta
+      H <- x$outer.info$hess[-ind,-ind,drop=FALSE]
+    }
+
     if (ncol(H)>length(x$sp)) scale.est <- TRUE else scale.est <- FALSE
     
     ## get derivs of log sqrt var comps wrt log sp and log scale....

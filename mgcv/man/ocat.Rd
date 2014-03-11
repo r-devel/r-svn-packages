@@ -27,7 +27,7 @@ An object of class \code{extended.family}.
 }
 
 \details{Such cumulative threshold models are only identifiable up to an intercept, or one of the cut points. 
-Rather than remove the intercept, \code{ocat} simply sets the first cut point to -1. Use \code{link{predict.gam}} with 
+Rather than remove the intercept, \code{ocat} simply sets the first cut point to -1. Use \code{\link{predict.gam}} with 
 \code{type="response"} to get the predicted probabilities in each category.
 }
 

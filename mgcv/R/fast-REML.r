@@ -58,7 +58,7 @@ Sl.setup <- function(G) {
   } ## finished paraPen
 
   ## now work through the smooths....
-  for (i in 1:length(G$smooth)) {
+  if (length(G$smooth)) for (i in 1:length(G$smooth)) {
 
     if (!is.null(G$smooth[[i]]$fixed)&&G$smooth[[i]]$fixed) m <- 0 else
     m <- length(G$smooth[[i]]$S)
@@ -128,6 +128,8 @@ Sl.setup <- function(G) {
   ## multiple S blocks. Now the blocks need re-parameterization applied.
   ## Singletons need to be transformed to identity penalties, while 
   ## multiples need to be projected into total penalty range space. 
+
+  if (length(Sl)==0) return(Sl) ## nothing to do
 
   np <- ncol(G$X)
   E <- matrix(0,np,np) ## well scaled square root penalty
@@ -206,6 +208,7 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
 ## or cov matrix. if inverse is TRUE and both.sides=FALSE then 
 ## re-para only applied to rhs, as appropriate for a choleski factor.
+  if (length(Sl)==0) return(X) ## nothing to do
   if (inverse) { ## apply inverse re-para
     if (is.matrix(X)) { 
       if (cov) { ## then it's a covariance matrix
