@@ -139,7 +139,6 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
 
 
 
-
 gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs),U1=diag(ncol(x)), Mp=-1, family = gaussian(), 

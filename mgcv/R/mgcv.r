@@ -1479,8 +1479,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
   fam.name <- G$family$family[1]
 
-  if (scale==0) ## choose criterion for performance iteration
-  { if (fam.name == "binomial"||fam.name == "poisson") G$sig2<-1 #ubre
+  if (scale==0) { ## choose criterion for performance iteration
+    if (fam.name == "binomial"||fam.name == "poisson") G$sig2<-1 #ubre
       else G$sig2 <- -1 #gcv
   } else {G$sig2 <- scale}
 
@@ -1488,7 +1488,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   if (reml) { ## then RE(ML) selection, but which variant?
    criterion <- method
    if (fam.name == "binomial"||fam.name == "poisson") scale <- 1
-   if (inherits(G$family,"extended.family")) {
+   if (inherits(G$family,"extended.family") && scale <=0) {
      scale <- if (is.null(G$family$scale)) 1 else G$family$scale
    }
   } else {
