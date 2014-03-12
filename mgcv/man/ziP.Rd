@@ -11,9 +11,9 @@ ziP(theta = NULL, link = "log")
 }
 \arguments{
 \item{theta}{the 2 parameters controlling the slope and intercept of the 
-linear transform of the mean controlling the zero inflation rate. If supplied (and of length 2) 
-then treated as fixed parameters, otherwise estimated. If supplied and of length 3 
-then first 2 elements are used as starting values.}
+linear transform of the mean controlling the zero inflation rate. If supplied (and second element is positive) 
+then treated as fixed parameters (\eqn{\theta_1}{theta_1} and \eqn{\exp(\theta_2)}{exp(theta_2)}), otherwise estimated. If supplied and second element is negative
+then treated as starting values (with sign of second element reversed).}
 
 \item{link}{The link function: only the \code{"log"} is currently supported.}
 
@@ -24,7 +24,7 @@ An object of class \code{extended.family}.
 
 \details{The probability of a zero count is given by \eqn{p + (1-p)\exp(-\mu)}{p + (1-p)exp(-mu)}, whereas the probability of
 count \eqn{y>0}{y>0} is \eqn{(1-p)\exp(-\mu)\mu^y/y!}{(1-p)exp(-mu)mu^y/y!}. The linear predictor of the model controls the 
-Poisson mean \eqn{\mu}{\mu}, while \eqn{logit(p) = \theta_1 + \theta_2 \mu }{logit(p) = theta_1 + theta_2 mu}. The \code{theta} 
+Poisson mean \eqn{\mu}{\mu}, while \eqn{logit(p) = \theta_1 - \exp(\theta_2) \mu }{logit(p) = theta_1 - exp(theta_2) mu}. The \code{theta} 
 parameters are estimated alongside the smoothing parameters.
 }
 

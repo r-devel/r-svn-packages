@@ -8,7 +8,7 @@
 data set, the term `GAM' being taken to include any quadratically penalized GLM.  
 The degree of smoothness of model terms is estimated as part of
 fitting. In use the function is much like \code{\link{gam}}, except that the numerical methods
-are designed for datasets containing upwards of several tens of thousands of data. The advantage 
+are designed for datasets containing upwards of several tens of thousands of data (see Wood, Goude and Shaw, 2014). The advantage 
 of \code{bam} is much lower memory footprint than \code{\link{gam}}, but it can also be much faster, 
 for large datasets. \code{bam} can also compute on a cluster set up by the \link[parallel]{parallel} package.
 
@@ -150,6 +150,8 @@ Smoothness selection is performed on the working model at each stage (performanc
 small memory footprint. This is trivial to justify in the case of GCV or Cp/UBRE/AIC based model selection, and 
 for REML/ML is justified via the asymptotic multivariate normality of Q'z where z is the IRLS pseudodata. 
 
+For full method details see Wood, Goude and Shaw (2014).
+
 Note that POI is not as stable as the default nested iteration used with \code{\link{gam}}, but that for very large, information rich,
 datasets, this is unlikely to matter much. 
 
@@ -172,7 +174,7 @@ by this approach, while the computation is less stable than the default, and the
 
 
 \references{
-\url{http://www.maths.bath.ac.uk/~sw283/}
+Wood, S.N., Goude, Y. & Shaw S. (2014) Generalized additive models for large datasets. Journal of the Royal Statistical Society, Series C, in press.  
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}

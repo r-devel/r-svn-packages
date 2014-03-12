@@ -53,6 +53,10 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     }
     theta
   }
+  postproc <- expression({
+    object$family$family <- 
+    paste("Ordered Categorical(",paste(round(object$family$getTheta(TRUE),2),collapse=","),")",sep="")
+  })
 
   validmu <- function(mu) all(is.finite(mu))
 
@@ -542,7 +546,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   environment(getTheta) <- environment(rd) <- environment(predict) <- env
   structure(list(family = "Ordered Categorical", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,
         preinitialize = preinitialize, ls=ls,rd=rd,residuals=residuals,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta,
         ini.theta = iniTheta,putTheta=putTheta,predict=predict,step = 1,
@@ -664,6 +668,11 @@ nb <- function (theta = NULL, link = "log") {
         n <- rep(1, nobs)
         mustart <- y + (y == 0)/6
     })
+  
+    postproc <- expression({
+      object$family$family <- 
+      paste("Negative Binomial(",round(object$family$getTheta(TRUE),3),")",sep="")
+    })
 
     rd <- function(mu,wt,scale) {
       Theta <- exp(get(".Theta"))
@@ -681,7 +690,7 @@ nb <- function (theta = NULL, link = "log") {
 #    famname <- paste("Negative Binomial(", format(round(theta,3)), ")", sep = "")
     structure(list(family = "negative binomial", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,rd=rd,qf=qf),
         class = c("extended.family","family"))
@@ -856,8 +865,12 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         n <- rep(1, nobs)
         mustart <- y + (y == 0)*.1
     })
-
-   rd <- function(mu,wt,scale) {
+    postproc <- expression({
+      object$family$family <- 
+      paste("Tweedie(p=",round(object$family$getTheta(TRUE),3),")",sep="")
+    })
+  
+    rd <- function(mu,wt,scale) {
      th <- get(".Theta") 
      #a <- 1.01;b <- 1.99 
      a <- get(".a");b <- get(".b")
@@ -875,7 +888,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 #    famname <- paste("Negative Binomial(", format(round(theta,3)), ")", sep = "")
     structure(list(family = "Tweedie", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,rd=rd,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,
         validmu = validmu, valideta = stats$valideta,canonical="none",n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,scale = -1),
         class = c("extended.family","family"))
@@ -1214,7 +1227,10 @@ scat <- function (theta = NULL, link = "identity") {
         n <- rep(1, nobs)
         mustart <- y + (y == 0)*.1
     })
-
+    postproc <- expression({
+      object$family$family <- 
+      paste("Scaled t(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
+    })
     rd <- function(mu,wt,scale) {
      ## simulate data given fitted latent variable in mu 
       theta <- get(".Theta")
@@ -1227,7 +1243,7 @@ scat <- function (theta = NULL, link = "identity") {
     environment(rd)<- environment(variance) <- environment(putTheta) <- env
 
     structure(list(family = "scaled t", link = linktemp, linkfun = stats$linkfun,
-        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,postproc=postproc,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls, preinitialize=preinitialize,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta,   
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta, rd=rd),
@@ -1258,12 +1274,12 @@ ziP <- function (theta = NULL, link = "log") {
     }
     Theta <-  NULL;n.theta <- 2
     if (!is.null(theta)) {
-      if (length(theta)>2) iniTheta <- theta[1:2] ## initial theta supplied
+      if (theta[2]<0) iniTheta <- c(theta[1],log(-theta[2])) ## initial theta supplied
       else { ## fixed theta supplied
-        iniTheta <- Theta <- theta 
+        iniTheta <- Theta <- c(theta[1],log(theta[2]))
         n.theta <- 0 ## no thetas to estimate
       }
-    } else iniTheta <- c(1,-10) ## inital theta value
+    } else iniTheta <- c(1,-1) ## inital theta value
            
     
     env <- new.env(parent = .GlobalEnv)
@@ -1271,7 +1287,7 @@ ziP <- function (theta = NULL, link = "log") {
     getTheta <- function(trans=FALSE) { 
      ## trans transforms to the original scale...
       th <- get(".Theta")
-      if (trans)  th[2] <- exp(th[2])
+      if (trans) th[2] <- exp(th[2])
       th
     }
     putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
@@ -1557,7 +1573,10 @@ ziP <- function (theta = NULL, link = "log") {
         n <- rep(1, nobs)
         mustart <- y +exp(-y) # + (y==0)/5
     })
-    
+    postproc <- expression({
+      object$family$family <- 
+      paste("Zero inflated Poisson(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
+    })
     fv <- function(mu,theta=NULL) {
     ## optional function to give fitted values - idea is that 
     ## predict.gam(...,type="response") will use this, as well
@@ -1587,7 +1606,7 @@ ziP <- function (theta = NULL, link = "log") {
 
     structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,fv=fv,
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,fv=fv,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
         class = c("extended.family","family"))
