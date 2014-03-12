@@ -39,7 +39,7 @@ export(anova.gam, bam, bam.update, Beta, cox.ph,concurvity, cSplineDes,
        Predict.matrix.t2.smooth,
        qq.gam,
        residuals.gam,rig,rTweedie, 
-       Rrank,s,
+       Rrank,s,scat,
        slanczos,
        smoothCon,smooth.construct,smooth.construct2,
        smooth.construct.cc.smooth.spec,
@@ -62,7 +62,7 @@ export(anova.gam, bam, bam.update, Beta, cox.ph,concurvity, cSplineDes,
        summary.gam,sp.vcov,
        spasm.construct,spasm.sp,spasm.smooth,
        t2,te,ti,tensor.prod.model.matrix,tensor.prod.penalties,
-       t.scaled,Tweedie,tw,uniquecombs, vcov.gam, vis.gam, ziP, ziplss)
+       Tweedie,tw,uniquecombs, vcov.gam, vis.gam, ziP, ziplss)
 
 importFrom(grDevices,cm.colors,gray,heat.colors,terrain.colors,topo.colors)
 importFrom(graphics,axis,box,contour,hist,lines,mtext, par, persp,plot,points,

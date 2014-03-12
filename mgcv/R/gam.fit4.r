@@ -149,12 +149,12 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 ## sp contains the vector of extended family parameters, followed by the log smoothing parameters,
 ## followed by the log scale parameter if scale < 0
 
-  if (family$n.theta>0) { 
+  if (family$n.theta>0) { ## there are extra parameters to estimate
     ind <- 1:family$n.theta
     theta <- sp[ind] ## parameters of the family
     family$putTheta(theta)
     sp <- sp[-ind]   ## log smoothing parameters
-  }
+  } else theta <- family$getTheta() ## fixed value
 
   penalized <- if (length(UrS)>0) TRUE else FALSE
 
@@ -467,8 +467,13 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
               REML2 <- cbind(REML2,c(as.numeric(d2lr.dspphi),d2lr.d2lphi))
       }
    }
+   
+   nth <- length(theta)
+   if (deriv>0&&family$n.theta==0&&nth>0) { ## need to drop derivs for fixed theta
+     REML1 <- REML1[-(1:nth)]
+     if (deriv>1) REML2 <- REML2[-(1:nth),-(1:nth)]
+   }  
 
-  
    names(coef) <- xnames
    names(residuals) <- ynames
    wtdmu <- sum(weights * y)/sum(weights)

@@ -28,8 +28,10 @@ negbin(theta = stop("'theta' must be specified"), link = "log")
 nb(theta = NULL, link = "log")
 }
 \arguments{
-\item{theta}{Either i) a single value known value of theta  ii) two values of theta specifying the 
-endpoints of an interval over which to search for theta (this is an option only for \code{negbin}). }
+\item{theta}{Either i) a single value known value of theta or ii) two values of theta specifying the 
+endpoints of an interval over which to search for theta (this is an option only for \code{negbin}). 
+For \code{nb} then a positive supplied \code{theta} is treated as a fixed known parameter, otherwise 
+it is estimated (the absolute value of a negative \code{theta} is taken as a starting value).}
 \item{link}{The link function: one of \code{"log"}, \code{"identity"} or \code{"sqrt"}}
 }
 \value{

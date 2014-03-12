@@ -31,9 +31,7 @@ The null deviance reported for this family is the sum of squares of the differen
 
 }
 
-\references{
 
-}
 
 
 \examples{

@@ -1,4 +1,5 @@
-\name{t.scaled}
+\name{scat}
+\alias{scat}
 \alias{t.scaled}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM scaled t family for heavy tailed data}
@@ -9,11 +10,12 @@ to be estimated alongside the smoothing parameters.
 }
 
 \usage{
-t.scaled(theta = NULL, link = "logit")
+scat(theta = NULL, link = "identity")
 }
 \arguments{
 \item{theta}{the parameters to be estimated \eqn{\nu = 2 + \exp(\theta_1)}{nu = 2 + exp(theta_1) } and 
-\eqn{\sigma = \exp(\theta_2)}{sig = exp(theta_2)}. }
+\eqn{\sigma = \exp(\theta_2)}{sig = exp(theta_2)}. If supplied and positive, then taken to be fixed values of 
+\eqn{\nu}{nu} and \eqn{\sigma}{sig}. If any negative, then absolute values taken as starting values. }
 
 \item{link}{The link function: one of \code{"identity"}, \code{"log"} or \code{"inverse"}.}
 
@@ -30,9 +32,6 @@ An object of class \code{extended.family}.
 \author{ Natalya Pya (nyp20@bath.ac.uk)
 }
 
-\references{
-}
-
 
 \examples{
 library(mgcv)
@@ -41,7 +40,7 @@ set.seed(3);n<-400
 dat <- gamSim(1,n=n)
 dat$y <- dat$f + rt(n,df=3)*2
 
-b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=t.scaled(link="identity"),data=dat)
+b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=scat(link="identity"),data=dat)
 
 b
 plot(b,pages=1)

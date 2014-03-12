@@ -32,8 +32,6 @@ have to be reset to be just above 0 or just below 1 (see example below).
 \author{ Natalya Pya (nyp20@bath.ac.uk)
 }
 
-\references{
-}
 
 
 \examples{

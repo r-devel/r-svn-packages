@@ -34,9 +34,6 @@ value for all observations.
 
 }
 
-\references{
-
-}
 
 
 \examples{

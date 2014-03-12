@@ -15,7 +15,7 @@ number of categories.
 ocat(theta=NULL,link="identity",R=NULL)
 }
 \arguments{
-\item{theta}{initial cut point parameter vector. }
+\item{theta}{cut point parameter vector (dimension \code{R-2}). If supplied and all positive, then taken to be the cut point increments (first cut point is fixed at -1). If any are negative then absolute values are taken as starting values for cutpoint increments. }
 
 \item{link}{The link function: only \code{"identity"} allowed at present (possibly for ever).}
 
@@ -36,8 +36,6 @@ Rather than remove the intercept, \code{ocat} simply sets the first cut point to
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
 }
 
-\references{
-}
 
 
 \examples{

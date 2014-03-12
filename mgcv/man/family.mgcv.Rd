@@ -41,8 +41,6 @@ given potential presence is modelled with a second linear predictor.
 \author{ Simon N. Wood (s.wood@r-project.org) & Natalya Pya
 }
 
-\references{
-}
 
 \keyword{models} \keyword{regression}%-- one or more ..
 

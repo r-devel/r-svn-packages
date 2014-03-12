@@ -24,11 +24,14 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   }
   if (is.null(theta)&&is.null(R)) stop("Must supply theta or R to ocat")
   if (!is.null(theta)) R <- length(theta) + 2 ## number of catergories
-  Theta <-  NULL
-  ## NOTE: following not really right - should initialize from cut points
+  Theta <-  NULL;n.theta <- R-2
+  ## NOTE: data based initialization is in preinitialize...
   if (!is.null(theta)&&sum(theta==0)==0) {
     if (sum(theta<0)) iniTheta <- log(abs(theta)) ## initial theta supplied
-    else iniTheta <- Theta <- log(theta) ## fixed theta supplied
+    else { 
+      iniTheta <- Theta <- log(theta) ## fixed theta supplied
+      n.theta <- 0
+    }
   } else iniTheta <- rep(-1,length=R-2) ## inital log theta value
 
   env <- new.env(parent = .GlobalEnv)
@@ -403,7 +406,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       theta <- log(theta)
     }
     R3 <- length(G$family$getTheta())+2
-    if (R3>2) {
+    if (R3>2&&G$family$n.theta>0) { 
       Theta <- ocat.ini(R3,G$y)
       G$family$putTheta(Theta)
     } 
@@ -541,7 +544,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,
         preinitialize = preinitialize, ls=ls,rd=rd,residuals=residuals,
-        validmu = validmu, valideta = stats$valideta,n.theta=R-2,
+        validmu = validmu, valideta = stats$valideta,n.theta=n.theta,
         ini.theta = iniTheta,putTheta=putTheta,predict=predict,step = 1,
         getTheta=getTheta,no.r.sq=TRUE), class = c("extended.family","family"))
 } ## end of ocat
@@ -566,16 +569,18 @@ nb <- function (theta = NULL, link = "log") {
                 linktemp <- stats$name
         }
         else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
-    }
-    Theta <-  NULL
-    if (!is.null(theta)&&theta!=0) {
-      if (theta>0) iniTheta <- Theta <- log(theta) ## fixed theta supplied
-      else iniTheta <- log(-theta) ## initial theta supplied
-    } else iniTheta <- 0 ## inital log theta value
+  }
+  Theta <-  NULL;n.theta <- 1
+  if (!is.null(theta)&&theta!=0) {
+      if (theta>0) { 
+        iniTheta <- Theta <- log(theta) ## fixed theta supplied
+        n.theta <- 0 ## signal that there are no theta parameters to estimate
+      } else iniTheta <- log(-theta) ## initial theta supplied
+  } else iniTheta <- 0 ## inital log theta value
     
     env <- new.env(parent = .GlobalEnv)
     assign(".Theta", iniTheta, envir = env)
-    getTheta <- function(trans=FALSE) if (trans) exp(.Theta) else .Theta # get(".Theta")
+    getTheta <- function(trans=FALSE) if (trans) exp(get(".Theta")) else get(".Theta") # get(".Theta")
     putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
 
     variance <- function(mu) mu + mu^2/exp(get(".Theta"))
@@ -677,7 +682,7 @@ nb <- function (theta = NULL, link = "log") {
     structure(list(family = "negative binomial", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
-        validmu = validmu, valideta = stats$valideta,n.theta=1, 
+        validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,rd=rd,qf=qf),
         class = c("extended.family","family"))
 } ## nb
@@ -710,10 +715,13 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         else  stop(gettextf("link \"%s\" not available for Tweedie family.", 
                 linktemp, collapse = ""), domain = NA)
   }
-  Theta <-  NULL
+  Theta <-  NULL;n.theta <- 1
   if (!is.null(theta)&&theta!=0) {
-      if (theta>0) iniTheta <- Theta <- log((theta-a)/(b-theta)) ## fixed theta supplied
-      else iniTheta <- log((-theta-a)/(b+theta)) ## initial theta supplied
+      if (abs(theta)<=a||abs(theta)>=b) stop("Tweedie p must be in interval (a,b)")
+      if (theta>0) { ## fixed theta supplied
+        iniTheta <- Theta <- log((theta-a)/(b-theta)) 
+        n.theta <- 0 ## so no theta to estimate
+      } else iniTheta <- log((-theta-a)/(b+theta)) ## initial theta supplied
   } else iniTheta <- 0 ## inital log theta value
     
   env <- new.env(parent = .GlobalEnv)
@@ -868,7 +876,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
     structure(list(family = "Tweedie", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,rd=rd,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
-        validmu = validmu, valideta = stats$valideta,canonical="none",n.theta=1, 
+        validmu = validmu, valideta = stats$valideta,canonical="none",n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,scale = -1),
         class = c("extended.family","family"))
 } ## tw
@@ -879,6 +887,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 
 
 Beta <- function (theta = NULL, link = "logit") { 
+## THIS IS MESSED UP: ls wrong - wait for replacement
 ## Extended family object for beta regression
 ## length(theta)=1; log theta supplied
   linktemp <- substitute(link)
@@ -904,7 +913,7 @@ Beta <- function (theta = NULL, link = "logit") {
     
     env <- new.env(parent = .GlobalEnv)
     assign(".Theta", iniTheta, envir = env)
-    getTheta <- function(trans=FALSE) if (trans) exp(.Theta) else .Theta # get(".Theta")
+    getTheta <- function(trans=FALSE) if (trans) exp(get(".Theta")) else get(".Theta") 
     putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
 
     variance <- function(mu) { 
@@ -1033,7 +1042,7 @@ Beta <- function (theta = NULL, link = "logit") {
   
 ## scaled t ...
 
-t.scaled <- function (theta = NULL, link = "identity") { 
+scat <- function (theta = NULL, link = "identity") { 
 ## Extended family object for scaled t distribution
 ## length(theta)=2; log theta supplied
   linktemp <- substitute(link)
@@ -1050,10 +1059,15 @@ t.scaled <- function (theta = NULL, link = "identity") {
         }
         else stop(linktemp, " link not available for scaled t distribution; available links are \"identity\", \"log\",  and \"inverse\"")
     }
-    Theta <-  NULL
+    Theta <-  NULL;n.theta <- 2
     if (!is.null(theta)&&sum(theta==0)==0) {
-      if (sum(theta<0)) iniTheta <- c(log(abs(theta[1])-2),log(abs(theta[2]))) ## initial theta supplied
-      else iniTheta <- Theta <- c(log(theta[1]-2),log(theta[2])) ## fixed theta supplied
+      if (abs(theta[1]<2)) stop("scaled t df must be >2")
+      if (sum(theta<0)) { 
+        iniTheta <- c(log(abs(theta[1])-2),log(abs(theta[2]))) ## initial theta supplied
+      } else { ## fixed theta supplied
+        iniTheta <- Theta <- c(log(theta[1]-2),log(theta[2])) 
+        n.theta <- 0 ## no thetas to estimate
+      }
     } else iniTheta <- c(-2,-1) ## inital log theta value
                
     env <- new.env(parent = .GlobalEnv)
@@ -1189,8 +1203,10 @@ t.scaled <- function (theta = NULL, link = "identity") {
 
     preinitialize <- expression({
       ## initialize theta from raw observations..
-       Theta <- c(-1, log(0.2*var(G$y)^.5))
-       G$family$putTheta(Theta)
+       if (G$family$n.theta>0) {
+         Theta <- c(-1, log(0.2*var(G$y)^.5))
+         G$family$putTheta(Theta)
+       } ## otherwise fixed theta supplied
     })
 
     initialize <- expression({
@@ -1213,10 +1229,10 @@ t.scaled <- function (theta = NULL, link = "identity") {
     structure(list(family = "scaled t", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd,variance=variance,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls, preinitialize=preinitialize,
-        validmu = validmu, valideta = stats$valideta,n.theta=2,   # canonical="identity",
+        validmu = validmu, valideta = stats$valideta,n.theta=n.theta,   
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta, rd=rd),
         class = c("extended.family","family"))
-} ## t.scaled
+} ## scat
 
 
 
@@ -1240,10 +1256,13 @@ ziP <- function (theta = NULL, link = "log") {
         }
         else stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"log\"")
     }
-    Theta <-  NULL
-    if (!is.null(theta)&&sum(theta==0)==0) {
-      if (sum(theta<0)) iniTheta <- log(abs(theta)) ## initial theta supplied
-      else iniTheta <- Theta <- log(theta) ## fixed theta supplied
+    Theta <-  NULL;n.theta <- 2
+    if (!is.null(theta)) {
+      if (length(theta)>2) iniTheta <- theta[1:2] ## initial theta supplied
+      else { ## fixed theta supplied
+        iniTheta <- Theta <- theta 
+        n.theta <- 0 ## no thetas to estimate
+      }
     } else iniTheta <- c(1,-10) ## inital theta value
            
     
@@ -1555,7 +1574,7 @@ ziP <- function (theta = NULL, link = "log") {
       theta <- get(".Theta") 
       th1 <- theta[1]; th2 <- exp(theta[2]); 
       n.sim <- length(mu)
-      p <- exp(th1- th2*lambda)/(1 + exp(th1- th2*lambda)) 
+      p <- exp(th1- th2*mu)/(1 + exp(th1- th2*mu)) 
       z <- y <- runif(n.sim)
       y <- rep(0,n.sim)
       good <- z >= p
@@ -1569,7 +1588,7 @@ ziP <- function (theta = NULL, link = "log") {
     structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,fv=fv,
-        validmu = validmu, valideta = stats$valideta,n.theta=2,  # canonical="none",
+        validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
         class = c("extended.family","family"))
 } ## zip

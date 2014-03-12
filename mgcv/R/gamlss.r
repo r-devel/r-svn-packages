@@ -504,20 +504,20 @@ pen.reg <- function(x,e,y) {
   Qy <- qr.qty(qrx,y)[1:ncol(R)]  
   ## now we want estimates with penalty weight low enough 
   ## EDF is k * rr where k is somewhere in e.g. (.7,.9)
-  k <- .01 * norm(R)/norm(E)
-  qrr <- qr(rbind(R,E*k));
+  k <- .01 * norm(R)/norm(e)
+  qrr <- qr(rbind(R,e*k));
   edf <- sum(qr.Q(qrr)[1:r,]^2) 
   while (edf > .9*rr) { ## increase penalization
     k <- k*10
-    qrr <- qr(rbind(R,E*k));
+    qrr <- qr(rbind(R,e*k));
     edf <- sum(qr.Q(qrr)[1:r,]^2)
   } 
   while (edf<.7*rr) { ## reduce penalization
     k <- k/20
-    qrr <- qr(rbind(R,E*k));
+    qrr <- qr(rbind(R,e*k));
     edf <- sum(qr.Q(qrr)[1:r,]^2)
   } 
-  b <- qr.coef(qrr,c(Qy,rep(0,nrow(E))));b[!is.finite(b)] <- 0
+  b <- qr.coef(qrr,c(Qy,rep(0,nrow(e))));b[!is.finite(b)] <- 0
   b
 } ## pen.reg
 

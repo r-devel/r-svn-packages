@@ -1580,8 +1580,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$L)) G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
     } 
-      
-    if (inherits(G$family,"extended.family")&&!inherits(G$family,"general.family")) { ## then there may be extra parameters to estimate
+     ## check if there are extra parameters to estimate
+    if (inherits(G$family,"extended.family")&&!inherits(G$family,"general.family")&&G$family$n.theta>0) {
       th0 <- G$family$getTheta() ## additional (initial) parameters of likelihood 
       nth <- length(th0)
       nlsp <- length(lsp)

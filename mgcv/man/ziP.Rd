@@ -11,7 +11,9 @@ ziP(theta = NULL, link = "log")
 }
 \arguments{
 \item{theta}{the 2 parameters controlling the slope and intercept of the 
-linear transform of the mean controlling the zero inflation rate. }
+linear transform of the mean controlling the zero inflation rate. If supplied (and of length 2) 
+then treated as fixed parameters, otherwise estimated. If supplied and of length 3 
+then first 2 elements are used as starting values.}
 
 \item{link}{The link function: only the \code{"log"} is currently supported.}
 
@@ -31,8 +33,6 @@ parameters are estimated alongside the smoothing parameters.
 \author{ Natalya Pya (nyp20@bath.ac.uk)
 }
 
-\references{
-}
 
 \seealso{\code{\link{ziplss}}}
 
