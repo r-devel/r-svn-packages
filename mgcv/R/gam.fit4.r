@@ -261,7 +261,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
       good <- dd$Deta2 != 0
       w <- dd$Deta2[good] * .5
-      z <- eta[good] - .5 * dd$Deta[good] / w
+      z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
 
       oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
                y=as.double(z),X=as.double(x[good,]),w=as.double(w),
@@ -272,7 +272,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
         good <- dd$Deta2 > 0
         w <- dd$Deta2[good] * .5
-        z <- eta[good] - .5 * dd$Deta[good] / w
+        z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
        
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
                   y=as.double(z),X=as.double(x[good,]),w=as.double(w),
@@ -284,7 +284,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       start <- oo$y[1:ncol(x)] ## current coefficient estimates
       penalty <- oo$penalty ## size of penalty
 
-      eta <- drop(x%*%start) ## the linear predictor
+      eta <- drop(x%*%start) ## the linear predictor (less offset)
 
       if (any(!is.finite(start))) { ## test for breakdown
           conv <- FALSE
@@ -399,7 +399,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    dd <- dDeta(y,mu,weights,theta,family,deriv)
    good <- dd$Deta2 != 0
    w <- dd$Deta2[good] * .5
-   z <- eta[good] - .5 * dd$Deta[good] / w
+   z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
    wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
 
    residuals <- rep.int(NA, nobs)

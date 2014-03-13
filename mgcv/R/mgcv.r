@@ -1443,6 +1443,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (!(method%in%c("REML","ML"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
+       if (!is.null(G$offset)) for (i in 1:length(G$offset)) 
+         if (!is.null(G$offset[[i]])) warning("sorry, general families currently ignore offsets")
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
