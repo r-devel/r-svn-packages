@@ -9,7 +9,7 @@
 \details{
 The following families are in the exponential family given the value of a single parameter. They are usable with all modelling functions.
 \itemize{
-\item \code{\link{Tweedie}} An exponential family distribution for which the varaince of the response is given by the mean response to the power \code{p}. 
+\item \code{\link{Tweedie}} An exponential family distribution for which the variance of the response is given by the mean response to the power \code{p}. 
 \code{p} is in (1,2) and must be supplied. See \code{\link{tw}} to estimate \code{p}.
 \item \code{\link{negbin}} The negative binomial. See \code{\link{nb}} to estimate the \code{theta} parameter of the negative binomial. 
 
@@ -23,7 +23,7 @@ which is a sum of independent terms, each coprresponding to a single response ob
 \item \code{\link{tw}} for Tweedie distributed data, when the power parameter relating the variance to the mean is to be estimated.
 \item \code{\link{nb}} for negative binomial data when the \code{theta} parameter is to be estimated.
 \item \code{\link{Beta}} for proportions data on (0,1) when the binomial is not appropriate.
-\item \code{\link{t.scaled}} for heavy tailed data that would otherwise be modelled as Gaussian.
+\item \code{\link{scat}} scaled t for heavy tailed data that would otherwise be modelled as Gaussian.
 \item \code{\link{ziP}} for zero inflated Poisson data, when the zero inflation rate depends simply on the Poisson mean.
 } %% end itemize 
 
