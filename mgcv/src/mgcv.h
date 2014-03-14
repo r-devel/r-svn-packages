@@ -46,6 +46,9 @@ void coxlpl(double *eta,double *X,int *r, int *d,double *tr,
             double *d1beta,double *d1H,double *d2beta,
             double *d2H,int *n_sp,int *deriv);
 
+/* MVN smooth additive */
+void mvn_ll(double *y,double *X,double *beta,int *n,int *lpi,int *m,double *ll,double *lb,int *nt);
+
 /* various service routines */
 
 void tweedious(double *w,double *w1,double *w2, double *w1p,double *w2p,double *w2pp, 

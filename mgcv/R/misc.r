@@ -1,6 +1,20 @@
-## (c) Simon N. Wood 2011-2013
+## (c) Simon N. Wood 2011-2014
 ## Many of the following are simple wrappers for C functions, used largely 
 ## for testing purposes
+
+
+mvn.ll <- function(y,X,beta) {
+## to facilitate testing of MVN routine mvn_ll.
+## X is a sequence of m model matrices bound columnwise, with m dim attribute lpi
+##   indicating where the next starts in all cases.
+## beta is parameter vector - last m*(m+1)/2 elements are chol factor of precision params.
+## y is m by n data matrix.
+  lpi <- attr(X,"lpi")-1;m <- length(lpi)
+  oo <- .C(C_mvn_ll,y=as.double(y),X=as.double(X),beta=as.double(beta),n=as.integer(nrow(X)),
+                  lpi=as.integer(lpi),m=as.integer(m),ll=as.double(0),lb=as.double(beta*0),
+                  nt=as.integer(1))
+  list(l=oo$ll,lb=oo$lb)         
+}
 
 pinv <- function(X,svd=FALSE) {
 ## a pseudoinverse for n by p, n>p matrices
