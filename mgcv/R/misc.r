@@ -10,10 +10,11 @@ mvn.ll <- function(y,X,beta) {
 ## beta is parameter vector - last m*(m+1)/2 elements are chol factor of precision params.
 ## y is m by n data matrix.
   lpi <- attr(X,"lpi")-1;m <- length(lpi)
-  oo <- .C(C_mvn_ll,y=as.double(y),X=as.double(X),beta=as.double(beta),n=as.integer(nrow(X)),
+  nb <- length(beta)
+  oo <- .C(C_mvn_ll,y=as.double(y),X=as.double(X),XX=as.double(crossprod(X)),beta=as.double(beta),n=as.integer(nrow(X)),
                   lpi=as.integer(lpi),m=as.integer(m),ll=as.double(0),lb=as.double(beta*0),
-                  nt=as.integer(1))
-  list(l=oo$ll,lb=oo$lb)         
+                  lbb=as.double(rep(0,nb*nb)),nt=as.integer(1))
+  list(l=oo$ll,lb=oo$lb,lbb=matrix(oo$lbb,nb,nb))         
 }
 
 pinv <- function(X,svd=FALSE) {

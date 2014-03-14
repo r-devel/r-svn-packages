@@ -13,13 +13,14 @@
 #include <R_ext/BLAS.h>
 #include "mgcv.h"
 
-void mvn_ll(double *y,double *X,double *beta,int *n,int *lpi, /* note zero indexing */
-            int *m,double *ll,double *lb,int *nt) {
+void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note zero indexing */
+            int *m,double *ll,double *lb,double *lbb,int *nt) {
 /* inputs:
     * 'y' is an m by n matrix, each column of which is a m-dimensional observation of a 
       multivariate normal r.v.
     * 'X' is a sequence of model matrices. The first (0th) model matrix runs from columns 0 to lpi[0]-1,
       the jth from cols lpi[j-1] to lpi[j]-1. lpi indexing starts from 0!!
+    * XX is the pre-computed X'X matrix.
     * 'beta' is a parameter vector corresponding to X. The m*(m+1)/2 elements starting at lpi[m] are the 
       parameters of the Choleki factor of the precision matrix.
     * nt is number of threads to use.     
@@ -28,17 +29,25 @@ void mvn_ll(double *y,double *X,double *beta,int *n,int *lpi, /* note zero index
     * 'll' is the evaluated log likelihood.
     * 'lb' is the grad vector 
 */
-  double *R,*theta,ldetR,*Xl,*bl,oned=1.0,zerod=0.0,*p,*p1,*p2,*p3,xx,zz,
-    *v1,*v2,*mu,*Rymu;
-  int i,j,k,l,pl,one=1,bt,ct;
+  double *R,*theta,ldetR,*Xl,*bl,oned=1.0,zerod=0.0,*p,*p1,*p2,*p3,xx,zz,yy,
+    *mu,*Rymu,rip;
+  int i,j,k,l,pl,one=1,bt,ct,nb,*din,ntheta,ncoef,*rri,*rci,ri,rj,ril,rjl,rik,rjk;
   const char not_trans='N';
+  ntheta = *m * (*m+1)/2;ncoef = lpi[*m-1];
+  nb = ncoef + ntheta; /* number of coefficients overall */
   /* Create the Choleski factor of the precision matrix */
   R = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double));
-  theta = beta + lpi[*m]; /* parameters of R */
+  theta = beta + lpi[*m-1]; /* parameters of R */
   ldetR = 0.0; /* log|R| */
-  for (k=0,i=0;i<*m;i++) { 
-    R[i + *m + i] = exp(theta[k]);ldetR += theta[k];k++; 
-    for (j=i+1;j<*m;j++) { R[i + *m + j] = theta[k];k++;}
+  rri = (int *)R_chk_calloc((size_t)ntheta,sizeof(int)); /* theta to R row index */
+  rci = (int *)R_chk_calloc((size_t)ntheta,sizeof(int)); /* theta to R col index */
+  for (k=0,i=0;i<*m;i++) { /* fill out R */
+    R[i + *m * i] = exp(theta[k]);ldetR += theta[k];
+    rri[k]=rci[k]=i;k++; 
+    for (j=i+1;j<*m;j++) { 
+      R[i + *m * j] = theta[k];
+      rri[k]=i;rci[k]=j;k++;
+    }
   }  
   /* obtain y - mu */
   mu  = (double *)R_chk_calloc((size_t)*n,sizeof(double));
@@ -47,7 +56,7 @@ void mvn_ll(double *y,double *X,double *beta,int *n,int *lpi, /* note zero index
     else { Xl = X + *n * lpi[l-1];pl = lpi[l]-lpi[l-1];bl = beta + lpi[l-1];}   
     F77_CALL(dgemv)(&not_trans,n,&pl,&oned,Xl,n, bl, &one,&zerod, mu, &one); /* BLAS call for mu = Xl bl */
     /* now subtract mu from relevant component of y */
-    for (p=mu,p1= mu + *n,p2=y+k;p<p1;p++,p2 += *m) *p2 -= *p;
+    for (p=mu,p1= mu + *n,p2=y+l;p<p1;p++,p2 += *m) *p2 -= *p;
   }
   R_chk_free(mu);
   /* so y now contains y-mu */
@@ -64,41 +73,97 @@ void mvn_ll(double *y,double *X,double *beta,int *n,int *lpi, /* note zero index
   p = lb;
   /* first the derivatives w.r.t. the coeffs of the linear predictors */
   for (l=0;l<*m;l++) { /* work through dimensions */
-    if (l==0) { Xl = X;pl = lpi[0];bl=beta;} /* Xl is lth model matrix with pl columns, coef vec bl */ 
-    else { Xl = X + *n * lpi[l-1];pl = lpi[l]-lpi[l-1];bl = beta + lpi[l-1];} 
+    if (l==0) { Xl = X;pl = lpi[0];} /* Xl is lth model matrix with pl columns */ 
+    else { Xl = X + *n * lpi[l-1];pl = lpi[l]-lpi[l-1];} 
     for (i=0;i<pl;i++) { /* work through coefs for this dimension */
       *p = 0.0; /* clear lb */
       for (j=0;j<*n;j++) {
         xx = Xl[j + *n * i];
-        for (p1=R + l * *m,p2 = p1 + l,p3 = Rymu + *m *j;p1<p2;p1++,p3++) *p += xx * *p1 * *p3; 
+        for (p1=R + l * *m,p2 = p1 + l,p3 = Rymu + *m *j;p1<=p2;p1++,p3++) *p += xx * *p1 * *p3; 
       }
       p++;
     }
   }
   /* now the derivatives w.r.t. the parameters, theta, of R */ 
-  v1 =  (double *)R_chk_calloc((size_t)*m,sizeof(double));
-  v2 =  (double *)R_chk_calloc((size_t)*m,sizeof(double));
+  
   for (k=0,i=0;i<*m;i++) { /* i is row */ 
     /* get tr(R^{-1}R R_theta^k) */
-    v1[i] = xx = exp(theta[k]); /* the non-zero element of R_theta^i at i,i */;
-    mgcv_backsolve(R,m,m,v1,v2,&one);
-    v1[i] = 0.0;
-    *p += *n * v2[i]; /* v2[i] contains tr(R^{-1}R R_theta^k) */
+    xx = exp(theta[k]); /* the non-zero element of R_theta^i at i,i */;
+    *p += *n;
     k++; /* increment the theta index */ 
     /* quadratic form involves only ith dimension */
     for (zz=0.0,l=0,p1 = Rymu+i,p2=y+i;l<*n;l++,p1 += *m,p2 += *m) zz += *p1 * *p2 * xx;
-    *p += -zz/2;p++;
+    *p += -zz; 
+    p++;
     for (j=i+1;j<*m;j++) { /* j is col */
-      v1[i] = 1.0;/* the non-zero element of R_theta^k at i,j */
-      mgcv_backsolve(R,m,m,v1,v2,&one);
-      v1[i] = 0.0;
-      *p += *n * v2[j]; /* v2[j] contains tr(R^{-1}R R_theta^k) */
       k++; /* increment the theta index */ 
-      for (zz=0.0,l=0,p1 = Rymu+i,p2=y+i;l<*n;l++,p1 += *m,p2 += *m) zz += *p1 * *p2;
-      *p += -zz/2;p++;
+      for (zz=0.0,l=0,p1 = Rymu+i,p2=y+j;l<*n;l++,p1 += *m,p2 += *m) zz += *p1 * *p2;
+      *p += -zz;
+      p++;
     }
   }  
-  R_chk_free(v1);R_chk_free(v2);
+
+  /* the Hessian is needed next */
+  /* create index vector of dimension to which each coef relates ...*/ 
+  din =  (int *)R_chk_calloc((size_t)nb,sizeof(int));
+  for (k=0,i=0;i<ncoef;i++) { 
+    if (i==lpi[k]) k++; 
+    din[i] = k;
+  } 
+  /* first the mean coef blocks */
+  for (i=0;i<ncoef;i++) for (j=0;j<=i;j++) {
+     l=din[i];k=din[j]; /* note l>=k */
+     /* inner product of col l and col k of R ... */
+     for (p=R+l * *m,p1=R+k * *m,rip=0.0,p2=p1+k;p1<=p2;p++,p1++) rip += *p * *p1;
+     /* inner product of column i and column j of X... actually better to pre-compute!!*/
+     /*for (xx=0.0,p=X + i * *n,p1=X + j * *n,p2 = p1 + *n;p1<p2;p1++,p++) xx += *p * *p1 ;*/ 
+     lbb[i + nb * j] = lbb[j + nb * i] = -XX[i + ncoef * j]*rip; /* -xx*rip; */ 
+  }
+  /* now the mixed blocks */
+  for (i=0;i<ncoef;i++) for (j=0;j<ntheta;j++) {
+     ri = rri[j]; /* row index of theta[j] in R */
+     rj = rci[j]; /* col index of theta[j] in R */
+     l = din[i]; /* which dimension does beta[i] relate to */
+     xx = 0.0;
+     if (ri==rj) zz = exp(theta[j]); else zz = 1.0; /* the non-zero derivative of R w.r.t. theta */
+     /* term \bar x_i^{lT} R_\theta^{jT} R(y-\mu) is only non zero if l=rj... */
+     if (l==rj) for (p = X + i* *n,p1=Rymu+ri,p2=p + *n;p<p2;p++,p1 += *m) xx += *p * *p1;
+     xx *= zz;
+     /* next term is inner product of ith col of X with row rj of y-mu (in y), multiplied by a constant*/
+     if (ri<=l) { 
+       for (yy=0.0,p = X + i* *n,p1=y+rj,p2=p + *n;p<p2;p++,p1 += *m) yy += *p * *p1;
+       xx += yy * R[ri + *m * l]*zz;
+     }
+     lbb[i + nb * (j+ncoef)] = lbb[j + ncoef + nb * i] = xx;
+  }
+  /* the theta block completes the Hessian... */
+  for (k=0;k<ntheta;k++) for (l=0;l<=k;l++) {
+      xx=0.0; /* to accumulate term */
+      if (k==l) {
+        ri=rri[k];rj=rci[k];
+        if (ri==rj) { 
+          /* compute (y-\mu)'R'R_\theta^k_\theta^l(y-\mu) */
+          for (zz=0.0,i=0,p=Rymu+ri,p2=y+ri;i<*n;i++,p += *m,p2+= *m) zz += *p * *p2;
+          xx -= zz *  exp(theta[k]);
+        }
+      } 
+      
+      ri=rri[k];rj=rci[k];
+      if (ri==rj) zz = exp(theta[k]); else zz = 1.0;
+      /* compute (y-\mu)'R_\theta^l'R_\theta^k_\theta^l(y-\mu) */
+      ril=rri[l];rjl=rci[l];
+      rik=rri[k];rjk=rci[k];
+      if (ril==rik) { /* then term is non-zero */
+	for (yy=0.0,i=0,p=y+rjl,p1=y+rjk;i<*n;i++,p+= *m, p1+= *m) yy += *p * *p1;
+        yy *= zz;
+        if (ril==rjl) yy *= exp(theta[l]);
+        xx -= yy;
+      }
+      lbb[k + ncoef + nb * (l+ncoef)] = lbb[l + ncoef + nb * (k+ncoef)] = xx;
+  }
+
+  R_chk_free(din); R_chk_free(rri); R_chk_free(rci);
+  
   R_chk_free(R);R_chk_free(Rymu);
 } /* mvn_ll */
 
