@@ -18,7 +18,7 @@ R_CMethodDef CEntries[] = {
     {"coxpred", (DL_FUNC) &coxpred, 13},
     {"coxpp", (DL_FUNC) &coxpp, 10},
     {"coxlpl", (DL_FUNC) &coxlpl, 17},
-    {"mvn_ll", (DL_FUNC) &mvn_ll,11},
+    {"mvn_ll", (DL_FUNC) &mvn_ll,15},
     {"RMonoCon", (DL_FUNC) &RMonoCon, 7},
     {"RuniqueCombs", (DL_FUNC) &RuniqueCombs, 4},
     {"RPCLS", (DL_FUNC) &RPCLS, 14},

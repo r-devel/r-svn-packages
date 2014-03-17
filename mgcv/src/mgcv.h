@@ -47,7 +47,9 @@ void coxlpl(double *eta,double *X,int *r, int *d,double *tr,
             double *d2H,int *n_sp,int *deriv);
 
 /* MVN smooth additive */
-void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi,int *m,double *ll,double *lb,double *lbb,int *nt);
+void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi,
+            int *m,double *ll,double *lb,double *lbb,double *dbeta,
+            double *dH,int *deriv,int *nsp,int *nt);
 
 /* various service routines */
 

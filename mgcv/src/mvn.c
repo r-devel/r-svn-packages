@@ -14,7 +14,8 @@
 #include "mgcv.h"
 
 void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note zero indexing */
-            int *m,double *ll,double *lb,double *lbb,int *nt) {
+            int *m,double *ll,double *lb,double *lbb,double *dbeta,
+            double *dH,int *deriv,int *nsp,int *nt) {
 /* inputs:
     * 'y' is an m by n matrix, each column of which is a m-dimensional observation of a 
       multivariate normal r.v.
@@ -30,8 +31,8 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
     * 'lb' is the grad vector 
 */
   double *R,*theta,ldetR,*Xl,*bl,oned=1.0,zerod=0.0,*p,*p1,*p2,*p3,xx,zz,yy,
-    *mu,*Rymu,rip;
-  int i,j,k,l,pl,one=1,bt,ct,nb,*din,ntheta,ncoef,*rri,*rci,ri,rj,ril,rjl,rik,rjk;
+    *mu,*Rymu,rip,*dtheta,*db,*deriv_theta,*yX,*yRX;
+  int i,j,k,l,pl,one=1,bt,ct,nb,*din,ntheta,ncoef,*rri,*rci,ri,rj,ril,rjl,rik,rjk,rij,rjj,q,r;
   const char not_trans='N';
   ntheta = *m * (*m+1)/2;ncoef = lpi[*m-1];
   nb = ncoef + ntheta; /* number of coefficients overall */
@@ -41,11 +42,14 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
   ldetR = 0.0; /* log|R| */
   rri = (int *)R_chk_calloc((size_t)ntheta,sizeof(int)); /* theta to R row index */
   rci = (int *)R_chk_calloc((size_t)ntheta,sizeof(int)); /* theta to R col index */
+  deriv_theta = (double *)R_chk_calloc((size_t)ntheta,sizeof(double)); /* exp(theta) or 1*/
   for (k=0,i=0;i<*m;i++) { /* fill out R */
-    R[i + *m * i] = exp(theta[k]);ldetR += theta[k];
+    deriv_theta[k] = exp(theta[k]);
+    R[i + *m * i] = deriv_theta[k];ldetR += theta[k];
     rri[k]=rci[k]=i;k++; 
     for (j=i+1;j<*m;j++) { 
       R[i + *m * j] = theta[k];
+      deriv_theta[k] = 1.0;
       rri[k]=i;rci[k]=j;k++;
     }
   }  
@@ -88,7 +92,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
   
   for (k=0,i=0;i<*m;i++) { /* i is row */ 
     /* get tr(R^{-1}R R_theta^k) */
-    xx = exp(theta[k]); /* the non-zero element of R_theta^i at i,i */;
+    xx = deriv_theta[k]; /* the non-zero element of R_theta^i at i,i */;
     *p += *n;
     k++; /* increment the theta index */ 
     /* quadratic form involves only ith dimension */
@@ -125,7 +129,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
      rj = rci[j]; /* col index of theta[j] in R */
      l = din[i]; /* which dimension does beta[i] relate to */
      xx = 0.0;
-     if (ri==rj) zz = exp(theta[j]); else zz = 1.0; /* the non-zero derivative of R w.r.t. theta */
+     zz = deriv_theta[j];  /* the non-zero derivative of R w.r.t. theta */
      /* term \bar x_i^{lT} R_\theta^{jT} R(y-\mu) is only non zero if l=rj... */
      if (l==rj) for (p = X + i* *n,p1=Rymu+ri,p2=p + *n;p<p2;p++,p1 += *m) xx += *p * *p1;
      xx *= zz;
@@ -144,23 +148,80 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
         if (ri==rj) { 
           /* compute (y-\mu)'R'R_\theta^k_\theta^l(y-\mu) */
           for (zz=0.0,i=0,p=Rymu+ri,p2=y+ri;i<*n;i++,p += *m,p2+= *m) zz += *p * *p2;
-          xx -= zz *  exp(theta[k]);
+          xx -= zz *  deriv_theta[k];
         }
       } 
       
       ri=rri[k];rj=rci[k];
-      if (ri==rj) zz = exp(theta[k]); else zz = 1.0;
+      zz = deriv_theta[k]; 
       /* compute (y-\mu)'R_\theta^l'R_\theta^k_\theta^l(y-\mu) */
       ril=rri[l];rjl=rci[l];
       rik=rri[k];rjk=rci[k];
       if (ril==rik) { /* then term is non-zero */
 	for (yy=0.0,i=0,p=y+rjl,p1=y+rjk;i<*n;i++,p+= *m, p1+= *m) yy += *p * *p1;
         yy *= zz;
-        if (ril==rjl) yy *= exp(theta[l]);
+        if (ril==rjl) yy *= deriv_theta[l];
         xx -= yy;
       }
       lbb[k + ncoef + nb * (l+ncoef)] = lbb[l + ncoef + nb * (k+ncoef)] = xx;
   }
+
+  /* Now the derivatives of the Hessian, given the derivatives of the coefficients,
+     wrt the smoothing parameters */
+  if (*deriv) {
+    yX = (double *)R_chk_calloc((size_t)*m * ncoef,sizeof(double)); /* need X'(y-mu) (or (y-mu)'X) */
+    bt=0;ct=0;mgcv_pmmult(yX,y,X,&bt,&ct,m,&ncoef,n,nt); /* rows, dim, cols coef */   
+    yRX = (double *)R_chk_calloc((size_t)*m * ncoef,sizeof(double)); /* need (y-mu)'R'X */
+    bt=0;ct=0;mgcv_pmmult(yRX,Rymu,X,&bt,&ct,m,&ncoef,n,nt); /* rows, dim, cols coef */  
+    for (r=0;r< *nsp;r++) { 
+      db = dbeta + nb * r; /* d coefs / d rho_r */
+      dtheta = db + ncoef; /* d theta / d rho_r */
+      /* the derivatives of the hessian w.r.t. the smoothing parameters. First the portions 
+         relating to the coefficients */
+      for (i=0;i<ncoef;i++) for (j=0;j<=i;j++) {
+	l = din[i];k = din[j]; /* dimensions for these elements */
+	for (xx=0.0,p=R+l* *m,p1=R+k* *m,q=0;q<ntheta;q++) { /* sum over derivs of theta_q */
+          ri=rri[q];rj=rci[q]; /* row and col of non zero element of deriv of R wrt theta_q */
+          if (ri==l||ri==k) xx += (p[ri]*(ri==k)+p1[rj]*(ri==l))*deriv_theta[q]*dtheta[q];
+        }
+        /* xx now contains the required element of (R_\theta^{qT} R + R^T R_\theta^q) d\theta_q/d \rho_r 
+           which is multiplied by the inner product of columns i and j of X... */
+        if (xx>0.0) dH[i + nb * j] = dH[j + nb * i] = -xx * XX[i +  ncoef * j];
+      } 
+      /* now the mixed blocks */
+      for (i=0;i<ncoef;i++) for (j=0;j<ntheta;j++) {  
+	/* first the summation over the derivatives of beta */
+        l=din[i];
+	for (xx=0.0,q=0;q<ncoef;q++) {
+          k=din[q];
+          ri=rri[j];rj=rci[j]; /* row and col of non zero element of deriv of R wrt theta_j */
+          zz = deriv_theta[l];/* deriv R w.r.t theta_l */
+          xx += (R[ri + *m * l]+R[rj + *m * k])*zz*XX[i + ncoef * q] * db[q];
+	}
+        /* now the summation over the derivatives of theta */
+        rij=rri[j];rjj=rci[j]; /* row and col of non zero element of deriv of R wrt theta_l */
+        for (k=0;k<ntheta;k++) {
+          zz=0.0;
+          rik=rri[k];rjk=rci[k]; /* row and col of non zero element of deriv of R wrt theta_k */
+          if (rij==rik&&(l==rjj||l==rjk)) { /* then term is non-zero */
+            if (l==rjj) zz += - yX[rjk + i * *m] * deriv_theta[j] * deriv_theta[k];
+            if (l==rjk) zz += - yX[rjj + i * *m] * deriv_theta[j] * deriv_theta[k];
+            if (k==j&&rik==rjk) { /* then second deriv of R is non-zero */
+              zz += - deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];
+              zz -= - deriv_theta[k] * yRX[rjj + *m * i];   
+            }
+            xx += zz * dtheta[k];
+          }
+        }
+        dH[i + (j+ncoef) * nb] = dH[j+ncoef + i * nb] = xx;   
+      } /* mixed block loop */
+      
+
+      dH += nb * nb; /* move on to next Hessian */
+    } /* smoothing parameter loop */ 
+    R_chk_free(yX);R_chk_free(yRX);
+  } /* if (*deriv) */
+  
 
   R_chk_free(din); R_chk_free(rri); R_chk_free(rci);
   
