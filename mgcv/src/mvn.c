@@ -178,7 +178,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
     yty = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double)); /* need (y-mu)(y-mu)' */
     bt=0;ct=1;mgcv_pmmult(yty,y,y,&bt,&ct,m,m,n,nt); /* rows, cols dim */  
     yRy = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double)); /* need (y-mu)R(y-mu)' */
-    bt=0;ct=1;mgcv_pmmult(yRy,Rymu,y,&bt,&ct,m,m,n,nt); /* rows, cols dim */  
+    bt=0;ct=1;mgcv_pmmult(yRy,y,Rymu,&bt,&ct,m,m,n,nt); /* rows, cols dim */  
     for (r=0;r< *nsp;r++) { 
       db = dbeta + nb * r; /* d coefs / d rho_r */
       dtheta = db + ncoef; /* d theta / d rho_r */
@@ -229,7 +229,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
       /* finally the theta block... */
       for (j=0;j<ntheta;j++) for (k=0;k<=j;k++) {
         rij=rri[j];rjj=rci[j];rik=rri[k];rjk=rci[k];
-	 /* first sum over the derivatives of beta... */
+	/* first sum over the derivatives of beta... */
 	xx = 0.0;
         for (i=0;i<ncoef;i++) {
 	  zz=0.0;l=din[i];
@@ -240,19 +240,21 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
               zz +=  deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];
               zz +=  deriv_theta[k] * yRX[rjj + *m * i];   
             }
-            xx += -zz * db[i];
+            xx += zz * db[i];
           }
         }
         for (i=0;i<ntheta;i++) {
-	  ri = rri[i];rj=rci[i];
-          zz=0.0;
-          if (j==k&&ri==rij&&rjk==rik) zz += deriv_theta[j]*deriv_theta[i]*yty[j * *m + i];  /* row rjj, col rj */ 
-          if (i==k&&rik==rij&&rjj==rij) zz += deriv_theta[j]*deriv_theta[i]*yty[j * *m + i];  /* row rjj, col rjk */ 
-          if (i==j&&rik==rij&&rj==ri) zz += deriv_theta[k]*deriv_theta[i]*yty[j * *m + i];  /* row rjk, col rjk */ 
-          if (i==j==k&&ri==rj) zz += deriv_theta[k]*R[ri + *m * rj]*yRy[j * *m + i];
-          xx += zz*dtheta[i];
+	  ri = rri[i];rj=rci[i];zz=0.0;
+          if (j==k&&ri==rij&&rjk==rik) zz += deriv_theta[j]*deriv_theta[i]*yty[rjj * *m + rj];  /* row rjj, col rj */ 
+          if (i==k&&rik==rij&&rjj==rij) zz += deriv_theta[j]*deriv_theta[i]*yty[rjj * *m + rjk];  /* row rjj, col rjk */ 
+          if (i==j&&rik==rij&&rj==ri) zz += deriv_theta[k]*deriv_theta[i]*yty[rjk * *m + rj];  /* row rjk, col rj */ 
+          if (i==j&&j==k&&ri==rj) {
+            for (yy=0.0,p=Rymu+ri,p1=y+ri,q=0;q<*n;p+= *m,p1+= *m,q++) yy += *p * *p1;           
+            zz += deriv_theta[k]*yy;
+          }
+          xx += -zz*dtheta[i];
         }
-	dH[k + ncoef + (j+ncoef) * nb] = dH[j+ncoef + (k+ncoef) * nb] = -xx;
+	dH[k + ncoef + (j+ncoef) * nb] = dH[j+ncoef + (k+ncoef) * nb] = xx;
       }
 
       dH += nb * nb; /* move on to next Hessian */
