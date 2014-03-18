@@ -182,14 +182,14 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
 	l = din[i];k = din[j]; /* dimensions for these elements */
 	for (xx=0.0,p=R+l* *m,p1=R+k* *m,q=0;q<ntheta;q++) { /* sum over derivs of theta_q */
           ri=rri[q];rj=rci[q]; /* row and col of non zero element of deriv of R wrt theta_q */
-          if (ri==l||ri==k) xx += (p[ri]*(ri==k)+p1[rj]*(ri==l))*deriv_theta[q]*dtheta[q];
+          /*if (rj==l||rj==k)*/ xx += (p[ri]*(rj==k)+p1[ri]*(rj==l))*deriv_theta[q]*dtheta[q];
         }
         /* xx now contains the required element of (R_\theta^{qT} R + R^T R_\theta^q) d\theta_q/d \rho_r 
            which is multiplied by the inner product of columns i and j of X... */
-        if (xx>0.0) dH[i + nb * j] = dH[j + nb * i] = -xx * XX[i +  ncoef * j];
+        dH[i + nb * j] = dH[j + nb * i] = -xx * XX[i +  ncoef * j];
       } 
       /* now the mixed blocks */
-      for (i=0;i<ncoef;i++) for (j=0;j<ntheta;j++) {  
+      if (0) for (i=0;i<ncoef;i++) for (j=0;j<ntheta;j++) {  
 	/* first the summation over the derivatives of beta */
         l=din[i];
 	for (xx=0.0,q=0;q<ncoef;q++) {
