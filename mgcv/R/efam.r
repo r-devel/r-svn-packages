@@ -898,9 +898,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 ## Natalya Pya code from here....
 ##################################
 
-
-Beta <- function (theta = NULL, link = "logit") { 
-## THIS IS MESSED UP: ls wrong - wait for replacement
+betar <- function (theta = NULL, link = "logit") { 
 ## Extended family object for beta regression
 ## length(theta)=1; log theta supplied
   linktemp <- substitute(link)
@@ -918,10 +916,12 @@ Beta <- function (theta = NULL, link = "logit") {
         else stop(linktemp, " link not available for beta regression; available links are  \"logit\", \"probit\", \"cloglog\", \"log\" and \"cauchit\"")
     }
    
-    Theta <-  NULL
+    Theta <-  NULL; n.theta <- 1
     if (!is.null(theta)&&theta!=0) {
-      if (theta>0) Theta <- log(theta) ## fixed theta supplied
-      else iniTheta <- log(-theta) ## initial theta supplied
+       if (theta>0) {
+           iniTheta <- Theta <- log(theta) ## fixed theta supplied
+           n.theta <- 0 ## signal that there are no theta parameters to estimate
+       } else iniTheta <- log(-theta) ## initial theta supplied
     } else iniTheta <- 0 ##  inital log theta value
     
     env <- new.env(parent = .GlobalEnv)
@@ -937,53 +937,52 @@ Beta <- function (theta = NULL, link = "logit") {
     validmu <- function(mu) all(mu > 0 & mu < 1)
 
     dev.resids <- function(y, mu, wt,theta=NULL) {
+    ## '-'2*loglik instead of deviance in REML/ML expression
       if (is.null(theta)) theta <- get(".Theta")
       theta <- exp(theta) ## note log theta supplied
-      2 * wt * (lgamma(mu*theta) - lgamma(y*theta) + lgamma((1-mu)*theta) - lgamma((1-y)*theta)+
-       theta*(y-mu)*(log(y)-log(1-y))) 
+      muth <- mu*theta
+      yth <- y*theta
+      2* wt * (-lgamma(theta) +lgamma(muth) + lgamma(theta - muth) - muth*log(y/(1-y)) - theta*log(1-y) + log(y*(1-y))) 
     }
     
     Dd <- function(y, mu, theta, wt, level=0) {
-    ## derivatives of the deviance...
+    ## derivatives of the -2*loglik...
       ltheta <- theta
       theta <- exp(theta)
       onemu <- 1 - mu;  oney <- 1 - y
       muth <- mu*theta; yth <- y*theta
-      onemuth <- onemu*theta; oneyth <- oney*theta
+      onemuth <- onemu*theta  ## (1-mu)*theta
+      psi0.th <- digamma(theta)
+      psi1.th <- trigamma(theta)
       psi0.muth <- digamma(muth) 
       psi0.onemuth <- digamma(onemuth)
-      psi0.yth <- digamma(yth)
-      psi0.oneyth  <- digamma(oneyth)
       psi1.muth <- trigamma(muth)
       psi1.onemuth <- trigamma(onemuth)
-      psi1.oneyth <- trigamma(oneyth)
       psi2.muth <- psigamma(muth,2)
       psi2.onemuth <- psigamma(onemuth,2)
       psi3.muth <- psigamma(muth,3)
       psi3.onemuth <- psigamma(onemuth,3)
+      log.yoney <- log(y)-log(oney)
       r <- list()
       ## get the quantities needed for IRLS. 
       ## Dmu2eta2 is deriv of D w.r.t mu twice and eta twice,
       ## Dmu is deriv w.r.t. mu once, etc...
-      r$Dmu <- 2 * wt * theta* (psi0.muth - psi0.onemuth - log(y)+log(oney))
+      r$Dmu <- 2 * wt * theta* (psi0.muth - psi0.onemuth - log.yoney)
       r$Dmu2 <- 2 * wt * theta^2*(psi1.muth+psi1.onemuth)
       r$EDmu2 <- r$Dmu2
       if (level>0) { ## quantities needed for first derivatives
-        r$Dth <- 2 * wt *theta*(mu*psi0.muth-y*psi0.yth+onemu*psi0.onemuth
-          - oney*psi0.oneyth+(y-mu)*(log(y)-log(oney))) 
-        r$Dmuth <- 2 * wt * theta*(psi0.muth+muth*psi1.muth-psi0.onemuth -
-             theta*onemu*psi1.onemuth-log(y)+log(oney))
+        r$Dth <- 2 * wt *theta*(-mu*log.yoney - log(oney)+ mu*psi0.muth+onemu*psi0.onemuth -psi0.th) 
+        r$Dmuth <- r$Dmu + 2 * wt * theta^2*(mu*psi1.muth -onemu*psi1.onemuth)
         r$Dmu3 <- 2 * wt *theta^3 * (psi2.muth - psi2.onemuth) 
         r$Dmu2th <- 2* r$Dmu2 + 2 * wt * theta^3* (mu*psi2.muth + onemu*psi2.onemuth)
       } 
-      if (level>1) { ## whole damn lot
+      if (level>1) { ## whole lot
         r$Dmu4 <- 2 * wt *theta^4 * (psi3.muth+psi3.onemuth) 
-        r$Dth2 <- r$Dth +2 * wt *theta^2* (-y^2*trigamma(yth)-oney^2*psi1.oneyth+
-              mu^2*psi1.muth+ onemu^2*psi1.onemuth)
-        r$Dmuth2 <- r$Dmuth + 2 * wt *theta^2* (2*mu*psi1.muth+ muth*mu*psi2.muth-
-                  2*onemu*psi1.onemuth-theta*onemu^2*psi2.onemuth)
-        r$Dmu2th2 <- 2*r$Dmu2th + 6 * wt * theta^3* (mu*psi2.muth+ onemu*psi2.onemuth) + 
-                 2*wt*theta^4*(mu^2*psi3.muth + onemu^2*psi3.onemuth)
+        r$Dth2 <- r$Dth +2 * wt *theta^2* (mu^2*psi1.muth+ onemu^2*psi1.onemuth-psi1.th)
+        r$Dmuth2 <- r$Dmuth + 2 * wt *theta^2* (mu^2*theta*psi2.muth+ 2*mu*psi1.muth -
+                    theta*onemu^2*psi2.onemuth - 2*onemu*psi1.onemuth)
+        r$Dmu2th2 <- 2*r$Dmu2th + 2* wt * theta^3* (mu^2*theta*psi3.muth +3*mu*psi2.muth+ 
+                    onemu^2*theta*psi3.onemuth + 3*onemu*psi2.onemuth )
         r$Dmu3th <- 3*r$Dmu3 + 2 * wt *theta^4*(mu*psi3.muth-onemu*psi3.onemuth)
       }
       r
@@ -991,65 +990,162 @@ Beta <- function (theta = NULL, link = "logit") {
 
     aic <- function(y, mu, theta=NULL, wt, dev) {
         if (is.null(theta)) theta <- get(".Theta")
-        Theta <- exp(theta)
-        term <- -lgamma(Theta)+lgamma(mu*Theta)+lgamma((1-mu)*Theta)-(mu*Theta-1)*log(y)-
-               ((1-mu)*Theta-1)*log(1-y) ## `-' log likelihood for each observation
+        theta <- exp(theta)
+        muth <- mu*theta
+        term <- -lgamma(theta)+lgamma(muth)+lgamma(theta-muth)-(muth-1)*log(y)-
+               (theta-muth-1)*log(1-y) ## `-' log likelihood for each observation
         2 * sum(term * wt)
     }
     
     ls <- function(y,w,n,theta,scale) {
        ## the log saturated likelihood function.
-       Theta <- exp(theta)
-       oney <- 1-y
-       term <- lgamma(Theta) - lgamma(y*Theta)- lgamma(oney*Theta) + (y*Theta-1)*log(y) +
-               (oney*Theta-1)*log(oney)
-       ls <- sum(term*w)
-       ## first derivative wrt theta...
-       term <- Theta * (digamma(Theta)-y*digamma(y*Theta) - oney*digamma(oney*Theta)+
-              y*log(y) +oney*log(oney))
-       lsth <- sum(term*w)
-       ## second deriv...
-       term <- term + Theta^2 * (trigamma(Theta)-y^2*trigamma(y*Theta) - 
-                oney^2*trigamma(oney*Theta))        
-       lsth2 <- sum(term*w)
-       list(ls=ls,## saturated log likelihood
-            lsth1=lsth,  ## first deriv vector w.r.t theta - last element relates to scale, not done??
-            lsth2=lsth2) ##Hessian w.r.t. theta
+       ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik 
+       list(ls=0,## saturated log likelihood
+            lsth1=0,  ## first deriv vector w.r.t theta - last element relates to scale
+            lsth2=0) ##Hessian w.r.t. theta
      }
 
-  #  preinitialize <- expression({
-   #    ## initialize theta from raw observations..
-   #    Theta <- log(sum(G$y*(1 - G$y))/length(G$y)/var(G$y)-1)  ##
-   #    G$family$putTheta(Theta)
-   # })
+   
+    ## preinitialization to reset G$y values of <=0 and >=1... 
+    preinitialize <- expression({
+     ## code to evaluate in estimate.gam...
+     ## reset G$y values of <=0 and >= 1 to eps and 1-eps...
+     # G$family.data <- list()
+      eps <- 1e-7 
+      G$y[G$y >= 1-eps] <- 1 - eps
+      G$y[G$y<= eps] <- eps
+    })
+
+    saturated.ll <- function(y,wt,theta=NULL){
+    ## function to find the saturated loglik by Newton method,
+    ## searching for the mu (on logit scale) that max loglik given theta and data...
+    ## BUGGY: this is hopeless - it's taking several hundred evaluations to converge!!
+    ##        e.g. 33 steps with 5-15 step halvings for each! this makes e.g. gam.check
+    ##        slower than fitting!
+      ll <- function(y,mu, wt,theta){
+      ## '-'ve loglik, it's gradient w.r.t. mu and Hessian matrix
+      ## logit mu supplied...
+      ## theta is untransformed, not log 
+         mu <-  exp(mu)/(1+exp(mu))  ## back transformed mu
+         eps <- 1e-7 
+         mu[ mu >= 1-eps] <- 1 - eps
+         mu[mu <= eps] <- eps
+         muth <- mu*theta
+         onemu <- 1 - mu; 
+         log.yoney <- log(y)-log(1-y)
+         onemuth <- onemu*theta  ## (1-mu)*theta
+         psi0.muth <- digamma(muth) 
+         psi0.onemuth <- digamma(onemuth)
+         psi1.muth <- trigamma(muth)
+         psi1.onemuth <- trigamma(onemuth)
+         term <- lgamma(theta)-lgamma(muth) - lgamma(theta-muth) + (muth-1)*log(y) +
+               (theta-muth-1)*log(1-y)  ## loglik for each observation
+         f <- -sum(wt * term)  ## -ve loglik for n observs
+         g <- -wt*muth*onemu*(log.yoney + psi0.onemuth - psi0.muth) ## gradient vector of -ve loglik
+         diagH <- -wt*muth*((2*mu^2-3*mu+1)*(log.yoney+psi0.onemuth -psi0.muth) -
+                muth*onemu^2*(psi1.onemuth + psi1.muth))   ## diagonal elements of Hessian of '-'ve loglik
+         list(f=f,g=g,diagH=diagH, term=term)
+      } ## ll
+      ## Newton search...
+      mu <- log(y/(1-y)) ## starting mu values
+      lf <- ll(y,mu,wt,theta=theta) ## initial -ve loglik 
+      eps <- 1e-7
+      for (i in 1:200){ ## Newton loop
+         if (max(abs(lf$g)) < abs(lf$f)*.Machine$double.eps^.5) break  ## converged
+         step <- -lf$g/abs(lf$diagH)  ## Newton step
+         lf1 <- ll(y, mu+step,wt,theta)
+         k <- 0
+         while ((is.na(lf1$f) || lf1$f-lf$f > abs(lf$f)*.Machine$double.eps^.5) && k <100) { ## step length selection
+           # if (k > 100)  stop("inner Newton loop for saturated loglik; can't correct step size")
+            step <- step/2; k <- k+1
+            lf1 <- ll(y,mu+step, wt,theta)
+         }
+         ## update now...
+         lf <- lf1
+         mu <- mu+step  # on logit scale
+      }  ## end of Newton loop
+      lf
+    } ## saturated.ll
+
+
+    postproc <- expression({
+    ## code to evaluate in estimate.gam, to find the saturated
+    ## loglik by Newton method
+    ## searching for the mu (on logit scale) that max loglik given theta...
+      wts <- object$prior.weights
+      theta <- object$family$getTheta(trans=TRUE) ## exp theta
+      lf <- object$family$saturated.ll(G$y, wts,theta)
+      ## storing the saturated loglik for each datum...
+      object$family.data <- lf$term   
+      l2 <- object$family$dev.resids(G$y,object$fitted.values,wts)
+      object$deviance <- -2*lf$f + sum(l2)
+      wtdmu <- if (G$intercept) sum(wts * G$y)/sum(wts) 
+              else object$family$linkinv(G$offset)
+      object$null.deviance <- -2*lf$f + sum(object$family$dev.resids(G$y, wtdmu, wts))
+      object$family$family <- 
+      paste("Beta regression(",round(theta,3),")",sep="")
+    })
 
     initialize <- expression({
-        if (any(y <= 0 | y >= 1)) stop("Values outside the interval (0,1) not allowed for the beta regression")
         n <- rep(1, nobs)
         mustart <- y 
     })
 
+    residuals <- function(object,type=c("deviance","working","response","pearson")) {
+      if (type == "working") { 
+        res <- object$residuals 
+      } else if (type == "response") {
+        res <- object$y - object$fitted.values
+      } else if (type == "deviance") { 
+        y <- object$y
+        mu <- object$fitted.values
+        wts <- object$prior.weights
+        sim <- attr(y,"simula")
+     #   if (!is.null(sim)) {  ## if response values simulated, Newton search called to get saturated log.lik
+           lf <- object$family$saturated.ll(y, wts,object$family$getTheta(TRUE))
+           object$family.data <- lf$term  
+     #   }
+        res <- 2*object$family.data + object$family$dev.resids(y,mu,wts)
+        s <- sign(y-mu)
+        res <- sqrt(res) * s   
+      } else if (type == "pearson") {
+        mu <- object$fitted.values
+        res <- (object$y - mu)/object$family$variance(mu)^.5
+      }
+      res
+     } ## residuals
+
     rd <- function(mu,wt,scale) {
      ## simulate data given fitted latent variable in mu 
       Theta <- exp(get(".Theta"))
-      rbeta(mu,shape1=Theta*mu,shape2=Theta*(1-mu))
+      r <- rbeta(mu,shape1=Theta*mu,shape2=Theta*(1-mu))
+      eps <- 1e-7 ;
+      r[r>=1-eps] <- 1 - eps
+      r[r<eps] <- eps
+      r
     }
 
     qf <- function(p,mu,wt,scale) {
       Theta <- exp(get(".Theta"))
-      qbeta(p,shape1=Theta*mu,shape2=Theta*(1-mu))
+      q <- qbeta(p,shape1=Theta*mu,shape2=Theta*(1-mu))
+      eps <- 1e-7 ;
+      q[q>=1-eps] <- 1 - eps
+      q[q<eps] <- eps
+      q
     }
 
     environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
-    environment(rd)<- environment(qf) <- environment(variance) <- environment(putTheta) <- env
+    environment(rd)<- environment(qf) <- environment(variance) <- environment(putTheta) <-
+    environment(saturated.ll) <- env
 
-    structure(list(family = "beta regression", link = linktemp, linkfun = stats$linkfun,
+    structure(list(family = "Beta regression", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, variance=variance,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls, 
-        validmu = validmu, valideta = stats$valideta, n.theta=1,  # canonical="logit",
+        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
+        preinitialize=preinitialize,postproc=postproc, residuals=residuals, saturated.ll=saturated.ll,
+        validmu = validmu, valideta = stats$valideta, n.theta=n.theta,  
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,rd=rd,qf=qf), 
         class = c("extended.family","family"))
-} ## Beta
+} ## betar
 
 
   

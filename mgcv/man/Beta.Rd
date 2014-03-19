@@ -1,5 +1,5 @@
-\name{Beta}
-\alias{Beta}
+\name{betar}
+\alias{betar}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM beta regression family}
 \description{Family for use with \code{\link{gam}}, implementing regression for beta distributed data on (0,1).
@@ -9,7 +9,7 @@ fitting, alongside the smoothing parameters.
 }
 
 \usage{
-Beta(theta = NULL, link = "logit")
+betar(theta = NULL, link = "logit")
 }
 \arguments{
 \item{theta}{the extra parameter (\eqn{\phi}{phi} above). }
@@ -24,7 +24,7 @@ An object of class \code{extended.family}.
 \details{These models are useful for proportions data which can not be modelled as binomial. Note the assumption that data are in 
 (0,1), despite the fact that for some parameter values 0 and 1 are perfectly legitimate observations. The restriction is needed to 
 keep the log likelihood bounded for all parameter values. Any data exactly at 0 or 1 
-have to be reset to be just above 0 or just below 1 (see example below). 
+are reset to be just above 0 or just below 1. 
 }
 
 %- maybe also `usage' for other objects documented here.
@@ -43,11 +43,8 @@ mu <- binomial()$linkinv(dat$f/4-2)
 phi <- .5
 a <- mu*phi;b <- phi - a;
 dat$y <- rbeta(n,a,b) 
-eps <- 1e-7 ; 
-dat$y[dat$y>=1-eps] <- 1 - eps
-dat$y[dat$y<eps] <- eps
 
-bm <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Beta(link="logit"),data=dat)
+bm <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=betar(link="logit"),data=dat)
 
 bm
 plot(bm,pages=1)

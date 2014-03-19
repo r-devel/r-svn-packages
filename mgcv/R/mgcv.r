@@ -269,15 +269,17 @@ interpret.gam <- function(gf) {
 
     ## make sure all formulae have a response, to avoid
     ## problems with parametric sub formulae of the form ~1
-    if (length(gf[[1]])<3) stop("first formula must specify a response")
+    #if (length(gf[[1]])<3) stop("first formula must specify a response")
     resp <- gf[[1]][2]
-    if (d>1) for (i in 2:d) if (length(gf[[i]])==2) { gf[[i]][3] <- gf[[i]][2];gf[[i]][2] <- resp}
-
+    
     ret <- list()
     av <- rep("",0)
     for (i in 1:d) {
       textra <- if (i==1) NULL else paste(".",i-1,sep="") ## modify smooth labels to identify to predictor  
       ret[[i]] <- interpret.gam0(gf[[i]],textra)
+      ## make sure all parametric formulae have a response, to avoid
+      ## problems with parametric sub formulae of the form ~1
+      if (length(ret[[i]]$pf)==2) { ret[[i]]$pf[3] <- ret[[i]]$pf[2];ret[[i]]$pf[2] <- resp}
       av <- c(av,ret[[i]]$fake.names) ## accumulate all required variable names 
     } 
     av <- unique(av) ## strip out duplicate variable names
@@ -626,12 +628,16 @@ gam.setup.list <- function(formula,pterms,
   lpi <- list(1:ncol(G$X)) ## lpi[[j]] is index of cols for jth linear predictor 
   pof <- ncol(G$X) ## 
   for (i in 2:d) {
-    if (is.null(formula[[i]]$response)) formula[[i]]$response <- formula$response ## keep gam.setup happy
+    if (is.null(formula[[i]]$response)) {  ## keep gam.setup happy
+      formula[[i]]$response <- formula$response 
+      mv.response <- FALSE
+    } else mv.response <- TRUE
     spind <- if (is.null(sp)) 1 else (G$m+1):length(sp)
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
     lpi[[i]] <- pof + 1:ncol(um$X)
+    if (mv.response) G$y <- cbind(G$y,um$y)
     G$offset[[i]] <- um$offset
     G$contrasts[[i]] <- um$contrasts
     G$xlevels[[i]] <- um$xlevels
