@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: nlme 3.1-111\n"
-"POT-Creation-Date: 2013-08-17 08:12\n"
+"Project-Id-Version: nlme 3.1-115\n"
+"POT-Creation-Date: 2014-03-19 07:56\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -152,9 +152,6 @@ msgid "range must be > 0 in \"corSpher\" initial value"
 msgstr ""
 
 msgid "initial value for \"corSpher\" parameters of wrong dimension"
-msgstr ""
-
-msgid "negative control$nlmStepMax - using default value"
 msgstr ""
 
 msgid "model must be a formula of the form \"resp ~ pred\""

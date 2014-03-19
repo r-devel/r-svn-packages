@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-104\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2013-08-17 08:12\n"
+"POT-Creation-Date: 2014-03-19 07:56\n"
 "PO-Revision-Date: 2012-10-06 16:10+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -318,17 +318,6 @@ msgstr "zakres musi być > 0 w początkowej wartości \"corShere\""
 # stop("initial value for \"corSpher\" parameters of wrong dimension")
 msgid "initial value for \"corSpher\" parameters of wrong dimension"
 msgstr "początkowa wartość parametrów \"corSpher\" ma niepoprawny wymiar"
-
-# nlme/R/gls.R: 38
-# warning("negative control$nlmStepMax - using default value")
-# nlme/R/gnls.R: 62
-# warning("negative control$nlmStepMax - using default value")
-# nlme/R/lme.R: 145
-# warning("negative control$nlmStepMax - using default value")
-# nlme/R/nlme.R: 177
-# warning("negative control$nlmStepMax - using default value")
-msgid "negative control$nlmStepMax - using default value"
-msgstr "ujemna wartość 'control$nlmStepMax' - używanie wartości domyślnej"
 
 msgid "model must be a formula of the form \"resp ~ pred\""
 msgstr ""
@@ -2206,6 +2195,17 @@ msgstr[1] ""
 msgstr[2] ""
 "nazwy grup nie zgadzają się z początkowymi wartościami dla efektów losowych: "
 "%s"
+
+# nlme/R/gls.R: 38
+# warning("negative control$nlmStepMax - using default value")
+# nlme/R/gnls.R: 62
+# warning("negative control$nlmStepMax - using default value")
+# nlme/R/lme.R: 145
+# warning("negative control$nlmStepMax - using default value")
+# nlme/R/nlme.R: 177
+# warning("negative control$nlmStepMax - using default value")
+#~ msgid "negative control$nlmStepMax - using default value"
+#~ msgstr "ujemna wartość 'control$nlmStepMax' - używanie wartości domyślnej"
 
 # nlme/R/lme.R: 880
 # stop(gettextf("'Terms; must be between 1 and %d", nTerms),
