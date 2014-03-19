@@ -30,7 +30,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
     * 'll' is the evaluated log likelihood.
     * 'lb' is the grad vector 
 */
-  double *R,*theta,ldetR,*Xl,*bl,oned=1.0,zerod=0.0,*p,*p1,*p2,*p3,xx,zz,yy,*yty,*yRy,
+  double *R,*theta,ldetR,*Xl,*bl,oned=1.0,zerod=0.0,*p,*p1,*p2,*p3,xx,zz,yy,*yty,
     *mu,*Rymu,rip,*dtheta,*db,*deriv_theta,*yX,*yRX;
   int i,j,k,l,pl,one=1,bt,ct,nb,*din,ntheta,ncoef,*rri,*rci,ri,rj,ril,rjl,rik,rjk,rij,rjj,q,r;
   const char not_trans='N';
@@ -114,15 +114,12 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
   for (k=0,i=0;i<ncoef;i++) { 
     if (i==lpi[k]) k++; 
     din[i] = k;
-    // Rprintf(" %d ",k);
   } 
   /* first the mean coef blocks */
   for (i=0;i<ncoef;i++) for (j=0;j<=i;j++) {
      l=din[i];k=din[j]; /* note l>=k */
      /* inner product of col l and col k of R ... */
      for (p=R+l * *m,p1=R+k * *m,rip=0.0,p2=p1+k;p1<=p2;p++,p1++) rip += *p * *p1;
-     /* inner product of column i and column j of X... actually better to pre-compute!!*/
-     /*for (xx=0.0,p=X + i * *n,p1=X + j * *n,p2 = p1 + *n;p1<p2;p1++,p++) xx += *p * *p1 ;*/ 
      lbb[i + nb * j] = lbb[j + nb * i] = -XX[i + ncoef * j]*rip; /* -xx*rip; */ 
   }
   /* now the mixed blocks */
@@ -177,12 +174,10 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
     bt=0;ct=0;mgcv_pmmult(yRX,Rymu,X,&bt,&ct,m,&ncoef,n,nt); /* rows, dim, cols coef */  
     yty = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double)); /* need (y-mu)(y-mu)' */
     bt=0;ct=1;mgcv_pmmult(yty,y,y,&bt,&ct,m,m,n,nt); /* rows, cols dim */  
-    yRy = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double)); /* need (y-mu)R(y-mu)' */
-    bt=0;ct=1;mgcv_pmmult(yRy,y,Rymu,&bt,&ct,m,m,n,nt); /* rows, cols dim */  
     for (r=0;r< *nsp;r++) { 
       db = dbeta + nb * r; /* d coefs / d rho_r */
       dtheta = db + ncoef; /* d theta / d rho_r */
-      //Rprintf("\n"); for (q=0;q<ntheta;q++) Rprintf("%g  ",dtheta[q]);Rprintf("\n");
+
       /* the derivatives of the hessian w.r.t. the smoothing parameters. First the portions 
          relating to the coefficients */
       for (i=0;i<ncoef;i++) for (j=0;j<=i;j++) {
@@ -245,8 +240,8 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
         }
         for (i=0;i<ntheta;i++) {
 	  ri = rri[i];rj=rci[i];zz=0.0;
-          if (j==k&&ri==rij&&rjk==rik) zz += deriv_theta[j]*deriv_theta[i]*yty[rjj * *m + rj];  /* row rjj, col rj */ 
-          if (i==k&&rik==rij&&rjj==rij) zz += deriv_theta[j]*deriv_theta[i]*yty[rjj * *m + rjk];  /* row rjj, col rjk */ 
+          if (j==k&&ri==rij&&rjk==rik) zz += deriv_theta[j]*deriv_theta[i]*yty[rj * *m + rjj];  /* row rjj, col rj */ 
+          if (i==k&&rik==rij&&rjj==rij) zz += deriv_theta[j]*deriv_theta[i]*yty[rjk * *m + rjj];  /* row rjj, col rjk */ 
           if (i==j&&rik==rij&&rj==ri) zz += deriv_theta[k]*deriv_theta[i]*yty[rjk * *m + rj];  /* row rjk, col rj */ 
           if (i==j&&j==k&&ri==rj) {
             for (yy=0.0,p=Rymu+ri,p1=y+ri,q=0;q<*n;p+= *m,p1+= *m,q++) yy += *p * *p1;           
@@ -259,7 +254,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
 
       dH += nb * nb; /* move on to next Hessian */
     } /* smoothing parameter loop */ 
-    R_chk_free(yX);R_chk_free(yRX);R_chk_free(yty);R_chk_free(yRy);
+    R_chk_free(yX);R_chk_free(yRX);R_chk_free(yty);
   } /* if (*deriv) */
   
 
