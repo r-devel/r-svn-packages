@@ -1,3 +1,9 @@
+2014-03-20 Brian Ripley
+
+	* DESCRIPTION: Version is 0.8-60
+
+	* src/stataread.c: writeStataValueLabel used wrong length.
+
 2014-01-26 Brian Ripley
 
 	* tests/spss.{R,Rout.save}: avoid partial match in all.equal().

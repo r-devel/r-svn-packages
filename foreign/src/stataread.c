@@ -632,7 +632,7 @@ static void OutShortIntBinary(int i,FILE * fp)
 
 static void  OutDoubleBinary(double d, FILE * fp, int naok)
 {
-    d=(R_FINITE(d) ? d : STATA_DOUBLE_NA);
+    d = (R_FINITE(d) ? d : STATA_DOUBLE_NA);
     if (fwrite(&d, sizeof(double), 1, fp) != 1)
 	error(_("a binary write error occurred"));
 }
@@ -647,9 +647,8 @@ static void OutStringBinary(const char *buffer, FILE * fp, int nchar)
 
 static char* nameMangleOut(char *stataname, int len)
 {
-    for(int i = 0; i < len; i++) {
+    for(int i = 0; i < len; i++)
       if (stataname[i] == '.') stataname[i] = '_';
-    }
     return stataname;
 }
 
@@ -669,7 +668,7 @@ writeStataValueLabel(const char *labelName, const SEXP theselabels,
 
     if (!isNull(theselevels) && 
 	((TYPEOF(theselevels)!=INTSXP && TYPEOF(theselevels)!=REALSXP)  || 
-	 LENGTH(theselabels)!=LENGTH(theselevels)))
+	 LENGTH(theselabels) != LENGTH(theselevels)))
 	return FALSE;
 
     len = 4*2*(length(theselabels)+1);
@@ -678,9 +677,9 @@ writeStataValueLabel(const char *labelName, const SEXP theselabels,
 	txtlen += strlen(CHAR(STRING_ELT(theselabels, i))) + 1;
     len += txtlen;
     OutIntegerBinary((int)len, fp, 0); /* length of table */
-    char labelName2[strlen(labelName) + 1];
-    strcpy(labelName2, labelName);
-    OutStringBinary(nameMangleOut(labelName2, namelength), fp, namelength);
+    char labelName2[namelength + 1];
+    strncpy(labelName2, labelName, namelength + 1); // nameMangleOut changes its arg.
+    OutStringBinary(nameMangleOut(labelName2, strlen(labelName)), fp, namelength);
     OutByteBinary(0, fp); /* label format name */
     OutByteBinary(0, fp); OutByteBinary(0, fp); OutByteBinary(0, fp); /*padding*/
     OutIntegerBinary(length(theselabels), fp, 0);
