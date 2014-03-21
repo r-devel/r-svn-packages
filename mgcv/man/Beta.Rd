@@ -29,7 +29,7 @@ are reset to be just above 0 or just below 1.
 
 %- maybe also `usage' for other objects documented here.
 
-\author{ Natalya Pya (nyp20@bath.ac.uk)
+\author{ Natalya Pya (nyp20@bath.ac.uk) and Simon Wood (s.wood@r-project.org)
 }
 
 

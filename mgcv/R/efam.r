@@ -1019,52 +1019,72 @@ betar <- function (theta = NULL, link = "logit") {
     saturated.ll <- function(y,wt,theta=NULL){
     ## function to find the saturated loglik by Newton method,
     ## searching for the mu (on logit scale) that max loglik given theta and data...
-    ## BUGGY: this is hopeless - it's taking several hundred evaluations to converge!!
-    ##        e.g. 33 steps with 5-15 step halvings for each! this makes e.g. gam.check
-    ##        slower than fitting!
-      ll <- function(y,mu, wt,theta){
-      ## '-'ve loglik, it's gradient w.r.t. mu and Hessian matrix
-      ## logit mu supplied...
-      ## theta is untransformed, not log 
-         mu <-  exp(mu)/(1+exp(mu))  ## back transformed mu
-         eps <- 1e-7 
-         mu[ mu >= 1-eps] <- 1 - eps
-         mu[mu <= eps] <- eps
-         muth <- mu*theta
-         onemu <- 1 - mu; 
-         log.yoney <- log(y)-log(1-y)
-         onemuth <- onemu*theta  ## (1-mu)*theta
-         psi0.muth <- digamma(muth) 
-         psi0.onemuth <- digamma(onemuth)
-         psi1.muth <- trigamma(muth)
-         psi1.onemuth <- trigamma(onemuth)
-         term <- lgamma(theta)-lgamma(muth) - lgamma(theta-muth) + (muth-1)*log(y) +
-               (theta-muth-1)*log(1-y)  ## loglik for each observation
-         f <- -sum(wt * term)  ## -ve loglik for n observs
-         g <- -wt*muth*onemu*(log.yoney + psi0.onemuth - psi0.muth) ## gradient vector of -ve loglik
-         diagH <- -wt*muth*((2*mu^2-3*mu+1)*(log.yoney+psi0.onemuth -psi0.muth) -
-                muth*onemu^2*(psi1.onemuth + psi1.muth))   ## diagonal elements of Hessian of '-'ve loglik
-         list(f=f,g=g,diagH=diagH, term=term)
-      } ## ll
-      ## Newton search...
-      mu <- log(y/(1-y)) ## starting mu values
-      lf <- ll(y,mu,wt,theta=theta) ## initial -ve loglik 
+
+      gbh <- function(y,eta,phi,deriv=FALSE,a=1e-8,b=1-a) {
+      ## local function evaluating log likelihood (l), gradient and second deriv 
+      ## vectors for beta... a and b are min and max mu values allowed. 
+      ## mu = (a + b*exp(eta))/(1+exp(eta))
+        ind <- eta>0
+        expeta <- mu <- eta;
+        expeta[ind] <- exp(-eta[ind]);expeta[!ind] <- exp(eta[!ind])
+        mu[ind] <- (a*expeta[ind] + b)/(1+expeta[ind])
+        mu[!ind] <- (a + b*expeta[!ind])/(1+expeta[!ind])
+        l <- dbeta(y,phi*mu,phi*(1-mu),log=TRUE)
+        if (deriv) {
+          g <- phi * log(y) - phi * log(1-y) - phi * digamma(mu*phi) + phi * digamma((1-mu)*phi)
+          h <- -phi^2*(trigamma(mu*phi)+trigamma((1-mu)*phi))
+          dmueta2 <- dmueta1 <-  eta
+          dmueta1 <- expeta*(b-a)/(1+expeta)^2 
+          dmueta2 <- sign(eta)* ((a-b)*expeta+(b-a)*expeta^2)/(expeta+1)^3
+          h <- h * dmueta1^2 + g * dmueta2
+          g <- g * dmueta1
+        } else g=h=NULL
+        list(l=l,g=g,h=h,mu=mu)
+      } ## gbh 
+      ## now Newton loop...
       eps <- 1e-7
-      for (i in 1:200){ ## Newton loop
-         if (max(abs(lf$g)) < abs(lf$f)*.Machine$double.eps^.5) break  ## converged
-         step <- -lf$g/abs(lf$diagH)  ## Newton step
-         lf1 <- ll(y, mu+step,wt,theta)
-         k <- 0
-         while ((is.na(lf1$f) || lf1$f-lf$f > abs(lf$f)*.Machine$double.eps^.5) && k <100) { ## step length selection
-           # if (k > 100)  stop("inner Newton loop for saturated loglik; can't correct step size")
-            step <- step/2; k <- k+1
-            lf1 <- ll(y,mu+step, wt,theta)
-         }
-         ## update now...
-         lf <- lf1
-         mu <- mu+step  # on logit scale
-      }  ## end of Newton loop
-      lf
+      eta <- y
+      a <- eps;b <- 1 - eps
+      y[y<eps] <- eps;y[y>1-eps] <- 1-eps
+      eta[y<=eps*1.2] <- eps *1.2
+      eta[y>=1-eps*1.2] <- 1-eps*1.2
+      eta <- log((eta-a)/(b-eta)) 
+      mu <- LS <- ii <- 1:length(y)
+      for (i in 1:200) {
+        ls <- gbh(y,eta,theta,TRUE)
+        conv <- abs(ls$g)<mean(abs(ls$l)+.1)*1e-8
+        if (sum(conv)>0) { ## some convergences occured
+          LS[ii[conv]] <- ls$l[conv] ## store converged
+          mu[ii[conv]] <- ls$mu[conv] ## store mu at converged
+          ii <- ii[!conv] ## drop indices
+          if (length(ii)>0) { ## drop the converged
+            y <- y[!conv];eta <- eta[!conv]
+            ls$l <- ls$l[!conv];ls$g <- ls$g[!conv];ls$h <- ls$h[!conv]
+          } else break ## nothing left to do
+        }
+        h <- -ls$h
+        hmin <- max(h)*1e-4 
+        h[h<hmin] <- hmin ## make +ve def
+        delta <- ls$g/h   ## step
+        ind <- abs(delta)>2
+        delta[ind] <- sign(delta[ind])*2 ## step length limit
+        ls1 <- gbh(y,eta+delta,theta,FALSE); ## did it work?
+        ind <- ls1$l<ls$l ## failure index
+        k <- 0
+        while (sum(ind)>0&&k<20) { ## step halve only failed steps
+          k <- k + 1
+          delta[ind] <- delta[ind]/2
+          ls1$l[ind] <- gbh(y[ind],eta[ind]+delta[ind],phi,FALSE)$l
+          ind <- ls1$l<ls$l
+        }
+        eta <- eta + delta
+      } ## end newton loop
+      if (length(ii)>0) { 
+        LS[ii] <- ls$l
+        warning("saturated likelihood may be inaccurate")
+      }
+
+      list(f=sum(wt*LS),term=LS,mu=mu) ## fields f (sat lik) and term (individual datum sat lik) expected
     } ## saturated.ll
 
 
@@ -1076,12 +1096,12 @@ betar <- function (theta = NULL, link = "logit") {
       theta <- object$family$getTheta(trans=TRUE) ## exp theta
       lf <- object$family$saturated.ll(G$y, wts,theta)
       ## storing the saturated loglik for each datum...
-      object$family.data <- lf$term   
+      object$family.data <- list(ls = lf$term,mu.ls = lf$mu)   
       l2 <- object$family$dev.resids(G$y,object$fitted.values,wts)
-      object$deviance <- -2*lf$f + sum(l2)
+      object$deviance <- 2*lf$f + sum(l2)
       wtdmu <- if (G$intercept) sum(wts * G$y)/sum(wts) 
               else object$family$linkinv(G$offset)
-      object$null.deviance <- -2*lf$f + sum(object$family$dev.resids(G$y, wtdmu, wts))
+      object$null.deviance <- 2*lf$f + sum(object$family$dev.resids(G$y, wtdmu, wts))
       object$family$family <- 
       paste("Beta regression(",round(theta,3),")",sep="")
     })
@@ -1103,9 +1123,10 @@ betar <- function (theta = NULL, link = "logit") {
         sim <- attr(y,"simula")
      #   if (!is.null(sim)) {  ## if response values simulated, Newton search called to get saturated log.lik
            lf <- object$family$saturated.ll(y, wts,object$family$getTheta(TRUE))
-           object$family.data <- lf$term  
+           object$family.data$ls <- lf$term  
      #   }
-        res <- 2*object$family.data + object$family$dev.resids(y,mu,wts)
+        res <- 2*object$family.data$ls + object$family$dev.resids(y,mu,wts)
+        res[res<0] <- 0
         s <- sign(y-mu)
         res <- sqrt(res) * s   
       } else if (type == "pearson") {
