@@ -78,9 +78,10 @@ static double get_IBM_double(char* c, size_t len)
 				/* exponent is expressed here as
 				   excess 70 (=64+6) to accomodate
 				   integer conversion of c[1] to c[4] */
-    char negative = c[0] & 0x80, exponent = (c[0] & 0x7f) - 70, buf[4];
+    char negative = c[0] & 0x80;
+    signed char exponent = (c[0] & 0x7f) - 70;
     double value;
-    char ibuf[8];
+    char buf[4], ibuf[8];
 
     if (len < 2 || len > 8)
       error(_("invalid field length in numeric variable"));
