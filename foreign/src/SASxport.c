@@ -79,6 +79,7 @@ static double get_IBM_double(char* c, size_t len)
 				   excess 70 (=64+6) to accomodate
 				   integer conversion of c[1] to c[4] */
     char negative = c[0] & 0x80;
+    // needs to be signed: char is not on Raspbian
     signed char exponent = (c[0] & 0x7f) - 70;
     double value;
     char buf[4], ibuf[8];

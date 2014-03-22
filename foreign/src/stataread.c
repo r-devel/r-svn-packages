@@ -410,7 +410,7 @@ SEXP R_LoadStataData(FILE *fp)
 	    SET_STRING_ELT(tmp, 0, mkChar(datalabel));
 	    InStringBinary(fp, 33, datalabel);
 	    SET_STRING_ELT(tmp, 1, mkChar(datalabel));
-	    txt =  Calloc((size_t) (charlen-66), char);
+	    txt = Calloc((size_t) (charlen-66), char);
 	    InStringBinary(fp, (charlen-66), txt);
 	    SET_STRING_ELT(tmp, 2, mkChar(txt));
 	    SET_VECTOR_ELT(labeltable, j, tmp);
@@ -917,20 +917,24 @@ void R_SaveStataData(FILE *fp, SEXP df, int version, SEXP leveltable)
 	Don't have documentation for pre-version7 format (are the first two fields still 33 bytes?) **/
     PROTECT(exp_fields = getAttrib(df, install("expansion.fields")));
     if(!isNull(exp_fields) && TYPEOF(exp_fields) == VECSXP && abs(version) >= 7){
-	for(i = 0; i< LENGTH(exp_fields); i++){
-		PROTECT(exp_field = VECTOR_ELT(exp_fields, i));	
-		if(!isNull(exp_field) && isString(exp_field) && LENGTH(exp_field) == 3) {
-		    OutByteBinary(1, fp);
-		    OutIntegerBinary(2*(namelength+1) + (length(STRING_ELT(exp_field,2))+1), fp, 1);
-
-		    OutStringBinary(CHAR(STRING_ELT(exp_field, 0)), fp, namelength);
-		    OutByteBinary(0, fp);
-		    OutStringBinary(CHAR(STRING_ELT(exp_field, 1)), fp, namelength);
-		    OutByteBinary(0, fp);
-		    OutStringBinary(CHAR(STRING_ELT(exp_field, 2)), fp, length(STRING_ELT(exp_field, 2)));
-		    OutByteBinary(0, fp);
-		}
-		UNPROTECT(1);
+	for(i = 0; i< LENGTH(exp_fields); i++) {
+	    char tmp[namelength];
+	    PROTECT(exp_field = VECTOR_ELT(exp_fields, i));	
+	    if(!isNull(exp_field) && isString(exp_field) && LENGTH(exp_field) == 3) {
+		OutByteBinary(1, fp);
+		OutIntegerBinary(2*(namelength+1) + (length(STRING_ELT(exp_field,2))+1), fp, 1);
+		memset(tmp, 0, namelength);
+		strncpy(tmp, CHAR(STRING_ELT(exp_field, 0)), namelength);
+		OutStringBinary(tmp, fp, namelength);
+		OutByteBinary(0, fp);
+		memset(tmp, 0, namelength);
+		strncpy(tmp, CHAR(STRING_ELT(exp_field, 1)), namelength);
+		OutStringBinary(tmp, fp, namelength);
+		OutByteBinary(0, fp);
+		OutStringBinary(CHAR(STRING_ELT(exp_field, 2)), fp, length(STRING_ELT(exp_field, 2)));
+		OutByteBinary(0, fp);
+	    }
+	    UNPROTECT(1);
 	}
     }
     UNPROTECT(1);
