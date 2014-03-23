@@ -1,4 +1,6 @@
 2014 Mar ??	4.1-?	Update French and German translations.
+	                Fix array-overrun in gini.c (detected by valgrind
+	                checks for adabag).
 
 2014 Mar 07	4.1-6	model.frame() method could fail when the recorded
 			call was rpart::rpart().
