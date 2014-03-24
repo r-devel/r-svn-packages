@@ -178,7 +178,8 @@ cox.ph <- function (link = "identity") {
         hazard=hazard,predict=predict,residuals=residuals,
         validmu = validmu, valideta = stats$valideta, 
         rd=rd,qf=qf,drop.intercept = TRUE,
-        ls=1 ## signal ls not needed
+        ls=1, ## signal ls not needed
+        available.derivs = 2 ## can use full Newton here
         ),
         class = c("general.family","extended.family","family"))
 } ## cox.ph

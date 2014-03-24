@@ -479,7 +479,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
-    ls=1 ## signals that ls not needed here
+    ls=1, ## signals that ls not needed here
+    available.derivs = 2 ## can use full Newton here
     ),class = c("general.family","extended.family","family"))
 } ## end gaulss
 
@@ -567,6 +568,8 @@ ziplss <-  function(link=list("log","logit")) {
     rsd[!ind] <- object$y[!ind]*(log(object$y[!ind])-log(lambda)-1) - log(p[!ind]) + lambda
     object$null.deviance <- sum(rsd)
   })
+
+
   ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
   ## function defining the gamlss ZIP model log lik. 
   ## Firt l.p. defines Poisson mean, given presence (lambda)
@@ -706,7 +709,8 @@ ziplss <-  function(link=list("log","logit")) {
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
-    ls=1 ## signals that ls not needed here
+    ls=1, ## signals that ls not needed here
+    available.derivs = 2 ## can use full Newton here
     ),class = c("general.family","extended.family","family"))
 } ## ziplss
 

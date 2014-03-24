@@ -279,8 +279,12 @@ interpret.gam <- function(gf) {
       ret[[i]] <- interpret.gam0(gf[[i]],textra)
       ## make sure all parametric formulae have a response, to avoid
       ## problems with parametric sub formulae of the form ~1
-      if (length(ret[[i]]$pf)==2) { ret[[i]]$pf[3] <- ret[[i]]$pf[2];ret[[i]]$pf[2] <- resp}
-      av <- c(av,ret[[i]]$fake.names) ## accumulate all required variable names 
+      respi <- rep("",0) ## no extra response terms
+      if (length(ret[[i]]$pf)==2) { 
+        ret[[i]]$pf[3] <- ret[[i]]$pf[2];ret[[i]]$pf[2] <- resp
+        respi <- rep("",0)
+      } else if (i>1) respi <- ret[[i]]$response ## extra response terms
+      av <- c(av,ret[[i]]$fake.names,respi) ## accumulate all required variable names 
     } 
     av <- unique(av) ## strip out duplicate variable names
     ret$fake.formula <- reformulate(av,response=ret[[1]]$response) ## create fake formula containing all variables
@@ -1454,6 +1458,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
+       ## make sure its BFGS if family only supplies these derivatives
+       if (!is.null(family$available.derivs)&&available.derivs==1) optimizer <- c("outer","bfgs")
     }
   }
 

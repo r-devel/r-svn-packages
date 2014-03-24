@@ -1,15 +1,20 @@
 ## (c) Simon N. Wood (2013, 2014) mvn model extended family. 
 ## Released under GPL2 ...
 
-mvn <- function() { 
+mvn <- function(d=2) { 
 ## Extended family object for multivariate normal additive model.
- 
+  if (d<2) stop("mvn requires 2 or more dimensional data")
+  stats <- list()
+  for (i in 1:d) {
+    stats[[i]] <- make.link("identity") 
+  }
+  
   env <- new.env(parent = .GlobalEnv)
   validmu <- function(mu) all(is.finite(mu))
 
    
   aic <- function(y, mu, theta=NULL, wt, dev) {
-    
+## NOT DONE
   }
     
 
@@ -18,17 +23,26 @@ mvn <- function() {
   
     preinitialize <- expression({
     ## code to evaluate in estimate.gam...
+    ## extends model matrix with dummy columns and 
+    ## finds initial coefficients
       ydim <- ncol(G$y) ## dimension of response
-      nbeta <- ncole(G$X)
+      nbeta <- ncol(G$X)
       ntheta <- ydim*(ydim+1)/2 ## numer of cov matrix factor params
       lpi <- attr(G$X,"lpi")
+      XX <- crossprod(G$X)
       G$X <- cbind(G$X,matrix(0,nrow(G$X),ntheta)) ## add dummy columns to G$X
       attr(G$X,"lpi") <- lpi
+      attr(G$X,"XX") <- XX
       G$family.data <- list(ydim = ydim,nbeta=nbeta)
-      ## now get initial parameters
+      G$family$ibeta = rep(0,ncol(G$X)))
+      ## now get initial parameters and stroe in family...
       for (k in 1:ydim) {
-        
-        magic(G$y[,k],G$X[,lpi[[k]]],sp,S,off)
+        sin <- G$off %in% lpi[[k]]
+        Sk <- G$S[sin]
+        um <- magic(G$y[,k],G$X[,lpi[[k]]],rep(-1,sum(sin)),G$S[sin],off[sin]-lpi[[k]]+1,nt=control$nthreads)
+        G$family$ibeta[lpi[[k]]] <- um$b
+        G$family$ibeta[nbeta+1] <- -.5*log(um$scale) ## initial log root precision
+        nbeta <- nbeta + ydim - k + 1
       }
     })
     
@@ -49,22 +63,26 @@ mvn <- function() {
     
     initialize <- expression({
       ## Ideally fit separate models to each component and
-      ## extract initial coefs, s.p.s and variances this way
+      ## extract initial coefs, s.p.s and variances this way 
+        n <- rep(1, nobs)
+        if (is.null(start)) start <- family$ibeta
     })
 
 
     residuals <- function(object,type=c("deviance","martingale")) {
+## NOT DONE
       type <- match.arg(type)
       w <- object$prior.weights;log.s <- log(object$fitted.values)
       res <- w + log.s ## martingale residuals
       if (type=="deviance") res <- sign(res)*sqrt(-2*(res + w * log(-log.s)))
       res 
-    }
+    } ## residuals
 
 
     predict <- function(family,se=FALSE,eta=NULL,y=NULL,
                X=NULL,beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
       ## prediction function.
+## NOT DONE
       ii <- order(y,decreasing=TRUE) ## C code expects non-increasing
       n <- nrow(X)
       oo <- .C("coxpred",as.double(X[ii,]),t=as.double(y[ii]),as.double(beta),as.double(Vb),
@@ -76,85 +94,69 @@ mvn <- function() {
       s[ii] <- oo$s
       sef[ii] <- oo$se    
       if (se) return(list(fit=s,se.fit=sef)) else return(list(fit=s))
-    }
+    } ## predict
 
     rd <- qf <- NULL ## these functions currently undefined for Cox PH
 
     ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
-    ## function defining the cox model log lik.
-    ## Calls C code "coxlpl"
+    ## function defining the Multivariate Normal model log lik.
+    ## Calls C code "mvn_ll"
     ## deriv codes: 0 - eval; 1 - grad and Hessian
-    ##              2 - d1H (diagonal only)
-    ##              3 - d1H; 4 d2H (diag)
+    ##              2 - d1H (diagonal only - not implemented efficiently)
+    ##              3 - d1H; 4 d2H (diag - not implemented)
     ## Hp is the preconditioned penalized hessian of the log lik
     ##    which is of rank 'rank'.
     ## fh is a factorization of Hp - either its eigen decomposition 
     ##    or its Choleski factor
     ## D is the diagonal pre-conditioning matrix used to obtain Hp
     ##   if Hr is the raw Hp then Hp = D*t(D*Hr)
-      ##tr <- sort(unique(y),decreasing=TRUE)
-      tr <- unique(y)
-      r <- match(y,tr)
-      p <- ncol(X)
-      deriv <- deriv - 1
-      mu <- X%*%coef
-      g <- rep(0,p);H <- rep(0,p*p)
-      if (deriv > 0) {
-        M <- ncol(d1b)
-        d1H <- if (deriv==1) rep(0,p*M) else rep(0,p*p*M)
-      } else M <- d1H <- 0
-      if (deriv > 2) {
-        d2H <- rep(0,p*M*(M+1)/2)
-        #X <- t(forwardsolve(t(L),t(X)))
-        #d1b <- L %*% d1b; d2b <- L %*% d2b
-        if (is.list(fh)) {
-          ev <- fh
-        } else  { ## need to compute eigen here
-          ev <- eigen(Hp,symmetric=TRUE)
-          if (rank < p) ev$values[(rank+1):p] <- 0
-        } 
-        X <- X%*%(ev$vectors*D)
-        d1b <- t(ev$vectors)%*%(d1b/D); d2b <- t(ev$vectors)%*%(d2b/D)
-      } else trHid2H <- d2H <- 0
-      ## note that the following call can not use .C(C_coxlpl,...) since the ll
-      ## function is not in the mgcv namespace.
-      oo <- .C("coxlpl",as.double(mu),as.double(X),as.integer(r),as.integer(wt),
-            as.double(tr),n=as.integer(length(y)),p=as.integer(p),nt=as.integer(length(tr)),
-            lp=as.double(0),g=as.double(g),H=as.double(H),
-            d1b=as.double(d1b),d1H=as.double(d1H),d2b=as.double(d2b),d2H=as.double(d2H),
-            n.sp=as.integer(M),deriv=as.integer(deriv),PACKAGE="mgcv");
-      if (deriv==1) d1H <- matrix(oo$d1H,p,M) else
-      if (deriv>1) {
-        ind <- 1:(p^2)
-        d1H <- list()
-        for (i in 1:M) { 
-          d1H[[i]] <- matrix(oo$d1H[ind],p,p)
-          ind <- ind + p^2
-        }
-      } 
-      if (deriv>2) { 
-        d2H <- matrix(oo$d2H,p,M*(M+1)/2)
-        #trHid2H <- colSums(d2H)
-        d <- ev$values
-        d[d>0] <- 1/d[d>0];d[d<=0] <- 0
-        trHid2H <- colSums(d2H*d)
+      lpi <- attr(X,"lpi")-1; ## lpi[[k]] is index of model matrix columns for dim k 
+      m <- length(lpi)        ## number of dimensions of MVN
+      nb <- length(beta)      ## total number of parameters
+      if (deriv<2) {
+        nsp = 0;d1b <- dH <- 0
+      } else {
+        nsp = ncol(d1b)
+        dH = rep(0,nsp*nb*nb)
       }
-      assign(".log.partial.likelihood", oo$lp, envir=environment(sys.function()))
-      list(l=oo$lp,lb=oo$g,lbb=matrix(oo$H,p,p),d1H=d1H,d2H=d2H,trHid2H=trHid2H)
-    }
+      oo <- .C(C_mvn_ll,y=as.double(y),X=as.double(X),XX=as.double(attr(X,"XX")),
+               beta=as.double(beta),n=as.integer(nrow(X)),
+               lpi=as.integer(lpi),m=as.integer(m),ll=as.double(0),lb=as.double(beta*0),
+               lbb=as.double(rep(0,nb*nb)), dbeta = as.double(dbeta), dH = as.double(dH), 
+               deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1))
+      if (nsp==0) d1H <- NULL else if (deriv==2) {
+        d1H <- matrix(0,nb,nsp)
+        for (i in 1:nsp) { 
+          d1H[,i] <- diag(matrix(oo$dH[ind],nb,nb))
+          ind <- ind + nb*nb
+        }
+      } else { ## deriv==3
+        d1H <- list();ind <- 1:(nb*nb)
+        for (i in 1:nsp) { 
+          d1H[[i]] <- matrix(oo$dH[ind],nb,nb)
+          ind <- ind + nb*nb
+        }
+      }
+      list(l=oo$ll,lb=oo$lb,lbb=matrix(oo$lbb,nb,nb),d1H=d1H)
+    } ## ll
 
     # environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
     # environment(rd)<- environment(qf)<- environment(variance) <- environment(putTheta) 
     environment(aic) <- environment(ll) <- env
-    structure(list(family = "Cox PH", link = linktemp, linkfun = stats$linkfun,
-        linkinv = stats$linkinv, ll=ll,
-        aic = aic, mu.eta = stats$mu.eta, 
+    structure(list(family = "Multivariate normal", 
+        ## link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv, 
+        ll=ll,
+        aic = aic, 
+        ## mu.eta = stats$mu.eta, 
         initialize = initialize,preinitialize=preinitialize,postproc=postproc,
-        hazard=hazard,predict=predict,residuals=residuals,
-        validmu = validmu, valideta = stats$valideta, 
-        rd=rd,qf=qf,drop.intercept = TRUE,
-        ls=1 ## signal ls not needed
+        ## hazard=hazard,predict=predict,residuals=residuals,
+        validmu = validmu, ## valideta = stats$valideta, 
+        ## rd=rd,qf=qf,  
+        linfo = stats, ## link information list
+        d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
+        ls=1, ## signal ls not needed
+        available.derivs = 1 ## signal only first derivatives available...
         ),
         class = c("general.family","extended.family","family"))
-} ## cox.ph
+} ## mvn
 
