@@ -1,69 +1,48 @@
-## (c) Simon N. Wood (2013, 2014) coxph model extended family. 
+## (c) Simon N. Wood (2013, 2014) mvn model extended family. 
 ## Released under GPL2 ...
 
-cox.ph <- function (link = "identity") { 
-## Extended family object for Cox PH.
-  linktemp <- substitute(link)
-  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("identity")) stats <- make.link(linktemp)
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else stop(linktemp, " link not available for coxph family; available link is \"identity\" ")
-  }
+mvn <- function() { 
+## Extended family object for multivariate normal additive model.
+ 
   env <- new.env(parent = .GlobalEnv)
   validmu <- function(mu) all(is.finite(mu))
 
    
-    aic <- function(y, mu, theta=NULL, wt, dev) {
-      ## this needs to call coxlpl - not really enough info 
-      ## use store and retrieve approach
-      get(".log.partial.likelihood")
-    }
+  aic <- function(y, mu, theta=NULL, wt, dev) {
+    
+  }
     
 
-    ## initialization is tough here... need data frame in reverse time order,
-    ## and intercept removed from X...
+  ## initialization has to add in the extra parameters of 
+  ## the cov matrix...
   
     preinitialize <- expression({
     ## code to evaluate in estimate.gam...
-      ## sort y (time) into decending order, and
-      ## re-order weights and rows of X accordingly
-      G$family.data <- list()
-      y.order <- order(G$y,decreasing=TRUE)
-      G$family.data$y.order <- y.order
-      G$y <- G$y[y.order]
-      G$X <- G$X[y.order,]
-      G$w <- G$w[y.order]
+      ydim <- ncol(G$y) ## dimension of response
+      nbeta <- ncole(G$X)
+      ntheta <- ydim*(ydim+1)/2 ## numer of cov matrix factor params
+      G$X <- cbind(G$X,matrix(0,nrow(G$X),ntheta)) ## add dummy columns to G$X
+      G$family.data <- list(ydim = ydim,nbeta=nbeta)
     })
     
     postproc <- expression({
-    ## code to evaluate in estimate.gam, to do with data ordering and 
-    ## baseline hazard estimation...
-      ## first get the estimated hazard and prediction information...
-      object$family.data <- G$family$hazard(G$y,G$X,object$coefficients,G$w)
-      ## now put the survivor function in object$fitted
-      object$fitted.values <- exp(-object$family.data$h[object$family.data$r]*exp(object$linear.predictors))
-      ## compute the null deviance...
-      s.base <- exp(-object$family.data$h[object$family.data$r]) ## baseline survival
-      object$null.deviance <- ## sum of squares of null deviance residuals
-      2*sum(abs((object$prior.weights + log(s.base) + object$prior.weights*(log(-log(s.base)))))) 
-      ## and undo the re-ordering...
-      object$linear.predictors[y.order] <- object$linear.predictors
-      object$fitted.values[y.order] <- object$fitted.values
-      object$y[y.order] <- object$y  
-      object$prior.weights[y.order] <- object$prior.weights
+    ## code to evaluate in estimate.gam, to do with estimated factor of
+    ## precision matrix, etc...
+      ydim <- object$family.data$ydim
+      object$family.data$R <- matrix(0,ydim,ydim)
+      ind <- object$family.data$nbeta + 1:(ydim*(ydim+1)/2);
+      theta <- object$coefficients[ind]
+      k <- 1;for (i in 1:ydim) for (j in i:ydim) {
+        if (i==j) R[i,j] <- exp(theta[k]) else R[i,j] <- theta[k]
+        k <- k + 1
+      } 
+      ##object$fitted.values <-
+      ## object$null.deviance <-
     })
     
     initialize <- expression({
-        n <- rep(1, nobs)
-        if (is.null(start)) start <- rep(0,ncol(x))
+      ## Ideally fit separate models to each component and
+      ## extract initial coefs, s.p.s and variances this way
     })
 
     hazard <- function(y, X,beta,wt) {

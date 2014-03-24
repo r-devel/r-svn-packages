@@ -1074,7 +1074,7 @@ betar <- function (theta = NULL, link = "logit") {
         while (sum(ind)>0&&k<20) { ## step halve only failed steps
           k <- k + 1
           delta[ind] <- delta[ind]/2
-          ls1$l[ind] <- gbh(y[ind],eta[ind]+delta[ind],phi,FALSE)$l
+          ls1$l[ind] <- gbh(y[ind],eta[ind]+delta[ind],theta,FALSE)$l
           ind <- ls1$l<ls$l
         }
         eta <- eta + delta
