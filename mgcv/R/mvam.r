@@ -21,8 +21,15 @@ mvn <- function() {
       ydim <- ncol(G$y) ## dimension of response
       nbeta <- ncole(G$X)
       ntheta <- ydim*(ydim+1)/2 ## numer of cov matrix factor params
+      lpi <- attr(G$X,"lpi")
       G$X <- cbind(G$X,matrix(0,nrow(G$X),ntheta)) ## add dummy columns to G$X
+      attr(G$X,"lpi") <- lpi
       G$family.data <- list(ydim = ydim,nbeta=nbeta)
+      ## now get initial parameters
+      for (k in 1:ydim) {
+        
+        magic(G$y[,k],G$X[,lpi[[k]]],sp,S,off)
+      }
     })
     
     postproc <- expression({
@@ -45,17 +52,6 @@ mvn <- function() {
       ## extract initial coefs, s.p.s and variances this way
     })
 
-    hazard <- function(y, X,beta,wt) {
-    ## get the baseline hazard function information, given times in descending order in y
-    ## model matrix (same ordering) in X, coefs in beta and censoring in wt (1 = death, 0
-    ## = censoring)
-      tr <- unique(y);r <- match(y,tr);nt <- length(tr)
-      oo <- .C("coxpp",as.double(X%*%beta),A=as.double(X),as.integer(r),d=as.integer(wt),
-               h=as.double(rep(0,nt)),q=as.double(rep(0,nt)),km=as.double(rep(0,nt)),n=as.integer(nrow(X)),p=as.integer(ncol(X)),
-               nt=as.integer(nt),PACKAGE="mgcv")
-      p <- ncol(X)
-      list(tr=tr,h=oo$h,q=oo$q,a=matrix(oo$A[p*nt],p,nt),nt=nt,r=r,km=oo$km)
-    }
 
     residuals <- function(object,type=c("deviance","martingale")) {
       type <- match.arg(type)
