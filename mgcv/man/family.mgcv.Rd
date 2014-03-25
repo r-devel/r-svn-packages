@@ -2,7 +2,7 @@
 \alias{family.mgcv}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Distribution families in mgcv}
-\description{As well as the standard families documented in \code{\link{family}} which can be used with functions \code{\link{gam}}, \code{\link{bam}} and \code{\link{gamm}}, \code{mgcv} also supplies some extra families, most of which are currently only usable with \code{\link{gam}}. These are described here.
+\description{As well as the standard families documented in \code{\link{family}} (see also \code{\link{glm}}) which can be used with functions \code{\link{gam}}, \code{\link{bam}} and \code{\link{gamm}}, \code{mgcv} also supplies some extra families, most of which are currently only usable with \code{\link{gam}}. These are described here.
 }
 
 
@@ -32,7 +32,8 @@ The following families implement more general model classes. Usable only with \c
 \item \code{\link{cox.ph}} the Cox Proportional Hazards model for survival data.
 \item \code{\link{gaulss}} a Gaussian location-scale model where the mean and the standard deviation are both modelled using smooth linear predictors.
 \item \code{\link{ziplss}} a `two-stage' zero inflated Poisson model, in which 'potential-presence' is modelled with one linear predictor, and Poisson mean abundance
-given potential presence is modelled with a second linear predictor.   
+given potential presence is modelled with a second linear predictor. 
+\item \code{\link{mvn}} multivariate normal additive models.   
  } %% end itemize 
 }
 

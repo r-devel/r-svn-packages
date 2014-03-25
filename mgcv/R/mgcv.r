@@ -1459,7 +1459,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
        ## make sure its BFGS if family only supplies these derivatives
-       if (!is.null(family$available.derivs)&&available.derivs==1) optimizer <- c("outer","bfgs")
+       if (!is.null(G$family$available.derivs)&&G$family$available.derivs==1) optimizer <- c("outer","bfgs")
     }
   }
 
@@ -1530,13 +1530,14 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
-  family <- G$family  
+  family <- G$family; nb.fam.reset <- FALSE
   if (outer.looping) {     
     ## how many performance iteration steps to use for initialization...
     fixedSteps <- if (inherits(G$family,"extended.family")) 0 else control$outerPIsteps  
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       scale <- G$sig2 <- 1
       G$family <- negbin(max(family$getTheta()),link=family$link)
+      nb.fam.seset <- TRUE
     }
   } else fixedSteps <- control$maxit+2
   
@@ -1561,7 +1562,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       lsp <- lsp2
     } 
   }
-  G$family <- family ## restore, in case manipulated for negative binomial 
+  if (nb.fam.reset) G$family <- family ## restore, in case manipulated for negative binomial 
     
   if (outer.looping) {
     # don't allow PI initial sp's too far from defaults, otherwise optimizers may

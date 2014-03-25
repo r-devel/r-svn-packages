@@ -34,12 +34,12 @@ mvn <- function(d=2) {
       attr(G$X,"lpi") <- lpi
       attr(G$X,"XX") <- XX
       G$family.data <- list(ydim = ydim,nbeta=nbeta)
-      G$family$ibeta = rep(0,ncol(G$X)))
+      G$family$ibeta = rep(0,ncol(G$X))
       ## now get initial parameters and stroe in family...
       for (k in 1:ydim) {
         sin <- G$off %in% lpi[[k]]
         Sk <- G$S[sin]
-        um <- magic(G$y[,k],G$X[,lpi[[k]]],rep(-1,sum(sin)),G$S[sin],off[sin]-lpi[[k]]+1,nt=control$nthreads)
+        um <- magic(G$y[,k],G$X[,lpi[[k]]],rep(-1,sum(sin)),G$S[sin],G$off[sin]-lpi[[k]][1]+1,nt=control$nthreads)
         G$family$ibeta[lpi[[k]]] <- um$b
         G$family$ibeta[nbeta+1] <- -.5*log(um$scale) ## initial log root precision
         nbeta <- nbeta + ydim - k + 1
@@ -49,16 +49,19 @@ mvn <- function(d=2) {
     postproc <- expression({
     ## code to evaluate in estimate.gam, to do with estimated factor of
     ## precision matrix, etc...
-      ydim <- object$family.data$ydim
-      object$family.data$R <- matrix(0,ydim,ydim)
-      ind <- object$family.data$nbeta + 1:(ydim*(ydim+1)/2);
+      ydim <- G$family.data$ydim
+      R <- matrix(0,ydim,ydim)
+      ind <- G$family.data$nbeta + 1:(ydim*(ydim+1)/2);
       theta <- object$coefficients[ind]
       k <- 1;for (i in 1:ydim) for (j in i:ydim) {
         if (i==j) R[i,j] <- exp(theta[k]) else R[i,j] <- theta[k]
         k <- k + 1
-      } 
-      ##object$fitted.values <-
-      ## object$null.deviance <-
+      }
+      object$family.data <- list(R=R) 
+      rsd <- R%*%t(object$y-object$fitted.values)
+      object$deviance <- sum(rsd^2)
+      rsd <- R%*%(t(object$y)-colMeans(object$y))
+      object$null.deviance <- sum(rsd^2)
     })
     
     initialize <- expression({
@@ -69,32 +72,13 @@ mvn <- function(d=2) {
     })
 
 
-    residuals <- function(object,type=c("deviance","martingale")) {
-## NOT DONE
+    residuals <- function(object,type=c("response","deviance")) {
       type <- match.arg(type)
-      w <- object$prior.weights;log.s <- log(object$fitted.values)
-      res <- w + log.s ## martingale residuals
-      if (type=="deviance") res <- sign(res)*sqrt(-2*(res + w * log(-log.s)))
+      res <- object$y - object$fitted.values
+      if (type=="deviance") res <- res%*%t(object$family.data$R)
       res 
     } ## residuals
 
-
-    predict <- function(family,se=FALSE,eta=NULL,y=NULL,
-               X=NULL,beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
-      ## prediction function.
-## NOT DONE
-      ii <- order(y,decreasing=TRUE) ## C code expects non-increasing
-      n <- nrow(X)
-      oo <- .C("coxpred",as.double(X[ii,]),t=as.double(y[ii]),as.double(beta),as.double(Vb),
-                a=as.double(family.data$a),h=as.double(family.data$h),q=as.double(family.data$q),
-                tr = as.double(family.data$tr),
-                n=as.integer(n),p=as.integer(ncol(X)),nt = as.integer(family.data$nt),
-                s=as.double(rep(0,n)),se=as.double(rep(0,n)),PACKAGE="mgcv")
-      s <- sef <- oo$s
-      s[ii] <- oo$s
-      sef[ii] <- oo$se    
-      if (se) return(list(fit=s,se.fit=sef)) else return(list(fit=s))
-    } ## predict
 
     rd <- qf <- NULL ## these functions currently undefined for Cox PH
 
@@ -110,20 +94,25 @@ mvn <- function(d=2) {
     ##    or its Choleski factor
     ## D is the diagonal pre-conditioning matrix used to obtain Hp
     ##   if Hr is the raw Hp then Hp = D*t(D*Hr)
-      lpi <- attr(X,"lpi")-1; ## lpi[[k]] is index of model matrix columns for dim k 
+      lpi <- attr(X,"lpi") ## lpi[[k]] is index of model matrix columns for dim k 
       m <- length(lpi)        ## number of dimensions of MVN
-      nb <- length(beta)      ## total number of parameters
+      lpstart <- rep(0,m)
+      for (i in 1:(m-1)) lpstart[i] <- lpi[[i+1]][1]
+      lpstart[m] <- lpi[[m]][length(lpi[[m]])]+1 
+      nb <- length(coef)      ## total number of parameters
       if (deriv<2) {
         nsp = 0;d1b <- dH <- 0
       } else {
         nsp = ncol(d1b)
         dH = rep(0,nsp*nb*nb)
       }
-      oo <- .C(C_mvn_ll,y=as.double(y),X=as.double(X),XX=as.double(attr(X,"XX")),
-               beta=as.double(beta),n=as.integer(nrow(X)),
-               lpi=as.integer(lpi),m=as.integer(m),ll=as.double(0),lb=as.double(beta*0),
-               lbb=as.double(rep(0,nb*nb)), dbeta = as.double(dbeta), dH = as.double(dH), 
-               deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1))
+      #cat("\nderiv=",deriv,"  lpstart=",lpstart," dim(y) = ",dim(y),
+      #    "\ndim(XX)=",dim(attr(X,"XX"))," m=",m," nsp=",nsp,"\n")
+      oo <- .C("mvn_ll",y=as.double(t(y)),X=as.double(X),XX=as.double(attr(X,"XX")),
+               beta=as.double(coef),n=as.integer(nrow(X)),
+               lpi=as.integer(lpstart-1),m=as.integer(m),ll=as.double(0),lb=as.double(coef*0),
+               lbb=as.double(rep(0,nb*nb)), dbeta = as.double(d1b), dH = as.double(dH), 
+               deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1),PACKAGE="mgcv")
       if (nsp==0) d1H <- NULL else if (deriv==2) {
         d1H <- matrix(0,nb,nsp)
         for (i in 1:nsp) { 
@@ -145,11 +134,10 @@ mvn <- function(d=2) {
     environment(aic) <- environment(ll) <- env
     structure(list(family = "Multivariate normal", 
         ## link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv, 
-        ll=ll,
+        ll=ll,nlp=d,
         aic = aic, 
-        ## mu.eta = stats$mu.eta, 
         initialize = initialize,preinitialize=preinitialize,postproc=postproc,
-        ## hazard=hazard,predict=predict,residuals=residuals,
+        residuals=residuals,
         validmu = validmu, ## valideta = stats$valideta, 
         ## rd=rd,qf=qf,  
         linfo = stats, ## link information list

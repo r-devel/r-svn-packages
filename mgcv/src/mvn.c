@@ -3,8 +3,6 @@
   likelihood and derivative evaluation for multivariate Gaussian 
   additive models.
 
-  R CMD SHLIB mvn.c to compile.
-
 */
 #include <stdlib.h>
 #include <stdio.h>

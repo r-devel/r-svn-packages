@@ -5,7 +5,8 @@
 \title{Generalized additive models with integrated smoothness estimation}
 
 \description{ Fits a generalized additive model (GAM) to
-data, the term `GAM' being taken to include any quadratically penalized GLM.  
+data, the term `GAM' being taken to include any quadratically penalized GLM and a variety of 
+other models estimated by a quadratically penalised likelihood type approach (see \code{\link{family.mgcv}}).  
 The degree of smoothness of model terms is estimated as part of
 fitting. \code{gam} can also fit any GLM subject to multiple quadratic penalties (including 
 estimation of degree of penalization). Isotropic or scale invariant smooths of any number of variables are
@@ -42,9 +43,9 @@ to the right hand side to specify that the linear predictor depends on smooth fu
 
 \item{family}{
 This is a family object specifying the distribution and link to use in
-fitting etc. See \code{\link{glm}} and \code{\link{family}} for more
-details. A negative binomial family is provided: see \code{\link{negbin}}. 
-\code{quasi} families actually result in the use of extended quasi-likelihood 
+fitting etc (see \code{\link{glm}} and \code{\link{family}}). See 
+\code{\link{family.mgcv}} for a full list of what is available, which goes well beyond exponential family.
+Note that \code{quasi} families actually result in the use of extended quasi-likelihood 
 if \code{method} is set to a RE/ML method (McCullagh and Nelder, 1989, 9.6).
 } 
 

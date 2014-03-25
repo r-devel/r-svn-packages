@@ -309,6 +309,10 @@ gam.check <- function(b, old.style=FALSE,
                    " (maximum possible: ",b$mgcv.conv$full.rank,")\n",sep="")
       }
     }
+    if (!is.null(b$rank)) {
+      cat("Model rank = ",b$rank,"/",length(b$coefficients),"\n")
+    }
+
     cat("\n")
     ## now check k
     kchck <- k.check(b,subsample=k.sample,n.rep=k.rep)

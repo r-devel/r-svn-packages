@@ -12,11 +12,13 @@
   zero inflated Poisson regression and heavy tailed regression. These are all 
   examples of 'extended families' now useable with 'gam'.
 
-*** gaulss and ziplss families, implementing modles with multiple linear 
+*** gaulss and ziplss families, implementing models with multiple linear 
   predictors. For gaulss there is a linear predictor for the Gaussian mean
   and another for the stnadard deviation. For ziplss there is a linear
   predictor controlling `potential presense' and another controlling 
   the Poisson mean, given presence. 
+
+*** mvn family for multivariate normal additive models.
 
 * gam now defaults to the Pearson estimator of the scale parameter to avoid
   poor scale estimates in the quasipoisson case with low counts (and possibly
@@ -24,7 +26,8 @@
   Thanks to Greg Dropkin, for reporting the issue.
 
 * 'print.gam' and 'summary.gam' now report the rank of the model if it is
-   rank deficient.
+   rank deficient. 'gam.check' reports the model rank whenever it is 
+   available.
 
 * fix of bug in 'k.check' called by 'gam.check' that gave an error for 
   smooths with by variables.
