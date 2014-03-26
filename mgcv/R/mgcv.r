@@ -3690,11 +3690,13 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
 } ## end of gam.vcomp
 
 
-vcov.gam <- function(object, freq = FALSE, dispersion = NULL, ...)
+vcov.gam <- function(object, freq = FALSE, dispersion = NULL,unconditional=FALSE, ...)
 ## supplied by Henric Nilsson <henric.nilsson@statisticon.se> 
 { if (freq)
     vc <- object$Ve
-  else vc <- object$Vp
+  else { 
+    vc <- if (unconditional&&!is.null(object$Vc)) object$Vc else object$Vp
+  }
   if (!is.null(dispersion))
     vc <- dispersion * vc / object$sig2
   name <- names(object$edf)
