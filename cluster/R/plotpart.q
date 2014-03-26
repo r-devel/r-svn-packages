@@ -301,8 +301,7 @@ function(x, clus, diss = FALSE, s.x.2d = mkCheckX(x, diss),
 			  ierr = integer(1))
 		if(res$ierr != 0)
 		    ## MM : exactmve not available here !
-		    warning("Error in Fortran routine for the spanning ellipsoid,",
-			    "\n rank problem??")
+		    warning("Error in Fortran routine for the spanning ellipsoid,\n rank problem??")
 
 		cov <- cov.wt(x, res$prob)
 		loc[i, ] <- cov$center
@@ -509,8 +508,8 @@ clusplot.partition <- function(x, main = NULL, dist = NULL, ...)
 	if(!is.null(x$call)) {
 	    xD <- try(eval(x$call[[2]], envir = parent.frame()))
 	    if(inherits(xD, "try-error") || !inherits(xD, "dist"))
-		stop("no diss nor data found, nor the original argument of ",
-		     deparse(x$call))
+		stop(gettextf("no diss nor data found, nor the original argument of %s",
+			      deparse(x$call)))
 	    ## else
 	    ## warning("both 'x$diss' and 'dist' are empty; ",
 	    ##	       "trying to find the first argument of ", deparse(x$call))

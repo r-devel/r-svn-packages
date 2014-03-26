@@ -38,14 +38,14 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 
     if((diss <- as.logical(diss))) {
 	## check type of input vector
-	if(any(is.na(x))) stop(..msg$error["NAdiss"])
+	if(any(is.na(x))) stop("NA-values in the dissimilarity matrix not allowed.")
 	if(data.class(x) != "dissimilarity") { # try to convert to
 	    if(!is.null(dim(x))) {
 		x <- as.dist(x) # or give an error
 	    } else {
 		## possibly convert input *vector*
 		if(!is.numeric(x) || is.na(n <- sizeDiss(x)))
-		    stop(..msg$error["non.diss"])
+		    stop("'x' is not and cannot be converted to class \"dissimilarity\"")
 		attr(x, "Size") <- n
 	    }
 	    class(x) <- dissiCl
