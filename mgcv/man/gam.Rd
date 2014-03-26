@@ -380,7 +380,9 @@ print(b)
 
 ## change the smoothness selection method to REML
 b0 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="REML")
-plot(b0,pages=1,scheme=1)
+## use alternative plotting scheme, and way intervals include
+## smoothing parameter uncertainty...
+plot(b0,pages=1,scheme=1,unconditional=TRUE) 
 
 ## Would a smooth interaction of x0 and x1 be better?
 ## Use tensor product smooth of x0 and x1, basis 

@@ -20,6 +20,10 @@
 
 *** mvn family for multivariate normal additive models.
 
+* With REML/ML smoothness selection in gam an extra covariance matrix 'Vc'
+  is now computed which allows for smoothing parameter uncertainty. See
+  the 'unconditional' arguments to 'predict.gam' and 'plot.gam' to use this. 
+
 * gam now defaults to the Pearson estimator of the scale parameter to avoid
   poor scale estimates in the quasipoisson case with low counts (and possibly
   elsewhere). Gaussian, Poisson and binomial inference invariant to change. 

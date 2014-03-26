@@ -415,7 +415,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             Det2=as.double(dd$Deta2),Dth2=as.double(dd$Dth2),Det.th=as.double(dd$Detath),
             Det2.th=as.double(dd$Deta2th),Det3=as.double(dd$Deta3),Det.th2 = as.double(dd$Detath2),
             Det4 = as.double(dd$Deta4),Det3.th=as.double(dd$Deta3th), Deta2.th2=as.double(dd$Deta2th2),
-            beta=as.double(coef),D1=as.double(rep(0,ntot)),D2=as.double(rep(0,ntot^2)),
+            beta=as.double(coef),b1=as.double(rep(0,ntot*ncol(x))),
+            D1=as.double(rep(0,ntot)),D2=as.double(rep(0,ntot^2)),
             P=as.double(0),P1=as.double(rep(0,ntot)),P2 = as.double(rep(0,ntot^2)),
             ldet=as.double(1-2*(scoreType=="ML")),ldet1 = as.double(rep(0,ntot)), 
             ldet2 = as.double(rep(0,ntot^2)),
@@ -428,6 +429,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
    rV <- T %*% rV   
+   ## derivatives of coefs w.r.t. sps etc...
+   db.drho <- if (deriv) T %*% matrix(oo$b1,ncol(x),ntot) else NULL 
    Kmat <- matrix(0,nrow(x),ncol(x)) 
    Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
@@ -497,7 +500,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,
         REML=REML,REML1=REML1,REML2=REML2,
-        rV=rV,
+        rV=rV,db.drho=db.drho,
         scale.est=scale,reml.scale=scale,
         aic=aic.model,
         rank=oo$rank.est,
@@ -847,11 +850,12 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        L=L, ## chol factor of pre-conditioned penalized hessian
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
-       St=St) ## total penalty matrix
+       St=St, ## total penalty matrix
+       db.drho = d1b) ## derivative of penalty coefs w.r.t. log sps.
        #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
-       #b1 = d1b,b2 = d2b)
+       #b2 = d2b)
        #H = llr$lbb,dH = llr$d1H,d2H=llr$d2H)
     #ret$dev <- if (is.null(family$residuals)) NA else sum(family$residuals(ret,"deviance")^2)
     ret
@@ -929,8 +933,16 @@ gam.fit5.post.proc <- function(object,Sl) {
     lbb[ibd,ibd] <- lbbt
   }  
 
+  ## compute the smoothing parameter uncertainty correction...
+  ev <- eigen(object$outer.info$hess,symmetric=TRUE)
+  ind <- ev$values <= 0
+  ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+  Vc <- crossprod((ev$values*t(ev$vectors))%*%t(object$db.drho))
+  Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
+
   ## reverse the various re-parameterizations...
- 
+  Vc <- Sl.repara(object$rp,Vc,inverse=TRUE) 
+  Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
   Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
   R <- Sl.repara(object$rp,R,inverse=TRUE,both.sides=FALSE)
@@ -938,8 +950,9 @@ gam.fit5.post.proc <- function(object,Sl) {
   F <- Vb%*%crossprod(R)
   Ve <- F%*%Vb ## 'frequentist' cov matrix
   edf <- diag(F);edf1 <- 2*edf - rowSums(t(F)*F)
+  edf2 <- diag(Vc%*%crossprod(R))
   ## note hat not possible here...
-  list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,F=F,R=R)
+  list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)
 } ## gam.fit5.post.proc
 
 

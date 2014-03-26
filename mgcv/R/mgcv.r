@@ -1408,8 +1408,11 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   if (inherits(family,"general.family")) {
     mv <- gam.fit5.post.proc(object,G$Sl)
     object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
-  
+    object$edf2 <- mv$edf2
   } else mv <- gam.fit3.post.proc(G$X,object)
+  ## note: use of the following in place of Vp appears to mess up p-values for smooths,
+  ##       but doesn't change r.e. p-values of course. 
+  if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
   object$Vp <- mv$Vb
   object$hat<-mv$hat
   object$Ve <- mv$Ve
@@ -1453,8 +1456,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (!(method%in%c("REML","ML"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
-       if (!is.null(G$offset)) for (i in 1:length(G$offset)) 
+       if (!is.null(G$offset)) if (is.list(G$offset)) { for (i in 1:length(G$offset)) 
          if (!is.null(G$offset[[i]])) warning("sorry, general families currently ignore offsets")
+       } else if (sum(G$offset==0)>0) warning("sorry, general families currently ignore offsets")
+
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
@@ -2319,7 +2324,8 @@ model.matrix.gam <- function(object,...)
 
 
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
-                       block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,...) {
+                       block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,
+                       unconditional=FALSE,...) {
 
 # This function is used for predicting from a GAM. 'object' is a gam object, newdata a dataframe to
 # be used in prediction......
@@ -2354,6 +2360,11 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 #              == "na.omit" or "na.exclude" then NA predictors result in
 #                       dropping
 # if GC is TRUE then gc() is called after each block is processed
+
+  if (unconditional) {
+    if (is.null(object$Vc)) warning("Smoothness uncertainty corrected covariance not available") else 
+    object$Vp <- object$Vc
+  }
 
   if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  
   { warning("Unknown type, reset to terms.")

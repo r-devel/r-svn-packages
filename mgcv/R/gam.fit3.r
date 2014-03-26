@@ -552,8 +552,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                 mu=as.double(mug),eta=as.double(etag),y=as.double(yg),
                 p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),
                 g3=as.double(g3),g4=as.double(g4),V0=as.double(V),V1=as.double(V1),
-                V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),D1=as.double(D1),
-                D2=as.double(D2),P=as.double(dum),P1=as.double(P1),P2=as.double(P2),
+                V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),b1=as.double(rep(0,nSp*ncol(x))),
+                D1=as.double(D1),D2=as.double(D2),P=as.double(dum),P1=as.double(P1),P2=as.double(P2),
                 trA=as.double(dum),trA1=as.double(trA1),trA2=as.double(trA2),
                 rV=as.double(rV),rank.tol=as.double(rank.tol),
                 conv.tol=as.double(control$epsilon),rank.est=as.integer(1),n=as.integer(length(z)),
@@ -566,6 +566,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            cat("done!\n")
          }
  
+         ## get dbeta/drho, directly in original parameterization
+         db.drho <- if (deriv) T%*%matrix(oo$b1,ncol(x),nSp) else NULL
+
          rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
          
          Kmat <- matrix(0,nrow(x),ncol(x)) 
@@ -705,7 +708,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         ## undo reparameterization....
         coef <- as.numeric(T %*% coef)
         rV <- T %*% rV
-
         names(coef) <- xnames 
     } ### end if (!EMPTY)
     names(residuals) <- ynames
@@ -737,7 +739,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
-        UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,
+        UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
@@ -764,7 +766,16 @@ gam.fit3.post.proc <- function(X,object) {
   qrx <- pqr(sqrt(object$weights)*X,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
   ##bias = as.numeric(object$coefficients - F%*%object$coefficients)
-  list(Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,hat=hat,F=F,R=R)
+  if (!is.na(object$reml.scale)) { ## compute sp uncertainty correction
+    M <- ncol(object$db.drho) 
+    ev <- eigen(object$outer.info$hess,symmetric=TRUE)
+    ind <- ev$values <= 0
+    ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+    rV <- (ev$values*t(ev$vectors))[,1:M]
+    Vc <- crossprod(rV%*%t(object$db.drho))
+    Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
+  } else Vc <- NULL
+  list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
 
 

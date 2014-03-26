@@ -2101,7 +2101,8 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
           double *Dth,double *Det,double *Det2,double *Dth2,double *Det_th,
           double *Det2_th,double *Det3,double *Det_th2,
           double *Det4, double *Det3_th, double *Det2_th2,
-          double *beta,double *D1,double *D2,double *P0,double *P1,double *P2,
+          double *beta,double *b1,
+          double *D1,double *D2,double *P0,double *P1,double *P2,
           double *ldet, double *ldet1,double *ldet2,double *rV,
           double *rank_tol,int *rank_est,
 	  int *n,int *q, int *M,int *n_theta, int *Mp,int *Enrow,int *rSncol,int *deriv,
@@ -2176,7 +2177,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 
 */
 { double *work,*p0,*p1,*p2,*p3,*p4,*p5,*p6,*p7,*K=NULL,
-    *Vt,*b1=NULL,*b2=NULL,*P,xx=0.0,*eta1=NULL,*eta2=NULL,
+    *Vt,*b2=NULL,*P,xx=0.0,*eta1=NULL,*eta2=NULL,
     *PKtz,*wi=NULL,*w1=NULL,*w2=NULL,*Tk=NULL,*Tkm=NULL,
     *dev_hess=NULL,*R,*raw,*Q1,*Q,*nulli,*WX,*tau,*R1;
   int i,j,k,*pivot1,ScS,*pi,rank,m,*pivot,
@@ -2243,7 +2244,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   ntot = *M + *n_theta;
   n_2dCols = (ntot  * (1 + ntot))/2;
   if (*deriv) {
-    b1 = (double *)R_chk_calloc((size_t) rank * ntot,sizeof(double)); 
+    //b1 = (double *)R_chk_calloc((size_t) rank * ntot,sizeof(double)); 
     eta1 = (double *)R_chk_calloc((size_t) *n * ntot,sizeof(double)); 
     if (deriv2) {
       b2 = (double *)R_chk_calloc((size_t) rank * n_2dCols,sizeof(double)); 
@@ -2364,10 +2365,19 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 
   } else get_ddetXWXpS(ldet1,ldet2,P,K,sp,rS,rSncol,Tk,Tkm,n,&rank,&rank,M,n_theta,deriv,*nt); 
   
- 
- /* and the derivatives of b'S'b w.r.t. all parameters [theta,sp] */
-  
- // get_bSb(P0,P1,P2,sp,E,rS,rSncol,Enrow,&rank,M,n_theta,PKtz,b1,b2,deriv);
+  if (*deriv) { /* unpivot and zero pad b1 */
+    
+    for (j = *M-1;j>=0;j--) {
+      p0 = b1 + rank * j; /* start of source column */
+      for (i=0;i< rank;i++) beta[pivot1[i]] = p0[i];
+      undrop_rows(beta,*q,1,drop,n_drop); /* zero rows inserted */
+      p1 = b1 + *q * j; /* start of target column */
+      for (p0=beta,p2=p0 + *q;p0<p2;p0++,p1++) *p1 = *p0;
+    }
+  }
+  /* PKtz into beta... */
+  for (i=0;i< rank;i++) beta[pivot1[i]] = PKtz[i];
+  undrop_rows(beta,*q,1,drop,n_drop); /* zero rows inserted */
 
 
 
@@ -2414,7 +2424,8 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   *rank_est = rank;
 
   if (*deriv) { 
-    R_chk_free(b1);R_chk_free(eta1);R_chk_free(Tk);
+    //R_chk_free(b1);
+    R_chk_free(eta1);R_chk_free(Tk);
     R_chk_free(w1);
     if (deriv2) {
       R_chk_free(b2);R_chk_free(eta2);R_chk_free(w2);
@@ -2435,7 +2446,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 	  double *sp,double *z,double *w,double *wf,double *alpha,double *mu,double *eta, double *y,
 	 double *p_weights,double *g1,double *g2,double *g3,double *g4,double *V0,
-	 double *V1,double *V2,double *V3,double *beta,double *D1,double *D2,
+	  double *V1,double *V2,double *V3,double *beta,double *b1,double *D1,double *D2,
     double *P0, double *P1,double *P2,double *trA,
     double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
@@ -2482,6 +2493,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
      Note that g''(mu) g'''(mu) and g''''(mu) are *divided by* g'(mu)
    * V0, V1, V2, V3 are n-vectors of the variance function and first three derivatives,
      Note that V'(mu), V''(mu) & V'''(mu) are divided by V(mu)
+   * beta is the vector for the returned coef vector and
+     b1 is for returning the q by M array of derivs of coefs w.r.t. log sps 
    * D1 and D2 are an M-vector and M by M matrix for returning the first 
      and second derivatives of the deviance wrt the log smoothing parameters.
      if *REML is non zero then the derivs will be of the penalized deviance,
@@ -2539,7 +2552,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
 
 */
 { double *WX,*tau,*work,*p0,*p1,*p2,*p3,*K=NULL,
-    *R1,*Vt,xx,*b1,*b2,*P,*Q,
+    *R1,*Vt,xx,*b2,*P,*Q,
     *af1=NULL,*af2=NULL,*a1,*a2,*eta1=NULL,*eta2=NULL,
     *PKtz,*v1,*v2,*wi,*w1,*w2,*pw2,*Tk,*Tkm,*Tfk=NULL,*Tfkm=NULL,
          *pb2, *dev_grad,*dev_hess=NULL,
@@ -2615,7 +2628,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     b2 = (double *)R_chk_calloc((size_t)n_b2,sizeof(double)); /* 2nd derivs of beta */
    
     n_b1 = rank * *M;
-    b1 = (double *)R_chk_calloc((size_t)n_b1,sizeof(double)); /* 1st derivs of beta */
+    //b1 = (double *)R_chk_calloc((size_t)n_b1,sizeof(double)); /* 1st derivs of beta */
    
     n_eta1 = *n * *M;
     eta1 = (double *)R_chk_calloc((size_t)n_eta1,sizeof(double));
@@ -2812,11 +2825,21 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   }
 
 
+  
+  if (*deriv) { /* unpivot and zero pad b1 */
+    
+    for (j = *M-1;j>=0;j--) {
+      p0 = b1 + rank * j; /* start of source column */
+      for (i=0;i< rank;i++) beta[pivot1[i]] = p0[i];
+      undrop_rows(beta,*q,1,drop,n_drop); /* zero rows inserted */
+      p1 = b1 + *q * j; /* start of target column */
+      for (p0=beta,p2=p0 + *q;p0<p2;p0++,p1++) *p1 = *p0;
+    }
+  }
   /* PKtz into beta... */
-
   for (i=0;i< rank;i++) beta[pivot1[i]] = PKtz[i];
-
   undrop_rows(beta,*q,1,drop,n_drop); /* zero rows inserted */
+
 
  
   /* Now get the REML penalty */
@@ -2858,7 +2881,8 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
   R_chk_free(work);R_chk_free(PKtz);
  
   if (*deriv) {
-    R_chk_free(b1);R_chk_free(eta1);
+    //R_chk_free(b1);
+    R_chk_free(eta1);
     R_chk_free(eta2);
     R_chk_free(a1);R_chk_free(a2);R_chk_free(wi);R_chk_free(dev_grad);
     R_chk_free(w1);R_chk_free(w2);R_chk_free(b2);
