@@ -1425,7 +1425,7 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
     } else
     { stub <- paste(ifelse("xlab" %in% dnm, "" , ",xlab=view[1]"),
                     ifelse("ylab" %in% dnm, "" , ",ylab=view[2]"),
-                    ifelse("main" %in% dnm, "" , ",zlab=zlab"),",...)",sep="")
+                    ifelse("zlab" %in% dnm, "" , ",zlab=zlab"),",...)",sep="")
       if (color=="bw")
       { op <- par(bg="white")
         txt <- paste("persp(m1,m2,z,col=\"white\",zlim=c(min.z,max.z) ",stub,sep="") # assemble persp() call
