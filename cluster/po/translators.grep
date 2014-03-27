@@ -1,0 +1,10 @@
+-*- mode: grep; default-directory: "~/R/Pkgs/cluster/po/" -*-
+Grep started at Thu Mar 27 10:11:47
+
+grep -nHi -e Translator: *.po
+R-de.po:11:"Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
+R-en@quot.po:29:"Last-Translator: Automatically generated\n"
+R-fr.po:6:"Last-Translator: \n"
+R-pl.po:7:"Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
+
+Grep finished (matches found) at Thu Mar 27 10:11:48

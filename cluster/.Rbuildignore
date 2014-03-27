@@ -43,3 +43,4 @@ tests/clara-segfault.*
 tests/clara-ex.Rout.*
 tests/clara-MM.R.*
 00-orig-src
+po/translator.*
