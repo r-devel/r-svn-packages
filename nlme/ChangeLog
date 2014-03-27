@@ -1,3 +1,8 @@
+2014-03-27  Brian Ripley
+
+	* R/{lme,newMethods,nlsList}.R: modify messsages.
+	* po/{R-pl,pl}.po: update.
+
 2014-03-19  Brian Ripley
 
 	* tests/missing.{R,Rout.save}: reduce 'digits' for cleaner results
