@@ -1,7 +1,7 @@
 Package: KernSmooth
 Priority: recommended
-Version: 2.23-11
-Date: 2014-03-19
+Version: 2.23-12
+Date: 2014-03-28
 Title: Functions for kernel smoothing for Wand & Jones (1995)
 Authors@R: c(person("Matt", "Wand", role = "aut",
 	             email = "Matt.Wand@uts.edu.au"),

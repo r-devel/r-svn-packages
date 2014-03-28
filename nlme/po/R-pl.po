@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: nlme 3.1-115\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2013-08-17 08:12\n"
+"POT-Creation-Date: 2014-03-28 07:43\n"
 "PO-Revision-Date: 2014-03-25 17:00+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -275,9 +275,6 @@ msgstr "zakres musi być > 0 w początkowej wartości \"corShere\""
 # stop("initial value for \"corSpher\" parameters of wrong dimension")
 msgid "initial value for \"corSpher\" parameters of wrong dimension"
 msgstr "początkowa wartość parametrów \"corSpher\" ma niepoprawny wymiar"
-
-msgid "negative control$nlmStepMax - using default value"
-msgstr "ujemna wartość 'control$nlmStepMax' - używanie wartości domyślnej"
 
 # nlme/R/gls.R: 48
 # stop("'model' argument must be a formula of the form \"resp ~ pred\"")
@@ -690,6 +687,24 @@ msgid "fewer observations than random effects in all level %s groups"
 msgstr ""
 "mniej obserwacji niż losowych efektów we wszystkich grupach w poziomie %s"
 
+# nlme/R/lme.R: 342
+# gettextf("%s problem, convergence error code = %s\n  message = %s", controlvals$opt, optRes$convergence, paste(optRes$message, collapse = ""))
+msgid ""
+"%s problem, convergence error code = %s\n"
+"  message = %s"
+msgstr ""
+"problem %s, kod błędu zbieżności = %s\n"
+"  komunikat = %s"
+
+# nlme/R/lme.R: 368
+# gettext("maximum number of iterations (lmeControl(maxIter)) reached without convergence")
+msgid ""
+"maximum number of iterations (lmeControl(maxIter)) reached without "
+"convergence"
+msgstr ""
+"maksymalna liczba iteracji ('lmeControl(maxIter)') została osiągnięta bez "
+"uzyskania zbieżności"
+
 msgid "object must inherit from class \"lme\""
 msgstr "argument 'object' nie jest obiektem klasy \"lme\""
 
@@ -732,11 +747,11 @@ msgstr "wszystkie dopasowane obiekty muszą mieć tę samą metodę oszacowania"
 
 # nlme/R/lme.R: 1019
 # warning("fitted objects with different fixed effects. REML comparisons are not meaningful.")
-msgid "fitted objects with different fixed effects."
+#, fuzzy
+msgid ""
+"fitted objects with different fixed effects. REML comparisons are not "
+"meaningful."
 msgstr "dopasowane obiekty z różnymi stałymi efektami."
-
-msgid "REML comparisons are not meaningful."
-msgstr "Porównania REML nie mają sensu."
 
 # nlme/R/lme.R: 1026
 # stop("objects must have a \"call\" component or attribute")
@@ -884,7 +899,8 @@ msgstr "argument 'form' może być jedynie formułą lub listą formuł"
 # stop(gettextf("level of %s does not match formula %s", level[aux], sQuote(deparse(form))), domain = "R-nlme")
 # nlme/R/newMethods.R: 97
 # stop(gettextf("level of %s does not match formula %s", level[aux], sQuote(deparse(form))), domain = "R-nlme")
-msgid "level of %s does not match formula"
+#, fuzzy
+msgid "level of %s does not match formula %s"
 msgstr "poziom %s nie zgadza się z formułą"
 
 # nlme/R/reStruct.R: 66
@@ -1079,6 +1095,32 @@ msgid ""
 msgstr ""
 "argument 'data' musi być obiektem klasy \"groupedData\" jeśli argument "
 "'fomula' nie zawiera grup"
+
+# nlme/R/nlsList.R: 87
+# stop("old-style self-starting model functions\nare no longer supported.\nNew selfStart functions are available.\nUse\n  SSfpl instead of fpl,\n  SSfol instead of first.order.log,\n  SSbiexp instead of biexp,\n  SSlogis instead of logistic.\nIf writing your own selfStart model, see\n  \"help(selfStart)\"\nfor the new form of the \"initial\" attribute.", domain = "R-nlme")
+msgid ""
+"old-style self-starting model functions\n"
+"are no longer supported.\n"
+"New selfStart functions are available.\n"
+"Use\n"
+"  SSfpl instead of fpl,\n"
+"  SSfol instead of first.order.log,\n"
+"  SSbiexp instead of biexp,\n"
+"  SSlogis instead of logistic.\n"
+"If writing your own selfStart model, see\n"
+"  \"help(selfStart)\"\n"
+"for the new form of the \"initial\" attribute."
+msgstr ""
+"samoinicjujące się funkcje modelu starego stylu nie są już dłużej wspierane\n"
+"Brak dostępnych funkcji 'selfStart'.\n"
+"Użyj\n"
+"  'SSfpl' zamiast 'fpl',\n"
+"  'SSfol' zamiast 'first.order.log',\n"
+"  'SSbiexp' zamiast 'biexp',\n"
+"  'SSlogis' zamiast 'logistic'.\n"
+"Jeśli piszesz swój własny model 'selfStart', zobacz\n"
+"  'help(selfStart)'\n"
+"aby uzyskać informację o nowej formie atrybutu 'initial'."
 
 # nlme/R/nlsList.R: 148
 # stop("missing call attribute in \"nlsList\" object")
@@ -1864,6 +1906,12 @@ msgstr[1] ""
 msgstr[2] ""
 "nazwy grup nie zgadzają się z początkowymi wartościami dla efektów losowych: "
 "%s"
+
+#~ msgid "negative control$nlmStepMax - using default value"
+#~ msgstr "ujemna wartość 'control$nlmStepMax' - używanie wartości domyślnej"
+
+#~ msgid "REML comparisons are not meaningful."
+#~ msgstr "Porównania REML nie mają sensu."
 
 # nlme/R/VarCov.R: 26
 # stop("'getVarCov.lme()' is not implemented for objects of class \"nlme\"")
@@ -2677,24 +2725,6 @@ msgstr[2] ""
 #~ msgstr ""
 #~ "można dopasować jedynie obiekty klasy %s z pojedynczą zmienną grupującą"
 
-# nlme/R/lme.R: 342
-# gettextf("%s problem, convergence error code = %s\n  message = %s", controlvals$opt, optRes$convergence, paste(optRes$message, collapse = ""))
-#~ msgid ""
-#~ "%s problem, convergence error code = %s\n"
-#~ "  message = %s"
-#~ msgstr ""
-#~ "problem %s, kod błędu zbieżności = %s\n"
-#~ "  komunikat = %s"
-
-# nlme/R/lme.R: 368
-# gettext("maximum number of iterations (lmeControl(maxIter)) reached without convergence")
-#~ msgid ""
-#~ "maximum number of iterations (lmeControl(maxIter)) reached without "
-#~ "convergence"
-#~ msgstr ""
-#~ "maksymalna liczba iteracji ('lmeControl(maxIter)') została osiągnięta bez "
-#~ "uzyskania zbieżności"
-
 # nlme/R/lme.R: 981
 # stop(gettextf("objects must inherit from at least one of the following classes: %s", paste(dQuote(valid.classes), collapse = ", ")))
 #~ msgid "objects must inherit from at least one of the following classes: %s"
@@ -2846,33 +2876,6 @@ msgstr[2] ""
 
 #~ msgid "PNLS step: RSS = %s"
 #~ msgstr "krok PNLS: RSS = %s"
-
-# nlme/R/nlsList.R: 87
-# stop("old-style self-starting model functions\nare no longer supported.\nNew selfStart functions are available.\nUse\n  SSfpl instead of fpl,\n  SSfol instead of first.order.log,\n  SSbiexp instead of biexp,\n  SSlogis instead of logistic.\nIf writing your own selfStart model, see\n  \"help(selfStart)\"\nfor the new form of the \"initial\" attribute.", domain = "R-nlme")
-#~ msgid ""
-#~ "old-style self-starting model functions\n"
-#~ "are no longer supported.\n"
-#~ "New selfStart functions are available.\n"
-#~ "Use\n"
-#~ "  SSfpl instead of fpl,\n"
-#~ "  SSfol instead of first.order.log,\n"
-#~ "  SSbiexp instead of biexp,\n"
-#~ "  SSlogis instead of logistic.\n"
-#~ "If writing your own selfStart model, see\n"
-#~ "  \"help(selfStart)\"\n"
-#~ "for the new form of the \"initial\" attribute."
-#~ msgstr ""
-#~ "samoinicjujące się funkcje modelu starego stylu nie są już dłużej "
-#~ "wspierane\n"
-#~ "Brak dostępnych funkcji 'selfStart'.\n"
-#~ "Użyj\n"
-#~ "  'SSfpl' zamiast 'fpl',\n"
-#~ "  'SSfol' zamiast 'first.order.log',\n"
-#~ "  'SSbiexp' zamiast 'biexp',\n"
-#~ "  'SSlogis' zamiast 'logistic'.\n"
-#~ "Jeśli piszesz swój własny model 'selfStart', zobacz\n"
-#~ "  'help(selfStart)'\n"
-#~ "aby uzyskać informację o nowej formie atrybutu 'initial'."
 
 # nlme/R/pdMat.R: 90
 # warning(gettextf("ignoring argument '%s'", "form"))
