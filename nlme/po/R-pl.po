@@ -899,9 +899,8 @@ msgstr "argument 'form' może być jedynie formułą lub listą formuł"
 # stop(gettextf("level of %s does not match formula %s", level[aux], sQuote(deparse(form))), domain = "R-nlme")
 # nlme/R/newMethods.R: 97
 # stop(gettextf("level of %s does not match formula %s", level[aux], sQuote(deparse(form))), domain = "R-nlme")
-#, fuzzy
 msgid "level of %s does not match formula %s"
-msgstr "poziom %s nie zgadza się z formułą"
+msgstr "poziom %s nie zgadza się z formułą %s"
 
 # nlme/R/reStruct.R: 66
 # stop(gettextf("'%s' argument must have a formula", "object"))

@@ -589,9 +589,8 @@ msgid "'form' can only be a formula, or a list of formulas"
 msgstr "'form' kann nur eine Formel oder eine Liste von Formeln sein."
 
 # R/newMethods.R
-#, fuzzy
 msgid "level of %s does not match formula %s"
-msgstr "Stufe von %s passt nicht zu Formel"
+msgstr "Stufe von %s passt nicht zu Formel %s"
 
 msgid "'form' argument must be a formula"
 msgstr "'form'-Argument muss eine Formel sein"
