@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cluster 1.14.5\n"
 "POT-Creation-Date: 2014-03-26 21:02\n"
-"PO-Revision-Date: 2014-03-18 12:07+0100\n"
-"Last-Translator: Philippe.GROSJEAN@umons.ac.be\n"
+"PO-Revision-Date: 2014-03-30 09:03+0100\n"
+"Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: none\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -25,14 +25,15 @@ msgstr "méthode d'agrégation ambigüe"
 msgid "'par.method' must be of length 1, 3, or 4"
 msgstr "'par.method' doit être de longueur 1, 3 ou 4"
 
-#, fuzzy
 msgid "NA-values in the dissimilarity matrix not allowed."
 msgstr ""
-"Aucune agrégation n'est réalisée, présence de NAs dans la matrice de "
+"les valeurs manquantes (NA) ne sont pas autorisées dans la matrice de "
 "dissimilarité."
 
 msgid "'x' is not and cannot be converted to class \"dissimilarity\""
 msgstr ""
+"'x' n'est pas et ne peux pas être converti en un objet de classe "
+"\"dissimilarity\""
 
 msgid "x is not a numeric dataframe or matrix."
 msgstr ""
@@ -65,16 +66,19 @@ msgstr "'samples' doit valoir au moins 1"
 msgid "when 'medoids.x' is FALSE, 'keep.data' must be too"
 msgstr "lorsque 'medoids.x' est FALSE, 'keep.data' doit l'être aussi"
 
-#, fuzzy
 msgid ""
 "Each of the random samples contains objects between which no distance can be "
 "computed."
-msgstr "Chacun des échantillons aléatoires contient des objets entre lesquels"
+msgstr ""
+"Chacun des échantillons aléatoires contient des objets entre lesquels la "
+"distance ne peut être calculée."
 
 msgid ""
 "For each of the %d samples, at least one object was found which could not be "
 "assigned to a cluster (because of missing values)."
 msgstr ""
+"Dans chacun des %d échantillons, au moins un objet ne peut être assigné à un "
+"groupe (parce qu'il contient des valeurs manquantes)"
 
 msgid "invalid 'jstop' from .C(cl_clara,.):"
 msgstr "'jstop' incorrect obtenu de .C(cl_clara,.) :"
@@ -89,21 +93,17 @@ msgid "x is not a dataframe or a numeric matrix."
 msgstr ""
 "x n'est pas un tableau de données (data frame) ou une matrice numérique."
 
-#, fuzzy
 msgid "invalid %s; must be named list"
-msgstr " ; doit être une liste nommée"
+msgstr "%s incorrect ; doit être une liste nommée"
 
-#, fuzzy
 msgid "%s has invalid column names"
-msgstr "a des noms de colonnes incorrects"
+msgstr "%s a des noms de colonnes incorrects"
 
-#, fuzzy
 msgid "%s must be in 1:ncol(x)"
-msgstr "doit être compris dans 1:ncol(x)"
+msgstr "%s doit être compris dans 1:ncol(x)"
 
-#, fuzzy
 msgid "%s must contain column names or numbers"
-msgstr "doit contenir des noms de colonnes ou des nombres"
+msgstr "%s doit contenir des noms de colonnes ou des nombres"
 
 msgid "at least one binary variable has more than 2 levels."
 msgstr "au moins une des variables binaires a plus de deux niveaux."
@@ -114,13 +114,12 @@ msgstr "au moins une variable binaire n'a pas deux nivea\tux."
 msgid "at least one binary variable has values not in {0,1,NA}"
 msgstr "au moins une variable binaire a des valeurs autres que {0,1,NA}"
 
-#, fuzzy
 msgid "binary variable(s) %s treated as interval scaled"
-msgstr "traitées comme intervalles standardisés"
+msgstr ""
+"la ou les variables binaires %s sont traitées comme intervalles standardisés"
 
-#, fuzzy
 msgid "%s has constant columns %s; these are standardized to 0"
-msgstr "; elles sont standardisées à 0"
+msgstr "%s à des colonnes constantes %s ; elles sont standardisées à 0"
 
 msgid "with mixed variables, metric \"gower\" is used automatically"
 msgstr ""
@@ -130,14 +129,12 @@ msgstr ""
 msgid "'weights' must be of length p (or 1)"
 msgstr "'weights' doit être de longueur p (ou 1)"
 
-#, fuzzy
 msgid "invalid type %s for column numbers %s"
-msgstr "pour les numéros de colonnes"
+msgstr "type inadéquat %s pour les numéros de colonnes %s"
 
-#, fuzzy
 msgid "NA values in the dissimilarity matrix not allowed."
 msgstr ""
-"Aucune agrégation n'est réalisée, présence de NAs dans la matrice de "
+"les valeurs manquantes (NA) ne sont pas admises dans la matrice de "
 "dissimilarité."
 
 msgid "No clustering performed, NA's in dissimilarity matrix."
@@ -153,13 +150,11 @@ msgstr "valeurs NAs ignorées"
 msgid "no points without missing values"
 msgstr "aucun point sans valeurs manquantes"
 
-#, fuzzy
 msgid "computed some negative or all 0 probabilities"
-msgstr "des 'prob'abilités négatives ou nulles ont été calculées"
+msgstr "des probabilités négatives ou égales à zéro ont été calculées"
 
-#, fuzzy
 msgid "algorithm possibly not converged in %d iterations"
-msgstr "l'algorithme FANNY n'a pas convergé en 'maxit' = %d itérations"
+msgstr "l'algorithme n'a vraisemblablement pas convergé en %d itérations"
 
 msgid "'A' must be p x p  cov-matrix defining an ellipsoid"
 msgstr "'A doit être une matrice de covariance p x p définissant un ellipsoïde"
@@ -228,10 +223,11 @@ msgstr ""
 msgid "Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2"
 msgstr "Le nombre de groupes 'k' doit être dans {1,2, …, n-1} ; où n >= 2"
 
-#, fuzzy
 msgid ""
 "'medoids' must be NULL or vector of %d distinct indices in {1,2, .., n}, n=%d"
-msgstr "valeurs d'indice distinctes dans {1, 2, …, n}, n="
+msgstr ""
+"'medoids' doit être NULL ou un vecteur de %d valeurs d'indice distinctes "
+"dans {1, 2, …, n}, n=%d"
 
 msgid "No clustering performed, NAs in the computed dissimilarity matrix."
 msgstr ""
@@ -282,19 +278,18 @@ msgid "NA-values are not allowed in clustering vector"
 msgstr ""
 "Les valeurs manquantes NA ne sont pas autorisées dans le vecteur d'agrégation"
 
-#, fuzzy
 msgid ""
 "Error in Fortran routine for the spanning ellipsoid,\n"
 " rank problem??"
 msgstr ""
-"Erreur dans la routine Fortran pour obtenir l'ellipsoïde de dispersion,"
+"Erreur dans la routine Fortran pour obtenir l'ellipsoïde de dispersion,\n"
+" problème de rang??"
 
 msgid "'col.clus' should have length 4 when color is TRUE"
 msgstr "'col.clus' doit avoir une longueur de 4 lorsque color est TRUE"
 
-#, fuzzy
 msgid "no diss nor data found, nor the original argument of %s"
-msgstr "pas de diss ou de données trouvées, même pas l'argument original de"
+msgstr "pas de diss ou de données trouvées, même pas l'argument original de %s"
 
 msgid "no diss nor data found for clusplot()'"
 msgstr "pas de diss ou de données trouvées pour clusplot()'"
@@ -302,10 +297,11 @@ msgstr "pas de diss ou de données trouvées pour clusplot()'"
 msgid "invalid partition object"
 msgstr "objet de partitionnement incorrect"
 
-#, fuzzy
 msgid ""
 "full silhouette is only available for results of 'clara(*, keep.data = TRUE)'"
-msgstr "la silhouette complète n'est disponible que pour les résultats de"
+msgstr ""
+"la silhouette complète n'est disponible que pour les résultats de 'clara(*, "
+"keep.data = TRUE)'"
 
 msgid "'x' must only have integer codes"
 msgstr "'x' doit n'avoir que des codes entiers"
@@ -333,14 +329,17 @@ msgstr "Aucune valeur de silhouette n'est correcte (#{groupes} =? 1)"
 
 msgid "Observation %s has *only* NAs --> omit it for clustering"
 msgid_plural "Observations %s have *only* NAs --> omit them for clustering!"
-msgstr[0] ""
+msgstr[0] "L'observation %s n'a *que* des NAs --> ignorée pour le regroupement"
 msgstr[1] ""
+"Les observations %s n'ont *que* des NAs --> ignorées pour le regroupement!"
 
 msgid "%d observation (%s) has *only* NAs --> omit them for clustering!"
 msgid_plural ""
 "%d observations (%s ...) have *only* NAs --> omit them for clustering!"
 msgstr[0] ""
+"%d observation (%s) n'a *que* des NAs --> ignorée pour le regroupement!"
 msgstr[1] ""
+"%d observations (%s) n'ont *que* des NAs --> ignorées pour le regroupement!"
 
 msgid "setting 'logical' variable %s to type 'asymm'"
 msgid_plural "setting 'logical' variables %s to type 'asymm'"
