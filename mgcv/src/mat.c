@@ -247,7 +247,9 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
   #ifdef SUPPORT_OPENMP
   m = omp_get_num_procs(); /* detected number of processors */
   if (nt > m || nt < 1) nt = m; /* no point in more threads than m */
+  /*Rprintf("\n open mp %d cores, %d used\n",m,nt);*/
   #else
+  /*Rprintf("\n no openmp\n");*/
   nt = 1; /* no openMP support - turn off threading */
   #endif
   mgcv_pmmult(A,B,C,&Bt,&Ct,&r,&col,&n,&nt);

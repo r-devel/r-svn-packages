@@ -420,7 +420,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
                              log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
                              nobs =nobs+nobs.extra,Mp=um$Mp)
         res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE)
-        object <- list(coefficients=res$beta,
+        object <- list(coefficients=res$beta,db.drho=fit$d1b,
                        gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
                        message=fit$conv),rank=ncol(um$X),
                        Ve=NULL,scale.estimated = scale<=0,outer.info=fit$outer.info,
@@ -486,10 +486,12 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
       object$edf <- res$edf
       object$edf1 <- res$edf1
+      object$edf2 <- res$edf2
       object$F <- res$F
       object$hat <- res$hat
       object$Vp <- res$Vp
       object$Ve <- res$Ve
+      object$Vc <- res$Vc
     }
 
     if (!conv)
@@ -1002,10 +1004,12 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp)
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
-     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,F=res$F,
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,F=res$F,
+                    db.drho=fit$d1b,
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
                     message=fit$conv),rank=ncol(um$X),
-                    Ve=res$Ve,Vp=res$Vp,scale.estimated = scale<=0,outer.info=fit$outer.info,
+                    Ve=res$Ve,Vp=res$Vp,Vc=res$Vc,
+                    scale.estimated = scale<=0,outer.info=fit$outer.info,
                     optimizer=c("perf","newton"))
      if (scale<=0) { ## get sp's and scale estimate
        nsp <- length(fit$rho)
@@ -1452,10 +1456,10 @@ bam.update <- function(b,data,chunk.size=10000) {
      res <- Sl.postproc(b$Sl,fit,um$undrop,b$qrx$R,cov=TRUE,scale=scale)
 
 
-     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,F=res$F,
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,F=res$F,
                     gcv.ubre=fit$reml,hat=res$hat,outer.info=list(iter=fit$iter,
                     message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
-                    Ve=NULL,Vp=res$V,scale.estimated = scale<=0)
+                    Ve=NULL,Vp=res$V,Vc=res$Vc,db.drho=fit$d1b,scale.estimated = scale<=0)
      if (scale<=0) { ## get sp's and scale estimate
        nsp <- length(fit$rho)
        object$sig2 <- object$scale <- exp(fit$rho[nsp])

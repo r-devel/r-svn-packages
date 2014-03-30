@@ -1,7 +1,7 @@
 ## code for fast REML computation. key feature is that first and 
 ## second derivatives come at no increase in leading order 
 ## computational cost, relative to evaluation! 
-## (c) Simon N. Wood, 2010-2012
+## (c) Simon N. Wood, 2010-2014
 
 Sl.setup <- function(G) {
 ## Sets up a list representing a block diagonal penalty matrix.
@@ -503,7 +503,7 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
                                 (k==j)*sum(beta*Skb[[k]])
     }
   }
-  list(rss =sum(rsd^2),bSb=sum(beta*Sb),rss1=rss1,bSb1=bSb1,rss2=rss2,bSb2=bSb2)
+  list(rss =sum(rsd^2),bSb=sum(beta*Sb),rss1=rss1,bSb1=bSb1,rss2=rss2,bSb2=bSb2,d1b=db)
 } ## end Sl.ift
 
 Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NULL,Mp=0) {
@@ -555,8 +555,8 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   #list(reml=dift$rss,reml1=dift$rss1,reml2=dift$rss2)
   #list(reml=dift$bSb,reml1=dift$bSb1,reml2=dift$bSb2) 
   list(reml=as.numeric(reml),reml1=reml1,reml2=reml2,beta=beta[rp],PP=PP,
-       rp=ldS$rp,rss=dift$rss+rss.extra,nobs=nobs)
-}
+       rp=ldS$rp,rss=dift$rss+rss.extra,nobs=nobs,d1b=dift$d1b)
+} ## Sl.fit
 
 fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
                  rss.extra=0,nobs=NULL,Mp=0,conv.tol=.Machine$double.eps^.5) {
@@ -785,7 +785,11 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
   beta <- rep(0,np)
   beta[undrop] <- Sl.repara(fit$rp,fit$beta,inverse=TRUE)
   beta <- Sl.initial.repara(Sl,beta,inverse=TRUE)
-  if (cov) {
+ 
+  if (cov) { 
+    d1b <- matrix(0,np,ncol(fit$d1b))
+    d1b[undrop,] <- Sl.repara(fit$rp,fit$d1b,inverse=TRUE)
+    for (i in 1:ncol(d1b)) d1b[,i] <- Sl.initial.repara(Sl,as.numeric(d1b[,i]),inverse=TRUE) ## d beta / d rho matrix
     PP <- matrix(0,np,np)
     PP[undrop,undrop] <-  Sl.repara(fit$rp,fit$PP,inverse=TRUE)
     PP <- Sl.initial.repara(Sl,PP,inverse=TRUE)
@@ -799,8 +803,18 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
     ## edf <- rowSums(PP*crossprod(X0)) ## diag(PP%*%(t(X0)%*%X0))
     if (scale<=0) scale <- fit$rss/(fit$nobs - sum(edf))
     Vp <- PP * scale ## cov matrix
+    ## sp uncertainty correction... 
+    M <- ncol(d1b) 
+    ev <- eigen(fit$outer.info$hess,symmetric=TRUE)
+    ind <- ev$values <= 0
+    ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+    rV <- (ev$values*t(ev$vectors))[,1:M]
+    Vc <- crossprod(rV%*%t(d1b))
+    Vc <- Vp + Vc  ## Bayesian cov matrix with sp uncertainty
+    edf2 <- rowSums(Vc*crossprod(X0))/scale
+
     ##bias <- as.numeric(beta-F%*%beta) ## estimate of smoothing bias in beta
-    return(list(beta=beta,Vp=Vp,Ve=F%*%Vp,edf=edf,edf1=edf1,hat=hat,F=F))
+    return(list(beta=beta,Vp=Vp,Vc=Vc,Ve=F%*%Vp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F))
   } else return(list(beta=beta))
 }
 

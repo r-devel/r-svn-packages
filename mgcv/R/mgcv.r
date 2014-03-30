@@ -1408,11 +1408,11 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   if (inherits(family,"general.family")) {
     mv <- gam.fit5.post.proc(object,G$Sl)
     object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
-    object$edf2 <- mv$edf2
   } else mv <- gam.fit3.post.proc(G$X,object)
   ## note: use of the following in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
   if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
+  if (!is.null(mv$edf2)) object$edf2 <- mv$edf2
   object$Vp <- mv$Vb
   object$hat<-mv$hat
   object$Ve <- mv$Ve
@@ -3712,15 +3712,19 @@ influence.gam <- function(model,...) { model$hat }
 
 
 
-logLik.gam <- function (object, ...)
+logLik.gam <- function (object)
 {  # based on logLik.glm - is ordering of p correction right???
-    if (length(list(...)))
-        warning("extra arguments discarded")
+   # if (length(list(...)))
+   #     warning("extra arguments discarded")
+   
     fam <- family(object)$family
-    p <- sum(object$edf)
-    if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))
-        p <- p + 1
+    p <- sum(object$edf) 
     val <- p - object$aic/2
+    #if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))
+    #    p <- p + 1
+    if (!is.null(object$edf2)) p <- sum(object$edf2) 
+    if (object$scale.estimated) p <- p + 1
+    if (inherits(object$family,"extended.family")&&!is.null(object$family$n.theta)) p <- p + object$family$n.theta 
     attr(val, "df") <- p
     class(val) <- "logLik"
     val

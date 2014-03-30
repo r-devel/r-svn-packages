@@ -194,6 +194,8 @@ This routine is less stable than `gam' for the same dataset.
 
 The negbin family is only supported for the *known theta* case.
 
+AIC computation does not currently take account of an AR1 model, if used.
+
 } 
 
 \seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{smooth.terms}},
