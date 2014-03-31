@@ -42,7 +42,7 @@ void read_mat(double *M,int *r,int*c,char *path) {
              as.character("/home/sw283/tmp/badmat.dat"),PACKAGE="mgcv")
    M <- matrix(oo$M,oo$r,oo$c)
 */
- int j;
+ size_t j;
  FILE *mf;
  mf = fopen("/home/sw283/tmp/badmat.dat","rb"); 
  if (mf == NULL) { 

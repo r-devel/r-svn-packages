@@ -25,7 +25,7 @@ void coxpred(double *X,double *t,double *beta,double *Vb,double *a,double *h,dou
    The new data are in descending order on entry, as is tr. 
    On exit n - vectors s and se contain the estimated survival function and its se.
 */
-  double *xp,eta,*p1,*p2,*p3,*v,*pv,*pa,x,vVv,hi; 
+  double eta,*p1,*p2,*p3,*v,*pv,*pa,x,vVv,hi; 
   int ir=0,i=0;
   v = (double *)R_chk_calloc((size_t)*p,sizeof(double)); 
   for (i=0;i<*n;i++) { /* loop through new data */

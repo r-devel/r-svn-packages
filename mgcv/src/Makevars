@@ -3,4 +3,4 @@ PKG_CFLAGS = $(SHLIB_OPENMP_CFLAGS)
 ## *Both* the above must be *uncommented* for release
 
 #PKG_CFLAGS = -Wall -pedantic $(SHLIB_OPENMP_CFLAGS)
-## `#' out previous line for release
+## `#' out previous line for release (but not without uncommenting openMP)

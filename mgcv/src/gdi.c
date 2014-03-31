@@ -2559,7 +2559,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
          ldetXWXS=0.0,reml_penalty=0.0,bSb=0.0,*R,
     *alpha1,*alpha2,*raw,*Q1,*nulli;
   int i,j,k,*pivot=NULL,*pivot1,ScS,*pi,rank,tp,bt,ct,iter=0,m,one=1,
-    n_2dCols=0,n_b1,n_b2,n_drop,*drop,nt1,
+    n_2dCols=0,n_b2,n_drop,*drop,nt1,
       n_eta1=0,n_eta2=0,n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0; 
   
   #ifdef SUPPORT_OPENMP
@@ -2627,7 +2627,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     n_b2 = rank * n_2dCols;
     b2 = (double *)R_chk_calloc((size_t)n_b2,sizeof(double)); /* 2nd derivs of beta */
    
-    n_b1 = rank * *M;
+    //n_b1 = rank * *M;
     //b1 = (double *)R_chk_calloc((size_t)n_b1,sizeof(double)); /* 1st derivs of beta */
    
     n_eta1 = *n * *M;
