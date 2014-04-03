@@ -82,7 +82,10 @@ cox.ph <- function (link = "identity") {
       type <- match.arg(type)
       w <- object$prior.weights;log.s <- log(object$fitted.values)
       res <- w + log.s ## martingale residuals
-      if (type=="deviance") res <- sign(res)*sqrt(-2*(res + w * log(-log.s)))
+      if (type=="deviance") { 
+        log.s[log.s>-1e-50] <- -1e-50
+        res <- sign(res)*sqrt(-2*(res + w * log(-log.s)))
+      }
       res 
     }
 

@@ -1458,7 +1458,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (inherits(G$family,"general.family")) {
        if (!is.null(G$offset)) if (is.list(G$offset)) { for (i in 1:length(G$offset)) 
          if (!is.null(G$offset[[i]])) warning("sorry, general families currently ignore offsets")
-       } else if (sum(G$offset==0)>0) warning("sorry, general families currently ignore offsets")
+       } else if (sum(G$offset!=0)>0) warning("sorry, general families currently ignore offsets")
 
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
