@@ -48,12 +48,16 @@ cox.ph <- function (link = "identity") {
     ## baseline hazard estimation...
       ## first get the estimated hazard and prediction information...
       object$family.data <- G$family$hazard(G$y,G$X,object$coefficients,G$w)
+      rumblefish <- G$family$hazard(G$y,matrix(0,nrow(G$X),0),object$coefficients,G$w)
+      s0.base <- exp(-rumblefish$h[rumblefish$r]) ## no model baseline survival 
+      s0.base[s0.base >= 1] <- 1 - 2*.Machine$double.eps ## avoid NA later
       ## now put the survivor function in object$fitted
       object$fitted.values <- exp(-object$family.data$h[object$family.data$r]*exp(object$linear.predictors))
       ## compute the null deviance...
       s.base <- exp(-object$family.data$h[object$family.data$r]) ## baseline survival
+      s.base[s.base >= 1] <- 1 - 2*.Machine$double.eps ## avoid NA later
       object$null.deviance <- ## sum of squares of null deviance residuals
-      2*sum(abs((object$prior.weights + log(s.base) + object$prior.weights*(log(-log(s.base)))))) 
+      2*sum(abs((object$prior.weights + log(s0.base) + object$prior.weights*(log(-log(s0.base)))))) 
       ## and undo the re-ordering...
       object$linear.predictors[y.order] <- object$linear.predictors
       object$fitted.values[y.order] <- object$fitted.values

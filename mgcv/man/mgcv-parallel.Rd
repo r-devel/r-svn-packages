@@ -1,5 +1,5 @@
-\name{mgcv-parallel}
-\alias{mgcv-parallel}
+\name{mgcv.parallel}
+\alias{mgcv.parallel}
 \title{Parallel computation in mgcv.
 }
 \description{

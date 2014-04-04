@@ -1,4 +1,5 @@
-\name{mgcv-package}
+\name{mgcv.package}
+\alias{mgcv.package}
 \alias{mgcv-package}
 \alias{mgcv}
 \docType{package}
