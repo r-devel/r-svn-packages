@@ -81,7 +81,7 @@ void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,double *km,
      -h[r+1]*eta ## r+1 to convert C indices to R indices.
 
    These ingredients are to be supplied to 'coxpred' to obtain the predicted 
-   survivor function for. 
+   survivor function for individuals. 
 */
   double *b,*gamma_p,*gamma,*gamma_np,*bj,*bj1,*p1,*p2,gamma_i,*Xp,*aj,*aj1,x,y;
   int *dc,i,j;
@@ -90,7 +90,8 @@ void coxpp(double *eta,double *X,int *r, int *d,double *h,double *q,double *km,
   gamma_np = (double *)R_chk_calloc((size_t) *nt,sizeof(double));
   dc = (int *)R_chk_calloc((size_t) *nt,sizeof(int)); /* storage for event counts at each time*/
   gamma = (double *)R_chk_calloc((size_t)*n,sizeof(double)); 
-  for (i=0;i<*n;i++) gamma[i] = exp(eta[i]);
+  if (*p>0) for (i=0;i<*n;i++) gamma[i] = exp(eta[i]);
+  else for (p1=gamma,p2=p1 + *n;p1<p2;p1++) *p1 = 1.0;
 
   bj1 = bj = b;
   for (i=0,j=0;j<*nt;j++) { /* work back in time */
