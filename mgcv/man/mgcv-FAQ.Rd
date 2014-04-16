@@ -23,6 +23,8 @@ SEs etc to be calculated).
 
 \item \bold{Some of my smooths are estimated to be straight lines and their confidence intervals vanish at some point in the middle. What is wrong?} Nothing. Smooths are subject to sum-to-zero identifiability constraints. If a smooth is estimated to be a straight line then it consequently has one degree of freedom, and there is no choice about where it passes through zero --- so the CI must vanish at that point. 
 
+\item \bold{How do I test whether a smooth is significantly different from a straight line}. See \code{\link{tprs}} and the example therein.
+
 \item \bold{Some code from Wood (2006) causes an error: why?} The book was written using mgcv version 1.3. To allow for 
 REML estimation of smoothing parameters in versions 1.5, some changes had to be made to the syntax. In particular the 
 function \code{gam.method} no longer exists. The smoothness selection method (GCV, REML etc) is now controlled by the
