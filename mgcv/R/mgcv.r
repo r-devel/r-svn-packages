@@ -3875,6 +3875,10 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
       ind <- off[i]:(off[i]+ncol(S[[i]])-1)
       lami <- 1
       dlb <- -diag(lbb[ind,ind]);dS <- diag(S[[i]])
+      ## get index of elements doing any actual penalization...
+      ind <- rowSums(abs(S[[i]]))>max(S[[i]])*.Machine$double.eps^.75
+      ## drop elements that are not penalizing
+      dlb <- dlb[ind];dS <- dS[ind]
       while (mean(dlb/(dlb + lami * dS)) > 0.4) lami <- lami*5
       while (mean(dlb/(dlb + lami * dS)) < 0.4) lami <- lami/5
       lambda[i] <- lami 

@@ -552,12 +552,14 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     Eb <- Sl.repara(rp$rp,Eb) ## root balanced penalty 
     St <- crossprod(rp$E) ## total penalty matrix
     E <- rp$E ## root total penalty
-    attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be furhter scaled   
-
+    attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be further scaled   
     if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
+    ## BUG: it can be that other attributes need re-parameterization here
+    ## Ideally, check if re-para used first...
+
   } else { ## unpenalized so now derivatives resquired
     deriv <- 0 
-    rp <- list(ldetS=0)
+    rp <- list(ldetS=0,rp=list())
     St <- matrix(0,q,q)
   }
   ## now call initialization code, but make sure that any 
@@ -584,8 +586,18 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   rank <- q;drop <- NULL
   eigen.fix <- FALSE
   converged <- FALSE
+  check.deriv <- FALSE; eps <- 1e-5
   for (iter in 1:(2*control$maxit)) { ## main iteration
     ## get Newton step... 
+    if (check.deriv) {
+      fdg <- ll$lb*0; fdh <- ll$lbb*0
+      for (k in 1:length(coef)) {
+        coef1 <- coef;coef1[k] <- coef[k] + eps
+        ll.fd <- family$ll(y,x,coef1,weights,family,deriv=1)
+        fdg[k] <- (ll.fd$l-ll$l)/eps
+        fdh[,k] <- (ll.fd$lb-ll$lb)/eps
+      }
+    }
     grad <- ll$lb - St%*%coef 
     Hp <- -ll$lbb+St
     D <- diag(Hp)

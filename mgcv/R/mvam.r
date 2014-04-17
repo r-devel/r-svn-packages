@@ -33,9 +33,11 @@ mvn <- function(d=2) {
       G$X <- cbind(G$X,matrix(0,nrow(G$X),ntheta)) ## add dummy columns to G$X
       attr(G$X,"lpi") <- lpi
       attr(G$X,"XX") <- XX
+      ## pad out sqrt of balanced penalty matrix to account for extra params
+      attr(G$Sl,"E") <- cbind(attr(G$Sl,"E"),matrix(0,nbeta,ntheta))
       G$family.data <- list(ydim = ydim,nbeta=nbeta)
       G$family$ibeta = rep(0,ncol(G$X))
-      ## now get initial parameters and stroe in family...
+      ## now get initial parameters and store in family...
       for (k in 1:ydim) {
         sin <- G$off %in% lpi[[k]]
         Sk <- G$S[sin]
@@ -65,10 +67,14 @@ mvn <- function(d=2) {
     })
     
     initialize <- expression({
+      ## called in gam.fit5 and initial.spg
       ## Ideally fit separate models to each component and
       ## extract initial coefs, s.p.s and variances this way 
         n <- rep(1, nobs)
         if (is.null(start)) start <- family$ibeta
+        ## need to re-parameterize XX is non-standard
+        if (exists("rp",inherits=FALSE)&&length(rp$rp)>0) 
+           attr(x,"XX") <- Sl.repara(rp$rp,t(Sl.repara(rp$rp,attr(x,"XX"))))
     })
 
 
