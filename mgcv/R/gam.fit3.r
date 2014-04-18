@@ -1455,6 +1455,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   score.hist <- rep(NA,max.step+1)
   score.hist[1] <- initial$score
 
+  check.derivs <- FALSE;eps <- 1e-5
+
   for (i in 1:max.step) {
    
     ## get the trial step ...
@@ -1479,6 +1481,16 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
                     pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+     if (check.derivs) {
+       deriv <- 1
+       #eps <- 1e-4
+       deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
+         offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
+         control=control,gamma=gamma,scale=scale,
+         printWarn=FALSE,mustart=mustart,start=start,
+         scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
+      }
+
       if (reml) {
         trial$score <- b$REML; 
       } else if (scoreType=="GACV") {
