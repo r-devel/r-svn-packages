@@ -1481,15 +1481,27 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
                     pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
-     if (check.derivs) {
+     ok <- check.derivs
+     while (ok) {
        deriv <- 1
-       #eps <- 1e-4
+       ok <- FALSE ## set to TRUE to re-run (e.g. with different eps)
        deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,mustart=mustart,start=start,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
-      }
+       
+       fdH <- b$dH
+       for (j in 1:length(lsp)) { ## check dH
+         lsp1 <- lsp;lsp1[j] <- lsp[j] + eps
+         ba <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+                    offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
+                    control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
+                    mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
+                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+         fdH[[j]] <- (ba$H - b$H)/eps
+       }
+     }
 
       if (reml) {
         trial$score <- b$REML; 

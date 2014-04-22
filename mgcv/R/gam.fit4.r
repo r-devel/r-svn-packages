@@ -751,6 +751,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ll <- family$ll(y,x,coef,weights,family,deriv=3,d1b=d1b)
     d1l <- colSums(ll$lb*d1b)
     
+
     if (deriv>1) { ## Implicit differentiation for the second derivatives is now possible...
 
       d2b <- matrix(0,rank,m*(m+1)/2)
@@ -836,7 +837,13 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
   ## get grad and Hessian of REML score...
   REML <- -as.numeric(ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2 - ldetHp/2 + Mp*log(2*pi)/2)
-  REML1 <- if (deriv>0) -as.numeric(d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2) else NULL
+ 
+  REML1 <- if (deriv>0) -as.numeric(d1l - d1bSb/2 + rp$ldet1/2 - d1ldetH/2) else NULL 
+  if (control$trace) {
+    cat("\niter =",iter,"  ll =",ll$l,"  REML =",REML,"  bSb =",t(coef)%*%St%*%coef/2,"\n")
+    cat("log|S| =",rp$ldetS,"  log|H+S| =",ldetHp,"  n.drop =",length(drop),"\n")
+    if (!is.null(REML1)) cat("REML1 =",REML1,"\n")
+  }
   REML2 <- if (deriv>1) -(d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2) else NULL 
   bSb <- t(coef)%*%St%*%coef
   lpi <- attr(x,"lpi")
@@ -863,12 +870,12 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
        St=St, ## total penalty matrix
-       db.drho = d1b) ## derivative of penalty coefs w.r.t. log sps.
+       db.drho = d1b, ## derivative of penalty coefs w.r.t. log sps.
        #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        #b2 = d2b)
-       #H = llr$lbb,dH = llr$d1H,d2H=llr$d2H)
+       H = ll$lbb,dH = ll$d1H)#,d2H=llr$d2H)
     #ret$dev <- if (is.null(family$residuals)) NA else sum(family$residuals(ret,"deviance")^2)
     ret
 } ## end of gam.fit5
