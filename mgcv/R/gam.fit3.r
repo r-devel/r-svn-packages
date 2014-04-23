@@ -1492,7 +1492,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
        
        fdH <- b$dH
-       for (j in 1:length(lsp)) { ## check dH
+       fdb.dr <- b$db.drho*0
+       for (j in 1:length(lsp)) { ## check dH and db.drho
          lsp1 <- lsp;lsp1[j] <- lsp[j] + eps
          ba <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
@@ -1500,6 +1501,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
                     pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
          fdH[[j]] <- (ba$H - b$H)/eps
+         fdb.dr[,j] <- (ba$coefficients - b$coefficients)/eps
        }
      }
 

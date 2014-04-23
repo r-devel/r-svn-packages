@@ -166,11 +166,11 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
   /* Now the derivatives of the Hessian, given the derivatives of the coefficients,
      wrt the smoothing parameters */
   if (*deriv) {
-    yX = (double *)R_chk_calloc((size_t)*m * ncoef,sizeof(double)); /* need X'(y-mu) (or (y-mu)'X) */
+    yX = (double *)R_chk_calloc((size_t)*m * ncoef,sizeof(double)); /* need (y-mu)X - m by ncoef */
     bt=0;ct=0;mgcv_pmmult(yX,y,X,&bt,&ct,m,&ncoef,n,nt); /* rows, dim, cols coef */   
-    yRX = (double *)R_chk_calloc((size_t)*m * ncoef,sizeof(double)); /* need (y-mu)'R'X */
+    yRX = (double *)R_chk_calloc((size_t)*m * ncoef,sizeof(double)); /* need R(y-mu)X - m by ncoef*/
     bt=0;ct=0;mgcv_pmmult(yRX,Rymu,X,&bt,&ct,m,&ncoef,n,nt); /* rows, dim, cols coef */  
-    yty = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double)); /* need (y-mu)(y-mu)' */
+    yty = (double *)R_chk_calloc((size_t)*m * *m,sizeof(double)); /* need (y-mu)(y-mu)' - m by m */
     bt=0;ct=1;mgcv_pmmult(yty,y,y,&bt,&ct,m,m,n,nt); /* rows, cols dim */  
     for (r=0;r< *nsp;r++) { 
       db = dbeta + nb * r; /* d coefs / d rho_r */
@@ -198,11 +198,11 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
           k=din[q];
           ri=rri[j];rj=rci[j]; /* row and col of non zero element of deriv of R wrt theta_j */
           zz = deriv_theta[j];/* deriv R w.r.t theta_l */
-          if (rj==l) xx += R[ri + *m * k]*zz*XX[i + ncoef * q] * db[q];
-          if (rj==k) xx += R[ri + *m * l]*zz*XX[i + ncoef * q] * db[q];
+          if (rj==l) xx += -R[ri + *m * k]*zz*XX[i + ncoef * q] * db[q];
+          if (rj==k) xx += -R[ri + *m * l]*zz*XX[i + ncoef * q] * db[q];
 	}
         /* now the summation over the derivatives of theta */
-        rij=rri[j];rjj=rci[j]; /* row and col of non zero element of deriv of R wrt theta_l */
+        rij=rri[j];rjj=rci[j]; /* row and col of non zero element of deriv of R wrt theta_j */
         for (k=0;k<ntheta;k++) {
           zz=0.0;
           rik=rri[k];rjk=rci[k]; /* row and col of non zero element of deriv of R wrt theta_k */
@@ -210,17 +210,18 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
             if (l==rjj) zz +=  yX[rjk + i * *m] * deriv_theta[j] * deriv_theta[k];
             if (l==rjk) zz +=  yX[rjj + i * *m] * deriv_theta[j] * deriv_theta[k];
             if (k==j&&rik==rjk) { /* then second deriv of R is non-zero */
-              zz +=  deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];
+              //zz +=  deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];/* x_i^l'R'R_tt^jk(y-mu) */
               zz +=  deriv_theta[k] * yRX[rjj + *m * i];   
             }
-            xx += -zz * dtheta[k];
+            xx += zz * dtheta[k];
           }
+          if (k==j&&rik==rjk) xx += dtheta[k]* deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];/* x_i^l'R'R_tt^jk(y-mu) */
         }
-        dH[i + (j+ncoef) * nb] = dH[j+ncoef + i * nb] = -xx;   
+        dH[i + (j+ncoef) * nb] = dH[j+ncoef + i * nb] = xx;   
       } /* mixed block loop */
       
       /* finally the theta block... */
-      for (j=0;j<ntheta;j++) for (k=0;k<=j;k++) {
+      for (j=0;j<ntheta;j++) for (k=j;k<ntheta;k++) {
         rij=rri[j];rjj=rci[j];rik=rri[k];rjk=rci[k];
 	/* first sum over the derivatives of beta... */
 	xx = 0.0;
@@ -230,18 +231,22 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
             if (l==rjj) zz +=  yX[rjk + i * *m] * deriv_theta[j] * deriv_theta[k];
             if (l==rjk) zz +=  yX[rjj + i * *m] * deriv_theta[j] * deriv_theta[k];
             if (k==j&&rik==rjk) { /* then second deriv of R is non-zero */
-              zz +=  deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];
-              zz +=  deriv_theta[k] * yRX[rjj + *m * i];   
+              // following is suspicious... commenting it out improves the dodgy element from 7 out to 1 out, but 
+              // spoils final element to 1 out.
+	      // zz +=  deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i]; /* x_i^l'R'R_tt^jk(y-mu) */
+              if (l==rjj) zz +=  deriv_theta[k] * yRX[rjj + *m * i];  /* x_i^l'R_tt^jk R(y-mu) */
             }
             xx += zz * db[i];
           }
+          if (k==j&&rij==rjj) xx +=  db[i]*deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i]; /* x_i^l'R'R_tt^jk(y-mu) */
         }
         for (i=0;i<ntheta;i++) {
 	  ri = rri[i];rj=rci[i];zz=0.0;
           if (j==k&&ri==rij&&rjk==rik) zz += deriv_theta[j]*deriv_theta[i]*yty[rj * *m + rjj];  /* row rjj, col rj */ 
-          if (i==k&&rik==rij&&rjj==rij) zz += deriv_theta[j]*deriv_theta[i]*yty[rjk * *m + rjj];  /* row rjj, col rjk */ 
+          if (i==k&&rik==rij&&rj==ri) zz += deriv_theta[j]*deriv_theta[i]*yty[rjk * *m + rjj];  /* row rjj, col rjk */ 
           if (i==j&&rik==rij&&rj==ri) zz += deriv_theta[k]*deriv_theta[i]*yty[rjk * *m + rj];  /* row rjk, col rj */ 
-          if (i==j&&j==k&&ri==rj) {
+
+          if (i==j&&j==k&&ri==rj) { /* pure derivative on diagonal of R: (y-mu)'R'R_ttt^iii(y-mu)*/
             for (yy=0.0,p=Rymu+ri,p1=y+ri,q=0;q<*n;p+= *m,p1+= *m,q++) yy += *p * *p1;           
             zz += deriv_theta[k]*yy;
           }
