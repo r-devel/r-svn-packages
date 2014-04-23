@@ -870,6 +870,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        bdrop=bdrop, ## logical index of dropped parameters
        D=D, ## diagonal preconditioning matrix
        St=St, ## total penalty matrix
+       rp = rp$rp,
        db.drho = d1b, ## derivative of penalty coefs w.r.t. log sps.
        #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
