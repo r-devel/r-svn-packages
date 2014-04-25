@@ -1450,7 +1450,8 @@ ziP <- function (theta = NULL, link = "log") {
       yzero <- y == 0
       f1 <- th1-th2*la[yzero]; 
       a1 <- a2 <- d2 <- t1 <- ind <- f1 > 0
-      emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); efa <- exp(f1);
+      emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); 
+      ## efa <- exp(f1); ## could overflow but never used!!
       a1[ind] <- 1/(1+emf); a1[!ind] <- ef/(1+ef)
       b1 <- exp(-la[yzero])
       a2[ind] <- emf/(1+emf)^2; a2[!ind] <- ef/(1+ef)^2;
@@ -1460,7 +1461,8 @@ ziP <- function (theta = NULL, link = "log") {
       ## notations for the second terms when y > 0...
       f1.s <- th1-th2*la[!yzero]; 
       a1.s <- a2.s <- ind <- f1.s > 0
-      emf.s <- exp(-f1.s[ind]); ef.s <- exp(f1.s[!ind]); efa.s <- exp(f1.s);
+      emf.s <- exp(-f1.s[ind]); ef.s <- exp(f1.s[!ind]); 
+      ## efa.s <- exp(f1.s); ## could overflow, but never used
       a1.s[ind] <- 1/(1+emf.s); a1.s[!ind] <- ef.s/(1+ef.s)
       a2.s[ind] <- emf.s/(1+emf.s)^2; a2.s[!ind] <- ef.s/(1+ef.s)^2;
       
@@ -1478,18 +1480,27 @@ ziP <- function (theta = NULL, link = "log") {
       oo$Dmu2[!yzero] <-  2*(y[!yzero]/la[!yzero]^2 + a2.s*th2^2)
       f <- th1-th2*la
       a <- aa <- ind <- f > 0
-      b <- exp(-la);
-      emf <- exp(-f[ind]); ef <- exp(f[!ind]); efa <- exp(f);
+      emf <- exp(-f[ind]); ef <- exp(f[!ind]); 
       a[ind] <- 1/(1+emf); a[!ind] <- ef/(1+ef)
-      c <- 1/(efa + b); s <- 1/(1+efa);
+      ##efa <- exp(f); ## this can overflow - which was whole point of ind construction
+      bc <- s <- b <- exp(-la); 
+      ## s <- 1/(1+efa); ## can overflow
+      s[ind] <- emf/(1+emf);s[!ind] <- 1/(1+ef) 
+      ##c <- 1/(efa + b) ## can be inf, but only used in product b*c
+      bc <- 1/(1+exp(th1-(th2-1)*la)) ## stable
       aa[ind] <- emf/(1+emf)^2; aa[!ind] <- ef/(1+ef)^2;
-      oo$EDmu2 <- 2*(aa*th2^2 + s/la- a*b*c*(th2-1)^2)
+      oo$EDmu2 <- 2*(aa*th2^2 + s/la- a*bc*(th2-1)^2)
 
       if (level>0) { ## quantities needed for first derivatives
         ## notations for the first terms when y == 0...
-        a3 <- a23 <- d1 <- t2 <- t3 <-  g1 <- g12 <- ind <- f1 > 0
-        emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); efa <- exp(f1);
-        c1 <- 1/(efa + b1); s1 <- 1/(1+efa);
+        s1 <- a3 <- a23 <- d1 <- t2 <- t3 <-  g1 <- g12 <- ind <- f1 > 0
+        emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); 
+
+        ## BUG: as above following is overflow prone...
+        efa <- exp(f1);c1 <- 1/(efa + b1); 
+
+        ## s1 <- 1/(1+efa); ## can overflow
+        s1[ind] <- emf/(1+emf);s1[!ind] <- 1/(1+ef)
       
         a3[ind] <- emf^2/(1+emf)^3; a3[!ind] <- ef/(1+ef)^3; 
         a23[ind] <- emf/(1+emf)^3; a23[!ind] <- ef^2/(1+ef)^3;
@@ -1500,9 +1511,14 @@ ziP <- function (theta = NULL, link = "log") {
 
         f0 <- th1-th2*y[yzero]; 
         a0 <- a20 <- b0 <- c0 <-  d0 <- g0 <- g02 <- ind <- f0 > 0
-        emf0 <- exp(-f0[ind]); ef0 <- exp(f0[!ind]); efa0 <- exp(f0);
-        b0 <- exp(-y[yzero])
-        c0 <- 1/(efa0 + b0); 
+        emf0 <- exp(-f0[ind]); ef0 <- exp(f0[!ind]); 
+
+        ##efa0 <- exp(f0); ## this can overflow
+
+        b0 <- exp(-y[yzero]) ## this is 1 in fact!!
+        ## c0 <- 1/(efa0 + b0); ## so this is safe if computed sanely
+        c0[ind] <- emf0/(1+emf0);c0[!ind] <- 1/(ef0+1)
+
         a0[ind] <- 1/(1+emf0); a0[!ind] <- ef0/(1+ef0) 
         d0[ind] <- 1/(1+ b0[ind]*emf0); d0[!ind] <- ef0/(b0[!ind]+ef0);
         a20[ind] <- emf0/(1+emf0)^2; a20[!ind] <- ef0/(1+ef0)^2;
@@ -1514,9 +1530,10 @@ ziP <- function (theta = NULL, link = "log") {
         a3.s[ind] <- emf.s^2/(1+emf.s)^3; a3.s[!ind] <- ef.s/(1+ef.s)^3; 
         a23.s[ind] <- emf.s/(1+emf.s)^3; a23.s[!ind] <- ef.s^2/(1+ef.s)^3;
        
-        f0.s <- th1-th2*y[!yzero]; 
+        f0.s <- th1-th2*y[!yzero]; ## th1
         a0.s <- a20.s <- ind <- f0.s > 0
-        emf0 <- exp(-f0.s[ind]); ef0 <- exp(f0.s[!ind]); efa0 <- exp(f0.s);
+        emf0 <- exp(-f0.s[ind]); ef0 <- exp(f0.s[!ind]); 
+        efa0 <- exp(f0.s); ## exp(th1) - probably safe
         a0.s[ind] <- 1/(1+emf0); a0.s[!ind] <- ef0/(1+ef0) 
         a20.s[ind] <- emf0/(1+emf0)^2; a20.s[!ind] <- ef0/(1+ef0)^2;
         lath.s <- la[!yzero]*th2; olath.s <- 1 - lath.s; tlath.s <- 2 - lath.s
@@ -1526,9 +1543,9 @@ ziP <- function (theta = NULL, link = "log") {
         a2th.s <- a2.s * th2
         d1t1 <- d1 * t1
 
-        oo$Dth[yzero,1] <- 2*(a0*c0*b0m - a1*b1m*c1)
+        oo$Dth[yzero,1] <- 2*(a0*c0*b0m - a1*b1m*c1) ## C1 problem
         oo$Dth[!yzero,1] <- 2*(a1.s - a0.s)
-        oo$Dth[yzero,2] <- 2*( -y[yzero]*a0*th2*c0*b0m + lath*a1*b1m*c1)
+        oo$Dth[yzero,2] <- 2*( -y[yzero]*a0*th2*c0*b0m + lath*a1*b1m*c1) ## C1 problem
         oo$Dth[!yzero,2] <- 2*(y[!yzero]*a0.s*th2 - lath.s*a1.s)
 
         oo$Dmuth[yzero,1] <- 2 * (-th2*g1 + th2*a1^2 - d1t1)
@@ -1546,7 +1563,7 @@ ziP <- function (theta = NULL, link = "log") {
       } 
       if (level>1) { ## whole damn lot
         d1t2 <- d1*t2              
-        term1 <- -d1*th2^4 -b1*c1 + ath*th2^3 + 12*ath^3*th2 - 6*ath^4 
+        term1 <- -d1*th2^4 -b1*c1 + ath*th2^3 + 12*ath^3*th2 - 6*ath^4 ## C1 problem
         term2 <- - 7*ath^2*th2^2 + 4*t1*t3 + 3*t2^2 - 12*t1^2*t2 + 6*t1^4
         oo$Dmu4[yzero] <- 2*(term1 + term2)
         oo$Dmu4[!yzero] <- 2*(6*y[!yzero]/la[!yzero]^4 + a2th.s*th2^3 - 6*a1.s^2*th2^4 + 12*a23.s*a1.s*th2^4 
@@ -1564,6 +1581,7 @@ ziP <- function (theta = NULL, link = "log") {
         oo$Dmu3th[!yzero,2] <- 2*ath.s*th2^2*(-3 +lath.s +(9-7*lath.s)*a1.s - 
                 6*(1-2*lath.s)*a1.s^2 - 6*lath.s*a1.s^3)
 
+        ## C1 problem
         oo$Dth2[yzero,1] <- 2* (a20*b0m*b0*c0^2 -a20*b0m*d0^2 - a2*b1m*b1*c1^2 + a2*b1m*d1^2)  ## deriv of D w.r.t. theta1 theta1
         oo$Dth2[!yzero,1] <- 2 * (- a20.s +a2.s)
         
