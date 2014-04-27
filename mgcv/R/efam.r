@@ -1431,7 +1431,8 @@ ziP <- function (theta = NULL, link = "log") {
       f <- exp(f[!ind])
       h[!ind] <- (f + ela[!ind])/(1+f)
       
-      f <- th1 - th2*y[yzero]; ela <- exp(-y[yzero]);
+      f <- th1 - th2*y[yzero]; ## i.e. th1
+      ela <- exp(-y[yzero]);   ## i.e. 1
       h0 <- ind <- f >0; 
       h0[ind] <- (1 + ela[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
       f <- exp(f[!ind])
@@ -1449,14 +1450,23 @@ ziP <- function (theta = NULL, link = "log") {
       ## notations for the first terms when y == 0...
       yzero <- y == 0
       f1 <- th1-th2*la[yzero]; 
-      a1 <- a2 <- d2 <- t1 <- ind <- f1 > 0
+      a1 <- a2  <- t1 <- ind <- f1 > 0
       emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); 
       ## efa <- exp(f1); ## could overflow but never used!!
       a1[ind] <- 1/(1+emf); a1[!ind] <- ef/(1+ef)
       b1 <- exp(-la[yzero])
       a2[ind] <- emf/(1+emf)^2; a2[!ind] <- ef/(1+ef)^2;
-      d2[ind] <- emf/(1+emf*b1[ind])^2; d2[!ind] <- ef/(b1[!ind]+ef)^2;
-      t1[ind] <- (th2 + emf*b1[ind])/(1+emf*b1[ind]); t1[!ind] <- (th2*ef + b1[!ind])/(b1[!ind]+ef);
+      ## d2 can be infinite, but in fact only d2*b1 is ever needed!!
+      g <- f1 + la[yzero]
+      d1 <- 1/(1+exp(-g)) 
+      d2b1 <- d1/(1+exp(g))
+      ## d2[ind] <- emf/(1+emf*b1[ind])^2; 
+      ## d2[!ind] <- ef/(b1[!ind]+ef)^2; ## BUG can be undefined
+      ind <- g>0
+      eg <- exp(-g[ind]);t1[ind] <- (eg+th2)/(eg+1)
+      eg <- exp(g[!ind]);t1[!ind] <- (eg*th2+1)/(eg+1)
+      ##t1[ind] <- (th2 + emf*b1[ind])/(1+emf*b1[ind]); 
+      ##t1[!ind] <- (th2*ef + b1[!ind])/(b1[!ind]+ef); ## BUG can be undefined
       
       ## notations for the second terms when y > 0...
       f1.s <- th1-th2*la[!yzero]; 
@@ -1476,7 +1486,7 @@ ziP <- function (theta = NULL, link = "log") {
       oo$Dmu <- oo$Dmu2 <- rep(0,n)
       oo$Dmu[yzero] <- 2*(-ath + t1)
       oo$Dmu[!yzero] <- 2*(-y[!yzero]/la[!yzero] - ath.s +1)
-      oo$Dmu2[yzero] <-  2*(a2*th2^2 - d2*b1*(th2-1)^2)
+      oo$Dmu2[yzero] <-  2*(a2*th2^2 - d2b1*(th2-1)^2)
       oo$Dmu2[!yzero] <-  2*(y[!yzero]/la[!yzero]^2 + a2.s*th2^2)
       f <- th1-th2*la
       a <- aa <- ind <- f > 0
@@ -1496,31 +1506,41 @@ ziP <- function (theta = NULL, link = "log") {
         s1 <- a3 <- a23 <- d1 <- t2 <- t3 <-  g1 <- g12 <- ind <- f1 > 0
         emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); 
 
-        ## BUG: as above following is overflow prone...
-        efa <- exp(f1);c1 <- 1/(efa + b1); 
+        ## FIXED: as above following was overflow prone...
+        efa <- exp(f1);##emfa <- exp(-f1); c1 <- 1/(efa + b1); 
+        b1c1 <- 1/(1+exp(g)) ##th1-(th2-1)*la[yzero])) ## stable
+        a1c1 <- 1/((1+exp(-g))*(1+efa))  ## b1 is exp(-la[yzero])
+        a2c1 <- a1c1/(1+efa)      
 
-        ## s1 <- 1/(1+efa); ## can overflow
-        s1[ind] <- emf/(1+emf);s1[!ind] <- 1/(1+ef)
+        s1 <- 1/(1+efa); 
+        ##s1[ind] <- emf/(1+emf);s1[!ind] <- 1/(1+ef)
       
         a3[ind] <- emf^2/(1+emf)^3; a3[!ind] <- ef/(1+ef)^3; 
         a23[ind] <- emf/(1+emf)^3; a23[!ind] <- ef^2/(1+ef)^3;
-        d1[ind] <- 1/(1+emf*b1[ind]); d1[!ind] <- ef/(b1[!ind]+ef);
-        t2[ind] <- (th2^2 + emf*b1[ind])/(1+emf*b1[ind]); t2[!ind] <- (th2^2*ef + b1[!ind])/(b1[!ind]+ef);   
-        t3[ind] <- (th2^3 + emf*b1[ind])/(1+emf*b1[ind]); t3[!ind] <- (th2^3*ef + b1[!ind])/(b1[!ind]+ef);
+        ##d1[ind] <- 1/(1+emf*b1[ind]); ## now computed properly above 
+        ##d1[!ind] <- ef/(b1[!ind]+ef); ## BUG can be undefined
+        ind <- g>0
+        eg <- exp(-g[ind]);t2[ind] <- (eg+th2^2)/(eg+1);t3[ind] <- (eg+th2^3)/(eg+1);
+        eg <- exp(g[!ind]);t2[!ind] <- (eg*th2^2+1)/(eg+1);t3[!ind] <- (eg*th2^3+1)/(eg+1)
+        ##t2[ind] <- (th2^2 + emf*b1[ind])/(1+emf*b1[ind]); 
+        ##t2[!ind] <- (th2^2*ef + b1[!ind])/(b1[!ind]+ef);  ## BUG can be undefined 
+        ##t3[ind] <- (th2^3 + emf*b1[ind])/(1+emf*b1[ind]); 
+        ##t3[!ind] <- (th2^3*ef + b1[!ind])/(b1[!ind]+ef); ## BUG can be undefined
         g1 <- a1 - d1; g12 <- a1^2 - d1^2;
 
-        f0 <- th1-th2*y[yzero]; 
+        f0 <- th1-th2*y[yzero]; ## i.e th1
         a0 <- a20 <- b0 <- c0 <-  d0 <- g0 <- g02 <- ind <- f0 > 0
         emf0 <- exp(-f0[ind]); ef0 <- exp(f0[!ind]); 
 
         ##efa0 <- exp(f0); ## this can overflow
 
-        b0 <- exp(-y[yzero]) ## this is 1 in fact!!
-        ## c0 <- 1/(efa0 + b0); ## so this is safe if computed sanely
+        ## b0 <- exp(-y[yzero]) ## this is 1 in fact!!
+        ## c0 <- 1/(efa0 + b0); ## so this is safe
         c0[ind] <- emf0/(1+emf0);c0[!ind] <- 1/(ef0+1)
 
         a0[ind] <- 1/(1+emf0); a0[!ind] <- ef0/(1+ef0) 
-        d0[ind] <- 1/(1+ b0[ind]*emf0); d0[!ind] <- ef0/(b0[!ind]+ef0);
+        d0[ind] <- 1/(1+ emf0) ## + b0[ind]*emf0); ## b0 is 1 
+        d0[!ind] <- ef0/(1+ef0) ## (b0[!ind]+ef0); ## b0 = 1  
         a20[ind] <- emf0/(1+emf0)^2; a20[!ind] <- ef0/(1+ef0)^2;
         g0 <- a0 - d0; g02 <- a0^2 - d0^2
         lath <- la[yzero]*th2; olath <- 1 - lath; tlath <- 2 - lath
@@ -1539,13 +1559,16 @@ ziP <- function (theta = NULL, link = "log") {
         lath.s <- la[!yzero]*th2; olath.s <- 1 - lath.s; tlath.s <- 2 - lath.s
 
         oo$Dmu2th <- oo$Dmuth <- oo$Dth <- matrix(0,n,2)
-        b0m <- 1 - b0; b1m <- 1 - b1;
+        ## b0m <- 1 - b0; ## er - zero!! 
+        b1m <- 1 - b1;
         a2th.s <- a2.s * th2
         d1t1 <- d1 * t1
 
-        oo$Dth[yzero,1] <- 2*(a0*c0*b0m - a1*b1m*c1) ## C1 problem
+        ## oo$Dth[yzero,1] <- 2*(a0*c0*b0m + b1*a1c1 - a1c1) ##- a1*b1m*c1) ## C1 problem - b0m is zero
+        oo$Dth[yzero,1] <- 2*(b1*a1c1 - a1c1*b1m)
         oo$Dth[!yzero,1] <- 2*(a1.s - a0.s)
-        oo$Dth[yzero,2] <- 2*( -y[yzero]*a0*th2*c0*b0m + lath*a1*b1m*c1) ## C1 problem
+        ## oo$Dth[yzero,2] <- 2*( -y[yzero]*a0*th2*c0*b0m +lath*(a1c1-a1c1*b1)) ##+ lath*a1*b1m*c1) ## C1 problem + brain dead coding
+        oo$Dth[yzero,2] <- 2*(lath*(a1c1-a1c1*b1))
         oo$Dth[!yzero,2] <- 2*(y[!yzero]*a0.s*th2 - lath.s*a1.s)
 
         oo$Dmuth[yzero,1] <- 2 * (-th2*g1 + th2*a1^2 - d1t1)
@@ -1555,15 +1578,16 @@ ziP <- function (theta = NULL, link = "log") {
 
         oo$Dmu3[yzero] <- 2*(-ath*th2^2 + t3+ 3*ath^2*th2 - 2*ath^3 - 3*t1*t2 + 2*t1^3)
         oo$Dmu3[!yzero] <- 2*(-2*y[!yzero]/la[!yzero]^3 - th2^3*(a3.s - a23.s))
-        oo$Dmu2th[yzero,1] <- 2*(-2*d1t1*t1 + th2^2*g1 - 3*ath^2 +2*ath^2*a1 + 3*th2^2*d1^2 + 2*th2*b1*d2 + b1*d2)
+        oo$Dmu2th[yzero,1] <- 2*(-2*d1t1*t1 + th2^2*g1 - 3*ath^2 +2*ath^2*a1 + 3*th2^2*d1^2 + 2*th2*d2b1 + d2b1)
         oo$Dmu2th[!yzero,1] <- 2 * th2 * ath.s*(1 - 3*a1.s +2*a1.s^2)
         oo$Dmu2th[yzero,2] <- 2* (-lath*d1*t2 + th2^2*tlath*g1 + 2*th2*olath*d1t1 + 2*lath*d1t1*t1 -
             2*lath*ath^2*a1 - ath^2*(2-3*lath))
-        oo$Dmu2th[!yzero,2] <- 2*th2^2*(tlath.s*a1.s + a1.s^2*(3*lath.s - 2) - 2*lath.s*a1.s^3)
+        ##oo$Dmu2th[!yzero,2] <- 2*th2^2*(tlath.s*a1.s + a1.s^2*(3*lath.s - 2) - 2*lath.s*a1.s^3)
+        oo$Dmu2th[!yzero,2] <- 2*th2^2*a1.s*(tlath.s + a1.s*(3*lath.s - 2) - 2*lath.s*a1.s^2)
       } 
       if (level>1) { ## whole damn lot
         d1t2 <- d1*t2              
-        term1 <- -d1*th2^4 -b1*c1 + ath*th2^3 + 12*ath^3*th2 - 6*ath^4 ## C1 problem
+        term1 <- -d1*th2^4 -b1c1 + ath*th2^3 + 12*ath^3*th2 - 6*ath^4 ## C1 problem (was b1*c1)
         term2 <- - 7*ath^2*th2^2 + 4*t1*t3 + 3*t2^2 - 12*t1^2*t2 + 6*t1^4
         oo$Dmu4[yzero] <- 2*(term1 + term2)
         oo$Dmu4[!yzero] <- 2*(6*y[!yzero]/la[!yzero]^4 + a2th.s*th2^3 - 6*a1.s^2*th2^4 + 12*a23.s*a1.s*th2^4 
@@ -1581,19 +1605,24 @@ ziP <- function (theta = NULL, link = "log") {
         oo$Dmu3th[!yzero,2] <- 2*ath.s*th2^2*(-3 +lath.s +(9-7*lath.s)*a1.s - 
                 6*(1-2*lath.s)*a1.s^2 - 6*lath.s*a1.s^3)
 
-        ## C1 problem
-        oo$Dth2[yzero,1] <- 2* (a20*b0m*b0*c0^2 -a20*b0m*d0^2 - a2*b1m*b1*c1^2 + a2*b1m*d1^2)  ## deriv of D w.r.t. theta1 theta1
+        ## C1 problem '- a2*b1m*b1*c1^2' could be undefined + brain dead coding as b0m == 0
+        ## oo$Dth2[yzero,1] <- 2* (a20*b0m*b0*c0^2 -a20*b0m*d0^2 - a2c1*b1c1*b1m + a2*b1m*d1^2)  ## deriv of D w.r.t. theta1 theta1
+        oo$Dth2[yzero,1] <- 2* ( - a2c1*b1c1*b1m + a2*b1m*d1^2)  ## deriv of D w.r.t. theta1 theta1
         oo$Dth2[!yzero,1] <- 2 * (- a20.s +a2.s)
         
-        y0th <- y[yzero]*th2; y1th <- y[!yzero]*th2;
-        oo$Dth2[yzero,2] <- 2*(y0th*g0 - y0th*g02 - lath*g1 + lath*g12 )## deriv of D wrt theta1 theta2
+        ##y0th <- y[yzero]*th2; ## identically 0 
+        y1th <- y[!yzero]*th2;
+        ## oo$Dth2[yzero,2] <- 2*(y0th*g0 - y0th*g02 - lath*g1 + lath*g12 )## deriv of D wrt theta1 theta2
+        oo$Dth2[yzero,2] <- 2*( - lath*g1 + lath*g12 )## deriv of D wrt theta1 theta2
         oo$Dth2[!yzero,2] <- 2*(y1th*a0.s*(1 - a0.s) - lath.s*a1.s*(1 - a1.s) )    
 
-        oo$Dth2[yzero,3] <- 2*(y0th*(1-y0th)*g0 + y0th^2*g02^2 -
-           lath*olath*g1 - lath^2*g12) ## deriv of D wrt theta2 theta2
+        ##oo$Dth2[yzero,3] <- 2*(y0th*(1-y0th)*g0 + y0th^2*g02^2 - ## brain dead 
+        ##   lath*olath*g1 - lath^2*g12) ## deriv of D wrt theta2 theta2
+        oo$Dth2[yzero,3] <- 2*lath*( -olath*g1 - lath*g12) ## deriv of D wrt theta2 theta2
+
         oo$Dth2[!yzero,3] <- 2*(y1th*(1-y1th)*a0.s + (y1th*a0.s)^2 - lath.s*a1.s*olath.s - (lath.s*a1.s)^2 )    
 
-        oo$Dmuth2[yzero,1] <- 2* (th2*d1*(1 - 3*d1) - d2*b1 + 2*d1^2*t1 - ath*(1- 3*a1 + 2*a1^2))
+        oo$Dmuth2[yzero,1] <- 2* (th2*d1*(1 - 3*d1) - d2b1 + 2*d1^2*t1 - ath*(1- 3*a1 + 2*a1^2))
         oo$Dmuth2[!yzero,1] <- 2*ath.s*(-1 +3*a1.s - 2*a1.s^2)
 
         oo$Dmuth2[yzero,2] <- 2* (lath*d1t1*(1-2*d1) -th2*olath*(g1 +d1^2) + lath*th2*(2*a1^3 - g12) +
@@ -1604,7 +1633,7 @@ ziP <- function (theta = NULL, link = "log") {
            2*lath*la[yzero]*d1t1*d1 + lath*olath*(2*d1^2 - 3*a1^2))
         oo$Dmuth2[!yzero,3] <- 2*ath.s*(lath.s - olath.s^2 - 3*lath.s*a1.s*olath.s - 2*lath.s^2*a1.s^2)
   
-        d1d2b1 <- d1*d2*b1
+        d1d2b1 <- d1*d2b1
         term1 <- -th2^2*d1*(1 - 4*d1+ 10*d1^2) + d1t2 + 2*th2*d1t1 - 8*th2*d1d2b1 - 2*d1d2b1 -
             2*d1t1*t1 + 6*d1t1^2 
         term2 <- th2^2*a1*(1 - 7*a1 + 12*a1^2 - 6*a1^3)
@@ -1654,7 +1683,8 @@ ziP <- function (theta = NULL, link = "log") {
        th1 <- theta[1]; th2 <- exp(theta[2]); 
        yzero <- y == 0
        term <- rep(0,length(y))  ## saturated log likelihood for each observation
-       f <- th1 - th2*y[yzero]; ey <- exp(-y[yzero]);
+       f <- th1 - th2*y[yzero]; ## i.e. th1
+       ey <- exp(-y[yzero]);  ## i.e. 1
        h <- ind <- f >0 
        h[ind] <- (1 + ey[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
        f <- exp(f[!ind])
@@ -1666,14 +1696,15 @@ ziP <- function (theta = NULL, link = "log") {
        ls <- sum(term*w) 
        ## first derivatives wrt theta...
        lsth <- rep(0,2) 
-       f <- th1 - th2*y[yzero]
+       f <- th1 - th2*y[yzero] ## i.e. th1
        a0 <- a20 <- b0 <- c0 <- d0 <- ind <- f > 0
        emf <- exp(-f[ind]); ef <- exp(f[!ind]); efa <- exp(f);
-       b0 <- exp(-y[yzero])
-       c0 <- 1/(efa + b0); 
+       ## b0 <- exp(-y[yzero]) ## this is 1
+       c0 <- 1/(efa +1) #+ b0);  ## b0 is 1
        a0[ind] <- 1/(1+emf); a0[!ind] <- ef/(1+ef) 
        a20[ind] <- emf/(1+emf)^2; a20[!ind] <- ef/(1+ef)^2;    
-       d0[ind] <- 1/(1+ b0[ind]*emf); d0[!ind] <- ef/(b0[!ind]+ef);   
+       d0[ind] <- 1/(1 + emf) ## + b0[ind]*emf); 
+       d0[!ind] <- ef/(1+ef)   ## (b0[!ind]+ef);  ## b0 is 1
        
        f0.s <- th1-th2*y[!yzero]; 
        a0.s <- a20.s <- ind <- f0.s > 0
@@ -1684,7 +1715,7 @@ ziP <- function (theta = NULL, link = "log") {
        term <- rep(0,length(y))
        term[yzero] <- a0*(1-b0)*c0;  term[!yzero] <- -a0.s
        lsth[1] <- sum(w*term)
-       term[yzero] <- y[yzero]*th2*a0*(b0-1)*c0
+       term[yzero] <- 0 ## y[yzero]*th2*a0*(b0-1)*c0 ## brain dead
        term[!yzero] <- y[!yzero]*th2*a0.s
        lsth[2] <- sum(w*term)
        
@@ -1693,11 +1724,11 @@ ziP <- function (theta = NULL, link = "log") {
        term[yzero] <- tt <- (1-b0)*a20 * (b0*c0^2 - d0^2)
        term[!yzero] <- -a20.s 
        lsth2[1,1] <- sum(term*w)
-       term[yzero] <- -y[yzero]*th2*tt
+       term[yzero] <- 0 ##-y[yzero]*th2*tt
        term[!yzero] <- y[!yzero]*th2*a20.s
        lsth2[1,2] <- lsth2[2,1] <- sum(term*w)
        
-       term[yzero] <- y[yzero]*th2*(b0-1)*a20*(d0^2 + a0*b0*c0^2) + (y[yzero]*th2)^2*tt
+       term[yzero] <- 0 ## y[yzero]*th2*(b0-1)*a20*(d0^2 + a0*b0*c0^2) + (y[yzero]*th2)^2*tt
        term[!yzero] <- y[!yzero]*th2* (a20.s + a0.s^2 - th2*y[!yzero]*a20.s)
        lsth2[2,2] <- sum(term*w)
        list(ls=ls,## saturated log likelihood
