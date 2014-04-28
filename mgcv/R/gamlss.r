@@ -333,7 +333,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
   stats[[1]]$d2link <- fam$d2link
   stats[[1]]$d3link <- fam$d3link
   stats[[1]]$d4link <- fam$d4link
-  if (link[[2]] %in% okLinks[[2]]) {
+  if (link[[2]] %in% okLinks[[2]]) { ## creating the logb link
     stats[[2]] <- list()
     stats[[2]]$valideta <- function(eta) TRUE 
     stats[[2]]$link = link[[2]]
@@ -665,10 +665,12 @@ ziplss <-  function(link=list("log","logit")) {
   } ## end ll for ZIP
 
   initialize <- expression({ ## for ZIP
-  ## idea is to regress binarized y on model matrix for p. 
-  ## Then drop any y=0 with p<0.5 and regress g(y) on 
-  ## the model matrix for lambda - may be called in both
-  ## gam.fit5 and initial.spg... note that appropriate E scaling
+  ## Idea is to regress binarized y on model matrix for p. 
+  ## Then downweight any y=0 with p<0.5 and regress g(y) on 
+  ## the model matrix for lambda - don't drop as this may
+  ## induce rank deficiency in model matrix! 
+  ## May be called in both gam.fit5 and initial.spg... 
+  ## note that appropriate E scaling
   ## for full calculation may be inappropriate for initialization 
   ## which is basically penalizing something different here.
   ## best we can do here is to use E only as a regularizer.
@@ -688,13 +690,16 @@ ziplss <-  function(link=list("log","logit")) {
           startji[!is.finite(startji)] <- 0       
         } else startji <- pen.reg(x1,e1,yt1)
         start[jj[[2]]] <- startji
-        p <- drop(x1[1:nobs,] %*% startji) ## probability of presence
-        ind <- y==0 & p < 0.5 ## drop these for estimating lambda
-        
-        yt1 <- if (family$link[[1]]=="identity") y[!ind] else 
-               family$linfo[[1]]$linkfun(abs(y[!ind])+max(y)*1e-7)
-       
-        x1 <-  x[!ind,jj[[1]],drop=FALSE];e1 <- E[,jj[[1]],drop=FALSE]
+        p <- drop(x1[1:nobs,,drop=FALSE] %*% startji) ## probability of presence
+        ind <- y==0 & p < 0.5 ## downweight these for estimating lambda
+        w <- rep(1,nobs); w[ind] <- .1
+
+        yt1 <- if (family$link[[1]]=="identity") y else 
+               family$linfo[[1]]$linkfun(abs(y)+(y==0)*.2)
+
+        yt1 <- yt1*w        
+
+        x1 <-  w*x[,jj[[1]],drop=FALSE];e1 <- E[,jj[[1]],drop=FALSE]
         if (use.unscaled) {
           x1 <- rbind(x1,e1)
           startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))   

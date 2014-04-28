@@ -902,6 +902,9 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 betar <- function (theta = NULL, link = "logit") { 
 ## Extended family object for beta regression
 ## length(theta)=1; log theta supplied
+## This serves as a prototype for working with -2logLik
+## as deviance, and only dealing with saturated likelihood 
+## at the end.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   if (linktemp %in% c("logit", "probit", "cloglog", "cauchit", "log")) stats <- make.link(linktemp)
@@ -1373,23 +1376,27 @@ scat <- function (theta = NULL, link = "identity") {
 ## zero inflated Poisson...
 
 
-ziP <- function (theta = NULL, link = "log") { 
+ziP <- function (theta = NULL, link = "loga",a=1e-8) { 
 ## Extended family object for zero inflated distribution
 ## n.theta=2; log theta supplied
+## This version overflow proofed snw. nyp original version is at svn version 6742
+## loga link is just log(mu-a) so mu = a + exp(eta) and mu > a 
+## - avoids various overflow problems without messing up derivatives in the 
+## way simply truncating (as poisson(link="log") does) would.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("log")) stats <- make.link(linktemp) ## done only for the "log" link at the moment
-  else if (is.character(link)) {
-    stats <- make.link(link)
-    linktemp <- link
-  } else {
-    if (inherits(link, "link-glm")) {
-       stats <- link
-            if (!is.null(stats$name))
-                linktemp <- stats$name
-        }
-        else stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"log\"")
-    }
+  if (linktemp %in% c("loga")) { 
+    stats <- list()
+    stats$valideta <- function(eta) TRUE 
+    stats$link = "loga"
+    stats$linkfun <- eval(parse(text=paste("function(mu) log(mu -",a,")")))
+    stats$linkinv <- eval(parse(text=paste("function(eta) exp(eta) +",a)))
+    stats$mu.eta <- function(eta) exp(eta)
+    stats$g2g <- function(mu) rep(-1,length(mu))
+    stats$g3g <- function(mu) rep(2,length(mu))
+    stats$g4g <- function(mu) rep(-6,length(mu))
+  } else  stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"loga\"")
+   
     Theta <-  NULL;n.theta <- 2
     if (!is.null(theta)) {
       if (theta[2]<0) iniTheta <- c(theta[1],log(-theta[2])) ## initial theta supplied
@@ -1503,7 +1510,7 @@ ziP <- function (theta = NULL, link = "log") {
 
       if (level>0) { ## quantities needed for first derivatives
         ## notations for the first terms when y == 0...
-        s1 <- a3 <- a23 <- d1 <- t2 <- t3 <-  g1 <- g12 <- ind <- f1 > 0
+        s1 <- a3 <- a23 <- t2 <- t3 <-  g1 <- g12 <- ind <- f1 > 0
         emf <- exp(-f1[ind]); ef <- exp(f1[!ind]); 
 
         ## FIXED: as above following was overflow prone...
@@ -1565,7 +1572,7 @@ ziP <- function (theta = NULL, link = "log") {
         d1t1 <- d1 * t1
 
         ## oo$Dth[yzero,1] <- 2*(a0*c0*b0m + b1*a1c1 - a1c1) ##- a1*b1m*c1) ## C1 problem - b0m is zero
-        oo$Dth[yzero,1] <- 2*(b1*a1c1 - a1c1*b1m)
+        oo$Dth[yzero,1] <- 2*(-b1m*a1c1)
         oo$Dth[!yzero,1] <- 2*(a1.s - a0.s)
         ## oo$Dth[yzero,2] <- 2*( -y[yzero]*a0*th2*c0*b0m +lath*(a1c1-a1c1*b1)) ##+ lath*a1*b1m*c1) ## C1 problem + brain dead coding
         oo$Dth[yzero,2] <- 2*(lath*(a1c1-a1c1*b1))
@@ -1773,7 +1780,8 @@ ziP <- function (theta = NULL, link = "log") {
 
     structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,
-        aic = aic, mu.eta = stats$mu.eta, initialize = initialize,postproc=postproc,ls=ls,fv=fv,
+        aic = aic, mu.eta = stats$mu.eta, g2g = stats$g2g,g3g=stats$g3g, g4g=stats$g4g, 
+        initialize = initialize,postproc=postproc,ls=ls,fv=fv,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
         class = c("extended.family","family"))

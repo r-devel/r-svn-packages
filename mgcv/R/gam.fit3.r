@@ -1121,9 +1121,11 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   score.hist <- rep(NA,200)
   for (i in 1:200) {
    ## debugging code....
-   if (check.derivs) {
-     deriv <- 2
+   okc <- check.derivs 
+   while (okc) {
+     okc <- FALSE
      eps <- 1e-4
+     deriv <- 2
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
@@ -1731,8 +1733,105 @@ gam4objective <- function(lsp,args,...)
 ## The following fix up family objects for use with gam.fit3
 ##
 
+fix.family.link.extended.family <- function(fam) {
+## extended families require link derivatives in ratio form.
+## g2g= g''/g'^2, g3g = g'''/g'^3, g4g = g''''/g'^4 - these quanitities are often
+## less overflow prone than the raw derivatives
+  if (!is.null(fam$g2g)&&!is.null(fam$g3g)&&!is.null(fam$g4g)) return(fam)  
+  link <- fam$link
+  if (link=="identity") {
+    fam$g2g <- fam$g3g <- fam$g4g <- 
+    function(mu) rep.int(0,length(mu))
+    return(fam)
+  } 
+  if (link == "log") {
+    fam$g2g <- function(mu) rep(-1,length(mu))
+    fam$g3g <- function(mu) rep(2,length(mu))
+    fam$g4g <- function(mu) rep(-6,length(mu))
+    return(fam)
+  }
+  if (link == "inverse") {
+    ## g'(mu) = -1/mu^2
+    fam$g2g <- function(mu) 2*mu     ## g'' = 2/mu^3
+    fam$g3g <- function(mu) 6*mu^2   ## g''' = -6/mu^4
+    fam$d4link <- function(mu) 24*mu^3     ## g'''' = 24/mu^5
+    return(fam)
+  }  
+  if (link == "logit") {
+    ## g = log(mu/(1-mu)) g' = 1/(1-mu) + 1/mu = 1/(mu*(1-mu))
+    fam$g2g <- function(mu) mu^2 - (1-mu)^2      ## g'' = 1/(1 - mu)^2 - 1/mu^2
+    fam$g3g <- function(mu) 2*mu^3 + 2*(1-mu)^3  ## g''' = 2/(1 - mu)^3 + 2/mu^3
+    fam$g4g <- function(mu) 6*mu^4 - 6*(1-mu)^4  ## g'''' = 6/(1-mu)^4 - 6/mu^4
+    return(fam)
+  }
+  if (link == "sqrt") {
+  ## g = sqrt(mu); g' = .5*mu^-.5
+    fam$g2g <- function(mu) - mu^-.5  ## g'' = -.25 * mu^-1.5
+    fam$g3g <- function(mu) 3 * mu^-1 ## g''' = .375 * mu^-2.5
+    fam$g4g <- function(mu) -15 * mu^-1.5 ## -0.9375 * mu^-3.5
+    return(fam)
+  }
+  if (link == "probit") {
+  ## g(mu) = qnorm(mu); 1/g' = dmu/deta = 1/dnorm(eta)
+    fam$g2g <- function(mu) { 
+      eta <- fam$linkfun(mu)
+      ## g'' = eta/fam$mu.eta(eta)^2
+      eta
+    }
+    fam$g3g <- function(mu) {
+      eta <-  fam$linkfun(mu)
+      ## g''' = (1 + 2*eta^2)/fam$mu.eta(eta)^3
+      (1 + 2*eta^2)
+    }
+    fam$g4g <- function(mu) {
+       eta <-  fam$linkfun(mu)
+       ## g'''' = (7*eta + 6*eta^3)/fam$mu.eta(eta)^4
+       (7*eta + 6*eta^3)
+    }
+    return(fam)
+  } ## probit
+  if (link == "cauchit") {
+  ## uses general result that if link is a quantile function then 
+  ## d mu / d eta = f(eta) where f is the density. Link derivative
+  ## is one over this... repeated differentiation w.r.t. mu using chain
+  ## rule gives results...
+    fam$g2g <- function(mu) { 
+     eta <- fam$linkfun(mu)
+     ## g'' = 2*pi*pi*eta*(1+eta*eta)
+     eta/(1+eta*eta)
+    }
+    fam$g3g <- function(mu) { 
+     eta <- fam$linkfun(mu)
+     eta2 <- eta*eta
+     ## g''' = 2*pi*pi*pi*(1+3*eta2)*(1+eta2)
+     (1+3*eta2)/(1+eta2)^2
+    }
+    fam$g4g <- function(mu) { 
+     eta <- fam$linkfun(mu)
+     eta2 <- eta*eta
+     ## g'''' = 2*pi^4*(8*eta+12*eta2*eta)*(1+eta2)
+     ((8+ 12*eta2)/(1+eta2)^2)*(eta/(1+eta2))
+    }
+    return(fam)
+  } ## cauchit  
+  if (link == "cloglog") {
+    ## g = log(-log(1-mu)), g' = -1/(log(1-mu)*(1-mu))
+    fam$g2g <- function(mu) { l1m <- log(1-mu)
+      -l1m - 1
+    }
+    fam$g3g <- function(mu) { l1m <- log(1-mu)
+       l1m*(2*l1m + 3) + 2    
+    }
+    fam$g4g <- function(mu){
+      l1m <- log(1-mu)
+      -l1m*(l1m*(6*l1m+11)+12)-6
+    }
+    return(fam)
+  }
+  stop("link not implemented for extended families")
+} ## fix.family.link.extended.family
 
-fix.family.link <- function(fam)
+fix.family.link.family <- function(fam)
 # adds d2link the second derivative of the link function w.r.t. mu
 # to the family supplied, as well as a 3rd derivative function 
 # d3link...
@@ -1800,6 +1899,7 @@ fix.family.link <- function(fam)
     return(fam)
   }
   if (link == "cloglog") {
+  ## g = log(-log(1-mu)), g' = -1/(log(1-mu)*(1-mu))
     fam$d2link <- function(mu) { l1m <- log(1-mu)
       -1/((1 - mu)^2*l1m) *(1+ 1/l1m)
     }
@@ -1821,6 +1921,10 @@ fix.family.link <- function(fam)
     return(fam)
   }
   if (link == "cauchit") {
+  ## uses general result that if link is a quantile function then 
+  ## d mu / d eta = f(eta) where f is the density. Link derivative
+  ## is one over this... repeated differentiation w.r.t. mu using chain
+  ## rule gives results...
     fam$d2link <- function(mu) { 
      eta <- fam$linkfun(mu)
      2*pi*pi*eta*(1+eta*eta)
@@ -1852,8 +1956,9 @@ fix.family.link <- function(fam)
     return(fam)
   }
   stop("link not recognised")
-} ## fix.family.link
+} ## fix.family.link.family
 
+fix.family.link <- function(fam) UseMethod("fix.family.link")
 
 fix.family.var <- function(fam)
 # adds dvar the derivative of the variance function w.r.t. mu

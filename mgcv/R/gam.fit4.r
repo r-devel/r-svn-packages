@@ -2,7 +2,9 @@
 ## (c) Simon N. Wood (2013). Provided under GPL 2.
 ## Routines for gam estimation beyond exponential family.
 
-dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
+dDeta.old <- function(y,mu,wt,theta,fam,deriv=0) {
+## old version using link derivatives directly - more overflow prone than 
+## new version below...
 ## What is available directly from the family are derivatives of the 
 ## deviance and link w.r.t. mu. This routine converts these to the
 ## required derivatives of the deviance w.r.t. eta.
@@ -51,6 +53,63 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
      d$Deta3th <-  ig13*(r$Dmu3th - 3 *r$Dmu2th*g2*ig1 + r$Dmuth*(3*g22*ig12-g3*ig1))
    }
    d
+} ## dDmu.old
+
+
+dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
+## What is available directly from the family are derivatives of the 
+## deviance and link w.r.t. mu. This routine converts these to the
+## required derivatives of the deviance w.r.t. eta.
+## deriv is the order of derivative of the smoothing parameter score 
+## required.
+## This version is based on ratios of derivatives of links rather 
+## than raw derivatives of links. g2g = g''/g'^2, g3g = g'''/g'^3 etc 
+   r <- fam$Dd(y, mu, theta, wt, level=deriv)  
+   d <- list(Deta=0,Dth=0,Dth2=0,Deta2=0,EDeta2=0,Detath=0,
+             Deta3=0,Deta2th=0,Detath2=0,
+             Deta4=0,Deta3th=0,Deta2th2=0)
+   if (fam$link=="identity") { ## don't waste time on transformation
+      d$Deta <- r$Dmu;d$Deta2 <- r$Dmu2
+      d$EDeta2 <- r$EDmu2
+      if (deriv>0) {
+        d$Dth <- r$Dth; d$Detath <- r$Dmuth
+        d$Deta3 <- r$Dmu3; d$Deta2th <- r$Dmu2th
+      }
+      if (deriv>1) {
+        d$Deta4 <- r$Dmu4; d$Dth2 <- r$Dth2; d$Detath2 <- r$Dmuth2
+        d$Deta2th2 <- r$Dmu2th2; d$Deta3th <- r$Dmu3th
+      }
+      return(d)
+   }
+
+   ig1 <- fam$mu.eta(fam$linkfun(mu)) 
+   ig12 <- ig1^2
+   
+   g2g <- fam$g2g(mu)
+
+##   ig12 <- ig1^2;ig13 <- ig12 * ig1
+
+   d$Deta <- r$Dmu * ig1
+   d$Deta2 <- r$Dmu2*ig12 - r$Dmu*g2g*ig1
+   d$EDeta2 <- r$EDmu2*ig12
+   if (deriv>0) {
+      ig13 <- ig12 * ig1
+      d$Dth <- r$Dth 
+      d$Detath <- r$Dmuth * ig1
+      g3g <- fam$g3g(mu)
+      d$Deta3 <- r$Dmu3*ig13 - 3*r$Dmu2 * g2g * ig12 + r$Dmu * (3*g2g^2 - g3g)*ig1
+      d$Deta2th <- r$Dmu2th*ig12 - r$Dmuth*g2g*ig1
+   }
+   if (deriv>1) {
+     g4g <- fam$g4g(mu)
+     d$Deta4 <- ig12^2*r$Dmu4 - 6*r$Dmu3*ig13*g2g + r$Dmu2*(15*g2g^2-4*g3g)*ig12 - 
+                       r$Dmu*(15*g2g^3-10*g2g*g3g  +g4g)*ig1
+     d$Dth2 <- r$Dth2
+     d$Detath2 <- r$Dmuth2 * ig1 
+     d$Deta2th2 <- ig12*r$Dmu2th2 - r$Dmuth2*g2g*ig1
+     d$Deta3th <-  ig13*r$Dmu3th - 3 *r$Dmu2th*g2g*ig12 + r$Dmuth*(3*g2g^2-g3g)*ig1
+   }
+   d
 } ## dDmu
 
 fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
@@ -62,11 +121,13 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   dev1 <- fam$dev.resids(y,mu1, wt,theta)
   Deta.fd <- (dev1-dev)/eps
   cat("Deta: rdiff = ",range(dd$Deta-Deta.fd)," cor = ",cor(dd$Deta,Deta.fd),"\n")
-  for (i in 1:length(theta)) {
+  nt <- length(theta)
+  for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
-    dev1 <- fam$dev.resids(y, mu, wt,th1)
+    dev1 <- fam$dev.resids(y, mu, wt,th1)   
     Dth.fd <- (dev1-dev)/eps
-    cat("Dth[",i,"]: rdiff = ",range(dd$Dth-Dth.fd)," cor = ",cor(dd$Dth,Dth.fd),"\n")
+    um <- if (nt>1) dd$Dth[,i] else dd$Dth
+    cat("Dth[",i,"]: rdiff = ",range(um-Dth.fd)," cor = ",cor(um,Dth.fd),"\n")
   }
   ## second order up...
   dd1 <- dDeta(y,mu1,wt,theta,fam,deriv=2)
@@ -77,22 +138,39 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   Deta4.fd <- (dd1$Deta3 - dd$Deta3)/eps
   cat("Deta4: rdiff = ",range(dd$Deta4-Deta4.fd)," cor = ",cor(dd$Deta4,Deta4.fd),"\n")
   ## and now the higher derivs wrt theta...
-  for (i in 1:length(theta)) {
+  ind <- 1:nt
+  for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dd1 <- dDeta(y,mu,wt,th1,fam,deriv=2)
-    Detath.fd <- (dd1$Deta - dd$Deta)/eps
-    cat("Detath[",i,"]: rdiff = ",range(dd$Detath-Detath.fd)," cor = ",cor(dd$Detath,Detath.fd),"\n")
+    Detath.fd <- (dd1$Deta - dd$Deta)/eps 
+    um <- if (nt>1) dd$Detath[,i] else dd$Detath
+    cat("Detath[",i,"]: rdiff = ",range(um-Detath.fd)," cor = ",cor(um,Detath.fd),"\n")
     Deta2th.fd <- (dd1$Deta2 - dd$Deta2)/eps
-    cat("Deta2th[",i,"]: rdiff = ",range(dd$Deta2th-Deta2th.fd)," cor = ",cor(dd$Deta2th,Deta2th.fd),"\n")
+    um <- if (nt>1) dd$Deta2th[,i] else dd$Deta2th
+    cat("Deta2th[",i,"]: rdiff = ",range(um-Deta2th.fd)," cor = ",cor(um,Deta2th.fd),"\n")
     Deta3th.fd <- (dd1$Deta3 - dd$Deta3)/eps
-    cat("Deta3th[",i,"]: rdiff = ",range(dd$Deta3th-Deta3th.fd)," cor = ",cor(dd$Deta3th,Deta3th.fd),"\n")
+    um <- if (nt>1) dd$Deta3th[,i] else dd$Deta3th
+    cat("Deta3th[",i,"]: rdiff = ",range(um-Deta3th.fd)," cor = ",cor(um,Deta3th.fd),"\n")
+
     ## now the 3 second derivative w.r.t. theta terms
+
     Dth2.fd <- (dd1$Dth - dd$Dth)/eps
-    cat("Dth2[",i,",]: rdiff = ",range(dd$Dth2-Dth2.fd)," cor = ",cor(dd$Dth2,Dth2.fd),"\n")
+    um <- if (nt>1) dd$Dth2[,ind] else dd$Dth2
+    er <- if (nt>1) Dth2.fd[,i:nt] else Dth2.fd
+    cat("Dth2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+
     Detath2.fd <- (dd1$Detath - dd$Detath)/eps
-    cat("Detath2[",i,",]: rdiff = ",range(dd$Detath2-Detath2.fd)," cor = ",cor(dd$Detath2,Detath2.fd),"\n")
+    um <- if (nt>1) dd$Detath2[,ind] else dd$Detath2
+    er <- if (nt>1) Detath2.fd[,i:nt] else Detath2.fd
+    cat("Detath2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+    ## cat("Detath2[",i,",]: rdiff = ",range(dd$Detath2-Detath2.fd)," cor = ",cor(dd$Detath2,Detath2.fd),"\n")
+
     Deta2th2.fd <- (dd1$Deta2th - dd$Deta2th)/eps
-    cat("Deta2th2[",i,",]: rdiff = ",range(dd$Deta2th2-Deta2th2.fd)," cor = ",cor(dd$Deta2th2,Deta2th2.fd),"\n")
+    um <- if (nt>1) dd$Deta2th2[,ind] else dd$Deta2th2
+    er <- if (nt>1) Deta2th2.fd[,i:nt] else Deta2th2.fd
+    cat("Deta2th2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+    ## cat("Deta2th2[",i,",]: rdiff = ",range(dd$Deta2th2-Deta2th2.fd)," cor = ",cor(dd$Deta2th2,Deta2th2.fd),"\n") 
+    ind <- max(ind)+1:(nt-i)
   }
 } ## fetad.test
 
@@ -103,11 +181,13 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   dev1 <- fam$dev.resids(y, mu+eps, wt,theta)
   Dmu.fd <- (dev1-dev)/eps
   cat("Dmu: rdiff = ",range(dd$Dmu-Dmu.fd)," cor = ",cor(dd$Dmu,Dmu.fd),"\n")
-  for (i in 1:length(theta)) {
+  nt <- length(theta)
+  for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dev1 <- fam$dev.resids(y, mu, wt,th1)
     Dth.fd <- (dev1-dev)/eps
-    cat("Dth[",i,"]: rdiff = ",range(dd$Dth-Dth.fd)," cor = ",cor(dd$Dth,Dth.fd),"\n")
+    um <- if (nt>1) dd$Dth[,i] else dd$Dth
+    cat("Dth[",i,"]: rdiff = ",range(um-Dth.fd)," cor = ",cor(um,Dth.fd),"\n")
   }
   ## second order up...
   dd1 <- fam$Dd(y, mu+eps, theta, wt, level=2)
@@ -118,22 +198,37 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   Dmu4.fd <- (dd1$Dmu3 - dd$Dmu3)/eps
   cat("Dmu4: rdiff = ",range(dd$Dmu4-Dmu4.fd)," cor = ",cor(dd$Dmu4,Dmu4.fd),"\n")
   ## and now the higher derivs wrt theta 
-  for (i in 1:length(theta)) {
+  ind <- 1:nt
+  for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dd1 <- fam$Dd(y, mu, th1, wt, level=2)
     Dmuth.fd <- (dd1$Dmu - dd$Dmu)/eps
-    cat("Dmuth[",i,"]: rdiff = ",range(dd$Dmuth-Dmuth.fd)," cor = ",cor(dd$Dmuth,Dmuth.fd),"\n")
+    um <- if (nt>1) dd$Dmuth[,i] else dd$Dmuth
+    cat("Dmuth[",i,"]: rdiff = ",range(um-Dmuth.fd)," cor = ",cor(um,Dmuth.fd),"\n")
     Dmu2th.fd <- (dd1$Dmu2 - dd$Dmu2)/eps
-    cat("Dmu2th[",i,"]: rdiff = ",range(dd$Dmu2th-Dmu2th.fd)," cor = ",cor(dd$Dmu2th,Dmu2th.fd),"\n")
+    um <- if (nt>1) dd$Dmu2th[,i] else dd$Dmu2th
+    cat("Dmu2th[",i,"]: rdiff = ",range(um-Dmu2th.fd)," cor = ",cor(um,Dmu2th.fd),"\n")
     Dmu3th.fd <- (dd1$Dmu3 - dd$Dmu3)/eps
-    cat("Dmu3th[",i,"]: rdiff = ",range(dd$Dmu3th-Dmu3th.fd)," cor = ",cor(dd$Dmu3th,Dmu3th.fd),"\n")
-    ## now the 3 second derivative w.r.t. theta terms
+    um <- if (nt>1) dd$Dmu3th[,i] else dd$Dmu3th
+    cat("Dmu3th[",i,"]: rdiff = ",range(um-Dmu3th.fd)," cor = ",cor(um,Dmu3th.fd),"\n")
+
+    ## now the 3 second derivative w.r.t. theta terms...
+
     Dth2.fd <- (dd1$Dth - dd$Dth)/eps
-    cat("Dth2[",i,",]: rdiff = ",range(dd$Dth2-Dth2.fd)," cor = ",cor(dd$Dth2,Dth2.fd),"\n")
+    um <- if (nt>1) dd$Dth2[,ind] else dd$Dth2
+    er <- if (nt>1) Dth2.fd[,i:nt] else Dth2.fd
+    cat("Dth2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+
     Dmuth2.fd <- (dd1$Dmuth - dd$Dmuth)/eps
-    cat("Dmuth2[",i,",]: rdiff = ",range(dd$Dmuth2-Dmuth2.fd)," cor = ",cor(dd$Dmuth2,Dmuth2.fd),"\n")
+    um <- if (nt>1) dd$Dmuth2[,ind] else dd$Dmuth2
+    er <- if (nt>1) Dmuth2.fd[,i:nt] else Dmuth2.fd
+    cat("Dmuth2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+ 
     Dmu2th2.fd <- (dd1$Dmu2th - dd$Dmu2th)/eps
-    cat("Dmu2th2[",i,",]: rdiff = ",range(dd$Dmu2th2-Dmu2th2.fd)," cor = ",cor(dd$Dmu2th2,Dmu2th2.fd),"\n")
+    um <- if (nt>1) dd$Dmu2th2[,ind] else dd$Dmu2th2
+    er <- if (nt>1) Dmu2th2.fd[,i:nt] else Dmu2th2.fd
+    cat("Dmu2th2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+    ind <- max(ind)+1:(nt-i)
   }
 }
 
@@ -243,13 +338,13 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    mu.eta <- family$mu.eta
    Dd <- family$Dd
-   d2link <- family$d2link
+  # d2link <- family$d2link
    linkinv <- family$linkinv
    valideta <- family$valideta
    validmu <- family$validmu
    dev.resids <- family$dev.resids
  
-   mu <- linkinv(eta)
+   mu <- linkinv(eta);etaold <- eta
      
    ## need an initial `null deviance' to test for initial divergence...
    null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
@@ -259,8 +354,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       if (control$trace) cat(iter," ")
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-      good <- dd$Deta2 != 0
-      w <- dd$Deta2[good] * .5
+      w <- dd$Deta2 * .5
+      good <- w!=0
+      w <- w[good]
       z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
 
       oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
@@ -270,8 +366,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
                      nt=as.integer(control$nthreads))
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
-        good <- dd$Deta2 > 0
-        w <- dd$Deta2[good] * .5
+        w <- dd$Deta2 * .5
+        good <- w > 0
+        w <- w[good]
         z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
        
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
@@ -396,9 +493,17 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    #coef ## final parameters
 
    ## now obtain derivatives, if these are needed...
+   check.derivs <- FALSE
+   while (check.derivs) { ## debugging code to check derivatives
+     eps <- 1e-7
+     fmud.test(y,mu,weights,theta,family,eps = eps)
+     fetad.test(y,mu,weights,theta,family,eps = eps)
+   }
+
    dd <- dDeta(y,mu,weights,theta,family,deriv)
-   good <- dd$Deta2 != 0
-   w <- dd$Deta2[good] * .5
+   w <- dd$Deta2 * .5
+   good <- w!=0
+   w <- w[good]
    z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
    wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
 
