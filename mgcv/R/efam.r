@@ -1742,6 +1742,14 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
          lsth1=lsth,lsth2=lsth2) ## its first and second derivs wrt theta
     }
 
+    preinitialize <- expression({
+      ## set initial theta to something sane - at lambda=0, 20% inflation
+      ## at lambda = mean of non zero y, 10% inflation... 
+      Theta <- c(log(.2/.8),0)   
+      Theta[2] <- log((Theta[1]-log(.1/.9))/mean(G$y[G$y>0]))
+      G$family$putTheta(Theta)
+    })
+
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
         n <- rep(1, nobs)
@@ -1781,7 +1789,7 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
     structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,
         aic = aic, mu.eta = stats$mu.eta, g2g = stats$g2g,g3g=stats$g3g, g4g=stats$g4g, 
-        initialize = initialize,postproc=postproc,ls=ls,fv=fv,
+        preinitialize=preinitialize,initialize = initialize,postproc=postproc,ls=ls,fv=fv,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
         class = c("extended.family","family"))

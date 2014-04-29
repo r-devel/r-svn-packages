@@ -71,6 +71,7 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
    if (fam$link=="identity") { ## don't waste time on transformation
       d$Deta <- r$Dmu;d$Deta2 <- r$Dmu2
       d$EDeta2 <- r$EDmu2
+      d$Deta.EDeta2 <- r$Dmu/r$EDmu2
       if (deriv>0) {
         d$Dth <- r$Dth; d$Detath <- r$Dmuth
         d$Deta3 <- r$Dmu3; d$Deta2th <- r$Dmu2th
@@ -92,6 +93,8 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
    d$Deta <- r$Dmu * ig1
    d$Deta2 <- r$Dmu2*ig12 - r$Dmu*g2g*ig1
    d$EDeta2 <- r$EDmu2*ig12
+   d$Deta.Deta2 <- r$Dmu/(r$Dmu2*ig1 - r$Dmu*g2g)
+   d$Deta.EDeta2 <- r$Dmu/r$EDmu2*ig1
    if (deriv>0) {
       ig13 <- ig12 * ig1
       d$Dth <- r$Dth 
@@ -354,10 +357,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       if (control$trace) cat(iter," ")
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-      w <- dd$Deta2 * .5
-      good <- w!=0
-      w <- w[good]
-      z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
+      ## w <- dd$Deta2 * .5
+      good <- is.finite(dd$Deta.Deta2)
+      w <- dd$Deta2[good] * .5
+      ## w <- w[good]
+      z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
 
       oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
                y=as.double(z),X=as.double(x[good,]),w=as.double(w),
@@ -366,10 +370,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
                      nt=as.integer(control$nthreads))
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
-        w <- dd$Deta2 * .5
-        good <- w > 0
-        w <- w[good]
-        z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
+        good <- is.finite(dd$Deta.EDeta2)
+        w <- dd$EDeta2[good] * .5 ## Fisher
+        ##good <- w > 0
+        ##w <- w[good]
+        z <- (eta-offset)[good] - dd$Deta.EDeta2[good] ## - .5 * dd$Deta[good] / w
        
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
                   y=as.double(z),X=as.double(x[good,]),w=as.double(w),
@@ -500,11 +505,16 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      fetad.test(y,mu,weights,theta,family,eps = eps)
    }
 
+    
+
    dd <- dDeta(y,mu,weights,theta,family,deriv)
-   w <- dd$Deta2 * .5
-   good <- w!=0
-   w <- w[good]
-   z <- (eta-offset)[good] - .5 * dd$Deta[good] / w
+   ## w <- dd$Deta2 * .5
+   ## good <- w!=0
+   good <- is.finite(dd$Deta.Deta2)
+   if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
+   ## w <- w[good] 
+   w <- dd$Deta2[good] * .5
+   z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
    wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
 
    residuals <- rep.int(NA, nobs)
@@ -513,6 +523,27 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ntot <- length(theta) + length(sp)
    if (deriv>1) n2d <- ntot*(1+ntot)/2 else n2d <- 0 
    rSncol <- unlist(lapply(UrS,ncol))
+   ## Now drop any elements of dd that have been dropped in fitting...
+   if (sum(!good)>0) { ## drop !good from fields of dd
+     dd$Deta <- dd$Deta[good];dd$Deta2 <- dd$Deta2[good] 
+     dd$EDeta2 <- dd$EDeta2[good];dd$Deta3 <- dd$Deta3[good]
+     dd$Deta4 <- dd$Deta4[good]
+     if (length(theta)>1) {
+       dd$Dth <- dd$Dth[good,]; dd$Dth2 <- dd$Dth2[good,]
+       dd$Detath <- dd$Detath[good,]; dd$Deta2th <- dd$Deta2th[good,]
+       dd$Detath2 <- dd$Detath2[good,]; dd$Deta3th <- dd$Deta3th[good,]
+       dd$Deta2th2 <- dd$Deta2th2[good,] 
+     } else {
+       dd$Dth <- dd$Dth[good]; dd$Dth2 <- dd$Dth2[good]
+       dd$Detath <- dd$Detath[good]; dd$Deta2th <- dd$Deta2th[good]
+       dd$Detath2 <- dd$Detath2[good]; dd$Deta3th <- dd$Deta3th[good]
+       dd$Deta2th2 <- dd$Deta2th2[good] 
+     }
+   }
+   ## can't have zero weights in gdi2 call 
+   mwb <- max(abs(w))*.Machine$double.eps
+   mwa <- min(abs(w[w!=0]))*.0001; if (mwa==0) mwa <- mwb
+   w[w==0] <- min(mwa,mwb);
    oo <- .C(C_gdi2,
             X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
             U1 = as.double(U1),sp=as.double(exp(sp)),theta=as.double(theta),
