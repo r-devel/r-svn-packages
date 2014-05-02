@@ -1375,8 +1375,197 @@ scat <- function (theta = NULL, link = "identity") {
 
 ## zero inflated Poisson...
 
+logid <- function(l,th,deriv=0) {
+## evaluate exp(th[1]+th[2]*l)/(1+exp(th[1]+th[2]*l))
+## and some of its derivatives
+  p <- f <- th[1] + th[2] * l
+  ind <- f > 0; ef <- exp(f[!ind])
+  p[!ind] <- ef/(1+ef); p[ind] <- 1/(1+exp(-f[ind]))  
+  r <- list(p=p)
+  
+  a1 <- p*(1-p); a2 <- p*(p*(2*p-3)+1)
+  r$p.l <- th[2]*a1;   ## p_l
+  r$p.ll <- th[2]^2*a2 ## p_ll
+  if (deriv>0) { 
+  n <- length(l); r$p.lth <- r$p.th <- matrix(0,n,2) 
+  r$p.th[,1] <- a1   ## dp/dth1
+  r$p.th[,2] <- l*a1 ## dp/dth2
+  r$p.lth[,1] <- th[2]*a2  ## p_lth1
+  r$p.lth[,2] <- l*th[2]*a2 + a1 ## p_lth2
+
+  a3 <- p*(p*(p*(-6*p + 12) -7)+1)
+  r$p.lll <- th[2]^3*a3   ## p_lll
+  r$p.llth <- matrix(0,n,2) 
+  r$p.llth[,1] <- th[2]^2 * a3 ## p_llth1
+  r$p.llth[,2] <- l*th[2]^2*a3 + 2*th[2]*a2 ## p_ppth2
+
+  a4 <- p*(p*(p*(p*(p*24-60)+50)-15)+1)
+  r$p.llll <- th[2]^4*a4 ## p_llll
+  r$p.lllth <- matrix(0,n,2)
+  r$p.lllth[,1] <- th[2]^3*a4 ## p_lllth1
+  r$p.lllth[,2] <- th[2]^3*l*a4 + 3*th[2]^2*a3 ## p_lllth2
+
+  r$p.llth2 <- r$p.lth2 <- r$p.th2 <- matrix(0,n,3) ## ordered l_th1th1,l_th1th2,l_th2th2
+
+  r$p.th2[,1] <- a2   ## p_th1th1
+  r$p.th2[,2] <- l*a2 ## p_th1th2  
+  r$p.th2[,3] <- l*l*a2 ## p_th2th2
+
+  r$p.lth2[,1] <- th[2]*a3  ## p_lth1th1
+  r$p.lth2[,2] <- th[2]*l*a3 + a2 ## p_lth1th2  
+  r$p.lth2[,3] <- l*l*a3*th[2] + 2*l*a2 ## p_lth2th2
+
+  r$p.llth2[,1] <- th[2]^2*a4  ## p_llth1th1
+  r$p.llth2[,2] <- th[2]^2*l*a4 + 2*th[2]*a3 ## p_llth1th2  
+  r$p.llth2[,3] <- l*l*th[2]^2*a4 + 4*l*th[2]*a3 + 2*a2 ## p_llth2th2
+  }
+  r
+} ## logid
+
+
 
 ziP <- function (theta = NULL, link = "loga",a=1e-8) { 
+  linktemp <- substitute(link)
+  if (!is.character(linktemp)) linktemp <- deparse(linktemp)
+  if (linktemp %in% c("loga")) { 
+    stats <- list()
+    stats$valideta <- function(eta) TRUE 
+    stats$link = "loga"
+    stats$linkfun <- eval(parse(text=paste("function(mu) log(mu -",a,")")))
+    stats$linkinv <- eval(parse(text=paste("function(eta) exp(eta) +",a)))
+    stats$mu.eta <- function(eta) exp(eta)
+    stats$g2g <- function(mu) rep(-1,length(mu))
+    stats$g3g <- function(mu) rep(2,length(mu))
+    stats$g4g <- function(mu) rep(-6,length(mu))
+  } else  stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"loga\"")
+  Theta <-  NULL;n.theta <- 2
+  if (!is.null(theta)) {
+      ## fixed theta supplied
+      iniTheta <- Theta <- c(theta[1],theta[2])
+      n.theta <- 0 ## no thetas to estimate
+  } else iniTheta <- c(1,-1) ## inital theta value
+
+  env <- new.env(parent = environment(ziP))# new.env(parent = .GlobalEnv)
+  assign(".Theta", iniTheta, envir = env)
+  getTheta <- function(trans=FALSE) { 
+  ## trans transforms to the original scale...
+    th <- get(".Theta")
+    th
+  }
+  putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
+  
+  validmu <- function(mu) all(mu > 0)
+  
+  dev.resids <- function(y, mu, wt,theta=NULL) {
+    ## this version ignores saturated likelihood
+    if (is.null(theta)) theta <- get(".Theta")
+    p <- f <- theta[1] + theta[2] * mu; ind <- f > 0
+    p[ind] <- exp(f[!ind])/(1+exp(f[!ind])) 
+    p[!ind] <- 1/(1+exp(-f[!ind]))
+    -2*zipll(y,mu,p,deriv=0)$l
+  }
+  
+  Dd <- function(y, mu, theta, wt=NULL, level=0) {
+    if (is.null(theta)) theta <- get(".Theta")
+    deriv <- 1; if (level==1) deriv <- 2 else if (level>1) deriv <- 4 
+    g <- logid(mu,theta,level) ## the derviatives of the logistic transform mapping mu to p
+    z <- zipll(y,mu,g$p,deriv)
+    oo <- list();n <- length(y)
+    if (is.null(wt)) wt <- rep(1,n)
+    oo$Dmu <- -2*wt*(z$l1[,1] + z$l1[,2]*g$p.l)
+    oo$Dmu2 <- -2*wt*(z$l2[,1] + z$l2[,2]*g$p.l + z$l2[,3]*g$p.l^2 + z$l*g$p.ll)
+    emlam <- exp(-mu) 
+    pz <- 1 - g$p + g$p*emlam ## probablity of a zero
+    ll <- -g$p * emlam/(g$p*(emlam-1)+1) 
+    oo$EDmu2 <- -2*wt*(pz * (-ll - ll^2) - (1-pz)/(mu*(1-emlam)))  
+    if (level>0) { ## l,p - ll,lp,pp -  lll,llp,lpp,ppp - llll,lllp,llpp,lppp,pppp
+      oo$Dth <- -2*wt*z$l1[,2]*g$p.th ## l_p p_th
+      oo$Dmuth <- -2*wt*z$l2[,2]*g$p.th + z$l2[,3]*g$p.l*g$p.th + z$l1[,2]*g$p.lth 
+      oo$Dmu2th <- -2*wt*(z$l3[,2]*g$p.th + z$l3[,3]*g$p.l*g$p.th + z$l2[,2]*g$p.lth + 
+       z$l3[,4]*g$p.l^2*g$p.th + z$l2[,3]*(2*g$p.l*g$p.lth + g$p.th*g$p.ll) + z$l1[,2]*g$p.llth)
+      oo$Dmu3 <- -2*wt*(z$l3[,1] + 2*z$l3[,2]*g$p.l + z$l3[,3]*g$p.l^2 + 2*z$l2[,2]*g$p.ll + z$l3[,3]*g$p.l^2 +
+       z$l3[,4]*g$p.l^3 +3*z$l2[,3]*g$p.l*g$p.ll + z$l1[,2]*g$p.lll)
+    } 
+    if (level>1) {
+      p.thth <- matrix(0,n,3);p.thth[,1] <- g$p.th[,1]^2
+      p.thth[,2] <- g$p.th[,1]*g$p.th[,2];p.thth[,3] <- g$p.th[,2]^2
+      oo$Dth2 <- -2*wt*(z$l2[,2]*p.thth + z$l1[,2]*g$p.th2)
+      p.lthth <- matrix(0,n,3);p.lthth[,1] <- g$p.th[,1]*g$p.lth[,1]*2
+      p.lthth[,2] <- g$p.th[,1]*g$p.lth[,2] + g$p.th[,2]*g$p.lth[,1];
+      p.lthth[,3] <- g$p.th[,2]*g$p.lth[,2]*2
+      oo$Dmuth2 <- -2*wt*( z$l3[,3]*p.thth + z$l2[,2]*g$p.th2 + z$l3[,4]*g$p.l*p.thth + 
+        z$l2[,3]*(g$p.th2*g$p.l + p.lthth) + z$l1[,2]*g$p.lth2)
+      p.lthlth <- matrix(0,n,3);p.lthlth[,1] <- g$p.lth[,1]*g$p.lth[,1]*2
+      p.lthlth[,2] <- g$p.lth[,1]*g$p.lth[,2] + g$p.lth[,2]*g$p.lth[,1];
+      p.lthlth[,3] <- g$p.lth[,2]*g$p.lth[,2]*2
+      p.llthth <- matrix(0,n,3);p.llthth[,1] <- g$p.th[,1]*g$p.llth[,1]*2
+      p.llthth[,2] <- g$p.th[,1]*g$p.llth[,2] + g$p.th[,2]*g$p.lth[,1];
+      p.llthth[,3] <- g$p.th[,2]*g$p.llth[,2]*2
+      oo$Dmu2th2 <- -2*wt*(z$l4[,3]*p.thth + z$l3[,2]*g$p.th2 +z$l4[,4] * p.thth *g$p.l + z$l3[,3]*(g$p.th2*g$p.l + p.lthth) +
+        z$l2[,2]*g$p.lth2 + z$l4[,5]*p.thth*g$p.l^2 + z$l3[,4]*(g$p.th2*g$p.l^2 + 2*p.lthth*g$p.l + p.thth*g$p.ll) +
+        z$l2[,3]*(p.lthlth + 2*g$p.l*g$p.lth2 + p.llthth + g$p.th2*g$p.ll) + z$l1[,2]*g$p.llth2)
+      oo$Dmu3th <- -2*wt*(z$l4[,2]*g$p.th + 2*z$l4[,3]*g$p.th*g$p.l + 2*z$l3[,2]*g$p.lth + z$l4[,4]*g$p.th*g$p.l^2 + 
+        z$l3[,3]*(4*g$p.lth*g$p.l + 2*g$p.th*g$p.ll) + 2*z$l2[,2]*g$p.llth + z$l4[,4]*g$p.th*g$p.l^2 + 
+        z$l4[,5]*g$p.th*g$p.l^3 + 3*z$l3[,4]*(g$p.l^2*g$p.lth + g$p.th*g$p.l*g$p.ll) +
+        z$l2[,3]*(3*g$p.lth*g$p.ll + 3*g$p.l*g$p.llth + g$p.th*g$p.lll) + z$l1[,2]*g$p.lllth)
+      oo$Dmu4 <- -2*wt*(z$l4[,1] + 3*z$l4[,2]*g$p.l + 2*z$l3[,2]*g$p.ll + z$l4[,3]*(3*g$p.l^2 + 2*g$p.ll) +
+        2*z$l3[,3]*g$p.l*g$p.ll + z$l4[,4]*(3*g$p.l^2 + 2*g$p.l*g$p.ll) + 3*z$l2[,2]*g$p.lll + z$l4[,3]*g$p.l^2 +
+        5*z$l3[,3]*g$p.l*g$p.ll + z$l4[,5]*g$p.l^4 + 6*z$l3[,4]*g$p.l^2*g$p.ll + z$l2[,3]*(3*g$p.ll^2 + 4*g$p.l*g$p.lll) +
+        z$l1[,2]*g$p.llll)
+    }
+    oo
+  } ## end Dd for ziP
+  
+  aic <- function(y, mu, theta=NULL, wt, dev) {
+    if (is.null(theta)) theta <- get(".Theta")
+    p <- logid(mu,theta,0)$p ## the derviatives of the logistic transform mapping mu to p
+    sum(-2*wt*zipll(y,mu,p,0)$l)
+  }
+  ls <- function(y,w,n,theta,scale) {
+       ## the log saturated likelihood function.
+       ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik 
+       list(ls=0,## saturated log likelihood
+            lsth1=c(0,0),  ## first deriv vector w.r.t theta - last element relates to scale
+            lsth2=matrix(0,2,2)) ##Hessian w.r.t. theta
+  }
+    preinitialize <- expression({
+      ## set initial theta to something sane - at lambda=0, 20% inflation
+      ## at lambda = mean of non zero y, 10% inflation... 
+      if (G$family$n.theta) {
+        Theta <- c(log(.2/.8),0)   
+        Theta[2] <- -(Theta[1]-log(.1/.9))/mean(G$y[G$y>0])
+        G$family$putTheta(Theta)
+      }
+    })
+
+    initialize <- expression({
+        if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
+        n <- rep(1, nobs)
+        mustart <- y +exp(-y) # + (y==0)/5
+    })
+    postproc <- expression({
+      object$family$family <- 
+      paste("Zero inflated Poisson(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
+      ## need to fix deviance here!!
+    })
+   
+    ## NOTE: needs a predict function, and a residuals function and an rd function
+    environment(dev.resids) <- 
+    environment(aic) <- environment(getTheta) <- 
+    environment(putTheta) <- env
+
+    structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
+        linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, ##rd=rd,
+        aic = aic, mu.eta = stats$mu.eta, g2g = stats$g2g,g3g=stats$g3g, g4g=stats$g4g, 
+        preinitialize=preinitialize,initialize = initialize,postproc=postproc,ls=ls,#fv=fv,
+        validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
+        ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
+        class = c("extended.family","family"))
+
+} ## ziP
+
+
+ziP.old <- function (theta = NULL, link = "loga",a=1e-8) { 
 ## Extended family object for zero inflated distribution
 ## n.theta=2; log theta supplied
 ## This version overflow proofed snw. nyp original version is at svn version 6742
@@ -1407,7 +1596,7 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
     } else iniTheta <- c(1,-1) ## inital theta value
            
     
-    env <- new.env(parent = .GlobalEnv)
+    env <- new.env(parent = environment(ziP))##.GlobalEnv)
     assign(".Theta", iniTheta, envir = env)
     getTheta <- function(trans=FALSE) { 
      ## trans transforms to the original scale...
@@ -1693,6 +1882,7 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
        f <- th1 - th2*y[yzero]; ## i.e. th1
        ey <- exp(-y[yzero]);  ## i.e. 1
        h <- ind <- f >0 
+
        h[ind] <- (1 + ey[ind]*exp(-f[ind]))/(1 + exp(-f[ind]))
        f <- exp(f[!ind])
        h[!ind] <- (f + ey[!ind])/(1+f)
@@ -1701,10 +1891,12 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
        term[!yzero] <- -log(1+f) - y[!yzero] +y[!yzero]*log(y[!yzero]) -
                  lfactorial(y[!yzero]) 
        ls <- sum(term*w) 
+
        ## first derivatives wrt theta...
        lsth <- rep(0,2) 
        f <- th1 - th2*y[yzero] ## i.e. th1
        a0 <- a20 <- b0 <- c0 <- d0 <- ind <- f > 0
+ 
        emf <- exp(-f[ind]); ef <- exp(f[!ind]); efa <- exp(f);
        ## b0 <- exp(-y[yzero]) ## this is 1
        c0 <- 1/(efa +1) #+ b0);  ## b0 is 1
@@ -1715,12 +1907,14 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
        
        f0.s <- th1-th2*y[!yzero]; 
        a0.s <- a20.s <- ind <- f0.s > 0
+
        emf0 <- exp(-f0.s[ind]); ef0 <- exp(f0.s[!ind]); efa0 <- exp(f0.s);
        a0.s[ind] <- 1/(1+emf0); a0.s[!ind] <- ef0/(1+ef0) 
        a20.s[ind] <- emf0/(1+emf0)^2; a20.s[!ind] <- ef0/(1+ef0)^2;
 
        term <- rep(0,length(y))
-       term[yzero] <- a0*(1-b0)*c0;  term[!yzero] <- -a0.s
+       term[yzero] <- 0 ## a0*(1-b0)*c0; ##1-b0 = 0  
+       term[!yzero] <- -a0.s
        lsth[1] <- sum(w*term)
        term[yzero] <- 0 ## y[yzero]*th2*a0*(b0-1)*c0 ## brain dead
        term[!yzero] <- y[!yzero]*th2*a0.s
@@ -1728,7 +1922,7 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
        
        ## second deriv...      
        lsth2 <- matrix(0,2,2)  
-       term[yzero] <- tt <- (1-b0)*a20 * (b0*c0^2 - d0^2)
+       term[yzero] <- tt <- 0  ## (1-b0)*a20 * (b0*c0^2 - d0^2) ## b0 is 1
        term[!yzero] <- -a20.s 
        lsth2[1,1] <- sum(term*w)
        term[yzero] <- 0 ##-y[yzero]*th2*tt
@@ -1745,9 +1939,11 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
     preinitialize <- expression({
       ## set initial theta to something sane - at lambda=0, 20% inflation
       ## at lambda = mean of non zero y, 10% inflation... 
-      Theta <- c(log(.2/.8),0)   
-      Theta[2] <- log((Theta[1]-log(.1/.9))/mean(G$y[G$y>0]))
-      G$family$putTheta(Theta)
+      if (G$family$n.theta) {
+        Theta <- c(log(.2/.8),0)   
+        Theta[2] <- log((Theta[1]-log(.1/.9))/mean(G$y[G$y>0]))
+        G$family$putTheta(Theta)
+      }
     })
 
     initialize <- expression({
@@ -1759,6 +1955,7 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
       object$family$family <- 
       paste("Zero inflated Poisson(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
     })
+
     fv <- function(mu,theta=NULL) {
     ## optional function to give fitted values - idea is that 
     ## predict.gam(...,type="response") will use this, as well
@@ -1793,4 +1990,4 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta, 
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta),
         class = c("extended.family","family"))
-} ## zip
+} ## ziP.old

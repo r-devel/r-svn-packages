@@ -1091,6 +1091,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
   mustart <- b$fitted.values
+  etastart <- b$linear.predictors
   start <- b$coefficients
 
   if (reml) {
@@ -1129,7 +1130,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
-         printWarn=FALSE,mustart=mustart,start=start,
+         printWarn=FALSE,etastart=etastart,start=start,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
     }
 #    ii <- 0
@@ -1195,6 +1196,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     if (score1<score) { ## accept
       old.score <- score 
       mustart <- b$fitted.values
+      etastart <- b$linear.predictors
       start <- b$coefficients
       lsp <- lsp1
       if (reml) {
@@ -1250,6 +1252,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
              mustart=mustart,scoreType=scoreType,null.coef=null.coef,
              pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
           mustart <- b$fitted.values 
+          etastart <- b$linear.predictors
           start <- b$coefficients
           old.score <- score;lsp <- lsp1
          
@@ -1732,6 +1735,8 @@ gam4objective <- function(lsp,args,...)
 ##
 ## The following fix up family objects for use with gam.fit3
 ##
+
+fix.family.link.general.family <- function(fam) fix.family.link.family(fam)
 
 fix.family.link.extended.family <- function(fam) {
 ## extended families require link derivatives in ratio form.

@@ -70,7 +70,7 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
              Deta4=0,Deta3th=0,Deta2th2=0)
    if (fam$link=="identity") { ## don't waste time on transformation
       d$Deta <- r$Dmu;d$Deta2 <- r$Dmu2
-      d$EDeta2 <- r$EDmu2
+      d$EDeta2 <- r$EDmu2;d$Deta.Deta2 <- r$Dmu/r$Dmu2
       d$Deta.EDeta2 <- r$Dmu/r$EDmu2
       if (deriv>0) {
         d$Dth <- r$Dth; d$Detath <- r$Dmuth
@@ -94,7 +94,7 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
    d$Deta2 <- r$Dmu2*ig12 - r$Dmu*g2g*ig1
    d$EDeta2 <- r$EDmu2*ig12
    d$Deta.Deta2 <- r$Dmu/(r$Dmu2*ig1 - r$Dmu*g2g)
-   d$Deta.EDeta2 <- r$Dmu/r$EDmu2*ig1
+   d$Deta.EDeta2 <- r$Dmu/(r$EDmu2*ig1)
    if (deriv>0) {
       ig13 <- ig12 * ig1
       d$Dth <- r$Dth 
@@ -611,6 +611,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    if (deriv>0&&family$n.theta==0&&nth>0) { ## need to drop derivs for fixed theta
      REML1 <- REML1[-(1:nth)]
      if (deriv>1) REML2 <- REML2[-(1:nth),-(1:nth)]
+     db.drho <- db.drho[,-(1:nth),drop=FALSE]
    }  
 
    names(coef) <- xnames
