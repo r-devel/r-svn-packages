@@ -1375,56 +1375,61 @@ scat <- function (theta = NULL, link = "identity") {
 
 ## zero inflated Poisson...
 
-logid <- function(l,th,deriv=0) {
+logid <- function(l,th,deriv=0,a=0,trans=TRUE) {
 ## evaluate exp(th[1]+th[2]*l)/(1+exp(th[1]+th[2]*l))
 ## and some of its derivatives
+## if trans==TRUE then it is assumed that the 
+## transformation th[2] = exp(th[2]) is applied on input
+  b <- 1-2*a
+  ## x is dth[2]/dth[2]' where th[2]' is input version, xx is second deriv over first
+  if (trans) { xx <- 1; x <- th[2] <- exp(th[2])} else { x <- 1;xx <- 0}
   p <- f <- th[1] + th[2] * l
   ind <- f > 0; ef <- exp(f[!ind])
   p[!ind] <- ef/(1+ef); p[ind] <- 1/(1+exp(-f[ind]))  
-  r <- list(p=p)
+  r <- list(p = a + b * p)
   
   a1 <- p*(1-p); a2 <- p*(p*(2*p-3)+1)
-  r$p.l <- th[2]*a1;   ## p_l
-  r$p.ll <- th[2]^2*a2 ## p_ll
+  r$p.l <- b * th[2]*a1;   ## p_l
+  r$p.ll <- b * th[2]^2*a2 ## p_ll
   if (deriv>0) { 
-  n <- length(l); r$p.lth <- r$p.th <- matrix(0,n,2) 
-  r$p.th[,1] <- a1   ## dp/dth1
-  r$p.th[,2] <- l*a1 ## dp/dth2
-  r$p.lth[,1] <- th[2]*a2  ## p_lth1
-  r$p.lth[,2] <- l*th[2]*a2 + a1 ## p_lth2
+    n <- length(l); r$p.lth <- r$p.th <- matrix(0,n,2) 
+    r$p.th[,1] <- b * a1   ## dp/dth1
+    r$p.th[,2] <- b * l*a1 * x ## dp/dth2
+    r$p.lth[,1] <- b * th[2]*a2  ## p_lth1
+    r$p.lth[,2] <- b * (l*th[2]*a2 + a1) * x ## p_lth2
 
-  a3 <- p*(p*(p*(-6*p + 12) -7)+1)
-  r$p.lll <- th[2]^3*a3   ## p_lll
-  r$p.llth <- matrix(0,n,2) 
-  r$p.llth[,1] <- th[2]^2 * a3 ## p_llth1
-  r$p.llth[,2] <- l*th[2]^2*a3 + 2*th[2]*a2 ## p_ppth2
+    a3 <- p*(p*(p*(-6*p + 12) -7)+1)
+    r$p.lll <- b * th[2]^3*a3   ## p_lll
+    r$p.llth <- matrix(0,n,2) 
+    r$p.llth[,1] <- b * th[2]^2 * a3 ## p_llth1
+    r$p.llth[,2] <- b * (l*th[2]^2*a3 + 2*th[2]*a2) * x ## p_ppth2
 
-  a4 <- p*(p*(p*(p*(p*24-60)+50)-15)+1)
-  r$p.llll <- th[2]^4*a4 ## p_llll
-  r$p.lllth <- matrix(0,n,2)
-  r$p.lllth[,1] <- th[2]^3*a4 ## p_lllth1
-  r$p.lllth[,2] <- th[2]^3*l*a4 + 3*th[2]^2*a3 ## p_lllth2
+    a4 <- p*(p*(p*(p*(p*24-60)+50)-15)+1)
+    r$p.llll <- b * th[2]^4*a4 ## p_llll
+    r$p.lllth <- matrix(0,n,2)
+    r$p.lllth[,1] <- b * th[2]^3*a4 ## p_lllth1
+    r$p.lllth[,2] <- b * (th[2]^3*l*a4 + 3*th[2]^2*a3) * x ## p_lllth2
 
-  r$p.llth2 <- r$p.lth2 <- r$p.th2 <- matrix(0,n,3) ## ordered l_th1th1,l_th1th2,l_th2th2
+    r$p.llth2 <- r$p.lth2 <- r$p.th2 <- matrix(0,n,3) ## ordered l_th1th1,l_th1th2,l_th2th2
 
-  r$p.th2[,1] <- a2   ## p_th1th1
-  r$p.th2[,2] <- l*a2 ## p_th1th2  
-  r$p.th2[,3] <- l*l*a2 ## p_th2th2
+    r$p.th2[,1] <- b * a2   ## p_th1th1
+    r$p.th2[,2] <- b * l*a2 * x ## p_th1th2  
+    r$p.th2[,3] <- b * l*l*a2 * x * x + xx* r$p.th[,2] ## p_th2th2
 
-  r$p.lth2[,1] <- th[2]*a3  ## p_lth1th1
-  r$p.lth2[,2] <- th[2]*l*a3 + a2 ## p_lth1th2  
-  r$p.lth2[,3] <- l*l*a3*th[2] + 2*l*a2 ## p_lth2th2
+    r$p.lth2[,1] <- b * th[2]*a3  ## p_lth1th1
+    r$p.lth2[,2] <- b * (th[2]*l*a3 + a2) * x ## p_lth1th2  
+    r$p.lth2[,3] <- b * (l*l*a3*th[2] + 2*l*a2) *x * x + xx*r$p.lth[,2]  ## p_lth2th2
 
-  r$p.llth2[,1] <- th[2]^2*a4  ## p_llth1th1
-  r$p.llth2[,2] <- th[2]^2*l*a4 + 2*th[2]*a3 ## p_llth1th2  
-  r$p.llth2[,3] <- l*l*th[2]^2*a4 + 4*l*th[2]*a3 + 2*a2 ## p_llth2th2
+    r$p.llth2[,1] <- b * th[2]^2*a4  ## p_llth1th1
+    r$p.llth2[,2] <- b * (th[2]^2*l*a4 + 2*th[2]*a3) *x ## p_llth1th2  
+    r$p.llth2[,3] <- b * (l*l*th[2]^2*a4 + 4*l*th[2]*a3 + 2*a2) *x*x + xx*r$p.llth[,2] ## p_llth2th2
   }
   r
 } ## logid
 
 
 
-ziP <- function (theta = NULL, link = "loga",a=1e-8) { 
+ziP.new <- function (theta = NULL, link = "loga",a=1e-8) { 
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   if (linktemp %in% c("loga")) { 
@@ -1459,9 +1464,10 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
   dev.resids <- function(y, mu, wt,theta=NULL) {
     ## this version ignores saturated likelihood
     if (is.null(theta)) theta <- get(".Theta")
-    p <- f <- theta[1] + theta[2] * mu; ind <- f > 0
-    p[ind] <- exp(f[!ind])/(1+exp(f[!ind])) 
-    p[!ind] <- 1/(1+exp(-f[!ind]))
+    p <- logid(mu,theta,deriv=0)$p
+    #p <- f <- theta[1] + theta[2] * mu; ind <- f > 0
+    #ef <- exp(f[!ind])
+    #p[!ind] <- ef/(1+ef); p[ind] <- 1/(1+exp(-f[ind]))  
     -2*zipll(y,mu,p,deriv=0)$l
   }
   
@@ -1473,23 +1479,25 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
     oo <- list();n <- length(y)
     if (is.null(wt)) wt <- rep(1,n)
     oo$Dmu <- -2*wt*(z$l1[,1] + z$l1[,2]*g$p.l)
-    oo$Dmu2 <- -2*wt*(z$l2[,1] + z$l2[,2]*g$p.l + z$l2[,3]*g$p.l^2 + z$l*g$p.ll)
+    oo$Dmu2 <- -2*wt*(z$l2[,1] + 2*z$l2[,2]*g$p.l + z$l2[,3]*g$p.l^2 + z$l1[,2]*g$p.ll)
     emlam <- exp(-mu) 
     pz <- 1 - g$p + g$p*emlam ## probablity of a zero
-    ll <- -g$p * emlam/(g$p*(emlam-1)+1) 
-    oo$EDmu2 <- -2*wt*(pz * (-ll - ll^2) - (1-pz)/(mu*(1-emlam)))  
+    ##ll <- -g$p * emlam/(g$p*(emlam-1)+1) 
+    aa <- -(g$p*emlam)^2/pz; aa[!is.finite(aa)] <- 0 
+    aa <- aa + g$p*emlam
+    oo$EDmu2 <- -2*wt*(aa - g$p/mu)  
     if (level>0) { ## l,p - ll,lp,pp -  lll,llp,lpp,ppp - llll,lllp,llpp,lppp,pppp
       oo$Dth <- -2*wt*z$l1[,2]*g$p.th ## l_p p_th
-      oo$Dmuth <- -2*wt*z$l2[,2]*g$p.th + z$l2[,3]*g$p.l*g$p.th + z$l1[,2]*g$p.lth 
-      oo$Dmu2th <- -2*wt*(z$l3[,2]*g$p.th + z$l3[,3]*g$p.l*g$p.th + z$l2[,2]*g$p.lth + 
+      oo$Dmuth <- -2*wt*(z$l2[,2]*g$p.th + z$l2[,3]*g$p.l*g$p.th + z$l1[,2]*g$p.lth) 
+      oo$Dmu2th <- -2*wt*(z$l3[,2]*g$p.th + 2*z$l3[,3]*g$p.l*g$p.th + 2* z$l2[,2]*g$p.lth + 
        z$l3[,4]*g$p.l^2*g$p.th + z$l2[,3]*(2*g$p.l*g$p.lth + g$p.th*g$p.ll) + z$l1[,2]*g$p.llth)
-      oo$Dmu3 <- -2*wt*(z$l3[,1] + 2*z$l3[,2]*g$p.l + z$l3[,3]*g$p.l^2 + 2*z$l2[,2]*g$p.ll + z$l3[,3]*g$p.l^2 +
+      oo$Dmu3 <- -2*wt*(z$l3[,1] + 3*z$l3[,2]*g$p.l + 2*z$l3[,3]*g$p.l^2 + 3*z$l2[,2]*g$p.ll + z$l3[,3]*g$p.l^2 +
        z$l3[,4]*g$p.l^3 +3*z$l2[,3]*g$p.l*g$p.ll + z$l1[,2]*g$p.lll)
     } 
     if (level>1) {
       p.thth <- matrix(0,n,3);p.thth[,1] <- g$p.th[,1]^2
       p.thth[,2] <- g$p.th[,1]*g$p.th[,2];p.thth[,3] <- g$p.th[,2]^2
-      oo$Dth2 <- -2*wt*(z$l2[,2]*p.thth + z$l1[,2]*g$p.th2)
+      oo$Dth2 <- -2*wt*(z$l2[,3]*p.thth + z$l1[,2]*g$p.th2)
       p.lthth <- matrix(0,n,3);p.lthth[,1] <- g$p.th[,1]*g$p.lth[,1]*2
       p.lthth[,2] <- g$p.th[,1]*g$p.lth[,2] + g$p.th[,2]*g$p.lth[,1];
       p.lthth[,3] <- g$p.th[,2]*g$p.lth[,2]*2
@@ -1499,19 +1507,21 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
       p.lthlth[,2] <- g$p.lth[,1]*g$p.lth[,2] + g$p.lth[,2]*g$p.lth[,1];
       p.lthlth[,3] <- g$p.lth[,2]*g$p.lth[,2]*2
       p.llthth <- matrix(0,n,3);p.llthth[,1] <- g$p.th[,1]*g$p.llth[,1]*2
-      p.llthth[,2] <- g$p.th[,1]*g$p.llth[,2] + g$p.th[,2]*g$p.lth[,1];
+      p.llthth[,2] <- g$p.th[,1]*g$p.llth[,2] + g$p.th[,2]*g$p.llth[,1];
       p.llthth[,3] <- g$p.th[,2]*g$p.llth[,2]*2
-      oo$Dmu2th2 <- -2*wt*(z$l4[,3]*p.thth + z$l3[,2]*g$p.th2 +z$l4[,4] * p.thth *g$p.l + z$l3[,3]*(g$p.th2*g$p.l + p.lthth) +
-        z$l2[,2]*g$p.lth2 + z$l4[,5]*p.thth*g$p.l^2 + z$l3[,4]*(g$p.th2*g$p.l^2 + 2*p.lthth*g$p.l + p.thth*g$p.ll) +
+
+      oo$Dmu2th2 <- -2*wt*(z$l4[,3]*p.thth + z$l3[,2]*g$p.th2 + 2*z$l4[,4] * p.thth *g$p.l + 2*z$l3[,3]*(g$p.th2*g$p.l + p.lthth) +
+        2*z$l2[,2]*g$p.lth2 + z$l4[,5]*p.thth*g$p.l^2 + z$l3[,4]*(g$p.th2*g$p.l^2 + 2*p.lthth*g$p.l + p.thth*g$p.ll) +
         z$l2[,3]*(p.lthlth + 2*g$p.l*g$p.lth2 + p.llthth + g$p.th2*g$p.ll) + z$l1[,2]*g$p.llth2)
-      oo$Dmu3th <- -2*wt*(z$l4[,2]*g$p.th + 2*z$l4[,3]*g$p.th*g$p.l + 2*z$l3[,2]*g$p.lth + z$l4[,4]*g$p.th*g$p.l^2 + 
-        z$l3[,3]*(4*g$p.lth*g$p.l + 2*g$p.th*g$p.ll) + 2*z$l2[,2]*g$p.llth + z$l4[,4]*g$p.th*g$p.l^2 + 
+
+      oo$Dmu3th <- -2*wt*(z$l4[,2]*g$p.th + 3*z$l4[,3]*g$p.th*g$p.l + 3*z$l3[,2]*g$p.lth + 2*z$l4[,4]*g$p.th*g$p.l^2 + 
+        z$l3[,3]*(6*g$p.lth*g$p.l + 3*g$p.th*g$p.ll) + 3*z$l2[,2]*g$p.llth + z$l4[,4]*g$p.th*g$p.l^2 + 
         z$l4[,5]*g$p.th*g$p.l^3 + 3*z$l3[,4]*(g$p.l^2*g$p.lth + g$p.th*g$p.l*g$p.ll) +
         z$l2[,3]*(3*g$p.lth*g$p.ll + 3*g$p.l*g$p.llth + g$p.th*g$p.lll) + z$l1[,2]*g$p.lllth)
-      oo$Dmu4 <- -2*wt*(z$l4[,1] + 3*z$l4[,2]*g$p.l + 2*z$l3[,2]*g$p.ll + z$l4[,3]*(3*g$p.l^2 + 2*g$p.ll) +
-        2*z$l3[,3]*g$p.l*g$p.ll + z$l4[,4]*(3*g$p.l^2 + 2*g$p.l*g$p.ll) + 3*z$l2[,2]*g$p.lll + z$l4[,3]*g$p.l^2 +
-        5*z$l3[,3]*g$p.l*g$p.ll + z$l4[,5]*g$p.l^4 + 6*z$l3[,4]*g$p.l^2*g$p.ll + z$l2[,3]*(3*g$p.ll^2 + 4*g$p.l*g$p.lll) +
-        z$l1[,2]*g$p.llll)
+      oo$Dmu4 <- -2*wt*(z$l4[,1] + 4*z$l4[,2]*g$p.l + 6*z$l4[,3]*g$p.l^2 + 6*z$l3[,2]*g$p.ll + 
+        4*z$l4[,4]*g$p.l^3 + 12*z$l3[,3]*g$p.l*g$p.ll + 4*z$l2[,2]*g$p.lll + z$l4[,5] * g$p.l^4 +
+        6*z$l3[,4]*g$p.l^2*g$p.ll + z$l2[,3] *(4*g$p.l*g$p.lll + 3*g$p.ll^2) + z$l1[,2]*g$p.llll)
+
     }
     oo
   } ## end Dd for ziP
@@ -1532,8 +1542,8 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
       ## set initial theta to something sane - at lambda=0, 20% inflation
       ## at lambda = mean of non zero y, 10% inflation... 
       if (G$family$n.theta) {
-        Theta <- c(log(.2/.8),0)   
-        Theta[2] <- -(Theta[1]-log(.1/.9))/mean(G$y[G$y>0])
+        Theta <- c(log(.6/.4),0)   
+        Theta[2] <- log((log(.9/.1)-Theta[1])/mean(G$y[G$y>0]))
         G$family$putTheta(Theta)
       }
     })
@@ -1565,7 +1575,7 @@ ziP <- function (theta = NULL, link = "loga",a=1e-8) {
 } ## ziP
 
 
-ziP.old <- function (theta = NULL, link = "loga",a=1e-8) { 
+ziP <- function (theta = NULL, link = "loga",a=1e-8) { 
 ## Extended family object for zero inflated distribution
 ## n.theta=2; log theta supplied
 ## This version overflow proofed snw. nyp original version is at svn version 6742

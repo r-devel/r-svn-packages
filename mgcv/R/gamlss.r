@@ -535,19 +535,31 @@ zipll <- function(y,lambda,p,deriv=0) {
 
    l1 <- l2 <- l3 <- l4 <- NULL
    zind <- y == 0 ## the index of the zeroes
-   l <- y; enlz <- exp(-lambda[zind])
-   l[zind] <- log(1-p[zind]*(1-enlz))    
-   l[!zind] <- log(p[!zind]) + y[!zind]*log(lambda[!zind]) - lambda[!zind] - lgamma(y[!zind]+1)
+   lamz <- lambda[zind]
+   l <- y; enlz <- exp(-lamz)
+   pz <- p[zind];pnz <- p[!zind]
+   p1ind <- pz>=1 ## is p == 1??
+   p.prob <- if (length(zind)>0) as.logical(sum(p1ind)) else FALSE
+   if (p.prob) { ## exp underflow issue
+     a <- pz; a[!p1ind] <- log(1-pz[!p1ind]*(1-enlz[!p1ind]))
+     a[p1ind] <- -lamz[p1ind]; l[zind] <- a 
+   } else l[zind] <- log(1-pz*(1-enlz))
+   l[!zind] <- log(pnz) + y[!zind]*log(lambda[!zind]) - lambda[!zind] - lgamma(y[!zind]+1)
    if (deriv>0) {
       n <- length(y)
       l1 <- matrix(0,n,2)
-
-      llz <- p[zind]*enlz/(p[zind]*(enlz-1)+1)    ## l_lambda
+      if (p.prob) {
+        a[!p1ind] <- (pz*enlz)[!p1ind]
+        a[!p1ind] <- a[!p1ind]/(a[!p1ind]-pz[!p1ind]+1)
+        a[p1ind] <- 1
+        llz <- a
+      } else llz <- pz*enlz/(pz*(enlz-1)+1)    ## l_lambda
       l1[zind,1] <- -llz
       l1[!zind,1] <- y[!zind]/lambda[!zind] - 1
 
-      lpz <- l1[zind,2] <- (enlz-1)/(p[zind]*(enlz-1)+1)  ## l_p
-      l1[!zind,2] <- 1/p[!zind]
+      lpz <- l1[zind,2] <- (enlz-1)/(pz*(enlz-1)+1)  ## l_p
+      lpz[!is.finite(lpz)] <- -1/.Machine$double.eps
+      l1[!zind,2] <- 1/pnz
 
       ## the second derivatives
     
@@ -557,10 +569,10 @@ zipll <- function(y,lambda,p,deriv=0) {
       l2[zind,1] <- llz*(1-llz)    ## l_ll
       l2[!zind,1] <- -y[!zind]/lambda[!zind]^2
  
-      l2[zind,2] <- llz*lpz - llz/p[zind]       ## l_lp
+      l2[zind,2] <- llz*lpz - llz/pz       ## l_lp
 
       l2[zind,3] <- -lpz^2         ## l_pp
-      l2[!zind,3] <- -1/p[!zind]^2
+      l2[!zind,3] <- -1/pnz^2
    }
    if (deriv>1) {
       ## the third derivatives
@@ -569,10 +581,10 @@ zipll <- function(y,lambda,p,deriv=0) {
       l3[zind,1] <- -llz + 3*llz^2 - 2*llz^3 ## l_lll
       l3[!zind,1] <- 2*y[!zind]/lambda[!zind]^3
 
-      l3[zind,2] <- (1/p[zind]-lpz)*llz*(1-2*llz)  ## l_llp
-      l3[zind,3] <- 2*lpz*llz*(1/p[zind]-lpz)  ## l_ppl
+      l3[zind,2] <- (1/pz-lpz)*llz*(1-2*llz)  ## l_llp
+      l3[zind,3] <- 2*lpz*llz*(1/pz-lpz)  ## l_ppl
       l3[zind,4] <- 2*lpz^3 ## l_ppp
-      l3[!zind,4] <- 2/p[!zind]^3  
+      l3[!zind,4] <- 2/pnz^3  
    }
    if (deriv>3) {
       ## the fourth derivatives
@@ -580,14 +592,16 @@ zipll <- function(y,lambda,p,deriv=0) {
       l4 <- matrix(0,n,5) 
       l4[zind,1] <- llz - 7*llz^2 + 12*llz^3 -6*llz^4 ## l_llll
       l4[!zind,1] <- -6*y[!zind]/lambda[!zind]^4
-      l4[zind,2] <- (1/p[zind] - lpz) * llz * (6*llz*(1-llz)-1) ## l_lllp
-      l4[zind,3] <- 2*llz*((llz*(4*lpz-1/p[zind])-lpz)/p[zind]+lpz*llz*(1-3*lpz)) ## l_llpp
-      l4[zind,4] <- 6*lpz^2*llz*(lpz-1/p[zind]) ## l_pppl 
+      l4[zind,2] <- (1/pz - lpz) * llz * (6*llz*(1-llz)-1) ## l_lllp
+      ## note llz is -ve of l_lambda!
+      l4[zind,3] <- -2*lpz*llz/pz - 2*llz^2/pz^2 + 2*lpz^2*llz + 8*llz^2*lpz/pz - 6*lpz^2*llz^2 ## l_llpp
+##2*llz*((llz*(4*lpz-1/p[zind])+lpz)/p[zind]-lpz*lpz*(1+3*llz)) ## l_llpp
+      l4[zind,4] <- 6*lpz^2*llz*(lpz-1/pz) ## l_pppl 
       l4[zind,5] <- -6*lpz^4  ## l_pppp  
-      l4[!zind,5] <- -6/p[!zind]^4
+      l4[!zind,5] <- -6/pnz^4
    }
    list(l=l,l1=l1,l2=l2,l3=l3,l4=l4)
-}
+} ## zipll
 
 
 ziplss <-  function(link=list("log","logit")) {
@@ -597,9 +611,10 @@ ziplss <-  function(link=list("log","logit")) {
   ## first deal with links and their derivatives...
   if (length(link)!=2) stop("ziplss requires 2 links specified as character strings")
   okLinks <- list(c("log", "identity","sqrt"),c("logit","probit"))
+  def.link <- c("loga","logita")
   stats <- list()
   param.names <- c("Poisson mean","binary probability")
-  for (i in 1:2) {
+  for (i in 1:2) if (link[[i]]!=def.link[i]) {
     if (link[[i]] %in% okLinks[[i]]) stats[[i]] <- make.link(link[[i]]) else 
     stop(link[[i]]," link not available for ",param.names[i]," parameter of ziplss")
     fam <- structure(list(link=link[[i]],canonical="none",linkfun=stats[[i]]$linkfun,
@@ -609,8 +624,12 @@ ziplss <-  function(link=list("log","logit")) {
     stats[[i]]$d2link <- fam$d2link
     stats[[i]]$d3link <- fam$d3link
     stats[[i]]$d4link <- fam$d4link
+  } else {
+    ## idea was to create loga and logita links here 
   }
-  
+    
+
+
   residuals <- function(object,type=c("deviance","response")) {
       type <- match.arg(type)
       rsd <- p <- object$fitted[,2];lam <- object$fitted[,1]

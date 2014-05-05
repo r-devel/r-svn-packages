@@ -385,7 +385,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   mu <- linkinv(eta)
                   dev <- sum(dev.resids(y, mu, weights))
                 }
-                boundary <- TRUE
+                boundary <- TRUE 
+                penalty <- t(start)%*%St%*%start
                 if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
             }
@@ -402,6 +403,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   mu <- linkinv(eta)
                 }
                 boundary <- TRUE
+                penalty <- t(start)%*%St%*%start
                 dev <- sum(dev.resids(y, mu, weights))
                 if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
@@ -1121,6 +1123,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
   score.hist <- rep(NA,200)
   for (i in 1:200) {
+   if (control$trace) {
+     cat("\n",i,"newton max(|grad|) =",max(abs(grad)),"\n")
+   }
    ## debugging code....
    okc <- check.derivs 
    while (okc) {

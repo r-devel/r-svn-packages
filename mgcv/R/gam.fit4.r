@@ -115,7 +115,7 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
    d
 } ## dDmu
 
-fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
+fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
 ## test family derivatives w.r.t. eta
   
   dd <- dDeta(y,mu,wt,theta,fam,deriv=2)
@@ -124,6 +124,7 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   dev1 <- fam$dev.resids(y,mu1, wt,theta)
   Deta.fd <- (dev1-dev)/eps
   cat("Deta: rdiff = ",range(dd$Deta-Deta.fd)," cor = ",cor(dd$Deta,Deta.fd),"\n")
+  plot(dd$Deta,Deta.fd);abline(0,1)
   nt <- length(theta)
   for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
@@ -131,15 +132,19 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
     Dth.fd <- (dev1-dev)/eps
     um <- if (nt>1) dd$Dth[,i] else dd$Dth
     cat("Dth[",i,"]: rdiff = ",range(um-Dth.fd)," cor = ",cor(um,Dth.fd),"\n")
+    plot(um,Dth.fd);abline(0,1)
   }
   ## second order up...
   dd1 <- dDeta(y,mu1,wt,theta,fam,deriv=2)
   Deta2.fd <- (dd1$Deta - dd$Deta)/eps
   cat("Deta2: rdiff = ",range(dd$Deta2-Deta2.fd)," cor = ",cor(dd$Deta2,Deta2.fd),"\n")
+  plot(dd$Deta2,Deta2.fd);abline(0,1)
   Deta3.fd <- (dd1$Deta2 - dd$Deta2)/eps
   cat("Deta3: rdiff = ",range(dd$Deta3-Deta3.fd)," cor = ",cor(dd$Deta3,Deta3.fd),"\n")
+  plot(dd$Deta3,Deta3.fd);abline(0,1)
   Deta4.fd <- (dd1$Deta3 - dd$Deta3)/eps
   cat("Deta4: rdiff = ",range(dd$Deta4-Deta4.fd)," cor = ",cor(dd$Deta4,Deta4.fd),"\n")
+  plot(dd$Deta4,Deta4.fd);abline(0,1)
   ## and now the higher derivs wrt theta...
   ind <- 1:nt
   for (i in 1:nt) {
@@ -148,32 +153,36 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
     Detath.fd <- (dd1$Deta - dd$Deta)/eps 
     um <- if (nt>1) dd$Detath[,i] else dd$Detath
     cat("Detath[",i,"]: rdiff = ",range(um-Detath.fd)," cor = ",cor(um,Detath.fd),"\n")
+    plot(um,Detath.fd);abline(0,1)
     Deta2th.fd <- (dd1$Deta2 - dd$Deta2)/eps
     um <- if (nt>1) dd$Deta2th[,i] else dd$Deta2th
-    cat("Deta2th[",i,"]: rdiff = ",range(um-Deta2th.fd)," cor = ",cor(um,Deta2th.fd),"\n")
+    cat("Deta2th[",i,"]: rdiff = ",range(um-Deta2th.fd)," cor = ",cor(um,Deta2th.fd),"\n") 
+    plot(um,Deta2th.fd);abline(0,1)
     Deta3th.fd <- (dd1$Deta3 - dd$Deta3)/eps
     um <- if (nt>1) dd$Deta3th[,i] else dd$Deta3th
     cat("Deta3th[",i,"]: rdiff = ",range(um-Deta3th.fd)," cor = ",cor(um,Deta3th.fd),"\n")
-
+    plot(um,Deta3th.fd);abline(0,1)
     ## now the 3 second derivative w.r.t. theta terms
 
     Dth2.fd <- (dd1$Dth - dd$Dth)/eps
     um <- if (nt>1) dd$Dth2[,ind] else dd$Dth2
     er <- if (nt>1) Dth2.fd[,i:nt] else Dth2.fd
     cat("Dth2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
-
+    plot(um,er);abline(0,1)
     Detath2.fd <- (dd1$Detath - dd$Detath)/eps
     um <- if (nt>1) dd$Detath2[,ind] else dd$Detath2
     er <- if (nt>1) Detath2.fd[,i:nt] else Detath2.fd
     cat("Detath2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
     ## cat("Detath2[",i,",]: rdiff = ",range(dd$Detath2-Detath2.fd)," cor = ",cor(dd$Detath2,Detath2.fd),"\n")
-
+    plot(um,er);abline(0,1)
+ 
     Deta2th2.fd <- (dd1$Deta2th - dd$Deta2th)/eps
     um <- if (nt>1) dd$Deta2th2[,ind] else dd$Deta2th2
     er <- if (nt>1) Deta2th2.fd[,i:nt] else Deta2th2.fd
     cat("Deta2th2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
     ## cat("Deta2th2[",i,",]: rdiff = ",range(dd$Deta2th2-Deta2th2.fd)," cor = ",cor(dd$Deta2th2,Deta2th2.fd),"\n") 
-    ind <- max(ind)+1:(nt-i)
+    ind <- max(ind)+1:(nt-i) 
+    plot(um,er);abline(0,1)
   }
 } ## fetad.test
 
@@ -358,11 +367,23 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       if (control$trace) cat(iter," ")
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
       ## w <- dd$Deta2 * .5
-      good <- is.finite(dd$Deta.Deta2)
-      w <- dd$Deta2[good] * .5
+      #good <- is.finite(dd$Deta.Deta2)
+      #w <- dd$Deta2[good] * .5
       ## w <- w[good]
+      #z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
+      
+      good <- is.finite(dd$Deta.Deta2)
+      if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n") 
+      w <- dd$Deta2 * .5;
+      if (sum(!good)) {
+        good1 <- is.finite(w)&good ## make sure w finite too
+        w[!is.finite(w)] <- 0      ## clear infinite w
+        w[!good1&w==0] <- max(w)*.Machine$double.eps^.5 ## reset zero value weights for problem elements
+        dd$Deta.Deta2[!good] <- .5*dd$Deta[!good]/w[!good] ## reset problem elements to finite
+        good <- is.finite(dd$Deta.Deta2) ## check in case Deta not finite, for example
+      }
       z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
-
+      
       oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
                y=as.double(z),X=as.double(x[good,]),w=as.double(w),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
@@ -370,11 +391,21 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
                      nt=as.integer(control$nthreads))
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
-        good <- is.finite(dd$Deta.EDeta2)
-        w <- dd$EDeta2[good] * .5 ## Fisher
+        if (control$trace) cat("**using positive weights\n")
+        # problem is that Fisher can be very poor for zeroes  
+        #good <- is.finite(dd$Deta.EDeta2)
+        #w <- dd$EDeta2[good] * .5 ## Fisher 
+        ## just dropping drops informative obs
         ##good <- w > 0
         ##w <- w[good]
-        z <- (eta-offset)[good] - dd$Deta.EDeta2[good] ## - .5 * dd$Deta[good] / w
+        ## index weights that are finite and positive 
+        good <- is.finite(dd$Deta2)
+        good[good] <- dd$Deta2[good]>0 
+        w <- dd$Deta2*.5; w[!good] <- 0
+        thresh <- max(w[good])*.Machine$double.eps^.5
+        w[w < thresh] <- thresh
+        good <- is.finite(dd$Deta)
+        z <- (eta-offset)[good] - .5 * dd$Deta[good] / w[good]
        
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
                   y=as.double(z),X=as.double(x[good,]),w=as.double(w),
@@ -422,6 +453,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
          }
          boundary <- TRUE
+         penalty <- t(start)%*%St%*%start ## reset penalty too
          if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
       } ## end of infinite deviance correction
@@ -441,7 +473,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          }
          boundary <- TRUE
          dev <- sum(dev.resids(y, mu, weights))
-       
+         penalty <- t(start)%*%St%*%start ## need to reset penalty too
          if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")
       } ## end of invalid mu/eta handling
@@ -503,17 +535,22 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      eps <- 1e-7
      fmud.test(y,mu,weights,theta,family,eps = eps)
      fetad.test(y,mu,weights,theta,family,eps = eps)
-   }
-
-    
+   }   
 
    dd <- dDeta(y,mu,weights,theta,family,deriv)
-   ## w <- dd$Deta2 * .5
+   w <- dd$Deta2 * .5
    ## good <- w!=0
    good <- is.finite(dd$Deta.Deta2)
    if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
-   ## w <- w[good] 
-   w <- dd$Deta2[good] * .5
+   w <- w[good] 
+ #  w <- dd$Deta2 * .5;
+ #  if (sum(!good)) {
+ #    good1 <- is.finite(w)&good ## make sure w finite too
+ #    w[!is.finite(w)] <- 0      ## clear infinite w
+ #    w[!good1&w==0] <- max(w)*.Machine$double.eps^.5 ## reset zero value weights for problem elements
+ #    dd$Deta.Deta2[!good] <- .5*dd$Deta[!good]/w ## reset problem elements to finite
+ #    good <- is.finite(dd$Deta.Deta2) ## check in case Deta not finite, for example
+ #  }
    z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
    wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
 
@@ -526,18 +563,27 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ## Now drop any elements of dd that have been dropped in fitting...
    if (sum(!good)>0) { ## drop !good from fields of dd
      dd$Deta <- dd$Deta[good];dd$Deta2 <- dd$Deta2[good] 
-     dd$EDeta2 <- dd$EDeta2[good];dd$Deta3 <- dd$Deta3[good]
-     dd$Deta4 <- dd$Deta4[good]
+     dd$EDeta2 <- dd$EDeta2[good]
+     if (deriv>0) dd$Deta3 <- dd$Deta3[good]
+     if (deriv>1) dd$Deta4 <- dd$Deta4[good]
      if (length(theta)>1) {
-       dd$Dth <- dd$Dth[good,]; dd$Dth2 <- dd$Dth2[good,]
-       dd$Detath <- dd$Detath[good,]; dd$Deta2th <- dd$Deta2th[good,]
-       dd$Detath2 <- dd$Detath2[good,]; dd$Deta3th <- dd$Deta3th[good,]
-       dd$Deta2th2 <- dd$Deta2th2[good,] 
+         if (deriv>0) {  
+         dd$Dth <- dd$Dth[good,]; 
+         dd$Detath <- dd$Detath[good,]; dd$Deta2th <- dd$Deta2th[good,]
+         if (deriv>1) {  
+           dd$Detath2 <- dd$Detath2[good,]; dd$Deta3th <- dd$Deta3th[good,]
+           dd$Deta2th2 <- dd$Deta2th2[good,];dd$Dth2 <- dd$Dth2[good,]
+         }
+       }
      } else {
-       dd$Dth <- dd$Dth[good]; dd$Dth2 <- dd$Dth2[good]
-       dd$Detath <- dd$Detath[good]; dd$Deta2th <- dd$Deta2th[good]
-       dd$Detath2 <- dd$Detath2[good]; dd$Deta3th <- dd$Deta3th[good]
-       dd$Deta2th2 <- dd$Deta2th2[good] 
+       if (deriv>0) { 
+         dd$Dth <- dd$Dth[good]; 
+         dd$Detath <- dd$Detath[good]; dd$Deta2th <- dd$Deta2th[good]
+         if (deriv>1) {
+           dd$Detath2 <- dd$Detath2[good]; dd$Deta3th <- dd$Deta3th[good]
+           dd$Deta2th2 <- dd$Deta2th2[good]; dd$Dth2 <- dd$Dth2[good]
+         }
+       } 
      }
    }
    ## can't have zero weights in gdi2 call 
@@ -617,7 +663,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    names(coef) <- xnames
    names(residuals) <- ynames
    wtdmu <- sum(weights * y)/sum(weights)
-   nulldev <- sum(dev.resids(y, wtdmu, weights))
+   nulldev <- sum(dev.resids(y, rep(wtdmu,length(y)), weights))
    n.ok <- nobs - sum(weights == 0)
    nulldf <- n.ok
    wt <- rep.int(0, nobs)
