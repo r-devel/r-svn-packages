@@ -5,14 +5,16 @@
 \description{The \code{ziplss} family implements a zero inflated Poisson model in which one linear predictor 
 controls the probability of `potential presence' and the other controls the mean given `potential presence'.
 For example, in animal abundance studies `potential presence' might mean `habitat suitability', with the number of animals observed being given by a Poisson random variable, with some mean, if the habitat is suitable. (The slightly involved description is because the model has two ways of generating zeroes/absences: Poisson zeroes, and `unsuitability zeroes'.) Useable 
-only with \code{\link{gam}}, the linear predictors are specified via a list of formulae.
+only with \code{\link{gam}}, the linear predictors are specified via a list of formulae. 
+
 }
 
 \usage{
-ziplss(link=list("log","logit"))
+ziplss(link=list("identity","identity"))
 }
 \arguments{
-\item{link}{two item list specifying the link for the Poisson mean and the probability of `potential presence'.}
+\item{link}{two item list specifying the link - currently only identity links are possible, as 
+parameterization is directly in terms of log of Poisson response and logit of probability of presence..}
 }
 \value{
  An object inheriting from class \code{general.family}.
@@ -21,20 +23,28 @@ ziplss(link=list("log","logit"))
 \details{Used with \code{\link{gam}} to fit 2 stage zero inflated Poisson models. \code{gam} is called with 
 a list containing 2 formulae, the first specifies the response on the left hand side and the structure of the linear predictor for the Poisson mean on the right hand side. The second is one sided, specifying the linear predictor for the probability of potential presence on the right hand side. 
 
-Link functions \code{"log"}, \code{"identity"}  and \code{"sqrt"} are available for the Poisson mean. 
-For the probability of potential presence the \code{"logit"} and \code{"probit"} links can be used.
-
 The fitted values for this family will be a two column matrix. The first column is the Poisson mean, 
 and the second column is the probability of potential presence. 
 Predictions using \code{\link{predict.gam}} will also produce 2 column matrices for \code{type} 
 \code{"link"} and \code{"response"}.
 
-The null deviance computed for this model assumes that the probabilities of presence are as estiamted, but the Poisson mean takes the same 
-value for all observations.
+The null deviance computed for this model assumes that the probabilities of presence are as estimated, but the Poisson mean takes the same value for all observations.
+
+For data with large areas of covariate space over which the response is zero it is advisable to use low order penalties to 
+avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smooths use \code{\link{Duchon.spline}}s in place of thin plaste terms with order 1 penalties, e.g \code{s(x,z,m=c(1,.5))} --- such smooths penalize towards constants, thereby avoiding extreme estimates when the data are uninformative. Uninformativeness arises because zero observations contain little or no information about the Poisson mean when the zero inflation is high, and contain only rather limited information when there is any zero inflation at all. 
 
 }
+\author{ Simon N. Wood \email{simon.wood@r-project.org}
+}
 
+\section{WARNINGS }{
+Data for which the response is zero over large areas of the covariate space lead to identifiability problems that are very
+difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
+compute the likelihood and its derivatives accurately. In such cases it is sensible to use first order penalties on the 
+smooths. 
 
+Zero inflated models are often over-used. Having lots of zeroes in the data does not in itself imply zero inflation. Having too many zeroes *given the model mean* may imply zero inflation. 
+}
 
 \examples{
 library(mgcv)

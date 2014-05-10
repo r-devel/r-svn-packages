@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (ocat, tw, nb) & Natalya Pya (t.scaled, beta, zip), 
+## (c) Simon N. Wood (ocat, tw, nb, ziP) & Natalya Pya (scat, beta), 
 ## 2013, 2014. Released under GPL2.
 
 ## extended families for mgcv ...
@@ -1375,6 +1375,26 @@ scat <- function (theta = NULL, link = "identity") {
 
 ## zero inflated Poisson...
 
+lind <- function(l,th,deriv=0) {
+## evaluate th[1] + exp(th[2])*l and some derivs
+  th[2] <- exp(th[2])
+  r <- list(p = th[1] + th[2]*l)
+  r$p.l <- th[2]   ## p_l
+  r$p.ll <- 0 ## p_ll
+  if (deriv) {
+    n <- length(l);  
+    r$p.lllth <- r$p.llth <- r$p.lth <- r$p.th <- matrix(0,n,2)
+    r$p.th[,1] <- 1   ## dp/dth1 
+    r$p.th[,2] <- th[2]*l ## dp/dth2 
+    r$p.lth[,2] <- th[2] ## p_lth2
+    r$p.llll <- r$p.lll <- 0   ## p_lll,p_llll
+    r$p.llth2 <- r$p.lth2 <- r$p.th2 <- matrix(0,n,3) ## ordered l_th1th1,l_th1th2,l_th2th2
+    r$p.th2[,3] <- l*th[2] ## p_th2th2
+    r$p.lth2[,3] <- th[2]  ## p_lth2th2
+  }
+  r
+} ## lind
+
 logid <- function(l,th,deriv=0,a=0,trans=TRUE) {
 ## evaluate exp(th[1]+th[2]*l)/(1+exp(th[1]+th[2]*l))
 ## and some of its derivatives
@@ -1429,19 +1449,11 @@ logid <- function(l,th,deriv=0,a=0,trans=TRUE) {
 
 
 
-ziP.new <- function (theta = NULL, link = "loga",a=1e-8) { 
+ziP <- function (theta = NULL, link = "identity") { 
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("loga")) { 
-    stats <- list()
-    stats$valideta <- function(eta) TRUE 
-    stats$link = "loga"
-    stats$linkfun <- eval(parse(text=paste("function(mu) log(mu -",a,")")))
-    stats$linkinv <- eval(parse(text=paste("function(eta) exp(eta) +",a)))
-    stats$mu.eta <- function(eta) exp(eta)
-    stats$g2g <- function(mu) rep(-1,length(mu))
-    stats$g3g <- function(mu) rep(2,length(mu))
-    stats$g4g <- function(mu) rep(-6,length(mu))
+  if (linktemp %in% c("identity")) { 
+    stats <- make.link(linktemp)
   } else  stop(linktemp, " link not available for zero inflated; available link for `lambda' is only  \"loga\"")
   Theta <-  NULL;n.theta <- 2
   if (!is.null(theta)) {
@@ -1455,37 +1467,37 @@ ziP.new <- function (theta = NULL, link = "loga",a=1e-8) {
   getTheta <- function(trans=FALSE) { 
   ## trans transforms to the original scale...
     th <- get(".Theta")
+    if (trans) th[2] <- exp(th[2])
     th
   }
   putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
   
-  validmu <- function(mu) all(mu > 0)
+  validmu <- function(mu) all(is.finite(mu))
   
   dev.resids <- function(y, mu, wt,theta=NULL) {
     ## this version ignores saturated likelihood
     if (is.null(theta)) theta <- get(".Theta")
-    p <- logid(mu,theta,deriv=0)$p
-    #p <- f <- theta[1] + theta[2] * mu; ind <- f > 0
-    #ef <- exp(f[!ind])
-    #p[!ind] <- ef/(1+ef); p[ind] <- 1/(1+exp(-f[ind]))  
+    p <- theta[1] + exp(theta[2]) * mu ## l.p. for prob present
     -2*zipll(y,mu,p,deriv=0)$l
   }
   
   Dd <- function(y, mu, theta, wt=NULL, level=0) {
+    ## here mu is lin pred for Poisson mean so E(y) = exp(mu)
+    ## Deviance for log lik of zero inflated Poisson. 
+    ## code here is far more general than is needed - could deal 
+    ## with any 2 parameter mapping of lp of mean to lp of prob presence.
     if (is.null(theta)) theta <- get(".Theta")
     deriv <- 1; if (level==1) deriv <- 2 else if (level>1) deriv <- 4 
-    g <- logid(mu,theta,level) ## the derviatives of the logistic transform mapping mu to p
+    g <- lind(mu,theta,level) ## the derviatives of the transform mapping mu to p
     z <- zipll(y,mu,g$p,deriv)
     oo <- list();n <- length(y)
     if (is.null(wt)) wt <- rep(1,n)
     oo$Dmu <- -2*wt*(z$l1[,1] + z$l1[,2]*g$p.l)
     oo$Dmu2 <- -2*wt*(z$l2[,1] + 2*z$l2[,2]*g$p.l + z$l2[,3]*g$p.l^2 + z$l1[,2]*g$p.ll)
-    emlam <- exp(-mu) 
-    pz <- 1 - g$p + g$p*emlam ## probablity of a zero
-    ##ll <- -g$p * emlam/(g$p*(emlam-1)+1) 
-    aa <- -(g$p*emlam)^2/pz; aa[!is.finite(aa)] <- 0 
-    aa <- aa + g$p*emlam
-    oo$EDmu2 <- -2*wt*(aa - g$p/mu)  
+    ## WARNING: following requires z$El1 term to be added if transform modified so 
+    ##          that g$p.ll != 0....
+    oo$EDmu2 <- -2*wt*(z$El2[,1] + 2*z$El2[,2]*g$p.l + z$El2[,3]*g$p.l^2)
+
     if (level>0) { ## l,p - ll,lp,pp -  lll,llp,lpp,ppp - llll,lllp,llpp,lppp,pppp
       oo$Dth <- -2*wt*z$l1[,2]*g$p.th ## l_p p_th
       oo$Dmuth <- -2*wt*(z$l2[,2]*g$p.th + z$l2[,3]*g$p.l*g$p.th + z$l1[,2]*g$p.lth) 
@@ -1528,7 +1540,7 @@ ziP.new <- function (theta = NULL, link = "loga",a=1e-8) {
   
   aic <- function(y, mu, theta=NULL, wt, dev) {
     if (is.null(theta)) theta <- get(".Theta")
-    p <- logid(mu,theta,0)$p ## the derviatives of the logistic transform mapping mu to p
+    p <- theta[1] + exp(theta[2]) * mu ## l.p. for prob present
     sum(-2*wt*zipll(y,mu,p,0)$l)
   }
   ls <- function(y,w,n,theta,scale) {
@@ -1551,13 +1563,37 @@ ziP.new <- function (theta = NULL, link = "loga",a=1e-8) {
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
         n <- rep(1, nobs)
-        mustart <- y +exp(-y) # + (y==0)/5
+        mustart <- log(y + (y==0)/5) # + (y==0)/5
     })
     postproc <- expression({
       object$family$family <- 
       paste("Zero inflated Poisson(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
       ## need to fix deviance here!!
     })
+
+   fv <- function(mu,theta=NULL) {
+    ## optional function to give fitted values - idea is that 
+    ## predict.gam(...,type="response") will use this, as well
+    ## as residuals(...,type="response")...
+      if (is.null(theta)) theta <- get(".Theta")
+      th1 <- theta[1]; th2 <- exp(theta[2]); 
+      p <- logid(th1 + th2*mu)$p
+      fv <- p * mu      
+      fv
+    } ## fv
+
+    rd <- function(mu,wt,scale) {
+    ## simulate data given fitted latent variable in mu 
+      theta <- get(".Theta") 
+      th1 <- theta[1]; th2 <- exp(theta[2]); 
+      n.sim <- length(mu)
+      p <- logid(th1 + th2*mu)$p ## prob of potential presence
+      z <- y <- runif(n.sim)
+      y <- rep(0,n.sim)
+      good <- z <= p ## present?
+      y[good] <- rpois(sum(good),exp(mu[good])) ## simulate for present
+      y
+    }
    
     ## NOTE: needs a predict function, and a residuals function and an rd function
     environment(dev.resids) <- 
@@ -1575,7 +1611,7 @@ ziP.new <- function (theta = NULL, link = "loga",a=1e-8) {
 } ## ziP
 
 
-ziP <- function (theta = NULL, link = "loga",a=1e-8) { 
+ziP.old <- function (theta = NULL, link = "loga",a=1e-8) { 
 ## Extended family object for zero inflated distribution
 ## n.theta=2; log theta supplied
 ## This version overflow proofed snw. nyp original version is at svn version 6742

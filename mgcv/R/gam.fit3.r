@@ -827,8 +827,9 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
    if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    b<-gam.fit3(x=x, y=y, sp=sp,Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
-      control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
+      control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+      start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
+      null.coef=null.coef,Sl=Sl,...)
 
    P0 <- b$P;fd.P1 <- P10 <- b$P1;  if (deriv==2) fd.P2 <- P2 <- b$P2 
    trA0 <- b$trA;fd.gtrA <- gtrA0 <- b$trA1 ; if (deriv==2) fd.htrA <- htrA <- b$trA2 
@@ -852,14 +853,16 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
      sp1 <- sp;sp1[i] <- sp[i]+eps/2
      bf<-gam.fit3(x=x, y=y, sp=sp1,Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
-      control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
+      control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+      start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
+      null.coef=null.coef,Sl=Sl,...)
       
      sp1 <- sp;sp1[i] <- sp[i]-eps/2
      bb<-gam.fit3(x=x, y=y, sp=sp1, Eb=Eb,UrS=UrS,
       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
-      control=control,gamma=gamma,scale=scale,
-      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
+      control=control,gamma=gamma,scale=scale,printWarn=FALSE,
+      start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
+     null.coef=null.coef,Sl=Sl,...)
       
    
       if (!reml) {

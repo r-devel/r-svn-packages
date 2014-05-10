@@ -3,34 +3,46 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM zero-inflated Poisson regression family}
 \description{Family for use with \code{\link{gam}}, implementing regression for zero inflated Poisson data
-when the logit of the zero inflation rate is linearly dependent on the Poisson mean.
+when the logit of the zero inflation rate is linearly dependent on the log of the Poisson mean.
 }
 
 \usage{
-ziP(theta = NULL, link = "log")
+ziP(theta = NULL, link = "identity")
 }
 \arguments{
 \item{theta}{the 2 parameters controlling the slope and intercept of the 
 linear transform of the mean controlling the zero inflation rate. If supplied (and second element is positive) 
-then treated as fixed parameters (\eqn{\theta_1}{theta_1} and \eqn{\exp(\theta_2)}{exp(theta_2)}), otherwise estimated. If supplied and second element is negative
-then treated as starting values (with sign of second element reversed).}
+then treated as fixed parameters (\eqn{\theta_1}{theta_1} and \eqn{\exp(\theta_2)}{exp(theta_2)}), otherwise estimated. If supplied and second element is negative then treated as starting values (with sign of second element reversed).}
 
-\item{link}{The link function: only the \code{"log"} is currently supported.}
+\item{link}{The link function: only the \code{"identity"} is currently supported.}
 
 }
 \value{
 An object of class \code{extended.family}.
 }
 
-\details{The probability of a zero count is given by \eqn{p + (1-p)\exp(-\mu)}{p + (1-p)exp(-mu)}, whereas the probability of
-count \eqn{y>0}{y>0} is \eqn{(1-p)\exp(-\mu)\mu^y/y!}{(1-p)exp(-mu)mu^y/y!}. The linear predictor of the model controls the 
-Poisson mean \eqn{\mu}{\mu}, while \eqn{logit(p) = \theta_1 - \exp(\theta_2) \mu }{logit(p) = theta_1 - exp(theta_2) mu}. The \code{theta} 
-parameters are estimated alongside the smoothing parameters.
+\details{The probability of a zero count is given by \eqn{1-p + p \exp(-\mu)}{1- p + pexp(-mu)}, whereas the probability of
+count \eqn{y>0}{y>0} is \eqn{p\exp(-\mu)\mu^y/y!}{(pexp(-mu)mu^y/y!}. The linear predictor of the model controls the 
+log Poisson mean \eqn{\log \mu}{log(mu)}, while \eqn{logit(p) = \theta_1 - \exp(\theta_2) \log \mu }{logit(p) = theta_1 - exp(theta_2) log(mu)}. The \code{theta} parameters are estimated alongside the smoothing parameters.
+
+For data with large areas of covariate space over which the response is zero it is advisable to use low order penalties to 
+avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smooths use \code{\link{Duchon.spline}}s in place of thin plaste terms with order 1 penalties, e.g \code{s(x,z,m=c(1,.5))} --- such smooths penalize towards constants, thereby avoiding extreme estimates when the data are uninformative. Uninformativeness arises because zero observations contain little or no information about the Poisson mean when the zero inflation is high, and contain only rather limited information when there is any zero inflation at all. 
+
+
 }
 
 %- maybe also `usage' for other objects documented here.
 
-\author{ Natalya Pya (nyp20@bath.ac.uk)
+\author{ Simon N. Wood \email{simon.wood@r-project.org}
+}
+
+\section{WARNINGS }{
+Data for which the response is zero over large areas of the covariate space lead to identifiability problems that are very
+difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
+compute the likelihood and its derivatives accurately. In such cases it is sensible to use first order penalties on the 
+smooths. 
+
+Zero inflated models are often over-used. Having lots of zeroes in the data does not in itself imply zero inflation. Having too many zeroes *given the model mean* may imply zero inflation. 
 }
 
 

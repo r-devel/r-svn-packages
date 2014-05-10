@@ -540,7 +540,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    dd <- dDeta(y,mu,weights,theta,family,deriv)
    w <- dd$Deta2 * .5
    ## good <- w!=0
-   good <- is.finite(dd$Deta.Deta2)
+   ## exclude points for which gradient and second deriv are effectively zero and 
+   ## points with non finite second deriv or deriv ratio... 
+   min.Deta <- mean(abs(dd$Deta[is.finite(dd$Deta)]))*.Machine$double.eps*.001
+   min.Deta2 <- mean(abs(dd$Deta2[is.finite(dd$Deta2)]))*.Machine$double.eps*.001
+   good <- is.finite(dd$Deta.Deta2)&is.finite(w)&!(abs(dd$Deta2) < min.Deta2 & abs(dd$Deta) < min.Deta) 
    if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
    w <- w[good] 
  #  w <- dd$Deta2 * .5;
@@ -586,7 +590,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        } 
      }
    }
-   ## can't have zero weights in gdi2 call 
+   ## can't have zero weights in gdi2 call REDUNDANT?
    mwb <- max(abs(w))*.Machine$double.eps
    mwa <- min(abs(w[w!=0]))*.0001; if (mwa==0) mwa <- mwb
    w[w==0] <- min(mwa,mwb);
@@ -678,7 +682,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    list(coefficients = coef,residuals=residuals,fitted.values = mu,
         family=family, linear.predictors = eta,deviance=dev,
         null.deviance=nulldev,iter=iter,
-        weights=wf, ## note that these are Fisher type weights 
+        weights=wt, ## note that these are Fisher type weights 
         prior.weights=weights,
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,

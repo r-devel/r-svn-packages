@@ -524,86 +524,6 @@ pen.reg <- function(x,e,y) {
 
 ## code for zero inflated Poisson models
 
-zipll.0 <- function(y,lambda,p,deriv=0) {
-## function to evaluate zero inflated Poisson log likelihood
-## and its derivatives w.r.t. lambda and p, for each datum in 
-## vetor y.
-## this version works in terms of p, but that leads to 
-## derivative overflow
-## deriv: 0 - eval
-##        1 - grad (l,p) and Hess (ll,lp,pp)
-##        2 - third derivs lll,llp,lpp,ppp
-##        4 - 4th derivs. llll,lllp,llpp,lppp,pppp
-
-   l1 <- l2 <- l3 <- l4 <- NULL
-   zind <- y == 0 ## the index of the zeroes
-   lamz <- lambda[zind]
-   l <- y; enlz <- exp(-lamz)
-   pz <- p[zind];pnz <- p[!zind]
-   p1ind <- pz>=1 ## is p == 1??
-   p.prob <- if (length(zind)>0) as.logical(sum(p1ind)) else FALSE
-   if (p.prob) { ## exp underflow issue
-     a <- pz; a[!p1ind] <- log(1-pz[!p1ind]*(1-enlz[!p1ind]))
-     a[p1ind] <- -lamz[p1ind]; l[zind] <- a 
-   } else l[zind] <- log(1-pz*(1-enlz))
-   l[!zind] <- log(pnz) + y[!zind]*log(lambda[!zind]) - lambda[!zind] - lgamma(y[!zind]+1)
-   if (deriv>0) {
-      n <- length(y)
-      l1 <- matrix(0,n,2)
-      if (p.prob) {
-        a[!p1ind] <- (pz*enlz)[!p1ind]
-        a[!p1ind] <- a[!p1ind]/(a[!p1ind]-pz[!p1ind]+1)
-        a[p1ind] <- 1
-        llz <- a
-      } else llz <- pz*enlz/(pz*(enlz-1)+1)    ## l_lambda
-      l1[zind,1] <- -llz
-      l1[!zind,1] <- y[!zind]/lambda[!zind] - 1
-
-      lpz <- l1[zind,2] <- (enlz-1)/(pz*(enlz-1)+1)  ## l_p
-      lpz[!is.finite(lpz)] <- -1/.Machine$double.eps
-      l1[!zind,2] <- 1/pnz
-
-      ## the second derivatives
-    
-      l2 <- matrix(0,n,3)
-      ## order ll, lp, pp... 
- 
-      l2[zind,1] <- llz*(1-llz)    ## l_ll
-      l2[!zind,1] <- -y[!zind]/lambda[!zind]^2
- 
-      l2[zind,2] <- llz*lpz - llz/pz       ## l_lp
-
-      l2[zind,3] <- -lpz^2         ## l_pp
-      l2[!zind,3] <- -1/pnz^2
-   }
-   if (deriv>1) {
-      ## the third derivatives
-      ## order lll,llp,lpp,ppp
-      l3 <- matrix(0,n,4) 
-      l3[zind,1] <- -llz + 3*llz^2 - 2*llz^3 ## l_lll
-      l3[!zind,1] <- 2*y[!zind]/lambda[!zind]^3
-
-      l3[zind,2] <- (1/pz-lpz)*llz*(1-2*llz)  ## l_llp
-      l3[zind,3] <- 2*lpz*llz*(1/pz-lpz)  ## l_ppl
-      l3[zind,4] <- 2*lpz^3 ## l_ppp
-      l3[!zind,4] <- 2/pnz^3  
-   }
-   if (deriv>3) {
-      ## the fourth derivatives
-      ## order llll,lllp,llpp,lppp,pppp
-      l4 <- matrix(0,n,5) 
-      l4[zind,1] <- llz - 7*llz^2 + 12*llz^3 -6*llz^4 ## l_llll
-      l4[!zind,1] <- -6*y[!zind]/lambda[!zind]^4
-      l4[zind,2] <- (1/pz - lpz) * llz * (6*llz*(1-llz)-1) ## l_lllp
-      ## note llz is -ve of l_lambda!
-      l4[zind,3] <- -2*lpz*llz/pz - 2*llz^2/pz^2 + 2*lpz^2*llz + 8*llz^2*lpz/pz - 6*lpz^2*llz^2 ## l_llpp
-##2*llz*((llz*(4*lpz-1/p[zind])+lpz)/p[zind]-lpz*lpz*(1+3*llz)) ## l_llpp
-      l4[zind,4] <- 6*lpz^2*llz*(lpz-1/pz) ## l_pppl 
-      l4[zind,5] <- -6*lpz^4  ## l_pppp  
-      l4[!zind,5] <- -6/pnz^4
-   }
-   list(l=l,l1=l1,l2=l2,l3=l3,l4=l4)
-} ## zipll.0
 
 log1ex <- function(x) {
 ## evaluate log(1+exp(x)) accurately and avoiding overflow
@@ -630,7 +550,132 @@ logist <- function(x) {
   y
 }
 
-zipll <- function(y,lambda,eta,deriv=0) {
+
+zipll <- function(y,gamma,eta,deriv=0) {
+## function to evaluate zero inflated Poisson log likelihood
+## and its derivatives w.r.t. gamma and eta where 
+## p = logit(eta) and lambda = exp(gamma), for each datum in vector y.
+## p is probability of potential presence. lambda is Poisson mean
+## given potential presence. 
+## deriv: 0 - eval
+##        1 - grad (l,p) and Hess (ll,lp,pp)
+##        2 - third derivs lll,llp,lpp,ppp
+##        4 - 4th derivs. llll,lllp,llpp,lppp,pppp
+
+   ## eta can become unbounded above if p is 0  
+   #eta <- pmin(50,eta) 
+   ## pointless computing for gamma outside some bounded interval,
+   ## likelihood simply ceases to care
+   #gamma <- pmin(50,pmax(-50,gamma))
+   l1 <- El2 <- l2 <- l3 <- l4 <- NULL
+   zind <- y == 0 ## the index of the zeroes
+   yz <- y[zind];yp <- y[!zind]
+   lambda <- exp(gamma)
+   lamz <- lambda[zind];lamp <- lambda[!zind] 
+   etaz <- eta[zind]  ## zero y branch
+   etap <- eta[!zind] ## positive y branch
+   ela <- eta - lambda
+   elaz <- ela[zind];elap <- ela[!zind]  
+   alpha <- logist(eta)
+   alphaz <- alpha[zind];alphap <- alpha[!zind]
+   l <- y;
+   enl <- exp(-lambda);enlz <- enl[zind]
+   pz <- log1ex(ela) - log1ex(eta)
+   l[zind] <- pz[zind] ## log lik for y==0
+   pz <- exp(pz) ## probability of zero
+   ## l[zind] <- log1ex(elaz) - log1ex(etaz) ## for y==0
+   log.alphap <- alphap
+   thresh <- -log(.Machine$double.eps)/2
+   ind <- abs(etap) < thresh
+   log.alphap[ind] <- log(alphap[ind])
+   ind <- etap >= thresh
+   log.alphap[ind] <- -exp(-etap[ind])
+   ind <- etap <= -thresh
+   log.alphap[ind] <- etap[ind]
+   l[!zind] <- log.alphap + yp*log(lamp) - lamp - lgamma(yp+1) ## for y!=0
+   
+   if (deriv>0) { 
+      delta <- 1/(exp(ela)+1);deltaz <- delta[zind] ## 1 + l_lambda
+      ## deltaz <- 1/(exp(etaz-lamz)+1) ## 1 + l_lambda
+      beta <- 1/(exp(eta)+1) ## 1 - alpha
+      betaz <- beta[zind];betap <- beta[!zind]
+      n <- length(y)
+      l1 <- matrix(0,n,2)
+ 
+      llz0 <- -logist(ela)  ## l_lambda expression for y=0
+      ##llz <- -logist(elaz) ## l_lambda 
+      llz <- llz0[zind] ## l_lambda 
+      l1[zind,1] <- llz * lamz ## l_gamma
+      llp <- l1[!zind,1] <- yp-lamp 
+     
+      lez0 <- (enl-1)/((exp(ela)+1)*(exp(-eta)+1)) ## l_eta expression for y>0
+      lez <- l1[zind,2] <- lez0[zind] ##(enlz-1)/((exp(elaz)+1)*(exp(-etaz)+1))  ## l_eta
+      lep <- l1[!zind,2] <- betap
+      ## the second derivatives
+
+      El2 <- l2 <- matrix(0,n,3)
+      ## order ll, le, ee... 
+ 
+      l.ll <- -llz*deltaz ## -llz*(1+llz)    ## l_ll
+      l2[zind,1] <- l.ll*lamz^2 + llz*lamz ## l_gg
+      l2[!zind,1] <- -lamp ## l_gg
+ 
+      l.le <- -llz*lez + llz*betaz       ## l_le
+      l2[zind,2] <- lamz*l.le       ## l_ge
+
+      l2[zind,3] <- lez/(1+exp(etaz)) + lez*llz         ## l_ee
+      l2[!zind,3] <- - alphap*betap
+
+      ## now El2...
+      El2[,1] <- pz * llz0 * lambda * (1-delta*lambda) - (1-pz) * lambda  ## E l_gg
+      El2[,2] <- pz * llz0 * lambda * (beta - lez0)                       ## E l_ge
+      El2[,3] <- pz * lez0 *(beta + llz0)  - (1-pz) * alpha*beta          ## E l_ee
+   }
+   if (deriv>1) {
+      ## the third derivatives
+      ## order lll,lle,lee,eee
+      l3 <- matrix(0,n,4) 
+      l.lll <- deltaz*llz*(2*llz+1)  ##2*llz^3+3*llz^2+llz  ## l_lll
+      l3[zind,1] <- ((l.lll*lamz + 3*l.ll)*lamz + llz)*lamz ## l_ggg
+      
+      l3[!zind,1] <- -lamp
+      l.lle <- 2*lez*llz^2 + lez*llz - llz*betaz - 2*llz^2*betaz  ## l_lle
+      l3[zind,2] <- (l.lle*lamz + l.le) * lamz ## l_gge
+
+      l.lee <- llz*(betaz-betaz*alphaz + lez*alphaz - 2*lez*deltaz + llz*betaz)  ## l_lee
+      l3[zind,3] <- l.lee * lamz ## l_gee
+
+      l3[zind,4] <- -lez*betaz*(2*alphaz-1) + lez*llz*(3*betaz+alphaz) + 2*lez*llz^2 ## l_eee
+      l3[!zind,4] <- alphap*(2*alphap-1)*betap
+   }
+   if (deriv>3) {
+      ## the fourth derivatives
+      ## order llll,llle,llee,leee,eeee
+      l4 <- matrix(0,n,5) 
+      l.llll <- -deltaz*llz*(6*llz^2+6*llz+1) ##-llz - 7*llz^2 - 12*llz^3 -6*llz^4 ## l_llll
+      l4[zind,1] <- (((l.llll*lamz + 6*l.lll)*lamz + 7*l.ll)*lamz + llz)*lamz ## l_gggg
+      l4[!zind,1] <- -lamp
+
+      l.llle <- llz*(betaz-lez)*(6*llz^2+6*llz+1) ## l_llle
+      l4[zind,2] <- ((l.llle * lamz + 3*l.lle)*lamz + l.le)*lamz ## l_ggge
+
+      l.llee <- -llz*betaz^2 + llz^2*betaz*(2*alphaz-5) + lez*llz^2*(8-2*alphaz) +
+                     lez*llz*(2-alphaz) + 6*lez*llz^3 - 4*betaz*llz^3 ## l_llee
+      l4[zind,3] <- (l.llee*lamz + l.lee)*lamz ## l_ggee
+
+      l.leee <- llz*betaz^2*(1-alphaz*2) + lez*llz*(-2*alphaz^2 + 5 * alphaz -4) +
+                     llz^2*betaz*(3-2*alphaz) + lez*llz^2*(4*alphaz-10) - 6*lez*llz^3 + 2*betaz*llz^3 ## l_eeel 
+      l4[zind,4] <- l.leee * lamz
+ 
+      l4[zind,5] <- lez*betaz*(6*alphaz^2-6*alphaz+1) + ##(-6*alphaz^3+12*alphaz^2-7*alphaz+1) + 
+                     lez*llz*(6*alphaz^2-12*alphaz+7) + 6*lez*llz^2*(2-alphaz+llz)  ## l_eeee  
+      l4[!zind,5] <- alphap*betap*(-6*alphap^2+6*alphap-1) 
+        ##6*alphap^4 - 12*alphap^3 + 7*alphap^2 - alphap
+   }
+   list(l=l,l1=l1,l2=l2,l3=l3,l4=l4,El2=El2)
+} ## zipll
+
+zipll.1 <- function(y,lambda,eta,deriv=0) {
 ## function to evaluate zero inflated Poisson log likelihood
 ## and its derivatives w.r.t. lambda and eta where 
 ## p = logit(eta), for each datum in vector y.
@@ -709,10 +754,10 @@ zipll <- function(y,lambda,eta,deriv=0) {
        l4[!zind,5] <- 6*alphap^4 - 12*alphap^3 + 7*alphap^2 - alphap
    }
    list(l=l,l1=l1,l2=l2,l3=l3,l4=l4)
-} ## zipll
+} ## zipll.1
 
 
-ziplss <-  function(link=list("log","identity")) {
+ziplss <-  function(link=list("identity","identity")) {
 ## Extended family for Zero Inflated Poisson fitted as gamlss 
 ## type model.
 ## mu1 is Poisson mean, while mu2 is zero inflation parameter.
@@ -735,12 +780,12 @@ ziplss <-  function(link=list("log","identity")) {
   } else {
     ## idea was to create loga and logita links here 
   }
-    
+
 
 
   residuals <- function(object,type=c("deviance","response")) {
       type <- match.arg(type)
-      rsd <- p <- logist(object$fitted[,2]);lam <- object$fitted[,1]
+      rsd <- p <- logist(object$fitted[,2]);lam <- exp(object$fitted[,1])
 
       rsd <- object$y - p*lam
       if (type=="response") return(rsd)
@@ -888,8 +933,8 @@ ziplss <-  function(link=list("log","identity")) {
         ind <- y==0 & p < 0.5 ## downweight these for estimating lambda
         w <- rep(1,nobs); w[ind] <- .1
 
-        yt1 <- if (family$link[[1]]=="identity") y else 
-               family$linfo[[1]]$linkfun(abs(y)+(y==0)*.2)
+        ## note assumption that working scale is log...
+        yt1 <-  family$linfo[[1]]$linkfun(log(abs(y)+(y==0)*.2))
 
         yt1 <- yt1*w        
 
