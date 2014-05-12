@@ -28,6 +28,7 @@ log Poisson mean \eqn{\log \mu}{log(mu)}, while \eqn{logit(p) = \theta_1 - \exp(
 For data with large areas of covariate space over which the response is zero it is advisable to use low order penalties to 
 avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smooths use \code{\link{Duchon.spline}}s in place of thin plaste terms with order 1 penalties, e.g \code{s(x,z,m=c(1,.5))} --- such smooths penalize towards constants, thereby avoiding extreme estimates when the data are uninformative. Uninformativeness arises because zero observations contain little or no information about the Poisson mean when the zero inflation is high, and contain only rather limited information when there is any zero inflation at all. 
 
+Note that the fitted values for this model are the log of the Poisson mean. Use the \code{predict} function with \code{type=="response"} to get the predicted expected response.
 
 }
 
@@ -39,8 +40,7 @@ avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smoot
 \section{WARNINGS }{
 Data for which the response is zero over large areas of the covariate space lead to identifiability problems that are very
 difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
-compute the likelihood and its derivatives accurately. In such cases it is sensible to use first order penalties on the 
-smooths. 
+compute the likelihood and its derivatives accurately. Use of first order penalties on the smooths can help to regularize matters. 
 
 Zero inflated models are often over-used. Having lots of zeroes in the data does not in itself imply zero inflation. Having too many zeroes *given the model mean* may imply zero inflation. 
 }
@@ -75,6 +75,9 @@ b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=ziP(),data=dat)
 
 b
 plot(b,pages=1)
+## plot deviance residuals against expected response
+plot(predict(b,type="response"),residuals(b))
+
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

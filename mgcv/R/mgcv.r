@@ -3722,7 +3722,9 @@ logLik.gam <- function (object)
     val <- p - object$aic/2
     #if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))
     #    p <- p + 1
-    if (!is.null(object$edf2)) p <- sum(object$edf2) 
+    if (!is.null(object$edf2)) p <- sum(object$edf2)
+    np <- length(object$coefficients) 
+    if (p > np) p <- np 
     if (object$scale.estimated) p <- p + 1
     if (inherits(object$family,"extended.family")&&!is.null(object$family$n.theta)) p <- p + object$family$n.theta 
     attr(val, "df") <- p
