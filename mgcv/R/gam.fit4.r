@@ -670,9 +670,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    nulldev <- sum(dev.resids(y, rep(wtdmu,length(y)), weights))
    n.ok <- nobs - sum(weights == 0)
    nulldf <- n.ok
-   wt <- rep.int(0, nobs)
+   ww <- wt <- rep.int(0, nobs)
    wt[good] <- wf 
-
+   ww[good] <- w
    aic.model <- family$aic(y, mu, theta, weights, dev) # note: incomplete 2*edf needs to be added
  
   ## fitted values might not just be mu....
@@ -684,6 +684,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         null.deviance=nulldev,iter=iter,
         weights=wt, ## note that these are Fisher type weights 
         prior.weights=weights,
+        working.weights = ww, ## working weights
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,
         REML=REML,REML1=REML1,REML2=REML2,
@@ -1156,8 +1157,15 @@ gam.fit5.post.proc <- function(object,Sl) {
   R <-  Sl.initial.repara(Sl,R,inverse=TRUE,both.sides=FALSE,cov=FALSE)
   F <- Vb%*%crossprod(R)
   Ve <- F%*%Vb ## 'frequentist' cov matrix
-  edf <- diag(F);edf1 <- 2*edf - rowSums(t(F)*F)
-  edf2 <- diag(Vc%*%crossprod(R))
+  edf <- diag(F)
+  ## note that edf1 is a heuristic upper bound on EDF - it's the 
+  ## df of the best unpenalized approx to the 1st order bias corrected
+  ## model. This is larger than edf2 should be, because of bias correction variability,
+  ##  but is bounded in a way that is not *guaranteed* for edf2. Note that 
+  ## justification only applies to sum(edf1/2) not elementwise   
+  edf1 <- 2*edf - rowSums(t(F)*F)
+  edf2 <- diag(Vc%*%crossprod(R)) 
+  if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)
 } ## gam.fit5.post.proc

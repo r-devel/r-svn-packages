@@ -776,7 +776,15 @@ gam.fit3.post.proc <- function(X,object) {
     rV <- (ev$values*t(ev$vectors))[,1:M]
     Vc <- crossprod(rV%*%t(object$db.drho))
     Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
+    ## finite sample size check on edf sanity...
+    #ev <- eigen(Vc,symmetric=TRUE)
+    #ev$values[ev$values<0] <- 0
+    #C <- sqrt(ev$values)*t(ev$vectors)
+    #D <- eigen(crossprod(R%*%t(C)),symmetric=TRUE,only.values=TRUE)$values/object$scale
+    #D[D>1] <- 1;D[D<0] <- 0
     edf2 <- rowSums(Vc*crossprod(R))/object$scale.est
+    if (sum(edf2)>sum(edf1)) edf2 <- edf1 
+    #edf2 <- sum(D)
   } else edf2 <- Vc <- NULL
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc

@@ -1618,6 +1618,7 @@ ziP <- function (theta = NULL, link = "identity") {
       wtdmu <- if (G$intercept) sum(wts * G$y)/sum(wts) 
               else object$family$linkinv(G$offset)
       object$null.deviance <- sum(object$family$dev.resids(G$y, rep(log(wtdmu),length(G$y)), wts)-lf)
+      object$weights <- pmax(0,object$working.weights) ## Fisher can be too extreme
       ## E(y) = p * E(y) - really can't mess with fitted.values if e.g. rd is to work.
       #th <- object$family$getTheta()
       #object$fitted.values <- logid(object$fitted.values,th)$p * exp(object$fitted.values)
