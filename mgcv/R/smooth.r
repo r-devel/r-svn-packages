@@ -2698,8 +2698,8 @@ Predict.matrix.duchon.spline <- function(object,data)
     n.chunk <- n %/% nk
     for (i in 1:n.chunk) { ## build predict matrix in chunks
       ind <- 1:nk + (i-1)*nk
-      Xc <- DuchonE(x=x[ind,],xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
-      Xc <- cbind(Xc%*%object$UZ,DuchonT(x=x[ind,],m=object$p.order[1],n=object$dim))
+      Xc <- DuchonE(x=x[ind,,drop=FALSE],xk=object$knt,m=object$p.order[1],s=object$p.order[2],n=object$dim)
+      Xc <- cbind(Xc%*%object$UZ,DuchonT(x=x[ind,,drop=FALSE],m=object$p.order[1],n=object$dim))
       if (i == 1) X <- Xc else { X <- rbind(X,Xc);rm(Xc)}
     } ## finished size nk chunks
 

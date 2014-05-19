@@ -3653,18 +3653,19 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
     ## get derivs of log sqrt var comps wrt log sp and log scale....
     J <- matrix(0,nrow(H),ncol(H)) 
     if (scale.est) { 
-      diag(J) <- -2
-      J[,ncol(J)] <- 2
+      diag(J) <- -.5 # -2
+      J[,ncol(J)] <- .5 # 2
       vc <- c(vc,scale);names(vc) <- c(names(x$sp),"scale")
     } else {
-      diag(J) <- -0.5
+      diag(J) <- -0.5 #-2
     }
-    H <- t(J)%*%H%*%J ## hessian of log sqrt variances
+    #H <- t(J)%*%H%*%J ## hessian of log sqrt variances
     eh <- eigen(H,symmetric=TRUE)
     ind <- eh$values>max(eh$values)*.Machine$double.eps^75 ## index of non zero eigenvalues 
     rank <- sum(ind) ## rank of hessian
     iv <- eh$values*0;iv[ind] <- 1/eh$values[ind]
-    V <- eh$vectors%*%(iv*t(eh$vectors)) ## cov matrix for log sqrt variances
+    V <- eh$vectors%*%(iv*t(eh$vectors)) ## cov matrix for sp's ## log sqrt variances
+    V <- J%*%V%*%t(J) ## cov matrix for log sqrt variance
     lsd <- log(sqrt(vc)) ## log sqrt variances
     sd.lsd <- sqrt(diag(V))
     if (conf.lev<=0||conf.lev>=1) conf.lev <- 0.95

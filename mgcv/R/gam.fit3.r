@@ -768,7 +768,7 @@ gam.fit3.post.proc <- function(X,object) {
   qrx <- pqr(sqrt(object$weights)*X,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
   ##bias = as.numeric(object$coefficients - F%*%object$coefficients)
-  if (!is.na(object$reml.scale)) { ## compute sp uncertainty correction
+  if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
     M <- ncol(object$db.drho) 
     ev <- eigen(object$outer.info$hess,symmetric=TRUE)
     ind <- ev$values <= 0
