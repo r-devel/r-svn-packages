@@ -536,7 +536,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     theta <- family$getTheta(TRUE)
     if (is.null(eta)) { ## return probabilities
       mu <- X%*%beta + off 
-      se <- if (se) sqrt(rowSums((X%*%Vb)*X)) else NULL
+      se <- if (se) sqrt(pmax(0,rowSums((X%*%Vb)*X))) else NULL
       ##theta <- cumsum(c(-1,exp(theta)))
       p <- ocat.prob(theta,mu,se)
       if (is.null(se)) return(p) else { ## approx se on prob also returned
@@ -1709,7 +1709,7 @@ ziP <- function (theta = NULL, link = "identity") {
     
     if (is.null(eta)) { ## return probabilities
       eta <- X%*%beta + off 
-      se <- if (se) sqrt(rowSums((X%*%Vb)*X)) else NULL ## se of lin pred
+      se <- if (se) sqrt(pmax(0,rowSums((X%*%Vb)*X))) else NULL ## se of lin pred
     } else se <- NULL
     r <- logid(eta,theta) ## p is prob Pois, p.l is deriv wrt mu
     fv <- list(as.numeric(r$p*exp(eta)))    ## E(y)    

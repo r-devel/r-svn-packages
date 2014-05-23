@@ -329,7 +329,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
   fam <- structure(list(link=link[[1]],canonical="none",linkfun=stats[[1]]$linkfun,
            mu.eta=stats[[1]]$mu.eta),
            class="family")
-  fam <- mgcv:::fix.family.link(fam)
+  fam <- fix.family.link(fam)
   stats[[1]]$d2link <- fam$d2link
   stats[[1]]$d3link <- fam$d3link
   stats[[1]]$d4link <- fam$d4link
@@ -773,7 +773,7 @@ ziplss <-  function(link=list("identity","identity")) {
     fam <- structure(list(link=link[[i]],canonical="none",linkfun=stats[[i]]$linkfun,
            mu.eta=stats[[i]]$mu.eta),
            class="family")
-    fam <- mgcv:::fix.family.link(fam)
+    fam <- fix.family.link(fam)
     stats[[i]]$d2link <- fam$d2link
     stats[[i]]$d3link <- fam$d3link
     stats[[i]]$d4link <- fam$d4link

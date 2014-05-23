@@ -343,6 +343,7 @@ plot.random.effect <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2
       X <- diag(p)   # prediction matrix for this term
       if (is.null(xlab)) xlabel<- "Gaussian quantiles" else xlabel <- xlab
       if (is.null(ylab)) ylabel <- "effects" else ylabel <- ylab
+      if (!is.null(main)) label <- main
       return(list(X=X,scale=FALSE,se=FALSE,raw=raw,xlab=xlabel,ylab=ylabel,
              main=label))
 
@@ -1088,9 +1089,9 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
           meanL1 <- x$smooth[[i]]$meanL1
           if (!is.null(meanL1)) X1 <- X1 / meanL1
           X1[,first:last] <- P$X
-          se.fit <- sqrt(rowSums((X1%*%x$Vp)*X1))
+          se.fit <- sqrt(pmax(0,rowSums((X1%*%x$Vp)*X1)))
         } else se.fit <- ## se in centred (or anyway unconstained) space only
-        sqrt(rowSums((P$X%*%x$Vp[first:last,first:last,drop=FALSE])*P$X))
+        sqrt(pmax(0,rowSums((P$X%*%x$Vp[first:last,first:last,drop=FALSE])*P$X)))
         if (!is.null(P$exclude)) P$se.fit[P$exclude] <- NA
       } ## standard errors for fit completed
       if (partial.resids) { P$p.resid <- fv.terms[,length(order)+i] + w.resid }
@@ -1153,7 +1154,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   if (scale==-1&&is.null(ylim)) {
     k <- 0
     if (m>0) for (i in 1:m) if (pd[[i]]$plot.me&&pd[[i]]$scale) { ## loop through plot data 
-      if (se&&pd[[i]]$se) { ## require CIs on plots
+      if (se&&length(pd[[i]]$se)>1) { ## require CIs on plots
         ul<-pd[[i]]$fit+pd[[i]]$se
         ll<-pd[[i]]$fit-pd[[i]]$se
         if (k==0) { 

@@ -2584,7 +2584,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           ii <- ind[lass[[j]]==i] + pstart[j] - 1 
           fit[start:stop,k] <- X[,ii,drop=FALSE]%*%object$coefficients[ii]
           if (se.fit) se[start:stop,k] <-
-          sqrt(rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE]))
+          sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE])))
         }
       }
       if (n.smooth&&!para.only) {
@@ -2597,10 +2597,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              
               X1[,first:last] <- X[,first:last]
-              se[start:stop,n.pterms+k] <- sqrt(rowSums((X1%*%object$Vp)*X1))
+              se[start:stop,n.pterms+k] <- sqrt(pmax(0,rowSums((X1%*%object$Vp)*X1)))
             } else se[start:stop,n.pterms+k] <- ## terms strictly centred
-            sqrt(rowSums((X[,first:last,drop=FALSE]%*%
-                          object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE]))
+            sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*%
+                          object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE])))
           } ## end if (se.fit)
         }
         colnames(fit) <- ColNames
@@ -2637,7 +2637,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     } else { ## "link" or "response" case
       k <- attr(attr(object$model,"terms"),"offset")
       if (nlp>1) { ## multiple linear predictor case
-        pstart <- c(pstart,ncol(X))
+        pstart <- c(pstart,ncol(X)+1)
         ## get index of smooths with an offset...
         off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
         for (j in 1:nlp) { ## looping over the linear predictors
@@ -2646,7 +2646,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
             if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
           }
-          if (se.fit) se[start:stop,j] <- sqrt(rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE]))
+          if (se.fit) se[start:stop,j] <- 
+          sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
           ## model offset only handled for first predictor...
           if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
           if (type=="response") { ## need to transform lp to response scale
@@ -2660,7 +2661,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf)
         fit[start:stop] <- X%*%object$coefficients + offs
         #if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) ## + rowSums(Xoff)
-        if (se.fit) se[start:stop] <- sqrt(rowSums((X%*%object$Vp)*X))
+        if (se.fit) se[start:stop] <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
         if (type=="response") { # transform    
           fam <- object$family;linkinv <- fam$linkinv
           if (is.null(fam$predict)) {
@@ -3713,7 +3714,7 @@ influence.gam <- function(model,...) { model$hat }
 
 
 
-logLik.gam <- function (object)
+logLik.gam <- function (object,...)
 {  # based on logLik.glm - is ordering of p correction right???
    # if (length(list(...)))
    #     warning("extra arguments discarded")
