@@ -788,7 +788,8 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
  
   if (cov) { 
     d1b <- matrix(0,np,ncol(fit$d1b))
-    d1b[undrop,] <- Sl.repara(fit$rp,fit$d1b,inverse=TRUE)
+    ## following construction a bit ugly due to Sl.repara assumptions...
+    d1b[undrop,] <- t(Sl.repara(fit$rp,t(fit$d1b),inverse=TRUE,both.sides=FALSE))
     for (i in 1:ncol(d1b)) d1b[,i] <- Sl.initial.repara(Sl,as.numeric(d1b[,i]),inverse=TRUE) ## d beta / d rho matrix
     PP <- matrix(0,np,np)
     PP[undrop,undrop] <-  Sl.repara(fit$rp,fit$PP,inverse=TRUE)

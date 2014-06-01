@@ -23,7 +23,7 @@ be greater than 1 and less than or equal to 2. 1 would be Poisson, 2 is gamma. }
 \item{link}{The link function: one of \code{"log"}, \code{"identity"}, \code{"inverse"}, \code{"sqrt"}, or a 
 \code{\link{power}} link.}
 
-\item{theta}{\eqn{p=\exp\{a+b*\exp(\theta)\}/\{1+exp(\theta)\}}{p=exp(a+b*exp(theta))/(1+exp(theta))}. If this is supplied as a positive value then it is taken as the fixed value for \code{p}.
+\item{theta}{\eqn{p=\exp\{a+b \exp(\theta)\}/\{1+\exp(\theta)\}}{p=exp(a+b*exp(theta))/(1+exp(theta))}. If this is supplied as a positive value then it is taken as the fixed value for \code{p}.
 If it is a negative values then its absolute value is taken as the initial value for \code{p}.}
 
 \item{a}{lower limit on \code{p} for optimization.}
@@ -83,15 +83,16 @@ set.seed(3)
 n<-400
 ## Simulate data (really Poisson with log-link)
 dat <- gamSim(1,n=n,dist="poisson",scale=.2)
+dat$y <- rTweedie(exp(dat$f),p=1.3,phi=.5)
 
 ## Fit a `nearby' Tweedie...
-b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.1,power(.1)),
+b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.25,power(.1)),
          data=dat)
 plot(b,pages=1)
 print(b)
 
 ## Same by approximate REML...
-b1 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.1,power(.1)),
+b1 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.25,power(.1)),
           data=dat,method="REML")
 plot(b1,pages=1)
 print(b1)

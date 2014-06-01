@@ -1406,9 +1406,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   
   object$control <- control
   if (inherits(family,"general.family")) {
-    mv <- gam.fit5.post.proc(object,G$Sl)
+    mv <- gam.fit5.post.proc(object,G$Sl,G$L)
     object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
-  } else mv <- gam.fit3.post.proc(G$X,object)
+  } else mv <- gam.fit3.post.proc(G$X,G$L,object)
   ## note: use of the following in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
   if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
@@ -1542,7 +1542,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (substr(G$family$family[1],1,17)=="Negative Binomial") { ## initialize sensibly
       scale <- G$sig2 <- 1
       G$family <- negbin(max(family$getTheta()),link=family$link)
-      nb.fam.seset <- TRUE
+      nb.fam.reset <- TRUE
     }
   } else fixedSteps <- control$maxit+2
   
@@ -1915,7 +1915,7 @@ print.gam<-function (x,...)
   invisible(x)
 }
 
-gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 100,
+gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
                          mgcv.tol=1e-7,mgcv.half=15,trace =FALSE,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
@@ -2576,7 +2576,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     } else if (type=="terms"||type=="iterms") { ## split results into terms
       lass <- if (is.list(object$assign)) object$assign else list(object$assign)
       k <- 0
-      for (j in 1:length(lass)) { ## work through assign list
+      for (j in 1:length(lass)) if (length(lass[[j]])) { ## work through assign list
         ind <- 1:length(lass[[j]]) ## index vector for coefs involved
         nptj <- max(lass[[j]]) ## numer of terms involved here
         if (nptj>0) for (i in 1:nptj) { ## work through parametric part
@@ -2586,7 +2586,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           if (se.fit) se[start:stop,k] <-
           sqrt(pmax(0,rowSums((X[,ii,drop=FALSE]%*%object$Vp[ii,ii])*X[,ii,drop=FALSE])))
         }
-      }
+      } ## assign list done
       if (n.smooth&&!para.only) {
         for (k in 1:n.smooth) # work through the smooth terms 
         { first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para

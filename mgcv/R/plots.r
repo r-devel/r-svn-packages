@@ -1051,12 +1051,15 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
   }
 
   if (partial.resids) { ## getting information needed for partial residuals...
-    fv.terms <- predict(x,type="terms")
-    if (is.null(w.resid)) w.resid<-x$residuals*sqrt(x$weights) # weighted working residuals
+    if (is.null(w.resid)) { ## produce working resids if info available
+      if (is.null(x$residuals)||is.null(x$weights)) partial.resids <- FALSE else
+      w.resid<-x$residuals*sqrt(x$weights) # weighted working residuals
+    }
+    if (partial.resids) fv.terms <- predict(x,type="terms") ## get individual smooth effects
   }
 
-  pd<-list(); ## plot data list
-  i<-1 # needs a value if no smooths, but parametric terms ...
+  pd <- list(); ## plot data list
+  i <- 1 # needs a value if no smooths, but parametric terms ...
 
   ##################################################
   ## First the loop to get the data for the plots...

@@ -1659,20 +1659,27 @@ ziP <- function (theta = NULL, link = "identity") {
       r <- family$Dd(y,mu,theta,wt)
       l <- family$dev.resids(y,mu,wt,theta)
       lmax <- max(abs(l))
+      ucov <- abs(r$Dmu) > lmax*1e-7
+      k <- 0
       while (keep.on) { 
         step <- -r$Dmu/r$Dmu2
+        step[!ucov] <- 0
         mu1 <- mu + step
         l1 <- family$dev.resids(y,mu1,wt,theta)
-        ind <- l1>l
-        while (sum(ind)>0) {
+        ind <- l1>l & ucov
+        kk <- 0
+        while (sum(ind)>0&&kk<50) {
             step[ind] <- step[ind]/2
             mu1 <- mu + step
             l1 <- family$dev.resids(y,mu1,wt,theta) 
-            ind <- l1>l
+            ind <- l1>l & ucov
+            kk <- kk + 1
         }       
         mu <- mu1;l <- l1
         r <- family$Dd(y,mu,theta,wt)
-        if (all(abs(r$Dmu)<lmax*1e-7)) keep.on <- FALSE
+        ucov <- abs(r$Dmu) > lmax*1e-7
+        k <- k + 1
+        if (all(!ucov)||k==100) keep.on <- FALSE
       }
       l1 <- rep(0,length(pind));l1[pind] <- l
       l1

@@ -220,10 +220,11 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     validmu <- family$validmu
     if (is.null(validmu)) 
        validmu <- function(mu) TRUE
+
     if (is.null(mustart)) {
         eval(family$initialize)
     } else {
-        start <- NULL ## if mustart was supplied then ignore start
+        ##start <- NULL ## if mustart was supplied then ignore start
         mukeep <- mustart
         eval(family$initialize)
         mustart <- mukeep
@@ -262,7 +263,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         scale.est <- alpha / (nobs - trA)
     } ### end if (EMPTY)
     else {
-        coefold <- NULL
+        ##coefold <- NULL
         eta <- if (!is.null(etastart)) 
             etastart
         else if (!is.null(start)) 
@@ -285,8 +286,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         rV=matrix(0,ncol(x),ncol(x))   
        
         ## need an initial `null deviance' to test for initial divergence... 
-        ## null.coef <- qr.coef(qr(x),family$linkfun(mean(y)+0*y))
-        ## null.coef[is.na(null.coef)] <- 0 
+        ## Note: can be better not to shrink towards start on
+        ## immediate failure, in case start is on edge of feasible space...
+        ## if (!is.null(start)) null.coef <- start
+        coefold <- null.coef
         null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
         old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights)) + t(null.coef)%*%St%*%null.coef 
         ## ... if the deviance exceeds this then there is an immediate problem
@@ -746,9 +749,9 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 } ## end gam.fit3
 
 
-gam.fit3.post.proc <- function(X,object) {
+gam.fit3.post.proc <- function(X,L,object) {
 ## get edf array and covariance matrices after a gam fit. 
-## X is original model matrix
+## X is original model matrix, L the mapping from working to full sp
   Vb <- object$rV%*%t(object$rV)*object$scale.est ## Bayesian cov.
   # PKt <- object$rV%*%t(object$K)
   PKt <- .Call(C_mgcv_pmmult2,object$rV,object$K,0,1,object$control$nthreads)
@@ -769,7 +772,13 @@ gam.fit3.post.proc <- function(X,object) {
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
   ##bias = as.numeric(object$coefficients - F%*%object$coefficients)
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
-    M <- ncol(object$db.drho) 
+    M <- ncol(object$db.drho)
+    ## transform to derivs w.r.t. working, noting that an extra final row of L
+    ## may be present, relating to scale parameter (for which db.drho is 0 since its a scale parameter)  
+    if (!is.null(L)) { 
+      object$db.drho <- object$db.drho%*%L[1:M,,drop=FALSE] 
+      M <- ncol(object$db.drho)
+    }
     ev <- eigen(object$outer.info$hess,symmetric=TRUE)
     ind <- ev$values <= 0
     ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
@@ -1035,11 +1044,14 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",start=NULL,
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra,
                    dev.extra=0,n.true=-1,Sl=NULL,...)
-## Newton optimizer for GAM gcv/aic optimization that can cope with an 
-## indefinite Hessian! Main enhancements are: i) always perturbs the Hessian
-## to +ve definite ii) step halves on step 
-## failure, without obtaining derivatives until success; (iii) carries start
-## values forward from one evaluation to next to speed convergence.    
+## Newton optimizer for GAM reml/gcv/aic optimization that can cope with an 
+## indefinite Hessian. Main enhancements are: 
+## i) always perturbs the Hessian to +ve definite if indefinite 
+## ii) step halves on step failure, without obtaining derivatives until success; 
+## (iii) carries start values forward from one evaluation to next to speed convergence;
+## iv) Always tries the steepest descent direction as well as the 
+##     Newton direction for indefinite problems (step length on steepest trial could
+##     be improved here - currently simply halves until descent achieved).    
 ## L is the matrix such that L%*%lsp + lsp0 gives the logs of the smoothing 
 ## parameters actually multiplying the S[[i]]'s
 ## NOTE: an obvious acceleration would use db/dsp to produce improved
@@ -1133,11 +1145,14 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## check for all converged too soon, and undo !
   if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE
   score.hist <- rep(NA,200)
+  ################################
+  ## Start of Newton iteration.... 
+  ################################
   for (i in 1:200) {
    if (control$trace) {
      cat("\n",i,"newton max(|grad|) =",max(abs(grad)),"\n")
    }
-   ## debugging code....
+   ## debugging code for checking derivatives ....
    okc <- check.derivs 
    while (okc) {
      okc <- FALSE
@@ -1164,10 +1179,15 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## get the trial step ...
     eh <- eigen(hess1,symmetric=TRUE)
     d <- eh$values;U <- eh$vectors
+    ## set eigen-values to their absolute value - heuristically appealing
+    ## as it avoids very long steps being proposed for indefinte components,
+    ## unlike setting -ve e.v.s to very small +ve constant...
     ind <- d < 0
+    pdef <- if (sum(ind)>0) FALSE else TRUE ## is it positive definite? 
     d[ind] <- -d[ind] ## see Gill Murray and Wright p107/8
     low.d <- max(d)*.Machine$double.eps^.7
     ind <- d < low.d
+    if (sum(ind)>0) pdef <- FALSE ## not certain it is positive definite
     d[ind] <- low.d 
     ind <- d != 0
     d[ind] <- 1/d[ind]
@@ -1193,12 +1213,17 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       } 
     } else lsp1 <- lsp + Nstep
 
-    b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-       control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
-       mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-       pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
-    
+    ## if pdef==TRUE then get grad and hess immediately, otherwise postpone as
+    ## the steepest descent direction should be tried as well as Newton
+
+    b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+         offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=as.numeric(pdef)*2,
+         control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
+         mustart=mustart,scoreType=scoreType,null.coef=null.coef,
+         pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)    
+
+    sd.unused <- TRUE ## steepest descent direction not yet tried
+
     if (reml) {
       score1 <- b$REML
     } else if (scoreType=="GACV") {
@@ -1209,7 +1234,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
     ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
-    if (score1<score) { ## accept
+    if (score1<score&&pdef) { ## immediately accept step if it worked and positive definite
       old.score <- score 
       mustart <- b$fitted.values
       etastart <- b$linear.predictors
@@ -1233,13 +1258,14 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         grad <- rho$rho1*grad
       }
 
-    } else { ## step halving ...
+    } else if (score1>=score) { ## initial step failed to improve score, try step halving ...
       step <- Nstep ## start with the (pseudo) Newton direction
       ##sc.extra <- 1e-4*sum(grad*step) ## -ve sufficient decrease 
       while (score1>score && ii < maxHalf) {
         if (ii==3&&i<10) { ## Newton really not working - switch to SD, but keeping step length 
           s.length <- min(sum(step^2)^.5,maxSstep)
           step <- Sstep*s.length/sum(Sstep^2)^.5 ## use steepest descent direction
+          sd.unused <- FALSE ## signal that SD already tried
         } else step <- step/2
         ##if (ii>3) Slength <- Slength/2 ## keep track of SD step length
         if (!is.null(lsp.max)) { ## need to take step in delta space
@@ -1262,37 +1288,120 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         } else score1 <- b1$GCV
         ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
         if (score1 <= score) { ## accept
-          b<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-             offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
-             control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
-             mustart=mustart,scoreType=scoreType,null.coef=null.coef,
-             pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
-          mustart <- b$fitted.values 
-          etastart <- b$linear.predictors
-          start <- b$coefficients
-          old.score <- score;lsp <- lsp1
+          if (pdef||!sd.unused) { ## then accept and compute derivatives
+            b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+                 offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
+                 control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
+                 mustart=mustart,scoreType=scoreType,null.coef=null.coef,
+                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+            mustart <- b$fitted.values 
+            etastart <- b$linear.predictors
+            start <- b$coefficients
+            old.score <- score;lsp <- lsp1
          
-          if (reml) {
-            score <- b$REML;grad <- b$REML1;hess <- b$REML2 
-          } else if (scoreType=="GACV") {
-            score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
-          } else if (scoreType=="UBRE") {
-            score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
-          } else { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2}
-          grad <- t(L)%*%grad
-          hess <- t(L)%*%hess%*%L
-          if (!is.null(lsp.max)) { ## need to transform to delta space
-             delta <- delta1
-             rho <- rt(delta,lsp1.max)
-             nr <- length(rho$rho1)
-             hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
-             grad <- rho$rho1*grad
+            if (reml) {
+              score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+            } else if (scoreType=="GACV") {
+              score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
+            } else if (scoreType=="UBRE") {
+              score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+            } else { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2}
+            grad <- t(L)%*%grad
+            hess <- t(L)%*%hess%*%L
+            if (!is.null(lsp.max)) { ## need to transform to delta space
+               delta <- delta1
+               rho <- rt(delta,lsp1.max)
+               nr <- length(rho$rho1)
+               hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
+               grad <- rho$rho1*grad
+            }
+          } else { ## still need to try the steepest descent step to see if it does better
+            b <- b1
+            score2 <- score1 
           }
-          score1 <- score - abs(score) - 1 ## make damn sure that score1 < score
-        }  # end of if (score1<= score )
+          score1 <- score - abs(score) - 1 ## make sure that score1 < score
+        }  # end of if (score1<= score ) # accept
         ii <- ii + 1
-      } # end of step halving
-    }
+      } ## end while (score1>score && ii < maxHalf)
+      if (!pdef&&sd.unused) score1 <- score2
+    } ## end of step halving branch
+
+    ## if the problem is not positive definite, and the sd direction has not 
+    ## yet been tried then it should be tried now, and the better of the 
+    ## newton and steepest steps used (before computing the derivatives)
+    ## score1, lsp1 (delta1) contain the best so far...
+
+    if (!pdef&&sd.unused) {
+      step <- Sstep*2
+      kk <- 0
+      ok <- TRUE
+      while (ok) { ## step length loop for steepest....
+        step <- step/2;kk <- kk+1
+        if (!is.null(lsp.max)) { ## need to take step in delta space
+          delta3 <- delta + step
+          lsp3 <- rt(delta3,lsp1.max)$rho ## transform to log sp space
+        } else lsp3 <- lsp + step
+        b1 <- gam.fit3(x=X, y=y, sp=L%*%lsp3+lsp0,Eb=Eb,UrS=UrS,
+              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
+              control=control,gamma=gamma,scale=scale,
+              printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
+              null.coef=null.coef,pearson.extra=pearson.extra,
+              dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+        if (reml) {       
+          score3 <- b1$REML
+        } else if (scoreType=="GACV") {
+          score3 <- b1$GACV
+        } else if (scoreType=="UBRE") {
+          score3 <- b1$UBRE
+        } else score3 <- b1$GCV
+        if (kk==1||score3<=score2) { ## accept step - better than last try
+          score2 <- score3
+          lsp2 <- lsp3
+          if (!is.null(lsp.max)) delta2 <- delta3
+        }
+        ## stop when improvement found, and shorter step is worse...
+        if (score2<score&&score3>score2||kk==40) ok <- FALSE
+      } ## while (ok) ## step length control loop
+
+      ## now pick the step that led to the biggest decrease  
+
+      if (score2<score1) {
+        lsp1 <- lsp2
+        if (!is.null(lsp.max)) delta1 <- delta
+        score1 <- score2
+      }
+
+      ## and compute derivatives for the accepted step....
+
+      b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+                 offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
+                 control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
+                 mustart=mustart,scoreType=scoreType,null.coef=null.coef,
+                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+      mustart <- b$fitted.values 
+      etastart <- b$linear.predictors
+      start <- b$coefficients
+      old.score <- score;lsp <- lsp1
+         
+      if (reml) {
+         score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+      } else if (scoreType=="GACV") {
+         score <- b$GACV;grad <- b$GACV1;hess <- b$GACV2
+      } else if (scoreType=="UBRE") {
+         score <- b$UBRE;grad <- b$UBRE1;hess <- b$UBRE2 
+      } else { score <- b$GCV;grad <- b$GCV1;hess <- b$GCV2}
+      grad <- t(L)%*%grad
+      hess <- t(L)%*%hess%*%L
+      if (!is.null(lsp.max)) { ## need to transform to delta space
+          delta <- delta1
+          rho <- rt(delta,lsp1.max)
+          nr <- length(rho$rho1)
+          hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
+          grad <- rho$rho1*grad
+       }
+
+    } ## end of steepest descent trial for indefinite problems
+
     ## record current score
     score.hist[i] <- score 
    
@@ -1465,7 +1574,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## force initial Hessian to +ve def and invert... 
   B <- (B+t(B))/2
   eb <- eigen(B,symmetric=TRUE)
-  thresh <- max(abs(eb$values))*1e-4
+  eb$values <- abs(eb$values)
+  thresh <- max(eb$values) * 1e-4
   eb$values[eb$values<thresh] <- thresh
   B <- eb$vectors%*%(t(eb$vectors)/eb$values)
   ilsp <- lsp
@@ -1602,7 +1712,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       yg <- trial$grad-initial$grad
       step <- step*trial$alpha
       if (i==1) { ## initial step --- adjust Hessian as p143 of N&W
-        B <- B*trial$alpha ##  sum(yg*step)/sum(yg*yg)
+        B <- B*trial$alpha ## B <- B * sum(yg*step)/sum(yg*yg)
       }
       rho <- 1/sum(yg*step)
       B <- B - rho*step%*%(t(yg)%*%B)
@@ -1614,7 +1724,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
       ## test for convergence
       converged <- TRUE
-      if (reml) score.scale <- abs(trial$scale.est) + abs(trial$score) ## abs(log(trial$dev/nrow(X))) + abs(trial$score)
+      if (reml) score.scale <- 1 + abs(trial$score) ## abs(log(trial$dev/nrow(X))) + abs(trial$score)
       else score.scale <- abs(trial$scale.est) + abs(trial$score)  ##trial$dev/nrow(X) + abs(trial$score)    
       uconv.ind <- abs(trial$grad) > score.scale*conv.tol
       if (sum(uconv.ind)) converged <- FALSE

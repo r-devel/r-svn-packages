@@ -333,7 +333,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   
   ## and now finalize initialization of mu and eta...
 
-  coefold <- NULL
+  #coefold <- NULL
   eta <- if (!is.null(etastart)) etastart
          else if (!is.null(start)) 
               if (length(start) != nvars) 
@@ -359,6 +359,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    mu <- linkinv(eta);etaold <- eta
      
    ## need an initial `null deviance' to test for initial divergence...
+   ## if (!is.null(start)) null.coef <- start - can be on edge of feasible - not good
+   coefold <- null.coef
    null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
    old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
    conv <-  boundary <- FALSE
@@ -1069,8 +1071,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ret
 } ## end of gam.fit5
 
-gam.fit5.post.proc <- function(object,Sl) {
-## object is object returned by gam.fit5,
+gam.fit5.post.proc <- function(object,Sl,L) {
+## object is object returned by gam.fit5, Sl is penalty object, L maps working sp
+## vector to full sp vector 
 ## Computes:
 ## R - unpivoted Choleski of estimated expected hessian of ll 
 ## Vb - the Bayesian cov matrix,
@@ -1145,6 +1148,7 @@ gam.fit5.post.proc <- function(object,Sl) {
   ev <- eigen(object$outer.info$hess,symmetric=TRUE)
   ind <- ev$values <= 0
   ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+  if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
   Vc <- crossprod((ev$values*t(ev$vectors))%*%t(object$db.drho))
   Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
 

@@ -42,6 +42,8 @@
 * predict.gam now checks that factors in newdata do not contain more
   levels than those used in fitting.
 
+* predict.gam could fail for type "terms" with no intercept - fixed.
+
 * 'bfgs' now uses a finite difference approximation for the initial inverse 
   Hessian. 
 
