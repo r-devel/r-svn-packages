@@ -4,8 +4,10 @@
 \title{Zero inflated Poisson location-scale model family}
 \description{The \code{ziplss} family implements a zero inflated Poisson model in which one linear predictor 
 controls the probability of `potential presence' and the other controls the mean given `potential presence'.
-For example, in animal abundance studies `potential presence' might mean `habitat suitability', with the number of animals observed being given by a Poisson random variable, with some mean, if the habitat is suitable. (The slightly involved description is because the model has two ways of generating zeroes/absences: Poisson zeroes, and `unsuitability zeroes'.) Useable 
-only with \code{\link{gam}}, the linear predictors are specified via a list of formulae. 
+For example, in animal abundance studies `potential presence' might mean `habitat suitability', with the number of animals observed being given by a Poisson random variable, with some mean, if the habitat is suitable. (The slightly involved description is because the model has two ways of generating zeroes/absences: Poisson zeroes, and `unsuitability zeroes'.) Useable only with \code{\link{gam}}, the linear predictors are specified via a list of formulae. 
+
+Should be used with care, as it is easy to generate models for which the likelihood is indefinite - having two flexible sub-models 
+competing to explain the zeroes in a dataset is a recipe for identifiability problems.  
 
 }
 
@@ -14,7 +16,7 @@ ziplss(link=list("identity","identity"))
 }
 \arguments{
 \item{link}{two item list specifying the link - currently only identity links are possible, as 
-parameterization is directly in terms of log of Poisson response and logit of probability of presence..}
+parameterization is directly in terms of log of Poisson response and logit of probability of presence.}
 }
 \value{
  An object inheriting from class \code{general.family}.
@@ -38,7 +40,7 @@ avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smoot
 }
 
 \section{WARNINGS }{
-Data for which the response is zero over large areas of the covariate space lead to identifiability problems that are very
+Data for which the response is zero (or even binary) over large areas of the covariate space lead to identifiability problems that are very
 difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
 compute the likelihood and its derivatives accurately. In such cases it is sensible to use first order penalties on the 
 smooths. 
@@ -68,6 +70,7 @@ y[ind] <- rpois(exp(eta2),exp(eta2))
 
 ## Fit ZIP model... 
 b <- gam(list(y~s(x2)+s(x3),~s(x0)+s(x1)),family=ziplss())
+b$outer.info ## check convergence!!
 
 summary(b) 
 plot(b,pages=1)

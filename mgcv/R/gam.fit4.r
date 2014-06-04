@@ -776,7 +776,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   rank <- q;drop <- NULL
   eigen.fix <- FALSE
   converged <- FALSE
-  check.deriv <- FALSE; eps <- 1e-5
+  check.deriv <- FALSE; eps <- 1e-5 
+  drop <- NULL;bdrop <- rep(FALSE,q) ## by default nothing dropped
+  perturbed <- 0 ## counter for number of times perturbation tried on possible saddle
   for (iter in 1:(2*control$maxit)) { ## main iteration
     ## get Newton step... 
     if (check.deriv) {
@@ -795,9 +797,10 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     if (sum(D <= 0)) { ## Hessian indefinite, for sure
       D <- rep(1,ncol(Hp))
       if (eigen.fix) {
-        eh <- eigen(Hp,symmetric=TRUE);ev <- eh$values
-        thresh <- min(ev[ev>0])
-        ev[ev<thresh] <- thresh
+        eh <- eigen(Hp,symmetric=TRUE);
+        ev <- abs(eh$values)
+        #thresh <- min(ev[ev>0])
+        #ev[ev<thresh] <- thresh
         Hp <- eh$vectors%*%(ev*t(eh$vectors))
       } else {
         Ib <- diag(rank)*abs(min(D))
@@ -854,54 +857,58 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
     if (ll1 >= ll0||iter==control$maxit) { ## step ok. Accept and test
       coef <- coef + step
-      # convergence test...
-      if (iter==control$maxit||(abs(ll1-ll0) < control$epsilon*abs(ll0) 
-          && max(abs(grad)) < .Machine$double.eps^.5*abs(ll0))) {
-        if (rank.checked||!indefinite) {
-          if (!rank.checked) { ## was never indefinite
-            drop <- NULL;bdrop <- rep(FALSE,q)
-          }
-          converged <- TRUE
-          break
-        } else { ## check rank, as fit appears indefinite...
-          rank.checked <- TRUE
-          if (penalized) {
-            Sb <- crossprod(Eb) ## balanced penalty
-            Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
-          } else Hb <- -ll$lbb/norm(ll$lbb,"F")
-          ## apply pre-conditioning, otherwise badly scaled problems can result in
-          ## wrong coefs being dropped...
-          D <- abs(diag(Hb))
-          D[D<1e-50] <- 1;D <- D^-.5
-          Hb <- t(D*Hb)*D
-          qrh <- qr(Hb,LAPACK=TRUE)
-          rank <- Rrank(qr.R(qrh))
-          if (rank < q) { ## rank deficient. need to drop and continue to adjust other params
-            drop <- sort(qrh$pivot[(rank+1):q]) ## set these params to zero 
-            bdrop <- 1:q %in% drop ## TRUE FALSE version
-            ## now drop the parameters and recompute ll0...
-            lpi <- attr(x,"lpi")
-            coef <- coef[-drop]
-            St <- St[-drop,-drop]
-            x <- x[,-drop] ## dropping columns from model matrix
-            if (!is.null(lpi)) { ## need to adjust column indexes as well
-              k <- 0
-              for (i in 1:length(lpi)) {
-                kk <- sum(lpi[[i]]%in%drop==FALSE) ## how many left undropped?
-                lpi[[i]] <- 1:kk + k ## new index - note strong assumptions on structure here
-                k <- k + kk
-              }
-            } ## lpi adjustment done
-            attr(x,"lpi") <- lpi
+      ## convergence test...
+      ok <- (iter==control$maxit||(abs(ll1-ll0) < control$epsilon*abs(ll0) 
+          && max(abs(grad)) < .Machine$double.eps^.5*abs(ll0))) 
+      if (ok) { ## appears to have converged
+        if (indefinite) { ## not a well defined maximum
+          if (perturbed==5) stop("indefinite penalized likelihood in gam.fit5 ")
+          if (iter<4||rank.checked) {
+            perturbed <- perturbed + 1
+            coef <- coef*(1+(runif(length(coef))*.02-.01)*perturbed) + 
+                    (runif(length(coef)) - 0.5 ) * mean(abs(coef))*1e-5*perturbed 
             ll <- family$ll(y,x,coef,weights,family,deriv=1) 
             ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
-          } else { ## full rank, so done
-            converged <- TRUE
-            drop <- NULL;bdrop <- rep(FALSE,q)
-            break
+          } else {        
+            rank.checked <- TRUE
+            if (penalized) {
+              Sb <- crossprod(Eb) ## balanced penalty
+              Hb <- -ll$lbb/norm(ll$lbb,"F")+Sb/norm(Sb,"F") ## balanced penalized hessian
+            } else Hb <- -ll$lbb/norm(ll$lbb,"F")
+            ## apply pre-conditioning, otherwise badly scaled problems can result in
+            ## wrong coefs being dropped...
+            D <- abs(diag(Hb))
+            D[D<1e-50] <- 1;D <- D^-.5
+            Hb <- t(D*Hb)*D
+            qrh <- qr(Hb,LAPACK=TRUE)
+            rank <- Rrank(qr.R(qrh))
+            if (rank < q) { ## rank deficient. need to drop and continue to adjust other params
+              drop <- sort(qrh$pivot[(rank+1):q]) ## set these params to zero 
+              bdrop <- 1:q %in% drop ## TRUE FALSE version
+              ## now drop the parameters and recompute ll0...
+              lpi <- attr(x,"lpi")
+              coef <- coef[-drop]
+              St <- St[-drop,-drop]
+              x <- x[,-drop] ## dropping columns from model matrix
+              if (!is.null(lpi)) { ## need to adjust column indexes as well
+                k <- 0
+                for (i in 1:length(lpi)) {
+                  kk <- sum(lpi[[i]]%in%drop==FALSE) ## how many left undropped?
+                  lpi[[i]] <- 1:kk + k ## new index - note strong assumptions on structure here
+                  k <- k + kk
+                }
+              } ## lpi adjustment done
+              attr(x,"lpi") <- lpi
+              ll <- family$ll(y,x,coef,weights,family,deriv=1) 
+              ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
+            } 
           }
-        } 
-      } else ll0 <- ll1
+
+        } else { ## not indefinite really converged
+          converged <- TRUE
+          break
+        }
+      } else ll0 <- ll1 ## step ok but not converged yet
     } else { ## step failed.
       converged  <- FALSE
       if (is.null(drop)) bdrop <- rep(FALSE,q)
@@ -1047,8 +1054,14 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       fitted.values[,j] <- family$linfo[[j]]$linkinv( linear.predictors[,j]) 
     }
   }
-  coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef
+  coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef 
  
+  if (!is.null(drop)) { ## create full version of b1 with zeros for unidentifiable 
+    db.drho <- matrix(0,length(bdrop),ncol(b1));db.drho[!bdrop,] <- d1b
+  } else db.drho <- d1b
+  ## and undo re-para...
+  if (!is.null(d1b)) db.drho <- t(Sl.repara(rp$p,t(db.drho),inverse=TRUE,both.sides=FALSE)) 
+
   ret <- list(coefficients=coef,family=family,y=y,prior.weights=weights,
        fitted.values=fitted.values, linear.predictors=linear.predictors,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
@@ -1061,7 +1074,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        D=D, ## diagonal preconditioning matrix
        St=St, ## total penalty matrix
        rp = rp$rp,
-       db.drho = d1b, ## derivative of penalty coefs w.r.t. log sps.
+       db.drho = db.drho, ## derivative of penalty coefs w.r.t. log sps.
        #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
@@ -1175,3 +1188,63 @@ gam.fit5.post.proc <- function(object,Sl,L) {
 } ## gam.fit5.post.proc
 
 
+deriv.check5 <- function(x, y, sp, 
+            weights = rep(1, length(y)), start = NULL,
+            offset = rep(0, length(y)),Mp,family = gaussian(), 
+            control = gam.control(),deriv=2,eps=1e-7,spe=1e-3,
+            Sl,...)
+## FD checking of derivatives for gam.fit5: a debugging routine
+{  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
+   if (control$epsilon>1e-9) control$epsilon <- 1e-9 
+   ## first obtain the fit corresponding to sp...
+   b <- gam.fit5(x=x,y=y,lsp=sp,Sl=Sl,weights=weights,offset=offset,deriv=2,
+        family=family,control=control,Mp=Mp,start=start)
+   ## now get the derivatives of the likelihood w.r.t. coefs...
+   ll <- family$ll(y=y,X=x,coef=b$coefficients,wt=weights,family=family,
+                   deriv=1,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL)
+   ## and finite difference versions of these...
+   p <- length(b$coefficients)
+   fdg <- rep(0,p)
+   fdh <- matrix(0,p,p)
+   for (i in 1:p) {
+     coef1 <- b$coefficients;coef1[i] <- coef1[i] + eps
+     ll1 <- family$ll(y=y,X=x,coef=coef1,wt=weights,family=family,
+                      deriv=1,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL)
+     fdg[i] <- (ll1$l - ll$l)/eps
+     fdh[,i] <- (ll1$lb - ll$lb)/eps
+   }
+   ## display them... 
+   oask <- devAskNewPage(TRUE)
+   on.exit(devAskNewPage(oask))
+   plot(ll$lb,fdg,xlab="computed",ylab="FD",main="grad of log lik");abline(0,1)
+   cat("log lik grad cor. =",cor(ll$lb,fdg),"\n")
+   plot(ll$lbb,fdh,xlab="computed",ylab="FD",main="hess of log lik");abline(0,1)
+   cat("log lik hess cor. =",cor(as.numeric(ll$lbb),as.numeric(fdh)),"\n")
+   ## now we need to investigate the derivatives w.r.t. the log smoothing parameters.    
+   M <- length(sp) ## number of smoothing parameters
+   fd.br <- matrix(0,p,M)
+   REML1 <- rep(0,M)
+   fd.dH <- list()
+   for (i in 1:M) { ## the smoothing parameter loop
+     sp0 <- sp1 <- sp;sp1[i] <- sp[i] + spe/2;sp0[i] <- sp[i] - spe/2
+     b0 <- gam.fit5(x=x,y=y,lsp=sp0,Sl=Sl,weights=weights,offset=offset,deriv=0,
+          family=family,control=control,Mp=Mp,start=start)
+     b1 <- gam.fit5(x=x,y=y,lsp=sp1,Sl=Sl,weights=weights,offset=offset,deriv=0,
+          family=family,control=control,Mp=Mp,start=start)
+     fd.br[,i] <- (b1$coefficients - b0$coefficients)/spe
+     REML1[i] <- (b1$REML-b0$REML)/spe
+     fd.dH[[i]] <- (b1$lbb - b0$lbb)/spe
+   }
+   ## plot db.drho against fd versions...
+   for (i in 1:M) {
+     plot(b$db.drho[,i],fd.br[,i],xlab="computed",ylab="FD",main="db/drho");abline(0,1)
+     cat("cor db/drho[",i,"] = ",cor(b$db.drho[,i],fd.br[,i]),"\n")
+   }
+   ## plot first deriv Hessian against FD version
+   for (i in 1:M) {
+     plot(b$dH[[i]],fd.dH[[i]],xlab="computed",ylab="FD",main="dH/drho");abline(0,1)
+     cat("cor dH/drho[",i,"] = ",cor(as.numeric(b$dH[[i]]),as.numeric(fd.dH[[i]])),"\n")
+   }
+   list(fd=list(lb=fdg,lbb=fdh,REML1=REML1,db.drho=fd.br,dH=fd.dH),
+        lb=ll$lb,lbb=ll$lbb,REML1=b$REML1,db.drho=b$db.drho,dH=b$dH)
+}

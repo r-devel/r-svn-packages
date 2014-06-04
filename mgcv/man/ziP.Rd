@@ -3,7 +3,9 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM zero-inflated Poisson regression family}
 \description{Family for use with \code{\link{gam}}, implementing regression for zero inflated Poisson data
-when the logit of the zero inflation rate is linearly dependent on the log of the Poisson mean.
+when the logit of the zero inflation rate is linearly dependent on the log of the Poisson mean. Use with care, 
+it is relatively easy to produce models with an indefinite log likelihood using this family, by the very fact of 
+providing two ways of generating a zero.
 }
 
 \usage{
@@ -38,7 +40,7 @@ Note that the fitted values for this model are the log of the Poisson mean. Use 
 }
 
 \section{WARNINGS }{
-Data for which the response is zero over large areas of the covariate space lead to identifiability problems that are very
+Data for which the response is zero (or binary) over substantial areas of the covariate space lead to identifiability problems that are very
 difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
 compute the likelihood and its derivatives accurately. Use of first order penalties on the smooths can help to regularize matters. 
 
@@ -72,7 +74,7 @@ mu <- exp(dat$f/4-2)
 dat$y <- rzip(mu)
 
 b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=ziP(),data=dat)
-
+b$outer.info ## check convergence!!
 b
 plot(b,pages=1)
 ## plot deviance residuals against expected response

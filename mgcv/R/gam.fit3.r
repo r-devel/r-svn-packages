@@ -1095,6 +1095,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,start=start,mustart=mustart,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
+
+     
   }
 
 #  ii <- 0
@@ -1163,7 +1165,17 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,etastart=etastart,start=start,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
-    }
+     if (inherits(family,"general.family")) { ## call gam.fit5 checking
+       eps <- 1e-6
+       spe <- 1e-3
+       er <- deriv.check5(x=X, y=y, sp=L%*%lsp+lsp0, 
+            weights = weights, start = start,
+            offset = offset,Mp=Mp,family = family, 
+            control = control,deriv=deriv,eps=eps,spe=spe,
+            Sl=Sl,...)
+   
+     }
+   } ## end of derivative checking
 #    ii <- 0
 #    if (ii>0) {
 #    score.transect(ii,x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
@@ -1443,7 +1455,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 ##
 ## BFGS is based on Nocedal & Wright (2006) Numerical Optimization, Springer.
 ## In particular the step lengths are chosen to meet the Wolfe conditions
-## using their algorithms 3.5 and 3.6. On page 143 they recommend a post step
+## using their algorithms 3.5 (p60) and 3.6 (p61). On p143 they recommend a post step
 ## adjustment to the initial Hessian. I can't understand why one would do anything
 ## other than adjust so that the initial Hessian would give the step taken, and
 ## indeed the latter adjustment seems to give faster convergence than their 
@@ -1592,13 +1604,14 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
    
     ## get the trial step ...
 
-    step <- -drop(B%*%initial$grad)    
- 
+    step <- -drop(B%*%initial$grad)   
+    ## unit.step <- step/sqrt(sum(step^2)) ## unit vector in step direction
+
     ms <- max(abs(step))
     if (ms>maxNstep) { 
       step <- maxNstep * step/ms
-      alpha.max <- 2
-    } else alpha.max <- 2*maxNstep/ms
+      alpha.max <- 50
+    } else alpha.max <- 50*maxNstep/ms
 
     initial$dscore <- sum(step*initial$grad)
     prev <- initial
@@ -1613,7 +1626,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
                     pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
      ok <- check.derivs
-     while (ok) {
+     while (ok) { ## derivative testing
        deriv <- 1
        ok <- FALSE ## set to TRUE to re-run (e.g. with different eps)
        deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
@@ -1634,7 +1647,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          fdH[[j]] <- (ba$H - b$H)/eps
          fdb.dr[,j] <- (ba$coefficients - b$coefficients)/eps
        }
-     }
+     } ## end of derivative testing
 
       if (reml) {
         trial$score <- b$REML; 
@@ -1700,7 +1713,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       
       prev <- trial
       if (trial$alpha == alpha.max) { trial <- NULL;break;} ## step failed
-      trial <- list(alpha = min(prev$alpha + 1, alpha.max))
+      trial <- list(alpha = min(prev$alpha*1.3, alpha.max))
     } ## end of while(TRUE)
 
     ## Now `trial' contains a suitable step, or is NULL on failure to meet Wolfe.  
@@ -1712,7 +1725,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       yg <- trial$grad-initial$grad
       step <- step*trial$alpha
       if (i==1) { ## initial step --- adjust Hessian as p143 of N&W
-        B <- B*trial$alpha ## B <- B * sum(yg*step)/sum(yg*yg)
+        B <- B*trial$alpha ## this is my version 
+        ## B <- B * sum(yg*step)/sum(yg*yg) ## this is N&W
       }
       rho <- 1/sum(yg*step)
       B <- B - rho*step%*%(t(yg)%*%B)

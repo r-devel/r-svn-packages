@@ -1,4 +1,4 @@
-##  R plotting routines for the package mgcv (c) Simon Wood 2000-2010
+#  R plotting routines for the package mgcv (c) Simon Wood 2000-2010
 ##  With contributions from Henric Nilsson
 
 
