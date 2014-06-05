@@ -675,87 +675,6 @@ zipll <- function(y,gamma,eta,deriv=0) {
    list(l=l,l1=l1,l2=l2,l3=l3,l4=l4,El2=El2)
 } ## zipll
 
-zipll.1 <- function(y,lambda,eta,deriv=0) {
-## function to evaluate zero inflated Poisson log likelihood
-## and its derivatives w.r.t. lambda and eta where 
-## p = logit(eta), for each datum in vector y.
-## deriv: 0 - eval
-##        1 - grad (l,p) and Hess (ll,lp,pp)
-##        2 - third derivs lll,llp,lpp,ppp
-##        4 - 4th derivs. llll,lllp,llpp,lppp,pppp
-
-   l1 <- l2 <- l3 <- l4 <- NULL
-   zind <- y == 0 ## the index of the zeroes
-   yz <- y[zind];yp <- y[!zind]
-   lamz <- lambda[zind];lamp <- lambda[!zind] 
-   etaz <- eta[zind]  ## zero y branch
-   etap <- eta[!zind] ## positive y branch
-   ela <- eta - lambda
-   elaz <- ela[zind];elap <- ela[!zind]
-   l <- y; enlz <- exp(-lamz)
-   l[zind] <- log1ex(elaz) - log1ex(etaz) ## for y==0
-   l[!zind] <- etap - log1ex(etap) + yp*log(lamp) - lamp - lgamma(yp+1) ## for y!=0
-  
-   if (deriv>0) { 
-      alpha <- logist(eta)
-      alphaz <- alpha[zind];alphap <- alpha[!zind]
-      beta <- 1/(exp(eta)+1) ## 1 - alpha
-      betaz <- beta[zind];betap <- beta[!zind]
-      n <- length(y)
-      l1 <- matrix(0,n,2)
- 
-      llz <- l1[zind,1] <- -logist(elaz) ## l_lambda
-      llp <- l1[!zind,1] <- yp/lamp - 1
-
-      lez <- l1[zind,2] <- (enlz-1)/((exp(elaz)+1)*(exp(-etaz)+1))  ## l_eta
-      lep <- l1[!zind,2] <- betap
-      ## the second derivatives
-
-      l2 <- matrix(0,n,3)
-      ## order ll, le, ee... 
- 
-      l2[zind,1] <- -llz*(1+llz)    ## l_ll
-      l2[!zind,1] <- -yp/lamp^2
- 
-      l2[zind,2] <- -llz*lez + llz*betaz       ## l_le
-
-      l2[zind,3] <- lez/(1+exp(etaz)) + lez*llz         ## l_ee
-      l2[!zind,3] <- - alphap*betap
-   }
-   if (deriv>1) {
-      ## the third derivatives
-      ## order lll,lle,lee,eee
-      l3 <- matrix(0,n,4) 
-      l3[zind,1] <- 2*llz^3+3*llz^2+llz ##alphaz*(2*alphaz-1)*betaz ## l_lll
-      l3[!zind,1] <- 2*yp/lamp^3
-      l3[zind,2] <- 2*lez*llz^2 + lez*llz - llz*betaz - 2*llz^2*betaz  ## l_lle
-      
-      l3[zind,3] <- llz*(betaz-betaz*alphaz + lez*alphaz - 2*lez*llz + llz*betaz - 2*lez)  ## l_eel
-
-      l3[zind,4] <- -lez*betaz*(2*alphaz-1) + lez*llz*(3*betaz+alphaz) + 2*lez*llz^2 ## l_eee
-      l3[!zind,4] <- alphap*(2*alphap-1)*betap
-   }
-   if (deriv>3) {
-      ## the fourth derivatives
-      ## order llll,llle,llee,leee,eeee
-      l4 <- matrix(0,n,5) 
-      l4[zind,1] <- -llz - 7*llz^2 - 12*llz^3 -6*llz^4 ## l_llll
-      l4[!zind,1] <- -6*yp/lamp^4
-       l4[zind,2] <- llz*(betaz-lez)*(6*llz^2+6*llz+1) ## l_llle
-  
-       l4[zind,3] <- -llz*betaz^2 + llz^2*betaz*(2*alphaz-5) + lez*llz^2*(8-2*alphaz) +
-                     lez*llz*(2-alphaz) + 6*lez*llz^3 - 4*betaz*llz^3 ## l_llee
-
-       l4[zind,4] <- llz*betaz*(1+alphaz*(2*alphaz-3)) + lez*llz*(-2*alphaz^2 + 5 * alphaz -4) +
-                     llz^2*betaz*(3-2*alphaz) + lez*llz^2*(4*alphaz-10) - 6*lez*llz^3 + 2*betaz*llz^3 ## l_eeel 
-
-       l4[zind,5] <- lez*(-6*alphaz^3+12*alphaz^2-7*alphaz+1) + 
-                     lez*llz*(6*alphaz^2-12*alphaz+7) + 6*lez*llz^2*(2-alphaz+llz)  ## l_eeee  
-       l4[!zind,5] <- 6*alphap^4 - 12*alphap^3 + 7*alphap^2 - alphap
-   }
-   list(l=l,l1=l1,l2=l2,l3=l3,l4=l4)
-} ## zipll.1
-
 
 ziplss <-  function(link=list("identity","identity")) {
 ## Extended family for Zero Inflated Poisson fitted as gamlss 
@@ -827,33 +746,8 @@ ziplss <-  function(link=list("identity","identity")) {
     n <- length(y)
     l1 <- matrix(0,n,2)
     zl <- zipll(y,lambda,p,deriv)
-    ##zind <- y == 0 ## the index of the zeroes
-    ##l <- y; enlz <- exp(-lambda[zind])
-    ##l[zind] <- log(1-p[zind]*(1-enlz))    
-    ##l[!zind] <- log(p[!zind]) + y[!zind]*log(lambda[!zind]) - lambda[!zind] - lgamma(y[!zind]+1)
 
     if (deriv>0) {
-
-      #llz <- p[zind]*enlz/(p[zind]*(enlz-1)+1)    ## l_lambda
-      #l1[zind,1] <- -llz
-      #l1[!zind,1] <- y[!zind]/lambda[!zind] - 1
-
-      #lpz <- l1[zind,2] <- (enlz-1)/(p[zind]*(enlz-1)+1)  ## l_p
-      #l1[!zind,2] <- 1/p[!zind]
-
-      ## the second derivatives
-    
-      #l2 <- matrix(0,n,3)
-      ## order ll, lp, pp... 
- 
-      #l2[zind,1] <- llz*(1-llz)    ## l_ll
-      #l2[!zind,1] <- -y[!zind]/lambda[!zind]^2
- 
-      #l2[zind,2] <- llz*lpz - llz/p[zind]       ## l_lp
-
-      #l2[zind,3] <- -lpz^2         ## l_pp
-      #l2[!zind,3] <- -1/p[!zind]^2
-
       ## need some link derivatives for derivative transform
       ig1 <- cbind(family$linfo[[1]]$mu.eta(eta),family$linfo[[2]]$mu.eta(eta1))
       g2 <- cbind(family$linfo[[1]]$d2link(lambda),family$linfo[[2]]$d2link(p))
@@ -864,29 +758,12 @@ ziplss <-  function(link=list("identity","identity")) {
     if (deriv>1) {
       ## the third derivatives
       ## order lll,llp,lpp,ppp
-      #l3 <- matrix(0,n,4) 
-      #l3[zind,1] <- -llz + 3*llz^2 - 2*llz^3 ## l_lll
-      #l3[!zind,1] <- 2*y[!zind]/lambda[!zind]^3
-
-      #l3[zind,2] <- (1/p[zind]-lpz)*llz*(1-2*llz)  ## l_llp
-      #l3[zind,3] <- 2*lpz*llz*(1/p[zind]-lpz)  ## l_ppl
-      #l3[zind,4] <- 2*lpz^3 ## l_ppp
-      #l3[!zind,4] <- 2/p[!zind]^3  
- 
       g3 <- cbind(family$linfo[[1]]$d3link(lambda),family$linfo[[2]]$d3link(p))
     }
 
     if (deriv>3) {
       ## the fourth derivatives
       ## order llll,lllp,llpp,lppp,pppp
-      #l4 <- matrix(0,n,5) 
-     # l4[zind,1] <- llz - 7*llz^2 + 12*llz^3 -6*llz^4 ## l_llll
-     # l4[!zind,1] <- -6*y[!zind]/lambda[!zind]^4
-     # l4[zind,2] <- (1/p[zind] - lpz) * llz * (6*llz*(1-llz)-1) ## l_lllp
-     # l4[zind,3] <- 2*llz*((llz*(4*lpz-1/p[zind])-lpz)/p[zind]+lpz*llz*(1-3*lpz)) ## l_llpp
-     # l4[zind,4] <- 6*lpz^2*llz*(lpz-1/p[zind]) ## l_pppl 
-     # l4[zind,5] <- -6*lpz^4  ## l_pppp  
-     # l4[!zind,5] <- -6/p[!zind]^4
       g4 <- cbind(family$linfo[[1]]$d4link(lambda),family$linfo[[2]]$d4link(p))
     }
     if (deriv) {

@@ -81,11 +81,11 @@ Tweedie, M. C. K. (1984). An index which distinguishes between
 library(mgcv)
 set.seed(3)
 n<-400
-## Simulate data (really Poisson with log-link)
+## Simulate data...
 dat <- gamSim(1,n=n,dist="poisson",scale=.2)
-dat$y <- rTweedie(exp(dat$f),p=1.3,phi=.5)
+dat$y <- rTweedie(exp(dat$f),p=1.3,phi=.5) ## Tweedie response
 
-## Fit a `nearby' Tweedie...
+## Fit a fixed p Tweedie, with wrong link ...
 b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=Tweedie(1.25,power(.1)),
          data=dat)
 plot(b,pages=1)

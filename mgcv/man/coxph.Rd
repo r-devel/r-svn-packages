@@ -81,6 +81,33 @@ plot(b$family.data$tr,exp(-b$family.data$h),type="l",ylim=c(0,1),
 lines(b$family.data$tr,exp(-b$family.data$h + 2*b$family.data$q^.5),col=2)
 lines(b$family.data$tr,exp(-b$family.data$h - 2*b$family.data$q^.5),col=2)
 lines(b$family.data$tr,exp(-b$family.data$km),lty=2) ## Kaplan Meier
+
+## Simple simulated known truth example...
+ph.weibull.sim <- function(eta,gamma=1,h0=.01,t1=100) { 
+  lambda <- h0*exp(eta)
+  n <- length(eta)
+  U <- runif(n)
+  t <- (-log(U)/lambda)^(1/gamma)
+  d <- as.numeric(t <= t1)
+  t[!d] <- t1
+  list(t=t,d=d)
+}
+n <- 500;set.seed(2)
+x0 <- runif(n, 0, 1);x1 <- runif(n, 0, 1)
+x2 <- runif(n, 0, 1);x3 <- runif(n, 0, 1)
+f0 <- function(x) 2 * sin(pi * x)
+f1 <- function(x) exp(2 * x)
+f2 <- function(x) 0.2*x^11*(10*(1-x))^6+10*(10*x)^3*(1-x)^10
+f3 <- function(x) 0*x
+f <- f0(x0) + f1(x1) + f2(x2)
+g <- (f-mean(f))/5
+surv <- ph.weibull.sim(g)
+surv$x0 <- x0;surv$x1 <- x1;surv$x2 <- x2;surv$x3 <- x3
+
+b <- gam(t~s(x0)+s(x1)+s(x2,k=15)+s(x3),family=cox.ph,weights=d,data=surv)
+
+plot(b,pages=1)
+
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 

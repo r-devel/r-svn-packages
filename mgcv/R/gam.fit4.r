@@ -1056,8 +1056,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   }
   coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef 
  
-  if (!is.null(drop)) { ## create full version of b1 with zeros for unidentifiable 
-    db.drho <- matrix(0,length(bdrop),ncol(b1));db.drho[!bdrop,] <- d1b
+  if (!is.null(drop)) { ## create full version of d1b with zeros for unidentifiable 
+    db.drho <- matrix(0,length(bdrop),ncol(d1b));db.drho[!bdrop,] <- d1b
   } else db.drho <- d1b
   ## and undo re-para...
   if (!is.null(d1b)) db.drho <- t(Sl.repara(rp$p,t(db.drho),inverse=TRUE,both.sides=FALSE)) 

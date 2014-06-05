@@ -1408,7 +1408,7 @@ scat <- function (theta = NULL, link = "identity") {
 
 
 
-## zero inflated Poisson...
+## zero inflated Poisson (simon wood)...
 
 lind <- function(l,th,deriv=0) {
 ## evaluate th[1] + exp(th[2])*l and some derivs

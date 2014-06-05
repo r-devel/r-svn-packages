@@ -1174,7 +1174,9 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
 ## to be an array giving a discrete set of theta values over which to optimize
 ## by exhaustive search. Note that AIC is used as the criterion, since the 
 ## deviance depends on theta, UBRE is not proportional to AIC if theta is varied.
- 
+  
+  warning("`negbin' with unknown theta and outer iteration is deprecated - use `nb'. ")
+
   if (method%in%c("ML","REML","P-REML","P-ML")) { use.aic <- FALSE;scoreType=method } 
                                            else { use.aic <- TRUE;scoreType="UBRE"}
 

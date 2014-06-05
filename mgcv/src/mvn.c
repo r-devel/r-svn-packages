@@ -210,8 +210,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
             if (l==rjj) zz +=  yX[rjk + i * *m] * deriv_theta[j] * deriv_theta[k];
             if (l==rjk) zz +=  yX[rjj + i * *m] * deriv_theta[j] * deriv_theta[k];
             if (k==j&&rik==rjk) { /* then second deriv of R is non-zero */
-              //zz +=  deriv_theta[k] * R[rjj + *m * l] * yX[rjj + *m * i];/* x_i^l'R'R_tt^jk(y-mu) */
-              zz +=  deriv_theta[k] * yRX[rjj + *m * i];   
+               zz +=  deriv_theta[k] * yRX[rjj + *m * i];   
             }
             xx += zz * dtheta[k];
           }
@@ -257,7 +256,7 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
 
       dH += nb * nb; /* move on to next Hessian */
     } /* smoothing parameter loop */ 
-    R_chk_free(yX);R_chk_free(yRX);R_chk_free(yty);
+    R_chk_free(yX);R_chk_free(yRX);R_chk_free(yty);R_chk_free(deriv_theta);
   } /* if (*deriv) */
   
 
