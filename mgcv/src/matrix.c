@@ -75,7 +75,7 @@ matrix initmat(int rows,int cols)
     for (i=0;i<rows+2*pad;i++)
     A.M[i]=(double *)R_chk_calloc((size_t)(cols+2*pad),sizeof(double));
   }
-  A.mem=rows*cols*sizeof(double);
+  A.mem=(long)(rows*cols*sizeof(double));
   memused+=A.mem;matrallocd++;
   A.original_r=A.r=rows;A.original_c=A.c=cols;
   if (((!A.M)||(!A.M[rows-1+2*pad]))&&(rows*cols>0))

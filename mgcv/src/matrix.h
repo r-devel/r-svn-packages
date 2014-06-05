@@ -46,4 +46,7 @@ void svd_bidiag(matrix *U, matrix *w, matrix *ws,matrix *V);
 void msort(matrix a);
 void RArrayFromMatrix(double *a,int r,matrix *M);
 matrix Rmatrix(double *A,int r,int c);
+matrix initvec(int rows);
+void interchange(matrix *M,int i,int j,int col);
+
 #endif

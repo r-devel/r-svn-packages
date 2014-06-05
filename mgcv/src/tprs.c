@@ -22,6 +22,7 @@ USA.*/
 #include "mgcv.h"
 #include "matrix.h"
 #include "general.h"
+#include "tprs.h"
 #include <R_ext/BLAS.h>
 /* Code for thin plate regression splines */
 
@@ -184,7 +185,7 @@ void tpsT(matrix *T,matrix *X,int m,int d)
   /* pin=(int **)R_chk_calloc((size_t)M,sizeof(int *)); 
      for (i=0;i<M;i++) pin[i]=(int *)R_chk_calloc((size_t)d,sizeof(int));*/
 
-  pin = (int *)R_chk_calloc((size_t) M * d,sizeof(int));
+  pin = (int *)R_chk_calloc((size_t) (M * d),sizeof(int));
   gen_tps_poly_powers(pin, &M, &m, &d); /* pin[][] contains powers of polynomials in unpenalized basis */
   
   (*T)=initmat(X->r,M);
@@ -253,7 +254,7 @@ double tps_g(matrix *X,matrix *p,double *x,int d,int m,double *b,int constant)
       for (i=2;i<=d;i++) M/=i;     /* M = (m+d+1)!/(d!(m-d!) */
       /* pin=(int **)R_chk_calloc((size_t)M,sizeof(int *)); 
          for (i=0;i<M;i++) pin[i]=(int *)R_chk_calloc((size_t)d,sizeof(int));*/
-      pin=(int *)R_chk_calloc((size_t)M*d,sizeof(int)); 
+      pin=(int *)R_chk_calloc((size_t)(M*d),sizeof(int)); 
       gen_tps_poly_powers(pin, &M, &m, &d);
       eta0 = eta_const(m,d); /* constant multiplying eta */
     } else return(0.0);
@@ -438,8 +439,8 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
 
   
       nk = E.r;
-      Ea = (double *) R_chk_calloc((size_t) nk*nk,sizeof(double));
-      Ua = (double *) R_chk_calloc((size_t) nk*k,sizeof(double));
+      Ea = (double *) R_chk_calloc((size_t) (nk*nk),sizeof(double));
+      Ua = (double *) R_chk_calloc((size_t) (nk*k),sizeof(double));
       RArrayFromMatrix(Ea,nk,&E);
       minus = -1;kk=k; 
   
@@ -495,7 +496,7 @@ void tprs_setup(double **x,double **knt,int m,int d,int n,int k,int constant,mat
     a = (double *)R_chk_calloc((size_t)k,sizeof(double));
     /* following loop can dominate computational cost, so it is worth 
        using BLAS routines and paying some attention to efficiency */
-    uz = (double *) R_chk_calloc((size_t)kk*k,sizeof(double));
+    uz = (double *) R_chk_calloc((size_t)(kk*k),sizeof(double));
     RArrayFromMatrix(uz,kk,UZ);
     for (i=0;i<n;i++) { 
       for (j=0;j<d;j++) xc[j]=x[j][i];
@@ -602,7 +603,7 @@ void predict_tprs(double *x, int *d,int *n,int *m,int *k,int *M,double *Xu,int *
 
   if (2 * *m <= *d && *d > 0) { *m = 0;while ( 2 * *m < *d+2) (*m)++;} 
   /* get null space polynomial powers */
-  pin=(int *)R_chk_calloc((size_t) *M * *d,sizeof(int)); 
+  pin=(int *)R_chk_calloc((size_t) (*M * *d),sizeof(int)); 
   gen_tps_poly_powers(pin, M, m, d);
   eta0 = eta_const(*m,*d);
 

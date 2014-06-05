@@ -2180,11 +2180,12 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
     *Vt,*b2=NULL,*P,xx=0.0,*eta1=NULL,*eta2=NULL,
     *PKtz,*wi=NULL,*w1=NULL,*w2=NULL,*Tk=NULL,*Tkm=NULL,
     *dev_hess=NULL,*R,*raw,*Q1,*Q,*nulli,*WX,*tau,*R1;
-  int i,j,k,*pivot1,ScS,*pi,rank,m,*pivot,
+  int i,j,k,*pivot1,ScS,*pi,rank,*pivot,
     ntot,n_2dCols=0,n_drop,*drop,tp,
     n_work,deriv2,neg_w=0,*nind,nr,TRUE=1,FALSE=0,ML=0; 
   
   #ifdef SUPPORT_OPENMP
+  int m;
   m = omp_get_num_procs(); /* detected number of processors */
   if (*nt > m || *nt < 1) *nt = m; /* no point in more threads than m */
   omp_set_num_threads(*nt); /* set number of threads to use */
@@ -3050,11 +3051,10 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 */
 
 { int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1,nz;
-  double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,m,
+  double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
     *R1,*tau1,Rnorm,Enorm,*R;
-  
-
   #ifdef SUPPORT_OPENMP
+  int m;
   m = omp_get_num_procs(); /* detected number of processors */
   if (*nt > m || *nt < 1) *nt = m; /* no point in more threads than m */
   omp_set_num_threads(*nt); /* set number of threads to use */

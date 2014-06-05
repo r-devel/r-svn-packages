@@ -250,7 +250,7 @@ void coxlpl(double *eta,double *X,int *r, int *d,double *tr,
     /* note that only leading diagonal of d2H is obtained and stored */ 
     if (*deriv>2) {   
       d2ldA_p = (double *)R_chk_calloc((size_t)(nhh * *p),sizeof(double));
-      for (j = nhh * *p,k=0;j<j;k++) d2H[k] = 0.0; 
+      for (j = nhh * *p,k=0;k<j;k++) d2H[k] = 0.0; 
     }
   }
 

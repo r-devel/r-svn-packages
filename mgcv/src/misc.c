@@ -129,7 +129,7 @@ double *forward_buf(double *buf,int *jal,int update)
 /* extend buffer forward 1000 */
 { double *buf2,*p,*p1,*p2;
   int n=1000;
-  buf2 = (double *)R_chk_calloc((size_t)*jal+n,sizeof(double));
+  buf2 = (double *)R_chk_calloc((size_t)(*jal+n),sizeof(double));
   for (p=buf,p1=buf + *jal,p2=buf2;p<p1;p++,p2++) *p2 = *p;
   R_chk_free(buf);
   if (update) *jal += n;
@@ -143,7 +143,7 @@ double *backward_buf(double *buf,int *jal,int *j0,int *j_lo,int *j_hi,int update
   double *buf2,*p,*p1,*p2;
   if (n > *j0-1) n = *j0 - 1; /* only extend back to j=1 */
   if (n==0) return(buf);
-  buf2 = (double *)R_chk_calloc((size_t)*jal+n,sizeof(double));
+  buf2 = (double *)R_chk_calloc((size_t)(*jal+n),sizeof(double));
   for (p=buf,p1=buf + *jal,p2=buf2 + n;p<p1;p++,p2++) *p2 = *p;  
   if (update) {
     *jal += n; /* number of buffer locations allocated */
