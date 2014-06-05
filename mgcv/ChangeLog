@@ -6,19 +6,26 @@
 *** Cox Proportional Hazard family 'cox.ph' added as example of general
   penalized likelihood families now useable with 'gam'.
 
-*** 'ocat', 'tw', 'nb', 'Beta', 'ziP' and 't.scaled' families added for 
+*** 'ocat', 'tw', 'nb', 'betar', 'ziP' and 'scat' families added for 
   ordered categorical data, Tweedie with estimation of 'p', negative binomial 
   with (fast) estimation of 'theta', beta regression for proportions, simple
-  zero inflated Poisson regression and heavy tailed regression. These are all 
-  examples of 'extended families' now useable with 'gam'.
+  zero inflated Poisson regression and heavy tailed regression with scaled t 
+  distribution. These are all examples of 'extended families' now useable 
+  with 'gam'.
 
-*** gaulss and ziplss families, implementing models with multiple linear 
+*** 'gaulss' and 'ziplss' families, implementing models with multiple linear 
   predictors. For gaulss there is a linear predictor for the Gaussian mean
   and another for the stnadard deviation. For ziplss there is a linear
   predictor controlling `potential presense' and another controlling 
   the Poisson mean, given presence. 
 
-*** mvn family for multivariate normal additive models.
+*** 'mvn' family for multivariate normal additive models.
+
+* 'plot.gam' now weights partial residuals by *normalized* square root 
+  iterative weights so that the average weight is 1 and the residuals 
+  should have constant variance if all is ok.
+
+* 'pcls' now reports if the initial point is not feasible.
 
 * 'gam.vcomp' bug fix. Computed intervals for families with fixed scale 
    parameter were too wide. 

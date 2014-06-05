@@ -1052,8 +1052,10 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
 
   if (partial.resids) { ## getting information needed for partial residuals...
     if (is.null(w.resid)) { ## produce working resids if info available
-      if (is.null(x$residuals)||is.null(x$weights)) partial.resids <- FALSE else
-      w.resid<-x$residuals*sqrt(x$weights) # weighted working residuals
+      if (is.null(x$residuals)||is.null(x$weights)) partial.resids <- FALSE else {
+        wr <- sqrt(x$weights)
+        w.resid <- x$residuals*wr/mean(wr) # weighted working residuals
+      }
     }
     if (partial.resids) fv.terms <- predict(x,type="terms") ## get individual smooth effects
   }
