@@ -550,8 +550,158 @@ logist <- function(x) {
   y
 }
 
+l1ee <- function(x) {
+## log(1-exp(-exp(x)))...
+  ind <- x < log(.Machine$double.eps)/3
+  ex <- exp(x);exi <- ex[ind]
+  l <- log(1-exp(-ex))
+  l[ind] <- log(exi-exi^2/2+exi^3/6)
+  ind <- x < -log(.Machine$double.xmax)
+  l[ind] <- x[ind]
+  l
+}
 
-zipll <- function(y,gamma,eta,deriv=0) {
+lee1 <- function(x) {
+## log(exp(exp(x))-1)...
+  ind <- x < log(.Machine$double.eps)/3
+  ex <- exp(x);exi <- ex[ind]
+  l <- log(exp(ex)-1)
+  l[ind] <- log(exi+exi^2/2+exi^3/6)
+  ind <- x < -log(.Machine$double.xmax)
+  l[ind] <- x[ind]
+  ind <- x > log(log(.Machine$double.xmax))
+  l[ind] <- ex[ind]
+  l
+}
+
+ldg <- function(g,deriv=4) {
+  alpha <- function(g) {
+    ind <- g > log(.Machine$double.eps)/3
+    eg <- exp(g)
+    g[ind] <- eg[ind]/(1-exp(-eg[ind]))
+    g[!ind] <- 1+eg[!ind]/2 + eg[!ind]^2/12
+    g
+  }
+  ind <- g < log(.Machine$double.eps)/3
+  ghi <- log(log(.Machine$double.xmax)) + 1 
+  ## ... above ghi alpha(g) is simply exp(g) 
+  ii <- g>ghi 
+  a <- alpha(g)
+  eg <- exp(g)
+  l2 <- a*(a-eg-1)
+  egi <- eg[ind]
+  ## in the lower tail alpha = 1 + b, where b = eg/2 + eg^2/12
+  ## so l'' = alpha*(b-eg)...
+  b <- egi*(1+egi/6)/2
+  l2[ind] <- a[ind]*(b-egi)
+  l3 <- l4 <- NULL
+  ## in a similar vein l3 can be robustified...  
+  if (deriv>1) {
+    l3 <- a*(a*(-2*a + 3*(eg+1)) - 3*eg - eg^2 - 1) 
+    l3[ind] <- a[ind]*(-b-2*b^2+3*b*egi-egi^2)
+    l3[ii] <- -exp(g[ii])
+  }
+  ## finally l4, which requires a similar approach...
+  if (deriv>2) {
+    l4 <- a*(6*a^3 - 12*(eg+1)*a^2+4*eg*a+7*(eg+1)^2*a-(4+3*eg)*eg -(eg+1)^3)
+    l4[ind] <- a[ind]*(6*b*(3+3*b+b^2) - 12*egi*(1+2*b+b^2) - 12*b*(2-b) + 4*egi*(1+b)+
+                     7*(egi^2+2*egi+b*egi^2+2*b*egi+b)-(4+3*egi)*egi-egi*(3+3*egi+egi^2))
+   
+    l4[ii] <- -exp(g[ii])
+  }
+  list(l1=-a,l2=l2,l3=l3,l4=l4)
+} ## ldg
+
+lde <- function(eta,deriv=4) {
+  ## llog lik derivs w.r.t. eta
+  ind <- eta < log(.Machine$double.eps)/3
+  ii <- eta > log(.Machine$double.xmax)
+  l1 <- et <- exp(eta);eti <- et[ind]
+  l1[!ind] <- et[!ind]/(exp(et[!ind])-1)
+  b <- -eti*(1+eti/6)/2
+  l1[ind] <- 1+b
+  l1[ii] <- 0
+  ## l2 ...   
+  l2 <- l1*((1-et)-l1)
+  l2[ind] <- -b*(1+eti+b) - eti
+  l2[ii] <- 0
+  l3 <- l4 <- NULL
+  ## l3 ...
+  if (deriv>1) {
+    ii <- eta > log(.Machine$double.xmax)/2
+    l3 <- l1*((1-et)^2-et - 3*(1-et)*l1 + 2*l1^2)
+    l3[ind] <- l1[ind]*(-3*eti+eti^2 -3*(-eti+b-eti*b) + 2*b*(2+b))
+    l3[ii] <- 0
+  }
+  ## l4 ...
+  if (deriv>2) {
+    ii <- eta > log(.Machine$double.xmax)/3
+    l4 <- l1*((3*et-4)*et + 4*et*l1 + (1-et)^3 - 7*(1-et)^2*l1 + 12*(1-et)*l1^2 
+            - 6*l1^3)
+    l4[ii] <- 0
+    l4[ind] <- l1[ind]*(4*l1[ind]*eti - eti^3 - b -7*b*eti^2 - eti^2 - 5*eti -
+                 10*b*eti - 12*eti*b^2 - 6*b^2 - 6*b^3)
+  }
+  list(l1=l1,l2=l2,l3=l3,l4=l4)
+} ## lde
+
+
+zipll <- function(y,g,eta,deriv=0) {
+## function to evaluate zero inflated Poisson log likelihood
+## and its derivatives w.r.t. g/gamma and eta where 
+## 1-p = exp(-exp(eta)) and lambda = exp(gamma), for each datum in vector y.
+## p is probability of potential presence. lambda is Poisson mean
+## given potential presence. 
+## deriv: 0 - eval
+##        1 - grad (l,p) and Hess (ll,lp,pp)
+##        2 - third derivs lll,llp,lpp,ppp
+##        4 - 4th derivs. llll,lllp,llpp,lppp,pppp
+
+   l1 <- El2 <- l2 <- l3 <- l4 <- NULL
+   zind <- y == 0 ## the index of the zeroes
+   yz <- y[zind];yp <- y[!zind]
+   l <- et <- exp(eta)
+   l[zind] <- -et[zind] # -exp(eta[ind])
+   l[!zind] <- l1ee(eta[!zind]) + yp*g[!zind] - lee1(g[!zind]) - lgamma(yp+1)
+   p <- 1-exp(-et) ## probablity of non-zero
+
+   if (deriv>0) { ## get first and second derivs...
+     n <- length(y)
+     l1 <- matrix(0,n,2)
+     le <- lde(eta,deriv) ## derivs of ll wrt eta     
+     lg <- ldg(g,deriv) ## derivs of ll wrt gamma
+     l1[!zind,1] <- yp + lg$l1[!zind]  ## l_gamma, y>0
+     l1[zind,2] <- l[zind] ## l_eta, y==0
+     l1[!zind,2] <- le$l1[!zind]  ## l_eta, y>0    
+
+     El2 <- l2 <- matrix(0,n,3)
+     ## order gg, ge, ee... 
+     l2[!zind,1] <- lg$l2[!zind]   ## l_gg, y>0
+     l2[!zind,3] <- le$l2[!zind]   ## l_ee, y>0
+     l2[zind,3]  <- l[zind] ## l_ee, y=0
+     El2[,1] <- p*lg$l2             ## E(l_gg)
+     El2[,3] <- -(1-p)*et + p*le$l2 ## E(l_ee)
+   }
+   if (deriv>1) {
+      ## the third derivatives
+      ## order ggg,gge,gee,eee
+      l3 <- matrix(0,n,4) 
+      l3[!zind,1] <- lg$l3[!zind]   ## l_ggg, y>0
+      l3[!zind,4] <- le$l3[!zind]   ## l_eee, y>0
+      l3[zind,4]  <- l[zind]        ## l_eee, y=0
+   }
+   if (deriv>3) {
+      ## the fourth derivatives
+      ## order gggg,ggge,ggee,geee,eeee
+      l4 <- matrix(0,n,5) 
+      l4[!zind,1] <- lg$l4[!zind]   ## l_gggg, y>0
+      l4[!zind,4] <- le$l4[!zind]   ## l_eeee, y>0
+      l4[zind,4]  <- l[zind]        ## l_eeee, y=0
+   }
+   list(l=l,l1=l1,l2=l2,l3=l3,l4=l4,El2=El2)
+} ## zipll
+
+zipll0 <- function(y,gamma,eta,deriv=0) {
 ## function to evaluate zero inflated Poisson log likelihood
 ## and its derivatives w.r.t. gamma and eta where 
 ## p = logit(eta) and lambda = exp(gamma), for each datum in vector y.
@@ -673,7 +823,7 @@ zipll <- function(y,gamma,eta,deriv=0) {
         ##6*alphap^4 - 12*alphap^3 + 7*alphap^2 - alphap
    }
    list(l=l,l1=l1,l2=l2,l3=l3,l4=l4,El2=El2)
-} ## zipll
+} ## zipll0
 
 
 ziplss <-  function(link=list("identity","identity")) {
@@ -699,8 +849,6 @@ ziplss <-  function(link=list("identity","identity")) {
   } else {
     ## idea was to create loga and logita links here 
   }
-
-
 
   residuals <- function(object,type=c("deviance","response")) {
       type <- match.arg(type)
