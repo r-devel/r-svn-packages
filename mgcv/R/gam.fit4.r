@@ -744,8 +744,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     E <- rp$E ## root total penalty
     attr(E,"use.unscaled") <- TRUE ## signal initialization code that E not to be further scaled   
     if (!is.null(start)) start  <- Sl.repara(rp$rp,start) ## re-para start
-    ## BUG: it can be that other attributes need re-parameterization here
-    ## Ideally, check if re-para used first...
+    ## NOTE: it can be that other attributes need re-parameterization here
+    ##       this should be done in 'family$initialize' - see mvn for an example. 
 
   } else { ## unpenalized so now derivatives resquired
     deriv <- 0 

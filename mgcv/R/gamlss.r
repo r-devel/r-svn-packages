@@ -832,11 +832,10 @@ ziplss <-  function(link=list("identity","identity")) {
 ## mu1 is Poisson mean, while mu2 is zero inflation parameter.
   ## first deal with links and their derivatives...
   if (length(link)!=2) stop("ziplss requires 2 links specified as character strings")
-  okLinks <- list(c("log", "identity","sqrt"),c("identity"))
-  def.link <- c("loga","logita")
+  okLinks <- list(c("identity"),c("identity"))
   stats <- list()
   param.names <- c("Poisson mean","binary probability")
-  for (i in 1:2) if (link[[i]]!=def.link[i]) {
+  for (i in 1:2) {
     if (link[[i]] %in% okLinks[[i]]) stats[[i]] <- make.link(link[[i]]) else 
     stop(link[[i]]," link not available for ",param.names[i]," parameter of ziplss")
     fam <- structure(list(link=link[[i]],canonical="none",linkfun=stats[[i]]$linkfun,
@@ -846,33 +845,80 @@ ziplss <-  function(link=list("identity","identity")) {
     stats[[i]]$d2link <- fam$d2link
     stats[[i]]$d3link <- fam$d3link
     stats[[i]]$d4link <- fam$d4link
-  } else {
-    ## idea was to create loga and logita links here 
-  }
+  } 
 
   residuals <- function(object,type=c("deviance","response")) {
-      type <- match.arg(type)
-      rsd <- p <- logist(object$fitted[,2]);lam <- exp(object$fitted[,1])
+      ls <- function(y) {
+        ## compute saturated likelihood for ziplss model 
+        l <- y;l[y<2] <- 0
+        ind <- y > 1 & y < 18
+        ## lambda maximizing likelihood for y = 2 to 17 
+        glo <- c(1.593624,2.821439,3.920690,4.965114,5.984901,6.993576,
+                 7.997309,8.998888,9.999546,10.999816,11.999926,12.999971,
+                 13.999988,14.999995,15.999998,16.999999)
+        g <- y ## maximizing lambda essentially y above this
+        g[ind] <- glo[y[ind]-1]
+        ind <- y > 1
+        l[ind] <- zipll(y[ind],log(g[ind]),g[ind]*0+1e10,deriv=0)$l
+        l
+      } ## ls
 
-      rsd <- object$y - p*lam
+      type <- match.arg(type)
+      p <- exp(-exp(object$fitted[,2]));
+      lam <- exp(object$fitted[,1])
+      ind <- lam > .Machine$double.eps^.5
+      ## compute E(y)
+      Ey <- p ## very small lambda causes conditional expectation to be 1
+      Ey[ind] <- p[ind]*lam[ind]/(1-exp(-lam[ind])) 
+      rsd <- object$y - Ey ## raw residuals
       if (type=="response") return(rsd)
-      else {
+      else { ## compute deviance residuals
         sgn <- sign(rsd)
-        ind <- object$y == 0 
-        rsd[ind] <- - log(1-p[ind]*(1-exp(-lam[ind])))
-        rsd[!ind] <- object$y[!ind]*(log(object$y[!ind])-log(lam[!ind])-1) - log(p[!ind]) + lam[!ind]
+        ind <- object$y == 0
+        rsd <- pmax(0,2*(ls(y) - zipll(y,object$fitted[,1],object$fitted[,2],deriv=0)$l))
         rsd <- sqrt(rsd)*sgn
       }
       rsd
   }
+
   postproc <- expression({
     ## code to evaluate in estimate.gam, to evaluate null deviance
-    rsd <- p <- logist(object$fitted[,2]);
-    lambda <- mean(object$y/p,na.rm=TRUE)
-    ind <- object$y == 0 
-    rsd[ind] <- - log(1-p[ind]*(1-exp(-lambda)))
-    rsd[!ind] <- object$y[!ind]*(log(object$y[!ind])-log(lambda)-1) - log(p[!ind]) + lambda
-    object$null.deviance <- sum(rsd)
+    ## null model really has two parameters... probably need to newton iterate
+    ls <- function(y) {
+        ## compute saturated likelihood for ziplss model 
+        l <- y;l[y<2] <- 0
+        ind <- y > 1 & y < 18
+        ## lambda maximizing likelihood for y = 2 to 17 
+        glo <- c(1.593624,2.821439,3.920690,4.965114,5.984901,6.993576,
+                 7.997309,8.998888,9.999546,10.999816,11.999926,12.999971,
+                 13.999988,14.999995,15.999998,16.999999)
+        g <- y ## maximizing lambda essentially y above this
+        g[ind] <- glo[y[ind]-1]
+        ind <- y > 1
+        l[ind] <- zipll(y[ind],log(g[ind]),g[ind]*0+1e10,deriv=0)$l
+        l
+    } ## ls
+
+    fp <- function(p,y) {
+    ## compute zero related part of log likelihood
+       eps <- .Machine$double.eps^.5 
+       l1p <- if (p>eps) log(1-p) else -p - p^2/2 
+       l1p*sum(y==0) + log(p)*sum(y>0)
+    } ## fp
+
+    flam <- function(lam,y) {
+      ## compute >0 part of log likelihood
+      y <- y[y>0]
+      sum(y*log(lam) - log(exp(lam)-1) - lgamma(y+1))
+    } ## flam
+
+    ## optimize zero repated part of likelihood w.r.t. p...
+    lnull <- optimize(fp,interval=c(1e-60,1-1e-10),y=object$y,maximum=TRUE)$objective
+    ## optimize >0 part for lambda...
+    my <- mean(object$y[object$y>0])
+    lnull <- lnull + optimize(flam,interval=c(my/2,my*2),y=object$y,maximum=TRUE)$objective
+    object$null.deviance <- 2*(sum(ls(object$y)) - lnull)
+   
   })
 
 

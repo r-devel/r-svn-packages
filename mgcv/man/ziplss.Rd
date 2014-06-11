@@ -3,12 +3,9 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Zero inflated Poisson location-scale model family}
 \description{The \code{ziplss} family implements a zero inflated Poisson model in which one linear predictor 
-controls the probability of `potential presence' and the other controls the mean given `potential presence'.
-For example, in animal abundance studies `potential presence' might mean `habitat suitability', with the number of animals observed being given by a Poisson random variable, with some mean, if the habitat is suitable. (The slightly involved description is because the model has two ways of generating zeroes/absences: Poisson zeroes, and `unsuitability zeroes'.) Useable only with \code{\link{gam}}, the linear predictors are specified via a list of formulae. 
-
-Should be used with care, as it is easy to generate models for which the likelihood is indefinite - having two flexible sub-models 
-competing to explain the zeroes in a dataset is a recipe for identifiability problems.  
-
+controls the probability of presence  and the other controls the mean given  presence.
+Useable only with \code{\link{gam}}, the linear predictors are specified via a list of formulae. 
+Should be used with care: simply having a large number of zeroes is not an indication of zero inflation. 
 }
 
 \usage{
@@ -23,28 +20,24 @@ parameterization is directly in terms of log of Poisson response and logit of pr
 }
 
 \details{Used with \code{\link{gam}} to fit 2 stage zero inflated Poisson models. \code{gam} is called with 
-a list containing 2 formulae, the first specifies the response on the left hand side and the structure of the linear predictor for the Poisson mean on the right hand side. The second is one sided, specifying the linear predictor for the probability of potential presence on the right hand side. 
+a list containing 2 formulae, the first specifies the response on the left hand side and the structure of the linear predictor for the Poisson parameter on the right hand side. The second is one sided, specifying the linear predictor for the probability of presence on the right hand side. 
 
-The fitted values for this family will be a two column matrix. The first column is the Poisson mean, 
-and the second column is the probability of potential presence. 
+The fitted values for this family will be a two column matrix. The first column is the log of the Poisson parameter, 
+and the second column is the complimentary log log of probability of presnece.. 
 Predictions using \code{\link{predict.gam}} will also produce 2 column matrices for \code{type} 
 \code{"link"} and \code{"response"}.
 
-The null deviance computed for this model assumes that the probabilities of presence are as estimated, but the Poisson mean takes the same value for all observations.
+The null deviance computed for this model assumes that a single probability of presence and a single Poisson parameter 
+are estimated. 
 
-For data with large areas of covariate space over which the response is zero it is advisable to use low order penalties to 
-avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smooths use \code{\link{Duchon.spline}}s in place of thin plaste terms with order 1 penalties, e.g \code{s(x,z,m=c(1,.5))} --- such smooths penalize towards constants, thereby avoiding extreme estimates when the data are uninformative. Uninformativeness arises because zero observations contain little or no information about the Poisson mean when the zero inflation is high, and contain only rather limited information when there is any zero inflation at all. 
+For data with large areas of covariate space over which the response is zero it may be advisable to use low order penalties to 
+avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smooths use \code{\link{Duchon.spline}}s in place of thin plaste terms with order 1 penalties, e.g \code{s(x,z,m=c(1,.5))} --- such smooths penalize towards constants, thereby avoiding extreme estimates when the data are uninformative.
 
 }
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
 }
 
 \section{WARNINGS }{
-Data for which the response is zero (or even binary) over large areas of the covariate space lead to identifiability problems that are very
-difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
-compute the likelihood and its derivatives accurately. In such cases it is sensible to use first order penalties on the 
-smooths. 
-
 Zero inflated models are often over-used. Having lots of zeroes in the data does not in itself imply zero inflation. Having too many zeroes *given the model mean* may imply zero inflation. 
 }
 
@@ -70,7 +63,7 @@ y[ind] <- rpois(exp(eta2),exp(eta2))
 
 ## Fit ZIP model... 
 b <- gam(list(y~s(x2)+s(x3),~s(x0)+s(x1)),family=ziplss())
-b$outer.info ## check convergence!!
+b$outer.info ## check convergence
 
 summary(b) 
 plot(b,pages=1)

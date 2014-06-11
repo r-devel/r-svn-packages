@@ -3,9 +3,8 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{GAM zero-inflated Poisson regression family}
 \description{Family for use with \code{\link{gam}}, implementing regression for zero inflated Poisson data
-when the logit of the zero inflation rate is linearly dependent on the log of the Poisson mean. Use with care, 
-it is relatively easy to produce models with an indefinite log likelihood using this family, by the very fact of 
-providing two ways of generating a zero.
+when the complinetart log log of the zero probability is linearly dependent on the log of the Poisson parameter. Use with care, 
+noting that simply having many zero response observations is not an indication of zero inflation: the question is whether you have too many zeroes given the specified model.  
 }
 
 \usage{
@@ -23,14 +22,11 @@ then treated as fixed parameters (\eqn{\theta_1}{theta_1} and \eqn{\exp(\theta_2
 An object of class \code{extended.family}.
 }
 
-\details{The probability of a zero count is given by \eqn{1-p + p \exp(-\mu)}{1- p + pexp(-mu)}, whereas the probability of
-count \eqn{y>0}{y>0} is \eqn{p\exp(-\mu)\mu^y/y!}{(pexp(-mu)mu^y/y!}. The linear predictor of the model controls the 
-log Poisson mean \eqn{\log \mu}{log(mu)}, while \eqn{logit(p) = \theta_1 - \exp(\theta_2) \log \mu }{logit(p) = theta_1 - exp(theta_2) log(mu)}. The \code{theta} parameters are estimated alongside the smoothing parameters.
+\details{The probability of a zero count is given by \eqn{1-p}{1- p}, whereas the probability of
+count \eqn{y>0}{y>0} is given by the truncated Poisson probability function \eqn{p\mu^y/((\exp(\mu)-1)y!)}{(pmu^y/((exp(mu)-1)y!)}. The linear predictor 
+gives \eqn{\log \mu}{log(mu)}, while \eqn{\eta = \log(-\log(1-p)) }{eta=log(-log(1-p))} and \eqn{\eta = \theta_1 + \exp(\theta_2) \log \mu }{eta = theta_1 + exp(theta_2) log(mu)}. The \code{theta} parameters are estimated alongside the smoothing parameters.
 
-For data with large areas of covariate space over which the response is zero it is advisable to use low order penalties to 
-avoid problems. For 1D smooths uses e.g. \code{s(x,m=1)} and for isotropic smooths use \code{\link{Duchon.spline}}s in place of thin plaste terms with order 1 penalties, e.g \code{s(x,z,m=c(1,.5))} --- such smooths penalize towards constants, thereby avoiding extreme estimates when the data are uninformative. Uninformativeness arises because zero observations contain little or no information about the Poisson mean when the zero inflation is high, and contain only rather limited information when there is any zero inflation at all. 
-
-Note that the fitted values for this model are the log of the Poisson mean. Use the \code{predict} function with \code{type=="response"} to get the predicted expected response.
+Note that the fitted values for this model are the log of the Poisson parameter. Use the \code{predict} function with \code{type=="response"} to get the predicted expected response.
 
 }
 
@@ -40,9 +36,6 @@ Note that the fitted values for this model are the log of the Poisson mean. Use 
 }
 
 \section{WARNINGS }{
-Data for which the response is zero (or binary) over substantial areas of the covariate space lead to identifiability problems that are very
-difficult to handle automatically. It is possible to get parameter divergence in such cases which make it impossible to 
-compute the likelihood and its derivatives accurately. Use of first order penalties on the smooths can help to regularize matters. 
 
 Zero inflated models are often over-used. Having lots of zeroes in the data does not in itself imply zero inflation. Having too many zeroes *given the model mean* may imply zero inflation. 
 }
