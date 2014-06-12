@@ -9,7 +9,7 @@ full likelihood is desirable. \code{Tweedie} is for use with fixed \code{p}. \co
 is to be estimated during fitting. For fixed \code{p} between 1 and 2 the Tweedie is an exponential family 
 distribution with variance given by the mean to the power \code{p}.
 
-\code{tw} is only useable with \code{\link{gam}}, not \code{bam} or \code{gamm}.
+\code{tw} is only useable with \code{\link{gam}}, not \code{bam} or \code{gamm}. \code{Tweedie} works with all three.
 }
 
 \usage{
@@ -21,9 +21,9 @@ tw(theta = NULL, link = "log",a=1.01,b=1.99)
 be greater than 1 and less than or equal to 2. 1 would be Poisson, 2 is gamma. }
 
 \item{link}{The link function: one of \code{"log"}, \code{"identity"}, \code{"inverse"}, \code{"sqrt"}, or a 
-\code{\link{power}} link.}
+\code{\link{power}} link (\code{Tweedie} only).}
 
-\item{theta}{\eqn{p=\exp\{a+b \exp(\theta)\}/\{1+\exp(\theta)\}}{p=exp(a+b*exp(theta))/(1+exp(theta))}. If this is supplied as a positive value then it is taken as the fixed value for \code{p}.
+\item{theta}{Related to the Tweedie power parameter by \eqn{p=\exp(a+b \exp(\theta))/(1+\exp(\theta))}{p=exp(a+b*exp(theta))/(1+exp(theta))}. If this is supplied as a positive value then it is taken as the fixed value for \code{p}.
 If it is a negative values then its absolute value is taken as the initial value for \code{p}.}
 
 \item{a}{lower limit on \code{p} for optimization.}
@@ -50,18 +50,18 @@ See \code{\link{ldTweedie}} for more on this behaviour.
 
 \code{Tweedie} is based partly on the \code{\link{poisson}} family, and partly on \code{tweedie} from the 
 \code{statmod} package. It includes extra components to work with all \code{mgcv} GAM fitting methods as well as 
-an \code{aic} function. The required log density evaluation (+ derivatives w.r.t. scale) is based on the series 
-evaluation method of Dunn and Smyth (2005). 
+an \code{aic} function. 
 
-Without the restriction on \code{p} the calculation of Tweedie densities is less straightforward, and there does not 
-currently seem to be an implementation which offers any benefit over \code{\link{quasi}}. If you really need to this 
+The Tweedie density involves a normalizing constant with no closed form, so this is evaluated using the series 
+evaluation method of Dunn and Smyth (2005), with extensions to also compute the derivatives w.r.t. \code{p} and the scale parameter. 
+Without restricting \code{p} to (1,2) the calculation of Tweedie densities is more difficult, and there does not 
+currently seem to be an implementation which offers any benefit over \code{\link{quasi}}. If you need  this 
 case then the \code{tweedie} package is the place to start.
 }
 
 %- maybe also `usage' for other objects documented here.
 
-\author{ Simon N. Wood \email{simon.wood@r-project.org}
-modified from Venables and Ripley's \code{negative.binomial} family.
+\author{ Simon N. Wood \email{simon.wood@r-project.org}.
 }
 
 \references{
@@ -75,7 +75,7 @@ Tweedie, M. C. K. (1984). An index which distinguishes between
      Roy), pp. 579-604. Calcutta: Indian Statistical Institute.
 }
 
-\seealso{\code{\link{ldTweedie}}}
+\seealso{\code{\link{ldTweedie}}, \code{\link{rTweedie}}}
 
 \examples{
 library(mgcv)

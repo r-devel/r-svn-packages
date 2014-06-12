@@ -875,7 +875,7 @@ ziplss <-  function(link=list("identity","identity")) {
       else { ## compute deviance residuals
         sgn <- sign(rsd)
         ind <- object$y == 0
-        rsd <- pmax(0,2*(ls(y) - zipll(y,object$fitted[,1],object$fitted[,2],deriv=0)$l))
+        rsd <- pmax(0,2*(ls(object$y) - zipll(object$y,object$fitted[,1],object$fitted[,2],deriv=0)$l))
         rsd <- sqrt(rsd)*sgn
       }
       rsd

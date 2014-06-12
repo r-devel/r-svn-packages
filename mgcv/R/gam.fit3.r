@@ -1899,7 +1899,7 @@ fix.family.link.extended.family <- function(fam) {
     ## g'(mu) = -1/mu^2
     fam$g2g <- function(mu) 2*mu     ## g'' = 2/mu^3
     fam$g3g <- function(mu) 6*mu^2   ## g''' = -6/mu^4
-    fam$d4link <- function(mu) 24*mu^3     ## g'''' = 24/mu^5
+    fam$g4g <- function(mu) 24*mu^3     ## g'''' = 24/mu^5
     return(fam)
   }  
   if (link == "logit") {
