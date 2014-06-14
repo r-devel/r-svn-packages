@@ -929,9 +929,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         class = c("extended.family","family"))
 } ## tw
 
-##################################
-## Natalya Pya code from here....
-##################################
+## beta regression
 
 betar <- function (theta = NULL, link = "logit") { 
 ## Extended family object for beta regression
@@ -939,6 +937,7 @@ betar <- function (theta = NULL, link = "logit") {
 ## This serves as a prototype for working with -2logLik
 ## as deviance, and only dealing with saturated likelihood 
 ## at the end.
+## Written by Natalya Pya. 'saturated.ll' by Simon Wood 
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   if (linktemp %in% c("logit", "probit", "cloglog", "cauchit", "log")) stats <- make.link(linktemp)
@@ -1208,11 +1207,12 @@ betar <- function (theta = NULL, link = "logit") {
 
 
   
-## scaled t ...
+## scaled t (Natalya Pya) ...
 
 scat <- function (theta = NULL, link = "identity") { 
 ## Extended family object for scaled t distribution
-## length(theta)=2; log theta supplied
+## length(theta)=2; log theta supplied. 
+## Written by Natalya Pya.
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   if (linktemp %in% c("identity", "log", "inverse")) stats <- make.link(linktemp)
@@ -1408,7 +1408,7 @@ scat <- function (theta = NULL, link = "identity") {
 
 
 
-## zero inflated Poisson (simon wood)...
+## zero inflated Poisson (Simon Wood)...
 
 lind <- function(l,th,deriv=0) {
 ## evaluate th[1] + exp(th[2])*l and some derivs
@@ -1485,8 +1485,9 @@ logid <- function(l,th,deriv=0,a=0,trans=TRUE) {
 
 
 ziP <- function (theta = NULL, link = "identity") { 
-## zero inflated Poisson parameterized in terms of the log Poisson mean, gamma. 
-## logit probability of potential presence is theta[1] + exp(theta[2]*gamma)
+## zero inflated Poisson parameterized in terms of the log Poisson parameter, gamma. 
+## eta = theta[1] + exp(theta[2])*gamma), and 1-p = exp(-exp(eta)) where p is 
+## probability of presence.
 
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
@@ -1498,16 +1499,17 @@ ziP <- function (theta = NULL, link = "identity") {
       ## fixed theta supplied
       iniTheta <- Theta <- c(theta[1],theta[2])
       n.theta <- 0 ## no thetas to estimate
-  } else iniTheta <- c(1,-1) ## inital theta value
+  } else iniTheta <- c(0,0) ## inital theta value - start at Poisson
 
   env <- new.env(parent = environment(ziP))# new.env(parent = .GlobalEnv)
   assign(".Theta", iniTheta, envir = env)
   getTheta <- function(trans=FALSE) { 
   ## trans transforms to the original scale...
     th <- get(".Theta")
-    if (trans) th[2] <- exp(th[2])
+    ## if (trans) th[2] <- exp(th[2])
     th
   }
+
   putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
   
   validmu <- function(mu) all(is.finite(mu))
@@ -1589,62 +1591,72 @@ ziP <- function (theta = NULL, link = "identity") {
             lsth1=c(0,0),  ## first deriv vector w.r.t theta - last element relates to scale
             lsth2=matrix(0,2,2)) ##Hessian w.r.t. theta
   }
-    preinitialize <- expression({
-      ## set initial theta to something sane - at lambda=0, 20% inflation
-      ## at lambda = mean of non zero y, 10% inflation... 
-      if (G$family$n.theta) {
-        Theta <- c(log(.6/.4),0)   
-        Theta[2] <- log((log(.9/.1)-Theta[1])/mean(G$y[G$y>0]))
-        G$family$putTheta(Theta)
-      }
-    })
+#    preinitialize <- expression({
+#      ## set initial theta to something sane - at lambda=0, 20% inflation
+#      ## at lambda = mean of non zero y, 10% inflation... 
+#      if (G$family$n.theta) {
+#        Theta <- c(log(.6/.4),0)   
+#        Theta[2] <- log((log(.9/.1)-Theta[1])/mean(G$y[G$y>0]))
+#        G$family$putTheta(Theta)
+#      }
+#    })
 
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
         n <- rep(1, nobs)
-        mustart <- log(y + (y==0)/5) # + (y==0)/5
+        mustart <- log(y + (y==0)/5) 
     })
 
     postproc <- expression({
       object$family$family <- 
       paste("Zero inflated Poisson(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
       ## need to fix deviance here!!
-      wts <- object$prior.weights
-      lf <- object$family$saturated.ll(G$y,family, wts)
+      ## wts <- object$prior.weights
+      lf <- object$family$saturated.ll(G$y,family, object$prior.weights)
       ## storing the saturated loglik for each datum...
       object$family.data <- list(ls = lf)   
-      l2 <- object$family$dev.resids(G$y,object$fitted.values,wts)
+      l2 <- object$family$dev.resids(G$y,object$linear.predictors,object$prior.weights)
       object$deviance <- sum(l2-lf)
-      wtdmu <- if (G$intercept) sum(wts * G$y)/sum(wts) 
-              else object$family$linkinv(G$offset)
-      object$null.deviance <- sum(object$family$dev.resids(G$y, rep(log(wtdmu),length(G$y)), wts)-lf)
-      object$weights <- pmax(0,object$working.weights) ## Fisher can be too extreme
-      ## E(y) = p * E(y) - really can't mess with fitted.values if e.g. rd is to work.
-      #th <- object$family$getTheta()
-      #object$fitted.values <- logid(object$fitted.values,th)$p * exp(object$fitted.values)
+      fnull <- function(gamma,object) {
+        ## evaluate deviance for single parameter model
+        sum(object$family$dev.resids(object$y, rep(gamma,length(object$y)), object$prior.weights))
+      }
+      meany <- mean(object$y)
+      object$null.deviance <- optimize(fnull,interval=c(meany/5,meany*3),object=object)$objective - sum(lf)
+ 
+      ## object$weights <- pmax(0,object$working.weights) ## Fisher can be too extreme
+      ## E(y) = p * E(y) - but really can't mess with fitted.values if e.g. rd is to work.
+
     })
 
-   fv <- function(mu,theta=NULL) {
-    ## optional function to give fitted values - idea is that 
-    ## predict.gam(...,type="response") will use this, as well
-    ## as residuals(...,type="response")...
+   fv <- function(lp,theta=NULL) {
+    ## optional function to give fitted values... 
       if (is.null(theta)) theta <- get(".Theta")
       th1 <- theta[1]; th2 <- exp(theta[2]); 
-      p <- logid(th1 + th2*mu)$p
-      fv <- p * mu      
-      fv
+      eta <- th1 + th2*lp
+      p <- 1 - exp(-exp(eta))
+      fv <- lambda <- exp(lp)
+      ind <- lp < log(.Machine$double.eps)/2
+      fv[!ind] <- p[!ind] * lambda[!ind]/(1-exp(-lambda[!ind]))
+      fv[ind] <- p[ind]
+      fv      
     } ## fv
 
     rd <- function(mu,wt,scale) {
     ## simulate data given fitted latent variable in mu 
-      theta <- get(".Theta")
-      n.sim <- length(mu)
-      p <- logid(mu,theta)$p ## prob of potential presence
-      z <- y <- runif(n.sim)
-      y <- rep(0,n.sim)
-      good <- z <= p ## present?
-      y[good] <- rpois(sum(good),exp(mu[good])) ## simulate for present
-      y
+      rzip <- function(gamma,theta) { ## generate ziP deviates according to model and lp gamma
+        y <- gamma; n <- length(y)
+        lambda <- exp(gamma)
+        eta <- theta[1] + exp(theta[2])*gamma
+        p <- 1- exp(-exp(eta))
+        ind <- p > runif(n)
+        y[!ind] <- 0
+        np <- sum(ind)
+        ## generate from zero truncated Poisson, given presence...
+        y[ind] <- qpois(runif(np,dpois(0,lambda[ind]),1),lambda[ind])
+        y
+      } 
+      rzip(mu,get(".Theta"))
     }
    
    saturated.ll <- function(y,family,wt=rep(1,length(y))) {
@@ -1689,15 +1701,14 @@ ziP <- function (theta = NULL, link = "identity") {
     if (type == "working") { 
       res <- object$residuals 
     } else if (type == "response") {
-      res <- object$y - object$fitted.values
+      res <- object$y - predict.gam(object,type="response")
     } else if (type == "deviance") { 
       y <- object$y
       mu <- object$linear.predictors
       wts <- object$prior.weights
       res <- object$family$dev.resids(y,mu,wts)
       res <- res - object$family$saturated.ll(y,object$family,wts)
-      th <- object$family$getTheta()
-      fv <-  exp(object$fitted.values) ## * logid(object$fitted.values,th)$p ## un/conditional mean? 
+      fv <- predict.gam(object,type="response")
       s <- attr(res,"sign")
       if (is.null(s)) s <- sign(y-fv)
       res <- as.numeric(sqrt(pmax(res,0)) * s) 
@@ -1712,16 +1723,28 @@ ziP <- function (theta = NULL, link = "identity") {
   ## either eta will be provided, or {X, beta, off, Vb}. family.data
   ## contains any family specific extra information. 
  
-    theta <- family$getTheta(TRUE)
-    
+    theta <- family$getTheta()
+
     if (is.null(eta)) { ## return probabilities
-      eta <- X%*%beta + off 
-      se <- if (se) sqrt(pmax(0,rowSums((X%*%Vb)*X))) else NULL ## se of lin pred
-    } else se <- NULL
-    r <- logid(eta,theta) ## p is prob Pois, p.l is deriv wrt mu
-    fv <- list(as.numeric(r$p*exp(eta)))    ## E(y)    
+      gamma <- drop(X%*%beta + off) ## linear predictor for poisson parameter 
+      se <- if (se) drop(sqrt(pmax(0,rowSums((X%*%Vb)*X)))) else NULL ## se of lin pred
+    } else { se <- NULL; gamma <- eta}
+    ## now compute linear predictor for probability of presence...
+    eta <- theta[1] + exp(theta[2])*gamma
+    et <- exp(eta)
+    mu <- p <- 1 - exp(-et)
+    fv <- lambda <- exp(gamma)  
+    ind <- gamma < log(.Machine$double.eps)/2
+    mu[!ind] <- lambda[!ind]/(1-exp(-lambda[!ind]))
+    mu[ind] <- 1
+    fv <- list(p*mu)    ## E(y)    
     if (is.null(se)) return(fv) else {
-      fv[[2]] <- as.numeric(se*exp(eta)*(r$p + r$p.l)) 
+      dp.dg <- p  
+      ind <- eta < log(.Machine$double.xmax)/2
+      dp.dg[!ind] <- 0
+      dp.dg <- exp(-et)*et*exp(theta[2])
+      dmu.dg <- (lambda + 1)*mu - mu^2
+      fv[[2]] <- abs(dp.dg*mu+dmu.dg*p)*se   
       names(fv) <- c("fit","se.fit")
       return(fv)
     }
@@ -1736,7 +1759,8 @@ ziP <- function (theta = NULL, link = "identity") {
     structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,residuals=residuals,
         aic = aic, mu.eta = stats$mu.eta, g2g = stats$g2g,g3g=stats$g3g, g4g=stats$g4g, 
-        preinitialize=preinitialize,initialize = initialize,postproc=postproc,ls=ls,#fv=fv,
+        #preinitialize=preinitialize,
+        initialize = initialize,postproc=postproc,ls=ls,#fv=fv,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta,predict=predict,
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,saturated.ll = saturated.ll),
         class = c("extended.family","family"))

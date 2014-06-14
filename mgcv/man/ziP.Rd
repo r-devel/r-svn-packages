@@ -44,27 +44,28 @@ Zero inflated models are often over-used. Having lots of zeroes in the data does
 \seealso{\code{\link{ziplss}}}
 
 \examples{
-rzip <- function(lambda,theta= c(2,2)) {
-## generate zero inflated Poisson random variables, according 
-## to model above
-  if (length(theta)!=2) stop("theta must be of length 2")
-  if (sum(lambda<0)) stop("lambda must be non negative")
-  if (theta[2]< 0) stop("the second parameter must be non-negative")
-  n.sim <- length(lambda)
-  p <- exp(theta[1]- theta[2]*lambda)/(1 + exp(theta[1]- theta[2]*lambda)) 
 
-  y <- rep(0,n.sim)
-  good <- runif(n.sim) >= p
-  y[good] <- rpois(sum(good),lambda[good])
-  y
-}
+rzip <- function(gamma,theta= c(-2,.3)) {
+## generate zero inflated Poisson random variables, where 
+## lambda = exp(gamma), eta = theta[1] + exp(theta[2])*gamma
+## and 1-p = exp(-exp(eta)).
+   y <- gamma; n <- length(y)
+   lambda <- exp(gamma)
+   eta <- theta[1] + exp(theta[2])*gamma
+   p <- 1- exp(-exp(eta))
+   ind <- p > runif(n)
+   y[!ind] <- 0
+   np <- sum(ind)
+   ## generate from zero truncated Poisson, given presence...
+   y[ind] <- qpois(runif(np,dpois(0,lambda[ind]),1),lambda[ind])
+   y
+} 
 
 library(mgcv)
 ## Simulate some beta data...
 set.seed(1);n<-400
 dat <- gamSim(1,n=n)
-mu <- exp(dat$f/4-2)
-dat$y <- rzip(mu)
+dat$y <- rzip(dat$f/4-1)
 
 b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=ziP(),data=dat)
 b$outer.info ## check convergence!!

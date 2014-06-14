@@ -56,7 +56,7 @@ eta1 <- f0(x0) + f1(x1) - 3
 p <- binomial()$linkinv(eta1) 
 y <- as.numeric(runif(n)<p) ## 1 for presence, 0 for absence
 
-## Simulate y given potentially present...
+## Simulate y given potentially present (not exactly model fitted!)...
 ind <- y>0
 eta2 <- f2(x2[ind])/3
 y[ind] <- rpois(exp(eta2),exp(eta2))
