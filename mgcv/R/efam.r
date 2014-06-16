@@ -452,7 +452,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   })
 
   initialize <- expression({ 
-    R <- family$n.theta+2
+    R <- length(family$getTheta())+2 ## don't use n.theta as it's used to signal fixed theta
     if (any(y < 1)||any(y>R)) stop("values out of range")
     n <- rep(1, nobs)
     ## get the cut points... 
@@ -1760,7 +1760,7 @@ ziP <- function (theta = NULL, link = "identity") {
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,residuals=residuals,
         aic = aic, mu.eta = stats$mu.eta, g2g = stats$g2g,g3g=stats$g3g, g4g=stats$g4g, 
         #preinitialize=preinitialize,
-        initialize = initialize,postproc=postproc,ls=ls,#fv=fv,
+        initialize = initialize,postproc=postproc,ls=ls,no.r.sq=TRUE,
         validmu = validmu, valideta = stats$valideta,n.theta=n.theta,predict=predict,
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,saturated.ll = saturated.ll),
         class = c("extended.family","family"))

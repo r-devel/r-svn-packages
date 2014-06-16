@@ -2368,7 +2368,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
   
   if (*deriv) { /* unpivot and zero pad b1 */
     
-    for (j = *M-1;j>=0;j--) {
+    for (j = ntot - 1;j>=0;j--) { 
       p0 = b1 + rank * j; /* start of source column */
       for (i=0;i< rank;i++) beta[pivot1[i]] = p0[i];
       undrop_rows(beta,*q,1,drop,n_drop); /* zero rows inserted */
