@@ -14,7 +14,7 @@ betar(theta = NULL, link = "logit")
 \arguments{
 \item{theta}{the extra parameter (\eqn{\phi}{phi} above). }
 
-\item{link}{The link function: one of \code{"logit"}, \code{"probit"}, \code{"cloglog"}, \code{"cauchit"} and \code{"log"}.}
+\item{link}{The link function: one of \code{"logit"}, \code{"probit"}, \code{"cloglog"} and \code{"cauchit"}.}
 
 }
 \value{

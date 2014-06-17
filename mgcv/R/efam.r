@@ -940,7 +940,7 @@ betar <- function (theta = NULL, link = "logit") {
 ## Written by Natalya Pya. 'saturated.ll' by Simon Wood 
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
-  if (linktemp %in% c("logit", "probit", "cloglog", "cauchit", "log")) stats <- make.link(linktemp)
+  if (linktemp %in% c("logit", "probit", "cloglog", "cauchit")) stats <- make.link(linktemp)
   else if (is.character(link)) {
     stats <- make.link(link)
     linktemp <- link
@@ -950,7 +950,7 @@ betar <- function (theta = NULL, link = "logit") {
             if (!is.null(stats$name))
                 linktemp <- stats$name
         }
-        else stop(linktemp, " link not available for beta regression; available links are  \"logit\", \"probit\", \"cloglog\", \"log\" and \"cauchit\"")
+        else stop(linktemp, " link not available for beta regression; available links are  \"logit\", \"probit\", \"cloglog\" and \"cauchit\"")
     }
    
     Theta <-  NULL; n.theta <- 1
@@ -1751,12 +1751,12 @@ ziP <- function (theta = NULL, link = "identity") {
   } ## predict
 
 
-    ## NOTE: needs a predict function, and a residuals function and an rd function
-    environment(saturated.ll) <- environment(dev.resids) <- 
-    environment(aic) <- environment(getTheta) <- environment(rd) <-
-    environment(putTheta) <- env
+   
+  environment(saturated.ll) <- environment(dev.resids) <- 
+  environment(aic) <- environment(getTheta) <- environment(rd) <-
+  environment(putTheta) <- env
 
-    structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
+  structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, rd=rd,residuals=residuals,
         aic = aic, mu.eta = stats$mu.eta, g2g = stats$g2g,g3g=stats$g3g, g4g=stats$g4g, 
         #preinitialize=preinitialize,

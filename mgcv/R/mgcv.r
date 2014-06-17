@@ -291,7 +291,8 @@ interpret.gam <- function(gf) {
       av <- c(av,ret[[i]]$fake.names,respi) ## accumulate all required variable names 
     } 
     av <- unique(av) ## strip out duplicate variable names
-    ret$fake.formula <- reformulate(av,response=ret[[1]]$response) ## create fake formula containing all variables
+    ret$fake.formula <- if (length(av)>0) reformulate(av,response=ret[[1]]$response) else ## create fake formula containing all variables
+                        ret[[1]]$fake.formula
     ret$response <- ret[[1]]$response 
     class(ret) <- "split.gam.formula"
     return(ret)
@@ -667,7 +668,7 @@ gam.setup.list <- function(formula,pterms,
     if (!is.null(um$L)||!is.null(G$L)) {
       if (is.null(G$L)) G$L <- diag(1,nrow=ks)
       if (is.null(um$L)) um$L <- diag(1,nrow=M)
-      G$L <- rbind(cbind(G$L,matrix(0,ks,M)),cbind(matrix(0,M,ks),um$L))
+      G$L <- rbind(cbind(G$L,matrix(0,nrow(G$L),ncol(um$L))),cbind(matrix(0,nrow(um$L),ncol(G$L)),um$L))
     }
 
     G$off <- c(G$off,um$off+pof)
@@ -689,6 +690,7 @@ gam.setup.list <- function(formula,pterms,
     if (um$nsdf>0) um$term.names[1:um$nsdf] <- paste(um$term.names[1:um$nsdf],i-1,sep=".")
     G$term.names <- c(G$term.names,um$term.names)
     G$lsp0 <- c(G$lsp0,um$lsp0)
+    G$sp <- c(G$sp,um$sp)
     pof <- ncol(G$x)
   }
  
@@ -1792,6 +1794,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## work in general (e.g. with offset)...
 
     if (is.list(formula)) { ## then there are several linear predictors
+      environment(formula) <- environment(formula[[1]]) ## e.g. termplots needs this
       pterms <- list()
       tlab <- rep("",0)
       for (i in 1:length(formula)) {
@@ -1808,7 +1811,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       pterms <- attr(pmf,"terms") ## pmf only used for this
     }
 
-    if (is.character(family)) family<-eval(parse(text=family))
+    if (is.character(family)) family <- eval(parse(text=family))
     if (is.function(family)) family <- family()
     if (is.null(family$family)) stop("family not recognized")
   
@@ -1889,7 +1892,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   class(object) <- c("gam","glm","lm")
   if (is.null(object$deviance)) object$deviance <- sum(residuals(object,"deviance")^2)
   object
-}
+} ## gam
 
 
 
@@ -2641,27 +2644,46 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         }
       }
     } else { ## "link" or "response" case
+      fam <- object$family
       k <- attr(attr(object$model,"terms"),"offset")
       if (nlp>1) { ## multiple linear predictor case
-        pstart <- c(pstart,ncol(X)+1)
-        ## get index of smooths with an offset...
-        off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
-        for (j in 1:nlp) { ## looping over the linear predictors
-          ind <- pstart[j]:(pstart[j+1]-1)
-          fit[start:stop,j] <- X[,ind,drop=FALSE]%*%object$coefficients[ind]
-          if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
-            if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
+        if (is.null(fam$predict)||type=="link") {
+          pstart <- c(pstart,ncol(X)+1)
+          ## get index of smooths with an offset...
+          off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
+          for (j in 1:nlp) { ## looping over the linear predictors
+            ind <- pstart[j]:(pstart[j+1]-1)
+            fit[start:stop,j] <- X[,ind,drop=FALSE]%*%object$coefficients[ind]
+            if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
+              if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
+            }
+            if (se.fit) se[start:stop,j] <- 
+            sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
+            ## model offset only handled for first predictor...
+            if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
+            if (type=="response") { ## need to transform lp to response scale
+              linfo <- object$family$linfo[[j]] ## link information
+              if (se.fit) se[start:stop,j] <- se[start:stop,j]*abs(linfo$mu.eta(fit[start:stop,j]))
+              fit[start:stop,j] <- linfo$linkinv(fit[start:stop,j])
+            }
+          } ## end of lp loop
+        } else { ## response case with own predict code
+          lpi <- list();pst <- c(pstart,ncol(X)+1)
+          for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)
+          attr(X,"lpi") <- lpi  
+          ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,
+                             off=offs,Vb=object$Vp,family.data=object$family.data)
+          if (is.matrix(fit)&&!is.matrix(ffv[[1]])) {
+            fit <- fit[,1]; if (se.fit) se <- se[,1]
           }
-          if (se.fit) se[start:stop,j] <- 
-          sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
-          ## model offset only handled for first predictor...
-          if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
-          if (type=="response") { ## need to transform lp to response scale
-            linfo <- object$family$linfo[[j]] ## link information
-            if (se.fit) se[start:stop,j] <- se[start:stop,j]*abs(linfo$mu.eta(fit[start:stop,j]))
-            fit[start:stop,j] <- linfo$linkinv(fit[start:stop,j])
+          if (is.matrix(fit)) {
+            fit[start:stop,] <- ffv[[1]]
+            if (se.fit) se[start:stop,] <- ffv[[2]]
+          } else {
+            fit[start:stop] <- ffv[[1]]
+            if (se.fit) se[start:stop] <- ffv[[2]]
           }
-        } ## end of lp loop
+        } ## end of own response prediction code
       } else { ## single linear predictor
        # k <- attr(attr(object$model,"terms"),"offset")
         offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf)
@@ -2669,7 +2691,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         #if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) ## + rowSums(Xoff)
         if (se.fit) se[start:stop] <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
         if (type=="response") { # transform    
-          fam <- object$family;linkinv <- fam$linkinv
+          linkinv <- fam$linkinv
           if (is.null(fam$predict)) {
             dmu.deta <- fam$mu.eta  
             if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
@@ -2710,8 +2732,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     }
     H <- napredict(na.act,H)
     if (length(object$nsdf)>1) { ## add "lpi" attribute if more than one l.p.
-      lpi <- list();pstart <- c(pstart,ncol(H))
-      for (i in 1:(length(pstart)-1)) lpi[[i]] <- pstart[i]:pstart[i+1]  
+      lpi <- list();pst <- c(pstart,ncol(H)+1)
+      for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)  
       attr(H,"lpi") <- lpi
     }
   } else { 

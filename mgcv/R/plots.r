@@ -262,7 +262,8 @@ gam.check <- function(b, old.style=FALSE,
 {
   type <- match.arg(type)
   resid <- residuals(b, type=type)
-  linpred <- napredict(b$na.action, b$linear.predictors)
+  linpred <- if (is.matrix(b$linear.predictors)) napredict(b$na.action, b$linear.predictors[,1]) else 
+             napredict(b$na.action, b$linear.predictors)
 ##  if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","mle.REML","mle.ML","PQL")) { 
     old.par<-par(mfrow=c(2,2))
     if (old.style)
@@ -272,7 +273,9 @@ gam.check <- function(b, old.style=FALSE,
     plot(linpred, resid,main="Resids vs. linear pred.",
          xlab="linear predictor",ylab="residuals",...)
     hist(resid,xlab="Residuals",main="Histogram of residuals",...)
-    plot(fitted(b), napredict(b$na.action, b$y),
+    fv <- if (inherits(b$family,"extended.family")) predict(b,type="response") else fitted(b)
+    if (is.matrix(fv)) fv <- fv[,1]
+    plot(fv, napredict(b$na.action, b$y),
          xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
     if (!(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML"))) { ## gamm `gam' object
        par(old.par)

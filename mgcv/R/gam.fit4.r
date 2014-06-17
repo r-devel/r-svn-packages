@@ -747,10 +747,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ## NOTE: it can be that other attributes need re-parameterization here
     ##       this should be done in 'family$initialize' - see mvn for an example. 
 
-  } else { ## unpenalized so now derivatives resquired
+  } else { ## unpenalized so no derivatives required
     deriv <- 0 
     rp <- list(ldetS=0,rp=list())
     St <- matrix(0,q,q)
+    E <- matrix(0,0,q) ## can be needed by initialization code
   }
   ## now call initialization code, but make sure that any 
   ## supplied 'start' vector is not overwritten...
@@ -1158,14 +1159,15 @@ gam.fit5.post.proc <- function(object,Sl,L) {
   }  
 
   ## compute the smoothing parameter uncertainty correction...
-  ev <- eigen(object$outer.info$hess,symmetric=TRUE)
-  ind <- ev$values <= 0
-  ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-  if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
-  Vc <- crossprod((ev$values*t(ev$vectors))%*%t(object$db.drho))
-  Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
-
-  ## reverse the various re-parameterizations...
+  if (!is.null(object$outer.info$hess)) {
+    ev <- eigen(object$outer.info$hess,symmetric=TRUE)
+    ind <- ev$values <= 0
+    ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+    if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
+    Vc <- crossprod((ev$values*t(ev$vectors))%*%t(object$db.drho))
+    Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
+    ## reverse the various re-parameterizations...
+  } else Vc <- Vb
   Vc <- Sl.repara(object$rp,Vc,inverse=TRUE) 
   Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)

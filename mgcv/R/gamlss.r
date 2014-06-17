@@ -525,30 +525,30 @@ pen.reg <- function(x,e,y) {
 ## code for zero inflated Poisson models
 
 
-log1ex <- function(x) {
+#log1ex <- function(x) {
 ## evaluate log(1+exp(x)) accurately and avoiding overflow
-  y <- x
-  big <- -log(.Machine$double.eps)+5 ## exp(big) overwhelms 1
-  ind <- x > big
-  y[ind] <- x[ind] ## log(1+exp(x)) = x to machine precision
-  ## compute number below which log(1+exp(x)) = exp(x) to
-  ## machine precision... 
-  small <- log(sqrt(.Machine$double.eps))
-  ind1 <- x < small
-  y[ind1] <- exp(x[ind1])
-  ind <- !ind&!ind1 ## the moderate size elements 
-  y[ind] <- log(1+exp(x[ind]))
-  y 
-}
+#  y <- x
+#  big <- -log(.Machine$double.eps)+5 ## exp(big) overwhelms 1
+#  ind <- x > big
+#  y[ind] <- x[ind] ## log(1+exp(x)) = x to machine precision
+#  ## compute number below which log(1+exp(x)) = exp(x) to
+#  ## machine precision... 
+#  small <- log(sqrt(.Machine$double.eps))
+#  ind1 <- x < small
+#  y[ind1] <- exp(x[ind1])
+#  ind <- !ind&!ind1 ## the moderate size elements 
+#  y[ind] <- log(1+exp(x[ind]))
+#  y 
+#}
 
-logist <- function(x) {
+#logist <- function(x) {
 ## overflow proof logistic
-  ind <- x > 0; y <- x
-  y[ind] <- 1/(exp(-x[ind])+1) 
-  ex <- exp(x[!ind])
-  y[!ind] <- ex/(1+ex)
-  y
-}
+#  ind <- x > 0; y <- x
+#  y[ind] <- 1/(exp(-x[ind])+1) 
+#  ex <- exp(x[!ind])
+#  y[!ind] <- ex/(1+ex)
+#  y
+#}
 
 l1ee <- function(x) {
 ## log(1-exp(-exp(x)))...
@@ -701,130 +701,6 @@ zipll <- function(y,g,eta,deriv=0) {
    list(l=l,l1=l1,l2=l2,l3=l3,l4=l4,El2=El2)
 } ## zipll
 
-zipll0 <- function(y,gamma,eta,deriv=0) {
-## function to evaluate zero inflated Poisson log likelihood
-## and its derivatives w.r.t. gamma and eta where 
-## p = logit(eta) and lambda = exp(gamma), for each datum in vector y.
-## p is probability of potential presence. lambda is Poisson mean
-## given potential presence. 
-## deriv: 0 - eval
-##        1 - grad (l,p) and Hess (ll,lp,pp)
-##        2 - third derivs lll,llp,lpp,ppp
-##        4 - 4th derivs. llll,lllp,llpp,lppp,pppp
-
-   ## eta can become unbounded above if p is 0  
-   #eta <- pmin(50,eta) 
-   ## pointless computing for gamma outside some bounded interval,
-   ## likelihood simply ceases to care
-   #gamma <- pmin(50,pmax(-50,gamma))
-   l1 <- El2 <- l2 <- l3 <- l4 <- NULL
-   zind <- y == 0 ## the index of the zeroes
-   yz <- y[zind];yp <- y[!zind]
-   lambda <- exp(gamma)
-   lamz <- lambda[zind];lamp <- lambda[!zind] 
-   etaz <- eta[zind]  ## zero y branch
-   etap <- eta[!zind] ## positive y branch
-   ela <- eta - lambda
-   elaz <- ela[zind];elap <- ela[!zind]  
-   alpha <- logist(eta)
-   alphaz <- alpha[zind];alphap <- alpha[!zind]
-   l <- y;
-   enl <- exp(-lambda);enlz <- enl[zind]
-   pz <- log1ex(ela) - log1ex(eta)
-   l[zind] <- pz[zind] ## log lik for y==0
-   pz <- exp(pz) ## probability of zero
-   ## l[zind] <- log1ex(elaz) - log1ex(etaz) ## for y==0
-   log.alphap <- alphap
-   thresh <- -log(.Machine$double.eps)/2
-   ind <- abs(etap) < thresh
-   log.alphap[ind] <- log(alphap[ind])
-   ind <- etap >= thresh
-   log.alphap[ind] <- -exp(-etap[ind])
-   ind <- etap <= -thresh
-   log.alphap[ind] <- etap[ind]
-   l[!zind] <- log.alphap + yp*log(lamp) - lamp - lgamma(yp+1) ## for y!=0
-   
-   if (deriv>0) { 
-      delta <- 1/(exp(ela)+1);deltaz <- delta[zind] ## 1 + l_lambda
-      ## deltaz <- 1/(exp(etaz-lamz)+1) ## 1 + l_lambda
-      beta <- 1/(exp(eta)+1) ## 1 - alpha
-      betaz <- beta[zind];betap <- beta[!zind]
-      n <- length(y)
-      l1 <- matrix(0,n,2)
- 
-      llz0 <- -logist(ela)  ## l_lambda expression for y=0
-      ##llz <- -logist(elaz) ## l_lambda 
-      llz <- llz0[zind] ## l_lambda 
-      l1[zind,1] <- llz * lamz ## l_gamma
-      llp <- l1[!zind,1] <- yp-lamp 
-     
-      lez0 <- (enl-1)/((exp(ela)+1)*(exp(-eta)+1)) ## l_eta expression for y>0
-      lez <- l1[zind,2] <- lez0[zind] ##(enlz-1)/((exp(elaz)+1)*(exp(-etaz)+1))  ## l_eta
-      lep <- l1[!zind,2] <- betap
-      ## the second derivatives
-
-      El2 <- l2 <- matrix(0,n,3)
-      ## order ll, le, ee... 
- 
-      l.ll <- -llz*deltaz ## -llz*(1+llz)    ## l_ll
-      l2[zind,1] <- l.ll*lamz^2 + llz*lamz ## l_gg
-      l2[!zind,1] <- -lamp ## l_gg
- 
-      l.le <- -llz*lez + llz*betaz       ## l_le
-      l2[zind,2] <- lamz*l.le       ## l_ge
-
-      l2[zind,3] <- lez/(1+exp(etaz)) + lez*llz         ## l_ee
-      l2[!zind,3] <- - alphap*betap
-
-      ## now El2...
-      El2[,1] <- pz * llz0 * lambda * (1-delta*lambda) - (1-pz) * lambda  ## E l_gg
-      El2[,2] <- pz * llz0 * lambda * (beta - lez0)                       ## E l_ge
-      El2[,3] <- pz * lez0 *(beta + llz0)  - (1-pz) * alpha*beta          ## E l_ee
-   }
-   if (deriv>1) {
-      ## the third derivatives
-      ## order lll,lle,lee,eee
-      l3 <- matrix(0,n,4) 
-      l.lll <- deltaz*llz*(2*llz+1)  ##2*llz^3+3*llz^2+llz  ## l_lll
-      l3[zind,1] <- ((l.lll*lamz + 3*l.ll)*lamz + llz)*lamz ## l_ggg
-      
-      l3[!zind,1] <- -lamp
-      l.lle <- 2*lez*llz^2 + lez*llz - llz*betaz - 2*llz^2*betaz  ## l_lle
-      l3[zind,2] <- (l.lle*lamz + l.le) * lamz ## l_gge
-
-      l.lee <- llz*(betaz-betaz*alphaz + lez*alphaz - 2*lez*deltaz + llz*betaz)  ## l_lee
-      l3[zind,3] <- l.lee * lamz ## l_gee
-
-      l3[zind,4] <- -lez*betaz*(2*alphaz-1) + lez*llz*(3*betaz+alphaz) + 2*lez*llz^2 ## l_eee
-      l3[!zind,4] <- alphap*(2*alphap-1)*betap
-   }
-   if (deriv>3) {
-      ## the fourth derivatives
-      ## order llll,llle,llee,leee,eeee
-      l4 <- matrix(0,n,5) 
-      l.llll <- -deltaz*llz*(6*llz^2+6*llz+1) ##-llz - 7*llz^2 - 12*llz^3 -6*llz^4 ## l_llll
-      l4[zind,1] <- (((l.llll*lamz + 6*l.lll)*lamz + 7*l.ll)*lamz + llz)*lamz ## l_gggg
-      l4[!zind,1] <- -lamp
-
-      l.llle <- llz*(betaz-lez)*(6*llz^2+6*llz+1) ## l_llle
-      l4[zind,2] <- ((l.llle * lamz + 3*l.lle)*lamz + l.le)*lamz ## l_ggge
-
-      l.llee <- -llz*betaz^2 + llz^2*betaz*(2*alphaz-5) + lez*llz^2*(8-2*alphaz) +
-                     lez*llz*(2-alphaz) + 6*lez*llz^3 - 4*betaz*llz^3 ## l_llee
-      l4[zind,3] <- (l.llee*lamz + l.lee)*lamz ## l_ggee
-
-      l.leee <- llz*betaz^2*(1-alphaz*2) + lez*llz*(-2*alphaz^2 + 5 * alphaz -4) +
-                     llz^2*betaz*(3-2*alphaz) + lez*llz^2*(4*alphaz-10) - 6*lez*llz^3 + 2*betaz*llz^3 ## l_eeel 
-      l4[zind,4] <- l.leee * lamz
- 
-      l4[zind,5] <- lez*betaz*(6*alphaz^2-6*alphaz+1) + ##(-6*alphaz^3+12*alphaz^2-7*alphaz+1) + 
-                     lez*llz*(6*alphaz^2-12*alphaz+7) + 6*lez*llz^2*(2-alphaz+llz)  ## l_eeee  
-      l4[!zind,5] <- alphap*betap*(-6*alphap^2+6*alphap-1) 
-        ##6*alphap^4 - 12*alphap^3 + 7*alphap^2 - alphap
-   }
-   list(l=l,l1=l1,l2=l2,l3=l3,l4=l4,El2=El2)
-} ## zipll0
-
 
 ziplss <-  function(link=list("identity","identity")) {
 ## Extended family for Zero Inflated Poisson fitted as gamlss 
@@ -879,7 +755,67 @@ ziplss <-  function(link=list("identity","identity")) {
         rsd <- sqrt(rsd)*sgn
       }
       rsd
-  }
+  } ## residuals
+
+  predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
+                beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
+  ## optional function to give predicted values - idea is that 
+  ## predict.gam(...,type="response") will use this, and that
+  ## either eta will be provided, or {X, beta, off, Vb}. family.data
+  ## contains any family specific extra information. 
+
+    if (is.null(eta)) { 
+      lpi <- attr(X,"lpi") 
+      X1 <- X[,lpi[[1]],drop=FALSE]
+      X2 <- X[,lpi[[2]],drop=FALSE]
+      gamma <- drop(X1%*%beta[lpi[[1]]]) ## linear predictor for poisson parameter 
+      eta <- drop(X2%*%beta[lpi[[2]]]) ## linear predictor for presence parameter 
+      if (se) {
+        v.g <- drop(pmax(0,rowSums((X1%*%Vb[lpi[[1]],lpi[[1]]])*X1))) ## var of gamma
+        v.e <- drop(pmax(0,rowSums((X1%*%Vb[lpi[[1]],lpi[[1]]])*X1))) ## var of eta
+        v.eg <- drop(pmax(0,rowSums((X1%*%Vb[lpi[[1]],lpi[[2]]])*X2))) ## cov of eta, gamma
+      }
+    } else { 
+      se <- FALSE
+      gamma <- eta[,1]
+      eta <- eta[,2]
+    }
+    et <- exp(eta)
+    mu <- p <- 1 - exp(-et)
+    fv <- lambda <- exp(gamma)  
+    ind <- gamma < log(.Machine$double.eps)/2
+    mu[!ind] <- lambda[!ind]/(1-exp(-lambda[!ind]))
+    mu[ind] <- 1
+    fv <- list(p*mu)    ## E(y)    
+    if (!se) return(fv) else {
+      df.de <- p  
+      ind <- eta < log(.Machine$double.xmax)/2
+      df.de[!ind] <- 0
+      df.de[ind] <- exp(-et[ind])*et[ind]
+      df.de <- df.de * mu
+      df.dg <- ((lambda + 1)*mu - mu^2)*p
+      fv[[2]] <- sqrt(df.dg^2*v.g + df.de^2*v.e + 2 * df.de * df.dg * v.eg)   
+      names(fv) <- c("fit","se.fit")
+      return(fv)
+    }
+  } ## predict
+
+
+  rd <- function(mu,wt,scale) {
+    ## simulate data given fitted latent variable in mu 
+      rzip <- function(gamma,eta) { ## generate ziP deviates according to model and lp gamma
+        y <- gamma; n <- length(y)
+        lambda <- exp(gamma)
+        p <- 1- exp(-exp(eta))
+        ind <- p > runif(n)
+        y[!ind] <- 0
+        np <- sum(ind)
+        ## generate from zero truncated Poisson, given presence...
+        y[ind] <- qpois(runif(np,dpois(0,lambda[ind]),1),lambda[ind])
+        y
+      } 
+      rzip(mu[,1],mu[,2])
+  } ## rd
 
   postproc <- expression({
     ## code to evaluate in estimate.gam, to evaluate null deviance
@@ -919,7 +855,7 @@ ziplss <-  function(link=list("identity","identity")) {
     lnull <- lnull + optimize(flam,interval=c(my/2,my*2),y=object$y,maximum=TRUE)$objective
     object$null.deviance <- 2*(sum(ls(object$y)) - lnull)
    
-  })
+  }) ## postproc
 
 
   ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
@@ -1021,7 +957,7 @@ ziplss <-  function(link=list("identity","identity")) {
 
   structure(list(family="ziplss",ll=ll,link=paste(link),nlp=2,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
-    initialize=initialize,postproc=postproc,residuals=residuals,
+    initialize=initialize,postproc=postproc,residuals=residuals,rd=rd,predict=predict,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1, ## signals that ls not needed here
