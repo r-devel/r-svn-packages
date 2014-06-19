@@ -258,11 +258,12 @@ gam.check <- function(b, old.style=FALSE,
                       k.sample=5000,k.rep=200,
 		      ## arguments passed to qq.gam() {w/o warnings !}:
 		      rep=0, level=.9, rl.col=2, rep.col="gray80", ...)
-# takes a fitted gam object and produces some standard diagnostic plots
+## takes a fitted gam object and produces some standard diagnostic plots
 {
   type <- match.arg(type)
   resid <- residuals(b, type=type)
-  linpred <- if (is.matrix(b$linear.predictors)) napredict(b$na.action, b$linear.predictors[,1]) else 
+  linpred <- if (is.matrix(b$linear.predictors)&&!is.matrix(resid)) 
+             napredict(b$na.action, b$linear.predictors[,1]) else 
              napredict(b$na.action, b$linear.predictors)
 ##  if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","mle.REML","mle.ML","PQL")) { 
     old.par<-par(mfrow=c(2,2))
@@ -274,7 +275,7 @@ gam.check <- function(b, old.style=FALSE,
          xlab="linear predictor",ylab="residuals",...)
     hist(resid,xlab="Residuals",main="Histogram of residuals",...)
     fv <- if (inherits(b$family,"extended.family")) predict(b,type="response") else fitted(b)
-    if (is.matrix(fv)) fv <- fv[,1]
+    if (is.matrix(fv)&&!is.matrix(b$y)) fv <- fv[,1]
     plot(fv, napredict(b$na.action, b$y),
          xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
     if (!(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML"))) { ## gamm `gam' object
@@ -1093,6 +1094,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
       if (se && P$se) { ## get standard errors for fit
         ## test whether mean variability to be added to variability (only for centred terms)
         if (seWithMean && attr(x$smooth[[i]],"nCons")>0) {
+          if (length(x$cmX) < ncol(x$Vp)) x$cmX <- c(x$cmX,rep(0,ncol(x$Vp)-length(x$cmX)))
           X1 <- matrix(x$cmX,nrow(P$X),ncol(x$Vp),byrow=TRUE)
           meanL1 <- x$smooth[[i]]$meanL1
           if (!is.null(meanL1)) X1 <- X1 / meanL1

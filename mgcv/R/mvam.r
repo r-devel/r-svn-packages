@@ -12,12 +12,6 @@ mvn <- function(d=2) {
   env <- new.env(parent = .GlobalEnv)
   validmu <- function(mu) all(is.finite(mu))
 
-   
-  aic <- function(y, mu, theta=NULL, wt, dev) {
-## NOT DONE
-  }
-    
-
   ## initialization has to add in the extra parameters of 
   ## the cov matrix...
   
@@ -31,6 +25,8 @@ mvn <- function(d=2) {
       lpi <- attr(G$X,"lpi")
       XX <- crossprod(G$X)
       G$X <- cbind(G$X,matrix(0,nrow(G$X),ntheta)) ## add dummy columns to G$X
+      #G$cmX <- c(G$cmX,rep(0,ntheta)) ## and corresponding column means
+      G$term.names <- c(G$term.names,paste("R",1:ntheta,sep="."))
       attr(G$X,"lpi") <- lpi
       attr(G$X,"XX") <- XX
       ## pad out sqrt of balanced penalty matrix to account for extra params
@@ -137,11 +133,11 @@ mvn <- function(d=2) {
 
     # environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
     # environment(rd)<- environment(qf)<- environment(variance) <- environment(putTheta) 
-    environment(aic) <- environment(ll) <- env
+    ##environment(aic) <- 
+    environment(ll) <- env
     structure(list(family = "Multivariate normal", 
         ## link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv, 
         ll=ll,nlp=d,
-        aic = aic, 
         initialize = initialize,preinitialize=preinitialize,postproc=postproc,
         residuals=residuals,
         validmu = validmu, ## valideta = stats$valideta, 

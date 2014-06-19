@@ -257,8 +257,14 @@ interpret.gam0 <- function (gf,textra=NULL)
     } else av <- c(av,smooth.spec[[i]]$term)
   }
   fake.formula <- as.formula(fake.formula,p.env)
+  if (length(av)) {
+    pred.formula <- as.formula(paste("~",paste(av,collapse="+")))
+    av <- all.vars(pred.formula) ## trick to strip out 'offset(x)' etc...
+    pred.formula <- reformulate(av) 
+  } else  pred.formula <- ~1
   ret <- list(pf=as.formula(pf,p.env),pfok=pfok,smooth.spec=smooth.spec,
-            fake.formula=fake.formula,response=response,fake.names=av)
+            fake.formula=fake.formula,response=response,fake.names=av,
+            pred.formula=pred.formula)
   class(ret) <- "split.gam.formula"
   ret
 } ## interpret.gam0
@@ -277,7 +283,7 @@ interpret.gam <- function(gf) {
     resp <- gf[[1]][2]
     
     ret <- list()
-    av <- rep("",0)
+    pav <- av <- rep("",0)
     for (i in 1:d) {
       textra <- if (i==1) NULL else paste(".",i-1,sep="") ## modify smooth labels to identify to predictor  
       ret[[i]] <- interpret.gam0(gf[[i]],textra)
@@ -289,10 +295,13 @@ interpret.gam <- function(gf) {
         respi <- rep("",0)
       } else if (i>1) respi <- ret[[i]]$response ## extra response terms
       av <- c(av,ret[[i]]$fake.names,respi) ## accumulate all required variable names 
+      pav <- c(pav,ret[[i]]$fake.names) ## predictors only 
     } 
     av <- unique(av) ## strip out duplicate variable names
+    pav <- unique(pav)
     ret$fake.formula <- if (length(av)>0) reformulate(av,response=ret[[1]]$response) else ## create fake formula containing all variables
                         ret[[1]]$fake.formula
+    ret$pred.formula <- if (length(pav)>0) reformulate(pav) else ~1 ## predictor only formula
     ret$response <- ret[[1]]$response 
     class(ret) <- "split.gam.formula"
     return(ret)
@@ -691,7 +700,7 @@ gam.setup.list <- function(formula,pterms,
     G$term.names <- c(G$term.names,um$term.names)
     G$lsp0 <- c(G$lsp0,um$lsp0)
     G$sp <- c(G$sp,um$sp)
-    pof <- ncol(G$x)
+    pof <- ncol(G$X)
   }
  
   attr(G$X,"lpi") <- lpi
@@ -1850,6 +1859,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (G$m) for (i in 1:G$m) G$min.edf<-G$min.edf+G$smooth[[i]]$null.space.dim
 
     G$formula <- formula
+    G$pred.formula <- gp$pred.formula
     environment(G$formula)<-environment(formula)
   }
 
@@ -1874,8 +1884,10 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$na.action <- attr(G$mf,"na.action") # how to deal with NA's
   object$control <- control
   object$terms <- G$terms
-  pvars <- all.vars(delete.response(object$terms))
-  object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else ~1
+  object$pred.formula <- G$pred.formula
+  ##pvars <- all.vars(delete.response(object$terms))
+  ##object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else ~1
+
   attr(object$pred.formula,"full") <- reformulate(all.vars(object$terms))
   
   object$pterms <- G$pterms
@@ -2426,7 +2438,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           response <- FALSE 
           Terms <- delete.response(terms(object))
         }
-        allNames <- all.vars(Terms)
+        allNames <- if (is.null(object$pred.formula)) all.vars(Terms) else all.vars(object$pred.formula)
         if (length(allNames) > 0) { 
           ff <- if (is.null(object$pred.formula)) reformulate(allNames) else  object$pred.formula
           if (sum(!(allNames%in%names(newdata)))) { 
@@ -2601,8 +2613,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         { first <- object$smooth[[k]]$first.para; last <- object$smooth[[k]]$last.para
           fit[start:stop,n.pterms+k] <- X[,first:last,drop=FALSE] %*% object$coefficients[first:last] + Xoff[,k]
           if (se.fit) { # diag(Z%*%V%*%t(Z))^0.5; Z=X[,first:last]; V is sub-matrix of Vp
-            if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept 
-             X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
+            if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
+              ## some general families, add parameters after cmX created, which are irrelevant to cmX... 
+              if (length(object$cmX) < ncol(X)) object$cmX <- c(object$cmX,rep(0,ncol(X)-length(object$cmX)))
+              X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              
               X1[,first:last] <- X[,first:last]

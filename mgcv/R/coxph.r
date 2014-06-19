@@ -21,11 +21,11 @@ cox.ph <- function (link = "identity") {
   validmu <- function(mu) all(is.finite(mu))
 
    
-    aic <- function(y, mu, theta=NULL, wt, dev) {
-      ## this needs to call coxlpl - not really enough info 
-      ## use store and retrieve approach
-      get(".log.partial.likelihood")
-    }
+#    aic <- function(y, mu, theta=NULL, wt, dev) {
+#      ## this needs to call coxlpl - not really enough info 
+#      ## use store and retrieve approach, actually this is not needed (gam.fit5 computes from likelihood)
+#      get(".log.partial.likelihood")
+#    }
     
 
     ## initialization is tough here... need data frame in reverse time order,
@@ -177,10 +177,11 @@ cox.ph <- function (link = "identity") {
 
     # environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
     # environment(rd)<- environment(qf)<- environment(variance) <- environment(putTheta) 
-    environment(aic) <- environment(ll) <- env
+    #environment(aic) <- 
+    environment(ll) <- env
     structure(list(family = "Cox PH", link = linktemp, linkfun = stats$linkfun,
-        linkinv = stats$linkinv, ll=ll,
-        aic = aic, mu.eta = stats$mu.eta, 
+        linkinv = stats$linkinv, ll=ll, ## aic = aic, 
+        mu.eta = stats$mu.eta, 
         initialize = initialize,preinitialize=preinitialize,postproc=postproc,
         hazard=hazard,predict=predict,residuals=residuals,
         validmu = validmu, valideta = stats$valideta, 

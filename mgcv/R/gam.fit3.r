@@ -1504,13 +1504,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
            dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
 
         if (reml) {
-          trial$grad <- L%*%b$REML1;
+          trial$grad <- t(L)%*%b$REML1;
         } else if (scoreType=="GACV") {
-          trial$grad <- L%*%b$GACV1; 
+          trial$grad <- t(L)%*%b$GACV1; 
         } else if (scoreType=="UBRE"){
-          trial$grad <- L%*%b$UBRE1  
+          trial$grad <- t(L)%*%b$UBRE1  
         } else { ## default to deviance based GCV
-          trial$grad <- L%*%b$GCV1;
+          trial$grad <- t(L)%*%b$GCV1;
         } 
         trial$scale.est <- b$scale.est;rm(b);
         trial$dscore <- sum(step*trial$grad) ## directional derivative
@@ -1549,13 +1549,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   initial <- list(alpha = 0,mustart=b$fitted.values,start=coef(b))
   if (reml) {
-     score <- b$REML;grad <- L%*%b$REML1;
+     score <- b$REML;grad <- t(L)%*%b$REML1;
   } else if (scoreType=="GACV") {
-     score <- b$GACV;grad <- L%*%b$GACV1; 
+     score <- b$GACV;grad <- t(L)%*%b$GACV1; 
   } else if (scoreType=="UBRE"){
-     score <- b$UBRE;grad <- L%*%b$UBRE1  
+     score <- b$UBRE;grad <- t(L)%*%b$UBRE1  
   } else { ## default to deviance based GCV
-     score <- b$GCV;grad <- L%*%b$GCV1;
+     score <- b$GCV;grad <- t(L)%*%b$GCV1;
   } 
   initial$score <- score;initial$grad <- grad;
   initial$scale.est <- b$scale.est
@@ -1572,13 +1572,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                scoreType=scoreType,null.coef=null.coef,
                pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...) 
      if (reml) {
-       grad1 <- L%*%b$REML1;
+       grad1 <- t(L)%*%b$REML1;
      } else if (scoreType=="GACV") {
-       grad1 <- L%*%b$GACV1; 
+       grad1 <- t(L)%*%b$GACV1; 
      } else if (scoreType=="UBRE"){
-       grad1 <- L%*%b$UBRE1  
+       grad1 <- t(L)%*%b$UBRE1  
      } else { ## default to deviance based GCV
-       grad1 <- L%*%b$GCV1;
+       grad1 <- t(L)%*%b$GCV1;
      } 
      B[i,] <- (grad1-grad)/feps 
      rm(b)
@@ -1661,13 +1661,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
       if (deriv>0) {
         if (reml) {
-          trial$grad <- L%*%b$REML1;
+          trial$grad <- t(L)%*%b$REML1;
         } else if (scoreType=="GACV") {
-          trial$grad <- L%*%b$GACV1; 
+          trial$grad <- t(L)%*%b$GACV1; 
         } else if (scoreType=="UBRE"){
-          trial$grad <- L%*%b$UBRE1  
+          trial$grad <- t(L)%*%b$UBRE1  
         } else { ## default to deviance based GCV
-          trial$grad <- L%*%b$GCV1;
+          trial$grad <- t(L)%*%b$GCV1;
         } 
         trial$dscore <- sum(trial$grad*step)
         deriv <- 0 
@@ -1691,13 +1691,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                       scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
                       dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
         if (reml) {
-          trial$grad <- L%*%b$REML1;
+          trial$grad <- t(L)%*%b$REML1;
         } else if (scoreType=="GACV") {
-          trial$grad <- L%*%b$GACV1; 
+          trial$grad <- t(L)%*%b$GACV1; 
         } else if (scoreType=="UBRE"){
-          trial$grad <- L%*%b$UBRE1  
+          trial$grad <- t(L)%*%b$UBRE1  
         } else { ## default to deviance based GCV
-          trial$grad <- L%*%b$GCV1;
+          trial$grad <- t(L)%*%b$GCV1;
         } 
         trial$dscore <- sum(trial$grad*step)
         trial$scale.est <- b$scale.est
@@ -1769,13 +1769,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                 scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
                 dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
   if (reml) {
-     score <- b$REML;grad <- L%*%b$REML1;
+     score <- b$REML;grad <- t(L)%*%b$REML1;
   } else if (scoreType=="GACV") {
-     score <- b$GACV;grad <- L%*%b$GACV1; 
+     score <- b$GACV;grad <- t(L)%*%b$GACV1; 
   } else if (scoreType=="UBRE"){
-     score <- b$UBRE;grad <- L%*%b$UBRE1  
+     score <- b$UBRE;grad <- t(L)%*%b$UBRE1  
   } else { ## default to deviance based GCV
-     score <- b$GCV;grad <- L%*%b$GCV1;
+     score <- b$GCV;grad <- t(L)%*%b$GCV1;
   } 
 
   ## get approximate Hessian...

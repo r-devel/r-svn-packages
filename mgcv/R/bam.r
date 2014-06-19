@@ -1205,7 +1205,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   G$family <- family
   G$terms<-terms;##G$pterms<-pterms
   pvars <- all.vars(delete.response(terms))
-  G$pred.formula <- if (length(pvars)>0) reformulate(pvars) else NULL
+  G$pred.formula <- gp$pred.formula # if (length(pvars)>0) reformulate(pvars) else NULL
 
   n <- nrow(mf)
   
@@ -1306,7 +1306,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$offset <- G$offset
   object$prior.weights <- G$w
   object$pterms <- G$pterms
-  object$pred.formula <- G$pred.formula
+  object$pred.formula <- G$pred.formula 
   object$smooth <- G$smooth
 
   object$terms <- G$terms
