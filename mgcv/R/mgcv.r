@@ -197,7 +197,7 @@ interpret.gam0 <- function (gf,textra=NULL)
   len.tip <- length(tip)
   len.t2p <- length(t2p)
   ns <- len.sp + len.tp + len.tip + len.t2p # number of smooths
-  av <- rep("",0)
+  pav <- av <- rep("",0)
   smooth.spec <- list()
   if (nt) for (i in 1:nt) { # work through all terms
     if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||
@@ -259,12 +259,12 @@ interpret.gam0 <- function (gf,textra=NULL)
   fake.formula <- as.formula(fake.formula,p.env)
   if (length(av)) {
     pred.formula <- as.formula(paste("~",paste(av,collapse="+")))
-    av <- all.vars(pred.formula) ## trick to strip out 'offset(x)' etc...
-    pred.formula <- reformulate(av) 
+    pav <- all.vars(pred.formula) ## trick to strip out 'offset(x)' etc...
+    pred.formula <- reformulate(pav) 
   } else  pred.formula <- ~1
   ret <- list(pf=as.formula(pf,p.env),pfok=pfok,smooth.spec=smooth.spec,
             fake.formula=fake.formula,response=response,fake.names=av,
-            pred.formula=pred.formula)
+            pred.names=pav,pred.formula=pred.formula)
   class(ret) <- "split.gam.formula"
   ret
 } ## interpret.gam0
@@ -295,7 +295,7 @@ interpret.gam <- function(gf) {
         respi <- rep("",0)
       } else if (i>1) respi <- ret[[i]]$response ## extra response terms
       av <- c(av,ret[[i]]$fake.names,respi) ## accumulate all required variable names 
-      pav <- c(pav,ret[[i]]$fake.names) ## predictors only 
+      pav <- c(pav,ret[[i]]$pred.names) ## predictors only 
     } 
     av <- unique(av) ## strip out duplicate variable names
     pav <- unique(pav)
