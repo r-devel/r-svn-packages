@@ -1143,7 +1143,7 @@ gam.fit5.post.proc <- function(object,Sl,L) {
   ## to DiLiLi'Di = Vb, the Bayesian cov matrix...
   ipiv <- piv <- attr(object$L,"pivot")
   ipiv[piv] <- 1:p
-  Vb <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,])[ipiv,])
+  Vb <- crossprod(forwardsolve(t(object$L),diag(object$D,nrow=p)[piv,,drop=FALSE])[ipiv,,drop=FALSE])
 
   ## Insert any zeroes required as a result of dropping 
   ## unidentifiable parameters...

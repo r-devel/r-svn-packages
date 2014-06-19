@@ -39,7 +39,7 @@ cox.ph <- function (link = "identity") {
       y.order <- order(G$y,decreasing=TRUE)
       G$family.data$y.order <- y.order
       G$y <- G$y[y.order]
-      G$X <- G$X[y.order,]
+      G$X <- G$X[y.order,,drop=FALSE]
       G$w <- G$w[y.order]
     })
     
