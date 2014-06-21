@@ -25,6 +25,10 @@
    to account for smoothing parameter uncertainty in degrees of freedom
    term.
 
+* interpret.gam now evaluates in namespace of mgcv with environment of
+  formula as enclosing environment, to allow it to be called without 
+  attaching mgcv... 
+
 * 'plot.gam' now weights partial residuals by *normalized* square root 
   iterative weights so that the average weight is 1 and the residuals 
   should have constant variance if all is ok.

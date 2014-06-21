@@ -497,7 +497,7 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
             id=id,sp=sp)
   class(ret)<-paste(bs,".smooth.spec",sep="")
   ret
-}
+} ## end of s
 
 #############################################################
 ## Type 1 tensor product methods start here (i.e. Wood, 2006)

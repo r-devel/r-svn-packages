@@ -144,7 +144,7 @@ pcls <- function(M)
 } ## pcls
 
 
-interpret.gam0 <- function (gf,textra=NULL)
+interpret.gam0 <- function(gf,textra=NULL)
 # interprets a gam formula of the generic form:
 #   y~x0+x1+x3*x4 + s(x5)+ s(x6,x7) ....
 # and returns:
@@ -159,9 +159,7 @@ interpret.gam0 <- function (gf,textra=NULL)
   
   if (attr(tf,"response") > 0) {  # start the replacement formulae
     response <- as.character(attr(tf,"variables")[2])
-    #pf <-  paste(response,"~",sep="")
   } else { 
-    #pf <-  "~"
     response <- NULL
   }
   sp <- attr(tf,"specials")$s     # array of indices of smooth terms 
@@ -190,7 +188,6 @@ interpret.gam0 <- function (gf,textra=NULL)
     t2p[i] <- ind # the term that smooth relates to
   } ## re-referencing is complete
 
-  ##ns <- length(sp) + length(tp) + length(tip) + length(t2p) # number of smooths
   k <- kt <- kti <- kt2 <- ks <- kp <- 1 # counters for terms in the 2 formulae
   len.sp <- length(sp)
   len.tp <- length(tp)
@@ -202,7 +199,14 @@ interpret.gam0 <- function (gf,textra=NULL)
   if (nt) for (i in 1:nt) { # work through all terms
     if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||
                   (kti<=len.tip&&tip[kti]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) { # it's a smooth
-      st <- eval(parse(text=terms[i]),envir=p.env)
+      ## have to evaluate in the environment of the formula or you can't find variables 
+      ## supplied as smooth arguments, e.g. k <- 5;gam(y~s(x,k=k)), fails,
+      ## but if you don't specify namespace of mgcv then stuff like 
+      ## loadNamespace('mgcv'); mgcv::interpret.gam(y~s(x)) fails (can't find s)
+      ## Following line does not work if envir=p.env and enclos is namespace?? 
+
+      st <- eval(parse(text=terms[i]),enclos=p.env,envir=loadNamespace('mgcv'))
+
       if (!is.null(textra)) { ## modify the labels on smooths with textra
         pos <- regexpr("(",st$lab,fixed=TRUE)[1]
         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,
@@ -215,15 +219,11 @@ interpret.gam0 <- function (gf,textra=NULL)
       kt2 <- kt2 + 1                           # counts t2() terms
       k <- k + 1      # counts smooth terms 
     } else {          # parametric
-      #if (kp>1) pf <- paste(pf,"+",terms[i],sep="") # add to parametric formula
-      #else pf <- paste(pf,terms[i],sep="")
       av[kp] <- terms[i] ## element kp on rhs of parametric
       kp <- kp+1    # counts parametric terms
     }
   }    
-  if (!is.null(off)) # deal with offset
-  { #if (kp>1) pf <- paste(pf,"+",sep="")
-    #pf <- paste(pf,as.character(attr(tf,"variables")[1+off]),sep="")
+  if (!is.null(off)) { ## deal with offset 
     av[kp] <- as.character(attr(tf,"variables")[1+off])
     kp <- kp+1          
   }
@@ -237,12 +237,6 @@ interpret.gam0 <- function (gf,textra=NULL)
       pf <- paste(pf,"1"); 
     }
   }
-  #if (kp>0) { ## there are parametric predictors - need to include all raw versions in fake formula 
-  # av <- unique(c(av,all.vars(as.formula(pf)))) ## want raw variables for parametric part in fake formula
-  #  fake.formula <- paste(response,"~",paste(av,collapse=" + ")) 
-  #} else fake.formula <- pf
-
-  #if (attr(tf,"intercept")==0) fake.formula <- paste(fake.formula,"-1",sep="")
 
   fake.formula <- pf
 
@@ -437,7 +431,6 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
   }
   nobs <- nrow(sm[[1]]$X) ## number of observations
   
- # for (d in 2:maxDim) { ## work up through dimensions   
   for (d in 1:maxDim) { ## work up through dimensions 
     for (i in 1:m) { ## work through smooths
       if (sm[[i]]$dim == d&&sm[[i]]$side.constrain) { ## check for nesting
@@ -1185,6 +1178,7 @@ gam.negbin <- function(lsp,fscale,family,control,method,optimizer,gamma,G,scale,
 ## to be an array giving a discrete set of theta values over which to optimize
 ## by exhaustive search. Note that AIC is used as the criterion, since the 
 ## deviance depends on theta, UBRE is not proportional to AIC if theta is varied.
+## DEPRECATED in favour of using nb() with gam.fit4
   
   warning("`negbin' with unknown theta and outer iteration is deprecated - use `nb'. ")
 
@@ -1549,7 +1543,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (method=="P-REML")  criterion <- method <- "REML"
   } 
 
-
   # take only a few IRLS steps to get scale estimates for "pure" outer
   # looping...
   family <- G$family; nb.fam.reset <- FALSE
@@ -1657,17 +1650,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
   object$method <- criterion
 
   object$smooth<-G$smooth
-  # now re-assign variable names to coefficients etc. 
-#  if (G$nsdf>0) term.names<-colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
-#  n.smooth<-length(G$smooth)
-#  if (n.smooth)
-#  for (i in 1:n.smooth)
-#  { k<-1
-#    for (j in G$smooth[[i]]$first.para:G$smooth[[i]]$last.para)
-#    { term.names[j]<-paste(G$smooth[[i]]$label,".",as.character(k),sep="")
-#      k<-k+1
-#    }
-#  }
+
   names(object$edf) <- G$term.names
   names(object$edf1) <- G$term.names
 
@@ -1885,8 +1868,6 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$control <- control
   object$terms <- G$terms
   object$pred.formula <- G$pred.formula
-  ##pvars <- all.vars(delete.response(object$terms))
-  ##object$pred.formula <- if (length(pvars)>0) reformulate(pvars) else ~1
 
   attr(object$pred.formula,"full") <- reformulate(all.vars(object$terms))
   
@@ -3774,37 +3755,8 @@ logLik.gam <- function (object,...)
     attr(val, "df") <- p
     class(val) <- "logLik"
     val
-}
+} ## logLik.gam
 
-
-
-
-#exclude.too.far<-function(g1,g2,d1,d2,dist)
-# if g1 and g2 are the co-ordinates of grid modes and d1,d2 are co-ordinates of data
-# then this routine returns a vector with TRUE if the grid node is too far from
-# any data and FALSE otherwise. Too far is judged using dist: a positive number indicating
-# distance on the unit square into which the grid is scaled prior to calculation
-#{ mig<-min(g1)
-#  d1<-d1-mig;g1<-g1-mig
-#  mag<-max(g1)
-#  d1<-d1/mag;g1<-g1/mag
-#  mig<-min(g2)
-#  d2<-d2-mig;g2<-g2-mig
-#  mag<-max(g2)
-#  d2<-d2/mag;g2<-g2/mag
-#  # all now in unit square
-#  n<-length(g1)
-#  m<-length(d1)
-#  if (length(g2)!=n) stop("grid vectors are different lengths")
-#  if (m!=length(d2)) stop("data vectors are of different lengths")
-#  if (dist<0) stop("supplied dist negative")
-#  distance<-array(0,n)
-#  o<-.C(C_MinimumSeparation,as.double(g1),as.double(g2),as.integer(n),as.double(d1),as.double(d2),
-#         as.integer(m),distance=as.double(distance))  
-#  res<-rep(FALSE,n)
-#  res[o$distance > dist] <-TRUE
-#  res
-#}
 
 
 # From here on is the code for magic.....
@@ -3841,7 +3793,7 @@ mroot <- function(A,rank=NULL,method="chol")
     return(L)
   } else
   stop("method not recognised.")
-}
+} ## mroot
 
 
 
@@ -4151,7 +4103,7 @@ magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,g
     res$rV <- qr.qy(ns.qr,b)# ZrV
   } 
   res
-}
+} ## magic
 
 
 print.mgcv.version <- function()
@@ -4181,12 +4133,6 @@ set.mgcv.options <- function()
 
 .onUnload <- function(libpath) library.dynam.unload("mgcv", libpath)
 
-#.First.lib <- function(lib, pkg) {
-  ## defunct
-#  library.dynam("mgcv", pkg, lib)
-#  print.mgcv.version()
-#  set.mgcv.options()
-#}
 
 
 ###############################################################################
@@ -4194,12 +4140,6 @@ set.mgcv.options <- function()
 #
 #* Could use R_CheckUserInterrupt() to allow user interupt of
 #  mgcv code. (6.12) But then what about memory?#
-#
-#* Should use R memory allocation to gracefully handle out of memory
-#  problems, or at least check for NULL pointer return. How to free on
-#  error/interupt? Note that under linux there is no guarantee that malloc
-#  will return a NULL pointer even if the memory requested is not actually
-#  available, but calloc will (since it has to access mem to 0 it). See man calloc.
 #
 #* predict.gam and plot.gam "iterms" and `seWithMean' options
 #  don't deal properly with case in which centering constraints
