@@ -63,15 +63,6 @@ Sl.setup <- function(G) {
     if (!is.null(G$smooth[[i]]$fixed)&&G$smooth[[i]]$fixed) m <- 0 else
     m <- length(G$smooth[[i]]$S)
 
-   # if (m>0&&!is.null(G$smooth[[i]]$fx)) { ## drop any fixed 
-   #   for (j in m:1) {
-   #     if (G$smooth[[i]]$fx[j]==TRUE) { 
-   #       G$smooth[[i]]$S[[j]] <- NULL
-   #       m <- m - 1
-   #     }
-   #   }
-   # }
-
     if (m>0) {
       Sl[[b]] <- list()
       Sl[[b]]$start <- G$smooth[[i]]$first.para
@@ -116,7 +107,6 @@ Sl.setup <- function(G) {
           b <- b + 1
         }
       } else { ## not possible to split
-        #Sl[[b]]$rank <- nrow(G$smooth[[i]]$S[[1]]) - G$smooth[[i]]$null.space.dim+1 
         Sl[[b]]$S <- G$smooth[[i]]$S
       
       } ## additive block finished
@@ -157,7 +147,6 @@ Sl.setup <- function(G) {
         Sl[[b]]$D <- t(D*t(U)) ## D <- U%*%diag(D)
         Sl[[b]]$Di <- t(U)/D
         ## so if X is smooth model matrix X%*%D is re-parameterized form 
-        ## Sl[[b]]$D <- D; 
         Sl[[b]]$ind <- ind
       }
       ## add penalty square root into E  
@@ -181,8 +170,7 @@ Sl.setup <- function(G) {
       }
       Sl[[b]]$ind <- rep(FALSE,ncol(U))
       Sl[[b]]$ind[ind] <- TRUE ## index penalized within sub-range
-      ## Sl[[b]]$stop = Sl[[b]]$start + Sl[[b]]$rank - 1
-      ## Sl[[b]]$ind <- ind ## IS THIS NEEDED?? (if so should be logical!!)
+     
       ## now compute well scaled sqrt
       S.norm <- norm(Sl[[b]]$S[[1]])
       St <- Sl[[b]]$S[[1]]/S.norm

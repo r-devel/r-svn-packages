@@ -1,59 +1,6 @@
-
-## (c) Simon N. Wood (2013). Provided under GPL 2.
+## (c) Simon N. Wood (2013,2014). Provided under GPL 2.
 ## Routines for gam estimation beyond exponential family.
 
-dDeta.old <- function(y,mu,wt,theta,fam,deriv=0) {
-## old version using link derivatives directly - more overflow prone than 
-## new version below...
-## What is available directly from the family are derivatives of the 
-## deviance and link w.r.t. mu. This routine converts these to the
-## required derivatives of the deviance w.r.t. eta.
-## deriv is the order of derivative of the smoothing parameter score 
-## required.
-   r <- fam$Dd(y, mu, theta, wt, level=deriv)  
-   d <- list(Deta=0,Dth=0,Dth2=0,Deta2=0,EDeta2=0,Detath=0,
-             Deta3=0,Deta2th=0,Detath2=0,
-             Deta4=0,Deta3th=0,Deta2th2=0)
-   if (fam$link=="identity") { ## don't waste time on transformation
-      d$Deta <- r$Dmu;d$Deta2 <- r$Dmu2
-      d$EDeta2 <- r$EDmu2
-      if (deriv>0) {
-        d$Dth <- r$Dth; d$Detath <- r$Dmuth
-        d$Deta3 <- r$Dmu3; d$Deta2th <- r$Dmu2th
-      }
-      if (deriv>1) {
-        d$Deta4 <- r$Dmu4; d$Dth2 <- r$Dth2; d$Detath2 <- r$Dmuth2
-        d$Deta2th2 <- r$Dmu2th2; d$Deta3th <- r$Dmu3th
-      }
-      return(d)
-   }
-
-   ig1 <- fam$mu.eta(fam$linkfun(mu)) 
-   g2 <- fam$d2link(mu)
-   g22 <- g2^2
-   ig12 <- ig1^2;ig13 <- ig12 * ig1
-
-   d$Deta <- r$Dmu * ig1
-   d$Deta2 <- (r$Dmu2 - r$Dmu*g2*ig1)*ig12
-   d$EDeta2 <- r$EDmu2*ig12
-   if (deriv>0) {
-      d$Dth <- r$Dth 
-      d$Detath <- r$Dmuth * ig1
-      g3 <- fam$d3link(mu)
-      d$Deta3 <- (r$Dmu3 - 3*r$Dmu2 * g2 * ig1 + r$Dmu * (3*g22*ig12 - g3 * ig1))*ig13
-      d$Deta2th <- (r$Dmu2th - r$Dmuth*g2*ig1)*ig12
-   }
-   if (deriv>1) {
-     g4 <- fam$d4link(mu)
-     d$Deta4 <- ig12^2*(r$Dmu4 - 6*r$Dmu3*ig1*g2 + r$Dmu2*(15*g22*ig12-4*g3*ig1) - 
-                       r$Dmu*(15*g2^3*ig13-10*g2*g3*ig12  +g4*ig1))
-     d$Dth2 <- r$Dth2
-     d$Detath2 <- r$Dmuth2 * ig1 
-     d$Deta2th2 <- ig12*(r$Dmu2th2 - r$Dmuth2*g2*ig1)
-     d$Deta3th <-  ig13*(r$Dmu3th - 3 *r$Dmu2th*g2*ig1 + r$Dmuth*(3*g22*ig12-g3*ig1))
-   }
-   d
-} ## dDmu.old
 
 
 dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
@@ -295,9 +242,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       if (!is.null(start)) start <- t(T)%*%start
 
       ## form x%*%T in parallel 
-      ## x <- .Call("mgcv_pmmult2",x,T,0,0,control$nthreads,PACKAGE="mgcv")
-      x <- .Call(C_mgcv_pmmult2,x,T,0,0,control$nthreads) ## within package version
-      ## x <- x%*%T   ## model matrix 0(nq^2)
+      x <- .Call(C_mgcv_pmmult2,x,T,0,0,control$nthreads)
       rS <- list()
       for (i in 1:length(UrS)) {
         rS[[i]] <- rbind(rp$rS[[i]],matrix(0,Mp,ncol(rp$rS[[i]])))
@@ -333,7 +278,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   
   ## and now finalize initialization of mu and eta...
 
-  #coefold <- NULL
   eta <- if (!is.null(etastart)) etastart
          else if (!is.null(start)) 
               if (length(start) != nvars) 
@@ -350,7 +294,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    mu.eta <- family$mu.eta
    Dd <- family$Dd
-  # d2link <- family$d2link
+
    linkinv <- family$linkinv
    valideta <- family$valideta
    validmu <- family$validmu
@@ -531,7 +475,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    dd <- dDeta(y,mu,weights,theta,family,deriv)
    w <- dd$Deta2 * .5
-   ## good <- w!=0
+
    ## exclude points for which gradient and second deriv are effectively zero and 
    ## points with non finite second deriv or deriv ratio... 
    min.Deta <- mean(abs(dd$Deta[is.finite(dd$Deta)]))*.Machine$double.eps*.001
@@ -899,7 +843,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
   ## at this stage the Hessian (of pen lik. w.r.t. coefs) should be +ve definite,
   ## so that the pivoted Choleski factor should exist...
-  if (iter == 2*control$maxit&&converged==FALSE) warning(paste("iteration limit reached: max abs grad =",max(abs(grad))))
+  if (iter == 2*control$maxit&&converged==FALSE) 
+    warning(gettextf("iteration limit reached: max abs grad = %g",max(abs(grad))))
 
   ldetHp <- 2*sum(log(diag(L))) - 2 * sum(log(D)) ## log |Hp|
 
@@ -1102,8 +1047,6 @@ gam.fit5.post.proc <- function(object,Sl,L) {
       Hp <- lbb + object$D*t(object$D*object$St) ## pre-conditioned Hp
       ## Now try to invert it by Choleski with diagonal pre-cond,
       ## to get Vb
-      #object$D <- D <- diag(Hp)^-.5 ## diagonal pre-conditioner
-      #Hp <- D*t(D*Hp) ## pre-condition Hp   
       object$L <- suppressWarnings(chol(Hp,pivot=TRUE))
       if (attr(object$L,"rank")==ncol(Hp)) {
         R <- t(t(R)/object$D) ## so R'R = lbb (original)
@@ -1227,4 +1170,4 @@ deriv.check5 <- function(x, y, sp,
    }
    list(fd=list(lb=fdg,lbb=fdh,REML1=REML1,db.drho=fd.br,dH=fd.dH),
         lb=ll$lb,lbb=ll$lbb,REML1=b$REML1,db.drho=b$db.drho,dH=b$dH)
-}
+} ## deriv.check5

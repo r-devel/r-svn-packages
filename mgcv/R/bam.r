@@ -32,10 +32,6 @@ chol2qr <- function(XX,Xy) {
 ## equivalent to qr update. Uses simple
 ## regularization if XX not +ve def. 
 
-  #d <- diag(XX)
-  #ind <- d>0
-  #d[!ind] <- 1;d[ind] <- 1/sqrt(d[ind])
-  #XX <- t(d*t(d*XX)) ## diagonal pre-conditioning
 
   XXeps <- norm(XX)*.Machine$double.eps^.9
   n <- ncol(XX)
@@ -44,13 +40,11 @@ chol2qr <- function(XX,Xy) {
     R <- try(chol(XX+diag(n)*XXeps*i,pivot=TRUE),silent=TRUE) ## R'R = X'X
     if (inherits(R,"try-error")) ok <- FALSE else {
       ipiv <- piv <- attr(R,"pivot") 
-      #f <- try(forwardsolve(t(R),(Xy*d)[piv]),silent=TRUE) 
       f <- try(forwardsolve(t(R),Xy[piv]),silent=TRUE)
       if (inherits(f,"try-error")) ok <- FALSE
     }
     if (ok) { 
       ipiv[piv] <- 1:ncol(R)
-      #R <- t(t(R[,ipiv])/d)
       R <- R[,ipiv]
       break; ## success
     }
@@ -97,7 +91,6 @@ qr.up <- function(arg) {
   dev <- 0    
   for (b in 1:arg$n.block) {
     ind <- arg$start[b]:arg$stop[b]
-    ##arg$G$model <- arg$mf[ind,]
     X <- predict(arg$G,newdata=arg$mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
     rownames(X) <- NULL
     if (is.null(arg$coef)) eta1 <- arg$eta[ind] else eta1 <- drop(X%*%arg$coef) + arg$offset[ind]
@@ -315,9 +308,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
        dev <- 0
        if (n.threads == 1) { ## use original serial update code     
          for (b in 1:n.block) {
-        
            ind <- start[b]:stop[b]
-           ##G$model <- mf[ind,]
            X <- predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
            rownames(X) <- NULL
            if (is.null(coef)) eta1 <- eta[ind] else eta1 <- drop(X%*%coef) + offset[ind]
