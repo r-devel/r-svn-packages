@@ -115,8 +115,7 @@ pdConstruct.pdTens <-
   m <- length(attr(form,"S"))
   if ((aux <- length(val)) > 0) {
     if (aux && (aux != m)) {
-      stop(paste("An object of length", aux,
-		 "does not match the required parameter size"))
+      stop(gettextf("An object of length %d does not match the required parameter size",aux))
     }
   }
   class(val) <- c("pdTens","pdMat")
@@ -1163,7 +1162,7 @@ gammPQL <- function (fixed, random, family, data, correlation, weights,
   converged <- FALSE 
 
   for (i in 1:niter) {
-    if (verbose) message("iteration ", i)
+    if (verbose) message(gettextf("iteration %d", i))
     fit <- lme(fixed=fixed,random=random,data=data,correlation=correlation,
              control=control,weights=varFixed(w.formula),method="ML",...)
     etaold <- eta

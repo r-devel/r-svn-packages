@@ -117,7 +117,7 @@ pcls <- function(M)
   if (m>0) for (i in 1:m)
   { Sa<-c(Sa,M$S[[i]])
     df[i]<-nrow(M$S[[i]])
-    if (M$off[i]+df[i]-1>nar[2]) stop(paste("M$S[",i,"] is too large given M$off[",i,"]",sep=""))
+    if (M$off[i]+df[i]-1>nar[2]) stop(gettextf("M$S[%d] is too large given M$off[%d]", i, i))
   }
   qra.exist <- FALSE
   if (ncol(M$X)>nrow(M$X)) {
@@ -1429,7 +1429,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   object$Ve <- mv$Ve
   object$edf<-mv$edf
   object$edf1 <- mv$edf1
-  object$F <- mv$F ## DoF matrix --- probably not needed
+  ##object$F <- mv$F ## DoF matrix --- probably not needed
   object$R <- mv$R ## qr.R(sqrt(W)X)
   object$aic <- object$aic + 2*sum(mv$edf)
   object$nsdf <- G$nsdf
@@ -2123,8 +2123,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
     else if (!is.null(start)) 
     if (length(start) != nvars) 
-    stop(paste("Length of start should equal", nvars,
-        "and correspond to initial coefs.")) # 1.5.0
+    stop(gettextf("Length of start should equal %d and correspond to initial coefs.",nvars)) 
     else 
     { coefold<-start                        #1.5.0
       offset+as.vector(if (NCOL(G$X) == 1)
@@ -2158,7 +2157,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         good <- (weights > 0) & (mu.eta.val != 0) # note good modified here => must re-calc each iter
         if (all(!good)) {
             conv <- FALSE
-            warning(paste("No observations informative at iteration", 
+            warning(gettextf("No observations informative at iteration %d", 
                 iter))
             break
         }
@@ -2201,7 +2200,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
 
         if (any(!is.finite(G$p))) {
             conv <- FALSE   
-            warning(paste("Non-finite coefficients at iteration",iter))
+            warning(gettextf("Non-finite coefficients at iteration %d",iter))
             break
         }
 
@@ -2212,7 +2211,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         eta <- linkfun(mu) # force eta/mu consistency even if linkinv truncates
         dev <- sum(dev.resids(y, mu, weights))
         if (control$trace) 
-            cat("Deviance =", dev, "Iterations -", iter, "\n")
+            gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
         boundary <- FALSE
         if (!is.finite(dev)) {
             if (is.null(coefold))
@@ -2312,10 +2311,11 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         family = family,linear.predictors = eta, deviance = dev,
         null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights,  
         df.null = nulldf, y = y, converged = conv,sig2=G$sig2,edf=G$edf,edf1=mv$edf1,hat=G$hat,
-        F=mv$F,R=mr$R,
+        ##F=mv$F,
+        R=mr$R,
         boundary = boundary,sp = G$sp,nsdf=G$nsdf,Ve=G$Ve,Vp=G$Vp,rV=mr$rV,mgcv.conv=G$conv,
         gcv.ubre=G$gcv.ubre,aic=aic.model,rank=rank,gcv.ubre.dev=gcv.ubre.dev,scale.estimated = (scale < 0))
-}
+} ## gam.fit
 
 
 model.matrix.gam <- function(object,...)
@@ -2667,7 +2667,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)
           attr(X,"lpi") <- lpi  
           ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,
-                             off=offs,Vb=object$Vp,family.data=object$family.data)
+                             off=offs,Vb=object$Vp)
           if (is.matrix(fit)&&!is.matrix(ffv[[1]])) {
             fit <- fit[,1]; if (se.fit) se <- se[,1]
           }
@@ -2692,7 +2692,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
             if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
             fit[start:stop] <- linkinv(fit[start:stop])
           } else { ## family has its own prediction code for response case
-            ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,off=offs,Vb=object$Vp,family.data=object$family.data)
+            ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
             ##sev <- if (se.fit) se[start:stop] else NULL 
             ##ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
@@ -3825,7 +3825,7 @@ magic.post.proc <- function(X,object,w=NULL)
   edf <- colSums(B) #apply(B,2,sum) # diag(V%*%t(X)%*%WX)
   Vb <- V*object$scale;rm(V)
   list(Ve=Ve,Vb=Vb,hat=hat,edf=edf,edf1=2*edf-edf1,F=F)
-}
+} ## magic.post.proc
 
 single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 ## function to find smoothing parameter corresponding to particular 
@@ -3939,7 +3939,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
       pen[start:finish] <- pen[start:finish]|ind
       sizeXX <- mean(xx)
       sizeS <- mean(ss)
-      if (sizeS <= 0) stop(paste("S[[",i,"]] matrix is not +ve definite.",sep=""))
+      if (sizeS <= 0) stop(gettextf("S[[%d]] matrix is not +ve definite.", i)) 
       def.sp[i] <- sizeXX/ sizeS # relative s.p. estimate
       ## accumulate leading diagonal of \sum sp[i]*S[[i]]
       ldss[start:finish] <- ldss[start:finish] + def.sp[i]*diag(S[[i]]) 

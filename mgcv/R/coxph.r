@@ -35,9 +35,9 @@ cox.ph <- function (link = "identity") {
     ## code to evaluate in estimate.gam...
       ## sort y (time) into decending order, and
       ## re-order weights and rows of X accordingly
-      G$family.data <- list()
+      G$family$data <- list()
       y.order <- order(G$y,decreasing=TRUE)
-      G$family.data$y.order <- y.order
+      G$family$data$y.order <- y.order
       G$y <- G$y[y.order]
       G$X <- G$X[y.order,,drop=FALSE]
       G$w <- G$w[y.order]
@@ -47,14 +47,14 @@ cox.ph <- function (link = "identity") {
     ## code to evaluate in estimate.gam, to do with data ordering and 
     ## baseline hazard estimation...
       ## first get the estimated hazard and prediction information...
-      object$family.data <- G$family$hazard(G$y,G$X,object$coefficients,G$w)
+      object$family$data <- G$family$hazard(G$y,G$X,object$coefficients,G$w)
       rumblefish <- G$family$hazard(G$y,matrix(0,nrow(G$X),0),object$coefficients,G$w)
       s0.base <- exp(-rumblefish$h[rumblefish$r]) ## no model baseline survival 
       s0.base[s0.base >= 1] <- 1 - 2*.Machine$double.eps ## avoid NA later
       ## now put the survivor function in object$fitted
-      object$fitted.values <- exp(-object$family.data$h[object$family.data$r]*exp(object$linear.predictors))
+      object$fitted.values <- exp(-object$family$data$h[object$family$data$r]*exp(object$linear.predictors))
       ## compute the null deviance...
-      s.base <- exp(-object$family.data$h[object$family.data$r]) ## baseline survival
+      s.base <- exp(-object$family$data$h[object$family$data$r]) ## baseline survival
       s.base[s.base >= 1] <- 1 - 2*.Machine$double.eps ## avoid NA later
       object$null.deviance <- ## sum of squares of null deviance residuals
       2*sum(abs((object$prior.weights + log(s0.base) + object$prior.weights*(log(-log(s0.base)))))) 
@@ -95,14 +95,14 @@ cox.ph <- function (link = "identity") {
 
 
     predict <- function(family,se=FALSE,eta=NULL,y=NULL,
-               X=NULL,beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
+               X=NULL,beta=NULL,off=NULL,Vb=NULL) {
       ## prediction function.
       ii <- order(y,decreasing=TRUE) ## C code expects non-increasing
       n <- nrow(X)
       oo <- .C("coxpred",as.double(X[ii,]),t=as.double(y[ii]),as.double(beta),as.double(Vb),
-                a=as.double(family.data$a),h=as.double(family.data$h),q=as.double(family.data$q),
-                tr = as.double(family.data$tr),
-                n=as.integer(n),p=as.integer(ncol(X)),nt = as.integer(family.data$nt),
+                a=as.double(family$data$a),h=as.double(family$data$h),q=as.double(family$data$q),
+                tr = as.double(family$data$tr),
+                n=as.integer(n),p=as.integer(ncol(X)),nt = as.integer(family$data$nt),
                 s=as.double(rep(0,n)),se=as.double(rep(0,n)),PACKAGE="mgcv")
       s <- sef <- oo$s
       s[ii] <- oo$s

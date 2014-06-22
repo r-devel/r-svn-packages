@@ -75,7 +75,8 @@ included in \code{formula}: this conforms to the behaviour of
 \item{method}{The smoothing parameter estimation method. \code{"GCV.Cp"} to use GCV for unknown scale parameter and
 Mallows' Cp/UBRE/AIC for known scale. \code{"GACV.Cp"} is equivalent, but using GACV in place of GCV. \code{"REML"} 
 for REML estimation, including of unknown scale, \code{"P-REML"} for REML estimation, but using a Pearson estimate 
-of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likelihood in place of REML. }
+of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likelihood in place of REML. Beyond the 
+exponential family \code{"REML"} is the default, and the only other option is \code{"ML"}.}
 
 \item{optimizer}{An array specifying the numerical optimization method to use to optimize the smoothing 
 parameter estimation criterion (given by \code{method}). \code{"perf"} for performance iteration. \code{"outer"} 
@@ -194,10 +195,8 @@ just AIC rescaled, but is only used when \eqn{s}{s} is known.
 
 Alternatives are GACV, or a Laplace approximation to REML. There
 is some evidence that the latter may actually be the most effective choice. 
-
-Smoothing parameters are chosen to 
-minimize the GCV, UBRE/AIC, GACV or REML scores for the model, and the main computational challenge solved 
-by the \code{mgcv} package is to do this efficiently and reliably. Various
+The main computational challenge solved 
+by the \code{mgcv} package is to optimize the smoothness selection criteria efficiently and reliably. Various
 alternative numerical methods are provided which can be set by argument \code{optimizer}.
 
 
@@ -206,7 +205,8 @@ coefficient matrices for each smooth term in the model formula, obtaining a mode
 the strictly parametric part of the model formula, and combining these to obtain a 
 complete model matrix (/design matrix) and a set of penalty matrices for the smooth terms. 
 Some linear identifiability constraints are also obtained at this point. The model is 
-fit using \code{\link{gam.fit}}, a modification of \code{\link{glm.fit}}. The GAM 
+fit using \code{\link{gam.fit}}, \code{\link{gam.fit3}} or varaints, which are modifications 
+of \code{\link{glm.fit}}. The GAM 
 penalized likelihood maximization problem is solved by Penalized Iteratively 
 Reweighted  Least Squares (P-IRLS) (see e.g. Wood 2000). 
 Smoothing parameter selection is integrated in one of two ways. (i)
@@ -217,7 +217,7 @@ parameter estimates converge. (ii) Alternatively the P-IRLS scheme is iterated t
 convergence for each trial set of smoothing parameters, and GCV, UBRE or REML scores
 are only evaluated on convergence - optimization is then `outer' to the P-IRLS
 loop: in this case the P-IRLS iteration has to be differentiated, to
-facilitate optimization, and \code{\link{gam.fit3}} is used in place of
+facilitate optimization, and \code{\link{gam.fit3}} or one of its variants is used in place of
 \code{gam.fit}. The default is the second method, outer iteration.
 
 
@@ -239,7 +239,8 @@ Note that \code{gam} assumes a very inclusive definition of what counts as a GAM
 basically any penalized GLM can be used: to this end \code{gam} allows the non smooth model 
 components to be penalized via argument \code{paraPen} and allows the linear predictor to depend on 
 general linear functionals of smooths, via the summation convention mechanism described in 
-\code{\link{linear.functional.terms}}.
+\code{\link{linear.functional.terms}}. \code{link{family.mgcv}} details what is available beyond GLMs 
+and the exponential family.
      
 Details of the default underlying fitting methods are given in Wood (2011
 and 2004). Some alternative methods are discussed in Wood (2000 and 2006). 
@@ -253,11 +254,12 @@ can depend on any (bounded) linear functional of smooth terms, (iv) the parametr
 (v) simple random effects can be incorporated, and 
 (vi) the facilities for incorporating smooths of more than one variable are
 different: specifically there are no \code{lo} smooths, but instead (a) \code{\link{s}}
-terms can have more than one argument, implying an isotropic smooth and (b) \code{\link{te}} or \code{\link{t2}} smooths are
+terms can have more than one argument, implying an isotropic smooth and (b) \code{\link{te}}, 
+\code{\link{ti}} or \code{\link{t2}} smooths are
 provided as an effective means for modelling smooth interactions of any
 number of variables via scale invariant tensor product smooths. Splines on the sphere, Duchon splines 
-and Gaussian Markov Random Fields are also available. See \link[gam]{gam} 
-from package \code{gam}, for GAMs via the original Hastie and Tibshirani approach.
+and Gaussian Markov Random Fields are also available. (vii) Models beyond the exponential family are available. 
+See \link[gam]{gam} from package \code{gam}, for GAMs via the original Hastie and Tibshirani approach.
 }
 
 

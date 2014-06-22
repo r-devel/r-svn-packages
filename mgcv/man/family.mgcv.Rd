@@ -17,7 +17,7 @@ The following families are in the exponential family given the value of a single
 
 
 The following families are for regression type models dependent on a single linear predictor, and with a log likelihood
-which is a sum of independent terms, each coprresponding to a single response observation. Usable only with \code{\link{gam}}.
+which is a sum of independent terms, each coprresponding to a single response observation. Usable only with \code{\link{gam}}, with smoothing parameter estimation by \code{"REML"} or \code{"ML"} (the latter does not integrate the unpenalized and parameteric effects out of the marginal likelihood optimized for the smoothing parameters).
 \itemize{
 \item \code{\link{ocat}} for ordered categorical data.
 \item \code{\link{tw}} for Tweedie distributed data, when the power parameter relating the variance to the mean is to be estimated.
@@ -27,7 +27,7 @@ which is a sum of independent terms, each coprresponding to a single response ob
 \item \code{\link{ziP}} for zero inflated Poisson data, when the zero inflation rate depends simply on the Poisson mean.
 } %% end itemize 
 
-The following families implement more general model classes. Usable only with \code{\link{gam}}.
+The following families implement more general model classes. Usable only with \code{\link{gam}} and only with REML smoothing parameter estimation.
 \itemize{
 \item \code{\link{cox.ph}} the Cox Proportional Hazards model for survival data.
 \item \code{\link{gaulss}} a Gaussian location-scale model where the mean and the standard deviation are both modelled using smooth linear predictors.

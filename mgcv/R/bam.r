@@ -386,7 +386,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       rss.extra <- qrx$y.norm2 - sum(qrx$f^2)
       
       if (control$trace)
-         cat("Deviance =", dev, "Iterations -", iter,"\n")
+         gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
 
       if (!is.finite(dev)) stop("Non-finite deviance")
 
@@ -457,7 +457,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         object$coefficients <- fit$b
         object$edf <- post$edf 
         object$edf1 <- post$edf1
-        object$F <- post$F
+        ##object$F <- post$F
         object$full.sp <- fit$sp.full
         object$gcv.ubre <- fit$score
         object$hat <- post$hat
@@ -476,8 +476,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         
       if (any(!is.finite(coef))) {
           conv <- FALSE
-          warning("non-finite coefficients at iteration ",
-                  iter)
+          warning(gettextf("non-finite coefficients at iteration %d",
+                  iter))
           break
       }
     } ## end fitting iteration
@@ -487,7 +487,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       object$edf <- res$edf
       object$edf1 <- res$edf1
       object$edf2 <- res$edf2
-      object$F <- res$F
+      ##object$F <- res$F
       object$hat <- res$hat
       object$Vp <- res$Vp
       object$Ve <- res$Ve
@@ -598,7 +598,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
       rss.extra <- qrx$y.norm2 - sum(qrx$f^2)
       
       if (control$trace)
-         cat("Deviance =", dev, "Iterations -", iter,"\n")
+         gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
 
       if (!is.finite(dev)) stop("Non-finite deviance")
 
@@ -636,7 +636,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
         object$coefficients <- fit$b
         object$edf <- post$edf
         object$edf1 <- post$edf1
-        object$F <- post$F
+        #object$F <- post$F
         object$full.sp <- fit$sp.full
         object$gcv.ubre <- fit$score
         object$hat <- post$hat
@@ -1004,7 +1004,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp)
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
-     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,F=res$F,
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,
                     db.drho=fit$d1b,
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
                     message=fit$conv),rank=ncol(um$X),
@@ -1054,7 +1054,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      object$coefficients <- fit$b
      object$edf <- post$edf
      object$edf1 <- post$edf1
-     object$F <- post$F
+     ##object$F <- post$F
      object$full.sp <- fit$sp.full
      object$gcv.ubre <- fit$score
      object$hat <- post$hat
@@ -1456,7 +1456,7 @@ bam.update <- function(b,data,chunk.size=10000) {
      res <- Sl.postproc(b$Sl,fit,um$undrop,b$qrx$R,cov=TRUE,scale=scale)
 
 
-     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,F=res$F,
+     object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,
                     gcv.ubre=fit$reml,hat=res$hat,outer.info=list(iter=fit$iter,
                     message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
                     Ve=NULL,Vp=res$V,Vc=res$Vc,db.drho=fit$d1b,scale.estimated = scale<=0)
@@ -1508,7 +1508,7 @@ bam.update <- function(b,data,chunk.size=10000) {
     b$coefficients <- fit$b
     b$edf <- post$edf
     b$edf1 <- post$edf1
-    b$F <- post$F
+    ##b$F <- post$F
     b$full.sp <- fit$sp.full
     b$gcv.ubre <- fit$score
     b$hat <- post$hat
@@ -1524,7 +1524,7 @@ bam.update <- function(b,data,chunk.size=10000) {
     b$coefficients <- object$coefficients
     b$edf <- object$edf
     b$edf1 <- object$edf1
-    b$F <- object$F
+    ##b$F <- object$F
     b$full.sp <- object$sp.full
     b$gcv.ubre <- object$gcv.ubre
     b$hat <- object$hat

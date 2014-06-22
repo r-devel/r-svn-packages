@@ -758,10 +758,10 @@ ziplss <-  function(link=list("identity","identity")) {
   } ## residuals
 
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
-                beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
+                beta=NULL,off=NULL,Vb=NULL) {
   ## optional function to give predicted values - idea is that 
   ## predict.gam(...,type="response") will use this, and that
-  ## either eta will be provided, or {X, beta, off, Vb}. family.data
+  ## either eta will be provided, or {X, beta, off, Vb}. family$data
   ## contains any family specific extra information. 
 
     if (is.null(eta)) { 

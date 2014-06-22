@@ -368,12 +368,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       if (control$trace) cat(iter," ")
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-      ## w <- dd$Deta2 * .5
-      #good <- is.finite(dd$Deta.Deta2)
-      #w <- dd$Deta2[good] * .5
-      ## w <- w[good]
-      #z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
-      
+     
       good <- is.finite(dd$Deta.Deta2)
       if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n") 
       w <- dd$Deta2 * .5;
@@ -395,11 +390,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
         if (control$trace) cat("**using positive weights\n")
         # problem is that Fisher can be very poor for zeroes  
-        #good <- is.finite(dd$Deta.EDeta2)
-        #w <- dd$EDeta2[good] * .5 ## Fisher 
-        ## just dropping drops informative obs
-        ##good <- w > 0
-        ##w <- w[good]
+
         ## index weights that are finite and positive 
         good <- is.finite(dd$Deta2)
         good[good] <- dd$Deta2[good]>0 
@@ -452,7 +443,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                eta <- (eta + etaold)/2               
                mu <- linkinv(eta)
                dev <- sum(dev.resids(y, mu, weights,theta))
-               #if (Utoo) dev <- dev + 2*family$U(y,mu,x,weights,FALSE)$U
+              
          }
          boundary <- TRUE
          penalty <- t(start)%*%St%*%start ## reset penalty too
@@ -529,8 +520,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    
    ## so at this stage the model has been fully estimated
    coef <- as.numeric(T %*% coef)
-   #coef ## final parameters
-
+ 
    ## now obtain derivatives, if these are needed...
    check.derivs <- FALSE
    while (check.derivs) { ## debugging code to check derivatives
@@ -549,14 +539,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    good <- is.finite(dd$Deta.Deta2)&is.finite(w)&!(abs(dd$Deta2) < min.Deta2 & abs(dd$Deta) < min.Deta) 
    if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
    w <- w[good] 
- #  w <- dd$Deta2 * .5;
- #  if (sum(!good)) {
- #    good1 <- is.finite(w)&good ## make sure w finite too
- #    w[!is.finite(w)] <- 0      ## clear infinite w
- #    w[!good1&w==0] <- max(w)*.Machine$double.eps^.5 ## reset zero value weights for problem elements
- #    dd$Deta.Deta2[!good] <- .5*dd$Deta[!good]/w ## reset problem elements to finite
- #    good <- is.finite(dd$Deta.Deta2) ## check in case Deta not finite, for example
- #  }
+
    z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
    wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
 
@@ -592,7 +575,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        } 
      }
    }
-   ## can't have zero weights in gdi2 call REDUNDANT?
+   ## can't have zero weights in gdi2 call
    mwb <- max(abs(w))*.Machine$double.eps
    mwa <- min(abs(w[w!=0]))*.0001; if (mwa==0) mwa <- mwb
    w[w==0] <- min(mwa,mwb);
@@ -677,9 +660,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ww[good] <- w
    aic.model <- family$aic(y, mu, theta, weights, dev) # note: incomplete 2*edf needs to be added
  
-  ## fitted values might not just be mu....
-  ## if (!is.null(family$fv)) mu <- family$fv(mu,theta) 
-  ## .... actually, probably do not want to return fv values here
 
    list(coefficients = coef,residuals=residuals,fitted.values = mu,
         family=family, linear.predictors = eta,deviance=dev,
@@ -695,10 +675,10 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         aic=aic.model,
         rank=oo$rank.est,
         K=Kmat,control=control
-        ,D1=oo$D1,D2=D2,
-        ldet=oo$ldet,ldet1=oo$ldet1,ldet2=ldet2,
-        bSb=oo$P,bSb1=oo$P1,bSb2=bSb2,
-        ls=ls$ls,ls1=ls$lsth1,ls2=ls$lsth2
+        #,D1=oo$D1,D2=D2,
+        #ldet=oo$ldet,ldet1=oo$ldet1,ldet2=ldet2,
+        #bSb=oo$P,bSb1=oo$P1,bSb2=bSb2,
+        #ls=ls$ls,ls1=ls$lsth1,ls2=ls$lsth2
        )
  
 } ## gam.fit4
@@ -707,8 +687,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
 gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
                      control=gam.control(),Mp=-1,start=NULL){
-## NOTE!!!! 1. Current initialization code is just hacked - need to replace.
-##          2. offset handling - needs to be passed to ll code
+## NOTE: offset handling - needs to be passed to ll code
 ## fit models by general penalized likelihood method, 
 ## given doubly extended family in family. lsp is log smoothing parameters
 ## Stabilization strategy:
@@ -1081,7 +1060,6 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        #b2 = d2b)
        H = ll$lbb,dH = ll$d1H)#,d2H=llr$d2H)
-    #ret$dev <- if (is.null(family$residuals)) NA else sum(family$residuals(ret,"deviance")^2)
     ret
 } ## end of gam.fit5
 

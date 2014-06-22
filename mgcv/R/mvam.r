@@ -31,7 +31,7 @@ mvn <- function(d=2) {
       attr(G$X,"XX") <- XX
       ## pad out sqrt of balanced penalty matrix to account for extra params
       attr(G$Sl,"E") <- cbind(attr(G$Sl,"E"),matrix(0,nbeta,ntheta))
-      G$family.data <- list(ydim = ydim,nbeta=nbeta)
+      G$family$data <- list(ydim = ydim,nbeta=nbeta)
       G$family$ibeta = rep(0,ncol(G$X))
       ## now get initial parameters and store in family...
       for (k in 1:ydim) {
@@ -47,15 +47,15 @@ mvn <- function(d=2) {
     postproc <- expression({
     ## code to evaluate in estimate.gam, to do with estimated factor of
     ## precision matrix, etc...
-      ydim <- G$family.data$ydim
+      ydim <- G$family$data$ydim
       R <- matrix(0,ydim,ydim)
-      ind <- G$family.data$nbeta + 1:(ydim*(ydim+1)/2);
+      ind <- G$family$data$nbeta + 1:(ydim*(ydim+1)/2);
       theta <- object$coefficients[ind]
       k <- 1;for (i in 1:ydim) for (j in i:ydim) {
         if (i==j) R[i,j] <- exp(theta[k]) else R[i,j] <- theta[k]
         k <- k + 1
       }
-      object$family.data <- list(R=R) 
+      object$family$data <- list(R=R) 
       rsd <- R%*%t(object$y-object$fitted.values)
       object$deviance <- sum(rsd^2)
       rsd <- R%*%(t(object$y)-colMeans(object$y))
@@ -77,7 +77,7 @@ mvn <- function(d=2) {
     residuals <- function(object,type=c("response","deviance")) {
       type <- match.arg(type)
       res <- object$y - object$fitted.values
-      if (type=="deviance") res <- res%*%t(object$family.data$R)
+      if (type=="deviance") res <- res%*%t(object$family$data$R)
       res 
     } ## residuals
 

@@ -25,6 +25,8 @@
    to account for smoothing parameter uncertainty in degrees of freedom
    term.
 
+* Polish translation added thanks to Lukasz Daniel.
+
 * interpret.gam now evaluates in namespace of mgcv with environment of
   formula as enclosing environment, to allow it to be called without 
   attaching mgcv... 

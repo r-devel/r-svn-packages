@@ -268,8 +268,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             etastart
         else if (!is.null(start)) 
             if (length(start) != nvars) 
-                stop("Length of start should equal ", nvars, 
-                  " and correspond to initial coefs for ", deparse(xnames))
+                stop(gettextf("Length of start should equal %d and correspond to initial coefs for %s", 
+                     nvars, deparse(xnames)))
             else {
                 coefold <- start
                 offset + as.vector(if (NCOL(x) == 1) 
@@ -310,7 +310,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          
             if (all(!good)) {
                 conv <- FALSE
-                warning("No observations informative at iteration ", iter)
+                warning(gettextf("No observations informative at iteration %d", iter))
                 break
             }
             mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good]
@@ -354,8 +354,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
             if (any(!is.finite(start))) {
                 conv <- FALSE
-                warning("Non-finite coefficients at iteration ", 
-                  iter)
+                warning(gettextf("Non-finite coefficients at iteration %d", 
+                  iter))
                 break
             }        
      
@@ -363,8 +363,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            dev <- sum(dev.resids(y, mu, weights))
           
            if (control$trace) 
-                cat("Deviance =", dev, "Iterations -", iter, 
-                  "\n")
+             gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
             boundary <- FALSE
             
             if (!is.finite(dev)) {
@@ -415,7 +414,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             pdev <- dev + penalty  ## the penalized deviance 
 
             if (control$trace) 
-                  cat("penalized deviance =", pdev, "\n")
+                gettextf("penalized deviance = %s", pdev, domain = "R-mgcv")
+               
 
             div.thresh <- 10*(.1+abs(old.pdev))*.Machine$double.eps^.5 
             ## ... threshold for judging divergence --- too tight and near
@@ -437,7 +437,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   dev <- sum(dev.resids(y, mu, weights))
                   pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
                 if (control$trace) 
-                  cat("Step halved: new penalized deviance =", pdev, "\n")
+                  gettextf("Step halved: new penalized deviance = %g", pdev, "\n")
               }
             } 
             
@@ -2272,7 +2272,7 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
             if (!is.null(stats$name))
                 linktemp <- stats$name
         }
-        else stop(linktemp, " link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"")
+        else stop(gettextf("%s link not available for negative binomial family; available links are \"identity\", \"log\" and \"sqrt\"",linktemp))
     }
     env <- new.env(parent = .GlobalEnv)
     assign(".Theta", theta, envir = env)

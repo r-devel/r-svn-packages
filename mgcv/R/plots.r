@@ -1309,8 +1309,9 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
     }
     if (k<2) stop("Model does not seem to have enough terms to do anything useful")
   } else { 
-    if (sum(view%in%v.names)!=2) stop(
-        paste(c("view variables must be one of",v.names),collapse=", "))
+    if (sum(view%in%v.names)!=2) stop(gettextf("view variables must be one of %s", 
+                                      paste(v.names, collapse = ", ")))
+
     for (i in 1:2) 
     if  (!inherits(x$var.summary[[view[i]]],c("numeric","factor"))) 
     stop("Don't know what to do with parametric terms that are not simple numeric or factor variables")
@@ -1322,9 +1323,9 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
   } else {
     if (length(unique(x$var.summary[[view[i]]]))<=1) ok <- FALSE 
   }
-  if (!ok) 
-  stop(paste("View variables must contain more than one value. view = c(",view[1],",",view[2],").",sep=""))
-
+  if (!ok) stop(gettextf("View variables must contain more than one value. view = c(%s,%s).",
+                view[1], view[2]))
+ 
   # now get the values of the variables which are not the arguments of the plotted surface
 #  marg<-x$model[1,]
 #  m.name<-names(x$model)

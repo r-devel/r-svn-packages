@@ -59,7 +59,7 @@ b <- gam(list(y0~s(x0)+s(x1),y1~s(x2)+s(x3)),family=mvn(d=2),data=dat)
 b
 summary(b)
 plot(b,pages=1)
-solve(crossprod(b$family.data$R)) ## estimated cov matrix
+solve(crossprod(b$family$data$R)) ## estimated cov matrix
 
 }
 \keyword{models} \keyword{regression}%-- one or more ..

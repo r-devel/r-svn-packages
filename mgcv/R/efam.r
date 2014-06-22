@@ -32,7 +32,7 @@
 ## rd - optional function for simulating response data from fitted model.
 ## residuals - optional function for computing residuals.
 ## predict - optional function for predicting from model, called by predict.gam.
-## family.data - optional list storing any family specific data for use, e.g. in predict
+## family$data - optional list storing any family specific data for use, e.g. in predict
 ##               function.
 
 
@@ -507,10 +507,10 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   ## predict == TRUE indicates prediction call.
  
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
-                beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
+                beta=NULL,off=NULL,Vb=NULL) {
   ## optional function to give predicted values - idea is that 
   ## predict.gam(...,type="response") will use this, and that
-  ## either eta will be provided, or {X, beta, off, Vb}. family.data
+  ## either eta will be provided, or {X, beta, off, Vb}. family$data
   ## contains any family specific extra information. 
     ocat.prob <- function(theta,lp,se=NULL) {
     ## compute probabilities for each class in ocat model
@@ -1047,7 +1047,6 @@ betar <- function (theta = NULL, link = "logit") {
     preinitialize <- expression({
      ## code to evaluate in estimate.gam...
      ## reset G$y values of <=0 and >= 1 to eps and 1-eps...
-     # G$family.data <- list()
       eps <- 1e-7 
       G$y[G$y >= 1-eps] <- 1 - eps
       G$y[G$y<= eps] <- eps
@@ -1133,7 +1132,7 @@ betar <- function (theta = NULL, link = "logit") {
       theta <- object$family$getTheta(trans=TRUE) ## exp theta
       lf <- object$family$saturated.ll(G$y, wts,theta)
       ## storing the saturated loglik for each datum...
-      object$family.data <- list(ls = lf$term,mu.ls = lf$mu)   
+      object$family$data <- list(ls = lf$term,mu.ls = lf$mu)   
       l2 <- object$family$dev.resids(G$y,object$fitted.values,wts)
       object$deviance <- 2*lf$f + sum(l2)
       wtdmu <- if (G$intercept) sum(wts * G$y)/sum(wts) 
@@ -1160,9 +1159,9 @@ betar <- function (theta = NULL, link = "logit") {
         sim <- attr(y,"simula")
      #   if (!is.null(sim)) {  ## if response values simulated, Newton search called to get saturated log.lik
            lf <- object$family$saturated.ll(y, wts,object$family$getTheta(TRUE))
-           object$family.data$ls <- lf$term  
+           object$family$data$ls <- lf$term  
      #   }
-        res <- 2*object$family.data$ls + object$family$dev.resids(y,mu,wts)
+        res <- 2*object$family$data$ls + object$family$dev.resids(y,mu,wts)
         res[res<0] <- 0
         s <- sign(y-mu)
         res <- sqrt(res) * s   
@@ -1614,7 +1613,7 @@ ziP <- function (theta = NULL, link = "identity") {
       ## wts <- object$prior.weights
       lf <- object$family$saturated.ll(G$y,family, object$prior.weights)
       ## storing the saturated loglik for each datum...
-      object$family.data <- list(ls = lf)   
+      object$family$data <- list(ls = lf)   
       l2 <- object$family$dev.resids(G$y,object$linear.predictors,object$prior.weights)
       object$deviance <- sum(l2-lf)
       fnull <- function(gamma,object) {
@@ -1717,10 +1716,10 @@ ziP <- function (theta = NULL, link = "identity") {
   } ## residuals
 
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
-                beta=NULL,off=NULL,Vb=NULL,family.data=NULL) {
+                beta=NULL,off=NULL,Vb=NULL) {
   ## optional function to give predicted values - idea is that 
   ## predict.gam(...,type="response") will use this, and that
-  ## either eta will be provided, or {X, beta, off, Vb}. family.data
+  ## either eta will be provided, or {X, beta, off, Vb}. family$data
   ## contains any family specific extra information. 
  
     theta <- family$getTheta()

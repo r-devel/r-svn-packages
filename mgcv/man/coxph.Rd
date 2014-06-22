@@ -76,11 +76,11 @@ lines(newd$time,fv$fit-2*fv$se.fit,col=2)
 
 ## crude plot of baseline survival...
 
-plot(b$family.data$tr,exp(-b$family.data$h),type="l",ylim=c(0,1),
+plot(b$family$data$tr,exp(-b$family$data$h),type="l",ylim=c(0,1),
      xlab="time",ylab="survival")
-lines(b$family.data$tr,exp(-b$family.data$h + 2*b$family.data$q^.5),col=2)
-lines(b$family.data$tr,exp(-b$family.data$h - 2*b$family.data$q^.5),col=2)
-lines(b$family.data$tr,exp(-b$family.data$km),lty=2) ## Kaplan Meier
+lines(b$family$data$tr,exp(-b$family$data$h + 2*b$family$data$q^.5),col=2)
+lines(b$family$data$tr,exp(-b$family$data$h - 2*b$family$data$q^.5),col=2)
+lines(b$family$data$tr,exp(-b$family$data$km),lty=2) ## Kaplan Meier
 
 ## Simple simulated known truth example...
 ph.weibull.sim <- function(eta,gamma=1,h0=.01,t1=100) { 

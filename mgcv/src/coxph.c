@@ -1,5 +1,5 @@
 /* The Cox Proportional Hazard model for survival data, 
-   for mgcv. (c) Simon N. Wood 2013 
+   for mgcv. (c) Simon N. Wood 2013-14 
    
    See for example, Hastie and Tibshirani (1990) for the log partial 
    likelihood (Peto's, 1972, approximation for ties). 
