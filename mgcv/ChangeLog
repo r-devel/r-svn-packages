@@ -27,6 +27,11 @@
 
 * Polish translation added thanks to Lukasz Daniel.
 
+* gam.fit3 now forces eta and mu to be consistent with coef and valid on
+  return (previously could happen that if step halving was used in final
+  iteration then eta or mu could be invalid, e.g. when using identity link
+  with non-negative data)
+
 * interpret.gam now evaluates in namespace of mgcv with environment of
   formula as enclosing environment, to allow it to be called without 
   attaching mgcv... 

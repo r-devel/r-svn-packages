@@ -224,7 +224,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     if (is.null(mustart)) {
         eval(family$initialize)
     } else {
-        ##start <- NULL ## if mustart was supplied then ignore start
         mukeep <- mustart
         eval(family$initialize)
         mustart <- mukeep
@@ -277,10 +276,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                 else x %*% start)
             }
         else family$linkfun(mustart)
-        etaold <- eta
+        #etaold <- eta
         muold <- mu <- linkinv(eta)
-        if (!(validmu(mu) && valideta(eta))) 
-            stop("Can't find valid starting values: please specify some")
+        #if (!(validmu(mu) && valideta(eta))) 
+        #    stop("Can't find valid starting values: please specify some")
     
         boundary <- conv <- FALSE
         rV=matrix(0,ncol(x),ncol(x))   
@@ -290,10 +289,18 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         ## immediate failure, in case start is on edge of feasible space...
         ## if (!is.null(start)) null.coef <- start
         coefold <- null.coef
-        null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
+        etaold <- null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
         old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights)) + t(null.coef)%*%St%*%null.coef 
         ## ... if the deviance exceeds this then there is an immediate problem
-    
+        ii <- 0
+        while (!(validmu(mu) && valideta(eta))) { ## shrink towards null.coef if immediately invalid
+          ii <- ii + 1
+          if (ii>20) stop("Can't find valid starting values: please specify some")
+          if (!is.null(start)) start <- start * .9 + coefold * .1
+          eta <- .9 * eta + .1 * etaold  
+          mu <- linkinv(eta)
+        }
+
         for (iter in 1:control$maxit) { ## start of main fitting iteration
             good <- weights > 0
             var.val <- variance(mu)
@@ -453,6 +460,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                 } else {
                   conv <- TRUE
                   coef <- start
+                  etaold <- eta
                   break 
                 }
             }
@@ -580,6 +588,18 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
          coef <- oo$beta;
+         eta <- drop(x%*%coef + offset)
+         mu <- linkinv(eta)
+         if (!(validmu(mu)&&valideta(eta))) {
+           ## if iteration terminated with step halving then it can be that
+           ## gdi1 returns an invalid coef, because likelihood is actually
+           ## pushing coefs to invalid region. Probably not much hope in 
+           ## this case, but it is worth at least returning feasible values,
+           ## even though this is not quite consistent with derivs.
+           coef <- start
+           eta <- etaold
+           mu <- linkinv(eta)
+         }
          trA <- oo$trA;
          pearson <- sum((y-mu)^2/family$variance(mu)) ## Pearson statistic
 
@@ -766,11 +786,8 @@ gam.fit3.post.proc <- function(X,L,object) {
   ## get QR factor R of WX - more efficient to do this
   ## in gdi_1 really, but that means making QR of augmented 
   ## a two stage thing, so not clear cut...
-  #qrx <- qr(sqrt(object$weights)*X,LAPACK=TRUE,tol=0)
-  #R <- qr.R(qrx);R[,qrx$pivot] <- R
   qrx <- pqr(sqrt(object$weights)*X,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
-  ##bias = as.numeric(object$coefficients - F%*%object$coefficients)
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
     M <- ncol(object$db.drho)
     ## transform to derivs w.r.t. working, noting that an extra final row of L
@@ -786,14 +803,8 @@ gam.fit3.post.proc <- function(X,L,object) {
     Vc <- crossprod(rV%*%t(object$db.drho))
     Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
     ## finite sample size check on edf sanity...
-    #ev <- eigen(Vc,symmetric=TRUE)
-    #ev$values[ev$values<0] <- 0
-    #C <- sqrt(ev$values)*t(ev$vectors)
-    #D <- eigen(crossprod(R%*%t(C)),symmetric=TRUE,only.values=TRUE)$values/object$scale
-    #D[D>1] <- 1;D[D<0] <- 0
     edf2 <- rowSums(Vc*crossprod(R))/object$scale.est
     if (sum(edf2)>sum(edf1)) edf2 <- edf1 
-    #edf2 <- sum(D)
   } else edf2 <- Vc <- NULL
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
@@ -1246,7 +1257,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
     ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
-    if (score1<score&&pdef) { ## immediately accept step if it worked and positive definite
+    if (score1<score && pdef) { ## immediately accept step if it worked and positive definite
       old.score <- score 
       mustart <- b$fitted.values
       etastart <- b$linear.predictors
@@ -1333,9 +1344,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           }
           score1 <- score - abs(score) - 1 ## make sure that score1 < score
         }  # end of if (score1<= score ) # accept
-        ii <- ii + 1
+        if (score1>score) ii <- ii + 1
       } ## end while (score1>score && ii < maxHalf)
-      if (!pdef&&sd.unused) score1 <- score2
+      if (!pdef&&sd.unused&&ii<maxHalf) score1 <- score2
     } ## end of step halving branch
 
     ## if the problem is not positive definite, and the sd direction has not 
