@@ -454,7 +454,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                ## Need to check coefs converged adequately, to ensure implicit differentiation
                ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
                ## drop same parameter every iteration!)       
-               grad <- 2 * t(x)%*%(w*((x%*%start)-z))+ 2*St%*%start 
+               grad <- 2 * t(x[good,])%*%(w*((x%*%start)[good]-z))+ 2*St%*%start 
                if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
                ##if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
                ## if (max(abs(mu-muold))>control$epsilon*max(abs(mu+muold))/2) {
