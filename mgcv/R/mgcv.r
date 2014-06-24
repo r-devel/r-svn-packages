@@ -203,13 +203,14 @@ interpret.gam0 <- function(gf,textra=NULL)
       ## have to evaluate in the environment of the formula or you can't find variables 
       ## supplied as smooth arguments, e.g. k <- 5;gam(y~s(x,k=k)), fails,
       ## but if you don't specify namespace of mgcv then stuff like 
-      ## loadNamespace('mgcv'); mgcv::interpret.gam(y~s(x)) fails (can't find s)
+      ## loadNamespace('mgcv'); k <- 10; mgcv::interpret.gam(y~s(x,k=k)) fails (can't find s)
       ## eval(parse(text=terms[i]),envir=p.env,enclos=loadNamespace('mgcv')) fails??
-      ## following supplies namespace of mgcv explicitly if not on search path...
-
-      st <- if (mgcvat) eval(parse(text=terms[i]),envir=p.env) else
+      ## following may supply namespace of mgcv explicitly if not on search path...
+      if (mgcvat) st <- eval(parse(text=terms[i]),envir=p.env) else {
+         st <- try(eval(parse(text=terms[i]),envir=p.env),silent=TRUE)
+         if (inherits(st,"try-error")) st <- 
             eval(parse(text=terms[i]),enclos=p.env,envir=loadNamespace('mgcv'))
-
+      }
       if (!is.null(textra)) { ## modify the labels on smooths with textra
         pos <- regexpr("(",st$lab,fixed=TRUE)[1]
         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,
