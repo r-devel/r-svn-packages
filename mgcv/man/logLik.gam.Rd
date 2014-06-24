@@ -1,5 +1,6 @@
 \name{logLik.gam}
 \alias{logLik.gam}
+\alias{AIC.gam}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Log likelihood for a fitted GAM, for AIC}
 \description{ Function to extract the log-likelihood for a fitted \code{gam}
@@ -26,7 +27,8 @@ parameters, and the model maximizes the penalized likelihood, not the actual
 likelihood. (See e.g. Hastie and Tibshirani, 1990, section 6.8.3 and also Wood 2008), 
 
 By default this routine uses a definition of the effective degrees of freedom that 
-includes smoothing parameter uncertainty.
+includes smoothing parameter uncertainty, if this is available (i.e. if smoothing 
+parameter selection is by some variety of marginal likelihood).
   
 }
 
