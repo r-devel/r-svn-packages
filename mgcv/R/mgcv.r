@@ -2851,15 +2851,15 @@ concurvity <- function(b,full=TRUE) {
 
 residuals.gam <-function(object, type = "deviance",...)
 ## calculates residuals for gam object 
-{ #type <- match.arg(type)
-  ## if family has its own residual function, then use that...
+{ ## if family has its own residual function, then use that...
   if (!is.null(object$family$residuals)) {
     res <- object$family$residuals(object,type,...)
     res <- naresid(object$na.action,res)
     return(res)
   }
-  if (sum(type %in% c("deviance", "pearson","scaled.pearson", "working", "response") )==0) 
-        stop(paste(type," residuals not available"))
+  type <- match.arg(type,c("deviance", "pearson","scaled.pearson", "working", "response"))
+  #if (sum(type %in% c("deviance", "pearson","scaled.pearson", "working", "response") )==0) 
+  #      stop(paste(type," residuals not available"))
   ## default computations...
   y <- object$y
   mu <- object$fitted.values
