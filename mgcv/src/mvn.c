@@ -256,13 +256,13 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note
 
       dH += nb * nb; /* move on to next Hessian */
     } /* smoothing parameter loop */ 
-    R_chk_free(yX);R_chk_free(yRX);R_chk_free(yty);R_chk_free(deriv_theta);
+    R_chk_free(yX);R_chk_free(yRX);R_chk_free(yty);
   } /* if (*deriv) */
   
 
   R_chk_free(din); R_chk_free(rri); R_chk_free(rci);
   
-  R_chk_free(R);R_chk_free(Rymu);
+  R_chk_free(R);R_chk_free(Rymu);R_chk_free(deriv_theta);
 } /* mvn_ll */
 
 
