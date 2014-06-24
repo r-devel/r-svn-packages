@@ -196,6 +196,7 @@ interpret.gam0 <- function(gf,textra=NULL)
   ns <- len.sp + len.tp + len.tip + len.t2p # number of smooths
   pav <- av <- rep("",0)
   smooth.spec <- list()
+  mgcvat <- "package:mgcv" %in% search() ## is mgcv in search path?
   if (nt) for (i in 1:nt) { # work through all terms
     if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||
                   (kti<=len.tip&&tip[kti]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) { # it's a smooth
@@ -203,9 +204,11 @@ interpret.gam0 <- function(gf,textra=NULL)
       ## supplied as smooth arguments, e.g. k <- 5;gam(y~s(x,k=k)), fails,
       ## but if you don't specify namespace of mgcv then stuff like 
       ## loadNamespace('mgcv'); mgcv::interpret.gam(y~s(x)) fails (can't find s)
-      ## Following line does not work if envir=p.env and enclos is namespace?? 
+      ## eval(parse(text=terms[i]),envir=p.env,enclos=loadNamespace('mgcv')) fails??
+      ## following supplies namespace of mgcv explicitly if not on search path...
 
-      st <- eval(parse(text=terms[i]),enclos=p.env,envir=loadNamespace('mgcv'))
+      st <- if (mgcvat) eval(parse(text=terms[i]),envir=p.env) else
+            eval(parse(text=terms[i]),enclos=p.env,envir=loadNamespace('mgcv'))
 
       if (!is.null(textra)) { ## modify the labels on smooths with textra
         pos <- regexpr("(",st$lab,fixed=TRUE)[1]
