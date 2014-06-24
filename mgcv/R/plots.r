@@ -483,6 +483,7 @@ plot.sos.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
  
     dat <- data.frame(la=um$la*180/pi,lo=um$lo*180/pi)
     names(dat) <- x$term
+    if (x$by!="NA") dat[[x$by]] <- la*0+1    
 
     X <- PredictMat(x,dat)   # prediction matrix for this term
 

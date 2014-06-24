@@ -451,7 +451,12 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             if (strictly.additive) { conv <- TRUE;coef <- start;break;}
 
             if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
-                if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
+               ## Need to check coefs converged adequately, to ensure implicit differentiation
+               ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
+               ## drop same parameter every iteration!)       
+               grad <- 2 * t(x)%*%(w*((x%*%start)-z))+ 2*St%*%start 
+               if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
+               ##if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
                ## if (max(abs(mu-muold))>control$epsilon*max(abs(mu+muold))/2) {
                   old.pdev <- pdev
                   coef <- coefold <- start
@@ -493,17 +498,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          if (any(is.na(mu.eta.val[good]))) 
                 stop("NAs in d(mu)/d(eta)")
    
-#         if (fisher) {
-#              good <- (weights > 0) & (mu.eta.val != 0)
-#         } else { ## full Newton
-#              c <- y - mu
-#              alpha <- 1 + c*(family$dvar(mu)/var.val + family$d2link(mu)*mu.eta.val)
-#              ### can't just drop obs when alpha==0, as they are informative, but
-#              ### happily using an `effective zero' is stable here, and there is 
-#              ### a natural effective zero, since E(alpha) = 1.
-#              alpha[alpha==0] <- .Machine$double.eps 
-#              good <-  (weights > 0) & (mu.eta.val != 0)
-#         }
 
          good <- (weights > 0) & (mu.eta.val != 0)
          mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
@@ -2218,12 +2212,6 @@ fix.family.ls<-function(fam)
       res[2] <- sum(k/w)
       k <- (-trigamma(1/scale)/(scale) + (1-2*log(scale)-2*digamma(1/scale)))/(scale^3)
       res[3] <- sum(k/w^2) 
-    #  k <- -lgamma(1/scale) - log(scale)/scale - 1/scale
-    #  res[1] <- sum(w*(k-log(y)))
-    #  k <- (digamma(1/scale)+log(scale))/(scale*scale)
-    #  res[2] <- sum(w*k)  
-    #  k <- (-trigamma(1/scale)/(scale) + (1-2*log(scale)-2*digamma(1/scale)))/(scale^3)
-    #  res[3] <- sum(w*k) 
       res
     }
     return(fam)

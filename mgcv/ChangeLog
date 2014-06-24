@@ -32,9 +32,16 @@
   iteration then eta or mu could be invalid, e.g. when using identity link
   with non-negative data)
 
-* interpret.gam now evaluates in namespace of mgcv with environment of
-  formula as enclosing environment, to allow it to be called without 
-  attaching mgcv... 
+* gam.fit3 now bases its convergence criteria on grad deviance w.r.t. model 
+  coefs, rather than changes in model coefs. This prevents problems when 
+  there is rank deficiency but different coefs get dropped at different 
+  iterations. Thanks to Kristynn Sullivan.
+
+* If mgcv is not on the search path then interpret.gam now tries to 
+  evaluate in namespace of mgcv with environment of formula as enclosing 
+  environment, if evaluation in the environment of the formula fails. 
+
+* bug fix to sos plotting method so that it now works with 'by' variables.
 
 * 'plot.gam' now weights partial residuals by *normalized* square root 
   iterative weights so that the average weight is 1 and the residuals 
