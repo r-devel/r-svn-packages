@@ -595,7 +595,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            mu <- linkinv(eta)
          }
          trA <- oo$trA;
-         pearson <- sum((y-mu)^2/family$variance(mu)) ## Pearson statistic
+         pearson <- sum(weights*(y-mu)^2/family$variance(mu)) ## Pearson statistic
 
          scale.est <- (pearson+dev.extra)/(n.true-trA)
 
@@ -766,7 +766,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 gam.fit3.post.proc <- function(X,L,object) {
 ## get edf array and covariance matrices after a gam fit. 
 ## X is original model matrix, L the mapping from working to full sp
-  Vb <- object$rV%*%t(object$rV)*object$scale.est ## Bayesian cov.
+  Vb <- if (object$scale.estimated) object$rV%*%t(object$rV)*object$scale.est else 
+        object$rV%*%t(object$rV)*object$scale ## Bayesian cov.
   # PKt <- object$rV%*%t(object$K)
   PKt <- .Call(C_mgcv_pmmult2,object$rV,object$K,0,1,object$control$nthreads)
   # F <- PKt%*%(sqrt(object$weights)*X)

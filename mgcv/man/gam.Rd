@@ -245,7 +245,7 @@ and the exponential family.
 Details of the default underlying fitting methods are given in Wood (2011
 and 2004). Some alternative methods are discussed in Wood (2000 and 2006). 
 
-\code{gam()} is not a clone of Trevor Hastie's oroginal (as supplied in S-PLUS or package \link[gam]{gam}) The major
+\code{gam()} is not a clone of Trevor Hastie's original (as supplied in S-PLUS or package \link[gam]{gam}). The major
 differences are (i) that by default estimation of the
 degree of smoothness of model terms is part of model fitting, (ii) a
 Bayesian approach to variance estimation is employed that makes for easier
