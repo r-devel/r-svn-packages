@@ -3,6 +3,9 @@
 
 1.8-1
 
+* bam modified so that choleski based fitting works properly with rank 
+  deficient model matrix (without regularization).
+
 * fix of 1.8-0 bug - gam prior weights mishandled in computation of cov matrix.
   Thanks Fabian Scheipl.
 		
