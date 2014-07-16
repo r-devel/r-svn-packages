@@ -370,7 +370,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            dev <- sum(dev.resids(y, mu, weights))
           
            if (control$trace) 
-             gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
+             message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
             boundary <- FALSE
             
             if (!is.finite(dev)) {
@@ -421,7 +421,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             pdev <- dev + penalty  ## the penalized deviance 
 
             if (control$trace) 
-                gettextf("penalized deviance = %s", pdev, domain = "R-mgcv")
+                message(gettextf("penalized deviance = %s", pdev, domain = "R-mgcv"))
                
 
             div.thresh <- 10*(.1+abs(old.pdev))*.Machine$double.eps^.5 
@@ -444,7 +444,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   dev <- sum(dev.resids(y, mu, weights))
                   pdev <- dev + t(start)%*%St%*%start ## the penalized deviance
                 if (control$trace) 
-                  gettextf("Step halved: new penalized deviance = %g", pdev, "\n")
+                  message(gettextf("Step halved: new penalized deviance = %g", pdev, "\n"))
               }
             } 
             

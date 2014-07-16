@@ -1,6 +1,17 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-2
+
+* predict.bam was not declared as a method in NAMESPACE - fixed
+
+* predict.gam now has block.size=NULL as default. This implies a block
+  size of 1000 when newdata supplied, and use of a single block if no
+  new data was supplied. 
+
+* some messages were not printing correctly after a change in 
+  message handling to facilitate easier translation. Now fixed.
+
 1.8-1
 
 * bam modified so that choleski based fitting works properly with rank 

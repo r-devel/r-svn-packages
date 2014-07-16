@@ -366,7 +366,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       rss.extra <- qrx$y.norm2 - sum(qrx$f^2)
       
       if (control$trace)
-         gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
+         message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
 
       if (!is.finite(dev)) stop("Non-finite deviance")
 
@@ -578,7 +578,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
       rss.extra <- qrx$y.norm2 - sum(qrx$f^2)
       
       if (control$trace)
-         gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
+         message(gettextf("Deviance = %s Iterations - %d\n", dev, iter, domain = "R-mgcv"))
 
       if (!is.finite(dev)) stop("Non-finite deviance")
 

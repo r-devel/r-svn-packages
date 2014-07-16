@@ -2215,7 +2215,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         eta <- linkfun(mu) # force eta/mu consistency even if linkinv truncates
         dev <- sum(dev.resids(y, mu, weights))
         if (control$trace) 
-            gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv")
+            message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
         boundary <- FALSE
         if (!is.finite(dev)) {
             if (is.null(coefold))
@@ -2330,7 +2330,7 @@ model.matrix.gam <- function(object,...)
 
 
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
-                       block.size=1000,newdata.guaranteed=FALSE,na.action=na.pass,
+                       block.size=NULL,newdata.guaranteed=FALSE,na.action=na.pass,
                        unconditional=FALSE,...) {
 
 # This function is used for predicting from a GAM. 'object' is a gam object, newdata a dataframe to
@@ -2442,7 +2442,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (!is.null(attr(newdata,"terms"))) nd.is.mf <- TRUE
     response <- newdata[[yname]]
   }
-  
+
+
   ## now check the factor levels and split into blocks...
 
   if (new.data.ok) {
@@ -2465,7 +2466,29 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (is.null(dim(newdata[[1]]))) np <- length(newdata[[1]]) 
     else np <- dim(newdata[[1]])[1] 
     nb <- length(object$coefficients)
+    if (is.null(block.size)) block.size <- 1000
     if (block.size < 1) block.size <- np
+#    n.blocks <- np %/% block.size
+#    b.size <- rep(block.size,n.blocks)
+#    last.block <- np-sum(b.size)
+#    if (last.block>0) {
+#      n.blocks <- n.blocks+1  
+#      b.size[n.blocks] <- last.block
+#    }
+  } else { # no new data, just use object$model
+    np <- nrow(object$model)
+    nb <- length(object$coefficients)
+#    n.blocks <- 1
+#    b.size <- array(np,1)
+  }
+  
+  ## split prediction into blocks, to avoid running out of memory
+  if (is.null(block.size)) { 
+    ## use one block as predicting using model frame
+    ## and no block size supplied... 
+    n.blocks <- 1
+    b.size <- array(np,1)
+  } else {
     n.blocks <- np %/% block.size
     b.size <- rep(block.size,n.blocks)
     last.block <- np-sum(b.size)
@@ -2473,12 +2496,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       n.blocks <- n.blocks+1  
       b.size[n.blocks] <- last.block
     }
-  } else { # no new data, just use object$model
-    np <- nrow(object$model)
-    nb <- length(object$coefficients)
-    n.blocks <- 1
-    b.size <- array(np,1)
   }
+
 
   # setup prediction arrays...
 

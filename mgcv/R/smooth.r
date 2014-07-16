@@ -1568,7 +1568,7 @@ smooth.construct.ps.smooth.spec<-function(object,data,knots)
   if (!is.null(k)) {
     if (sum(colSums(object$X)==0)>0) warning("knot range is so wide that there is *no* information about some basis coefficients")
   }  
-
+  if (length(unique(x)) < k) warning("basis dimension is larger than number of unique covariates")
   ## now construct penalty        
   S<-diag(object$bs.dim);
   if (m[2]) for (i in 1:m[2]) S <- diff(S)
