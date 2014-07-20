@@ -632,7 +632,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          pearson.warning <- NULL
          if (control$scale.est=="pearson") { 
            scale.est <- se$pearson
-           if (scale.est > 2 * se$robust) pearson.warning <- TRUE
+           if (scale.est > 4 * se$robust) pearson.warning <- TRUE
          } else scale.est <- if (control$scale.est=="deviance") se$deviance else se$robust
 
          #pearson <- sum(weights*(y-mu)^2/family$variance(mu)) ## Pearson statistic
