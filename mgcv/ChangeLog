@@ -4,9 +4,8 @@
 1.8-2
 
 * For exponential family gams, fitted by outer iteration, a warning is now
-  generated if the estimated scale parameter is outside the range
-  [.5*D,2*D] where D is the deviance based estimate of the scale parameter.
-  This situation may indicate an unstable Pearson estimate.
+  generated if the Pearson scale parameter estimate is more than twice
+  a robust estimate. This may indicate an unstable Pearson estimate.
 
 * 'gam.control' now has an option 'scale.est' to allow selection of the 
   estimator to use for the scale parameter in exponential family GAMs. 
