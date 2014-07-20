@@ -76,6 +76,35 @@ get.Eb <- function(rS,rank)
   t(mroot(S,rank=rank)) ## E such that E'E = S
 } ## get.Eb
 
+
+gam.scale <- function(wp,wd,dof,extra=0) {
+## obtain estimates of the scale parameter, using the weighted Pearson and 
+## deviance residuals and the residual effective degrees of freedom.
+## Problem is that Pearson is unbiased, but potentially unstable (e.g. 
+## when count is 1 but mean is tiny, so that pearson residual is enormous,
+## although deviance residual is much less extreme). 
+  pearson <- sum(wp^2+extra)/dof
+  deviance <- sum(wd^2+extra)/dof
+  ## now scale deviance residuals to have magnitude similar
+  ## to pearson and compute new estimator. 
+  kd <- wd
+  ind <- wd > 0
+  kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
+  ind <- wd < 0
+  kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
+  robust <- sum(kd^2+extra)/dof
+  ## force estimate to lie between deviance and pearson estimators
+  if (pearson > deviance) {
+    if (robust < deviance) robust <- deviance
+    if (robust > pearson) robust <- pearson
+  } else {
+    if (robust > deviance) robust <- deviance
+    if (robust < pearson) robust <- pearson
+  }
+  list(pearson=pearson,deviance=deviance,robust=robust)
+}
+
+
 gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs),U1=diag(ncol(x)), Mp=-1, family = gaussian(), 
@@ -475,8 +504,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             }
         } ### end main loop 
        
-        dev <- sum(dev.resids(y, mu, weights)) 
-       
+        wdr <- dev.resids(y, mu, weights)
+        dev <- sum(wdr) 
+        wdr <- sign(y-mu)*sqrt(pmax(wdr,0)) ## used below in scale estimation 
+  
         ## Now call the derivative calculation scheme. This requires the
         ## following inputs:
         ## z and w - the pseudodata and weights
@@ -595,9 +626,16 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            mu <- linkinv(eta)
          }
          trA <- oo$trA;
-         pearson <- sum(weights*(y-mu)^2/family$variance(mu)) ## Pearson statistic
+         
+         wpr <- (y-mu) *sqrt(weights/family$variance(mu)) ## weighted pearson residuals
+         se <- gam.scale(wpr,wdr,n.true-trA,dev.extra) ## get scale estimates
+         if (control$scale.est=="pearson") { 
+           scale.est <- se$pearson
+         } else scale.est <- if (control$scale.est=="deviance") se$deviance else se$robust
 
-         scale.est <- (pearson+dev.extra)/(n.true-trA)
+         #pearson <- sum(weights*(y-mu)^2/family$variance(mu)) ## Pearson statistic
+
+         #scale.est <- (pearson+dev.extra)/(n.true-trA)
 
          #scale.est <- (dev+dev.extra)/(n.true-trA)
          reml.scale <- NA  
@@ -774,6 +812,14 @@ gam.fit3.post.proc <- function(X,L,object) {
   F <- .Call(C_mgcv_pmmult2,PKt,sqrt(object$weights)*X,0,0,object$control$nthreads)
   edf <- diag(F) ## effective degrees of freedom
   edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
+
+  ## check on plausibility of scale (estimate)
+ 
+  if (object$scale.estimated) { 
+    dev.scale <- object$dev/(length(object$y) - sum(edf))
+    if (scale > 2*dev.scale) warning("scale estimate > 2 * deviance over residual edf. See ?gam.scale.")
+    if (scale < .5*dev.scale) warning("scale estiamte < .5 * deviance over residual edf. See ?gam.scale. ")
+  }
   ## edf <- rowSums(PKt*t(sqrt(object$weights)*X))
   ## Ve <- PKt%*%t(PKt)*object$scale  ## frequentist cov
   Ve <- F%*%Vb ## not quite as stable as above, but quicker
