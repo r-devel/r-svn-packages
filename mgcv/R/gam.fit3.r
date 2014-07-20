@@ -816,7 +816,7 @@ gam.fit3.post.proc <- function(X,L,object) {
   edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
 
   ## check on plausibility of scale (estimate)
-  if (!is.null(object$pearson.warning)) warning("Pearson scale estimate maybe unstable. See ?gam.scale.")
+  if (object$scale.estimated&&!is.null(object$pearson.warning)) warning("Pearson scale estimate maybe unstable. See ?gam.scale.")
 
   ## edf <- rowSums(PKt*t(sqrt(object$weights)*X))
   ## Ve <- PKt%*%t(PKt)*object$scale  ## frequentist cov
