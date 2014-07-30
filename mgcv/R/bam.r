@@ -1207,7 +1207,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (is.null(G$offset)) G$offset <- rep(0,n)
 
   if (ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data")      ##+nrow(G$C)) stop("Model has more coefficients than data")
- 
+  
+  if (ncol(G$X) < chunk.size) { ## no sense having chunk.size < p
+    chunk.size <- 4*ncol(G$X)
+    warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))    
+  }
+
   G$cl<-cl;
   G$am <- am
      
