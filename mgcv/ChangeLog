@@ -1,6 +1,14 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-3
+
+* bam now checks that chunk.size > number of parameters and resets the 
+  chunk.size if not.
+
+* Examples of use of smoothCon and PredictMat for setting up bases 
+  for use outside mgcv (and then predicting) added to ?smoothCon.
+
 1.8-2
 
 * For exponential family gams, fitted by outer iteration, a warning is now
