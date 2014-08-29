@@ -3,6 +3,9 @@
 
 1.8-3
 
+* Fix of two illegal read/write bugs with extended family models with no
+  smooths. (Thanks to Julian Faraway for reporting beta regr problem).
+
 * bam now checks that chunk.size > number of parameters and resets the 
   chunk.size if not.
 
