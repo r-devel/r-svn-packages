@@ -1,6 +1,19 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-4
+
+* nthreads argument added to 'bam' to allow for parallel computation 
+  for computations in the main process (serial on any cluster nodes).
+  e.g. QR based combination of results from cluster nodes is now
+  parallel.
+
+* fREML computation now partly in parallel (controlled by 'nthreads' 
+  argument to 'bam')
+
+* slanczos now accepts an nt argument allowing parallel computation of 
+  main O(n^2) step.
+
 1.8-3
 
 * Fix of two illegal read/write bugs with extended family models with no

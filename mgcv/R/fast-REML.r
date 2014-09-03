@@ -494,7 +494,7 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
   list(rss =sum(rsd^2),bSb=sum(beta*Sb),rss1=rss1,bSb1=bSb1,rss2=rss2,bSb2=bSb2,d1b=db)
 } ## end Sl.ift
 
-Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NULL,Mp=0) {
+Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NULL,Mp=0,nt=1) {
 ## fits penalized regression model with model matrix X and 
 ## initialised block diagonal penalty Sl to data in y, given 
 ## log smoothing parameters rho. 
@@ -507,8 +507,8 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   ldS <- ldetS(Sl,rho,fixed,np,root=TRUE)
   ## apply resulting stable re-parameterization to X...
   X <- Sl.repara(ldS$rp,X)
-  ## get pivoted QR decomp of augmented model matrix
-  qrx <- qr(rbind(X,ldS$E),LAPACK=TRUE)
+  ## get pivoted QR decomp of augmented model matrix (in parallel if nt>1)
+  qrx <- if (nt>1) pqr2(rbind(X,ldS$E),nt=nt) else qr(rbind(X,ldS$E),LAPACK=TRUE)
   rp <- qrx$pivot;rp[rp] <- 1:np ## reverse pivot vector
   ## find pivoted \hat beta...
   R <- qr.R(qrx)
@@ -547,7 +547,7 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
 } ## Sl.fit
 
 fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
-                 rss.extra=0,nobs=NULL,Mp=0,conv.tol=.Machine$double.eps^.5) {
+                 rss.extra=0,nobs=NULL,Mp=0,conv.tol=.Machine$double.eps^.5,nt=1) {
 ## estimates log smoothing parameters rho, by optimizing fast REML 
 ## using Newton's method. On input Sl is a block diagonal penalty 
 ## structure produced by Sl.setup, while X is a model matrix 
@@ -560,7 +560,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
   if (is.null(nobs)) nobs <- nrow(X)
   np <- ncol(X)
   if (nrow(X) > np) { ## might as well do an initial QR step
-    qrx <- qr(X,LAPACK=TRUE)
+    qrx <- if (nt>1) pqr2(X,nt=nt) else qr(X,LAPACK=TRUE)
     rp <- qrx$pivot
     rp[rp] <- 1:np
     X <- qr.R(qrx)[,rp]
@@ -580,7 +580,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
   fixed <- rep(FALSE,nrow(L))
  
   
-  best <- Sl.fit(Sl,X,y,L%*%rho+rho.0,fixed,log.phi,phi.fixed,rss.extra,nobs,Mp)
+  best <- Sl.fit(Sl,X,y,L%*%rho+rho.0,fixed,log.phi,phi.fixed,rss.extra,nobs,Mp,nt=nt)
   ## get a typical scale for the reml score... 
   reml.scale <- abs(best$reml) + best$rss/best$nobs
  
@@ -624,12 +624,12 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
     step[uconv.ind] <- uc.step ## step includes converged
     ## try out the step...
     rho1 <- L%*%(rho + step)+rho.0; if (!phi.fixed) log.phi <- rho1[nr+1]
-    trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp)
+    trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp,nt=nt)
     k <- 0
     while (trial$reml>best$reml && k<35) { ## step half until improvement
       step <- step/2;k <- k + 1
       rho1 <- L%*%(rho + step)+rho.0; if (!phi.fixed) log.phi <- rho1[nr+1]
-      trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp)
+      trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp,nt=nt)
     }
     if (k==35 && trial$reml>best$reml) { ## step has failed
       step.failed <- TRUE
@@ -667,7 +667,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
   best ## return the best fit (note that it will need post-processing to be useable)
 } ## end fast.REML.fit
 
-ident.test <- function(X,E) {
+ident.test <- function(X,E,nt=1) {
 ## routine to identify structurally un-identifiable coefficients
 ## for model with model matrix X and scaled sqrt penalty matrix E
 ## lambda is smoothing parameter vector corresponding to E, 
@@ -679,7 +679,7 @@ ident.test <- function(X,E) {
 ## then beta.full[undrop] <- beta, is the full, zero padded 
 ## coeff vector, with dropped coefs re-nstated as zeroes. 
   Xnorm <- norm(X,type="F")
-  qrx <- qr(rbind(X/Xnorm,E),LAPACK=TRUE) ## pivoted QR
+  qrx <- if (nt>1) pqr2(rbind(X/Xnorm,E),nt=nt) else qr(rbind(X/Xnorm,E),LAPACK=TRUE) ## pivoted QR
   rank <- Rrank(qr.R(qrx),tol=.Machine$double.eps^.75)
   drop <- qrx$pivot[-(1:rank)] ## index of un-identifiable coefs
   undrop <- 1:ncol(X) 
@@ -745,13 +745,13 @@ Sl.drop <- function(Sl,drop,np) {
   Sl
 } ## Sl.drop
 
-Sl.Xprep <- function(Sl,X) { 
+Sl.Xprep <- function(Sl,X,nt=1) { 
 ## Sl is block diag object from Sl.setup, X is a model matrix
 ## this routine applies preliminary Sl transformations to X
 ## tests for structural identifibility problems and drops
 ## un-identifiable parameters.
   X <- Sl.initial.repara(Sl,X) ## apply re-para used in Sl to X
-  id <- ident.test(X,attr(Sl,"E")) ## deal with structural identifiability
+  id <- ident.test(X,attr(Sl,"E"),nt=nt) ## deal with structural identifiability
   ## id contains drop, undrop, lambda
   if (length(id$drop)>0) { ## then there is something to do here 
     Sl <- Sl.drop(Sl,id$drop,ncol(X)) ## drop unidentifiable from Sl

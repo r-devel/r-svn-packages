@@ -18,7 +18,8 @@ bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action=na.omit, offset=NULL,method="fREML",control=list(),
     scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
     chunk.size=10000,rho=0,AR.start=NULL,sparse=FALSE,cluster=NULL,
-    gc.level=1,use.chol=FALSE,samfrac=1,drop.unused.levels=TRUE,...)
+    nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,
+    drop.unused.levels=TRUE,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -121,12 +122,17 @@ In practice the speed up is disappointing, and the computation is less well cond
 from the \code{parallel} package, if it is supplied with a cluster on which to do this (a cluster here can be some cores of a 
 single machine). See details and example code. 
 }
+
+\item{nthreads}{Number of threads to use for non-cluster computation (e.g. combining results from cluster nodes).
+if \code{NA} set to \code{max(1,length(cluster))}.}
+
 \item{gc.level}{to keep the memory footprint down, it helps to call the garbage collector often, but this takes 
 a substatial amount of time. Setting this to zero means that garbage collection only happens when R decides it should. Setting to 2 gives frequent garbage collection. 1 is in between.}
 
 \item{use.chol}{By default \code{bam} uses a very stable QR update approach to obtaining the QR decomposition
 of the model matrix. For well conditioned models an alternative accumulates the crossproduct of the model matrix
 and then finds its Choleski decomposition, at the end. This is somewhat more efficient, computationally.}
+
 
 \item{samfrac}{For very large sample size Generalized additive models the number of iterations needed for the model fit can 
 be reduced by first fitting a model to a random sample of the data, and using the results to supply starting values. This initial fit is run with sloppy convergence tolerances, so is typically very low cost. \code{samfrac} is the sampling fraction to use. 0.1 is often reasonable. }

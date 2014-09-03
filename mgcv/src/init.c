@@ -43,7 +43,7 @@ R_CMethodDef CEntries[] = {
     {"read_mat",(DL_FUNC)&read_mat,4},
     {"rwMatrix",(DL_FUNC)&rwMatrix,6},
     {"in_out",(DL_FUNC)&in_out,8},
-    {"Rlanczos",(DL_FUNC)&Rlanczos,7},
+    {"Rlanczos",(DL_FUNC)&Rlanczos,8},
     {"rksos",(DL_FUNC)&rksos,3},
     {"gen_tps_poly_powers",(DL_FUNC)&gen_tps_poly_powers,4},
     {"k_nn",(DL_FUNC)&k_nn,8},

@@ -2,6 +2,18 @@
    packing format....
 
    See R-x/include/R_ext/Lapack.h...
+
+   parallel support (using openMP) offered by...
+   * mgcv_pqr - parallel QR based on row blocking ok for few cores and n>>p but
+                somewhat involved. Advantage is that just one thread used per 
+                core, so threading overhead minimal. Disadvantage is that an extra 
+                single thread QR is used to combine everything.
+   * mgcv_piqr - pivoted QR that simply parallelizes the 'householder-to-unfinished-cols'
+                 step. Storage exactly as standard LAPACK pivoted QR.
+   * mgcv_pmmult - parallel matrix multiplication.
+   * Rlanczos - parallel on leading order cost step (but note that standard BLAS seems to 
+                use Strassen for square matrices.)   
+
 */
 #include "mgcv.h"
 #include <stdlib.h>
@@ -267,6 +279,9 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
    Key is to inline the expensive step that is parallelized, noting
    that housholder ops are not in BLAS, but are LAPACK auxilliary 
    routines (so no loss in re-writing)
+   
+   Parallelization here is based on splitting the application of householder
+   rotations to the 'remaining columns' between cores using openMP. 
 */
 
   int i,k,r,nh,j,one=1,cpt,nth,cpf,ii;
@@ -359,9 +374,14 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
 
 SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
 /* routine to QR decompose N by P matrix X with pivoting using routine
-   dlarg to generate housholder. This is direct 
+   dlarfg to generate housholder. This is direct 
    implementation of 5.4.1 from Golub and van Loan (with correction 
-   of the pivot pivoting!). */
+   of the pivot pivoting!). Work is done by mgcv_piqr.
+
+   Designed for use with .call rather than .C
+   Return object is as 'qr' in R.
+
+*/
   int n,p,nt,*piv,r,*rrp;
   double *x,*beta;
   SEXP rr;
@@ -809,6 +829,19 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
   F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,c, bc, &alpha,R, r,C,c);
 }
 
+void mgcv_pbsi(double *R,int *r,int *nt) {
+/* parallel inversion of upper triangular matrix using nt threads
+   i.e. Solve of R Ri = I for Ri. Idea is to work through columns of I
+   exploiting fact that full solve is never needed. Results are stored
+   in lower triangle of R and an r-dimensional array, and copied into R 
+   before exit (working back trough columns over-writing columns of R
+   as we go is not an option without waiting for threads to return in 
+   right order - which can lead to blocking by slowest). 
+*/
+  
+
+}
+
 
 void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc) 
 /* BLAS free version
@@ -1111,6 +1144,9 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
    On exit x, pivot and tau contain decompostion information in packed form
    for use by getRpqr and mgcv_pqrqy
    Routine first computes k, the optimal number of threads to use from 1 to nt.
+
+   strategy is to split into row blocks, QR each and then combine the decompositions
+   - good for n>>p, not so good otherwise. 
 */
 
   int i,j,k,l,*piv,nb,nbf,n,TRUE=1,FALSE=0,nr; 
@@ -1431,7 +1467,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
     R_chk_free(p);R_chk_free(Acopy);
   }
 
-}
+} /* mgcv_symeig */
 
 void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descending) 
 /* Find eigen-values and vectors of n by n symmetric tridiagonal matrix 
@@ -1485,11 +1521,11 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
 
    R_chk_free(work);R_chk_free(iwork);
    *n=info; /* zero is success */
-}
+} /* mgcv_trisymeig */
 
 
 
-void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol) {
+void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,int *nt) {
 /* Faster version of lanczos_spd for calling from R.
    A is n by n symmetric matrix. Let k = m + max(0,lm).
    U is n by k and D is a k-vector.
@@ -1499,6 +1535,9 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
 
    Matrices are stored in R (and LAPACK) format (1 column after another).
 
+   If nt>1 and there is openMP support then the routine computes the O(n^2) inner products in 
+   parallel.
+
    ISSUE: 1. Currently all eigenvectors of Tj are found, although only the next unconverged one
              is really needed. Might be better to be more selective using dstein from LAPACK. 
           2. Basing whole thing on dstevx might be faster
@@ -1507,10 +1546,16 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
           4. Could use selective orthogonalization, but cost of full orth is only 2nj, while n^2 of method is
              unavoidable, so probably not worth it.  
 */
-  int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,ni,pi,converged,incx=1;
+    int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,ni,pi,converged,incx=1,ri,ci,cir,one=1;
   double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*zp,*qp,normTj,eps_stop,max_err,alpha=1.0,beta=0.0;
   unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
-  const char uplo='U';
+  const char uplo='U',trans='T';
+
+  #ifndef SUPPORT_OPENMP
+  *nt = 1; /* reset number of threads to 1 if openMP not available  */ 
+  #endif
+  if (*nt > *n) *nt = *n; /* don't use more threads than columns! */
+
   eps_stop = *tol; 
 
   if (*lm<0) { biggest=1;*lm=0;} /* get m largest magnitude eigen-values */
@@ -1540,13 +1585,43 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol)
   z=(double *)R_chk_calloc((size_t) *n,sizeof(double));
   err=(double *)R_chk_calloc((size_t) *n,sizeof(double));
   for (i=0;i< *n;i++) err[i]=1e300;
+  /* figure out how to split up work if nt>1 */
+  if (*nt>1) {
+    ci = *n / *nt; /* cols per thread */
+    cir = *n - ci * (*nt - 1); /* cols for final thread */  
+    if (cir>ci) { /* final thread has more work than normal thread - redo */
+      ci++; /* up work per thread by one */
+      *nt = (int)ceil(*n/ci); /* drop number of threads */
+      cir = *n - ci * (*nt - 1);  /* recompute cols for final thread */
+    }
+    if (cir == 0) { (*nt)--;cir=ci; } /* no cols left for final thread so drop it */
+  }
+  Rprintf("nt = %d, ci = %d, cir = %d\n",*nt,ci,cir);
   /* The main loop. Will break out on convergence. */
-  for (j=0;j< *n;j++) 
-  { /* form z=Aq[j]=A'q[j], the O(n^2) step ...  */
-    /*for (Ap=A,zp=z,p0=zp+*n;zp<p0;zp++) 
+  for (j=0;j< *n;j++) {
+    /* form z=Aq[j]=A'q[j], the O(n^2) step ...  */
+ 
+    /*blas free version ... for (Ap=A,zp=z,p0=zp+*n;zp<p0;zp++) 
       for (*zp=0.0,qp=q[j],p1=qp+*n;qp<p1;qp++,Ap++) *zp += *Ap * *qp;*/
+
     /*  BLAS versions y := alpha*A*x + beta*y, */
-    F77_CALL(dsymv)(&uplo,n,&alpha,
+    if (*nt>1) { /* use parallel computation for the z = A q[j] */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp parallel private(i,ri) num_threads(*nt)
+      #endif
+      { 
+	#ifdef SUPPORT_OPENMP
+	#pragma omp for
+	#endif
+        for (i=0;i<*nt;i++) {
+          if (i < *nt-1) ri = ci; else ri = cir; /* number of cols of A to process */
+          /* note that symmetry, A' == A, is exploited here, (rows a:b of A are same 
+             as cols a:b of A, but latter are easier to access as a block) */  
+          F77_CALL(dgemv)(&trans,n,&ri,&alpha,A+i * ci * *n,n,q[j],
+                        &one,&beta,z+i*ci,&one);
+        }
+      } /* end parallel */
+    } else F77_CALL(dsymv)(&uplo,n,&alpha,
 		A,n,
 		q[j],&incx,
 		&beta,z,&incx);
