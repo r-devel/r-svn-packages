@@ -100,6 +100,7 @@ void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt);
 void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt);
 SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT);
 void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N);
+void mgcv_Rpbsi(SEXP A, SEXP NT);
 
 /* basis constructor/prediction routines*/
 

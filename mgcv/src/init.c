@@ -10,7 +10,8 @@
 R_CallMethodDef CallMethods[] = {
   {"mgcv_pmmult2", (DL_FUNC) &mgcv_pmmult2,5},
   {"mgcv_Rpiqr", (DL_FUNC) &mgcv_Rpiqr,4}, 
-  { "mgcv_tmm",(DL_FUNC)&mgcv_tmm,5},
+  { "mgcv_tmm",(DL_FUNC)&mgcv_tmm,5}, 
+  { "mgcv_Rpbsi",(DL_FUNC)&mgcv_Rpbsi,2},
   {NULL, NULL, 0}
 };
 

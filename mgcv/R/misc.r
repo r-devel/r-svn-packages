@@ -52,7 +52,7 @@ pinv <- function(X,svd=FALSE) {
 pqr2 <- function(x,nt=1) {
 ## Function for parallel pivoted qr decomposition of a matrix using LAPACK
 ## householder routines...
-## library(mgcv); n <- 10000;p<-1000;x <- matrix(runif(n*p),n,p)
+## library(mgcv); n <- 1000;p<-100;x <- matrix(runif(n*p),n,p)
 ## system.time(qrx <- qr(x,LAPACK=TRUE))
 ## system.time(qrx2 <- mgcv:::pqr2(x,2)) 
 ## system.time(qrx3 <- mgcv:::pqr(x,2)) 
@@ -60,13 +60,26 @@ pqr2 <- function(x,nt=1) {
   p <- ncol(x)
   beta <- rep(0.0,p)
   piv <- as.integer(rep(0,p))
-  xc <- x*1
-  rank <- .Call(C_mgcv_Rpiqr,xc,beta,piv,nt)
-  ret <- list(qr=xc,rank=rank,qraux=beta,pivot=piv+1)
+  ## need to force a copy of x, otherwise x will be over-written 
+  ## by .Call *in environment from which function is called*
+  x <- x*1  
+  rank <- .Call(C_mgcv_Rpiqr,x,beta,piv,nt)
+  ret <- list(qr=x,rank=rank,qraux=beta,pivot=piv+1)
   attr(ret,"useLAPACK") <- TRUE
   class(ret) <- "qr"
   ret
-}
+} ## pqr2
+
+pbsi <- function(R,nt=1,copy=TRUE) {
+## parallel back substitution inversion of upper triangular R
+## library(mgcv); n <- 10000;p<-1000;x <- matrix(runif(n*p),n,p)
+## qrx <- qr(x,LAPACK=TRUE);R <- qr.R(qrx)
+## system.time(Ri <- mgcv:::pbsi(R,2))
+## system.time(Ri2 <- backsolve(R,diag(p)))
+  if (copy) R <- R * 1 ## ensure that R modified only within pbsi
+ .Call(C_mgcv_Rpbsi,R,nt)
+ R
+} ## pbsi
 
 block.reorder <- function(x,n.blocks=1,reverse=FALSE) {
 ## takes a matrix x divides it into n.blocks row-wise blocks, and re-orders 
@@ -82,7 +95,8 @@ block.reorder <- function(x,n.blocks=1,reverse=FALSE) {
  oo <- .C(C_row_block_reorder,x=as.double(x),as.integer(r),as.integer(cols),
           as.integer(nb),as.integer(reverse));
  matrix(oo$x,r,cols)
-}
+} ## block.reorder
+
 
 pqr <- function(x,nt=1) {
 ## parallel QR decomposition, using openMP in C, and up to nt threads (only if worthwhile)

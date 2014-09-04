@@ -11,6 +11,7 @@
    * mgcv_piqr - pivoted QR that simply parallelizes the 'householder-to-unfinished-cols'
                  step. Storage exactly as standard LAPACK pivoted QR.
    * mgcv_pmmult - parallel matrix multiplication.
+   * mgcv_Rpbsi - parallel inversion of upper triangular matrix.
    * Rlanczos - parallel on leading order cost step (but note that standard BLAS seems to 
                 use Strassen for square matrices.)   
 
@@ -830,7 +831,7 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
 }
 
 void mgcv_pbsi(double *R,int *r,int *nt) {
-/* parallel inversion of upper triangular matrix using nt threads
+/* parallel back substitution inversion of upper triangular matrix using nt threads
    i.e. Solve of R Ri = I for Ri. Idea is to work through columns of I
    exploiting fact that full solve is never needed. Results are stored
    in lower triangle of R and an r-dimensional array, and copied into R 
@@ -838,10 +839,56 @@ void mgcv_pbsi(double *R,int *r,int *nt) {
    as we go is not an option without waiting for threads to return in 
    right order - which can lead to blocking by slowest). 
 */
-  
+  int i,i1,k,tid,one=1;
+  double *d,*z,*zz,*rr,*r2,alpha=1.0;
+  char side='L',uplo='U',transa='N',diag='N';
+  z = (double *)R_chk_calloc((size_t) (*r * *nt),sizeof(double));
+  d = (double *)R_chk_calloc((size_t) *r,sizeof(double));
+  tid = 0; /* default thread id */ 
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(i,i1,k,tid,zz,rr) num_threads(*nt)
+  #endif
+  { /* open parallel section */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (i=0;i<*r;i++) { /* i is cilumn index */	
+      #ifdef SUPPORT_OPENMP
+      tid = omp_get_thread_num(); /* thread running this bit */
+      #endif
+      i1 = i + 1;
+      k = *r - i1; /* column of R in which to store result */
+      zz = z + tid * *r; /* working storage for this thread */
+      zz[i] = 1.0; /* ith column of identity */
+      /* backsolve for ith solution column */
+      F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,&i1, &one, &alpha,R, r,zz,r);
+      /* store solution in lower triangle of R[(k+1):(r-1),k] and d[k], and wipe z */
+      d[k] = zz[i];zz[i]=0.0;
+      for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*rr = *zz;*zz = 0.0;}
+    }
+  } /* end parallel section */
+  /* now copy the solution back into original R */
+  for (k=*r-1,i=0;i<*r;i++,k--) {
+    zz = R + i * *r + i; /* leading diagonal element */
+    *zz = d[k];
+    zz -= i; /* shift back to start of column */
+    /* copy rest of column and wipe below diagonal storage */
+    for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
+  }
+  R_chk_free(d);R_chk_free(z);
+} /* mgcv_pbsi */
 
-}
-
+void mgcv_Rpbsi(SEXP A, SEXP NT) {
+/* parallel back sub inversion of upper triangular matrix A 
+   designed for use with .call, but using mgcv_pbsi to do the work. 
+*/
+  int nt,r;
+  double *R;
+  nt = asInteger(NT);
+  r = nrows(A);
+  R = REAL(A);
+  mgcv_pbsi(R,&r,&nt);
+} /* mgcv_Rpbsi */
 
 void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc) 
 /* BLAS free version
