@@ -489,7 +489,7 @@ List of 9
  - attr(*, "class")= chr [1:2] "agnes" "twins"
 > 
 > showProc.time()
-Time elapsed:  0.048 0.001 0.05 
+Time elapsed:  0.105 0 0.105 
 > 
 > summary(ar2 <- agnes(ruspini, metric="manhattan", method = "weighted"))
 Object of class 'agnes' from call:
@@ -614,7 +614,7 @@ Available components:
 > stopifnot(all.equal(ar2[1:4], ar3[1:4], tol=1e-12))
 > 
 > showProc.time()
-Time elapsed:  0.006 0 0.006 
+Time elapsed:  0.011 0 0.011 
 > 
 > ## Small example, testing "flexible" vs "single"
 > i8 <- -c(1:2, 9:10)
@@ -628,7 +628,7 @@ Time elapsed:  0.006 0 0.006
 > chk <- function(d, method=c("single", "complete", "weighted"),
 +                 trace.lev = 1,
 +                 iC = -(6:7), # <- not using 'call' and 'method' for comparisons
-+                 doplot = require("sfsmisc"), tol = 1e-12)
++                 doplot = FALSE, tol = 1e-12)
 + {
 +     if(!inherits(d, "dist")) d <- daisy(d, "manhattan")
 +     method <- match.arg(method)
@@ -640,8 +640,7 @@ Time elapsed:  0.006 0 0.006
 +     a.f <- agnes(d, method="flex", par.method = par.meth[[method]], trace.lev=trace.lev)
 + 
 +     if(doplot) {
-+         op <- if(require("sfsmisc")) mult.fig(4)$old.par
-+               else par(mfrow = c(2,2), mgp = c(1.6, 0.6, 0), mar = .1 + c(4,4,2,1))
++ 	op <- par(mfrow = c(2,2), mgp = c(1.6, 0.6, 0), mar = .1 + c(4,4,2,1))
 +         on.exit(par(op))
 +         plot(a.s)
 +         plot(a.f)
@@ -681,7 +680,6 @@ C agnes(n=5, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,-0.5); 4 mergin
  -->  new size = 4
  nclu=1, j=2, d_min = D(1,2) = 13.2000; nmerge = 5, last=5;
  -->  new size = 5
-Loading required package: sfsmisc
 [1] TRUE
 attr(,"fits")
 attr(,"fits")$s
@@ -710,9 +708,6 @@ Available components:
 [1] "order"     "height"    "ac"        "merge"     "diss"      "call"     
 [7] "method"    "order.lab"
 
-Warning message:
-In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = TRUE,  :
-  there is no package called 'sfsmisc'
 > 
 > stopifnot(chk(agr5), chk(agr5, "complete", trace = 2), chk(agr5, "weighted"),
 +           chk(agr8), chk(agr8, "complete"), chk(agr8, "weighted", trace.lev=2),
@@ -720,7 +715,6 @@ In library(package, lib.loc = lib.loc, character.only = TRUE, logical.return = T
 +           chk(ruspini), chk(ruspini, "complete"), chk(ruspini, "weighted"))
 C agnes(n=5, method = 2, ..): 4 merging steps
 C agnes(n=5, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,-0.5); 4 merging steps
-Loading required package: sfsmisc
 C agnes(n=5, method = 3, ..): 4 merging steps
  nclu=4, j=2, d_min = D(1,4) = 3.40000; nmerge = 2, last=4; upd(n,b); new size = 2
  nclu=3, j=2, d_min = D(3,5) = 3.60000; nmerge = 3, last=5; new size = 2
@@ -731,16 +725,12 @@ C agnes(n=5, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,0.5); 4 merging
  nclu=3, j=2, d_min = D(3,5) = 3.60000; nmerge = 3, last=5; new size = 2
  nclu=2, j=2, d_min = D(2,3) = 16.8000; nmerge = 4, last=4; new size = 3
  nclu=1, j=2, d_min = D(1,2) = 31.5000; nmerge = 5, last=3; new size = 5
-Loading required package: sfsmisc
 C agnes(n=5, method = 5, ..): 4 merging steps
 C agnes(n=5, method = 6, ..): 4 merging steps
-Loading required package: sfsmisc
 C agnes(n=8, method = 2, ..): 7 merging steps
 C agnes(n=8, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,-0.5); 7 merging steps
-Loading required package: sfsmisc
 C agnes(n=8, method = 3, ..): 7 merging steps
 C agnes(n=8, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,0.5); 7 merging steps
-Loading required package: sfsmisc
 C agnes(n=8, method = 5, ..): 7 merging steps
  nclu=7, j=2, d_min = D(1,4) = 3.40000; nmerge = 2, last=4; upd(n,b); new size = 2
  nclu=6, j=2, d_min = D(3,5) = 3.60000; nmerge = 3, last=5; new size = 2
@@ -757,27 +747,20 @@ C agnes(n=8, method = 6, ..): 7 merging steps
  nclu=3, j=2, d_min = D(1,8) = 7.75000; nmerge = 6, last=8; upd(n,b); new size = 4
  nclu=2, j=2, d_min = D(2,3) = 11.6500; nmerge = 7, last=7; new size = 4
  nclu=1, j=2, d_min = D(1,2) = 18.3750; nmerge = 8, last=5; new size = 8
-Loading required package: sfsmisc
 C agnes(n=12, method = 2, ..): 11 merging steps
 C agnes(n=12, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,-0.5); 11 merging steps
-Loading required package: sfsmisc
 C agnes(n=12, method = 3, ..): 11 merging steps
 C agnes(n=12, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,0.5); 11 merging steps
-Loading required package: sfsmisc
 C agnes(n=75, method = 2, ..): 74 merging steps
 C agnes(n=75, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,-0.5); 74 merging steps
-Loading required package: sfsmisc
 C agnes(n=75, method = 3, ..): 74 merging steps
 C agnes(n=75, method = 6, ..): |par| = 4, alpha[1:4] = (0.5,0.5,0,0.5); 74 merging steps
-Loading required package: sfsmisc
 C agnes(n=75, method = 5, ..): 74 merging steps
 C agnes(n=75, method = 6, ..): 74 merging steps
-Loading required package: sfsmisc
-There were 11 warnings (use warnings() to see them)
 > 
 > showProc.time()
-Time elapsed:  0.034 0.003 0.044 
+Time elapsed:  0.04 0 0.04 
 > 
 > proc.time()
    user  system elapsed 
-  0.210   0.029   0.298 
+  0.456   0.025   0.468 
