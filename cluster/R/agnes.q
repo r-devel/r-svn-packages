@@ -2,14 +2,14 @@
 
 agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		  stand = FALSE, method = "average", par.method,
-                  keep.diss = n < 100, keep.data = !diss)
+                  keep.diss = n < 100, keep.data = !diss, trace.lev = 0)
 {
-    trace.lev <- 0 ## FIXME: make argument and implement (in C) as for diana() !
     METHODS <- c("average", "single","complete", "ward","weighted", "flexible", "gaverage")
     ## hclust has more;  1    2         3           4       5         6         7
     meth <- pmatch(method, METHODS)
     if(is.na(meth)) stop("invalid clustering method")
     if(meth == -1) stop("ambiguous clustering method")
+    cl. <- match.call()
     method <- METHODS[meth]
     if(method == "flexible") {
 	## Lance-Williams formula (but *constant* coefficients):
@@ -81,6 +81,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	dv <- double(1 + (n * (n - 1))/2)
     }
     if(n <= 1) stop("need at least 2 objects to cluster")
+    stopifnot(length(trace.lev <- as.integer(trace.lev)) == 1)
     C.keep.diss <- keep.diss && !diss
     res <- .C(twins,
 		    as.integer(n),
@@ -97,9 +98,10 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    integer(n),
 		    ner = integer(n),
 		    ban = double(n),
-		    ac = as.double(trace.lev),# in / out
+		    ac = double(1),
                     par.method,
 		    merge = matrix(0L, n - 1, 2), # integer
+                    trace = trace.lev,
                     DUP = FALSE)
     if(!diss) {
 	##give warning if some dissimilarities are missing.
@@ -128,7 +130,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     }
     clustering <- list(order = res$ner, height = res$ban[-1], ac = res$ac,
 		       merge = res$merge, diss = if(keep.diss)disv,
-                       call = match.call(), method = METHODS[meth])
+		       call = cl., method = METHODS[meth])
     if(exists("order.lab"))
 	clustering$order.lab <- order.lab
     if(keep.data && !diss) {

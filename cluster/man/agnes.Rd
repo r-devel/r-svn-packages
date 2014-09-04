@@ -8,7 +8,7 @@
 \usage{
 agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
       stand = FALSE, method = "average", par.method,
-      keep.diss = n < 100, keep.data = !diss)
+      keep.diss = n < 100, keep.data = !diss, trace.lev = 0)
 }
 \arguments{
   \item{x}{
@@ -72,6 +72,9 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
     and/or input data \code{x} should be kept in the result.  Setting
     these to \code{FALSE} can give much smaller results and hence even save
     memory allocation \emph{time}.}
+  \item{trace.lev}{integer specifying a trace level for printing
+    diagnostics during the algorithm.  Default \code{0} does not print
+    anything; higher values print increasingly more.}
 }
 \value{
   an object of class \code{"agnes"} (which extends \code{"twins"})
@@ -140,7 +143,7 @@ agnes(x, diss = inherits(x, "dist"), metric = "euclidean",
   \dQuote{flexible UPGMA} method, and is (a generalization of the approach)
   detailed in Belbin et al. (1992).  As \code{"flexible"}, it uses the
   Lance-Williams formula above for dissimilarity updating, but with
-  \eqn{\alpha_1} and \eqn{\alpha_1} not constant, but \emph{proportional} to
+  \eqn{\alpha_1} and \eqn{\alpha_2} not constant, but \emph{proportional} to
   the \emph{sizes} \eqn{n_1} and \eqn{n_2} of the clusters \eqn{C_1} and
   \eqn{C_2} respectively, i.e,
   \deqn{\alpha_j = \alpha'_j \frac{n_1}{n_1+n_2},}{%
@@ -228,8 +231,8 @@ a.comp <- agnes(d.vr, method = "complete")
 iC <- -(6:7) # not using 'call' and 'method' for comparisons
 stopifnot(
   all.equal(a.wgt [iC], agnes(d.vr, method="flexible", par.method = 0.5)[iC])   ,
-  all.equal(a.sing[iC], agnes(d.vr, method="flex", par.method= c(.5,.5,0,-.5))[iC]),
-  all.equal(a.comp[iC], agnes(d.vr, method="flex", par.method= c(.5,.5,0,+.5))[iC]))
+  all.equal(a.sing[iC], agnes(d.vr, method="flex", par.method= c(.5,.5,0, -.5))[iC]),
+  all.equal(a.comp[iC], agnes(d.vr, method="flex", par.method= c(.5,.5,0, +.5))[iC]))
 
 ## Exploring the dendrogram structure
 (d2 <- as.dendrogram(agn2)) # two main branches
@@ -256,7 +259,8 @@ plot(aa.a,  which.plot = 2)
 plot(aa.ga, which.plot = 2)
 par(op)
 \dontshow{## equivalence
-stopifnot(
+stopifnot( ## below show  ave == gave(0); here  ave == gave(c(1,1,0,0)):
+  all.equal(aa.a [iC], agnes(animals, method="gave", par.meth= c(1,1,0,0))[iC]),
   all.equal(aa.ga[iC], agnes(animals, method="gave", par.meth= -0.1)[iC]),
   all.equal(aa.ga[iC], agnes(animals, method="gav", par.m= c(1.1,1.1,-0.1,0))[iC]))
 }
