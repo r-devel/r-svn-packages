@@ -52,7 +52,7 @@ dim(agr5 <- agriculture[i5, ])
 chk <- function(d, method=c("single", "complete", "weighted"),
                 trace.lev = 1,
                 iC = -(6:7), # <- not using 'call' and 'method' for comparisons
-                doplot = require("sfsmisc"), tol = 1e-12)
+                doplot = FALSE, tol = 1e-12)
 {
     if(!inherits(d, "dist")) d <- daisy(d, "manhattan")
     method <- match.arg(method)
@@ -64,8 +64,7 @@ chk <- function(d, method=c("single", "complete", "weighted"),
     a.f <- agnes(d, method="flex", par.method = par.meth[[method]], trace.lev=trace.lev)
 
     if(doplot) {
-        op <- if(require("sfsmisc")) mult.fig(4)$old.par
-              else par(mfrow = c(2,2), mgp = c(1.6, 0.6, 0), mar = .1 + c(4,4,2,1))
+	op <- par(mfrow = c(2,2), mgp = c(1.6, 0.6, 0), mar = .1 + c(4,4,2,1))
         on.exit(par(op))
         plot(a.s)
         plot(a.f)
