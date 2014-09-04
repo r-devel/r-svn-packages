@@ -52,7 +52,8 @@ diana(x, diss = inherits(x, "dist"), metric = "euclidean", stand = FALSE,
     memory allocation \emph{time}.}
   \item{trace.lev}{integer specifying a trace level for printing
     diagnostics during the algorithm.  Default \code{0} does not print
-    anything; higher values print increasingly more.}
+    anything; higher values print increasingly more.
+    \bold{Not yet implemented however}.}
 }
 \value{
   an object of class \code{"diana"} representing the clustering;

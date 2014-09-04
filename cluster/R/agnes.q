@@ -1,8 +1,10 @@
 #### $Id$
+
 agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		  stand = FALSE, method = "average", par.method,
                   keep.diss = n < 100, keep.data = !diss)
 {
+    trace.lev <- 0 ## FIXME: make argument and implement (in C) as for diana() !
     METHODS <- c("average", "single","complete", "ward","weighted", "flexible", "gaverage")
     ## hclust has more;  1    2         3           4       5         6         7
     meth <- pmatch(method, METHODS)
@@ -12,13 +14,13 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
     if(method == "flexible") {
 	## Lance-Williams formula (but *constant* coefficients):
 	stopifnot((np <- length(a <- as.numeric(par.method))) >= 1)
-	attr(method,"par") <- par.method <- 
+	attr(method,"par") <- par.method <-
 	    if(np == 1)## default (a1= a, a2= a, b= 1-2a, c = 0)
 		c(a, a, 1-2*a, 0)
 	    else if(np == 3)
 		c(a, 0)
-	    else if(np != 4)
-		stop("'par.method' must be of length 1, 3, or 4")
+	    else if(np == 4) a
+	    else stop("'par.method' must be of length 1, 3, or 4")
     } else if (method == "gaverage") {
 	attr(method,"par") <- par.method <- if (missing(par.method)) {
 	    ## Default par.method: Using beta = -0.1 as advised in Belbin et al. (1992)
@@ -30,8 +32,8 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		c(1-b, 1-b, b, 0)
 	    else if(np == 3)
 		c(b, 0)
-	    else if(np != 4)
-		stop("'par.method' must be of length 1, 3, or 4")
+	    else if(np == 4) b
+	    else stop("'par.method' must be of length 1, 3, or 4")
 	}
     } else ## dummy (passed to C)
 	par.method <- double()
@@ -95,7 +97,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    integer(n),
 		    ner = integer(n),
 		    ban = double(n),
-		    ac = as.double(0), ## as.double(trace.lev),# in / out
+		    ac = as.double(trace.lev),# in / out
                     par.method,
 		    merge = matrix(0L, n - 1, 2), # integer
                     DUP = FALSE)

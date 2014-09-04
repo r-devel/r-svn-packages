@@ -90,7 +90,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	      double(n),		# damer[]
 	      avsil = double(n),	# 'ttd'
 	      double(n),		# separ[]
-	      ttsil = as.double(0),
+	      ttsil = double(1),
 	      obj = as.double(c(cluster.only, trace.lev)),# in & out!
 	      med = medID,# in & out(if !cluster.only)
 	      clu = integer(n),

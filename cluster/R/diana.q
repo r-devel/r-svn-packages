@@ -65,8 +65,8 @@ diana <- function(x, diss = inherits(x, "dist"),
 		    integer(n),
 		    ner = integer(n),
 		    ban = double(n),
-		    dc = as.double(trace.lev),# in / out
-		    double(1),
+		    dc = as.double(trace.lev),# in / out: FIXME: not implemented in C
+		    double(1), # { unused for diana() }
 		    merge = matrix(0L, n - 1, 2), # integer
 		    DUP = FALSE)
     if(!diss) {

@@ -37,7 +37,7 @@ void twins(int *nn, // = maximal number of objects
 	   int *kwan,
 	   int *ner,     // = order []   (in R)
 	   double *ban,  // = height[]
-	   double *coef,
+	   double *coef, // input : trace.lev  //  output: 'ac' or 'dc' coefficient
 	   double *alpha, int *merge)
 {
     if (*jdyss % 10 == 1) {
@@ -51,6 +51,7 @@ void twins(int *nn, // = maximal number of objects
     if (*jdyss >= 10) { /*        save distances for S */
 	Memcpy(dys2, dys, (*nn * (*nn - 1) / 2 + 1));
     }
+    // FIXME: pass (something like)   trace_lev =  (int) coef[0]
     if (*jalg != 2) {
 	// AGNES
 	agnes(*nn, kwan, ner, ban, dys, *method, alpha, merge);
