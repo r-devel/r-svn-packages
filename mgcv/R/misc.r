@@ -72,10 +72,10 @@ pqr2 <- function(x,nt=1) {
 
 pbsi <- function(R,nt=1,copy=TRUE) {
 ## parallel back substitution inversion of upper triangular R
-## library(mgcv); n <- 10000;p<-1000;x <- matrix(runif(n*p),n,p)
-## qrx <- qr(x,LAPACK=TRUE);R <- qr.R(qrx)
+## library(mgcv); n <- 5000;p<-4000;x <- matrix(runif(n*p),n,p)
+## qrx <- mgcv:::pqr2(x,2);R <- qr.R(qrx)
 ## system.time(Ri <- mgcv:::pbsi(R,2))
-## system.time(Ri2 <- backsolve(R,diag(p)))
+## system.time(Ri2 <- backsolve(R,diag(p)));range(Ri-Ri2)
   if (copy) R <- R * 1 ## ensure that R modified only within pbsi
  .Call(C_mgcv_Rpbsi,R,nt)
  R
