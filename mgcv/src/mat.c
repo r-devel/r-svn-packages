@@ -828,9 +828,10 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
   char side='L',uplo='U',transa='N',diag='N';
   for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
   F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,c, bc, &alpha,R, r,C,c);
-}
+} /* mgcv_backsolve */
 
-void mgcv_pbsi0(double *R,int *r,int *nt) {
+
+void mgcv_pbsi(double *R,int *r,int *nt) {
 /* parallel back substitution inversion of upper triangular matrix using nt threads
    i.e. Solve of R Ri = I for Ri. Idea is to work through columns of I
    exploiting fact that full solve is never needed. Results are stored
@@ -839,135 +840,16 @@ void mgcv_pbsi0(double *R,int *r,int *nt) {
    as we go is not an option without waiting for threads to return in 
    right order - which can lead to blocking by slowest). 
 
-   - very slow - basically no speed up on single call to dtrsm in single thread mode, and 
-     parallelization barely any quicker.
+   This version avoids BLAS calls which have function call overheads. 
+   In single thread mode it is 2-3 times faster than a BLAS call to dtrsm.
+   It uses a load balancing approach, splitting columns up to threads in advance,
+   so that thread initialisation overheads are minimised. This is important, 
+   e.g. the alternative of sending each column to a separate thread removes 
+   almost all advantage of parallel computing, because of the thread initiation 
+   overheads. 
 
-*/
-  int i,i1,k,tid,one=1;
-  double *d,*z,*zz,*rr,*r2,alpha=1.0;
-  char side='L',uplo='U',transa='N',diag='N';
-  z = (double *)R_chk_calloc((size_t) (*r * *nt),sizeof(double));
-  d = (double *)R_chk_calloc((size_t) *r,sizeof(double));
-  tid = 0; /* default thread id */ 
-  #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(i,i1,k,tid,zz,rr) num_threads(*nt)
-  #endif
-  { /* open parallel section */
-    #ifdef SUPPORT_OPENMP
-    #pragma omp for
-    #endif
-    for (i=0;i<*r;i++) { /* i is column index */	
-      #ifdef SUPPORT_OPENMP
-      tid = omp_get_thread_num(); /* thread running this bit */
-      #endif
-      i1 = i + 1;
-      k = *r - i1; /* column of R in which to store result */
-      zz = z + tid * *r; /* working storage for this thread */
-      zz[i] = 1.0; /* ith column of identity */
-      /* backsolve for ith solution column */
-      F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,&i1, &one, &alpha,R, r,zz,r);
-      /* store solution in lower triangle of R[(k+1):(r-1),k] and d[k], and wipe z */
-      d[k] = zz[i];zz[i]=0.0;
-      for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*rr = *zz;*zz = 0.0;}
-    }
-  } /* end parallel section */
+   Only disadvantage of this approach is that all cores are assumed equal. 
 
-  /* now copy the solution back into original R */  
-  #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(i,k,zz,rr) num_threads(*nt)
-  #endif 
-  { /* open parallel section */
-    #ifdef SUPPORT_OPENMP
-    #pragma omp for
-    #endif 
-    for (i=0;i<*r;i++) {
-      k = *r - i - 1;
-      zz = R + i * *r + i; /* leading diagonal element */
-      *zz = d[k];
-      zz -= i; /* shift back to start of column */
-      /* copy rest of column and wipe below diagonal storage */
-      for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
-    } 
-  } /* end parallel section */
-  R_chk_free(d);R_chk_free(z);
-} /* mgcv_pbsi */
-
-void mgcv_pbsi1(double *R,int *r,int *nt) {
-/* parallel back substitution inversion of upper triangular matrix using nt threads
-   i.e. Solve of R Ri = I for Ri. Idea is to work through columns of I
-   exploiting fact that full solve is never needed. Results are stored
-   in lower triangle of R and an r-dimensional array, and copied into R 
-   before exit (working back trough columns over-writing columns of R
-   as we go is not an option without waiting for threads to return in 
-   right order - which can lead to blocking by slowest). 
-
-   This version avoids BLAS calls which have function call overheads. In
-   single thread mode it is 2-3 times faster than a straight BLAS, but it is not
-   scaling well. I think that the issue is the use of one thread per column - this
-   is alot of thread dispatch. Would be better to split into load balanced blocks :-(
-*/
-  int i,j,k,r1;
-  double *d,*dk,*z,*zz,*z1,*rr,*Rjj,*r2;
-  d = (double *)R_chk_calloc((size_t) *r,sizeof(double));
-  r1 = *r + 1;
-  #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(i,j,k,zz,z,z1,rr,Rjj,dk) num_threads(*nt)
-  #endif
-  { /* open parallel section */
-    #ifdef SUPPORT_OPENMP
-    #pragma omp for
-    #endif
-    for (i=0;i<*r;i++) { /* i is column index */	
-      k = *r - i -1; /* column of R in which to store result */
-      Rjj = rr = R + *r * i + i; /* Pointer to R[i,i] */
-      dk = d + k;
-      *dk = 1 / *rr; /* Ri[i,i] */
-      z = R + *r * k + k + 1; /* pointer to solution storage, below l.d. of R */
-      rr -= i; /* pointer moved back to start of R[,i] */
-      for (zz=z,z1 = z+i;zz<z1;zz++,rr++) *zz = *rr * *dk; /* sum_0_{i-1} Rii * zz[i] */
-      for (j=i-1;j>=0;j--) {
-        Rjj -= r1;
-        dk = z + j;
-        *dk /= - *Rjj;
-        for (zz=z,z1=z+j,rr=Rjj-j;zz<z1;zz++,rr++) *zz += *rr * *dk; 
-      }
-    }
-  } /* end parallel section */
-
-  /* now copy the solution back into original R */  
-  #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(i,k,zz,rr) num_threads(*nt)
-  #endif 
-  { /* open parallel section */
-    #ifdef SUPPORT_OPENMP
-    #pragma omp for
-    #endif 
-    for (i=0;i<*r;i++) {
-      k = *r - i - 1;
-      zz = R + i * *r + i; /* leading diagonal element */
-      *zz = d[k];
-      zz -= i; /* shift back to start of column */
-      /* copy rest of column and wipe below diagonal storage */
-      for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
-    } 
-  } /* end parallel section */
-  R_chk_free(d);
-} /* mgcv_pbsi1 */
-
-
-void mgcv_pbsi2(double *R,int *r,int *nt) {
-/* parallel back substitution inversion of upper triangular matrix using nt threads
-   i.e. Solve of R Ri = I for Ri. Idea is to work through columns of I
-   exploiting fact that full solve is never needed. Results are stored
-   in lower triangle of R and an r-dimensional array, and copied into R 
-   before exit (working back trough columns over-writing columns of R
-   as we go is not an option without waiting for threads to return in 
-   right order - which can lead to blocking by slowest). 
-
-   This version avoids BLAS calls which have function call overheads. In
-   single thread mode it is 2-3 times faster than a straight BLAS, but it is not
-   scaling well. I think that the issue is the use of one thread per column - this
-   is alot of thread dispatch. Would be better to split into load balanced blocks :-(
 */
   int i,j,k,r1,*a,b;
   double x,*d,*dk,*z,*zz,*z1,*rr,*Rjj,*r2;
@@ -983,7 +865,6 @@ void mgcv_pbsi2(double *R,int *r,int *nt) {
   for (i=*nt-1;i>0;i--) { /* don't allow zero width blocks */
     if (a[i]>=a[i+1]) a[i] = a[i+1]-1;
   }
-  for (i=0;i <= *nt;i++) Rprintf("%d\n",a[i]);
   r1 = *r + 1;
   #ifdef SUPPORT_OPENMP
   #pragma omp parallel private(b,i,j,k,zz,z,z1,rr,Rjj,dk) num_threads(*nt)
@@ -1012,24 +893,34 @@ void mgcv_pbsi2(double *R,int *r,int *nt) {
   } /* end parallel section */
 
   /* now copy the solution back into original R */  
+  /* different block structure is required here */
+  x = (double) *r;x = x*x / *nt;
+  /* compute approximate optimal split... */
+  for (i=1;i < *nt;i++) a[i] = round(sqrt(x*i));
+  for (i=*nt-1;i>0;i--) { /* don't allow zero width blocks */
+    if (a[i]>=a[i+1]) a[i] = a[i+1]-1;
+  }
+
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(i,k,zz,rr) num_threads(*nt)
+  #pragma omp parallel private(b,i,k,zz,rr) num_threads(*nt)
   #endif 
   { /* open parallel section */
     #ifdef SUPPORT_OPENMP
     #pragma omp for
     #endif 
-    for (i=0;i<*r;i++) {
-      k = *r - i - 1;
-      zz = R + i * *r + i; /* leading diagonal element */
-      *zz = d[k];
-      zz -= i; /* shift back to start of column */
-      /* copy rest of column and wipe below diagonal storage */
-      for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
+    for (b=0;b<*nt;b++) {
+      for (i=a[b];i<a[b+1];i++) {
+        k = *r - i - 1;
+        zz = R + i * *r + i; /* leading diagonal element */
+        *zz = d[k];
+        zz -= i; /* shift back to start of column */
+        /* copy rest of column and wipe below diagonal storage */
+        for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
+      }
     } 
   } /* end parallel section */
   R_chk_free(d);R_chk_free(a);
-} /* mgcv_pbsi2 */
+} /* mgcv_pbsi */
 
 
 
@@ -1042,7 +933,7 @@ void mgcv_Rpbsi(SEXP A, SEXP NT) {
   nt = asInteger(NT);
   r = nrows(A);
   R = REAL(A);
-  mgcv_pbsi2(R,&r,&nt);
+  mgcv_pbsi(R,&r,&nt);
 } /* mgcv_Rpbsi */
 
 void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc) 

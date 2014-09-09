@@ -518,7 +518,8 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   ## get component derivatives based on IFT...
   dift <- Sl.ift(ldS$Sl,R,X,y,beta,qrx$pivot,rp)
   ## and the derivatives of log|X'X+S|...
-  P <- backsolve(R,diag(np))[rp,] ## invert R and row unpivot
+  P <- pbsi(R,nt=nt,copy=TRUE)[rp,] ## invert R and row unpivot
+  ## P <- backsolve(R,diag(np))[rp,] 
   PP <- tcrossprod(P) ## PP'
   ldetXXS <- 2*sum(log(abs(diag(R)))) ## log|X'X+S|
   dXXS <- d.detXXS(ldS$Sl,PP) ## derivs of log|X'X+S|
