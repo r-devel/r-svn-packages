@@ -304,7 +304,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE) {
       }      
     } ## end of multi-S block branch
   } ## end of block loop
-  if (root) E <- E[rowSums(abs(E))!=0,] ## drop zero rows.
+  if (root) E <- E[rowSums(abs(E))!=0,,drop=FALSE] ## drop zero rows.
   list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E)
 } ## end ldetS
 
@@ -518,9 +518,10 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   ## get component derivatives based on IFT...
   dift <- Sl.ift(ldS$Sl,R,X,y,beta,qrx$pivot,rp)
   ## and the derivatives of log|X'X+S|...
-  P <- pbsi(R,nt=nt,copy=TRUE)[rp,] ## invert R and row unpivot
-  ## P <- backsolve(R,diag(np))[rp,] 
-  PP <- tcrossprod(P) ## PP'
+  P <- pbsi(R,nt=nt,copy=TRUE) ## invert R 
+  ## P <- backsolve(R,diag(np))[rp,] ## invert R and row unpivot
+  ## crossprod and unpivot (don't unpivot if unpivoting P above)
+  PP <- if (nt==1) tcrossprod(P)[rp,rp] else pRRt(P,nt)[rp,rp] ## PP'
   ldetXXS <- 2*sum(log(abs(diag(R)))) ## log|X'X+S|
   dXXS <- d.detXXS(ldS$Sl,PP) ## derivs of log|X'X+S|
   ## all ingredients are now in place to form REML score and 

@@ -936,6 +936,108 @@ void mgcv_Rpbsi(SEXP A, SEXP NT) {
   mgcv_pbsi(R,&r,&nt);
 } /* mgcv_Rpbsi */
 
+
+void mgcv_PPt(double *A,double *R,int *r,int *nt) {
+/* Computes A=RR', where R is r by r upper triangular.
+   Computation uses *nt cores. */
+  double x,*ru,*rl,*r1,*ri,*rj,*Aji,*Aij;
+  int *a,i,j,k,b;
+  if (*nt < 1) *nt = 1;
+  if (*nt > *r) *nt = *r; /* no point having more threads than columns */
+  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int));
+  a[0] = 0;a[*nt] = *r;
+  /* It is worth transposing R into lower triangle */
+  x = (double) *r;x = x*x / *nt;
+  /* compute approximate optimal split... */
+  for (i=1;i < *nt;i++) a[i] = round(*r - sqrt(x*(*nt-i)));
+  for (i=1;i <= *nt;i++) { /* don't allow zero width blocks */
+    if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
+  }
+
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(b,i,ru,rl) num_threads(*nt)
+  #endif
+  { /* open parallel section */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif 
+    for (b=0;b<*nt;b++) {
+      for (i=a[b];i<a[b+1];i++) { /* work through rows */
+        ru = rl = R + i * *r + i; /* diagonal element R[i,i] */
+        ru += *r; /* move to R[i,i+1] */
+        /* now copy R[i,i:r] to R[i:r,i]... */
+        for (r1=rl + *r - i,rl++;rl<r1;rl++,ru += *r) *rl = *ru;
+      }
+    } /* end of for b block loop */
+  } /* end parallel section */
+
+  /* Now obtain approximate load balancing block starts for product... */
+  x = (double) *r;x = x*x*x / *nt;
+  /* compute approximate optimal split... */
+  for (i=1;i < *nt;i++) a[i] = round(*r - pow(x*(*nt-i),1/3.0));
+  for (i=1;i <= *nt;i++) { /* don't allow zero width blocks */
+    if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
+  }
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(x,b,i,j,ru,rl,r1,rj,ri,Aij,Aji) num_threads(*nt)
+  #endif
+  { /* start parallel block */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (b=0;b< *nt;b++) {
+      for (i=a[b];i<a[b+1];i++) { /* loop over this block's rows */
+        Aij = Aji = A + i * *r + i;
+        rl = ru =  R + i * *r + i;
+        r1 = R + (i+1) * *r; /* upper limit for ri */
+        for (j=i;j < *r;j++,Aij += *r,Aji++,ru++,rl+= *r + 1) {
+          //rj = rl;// R + j * *r + j;
+          //ri = ru; // ri=R + i * *r + j;
+          //for (x=0.0,k=j;k<*r;k++,rj++,ri++) x += *rj * *ri;
+          for (x=0.0,rj=rl,ri=ru;ri < r1;rj++,ri++) x += *rj * *ri;
+          *Aij = *Aji = x;  
+        }
+      }
+    } /* block loop end */
+  } /* end parallel block */
+  /* wipe lower triangle of input R */
+  x = (double) *r;x = x*x / *nt;
+  /* compute approximate optimal split... */
+  for (i=1;i < *nt;i++) a[i] = round(*r - sqrt(x*(*nt-i)));
+  for (i=1;i <= *nt;i++) { /* don't allow zero width blocks */
+    if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
+  }
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(b,i,rl) num_threads(*nt)
+  #endif
+  { /* start parallel block */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif 
+    for (b=0;b<*nt;b++) {
+      for (i=a[b];i<a[b+1];i++) { /* work through rows */
+        rl = R + i * *r + i; /* diagonal element R[i,i] */
+        /* now wipe sub diagonal elements...*/
+        for (r1=rl + *r - i,rl++;rl<r1;rl++) *rl = 0.0;
+      }
+    } /* end of for b block loop */
+  } /* end parallel block */ 
+  R_chk_free(a);
+} /* mgcv_PPt */
+
+void mgcv_RPPt(SEXP a,SEXP r, SEXP NT) {
+/* Form a = rr' where r is upper triangular. 
+   designed for use with .Call, but using mgcv_PPt to do the work. 
+*/
+  int nt,n;
+  double *R,*A;
+  nt = asInteger(NT);
+  n = nrows(a);
+  A = REAL(a);
+  R = REAL(r);
+  mgcv_PPt(A,R,&n,&nt);
+} /* mgcv_Rpbsi */
+
 void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc) 
 /* BLAS free version
    Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
@@ -1689,7 +1791,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
     }
     if (cir == 0) { (*nt)--;cir=ci; } /* no cols left for final thread so drop it */
   }
-  Rprintf("nt = %d, ci = %d, cir = %d\n",*nt,ci,cir);
+  //Rprintf("nt = %d, ci = %d, cir = %d\n",*nt,ci,cir);
   /* The main loop. Will break out on convergence. */
   for (j=0;j< *n;j++) {
     /* form z=Aq[j]=A'q[j], the O(n^2) step ...  */

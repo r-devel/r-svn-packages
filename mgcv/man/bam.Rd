@@ -208,7 +208,8 @@ AIC computation does not currently take account of an AR1 model, if used.
 
 } 
 
-\seealso{\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{smooth.terms}},
+\seealso{\code{\link{mgcv.parallel}}, 
+\code{\link{mgcv-package}}, \code{\link{gamObject}}, \code{\link{gam.models}}, \code{\link{smooth.terms}},
 \code{\link{linear.functional.terms}}, \code{\link{s}},
 \code{\link{te}} \code{\link{predict.gam}},
 \code{\link{plot.gam}}, \code{\link{summary.gam}}, \code{\link{gam.side}},

@@ -180,7 +180,7 @@ mini.mf <-function(mf,chunk.size) {
 
 bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etastart = NULL,
     mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE, 
-    cl = NULL,gc.level=0,use.chol=FALSE,nobs.extra=0,samfrac=1,nt=1)
+    cl = NULL,gc.level=0,use.chol=FALSE,nobs.extra=0,samfrac=1,npt=1)
 {   y <- mf[[gp$response]]
     weights <- G$w
     conv <- FALSE
@@ -311,9 +311,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
            dev <- dev + sum(dev.resids(y,mu,weights))
            wt <- c(wt,w)
            w <- sqrt(w)
-           ## note that QR may be parallel using nt>1, even under serial accumulation...
-           if (b == 1) qrx <- qr.update(w*X[good,],w*z,use.chol=use.chol,nt=nt) 
-           else qrx <- qr.update(w*X[good,],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=nt)
+           ## note that QR may be parallel using npt>1, even under serial accumulation...
+           if (b == 1) qrx <- qr.update(w*X[good,],w*z,use.chol=use.chol,nt=npt) 
+           else qrx <- qr.update(w*X[good,],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=npt)
            rm(X);if(gc.level>1) gc() ## X can be large: remove and reclaim
         }
         if (use.chol) { ## post proc to get R and f...
@@ -348,8 +348,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
             wt <- c(wt,res[[i]]$wt); dev <- dev + res[[i]]$dev
             y.norm2 <- y.norm2 + res[[i]]$y.norm2
           }         
-          ## use parallel QR here if nt>1...
-          qrx <- if (nt>1) pqr2(R,nt) else qr(R,tol=0,LAPACK=TRUE) 
+          ## use parallel QR here if npt>1...
+          qrx <- if (npt>1) pqr2(R,npt) else qr(R,tol=0,LAPACK=TRUE) 
           f <- qr.qty(qrx,f)[1:ncol(R)]
           rp <- qrx$pivot;rp[rp] <- 1:ncol(R) # reverse pivot
           qrx <- list(R=qr.R(qrx)[,rp],f=f,y.norm2=y.norm2)
@@ -388,7 +388,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
          post <- magic.post.proc(qrx$R,fit,qrx$f*0+1) 
       } else if (method=="fREML") { ## use fast REML code
         ## block diagonal penalty object, Sl, set up before loop
-        um <- Sl.Xprep(Sl,qrx$R,nt=nt)
+        um <- Sl.Xprep(Sl,qrx$R,nt=npt)
         lambda.0 <- initial.sp(qrx$R,G$S,G$off)
         lsp0 <- log(lambda.0) ## initial s.p.
         ## carry forward scale estimate if possible...
@@ -400,7 +400,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         }
         fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
                              log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
-                             nobs =nobs+nobs.extra,Mp=um$Mp,nt=nt)
+                             nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt)
         res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE)
         object <- list(coefficients=res$beta,db.drho=fit$d1b,
                        gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
@@ -803,7 +803,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 } ## end predict.bam 
 
 bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
-                    cl=NULL,gc.level=0,use.chol=FALSE,nt=1) 
+                    cl=NULL,gc.level=0,use.chol=FALSE,npt=1) 
 ## function that does big additive model fit in strictly additive case
 {  ## first perform the QR decomposition, blockwise....
    n <- nrow(mf)
@@ -907,7 +907,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
            } 
          }      
 
-         qrx <- qr.update(X,y,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=nt)
+         qrx <- qr.update(X,y,qrx$R,qrx$f,qrx$y.norm2,use.chol=use.chol,nt=npt)
          rm(X)
          if (gc.level>1) {gc()} ## X can be large: remove and reclaim
        } ## end of single thread block loop
@@ -940,8 +940,8 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
          qrx <- chol2qr(R,f)
          qrx$y.norm2 <- y.norm2
        } else { ## proper QR         
-         ## use parallel QR if nt>1...
-         qrx <- if (nt>1) pqr2(R,nt) else qr(R,tol=0,LAPACK=TRUE) 
+         ## use parallel QR if npt>1...
+         qrx <- if (npt>1) pqr2(R,npt) else qr(R,tol=0,LAPACK=TRUE) 
          f <- qr.qty(qrx,f)[1:ncol(R)]
          rp <- qrx$pivot;rp[rp] <- 1:ncol(R) # reverse pivot
          qrx <- list(R=qr.R(qrx)[,rp],f=f,y.norm2=y.norm2)
@@ -952,7 +952,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      G$y <- mf[[gp$response]]
    
    } else { ## n <= chunk.size
-     if (rho==0) qrx <- qr.update(sqrt(G$w)*G$X,sqrt(G$w)*G$y,use.chol=use.chol,nt=nt) else {
+     if (rho==0) qrx <- qr.update(sqrt(G$w)*G$X,sqrt(G$w)*G$y,use.chol=use.chol,nt=npt) else {
        row <- c(1,rep(1:n,rep(2,n))[-c(1,2*n)])
        weight <- c(1,rep(c(sd,ld),n-1))
        stop <- c(1,1:(n-1)*2+1)
@@ -967,7 +967,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
        yX.last <- c(G$y[n],G$X[n,])  ## store final row, in case of update
        X <- rwMatrix(stop,row,weight,sqrt(G$w)*G$X)
        y <- rwMatrix(stop,row,weight,sqrt(G$w)*G$y)
-       qrx <- qr.update(X,y,use.chol=use.chol,nt=nt)
+       qrx <- qr.update(X,y,use.chol=use.chol,nt=npt)
    
        rm(X); if (gc.level>1) gc() ## X can be large: remove and reclaim
      } 
@@ -989,14 +989,14 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      post <- magic.post.proc(qrx$R,fit,qrx$f*0+1) 
    } else if (method=="fREML"){ ## use fast REML code
      Sl <- Sl.setup(G) ## setup block diagonal penalty object
-     um <- Sl.Xprep(Sl,qrx$R,nt=nt)
+     um <- Sl.Xprep(Sl,qrx$R,nt=npt)
      lambda.0 <- initial.sp(qrx$R,G$S,G$off)
      lsp0 <- log(lambda.0) ## initial s.p.
      if (scale<=0) log.phi <- log(var(as.numeric(G$y))*.05) else ## initial phi guess
                    log.phi <- log(scale)
      fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
-            nobs =n,Mp=um$Mp,nt=nt)
+            nobs =n,Mp=um$Mp,nt=npt)
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
      object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,
                     db.drho=fit$d1b,
@@ -1249,7 +1249,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   } else if (am) {
     if (nrow(mf)>chunk.size) G$X <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc() 
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
-                      gc.level=gc.level,use.chol=use.chol,nt=nthreads)
+                      gc.level=gc.level,use.chol=use.chol,npt=nthreads)
   } else {
     G$X  <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc()
     if (rho!=0) warning("AR1 parameter rho unused with generalized model")
@@ -1262,7 +1262,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         control1 <- control
         control1$epsilon <- 1e-2
         object <- bgam.fit(G, mf[ind,], chunk.size, gp ,scale ,gamma,method=method,nobs.extra=0,
-                       control = control1,cl=cluster,nt=nthreads,gc.level=gc.level,
+                       control = control1,cl=cluster,npt=nthreads,gc.level=gc.level,
                        use.chol=use.chol,samfrac=1,...)
         G$w <- Gw;G$offset <- Goffset
         coef <- object$coefficients
@@ -1270,7 +1270,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
     ## fit full dataset
     object <- bgam.fit(G, mf, chunk.size, gp ,scale ,gamma,method=method,coef=coef,
-                       control = control,cl=cluster,nt=nthreads,gc.level=gc.level,
+                       control = control,cl=cluster,npt=nthreads,gc.level=gc.level,
                        use.chol=use.chol,...)
   }
 

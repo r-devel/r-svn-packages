@@ -3953,8 +3953,9 @@ initial.sp <- function(X,S,off,expensive=FALSE)
       maS <- max(abs(S[[i]])) 
       rsS <- rowMeans(abs(S[[i]]))
       csS <- colMeans(abs(S[[i]]))
-      thresh <- .Machine$double.eps*maS*10
-      ind <- rsS > thresh & csS > thresh # only these columns really penalize
+      dS <- diag(abs(S[[i]])) ## new 1.8-4
+      thresh <- .Machine$double.eps^.8 * maS ## .Machine$double.eps*maS*10
+      ind <- rsS > thresh & csS > thresh & dS > thresh # only these columns really penalize
       ss <- diag(S[[i]])[ind] # non-zero elements of l.d. S[[i]]
       start <- off[i];finish <- start+ncol(S[[i]])-1
       xx <- ldxx[start:finish]

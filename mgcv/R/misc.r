@@ -81,6 +81,17 @@ pbsi <- function(R,nt=1,copy=TRUE) {
  R
 } ## pbsi
 
+pRRt <- function(R,nt=1) {
+## parallel RR' for upper triangular R
+## library(mgcv);n <- 4000;R <- matrix(0,n,n);for (i in 1:n) R[i,i:n] <- runif(n-i+1)
+## system.time(A <- mgcv:::pRRt(R,2))
+## system.time(A2 <- tcrossprod(R));range(A-A2)
+  n <- nrow(R)
+  A <- matrix(0,n,n)
+  .Call(C_mgcv_RPPt,A,R,nt)
+  A
+}
+
 block.reorder <- function(x,n.blocks=1,reverse=FALSE) {
 ## takes a matrix x divides it into n.blocks row-wise blocks, and re-orders 
 ## so that the blocks are stored one after the other. 

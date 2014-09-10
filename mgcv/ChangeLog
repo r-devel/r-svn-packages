@@ -14,6 +14,15 @@
 * slanczos now accepts an nt argument allowing parallel computation of 
   main O(n^2) step.
 
+* fix to newton logic problem, which could cause an attempt to use 'score2'
+  before definition.
+
+* fix to fREML code which could cause matrix square root to lose dimensions 
+  and cause an error. 
+
+* initial.sp could perform very poorly for very low basis dimensions - could 
+  set initial sp to infinity effectively. 
+
 1.8-3
 
 * Fix of two illegal read/write bugs with extended family models with no
