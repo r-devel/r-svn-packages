@@ -195,3 +195,9 @@ Version 2.23-12
 
 Update Polish translations.
 
+
+Version 2.23-12
+===============
+
+Changes to reduce noise from R CMD check --as-cran.
+
