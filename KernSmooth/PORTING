@@ -199,5 +199,6 @@ Update Polish translations.
 Version 2.23-13
 ===============
 
-Changes to reduce noise from R CMD check --as-cran.
+Changes to reduce noise from R CMD check --as-cran:
+put message in .onAttach and remove orig.
 
