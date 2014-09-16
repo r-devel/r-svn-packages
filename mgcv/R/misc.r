@@ -52,7 +52,7 @@ pinv <- function(X,svd=FALSE) {
 pqr2 <- function(x,nt=1) {
 ## Function for parallel pivoted qr decomposition of a matrix using LAPACK
 ## householder routines...
-## library(mgcv); n <- 1000;p<-100;x <- matrix(runif(n*p),n,p)
+## library(mgcv); n <- 10000;p<-500;x <- matrix(runif(n*p),n,p)
 ## system.time(qrx <- qr(x,LAPACK=TRUE))
 ## system.time(qrx2 <- mgcv:::pqr2(x,2)) 
 ## system.time(qrx3 <- mgcv:::pqr(x,2)) 
@@ -81,9 +81,24 @@ pbsi <- function(R,nt=1,copy=TRUE) {
  R
 } ## pbsi
 
+pchol <- function(A,nt=1) {
+## parallel Choleski factorization.
+## library(mgcv);n <- 4000;r <- 4000;A <- tcrossprod(matrix(runif(n*r),n,r))
+## system.time(R <- chol(A,pivot=TRUE));system.time(L <- mgcv:::pchol(A));range(R[1:r,]-L[1:r,])
+## system.time(L <- mgcv:::pchol(A,2))
+  piv <- as.integer(rep(0,ncol(A)))
+  A <- A*1 ## otherwise over-write in calling env!
+  rank <- .Call(C_mgcv_Rpchol,A,piv,nt)
+  attr(A,"pivot") <- piv+1;attr(A,"rank") <- rank
+  A
+}
+
 pRRt <- function(R,nt=1) {
 ## parallel RR' for upper triangular R
-## library(mgcv);n <- 4000;R <- matrix(0,n,n);for (i in 1:n) R[i,i:n] <- runif(n-i+1)
+## following creates index of lower triangular elements...
+## n <- 4000;a <- rep(1:n,n);b <- rep(1:n,each=n)-1;which(a-b>0) -> ii;a[ii]+b[ii]*n->ii
+## library(mgcv);R <- matrix(0,n,n);R[ii] <- runif(n*(n+1)/2)
+## Note: A[a-b<=0] <- 0 zeroes upper triangle 
 ## system.time(A <- mgcv:::pRRt(R,2))
 ## system.time(A2 <- tcrossprod(R));range(A-A2)
   n <- nrow(R)

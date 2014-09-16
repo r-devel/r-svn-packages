@@ -274,6 +274,152 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
   return(a);
 } /* mgcv_pmmult2 */
 
+int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
+/* Obtain pivoted Choleski factor of n by n matrix A using 
+   algorithm 4.2.4 of Golub and van Loan 3 (1996) and using 
+   openMP to parallelize on nt cores. 
+   Note that 4.2.4 is only correct if the pivot instructions are 
+   replaced by those below, which assume that only the lower triangle 
+   of A is to be accessed. GvL4 (2013) Alg 4.2.2 is very similar, and works 
+   as is, with a much simpler correction of the pivoting, but in that 
+   case both triangles of A are accessed and the cost doubles. Modifying
+   to use only the lower triangle again gives the following. 
+
+   This version is almost identical to LAPACK with defualt BLAS in speed 
+   (4% slower at n=4000), as a single thread algorithm.
+*/
+  int i,j,k,r,q,n1,*pk,*pq,kn,qn,*a,N,m,b;
+  double *Aj,*Ak,*Aq,*Aend,x,Ajk,Akk,thresh=0.0;
+  if (*nt < 1) *nt = 1; if (*nt > *n) *nt = *n;
+  m = *nt;  
+  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int));
+  a[0] = 0;a[m] = *n; /* ... initialize column block splitting array */ 
+  r = 0;n1 = *n + 1;
+  for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
+  for (pk=piv,k=0;k< *n;k++,pk++) {
+    kn = k * *n;
+    /* find largest element of diag(A), from k onwards */
+    Ak = A + kn + k;x = *Ak;q=k;Ak+=n1;
+    for (i=k+1;i < *n;i++,Ak+=n1) if (*Ak>x) {x = *Ak;q=i;}
+    qn = q * *n;
+    if (k==0) thresh = *n * x * DOUBLE_EPS;
+    if (x>thresh) { /* A[q,q] =x > 0 */
+      r++;
+      /* piv[k] <-> piv[q] */
+      pq = piv + q;i = *pq; *pq = *pk;*pk = i;
+      
+      /* A[k,k] <-> A[q,q] */
+      Ak = A + kn + k;Aq = A + qn + q;
+      x = *Ak;*Ak = *Aq;*Aq = x;
+      /* A[k+1:q-1,k] <-> A[q,k+1:q-1] */
+      Ak++; Aend = Aq; Aq = A + q + kn + *n;
+      for (;Aq<Aend;Ak++,Aq += *n) {
+        x = *Ak;*Ak = *Aq;*Aq = x;
+      }
+      /* A[q,1:k-1] <-> A[k,1:k-1] */
+      Ak = A + k;Aend=Ak + kn;Aq = A + q;
+      for (;Ak < Aend;Ak += *n,Aq += *n) {x = *Aq;*Aq = *Ak;*Ak = x;}
+      /* A[q+1:n,k] <-> A[q+1:n,q] */
+      Ak = A + kn; Aq = A + qn+q+1;Aend = Ak + *n;Ak+=q+1;
+      for (;Ak<Aend;Ak++,Aq++) {x = *Aq;*Aq = *Ak;*Ak = x;}
+      /* kth column scaling */
+      Ak = A + kn + k;*Ak = sqrt(*Ak);Akk = *Ak;Ak++;
+      for (;Ak<Aend;Ak++) *Ak /= Akk;
+      /* finally the column updates...*/
+      /* create the nt work blocks for this... */
+      N = *n - k - 1; /* block to be processed is r by r */
+      if (m > N) { m = N;a[m] = *n; } /* number of threads to use must be <= r */
+      (*a)++;
+      x = (double) N;x = x*x / m;
+      /* compute approximate optimal split... */
+      for (i=1;i < m;i++) a[i] = round(N - sqrt(x*(m-i)))+k+1;
+      for (i=1;i <= m;i++) { /* don't allow zero width blocks */
+        if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
+      }    
+      /* check load balance... */
+      // for (i=0;i<m;i++) Rprintf("%d  ",(a[i+1]-a[i])*(*n-(a[i+1]-1+a[i])/2));Rprintf("\n");
+      #ifdef SUPPORT_OPENMP
+      #pragma omp parallel private(b,j,Aj,Aend,Ak,Ajk) num_threads(m)
+      #endif 
+      { /* begin parallel section */
+        #ifdef SUPPORT_OPENMP
+        #pragma omp for
+        #endif
+        for (b=0;b<m;b++)
+	  for (j=a[b];j<a[b+1];j++) {  
+	    Aj = A + *n * j + j;
+            Ak = A + kn; Aend = Ak + *n;Ak += j;Ajk = *Ak;
+            for (;Ak < Aend;Ak++,Aj++) *Aj -= *Ak * Ajk;
+          }
+      } /* end parallel section */
+    } else break; /* if x not greater than zero */
+  } /* k loop */ 
+  /* Wipe redundant columns... */ 
+  Aend = A + *n * *n; /* 1 beyond end of A */  
+  for (Ak = A + r * *n;Ak<Aend;Ak++) *Ak = 0.0;
+  
+  /* transpose and wipe lower triangle ... */
+  /* first compute block split */
+  a[0] = 0;a[*nt] = *n;
+  x = (double) *n;x = x*x / *nt;
+  /* compute approximate optimal split... */
+  for (i=1;i < *nt;i++) a[i] = round(*n - sqrt(x*(*nt-i)));
+  for (i=1;i <= *nt;i++) { /* don't allow zero width blocks */
+    if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
+  }
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel private(b,i,Ak,Aend,Aq) num_threads(*nt)
+  #endif 
+  { /* start parallel */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp for
+    #endif
+    for (b=0;b < *nt;b++)
+      for (i=a[b];i<a[b+1];i++) {
+        Ak = A + i * *n; Aend = Ak + *n;Ak += i;
+        Aq = Ak + *n; /* row i pointer A[i,i+1] */
+        Ak ++; /* col i pointer A[i+1,i] */
+        for (;Ak<Aend;Ak++,Aq += *n) { /* copy and wipe */
+          *Aq = *Ak;*Ak=0.0;
+        }
+      }
+  } /* end parallel */
+  /* wipe upper triangle code 
+    for (i = 0 ; i < r;i++) {
+    Ak = A + *n * i;Aend = Ak + i;
+    for (;Ak<Aend;Ak++) *Ak = 0.0; 
+    }*/
+  
+  R_chk_free(a);
+  return(r); 
+} /* mgcv_pchol */
+
+
+SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT) {
+/* routine to Choleski decompose n by n  matrix Amat with pivoting 
+   using routine mgcv_pchol to do the work. Uses NT parallel
+   threads.
+
+   Designed for use with .call rather than .C
+   Returns detected rank, and overwrites Amat with its pivoted
+   Choleski factor. PIV contains pivot vector.
+
+*/
+  int n,nt,*piv,r,*rrp;
+  double *A;
+  SEXP rr;
+  nt = asInteger(NT);
+  n = nrows(Amat);
+  A = REAL(Amat);
+  piv = INTEGER(PIV);
+  r = mgcv_pchol(A,piv,&n,&nt);
+  /* should return rank (r+1) */
+  rr = PROTECT(allocVector(INTSXP, 1));
+  rrp = INTEGER(rr);
+  *rrp = r;
+  UNPROTECT(1);
+  return(rr);
+} /* mgcv_piqr */
 
 int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
 /* Do the work for parallel QR: 
@@ -626,7 +772,7 @@ void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work)
       XtMX[i * *c + j] = XtMX[j * *c + i] = xx;
     }
   }
-}
+} /* getXtMX */
 
 
 
@@ -1330,7 +1476,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
     if (*cb>1) row_block_reorder(b,r,cb,&nb,&TRUE);
   }
   R_chk_free(Qb);
-} 
+}  /* mgcv_pqrqy */
 
 void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
 /* parallel qr decomposition using up to nt threads. 
