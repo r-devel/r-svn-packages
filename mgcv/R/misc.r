@@ -81,14 +81,15 @@ pbsi <- function(R,nt=1,copy=TRUE) {
  R
 } ## pbsi
 
-pchol <- function(A,nt=1) {
+pchol <- function(A,nt=1,nb=32) {
 ## parallel Choleski factorization.
-## library(mgcv);n <- 4000;r <- 4000;A <- tcrossprod(matrix(runif(n*r),n,r))
+## library(mgcv);
+## set.seed(2);n <- 2000;r <- 2000;A <- tcrossprod(matrix(runif(n*r),n,r))
 ## system.time(R <- chol(A,pivot=TRUE));system.time(L <- mgcv:::pchol(A));range(R[1:r,]-L[1:r,])
-## system.time(L <- mgcv:::pchol(A,2))
+## system.time(L <- mgcv:::pchol(A,nb=30))
   piv <- as.integer(rep(0,ncol(A)))
   A <- A*1 ## otherwise over-write in calling env!
-  rank <- .Call(C_mgcv_Rpchol,A,piv,nt)
+  rank <- .Call(C_mgcv_Rpchol,A,piv,nt,nb)
   attr(A,"pivot") <- piv+1;attr(A,"rank") <- rank
   A
 }

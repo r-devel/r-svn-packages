@@ -274,6 +274,90 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
   return(a);
 } /* mgcv_pmmult2 */
 
+int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
+/* Lucas 2004 block pivoted Choleski algorithm...
+   nb is block size, nt is number of threads, A is symmetric
+   +ve semi definite matrix and piv is pivot sequence. 
+*/  
+  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,jn;
+  double tol=0.0,*dots,*pd,*p1,*Aj,*Aj1,*Ajn,xmax,x,*Aq,*Ak,*Ajj,*Aend;
+  dots = (double *)R_chk_calloc((size_t) *n,sizeof(double));
+  for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
+  jb = *nb; /* block size, allowing final to be smaller */
+  n1 = *n + 1;
+  Ajn = A;
+  for (k=0;k<*n;k+= *nb) {
+    if (*n - k  < jb) jb = *n - k ; /* end block */ 
+    for (pd = dots + k,p1 = dots + *n;pd<p1;pd++) *pd = 0;
+    for (j=k;j<k+jb;j++,Ajn += *n) {
+      jn = j * *n;
+      pd = dots + j;Aj = Ajn + j; Aj1 = Aj - 1;
+      xmax = -1.0;q=j;p1 = dots + *n;
+      if (j>k) for (;pd<p1;pd++,Aj1 += *n) *pd += *Aj1 * *Aj1; /* dot product update */
+      for (l=j,pd = dots + j;pd<p1;pd++,Aj += n1,l++) {   
+        x = *Aj - *pd; 
+        if (x>xmax) { xmax = x;q=l;} /* find the pivot */
+      } 
+      if (j==0) tol = *n * xmax * DOUBLE_EPS;
+      Aq = A + *n * q + q;
+      // Rprintf("\n n = %d k = %d j = %d  q = %d,  A[q,q] = %g  ",*n,k,j,q,*Aq);
+      if (*Aq - dots[q]<tol) {r = j;break;} 
+      /* swap dots... */
+      pd = dots + j;p1 = dots + q;
+      x = *pd;*pd = *p1;*p1 = x;
+      /* swap pivots... */
+      pk = piv + j;pq = piv +q;
+      i = *pk;*pk = *pq;*pq = i;
+      /* swap rows ... */
+      Aend = A + *n * *n;
+      Aj = Ajn + j; Aq = Ajn + q;
+      for (;Aj<Aend;Aj += *n,Aq += *n) {
+        x = *Aj;*Aj = *Aq;*Aq = x;
+      }
+      /* swap cols ... */
+      Aj = Ajn; Aq = A + *n * q;Aend = Aj + *n;
+      for (;Aj < Aend;Aj++,Aq++)  {
+        x = *Aj;*Aj = *Aq;*Aq = x;
+      }
+      /* now update */
+      Ajj = Ajn + j;  
+      // Rprintf(" %g  %g",*Aj,*pd);
+      *Ajj = sqrt(*Ajj - *pd); /* sqrt(A[j,j]-dots[j]) */      
+      Aend = A + *n * *n;
+      if (j > k&&j < *n) {
+        Aj = Ajn + *n;
+        Aq = Aj + k;
+        Aj += j;        
+        Aj1 = Ajn + k;
+        for (;Aj<Aend;Aj += *n,Aq += *n) 
+        for (pd = Aj1,p1=Aq;pd < Ajj;pd++,p1++) *Aj -= *pd * *p1;  
+      }
+      if (j < *n) {
+        Aj = Ajj; x = *Aj;Aj += *n;
+        for (;Aj<Aend;Aj += *n) *Aj /= x;
+      }    
+    } /* j loop */
+    if (r > 0) break;
+    /* now the main work - updating the trailing factor... */
+    if (k + jb < *n) 
+    for (i=j;i<*n;i++) for (l=i;l<*n;l++) {
+	Aj = A + i * *n;Aend = Aj + j;Aj1 = Aj + l;Aj+=k;
+        Aq = A + l * *n + k;
+        for (;Aj < Aend;Aj++,Aq++) *Aj1 -= *Aq * *Aj;
+        A[i + *n * l ] = *Aj1;
+    }
+  } /* k loop */
+  if (r<0) r = *n;
+  R_chk_free(dots);
+  
+  for (Ajn=A,j=0;j<*n;j++,Ajn += *n) {
+    Aj = Ajn;Aend = Aj + *n;
+    if (j<r) Aj += j+1; else Aj += r;
+    for (;Aj<Aend;Aj++) *Aj = 0.0;
+  }
+  return(r);
+} /* mgcv_bchol */
+
 int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
 /* Obtain pivoted Choleski factor of n by n matrix A using 
    algorithm 4.2.4 of Golub and van Loan 3 (1996) and using 
@@ -285,7 +369,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
    case both triangles of A are accessed and the cost doubles. Modifying
    to use only the lower triangle again gives the following. 
 
-   This version is almost identical to LAPACK with defualt BLAS in speed 
+   This version is almost identical to LAPACK with default BLAS in speed 
    (4% slower at n=4000), as a single thread algorithm.
 */
   int i,j,k,r,q,n1,*pk,*pq,kn,qn,*a,N,m,b;
@@ -395,7 +479,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
 } /* mgcv_pchol */
 
 
-SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT) {
+SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT,SEXP NB) {
 /* routine to Choleski decompose n by n  matrix Amat with pivoting 
    using routine mgcv_pchol to do the work. Uses NT parallel
    threads.
@@ -405,14 +489,16 @@ SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT) {
    Choleski factor. PIV contains pivot vector.
 
 */
-  int n,nt,*piv,r,*rrp;
+  int n,nt,*piv,r,*rrp,nb;
   double *A;
   SEXP rr;
+  nb = asInteger(NB);
   nt = asInteger(NT);
   n = nrows(Amat);
   A = REAL(Amat);
   piv = INTEGER(PIV);
-  r = mgcv_pchol(A,piv,&n,&nt);
+  // r = mgcv_pchol(A,piv,&n,&nt); 
+  r = mgcv_bchol(A,piv,&n,&nt,&nb);
   /* should return rank (r+1) */
   rr = PROTECT(allocVector(INTSXP, 1));
   rrp = INTEGER(rr);
