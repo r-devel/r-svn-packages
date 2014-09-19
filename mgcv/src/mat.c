@@ -279,13 +279,16 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
 */  
-  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,jn;
+  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,jn,m,N,*a,b;
   double tol=0.0,*dots,*pd,*p1,*Aj,*Aj1,*Ajn,xmax,x,*Aq,*Ak,*Ajj,*Aend;
   dots = (double *)R_chk_calloc((size_t) *n,sizeof(double));
   for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
   jb = *nb; /* block size, allowing final to be smaller */
   n1 = *n + 1;
   Ajn = A;
+  m = *nt;if (m<1) m=1;if (m>*n) m = *n; /* threads to use */
+  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int)); /* thread block cut points */
+  a[m] = *n;
   for (k=0;k<*n;k+= *nb) {
     if (*n - k  < jb) jb = *n - k ; /* end block */ 
     for (pd = dots + k,p1 = dots + *n;pd<p1;pd++) *pd = 0;
@@ -339,13 +342,34 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
     } /* j loop */
     if (r > 0) break;
     /* now the main work - updating the trailing factor... */
-    if (k + jb < *n) 
-    for (i=j;i<*n;i++) for (l=i;l<*n;l++) {
-	Aj = A + i * *n;Aend = Aj + j;Aj1 = Aj + l;Aj+=k;
-        Aq = A + l * *n + k;
-        for (;Aj < Aend;Aj++,Aq++) *Aj1 -= *Aq * *Aj;
-        A[i + *n * l ] = *Aj1;
-    }
+  
+    if (k + jb < *n) {
+      /* create the m work blocks for this... */
+      N = *n - j; /* block to be processed is N by N */
+      if (m > N) { m = N;a[m] = *n; } /* number of threads to use must be <= r */
+      *a = j; /* start of first block */
+      x = (double) N;x = x*x / m;
+      /* compute approximate optimal split... */
+      for (i=1;i < m;i++) a[i] = round(N - sqrt(x*(m-i)))+j;
+      for (i=1;i <= m;i++) { /* don't allow zero width blocks */
+          if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
+      }     
+      #ifdef SUPPORT_OPENMP
+      #pragma omp parallel private(b,i,l,Aj,Aend,Aq,Aj1) num_threads(m)
+      #endif 
+      { /* start parallel section */
+        #ifdef SUPPORT_OPENMP
+        #pragma omp for
+        #endif
+        for (b=0;b<m;b++)
+        for (i=a[b];i<a[b+1];i++) for (l=i;l<*n;l++) {
+	  Aj = A + i * *n;Aend = Aj + j;Aj1 = Aj + l;Aj+=k;
+          Aq = A + l * *n + k;
+          for (;Aj < Aend;Aj++,Aq++) *Aj1 -= *Aq * *Aj;
+          A[i + *n * l ] = *Aj1;
+        }
+      } /* end parallel section */
+    } /* if (k + jb < *n) */
   } /* k loop */
   if (r<0) r = *n;
   R_chk_free(dots);
@@ -355,6 +379,7 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
     if (j<r) Aj += j+1; else Aj += r;
     for (;Aj<Aend;Aj++) *Aj = 0.0;
   }
+  R_chk_free(a);
   return(r);
 } /* mgcv_bchol */
 
