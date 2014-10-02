@@ -10,6 +10,7 @@
                 single thread QR is used to combine everything.
    * mgcv_piqr - pivoted QR that simply parallelizes the 'householder-to-unfinished-cols'
                  step. Storage exactly as standard LAPACK pivoted QR.
+   * mgcv_Rpiqr - wrapper for above for use via .call 
    * mgcv_pmmult - parallel matrix multiplication.
    * mgcv_Rpbsi - parallel inversion of upper triangular matrix.
    * Rlanczos - parallel on leading order cost step (but note that standard BLAS seems to 
@@ -275,7 +276,8 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
 } /* mgcv_pmmult2 */
 
 int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
-/* Lucas 2004 block pivoted Choleski algorithm...
+/* Lucas (2004) "LAPACK-Style Codes for Level 2 and 3 Pivoted Cholesky Factorizations" 
+   block pivoted Choleski algorithm 5.1. Note several errors in paper, noted below. 
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
 */  
@@ -304,7 +306,7 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
       if (j==0) tol = *n * xmax * DOUBLE_EPS;
       Aq = A + *n * q + q;
       // Rprintf("\n n = %d k = %d j = %d  q = %d,  A[q,q] = %g  ",*n,k,j,q,*Aq);
-      if (*Aq - dots[q]<tol) {r = j;break;} 
+      if (*Aq - dots[q]<tol) {r = j;break;} /* note Lucas (2004) has 'dots[q]' missing */
       /* swap dots... */
       pd = dots + j;p1 = dots + q;
       x = *pd;*pd = *p1;*p1 = x;
@@ -327,11 +329,11 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
       // Rprintf(" %g  %g",*Aj,*pd);
       *Ajj = sqrt(*Ajj - *pd); /* sqrt(A[j,j]-dots[j]) */      
       Aend = A + *n * *n;
-      if (j > k&&j < *n) {
+      if (j > k&&j < *n) { /* Lucas (2004) has '1' in place of 'k' */
         Aj = Ajn + *n;
-        Aq = Aj + k;
+        Aq = Aj + k; /* Lucas (2004) has '1' in place of 'k' */
         Aj += j;        
-        Aj1 = Ajn + k;
+        Aj1 = Ajn + k; /* Lucas (2004) has '1' in place of 'k' */
         for (;Aj<Aend;Aj += *n,Aq += *n) 
         for (pd = Aj1,p1=Aq;pd < Ajj;pd++,p1++) *Aj -= *pd * *p1;  
       }
@@ -363,8 +365,8 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
         #endif
         for (b=0;b<m;b++)
         for (i=a[b];i<a[b+1];i++) for (l=i;l<*n;l++) {
-	  Aj = A + i * *n;Aend = Aj + j;Aj1 = Aj + l;Aj+=k;
-          Aq = A + l * *n + k;
+	  Aj = A + i * *n;Aend = Aj + j;Aj1 = Aj + l;
+          Aj+=k;Aq = A + l * *n + k; /* Lucas (2004) has '1' in place of 'k' */
           for (;Aj < Aend;Aj++,Aq++) *Aj1 -= *Aq * *Aj;
           A[i + *n * l ] = *Aj1;
         }
@@ -507,7 +509,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
 SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT,SEXP NB) {
 /* routine to Choleski decompose n by n  matrix Amat with pivoting 
    using routine mgcv_pchol to do the work. Uses NT parallel
-   threads.
+   threads. NB is block size.
 
    Designed for use with .call rather than .C
    Returns detected rank, and overwrites Amat with its pivoted
@@ -530,7 +532,126 @@ SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT,SEXP NB) {
   *rrp = r;
   UNPROTECT(1);
   return(rr);
-} /* mgcv_piqr */
+} /* mgcv_Rpchol */
+
+
+int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
+/* block pivoted QR based on 
+    Quintana-Orti, G.; Sun, X. & Bischof, C. H. (1998)
+    "A BLAS-3 version of the QR factorization with column pivoting" 
+    SIAM Journal on Scientific Computing, 19: 1486-1494
+   but not quite alot of correction of algorithm as stated in paper (there 
+   are a number of indexing errors there, and down-date cancellation 
+   strategy is only described verbally). 
+*/ 
+  int jb,pb,i,j,k,m,*p0,nb0,q,one=1,ok_norm;
+  double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,y,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
+  char trans='T',nottrans='N';
+  tol = pow(DOUBLE_EPS,.8);
+  for (p0=piv,i=0;i<p;i++,p0++) *p0 = i; /* initialize pivot index */
+  work = (double *)R_chk_calloc((size_t) nb,sizeof(double));
+  /* create column norm vectors */
+  cn =(double *)R_chk_calloc((size_t) p,sizeof(double)); /* version for downdating */
+  icn =(double *)R_chk_calloc((size_t) p,sizeof(double)); /* inital for judging cancellation error */
+  for (a0=A,i=0;i<p;i++) { /* cn[i]=icn[i] = || A[:,i] ||^2 */
+    for (x=0.0,a1 = a0 + n;a0<a1;a0++) x += *a0 * *a0;
+    cn[i] = icn[i] = x;   
+  }
+  if (p<nb) nb = p;
+  nb0 = nb; /* target block size nb */  
+  jb=0; /* start column of current block */
+  pb = p; /* columns left to process */
+  F = (double *)R_chk_calloc((size_t) (p * nb0),sizeof(double));
+  while (jb < p) {
+    nb = p-jb;if (nb>nb0) nb = nb0;/* attempted block size */
+    for (a0=F,a1=F+nb*pb;a0<a1;a0++) *a0 = 0.0; /* F[1:pb,1:nb] = 0 - i.e. clear F */
+    for (j=0;j<nb;j++) { /* loop through cols of this block */
+      k = jb + j; /* index of current column of A to process */
+      a0 = cn + k;x=*a0;q=k;a0++;
+      for (i=k+1;i<p;i++,a0++) if (*a0>x) { x = *a0;q=i; } /* find pivot col q */
+      if (q!=k) { /* then pivot */
+        i = piv[q];piv[q]=piv[k];piv[k] = i;
+        x = cn[q];cn[q]=cn[k];cn[k] = x;
+        x = icn[q];icn[q]=icn[k];icn[k] = x;
+        Aq = A + q * n;Ak = A + k * n;a1 = Aq + n;
+        for (;Aq<a1;Aq++,Ak++) { x = *Aq; *Aq = *Ak; *Ak = x;} /* A[:,k] <-> A[:,q] */
+        Aq = F + q - jb;Ak = F + j;a1 = F + nb*pb;
+        for (;Aq<a1;Aq+=pb,Ak+=pb) { x = *Aq; *Aq = *Ak; *Ak = x;} /* F[q-jb,:] <-> F[j,:] */        
+      }
+      /* update the pivot column: A[k:n-1,k] -= A[k:n-1,jb:k-1]F[j,0:j-1]' using
+         BLAS call to DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
+                    y := alpha*A*x + beta*y (or A' if TRANS='T')*/
+      m = n-k;Ak = A+n*k+k;
+      if (j) {
+        F77_CALL(dgemv)(&nottrans, &m, &j,&dmone,A+jb*n+k,&n,F+j,&pb,&done,Ak, &one);
+      }
+      /* now compute the Householder transform for A[,k], by calling 
+         dlarfg (N, ALPHA, X, INCX, TAU), N is housholder dim */
+      xx = *Ak; /* A[k,k] on entry and transformed on exit */
+      Ak++; /* on exit all but first element of v will be in Ak, v(1) = 1 */
+      F77_CALL(dlarfg)(&m,&xx,Ak,&one,tau+k);
+      Ak--;*Ak = 1.0; /* for now, have Ak point to whole of v */
+      /* F[j+1:pb-1,j] = tau[k] * A[k:n-1,k+1:p-1]'v */ 
+      
+      if (k<p-1) {
+        i=p-k-1;
+        F77_CALL(dgemv)(&trans, &m, &i,tau+k,A+(k+1)*n+k,&n,Ak,&one,&dzero,F+j+1+j*pb, &one);
+      } 
+      /* F[0:pb-1,j] -= tau[k] F[0:pb-1,0:j-1] A[k:n-1,jb:k-1]'v */
+      if (j>0) {
+        F77_CALL(dgemv)(&trans, &m, &j,&dmone,A+jb*n+k,&n,Ak,&one,&dzero,work, &one);
+        F77_CALL(dgemv)(&nottrans, &pb, &j,tau+k,F,&pb,work,&one,&done,F+j*pb, &one);
+      }
+      /* update pivot row */
+      if (k<p-1) {
+        m=pb-j-1;i=j+1;
+        F77_CALL(dgemv)(&nottrans, &m, &i,&dmone,F+j+1,&pb,A + jb * n + k,&n,&done,Ak+n, &n);
+      }
+      *Ak = xx; /* restore A[k,k] */
+      /* Now down date the column norms */
+      ok_norm = 1;
+      if (k < p-1) {
+        Ak += n;
+        a0 = cn + k + 1;a1=cn + p;Aq = icn + k + 1;
+        for (;a0<a1;a0++,Aq++,Ak+=n) { 
+          *a0 -= *Ak * *Ak;
+          if (*a0<*Aq*tol) ok_norm = 0; /* cancellation error problem in downdate */ 
+        }  
+      } /* down dates complete */
+      if (!ok_norm) { 
+        j++;
+        nb = j;
+        break; /* a column norm has suffered serious cancellation error. Need to break out and recompute */
+      }
+    } /* for j */
+    j--; /* make compatible with current k */
+
+    /* now the block update */    
+    if (k<p-1) {
+      /* A[k+1:n,k+1:p] -= A[k+1:n,jb:k]F[j+1:pb,0:nb-1]'
+         dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)*/
+      Ak = A + (k+1)*n + k + 1;Aq = A + jb * n + k + 1;
+      m = n - k - 1 ;i = p - k - 1;
+      F77_CALL(dgemm)(&nottrans,&trans,&m,&i,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n);
+    }
+
+    if (!ok_norm) { /* recompute any column norms that had cancelled badly */ 
+      for (i = k+1;i<p; i++) { 
+        if (cn[i]<icn[i]*tol) { /* do the recompute */
+          x=0.0; Ak = A + i * n; Aq += n; Ak += k+1;
+          for (;Ak<Aq;Ak++) x += *Ak * *Ak;
+          cn[i] = icn[i] = x;
+        } 
+      } 
+    }
+    pb -= nb;
+    jb += nb;
+  } /* end while (jb<p) */
+  R_chk_free(F);
+  R_chk_free(cn);
+  R_chk_free(icn);
+  R_chk_free(work);
+} /* bpqr */
 
 int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
 /* Do the work for parallel QR: 
@@ -574,12 +695,18 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
     /* now generate the householder reflector for column r O(n)*/
     p0 = x + r * n + r; /* first element of column */
     p1 = p0 + 1; /* remaining elements of column */
-    xx = *p0;
+    xx = *p0; /* contains first element of column to be worked on */
     F77_CALL(dlarfg)(&nh,&xx,p1,&one,beta+r);
-    
+    /* now xx contains first element of rotated column - i.e. leading 
+       diagonal element of R[r,r]. Elements of column r of x below the 
+       diagonal now contain elements of the housholder vector apart from 
+       the first, which is 1. So if v' = [1,x[(r+1):n,r]'] then 
+       H = I - beta[r]*v*v' */
+
     /* next apply the rotation to the remaining columns of x O(np) */
        
-    *p0 = 1.0;j=p-r-1;
+    *p0 = 1.0; /* put 1 into leading diagonal element of x so that v = x[r:n,r] */
+    j=p-r-1;
     
     /* now distribute the j columns between nt threads */
     if (j) {
@@ -604,6 +731,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
             p1 = p0 + n + n * cpt *i; 
             z1=p1+nh;
             for (ii =0;ii<j;ii++,p1+=n,z1+=n) {
+            /* apply reflection I - beta v v' */ 
             for (zz=0.0,v=p0,z=p1;z<z1;z++,v++) zz += *z * *v * br;
             for (z=p1,v=p0;z<z1;z++,v++) *z -= zz * *v;
 	   }
@@ -612,7 +740,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
       } /* if (j) */
     } /* end parallel */ 
     nh--;
-    *p0 = xx;
+    *p0 = xx; /* now restore leading diagonal element of R to x[r,r] */
     /* update c, get new k... */
     k = r + 1;
     for (tau=0.0,p0+=n,i=r+1;i<p;i++,p0+=n) { 
@@ -628,7 +756,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   
   R_chk_free(c); R_chk_free(work);
   return(r+1);
-  } /* mgcv_piqr */
+} /* mgcv_piqr */
 
 SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
 /* routine to QR decompose N by P matrix X with pivoting using routine
@@ -640,7 +768,7 @@ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
    Return object is as 'qr' in R.
 
 */
-  int n,p,nt,*piv,r,*rrp;
+    int n,p,nt,*piv,r,*rrp,nb=30;
   double *x,*beta;
   SEXP rr;
   nt = asInteger(NT);
@@ -648,7 +776,9 @@ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
   p = ncols(X);
   x = REAL(X);beta = REAL(BETA);
   piv = INTEGER(PIV);
-  r = mgcv_piqr(x,n,p,beta,piv,nt);
+  //int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt)
+  r = bpqr(x,n,p,beta,piv,nb,nt); /* block version */
+  //r = mgcv_piqr(x,n,p,beta,piv,nt); /* level 2 version */
   /* should return rank (r+1) */
   rr = PROTECT(allocVector(INTSXP, 1));
   rrp = INTEGER(rr);
