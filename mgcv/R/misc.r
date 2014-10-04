@@ -49,7 +49,7 @@ pinv <- function(X,svd=FALSE) {
   X
 } ## end pinv
 
-pqr2 <- function(x,nt=1) {
+pqr2 <- function(x,nt=1,nb=30) {
 ## Function for parallel pivoted qr decomposition of a matrix using LAPACK
 ## householder routines...
 ## library(mgcv); n <- 10000;p<-500;x <- matrix(runif(n*p),n,p)
@@ -63,7 +63,7 @@ pqr2 <- function(x,nt=1) {
   ## need to force a copy of x, otherwise x will be over-written 
   ## by .Call *in environment from which function is called*
   x <- x*1  
-  rank <- .Call(C_mgcv_Rpiqr,x,beta,piv,nt)
+  rank <- .Call(C_mgcv_Rpiqr,x,beta,piv,nt,nb)
   ret <- list(qr=x,rank=rank,qraux=beta,pivot=piv+1)
   attr(ret,"useLAPACK") <- TRUE
   class(ret) <- "qr"

@@ -544,10 +544,12 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
    are a number of indexing errors there, and down-date cancellation 
    strategy is only described verbally). 
 */ 
-  int jb,pb,i,j,k,m,*p0,nb0,q,one=1,ok_norm;
+  int jb,pb,i,j,k,m,*p0,nb0,q,one=1,ok_norm,*mb,*kb,rt,nth;
   double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,y,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
   char trans='T',nottrans='N';
   tol = pow(DOUBLE_EPS,.8);
+  mb = (int *)R_chk_calloc((size_t) nt,sizeof(int));
+  kb = (int *)R_chk_calloc((size_t) nt,sizeof(int));  
   for (p0=piv,i=0;i<p;i++,p0++) *p0 = i; /* initialize pivot index */
   work = (double *)R_chk_calloc((size_t) nb,sizeof(double));
   /* create column norm vectors */
@@ -594,8 +596,25 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
       /* F[j+1:pb-1,j] = tau[k] * A[k:n-1,k+1:p-1]'v */ 
       
       if (k<p-1) {
-        i=p-k-1;
-        F77_CALL(dgemv)(&trans, &m, &i,tau+k,A+(k+1)*n+k,&n,Ak,&one,&dzero,F+j+1+j*pb, &one);
+        // i=p-k-1;
+        q = p - k - 1 ;
+        rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
+        nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
+        kb[0] = j+1;
+        for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
+        mb[nth-1]=q-(nth-1)*rt;
+        #ifdef SUPPORT_OPENMP
+        #pragma omp parallel private(i) num_threads(nth)
+        #endif 
+        { /* start of parallel section */
+          #ifdef SUPPORT_OPENMP
+          #pragma omp for
+          #endif
+          for (i=0;i<nth;i++) {
+            F77_CALL(dgemv)(&trans, &m, mb+i,tau+k,A+(kb[i]+jb)*n+k,&n,Ak,&one,&dzero,F+kb[i]+j*pb, &one);
+          }
+          //F77_CALL(dgemv)(&trans, &m, &i,tau+k,A+(k+1)*n+k,&n,Ak,&one,&dzero,F+j+1+j*pb, &one);
+        } /* end of parallel section */
       } 
       /* F[0:pb-1,j] -= tau[k] F[0:pb-1,0:j-1] A[k:n-1,jb:k-1]'v */
       if (j>0) {
@@ -629,10 +648,29 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     /* now the block update */    
     if (k<p-1) {
       /* A[k+1:n,k+1:p] -= A[k+1:n,jb:k]F[j+1:pb,0:nb-1]'
-         dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)*/
-      Ak = A + (k+1)*n + k + 1;Aq = A + jb * n + k + 1;
-      m = n - k - 1 ;i = p - k - 1;
-      F77_CALL(dgemm)(&nottrans,&trans,&m,&i,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n);
+         dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)*/ 
+      m = n - k - 1 ;
+      rt = m/nt;if (rt*nt < m) rt++; /* rows per thread */
+      nth = nt; while (nth>1&&(nth-1)*rt>m) nth--; /* reduce number of threads if some empty */
+      kb[0] = k+1;
+      for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
+      mb[nth-1]=m-(nth-1)*rt;
+      rt = p - k - 1;  
+      //Rprintf("nth = %d  nt = %d\n",nth,nt);   
+      #ifdef SUPPORT_OPENMP
+      #pragma omp parallel private(i,Ak,Aq) num_threads(nth)
+      #endif 
+      { /* start of parallel section */
+        #ifdef SUPPORT_OPENMP
+        #pragma omp for
+        #endif
+        for (i=0;i<nth;i++) {
+          Ak = A + (k+1)*n + kb[i];Aq = A + jb * n + kb[i];
+          F77_CALL(dgemm)(&nottrans,&trans,mb+i,&rt,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n);
+          // Ak = A + (k+1)*n + k + 1;Aq = A + jb * n + k + 1;
+          // F77_CALL(dgemm)(&nottrans,&trans,&m,&rt,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n);
+        }
+      } /* end of parallel section */
     }
 
     if (!ok_norm) { /* recompute any column norms that had cancelled badly */ 
@@ -647,7 +685,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     pb -= nb;
     jb += nb;
   } /* end while (jb<p) */
-  R_chk_free(F);
+  R_chk_free(F); R_chk_free(mb); R_chk_free(kb);
   R_chk_free(cn);
   R_chk_free(icn);
   R_chk_free(work);
@@ -758,7 +796,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   return(r+1);
 } /* mgcv_piqr */
 
-SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
+ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT, SEXP NB) {
 /* routine to QR decompose N by P matrix X with pivoting using routine
    dlarfg to generate housholder. This is direct 
    implementation of 5.4.1 from Golub and van Loan (with correction 
@@ -768,10 +806,10 @@ SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT) {
    Return object is as 'qr' in R.
 
 */
-    int n,p,nt,*piv,r,*rrp,nb=30;
+    int n,p,nt,*piv,r,*rrp,nb;
   double *x,*beta;
   SEXP rr;
-  nt = asInteger(NT);
+  nt = asInteger(NT);nb = asInteger(NB);
   n = nrows(X);
   p = ncols(X);
   x = REAL(X);beta = REAL(BETA);

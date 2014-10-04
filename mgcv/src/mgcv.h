@@ -98,7 +98,7 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse);
 void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt);
 void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt);
 void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt);
-SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT);
+SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT,SEXP NB);
 void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N);
 void mgcv_Rpbsi(SEXP A, SEXP NT);
 void mgcv_RPPt(SEXP a,SEXP r, SEXP NT);
