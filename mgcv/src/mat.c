@@ -585,7 +585,24 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
                     y := alpha*A*x + beta*y (or A' if TRANS='T')*/
       m = n-k;Ak = A+n*k+k;
       if (j) {
-        F77_CALL(dgemv)(&nottrans, &m, &j,&dmone,A+jb*n+k,&n,F+j,&pb,&done,Ak, &one);
+        q = m ; /* total number of rows to split between threads */
+        rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
+        nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
+        kb[0] = k; /* starting row */
+        for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
+        mb[nth-1]=q-(nth-1)*rt;
+        #ifdef SUPPORT_OPENMP
+        #pragma omp parallel private(i) num_threads(nth)
+        #endif 
+        { /* start of parallel section */
+          #ifdef SUPPORT_OPENMP
+          #pragma omp for
+          #endif
+          for (i=0;i<nth;i++) {
+            F77_CALL(dgemv)(&nottrans, mb+i, &j,&dmone,A+jb*n+kb[i],&n,F+j,&pb,&done,A + n*k + kb[i], &one);
+            //F77_CALL(dgemv)(&nottrans, &m, &j,&dmone,A+jb*n+k,&n,F+j,&pb,&done,Ak, &one);
+          }
+        }
       }
       /* now compute the Householder transform for A[,k], by calling 
          dlarfg (N, ALPHA, X, INCX, TAU), N is housholder dim */
@@ -597,7 +614,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
       
       if (k<p-1) {
         // i=p-k-1;
-        q = p - k - 1 ;
+        q = p - k - 1 ; /* total number of rows to split between threads */
         rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
         nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
         kb[0] = j+1;
@@ -618,13 +635,57 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
       } 
       /* F[0:pb-1,j] -= tau[k] F[0:pb-1,0:j-1] A[k:n-1,jb:k-1]'v */
       if (j>0) {
-        F77_CALL(dgemv)(&trans, &m, &j,&dmone,A+jb*n+k,&n,Ak,&one,&dzero,work, &one);
-        F77_CALL(dgemv)(&nottrans, &pb, &j,tau+k,F,&pb,work,&one,&done,F+j*pb, &one);
+        q = j ; /* total number of rows to split between threads */
+        rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
+        nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
+        kb[0] = jb; /* starting row */
+        for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
+        mb[nth-1]=q-(nth-1)*rt;
+        #ifdef SUPPORT_OPENMP
+        #pragma omp parallel private(i) num_threads(nth)
+        #endif 
+        { /* start of parallel section */
+          #ifdef SUPPORT_OPENMP
+          #pragma omp for
+          #endif
+          for (i=0;i<nth;i++) {
+            F77_CALL(dgemv)(&trans, &m, mb+i,&dmone,A+kb[i]*n+k,&n,Ak,&one,&dzero,work+kb[i]-jb, &one);
+          // F77_CALL(dgemv)(&trans, &m, &j,&dmone,A+jb*n+k,&n,Ak,&one,&dzero,work, &one);
+          }
+        }
+        q = pb ; /* total number of rows to split between threads */
+        rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
+        nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
+        kb[0] = 0; /* starting row */
+        for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
+        mb[nth-1]=q-(nth-1)*rt;
+        for (i=0;i<nth;i++) { 
+	  F77_CALL(dgemv)(&nottrans, mb+i, &j,tau+k,F+kb[i],&pb,work,&one,&done,F+j*pb+kb[i], &one);
+	  // F77_CALL(dgemv)(&nottrans, &pb, &j,tau+k,F,&pb,work,&one,&done,F+j*pb, &one);
+        }
       }
-      /* update pivot row */
+      /* update pivot row A[k,k+1:p-1] -= A[k,jb:k]F(j+1:pb-1,1:j)' */
       if (k<p-1) {
-        m=pb-j-1;i=j+1;
-        F77_CALL(dgemv)(&nottrans, &m, &i,&dmone,F+j+1,&pb,A + jb * n + k,&n,&done,Ak+n, &n);
+        q = pb-j-1 ; /* total number of cols to split between threads */
+        rt = q/nt;if (rt*nt < q) rt++; /* colss per thread */
+        nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
+        kb[0] = j+1; /* starting col in F, and jb to this to get start in A */
+        for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
+        mb[nth-1]=q-(nth-1)*rt;
+        q=j+1; 
+        #ifdef SUPPORT_OPENMP
+        #pragma omp parallel private(i) num_threads(nth)
+        #endif 
+        { /* start of parallel section */
+          #ifdef SUPPORT_OPENMP
+          #pragma omp for
+          #endif
+          for (i=0;i<nth;i++) {
+	     F77_CALL(dgemv)(&nottrans, mb+i, &q,&dmone,F+kb[i],&pb,A+jb*n+k,&n,&done,A+(kb[i]+jb)*n+k, &n); 
+          }
+        }
+        //m=pb-j-1;i=j+1;
+        //F77_CALL(dgemv)(&nottrans, &m, &i,&dmone,F+j+1,&pb,A + jb * n + k,&n,&done,Ak+n, &n);
       }
       *Ak = xx; /* restore A[k,k] */
       /* Now down date the column norms */
