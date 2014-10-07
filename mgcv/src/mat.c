@@ -540,7 +540,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     Quintana-Orti, G.; Sun, X. & Bischof, C. H. (1998)
     "A BLAS-3 version of the QR factorization with column pivoting" 
     SIAM Journal on Scientific Computing, 19: 1486-1494
-   but not quite alot of correction of algorithm as stated in paper (there 
+   but note quite alot of correction of algorithm as stated in paper (there 
    are a number of indexing errors there, and down-date cancellation 
    strategy is only described verbally). 
 */ 
@@ -612,7 +612,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
       Ak--;*Ak = 1.0; /* for now, have Ak point to whole of v */
       /* F[j+1:pb-1,j] = tau[k] * A[k:n-1,k+1:p-1]'v */ 
       
-      if (k<p-1) {
+      if (k<p-1) { /* up to O(np) step - most expensive after block */
         // i=p-k-1;
         q = p - k - 1 ; /* total number of rows to split between threads */
         rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
@@ -706,7 +706,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     } /* for j */
     j--; /* make compatible with current k */
 
-    /* now the block update */    
+    /* now the block update - about half the work is here*/    
     if (k<p-1) {
       /* A[k+1:n,k+1:p] -= A[k+1:n,jb:k]F[j+1:pb,0:nb-1]'
          dgemm (TRANSA, TRANSB, M, N, K, ALPHA, A, LDA, B, LDB, BETA, C, LDC)*/ 
@@ -755,7 +755,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
 int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
 /* Do the work for parallel QR: 
    Key is to inline the expensive step that is parallelized, noting
-   that housholder ops are not in BLAS, but are LAPACK auxilliary 
+   that householder ops are not in BLAS, but are LAPACK auxilliary 
    routines (so no loss in re-writing)
    
    Parallelization here is based on splitting the application of householder
@@ -1867,7 +1867,7 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
     n = k * *c;
     mgcv_qr(R,&n,c,pivot,tau + k * *c); /* final pivoted QR */
   }
-}
+} /* mgcv_pqr */
 
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 /* call LA_PACK to get pivoted QR decomposition of x
