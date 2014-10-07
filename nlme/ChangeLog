@@ -1,6 +1,8 @@
-2014-09-30  Brian Ripley
+2014-10-07  Brian Ripley
 
 	* DESCRIPTION: version is 3.1-118
+
+2014-09-30 Brian Ripley
 
 	* R/nlme.R: nlme with self-starting model required 'start'.
 
