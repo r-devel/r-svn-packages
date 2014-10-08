@@ -277,7 +277,7 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
 
 int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
 /* Lucas (2004) "LAPACK-Style Codes for Level 2 and 3 Pivoted Cholesky Factorizations" 
-   block pivoted Choleski algorithm 5.1. Note several errors in paper, noted below. 
+   block pivoted Choleski algorithm 5.1. Note some misprints in paper, noted below. 
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
 */  
@@ -867,7 +867,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
    Return object is as 'qr' in R.
 
 */
-    int n,p,nt,*piv,r,*rrp,nb;
+  int n,p,nt,*piv,r,*rrp,nb;
   double *x,*beta;
   SEXP rr;
   nt = asInteger(NT);nb = asInteger(NB);
@@ -1698,6 +1698,21 @@ void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt) {
 /* x contains qr decomposition of r by c matrix as computed by mgcv_pqr 
    This routine simply extracts the c by c R factor into R. 
    R has rr rows, where rr == c if R is square. 
+
+*/
+  int i,j,n;
+  double *Rs;
+  Rs = x;n = *r;
+  for (i=0;i<*c;i++) for (j=0;j<*c;j++) if (i>j) R[i + *rr * j] = 0; else
+	R[i + *rr * j] = Rs[i + n * j];
+} /* getRpqr */
+
+void getRpqr0(double *R,double *x,int *r, int *c,int *rr,int *nt) {
+/* x contains qr decomposition of r by c matrix as computed by mgcv_pqr 
+   This routine simply extracts the c by c R factor into R. 
+   R has rr rows, where rr == c if R is square. 
+
+   This version matches mgcv_pqrqy0, which is inferior to current code.
 */
   int i,j,k,n;
   double *Rs;
@@ -1710,13 +1725,15 @@ void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt) {
   }
   for (i=0;i<*c;i++) for (j=0;j<*c;j++) if (i>j) R[i + *rr * j] = 0; else
 	R[i + *rr * j] = Rs[i + n * j];
-}
+} /* getRpqr0 */
 
-void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt) {
+void mgcv_pqrqy0(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt) {
 /* Applies factor Q of a QR factor computed in parallel to b. 
    If b is physically r by cb, but if tp = 0 it contains a c by cb matrix on entry, while if
    tp=1 it contains a c by cb matrix on exit. Unused elments of b on entry assumed 0. 
-   a and tau are the result of mgcv_pqr   
+   a and tau are the result of mgcv_pqr  
+
+   This version matches mgcv_pqr0, which scales less well than current code. 
 */
   int i,j,k,l,left=1,n,nb,nbf,nq,TRUE=1,FALSE=0;
   double *x0,*x1,*Qb;  
@@ -1816,9 +1833,76 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
     if (*cb>1) row_block_reorder(b,r,cb,&nb,&TRUE);
   }
   R_chk_free(Qb);
+}  /* mgcv_pqrqy0 */
+
+
+void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,int *nt) {
+/* Applies factor Q of a QR factor computed by mgcv_pqr to b. 
+   b is physically r by cb, but if tp = 0 it contains a c by cb matrix on entry, while if
+   tp=1 it contains a c by cb matrix on exit. Unused elments of b on entry assumed 0. 
+   a and tau are the result of mgcv_pqr  
+
+*/
+  int i,j,ki,k,left=1,nth;
+  double *x0,*x1;  
+  //Rprintf("pqrqy %d ",*nt);
+  if (*tp == 0 ) {/* re-arrange so b is a full matrix */
+    x0 = b + *r * *cb -1; /* end of full b (target) */
+    x1 = b + *c * *cb -1; /* end of used block (source) */
+    for (j= *cb;j>0;j--) { /* work down columns */
+      /*for (i = *r;i > *c;i--,x0--) *x0 = 0.0;*/ /* clear unused */
+      x0 -= *r - *c; /* skip unused */
+      for (i = *c;i>0;i--,x0--,x1--) { 
+        *x0 = *x1; /* copy */
+        if (x0!=x1) *x1 = 0.0; /* clear source */
+      }
+    }
+  } /* if (*tp) */
+  if (*cb==1 || *nt==1) mgcv_qrqy(b,a,tau,r,cb,c,&left,tp);
+  else { /* split operation by columns of b */ 
+    nth = *nt;if (nth > *cb) nth = *cb;
+    k = *cb/nth; 
+    if (k*nth < *cb) k++; /* otherwise last thread is rate limiting */
+    if (k*(nth-1) >= *cb) nth--; /* otherwise last thread has no work */
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel private(i,j,ki) num_threads(nth)
+    #endif
+    { /* open parallel section */
+      #ifdef SUPPORT_OPENMP
+      #pragma omp for
+      #endif
+      for (i=0;i<nth;i++) {
+        j = i * k;
+        if (i==nth-1) ki = *cb - j; else ki = k;
+        mgcv_qrqy(b + j * *r,a,tau,r,&ki,c,&left,tp);
+      }
+    } /* end parallel section */
+  } 
+  if (*tp) { /* need to strip out the extra rows */
+    x1 = x0 = b;
+    for (i=0;i < *cb;i++,x1 += *r - *c) 
+    for (j=0;j < *c;j++,x0++,x1++) *x0 = *x1; 
+  }
+  return;
 }  /* mgcv_pqrqy */
 
 void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
+/* Function called from mgcv to request a multi-threaded pivoted QR decomposition.
+   Basically a wrapper to call the actual code, allowing painless changing of the 
+   underlying technology.
+
+   Currently Block Pivoted QR scales best from the codes available. 
+   Hard coded block size (30) is not ideal. 
+*/
+  //Rprintf("pqr %d ",*nt);
+  if (*nt==1) mgcv_qr(x,r,c,pivot,tau); else { /* call bpqr */
+    /* int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt)*/
+    bpqr(x,*r,*c,tau,pivot,15,*nt); 
+  }
+} /* mgcv_pqr */
+
+
+void mgcv_pqr0(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
 /* parallel qr decomposition using up to nt threads. 
    * x is an r*c+nt*c^2 array. On entry first r*c entries is matrix to decompose.
    * pivot is a c vector and tau is a (nt+1)*c vector.
@@ -1828,6 +1912,8 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
 
    strategy is to split into row blocks, QR each and then combine the decompositions
    - good for n>>p, not so good otherwise. 
+
+   - this is old code, which is uniformly less efficient than replacement.
 */
 
   int i,j,k,l,*piv,nb,nbf,n,TRUE=1,FALSE=0,nr; 
@@ -1867,7 +1953,7 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
     n = k * *c;
     mgcv_qr(R,&n,c,pivot,tau + k * *c); /* final pivoted QR */
   }
-} /* mgcv_pqr */
+} /* mgcv_pqr0 */
 
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
 /* call LA_PACK to get pivoted QR decomposition of x

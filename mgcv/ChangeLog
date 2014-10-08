@@ -3,6 +3,9 @@
 
 1.8-4
 
+* backend parallel QR code used by gam modified to use a pivoted block
+  algorithm.
+
 * nthreads argument added to 'bam' to allow for parallel computation 
   for computations in the main process (serial on any cluster nodes).
   e.g. QR based combination of results from cluster nodes is now
