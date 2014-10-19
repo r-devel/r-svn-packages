@@ -74,8 +74,9 @@
 * bam modified so that choleski based fitting works properly with rank 
   deficient model matrix (without regularization).
 
-* fix of 1.8-0 bug - gam prior weights mishandled in computation of cov matrix.
-  Thanks Fabian Scheipl.
+* fix of 1.8-0 bug - gam prior weights mishandled in computation of cov matrix,
+  resulting in incorrect variance estimates (even without prior weights 
+  specified). Thanks Fabian Scheipl.
 		
 1.8-0
 
@@ -151,6 +152,11 @@
 
 * 'bfgs' now uses a finite difference approximation for the initial inverse 
   Hessian. 
+
+1.7-29
+
+* Single character change to Makevars file so that openMP multi-threading 
+  actually works.  
 
 1.7-28
 

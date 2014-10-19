@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2011
+##  R routines for the package mgcv (c) Simon Wood 2000-2014
 
 ##  This file is primarily concerned with defining classes of smoother,
 ##  via constructor methods and prediction matrix methods. There are
@@ -328,7 +328,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   if (!is.null(id)) { 
     if (length(id)>1) { 
       id <- id[1]
-      warning("only first element of `id' used")
+';-      warning("only first element of `id' used")
     } 
     id <- as.character(id)
   }
@@ -1601,7 +1601,8 @@ Predict.matrix.pspline.smooth<-function(object,data)
     ## matrix mapping coefs to value and slope at end points...
     D <- splines::spline.des(object$knots,c(ll,ll,ul,ul),m,c(0,1,0,1))$design
     X <- matrix(0,n,ncol(D)) ## full predict matrix
-    X[ind,] <- splines::spline.des(object$knots,x[ind],m)$design ## interior rows
+    if (sum(ind)>0) X[ind,] <- 
+         splines::spline.des(object$knots,x[ind],m)$design ## interior rows
     ## Now add rows for linear extrapolation...
     ind <- x < ll 
     if (sum(ind)>0) X[ind,] <- cbind(1,x[ind]-ll)%*%D[1:2,]
@@ -2830,7 +2831,7 @@ ExtractData <- function(object,data,knots) {
      }
    }
    return(list(data=dat,knots=knt))
-}
+} #ExtractData
 
 
 #########################################################################

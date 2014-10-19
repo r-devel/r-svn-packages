@@ -27,11 +27,11 @@ rwMatrix <- function(stop,row,weight,X) {
   return(oo$X) 
 }
 
-chol2qr <- function(XX,Xy) {
+chol2qr <- function(XX,Xy,nt=1) {
 ## takes X'X and X'y and returns R and f
 ## equivalent to qr update.  
   op <- options(warn = -1) ## otherwise warns if +ve semidef
-  R <- chol(XX,pivot=TRUE)
+  R <- if (nt) pchol(XX,nt=nt) else chol(XX,pivot=TRUE)
   options(op)
   p <- length(Xy)
   ipiv <- piv <- attr(R,"pivot");ipiv[piv] <- 1:p
@@ -318,7 +318,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         }
         if (use.chol) { ## post proc to get R and f...
           y.norm2 <- qrx$y.norm2 
-          qrx <- chol2qr(qrx$R,qrx$f)
+          qrx <- chol2qr(qrx$R,qrx$f,nt=npt)
           qrx$y.norm2 <- y.norm2
         }
       } else { ## use new parallel accumulation 
@@ -338,7 +338,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
             wt <- c(wt,res[[i]]$wt); dev <- dev + res[[i]]$dev
             y.norm2 <- y.norm2 + res[[i]]$y.norm2
           }         
-          qrx <- chol2qr(R,f)
+          qrx <- chol2qr(R,f,nt=npt)
           qrx$y.norm2 <- y.norm2
         } else { ## proper QR
           R <- res[[1]]$R;f <- res[[1]]$f;dev <- res[[1]]$dev
@@ -430,7 +430,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         G$dev.extra <- rss.extra
         G$pearson.extra <- rss.extra
         G$n.true <- nobs+nobs.extra
-        object <- gam(G=G,method=method,gamma=gamma,scale=scale)
+        object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
         y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
       }
      
@@ -608,7 +608,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
         G$dev.extra <- rss.extra
         G$pearson.extra <- rss.extra
         G$n.true <- n
-        object <- gam(G=G,method=method,gamma=gamma,scale=scale)
+        object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
         y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
       }
       gc()
@@ -913,7 +913,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
        } ## end of single thread block loop
        if (use.chol) { ## post proc to get R and f...
           y.norm2 <- qrx$y.norm2 
-          qrx <- chol2qr(qrx$R,qrx$f)
+          qrx <- chol2qr(qrx$R,qrx$f,nt=npt)
           qrx$y.norm2 <- y.norm2
         }
      } else { ## use parallel accumulation
@@ -937,7 +937,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
          y.norm2 <- y.norm2 + res[[i]]$y.norm2
        } 
        if (use.chol) {
-         qrx <- chol2qr(R,f)
+         qrx <- chol2qr(R,f,nt=npt)
          qrx$y.norm2 <- y.norm2
        } else { ## proper QR         
          ## use parallel QR if npt>1...
@@ -973,7 +973,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      } 
      if (use.chol) { ## post proc to get R and f...
         y.norm2 <- qrx$y.norm2 
-        qrx <- chol2qr(qrx$R,qrx$f)
+        qrx <- chol2qr(qrx$R,qrx$f,nt=npt)
         qrx$y.norm2 <- y.norm2
      }
    }
@@ -1036,7 +1036,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      G$dev.extra <- rss.extra
      G$pearson.extra <- rss.extra
      G$n.true <- n
-     object <- gam(G=G,method=method,gamma=gamma,scale=scale)
+     object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
      y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
      if (rho!=0) { ## correct RE/ML score for AR1 transform 
        df <- if (is.null(mf$"(AR.start)")) 1 else sum(mf$"(AR.start)")

@@ -396,7 +396,7 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
   A
 } ## end Sl.mult
 
-Sl.termMult <- function(Sl,A,full=FALSE) {
+Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
 ## returns a list containing the product of each element S of Sl
 ## with A. If full==TRUE then the results include the zero rows
 ## otherwise these are stripped out, but in that case each element 
@@ -426,12 +426,16 @@ Sl.termMult <- function(Sl,A,full=FALSE) {
         k <- k + 1
         if (full) { ## return answer with all zeroes in place
           B <- A*0
-          if (Amat) B[ind,] <- Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else  
-                    B[ind] <- Sl[[b]]$Srp[[i]]%*%A[ind]
+          if (Amat) { 
+            B[ind,] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else 
+                       pmmult(Sl[[b]]$Srp[[i]],A[ind,,drop=FALSE],nt=nt) 
+          } else B[ind] <- Sl[[b]]$Srp[[i]]%*%A[ind]
           SA[[k]] <- B
         } else { ## strip zero rows from answer
-          if (Amat) SA[[k]] <- Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else
-                    SA[[k]] <- as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
+          if (Amat) {
+            SA[[k]] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else
+                       pmmult(Sl[[b]]$Srp[[i]],A[ind,,drop=FALSE],nt=nt)
+          } else SA[[k]] <- as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
           attr(SA[[k]],"ind") <- ind
         }
       } ## end of S loop for block b
@@ -440,10 +444,10 @@ Sl.termMult <- function(Sl,A,full=FALSE) {
   SA
 } ## end Sl.termMult
 
-d.detXXS <- function(Sl,PP) {
+d.detXXS <- function(Sl,PP,nt=1) {
 ## function to obtain derivatives of log |X'X+S| given unpivoted PP' where 
 ## P is inverse of R from the QR of the augmented model matrix. 
-  SPP <- Sl.termMult(Sl,PP,full=FALSE) ## SPP[[k]] is S_k PP'
+  SPP <- Sl.termMult(Sl,PP,full=FALSE,nt=nt) ## SPP[[k]] is S_k PP'
   nd <- length(SPP)
   d1 <- rep(0,nd);d2 <- matrix(0,nd,nd) 
   for (i in 1:nd) { 
@@ -523,7 +527,7 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   ## crossprod and unpivot (don't unpivot if unpivoting P above)
   PP <- if (nt==1) tcrossprod(P)[rp,rp] else pRRt(P,nt)[rp,rp] ## PP'
   ldetXXS <- 2*sum(log(abs(diag(R)))) ## log|X'X+S|
-  dXXS <- d.detXXS(ldS$Sl,PP) ## derivs of log|X'X+S|
+  dXXS <- d.detXXS(ldS$Sl,PP,nt=nt) ## derivs of log|X'X+S|
   ## all ingredients are now in place to form REML score and 
   ## its derivatives....
   reml <- (rss.bSb/phi + (nobs-Mp)*log(2*pi*phi) +
