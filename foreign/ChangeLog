@@ -1,3 +1,7 @@
+2014-10-20 Brian Ripley
+
+	* R/octave.R: remove unused assignments
+
 2014-03-27 Brian Ripley
 
 	* R/dbf.R, po/*pl.pp: updates
