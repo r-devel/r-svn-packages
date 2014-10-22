@@ -3,6 +3,13 @@
 
 1.8-4
 
+* 1.8 allows some prediction tasks for some families (e.g. cox.ph) to 
+  require response variables to be supplied. NAs in these then messed up 
+  prediction when they were not needed (e.g. if response variables with
+  NAs were provided to predict.gam for a simple exponential family GAM). 
+  Response NAs now passed to the family specific prediction code, restoring 
+  the previous behaviour for most models. Thanks Casper Wilestofte Berg.
+
 * backend parallel QR code used by gam modified to use a pivoted block
   algorithm.
 

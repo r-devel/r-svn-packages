@@ -328,7 +328,7 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   if (!is.null(id)) { 
     if (length(id)>1) { 
       id <- id[1]
-';-      warning("only first element of `id' used")
+      warning("only first element of `id' used")
     } 
     id <- as.character(id)
   }

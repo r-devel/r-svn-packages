@@ -2415,10 +2415,21 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         ## get names of required variables, less response, but including offset variable
         ## see ?terms.object and ?terms for more information on terms objects
         yname <- all.vars(object$terms)[attr(object$terms,"response")]
-        if (!is.null(newdata[[yname]])) { ## response provided...
+        naresp <- FALSE
+        if (!is.null(object$family$predict)&&!is.null(newdata[[yname]])) { 
+          ## response provided, and potentially needed for prediction (e.g. Cox PH family)
           if (!is.null(object$pred.formula)) object$pred.formula <- attr(object$pred.formula,"full")
           response <- TRUE
           Terms <- terms(object)
+          resp <- newdata[[yname]]
+          if (sum(is.na(resp))>0) {
+            naresp <- TRUE ## there are NAs in supplied response
+            ## replace them with a numeric code, so that rows are not dropped below
+            rar <- range(res,na.rm=TRUE)
+            thresh <- rar[1]*1.01-rar[2]*.01
+            resp[is.na(resp)] <- thresh
+            newdata[[yname]] <- thresh 
+          } 
         } else { ## response not provided
           response <- FALSE 
           Terms <- delete.response(terms(object))
@@ -2430,7 +2441,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           warning("not all required variables have been supplied in  newdata!\n")}
           ## note that `xlev' argument not used here, otherwise `as.factor' in 
           ## formula can cause a problem ... levels reset later.
-          newdata <- eval(model.frame(ff,data=newdata,na.action=na.act),parent.frame()) 
+          newdata <- eval(model.frame(ff,data=newdata,na.action=na.act),parent.frame())
+          if (naresp) (newdata[[yname]])[newdata[[yname]]<=thresh] <- NA ## reinstate as NA  
         } ## otherwise it's intercept only and newdata can be left alone
         na.act <- attr(newdata,"na.action")
         response <- if (response) newdata[[yname]] else NULL
