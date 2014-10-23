@@ -18,6 +18,7 @@ sizeDiss <- function(d)
 ##' -->> FIXME: eventually do the above directly in C
 ##' @param n "Size" = number of objects, underlying the dist/dissimilarity
 ##' used in  ./agnes.q, ./clara.q,  ./diana.q  und ./pam.q :
+##' *somewhat* related to Matrix:::indTri()
 lower.to.upper.tri.inds <- function(n)
 {
     n1 <- as.integer(n - 1)
