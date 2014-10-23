@@ -21,6 +21,8 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		c(a, 0)
 	    else if(np == 4) a
 	    else stop("'par.method' must be of length 1, 3, or 4")
+        ## if(any(par.method[1:2]) < 0)
+        ##     warning("method \"flexible\": alpha_1 or alpha_2 < 0 can give invalid dendrograms"
     } else if (method == "gaverage") {
 	attr(method,"par") <- par.method <- if (missing(par.method)) {
 	    ## Default par.method: Using beta = -0.1 as advised in Belbin et al. (1992)
@@ -35,6 +37,8 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	    else if(np == 4) b
 	    else stop("'par.method' must be of length 1, 3, or 4")
 	}
+        ## if(any(par.method[1:2]) < 0)
+        ##     warning("method \"gaverage\": alpha_1 or alpha_2 < 0 can give invalid dendrograms"
     } else ## dummy (passed to C)
 	par.method <- double()
 

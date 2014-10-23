@@ -1,7 +1,6 @@
 
-R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
-Copyright (C) 2013 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R version 3.1.2 beta (2014-10-21 r66834) -- "Pumpkin Helmet"
+Copyright (C) 2014 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -23,21 +22,32 @@ Type 'q()' to quit R.
 > 
 > data(xclara)
 > ## Try 100 times *different* random samples -- for reliability:
-> if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
-Warning message:
-In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
-  buggy version of Kinderman-Ramage generator used
-> 
 > nSim <- 100
 > nCl <- 3 # = no.classes
-> set.seed(421)# (reproducibility)
 > ## unknown problem: this is still platform dependent to some extent:
-> cl <- matrix(NA,nrow(xclara), nSim)
-> for(i in 1:nSim) cl[,i] <- clara(xclara, nCl, rngR = TRUE)$cluster
+> 
+> set.seed(107)# (reproducibility; somewhat favorable with "small iDoubt")
+> cl <- replicate(nSim, clara(xclara, nCl, rngR = TRUE)$cluster)
 > tcl <- apply(cl,1, tabulate, nbins = nCl)
 > ## those that are not always in same cluster (5 out of 3000 for this seed):
 > (iDoubt <- which(apply(tcl,2, function(n) all(n < nSim))))
- [1]  243  245  309  610  708  727 1038 1081 1120 1248 1289 1610 1644 1922 2821
+ [1]    6   71  243  245  610  708  727  770 1038 1081 1120 1248 1289 1610 1644
+[16] 1922
+> 
+> if(FALSE) {# doExtras --
++ rrr <- lapply(1:128, function(iseed) {
++     set.seed(iseed)# (reproducibility; somewhat favorable with "small iDoubt")
++     cat(iseed, if(iseed %% 10 == 0)"\n")
++     cl <- replicate(nSim, clara(xclara, nCl, rngR = TRUE)$cluster)
++     tcl <- apply(cl,1, tabulate, nbins = nCl)
++     which(apply(tcl,2, function(n) all(n < nSim)))
++ })
++ ## compare with "true" -- are the "changers" only those with small sil.width?
++ 
++ print(system.time(px <- pam(xclara,3)))# 1.84 on lynne(2013)
++ }## doExtras
+> 
+> 
 > if(length(iDoubt)) { # (not for all seeds)
 +   tabD <- tcl[,iDoubt, drop=FALSE]
 +   dimnames(tabD) <- list(cluster = paste(1:nCl), obs = format(iDoubt))
@@ -45,22 +55,23 @@ In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
 + }
       cluster
 obs     1  2  3
+     6 98  2  0
+    71 99  1  0
    243 98  0  2
-   245 89  0 11
-   309 99  0  1
-   610 83 17  0
-   708 88 12  0
+   245 86  0 14
+   610 84 16  0
+   708 87 13  0
    727 87  0 13
-  1038 77 23  0
-  1081 49 51  0
-  1120  3 97  0
-  1248 18 82  0
-  1289  2 98  0
-  1610 62 38  0
+   770  0  1 99
+  1038 80 20  0
+  1081 48 52  0
+  1120  5 95  0
+  1248 21 79  0
+  1289  3 97  0
+  1610 59 41  0
   1644 18 82  0
-  1922  6 94  0
-  2821  2  0 98
+  1922 10 90  0
 > 
 > proc.time()
    user  system elapsed 
-  0.800   0.037   0.911 
+  0.408   0.016   0.479 
