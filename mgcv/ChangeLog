@@ -3,6 +3,9 @@
 
 1.8-4
 
+* predict.bam now exported in response to a request from another 
+  package maintainer.
+
 * 1.8 allows some prediction tasks for some families (e.g. cox.ph) to 
   require response variables to be supplied. NAs in these then messed up 
   prediction when they were not needed (e.g. if response variables with
