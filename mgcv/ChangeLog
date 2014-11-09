@@ -3,6 +3,12 @@
 
 1.8-4
 
+* smoothCon now has an argument `diagonal.penalty' allowing single penalty 
+  smooths to be re-parameterized in order to diagonalize the penalty matrix.
+  PredictMat is modified to apply the same reparameterization, making it
+  user transparent. Facilitates the setup of smooths for export to other 
+  packages.
+
 * predict.bam now exported in response to a request from another 
   package maintainer.
 

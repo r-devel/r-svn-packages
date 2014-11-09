@@ -708,7 +708,8 @@ gam.setup.list <- function(formula,pterms,
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
-                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE)
+                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE,
+                    diagonal.penalty=FALSE) 
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 ## needed for a gam fit.
 ## elements of returned object:
@@ -846,12 +847,12 @@ gam.setup <- function(formula,pterms,
     id <- split$smooth.spec[[i]]$id
     if (is.null(id)||!idLinksBases) { ## regular evaluation
       sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,
-                       null.space.penalty=select,sparse.cons=sparse.cons) 
+                       null.space.penalty=select,sparse.cons=sparse.cons,diagonal.penalty=diagonal.penalty) 
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
                        absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,
-                       null.space.penalty=select,sparse.cons=sparse.cons)
+                       null.space.penalty=select,sparse.cons=sparse.cons,diagonal.penalty=diagonal.penalty)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
