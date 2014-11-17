@@ -3,6 +3,15 @@
 
 1.8-4
 
+** JAGS/BUGS support added, enabling auto-generation of code and data
+  required to used mgcv type GAMs with JAGS. Useful for complex random 
+  effects structures, for example.
+
+* gam.check would fail for tensor product smooths with by variables - fixed.
+
+* predict.gam would fail when predicting for more data than the blocksize
+  but selecting only some terms. Fixed thanks to Scott Kostyshak.
+
 * smoothCon now has an argument `diagonal.penalty' allowing single penalty 
   smooths to be re-parameterized in order to diagonalize the penalty matrix.
   PredictMat is modified to apply the same reparameterization, making it

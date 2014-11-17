@@ -2664,16 +2664,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         se <- se[,order==1,drop=FALSE]
         colnames(se) <- term.labels } 
       }
-      if (!is.null(terms)) { # return only terms requested via `terms'
-        if (sum(!(terms %in%colnames(fit)))) 
-          warning("non-existent terms requested - ignoring")
-        else { 
-          fit <- fit[,terms,drop=FALSE]
-          if (se.fit) {## se <- as.matrix(as.matrix(se)[,terms])
-            se <- se[,terms,drop=FALSE]
-          }
-        }
-      }
+     
     } else { ## "link" or "response" case
       fam <- object$family
       k <- attr(attr(object$model,"terms"),"offset")
@@ -2749,6 +2740,18 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     rm(X)
    
   } ## end of prediction block loop
+
+  if ((type=="terms"||type=="iterms")&&!is.null(terms)) { # return only terms requested via `terms'
+    if (sum(!(terms %in%colnames(fit)))) 
+      warning("non-existent terms requested - ignoring")
+    else { 
+      fit <- fit[,terms,drop=FALSE]
+      if (se.fit) {
+        se <- se[,terms,drop=FALSE]
+      }
+    }
+  }
+
   if (type=="response"&&!is.null(fit1)) {
     fit <- fit1
     if (se.fit) se <- se1

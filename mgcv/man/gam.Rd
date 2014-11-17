@@ -36,7 +36,8 @@ gam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
 
 \arguments{ 
 \item{formula}{ A GAM formula (see \code{\link{formula.gam}} and also \code{\link{gam.models}}). 
-This is exactly like the formula for a GLM except that smooth terms, \code{s} and \code{te} can be added 
+This is exactly like the formula for a GLM except that smooth terms, \code{\link{s}}, \code{\link{te}}, \code{\link{ti}} 
+and \code{\link{t2}}, can be added 
 to the right hand side to specify that the linear predictor depends on smooth functions of predictors 
 (or linear functionals of these).
 } 
