@@ -265,15 +265,15 @@ sim2jam <- function(sam,pregam,edf.type=2) {
 ## for plotting. This is given a class "jam" since only a limited range of gam 
 ## methods are appropriate for such models. Ideally...
 ## vcov, print, plot, predict, model.matrix, ... 
-  if (is.null(jam$b)) stop("coefficient simulation data is missing") 
-  pregam$Vp <- cov(t(jam$b[,,1]))
-  pregam$coefficients <- rowMeans(jam$b[,,1])
-  pregam$sig2 <- if (is.null(jam$scale)) 1 else mean(jam$scale)
-  n.chain <- dim(jam$b)[3]
+  if (is.null(sam$b)) stop("coefficient simulation data is missing") 
+  pregam$Vp <- cov(t(sam$b[,,1]))
+  pregam$coefficients <- rowMeans(sam$b[,,1])
+  pregam$sig2 <- if (is.null(sam$scale)) 1 else mean(sam$scale)
+  n.chain <- dim(sam$b)[3]
   if (n.chain>1) { 
     for (i in 2:n.chain) {
-      pregam$Vp <- pregam$Vp +  cov(t(jam$b[,,i]))
-      pregam$coefficients <-  pregam$coefficients + rowMeans(jam$b[,,i])
+      pregam$Vp <- pregam$Vp +  cov(t(sam$b[,,i]))
+      pregam$coefficients <-  pregam$coefficients + rowMeans(sam$b[,,i])
     }
     pregam$Vp <- pregam$Vp/n.chain
     pregam$coefficients <-  pregam$coefficients/n.chain
@@ -282,23 +282,23 @@ sim2jam <- function(sam,pregam,edf.type=2) {
   ##       0. diag((X'X+S)^{-1}X'X)
   ##       1. diag((X'WX+S)^-1X'WX)
   ##       2. diag(VbX'WX)/scale Vb by simulation. mu used for W may also be by sim.
-  if (edf.type<2&&is.null(jam$rho)) {
+  if (edf.type<2&&is.null(sam$rho)) {
     edf.type <- 2
     warning("rho missing from simulation data edf.type reset to 2")
   }
   if (edf.type > 0) { ## use X'WX not X'X
-    if (is.null(jam$mu)) {
+    if (is.null(sam$mu)) {
       eta <- pregam$X %*% pregam$coefficients
       mu <- pregam$family$linkinv(eta)
     } else { 
-      mu <- rowMeans(jam$mu)
+      mu <- rowMeans(sam$mu)
       eta <- pregam$family$linkfun(mu)
     }
     w <- as.numeric(pregam$w * pregam$family$mu.eta(eta)^2/pregam$family$variance(mu))
     XWX <- t(pregam$X) %*% (w*pregam$X) 
   } else XWX <- t(pregam$X) %*% (pregam$X) 
   if (edf.type < 2) { ## tr((X'WX + S)^{-1}X'WX
-    rho <- rowMeans(jam$rho);lambda <- exp(rho)
+    rho <- rowMeans(sam$rho);lambda <- exp(rho)
     XWXS <- XWX
     for (i in 1:length(lambda)) {
       ind <- pregam$off[i]:(pregam$off[i]+ncol(pregam$S[[i]])-1)
