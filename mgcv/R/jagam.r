@@ -8,7 +8,7 @@
 ## of random effects structure most appropriately handled in JAGS.
 
 
-write.jagslp <- function(resp,family,file,use.weights) {
+write.jagslp <- function(resp,family,file,use.weights,offset=FALSE) {
 ## write the JAGS code for the linear predictor  
 ## and response distribution. 
   iltab <- ## table of inverse link functions
@@ -18,9 +18,11 @@ write.jagslp <- function(resp,family,file,use.weights) {
   
   ## code linear predictor and expected response...
   if (family$link=="identity") {
-    cat("  mu <- X %*% b ## expected response\n",file=file,append=TRUE)
+    if (offset) cat("  mu <- X %*% b + offset ## expected response\n",file=file,append=TRUE)
+    else cat("  mu <- X %*% b ## expected response\n",file=file,append=TRUE)
   } else {
-    cat("  eta <- X %*% b ## linear predictor\n",file=file,append=TRUE)
+    if (offset) cat("  eta <- X %*% b + offset ## linear predictor\n",file=file,append=TRUE)
+    else cat("  eta <- X %*% b ## linear predictor\n",file=file,append=TRUE)
     cat("  for (i in 1:n) { mu[i] <- ",iltab[family$link],"} ## expected response\n",file=file,append=TRUE)
   }
   ## code the response given mu and any scale parameter prior...
@@ -142,12 +144,13 @@ sp.prior = "gamma",diagonalize=FALSE) {
   ## response....
 
   use.weights <- if (is.null(weights)) FALSE else TRUE 
-  use.weights <- write.jagslp("y",family,file,use.weights)
+  use.weights <- write.jagslp("y",family,file,use.weights,!is.null(G$offset))
   if (is.null(weights)&&use.weights) weights <- rep(1,nrow(G$X))  
 
   ## start the JAGS data list...
 
   jags.stuff <- list(y=G$y,n=length(G$y),X=G$X)  
+  if (!is.null(G$offset)) jags.stuff$offset <- G$offset
   if (use.weights) jags.stuff$w <- weights
 
   if (family$family == "binomial") jags.stuff$y <- G$y*weights ## JAGS not expecting observed prob!!
@@ -174,20 +177,24 @@ sp.prior = "gamma",diagonalize=FALSE) {
     seperable <- FALSE
     M <- length(G$smooth[[i]]$S)
     p <- G$smooth[[i]]$last.para - G$smooth[[i]]$first.para + 1 ## number of params
-    if (M==1) seperable <- TRUE else {
+    if (M<=1) seperable <- TRUE else {
       overlap <- rowSums(G$smooth[[i]]$S[[1]])
       for (j in 2:M) overlap <- overlap & rowSums(G$smooth[[i]]$S[[j]])
       if (!sum(overlap)) seperable <- TRUE 
     }
     if (seperable) { ## double check that they are diagonal
-      for (j in 1:M) {
+      if (M>0) for (j in 1:M) {
         if (max(abs(G$smooth[[i]]$S[[j]] - diag(diag(G$smooth[[i]]$S[[j]]),nrow=p)))>0) seperable <- FALSE
       } 
     }
     cat("  ## prior for ",G$smooth[[i]]$label,"... \n",file=file,append=TRUE,sep="")
     if (seperable) {
       b0 <- G$smooth[[i]]$first.para
-      for (j in 1:M) {
+      if (M==0) {
+        cat("  ## Note fixed vague prior, CHECK tau...\n",file=file,append=TRUE,sep="")
+        b1 <- G$smooth[[i]]$last.para
+        cat("  for (i in ",b0,":",b1,") { b[i] ~ dnorm(0, 1e-6) }\n",file=file,append=TRUE,sep="")
+      } else for (j in 1:M) {
         D <- diag(G$smooth[[i]]$S[[j]]) > 0
         b1 <- sum(as.numeric(D)) + b0 - 1
         n.sp <- n.sp + 1
@@ -236,10 +243,16 @@ sp.prior = "gamma",diagonalize=FALSE) {
     }
   } else { 
     jags.stuff$L <- G$L
+    rho.lo <- FALSE
+    if (any(G$lsp0!=0)) {
+      jags.stuff$rho.lo <- G$lsp0
+      rho.lo <- TRUE
+    }
     nr <- ncol(G$L)
     if (sp.prior=="log.uniform") {
       cat("  for (i in 1:",nr,") { rho0[i] ~ dunif(-12,12) }\n",file=file,append=TRUE,sep="")
-      cat("  rho <- L %*% rho0\n",file=file,append=TRUE,sep="")
+      if (rho.lo) cat("  rho <- rho.lo + L %*% rho0\n",file=file,append=TRUE,sep="")
+      else cat("  rho <- L %*% rho0\n",file=file,append=TRUE,sep="")
       cat("  for (i in 1:",n.sp,") { lambda[i] <- exp(rho[i]) }\n",file=file,append=TRUE,sep="")
       jags.ini$rho0 <- log(lambda)
     } else { ## gamma prior
@@ -247,7 +260,8 @@ sp.prior = "gamma",diagonalize=FALSE) {
       cat("    lambda0[i] ~ dgamma(.05,.005)\n",file=file,append=TRUE,sep="") 
       cat("    rho0[i] <- log(lambda0[i])\n",file=file,append=TRUE,sep="")
       cat("  }\n",file=file,append=TRUE,sep="")
-      cat("  rho <- L %*% rho0\n",file=file,append=TRUE,sep="")
+      if (rho.lo) cat("  rho <- rho.lo + L %*% rho0\n",file=file,append=TRUE,sep="")
+      else cat("  rho <- L %*% rho0\n",file=file,append=TRUE,sep="")
       cat("  for (i in 1:",n.sp,") { lambda[i] <- exp(rho[i]) }\n",file=file,append=TRUE,sep="")
       jags.ini$lambda0 <- lambda
     }

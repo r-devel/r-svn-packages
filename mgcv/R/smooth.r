@@ -3189,7 +3189,6 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       }
     }
 
-
   } else for (i in 1:length(sml)) attr(sml[[i]],"qrc") <-NULL ## no absorption
 
   ## now convert single penalties to identity matrices, if requested.
@@ -3223,7 +3222,8 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
 
   if (null.space.penalty) { ## then an extra penalty on the un-penalized space should be added 
     ## first establish if there is a quick method for doing this
-    if (length(sml[[1]]$S)==1) { ## only have quick method for single penalty
+    nsm <- length(sml[[1]]$S)
+    if (nsm==1) { ## only have quick method for single penalty
       S11 <- sml[[1]]$S[[1]][1,1]
       rank <- sml[[1]]$rank;
       p <- ncol(sml[[1]]$X)
@@ -3236,7 +3236,8 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
           sml[[i]]$null.space.dim <- 0
         }
       }
-    } else need.full <- TRUE
+    } else need.full <- if (nsm > 0) TRUE else FALSE
+
     if (need.full) {
       St <- sml[[1]]$S[[1]]
       if (length(sml[[1]]$S)>1) for (i in 1:length(sml[[1]]$S)) St <- St + sml[[1]]$S[[i]]
