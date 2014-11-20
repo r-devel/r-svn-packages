@@ -8,9 +8,8 @@
   effects structures, for example.
 
 * smoothCon failed if selection penalties requested, but term was unpenalized.
-  Now fixed (no sleection penalties on unpenalized terms.)
+  Now fixed (no selection penalties on unpenalized terms.)
   
-
 * gam.check would fail for tensor product smooths with by variables - fixed.
 
 * predict.gam would fail when predicting for more data than the blocksize
@@ -53,7 +52,7 @@
   and cause an error. 
 
 * initial.sp could perform very poorly for very low basis dimensions - could 
-  set initial sp to infinity effectively. 
+  set initial sp to effective infinity. 
 
 1.8-3
 

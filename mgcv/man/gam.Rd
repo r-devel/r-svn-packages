@@ -55,7 +55,10 @@ covariates required by the formula. By default the variables are taken
 from \code{environment(formula)}: typically the environment from 
 which \code{gam} is called.} 
 
-\item{weights}{ prior weights on the data.}
+\item{weights}{ prior weights on the contribution of the data to the log likelihood. Note that a weight of 2, for example, 
+                is equivalent to having made exactly the same observation twice. If you want to reweight the contributions 
+                of each datum without changing the overall magnitude of the log likelihood, then you should normalize the weights
+                (e.g. \code{weights <- weights/mean(weights)}). }
 
 \item{subset}{ an optional vector specifying a subset of observations to be
           used in the fitting process.}
