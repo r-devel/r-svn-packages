@@ -499,7 +499,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 
 
 bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NULL,
-    mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE)
+    mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE,npt=1)
 ## version using sparse full model matrix in place of QR update...
 ## not multi-threaded, due to anyway disappointing performance
 {   G$y <- y <- mf[[gp$response]]
@@ -1245,7 +1245,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       G$X <- sparse.model.matrix(G,mf,chunk.size)
     if (rho!=0) warning("AR1 parameter rho unused with sparse fitting")
     object <- bgam.fit2(G, mf, chunk.size, gp ,scale ,gamma,method=method,
-                       control = control,...)
+                       control = control,npt=nthreads,...)
   } else if (am) {
     if (nrow(mf)>chunk.size) G$X <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc() 
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
