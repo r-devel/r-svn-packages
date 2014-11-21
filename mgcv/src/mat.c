@@ -281,8 +281,8 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
 */  
-  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,jn,m,N,*a,b;
-  double tol=0.0,*dots,*pd,*p1,*Aj,*Aj1,*Ajn,xmax,x,*Aq,*Ak,*Ajj,*Aend;
+  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b;
+  double tol=0.0,*dots,*pd,*p1,*Aj,*Aj1,*Ajn,xmax,x,*Aq,*Ajj,*Aend;
   dots = (double *)R_chk_calloc((size_t) *n,sizeof(double));
   for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
   jb = *nb; /* block size, allowing final to be smaller */
@@ -295,7 +295,6 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
     if (*n - k  < jb) jb = *n - k ; /* end block */ 
     for (pd = dots + k,p1 = dots + *n;pd<p1;pd++) *pd = 0;
     for (j=k;j<k+jb;j++,Ajn += *n) {
-      jn = j * *n;
       pd = dots + j;Aj = Ajn + j; Aj1 = Aj - 1;
       xmax = -1.0;q=j;p1 = dots + *n;
       if (j>k) for (;pd<p1;pd++,Aj1 += *n) *pd += *Aj1 * *Aj1; /* dot product update */
@@ -542,10 +541,10 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     SIAM Journal on Scientific Computing, 19: 1486-1494
    but note quite alot of correction of algorithm as stated in paper (there 
    are a number of indexing errors there, and down-date cancellation 
-   strategy is only described verbally). 
+   strategy is only described in words). 
 */ 
   int jb,pb,i,j,k,m,*p0,nb0,q,one=1,ok_norm,*mb,*kb,rt,nth;
-  double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,y,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
+  double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
   char trans='T',nottrans='N';
   tol = pow(DOUBLE_EPS,.8);
   mb = (int *)R_chk_calloc((size_t) nt,sizeof(int));
@@ -750,6 +749,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
   R_chk_free(cn);
   R_chk_free(icn);
   R_chk_free(work);
+  return(p); /* NOTE: not really rank!! */
 } /* bpqr */
 
 int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
@@ -1427,7 +1427,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
 /* Computes A=RR', where R is r by r upper triangular.
    Computation uses *nt cores. */
   double x,*ru,*rl,*r1,*ri,*rj,*Aji,*Aij;
-  int *a,i,j,k,b;
+  int *a,i,j,b;
   if (*nt < 1) *nt = 1;
   if (*nt > *r) *nt = *r; /* no point having more threads than columns */
   a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int));

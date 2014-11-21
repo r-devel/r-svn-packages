@@ -83,6 +83,8 @@ allows efficient conjugate samplers to be used, but otherwise it is better to up
 \item{sam}{jags sample object, containing at least fields \code{b} (coefficients) and \code{rho} (log 
 smoothing parameters). May also contain field \code{mu} containing monitored expected response.}
 
+\item{pregam}{standard \code{mgcv} GAM setup data, as returned in \code{jagam} return list.}
+
 \item{edf.type}{Since EDF is not uniquely defined and may be affected by the stochastic structure added to the JAGS model file, 3 options are offered. See details.}
 
 }
