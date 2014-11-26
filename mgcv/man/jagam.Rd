@@ -9,10 +9,10 @@
 }
 \usage{
 jagam(formula,family=gaussian,data=list(),file,weights=NULL,na.action,
-offset=NULL,knots=NULL,sp=NULL,drop.unused.levels=TRUE,control=gam.control(),
-centred=TRUE,sp.prior = "gamma",diagonalize=FALSE)
+offset=NULL,knots=NULL,sp=NULL,drop.unused.levels=TRUE,
+control=gam.control(),centred=TRUE,sp.prior = "gamma",diagonalize=FALSE)
 
-sim2jam(sam,pregam,edf.type=2)
+sim2jam(sam,pregam,edf.type=2,burnin=0)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -87,6 +87,8 @@ smoothing parameters). May also contain field \code{mu} containing monitored exp
 
 \item{edf.type}{Since EDF is not uniquely defined and may be affected by the stochastic structure added to the JAGS model file, 3 options are offered. See details.}
 
+\item{burnin}{the amount of burn in to discard from the simulation chains. Limited to .9 of the chain length.}
+
 }
 
 \value{ 
@@ -104,7 +106,7 @@ plotting and predicting.
 
 In an additive modelling context it is usual to centre the smooths, to avoid the identifiability issues associated with having an intercept for each smooth term (in addition to a global intercept). Under Gibbs sampling it is technically possible to omit this centring, since we anyway force propriety on the priors, and this propiety implies formal model identifiability. However, in most situations this formal identifiability is rather artificial and does not imply statistically meaningfull identifiability. Rather it serves only to massively inflate confidence intervals, since the multiple intercept terms are not identifiable from the data, but only from the prior. By default then, \code{jagam} imposes standard GAM identifiability constraints on all smooths. The \code{centred} argument does allow you to turn this off, but it is not recommended. If you do set \code{centred=FALSE} then chain convergence and mixing checks should be particularly stringent. 
 
-The final technical issue for model setup is the setting of initial conditions for the coefficients and smoothing parameters. The approach taken is to take the default initial smoothing parameter values used elsewhere by \code{mgcv}, and to take a single PIRLS fitting step with these smoothing parameters in order to obtain starting values for the smooth coefficients. In the setting of fully conjugate updating the initial values of the coefficients are not critical, and good results are obtained without supplying them. But in the usual setting in which slice sampling is required for at least some of the updates then very poor results can sometimes be obtained without inital values, as the sampler simply fails to find the region of the posterior mode. 
+The final technical issue for model setup is the setting of initial conditions for the coefficients and smoothing parameters. The approach taken is to take the default initial smoothing parameter values used elsewhere by \code{mgcv}, and to take a single PIRLS fitting step with these smoothing parameters in order to obtain starting values for the smooth coefficients. In the setting of fully conjugate updating the initial values of the coefficients are not critical, and good results are obtained without supplying them. But in the usual setting in which slice sampling is required for at least some of the updates then very poor results can sometimes be obtained without initial values, as the sampler simply fails to find the region of the posterior mode. 
 
 The \code{sim2jam} function takes the partial \code{gam} object (\code{pregam}) from \code{jagam} along with simulation output in standard \code{rjags} form and creates a reduced version of a \code{gam} object, suitable for plotting and prediction of the model's smooth components. \code{sim2gam} computes effective degrees of freedom for each smooth, but it should be noted that there are several possibilites for doing this in the context of a model with a complex random effects structure. The simplest approach (\code{edf.type=0}) is to compute the degrees of freedom that the smooth would have had if it had been part of an unweighted Gaussian additive model. One might choose to use this option if the model has been modified so that the response distribution and/or link are not those that were specified to \code{jagam}. The second option is (\code{edf.type=1}) uses the edf that would have been computed by \code{\link{gam}} had it produced these estimates - in the context in which the JAGS model modifications have all been about modifying the random effects structure, this is equivalent to simply setting all the random effects to zero for the effective degrees of freedom calculation. The default option (\code{edf.type=2}) is to base the EDF on the sample covariance matrix, \code{Vp}, of the model coefficients. If the simulation output (\code{sim}) includes a \code{mu} field, then this will be used to form the weight matrix \code{W} in \code{XWX = t(X)\%*\%W\%*\%X}, where the EDF is computed from \code{rowSums(Vp*XWX)*scale}. If \code{mu} is not supplied then it is estimated from the the model matrix \code{X} and the mean of the simulated coefficients, but the resulting \code{W} may not be strictly comaptible with the \code{Vp} matrix in this case. In the situation in which the fitted model is very different in structure from the regression model of the template produced by \code{jagam} then the default option may make no sense, and indeed it may be best to use option 0.
 
@@ -173,6 +175,8 @@ jd <- jagam(y~s(x0)+te(x1,x2)+s(x3),data=dat,family=Gamma(link=log),file="test.j
 
 \dontrun{
 require(rjags)
+jd$jags.ini$.RNG.name <- "base::Mersenne-Twister" ## setting RNG
+jd$jags.ini$.RNG.seed <- 6 ## how to set RNG seed
 jm <- jags.model("test.jags",data=jd$jags.data,inits=jd$jags.ini,n.chains=1)
 list.samplers(jm)
 sam <- jags.samples(jm,c("b","rho","scale","mu"),n.iter=10000,thin=10)

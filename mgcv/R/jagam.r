@@ -273,13 +273,25 @@ sp.prior = "gamma",diagonalize=FALSE) {
   list(pregam=G,jags.data=jags.stuff,jags.ini=jags.ini)
 } ## jagam
 
-sim2jam <- function(sam,pregam,edf.type=2) {
+sim2jam <- function(sam,pregam,edf.type=2,burnin=0) {
 ## takes jags simulation output with field, b, containing model coefficients
 ## and a pregam object from jagam, and attempts to create a fake gam object suitable
 ## for plotting. This is given a class "jam" since only a limited range of gam 
 ## methods are appropriate for such models. Ideally...
 ## vcov, print, plot, predict, model.matrix, ... 
   if (is.null(sam$b)) stop("coefficient simulation data is missing") 
+  if (burnin>0) {
+    nc <- dim(sam$b)[2] ## chain length
+    if (burnin >= nc*.9) {
+      warning("burnin too large, reset")
+      burnin <- min(nc-1,floor(nc * .9))
+    } 
+    ind <- (burnin+1):nc
+    sam$b <- sam$b[,ind,]
+    if (!is.null(sam$mu)) sam$mu <- sam$mu[,ind,]
+    if (!is.null(sam$rho)) sam$rho <- sam$rho[,ind,]
+    if (!is.null(sam$scale)) sam$scale <- sam$scale[,ind,]
+  }
   pregam$Vp <- cov(t(sam$b[,,1]))
   pregam$coefficients <- rowMeans(sam$b[,,1])
   pregam$sig2 <- if (is.null(sam$scale)) 1 else mean(sam$scale)
