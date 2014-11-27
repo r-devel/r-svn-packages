@@ -116,6 +116,10 @@ The \code{sim2jam} function takes the partial \code{gam} object (\code{pregam}) 
 \references{
 Marra, G. and S.N. Wood (2011) Practical variable selection for generalized additive models.
 Computational Statistics & Data Analysis 55(7): 2372-2387
+
+Here is a key early reference to smoothing using BUGS (although the approach and smooths used are different to jagam)
+
+Crainiceanu, C. M. D Ruppert, & M.P. Wand (2005) Bayesian Analysis for Penalized Spline Regression Using WinBUGS Journal of Statistical Software 14.
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
@@ -152,7 +156,7 @@ jd <- jagam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,file="test.jags",
 
 \dontrun{
 require(rjags)
-jm <- jags.model("test.jags",data=jd$jags.data,inits=jd$jags.ini,n.chains=1)
+jm <-jags.model("test.jags",data=jd$jags.data,inits=jd$jags.ini,n.chains=1)
 list.samplers(jm)
 sam <- jags.samples(jm,c("b","rho","scale"),n.iter=10000,thin=10)
 jam <- sim2jam(sam,jd$pregam)
@@ -167,8 +171,8 @@ set.seed(1); n <- 400
 dat <- gamSim(1,n=n,dist="normal",scale=2)
 scale <- .5; Ey <- exp(dat$f/2)
 dat$y <- rgamma(n,shape=1/scale,scale=Ey*scale)
-jd <- jagam(y~s(x0)+te(x1,x2)+s(x3),data=dat,family=Gamma(link=log),file="test.jags",
-            sp.prior="log.uniform")
+jd <- jagam(y~s(x0)+te(x1,x2)+s(x3),data=dat,family=Gamma(link=log),
+            file="test.jags",sp.prior="log.uniform")
 
 ## In normal use the model in "test.jags" would now be edited to add 
 ## the non-standard stochastic elements that require use of JAGS....
@@ -177,7 +181,7 @@ jd <- jagam(y~s(x0)+te(x1,x2)+s(x3),data=dat,family=Gamma(link=log),file="test.j
 require(rjags)
 jd$jags.ini$.RNG.name <- "base::Mersenne-Twister" ## setting RNG
 jd$jags.ini$.RNG.seed <- 6 ## how to set RNG seed
-jm <- jags.model("test.jags",data=jd$jags.data,inits=jd$jags.ini,n.chains=1)
+jm <-jags.model("test.jags",data=jd$jags.data,inits=jd$jags.ini,n.chains=1)
 list.samplers(jm)
 sam <- jags.samples(jm,c("b","rho","scale","mu"),n.iter=10000,thin=10)
 jam <- sim2jam(sam,jd$pregam)

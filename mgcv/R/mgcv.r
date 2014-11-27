@@ -2373,8 +2373,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     object$Vp <- object$Vc
   }
 
-  if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  
-  { warning("Unknown type, reset to terms.")
+  if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  { 
+    warning("Unknown type, reset to terms.")
     type<-"terms"
   }
   if (!inherits(object,"gam")) stop("predict.gam can only be used to predict from gam objects")
@@ -2426,7 +2426,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           if (sum(is.na(resp))>0) {
             naresp <- TRUE ## there are NAs in supplied response
             ## replace them with a numeric code, so that rows are not dropped below
-            rar <- range(res,na.rm=TRUE)
+            rar <- range(resp,na.rm=TRUE)
             thresh <- rar[1]*1.01-rar[2]*.01
             resp[is.na(resp)] <- thresh
             newdata[[yname]] <- thresh 
@@ -2439,11 +2439,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         if (length(allNames) > 0) { 
           ff <- if (is.null(object$pred.formula)) reformulate(allNames) else  object$pred.formula
           if (sum(!(allNames%in%names(newdata)))) { 
-          warning("not all required variables have been supplied in  newdata!\n")}
+            warning("not all required variables have been supplied in  newdata!\n")
+          }
           ## note that `xlev' argument not used here, otherwise `as.factor' in 
           ## formula can cause a problem ... levels reset later.
           newdata <- eval(model.frame(ff,data=newdata,na.action=na.act),parent.frame())
-          if (naresp) (newdata[[yname]])[newdata[[yname]]<=thresh] <- NA ## reinstate as NA  
+          if (naresp) newdata[[yname]][newdata[[yname]]<=thresh] <- NA ## reinstate as NA  
         } ## otherwise it's intercept only and newdata can be left alone
         na.act <- attr(newdata,"na.action")
         response <- if (response) newdata[[yname]] else NULL
