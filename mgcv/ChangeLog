@@ -1,6 +1,12 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-5
+
+* ziP and ziplss now check for non-integer (or binary) responses and produce
+  an error message if these are found. Previously this was not trap and
+  could lead to a segfault. 
+
 1.8-4
 
 ** JAGS/BUGS support added, enabling auto-generation of code and data

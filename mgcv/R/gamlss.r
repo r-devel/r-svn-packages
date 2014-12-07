@@ -921,6 +921,10 @@ ziplss <-  function(link=list("identity","identity")) {
   ## which is basically penalizing something different here.
   ## best we can do here is to use E only as a regularizer.
       n <- rep(1, nobs)
+      if (all.equal(y,round(y))!=TRUE) {
+          stop("Non-integer response variables are not allowed with ziplss ")
+      }
+      if ((min(y)==0&&max(y)==1)) stop("Using ziplss for binary data makes no sense")
       ## should E be used unscaled or not?..
       use.unscaled <- if (!is.null(attr(E,"use.unscaled"))) TRUE else FALSE
       if (is.null(start)) {

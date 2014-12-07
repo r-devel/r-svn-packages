@@ -1552,6 +1552,10 @@ ziP <- function (theta = NULL, link = "identity") {
 
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the zero inflated Poisson family")
+        if (all.equal(y,round(y))!=TRUE) {
+          stop("Non-integer response variables are not allowed with ziP ")
+        }
+        if ((min(y)==0&&max(y)==1)) stop("Using ziP for binary data makes no sense")
         n <- rep(1, nobs)
         mustart <- log(y + (y==0)/5) 
     })
