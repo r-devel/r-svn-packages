@@ -637,7 +637,7 @@ gam.setup.list <- function(formula,pterms,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
   G$pterms <- pterms
   G$offset <- list(G$offset)
-  G$contrasts <- list(G$contrasts)
+  #G$contrasts <- list(G$contrasts)
   G$xlevels <- list(G$xlevels)
   G$assign <- list(G$assign)
   lpi <- list(1:ncol(G$X)) ## lpi[[j]] is index of cols for jth linear predictor 
@@ -654,7 +654,8 @@ gam.setup.list <- function(formula,pterms,
     lpi[[i]] <- pof + 1:ncol(um$X)
     if (mv.response) G$y <- cbind(G$y,um$y)
     G$offset[[i]] <- um$offset
-    G$contrasts[[i]] <- um$contrasts
+    #G$contrasts[[i]] <- um$contrasts
+    if (!is.null(um$contrasts)) G$contrasts <- c(G$contrasts,um$contrasts)
     G$xlevels[[i]] <- um$xlevels
     G$assign[[i]] <- um$assign
     G$rank <- c(G$rank,um$rank)
