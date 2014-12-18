@@ -765,7 +765,7 @@ gam.setup <- function(formula,pterms,
   else mf <- data # data is already a model frame
 
   G$intercept <-  attr(attr(mf,"terms"),"intercept")>0
-  G$offset <- model.offset(mf)   # get the model offset (if any)
+  G$offset <- as.numeric(model.offset(mf))   # get the model offset (if any)
 
   # construct strictly parametric model matrix.... 
   if (drop.intercept) attr(pterms,"intercept") <- 1 ## ensure there is an intercept to drop
@@ -3784,14 +3784,14 @@ logLik.gam <- function (object,...)
    #     warning("extra arguments discarded")
    
     fam <- family(object)$family
-    p <- sum(object$edf) 
+    sc.p <- as.numeric(object$scale.estimated)
+    p <- sum(object$edf) + sc.p
     val <- p - object$aic/2
     #if (fam %in% c("gaussian", "Gamma", "inverse.gaussian","Tweedie"))
     #    p <- p + 1
-    if (!is.null(object$edf2)) p <- sum(object$edf2)
-    np <- length(object$coefficients) 
+    if (!is.null(object$edf2)) p <- sum(object$edf2) + sc.p
+    np <- length(object$coefficients) + sc.p 
     if (p > np) p <- np 
-    if (object$scale.estimated) p <- p + 1
     if (inherits(object$family,"extended.family")&&!is.null(object$family$n.theta)) p <- p + object$family$n.theta 
     attr(val, "df") <- p
     class(val) <- "logLik"

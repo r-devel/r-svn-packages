@@ -3,6 +3,11 @@
 
 1.8-5
 
+* 'eps' is now an argument to 'betar' allowing some control on how to 
+  handle response values too close to 0 or 1. Help file expoanded to 
+  emphasise the problems with using beta regression with 0s and 1s in 
+  the data.
+
 * fix of bug in multi-formula contrast handling, causing failure of prediction
   in some  cases.
 

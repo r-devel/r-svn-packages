@@ -898,7 +898,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 
 ## beta regression
 
-betar <- function (theta = NULL, link = "logit") { 
+betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) { 
 ## Extended family object for beta regression
 ## length(theta)=1; log theta supplied
 ## This serves as a prototype for working with -2logLik
@@ -930,6 +930,7 @@ betar <- function (theta = NULL, link = "logit") {
     
     env <- new.env(parent = .GlobalEnv)
     assign(".Theta", iniTheta, envir = env)
+    assign(".betarEps",eps, envir = env)
     getTheta <- function(trans=FALSE) if (trans) exp(get(".Theta")) else get(".Theta") 
     putTheta <- function(theta) assign(".Theta", theta,envir=environment(sys.function()))
 
@@ -1011,13 +1012,16 @@ betar <- function (theta = NULL, link = "logit") {
 
    
     ## preinitialization to reset G$y values of <=0 and >=1... 
-    preinitialize <- expression({
-     ## code to evaluate in estimate.gam...
-     ## reset G$y values of <=0 and >= 1 to eps and 1-eps...
-      eps <- 1e-7 
-      G$y[G$y >= 1-eps] <- 1 - eps
-      G$y[G$y<= eps] <- eps
-    })
+    ## code to evaluate in estimate.gam...
+    ## reset G$y values of <=0 and >= 1 to eps and 1-eps... 
+    eval(parse(text=paste("preinitialize <- expression({\n eps <- ",eps,
+         "\n G$y[G$y >= 1-eps] <- 1 - eps\n  G$y[G$y<= eps] <- eps })")))
+    
+ #   preinitialize <- expression({
+ #     eps <- 1e-7 
+ #     G$y[G$y >= 1-eps] <- 1 - eps
+ #     G$y[G$y<= eps] <- eps
+ #   })
 
     saturated.ll <- function(y,wt,theta=NULL){
     ## function to find the saturated loglik by Newton method,
@@ -1045,7 +1049,7 @@ betar <- function (theta = NULL, link = "logit") {
         list(l=l,g=g,h=h,mu=mu)
       } ## gbh 
       ## now Newton loop...
-      eps <- 1e-7
+      eps <- get(".betarEps")
       eta <- y
       a <- eps;b <- 1 - eps
       y[y<eps] <- eps;y[y>1-eps] <- 1-eps
@@ -1054,7 +1058,7 @@ betar <- function (theta = NULL, link = "logit") {
       eta <- log((eta-a)/(b-eta)) 
       mu <- LS <- ii <- 1:length(y)
       for (i in 1:200) {
-        ls <- gbh(y,eta,theta,TRUE)
+        ls <- gbh(y,eta,theta,TRUE,a=eps/10)
         conv <- abs(ls$g)<mean(abs(ls$l)+.1)*1e-8
         if (sum(conv)>0) { ## some convergences occured
           LS[ii[conv]] <- ls$l[conv] ## store converged
@@ -1071,13 +1075,13 @@ betar <- function (theta = NULL, link = "logit") {
         delta <- ls$g/h   ## step
         ind <- abs(delta)>2
         delta[ind] <- sign(delta[ind])*2 ## step length limit
-        ls1 <- gbh(y,eta+delta,theta,FALSE); ## did it work?
+        ls1 <- gbh(y,eta+delta,theta,FALSE,a=eps/10); ## did it work?
         ind <- ls1$l<ls$l ## failure index
         k <- 0
         while (sum(ind)>0&&k<20) { ## step halve only failed steps
           k <- k + 1
           delta[ind] <- delta[ind]/2
-          ls1$l[ind] <- gbh(y[ind],eta[ind]+delta[ind],theta,FALSE)$l
+          ls1$l[ind] <- gbh(y[ind],eta[ind]+delta[ind],theta,FALSE,a=eps/10)$l
           ind <- ls1$l<ls$l
         }
         eta <- eta + delta
@@ -1143,7 +1147,7 @@ betar <- function (theta = NULL, link = "logit") {
      ## simulate data given fitted latent variable in mu 
       Theta <- exp(get(".Theta"))
       r <- rbeta(mu,shape1=Theta*mu,shape2=Theta*(1-mu))
-      eps <- 1e-7 ;
+      eps <- get(".betarEps")
       r[r>=1-eps] <- 1 - eps
       r[r<eps] <- eps
       r
@@ -1152,7 +1156,7 @@ betar <- function (theta = NULL, link = "logit") {
     qf <- function(p,mu,wt,scale) {
       Theta <- exp(get(".Theta"))
       q <- qbeta(p,shape1=Theta*mu,shape2=Theta*(1-mu))
-      eps <- 1e-7 ;
+      eps <-  get(".betarEps")
       q[q>=1-eps] <- 1 - eps
       q[q<eps] <- eps
       q
