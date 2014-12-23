@@ -68,8 +68,7 @@ diana <- function(x, diss = inherits(x, "dist"),
 		    dc = double(1),
 		    double(1), # { unused for diana() }
 		    merge = matrix(0L, n - 1, 2), # integer
-                    trace = trace.lev,
-		    DUP = FALSE)
+		    trace = trace.lev)
     if(!diss) {
 	## give warning if some dissimilarities are missing.
 	if(res$jdyss == -1)

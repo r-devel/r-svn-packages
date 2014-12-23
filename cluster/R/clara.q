@@ -44,9 +44,6 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	x[inax] <- valmisdat
     } else rm(inax) # save space
 
-    doDUP <- nzchar(dup <- Sys.getenv("R_cluster_clara_dup")) && isTRUE(as.logical(dup))
-    if((trace <- as.integer(trace)))
-	cat(sprintf("calling .C(cl_clara, ..., DUP = %s):\n", doDUP))
     res <- .C(cl_clara,
 	      n,
 	      jp,
@@ -80,8 +77,7 @@ clara <- function(x, k, metric = "euclidean", stand = FALSE,
 	      jstop = integer(1),
 	      trace = trace,
 	      tmp  = double (3 * sampsize),
-	      itmp = integer(6 * sampsize),
-	      DUP = doDUP)
+	      itmp = integer(6 * sampsize))
     ## give a warning when errors occured
     if(res$jstop) {
 	if(mdata && any(aNA <- apply(inax,1, all))) {

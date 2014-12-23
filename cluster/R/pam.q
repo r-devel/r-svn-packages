@@ -7,6 +7,7 @@ pam <- function(x, k, diss = inherits(x, "dist"),
                 keep.data = !diss && !cluster.only,
 		pamonce = FALSE, trace.lev = 0)
 {
+    stopifnot(length(cluster.only) == 1, length(trace.lev) == 1)
     if((diss <- as.logical(diss))) {
 	## check type of input vector
 	if(any(is.na(x))) stop("NA values in the dissimilarity matrix not allowed.")
@@ -67,12 +68,19 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     }
     nisol <- integer(if(cluster.only) 1 else k)
     if(do.swap) nisol[1] <- 1L
-    stopifnot(length(cluster.only) == 1,
-	      length(trace.lev) == 1)
 
     ## call C routine --- FIXME -- using .Call() would simplify logic *much*
     storage.mode(dv) <- "double"
     storage.mode(x2) <- "double"
+    if(FALSE)
+    res <- .Call(cl_Pam, k, n, # <- (not really needed ?)
+                 diss,
+                 x2, dv, # <- could become smarter (==> no need for dv allocation above!)
+                 ## and *then* use do.diss instead of jdyss
+                 !cluster.only, medoids,
+                 )
+    ## from result, use   dys, jdyss, med, silinf, obj, isol, clu, clusinf, avsil, ttsil
+    else
     res <- .C(cl_pam,
 	      as.integer(n),
 	      as.integer(jp),
@@ -97,8 +105,8 @@ pam <- function(x, k, diss = inherits(x, "dist"),
 	      clusinf = if(cluster.only) 0. else matrix(0., k, 5),
 	      silinf  = if(cluster.only) 0. else matrix(0., n, 4),
 	      isol = nisol,
-	      as.integer(pamonce),
-	      DUP = FALSE) # care!!
+	      as.integer(pamonce)) # care!!
+    ## from result, use   dys, jdyss, med, silinf, obj, isol, clu, clusinf, avsil, ttsil
 
     xLab <- if(diss) attr(x, "Labels") else dimnames(x)[[1]]
     r.clu <- res$clu

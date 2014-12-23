@@ -149,8 +149,8 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 		     ndyst,
 		     as.integer(mdata),
 		     dis = double((n * (n - 1))/2),
-		     NAOK = TRUE,# only to allow "+- Inf"
-		     DUP = FALSE)$dis
+		     NAOK = TRUE# only to allow "+- Inf"
+		     )$dis
     ## adapt Fortran output to S:
     ## convert lower matrix, read by rows, to upper matrix, read by rows.
     disv[disv == -1] <- NA
