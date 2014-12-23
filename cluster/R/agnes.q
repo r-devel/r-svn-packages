@@ -105,8 +105,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    ac = double(1),
                     par.method,
 		    merge = matrix(0L, n - 1, 2), # integer
-                    trace = trace.lev,
-                    DUP = FALSE)
+                    trace = trace.lev)
     if(!diss) {
 	##give warning if some dissimilarities are missing.
 	if(res$jdyss == -1)
