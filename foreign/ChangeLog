@@ -1,8 +1,14 @@
+2015-01-02 Brian Ripley
+
+	* DESCRIPTION: Authors@R had a needless call to structure().
+
 2014-10-20 Brian Ripley
 
 	* R/octave.R: remove unused assignments
 
-2014-03-27 Brian Ripley
+2014-03-28 Brian Ripley
+
+	* DESCRIPTION: Version is 0.8-61
 
 	* R/dbf.R, po/*pl.pp: updates
 
