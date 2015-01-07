@@ -1,4 +1,6 @@
-2015-01-06 Brian Ripley
+2015-01-07 Brian Ripley
+
+	* DESCRIPTION: Version is 0.8-62
 
 	* man/*.Rd: Add some explanation of the \dontrun sections.
 
@@ -8,7 +10,7 @@
 
 2014-10-20 Brian Ripley
 
-	* R/octave.R: remove unused assignments
+	* R/octave.R: remove unused assignments.
 
 2014-03-28 Brian Ripley
 
