@@ -1,3 +1,7 @@
+2015-01-09  Brian Ripley
+
+	* man/bdf.Rd: update URL.
+
 2014-10-20  Brian Ripley
 
 	* R/*.R: remove unused assignments.

@@ -1,3 +1,8 @@
+2015-01-09 Brian Ripley
+
+	* man/{lookup.xport,read.arff,read.xport,write.arff}.Rd:
+	update URLs.
+
 2015-01-07 Brian Ripley
 
 	* DESCRIPTION: Version is 0.8-62
