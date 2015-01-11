@@ -765,7 +765,8 @@ gam.setup <- function(formula,pterms,
   else mf <- data # data is already a model frame
 
   G$intercept <-  attr(attr(mf,"terms"),"intercept")>0
-  G$offset <- as.numeric(model.offset(mf))   # get the model offset (if any)
+  G$offset <- model.offset(mf)   # get the model offset (if any)
+  if (!is.null(G$offset))  G$offset <- as.numeric(G$offset) 
 
   # construct strictly parametric model matrix.... 
   if (drop.intercept) attr(pterms,"intercept") <- 1 ## ensure there is an intercept to drop
@@ -1392,7 +1393,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } else { ## methods calling gam.fit3 
     args <- list(X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
-             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef)
+             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef,n.true=G$n.true)
   
     if (optimizer[2]=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 

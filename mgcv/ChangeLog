@@ -4,7 +4,7 @@
 1.8-5
 
 * 'eps' is now an argument to 'betar' allowing some control on how to 
-  handle response values too close to 0 or 1. Help file expoanded to 
+  handle response values too close to 0 or 1. Help file expanded to 
   emphasise the problems with using beta regression with 0s and 1s in 
   the data.
 
@@ -12,7 +12,7 @@
   in some  cases.
 
 * ziP and ziplss now check for non-integer (or binary) responses and produce
-  an error message if these are found. Previously this was not trap and
+  an error message if these are found. Previously this was not trapped and
   could lead to a segfault. 
 
 1.8-4
