@@ -1897,7 +1897,7 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
   //Rprintf("pqr %d ",*nt);
   if (*nt==1) mgcv_qr(x,r,c,pivot,tau); else { /* call bpqr */
     /* int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt)*/
-    bpqr(x,*r,*c,tau,pivot,15,*nt); 
+    bpqr(x,*r,*c,tau,pivot,30,*nt); /* 30 is hard coded block size here */ 
   }
 } /* mgcv_pqr */
 
