@@ -1,10 +1,14 @@
+2015-01-23  Brian Ripley
+
+	* NAMESPACE: register lme method for simulate()
+
 2015-01-09  Brian Ripley
 
 	* DESCRIPTION: version is 3.1-119
 
 	* man/bdf.Rd: update URL.
 
-2014-10-20  Brian Ripleyx
+2014-10-20  Brian Ripley
 
 	* R/*.R: remove unused assignments.
 
