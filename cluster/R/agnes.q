@@ -61,7 +61,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	dv <- x[lower.to.upper.tri.inds(n)]
 	## prepare arguments for the Fortran call
 	dv <- c(0., dv)# "double", 1st elem. "only for Fortran" (?)
-	jp <- 1
+	jp <- 1L
 	mdata <- FALSE
 	ndyst <- 0
 	x2 <- double(1)
@@ -76,11 +76,11 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 	n <- nrow(x2)
 	jp <- ncol(x2)
 	if((mdata <- any(inax <- is.na(x2)))) { # TRUE if x[] has any NAs
-	    jtmd <- as.integer(ifelse(apply(inax, 2, any), -1, 1))
+	    jtmd <- integer(jp)
+	    jtmd[apply(inax, 2L, any)] <- -1L
 	    ## VALue for MISsing DATa
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
-	    valmd <- rep(valmisdat, jp)
 	}
 	dv <- double(1 + (n * (n - 1))/2)
     }
@@ -94,7 +94,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 		    dv,
 		    dis = double(if(C.keep.diss) length(dv) else 1),
 		    jdyss = if(C.keep.diss) diss + 10L else as.integer(diss),
-		    if(mdata) valmd else double(1),
+		    if(mdata) rep(valmisdat, jp) else double(1),
 		    if(mdata) jtmd else integer(jp),
 		    as.integer(ndyst),
 		    1L,# jalg = 1 <==> AGNES

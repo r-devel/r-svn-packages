@@ -45,7 +45,6 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
 	    ## VALue for MISsing DATa
 	    valmisdat <- 1.1* max(abs(range(x2, na.rm=TRUE)))
 	    x2[inax] <- valmisdat
-	    valmd <- rep(valmisdat, jp)
 	}
 	dv <- double(1 + (n * (n - 1))/2)
 	jdyss <- 0
@@ -80,7 +79,7 @@ fanny <- function(x, k, diss = inherits(x, "dist"), memb.exp = 2,
               x2,
               dis = dv,
               ok = as.integer(jdyss),
-              if(mdata)valmd else double(1),
+	      if(mdata) rep(valmisdat, jp) else double(1),
               if(mdata) jtmd else integer(jp),
               ndyst,
               integer(n), # nsend

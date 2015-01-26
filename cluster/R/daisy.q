@@ -129,11 +129,11 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 	stop(gettextf("invalid type %s for column numbers %s",
 		      type2[ina], pColl(which(is.na))))
     if((mdata <- any(inax <- is.na(x)))) { # TRUE if x[] has any NAs
-	jtmd <- as.integer(ifelse(apply(inax, 2, any), -1, 1))
+	jtmd <- integer(p)
+	jtmd[apply(inax, 2L, any)] <- -1L
 	## VALue for MISsing DATa
 	valmisdat <- 1.1* max(abs(range(x, na.rm=TRUE)))
 	x[inax] <- valmisdat
-	valmd <- rep(valmisdat, p)
     }
     ## call Fortran routine
     storage.mode(x) <- "double"
@@ -141,7 +141,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
 		     n,
 		     p,
 		     x,
-		     if(mdata)valmd else double(1),
+		     if(mdata) rep(valmisdat, p) else double(1),
                      as.double(weights),
 		     if(mdata) jtmd else integer(1),
 		     jdat,

@@ -1,5 +1,5 @@
 #### Cluster - Internal Utilities
-#### ============================ (new by Martin Mächler)
+#### ============================ (new by Martin Maechler)
 
 ## This was size(); seems slightly useful in general
 sizeDiss <- function(d)
@@ -24,8 +24,8 @@ lower.to.upper.tri.inds <- function(n)
     n1 <- as.integer(n - 1)
     if(n1 < 1) stop("'n' must be >= 2")
     else if(n1 == 1) 1L
-    else rep(1:n1, 1:n1) +
-        c(0L, unlist(lapply(2:n1, function(k) cumsum(c(0L, (n - 2):(n - k))))))
+    else rep(seq_len(n1), seq_len(n1)) +
+        c(0L, unlist(lapply(2:n1, function(k) cumsum(c(0L, (n - 2L):(n - k))))))
 }
 
 upper.to.lower.tri.inds <- function(n)

@@ -22,10 +22,10 @@ caddy(int nn, int k, double *p, int *ktrue,
       int *nfuzz, int *ncluv, double *rdraw, int trace_lev);
 
 static void
-fygur(int kk, int nn,
-      int *ncluv, int *nsend, int *nelem, int *negbr,
+fygur(int kk, int nn, int ncluv[], double dss[], double s,
+      int *nsend, int *nelem, int *negbr,
       double *syl, double *srank, double *avsyl, double *ttsyl,
-      double *dss, double *s, double *sylinf);
+      double *sylinf);
 
 
 void cl_fanny(int *nn,  /* = number of objects */
@@ -65,8 +65,8 @@ void cl_fanny(int *nn,  /* = number of objects */
 	for(i = 0; i < nhalf; i++)
 	    if (s < dss[i])
 		s = dss[i];
-	fygur(ktrue, *nn, ncluv, nsend, nelem,
-	      negbr, syl, dvec, pt, ttsyl, dss, &s, sylinf);
+	fygur(ktrue, *nn, ncluv, dss, s,
+	      nsend, nelem, negbr, syl, dvec, pt, ttsyl, sylinf);
     }
     return;
 } /* cl_fanny */
@@ -373,10 +373,10 @@ void caddy(int nn, int k, double *p, int *ktrue,
    -- dss[] indexing change needs to be "synchronized" in all functions here
 */
 static
-void fygur(int kk, int nn,
-	   int *ncluv, int *nsend, int *nelem, int *negbr,
+void fygur(int kk, int nn, int ncluv[], double dss[], double s,
+	   int *nsend, int *nelem, int *negbr,
 	   double *syl, double *srank, double *avsyl, double *ttsyl,
-	   double *dss, double *s, double *sylinf)
+	   double *sylinf)
 {
     int sylinf_d = nn; /* sylinf[nn, 4] */
     int j, l, k, k_, nj, ntt, nsylr;
@@ -408,7 +408,7 @@ void fygur(int kk, int nn,
 
 	for (j = 0; j < ntt; ++j) {/* (j+1)-th obs. in cluster k */
 	    nj = nelem[j];
-	    dysb = *s * 1.1 + 1.;
+	    dysb = s * 1.1 + 1.;
 	    negbr[j] = -1;
 	    /* for all clusters	 k_ != k : */
 	    for (k_ = 1; k_ <= kk; ++k_) if (k_ != k) {
