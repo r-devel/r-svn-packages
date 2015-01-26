@@ -1,7 +1,6 @@
 
-R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
-Copyright (C) 2013 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
+R Under development (unstable) (2015-01-21 r67569) -- "Unsuffered Consequences"
+Copyright (C) 2015 The R Foundation for Statistical Computing
 Platform: x86_64-unknown-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -319,7 +318,6 @@ $clusinfo
 +         save(xx, file=ff, compress=TRUE)
 + }
 > print(clara(xx, 2, samples= 5, trace = 3)[clInd])
-calling .C(cl_clara, ..., DUP = FALSE):
 C clara(): (nsam,nran,n) = (44,5,1500);
 C clara(): sample 1  finding 1st... new k{ran}:
 .. kall: FALSE, 
@@ -339,7 +337,7 @@ clara()'s bswap2(*, s=84.7454):     new repr. 6
  --> sky = sum_j D_j= 536.37
    swp new 39 <-> 6 old; decreasing diss. by -117.879
   Last swap: new 39 <-> 6 old; decreasing diss. by 1
-end{bswap}: sky = 418.491
+end{bswap2}: sky = 418.491
  1st proper or new best: obj= 10.112
 C clara(): sample 2  if (kall && nunfs...): 
 .. kall: T, 
@@ -359,7 +357,7 @@ clara()'s bswap2(*, s=80.3603):     new repr. 18
  --> sky = sum_j D_j= 601.537
    swp new 41 <-> 18 old; decreasing diss. by -156.926
   Last swap: new 41 <-> 18 old; decreasing diss. by 1
-end{bswap}: sky = 444.611
+end{bswap2}: sky = 444.611
  obj= 10.112
 C clara(): sample 3  if (kall && nunfs...): 
 .. kall: T, 
@@ -379,7 +377,7 @@ clara()'s bswap2(*, s=90.5529):     new repr. 9
  --> sky = sum_j D_j= 490.874
    swp new 14 <-> 9 old; decreasing diss. by -82.2855
   Last swap: new 14 <-> 9 old; decreasing diss. by 1
-end{bswap}: sky = 408.588
+end{bswap2}: sky = 408.588
  obj= 10.4392
 C clara(): sample 4  if (kall && nunfs...): 
 .. kall: T, 
@@ -399,7 +397,7 @@ clara()'s bswap2(*, s=88.047):     new repr. 24
  --> sky = sum_j D_j= 497.526
    swp new 9 <-> 24 old; decreasing diss. by -109.602
   Last swap: new 9 <-> 24 old; decreasing diss. by 1
-end{bswap}: sky = 387.924
+end{bswap2}: sky = 387.924
  obj= 10.3256
 C clara(): sample 5  if (kall && nunfs...): 
 .. kall: T, 
@@ -419,7 +417,7 @@ clara()'s bswap2(*, s=81.3492):     new repr. 33
  --> sky = sum_j D_j= 427.172
    swp new 28 <-> 33 old; decreasing diss. by -15.2673
   Last swap: new 28 <-> 33 old; decreasing diss. by 1
-end{bswap}: sky = 411.905
+end{bswap2}: sky = 411.905
  obj= 10.5219
 C clara(): best sample _found_ ; nbest[1:44] =
  c(23,54,87,103,140,199,246,303,306,322,394,408,412,414,428,461,468,521,592,647,859,898,906,967,971,1007,1028,1039,1114,1149,1151,1192,1237,1250,1279,1291,1301,1317,1340,1353,1366,1381,1383,1492)
@@ -442,7 +440,6 @@ $clusinfo
 
 > 
 > print(clara(xx, 2, samples=50, trace = 2)[clInd])
-calling .C(cl_clara, ..., DUP = FALSE):
 C clara(): (nsam,nran,n) = (44,50,1500);
 C clara(): sample 1  finding 1st... new k{ran}:
 .. kall: FALSE, nsel[ntt=1] = 0
@@ -451,7 +448,7 @@ C clara(): sample 1  finding 1st... new k{ran}:
  bswap2(): 6 31  after build: medoids are  6 31
  --> sky = sum_j D_j= 536.37
   Last swap: new 39 <-> 6 old; decreasing diss. by 1
-end{bswap}: sky = 418.491
+end{bswap2}: sky = 418.491
  1st proper or new best: obj= 10.112
 C clara(): sample 2  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 87
@@ -460,7 +457,7 @@ C clara(): sample 2  if (kall && nunfs...):
  bswap2(): 18 35  after build: medoids are 18 35
  --> sky = sum_j D_j= 601.537
   Last swap: new 41 <-> 18 old; decreasing diss. by 1
-end{bswap}: sky = 444.611
+end{bswap2}: sky = 444.611
  obj= 10.112
 C clara(): sample 3  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 97
@@ -469,7 +466,7 @@ C clara(): sample 3  if (kall && nunfs...):
  bswap2(): 9 5  after build: medoids are  5  9
  --> sky = sum_j D_j= 490.874
   Last swap: new 14 <-> 9 old; decreasing diss. by 1
-end{bswap}: sky = 408.588
+end{bswap2}: sky = 408.588
  obj= 10.4392
 C clara(): sample 4  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 23
@@ -478,7 +475,7 @@ C clara(): sample 4  if (kall && nunfs...):
  bswap2(): 24 18  after build: medoids are 18 24
  --> sky = sum_j D_j= 497.526
   Last swap: new 9 <-> 24 old; decreasing diss. by 1
-end{bswap}: sky = 387.924
+end{bswap2}: sky = 387.924
  obj= 10.3256
 C clara(): sample 5  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 61
@@ -487,7 +484,7 @@ C clara(): sample 5  if (kall && nunfs...):
  bswap2(): 33 23  after build: medoids are 23 33
  --> sky = sum_j D_j= 427.172
   Last swap: new 28 <-> 33 old; decreasing diss. by 1
-end{bswap}: sky = 411.905
+end{bswap2}: sky = 411.905
  obj= 10.5219
 C clara(): sample 6  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 134
@@ -496,7 +493,7 @@ C clara(): sample 6  if (kall && nunfs...):
  bswap2(): 13 4  after build: medoids are  4 13
  --> sky = sum_j D_j= 544.958
   Last swap: new 39 <-> 4 old; decreasing diss. by 0.439251
-end{bswap}: sky = 454.919
+end{bswap2}: sky = 454.919
  obj= 10.1386
 C clara(): sample 7  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 179
@@ -505,7 +502,7 @@ C clara(): sample 7  if (kall && nunfs...):
  bswap2(): 31 29  after build: medoids are 29 31
  --> sky = sum_j D_j= 585.002
   Last swap: new 36 <-> 29 old; decreasing diss. by 0.626606
-end{bswap}: sky = 448.191
+end{bswap2}: sky = 448.191
  obj= 10.112
 C clara(): sample 8  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 45
@@ -514,7 +511,7 @@ C clara(): sample 8  if (kall && nunfs...):
  bswap2(): 12 34  after build: medoids are 12 34
  --> sky = sum_j D_j= 532.479
   Last swap: new 11 <-> 34 old; decreasing diss. by 0.363353
-end{bswap}: sky = 441.367
+end{bswap2}: sky = 441.367
  obj= 10.4095
 C clara(): sample 9  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 59
@@ -523,7 +520,7 @@ C clara(): sample 9  if (kall && nunfs...):
  bswap2(): 36 7  after build: medoids are  7 36
  --> sky = sum_j D_j= 666.688
   Last swap: new 37 <-> 36 old; decreasing diss. by 1
-end{bswap}: sky = 401.451
+end{bswap2}: sky = 401.451
  obj= 10.1507
 C clara(): sample 10  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 119
@@ -532,7 +529,7 @@ C clara(): sample 10  if (kall && nunfs...):
  bswap2(): 43 8  after build: medoids are  8 43
  --> sky = sum_j D_j= 618.017
   Last swap: new 22 <-> 8 old; decreasing diss. by 0.0544228
-end{bswap}: sky = 407.377
+end{bswap2}: sky = 407.377
  obj= 10.6473
 C clara(): sample 11  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 93
@@ -541,7 +538,7 @@ C clara(): sample 11  if (kall && nunfs...):
  bswap2(): 17 40  after build: medoids are 17 40
  --> sky = sum_j D_j= 472.932
   Last swap: new 19 <-> 17 old; decreasing diss. by 1
-end{bswap}: sky = 379.676
+end{bswap2}: sky = 379.676
  obj= 10.5167
 C clara(): sample 12  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 44
@@ -550,7 +547,7 @@ C clara(): sample 12  if (kall && nunfs...):
  bswap2(): 3 40  after build: medoids are  3 40
  --> sky = sum_j D_j= 511.987
   Last swap: new 12 <-> 40 old; decreasing diss. by 0.128322
-end{bswap}: sky = 393.552
+end{bswap2}: sky = 393.552
  1st proper or new best: obj= 10.0289
 C clara(): sample 13  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 92
@@ -559,7 +556,7 @@ C clara(): sample 13  if (kall && nunfs...):
  bswap2(): 19 21  after build: medoids are 19 21
  --> sky = sum_j D_j= 535.094
   Last swap: new 37 <-> 21 old; decreasing diss. by 0.558058
-end{bswap}: sky = 408.043
+end{bswap2}: sky = 408.043
  obj= 10.0833
 C clara(): sample 14  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 108
@@ -568,7 +565,7 @@ C clara(): sample 14  if (kall && nunfs...):
  bswap2(): 29 33  after build: medoids are 29 33
  --> sky = sum_j D_j= 463.418
   Last swap: new 14 <-> 29 old; decreasing diss. by 1
-end{bswap}: sky = 399.773
+end{bswap2}: sky = 399.773
  obj= 10.1145
 C clara(): sample 15  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 41
@@ -577,7 +574,7 @@ C clara(): sample 15  if (kall && nunfs...):
  bswap2(): 34 14  after build: medoids are 14 34
  --> sky = sum_j D_j= 648
   Last swap: new 37 <-> 4 old; decreasing diss. by 0.47473
-end{bswap}: sky = 437.382
+end{bswap2}: sky = 437.382
  obj= 10.0825
 C clara(): sample 16  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 221
@@ -586,7 +583,7 @@ C clara(): sample 16  if (kall && nunfs...):
  bswap2(): 18 35  after build: medoids are 18 35
  --> sky = sum_j D_j= 544.162
   Last swap: new 28 <-> 15 old; decreasing diss. by 0.774928
-end{bswap}: sky = 392.466
+end{bswap2}: sky = 392.466
  obj= 10.6769
 C clara(): sample 17  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 63
@@ -595,7 +592,7 @@ C clara(): sample 17  if (kall && nunfs...):
  bswap2(): 14 35  after build: medoids are 14 35
  --> sky = sum_j D_j= 662.014
   Last swap: new 13 <-> 14 old; decreasing diss. by 1
-end{bswap}: sky = 437.238
+end{bswap2}: sky = 437.238
  obj= 10.4843
 C clara(): sample 18  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 123
@@ -604,7 +601,7 @@ C clara(): sample 18  if (kall && nunfs...):
  bswap2(): 34 36  after build: medoids are 34 36
  --> sky = sum_j D_j= 448.5
   Last swap: new 6 <-> 36 old; decreasing diss. by 0.756785
-end{bswap}: sky = 421.78
+end{bswap2}: sky = 421.78
  obj= 10.0289
 C clara(): sample 19  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 135
@@ -613,7 +610,7 @@ C clara(): sample 19  if (kall && nunfs...):
  bswap2(): 10 31  after build: medoids are 10 31
  --> sky = sum_j D_j= 518.807
   Last swap: new 31 <-> 35 old; decreasing diss. by 0.526342
-end{bswap}: sky = 438.824
+end{bswap2}: sky = 438.824
  obj= 10.039
 C clara(): sample 20  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 84
@@ -622,7 +619,7 @@ C clara(): sample 20  if (kall && nunfs...):
  bswap2(): 37 14  after build: medoids are 14 37
  --> sky = sum_j D_j= 564.583
   Last swap: new 7 <-> 37 old; decreasing diss. by 1
-end{bswap}: sky = 389.759
+end{bswap2}: sky = 389.759
  1st proper or new best: obj= 10.0219
 C clara(): sample 21  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 128
@@ -631,7 +628,7 @@ C clara(): sample 21  if (kall && nunfs...):
  bswap2(): 41 5  after build: medoids are  5 41
  --> sky = sum_j D_j= 494.226
   Last swap: new 11 <-> 41 old; decreasing diss. by 1
-end{bswap}: sky = 409.682
+end{bswap2}: sky = 409.682
  obj= 10.0219
 C clara(): sample 22  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 105
@@ -640,7 +637,7 @@ C clara(): sample 22  if (kall && nunfs...):
  bswap2(): 12 11  after build: medoids are 11 12
  --> sky = sum_j D_j= 504.842
   Last swap: new 42 <-> 11 old; decreasing diss. by 0.951253
-end{bswap}: sky = 458.314
+end{bswap2}: sky = 458.314
  obj= 10.0219
 C clara(): sample 23  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 204
@@ -649,7 +646,7 @@ C clara(): sample 23  if (kall && nunfs...):
  bswap2(): 36 18  after build: medoids are 18 36
  --> sky = sum_j D_j= 618.515
   Last swap: new 32 <-> 18 old; decreasing diss. by 0.292828
-end{bswap}: sky = 408.054
+end{bswap2}: sky = 408.054
  obj= 10.1029
 C clara(): sample 24  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 87
@@ -658,7 +655,7 @@ C clara(): sample 24  if (kall && nunfs...):
  bswap2(): 43 2  after build: medoids are  2 43
  --> sky = sum_j D_j= 604.622
   Last swap: new 8 <-> 43 old; decreasing diss. by 1
-end{bswap}: sky = 420.184
+end{bswap2}: sky = 420.184
  obj= 10.2899
 C clara(): sample 25  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 140
@@ -667,7 +664,7 @@ C clara(): sample 25  if (kall && nunfs...):
  bswap2(): 36 18  after build: medoids are 18 36
  --> sky = sum_j D_j= 479.397
   Last swap: new 4 <-> 18 old; decreasing diss. by 0.00150722
-end{bswap}: sky = 386.099
+end{bswap2}: sky = 386.099
  obj= 10.1338
 C clara(): sample 26  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 273
@@ -676,7 +673,7 @@ C clara(): sample 26  if (kall && nunfs...):
  bswap2(): 25 15  after build: medoids are 15 25
  --> sky = sum_j D_j= 613.595
   Last swap: new 39 <-> 25 old; decreasing diss. by 1
-end{bswap}: sky = 464.068
+end{bswap2}: sky = 464.068
  obj= 10.2005
 C clara(): sample 27  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 128
@@ -685,7 +682,7 @@ C clara(): sample 27  if (kall && nunfs...):
  bswap2(): 25 8  after build: medoids are  8 25
  --> sky = sum_j D_j= 494.241
   Last swap: new 16 <-> 37 old; decreasing diss. by 0.727466
-end{bswap}: sky = 396.18
+end{bswap2}: sky = 396.18
  1st proper or new best: obj= 10.0032
 C clara(): sample 28  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 74
@@ -694,7 +691,7 @@ C clara(): sample 28  if (kall && nunfs...):
  bswap2(): 42 7  after build: medoids are  7 42
  --> sky = sum_j D_j= 497.431
   Last swap: new 34 <-> 42 old; decreasing diss. by 1
-end{bswap}: sky = 417.303
+end{bswap2}: sky = 417.303
  obj= 10.0843
 C clara(): sample 29  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 95
@@ -703,7 +700,7 @@ C clara(): sample 29  if (kall && nunfs...):
  bswap2(): 16 14  after build: medoids are 14 16
  --> sky = sum_j D_j= 498.138
   Last swap: new 35 <-> 14 old; decreasing diss. by 0.0669929
-end{bswap}: sky = 405.979
+end{bswap2}: sky = 405.979
  obj= 10.2104
 C clara(): sample 30  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 160
@@ -712,7 +709,7 @@ C clara(): sample 30  if (kall && nunfs...):
  bswap2(): 35 14  after build: medoids are 14 35
  --> sky = sum_j D_j= 495.651
   Last swap: new 21 <-> 30 old; decreasing diss. by 0.969312
-end{bswap}: sky = 388.346
+end{bswap2}: sky = 388.346
  obj= 10.0032
 C clara(): sample 31  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 45
@@ -721,7 +718,7 @@ C clara(): sample 31  if (kall && nunfs...):
  bswap2(): 44 5  after build: medoids are  5 44
  --> sky = sum_j D_j= 444.394
   Last swap: new 6 <-> 37 old; decreasing diss. by 0.155417
-end{bswap}: sky = 356.436
+end{bswap2}: sky = 356.436
  obj= 10.1346
 C clara(): sample 32  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 56
@@ -730,7 +727,7 @@ C clara(): sample 32  if (kall && nunfs...):
  bswap2(): 35 15  after build: medoids are 15 35
  --> sky = sum_j D_j= 500.91
   Last swap: new 13 <-> 15 old; decreasing diss. by 0.747984
-end{bswap}: sky = 377.057
+end{bswap2}: sky = 377.057
  obj= 10.0079
 C clara(): sample 33  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 50
@@ -739,7 +736,7 @@ C clara(): sample 33  if (kall && nunfs...):
  bswap2(): 15 29  after build: medoids are 15 29
  --> sky = sum_j D_j= 535.787
   Last swap: new 6 <-> 15 old; decreasing diss. by 1
-end{bswap}: sky = 429.005
+end{bswap2}: sky = 429.005
  obj= 10.0152
 C clara(): sample 34  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 165
@@ -748,7 +745,7 @@ C clara(): sample 34  if (kall && nunfs...):
  bswap2(): 16 13  after build: medoids are 13 16
  --> sky = sum_j D_j= 616.138
   Last swap: new 10 <-> 13 old; decreasing diss. by 0.885394
-end{bswap}: sky = 406.402
+end{bswap2}: sky = 406.402
  obj= 10.0032
 C clara(): sample 35  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 123
@@ -757,7 +754,7 @@ C clara(): sample 35  if (kall && nunfs...):
  bswap2(): 25 37  after build: medoids are 25 37
  --> sky = sum_j D_j= 635.195
   Last swap: new 15 <-> 25 old; decreasing diss. by 1
-end{bswap}: sky = 432.163
+end{bswap2}: sky = 432.163
  obj= 10.1734
 C clara(): sample 36  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 58
@@ -766,7 +763,7 @@ C clara(): sample 36  if (kall && nunfs...):
  bswap2(): 21 10  after build: medoids are 10 21
  --> sky = sum_j D_j= 512.215
   Last swap: new 34 <-> 21 old; decreasing diss. by 1
-end{bswap}: sky = 482.571
+end{bswap2}: sky = 482.571
  obj= 10.0032
 C clara(): sample 37  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 94
@@ -775,7 +772,7 @@ C clara(): sample 37  if (kall && nunfs...):
  bswap2(): 29 12  after build: medoids are 12 29
  --> sky = sum_j D_j= 620.466
   Last swap: new 4 <-> 35 old; decreasing diss. by 0.939187
-end{bswap}: sky = 412.779
+end{bswap2}: sky = 412.779
  obj= 10.5208
 C clara(): sample 38  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 117
@@ -784,7 +781,7 @@ C clara(): sample 38  if (kall && nunfs...):
  bswap2(): 7 31  after build: medoids are  7 31
  --> sky = sum_j D_j= 605.048
   Last swap: new 9 <-> 7 old; decreasing diss. by 1
-end{bswap}: sky = 397.868
+end{bswap2}: sky = 397.868
  obj= 10.0032
 C clara(): sample 39  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 63
@@ -793,7 +790,7 @@ C clara(): sample 39  if (kall && nunfs...):
  bswap2(): 1 28  after build: medoids are  1 28
  --> sky = sum_j D_j= 458.896
   Last swap: new 40 <-> 1 old; decreasing diss. by 1
-end{bswap}: sky = 414.271
+end{bswap2}: sky = 414.271
  obj= 10.7806
 C clara(): sample 40  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 96
@@ -802,7 +799,7 @@ C clara(): sample 40  if (kall && nunfs...):
  bswap2(): 43 40  after build: medoids are 40 43
  --> sky = sum_j D_j= 509.713
   Last swap: new 35 <-> 43 old; decreasing diss. by 1
-end{bswap}: sky = 437.147
+end{bswap2}: sky = 437.147
  obj= 10.4477
 C clara(): sample 41  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 125
@@ -811,7 +808,7 @@ C clara(): sample 41  if (kall && nunfs...):
  bswap2(): 20 12  after build: medoids are 12 20
  --> sky = sum_j D_j= 446.501
   Last swap: new 31 <-> 44 old; decreasing diss. by 0.203346
-end{bswap}: sky = 359.731
+end{bswap2}: sky = 359.731
  obj= 10.1185
 C clara(): sample 42  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 23
@@ -820,7 +817,7 @@ C clara(): sample 42  if (kall && nunfs...):
  bswap2(): 30 16  after build: medoids are 16 30
  --> sky = sum_j D_j= 477.285
   Last swap: new 37 <-> 30 old; decreasing diss. by 1
-end{bswap}: sky = 428.793
+end{bswap2}: sky = 428.793
  obj= 10.0287
 C clara(): sample 43  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 112
@@ -829,7 +826,7 @@ C clara(): sample 43  if (kall && nunfs...):
  bswap2(): 34 8  after build: medoids are  8 34
  --> sky = sum_j D_j= 453.656
   Last swap: new 26 <-> 8 old; decreasing diss. by 0.780873
-end{bswap}: sky = 438.756
+end{bswap2}: sky = 438.756
  obj= 10.0292
 C clara(): sample 44  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 100
@@ -838,7 +835,7 @@ C clara(): sample 44  if (kall && nunfs...):
  bswap2(): 8 29  after build: medoids are  8 29
  --> sky = sum_j D_j= 572.709
   Last swap: new 26 <-> 8 old; decreasing diss. by 1
-end{bswap}: sky = 419.057
+end{bswap2}: sky = 419.057
  obj= 10.6533
 C clara(): sample 45  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 186
@@ -847,7 +844,7 @@ C clara(): sample 45  if (kall && nunfs...):
  bswap2(): 20 9  after build: medoids are  9 20
  --> sky = sum_j D_j= 423.178
   Last swap: new 12 <-> 9 old; decreasing diss. by 0.132875
-end{bswap}: sky = 370.823
+end{bswap2}: sky = 370.823
  obj= 10.0595
 C clara(): sample 46  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 72
@@ -856,7 +853,7 @@ C clara(): sample 46  if (kall && nunfs...):
  bswap2(): 24 13  after build: medoids are 13 24
  --> sky = sum_j D_j= 425.546
   Last swap: new 8 <-> 13 old; decreasing diss. by 0.582792
-end{bswap}: sky = 374.277
+end{bswap2}: sky = 374.277
  obj= 10.256
 C clara(): sample 47  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 141
@@ -865,7 +862,7 @@ C clara(): sample 47  if (kall && nunfs...):
  bswap2(): 1 7  after build: medoids are  1  7
  --> sky = sum_j D_j= 446.971
   Last swap: new 33 <-> 1 old; decreasing diss. by 1
-end{bswap}: sky = 389.032
+end{bswap2}: sky = 389.032
  obj= 10.0032
 C clara(): sample 48  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 67
@@ -874,7 +871,7 @@ C clara(): sample 48  if (kall && nunfs...):
  bswap2(): 26 3  after build: medoids are  3 26
  --> sky = sum_j D_j= 504.047
   Last swap: new 33 <-> 26 old; decreasing diss. by 1
-end{bswap}: sky = 413.772
+end{bswap2}: sky = 413.772
  obj= 10.6891
 C clara(): sample 49  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 121
@@ -883,7 +880,7 @@ C clara(): sample 49  if (kall && nunfs...):
  bswap2(): 23 20  after build: medoids are 20 23
  --> sky = sum_j D_j= 486.38
   Last swap: new 18 <-> 23 old; decreasing diss. by 1
-end{bswap}: sky = 354.591
+end{bswap2}: sky = 354.591
  obj= 10.9521
 C clara(): sample 50  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 78
@@ -892,7 +889,7 @@ C clara(): sample 50  if (kall && nunfs...):
  bswap2(): 42 14  after build: medoids are 14 42
  --> sky = sum_j D_j= 571.882
   Last swap: new 34 <-> 42 old; decreasing diss. by 1
-end{bswap}: sky = 453.192
+end{bswap2}: sky = 453.192
  obj= 10.4592
 C clara(): best sample _found_ ; nbest[1:44] =
  c(53,55,74,171,210,251,290,300,323,333,368,373,387,446,459,493,495,663,683,687,705,711,750,775,813,924,929,938,961,999,1004,1008,1019,1026,1056,1111,1139,1192,1227,1372,1399,1400,1416,1444)
@@ -1601,8 +1598,8 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  4.527 0.016 4.593 0 0 
+Time elapsed:  2.185 0.014 2.218 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  4.784   0.061   4.964 
+  2.328   0.048   2.437 
