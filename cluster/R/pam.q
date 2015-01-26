@@ -82,10 +82,9 @@ pam <- function(x, k, diss = inherits(x, "dist"),
     if(do.swap) nisol[1] <- 1L
 
     if(use.Call)
-    res <- .Call(cl_Pam, k, n, # <- (not really needed ?)
-                 !diss, # == do_diss: compute them from x2[]
-                 if(diss) dv else x2, ## <- and allocate in C
-                 ## and *then* use do.diss instead of jdyss
+    res <- .Call(cl_Pam, k, n,
+                 !diss, # == do_diss: compute d[i,j] them from x2[] and allocate in C
+                 if(diss) dv else x2,
                  !cluster.only, ## == all_stats == "old"  obj[1+ 0] == 0
                  medoids,
                  do.swap, trace.lev, keep.diss, pamonce,

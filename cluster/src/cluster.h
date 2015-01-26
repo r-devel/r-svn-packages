@@ -89,7 +89,7 @@ void cl_pam(int *nn, int *jpp, int *kk, double *x, double *dys,
 	    double *ttsyl, double *obj, int *med, int *ncluv,
 	    double *clusinf, double *sylinf, int *nisol, int* optim);
 
-SEXP cl_Pam(SEXP k_,
+SEXP cl_Pam(SEXP k_, SEXP n_,
 	    SEXP do_diss_, /* == !diss;  if true, compute distances from x (= x_or_diss);
 			      otherwise distances provided by x_or_diss */
 	    SEXP x_or_diss,// this "is"  if(do_diss) "x[]" (n x p) else "dys[]"
@@ -101,7 +101,6 @@ SEXP cl_Pam(SEXP k_,
 	    // the next 3 are only needed  if(do_diss)
 	    SEXP val_md, SEXP j_md, // "md" := [m]issing [d]ata
 	    SEXP dist_kind); // = 1 ("euclidean")  or 2 ("manhattan")
-
 
 void bswap(int kk, int nsam, int *nrepr,
 	   /* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */

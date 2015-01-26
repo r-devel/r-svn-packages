@@ -100,7 +100,7 @@ void cl_pam(int *nn, int *p, int *kk, double *x, double *dys,
 } /* cl_pam */
 
 // The .Call() version
-SEXP cl_Pam(SEXP k_,
+SEXP cl_Pam(SEXP k_, SEXP n_,
 	    SEXP do_diss_, /* == !diss;  if true, compute distances from x (= x_or_diss);
 			      otherwise distances provided by x_or_diss */
 	    SEXP x_or_diss,// this "is"  if(do_diss) "x[]" (n x p) else "dys[]"
@@ -113,16 +113,17 @@ SEXP cl_Pam(SEXP k_,
 	    SEXP val_md, SEXP j_md, // "md" := [m]issing [d]ata
 	    SEXP dist_kind) // = 1 ("euclidean")  or 2 ("manhattan")
 {
-    const int kk = asInteger(k_),
+    const int kk = asInteger(k_), n = asInteger(n_),
 	pam_once = asInteger(pam_once_),
 	trace_lev = asInteger(trace_lev_);
     const Rboolean all_stats = asLogical(all_stats_)
-	, med_given = LENGTH(medoids) == kk /* if true, med[] contain initial medoids */
+	, med_given = (medoids != R_NilValue) // if true, med[] contain initial medoids
 	, do_diss = asLogical(do_diss_)
 	, do_swap = asLogical(do_swap_)
 	, keep_diss = asLogical(keep_diss_) // only  if(keep_diss)  return dys[] ..
 	;
 
+#ifdef once_we_get_n_from_args
     int n, p = NA_INTEGER;
     if (do_diss) { // <-- was 'jdyss != 1' i.e.  jdyss == 0
 	SEXP dims = getAttrib(x_or_diss, R_DimSymbol);
@@ -131,6 +132,7 @@ SEXP cl_Pam(SEXP k_,
     } else {
 	n = asInteger(getAttrib(x_or_diss, install("Size")));
     }
+#endif
 
     int i, nhalf = n * (n - 1) / 2 + 1; // nhalf := #{distances}+1 = length(dys)
     double s;
@@ -146,7 +148,9 @@ SEXP cl_Pam(SEXP k_,
         *separ = (double*) R_alloc( n, sizeof(double));
     int clusinf_dim1 = kk;
 
-    if(med_given)  {
+    if(med_given) {
+	if(TYPEOF(medoids) != INTSXP || LENGTH(medoids) != kk)
+	    error(_("Invalid 'medoids'"));
 	PROTECT(medoids = duplicate(medoids));
     } else {
 	PROTECT(medoids = allocVector(INTSXP, kk));
@@ -187,10 +191,12 @@ SEXP cl_Pam(SEXP k_,
     if (do_diss) { // <-- was 'jdyss != 1' i.e.  jdyss == 0
 	double *x = REAL(x_or_diss);
 	int jhalt = 0;
+	SEXP dims = getAttrib(x_or_diss, R_DimSymbol);
+	int p = INTEGER(dims)[1];
 	if(trace_lev)
 	    Rprintf("C pam(): computing %d dissimilarities from  %d x %d  matrix: ",
 		    nhalf, n, p);
-	F77_CALL(dysta)(&n, &p, x, dys, ndyst, jtmd, valmd, &jhalt);
+	F77_CALL(dysta)((int*)&n, &p, x, dys, ndyst, jtmd, valmd, &jhalt);
 	if (jhalt != 0) {
 	    if(trace_lev) Rprintf(" dysta()-error: jhalt=%d\n", jhalt);
 	    return ScalarInteger(jhalt); // i.e., integer error code instead of a named list
