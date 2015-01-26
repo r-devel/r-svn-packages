@@ -75,7 +75,7 @@ static const R_CMethodDef CEntries[]  = {
 };
 
 static R_CallMethodDef CallEntries[] = {
-    CALLDEF(cl_Pam, 13),
+    CALLDEF(cl_Pam, 12),
     {NULL, NULL, 0}
 };
 

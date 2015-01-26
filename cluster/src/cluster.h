@@ -89,7 +89,7 @@ void cl_pam(int *nn, int *jpp, int *kk, double *x, double *dys,
 	    double *ttsyl, double *obj, int *med, int *ncluv,
 	    double *clusinf, double *sylinf, int *nisol, int* optim);
 
-SEXP cl_Pam(SEXP k_, SEXP n_,
+SEXP cl_Pam(SEXP k_,
 	    SEXP do_diss_, /* == !diss;  if true, compute distances from x (= x_or_diss);
 			      otherwise distances provided by x_or_diss */
 	    SEXP x_or_diss,// this "is"  if(do_diss) "x[]" (n x p) else "dys[]"
@@ -107,13 +107,13 @@ void bswap(int kk, int nsam, int *nrepr,
 	   /* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */
 	   Rboolean med_given, Rboolean do_swap, int trace_lev,
 	   double *dysma, double *dysmb, double *beter,
-	   double *dys, double s, double *obj, int pamonce);
+	   const double dys[], double s, double *obj, int pamonce);
 
 void cstat(int kk, int nn, int *nsend, int *nrepr, Rboolean all_stats,
 	   double *radus, double *damer, double *ttd, double *separ, double *s,
 	   double *dys, int *ncluv, int *nelem, int *med, int *nisol);
 
-void dark(int kk, int nn, int *ncluv, double *dys, double *s,
+void dark(int kk, int nn, const int ncluv[], const double dys[], double s,
 	  int *nsend, int *nelem, int *negbr,
 	  double *syl, double *srank, double *avsyl, double *ttsyl,
 	  double *sylinf);

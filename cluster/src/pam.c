@@ -43,12 +43,15 @@ void cl_pam(int *nn, int *p, int *kk, double *x, double *dys,
     if (*jdyss != 1) {
 	int jhalt = 0;
 	if(trace_lev)
-	    Rprintf("C pam(): computing %d dissimilarities: ", nhalf);
+	    Rprintf("C pam(): computing %d dissimilarities from  %d x %d  matrix: ",
+		    nhalf, *nn, *p);
 	F77_CALL(dysta)(nn, p, x, dys, ndyst, jtmd, valmd, &jhalt);
-	if(trace_lev) Rprintf("[Ok]\n");
 	if (jhalt != 0) {
+	    if(trace_lev) Rprintf(" dysta()-error: jhalt=%d\n", jhalt);
 	    *jdyss = -1; return;
 	}
+	// else
+	if(trace_lev) Rprintf("[Ok]\n");
     }
 
     /* s := max( dys[.] ), the largest distance */
@@ -83,13 +86,13 @@ void cl_pam(int *nn, int *p, int *kk, double *x, double *dys,
 	for (k = 0; k < *kk; ++k) {
 	    clusinf[k]=		(double)       nrepr[k];
 	    clusinf[k + clusinf_dim1]	     = radus[k];
-	    clusinf[k + (clusinf_dim1 << 1)] = avsyl  [k];
+	    clusinf[k + (clusinf_dim1 << 1)] = avsyl[k];
 	    clusinf[k + clusinf_dim1 * 3]    = damer[k];
 	    clusinf[k + (clusinf_dim1 << 2)] = separ[k];
 	}
 	if (1 < *kk && *kk < *nn) {
 	    /* Compute Silhouette info : */
-	    dark(*kk, *nn, ncluv, dys, &s,
+	    dark(*kk, *nn, ncluv, dys, s,
 		 // -->
 		 nsend, nelem, nrepr, radus, damer, avsyl, ttsyl, sylinf);
 	}
@@ -97,7 +100,7 @@ void cl_pam(int *nn, int *p, int *kk, double *x, double *dys,
 } /* cl_pam */
 
 // The .Call() version
-SEXP cl_Pam(SEXP k_, SEXP n_,
+SEXP cl_Pam(SEXP k_,
 	    SEXP do_diss_, /* == !diss;  if true, compute distances from x (= x_or_diss);
 			      otherwise distances provided by x_or_diss */
 	    SEXP x_or_diss,// this "is"  if(do_diss) "x[]" (n x p) else "dys[]"
@@ -110,16 +113,24 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
 	    SEXP val_md, SEXP j_md, // "md" := [m]issing [d]ata
 	    SEXP dist_kind) // = 1 ("euclidean")  or 2 ("manhattan")
 {
-    int kk = asInteger(k_), n = asInteger(n_),
+    const int kk = asInteger(k_),
 	pam_once = asInteger(pam_once_),
 	trace_lev = asInteger(trace_lev_);
-    Rboolean all_stats = asLogical(all_stats_)
+    const Rboolean all_stats = asLogical(all_stats_)
 	, med_given = LENGTH(medoids) == kk /* if true, med[] contain initial medoids */
 	, do_diss = asLogical(do_diss_)
 	, do_swap = asLogical(do_swap_)
 	, keep_diss = asLogical(keep_diss_) // only  if(keep_diss)  return dys[] ..
 	;
 
+    int n, p = NA_INTEGER;
+    if (do_diss) { // <-- was 'jdyss != 1' i.e.  jdyss == 0
+	SEXP dims = getAttrib(x_or_diss, R_DimSymbol);
+	n = INTEGER(dims)[0];
+	p = INTEGER(dims)[1];
+    } else {
+	n = asInteger(getAttrib(x_or_diss, install("Size")));
+    }
 
     int i, nhalf = n * (n - 1) / 2 + 1; // nhalf := #{distances}+1 = length(dys)
     double s;
@@ -174,15 +185,14 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
     int* nisol = INTEGER(nisol_);
 
     if (do_diss) { // <-- was 'jdyss != 1' i.e.  jdyss == 0
+	double *x = REAL(x_or_diss);
 	int jhalt = 0;
 	if(trace_lev)
-	    Rprintf("C pam(): computing %d dissimilarities: ", nhalf);
-	double *x = REAL(x_or_diss);
-	SEXP dims = getAttrib(x_or_diss, R_DimSymbol);
-	F77_CALL(dysta)(&n, INTEGER(dims) + 1, // =: p == ncol(x_or_diss)
-			x, dys, ndyst, jtmd, valmd, &jhalt);
+	    Rprintf("C pam(): computing %d dissimilarities from  %d x %d  matrix: ",
+		    nhalf, n, p);
+	F77_CALL(dysta)(&n, &p, x, dys, ndyst, jtmd, valmd, &jhalt);
 	if (jhalt != 0) {
-	    if(trace_lev) Rprintf(" - error: jhalt=%d\n", jhalt);
+	    if(trace_lev) Rprintf(" dysta()-error: jhalt=%d\n", jhalt);
 	    return ScalarInteger(jhalt); // i.e., integer error code instead of a named list
 	}
 	// else
@@ -229,8 +239,9 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
 	}
 	if (1 < kk && kk < n) {
 	    /* Compute Silhouette info : */
-	    dark(kk, n, ncluv, dys, &s, nsend, nelem, nrepr,
-		 radus, damer, avsyl, &ttsyl, sylinf);
+	    dark(kk, n, ncluv, dys, s,
+		 // -->
+		 nsend, nelem, nrepr, radus, damer, avsyl, &ttsyl, sylinf);
 	}
     }
     SET_STRING_ELT(nms, 0, mkChar("clu")); 	SET_VECTOR_ELT(ans, 0, clu_);
@@ -258,7 +269,7 @@ void bswap(int kk, int n, int *nrepr,
 	   Rboolean med_given, Rboolean do_swap, int trace_lev,
 	   /* nrepr[]: here is boolean (0/1): 1 = "is representative object"  */
 	   double *dysma, double *dysmb, double *beter,
-	   double *dys, double s, double *obj, int pamonce)
+	   const double dys[], double s, double *obj, int pamonce)
 {
     int i, j, ij, k,h, dig_n;
     double sky;
@@ -368,7 +379,7 @@ void bswap(int kk, int n, int *nrepr,
 	int *medoids, *clustmembership;
 	double *fvect;
 	if(pamonce) {
-	    // add one to use R indices
+	    // +1 --> use 1-based indices (as R)
 	    medoids = (int*) R_alloc(kk+1, sizeof(int));
 	    clustmembership = (int*) R_alloc(n+1, sizeof(int));
 	    fvect = (double*) R_alloc(n+1, sizeof(double));
@@ -713,7 +724,7 @@ void cstat(int kk, int nn, int *nsend, int *nrepr, Rboolean all_stats,
  */
 void dark(
     // input:
-    int kk, int nn, int *ncluv, double *dys, double *s,
+    int kk, int nn, const int ncluv[], const double dys[], double s,
     // output:
     int *nsend, int *nelem, int *negbr,
     double *syl, double *srank, double *avsyl, double *ttsyl,
@@ -744,7 +755,7 @@ void dark(
 
 	for (j = 0; j < ntt; ++j) {/* (j+1)-th obs. in cluster k */
 	    int k_, nj = nelem[j];
-	    double dysb = *s * 1.1 + 1.;
+	    double dysb = s * 1.1 + 1.;
 	    negbr[j] = -1;
 	    /* for all clusters  k_ != k : */
 	    for (k_ = 1; k_ <= kk; ++k_) if (k_ != k) {
