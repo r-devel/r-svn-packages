@@ -162,8 +162,9 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
     setAttrib(ans, R_NamesSymbol,
 	      nms = allocVector(STRSXP, keep_diss ? 9 : 9-1));
     int nprot = 2; // <- ++ for each PROTECT() below
+    SEXP dys_, avsyl_, obj_, clu_, clusinf_, sylinf_, nisol_,ttsyl_;
+
     // these are only used  if(do_diss) :
-    SEXP dys_;
     double *valmd; int *jtmd; int *ndyst;
     if (do_diss) { // <-- was 'jdyss != 1' i.e.  jdyss == 0
 	PROTECT(dys_ = allocVector(REALSXP, nhalf)); nprot++;
@@ -173,20 +174,37 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
     } else {
 	dys_ = x_or_diss; // a pointer to the same thing
     }
-    double *dys = REAL(dys_);
-    double ttsyl = NA_REAL;/* -Wall */
-    SEXP avsyl_ = allocVector(REALSXP, n); 	double* avsyl = REAL(avsyl_);
-    SEXP obj_ = allocVector(REALSXP, 2);	double* obj   = REAL(obj_);
-    SEXP clu_ = allocVector(INTSXP, n); 	int* ncluv = INTEGER(clu_);
-    // FIXME? if(all_stats) {
-    // clusinf = if(cluster.only) 0. else matrix(0., kk, 5),
-    SEXP clusinf_ = all_stats ? allocMatrix(REALSXP, kk, 5) : allocVector(REALSXP, 1);
-    double* clusinf = REAL(clusinf_);
-    // silinf  = if(cluster.only) 0. else matrix(0., n, 4),
-    SEXP sylinf_  = all_stats ? allocMatrix(REALSXP, n, 4) : allocVector(REALSXP, 1);
-    double* sylinf = REAL(sylinf_);
-    SEXP nisol_ = allocVector(INTSXP, all_stats ? kk : 1);
-    int* nisol = INTEGER(nisol_);
+    // Creating the SEXPs as list components, so they are auto-PROTECTed:
+    SET_STRING_ELT(nms, 0, mkChar("clu"));
+    SET_VECTOR_ELT(ans, 0,         clu_ = allocVector(INTSXP, n));
+    SET_STRING_ELT(nms, 1, mkChar("med")); SET_VECTOR_ELT(ans, 1, medoids);
+    SET_STRING_ELT(nms, 2, mkChar("silinf"));
+    SET_VECTOR_ELT(ans, 2,         sylinf_ = all_stats ? allocMatrix(REALSXP, n, 4)
+		   : allocVector(REALSXP, 1));
+    SET_STRING_ELT(nms, 3, mkChar("obj"));
+    SET_VECTOR_ELT(ans, 3,         obj_ = allocVector(REALSXP, 2));
+    SET_STRING_ELT(nms, 4, mkChar("isol"));
+    SET_VECTOR_ELT(ans, 4,         nisol_ = allocVector(INTSXP, all_stats ? kk : 1));
+    SET_STRING_ELT(nms, 5, mkChar("clusinf"));
+    SET_VECTOR_ELT(ans, 5,         clusinf_ = all_stats ? allocMatrix(REALSXP, kk, 5)
+		   : allocVector(REALSXP, 1));
+    SET_STRING_ELT(nms, 6, mkChar("avsil"));
+    SET_VECTOR_ELT(ans, 6,         avsyl_ = allocVector(REALSXP, n));
+    SET_STRING_ELT(nms, 7, mkChar("ttsil"));
+    SET_VECTOR_ELT(ans, 7,         ttsyl_ = allocVector(REALSXP, 1));
+    if(keep_diss) {
+	SET_STRING_ELT(nms, 8, mkChar("dys"));	SET_VECTOR_ELT(ans, 8, dys_);
+    }
+
+    int *ncluv = INTEGER(clu_),
+	*nisol = INTEGER(nisol_);
+    double
+	*dys    = REAL(dys_),
+	*ttsyl  = REAL(ttsyl_),
+	*avsyl  = REAL(avsyl_),
+	*obj    = REAL(obj_),
+	*clusinf= REAL(clusinf_),
+	*sylinf = REAL(sylinf_);
 
     if (do_diss) { // <-- was 'jdyss != 1' i.e.  jdyss == 0
 	double *x = REAL(x_or_diss);
@@ -247,21 +265,9 @@ SEXP cl_Pam(SEXP k_, SEXP n_,
 	    /* Compute Silhouette info : */
 	    dark(kk, n, ncluv, dys, s,
 		 // -->
-		 nsend, nelem, nrepr, radus, damer, avsyl, &ttsyl, sylinf);
+		 nsend, nelem, nrepr, radus, damer, avsyl, ttsyl, sylinf);
 	}
     }
-    SET_STRING_ELT(nms, 0, mkChar("clu")); 	SET_VECTOR_ELT(ans, 0, clu_);
-    SET_STRING_ELT(nms, 1, mkChar("med"));	SET_VECTOR_ELT(ans, 1, medoids);
-    SET_STRING_ELT(nms, 2, mkChar("silinf"));	SET_VECTOR_ELT(ans, 2, sylinf_);
-    SET_STRING_ELT(nms, 3, mkChar("obj")); 	SET_VECTOR_ELT(ans, 3, obj_);
-    SET_STRING_ELT(nms, 4, mkChar("isol")); 	SET_VECTOR_ELT(ans, 4, nisol_);
-    SET_STRING_ELT(nms, 5, mkChar("clusinf"));	SET_VECTOR_ELT(ans, 5, clusinf_);
-    SET_STRING_ELT(nms, 6, mkChar("avsil"));	SET_VECTOR_ELT(ans, 6, avsyl_);
-    SET_STRING_ELT(nms, 7, mkChar("ttsil"));    SET_VECTOR_ELT(ans, 7, ScalarReal(ttsyl));
-    if(keep_diss) {
-	SET_STRING_ELT(nms, 8, mkChar("dys"));	SET_VECTOR_ELT(ans, 8, dys_);
-    }
-
     UNPROTECT(nprot);
     return ans;
 } /* cl_Pam */
