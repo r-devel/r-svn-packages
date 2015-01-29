@@ -1,3 +1,7 @@
+2015-01-29  Brian Ripley
+
+	* po/*.de.po: updates.
+
 2015-01-23  Brian Ripley
 
 	* NAMESPACE: register lme method for simulate()
