@@ -33,6 +33,14 @@
 
 /*#include <dmalloc.h>*/
 
+void mgcv_omp(int *a) {
+#ifdef SUPPORT_OPENMP
+  *a=1;
+#else
+  *a=0;
+#endif  
+}
+
 void dump_mat(double *M,int *r,int*c,const char *path) {
   /* dump r by c matrix M to path - intended for debugging use only */
   FILE *mf;
@@ -543,7 +551,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
    are a number of indexing errors there, and down-date cancellation 
    strategy is only described in words). 
 */ 
-  int jb,pb,i,j,k,m,*p0,nb0,q,one=1,ok_norm,*mb,*kb,rt,nth;
+  int jb,pb,i,j,k,m,*p0,nb0,q,one=1,ok_norm=1,*mb,*kb,rt,nth;
   double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
   char trans='T',nottrans='N';
   tol = pow(DOUBLE_EPS,.8);
@@ -736,7 +744,9 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     if (!ok_norm) { /* recompute any column norms that had cancelled badly */ 
       for (i = k+1;i<p; i++) { 
         if (cn[i]<icn[i]*tol) { /* do the recompute */
-          x=0.0; Ak = A + i * n; Aq += n; Ak += k+1;
+          x=0.0; Ak = A + i * n; 
+          Aq = Ak + n; // Aq += n; <-- this was old code: Aq not initialised!
+          Ak += k+1;
           for (;Ak<Aq;Ak++) x += *Ak * *Ak;
           cn[i] = icn[i] = x;
         } 

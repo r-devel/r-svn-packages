@@ -169,7 +169,7 @@ uniquecombs <- function(x) {
 
 cSplineDes <- function (x, knots, ord = 4)
 { ## cyclic version of spline design...
-  require(splines)
+  ##require(splines)
   nk <- length(knots)
   if (ord<2) stop("order too low")
   if (nk<ord) stop("too few knots")
@@ -1540,7 +1540,7 @@ Predict.matrix.cpspline.smooth <- function(object,data)
 
 smooth.construct.ps.smooth.spec <- function(object,data,knots)
 # a p-spline constructor method function
-{ require(splines)
+{ ##require(splines)
   if (length(object$p.order)==1) m <- rep(object$p.order,2) 
   else m <- object$p.order  # m[1] - basis order, m[2] - penalty order
   m[is.na(m)] <- 2 ## default
@@ -1588,7 +1588,7 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
 
 Predict.matrix.pspline.smooth <- function(object,data)
 # prediction method function for the p.spline smooth class
-{ require(splines)
+{ ##require(splines)
   m <- object$m[1]+1
   ## find spline basis inner knot range...
   ll <- object$knots[m+1];ul <- object$knots[length(object$knots)-m]

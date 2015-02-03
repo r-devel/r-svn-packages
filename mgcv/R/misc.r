@@ -2,6 +2,11 @@
 ## Many of the following are simple wrappers for C functions, used largely 
 ## for testing purposes
 
+mgcv.omp <- function() {
+## does open MP appear to be available?
+  oo <- .C(C_mgcv_omp,a=as.integer(-1))
+  if (oo$a==1) TRUE else FALSE
+}
 
 mvn.ll <- function(y,X,beta,dbeta=NULL) {
 ## to facilitate testing of MVN routine mvn_ll.

@@ -1014,6 +1014,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
     ## preinitialization to reset G$y values of <=0 and >=1... 
     ## code to evaluate in estimate.gam...
     ## reset G$y values of <=0 and >= 1 to eps and 1-eps... 
+    preinitialize <- NULL ## keep codetools happy
     eval(parse(text=paste("preinitialize <- expression({\n eps <- ",eps,
          "\n G$y[G$y >= 1-eps] <- 1 - eps\n  G$y[G$y<= eps] <- eps })")))
     
@@ -1173,6 +1174,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         validmu = validmu, valideta = stats$valideta, n.theta=n.theta,  
         ini.theta = iniTheta,putTheta=putTheta,getTheta=getTheta,rd=rd,qf=qf), 
         class = c("extended.family","family"))
+    
 } ## betar
 
 

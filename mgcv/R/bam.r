@@ -733,7 +733,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   gc()
 
   if (!is.null(cluster)&&inherits(cluster,"cluster")) { 
-     require(parallel)
+     ## require(parallel)
      n.threads <- length(cluster)
   } else n.threads <- 1
   if (missing(newdata)) n <- nrow(object$model) else n <- nrow(newdata)
@@ -814,7 +814,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
 
    if (n>chunk.size) { ## then use QR accumulation approach
      if (!is.null(cl)&&inherits(cl,"cluster")) { 
-       require(parallel)
+       ## require(parallel)
        n.threads <- length(cl)
      } else n.threads <- 1
 
