@@ -10,7 +10,7 @@ importFrom(lattice,
 
 importFrom(stats,
            anova, coef, fitted, formula, logLik, nobs, predict, qqnorm,
-           residuals, update, vcov)
+           residuals, simulate, update, vcov)
 
 export(ACF, allCoef, asOneFormula, asTable, augPred, balancedGrouped,
        "coef<-", "coefficients<-", collapse, compareFits,
