@@ -3,6 +3,10 @@
 
 1.8-5
 
+* Allow openMP support if compiler supports it and provides pre-defined macro 
+  _OPENMP, even if SUPPORT_OPENMP undefined. (Allows multi-threading on 
+   Windows, for example.) 
+
 * 'eps' is now an argument to 'betar' allowing some control on how to 
   handle response values too close to 0 or 1. Help file expanded to 
   emphasise the problems with using beta regression with 0s and 1s in 

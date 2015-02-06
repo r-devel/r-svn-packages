@@ -22,7 +22,6 @@ USA. */
 #include "general.h"
 #include "mgcv.h"
 #include "matrix.h"
-#include <Rconfig.h>
 #ifdef SUPPORT_OPENMP
 #include <omp.h>
 #endif

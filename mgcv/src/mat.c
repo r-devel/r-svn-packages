@@ -22,11 +22,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <R.h>
-#include <Rinternals.h>
 #include <R_ext/Linpack.h> /* only needed for pivoted chol - see note in mgcv_chol */
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
-#include <Rconfig.h>
 #ifdef SUPPORT_OPENMP
 #include <omp.h>
 #endif

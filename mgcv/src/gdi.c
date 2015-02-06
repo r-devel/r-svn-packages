@@ -20,13 +20,14 @@ USA. */
 #include <stdio.h>
 #include <math.h>
 #include <R.h>
-#include <Rconfig.h>
+#include "mgcv.h"
+
 #ifdef SUPPORT_OPENMP
 #include <omp.h>
 #endif
 #define ANSI
 /*#define DEBUG*/
-#include "mgcv.h"
+
 
 
 double trBtAB(double *A,double *B,int *n,int*m) 

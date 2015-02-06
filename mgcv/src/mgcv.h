@@ -1,5 +1,21 @@
 /* main method routines */
 #include <Rinternals.h>
+#include <Rconfig.h>
+/* Rconfig.h sometimes doesn't define SUPPORT_OPENMP although
+   support is available (e.g. on Windows). Doesn't quite match 
+   documentation in `Writing R extensions', but is apparently 
+   intentional. However, most compilers with openMP support supply 
+   a pre-defined compiler macro _OPENMP. So... */
+#if (!defined SUPPORT_OPENMP && defined _OPENMP)
+#define SUPPORT_OPENMP 1 
+#endif
+/* ... note also that there is no actual *need* to protect #pragmas with 
+  #ifdef SUPPORT_OPENMP, since C ignores undefined pragmas, but failing 
+  to do so may produce alot of compilation warnings if openMP is not supported. 
+  In contrast functions from omp.h must be protected, and there is 
+  non-avoidable use of these in the mgcv code. */
+
+
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score,int *nt);
