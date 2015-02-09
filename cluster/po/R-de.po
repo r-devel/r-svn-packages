@@ -1,13 +1,13 @@
 # Translation of src/library/Recommended/cluster/po/R-cluster.pot to German
 # Copyright (C) 2013 The R Foundation
 # This file is distributed under the same license as the R package.
-# Detlef Steuer <detlef.steuer@hsu-hh.de>, 2013.
+# Detlef Steuer <detlef.steuer@hsu-hh.de>, 2013-2015.
 msgid ""
 msgstr ""
-"Project-Id-Version: R 3.1.0\n"
+"Project-Id-Version: R 3.1.3\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
 "POT-Creation-Date: 2015-01-26 14:31\n"
-"PO-Revision-Date: 2014-03-28 10:16+0100\n"
+"PO-Revision-Date: 2015-02-02 11:30+0100\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R Core Team <r-core@r-project.org\n"
 "Language: de\n"
@@ -208,7 +208,7 @@ msgstr ""
 "fehlenden Wert."
 
 msgid "Cannot keep data when 'x' is a dissimilarity!"
-msgstr ""
+msgstr "Kann die Datern nicht behalten, wenn 'x' eine Dissimilarität ist!"
 
 msgid "Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2"
 msgstr "Anzahl der Cluster 'k' muss auch {1, 2, ..., n-1} sein; deshalb n >= 2"
