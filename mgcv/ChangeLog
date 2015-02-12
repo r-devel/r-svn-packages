@@ -3,6 +3,10 @@
 
 1.8-5
 
+* mgcv_qrqy was not thread safe. Not noticeable on many platforms as all 
+  threads did exactly the same thing to the same matrix, but very noticeable
+  on Windows. Thread safe mgcv_qrqy0 added and used in any parallel sections.
+
 * Allow openMP support if compiler supports it and provides pre-defined macro 
   _OPENMP, even if SUPPORT_OPENMP undefined. (Allows multi-threading on 
    Windows, for example.) 

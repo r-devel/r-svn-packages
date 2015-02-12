@@ -15,6 +15,7 @@
   In contrast functions from omp.h must be protected, and there is 
   non-avoidable use of these in the mgcv code. */
 
+//#define OMP_REPORT // define to have all routines using omp report on start and end.
 
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
@@ -89,6 +90,7 @@ void mgcv_omp(int *a);
 void mgcv_chol(double *a,int *pivot,int *n,int *rank);
 void mgcv_svd(double *x,double *u, double *d,int *r,int *c);
 void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp);
+void mgcv_qrqy0(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp);
 void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc);
 void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau);
