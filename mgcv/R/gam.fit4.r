@@ -210,7 +210,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
     sp <- sp[-ind]   ## log smoothing parameters
   } else theta <- family$getTheta() ## fixed value
 
-  penalized <- if (length(UrS)>0) TRUE else FALSE
+  ## penalized <- if (length(UrS)>0) TRUE else FALSE
 
   if (scale>0) scale.known <- TRUE else {
     ## unknown scale parameter, trial value supplied as 
@@ -292,8 +292,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
               else family$linkfun(mustart)
  
 
-   mu.eta <- family$mu.eta
-   Dd <- family$Dd
+   ##mu.eta <- family$mu.eta
+   ##Dd <- family$Dd
 
    linkinv <- family$linkinv
    valideta <- family$valideta
@@ -449,7 +449,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
          old.pdev <- pdev  ## not converged quite enough
          coef <- coefold <- start
          etaold <- eta 
-         muold <- mu
+         ##muold <- mu
        } else { ## converged
          conv <- TRUE
          coef <- start
@@ -491,7 +491,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    residuals[good] <- z - (eta - offset)[good]
 
    ntot <- length(theta) + length(sp)
-   if (deriv>1) n2d <- ntot*(1+ntot)/2 else n2d <- 0 
+   ## if (deriv>1) n2d <- ntot*(1+ntot)/2 else n2d <- 0 
    rSncol <- unlist(lapply(UrS,ncol))
    ## Now drop any elements of dd that have been dropped in fitting...
    if (sum(!good)>0) { ## drop !good from fields of dd
@@ -651,10 +651,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   penalized <- if (length(Sl)>0) TRUE else FALSE
 
   nSp <- length(lsp)
-  sp <- exp(lsp) 
-  rank.tol <- .Machine$double.eps*100 ## tolerance to use for rank deficiency
+  ##sp <- exp(lsp) 
+  ## rank.tol <- .Machine$double.eps*100 ## tolerance to use for rank deficiency
   q <- ncol(x)
-  n <- nobs <- length(y)
+  ##n <- 
+  nobs <- length(y)
   
   if (penalized) {
     Eb <- attr(Sl,"E") ## balanced penalty sqrt
@@ -967,7 +968,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     if (!is.null(REML1)) cat("REML1 =",REML1,"\n")
   }
   REML2 <- if (deriv>1) -(d2l - d2bSb/2 + rp$ldet2/2 - d2ldetH/2) else NULL 
-  bSb <- t(coef)%*%St%*%coef
+ ## bSb <- t(coef)%*%St%*%coef
   lpi <- attr(x,"lpi")
   if (is.null(lpi)) { 
     linear.predictors <- as.numeric(x%*%coef)

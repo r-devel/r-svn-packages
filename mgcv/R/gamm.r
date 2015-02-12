@@ -683,12 +683,12 @@ gamm.setup <- function(formula,pterms,
   
     if (!is.null(sm$fac)) { 
       flev <- levels(sm$fac) ## grouping factor for smooth
-      n.lev <- length(flev)
-    } else n.lev <- 1
+      ##n.lev <- length(flev)
+    } ##else n.lev <- 1
  
     ## now append constructed variables to model frame and random effects to main list
     n.para <- 0 ## count random coefficients
-    rinc <- rind <- rep(0,0)
+   ## rinc <- rind <- rep(0,0)
     if (!sm$fixed) {
      # kk <- 1;
       for (k in 1:length(rasm$rand)) {
@@ -1258,7 +1258,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     else mf <- gmf
     rm(gmf)
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
-    Terms <- attr(mf,"terms")    
+    ##Terms <- attr(mf,"terms")    
   
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices

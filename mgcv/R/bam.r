@@ -185,13 +185,13 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     weights <- G$w
     conv <- FALSE
     nobs <- nrow(mf)
-    nvars <- ncol(G$X)
+    ##nvars <- ncol(G$X)
     offset <- G$offset
     family <- G$family
     G$family <- gaussian() ## needed if REML/ML used
     variance <- family$variance
     dev.resids <- family$dev.resids
-    aic <- family$aic
+    ## aic <- family$aic
     linkinv <- family$linkinv
     mu.eta <- family$mu.eta
     if (!is.function(variance) || !is.function(linkinv))
@@ -211,7 +211,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         mustart <- mukeep
     }
  
-    coefold <- NULL
+    ##coefold <- NULL
     eta <- if (!is.null(etastart))
          etastart
     else family$linkfun(mustart)
@@ -220,7 +220,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     if (!(validmu(mu) && valideta(eta)))
        stop("cannot find valid starting values: please specify some")
     dev <- sum(dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
-    boundary <- conv <- FALSE
+    ##boundary <- 
+    conv <- FALSE
    
     G$coefficients <- rep(0,ncol(G$X))
     class(G) <- "gam"  
@@ -506,13 +507,13 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
     weights <- G$w
     conv <- FALSE
     nobs <- nrow(mf)
-    nvars <- ncol(G$X)
+    ##nvars <- ncol(G$X)
     offset <- G$offset
     family <- G$family
     G$family <- gaussian() ## needed if REML/ML used
     variance <- family$variance
     dev.resids <- family$dev.resids
-    aic <- family$aic
+    ##aic <- family$aic
     linkinv <- family$linkinv
     mu.eta <- family$mu.eta
     if (!is.function(variance) || !is.function(linkinv))
@@ -532,7 +533,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
         mustart <- mukeep
     }
  
-    coefold <- NULL
+    ##coefold <- NULL
     eta <- if (!is.null(etastart))
          etastart
     else family$linkfun(mustart)
@@ -541,7 +542,8 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
     if (!(validmu(mu) && valideta(eta)))
        stop("cannot find valid starting values: please specify some")
     dev <- sum(dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
-    boundary <- conv <- FALSE
+    ##boundary <- 
+    conv <- FALSE
 
     G$n <- nobs
     X <- G$X 
@@ -926,7 +928,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
        # }
 
        ## now consolidate the results from the parallel threads...
-       R <- res[[1]]$R;f <- res[[1]]$f;dev <- res[[1]]$dev
+       R <- res[[1]]$R;f <- res[[1]]$f; ## dev <- res[[1]]$dev
        y.norm2 <- res[[1]]$y.norm2
        for (i in 2:n.threads) {
          if (use.chol) {
@@ -1202,8 +1204,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   G$var.summary <- var.summary
   G$family <- family
   G$terms<-terms;##G$pterms<-pterms
-  pvars <- all.vars(delete.response(terms))
-  G$pred.formula <- gp$pred.formula # if (length(pvars)>0) reformulate(pvars) else NULL
+  ## pvars <- all.vars(delete.response(terms))
+  G$pred.formula <- gp$pred.formula ## if (length(pvars)>0) reformulate(pvars) else NULL
 
   n <- nrow(mf)
   
@@ -1451,7 +1453,6 @@ bam.update <- function(b,data,chunk.size=10000) {
   } else if (method=="fREML") { ## fast REML
 
      um <- Sl.Xprep(b$Sl,b$qrx$R)
-     lambda.0 <- initial.sp(b$qrx$R,b$G$S,b$G$off)
      lsp0 <- log(b$sp) ## initial s.p.
      log.phi <- log(b$sig2) ## initial or fixed scale
      fit <- fast.REML.fit(um$Sl,um$X,b$qrx$f,rho=lsp0,L=b$G$L,rho.0=b$G$lsp0,

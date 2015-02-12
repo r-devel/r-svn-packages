@@ -1359,7 +1359,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
  
   family <- fix.family.link(family)
   family <- fix.family.var(family)
-  if (method%in%c("REML","ML","P-REML","P-ML")) {reml <- TRUE; family <- fix.family.ls(family)} else reml <- FALSE 
+  if (method%in%c("REML","ML","P-REML","P-ML")) family <- fix.family.ls(family)
   
 
   if (nbGetTheta) {
@@ -1453,7 +1453,7 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
 ## Get an estimate of the coefs corresponding to maximum reasonable deviance...
   y <- G$y
   weights <- G$w
-  nobs <- G$n
+  nobs <- G$n ## ignore codetools warning!!
   ##start <- etastart <- mustart <- NULL
   family <- G$family
   eval(family$initialize) ## have to do this to ensure y numeric
@@ -2170,7 +2170,7 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
         }
    
         mevg <- mu.eta.val[good];mug <- mu[good];yg <- y[good]
-        weg <- weights[good];etag <- eta[good]
+        weg <- weights[good];##etag <- eta[good]
         var.mug<-variance(mug)
 
         G$y <- z <- (eta - offset)[good] + (yg - mug)/mevg
@@ -2830,7 +2830,7 @@ concurvity <- function(b,full=TRUE) {
   n.measures <- 3
   measure.names <- c("worst","observed","estimate")
 
-  n <- nrow(X)
+  ##n <- nrow(X)
   if (full) { ## get dependence of each smooth on all the rest...
     conc <- matrix(0,n.measures,m)
     for (i in 1:m) {
@@ -2941,7 +2941,7 @@ smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
   V <- R%*%V[qrx$pivot,qrx$pivot]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
-  k <- n <- length(ed$values)
+  k <- length(ed$values)
   ## could truncate, but it doesn't improve power in correlated case!
   f <- t(ed$vectors[,1:k])%*%R%*%b
   t <- sum(f^2)
@@ -3784,7 +3784,7 @@ logLik.gam <- function (object,...)
    # if (length(list(...)))
    #     warning("extra arguments discarded")
    
-    fam <- family(object)$family
+    ##fam <- family(object)$family
     sc.p <- as.numeric(object$scale.estimated)
     p <- sum(object$edf) + sc.p
     val <- p - object$aic/2
@@ -3903,7 +3903,7 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
   ## Get the initial weights...
   if (length(S)==0) return(rep(0,0))
   ## start <- etastart <- mustart <- NULL
-  nobs <- nrow(x) 
+  nobs <- nrow(x) ## ignore codetools warning - required for initialization
   if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
   eval(family$initialize) 
   if (inherits(family,"general.family")) { ## Cox, gamlss etc...   

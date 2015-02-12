@@ -306,7 +306,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             }
         else family$linkfun(mustart)
         #etaold <- eta
-        muold <- mu <- linkinv(eta)
+        ##muold <- 
+        mu <- linkinv(eta)
         #if (!(validmu(mu) && valideta(eta))) 
         #    stop("Can't find valid starting values: please specify some")
     
@@ -490,7 +491,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   old.pdev <- pdev
                   coef <- coefold <- start
                   etaold <- eta 
-                  muold <- mu
+                  ##muold <- mu
                 } else {
                   conv <- TRUE
                   coef <- start
@@ -1222,7 +1223,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
             weights = weights, start = start,
             offset = offset,Mp=Mp,family = family, 
             control = control,deriv=deriv,eps=eps,spe=spe,
-            Sl=Sl,...)
+            Sl=Sl,...) ## ignore codetools warning
    
      }
    } ## end of derivative checking
@@ -1419,7 +1420,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         if (kk==1||score3<=score2) { ## accept step - better than last try
           score2 <- score3
           lsp2 <- lsp3
-          if (!is.null(lsp.max)) delta2 <- delta3
+          ## if (!is.null(lsp.max)) delta2 <- delta3
         }
         ## stop when improvement found, and shorter step is worse...
         if (score2<score&&score3>score2||kk==40) ok <- FALSE
