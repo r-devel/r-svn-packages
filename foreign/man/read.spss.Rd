@@ -19,9 +19,9 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
 \arguments{
   \item{file}{character string: the name of the file or URL to read.}
   \item{use.value.labels}{logical: convert variables with value labels
-    into \R factors with those levels?  If there are values without a
-    corresponding value label they are set to \code{NA}, as usual for a
-    factor.}
+    into \R factors with those levels?  This is only done if there are
+    at least as many labels as values of the variable (when values
+    without a matching label are returned as \code{NA}).}
   \item{to.data.frame}{logical: return a data frame?}
   \item{max.value.labels}{logical: only variables with value labels and
     at most this many unique values will be converted to factors if
