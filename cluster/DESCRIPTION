@@ -1,8 +1,8 @@
 Package: cluster
-Version: 2.0.1
-Date: 2015-01-31
+Version: 2.0.2
+Date: 2015-02-..
 Priority: recommended
-Title: Cluster Analysis Extended Rousseeuw et al.
+Title: Cluster Analysis Extended Rousseeuw et Al
 Description: Cluster analysis methods.  Much extended the original from
 	Peter Rousseeuw, Anja Struyf and Mia Hubert,
 	based on Kaufman and Rousseeuw (1990).
