@@ -1,3 +1,11 @@
+2015-02-20  Brian Ripley
+
+	* DESCRIPTION: version is 3.1-120
+
+2015-02-07  Brian Ripley
+
+	* man/bdf.Rd: change markup for a dead URL
+
 2015-01-29  Brian Ripley
 
 	* po/*.de.po: updates.
