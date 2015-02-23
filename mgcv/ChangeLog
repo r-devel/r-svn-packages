@@ -3,6 +3,10 @@
 
 1.8-5
 
+* gam.fit4 convergence testing of coefs modified to more robust test of
+  gradients of penalized dev w.r.t. params, rather than change in params,
+  which can fail under rank deficiency.
+
 * mgcv_qrqy was not thread safe. Not noticeable on many platforms as all 
   threads did exactly the same thing to the same matrix, but very noticeable
   on Windows. Thread safe mgcv_qrqy0 added and used in any parallel sections.

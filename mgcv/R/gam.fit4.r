@@ -445,7 +445,12 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      ## convergence testing...
 
      if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
-       if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
+       ## Need to check coefs converged adequately, to ensure implicit differentiation
+       ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
+       ## drop same parameter every iteration!)       
+       grad <- 2 * t(x[good,])%*%(w*((x%*%start)[good]-z))+ 2*St%*%start 
+       if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
+      ## if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
          old.pdev <- pdev  ## not converged quite enough
          coef <- coefold <- start
          etaold <- eta 
