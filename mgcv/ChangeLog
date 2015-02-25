@@ -3,6 +3,9 @@
 
 1.8-5
 
+* A help file 'single.index' supplied illustrating how single index models
+  can be estimated in mgcv.
+
 * gam.fit4 convergence testing of coefs modified to more robust test of
   gradients of penalized dev w.r.t. params, rather than change in params,
   which can fail under rank deficiency.
