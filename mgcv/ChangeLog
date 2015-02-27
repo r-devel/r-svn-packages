@@ -3,6 +3,13 @@
 
 1.8-5
 
+* 'bam' and 'gam' modified to often produce smaller files when models 
+  saved (and never to produce absurdly large files). Achieved by setting 
+  environment of formula, terms etc to .GlobalEnv. Previously 'save' could
+  save entire contents of environment of formula with fitted model object. 
+  Note that change can cause user written functions calling gam/bam and 
+  then predict without supplying all prediction variables to fail (fix obvious).
+
 * A help file 'single.index' supplied illustrating how single index models
   can be estimated in mgcv.
 

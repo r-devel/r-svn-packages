@@ -1197,15 +1197,15 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
+  
 
   ## no advantage to "fREML" with no free smooths...
   if (((!is.null(G$L)&&ncol(G$L) < 1)||(length(G$sp)==0))&&method=="fREML") method <- "REML"
 
   G$var.summary <- var.summary
   G$family <- family
-  G$terms<-terms;##G$pterms<-pterms
-  ## pvars <- all.vars(delete.response(terms))
-  G$pred.formula <- gp$pred.formula ## if (length(pvars)>0) reformulate(pvars) else NULL
+  G$terms<-terms;
+  G$pred.formula <- gp$pred.formula
 
   n <- nrow(mf)
   
@@ -1229,8 +1229,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (G$m) for (i in 1:G$m) G$min.edf<-G$min.edf+G$smooth[[i]]$null.space.dim
 
   G$formula<-formula
-  environment(G$formula)<-environment(formula)
-  
+  ## environment(G$formula)<-environment(formula)
+  environment(G$pterms) <- environment(G$terms) <- environment(G$pred.formula) <- 
+  environment(G$formula) <- .BaseNamespaceEnv
+
+ 
   G$conv.tol<-control$mgcv.tol      # tolerence for mgcv
   G$max.half<-control$mgcv.half     # max step halving in bfgs optimization
 
@@ -1299,7 +1302,6 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$family <- family
   object$formula<-G$formula 
  
-  #object$linear.predictors <- NA
   if (method=="GCV.Cp") {
     if (scale<=0) object$method <- "GCV" else object$method <- "UBRE"
   } else {
@@ -1347,6 +1349,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (length(object$full.sp)==length(object$sp)&&
         all.equal(object$sp,object$full.sp)==TRUE) object$full.sp <- NULL
   }
+  environment(object$formula) <- environment(object$pred.formula) <-
+  environment(object$terms) <- environment(object$pterms) <- 
+  environment(attr(object$model,"terms"))  <- .GlobalEnv
   object
 } ## end of bam
 

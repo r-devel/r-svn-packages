@@ -1837,9 +1837,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         (!is.list(formula)&&!is.null(family$npl)&&(family$npl>1))) stop("incorrect number of linear predictors for family")
 
     if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
-        ## +nrow(G$C)) stop("Model has more coefficients than data")
-
-    G$terms<-terms;##G$pterms<-pterms
+       
+    G$terms<-terms;
     G$mf<-mf;G$cl<-cl;
     G$am <- am
 
@@ -1891,6 +1890,10 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$call <- G$cl # needed for update() to work
   class(object) <- c("gam","glm","lm")
   if (is.null(object$deviance)) object$deviance <- sum(residuals(object,"deviance")^2)
+  environment(object$formula) <- environment(object$pred.formula) <-
+  environment(object$terms) <- environment(object$pterms) <- .GlobalEnv
+  if (!is.null(object$model))  environment(attr(object$model,"terms"))  <- .GlobalEnv
+  if (!is.null(attr(object$pred.formula,"full"))) environment(attr(object$pred.formula,"full")) <- .GlobalEnv
   object
 } ## gam
 
