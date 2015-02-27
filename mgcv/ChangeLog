@@ -6,6 +6,8 @@
 * A help file 'single.index' supplied illustrating how single index models
   can be estimated in mgcv.
 
+* predict.gam now only creates a "constant" attribute if the model has one.
+
 * gam.fit4 convergence testing of coefs modified to more robust test of
   gradients of penalized dev w.r.t. params, rather than change in params,
   which can fail under rank deficiency.

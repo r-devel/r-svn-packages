@@ -2794,9 +2794,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       H <- napredict(na.act,H)
     }
   }
-  if (type=="terms"||type=="iterms") attr(H,"constant") <- object$coefficients[1]
+  if ((type=="terms"||type=="iterms")&&attr(object$terms,"intercept")==1) attr(H,"constant") <- object$coefficients[1]
   H # ... and return
-} ## end of gam.fit
+} ## end of predict.gam
 
 
 
