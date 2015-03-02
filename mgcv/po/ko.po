@@ -1,25 +1,29 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Korean translations for mgcv package.
+# Recommended/mgcv/po/ko.po
+# Maintainer: Simon Wood <simon.wood@r-project.org>
 #
-#, fuzzy
+# This file is distributed under the same license as the R mgcv package.
+# Chel Hee Lee <chl948@mail.usask.ca>, 2013-2015.
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: mgcv 1.8-5\n"
+"Project-Id-Version: mgcv 1.8-4\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-03-02 20:44+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2015-02-21 16:01-0600\n"
+"Last-Translator:Chel Hee Lee  <chl948@mail.usask.ca>\n"
+"Language-Team: Chel Hee Lee  <chl948@mail.usask.ca>\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
 #: magic.c:444
 msgid "magic requires smoothing parameter starting values if L supplied"
 msgstr ""
+"L에 주어진 값이 없다면 스무딩 파라미터(smoothing parameter)에 대한 초기값"
+"(starting values)가 필요합니다."
 
 #: magic.c:562
 msgid "magic, the gcv/ubre optimizer, failed to converge after 400 iterations."
@@ -27,7 +31,7 @@ msgstr ""
 
 #: matrix.c:80
 msgid "Failed to initialize memory for matrix."
-msgstr ""
+msgstr "행렬생성에 필요한 메모리 초기화에 실패했습니다."
 
 #: matrix.c:142 matrix.c:204
 msgid "An out of bound write to matrix has occurred!"
@@ -55,7 +59,7 @@ msgstr ""
 
 #: matrix.c:400
 msgid "Singular Matrix passed to invert()"
-msgstr ""
+msgstr "특이함수(singular matrix)가 invert()에 전달되었습니다."
 
 #: matrix.c:1320
 msgid "svd() not converged"
@@ -68,11 +72,11 @@ msgstr ""
 
 #: matrix.c:1424
 msgid "Sort failed"
-msgstr ""
+msgstr "정렬에 실패했습니다."
 
 #: qp.c:58
 msgid "ERROR in addconQT."
-msgstr ""
+msgstr "addconQT 에서 에러가 발생했습니다."
 
 #: qp.c:464
 msgid "QPCLS - Rank deficiency in model"
@@ -87,3 +91,5 @@ msgid ""
 "A term has fewer unique covariate combinations than specified maximum "
 "degrees of freedom"
 msgstr ""
+
+

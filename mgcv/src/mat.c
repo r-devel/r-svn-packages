@@ -2554,8 +2554,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
     /* calculate b[j]=||z||.... */
     for (xx=0.0,zp=z,p0=zp+*n;zp<p0;zp++) xx += *zp * *zp;b[j]=sqrt(xx); 
   
-    /*if (b[j]==0.0&&j< *n-1) ErrorMessage(_("Lanczos failed"),1);*/ /* Actually this isn't really a failure => rank(A)<l+lm */
-    /* get q[j+1]      */
+     /* get q[j+1]      */
     if (j < *n-1)
     { q[j+1]=(double *)R_chk_calloc((size_t) *n,sizeof(double));
       for (xx=b[j],qp=q[j+1],p0=qp + *n,zp=z;qp<p0;qp++,zp++) *qp = *zp/xx; /* forming q[j+1]=z/b[j] */
