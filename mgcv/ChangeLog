@@ -9,8 +9,8 @@
 * 'bam', 'gam' and 'gamm' modified to often produce smaller files when models 
   saved (and never to produce absurdly large files). Achieved by setting 
   environment of formula, terms etc to .GlobalEnv. Previously 'save' could
-  save entire contents of environment of formula with fitted model object. 
-  Note that change can cause failure in user written functions calling 
+  save entire contents of environment of formula/terms with fitted model 
+  object. Note that change can cause failure in user written functions calling 
   gam/bam and then 'predict' without supplying all prediction variables 
   (fix obvious).
 

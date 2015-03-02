@@ -136,7 +136,7 @@ Check that the parameters of the priors on the parameters are fit for your purpo
 
 \examples{
 ## the following illustrates a typical workflow. To run the 
-## 'do not run' code you need rjags (and JAGS) to be installed.
+## 'Not run' code you need rjags (and JAGS) to be installed.
 require(mgcv)
   
 set.seed(2) ## simulate some data... 

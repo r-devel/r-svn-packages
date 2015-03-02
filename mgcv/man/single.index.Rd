@@ -48,20 +48,32 @@ y <- rpois(n,mu) ## Poi response
 
 ## now fit to the simulated data...
 
+
+th0 <- c(-.8,.4) ## close to truth for speed
+## get initial theta, using no penalization...
+f0 <- nlm(si,th0,y=y,x=x,z=z,fx=TRUE,k=5)
+## now get theta/alpha with smoothing parameter selection...
+f1 <- nlm(si,f0$estimate,y=y,x=x,z=z,hessian=TRUE,k=10)
+theta.est <-f1$estimate 
+
+## Alternative using 'optim' ('Not run' simply to keep
+## CRAN check time down)... 
+\dontrun{
 th0 <- rep(0,m-1) 
 ## get initial theta, using no penalization...
 f0 <- optim(th0,si,y=y,x=x,z=z,fx=TRUE,k=5)
 ## now get theta/alpha with smoothing parameter selection...
 f1 <- optim(f0$par,si,y=y,x=x,z=z,hessian=TRUE,k=10)
-
+theta.est <-f1$par 
+}
 ## extract and examine fitted model...
 
-b <- si(f1$par,y,x,z,opt=FALSE) ## extract best fit model
+b <- si(theta.est,y,x,z,opt=FALSE) ## extract best fit model
 plot(b,pages=1)
 b
 b$alpha 
 ## get sd for alpha...
-Vt <- b$J%*%solve(f1$hessian,t(b$J))
+Vt <- b$J\%*\%solve(f1$hessian,t(b$J))
 diag(Vt)^.5
 
 }
