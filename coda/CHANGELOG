@@ -1,3 +1,8 @@
+0.17-1
+- Moved lattice package from Depends to Imports in DESCRIPTION file
+- Russell Almond is fully credited as co-author
+- Moved AUTHORS file into inst/ sub-directory
+
 0.16-1
 - Fixed main title bug in densplot
 - Substitute spectrum0.ar for spectrum0 internally

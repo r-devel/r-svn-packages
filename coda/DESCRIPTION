@@ -1,15 +1,19 @@
 Package: coda
-Version: 0.16-1
-Date: 2012-11-06
-Title: Output analysis and diagnostics for MCMC
+Version: 0.17-1
+Date: 2015-03-02
+Title: Output Analysis and Diagnostics for MCMC
 Authors@R: c(person("Martyn", "Plummer", role=c("aut","cre","trl"),
        	            email="plummerm@iarc.fr"),
              person("Nicky", "Best", role="aut"),
              person("Kate", "Cowles", role="aut"),
              person("Karen", "Vines", role="aut"),
              person("Deepayan", "Sarkar", role="aut"),
-             person("Russell", "Almond", role="ctb"))
-Depends: R (>= 2.14.0), lattice
-Description: Output analysis and diagnostics for Markov Chain Monte
-  Carlo simulations. 
+	     person("Douglas", "Bates", role="aut"),
+             person("Russell", "Almond", role="aut"))
+Depends: R (>= 2.14.0)
+Imports: lattice
+Description: Provides functions for summarizing and plotting the
+	output from Markov Chain Monte Carlo (MCMC) simulations, as
+	well as diagnostic tests of convergence to the equilibrium
+	distribution of the Markov chain.
 License: GPL (>= 2)
