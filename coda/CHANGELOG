@@ -1,3 +1,7 @@
+0.17-2 Martyn Plummer <plummerm@iarc.fr>
+
+	- Avoid redundant copies when subsetting mcmc.list objects
+	
 0.17-1 Martyn Plummer <plummerm@iarc.fr>
 
 	- Moved lattice package from Depends to Imports in DESCRIPTION
