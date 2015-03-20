@@ -3,6 +3,8 @@
 
 1.8-5
 
+* Korean translation added thanks to Chel Hee Lee.
+
 * scale parameter handling in edf in logLik.gam made consistent with glm 
   (affects AIC).
 

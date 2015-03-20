@@ -272,6 +272,21 @@ interpret.gam <- function(gf) {
 ## a single formula. This facilitates general penalized 
 ## likelihood models in which several linear predictors 
 ## may be involved...
+##
+## The list syntax is as follows. The first formula must have a response on
+## the lhs, rather than labels. For m linear predictors, there 
+## must be m 'base formulae' in linear predictor order. lhs labels will 
+## be ignored in a base formula. Empty base formulae have '-1' on rhs.
+## Further formulae have labels up to m labels 1,...,m on the lhs, in a 
+## syntax like this: 3 + 5 ~ s(x), which indicates that the same s(x) 
+## should be added to both linear predictors 3 and 5. 
+## e.g. A bivariate normal model with common expected values might be
+## list(y1~-1,y2~-1,1+2~s(x)), whereas if the second component was contaminated 
+## by something else we might have list(y1~-1,y2~s(v)-1,1+2~s(x)) 
+## 
+## For a list argument, this routine returns a list of slit.formula objects 
+## with an extra field "lpi" indicating the linear predictors to which each 
+## contributes...
   if (is.list(gf)) {
     d <- length(gf)
 
@@ -282,9 +297,18 @@ interpret.gam <- function(gf) {
     
     ret <- list()
     pav <- av <- rep("",0)
+    nlp <- 0 ## count number of linear predictors (may be different from number of formulae)
     for (i in 1:d) {
       textra <- if (i==1) NULL else paste(".",i-1,sep="") ## modify smooth labels to identify to predictor  
+
+      lpi <- getNumericResponse(gf[[i]]) ## get linear predictors to which this applies, if explicit
+      if (length(lpi)==1) warning("single linear predictor indices are ignored")
+      if (length(lpi)>0) gf[[i]][[2]] <- NULL else { ## delete l.p. labels from formula response 
+        nlp <- nlp + 1;lpi <- nlp ## this is base formula for l.p. number nlp       
+      }
       ret[[i]] <- interpret.gam0(gf[[i]],textra)
+      ret[[i]]$lpi <- lpi ## record of the linear predictors to which this applies
+      
       ## make sure all parametric formulae have a response, to avoid
       ## problems with parametric sub formulae of the form ~1
       respi <- rep("",0) ## no extra response terms
@@ -297,10 +321,12 @@ interpret.gam <- function(gf) {
     } 
     av <- unique(av) ## strip out duplicate variable names
     pav <- unique(pav)
-    ret$fake.formula <- if (length(av)>0) reformulate(av,response=ret[[1]]$response) else ## create fake formula containing all variables
-                        ret[[1]]$fake.formula
+    ret$fake.formula <- if (length(av)>0) reformulate(av,response=ret[[1]]$response) else 
+                        ret[[1]]$fake.formula ## create fake formula containing all variables
     ret$pred.formula <- if (length(pav)>0) reformulate(pav) else ~1 ## predictor only formula
     ret$response <- ret[[1]]$response 
+    ret$nlp <- nlp ## number of linear predictors
+    for (i in 1:d) if (max(ret[[i]]$lpi)>nlp||min(ret[[i]]$lpi)<1) stop("linear predictor labels out of range")
     class(ret) <- "split.gam.formula"
     return(ret)
   } else interpret.gam0(gf)  
@@ -624,14 +650,43 @@ parametricPenalty <- function(pterms,assign,paraPen,sp0) {
   list(S=S,off=off,sp=sp,L=L,rank=rank,full.sp.names=full.sp.names)
 } ## parametricPenalty
 
+getNumericResponse <- function(form) {
+## takes a formula for which the lhs contains numbers, but no variable 
+## names, and returns an array of those numbers. For example if 'form' 
+## is '1+26~s(x)', this will return the numeric vector c(1,26). 
+## A zero length vector is returned if the lhs contains no numbers,
+## or contains variable names.  
+## This is useful for setting up models in which
+## multiple linear predictors share terms. The lhs numbers can then 
+## indicate which linear predictors the rhs will contribute to.
+
+  ## if the response contains variables or there is no
+  ## response then return nothing...
+
+  if (length(form)==2||length(all.vars(form[[2]]))>0) return(rep(0,0))
+
+  ## deparse turns lhs into a string; strsplit extracts the characters 
+  ## corresponding to numbers; unlist deals with the fact that deparse 
+  ## will split long lines resulting in multiple list items from 
+  ## strsplit; as.numeric converts the numbers; na.omit drops NAs
+  ## resulting from "" elements; unique & round are obvious... 
+
+  round(unique(na.omit(as.numeric(unlist(strsplit(deparse(form[[2]]), "[^0-9]+"))))))  
+
+} ## getNumericResponse
+
 gam.setup.list <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE) {
-## version of gam.setup for when gam is called with a list of formulae, specifying several linear predictors...
+## version of gam.setup for when gam is called with a list of formulae, 
+## specifying several linear predictors...
+## key difference to gam.setup is an attribute to the model matrix, "lpi", which is a list
+## of column indices for each linear predictor 
   if (!is.null(paraPen)) stop("paraPen not supported for multi-formula models")
   if (!absorb.cons) stop("absorb.cons must be TRUE for multi-formula models")
-  d <- length(pterms) ## number of linear predictors
+  d <- length(pterms) ## number of formulae
+
   G <- gam.setup(formula[[1]],pterms[[1]],
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
@@ -640,8 +695,14 @@ gam.setup.list <- function(formula,pterms,
   #G$contrasts <- list(G$contrasts)
   G$xlevels <- list(G$xlevels)
   G$assign <- list(G$assign)
-  lpi <- list(1:ncol(G$X)) ## lpi[[j]] is index of cols for jth linear predictor 
-  pof <- ncol(G$X) ## 
+  
+  ## formula[[1]] always relates to the base formula of the first linear predictor...
+
+  lpi <- list()
+  for (i in 1:formula$nlp) lpi[[i]] <- rep(0,0)
+  lpi[[1]] <- 1:ncol(G$X) ## lpi[[j]] is index of cols for jth linear predictor 
+
+  pof <- ncol(G$X) ## counts the model matrix columns produced so far
   for (i in 2:d) {
     if (is.null(formula[[i]]$response)) {  ## keep gam.setup happy
       formula[[i]]$response <- formula$response 
@@ -651,7 +712,10 @@ gam.setup.list <- function(formula,pterms,
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
-    lpi[[i]] <- pof + 1:ncol(um$X)
+    for (j in formula[[i]]$lpi) { ## loop through all l.p.s to which this term contributes
+      lpi[[j]] <- c(lpi[[j]],pof + 1:ncol(um$X)) ## add these cols to lpi[[j]]
+      ##lpi[[i]] <- pof + 1:ncol(um$X) ## old code
+    }
     if (mv.response) G$y <- cbind(G$y,um$y)
     G$offset[[i]] <- um$offset
     #G$contrasts[[i]] <- um$contrasts
