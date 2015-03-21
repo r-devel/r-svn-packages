@@ -1,6 +1,59 @@
 ## (c) Simon N. Wood (2013, 2014) mvn model extended family. 
 ## Released under GPL2 ...
 
+lpi.expand <- function(X) {
+## takes a model matrix X, with "lpi" attribute, and produces 
+## full redundant version in which each column block is the full
+## model matrix for one linear predictor, which may involve 
+## repeating columns between blocks.
+  lpi <- attr(X,"lpi")
+  if (!attr(lpi,"overlap")) return(X) ## nothing to do
+  X <- X[,unlist(lpi)]
+  k <- 0
+  for (i in 1:length(lpi)) {
+    lpi[[i]] <- 1:length(lpi[[i]]) + k
+    k <- k + length(lpi[[i]])
+  } 
+  attr(X,"lpi") <- lpi
+  X
+} ## lpi.expand
+
+lpi.contract <- function(x,lpi,type="rc") {
+## takes a vector or matrix x, and applies an lpi contraction to it
+## if x is a matrix then type can be "r", "c" or "rc" for row, col
+## or row, column contraction.
+  p <- max(unlist(lpi)) ## dimension of result
+  if (is.matrix(x)) {
+    if (type=="c"||type=="rc") { ## column contraction
+      k <- 0
+      z <- matrix(0,nrow(x),p)
+      for (i in 1:length(lpi)) { 
+        ii <- 1:length(lpi[[i]]) + k
+        k <- k + length(ii) 
+        z[,lpi[[i]]] <- z[,lpi[[i]]] + x[,ii]
+      } 
+      if (type=="rc") x <- z
+    }
+    if (type=="r"||type=="rc") { ## row contraction
+      z <- matrix(0,p,ncol(x))
+      k <- 0
+      for (i in 1:length(lpi)) { 
+        ii <- 1:length(lpi[[i]]) + k
+        k <- k + length(ii) 
+        z[lpi[[i]],] <- z[lpi[[i]],] + x[ii,]
+      }
+    } 
+  } else { ## vector
+    z <- rep(0,p);k <- 0
+    for (i in 1:length(lpi)) {
+      ii <- 1:length(lpi[[i]]) + k
+      k <- k + length(ii) 
+      z[lpi[[i]]] <- z[lpi[[i]]] + x[ii]
+    }
+  }
+  z
+} ## lpi.contract
+
 mvn <- function(d=2) { 
 ## Extended family object for multivariate normal additive model.
   if (d<2) stop("mvn requires 2 or more dimensional data")
@@ -21,7 +74,7 @@ mvn <- function(d=2) {
     ## finds initial coefficients
       ydim <- ncol(G$y) ## dimension of response
       nbeta <- ncol(G$X)
-      ntheta <- ydim*(ydim+1)/2 ## numer of cov matrix factor params
+      ntheta <- ydim*(ydim+1)/2 ## number of cov matrix factor params
       lpi <- attr(G$X,"lpi")
       XX <- crossprod(G$X)
       G$X <- cbind(G$X,matrix(0,nrow(G$X),ntheta)) ## add dummy columns to G$X
@@ -64,8 +117,6 @@ mvn <- function(d=2) {
     
     initialize <- expression({
       ## called in gam.fit5 and initial.spg
-      ## Ideally fit separate models to each component and
-      ## extract initial coefs, s.p.s and variances this way 
         n <- rep(1, nobs)
         if (is.null(start)) start <- family$ibeta
         ## need to re-parameterize XX is non-standard
@@ -97,6 +148,11 @@ mvn <- function(d=2) {
     ## D is the diagonal pre-conditioning matrix used to obtain Hp
     ##   if Hr is the raw Hp then Hp = D*t(D*Hr)
       lpi <- attr(X,"lpi") ## lpi[[k]] is index of model matrix columns for dim k 
+      drop <- attr(X,"drop") 
+      if (!is.null(drop)) { ## the optimizer has dropped some parameters
+        ## it will have adjusted lpi automatically, but XX is mvn specific
+        attr(X,"XX") <- attr(X,"XX")[-drop,-drop]
+      }
       m <- length(lpi)        ## number of dimensions of MVN
       lpstart <- rep(0,m)
       for (i in 1:(m-1)) lpstart[i] <- lpi[[i+1]][1]

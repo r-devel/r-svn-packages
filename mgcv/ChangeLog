@@ -1,6 +1,11 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-6
+
+* Generalization of list formula handling to allow linear predictors to
+  share terms. 
+
 1.8-5
 
 * Korean translation added thanks to Chel Hee Lee.

@@ -687,6 +687,8 @@ gam.setup.list <- function(formula,pterms,
   if (!absorb.cons) stop("absorb.cons must be TRUE for multi-formula models")
   d <- length(pterms) ## number of formulae
 
+  lp.overlap <- if (formula$nlp<d) TRUE else FALSE ## predictors share terms
+
   G <- gam.setup(formula[[1]],pterms[[1]],
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
@@ -764,7 +766,7 @@ gam.setup.list <- function(formula,pterms,
     G$sp <- c(G$sp,um$sp)
     pof <- ncol(G$X)
   }
- 
+  attr(lpi,"overlap") <- lp.overlap
   attr(G$X,"lpi") <- lpi
   attr(G$nsdf,"pstart") <- unlist(lapply(lpi,min))
   G
