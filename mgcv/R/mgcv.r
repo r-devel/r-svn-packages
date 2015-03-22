@@ -1899,7 +1899,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     G$var.summary <- var.summary
     G$family <- family
    
-    if ((is.list(formula)&&(is.null(family$nlp)||family$nlp!=length(formula)))||
+    if ((is.list(formula)&&(is.null(family$nlp)||family$nlp!=gp$nlp))||
         (!is.list(formula)&&!is.null(family$npl)&&(family$npl>1))) stop("incorrect number of linear predictors for family")
 
     if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 

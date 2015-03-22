@@ -1129,7 +1129,7 @@ deriv.check5 <- function(x, y, sp,
 {  if (!deriv%in%c(1,2)) stop("deriv should be 1 or 2")
    if (control$epsilon>1e-9) control$epsilon <- 1e-9 
    ## first obtain the fit corresponding to sp...
-   b <- gam.fit5(x=x,y=y,lsp=sp,Sl=Sl,weights=weights,offset=offset,deriv=2,
+   b <- gam.fit5(x=x,y=y,lsp=sp,Sl=Sl,weights=weights,offset=offset,deriv=deriv,
         family=family,control=control,Mp=Mp,start=start)
    ## now get the derivatives of the likelihood w.r.t. coefs...
    ll <- family$ll(y=y,X=x,coef=b$coefficients,wt=weights,family=family,
