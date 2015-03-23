@@ -731,6 +731,8 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
   rt
 } ## olid
 
+
+
 gam.setup.list <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
@@ -834,8 +836,18 @@ gam.setup.list <- function(formula,pterms,
   if (lp.overlap) {
     rt <- olid(G$X,G$nsdf,pstart,flpi,lpi)
     if (length(rt$dind)>0) { ## then columns have to be dropped
-      warning("dropping unidentifiable parameteric terms from model")
-      G$X <- G$X[,-rt$dind] ## drop cols
+      warning("dropping unidentifiable parameteric terms from model",call.=FALSE)
+      G$X <- G$X[,-rt$dind] ## drop cols 
+      G$cmX <- G$cmX[-rt$dind]
+      G$term.names <- G$term.names[-rt$dind]
+      ## adjust indexing in smooth list, noting that coefs of smooths 
+      ## are never dropped by dind 
+      for (i in 1:length(G$smooth)) {
+        k <- sum(rt$dind < G$smooth[[i]]$first.para)
+        G$smooth[[i]]$first.para <- G$smooth[[i]]$first.para - k
+        G$smooth[[i]]$last.para <- G$smooth[[i]]$last.para - k
+      }
+      for (i in 1:length(G$off)) G$off[i] <- G$off[i] - sum(rt$dind < G$off[i])
       ## replace various indices with updated versions...
       pstart <- rt$pstart
       G$nsdf <- rt$nsdf
