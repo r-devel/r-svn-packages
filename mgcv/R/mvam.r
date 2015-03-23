@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013, 2014) mvn model extended family. 
+## (c) Simon N. Wood (2013-2015) mvn model extended family. 
 ## Released under GPL2 ...
 
 lpi.expand <- function(X,trailing=TRUE) {
@@ -6,6 +6,7 @@ lpi.expand <- function(X,trailing=TRUE) {
 ## full redundant version in which each column block is the full
 ## model matrix for one linear predictor, which may involve 
 ## repeating columns between blocks.
+## See mvn family (ll) for prototypic application 
   lpi <- attr(X,"lpi")
   if (!attr(lpi,"overlap")) return(X) ## nothing to do
   ip <- unlist(lpi)
@@ -26,6 +27,7 @@ lpi.contract <- function(x,lpi,type="rc",trailing=TRUE) {
 ## takes a vector or matrix x, and applies an lpi contraction to it
 ## if x is a matrix then type can be "r", "c" or "rc" for row, col
 ## or row, column contraction.
+## See mvn family (ll) for prototypic application 
   ip <- unlist(lpi)
   if (trailing) { ## copy across any un-indexed trailing blocks
     lip <- length(ip) ## last row/col indexed in x
@@ -181,12 +183,13 @@ mvn <- function(d=2) {
         X <- mgcv:::lpi.expand(X)
         attr(X,"XX") <- XX;rm(XX)
         lpi0 <- lpi ## need to save this for contraction of results
-        lpi <- attr(X,"lpi") ## 
+        lpi <- attr(X,"lpi") ## this indexes the cols of each l.p in the expanded X
         ## need to expand coef beta, leaving m*(m+1)/2 final coefs of R at end
         ind <- (max(ip)+1):length(coef)
         if (length(ind)!=m*(m+1)/2) stop("mvn dimension error")
         coef <- c(coef[ip],coef[ind])
-        if (!is.null(d1b)) d1b <- rbind(d1b[ip,],d1b[ind,])
+        ## do same for derivatives of coef wrt log smoothing params...
+        if (!is.null(d1b)) d1b <- rbind(d1b[ip,],d1b[ind,]) 
       } else ind <- NULL
       lpstart <- rep(0,m)
       for (i in 1:(m-1)) lpstart[i] <- lpi[[i+1]][1]

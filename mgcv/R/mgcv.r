@@ -675,6 +675,62 @@ getNumericResponse <- function(form) {
 
 } ## getNumericResponse
 
+olid <- function(X,nsdf,pstart,flpi,lpi) {
+## X is a model matrix, made up of nf=length(nsdf) column blocks.
+## The ith block starts at column pstart[i] and its first nsdf[i]
+## columns are unpenalized. X is used to define nlp=length(lpi)
+## linear predictors. lpi[[i]] gives the columns of X used in the 
+## ith linear predictor. flpi[j] gives the linear predictor(s)
+## to which the jth block of X belongs. The problem is that the 
+## unpenalized blocks need not be identifiable when used in combination. 
+## This function returns a vector dind of columns of X to drop for 
+## identifiability, along with modified lpi, pstart and nsdf vectors.
+  nlp <- length(lpi) ## number of linear predictors
+  n <- nrow(X) 
+  nf <- length(nsdf) ## number of formulae blocks
+  Xp <- matrix(0,n*nlp,sum(nsdf))
+  start <- 1
+  ii <- 1:n
+  tind <- rep(0,0) ## complete index of all parametric columns in X
+  ## create a block matrix, Xp, with the same identifiability properties as
+  ## unpenalized part of model...
+  for (i in 1:nf) {
+    stop <- start - 1 + nsdf[i]
+    if (stop>=start) {
+      ind <- pstart[i] + 1:nsdf[i] - 1
+      for (k in flpi[[i]]) {
+        Xp[ii+(k-1)*n,start:stop] <- X[,ind]
+      }
+      tind <- c(tind,ind)
+      start <- start + nsdf[i]
+    }
+  }
+  ## rank deficiency of Xp will reveal number of redundant parametric 
+  ## terms, and a pivoted QR will reveal which to drop to restore
+  ## full rank...
+  qrx <- qr(Xp,LAPACK=TRUE,tol=0.0) ## unidentifiable columns get pivoted to final cols
+  r <- Rrank(qr.R(qrx)) ## get rank from R factor of pivoted QR
+  if (r==ncol(Xp)) { ## full rank, all fine, drop nothing
+    rt <- list(dind=rep(0,0),lpi=lpi,pstart=pstart,nsdf=nsdf)
+  } else { ## reduced rank, drop some columns
+    dind <- tind[sort(qrx$pivot[(r+1):ncol(X)],decreasing=TRUE)] ## columns to drop
+    ## now we need to adjust nsdf, pstart and lpi
+    for (d in dind) { ## working down through drop indices
+      k <- if (d>=pstart[nf]) nlp else which(d >= pstart[1:(nf-1)] & d < pstart[2:nf])
+      nsdf[k] <- nsdf[k] - 1 ## one less unpenalized column in this block
+      if (k<nf) pstart[(k+1):nf] <-  pstart[(k+1):nf] - 1 ## later block starts move down 1 
+      for (i in 1:nlp) { 
+        k <- which(d == lpi[[i]])
+        if (length(k)>0) lpi[[i]] <- lpi[[i]][-k] ## drop row
+        k <- which(lpi[[i]]>d)
+        if (length(k)>0) lpi[[i]][k] <- lpi[[i]][k] - 1 ## close up
+      }
+    } ## end of drop index loop
+    rt <- list(dind=dind,lpi=lpi,pstart=pstart,nsdf=nsdf)
+  }
+  rt
+} ## olid
+
 gam.setup.list <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
@@ -700,11 +756,14 @@ gam.setup.list <- function(formula,pterms,
   
   ## formula[[1]] always relates to the base formula of the first linear predictor...
 
-  lpi <- list()
+  flpi <- lpi <- list()
   for (i in 1:formula$nlp) lpi[[i]] <- rep(0,0)
   lpi[[1]] <- 1:ncol(G$X) ## lpi[[j]] is index of cols for jth linear predictor 
+  flpi[[1]] <- formula[[1]]$lpi ## used in identifiability testing by olid, later  
 
   pof <- ncol(G$X) ## counts the model matrix columns produced so far
+  pstart <- rep(0,d) ## indexes where parameteric columns start in each formula block of X
+  pstart[1] <- 1
   for (i in 2:d) {
     if (is.null(formula[[i]]$response)) {  ## keep gam.setup happy
       formula[[i]]$response <- formula$response 
@@ -714,6 +773,7 @@ gam.setup.list <- function(formula,pterms,
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
+    flpi[[i]] <- formula[[i]]$lpi
     for (j in formula[[i]]$lpi) { ## loop through all l.p.s to which this term contributes
       lpi[[j]] <- c(lpi[[j]],pof + 1:ncol(um$X)) ## add these cols to lpi[[j]]
       ##lpi[[i]] <- pof + 1:ncol(um$X) ## old code
@@ -725,6 +785,7 @@ gam.setup.list <- function(formula,pterms,
     G$xlevels[[i]] <- um$xlevels
     G$assign[[i]] <- um$assign
     G$rank <- c(G$rank,um$rank)
+    pstart[i] <- pof+1
     G$X <- cbind(G$X,um$X) ## extend model matrix
     ## deal with the smooths...
     k <- G$m
@@ -765,10 +826,26 @@ gam.setup.list <- function(formula,pterms,
     G$lsp0 <- c(G$lsp0,um$lsp0)
     G$sp <- c(G$sp,um$sp)
     pof <- ncol(G$X)
+  } ## formula loop end
+
+  ## If there is overlap then there is a danger of lack of identifiability of the 
+  ## parameteric terms, especially if there are factors present in shared components. 
+  ## The following code deals with this possibility... 
+  if (lp.overlap) {
+    rt <- olid(G$X,G$nsdf,pstart,flpi,lpi)
+    if (length(rt$dind)>0) { ## then columns have to be dropped
+      warning("dropping unidentifiable parameteric terms from model")
+      G$X <- G$X[,-rt$dind] ## drop cols
+      ## replace various indices with updated versions...
+      pstart <- rt$pstart
+      G$nsdf <- rt$nsdf
+      lpi <- rt$lpi
+      attr(G$nsdf,"drop.ind") <- rt$dind ## store drop index
+    } 
   }
   attr(lpi,"overlap") <- lp.overlap
   attr(G$X,"lpi") <- lpi
-  attr(G$nsdf,"pstart") <- unlist(lapply(lpi,min))
+  attr(G$nsdf,"pstart") <- pstart ##unlist(lapply(lpi,min))
   G
 } ## gam.setup.list
 
@@ -1933,6 +2010,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   names(object$sp) <- names(G$sp)
   object$paraPen <- G$pP
   object$formula <- G$formula
+  ## store any lpi attribute of G$X for use in predict.gam...
+  if (is.list(object$formula)) attr(object$formula,"lpi") <- attr(G$X,"lpi")
   object$var.summary <- G$var.summary 
   object$cmX <- G$cmX ## column means of model matrix --- useful for CIs
   object$model<-G$mf # store the model frame
@@ -2553,18 +2632,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     nb <- length(object$coefficients)
     if (is.null(block.size)) block.size <- 1000
     if (block.size < 1) block.size <- np
-#    n.blocks <- np %/% block.size
-#    b.size <- rep(block.size,n.blocks)
-#    last.block <- np-sum(b.size)
-#    if (last.block>0) {
-#      n.blocks <- n.blocks+1  
-#      b.size[n.blocks] <- last.block
-#    }
   } else { # no new data, just use object$model
     np <- nrow(object$model)
     nb <- length(object$coefficients)
-#    n.blocks <- 1
-#    b.size <- array(np,1)
   }
   
   ## split prediction into blocks, to avoid running out of memory
@@ -2599,7 +2669,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     ColNames <- term.labels
   } else { ## "response" or "link"
     ## get number of linear predictors, in case it's more than 1...
-    nlp <- if (is.list(object$formula)) length(object$formula) else 1
+    if (is.list(object$formula)) {
+      nf <- length(object$formula) ## number of model formulae
+      lpi <- attr(object$formula,"lpi") ## lpi[[i]][j] is the column of model matrix contributing the jth col to lp i 
+      nlp <- length(lpi) ## number of linear predictors
+    } else nlp <- nf <- 1
+    # nlp <- if (is.list(object$formula)) length(object$formula) else 1
     fit <- if (nlp>1) matrix(0,np,nlp) else array(0,np)
     if (se.fit) se <- fit
     fit1 <- NULL ## "response" returned by fam$fv can be non-vector 
@@ -2631,7 +2706,13 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     ## make sure intercept explicitly included, so it can be cleanly dropped...
     for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 
   } 
-  
+
+  ## index of any parametric terms that have to be dropped
+  ## this is used to help with identifiability in multi-
+  ## formula models...
+
+  drop.ind <- attr(object$nsdf,"drop.ind") 
+
   ####################################
   ## Actual prediction starts here...
   ####################################
@@ -2664,7 +2745,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         xat$dim[2] <- xat$dim[2]-1;attributes(Xp) <- xat 
       }
       if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
-    } ## end of parametric part
+    } ## end of parametric loop
 
     if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths
       Xfrag <- PredictMat(object$smooth[[k]],data)		 
@@ -2673,6 +2754,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
       if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- object$smooth[[k]]$label
     } ## smooths done
+
+    if (!is.null(drop.ind)) X <- X[,-drop.ind]
 
     if (!is.null(object$Xcentre)) { ## Apply any column centering
       X <- sweep(X,2,object$Xcentre)
@@ -2688,7 +2771,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       k <- 0
       for (j in 1:length(lass)) if (length(lass[[j]])) { ## work through assign list
         ind <- 1:length(lass[[j]]) ## index vector for coefs involved
-        nptj <- max(lass[[j]]) ## numer of terms involved here
+        nptj <- max(lass[[j]]) ## number of terms involved here
         if (nptj>0) for (i in 1:nptj) { ## work through parametric part
           k <- k + 1 ## counts total number of parametric terms
           ii <- ind[lass[[j]]==i] + pstart[j] - 1 
@@ -2736,17 +2819,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         se <- se[,order==1,drop=FALSE]
         colnames(se) <- term.labels } 
       }
-     
     } else { ## "link" or "response" case
       fam <- object$family
       k <- attr(attr(object$model,"terms"),"offset")
       if (nlp>1) { ## multiple linear predictor case
         if (is.null(fam$predict)||type=="link") {
-          pstart <- c(pstart,ncol(X)+1)
+          ##pstart <- c(pstart,ncol(X)+1)
           ## get index of smooths with an offset...
           off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
-          for (j in 1:nlp) { ## looping over the linear predictors
-            ind <- pstart[j]:(pstart[j+1]-1)
+          for (j in 1:nlp) { ## looping over the model formulae
+            ind <- lpi[[j]] ##pstart[j]:(pstart[j+1]-1)
             fit[start:stop,j] <- X[,ind,drop=FALSE]%*%object$coefficients[ind]
             if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
               if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
@@ -2762,8 +2844,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
             }
           } ## end of lp loop
         } else { ## response case with own predict code
-          lpi <- list();pst <- c(pstart,ncol(X)+1)
-          for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)
+          #lpi <- list();pst <- c(pstart,ncol(X)+1)
+          #for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)
           attr(X,"lpi") <- lpi  
           ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,
                              off=offs,Vb=object$Vp)
@@ -2779,10 +2861,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           }
         } ## end of own response prediction code
       } else { ## single linear predictor
-       # k <- attr(attr(object$model,"terms"),"offset")
         offs <- if (is.null(k)) rowSums(Xoff) else rowSums(Xoff) + model.offset(mf)
         fit[start:stop] <- X%*%object$coefficients + offs
-        #if (!is.null(k)) fit[start:stop] <- fit[start:stop]+model.offset(mf) ## + rowSums(Xoff)
         if (se.fit) se[start:stop] <- sqrt(pmax(0,rowSums((X%*%object$Vp)*X)))
         if (type=="response") { # transform    
           linkinv <- fam$linkinv
@@ -2792,8 +2872,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
             fit[start:stop] <- linkinv(fit[start:stop])
           } else { ## family has its own prediction code for response case
             ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
-            ##sev <- if (se.fit) se[start:stop] else NULL 
-            ##ffv <- fam$fv(linkinv(fit[start:stop]),sev,predict=TRUE)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
               fit1 <- matrix(0,np,ncol(ffv[[1]]))
               if (se.fit) se1 <- fit1
@@ -2808,9 +2886,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
           }
         }
       } ## single lp done
-    }
+    } ## end of link or response case 
     rm(X)
-   
   } ## end of prediction block loop
 
   if ((type=="terms"||type=="iterms")&&!is.null(terms)) { # return only terms requested via `terms'
@@ -2838,8 +2915,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     }
     H <- napredict(na.act,H)
     if (length(object$nsdf)>1) { ## add "lpi" attribute if more than one l.p.
-      lpi <- list();pst <- c(pstart,ncol(H)+1)
-      for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)  
+      #lpi <- list();pst <- c(pstart,ncol(H)+1)
+      #for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)  
       attr(H,"lpi") <- lpi
     }
   } else { 
@@ -2866,7 +2943,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if ((type=="terms"||type=="iterms")&&attr(object$terms,"intercept")==1) attr(H,"constant") <- object$coefficients[1]
   H # ... and return
 } ## end of predict.gam
-
 
 
 
