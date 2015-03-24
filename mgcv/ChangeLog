@@ -1,14 +1,10 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-Problems: prediction with lpi overlap, and identification between base 
-and shared components - these are linked as dropped params have to be 
-dealt with somehow...
-
 1.8-6
 
 * Generalization of list formula handling to allow linear predictors to
-  share terms. 
+  share terms. e.g. gam(list(y1~s(x),y2~s(z),1+2~s(v)+w-1),family=mvn(d=2))
 
 1.8-5
 

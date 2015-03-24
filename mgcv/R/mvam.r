@@ -82,7 +82,7 @@ mvn <- function(d=2) {
     stats[[i]] <- make.link("identity") 
   }
   
-  env <- new.env(parent = .GlobalEnv)
+  ##env <- new.env(parent = .GlobalEnv)
   validmu <- function(mu) all(is.finite(mu))
 
   ## initialization has to add in the extra parameters of 
@@ -180,7 +180,7 @@ mvn <- function(d=2) {
       if (overlap) { ## linear predictors share terms - expand to redundant representation 
         ip <- unlist(lpi)
         XX <- attr(X,"XX")[ip,ip]
-        X <- mgcv:::lpi.expand(X)
+        X <- lpi.expand(X)
         attr(X,"XX") <- XX;rm(XX)
         lpi0 <- lpi ## need to save this for contraction of results
         lpi <- attr(X,"lpi") ## this indexes the cols of each l.p in the expanded X
@@ -210,15 +210,15 @@ mvn <- function(d=2) {
                deriv = as.integer(nsp>0),nsp = as.integer(nsp),nt=as.integer(1),PACKAGE="mgcv")
       lb <- oo$lb;lbb <- matrix(oo$lbb,nb,nb)
       if (overlap) { ## need to apply lpi contraction
-        lb <- mgcv:::lpi.contract(lb,lpi0)
+        lb <- lpi.contract(lb,lpi0)
         ## lpi.contract will automatically carry across the R coef related stuff 
-        lbb <- mgcv:::lpi.contract(lbb,lpi0)
+        lbb <- lpi.contract(lbb,lpi0)
       }
       if (nsp==0) d1H <- NULL else if (deriv==2) {
         d1H <- matrix(0,nb,nsp)
         for (i in 1:nsp) { 
           dH <- matrix(oo$dH[ind],nb,nb)
-          if (overlap) dH <- mgcv:::lpi.contract(dH,lpi0)
+          if (overlap) dH <- lpi.contract(dH,lpi0)
           d1H[,i] <- diag(dH)
           ind <- ind + nb*nb
         }
@@ -226,7 +226,7 @@ mvn <- function(d=2) {
         d1H <- list();ind <- 1:(nb*nb)
         for (i in 1:nsp) { 
           dH <- matrix(oo$dH[ind],nb,nb)
-          if (overlap) dH <- mgcv:::lpi.contract(dH,lpi0)
+          if (overlap) dH <- lpi.contract(dH,lpi0)
           d1H[[i]] <- dH
           ind <- ind + nb*nb
         }
@@ -237,7 +237,7 @@ mvn <- function(d=2) {
     # environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
     # environment(rd)<- environment(qf)<- environment(variance) <- environment(putTheta) 
     ##environment(aic) <- 
-    environment(ll) <- env
+    ##environment(ll) <- env
     structure(list(family = "Multivariate normal", 
         ## link = linktemp, linkfun = stats$linkfun, linkinv = stats$linkinv, 
         ll=ll,nlp=d,

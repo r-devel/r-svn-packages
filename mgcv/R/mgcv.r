@@ -711,14 +711,17 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
   qrx <- qr(Xp,LAPACK=TRUE,tol=0.0) ## unidentifiable columns get pivoted to final cols
   r <- Rrank(qr.R(qrx)) ## get rank from R factor of pivoted QR
   if (r==ncol(Xp)) { ## full rank, all fine, drop nothing
-    rt <- list(dind=rep(0,0),lpi=lpi,pstart=pstart,nsdf=nsdf)
+    dind <- rep(0,0)
   } else { ## reduced rank, drop some columns
     dind <- tind[sort(qrx$pivot[(r+1):ncol(X)],decreasing=TRUE)] ## columns to drop
     ## now we need to adjust nsdf, pstart and lpi
     for (d in dind) { ## working down through drop indices
-      k <- if (d>=pstart[nf]) nlp else which(d >= pstart[1:(nf-1)] & d < pstart[2:nf])
-      nsdf[k] <- nsdf[k] - 1 ## one less unpenalized column in this block
-      if (k<nf) pstart[(k+1):nf] <-  pstart[(k+1):nf] - 1 ## later block starts move down 1 
+      ## following commented out code is useful should it ever prove necessary to 
+      ## adjust pstart and nsdf, but at present these are only used in prediction, 
+      ## and it is cleaner to leave them unchanged, and simply drop using dind during prediction.
+      #k <- if (d>=pstart[nf]) nlp else which(d >= pstart[1:(nf-1)] & d < pstart[2:nf])
+      #nsdf[k] <- nsdf[k] - 1 ## one less unpenalized column in this block
+      #if (k<nf) pstart[(k+1):nf] <-  pstart[(k+1):nf] - 1 ## later block starts move down 1 
       for (i in 1:nlp) { 
         k <- which(d == lpi[[i]])
         if (length(k)>0) lpi[[i]] <- lpi[[i]][-k] ## drop row
@@ -726,9 +729,8 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
         if (length(k)>0) lpi[[i]][k] <- lpi[[i]][k] - 1 ## close up
       }
     } ## end of drop index loop
-    rt <- list(dind=dind,lpi=lpi,pstart=pstart,nsdf=nsdf)
   }
-  rt
+  list(dind=dind,lpi=lpi) ##,pstart=pstart,nsdf=nsdf)
 } ## olid
 
 
@@ -772,6 +774,7 @@ gam.setup.list <- function(formula,pterms,
       mv.response <- FALSE
     } else mv.response <- TRUE
     spind <- if (is.null(sp)) 1 else (G$m+1):length(sp)
+    formula[[i]]$pfok <- 1 ## empty formulae OK here!
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
@@ -849,8 +852,7 @@ gam.setup.list <- function(formula,pterms,
       }
       for (i in 1:length(G$off)) G$off[i] <- G$off[i] - sum(rt$dind < G$off[i])
       ## replace various indices with updated versions...
-      pstart <- rt$pstart
-      G$nsdf <- rt$nsdf
+      # pstart <- rt$pstart; G$nsdf <- rt$nsdf ## these two only needed in predict.gam - cleaner to leave unchanged
       lpi <- rt$lpi
       attr(G$nsdf,"drop.ind") <- rt$dind ## store drop index
     } 
@@ -1820,7 +1822,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     
   if (!is.null(G$family$postproc)) eval(G$family$postproc)
 
-  if (!is.null(G$P)) { ## matrix transforming from fit to predcition parameterization
+  if (!is.null(G$P)) { ## matrix transforming from fit to prediction parameterization
     object$coefficients <- as.numeric(G$P %*% object$coefficients)
     object$Vp <- G$P %*% object$Vp %*% t(G$P)
     object$Ve <- G$P %*% object$Ve %*% t(G$P)
@@ -2735,7 +2737,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     start <- stop+1
     stop <- start + b.size[b] - 1
     if (n.blocks==1) data <- newdata else data <- newdata[start:stop,]
-    X <- matrix(0,b.size[b],nb)
+    X <- matrix(0,b.size[b],nb+length(drop.ind))
     Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
     for (i in 1:length(Terms)) { ## loop for parametric components (1 per lp)
       ## implements safe prediction for parametric part as described in
@@ -2759,6 +2761,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
     } ## end of parametric loop
 
+    if (!is.null(drop.ind)) X <- X[,-drop.ind]
+
     if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths
       Xfrag <- PredictMat(object$smooth[[k]],data)		 
       X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
@@ -2767,7 +2771,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
       if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- object$smooth[[k]]$label
     } ## smooths done
 
-    if (!is.null(drop.ind)) X <- X[,-drop.ind]
+    
 
     if (!is.null(object$Xcentre)) { ## Apply any column centering
       X <- sweep(X,2,object$Xcentre)
