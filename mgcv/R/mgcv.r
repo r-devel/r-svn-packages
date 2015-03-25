@@ -2669,7 +2669,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
 
 
   # setup prediction arrays...
-
+  ## in multi-linear predictor models, lpi[[i]][j] is the column of model matrix contributing the jth col to lp i 
+  lpi <- if (is.list(object$formula)) attr(object$formula,"lpi") else NULL 
   n.smooth<-length(object$smooth)
   if (type=="lpmatrix") {
     H <- matrix(0,np,nb)
@@ -2685,7 +2686,6 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     ## get number of linear predictors, in case it's more than 1...
     if (is.list(object$formula)) {
       nf <- length(object$formula) ## number of model formulae
-      lpi <- attr(object$formula,"lpi") ## lpi[[i]][j] is the column of model matrix contributing the jth col to lp i 
       nlp <- length(lpi) ## number of linear predictors
     } else nlp <- nf <- 1
     # nlp <- if (is.list(object$formula)) length(object$formula) else 1
