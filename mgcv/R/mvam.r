@@ -109,9 +109,9 @@ mvn <- function(d=2) {
       ## now get initial parameters and store in family...
       for (k in 1:ydim) {
         sin <- G$off %in% lpi[[k]]
-        Sk <- G$S[sin]
-        um <- magic(G$y[,k],G$X[,lpi[[k]]],rep(-1,sum(sin)),G$S[sin],which(lpi[[k]]%in%G$off[sin]),
-                    #G$off[sin]-lpi[[k]][1]+1,
+        #Sk <- G$S[sin]
+        um <- magic(G$y[,k],G$X[,lpi[[k]]],rep(-1,sum(sin)),G$S[sin],
+                    match(G$off[sin],lpi[[k]]), ## turn G$off global indices into indices for this predictor
                     nt=control$nthreads)
         G$family$ibeta[lpi[[k]]] <- um$b
         G$family$ibeta[nbeta+1] <- -.5*log(um$scale) ## initial log root precision
