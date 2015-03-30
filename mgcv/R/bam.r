@@ -1233,12 +1233,14 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     environment(G$formula) <- .BaseNamespaceEnv
 
   } else { ## G supplied
+    scale <- G$scale
     mf <- G$mf; G$mf <- NULL
     gp <- G$gp; G$gp <- NULL
     na.action <- G$na.action; G$na.action <- NULL
   } ## end of G setup 
 
   if (!fit) {
+    G$scale <- scale
     G$mf <- mf;G$na.action <- na.action;G$gp <- gp
     return(G)
   }
