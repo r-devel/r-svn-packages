@@ -18,6 +18,7 @@ R_CallMethodDef CallMethods[] = {
 };
 
 R_CMethodDef CEntries[] = {
+    {"dchol", (DL_FUNC) &dchol, 4},
     {"mgcv_omp", (DL_FUNC) &mgcv_omp, 1},
     {"coxpred", (DL_FUNC) &coxpred, 13},
     {"coxpp", (DL_FUNC) &coxpp, 10},

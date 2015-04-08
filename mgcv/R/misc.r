@@ -52,6 +52,12 @@ mvn.ll <- function(y,X,beta,dbeta=NULL) {
   list(l=oo$ll,lb=oo$lb,lbb=matrix(oo$lbb,nb,nb),dH=dH)
 }
 
+dchol <- function(dA,R) {
+  p <- ncol(R)
+  oo <- .C(C_dchol,dA=as.double(dA),R=as.double(R),dR=as.double(R*0),p=as.integer(ncol(R)))
+  return(matrix(oo$dR,p,p))
+} ## dchol
+
 pinv <- function(X,svd=FALSE) {
 ## a pseudoinverse for n by p, n>p matrices
   qrx <- qr(X,tol=0,LAPACK=TRUE)

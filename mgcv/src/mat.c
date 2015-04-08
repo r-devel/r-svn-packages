@@ -1150,7 +1150,22 @@ void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work)
   }
 } /* getXtMX */
 
-
+void dchol(double *dA, double *R, double *dR,int *p) {
+/* R is the Choleski factor of A, s.t. R'R = A (no pivoting). dA is dA/dx.
+   This function computes dR/dx and returns it in dR. Lower triangles not accessed.
+   FLOP cost double choleski, but no square roots.
+*/
+  int i,j,k;
+  double x,*pdRi,*pdRj,*pRi,*pRj,*pend;
+  for (i=0;i < *p;i++) for (j=i;j < *p;j++) {
+    k = i * *p;pdRi = dR + k; pRi = R + k;
+    k = j * *p; pdRj = dR + k; pRj = R + k;pend = pRj + i; 
+    for (x=0.0;pRj<pend;pRi++,pRj++,pdRi++,pdRj++) x += *pRi * *pdRj + *pRj * *pdRi;
+    k = i + j * *p;
+    if (j>i) dR[k] = (dA[k] - x - R[k]*dR[i + i * *p])/R[i + i * *p]; 
+    else  dR[k] = (dA[k] - x)*.5/R[i + i * *p]; 
+  }
+} /* dchol */
 
 void mgcv_chol(double *a,int *pivot,int *n,int *rank)
 /* a stored in column order, this routine finds the pivoted choleski decomposition of matrix a 

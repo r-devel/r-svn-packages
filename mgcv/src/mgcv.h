@@ -121,6 +121,7 @@ void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N);
 void mgcv_Rpbsi(SEXP A, SEXP NT);
 void mgcv_RPPt(SEXP a,SEXP r, SEXP NT);
 SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT,SEXP NB);
+void dchol(double *dA, double *R, double *dR,int *p);
 
 /* basis constructor/prediction routines*/
 
