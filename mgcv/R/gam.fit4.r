@@ -535,7 +535,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             Det2=as.double(dd$Deta2),Dth2=as.double(dd$Dth2),Det.th=as.double(dd$Detath),
             Det2.th=as.double(dd$Deta2th),Det3=as.double(dd$Deta3),Det.th2 = as.double(dd$Detath2),
             Det4 = as.double(dd$Deta4),Det3.th=as.double(dd$Deta3th), Deta2.th2=as.double(dd$Deta2th2),
-            beta=as.double(coef),b1=as.double(rep(0,ntot*ncol(x))),
+            beta=as.double(coef),b1=as.double(rep(0,ntot*ncol(x))),w1=rep(0,ntot*nrow(x)),
             D1=as.double(rep(0,ntot)),D2=as.double(rep(0,ntot^2)),
             P=as.double(0),P1=as.double(rep(0,ntot)),P2 = as.double(rep(0,ntot^2)),
             ldet=as.double(1-2*(scoreType=="ML")),ldet1 = as.double(rep(0,ntot)), 
@@ -551,6 +551,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    rV <- T %*% rV   
    ## derivatives of coefs w.r.t. sps etc...
    db.drho <- if (deriv) T %*% matrix(oo$b1,ncol(x),ntot) else NULL 
+   dw.drho <- if (deriv) matrix(oo$w1,nrow(x),ntot) else NULL
    Kmat <- matrix(0,nrow(x),ncol(x)) 
    Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
@@ -619,7 +620,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         df.null = nulldf, y = y, converged = conv,
         boundary = boundary,
         REML=REML,REML1=REML1,REML2=REML2,
-        rV=rV,db.drho=db.drho,
+        rV=rV,db.drho=db.drho,dw.drho=dw.drho,
         scale.est=scale,reml.scale=scale,
         aic=aic.model,
         rank=oo$rank.est,

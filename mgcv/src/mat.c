@@ -1150,6 +1150,43 @@ void getXtMX(double *XtMX,double *X,double *M,int *r,int *c,double *work)
   }
 } /* getXtMX */
 
+void vcorr(double *dR,double *Vr,double *Vb,int *p,int *M) {
+/* dR contains M upper p by p matrices. The dR matrices are upper
+   triangular, but the zeros are included. Vr is an M by M matrix.
+   Vb is a p by p matrix. The kth dR contains dR/d\rho_k the derivative 
+   of the Choleski factor of the covariance matrix of some parameters
+   \beta w.r.t. \rho_k. Vr is the covariance matrix of \rho. If
+   b = \sum_k dR'/d\rho_k z (\rho_k - \hat \rho_k) where z ~ N(0,I_p)
+   then Vb is its cov matrix */ 
+  double *Vi,*ViV,*p0,*p1,*p2,zero=0.0,one=1.0,x;
+  int i,j,k;
+  char trans = 'N';
+  Vi = (double *)R_chk_calloc((size_t) (*p * *M),sizeof(double));
+  ViV = (double *)R_chk_calloc((size_t) (*p * *M),sizeof(double));
+  for (i=0;i<*p;i++) {   
+    for (p0=Vi,k=0;k<*M;k++) {
+      /* Vi is i by M */
+      p1 = dR + k * *p * *p + i * *p; /* start of col i of kth dR */
+      p2 = p1 + i + 1; /* first zero in col i of kth dR */ 
+      for (;p1<p2;p1++,p0++) *p0 = *p1;
+    }    
+    /* create ViV = Vi Vr (i by M) */
+    k = i + 1;
+    F77_CALL(dgemm)(&trans,&trans,&k,M,M, &one,
+		Vi, &k, Vr , M, &zero, ViV, &k);
+    for (j=i;j<*p;j++) {
+      for (x=0.0,p0=ViV,k=0;k<*M;k++) {
+        /* Vj is i by M */
+        p1 = dR + k * *p * *p + j * *p; /* start of col j of kth dR */
+        p2 = p1 + i + 1; /* one past last relevant row in col j of kth dR */ 
+        for (;p1<p2;p1++,p0++) x += *p0 * *p1;
+      }
+      Vb[i + *p * j] = Vb[j + *p * i] = x;
+    }
+  }
+  R_chk_free(Vi);R_chk_free(ViV);
+} /* vcorr */
+
 void dchol(double *dA, double *R, double *dR,int *p) {
 /* R is the Choleski factor of A, s.t. R'R = A (no pivoting). dA is dA/dx.
    This function computes dR/dx and returns it in dR. Lower triangles not accessed.

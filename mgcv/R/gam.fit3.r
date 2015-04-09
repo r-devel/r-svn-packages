@@ -592,6 +592,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                 p.weights=as.double(weg),g1=as.double(g1),g2=as.double(g2),
                 g3=as.double(g3),g4=as.double(g4),V0=as.double(V),V1=as.double(V1),
                 V2=as.double(V2),V3=as.double(V3),beta=as.double(coef),b1=as.double(rep(0,nSp*ncol(x))),
+                w1=as.double(rep(0,nSp*nrow(x))),
                 D1=as.double(D1),D2=as.double(D2),P=as.double(dum),P1=as.double(P1),P2=as.double(P2),
                 trA=as.double(dum),trA1=as.double(trA1),trA2=as.double(trA2),
                 rV=as.double(rV),rank.tol=as.double(rank.tol),
@@ -607,6 +608,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
  
          ## get dbeta/drho, directly in original parameterization
          db.drho <- if (deriv) T%*%matrix(oo$b1,ncol(x),nSp) else NULL
+         dw.drho <- if (deriv) matrix(oo$w1,nrow(x),nSp) else NULL
 
          rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
          
@@ -800,6 +802,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
+        dw.drho=dw.drho,
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 

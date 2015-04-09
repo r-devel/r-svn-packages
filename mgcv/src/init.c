@@ -18,6 +18,7 @@ R_CallMethodDef CallMethods[] = {
 };
 
 R_CMethodDef CEntries[] = {
+    {"vcorr", (DL_FUNC) &vcorr, 5},
     {"dchol", (DL_FUNC) &dchol, 4},
     {"mgcv_omp", (DL_FUNC) &mgcv_omp, 1},
     {"coxpred", (DL_FUNC) &coxpred, 13},
@@ -34,8 +35,8 @@ R_CMethodDef CEntries[] = {
     {"magic", (DL_FUNC) &magic, 19},
     {"mgcv_mmult", (DL_FUNC) &mgcv_mmult,8},
     {"mgcv_pmmult", (DL_FUNC) &mgcv_pmmult,9},
-    {"gdi1",(DL_FUNC) &gdi1,47},
-    {"gdi2",(DL_FUNC) &gdi2,44},
+    {"gdi1",(DL_FUNC) &gdi1,48},
+    {"gdi2",(DL_FUNC) &gdi2,45},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
     {"pls_fit1",(DL_FUNC)&pls_fit1,12},
     {"tweedious",(DL_FUNC)&tweedious,13},

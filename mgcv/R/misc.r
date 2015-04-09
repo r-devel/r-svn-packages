@@ -53,10 +53,22 @@ mvn.ll <- function(y,X,beta,dbeta=NULL) {
 }
 
 dchol <- function(dA,R) {
+## if dA contains matrix dA/dx where R is chol factor s.t. R'R = A
+## then this routine returns dR/dx...
   p <- ncol(R)
   oo <- .C(C_dchol,dA=as.double(dA),R=as.double(R),dR=as.double(R*0),p=as.integer(ncol(R)))
   return(matrix(oo$dR,p,p))
 } ## dchol
+
+vcorr <- function(dR,Vr) {
+## Suppose b = sum_k t(dR[[k]])%*%z*r_k, z ~ N(0,Ip), r ~ N(0,Vr). vcorr returns cov(b).
+## dR is a list of p by p matrices.
+  p <- ncol(dR[[1]]);M <- ncol(Vr)
+  oo <- .C(C_vcorr,dR=as.double(unlist(dR)),Vr=as.double(Vr),Vb=as.double(rep(0,p*p)),
+           p=as.integer(p),M=as.integer(M))
+  return(matrix(oo$Vb,p,p))
+} ## vcorr
+
 
 pinv <- function(X,svd=FALSE) {
 ## a pseudoinverse for n by p, n>p matrices
