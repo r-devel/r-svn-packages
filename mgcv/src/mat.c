@@ -1157,31 +1157,63 @@ void vcorr(double *dR,double *Vr,double *Vb,int *p,int *M) {
    of the Choleski factor of the covariance matrix of some parameters
    \beta w.r.t. \rho_k. Vr is the covariance matrix of \rho. If
    b = \sum_k dR'/d\rho_k z (\rho_k - \hat \rho_k) where z ~ N(0,I_p)
-   then Vb is its cov matrix */ 
+   then Vb is its cov matrix 
+   If *M < 0 then R is not transposed, i.e. 
+   b = \sum_k dR/d\rho_k z (\rho_k - \hat \rho_k)
+*/ 
   double *Vi,*ViV,*p0,*p1,*p2,zero=0.0,one=1.0,x;
   int i,j,k;
   char trans = 'N';
-  Vi = (double *)R_chk_calloc((size_t) (*p * *M),sizeof(double));
-  ViV = (double *)R_chk_calloc((size_t) (*p * *M),sizeof(double));
-  for (i=0;i<*p;i++) {   
-    for (p0=Vi,k=0;k<*M;k++) {
-      /* Vi is i by M */
-      p1 = dR + k * *p * *p + i * *p; /* start of col i of kth dR */
-      p2 = p1 + i + 1; /* first zero in col i of kth dR */ 
-      for (;p1<p2;p1++,p0++) *p0 = *p1;
-    }    
-    /* create ViV = Vi Vr (i by M) */
-    k = i + 1;
-    F77_CALL(dgemm)(&trans,&trans,&k,M,M, &one,
-		Vi, &k, Vr , M, &zero, ViV, &k);
-    for (j=i;j<*p;j++) {
-      for (x=0.0,p0=ViV,k=0;k<*M;k++) {
-        /* Vj is i by M */
-        p1 = dR + k * *p * *p + j * *p; /* start of col j of kth dR */
-        p2 = p1 + i + 1; /* one past last relevant row in col j of kth dR */ 
-        for (;p1<p2;p1++,p0++) x += *p0 * *p1;
+  k = *p * *M; if (k<0) k = -k;
+  Vi = (double *)R_chk_calloc((size_t) k,sizeof(double));
+  ViV = (double *)R_chk_calloc((size_t) k,sizeof(double));
+  if (*M>0) { /* R is transposed */
+    for (i=0;i<*p;i++) {   
+      for (p0=Vi,k=0;k<*M;k++) {
+        /* Vi is i by M */
+        p1 = dR + k * *p * *p + i * *p; /* start of col i of kth dR */
+        p2 = p1 + i + 1; /* first zero in col i of kth dR */ 
+        for (;p1<p2;p1++,p0++) *p0 = *p1;
+      }    
+      /* create ViV = Vi Vr (i by M) */
+      k = i + 1;
+      F77_CALL(dgemm)(&trans,&trans,&k,M,M, &one,
+  		Vi, &k, Vr , M, &zero, ViV, &k);
+      for (j=i;j<*p;j++) {
+        for (x=0.0,p0=ViV,k=0;k<*M;k++) {
+          /* Vj is i by M */
+          p1 = dR + k * *p * *p + j * *p; /* start of col j of kth dR */
+          p2 = p1 + i + 1; /* one past last relevant row in col j of kth dR */ 
+          for (;p1<p2;p1++,p0++) x += *p0 * *p1;
+        }
+        Vb[i + *p * j] = Vb[j + *p * i] = x;
       }
-      Vb[i + *p * j] = Vb[j + *p * i] = x;
+    }
+  } else { /* R not transposed */
+    *M = - *M;
+    for (i=0;i<*p;i++) {   
+      for (p0=Vi,k=0;k<*M;k++) {
+        /* Vi is p-i by M */
+        p1 = dR + k * *p * *p + i ; /* start of row i of kth dR */
+        p2 = p1 + *p * *p; /* 1 past row end */
+        p1 += i * *p; /* skip the starting zeroes */ 
+        for (;p1<p2;p1+= *p,p0++) *p0 = *p1;
+      }    
+      /* create ViV = Vi Vr (p-i by M) */
+      k = *p - i;
+      F77_CALL(dgemm)(&trans,&trans,&k,M,M, &one,
+  		Vi, &k, Vr , M, &zero, ViV, &k);
+      for (j=i;j<*p;j++) {
+        for (x=0.0,p0=ViV,k=0;k<*M;k++) {
+          p0 += (j-i);
+          /* Vj is p-i by M */
+          p1 = dR + k * *p * *p + j; /* start of row j of kth dR */
+          p2 = p1 + *p * *p; /* one past last relevant row in col j of kth dR */ 
+          p1 += j * *p; /* skip the starting zeroes */
+          for (;p1<p2;p1 += *p,p0++) x += *p0 * *p1;
+        }
+        Vb[i + *p * j] = Vb[j + *p * i] = x;
+      }
     }
   }
   R_chk_free(Vi);R_chk_free(ViV);

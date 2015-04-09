@@ -608,7 +608,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
  
          ## get dbeta/drho, directly in original parameterization
          db.drho <- if (deriv) T%*%matrix(oo$b1,ncol(x),nSp) else NULL
-         dw.drho <- if (deriv) matrix(oo$w1,nrow(x),nSp) else NULL
+         dw.drho <- if (deriv) matrix(oo$w1,length(z),nSp) else NULL
 
          rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
          
@@ -775,12 +775,21 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     names(residuals) <- ynames
     names(mu) <- ynames
     names(eta) <- ynames
-    wt <- rep.int(0, nobs)
-    if (fisher) wt[good] <- w else wt[good] <- wf  ## note that Fisher weights are returned
+    ww <- wt <- rep.int(0, nobs)
+    if (fisher) { wt[good] <- w; ww <- wt} else { 
+      wt[good] <- wf  ## note that Fisher weights are returned
+      ww[good] <- w
+    }
     names(wt) <- ynames
     names(weights) <- ynames
     names(y) <- ynames
-   
+    if (nrow(dw.drho)!=nrow(x)) {
+      w1 <- dw.drho
+      dw.drho <- matrix(0,nrow(x),ncol(w1))
+      dw.drho[good,] <- w1
+    }
+    
+
     wtdmu <- if (intercept) 
         sum(weights * y)/sum(weights)
     else linkinv(offset)
@@ -797,7 +806,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
    
     list(coefficients = coef, residuals = residuals, fitted.values = mu, 
          family = family, linear.predictors = eta, deviance = dev, 
-        null.deviance = nulldev, iter = iter, weights = wt, prior.weights = weights, 
+        null.deviance = nulldev, iter = iter, weights = wt, working.weights=ww,prior.weights = weights, 
         df.null = nulldf, y = y, converged = conv,pearson.warning = pearson.warning,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
@@ -806,6 +815,52 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
+Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
+## compute higher order Vb correction...
+  M <- length(off) ## number of penalty terms
+  lambda <- if (is.null(L)) exp(rho) else exp(L[1:M,,drop=FALSE]%*%rho)
+  
+  ## Re-create the Hessian...
+  H <- t(X)%*%(w*X)
+  for (i in 1:M) {
+    ind <- off[i] + 1:ncol(S[[i]]) - 1
+    H[ind,ind] <- H[ind,ind] + lambda[i] * S[[i]]
+  }
+  R <- try(chol(H),silent=TRUE) ## get its Choleski factor.  
+  if (inherits(R,"try-error")) return(0) ## bail out as Hessian insufficiently well conditioned
+  
+  ## Create dH the derivatives of the hessian w.r.t. (all) the smoothing parameters...
+  dH <- list()
+  for (i in 1:ncol(dw)) {
+    ind <- off[i] + 1:ncol(S[[i]]) - 1
+    dH[[i]] <- t(X)%*%(dw[,i]*X)
+    if (i <= M) dH[[i]][ind,ind] <- dH[[i]][ind,ind] + lambda[i]*S[[i]]
+  }
+  ## If L supplied then dH has to be re-weighted to give
+  ## derivatives w.r.t. optimization smoothing params.
+  if (!is.null(L)) {
+    dH1 <- dH;dH <- list()
+    for (j in 1:length(rho)) { 
+      ok <- FALSE ## dH[[j]] not yet created
+      for (i in 1:M) if (L[i,j]!=0.0) { 
+        dH[[j]] <- if (ok) dH[[j]] + dH1[[i]]*L[i,j] else dH1[[i]]*L[i,j]
+        ok <- TRUE
+      }
+    } 
+    rm(dH1)
+  } ## dH now w.r.t. optimization parameters 
+  
+  ## Get derivatives of Choleski factor w.r.t. the smoothing parameters 
+  dR <- dchol(dH,R); rm(dH)
+  
+  ## need to transform all dR to dR^{-1} = -R^{-1} dR R^{-1}...
+  for (i in 1:length(dR)) dR[[i]] <- -forwardsolve(t(R),t(backsolve(R,dR[[i]])))
+ 
+  ## BUT: dR, now upper triangular, and it relates to RR' = Vb not R'R = Vb
+  ## in consequence of which Rz is the thing with the right distribution
+  ## and not R'z...
+  vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
+} ## Vb.corr
 
 gam.fit3.post.proc <- function(X,L,object) {
 ## get edf array and covariance matrices after a gam fit. 

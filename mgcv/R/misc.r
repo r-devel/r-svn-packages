@@ -60,10 +60,11 @@ dchol <- function(dA,R) {
   return(matrix(oo$dR,p,p))
 } ## dchol
 
-vcorr <- function(dR,Vr) {
-## Suppose b = sum_k t(dR[[k]])%*%z*r_k, z ~ N(0,Ip), r ~ N(0,Vr). vcorr returns cov(b).
-## dR is a list of p by p matrices.
-  p <- ncol(dR[[1]]);M <- ncol(Vr)
+vcorr <- function(dR,Vr,trans=TRUE) {
+## Suppose b = sum_k op(dR[[k]])%*%z*r_k, z ~ N(0,Ip), r ~ N(0,Vr). vcorr returns cov(b).
+## dR is a list of p by p matrices. 'op' is 't' if trans=TRUE and I() otherwise.
+  p <- ncol(dR[[1]])
+  M <- if (trans) ncol(Vr) else -ncol(Vr) ## sign signals transpose or not to C code
   oo <- .C(C_vcorr,dR=as.double(unlist(dR)),Vr=as.double(Vr),Vb=as.double(rep(0,p*p)),
            p=as.integer(p),M=as.integer(M))
   return(matrix(oo$Vb,p,p))

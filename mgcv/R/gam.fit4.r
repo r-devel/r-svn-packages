@@ -608,6 +608,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ww <- wt <- rep.int(0, nobs)
    wt[good] <- wf 
    ww[good] <- w
+   if (nrow(dw.drho)!=nrow(x)) {
+      w1 <- dw.drho
+      dw.drho <- matrix(0,nrow(x),ncol(w1))
+      dw.drho[good,] <- w1
+   }
    aic.model <- family$aic(y, mu, theta, weights, dev) # note: incomplete 2*edf needs to be added
  
 
