@@ -1098,9 +1098,9 @@ gam.fit5.post.proc <- function(object,Sl,L,S,off) {
   if (!is.null(object$outer.info$hess)) { 
     if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
     ev <- eigen(object$outer.info$hess,symmetric=TRUE)
-    ind <- ev$values <= 0
-    ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-    Vc <- crossprod((ev$values*t(ev$vectors))%*%t(object$db.drho))
+    d <- ev$values;ind <- d <= 0
+    d[ind] <- 0;d[!ind] <- 1/sqrt(d[!ind])
+    Vc <- crossprod((d*t(ev$vectors))%*%t(object$db.drho))
     #dpv <- rep(0,ncol(object$outer.info$hess));M <- length(off)
     #dpv[1:M] <- 1/100 ## prior precision (1/var) on log smoothing parameters
     #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
@@ -1108,10 +1108,13 @@ gam.fit5.post.proc <- function(object,Sl,L,S,off) {
     
     #dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
     #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
-    Vr <- crossprod((ev$values+1/sqrt(10))*t(ev$vectors))
-    Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
+    M <- length(off)
+    d <- ev$values; d[ind] <- 0;d[1:M] <- d[1:M] + 1/50 
+    d <- 1/sqrt(d)
+    Vr <- crossprod(d*t(ev$vectors))
+    #Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
 
-    Vc <- Vb + Vc + Vc2  ## Bayesian cov matrix with sp uncertainty
+    Vc <- Vb + Vc #+ Vc2  ## Bayesian cov matrix with sp uncertainty
     ## reverse the various re-parameterizations...
   } else Vc <- Vb
   Vc <- Sl.repara(object$rp,Vc,inverse=TRUE) 
@@ -1128,6 +1131,11 @@ gam.fit5.post.proc <- function(object,Sl,L,S,off) {
   ## model. This is larger than edf2 should be, because of bias correction variability,
   ##  but is bounded in a way that is not *guaranteed* for edf2. Note that 
   ## justification only applies to sum(edf1/2) not elementwise   
+  if (!is.null(object$outer.info$hess)) { 
+    ## second correction term is easier computed in original parameterization...
+    Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
+    Vc <- Vc + Vc2
+  }
   edf1 <- 2*edf - rowSums(t(F)*F)
   #edf2 <- diag(Vc%*%crossprod(R)) 
   edf2 <- rowSums(Vc*crossprod(R))

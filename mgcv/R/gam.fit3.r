@@ -917,10 +917,10 @@ gam.fit3.post.proc <- function(X,L,S,off,object) {
       M <- ncol(object$db.drho)
     }
     ## extract cov matrix for log smoothing parameters...
-    ev <- eigen(object$outer.info$hess,symmetric=TRUE)
-    ind <- ev$values <= 0
-    ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-    rV <- (ev$values*t(ev$vectors))[,1:M] ## root of cov matrix
+    ev <- eigen(object$outer.info$hess,symmetric=TRUE) 
+    d <- ev$values;ind <- d <= 0
+    d[ind] <- 0;d[!ind] <- 1/sqrt(d[!ind])
+    rV <- (d*t(ev$vectors))[,1:M] ## root of cov matrix
     Vc <- crossprod(rV%*%t(object$db.drho))
     ## set a prior precision on the smoothing parameters, but don't use it to 
     ## fit, only to regularize Cov matrix. exp(4*var^.5) gives approx 
@@ -930,8 +930,8 @@ gam.fit3.post.proc <- function(X,L,S,off,object) {
 #    dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
 #    Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
 #    Vc <- object$db.drho%*%Vr%*%t(object$db.drho)
-   
-    Vr <- crossprod(((ev$values+1/sqrt(10))*t(ev$vectors))[,1:M])
+    d <- ev$values; d[ind] <- 0;d <- 1/sqrt(d+1/10)
+    Vr <- crossprod(d*t(ev$vectors))
     #Vc2 <- scale*Vb.corr(X,L,S,off,object$dw.drho,object$working.weights,log(object$sp),Vr)
     Vc2 <- scale*Vb.corr(R,L,S,off,object$dw.drho,w=NULL,log(object$sp),Vr)
     
