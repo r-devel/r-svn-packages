@@ -608,7 +608,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ww <- wt <- rep.int(0, nobs)
    wt[good] <- wf 
    ww[good] <- w
-   if (nrow(dw.drho)!=nrow(x)) {
+   if (deriv && nrow(dw.drho)!=nrow(x)) {
       w1 <- dw.drho
       dw.drho <- matrix(0,nrow(x),ncol(w1))
       dw.drho[good,] <- w1
@@ -1023,7 +1023,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ret
 } ## end of gam.fit5
 
-gam.fit5.post.proc <- function(object,Sl,L) {
+gam.fit5.post.proc <- function(object,Sl,L,S,off) {
 ## object is object returned by gam.fit5, Sl is penalty object, L maps working sp
 ## vector to full sp vector 
 ## Computes:
@@ -1095,13 +1095,23 @@ gam.fit5.post.proc <- function(object,Sl,L) {
   }  
 
   ## compute the smoothing parameter uncertainty correction...
-  if (!is.null(object$outer.info$hess)) {
+  if (!is.null(object$outer.info$hess)) { 
+    if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
     ev <- eigen(object$outer.info$hess,symmetric=TRUE)
     ind <- ev$values <= 0
     ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-    if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
     Vc <- crossprod((ev$values*t(ev$vectors))%*%t(object$db.drho))
-    Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
+    #dpv <- rep(0,ncol(object$outer.info$hess));M <- length(off)
+    #dpv[1:M] <- 1/100 ## prior precision (1/var) on log smoothing parameters
+    #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
+    #Vc <- object$db.drho%*%Vr%*%t(object$db.drho)
+    
+    #dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
+    #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
+    Vr <- crossprod((ev$values+1/sqrt(10))*t(ev$vectors))
+    Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
+
+    Vc <- Vb + Vc + Vc2  ## Bayesian cov matrix with sp uncertainty
     ## reverse the various re-parameterizations...
   } else Vc <- Vb
   Vc <- Sl.repara(object$rp,Vc,inverse=TRUE) 
@@ -1119,7 +1129,8 @@ gam.fit5.post.proc <- function(object,Sl,L) {
   ##  but is bounded in a way that is not *guaranteed* for edf2. Note that 
   ## justification only applies to sum(edf1/2) not elementwise   
   edf1 <- 2*edf - rowSums(t(F)*F)
-  edf2 <- diag(Vc%*%crossprod(R)) 
+  #edf2 <- diag(Vc%*%crossprod(R)) 
+  edf2 <- rowSums(Vc*crossprod(R))
   if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)

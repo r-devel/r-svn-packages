@@ -783,7 +783,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     names(wt) <- ynames
     names(weights) <- ynames
     names(y) <- ynames
-    if (nrow(dw.drho)!=nrow(x)) {
+    if (deriv && nrow(dw.drho)!=nrow(x)) {
       w1 <- dw.drho
       dw.drho <- matrix(0,nrow(x),ncol(w1))
       dw.drho[good,] <- w1
@@ -817,24 +817,32 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
 Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
 ## compute higher order Vb correction...
+## If w is NULL then X should be root Hessian, and 
+## dw is treated as if it was 0, otherwise X should be model 
+## matrix...
   M <- length(off) ## number of penalty terms
   lambda <- if (is.null(L)) exp(rho) else exp(L[1:M,,drop=FALSE]%*%rho)
   
-  ## Re-create the Hessian...
-  H <- t(X)%*%(w*X)
+  ## Re-create the Hessian, if is.null(w) then X assumed to be root
+  ## unpenalized Hessian...
+  H <- if (is.null(w)) crossprod(X) else H <- t(X)%*%(w*X)
   for (i in 1:M) {
-    ind <- off[i] + 1:ncol(S[[i]]) - 1
-    H[ind,ind] <- H[ind,ind] + lambda[i] * S[[i]]
+      ind <- off[i] + 1:ncol(S[[i]]) - 1
+      H[ind,ind] <- H[ind,ind] + lambda[i] * S[[i]]
   }
+
   R <- try(chol(H),silent=TRUE) ## get its Choleski factor.  
   if (inherits(R,"try-error")) return(0) ## bail out as Hessian insufficiently well conditioned
   
   ## Create dH the derivatives of the hessian w.r.t. (all) the smoothing parameters...
   dH <- list()
-  for (i in 1:ncol(dw)) {
-    ind <- off[i] + 1:ncol(S[[i]]) - 1
-    dH[[i]] <- t(X)%*%(dw[,i]*X)
-    if (i <= M) dH[[i]][ind,ind] <- dH[[i]][ind,ind] + lambda[i]*S[[i]]
+  for (i in 1:ncol(Vr)) {
+    ## If w==NULL use constant H approx...
+    dH[[i]] <- if (is.null(w)) H*0 else t(X)%*%(dw[,i]*X) 
+    if (i <= M) { 
+      ind <- off[i] + 1:ncol(S[[i]]) - 1
+      dH[[i]][ind,ind] <- dH[[i]][ind,ind] + lambda[i]*S[[i]]
+    }
   }
   ## If L supplied then dH has to be re-weighted to give
   ## derivatives w.r.t. optimization smoothing params.
@@ -851,18 +859,32 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
   } ## dH now w.r.t. optimization parameters 
   
   ## Get derivatives of Choleski factor w.r.t. the smoothing parameters 
-  dR <- dchol(dH,R); rm(dH)
+  dR <- list()
+  for (i in 1:length(dH)) dR[[i]] <- dchol(dH[[i]],R) 
+  rm(dH)
   
   ## need to transform all dR to dR^{-1} = -R^{-1} dR R^{-1}...
-  for (i in 1:length(dR)) dR[[i]] <- -forwardsolve(t(R),t(backsolve(R,dR[[i]])))
+  for (i in 1:length(dR)) dR[[i]] <- -t(forwardsolve(t(R),t(backsolve(R,dR[[i]]))))
  
   ## BUT: dR, now upper triangular, and it relates to RR' = Vb not R'R = Vb
   ## in consequence of which Rz is the thing with the right distribution
   ## and not R'z...
-  vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
+  dbg <- FALSE
+  if (dbg) { ## debugging code
+    n.rep <- 10000;p <- ncol(R)
+    r <- rmvn(n.rep,rep(0,M),Vr)
+    b <- matrix(0,n.rep,p)
+    for (i in 1:n.rep) {
+      z <- rnorm(p)
+      for (j in 1:M) b[i,] <- b[i,] + dR[[j]]%*%z*(r[i,j]) 
+    }
+    Vfd <- crossprod(b)/n.rep
+  }
+
+  Vc <- vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
 } ## Vb.corr
 
-gam.fit3.post.proc <- function(X,L,object) {
+gam.fit3.post.proc <- function(X,L,S,off,object) {
 ## get edf array and covariance matrices after a gam fit. 
 ## X is original model matrix, L the mapping from working to full sp
   scale <- if (object$scale.estimated) object$scale.est else object$scale
@@ -894,15 +916,32 @@ gam.fit3.post.proc <- function(X,L,object) {
       object$db.drho <- object$db.drho%*%L[1:M,,drop=FALSE] 
       M <- ncol(object$db.drho)
     }
+    ## extract cov matrix for log smoothing parameters...
     ev <- eigen(object$outer.info$hess,symmetric=TRUE)
     ind <- ev$values <= 0
     ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-    rV <- (ev$values*t(ev$vectors))[,1:M]
+    rV <- (ev$values*t(ev$vectors))[,1:M] ## root of cov matrix
     Vc <- crossprod(rV%*%t(object$db.drho))
-    Vc <- Vb + Vc  ## Bayesian cov matrix with sp uncertainty
+    ## set a prior precision on the smoothing parameters, but don't use it to 
+    ## fit, only to regularize Cov matrix. exp(4*var^.5) gives approx 
+    ## multiplicative range. e.g. var = 5.3 says parameter between .01 and 100 times
+    ## estimate. Avoids nonsense at `infinite' smoothing parameters.   
+#    dpv <- rep(0,ncol(object$outer.info$hess))
+#    dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
+#    Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
+#    Vc <- object$db.drho%*%Vr%*%t(object$db.drho)
+   
+    Vr <- crossprod(((ev$values+1/sqrt(10))*t(ev$vectors))[,1:M])
+    #Vc2 <- scale*Vb.corr(X,L,S,off,object$dw.drho,object$working.weights,log(object$sp),Vr)
+    Vc2 <- scale*Vb.corr(R,L,S,off,object$dw.drho,w=NULL,log(object$sp),Vr)
+    
+    Vc <- Vb + Vc + Vc2 ## Bayesian cov matrix with sp uncertainty
     ## finite sample size check on edf sanity...
     edf2 <- rowSums(Vc*crossprod(R))/scale
-    if (sum(edf2)>sum(edf1)) edf2 <- edf1 
+    if (sum(edf2)>sum(edf1)) { 
+      #cat("\n edf2=",sum(edf2),"  edf1=",sum(edf1)); 
+      edf2 <- edf1
+    } 
   } else edf2 <- Vc <- NULL
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc

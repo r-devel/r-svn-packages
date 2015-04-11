@@ -1581,9 +1581,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   
   object$control <- control
   if (inherits(family,"general.family")) {
-    mv <- gam.fit5.post.proc(object,G$Sl,G$L)
+    mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$S,G$off)
     object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
-  } else mv <- gam.fit3.post.proc(G$X,G$L,object)
+  } else mv <- gam.fit3.post.proc(G$X,G$L,G$S,G$off,object)
   ## note: use of the following in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
   if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
