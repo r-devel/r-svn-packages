@@ -239,9 +239,48 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
   X
 } ## end Sl.initial.repara
 
-ldetS <- function(Sl,rho,fixed,np,root=FALSE) {
+
+ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
+## finds derivatives wrt rho of log|S| where 
+## S = sum_i tcrossprod(rS[[i]]*exp(rho[i]))
+## when S is full rank +ve def and no 
+## reparameterization is required....
+  lam <- exp(rho)
+  S <- tcrossprod(rS[[1]])*lam[1]
+  m <- length(rS)
+  if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i]
+  d <- diag(S)^.5
+  S <- t(S/d)/d ## diagonally pre-condition
+  R <- suppressWarnings(chol(S,pivot=TRUE))
+  piv <- attr(R,"pivot")
+  if (root) {
+    rp <- piv;rp[rp] <- 1:p ## reverse pivot
+    E <- R[,rp]
+  } else E <- NULL
+  r <- Rrank(R)
+  if (r<p) { ## rank deficiency
+    R <- R[1:r,1:r]
+    piv <- piv[1:r]
+  }
+  RrS <- list();dS1 <- rep(0,m);dS2 <- matrix(0,m,m)
+  ## use dlog|S|/drhoi = lam_i tr(S^{-1}S_i) = tr(R^{-T}rS[[i]]rS[[i]]R^{-1} etc...
+  for (i in 1:m) {
+    RrS[[i]] <- forwardsolve(t(R),rS[[i]][piv,]/d[piv])
+    dS1[i] <- sum(RrS[[i]]^2)*lam[i] ## dlog|S|/drhoi
+    if (deriv==2) { 
+      RrS[[i]] <- tcrossprod(RrS[[i]])
+      for (j in 1:i) {
+        dS2[i,j] <- dS2[j,i] <- -sum(RrS[[i]]*RrS[[j]])*lam[i]*lam[j]
+      }
+      dS2[i,i] <- dS2[i,i] + dS1[i]
+    }
+  }
+  list(det = 2*sum(log(diag(R))+log(d[piv])),det1=dS1,det2=dS2,E=E)
+} ## ldetSblock
+
+ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE) {
 ## Get log generalized determinant of S stored blockwise in an Sl list.
-## Any multi-term blocks will be re-parameterized using gam.reparam, and
+## If repara=TRUE multi-term blocks will be re-parameterized using gam.reparam, and
 ## a re-parameterization object supplied in the returned object.
 ## rho contains log smoothing parameters, fixed is an array indicating whether they 
 ## are fixed (or free). np is the number of coefficients. root indicates
@@ -276,7 +315,8 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE) {
       ind <- k.sp:(k.sp+m-1) ## index for smoothing parameters
       ## call gam.reparam to deal with this block
       ## in a stable way...
-      grp <- gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=2) 
+      grp <- if (repara) gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=2) else 
+             ldetSblock(Sl[[b]]$rS,rho[ind],deriv=2,root=root)
       Sl[[b]]$lambda <- exp(rho[ind])
       ldS <- ldS + grp$det
       ## next deal with the derivatives...
@@ -289,11 +329,13 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE) {
         d2.ldS[dind,dind] <- grp$det2
         k.deriv <- k.deriv + nd
       }
-      ## now store the reparameterization information      
-      rp[[k.rp]] <- list(block =b,ind = (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind],Qs = grp$Qs)
-      k.rp <- k.rp + 1
-      for (i in 1:m) {
-        Sl[[b]]$Srp[[i]] <- Sl[[b]]$lambda[i]*grp$rS[[i]]%*%t(grp$rS[[i]])
+      ## now store the reparameterization information   
+      if (repara) {   
+        rp[[k.rp]] <- list(block =b,ind = (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind],Qs = grp$Qs)
+        k.rp <- k.rp + 1
+        for (i in 1:m) {
+          Sl[[b]]$Srp[[i]] <- Sl[[b]]$lambda[i]*grp$rS[[i]]%*%t(grp$rS[[i]])
+        }
       }
       k.sp <- k.sp + m
       if (root) { ## unpack the square root E'E
@@ -466,21 +508,21 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
 ## function to obtain derviatives of \hat \beta by implicit differentiation
 ## and to use these directly to evaluate derivs of b'Sb and the RSS.
 ## piv and rp are the pivots and inverse pivots from the qr that produced R.
+## rssj and bSbj only contain the terms that will not cancel in rssj + bSbj
   beta <- beta[rp] ## unpivot
   Sb <- Sl.mult(Sl,beta,k = 0)          ## unpivoted
   Skb <- Sl.termMult(Sl,beta,full=TRUE) ## unpivoted
   rsd <- (X%*%beta - y)
-  Xrsd <- t(X)%*%rsd ## X'Xbeta - X'y
+  #Xrsd <- t(X)%*%rsd ## X'Xbeta - X'y
   nd <- length(Skb)
   np <- length(beta)
-  Sk.db <- db <- matrix(0,np,nd)
+  db <- matrix(0,np,nd)
   rss1 <- bSb1 <- rep(0,nd)  
   
   for (i in 1:nd) { ## compute the first derivatives
     db[,i] <- -backsolve(R,forwardsolve(t(R),Skb[[i]][piv]))[rp] ## d beta/ d rho_i
-    ##Sk.db[,i] <- Sl.mult(Sl,db[,i],k = i,full=TRUE)    ## S_i d beta/ d rho_i
-    rss1[i] <- 2 * sum(db[,i]*Xrsd)                    ## d rss / d rho_i
-    bSb1[i] <- 2 * sum(db[,i]*Sb) + sum(beta*Skb[[i]])       ## d b'Sb / d_rho_i
+    ## rss1[i] <- 0* 2 * sum(db[,i]*Xrsd)                      ## d rss / d rho_i
+    bSb1[i] <- sum(beta*Skb[[i]]) ## + 2 * sum(db[,i]*Sb)   ## d b'Sb / d_rho_i
   }
   XX.db <- t(X)%*%(X%*%db)
   S.db <- Sl.mult(Sl,db,k=0)
@@ -489,14 +531,120 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
   rss2 <- bSb2 <- matrix(0,nd,nd)
   for (k in 1:nd) { ## second derivative loop 
     for (j in k:nd) {
-      d2b <- (k==j)*db[,k] - backsolve(R,forwardsolve(t(R),Sk.db[[j]][piv,k]+Sk.db[[k]][piv,j]))[rp]
-      rss2[j,k] <- rss2[k,j] <- 2 * sum(d2b*Xrsd) + 2 * sum(db[,j]*XX.db[,k])
-      bSb2[j,k] <- bSb2[k,j] <- 2 * (sum(d2b*Sb) + sum(db[,k]*(Skb[[j]]+S.db[,j])) + sum(db[,j]*Skb[[k]])) +
-                                (k==j)*sum(beta*Skb[[k]])
+      ## d2b <- (k==j)*db[,k] - backsolve(R,forwardsolve(t(R),Sk.db[[j]][piv,k]+Sk.db[[k]][piv,j]))[rp]
+      rss2[j,k] <- rss2[k,j] <- 2 * sum(db[,j]*XX.db[,k]) ## + 2 * sum(d2b*Xrsd) 
+      bSb2[j,k] <- bSb2[k,j] <-  (k==j)*sum(beta*Skb[[k]])  + 2*(sum(db[,k]*(Skb[[j]]+S.db[,j])) + 
+                                 sum(db[,j]*Skb[[k]])) ## + 2 * (sum(d2b*Sb)   
+                               
     }
   }
-  list(rss =sum(rsd^2),bSb=sum(beta*Sb),rss1=rss1,bSb1=bSb1,rss2=rss2,bSb2=bSb2,d1b=db)
+  list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,d1b=db,rss =sum(rsd^2),rss1=rss1,rss2=rss2)
 } ## end Sl.ift
+
+Sl.iftChol <- function(Sl,R,d,beta,piv) {
+## function to obtain derviatives of \hat \beta by implicit differentiation
+## and to use these directly to evaluate derivs of b'Sb and the RSS.
+## piv contains the pivots from the chol that produced R.
+## rssj and bSbj only contain the terms that will not cancel in rssj + bSbj
+  Sb <- Sl.mult(Sl,beta,k = 0)          ## unpivoted
+  Skb <- Sl.termMult(Sl,beta,full=TRUE) ## unpivoted
+  nd <- length(Skb)
+  np <- length(beta)
+  db <- matrix(0,np,nd)
+  rss1 <- bSb1 <- rep(0,nd)  
+  
+  for (i in 1:nd) { ## compute the first derivatives
+    db[piv,i] <- -backsolve(R,forwardsolve(t(R),Skb[[i]][piv]/d[piv]))/d[piv] ## d beta/ d rho_i
+    bSb1[i] <- sum(beta*Skb[[i]])  ## d b'Sb / d_rho_i
+  }
+  XX.db <- db
+  XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*beta[piv,]))) ## X'Xdb
+
+  S.db <- Sl.mult(Sl,db,k=0)
+  Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
+
+  rss2 <- bSb2 <- matrix(0,nd,nd)
+  for (k in 1:nd) { ## second derivative loop 
+    for (j in k:nd) {
+      rss2[j,k] <- rss2[k,j] <- 2 * sum(db[,j]*XX.db[,k]) 
+      bSb2[j,k] <- bSb2[k,j] <-  (k==j)*sum(beta*Skb[[k]])  + 2*(sum(db[,k]*(Skb[[j]]+S.db[,j])) + 
+                                 sum(db[,j]*Skb[[k]]))                                  
+    }
+  }
+  list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,d1b=db,rss1=rss1,rss2=rss2)
+} ## end Sl.iftChol
+
+
+Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,nt=1,tol=0) {
+## given X'W^2X in XX and f=X'Wy solves the penalized least squares problem
+## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
+## gradient and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
+## yy = y'Wy in order to get derivsatives w.r.t. phi. 
+  
+  rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
+
+  ## get log|S|_+ without stability transform...
+  ldS <- ldetS(Sl,rho,fixed,np,root=TRUE,repara=FALSE)
+  
+  ## now the Choleki factor of the penalized Hessian... 
+  XX <- XX+crosspord(ldS$E) ## penalized Hessian
+  d <- diag(XX);ind <- d<=0
+  d[ind] <- 1;d[!ind] <- sqrt(d[!ind])
+  XX <- t(XX/d)/d ## diagonally precondition
+  R <- suppressWarnings(chol(XX,pivot=TRUE))
+  r <- Rrank(R);p <- ncol(XX)
+  piv <- attr(R,"pivot");rp[rp] <- 1:p
+  if (r<p) { ## drop rank deficient terms...
+    R <- R[1:r,1:r]
+    piv <- piv[1:2]
+  }
+  beta <- rep(0,p)
+  beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
+ 
+  ## get component derivatives based on IFT...
+  dift <- Sl.iftChol(ldS$Sl,R,d,beta,piv)
+ 
+  ## now the derivatives of log|X'X+S|
+  P <- pbsi(R,nt=nt,copy=TRUE) ## invert R 
+  PP <- matrix(0,p,p)
+  PP[piv,piv] <- if (nt==1) tcrossprod(P) else pRRt(P,nt) ## PP'
+  PP <- t(PP*w)*w
+  ##ldetXXS <- 2*sum(log(diag(R))+log(d[piv])) ## log|X'X+S|
+  dXXS <- d.detXXS(ldS$Sl,PP,nt=nt) ## derivs of log|X'X+S|
+  
+  reml1 <-  (dXXS$d1[!fixed] - ldS$ldet1 + 
+            (dift$rss1[!fixed] + dift$bSb1[!fixed])/phi)/2
+
+  reml2 <- (dXXS$d2[!fixed,!fixed] - ldS$ldet2 +  
+           (dift$rss2[!fixed,!fixed] + dift$bSb2[!fixed,!fixed])/phi)/2 
+ 
+  if (!phi.fixed) {
+    n <- length(reml1)
+    rss.bSb <- yy - sum(beta*f) ## use identity ||y-Xb|| + b'Sb = y'y - b'X'y (b is minimizer)
+    reml1[n+1] <- (-rss.bSb/phi + nobs - Mp)/2
+    d <- c(-(dift$rss1[!fixed] + dift$bSb1[!fixed]),rss.bSb)/(2*phi)
+    reml2 <- rbind(cbind(reml2,d[1:n]),d)
+  }
+
+  if (!is.null(L)) {
+    reml1 <- t(L)%*%reml1
+    reml2 <- t(L)%*%reml2%*%L
+  }
+  uconv.ind <- (abs(grad) > tol)|(abs(grad2)>tol)
+  if (sum(uconv.ind)!=ncol(reml2)) { 
+    reml1 <- reml1[uconv.ind]
+    reml2 <- reml2[uconv.ind,uconv.ind]
+  }
+
+  er <- eigen(reml2,symmetric=TRUE)
+  er$values <- abs(er$values)
+  me <- max(er$values)*.Machine$double.eps^.5
+  er$values[er$values<me] <- me
+  step <- reml1*0
+  step[uconv.ind] <- -er$vectors%*%((t(er$vectors)%*%reml1)/er$values)
+  ## return the coefficient estimate, the reml grad and the Newton step...
+  list(beta=beta,grad=reml1,step=step)
+} ## Sl.fitChol
 
 Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NULL,Mp=0,nt=1) {
 ## fits penalized regression model with model matrix X and 
@@ -532,14 +680,16 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   ## its derivatives....
   reml <- (rss.bSb/phi + (nobs-Mp)*log(2*pi*phi) +
            ldetXXS - ldS$ldetS)/2
-  reml1 <- ((dift$rss1[!fixed] + dift$bSb1[!fixed])/phi + 
-            dXXS$d1[!fixed] - ldS$ldet1)/2
-  reml2 <- ((dift$rss2[!fixed,!fixed] + dift$bSb2[!fixed,!fixed])/phi + 
-           dXXS$d2[!fixed,!fixed] - ldS$ldet2)/2
+  reml1 <-  (dXXS$d1[!fixed] - ldS$ldet1 + # dift$bSb1[!fixed]/phi)/2 
+            (dift$rss1[!fixed] + dift$bSb1[!fixed])/phi)/2
+
+  reml2 <- (dXXS$d2[!fixed,!fixed] - ldS$ldet2 + #dift$bSb2[!fixed,!fixed]/phi)/2 
+           (dift$rss2[!fixed,!fixed] + dift$bSb2[!fixed,!fixed])/phi)/2 
   ## finally add in derivatives w.r.t. log.phi
   if (!phi.fixed) {
     n <- length(reml1)
     reml1[n+1] <- (-rss.bSb/phi + nobs - Mp)/2
+    #d <- c(-(dift$bSb1[!fixed]),rss.bSb)/(2*phi)
     d <- c(-(dift$rss1[!fixed] + dift$bSb1[!fixed]),rss.bSb)/(2*phi)
     reml2 <- rbind(cbind(reml2,d[1:n]),d)
   } 
@@ -562,7 +712,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
 ## structurally un-identifiable coefficients. 
 ## Note that lower bounds on smoothing parameters are not handled.
   maxNstep <- 5  
-
+  
   if (is.null(nobs)) nobs <- nrow(X)
   np <- ncol(X)
   if (nrow(X) > np) { ## might as well do an initial QR step

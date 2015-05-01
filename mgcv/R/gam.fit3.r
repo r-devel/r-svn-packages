@@ -858,6 +858,8 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
     rm(dH1)
   } ## dH now w.r.t. optimization parameters 
   
+  if (length(dH)==0) return(0) ## nothing to correct
+
   ## Get derivatives of Choleski factor w.r.t. the smoothing parameters 
   dR <- list()
   for (i in 1:length(dH)) dR[[i]] <- dchol(dH[[i]],R) 
@@ -2463,7 +2465,7 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
     }
  
     environment(qf) <- environment(rd) <- environment(dvar) <- environment(d2var) <- 
-    environment(variance) <- environment(validmu) <- 
+    environment(d3var) <-environment(variance) <- environment(validmu) <- 
     environment(ls) <- environment(dev.resids) <- environment(aic) <- environment(getTheta) <- env
     famname <- paste("Negative Binomial(", format(round(theta,3)), ")", sep = "")
     structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,

@@ -4117,15 +4117,17 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
 
 }
 
-initial.sp <- function(X,S,off,expensive=FALSE)
+initial.sp <- function(X,S,off,expensive=FALSE,XX=FALSE)
 # Find initial smoothing parameter guesstimates based on model matrix X 
 # and penalty list S. off[i] is the index of the first parameter to
 # which S[[i]] applies, since S[[i]]'s only store non-zero submatrix of 
 # penalty coefficient matrix.
+# if XX==TRUE then X contains X'X, not X!
 { n.p <- length(S) 
+  if (XX) expensive <- FALSE 
   def.sp <- array(0,n.p)
   if (n.p) { 
-    ldxx <- colSums(X*X) # yields diag(t(X)%*%X)
+    ldxx <- if (XX) diag(X) else colSums(X*X) # yields diag(t(X)%*%X)
     ldss <- ldxx*0       # storage for combined penalty l.d. 
     if (expensive) St <- matrix(0,ncol(X),ncol(X)) 
     pen <- rep(FALSE,length(ldxx)) # index of what actually gets penalized
@@ -4162,7 +4164,7 @@ initial.sp <- function(X,S,off,expensive=FALSE)
     }
   } 
   as.numeric(def.sp)
-}
+} ## initial.sp
 
 
 
