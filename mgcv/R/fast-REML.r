@@ -1,4 +1,4 @@
-## code for fast REML computation. key feature is that first and 
+# code for fast REML computation. key feature is that first and 
 ## second derivatives come at no increase in leading order 
 ## computational cost, relative to evaluation! 
 ## (c) Simon N. Wood, 2010-2014
@@ -233,8 +233,18 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
     }
   } else for (b in 1:length(Sl)) { ## model matrix re-para
     ind <- Sl[[b]]$start:Sl[[b]]$stop
-    if (is.matrix(Sl[[b]]$D)) X[,ind] <- X[,ind,drop=FALSE]%*%Sl[[b]]$D else 
-    X[,ind] <- t(Sl[[b]]$D*t(X[,ind,drop=FALSE])) ## X[,ind]%*%diag(Sl[[b]]$D)
+    if (is.matrix(X)) { 
+      if (is.matrix(Sl[[b]]$D)) { 
+        if (both.sides)  X[ind,] <- t(Sl[[b]]$D)%*%X[ind,,drop=FALSE]
+        X[,ind] <- X[,ind,drop=FALSE]%*%Sl[[b]]$D 
+      } else { 
+        if (both.sides) X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
+        X[,ind] <- t(Sl[[b]]$D*t(X[,ind,drop=FALSE])) ## X[,ind]%*%diag(Sl[[b]]$D)
+      }
+    } else {
+      if (is.matrix(Sl[[b]]$D)) X[ind] <- t(Sl[[b]]$D)%*%X[ind] else 
+      X[ind] <- Sl[[b]]$D*X[ind] 
+    }
   }
   X
 } ## end Sl.initial.repara
@@ -541,7 +551,7 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
   list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,d1b=db,rss =sum(rsd^2),rss1=rss1,rss2=rss2)
 } ## end Sl.ift
 
-Sl.iftChol <- function(Sl,R,d,beta,piv) {
+Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
 ## function to obtain derviatives of \hat \beta by implicit differentiation
 ## and to use these directly to evaluate derivs of b'Sb and the RSS.
 ## piv contains the pivots from the chol that produced R.
@@ -557,8 +567,8 @@ Sl.iftChol <- function(Sl,R,d,beta,piv) {
     db[piv,i] <- -backsolve(R,forwardsolve(t(R),Skb[[i]][piv]/d[piv]))/d[piv] ## d beta/ d rho_i
     bSb1[i] <- sum(beta*Skb[[i]])  ## d b'Sb / d_rho_i
   }
-  XX.db <- db
-  XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*beta[piv,]))) ## X'Xdb
+  XX.db <- XX%*%db
+  #XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*db[piv,]))) ## X'Xdb
 
   S.db <- Sl.mult(Sl,db,k=0)
   Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
@@ -575,7 +585,7 @@ Sl.iftChol <- function(Sl,R,d,beta,piv) {
 } ## end Sl.iftChol
 
 
-Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,nt=1,tol=0) {
+Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,nobs=0,Mp=0,nt=1,tol=0) {
 ## given X'W^2X in XX and f=X'Wy solves the penalized least squares problem
 ## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
 ## gradient and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
@@ -583,17 +593,18 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   
   rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
 
-  ## get log|S|_+ without stability transform...
-  ldS <- ldetS(Sl,rho,fixed,np,root=TRUE,repara=FALSE)
+  ## get log|S|_+ without stability transform... 
+  fixed <- rep(FALSE,length(rho))
+  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=TRUE,repara=FALSE)
   
   ## now the Choleki factor of the penalized Hessian... 
-  XX <- XX+crosspord(ldS$E) ## penalized Hessian
-  d <- diag(XX);ind <- d<=0
+  XXp <- XX+crossprod(ldS$E) ## penalized Hessian
+  d <- diag(XXp);ind <- d<=0
   d[ind] <- 1;d[!ind] <- sqrt(d[!ind])
-  XX <- t(XX/d)/d ## diagonally precondition
-  R <- suppressWarnings(chol(XX,pivot=TRUE))
-  r <- Rrank(R);p <- ncol(XX)
-  piv <- attr(R,"pivot");rp[rp] <- 1:p
+  #XXp <- t(XXp/d)/d ## diagonally precondition
+  R <- if (nt>1) pchol(t(XXp/d)/d,nt) else suppressWarnings(chol(t(XXp/d)/d,pivot=TRUE))
+  r <- Rrank(R);p <- ncol(XXp)
+  piv <- attr(R,"pivot") #;rp[rp] <- 1:p
   if (r<p) { ## drop rank deficient terms...
     R <- R[1:r,1:r]
     piv <- piv[1:2]
@@ -602,16 +613,18 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
  
   ## get component derivatives based on IFT...
-  dift <- Sl.iftChol(ldS$Sl,R,d,beta,piv)
+  dift <- Sl.iftChol(ldS$Sl,XX,R,d,beta,piv)
  
   ## now the derivatives of log|X'X+S|
   P <- pbsi(R,nt=nt,copy=TRUE) ## invert R 
   PP <- matrix(0,p,p)
   PP[piv,piv] <- if (nt==1) tcrossprod(P) else pRRt(P,nt) ## PP'
-  PP <- t(PP*w)*w
+  PP <- t(PP/d)/d
   ##ldetXXS <- 2*sum(log(diag(R))+log(d[piv])) ## log|X'X+S|
   dXXS <- d.detXXS(ldS$Sl,PP,nt=nt) ## derivs of log|X'X+S|
-  
+
+  phi <- exp(log.phi)  
+
   reml1 <-  (dXXS$d1[!fixed] - ldS$ldet1 + 
             (dift$rss1[!fixed] + dift$bSb1[!fixed])/phi)/2
 
@@ -630,7 +643,9 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
     reml1 <- t(L)%*%reml1
     reml2 <- t(L)%*%reml2%*%L
   }
-  uconv.ind <- (abs(grad) > tol)|(abs(grad2)>tol)
+  uconv.ind <- (abs(reml1) > tol)|(abs(diag(reml2))>tol)
+  hess <- reml2
+  grad <- reml1
   if (sum(uconv.ind)!=ncol(reml2)) { 
     reml1 <- reml1[uconv.ind]
     reml2 <- reml2[uconv.ind,uconv.ind]
@@ -642,8 +657,13 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   er$values[er$values<me] <- me
   step <- reml1*0
   step[uconv.ind] <- -er$vectors%*%((t(er$vectors)%*%reml1)/er$values)
+
+  ## limit the step length...
+  ms <- max(abs(step))
+  if (ms>4) step <- 4*step/ms
+
   ## return the coefficient estimate, the reml grad and the Newton step...
-  list(beta=beta,grad=reml1,step=step)
+  list(beta=beta,grad=grad,step=step,db=dift$d1b,PP=PP,R=R,piv=piv,rank=r,hess=hess)
 } ## Sl.fitChol
 
 Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NULL,Mp=0,nt=1) {
@@ -906,7 +926,7 @@ Sl.Xprep <- function(Sl,X,nt=1) {
 ## this routine applies preliminary Sl transformations to X
 ## tests for structural identifibility problems and drops
 ## un-identifiable parameters.
-  X <- Sl.initial.repara(Sl,X) ## apply re-para used in Sl to X
+  X <- Sl.initial.repara(Sl,X,inverse=FALSE,both.sides=FALSE,cov=FALSE) ## apply re-para used in Sl to X
   id <- ident.test(X,attr(Sl,"E"),nt=nt) ## deal with structural identifiability
   ## id contains drop, undrop, lambda
   if (length(id$drop)>0) { ## then there is something to do here 
@@ -928,16 +948,16 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
   np <- ncol(X0)
   beta <- rep(0,np)
   beta[undrop] <- Sl.repara(fit$rp,fit$beta,inverse=TRUE)
-  beta <- Sl.initial.repara(Sl,beta,inverse=TRUE)
+  beta <- Sl.initial.repara(Sl,beta,inverse=TRUE,both.sides=TRUE,cov=TRUE)
  
   if (cov) { 
     d1b <- matrix(0,np,ncol(fit$d1b))
     ## following construction a bit ugly due to Sl.repara assumptions...
     d1b[undrop,] <- t(Sl.repara(fit$rp,t(fit$d1b),inverse=TRUE,both.sides=FALSE))
-    for (i in 1:ncol(d1b)) d1b[,i] <- Sl.initial.repara(Sl,as.numeric(d1b[,i]),inverse=TRUE) ## d beta / d rho matrix
+    for (i in 1:ncol(d1b)) d1b[,i] <- Sl.initial.repara(Sl,as.numeric(d1b[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE) ## d beta / d rho matrix
     PP <- matrix(0,np,np)
     PP[undrop,undrop] <-  Sl.repara(fit$rp,fit$PP,inverse=TRUE)
-    PP <- Sl.initial.repara(Sl,PP,inverse=TRUE)
+    PP <- Sl.initial.repara(Sl,PP,inverse=TRUE,both.sides=TRUE,cov=TRUE)
     #XPP <- crossprod(t(X0),PP)*X0
     #hat <- rowSums(XPP);edf <- colSums(XPP)
     XPP <- crossprod(t(X0),PP)

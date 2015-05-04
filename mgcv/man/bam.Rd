@@ -192,7 +192,7 @@ by this approach, while the computation is less stable than the default, and the
 
 
 \references{
-Wood, S.N., Goude, Y. & Shaw S. (2014) Generalized additive models for large datasets. Journal of the Royal Statistical Society, Series C, in press.  
+Wood, S.N., Goude, Y. & Shaw S. (2015) Generalized additive models for large datasets. Journal of the Royal Statistical Society, Series C 64(1): 139-155.  
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
