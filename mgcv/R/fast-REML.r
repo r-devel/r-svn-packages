@@ -257,6 +257,7 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
 ## reparameterization is required....
   lam <- exp(rho)
   S <- tcrossprod(rS[[1]])*lam[1]
+  p <- ncol(S)
   m <- length(rS)
   if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i]
   d <- diag(S)^.5
@@ -360,6 +361,26 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE) {
   list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E)
 } ## end ldetS
 
+Sl.addS <- function(Sl,A,rho) {
+## Routine to add total penalty to matrix A. Sl is smooth penalty
+## list from Sl.setup, so initial reparameterizations have taken place,
+## and should have already been applied to A using Sl.initial.repara
+  k <- 1
+  for (b in 1:length(Sl)) {
+    ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
+    if (length(Sl[[b]]$S)==1) { ## singleton
+      diag(A)[ind] <-  diag(A)[ind] + exp(rho[k]) ## penalty is identity times sp
+      k <- k + 1
+    } else {
+      for (j in 1:length(Sl[[b]]$S)) {
+        A[ind,ind] <- A[ind,ind] + exp(rho[k]) * Sl[[b]]$S[[j]]
+        k <- k + 1
+      }
+    }
+  }
+  A
+} ## Sl.addS
+
 Sl.repara <- function(rp,X,inverse=FALSE,both.sides=TRUE) {
 ## Apply re-parameterization from ldetS to X, blockwise.
 ## If X is a matrix it is assumed to be a model matrix
@@ -431,12 +452,18 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
             ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
             if (full) { ## return zero answer with all zeroes in place
               B <- A*0
-              if (Amat) B[ind,] <- Sl[[b]]$Srp[[i]]%*%A[ind,] else  
-                        B[ind] <- Sl[[b]]$Srp[[i]]%*%A[ind]
+              if (is.null(Sl[[b]]$Srp)) {
+                B[ind,] <- if (Amat) Sl[[b]]$S[[i]]%*%A[ind,] else Sl[[b]]$S[[i]]%*%A[ind]
+              } else {
+                B[ind,] <- if (Amat) Sl[[b]]$Srp[[i]]%*%A[ind,] else Sl[[b]]$Srp[[i]]%*%A[ind]
+              }
               A <- B
             } else { ## strip zero rows from answer
-              if (Amat) A <- Sl[[b]]$Srp[[i]]%*%A[ind,] else
-                        A <- as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
+              if (is.null(Sl[[b]]$Srp)) {
+                A <- if (Amat) Sl[[b]]$S[[i]]%*%A[ind,] else as.numeric(Sl[[b]]$S[[i]]%*%A[ind])
+              } else {
+                A <- if (Amat) Sl[[b]]$Srp[[i]]%*%A[ind,] else as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
+              }
             }
           }
           break
@@ -478,16 +505,30 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
         k <- k + 1
         if (full) { ## return answer with all zeroes in place
           B <- A*0
-          if (Amat) { 
-            B[ind,] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else 
+          if (is.null(Sl[[b]]$Srp)) {
+            if (Amat) { 
+              B[ind,] <- if (nt==1) Sl[[b]]$S[[i]]%*%A[ind,,drop=FALSE] else 
+                       pmmult(Sl[[b]]$S[[i]],A[ind,,drop=FALSE],nt=nt) 
+            } else B[ind] <- Sl[[b]]$S[[i]]%*%A[ind]
+          } else {
+            if (Amat) { 
+              B[ind,] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else 
                        pmmult(Sl[[b]]$Srp[[i]],A[ind,,drop=FALSE],nt=nt) 
-          } else B[ind] <- Sl[[b]]$Srp[[i]]%*%A[ind]
+            } else B[ind] <- Sl[[b]]$Srp[[i]]%*%A[ind]
+          }
           SA[[k]] <- B
         } else { ## strip zero rows from answer
-          if (Amat) {
-            SA[[k]] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else
+          if (is.null(Sl[[b]]$Srp)) {
+            if (Amat) {
+              SA[[k]] <- if (nt==1) Sl[[b]]$S[[i]]%*%A[ind,,drop=FALSE] else
+                       pmmult(Sl[[b]]$S[[i]],A[ind,,drop=FALSE],nt=nt)
+            } else SA[[k]] <- as.numeric(Sl[[b]]$S[[i]]%*%A[ind])
+          } else {
+            if (Amat) {
+              SA[[k]] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else
                        pmmult(Sl[[b]]$Srp[[i]],A[ind,,drop=FALSE],nt=nt)
-          } else SA[[k]] <- as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
+            } else SA[[k]] <- as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
+          }
           attr(SA[[k]],"ind") <- ind
         }
       } ## end of S loop for block b
@@ -599,6 +640,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   
   ## now the Choleki factor of the penalized Hessian... 
   XXp <- XX+crossprod(ldS$E) ## penalized Hessian
+
   d <- diag(XXp);ind <- d<=0
   d[ind] <- 1;d[!ind] <- sqrt(d[!ind])
   #XXp <- t(XXp/d)/d ## diagonally precondition
