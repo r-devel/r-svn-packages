@@ -260,6 +260,7 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
   p <- ncol(S)
   m <- length(rS)
   if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i]
+  if (!root) E <- S
   d <- diag(S);d[d<=0] <- 1;d <- sqrt(d)
   S <- t(S/d)/d ## diagonally pre-condition
   R <- suppressWarnings(chol(S,pivot=TRUE))
@@ -269,7 +270,7 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
   if (root) {
     rp <- piv;rp[rp] <- 1:p ## reverse pivot
     E <- t(t(R[,rp])*d)
-  } else E <- NULL
+  } 
   if (r<p) { ## rank deficiency
     R <- R[1:r,1:r]
     piv <- piv[1:r]
@@ -353,9 +354,13 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE) {
       if (root) { ## unpack the square root E'E
         ic <- Sl[[b]]$start:(Sl[[b]]$start+ncol(grp$E)-1)
         ir <- Sl[[b]]$start:(Sl[[b]]$start+nrow(grp$E)-1)
-        E[ir,ic] <- grp$E     
-        Sl[[b]]$St <- t(grp$E)%*%grp$E
-      }      
+        E[ir,ic] <- grp$E      
+        Sl[[b]]$St <- crossprod(grp$E)
+      } else {  
+        ## gam.reparam always returns root penalty in E, but 
+        ## ldetSblock returns penalty in E if root==FALSE
+        Sl[[b]]$St <- if (repara) crossprod(grp$E) else grp$E
+      }   
     } ## end of multi-S block branch
   } ## end of block loop
   if (root) E <- E[rowSums(abs(E))!=0,,drop=FALSE] ## drop zero rows.
@@ -642,10 +647,11 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
 
   ## get log|S|_+ without stability transform... 
   fixed <- rep(FALSE,length(rho))
-  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=TRUE,repara=FALSE)
+  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=FALSE,repara=FALSE)
   
   ## now the Choleki factor of the penalized Hessian... 
-  XXp <- XX+crossprod(ldS$E) ## penalized Hessian
+  #XXp <- XX+crossprod(ldS$E) ## penalized Hessian
+  XXp <- Sl.addS(Sl,XX,rho)
 
   d <- diag(XXp);ind <- d<=0
   d[ind] <- 1;d[!ind] <- sqrt(d[!ind])
