@@ -260,15 +260,16 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
   p <- ncol(S)
   m <- length(rS)
   if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i]
-  d <- diag(S)^.5
+  d <- diag(S);d[d<=0] <- 1;d <- sqrt(d)
   S <- t(S/d)/d ## diagonally pre-condition
   R <- suppressWarnings(chol(S,pivot=TRUE))
   piv <- attr(R,"pivot")
+  r <- attr(R,"rank")
+  if (r<p) R[(r+1):p,(r+1):p] <- 0 ## fix chol bug
   if (root) {
     rp <- piv;rp[rp] <- 1:p ## reverse pivot
-    E <- R[,rp]
+    E <- t(t(R[,rp])*d)
   } else E <- NULL
-  r <- Rrank(R)
   if (r<p) { ## rank deficiency
     R <- R[1:r,1:r]
     piv <- piv[1:r]
@@ -361,6 +362,8 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE) {
   list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E)
 } ## end ldetS
 
+
+
 Sl.addS <- function(Sl,A,rho) {
 ## Routine to add total penalty to matrix A. Sl is smooth penalty
 ## list from Sl.setup, so initial reparameterizations have taken place,
@@ -452,15 +455,18 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
             ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
             if (full) { ## return zero answer with all zeroes in place
               B <- A*0
-              if (is.null(Sl[[b]]$Srp)) {
-                B[ind,] <- if (Amat) Sl[[b]]$S[[i]]%*%A[ind,] else Sl[[b]]$S[[i]]%*%A[ind]
+              if (Amat) {
+                B[ind,] <- if (is.null(Sl[[b]]$Srp)) Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind,]) else 
+                                                     Sl[[b]]$Srp[[i]]%*%A[ind,]
               } else {
-                B[ind,] <- if (Amat) Sl[[b]]$Srp[[i]]%*%A[ind,] else Sl[[b]]$Srp[[i]]%*%A[ind]
+                B[ind] <- if (is.null(Sl[[b]]$Srp)) Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind]) else 
+                                                    Sl[[b]]$Srp[[i]]%*%A[ind]
               }
               A <- B
             } else { ## strip zero rows from answer
               if (is.null(Sl[[b]]$Srp)) {
-                A <- if (Amat) Sl[[b]]$S[[i]]%*%A[ind,] else as.numeric(Sl[[b]]$S[[i]]%*%A[ind])
+                A <- if (Amat)  Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind,]) else  
+                                Sl[[b]]$lambda[i]*as.numeric(Sl[[b]]$S[[i]]%*%A[ind])
               } else {
                 A <- if (Amat) Sl[[b]]$Srp[[i]]%*%A[ind,] else as.numeric(Sl[[b]]$Srp[[i]]%*%A[ind])
               }
@@ -507,9 +513,9 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
           B <- A*0
           if (is.null(Sl[[b]]$Srp)) {
             if (Amat) { 
-              B[ind,] <- if (nt==1) Sl[[b]]$S[[i]]%*%A[ind,,drop=FALSE] else 
-                       pmmult(Sl[[b]]$S[[i]],A[ind,,drop=FALSE],nt=nt) 
-            } else B[ind] <- Sl[[b]]$S[[i]]%*%A[ind]
+              B[ind,] <- if (nt==1)  Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind,,drop=FALSE]) else 
+                         Sl[[b]]$lambda[i]*pmmult(Sl[[b]]$S[[i]],A[ind,,drop=FALSE],nt=nt) 
+            } else B[ind] <-  Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind])
           } else {
             if (Amat) { 
               B[ind,] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else 
@@ -520,9 +526,9 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
         } else { ## strip zero rows from answer
           if (is.null(Sl[[b]]$Srp)) {
             if (Amat) {
-              SA[[k]] <- if (nt==1) Sl[[b]]$S[[i]]%*%A[ind,,drop=FALSE] else
-                       pmmult(Sl[[b]]$S[[i]],A[ind,,drop=FALSE],nt=nt)
-            } else SA[[k]] <- as.numeric(Sl[[b]]$S[[i]]%*%A[ind])
+              SA[[k]] <- if (nt==1)  Sl[[b]]$lambda[i]*(Sl[[b]]$S[[i]]%*%A[ind,,drop=FALSE]) else
+                         Sl[[b]]$lambda[i]*pmmult(Sl[[b]]$S[[i]],A[ind,,drop=FALSE],nt=nt)
+            } else SA[[k]] <-  Sl[[b]]$lambda[i]*as.numeric(Sl[[b]]$S[[i]]%*%A[ind])
           } else {
             if (Amat) {
               SA[[k]] <- if (nt==1) Sl[[b]]$Srp[[i]]%*%A[ind,,drop=FALSE] else

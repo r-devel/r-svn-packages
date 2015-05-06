@@ -6,6 +6,10 @@
 * Slightly more accurate smoothing parameter uncertainty correction. Changes 
   edf2 used for AIC (under RE/ML). 
 
+* mroot patched for fact that chol(...,pivot=TRUE) does not operate as 
+  documented on rank deficient matrices: trailing block of triangular factor
+  has to be zeroed for pivoted crossprod of factor to equal original matrix. 
+
 1.8-6
 
 * Generalization of list formula handling to allow linear predictors to

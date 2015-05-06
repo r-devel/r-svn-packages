@@ -3971,8 +3971,8 @@ mroot <- function(A,rank=NULL,method="chol")
 # correct rank if it isn't known in advance. 
 { if (is.null(rank)) rank <- 0 
   if (!isTRUE(all.equal(A,t(A)))) stop("Supplied matrix not symmetric")
-  if (method=="svd")
-  { um<-La.svd(A)
+  if (method=="svd") { 
+    um <- La.svd(A)
     if (sum(um$d!=sort(um$d,decreasing=TRUE))>0) 
     stop("singular values not returned in order")
     if (rank < 1) # have to work out rank
@@ -3985,14 +3985,17 @@ mroot <- function(A,rank=NULL,method="chol")
     d<-um$d[1:rank]^0.5
     return(t(t(um$u[,1:rank])*as.vector(d))) # note recycling rule used for efficiency
   } else
-  if (method=="chol")
-  { op <- options(warn=-1) ## don't want to be warned it's not +ve def
-    L <- chol(A,pivot=TRUE)
-    options(op) ## reset default warnings
+  if (method=="chol") { 
+    ## don't want to be warned it's not +ve def...
+    L <- suppressWarnings(chol(A,pivot=TRUE,tol=0))
     piv <- order(attr(L,"pivot"))
-    if (rank < 1) rank <- attr(L,"rank")
-    L <- L[,piv,drop=FALSE];L <- t(L[1:rank,,drop=FALSE])
-    #if (rank <= 1) dim(L) <- c(nrow(A),1)
+    ## chol does not work as documented (reported), have to explicitly zero
+    ## the trailing block...
+    r <- attr(L,"rank")
+    p <- ncol(L)
+    if (r < p) L[(r+1):p,(r+1):p] <- 0
+    if (rank < 1) rank <- r
+    L <- L[,piv,drop=FALSE]; L <- t(L[1:rank,,drop=FALSE])
     return(L)
   } else
   stop("method not recognised.")
