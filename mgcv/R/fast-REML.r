@@ -638,9 +638,9 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
 
 
 Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,nobs=0,Mp=0,nt=1,tol=0) {
-## given X'W^2X in XX and f=X'Wy solves the penalized least squares problem
+## given X'WX in XX and f=X'Wy solves the penalized least squares problem
 ## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
-## gradient and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
+## gradiant and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
 ## yy = y'Wy in order to get derivsatives w.r.t. phi. 
   
   rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0

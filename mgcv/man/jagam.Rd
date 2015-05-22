@@ -156,6 +156,7 @@ jd <- jagam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,file="test.jags",
 
 \dontrun{
 require(rjags)
+load.module("glm") ## improved samplers for GLMs often worth loading
 jm <-jags.model("test.jags",data=jd$jags.data,inits=jd$jags.ini,n.chains=1)
 list.samplers(jm)
 sam <- jags.samples(jm,c("b","rho","scale"),n.iter=10000,thin=10)

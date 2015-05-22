@@ -508,7 +508,7 @@ tensor.prod.model.matrix1 <- function(X) {
 # X is a list of model matrices, from which a tensor product model matrix is to be produced.
 # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
 # column-wise, for efficiency
-# old version, which is rather slow becuase of using cbind.
+# old version, which is rather slow because of using cbind.
   m <- length(X)
   X1 <- X[[m]]
   n <- nrow(X1)
@@ -3235,6 +3235,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
         if (p>rank) for (i in 1:length(sml)) {
           sml[[i]]$S[[2]] <- diag(c(rep(0,rank),rep(1,p-rank)))
           sml[[i]]$rank[2] <- p-rank
+          sml[[i]]$S.scale[2] <- 1 
           sml[[i]]$null.space.dim <- 0
         }
       }
@@ -3252,6 +3253,7 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
         for (i in 1:length(sml)) {
           sml[[i]]$S[[M+1]] <- Sf
           sml[[i]]$rank[M+1] <- sum(ind)
+          sml[[i]]$S.scale[M+1] <- 1
           sml[[i]]$null.space.dim <- 0
         }
       }

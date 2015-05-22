@@ -104,6 +104,102 @@ qr.up <- function(arg) {
   qrx
 } ## qr.up
 
+compress.df <- function(dat,m=NULL) {
+## Takes dataframe in dat and compresses it by rounding and duplicate 
+## removal. For metric variables we first find the unique cases.
+## If there are <= m of these then these are employed, otherwise 
+## rounding is used. Factors are always reduced to the number of 
+## levels present in the data. Idea is that this function is called 
+## with columns of dataframes corresponding to single smooths or marginals. 
+  d <- ncol(dat)
+  if (is.null(m)) m <- if (d==1) 1000 else if (d==2) 100 else 25
+  
+  mf <- mm <- 1 ## total grid points for factor and metric
+  for (i in 1:d) if (is.factor(dat[,i])) {  
+    mf <- mf * length(unique(dat[,i])) 
+  } else {
+    mm <- mm * m 
+  } 
+  xu <- uniquecombs(as.matrix(dat))
+  if (nrow(xu)>mm*mf) { ## too many unique rows to use only unique
+    for (i in 1:d) if (!is.factor(dat[,i])) { ## round the metric variables
+      xl <- range(dat[,i])
+      xu <- seq(xl[1],xl[2],length=m)
+      dx <- xu[2]-xu[1]
+      kx <- round((dat[,i]-xl[1])/dx)+1
+      dat[,i] <- xu[kx] ## rounding the metric variables
+    }
+    xu <- uniquecombs(as.matrix(dat))
+  }  
+  k <- attr(xu,"index")
+  xu <- as.data.frame(xu)
+  ## set names and levels to match dat...
+  names(xu) <- names(dat)
+  for (i in 1:d) if (is.factor(dat[,i])) {
+    xu[,i] <- as.factor(xu[,i])
+    levels(xu[,i]) <- levels(dat[,i])
+  }
+  k -> attr(xu,"index")
+  xu
+} ## compress.df
+
+discrete.mf <- function(gp,mf) {
+## discretize the covariates for the terms speficied in smooth.spec
+## id and factor by not allowed. 
+## NOTE: matrix arguments not allowed but not caught yet.
+## currently not dealing with parameteric terms :-(
+  mf0 <- list()
+  nk <- 0 ## count number of index vectors to avoid too much use of cbind
+  for (i in 1:length(gp$smooth.spec)) nk <- nk + 
+    if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
+  k <- matrix(0,nrow(mf),nk)
+  ik <- 0 ## index counter
+  knames <- rep("",0) 
+  nr <- rep(0,nk) ## number of rows for term
+  ## loop through the terms discretizing the covariates...
+  for (i in 1:length(gp$smooth.spec)) {
+    if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) { ## tensor branch
+      for (j in 1:length(gp$smooth.spec[[i]]$margin)) { ## loop through margins
+        mfd <- compress.df(mf[gp$smooth.spec[[i]]$margin[[j]]$term],m=NULL)
+        ik <- ik + 1
+        knames <- c(knames,names(mfd))
+        k[,ik] <- attr(mfd,"index")
+        nr[ik] <- nrow(mfd)
+        mf0 <- c(mf0,mfd)
+      }
+    } else { ## not te or ti...
+      mfd <- compress.df(mf[gp$smooth.spec[[i]]$term],m=NULL)
+      ik <- ik + 1
+      knames <- c(knames,names(mfd))
+      k[,ik] <- attr(mfd,"index")
+      nr[ik] <- nrow(mfd)
+      mf0 <- c(mf0,mfd)
+    }
+    ## deal with any by variable... 
+    if (gp$smooth.spec[[i]]$by!="NA") {
+      if (is.factor(mf[gp$smooth.spec[[i]]$by])) stop("discretization can not handle factor by variables")
+      if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handles smooth ids")
+      mf0[[gp$smooth.spec[[i]]$by]] <- rep(1,nr[ik]) ## actual by variables are handled by discrete methods
+    }  
+  } ## main term loop
+  colnames(k) <- knames
+  names(nr) <- knames
+  ## pad mf0 so that all rows are the same length
+  ## padding is necessary if gam.setup is to be used for setup
+  maxr <- max(nr) 
+  for (i in 1:length(mf0)) {
+    me <- length(mf0[[i]]) 
+    if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
+  }
+  ## add response so that gam.setup can do its thing...
+  mf0[[gp$response]] <- sample(mf[[gp$response]],maxr)
+
+  ## mf is the discretized model frame (actually a list), padded to have equal length rows
+  ## k is the index vector for each sub-matrix, only the first nr rows of which are
+  ## to be retained  
+  list(mf=as.data.frame(mf0),k=k,nr=nr)
+} ## discrete.mf
+
 mini.mf <-function(mf,chunk.size) {
 ## takes a model frame and produces a representative subset of it, suitable for 
 ## basis setup.
@@ -1415,13 +1511,30 @@ sparse.model.matrix <- function(G,mf,chunk.size) {
     gc()
   }
   X
-}
+} # sparse.model.matrix
 
+tero <- function(sm) {
+## te smooth spec re-order so that largest marginal is last.
+  maxd <- 0
+  ns <- length(sm$margin)
+  for (i in 1:ns) if (sm$margin[[i]]$bs.dim>=maxd) {
+    maxi <- i;maxd <- sm$margin[[i]]$bs.dim
+  }
+  if (maxi<ns) { ## re-ordering required
+    ind <- 1:ns;ind[maxi] <- ns;ind[ns] <- maxi
+    sm$margin <- sm$margin[ind]
+    sm$fix <- sm$fix[ind]
+    sm$term <- rep("",0)
+    for (i in 1:ns) sm$term <- c(sm$term,sm$margin[[i]]$term)
+    sm$label <- paste0(substr(sm$label,1,3),paste0(sm$term,collapse=","),")",collapse="")
+  }
+  sm
+} ## tero
 
 
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
-                offset=NULL,method="fREML",control=list(),scale=0,gamma=1,knots=NULL,
-                sp=NULL,min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,sparse=FALSE,cluster=NULL,
+                offset=NULL,method="fREML",control=list(),scale=0,gamma=1,knots=NULL,sp=NULL,
+                min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discretize=FALSE,sparse=FALSE,cluster=NULL,
                 nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
@@ -1445,20 +1558,28 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
     if (!method%in%c("fREML","fcREML","GCV.Cp","REML",
                     "ML","P-REML","P-ML")) stop("un-supported smoothness selection method")
-    if (method=="fREML"&&!is.null(min.sp)) {
+    if (discretize && method!="fcREML") { 
+      discretize <- FALSE
+      warning("discretization only available with fcREML")
+    }
+    if (method%in%c("fREML","fcREML")&&!is.null(min.sp)) {
       min.sp <- NULL
       warning("min.sp not supported with fast REML computation, and ignored.")
     }
-    if (sparse&&method=="fREML") {
+    if (sparse&&method%in%c("fREML","fcREML")) {
       method <- "REML"
       warning("sparse=TRUE not supported with fast REML, reset to REML.")
     }
     gp <- interpret.gam(formula) # interpret the formula 
+    if (discretize) { ## re-order the tensor terms for maximum efficiency...
+      for (i in 1:length(gp$smooth.spec)) if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) 
+      gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
+    }
     cl <- match.call() # call needed in gam object for update to work
     mf <- match.call(expand.dots=FALSE)
     mf$formula <- gp$fake.formula 
     mf$method <-  mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp <- mf$gc.level <-
-    mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$cluster <-
+    mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$cluster <- mf$discretize <-
     mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]]<-as.name("model.frame")
@@ -1492,7 +1613,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     rm(dl); if (gc.level>0) gc() ## save space    
 
     ## need mini.mf for basis setup, then accumulate full X, y, w and offset
-    mf0 <- mini.mf(mf,chunk.size)
+    if (discretize) {
+      ## discretize the data, creating list mf0 with discrete values
+      ## and indices giving the discretized value for each element of model frame. 
+      dk <- discrete.mf(gp,mf)
+      mf0 <- dk$mf ## padded discretized model frame
+    } else mf0 <- mini.mf(mf,chunk.size)
     
     if (sparse) sparse.cons <- 2 else sparse.cons <- -1
 
@@ -1502,6 +1628,14 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen)
   
+    if (discretize) {
+      ## create data object suitable for discrete data methods, from marginal model 
+      ## matrices in G$smooth and G$X (stripping out padding, of course)
+
+      ## deal with tensor product constraints
+
+    }
+
     G$sparse <- sparse
 
     ## no advantage to "fREML" with no free smooths...
@@ -1566,6 +1700,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   colnamesX <- colnames(G$X)  
 
   if (G$sparse) { ## Form a sparse model matrix...
+    warning("sparse=TRUE is deprecated")
     if (sum(G$X==0)/prod(dim(G$X))<.5) warning("model matrix too dense for any possible benefit from sparse")
     if (nrow(mf)<=chunk.size) G$X <- as(G$X,"dgCMatrix") else 
       G$X <- sparse.model.matrix(G,mf,chunk.size)

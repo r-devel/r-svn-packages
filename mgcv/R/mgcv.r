@@ -958,7 +958,7 @@ gam.setup <- function(formula,pterms,
   G$smooth <- list()
   G$S <- list()
  
-  if (gamm.call) { ## flag that this is a call from gamm --- some smoothers need to now!
+  if (gamm.call) { ## flag that this is a call from gamm --- some smoothers need to know!
     if (m>0) for (i in 1:m) attr(split$smooth.spec[[i]],"gamm") <- TRUE
   }
 
@@ -3089,8 +3089,6 @@ residuals.gam <-function(object, type = "deviance",...)
 ## Start of anova and summary (with contributions from Henric Nilsson) ....
 
 
-
-
 smoothTest <- function(b,X,V,eps=.Machine$double.eps^.5) {
 ## Forms Cox, Koh, etc type test statistic, and
 ## obtains null distribution by simulation...
@@ -3322,6 +3320,8 @@ reTest <- function(b,m) {
   } else { pval <- liu2(stat,ev) }
   list(stat=stat,pval=pval,rank=rank)
 } ## end reTest
+
+
 
 testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 ## Implements Wood (2013) Biometrika 100(1), 221-228
@@ -3837,17 +3837,21 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
           ok <- TRUE
         } 
       } else { ok <- TRUE} ## no id so proceed
-      if (ok) for (j in 1:length(x$smooth[[i]]$S.scale)) {
-        if (x$smooth[[i]]$sp[j]<0) { ## sp not supplied
-          x$sp[k] <- x$sp[k] / x$smooth[[i]]$S.scale[j]
-          k <- k + 1
-          if (kf>0) {
+      if (ok) { 
+       if (length(x$smooth[[i]]$S.scale)!=length(x$smooth[[i]]$S))
+         warning("S.scale vector doesn't match S list - please report to maintainer")
+        for (j in 1:length(x$smooth[[i]]$S.scale)) {
+          if (x$smooth[[i]]$sp[j]<0) { ## sp not supplied
+            x$sp[k] <- x$sp[k] / x$smooth[[i]]$S.scale[j]
+            k <- k + 1
+            if (kf>0) {
+              x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[i]]$S.scale[j]
+              kf <- kf + 1
+            }
+          } else { ## sp supplied
             x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[i]]$S.scale[j]
             kf <- kf + 1
-          }
-        } else { ## sp supplied
-          x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[i]]$S.scale[j]
-          kf <- kf + 1
+          } 
         }
       } else { ## this id already dealt with, but full.sp not scaled yet 
         ii <- idxi[idx%in%x$smooth[[i]]$id] ## smooth prototype
@@ -3855,7 +3859,7 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
           x$full.sp[kf] <- x$full.sp[kf] / x$smooth[[ii]]$S.scale[j]
           kf <- kf + 1
         }
-      }
+      } 
     } ## finished rescaling
   }
   ## variance components (original scale)
