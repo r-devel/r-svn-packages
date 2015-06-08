@@ -3,10 +3,6 @@
 
 1.8-7
 
-ISSUE: vcorr doesn't handle linked smooths properly. In gam.fit3.post.proc
-  should last row col of Vr be dropped when calling Vb.corr when scale 
-  estimated? what if s terms not linked?
-
 - zheyuan reports non-symm matrix error from mroot in te setup 
 
 * fix of openMP error in mgcv_pbsi, which could cause a problem in 
