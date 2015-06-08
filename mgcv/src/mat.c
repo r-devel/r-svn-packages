@@ -1511,7 +1511,7 @@ void mgcv_pbsi(double *R,int *r,int *nt) {
   }
 
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(b,i,k,zz,rr) num_threads(*nt)
+#pragma omp parallel private(b,i,k,zz,rr,r2) num_threads(*nt)
   #endif 
   { /* open parallel section */
     #ifdef SUPPORT_OPENMP
@@ -1570,7 +1570,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
   }
 
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(b,i,ru,rl) num_threads(*nt)
+  #pragma omp parallel private(b,i,ru,rl,r1) num_threads(*nt)
   #endif
   { /* open parallel section */
     #ifdef SUPPORT_OPENMP
@@ -1623,7 +1623,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
     if (a[i]<=a[i-1]) a[i] = a[i-1]+1;
   }
   #ifdef SUPPORT_OPENMP
-  #pragma omp parallel private(b,i,rl) num_threads(*nt)
+  #pragma omp parallel private(b,i,rl,r1) num_threads(*nt)
   #endif
   { /* start parallel block */
     #ifdef SUPPORT_OPENMP

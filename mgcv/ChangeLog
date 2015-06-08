@@ -3,7 +3,18 @@
 
 1.8-7
 
-ISSUE: vcorr doesn't handle linked smooths properly.
+ISSUE: vcorr doesn't handle linked smooths properly. In gam.fit3.post.proc
+  should last row col of Vr be dropped when calling Vb.corr when scale 
+  estimated? what if s terms not linked?
+
+- zheyuan reports non-symm matrix error from mroot in te setup 
+
+* fix of openMP error in mgcv_pbsi, which could cause a problem in 
+  multi-threaded bam computation (failure to declare a variable as private).  
+
+* Smoothing parameter uncertainty corrected AIC calculations had an 
+  indexing problem in Sl.postproc, which could result in failure of bam with 
+  linked smooths. 
 
 * Slightly more accurate smoothing parameter uncertainty correction. Changes 
   edf2 used for AIC (under RE/ML). 
@@ -14,6 +25,9 @@ ISSUE: vcorr doesn't handle linked smooths properly.
 
 * bam(...,sparse=TRUE) deprecated as no examples found where it is really 
   worthwhile (but let me know if this is a problem). 
+
+* initial.spg could fail if response vector had dim attributes and extended 
+  family used. fixed.
 
 1.8-6
 

@@ -803,7 +803,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
                              log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
                              nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt)
-        res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE)
+        res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE,L=G$L)
         object <- list(coefficients=res$beta,db.drho=fit$d1b,
                        gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
                        message=fit$conv),rank=ncol(um$X),
@@ -867,7 +867,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     } ## end fitting iteration
 
     if (method=="fREML") { ## do expensive cov matrix cal only at end
-      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
+      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale,L=G$L)
       object$edf <- res$edf
       object$edf1 <- res$edf1
       object$edf2 <- res$edf2
@@ -1401,7 +1401,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp,nt=npt)
-     res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
+     res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale,L=G$L)
      object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,
                     db.drho=fit$d1b,
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
@@ -1924,7 +1924,7 @@ bam.update <- function(b,data,chunk.size=10000) {
             log.phi=log.phi,phi.fixed = !b$scale.estimated,rss.extra=rss.extra,
             nobs =n,Mp=um$Mp,nt=1)
      if (b$scale.estimated) scale <- -1 else scale=b$sig2
-     res <- Sl.postproc(b$Sl,fit,um$undrop,b$qrx$R,cov=TRUE,scale=scale)
+     res <- Sl.postproc(b$Sl,fit,um$undrop,b$qrx$R,cov=TRUE,scale=scale,L=b$g$L)
 
 
      object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,

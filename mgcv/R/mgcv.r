@@ -1771,7 +1771,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       }
       lsp <- c(lsp,log.scale) ## append log initial scale estimate to lsp
       ## extend G$L, if present...
-      if (!is.null(G$L)) G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
+      if (!is.null(G$L)) { 
+        G$L <- cbind(rbind(G$L,rep(0,ncol(G$L))),c(rep(0,nrow(G$L)),1))
+        #attr(G$L,"scale") <- TRUE ## indicates scale estimated as sp
+      }
       if (!is.null(G$lsp0)) G$lsp0 <- c(G$lsp0,0)
     } 
      ## check if there are extra parameters to estimate
@@ -1785,7 +1788,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
       if (!is.null(G$L)&&nth>0) { 
         L <- rbind(cbind(diag(nth),matrix(0,nth,ncol(G$L))),
                    cbind(matrix(0,nrow(G$L),nth),G$L))
+        #sat <- attr(G$L,"scale")
         G$L <- L
+        #attr(G$L,"scale") <- sat
+        #attr(G$L,"not.sp") <- nth ## first not.sp params are not smoothing params
       }
       if (!is.null(G$lsp0)) G$lsp0 <- c(th0*0,G$lsp0)
     } else nth <- 0
@@ -4099,8 +4105,8 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
     } else mustart <- mukeep
     if (inherits(family,"extended.family")) {
       theta <- family$getTheta()
-      w <- .5 * family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2  
-    } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
+      w <- .5 * drop(family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2)  
+    } else w <- drop(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
     w <- sqrt(w)
     if (type==1) { ## what PI would have used
       lambda <-  initial.sp(w*x,S,off)

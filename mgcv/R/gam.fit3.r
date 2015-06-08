@@ -815,12 +815,24 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
-Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
+Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
 ## compute higher order Vb correction...
 ## If w is NULL then X should be root Hessian, and 
 ## dw is treated as if it was 0, otherwise X should be model 
-## matrix...
+## matrix.
+## dw is derivative w.r.t. all the smoothing parameters and family parametres as if these 
+## were not linked, but not the scale parameter, of course. Vr includes scale uncertainty,
+## if scale extimated...
+## nth is the number of initial elements of rho that are not smoothing 
+## parameters, scale.est is TRUE is scale estimated
   M <- length(off) ## number of penalty terms
+  if (scale.est) {
+    ## drop scale param from L, rho and Vr...
+    rho <- rho[-length(rho)]
+    if (!is.null(L)) L <- L[-nrow(L),-ncol(L),drop=FALSE]
+    Vr <- Vr[-nrow(Vr),-ncol(Vr),drop=FALSE]
+  }
+  ## ??? rho0???
   lambda <- if (is.null(L)) exp(rho) else exp(L[1:M,,drop=FALSE]%*%rho)
   
   ## Re-create the Hessian, if is.null(w) then X assumed to be root
@@ -828,7 +840,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
   H <- if (is.null(w)) crossprod(X) else H <- t(X)%*%(w*X)
   for (i in 1:M) {
       ind <- off[i] + 1:ncol(S[[i]]) - 1
-      H[ind,ind] <- H[ind,ind] + lambda[i] * S[[i]]
+      H[ind,ind] <- H[ind,ind] + lambda[i+nth] * S[[i]]
   }
 
   R <- try(chol(H),silent=TRUE) ## get its Choleski factor.  
@@ -836,12 +848,12 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
   
   ## Create dH the derivatives of the hessian w.r.t. (all) the smoothing parameters...
   dH <- list()
-  for (i in 1:ncol(Vr)) {
+  for (i in 1:length(lambda)) {
     ## If w==NULL use constant H approx...
     dH[[i]] <- if (is.null(w)) H*0 else t(X)%*%(dw[,i]*X) 
-    if (i <= M) { 
-      ind <- off[i] + 1:ncol(S[[i]]) - 1
-      dH[[i]][ind,ind] <- dH[[i]][ind,ind] + lambda[i]*S[[i]]
+    if (i>nth) { 
+      ind <- off[i-nth] + 1:ncol(S[[i-nth]]) - 1
+      dH[[i]][ind,ind] <- dH[[i]][ind,ind] + lambda[i]*S[[i-nth]]
     }
   }
   ## If L supplied then dH has to be re-weighted to give
@@ -850,7 +862,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr) {
     dH1 <- dH;dH <- list()
     for (j in 1:length(rho)) { 
       ok <- FALSE ## dH[[j]] not yet created
-      for (i in 1:M) if (L[i,j]!=0.0) { 
+      for (i in 1:nrow(L)) if (L[i,j]!=0.0) { 
         dH[[j]] <- if (ok) dH[[j]] + dH1[[i]]*L[i,j] else dH1[[i]]*L[i,j]
         ok <- TRUE
       }
@@ -913,7 +925,7 @@ gam.fit3.post.proc <- function(X,L,S,off,object) {
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
     M <- ncol(object$db.drho)
     ## transform to derivs w.r.t. working, noting that an extra final row of L
-    ## may be present, relating to scale parameter (for which db.drho is 0 since its a scale parameter)  
+    ## may be present, relating to scale parameter (for which db.drho is 0 since it's a scale parameter)  
     if (!is.null(L)) { 
       object$db.drho <- object$db.drho%*%L[1:M,,drop=FALSE] 
       M <- ncol(object$db.drho)
@@ -935,7 +947,11 @@ gam.fit3.post.proc <- function(X,L,S,off,object) {
     d <- ev$values; d[ind] <- 0;d <- 1/sqrt(d+1/10)
     Vr <- crossprod(d*t(ev$vectors))
     #Vc2 <- scale*Vb.corr(X,L,S,off,object$dw.drho,object$working.weights,log(object$sp),Vr)
-    Vc2 <- scale*Vb.corr(R,L,S,off,object$dw.drho,w=NULL,log(object$sp),Vr)
+    ## Note that db.drho and dw.drho are derivatives w.r.t. full set of smoothing 
+    ## parameters excluding any scale parameter, but Vr includes info for scale parameter
+    ## if it has been estiamted. 
+    nth <- if (is.null(object$family$n.theta)) 0 else object$family$n.theta ## any parameters of family itself
+    Vc2 <- scale*Vb.corr(R,L,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,object$scale.estimated)
     
     Vc <- Vb + Vc + Vc2 ## Bayesian cov matrix with sp uncertainty
     ## finite sample size check on edf sanity...

@@ -65,6 +65,7 @@ vcorr <- function(dR,Vr,trans=TRUE) {
 ## dR is a list of p by p matrices. 'op' is 't' if trans=TRUE and I() otherwise.
   p <- ncol(dR[[1]])
   M <- if (trans) ncol(Vr) else -ncol(Vr) ## sign signals transpose or not to C code
+  if (abs(M)!=length(dR)) stop("internal error in vcorr, please report to simon.wood@r-project.org")
   oo <- .C(C_vcorr,dR=as.double(unlist(dR)),Vr=as.double(Vr),Vb=as.double(rep(0,p*p)),
            p=as.integer(p),M=as.integer(M))
   return(matrix(oo$Vb,p,p))
@@ -112,7 +113,7 @@ pqr2 <- function(x,nt=1,nb=30) {
 
 pbsi <- function(R,nt=1,copy=TRUE) {
 ## parallel back substitution inversion of upper triangular R
-## library(mgcv); n <- 5000;p<-4000;x <- matrix(runif(n*p),n,p)
+## library(mgcv); n <- 500;p<-400;x <- matrix(runif(n*p),n,p)
 ## qrx <- mgcv:::pqr2(x,2);R <- qr.R(qrx)
 ## system.time(Ri <- mgcv:::pbsi(R,2))
 ## system.time(Ri2 <- backsolve(R,diag(p)));range(Ri-Ri2)

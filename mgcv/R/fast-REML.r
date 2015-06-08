@@ -1,4 +1,4 @@
-# code for fast REML computation. key feature is that first and 
+## code for fast REML computation. key feature is that first and 
 ## second derivatives come at no increase in leading order 
 ## computational cost, relative to evaluation! 
 ## (c) Simon N. Wood, 2010-2014
@@ -994,7 +994,7 @@ Sl.Xprep <- function(Sl,X,nt=1) {
 } ## end Sl.Xprep
 
 
-Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
+Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L) {
 ## reverse the various fitting re-parameterizations.
 ## X0 is the orginal model matrix before any re-parameterization
 ## or parameter dropping. Sl is also the original *before parameter 
@@ -1020,9 +1020,13 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1) {
     edf <- diag(F)
     edf1 <- 2*edf - rowSums(t(F)*F) 
     ## edf <- rowSums(PP*crossprod(X0)) ## diag(PP%*%(t(X0)%*%X0))
-    if (scale<=0) scale <- fit$rss/(fit$nobs - sum(edf))
+    if (scale<=0) { 
+      scale <- fit$rss/(fit$nobs - sum(edf))
+    }
     Vp <- PP * scale ## cov matrix
     ## sp uncertainty correction... 
+    ## BUG: possibility of L ignored here.
+    if (!is.null(L)) d1b <- d1b%*%L
     M <- ncol(d1b) 
     ev <- eigen(fit$outer.info$hess,symmetric=TRUE)
     ind <- ev$values <= 0
