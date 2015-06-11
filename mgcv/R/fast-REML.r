@@ -861,7 +861,7 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
       rho1 <- L%*%(rho + step)+rho.0; if (!phi.fixed) log.phi <- rho1[nr+1]
       trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp,nt=nt)
     }
-    if (k==35 && trial$reml>best$reml) { ## step has failed
+    if ((k==35 && trial$reml>best$reml)||(sum(rho != rho + step)==0)) { ## step has failed
       step.failed <- TRUE
       break ## can get no further
     }

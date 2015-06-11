@@ -5,6 +5,8 @@
 
 - zheyuan reports non-symm matrix error from mroot in te setup 
 
+* step fail logic improved for "fREML" optimization in 'bam'.
+
 * fix of openMP error in mgcv_pbsi, which could cause a problem in 
   multi-threaded bam computation (failure to declare a variable as private).  
 
