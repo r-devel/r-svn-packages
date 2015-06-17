@@ -127,7 +127,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
     type3 <- match(type2, typeCodes)# integer
     if(any(ina <- is.na(type3)))
 	stop(gettextf("invalid type %s for column numbers %s",
-		      type2[ina], pColl(which(is.na))))
+		      type2[ina], pColl(which(ina))))
     if((mdata <- any(inax <- is.na(x)))) { # TRUE if x[] has any NAs
 	jtmd <- integer(p)
 	jtmd[apply(inax, 2L, any)] <- -1L
