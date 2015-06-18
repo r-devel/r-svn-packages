@@ -2,7 +2,7 @@ Package: cluster
 Version: 2.0.2
 Date: 2015-06-18
 Priority: recommended
-Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al
+Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from
 	Peter Rousseeuw, Anja Struyf and Mia Hubert,
 	based on Kaufman and Rousseeuw (1990) "Finding Groups in Data".
