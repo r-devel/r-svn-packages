@@ -1,11 +1,11 @@
 Package: cluster
 Version: 2.0.2
-Date: 2015-02-..
+Date: 2015-06-18
 Priority: recommended
-Title: Cluster Analysis Extended Rousseeuw et Al
-Description: Cluster analysis methods.  Much extended the original from
+Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
+Description: Methods for Cluster analysis.  Much extended the original from
 	Peter Rousseeuw, Anja Struyf and Mia Hubert,
-	based on Kaufman and Rousseeuw (1990).
+	based on Kaufman and Rousseeuw (1990) "Finding Groups in Data".
 Maintainer: Martin Maechler <maechler@stat.math.ethz.ch>
 Authors@R: c(person("Martin","Maechler", role=c("aut","cre"), email="maechler@stat.math.ethz.ch")
  ,person("Peter", "Rousseeuw", role="aut", email="rousse@uia.ua.ac.be",

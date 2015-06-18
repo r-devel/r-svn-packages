@@ -158,7 +158,7 @@ daisy <- function(x, metric = c("euclidean", "manhattan", "gower"),
     full[!lower.tri(full, diag = TRUE)] <- disv
     disv <- t(full)[lower.tri(full)]
     ## give warning if some dissimilarities are missimg
-    if(any(is.na(disv))) attr(disv, "NA.message") <-
+    if(anyNA(disv)) attr(disv, "NA.message") <-
 	"NA-values in the dissimilarity matrix !"
     ## construct S object -- "dist" methods are *there* !
     class(disv) <- dissiCl # see ./0aaa.R

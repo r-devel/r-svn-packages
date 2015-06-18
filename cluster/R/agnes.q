@@ -44,7 +44,7 @@ agnes <- function(x, diss = inherits(x, "dist"), metric = "euclidean",
 
     if((diss <- as.logical(diss))) {
 	## check type of input vector
-	if(any(is.na(x))) stop("NA-values in the dissimilarity matrix not allowed.")
+	if(anyNA(x)) stop("NA-values in the dissimilarity matrix not allowed.")
 	if(data.class(x) != "dissimilarity") { # try to convert to
 	    if(!is.null(dim(x))) {
 		x <- as.dist(x) # or give an error
