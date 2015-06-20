@@ -52,6 +52,47 @@ mvn.ll <- function(y,X,beta,dbeta=NULL) {
   list(l=oo$ll,lb=oo$lb,lbb=matrix(oo$lbb,nb,nb),dH=dH)
 }
 
+## discretized covariate routines...
+
+XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1) {
+## Form X'WX given weights in w and X in compressed form in list X.
+## each element of X is a (marginal) model submatrix. Full version 
+## is given by X[[i]][k[,i],]. list X relates to length(ds) separate
+## terms. ith term starts at matrix ts[i] and has dt[i] marginal matrices.
+## Terms with several marginals are tensor products and may have 
+## constraints (if qc[i]>1), stored as a householder vector in v[[i]]. 
+## check ts and k index start (assumed 1 here)
+  m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
+  nx <- length(X);nt <- length(ts)
+  n <- length(w);pt <- 0;
+  for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0) 
+  oo <- .C(C_XWXd,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),k=as.integer(k-1),m=as.integer(m),
+           p=as.integer(p), n=as.integer(n), ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
+           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads))
+  matrix(oo$XWX,pt,pt)
+} ## XWXd
+
+XWyd <- function(X,w,y,k,ts,dt,v,qc) {
+## X'Wy...  
+  m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
+  nx <- length(X);nt <- length(ts)
+  n <- length(w);pt <- 0;
+  for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0) 
+  oo <- .C(C_XWyd,XWy=rep(0,pt),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
+           m=as.integer(m),p=as.integer(p),n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
+           dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc))
+  oo$XWy
+} ## XWyd 
+
+Xbd <- function(X,beta,k,ts,dt,v,qc) {
+  n <- nrow(k);m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
+  nx <- length(X);nt <- length(ts)
+  oo <- .C(C_Xbd,f=as.double(rep(0,n)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1), 
+           m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
+           as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc))
+  oo$f
+} ## Xbd
+
 dchol <- function(dA,R) {
 ## if dA contains matrix dA/dx where R is chol factor s.t. R'R = A
 ## then this routine returns dR/dx...

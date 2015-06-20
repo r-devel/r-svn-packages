@@ -70,12 +70,28 @@ get.Eb <- function(rS,rank)
 { q <- nrow(rS[[1]])
   S <- matrix(0,q,q)
   for (i in 1:length(rS)) { 
-    Si <- rS[[i]]%*%t(rS[[i]])
+    Si <- tcrossprod(rS[[i]]) ## rS[[i]]%*%t(rS[[i]])
     S <- S + Si/sqrt(sum(Si^2)) 
   }
   t(mroot(S,rank=rank)) ## E such that E'E = S
 } ## get.Eb
 
+huberp <- function(wp,dof,k=1.5,tol=.Machine$double.eps^.5) {
+## function to obtain huber estimate of scale from Pearson residuals, simplified 
+## from 'hubers' from MASS package
+  s0 <- mad(wp) ## initial scale estimate
+  th <- 2*pnorm(k) - 1
+  beta <- th + k^2 * (1 - th) - 2 * k * dnorm(k)
+  for (i in 1:50) {
+    r <- pmin(pmax(wp,-k*s0),k*s0)
+    ss <- sum(r^2)/dof
+    s1 <- sqrt(ss/beta)
+    if (abs(s1-s0)<tol*s0) break
+    s0 <- s1
+  }
+  if (i==50) warning("Huber scale estiamte not converged")
+  s1^2
+} ## huberp
 
 gam.scale <- function(wp,wd,dof,extra=0) {
 ## obtain estimates of the scale parameter, using the weighted Pearson and 
@@ -85,21 +101,23 @@ gam.scale <- function(wp,wd,dof,extra=0) {
 ## although deviance residual is much less extreme). 
   pearson <- (sum(wp^2)+extra)/dof
   deviance <- (sum(wd^2)+extra)/dof
-  ## now scale deviance residuals to have magnitude similar
-  ## to pearson and compute new estimator. 
-  kd <- wd
-  ind <- wd > 0
-  kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
-  ind <- wd < 0
-  kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
-  robust <- (sum(kd^2)+extra)/dof
-  ## force estimate to lie between deviance and pearson estimators
-  if (pearson > deviance) {
-    if (robust < deviance) robust <- deviance
-    if (robust > pearson) robust <- pearson
-  } else {
-    if (robust > deviance) robust <- deviance
-    if (robust < pearson) robust <- pearson
+  if (extra==0) robust <- huberp(wp,dof) else {
+    ## now scale deviance residuals to have magnitude similar
+    ## to pearson and compute new estimator. 
+    kd <- wd
+    ind <- wd > 0
+    kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
+    ind <- wd < 0
+    kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
+    robust <- (sum(kd^2)+extra)/dof
+    ## force estimate to lie between deviance and pearson estimators
+    if (pearson > deviance) {
+      if (robust < deviance) robust <- deviance
+      if (robust > pearson) robust <- pearson
+    } else {
+      if (robust > deviance) robust <- deviance
+      if (robust < pearson) robust <- pearson
+    }
   }
   list(pearson=pearson,deviance=deviance,robust=robust)
 }

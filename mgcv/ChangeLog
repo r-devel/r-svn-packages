@@ -3,7 +3,12 @@
 
 1.8-7
 
-- zheyuan reports non-symm matrix error from mroot in te setup 
+* "robust" scale estimation option modified for 'gam' so that a Huber 
+  estimate based on the Pearson residuals is used, when possible.
+
+* p-value computation for smooth terms modified to avoid an ambiguity in the 
+  choice of test statistic that could lead to p-value changing somewhat between 
+  platforms.   
 
 * step fail logic improved for "fREML" optimization in 'bam'.
 

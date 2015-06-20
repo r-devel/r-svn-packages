@@ -126,15 +126,17 @@ void singleXb(double *f,double *work,double *X,double *beta,int *k,int *m, int *
 } /* singleXb */
 
 void tensorXb(double *f,double *X, double *C,double *work, double *beta,
-              int *m, int *p,int *dt,int *k, int *n,double *Q,int *qc) {
+              int *m, int *p,int *dt,int *k, int *n,double *v,int *qc) {
 /* for X* beta where X* is a tensor product term with nt marginal model matrices
    stored in X. ith such is m[i] by p[i]. 
-   work is an n vector. C is m[d] by pb.  
-   Q is a (prod_i p[i]) by qc constraint matrix
+   work is an n vector. C is an m[d] by pb working matrix.  
+   v is a vector such that if Q=I-vv' and Z is Q with the first column dropped then 
+   Z is a null space basis for the identifiability constraint. If *qc <= 0 then
+   no constraint is applied. 
 */ 
   char trans='N';
   int pb=1,md,*kp,*kd,pd,i,j,one=1;
-  double *M,done=1.0,dzero=0.0,*p0,*p1,*pf,*pc;
+  double *M,done=1.0,dzero=0.0,*p0,*p1,*p2,*p3,*pf,*pc,x;
   M = X;
   for (i=0;i<*dt-1;i++) {
     pb *= p[i];
@@ -149,8 +151,16 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
 		    M,&md,beta,&pd,&dzero,C,&md); 
   } else { /* their is a constraint matrix */
     /* first map supplied beta to unconstrained parameterization */ 
-    j = pb*pd;
-    F77_CALL(dgemv)(&trans, &j, qc,&done,Q,&j,beta,&one,&dzero,work,&one);
+    j = pb*pd; /* total number of coeffs - length of unconstrained beta */
+    
+    *work = 0.0;x=0.0;
+    for (p0=work+1,p1=p0+j-1,p2=beta,p3=v+1;p0<p1;p0++,p2++,p3++) { 
+      *p0 = *p2; 
+      x += *p0 * *p3; /* v'beta where beta padded with extra zero at start */ 
+    }
+    for (p0=work,p1=p0+j,p2=v;p0<p1;p0++,p2++) *p0 -= *p2 * x; /* (I-vv')(0,beta')' */
+
+    /*F77_CALL(dgemv)(&trans, &j, qc,&done,Q,&j,beta,&one,&dzero,work,&one); old when Q full matrix */
     F77_CALL(dgemm)(&trans,&trans,&md,&pb, &pd, &done,
 		    M,&md,work,&pd,&dzero,C,&md);
   }
@@ -168,27 +178,71 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
   }
 } /* tensorXb */
 
+void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n, 
+	int *nx, int *ts, int *dt, int *nt,double *v,int *qc) {
+/* Forms f = X beta for X stored in the packed form described in function XWX */
+  int i,j,q,*pt,*off,*voff,*tps,dC=0,c1;
+  double *f0,*pf,*p0,*p1,*p2,*C,*work,maxp=0;
+  /* obtain various indices */
+  pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
+  off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
+  voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvector starts */
+  tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+  for (q=i=0;i< *nt; i++) { /* work through the terms */
+    for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
+      off[q+1] = off[q] + p[q]*m[q]; /* submatrix start offsets */
+      if (j>0 && j==dt[i]-1) {
+        c1 = pt[i]*m[q]; 
+        if (c1>dC) dC = c1; /* dimension of working matrix C */
+      }
+      if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
+      //if (maxm<m[q]) maxm=m[q];
+    } 
+    if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else voff[i+1] = voff[i]; /* start of ith v matrix */
+    if (maxp < pt[i]) maxp = pt[i];
+    if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
+    else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
+  }
+  /* now form the product term by term... */
+  pf=f0 = (double *)calloc((size_t)*n,sizeof(double));
+  i = *n; if (i<maxp) i=maxp;
+  work = (double *)calloc((size_t)i,sizeof(double));
+  if (dC) C = (double *)calloc((size_t)dC,sizeof(double));
+  for (i=0;i < *nt;i++) { /* work through terms */ 
+    if (i==0) f0 = f; /* result written straight to f for i==0 */
+    if (dt[i]==1) singleXb(f0,work,X+off[ts[i]],beta+tps[i],k + *n *ts[i],m+ts[i], p+ts[i],n); 
+    else tensorXb(f0,X+off[ts[i]],C,work, beta+tps[i],
+                  m+ts[i], p+ts[i],dt+i,k + *n *ts[i],n,v+voff[i], qc+i);
+    if (i>0) {
+      for (p0=f,p1=f + *n,p2=f0;p0<p1;p0++,p2++) *p0 += *p2; /* f <- f + f0 */     
+    } else { f0=pf; /* restore f0 */}
+  }
+  if (dC) R_chk_free(C);
+  R_chk_free(work);R_chk_free(f0);
+  R_chk_free(pt);R_chk_free(off);R_chk_free(voff);R_chk_free(tps);
+} /* Xb */
 
-void XWy(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
-         int *nx, int *ts, int *dt, int *nt,double *Q,int *qc) {
-  double *Wy,*p0,*p1,*p2,done=1.0,dzero=0.0,*Xy0,*work,*work1;
-  int q,i,j,*pt,*off,*Qoff,*tps,maxm,maxp,one=1;
+
+void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
+         int *nx, int *ts, int *dt, int *nt,double *v,int *qc) {
+  double *Wy,*p0,*p1,*p2,*p3,done=1.0,dzero=0.0,*Xy0,*work,*work1,x;
+  int q,i,j,*pt,*off,*voff,*tps,maxm=0,maxp=0,one=1;
   char trans='T';
   /* obtain various indices */
   pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
   off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
-  Qoff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for Q submatrix starts */
-  tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts */
+  voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvector starts */
+  tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       off[q+1] = off[q] + p[q]*m[q]; /* submatrix start offsets */
       if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
       if (maxm<m[q]) maxm=m[q];
     } 
-    Qoff[i+1] = Qoff[i] + qc[i] * pt[i]; /* start of ith Q matrix */
-    if (maxp<pt[i]) maxp=pt[i];
+    if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else voff[i+1] = voff[i];  /* start of ith Q matrix */
+    if (maxp < pt[i]) maxp=pt[i];
     if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
-    else tps[i+1] = tps[i] + qc[i]; /* there is a tensor constraint to apply - reducing param count*/
+    else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
   Xy0 =  (double *) R_chk_calloc((size_t)maxp,sizeof(double));
   work =  (double *) R_chk_calloc((size_t)*n,sizeof(double));
@@ -200,8 +254,12 @@ void XWy(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n
   for (i=0;i<*nt;i++) {
     if (dt[i]>1) { /* it's a tensor */
       tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k+ts[i] * *n,n);
-      if (qc[i]>0) { /* there is a constraint to apply */
-        F77_CALL(dgemv)(&trans, pt+i, qc+i,&done,Q+Qoff[i],pt+i,Xy0,&one,&dzero,XWy + tps[i],&one);
+      if (qc[i]>0) { /* there is a constraint to apply Z'Xy0: form Q'Xy0 and discard first row... */
+        /* Q' = I - vv' */
+        for (x=0.0,p0=Xy0,p1=p0 + pt[i],p2=v+voff[i];p0<p1;p0++,p2++) x += *p0 * *p2; /* x = v'Xy0 */
+        p0=XWy + tps[i];p1 = p0 + pt[i]-1;p2 = v+voff[i] + 1;p3=Xy0+1;
+        for (;p0<p1;p0++,p2++,p3++) *p0 = *p3 - x * *p2; /* (I-vv')Xy0 less first element */
+        //F77_CALL(dgemv)(&trans, pt+i, qc+i,&done,Q+Qoff[i],pt+i,Xy0,&one,&dzero,XWy + tps[i],&one);
       } else { /* straight copy */
         for (p0=Xy0,p1=p0+pt[i],p2=XWy+tps[i];p0<p1;p0++,p2++) *p2 = *p0;
       }
@@ -211,11 +269,11 @@ void XWy(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n
     }
   }
   R_chk_free(Wy); R_chk_free(Xy0); R_chk_free(work); R_chk_free(work1); 
-  R_chk_free(pt); R_chk_free(off); R_chk_free(Qoff); R_chk_free(tps);
+  R_chk_free(pt); R_chk_free(off); R_chk_free(voff); R_chk_free(tps);
 } /* XWy */
 
-void XWX(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx, int *ts, int *dt, int *nt,
-         double *Q,int *qc,int *nthreads) {
+void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx, int *ts, int *dt, int *nt,
+         double *v,int *qc,int *nthreads) {
 /* This version uses open MP by column, within sub-block.
 
    An alternative in which one thread did each sub-block scaled poorly, largely 
@@ -226,22 +284,18 @@ void XWX(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx,
    k contains nx index vectors. If kj and Xj represent the jth sub-matrix and index vector 
    then the ith row of the corresponding full sub-matrix is Xj[kj[i],]. The blocks of Xt 
    need not be directly given by terms like Xj[kj[i],], some are actually given by row 
-   tensors of several such matrices. Conceptually Xt has nt < nx blocks (terms) and the ith 
-   block starts at sub-matriux  ts[i] of X, and is made up of the row tensor produce of 
+   tensors of several such matrices. Conceptually Xt has nt <= nx blocks (terms) and the ith 
+   block starts at sub-matrix  ts[i] of X, and is made up of the row tensor produce of 
    dt[i] consecutive sub-matrices. 
     
-   Tensor product terms may have constraint matrices Q, which post multiply the tensor product 
-   (typically imposing approximate sum-to-zero constraints). qc contains the number of columns 
-   Q for each of the nt terms. It should be zero for a singleton term or a tensor product with 
-   no constraints. Otherwise qc contains the number of columns of Q - typically one less than 
-   the total number of coeffs for the tensor prodoct. 
+   Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
+   (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
+   dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
   
-   NOTE: ideally tensor product constraints would be implemented using single householder 
-   rotations.  
 */  
-  int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*Qoff,pa,pb,kk,dk,rk,*start; 
+  int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*voff,pa,pb,kk,dk,rk,*start; 
   double done=1.0,dzero=0.0,*p0,*p1,*p2, *Xi,*temp,*tempn,*xwx,*xwx0,
-         *XiB,*tempB,*tempnB;
+    *XiB,*tempB,*tempnB,*x0,*x1,x;
   char trans='T',not_trans='N';
   #ifndef SUPPORT_OPENMP
   *nthreads = 1;
@@ -253,7 +307,7 @@ void XWX(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx,
   pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
   pd = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* storage for last marginal size */
   off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
-  Qoff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for Q submatrix starts */
+  voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvectors starts */
   tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts */
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) {
@@ -262,10 +316,10 @@ void XWX(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx,
       if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
       if (maxm<m[q]) maxm=m[q];
     } 
-    Qoff[i+1] = Qoff[i] + qc[i] * pt[i]; /* start of ith Q matrix */
+    if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else voff[i+1] = voff[i]; /* start of ith v vector */
     if (maxp<pt[i]) maxp=pt[i];
     if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
-    else tps[i+1] = tps[i] + qc[i]; /* there is a tensor constraint to apply - reducing param count*/
+    else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
   tempB = (double *) R_chk_calloc((size_t)(maxm * *nthreads),sizeof(double));
   xwx = (double *) R_chk_calloc((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
@@ -321,20 +375,34 @@ void XWX(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx,
 
     /* if Xb is tensor, may need to apply constraint */
     if (dt[a]>1&&qc[a]>0) { /* first term is a tensor with a constraint */
-      /* copy xwx to xwx0 */
-      for (p0=xwx,p1=p0 + pt[b]*pt[a],p2=xwx0;p0<p1;p0++,p2++) *p2 = *p0;
+      ///* copy xwx to xwx0 */
+      //for (p0=xwx,p1=p0 + pt[b]*pt[a],p2=xwx0;p0<p1;p0++,p2++) *p2 = *p0;
       /* apply Qa' */
-      F77_CALL(dgemm)(&trans,&not_trans,qc+a,pt+b,pt+a, &done,
-		    Q+Qoff[a],pt+a,xwx0,pt+a,&dzero,xwx,qc+a);
-      pa = qc[a]; /* rows of xwx */
+      //F77_CALL(dgemm)(&trans,&not_trans,qc+a,pt+b,pt+a, &done,
+      //		    Q+Qoff[a],pt+a,xwx0,pt+a,&dzero,xwx,qc+a);
+      //pa = qc[a]; /* rows of xwx */
+      x0=x1=xwx; /* pointers to columns of xwx */ 
+      /* col by col form (I-vv')xwx, dropping first row... */
+      for (j=0;j<pt[b];j++) {
+        for (x=0.0,p0=x0,p1=x0+pt[a],p2=v+voff[a];p0<p1;p0++,p2++) x += *p0 * *p2;
+        for (p2=v+voff[a]+1,p1=x0+pt[a],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 *x;
+      }
+      pa = pt[a] -1;
     } else pa = pt[a];
     if (dt[b]>1&&qc[b]>0) { /* second term is a tensor with a constraint */
       /* copy xwx to xwx0 */
       for (p0=xwx,p1=p0 + pt[b]*pa,p2=xwx0;p0<p1;p0++,p2++) *p2 = *p0;
-      /* apply Qa from right */
-      F77_CALL(dgemm)(&not_trans,&not_trans,&pa,qc+b,pt+b, &done,
-		      xwx0,&pa, Q+Qoff[b],pt+b,&dzero,xwx,&pa);
-      pb = qc[b]; /* rows of xwx */
+      /* row by row form xwx(I-vv') dropping first col... */
+      for (j=0;j<pa;j++) {
+        for (x=0.0,p0=xwx0+j,p1=v+voff[b],p2=p1+pt[b];p1<p2;p0 += pa,p1++) x += *p0 * *p1; 
+        x1 = xwx + j;
+        for (p0=xwx0+j+pa,p1=v+voff[b],p2=p1+pt[b],p1++;p1<p2;x1+=pa,p1++,p0+=pa) *x1 = *p0 - *p1 *x; 
+      }
+      pb=pt[b]-1;
+      ///* apply Qa from right */
+      //F77_CALL(dgemm)(&not_trans,&not_trans,&pa,qc+b,pt+b, &done,
+      //		      xwx0,&pa, Q+Qoff[b],pt+b,&dzero,xwx,&pa);
+      //pb = qc[b]; /* rows of xwx */
     } else pb=pt[b];
     /* copy result into overall XWX*/  
   
@@ -348,7 +416,7 @@ void XWX(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx,
   } /* end of block loop */
   R_chk_free(start);
   R_chk_free(XiB); R_chk_free(tempnB); R_chk_free(pt); R_chk_free(pd); R_chk_free(off);
-  R_chk_free(Qoff); R_chk_free(tps); R_chk_free(tempB); R_chk_free(xwx); R_chk_free(xwx0);
+  R_chk_free(voff); R_chk_free(tps); R_chk_free(tempB); R_chk_free(xwx); R_chk_free(xwx0);
   //R_chk_free(); R_chk_free(); R_chk_free(); R_chk_free(); R_chk_free();
 } /* XWX */
 

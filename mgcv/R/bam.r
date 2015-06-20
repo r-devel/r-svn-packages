@@ -196,7 +196,7 @@ discrete.mf <- function(gp,mf) {
 
   ## mf is the discretized model frame (actually a list), padded to have equal length rows
   ## k is the index vector for each sub-matrix, only the first nr rows of which are
-  ## to be retained  
+  ## to be retained...  
   list(mf=as.data.frame(mf0),k=k,nr=nr)
 } ## discrete.mf
 
@@ -252,7 +252,212 @@ mini.mf <-function(mf,chunk.size) {
   assign(".Random.seed", seed, envir = .GlobalEnv)
 
   mf0
-}
+} ## mini.mf
+
+
+bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
+    mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE, 
+    gc.level=0,nobs.extra=0,npt=1) {
+## This is a version of bgam.fit1 designed for use with discretized covariates. 
+## Difference to bgam.fit1 is that XWX, XWy and Xbeta are computed in C
+## code using compressed versions of X. Parallelization of XWX formation
+## is performed at the C level using openMP.
+## Alternative fitting iteration using Choleski only, including for REML.
+## basic idea is to take only one Newton step for parameters per iteration
+## and to control the step length to ensure that at the end of the step we
+## are not going uphill w.r.t. the REML criterion...
+
+    y <- mf[[gp$response]]
+    weights <- G$w 
+    conv <- FALSE
+    nobs <- nrow(mf)
+    offset <- G$offset 
+    family <- G$family
+    additive <- if (family$family=="gaussian"&&family$link=="identity") TRUE else FALSE
+    variance <- family$variance
+    dev.resids <- family$dev.resids
+    linkinv <- family$linkinv
+    mu.eta <- family$mu.eta
+    if (!is.function(variance) || !is.function(linkinv))
+        stop("'family' argument seems not to be a valid family object")
+    valideta <- family$valideta
+    if (is.null(valideta))
+        valideta <- function(eta) TRUE
+    validmu <- family$validmu
+    if (is.null(validmu))
+        validmu <- function(mu) TRUE
+    if (is.null(mustart)) {
+        eval(family$initialize)
+    }
+    else {
+        mukeep <- mustart
+        eval(family$initialize)
+        mustart <- mukeep
+    }
+ 
+    eta <- if (!is.null(etastart))
+         etastart
+    else family$linkfun(mustart)
+    
+    mu <- linkinv(eta)
+    if (!(validmu(mu) && valideta(eta)))
+       stop("cannot find valid starting values: please specify some")
+    dev <- sum(dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
+
+    conv <- FALSE
+   
+    G$coefficients <- rep(0,ncol(G$X))
+    class(G) <- "gam"  
+    
+    ## need to reset response and weights to post initialization values
+    ## in particular to deal with binomial properly...
+    G$y <- y
+    G$w <- weights
+
+    Sl <- Sl.setup(G) ## setup block diagonal penalty object
+    rank <- 0
+    for (b in 1:length(Sl)) rank <- rank + Sl[[b]]$rank
+    Mp <- ncol(G$X) - rank ## null space dimension
+    Nstep <- 0
+    for (iter in 1L:control$maxit) { ## main fitting loop 
+      devold <- dev
+      dev <- 0
+      ## accumulate the QR decomposition of the weighted model matrix
+      if (iter==1||!additive) {
+        qrx <- list() 
+        if (iter>1) {
+          ## form eta = X%*%beta
+          eta <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc)
+        }
+        mu <- linkinv(eta)
+        mu.eta.val <- mu.eta(eta)
+        good <- mu.eta.val != 0
+        mu.eta.val[!good] <- .1 ## irrelvant as weight is zero
+        z <- (eta - offset) + (G$y - mu)/mu.eta.val
+        w <- (G$w * mu.eta.val^2)/variance(mu)
+        dev <- sum(dev.resids(G$y,mu,G$w))
+        qrx$y.norm2 <- sum(w*z^2)
+        ## form X'WX efficiently...
+        qrx$R <- XWXd(G$Xd,w,G$kd,G$ts,G$dt,G$v,G$qc,npt)
+        ## form X'Wz efficiently...
+        qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ts,G$dt,G$v,G$qc)
+        if(gc.level>1) gc()
+     
+        ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
+        qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE)
+        qrx$f <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE)  
+        
+        G$n <- nobs
+      } else {  ## end of if (iter==1||!additive)
+        dev <- qrx$y.norm2 - sum(coef*qrx$f) ## actually penalized deviance
+      }
+  
+      ## rss.extra <- qrx$y.norm2 - sum(qrx$f^2) ## unused in chol based reml
+      
+      if (control$trace)
+         message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
+
+      if (!is.finite(dev)) stop("Non-finite deviance")
+
+      ## preparation for working model fit is ready, but need to test for convergence first
+      if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
+          conv <- TRUE
+          #coef <- start
+          break
+      }
+
+      ## use fast REML code
+      ## block diagonal penalty object, Sl, set up before loop
+
+      if (iter==1) { ## need to get initial smoothing parameters 
+        lambda.0 <- initial.sp(qrx$R,G$S,G$off,XX=TRUE) ## note that this uses the untrasformed X'X in qrx$R
+        ## convert intial s.p.s to account for L 
+        lsp0 <- log(lambda.0) ## initial s.p.
+        if (!is.null(G$L)) lsp0 <- as.numeric(coef(lm(lsp0 ~ G$L-1+offset(G$lsp0))))
+        n.sp <- length(lsp0) 
+      }
+     
+      ## carry forward scale estimate if possible...
+      if (scale>0) log.phi <- log(scale) else {
+        if (iter==1) {
+            if (is.null(coef)||qrx$y.norm2==0) lsp0[n.sp+1] <- log(var(as.numeric(G$y))*.05) else
+               lsp0[n.sp+1] <- log(qrx$y.norm2/(nobs+nobs.extra))
+        }
+      }
+
+      ## get beta, grad and proposed Newton step... 
+      ok <- FALSE
+      repeat { ## Take a Newton step to update log sp and phi
+        lsp <- lsp0 + Nstep
+        if (scale<=0) log.phi <- lsp[n.sp+1] 
+        prop <- Sl.fitChol(Sl,qrx$XX,qrx$f,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
+                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=dev*.Machine$double.eps^.7)
+        if (max(Nstep)==0) { 
+          Nstep <- prop$step;lsp0 <- lsp;
+          break 
+        } else {
+          if (sum(prop$grad*Nstep)>dev*1e-7) Nstep <- Nstep/2 else {
+            Nstep <- prop$step;lsp0 <- lsp;break;
+          }
+        }
+      } ## end of sp update
+
+      coef <- Sl.initial.repara(Sl,prop$beta,inverse=TRUE,both.sides=FALSE,cov=FALSE)
+
+      if (any(!is.finite(coef))) {
+          conv <- FALSE
+          warning(gettextf("non-finite coefficients at iteration %d",
+                  iter))
+          break
+      }
+    } ## end fitting iteration
+
+    if (!conv)
+       warning("algorithm did not converge")
+   
+    eps <- 10 * .Machine$double.eps
+    if (family$family == "binomial") {
+         if (any(mu > 1 - eps) || any(mu < eps))
+                warning("fitted probabilities numerically 0 or 1 occurred")
+    }
+    if (family$family == "poisson") {
+            if (any(mu < eps))
+                warning("fitted rates numerically 0 occurred")
+    }
+  object <- list(db.drho=prop$db,
+                 gcv.ubre=NA,mgcv.conv=conv,rank=prop$r,
+                 scale.estimated = scale<=0,outer.info=NULL,
+                 optimizer=c("perf","chol"))
+  object$coefficients <- coef
+  PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE)
+  F <- crossprod(PP,qrx$R) ## qrx$R contains X'WX in this case
+  object$edf <- diag(F)
+  object$edf1 <- 2*object$edf - rowSums(t(F)*F) 
+  object$sp <- exp(lsp[1:n.sp]) 
+  object$sig2 <- object$scale <- scale <- exp(log.phi)
+  object$Vp <- PP * scale
+  ## sp uncertainty correction... 
+  M <- ncol(prop$db) 
+  ev <- eigen(prop$hess,symmetric=TRUE)
+  ind <- ev$values <= 0
+  ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+  rV <- (ev$values*t(ev$vectors))[,1:M]
+  Vc <- crossprod(rV%*%t(prop$db))
+  Vc <- object$Vp + Vc  ## Bayesian cov matrix with sp uncertainty
+  object$edf2 <- rowSums(Vc*qrx$R)/scale
+  object$Vc <- Vc
+  object$outer.info <- list(grad = prop$grad,hess=prop$hess)  
+  
+  object$R <- pchol(qrx$R,npt)
+  piv <- attr(object$R,"pivot") 
+  object$R[,piv] <- object$R   
+  object$iter <- iter 
+  object$wt <- w
+  object$y <- G$y
+  rm(G);if (gc.level>0) gc()
+  object
+} ## end bgam.fitd
+
 
 bgam.fit1 <- function (G, mf, chunk.size, gp ,scale , coef=NULL,etastart = NULL,
     mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE, 
@@ -489,30 +694,6 @@ bgam.fit1 <- function (G, mf, chunk.size, gp ,scale , coef=NULL,etastart = NULL,
 
       coef <- Sl.initial.repara(Sl,prop$beta,inverse=TRUE,both.sides=FALSE,cov=FALSE)
 
-  #      fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
-  #                           log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
-  #                           nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt)
-  #      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE)
-  #      object <- list(coefficients=res$beta,db.drho=fit$d1b,
-  #                     gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
-  #                     message=fit$conv),rank=ncol(um$X),
-  #                     Ve=NULL,scale.estimated = scale<=0,outer.info=fit$outer.info,
-  #                      optimizer=c("perf","newton"))
- 
-  #      if (scale<=0) { ## get sp's and scale estimate
-  #        nsp <- length(fit$rho)
-  #        object$sig2 <- object$scale <- exp(fit$rho[nsp])
-  #        object$sp <- exp(fit$rho[-nsp]) 
-  #        nsp <- length(fit$rho.full)
-  #        object$full.sp <- exp(fit$rho.full[-nsp])
-  #      } else { ## get sp's
-  #        object$sig2 <- object$scale <- scale  
-  #        object$sp <- exp(fit$rho)
-  #        object$full.sp <- exp(fit$rho.full)
-  #      }
-  #      class(object)<-c("gam")               
-  #    }
-        
       if (any(!is.finite(coef))) {
           conv <- FALSE
           warning(gettextf("non-finite coefficients at iteration %d",
@@ -520,17 +701,6 @@ bgam.fit1 <- function (G, mf, chunk.size, gp ,scale , coef=NULL,etastart = NULL,
           break
       }
     } ## end fitting iteration
-
-#    if (method=="fREML") { ## do expensive cov matrix cal only at end
- #     res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale)
- #     object$edf <- res$edf
- #     object$edf1 <- res$edf1
- #     object$edf2 <- res$edf2
- #     object$hat <- res$hat
- #     object$Vp <- res$Vp
- #     object$Ve <- res$Ve
- #     object$Vc <- res$Vc
- #   }
 
     if (!conv)
        warning("algorithm did not converge")
@@ -1534,7 +1704,8 @@ tero <- function(sm) {
 
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
                 offset=NULL,method="fREML",control=list(),scale=0,gamma=1,knots=NULL,sp=NULL,
-                min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discretize=FALSE,sparse=FALSE,cluster=NULL,
+                min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discretize=FALSE,
+                sparse=FALSE,cluster=NULL,
                 nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
@@ -1618,9 +1789,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## and indices giving the discretized value for each element of model frame. 
       dk <- discrete.mf(gp,mf)
       mf0 <- dk$mf ## padded discretized model frame
-    } else mf0 <- mini.mf(mf,chunk.size)
-    
-    if (sparse) sparse.cons <- 2 else sparse.cons <- -1
+      sparse.cons <- 0 ## default constraints required for tensor terms
+    } else { 
+      mf0 <- mini.mf(mf,chunk.size)
+      if (sparse) sparse.cons <- 2 else sparse.cons <- -1
+    }
 
     G <- gam.setup(gp,pterms=pterms,
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
@@ -1629,12 +1802,46 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  paraPen=paraPen)
   
     if (discretize) {
+      v <- G$Xd <- list()
+      ## have to extract full parametric model matrix from pterms and mf
+      G$Xd[[1]] <- model.matrix(G$pterms,mf) 
+      G$kd <- cbind(1:nrow(mf),dk$k) ## add index for parametric part to index list
       ## create data object suitable for discrete data methods, from marginal model 
       ## matrices in G$smooth and G$X (stripping out padding, of course)
-
-      ## deal with tensor product constraints
-
-    }
+      if (ncol(G$Xd[[1]])) {
+        kb <- k <- 2; qc <- dt <- ts <- rep(0,length(G$smooth)+1)
+        dt[1] <- ts[1] <- 1 
+      } else {
+        kb <- k <- 1; qc <- dt <- ts <- rep(0,length(G$smooth))
+      }
+      for (i in 1:length(G$smooth)) {
+        ts[kb] <- k
+        if (inherits(G$smooth[[i]],"tensor.smooth")) {
+          dt[kb] <- length(G$smooth[[i]]$margin)
+          for (j in 1:dt[kb]) {
+            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X
+            k <- k + 1 
+          } 
+          ## deal with tensor smooth constraint
+          qrc <- attr(G$smooth[[i]],"qrc")
+          ## compute v such that Q = I-vv' and Q[,-1] is constraint null space basis
+          v[[kb]] <- qrc$qr/sqrt(qrc$qraux);v[[kb]][1] <- sqrt(qrc$qraux)
+          qc[kb] <- 1 ## indicate a constraint
+        } else {
+          v[[kb]] <- rep(0,0)
+          dt[kb] <- 1
+          G$Xd[[k]] <- G$X[1:dk$nr[i],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
+          k <- k + 1
+        }
+        kb <- kb + 1
+      }
+      ## ... Xd is the list of discretized model matrices, or marginal model matrices
+      ## kd contains indexing vectors, so the ith model matrix or margin is Xd[[i]][kd[i,],]
+      ## ts[i] is the starting matrix in Xd for the ith model matrix, while dt[i] is the number 
+      ## of elements of Xd that make it up (1 for a dingleton, more for a tensor). 
+      ## v is list of Householder vectors encoding constraints and qc the constraint indicator.
+      G$v <- v;G$ts <- ts;G$dt <- dt;G$qc <- qc
+    } ## if (discretize)
 
     G$sparse <- sparse
 
@@ -1712,7 +1919,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
                       gc.level=gc.level,use.chol=use.chol,npt=nthreads)
   } else if (method=="fcREML") {
-    object <- bgam.fit1(G, mf, chunk.size, gp ,scale ,nobs.extra=0,
+    object <- if (discretize) bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,
+                       control = control,npt=nthreads,gc.level=gc.level,...) else 
+                       bgam.fit1(G, mf, chunk.size, gp ,scale ,nobs.extra=0,
                        control = control,cl=cluster,npt=nthreads,gc.level=gc.level,
                        samfrac=1,...)
   } else {

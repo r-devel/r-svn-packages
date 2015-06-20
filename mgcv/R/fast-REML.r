@@ -166,6 +166,7 @@ Sl.setup <- function(G) {
       ind <- 1:Sl[[b]]$rank
       for (j in 1:length(Sl[[b]]$S)) { ## project penalties into range space of total penalty
         Sl[[b]]$S[[j]] <- t(U[,ind])%*%Sl[[b]]$S[[j]]%*%U[,ind]
+        Sl[[b]]$S[[j]] <- (t(Sl[[b]]$S[[j]]) + Sl[[b]]$S[[j]])/2 ## avoid over-zealous chol sym check
         Sl[[b]]$rS[[j]] <- mroot(Sl[[b]]$S[[j]],Sl[[b]]$rank)
       }
       Sl[[b]]$ind <- rep(FALSE,ncol(U))
@@ -180,6 +181,7 @@ Sl.setup <- function(G) {
         St <- St + Sl[[b]]$S[[j]]/S.norm
         lambda <- c(lambda,1/S.norm)
       } 
+      St <- (t(St) + St)/2  ## avoid over-zealous chol sym check
       St <- t(mroot(St,Sl[[b]]$rank))
       indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(St)-1)
       indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(St)-1)

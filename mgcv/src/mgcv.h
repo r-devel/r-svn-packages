@@ -68,6 +68,14 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi,
             int *m,double *ll,double *lb,double *lbb,double *dbeta,
             double *dH,int *deriv,int *nsp,int *nt);
 
+/* discretized covariate methods */
+void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx, int *ts, int *dt, int *nt,
+	  double *v,int *qc,int *nthreads);
+void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
+	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc);
+void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n, 
+	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc);
+
 /* various service routines */
 
 void tweedious(double *w,double *w1,double *w2, double *w1p,double *w2p,double *w2pp, 

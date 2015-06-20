@@ -2868,15 +2868,15 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
   if (is.null(sm$C)) {
     if (sparse.cons<=0) {
       sm$C <- matrix(colMeans(sm$X),1,ncol(sm$X))
-     ## following 2 lines implement sweep and drop constraints,
-     ## which are computationally faster than QR null space
-     ## however note that these are not appropriate for 
-     ## models with by-variables requiring constraint! 
-     if (sparse.cons == -1) { 
-       vcol <- apply(sm$X,2,var) ## drop least variable column
-       drop <- min((1:length(vcol))[vcol==min(vcol)])
-     }
-    } else { ## use sparse constraints for sparse terms
+      ## following 2 lines implement sweep and drop constraints,
+      ## which are computationally faster than QR null space
+      ## however note that these are not appropriate for 
+      ## models with by-variables requiring constraint! 
+      if (sparse.cons == -1) { 
+        vcol <- apply(sm$X,2,var) ## drop least variable column
+        drop <- min((1:length(vcol))[vcol==min(vcol)])
+      }
+    } else if (sparse.cons>0) { ## use sparse constraints for sparse terms
       if (sum(sm$X==0)>.1*sum(sm$X!=0)) { ## treat term as sparse
         if (sparse.cons==1) {
           xsd <- apply(sm$X,2,FUN=sd)
@@ -2894,7 +2894,9 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
       } else { ## it's not sparse anyway 
         sm$C <- matrix(colSums(sm$X),1,ncol(sm$X))
       }
-    } ## end of sparse constraint handling
+    } else { ## end of sparse constraint handling
+      sm$C <- matrix(colSums(sm$X),1,ncol(sm$X)) ## default dense case
+    }
     ## conSupplied <- FALSE
     alwaysCon <- FALSE
   } else { 

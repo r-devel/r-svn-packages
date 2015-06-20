@@ -3346,7 +3346,9 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
   V <- R%*%V[qrx$pivot,qrx$pivot,drop=FALSE]%*%t(R)
   V <- (V + t(V))/2
   ed <- eigen(V,symmetric=TRUE)
-
+  ## remove possible ambiguity from statistic...
+  siv <- sign(ed$vectors[1,]);siv[siv==0] <- 1
+  ed$vectors <- sweep(ed$vectors,2,siv,"*")
 
   k <- max(0,floor(rank)) 
   nu <- abs(rank - k)     ## fractional part of supplied edf
@@ -3391,15 +3393,23 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
      B <- ev%*%B%*%ev
      eb <- eigen(B,symmetric=TRUE)
      rB <- eb$vectors%*%diag(sqrt(eb$values))%*%t(eb$vectors)
+     vec1 <- vec
+     vec1[,k:k1] <- t(rB%*%diag(c(-1,1))%*%t(vec[,k:k1]))
      vec[,k:k1] <- t(rB%*%t(vec[,k:k1]))
   } else {
-    if (k==0) vec <- t(t(vec)*sqrt(1/ed$val[1])) else
-    vec <- t(t(vec)/sqrt(ed$val[1:k]))
+    vec1 <- vec <- if (k==0) t(t(vec)*sqrt(1/ed$val[1])) else
+            t(t(vec)/sqrt(ed$val[1:k]))
     if (k==1) rank <- 1
   }
- 
+  ## there is an ambiguity in the choise of test statistic, leading to slight
+  ## differences in the p-value computation depending on which of 2 alternatives 
+  ## is arbitrarily selected. Following allows both to be computed and p-values
+  ## averaged (can't average test stat as dist then unknown) 
   d <- t(vec)%*%(R%*%p)
   d <- sum(d^2) 
+  d1 <- t(vec1)%*%(R%*%p)
+  d1 <- sum(d1^2)
+  ##d <- d1 ## uncomment to avoid averaging
 
   rank1 <- rank ## rank for lower tail pval computation below
 
@@ -3414,15 +3424,15 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
        val[k1] <- (rp - val[k])
      }
    
-     if (res.df <= 0) pval <- liu2(d,val) else ##  pval <- davies(d,val)$Qq else
-     pval <- simf(d,val,res.df)
+     if (res.df <= 0) pval <- (liu2(d,val) + liu2(d1,val))/2 else ##  pval <- davies(d,val)$Qq else
+     pval <- (simf(d,val,res.df) + simf(d1,val,res.df))/2
   } else { pval <- 2 }
   ## integer case still needs computing, also liu/pearson approx only good in 
   ## upper tail. In lower tail, 2 moment approximation is better (Can check this 
   ## by simply plotting the whole interesting range as a contour plot!)
   if (pval > .5) { 
-    if (res.df <= 0) pval <- pchisq(d,df=rank1,lower.tail=FALSE) else
-    pval <- pf(d/rank1,rank1,res.df,lower.tail=FALSE)
+    if (res.df <= 0) pval <- (pchisq(d,df=rank1,lower.tail=FALSE)+pchisq(d1,df=rank1,lower.tail=FALSE))/2 else
+    pval <- (pf(d/rank1,rank1,res.df,lower.tail=FALSE)+pf(d1/rank1,rank1,res.df,lower.tail=FALSE))/2
   }
   list(stat=d,pval=min(1,pval),rank=rank)
 } ## end of testStat
