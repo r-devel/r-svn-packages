@@ -252,20 +252,20 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
 } ## end Sl.initial.repara
 
 
-ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
+ldetSblock <- function(rS,rho,deriv=2,root=FALSE,nt=1) {
 ## finds derivatives wrt rho of log|S| where 
 ## S = sum_i tcrossprod(rS[[i]]*exp(rho[i]))
 ## when S is full rank +ve def and no 
 ## reparameterization is required....
   lam <- exp(rho)
-  S <- tcrossprod(rS[[1]])*lam[1]
+  S <- tcrossprod(rS[[1]])*lam[1] ## parallel
   p <- ncol(S)
   m <- length(rS)
-  if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i]
+  if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i] ## parallel
   if (!root) E <- S
   d <- diag(S);d[d<=0] <- 1;d <- sqrt(d)
   S <- t(S/d)/d ## diagonally pre-condition
-  R <- suppressWarnings(chol(S,pivot=TRUE))
+  R <- if (nt>1) pchol(S,nt) else suppressWarnings(chol(S,pivot=TRUE))
   piv <- attr(R,"pivot")
   r <- attr(R,"rank")
   if (r<p) R[(r+1):p,(r+1):p] <- 0 ## fix chol bug
@@ -280,10 +280,10 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE) {
   RrS <- list();dS1 <- rep(0,m);dS2 <- matrix(0,m,m)
   ## use dlog|S|/drhoi = lam_i tr(S^{-1}S_i) = tr(R^{-T}rS[[i]]rS[[i]]R^{-1} etc...
   for (i in 1:m) {
-    RrS[[i]] <- forwardsolve(t(R),rS[[i]][piv,]/d[piv])
+    RrS[[i]] <- pforwardsolve(R,rS[[i]][piv,]/d[piv],nt=nt) ## note R transposed internally - unlike forwardsolve!!
     dS1[i] <- sum(RrS[[i]]^2)*lam[i] ## dlog|S|/drhoi
     if (deriv==2) { 
-      RrS[[i]] <- tcrossprod(RrS[[i]])
+      RrS[[i]] <- tcrossprod(RrS[[i]]) ## parallel
       for (j in 1:i) {
         dS2[i,j] <- dS2[j,i] <- -sum(RrS[[i]]*RrS[[j]])*lam[i]*lam[j]
       }

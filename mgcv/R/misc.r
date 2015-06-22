@@ -178,6 +178,13 @@ pchol <- function(A,nt=1,nb=30) {
   A
 }
 
+pforwardsolve <- function(R,B,nt=1) {
+## parallel forward solve via simple col splitting...
+ if (is.matrix(B)) B <- as.matrix(B)
+ .Call(C_mgcv_Rpforwardsolve,R,B,nt)
+
+}
+
 pRRt <- function(R,nt=1) {
 ## parallel RR' for upper triangular R
 ## following creates index of lower triangular elements...

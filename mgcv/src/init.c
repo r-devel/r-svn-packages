@@ -14,6 +14,7 @@ R_CallMethodDef CallMethods[] = {
   { "mgcv_Rpbsi",(DL_FUNC)&mgcv_Rpbsi,2},
   { "mgcv_RPPt",(DL_FUNC)&mgcv_RPPt,3},
   { "mgcv_Rpchol",(DL_FUNC)&mgcv_Rpchol,4},
+  { "mgcv_Rpforwardsolve",(DL_FUNC)&mgcv_Rpforwardsolve,3},
   {NULL, NULL, 0}
 };
 

@@ -515,7 +515,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
 
 SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT,SEXP NB) {
 /* routine to Choleski decompose n by n  matrix Amat with pivoting 
-   using routine mgcv_pchol to do the work. Uses NT parallel
+   using routine mgcv_bchol to do the work. Uses NT parallel
    threads. NB is block size.
 
    Designed for use with .call rather than .C
@@ -881,11 +881,9 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   return(r+1);
 } /* mgcv_piqr */
 
- SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT, SEXP NB) {
-/* routine to QR decompose N by P matrix X with pivoting using routine
-   dlarfg to generate housholder. This is direct 
-   implementation of 5.4.1 from Golub and van Loan (with correction 
-   of the pivot pivoting!). Work is done by mgcv_piqr.
+SEXP mgcv_Rpiqr(SEXP X, SEXP BETA,SEXP PIV,SEXP NT, SEXP NB) {
+/* routine to QR decompose N by P matrix X with pivoting.
+   Work is done by bpqr.
 
    Designed for use with .call rather than .C
    Return object is as 'qr' in R.
@@ -899,9 +897,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   p = ncols(X);
   x = REAL(X);beta = REAL(BETA);
   piv = INTEGER(PIV);
-  //int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt)
   r = bpqr(x,n,p,beta,piv,nb,nt); /* block version */
-  //r = mgcv_piqr(x,n,p,beta,piv,nt); /* level 2 version */
   /* should return rank (r+1) */
   rr = PROTECT(allocVector(INTSXP, 1));
   rrp = INTEGER(rr);
@@ -1685,7 +1681,55 @@ void mgcv_forwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc)
   char side='L',uplo='U',transa='T',diag='N';
   for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
   F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,c, bc, &alpha,R, r,C,c);
-}
+} /* mgcv_forwardsolve */
+
+void mgcv_pforwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc,int *nt) 
+/* parallel forward solve, using nt threads.
+   Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
+   of r by c argument R. B is c by bc. (Possibility of non square argument
+   R facilitates use with output from mgcv_qr). This is just a standard forward 
+   substitution loop.
+*/  
+{ double *pR,*pC,alpha=1.0;
+  int cpt,cpf,nth,i,cp;
+  char side='L',uplo='U',transa='T',diag='N';
+  cpt = *bc / *nt; /* cols per thread */
+  if (cpt * *nt < *bc) cpt++;
+  nth = *bc/cpt;
+  if (nth * cpt < *bc) nth++;
+  cpf = *bc - cpt * (nth-1); /* columns on final block */ 
+  for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
+  //Rprintf("r = %d, c= %d bc = %d, nth= %d, cpt = %d, cpf = %d",*r,*c,*bc,nth,cpt,cpf);
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel for private(i,cp) num_threads(nth)
+  #endif
+  for (i=0;i<nth;i++) {
+    if (i==nth-1) cp = cpf; else cp = cpt;
+    F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,c, &cp, &alpha,R, r,C + i * cpt * *c,c);
+  }
+} /* mgcv_pforwardsolve */
+
+SEXP mgcv_Rpforwardsolve(SEXP R, SEXP B,SEXP NT) {
+/* .Call wrapper for mgcv_pforwardsolve.
+   Return object a matrix.
+
+*/
+  int c,r,nt,bc;
+  double *R0,*b,*C0;
+  SEXP C;
+  nt = asInteger(NT);
+  r = nrows(R);c = ncols(R);
+  R0 = REAL(R);
+  bc = ncols(B);
+  b = REAL(B);  
+  C = PROTECT(allocMatrix(REALSXP,c,bc));
+  C0 = REAL(C);
+
+  mgcv_pforwardsolve(R0,&r,&c,b,C0,&bc,&nt);
+   
+  UNPROTECT(1);
+  return(C);
+} /* mgcv_Rpforwardsolve */
 
 
 void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {

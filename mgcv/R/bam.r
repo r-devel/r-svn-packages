@@ -345,15 +345,13 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
      
         ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
         qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE)
-        qrx$f <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE)  
+        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE)  
         
         G$n <- nobs
       } else {  ## end of if (iter==1||!additive)
         dev <- qrx$y.norm2 - sum(coef*qrx$f) ## actually penalized deviance
       }
   
-      ## rss.extra <- qrx$y.norm2 - sum(qrx$f^2) ## unused in chol based reml
-      
       if (control$trace)
          message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
 
@@ -390,7 +388,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
       repeat { ## Take a Newton step to update log sp and phi
         lsp <- lsp0 + Nstep
         if (scale<=0) log.phi <- lsp[n.sp+1] 
-        prop <- Sl.fitChol(Sl,qrx$XX,qrx$f,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
+        prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
                  phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=dev*.Machine$double.eps^.7)
         if (max(Nstep)==0) { 
           Nstep <- prop$step;lsp0 <- lsp;
@@ -635,14 +633,13 @@ bgam.fit1 <- function (G, mf, chunk.size, gp ,scale , coef=NULL,etastart = NULL,
  
         ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
         qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE)
-        qrx$f <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE)  
+        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE)  
         
         G$n <- nobs
       } else {  ## end of if (iter==1||!additive)
         dev <- qrx$y.norm2 - sum(coef*qrx$f) ## actually penalized deviance
       }
   
-      ## rss.extra <- qrx$y.norm2 - sum(qrx$f^2) ## unused in chol based reml
       
       if (control$trace)
          message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
@@ -680,7 +677,7 @@ bgam.fit1 <- function (G, mf, chunk.size, gp ,scale , coef=NULL,etastart = NULL,
       repeat { ## Take a Newton step to update log sp and phi
         lsp <- lsp0 + Nstep
         if (scale<=0) log.phi <- lsp[n.sp+1] 
-        prop <- Sl.fitChol(Sl,qrx$XX,qrx$f,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
+        prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
                  phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=dev*.Machine$double.eps^.7)
         if (max(Nstep)==0) { 
           Nstep <- prop$step;lsp0 <- lsp;
