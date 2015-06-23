@@ -17,7 +17,7 @@ for large datasets. \code{bam} can also compute on a cluster set up by the \link
 bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action=na.omit, offset=NULL,method="fREML",control=list(),
     scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
-    chunk.size=10000,rho=0,AR.start=NULL,sparse=FALSE,cluster=NULL,
+    chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,sparse=FALSE,cluster=NULL,
     nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,
     drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
 }
@@ -116,6 +116,9 @@ Reset to \code{4*p} if \code{chunk.size < 4*p} where \code{p} is the number of c
 \item{AR.start}{logical variable of same length as data, \code{TRUE} at first observation of an independent
 section of AR1 correlation. Very first observation in data frame does not need this. If \code{NULL} then 
 there are no breaks in AR1 correlaion.}
+
+\item{discrete}{with \code{method="fcREML"} it is possible to discretize covariates for storage and effiicency reasons.
+If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins. }
 
 \item{sparse}{Deprecated. If all smooths are P-splines and all tensor products are of the form \code{te(...,bs="ps",np=FALSE)} 
 then in principle computation could be made faster using sparse matrix methods, and you could set this to \code{TRUE}. 

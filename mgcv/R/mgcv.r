@@ -863,6 +863,8 @@ gam.setup.list <- function(formula,pterms,
   G
 } ## gam.setup.list
 
+
+
 gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
@@ -910,10 +912,6 @@ gam.setup <- function(formula,pterms,
     m <- 0
   } else  m <- length(split$smooth.spec) # number of smooth terms
   
-  #pmf <- data
-  #pmf$formula <- split$pf
-  #pterms <- attr(model.frame(split$pf,data,drop.unused.levels=TRUE),"terms") # pmf contains all data for parametric part
-
   G <- list(m=m,min.sp=min.sp,H=H,pearson.extra=0,
             dev.extra=0,n.true=-1,pterms=pterms) ## dev.extra gets added to deviance if REML/ML used in gam.fit3
   

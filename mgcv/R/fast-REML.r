@@ -193,7 +193,7 @@ Sl.setup <- function(G) {
   Sl ## the penalty list
 } ## end of Sl.setup
 
-Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
+Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) {
 ## Routine to apply initial Sl re-parameterization to model matrix X,
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
 ## or cov matrix. if inverse is TRUE and both.sides=FALSE then 
@@ -205,8 +205,10 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
         for (b in 1:length(Sl)) { 
           ind <- Sl[[b]]$start:Sl[[b]]$stop
           if (is.matrix(Sl[[b]]$D)) { 
-            if (both.sides) X[ind,] <- Sl[[b]]$D%*%X[ind,,drop=FALSE]
-            X[,ind] <- X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) 
+            if (both.sides) X[ind,] <- if (nt==1) Sl[[b]]$D%*%X[ind,,drop=FALSE] else 
+                                       pmmult(Sl[[b]]$D,X[ind,,drop=FALSE],FALSE,FALSE,nt=nt)
+            X[,ind] <- if (nt==1) X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) else
+                       pmmult(X[,ind,drop=FALSE],Sl[[b]]$D,FALSE,TRUE,nt=nt)
           } else { ## Diagonal D
             X[,ind] <- t(Sl[[b]]$D * t(X[,ind,drop=FALSE]))
             if (both.sides) X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
@@ -217,8 +219,10 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
           ind <- Sl[[b]]$start:Sl[[b]]$stop
           if (is.matrix(Sl[[b]]$D)) { 
             Di <- if(is.null(Sl[[b]]$Di)) t(Sl[[b]]$D) else Sl[[b]]$Di
-            if (both.sides) X[ind,] <- t(Di)%*%X[ind,,drop=FALSE]
-            X[,ind] <- X[,ind,drop=FALSE]%*%Di 
+            if (both.sides) X[ind,] <- if (nt==1) t(Di)%*%X[ind,,drop=FALSE] else
+                            pmmult(Di,X[ind,,drop=FALSE],TRUE,FALSE,nt=nt)
+            X[,ind] <- if (nt==1) X[,ind,drop=FALSE]%*%Di else
+                       pmmult(X[,ind,drop=FALSE],Di,FALSE,FALSE,nt=nt)
           } else { ## Diagonal D
             Di <- 1/Sl[[b]]$D
             X[,ind] <- t(Di * t(X[,ind,drop=FALSE]))
@@ -237,8 +241,10 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE) {
     ind <- Sl[[b]]$start:Sl[[b]]$stop
     if (is.matrix(X)) { 
       if (is.matrix(Sl[[b]]$D)) { 
-        if (both.sides)  X[ind,] <- t(Sl[[b]]$D)%*%X[ind,,drop=FALSE]
-        X[,ind] <- X[,ind,drop=FALSE]%*%Sl[[b]]$D 
+        if (both.sides)  X[ind,] <- if (nt==1) t(Sl[[b]]$D)%*%X[ind,,drop=FALSE] else 
+                         pmmult(Sl[[b]]$D,X[ind,,drop=FALSE],TRUE,FALSE,nt=nt)
+        X[,ind] <- if (nt==1) X[,ind,drop=FALSE]%*%Sl[[b]]$D else
+                   pmmult(X[,ind,drop=FALSE],Sl[[b]]$D,FALSE,FALSE,nt=nt)
       } else { 
         if (both.sides) X[ind,] <- Sl[[b]]$D * X[ind,,drop=FALSE]
         X[,ind] <- t(Sl[[b]]$D*t(X[,ind,drop=FALSE])) ## X[,ind]%*%diag(Sl[[b]]$D)
@@ -293,7 +299,7 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE,nt=1) {
   list(det = 2*sum(log(diag(R))+log(d[piv])),det1=dS1,det2=dS2,E=E)
 } ## ldetSblock
 
-ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE) {
+ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1) {
 ## Get log generalized determinant of S stored blockwise in an Sl list.
 ## If repara=TRUE multi-term blocks will be re-parameterized using gam.reparam, and
 ## a re-parameterization object supplied in the returned object.
@@ -331,7 +337,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE) {
       ## call gam.reparam to deal with this block
       ## in a stable way...
       grp <- if (repara) gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=2) else 
-             ldetSblock(Sl[[b]]$rS,rho[ind],deriv=2,root=root)
+             ldetSblock(Sl[[b]]$rS,rho[ind],deriv=2,root=root,nt=nt)
       Sl[[b]]$lambda <- exp(rho[ind])
       ldS <- ldS + grp$det
       ## next deal with the derivatives...
@@ -649,7 +655,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
 
   ## get log|S|_+ without stability transform... 
   fixed <- rep(FALSE,length(rho))
-  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=FALSE,repara=FALSE)
+  ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=FALSE,repara=FALSE,nt=nt)
   
   ## now the Choleki factor of the penalized Hessian... 
   #XXp <- XX+crossprod(ldS$E) ## penalized Hessian
@@ -732,7 +738,7 @@ Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NU
   phi <- exp(log.phi)
   if (is.null(nobs)) nobs <- n
   ## get log|S|_+ stably...
-  ldS <- ldetS(Sl,rho,fixed,np,root=TRUE)
+  ldS <- ldetS(Sl,rho,fixed,np,root=TRUE,nt=nt)
   ## apply resulting stable re-parameterization to X...
   X <- Sl.repara(ldS$rp,X)
   ## get pivoted QR decomp of augmented model matrix (in parallel if nt>1)
@@ -982,7 +988,7 @@ Sl.Xprep <- function(Sl,X,nt=1) {
 ## this routine applies preliminary Sl transformations to X
 ## tests for structural identifibility problems and drops
 ## un-identifiable parameters.
-  X <- Sl.initial.repara(Sl,X,inverse=FALSE,both.sides=FALSE,cov=FALSE) ## apply re-para used in Sl to X
+  X <- Sl.initial.repara(Sl,X,inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=nt) ## apply re-para used in Sl to X
   id <- ident.test(X,attr(Sl,"E"),nt=nt) ## deal with structural identifiability
   ## id contains drop, undrop, lambda
   if (length(id$drop)>0) { ## then there is something to do here 
@@ -996,7 +1002,7 @@ Sl.Xprep <- function(Sl,X,nt=1) {
 } ## end Sl.Xprep
 
 
-Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L) {
+Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L,nt=nt) {
 ## reverse the various fitting re-parameterizations.
 ## X0 is the orginal model matrix before any re-parameterization
 ## or parameter dropping. Sl is also the original *before parameter 
@@ -1004,16 +1010,17 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L) {
   np <- ncol(X0)
   beta <- rep(0,np)
   beta[undrop] <- Sl.repara(fit$rp,fit$beta,inverse=TRUE)
-  beta <- Sl.initial.repara(Sl,beta,inverse=TRUE,both.sides=TRUE,cov=TRUE)
+  beta <- Sl.initial.repara(Sl,beta,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nt)
  
   if (cov) { 
     d1b <- matrix(0,np,ncol(fit$d1b))
     ## following construction a bit ugly due to Sl.repara assumptions...
     d1b[undrop,] <- t(Sl.repara(fit$rp,t(fit$d1b),inverse=TRUE,both.sides=FALSE))
-    for (i in 1:ncol(d1b)) d1b[,i] <- Sl.initial.repara(Sl,as.numeric(d1b[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE) ## d beta / d rho matrix
+    for (i in 1:ncol(d1b)) d1b[,i] <- 
+        Sl.initial.repara(Sl,as.numeric(d1b[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nt) ## d beta / d rho matrix
     PP <- matrix(0,np,np)
     PP[undrop,undrop] <-  Sl.repara(fit$rp,fit$PP,inverse=TRUE)
-    PP <- Sl.initial.repara(Sl,PP,inverse=TRUE,both.sides=TRUE,cov=TRUE)
+    PP <- Sl.initial.repara(Sl,PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nt)
     #XPP <- crossprod(t(X0),PP)*X0
     #hat <- rowSums(XPP);edf <- colSums(XPP)
     XPP <- crossprod(t(X0),PP)

@@ -31,8 +31,6 @@
 #include <omp.h>
 #endif
 
-
-
 /* basic extraction operations */ 
 
 void singleXj(double *Xj,double *X, int *m, int *k, int *n,int *j) {
