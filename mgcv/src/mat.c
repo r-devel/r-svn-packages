@@ -1031,7 +1031,22 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
   #endif
 } /* end mgcv_pmmult */
 
+void pcrossprod(double *B, double *A,int *r, int *c,int *t,int *nt,int *nb) {
+/* B=A'A if t==0 and B==AA' otherwise. A is r by c. nb^2 is the target number of elements in a block. 
+   nt is the number of threads to use. B is c by c if t==0, and r by r otherwise.
+*/
+    int m,rb,cb,rf,cf;
+  /* first obtain the number of blocks to use, m, and integer multiple of nt. */
+  m = *nt;
+  rb= *r/m; /* rows per block */
+  cb= *c/m; /* cols per block */
+  while (rb * cb > *nb * *nb) {
+    m*=2;rb= *r/m;cb= *c/m; /* double the number of blocks */
+  }
+  if (rb<1||rb*m< *r) rb++; if (cb<1||cb*m< *c) cb++;
+  rf = *r - (m-1)*rb; cf = *c - (m-1)*cb;
 
+} /* pcrossprod */
 
 void getXtX0(double *XtX,double *X,int *r,int *c)
 /* form X'X (nearly) as efficiently as possible - BLAS free

@@ -189,7 +189,9 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
   ## pad mf0 so that all rows are the same length
   ## padding is necessary if gam.setup is to be used for setup
   maxr <- max(nr) 
-  
+  pmf0 <- mini.mf(pmf,maxr)
+  if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
+  mf0 <- c(mf0,pmf0)
   for (i in 1:length(mf0)) {
     me <- length(mf0[[i]]) 
     if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
