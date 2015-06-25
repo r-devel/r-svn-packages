@@ -225,7 +225,7 @@ mini.mf <-function(mf,chunk.size) {
   set.seed(66)  
   ## randomly sample from original frame...
   ind <- sample(1:n,chunk.size)
-  mf0 <- mf[ind,]
+  mf0 <- mf[ind,,drop=FALSE]
   ## ... now need to ensure certain sorts of representativeness
 
   ## work through elements collecting the rows containing 

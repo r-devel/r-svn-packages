@@ -2095,7 +2095,7 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
                          idLinksBases=TRUE,scalePenalty=TRUE,
-                         keepData=FALSE,scale.est="pearson") 
+                         keepData=FALSE,scale.est="fletcher") 
 # Control structure for a gam. 
 # irls.reg is the regularization parameter to use in the GAM fitting IRLS loop.
 # epsilon is the tolerance to use in the IRLS MLE loop. maxit is the number 
@@ -2105,7 +2105,7 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
 # rank.tol is the tolerance to use for rank determination
 # outerPIsteps is the number of performance iteration steps used to intialize
 #                         outer iteration
-{   scale.est <- match.arg(scale.est,c("robust","pearson","deviance"))
+{   scale.est <- match.arg(scale.est,c("fletcher","pearson","deviance"))
     if (!is.numeric(nthreads) || nthreads <1) stop("nthreads must be a positive integer") 
     if (!is.numeric(irls.reg) || irls.reg <0.0) stop("IRLS regularizing parameter must be a non-negative number.")
     if (!is.numeric(epsilon) || epsilon <= 0) 

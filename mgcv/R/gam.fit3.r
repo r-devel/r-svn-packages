@@ -647,21 +647,27 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            mu <- linkinv(eta)
          }
          trA <- oo$trA;
-         
-         wpr <- (y-mu) *sqrt(weights/family$variance(mu)) ## weighted pearson residuals
-         se <- gam.scale(wpr,wdr,n.true-trA,dev.extra) ## get scale estimates
-         pearson.warning <- NULL
-         if (control$scale.est=="pearson") { 
-           scale.est <- se$pearson
-           if (scale.est > 4 * se$robust) pearson.warning <- TRUE
-         } else scale.est <- if (control$scale.est=="deviance") se$deviance else se$robust
+                  
+#         wpr <- (y-mu) *sqrt(weights/family$variance(mu)) ## weighted pearson residuals
+#         se <- gam.scale(wpr,wdr,n.true-trA,dev.extra) ## get scale estimates
+#         pearson.warning <- NULL
+#         if (control$scale.est=="pearson") { 
+#           scale.est <- se$pearson
+#           if (scale.est > 4 * se$robust) pearson.warning <- TRUE
+#         } else scale.est <- if (control$scale.est=="deviance") se$deviance else se$robust
 
-         #pearson <- sum(weights*(y-mu)^2/family$variance(mu)) ## Pearson statistic
+         if (control$scale.est%in%c("pearson","fletcher","Pearson","Fletcher")) {
+            pearson <- sum(weights*(y-mu)^2/family$variance(mu))
+            scale.est <- (pearson+dev.extra)/(n.true-trA)
+            if (control$scale.est%in%c("fletcher","Fletcher")) { ## Apply Fletcher (2012) correction
+              s.bar = mean(family$dvar(mu)*(y-mu)*sqrt(weights)/family$variance(mu))
+              if (is.finite(s.bar)) scale.est <- scale.est/(1+s.bar)
+            }
+         } else { ## use the deviance estimator
+           scale.est <- (dev+dev.extra)/(n.true-trA)
+         }
 
-         #scale.est <- (pearson+dev.extra)/(n.true-trA)
-
-         #scale.est <- (dev+dev.extra)/(n.true-trA)
-         reml.scale <- NA  
+        reml.scale <- NA  
 
         if (scoreType%in%c("REML","ML")) { ## use Laplace (RE)ML
           
@@ -825,7 +831,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     list(coefficients = coef, residuals = residuals, fitted.values = mu, 
          family = family, linear.predictors = eta, deviance = dev, 
         null.deviance = nulldev, iter = iter, weights = wt, working.weights=ww,prior.weights = weights, 
-        df.null = nulldf, y = y, converged = conv,pearson.warning = pearson.warning,
+        df.null = nulldf, y = y, converged = conv,##pearson.warning = pearson.warning,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
@@ -929,7 +935,7 @@ gam.fit3.post.proc <- function(X,L,S,off,object) {
   edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
 
   ## check on plausibility of scale (estimate)
-  if (object$scale.estimated&&!is.null(object$pearson.warning)) warning("Pearson scale estimate maybe unstable. See ?gam.scale.")
+  ##if (object$scale.estimated&&!is.null(object$pearson.warning)) warning("Pearson scale estimate maybe unstable. See ?gam.scale.")
 
   ## edf <- rowSums(PKt*t(sqrt(object$weights)*X))
   ## Ve <- PKt%*%t(PKt)*object$scale  ## frequentist cov
