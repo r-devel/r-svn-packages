@@ -180,9 +180,16 @@ pchol <- function(A,nt=1,nb=30) {
 
 pforwardsolve <- function(R,B,nt=1) {
 ## parallel forward solve via simple col splitting...
- if (is.matrix(B)) B <- as.matrix(B)
+ if (!is.matrix(B)) B <- as.matrix(B)
  .Call(C_mgcv_Rpforwardsolve,R,B,nt)
 
+}
+
+pcrossprod <- function(A,trans=FALSE,nt=1,nb=30) {
+## parallel cross prod A'A or AA' if trans==TRUE...
+ if (!is.matrix(A)) A <- as.matrix(A)
+ if (trans) A <- t(A)
+ .Call(C_mgcv_Rpcross,A,nt,nb)
 }
 
 pRRt <- function(R,nt=1) {

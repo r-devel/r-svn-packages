@@ -1031,22 +1031,84 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
   #endif
 } /* end mgcv_pmmult */
 
-void pcrossprod(double *B, double *A,int *r, int *c,int *t,int *nt,int *nb) {
-/* B=A'A if t==0 and B==AA' otherwise. A is r by c. nb^2 is the target number of elements in a block. 
-   nt is the number of threads to use. B is c by c if t==0, and r by r otherwise.
+void pcrossprod(double *B, double *A,int *R, int *C,int *nt,int *nb) {
+/* B=A'A if t==0. A is R by C. nb^2 is the target number of elements in a block. 
+   nt is the number of threads to use. B is C by C.
+   30/4 memorial edition 
 */
-    int m,rb,cb,rf,cf;
-  /* first obtain the number of blocks to use, m, and integer multiple of nt. */
-  m = *nt;
-  rb= *r/m; /* rows per block */
-  cb= *c/m; /* cols per block */
-  while (rb * cb > *nb * *nb) {
-    m*=2;rb= *r/m;cb= *c/m; /* double the number of blocks */
+  int M,N,nf,nrf,kmax,kk,i,r,c,k,bs,bn,as,an,cs,cn; 
+  char uplo = 'U',trans='T',ntrans='N'; 
+  double alpha=1.0,beta=1.0;
+  M = ceil(((double) *C)/ *nb);
+  N = ceil(((double) *R)/ *nb);
+  if (M==1) { /* perform single threaded crossprod */
+    beta = 0.0;
+    F77_CALL(dsyrk)(&uplo,&trans,C,R,&alpha,A,R,&beta,B,C);
+  } else {
+    nf = *C - (M-1) * *nb;  /* cols in last col block of A */
+    nrf = *R - (N-1) * *nb;  /* rows in last row block of A */
+    kmax = (M+1)*M/2; /* number of blocks in upper triangle */ 
+    #ifdef SUPPORT_OPENMP
+    #pragma omp parallel for private(kk,i,r,c,bn,bs,k,as,an,beta,cs,cn) num_threads(*nt)
+    #endif
+    for (kk=0;kk<kmax;kk++) { /* work through blocks on upper triangle */
+      i=kk;r=0;while (i >= M-r) { i -= M - r; r++;}; c = r + i; /* convert kk to row/col */
+      if (r==M-1) bn = nf; else bn = *nb; /* (row) B block size */
+      bs = r * *nb; /* (row) B block start */
+      if (c==r) { /* diagonal block */
+        for (k=0;k<N;k++) { /* work through row blocks of A */
+          as = k * *nb; /* A row block start */ 
+          if (k==N-1) an = nrf; else an = *nb; /* A row block size */ 
+          /* uplo 'U' or 'L' for upper/lower tri. trans = 'T' for A'A.*/
+          if (k) beta=1.0; else beta = 0.0; /* multiplier for B block */
+          F77_CALL(dsyrk)(&uplo,&trans,&bn, /* cols of A block */
+			&an, /* rows of A block */ 
+                        &alpha,A + as + *R * bs, /* start of A block */
+                        R, /* R is physical number of rows in A */
+                        &beta,B + bs + *C * bs,C);
+        }
+      } else {
+	cs = c * *nb; /* b col start */
+        if (c==M-1) cn = nf; else cn = *nb; /* b col block size */
+        for (k=0;k<N;k++) { /* work through row blocks of A */
+          as = k * *nb; /* A row block start */ 
+          if (k==N-1) an = nrf; else an = *nb; /* A row block size */ 
+          /* uplo 'U' or 'L' for upper/lower tri. trans = 'T' for A'A.*/
+          if (k) beta=1.0; else beta = 0.0; /* multiplier for B block */
+          F77_CALL(dgemm)(&trans,&ntrans,
+                          &bn,&cn,&an, 
+                          &alpha,A + *R * bs + as, 
+                          R,A + *R * cs + as,R,&beta, B + bs + *C * cs, C);
+        }
+      }
+    }
   }
-  if (rb<1||rb*m< *r) rb++; if (cb<1||cb*m< *c) cb++;
-  rf = *r - (m-1)*rb; cf = *c - (m-1)*cb;
-
+  /* fill in lower block */
+  for (r=0; r < *C;r++) for (c=0;c < r;c++) B[r + *C * c] = B[c + *C * r];
 } /* pcrossprod */
+
+
+SEXP mgcv_Rpcross(SEXP A, SEXP NT,SEXP NB) {
+/* .Call wrapper for pcrossproduct - forms A'A using 
+   NT threads and blocksize NB.
+   Return object a matrix.
+*/
+  int c,r,nt,nb;
+  double *A0,*B0;
+  SEXP B;
+  nt = asInteger(NT); /* number of threads */
+  nb = asInteger(NB); /* block size */
+  r = nrows(A);c = ncols(A);
+  A0 = REAL(A);  
+  B = PROTECT(allocMatrix(REALSXP,c,c));
+  B0 = REAL(B);
+  
+  pcrossprod(B0,A0,&r,&c,&nt,&nb);
+   
+  UNPROTECT(1);
+  return(B);
+} /* mgcv_Rpcross */
+
 
 void getXtX0(double *XtX,double *X,int *r,int *c)
 /* form X'X (nearly) as efficiently as possible - BLAS free

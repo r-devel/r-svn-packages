@@ -10,6 +10,8 @@
   choice of test statistic that could lead to p-value changing somewhat between 
   platforms.   
 
+* gamm now warns if attempt is made to use extended family.
+
 * step fail logic improved for "fREML" optimization in 'bam'.
 
 * fix of openMP error in mgcv_pbsi, which could cause a problem in 

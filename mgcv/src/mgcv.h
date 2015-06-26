@@ -132,6 +132,8 @@ SEXP mgcv_Rpchol(SEXP Amat,SEXP PIV,SEXP NT,SEXP NB);
 void dchol(double *dA, double *R, double *dR,int *p);
 void vcorr(double *dR,double *Vr,double *Vb,int *p,int *M);
 SEXP mgcv_Rpforwardsolve(SEXP R, SEXP B,SEXP NT);
+SEXP mgcv_Rpcross(SEXP A, SEXP NT,SEXP NB);
+
 /* basis constructor/prediction routines*/
 
 void crspl(double *x,int *n,double *xk, int *nk,double *X,double *S, double *F,int *Fsupplied);
