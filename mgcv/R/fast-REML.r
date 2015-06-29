@@ -264,10 +264,12 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE,nt=1) {
 ## when S is full rank +ve def and no 
 ## reparameterization is required....
   lam <- exp(rho)
-  S <- tcrossprod(rS[[1]])*lam[1] ## parallel
+  S <- pcrossprod(rS[[1]],trans=TRUE,nt=nt)*lam[1]
+      ##tcrossprod(rS[[1]])*lam[1] ## parallel
   p <- ncol(S)
   m <- length(rS)
-  if (m > 1) for (i in 2:m) S <- S + tcrossprod(rS[[i]])*lam[i] ## parallel
+  if (m > 1) for (i in 2:m) S <- S + pcrossprod(rS[[i]],trans=TRUE,nt=nt)*lam[i]
+  ## S <- S + tcrossprod(rS[[i]])*lam[i] ## parallel
   if (!root) E <- S
   d <- diag(S);d[d<=0] <- 1;d <- sqrt(d)
   S <- t(S/d)/d ## diagonally pre-condition
@@ -289,7 +291,8 @@ ldetSblock <- function(rS,rho,deriv=2,root=FALSE,nt=1) {
     RrS[[i]] <- pforwardsolve(R,rS[[i]][piv,]/d[piv],nt=nt) ## note R transposed internally - unlike forwardsolve!!
     dS1[i] <- sum(RrS[[i]]^2)*lam[i] ## dlog|S|/drhoi
     if (deriv==2) { 
-      RrS[[i]] <- tcrossprod(RrS[[i]]) ## parallel
+      RrS[[i]] <- pcrossprod(RrS[[i]],trans=TRUE,nt=nt)
+      #tcrossprod(RrS[[i]]) ## parallel
       for (j in 1:i) {
         dS2[i,j] <- dS2[j,i] <- -sum(RrS[[i]]*RrS[[j]])*lam[i]*lam[j]
       }
