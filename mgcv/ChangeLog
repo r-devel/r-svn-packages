@@ -6,6 +6,9 @@
 ** 'gam' default scale parameter changed to modified Pearson estimator 
   developed by Fletcher 2012 Biometrika 99(1), 230-237. See ?gam.scale.
 
+* jagam prior variance on fixed effects is now set with reference to data and 
+  model during initialization step.
+
 * p-value computation for smooth terms modified to avoid an ambiguity in the 
   choice of test statistic that could lead to p-value changing somewhat between 
   platforms.   
