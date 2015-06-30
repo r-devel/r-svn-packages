@@ -1,3 +1,9 @@
+2015-06-29  Brian Ripley
+
+	* DESCRIPTION: version is 3.1-121
+
+	* NAMESPACE: tweak imports.
+
 2015-02-20  Brian Ripley
 
 	* DESCRIPTION: version is 3.1-120
