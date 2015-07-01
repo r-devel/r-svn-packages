@@ -9,6 +9,8 @@
 * jagam prior variance on fixed effects is now set with reference to data and 
   model during initialization step.
 
+* bam could lose offset for small datasets in gaussian additive case. fixed. 
+
 * p-value computation for smooth terms modified to avoid an ambiguity in the 
   choice of test statistic that could lead to p-value changing somewhat between 
   platforms.   

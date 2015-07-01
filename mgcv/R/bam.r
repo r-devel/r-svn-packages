@@ -1530,7 +1530,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      G$y <- mf[[gp$response]]
    
    } else { ## n <= chunk.size
-     if (rho==0) qrx <- qr.update(sqrt(G$w)*G$X,sqrt(G$w)*G$y,use.chol=use.chol,nt=npt) else {
+     if (rho==0) qrx <- qr.update(sqrt(G$w)*G$X,sqrt(G$w)*(G$y-G$offset),use.chol=use.chol,nt=npt) else {
        row <- c(1,rep(1:n,rep(2,n))[-c(1,2*n)])
        weight <- c(1,rep(c(sd,ld),n-1))
        stop <- c(1,1:(n-1)*2+1)
@@ -1770,7 +1770,6 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     pmf <- eval(pmf, parent.frame()) # pmf contains all data for parametric part
     pterms <- attr(pmf,"terms") ## pmf only used for this and discretization, if selected.
    
-
     if (gc.level>0) gc()
 
     mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
@@ -1886,7 +1885,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
      
     G$min.edf<-G$nsdf #-dim(G$C)[1]
     if (G$m) for (i in 1:G$m) G$min.edf<-G$min.edf+G$smooth[[i]]$null.space.dim
-
+    G$discretize <- discretize
     G$formula<-formula
     ## environment(G$formula)<-environment(formula)
     environment(G$pterms) <- environment(G$terms) <- environment(G$pred.formula) <- 
@@ -1932,7 +1931,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
                       gc.level=gc.level,use.chol=use.chol,npt=nthreads)
   } else if (method=="fcREML") {
-    object <- if (discretize) bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,
+    object <- if (G$discretize) bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,
                        control = control,npt=nthreads,gc.level=gc.level,...) else 
                        bgam.fit1(G, mf, chunk.size, gp ,scale ,nobs.extra=0,
                        control = control,cl=cluster,npt=nthreads,gc.level=gc.level,
@@ -2014,15 +2013,16 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   names(object$coefficients) <- G$term.names
   names(object$edf) <- G$term.names
 
-  rm(G);if (gc.level>0) gc()
-
   ## note that predict.gam assumes that it must be ok not to split the 
   ## model frame, if no new data supplied, so need to supply explicitly
   class(object) <- c("bam","gam","glm","lm")
-  if (!discretize) object$linear.predictors <- 
+  if (!G$discretize) object$linear.predictors <- 
           as.numeric(predict.bam(object,newdata=object$model,block.size=chunk.size,cluster=cluster))
-  object$fitted.values <- family$linkinv(object$linear.predictors)
   
+  rm(G);if (gc.level>0) gc()
+
+  object$fitted.values <- family$linkinv(object$linear.predictors)
+   
   object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$prior.weights)) * 
                       sign(object$y-object$fitted.values)
   object$deviance <- sum(object$residuals^2)
