@@ -1836,7 +1836,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         if (inherits(G$smooth[[i]],"tensor.smooth")) {
           dt[kb] <- length(G$smooth[[i]]$margin)
           for (j in 1:dt[kb]) {
-            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X
+            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X ## BUG: not picking right length
             k <- k + 1 
           } 
           ## deal with tensor smooth constraint
@@ -1847,6 +1847,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         } else {
           v[[kb]] <- rep(0,0)
           dt[kb] <- 1
+          ## BUG: dk$nr[i] is wrong length index!!
           G$Xd[[k]] <- G$X[1:dk$nr[i],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
           k <- k + 1
         }
