@@ -720,7 +720,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   er$values <- abs(er$values)
   me <- max(er$values)*.Machine$double.eps^.5
   er$values[er$values<me] <- me
-  step <- reml1*0
+  step <- rep(0,length(uconv.ind))
   step[uconv.ind] <- -er$vectors%*%((t(er$vectors)%*%reml1)/er$values)
 
   ## limit the step length...

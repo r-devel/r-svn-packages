@@ -155,7 +155,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
   k <- matrix(0,nrow(mf),nk)
   ik <- 0 ## index counter
-  knames <- rep("",0) 
+  #knames <- rep("",0) 
   nr <- rep(0,nk) ## number of rows for term
   ## loop through the terms discretizing the covariates...
   for (i in 1:length(gp$smooth.spec)) {
@@ -164,7 +164,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
       for (j in 1:length(gp$smooth.spec[[i]]$margin)) { ## loop through margins
         mfd <- compress.df(mf[gp$smooth.spec[[i]]$margin[[j]]$term],m=mi)
         ik <- ik + 1
-        knames <- c(knames,names(mfd))
+   #     knames <- c(knames,names(mfd))
         k[,ik] <- attr(mfd,"index")
         nr[ik] <- nrow(mfd)
         mf0 <- c(mf0,mfd)
@@ -172,7 +172,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     } else { ## not te or ti...
       mfd <- compress.df(mf[gp$smooth.spec[[i]]$term],m=mi)
       ik <- ik + 1
-      knames <- c(knames,names(mfd))
+      #knames <- c(knames,names(mfd))
       k[,ik] <- attr(mfd,"index")
       nr[ik] <- nrow(mfd)
       mf0 <- c(mf0,mfd)
@@ -184,8 +184,8 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
       mf0[[gp$smooth.spec[[i]]$by]] <- rep(1,nr[ik]) ## actual by variables are handled by discrete methods
     }  
   } ## main term loop
-  colnames(k) <- knames
-  names(nr) <- knames
+  #colnames(k) <- knames
+  #names(nr) <- knames
   ## pad mf0 so that all rows are the same length
   ## padding is necessary if gam.setup is to be used for setup
   maxr <- max(nr) 
@@ -199,10 +199,15 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
   ## add response so that gam.setup can do its thing...
   mf0[[gp$response]] <- sample(mf[[gp$response]],maxr)
 
-  ## mf is the discretized model frame (actually a list), padded to have equal length rows
+  ## mf0 is the discretized model frame (actually a list), padded to have equal length rows
   ## k is the index vector for each sub-matrix, only the first nr rows of which are
-  ## to be retained...  
-  list(mf=as.data.frame(mf0),k=k,nr=nr)
+  ## to be retained... Use of check.names=FALSE ensures, e.g. 'offset(x)' not changed...
+
+  ## now copy back into mf so terms unchanged
+  mf <- mf[1:maxr,]
+  for (na in names(mf0)) mf[[na]] <- mf0[[na]]  
+
+  list(mf=mf,k=k,nr=nr)
 } ## discrete.mf
 
 mini.mf <-function(mf,chunk.size) {
