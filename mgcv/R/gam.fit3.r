@@ -862,7 +862,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
   ## Re-create the Hessian, if is.null(w) then X assumed to be root
   ## unpenalized Hessian...
   H <- if (is.null(w)) crossprod(X) else H <- t(X)%*%(w*X)
-  for (i in 1:M) {
+  if (M>0) for (i in 1:M) {
       ind <- off[i] + 1:ncol(S[[i]]) - 1
       H[ind,ind] <- H[ind,ind] + lambda[i+nth] * S[[i]]
   }
@@ -872,7 +872,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
   
   ## Create dH the derivatives of the hessian w.r.t. (all) the smoothing parameters...
   dH <- list()
-  for (i in 1:length(lambda)) {
+  if (length(lambda)>0) for (i in 1:length(lambda)) {
     ## If w==NULL use constant H approx...
     dH[[i]] <- if (is.null(w)) H*0 else t(X)%*%(dw[,i]*X) 
     if (i>nth) { 
@@ -884,9 +884,9 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
   ## derivatives w.r.t. optimization smoothing params.
   if (!is.null(L)) {
     dH1 <- dH;dH <- list()
-    for (j in 1:length(rho)) { 
+    if (length(rho)>0) for (j in 1:length(rho)) { 
       ok <- FALSE ## dH[[j]] not yet created
-      for (i in 1:nrow(L)) if (L[i,j]!=0.0) { 
+      if (nrow(L)>0) for (i in 1:nrow(L)) if (L[i,j]!=0.0) { 
         dH[[j]] <- if (ok) dH[[j]] + dH1[[i]]*L[i,j] else dH1[[i]]*L[i,j]
         ok <- TRUE
       }
@@ -914,7 +914,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
     b <- matrix(0,n.rep,p)
     for (i in 1:n.rep) {
       z <- rnorm(p)
-      for (j in 1:M) b[i,] <- b[i,] + dR[[j]]%*%z*(r[i,j]) 
+      if (M>0) for (j in 1:M) b[i,] <- b[i,] + dR[[j]]%*%z*(r[i,j]) 
     }
     Vfd <- crossprod(b)/n.rep
   }
