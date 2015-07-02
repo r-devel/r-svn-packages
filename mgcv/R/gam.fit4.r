@@ -2,7 +2,6 @@
 ## Routines for gam estimation beyond exponential family.
 
 
-
 dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
 ## What is available directly from the family are derivatives of the 
 ## deviance and link w.r.t. mu. This routine converts these to the
@@ -551,7 +550,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    rV <- T %*% rV   
    ## derivatives of coefs w.r.t. sps etc...
    db.drho <- if (deriv) T %*% matrix(oo$b1,ncol(x),ntot) else NULL 
-   dw.drho <- if (deriv) matrix(oo$w1,nrow(x),ntot) else NULL
+   dw.drho <- if (deriv) matrix(oo$w1,length(z),ntot) else NULL
    Kmat <- matrix(0,nrow(x),ncol(x)) 
    Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
