@@ -1107,8 +1107,9 @@ gam.fit5.post.proc <- function(object,Sl,L,S,off) {
     
     #dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
     #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
-    M <- length(off)
-    d <- ev$values; d[ind] <- 0;d[1:M] <- d[1:M] + 1/50 
+    #M <- length(off)
+    d <- ev$values; d[ind] <- 0;
+    d <- d + 1/50 #d[1:M] <- d[1:M] + 1/50 
     d <- 1/sqrt(d)
     Vr <- crossprod(d*t(ev$vectors))
     #Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
