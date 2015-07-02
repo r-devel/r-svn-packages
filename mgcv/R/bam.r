@@ -1843,8 +1843,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           ## deal with tensor smooth constraint
           qrc <- attr(G$smooth[[i]],"qrc")
           ## compute v such that Q = I-vv' and Q[,-1] is constraint null space basis
-          v[[kb]] <- qrc$qr/sqrt(qrc$qraux);v[[kb]][1] <- sqrt(qrc$qraux)
-          qc[kb] <- 1 ## indicate a constraint
+          if (inherits(qrc),"qr") {
+            v[[kb]] <- qrc$qr/sqrt(qrc$qraux);v[[kb]][1] <- sqrt(qrc$qraux)
+            qc[kb] <- 1 ## indicate a constraint
+          } else { 
+            v[[kb]] <- rep(0,0) ##
+            if (!inherits(qrc,"character")||qrc!="no constraints") warning("unknown tensor constraint type")
+          } 
         } else {
           v[[kb]] <- rep(0,0)
           dt[kb] <- 1
