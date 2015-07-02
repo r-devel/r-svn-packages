@@ -672,7 +672,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   piv <- attr(R,"pivot") #;rp[rp] <- 1:p
   if (r<p) { ## drop rank deficient terms...
     R <- R[1:r,1:r]
-    piv <- piv[1:2]
+    piv <- piv[1:r]
   }
   beta <- rep(0,p)
   beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
