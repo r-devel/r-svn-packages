@@ -1827,7 +1827,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## matrices in G$smooth and G$X (stripping out padding, of course)
       if (ncol(G$Xd[[1]])) {
         kb <- k <- 2; qc <- dt <- ts <- rep(0,length(G$smooth)+1)
-        dt[1] <- ts[1] <- 1 
+        dt[1] <- ts[1] <- 1;
+        dk$nr <- c(NA,dk$nr) ## need array index to match elements of Xd
       } else {
         kb <- k <- 1; qc <- dt <- ts <- rep(0,length(G$smooth))
       }
@@ -1836,7 +1837,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         if (inherits(G$smooth[[i]],"tensor.smooth")) {
           dt[kb] <- length(G$smooth[[i]]$margin)
           for (j in 1:dt[kb]) {
-            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X ## BUG: not picking right length
+            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],] ## BUG: not picking right length
             k <- k + 1 
           } 
           ## deal with tensor smooth constraint
@@ -1848,7 +1849,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           v[[kb]] <- rep(0,0)
           dt[kb] <- 1
           ## BUG: dk$nr[i] is wrong length index!!
-          G$Xd[[k]] <- G$X[1:dk$nr[i],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
+          G$Xd[[k]] <- G$X[1:dk$nr[k],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
           k <- k + 1
         }
         kb <- kb + 1
