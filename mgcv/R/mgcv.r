@@ -398,7 +398,10 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
 # missed. 
 # Note that with.pen is quite extreme, since you then pretty much only pick
 # up dependencies in the null spaces
-{ m <- length(sm)
+{ if (!with.pen) { ## check that's possible and reset if not!
+    with.pen <- nrow(Xp) < ncol(Xp) + sum(unlist(lapply(sm,function(x) ncol(x$X))))
+  }
+  m <- length(sm)
   if (m==0) return(sm)
   v.names<-array("",0);maxDim<-1
   for (i in 1:m) { ## collect all term names and max smooth `dim'
@@ -736,7 +739,7 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
 
 
 gam.setup.list <- function(formula,pterms,
-                     data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
+                    data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE) {
 ## version of gam.setup for when gam is called with a list of formulae, 

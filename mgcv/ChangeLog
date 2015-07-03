@@ -11,6 +11,9 @@
 
 * bam could lose offset for small datasets in gaussian additive case. fixed. 
 
+* gam.side now setup to include penalties in computations if fewer data than 
+  coefs (an exceedingly specialist topic). 
+
 * p-value computation for smooth terms modified to avoid an ambiguity in the 
   choice of test statistic that could lead to p-value changing somewhat between 
   platforms.   

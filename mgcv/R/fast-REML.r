@@ -685,7 +685,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   PP <- matrix(0,p,p)
   PP[piv,piv] <- if (nt==1) tcrossprod(P) else pRRt(P,nt) ## PP'
   PP <- t(PP/d)/d
-  ##ldetXXS <- 2*sum(log(diag(R))+log(d[piv])) ## log|X'X+S|
+  ldetXXS <- 2*sum(log(diag(R))+log(d[piv])) ## log|X'X+S|
   dXXS <- d.detXXS(ldS$Sl,PP,nt=nt) ## derivs of log|X'X+S|
 
   phi <- exp(log.phi)  
@@ -728,7 +728,8 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   if (ms>4) step <- 4*step/ms
 
   ## return the coefficient estimate, the reml grad and the Newton step...
-  list(beta=beta,grad=grad,step=step,db=dift$d1b,PP=PP,R=R,piv=piv,rank=r,hess=hess)
+  list(beta=beta,grad=grad,step=step,db=dift$d1b,PP=PP,R=R,piv=piv,rank=r,
+       hess=hess,ldetS=ldS$ldetS,ldetXXS=ldetXXS)
 } ## Sl.fitChol
 
 Sl.fit <- function(Sl,X,y,rho,fixed,log.phi=0,phi.fixed=TRUE,rss.extra=0,nobs=NULL,Mp=0,nt=1) {

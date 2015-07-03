@@ -432,27 +432,32 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
             if (any(mu < eps))
                 warning("fitted rates numerically 0 occurred")
     }
+  Mp <- G$nsdf
+  if (length(G$smooth)>1) for (i in 1:length(G$smooth)) Mp <- Mp + G$smooth[[i]]$null.space.dim
+  scale <- exp(log.phi)
+  reml <- (dev/scale - prop$ldetS + prop$ldetXXS + (length(y)-Mp)*log(2*pi*scale))/2
   object <- list(db.drho=prop$db,
-                 gcv.ubre=NA,mgcv.conv=conv,rank=prop$r,
+                 gcv.ubre=reml,mgcv.conv=conv,rank=prop$r,
                  scale.estimated = scale<=0,outer.info=NULL,
                  optimizer=c("perf","chol"))
   object$coefficients <- coef
   ## form linear predictor efficiently...
   object$linear.predictors <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc)
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
-  F <- crossprod(PP,qrx$R) ## qrx$R contains X'WX in this case
+  F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt)  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
   object$edf <- diag(F)
   object$edf1 <- 2*object$edf - rowSums(t(F)*F) 
   object$sp <- exp(lsp[1:n.sp]) 
-  object$sig2 <- object$scale <- scale <- exp(log.phi)
+  object$sig2 <- object$scale <- scale
   object$Vp <- PP * scale
+  object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt) ## F%*%object$Vp
   ## sp uncertainty correction... 
   M <- ncol(prop$db) 
   ev <- eigen(prop$hess,symmetric=TRUE)
   ind <- ev$values <= 0
   ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
   rV <- (ev$values*t(ev$vectors))[,1:M]
-  Vc <- crossprod(rV%*%t(prop$db))
+  Vc <- pcrossprod(rV%*%t(prop$db),nt=npt)
   Vc <- object$Vp + Vc  ## Bayesian cov matrix with sp uncertainty
   object$edf2 <- rowSums(Vc*qrx$R)/scale
   object$Vc <- Vc
