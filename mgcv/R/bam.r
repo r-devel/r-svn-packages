@@ -442,7 +442,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
                  optimizer=c("perf","chol"))
   object$coefficients <- coef
   ## form linear predictor efficiently...
-  object$linear.predictors <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc)
+  object$linear.predictors <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc) + G$offset
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
   F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt)  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
   object$edf <- diag(F)
