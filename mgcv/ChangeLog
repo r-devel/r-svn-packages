@@ -39,6 +39,10 @@
 * bam(...,sparse=TRUE) deprecated as no examples found where it is really 
   worthwhile (but let me know if this is a problem). 
 
+* marginal model matrices in tensor product smooths now stored in 
+  re-parameterized form, if re-parameterization happened (shouldn't change 
+  anything!).
+
 * initial.spg could fail if response vector had dim attributes and extended 
   family used. fixed.
 

@@ -603,8 +603,8 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
   }
   XP <- list()
   if (object$np) # reparameterize 
-  for (i in 1:m)
-  { if (object$margin[[i]]$dim==1) { 
+  for (i in 1:m) {
+    if (object$margin[[i]]$dim==1) { 
       # only do classes not already optimal (or otherwise excluded)
       if (!inherits(object$margin[[i]],c("cs.smooth","cr.smooth","cyclic.smooth","random.effect"))) {
         x <- get.var(object$margin[[i]]$term,data)
@@ -625,7 +625,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
           warning("reparameterization unstable for margin: not done")
         } else {
           XP[[i]] <- sv$v%*%(t(sv$u)/sv$d)
-          Xm[[i]] <- Xm[[i]]%*%XP[[i]]
+          object$margin[[i]]$X <- Xm[[i]] <- Xm[[i]]%*%XP[[i]]
           Sm[[i]] <- t(XP[[i]])%*%Sm[[i]]%*%XP[[i]]
         }
       } else XP[[i]] <- NULL
