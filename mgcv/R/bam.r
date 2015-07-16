@@ -133,6 +133,25 @@ compress.df <- function(dat,m=NULL) {
     xu <- uniquecombs(as.matrix(dat))
   }  
   k <- attr(xu,"index")
+  ## shuffle rows in order to avoid induced dependencies between discretized
+  ## covariates (which can mess up gam.side)...
+  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+  if (inherits(seed,"try-error")) {
+     runif(1)
+     seed <- get(".Random.seed",envir=.GlobalEnv)
+  }
+  kind <- RNGkind(NULL)
+  RNGkind("default","default")
+  set.seed(1) ## ensure repeatability
+  
+  ii <- sample(1:nrow(xu),nrow(xu),replace=FALSE) ## shuffling index
+  
+  RNGkind(kind[1],kind[2])
+  assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+  
+  xu[ii,] <- xu  ## shuffle rows of xu
+  k <- ii[k]     ## correct k index accordingly
+  ## ... finished shuffle
   xu <- as.data.frame(xu)
   ## set names and levels to match dat...
   names(xu) <- names(dat)
@@ -155,7 +174,6 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
   k <- matrix(0,nrow(mf),nk)
   ik <- 0 ## index counter
-  #knames <- rep("",0) 
   nr <- rep(0,nk) ## number of rows for term
   ## loop through the terms discretizing the covariates...
   for (i in 1:length(gp$smooth.spec)) {
@@ -164,7 +182,6 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
       for (j in 1:length(gp$smooth.spec[[i]]$margin)) { ## loop through margins
         mfd <- compress.df(mf[gp$smooth.spec[[i]]$margin[[j]]$term],m=mi)
         ik <- ik + 1
-   #     knames <- c(knames,names(mfd))
         k[,ik] <- attr(mfd,"index")
         nr[ik] <- nrow(mfd)
         mf0 <- c(mf0,mfd)
@@ -172,7 +189,6 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     } else { ## not te or ti...
       mfd <- compress.df(mf[gp$smooth.spec[[i]]$term],m=mi)
       ik <- ik + 1
-      #knames <- c(knames,names(mfd))
       k[,ik] <- attr(mfd,"index")
       nr[ik] <- nrow(mfd)
       mf0 <- c(mf0,mfd)
@@ -180,12 +196,10 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     ## deal with any by variable... 
     if (gp$smooth.spec[[i]]$by!="NA") {
       if (is.factor(mf[gp$smooth.spec[[i]]$by])) stop("discretization can not handle factor by variables")
-      if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handles smooth ids")
+      if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handle smooth ids")
       mf0[[gp$smooth.spec[[i]]$by]] <- rep(1,nr[ik]) ## actual by variables are handled by discrete methods
     }  
   } ## main term loop
-  #colnames(k) <- knames
-  #names(nr) <- knames
   ## pad mf0 so that all rows are the same length
   ## padding is necessary if gam.setup is to be used for setup
   maxr <- max(nr) 
@@ -337,7 +351,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         qrx <- list() 
         if (iter>1) {
           ## form eta = X%*%beta
-          eta <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc)
+          eta <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc,G$drop)
         }
         mu <- linkinv(eta)
         mu.eta.val <- mu.eta(eta)
@@ -348,9 +362,9 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         dev <- sum(dev.resids(G$y,mu,G$w))
         qrx$y.norm2 <- sum(w*z^2)
         ## form X'WX efficiently...
-        qrx$R <- XWXd(G$Xd,w,G$kd,G$ts,G$dt,G$v,G$qc,npt)
+        qrx$R <- XWXd(G$Xd,w,G$kd,G$ts,G$dt,G$v,G$qc,npt,G$drop)
         ## form X'Wz efficiently...
-        qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ts,G$dt,G$v,G$qc)
+        qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ts,G$dt,G$v,G$qc,G$drop)
         if(gc.level>1) gc()
      
         ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
@@ -442,7 +456,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
                  optimizer=c("perf","chol"))
   object$coefficients <- coef
   ## form linear predictor efficiently...
-  object$linear.predictors <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc) + G$offset
+  object$linear.predictors <- Xbd(G$Xd,coef,G$kd,G$ts,G$dt,G$v,G$qc,G$drop) + G$offset
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
   F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt)  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
   object$edf <- diag(F)
@@ -1837,14 +1851,21 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       } else {
         kb <- k <- 1; qc <- dt <- ts <- rep(0,length(G$smooth))
       }
+      drop <- rep(0,0) ## index of te related columns to drop
       for (i in 1:length(G$smooth)) {
         ts[kb] <- k
         if (inherits(G$smooth[[i]],"tensor.smooth")) {
           dt[kb] <- length(G$smooth[[i]]$margin)
           for (j in 1:dt[kb]) {
-            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],] ## BUG: not picking right length
+            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],]
             k <- k + 1 
-          } 
+          }
+          ## deal with any side constraints on tensor terms  
+          di <- attr(G$smooth[[i]],"del.index")
+          if (!is.null(di)&&length(di>0)) {
+            di <- di + G$smooth[[i]]$first.para + length(drop)  - 1
+            drop <- c(drop,di)
+          }
           ## deal with tensor smooth constraint
           qrc <- attr(G$smooth[[i]],"qrc")
           ## compute v such that Q = I-vv' and Q[,-1] is constraint null space basis
@@ -1858,12 +1879,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         } else {
           v[[kb]] <- rep(0,0)
           dt[kb] <- 1
-          ## BUG: dk$nr[i] is wrong length index!!
           G$Xd[[k]] <- G$X[1:dk$nr[k],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
           k <- k + 1
         }
         kb <- kb + 1
       }
+      if (length(drop>0)) G$drop <- drop
       ## ... Xd is the list of discretized model matrices, or marginal model matrices
       ## kd contains indexing vectors, so the ith model matrix or margin is Xd[[i]][kd[i,],]
       ## ts[i] is the starting matrix in Xd for the ith model matrix, while dt[i] is the number 

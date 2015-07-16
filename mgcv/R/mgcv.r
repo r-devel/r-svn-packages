@@ -1638,7 +1638,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
-       G$X <- Sl.initial.repara(G$Sl,G$X) ## re-parameterize accordingly
+       G$X <- Sl.initial.repara(G$Sl,G$X,both.sides=FALSE) ## re-parameterize accordingly
        ## make sure its BFGS if family only supplies these derivatives
        if (!is.null(G$family$available.derivs)&&G$family$available.derivs==1) optimizer <- c("outer","bfgs")
     }

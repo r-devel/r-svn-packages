@@ -54,7 +54,7 @@ mvn.ll <- function(y,X,beta,dbeta=NULL) {
 
 ## discretized covariate routines...
 
-XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1) {
+XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1,drop=NULL) {
 ## Form X'WX given weights in w and X in compressed form in list X.
 ## each element of X is a (marginal) model submatrix. Full version 
 ## is given by X[[i]][k[,i],]. list X relates to length(ds) separate
@@ -62,6 +62,7 @@ XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1) {
 ## Terms with several marginals are tensor products and may have 
 ## constraints (if qc[i]>1), stored as a householder vector in v[[i]]. 
 ## check ts and k index start (assumed 1 here)
+## if drop is non-NULL it contains index of rows/cols to drop from result
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
   n <- length(w);pt <- 0;
@@ -69,10 +70,10 @@ XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1) {
   oo <- .C(C_XWXd,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),k=as.integer(k-1),m=as.integer(m),
            p=as.integer(p), n=as.integer(n), ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads))
-  matrix(oo$XWX,pt,pt)
+  if (is.null(drop)) matrix(oo$XWX,pt,pt) else matrix(oo$XWX,pt,pt)[-drop,-drop]
 } ## XWXd
 
-XWyd <- function(X,w,y,k,ts,dt,v,qc) {
+XWyd <- function(X,w,y,k,ts,dt,v,qc,drop=NULL) {
 ## X'Wy...  
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
@@ -81,12 +82,19 @@ XWyd <- function(X,w,y,k,ts,dt,v,qc) {
   oo <- .C(C_XWyd,XWy=rep(0,pt),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
            m=as.integer(m),p=as.integer(p),n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
            dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc))
-  oo$XWy
+  if (is.null(drop)) oo$XWy else oo$XWy[-drop]
 } ## XWyd 
 
-Xbd <- function(X,beta,k,ts,dt,v,qc) {
+Xbd <- function(X,beta,k,ts,dt,v,qc,drop=NULL) {
+## note that drop may contain the index of columns of X to drop before multiplying by beta.
+## equivalently we can insert zero elements into beta in the appropriate places.
   n <- nrow(k);m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
+  if (!is.null(drop)) { 
+    b <- rep(0,length(beta)+length(drop))
+    b[-drop] <- beta
+    beta <- b
+  }
   oo <- .C(C_Xbd,f=as.double(rep(0,n)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1), 
            m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
            as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc))
