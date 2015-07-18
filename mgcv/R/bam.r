@@ -15,14 +15,15 @@ ls.size <- function(x) {
  sz
 } ## ls.size
 
-rwMatrix <- function(stop,row,weight,X) {
+rwMatrix <- function(stop,row,weight,X,trans=FALSE) {
 ## Routine to recombine the rows of a matrix X according to info in 
 ## stop, row and weight. Consider the ith row of the output matrix 
 ## ind <- 1:stop[i] if i==1 and ind <- (stop[i-1]+1):stop[i]
 ## otherwise. The ith output row is then X[row[ind],]*weight[ind]
   if (is.matrix(X)) { n <- nrow(X);p<-ncol(X);ok <- TRUE} else { n<- length(X);p<-1;ok<-FALSE}
   stop <- stop - 1;row <- row - 1 ## R indices -> C indices
-  oo <-.C(C_rwMatrix,as.integer(stop),as.integer(row),as.double(weight),X=as.double(X),as.integer(n),as.integer(p))
+  oo <-.C(C_rwMatrix,as.integer(stop),as.integer(row),as.double(weight),X=as.double(X),
+          as.integer(n),as.integer(p),trans=as.integer(trans))
   if (ok) return(matrix(oo$X,n,p)) else
   return(oo$X) 
 } ## rwMatrix
@@ -280,7 +281,7 @@ mini.mf <-function(mf,chunk.size) {
 
 
 bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
-    mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE, 
+    mustart = NULL, offset = rep(0, nobs),rho=0, control = gam.control(), intercept = TRUE, 
     gc.level=0,nobs.extra=0,npt=1) {
 ## This is a version of bgam.fit1 designed for use with discretized covariates. 
 ## Difference to bgam.fit1 is that XWX, XWy and Xbeta are computed in C
@@ -290,12 +291,34 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 ## Basic idea is to take only one Newton step for parameters per iteration
 ## and to control the step length to ensure that at the end of the step we
 ## are not going uphill w.r.t. the REML criterion...
-
+    
     y <- mf[[gp$response]]
     weights <- G$w 
     conv <- FALSE
     nobs <- nrow(mf)
     offset <- G$offset 
+
+    if (rho!=0) { ## AR1 error model
+      
+      ld <- 1/sqrt(1-rho^2) ## leading diagonal of root inverse correlation
+      sd <- -rho*ld         ## sub diagonal
+      N <- nobs    
+      ## see rwMatrix() for how following are used...
+      ar.row <- c(1,rep(1:N,rep(2,N))[-c(1,2*N)]) ## index of rows to reweight
+      ar.weight <- c(1,rep(c(sd,ld),N-1))     ## row weights
+      ar.stop <- c(1,1:(N-1)*2+1)    ## (stop[i-1]+1):stop[i] are the rows to reweight to get ith row
+      if (!is.null(mf$"(AR.start)")) { ## need to correct the start of new AR sections...
+        ii <- which(mf$"(AR.start)"[ind]==TRUE)
+        if (length(ii)>0) {
+          if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
+          ar.weight[ii*2-2] <- 0 ## zero sub diagonal
+          ar.weight[ii*2-1] <- 1 ## set leading diagonal to 1
+        }
+      }
+    } else {## AR setup complete
+      ar.row <- ar.weight <- ar.stop <- -1 ## signal no re-weighting
+    }
+
     family <- G$family
     additive <- if (family$family=="gaussian"&&family$link=="identity") TRUE else FALSE
     variance <- family$variance
@@ -360,11 +383,14 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         z <- (eta - offset) + (G$y - mu)/mu.eta.val
         w <- (G$w * mu.eta.val^2)/variance(mu)
         dev <- sum(dev.resids(G$y,mu,G$w))
-        qrx$y.norm2 <- sum(w*z^2)
+      
+        qrx$y.norm2 <- if (rho==0) sum(w*z^2) else   ## AR mod needed
+          sum(rwMatrix(ar.stop,ar.row,ar.weight,sqrt(w)*z,trans=FALSE)^2) 
+       
         ## form X'WX efficiently...
-        qrx$R <- XWXd(G$Xd,w,G$kd,G$ts,G$dt,G$v,G$qc,npt,G$drop)
+        qrx$R <- XWXd(G$Xd,w,G$kd,G$ts,G$dt,G$v,G$qc,npt,G$drop,ar.stop,ar.row,ar.weight)
         ## form X'Wz efficiently...
-        qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ts,G$dt,G$v,G$qc,G$drop)
+        qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ts,G$dt,G$v,G$qc,G$drop,ar.stop,ar.row,ar.weight)
         if(gc.level>1) gc()
      
         ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
@@ -450,6 +476,11 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   if (length(G$smooth)>1) for (i in 1:length(G$smooth)) Mp <- Mp + G$smooth[[i]]$null.space.dim
   scale <- exp(log.phi)
   reml <- (dev/scale - prop$ldetS + prop$ldetXXS + (length(y)-Mp)*log(2*pi*scale))/2
+  if (rho!=0) { ## correct REML score for AR1 transform
+    df <- if (is.null(mf$"(AR.start)")) 1 else sum(mf$"(AR.start)")
+    reml <- reml - (nobs-df)*log(ld)
+  }
+   
   object <- list(db.drho=prop$db,
                  gcv.ubre=reml,mgcv.conv=conv,rank=prop$r,
                  scale.estimated = scale<=0,outer.info=NULL,
@@ -1969,7 +2000,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
                       gc.level=gc.level,use.chol=use.chol,npt=nthreads)
   } else if (method=="fcREML") {
-    object <- if (G$discretize) bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,
+    object <- if (G$discretize) bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,
                        control = control,npt=nthreads,gc.level=gc.level,...) else 
                        bgam.fit1(G, mf, chunk.size, gp ,scale ,nobs.extra=0,
                        control = control,cl=cluster,npt=nthreads,gc.level=gc.level,

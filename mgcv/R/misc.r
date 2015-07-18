@@ -54,7 +54,7 @@ mvn.ll <- function(y,X,beta,dbeta=NULL) {
 
 ## discretized covariate routines...
 
-XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1,drop=NULL) {
+XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1) {
 ## Form X'WX given weights in w and X in compressed form in list X.
 ## each element of X is a (marginal) model submatrix. Full version 
 ## is given by X[[i]][k[,i],]. list X relates to length(ds) separate
@@ -67,13 +67,15 @@ XWXd <- function(X,w,k,ts,dt,v,qc,nthreads=1,drop=NULL) {
   nx <- length(X);nt <- length(ts)
   n <- length(w);pt <- 0;
   for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0) 
-  oo <- .C(C_XWXd,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),k=as.integer(k-1),m=as.integer(m),
-           p=as.integer(p), n=as.integer(n), ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
-           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads))
+  oo <- .C(C_XWXd,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),
+           k=as.integer(k-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
+           ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
+           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
+           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w))
   if (is.null(drop)) matrix(oo$XWX,pt,pt) else matrix(oo$XWX,pt,pt)[-drop,-drop]
 } ## XWXd
 
-XWyd <- function(X,w,y,k,ts,dt,v,qc,drop=NULL) {
+XWyd <- function(X,w,y,k,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1) {
 ## X'Wy...  
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
@@ -81,7 +83,8 @@ XWyd <- function(X,w,y,k,ts,dt,v,qc,drop=NULL) {
   for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0) 
   oo <- .C(C_XWyd,XWy=rep(0,pt),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
            m=as.integer(m),p=as.integer(p),n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
-           dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc))
+           dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc),
+           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w))
   if (is.null(drop)) oo$XWy else oo$XWy[-drop]
 } ## XWyd 
 

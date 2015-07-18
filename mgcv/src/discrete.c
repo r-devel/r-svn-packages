@@ -31,6 +31,8 @@
 #include <omp.h>
 #endif
 
+#include "mgcv.h"
+
 /* basic extraction operations */ 
 
 void singleXj(double *Xj,double *X, int *m, int *k, int *n,int *j) {
@@ -222,10 +224,14 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
 
 
 void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
-         int *nx, int *ts, int *dt, int *nt,double *v,int *qc) {
+         int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
+         int *ar_stop,int *ar_row,double *ar_weights) {
   double *Wy,*p0,*p1,*p2,*p3,done=1.0,dzero=0.0,*Xy0,*work,*work1,x;
-  int q,i,j,*pt,*off,*voff,*tps,maxm=0,maxp=0,one=1;
+  int q,i,j,*pt,*off,*voff,*tps,maxm=0,maxp=0,one=1,zero=0;
   char trans='T';
+  if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
+    for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
+  }
   /* obtain various indices */
   pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
   off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
@@ -247,7 +253,12 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *
   work1 = (double *) R_chk_calloc((size_t)maxm,sizeof(double));
   /* apply W to y - for AR models this needs to be expanded */
   Wy = (double *) R_chk_calloc((size_t)*n,sizeof(double)); /* Wy */
-  for (p0=Wy,p1=Wy + *n;p0<p1;p0++,y++,w++) *p0 = *y * *w;
+  for (p0=Wy,p1=Wy + *n,p2=w;p0<p1;p0++,y++,p2++) *p0 = *y * *p2; 
+  if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
+    rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&zero);
+    rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&one); /* transpose of transform applied */
+    for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* sqrt weights again */
+  }
   /* now loop through terms applying the components of X'...*/
   for (i=0;i<*nt;i++) {
     if (dt[i]>1) { /* it's a tensor */
@@ -270,8 +281,8 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *
   R_chk_free(pt); R_chk_free(off); R_chk_free(voff); R_chk_free(tps);
 } /* XWy */
 
-void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx, int *ts, int *dt, int *nt,
-         double *v,int *qc,int *nthreads) {
+void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx, int *ts, 
+          int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights) {
 /* This version uses open MP by column, within sub-block.
 
    An alternative in which one thread did each sub-block scaled poorly, largely 
@@ -289,9 +300,11 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
    Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
    (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
    dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
+
+   AR models are handled via the 3 ar_* arrays. ar_stop[0] < 0 signals no AR. 
   
 */  
-  int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*voff,pa,pb,kk,dk,rk,*start; 
+  int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*voff,pa,pb,kk,dk,rk,*start,one=1,zero=0; 
   double done=1.0,dzero=0.0,*p0,*p1,*p2, *Xi,*temp,*tempn,*xwx,*xwx0,
     *XiB,*tempB,*tempnB,*x0,*x1,x;
   char trans='T',not_trans='N';
@@ -307,6 +320,9 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
   off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
   voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvectors starts */
   tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts */
+  if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
+    for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
+  }
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) {
       if (j==dt[i]-1) pd[i] = p[q]; /* the relevant dimension for deciding product ordering */
@@ -357,8 +373,13 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
           } else { /* singleton */
             singleXj(Xi,X+off[ts[b]], m + ts[b], k + *n * ts[b], n,&i);
           }
-          /* apply W to Xi - for AR models this needs to be expanded */
-          for (p0=w,p1=w + *n,p2=Xi;p0<p1;p0++,p2++) *p2 *= *p0;
+          /* apply W to Xi - for AR models this is sqrt(W) */
+          for (p0=w,p1=w + *n,p2=Xi;p0<p1;p0++,p2++) *p2 *= *p0; 
+          if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
+            rwMatrix(ar_stop,ar_row,ar_weights,Xi,n,&one,&zero);
+            rwMatrix(ar_stop,ar_row,ar_weights,Xi,n,&one,&one); /* transpose of transform applied */
+            for (p0=w,p1=w + *n,p2=Xi;p0<p1;p0++,p2++) *p2 *= *p0; /* sqrt weights again */
+          }
           /* now form Xa'WXb[:,i]... */  
           if (dt[a]>1) { /* tensor */
             tensorXty(xwx + i * pt[a],tempn,temp,Xi,X+off[ts[a]],m+ts[a],p+ts[a],
