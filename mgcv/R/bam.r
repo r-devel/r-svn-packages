@@ -1807,9 +1807,20 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       warning("sparse=TRUE not supported with fast REML, reset to REML.")
     }
     gp <- interpret.gam(formula) # interpret the formula 
-    if (discretize) { ## re-order the tensor terms for maximum efficiency...
-      for (i in 1:length(gp$smooth.spec)) if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) 
-      gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
+    if (discretize) { 
+      ## re-order the tensor terms for maximum efficiency, and 
+      ## signal that "re" terms should be constructed with marginals
+      ## also for efficiency
+      for (i in 1:length(gp$smooth.spec)) { 
+        if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) 
+        gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
+        if (inherits(gp$smooth.spec[[i]],"re.smooth.spec")&&gp$smooth.spec[[i]]$dim>1) {
+          gp$smooth.spec[[i]]$xt <- "tensor"
+          class(gp$smooth.spec[[i]]) <- c("re.smooth.spec","tensor.smooth.spec")
+          gp$smooth.spec[[i]]$margin <- list()
+          for (j in 1:gp$smooth.spec[[i]]$dim) gp$smooth.spec[[i]]$margin[[j]] <- list(term=gp$smooth.spec[[i]]$term[j])
+        }
+      }
     }
     cl <- match.call() # call needed in gam object for update to work
     mf <- match.call(expand.dots=FALSE)
@@ -1885,10 +1896,17 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       drop <- rep(0,0) ## index of te related columns to drop
       for (i in 1:length(G$smooth)) {
         ts[kb] <- k
+        dt[kb] <- length(G$smooth[[i]]$margin)
         if (inherits(G$smooth[[i]],"tensor.smooth")) {
-          dt[kb] <- length(G$smooth[[i]]$margin)
+          if (inherits(G$smooth[[i]],"random.effect")&&!is.null(G$smooth[[i]]$rind)) {
+            ## terms re-ordered for efficiency, so the same has to be done on indices...
+            rind <- k:(k+dt[kb]-1)    
+            dk$nr[rind] <- dk$nr[k+G$smooth[[i]]$rind-1]
+            G$kd[,rind] <- G$kd[,k+G$smooth[[i]]$rind-1]
+          }
+          
           for (j in 1:dt[kb]) {
-            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],]
+            G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],,drop=FALSE]
             k <- k + 1 
           }
           ## deal with any side constraints on tensor terms  

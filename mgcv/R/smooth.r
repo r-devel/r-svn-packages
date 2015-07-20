@@ -1971,7 +1971,9 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 ## a simple random effects constructor method function
 ## basic idea is that s(x,f,z,...,bs="re") generates model matrix
 ## corresponding to ~ x:f:z: ... - 1. Corresponding coefficients 
-## have an identity penalty.
+## have an identity penalty. If object$xt=="tensor" then terms
+## depending on more than one variable are set up with a te
+## smooth like structure (used e.g. in bam(...,discrete=TRUE))
 { 
   ## id's with factor variables are problematic - should terms have
   ## same levels, or just same number of levels, for example? 
@@ -1981,7 +1983,31 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   form <- as.formula(paste("~",paste(object$term,collapse=":"),"-1"))
   object$X <- model.matrix(form,data)
   object$bs.dim <- ncol(object$X)
- 
+
+  if (object$dim<2) object$xt <- NULL ## no point making it tensor like
+
+  if (!is.null(object$xt)&&object$xt=="tensor") { 
+    ## give object margins like a tensor product smooth...
+    object$margin <- list()
+    maxd <- maxi <- 0
+    for (i in 1:object$dim) {
+      form1 <- as.formula(paste("~",object$term[i],"-1"))
+      object$margin[[i]] <- list(X=model.matrix(form1,data),term=object$term[i])
+      d <- ncol(object$margin[[i]]$X)
+      if (d>maxd) {maxi <- i;maxd <- d}
+    }
+    ## now re-order so that largest margin is last...
+    if (maxi<object$dim) { ## re-ordering required
+      ns <- object$dim
+      ind <- 1:ns;ind[maxi] <- ns ;ind[ns] <- maxi
+      object$margin <- object$margin[ind]
+      object$term <- rep("",0)
+      for (i in 1:ns) object$term <- c(object$term,object$margin[[i]]$term)
+      object$label <- paste0(substr(object$label,1,2),paste0(object$term,collapse=","),")",collapse="")
+      object$rind <- ind ## re-orderinf index
+    }
+  } ## finished tensor like setup
+
   ## now construct penalty        
   object$S <- list(diag(object$bs.dim))  # get penalty
  
@@ -1995,13 +2021,15 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 
   object$side.constrain <- FALSE ## don't apply side constraints
   object$plot.me <- TRUE ## "re" terms can be plotted by plot.gam
-  object$te.ok <- 2 ## these terms are  suitable as te marginals, but 
-                    ##   can not be plotted
+  object$te.ok <- if (!is.null(object$xt)&&object$xt=="tensor") 0 else 2 ## these terms are  suitable as te marginals, but 
+                                                                         ##   can not be plotted
 
 
   object$random <- TRUE ## treat as a random effect for p-value comp.
-
-  class(object)<-"random.effect"  # Give object a class
+  
+  ## Give object a class
+  class(object) <- if (!is.null(object$xt)&&object$xt=="tensor") c("random.effect","tensor.smooth")  else 
+                   "random.effect"  
 
   object
 } ## smooth.construct.re.smooth.spec
