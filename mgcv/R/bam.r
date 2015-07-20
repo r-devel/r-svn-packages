@@ -308,7 +308,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
       ar.weight <- c(1,rep(c(sd,ld),N-1))     ## row weights
       ar.stop <- c(1,1:(N-1)*2+1)    ## (stop[i-1]+1):stop[i] are the rows to reweight to get ith row
       if (!is.null(mf$"(AR.start)")) { ## need to correct the start of new AR sections...
-        ii <- which(mf$"(AR.start)"[ind]==TRUE)
+        ii <- which(mf$"(AR.start)"==TRUE)
         if (length(ii)>0) {
           if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
           ar.weight[ii*2-2] <- 0 ## zero sub diagonal
