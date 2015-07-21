@@ -1790,11 +1790,15 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
   check.derivs <- FALSE;eps <- 1e-5
 
+  uconv.ind <- rep(TRUE,ncol(B))
+
   for (i in 1:max.step) {
    
     ## get the trial step ...
 
-    step <- -drop(B%*%initial$grad)   
+    step <- -drop(B%*%initial$grad)
+    ## following line messes up conditions under which Wolfe guarantees update... 
+    ## step[!uconv.ind] <- 0 ## don't move if apparently converged  - don't do this
     ## unit.step <- step/sqrt(sum(step^2)) ## unit vector in step direction
 
     ms <- max(abs(step))
@@ -1937,7 +1941,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         converged <- FALSE      
       }
       if (converged) break
-
+      ## uconv.ind <- abs(trial$grad) > score.scale*conv.tol*.1
       initial <- trial
       initial$alpha <- 0
     }  

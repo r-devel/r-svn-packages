@@ -705,7 +705,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
   ## get log likelihood, grad and Hessian (w.r.t. coefs - not s.p.s) ...
   ll <- family$ll(y,x,coef,weights,family,deriv=1) 
-  ll0 <- ll$l - t(coef)%*%St%*%coef/2
+  ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
   rank <- q;drop <- NULL
   eigen.fix <- FALSE
@@ -778,16 +778,36 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     coef1 <- coef + step 
     ll <- family$ll(y,x,coef1,weights,family,deriv=1) 
     ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
-    khalf <- 0
-    while (ll1 < ll0 && khalf < 50) { ## step halve until it succeeds...
-      step <- step/2;coef1 <- coef + step
+    khalf <- 0;fac <- 2
+    while (ll1 < ll0 && khalf < 25) { ## step halve until it succeeds...
+      step <- step/fac;coef1 <- coef + step
       ll <- family$ll(y,x,coef1,weights,family,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
       if (ll1>=ll0) {
         ll <- family$ll(y,x,coef1,weights,family,deriv=1)
+      } else { ## abort if step has made no difference
+        if (max(abs(coef1-coef))==0) khalf <- 100
       }
       khalf <- khalf + 1
+      if (khalf>5) fac <- 5
     } ## end step halve
+ 
+    if (ll1 < ll0) { ## switch to steepest descent... 
+      step <- -.5*drop(grad)*mean(abs(coef))/mean(abs(grad))
+      khalf <- 0
+    }
+
+    while (ll1 < ll0 && khalf < 25) { ## step cut until it succeeds...
+      step <- step/10;coef1 <- coef + step
+      ll <- family$ll(y,x,coef1,weights,family,deriv=0)
+      ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
+      if (ll1>=ll0) {
+        ll <- family$ll(y,x,coef1,weights,family,deriv=1)
+      } else { ## abort if step has made no difference
+        if (max(abs(coef1-coef))==0) khalf <- 100
+      }
+      khalf <- khalf + 1
+    }
 
     if (ll1 >= ll0||iter==control$maxit) { ## step ok. Accept and test
       coef <- coef + step
