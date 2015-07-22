@@ -71,8 +71,8 @@ importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,
            polygon,rect,strheight,strwidth,text,title)
 
 importFrom(stats,.checkMFClasses,.getXlevels,anova,approx,as.formula,
-coef,cooks.distance,cor,
-delete.response,dbeta,dgamma,dnorm,dpois,fitted,formula,glm,
+binomial,coef,cooks.distance,cor,cov,
+delete.response,dbeta,dgamma,dnorm,dpois,fitted,formula,gaussian,glm,
 influence,logLik,lm,mad,
 make.link,median,model.frame,model.offset,model.matrix,nlm,
 na.pass,napredict,na.omit,naresid,optim,pchisq,pnorm,pt,pf,
@@ -81,6 +81,8 @@ qbeta,qbinom,qchisq,qnbinom,qgamma,qnorm,qpois,qqline,qqnorm,qqplot,
 reformulate,residuals,
 rbeta,rbinom,rgamma,rnbinom,rnorm,rpois,runif,sd,
 termplot,terms.formula,terms,uniroot,var,vcov,weights)
+
+importFrom(utils,object.size)
 
 importFrom(nlme,Dim,corMatrix,logDet,pdConstruct,pdFactor,pdMatrix,getGroupsFormula,lme,varFixed,lmeControl)
 importMethodsFrom(Matrix,t,colMeans,colSums,chol,solve,lu,expand)

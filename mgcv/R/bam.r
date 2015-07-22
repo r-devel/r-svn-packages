@@ -931,7 +931,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
       ## preparation for working model fit is ready, but need to test for convergence first
       if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
           conv <- TRUE
-          coef <- start
+         # coef <- start
           break
       }
 
