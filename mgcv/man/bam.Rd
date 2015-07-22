@@ -117,8 +117,8 @@ Reset to \code{4*p} if \code{chunk.size < 4*p} where \code{p} is the number of c
 section of AR1 correlation. Very first observation in data frame does not need this. If \code{NULL} then 
 there are no breaks in AR1 correlaion.}
 
-\item{discrete}{with \code{method="fcREML"} it is possible to discretize covariates for storage and effiicency reasons.
-If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins. }
+\item{discrete}{with \code{method="fREML"} it is possible to discretize covariates for storage and efficiency reasons.
+If \code{discrete} is \code{TRUE}, a number or a vector of numbers for each smoother term, then discretization happens. If numbers are supplied they give the number of discretization bins. Experimental at present. }
 
 \item{sparse}{Deprecated. If all smooths are P-splines and all tensor products are of the form \code{te(...,bs="ps",np=FALSE)} 
 then in principle computation could be made faster using sparse matrix methods, and you could set this to \code{TRUE}. 

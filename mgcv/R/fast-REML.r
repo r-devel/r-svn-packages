@@ -599,7 +599,7 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
   }
   XX.db <- t(X)%*%(X%*%db)
   S.db <- Sl.mult(Sl,db,k=0)
-  Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
+##  Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
 
   rss2 <- bSb2 <- matrix(0,nd,nd)
   for (k in 1:nd) { ## second derivative loop 
@@ -634,7 +634,7 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
   #XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*db[piv,]))) ## X'Xdb
 
   S.db <- Sl.mult(Sl,db,k=0)
-  Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
+  ##Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
 
   rss2 <- bSb2 <- matrix(0,nd,nd)
   for (k in 1:nd) { ## second derivative loop 

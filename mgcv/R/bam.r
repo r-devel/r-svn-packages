@@ -196,6 +196,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     }
     ## deal with any by variable... 
     if (gp$smooth.spec[[i]]$by!="NA") {
+      stop("currently discrete methods do not handle by variables")
       if (is.factor(mf[gp$smooth.spec[[i]]$by])) stop("discretization can not handle factor by variables")
       if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handle smooth ids")
       mf0[[gp$smooth.spec[[i]]$by]] <- rep(1,nr[ik]) ## actual by variables are handled by discrete methods
@@ -434,7 +435,6 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
       }
 
       ## get beta, grad and proposed Newton step... 
-      ok <- FALSE
       repeat { ## Take a Newton step to update log sp and phi
         lsp <- lsp0 + Nstep
         if (scale<=0) log.phi <- lsp[n.sp+1] 
@@ -518,294 +518,6 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object
 } ## end bgam.fitd
 
-
-bgam.fit1 <- function (G, mf, chunk.size, gp ,scale , coef=NULL,etastart = NULL,
-    mustart = NULL, offset = rep(0, nobs), control = gam.control(), intercept = TRUE, 
-    cl = NULL,gc.level=0,nobs.extra=0,samfrac=1,npt=1) {
-## alternative fitting iteration using Choleski only, including for REML.
-## basic idea is to take only one Newton step for parameters per iteration
-## and to control the step length to ensure that at the end of the step we
-## are not going uphill w.r.t. the REML criterion...
-
-    y <- mf[[gp$response]]
-    weights <- G$w
-    conv <- FALSE
-    nobs <- nrow(mf)
-    offset <- G$offset
-    family <- G$family
-    additive <- if (family$family=="gaussian"&&family$link=="identity") TRUE else FALSE
-    variance <- family$variance
-    dev.resids <- family$dev.resids
-    linkinv <- family$linkinv
-    mu.eta <- family$mu.eta
-    if (!is.function(variance) || !is.function(linkinv))
-        stop("'family' argument seems not to be a valid family object")
-    valideta <- family$valideta
-    if (is.null(valideta))
-        valideta <- function(eta) TRUE
-    validmu <- family$validmu
-    if (is.null(validmu))
-        validmu <- function(mu) TRUE
-    if (is.null(mustart)) {
-        eval(family$initialize)
-    }
-    else {
-        mukeep <- mustart
-        eval(family$initialize)
-        mustart <- mukeep
-    }
- 
-    eta <- if (!is.null(etastart))
-         etastart
-    else family$linkfun(mustart)
-    
-    mu <- linkinv(eta)
-    if (!(validmu(mu) && valideta(eta)))
-       stop("cannot find valid starting values: please specify some")
-    dev <- sum(dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
-
-    conv <- FALSE
-   
-    G$coefficients <- rep(0,ncol(G$X))
-    class(G) <- "gam"  
-    
-    ## need to reset response and weights to post initialization values
-    ## in particular to deal with binomial properly...
-    G$y <- y
-    G$w <- weights
-
-    ## set up cluster for parallel computation...
-
-    if (!is.null(cl)&&inherits(cl,"cluster")) {
-      n.threads <- length(cl)
-    } else n.threads <- 1
-
-    if (n.threads>1) { ## set up thread argument lists
-      ## number of obs per thread
-      nt <- rep(ceiling(nobs/n.threads),n.threads)
-      nt[n.threads] <- nobs - sum(nt[-n.threads])
-      arg <- list()
-      n1 <- 0
-      for (i in 1:n.threads) {
-        n0 <- n1+1;n1 <- n1+nt[i]
-        ind <- n0:n1 ## this threads data block from mf
-        n.block <- nt[i]%/%chunk.size ## number of full sized blocks
-        stub <- nt[i]%%chunk.size ## size of end block
-        if (n.block>0) {
-          start <- (0:(n.block-1))*chunk.size+1
-          stop <- (1:n.block)*chunk.size
-          if (stub>0) {
-            start[n.block+1] <- stop[n.block]+1
-            stop[n.block+1] <- nt[i]
-            n.block <- n.block+1
-          } 
-        } else {
-          n.block <- 1
-          start <- 1
-          stop <- nt[i]
-        }
-        arg[[i]] <- list(nobs= nt[i],start=start,stop=stop,n.block=n.block,
-                         linkinv=linkinv,dev.resids=dev.resids,gc.level=gc.level,
-                         mu.eta=mu.eta,variance=variance,mf = mf[ind,],
-                         eta = eta[ind],offset = offset[ind],G = G,use.chol=TRUE)
-        arg[[i]]$G$w <- G$w[ind];arg[[i]]$G$model <- NULL
-        arg[[i]]$G$y <- G$y[ind]
-      }
-    } else { ## single thread, requires single indices
-      ## construct indices for splitting up model matrix construction... 
-      n.block <- nobs%/%chunk.size ## number of full sized blocks
-      stub <- nobs%%chunk.size ## size of end block
-      if (n.block>0) {
-        start <- (0:(n.block-1))*chunk.size+1
-        stop <- (1:n.block)*chunk.size
-        if (stub>0) {
-          start[n.block+1] <- stop[n.block]+1
-          stop[n.block+1] <- nobs
-          n.block <- n.block+1
-        } 
-      } else {
-        n.block <- 1
-        start <- 1
-        stop <- nobs
-      }
-   } ## single thread indices complete
- 
-    conv <- FALSE
-
-    Sl <- Sl.setup(G) ## setup block diagonal penalty object
-    rank <- 0
-    for (b in 1:length(Sl)) rank <- rank + Sl[[b]]$rank
-    Mp <- ncol(G$X) - rank ## null space dimension
-    Nstep <- 0
-    for (iter in 1L:control$maxit) { ## main fitting loop 
-      devold <- dev
-      dev <- 0
-      ## accumulate the QR decomposition of the weighted model matrix
-      if (iter==1||!additive) {
-        wt <- rep(0,0) 
-       
-        if (n.threads == 1) { ## use original serial update code     
-          for (b in 1:n.block) {
-            ind <- start[b]:stop[b]
-            X <- predict(G,newdata=mf[ind,],type="lpmatrix",newdata.guaranteed=TRUE,block.size=length(ind))
-            rownames(X) <- NULL
-            if (is.null(coef)) eta1 <- eta[ind] else eta1 <- drop(X%*%coef) + offset[ind]
-            mu <- linkinv(eta1) 
-            y <- G$y[ind] ## G$model[[gp$response]] ## - G$offset[ind]
-            weights <- G$w[ind]
-            mu.eta.val <- mu.eta(eta1)
-            good <- (weights > 0) & (mu.eta.val != 0)
-            z <- (eta1 - offset[ind])[good] + (y - mu)[good]/mu.eta.val[good]
-            w <- (weights[good] * mu.eta.val[good]^2)/variance(mu)[good]
-            dev <- dev + sum(dev.resids(y,mu,weights))
-            wt <- c(wt,w)
-            w <- sqrt(w)
-            ## note that Chol may be parallel using npt>1, even under serial accumulation...
-            if (b == 1) qrx <- qr.update(w*X[good,],w*z,use.chol=TRUE,nt=npt) 
-            else qrx <- qr.update(w*X[good,],w*z,qrx$R,qrx$f,qrx$y.norm2,use.chol=TRUE,nt=npt)
-            rm(X);if(gc.level>1) gc() ## X can be large: remove and reclaim
-          }
-        } else { ## use parallel accumulation 
-          for (i in 1:length(arg)) arg[[i]]$coef <- coef
-          res <- parallel::parLapply(cl,arg,qr.up) 
-          ## single thread debugging version 
-          #res <- list()
-          #for (i in 1:length(arg)) {
-          #  res[[i]] <- qr.up(arg[[i]])
-          #}
-          ## now consolidate the results from the parallel threads...
-          qrx <- list()
-          qrx$R <- res[[1]]$R;qrx$f <- res[[1]]$f;
-          dev <- res[[1]]$dev
-          wt <- res[[1]]$wt;
-          qrx$y.norm2 <- res[[1]]$y.norm2
-          for (i in 2:n.threads) {
-            qrx$R <- qrx$R + res[[i]]$R; qrx$f <- qrx$f + res[[i]]$f
-            wt <- c(wt,res[[i]]$wt); dev <- dev + res[[i]]$dev
-            qrx$y.norm2 <- qrx$y.norm2 + res[[i]]$y.norm2
-          }         
-        } 
-
-        ## if the routine has been called with only a random sample of the data, then 
-        ## R, f and ||y||^2 can be corrected to estimate the full versions...
- 
-        qrx$R <- qrx$R/sqrt(samfrac)
-        qrx$f <- qrx$f/sqrt(samfrac)
-        qrx$y.norm2 <- qrx$y.norm2/samfrac
- 
-        ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
-        qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt)
-        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=npt)  
-        
-        G$n <- nobs
-      } else {  ## end of if (iter==1||!additive)
-        dev <- qrx$y.norm2 - sum(coef*qrx$f) ## actually penalized deviance
-      }
-  
-      
-      if (control$trace)
-         message(gettextf("Deviance = %s Iterations - %d", dev, iter, domain = "R-mgcv"))
-
-      if (!is.finite(dev)) stop("Non-finite deviance")
-
-      ## preparation for working model fit is ready, but need to test for convergence first
-      if (iter>2 && abs(dev - devold)/(0.1 + abs(dev)) < control$epsilon) {
-          conv <- TRUE
-          #coef <- start
-          break
-      }
-
-      ## use fast REML code
-      ## block diagonal penalty object, Sl, set up before loop
-
-      if (iter==1) { ## need to get initial smoothing parameters 
-        lambda.0 <- initial.sp(qrx$R,G$S,G$off,XX=TRUE) ## note that this uses the untrasformed X'X in qrx$R
-        ## convert intial s.p.s to account for L 
-        lsp0 <- log(lambda.0) ## initial s.p.
-        if (!is.null(G$L)) lsp0 <- as.numeric(coef(lm(lsp0 ~ G$L-1+offset(G$lsp0))))
-        n.sp <- length(lsp0) 
-      }
-     
-      ## carry forward scale estimate if possible...
-      if (scale>0) log.phi <- log(scale) else {
-        if (iter==1) {
-            if (is.null(coef)||qrx$y.norm2==0) lsp0[n.sp+1] <- log(var(as.numeric(G$y))*.05) else
-               lsp0[n.sp+1] <- log(qrx$y.norm2/(nobs+nobs.extra))
-        }
-      }
-
-      ## get beta, grad and proposed Newton step... 
-      ok <- FALSE
-      repeat { ## Take a Newton step to update log sp and phi
-        lsp <- lsp0 + Nstep
-        if (scale<=0) log.phi <- lsp[n.sp+1] 
-        prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
-                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=dev*.Machine$double.eps^.7)
-        if (max(Nstep)==0) { 
-          Nstep <- prop$step;lsp0 <- lsp;
-          break 
-        } else {
-          if (sum(prop$grad*Nstep)>dev*1e-7) Nstep <- Nstep/2 else {
-            Nstep <- prop$step;lsp0 <- lsp;break;
-          }
-        }
-      } ## end of sp update
-
-      coef <- Sl.initial.repara(Sl,prop$beta,inverse=TRUE,both.sides=FALSE,cov=FALSE)
-
-      if (any(!is.finite(coef))) {
-          conv <- FALSE
-          warning(gettextf("non-finite coefficients at iteration %d",
-                  iter))
-          break
-      }
-    } ## end fitting iteration
-
-    if (!conv)
-       warning("algorithm did not converge")
-   
-    eps <- 10 * .Machine$double.eps
-    if (family$family == "binomial") {
-         if (any(mu > 1 - eps) || any(mu < eps))
-                warning("fitted probabilities numerically 0 or 1 occurred")
-    }
-    if (family$family == "poisson") {
-            if (any(mu < eps))
-                warning("fitted rates numerically 0 occurred")
-    }
-  object <- list(db.drho=prop$db,
-                 gcv.ubre=NA,mgcv.conv=conv,rank=prop$r,
-                 scale.estimated = scale<=0,outer.info=NULL,
-                 optimizer=c("perf","chol"))
-  object$coefficients <- coef
-  PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
-  F <- crossprod(PP,qrx$R) ## qrx$R contains X'WX in this case
-  object$edf <- diag(F)
-  object$edf1 <- 2*object$edf - rowSums(t(F)*F) 
-  object$sp <- exp(lsp[1:n.sp]) 
-  object$sig2 <- object$scale <- scale <- exp(log.phi)
-  object$Vp <- PP * scale
-  ## sp uncertainty correction... 
-  M <- ncol(prop$db) 
-  ev <- eigen(prop$hess,symmetric=TRUE)
-  ind <- ev$values <= 0
-  ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-  rV <- (ev$values*t(ev$vectors))[,1:M]
-  Vc <- crossprod(rV%*%t(prop$db))
-  Vc <- object$Vp + Vc  ## Bayesian cov matrix with sp uncertainty
-  object$edf2 <- rowSums(Vc*qrx$R)/scale
-  object$Vc <- Vc
-  object$outer.info <- list(grad = prop$grad,hess=prop$hess)  
-  
-  object$R <- pchol(qrx$R,npt)
-  piv <- attr(object$R,"pivot") 
-  object$R[,piv] <- object$R   
-  object$iter <- iter 
-  object$wt <- wt
-  object$y <- G$y
-  rm(G);if (gc.level>0) gc()
-  object
-} ## end bgam.fit1
 
 
 bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etastart = NULL,
@@ -1786,7 +1498,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ##family = gaussian() ## no choise here
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
-    if (!method%in%c("fREML","fcREML","GCV.Cp","REML",
+    if (!method%in%c("fREML","GCV.Cp","REML",
                     "ML","P-REML","P-ML")) stop("un-supported smoothness selection method")
     if (is.logical(discrete)) {
       discretize <- discrete
@@ -1794,15 +1506,19 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     } else {
       discretize <- if (is.numeric(discrete)) TRUE else FALSE
     }
-    if (discretize && method!="fcREML") { 
-      discretize <- FALSE
-      warning("discretization only available with fcREML")
+    if (discretize) { 
+      if (method!="fREML") { 
+        discretize <- FALSE
+        warning("discretization only available with fREML")
+      } else {
+        if (!is.null(cluster)) warning("discrete method does not use parallel cluster - use nthreads instead")
+      }
     }
-    if (method%in%c("fREML","fcREML")&&!is.null(min.sp)) {
+    if (method%in%c("fREML")&&!is.null(min.sp)) {
       min.sp <- NULL
       warning("min.sp not supported with fast REML computation, and ignored.")
     }
-    if (sparse&&method%in%c("fREML","fcREML")) {
+    if (sparse&&method%in%c("fREML")) {
       method <- "REML"
       warning("sparse=TRUE not supported with fast REML, reset to REML.")
     }
@@ -2013,16 +1729,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (rho!=0) warning("AR1 parameter rho unused with sparse fitting")
     object <- bgam.fit2(G, mf, chunk.size, gp ,scale ,gamma,method=method,
                        control = control,npt=nthreads,...)
-  } else if (G$am&&!method=="fcREML") {
+  } else if (G$am&&!G$discretize) {
     if (nrow(mf)>chunk.size) G$X <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc() 
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
                       gc.level=gc.level,use.chol=use.chol,npt=nthreads)
-  } else if (method=="fcREML") {
-    object <- if (G$discretize) bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,
-                       control = control,npt=nthreads,gc.level=gc.level,...) else 
-                       bgam.fit1(G, mf, chunk.size, gp ,scale ,nobs.extra=0,
-                       control = control,cl=cluster,npt=nthreads,gc.level=gc.level,
-                       samfrac=1,...)
+  } else if (G$discretize) {
+    object <- bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,
+                       control = control,npt=nthreads,gc.level=gc.level,...)
                        
   } else {
     G$X  <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc()

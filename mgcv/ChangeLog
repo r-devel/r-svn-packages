@@ -6,6 +6,13 @@
 ** 'gam' default scale parameter changed to modified Pearson estimator 
   developed by Fletcher 2012 Biometrika 99(1), 230-237. See ?gam.scale.
 
+** 'bam' now has a 'discrete' argument to allow discretization of covariates
+  for more efficient computation, with substantially more parallelization
+  (via 'nthreads'). Still somewhat experimental. 
+
+* Slightly more accurate smoothing parameter uncertainty correction. Changes 
+  edf2 used for AIC (under RE/ML), and hence may change AIC values. 
+
 * jagam prior variance on fixed effects is now set with reference to data and 
   model during initialization step.
 
@@ -28,9 +35,6 @@
 * Smoothing parameter uncertainty corrected AIC calculations had an 
   indexing problem in Sl.postproc, which could result in failure of bam with 
   linked smooths. 
-
-* Slightly more accurate smoothing parameter uncertainty correction. Changes 
-  edf2 used for AIC (under RE/ML). 
 
 * mroot patched for fact that chol(...,pivot=TRUE) does not operate as 
   documented on rank deficient matrices: trailing block of triangular factor

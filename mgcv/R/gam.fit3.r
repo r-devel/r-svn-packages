@@ -919,7 +919,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
     Vfd <- crossprod(b)/n.rep
   }
 
-  Vc <- vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
+  vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
 } ## Vb.corr
 
 gam.fit3.post.proc <- function(X,L,S,off,object) {
