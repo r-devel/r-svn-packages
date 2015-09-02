@@ -156,13 +156,26 @@ uniquecombs <- function(x) {
 ## takes matrix x and counts up unique rows
 ## `unique' now does this in R
   if (is.null(x)) stop("x is null")
-  if (is.null(nrow(x))) stop("x has no row attribute")
-  if (is.null(ncol(x))) stop("x has no col attribute")
+  if (is.null(nrow(x))||is.null(ncol(x))) x <- data.frame(x)
+  #if (is.null(nrow(x))) stop("x has no row attribute")
+  #if (is.null(ncol(x))) stop("x has no col attribute")
+  if (inherits(x,"data.frame")) {
+    xo <- x
+    x <- data.matrix(xo) ## ensure all data are numeric
+  } else xo <- NULL
   ind <- rep(0,nrow(x))
   res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
           r=as.integer(nrow(x)),c=as.integer(ncol(x)))
   n <- res$r*res$c
   x <- matrix(res$x[1:n],res$r,res$c)
+  if (!is.null(xo)) { ## original was a data.frame
+    x <- as.data.frame(x)
+    names(x) <- names(xo)
+    for (i in 1:ncol(xo)) if (is.factor(xo[,i])) { ## may need to reset factors to factors
+      x[,i] <- as.factor(x[,i])
+      levels(x[,i]) <- levels(xo[,i])
+    }
+  }
   attr(x,"index") <- res$ind+1 ## C to R index gotcha 
   x
 } ## uniquecombs
@@ -2867,7 +2880,7 @@ ExtractData <- function(object,data,knots) {
 ## calls for basis construction, and other functions used for prediction
 #########################################################################
 
-smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
+smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
                       dataX = NULL,null.space.penalty = FALSE,sparse.cons=0,diagonal.penalty=FALSE)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterization used. If absorb.cons==TRUE then a constraint free
@@ -3106,9 +3119,9 @@ smoothCon <- function(object,data,knots,absorb.cons=FALSE,scale.penalty=TRUE,n=n
     } else qrcp <- NULL ## rest of Cp processing is after C processing
 
     if (is.matrix(sm$C)) { ## the fit constraints
-      j<-nrow(sm$C)
-      if (j>0) # there are constraints
-      { indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of non-zero columns in C
+      j <- nrow(sm$C)
+      if (j>0) { # there are constraints
+        indi <- (1:ncol(sm$C))[colSums(sm$C)!=0] ## index of non-zero columns in C
         nx <- length(indi)
         if (nx < ncol(sm$C)) { ## then some parameters are completely constraint free
           nc <- j ## number of constraints

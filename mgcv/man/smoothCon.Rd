@@ -14,7 +14,7 @@ although this behaviour can be over-ridden.
 }
 
 \usage{
-smoothCon(object,data,knots,absorb.cons=FALSE,
+smoothCon(object,data,knots=NULL,absorb.cons=FALSE,
           scale.penalty=TRUE,n=nrow(data),dataX=NULL,
           null.space.penalty=FALSE,sparse.cons=0,
           diagonal.penalty=FALSE)

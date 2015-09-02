@@ -1,6 +1,18 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-8
+
+* bam(...,discrete=TRUE) now accepts metric (but not factor) 'by' variables. 
+
+* uniqucombs can now accept a data frame with some or all factor columns,
+  as well as purely numeric marices.
+
+* discrete.mf modified to avoid discretizing a covariate more than once,
+  and to halt if a model requires the same covariate to be discretized 
+  two different ways (e.g. s(x) + s(x,z)). This affects only 
+  bam(...,discrete=TRUE).
+
 1.8-7
 
 ** 'gam' default scale parameter changed to modified Pearson estimator 
