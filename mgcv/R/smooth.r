@@ -2881,11 +2881,16 @@ ExtractData <- function(object,data,knots) {
 #########################################################################
 
 smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
-                      dataX = NULL,null.space.penalty = FALSE,sparse.cons=0,diagonal.penalty=FALSE)
+                      dataX = NULL,null.space.penalty = FALSE,sparse.cons=0,diagonal.penalty=FALSE,
+                      apply.by=TRUE)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterization used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
-## Handles `by' variables, and summation convention.
+## Handles `by' variables, and summation convention. apply.by==FALSE causes by variable
+## handling to proceed as for apply.by==TRUE except that a copy of the model matrix X0 is 
+## stored for which the by variable (or dummy) is never actually multiplied into the model 
+## matrix. This facilitates
+## discretized fitting setup, where such multiplication needs to be handled `on-the-fly'.
 ## Note that `data' must be a data.frame or model.frame, unless n is provided explicitly, 
 ## in which case a list will do.
 ## If present dataX specifies the data to be used to set up the model matrix, given the 
@@ -2994,7 +2999,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
     }
   }
   offs <- NULL
+
   ## pick up "by variables" now, and handle summation convention ...
+
   if (matrixArg||(object$by!="NA"&&is.null(sm$by.done))) {
     drop <- -1 ## sweep and drop constraints inappropriate
     if (is.null(dataX)) by <- get.var(object$by,data) 
@@ -3015,7 +3022,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       for (j in 1:length(lev)) {
         sml[[j]] <- sm  ## replicate smooth for each factor level
         by.dum <- as.numeric(lev[j]==by)
-        sml[[j]]$X <- by.dum*sm$X  ## multiply model matrix by dummy for level
+        sml[[j]]$X <- by.dum*sm$X   ## multiply model matrix by dummy for level
         sml[[j]]$by.level <- lev[j] ## store level
         sml[[j]]$label <- paste(sm$label,":",object$by,lev[j],sep="") 
         if (!is.null(offs)) {
@@ -3028,6 +3035,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           (!is.null(sm$ind)&&length(by)!=length(sm$ind))) stop("`by' variable must be same dimension as smooth arguments")
      
       if (matrixArg) { ## arguments are matrices => summation convention used
+        #if (!apply.by) warning("apply.by==FALSE unsupported in matrix case")
         if (is.null(sm$ind)) { ## then the sm$X is in unpacked form
           sml[[1]]$X <- as.numeric(by)*sm$X ## normal `by' handling
           ## Now do the summation stuff....
@@ -3039,7 +3047,8 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           }
           sml[[1]]$X <- X
           if (!is.null(offs)) { ## deal with any term specific offset (i.e. sum it too)
-            offs <- attr(sm$X,"offset")*as.numeric(by) ## by variable multiplied version
+            ## by variable multiplied version...
+            offs <- attr(sm$X,"offset")*as.numeric(by)  
             ind <- 1:n 
             offX <- offs[ind,]
             for (i in 2:q) {
@@ -3055,16 +3064,16 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           sml[[1]]$X <- matrix(0,n,ncol(sm$X))  
           for (i in 1:n) { ## in this case have to work down the rows
             ind <- ind + 1
-            sml[[1]]$X[i,] <- colSums(by[ind]*sm$X[sm$ind[ind],]) 
+            sml[[1]]$X[i,] <- colSums(by[ind]*sm$X[sm$ind[ind],])
             if (!is.null(offs)) {
               offX[i] <- sum(offs[sm$ind[ind]]*by[ind])
             }      
           } ## finished all rows
           attr(sml[[1]]$X,"offset") <- offX
         } 
-      } else {  ## arguments not matrices => not in packed form + no summation needed 
+      } else {  ## arguments not matrices => not in packed form + no summation needed
         sml[[1]]$X <- as.numeric(by)*sm$X
-        if (!is.null(offs)) attr(sml[[1]]$X,"offset") <- offs*as.numeric(by)
+        if (!is.null(offs)) attr(sml[[1]]$X,"offset") <- if (apply.by) offs*as.numeric(by) else offs
       }
 
       if (object$by == "NA") sml[[1]]$label <- sm$label else 
@@ -3096,8 +3105,8 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
   ## absorb constraints.....#
   ###########################
 
-  if (absorb.cons)
-  { k<-ncol(sm$X)
+  if (absorb.cons) {
+    k<-ncol(sm$X)
 
     ## If Cp is present it denotes a constraint to use in place of the fitting constraints
     ## when predicting. 
@@ -3302,7 +3311,16 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
       }
     } ## if (need.full)
   } ## if (null.space.penalty)
-
+  
+  if (!apply.by) for (i in 1:length(sml)) {
+    by.name <- sml[[i]]$by 
+    if (by.name!="NA") {
+      sml[[i]]$by <- "NA"
+      ## get version of X without by applied...
+      sml[[i]]$X0 <- PredictMat(sml[[i]],data)
+      sml[[i]]$by <- by.name
+    }
+  }
   sml
 } ## end of smoothCon
 

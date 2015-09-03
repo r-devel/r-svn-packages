@@ -3,7 +3,7 @@
 
 1.8-8
 
-* bam(...,discrete=TRUE) now accepts metric (but not factor) 'by' variables. 
+* bam(...,discrete=TRUE) now accepts 'by' variables. 
 
 * uniqucombs can now accept a data frame with some or all factor columns,
   as well as purely numeric marices.

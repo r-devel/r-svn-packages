@@ -872,7 +872,7 @@ gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE,
-                    diagonal.penalty=FALSE) 
+                    diagonal.penalty=FALSE,apply.by=TRUE) 
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 ## needed for a gam fit.
 ## elements of returned object:
@@ -1007,12 +1007,14 @@ gam.setup <- function(formula,pterms,
     id <- split$smooth.spec[[i]]$id
     if (is.null(id)||!idLinksBases) { ## regular evaluation
       sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,
-                       null.space.penalty=select,sparse.cons=sparse.cons,diagonal.penalty=diagonal.penalty) 
+                       null.space.penalty=select,sparse.cons=sparse.cons,
+                       diagonal.penalty=diagonal.penalty,apply.by=apply.by) 
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
                        absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,
-                       null.space.penalty=select,sparse.cons=sparse.cons,diagonal.penalty=diagonal.penalty)
+                       null.space.penalty=select,sparse.cons=sparse.cons,
+                       diagonal.penalty=diagonal.penalty,apply.by=apply.by)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
@@ -1024,7 +1026,15 @@ gam.setup <- function(formula,pterms,
 
   ## at this stage, it is neccessary to impose any side conditions required
   ## for identifiability
-  if (m>0) sm <- gam.side(sm,X,tol=.Machine$double.eps^.5)
+  if (m>0) { 
+    sm <- gam.side(sm,X,tol=.Machine$double.eps^.5)
+    if (!apply.by) for (i in 1:length(sm)) { ## restore any by-free model matrices
+      if (!is.null(sm[[i]]$X0)) { ## there is a by-free matrix to restore 
+        ind <- attr(sm[[i]],"del.index") ## columns, if any to delete
+        sm[[i]]$X <- if (is.null(ind)) sm[[i]]$X0 else sm[[i]]$X0[,-ind,drop=FALSE] 
+      }
+    }
+  }
 
   ## The matrix, L, mapping the underlying log smoothing parameters to the
   ## log of the smoothing parameter multiplying the S[[i]] must be

@@ -205,9 +205,9 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     if (gp$smooth.spec[[i]]$by!="NA") {
       ##stop("currently discrete methods do not handle by variables")
       termi <- gp$smooth.spec[[i]]$by ## var name
-      if (is.factor(mf[termi])) stop("discretization can not handle factor by variables")
+      ##if (is.factor(mf[termi])) stop("discretization can not handle factor by variables")
       ik.prev <- check.term(termi,rec) ## term already discretized?
-      ik <- ik + 1 ## increment indes counter
+      ik <- ik + 1 ## increment index counter
       if (ik.prev==0) { ## new discretization required
          mfd <- compress.df(mf[termi],m=mi)
          k[,ik] <- attr(mfd,"index")
@@ -284,6 +284,30 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
   mf <- mf[1:maxr,]
   for (na in names(mf0)) mf[[na]] <- mf0[[na]]  
 
+  ## finally one more pass through, expanding k and nr to deal with replication that
+  ## will occur with factor by variables...
+  ik <- ncol(k)+1 ## starting index col for this term in k
+  for (i in length(gp$smooth.spec):1) { ## work down through terms so insertion painless
+    if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) nd <-  
+         length(gp$smooth.spec[[i]]$margin) else nd <- 1 ## number of indices
+    ik <- ik - d ## starting index if no by  
+    if (gp$smooth.spec[[i]]$by!="NA") {
+      ik <- ik - 1 ## first index
+      nd <- nd + 1 ## number of indices
+      byvar <- mf[[gp$smooth.spec[[i]]$by]]
+      if (is.factor(byvar)) { ## then need to expand nr and index matrix
+        nex <- length(levels(byvar))  ## number of copies of term indices
+        if (is.ordered(byvar)) nex <- nex - 1 ## first level dropped
+        if (nex>0) { ## insert index copies
+          ii0 <- if (ik>1) 1:(ik-1) else rep(0,0) ## earlier
+          ii1 <- if (ik+nd-1 < length(nr)) (ik+nd):length(nr) else rep(0,0) ## later
+          ii <- ik:(ik+nd-1) ## cols for this term
+          nr <- c(nr[ii0],rep(nr[ii],nex),nr[ii1])
+          k <- cbind(k[,ii0],k[,rep(ii,nex)],k[,ii1])
+        }
+      } ## factor by 
+    } ## existing by
+  } ## smooth.spec loop
   list(mf=mf,k=k,nr=nr)
 } ## discrete.mf
 
@@ -1645,13 +1669,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       mf0 <- dk$mf ## padded discretized model frame
       sparse.cons <- 0 ## default constraints required for tensor terms
       ## reset by variables to "NA" for gam.setup call
-      by.ind <- rep(0,0); by.name <- rep("",0)
-      for (i in 1:length(gp$smooth)) if (gp$smooth.spec[[i]]$by!="NA") {
-        by.ind <- c(by.ind,i) ## index of smooth.spec with reset by name
-        by.name <- c(by.name,gp$smooth.spec[[i]]$by) 
-        gp$smooth.spec[[i]]$by <- "NA" ## as if == 1 during setup 
-        gp$smooth.spec[[i]]$C <- matrix(0,0,0) ## signal no constraint because of by
-      }
+      #by.ind <- rep(0,0); by.name <- rep("",0)
+      #for (i in 1:length(gp$smooth)) if (gp$smooth.spec[[i]]$by!="NA") {
+      #  by.ind <- c(by.ind,i) ## index of smooth.spec with reset by name
+      #  by.name <- c(by.name,gp$smooth.spec[[i]]$by) 
+      #  gp$smooth.spec[[i]]$by <- "NA" ## as if == 1 during setup 
+      #  gp$smooth.spec[[i]]$C <- matrix(0,0,0) ## signal no constraint because of by
+      #}
     } else { 
       mf0 <- mini.mf(mf,chunk.size)
       if (sparse) sparse.cons <- 2 else sparse.cons <- -1
@@ -1662,11 +1686,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
-                 paraPen=paraPen)
+                 paraPen=paraPen,apply.by=!discretize)
   
     if (discretize) {
       ## reset any by variable names in smooth list (from "NA" back to original)...
-      if (length(by.ind)) for (i in 1:length(by.ind)) G$smooth[[by.ind[i]]]$by <- by.name[i]
+      #if (length(by.ind)) for (i in 1:length(by.ind)) G$smooth[[by.ind[i]]]$by <- by.name[i]
     
       v <- G$Xd <- list()
       ## have to extract full parametric model matrix from pterms and mf
@@ -1687,7 +1711,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         ## first deal with any by variable (as first marginal of tensor)...
         if (G$smooth[[i]]$by!="NA") {
           dt[kb] <- 1
-          G$Xd[[k]] <- matrix(mf[[G$smooth[[i]]$by]][1:dk$nr[k]],dk$nr[k],1)
+          by.var <- dk$mf[[G$smooth[[i]]$by]][1:dk$nr[k]]
+          if (is.factor(by.var)) { 
+            ## create dummy by variable...
+            by.var <- as.numeric(by.var==G$smooth[[i]]$by.level)
+      
+          }
+          G$Xd[[k]] <- matrix(by.var,dk$nr[k],1)
           k <- k + 1
         } else dt[kb] <- 0
         ## ... by done
