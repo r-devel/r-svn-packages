@@ -111,7 +111,9 @@ if smooths share smoothing parameters).}
 Reset to \code{4*p} if \code{chunk.size < 4*p} where \code{p} is the number of coefficients.}
 
 \item{rho}{An AR1 error model can be used for the residuals (based on dataframe order), of Gaussian-identity 
-           link models. This is the AR1 correlation parameter.}
+           link models. This is the AR1 correlation parameter. Standardized residuals (approximately 
+           uncorrelated under correct model) returned in 
+           \code{std.rsd} if non zero. }
 
 \item{AR.start}{logical variable of same length as data, \code{TRUE} at first observation of an independent
 section of AR1 correlation. Very first observation in data frame does not need this. If \code{NULL} then 
@@ -147,7 +149,7 @@ be reduced by first fitting a model to a random sample of the data, and using th
 involving factor variables you might want to turn this off. Only do so if you know what you are doing.}
 
 \item{G}{if not \code{NULL} then this should be the object returned by a previous call to \code{bam} with 
-\code{fit=FALSE}. Causes all other arguments to be ignored except \code{chunk.size}, \code{gamma},code{nthreads}, \code{cluster}, \code{rho}, \code{gc.level}, \code{samfrac}, \code{use.chol} and \code{method}.}
+\code{fit=FALSE}. Causes all other arguments to be ignored except \code{chunk.size}, \code{gamma},\code{nthreads}, \code{cluster}, \code{rho}, \code{gc.level}, \code{samfrac}, \code{use.chol} and \code{method}.}
 
 \item{fit}{if \code{FALSE} then the model is set up for fitting but not estimated, and an object is returned, suitable for passing as the \code{G} argument to \code{bam}.}
 

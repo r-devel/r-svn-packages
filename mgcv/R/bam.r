@@ -1557,6 +1557,26 @@ tero <- function(sm) {
   sm
 } ## tero
 
+AR.resid <- function(rsd,rho=0,AR.start=NULL) {
+## standardised residuals for AR1 model
+  if (rho==0) return(rsd)
+  ld <- 1/sqrt(1-rho^2) ## leading diagonal of root inverse correlation
+  sd <- -rho*ld         ## sub diagonal
+  N <- length(rsd)    
+  ## see rwMatrix() for how following are used...
+  ar.row <- c(1,rep(1:N,rep(2,N))[-c(1,2*N)]) ## index of rows to reweight
+  ar.weight <- c(1,rep(c(sd,ld),N-1))     ## row weights
+  ar.stop <- c(1,1:(N-1)*2+1)    ## (stop[i-1]+1):stop[i] are the rows to reweight to get ith row
+  if (!is.null(AR.start)) { ## need to correct the start of new AR sections...
+    ii <- which(AR.start==TRUE)
+    if (length(ii)>0) {
+          if (ii[1]==1) ii <- ii[-1] ## first observation does not need any correction
+          ar.weight[ii*2-2] <- 0 ## zero sub diagonal
+          ar.weight[ii*2-1] <- 1 ## set leading diagonal to 1
+    }
+  }
+  rwMatrix(ar.stop,ar.row,ar.weight,rsd)
+} ## AR.resid
 
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
                 offset=NULL,method="fREML",control=list(),scale=0,gamma=1,knots=NULL,sp=NULL,
@@ -1573,6 +1593,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## 'n.threads' is number of threads to use for non-cluster computation (e.g. combining 
 ## results from cluster nodes). If 'NA' then is set to max(1,length(cluster)).
 { control <- do.call("gam.control",control)
+  if (control$trace) t0 <- proc.time()
   if (is.null(G)) { ## need to set up model!
     if (is.character(family))
             family <- eval(parse(text = family))
@@ -1681,13 +1702,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       if (sparse) sparse.cons <- 2 else sparse.cons <- -1
     }
     rm(pmf); ## no further use
-    
+    if (control$trace) t1 <- proc.time()
     G <- gam.setup(gp,pterms=pterms,
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen,apply.by=!discretize)
-  
+    if (control$trace) t2 <- proc.time()
     if (discretize) {
       ## reset any by variable names in smooth list (from "NA" back to original)...
       #if (length(by.ind)) for (i in 1:length(by.ind)) G$smooth[[by.ind[i]]]$by <- by.name[i]
@@ -1766,7 +1787,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## v is list of Householder vectors encoding constraints and qc the constraint indicator.
       G$v <- v;G$ts <- ts;G$dt <- dt;G$qc <- qc
     } ## if (discretize)
-
+    if (control$trace) t3 <- proc.time()
     G$sparse <- sparse
 
     ## no advantage to "fREML" with no free smooths...
@@ -1872,6 +1893,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   if (gc.level>0) gc()
 
+  if (control$trace) t4 <- proc.time()
+
   if (control$trace) cat("Fit complete. Finishing gam object.\n")
 
   if (scale < 0) { object$scale.estimated <- TRUE;object$scale <- object$scale.est} else {
@@ -1934,6 +1957,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
    
   object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$prior.weights)) * 
                       sign(object$y-object$fitted.values)
+  if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
+
   object$deviance <- sum(object$residuals^2)
   object$aic <- family$aic(object$y,1,object$fitted.values,object$prior.weights,object$deviance) +
                 2*sum(object$edf)
@@ -1944,7 +1969,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   }
   environment(object$formula) <- environment(object$pred.formula) <-
   environment(object$terms) <- environment(object$pterms) <- 
-  environment(attr(object$model,"terms"))  <- .GlobalEnv
+  environment(attr(object$model,"terms"))  <- .GlobalEnv  
+  if (control$trace) { 
+    t5 <- proc.time()
+    t5 <- rbind(t1-t0,t2-t1,t3-t2,t4-t3,t5-t4)[,1:3]
+    row.names(t5) <- c("initial","gam.setup","pre-fit","fit","finalise")
+    print(t5)
+  }
   object
 } ## end of bam
 

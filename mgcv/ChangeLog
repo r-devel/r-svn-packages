@@ -3,6 +3,8 @@
 
 1.8-8
 
+* bam now returns standarized residuals 'std.rsd' if `rho!=0'. 
+
 * bam(...,discrete=TRUE) now accepts 'by' variables. 
 
 * uniqucombs can now accept a data frame with some or all factor columns,
