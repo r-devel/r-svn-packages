@@ -290,7 +290,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
   for (i in length(gp$smooth.spec):1) { ## work down through terms so insertion painless
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) nd <-  
          length(gp$smooth.spec[[i]]$margin) else nd <- 1 ## number of indices
-    ik <- ik - d ## starting index if no by  
+    ik <- ik - nd ## starting index if no by  
     if (gp$smooth.spec[[i]]$by!="NA") {
       ik <- ik - 1 ## first index
       nd <- nd + 1 ## number of indices
@@ -1743,7 +1743,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         } else dt[kb] <- 0
         ## ... by done
         if (inherits(G$smooth[[i]],"tensor.smooth")) { 
-          dt[kb] <- dt[kb] + length(G$smooth[[i]]$margin)
+          nmar <- length(G$smooth[[i]]$margin) 
+          dt[kb] <- dt[kb] + nmar
           if (inherits(G$smooth[[i]],"random.effect")&&!is.null(G$smooth[[i]]$rind)) {
             ## terms re-ordered for efficiency, so the same has to be done on indices...
             rind <- k:(k+dt[kb]-1)    
@@ -1751,7 +1752,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             G$kd[,rind] <- G$kd[,k+G$smooth[[i]]$rind-1]
           }
           
-          for (j in 1:dt[kb]) {
+          for (j in 1:nmar) {
             G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],,drop=FALSE]
             k <- k + 1 
           }
