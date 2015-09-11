@@ -3,9 +3,15 @@
 
 1.8-8
 
+* predict.gam and predict.bam now accept an 'exclude' argument allowing 
+  terms (e.g. random effects) to be zeroed for prediction. For efficiency,
+  smooth terms not in 'terms' or in 'exclude' are no longer evaluated, and 
+  are instead set to zero or not returned. See ?predict.gam.
+
 * bam now returns standarized residuals 'std.rsd' if `rho!=0'. 
 
-* bam(...,discrete=TRUE) now accepts 'by' variables. 
+* bam(...,discrete=TRUE) now accepts 'by' variables. Thanks to Zheyaun Li
+  for debugging on this.
 
 * uniqucombs can now accept a data frame with some or all factor columns,
   as well as purely numeric marices.

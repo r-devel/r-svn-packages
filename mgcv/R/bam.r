@@ -1151,7 +1151,7 @@ pabapr <- function(arg) {
                         na.action=arg$na.action)
 }
 
-predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
+predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
                         cluster=NULL,...) {
 ## function for prediction from a bam object, possibly in parallel
@@ -1169,11 +1169,11 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
   if (n < 100*n.threads) n.threads <- 1 ## not worth the overheads
   if (n.threads==1) { ## single threaded call
     if (missing(newdata)) return(
-      predict.gam(object,newdata=object$model,type=type,se.fit=se.fit,terms=terms,
+      predict.gam(object,newdata=object$model,type=type,se.fit=se.fit,terms=terms,exclude=exclude,
                         block.size=block.size,newdata.guaranteed=newdata.guaranteed,
                         na.action=na.action,...)
     ) else return(
-      predict.gam(object,newdata=newdata,type=type,se.fit=se.fit,terms=terms,
+      predict.gam(object,newdata=newdata,type=type,se.fit=se.fit,terms=terms,exclude=exclude,
                         block.size=block.size,newdata.guaranteed=newdata.guaranteed,
                         na.action=na.action,...))
   } else { ## parallel call...
@@ -1184,7 +1184,7 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     for (i in 1:n.threads) { 
       n0 <- n1+1;n1 <- n1+nt[i]
       ind <- n0:n1 ## this thread's data block from mf
-      arg[[i]] <- list(object=object,type=type,se.fit=se.fit,terms=terms,
+      arg[[i]] <- list(object=object,type=type,se.fit=se.fit,terms=terms,exclude=exclude,
                         block.size=block.size,newdata.guaranteed=newdata.guaranteed,
                         na.action=na.action)
       arg[[i]]$object$model <- object$model[1:2,] ## save space

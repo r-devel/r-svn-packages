@@ -2511,7 +2511,7 @@ model.matrix.gam <- function(object,...)
 
 
 
-predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
+predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                        block.size=NULL,newdata.guaranteed=FALSE,na.action=na.pass,
                        unconditional=FALSE,...) {
 
@@ -2781,11 +2781,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     if (!is.null(drop.ind)) X <- X[,-drop.ind]
 
     if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths
-      Xfrag <- PredictMat(object$smooth[[k]],data)		 
-      X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
-      Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
-      if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
-      if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- object$smooth[[k]]$label
+      klab <- object$smooth[[k]]$label
+      if ((is.null(terms)||(klab%in%terms))&&(is.null(exclude)||!(klab%in%exclude))) {
+        Xfrag <- PredictMat(object$smooth[[k]],data)		 
+        X[,object$smooth[[k]]$first.para:object$smooth[[k]]$last.para] <- Xfrag
+        Xfrag.off <- attr(Xfrag,"offset") ## any term specific offsets?
+        if (!is.null(Xfrag.off)) { Xoff[,k] <- Xfrag.off; any.soff <- TRUE }
+      }
+      if (type=="terms"||type=="iterms") ColNames[n.pterms+k] <- klab
     } ## smooths done
 
     
@@ -2923,13 +2926,27 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,
     rm(X)
   } ## end of prediction block loop
 
-  if ((type=="terms"||type=="iterms")&&!is.null(terms)) { # return only terms requested via `terms'
-    if (sum(!(terms %in%colnames(fit)))) 
-      warning("non-existent terms requested - ignoring")
-    else { 
-      fit <- fit[,terms,drop=FALSE]
-      if (se.fit) {
-        se <- se[,terms,drop=FALSE]
+  if ((type=="terms"||type=="iterms")&&(!is.null(terms)||!is.null(exclude))) { # return only terms requested via `terms'
+    cnames <- colnames(fit)
+    if (!is.null(terms)) {
+      if (sum(!(terms %in%cnames))) 
+        warning("non-existent terms requested - ignoring")
+      else { 
+        fit <- fit[,terms,drop=FALSE]
+        if (se.fit) {
+           se <- se[,terms,drop=FALSE]
+        }
+      }
+    }
+    if (!is.null(exclude)) {
+      if (sum(!(exclude %in%cnames))) 
+        warning("non-existent exclude terms requested - ignoring")
+      else { 
+        exclude <- which(cnames%in%exclude) ## convert to numeric column index
+        fit <- fit[,-exclude,drop=FALSE]
+        if (se.fit) {
+          se <- se[,-exclude,drop=FALSE]
+        }
       }
     }
   }
