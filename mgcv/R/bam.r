@@ -1633,7 +1633,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## re-order the tensor terms for maximum efficiency, and 
       ## signal that "re" terms should be constructed with marginals
       ## also for efficiency
-      for (i in 1:length(gp$smooth.spec)) { 
+      if (length(gp$smooth.spec)>0) for (i in 1:length(gp$smooth.spec)) { 
         if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) 
         gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
         if (inherits(gp$smooth.spec[[i]],"re.smooth.spec")&&gp$smooth.spec[[i]]$dim>1) {
@@ -1809,7 +1809,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     if (ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
   
-    if (ncol(G$X) > chunk.size) { ## no sense having chunk.size < p
+    if (ncol(G$X) > chunk.size && !discretize) { ## no sense having chunk.size < p
       chunk.size <- 4*ncol(G$X)
       warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))    
     }
@@ -1973,8 +1973,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   environment(attr(object$model,"terms"))  <- .GlobalEnv  
   if (control$trace) { 
     t5 <- proc.time()
-    t5 <- rbind(t1-t0,t2-t1,t3-t2,t4-t3,t5-t4)[,1:3]
-    row.names(t5) <- c("initial","gam.setup","pre-fit","fit","finalise")
+    if (is.null(G)) {
+      t5 <- rbind(t1-t0,t2-t1,t3-t2,t4-t3,t5-t4)[,1:3]
+      row.names(t5) <- c("initial","gam.setup","pre-fit","fit","finalise")
+    } else {
+      t5 <- rbind(t4-t3,t5-t4)[,1:3]
+      row.names(t5) <- c("fit","finalise")
+    }
     print(t5)
   }
   object
