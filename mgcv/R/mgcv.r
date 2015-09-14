@@ -503,10 +503,10 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
             }
           } ## penalty matrices finished
           ## Now we need to establish null space rank for the term
-          m <- length(sm[[i]]$S)
-          if (m>0) {
+          mi <- length(sm[[i]]$S)
+          if (mi>0) {
             St <- sm[[i]]$S[[1]]/norm(sm[[i]]$S[[1]],type="F")
-            if (m>1) for (j in 1:m) St <- St + 
+            if (mi>1) for (j in 1:mi) St <- St + 
                   sm[[i]]$S[[j]]/norm(sm[[i]]$S[[j]],type="F")
             es <- eigen(St,symmetric=TRUE,only.values=TRUE)
             sm[[i]]$null.space.dim <- sum(es$values<max(es$values)*.Machine$double.eps^.75) 
