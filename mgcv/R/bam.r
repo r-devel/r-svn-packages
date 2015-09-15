@@ -354,6 +354,7 @@ mini.mf <-function(mf,chunk.size) {
   } else if (is.factor(mf[[j]])) { ## factor variable...
     ## randomly sample one row from each factor level...
     find <- apply(X=as.matrix(levels(mf[[j]])),MARGIN=1,FUN=fun,fac=mf[[j]],ind=ind)
+    find <- find[is.finite(find)] ## in case drop.unused.levels==FALSE, so that there ar levels without rows
     nf <- length(find)
     mf0[(k+1):(k+nf),] <- mf[find,]
     k <- k + nf
@@ -1703,11 +1704,21 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
     rm(pmf); ## no further use
     if (control$trace) t1 <- proc.time()
-    G <- gam.setup(gp,pterms=pterms,
+    reset <- TRUE
+    while (reset) {
+      G <- gam.setup(gp,pterms=pterms,
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen,apply.by=!discretize)
+      if (!discretize&&ncol(G$X)>=chunk.size) { ## no point having chunk.size < p
+        chunk.size <- 4*ncol(G$X)
+        warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))
+        if (chunk.size>=nrow(mf)) { ## no sense splitting up computation
+          mf0 <- mf ## just use full dataset
+        } else reset <- FALSE
+      } else reset <- FALSE
+    }
     if (control$trace) t2 <- proc.time()
     if (discretize) {
       ## reset any by variable names in smooth list (from "NA" back to original)...

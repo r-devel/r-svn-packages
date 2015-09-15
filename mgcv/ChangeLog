@@ -13,6 +13,12 @@
 * bam(...,discrete=TRUE) now accepts 'by' variables. Thanks to Zheyaun Li
   for debugging on this.
 
+* bam now works with drop.unused.levels == TRUE when random effects should
+  have more levels than those that exist in data. (Thanks Alec Leh) 
+
+* bam chunk.size logic error fix - error could be triggered if chunk.size
+  reset automaticlly to be larger than data size.
+
 * uniqucombs can now accept a data frame with some or all factor columns,
   as well as purely numeric marices.
 
