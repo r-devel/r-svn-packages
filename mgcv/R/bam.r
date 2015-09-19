@@ -1,4 +1,4 @@
-## routines for very large dataset generalized additive modelling.
+# routines for very large dataset generalized additive modelling.
 ## (c) Simon N. Wood 2009-2015
 
 
@@ -1632,15 +1632,17 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     gp <- interpret.gam(formula) # interpret the formula 
     if (discretize) { 
       ## re-order the tensor terms for maximum efficiency, and 
-      ## signal that "re" terms should be constructed with marginals
+      ## signal that "re"/"fs" terms should be constructed with marginals
       ## also for efficiency
       if (length(gp$smooth.spec)>0) for (i in 1:length(gp$smooth.spec)) { 
         if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) 
         gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
-        if (inherits(gp$smooth.spec[[i]],"re.smooth.spec")&&gp$smooth.spec[[i]]$dim>1) {
-          gp$smooth.spec[[i]]$xt <- "tensor"
-          class(gp$smooth.spec[[i]]) <- c("re.smooth.spec","tensor.smooth.spec")
+        if (inherits(gp$smooth.spec[[i]],c("re.smooth.spec","fs.smooth.spec"))&&gp$smooth.spec[[i]]$dim>1) {
+          #gp$smooth.spec[[i]]$xt <- "tensor"
+          class(gp$smooth.spec[[i]]) <- c(class(gp$smooth.spec[[i]]),"tensor.smooth.spec")
+                                        ##c("re.smooth.spec","tensor.smooth.spec")
           gp$smooth.spec[[i]]$margin <- list()
+          ## only ok for 'fs' with univariate metric variable (caught in 'fs' construcor)...
           for (j in 1:gp$smooth.spec[[i]]$dim) gp$smooth.spec[[i]]$margin[[j]] <- list(term=gp$smooth.spec[[i]]$term[j])
         }
       }
@@ -1761,8 +1763,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             rind <- k:(k+dt[kb]-1)    
             dk$nr[rind] <- dk$nr[k+G$smooth[[i]]$rind-1]
             G$kd[,rind] <- G$kd[,k+G$smooth[[i]]$rind-1]
-          }
-          
+          } else if (inherits(G$smooth[[i]],"fs.interaction")&&which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)!=1) {
+            ## have to reverse the terms because tensor representation assumes factor is first
+            dk$nr[k:(k+1)] <- dk$nr[(k+1):k]
+            G$kd[,k:(k+1)] <- G$kd[,(k+1):k]
+          }          
           for (j in 1:nmar) {
             G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],,drop=FALSE]
             k <- k + 1 

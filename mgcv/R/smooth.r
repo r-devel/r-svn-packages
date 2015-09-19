@@ -1685,6 +1685,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
 
   
   ## call base constructor...
+  spec.class <- class(object)
   class(object) <- object$base.bs
   object <- smooth.construct(object,data,knots)
   if (length(object$S)>1) stop("\"fs\" smooth cannot use a multiply penalized basis (wrong basis in xt)")
@@ -1744,12 +1745,26 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
     object$te.ok <- 0
     object$rank <- c(object$rank*nf,rep(nf,null.d))
   }
+  
+  if ("tensor.smooth.spec"%in%spec.class) { 
+    ## give object margins like a tensor product smooth...
+    object$margin <- list()
+    if (object$dim>1) stop("fs smooth not suitable for discretisation with more than one metric predictor") 
+    form1 <- as.formula(paste("~",object$fterm,"-1")) 
+    fac -> data[[fterm]]
+    object$margin[[1]] <- list(X=model.matrix(form1,data),term=object$fterm)
+    object$margin[[2]] <- list(X=rp$X,term=object$base$term)
+    ## note --- no re-ordering at present - inefficiecnt as factor should really
+    ## be last, but that means complete re-working of penalty structure.
+  } ## finished tensor like setup
+
   object$side.constrain <- FALSE ## don't apply side constraints - these are really random effects
   object$null.space.dim <- 0
   object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix
   object$plot.me <- TRUE
-  #object$base.bs <- class(object) ## base smoother class
-  class(object) <- "fs.interaction"
+  #object$base.bs <- class(object) ## base smoother class 
+  class(object) <- if ("tensor.smooth.spec"%in%spec.class) c("fs.interaction","tensor.smooth")  else 
+                   "fs.interaction"
   object
 } ## end of smooth.construct.fs.smooth.spec
 
@@ -1984,8 +1999,8 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 ## a simple random effects constructor method function
 ## basic idea is that s(x,f,z,...,bs="re") generates model matrix
 ## corresponding to ~ x:f:z: ... - 1. Corresponding coefficients 
-## have an identity penalty. If object$xt=="tensor" then terms
-## depending on more than one variable are set up with a te
+## have an identity penalty. If object inherits from "tensor.smooth.spec" 
+## then terms depending on more than one variable are set up with a te
 ## smooth like structure (used e.g. in bam(...,discrete=TRUE))
 { 
   ## id's with factor variables are problematic - should terms have
@@ -1999,7 +2014,8 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 
   if (object$dim<2) object$xt <- NULL ## no point making it tensor like
 
-  if (!is.null(object$xt)&&object$xt=="tensor") { 
+  #if (!is.null(object$xt)&&object$xt=="tensor") {
+  if (inherits(object,"tensor.smooth.spec")) { 
     ## give object margins like a tensor product smooth...
     object$margin <- list()
     maxd <- maxi <- 0
@@ -2017,7 +2033,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
       object$term <- rep("",0)
       for (i in 1:ns) object$term <- c(object$term,object$margin[[i]]$term)
       object$label <- paste0(substr(object$label,1,2),paste0(object$term,collapse=","),")",collapse="")
-      object$rind <- ind ## re-orderinf index
+      object$rind <- ind ## re-ordering index
     }
   } ## finished tensor like setup
 
@@ -2034,14 +2050,14 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 
   object$side.constrain <- FALSE ## don't apply side constraints
   object$plot.me <- TRUE ## "re" terms can be plotted by plot.gam
-  object$te.ok <- if (!is.null(object$xt)&&object$xt=="tensor") 0 else 2 ## these terms are  suitable as te marginals, but 
+  object$te.ok <- if (inherits(object,"tensor.smooth.spec")) 0 else 2 ## these terms are  suitable as te marginals, but 
                                                                          ##   can not be plotted
 
 
   object$random <- TRUE ## treat as a random effect for p-value comp.
   
   ## Give object a class
-  class(object) <- if (!is.null(object$xt)&&object$xt=="tensor") c("random.effect","tensor.smooth")  else 
+  class(object) <- if (inherits(object,"tensor.smooth.spec")) c("random.effect","tensor.smooth")  else 
                    "random.effect"  
 
   object

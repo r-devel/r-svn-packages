@@ -1,5 +1,5 @@
 ## (c) Simon N. Wood (ocat, tw, nb, ziP) & Natalya Pya (scat, beta), 
-## 2013, 2014. Released under GPL2.
+## 2013-2015. Released under GPL2.
 
 ## extended families for mgcv, standard components. 
 ## family - name of family character string
@@ -42,7 +42,7 @@
 ocat <- function(theta=NULL,link="identity",R=NULL) {
 ## extended family object for ordered categorical model.
 ## one of theta and R must be supplied. length(theta) == R-2.
-## weights are ignored.
+## weights are ignored. #! is stuff removed under re-definition of ls as 0
   linktemp <- substitute(link)
   if (!is.character(linktemp)) linktemp <- deparse(linktemp)
   if (linktemp %in% c("identity")) stats <- make.link(linktemp)
@@ -133,11 +133,11 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     ##f <- pmax(f1 - f0,.Machine$double.eps)
     f <- Fdiff(al0mu,al1mu)
     ##a1 <- f1^2 - f1;a0 <- f0^2 - f0; a <- a1 -a0
-    al1al0 <- (al1-al0)/2;al0al1 <- (al0-al1)/2
+#!    al1al0 <- (al1-al0)/2;al0al1 <- (al0-al1)/2
     ##g1 <- F(al1al0);g0 <- F(al0al1)
     ##A <- pmax(g1 - g0,.Machine$double.eps)
-    A <- Fdiff(al0al1,al1al0)
-    rsd <- 2*(log(A)-log(f))
+#!    A <- Fdiff(al0al1,al1al0)
+    rsd <- -2*log(f) #! 2*(log(A)-log(f))
     attr(rsd,"sign") <- s
     rsd
   } ## end of dev.resids
@@ -210,7 +210,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     al1al0 <- (al1-al0)/2; al0al1 <- (al0-al1)/2
     ##g1 <- F(al1al0);g0 <- F(al0al1)
     ##A <- pmax(g1 - g0,.Machine$double.eps)
-    A <- Fdiff(al0al1,al1al0)
+#!    A <- Fdiff(al0al1,al1al0)
     if (level>=0) {
       ## b1 <- f1 - 3 * f1^2 + 2 * f1^3;b0 <- f0 - 3 * f0^2 + 2 * f0^3  
       b1 <- r1$bj;b0 <- r0$bj
@@ -221,10 +221,10 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       ##c0 <- -f0 + 7 * f0^2 - 12* f0^3 + 6 * f0^4
       c1 <- r1$cj;c0 <- r0$cj
       c <- c1 - c0
-      R1 <- abcd(al1al0,level-2) 
-      R0 <- abcd(al0al1,level-2)
+#!      R1 <- abcd(al1al0,level-2) 
+#!      R0 <- abcd(al0al1,level-2)
       ## B <- g1^2 - g1 + g0^2 - g0
-      B <- R1$aj + R0$aj
+#!     B <- R1$aj + R0$aj
     }
     if (level>1) {
       ##d1 <- f1 - 15 * f1^2 + 50 * f1^3 - 60 * f1^4 + 24 * f1^5
@@ -232,14 +232,14 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       d1 <- r1$dj;d0 <- r0$dj
       d <- d1 - d0
       ##C <- 2 * g1^3 - 3 * g1^2 + g1 - 2 * g0^3 + 3 * g0^2 - g0
-      C <- R1$bj - R0$bj
+#!      C <- R1$bj - R0$bj
     }
 
     oo <- list(D=NULL,Dmu=NULL,Dmu2=NULL,Dth=NULL,Dmuth=NULL,
              Dmu2th=NULL)
     n <- length(y)
     ## deviance...
-    oo$D <- 2*(log(A)-log(f))
+    oo$D <- -2 * log(f) #! 2*(log(A)-log(f))
     if (level >= 0) { ## get derivatives used in coefficient estimation
       oo$Dmu <- -2 * a / f
       a2 <- a^2
@@ -254,7 +254,8 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       Dmua1 <- -2 * (a1 * a /f - b1)/f
       Dmu2a0 <- -2* (c0 + (a0*(2*a2/f - b)- 2*b0*a  )/f)/f
       Dmu2a1 <- 2*(c1  + (2*(a1*a2/f - b1*a) - a1*b)/f)/f
-      Da0 <- B/A - 2*a0/f; Da1 <- -B/A + 2 * a1/f 
+      Da0 <- -2*a0/f #! + B/A; 
+      Da1 <-  2 * a1/f #! - B/A 
       ## now transform to derivatives w.r.t. theta...
       oo$Dmu2th <- oo$Dmuth <- oo$Dth <- matrix(0,n,R-2)
       for (k in 1:(R-2)) { 
@@ -297,9 +298,9 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       Dmu2a0a1 <- 0 ## (8*a0*b1*a/f^3 + 8*b0*a1*a/f^3 - 12*a0*a1*a/f^4 - 4*b0*b1/f^2 +
                     ## 4*a0*a1*b/f^3 - 2*c0*a1/f^2 - 2*c1*a0/f^2)
 
-      Da0a0 <- 2 * (b0 + a0^2/f)/f + .5 * (C - B^2/A)/A
-      Da1a1 <- -2* (b1 - a1^2/f)/f + .5 * (C - B^2/A)/A
-      Da0a1 <- -2*a0*a1/f2 - .5 * (C - B^2/A)/A
+      Da0a0 <- 2 * (b0 + a0^2/f)/f #! + .5 * (C - B^2/A)/A
+      Da1a1 <- -2* (b1 - a1^2/f)/f #! + .5 * (C - B^2/A)/A
+      Da0a1 <- -2*a0*a1/f2 #! - .5 * (C - B^2/A)/A
 
       ## now transform to derivatives w.r.t. theta...
       n2d <- (R-2)*(R-1)/2
@@ -360,7 +361,9 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   } ## end aic
 
   ls <- function(y,w,n,theta,scale) {
-    ## the log saturated likelihood function.
+    ## the log saturated likelihood function. 
+    #! actually only first line used since re-def as 0
+    return(list(ls=0,lsth1=rep(0,R-2),lsth2=matrix(0,R-2,R-2)))
     F <- function(x) {
       h <- ind <- x > 0; h[ind] <- 1/(exp(-x[ind]) + 1)
       x <- exp(x[!ind]); h[!ind] <- (x/(1+x))
@@ -427,6 +430,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       } 
     }
     list(ls=ls,lsth1=colSums(Dth),lsth2=ls2)
+   
   } ## end of ls
   
   ## initialization is interesting -- needs to be with reference to initial cut-points

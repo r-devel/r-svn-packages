@@ -8,7 +8,15 @@
   smooth terms not in 'terms' or in 'exclude' are no longer evaluated, and 
   are instead set to zero or not returned. See ?predict.gam.
 
+* ocat saturated likelihood definition changed to zero, leading to better 
+  comprability of deviance between model fits.
+
+* null.deviance calculation for extended families modified to make more sense
+  when `mu' is the mean of a latent variable, rather than the response itself. 
+
 * bam now returns standarized residuals 'std.rsd' if `rho!=0'. 
+
+* bam(...,discrete=TRUE) can now handle 'fs' terms.
 
 * bam(...,discrete=TRUE) now accepts 'by' variables. Thanks to Zheyaun Li
   for debugging on this.
