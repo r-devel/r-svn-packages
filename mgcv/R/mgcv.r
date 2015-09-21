@@ -372,7 +372,7 @@ augment.smX <- function(sm,nobs,np) {
 ## identifiability constraint purposes.
   ns <- length(sm$S) ## number of penalty matrices
   if (ns==0) { ## nothing to do
-    return(rbind(sm$X),matrix(0,np,np))
+    return(rbind(sm$X),matrix(0,np,ncol(sm$X)))
   }
   ind <- colMeans(abs(sm$S[[1]]))!=0
   sqrmaX  <- mean(abs(sm$X[,ind]))^2
@@ -3666,8 +3666,9 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         chi.sq[i] <- t(p)%*%V%*%p
         df[i] <- attr(V, "rank")
       } else { ## Better founded alternatives...
-        Xt <- X[,start:stop,drop=FALSE] 
-        if (object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
+        Xt <- X[,start:stop,drop=FALSE]  
+        fx <- if (inherits(object$smooth[[i]],"tensor.smooth")) all(object$smooth[[i]]$fx) else object$smooth[[i]]$fixed
+        if (!fx&&object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
           res <- reTest(object,i)
         } else { ## Inverted Nychka interval statistics
           df[i] <- min(ncol(Xt),edf1[i])

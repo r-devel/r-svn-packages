@@ -1301,7 +1301,6 @@ smooth.construct.cr.smooth.spec <- function(object,data,knots) {
   }
 
   object$df <- object$bs.dim # degrees of freedom,  unconstrained and unpenalized
-  object$null.space.dim <- 2
   object$xp <- k  # knot positions
   object$F <- oo$F # f'' = t(F)%*%f (at knots) - helps prediction 
   class(object) <- "cr.smooth"

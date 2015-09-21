@@ -663,6 +663,10 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 
     if (!is.null(cl)&&inherits(cl,"cluster")) {
       n.threads <- length(cl)
+      while(nobs/n.threads < ncol(G$X)) n.threads <- n.threads - 1
+      if (n.threads < length(cl)) { 
+        warning("Too many cluster nodes to use all efficiently")
+      }
     } else n.threads <- 1
 
     if (n.threads>1) { ## set up thread argument lists
@@ -1245,8 +1249,11 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
 
    if (n>chunk.size) { ## then use QR accumulation approach
      if (!is.null(cl)&&inherits(cl,"cluster")) { 
-       ## require(parallel)
        n.threads <- length(cl)
+       while(nobs/n.threads < ncol(G$X)) n.threads <- n.threads - 1
+       if (n.threads < length(cl)) { 
+         warning("Too many cluster nodes to use all efficiently")
+       }
      } else n.threads <- 1
 
      G$coefficients <- rep(0,ncol(G$X))
@@ -1594,7 +1601,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## 'n.threads' is number of threads to use for non-cluster computation (e.g. combining 
 ## results from cluster nodes). If 'NA' then is set to max(1,length(cluster)).
 { control <- do.call("gam.control",control)
-  if (control$trace) t0 <- proc.time()
+  if (control$trace) t3 <- t2 <- t1 <- t0 <- proc.time()
   if (is.null(G)) { ## need to set up model!
     if (is.character(family))
             family <- eval(parse(text = family))
@@ -1989,13 +1996,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   environment(attr(object$model,"terms"))  <- .GlobalEnv  
   if (control$trace) { 
     t5 <- proc.time()
-    if (is.null(G)) {
-      t5 <- rbind(t1-t0,t2-t1,t3-t2,t4-t3,t5-t4)[,1:3]
-      row.names(t5) <- c("initial","gam.setup","pre-fit","fit","finalise")
-    } else {
-      t5 <- rbind(t4-t3,t5-t4)[,1:3]
-      row.names(t5) <- c("fit","finalise")
-    }
+    t5 <- rbind(t1-t0,t2-t1,t3-t2,t4-t3,t5-t4)[,1:3]
+    row.names(t5) <- c("initial","gam.setup","pre-fit","fit","finalise")
     print(t5)
   }
   object
