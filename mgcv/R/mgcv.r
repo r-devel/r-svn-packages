@@ -372,7 +372,7 @@ augment.smX <- function(sm,nobs,np) {
 ## identifiability constraint purposes.
   ns <- length(sm$S) ## number of penalty matrices
   if (ns==0) { ## nothing to do
-    return(rbind(sm$X),matrix(0,np,ncol(sm$X)))
+    return(rbind(sm$X,matrix(0,np,ncol(sm$X))))
   }
   ind <- colMeans(abs(sm$S[[1]]))!=0
   sqrmaX  <- mean(abs(sm$X[,ind]))^2

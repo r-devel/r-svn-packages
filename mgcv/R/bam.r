@@ -1250,7 +1250,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
    if (n>chunk.size) { ## then use QR accumulation approach
      if (!is.null(cl)&&inherits(cl,"cluster")) { 
        n.threads <- length(cl)
-       while(nobs/n.threads < ncol(G$X)) n.threads <- n.threads - 1
+       while(n/n.threads < ncol(G$X)) n.threads <- n.threads - 1
        if (n.threads < length(cl)) { 
          warning("Too many cluster nodes to use all efficiently")
        }
