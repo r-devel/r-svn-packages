@@ -3,6 +3,10 @@
 
 1.8-8
 
+* Sl.setup (used by bam) modification to allow more efficient handling of terms
+  with multiple diagonal penalties with no non-zero elements in common, but
+  possibly with non zero elements `interleaved' between penalties.
+
 * predict.gam and predict.bam now accept an 'exclude' argument allowing 
   terms (e.g. random effects) to be zeroed for prediction. For efficiency,
   smooth terms not in 'terms' or in 'exclude' are no longer evaluated, and 
