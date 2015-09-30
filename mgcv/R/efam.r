@@ -949,7 +949,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
     validmu <- function(mu) all(mu > 0 & mu < 1)
 
     dev.resids <- function(y, mu, wt,theta=NULL) {
-    ## '-'2*loglik instead of deviance in REML/ML expression
+    ## '-2*loglik' instead of deviance in REML/ML expression
       if (is.null(theta)) theta <- get(".Theta")
       theta <- exp(theta) ## note log theta supplied
       muth <- mu*theta

@@ -13,7 +13,7 @@
   are instead set to zero or not returned. See ?predict.gam.
 
 * ocat saturated likelihood definition changed to zero, leading to better 
-  comprability of deviance between model fits.
+  comprability of deviance between model fits (thanks to Herwig Friedl).
 
 * null.deviance calculation for extended families modified to make more sense
   when `mu' is the mean of a latent variable, rather than the response itself. 
