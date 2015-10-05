@@ -3,6 +3,9 @@
 
 1.8-8
 
+* some smooth plot methods now accept 'colors' and 'contour.col' argument to
+  set color palette in image plots and contour line colors. 
+
 * Sl.setup (used by bam) modification to allow more efficient handling of terms
   with multiple diagonal penalties with no non-zero elements in common, but
   possibly with non zero elements `interleaved' between penalties.
