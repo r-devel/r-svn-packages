@@ -2880,8 +2880,8 @@ smooth.construct.ms.smooth.spec <- function(object,data,knots)
   knt <- sweep(knt,2,object$shift)
 
   ## Get the E matrix...
- 
-  E <- MaternE(knt,knt)
+  rho <- if (!is.na(object$p.order)) object$p.order else -1
+  E <- MaternE(knt,knt,rho)
   object$matern.rho <- attr(E,"rho")
 
   #T <- MaternT(knt,m=object$p.order[1],n=object$dim) ## constraint matrix

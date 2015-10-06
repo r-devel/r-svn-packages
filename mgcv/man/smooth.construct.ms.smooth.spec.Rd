@@ -7,7 +7,7 @@
 
 \description{Gaussian process/kriging models based on a Matern covariance function can be written in a very similar form to thin plate and Duchon spline models (e.g. Handcock, Meier, Nychka, 1994), and low rank versions produced by the eigen approximation method of Wood (2003). Kammann and Wand (2003) suggest a particularly simple form of the Matern covariance function with only a single smoothing parameter to estimate, and this class implements this.  
 
-
+Usually invoked by an \code{s(...,bs="ms")} term in a \code{gam} formula. Argument \code{m} of \code{s} sets the range parameter of the covariance function, with the default of \code{NA} signalling that the Kammann and Wand (2003) suggested value (approx) should be used.  
 }
 
 \usage{
@@ -87,12 +87,13 @@ eg <- gamSim(2,n=200,scale=.05)
 attach(eg)
 op <- par(mfrow=c(2,2),mar=c(4,4,1,1))
 b0 <- gam(y~s(x,z,bs="ds",m=c(2,0),k=50),data=data)  ## tps
-b <- gam(y~s(x,z,bs="ms",k=50),data=data)  ## Matern spline
+b <- gam(y~s(x,z,bs="ms",k=50),data=data)  ## Matern spline default range
+b1 <- gam(y~s(x,z,bs="ms",k=50,m=.1),data=data)  ## Matern spline 
 
 persp(truth$x,truth$z,truth$f,theta=30) ## truth
 vis.gam(b0,theta=30)
 vis.gam(b,theta=30)
-vis.gam(b,theta=110)
+vis.gam(b1,theta=30)
 
 detach(eg)
 
