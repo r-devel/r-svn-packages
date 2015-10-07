@@ -46,7 +46,7 @@ out duplicate locations).}
 \item \eqn{\exp(-d/\rho)(1+d/\rho + (d/\rho)^2/3)}{exp(-d/r)(1+d/r + (d/r)^2/3)}.
 \item \eqn{\exp(-d/\rho)(1+d/\rho+2(d/\rho)^2/5 + (d/\rho)^3/15)}{exp(-d/r)(1+d/r+2(d/r)^2/4+(d/r)^3/15)}.
 }
-See Fahrmeier et al. (2013) section 8.1.6, for example.  
+See Fahrmeir et al. (2013) section 8.1.6, for example.  
 
 The default basis dimension for this class is \code{k=M+k.def} where \code{M} is the null space dimension (dimension of unpenalized function space) and \code{k.def} is 10 for dimension 1, 30 for dimension 2 and 100 for higher dimensions. 
 This is essentially arbitrary, and should be checked, but as with all penalized regression smoothers, results are statistically 
@@ -82,7 +82,7 @@ faster, but gives poorer results (and the user must be quite careful in choosing
 
 \references{
 
-Fahrmeier, L., T. Kneib, S. Lang and B. Marx (2013) Regression, Springer.
+Fahrmeir, L., T. Kneib, S. Lang and B. Marx (2013) Regression, Springer.
 
 Handcock, M. S., K. Meier and D. Nychka (1994) Journal of the American Statistical Association, 89: 401-403
 
