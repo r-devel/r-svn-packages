@@ -52,7 +52,7 @@ outside \code{R} (see example code, below). }
 
 \item{terms}{if \code{type=="terms"} or \code{type="iterms"} then only results for the terms (smooth or parametric) named in this array will be returned. Otherwise any smooth terms not named in this array will be set to zero. If \code{NULL} then all terms are included.}
 
-item{exclude}{if \code{type=="terms"} or \code{type="iterms"} then terms (smooth or parametric) named in this array
+\item{exclude}{if \code{type=="terms"} or \code{type="iterms"} then terms (smooth or parametric) named in this array
 will not be returned. Otherwise any smooth terms named in this array will be set to zero. 
 If \code{NULL} then no terms are excluded.}
 

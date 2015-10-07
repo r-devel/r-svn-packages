@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2014
+##  R routines for the package mgcv (c) Simon Wood 2000-2015
 
 ##  This file is primarily concerned with defining classes of smoother,
 ##  via constructor methods and prediction matrix methods. There are
@@ -2786,28 +2786,41 @@ Predict.matrix.duchon.spline <- function(object,data)
 ##################################################
 
 
-MaternT <- function(x) {
+gpT <- function(x) {
 ## T matrix for Kamman and Wand Matern Spline...
   cbind(x[,1]*0+1,x)
-} ## MaternT
+} ## gpT
 
-MaternE <- function(x,xk,rho = -1) {
+gpE <- function(x,xk,defn = NA) {
 ## Get the E matrix for a Kammann and Wand Matern spline.
 ## rho is the range parameter... set to K&W default if not supplied
   ind <- expand.grid(x=1:nrow(x),xk=1:nrow(xk))
   ## get d[i,j] the Euclidian distance from x[i] to xk[j]... 
   E <- matrix(sqrt(rowSums((x[ind$x,,drop=FALSE]-xk[ind$xk,,drop=FALSE])^2)),nrow(x),nrow(xk))
+  rho <- -1; k <- 1
+  if ((length(defn)==1&&is.na(defn))||length(defn)<1) { type <- 3 } else
+  if (length(defn)>0) type <- round(defn[1])
+  if (length(defn)>1) rho <- defn[2]
+  if (length(defn)>2) k <- defn[3]
+
   if (rho <= 0) rho <- max(E) ## approximately the K & W choise
   E <- E/rho
-  E <- (1 + E) * exp(-E)
-  attr(E,"rho") <- rho
+  if (!type%in%1:5||k>2||k<=0) stop("incorrect arguments to GP smoother")
+  E <- switch(type,
+              (1 - 1.5*E + 0.5 *E^3)*(E<=rho), ## 1 spherical
+              exp(-E^k), ## 2 power exponential
+              (1 + E) * exp(-E), ## 3 Matern k = 1.5
+	      (1 + E + E^2/3) * exp(-E), ## 4 Matern k = 2.5
+	      (1 + E + .4 * E^2 + E^3 / 15) * exp(-E) ## 5 Matern k = 3.5
+	     )
+  attr(E,"defn") <- c(type,rho,k)
   E
-} ## MaternE
+} ## gpE
 
-smooth.construct.ms.smooth.spec <- function(object,data,knots)
-## The constructor for a Kamman and Wand (2003) Matern Spline.
+smooth.construct.gp.smooth.spec <- function(object,data,knots)
+## The constructor for a Kamman and Wand (2003) Matern Spline, and other GP smoothers.
 ## See also Handcock, Meier and Nychka (1994), and Handcock and Stein (1993).
-{ ## deal with possible extra arguments of "ms" type smooth
+{ ## deal with possible extra arguments of "gp" type smooth
   xtra <- list()
 
   if (is.null(object$xt$max.knots)) xtra$max.knots <- 2000 
@@ -2880,11 +2893,8 @@ smooth.construct.ms.smooth.spec <- function(object,data,knots)
   knt <- sweep(knt,2,object$shift)
 
   ## Get the E matrix...
-  rho <- if (!is.na(object$p.order)) object$p.order else -1
-  E <- MaternE(knt,knt,rho)
-  object$matern.rho <- attr(E,"rho")
-
-  #T <- MaternT(knt,m=object$p.order[1],n=object$dim) ## constraint matrix
+  E <- gpE(knt,knt,object$p.order)
+  object$gp.defn <- attr(E,"defn")
   
   def.k <- c(10,30,100)
   dd <- ncol(knt)
@@ -2914,17 +2924,17 @@ smooth.construct.ms.smooth.spec <- function(object,data,knots)
   object$knt = knt ## save the knots
   object$df <- object$bs.dim
   object$rank <- k
-  class(object)<-"matern.spline"
+  class(object)<-"gp.smooth"
 
-  object$X <- Predict.matrix.matern.spline(object,data)
+  object$X <- Predict.matrix.gp.smooth(object,data)
 
   object
-} ## end of smooth.construct.ms.smooth.spec
+} ## end of smooth.construct.gp.smooth.spec
 
 
 
-Predict.matrix.matern.spline <- function(object,data)
-# prediction method function for the Matern smooth class
+Predict.matrix.gp.smooth <- function(object,data)
+# prediction method function for the gp (Matern) smooth class
 { nk <- nrow(object$knt) ## number of 'knots'
 
   ## get evaluation points....
@@ -2943,23 +2953,23 @@ Predict.matrix.matern.spline <- function(object,data)
     n.chunk <- n %/% nk
     for (i in 1:n.chunk) { ## build predict matrix in chunks
       ind <- 1:nk + (i-1)*nk
-      Xc <- MaternE(x=x[ind,,drop=FALSE],xk=object$knt,rho=object$matern.rho)
-      Xc <- cbind(Xc%*%object$UZ,MaternT(x=x[ind,,drop=FALSE]))
+      Xc <- gpE(x=x[ind,,drop=FALSE],xk=object$knt,object$gp.defn)
+      Xc <- cbind(Xc%*%object$UZ,gpT(x=x[ind,,drop=FALSE]))
       if (i == 1) X <- Xc else { X <- rbind(X,Xc);rm(Xc)}
     } ## finished size nk chunks
 
     if (n > ind[nk]) { ## still some left over
       ind <- (ind[nk]+1):n ## last chunk
-      Xc <- MaternE(x=x[ind,,drop=FALSE],xk=object$knt,rho=object$matern.rho)
-      Xc <- cbind(Xc%*%object$UZ,MaternT(x=x[ind,,drop=FALSE]))
+      Xc <- gpE(x=x[ind,,drop=FALSE],xk=object$knt,object$gp.defn)
+      Xc <- cbind(Xc%*%object$UZ,gpT(x=x[ind,,drop=FALSE]))
       X <- rbind(X,Xc);rm(Xc)
     }
   } else {
-    X <- MaternE(x=x,xk=object$knt,rho=object$matern.rho)
-    X <- cbind(X%*%object$UZ,MaternT(x=x))
+    X <- gpE(x=x,xk=object$knt,object$gp.defn)
+    X <- cbind(X%*%object$UZ,gpT(x=x))
   }
   X 
-} ## end of Predict.matrix.matern.spline
+} ## end of Predict.matrix.gp.smooth
 
 
 

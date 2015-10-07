@@ -3,8 +3,9 @@
 
 1.8-8
 
-** New "ms" smooth class (see ?matern.spline) implemeting the Matern 
-   covariance based GP model of Kamman and Wand (2003).
+** New "gp" smooth class (see ?gp.smooth) implemeting the Matern 
+   covariance based GP model of Kamman and Wand (2003), and a 
+   variety of other simple GP smoothers.
 
 * some smooth plot methods now accept 'colors' and 'contour.col' argument to
   set color palette in image plots and contour line colors. 

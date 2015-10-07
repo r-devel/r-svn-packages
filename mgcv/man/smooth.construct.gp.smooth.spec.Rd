@@ -1,18 +1,18 @@
-\name{smooth.construct.ms.smooth.spec}
-\alias{smooth.construct.ms.smooth.spec}
-\alias{Predict.matrix.matern.spline}
-\alias{matern.spline}
+\name{smooth.construct.gp.smooth.spec}
+\alias{smooth.construct.gp.smooth.spec}
+\alias{Predict.matrix.gp.smooth}
+\alias{gp.smooth}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{Low rank Matern splines}
+\title{Low rank Gaussian process smooths}
 
-\description{Gaussian process/kriging models based on a Matern covariance function can be written in a very similar form to thin plate and Duchon spline models (e.g. Handcock, Meier, Nychka, 1994), and low rank versions produced by the eigen approximation method of Wood (2003). Kammann and Wand (2003) suggest a particularly simple form of the Matern covariance function with only a single smoothing parameter to estimate, and this class implements this.  
+\description{Gaussian process/kriging models based on a simple covariance functions can be written in a very similar form to thin plate and Duchon spline models (e.g. Handcock, Meier, Nychka, 1994), and low rank versions produced by the eigen approximation method of Wood (2003). Kammann and Wand (2003) suggest a particularly simple form of the Matern covariance function with only a single smoothing parameter to estimate, and this class implements this and other similar models.  
 
-Usually invoked by an \code{s(...,bs="ms")} term in a \code{gam} formula. Argument \code{m} of \code{s} sets the range parameter of the covariance function, with the default of \code{NA} signalling that the Kammann and Wand (2003) suggested value (approx) should be used.  
+Usually invoked by an \code{s(...,bs="ms")} term in a \code{gam} formula. Argument \code{m} of selects the covariance function, sets the range parameter and any power parameter. If \code{m} is not supplied then it defaults to \code{NA} and the covariance function suggested by Kammann and Wand (2003) along with their suggested range parameter is used. Otherwise \code{m[1]} between 1 and 5 selects the correlation function from respectively, spherical, power exponential, and Matern with kappa = 1.5, 2.5 or 3.5. \code{m[2]} if present specifies the range parameter, with non-positive or absent indicating that the Kammann and Wand estimate should be used. \code{m[3]} can be used to specify the power for the power exponential which otherwise defaults to 1. 
 }
 
 \usage{
-\method{smooth.construct}{ms.smooth.spec}(object, data, knots)
-\method{Predict.matrix}{matern.spline}(object, data)
+\method{smooth.construct}{gp.smooth.spec}(object, data, knots)
+\method{Predict.matrix}{gp.smooth}(object, data)
 }
 
 \arguments{ 
@@ -27,7 +27,7 @@ Usually invoked by an \code{s(...,bs="ms")} term in a \code{gam} formula. Argume
 
 }
 
-\value{ An object of class \code{"matern.spline"}. In addition to the usual elements of a 
+\value{ An object of class \code{"gp.smooth"}. In addition to the usual elements of a 
 smooth class documented under \code{\link{smooth.construct}}, this object will contain:
 \item{shift}{A record of the shift applied to each covariate in order to center it around zero and 
 avoid any co-linearity problems that might otehrwise occur in the penalty null space basis of the term. }
@@ -35,10 +35,20 @@ avoid any co-linearity problems that might otehrwise occur in the penalty null s
 out duplicate locations).}
 \item{UZ}{The matrix mapping the smoother parameters back to the parameters of a full Matern spline.}
 \item{null.space.dimension}{The dimension of the space of functions that have zero wiggliness according to the wiggliness penalty for this term.}
-\item{matern.rho}{the range parameter as calculated following Kammann and Wand (2003)}
+\item{gp.defn}{the type, range parameter and power parameter defining the correlation function. }
 }
 
-\details{  The default basis dimension for this class is \code{k=M+k.def} where \code{M} is the null space dimension (dimension of unpenalized function space) and \code{k.def} is 10 for dimension 1, 30 for dimension 2 and 100 for higher dimensions. 
+\details{ Let \eqn{\rho>0}{r>0} be the range parameter, \eqn{0 < \kappa\le 2 }{0<k<=2} and \eqn{d}{d} denote the distance between two points. Then the correlation functions indexed by \code{m[1]} are:
+\enumerate{
+\item \eqn{1 - 1.5 d/\rho + 0.5 (d/\rho)^3}{1-1.5d/r+0.5(d/r)^3} if \eqn{d \le \rho}{d<=r} and 0 otherwise.
+\item \eqn{\exp(-(d/\rho)^\kappa)}{exp((d/r)^k)}.
+\item \eqn{\exp(-d/\rho)(1+d/\rho)}{exp(-d/r)(1+d/r)}.
+\item \eqn{\exp(-d/\rho)(1+d/\rho + (d/\rho)^2/3)}{exp(-d/r)(1+d/r + (d/r)^2/3)}.
+\item \eqn{\exp(-d/\rho)(1+d/\rho+2(d/\rho)^2/5 + (d/\rho)^3/15)}{exp(-d/r)(1+d/r+2(d/r)^2/4+(d/r)^3/15)}.
+}
+See Fahrmeier et al. (2013) section 8.1.6, for example.  
+
+The default basis dimension for this class is \code{k=M+k.def} where \code{M} is the null space dimension (dimension of unpenalized function space) and \code{k.def} is 10 for dimension 1, 30 for dimension 2 and 100 for higher dimensions. 
 This is essentially arbitrary, and should be checked, but as with all penalized regression smoothers, results are statistically 
 insensitive to the exact choise, provided it is not so small that it forces oversmoothing (the smoother's 
 degrees of freedom are controlled primarily by its smoothing parameter).
@@ -72,6 +82,8 @@ faster, but gives poorer results (and the user must be quite careful in choosing
 
 \references{
 
+Fahrmeier, L., T. Kneib, S. Lang and B. Marx (2013) Regression, Springer.
+
 Handcock, M. S., K. Meier and D. Nychka (1994) Journal of the American Statistical Association, 89: 401-403
 
 Kammann, E. E. and M.P. Wand (2003) Geoadditive Models. Applied Statistics 52(1):1-18.
@@ -86,9 +98,9 @@ require(mgcv)
 eg <- gamSim(2,n=200,scale=.05)
 attach(eg)
 op <- par(mfrow=c(2,2),mar=c(4,4,1,1))
-b0 <- gam(y~s(x,z,bs="ds",m=c(2,0),k=50),data=data)  ## tps
-b <- gam(y~s(x,z,bs="ms",k=50),data=data)  ## Matern spline default range
-b1 <- gam(y~s(x,z,bs="ms",k=50,m=.1),data=data)  ## Matern spline 
+b0 <- gam(y~s(x,z,k=50),data=data)  ## tps
+b <- gam(y~s(x,z,bs="gp",k=50),data=data)  ## Matern spline default range
+b1 <- gam(y~s(x,z,bs="gp",k=50,m=c(1,.5)),data=data)  ## spherical 
 
 persp(truth$x,truth$z,truth$f,theta=30) ## truth
 vis.gam(b0,theta=30)
