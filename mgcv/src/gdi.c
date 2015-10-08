@@ -1923,12 +1923,16 @@ void gdiPK(double *work,double *X,double *E,double *Es,double *rS,double *U1,dou
            double *rank_tol,double *ldetXWXS)
 /* does initial QR decomposition for gdi routines */
 { int i,j,k,*pivot,nt1,nr,left,tp,bt,ct,TRUE=1,FALSE=0,one=1;
-  double *zz,*WX,*tau,*R1,Rnorm,Enorm,Rcond,*Q,*tau1,*Ri,ldetI2D,*IQ,*d,*p0,*p1,*p2,*p3,*p4;
+  double *zz,*zzp,*WX,*tau,*R1,Rnorm,Enorm,Rcond,*Q,*tau1,*Ri,ldetI2D,*IQ,*d,*p0,*p1,*p2,*p3,*p4,eps[2],xx,norm1,norm2;
   nt1 = *nt;
   zz = (double *)R_chk_calloc((size_t)*n,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
-  for (i=0;i< *n;i++) zz[i] = z[i]*raw[i]; /* form z itself*/
-
-  for (i=0;i<neg_w;i++) { k=nind[i];zz[k] = -zz[k];} 
+  zzp = (double *)R_chk_calloc((size_t)*n,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
+  eps[0] = 1 + *rank_tol;eps[1] = 1 - *rank_tol;
+  for (j=0,i=0;i< *n;i++) { 
+    zz[i] = z[i]*raw[i]; /* form z itself */
+    zzp[i] = zz[i]*eps[j];j = 1-j; /* perturbed version */
+  }
+  for (i=0;i<neg_w;i++) { k=nind[i]; zz[k] = -zz[k]; zzp[k] = -zzp[k];} 
 
   WX = (double *) R_chk_calloc((size_t) ( (*n + *nt * *q) * *q),sizeof(double));
   for (j=0;j<*q;j++) 
@@ -2112,10 +2116,34 @@ void gdiPK(double *work,double *X,double *E,double *Es,double *rS,double *U1,dou
  
   /* PK'z --- the pivoted coefficients...*/
   bt=1;ct=0;mgcv_mmult(work,K,zz,&bt,&ct,rank,&one,n);
+  mgcv_mmult(zz,K,zzp,&bt,&ct,rank,&one,n); /* perturbed version over-writing zz */
+  for (xx=0.0,i=0;i<*rank;i++) xx += fabs(work[i]); xx /= *rank;
+  for (norm1=0.0,i=0;i<*rank;i++) norm1 += fabs(work[i]-zz[i])/xx; norm1 /= *rank;
   applyP(PKtz,work,R,Vt,neg_w,nr,*rank,1);
+  // Rprintf("\n");for (i=0;i<*rank;i++) Rprintf("%g ",PKtz[i]);
+  if (norm1 > 1e-4) {  
+    /* Create Wz (not sqrt(|W|)z)... */
+    for (j=0,i=0;i<*n;i++) { 
+      zz[i] = raw[i] * raw[i] * z[i];
+      zzp[i] = zz[i] * eps[j]; j = 1-j;
+    } 
+    for (i=0;i<neg_w;i++) { k=nind[i]; zz[k] = -zz[k]; zzp[k] = -zzp[k];} 
+    /* now form X'Wz... */
+    bt=1;ct=0;mgcv_mmult(work,X,zz,&bt,&ct,rank,&one,n);
+    applyPt(zz,work,R,Vt,neg_w,nr,*rank,1); /* ... and P'X'Wz */
+    mgcv_mmult(work,X,zzp,&bt,&ct,rank,&one,n);
+    applyPt(zzp,work,R,Vt,neg_w,nr,*rank,1); /* ... and P'X'Wz */
+    /* estimate stability of this computation... */
+    for (xx=0.0,i=0;i < *rank;i++) xx += fabs(zz[i]); xx/= *rank;
+    for (norm2=0.0,i=0;i < *rank;i++) norm2 += fabs(zzp[i]-zz[i])/xx; norm2/= *rank;
+    if (norm2<norm1) { /* then use beta = PP'X'Wz */
+      applyP(PKtz,zz,R,Vt,neg_w,nr,*rank,1);
+      //Rprintf("\n");for (i=0;i<*rank;i++) Rprintf("%g ",PKtz[i]);
+    }
+  } /* dealing with unstable computations */
 
   R_chk_free(WX);R_chk_free(tau);R_chk_free(Ri);R_chk_free(R1); 
-  R_chk_free(tau1);R_chk_free(Q); R_chk_free(pivot);R_chk_free(zz);
+  R_chk_free(tau1);R_chk_free(Q); R_chk_free(pivot);R_chk_free(zz);R_chk_free(zzp);
 } /* gdiPK */
 
 
@@ -3057,9 +3085,9 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
 */
 
-{ int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1,nz;
-  double *z,*WX,*tau,Rcond,xx,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
-    *R1,*tau1,Rnorm,Enorm,*R;
+{ int i,j,k,rank,one=1,*pivot,*pivot1,left,tp,neg_w=0,*nind,bt,ct,nr,n_drop=0,*drop,TRUE=1,FALSE=0,nz;
+  double *z,*zp,*WX,*tau,Rcond,xx,zz,zz1,*work,*Q,*Q1,*IQ,*raw,*d,*Vt,*p0,*p1,
+    *R1,*tau1,Rnorm,Enorm,*R,eps[2],*Xp;
   #ifdef SUPPORT_OPENMP
   int m;
   m = omp_get_num_procs(); /* detected number of processors */
@@ -3072,6 +3100,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   nr = *q + *rE;
   nz = *n; if (nz<nr) nz=nr; /* possible for nr to be more than n */
   z = (double *)R_chk_calloc((size_t) nz,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
+  zp = (double *)R_chk_calloc((size_t) nz,sizeof(double)); /* storage for perturbed version of z=[sqrt(|W|)z,0] */
   raw = (double *)R_chk_calloc((size_t) *n,sizeof(double)); /* storage for sqrt(|w|) */
   
   for (i=0;i< *n;i++) 
@@ -3083,15 +3112,19 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
     k=0;for (i=0;i< *n;i++) if (w[i]<0) { nind[k]=i;k++;}
   } else { nind = (int *)NULL;}
 
-  for (i=0;i< *n;i++) z[i] = y[i]*raw[i]; /* form z itself*/
+  eps[1] = 1 + *rank_tol;eps[0] = 1 - *rank_tol;
+  for (j=0,i=0;i< *n;i++) { 
+    z[i] = y[i]*raw[i]; /* form z itself*/
+    zp[i] = raw[i]*eps[j]*y[i]; j = 1 - j; /* perturbed version, for assessing stability of Q_1'Wz */ 
+  }
 
-  for (i=0;i<neg_w;i++) {k=nind[i];z[k] = -z[k];} 
+  for (i=0;i<neg_w;i++) {k=nind[i];z[k] = -z[k]; zp[k] = -zp[k];} 
 
   /* st WX = (double *) R_chk_calloc((size_t) ( *n * *q),sizeof(double)); */
   WX = (double *) R_chk_calloc((size_t) ( (*n + *nt * *q) * *q),sizeof(double));
-  for (p0=WX,j=0;j<*q;j++) { 
-    for (p1=raw,i=0;i<*n;i++,p1++,p0++,X++) { /* form WX */
-      *p0 = *X * *p1;
+  for (Xp=X,p0=WX,j=0;j<*q;j++) { 
+    for (p1=raw,i=0;i<*n;i++,p1++,p0++,Xp++) { /* form WX */
+      *p0 = *Xp * *p1;
       /* k = i + nn * j;
          WX[k]=raw[i]*X[i + *n *j];*/
     }
@@ -3135,7 +3168,6 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   rank = *q;
   R_cond(R,&nr,&rank,work,&Rcond);
   while (*rank_tol * Rcond > 1) { rank--;R_cond(R,&nr,&rank,work,&Rcond);}
-  R_chk_free(work);
   
   /* Now have to drop the unidentifiable columns from R1, E and the corresponding rows from rS
      The columns to drop are indexed by the elements of pivot1 from pivot1[rank] onwards.
@@ -3194,7 +3226,7 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
       if (d[i]< - *rank_tol) { /* X'WX not +ve definite, clean up and abort */
         *n = -1; 
         R_chk_free(Vt);R_chk_free(d);R_chk_free(pivot);R_chk_free(tau);
-        R_chk_free(nind);R_chk_free(raw);R_chk_free(z);R_chk_free(WX);
+        R_chk_free(nind);R_chk_free(raw);R_chk_free(z);R_chk_free(zp);R_chk_free(work);R_chk_free(WX);
         R_chk_free(tau1);R_chk_free(pivot1);R_chk_free(R);if (n_drop) R_chk_free(drop);
         return;
       }
@@ -3207,21 +3239,31 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
   /* Now get the fitted values X \beta, *without* finding \beta */
   /* st left=1;tp=1;mgcv_qrqy(z,WX,tau,n,&one,q,&left,&tp); */ /* z = Q'z */
   tp=1;mgcv_pqrqy(z,WX,tau,n,q,&one,&tp,nt);
+  mgcv_pqrqy(zp,WX,tau,n,q,&one,&tp,nt); /* perturbed version for stability checking */
+  
+  for (i=rank;i<nz;i++) zp[i] = z[i]=0.0;
 
-  for (i=rank;i<nz;i++) z[i]=0.0;
+  left=1,tp=1; 
+  mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1'Q'z, where Q1 is the first rank rows of second orth factor */
+  mgcv_qrqy(zp,R,tau1,&nr,&one,&rank,&left,&tp); /* perturbed version */
 
-
-  left=1,tp=1; mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1'Q'z, where Q1 is the first rank rows of second orth factor */
-
-  for (i=rank;i < nz;i++) z[i]=0.0;
+  for (i=rank;i < nz;i++) zp[i]= z[i]=0.0;
 
   if (neg_w) { /* apply the correction factor for negative w_i terms */
-     bt=0;ct=0;mgcv_mmult(y,Vt,z,&bt,&ct,&rank,&one,&rank); /* V' Q_1' z */
-     for (i=0;i<rank;i++) y[i] *= d[i];
-     bt=1;ct=0;mgcv_mmult(z,Vt,y,&bt,&ct,&rank,&one,&rank); /* V (I-2D^2)^{-1} V' Q1' Q' z */
+     bt=0;ct=0;mgcv_mmult(work,Vt,z,&bt,&ct,&rank,&one,&rank); /* V' Q_1' z */
+     for (i=0;i<rank;i++) work[i] *= d[i];
+     bt=1;ct=0;mgcv_mmult(z,Vt,work,&bt,&ct,&rank,&one,&rank); /* V (I-2D^2)^{-1} V' Q1' Q' z */
+     /* repeat for perturbed version to assess stability of computation */
+     bt=0;ct=0;mgcv_mmult(work,Vt,zp,&bt,&ct,&rank,&one,&rank); /* V' Q_1' zp */
+     for (i=0;i<rank;i++) work[i] *= d[i];
+     bt=1;ct=0;mgcv_mmult(zp,Vt,work,&bt,&ct,&rank,&one,&rank); /* V (I-2D^2)^{-1} V' Q1' Q' zp */
   }
 
-  for (i=0;i<rank;i++) y[i] = z[i];        /* y = Q'z, or corrected version, for finding beta */ 
+  /* get measure of sensitivity to perturbation... */  
+  for (xx=0.0,i=0;i<rank;i++) xx += fabs(z[i]); xx /= rank;
+  for (zz=0.0,i=0;i<rank;i++) zz += fabs(z[i]-zp[i])/xx; zz /= rank;
+
+  for (i=0;i<rank;i++) work[i+*q] = z[i];        /* y = Q'z, or corrected version, for finding beta */ 
   
   left=1,tp=0; mgcv_qrqy(z,R,tau1,&nr,&one,&rank,&left,&tp); /* z = Q1 Q1'Q'z */
 
@@ -3234,21 +3276,72 @@ void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,i
 
   for (i=0;i<*n;i++) eta[i] = z[i]/raw[i]; /* the linear predictor */
 
+  if (zz>1e-4) { /* There was evidence of unstable computation of Q'z - try alternative */
+    /* form Wz (not sqrt(|W|)z)... */ 
+    for (j=0,i=0;i< *n;i++) { 
+      z[i] = y[i]*w[i]; /* form z itself*/
+      zp[i] = w[i]*eps[j]*y[i]; j = 1 - j; /* perturbed version, for assessing stability of R^{-T}X'Wz */ 
+    }
+    /* form X'Wz, drop any entries in drop and pivot... */
+    bt=1;ct=0;mgcv_mmult(work,X,z,&bt,&ct,q,&one,n);     
+    //Rprintf("\n");for (i=0;i<*q;i++) Rprintf("%g ",work[i]);
+    drop_rows(work,*q,1,drop,n_drop);
+    pivoter(work,&rank,&one,pivot1,&FALSE,&FALSE);  
+    //Rprintf("\n");for (i=0;i<*q;i++) Rprintf("%g ",work[i]);
+    /* and R^{-T} X'Wz... */
+    for (k=0;k<rank;k++) { /* forward sub loop (transposing R)*/
+      for (xx=0.0,j=0;j < k;j++) xx += R[j + nr * k]*z[j];
+      z[k] = (work[k] - xx)/R[k + nr * k];
+    }
+    /* repeat for X'Wzp... */
+    bt=1;ct=0;mgcv_mmult(work,X,zp,&bt,&ct,q,&one,n); 
+    drop_rows(work,*q,1,drop,n_drop);
+    pivoter(work,&rank,&one,pivot1,&FALSE,&FALSE);    
+    for (k=0;k<rank;k++) { /* forward sub loop (transposing R)*/
+      for (xx=0.0,j=0;j < k;j++) xx += R[j + nr * k]*zp[j];
+      zp[k] = (work[k] - xx)/R[k + nr * k];
+    }
+    if (neg_w) { /* apply the correction factor for negative w_i terms */
+      bt=0;ct=0;mgcv_mmult(work,Vt,z,&bt,&ct,&rank,&one,&rank); /* V' Q_1' z */
+      for (i=0;i<rank;i++) work[i] *= d[i];
+      bt=1;ct=0;mgcv_mmult(z,Vt,work,&bt,&ct,&rank,&one,&rank); /* V (I-2D^2)^{-1} V' Q1' Q' z */
+      /* repeat for perturbed version to assess stability of computation */
+      bt=0;ct=0;mgcv_mmult(work,Vt,zp,&bt,&ct,&rank,&one,&rank); /* V' Q_1' zp */
+      for (i=0;i<rank;i++) work[i] *= d[i];
+      bt=1;ct=0;mgcv_mmult(zp,Vt,work,&bt,&ct,&rank,&one,&rank); /* V (I-2D^2)^{-1} V' Q1' Q' zp */
+    }
+    /* now check apparent stability of this version */
+    for (xx=0.0,i=0;i<rank;i++) xx += fabs(z[i]); xx /= rank;
+    for (zz1=0.0,i=0;i<rank;i++) zz1 += fabs(z[i]-zp[i])/xx; zz1 /= rank;
+    if (zz1<zz) { 
+      //Rprintf("\n zz1 = %g,  zz = %g",zz1,zz);
+      for (i=0;i<rank;i++) y[i] = z[i];
+    } else for (i=0;i<rank;i++) y[i] = work[i + *q];
+  } else {/* end of alternative computation */
+    zz1 <- zz * 100; 
+    for (i=0;i<rank;i++) y[i] = work[i + *q];
+  }
   /* now find  \hat \beta = R^{-1}Q'z, which are needed if P-IRLS starts to diverge
      in order to be able to evaluate penalty on step reduction */ 
 
-  /* now back substitute to find \hat \beta */  
+  /* now back substitute to find \hat \beta = R^{-1}y */  
   for (k=rank-1;k>=0;k--) {
       for (xx=0.0,j=k+1;j < rank;j++) xx += R[k + nr * j]*z[j];
       z[k] = (y[k] - xx)/R[k + nr * k];
   }
-  /* unpivot result into y */
+  /* unpivot result (in z) into y */
   for (i=0;i< rank;i++) y[pivot1[i]] = z[i];
   /* insert zeroes for unidentifiables */
   undrop_rows(y,*q,1,drop,n_drop); 
+  
+  if (zz1<zz) { /* re-compute other results from beta, as originals appear unstable */
+    bt=0;ct=0;mgcv_mmult(eta,X,y,&bt,&ct,n,&one,q);
+    bt=0;ct=0;mgcv_mmult(work,E,y,&bt,&ct,rE,&one,q);
+    for (*penalty=0.0,i=0;i < *rE;i++) *penalty += work[i]*work[i]; /* the penalty term */
+  }
 
-  R_chk_free(z);R_chk_free(WX);R_chk_free(tau);R_chk_free(pivot);R_chk_free(raw);
-  R_chk_free(R);R_chk_free(pivot1);R_chk_free(tau1);
+  R_chk_free(z);R_chk_free(zp);R_chk_free(WX);R_chk_free(tau);R_chk_free(pivot);R_chk_free(raw);
+  R_chk_free(R);R_chk_free(pivot1);R_chk_free(tau1);  R_chk_free(work);
   if (n_drop) R_chk_free(drop);
   if (neg_w) { R_chk_free(nind);R_chk_free(d);R_chk_free(Vt);}
 } /* end pls_fit1 */
