@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013,2014). Provided under GPL 2.
+## (c) Simon N. Wood (2013-2015). Provided under GPL 2.
 ## Routines for gam estimation beyond exponential family.
 
 
@@ -311,25 +311,35 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       if (control$trace) cat(iter," ")
       dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-     
-      good <- is.finite(dd$Deta.Deta2)
-      if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n") 
+
+      # good <- is.finite(dd$Deta.Deta2)
+  
       w <- dd$Deta2 * .5;
+      wz <- w*(eta-offset) - .5*dd$Deta
+      z <- (eta-offset) - dd$Deta.Deta2
+      good <- is.finite(z)&is.finite(w)
+      if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
       if (sum(!good)) {
-        good1 <- is.finite(w)&good ## make sure w finite too
-        w[!is.finite(w)] <- 0      ## clear infinite w
-        w[!good1&w==0] <- max(w)*.Machine$double.eps^.5 ## reset zero value weights for problem elements
-        dd$Deta.Deta2[!good] <- .5*dd$Deta[!good]/w[!good] ## reset problem elements to finite
-        good <- is.finite(dd$Deta.Deta2) ## check in case Deta not finite, for example
-      }
-      z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
+        use.wy <- TRUE
+        good <- is.finite(w)&is.finite(wz)
+        z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
+      } else use.wy <- FALSE
+
+      #if (sum(!good)) {
+      #  good1 <- is.finite(w)&good ## make sure w finite too
+      #  w[!is.finite(w)] <- 0      ## clear infinite w
+      #  w[!good1&w==0] <- max(w)*.Machine$double.eps^.5 ## reset zero value weights for problem elements
+      #  dd$Deta.Deta2[!good] <- .5*dd$Deta[!good]/w[!good] ## reset problem elements to finite
+      #  good <- is.finite(dd$Deta.Deta2) ## check in case Deta not finite, for example
+      #}
+      #z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
       
-      oo <- .C(C_pls_fit1,   ##C_pls_fit1, reinstate for use in mgcv
-               y=as.double(z),X=as.double(x[good,]),w=as.double(w),
+      oo <- .C(C_pls_fit1,   
+               y=as.double(z[good]),X=as.double(x[good,]),w=as.double(w[good]),wy = as.double(wz[good]),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
-                     nt=as.integer(control$nthreads))
+                     nt=as.integer(control$nthreads),use.wy=as.integer(use.wy))
       if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
         if (control$trace) cat("**using positive weights\n")
         # problem is that Fisher can be very poor for zeroes  
@@ -337,18 +347,27 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         ## index weights that are finite and positive 
         good <- is.finite(dd$Deta2)
         good[good] <- dd$Deta2[good]>0 
-        w <- dd$Deta2*.5; w[!good] <- 0
-        thresh <- max(w[good])*.Machine$double.eps^.5
-        w[w < thresh] <- thresh
-        good <- is.finite(dd$Deta)
-        z <- (eta-offset)[good] - .5 * dd$Deta[good] / w[good]
+        #w <- dd$Deta2*.5; 
+        w[!good] <- 0
+        wz <- w*(eta-offset) - .5*dd$Deta
+        z <- (eta-offset) - dd$Deta.Deta2
+        good <- is.finite(z)&is.finite(w) 
+        if (sum(!good)) {
+          use.wy <- TRUE
+          good <- is.finite(w)&is.finite(wz)
+          z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
+        } else use.wy <- FALSE
+        #thresh <- max(w[good])*.Machine$double.eps^.5
+        #w[w < thresh] <- thresh
+        #good <- is.finite(dd$Deta)
+        #z <- (eta-offset)[good] - .5 * dd$Deta[good] / w[good]
        
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
-                  y=as.double(z),X=as.double(x[good,]),w=as.double(w),
+                  y=as.double(z[good]),X=as.double(x[good,]),w=as.double(w[good]),wy = as.double(wz[good]),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
-                     nt=as.integer(control$nthreads))
+                     nt=as.integer(control$nthreads),use.wy=as.integer(use.wy))
       }
       start <- oo$y[1:ncol(x)] ## current coefficient estimates
       penalty <- oo$penalty ## size of penalty

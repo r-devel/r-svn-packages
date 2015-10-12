@@ -386,20 +386,22 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            
             if (sum(good)<ncol(x)) stop("Not enough informative observations.")
             if (control$trace) t1 <- proc.time()
-            oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),
+            oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),wy=as.double(w*z),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
-                     penalty=as.double(1),rank.tol=as.double(rank.tol),nt=as.integer(control$nthreads))
+                     penalty=as.double(1),rank.tol=as.double(rank.tol),nt=as.integer(control$nthreads),
+                     use.wy=as.integer(0))
             if (control$trace) tc <- tc + sum((proc.time()-t1)[c(1,4)])
 
             if (!fisher&&oo$n<0) { ## likelihood indefinite - switch to Fisher for this step
               z <- (eta - offset)[good] + (yg - mug)/mevg
               w <- (weg * mevg^2)/var.mug
               if (control$trace) t1 <- proc.time()
-              oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),
+              oo <- .C(C_pls_fit1,y=as.double(z),X=as.double(x[good,]),w=as.double(w),wy=as.double(w*z),
                        E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
                        q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
-                       penalty=as.double(1),rank.tol=as.double(rank.tol),nt=as.integer(control$nthreads))
+                       penalty=as.double(1),rank.tol=as.double(rank.tol),nt=as.integer(control$nthreads),
+                       use.wy=as.integer(0))
               if (control$trace) tc <- tc + sum((proc.time()-t1)[c(1,4)])
             }
 

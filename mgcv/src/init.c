@@ -43,7 +43,7 @@ R_CMethodDef CEntries[] = {
     {"gdi1",(DL_FUNC) &gdi1,48},
     {"gdi2",(DL_FUNC) &gdi2,45},
     {"R_cond",(DL_FUNC) &R_cond,5} ,
-    {"pls_fit1",(DL_FUNC)&pls_fit1,12},
+    {"pls_fit1",(DL_FUNC)&pls_fit1,14},
     {"tweedious",(DL_FUNC)&tweedious,13},
     {"psum",(DL_FUNC)&psum,4},
     {"get_detS2",(DL_FUNC)&get_detS2,12},

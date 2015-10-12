@@ -41,8 +41,8 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 	  int *n,int *q, int *M,int *n_theta, int *Mp,int *Enrow,int *rSncol,int *deriv,
 	  int *fixed_penalty,int *nt);
 
-void pls_fit1(double *y,double *X,double *w,double *E,double *Es,int *n,int *q,int *rE,double *eta,
-	      double *penalty,double *rank_tol,int *nt);
+void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int *n,int *q,int *rE,double *eta,
+	      double *penalty,double *rank_tol,int *nt,int *use_wy);
 
 void get_detS2(double *sp,double *sqrtS, int *rSncol, int *q,int *M, int * deriv, 
                double *det, double *det1, double *det2, double *d_tol,
