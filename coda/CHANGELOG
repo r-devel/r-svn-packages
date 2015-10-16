@@ -1,3 +1,8 @@
+0.18-2 Martyn Plummer <plummerm@iarc.fr>
+
+	- gelman.plot() now avoids superfluous calculation of multivariate
+	diagnostic. Thanks to Gert van Valkenhoef
+
 0.18-1 Martyn Plummer <plummer@iarc.fr>
 
 	- Arni Magnusson is fully credited as coauthor
