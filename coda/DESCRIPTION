@@ -1,6 +1,6 @@
 Package: coda
-Version: 0.17-2
-Date: 2015-03-16
+Version: 0.18-1
+Date: 2015-10-16
 Title: Output Analysis and Diagnostics for MCMC
 Authors@R: c(person("Martyn", "Plummer", role=c("aut","cre","trl"),
        	            email="plummerm@iarc.fr"),
@@ -9,7 +9,8 @@ Authors@R: c(person("Martyn", "Plummer", role=c("aut","cre","trl"),
              person("Karen", "Vines", role="aut"),
              person("Deepayan", "Sarkar", role="aut"),
 	     person("Douglas", "Bates", role="aut"),
-             person("Russell", "Almond", role="aut"))
+             person("Russell", "Almond", role="aut"),
+	     person("Arni", "Magnusson", role="aut"))
 Depends: R (>= 2.14.0)
 Imports: lattice
 Description: Provides functions for summarizing and plotting the
