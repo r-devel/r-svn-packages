@@ -202,6 +202,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 ## sp contains the vector of extended family parameters, followed by the log smoothing parameters,
 ## followed by the log scale parameter if scale < 0
 
+  ## some families have second derivative of deviance, and hence iterative weights
+  ## very close to zero for some data. This can lead to poorly scaled sqrt(w)z
+  ## and it is better to base everything on wz...
+  if (is.null(family$use.wz)) family$use.wz <- FALSE
+
   if (family$n.theta>0) { ## there are extra parameters to estimate
     ind <- 1:family$n.theta
     theta <- sp[ind] ## parameters of the family
@@ -323,8 +328,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         use.wy <- TRUE
         good <- is.finite(w)&is.finite(wz)
         z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
-      } else use.wy <- FALSE
-
+      } else use.wy <- family$use.wz
+      
       #if (sum(!good)) {
       #  good1 <- is.finite(w)&good ## make sure w finite too
       #  w[!is.finite(w)] <- 0      ## clear infinite w
@@ -356,7 +361,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
           use.wy <- TRUE
           good <- is.finite(w)&is.finite(wz)
           z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
-        } else use.wy <- FALSE
+        } else use.wy <- family$use.wz
         #thresh <- max(w[good])*.Machine$double.eps^.5
         #w[w < thresh] <- thresh
         #good <- is.finite(dd$Deta)
@@ -466,7 +471,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        ## Need to check coefs converged adequately, to ensure implicit differentiation
        ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
        ## drop same parameter every iteration!)       
-       grad <- 2 * t(x[good,])%*%(w*((x%*%start)[good]-z))+ 2*St%*%start 
+       grad <- 2 * t(x[good,])%*%((w[good]*(x%*%start)[good]-wz[good]))+ 2*St%*%start 
        if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
       ## if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
          old.pdev <- pdev  ## not converged quite enough
@@ -498,26 +503,37 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    dd <- dDeta(y,mu,weights,theta,family,deriv)
    w <- dd$Deta2 * .5
+   z <- (eta-offset) - dd$Deta.Deta2 ## - .5 * dd$Deta[good] / w
+   wf <- dd$EDeta2 * .5 ## Fisher type weights 
+   wz <- w*(eta-offset) - 0.5*dd$Deta ## Wz finite when w==0
+  
+   gdi.type <- if (any(abs(w)<.Machine$double.xmin*1e20)||any(!is.finite(z))) 1 else 0   
+   good <- is.finite(wz)&is.finite(w)   
+      
 
    ## exclude points for which gradient and second deriv are effectively zero and 
    ## points with non finite second deriv or deriv ratio... 
-   min.Deta <- mean(abs(dd$Deta[is.finite(dd$Deta)]))*.Machine$double.eps*.001
-   min.Deta2 <- mean(abs(dd$Deta2[is.finite(dd$Deta2)]))*.Machine$double.eps*.001
-   good <- is.finite(dd$Deta.Deta2)&is.finite(w)&!(abs(dd$Deta2) < min.Deta2 & abs(dd$Deta) < min.Deta) 
-   if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
-   w <- w[good] 
+   #min.Deta <- mean(abs(dd$Deta[is.finite(dd$Deta)]))*.Machine$double.eps*.001
+   #min.Deta2 <- mean(abs(dd$Deta2[is.finite(dd$Deta2)]))*.Machine$double.eps*.001
+   #good <- is.finite(dd$Deta.Deta2)&is.finite(w)&!(abs(dd$Deta2) < min.Deta2 & abs(dd$Deta) < min.Deta) 
+   #if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
+   #w <- w[good] 
 
-   z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
-   wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
+   #z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
+   #wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
+   #wz <- w*(eta-offset)[good] - 0.5*dd$Deta[good]
 
-   residuals <- rep.int(NA, nobs)
-   residuals[good] <- z - (eta - offset)[good]
+   #residuals <- rep.int(NA, nobs)
+   residuals <- z - (eta - offset)
+   residuals[!is.finite(residuals)] <- NA 
+   z[!is.finite(z)] <- 0 ## avoid passing NA etc to C code  
 
    ntot <- length(theta) + length(sp)
    ## if (deriv>1) n2d <- ntot*(1+ntot)/2 else n2d <- 0 
    rSncol <- unlist(lapply(UrS,ncol))
    ## Now drop any elements of dd that have been dropped in fitting...
-   if (sum(!good)>0) { ## drop !good from fields of dd
+   if (sum(!good)>0) { ## drop !good from fields of dd, weights and pseudodata
+     z <- z[good]; w <- w[good]; wz <- wz[good]; wf <- wf[good]
      dd$Deta <- dd$Deta[good];dd$Deta2 <- dd$Deta2[good] 
      dd$EDeta2 <- dd$EDeta2[good]
      if (deriv>0) dd$Deta3 <- dd$Deta3[good]
@@ -542,14 +558,15 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        } 
      }
    }
-   ## can't have zero weights in gdi2 call
-   mwb <- max(abs(w))*.Machine$double.eps
-   mwa <- min(abs(w[w!=0]))*.0001; if (mwa==0) mwa <- mwb
-   w[w==0] <- min(mwa,mwb);
+   ## can't have zero weights in gdi2 call - superceded by type=1 handling of w==0
+   #mwb <- max(abs(w))*.Machine$double.eps
+   #mwa <- min(abs(w[w!=0]))*.0001; if (mwa==0) mwa <- mwb
+   #w[w==0] <- min(mwa,mwb);
    oo <- .C(C_gdi2,
             X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
             U1 = as.double(U1),sp=as.double(exp(sp)),theta=as.double(theta),
-            z=as.double(z),w=as.double(w),wf=as.double(wf),Dth=as.double(dd$Dth),Det=as.double(dd$Deta),
+            z=as.double(z),w=as.double(w),wz=as.double(wz),wf=as.double(wf),Dth=as.double(dd$Dth),
+            Det=as.double(dd$Deta),
             Det2=as.double(dd$Deta2),Dth2=as.double(dd$Dth2),Det.th=as.double(dd$Detath),
             Det2.th=as.double(dd$Deta2th),Det3=as.double(dd$Deta3),Det.th2 = as.double(dd$Detath2),
             Det4 = as.double(dd$Deta4),Det3.th=as.double(dd$Deta3th), Deta2.th2=as.double(dd$Deta2th2),
@@ -563,8 +580,29 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 	    n=as.integer(sum(good)),q=as.integer(ncol(x)),M=as.integer(nSp),
             n.theta=as.integer(length(theta)), Mp=as.integer(Mp),Enrow=as.integer(rows.E),
             rSncol=as.integer(rSncol),deriv=as.integer(deriv),
-	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads))
-
+	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),
+            type=as.integer(gdi.type))
+## test code used to ensure type 0 and type 1 produce identical results, when both should work. 
+#   oot <- .C(C_gdi2,
+#            X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
+#            U1 = as.double(U1),sp=as.double(exp(sp)),theta=as.double(theta),
+#            z=as.double(z),w=as.double(w),wz=as.double(wz),wf=as.double(wf),Dth=as.double(dd$Dth),
+#            Det=as.double(dd$Deta),
+#            Det2=as.double(dd$Deta2),Dth2=as.double(dd$Dth2),Det.th=as.double(dd$Detath),
+#            Det2.th=as.double(dd$Deta2th),Det3=as.double(dd$Deta3),Det.th2 = as.double(dd$Detath2),
+#            Det4 = as.double(dd$Deta4),Det3.th=as.double(dd$Deta3th), Deta2.th2=as.double(dd$Deta2th2),
+#            beta=as.double(coef),b1=as.double(rep(0,ntot*ncol(x))),w1=rep(0,ntot*length(z)),
+#            D1=as.double(rep(0,ntot)),D2=as.double(rep(0,ntot^2)),
+#            P=as.double(0),P1=as.double(rep(0,ntot)),P2 = as.double(rep(0,ntot^2)),
+#            ldet=as.double(1-2*(scoreType=="ML")),ldet1 = as.double(rep(0,ntot)), 
+#            ldet2 = as.double(rep(0,ntot^2)),
+#            rV=as.double(rep(0,ncol(x)^2)),
+#            rank.tol=as.double(.Machine$double.eps^.75),rank.est=as.integer(0),
+#	    n=as.integer(sum(good)),q=as.integer(ncol(x)),M=as.integer(nSp),
+#            n.theta=as.integer(length(theta)), Mp=as.integer(Mp),Enrow=as.integer(rows.E),
+#            rSncol=as.integer(rSncol),deriv=as.integer(deriv),
+#	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),
+#            type=as.integer(1))
    rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
    rV <- T %*% rV   
    ## derivatives of coefs w.r.t. sps etc...
