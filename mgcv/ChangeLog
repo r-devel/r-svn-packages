@@ -7,6 +7,16 @@
    covariance based GP model of Kamman and Wand (2003), and a 
    variety of other simple GP smoothers.
 
+* Some changes to ziP and ziplss families to improve numerical robustness,
+  and to ziP help file to suggest appropriate checking. Thanks to Keren 
+  Raiter, for reporting problems. 
+
+* numerical robustness of extended gam methods (gam.fit4) improved for cases 
+  with many zero or near zero iterative weights. Handling of zero weights 
+  modified to avoid divide by (near) zero problems. Also tests for poor 
+  scaling of sqrt(abs(w))*z and substitutes computations based on w*z if 
+  detected. Also 'newton' routine now step halves if REML score not finite!
+
 * some smooth plot methods now accept 'colors' and 'contour.col' argument to
   set color palette in image plots and contour line colors. 
 

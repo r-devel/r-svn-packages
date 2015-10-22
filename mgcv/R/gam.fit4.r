@@ -383,7 +383,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
           conv <- FALSE
           warning("Non-finite coefficients at iteration ", 
                   iter)
-          break
+          return(list(REML=NA)) ## return immediately signalling failure
       }        
      
       mu <- linkinv(eta <- eta + offset)
@@ -399,8 +399,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             coefold <- null.coef
             etaold <- null.eta
          }
-         warning("Step size truncated due to divergence", 
-                     call. = FALSE)
+         #warning("Step size truncated due to divergence", 
+         #            call. = FALSE)
          ii <- 1
          while (!is.finite(dev)) {
                if (ii > control$maxit) 
@@ -420,8 +420,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
       ## now step halve if mu or eta are out of bounds... 
       if (!(valideta(eta) && validmu(mu))) {
-         warning("Step size truncated: out of bounds", 
-                  call. = FALSE)
+         #warning("Step size truncated: out of bounds", 
+         #         call. = FALSE)
          ii <- 1
          while (!(valideta(eta) && validmu(mu))) {
                   if (ii > control$maxit) 

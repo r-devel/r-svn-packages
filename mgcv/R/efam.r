@@ -1384,11 +1384,11 @@ scat <- function (theta = NULL, link = "identity") {
 
 ## zero inflated Poisson (Simon Wood)...
 
-lind <- function(l,th,deriv=0) {
+lind <- function(l,th,deriv=0,k=0) {
 ## evaluate th[1] + exp(th[2])*l and some derivs
   th[2] <- exp(th[2])
-  r <- list(p = th[1] + th[2]*l)
-  r$p.l <- th[2]   ## p_l
+  r <- list(p = th[1] + (k+th[2])*l)
+  r$p.l <- k + th[2]   ## p_l
   r$p.ll <- 0 ## p_ll
   if (deriv) {
     n <- length(l);  
@@ -1458,7 +1458,7 @@ logid <- function(l,th,deriv=0,a=0,trans=TRUE) {
 
 
 
-ziP <- function (theta = NULL, link = "identity") { 
+ziP <- function (theta = NULL, link = "identity",b=0) { 
 ## zero inflated Poisson parameterized in terms of the log Poisson parameter, gamma. 
 ## eta = theta[1] + exp(theta[2])*gamma), and 1-p = exp(-exp(eta)) where p is 
 ## probability of presence.
@@ -1475,12 +1475,17 @@ ziP <- function (theta = NULL, link = "identity") {
       iniTheta <-  c(theta[1],theta[2])
       n.theta <- 0 ## no thetas to estimate
   } else iniTheta <- c(0,0) ## inital theta value - start at Poisson
-
-  env <- new.env(parent = environment(ziP))# new.env(parent = .GlobalEnv)
+  
+  env <- new.env(parent = environment(ziP))# new.env(parent = .GlobalEnv) 
+  
+  if (b<0) b <- 0; assign(".b", b, envir = env)
   assign(".Theta", iniTheta, envir = env)
   getTheta <- function(trans=FALSE) { 
   ## trans transforms to the original scale...
     th <- get(".Theta")
+    if (trans) {
+      th[2] <- get(".b") + exp(th[2])
+    }
     th
   }
 
@@ -1491,7 +1496,8 @@ ziP <- function (theta = NULL, link = "identity") {
   dev.resids <- function(y, mu, wt,theta=NULL) {
     ## this version ignores saturated likelihood
     if (is.null(theta)) theta <- get(".Theta")
-    p <- theta[1] + exp(theta[2]) * mu ## l.p. for prob present
+    b <- get(".b")
+    p <- theta[1] + (b + exp(theta[2])) * mu ## l.p. for prob present
     -2*zipll(y,mu,p,deriv=0)$l
   }
   
@@ -1502,7 +1508,8 @@ ziP <- function (theta = NULL, link = "identity") {
     ## with any 2 parameter mapping of lp of mean to lp of prob presence.
     if (is.null(theta)) theta <- get(".Theta")
     deriv <- 1; if (level==1) deriv <- 2 else if (level>1) deriv <- 4 
-    g <- lind(mu,theta,level) ## the derviatives of the transform mapping mu to p
+    b <- get(".b")
+    g <- lind(mu,theta,level,b) ## the derviatives of the transform mapping mu to p
     z <- zipll(y,mu,g$p,deriv)
     oo <- list();n <- length(y)
     if (is.null(wt)) wt <- rep(1,n)
@@ -1517,7 +1524,7 @@ ziP <- function (theta = NULL, link = "identity") {
       oo$Dmuth <- -2*wt*(z$l2[,2]*g$p.th + z$l2[,3]*g$p.l*g$p.th + z$l1[,2]*g$p.lth) 
       oo$Dmu2th <- -2*wt*(z$l3[,2]*g$p.th + 2*z$l3[,3]*g$p.l*g$p.th + 2* z$l2[,2]*g$p.lth + 
        z$l3[,4]*g$p.l^2*g$p.th + z$l2[,3]*(2*g$p.l*g$p.lth + g$p.th*g$p.ll) + z$l1[,2]*g$p.llth)
-      oo$Dmu3 <- -2*wt*(z$l3[,1] + 3*z$l3[,2]*g$p.l + 2*z$l3[,3]*g$p.l^2 + 3*z$l2[,2]*g$p.ll + z$l3[,3]*g$p.l^2 +
+      oo$Dmu3 <- -2*wt*(z$l3[,1] + 3*z$l3[,2]*g$p.l + 3*z$l3[,3]*g$p.l^2 + 3*z$l2[,2]*g$p.ll +
        z$l3[,4]*g$p.l^3 +3*z$l2[,3]*g$p.l*g$p.ll + z$l1[,2]*g$p.lll)
     } 
     if (level>1) {
@@ -1544,6 +1551,7 @@ ziP <- function (theta = NULL, link = "identity") {
         z$l3[,3]*(6*g$p.lth*g$p.l + 3*g$p.th*g$p.ll) + 3*z$l2[,2]*g$p.llth + z$l4[,4]*g$p.th*g$p.l^2 + 
         z$l4[,5]*g$p.th*g$p.l^3 + 3*z$l3[,4]*(g$p.l^2*g$p.lth + g$p.th*g$p.l*g$p.ll) +
         z$l2[,3]*(3*g$p.lth*g$p.ll + 3*g$p.l*g$p.llth + g$p.th*g$p.lll) + z$l1[,2]*g$p.lllth)
+
       oo$Dmu4 <- -2*wt*(z$l4[,1] + 4*z$l4[,2]*g$p.l + 6*z$l4[,3]*g$p.l^2 + 6*z$l3[,2]*g$p.ll + 
         4*z$l4[,4]*g$p.l^3 + 12*z$l3[,3]*g$p.l*g$p.ll + 4*z$l2[,2]*g$p.lll + z$l4[,5] * g$p.l^4 +
         6*z$l3[,4]*g$p.l^2*g$p.ll + z$l2[,3] *(4*g$p.l*g$p.lll + 3*g$p.ll^2) + z$l1[,2]*g$p.llll)
@@ -1554,7 +1562,8 @@ ziP <- function (theta = NULL, link = "identity") {
   
   aic <- function(y, mu, theta=NULL, wt, dev) {
     if (is.null(theta)) theta <- get(".Theta")
-    p <- theta[1] + exp(theta[2]) * mu ## l.p. for prob present
+    b <- get(".b")
+    p <- theta[1] + (b+ exp(theta[2])) * mu ## l.p. for prob present
     sum(-2*wt*zipll(y,mu,p,0)$l)
   }
 
@@ -1617,13 +1626,22 @@ ziP <- function (theta = NULL, link = "identity") {
       rzip <- function(gamma,theta) { ## generate ziP deviates according to model and lp gamma
         y <- gamma; n <- length(y)
         lambda <- exp(gamma)
-        eta <- theta[1] + exp(theta[2])*gamma
+        mlam <- max(c(lambda[is.finite(lambda)],.Machine$double.eps^.2))
+        lambda[!is.finite(lambda)] <- mlam
+        b <- get(".b")
+        eta <- theta[1] + (b+exp(theta[2]))*gamma
         p <- 1- exp(-exp(eta))
         ind <- p > runif(n)
         y[!ind] <- 0
         np <- sum(ind)
         ## generate from zero truncated Poisson, given presence...
-        y[ind] <- qpois(runif(np,dpois(0,lambda[ind]),1),lambda[ind])
+        lami <- lambda[ind]
+        yi <- p0 <- dpois(0,lami)
+        nearly1 <- 1 - .Machine$double.eps*10
+        ii <- p0 > nearly1 
+        yi[ii] <- 1 ## lambda so low that almost certainly y=1
+        yi[!ii] <- qpois(runif(sum(!ii),p0[!ii],nearly1),lami[!ii])
+        y[ind] <- yi 
         y
       } 
       rzip(mu,get(".Theta"))
@@ -1700,7 +1718,8 @@ ziP <- function (theta = NULL, link = "identity") {
       se <- if (se) drop(sqrt(pmax(0,rowSums((X%*%Vb)*X)))) else NULL ## se of lin pred
     } else { se <- NULL; gamma <- eta}
     ## now compute linear predictor for probability of presence...
-    eta <- theta[1] + exp(theta[2])*gamma
+    b <- get(".b")
+    eta <- theta[1] + (b+exp(theta[2]))*gamma
     et <- exp(eta)
     mu <- p <- 1 - exp(-et)
     fv <- lambda <- exp(gamma)  
@@ -1722,8 +1741,8 @@ ziP <- function (theta = NULL, link = "identity") {
 
 
    
-  environment(saturated.ll) <- environment(dev.resids) <- 
-  environment(aic) <- environment(getTheta) <- environment(rd) <-
+  environment(saturated.ll) <- environment(dev.resids) <- environment(Dd) <-
+  environment(aic) <- environment(getTheta) <- environment(rd) <- environment(predict) <-
   environment(putTheta) <- env
 
   structure(list(family = "zero inflated Poisson", link = linktemp, linkfun = stats$linkfun,
