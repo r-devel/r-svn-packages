@@ -172,7 +172,7 @@ uniquecombs <- function(x) {
     x <- as.data.frame(x)
     names(x) <- names(xo)
     for (i in 1:ncol(xo)) if (is.factor(xo[,i])) { ## may need to reset factors to factors
-      x[,i] <- as.factor(x[,i])
+      x[,i] <- if (is.ordered(xo[,i])) as.ordered(x[,i]) else as.factor(x[,i])
       levels(x[,i]) <- levels(xo[,i])
     }
   }
