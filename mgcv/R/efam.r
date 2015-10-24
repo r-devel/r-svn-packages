@@ -1633,7 +1633,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
         p <- 1- exp(-exp(eta))
         ind <- p > runif(n)
         y[!ind] <- 0
-        np <- sum(ind)
+        #np <- sum(ind)
         ## generate from zero truncated Poisson, given presence...
         lami <- lambda[ind]
         yi <- p0 <- dpois(0,lami)
