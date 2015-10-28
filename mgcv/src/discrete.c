@@ -135,7 +135,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
    no constraint is applied. 
 */ 
   char trans='N';
-  int pb=1,md,*kp,*kd,pd,i,j,one=1;
+  int pb=1,md,*kp,*kd,pd,i,j;
   double *M,done=1.0,dzero=0.0,*p0,*p1,*p2,*p3,*pf,*pc,x;
   M = X;
   for (i=0;i<*dt-1;i++) {
@@ -226,9 +226,8 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
 void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
          int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
          int *ar_stop,int *ar_row,double *ar_weights) {
-  double *Wy,*p0,*p1,*p2,*p3,done=1.0,dzero=0.0,*Xy0,*work,*work1,x;
+  double *Wy,*p0,*p1,*p2,*p3,*Xy0,*work,*work1,x;
   int q,i,j,*pt,*off,*voff,*tps,maxm=0,maxp=0,one=1,zero=0;
-  char trans='T';
   if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
     for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
   }
@@ -305,9 +304,8 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
   
 */  
   int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*voff,pa,pb,kk,dk,rk,*start,one=1,zero=0; 
-  double done=1.0,dzero=0.0,*p0,*p1,*p2, *Xi,*temp,*tempn,*xwx,*xwx0,
+  double *p0,*p1,*p2, *Xi,*temp,*tempn,*xwx,*xwx0,
     *XiB,*tempB,*tempnB,*x0,*x1,x;
-  char trans='T',not_trans='N';
   #ifndef SUPPORT_OPENMP
   *nthreads = 1;
   #endif
