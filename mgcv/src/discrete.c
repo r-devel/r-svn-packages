@@ -182,7 +182,7 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
 	int *nx, int *ts, int *dt, int *nt,double *v,int *qc) {
 /* Forms f = X beta for X stored in the packed form described in function XWX */
   int i,j,q,*pt,*off,*voff,*tps,dC=0,c1;
-  double *f0,*pf,*p0,*p1,*p2,*C,*work,maxp=0;
+  double *f0,*pf,*p0,*p1,*p2,*C=NULL,*work,maxp=0;
   /* obtain various indices */
   pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
   off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
@@ -301,7 +301,7 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
    AR models are handled via the 3 ar_* arrays. ar_stop[0] < 0 signals no AR. 
   
 */  
-  int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*voff,pa,pb,kk,dk,rk,*start,one=1,zero=0; 
+  int r,c,i,j,q,*pt,*pd,*off,a,b,*tps,ptot,maxp=0,maxm=0,*voff,pa,pb,kk,dk,*start,one=1,zero=0; 
   double *p0,*p1,*p2, *Xi,*temp,*tempn,*xwx,*xwx0,
     *XiB,*tempB,*tempnB,*x0,*x1,x;
   #ifndef SUPPORT_OPENMP
@@ -342,7 +342,7 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
       a=c;b=r; 
     }
     /* split cols between threads... */  
-    dk = pt[b] / *nthreads; rk = pt[b] % *nthreads;
+    dk = pt[b] / *nthreads; //rk = pt[b] % *nthreads;
     if (dk * *nthreads < pt[b]) dk++;start[0]=0; 
     for (i=0;i<*nthreads;i++) { 
       start[i+1] = start[i] + dk;
