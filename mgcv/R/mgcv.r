@@ -3667,7 +3667,8 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
         df[i] <- attr(V, "rank")
       } else { ## Better founded alternatives...
         Xt <- X[,start:stop,drop=FALSE]  
-        fx <- if (inherits(object$smooth[[i]],"tensor.smooth")) all(object$smooth[[i]]$fx) else object$smooth[[i]]$fixed
+        fx <- if (inherits(object$smooth[[i]],"tensor.smooth")&&
+                  !is.null(object$smooth[[i]]$fx)) all(object$smooth[[i]]$fx) else object$smooth[[i]]$fixed
         if (!fx&&object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
           res <- reTest(object,i)
         } else { ## Inverted Nychka interval statistics

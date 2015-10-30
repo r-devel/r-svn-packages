@@ -1,6 +1,12 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-10
+
+* with bam(...,discrete=TRUE) terms like s(a,b,bs="re") had wrong p-value 
+  computation applied, as a result of being treated as tensor product terms.
+  Fixed.
+
 1.8-9
 
 * C level fix in bam(...,discrete=TRUE) code. Some memory was mistakenly 
