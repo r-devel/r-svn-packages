@@ -181,16 +181,19 @@ check.term <- function(term,rec) {
   } else return(0) ## no match
 } ## check.term
 
-discrete.mf <- function(gp,mf,pmf,m=NULL) {
+discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
 ## discretize the covariates for the terms specified in smooth.spec
 ## id and factor by not allowed. pmf is a model frame for just the 
 ## parametric terms --- mini.mf is applied to this.
+## if full is FALSE then parametric and response terms are ignored
+## and what is returned is a list where columns can be of 
+## different lengths.
 ## NOTE: matrix arguments not allowed but not caught yet.
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
   for (i in 1:length(gp$smooth.spec)) nk <- nk + as.numeric(gp$smooth.spec[[i]]$by!="NA") +
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
-  k <- matrix(0,nrow(mf),nk)
+  k <- matrix(0,nrow(mf),nk) ## each column is an index vector
   ik <- 0 ## index counter
   nr <- rep(0,nk) ## number of rows for term
   ## structure to record terms already processed...
@@ -221,7 +224,6 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
          k[,ik] <- k[,ik.prev]
          nr[ik] <- nr[ik.prev]
        }
-       ##mf0[[gp$smooth.spec[[i]]$by]] <- rep(1,nr[ik]) ## actual by variables are handled by discrete methods
     }  
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) { ## tensor branch
       for (j in 1:length(gp$smooth.spec[[i]]$margin)) { ## loop through margins
@@ -263,27 +265,29 @@ discrete.mf <- function(gp,mf,pmf,m=NULL) {
     }
    
   } ## main term loop
+  ## obtain parametric terms and..
   ## pad mf0 so that all rows are the same length
   ## padding is necessary if gam.setup is to be used for setup
-  maxr <- max(nr) 
-  pmf0 <- mini.mf(pmf,maxr)
-  if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
-  mf0 <- c(mf0,pmf0)
-  for (i in 1:length(mf0)) {
-    me <- length(mf0[[i]]) 
-    if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
-  }
-  ## add response so that gam.setup can do its thing...
-  mf0[[gp$response]] <- sample(mf[[gp$response]],maxr)
+  if (full) {
+    maxr <- max(nr) 
+    pmf0 <- mini.mf(pmf,maxr) ## deal with parametric components
+    if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
+    mf0 <- c(mf0,pmf0) ## add parametric terms to end of mf0
+    for (i in 1:length(mf0)) {
+      me <- length(mf0[[i]]) 
+      if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
+    }
+    ## add response so that gam.setup can do its thing...
+    mf0[[gp$response]] <- sample(mf[[gp$response]],maxr)
 
-  ## mf0 is the discretized model frame (actually a list), padded to have equal length rows
-  ## k is the index vector for each sub-matrix, only the first nr rows of which are
-  ## to be retained... Use of check.names=FALSE ensures, e.g. 'offset(x)' not changed...
+    ## mf0 is the discretized model frame (actually a list), padded to have equal length rows
+    ## k is the index vector for each sub-matrix, only the first nr rows of which are
+    ## to be retained... Use of check.names=FALSE ensures, e.g. 'offset(x)' not changed...
 
-  ## now copy back into mf so terms unchanged
-  mf <- mf[1:maxr,]
-  for (na in names(mf0)) mf[[na]] <- mf0[[na]]  
-
+    ## now copy back into mf so terms unchanged
+    mf <- mf[1:maxr,]
+    for (na in names(mf0)) mf[[na]] <- mf0[[na]]  
+  } else mf <- mf0
   ## finally one more pass through, expanding k and nr to deal with replication that
   ## will occur with factor by variables...
   ik <- ncol(k)+1 ## starting index col for this term in k
@@ -1699,14 +1703,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       dk <- discrete.mf(gp,mf,pmf,m=discrete)
       mf0 <- dk$mf ## padded discretized model frame
       sparse.cons <- 0 ## default constraints required for tensor terms
-      ## reset by variables to "NA" for gam.setup call
-      #by.ind <- rep(0,0); by.name <- rep("",0)
-      #for (i in 1:length(gp$smooth)) if (gp$smooth.spec[[i]]$by!="NA") {
-      #  by.ind <- c(by.ind,i) ## index of smooth.spec with reset by name
-      #  by.name <- c(by.name,gp$smooth.spec[[i]]$by) 
-      #  gp$smooth.spec[[i]]$by <- "NA" ## as if == 1 during setup 
-      #  gp$smooth.spec[[i]]$C <- matrix(0,0,0) ## signal no constraint because of by
-      #}
+
     } else { 
       mf0 <- mini.mf(mf,chunk.size)
       if (sparse) sparse.cons <- 2 else sparse.cons <- -1
@@ -1730,8 +1727,6 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
     if (control$trace) t2 <- proc.time()
     if (discretize) {
-      ## reset any by variable names in smooth list (from "NA" back to original)...
-      #if (length(by.ind)) for (i in 1:length(by.ind)) G$smooth[[by.ind[i]]]$by <- by.name[i]
     
       v <- G$Xd <- list()
       ## have to extract full parametric model matrix from pterms and mf
@@ -1755,28 +1750,35 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           by.var <- dk$mf[[G$smooth[[i]]$by]][1:dk$nr[k]]
           if (is.factor(by.var)) { 
             ## create dummy by variable...
-            by.var <- as.numeric(by.var==G$smooth[[i]]$by.level)
-      
+            by.var <- as.numeric(by.var==G$smooth[[i]]$by.level)  
           }
           G$Xd[[k]] <- matrix(by.var,dk$nr[k],1)
+          G$smooth[[i]]$by.kind <- k ## record which index vector relates to by variable
           k <- k + 1
         } else dt[kb] <- 0
         ## ... by done
         if (inherits(G$smooth[[i]],"tensor.smooth")) { 
           nmar <- length(G$smooth[[i]]$margin) 
           dt[kb] <- dt[kb] + nmar
-          if (inherits(G$smooth[[i]],"random.effect")&&!is.null(G$smooth[[i]]$rind)) {
+          if (inherits(G$smooth[[i]],"fs.interaction")&&which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)!=1) {
+            ## have to reverse the terms because tensor representation assumes factor is first
+            G$smooth[[i]]$rind <- (k+1):k
+          }          
+          # if (inherits(G$smooth[[i]],"random.effect")&&!is.null(G$smooth[[i]]$rind)) {
+          if (!is.null(G$smooth[[i]]$rind)) {
             ## terms re-ordered for efficiency, so the same has to be done on indices...
             rind <- k:(k+dt[kb]-1)    
             dk$nr[rind] <- dk$nr[k+G$smooth[[i]]$rind-1]
             G$kd[,rind] <- G$kd[,k+G$smooth[[i]]$rind-1]
-          } else if (inherits(G$smooth[[i]],"fs.interaction")&&which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)!=1) {
-            ## have to reverse the terms because tensor representation assumes factor is first
-            dk$nr[k:(k+1)] <- dk$nr[(k+1):k]
-            G$kd[,k:(k+1)] <- G$kd[,(k+1):k]
-          }          
+          } 
+          #else if (inherits(G$smooth[[i]],"fs.interaction")&&which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)!=1) {
+          #  ## have to reverse the terms because tensor representation assumes factor is first
+          #  dk$nr[k:(k+1)] <- dk$nr[(k+1):k]
+          #  G$kd[,k:(k+1)] <- G$kd[,(k+1):k]
+          #}          
           for (j in 1:nmar) {
             G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],,drop=FALSE]
+            G$smooth[[i]]$margin[[j]]$kind <- k ## record which index vector relates to this margin
             k <- k + 1 
           }
           ## deal with any side constraints on tensor terms  
@@ -1799,11 +1801,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           v[[kb]] <- rep(0,0)
           dt[kb] <- dt[kb] + 1
           G$Xd[[k]] <- G$X[1:dk$nr[k],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
+          G$smooth[[i]]$kind <- k ## which index vector relates to this smooth
           k <- k + 1
         }
         kb <- kb + 1
       }
-      if (length(drop>0)) G$drop <- drop
+      if (length(drop>0)) G$drop <- drop ## index of terms to drop as a result of side cons on tensor terms
+
       ## ... Xd is the list of discretized model matrices, or marginal model matrices
       ## kd contains indexing vectors, so the ith model matrix or margin is Xd[[i]][kd[i,],]
       ## ts[i] is the starting matrix in Xd for the ith model matrix, while dt[i] is the number 
@@ -1811,6 +1815,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## v is list of Householder vectors encoding constraints and qc the constraint indicator.
       G$v <- v;G$ts <- ts;G$dt <- dt;G$qc <- qc
     } ## if (discretize)
+
     if (control$trace) t3 <- proc.time()
     G$sparse <- sparse
 
@@ -1972,9 +1977,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   ## note that predict.gam assumes that it must be ok not to split the 
   ## model frame, if no new data supplied, so need to supply explicitly
   class(object) <- c("bam","gam","glm","lm")
-  if (!G$discretize) object$linear.predictors <- 
+  if (!G$discretize) { object$linear.predictors <- 
           as.numeric(predict.bam(object,newdata=object$model,block.size=chunk.size,cluster=cluster))
-  
+  } else { ## store discretization specific information to help with discrete prediction
+    object$dinfo <- list(gp=gp, v = G$v, ts = G$ts, dt = G$dt, qc = G$qc, drop = G$drop)
+  } 
   rm(G);if (gc.level>0) gc()
 
   object$fitted.values <- family$linkinv(object$linear.predictors)

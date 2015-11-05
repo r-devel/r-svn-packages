@@ -77,6 +77,8 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *
           int *ar_stop,int *ar_row,double *ar_weights);
 void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n, 
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc);
+void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n, 
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *nthreads);
 
 /* various service routines */
 

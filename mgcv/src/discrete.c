@@ -221,6 +221,53 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
   R_chk_free(pt);R_chk_free(off);R_chk_free(voff);R_chk_free(tps);
 } /* Xb */
 
+void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n, 
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *nthreads) {
+/* Forms diag(XVX') where X is stored in the compact form described in XWXd.
+   V is a pv by pv matrix. 
+   Parallelization is by splitting the columns of V into nthreads subsets.
+   Currently inefficient. Could be speeded up by a factor of 2, by supplying a
+   square root of V in place of V.
+*/
+  double *xv,*dc,*p0,*p1,*p2,*p3,*ei,*xi;
+  int bsj,bs,bsf,i,j,kk;
+  #ifndef SUPPORT_OPENMP
+  *nthreads = 1;
+  #endif
+  if (*nthreads<1) *nthreads = 1;
+  if (*nthreads > *pv) *nthreads = *pv;
+  xv = (double *) R_chk_calloc((size_t) (*nthreads * *n),sizeof(double)); /* storage for cols of XV */
+  xi = (double *) R_chk_calloc((size_t) (*nthreads * *n),sizeof(double)); /* storage for cols of X */
+  ei = (double *) R_chk_calloc((size_t) (*nthreads * *pv),sizeof(double)); /* storage for identity matrix cols */
+  dc = (double *) R_chk_calloc((size_t) (*nthreads * *n),sizeof(double)); /* storage for components of diag */
+  if (*nthreads>1) {
+    bs = *pv / *nthreads;
+    while (bs * *nthreads < *pv) bs++;
+    while (bs * *nthreads - bs >= *pv) (*nthreads)--;
+    bsf = *pv - (bs * *nthreads - bs); 
+  } else {
+    bsf = bs = *pv;
+  }
+  #ifdef SUPPORT_OPENMP
+  #pragma omp parallel for private(j,bsj,i,kk,p0,p1,p2,p3) num_threads(*nthreads)
+  #endif  
+  for (j=0;j < *nthreads;j++) {
+    if (j == *nthreads - 1) bsj = bsf; else bsj = bs;
+    for (i=0;i<bsj;i++) { /* work through this block's columns */
+      kk = j * bs + i;
+      ei[j * *pv + kk] = 1;if (i>0) ei[j * *pv + kk - 1] = 0;
+      Xbd(xv + j * *n,V + kk * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc); /* XV[:,kk] */
+      Xbd(xi + j * *n,ei + j * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc); /* X[:,kk] inefficient, but deals with constraint*/
+      p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
+      for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* elementwise product of XV[:,kk] X[:,kk] */
+    } 
+  } /* parallel loop end */
+  /* sum the contributions from the different threads into diag... */
+  for (p0=diag,p1=p0+ *n,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
+  for (i=1;i< *nthreads;i++) for (p0=diag,p1=p0+ *n;p0<p1;p0++,p2++) *p0 += *p2;
+  R_chk_free(xv);R_chk_free(dc);R_chk_free(xi);R_chk_free(ei);
+} /* diagXVXt */
+
 
 void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
          int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
@@ -291,7 +338,7 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
    then the ith row of the corresponding full sub-matrix is Xj[kj[i],]. The blocks of Xt 
    need not be directly given by terms like Xj[kj[i],], some are actually given by row 
    tensors of several such matrices. Conceptually Xt has nt <= nx blocks (terms) and the ith 
-   block starts at sub-matrix  ts[i] of X, and is made up of the row tensor produce of 
+   block starts at sub-matrix  ts[i] of X, and is made up of the row tensor product of 
    dt[i] consecutive sub-matrices. 
     
    Tensor product terms may have constraint matrices Z, which post multiply the tensor product 

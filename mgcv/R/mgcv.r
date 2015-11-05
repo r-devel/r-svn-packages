@@ -2549,6 +2549,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 #                       dropping
 # if GC is TRUE then gc() is called after each block is processed
 
+  ## para acts by adding all smooths to the exclude list. 
+  ## it also causes any lp matrix to be smaller than it would otherwise have been.
+  #if (para) exclude <- c(exclude,unlist(lapply(object$smooth,function(x) x$label)))
+
   if (unconditional) {
     if (is.null(object$Vc)) warning("Smoothness uncertainty corrected covariance not available") else 
     object$Vp <- object$Vc

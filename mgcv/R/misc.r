@@ -104,6 +104,22 @@ Xbd <- function(X,beta,k,ts,dt,v,qc,drop=NULL) {
   oo$f
 } ## Xbd
 
+diagXVXd <- function(X,V,k,ts,dt,v,qc,drop=NULL,n.threads=1) {
+## discrete computation of diag(XVX')
+  n <- nrow(k);m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
+  nx <- length(X);nt <- length(ts)
+  if (!is.null(drop)) { 
+    pv <- length(beta)+length(drop)
+    V0 <- matrix(0,pv,pv)
+    V0[-drop,-drop] <- V
+    V <- V0;rm(V0)
+  } else pv <- ncol(V) 
+  oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
+           m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
+           as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(pv),as.integer(n.threads))
+  oo$diag
+} ## diagXVXd
+
 dchol <- function(dA,R) {
 ## if dA contains matrix dA/dx where R is chol factor s.t. R'R = A
 ## then this routine returns dR/dx...
