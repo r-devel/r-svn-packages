@@ -179,8 +179,10 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
 } /* tensorXb */
 
 void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n, 
-	int *nx, int *ts, int *dt, int *nt,double *v,int *qc) {
-/* Forms f = X beta for X stored in the packed form described in function XWX */
+	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc) {
+/* Forms f = X beta for X stored in the packed form described in function XWX
+   bc is number of cols of beta and f... 
+ */
   int i,j,q,*pt,*off,*voff,*tps,dC=0,c1;
   double *f0,*pf,*p0,*p1,*p2,*C=NULL,*work,maxp=0;
   /* obtain various indices */
@@ -207,14 +209,17 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
   i = *n; if (i<maxp) i=maxp;
   work = (double *)R_chk_calloc((size_t)i,sizeof(double));
   if (dC) C = (double *)R_chk_calloc((size_t)dC,sizeof(double));
-  for (i=0;i < *nt;i++) { /* work through terms */ 
-    if (i==0) f0 = f; /* result written straight to f for i==0 */
-    if (dt[i]==1) singleXb(f0,work,X+off[ts[i]],beta+tps[i],k + *n *ts[i],m+ts[i], p+ts[i],n); 
-    else tensorXb(f0,X+off[ts[i]],C,work, beta+tps[i],
+  for (j=0;j < *bc;j++) {
+    for (i=0;i < *nt;i++) { /* work through terms */ 
+      if (i==0) f0 = f; /* result written straight to f for i==0 */
+      if (dt[i]==1) singleXb(f0,work,X+off[ts[i]],beta+tps[i],k + *n *ts[i],m+ts[i], p+ts[i],n); 
+      else tensorXb(f0,X+off[ts[i]],C,work, beta+tps[i],
                   m+ts[i], p+ts[i],dt+i,k + *n *ts[i],n,v+voff[i], qc+i);
-    if (i>0) {
-      for (p0=f,p1=f + *n,p2=f0;p0<p1;p0++,p2++) *p0 += *p2; /* f <- f + f0 */     
-    } else { f0=pf; /* restore f0 */}
+      if (i>0) {
+        for (p0=f,p1=f + *n,p2=f0;p0<p1;p0++,p2++) *p0 += *p2; /* f <- f + f0 */     
+      } else { f0=pf; /* restore f0 */}
+    }
+    f += *n;beta += tps[*nt]; /* move on to next column */
   }
   if (dC) R_chk_free(C);
   R_chk_free(work);R_chk_free(f0);
@@ -230,7 +235,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n,
    square root of V in place of V.
 */
   double *xv,*dc,*p0,*p1,*p2,*p3,*ei,*xi;
-  int bsj,bs,bsf,i,j,kk;
+  int bsj,bs,bsf,i,j,kk,one=1;
   #ifndef SUPPORT_OPENMP
   *nthreads = 1;
   #endif
@@ -256,8 +261,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n,
     for (i=0;i<bsj;i++) { /* work through this block's columns */
       kk = j * bs + i;
       ei[j * *pv + kk] = 1;if (i>0) ei[j * *pv + kk - 1] = 0;
-      Xbd(xv + j * *n,V + kk * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc); /* XV[:,kk] */
-      Xbd(xi + j * *n,ei + j * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc); /* X[:,kk] inefficient, but deals with constraint*/
+      Xbd(xv + j * *n,V + kk * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc,&one); /* XV[:,kk] */
+      Xbd(xi + j * *n,ei + j * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc,&one); /* X[:,kk] inefficient, but deals with constraint*/
       p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
       for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* elementwise product of XV[:,kk] X[:,kk] */
     } 

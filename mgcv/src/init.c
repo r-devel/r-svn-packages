@@ -23,7 +23,7 @@ R_CMethodDef CEntries[] = {
     {"diagXVXt", (DL_FUNC) &diagXVXt,15},
     {"XWXd", (DL_FUNC) &XWXd,17},
     {"XWyd", (DL_FUNC) &XWyd,17},
-    {"Xbd", (DL_FUNC) &Xbd,13},
+    {"Xbd", (DL_FUNC) &Xbd,14},
     {"vcorr", (DL_FUNC) &vcorr, 5},
     {"dchol", (DL_FUNC) &dchol, 4},
     {"mgcv_omp", (DL_FUNC) &mgcv_omp, 1},

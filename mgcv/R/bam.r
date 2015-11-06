@@ -1519,6 +1519,153 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
    object
 } # end of bam.fit
 
+predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
+                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,...) {
+## function for prediction from a bam object, by discrete methods
+  ## remove some un-needed stuff from object
+  object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
+  object$Vc <- object$G <- object$residuals <- object$fitted.values <-
+  object$linear.predictors <- NULL
+  gc()
+  if (missing(newdata)) newdata <- object$model
+
+  if (type=="iterms") {
+    type <- "terms"
+    warning("iterms reset to terms")
+  }
+  
+  if (!is.null(exclude)) warning("exclude ignored by discrete prediction at present")
+
+  ## Parametric terms have to be dealt with safely, but without forming all terms 
+  ## or a full model matrix. Strategy here is to use predict.gam, having removed
+  ## key smooth related components from model object, so that it appears to be
+  ## a parametric model... 
+
+  if (object$nsdf) { ## deal with parametric terms...
+    ## save copies of smooth info...
+    smooth <- object$smooth; coef <- object$coefficients; Vp <- object$Vp
+    ## remove key smooth info from object 
+    object$coefficients <-  object$coefficients[1:object$nsdf]
+    object$Vp <- object$V[1:object$nsdf,1:object$nsdf]
+    object$smooth <- NULL
+    ## get prediction for parametric component. Always "lpmatrix", unless terms required.
+    ptype <- if (type %in% c("terms","iterms")) type else "lpmatrix"
+    pp <- predict(object,newdata=newdata,type=ptype,se.fit=se.fit,terms=terms,exclude=exclude,
+            block.size=block.size,newdata.guaranteed=newdata.guaranteed,
+            na.action=na.action,...)  
+    ## restore smooths to 'object'
+    object$coefficients <- coef
+    object$Vp <- Vp
+    object$smooth <- smooth
+  } ## parametric component dealt with
+
+  ## now discretize covariates... 
+  dk <- discrete.mf(object$dinfo$gp,mf=newdata,pmf=NULL,full=FALSE)
+
+  Xd <- list() ### list of discrete model matrices...
+  if (object$nsdf>0) {
+     Xd[[1]] <- if (type%in%c("term","iterms")) matrix(0,0,0) else pp 
+     kd <- cbind(1:nrow(newdata),dk$k) ## add index for parametric part to index list
+     kb <- k <- 2; 
+     dk$nr <- c(NA,dk$nr) ## need array index to match elements of Xd
+  } else {
+    kb <- k <- 1; 
+  }
+  
+  ts <- object$dinfo$ts
+  dt <- object$dinfo$dt   
+  for (i in 1:length(object$smooth)) { ## work through the smooth list
+    ## first deal with any by variable (as first marginal of tensor)...
+    if (object$smooth[[i]]$by!="NA") {
+      by.var <- dk$mf[[object$smooth[[i]]$by]][1:dk$nr[k]]
+      if (is.factor(by.var)) { 
+         ## create dummy by variable...
+         by.var <- as.numeric(by.var==object$smooth[[i]]$by.level)  
+      }
+      Xd[[k]] <- matrix(by.var,dk$nr[k],1)
+      k <- k + 1
+    }
+    ## ... by done
+    if (inherits(object$smooth[[i]],"tensor.smooth")) { 
+      nmar <- length(object$smooth[[i]]$margin) 
+      if (!is.null(object$smooth[[i]]$rind)) {
+         ## terms re-ordered for efficiency, so the same has to be done on indices...
+         rind <- k:(k+dt[kb]-1) ## could use object$dinfo$dt[kb]   
+         dk$nr[rind] <- dk$nr[k+object$smooth[[i]]$rind-1]
+         kd[,rind] <- kd[,k+object$smooth[[i]]$rind-1]
+      } 
+               
+      for (j in 1:nmar) {
+        Xd[[k]] <- PredictMat(smooth[[i]]$margin[[j]],dk$mf,n=dk$nr[k])
+        if (!is.null(object$smooth[[i]]$XP[[j]])) Xd[[k]] <- Xd[[k]]%*%object$smooth[[i]]$XP[[j]]
+        k <- k + 1 
+      }
+    } else { ## not a tensor smooth
+      Xd[[k]] <- PredictMat(object$smooth[[i]],dk$mf,n=dk$nr[k])
+      k <- k + 1
+    }
+    kb <- kb + 1
+  }
+   
+  ## end of discrete set up
+  se <- se.fit
+  if (type=="terms") {
+    if (object$nsdf>0) {
+      if (se) {
+        fit <- cbind(pp$fit,matrix(0,nrow(kd),length(object$smooth)))
+        se.fit <- cbind(pp$se.fit,matrix(0,nrow(kd),length(object$smooth))) 
+      } else fit <- cbind(pp,matrix(0,nrow(kd),length(object$smooth)))
+      k <- 2; ## starting Xd
+      kk <- ncol(fit) - length(object$smooth) + 1 ## starting col of fit for smooth terms
+    } else {
+      if (se) {
+        fit <- matrix(0,nrow(kd),length(object$smooth))
+        se.fit <- matrix(0,nrow(kd),length(object$smooth)) 
+      } else fit <- matrix(0,nrow(kd),length(object$smooth))
+      k <- 1; ## starting Xd
+      kk <- 1 ## starting col of fit for smooth terms
+    }
+    for (i in 1:length(object$smooth)) {
+      ii <- ts[k]:(ts[k]+dt[k]-1) ## index components for this term
+      ind <- object$smooth[[i]]$first.para:object$smooth[[i]]$last.para ## index coefs for this term
+      if (!is.null(object$dinfo$drop)) { 
+        drop <- object$dinfo$drop-object$smooth[[i]]$first.para+1
+        drop <- drop[drop<=length(ii)]
+      } else drop <- NULL
+      fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd[,ii],1,dt[k],object$dinfo$v[k],
+                        object$dinfo$qc[k],drop=drop)
+      if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd[,ii],1,dt[k],object$dinfo$v[k],
+                        object$dinfo$qc[k],drop=drop,n.threads=1)^.5
+      k <-  k + 1; kk <- kk + 1
+    } 
+    fit.names <- c(if (se) colnames(pp$fit) else colnames(pp),unlist(lapply(b$smooth,function(x) x$label)))
+    colnames(fit) <- fit.names
+    if (se) { 
+      colnames(se.fit) <- fit.names
+      fit <- list(fit=fit,se.fit=se.fit)
+    }
+  } else if (type=="lpmatrix") {
+    fit <- Xbd(Xd,diag(length(object$coefficients)),kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop)
+  } else { ## link or response
+    fit <- Xbd(Xd,object$coefficients,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop)
+    if (type=="response") {
+      linkinv <- object$family$linkinv
+      dmu.deta <- object$family$mu.eta
+    } else linkinv <- dmu.deta <- NULL
+    if (se==TRUE) {
+      se.fit <- diagXVXd(Xd,object$Vp,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,n.threads=1)^.5
+      if (type=="response") {
+        se.fit <- se.fit * abs(dmu.deta(fit))
+        fit <- linkinv(fit)
+      }
+      fit <- list(fit=fit,se.fit=se.fit)
+    } else if (type=="response") fit <- linkinv(fit)
+  }
+  fit
+} ## end predict.bamd 
+
+
+
 
 sparse.model.matrix <- function(G,mf,chunk.size) {
 ## create a whole sparse model matrix
@@ -1753,7 +1900,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             by.var <- as.numeric(by.var==G$smooth[[i]]$by.level)  
           }
           G$Xd[[k]] <- matrix(by.var,dk$nr[k],1)
-          G$smooth[[i]]$by.kind <- k ## record which index vector relates to by variable
+          #G$smooth[[i]]$by.kind <- k ## record which index vector relates to by variable
           k <- k + 1
         } else dt[kb] <- 0
         ## ... by done
@@ -1778,7 +1925,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           #}          
           for (j in 1:nmar) {
             G$Xd[[k]] <- G$smooth[[i]]$margin[[j]]$X[1:dk$nr[k],,drop=FALSE]
-            G$smooth[[i]]$margin[[j]]$kind <- k ## record which index vector relates to this margin
+            #G$smooth[[i]]$margin[[j]]$kind <- k ## record which index vector relates to this margin
             k <- k + 1 
           }
           ## deal with any side constraints on tensor terms  
@@ -1801,7 +1948,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           v[[kb]] <- rep(0,0)
           dt[kb] <- dt[kb] + 1
           G$Xd[[k]] <- G$X[1:dk$nr[k],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
-          G$smooth[[i]]$kind <- k ## which index vector relates to this smooth
+          #G$smooth[[i]]$kind <- k ## which index vector relates to this smooth
           k <- k + 1
         }
         kb <- kb + 1
