@@ -307,7 +307,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
           ii1 <- if (ik+nd-1 < length(nr)) (ik+nd):length(nr) else rep(0,0) ## later
           ii <- ik:(ik+nd-1) ## cols for this term
           nr <- c(nr[ii0],rep(nr[ii],nex),nr[ii1])
-          k <- cbind(k[,ii0],k[,rep(ii,nex)],k[,ii1])
+          k <- cbind(k[,ii0,drop=FALSE],k[,rep(ii,nex),drop=FALSE],k[,ii1,drop=FALSE])
         }
       } ## factor by 
     } ## existing by
@@ -1594,13 +1594,14 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
          dk$nr[rind] <- dk$nr[k+object$smooth[[i]]$rind-1]
          kd[,rind] <- kd[,k+object$smooth[[i]]$rind-1]
       } 
-               
+      XP <- object$smooth[[i]]$XP         
       for (j in 1:nmar) {
         Xd[[k]] <- PredictMat(smooth[[i]]$margin[[j]],dk$mf,n=dk$nr[k])
-        if (!is.null(object$smooth[[i]]$XP[[j]])) Xd[[k]] <- Xd[[k]]%*%object$smooth[[i]]$XP[[j]]
+        if (!is.null(XP)&&(j<=length(XP))&&!is.null(XP[[j]])) Xd[[k]] <- Xd[[k]]%*%XP[[j]]
         k <- k + 1 
       }
     } else { ## not a tensor smooth
+      object$smooth[[i]]$by <- "NA" ## have to ensure by not applied here!
       Xd[[k]] <- PredictMat(object$smooth[[i]],dk$mf,n=dk$nr[k])
       k <- k + 1
     }
