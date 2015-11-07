@@ -1633,9 +1633,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         drop <- object$dinfo$drop-object$smooth[[i]]$first.para+1
         drop <- drop[drop<=length(ii)]
       } else drop <- NULL
-      fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd[,ii],1,dt[k],object$dinfo$v[k],
+      fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd[,ii,drop=FALSE],1,dt[k],object$dinfo$v[k],
                         object$dinfo$qc[k],drop=drop)
-      if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd[,ii],1,dt[k],object$dinfo$v[k],
+      if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd[,ii,drop=FALSE],1,dt[k],object$dinfo$v[k],
                         object$dinfo$qc[k],drop=drop,n.threads=1)^.5
       k <-  k + 1; kk <- kk + 1
     } 
