@@ -18,7 +18,7 @@ for quantities derived from the model (e.g. derivatives of smooths), and for loo
 \usage{
 \method{predict}{bam}(object,newdata,type="link",se.fit=FALSE,terms=NULL,
         exclude=NULL,block.size=50000,newdata.guaranteed=FALSE,
-        na.action=na.pass,cluster=NULL,...)
+        na.action=na.pass,cluster=NULL,discrete=TRUE,...)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{ 
@@ -77,6 +77,8 @@ determined from \code{object$na.action}.}
 from the \code{parallel} package, if it is supplied with a cluster on which to do this (a cluster here can be some cores of a 
 single machine). See details and example code for \code{\link{bam}}. 
 }
+
+\item{discrete}{if \code{TRUE} then discrete prediction methods used with model fitted by discrete methods. \code{FALSE} for regular prediction.}
 
 \item{...}{ other arguments.}
 

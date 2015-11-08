@@ -2524,6 +2524,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 #      == "terms"    - for individual terms on scale of linear predictor 
 #      == "iterms"   - exactly as "terms" except that se's include uncertainty about mean  
 #      == "lpmatrix" - for matrix mapping parameters to l.p. - has "lpi" attribute if multiple l.p.s
+#      == "newdata"  - returns newdata after pre-processing 
 # Steps are:
 #  1. Set newdata to object$model if no newdata supplied
 #  2. split up newdata into manageable blocks if too large
@@ -2558,7 +2559,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     object$Vp <- object$Vc
   }
 
-  if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix")  { 
+  if (type!="link"&&type!="terms"&&type!="iterms"&&type!="response"&&type!="lpmatrix"&&type!="newdata")  { 
     warning("Unknown type, reset to terms.")
     type<-"terms"
   }
@@ -2659,6 +2660,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       }
       newdata[[i]] <- factor(newdata[[i]],levels=levm) # set prediction levels to fit levels
     }
+    if (type=="newdata") return(newdata)
 
     # split prediction into blocks, to avoid running out of memory
     if (length(newdata)==1) newdata[[2]] <- newdata[[1]] # avoids data frame losing its labels and dimensions below!
@@ -2965,7 +2967,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     colnames(H) <- names(object$coefficients);rownames(H)<-rn
     if (!is.null(s.offset)) { 
       s.offset <- napredict(na.act,s.offset)
-      attr(H,"offset") <- s.offset
+      attr(H,"offset") <- s.offset ## term specific offsets...
+    }
+    if (!is.null(attr(attr(object$model,"terms"),"offset"))) {
+      attr(H,"model.offset") <- napredict(na.act,model.offset(mf)) 
     }
     H <- napredict(na.act,H)
     if (length(object$nsdf)>1) { ## add "lpi" attribute if more than one l.p.

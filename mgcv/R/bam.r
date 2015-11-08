@@ -1162,9 +1162,13 @@ pabapr <- function(arg) {
 
 predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
-                        cluster=NULL,...) {
+                        cluster=NULL,discrete=TRUE,...) {
 ## function for prediction from a bam object, possibly in parallel
   ## remove some un-needed stuff from object
+  if (discrete && !is.null(object$dinfo)) {
+    return(predict.bamd(object,newdata,type,se.fit,terms,exclude,
+                        block.size,newdata.guaranteed,na.action,...))
+  }
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
   object$Vc <- object$G <- object$residuals <- object$fitted.values <-
   object$linear.predictors <- NULL
@@ -1536,11 +1540,15 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   
   if (!is.null(exclude)) warning("exclude ignored by discrete prediction at present")
 
+  newdata <- predict.gam(object,newdata=newdata,type="newdata",se.fit=se.fit,terms=terms,exclude=exclude,
+            block.size=block.size,newdata.guaranteed=newdata.guaranteed,
+            na.action=na.action,...) 
+
   ## Parametric terms have to be dealt with safely, but without forming all terms 
   ## or a full model matrix. Strategy here is to use predict.gam, having removed
   ## key smooth related components from model object, so that it appears to be
   ## a parametric model... 
-
+  offset <- 0
   if (object$nsdf) { ## deal with parametric terms...
     ## save copies of smooth info...
     smooth <- object$smooth; coef <- object$coefficients; Vp <- object$Vp
@@ -1550,13 +1558,17 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     object$smooth <- NULL
     ## get prediction for parametric component. Always "lpmatrix", unless terms required.
     ptype <- if (type %in% c("terms","iterms")) type else "lpmatrix"
-    pp <- predict(object,newdata=newdata,type=ptype,se.fit=se.fit,terms=terms,exclude=exclude,
-            block.size=block.size,newdata.guaranteed=newdata.guaranteed,
+    pp <- predict.gam(object,newdata=newdata,type=ptype,se.fit=se.fit,terms=terms,exclude=exclude,
+            block.size=block.size,newdata.guaranteed=TRUE,
             na.action=na.action,...)  
     ## restore smooths to 'object'
     object$coefficients <- coef
     object$Vp <- Vp
     object$smooth <- smooth
+    if (ptype=="lpmatrix") {
+      offset <- attr(pp,"model.offset")
+      if (is.null(offset)) offset <- 0
+    }
   } ## parametric component dealt with
 
   ## now discretize covariates... 
@@ -1648,7 +1660,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   } else if (type=="lpmatrix") {
     fit <- Xbd(Xd,diag(length(object$coefficients)),kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop)
   } else { ## link or response
-    fit <- Xbd(Xd,object$coefficients,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop)
+    fit <- Xbd(Xd,object$coefficients,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop) + offset
     if (type=="response") {
       linkinv <- object$family$linkinv
       dmu.deta <- object$family$mu.eta
