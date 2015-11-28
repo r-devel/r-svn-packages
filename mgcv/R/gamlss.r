@@ -20,7 +20,7 @@
 trind.generator <- function(K=2) {
 ## Generates index arrays for 'upper triangular' storage up to order 4
 ## Suppose you fill an array using code like...
-## m = 0
+## m = 1
 ## for (i in 1:K) for (j in i:K) for (k in j:K) for (l in k:K) {
 ##   a[,m] <- something; m <- m+1 }
 ## ... and do this because actually the same 'something' would 
@@ -620,6 +620,172 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     ),class = c("general.family","extended.family","family"))
 } ## end gaulss
 
+
+multinom <- function() {
+## general family for multinomial logidtic regression model...
+## accepts no links as parameterization directly in terms of 
+## linear predictor. 
+## 1. get derivatives wrt mu, tau
+## 2. get required link derivatives and tri indices.
+## 3. transform derivs to derivs wrt eta (gamlss.etamu).
+## 4. get the grad and Hessian etc for the model
+##    via a call to gamlss.gH  
+## the first derivatives of the log likelihood w.r.t
+## the first and second parameters...
+  
+  residuals <- function(object,type=c("deviance","pearson","response")) {
+## NOT DONE
+      type <- match.arg(type)
+      rsd <- object$y-object$fitted[,1]
+      if (type=="response") return(rsd) else
+      return((rsd*object$fitted[,2])) ## (y-mu)/sigma 
+    }
+
+  postproc <- expression({
+## NOT DONE
+    ## code to evaluate in estimate.gam, to evaluate null deviance
+    object$null.deviance <- sum(((object$y-mean(object$y))*object$fitted[,2])^2)
+  })
+
+  ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
+  ## Function defining the logistic multimomial model log lik. 
+  ## 
+  ## deriv: 0 - eval
+  ##        1 - grad and Hess
+  ##        2 - diagonal of first deriv of Hess
+  ##        3 - first deriv of Hess
+  ##        4 - everything.
+    jj <- attr(X,"lpi") ## extract linear predictor index
+    K <- length(jj) + 1 ## number of categories
+    n <- length(y)
+    eta <- matrix(1,n,K) ## linear predictor matrix (dummy 1's in final column)
+    for (i in 1:(K-1)) eta[,i] <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+    
+    y <- round(y) ## just in case
+    if (min(y)<0||max(y)>K) stop("response not in 1 to number of predictors + 1")
+    
+    ee <- exp(eta[,-K,drop=FALSE])
+    beta <- 1 + rowSums(ee); alpha <- log(beta)
+    
+    l <- eta[,y] - alpha ## log likelihood
+    
+    l1 <- matrix(0,n,K-1) ## first deriv matrix
+ 
+    if (deriv>0) {
+      for (i in 1:(K-1)) l1[,i] <- ee[,i]/beta ## alpha1
+    
+      ## the second derivatives...
+    
+      l2 <- matrix(0,n,K*(K-1)/2)
+      ii <- 0; b2 <- beta^2
+      for (i in 1:(K-1)) for (j in i:(K-1)) {
+        ii <- ii + 1 ## column index
+        l2[,ii] <- if (i==j) l1[,i] - ee[,i]^2/b2 else -(ee[,i]*ee[,j])/b2
+      }
+
+      ## finish first derivatives...
+      for (i in 1:(K-1)) l1[,i] <- as.numeric(y==i) - l1[,i] 
+
+    } ## if (deriv>0)
+ 
+    l3 <- l4 <- 0 ## defaults
+    tri <- family$tri ## trind.generator(4) ## indices to facilitate access to earlier results
+    
+    if (deriv>1) { ## the third derivatives...
+      k <- K-1
+      l3 <- matrix(0,(k*(k+3)+2)*k/6)
+      ii <- 0; b3 <- b2 * beta
+      for (i in 1:(K-1)) for (j in i:(K-1)) for (k = j:(K-1)) {
+        ii <- ii + 1 ## column index
+        if (i==j&&j==k) { ## all same
+           l3[,ii] <- -l2[,tri$i2[i,i]] - 2*ee[,i]^2/b2 + 2*ee[,i]^3/b3
+        } else if (i!=j&&j!=k&i!=k) { ## all different
+           l3[,ii] <- 2*(ee[,i]*ee[,j]*ee[,k])/b3
+        } else { ## two same one different
+           jj <- if (i==j) k else j ## get indices for differing pair
+           l3[,ii] <- -l2[,tri$i2[i,jj]] + 2*(ee[,i]*ee[,j]*ee[,k])/b3
+        }
+      }
+    } ## if (deriv>1)
+
+    if (deriv>3) { ## the fourth derivatives...
+      k <- K-1 ## number of linear predictors
+      l4 <- matrix(0,n,(6+k*11+k^2*6+k^3)*k/24)
+      ii <- 0; b4 <- b3 * beta
+      for (i in 1:(K-1)) for (j in i:(K-1)) for (k = j:(K-1)) for (l = k:(K-1)) {
+        ii <- ii + 1 ## column index
+        uni <- unique(c(i,j,k,l));
+        nun <- length(uni) ## number of unique indices
+        if (nun==1) { ## all equal
+          l4[,ii] <- -l3[,tri$i3[i,i,i]] - 4*ee[,i]^2/b2 + 10*ee[,i]^3/b3 - 6*ee[,i]^4/b4
+        } else if (nun==4) { ## all unequal
+          l4[,ii] <- -6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
+        } else if (nun==3) { ## 2 same 2 different
+          l4[,ii] <- -l3[,tri$i3[uni[1],uni[2],uni[3]]]  -6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
+        } else { ## 2 unique
+          l4[,ii] <- -l3[,tri$i3[uni[1],uni[2],uni[2]]] + 2 * ee[,uni[1]]^2*ee[,uni[2]]/b3 - 
+                     6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
+        }
+      }
+    } ## if deriv>3
+ 
+    if (deriv) {
+      ## get the gradient and Hessian...
+      ret <- gamlss.gH(X,jj,l1,l2,tri$i2,l3=l3,i3=tri$i3,l4=l4,i4=tri$i4,
+                      d1b=d1b,d2b=d2b,deriv=deriv-1,fh=fh,D=D) 
+    } else ret <- list()
+    ret$l <- l; ret
+  } ## end ll multinom
+
+  initialize <- expression({ ## NOT DONE
+  ## Perhaps... binarize each category and lm on 6*y-3 by category.
+  ##
+  ## idea is to regress g(y) on model matrix for mean, and then 
+  ## to regress the corresponding log absolute residuals on 
+  ## the model matrix for log(sigma) - may be called in both
+  ## gam.fit5 and initial.spg... note that appropriate E scaling
+  ## for full calculation may be inappropriate for initialization 
+  ## which is basically penalizing something different here.
+  ## best we can do here is to use E only as a regularizer.
+      n <- rep(1, nobs)
+      ## should E be used unscaled or not?..
+      use.unscaled <- if (!is.null(attr(E,"use.unscaled"))) TRUE else FALSE
+      if (is.null(start)) {
+        jj <- attr(x,"lpi")
+        start <- rep(0,ncol(x))
+        yt1 <- if (family$link[[1]]=="identity") y else 
+               family$linfo[[1]]$linkfun(abs(y)+max(y)*1e-7)
+        x1 <- x[,jj[[1]],drop=FALSE]
+        e1 <- E[,jj[[1]],drop=FALSE] ## square root of total penalty
+        #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
+        if (use.unscaled) {
+          qrx <- qr(rbind(x1,e1))
+          x1 <- rbind(x1,e1)
+          startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
+          startji[!is.finite(startji)] <- 0       
+        } else startji <- pen.reg(x1,e1,yt1)
+        start[jj[[1]]] <- startji
+        lres1 <- log(abs(y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]])))
+        x1 <-  x[,jj[[2]],drop=FALSE];e1 <- E[,jj[[2]],drop=FALSE]
+        #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
+        if (use.unscaled) {
+          x1 <- rbind(x1,e1)
+          startji <- qr.coef(qr(x1),c(lres1,rep(0,nrow(E))))   
+          startji[!is.finite(startji)] <- 0
+        } else startji <- pen.reg(x1,e1,lres1)
+        start[jj[[2]]] <- startji
+      }
+  }) ## initialize multinom
+
+  structure(list(family="multinom",ll=ll,link=paste(link),nlp=2,
+    tri = trind.generator(4), ## symmetric indices for accessing derivative arrays
+    initialize=initialize,postproc=postproc,residuals=residuals,
+    linfo = stats, ## link information list
+    d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
+    ls=1, ## signals that ls not needed here
+    available.derivs = 2 ## can use full Newton here
+    ),class = c("general.family","extended.family","family"))
+} ## end multinom
 
 
 

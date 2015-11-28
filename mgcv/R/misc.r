@@ -112,7 +112,7 @@ diagXVXd <- function(X,V,k,ts,dt,v,qc,drop=NULL,n.threads=1) {
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
   if (!is.null(drop)) { 
-    pv <- length(beta)+length(drop)
+    pv <- ncol(V)+length(drop)
     V0 <- matrix(0,pv,pv)
     V0[-drop,-drop] <- V
     V <- V0;rm(V0)

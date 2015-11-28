@@ -1162,12 +1162,12 @@ pabapr <- function(arg) {
 
 predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
-                        cluster=NULL,discrete=TRUE,...) {
+                        cluster=NULL,discrete=TRUE,n.threads=1,...) {
 ## function for prediction from a bam object, possibly in parallel
   ## remove some un-needed stuff from object
   if (discrete && !is.null(object$dinfo)) {
     return(predict.bamd(object,newdata,type,se.fit,terms,exclude,
-                        block.size,newdata.guaranteed,na.action,...))
+                        block.size,newdata.guaranteed,na.action,n.threads,...))
   }
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
   object$Vc <- object$G <- object$residuals <- object$fitted.values <-
@@ -1524,7 +1524,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
 } # end of bam.fit
 
 predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
-                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,...) {
+                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,n.threads=1,...) {
 ## function for prediction from a bam object, by discrete methods
   ## remove some un-needed stuff from object
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
@@ -1648,10 +1648,10 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd[,ii,drop=FALSE],1,dt[k],object$dinfo$v[k],
                         object$dinfo$qc[k],drop=drop)
       if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd[,ii,drop=FALSE],1,dt[k],object$dinfo$v[k],
-                        object$dinfo$qc[k],drop=drop,n.threads=1)^.5
+                        object$dinfo$qc[k],drop=drop,n.threads=n.threads)^.5
       k <-  k + 1; kk <- kk + 1
     } 
-    fit.names <- c(if (se) colnames(pp$fit) else colnames(pp),unlist(lapply(b$smooth,function(x) x$label)))
+    fit.names <- c(if (se) colnames(pp$fit) else colnames(pp),unlist(lapply(object$smooth,function(x) x$label)))
     colnames(fit) <- fit.names
     if (se) { 
       colnames(se.fit) <- fit.names
@@ -1666,7 +1666,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       dmu.deta <- object$family$mu.eta
     } else linkinv <- dmu.deta <- NULL
     if (se==TRUE) {
-      se.fit <- diagXVXd(Xd,object$Vp,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,n.threads=1)^.5
+      se.fit <- diagXVXd(Xd,object$Vp,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,n.threads=n.threads)^.5
       if (type=="response") {
         se.fit <- se.fit * abs(dmu.deta(fit))
         fit <- linkinv(fit)
