@@ -1,5 +1,6 @@
 ## from PR#8905
 library(nlme)
+data(Orthodont)
 fm <- lme(distance ~ poly(age, 3) + Sex, data = Orthodont, random = ~ 1)
 # data for predictions
 Newdata <- head(Orthodont)
