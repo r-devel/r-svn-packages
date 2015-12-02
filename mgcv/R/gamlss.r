@@ -621,8 +621,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 } ## end gaulss
 
 
-multinom <- function() {
-## general family for multinomial logidtic regression model...
+multinom <- function(K=2) {
+## general family for multinomial logistic regression model...
 ## accepts no links as parameterization directly in terms of 
 ## linear predictor. 
 ## 1. get derivatives wrt mu, tau
@@ -632,59 +632,150 @@ multinom <- function() {
 ##    via a call to gamlss.gH  
 ## the first derivatives of the log likelihood w.r.t
 ## the first and second parameters...
+ 
+  if (K<2) stop("number of categories must be at least 2") 
+   stats <- list()
   
-  residuals <- function(object,type=c("deviance","pearson","response")) {
-## NOT DONE
+  for (i in 1:(K-1)) {
+    stats[[i]] <- make.link("identity")
+    fam <- structure(list(link="identity",canonical="none",linkfun=stats[[i]]$linkfun,
+           mu.eta=stats[[i]]$mu.eta),
+           class="family")
+    fam <- fix.family.link(fam)
+    stats[[i]]$d2link <- fam$d2link
+    stats[[i]]$d3link <- fam$d3link
+    stats[[i]]$d4link <- fam$d4link
+  } 
+
+  residuals <- function(object,type=c("deviance")) {
+  ## Deviance residuals where sign depends on whether classification correct (+ve)
+  ## or not (-ve)...
       type <- match.arg(type)
-      rsd <- object$y-object$fitted[,1]
-      if (type=="response") return(rsd) else
-      return((rsd*object$fitted[,2])) ## (y-mu)/sigma 
+      ## get category probabilities...
+      p <- object$family$predict(object$family,eta=object$linear.predictors)[[1]]
+      ## now get most probable category for each observation
+      pc <- apply(p,1,function(x) which(max(x)==x)[1])-1 
+      n <- length(pc)
+      ## +ve sign if class correct, -ve otherwise
+      sgn <- rep(-1,n); sgn[pc==object$y] <- 1
+      ## now get the deviance...
+      sgn*sqrt(-2*log(pmax(.Machine$double.eps,p[1:n + object$y*n]))) 
+  } ## residuals
+
+  predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
+                beta=NULL,off=NULL,Vb=NULL) {
+  ## optional function to give predicted values - idea is that 
+  ## predict.gam(...,type="response") will use this, and that
+  ## either eta will be provided, or {X, beta, off, Vb}. family$data
+  ## contains any family specific extra information. 
+  ## if se = FALSE returns one item list containing matrix otherwise 
+  ## list of two matrices "fit" and "se.fit"... 
+
+    if (is.null(eta)) { 
+      lpi <- attr(X,"lpi") 
+      if (is.null(lpi)) {
+        lpi <- list(1:ncol(X))
+      } 
+      K <- length(lpi) ## number of linear predictors
+      eta <- matrix(0,nrow(X),K)
+      if (se) { 
+        ve <- matrix(0,nrow(X),K) ## variance of eta
+        ce <- matrix(0,nrow(X),K*(K-1)) ## covariance of eta_i eta_j
+      } 
+      for (i in 1:K) { 
+        Xi <- X[,lpi[[i]],drop=FALSE]
+        eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
+        if (se) { ## variance and covariances for kth l.p.
+          ve[,i] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
+          ii <- 0
+          if (i<K) for (j in (i+1):K) {
+            ii <- ii + 1
+            ce[,ii] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[j]]])*X[,lpi[[j]]])))
+          }
+        }
+      }
+    } else { 
+      se <- FALSE
     }
+    gamma <- cbind(1,exp(eta))
+    beta <- rowSums(gamma)
+    gamma <- gamma/beta ## category probabilities
+    vp <- gamma*0
+    if (se) { ## need to loop to find se of probabilities...
+      for (j in 1:(K+1)) {
+        ## get dp_j/deta_k...
+        if (j==1) dp <- -gamma[,-1]/beta else { 
+          dp <- -gamma[,j]*gamma[,-1]
+          dp[,j-1] <- gamma[,j]*(1-gamma[,j]) 
+        }
+        ## now compute variance... 
+        vp[,j] <- rowSums(dp^2*ve)
+        ii <- 0
+        for (i in 1:K) if (i<=K) for (k in i:K) {
+          ii <- ii + 1
+          vp[,j] <- vp[,j] + 2 * dp[,i]*dp[,j]*vc[,ii] 
+        }
+        vp[,j] <- sqrt(pmax(0,vp[,j])) ## transform to se
+      }
+      return(list(fit=gamma,se.fit=vp))
+    } ## if se
+    list(fit=gamma)
+  } ## multinom predict
 
   postproc <- expression({
-## NOT DONE
     ## code to evaluate in estimate.gam, to evaluate null deviance
-    object$null.deviance <- sum(((object$y-mean(object$y))*object$fitted[,2])^2)
+    multinom <- list()
+    object$y <- round(object$y) 
+    multinom$nj <- tabulate(object$y+1) ## count each class membership
+    multinom$n <- sum(multinom$nj) ## total number
+    multinom$K <- length(multinom$nj)-1 ## number of linear predictors
+    ## compute exp(eta) for categories 1..K
+    multinom$gamma <- c(1,solve(diag(multinom$n/multinom$nj[-1],multinom$K)-
+                        matrix(1,multinom$K,multinom$K),rep(1,multinom$K)))
+    multinom$gamma <- log(multinom$gamma/sum(multinom$gamma))
+    object$null.deviance <- -2*sum(multinom$gamma[object$y+1])
   })
 
   ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
   ## Function defining the logistic multimomial model log lik. 
-  ## 
+  ## Assumption is that coding runs from 0..K, with 0 class having no l.p.
+  ## ... this matches binary log reg case... 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
   ##        2 - diagonal of first deriv of Hess
   ##        3 - first deriv of Hess
   ##        4 - everything.
     jj <- attr(X,"lpi") ## extract linear predictor index
-    K <- length(jj) + 1 ## number of categories
+    K <- length(jj) ## number of linear predictors
+    if (K!=family$nlp) stop("number of linear predictors doesn't match")
     n <- length(y)
-    eta <- matrix(1,n,K) ## linear predictor matrix (dummy 1's in final column)
-    for (i in 1:(K-1)) eta[,i] <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+    eta <- matrix(1,n,K+1) ## linear predictor matrix (dummy 1's in first column)
+    for (i in 1:K) eta[,i+1] <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
     
     y <- round(y) ## just in case
-    if (min(y)<0||max(y)>K) stop("response not in 1 to number of predictors + 1")
+    if (min(y)<0||max(y)>K) stop("response not in 0 to number of predictors + 1")
     
-    ee <- exp(eta[,-K,drop=FALSE])
+    ee <- exp(eta[,-1,drop=FALSE])
     beta <- 1 + rowSums(ee); alpha <- log(beta)
     
-    l <- eta[,y] - alpha ## log likelihood
+    l <- sum(eta[1:n+y*n] - alpha) ## log likelihood
     
-    l1 <- matrix(0,n,K-1) ## first deriv matrix
+    l1 <- matrix(0,n,K) ## first deriv matrix
  
     if (deriv>0) {
-      for (i in 1:(K-1)) l1[,i] <- ee[,i]/beta ## alpha1
+      for (i in 1:K) l1[,i] <- ee[,i]/beta ## alpha1
     
       ## the second derivatives...
     
-      l2 <- matrix(0,n,K*(K-1)/2)
+      l2 <- matrix(0,n,K*(K+1)/2)
       ii <- 0; b2 <- beta^2
-      for (i in 1:(K-1)) for (j in i:(K-1)) {
+      for (i in 1:K) for (j in i:K) {
         ii <- ii + 1 ## column index
-        l2[,ii] <- if (i==j) l1[,i] - ee[,i]^2/b2 else -(ee[,i]*ee[,j])/b2
+        l2[,ii] <- if (i==j) -l1[,i] + ee[,i]^2/b2 else (ee[,i]*ee[,j])/b2
       }
 
       ## finish first derivatives...
-      for (i in 1:(K-1)) l1[,i] <- as.numeric(y==i) - l1[,i] 
+      for (i in 1:K) l1[,i] <- as.numeric(y==i) - l1[,i] 
 
     } ## if (deriv>0)
  
@@ -692,38 +783,36 @@ multinom <- function() {
     tri <- family$tri ## trind.generator(4) ## indices to facilitate access to earlier results
     
     if (deriv>1) { ## the third derivatives...
-      k <- K-1
-      l3 <- matrix(0,(k*(k+3)+2)*k/6)
+      l3 <- matrix(0,n,(K*(K+3)+2)*K/6)
       ii <- 0; b3 <- b2 * beta
-      for (i in 1:(K-1)) for (j in i:(K-1)) for (k = j:(K-1)) {
+      for (i in 1:K) for (j in i:K) for (k in j:K) {
         ii <- ii + 1 ## column index
         if (i==j&&j==k) { ## all same
-           l3[,ii] <- -l2[,tri$i2[i,i]] - 2*ee[,i]^2/b2 + 2*ee[,i]^3/b3
+           l3[,ii] <- l2[,tri$i2[i,i]] + 2*ee[,i]^2/b2 - 2*ee[,i]^3/b3
         } else if (i!=j&&j!=k&i!=k) { ## all different
-           l3[,ii] <- 2*(ee[,i]*ee[,j]*ee[,k])/b3
+           l3[,ii] <- -2*(ee[,i]*ee[,j]*ee[,k])/b3
         } else { ## two same one different
            jj <- if (i==j) k else j ## get indices for differing pair
-           l3[,ii] <- -l2[,tri$i2[i,jj]] + 2*(ee[,i]*ee[,j]*ee[,k])/b3
+           l3[,ii] <- l2[,tri$i2[i,jj]] - 2*(ee[,i]*ee[,j]*ee[,k])/b3
         }
       }
     } ## if (deriv>1)
 
     if (deriv>3) { ## the fourth derivatives...
-      k <- K-1 ## number of linear predictors
-      l4 <- matrix(0,n,(6+k*11+k^2*6+k^3)*k/24)
+      l4 <- matrix(0,n,(6+K*11+K^2*6+K^3)*K/24)
       ii <- 0; b4 <- b3 * beta
-      for (i in 1:(K-1)) for (j in i:(K-1)) for (k = j:(K-1)) for (l = k:(K-1)) {
+      for (i in 1:K) for (j in i:K) for (k in j:K) for (l in k:K) {
         ii <- ii + 1 ## column index
         uni <- unique(c(i,j,k,l));
         nun <- length(uni) ## number of unique indices
         if (nun==1) { ## all equal
-          l4[,ii] <- -l3[,tri$i3[i,i,i]] - 4*ee[,i]^2/b2 + 10*ee[,i]^3/b3 - 6*ee[,i]^4/b4
+          l4[,ii] <- l3[,tri$i3[i,i,i]] + 4*ee[,i]^2/b2 - 10*ee[,i]^3/b3 + 6*ee[,i]^4/b4
         } else if (nun==4) { ## all unequal
-          l4[,ii] <- -6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
+          l4[,ii] <- 6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
         } else if (nun==3) { ## 2 same 2 different
-          l4[,ii] <- -l3[,tri$i3[uni[1],uni[2],uni[3]]]  -6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
+          l4[,ii] <- l3[,tri$i3[uni[1],uni[2],uni[3]]]  +6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
         } else { ## 2 unique
-          l4[,ii] <- -l3[,tri$i3[uni[1],uni[2],uni[2]]] + 2 * ee[,uni[1]]^2*ee[,uni[2]]/b3 - 
+          l4[,ii] <- l3[,tri$i3[uni[1],uni[2],uni[2]]] - 2 * ee[,uni[1]]^2*ee[,uni[2]]/b3 + 
                      6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
         }
       }
@@ -737,49 +826,34 @@ multinom <- function() {
     ret$l <- l; ret
   } ## end ll multinom
 
-  initialize <- expression({ ## NOT DONE
-  ## Perhaps... binarize each category and lm on 6*y-3 by category.
-  ##
-  ## idea is to regress g(y) on model matrix for mean, and then 
-  ## to regress the corresponding log absolute residuals on 
-  ## the model matrix for log(sigma) - may be called in both
-  ## gam.fit5 and initial.spg... note that appropriate E scaling
-  ## for full calculation may be inappropriate for initialization 
-  ## which is basically penalizing something different here.
-  ## best we can do here is to use E only as a regularizer.
+  initialize <- expression({
+  ## Binarize each category and lm on 6*y-3 by category.
+ 
       n <- rep(1, nobs)
       ## should E be used unscaled or not?..
       use.unscaled <- if (!is.null(attr(E,"use.unscaled"))) TRUE else FALSE
       if (is.null(start)) {
         jj <- attr(x,"lpi")
         start <- rep(0,ncol(x))
-        yt1 <- if (family$link[[1]]=="identity") y else 
-               family$linfo[[1]]$linkfun(abs(y)+max(y)*1e-7)
-        x1 <- x[,jj[[1]],drop=FALSE]
-        e1 <- E[,jj[[1]],drop=FALSE] ## square root of total penalty
-        #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
-        if (use.unscaled) {
-          qrx <- qr(rbind(x1,e1))
-          x1 <- rbind(x1,e1)
-          startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
-          startji[!is.finite(startji)] <- 0       
-        } else startji <- pen.reg(x1,e1,yt1)
-        start[jj[[1]]] <- startji
-        lres1 <- log(abs(y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]])))
-        x1 <-  x[,jj[[2]],drop=FALSE];e1 <- E[,jj[[2]],drop=FALSE]
-        #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
-        if (use.unscaled) {
-          x1 <- rbind(x1,e1)
-          startji <- qr.coef(qr(x1),c(lres1,rep(0,nrow(E))))   
-          startji[!is.finite(startji)] <- 0
-        } else startji <- pen.reg(x1,e1,lres1)
-        start[jj[[2]]] <- startji
+        for (k in 1:length(jj)) { ## loop over the linear predictors      
+          yt1 <- 6*as.numeric(y==k)-3
+          x1 <- x[,jj[[k]],drop=FALSE]
+          e1 <- E[,jj[[k]],drop=FALSE] ## square root of total penalty
+          if (use.unscaled) {
+            qrx <- qr(rbind(x1,e1))
+            x1 <- rbind(x1,e1)
+            startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
+            startji[!is.finite(startji)] <- 0       
+          } else startji <- pen.reg(x1,e1,yt1)
+          start[jj[[k]]] <- startji ## copy coefficients back into overall start coef vector
+        } ## lp loop
       }
   }) ## initialize multinom
 
-  structure(list(family="multinom",ll=ll,link=paste(link),nlp=2,
+  structure(list(family="multinom",ll=ll,link=NULL,#paste(link),
+    nlp=round(K-1),
     tri = trind.generator(4), ## symmetric indices for accessing derivative arrays
-    initialize=initialize,postproc=postproc,residuals=residuals,
+    initialize=initialize,postproc=postproc,residuals=residuals,predict=predict,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1, ## signals that ls not needed here
@@ -1073,6 +1147,8 @@ ziplss <-  function(link=list("identity","identity")) {
   ## predict.gam(...,type="response") will use this, and that
   ## either eta will be provided, or {X, beta, off, Vb}. family$data
   ## contains any family specific extra information. 
+  ## if se = FALSE returns one item list containing matrix otherwise 
+  ## list of two matrices "fit" and "se.fit"... 
 
     if (is.null(eta)) { 
       lpi <- attr(X,"lpi") 

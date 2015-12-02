@@ -771,7 +771,7 @@ gam.setup.list <- function(formula,pterms,
   pof <- ncol(G$X) ## counts the model matrix columns produced so far
   pstart <- rep(0,d) ## indexes where parameteric columns start in each formula block of X
   pstart[1] <- 1
-  for (i in 2:d) {
+  if (d>1) for (i in 2:d) {
     if (is.null(formula[[i]]$response)) {  ## keep gam.setup happy
       formula[[i]]$response <- formula$response 
       mv.response <- FALSE
