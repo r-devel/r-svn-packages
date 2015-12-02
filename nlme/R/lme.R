@@ -1857,13 +1857,14 @@ predict.lme <-
 		      predict = val))
   }
   maxQ <- max(level)			# maximum level for predictions
+  nlev <- length(level)
   mCall <- object$call
   fixed <- eval(eval(mCall$fixed)[-2])
   Terms <- object$terms
   newdata <- as.data.frame(newdata)
-
   if (maxQ > 0) {			# predictions with random effects
-    reSt <- object$modelStruct$reStruct[Q - (maxQ - 1):0]
+    whichQ <- Q - (maxQ-1):0
+    reSt <- object$modelStruct$reStruct[whichQ]
     lmeSt <- lmeStruct(reStruct = reSt)
     groups <- getGroupsFormula(reSt)
     if (any(is.na(match(all.vars(groups), names(newdata))))) {
@@ -1877,7 +1878,7 @@ predict.lme <-
   mfArgs <- list(formula = asOneFormula(formula(reSt), fixed),
 		 data = newdata, na.action = na.action,
                  drop.unused.levels = TRUE)
-  dataMix <- do.call("model.frame", mfArgs)
+  dataMix <- do.call(model.frame, mfArgs)
   origOrder <- row.names(dataMix)	# preserve the original order
   whichRows <- match(origOrder, row.names(newdata))
 
@@ -1885,10 +1886,11 @@ predict.lme <-
     ## sort the model.frame by groups and get the matrices and parameters
     ## used in the estimation procedures
     grps <- getGroups(newdata,
-	      eval(parse(text = paste("~1", deparse(groups[[2L]]), sep = "|"))))
+                      as.formula(substitute(~ 1 | GRPS,
+                                            list(GRPS = groups[[2]]))))
     ## ordering data by groups
     if (inherits(grps, "factor")) {	# single level
-      grps <- grps[whichRows]
+      grps <- grps[whichRows, drop = TRUE]
       oGrps <- data.frame(grps)
       ## checking if there are missing groups
       if (any(naGrps <- is.na(grps))) {
@@ -1900,7 +1902,8 @@ predict.lme <-
       names(grps) <- names(oGrps) <- as.character(deparse((groups[[2L]])))
     } else {
       grps <- oGrps <-
-	do.call("data.frame", lapply(grps[whichRows, ], function(x) x[drop = TRUE]))
+	do.call(data.frame, ## FIXME?  better  lapply(*, drop)   ??
+                lapply(grps[whichRows, ], function(x) x[drop = TRUE]))
       ## checking for missing groups
       if (any(naGrps <- is.na(grps))) {
 	## need to input missing groups
@@ -1909,14 +1912,13 @@ predict.lme <-
 	}
 	naGrps <- t(apply(naGrps, 1, cumsum)) # propagating NAs
       }
-      ord <- do.call("order", grps)
+      ord <- do.call(order, grps)
       ## making group levels unique
       grps[, 1] <- grps[, 1][drop = TRUE]
       for(i in 2:ncol(grps)) {
 	grps[, i] <-
-          as.factor(paste(as.character(grps[, i-1]), as.character(grps[,i]),
-                          sep = "/"))
-	NULL
+          as.factor(paste(as.character(grps[, i-1]),
+                          as.character(grps[, i  ]), sep = "/"))
       }
     }
     naGrps <- cbind(FALSE, naGrps)[ord, , drop = FALSE]
@@ -1991,26 +1993,28 @@ predict.lme <-
   val[as.logical(naGrps)] <- NA			# setting missing groups to NA
   ## putting back in original order and extracting levels
   val <- val[revOrder, level + 1L]		# predictions
+
   if (maxQ > 1) {                      # making groups unique
-    for(i in 2:maxQ) {
+    for(i in 2:maxQ)
       oGrps[, i] <-
-        as.factor(paste(as.character(oGrps[,i-1]), as.character(oGrps[,i]),
-                        sep = "/"))
-    }
+        as.factor(paste(as.character(oGrps[,i-1]),
+                        as.character(oGrps[,i  ]), sep = "/"))
   }
-  if (length(level) == 1) {
+  if (nlev == 1) {
     grps <- as.character(oGrps[, level])
     if (asList) {
       val <- split(val, ordered(grps, levels = unique(grps)))
     } else {
       names(val) <- grps
     }
-    attr(val, "label") <- "Predicted values"
-    if (!is.null(aux <- attr(object, "units")$y))
-      attr(val, "label") <- paste(attr(val, "label"), aux)
+    lab <- "Predicted values"
+    if (!is.null(aux <- attr(object, "units")$y)) {
+      lab <- paste(lab, aux)
+    }
+    attr(val, "label") <- lab
     val
   } else {
-    data.frame(oGrps, predict = data.frame(val))
+    data.frame(oGrps, predict = val)
   }
 }
 
@@ -2386,7 +2390,7 @@ qqnorm.lme <-
       if (!is.null(auxData[[".Lid"]])) {
         idLabels <- rep(auxData[[".Lid"]], nc)
       }
-      data <- cbind(fData, do.call("rbind", rep(list(auxData), nc)))
+      data <- cbind(fData, do.call(rbind, rep(list(auxData), nc)))
     } else {
       data <- fData
     }
@@ -2421,7 +2425,7 @@ qqnorm.lme <-
   if(type == "reff" && !std) {
     args[["scales"]] <- list(x = list(relation = "free"))
   }
-  do.call("xyplot", as.list(args))
+  do.call(xyplot, as.list(args))
 }
 
 ranef.lme <-
@@ -2662,7 +2666,7 @@ update.lme <-
 #    thisCall$fixed <- update(as.formula(nextCall$fixed), fixed)
 #  }
 #  nextCall[names(thisCall)] <- thisCall
-#  do.call("lme", nextCall)
+#  do.call(lme, nextCall)
 #}
 
 Variogram.lme <-
@@ -2725,14 +2729,12 @@ Variogram.lme <-
     res <- res[wchRows]
   }
   res <- split(res, grps)
-  res <- res[sapply(res, length) > 1] # no 1-observation groups
+  res <- res[lengths(res) > 1] # no 1-observation groups
   levGrps <- levels(grps)
-  val <- vector("list", length(levGrps))
+  val <- lapply(seq_along(levGrps),
+                function(i) Variogram(res[[i]], distance[[i]]))
   names(val) <- levGrps
-  for(i in levGrps) {
-    val[[i]] <- Variogram(res[[i]], distance[[i]])
-  }
-  val <- do.call("rbind", val)
+  val <- do.call(rbind, val)
   if (!missing(maxDist)) {
     val <- val[val$dist <= maxDist, ]
   }
@@ -2754,41 +2756,35 @@ Variogram.lme <-
       nint <- length(breaks) - 1
     }
     if (nint < ludist) {
-      if (missing(breaks)) {
-        if (collapse == "quantiles") {    # break into equal groups
-          breaks <- unique(quantile(dst, seq(0, 1, 1/nint)))
-        } else {                          # fixed length intervals
-          breaks <- seq(udist[1L], udist[length(udist)], length = nint + 1L)
-        }
-      }
+      if (missing(breaks))
+        breaks <-
+          if (collapse == "quantiles") {    # break into equal groups
+            unique(quantile(dst, seq(0, 1, 1/nint)))
+          } else {                          # fixed length intervals
+            seq(udist[1L], udist[length(udist)], length = nint + 1L)
+          }
       cutDist <- cut(dst, breaks)
     } else {
       cutDist <- dst
     }
     val <- lapply(split(val, cutDist),
-                  function(el, robust) {
-                    nh <- nrow(el)
+                  function(el) {
                     vrg <- el$variog
-                    if (robust) {
-                      vrg <- ((mean(vrg^0.25))^4)/(0.457+0.494/nh)
-                    } else {
-                      vrg <- mean(vrg)
-                    }
-                    dst <- median(el$dist)
-                    data.frame(variog = vrg, dist = dst)
-                  }, robust = robust)
-    val <- do.call("rbind", val)
+                    vrg <- if (robust)
+                             ((mean(vrg^0.25))^4) / (0.457+ 0.494/nrow(el))
+                           else
+                             mean(vrg)
+                    data.frame(variog = vrg,
+                               dist = median(el$dist))
+                  })
+    val <- do.call(rbind, val)
     val$n.pairs <- as.vector(table(na.omit(cutDist)))
     val <- na.omit(val)                 # getting rid of NAs
   }
   row.names(val) <- 1:nrow(val)
   if (inherits(csT, "corSpatial") && resType != "normalized") {
     ## will keep model variogram
-    if (resType == "pearson") {
-      sig2 <- 1
-    } else {
-      sig2 <- object$sigma^2
-    }
+    sig2 <- if (resType == "pearson") 1 else object$sigma^2
     attr(val, "modelVariog") <-
       Variogram(csT, sig2 = sig2, length.out = length.out)
   }
@@ -2806,10 +2802,9 @@ lmeStruct <-
 
   val <- list(reStruct = reStruct, corStruct = corStruct,
               varStruct = varStruct)
-  val <- val[!sapply(val, is.null)]	# removing NULL components
-  attr(val, "settings") <- attr(val$reStruct, "settings")
-  class(val) <- c("lmeStruct", "modelStruct")
-  val
+  structure(val[!vapply(val, is.null, NA)], # removing NULL components
+            settings = attr(val$reStruct, "settings"),
+            class = c("lmeStruct", "modelStruct"))
 }
 
 ##*## lmeStruct methods for standard generics
@@ -2859,13 +2854,13 @@ Initialize.lmeStruct <-
 {
   object[] <- lapply(object, Initialize, data, conLin, control)
   theta <- lapply(object, coef)
-  len <- unlist(lapply(theta, length))
-  num <- seq_along(len)
-  if (sum(len) > 0) {
-    pmap <- outer(rep(num, len), num, "==")
-  } else {
-    pmap <- array(FALSE, c(1, length(len)))
-  }
+  len <- lengths(theta)
+  pmap <- if (sum(len) > 0) {
+	    num <- seq_along(len)
+	    outer(rep(num, len), num, "==")
+	  } else {
+	    array(FALSE, c(1, length(len)))
+	  }
   dimnames(pmap) <- list(NULL, names(object))
   attr(object, "pmap") <- pmap
   if (length(object) == 1  &&           # only reStruct

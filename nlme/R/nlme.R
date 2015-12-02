@@ -126,7 +126,7 @@ nlme.nlsList <-
   }
   thisCall[["start"]] <- start
   thisCall[["random"]] <- reSt
-  val <- do.call("nlme.formula", thisCall)
+  val <- do.call(nlme.formula, thisCall)
   val$origCall <- match.call()
   val
 }
@@ -361,7 +361,7 @@ nlme.formula <-
     mfArgs[["subset"]] <- asOneSidedFormula(Call[["subset"]])[[2]]
   }
   mfArgs$drop.unused.levels <- TRUE
-  dataMix <- do.call("model.frame", mfArgs)
+  dataMix <- do.call(model.frame, mfArgs)
 
   origOrder <- row.names(dataMix)	# preserve the original order
   ##
@@ -384,7 +384,7 @@ nlme.formula <-
     row.names(grps) <- origOrder
     names(grps) <- as.character(deparse((groups[[2]])))
   } else {
-    ord <- do.call("order", grps)
+    ord <- do.call(order, grps)
     ## making group levels unique
     for(i in 2:ncol(grps)) {
       grps[, i] <-
@@ -395,7 +395,7 @@ nlme.formula <-
   }
   if (corQ > lmeQ) {
     ## may have to reorder by the correlation groups
-    ord <- do.call("order", getGroups(dataMix,
+    ord <- do.call(order, getGroups(dataMix,
                                  getGroupsFormula(correlation)))
   }
   grps <- grps[ord, , drop = FALSE]
@@ -781,9 +781,9 @@ nlme.formula <-
   }
   ## creating the condensed linear model
   attr(nlmeSt, "conLin") <-
-    list(Xy = array(c(ZX, w), c(NReal, sum(ncols)),
-	     list(row.names(dataMixShrunk), c(colnames(ZX),
-					deparse(model[[2]])))),
+    list(Xy = array(c(ZX, w), dim = c(NReal, sum(ncols)),
+                    dimnames = list(row.names(dataMixShrunk),
+                                    c(colnames(ZX), deparse(model[[2]])))),
 	 dims = Dims, logLik = 0)
 
   ## additional attributes of nlmeSt
@@ -828,7 +828,7 @@ nlme.formula <-
                          control = control)
         aConv <- coef(nlmeSt) <- optRes$par
         convIter <- optRes$iterations
-    } else {
+    } else { ## nlm(.)
         aNlm <- nlm(f = function(nlmePars) -logLik(nlmeSt, nlmePars),
                     p = c(coef(nlmeSt)), hessian = TRUE,
                     print.level = controlvals$msVerbose,
@@ -926,8 +926,7 @@ nlme.formula <-
 
     conv <- abs((oldPars - aConv)/
                 ifelse(abs(aConv) < controlvals$tolerance, 1, aConv))
-    aConv <- c(max(conv[1:fLen]))
-    names(aConv) <- "fixed"
+    aConv <- c(fixed = max(conv[1:fLen]))
     conv <- conv[-(1:fLen)]
     for(i in names(nlmeSt)) {
       if (any(parMap[,i])) {
@@ -1099,10 +1098,10 @@ predict.nlme <-
     return(data.frame(object[["groups"]][,level[level != 0], drop = FALSE],
 		      predict = val))
   }
-  maxQ <- max(level)
+  maxQ <- max(level)			# maximum level for predictions
   nlev <- length(level)
-  newdata <- as.data.frame(newdata)
   mCall <- object$call
+  newdata <- as.data.frame(newdata)
   if (maxQ > 0) {			# predictions with random effects
     whichQ <- Q - (maxQ-1):0
     reSt <- object$modelStruct$reStruct[whichQ]
@@ -1116,13 +1115,14 @@ predict.nlme <-
     reSt <- NULL
   }
 
-  mfArgs <- list(formula = asOneFormula(formula(object),
+  mfArgs <- list(formula = asOneFormula(
+                   formula(object),
                    mCall$fixed, formula(reSt), naPattern,
                    omit = c(names(object$plist), "pi",
-                     deparse(getResponseFormula(object)[[2]]))),
-                 data = newdata, na.action = na.action)
-  mfArgs$drop.unused.levels <- TRUE
-  dataMix <- do.call("model.frame", mfArgs)
+                            deparse(getResponseFormula(object)[[2]]))),
+                 data = newdata, na.action = na.action,
+                 drop.unused.levels = TRUE)
+  dataMix <- do.call(model.frame, mfArgs)
   origOrder <- row.names(dataMix)	# preserve the original order
   whichRows <- match(origOrder, row.names(newdata))
 
@@ -1130,44 +1130,46 @@ predict.nlme <-
     ## sort the model.frame by groups and get the matrices and parameters
     ## used in the estimation procedures
     grps <- getGroups(newdata,
-	      eval(parse(text = paste("~1", deparse(groups[[2]]), sep = "|"))))
+                      as.formula(substitute(~ 1 | GRPS,
+                                            list(GRPS = groups[[2]]))))
     ## ordering data by groups
     if (inherits(grps, "factor")) {	# single level
       grps <- grps[whichRows, drop = TRUE]
       oGrps <- data.frame(grps)
       ## checking if there are missing groups
       if (any(naGrps <- is.na(grps))) {
-	grps[naGrps] <- levels(grps)[1]	# input with existing level
+	grps[naGrps] <- levels(grps)[1L]	# input with existing level
       }
       ord <- order(grps)     #"order" treats a single named argument peculiarly
       grps <- data.frame(grps)
       row.names(grps) <- origOrder
-      names(grps) <- names(oGrps) <- as.character(deparse((groups[[2]])))
+      names(grps) <- names(oGrps) <- as.character(deparse((groups[[2L]])))
     } else {
       grps <- oGrps <-
-	do.call("data.frame", lapply(grps[whichRows, ], function(x) x[drop = TRUE]))
+	do.call(data.frame, ## FIXME?  better  lapply(*, drop)   ??
+                lapply(grps[whichRows, ], function(x) x[drop = TRUE]))
       ## checking for missing groups
       if (any(naGrps <- is.na(grps))) {
 	## need to input missing groups
 	for(i in names(grps)) {
-	  grps[naGrps[, i], i] <- levels(grps[,i])[1]
+	  grps[naGrps[, i], i] <- levels(grps[,i])[1L]
 	}
 	naGrps <- t(apply(naGrps, 1, cumsum)) # propagating NAs
       }
-      ord <- do.call("order", grps)
+      ord <- do.call(order, grps)
       ## making group levels unique
       grps[, 1] <- grps[, 1][drop = TRUE]
       for(i in 2:ncol(grps)) {
 	grps[, i] <-
-          as.factor(paste(as.character(grps[, i-1]), as.character(grps[,i]),
-                          sep = "/"))
-	NULL
+          as.factor(paste(as.character(grps[, i-1]),
+                          as.character(grps[, i  ]), sep = "/"))
       }
     }
-    if (match(0, level, nomatch = 0)) {
-      naGrps <- cbind(FALSE, naGrps)
-    }
-    naGrps <- as.matrix(naGrps)[ord, , drop = FALSE]
+    ## if (match(0, level, nomatch = 0)) {
+    ##   naGrps <- cbind(FALSE, naGrps)
+    ## }
+    ## naGrps <- as.matrix(naGrps)[ord, , drop = FALSE]
+    naGrps <- cbind(FALSE, naGrps)[ord, , drop = FALSE]
     grps <- grps[ord, , drop = FALSE]
     dataMix <- dataMix[ord, ,drop = FALSE]
     revOrder <- match(origOrder, row.names(dataMix)) # putting in orig. order
@@ -1177,7 +1179,7 @@ predict.nlme <-
   for(i in names(dataMix)) {
     if (inherits(dataMix[,i], "factor") && !is.null(contr[[i]])) {
       levs <- levels(dataMix[,i])
-      levsC <- dimnames(contr[[i]])[[1]]
+      levsC <- dimnames(contr[[i]])[[1L]]
       if (any(wch <- is.na(match(levs, levsC)))) {
           stop(sprintf(ngettext(sum(wch),
                                 "level %s not allowed for %s",
@@ -1185,7 +1187,6 @@ predict.nlme <-
                        paste(levs[wch], collapse = ",")),
                domain = NA)
       }
-      attr(dataMix[,i], "contrasts") <- contr[[i]][levs, , drop = FALSE]
 #      if (length(levs) < length(levsC)) {
 #        if (inherits(dataMix[,i], "ordered")) {
 #          dataMix[,i] <- ordered(as.character(dataMix[,i]), levels = levsC)
@@ -1193,6 +1194,7 @@ predict.nlme <-
 #          dataMix[,i] <- factor(as.character(dataMix[,i]), levels = levsC)
 #        }
 #      }
+      attr(dataMix[,i], "contrasts") <- contr[[i]][levs, , drop = FALSE]
     }
   }
 
@@ -1245,11 +1247,7 @@ predict.nlme <-
       names(ranForm[[i]]) <- rnames[[i]]
     }
     ran <- ranef(object)
-    if(is.data.frame(ran)) {
-      ran <- list(ran)
-    } else {
-      ran <- rev(ran)
-    }
+    ran <- if(is.data.frame(ran)) list(ran) else rev(ran)
 ##    rn <- lapply(ran[whichQ], names)
     ran <- lapply(ran, t)
     ranVec <- unlist(ran)
@@ -1257,25 +1255,21 @@ predict.nlme <-
       for(i in namGrp) {
         if (!is.logical(plist[[nm]]$random[[i]])) {
           wch <- (1:length(rnames[[i]]))[!is.na(match(rnames[[i]], nm))]
-          if (length(wch) == 1) {         # only one formula for nm
-            plist[[nm]]$random[[i]] <-
-              model.matrix(asOneSidedFormula(ranForm[[i]][[nm]][[3]]),
-                 model.frame(asOneSidedFormula(ranForm[[i]][[nm]][[3]]),
-                             dataMix))
-          } else {                        # multiple formulae
-            plist[[nm]]$random[[i]] <- lapply(ranForm[[i]][wch],
-                           function(el, data) {
-                             if (el[[3]] == "1") {
-                               TRUE
-                             } else {
-                               val <- model.matrix(asOneSidedFormula(el[[3]]),
-                                       model.frame(asOneSidedFormula(el[[3]]),
-                                                   data))
-                               val
-
-                             }
-                           }, data = dataMix)
-          }
+          plist[[nm]]$random[[i]] <-
+            if (length(wch) == 1) {         # only one formula for nm
+              oSform <- asOneSidedFormula(ranForm[[i]][[nm]][[3]])
+              model.matrix(oSform,
+                           model.frame(oSform, dataMix))
+            } else {                        # multiple formulae
+              lapply(ranForm[[i]][wch], function(el) {
+                if (el[[3]] == "1") {
+                  TRUE
+                } else {
+                  oSform <- asOneSidedFormula(el[[3]])
+                  model.matrix(oSform,
+                               model.frame(oSform, dataMix))
+                } })
+            }
         }
       }
     }
@@ -1284,14 +1278,18 @@ predict.nlme <-
     grpsRev <- ranVec <- ran <- NULL
   }
   val <- vector("list", nlev)
-  names(val) <- c("fixed", rev(namGrp))[level + 1]
   modForm <- getCovariateFormula(object)[[2]]
+  omap <- object$map
   for(i in 1:nlev) {
-    val[[i]] <- eval(modForm, data.frame(dataMix,
-                  getParsNlme(plist, object$map$fmap, object$map$rmapRel,
-                          object$map$bmap, grpsRev, fix, ranVec, ran,
-                          level[i], N)))[naPat]
+    val[[i]] <- eval(modForm,
+                     data.frame(dataMix,
+                                ## FIXME: getParsNlme(...) fails when we have levels
+                                ## in newdata which do not exist in orig.data
+                                getParsNlme(plist, omap$fmap, omap$rmapRel,
+                                            omap$bmap, grpsRev, fix, ranVec, ran,
+                                            level[i], N)))[naPat]
   }
+  names(val) <- c("fixed", rev(namGrp))[level + 1]
   val <- as.data.frame(val)
 
   if (maxQ > 0) {
@@ -1301,39 +1299,39 @@ predict.nlme <-
     }
   }
   ## putting back in original order
+
   if (maxQ > 1) {                      # making groups unique
-    for(i in 2:maxQ) {
-      oGrps[, i] <- paste(as.character(oGrps[,i-1]), as.character(oGrps[,i]),
-                          sep = "/")
-    }
+    for(i in 2:maxQ)
+      oGrps[, i] <-
+        as.factor(paste(as.character(oGrps[,i-1]),
+                        as.character(oGrps[,i  ]), sep = "/"))
   }
   if (length(level) == 1) {
-    val <- val[,1]
-    if (level > 0) {
+    val <- val[,1] ## ?? not in predict.lme()
+    ## if (level > 0) {
       grps <- as.character(oGrps[, level])
       if (asList) {
         val <- split(val, ordered(grps, levels = unique(grps)))
       } else {
         names(val) <- grps
       }
-    }
+    ## }
     lab <- "Predicted values"
     if (!is.null(aux <- attr(object, "units")$y)) {
       lab <- paste(lab, aux)
     }
     attr(val, "label") <- lab
+    val
   } else {
-    val <- data.frame(oGrps, predict = val)
+    data.frame(oGrps, predict = val)
   }
-  val
 }
 
 # based on R's update.default
 update.nlme <-
     function (object, model., ..., evaluate = TRUE)
 {
-    call <- object$call
-    if (is.null(call))
+    if (is.null(call <- object$call))
 	stop("need an object with call component")
     extras <- match.call(expand.dots = FALSE)$...
     if (!missing(model.))
@@ -1394,7 +1392,7 @@ update.nlme <-
 #    thisCall$weights <- thWgt
 #  }
 #  nextCall[names(thisCall)] <- thisCall
-#  do.call("nlme", nextCall)
+#  do.call(nlme, nextCall)
 #}
 
 ###*### nlmeStruct - a model structure for nlme fits
@@ -1407,15 +1405,14 @@ nlmeStruct <-
 
   val <- list(reStruct = reStruct, corStruct = corStruct,
               varStruct = varStruct)
-  val <- val[!sapply(val, is.null)]	# removing NULL components
-  attr(val, "settings") <- attr(val$reStruct, "settings")
+  structure(val[!vapply(val, is.null, NA)], # removing NULL components
+            settings = attr(val$reStruct, "settings"),
 #  attr(val, "resp") <- resp
 #  attr(val, "model") <- model
 #  attr(val, "local") <- local
 #  attr(val, "N") <- N
 #  attr(val, "naPat") <- naPat
-  class(val) <- c("nlmeStruct", "lmeStruct", "modelStruct")
-  val
+            class = c("nlmeStruct", "lmeStruct", "modelStruct"))
 }
 
 ##*## nlmeStruct methods for standard generics
@@ -1432,6 +1429,7 @@ residuals.nlmeStruct <-
   function(object, level = Q, conLin = attr(object, "conLin"), ...)
 {
   Q <- conLin$dims[["Q"]]
+  stopifnot(length(level) >= 1)
   loc <- attr(object, "local")
   oLev <- get("level", envir = loc)
   on.exit(assign("level", oLev, envir = loc))
@@ -1464,7 +1462,7 @@ nlmeControl <-
        opt = match.arg(opt), natural = natural, ...)
 }
 
-nonlinModel <- function( modelExpression, env,
+nonlinModel <- function(modelExpression, env,
                         paramNames = get(".parameters", envir = env)) {
   modelExpression <- modelExpression[[2]]
   thisEnv <- environment()
@@ -1472,11 +1470,12 @@ nonlinModel <- function( modelExpression, env,
   ind <- vector("list", length(paramNames))
   names(ind) <- paramNames
   for( i in paramNames ) {
-    ind[[ i ]] <- offset + seq_along(get(i, envir = env))
-    offset <- offset + length( get(i, envir = env) )
+    v.i <- get(i, envir = env)
+    ind[[ i ]] <- offset + seq_along(v.i)
+    offset <- offset + length(v.i)
   }
   modelValue <- eval(modelExpression, env)
-  on.exit(remove(i, offset, paramNames))
+  rm(i, offset, paramNames)
   function (newPars) {
     if(!missing(newPars)) {
       for(i in names(ind))
