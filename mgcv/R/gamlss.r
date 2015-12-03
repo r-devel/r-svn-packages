@@ -621,7 +621,7 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 } ## end gaulss
 
 
-multinom <- function(K=2) {
+multinom <- function(K=1) {
 ## general family for multinomial logistic regression model...
 ## accepts no links as parameterization directly in terms of 
 ## linear predictor. 
@@ -633,10 +633,10 @@ multinom <- function(K=2) {
 ## the first derivatives of the log likelihood w.r.t
 ## the first and second parameters...
  
-  if (K<2) stop("number of categories must be at least 2") 
+  if (K<1) stop("number of categories must be at least 2") 
    stats <- list()
   
-  for (i in 1:(K-1)) {
+  for (i in 1:K) {
     stats[[i]] <- make.link("identity")
     fam <- structure(list(link="identity",canonical="none",linkfun=stats[[i]]$linkfun,
            mu.eta=stats[[i]]$mu.eta),
@@ -736,30 +736,36 @@ multinom <- function(K=2) {
     object$null.deviance <- -2*sum(multinom$gamma[object$y+1])
   })
 
-  ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
+  ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL) {
   ## Function defining the logistic multimomial model log lik. 
   ## Assumption is that coding runs from 0..K, with 0 class having no l.p.
+  ## argument eta is for debugging only, and allows direct FD testing of the 
+  ## derivatives w.r.t. eta. 
   ## ... this matches binary log reg case... 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
   ##        2 - diagonal of first deriv of Hess
   ##        3 - first deriv of Hess
   ##        4 - everything.
-    jj <- attr(X,"lpi") ## extract linear predictor index
-    K <- length(jj) ## number of linear predictors
-    if (K!=family$nlp) stop("number of linear predictors doesn't match")
     n <- length(y)
-    eta <- matrix(1,n,K+1) ## linear predictor matrix (dummy 1's in first column)
-    for (i in 1:K) eta[,i+1] <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
-    
+    if (is.null(eta)) {
+      return.l <- FALSE
+      jj <- attr(X,"lpi") ## extract linear predictor index
+      K <- length(jj) ## number of linear predictors 
+      eta <- matrix(1,n,K+1) ## linear predictor matrix (dummy 1's in first column)
+      for (i in 1:K) eta[,i+1] <- X[,jj[[i]],drop=FALSE]%*%coef[jj[[i]]]
+    } else { l2 <- 0;K <- ncol(eta);eta <- cbind(1,eta); return.l <- TRUE}
+ 
+    if (K!=family$nlp) stop("number of linear predictors doesn't match")
     y <- round(y) ## just in case
     if (min(y)<0||max(y)>K) stop("response not in 0 to number of predictors + 1")
     
     ee <- exp(eta[,-1,drop=FALSE])
     beta <- 1 + rowSums(ee); alpha <- log(beta)
     
-    l <- sum(eta[1:n+y*n] - alpha) ## log likelihood
-    
+    l0 <- eta[1:n+y*n] - alpha ## log likelihood
+    l <- sum(l0)    
+
     l1 <- matrix(0,n,K) ## first deriv matrix
  
     if (deriv>0) {
@@ -780,7 +786,7 @@ multinom <- function(K=2) {
     } ## if (deriv>0)
  
     l3 <- l4 <- 0 ## defaults
-    tri <- family$tri ## trind.generator(4) ## indices to facilitate access to earlier results
+    tri <- family$tri ## indices to facilitate access to earlier results
     
     if (deriv>1) { ## the third derivatives...
       l3 <- matrix(0,n,(K*(K+3)+2)*K/6)
@@ -792,8 +798,8 @@ multinom <- function(K=2) {
         } else if (i!=j&&j!=k&i!=k) { ## all different
            l3[,ii] <- -2*(ee[,i]*ee[,j]*ee[,k])/b3
         } else { ## two same one different
-           jj <- if (i==j) k else j ## get indices for differing pair
-           l3[,ii] <- l2[,tri$i2[i,jj]] - 2*(ee[,i]*ee[,j]*ee[,k])/b3
+           kk <- if (i==j) k else j ## get indices for differing pair
+           l3[,ii] <- l2[,tri$i2[i,kk]] - 2*(ee[,i]*ee[,j]*ee[,k])/b3
         }
       }
     } ## if (deriv>1)
@@ -811,13 +817,19 @@ multinom <- function(K=2) {
           l4[,ii] <- 6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
         } else if (nun==3) { ## 2 same 2 different
           l4[,ii] <- l3[,tri$i3[uni[1],uni[2],uni[3]]]  +6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
-        } else { ## 2 unique
+        } else if (sum(uni[1]==c(i,j,k,l))==2) { ## 2 unique (2 of each)
           l4[,ii] <- l3[,tri$i3[uni[1],uni[2],uni[2]]] - 2 * ee[,uni[1]]^2*ee[,uni[2]]/b3 + 
+                     6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
+        } else { ## 3 of one 1 of the other
+          if (sum(uni[1]==c(i,j,k,l))==1) uni <- uni[2:1] ## first index is triple repeat index
+          l4[,ii] <- l3[,tri$i3[uni[1],uni[1],uni[2]]] - 4 * ee[,uni[1]]^2*ee[,uni[2]]/b3 + 
                      6*ee[,i]*ee[,j]*ee[,k]*ee[,l]/b4
         }
       }
     } ## if deriv>3
- 
+
+    if (return.l) return(list(l=l0,l1=l1,l2=l2,l3=l3,l4=l4)) ## for testing...
+
     if (deriv) {
       ## get the gradient and Hessian...
       ret <- gamlss.gH(X,jj,l1,l2,tri$i2,l3=l3,i3=tri$i3,l4=l4,i4=tri$i4,
@@ -851,8 +863,8 @@ multinom <- function(K=2) {
   }) ## initialize multinom
 
   structure(list(family="multinom",ll=ll,link=NULL,#paste(link),
-    nlp=round(K-1),
-    tri = trind.generator(4), ## symmetric indices for accessing derivative arrays
+    nlp=round(K),
+    tri = trind.generator(K), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,predict=predict,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    

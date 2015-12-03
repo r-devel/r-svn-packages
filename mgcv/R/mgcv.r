@@ -2894,6 +2894,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           if (is.matrix(fit)&&!is.matrix(ffv[[1]])) {
             fit <- fit[,1]; if (se.fit) se <- se[,1]
           }
+          if (is.matrix(ffv[[1]])&&(!is.matrix(fit)||ncol(ffv[[1]])!=ncol(fit))) {
+            fit <- matrix(0,np,ncol(ffv[[1]])); if (se.fit) se <- fit
+          }
           if (is.matrix(fit)) {
             fit[start:stop,] <- ffv[[1]]
             if (se.fit) se[start:stop,] <- ffv[[2]]
