@@ -33,7 +33,8 @@ The following families implement more general model classes. Usable only with \c
 \item \code{\link{gaulss}} a Gaussian location-scale model where the mean and the standard deviation are both modelled using smooth linear predictors.
 \item \code{\link{ziplss}} a `two-stage' zero inflated Poisson model, in which 'potential-presence' is modelled with one linear predictor, and Poisson mean abundance
 given potential presence is modelled with a second linear predictor. 
-\item \code{\link{mvn}} multivariate normal additive models.   
+\item \code{\link{mvn}}: multivariate normal additive models.  
+\item \code{\link{multinom}}: multinomial logistic regression, for unordered categorical responses.  
  } %% end itemize 
 }
 

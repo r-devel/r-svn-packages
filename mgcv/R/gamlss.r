@@ -838,6 +838,14 @@ multinom <- function(K=1) {
     ret$l <- l; ret
   } ## end ll multinom
 
+  rd <- function(mu,wt,scale) {
+    ## simulate data given fitted linear predictor matrix in mu 
+    p <- exp(cbind(0,mu))
+    p <- p/rowSums(p)
+    cp <- t(apply(p,1,cumsum))
+    apply(cp,1,function(x) min(which(x>runif(1))))-1    
+  } ## rd
+
   initialize <- expression({
   ## Binarize each category and lm on 6*y-3 by category.
  
@@ -863,7 +871,7 @@ multinom <- function(K=1) {
   }) ## initialize multinom
 
   structure(list(family="multinom",ll=ll,link=NULL,#paste(link),
-    nlp=round(K),
+    nlp=round(K),rd=rd,
     tri = trind.generator(K), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,predict=predict,
     linfo = stats, ## link information list

@@ -3,9 +3,12 @@
 
 1.8-10
 
+* 'multinom' family implemented for multinomial logistic regression.
+
 * with bam(...,discrete=TRUE) terms like s(a,b,bs="re") had wrong p-value 
   computation applied, as a result of being treated as tensor product terms.
   Fixed.
+
 
 1.8-9
 
