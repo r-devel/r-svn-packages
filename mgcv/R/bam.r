@@ -1922,7 +1922,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           dt[kb] <- dt[kb] + nmar
           if (inherits(G$smooth[[i]],"fs.interaction")&&which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)!=1) {
             ## have to reverse the terms because tensor representation assumes factor is first
-            G$smooth[[i]]$rind <- (k+1):k
+            G$smooth[[i]]$rind <- 2:1 ## (k+1):k
           }          
           # if (inherits(G$smooth[[i]],"random.effect")&&!is.null(G$smooth[[i]]$rind)) {
           if (!is.null(G$smooth[[i]]$rind)) {

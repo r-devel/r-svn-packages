@@ -86,7 +86,7 @@ void mgcv_tensor_mm(double *X,double *T,int *d,int *m,int *n) {
    order). Each column has n rows. T is the target matrix, with n rows
    and \prod_i d[i] columns.   
 */
-  int start, i,j,k, tp=1, xp=0,pd;
+  ptrdiff_t start, i,j,k, tp=1, xp=0,pd;
   double *Xj,*Xj1,*Xk, *Tk,*p,*p1,*p2;
   /*Rprintf("m = %d  n = %d  d = ",*m,*n);
     for (i=0;i<*m;i++) Rprintf(" %d,",d[i]);*/
@@ -95,11 +95,11 @@ void mgcv_tensor_mm(double *X,double *T,int *d,int *m,int *n) {
   Xk = X + (xp-d[*m-1]) * *n; /* start of last matrix in X */
   Tk = T + (tp-d[*m-1]) * *n; /* start of last (filled) block in T */
   /* initialize by putting final matrix in X into end block of T... */
-  p = Xk;p1 = Xk + *n * d[*m-1];p2 = Tk;
+  p = Xk;p1 = Xk + *n * (ptrdiff_t) d[*m-1];p2 = Tk;
   for (;p<p1;p++,p2++) *p2 = *p;
   pd = d[*m-1]; /* cols in filled (end) block of T */
   for (i = *m - 2;i>=0;i--) { /* work down through matrices stored in X */
-    Xk -= *n * d[i]; /* start of ith X matrix */
+    Xk -= *n * (ptrdiff_t) d[i]; /* start of ith X matrix */
     Xj = Xk;
     start = tp - pd * d[i]; /* start column of target block in T */
     p = T + start * *n; /* start location in T */
@@ -291,13 +291,13 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
 */  
   int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b;
   double tol=0.0,*dots,*pd,*p1,*Aj,*Aj1,*Ajn,xmax,x,*Aq,*Ajj,*Aend;
-  dots = (double *)R_chk_calloc((size_t) *n,sizeof(double));
+  dots = (double *)CALLOC((size_t) *n,sizeof(double));
   for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
   jb = *nb; /* block size, allowing final to be smaller */
   n1 = *n + 1;
   Ajn = A;
   m = *nt;if (m<1) m=1;if (m>*n) m = *n; /* threads to use */
-  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int)); /* thread block cut points */
+  a = (int *)CALLOC((size_t) (*nt+1),sizeof(int)); /* thread block cut points */
   a[m] = *n;
   for (k=0;k<*n;k+= *nb) {
     if (*n - k  < jb) jb = *n - k ; /* end block */ 
@@ -381,14 +381,14 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
     } /* if (k + jb < *n) */
   } /* k loop */
   if (r<0) r = *n;
-  R_chk_free(dots);
+  FREE(dots);
   
   for (Ajn=A,j=0;j<*n;j++,Ajn += *n) {
     Aj = Ajn;Aend = Aj + *n;
     if (j<r) Aj += j+1; else Aj += r;
     for (;Aj<Aend;Aj++) *Aj = 0.0;
   }
-  R_chk_free(a);
+  FREE(a);
   return(r);
 } /* mgcv_bchol */
 
@@ -410,7 +410,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
   double *Aj,*Ak,*Aq,*Aend,x,Ajk,Akk,thresh=0.0;
   if (*nt < 1) *nt = 1; if (*nt > *n) *nt = *n;
   m = *nt;  
-  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int));
+  a = (int *)CALLOC((size_t) (*nt+1),sizeof(int));
   a[0] = 0;a[m] = *n; /* ... initialize column block splitting array */ 
   r = 0;n1 = *n + 1;
   for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
@@ -508,7 +508,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
     for (;Ak<Aend;Ak++) *Ak = 0.0; 
     }*/
   
-  R_chk_free(a);
+  FREE(a);
   return(r); 
 } /* mgcv_pchol */
 
@@ -558,13 +558,13 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
   Rprintf("bpqr...");
 #endif
   tol = pow(DOUBLE_EPS,.8);
-  mb = (int *)R_chk_calloc((size_t) nt,sizeof(int));
-  kb = (int *)R_chk_calloc((size_t) nt,sizeof(int));  
+  mb = (int *)CALLOC((size_t) nt,sizeof(int));
+  kb = (int *)CALLOC((size_t) nt,sizeof(int));  
   for (p0=piv,i=0;i<p;i++,p0++) *p0 = i; /* initialize pivot index */
-  work = (double *)R_chk_calloc((size_t) nb,sizeof(double));
+  work = (double *)CALLOC((size_t) nb,sizeof(double));
   /* create column norm vectors */
-  cn =(double *)R_chk_calloc((size_t) p,sizeof(double)); /* version for downdating */
-  icn =(double *)R_chk_calloc((size_t) p,sizeof(double)); /* inital for judging cancellation error */
+  cn =(double *)CALLOC((size_t) p,sizeof(double)); /* version for downdating */
+  icn =(double *)CALLOC((size_t) p,sizeof(double)); /* inital for judging cancellation error */
   for (a0=A,i=0;i<p;i++) { /* cn[i]=icn[i] = || A[:,i] ||^2 */
     for (x=0.0,a1 = a0 + n;a0<a1;a0++) x += *a0 * *a0;
     cn[i] = icn[i] = x;   
@@ -573,7 +573,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
   nb0 = nb; /* target block size nb */  
   jb=0; /* start column of current block */
   pb = p; /* columns left to process */
-  F = (double *)R_chk_calloc((size_t) (p * nb0),sizeof(double));
+  F = (double *)CALLOC((size_t) (p * nb0),sizeof(double));
   while (jb < p) {
     nb = p-jb;if (nb>nb0) nb = nb0;/* attempted block size */
     for (a0=F,a1=F+nb*pb;a0<a1;a0++) *a0 = 0.0; /* F[1:pb,1:nb] = 0 - i.e. clear F */
@@ -761,10 +761,10 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     pb -= nb;
     jb += nb;
   } /* end while (jb<p) */
-  R_chk_free(F); R_chk_free(mb); R_chk_free(kb);
-  R_chk_free(cn);
-  R_chk_free(icn);
-  R_chk_free(work);
+  FREE(F); FREE(mb); FREE(kb);
+  FREE(cn);
+  FREE(icn);
+  FREE(work);
 #ifdef OMP_REPORT
   Rprintf("done\n");
 #endif
@@ -791,8 +791,8 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
   #ifdef OMP_REPORT
   Rprintf("mgcv_piqr...");
   #endif
-  c =(double *)R_chk_calloc((size_t) p,sizeof(double)); 
-  work =(double *)R_chk_calloc((size_t) (p*nt),sizeof(double));
+  c =(double *)CALLOC((size_t) p,sizeof(double)); 
+  work =(double *)CALLOC((size_t) (p*nt),sizeof(double));
   k=0;tau=0.0;
   /* find column norms O(np) */
   for (p0=x,i=0;i<p;i++) {
@@ -874,7 +874,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
     
     } /* end while (tau > 0) */
   
-  R_chk_free(c); R_chk_free(work); 
+  FREE(c); FREE(work); 
   #ifdef OMP_REPORT
   Rprintf("done\n");
   #endif
@@ -1238,8 +1238,8 @@ void vcorr(double *dR,double *Vr,double *Vb,int *p,int *M) {
   int i,j,k;
   char trans = 'N';
   k = *p * *M; if (k<0) k = -k;
-  Vi = (double *)R_chk_calloc((size_t) k,sizeof(double));
-  ViV = (double *)R_chk_calloc((size_t) k,sizeof(double));
+  Vi = (double *)CALLOC((size_t) k,sizeof(double));
+  ViV = (double *)CALLOC((size_t) k,sizeof(double));
   if (*M>0) { /* R is transposed */
     for (i=0;i<*p;i++) {   
       for (p0=Vi,k=0;k<*M;k++) {
@@ -1289,7 +1289,7 @@ void vcorr(double *dR,double *Vr,double *Vb,int *p,int *M) {
       }
     }
   }
-  R_chk_free(Vi);R_chk_free(ViV);
+  FREE(Vi);FREE(ViV);
 } /* vcorr */
 
 void dchol(double *dA, double *R, double *dR,int *p) {
@@ -1326,11 +1326,11 @@ void mgcv_chol(double *a,int *pivot,int *n,int *rank)
 */
 { double *work,*p1,*p2,*p;
   int piv=1;
-  work=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  work=(double *)CALLOC((size_t) *n,sizeof(double));
   F77_CALL(dchdc)(a,n,n,work,pivot,&piv,rank);
   /* zero stuff below the leading diagonal */
   for (p2=a+ *n,p1=a+1;p2<a+ *n * *n;p1+= *n+1,p2+= *n) for (p=p1;p<p2;p++) *p=0.0;
-  R_chk_free(work);
+  FREE(work);
 }
 
 void mroot(double *A,int *rank,int *n)
@@ -1348,11 +1348,11 @@ void mroot(double *A,int *rank,int *n)
 */
 { int *pivot,erank,i,j;
   double *pi,*pj,*p0,*p1,*B;
-  pivot=(int *)R_chk_calloc((size_t)*n,sizeof(int));
+  pivot=(int *)CALLOC((size_t)*n,sizeof(int));
   mgcv_chol(A,pivot,n,&erank);
   if (*rank<=0) *rank = erank;
   /* unscramble the returned choleski factor */ 
-  B=R_chk_calloc((size_t)(*n * *n),sizeof(double));
+  B=CALLOC((size_t)(*n * *n),sizeof(double));
   /* copy A to B and zero A */
   for (p0=A,p1=B,i=0;i< *n;i++,p0+= *n,p1+= *n)
   for (pi=p0,pj=p1;pi<=p0+i;pi++,pj++) { *pj = *pi; *pi=0.0;}
@@ -1362,7 +1362,7 @@ void mroot(double *A,int *rank,int *n)
   /* remove trailing rows from choleski factor */
   for (pi=A,p0=A,i=0;i< *n;i++,p0+= *n)
   for (pj=p0;pj<p0+ *rank;pj++,pi++) *pi = *pj; 
-  R_chk_free(pivot);R_chk_free(B);
+  FREE(pivot);FREE(B);
 }
 
 
@@ -1380,11 +1380,11 @@ void mgcv_svd(double *x,double *u,double *d,int *r,int *c)
   		   &work1, &lwork, &info);
   lwork=(int)floor(work1);
   if (work1-lwork>0.5) lwork++;
-  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+  work=(double *)CALLOC((size_t)lwork,sizeof(double));
   /* actual call */
   F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
   		   work, &lwork, &info);
-  R_chk_free(work);
+  FREE(work);
 }
 
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c)
@@ -1413,11 +1413,11 @@ matrix(um[[2]],q,q);er$v
   		   &work1, &lwork, &info);
   lwork=(int)floor(work1);
   if (work1-lwork>0.5) lwork++;
-  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+  work=(double *)CALLOC((size_t)lwork,sizeof(double));
   /* actual call */
   F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
   		   work, &lwork, &info);
-  R_chk_free(work);
+  FREE(work);
 }
 
 
@@ -1437,10 +1437,10 @@ void mgcv_td_qy(double *S,double *tau,int *m,int *n, double *B,int *left,int *tr
   /* workspace query ... */
   F77_CALL(dormtr)(&side,&uplo,&trans,m,n,S,&nq,tau,B,m,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+  work=(double *)CALLOC((size_t)lwork,sizeof(double));
   /* actual call ... */
   F77_CALL(dormtr)(&side,&uplo,&trans,m,n,S,&nq,tau,B,m,work,&lwork,&info);
-  R_chk_free(work);
+  FREE(work);
 }
 
 void mgcv_tri_diag(double *S,int *n,double *tau)
@@ -1464,15 +1464,15 @@ void mgcv_tri_diag(double *S,int *n,double *tau)
 { int lwork=-1,info;
   double *work,work1,*e,*d;
   char uplo='U';
-  d = (double *)R_chk_calloc((size_t)*n,sizeof(double));
-  e = (double *)R_chk_calloc((size_t)(*n-1),sizeof(double));
+  d = (double *)CALLOC((size_t)*n,sizeof(double));
+  e = (double *)CALLOC((size_t)(*n-1),sizeof(double));
   /* work space query... */
   F77_CALL(dsytrd)(&uplo,n,S,n,d,e,tau,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+  work=(double *)CALLOC((size_t)lwork,sizeof(double));
   /* Actual call... */
   F77_CALL(dsytrd)(&uplo,n,S,n,d,e,tau,work,&lwork,&info);
-  R_chk_free(work);R_chk_free(d);R_chk_free(e);
+  FREE(work);FREE(d);FREE(e);
 }
 
 
@@ -1540,11 +1540,11 @@ void mgcv_pbsi(double *R,int *r,int *nt) {
   #ifdef OMP_REPORT
   Rprintf("mgcv_pbsi...");
   #endif
-  d = (double *)R_chk_calloc((size_t) *r,sizeof(double));
+  d = (double *)CALLOC((size_t) *r,sizeof(double));
   if (*nt < 1) *nt = 1;
   if (*nt > *r) *nt = *r; /* no point having more threads than columns */
   /* now obtain block start columns, a. a[i] is start column of block i.  */
-  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int));
+  a = (int *)CALLOC((size_t) (*nt+1),sizeof(int));
   a[0] = 0;a[*nt] = *r;
   x = (double) *r;x = x*x*x / *nt;
   /* compute approximate optimal split... */
@@ -1606,7 +1606,7 @@ void mgcv_pbsi(double *R,int *r,int *nt) {
       }
     } 
   } /* end parallel section */
-  R_chk_free(d);R_chk_free(a);
+  FREE(d);FREE(a);
   #ifdef OMP_REPORT
   Rprintf("done\n");
   #endif
@@ -1637,7 +1637,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
   #endif
   if (*nt < 1) *nt = 1;
   if (*nt > *r) *nt = *r; /* no point having more threads than columns */
-  a = (int *)R_chk_calloc((size_t) (*nt+1),sizeof(int));
+  a = (int *)CALLOC((size_t) (*nt+1),sizeof(int));
   a[0] = 0;a[*nt] = *r;
   /* It is worth transposing R into lower triangle */
   x = (double) *r;x = x*x / *nt;
@@ -1715,7 +1715,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
       }
     } /* end of for b block loop */
   } /* end parallel block */ 
-  R_chk_free(a); 
+  FREE(a); 
   #ifdef OMP_REPORT
   Rprintf("done\n");
   #endif
@@ -1847,7 +1847,7 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {
   if (nbf) { /* only do this if final block shorter than rest */
     ns_main = (*r * *c) / *nb; /* full segments fitting in x */
     ns_extra = ns - ns_main; /* segments requiring extra storage */
-    extra = (double *) R_chk_calloc((size_t) (*nb * ns_extra),sizeof(double));
+    extra = (double *) CALLOC((size_t) (*nb * ns_extra),sizeof(double));
     x0 = extra + *nb * ns_extra - 1; /* end of extra */ 
     x1 = x + *r * *c -1 ; /* end of x */
 
@@ -1889,9 +1889,9 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {
   /* now re-arrange row-block wise... */
 
   /* a[i] is original segment now in segment i... */ 
-  a = (int *) R_chk_calloc((size_t) (k * *c),sizeof(int));
+  a = (int *) CALLOC((size_t) (k * *c),sizeof(int));
   /* s[i] is segment now containing original segment i */
-  s = (int *) R_chk_calloc((size_t) (k * *c),sizeof(int));
+  s = (int *) CALLOC((size_t) (k * *c),sizeof(int));
   for (i=0;i<k * *c;i++) s[i] = a[i] = i;
   ti=0; /* target segment */
   for (i=0;i<k;i++) for (j=0;j<*c;j++,ti++) {
@@ -1933,7 +1933,7 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {
     }
   } 
 
-  R_chk_free(a); R_chk_free(s);if (nbf) R_chk_free(extra);
+  FREE(a); FREE(s);if (nbf) FREE(extra);
 } /* row_block_reorder */
 
 
@@ -2030,7 +2030,7 @@ void mgcv_pqrqy0(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,i
 
   nb = (int)ceil(*r/(double)k); /* block size - in rows */
   nbf = *r - (k-1)*nb; /* end block size */ 
-  Qb = (double *)R_chk_calloc((size_t) (k * *c * *cb),sizeof(double));
+  Qb = (double *)CALLOC((size_t) (k * *c * *cb),sizeof(double));
   nq = *c * k;
   if (*tp) { /* Q'b */
     /* first the component Q matrices are applied to the blocks of b */
@@ -2101,7 +2101,7 @@ void mgcv_pqrqy0(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,i
   #ifdef OMP_REPORT
   Rprintf("done\n");
   #endif
-  R_chk_free(Qb);
+  FREE(Qb);
 }  /* mgcv_pqrqy0 */
 
 
@@ -2137,7 +2137,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
   if (*cb==1 || *nt==1) mgcv_qrqy(b,a,tau,r,cb,c,&left,tp);
   else { /* split operation by columns of b */ 
     /* set leading diagonal elements of a to 1 and store them */
-    aii = (double *)R_chk_calloc((size_t)*c,sizeof(double));
+    aii = (double *)CALLOC((size_t)*c,sizeof(double));
     for (k=*r+1,x0=aii,x1=aii + *c,p0=a;x0<x1;x0++,p0 += k) { *x0 = *p0;*p0 = 1.0; } 
     nth = *nt;if (nth > *cb) nth = *cb;
     k = *cb/nth; 
@@ -2158,7 +2158,7 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
       }
     } /* end parallel section */
     for (k=*r+1,x0=aii,x1=aii + *c,p0=a;x0<x1;x0++,p0 += k) *p0= *x0;
-    R_chk_free(aii); 
+    FREE(aii); 
   } 
   if (*tp) { /* need to strip out the extra rows */
     x1 = x0 = b;
@@ -2215,7 +2215,7 @@ void mgcv_pqr0(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
     nbf = *r - (k-1)*nb; /* end block size */
     /* need to re-arrange row blocks so that they can be split between qr calls */
     row_block_reorder(x,r,c,&nb,&FALSE); 
-    piv = (int *)R_chk_calloc((size_t) (k * *c),sizeof(int));
+    piv = (int *)CALLOC((size_t) (k * *c),sizeof(int));
     R = x + *r * *c ; /* pointer to combined unpivoted R matrix */
     nr = *c * k; /* number of rows in R */
     #ifdef SUPPORT_OPENMP
@@ -2230,15 +2230,15 @@ void mgcv_pqr0(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
         xi = x + nb * i * *c; /* current block */
         mgcv_qr(xi,&n,c,piv + i * *c,tau + i * *c);
         /* and copy the R factors, unpivoted into a new matrix */
-        R1 = (double *)R_chk_calloc((size_t)(*c * *c),sizeof(double));
+        R1 = (double *)CALLOC((size_t)(*c * *c),sizeof(double));
         for (l=0;l<*c;l++) for (j=l;j<*c;j++) R1[l + *c * j] = xi[l + n * j]; 
         /* What if final nbf is less than c? - can't happen  */
         pivoter(R1,c,c,piv + i * *c,&TRUE,&TRUE); /* unpivoting the columns of R1 */
         for (l=0;l<*c;l++) for (j=0;j<*c;j++) R[i * *c +l + nr *j] = R1[l+ *c * j];
-        R_chk_free(R1);
+        FREE(R1);
       }
     } /* end of parallel section */
-    R_chk_free(piv);
+    FREE(piv);
     n = k * *c;
     mgcv_qr(R,&n,c,pivot,tau + k * *c); /* final pivoted QR */
   } 
@@ -2268,10 +2268,10 @@ void mgcv_qr(double *x, int *r, int *c,int *pivot,double *tau)
   /* Args: M, N, A, LDA, JPVT, TAU, WORK, LWORK, INFO */
   F77_CALL(dgeqp3)(r,c,x,r,pivot,tau,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+  work=(double *)CALLOC((size_t)lwork,sizeof(double));
    /* actual call */
   F77_CALL(dgeqp3)(r,c,x,r,pivot,tau,work,&lwork,&info); 
-  R_chk_free(work);
+  FREE(work);
   /*if (*r<*c) lwork= *r; else lwork= *c;*/ 
   for (ip=pivot;ip < pivot + *c;ip++) (*ip)--;
   /* ... for 'tis C in which we work and not the 'cursed Fortran... */
@@ -2294,11 +2294,11 @@ void mgcv_qr2(double *x, int *r, int *c,int *pivot,double *tau)
 */
 { int info,*ip,i;
   double *work;
-  work=(double *)R_chk_calloc((size_t)*r,sizeof(double));
+  work=(double *)CALLOC((size_t)*r,sizeof(double));
    /* actual call */
   /* Args: M, N, A, LDA, TAU, WORK, INFO */
   F77_CALL(dgeqr2)(r,c,x,r,tau,work,&info); 
-  R_chk_free(work);
+  FREE(work);
   /*if (*r<*c) lwork= *r; else lwork= *c;*/ 
   for (i=0,ip=pivot;ip < pivot + *c;ip++,i++) *ip = i;
   /* ... pivot index equivalent to no pivoting */
@@ -2328,7 +2328,7 @@ void mgcv_qrqy0(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,i
   } else { 
     lda= *r;lwork = *c;
   }
-  /* calloc is thread safe, R_chk_calloc ambiguous */
+  /* calloc is thread safe, CALLOC ambiguous */
   work=(double *)calloc((size_t)lwork,sizeof(double));
   if ((*left && ! *tp)||(! *left && *tp)) { /* kth H applied first */
     i0 = *k - 1;i1=-1;ii=-1;
@@ -2376,10 +2376,10 @@ void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,in
   
   F77_CALL(dormqr)(&side,&trans,r,c,k,a,&lda,tau,b,r,&work1,&lwork,&info);
   lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-  work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+  work=(double *)CALLOC((size_t)lwork,sizeof(double));
   /* actual call */
   F77_CALL(dormqr)(&side,&trans,r,c,k,a,&lda,tau,b,r,work,&lwork,&info); 
-  R_chk_free(work);
+  FREE(work);
 }
 
 
@@ -2425,8 +2425,8 @@ qr.R(qr(Xa,tol=0))
 */
 
 { double *x,*work,c,s,r,x0,x1,m,*xip,*xjp,*riip,*rijp,*Qp,*wp;
-  x=(double *)R_chk_calloc((size_t)*q,sizeof(double)); 
-  work=(double *)R_chk_calloc((size_t)*n,sizeof(double)); /* working extra column of Q */
+  x=(double *)CALLOC((size_t)*q,sizeof(double)); 
+  work=(double *)CALLOC((size_t)*n,sizeof(double)); /* working extra column of Q */
   x[*k] = *lam;
   /* conceptually i runs from k to q in the following loop */
   for (Qp=Q+ *k * *n,riip=R+ *k * *q + *k,xip=x+ *k ;xip< x+ *q;xip++,riip+= *q+1)
@@ -2454,7 +2454,7 @@ qr.R(qr(Xa,tol=0))
       *wp = s*x1+c* *wp;
     }
   }
-  R_chk_free(x);R_chk_free(work);
+  FREE(x);FREE(work);
 }
 
 void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
@@ -2491,7 +2491,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
   double work1,*work,dum1=0,abstol=0.0,*Z,*dum2,x,*p,*p1,*p2,*Acopy;
   int lwork = -1,liwork = -1,iwork1,info,*iwork,dumi=0,n_eval=0,*isupZ,i,j,k,debug=0;
   if (debug && *get_vectors) { /* need a copy to dump in case of trouble */
-    Acopy = (double *)R_chk_calloc((size_t)(*n * *n),sizeof(double));
+    Acopy = (double *)CALLOC((size_t)(*n * *n),sizeof(double));
     for (p2=Acopy,p=A,p1=A+ *n * *n;p<p1;p++,p2++) *p2 = *p;
   }
 
@@ -2499,10 +2499,10 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
   if (*use_dsyevd)
   { F77_CALL(dsyevd)(&jobz,&uplo,n,A,n,ev,&work1,&lwork,&iwork1,&liwork,&info);
     lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-    work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
-    liwork = iwork1;iwork= (int *)R_chk_calloc((size_t)liwork,sizeof(int));
+    work=(double *)CALLOC((size_t)lwork,sizeof(double));
+    liwork = iwork1;iwork= (int *)CALLOC((size_t)liwork,sizeof(int));
     F77_CALL(dsyevd)(&jobz,&uplo,n,A,n,ev,work,&lwork,iwork,&liwork,&info);
-    R_chk_free(work);R_chk_free(iwork);
+    FREE(work);FREE(iwork);
     if (*descending) for (i=0;i<*n/2;i++) {
         /* work in from left and right swapping cols */
 	p = A + i * *n; /* start of left col */ 
@@ -2512,20 +2512,20 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
         }
     }
   } else
-  { Z=(double *)R_chk_calloc((size_t)(*n * *n),sizeof(double)); /* eigen-vector storage */
-    isupZ=(int *)R_chk_calloc((size_t)(2 * *n),sizeof(int)); /* eigen-vector support */
+  { Z=(double *)CALLOC((size_t)(*n * *n),sizeof(double)); /* eigen-vector storage */
+    isupZ=(int *)CALLOC((size_t)(2 * *n),sizeof(int)); /* eigen-vector support */
     F77_CALL(dsyevr)(&jobz,&range,&uplo,
 		   n,A,n,&dum1,&dum1,&dumi,&dumi,
 		   &abstol,&n_eval,ev, 
     		   Z,n,isupZ, &work1,&lwork,&iwork1,&liwork,&info);
     lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-    work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
-    liwork = iwork1;iwork= (int *)R_chk_calloc((size_t)liwork,sizeof(int));
+    work=(double *)CALLOC((size_t)lwork,sizeof(double));
+    liwork = iwork1;iwork= (int *)CALLOC((size_t)liwork,sizeof(int));
     F77_CALL(dsyevr)(&jobz,&range,&uplo,
 		   n,A,n,&dum1,&dum1,&dumi,&dumi,
 		   &abstol,&n_eval,ev, 
     		     Z,n,isupZ, work,&lwork,iwork,&liwork,&info);
-    R_chk_free(work);R_chk_free(iwork);
+    FREE(work);FREE(iwork);
     
     /* if (*descending) for (i=0;i<*n/2;i++) { 
       x = ev[i]; ev[i] = ev[*n-i-1];ev[*n-i-1] = x;
@@ -2543,13 +2543,13 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
       }
     }
     A = p1;
-    R_chk_free(Z);R_chk_free(isupZ);
+    FREE(Z);FREE(isupZ);
   }
   if (*descending) for (i=0;i<*n/2;i++) { /* reverse the eigenvalues */
        x = ev[i]; ev[i] = ev[*n-i-1];ev[*n-i-1] = x;
   }
   if (debug && *get_vectors) { /* are the eigenvectors really orthogonal?? */
-    p = (double *)R_chk_calloc((size_t)(*n * *n),sizeof(double));
+    p = (double *)CALLOC((size_t)(*n * *n),sizeof(double));
     getXtX(p,A,n,n); /* cross prod of eigenvec matrix - should be I */
     x=0.0;k=0;
     for (i=0;i<*n;i++) for (j=0;j<i;j++)  if (fabs(p[i + *n * j])>1e-14) { 
@@ -2564,7 +2564,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
     }
     if (k) Rprintf("Eigenvectors not normalized %d %g\n",k,x/k);
     if (k+j>0) dump_mat(Acopy,n,n,"/home/sw283/tmp/badmat.dat");
-    R_chk_free(p);R_chk_free(Acopy);
+    FREE(p);FREE(Acopy);
   }
 
 } /* mgcv_symeig */
@@ -2597,9 +2597,9 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
 		   &iwork1, &liwork, &info);
 
    lwork=(int)floor(work1);if (work1-lwork>0.5) lwork++;
-   work=(double *)R_chk_calloc((size_t)lwork,sizeof(double));
+   work=(double *)CALLOC((size_t)lwork,sizeof(double));
    liwork = iwork1;
-   iwork= (int *)R_chk_calloc((size_t)liwork,sizeof(int));
+   iwork= (int *)CALLOC((size_t)liwork,sizeof(int));
 
    /* and the actual call... */
    F77_CALL(dstedc)(&compz,n,
@@ -2619,7 +2619,7 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
      }
    }
 
-   R_chk_free(work);R_chk_free(iwork);
+   FREE(work);FREE(iwork);
    *n=info; /* zero is success */
 } /* mgcv_trisymeig */
 
@@ -2668,10 +2668,10 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   kk = (int) floor(*n/10); if (kk<1) kk=1;  
   if (kk<f_check) f_check = kk;
 
-  q=(double **)R_chk_calloc((size_t)(*n+1),sizeof(double *));
+  q=(double **)CALLOC((size_t)(*n+1),sizeof(double *));
 
   /* "randomly" initialize first q vector */
-  q[0]=(double *)R_chk_calloc((size_t)*n,sizeof(double));
+  q[0]=(double *)CALLOC((size_t)*n,sizeof(double));
   b=q[0];bt=0.0;
   for (i=0;i < *n;i++)   /* somewhat randomized start vector!  */
   { jran=(jran*ia+ic) % im;   /* quick and dirty generator to avoid too regular a starting vector */
@@ -2682,12 +2682,12 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   for (i=0;i < *n;i++) b[i]/=bt;
 
   /* initialise vectors a and b - a is leading diagonal of T, b is sub/super diagonal */
-  a=(double *)R_chk_calloc((size_t) *n,sizeof(double));
-  b=(double *)R_chk_calloc((size_t) *n,sizeof(double));
-  g=(double *)R_chk_calloc((size_t) *n,sizeof(double));
-  d=(double *)R_chk_calloc((size_t) *n,sizeof(double)); 
-  z=(double *)R_chk_calloc((size_t) *n,sizeof(double));
-  err=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+  a=(double *)CALLOC((size_t) *n,sizeof(double));
+  b=(double *)CALLOC((size_t) *n,sizeof(double));
+  g=(double *)CALLOC((size_t) *n,sizeof(double));
+  d=(double *)CALLOC((size_t) *n,sizeof(double)); 
+  z=(double *)CALLOC((size_t) *n,sizeof(double));
+  err=(double *)CALLOC((size_t) *n,sizeof(double));
   for (i=0;i< *n;i++) err[i]=1e300;
   /* figure out how to split up work if nt>1 */
   if (*nt>1) {
@@ -2771,7 +2771,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   
      /* get q[j+1]      */
     if (j < *n-1)
-    { q[j+1]=(double *)R_chk_calloc((size_t) *n,sizeof(double));
+    { q[j+1]=(double *)CALLOC((size_t) *n,sizeof(double));
       for (xx=b[j],qp=q[j+1],p0=qp + *n,zp=z;qp<p0;qp++,zp++) *qp = *zp/xx; /* forming q[j+1]=z/b[j] */
     }
 
@@ -2781,9 +2781,9 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
     { for (i=0;i<j+1;i++) d[i]=a[i]; /* copy leading diagonal of T_j */
       for (i=0;i<j;i++) g[i]=b[i]; /* copy sub/super diagonal of T_j */   
       /* set up storage for eigen vectors */
-      if (vlength) R_chk_free(v); /* free up first */
+      if (vlength) FREE(v); /* free up first */
       vlength=j+1; 
-      v = (double *)R_chk_calloc((size_t)(vlength*vlength),sizeof(double));
+      v = (double *)CALLOC((size_t)(vlength*vlength),sizeof(double));
  
       /* obtain eigen values/vectors of T_j in O(j^2) flops */
     
@@ -2853,14 +2853,14 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   }
  
   /* clean up..... */
-  R_chk_free(a);
-  R_chk_free(b);
-  R_chk_free(g);
-  R_chk_free(d);
-  R_chk_free(z);
-  R_chk_free(err);
-  if (vlength) R_chk_free(v);
-  for (i=0;i< *n+1;i++) if (q[i]) R_chk_free(q[i]);R_chk_free(q);  
+  FREE(a);
+  FREE(b);
+  FREE(g);
+  FREE(d);
+  FREE(z);
+  FREE(err);
+  if (vlength) FREE(v);
+  for (i=0;i< *n+1;i++) if (q[i]) FREE(q[i]);FREE(q);  
   *n = j; /* number of iterations taken */
   #ifdef OMP_REPORT
   Rprintf("done\n");

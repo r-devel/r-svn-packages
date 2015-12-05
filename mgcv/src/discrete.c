@@ -186,10 +186,10 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
   int i,j,q,*pt,*off,*voff,*tps,dC=0,c1;
   double *f0,*pf,*p0,*p1,*p2,*C=NULL,*work,maxp=0;
   /* obtain various indices */
-  pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
-  off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
-  voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvector starts */
-  tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+  pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
+  off = (int *) CALLOC((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
+  voff = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* offsets for v subvector starts */
+  tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       off[q+1] = off[q] + p[q]*m[q]; /* submatrix start offsets */
@@ -205,10 +205,10 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
   /* now form the product term by term... */
-  pf=f0 = (double *)R_chk_calloc((size_t)*n,sizeof(double));
+  pf=f0 = (double *)CALLOC((size_t)*n,sizeof(double));
   i = *n; if (i<maxp) i=maxp;
-  work = (double *)R_chk_calloc((size_t)i,sizeof(double));
-  if (dC) C = (double *)R_chk_calloc((size_t)dC,sizeof(double));
+  work = (double *)CALLOC((size_t)i,sizeof(double));
+  if (dC) C = (double *)CALLOC((size_t)dC,sizeof(double));
   for (j=0;j < *bc;j++) {
     for (i=0;i < *nt;i++) { /* work through terms */ 
       if (i==0) f0 = f; /* result written straight to f for i==0 */
@@ -221,9 +221,9 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
     }
     f += *n;beta += tps[*nt]; /* move on to next column */
   }
-  if (dC) R_chk_free(C);
-  R_chk_free(work);R_chk_free(f0);
-  R_chk_free(pt);R_chk_free(off);R_chk_free(voff);R_chk_free(tps);
+  if (dC) FREE(C);
+  FREE(work);FREE(f0);
+  FREE(pt);FREE(off);FREE(voff);FREE(tps);
 } /* Xb */
 
 void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n, 
@@ -241,10 +241,10 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n,
   #endif
   if (*nthreads<1) *nthreads = 1;
   if (*nthreads > *pv) *nthreads = *pv;
-  xv = (double *) R_chk_calloc((size_t) (*nthreads * *n),sizeof(double)); /* storage for cols of XV */
-  xi = (double *) R_chk_calloc((size_t) (*nthreads * *n),sizeof(double)); /* storage for cols of X */
-  ei = (double *) R_chk_calloc((size_t) (*nthreads * *pv),sizeof(double)); /* storage for identity matrix cols */
-  dc = (double *) R_chk_calloc((size_t) (*nthreads * *n),sizeof(double)); /* storage for components of diag */
+  xv = (double *) CALLOC((size_t) (*nthreads * *n),sizeof(double)); /* storage for cols of XV */
+  xi = (double *) CALLOC((size_t) (*nthreads * *n),sizeof(double)); /* storage for cols of X */
+  ei = (double *) CALLOC((size_t) (*nthreads * *pv),sizeof(double)); /* storage for identity matrix cols */
+  dc = (double *) CALLOC((size_t) (*nthreads * *n),sizeof(double)); /* storage for components of diag */
   if (*nthreads>1) {
     bs = *pv / *nthreads;
     while (bs * *nthreads < *pv) bs++;
@@ -270,7 +270,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n,
   /* sum the contributions from the different threads into diag... */
   for (p0=diag,p1=p0+ *n,p2=dc;p0<p1;p0++,p2++) *p0 = *p2;
   for (i=1;i< *nthreads;i++) for (p0=diag,p1=p0+ *n;p0<p1;p0++,p2++) *p0 += *p2;
-  R_chk_free(xv);R_chk_free(dc);R_chk_free(xi);R_chk_free(ei);
+  FREE(xv);FREE(dc);FREE(xi);FREE(ei);
 } /* diagXVXt */
 
 
@@ -283,10 +283,10 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *
     for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
   }
   /* obtain various indices */
-  pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
-  off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
-  voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvector starts */
-  tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+  pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
+  off = (int *) CALLOC((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
+  voff = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* offsets for v subvector starts */
+  tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       off[q+1] = off[q] + p[q]*m[q]; /* submatrix start offsets */
@@ -298,16 +298,16 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *
     if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
-  Xy0 =  (double *) R_chk_calloc((size_t)maxp,sizeof(double));
-  work =  (double *) R_chk_calloc((size_t)*n,sizeof(double));
-  work1 = (double *) R_chk_calloc((size_t)maxm,sizeof(double));
+  Xy0 =  (double *) CALLOC((size_t)maxp,sizeof(double));
+  work =  (double *) CALLOC((size_t)*n,sizeof(double));
+  work1 = (double *) CALLOC((size_t)maxm,sizeof(double));
   /* apply W to y - for AR models this needs to be expanded */
-  Wy = (double *) R_chk_calloc((size_t)*n,sizeof(double)); /* Wy */
+  Wy = (double *) CALLOC((size_t)*n,sizeof(double)); /* Wy */
   for (p0=Wy,p1=Wy + *n,p2=w;p0<p1;p0++,y++,p2++) *p0 = *y * *p2; 
   if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
     rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&zero);
     rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&one); /* transpose of transform applied */
-    for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* sqrt weights again */
+    for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* square weights again */
   }
   /* now loop through terms applying the components of X'...*/
   for (i=0;i<*nt;i++) {
@@ -326,8 +326,8 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *
       singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k+ts[i] * *n,n);
     }
   }
-  R_chk_free(Wy); R_chk_free(Xy0); R_chk_free(work); R_chk_free(work1); 
-  R_chk_free(pt); R_chk_free(off); R_chk_free(voff); R_chk_free(tps);
+  FREE(Wy); FREE(Xy0); FREE(work); FREE(work1); 
+  FREE(pt); FREE(off); FREE(voff); FREE(tps);
 } /* XWy */
 
 void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx, int *ts, 
@@ -360,14 +360,14 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
   *nthreads = 1;
   #endif
   if (*nthreads<1) *nthreads = 1;
-  start = (int *) R_chk_calloc((size_t)(*nthreads+1),sizeof(int));
-  XiB = (double *) R_chk_calloc((size_t)(*n * *nthreads),sizeof(double)); /* column of X */
-  tempnB = (double *) R_chk_calloc((size_t)(*n * *nthreads),sizeof(double));
-  pt = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* the term dimensions */
-  pd = (int *) R_chk_calloc((size_t)*nt,sizeof(int)); /* storage for last marginal size */
-  off = (int *) R_chk_calloc((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
-  voff = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* offsets for v subvectors starts */
-  tps = (int *) R_chk_calloc((size_t)*nt+1,sizeof(int)); /* the term starts */
+  start = (int *) CALLOC((size_t)(*nthreads+1),sizeof(int));
+  XiB = (double *) CALLOC((size_t)(*n * *nthreads),sizeof(double)); /* column of X */
+  tempnB = (double *) CALLOC((size_t)(*n * *nthreads),sizeof(double));
+  pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
+  pd = (int *) CALLOC((size_t)*nt,sizeof(int)); /* storage for last marginal size */
+  off = (int *) CALLOC((size_t)*nx+1,sizeof(int)); /* offsets for X submatrix starts */
+  voff = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* offsets for v subvectors starts */
+  tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts */
   if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
     for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
   }
@@ -383,9 +383,9 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
     if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
-  tempB = (double *) R_chk_calloc((size_t)(maxm * *nthreads),sizeof(double));
-  xwx = (double *) R_chk_calloc((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
-  xwx0 = (double *) R_chk_calloc((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
+  tempB = (double *) CALLOC((size_t)(maxm * *nthreads),sizeof(double));
+  xwx = (double *) CALLOC((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
+  xwx0 = (double *) CALLOC((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
   ptot = tps[*nt]; /* total number of parameters */
   for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) { /* the block loop */
     if (pd[r]>pd[c]) { /* Form Xr'WXc */
@@ -471,8 +471,8 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
       XWX[i+tps[c]+(j+tps[r])*ptot] = XWX[j+tps[r]+(i+tps[c])*ptot] = xwx[i + pa * j];
     }
   } /* end of block loop */
-  R_chk_free(start);
-  R_chk_free(XiB); R_chk_free(tempnB); R_chk_free(pt); R_chk_free(pd); R_chk_free(off);
-  R_chk_free(voff); R_chk_free(tps); R_chk_free(tempB); R_chk_free(xwx); R_chk_free(xwx0);
+  FREE(start);
+  FREE(XiB); FREE(tempnB); FREE(pt); FREE(pd); FREE(off);
+  FREE(voff); FREE(tps); FREE(tempB); FREE(xwx); FREE(xwx0);
 } /* XWX */
 

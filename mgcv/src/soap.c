@@ -66,14 +66,14 @@ void boundary(int *G, double *d, double *dto, double *x0, double *y0, double *dx
   }
   k = *nx * *ny; /* total size of G, d, dto */
   out_lim = -k;
-  inb = (int *)R_chk_calloc((size_t)k,sizeof(int));  
+  inb = (int *)CALLOC((size_t)k,sizeof(int));  
   in_out(x,y,break_code,d,dto,inb,n,&k); /* test all cell centres for in/out */
   j = -(k + 10);
   for (ip = inb,ip1 = G,p2 = dto,ip2=G+k;ip1<ip2;ip1++,p2++,ip++) {
     if (!*ip) *ip1 = j; else *ip1 = 1; /* set outside/inside in G */
     *p2 = -1.0; /* clear dto to -ve */
   }
-  R_chk_free(inb);
+  FREE(inb);
 
   xb0 = *x0 - *dx/2;yb0 = *y0 - *dx/2; /* Refers to boundary lines lower left */ 
  

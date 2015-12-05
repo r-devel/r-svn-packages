@@ -17,6 +17,15 @@
 
 //#define OMP_REPORT // define to have all routines using omp report on start and end.
 
+/* sed -i 's/old-text/new-text/g' *.c
+   is quite useful!!
+*/
+// For safe memory handling from R...
+#define CALLOC R_chk_calloc
+#define FREE R_chk_free
+// Can reset to check for memory errors...
+//#define CALLOC calloc
+//#define FREE free
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score,int *nt);
