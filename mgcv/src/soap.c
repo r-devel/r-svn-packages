@@ -22,7 +22,7 @@ void boundary(int *G, double *d, double *dto, double *x0, double *y0, double *dx
    matrices d and dto are same dimension as G. 
    
    The boundary is supplied in n-arrays, `x' and `y'. Sub loops are separated by elements
-   <= break_code. nb must have dimension of muber of loops.
+   <= break_code. nb must have dimension of number of loops.
 
    On exit:
    G[i,j] < - nx * ny is outside boundary, otherwise

@@ -383,9 +383,9 @@ void XWXd(double *XWX,double *X,double *w,int *k, int *m,int *p, int *n, int *nx
     if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
-  tempB = (double *) CALLOC((size_t)(maxm * *nthreads),sizeof(double));
-  xwx = (double *) CALLOC((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
-  xwx0 = (double *) CALLOC((size_t)(maxp*maxp),sizeof(double)); /* working cross product storage */
+  tempB = (double *) CALLOC((size_t) maxm * *nthreads,sizeof(double));
+  xwx = (double *) CALLOC((size_t) maxp * maxp,sizeof(double)); /* working cross product storage */
+  xwx0 = (double *) CALLOC((size_t) maxp * maxp,sizeof(double)); /* working cross product storage */
   ptot = tps[*nt]; /* total number of parameters */
   for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) { /* the block loop */
     if (pd[r]>pd[c]) { /* Form Xr'WXc */
