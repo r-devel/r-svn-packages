@@ -530,7 +530,7 @@ x <- rtweedie(10000,power=1.5,mu=1,phi=1)
 /** Fast re-weighting routines                         */
 /*******************************************************/
 
-void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans) {
+void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans,double *work) {
 /* Function to recombine rows of n by p matrix X (column ordered).
    ith row of X' is made up of row[stop[i-1]+1...stop[i]], weighted by 
    w[stop[i-1]+1...stop[i]]. stop[-1]=-1 by convention.
@@ -540,14 +540,17 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans) {
    j from stop[i-1]+1 to stop[i]. Otherwise the tranposed operation 
    x'[row[j]] += w[row[j]] * x[i] is used with the same j range. x' zero at outset.
 
+   work is same dimension as X
+
    See rwMatrix in bam.r for call from R. 
 */
   ptrdiff_t i,j,jump,start=0,end,off;
   double *X1p,*Xp,weight,*Xpe,*X1;
   /* create storage for output matrix, cleared to zero */
-  X1 = (double *)CALLOC((size_t) *n * *p,sizeof(double));
+  X1 = work; 
   jump = *n;
-  off = *n * (ptrdiff_t) *p;
+  off = *n * (ptrdiff_t) *p; 
+  for (X1p=X1,Xpe=X1p+off;X1p<Xpe;X1p++) *X1p = 0.0;
   for (i=0;i<*n;i++) { /* loop through rows of output X1 */
     end = stop[i]+1;
     for (j=start;j<end;j++) { /* loop through the input rows */
@@ -565,7 +568,6 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans) {
   }
   /* copy output to input for return...*/
   for (Xp=X,X1p=X1,Xpe=Xp+off;Xp<Xpe;Xp++,X1p++) *Xp = *X1p;
-  FREE(X1);
 }
 
 /* Example code for rwMatrix in R....

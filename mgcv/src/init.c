@@ -53,7 +53,7 @@ R_CMethodDef CEntries[] = {
     {"mgcv_td_qy",(DL_FUNC)&mgcv_td_qy,7},
     {"mgcv_symeig",(DL_FUNC)&mgcv_symeig,6},
     {"read_mat",(DL_FUNC)&read_mat,4},
-    {"rwMatrix",(DL_FUNC)&rwMatrix,7},
+    {"rwMatrix",(DL_FUNC)&rwMatrix,8},
     {"in_out",(DL_FUNC)&in_out,8},
     {"Rlanczos",(DL_FUNC)&Rlanczos,8},
     {"rksos",(DL_FUNC)&rksos,3},

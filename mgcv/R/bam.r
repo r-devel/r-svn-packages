@@ -23,7 +23,7 @@ rwMatrix <- function(stop,row,weight,X,trans=FALSE) {
   if (is.matrix(X)) { n <- nrow(X);p<-ncol(X);ok <- TRUE} else { n<- length(X);p<-1;ok<-FALSE}
   stop <- stop - 1;row <- row - 1 ## R indices -> C indices
   oo <-.C(C_rwMatrix,as.integer(stop),as.integer(row),as.double(weight),X=as.double(X),
-          as.integer(n),as.integer(p),trans=as.integer(trans))
+          as.integer(n),as.integer(p),trans=as.integer(trans),work=as.double(rep(0,n*p)))
   if (ok) return(matrix(oo$X,n,p)) else
   return(oo$X) 
 } ## rwMatrix
@@ -597,7 +597,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object$edf2 <- rowSums(Vc*qrx$R)/scale
   object$Vc <- Vc
   object$outer.info <- list(grad = prop$grad,hess=prop$hess)  
-  
+  object$AR1.rho <- rho
   object$R <- pchol(qrx$R,npt)
   piv <- attr(object$R,"pivot") 
   object$R[,piv] <- object$R   

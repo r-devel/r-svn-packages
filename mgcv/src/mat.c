@@ -179,8 +179,8 @@ void mgcv_mmult0(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
         for (ap=A,cp=C;cp<cp1;cp++,ap+= *r) { xx = *ap; *ap = *cp; *cp = xx;}
         A++;
       } 
-    } else /* A=B'C - easiest case: move most slowly through A*/
-    { /*br= *n;*/cr= *n;cp2 = C + *c * cr;
+    } else {/* A=B'C - easiest case: move most slowly through A*/
+      cr= *n;cp2 = C + *c * (ptrdiff_t) cr;
       for (ap=A,cp1=C;cp1< cp2;cp1+=cr) for (bp=B,i=0;i< *r;i++,ap++)  
       { for (xx=0.0,cp=cp1,cp3=cp1+ *n;cp< cp3;cp++,bp++) xx += *cp * *bp; /* B[k+br*i]*C[k+cr*j];*/
         *ap=xx;
@@ -573,27 +573,27 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
   nb0 = nb; /* target block size nb */  
   jb=0; /* start column of current block */
   pb = p; /* columns left to process */
-  F = (double *)CALLOC((size_t) (p * nb0),sizeof(double));
+  F = (double *)CALLOC((size_t) p * nb0,sizeof(double));
   while (jb < p) {
     nb = p-jb;if (nb>nb0) nb = nb0;/* attempted block size */
     for (a0=F,a1=F+nb*pb;a0<a1;a0++) *a0 = 0.0; /* F[1:pb,1:nb] = 0 - i.e. clear F */
     for (j=0;j<nb;j++) { /* loop through cols of this block */
       k = jb + j; /* index of current column of A to process */
-      a0 = cn + k;x=*a0;q=k;a0++;
+      a0 = cn + k;x = *a0;q=k;a0++;
       for (i=k+1;i<p;i++,a0++) if (*a0>x) { x = *a0;q=i; } /* find pivot col q */
       if (q!=k) { /* then pivot */
         i = piv[q];piv[q]=piv[k];piv[k] = i;
         x = cn[q];cn[q]=cn[k];cn[k] = x;
         x = icn[q];icn[q]=icn[k];icn[k] = x;
-        Aq = A + q * n;Ak = A + k * n;a1 = Aq + n;
+        Aq = A + q * (ptrdiff_t) n;Ak = A + k * (ptrdiff_t) n;a1 = Aq + n;
         for (;Aq<a1;Aq++,Ak++) { x = *Aq; *Aq = *Ak; *Ak = x;} /* A[:,k] <-> A[:,q] */
-        Aq = F + q - jb;Ak = F + j;a1 = F + nb*pb;
+        Aq = F + q - jb;Ak = F + j;a1 = F + nb * (ptrdiff_t) pb;
         for (;Aq<a1;Aq+=pb,Ak+=pb) { x = *Aq; *Aq = *Ak; *Ak = x;} /* F[q-jb,:] <-> F[j,:] */        
       }
       /* update the pivot column: A[k:n-1,k] -= A[k:n-1,jb:k-1]F[j,0:j-1]' using
          BLAS call to DGEMV(TRANS,M,N,ALPHA,A,LDA,X,INCX,BETA,Y,INCY)
                     y := alpha*A*x + beta*y (or A' if TRANS='T')*/
-      m = n-k;Ak = A+n*k+k;
+      m = n-k;Ak = A + (ptrdiff_t)n * k + k;
       if (j) {
         q = m ; /* total number of rows to split between threads */
         rt = q/nt;if (rt*nt < q) rt++; /* rows per thread */
@@ -610,7 +610,8 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           #endif
           for (i=0;i<nth;i++) {
 	    /* Only 10th argument changed on exit... */ 
-            F77_CALL(dgemv)(&nottrans, mb+i, &j,&dmone,A+jb*n+kb[i],&n,F+j,&pb,&done,A + n*k + kb[i], &one);
+            F77_CALL(dgemv)(&nottrans, mb+i, &j,&dmone,A+jb*(ptrdiff_t)n+kb[i],&n,F+j,&pb,&done,
+	                    A + (ptrdiff_t)n*k + kb[i], &one);
             //F77_CALL(dgemv)(&nottrans, &m, &j,&dmone,A+jb*n+k,&n,F+j,&pb,&done,Ak, &one);
           }
         }
@@ -640,7 +641,8 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           #endif
           for (i=0;i<nth;i++) {
             //#pragma flush(trans,m,mb,tau,k,A,kb,jb,n,Ak,one,dzero,F,pb)
-            F77_CALL(dgemv)(&trans, &m, mb+i,tau+k,A+(kb[i]+jb)*n+k,&n,Ak,&one,&dzero,F+kb[i]+j*pb, &one);
+	  F77_CALL(dgemv)(&trans, &m, mb+i,tau+k,A+(kb[i]+jb) * (ptrdiff_t) n+k,&n,
+                          Ak,&one,&dzero,F+kb[i]+(ptrdiff_t)j*pb, &one);
           }
           //F77_CALL(dgemv)(&trans, &m, &i,tau+k,A+(k+1)*n+k,&n,Ak,&one,&dzero,F+j+1+j*pb, &one);
         } /* end of parallel section */
@@ -661,7 +663,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           #pragma omp for
           #endif
           for (i=0;i<nth;i++) {
-            F77_CALL(dgemv)(&trans, &m, mb+i,&dmone,A+kb[i]*n+k,&n,Ak,&one,&dzero,work+kb[i]-jb, &one);
+  	    F77_CALL(dgemv)(&trans, &m, mb+i,&dmone,A+kb[i]* (ptrdiff_t)n+k,&n,Ak,&one,&dzero,work+kb[i]-jb, &one);
           // F77_CALL(dgemv)(&trans, &m, &j,&dmone,A+jb*n+k,&n,Ak,&one,&dzero,work, &one);
           }
         }
@@ -672,7 +674,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
         for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
         mb[nth-1]=q-(nth-1)*rt;
         for (i=0;i<nth;i++) { 
-	  F77_CALL(dgemv)(&nottrans, mb+i, &j,tau+k,F+kb[i],&pb,work,&one,&done,F+j*pb+kb[i], &one);
+	  F77_CALL(dgemv)(&nottrans, mb+i, &j,tau+k,F+kb[i],&pb,work,&one,&done,F+(ptrdiff_t)j*pb+kb[i], &one);
 	  // F77_CALL(dgemv)(&nottrans, &pb, &j,tau+k,F,&pb,work,&one,&done,F+j*pb, &one);
         }
       }
@@ -693,7 +695,8 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           #pragma omp for
           #endif
           for (i=0;i<nth;i++) {
-	     F77_CALL(dgemv)(&nottrans, mb+i, &q,&dmone,F+kb[i],&pb,A+jb*n+k,&n,&done,A+(kb[i]+jb)*n+k, &n); 
+	    F77_CALL(dgemv)(&nottrans, mb+i, &q,&dmone,F+kb[i],&pb,A+(ptrdiff_t)jb*n+k,
+	                    &n,&done,A+(kb[i]+jb)*(ptrdiff_t)n+k, &n); 
           }
         }
         //m=pb-j-1;i=j+1;
@@ -738,7 +741,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
         #pragma omp for
         #endif
         for (i=0;i<nth;i++) {
-          Ak = A + (k+1)*n + kb[i];Aq = A + jb * n + kb[i];
+          Ak = A + (k+1)*(ptrdiff_t) n + kb[i];Aq = A + jb * (ptrdiff_t) n + kb[i];
           /* Argument 12 changed on exit... */
           F77_CALL(dgemm)(&nottrans,&trans,mb+i,&rt,&nb,&dmone,Aq,&n,F+j+1,&pb,&done,Ak,&n);
           // Ak = A + (k+1)*n + k + 1;Aq = A + jb * n + k + 1;
@@ -750,7 +753,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
     if (!ok_norm) { /* recompute any column norms that had cancelled badly */ 
       for (i = k+1;i<p; i++) { 
         if (cn[i]<icn[i]*tol) { /* do the recompute */
-          x=0.0; Ak = A + i * n; 
+          x=0.0; Ak = A + i * (ptrdiff_t)n; 
           Aq = Ak + n; // Aq += n; <-- this was old code: Aq not initialised!
           Ak += k+1;
           for (;Ak<Aq;Ak++) x += *Ak * *Ak;
@@ -809,7 +812,7 @@ int mgcv_piqr(double *x,int n, int p, double *beta, int *piv, int nt) {
     i=piv[r]; piv[r] = piv[k];piv[k] = i;
     /* swap r with k O(n) */
     xx = c[r];c[r] = c[k];c[k] = xx;
-    for (p0 = x + n * r, p1 = x + n * k,p2 = p0 + n;p0<p2;p0++,p1++) {
+    for (p0 = x + n * r, p1 = x + (ptrdiff_t)n * k,p2 = p0 + n;p0<p2;p0++,p1++) {
           xx = *p0; *p0 = *p1; *p1 = xx;
     }
     /* now generate the householder reflector for column r O(n)*/
@@ -973,7 +976,7 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
           if (i == nth-1) c1 = cpf; else c1 = cpt;
           /* note integer after each matrix is its leading dimension */
           if (c1>0) F77_CALL(dgemm)(&transa,&transb,&c1,c,n, &alpha,
-		B + i * cpt * *n, n ,C, c,&beta, A + i * cpt * *c, &c1);
+				    B + i * (ptrdiff_t) cpt * *n, n ,C, c,&beta, A + i * (ptrdiff_t) cpt * *c, &c1);
         }
       } /* parallel section ends */
       /* now re-order the r by c matrix A, which currently contains the sequential
@@ -998,7 +1001,7 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
         for (i=0;i<nth;i++) {
           if (i == nth-1) c1 = cpf;else c1=cpt;
           if (c1>0) F77_CALL(dgemm)(&transa,&transb,&c1,c,n, &alpha,
-		B + i * cpt * *n, &c1,C,c,&beta, A + i * cpt * *c, &c1);
+		B + i * (ptrdiff_t) cpt * *n, &c1,C,c,&beta, A + i * (ptrdiff_t) cpt * *c, &c1);
         }
       } /* parallel ends */
       /* now reverse the re-ordering */
@@ -1022,7 +1025,7 @@ void mgcv_pmmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int
       for (i=0;i< nth;i++) {
         if (i == nth-1) c1 = cpf;else c1=cpt; /* how many columns in this block */
         if (c1>0) F77_CALL(dgemm)(&transa,&transb,r,&c1,n, &alpha,
-		B, &lda,C + i * *n * cpt, &ldb,&beta, A + i * *r * cpt, &ldc);
+		B, &lda,C + i * (ptrdiff_t) *n * cpt, &ldb,&beta, A + i * (ptrdiff_t) *r * cpt, &ldc);
       }
     } /* end parallel */
   }
@@ -1036,7 +1039,8 @@ void pcrossprod(double *B, double *A,int *R, int *C,int *nt,int *nb) {
    nt is the number of threads to use. B is C by C.
    30/4 memorial edition 
 */
-  int M,N,nf,nrf,kmax,kk,i,r,c,k,bs,bn,as,an,cs,cn; 
+  int M,N,nf,nrf,kmax,kk,i,r,c,k,bn,an,cn; 
+  ptrdiff_t as,bs,cs;
   char uplo = 'U',trans='T',ntrans='N'; 
   double alpha=1.0,beta=1.0;
   M = ceil(((double) *C)/ *nb);
@@ -1054,24 +1058,24 @@ void pcrossprod(double *B, double *A,int *R, int *C,int *nt,int *nb) {
     for (kk=0;kk<kmax;kk++) { /* work through blocks on upper triangle */
       i=kk;r=0;while (i >= M-r) { i -= M - r; r++;}; c = r + i; /* convert kk to row/col */
       if (r==M-1) bn = nf; else bn = *nb; /* (row) B block size */
-      bs = r * *nb; /* (row) B block start */
+      bs = r * (ptrdiff_t) *nb; /* (row) B block start */
       if (c==r) { /* diagonal block */
         for (k=0;k<N;k++) { /* work through row blocks of A */
-          as = k * *nb; /* A row block start */ 
+          as = k * (ptrdiff_t) *nb; /* A row block start */ 
           if (k==N-1) an = nrf; else an = *nb; /* A row block size */ 
           /* uplo 'U' or 'L' for upper/lower tri. trans = 'T' for A'A.*/
           if (k) beta=1.0; else beta = 0.0; /* multiplier for B block */
           F77_CALL(dsyrk)(&uplo,&trans,&bn, /* cols of A block */
 			&an, /* rows of A block */ 
-                        &alpha,A + as + *R * bs, /* start of A block */
+                        &alpha,A + as + (ptrdiff_t) *R * bs, /* start of A block */
                         R, /* R is physical number of rows in A */
-                        &beta,B + bs + *C * bs,C);
+                        &beta,B + bs + (ptrdiff_t) *C * bs,C);
         }
       } else {
-	cs = c * *nb; /* b col start */
+	cs = c * (ptrdiff_t) *nb; /* b col start */
         if (c==M-1) cn = nf; else cn = *nb; /* b col block size */
         for (k=0;k<N;k++) { /* work through row blocks of A */
-          as = k * *nb; /* A row block start */ 
+          as = k * (ptrdiff_t) *nb; /* A row block start */ 
           if (k==N-1) an = nrf; else an = *nb; /* A row block size */ 
           /* uplo 'U' or 'L' for upper/lower tri. trans = 'T' for A'A.*/
           if (k) beta=1.0; else beta = 0.0; /* multiplier for B block */
@@ -1141,11 +1145,12 @@ void getXXt(double *XXt,double *X,int *r,int *c)
 /* form XX' (nearly) as efficiently as possible - uses BLAS*/
 { double alpha=1.0,beta=0.0;
   int i,j;
+  ptrdiff_t ii,jj;
   char uplo = 'L',trans='N';
   F77_CALL(dsyrk)(&uplo,&trans,r, c, &alpha,X,r,&beta,XXt,r);
   /* fill in upper triangle from lower */
-  for (i=0;i<*r;i++) 
-  for (j=0;j<i;j++)  XXt[j + i * *r] = XXt[i + j * *r];
+  for (ii=0;ii<*r;ii++) 
+  for (jj=0;jj<ii;jj++)  XXt[jj + ii * *r] = XXt[ii + jj * *r];
  
 }
 
@@ -1489,9 +1494,9 @@ void mgcv_backsolve0(double *R,int *r,int *c,double *B,double *C, int *bc)
     for (i = *c-1;i>=0;i--) { /* work up each column of B & C */
       x = 0.0;
       /* for (k=i+1;k<*c;k++) x += R[i + *r * k] * C[k + j * *c]; ...following replaces...*/
-      pR = R + i + (i+1) * *r;pC = C + j * *c + i + 1;
+      pR = R + i + (i+1) * (ptrdiff_t)*r;pC = C + j * (ptrdiff_t)*c + i + 1;
       for (k=i+1;k<*c;k++,pR+= *r,pC++) x += *pR * *pC;      
-      C[i + j * *c] = (B[i + j * *c] - x)/R[i + *r * i];
+      C[i + (ptrdiff_t)j * *c] = (B[i + (ptrdiff_t)j * *c] - x)/R[i + (ptrdiff_t)*r * i];
     }
   }
 }
@@ -1510,7 +1515,7 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc,int *ri
   int n,m;
   char side='L',uplo='U',transa='N',diag='N';
   if (*right) { side = 'R';m = *bc,n= *c;} else {m = *c;n= *bc;}
-  for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
+  for (pC=C,pR=pC+ *bc * (ptrdiff_t)*c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
   F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,&m, &n, &alpha,R, r,C,&m);
 } /* mgcv_backsolve */
 
@@ -1563,10 +1568,10 @@ void mgcv_pbsi(double *R,int *r,int *nt) {
     for (b=0;b< *nt;b++) { /* b is thread/block index */
       for (i=a[b];i<a[b+1];i++) { /* i is column index */	
         k = *r - i -1; /* column of R in which to store result */
-        Rjj = rr = R + *r * i + i; /* Pointer to R[i,i] */
+        Rjj = rr = R + *r * (ptrdiff_t) i + i; /* Pointer to R[i,i] */
         dk = d + k;
         *dk = 1 / *rr; /* Ri[i,i] */
-        z = R + *r * k + k + 1; /* pointer to solution storage, below l.d. of R */
+        z = R + *r * (ptrdiff_t)k + k + 1; /* pointer to solution storage, below l.d. of R */
         rr -= i; /* pointer moved back to start of R[,i] */
         for (zz=z,z1 = z+i;zz<z1;zz++,rr++) *zz = *rr * *dk; /* sum_0_{i-1} Rii * zz[i] */
         for (j=i-1;j>=0;j--) {
@@ -1598,11 +1603,11 @@ void mgcv_pbsi(double *R,int *r,int *nt) {
     for (b=0;b<*nt;b++) {
       for (i=a[b];i<a[b+1];i++) {
         k = *r - i - 1;
-        zz = R + i * *r + i; /* leading diagonal element */
+        zz = R + i * (ptrdiff_t) *r + i; /* leading diagonal element */
         *zz = d[k];
         zz -= i; /* shift back to start of column */
         /* copy rest of column and wipe below diagonal storage */
-        for (rr = R + k * *r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
+        for (rr = R + k * (ptrdiff_t)*r + k + 1, r2 = rr + i;rr<r2;rr++,zz++) {*zz = *rr;*rr = 0.0;}
       }
     } 
   } /* end parallel section */
@@ -1656,7 +1661,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
     #endif 
     for (b=0;b<*nt;b++) {
       for (i=a[b];i<a[b+1];i++) { /* work through rows */
-        ru = rl = R + i * *r + i; /* diagonal element R[i,i] */
+        ru = rl = R + i * (ptrdiff_t)*r + i; /* diagonal element R[i,i] */
         ru += *r; /* move to R[i,i+1] */
         /* now copy R[i,i:r] to R[i:r,i]... */
         for (r1=rl + *r - i,rl++;rl<r1;rl++,ru += *r) *rl = *ru;
@@ -1680,9 +1685,9 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
     #endif
     for (b=0;b< *nt;b++) {
       for (i=a[b];i<a[b+1];i++) { /* loop over this block's rows */
-        Aij = Aji = A + i * *r + i;
-        rl = ru =  R + i * *r + i;
-        r1 = R + (i+1) * *r; /* upper limit for ri */
+        Aij = Aji = A + i * (ptrdiff_t)*r + i;
+        rl = ru =  R + i * (ptrdiff_t)*r + i;
+        r1 = R + (i+1) * (ptrdiff_t)*r; /* upper limit for ri */
         for (j=i;j < *r;j++,Aij += *r,Aji++,ru++,rl+= *r + 1) {
           //rj = rl;// R + j * *r + j;
           //ri = ru; // ri=R + i * *r + j;
@@ -1709,7 +1714,7 @@ void mgcv_PPt(double *A,double *R,int *r,int *nt) {
     #endif 
     for (b=0;b<*nt;b++) {
       for (i=a[b];i<a[b+1];i++) { /* work through rows */
-        rl = R + i * *r + i; /* diagonal element R[i,i] */
+        rl = R + i * (ptrdiff_t)*r + i; /* diagonal element R[i,i] */
         /* now wipe sub diagonal elements...*/
         for (r1=rl + *r - i,rl++;rl<r1;rl++) *rl = 0.0;
       }
@@ -1746,8 +1751,8 @@ void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc)
   for (j=0;j<*bc;j++) { /* work across columns of B & C */
     for (i = 0;i< *c;i++) { /* work down each column of B & C */
       x=0.0;
-      for (k=0;k<i;k++) x+= C[k + j * *c] * R[k + i * *r]; 
-      C[i + j * *c] = (B[i + j * *c] - x) / R[i + i * *r]; 
+      for (k=0;k<i;k++) x+= C[k + (ptrdiff_t)j * *c] * R[k + (ptrdiff_t)i * *r]; 
+      C[i + (ptrdiff_t)j * *c] = (B[i + (ptrdiff_t)j * *c] - x) / R[i + (ptrdiff_t)i * *r]; 
     }
   }
 }
@@ -1766,7 +1771,7 @@ void mgcv_forwardsolve0(double *R,int *r,int *c,double *B,double *C, int *bc)
   int m,n;
   char side='L',uplo='U',transa='T',diag='N';
   if (*right) { side='R';m = *bc;n= *c; } else {m = *c;n= *bc;}
-  for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
+  for (pC=C,pR=pC+ *bc * (ptrdiff_t) *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
   F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,&m, &n, &alpha,R, r,C,&m);
 } /* mgcv_forwardsolve */
 
@@ -1785,14 +1790,14 @@ void mgcv_pforwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc,int
   nth = *bc/cpt;
   if (nth * cpt < *bc) nth++;
   cpf = *bc - cpt * (nth-1); /* columns on final block */ 
-  for (pC=C,pR=pC+ *bc * *c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
+  for (pC=C,pR=pC+ *bc * (ptrdiff_t)*c;pC<pR;pC++,B++) *pC = *B; /* copy B to C */
   //Rprintf("r = %d, c= %d bc = %d, nth= %d, cpt = %d, cpf = %d",*r,*c,*bc,nth,cpt,cpf);
   #ifdef SUPPORT_OPENMP
   #pragma omp parallel for private(i,cp) num_threads(nth)
   #endif
   for (i=0;i<nth;i++) {
     if (i==nth-1) cp = cpf; else cp = cpt;
-    F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,c, &cp, &alpha,R, r,C + i * cpt * *c,c);
+    F77_CALL(dtrsm)(&side,&uplo,&transa, &diag,c, &cp, &alpha,R, r,C + i * (ptrdiff_t) cpt * *c,c);
   }
 } /* mgcv_pforwardsolve */
 
@@ -1834,7 +1839,7 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {
    The elements of one column belonging to one block are referred to as a 
    segment.
 */
-  int *a,*s,k,nbf=0,i,j,q,si,ti,ns,ns_main,ns_extra;
+  ptrdiff_t *a,*s,k,nbf=0,i,j,q,si,ti,ns,ns_main,ns_extra;
   double *x0,*x1,tmp,*extra=NULL;
   k = *r / *nb; /* number of blocks */
   if (*r > *nb * k) {
@@ -1889,9 +1894,9 @@ void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {
   /* now re-arrange row-block wise... */
 
   /* a[i] is original segment now in segment i... */ 
-  a = (int *) CALLOC((size_t) (k * *c),sizeof(int));
+  a = (ptrdiff_t *) CALLOC((size_t) (k * *c),sizeof(ptrdiff_t));
   /* s[i] is segment now containing original segment i */
-  s = (int *) CALLOC((size_t) (k * *c),sizeof(int));
+  s = (ptrdiff_t *) CALLOC((size_t) (k * *c),sizeof(ptrdiff_t));
   for (i=0;i<k * *c;i++) s[i] = a[i] = i;
   ti=0; /* target segment */
   for (i=0;i<k;i++) for (j=0;j<*c;j++,ti++) {
