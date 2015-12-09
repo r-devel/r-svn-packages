@@ -19,6 +19,8 @@
 
 * some upgrading for 64bit addressing.
 
+* uniquecombs now preserves contrasts on factors.
+
 1.8-9
 
 * C level fix in bam(...,discrete=TRUE) code. Some memory was mistakenly 

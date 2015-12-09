@@ -172,12 +172,10 @@ uniquecombs <- function(x) {
     x <- as.data.frame(x)
     names(x) <- names(xo)
     for (i in 1:ncol(xo)) if (is.factor(xo[,i])) { ## may need to reset factors to factors
-      #x[,i] <- if (is.ordered(xo[,i])) as.ordered(x[,i]) else as.factor(x[,i])
-      #levels(x[,i]) <- levels(xo[,i])
-      ## following is wrong - levels don't match numeric values!
       xoi <- levels(xo[,i])
       x[,i] <- if (is.ordered(xo[,i])) ordered(x[,i],levels=1:length(xoi),labels=xoi) else 
                factor(x[,i],levels=1:length(xoi),labels=xoi)
+      contrasts(x[,i]) <- contrasts(xo[,i])
     }
   }
   attr(x,"index") <- res$ind+1 ## C to R index gotcha 
