@@ -2708,9 +2708,9 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   } else { ## "response" or "link"
     ## get number of linear predictors, in case it's more than 1...
     if (is.list(object$formula)) {
-      nf <- length(object$formula) ## number of model formulae
+      # nf <- length(object$formula) ## number of model formulae
       nlp <- length(lpi) ## number of linear predictors
-    } else nlp <- nf <- 1
+    } else nlp <- 1 ## nf <- 1
     # nlp <- if (is.list(object$formula)) length(object$formula) else 1
     fit <- if (nlp>1) matrix(0,np,nlp) else array(0,np)
     if (se.fit) se <- fit

@@ -73,7 +73,7 @@ importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,
            polygon,rect,strheight,strwidth,text,title)
 
 importFrom(stats,.checkMFClasses,.getXlevels,anova,approx,as.formula,
-binomial,coef,cooks.distance,cor,cov,
+binomial,coef,contrasts,"contrasts<-",cooks.distance,cor,cov,
 delete.response,dbeta,dgamma,dnorm,dpois,fitted,formula,gaussian,glm,
 influence,logLik,lm,mad,
 make.link,median,model.frame,model.offset,model.matrix,nlm,

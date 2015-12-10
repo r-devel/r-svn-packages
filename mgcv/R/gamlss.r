@@ -713,7 +713,7 @@ multinom <- function(K=1) {
         ii <- 0
         for (i in 1:K) if (i<=K) for (k in i:K) {
           ii <- ii + 1
-          vp[,j] <- vp[,j] + 2 * dp[,i]*dp[,j]*vc[,ii] 
+          vp[,j] <- vp[,j] + 2 * dp[,i]*dp[,j]*ce[,ii] 
         }
         vp[,j] <- sqrt(pmax(0,vp[,j])) ## transform to se
       }
