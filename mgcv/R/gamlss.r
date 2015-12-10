@@ -680,7 +680,7 @@ multinom <- function(K=1) {
       eta <- matrix(0,nrow(X),K)
       if (se) { 
         ve <- matrix(0,nrow(X),K) ## variance of eta
-        ce <- matrix(0,nrow(X),K*(K-1)) ## covariance of eta_i eta_j
+        ce <- matrix(0,nrow(X),K*(K-1)/2) ## covariance of eta_i eta_j
       } 
       for (i in 1:K) { 
         Xi <- X[,lpi[[i]],drop=FALSE]
@@ -704,16 +704,16 @@ multinom <- function(K=1) {
     if (se) { ## need to loop to find se of probabilities...
       for (j in 1:(K+1)) {
         ## get dp_j/deta_k...
-        if (j==1) dp <- -gamma[,-1]/beta else { 
-          dp <- -gamma[,j]*gamma[,-1]
+        if (j==1) dp <- -gamma[,-1,drop=FALSE]/beta else { 
+          dp <- -gamma[,j]*gamma[,-1,drop=FALSE]
           dp[,j-1] <- gamma[,j]*(1-gamma[,j]) 
         }
         ## now compute variance... 
         vp[,j] <- rowSums(dp^2*ve)
         ii <- 0
-        for (i in 1:K) if (i<=K) for (k in i:K) {
+        for (i in 1:K) if (i<K) for (k in (i+1):K) {
           ii <- ii + 1
-          vp[,j] <- vp[,j] + 2 * dp[,i]*dp[,j]*ce[,ii] 
+          vp[,j] <- vp[,j] + 2 * dp[,i]*dp[,k]*ce[,ii] 
         }
         vp[,j] <- sqrt(pmax(0,vp[,j])) ## transform to se
       }
