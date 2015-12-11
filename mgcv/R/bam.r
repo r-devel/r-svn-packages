@@ -1834,7 +1834,12 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
    
     if (gc.level>0) gc()
 
-    mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
+    mf <- eval(mf, parent.frame()) # the model frame now contains all the data
+   # if ("matrix"%in%unlist(lapply(mf,class))) {
+   #   mfattr <- attributes(mf)
+   #   mf <- lapply(mf,drop) # avoid single column matrices
+   #   mfattr -> attributes(mf)
+   # }
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")
     terms <- attr(mf,"terms")
     if (gc.level>0) gc()  

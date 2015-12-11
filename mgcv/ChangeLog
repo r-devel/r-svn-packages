@@ -21,6 +21,9 @@
 
 * uniquecombs now preserves contrasts on factors.
 
+* variable summary tweak so that 1 column matrices in parametric model are 
+  treated as regular numeric variables.
+
 1.8-9
 
 * C level fix in bam(...,discrete=TRUE) code. Some memory was mistakenly 

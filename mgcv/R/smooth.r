@@ -3548,7 +3548,7 @@ PredictMat <- function(object,data,n=nrow(data))
     X <- matrix(0,n,ncol(pm$X))  
     for (i in 1:n) { ## in this case have to work down the rows
       ind <- ind + 1
-      X[i,] <- colSums(by[ind]*pm$X[pm$ind[ind],]) 
+      X[i,] <- colSums(by[ind]*pm$X[pm$ind[ind],,drop=FALSE]) 
       if (!is.null(offs)) {
         offX[i] <- sum(offs[pm$ind[ind]]*by[ind])
       }      
@@ -3557,7 +3557,7 @@ PredictMat <- function(object,data,n=nrow(data))
   } else { ## regular case 
     offset <- attr(pm$X,"offset")
     if (!is.null(pm$ind)) { ## X needs to be unpacked
-      X <- pm$X[pm$ind,]
+      X <- pm$X[pm$ind,,drop=FALSE]
       if (!is.null(offset)) offset <- offset[pm$ind]
     } else X <- pm$X
    
@@ -3590,7 +3590,7 @@ PredictMat <- function(object,data,n=nrow(data))
       } else { get.off <- FALSE;offs <- NULL}
       for (i in 2:q) {
         ind <- ind + n
-        Xs <- Xs + X[ind,]
+        Xs <- Xs + X[ind,,drop=FALSE]
         if (get.off) offs <- offs + offset[ind]
       }
       offset <- offs
@@ -3647,7 +3647,7 @@ PredictMat <- function(object,data,n=nrow(data))
 
   ## drop columns eliminated by side-conditions...
   del.index <- attr(object,"del.index") 
-  if (!is.null(del.index)) X <- X[,-del.index]
+  if (!is.null(del.index)) X <- X[,-del.index,drop=FALSE]
   attr(X,"offset") <- offset
   X
 } ## end of PredictMat

@@ -1889,7 +1889,7 @@ variable.summary <- function(pf,dl,n) {
    if (v.n>0) for (i in 1:v.n) {
      if (v.name[i]%in%p.name) para <- TRUE else para <- FALSE ## is variable in the parametric part?
 
-     if (para&&is.matrix(dl[[v.name[i]]])) { ## parametric matrix --- a special case
+     if (para&&is.matrix(dl[[v.name[i]]])&&ncol(dl[[v.name[i]]])>1) { ## parametric matrix --- a special case
        x <- matrix(apply(dl[[v.name[i]]],2,quantile,probs=0.5,type=3,na.rm=TRUE),1,ncol(dl[[v.name[i]]])) ## nearest to median entries
      } else { ## anything else
        x <- dl[[v.name[i]]]
