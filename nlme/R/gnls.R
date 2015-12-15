@@ -3,7 +3,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2007-2014 The R Core team
+### Copyright 2007-2015  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -606,7 +606,7 @@ gnlsApVar <-
     }
     val <- fdHess(Pars, fullGnlsLogLik, gnlsSt, conLin, N,
 		  .relStep = .relStep, minAbsPar = minAbsPar)[["Hessian"]]
-    if (all(eigen(val)$values < 0)) {
+    if (all(eigen(val, only.values=TRUE)$values < 0)) {
       ## negative definite - OK
       val <- solve(-val)
       ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions

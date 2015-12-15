@@ -615,7 +615,7 @@ lmeApVar <-
   Pars <- c(coef(lmeSt), lSigma = log(sigma))
   val <- fdHess(Pars, lmeApVar.fullLmeLogLik, lmeSt, conLin, dims, N, sett,
 		.relStep = .relStep, minAbsPar = minAbsPar)[["Hessian"]]
-  if (all(eigen(val)$values < 0)) {
+  if (all(eigen(val, only.values=TRUE)$values < 0)) {
     ## negative definite - OK
     val <- solve(-val)
     if (fixedSigma && !is.null(dim(val))) {

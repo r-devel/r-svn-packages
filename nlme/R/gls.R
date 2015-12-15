@@ -293,16 +293,16 @@ glsApVar <-
         Pars <- c(glsCoef, lSigma=log(sigma))
         val <- fdHess(Pars, glsApVar.fullGlsLogLik, glsSt, conLin, dims, N,
                       .relStep = .relStep, minAbsPar = minAbsPar)[["Hessian"]]
-        if (all(eigen(val)$values < 0)) {
+        if (all(eigen(val, only.values=TRUE)$values < 0)) {
             ## negative definite - OK
             val <- solve(-val)
-			#   return val with original dimensions to prevent crashing in intervals
+            ## return val with original dimensions to prevent crashing in intervals
             ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
             if (fixedSigma && !is.null(dim(val))) {
             	Pars <- c(glsCoef, lSigma=log(sigma))
-            	npars<-length(Pars)
-            	val<-cbind(val, rep(0,npars-1))
-            	val<-rbind(val, rep(0,npars))
+            	npars <- length(Pars)
+            	val <- rbind(cbind(val, rep(0,npars-1)),
+                             rep(0,npars))
             }
             nP <- names(Pars)
             dimnames(val) <- list(nP, nP)
@@ -323,16 +323,14 @@ glsEstimate <-
     dd <- conLin$dims
     p <- dd$p
     oXy <- conLin$Xy
-	## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-    fixSig<-conLin$fixedSigma
-    sigma<-conLin$sigma
+    fixSig <- conLin$fixedSigma ## 17-11-2015; Fixed sigma patch; ..
+    sigma <- conLin$sigma
     conLin <- recalc(object, conLin)	# updating for corStruct and varFunc
     val <- .C(gls_estimate,
               as.double(conLin$Xy),
               as.integer(unlist(dd)),
               beta = double(p),
-	          ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-              sigma = as.double(sigma),
+              sigma = as.double(sigma), ## 17-11-2015; Fixed sigma patch; ..
               logLik = double(1L),
               varBeta = double(p * p),
               rank = integer(1),
@@ -345,28 +343,24 @@ glsEstimate <-
              domain = NA)
     }
     N <- dd$N - dd$REML * p
-	## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-    Nr <- dd$N - dd$REML * p
     namCoef <- colnames(oXy)[val[["pivot"]][1:rnkm1] + 1L]	# coef names
     varBeta <- t(array(val[["varBeta"]], c(rnkm1, rnkm1),
                        list(namCoef, namCoef)))
     beta <- val[["beta"]][1:rnkm1]
     names(beta) <- namCoef
-    fitVal <- oXy[, namCoef, drop = FALSE] %*% beta
-    resid<-c(oXy[, p + 1] - fitVal)
+    fitted <- c(oXy[, namCoef, drop = FALSE] %*% beta)
+    resid <- oXy[, p + 1] - fitted
     ll <- conLin$logLik + val[["logLik"]]
-
-    if (!fixSig) {
-      logLik <- (N * (logb(N) - (1 + logb(2 * pi))))/2 + ll  #  formula 2.21 on page 70  if sigma is estimated ML formula or 2.23 page 76 with REML
-		} else {
-			logLik <- (-N/2) * logb(2*pi)  + ll
-		}
-    auxSigma<- sqrt(sum((resid)^2))/sqrt(N)
-
+    logLik <-
+        if (!fixSig) {
+            (N * (logb(N) - (1 + logb(2 * pi))))/2 + ll
+            ## formula 2.21 on page 70  if sigma is estimated ML formula or 2.23 page 76 with REML
+        } else {
+            (-N/2) * logb(2*pi)  + ll
+        }
     list(logLik = logLik, beta = beta,
-			sigma = val[["sigma"]], varBeta = varBeta, fitted = c(fitVal),
-			resid = resid , auxSigma = auxSigma
-		)
+         sigma = val[["sigma"]], varBeta = varBeta, fitted = fitted,
+         resid = resid, auxSigma = sqrt(sum((resid)^2))/sqrt(N))
 }
 
 ### Methods for standard generics
@@ -427,10 +421,9 @@ ACF.gls <-
     val0 <- apply(sapply(val, function(x) x[,2L]), 1, sum)
     val1 <- apply(sapply(val, function(x) x[,1L]), 1, sum)/val0
     val2 <- val1/val1[1L]
-    z <- data.frame(lag = 0:maxLag, ACF = val2)
-    attr(z, "n.used") <- val0
-    class(z) <- c("ACF", "data.frame")
-    z
+    structure(data.frame(lag = 0:maxLag, ACF = val2),
+	      n.used = val0,
+	      class = c("ACF", "data.frame"))
 }
 
 anova.gls <-
@@ -538,12 +531,7 @@ anova.gls <-
                 L <- L0[noZeroRowL <- as.logical((L0 != 0) %*% rep(1, p)), , drop = FALSE]
                 nrowL <- nrow(L)
                 noZeroColL <- as.logical(c(rep(1,nrowL) %*% (L != 0)))
-                if (is.null(dmsL1)) {
-                    dmsL1 <- 1:nrowL
-                } else {
-                    dmsL1 <- dmsL1[noZeroRowL]
-                }
-                rownames(L) <- dmsL1
+                rownames(L) <- if(is.null(dmsL1)) 1:nrowL else dmsL1[noZeroRowL]
                 lab <- paste(lab, "F-test for linear combination(s)\n")
             }
             nDF <- sum(svd(L)$d > 0)
@@ -629,21 +617,17 @@ augPred.gls <-
     labs <- list(x = prName, y = respName)
     unts <- list(x = "", y = "")
     if(inherits(data, "groupedData")) {
-        labs[names(attr(data, "labels"))] <- attr(data, "labels")
-        unts[names(attr(data, "units"))] <- attr(data, "units")
-        attr(value, "units") <- attr(data, "units")
+	labs[names(attr(data, "labels"))] <- attr(data, "labels")
+	unts[names(attr(data, "units"))] <- attr(data, "units")
     }
-    attr(value, "labels") <- labs
-    attr(value, "units") <- unts
-    if (noGrp) {
-        attr(value, "formula") <-
-            eval(parse(text = paste(respName, prName, sep = "~")))
-    } else {
-        attr(value, "formula") <-
-            eval(parse(text = paste(respName, "~", prName, "|", grName)))
-    }
-    class(value) <- c("augPred", class(value))
-    value
+    structure(value, class = c("augPred", class(value)),
+	      labels = labs,
+	      units = unts,
+	      formula =
+		  eval(parse(text =
+				 if (noGrp)
+				      paste(respName, prName, sep = "~")
+				 else paste(respName, "~", prName, "|", grName))))
 }
 
 coef.gls <-
