@@ -176,7 +176,6 @@ gls <-
     namBeta <- names(glsFit$beta)
     ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
     attr(glsSt, "fixedSigma") <- fixedSigma
-    p1 <- p - as.integer(fixedSigma)
     attr(parAssign, "varBetaFact") <- varBeta <-
         glsFit$sigma * glsFit$varBeta * sqrt((N - REML * p)/(N - p))
     varBeta <- crossprod(varBeta)
