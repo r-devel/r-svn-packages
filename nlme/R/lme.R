@@ -529,27 +529,22 @@ getFixDF <-
     }
     valTerms[notIntTerms] <- dfTerms[stratTerms]
   } else {
-    notIntTerms <- unlist(lapply(assign,
-                                 function(el, notIntX) {
-                                   any(notIntX[el])
-                                 }, notIntX = notIntX))
+    notIntTerms <- vapply(assign, function(el) any(notIntX[el]), NA)
   }
   if (!all(notIntX)) {  #intercept included
     valX[!notIntX] <- max(dfX)
-    if (!all(notIntTerms)) {
+    if (!all(notIntTerms))
       valTerms[!notIntTerms] <- max(dfTerms)
-    }
   }
-  val <- list(X = valX, terms = valTerms)
-  attr(val, "assign") <- assign
-  val
+
+  structure(list(X = valX, terms = valTerms),
+            assign = assign)
 }
 
-lmeApVar.fullLmeLogLik <-
-    function(Pars, object, conLin, dims, N, settings) {
-      ## logLik as a function of sigma and coef(lmeSt)
-      fixedSigma <- attr(object, "fixedSigma")
-      npar <- length(Pars)
+lmeApVar.fullLmeLogLik <- function(Pars, object, conLin, dims, N, settings) {
+    ## logLik as a function of sigma and coef(lmeSt)
+    fixedSigma <- attr(object, "fixedSigma")
+    npar <- length(Pars)
     if (!fixedSigma) {
         sigma <- exp(Pars[npar])           # within-group std. dev.
         Pars <- Pars[-npar]
@@ -557,22 +552,20 @@ lmeApVar.fullLmeLogLik <-
     } else {
         sigma <- lsigma <- conLin$sigma
     }
-      coef(object) <- Pars
-      if ((lO <- length(object)) > 1) {
-	for(i in lO:2) {
-	  conLin <- recalc(object[[i]], conLin)
-	  NULL
-	}
-      }
-      val <- .C(mixed_loglik,
-		as.double(conLin$Xy),
-		as.integer(unlist(dims)),
-		as.double(sigma * unlist(pdFactor(solve(object$reStruct)))),
-		as.integer(settings),
-		logLik = double(1L),
-		lRSS = double(1L), sigma=as.double(lsigma))[c("logLik", "lRSS")]
-	  aux <- (exp(val[["lRSS"]])/sigma)^2
-	  conLin[["logLik"]] + val[["logLik"]] + (N * log(aux) - aux)/2
+    coef(object) <- Pars
+    if ((lO <- length(object)) > 1) {
+	for(i in lO:2)
+            conLin <- recalc(object[[i]], conLin)
+    }
+    val <- .C(mixed_loglik,
+              as.double(conLin$Xy),
+              as.integer(unlist(dims)),
+              as.double(sigma * unlist(pdFactor(solve(object$reStruct)))),
+              as.integer(settings),
+              logLik = double(1L),
+              lRSS = double(1L), sigma=as.double(lsigma))[c("logLik", "lRSS")]
+    aux <- (exp(val[["lRSS"]])/sigma)^2
+    conLin[["logLik"]] + val[["logLik"]] + (N * log(aux) - aux)/2
 }
 
 lmeApVar <-
@@ -580,7 +573,7 @@ lmeApVar <-
            .relStep = (.Machine$double.eps)^(1/3), minAbsPar = 0,
            natural = TRUE)
 {
-  fixedSigma<-attr(lmeSt,"fixedSigma")
+  fixedSigma <- attr(lmeSt,"fixedSigma")
   ## calculate approximate variance-covariance matrix of all parameters
   ## except the fixed effects. By default, uses natural parametrization for
   ## for pdSymm matrices
@@ -642,7 +635,7 @@ MEdecomp <-
 {
   dims <- conLin$dims
   if (dims[["StrRows"]] >= dims[["ZXrows"]]) {
-    ## no pint in doing the decomposition
+    ## no point in doing the decomposition
     return(conLin)
   }
   dc <- array(.C(mixed_decomp,

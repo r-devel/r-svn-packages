@@ -10,6 +10,7 @@ doExtras <- function ()
     interactive() || nzchar(Sys.getenv("R_nlme_check_extra")) ||
         identical("true", unname(Sys.getenv("R_PKG_CHECKING_doExtras")))
 }
+doExtras()
 
 ##===   example 1 general linear model page 251  gls ML  and LME ================
 ##
@@ -126,12 +127,10 @@ t1.fix.REML.nlme <- update(t1.fix.ML.nlme, method = method,
                                                  pnlsMaxIter = 20, # not just 7
                                                  maxIter = 1000),
                            verbose = interactive())
-t1.fix.REML.nlme$numIter # 380 or so
-t1.fix.REML.nlme
-## cat("\n ====== NO CONVERGENCE OTHER COMMANDS ARE SKIPPED====\n")
-## print(summary(t1.fix.REML.nlme))
-## print(anova(t1.fix.REML.nlme))
-}
+cat(" -> numIter: ", t1.fix.REML.nlme$numIter, "\n") # 380 or so
+print(summary(t1.fix.REML.nlme))
+print(anova  (t1.fix.REML.nlme))
+}# only if(doExtras())
 
 cat("Time elapsed: ", (proc.time() - .pt)[1:3], "\n")
 

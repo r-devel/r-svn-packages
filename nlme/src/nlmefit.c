@@ -1067,7 +1067,7 @@ mixed_combined(double *ZXy, longint *pdims, double *DmHalf, longint *nIter,
 	Free(work); Free(a); Free(newtheta); Free(grad); Free(typsiz); Free(theta);
 	Free(st);
     }
-#else  /* USING_R */
+#else  /* not USING_R */
     {
 	int ntheta = count_DmHalf_pars( dd, pdC );
 	longint p, *iv, liv, lv, uiparm[1]; /* for msmnh */

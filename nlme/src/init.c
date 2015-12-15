@@ -125,7 +125,7 @@ R_CMethodDef CEntries[] = {
     {"natural_pd", (DL_FUNC) &natural_pd, 3},
     {"compSymm_pd", (DL_FUNC) &compSymm_pd, 3},
     {"mixed_estimate", (DL_FUNC) &mixed_estimate, 8}, // 17-11-2015; Fixed sigma ...
-    {"mixed_combined", (DL_FUNC) &mixed_combined, 10},
+    {"mixed_combined", (DL_FUNC) &mixed_combined, 11},
     {NULL, NULL, 0}
 };
 
