@@ -4,6 +4,13 @@
 ## library(nlme,lib.loc=lib.loc)
 library(nlme)
 
+## possibly move to ../R/ or ../inst/ if used in more places
+doExtras <- function ()
+{
+    interactive() || nzchar(Sys.getenv("R_nlme_check_extra")) ||
+        identical("true", unname(Sys.getenv("R_PKG_CHECKING_doExtras")))
+}
+
 ##===   example 1 general linear model page 251  gls ML  and LME ================
 ##
 ex <- "ex1_gls_page251"; .pt <- proc.time()
@@ -105,13 +112,14 @@ stopifnot(
               c(65.439, 9.09557, 1581.21), tol = 5e-5)
 )
 
-
 ##
 ##   REML method
+if(doExtras()) { ## -- takes 2--3 minutes
 method <- "REML"
 sigma <- 0.7
 cat("\nFixed sigma= ", sigma,"  estimation method ", method,"\n")
-## only converges when tolerance is not small :
+##
+## only converges when tolerance is not small (and still takes long!) :
 t1.fix.REML.nlme <- update(t1.fix.ML.nlme, method = method,
                            control = nlmeControl(tolerance = 0.0005,
                                                  apVar=FALSE, sigma=sigma,
@@ -123,6 +131,8 @@ t1.fix.REML.nlme
 ## cat("\n ====== NO CONVERGENCE OTHER COMMANDS ARE SKIPPED====\n")
 ## print(summary(t1.fix.REML.nlme))
 ## print(anova(t1.fix.REML.nlme))
+}
+
 cat("Time elapsed: ", (proc.time() - .pt)[1:3], "\n")
 
 ##===   example 5  mixed non-linear  model  page 358 nlme =======================
