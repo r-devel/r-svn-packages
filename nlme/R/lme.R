@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2005-2013 The R Core team
+### Copyright 2005-2015  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ lme.groupedData <-
   names(args)[1L] <- "data"
   form <- getResponseFormula(fixed)
   form[[3]] <- getCovariateFormula(fixed)[[2L]]
-  do.call("lme", c(list(fixed = form), args))
+  do.call(lme, c(list(fixed = form), args))
 }
 
 lme.lmList <-
@@ -80,8 +80,8 @@ lme.lmList <-
   names(last.call)[match(names(last.call), "object")] <- "fixed"
   this.call[names(last.call)] <- last.call
   this.call$fixed <-
-    as.vector(eval(parse(text=paste(deparse(getResponseFormula(fixed)[[2L]]),
-                   c_deparse(getCovariateFormula(fixed)[[2L]]), sep="~"))))
+    as.vector(eval(parse(text=paste(  deparse(getResponseFormula (fixed)[[2L]]),
+                                    c_deparse(getCovariateFormula(fixed)[[2L]]), sep="~"))))
   if (missing(random)) {
     random <- eval(as.call(this.call[["fixed"]][-2]))
   }
@@ -118,7 +118,7 @@ lme.lmList <-
     matrix(reSt) <- diag((madRan/madRes)^2, ncol = length(rNames))
   }
   this.call[["random"]] <- reSt
-  val <- do.call("lme.formula", this.call)
+  val <- do.call(lme.formula, this.call)
   val$origCall <- match.call()
   val
 }
@@ -186,7 +186,7 @@ lme.formula <-
                                    function(el) deparse(el[[2L]])))
       corQ <- length(corGrpsForm)
       lmeGrpsForm <- unlist(lapply(splitFormula(groups),
-                        function(el) deparse(el[[2L]])))
+                                   function(el) deparse(el[[2L]])))
       lmeQ <- length(lmeGrpsForm)
       if (corQ <= lmeQ) {
         if (any(corGrpsForm != lmeGrpsForm[1:corQ])) {
@@ -196,8 +196,8 @@ lme.formula <-
           warning("cannot use smaller level of grouping for 'correlation' than for 'random'. Replacing the former with the latter.")
           attr(correlation, "formula") <-
             eval(parse(text = paste("~",
-                    c_deparse(getCovariateFormula(formula(correlation))[[2L]]),
-                         "|", deparse(groups[[2L]]))))
+				    c_deparse(getCovariateFormula(formula(correlation))[[2L]]),
+				    "|", deparse(groups[[2L]]))))
         }
       } else {
         if (any(lmeGrpsForm != corGrpsForm[1:lmeQ])) {
@@ -208,11 +208,11 @@ lme.formula <-
       ## using the same grouping as in random
       attr(correlation, "formula") <-
         eval(parse(text = paste("~",
-		     c_deparse(getCovariateFormula(formula(correlation))[[2L]]),
-		     "|", deparse(groups[[2L]]))))
+				c_deparse(getCovariateFormula(formula(correlation))[[2L]]),
+				"|", deparse(groups[[2L]]))))
       corQ <- lmeQ <- 1
     }
-    } else {
+  } else {
     corQ <- lmeQ <- 1
   }
   ## create an lme structure containing the random effects model and plug-ins
@@ -227,7 +227,7 @@ lme.formula <-
     mfArgs[["subset"]] <- asOneSidedFormula(Call[["subset"]])[[2L]]
   }
   mfArgs$drop.unused.levels <- TRUE
-  dataMix <- do.call("model.frame", mfArgs)
+  dataMix <- do.call(model.frame, mfArgs)
   origOrder <- row.names(dataMix)	# preserve the original order
   for(i in names(contrasts))            # handle contrasts statement
       contrasts(dataMix[[i]]) = contrasts[[i]]
@@ -241,7 +241,7 @@ lme.formula <-
     row.names(grps) <- origOrder
     names(grps) <- as.character(deparse((groups[[2L]])))
   } else {
-    ord <- do.call("order", grps)
+    ord <- do.call(order, grps)
     ## making group levels unique
     for(i in 2:ncol(grps)) {
       grps[, i] <-
@@ -252,8 +252,8 @@ lme.formula <-
   }
   if (corQ > lmeQ) {
     ## may have to reorder by the correlation groups
-    ord <- do.call("order", getGroups(dataMix,
-                                 getGroupsFormula(correlation)))
+    ord <- do.call(order, getGroups(dataMix,
+                                    getGroupsFormula(correlation)))
   }
   grps <- grps[ord, , drop = FALSE]
   dataMix <- dataMix[ord, ,drop = FALSE]
@@ -282,7 +282,9 @@ lme.formula <-
     list(Xy = array(c(Z, X, y), c(N, sum(ncols)),
 	     list(row.names(dataMix), c(colnames(Z), colnames(X),
 					deparse(fixed[[2L]])))),
-	 dims = MEdims(grps, ncols), logLik = 0)
+	 dims = MEdims(grps, ncols), logLik = 0,
+         ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+         sigma = controlvals$sigma, auxSigma = 0)
   ## checking if enough observations per group to estimate ranef
   tmpDims <- attr(lmeSt, "conLin")$dims
   if (max(tmpDims$ZXlen[[1L]]) < tmpDims$qvec[1L]) {
@@ -337,7 +339,8 @@ lme.formula <-
     ## checking if any updating is needed
     if (!needUpdate(lmeSt)) {
 	if (optRes$convergence) {
-	    msg <- gettextf("%s problem, convergence error code = %s\n  message = %s", controlvals$opt, optRes$convergence, paste(optRes$message, collapse = ""))
+	    msg <- gettextf("%s problem, convergence error code = %s\n  message = %s",
+                            controlvals$opt, optRes$convergence, paste(optRes$message, collapse = ""))
 	    if(!controlvals$returnObject)
 		stop(msg, domain = NA)
 	    else
@@ -399,6 +402,8 @@ lme.formula <-
   lmeSt$reStruct <- solve(lmeSt$reStruct)
   ## saving part of dims
   dims <- attr(lmeSt, "conLin")$dims[c("N", "Q", "qvec", "ngrps", "ncol")]
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  attr(lmeSt, "fixedSigma") <- controlvals$sigma > 0
   ## getting the approximate var-cov of the parameters
   if (controlvals$apVar) {
     apVar <- lmeApVar(lmeSt, lmeFit$sigma,
@@ -540,20 +545,18 @@ getFixDF <-
   val
 }
 
-lmeApVar <-
-  function(lmeSt, sigma, conLin = attr(lmeSt, "conLin"),
-           .relStep = (.Machine$double.eps)^(1/3), minAbsPar = 0,
-           natural = TRUE)
-{
-  ## calculate approximate variance-covariance matrix of all parameters
-  ## except the fixed effects. By default, uses natural parametrization for
-  ## for pdSymm matrices
-  fullLmeLogLik <-
+lmeApVar.fullLmeLogLik <-
     function(Pars, object, conLin, dims, N, settings) {
       ## logLik as a function of sigma and coef(lmeSt)
+      fixedSigma <- attr(object, "fixedSigma")
       npar <- length(Pars)
-      sigma <- exp(Pars[npar])              # within-group std. dev.
-      Pars <- Pars[-npar]
+    if (!fixedSigma) {
+        sigma <- exp(Pars[npar])           # within-group std. dev.
+        Pars <- Pars[-npar]
+        lsigma  <- 0
+    } else {
+        sigma <- lsigma <- conLin$sigma
+    }
       coef(object) <- Pars
       if ((lO <- length(object)) > 1) {
 	for(i in lO:2) {
@@ -566,11 +569,21 @@ lmeApVar <-
 		as.integer(unlist(dims)),
 		as.double(sigma * unlist(pdFactor(solve(object$reStruct)))),
 		as.integer(settings),
-		logLik = double(1),
-		lRSS = double(1))[c("logLik", "lRSS")]
-      aux <- (exp(val[["lRSS"]])/sigma)^2
-      conLin[["logLik"]] + val[["logLik"]] + (N * log(aux) - aux)/2
-    }
+		logLik = double(1L),
+		lRSS = double(1L), sigma=as.double(lsigma))[c("logLik", "lRSS")]
+	  aux <- (exp(val[["lRSS"]])/sigma)^2
+	  conLin[["logLik"]] + val[["logLik"]] + (N * log(aux) - aux)/2
+}
+
+lmeApVar <-
+  function(lmeSt, sigma, conLin = attr(lmeSt, "conLin"),
+           .relStep = (.Machine$double.eps)^(1/3), minAbsPar = 0,
+           natural = TRUE)
+{
+  fixedSigma<-attr(lmeSt,"fixedSigma")
+  ## calculate approximate variance-covariance matrix of all parameters
+  ## except the fixed effects. By default, uses natural parametrization for
+  ## for pdSymm matrices
   dims <- conLin$dims
   sett <- attr(lmeSt, "settings")
   N <- dims$N - sett[1L] * dims$ncol[dims$Q + 1L]
@@ -600,11 +613,17 @@ lmeApVar <-
     lmeSt[["corStruct"]] <- cSt
   }
   Pars <- c(coef(lmeSt), lSigma = log(sigma))
-  val <- fdHess(Pars, fullLmeLogLik, lmeSt, conLin, dims, N, sett,
+  val <- fdHess(Pars, lmeApVar.fullLmeLogLik, lmeSt, conLin, dims, N, sett,
 		.relStep = .relStep, minAbsPar = minAbsPar)[["Hessian"]]
   if (all(eigen(val)$values < 0)) {
     ## negative definite - OK
     val <- solve(-val)
+    if (fixedSigma && !is.null(dim(val))) {
+       Pars <- c(coef(lmeSt), lSigma = log(sigma))
+       npars <- length(Pars)
+       val <- rbind(cbind(val, rep(0,npars-1)),
+                    rep(0,npars))
+    }
     nP <- names(Pars)
     dimnames(val) <- list(nP, nP)
     attr(val, "Pars") <- Pars
@@ -656,7 +675,8 @@ MEEM <-
 	     as.integer(attr(object, "settings")[1L]),
 	     double(1),
 	     double(length(precvec)),
-	     double(1))[["precvec"]]
+	     double(1),
+	     as.double(conLin$sigma))[["precvec"]]
     Prec <- vector("list", length(object))
     names(Prec) <- names(object)
     for (i in seq_along(object)) {
@@ -683,7 +703,9 @@ MEestimate <-
 	   as.integer(REML),
 	   double(1),
 	   estimates = double(dd$StrRows * dd$ZXcols),
-	   as.logical(FALSE))[["estimates"]]
+	   as.logical(FALSE),
+	   ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+	   sigma = as.double(conLin$sigma))[["estimates"]]
   estimates <- array(zz, c(dd$StrRows, dd$ZXcols))
   resp <- estimates[ , dd$ZXcols]
   reSt <- object$reStruct
@@ -702,18 +724,25 @@ MEestimate <-
   p <- nc[Q + 1L]
   N <- dd$N - REML * p
   dimE <- dim(estimates)
-  if(p)
-      list(logLik = N * (log(N) - (1 + log(2 * pi)))/2 + rConLin$logLik,
-           b = rev(val),
-           beta = resp[dimE[1L] - (p:1)],
-           sigma = abs(resp[dimE[1L]])/sqrt(N),
-           varFix = t(solve(estimates[dimE[1L]-(p:1), dimE[2L]-(p:1), drop = FALSE])))
-  else
-      list(logLik = N * (log(N) - (1 + log(2 * pi)))/2 + rConLin$logLik,
-           b = rev(val),
-           beta = double(),
-           sigma = abs(resp[dimE[1L]])/sqrt(N),
-           varFix = matrix(,p,p))
+  ## 17-11-2015; Fixed sigma patch; ... modified by MM notably for p == 0:
+  Np <- N
+  if(conLin$sigma > 0) {
+    loglik <- (N * (-log(2 * pi)-2*log(conLin$sigma)))/2 + rConLin$logLik
+    sigma <- conLin$sigma
+  } else {
+    loglik <- (N * (log(N) - (1 + log(2 * pi))))/2 + rConLin$logLik
+    sigma <- abs(resp[dimE[1]])/sqrt(Np)
+  }
+  auxSigma <- abs(resp[dimE[1]])/sqrt(Np)
+  list(logLik = loglik,
+       b = rev(val),
+       beta = if(p) resp[dimE[1] - (p:1)] else double(),
+       sigma = sigma,
+       varFix = if(p)
+		  t(solve(estimates[dimE[1] - (p:1), dimE[2] - (p:1), drop = FALSE]))
+		else
+		  matrix(,p,p),
+       auxSigma = auxSigma)
 }
 
 MEdims <-
@@ -776,7 +805,7 @@ MEdims <-
   lastBlock <- vector("list", Q)
   names(lastBlock) <- rownames(strSizes)[1:Q]
   for(i in 1:Q) lastBlock[[i]] <- c(strSizes[i, -N], strRows)
-  maxStr <- do.call("pmax", lastBlock)
+  maxStr <- do.call(pmax, lastBlock)
   for(i in 1:Q) lastBlock[[i]] <- maxStr[as.logical(lastBlock[[i]])]
   lastBlock <- c(lastBlock, list(X = strRows, y = strRows))
   list(N = N,                   # total number of rows in data
@@ -843,6 +872,8 @@ anova.lme <-
            adjustSigma = TRUE, Terms, L, verbose = FALSE)
 
 {
+  fixSig <- attr(object$modelStruct, "fixedSigma")
+  fixSig <- !is.null(fixSig) && fixSig
   ## returns the likelihood ratio statistics, the AIC, and the BIC
   Lmiss <- missing(L)
   dots <- list(...)
@@ -1247,11 +1278,9 @@ fitted.lme <-
 
 formula.lme <- function(x, ...) eval(x$call$fixed)
 
-fixef.lme <-
-  function(object, ...) object$coefficients$fixed
+fixef.lme <- function(object, ...) object$coefficients$fixed
 
-getGroups.lme <-
-  function(object, form, level = Q, data, sep)
+getGroups.lme <- function(object, form, level = Q, data, sep)
 {
   Q <- object$dims$Q
   val <- object[["groups"]][, level]
@@ -1286,6 +1315,9 @@ intervals.lme <-
 {
   which <- match.arg(which)
   val <- list()
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  fixSig <- attr(object$modelStruct, "fixedSigma")
+  fixSig <- !is.null(fixSig) && fixSig
   if (which != "var-cov") {		# fixed effects included
     est <- fixef(object)
     len <- -qt((1-level)/2, object$fixDF$X) * sqrt(diag(object$varFix))
@@ -1330,20 +1362,31 @@ intervals.lme <-
     vsig <- exp(origInt[nP,])
     attr(vsig, "label") <- "Within-group standard error:"
     natInt[["sigma"]] <- vsig
-    origInt <- origInt[-nP,, drop = FALSE]
+    ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+    if (fixSig) {
+       natInt <- vector("list", length(namL))
+       names(natInt) <- namL
+    } else {
+       natInt <- vector("list", length(namL) + 1)
+       names(natInt) <- c(namL, "sigma") # list of intervals in natural pars
+    }
+    natInt <- as.list(natInt)
+    if (!fixSig) {
+      ## intervals for sigma are stored separately and dropped from origInt
+      vsig <- exp(origInt[nP,  ])
+      attr(vsig, "label") <- "Within-group standard error:"
+      natInt[["sigma"]] <- vsig
+      origInt <- origInt[ - nP,, drop = FALSE]
+    }
 
     if (attr(aV, "natural")) {          # convert any pdSymm's to pdNatural's
       for(i in seq_along(lmeSt$reStruct)) {
 	if (inherits(lmeSt$reStruct[[i]], "pdSymm")) {
 	  lmeSt$reStruct[[i]] <- pdNatural(lmeSt$reStruct[[i]])
-	} else {
-          if (inherits(lmeSt$reStruct[[i]], "pdBlocked")) {
-            for(j in seq_along(lmeSt$reStruct[[i]])) {
-              if (inherits(lmeSt$reStruct[[i]][[j]], "pdSymm")) {
-                lmeSt$reStruct[[i]][[j]] <- pdNatural(lmeSt$reStruct[[i]][[j]])
-              }
-            }
-          }
+	} else if (inherits(lmeSt$reStruct[[i]], "pdBlocked")) {
+          for(j in seq_along(lmeSt$reStruct[[i]]))
+            if (inherits(lmeSt$reStruct[[i]][[j]], "pdSymm"))
+              lmeSt$reStruct[[i]][[j]] <- pdNatural(lmeSt$reStruct[[i]][[j]])
         }
       }
     }
@@ -1357,9 +1400,8 @@ intervals.lme <-
     for(i in namL) {
       natInt[[i]] <- origInt[ pmap[ , i ], , drop = FALSE ]
       switch(i,
-             reStruct = {
+             "reStruct" = {
                plen <- attr( lmeSt$reStruct, "plen" )
-               natInt[[i]] <-
                natInt[[i]] <-
                  rev(as.matrix( split( as.data.frame( natInt[[i]] ),
                                       rep( seq_along(plen), plen ))))
@@ -1369,8 +1411,8 @@ intervals.lme <-
                    names( coef( lmeSt[[i]][[j]], unconstrained = FALSE ) )
                }
              },
-             corStruct =,
-             varStruct = {
+             "corStruct" =,
+             "varStruct" = {
                dimnames(natInt[[i]])[[1L]] <-
                  names(coef(lmeSt[[i]], unconstrained = FALSE))
              }
@@ -1392,6 +1434,9 @@ intervals.lme <-
 logLik.lme <-
   function(object, REML, ...)
 {
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  fixSig <- attr(object[["modelStruct"]], "fixedSigma")
+  fixSig <- !is.null(fixSig) && fixSig
   p <- object$dims$ncol[object$dims$Q + 1L]
   N <- object$dims$N
 ##  Np <- N - p
@@ -1408,7 +1453,8 @@ logLik.lme <-
   }
   attr(val, "nall") <- N
   attr(val, "nobs") <- N - REML * p
-  attr(val, "df") <- p + length(coef(object[["modelStruct"]])) + 1L
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  attr(val, "df") <- p + length(coef(object[["modelStruct"]])) + as.integer(!fixSig)
   class(val) <- "logLik"
   val
 }
@@ -1720,7 +1766,7 @@ plot.ranef.lme <-
     if (is.null(args$strip)) {
       args$strip <- function(...) strip.default(..., style = 1)
     }
-    do.call("dotplot", as.list(args))
+    do.call(dotplot, as.list(args))
   } else {
     if (!inherits(form, "formula")) {
       stop("'form' must be a formula when not NULL")
@@ -2096,18 +2142,18 @@ print.lme <-
   dd <- x$dims
   if (inherits(x, "nlme")) {	# nlme object
     cat( "Nonlinear mixed-effects model fit by " )
-    cat( ifelse( x$method == "REML", "REML\n", "maximum likelihood\n") )
+    cat( if(x$method == "REML") "REML\n" else "maximum likelihood\n")
     cat("  Model:", deparse(x$call$model),"\n")
   } else {				# lme objects
     cat( "Linear mixed-effects model fit by " )
-    cat( ifelse( x$method == "REML", "REML\n", "maximum likelihood\n") )
+    cat( if(x$method == "REML") "REML\n" else "maximum likelihood\n")
   }
   cat("  Data:", deparse( x$call$data ), "\n")
   if (!is.null(x$call$subset)) {
     cat("  Subset:", deparse(asOneSidedFormula(x$call$subset)[[2L]]),"\n")
   }
-  cat("  Log-", ifelse(x$method == "REML", "restricted-", ""),
-             "likelihood: ", format(x$logLik), "\n", sep = "")
+  cat("  Log-", if(x$method == "REML") "restricted-" else "",
+      "likelihood: ", format(x$logLik), "\n", sep = "")
   fixF <- x$call$fixed
   if (inherits(fixF, "formula") || is.call(fixF) || is.name(fixF)) {
     cat("  Fixed:", deparse(x$call$fixed), "\n")
@@ -2157,11 +2203,11 @@ print.summary.lme <-
   verbose <- verbose || attr(x, "verbose")
   if (inherits(x, "nlme")) {	# nlme object
     cat( "Nonlinear mixed-effects model fit by " )
-    cat( ifelse( x$method == "REML", "REML\n", "maximum likelihood\n") )
+    cat( if(x$method == "REML") "REML\n" else "maximum likelihood\n")
     cat("  Model:", deparse(x$call$model),"\n")
   } else {				# lme objects
     cat( "Linear mixed-effects model fit by " )
-    cat( ifelse( x$method == "REML", "REML\n", "maximum likelihood\n") )
+    cat( if(x$method == "REML") "REML\n" else "maximum likelihood\n")
   }
 ##  method <- x$method
   cat(" Data:", deparse( x$call$data ), "\n")
@@ -2251,8 +2297,7 @@ qqnorm.lme <-
   } else data <- NULL
   ## argument list
   dots <- list(...)
-  if (length(dots) > 0) args <- dots
-  else args <- list()
+  args <- if (length(dots) > 0) dots else list()
   ## appending object to data
   data <- as.list(c(as.list(data), . = list(object)))
 
@@ -2262,18 +2307,16 @@ qqnorm.lme <-
   labs <- attr(.x, "label")
   if (inherits(.x, "ranef.lme")) {      # random effects
     type <- "reff"
-  } else {
-    if (!is.null(labs) && ((labs == "Standardized residuals") ||
-                           (labs == "Normalized residuals") ||
-                           (substring(labs, 1, 9) == "Residuals"))) {
-      type <- "res"                     # residuals
-    } else {
-      stop("only residuals and random effects allowed")
-    }
-  }
+  } else if (!is.null(labs) && ((labs == "Standardized residuals") ||
+                                (labs == "Normalized residuals") ||
+                                (substring(labs, 1, 9) == "Residuals"))) {
+    type <- "res" # residuals
+  } else
+    stop("only residuals and random effects allowed")
+
   if (is.null(args$xlab)) args$xlab <- labs
   if (is.null(args$ylab)) args$ylab <- "Quantiles of standard normal"
-  if(type == "res") {			# residuals
+  if(type == "res") { ## residuals ---------------------------
     fData <- qqnorm(.x, plot.it = FALSE)
     data[[".y"]] <- fData$x
     data[[".x"]] <- fData$y
@@ -2317,7 +2360,7 @@ qqnorm.lme <-
         }
       }
     }
-  } else {				# random.effects
+  } else { # type random.effects  ---------------------------------
     level <- attr(.x, "level")
     std <- attr(.x, "standardized")
     if (!is.null(effNams <- attr(.x, "effectNames"))) {
@@ -2357,49 +2400,39 @@ qqnorm.lme <-
         auxData[[".id"]] <- id
       }
 
-      if (is.null(idLabels)) {
-        idLabels <- rep(row.names(.x), nc)
-      } else {
-        if (mode(idLabels) == "call") {
-          idLabels <-
-            as.character(eval(asOneSidedFormula(idLabels)[[2L]], data))
-        } else if (is.vector(idLabels)) {
-          if (length(idLabels <- unlist(idLabels)) != N) {
-            stop("'idLabels' of incorrect length")
-          }
-          idLabels <- as.character(idLabels)
-        } else {
-          stop("'idLabels' can only be a formula or a vector")
-        }
-      }
+      idLabels <-
+          if (is.null(idLabels)) {
+              rep(row.names(.x), nc)
+          } else if (mode(idLabels) == "call") {
+              as.character(eval(asOneSidedFormula(idLabels)[[2L]], data))
+          } else if (is.vector(idLabels)) {
+              if (length(idLabels <- unlist(idLabels)) != N)
+                  stop("'idLabels' of incorrect length")
+              as.character(idLabels)
+          } else
+              stop("'idLabels' can only be a formula or a vector")
       if (length(idLabels) == N) {
         ## idLabels as a formula evaluated in data
         auxData[[".Lid"]] <- idLabels
       }
     }
 
-    if (length(auxData)) {		# need collapsing
-      auxData <- gsummary(as.data.frame(auxData),
-                          groups = getGroups(object, level = level))
-      auxData <- auxData[row.names(.x), , drop = FALSE]
-
-      if (!is.null(auxData[[".id"]])) {
-        id <- rep(auxData[[".id"]], nc)
-      }
-
-      if (!is.null(auxData[[".Lid"]])) {
-        idLabels <- rep(auxData[[".Lid"]], nc)
-      }
-      data <- cbind(fData, do.call(rbind, rep(list(auxData), nc)))
-    } else {
-      data <- fData
-    }
+    data <-
+        if (length(auxData)) { # need collapsing
+            auxData <- gsummary(as.data.frame(auxData),
+                                groups = getGroups(object, level = level))
+            auxData <- auxData[row.names(.x), , drop = FALSE]
+            if (!is.null(auxData[[".id"]]))
+                id <- rep(auxData[[".id"]], nc)
+            if (!is.null(auxData[[".Lid"]]))
+                idLabels <- rep(auxData[[".Lid"]], nc)
+            cbind(fData, do.call(rbind, rep(list(auxData), nc)))
+        } else
+            fData
   }
-  assign("id", if (is.null(id)) NULL else as.logical(as.character(id)))#,
-  #   where = 1)
-  assign("idLabels", as.character(idLabels))#, where = 1)
-  #assign("grid", grid, where = 1)
-  assign("abl", abline)#, where = 1)
+  id <- if (!is.null(id)) as.logical(as.character(id))
+  idLabels <- as.character(idLabels)
+  abl <- abline
   if (is.null(args$strip)) {
     args$strip <- function(...) strip.default(..., style = 1)
   }
@@ -2552,17 +2585,15 @@ residuals.lme <-
       val <- as.list(split(val, ordered(grps, levels = unique(grps))))
     } else {
       grp.nm <- row.names(object[["groups"]])
-      val <-naresid(object$na.action, val)
+      val <- naresid(object$na.action, val)
       names(val) <- grps[match(names(val), grp.nm)]
     }
     attr(val, "label") <-
       switch(type,
              response = {
-               lab <- "Residuals"
-               if (!is.null(aux <- attr(object, "units")$y)) {
-                 lab <- paste(lab, aux)
-               }
-               lab
+               if (!is.null(aux <- attr(object, "units")$y))
+                 paste("Residuals", aux)
+               else "Residuals"
              },
              pearson = "Standardized residuals",
              normalized = "Normalized residuals"
@@ -2897,7 +2928,9 @@ logLik.lmeStructInt <-
 	    as.double(Pars),
 	    as.integer(attr(object, "settings")),
 	    val = double(1 + q * (q + 1)),
-	    double(1))[["val"]]
+	    double(1),
+	    ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+	    as.double(conLin$sigma))[["val"]]
   val <- aux[1L]
   attr(val, "gradient") <- -aux[1 + (1:q)]
   attr(val, "hessian") <- -array(aux[-(1:(q+1))], c(q, q))
@@ -2927,15 +2960,21 @@ lmeControl <-
            msMaxEval = 200,
 	   msTol = 1e-7, msVerbose = FALSE,
            returnObject = FALSE, gradHess = TRUE, apVar = TRUE,
-	   .relStep = (.Machine$double.eps)^(1/3), minAbsParApVar = 0.05,
+	   .relStep = .Machine$double.eps^(1/3), minAbsParApVar = 0.05,
            opt = c("nlminb", "optim"),
 	   optimMethod = "BFGS", natural = TRUE,
+	   sigma = NULL, ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
            ...)
 {
+  if(is.null(sigma))
+    sigma <- 0
+  else if (!is.numeric(sigma) || (length(sigma) != 1) || (sigma <= 0))
+    stop("Within-group std. dev. must be a positive numeric value")
   list(maxIter = maxIter, msMaxIter = msMaxIter, tolerance = tolerance,
        niterEM = niterEM, msMaxEval = msMaxEval, msTol = msTol,
        msVerbose = msVerbose, returnObject = returnObject,
        gradHess = gradHess , apVar = apVar, .relStep = .relStep,
        opt = match.arg(opt), optimMethod = optimMethod,
-       minAbsParApVar = minAbsParApVar, natural = natural, ...)
+       minAbsParApVar = minAbsParApVar, natural = natural,
+       sigma = sigma, ...)
 }

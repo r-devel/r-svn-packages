@@ -784,7 +784,9 @@ nlme.formula <-
     list(Xy = array(c(ZX, w), dim = c(NReal, sum(ncols)),
                     dimnames = list(row.names(dataMixShrunk),
                                     c(colnames(ZX), deparse(model[[2]])))),
-	 dims = Dims, logLik = 0)
+	 dims = Dims, logLik = 0,
+	 ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+	 sigma = controlvals$sigma, auxSigma = 0)
 
   ## additional attributes of nlmeSt
   attr(nlmeSt, "resp") <- yShrunk
@@ -842,9 +844,8 @@ nlme.formula <-
     nlmeFit <- attr(nlmeSt, "lmeFit") <- MEestimate(nlmeSt, grpShrunk)
     if (verbose) {
       cat("\n**Iteration", numIter)
-      cat("\n")
-      cat("LME step: Loglik:", format(nlmeFit$logLik),
-          ", nlm iterations:", convIter, "\n")
+      cat(sprintf("\nLME step: Loglik: %s, %s iterations: %d\n",
+                  format(nlmeFit$logLik), controlvals$opt, convIter))
       print(nlmeSt)
     }
 
@@ -856,11 +857,8 @@ nlme.formula <-
       cF <- corFactor(nlmeSt$corStruct)
       cD <- Dim(nlmeSt$corStruct)
     }
-    if (is.null(weights)) {
-      vW <- 1.0
-    } else {
-      vW <- varWeights(nlmeSt$varStruct)
-    }
+    vW <- if(is.null(weights)) 1.0 else varWeights(nlmeSt$varStruct)
+
     work <- .C(fit_nlme,
 	       thetaPNLS = as.double(c(as.vector(unlist(sran)), sfix)),
                pdFactor = as.double(pdFactor(nlmeSt$reStruct)),
@@ -874,38 +872,38 @@ nlme.formula <-
 	       additional = double(NReal * (pLen + 1)),
 	       as.integer(!is.null(correlation)),
 	       as.integer(!is.null(weights)),
+           ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+	       as.double(controlvals$sigma),
                nlModel,
 	       NAOK = TRUE)
     if (work$settings[4] == 1) {
 ##      convResult <- 2
-      if (controlvals$returnObject) {
-        warning("step halving factor reduced below minimum in PNLS step")
-      } else {
-        stop("step halving factor reduced below minimum in PNLS step")
-      }
+      msg <- "step halving factor reduced below minimum in PNLS step"
+      if (controlvals$returnObject)
+        warning(msg)
+      else
+        stop(msg)
     }
     # dim(work$pdFactor) <- dim(pdMatrix(nlmeSt$reStruct[[1]]))
     # matrix(nlmeSt$reStruct[[1]]) <- crossprod(work$pdFactor)
     # fix from Setzer.Woodrow@epamail.epa.gov for nested grouping factors
-    pdFacStart <- 1
+    i.pdF <- 1
     for (i in seq_along(nlmeSt$reStruct)) {
-      tmppdFactor <- work$pdFactor[pdFacStart:
-                                   (pdFacStart -1 +
-                                    prod(dim(pdMatrix(nlmeSt$reStruct[[i]]))))]
-      dim(tmppdFactor) <- dim(pdMatrix(nlmeSt$reStruct[[i]]))
-      matrix(nlmeSt$reStruct[[i]]) <- crossprod(tmppdFactor)
-      pdFacStart <- pdFacStart + prod(dim(pdMatrix(nlmeSt$reStruct[[i]])))
+      d.i <- dim(pdMatrix(nlmeSt$reStruct[[i]]))
+      ni.pdF <- i.pdF + prod(d.i)
+      pdF <- array(work$pdFactor[i.pdF:(ni.pdF -1)], dim = d.i)
+      matrix(nlmeSt$reStruct[[i]]) <- crossprod(pdF)
+      i.pdF <- ni.pdF
     }
     oldPars <- c(sfix, oldPars)
     for(i in 1:Q) sran[[i]][] <- work$thetaPNLS[(bmap[i]+1):bmap[i+1]]
     sfix[] <- work$thetaPNLS[nPars + 1 - (fLen:1)]
     if (verbose) {
-      cat("\nPNLS step: RSS = ", format(work$set[6]), "\n fixed effects:")
-      for (i in 1:fLen) cat(format(signif(sfix[i]))," ")
-      cat("\n iterations:",work$set[5],"\n")
+      cat("PNLS step: RSS = ", format(work$settings[6]), "\n fixed effects: ")
+      for (i in 1:fLen) cat(format(sfix[i])," ")
+      cat("\n iterations:", work$settings[5],"\n")
     }
-    aConv <- coef(nlmeSt) # added by SDR 04/19/2002
-    aConv <- c(sfix, aConv)
+    aConv <- c(sfix, coef(nlmeSt)) # 2nd part added by SDR 04/19/2002
     w[] <- work$additional[(NReal * pLen) + 1:NReal]
     ZX[] <- work$additional[1:(NReal * pLen)]
     w <- w + as.vector(ZX[, rLen + (1:fLen), drop = FALSE] %*% sfix)
@@ -936,7 +934,8 @@ nlme.formula <-
     }
 
     if (verbose) {
-      cat("\nConvergence:\n")
+      cat(sprintf("Convergence crit. (must all become <= tolerance = %g):\n",
+                  controlvals$tolerance))
       print(aConv)
     }
 
@@ -947,36 +946,41 @@ nlme.formula <-
     }
     if (numIter >= controlvals$maxIter) {
 ##      convResult <- 1
+      msg <- gettextf(
+	"maximum number of iterations (maxIter = %d) reached without convergence",
+	controlvals$maxIter)
       if (controlvals$returnObject) {
-	warning("maximum number of iterations reached without convergence")
+	warning(msg, domain=NA)
 	break
       } else {
-	stop("maximum number of iterations reached without convergence")
+	stop(msg, domain=NA)
       }
     }
   }
 
   ## wrapping up
-  if (decomp) {
-    nlmeFit <- MEestimate(nlmeSt, grpShrunk, oldConLin)
-  } else {
-    nlmeFit <- MEestimate(nlmeSt, grpShrunk)
-  }
+  nlmeFit <-
+    if (decomp)
+      MEestimate(nlmeSt, grpShrunk, oldConLin)
+    else
+      MEestimate(nlmeSt, grpShrunk)
   ## degrees of freedom for fixed effects tests
   fixDF <- getFixDF(ZX[, rLen + (1:fLen), drop = FALSE],
                     grpShrunk, attr(nlmeSt, "conLin")$dims$ngrps, fixAssign)
 
-  attr(fixDF, "varFixFact") <- nlmeFit$sigma * nlmeFit$varFix
-  varFix <- crossprod(nlmeFit$sigma * nlmeFit$varFix)
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  attr(fixDF, "varFixFact") <- varFix <- nlmeFit$sigma * nlmeFit$varFix
+  varFix <- crossprod(varFix)
+
   dimnames(varFix) <- list(fn, fn)
   ##
   ## fitted.values and residuals (in original order)
   ##
-  if (decomp) {
-    Resid <- resid(nlmeSt, level = 0:Q, oldConLin)[revOrderShrunk, ]
-  } else {
-    Resid <- resid(nlmeSt, level = 0:Q)[revOrderShrunk, ]
-  }
+  Resid <-
+    if (decomp)
+      resid(nlmeSt, level = 0:Q, oldConLin)[revOrderShrunk, ]
+    else
+      resid(nlmeSt, level = 0:Q)[revOrderShrunk, ]
   Fitted <- yShrunk[revOrderShrunk] - Resid
   rownames(Resid) <- rownames(Fitted) <- origOrderShrunk
   grpShrunk <- grpShrunk[revOrderShrunk, , drop = FALSE]
@@ -987,6 +991,8 @@ nlme.formula <-
   dims <- attr(nlmeSt, "conLin")$dims[c("N", "Q", "qvec", "ngrps", "ncol")]
   ## getting the approximate var-cov of the parameters
   if (controlvals$apVar) {
+    ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+    attr(nlmeSt, "fixedSigma") <- (controlvals$sigma > 0)
     apVar <- lmeApVar(nlmeSt, nlmeFit$sigma,
 		      .relStep = controlvals[[".relStep"]],
                       minAbsPar = controlvals[["minAbsParApVar"]],
@@ -1000,10 +1006,14 @@ nlme.formula <-
   oClass <- class(nlmeSt)
   attributes(nlmeSt) <- attributes(nlmeSt)[c("names", "class", "pmap")]
   class(nlmeSt) <- oClass
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  attr(nlmeSt, "fixedSigma") <- (controlvals$sigma > 0)
   ##
   ## creating the  nlme object
   ##
-  estOut <- list(modelStruct = nlmeSt,
+  isGrpd <- inherits(data, "groupedData")
+  structure(class = c("nlme","lme"),
+            list(modelStruct = nlmeSt,
 		 dims = dims,
                  contrasts = contr,
 		 coefficients = list(fixed = sfix, random = rev(sran)),
@@ -1019,14 +1029,10 @@ nlme.formula <-
 		 residuals = Resid,
 		 plist = plist,
                  map = list(fmap=fmap,rmap=rmap,rmapRel=rmapRel,bmap=bmap),
-                 fixDF = fixDF)
-  if (inherits(data, "groupedData")) {
-    ## saving labels and units for plots
-    attr(estOut, "units") <- attr(data, "units")
-    attr(estOut, "labels") <- attr(data, "labels")
-  }
-  class(estOut) <- c("nlme","lme")
-  estOut
+                 fixDF = fixDF),
+            ## saving labels and units for plots
+            units = if(isGrpd) attr(data, "units"),
+            labels = if(isGrpd) attr(data, "labels"))
 }
 
 ###
@@ -1451,15 +1457,23 @@ nlmeControl <-
            returnObject = FALSE, msVerbose = FALSE, gradHess = TRUE,
            apVar = TRUE, .relStep = (.Machine$double.eps)^(1/3),
            minAbsParApVar = 0.05,
-	   opt = c("nlminb", "nlm"), natural = TRUE, ...)
+	   opt = c("nlminb", "nlm"), natural = TRUE, sigma = NULL, ...)
 {
+  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+  if (!is.null(sigma)) {
+    if (!is.numeric(sigma) || (length(sigma) != 1) || (sigma <= 0)) {
+      stop("Within-group std. dev. must be a positive numeric value")
+    }
+  }
+  else
+    sigma <- 0
   list(maxIter = maxIter, pnlsMaxIter = pnlsMaxIter, msMaxIter = msMaxIter,
        minScale = minScale, tolerance = tolerance, niterEM = niterEM,
        pnlsTol = pnlsTol, msTol = msTol,
        returnObject = returnObject, msVerbose = msVerbose,
        gradHess = gradHess, apVar = apVar, .relStep = .relStep,
        minAbsParApVar = minAbsParApVar,
-       opt = match.arg(opt), natural = natural, ...)
+       opt = match.arg(opt), natural = natural, sigma=sigma, ...)
 }
 
 nonlinModel <- function(modelExpression, env,
