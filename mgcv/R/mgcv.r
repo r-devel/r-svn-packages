@@ -2066,6 +2066,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$call <- G$cl # needed for update() to work
   class(object) <- c("gam","glm","lm")
   if (is.null(object$deviance)) object$deviance <- sum(residuals(object,"deviance")^2)
+  names(object$gcv.ubre) <- method
   environment(object$formula) <- environment(object$pred.formula) <-
   environment(object$terms) <- environment(object$pterms) <- .GlobalEnv
   if (!is.null(object$model))  environment(attr(object$model,"terms"))  <- .GlobalEnv

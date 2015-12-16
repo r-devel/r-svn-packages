@@ -1,6 +1,12 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+1.8-11
+
+* Improved thread safety in discrete prediction.
+
+* bam/gam name gcv.ubre field by "method"
+
 1.8-10
 
 ** 'multinom' family implemented for multinomial logistic regression.

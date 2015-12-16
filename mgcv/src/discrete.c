@@ -38,7 +38,7 @@
 void singleXj(double *Xj,double *X, int *m, int *k, int *n,int *j) {
 /* Extract a column j of matrix stored in compact form in X, k into Xj. 
    X has m rows. k is of length n. ith row of result is Xj = X[k(i),j]
-   (an n vector). This function is O(n).
+   (an n vector). This function is O(n). Thread safe.
 */
   double *pe; 
   X += *m * *j; /* shift to start of jth column */ 
@@ -54,7 +54,7 @@ void tensorXj(double *Xj, double *X, int *m, int *p,int *dt,
 
    This routine performs pure extraction only if Xj is a vector of 1s on 
    entry. Otherwise the jth column is multiplied element wise by the 
-   contents of Xj on entry. 
+   contents of Xj on entry. Thread safe.
 */ 
   int q=1,l,i,jp;
   double *p0,*p1,*M;
@@ -75,6 +75,7 @@ void singleXty(double *Xy,double *temp,double *y,double *X, int *m,int *p, int *
 /* forms X'y for a matrix stored in packed form in X, k, with ith row 
    X[k[i],]. X as supplied is m by p, while k is an n vector.
    Xy and temp are respectively p and m vectors and do not need to be cleared on entry.
+   Thread safe.
 */
   double *p0,*p1,done=1.0,dzero=0.0; 
   char trans = 'T';
@@ -90,7 +91,7 @@ void tensorXty(double *Xy,double *work,double *work1, double *y,double *X,
    There are dt maginal matrices packed in X, the ith being m[i] by p[i].
    y and work are n vectors. work does not need to be cleared on entry.
    work1 is an m vector where m is the dimension of the final marginal.
-   Note: constraint not dealt with here.
+   Note: constraint not dealt with here. Thread safe.
 */
   int pb=1,i,j,pd;
   double *p1,*yn,*p0,*M; 
@@ -115,7 +116,7 @@ void tensorXty(double *Xy,double *work,double *work1, double *y,double *X,
 void singleXb(double *f,double *work,double *X,double *beta,int *k,int *m, int *p,int *n) {
 /* Forms X beta, where peta is a p - vector, and X is stored in compact form in 
    X, k, with ith row X[k[i],]. X is stored as an m by p matrix. k is an n vector.
-   work is an m vector.
+   work is an m vector. Thread safe.
 */
   char trans='N';
   double done=1.0,dzero=0.0,*p1;
@@ -132,7 +133,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
    work is an n vector. C is an m[d] by pb working matrix.  
    v is a vector such that if Q=I-vv' and Z is Q with the first column dropped then 
    Z is a null space basis for the identifiability constraint. If *qc <= 0 then
-   no constraint is applied. 
+   no constraint is applied. Thread safe.
 */ 
   char trans='N';
   int pb=1,md,*kp,*kd,pd,i,j;
@@ -182,15 +183,20 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc) {
 /* Forms f = X beta for X stored in the packed form described in function XWX
    bc is number of cols of beta and f... 
- */
+   LIMITED thread safety. Allocates/frees memory using R_chk_calloc/R_chk_free (usually),
+   protected within critical sections. Not safe to use with other routines allocating memory using these routines
+   within a parallel section. Safe to use as the only allocator of memory within a parallel section. 
+*/
   ptrdiff_t *off,*voff;
   int i,j,q,*pt,*tps,dC=0,c1;
   double *f0,*pf,*p0,*p1,*p2,*C=NULL,*work,maxp=0;
   /* obtain various indices */
-  pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
-  off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
-  voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvector starts */
-  tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+#pragma omp critical (xbdcalloc)
+  { pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
+    off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
+    voff = (ptrdiff_t *) CALLOC((size_t)*nt+1,sizeof(ptrdiff_t)); /* offsets for v subvector starts */
+    tps = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts in param vector or XWy */
+  }
   for (q=i=0;i< *nt; i++) { /* work through the terms */
     for (j=0;j<dt[i];j++,q++) { /* work through components of each term */
       off[q+1] = off[q] + p[q] * (ptrdiff_t) m[q]; /* submatrix start offsets */
@@ -205,11 +211,13 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
     if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
-  /* now form the product term by term... */
-  pf=f0 = (double *)CALLOC((size_t)*n,sizeof(double));
+  /* now form the product term by term... */ 
   i = *n; if (i<maxp) i=maxp;
-  work = (double *)CALLOC((size_t)i,sizeof(double));
-  if (dC) C = (double *)CALLOC((size_t)dC,sizeof(double));
+#pragma omp critical (xbdcalloc)
+  { pf=f0 = (double *)CALLOC((size_t)*n,sizeof(double));
+    work = (double *)CALLOC((size_t)i,sizeof(double));
+    if (dC) C = (double *)CALLOC((size_t)dC,sizeof(double));
+  }
   for (j=0;j < *bc;j++) {
     for (i=0;i < *nt;i++) { /* work through terms */ 
       if (i==0) f0 = f; /* result written straight to f for i==0 */
@@ -221,10 +229,12 @@ void Xbd(double *f,double *beta,double *X,int *k, int *m,int *p, int *n,
       } else { f0=pf; /* restore f0 */}
     }
     f += *n;beta += tps[*nt]; /* move on to next column */
+  } 
+#pragma omp critical (xbdcalloc)
+  { if (dC) FREE(C);
+    FREE(work);FREE(f0);
+    FREE(pt);FREE(off);FREE(voff);FREE(tps);
   }
-  if (dC) FREE(C);
-  FREE(work);FREE(f0);
-  FREE(pt);FREE(off);FREE(voff);FREE(tps);
 } /* Xb */
 
 void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n, 
@@ -263,6 +273,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n,
     for (i=0;i<bsj;i++) { /* work through this block's columns */
       kk = j * bs + i;
       ei[j * *pv + kk] = 1;if (i>0) ei[j * *pv + kk - 1] = 0;
+      /* Note thread safety of XBd means this must be only memory allocator in this section*/
       Xbd(xv + j * *n,V + kk * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc,&one); /* XV[:,kk] */
       Xbd(xi + j * *n,ei + j * *pv,X,k,m,p,n,nx,ts,dt,nt,v,qc,&one); /* X[:,kk] inefficient, but deals with constraint*/
       p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
@@ -279,6 +290,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *m,int *p, int *n,
 void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *m,int *p, int *n, 
          int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
          int *ar_stop,int *ar_row,double *ar_weights) {
+/* NOT thread safe */
   double *Wy,*p0,*p1,*p2,*p3,*Xy0,*work,*work1,x;
   ptrdiff_t q,i,j,*off,*voff;
   int *tps,maxm=0,maxp=0,one=1,zero=0,*pt;

@@ -2172,6 +2172,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     row.names(t5) <- c("initial","gam.setup","pre-fit","fit","finalise")
     print(t5)
   }
+  names(object$gcv.ubre) <- method
   object
 } ## end of bam
 
