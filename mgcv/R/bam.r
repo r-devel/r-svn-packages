@@ -206,9 +206,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
     if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handle smooth ids")
     ## deal with any by variable (should always go first as basically a 1D marginal)... 
     if (gp$smooth.spec[[i]]$by!="NA") {
-      ##stop("currently discrete methods do not handle by variables")
       termi <- gp$smooth.spec[[i]]$by ## var name
-      ##if (is.factor(mf[termi])) stop("discretization can not handle factor by variables")
       ik.prev <- check.term(termi,rec) ## term already discretized?
       ik <- ik + 1 ## increment index counter
       if (ik.prev==0) { ## new discretization required
@@ -1751,7 +1749,7 @@ AR.resid <- function(rsd,rho=0,AR.start=NULL) {
 } ## AR.resid
 
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
-                offset=NULL,method="fREML",control=list(),scale=0,gamma=1,knots=NULL,sp=NULL,
+                offset=NULL,method="fREML",control=list(),select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,
                 min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
                 sparse=FALSE,cluster=NULL,nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,
                 drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
@@ -1823,7 +1821,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf$formula <- gp$fake.formula 
     mf$method <-  mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp <- mf$gc.level <-
     mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$cluster <- mf$discrete <-
-    mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$...<-NULL
+    mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$select <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]]<-as.name("model.frame")
     pmf <- mf
@@ -1879,7 +1877,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     while (reset) {
       G <- gam.setup(gp,pterms=pterms,
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
-                 H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=FALSE,
+                 H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=select,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
                  paraPen=paraPen,apply.by=!discretize)
       if (!discretize&&ncol(G$X)>=chunk.size) { ## no point having chunk.size < p
