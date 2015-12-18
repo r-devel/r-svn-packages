@@ -3176,9 +3176,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
   sm$S.scale <- rep(1,length(sm$S))
 
   if (scale.penalty && length(sm$S)>0 && is.null(sm$no.rescale)) # then the penalty coefficient matrix is rescaled
-  {  maXX <- mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
+  {  maXX <- norm(sm$X,type="I")^2 ##mean(abs(t(sm$X)%*%sm$X)) # `size' of X'X
       for (i in 1:length(sm$S)) {
-        maS <- mean(abs(sm$S[[i]])) / maXX
+        maS <- norm(sm$S[[i]])/maXX  ## mean(abs(sm$S[[i]])) / maXX
         sm$S[[i]] <- sm$S[[i]] / maS
         sm$S.scale[i] <- maS ## multiply S[[i]] by this to get original S[[i]]
       } 

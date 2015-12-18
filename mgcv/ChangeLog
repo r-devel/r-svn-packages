@@ -3,6 +3,9 @@
 
 1.8-11
 
+* smoothCon rescaling of S changed to use efficient matrix norm in place of
+  relatively slow computation involving model matrix crossproduct.  
+
 * Added select=TRUE argument to 'bam'.
 
 * Improved thread safety in discrete prediction.
