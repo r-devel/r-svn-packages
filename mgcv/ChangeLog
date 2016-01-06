@@ -3,6 +3,8 @@
 
 1.8-11
 
+* bam(...,discrete=TRUE) can now handle matrix arguments to smooths.
+
 * bam(...,discrete = TRUE) db.drho reparameterization fix, fixing nonsensical 
   edf2. Also bam edf2 limited to maximum of edf1.
 
@@ -15,7 +17,7 @@
 
 * Improved thread safety in discrete prediction.
 
-* bam/gam name gcv.ubre field by "method"
+* bam/gam name gcv.ubre field by "method".
 
 1.8-10
 

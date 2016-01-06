@@ -1644,17 +1644,22 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   ## now discretize covariates... 
   dk <- discrete.mf(object$dinfo$gp,mf=newdata,pmf=NULL,full=FALSE)
-
+    
   Xd <- list() ### list of discrete model matrices...
   if (object$nsdf>0) {
      Xd[[1]] <- if (type%in%c("term","iterms")) matrix(0,0,0) else pp 
      kd <- cbind(1:nrow(newdata),dk$k) ## add index for parametric part to index list
      kb <- k <- 2; 
+     dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
      dk$nr <- c(NA,dk$nr) ## need array index to match elements of Xd
   } else {
-    kb <- k <- 1; 
+    kb <- k <- 1;  
+    kd <- dk$k
   }
-  
+  ## k[,ks[j,1]:ks[j,2]] gives index columns for term j, thereby allowing 
+  ## summation over matrix covariates....
+  ks <- cbind(dk$k.start[-length(dk$k.start)],dk$k.start[-1])
+
   ts <- object$dinfo$ts
   dt <- object$dinfo$dt   
   for (i in 1:length(object$smooth)) { ## work through the smooth list
@@ -1674,8 +1679,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       if (!is.null(object$smooth[[i]]$rind)) {
          ## terms re-ordered for efficiency, so the same has to be done on indices...
          rind <- k:(k+dt[kb]-1) ## could use object$dinfo$dt[kb]   
-         dk$nr[rind] <- dk$nr[k+object$smooth[[i]]$rind-1]
-         kd[,rind] <- kd[,k+object$smooth[[i]]$rind-1]
+         dk$nr[rind] <- dk$nr[k+object$smooth[[i]]$rind-1] 
+         ks[rind,] <- ks[k+object$smooth[[i]]$rind-1,] # either this line or next not both
+         ##kd[,rind] <- kd[,k+object$smooth[[i]]$rind-1]
       } 
       XP <- object$smooth[[i]]$XP         
       for (j in 1:nmar) {
@@ -1716,10 +1722,10 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
         drop <- object$dinfo$drop-object$smooth[[i]]$first.para+1
         drop <- drop[drop<=length(ii)]
       } else drop <- NULL
-      fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd[,ii,drop=FALSE],1,dt[k],object$dinfo$v[k],
-                        object$dinfo$qc[k],drop=drop)
-      if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd[,ii,drop=FALSE],1,dt[k],object$dinfo$v[k],
-                        object$dinfo$qc[k],drop=drop,n.threads=n.threads)^.5
+      fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd,ks[ii,],                           ##kd[,ii,drop=FALSE]
+                      1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop)
+      if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd,ks[ii,],                 #kd[,ii,drop=FALSE],
+                       1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop,n.threads=n.threads)^.5
       k <-  k + 1; kk <- kk + 1
     } 
     fit.names <- c(if (se) colnames(pp$fit) else colnames(pp),unlist(lapply(object$smooth,function(x) x$label)))
@@ -1729,15 +1735,15 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       fit <- list(fit=fit,se.fit=se.fit)
     }
   } else if (type=="lpmatrix") {
-    fit <- Xbd(Xd,diag(length(object$coefficients)),kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop)
+    fit <- Xbd(Xd,diag(length(object$coefficients)),kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop)
   } else { ## link or response
-    fit <- Xbd(Xd,object$coefficients,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop) + offset
+    fit <- Xbd(Xd,object$coefficients,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop) + offset
     if (type=="response") {
       linkinv <- object$family$linkinv
       dmu.deta <- object$family$mu.eta
     } else linkinv <- dmu.deta <- NULL
     if (se==TRUE) {
-      se.fit <- diagXVXd(Xd,object$Vp,kd,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,n.threads=n.threads)^.5
+      se.fit <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,n.threads=n.threads)^.5
       if (type=="response") {
         se.fit <- se.fit * abs(dmu.deta(fit))
         fit <- linkinv(fit)
@@ -2007,7 +2013,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             ## terms re-ordered for efficiency, so the same has to be done on indices...
             rind <- k:(k+dt[kb]-1)    
             dk$nr[rind] <- dk$nr[k+G$smooth[[i]]$rind-1]
-            G$ks[rind,] <- G$ks[k+G$smooth[[i]]$rind-1] # either this line or next not both
+            G$ks[rind,] <- G$ks[k+G$smooth[[i]]$rind-1,] # either this line or next not both
             #G$kd[,rind] <- G$kd[,k+G$smooth[[i]]$rind-1]
           }       
           for (j in 1:nmar) {
@@ -2226,7 +2232,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$aic <- family$aic(object$y,1,object$fitted.values,object$prior.weights,object$deviance) +
                 2 * (length(object$y) - sum(AR.start))*log(1/sqrt(1-rho^2)) + ## correction for AR
                 2*sum(object$edf)
-  if (!is.null(object$edf2)&&sum(object$edf2)>sum(object$edf1)) object$edf2 <- object$edf2
+  if (!is.null(object$edf2)&&sum(object$edf2)>sum(object$edf1)) object$edf2 <- object$edf1
   object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$prior.weights))
   if (!is.null(object$full.sp)) {
     if (length(object$full.sp)==length(object$sp)&&
