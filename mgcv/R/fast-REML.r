@@ -651,7 +651,9 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
                                  sum(db[,j]*Skb[[k]]))                                  
     }
   }
-  list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,d1b=db,rss1=rss1,rss2=rss2)
+  list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,
+       d1b=db ## BUG - this needs transforming as coef - here, or where used
+       ,rss1=rss1,rss2=rss2)
 } ## end Sl.iftChol
 
 
@@ -1045,7 +1047,6 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L,nt=nt) {
     }
     Vp <- PP * scale ## cov matrix
     ## sp uncertainty correction... 
-    ## BUG: possibility of L ignored here.
     if (!is.null(L)) d1b <- d1b%*%L
     M <- ncol(d1b) 
     ev <- eigen(fit$outer.info$hess,symmetric=TRUE)

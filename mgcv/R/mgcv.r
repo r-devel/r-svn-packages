@@ -4158,8 +4158,9 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
     } else mustart <- mukeep
     if (inherits(family,"extended.family")) {
       theta <- family$getTheta()
-      w <- .5 * drop(family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2)  
-    } else w <- drop(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
+      ## use 'as.numeric' - 'drop' can leave result as 1D array...
+      w <- .5 * as.numeric(family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2)  
+    } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
     w <- sqrt(w)
     if (type==1) { ## what PI would have used
       lambda <-  initial.sp(w*x,S,off)

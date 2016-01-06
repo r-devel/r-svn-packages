@@ -3,9 +3,14 @@
 
 1.8-11
 
+* bam(...,discrete = TRUE) db.drho reparameterization fix, fixing nonsensical 
+  edf2. Also bam edf2 limited to maximum of edf1.
+
 * smoothCon rescaling of S changed to use efficient matrix norm in place of
   relatively slow computation involving model matrix crossproduct.  
 
+* bam aic corrected for AR model if present.
+	
 * Added select=TRUE argument to 'bam'.
 
 * Improved thread safety in discrete prediction.

@@ -19,10 +19,10 @@ covariate values and C code level parallelization (controlled by the \code{nthre
 \usage{
 bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     na.action=na.omit, offset=NULL,method="fREML",control=list(),
-    select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,paraPen=NULL,
-    chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,sparse=FALSE,
-    cluster=NULL,nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,
-    drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
+    select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,
+    paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
+    sparse=FALSE,cluster=NULL,nthreads=NA,gc.level=1,use.chol=FALSE,
+    samfrac=1,drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
 }
 %- maybe also `usage' for other objects documented here.
 
