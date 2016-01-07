@@ -15,7 +15,7 @@
 	
 * Added select=TRUE argument to 'bam'.
 
-* Improved thread safety in discrete prediction.
+* Several discrete prediction fixes including improved thread safety.
 
 * bam/gam name gcv.ubre field by "method".
 
