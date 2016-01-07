@@ -19,6 +19,10 @@
 
 * bam/gam name gcv.ubre field by "method".
 
+* gam.side modified so that if a smoth has 'side.constrain==FALSE' it is 
+  neither constrained, nor used in the computation of constraints for other
+  terms (the latter part being new). Very limited impact!
+
 1.8-10
 
 ** 'multinom' family implemented for multinomial logistic regression.

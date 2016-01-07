@@ -437,7 +437,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
   sm.dim <- sm.id
   for (d in 1:maxDim) {
     for (i in 1:m) {
-      if (sm[[i]]$dim==d) for (j in 1:d) { ## work through terms
+      if (sm[[i]]$dim==d&&sm[[i]]$side.constrain) for (j in 1:d) { ## work through terms
         term<-sm[[i]]$vn[j]
         a <- sm.id[[term]]
         la <- length(a)+1
@@ -448,7 +448,7 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
   }
   ## so now each unique variable name has an associated array of 
   ## the smooths of which it is an argument, arranged in ascending 
-  ## order of dimension.
+  ## order of dimension. Smooths for which side.constrain==FALSE are excluded.
   if (maxDim==1) warning("model has repeated 1-d smooths of same variable.")
 
   ## Now set things up to enable term specific model matrices to be

@@ -1677,6 +1677,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
   k <- 1
   oterm <- object$term
 
+  ## and strip it from the terms...
   for (i in 1:object$dim) if (object$term[i]!=fterm) {
     object$term[k] <- object$term[i]
     k <- k + 1
@@ -1747,25 +1748,31 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
     object$rank <- c(object$rank*nf,rep(nf,null.d))
   }
   
-  if ("tensor.smooth.spec"%in%spec.class) { 
-    ## give object margins like a tensor product smooth...
-    object$margin <- list()
-    if (object$dim>1) stop("fs smooth not suitable for discretisation with more than one metric predictor") 
-    form1 <- as.formula(paste("~",object$fterm,"-1")) 
-    fac -> data[[fterm]]
-    object$margin[[1]] <- list(X=model.matrix(form1,data),term=object$fterm)
-    object$margin[[2]] <- list(X=rp$X,term=object$base$term)
-    ## note --- no re-ordering at present - inefficiecnt as factor should really
-    ## be last, but that means complete re-working of penalty structure.
-  } ## finished tensor like setup
-
   object$side.constrain <- FALSE ## don't apply side constraints - these are really random effects
   object$null.space.dim <- 0
   object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix
   object$plot.me <- TRUE
-  #object$base.bs <- class(object) ## base smoother class 
   class(object) <- if ("tensor.smooth.spec"%in%spec.class) c("fs.interaction","tensor.smooth")  else 
                    "fs.interaction"
+
+  if ("tensor.smooth.spec"%in%spec.class) { 
+    ## give object margins like a tensor product smooth...
+    ## need just enough for fitting and discrete prediction to work
+    object$margin <- list()
+    if (object$dim>1) stop("fs smooth not suitable for discretisation with more than one metric predictor") 
+    form1 <- as.formula(paste("~",object$fterm,"-1")) 
+    fac -> data[[fterm]]
+    object$margin[[1]] <- list(X=model.matrix(form1,data),term=object$fterm,form=form1,by="NA")
+    class(object$margin[[1]]) <- "random.effect"
+    object$margin[[2]] <- object
+    object$margin[[2]]$X <- rp$X
+    object$margin[[2]]$margin.only <- TRUE
+    ## list(X=rp$X,term=object$base$term,base=object$base,margin.only=TRUE,P=object$P,by="NA")
+    ## class(object$margin[[2]]) <- "fs.interaction"
+    ## note --- no re-ordering at present - inefficiecnt as factor should really
+    ## be last, but that means complete re-working of penalty structure.
+  } ## finished tensor like setup
+
   object
 } ## end of smooth.construct.fs.smooth.spec
 
@@ -1783,6 +1790,7 @@ Predict.matrix.fs.interaction <- function(object,data)
   object$bs.dim <- object$base$bs.dim
   object$term <- object$base$term
   Xb <- Predict.matrix(object,data)%*%object$P
+  if (!is.null(object$margin.only)) return(Xb)
   X <- matrix(0,nrow(Xb),0)
   for (i in 1:length(object$flev)) {
     X <- cbind(X,Xb * as.numeric(fac==object$flev[i]))
@@ -2022,7 +2030,8 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
     maxd <- maxi <- 0
     for (i in 1:object$dim) {
       form1 <- as.formula(paste("~",object$term[i],"-1"))
-      object$margin[[i]] <- list(X=model.matrix(form1,data),term=object$term[i])
+      object$margin[[i]] <- list(X=model.matrix(form1,data),term=object$term[i],form=form1,by="NA")
+      class(object$margin[[i]]) <- "random.effect"
       d <- ncol(object$margin[[i]]$X)
       if (d>maxd) {maxi <- i;maxd <- d}
     }
@@ -2052,7 +2061,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   object$side.constrain <- FALSE ## don't apply side constraints
   object$plot.me <- TRUE ## "re" terms can be plotted by plot.gam
   object$te.ok <- if (inherits(object,"tensor.smooth.spec")) 0 else 2 ## these terms are  suitable as te marginals, but 
-                                                                         ##   can not be plotted
+                                                                      ##   can not be plotted
 
 
   object$random <- TRUE ## treat as a random effect for p-value comp.

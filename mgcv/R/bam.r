@@ -365,16 +365,16 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
         if (nex>0) { ## insert index copies
           ii0 <- if (ik>1) 1:(ik-1) else rep(0,0) ## earlier
           ii1 <- if (ik+nd-1 < length(nr)) (ik+nd):length(nr) else rep(0,0) ## later
-          ii <- ik:(ik+nd-1) ## cols for this term
-          nr <- c(nr[ii0],rep(nr[ii],nex),nr[ii1])
+          ii <- ik:(ik+nd-1) ## cols for this term    
           ## indices for columns of k... 
           kk0 <- if (ik>1) 1:(k.start[ik]-1) else rep(0,0) ## earlier
           kk1 <- if (ik+nd-1 < length(nr)) k.start[ik+nd]:ncol(k) else rep(0,0) ## later
           kk <- k.start[ik]:(k.start[ik+nd]-1) ## cols for this term
           k <- cbind(k[,kk0,drop=FALSE],k[,rep(kk,nex),drop=FALSE],k[,kk1,drop=FALSE])
+          nr <- c(nr[ii0],rep(nr[ii],nex),nr[ii1])
           ## expand k.start...
           nkk <- length(kk) ## number of k columns in term to be repeated
-          k.start <- c(k.start[ii0],rep(k.start[ii],nex)+rep(0:(nex-1),each=nkk),
+          k.start <- c(k.start[ii0],rep(k.start[ii],nex)+rep(0:(nex-1),each=nkk)*nkk,
                        (nex-1)*nkk+c(k.start[ii1],k.start[length(k.start)]))
         }
       } ## factor by 
