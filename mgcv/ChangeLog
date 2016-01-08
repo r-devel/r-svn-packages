@@ -1,6 +1,13 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+Currently deprecated and liable to be removed: 
+- bam(...,sparse=TRUE) [1.8-5]
+- negbin() with search for `theta' - use 'nb' instead [1.8-0]
+- single penalty tensor product smooths.
+- p.type!=0 in summary.gam.
+	
+	
 1.8-11
 
 * bam(...,discrete=TRUE) can now handle matrix arguments to smooths.
