@@ -104,7 +104,7 @@ t1.fix.ML.nlme$numIter # 58 or 61 ..
 (aM4 <- anova  (t1.fix.ML.nlme))
 stopifnot(
     all.equal(fixef(t1.fix.ML.nlme),
-              c(lKe = -2.432512, lKa = 0.450163, lCl = -3.2144713), tol= 1e-6)
+              c(lKe = -2.432512, lKa = 0.450163, lCl = -3.2144713), tol= 8e-6)
     ,
     all.equal(sM4$tTable[,"Std.Error"],
               c(lKe = 0.0640155, lKa = 0.196058, lCl = 0.0808379), tol = 5e-5)

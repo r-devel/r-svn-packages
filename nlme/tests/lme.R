@@ -1,4 +1,6 @@
 library(nlme)
+is64bit <- .Machine$sizeof.pointer == 8
+
 fm1 <- lmList(Oxboys)
 fm1
 fm2 <- lme(fm1)
@@ -37,9 +39,15 @@ stopifnot(all.equal(pm3[1], p3.1,
 ## Intervals failed in a patch proposal (Nov.2015):
 (fm4 <- lme(distance ~ age, Orthodont, random = ~ age | Subject))
 (i4 <- intervals(fm4))
+## from  dput(signif(i4$reStruct$Subject, 8))
+## R-devel 2016-01-11; 64-bit :
 reSS <- data.frame(lower = c(0.9485605, 0.10250901, -0.93825047),
                    est.  = c(2.3270341, 0.22642779, -0.60933286),
                    upper = c(5.7087424, 0.50014674,  0.29816857))
+## R-devel 2016-01-11; 32-bit :
+## reSS <- data.frame(lower = c(0.94962127,0.10262181, -0.93804767),
+##                    est.  = c(2.3270339, 0.22642779, -0.60933284),
+##                    upper = c(5.7023648, 0.49959695,  0.29662651))
 rownames(reSS) <- rownames(i4$reStruct$Subject)
 sm4 <- summary(fm4)
 stopifnot(
@@ -50,8 +58,9 @@ stopifnot(
               c("(Intercept)" = 0.77524603, age = 0.071253264), tol=6e-8),
     all.equal(i4$reStruct$Subject[,"est."], reSS[,"est."], tol= 8e-8)
     ## (lower, upper) cannot be very accurate for these : ==> tol = *e-4
-   ,
-    all.equal(i4$reStruct$Subject[,c(1,3)], reSS[,c(1,3)], tol= 8e-4)
+   ,## "interestingly" 32-bit values changed from 3.2.3 to R-devel(3.3.0):
+    all.equal(i4$reStruct$Subject[,c(1,3)], reSS[,c(1,3)],
+              tol = if(is64bit) 4e-4 else 16e-4)
    ,
     all.equal(as.vector(i4$sigma),
               ##  lower     est.        upper

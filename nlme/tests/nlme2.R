@@ -1,4 +1,5 @@
 library(nlme)
+is64bit <- .Machine$sizeof.pointer == 8
 
 options(digits = 7)
 ## https://stat.ethz.ch/pipermail/r-help/2014-September/422123.html
@@ -9,25 +10,36 @@ nfm <- nlme(circumference ~ SSlogis(age, Asym, xmid, scal),
 vc <- VarCorr(nfm, rdig = 5)# def. 3
 storage.mode(vc) <- "double" # -> (correct) NA warning
 cfO <- sO$tTable
-
+if(FALSE)
+    dput(signif(cfO[,c("Std.Error", "t-value")], 8))
+cfO.T <- array(
+    if(is64bit)## R-devel 2016-01-11; [lynne]:
+        c(14.052671, 34.587947, 30.497593,
+          13.669776, 21.036087, 11.692943)
+    else ## R-devel 2016-01-11; [f32sfs-2]:
+        c(14.053663, 34.589821, 30.49412,
+          13.668653, 21.034544, 11.693889)
+   , dim = 3:2, dimnames = list(c("Asym", "xmid", "scal"),
+				c("Std.Error", "t-value")))
+if(FALSE)
+    dput(signif(as.vector(vc[,"StdDev"]), 8))
+vcSD <- setNames(if(is64bit)## R-devel 2016-01-11; [lynne]:
+		     c(27.051312, 24.258159, 36.597078, 7.321525)
+		 else ## R-devel 2016-01-11; [f32sfs-2]:
+		     c(27.053964, 24.275286, 36.58682, 7.321365),
+		 c("Asym", "xmid", "scal", "Residual"))
 stopifnot(
     identical(cfO[,"Value"], fixef(nfm)),
-    all.equal(cfO[,"Std.Error"],
-              c(Asym = 14.052931, xmid = 34.587933, scal = 30.496917), tol=5e-5)
-    ,
-    cfO[,"DF"] == 28,
-    all.equal(cfO[,"t-value"],
-              c(Asym = 13.669478, xmid = 21.035987, scal = 11.693074), tol=6e-5)
+    all.equal(cfO[,c("Std.Error", "t-value")], cfO.T, tol = 6e-5)
    ,
+    cfO[,"DF"] == 28,
     all.equal(vc[,"Variance"], vc[,"StdDev"]^2, tol= 5e-7)
    ,
-    all.equal(vc[,"StdDev"],
-              c(Asym = 27.0520, xmid = 24.255, scal = 36.596,
-                Residual = 7.3215), tol = 2e-4) # ~ 7e-5
+    all.equal(vc[,"StdDev"], vcSD, tol = 2e-4) # ~ 7e-5
    ,
     all.equal(unname(vc[2:3, 3:4]), # "Corr"
               rbind(c(-0.3273, NA),
-                    c(-0.9920, 0.4430)), tol = 1e-3)# ~ 2e-4
+		    c(-0.9920, 0.4430)), tol = 2e-3)# ~ 2e-4 / 8e-4
 )
 
 ## Confirm  predict(*, newdata=.)  works
@@ -48,3 +60,4 @@ if(!all((res10 <- round(10 * as.vector(resiv))) == res.T)) {
         "; with values:\n")
     print(cbind(resiv, res10, res.T)[iD,])
 }
+## -> indices  14 [64-bit]  or  27 [32-bit], respectively
