@@ -60,7 +60,7 @@ stopifnot(
     ## (lower, upper) cannot be very accurate for these : ==> tol = *e-4
    ,## "interestingly" 32-bit values changed from 3.2.3 to R-devel(3.3.0):
     all.equal(i4$reStruct$Subject[,c(1,3)], reSS[,c(1,3)],
-              tol = if(is64bit) 4e-4 else 16e-4)
+	      tol = if(is64bit) 4e-4 else .005)
    ,
     all.equal(as.vector(i4$sigma),
               ##  lower     est.        upper
