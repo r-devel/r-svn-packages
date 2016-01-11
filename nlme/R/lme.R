@@ -1,8 +1,8 @@
 ###            Fit a general linear mixed effects model
 ###
+### Copyright 2005-2016  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-### Copyright 2005-2015  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -719,31 +719,30 @@ MEestimate <-
   dimE <- dim(estimates)
   ## 17-11-2015; Fixed sigma patch; ... modified by MM notably for p == 0:
   Np <- N
+  auxSigma <- abs(resp[dimE[1]])/sqrt(Np)
   if(conLin$sigma > 0) {
     loglik <- (N * (-log(2 * pi)-2*log(conLin$sigma)))/2 + rConLin$logLik
     sigma <- conLin$sigma
   } else {
     loglik <- (N * (log(N) - (1 + log(2 * pi))))/2 + rConLin$logLik
-    sigma <- abs(resp[dimE[1]])/sqrt(Np)
+    sigma <- auxSigma
   }
-  auxSigma <- abs(resp[dimE[1]])/sqrt(Np)
   list(logLik = loglik,
        b = rev(val),
        beta = if(p) resp[dimE[1] - (p:1)] else double(),
        sigma = sigma,
+       auxSigma = auxSigma,
        varFix = if(p)
 		  t(solve(estimates[dimE[1] - (p:1), dimE[2] - (p:1), drop = FALSE]))
 		else
-		  matrix(,p,p),
-       auxSigma = auxSigma)
+		  matrix(,p,p))
 }
 
-MEdims <-
-  function(groups, ncols)
+MEdims <- function(groups, ncols)
 {
   ## define constants used in matrix decompositions and log-lik calculations
   ## first need some local functions
-  lengths <-
+  glengths <-
     ## returns the group lengths from a vector of last rows in the group
     function(lstrow) diff(c(0, lstrow))
   offsets <-
@@ -815,13 +814,13 @@ MEdims <-
                                         # no. of columns rotated per level
        nrot = (rev(c(0, cumsum(rev(ncols)))))[-1L],
        ZXoff = offsets(N, ncols, lastRow), # offsets into ZXy
-       ZXlen = lapply(lastRow, lengths), # lengths of ZXy groups
+       ZXlen = lapply(lastRow, glengths), # lengths of ZXy groups
                                         # storage array offsets
        SToff = offsets(strRows, ncols, lastStr, triangle = TRUE),
                                         # decomposition offsets
        DecOff = offsets(strRows, ncols, lastBlock),
                                         # decomposition lengths
-       DecLen = lapply(lastBlock, lengths)
+       DecLen = lapply(lastBlock, glengths)
        )
 }
 

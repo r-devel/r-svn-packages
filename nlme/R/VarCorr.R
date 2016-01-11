@@ -18,6 +18,12 @@
 #  http://www.r-project.org/Licenses/
 #
 
+if(getRversion() < "3.2.0") {
+    lengths <- function (x, use.names = TRUE)
+        vapply(x, length, 1L, USE.NAMES = use.names)
+}
+
+
 VarCorr <- function( x, sigma = 1, rdig = 3, ...) UseMethod("VarCorr")
 
 VarCorr.lme <- function( x, sigma = 1, rdig = 3, ...)
