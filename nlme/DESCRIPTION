@@ -13,7 +13,7 @@ Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
 	     person("R-core", email = "R-core@R-project.org",
                     role = c("aut", "cre")))
 Description: Fit and compare Gaussian linear and nonlinear mixed-effects models.
-Depends: graphics, stats, R (>= 3.0.1)
+Depends: graphics, stats, R (>= 3.0.2)
 Imports: lattice
 Suggests: Hmisc, MASS
 LazyData: yes
