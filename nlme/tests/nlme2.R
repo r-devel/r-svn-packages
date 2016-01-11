@@ -1,7 +1,7 @@
 library(nlme)
 is64bit <- .Machine$sizeof.pointer == 8
 
-options(digits = 7)
+options(digits = 10)# <- see more, as we have *no* *.Rout.save file here
 ## https://stat.ethz.ch/pipermail/r-help/2014-September/422123.html
 nfm <- nlme(circumference ~ SSlogis(age, Asym, xmid, scal),
             data = Orange,
@@ -30,12 +30,12 @@ vcSD <- setNames(if(is64bit)## R-devel 2016-01-11; [lynne]:
 		 c("Asym", "xmid", "scal", "Residual"))
 stopifnot(
     identical(cfO[,"Value"], fixef(nfm)),
-    all.equal(cfO[,c("Std.Error", "t-value")], cfO.T, tol = 6e-5)
+    all.equal(cfO[,c("Std.Error", "t-value")], cfO.T, tol = 2e-4)# 8.7e-5 (R 3.0.3, 32b)
    ,
     cfO[,"DF"] == 28,
     all.equal(vc[,"Variance"], vc[,"StdDev"]^2, tol= 5e-7)
    ,
-    all.equal(vc[,"StdDev"], vcSD, tol = 2e-4) # ~ 7e-5
+    all.equal(vc[,"StdDev"], vcSD, tol = 6e-4) # 3.5e-4 (R 3.0.3, 32b)
    ,
     all.equal(unname(vc[2:3, 3:4]), # "Corr"
               rbind(c(-0.3273, NA),
