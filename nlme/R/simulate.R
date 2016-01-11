@@ -116,6 +116,7 @@ simulate.lme <-
     if (inherits(nsim, "lm") || inherits(nsim, "lme"))
         stop("order of arguments in 'simulate.lme' has changed to conform with generic in R-2.2.0",
              domain = NA)
+### FIXME?  if(!ALT)  behave like a regular  simulate() method --> return 'base2' (see below)
     getResults1 <-
 	function(conLin, nIter, pdClass, REML, ssq, p, pp1) {
 	    unlist(.C(mixed_combined,
@@ -236,7 +237,8 @@ simulate.lme <-
             aREML <- nREML
     }
     for(i in 1:nsim) {
-        base2 <- base + rnorm(N, sd = sig)
+        base2 <- base + rnorm(N, sd = sig) ## = X beta + eps
+        ## now add  'Z b' as Q different terms  \sum_{j=1}^Q  Z_j b_j :
         for(j in 1:Q) {
             base2 <- base2 +
                 ((array(rnorm(ngrp[j] * qvec[j]), c(ngrp[j], qvec[j]),
