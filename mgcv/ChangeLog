@@ -12,6 +12,8 @@ Currently deprecated and liable to be removed:
 
 * bam(...,discrete=TRUE) can now handle matrix arguments to smooths.
 
+* bam(...,discrete=TRUE) bug fix in fixed sp handling.
+
 * bam(...,discrete = TRUE) db.drho reparameterization fix, fixing nonsensical 
   edf2. Also bam edf2 limited to maximum of edf1.
 

@@ -1,4 +1,4 @@
-# routines for very large dataset generalized additive modelling.
+## routines for very large dataset generalized additive modelling.
 ## (c) Simon N. Wood 2009-2015
 
 
@@ -580,7 +580,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         lambda.0 <- initial.sp(qrx$R,G$S,G$off,XX=TRUE) ## note that this uses the untrasformed X'X in qrx$R
         ## convert intial s.p.s to account for L 
         lsp0 <- log(lambda.0) ## initial s.p.
-        if (!is.null(G$L)) lsp0 <- as.numeric(coef(lm(lsp0 ~ G$L-1+offset(G$lsp0))))
+        if (!is.null(G$L)) lsp0 <- 
+          if (ncol(G$L)>0) as.numeric(coef(lm(lsp0 ~ G$L-1+offset(G$lsp0)))) else rep(0,0)
         n.sp <- length(lsp0) 
       }
      
@@ -658,12 +659,15 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object$Vp <- PP * scale
   object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt) ## F%*%object$Vp
   ## sp uncertainty correction... 
+  if (!is.null(G$L)) prop$db <- prop$db%*%G$L
   M <- ncol(prop$db) 
-  ev <- eigen(prop$hess,symmetric=TRUE)
-  ind <- ev$values <= 0
-  ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
-  rV <- (ev$values*t(ev$vectors))[,1:M]
-  Vc <- pcrossprod(rV%*%t(prop$db),nt=npt)
+  if (M>0) {
+    ev <- eigen(prop$hess,symmetric=TRUE)
+    ind <- ev$values <= 0
+    ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
+    rV <- (ev$values*t(ev$vectors))[,1:M]
+    Vc <- pcrossprod(rV%*%t(prop$db),nt=npt)
+  } else Vc <- 0
   Vc <- object$Vp + Vc  ## Bayesian cov matrix with sp uncertainty
   object$edf2 <- rowSums(Vc*qrx$R)/scale
   object$Vc <- Vc
