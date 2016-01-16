@@ -1,6 +1,9 @@
 library(nlme)
 is64bit <- .Machine$sizeof.pointer == 8
 
+options(digits = 6)# <==> less platform dependency in print() output
+if(!dev.interactive(orNone=TRUE)) pdf("test_lme.pdf")
+
 fm1 <- lmList(Oxboys)
 fm1
 fm2 <- lme(fm1)

@@ -704,7 +704,6 @@ MEestimate <-
   reSt <- object$reStruct
   nam <- names(reSt)
   val <- vector(mode = "list", length = Q)
-  names(val) <- nam
   start <- dd$StrRows * c(0, cumsum(nc))
   for (i in seq_along(reSt)) {
     val[[i]] <-
@@ -712,9 +711,9 @@ MEestimate <-
 	     ncol = nc[i], byrow = TRUE,
 	     dimnames = list(unique(as.character(groups[, nam[i]])),
 		 Names(reSt[[i]])))
-    NULL
   }
-  p <- nc[Q + 1L]
+  names(val) <- nam
+  p <- nc[[Q + 1L]]
   N <- dd$N - REML * p
   dimE <- dim(estimates)
   ## 17-11-2015; Fixed sigma patch; ... modified by MM notably for p == 0:
@@ -1423,15 +1422,15 @@ intervals.lme <-
   val
 }
 
-logLik.lme <-
-  function(object, REML, ...)
+logLik.lme <- function(object, REML, ...)
 {
   ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
   fixSig <- attr(object[["modelStruct"]], "fixedSigma")
   fixSig <- !is.null(fixSig) && fixSig
-  p <- object$dims$ncol[object$dims$Q + 1L]
-  N <- object$dims$N
-##  Np <- N - p
+  od <- object$dims
+  p <- od$ncol[[od$Q + 1L]]
+  N <- od$N
+  ##  Np <- N - p
   estM <- object$method
   if (missing(REML)) REML <- estM == "REML"
   val <- object[["logLik"]]
@@ -1443,12 +1442,11 @@ logLik.lme <-
     val <- val - (p * (log(2*pi) + 1L) + N * log(1 - p/N) +
 		  sum(log(abs(svd(object$varFix)$d)))) / 2
   }
-  attr(val, "nall") <- N
-  attr(val, "nobs") <- N - REML * p
-  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-  attr(val, "df") <- p + length(coef(object[["modelStruct"]])) + as.integer(!fixSig)
-  class(val) <- "logLik"
-  val
+  structure(val, class = "logLik",
+	    nall = N,
+	    nobs = N - REML * p,
+	    ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+	    df = p + length(coef(object[["modelStruct"]])) + as.integer(!fixSig))
 }
 
 nobs.lme <- function(object, ...) object$dims$N
