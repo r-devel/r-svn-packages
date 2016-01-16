@@ -711,7 +711,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
     reml1[n+1] <- (-rss.bSb/phi + nobs - Mp)/2
     d <- c(-(dift$rss1[!fixed] + dift$bSb1[!fixed]),rss.bSb)/(2*phi)
     reml2 <- rbind(cbind(reml2,d[1:n]),d) 
-    L <- rbind(cbind(L,rep(0,nrow(L))),c(rep(0,ncol(L)),1))
+    if (!is.null(L)) L <- rbind(cbind(L,rep(0,nrow(L))),c(rep(0,ncol(L)),1))
   }
 
   if (!is.null(L)) {
