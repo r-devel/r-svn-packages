@@ -2,21 +2,20 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2006-2014 The R Core team
-#
-#  This program is free software; you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation; either version 2 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  A copy of the GNU General Public License is available at
-#  http://www.r-project.org/Licenses/
-#
+### Copyright 2006-2016 The R Core team
+###
+###  This program is free software; you can redistribute it and/or modify
+###  it under the terms of the GNU General Public License as published by
+###  the Free Software Foundation; either version 2 of the License, or
+###  (at your option) any later version.
+###
+###  This program is distributed in the hope that it will be useful,
+###  but WITHOUT ANY WARRANTY; without even the implied warranty of
+###  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+###  GNU General Public License for more details.
+###
+###  A copy of the GNU General Public License is available at
+###  http://www.r-project.org/Licenses/
 
 nlme <-
   function(model,
@@ -1314,14 +1313,14 @@ predict.nlme <-
   }
   if (length(level) == 1) {
     val <- val[,1] ## ?? not in predict.lme()
-    ## if (level > 0) {
+    if (level > 0) { # otherwise 'oGrps' are typically undefined
       grps <- as.character(oGrps[, level])
       if (asList) {
         val <- split(val, ordered(grps, levels = unique(grps)))
       } else {
         names(val) <- grps
       }
-    ## }
+    }
     lab <- "Predicted values"
     if (!is.null(aux <- attr(object, "units")$y)) {
       lab <- paste(lab, aux)
