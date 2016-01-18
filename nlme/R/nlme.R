@@ -1441,14 +1441,13 @@ nlmeControl <-
            minAbsParApVar = 0.05,
 	   opt = c("nlminb", "nlm"), natural = TRUE, sigma = NULL, ...)
 {
-  ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-  if (!is.null(sigma)) {
-    if (!is.numeric(sigma) || (length(sigma) != 1) || (sigma <= 0)) {
-      stop("Within-group std. dev. must be a positive numeric value")
-    }
-  }
-  else
+  if(is.null(sigma))
     sigma <- 0
+  else {
+    if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
+      stop("Within-group std. dev. must be a positive numeric value")
+    if(missing(apVar)) apVar <- FALSE # not yet implemented
+  }
   list(maxIter = maxIter, pnlsMaxIter = pnlsMaxIter, msMaxIter = msMaxIter,
        minScale = minScale, tolerance = tolerance, niterEM = niterEM,
        pnlsTol = pnlsTol, msTol = msTol,

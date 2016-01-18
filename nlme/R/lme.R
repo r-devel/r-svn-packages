@@ -126,7 +126,7 @@ lme.lmList <-
 lme.formula <-
   function(fixed,
            data = sys.frame(sys.parent()),
-           random = pdSymm( eval( as.call( fixed[ -2 ] ) ) ),
+           random = pdSymm( eval( as.call(fixed[-2]) ) ),
            correlation = NULL,
            weights = NULL,
            subset,
@@ -143,6 +143,12 @@ lme.formula <-
   controlvals <- lmeControl()
   if (!missing(control)) {
     controlvals[names(control)] <- control
+  }
+  fixedSigma <- controlvals$sigma > 0
+  if(fixedSigma && controlvals$apVar) {
+    if("apVar" %in% names(control))
+      warning("for 'sigma' fixed, 'apVar' is set FALSE, as the cov approxmation is not yet available.")
+    controlvals$apVar <- FALSE
   }
 
   ##
@@ -167,8 +173,7 @@ lme.formula <-
         randL <- vector("list", Q)
         names(randL) <- rev(namGrp)
         for(i in 1:Q) randL[[i]] <- random
-        randL <- as.list(randL)
-        reSt <- reStruct(randL, REML = REML, data = NULL)
+        reSt <- reStruct(as.list(randL), REML = REML, data = NULL)
       } else {
         names(reSt) <- namGrp
       }
@@ -402,23 +407,27 @@ lme.formula <-
   ## saving part of dims
   dims <- attr(lmeSt, "conLin")$dims[c("N", "Q", "qvec", "ngrps", "ncol")]
   ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-  attr(lmeSt, "fixedSigma") <- controlvals$sigma > 0
+  attr(lmeSt, "fixedSigma") <- fixedSigma
   ## getting the approximate var-cov of the parameters
-  if (controlvals$apVar) {
-    apVar <- lmeApVar(lmeSt, lmeFit$sigma,
-                      .relStep = controlvals[[".relStep"]],
-                      minAbsPar = controlvals[["minAbsParApVar"]],
-                      natural = controlvals[["natural"]])
-  } else {
-    apVar <- "Approximate variance-covariance matrix not available"
-  }
+  apVar <-
+    if (controlvals$apVar) {
+      lmeApVar(lmeSt, lmeFit$sigma,
+               .relStep = controlvals[[".relStep"]],
+               minAbsPar = controlvals[["minAbsParApVar"]],
+               natural = controlvals[["natural"]])
+    } else {
+      "Approximate variance-covariance matrix not available"
+    }
   ## getting rid of condensed linear model and fit
   attr(lmeSt, "conLin") <- NULL
   attr(lmeSt, "lmeFit") <- NULL
+  grpDta <- inherits(data, "groupedData")
+
   ##
   ## creating the  lme object
   ##
-  estOut <- list(modelStruct = lmeSt,
+  structure(class = "lme",
+            list(modelStruct = lmeSt,
                  dims = dims,
                  contrasts = contr,
                  coefficients = list(
@@ -436,15 +445,11 @@ lme.formula <-
                  fitted = Fitted,
                  residuals = Resid,
                  fixDF = fixDF,
-                 na.action = attr(dataMix, "na.action"))
-  if (keep.data && !miss.data) estOut$data <- data
-  if (inherits(data, "groupedData")) {
-    ## saving labels and units for plots
-    attr(estOut, "units") <- attr(data, "units")
-    attr(estOut, "labels") <- attr(data, "labels")
-  }
-  class(estOut) <- "lme"
-  estOut
+		 na.action = attr(dataMix, "na.action"),
+		 data = if (keep.data && !miss.data) data),
+	    ## saving labels and units for plots
+	    units = if(grpDta) attr(data, "units"),
+	    labels= if(grpDta) attr(data, "labels"))
 }
 
 ### Auxiliary functions used internally in lme and its methods
@@ -1318,8 +1323,8 @@ intervals.lme <-
   }
   if (which != "fixed") {		# variance-covariance included
     if (is.character(aV <- object$apVar)) {
-      stop(gettextf("cannot get confidence intervals on var-cov components: %s",
-                    aV), domain = NA)
+      stop(gettextf("cannot get confidence intervals on var-cov components: %s\n Consider '%s'",
+                    aV, "which = \"fixed\""), domain = NA)
     }
     est <- attr(aV, "Pars")
     nP <- length(est)
@@ -2956,8 +2961,11 @@ lmeControl <-
 {
   if(is.null(sigma))
     sigma <- 0
-  else if (!is.numeric(sigma) || (length(sigma) != 1) || (sigma <= 0))
-    stop("Within-group std. dev. must be a positive numeric value")
+  else {
+    if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
+      stop("Within-group std. dev. must be a positive numeric value")
+    if(missing(apVar)) apVar <- FALSE # not yet implemented
+  }
   list(maxIter = maxIter, msMaxIter = msMaxIter, tolerance = tolerance,
        niterEM = niterEM, msMaxEval = msMaxEval, msTol = msTol,
        msVerbose = msVerbose, returnObject = returnObject,
