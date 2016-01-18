@@ -3,7 +3,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-### Copyright 2007-2015  The R Core team
+### Copyright 2007-2016  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -287,25 +287,21 @@ gnls <-
   }
 
   ##
-  ## defining the nlFrame
+  ## defining the nlFrame, i.e., nlEnv, an environment in R :
   ##
-  nlEnv <- new.env()
-  nlList <-
-                            list(model = gnlsModel,
-			    data = dataMod,
-			    plist = plist,
-			    beta = as.vector(spar),
-			    X = array(0, c(NReal, pLen), list(NULL, pn)),
-			    pmap = pmap,
-                            N = NReal,
-                            naPat = naPat,
-			    .parameters = c("beta"),
-                            finiteDiffGrad = finiteDiffGrad)
+  nlEnv <- list2env(
+      list(model = gnlsModel,
+           data = dataMod,
+           plist = plist,
+           beta = as.vector(spar),
+           X = array(0, c(NReal, pLen), list(NULL, pn)),
+           pmap = pmap,
+           N = NReal,
+           naPat = naPat,
+           .parameters = c("beta"),
+           finiteDiffGrad = finiteDiffGrad))
 
-  lapply(names(nlList), function(x, y, env) assign(x, y[[x]], envir = env),
-         nlList, env = nlEnv)
-
-  modelExpression <- ~{
+  modelExpression <- ~ {
     pars <- getParsGnls(plist, pmap, beta, N)
     res <- eval(model, data.frame(data, pars))
     if (!length(grad <- attr(res, "gradient"))) {
