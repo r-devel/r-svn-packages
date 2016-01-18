@@ -1,6 +1,7 @@
 2016-01-11  Martin Maechler
 
-	* R/VarCorr.R, man/VarCorr.Rd: add optional '...' (for other methods).
+	* R/VarCorr.R, man/VarCorr.Rd: add optional '...' and remove 'rdig'
+	from the argument list of the generic (for other methods).
 
 2015-11-25 Bert van Willigen --- with modifications by MM
 	* DESCRIPTION: version 3.1-123
