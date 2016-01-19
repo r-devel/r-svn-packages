@@ -1,4 +1,4 @@
-le2016-01-19 Brian Ripley
+2016-01-19 Brian Ripley
 
 	* src/{corStruct,gnls,nlme,nlmefit,nls}.c: Avoid clang warnings on
 	implicit conversions.
