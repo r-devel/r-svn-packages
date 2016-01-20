@@ -331,13 +331,22 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
     pmf0 <- mini.mf(pmf,maxr) ## deal with parametric components
     if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
     mf0 <- c(mf0,pmf0) ## add parametric terms to end of mf0
+    seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+    if (inherits(seed,"try-error")) {
+       runif(1)
+       seed <- get(".Random.seed",envir=.GlobalEnv)
+    }
+    kind <- RNGkind(NULL)
+    RNGkind("default", "default")
+    set.seed(9)  
     for (i in 1:length(mf0)) {
       me <- length(mf0[[i]]) 
       if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
     }
-    ## add response so that gam.setup can do its thing...
+    ## add response so that gam.setup can do its thing... 
+  
     mf0[[gp$response]] <- sample(mf[[gp$response]],maxr,replace=TRUE)
-
+    
     ## mf0 is the discretized model frame (actually a list), padded to have equal length rows
     ## k is the index vector for each sub-matrix, only the first nr rows of which are
     ## to be retained... Use of check.names=FALSE ensures, e.g. 'offset(x)' not changed...
@@ -345,7 +354,9 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
     ## now copy back into mf so terms unchanged
     #mf <- mf[1:maxr,]
     mf <- mf[sample(1:nrow(mf),maxr,replace=TRUE),]
-    for (na in names(mf0)) mf[[na]] <- mf0[[na]]  
+    for (na in names(mf0)) mf[[na]] <- mf0[[na]] 
+    RNGkind(kind[1], kind[2])
+    assign(".Random.seed", seed, envir = .GlobalEnv)
   } else mf <- mf0
 
   ## finally one more pass through, expanding k, k.start and nr to deal with replication that
