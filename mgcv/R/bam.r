@@ -652,7 +652,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   }
 
   for (i in 1:ncol(prop$db)) prop$db[,i] <- ## d beta / d rho matrix
-        Sl.initial.repara(Sl,as.numeric(prop$db[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=nt) 
+        Sl.initial.repara(Sl,as.numeric(prop$db[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt) 
 
   object <- list(db.drho=prop$db,
                  gcv.ubre=reml,mgcv.conv=conv,rank=prop$r,

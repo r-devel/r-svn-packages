@@ -10,7 +10,8 @@ Currently deprecated and liable to be removed:
 	
 1.8-11
 
-* bam(...,discrete=TRUE) can now handle matrix arguments to smooths.
+* bam(...,discrete=TRUE) can now handle matrix arguments to smooths (and hence
+  linear functional terms).
 
 * bam(...,discrete=TRUE) bug fix in fixed sp handling.
 
@@ -28,9 +29,12 @@ Currently deprecated and liable to be removed:
 
 * bam/gam name gcv.ubre field by "method".
 
-* gam.side modified so that if a smoth has 'side.constrain==FALSE' it is 
+* gam.side modified so that if a smooth has 'side.constrain==FALSE' it is 
   neither constrained, nor used in the computation of constraints for other
   terms (the latter part being new). Very limited impact!
+
+* No longer checks if SUPPORT_OPENMP defined in Rconfig.h, but only if _OPENMP
+  defined. No change in actual behaviour. 
 
 1.8-10
 
