@@ -1,3 +1,7 @@
+2016-01-25 Brian Ripley
+
+	* src/*.c: include directly headers included via R.h.
+
 2015-08-29 Brian Ripley
 
 	* man/read.dbf.Rd: wotsit.org is unavailable and has been for weeks.

@@ -25,10 +25,11 @@
 #ifndef NLME_BASE_H
 #define NLME_BASE_H
 
-#include "S.h"
 #include <stdlib.h>
+#include "S.h"
 
 #ifdef R_S_H
+#include <string.h> // for memcpy
 #include <R.h>
 #include <Rinternals.h>
 #include <Rmath.h>
