@@ -2243,9 +2243,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                       sign(object$y-object$fitted.values)
   if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
 
-  object$deviance <- sum(object$residuals^2)
-  object$aic <- family$aic(object$y,1,object$fitted.values,object$prior.weights,object$deviance) +
-                2 * (length(object$y) - sum(AR.start))*log(1/sqrt(1-rho^2)) + ## correction for AR
+  dev <- object$deviance <- sum(object$residuals^2)
+  if (rho!=0&&family$family=="gaussian") dev <- sum(object$std.rsd^2)
+  object$aic <- family$aic(object$y,1,object$fitted.values,object$prior.weights,dev) -
+                2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-rho^2)) + ## correction for AR
                 2*sum(object$edf)
   if (!is.null(object$edf2)&&sum(object$edf2)>sum(object$edf1)) object$edf2 <- object$edf1
   object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$prior.weights))

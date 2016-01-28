@@ -2021,9 +2021,6 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
   object$X <- model.matrix(form,data)
   object$bs.dim <- ncol(object$X)
 
-  if (object$dim<2) object$xt <- NULL ## no point making it tensor like
-
-  #if (!is.null(object$xt)&&object$xt=="tensor") {
   if (inherits(object,"tensor.smooth.spec")) { 
     ## give object margins like a tensor product smooth...
     object$margin <- list()
@@ -2044,13 +2041,22 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
       for (i in 1:ns) object$term <- c(object$term,object$margin[[i]]$term)
       object$label <- paste0(substr(object$label,1,2),paste0(object$term,collapse=","),")",collapse="")
       object$rind <- ind ## re-ordering index
+      if (!is.null(object$xt$S)) stop("Please put term with most levels last in 're' to avoid spoiling supplied penalties")
     }
   } ## finished tensor like setup
 
-  ## now construct penalty        
-  object$S <- list(diag(object$bs.dim))  # get penalty
- 
-  object$rank <- object$bs.dim  # penalty rank 
+  ## now construct penalty   
+  if (is.null(object$xt$S)) {     
+    object$S <- list(diag(object$bs.dim))  # get penalty
+    object$rank <- object$bs.dim  # penalty rank 
+  } else {
+    object$S <- if (is.list(object$xt$S)) object$xt$S else list(object$xt$S)
+    for (i in 1:length(object$S)) { 
+      if (ncol(object$S[[i]])!=object$bs.dim||nrow(object$S[[i]])!=object$bs.dim) stop("supplied S matrices are wrong diminsion")
+    }
+    object$rank <- object$xt$rank
+  }
+  #object$rank <- object$bs.dim  # penalty rank 
   object$null.space.dim <- 0    # dimension of unpenalized space 
 
   object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix

@@ -9,9 +9,14 @@ Currently deprecated and liable to be removed:
 
 1.8-12
 
-- negbin() with a grid search for `theta' is no longer supported - use 
+* s(...,bs="re") now allows known precision matrix structures to be defined
+  using the `xt' argument of 's' see ?smooth.construct.re.smooth.spec for
+  details and example.
+
+* negbin() with a grid search for `theta' is no longer supported - use 
   'nb' instead.
 
+* bug fix to bam aic computation with AR rho correction.
 	
 1.8-11
 
