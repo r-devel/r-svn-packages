@@ -1688,6 +1688,69 @@ Predict.matrix.pspline.smooth <- function(object,data)
   if (object$mono==0) X else X %*% object$B
 } ## Predict.matrix.pspline.smooth
 
+
+##############################
+## B-spline methods start here
+##############################
+
+smooth.construct.bs.smooth.spec <- function(object,data,knots)
+# a B-spline constructor method function
+{ if (is.na(object$p.order)) object$p.order <- 2
+  m <- object$m <- object$p.order ## 2 is cubic spline
+  if (object$bs.dim<0) object$bs.dim <- max(10,m+1) ## default
+  nk <- object$bs.dim - m  # number of interior knots
+  if (nk<=0) stop("basis dimension too small for b-spline order")
+  if (length(object$term)!=1) stop("Basis only handles 1D smooths")
+  x <- data[[object$term]]    # find the data
+  k <- knots[[object$term]]
+  if (is.null(k)) { xl <- min(x);xu <- max(x) } else
+  if (length(k)==2) { 
+    xl <- min(k);xu <- max(k);
+    if (xl>min(x)||xu<max(x)) stop("knot range does not include data")
+  } 
+ 
+  if (is.null(k)||length(k)==2) {
+    xr <- xu - xl # data limits and range
+    xl <- xl-xr*0.001;xu <- xu+xr*0.001;dx <- (xu-xl)/(nk-1) 
+    k <- seq(xl-dx*(m+1),xu+dx*(m+1),length=nk+2*m+2)   
+  } else {
+    if (length(k)!=nk+2*m+2) 
+    stop(paste("there should be ",nk+2*m+2," supplied knots"))
+  }
+  if (is.null(object$deriv)) object$deriv <- 0 
+  object$X <- splines::spline.des(k,x,m+2,x*0+object$deriv)$design # get model matrix
+  if (!is.null(k)) {
+    if (sum(colSums(object$X)==0)>0) warning("there is *no* information about some basis coefficients")
+  }  
+  if (length(unique(x)) < object$bs.dim) warning("basis dimension is larger than number of unique covariates")
+ 
+  ## now construct derivative based penalty. Order of derivate
+  ## is equal to m, which is only a conventional spline in the 
+  ## cubic case...        
+  object$knots <- k; 
+  class(object) <- "bspline.smooth"  # Give object a class
+  k0 <- k[m+1+1:nk] ## the interior knots
+  object$deriv <- m
+  dat <- data.frame(k0);names(dat) <- object$term 
+  D <- Predict.matrix.bspline.smooth(object,dat) ## evaluate basis for mth derivative at the knots 
+  h <- diff(k0) ## the difference sequence... 
+  ld <- c(0,h/3)+c(h/3,0)
+  ch <- trichol(ld,h/6)  
+  object$D <- ch$ld*D + rbind(ch$sd*D[-1,],0)   
+  object$S <- list(crossprod(object$D))
+  object$deriv <- NULL
+  object$rank <- object$bs.dim-m  # penalty rank 
+  object$null.space.dim <- m    # dimension of unpenalized space  
+ 
+  object
+} ### end of B-spline constructor
+
+Predict.matrix.bspline.smooth <- function(object,data) {
+  object$mono <- 0
+  Predict.matrix.pspline.smooth(object,data)
+}
+
+
 #######################################################################
 # Smooth-factor interactions. Efficient alternative to s(x,by=fac,id=1) 
 #######################################################################

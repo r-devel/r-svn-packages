@@ -34,7 +34,7 @@ The advantage of P-splines is the flexible way that penalty and basis order can 
 
 }
 
-\value{ An object of class \code{"ps.smooth"} or \code{"cp.smooth"}. See \code{\link{smooth.construct}}, 
+\value{ An object of class \code{"pspline.smooth"} or \code{"cp.smooth"}. See \code{\link{smooth.construct}}, 
 for the elements that this object will contain.
 }
 
@@ -59,7 +59,7 @@ For the \code{"ps"} basis it is possible to set flags in the smooth specificatio
 according to the SCOP-spline monotonic smoother construction of Pya and Wood (2015). As yet this is not 
 supported by any modelling functions in \code{mgcv} (see package \code{scam}). Similarly it is possible to set a 
 \code{deriv} flag in a smooth specification or smooth object, so that a model or prediction matrix produces the
-requested derivative of the spline, rahter than evaluating it. See examples below. 
+requested derivative of the spline, rather than evaluating it. See examples below. 
 
 }
 
