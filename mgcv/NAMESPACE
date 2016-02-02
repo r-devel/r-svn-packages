@@ -65,7 +65,7 @@ export(anova.gam, bam, bam.update, betar, cox.ph,concurvity, cSplineDes,
        summary.gam,sp.vcov,
        spasm.construct,spasm.sp,spasm.smooth,
        t2,te,ti,tensor.prod.model.matrix,tensor.prod.penalties,
-       Tweedie,tw,uniquecombs, vcov.gam, vis.gam, ziP, ziplss)
+       trichol,Tweedie,tw,uniquecombs, vcov.gam, vis.gam, ziP, ziplss)
 
 importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,heat.colors,terrain.colors,topo.colors)
 importFrom(graphics,abline,axis,axTicks,box,contour,hist,image,lines,

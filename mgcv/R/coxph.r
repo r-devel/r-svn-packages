@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013, 2014) coxph model extended family. 
+## (c) Simon N. Wood (2013, 2014) coxph model general family. 
 ## Released under GPL2 ...
 
 cox.ph <- function (link = "identity") { 
@@ -20,12 +20,6 @@ cox.ph <- function (link = "identity") {
   env <- new.env(parent = .GlobalEnv)
   validmu <- function(mu) all(is.finite(mu))
 
-   
-#    aic <- function(y, mu, theta=NULL, wt, dev) {
-#      ## this needs to call coxlpl - not really enough info 
-#      ## use store and retrieve approach, actually this is not needed (gam.fit5 computes from likelihood)
-#      get(".log.partial.likelihood")
-#    }
     
 
     ## initialization is tough here... need data frame in reverse time order,
@@ -76,7 +70,8 @@ cox.ph <- function (link = "identity") {
     ## = censoring)
       tr <- unique(y);r <- match(y,tr);nt <- length(tr)
       oo <- .C("coxpp",as.double(X%*%beta),A=as.double(X),as.integer(r),d=as.integer(wt),
-               h=as.double(rep(0,nt)),q=as.double(rep(0,nt)),km=as.double(rep(0,nt)),n=as.integer(nrow(X)),p=as.integer(ncol(X)),
+               h=as.double(rep(0,nt)),q=as.double(rep(0,nt)),km=as.double(rep(0,nt)),
+               n=as.integer(nrow(X)),p=as.integer(ncol(X)),
                nt=as.integer(nt),PACKAGE="mgcv")
       p <- ncol(X)
       list(tr=tr,h=oo$h,q=oo$q,a=matrix(oo$A[p*nt],p,nt),nt=nt,r=r,km=oo$km)

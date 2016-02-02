@@ -1460,6 +1460,17 @@ void mgcv_td_qy(double *S,double *tau,int *m,int *n, double *B,int *left,int *tr
   FREE(work);
 }
 
+void tri_chol(double *ld,double *sd,int *n,int *info) {
+/* compute LDL' decomposition of n by n symm tridiagonal matrix
+   with leading diagonal ld and sub/sup diagonals sd. 
+   Returns D in ld and sub-diagonal of L in sd (leading diagonal 
+   of L is all ones). info is 0 for success, -k if kth argument illegal
+   and k<n if not +ve definite, k==n if positive semi-definite and could 
+   just complete.
+*/  
+  F77_CALL(dpttrf)(n,ld,sd,info); 
+}
+
 void mgcv_tri_diag(double *S,int *n,double *tau)
 /* Reduces symmetric n by n matrix S to tridiagonal form T 
    by similarity transformation. Q'SQ = T, where Q is an

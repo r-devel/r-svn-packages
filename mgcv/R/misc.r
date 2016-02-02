@@ -18,6 +18,21 @@ rmvn <- function(n,mu,V) {
   z
 } ## rmvn
 
+trichol <- function(ld,sd) {
+## obtain chol factor R of symm tridiag matrix, A, with leading diag
+## ld and sub/super diags sd. R'R = A. On exit ld is diag of R and
+## sd its super diagonal.
+  n <- length(ld)
+  if (n<2) stop("don't be silly")
+  if (n!=length(sd)+1) stop("sd should have exactly one less entry than ld")
+  oo <- .C(C_tri_chol,ld=as.double(ld),sd=as.double(sd),n=as.integer(n),info=as.integer(0))
+  if (oo$info<0) stop("something wrong with inputs to LAPACK routine")
+  if (oo$info>0) stop("not postive definite")
+  ld <- sqrt(oo$ld)
+  sd <- oo$sd*ld[1:(n-1)]
+  list(ld=ld,sd=sd)
+}
+
 mgcv.omp <- function() {
 ## does open MP appear to be available?
   oo <- .C(C_mgcv_omp,a=as.integer(-1))

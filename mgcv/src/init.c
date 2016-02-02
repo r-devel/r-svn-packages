@@ -20,6 +20,7 @@ R_CallMethodDef CallMethods[] = {
 };
 
 R_CMethodDef CEntries[] = {
+  {"tri_chol",(DL_FUNC) tri_chol,4},
     {"diagXVXt", (DL_FUNC) &diagXVXt,16},
     {"XWXd", (DL_FUNC) &XWXd,18},
     {"XWyd", (DL_FUNC) &XWyd,18},
