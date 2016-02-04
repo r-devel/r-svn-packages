@@ -19,8 +19,9 @@ R_CallMethodDef CallMethods[] = {
   {NULL, NULL, 0}
 };
 
-R_CMethodDef CEntries[] = {
-  {"tri_chol",(DL_FUNC) tri_chol,4},
+R_CMethodDef CEntries[] = { 
+    {"band_chol",(DL_FUNC) band_chol,4},
+    {"tri_chol",(DL_FUNC) tri_chol,4},
     {"diagXVXt", (DL_FUNC) &diagXVXt,16},
     {"XWXd", (DL_FUNC) &XWXd,18},
     {"XWyd", (DL_FUNC) &XWyd,18},

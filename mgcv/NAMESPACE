@@ -1,6 +1,7 @@
 useDynLib(mgcv, .registration = TRUE, .fixes = "C_")
 
-export(anova.gam, bam, bam.update, betar, cox.ph,concurvity, cSplineDes,
+export(anova.gam, bam, bam.update,bandchol, betar, cox.ph,concurvity, 
+       cSplineDes,
        exclude.too.far,extract.lme.cov, extract.lme.cov2,
        formXtViX, full.score, formula.gam,fixDependence,fix.family.link,
        fix.family.var, fix.family.ls, fix.family.qf,fix.family.rd,   
@@ -41,7 +42,7 @@ export(anova.gam, bam, bam.update, betar, cox.ph,concurvity, cSplineDes,
        Predict.matrix.gp.smooth,
        qq.gam,
        residuals.gam,rig,rTweedie,rmvn, 
-       Rrank,s,scat,
+       Rrank,s,scat,sdiag,"sdiag<-",
        sim2jam,
        slanczos,
        smoothCon,smooth.construct,smooth.construct2,
