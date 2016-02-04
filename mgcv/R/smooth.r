@@ -1701,7 +1701,7 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
   else m <- object$p.order  # m[1] - basis order, m[2] - penalty order
   if (is.na(m[1])) if (is.na(m[2])) m <- c(3,2) else m[1] <- m[2] + 1
   if (is.na(m[2])) m[2] <- max(0,m[1]-1)
-  object$p.order <- m
+  object$m <- object$p.order <- m
   if (object$bs.dim<0) object$bs.dim <- max(10,m[1]) ## default
   nk <- object$bs.dim - m[1] + 1  # number of interior knots
   if (nk<=0) stop("basis dimension too small for b-spline order")
@@ -1754,8 +1754,8 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     H <- matrix(1/(rep(1:(pord+1),pord+1)+rep(1:(pord+1),each=pord+1)-1),pord+1,pord+1)
     W1 <- t(P)%*%H%*%P
     ## Create the non-zero diagonals of the W matrix... 
-    ld0 <- rep(sdiag(W1),length(h))*rep(h,each=length(ld))
-    i1 <- c(rep(1:pord,length(h)) + rep(0:(length(h)-1) * (pord+1),each=pord),length(ld))
+    ld0 <- rep(sdiag(W1),length(h))*rep(h,each=pord+1)
+    i1 <- c(rep(1:pord,length(h)) + rep(0:(length(h)-1) * (pord+1),each=pord),length(ld0))
     ld <- ld0[i1] ## extract elements for leading diagonal
     i0 <- 1:(length(h)-1)*pord+1
     i2 <- 1:(length(h)-1)*(pord+1)
@@ -1765,7 +1765,7 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     for (k in 1:pord) { ## create the other diagonals...
       diwk <- sdiag(W1,k) ## kth diagonal of W1
       ind <- 1:(length(ld)-k)
-      B[k+1,ind] <- rep(c(diwk,rep(0,k-1)),length(h))[ind]  
+      B[k+1,ind] <- (rep(h,each=pord)*rep(c(diwk,rep(0,k-1)),length(h)))[ind]  
     }
     ## ... now B contains the non-zero diagonals of W
     B <- bandchol(B) ## the banded cholesky factor.
