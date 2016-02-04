@@ -9,7 +9,7 @@ Currently deprecated and liable to be removed:
 
 1.8-12
 
-* "bs" B-spline smoothing basis. B-splines with derivative based penalties
+** "bs" B-spline smoothing basis. B-splines with derivative based penalties
   of various orders.
 
 * 'trichol' and 'bandchol' added for banded Cholesky decompositions, plus

@@ -1750,9 +1750,11 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
   if (pord==0) { ## integrand is just a step function...
     object$D <- sqrt(h)*D
   } else { ## integrand is a piecewise polynomial...
-    P <- solve(matrix(rep(seq(0,1,length=pord+1),pord+1)^rep(0:pord,each=pord+1),pord+1,pord+1))
-    H <- matrix(1/(rep(1:(pord+1),pord+1)+rep(1:(pord+1),each=pord+1)-1),pord+1,pord+1)
+    P <- solve(matrix(rep(seq(-1,1,length=pord+1),pord+1)^rep(0:pord,each=pord+1),pord+1,pord+1))
+    i1 <- rep(1:(pord+1),pord+1)+rep(1:(pord+1),each=pord+1) ## i + j
+    H <- matrix((1+(-1)^(i1-2))/(i1-1),pord+1,pord+1)
     W1 <- t(P)%*%H%*%P
+    h <- h/2 ## because we map integration interval to to [-1,1] for maximum stability
     ## Create the non-zero diagonals of the W matrix... 
     ld0 <- rep(sdiag(W1),length(h))*rep(h,each=pord+1)
     i1 <- c(rep(1:pord,length(h)) + rep(0:(length(h)-1) * (pord+1),each=pord),length(ld0))
