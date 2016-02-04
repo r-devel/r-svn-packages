@@ -23,6 +23,7 @@ trichol(ld,sd)
 
 }
  
+\seealso{\code{\link{bandchol}}}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
