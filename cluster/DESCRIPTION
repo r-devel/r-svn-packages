@@ -1,6 +1,6 @@
 Package: cluster
-Version: 2.0.3
-Date: 2015-07-20
+Version: 2.0.4
+Date: 2016-02-05
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from
@@ -17,7 +17,7 @@ Authors@R: c(person("Martin","Maechler", role=c("aut","cre"), email="maechler@st
  ,person("Matthias", "Studer", role="ctb")
  ,person("Pierre", "Roudier", role="ctb")
  )
-Depends: R (>= 2.15.0), utils
+Depends: R (>= 3.0.1), utils
 Imports: graphics, grDevices, stats
 Suggests: MASS
 SuggestsNote: two small examples using MASS' cov.rob() and mvrnorm()

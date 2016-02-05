@@ -18,7 +18,7 @@ dysta <- function(x, kind = c("euclidean","manhattan", "SqEuclidean"),
     n <- nrow(x <- as.matrix(x))
     p <- ncol(x)
     storage.mode(x) <- "double"
-    hasNA <- apply(x, 2, anyNA)
+    hasNA <- apply(is.na(x), 2, any) # == apply(x, 2, anyNA)
     if(any(hasNA)) {
 	ina <- is.na(x)
 	x[ina] <- valmd <- -1.1*max(abs(range(x, na.rm = TRUE)))
