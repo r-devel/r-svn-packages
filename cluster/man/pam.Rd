@@ -87,7 +87,7 @@ pam(x, k, diss = inherits(x, "dist"), metric = "euclidean",
   of dissimilarities instead of a sum of squared euclidean distances;
   (c) it provides a novel graphical display, the silhouette plot (see
   \code{plot.partition}) (d) it allows to select the number of clusters
-  using \code{mean(\link{silhouette}(pr))} on the result
+  using \code{mean(\link{silhouette}(pr)[, "sil_width"])} on the result
   \code{pr <- pam(..)}, or directly its component
   \code{pr$silinfo$avg.width}, see also \code{\link{pam.object}}.
 
