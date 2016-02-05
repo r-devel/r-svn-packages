@@ -1772,12 +1772,12 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     ## ... now B contains the non-zero diagonals of W
     B <- bandchol(B) ## the banded cholesky factor.
     ## Pre-Multiply D by the Cholesky factor...
-    D <- B[1,]*D
+    D1 <- B[1,]*D
     for (k in 1:pord) {
       ind <- 1:(nrow(D)-k)
-      D[ind,] <- D[ind,] + B[k+1,ind] * D[ind+k,]
+      D1[ind,] <- D1[ind,] + B[k+1,ind] * D[ind+k,]
     }
-    object$D <- D
+    object$D <- D1
   }
   object$S <- list(crossprod(object$D))
   object$rank <- object$bs.dim-m[2]  # penalty rank 

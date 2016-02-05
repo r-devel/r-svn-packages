@@ -12,6 +12,9 @@ Currently deprecated and liable to be removed:
 ** "bs" B-spline smoothing basis. B-splines with derivative based penalties
   of various orders.
 
+* changed scheme=3 in default 2-D plotting to grey scale version of 
+  scheme=2.
+
 * 'trichol' and 'bandchol' added for banded Cholesky decompositions, plus
   'sdiag' functions added for extracting and setting matrix sub- and
   super-  diagonals.
