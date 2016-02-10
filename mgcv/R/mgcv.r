@@ -1853,6 +1853,8 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     ## check whether family requires intercept to be dropped...
     drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
+ 
+    if (inherits(family,"general.family")&&!is.null(family$presetup)) eval(family$presetup)
 
     gsname <- if (is.list(formula)) "gam.setup.list" else "gam.setup" 
 

@@ -111,15 +111,18 @@ cox.ph <- function (link = "identity") {
     ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
     ## function defining the cox model log lik.
     ## Calls C code "coxlpl"
-    ## deriv codes: 0 - eval; 1 - grad and Hessian
-    ##              2 - d1H (diagonal only)
-    ##              3 - d1H; 4 d2H (diag)
+    ## deriv codes: 0   - evaluate the log likelihood
+    ##              1   - evaluate the grad and Hessian, H, of log lik w.r.t. coefs (beta)
+    ##              2/3 - evaluate d1H =dH/drho given db/drho in d1b 
+    ##                    (2 is for evaluation of diagonal only)
+    ##              4 -  given d1b and d2b evaluate trHid2H= tr(Hp^{-1}d2H/drhodrho')
     ## Hp is the preconditioned penalized hessian of the log lik
     ##    which is of rank 'rank'.
     ## fh is a factorization of Hp - either its eigen decomposition 
     ##    or its Choleski factor
     ## D is the diagonal pre-conditioning matrix used to obtain Hp
     ##   if Hr is the raw Hp then Hp = D*t(D*Hr)
+
       ##tr <- sort(unique(y),decreasing=TRUE)
       tr <- unique(y)
       r <- match(y,tr)
