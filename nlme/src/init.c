@@ -72,8 +72,8 @@ extern void fit_nlme(double *, double *, longint *,
 	 longint *, longint *, double *,
 	 double *, longint *, double *,
 	 double *, longint *, longint *,
-        // 17-11-2015; Fixed sigma patch; E van Willigen; Quantitative Solutions
-	 double * aMOD);
+         // 17-11-2015; Fixed sigma patch; E van Willigen; Quantitative Solutions
+	 double, SEXP model);
 extern void nlme_one_comp_first (longint *, double *, double *);
 extern void nlme_one_comp_open (longint *, double *, double *);
 
