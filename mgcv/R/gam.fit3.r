@@ -620,7 +620,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                 p=as.integer(ncol(x)),M=as.integer(nSp),Mp=as.integer(Mp),Enrow = as.integer(rows.E),
                 rSncol=as.integer(rSncol),deriv=as.integer(deriv.sp),
                 REML = as.integer(REML),fisher=as.integer(fisher),
-                fixed.penalty = as.integer(rp$fixed.penalty),nthreads=as.integer(control$nthreads))      
+                fixed.penalty = as.integer(rp$fixed.penalty),nthreads=as.integer(control$nthreads),
+                dVkk=as.double(rep(0,nSp*nSp)))      
          if (control$trace) { 
            tg <- sum((proc.time()-t1)[c(1,4)])
            cat("done!\n")
@@ -837,7 +838,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
-        dw.drho=dw.drho,
+        dw.drho=dw.drho,dVkk = matrix(oo$dVkk,nSp,nSp),
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
@@ -1630,6 +1631,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ct <- "iteration limit reached"
     warning("Iteration limit reached without full convergence - check carefully")
   } else ct <- "full convergence"
+  b$dVkk <- NULL
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,conv =ct,score.hist = score.hist[!is.na(score.hist)],object=b)
 } ## newton
 
@@ -1707,7 +1709,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           trial$grad <- t(L)%*%b$UBRE1  
         } else { ## default to deviance based GCV
           trial$grad <- t(L)%*%b$GCV1;
-        } 
+        }  
+        trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
         trial$scale.est <- b$scale.est;rm(b);
         trial$dscore <- sum(step*trial$grad) ## directional derivative
         
@@ -1752,7 +1755,9 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      score <- b$UBRE;grad <- t(L)%*%b$UBRE1  
   } else { ## default to deviance based GCV
      score <- b$GCV;grad <- t(L)%*%b$GCV1;
-  } 
+  }  
+  L0 <- if (nrow(L)==nrow(b$dVkk)) L else L[-nrow(L),-ncol(L)]
+  initial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
   initial$score <- score;initial$grad <- grad;
   initial$scale.est <- b$scale.est
   rm(b)
@@ -1803,8 +1808,9 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## get the trial step ...
 
     step <- -drop(B%*%initial$grad)
-    ## following line messes up conditions under which Wolfe guarantees update... 
-    ## step[!uconv.ind] <- 0 ## don't move if apparently converged  - don't do this
+    ## following line would mess up conditions under which Wolfe guarantees update,
+    ## *if* based only on grad and not grad and hess...  
+    step[!uconv.ind] <- 0 ## don't move if apparently converged 
     ## unit.step <- step/sqrt(sum(step^2)) ## unit vector in step direction
 
     ms <- max(abs(step))
@@ -1868,7 +1874,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           trial$grad <- t(L)%*%b$UBRE1  
         } else { ## default to deviance based GCV
           trial$grad <- t(L)%*%b$GCV1;
-        } 
+        }  
+        trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
         trial$dscore <- sum(trial$grad*step)
         deriv <- 0 
       } else trial$grad <- trial$dscore <- NULL
@@ -1901,6 +1908,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         } 
         trial$dscore <- sum(trial$grad*step)
         trial$scale.est <- b$scale.est
+        trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
         rm(b)
       }
 
@@ -1940,10 +1948,12 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       converged <- TRUE
       if (reml) score.scale <- 1 + abs(trial$score) ## abs(log(trial$dev/nrow(X))) + abs(trial$score)
       else score.scale <- abs(trial$scale.est) + abs(trial$score)  ##trial$dev/nrow(X) + abs(trial$score)    
-      uconv.ind <- abs(trial$grad) > score.scale*conv.tol
+      uconv.ind <- abs(trial$grad) > score.scale*conv.tol 
       if (sum(uconv.ind)) converged <- FALSE
-      if (abs(initial$score-trial$score)>score.scale*conv.tol) { 
-        if (converged) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
+      if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
+      uconv.ind <- uconv.ind | abs(trial$dVkk) > score.scale * conv.tol 
+      if (abs(initial$score-trial$score) > score.scale*conv.tol) { 
+        if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
         converged <- FALSE      
       }
       if (converged) break
@@ -1977,7 +1987,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   } else { ## default to deviance based GCV
      score <- b$GCV;grad <- t(L)%*%b$GCV1;
   } 
-
+  b$dVkk <- NULL
   ## get approximate Hessian...
   ev <- eigen(B,symmetric=TRUE)
   ind <- ev$values>max(ev$values)*.Machine$double.eps^.9

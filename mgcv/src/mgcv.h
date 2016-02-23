@@ -39,7 +39,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
          double *P0, double *P1,double *P2,double *trA,
          double *trA1,double *trA2,double *rV,double *rank_tol,double *conv_tol, int *rank_est,
 	 int *n,int *q, int *M,int *Mp,int *Enrow,int *rSncol,int *deriv,
-	  int *REML,int *fisher,int *fixed_penalty,int *nthreads);     
+	  int *REML,int *fisher,int *fixed_penalty,int *nthreads,double *dVkk);     
 
 void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 	  double *sp,double *theta,double *z,double *w,double *wz,double *wf,
@@ -50,7 +50,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
           double *ldet, double *ldet1,double *ldet2,double *rV,
           double *rank_tol,int *rank_est,
 	  int *n,int *q, int *M,int *n_theta, int *Mp,int *Enrow,int *rSncol,int *deriv,
-	  int *fixed_penalty,int *nt,int *type);
+	  int *fixed_penalty,int *nt,int *type,double *dVkk);
 
 void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int *n,int *q,int *rE,double *eta,
 	      double *penalty,double *rank_tol,int *nt,int *use_wy);

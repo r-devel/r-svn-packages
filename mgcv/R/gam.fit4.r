@@ -581,7 +581,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             n.theta=as.integer(length(theta)), Mp=as.integer(Mp),Enrow=as.integer(rows.E),
             rSncol=as.integer(rSncol),deriv=as.integer(deriv),
 	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),
-            type=as.integer(gdi.type))
+            type=as.integer(gdi.type),dVkk=as.double(rep(0,nSp^2)))
 ## test code used to ensure type 0 and type 1 produce identical results, when both should work. 
 #   oot <- .C(C_gdi2,
 #            X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
@@ -685,7 +685,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         scale.est=scale,reml.scale=scale,
         aic=aic.model,
         rank=oo$rank.est,
-        K=Kmat,control=control
+        K=Kmat,control=control,
+        dVkk = matrix(oo$dVkk,nSp,nSp)
         #,D1=oo$D1,D2=D2,
         #ldet=oo$ldet,ldet1=oo$ldet1,ldet2=ldet2,
         #bSb=oo$P,bSb1=oo$P1,bSb2=bSb2,

@@ -136,8 +136,6 @@ cox.ph <- function (link = "identity") {
       } else M <- d1H <- 0
       if (deriv > 2) {
         d2H <- rep(0,p*M*(M+1)/2)
-        #X <- t(forwardsolve(t(L),t(X)))
-        #d1b <- L %*% d1b; d2b <- L %*% d2b
         if (is.list(fh)) {
           ev <- fh
         } else  { ## need to compute eigen here
