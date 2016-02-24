@@ -1,5 +1,6 @@
 \name{sdiag}
 \alias{sdiag}
+\alias{sdiag<-}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Extract of modify diagonals of a matrix}
 \description{ Extracts of modifies sub- or super- diagonals of a matrix.

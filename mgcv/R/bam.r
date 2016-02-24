@@ -1599,7 +1599,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
     
    }
    G$smooth <- G$X <- NULL
-
+   object$prior.weights <- G$w
    object$AR1.rho <- rho
    if (rho!=0) { ## need to store last model matrix row, to allow update
      object$yX.last <- yX.last
