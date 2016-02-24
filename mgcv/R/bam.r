@@ -690,6 +690,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object$iter <- iter 
   object$wt <- w
   object$y <- G$y
+  object$prior.weights <- G$w
   rm(G);if (gc.level>0) gc()
   object
 } ## end bgam.fitd
@@ -1015,6 +1016,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
   object$iter <- iter 
   object$wt <- wt
   object$y <- G$y
+  object$prior.weights <- G$w
   rm(G);if (gc.level>0) gc()
   object
 } ## end bgam.fit
@@ -1184,6 +1186,7 @@ bgam.fit2 <- function (G, mf, chunk.size, gp ,scale ,gamma,method, etastart = NU
   object$wt <- w
   object$R <- qrx$R
   object$y <- G$y
+  object$prior.weights <- G$w
   rm(G);gc()
   object
 } ## end bgam.fit2
@@ -2209,7 +2212,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$nsdf <- G$nsdf
   if (G$nsdf>0) names(object$coefficients)[1:G$nsdf] <- colnamesX[1:G$nsdf]
   object$offset <- G$offset
-  object$prior.weights <- G$w
+  ##object$prior.weights <- G$w
   object$pterms <- G$pterms
   object$pred.formula <- G$pred.formula 
   object$smooth <- G$smooth
@@ -2249,7 +2252,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                 2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-rho^2)) + ## correction for AR
                 2*sum(object$edf)
   if (!is.null(object$edf2)&&sum(object$edf2)>sum(object$edf1)) object$edf2 <- object$edf1
-  object$null.deviance <- sum(family$dev.resids(object$y,mean(object$y),object$prior.weights))
+  object$null.deviance <- sum(family$dev.resids(object$y,weighted.mean(object$y,object$prior.weights),object$prior.weights))
   if (!is.null(object$full.sp)) {
     if (length(object$full.sp)==length(object$sp)&&
         all.equal(object$sp,object$full.sp)==TRUE) object$full.sp <- NULL

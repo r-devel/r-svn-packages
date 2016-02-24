@@ -12,6 +12,10 @@ Currently deprecated and liable to be removed:
 ** "bs" B-spline smoothing basis. B-splines with derivative based penalties
   of various orders.
 
+* bam null deviance computation was wrong with prior weights (including 
+  binomial other than binary case), and returned deviance was wrong for 
+  non-binary binomial. Fixed (did not affect estimation). 
+
 * improvements to "bfgs" optimizer to better deal with `infinite' smoothing
   parameters.
 
