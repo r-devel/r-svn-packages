@@ -2378,11 +2378,11 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
           b1,b2,eta1,eta2,
           n,&rank,M,n_theta,rSncol,&deriv2,&neg_w,&nr);
     
-    i=0;mgcv_mmult(work,Rh,b1,&i,&i,&rank,M,&rank); /* Rh db/drho */
-    /* Now obtain dVkk = db'/drho Rh' Rh db/drho ... */
-    //for (p0=work,p2 = dVkk + *M;dVkk<p2;dVkk++) for (*dVkk=0.0,p1 = p0 + rank;p0<p1;p0++) *dVkk += *p0 * *p0; 
-    getXtX(dVkk,work,&rank,M);  
-
+    if (*M>0) {
+      i=0;mgcv_mmult(work,Rh,b1,&i,&i,&rank,M,&rank); /* Rh db/drho */
+      /* Now obtain dVkk = db'/drho Rh' Rh db/drho ... */
+      getXtX(dVkk,work,&rank,M);  
+    }
     /* compute the grad of the deviance... */
     for (p4 = Dth,p0=D1,p1=eta1,i=0;i < *n_theta;i++,p0++) {
       for (*p0=0.0,p2 = Det,p3=Det + *n;p2<p3;p2++,p1++,p4++) *p0 += *p1 * *p2 + *p4;
@@ -2852,12 +2852,11 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
     /* Note that PKtz used as pivoted version of beta, but not clear that PKtz really essential if IFT used */
 
     ift1(R,Vt,X,rS,PKtz,sp,w,a1,b1,b2,eta1,eta2,n,&rank,M,rSncol,&deriv2,&neg_w,&nr);
-
-    i=0;mgcv_mmult(work,Rh,b1,&i,&i,&rank,M,&rank); /* Rh db/drho */
-    /* Now obtain dVkk = diag(db'/drho Rh' Rh db/drho) ... */
-    //for (p0=work,p2 = dVkk + *M;dVkk<p2;dVkk++) for (*dVkk=0.0,p1 = p0 + rank;p0<p1;p0++) *dVkk += *p0 * *p0; 
-    getXtX(dVkk,work,&rank,M); 
-  
+    if (*M>0) {
+      i=0;mgcv_mmult(work,Rh,b1,&i,&i,&rank,M,&rank); /* Rh db/drho */
+      /* Now obtain dVkk = diag(db'/drho Rh' Rh db/drho) ... */
+      getXtX(dVkk,work,&rank,M); 
+    }
     /* Now use IFT based derivatives to obtain derivatives of W and hence the T_* terms */
 
     /* get derivatives of w */  
