@@ -12,6 +12,9 @@ Currently deprecated and liable to be removed:
 ** "bs" B-spline smoothing basis. B-splines with derivative based penalties
   of various orders.
 
+* improvements to "bfgs" optimizer to better deal with `infinite' smoothing
+  parameters.
+
 * changed scheme=3 in default 2-D plotting to grey scale version of 
   scheme=2.
 

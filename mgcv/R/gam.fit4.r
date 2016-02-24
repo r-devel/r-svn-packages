@@ -944,7 +944,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     fcoef <- rep(0,length(bdrop));fcoef[!bdrop] <- coef
   } else fcoef <- coef
 
-  d1l <- d2l <- d1bSb <- d2bSb <- d1b <- d2b <- d1ldetH <- d2ldetH <- d1b <- d2b <- NULL
+  dVkk <- d1l <- d2l <- d1bSb <- d2bSb <- d1b <- d2b <- d1ldetH <- d2ldetH <- d1b <- d2b <- NULL
 
   if (deriv>0) {  ## Implicit differentiation for derivs...
 
@@ -954,6 +954,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     if (nSp) for (i in 1:m) d1b[,i] <- 
        -D*(backsolve(L,forwardsolve(t(L),(D*Sib[[i]][!bdrop])[piv]))[ipiv])
   
+    ## obtain the curvature check matrix...
+    dVkk <- crossprod(L[,ipiv]%*%(d1b/D))
+
     if (!is.null(drop)) { ## create full version of d1b with zeros for unidentifiable 
       fd1b <-  matrix(0,q,m)
       fd1b[!bdrop,] <- d1b
@@ -1096,7 +1099,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        #b2 = d2b)
-       H = ll$lbb,dH = ll$d1H)#,d2H=llr$d2H)
+       H = ll$lbb,dH = ll$d1H,dVkk=dVkk)#,d2H=llr$d2H)
     ret
 } ## end of gam.fit5
 
