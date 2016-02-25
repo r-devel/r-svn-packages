@@ -1737,7 +1737,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
  
   ## initial fit...
 
-  ilsp <- lsp
+  initial.lsp <- ilsp <- lsp
 
   b <- gam.fit3(x=X, y=y, sp=L%*%ilsp+lsp0,Eb=Eb,UrS=UrS,
                offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
@@ -1807,12 +1807,21 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   for (i in 1:max.step) { ## the main BFGS loop
    
     ## get the trial step ...
+    step <- initial$grad*0
+    step[uconv.ind] <- -B[uconv.ind,uconv.ind]%*%initial$grad[uconv.ind]
 
-    step <- -drop(B%*%initial$grad)
+    ## following tends to have lower directional grad than above (or full version commented out below)
+    #step <- -drop(B%*%initial$grad)
     ## following line would mess up conditions under which Wolfe guarantees update,
     ## *if* based only on grad and not grad and hess...  
-    step[!uconv.ind] <- 0 ## don't move if apparently converged 
-    ## unit.step <- step/sqrt(sum(step^2)) ## unit vector in step direction
+    #step[!uconv.ind] <- 0 ## don't move if apparently converged 
+    
+    if (sum(step*initial$grad)>=0) { ## step not descending!
+      ## Following would really be in the positive definite space... 
+      ##step[uconv.ind] <- -solve(chol2inv(chol(B))[uconv.ind,uconv.ind],initial$grad[uconv.ind])
+      step <- -diag(B)*initial$grad ## simple scaled steepest descent 
+      step[!uconv.ind] <- 0 ## don't move if apparently converged 
+    }
 
     ms <- max(abs(step))
     trial <- list()
@@ -1828,7 +1837,6 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     initial$dscore <- sum(step*initial$grad)
     prev <- initial
 
-    #trial <- list(alpha=1)
     deriv <- 1 ## only get derivatives immediately for initial step length   
     while(TRUE) { ## step length control Alg 3.5 of N&W (2006, p60)
       lsp <- ilsp + trial$alpha*step
@@ -1971,18 +1979,24 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       uconv.ind <- abs(trial$grad) > score.scale*conv.tol 
       if (sum(uconv.ind)) converged <- FALSE
       if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
-      uconv.ind <- uconv.ind | abs(trial$dVkk) > score.scale * conv.tol 
+      ## following must be tighter than convergence...
+      uconv.ind <- abs(trial$grad) > score.scale*conv.tol*.1 | abs(trial$dVkk) > score.scale * conv.tol*.1 
       if (abs(initial$score-trial$score) > score.scale*conv.tol) { 
         if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
         converged <- FALSE      
       }
+
+      ## roll back any `infinite' smoothing parameters to the point at
+      ## which score carries some information about them and continue 
+      ## optimization. Guards against early long steps missing shallow minimum. 
       if (converged) { ## try roll back for `working inf' sps...
-        ##flat.ind <- abs(trial$dVkk) < score.scale * conv.tol
         if (sum(!uconv.ind)==0||rolled.back) break
         rolled.back <- TRUE
         counter <- 0
-        while (sum(!uconv.ind)>0&&counter<5) {
-          lsp[!uconv.ind] <- lsp[!uconv.ind] - 4
+        uconv.ind0 <- uconv.ind 
+        while (sum(!uconv.ind0)>0&&counter<5) {
+          ## shrink towards initial values...
+          lsp[!uconv.ind0] <- lsp[!uconv.ind0]*.8 + initial.lsp[!uconv.ind0]*.2
           b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
                       offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                       control=control,gamma=gamma,scale=scale,printWarn=FALSE,
@@ -1990,23 +2004,30 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                       scoreType=scoreType,null.coef=null.coef,pearson.extra=pearson.extra,
                       dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
           if (reml) {
+            trial$score <- b$REML
             trial$grad <- t(L)%*%b$REML1;
           } else if (scoreType=="GACV") {
+            trial$score <- b$GACV
             trial$grad <- t(L)%*%b$GACV1; 
           } else if (scoreType=="UBRE"){
+            trial$score <- b$UBRE
             trial$grad <- t(L)%*%b$UBRE1  
           } else { ## default to deviance based GCV
+            trial$score <- b$GCV
             trial$grad <- t(L)%*%b$GCV1;
           } 
           trial$dscore <- sum(trial$grad*step)
           trial$scale.est <- b$scale.est
           trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0) ## curvature testing matrix
           rm(b);counter <- counter + 1
-          uconv.ind <- abs(trial$grad) > score.scale*conv.tol*20 | abs(trial$dVkk) > score.scale * conv.tol * 20 
-          #flat.ind <- abs(trial$dVkk) < score.scale * conv.tol
+          ## note that following rolls back until there is clear signal in derivs...
+          uconv.ind0 <- abs(trial$grad) > score.scale*conv.tol*20 | abs(trial$dVkk) > score.scale * conv.tol * 20         
+          uconv.ind0 <- uconv.ind0 | uconv.ind ## make sure we don't start rolling back unproblematic sps 
         }
         uconv.ind <- uconv.ind | TRUE
-        B <- diag(diag(B),nrow=nrow(B))
+        ## following line is tempting, but will likely reduce usefullness of B as approximtion 
+        ## to inverse Hessian on return...
+        ##B <- diag(diag(B),nrow=nrow(B))
         ilsp <- lsp
       }
     
