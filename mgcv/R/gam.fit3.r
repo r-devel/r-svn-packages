@@ -2018,7 +2018,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           } 
           trial$dscore <- sum(trial$grad*step)
           trial$scale.est <- b$scale.est
-          trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0) ## curvature testing matrix
+          trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0) ## curvature testing matrix 
+          if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
           rm(b);counter <- counter + 1
           ## note that following rolls back until there is clear signal in derivs...
           uconv.ind0 <- abs(trial$grad) > score.scale*conv.tol*20 | abs(trial$dVkk) > score.scale * conv.tol * 20         
