@@ -97,7 +97,8 @@ b <- c(rnorm(nb/2)*2,rnorm(nb/2)*.5) ## random effect now with 2 variances
 r <- sample(1:nb,n,replace=TRUE) ## r.e. levels
 y <- 2 + b[r] + rnorm(n)
 r <- factor(r)
-S <- list(diag(rep(c(1,0),each=nb/2)),diag(rep(c(0,1),each=nb/2))) ## known precision matrix components
+## known precision matrix components...
+S <- list(diag(rep(c(1,0),each=nb/2)),diag(rep(c(0,1),each=nb/2)))
 b <- gam(y ~ s(r,bs="re",xt=list(S=S,rank=c(nb/2,nb/2))),method="REML")
 gam.vcomp(b)
 summary(b)
