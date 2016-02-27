@@ -1,4 +1,9 @@
-2016-01-13 Brian Ripley
+2016-02-27 Brian Ripley
+
+	* DESCRIPTION: version 3.1-125; released
+	* tests/coef.Rout.save: update for R 3.3.x
+
+2016-02-13 Brian Ripley
 
 	* src/*.[ch]: remove use of S.h, clean up.
 	* src/nls.c: Unused in R, so remove.
