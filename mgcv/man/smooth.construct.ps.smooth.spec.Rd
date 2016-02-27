@@ -103,13 +103,13 @@ Pya, N., and Wood, S.N. (2015). Shape constrained additive models. Statistics an
   plot(bk,select=2,shade=TRUE);lines(z,0*z,col=2)
   
 ## Example using montonic constraints via the SCOP-spline
-## consturction, and of computng derivatives...
+## construction, and of computng derivatives...
   x <- seq(0,1,length=100); dat <- data.frame(x)
   sspec <- s(x,bs="ps")
   sspec$mono <- 1
   sm <- smoothCon(sspec,dat)[[1]]
-  sspec$deriv <- 1
-  sm1 <- smoothCon(sspec,dat)[[1]]
+  sm$deriv <- 1
+  Xd <- PredictMat(sm,dat)
 ## generate random coeffients in the unconstrainted 
 ## parameterization...
   b <- runif(10)*3-2.5
@@ -119,14 +119,31 @@ Pya, N., and Wood, S.N. (2015). Shape constrained additive models. Statistics an
 ## plot monotonic spline and its derivative
   par(mfrow=c(2,2))
   plot(x,sm$X\%*\%b,type="l",ylab="f(x)")
-  plot(x,sm1$X\%*\%b,type="l",ylab="f'(x)")
+  plot(x,Xd\%*\%b,type="l",ylab="f'(x)")
 ## repeat for decrease...
   sspec$mono <- -1
   sm1 <- smoothCon(sspec,dat)[[1]]
-  sspec$deriv <- 0
-  sm <- smoothCon(sspec,dat)[[1]]
+  sm1$deriv <- 1
+  Xd1 <- PredictMat(sm1,dat)
+  plot(x,sm1$X\%*\%b,type="l",ylab="f(x)")
+  plot(x,Xd1\%*\%b,type="l",ylab="f'(x)")
+
+## Now with sum to zero constraints as well...
+  sspec$mono <- 1
+  sm <- smoothCon(sspec,dat,absorb.cons=TRUE)[[1]]
+  sm$deriv <- 1
+  Xd <- PredictMat(sm,dat)
+  b <- b[-1] ## dropping first param
   plot(x,sm$X\%*\%b,type="l",ylab="f(x)")
-  plot(x,sm1$X\%*\%b,type="l",ylab="f'(x)")
+  plot(x,Xd\%*\%b,type="l",ylab="f'(x)")
+  
+  sspec$mono <- -1
+  sm1 <- smoothCon(sspec,dat,absorb.cons=TRUE)[[1]]
+  sm1$deriv <- 1
+  Xd1 <- PredictMat(sm1,dat)
+  plot(x,sm1$X\%*\%b,type="l",ylab="f(x)")
+  plot(x,Xd1\%*\%b,type="l",ylab="f'(x)")
+  
 }
 \keyword{models} \keyword{regression}%-- one or more ..
 
