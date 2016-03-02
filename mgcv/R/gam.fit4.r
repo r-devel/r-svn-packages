@@ -1100,6 +1100,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        #b2 = d2b)
        H = ll$lbb,dH = ll$d1H,dVkk=dVkk)#,d2H=llr$d2H)
+    ## debugging code to allow components of 2nd deriv of hessian w.r.t. sp.s 
+    ## to be passed to deriv.check.... 
+    #if (!is.null(ll$ghost1)&&!is.null(ll$ghost2)) { 
+    #  ret$ghost1 <- ll$ghost1; ret$ghost2 <- ret$ghost2
+    #} 
     ret
 } ## end of gam.fit5
 
