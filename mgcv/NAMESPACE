@@ -23,7 +23,7 @@ export(anova.gam, bam, bam.update,bandchol, betar, cox.ph,concurvity,
        place.knots, plot.gam, polys.plot,print.anova.gam,
        print.gam,print.summary.gam,predict.gam,predict.bam,
        PredictMat,Predict.matrix,Predict.matrix2,
-       Predict.matrix.bspline.smooth,
+       Predict.matrix.Bspline.smooth,
        Predict.matrix.cr.smooth,
        Predict.matrix.duchon.spline,
        Predict.matrix.cs.smooth,
@@ -155,7 +155,7 @@ S3method(smooth.construct, tensor.smooth.spec)
 S3method(smooth.construct, t2.smooth.spec)
 S3method(smooth.construct, ts.smooth.spec)
 
-S3method(Predict.matrix,bspline.smooth)
+S3method(Predict.matrix,Bspline.smooth)
 S3method(Predict.matrix,cr.smooth)
 S3method(Predict.matrix,cs.smooth)
 S3method(Predict.matrix,cyclic.smooth)

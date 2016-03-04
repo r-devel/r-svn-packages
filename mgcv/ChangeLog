@@ -5,7 +5,14 @@ Currently deprecated and liable to be removed:
 - bam(...,sparse=TRUE) [1.8-5]
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
-	
+
+1.8-13
+
+* 'Sl.' routines revised to allow operation with non-linearly parameterized
+  smoothers. 	
+
+* bug fix in Hessian computation in gam.fit5 - leading diagonal of Hessian of 
+  log|Hp| could be wrong where Hp is penalized Hessian. 
 
 1.8-12
 

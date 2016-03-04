@@ -1,6 +1,6 @@
 \name{smooth.construct.bs.smooth.spec}
 \alias{smooth.construct.bs.smooth.spec}
-\alias{Predict.matrix.bspline.smooth}
+\alias{Predict.matrix.Bspline.smooth}
 \alias{b.spline}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Penalized B-splines in GAMs}
@@ -12,7 +12,7 @@ with derivative based penalties, specified via terms like \code{s(x,bs="bs",m=c(
 
 \usage{
 \method{smooth.construct}{bs.smooth.spec}(object, data, knots)
-\method{Predict.matrix}{bspline.smooth}(object, data)
+\method{Predict.matrix}{Bspline.smooth}(object, data)
 }
 
 \arguments{ 
@@ -27,7 +27,7 @@ with derivative based penalties, specified via terms like \code{s(x,bs="bs",m=c(
 
 }
 
-\value{ An object of class \code{"bspline.smooth"}. See \code{\link{smooth.construct}}, 
+\value{ An object of class \code{"Bspline.smooth"}. See \code{\link{smooth.construct}}, 
 for the elements that this object will contain.
 }
 

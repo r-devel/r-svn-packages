@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2015
+##  R routines for the package mgcv (c) Simon Wood 2000-2016
 
 ##  This file is primarily concerned with defining classes of smoother,
 ##  via constructor methods and prediction matrix methods. There are
@@ -595,7 +595,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
   object$plot.me <- TRUE 
   mono <- rep(FALSE,m) ## indicator for monotonic parameteriztion margins
   for (i in 1:m) { 
-    if (!is.null(object$mono)&&object$mono!=0) mono[i] <- TRUE
+    if (!is.null(object$margin[[i]]$mono)&&object$margin[[i]]$mono!=0) mono[i] <- TRUE
     knt <- dat <- list()
     term <- object$margin[[i]]$term
     for (j in 1:length(term)) { 
@@ -1733,7 +1733,7 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
   ## is equal to m, which is only a conventional spline in the 
   ## cubic case...        
   object$knots <- k; 
-  class(object) <- "bspline.smooth"  # Give object a class
+  class(object) <- "Bspline.smooth"  # Give object a class
   k0 <- k[m[1]+1:nk] ## the interior knots
   object$deriv <- m[2]
   pord <- m[1]-m[2] ## order of derivative polynomial 0 is step function
@@ -1745,7 +1745,7 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
     k1 <- cumsum(c(k0[1],h1)) 
   } 
   dat <- data.frame(k1);names(dat) <- object$term 
-  D <- Predict.matrix.bspline.smooth(object,dat) ## evaluate basis for mth derivative at the k1
+  D <- Predict.matrix.Bspline.smooth(object,dat) ## evaluate basis for mth derivative at the k1
   object$deriv <- NULL ## reset or the smooth object will be set to evaluate derivs in prediction! 
   if (pord==0) { ## integrand is just a step function...
     object$D <- sqrt(h)*D
@@ -1782,23 +1782,11 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
   object$S <- list(crossprod(object$D))
   object$rank <- object$bs.dim-m[2]  # penalty rank 
   object$null.space.dim <- m[2]    # dimension of unpenalized space 
-  ## from here is code for order m derivs
-  #object$deriv <- m[1]-1
-  #dat <- data.frame(k0);names(dat) <- object$term 
-  #D <- Predict.matrix.bspline.smooth(object,dat) ## evaluate basis for mth derivative at the knots 
-  #h <- diff(k0) ## the difference sequence... 
-  #ld <- c(0,h/3)+c(h/3,0)
-  #ch <- trichol(ld,h/6)  
-  #object$D <- ch$ld*D + rbind(ch$sd*D[-1,],0)   
-  #object$S <- list(crossprod(object$D))
-  #object$deriv <- NULL
-  #object$rank <- object$bs.dim-m[1]+1  # penalty rank 
-  #object$null.space.dim <- m[1]-1    # dimension of unpenalized space  
  
   object
 } ### end of B-spline constructor
 
-Predict.matrix.bspline.smooth <- function(object,data) {
+Predict.matrix.Bspline.smooth <- function(object,data) {
   object$mono <- 0
   object$m <- object$m - 1 ## for consistency with p-spline defn of m
   Predict.matrix.pspline.smooth(object,data)
@@ -3770,7 +3758,10 @@ PredictMat <- function(object,data,n=nrow(data))
   if (inherits(qrc,"sweepDrop")) { ## needs dealing with first...
     ## Sweep and drop constraints. First element is index to drop. 
     ## Remainder are constants to be swept out of remaining columns 
-    if (is.null(object$deriv)||object$deriv==0) 
+    deriv <- if (is.null(object$deriv)||object$deriv==0) FALSE else TRUE
+    if (!deriv&&!is.null(object$margin)) for (i in 1:length(object$margin))
+    if (!is.null(object$margin[[i]]$deriv)&&object$margin[[i]]$deriv!=0) deriv <- TRUE 
+    if (!deriv) 
       pm$X <- pm$X[,-qrc[1],drop=FALSE] - matrix(qrc[-1],nrow(pm$X),ncol(pm$X)-1,byrow=TRUE)
     else pm$X <- pm$X[,-qrc[1],drop=FALSE]
   }
