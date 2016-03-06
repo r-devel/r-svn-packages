@@ -1877,6 +1877,7 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
   
   object$P <- rp$P ## X' = X%*%P, where X is original version
   object$fterm <- fterm ## the factor name...
+  if (!is.factor(fac)) warning("no factor supplied to fs smooth")
   object$flev <- levels(fac)
 
   ## now full penalties ...
