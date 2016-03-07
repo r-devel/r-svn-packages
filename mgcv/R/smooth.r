@@ -692,7 +692,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
     X <- X[,ind]
     if (!is.null(object$g.index)) object$g.index <- object$g.index[ind]
     #for (i in 1:length(S)) {
-      ## next line is equivalent to setting coefs for delted to zero! 
+      ## next line is equivalent to setting coefs for deleted to zero! 
       #S[[i]] <- S[[i]][ind,ind] 
     #}
     ## Instead we need to drop the differences involving deleted coefs
@@ -704,7 +704,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
     ## drop rows corresponding to differences that involve a dropped 
     ## basis function, and crossproduct...
     for (i in 1:m) { 
-      D <- S[[i]][rowSums(S[[i]][,-ind])==0,ind]
+      D <- S[[i]][rowSums(S[[i]][,-ind,drop=FALSE])==0,ind]
       r[i] <- nrow(D) ## penalty rank
       S[[i]] <- crossprod(D)
     }
@@ -3301,13 +3301,14 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
   ## must be done here on original model matrix to ensure same
   ## basis for all `id' linked terms...
   if (!is.null(sm$g.index)) { ## then it's a monotonic smooth or a tensor product with monotonic margins
-    ## computer the ingredients for sweep and drop cons...
+    ## compute the ingredients for sweep and drop cons...
     sm$C <- matrix(colMeans(sm$X),1,ncol(sm$X))
     if (length(sm$S)) {
-      upen <- rowMeans(sm$S[[1]])==0
-      if (length(sm$S)>1) for (i in 2:length(sm$S)) upen <- upen &  rowMeans(sm$S[[i]])==0
-      if (sum(upen)==0) stop("something wrong in monotone setup - no unpenalized terms!")
-      drop <- min(which(upen))
+      upen <- rowMeans(abs(sm$S[[1]]))==0
+      if (length(sm$S)>1) for (i in 2:length(sm$S)) upen <- upen &  rowMeans(abs(sm$S[[i]]))==0
+      if (sum(upen)>0) drop <- min(which(upen)) else {
+        drop <- min(which(!sm$g.index))
+      }
     } else drop <- 1
     sm$g.index <- sm$g.index[-drop]
   } else drop <- -1 ## signals not to use sweep and drop (may be modified below)
