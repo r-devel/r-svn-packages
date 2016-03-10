@@ -587,6 +587,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
   m <- length(object$margin)  # number of marginal bases
   if (inter) { 
     object$mc <- if (is.null(object$mc)) rep(TRUE,m) else as.logical(object$mc) 
+    object$sparse.cons <-  if (is.null(object$sparse.cons)) rep(0,m) else object$sparse.cons
   } else {
     object$mc <- rep(FALSE,m)
   }
@@ -603,7 +604,8 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
       knt[[term[j]]] <- knots[[term[j]]] 
     }
     object$margin[[i]] <- 
-    if (object$mc[i]) smoothCon(object$margin[[i]],dat,knt,absorb.cons=TRUE,n=length(dat[[1]]))[[1]] else
+    if (object$mc[i]) smoothCon(object$margin[[i]],dat,knt,absorb.cons=TRUE,n=length(dat[[1]]),
+                                sparse.cons=object$sparse.cons[i])[[1]] else
                       smooth.construct(object$margin[[i]],dat,knt)
     Xm[[i]] <- object$margin[[i]]$X
     if (!is.null(object$margin[[i]]$te.ok)) {
@@ -628,7 +630,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
     km <- which(mono)
     g <- list(); for (i in 1:length(km)) g[[i]] <- object$margin[[km[i]]]$g.index
     for (i in 1:length(object$margin)) {
-      d <- object$margin[[i]]$bs.dim
+      d <- ncol(object$margin[[i]]$X)
       for (j in length(km)) if (i!=km[j]) g[[j]] <- if (i > km[j])  rep(g[[j]],each=d) else rep(g[[j]],d)
     }
     object$g.index <- as.logical(rowSums(matrix(unlist(g),length(g[[1]]),length(g))))
@@ -1630,13 +1632,23 @@ smooth.construct.ps.smooth.spec <- function(object,data,knots)
     p <- ncol(object$X)
     B <- matrix(as.numeric(rep(1:p,p)>=rep(1:p,each=p)),p,p) ## coef summation matrix
     if (object$mono < 0) B[,2:p] <- -B[,2:p] ## monotone decrease case
-    object$X <- object$X %*% B
-    object$g.index <- c(FALSE,rep(TRUE,p-1)) ## indicator of which coefficients must be positive (exponentiated)
     object$D <- cbind(0,-diff(diag(p-1)))
+    if (object$mono==2||object$mono==-2) { ## drop intercept term
+      object$D <- object$D[,-1] 
+      B <- B[,-1]
+      object$null.space.dim <- 1
+      object$g.index <- rep(TRUE,p-1)
+      object$C <- matrix(0,0,ncol(object$X)) # null constraint matrix
+    } else { 
+      object$g.index <- c(FALSE,rep(TRUE,p-1)) 
+      object$null.space.dim <- 2
+    }
+    ## ... g.index is indicator of which coefficients must be positive (exponentiated)
+    object$X <- object$X %*% B
+    
     object$S <- list(crossprod(object$D)) ## penalty for a scop-spline
     object$B <- B
     object$rank <- p-2
-    object$null.space.dim <- 2
   } else {
     ## now construct conventional P-spline penalty        
     object$D <- S <- if (m[2]>0) diff(diag(object$bs.dim),differences=m[2]) else diag(object$bs.dim);
@@ -3300,7 +3312,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
   ## automatically produce centering constraint...
   ## must be done here on original model matrix to ensure same
   ## basis for all `id' linked terms...
-  if (!is.null(sm$g.index)) { ## then it's a monotonic smooth or a tensor product with monotonic margins
+  if (!is.null(sm$g.index)&&is.null(sm$C)) { ## then it's a monotonic smooth or a tensor product with monotonic margins
     ## compute the ingredients for sweep and drop cons...
     sm$C <- matrix(colMeans(sm$X),1,ncol(sm$X))
     if (length(sm$S)) {

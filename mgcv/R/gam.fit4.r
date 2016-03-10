@@ -900,6 +900,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
               bdrop <- 1:q %in% drop ## TRUE FALSE version
               ## now drop the parameters and recompute ll0...
               lpi <- attr(x,"lpi")
+              xat <- attributes(x)
+              xat$dim <- xat$dimnames <- NULL
               coef <- coef[-drop]
               St <- St[-drop,-drop]
               x <- x[,-drop] ## dropping columns from model matrix
@@ -914,6 +916,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
                   lpi[[i]] <- ij[lpi[[i]][!(lpi[[i]]%in%drop)]] # drop and shuffle up
                 }
               } ## lpi adjustment done
+              for (i in 1:length(xat)) attr(x,names(xat)[i]) <- xat[[i]]
               attr(x,"lpi") <- lpi
               attr(x,"drop") <- drop ## useful if family has precomputed something from x
               ll <- llf(y,x,coef,weights,family,deriv=1) 
@@ -1081,7 +1084,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   }
   coef <- Sl.repara(rp$rp,fcoef,inverse=TRUE) ## undo re-parameterization of coef 
  
-  if (!is.null(drop)) { ## create full version of d1b with zeros for unidentifiable 
+  if (!is.null(drop)&&!is.null(d1b)) { ## create full version of d1b with zeros for unidentifiable 
     db.drho <- matrix(0,length(bdrop),ncol(d1b));db.drho[!bdrop,] <- d1b
   } else db.drho <- d1b
   ## and undo re-para...

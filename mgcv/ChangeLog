@@ -8,6 +8,10 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
+* fix in predict.gam handling of 'na.action' to avoid trying to get type of
+  na.action from name of na.action function - this was fragile to nesting
+  and could cause predict.bam to fail in the presence of NA's.
+
 * 'Sl.' routines revised to allow operation with non-linearly parameterized
   smoothers. 	
 

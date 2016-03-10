@@ -1253,16 +1253,17 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
                         cluster=NULL,discrete=TRUE,n.threads=1,...) {
 ## function for prediction from a bam object, possibly in parallel
-  ## remove some un-needed stuff from object
+  
+  #if (is.function(na.action)) na.action <- deparse(substitute(na.action)) ## otherwise predict.gam can't detect type
   if (discrete && !is.null(object$dinfo)) {
     return(predict.bamd(object,newdata,type,se.fit,terms,exclude,
                         block.size,newdata.guaranteed,na.action,n.threads,...))
   }
+  ## remove some un-needed stuff from object
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
   object$Vc <- object$G <- object$residuals <- object$fitted.values <-
   object$linear.predictors <- NULL
   gc()
-
   if (!is.null(cluster)&&inherits(cluster,"cluster")) { 
      ## require(parallel)
      n.threads <- length(cluster)

@@ -2370,6 +2370,21 @@ model.matrix.gam <- function(object,...)
   predict(object,type="lpmatrix",...)
 }
 
+get.na.action <- function(na.action) {
+## get the name of the na.action whether function or text string.
+## avoids deparse(substitute(na.action)) which is easily broken by 
+## nested calls.
+  if (is.character(na.action)) {
+    if (na.action%in%c("na.omit","na.exclude","na.pass","na.fail")) 
+      return(na.action) else stop("unrecognised na.action")
+  } 
+  if (!is.function(na.action)) stop("na.action not character or function")
+  a <- try(na.action(c(0,NA)),silent=TRUE)
+  if (inherits(a,"try-error")) return("na.fail")
+  if (inherits((attr(a,"na.action")),"omit")) return("na.omit")
+  if (inherits((attr(a,"na.action")),"exclude")) return("na.exclude")
+  return("na.pass")
+} ## get.na.action
 
 
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
@@ -2430,10 +2445,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   if (missing(newdata)) na.act <- object$na.action else {
     if (is.null(na.action)) na.act <- NULL 
     else {
-      na.txt <- "na.pass"
-      if (is.character(na.action))
-      na.txt <- substitute(na.action) else
-      if (is.function(na.action)) na.txt <- deparse(substitute(na.action))
+      na.txt <- if (is.character(na.action)||is.function(na.action)) get.na.action(na.action) else "na.pass"
+      #if (is.character(na.action))
+      #na.txt <- na.action else ## substitute(na.action) else
+      #if (is.function(na.action)) na.txt <- deparse(substitute(na.action))
       if (na.txt=="na.pass") na.act <- "na.exclude" else
       if (na.txt=="na.exclude") na.act <- "na.omit" else
       na.act <- na.action
