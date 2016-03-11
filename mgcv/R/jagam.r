@@ -12,8 +12,8 @@ write.jagslp <- function(resp,family,file,use.weights,offset=FALSE) {
 ## write the JAGS code for the linear predictor  
 ## and response distribution. 
   iltab <- ## table of inverse link functions
-    c("eta[i]","exp(eta[i])","ilogit(eta[i])","1/eta[i]","eta[i]^2")
-  names(iltab) <- c("identity","log","logit","inverse","sqrt")
+    c("eta[i]","exp(eta[i])","ilogit(eta[i])","phi(eta[i])","1/eta[i]","eta[i]^2")
+  names(iltab) <- c("identity","log","logit","probit","inverse","sqrt")
   if (!family$link%in%names(iltab)) stop("sorry link not yet handled")
   
   ## code linear predictor and expected response...

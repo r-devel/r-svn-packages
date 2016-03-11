@@ -1442,15 +1442,15 @@ vis.gam <- function(x,view=NULL,cond=list(),n.grid=30,too.far=0,col=NA,color="he
       lo.col <- "green"
       hi.col <- "red"
     }
-    if (!is.null(zlim))
-    { if (length(zlim)!=2||zlim[1]>=zlim[2]) stop("Something wrong with zlim")
+    if (!is.null(zlim)) {
+      if (length(zlim)!=2||zlim[1]>=zlim[2]) stop("Something wrong with zlim")
       min.z<-zlim[1]
       max.z<-zlim[2]
-    } else
-    { z.max<-max(fv$fit+fv$se.fit*se,na.rm=TRUE)
-      z.min<-min(fv$fit-fv$se.fit*se,na.rm=TRUE)
+    } else {
+      max.z<-max(fv$fit+fv$se.fit*se,na.rm=TRUE)
+      min.z<-min(fv$fit-fv$se.fit*se,na.rm=TRUE)
+      zlim<-c(min.z,max.z)
     }
-    zlim<-c(z.min,z.max)
     z<-fv$fit-fv$se.fit*se;z<-matrix(z,n.grid,n.grid)
     if (plot.type=="contour") warning("sorry no option for contouring with errors: try plot.gam")
 

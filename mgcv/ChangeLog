@@ -12,6 +12,11 @@ Currently deprecated and liable to be removed:
   na.action from name of na.action function - this was fragile to nesting
   and could cause predict.bam to fail in the presence of NA's.
 
+* Fix of bug in zlim handling in vis.gam perspective plot with standard 
+  errors. Thanks Petra Kuhnert. 
+
+* probit link added to 'jagam' (suggested by Kenneth Knoblauch).
+
 * 'Sl.' routines revised to allow operation with non-linearly parameterized
   smoothers. 	
 
