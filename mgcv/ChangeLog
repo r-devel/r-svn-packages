@@ -11,6 +11,9 @@ Currently deprecated and liable to be removed:
 * Faster code used in 'uniquecombs'. Speeds up discretization step in 
   'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 
+* fix in predict.bamd discrete prediction code to be a bit more relaxed about 
+  use of as.factor, etc in formulae.
+
 * fix in predict.gam handling of 'na.action' to avoid trying to get type of
   na.action from name of na.action function - this was fragile to nesting
   and could cause predict.bam to fail in the presence of NA's.

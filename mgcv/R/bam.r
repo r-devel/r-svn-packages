@@ -183,7 +183,7 @@ check.term <- function(term,rec) {
 
 discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
 ## discretize the covariates for the terms specified in smooth.spec
-## id and factor by not allowed. pmf is a model frame for just the 
+## id not allowed. pmf is a model frame for just the 
 ## parametric terms --- mini.mf is applied to this.
 ## if full is FALSE then parametric and response terms are ignored
 ## and what is returned is a list where columns can be of 
@@ -201,7 +201,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
 ## ... there is an element of nr and k.start for each variable of 
 ## each smooth, but varaibles are onlt discretized and stored in mf
 ## once. If there are no matrix variables then k.start = 1:(ncol(k)+1) 
-
+#  if (is.null(attr(mf,"terms"))) mf <- eval(gp$fake.formula[-2],mf) ## assumes model frame below
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
   for (i in 1:length(gp$smooth.spec)) nk <- nk + as.numeric(gp$smooth.spec[[i]]$by!="NA") +
@@ -1622,6 +1622,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   object$linear.predictors <- NULL
   gc()
   if (missing(newdata)) newdata <- object$model
+  convert2mf <- is.null(attr(newdata,"terms"))
 
   if (type=="iterms") {
     type <- "terms"
@@ -1661,7 +1662,8 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     }
   } ## parametric component dealt with
 
-  ## now discretize covariates... 
+  ## now discretize covariates...
+  if (convert2mf) newdata <- model.frame(object$dinfo$gp$fake.formula[-2],newdata)
   dk <- discrete.mf(object$dinfo$gp,mf=newdata,pmf=NULL,full=FALSE)
     
   Xd <- list() ### list of discrete model matrices...
