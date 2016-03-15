@@ -2088,7 +2088,7 @@ gam2derivative <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp,Eb=args$Eb,UrS=args$UrS,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     null.coef=args$null.coef,n.true=args$n.true,...)
+     null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,...)
   if (reml) {
           ret <- b$REML1 
   } else if (args$scoreType=="GACV") {
@@ -2112,7 +2112,7 @@ gam2objective <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp,Eb=args$Eb,UrS=args$UrS,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=0,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     null.coef=args$null.coef,n.true=args$n.true,...)
+     null.coef=args$null.coef,n.true=args$n.true,Sl=args$Sl,...)
   if (reml) {
           ret <- b$REML 
   } else if (args$scoreType=="GACV") {
@@ -2138,7 +2138,7 @@ gam4objective <- function(lsp,args,...)
   b<-gam.fit3(x=args$X, y=args$y, sp=lsp, Eb=args$Eb,UrS=args$UrS,
      offset = args$offset,U1=args$U1,Mp=args$Mp,family = args$family,weights=args$w,deriv=1,
      control=args$control,gamma=args$gamma,scale=args$scale,scoreType=args$scoreType,
-     null.coef=args$null.coef,...)
+     null.coef=args$null.coef,Sl=args$Sl...)
   
   if (reml) {
           ret <- b$REML;at <- b$REML1

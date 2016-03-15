@@ -18,12 +18,14 @@ uniquecombs(x)
 }
 \details{ Models with more parameters than unique combinations of
   covariates are not identifiable. This routine provides a means of
-  evaluating the number of unique combinations of coavariates in a
+  evaluating the number of unique combinations of covariates in a
   model. The routine calls compiled C code, and is based on sorting, 
   with consequent O(nlog(n)) cost. In principle a hash table based solution 
-  should be only O(n).
+  should be only O(n). When \code{x} has only one column then the routine
+  uses \code{\link{unique}} and \code{\link{match}} to get the index, which
+  can be much faster. 
    
- \code{\link{unique}} and \code{\link{duplicated}}, can sometimes be used 
+ \code{\link{unique}} and \code{\link{duplicated}}, can be used 
  in place of this, if the full index is not needed. Relative performance is variable. 
 
  If \code{x} is not a matrix or data frame on entry then an attmept is made to coerce 
@@ -37,7 +39,7 @@ matrix that contains row i of the original matrix.
  
 }
 
-\seealso{\code{\link{unique}}, \code{\link{duplicated}}.}
+\seealso{\code{\link{unique}}, \code{\link{duplicated}}, \code{\link{match}}.}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 

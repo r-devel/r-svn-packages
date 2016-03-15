@@ -163,11 +163,17 @@ uniquecombs <- function(x) {
     xo <- x
     x <- data.matrix(xo) ## ensure all data are numeric
   } else xo <- NULL
-  ind <- rep(0,nrow(x))
-  res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
-          r=as.integer(nrow(x)),c=as.integer(ncol(x)))
-  n <- res$r*res$c
-  x <- matrix(res$x[1:n],res$r,res$c)
+  if (ncol(x)==1) { ## faster to use R 
+     xu <- unique(x)
+     res <- list(ind=match(as.numeric(x),xu)-1)
+     x <- matrix(xu,ncol=1,nrow=length(xu))
+  } else { ## no R equivalent that yields indices
+    ind <- rep(0,nrow(x))
+    res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
+            r=as.integer(nrow(x)),c=as.integer(ncol(x)))
+    n <- res$r*res$c
+    x <- matrix(res$x[1:n],res$r,res$c)
+  }
   if (!is.null(xo)) { ## original was a data.frame
     x <- as.data.frame(x)
     names(x) <- names(xo)
