@@ -165,14 +165,21 @@ uniquecombs <- function(x) {
   } else xo <- NULL
   if (ncol(x)==1) { ## faster to use R 
      xu <- unique(x)
-     res <- list(ind=match(as.numeric(x),xu)-1)
+     ind <- match(as.numeric(x),xu)
      x <- matrix(xu,ncol=1,nrow=length(xu))
-  } else { ## no R equivalent that yields indices
-    ind <- rep(0,nrow(x))
-    res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
-            r=as.integer(nrow(x)),c=as.integer(ncol(x)))
-    n <- res$r*res$c
-    x <- matrix(res$x[1:n],res$r,res$c)
+  } else { ## no R equivalent that directly yields indices
+    txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=","),")",sep="")
+    xt <- eval(parse(text=txt))
+    dup <- duplicated(xt)
+    ind <- match(xt,xt[!dup])
+    x <- x[!dup,]
+
+    #ind <- rep(0,nrow(x))
+    #res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
+    #        r=as.integer(nrow(x)),c=as.integer(ncol(x)))
+    #n <- res$r*res$c
+    #x <- matrix(res$x[1:n],res$r,res$c)
+    #ind <- res$ind+1 ## C to R index gotcha 
   }
   if (!is.null(xo)) { ## original was a data.frame
     x <- as.data.frame(x)
@@ -184,7 +191,7 @@ uniquecombs <- function(x) {
       contrasts(x[,i]) <- contrasts(xo[,i])
     }
   }
-  attr(x,"index") <- res$ind+1 ## C to R index gotcha 
+  attr(x,"index") <- ind 
   x
 } ## uniquecombs
 

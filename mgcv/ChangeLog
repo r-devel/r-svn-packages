@@ -8,8 +8,8 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
-* Faster code used in 'uniquecombs' when there is only one variable. Speeds
-  up discretization step in 'bam(...,discrete=TRUE)'.
+* Faster code used in 'uniquecombs'. Speeds up discretization step in 
+  'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 
 * fix in predict.gam handling of 'na.action' to avoid trying to get type of
   na.action from name of na.action function - this was fragile to nesting
