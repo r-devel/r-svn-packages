@@ -1,4 +1,10 @@
-2016-03-12  Martin Mächler  <maechler@stat.math.ethz.ch>
+2016-03-16 Martin Maechler
+
+	* DESCRIPTION (Version): 3.1-127
+	* R/lmList.R, R/nlsList.R: same kind of error catching -> warning
+	* */*.R: cosmetics (seq_along; vapply)
+
+2016-03-12 Martin Maechler
 
 	* DESCRIPTION: version 3.1-126
 	* R/nlme.R (predict.nlme): fix bug PR#16715; +cosmetic; also in

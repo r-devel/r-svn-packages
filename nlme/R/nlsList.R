@@ -89,35 +89,50 @@ nlsList.formula <-
   controlvals <- nls.control()
   if(!missing(control)) controlvals[names(control)] <- control
   val <- lapply(split(data, groups),
-		function(dat) {
-                  ans <- tryCatch({
+		function(dat)
+                  tryCatch({
                     data <- as.data.frame(dat)
                     if (is.null(start)) {
-                      nls(formula = model, data = data, control = controlvals)
+                      nls(model, data = data, control = controlvals)
                     } else {
-                      nls(formula = model, data = data, control = controlvals, start = start)
+                      nls(model, data = data, control = controlvals, start = start)
                     }
-                  }, error = function(e) e)
-                  if (inherits(ans, "error")) {
-		    warning("error caught in nls()' ", deparse(conditionCall(ans)), ": ",
-			    conditionMessage(ans), call. = FALSE)
-		    NULL
-                  } else ans
-		})
+                  }, error = function(e) e))
+  errs <- vapply(val, inherits, NA, what = "error")
+  if (any(errs)) {
+    v.err <- val[errs]
+    e.call <- deparse(conditionCall(v.err[[1]]))
+    tt <- table(vapply(v.err, conditionMessage, ""))
+    msg <-
+      if(length(tt) == 1)
+        sprintf(ngettext(tt[[1]],
+                         "%d error caught in %s: %s",
+                         "%d times caught the same error in %s: %s"),
+                tt[[1]], e.call, names(tt)[[1]])
+      else ## at least two different errors caught
+        paste(gettextf(
+          "%d errors caught in %s.  The error messages and their frequencies are",
+          sum(tt), e.call),
+          paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
+
+    warning(msg, call. = FALSE, domain = NA)
+    val[errs] <- list(NULL)
+    attr(val, "warningMsg") <- msg
+  }
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
     attr(val, "units") <- attr(data, "units")
     attr(val, "labels") <- attr(data, "labels")
     attr(val, "outer") <- attr(data, "outer")
   }
-  attr(val, "dims") <- list(N = nrow(data), M = length(val))
-  attr(val, "call") <- Call
-  attr(val,"groups") <- ordered(groups, levels = names(val))
-  attr(val, "origOrder") <- match(unique(as.character(groups)), names(val))
-  attr(val, "pool") <- pool
-  attr(val, "groupsForm") <- grpForm
-  class(val) <- c("nlsList", "lmList")
-  val
+
+  structure(val, class = c("nlsList", "lmList"),
+            call = Call,
+            dims = list(N = nrow(data), M = length(val)),
+            groups = ordered(groups, levels = names(val)),
+            origOrder = match(unique(as.character(groups)), names(val)),
+            pool = pool,
+            groupsForm = grpForm)
 }
 
 ###*# Methods for standard generics
@@ -131,7 +146,7 @@ formula.nlsList <-
 summary.nlsList <-
   function(object, ...)
 {
-  val <- NextMethod("summary")
+  val <- NextMethod("summary") # -> summary.lmList()
   class(val) <- c("summary.nlsList", class(val))
   val
 }
