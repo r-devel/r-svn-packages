@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2006-2014 The R Core team
+### Copyright 2006-2016  The R Core team
 
 ##*## Methods for some of the generics in newGenerics.q for standard classes
 
@@ -23,8 +23,7 @@ getCovariate.data.frame <-
   }
 }
 
-getData.nls <-
-  function(object)
+getData.nls <- function(object)
 {
   mCall <- object$call
   ## avoid partial matches here.
@@ -349,7 +348,7 @@ plot.nls <-
   grpsF <- getGroupsFormula(form)
   if (!is.null(grpsF)) {
     gr <- splitFormula(grpsF, sep = "*")
-    for(i in 1:length(gr)) {
+    for(i in seq_along(gr)) {
       auxGr <- all.vars(gr[[i]])
       for(j in auxGr) {
         argData[[j]] <- eval(as.name(j), data)

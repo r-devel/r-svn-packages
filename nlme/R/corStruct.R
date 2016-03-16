@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-### Copyright 2005-2015  The R Core team
+### Copyright 2005-2016  The R Core team
 
 #
 #  This program is free software; you can redistribute it and/or modify
@@ -65,7 +65,7 @@ corMatrix.corStruct <-
     ## transpose inverse square root
     if (data.class(covariate) == "list") {
       if (is.null(names(covariate))) {
-	names(covariate) <- 1:length(covariate)
+	names(covariate) <- seq_along(covariate)
       }
       corD <- Dim(object, rep(names(covariate),
 			      unlist(lapply(covariate, length))))
@@ -188,7 +188,7 @@ getCovariate.corStruct <-
       if (is.null(grps)) {
         covar <- 1:nrow(data)
       } else {
-	covar <- lapply(split(grps, grps), function(x) 1:length(x))
+	covar <- lapply(split(grps, grps), function(x) seq_along(x))
       }
     }
     if (!is.null(grps)) {
@@ -357,7 +357,7 @@ corMatrix.corSymm <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate, length))))
@@ -592,7 +592,7 @@ corMatrix.corNatural <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate, length))))
@@ -888,7 +888,7 @@ corMatrix.corAR1 <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate, length))))
@@ -1052,7 +1052,7 @@ corMatrix.corCAR1 <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate, length))))
@@ -1232,7 +1232,7 @@ corMatrix.corARMA <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate, length))))
@@ -1429,7 +1429,7 @@ corMatrix.corCompSymm <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate, length))))
@@ -1583,7 +1583,7 @@ summary.corCompSymm <-
 #{
 #  if (data.class(covariate) == "list") {
 #    if (is.null(names(covariate))) {
-#      names(covariate) <- 1:length(covariate)
+#      names(covariate) <- seq_along(covariate)
 #    }
 #    corD <- Dim(object, rep(names(covariate),
 #			    unlist(lapply(covariate, length))))
@@ -1784,7 +1784,7 @@ corMatrix.corSpatial <-
 {
   if (data.class(covariate) == "list") {
     if (is.null(names(covariate))) {
-      names(covariate) <- 1:length(covariate)
+      names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
 			    unlist(lapply(covariate,
@@ -1911,7 +1911,7 @@ getCovariate.corSpatial <-
       grps <- getGroups(object, data = data)
       if (is.null(covar)) {
 	covar <- lapply(split(grps, grps),
-                        function(x) as.vector(dist(1:length(x))))
+                        function(x) as.vector(dist(seq_along(x))))
       } else {
 	covar <- lapply(split(covar, grps),
 			function(el, metric) {

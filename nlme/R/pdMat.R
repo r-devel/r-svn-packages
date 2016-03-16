@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2006-2012 The R Core team
+### Copyright 2006-2016  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -179,7 +179,7 @@ pdConstruct.pdMat <-
         if (any(noMatch <- is.na(match(nam, namesForm)))) {
           err <- TRUE
           namCopy <- nam
-          indNoMatch <- (1:length(nam))[noMatch]
+          indNoMatch <- seq_along(nam)[noMatch]
           if (any(wch1 <- (nchar(nam, "c") > 12))) {
             ## possibly names with .(Intercept) in value
             wch1 <- substring(nam, nchar(nam, "c")-10) == "(Intercept)"
@@ -336,7 +336,7 @@ Names.pdMat <-
       err <- TRUE
       ## checking nlme case
       valueCopy <- value
-      indNoMatch <- (1:length(value))[noMatch]
+      indNoMatch <- seq_along(value)[noMatch]
       nam1 <- value[noMatch]            # no matching names
       if (any(wch1 <- (nchar(nam1, "c") > 12))) {
         ## possibly names with .(Intercept) in value

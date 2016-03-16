@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2006-2012 The R Core team
+### Copyright 2006-2016  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -135,7 +135,7 @@ nmGroupedData <-
     if (is.null(object)) return(object)
     if (is.list(object)) {
       if (is.null(names(object))) {
-        names(object) <- nams[1:length(object)]
+        names(object) <- nams[seq_along(object)]
       }
       return(object)
     }

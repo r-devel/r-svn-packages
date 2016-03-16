@@ -1170,7 +1170,7 @@ varComb <-
     stop("all arguments to 'varComb' must be of class \"varFunc\".")
   }
   if (is.null(names(val))) {
-    names(val) <- LETTERS[1:length(val)]
+    names(val) <- LETTERS[seq_along(val)]
   }
   class(val) <- c("varComb", "varFunc")
   val

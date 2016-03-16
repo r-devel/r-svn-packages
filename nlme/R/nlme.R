@@ -424,7 +424,7 @@ nlme.formula <-
     }
     if (any(unlist(this[["random"]]))) {
       for(i in 1:Q) {
-        wch <- (1:length(rnames[[i]]))[!is.na(match(rnames[[i]], nm))]
+        wch <- which(!is.na(match(rnames[[i]], nm)))
         if (length(wch) == 1) {           # only one formula for nm at level i
           if ((rF.i <- ranForm[[i]][[nm]][[3]]) != "1") {
             this[["random"]][[i]] <-
@@ -1116,8 +1116,8 @@ predict.nlme <-
     ## sort the model.frame by groups and get the matrices and parameters
     ## used in the estimation procedures
     grps <- getGroups(newdata,
-                      as.formula(substitute(~ 1 | GRPS,
-                                            list(GRPS = groups[[2]]))))
+                      eval(substitute(~ 1 | GRPS,
+                                      list(GRPS = groups[[2]]))))
     ## ordering data by groups
     if (inherits(grps, "factor")) {	# single level
       grps <- grps[whichRows, drop = TRUE]
@@ -1227,7 +1227,7 @@ predict.nlme <-
     namGrp <- names(ranForm)
     rnames <- lapply(ranForm, function(el)
       unlist(lapply(el, function(el1) deparse(el1[[2]]))))
-    for(i in 1:length(ranForm)) {
+    for(i in seq_along(ranForm)) {
       names(ranForm[[i]]) <- rnames[[i]]
     }
     ran <- ranef(object)
@@ -1238,7 +1238,7 @@ predict.nlme <-
     for(nm in names(plist)) {
       for(i in namGrp) {
         if (!is.logical(plist[[nm]]$random[[i]])) {
-          wch <- (1:length(rnames[[i]]))[!is.na(match(rnames[[i]], nm))]
+          wch <- which(!is.na(match(rnames[[i]], nm)))
           plist[[nm]]$random[[i]] <-
             if (length(wch) == 1) {         # only one formula for nm
               oSform <- asOneSidedFormula(ranForm[[i]][[nm]][[3]])
@@ -1418,7 +1418,7 @@ residuals.nlmeStruct <-
   dn <- c("fixed", rev(names(object$reStruct)))[level + 1]
   val <- array(0, c(attr(object, "NReal"), length(level)),
                list(dimnames(conLin$Xy)[[1]], dn))
-  for(i in 1:length(level)) {
+  for(i in seq_along(level)) {
     assign("level", level[i], envir = loc, immediate = TRUE)
     val[, i] <- c(eval(attr(object, "model")[[2]], envir = loc))
   }
