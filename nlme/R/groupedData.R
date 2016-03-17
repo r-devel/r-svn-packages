@@ -381,7 +381,7 @@ plot.nfnGroupedData <-
            }, key = TRUE, grid = TRUE, ...)
 {
   labels <- list(xlab = xlab, ylab =  ylab)
-  labels <- labels[unlist(lapply(labels, length)) > 0]
+  labels <- labels[lengths(labels) > 0]
   args <- c(list(attr(x, "formula"), data = x, strip = strip,
 		 aspect = aspect, panel = panel), labels)
   if (length(outer) > 0) {
@@ -483,7 +483,7 @@ plot.nffGroupedData <-
     groupLabel <- groupExpr
   }
   labels <- list(xlab = xlab, ylab = ylab)
-  labels <- labels[unlist(lapply(labels, length)) > 0]
+  labels <- labels[lengths(labels) > 0]
   if (length(outer) > 0) {
     if (is.logical(outer) && outer) {	# get the default outer formula
       form <- formula(paste(groupExpr,

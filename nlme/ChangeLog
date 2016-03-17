@@ -2,7 +2,8 @@
 
 	* DESCRIPTION (Version): 3.1-127
 	* R/lmList.R, R/nlsList.R: same kind of error catching -> warning
-	* */*.R: cosmetics (seq_along; vapply)
+	* */*.R: speedup cosmetics:  seq_along; vapply(); lengths();
+	lapply(a, `[[`, i).  Less  eval(parse(text = ....))
 
 2016-03-12 Martin Maechler
 

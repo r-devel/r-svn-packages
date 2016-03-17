@@ -71,9 +71,9 @@ nlsList.formula <-
   } else {
     if (missing(level))
       level <- length(getGroupsFormula(model, asList = TRUE))
-    model <- eval(parse(text = paste(paste(deparse(model[[2]]), collapse=" "),
-				     paste(deparse(getCovariateFormula(model)[[2]]), collapse=" "),
-				     sep = "~")))
+    model <- eval(substitute(Y ~ RHS,
+			     list(Y  = model[[2]],
+				  RHS= getCovariateFormula(model)[[2]])))
     groups <- getGroups(data, form = grpForm, level = level)[drop = TRUE]
   }
   if (is.null(start) && is.null(attr(data, "parameters"))) {

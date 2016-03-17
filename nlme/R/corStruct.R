@@ -68,7 +68,7 @@ corMatrix.corStruct <-
 	names(covariate) <- seq_along(covariate)
       }
       corD <- Dim(object, rep(names(covariate),
-			      unlist(lapply(covariate, length))))
+			      lengths(covariate)))
     } else {
       corD <- Dim(object, rep(1, length(covariate)))
     }
@@ -360,7 +360,7 @@ corMatrix.corSymm <-
       names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
-			    unlist(lapply(covariate, length))))
+			    lengths(covariate)))
   } else {
     corD <- Dim(object, rep(1, length(covariate)))
   }
@@ -595,7 +595,7 @@ corMatrix.corNatural <-
       names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
-			    unlist(lapply(covariate, length))))
+			    lengths(covariate)))
   } else {
     corD <- Dim(object, rep(1, length(covariate)))
   }
@@ -891,7 +891,7 @@ corMatrix.corAR1 <-
       names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
-			    unlist(lapply(covariate, length))))
+			    lengths(covariate)))
   } else {
     corD <- Dim(object, rep(1, length(covariate)))
   }
@@ -1055,7 +1055,7 @@ corMatrix.corCAR1 <-
       names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
-			    unlist(lapply(covariate, length))))
+			    lengths(covariate)))
   } else {
     corD <- Dim(object, rep(1, length(covariate)))
   }
@@ -1235,7 +1235,7 @@ corMatrix.corARMA <-
       names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
-			    unlist(lapply(covariate, length))))
+			    lengths(covariate)))
   } else {
     corD <- Dim(object, rep(1, length(covariate)))
   }
@@ -1432,7 +1432,7 @@ corMatrix.corCompSymm <-
       names(covariate) <- seq_along(covariate)
     }
     corD <- Dim(object, rep(names(covariate),
-			    unlist(lapply(covariate, length))))
+			    lengths(covariate)))
   } else {
     corD <- Dim(object, rep(1, length(covariate)))
   }
@@ -1586,7 +1586,7 @@ summary.corCompSymm <-
 #      names(covariate) <- seq_along(covariate)
 #    }
 #    corD <- Dim(object, rep(names(covariate),
-#			    unlist(lapply(covariate, length))))
+#			    lengths(covariate)))
 #  } else {
 #    corD <- Dim(object, rep(1, length(covariate)))
 #  }
@@ -1894,44 +1894,38 @@ getCovariate.corSpatial <-
       stop("need data to calculate covariate")
     }
     covForm <- getCovariateFormula(form)
-    if (length(all.vars(covForm)) > 0) { # covariate present
-      if (attr(terms(covForm), "intercept") == 1) {
-	covForm <-
-          eval(parse(text = paste("~", deparse(covForm[[2]]),"-1",sep="")))
-      }
-      covar <-
-          as.data.frame(unclass(model.matrix(covForm,
-                                             model.frame(covForm, data,
-                                                         drop.unused.levels = TRUE))))
-    } else {
-      covar <- NULL
-    }
+    covar <-
+        if (length(all.vars(covForm)) > 0) { # covariate present
+            if (attr(terms(covForm), "intercept") == 1) {
+                covForm <- eval(substitute(~ CV - 1, list(CV = covForm[[2]])))
+            }
+            as.data.frame(unclass(
+              model.matrix(covForm,
+                           model.frame(covForm, data,
+                                       drop.unused.levels = TRUE))))
+        } ## else NULL
 
-    if (!is.null(getGroupsFormula(form))) { # by groups
-      grps <- getGroups(object, data = data)
-      if (is.null(covar)) {
-	covar <- lapply(split(grps, grps),
-                        function(x) as.vector(dist(seq_along(x))))
-      } else {
-	covar <- lapply(split(covar, grps),
-			function(el, metric) {
-                          el <- as.matrix(el)
-                          if (nrow(el) > 1) {
-                            as.vector(dist(el, metric))
-                          } else {
-                            numeric(0)
-                          }
-			}, metric = attr(object, "metric"))
+    covar <-
+      if (!is.null(getGroupsFormula(form))) { # by groups
+        grps <- getGroups(object, data = data)
+        grps <-
+          if (is.null(covar)) {
+            lapply(split(grps, grps), function(x) as.vector(dist(seq_along(x))))
+          } else {
+            lapply(split(covar, grps),
+                   function(el, metric) {
+                     el <- as.matrix(el)
+                     if (nrow(el) > 1) as.vector(dist(el, metric)) else numeric(0)
+                   }, metric = attr(object, "metric"))
+          }
+        grps[lengths(grps) > 0]# no 1-obs groups
+      } else { # no groups
+        as.vector(
+          if (is.null(covar))
+            dist(1:nrow(data))
+          else
+            dist(as.matrix(covar), method = attr(object, "metric")))
       }
-      covar <- covar[sapply(covar, length) > 0]  # no 1-obs groups
-    } else {				# no groups
-      if (is.null(covar)) {
-	covar <- as.vector(dist(1:nrow(data)))
-      } else {
-	covar <- as.vector(dist(as.matrix(covar),
-                                method = attr(object, "metric")))
-      }
-    }
     if (any(unlist(covar) == 0)) {
       stop("cannot have zero distances in \"corSpatial\"")
     }

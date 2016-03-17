@@ -111,7 +111,7 @@ nlme.nlsList <-
   reSt <- reStruct(random, REML = REML, data = mData)
   names(reSt) <- deparse(groups[[2]])
   ## convert list of "name" objects to "character" vector
-  rnames <- sapply(lapply(ranForm, "[[", 2), deparse)
+  rnames <- sapply(lapply(ranForm, `[[`, 2L), deparse)
   ## if the random effects are a subset of the coefficients,
   ## construct initial estimates for their var-cov matrix
   if (all(match(rnames, pnames, 0))) {
@@ -535,7 +535,7 @@ nlme.formula <-
   }
   Names(nlmeSt$reStruct) <- rn
   rNam <- unlist(rn)                    # unlisted names of random effects
-  rlength<- unlist(lapply(rn, length))  # number of random effects per stratum
+  rlength <- lengths(rn)                # number of random effects per stratum
   rLen <- sum(rlength)                  # total number of random effects
   pLen <- rLen + fLen                   # total number of parameters
   ncols <- c(rlength, fLen, 1)

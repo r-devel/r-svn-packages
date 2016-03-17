@@ -425,8 +425,8 @@ plot.pdMat <-
 			    y = sumDif[1,2] + lagged * sumDif[2,2])
 		     }, lagged = laggedCos)
     gg <- rep(seq_along(xylist), rep(length(.angles), length(xylist)))
-    panel.superpose(unlist(lapply(xylist, "[[", "x")),
-		    unlist(lapply(xylist, "[[", "y")),
+    panel.superpose(unlist(lapply(xylist, `[[`, "x")),
+		    unlist(lapply(xylist, `[[`, "y")),
 		    subscripts = seq_along(gg), groups = gg, ..., type = "l")
   }, subscripts = TRUE, groups = groups)
 }
@@ -1872,7 +1872,7 @@ pdConstruct.pdBlocked <-
     stop("all elements in the argument must generate \"pdMat\" objects")
   }
   namesList <- lapply(object, Names)
-  lNam <- unlist(lapply(namesList, length))
+  lNam <- lengths(namesList)
 #  namInterc <- unlist(lapply(namesList,
 #                             function(el) {
 #                               (length(el) == 1) && (el == "(Intercept)")

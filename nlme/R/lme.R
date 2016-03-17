@@ -451,8 +451,7 @@ lme.formula <-
 
 ### Auxiliary functions used internally in lme and its methods
 
-getFixDF <-
-  function(X, grps, ngrps, assign = attr(X, "assign"), terms)
+getFixDF <- function(X, grps, ngrps, assign = attr(X, "assign"), terms)
 {
   ## calculates degrees of freedom for fixed effects Wald tests
   if (!is.list(assign)) {               # in R
@@ -467,8 +466,8 @@ getFixDF <-
   const <- function(x, tolerance = sqrt(.Machine$double.eps)) {
     if (length(x) < 1) return(NA)
     x <- as.numeric(x)
-    if (x[1L] == 0.) return(all(abs(x) < tolerance))
-    all(abs((x/x[1L] - 1.)) < tolerance)
+    ## return
+    all(abs(if(x[1L] == 0) x else x/x[1L] - 1) < tolerance)
   }
   N <- nrow(X)
   p <- ncol(X)
@@ -477,10 +476,8 @@ getFixDF <-
   namX <- colnames(X)
   ngrps <- rev(ngrps)[-(1:2)]
   stratNam <- c(names(ngrps), "Residual")
-  dfX <- dfTerms <- c(ngrps, N) - c(0, ngrps)
-  names(dfX) <- names(dfTerms) <- stratNam
-  valX <- double(p)
-  names(valX) <- namX
+  dfX <- dfTerms <- setNames(c(ngrps, N) - c(0, ngrps), stratNam)
+  valX <- setNames(double(p), namX)
   namTerms <- names(assign)
   valTerms <- double(length(assign))
   names(valTerms) <- namTerms
@@ -493,8 +490,9 @@ getFixDF <-
                        as.integer(p),
                        as.integer(Q),
                        as.integer(N),
-                       val = double(p * Q))[["val"]]), c(p, Qp1),
-                  list(namX, stratNam))
+                       val = double(p * Q))[["val"]]),
+		  dim = c(p, Qp1),
+		  dimnames = list(namX, stratNam))
     ## strata in which columns of X are estimated
     ## ignoring fractional inner percentages for now
     stratX <- stratNam[apply(innP, 1, function(el, index) max(index[el > 0]),
@@ -517,7 +515,7 @@ getFixDF <-
     }
     valX[notIntX] <- dfX[stratX]
     ## number of parameters in each term
-    pTerms <- unlist(lapply(assign, length))[notIntTerms]
+    pTerms <- lengths(assign)[notIntTerms]
     tDF <- tapply(pTerms, stratTerms, sum)
     dfTerms[names(tDF)] <- dfTerms[names(tDF)] - tDF
     if (!all(notIntTerms)) {
@@ -804,12 +802,13 @@ MEdims <- function(groups, ncols)
        StrRows = strRows,       # no. of rows required for storage
        qvec = ncols * c(rep(1, Q), 0, 0), # lengths of random effects
                                         # no. of groups at each level
+### This looks wrong: ")" at wrong place: unlist(*, N, N) !!
        ngrps = c(unlist(lapply(lastRow, length), N, N)),
-                                        # offsets into DmHalf array by level
-       DmOff = (c(0, cumsum(ncols^2)))[1:(Q+2)],
+###?ok ngrps = c(lengths(lastRow), N, N),# no. of groups at each level
+       DmOff = c(0, cumsum(ncols^2))[1:(Q+2)],# offsets into DmHalf array by level
        ncol = ncols,            # no. of columns decomposed per level
-                                        # no. of columns rotated per level
-       nrot = (rev(c(0, cumsum(rev(ncols)))))[-1L],
+       nrot = rev(c(0, cumsum(rev(ncols))))[-1L],# no. of columns rotated per level
+
        ZXoff = offsets(N, ncols, lastRow), # offsets into ZXy
        ZXlen = lapply(lastRow, glengths), # lengths of ZXy groups
                                         # storage array offsets
@@ -830,7 +829,7 @@ ACF.lme <-
   resType <- match.arg(resType)
   res <- resid(object, type = resType, asList = TRUE)
   if(missing(maxLag)) {
-    maxLag <- min(c(maxL <- max(sapply(res, length)) - 1,
+    maxLag <- min(c(maxL <- max(lengths(res)) - 1,
                     as.integer(10 * log10(maxL + 1))))
   }
   val <- lapply(res,
@@ -1095,9 +1094,10 @@ anova.lme <-
   aod
 }
 
+## (This is "cut'n'paste" similar to augPred.gls() in ./gls.R -- keep in sync!)
 augPred.lme <-
   function(object, primary = NULL, minimum = min(primary),
-           maximum = max(primary), length.out = 51, level = Q, ...)
+           maximum = max(primary), length.out = 51L, level = Q, ...)
 {
   data <- eval(object$call$data)
   if (!inherits(data, "data.frame")) {
@@ -1116,7 +1116,7 @@ augPred.lme <-
     pr.var <- asOneSidedFormula(primary)[[2L]]
     primary <- eval(pr.var, data)
   }
-  prName <- deparse(pr.var)
+  prName <- c_deparse(pr.var)
   newprimary <- seq(from = minimum, to = maximum, length.out = length.out)
 
   Q <- object$dims$Q                    # number of levels
@@ -1139,9 +1139,9 @@ augPred.lme <-
   if (any(toAdd <- is.na(match(names(summData), names(value))))) {
     summData <- summData[, toAdd, drop = FALSE]
   }
-  value[, names(summData)] <- summData[value[, 2], ]
-  pred <- predict(object, value[1:(nrow(value)/nL), , drop = FALSE], level = level)
-
+  value[, names(summData)] <- summData[value[, 2L], ]
+  pred <- predict(object, value[seq_len(nrow(value)/nL), , drop = FALSE],
+		  level = level)
   if (nL > 1) {                         # multiple levels
     pred <- pred[, ncol(pred) - (nL - 1):0] # eliminating groups
     predNames <- rep(names(pred), rep(nrow(pred), nL))
@@ -1169,7 +1169,8 @@ augPred.lme <-
 	    labels = labs,
 	    units  = unts,
 	    formula= eval(substitute(Y ~ X | G,
-                                     list(Y = resp.var, X = pr.var, G = as.name(grName)))))
+				     list(Y = resp.var, X = pr.var,
+					  G = as.name(grName)))))
 }
 
 coef.lme <-

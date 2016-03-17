@@ -363,18 +363,17 @@ model.matrix.reStruct <-
                      length(levels(x)) > 1) contrasts(x) else NULL ))
   contr[names(contrast)] <- contrast
 
-  ncols <- as.vector(unlist(lapply(value, length)))
+  ncols <- lengths(value)
   nams <- if (length(value) == 1) {
     names(value[[1]])
   } else {
     paste(rep(names(value), ncols), unlist(lapply(value, names)), sep = ".")
   }
-  val <- matrix(unlist(value), nrow = nrow(data),
-                dimnames = list(row.names(data), nams))
-  attr(val, "ncols") <- ncols
-  attr(val, "nams") <- as.list(lapply(value, names))
-  attr(val, "contr") <- contr
-  val
+  structure(matrix(unlist(value), nrow = nrow(data),
+		   dimnames = list(row.names(data), nams)),
+	    ncols = ncols,
+	    nams = lapply(value, names),
+	    contr = contr)
 }
 
 Names.reStruct <-

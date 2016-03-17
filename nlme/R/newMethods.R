@@ -177,7 +177,7 @@ Names.formula <-
 Names.listForm <-
   function(object, data = list(), exclude = c("pi", "."), ...)
 {
-  pnames <- as.character(unlist(lapply(object, "[[", 2)))
+  pnames <- as.character(unlist(lapply(object, `[[`, 2L)))
   nams <- lapply(object, function(el, data, exclude) {
     Names(getCovariateFormula(el), data, exclude)
     }, data = data, exclude = exclude)

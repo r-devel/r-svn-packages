@@ -967,9 +967,8 @@ coef.varConstPower <-
     function (object, unconstrained = TRUE, allCoef = FALSE, ...)
 {
     wPar <- attr(object, "whichFix")
-    nonInit <- !unlist(lapply(object, length))
-    nonInit <- is.null(wPar) || (any(nonInit) && !all(c(wPar[nonInit,
-                                                             ])))
+    nonInit <- !lengths(object)
+    nonInit <- is.null(wPar) || (any(nonInit) && !all(c(wPar[nonInit, ])))
     if (nonInit || (!allCoef && (length(unlist(object)) == 0))) {
         return(numeric(0))
     }
