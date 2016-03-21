@@ -339,7 +339,7 @@ collapse.groupedData <-
     }
     displayGroups <- ordered(displayGroups,
       levels = unique(as.character(displayGroups[do.call("order", groups)])))
-    form[[3]][[3]] <- as.name(".groups")
+    form[[3]][[3]] <- quote(.groups)
     object[[".groups"]] <- displayGroups
     args[["formula"]] <- form
     args[["data"]] <- object

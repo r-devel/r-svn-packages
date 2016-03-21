@@ -379,7 +379,7 @@ ACF.gls <-
                 if (length(allV) > 0L) {
                     alist <- lapply(as.list(allV), as.name)
                     names(alist) <- allV
-                    alist <- c(as.list(as.name("data.frame")), alist)
+                    alist <- c(as.list(quote(data.frame)), alist)
                     mode(alist) <- "call"
                     data <- eval(alist, sys.parent(1))
                 }
@@ -1179,7 +1179,7 @@ Variogram.gls <-
                 if (length(allV) > 0L) {
                     alist <- lapply(as.list(allV), as.name)
                     names(alist) <- allV
-                    alist <- c(as.list(as.name("data.frame")), alist)
+                    alist <- c(as.list(quote(data.frame)), alist)
                     mode(alist) <- "call"
                     data <- eval(alist, sys.parent(1))
                 }

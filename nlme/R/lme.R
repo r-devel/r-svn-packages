@@ -91,7 +91,7 @@ lme.lmList <-
     if (length(allV) > 0) {
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
-      alist <- c(as.list(as.name("data.frame")), alist)
+      alist <- c(as.list(quote(data.frame)), alist)
       mode(alist) <- "call"
       mData <- eval(alist, sys.parent(1))
     }
@@ -1473,7 +1473,7 @@ pairs.lme <-
     if (is.null(data)) {		# try to construct data
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
-      alist <- c(as.list(as.name("data.frame")), alist)
+      alist <- c(as.list(quote(data.frame)), alist)
       mode(alist) <- "call"
       data <- eval(alist, sys.parent(1))
     } else {
@@ -1891,7 +1891,7 @@ predict.lme <-
   maxQ <- max(level)			# maximum level for predictions
   nlev <- length(level)
   mCall <- object$call
-  fixed <- eval(eval(mCall$fixed)[-2])
+  fixed <- eval(eval(mCall$fixed)[-2])  # RHS
   Terms <- object$terms
   newdata <- as.data.frame(newdata)
   if (maxQ > 0) {			# predictions with random effects
@@ -2269,7 +2269,7 @@ qqnorm.lme <-
     if (is.null(data)) {		# try to construct data
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
-      alist <- c(as.list(as.name("data.frame")), alist)
+      alist <- c(as.list(quote(data.frame)), alist)
       mode(alist) <- "call"
       data <- eval(alist, sys.parent(1))
     } else {
@@ -2695,8 +2695,7 @@ Variogram.lme <-
            ...)
 {
   resType <- match.arg(resType)
-  Q <- object$dims$Q
-  grps <- getGroups(object, level = Q)
+  grps <- getGroups(object, level = object$dims$Q)
   ## checking if object has a corSpatial element
   csT <- object$modelStruct$corStruct
   wchRows <- NULL
@@ -2713,7 +2712,7 @@ Variogram.lme <-
         if (length(allV) > 0) {
           alist <- lapply(as.list(allV), as.name)
           names(alist) <- allV
-          alist <- c(as.list(as.name("data.frame")), alist)
+          alist <- c(as.list(quote(data.frame)), alist)
           mode(alist) <- "call"
           data <- eval(alist, sys.parent(1))
         }
@@ -2760,29 +2759,26 @@ Variogram.lme <-
     udist <- sort(unique(dst))
     ludist <- length(udist)
     if (!missing(breaks)) {
-      if (min(breaks) > udist[1L]) {
-        breaks <- c(udist[1L], breaks)
-      }
-      if (max(breaks) < udist[2L]) {
-        breaks <- c(breaks, udist[2L])
-      }
+      if (min(breaks) > udist[1L]) breaks <- c(udist[1L], breaks)
+      if (max(breaks) < udist[2L]) breaks <- c(breaks, udist[2L])
       if (!missing(nint) && nint != (length(breaks) - 1L)) {
         stop("'nint' is not consistent with 'breaks'")
       }
       nint <- length(breaks) - 1
     }
-    if (nint < ludist) {
-      if (missing(breaks))
-        breaks <-
-        if (collapse == "quantiles") {    # break into equal groups
-          unique(quantile(dst, seq(0, 1, 1/nint)))
-        } else {                          # fixed length intervals
-          seq(udist[1L], udist[length(udist)], length = nint + 1L)
-        }
-      cutDist <- cut(dst, breaks)
-    } else {
-      cutDist <- dst
-    }
+    cutDist <-
+      if (nint < ludist) {
+        if (missing(breaks))
+          breaks <-
+            if (collapse == "quantiles") {    # break into equal groups
+              unique(quantile(dst, seq(0, 1, 1/nint), names=FALSE))
+            } else {                          # fixed length intervals
+              seq(udist[1L], udist[length(udist)], length = nint + 1L)
+            }
+        cut(dst, breaks)
+      }
+      else
+        dst
     val <- lapply(split(val, cutDist),
                   function(el) {
                     vrg <- el$variog
@@ -2922,15 +2918,13 @@ logLik.lmeStructInt <-
 }
 
 residuals.lmeStruct <-
-  function(object, level = Q, conLin = attr(object, "conLin"),
+  function(object, level = conLin$dims$Q, conLin = attr(object, "conLin"),
            lmeFit = attr(object, "lmeFit"), ...)
 {
-  Q <- conLin$dims$Q
   conLin$Xy[, conLin$dims$ZXcols] - fitted(object, level, conLin, lmeFit)
 }
 
-varWeights.lmeStruct <-
-  function(object)
+varWeights.lmeStruct <- function(object)
 {
   if (is.null(object$varStruct)) rep(1, attr(object, "conLin")$dims$N)
   else varWeights(object$varStruct)

@@ -404,7 +404,7 @@ pairs.lmList <-
     if (is.null(data)) {		# try to construct data
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
-      alist <- c(as.list(as.name("data.frame")), alist)
+      alist <- c(as.list(quote(data.frame)), alist)
       mode(alist) <- "call"
       data <- eval(alist, sys.parent(1))
     } else {
@@ -661,7 +661,7 @@ plot.lmList <-
     if (is.null(data)) {		# try to construct data
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
-      alist <- c(as.list(as.name("data.frame")), alist)
+      alist <- c(as.list(quote(data.frame)), alist)
       mode(alist) <- "call"
       data <- eval(alist, sys.parent(1))
     } else {
@@ -1044,7 +1044,7 @@ qqnorm.lmList <-
     if (is.null(data)) {		# try to construct data
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
-      alist <- c(as.list(as.name("data.frame")), alist)
+      alist <- c(as.list(quote(data.frame)), alist)
       mode(alist) <- "call"
       data <- eval(alist, sys.parent(1))
     } else if (any(naV <- is.na(match(allV, names(data))))) {
@@ -1449,6 +1449,6 @@ update.lmList <-
 #  if (!is.null(thisCall$object)) {
 #    nextCall$object <- update(as.formula(nextCall$object), nextCall$object)
 #  }
-#  nextCall[[1]] <- as.name("lmList")
+#  nextCall[[1]] <- quote(lmList)
 #  eval(nextCall, envir = parent.frame(1))
 #}
