@@ -990,10 +990,10 @@ print.gls <-
             "likelihood: ", format(x$logLik), "\n", sep = "")
     }
     cat("\nCoefficients:\n")
-    print(coef(x))
+    print(coef(x), ...)
     cat("\n")
     if (length(x$modelStruct) > 0L) {
-        print(summary(x$modelStruct))
+        print(summary(x$modelStruct), ...)
     }
     cat("Degrees of freedom:", dd[["N"]],"total;",dd[["N"]] - dd[["p"]],
         "residual\n")
@@ -1022,11 +1022,13 @@ print.summary.gls <-
     if (!is.null(mCall$subset)) {
         cat("  Subset:", deparse(asOneSidedFormula(mCall$subset)[[2]]),"\n")
     }
-    print( data.frame(AIC=x$AIC,BIC=x$BIC,logLik=as.vector(x$logLik),row.names = " "))
+    print(data.frame(AIC=x$AIC, BIC=x$BIC, logLik=as.vector(x$logLik),
+		     row.names = " "),
+	  ...)
     if (verbose) { cat("Convergence at iteration:",x$numIter,"\n") }
     if (length(x$modelStruct)) {
         cat("\n")
-        print(summary(x$modelStruct))
+        print(summary(x$modelStruct), ...)
     }
     cat("\nCoefficients:\n")
     xtTab <- as.data.frame(x$tTable)
@@ -1039,19 +1041,17 @@ print.summary.gls <-
         levels(xtTab[, wchPval])[wchLv] <- "<.0001"
     }
     row.names(xtTab) <- dimnames(x$tTable)[[1]]
-    print(xtTab)
+    print(xtTab, ...)
     if (nrow(x$tTable) > 1L) {
         corr <- x$corBeta
         class(corr) <- "correlation"
-        print(corr,
-              title = "\n Correlation:",
-              ...)
+        print(corr, title = "\n Correlation:", ...)
     }
     cat("\nStandardized residuals:\n")
-    print(x$residuals)
+    print(x$residuals, ...)
     cat("\n")
     cat("Residual standard error:", format(x$sigma),"\n")
-    cat("Degrees of freedom:", dd[["N"]],"total;",dd[["N"]] - dd[["p"]],
+    cat("Degrees of freedom:", dd[["N"]],"total;", dd[["N"]] - dd[["p"]],
         "residual\n")
     invisible(x)
 }

@@ -1086,7 +1086,7 @@ anova.lme <-
                           check.names = FALSE)
       }
     }
-    row.names(aod) <- unlist(lapply(as.list(ancall[-1L]), deparse))
+    row.names(aod) <- vapply(as.list(ancall[-1L]), c_deparse, "")
     attr(aod, "rt") <- rt
     attr(aod, "verbose") <- verbose
   }
@@ -2050,22 +2050,21 @@ predict.lme <-
   }
 }
 
-print.anova.lme <-
-  function(x, verbose = attr(x, "verbose"), ...)
+print.anova.lme <- function(x, verbose = attr(x, "verbose"), ...)
 {
   ox <- x
   if ((rt <- attr(x,"rt")) == 1) {
     if (!is.null(lab <- attr(x, "label"))) {
       cat(lab)
       if (!is.null(L <- attr(x, "L"))) {
-        print(zapsmall(L))
+        print(zapsmall(L), ...)
       }
     }
     pval <- format(round(x[, "p-value"],4))
     pval[as.double(pval) == 0] <- "<.0001"
     x[, "F-value"] <- format(zapsmall(x[, "F-value"]))
     x[, "p-value"] <- pval
-    print(as.data.frame(x))
+    print(as.data.frame(x), ...)
   } else {
     if (verbose) {
       cat("Call:\n")
@@ -2096,16 +2095,14 @@ print.anova.lme <-
       }
       x[[i]] <- xx
     }
-    print(as.data.frame(x))
+    print(as.data.frame(x), ...)
   }
   invisible(ox)
 }
 
-print.intervals.lme <-
-  function(x, ...)
+print.intervals.lme <- function(x, ...)
 {
-  cat(paste("Approximate ", attr(x, "level") * 100,
-            "% confidence intervals\n", sep = ""))
+  cat(paste0("Approximate ", attr(x,"level") *100, "% confidence intervals\n"))
   for(i in names(x)) {
     aux <- x[[i]]
     cat("\n ",attr(aux, "label"), "\n", sep = "")
@@ -2114,16 +2111,15 @@ print.intervals.lme <-
         cat("  Level:", j, "\n")
         print(as.matrix(aux[[j]]), ...)
       }
-    } else {
-      if (i == "sigma") print(c(aux), ...)
-      else print(as.matrix(aux), ...)
-    }
+    } else if (i == "sigma")
+      print(c(aux), ...)
+    else
+      print(as.matrix(aux), ...)
   }
   invisible(x)
 }
 
-print.lme <-
-  function(x, ...)
+print.lme <- function(x, ...)
 {
   dd <- x$dims
   if (inherits(x, "nlme")) {	# nlme object
@@ -2141,15 +2137,15 @@ print.lme <-
   cat("  Log-", if(x$method == "REML") "restricted-" else "",
       "likelihood: ", format(x$logLik), "\n", sep = "")
   fixF <- x$call$fixed
-  if (inherits(fixF, "formula") || is.call(fixF) || is.name(fixF)) {
-    cat("  Fixed:", deparse(x$call$fixed), "\n")
-  } else {
-    cat("  Fixed:", deparse(lapply(fixF, function(el)
-      as.name(deparse(el)))), "\n")
-  }
-  print(fixef(x))
+  cat("  Fixed:",
+      deparse(
+	if(inherits(fixF, "formula") || is.call(fixF) || is.name(fixF))
+	  x$call$fixed
+	else
+	  lapply(fixF, function(el) as.name(deparse(el)))), "\n")
+  print(fixef(x), ...)
   cat("\n")
-  print(summary(x$modelStruct), sigma = x$sigma)
+  print(summary(x$modelStruct), sigma = x$sigma, ...)
   cat("Number of Observations:", dd[["N"]])
   cat("\nNumber of Groups: ")
   Ngrps <- dd$ngrps[1:dd$Q]
@@ -2162,13 +2158,12 @@ print.lme <-
                             c(lNgrps, lNgrps))[!lower.tri(diag(lNgrps))])
     names(Ngrps) <- unlist(lapply(aux, paste, collapse = " %in% "))
     cat("\n")
-    print(rev(Ngrps))
+    print(rev(Ngrps), ...)
   }
   invisible(x)
 }
 
-print.ranef.lme <-
-  function(x, ...)
+print.ranef.lme <- function(x, ...)
 {
   if (!inherits(x[[1L]], "data.frame")) {
     print.data.frame(x, ...)
@@ -2182,8 +2177,7 @@ print.ranef.lme <-
   invisible(x)
 }
 
-print.summary.lme <-
-  function(x, verbose = FALSE, ...)
+print.summary.lme <- function(x, verbose = FALSE, ...)
 {
   dd <- x$dims
   verbose <- verbose || attr(x, "verbose")
@@ -2200,19 +2194,18 @@ print.summary.lme <-
   if (!is.null(x$call$subset)) {
     cat("  Subset:", deparse(asOneSidedFormula(x$call$subset)[[2L]]),"\n")
   }
-  print( data.frame( AIC = x$AIC, BIC = x$BIC, logLik = c(x$logLik),
-                    row.names = " ") )
+  print(data.frame(AIC = x$AIC, BIC = x$BIC, logLik = c(x$logLik),
+                   row.names = " "), ...)
   if (verbose) { cat("Convergence at iteration:",x$numIter,"\n") }
   cat("\n")
   print(summary(x$modelStruct), sigma = x$sigma,
-        reEstimates = x$coef$random, verbose = verbose)
+        reEstimates = x$coef$random, verbose = verbose, ...)
   cat("Fixed effects: ")
   fixF <- x$call$fixed
   if (inherits(fixF, "formula") || is.call(fixF)) {
     cat(deparse(x$call$fixed), "\n")
   } else {
-    cat(deparse(lapply(fixF, function(el) as.name(deparse(el)))),
-        "\n")
+    cat(deparse(lapply(fixF, function(el) as.name(deparse(el)))), "\n")
   }
   ## fixed effects t-table and correlations
   xtTab <- as.data.frame(x$tTable)
@@ -2225,16 +2218,14 @@ print.summary.lme <-
     levels(xtTab[, wchPval])[wchLv] <- "<.0001"
   }
   row.names(xtTab) <- dimnames(x$tTable)[[1L]]
-  print(xtTab)
+  print(xtTab, ...)
   if (nrow(x$tTable) > 1) {
     corr <- x$corFixed
     class(corr) <- "correlation"
-    print(corr,
-          title = " Correlation:",
-          ...)
+    print(corr, title = " Correlation:", ...)
   }
   cat("\nStandardized Within-Group Residuals:\n")
-  print(x$residuals)
+  print(x$residuals, ...)
   cat("\nNumber of Observations:",x$dims[["N"]])
   cat("\nNumber of Groups: ")
   Ngrps <- dd$ngrps[1:dd$Q]
@@ -2247,7 +2238,7 @@ print.summary.lme <-
                             c(lNgrps, lNgrps))[!lower.tri(diag(lNgrps))])
     names(Ngrps) <- unlist(lapply(aux, paste, collapse = " %in% "))
     cat("\n")
-    print(rev(Ngrps))
+    print(rev(Ngrps), ...)
   }
   invisible(x)
 }

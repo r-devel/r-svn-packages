@@ -265,8 +265,7 @@ logLik.corStruct <-
 needUpdate.corStruct <-
   function(object) FALSE
 
-print.corStruct <-
-  function(x, ...)
+print.corStruct <- function(x, ...)
 {
   if (length(aux <- coef(x, unconstrained = FALSE)) > 0) {
     cat("Correlation structure of class", class(x)[1], "representing\n")
@@ -277,14 +276,13 @@ print.corStruct <-
   invisible(x)
 }
 
-print.summary.corStruct <-
-  function(x, ...)
+print.summary.corStruct <- function(x, ...)
 {
   class(x) <- attr(x, "oClass")
-  cat(paste("Correlation Structure: ", attr(x, "structName"), "\n", sep = ""))
+  cat(paste0("Correlation Structure: ", attr(x, "structName"), "\n"))
   cat(paste(" Formula:", deparse(formula(x)),"\n"))
   cat(" Parameter estimate(s):\n")
-  print(coef(x, unconstrained = FALSE))
+  print(coef(x, unconstrained = FALSE), ...)
   invisible(x)
 }
 

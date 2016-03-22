@@ -564,7 +564,7 @@ print.groupedData <- function(x, ...)
   cat("Grouped Data: ")
   if(identical(emptyenv(), environment(frm <- attr(x, "formula"))))
       environment(frm) <- globalenv()# for printing, as that will be suppressed
-  print(frm)
+  print(frm, ...)
   print.data.frame(x, ...)
 }
 
