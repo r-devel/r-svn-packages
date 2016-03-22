@@ -23,6 +23,33 @@ lmList <-
   function(object, data, level, subset, na.action = na.fail, pool = TRUE)
   UseMethod("lmList")
 
+##' Utility for lmList() and nlsList(): Collect errors from a list \code{val},
+##' produce a "summary warning" and keep that message as "warningMsg" attribute
+warnErrList <- function(val) {
+  errs <- vapply(val, inherits, NA, what = "error")
+  if (any(errs)) {
+    v.err <- val[errs]
+    e.call <- deparse(conditionCall(v.err[[1]]))
+    tt <- table(vapply(v.err, conditionMessage, ""))
+    msg <-
+      if(length(tt) == 1)
+        sprintf(ngettext(tt[[1]],
+                         "%d error caught in %s: %s",
+                         "%d times caught the same error in %s: %s"),
+                tt[[1]], e.call, names(tt)[[1]])
+      else ## at least two different errors caught
+        paste(gettextf(
+          "%d errors caught in %s.  The error messages and their frequencies are",
+          sum(tt), e.call),
+          paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
+
+    warning(msg, call. = FALSE, domain = NA)
+    val[errs] <- list(NULL)
+    attr(val, "warningMsg") <- msg
+  }
+  val
+}
+
 lmList.groupedData <-
   function(object, data, level, subset, na.action = na.fail, pool = TRUE)
 {
@@ -77,29 +104,9 @@ lmList.formula <-
   }
   val <- lapply(split(data, groups),
 		function(dat)
-                  tryCatch(lm(object, data = dat, na.action = na.action),
-                           error = function(e) e))
-  errs <- vapply(val, inherits, NA, what = "error")
-  if (any(errs)) {
-    v.err <- val[errs]
-    e.call <- deparse(conditionCall(v.err[[1]]))
-    tt <- table(vapply(v.err, conditionMessage, ""))
-    msg <-
-      if(length(tt) == 1)
-        sprintf(ngettext(tt[[1]],
-                         "%d error caught in %s: %s",
-                         "%d times caught the same error in %s: %s"),
-                tt[[1]], e.call, names(tt)[[1]])
-      else ## at least two different errors caught
-        paste(gettextf(
-          "%d errors caught in %s.  The error messages and their frequencies are",
-          sum(tt), e.call),
-          paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
-
-    warning(msg, call. = FALSE, domain = NA)
-    val[errs] <- list(NULL)
-    attr(val, "warningMsg") <- msg
-  }
+		    tryCatch(lm(object, data = dat, na.action = na.action),
+			     error = function(e) e))
+  val <- warnErrList(val)
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
     attr(val, "units") <- attr(data, "units")

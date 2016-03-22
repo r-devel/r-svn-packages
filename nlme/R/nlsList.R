@@ -98,27 +98,7 @@ nlsList.formula <-
                       nls(model, data = data, control = controlvals, start = start)
                     }
                   }, error = function(e) e))
-  errs <- vapply(val, inherits, NA, what = "error")
-  if (any(errs)) {
-    v.err <- val[errs]
-    e.call <- deparse(conditionCall(v.err[[1]]))
-    tt <- table(vapply(v.err, conditionMessage, ""))
-    msg <-
-      if(length(tt) == 1)
-        sprintf(ngettext(tt[[1]],
-                         "%d error caught in %s: %s",
-                         "%d times caught the same error in %s: %s"),
-                tt[[1]], e.call, names(tt)[[1]])
-      else ## at least two different errors caught
-        paste(gettextf(
-          "%d errors caught in %s.  The error messages and their frequencies are",
-          sum(tt), e.call),
-          paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
-
-    warning(msg, call. = FALSE, domain = NA)
-    val[errs] <- list(NULL)
-    attr(val, "warningMsg") <- msg
-  }
+  val <- warnErrList(val)
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
     attr(val, "units") <- attr(data, "units")
