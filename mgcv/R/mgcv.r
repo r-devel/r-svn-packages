@@ -1,4 +1,4 @@
-##  R routines for the package mgcv (c) Simon Wood 2000-2013
+##  R routines for the package mgcv (c) Simon Wood 2000-2016
 ##  With contributions from Henric Nilsson
 
 Rrank <- function(R,tol=.Machine$double.eps^.9) {
@@ -760,7 +760,9 @@ gam.setup.list <- function(formula,pterms,
   #G$contrasts <- list(G$contrasts)
   G$xlevels <- list(G$xlevels)
   G$assign <- list(G$assign)
-  
+  if (!is.null(sp)&&length(G$sp)>0) sp <- sp[-(1:length(G$sp))] ## need to strip off already used sp's
+  if (!is.null(min.sp)&&nrow(G$L)>0) min.sp <- min.sp[-(1:nrow(G$L))]  
+
   ## formula[[1]] always relates to the base formula of the first linear predictor...
 
   flpi <- lpi <- list()
@@ -781,6 +783,9 @@ gam.setup.list <- function(formula,pterms,
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
+    if (!is.null(sp)&&length(um$sp)>0) sp <- sp[-(1:length(um$sp))] ## need to strip off already used sp's
+    if (!is.null(min.sp)&&nrow(um$L)>0) min.sp <- min.sp[-(1:nrow(um$L))]  
+
     flpi[[i]] <- formula[[i]]$lpi
     for (j in formula[[i]]$lpi) { ## loop through all l.p.s to which this term contributes
       lpi[[j]] <- c(lpi[[j]],pof + 1:ncol(um$X)) ## add these cols to lpi[[j]]
@@ -1152,14 +1157,19 @@ gam.setup <- function(formula,pterms,
 
   ## following deals with supplied and estimated smoothing parameters...
   ## first process the `sp' array supplied to `gam'...
- 
-  if (!is.null(sp)) # then user has supplied fixed smoothing parameters
-  { if (length(sp)!=ncol(L)) { warning("Supplied smoothing parameter vector is too short - ignored.")}
-    if (sum(is.na(sp))) { warning("NA's in supplied smoothing parameter vector - ignoring.")}
-    G$sp <- sp
-  } else { # set up for auto-initialization
-    G$sp<-rep(-1,ncol(L))
-  }
+  
+  if (!is.null(sp)) { # then user has supplied fixed smoothing parameters
+   ok <- TRUE 
+   if (length(sp) < ncol(L)) { 
+      warning("Supplied smoothing parameter vector is too short - ignored.")
+      ok <- FALSE
+    }
+    if (sum(is.na(sp))) { 
+      warning("NA's in supplied smoothing parameter vector - ignoring.")
+      ok <- FALSE
+    }
+  } else ok <- FALSE
+  G$sp <- if (ok) sp[1:ncol(L)] else rep(-1,ncol(L))
   
   names(G$sp) <- sp.names
 
@@ -1214,8 +1224,9 @@ gam.setup <- function(formula,pterms,
   } ## now all elements of G$smooth have a record of initial sp. 
 
 
-  if (!is.null(min.sp)) # then minimum s.p.'s supplied
-  { if (length(min.sp)!=nrow(L)) stop("length of min.sp is wrong.")
+  if (!is.null(min.sp)) { # then minimum s.p.'s supplied
+    if (length(min.sp)<nrow(L)) stop("length of min.sp is wrong.")
+    min.sp <- min.sp[1:nrow(L)]
     if (sum(is.na(min.sp))) stop("NA's in min.sp.")
     if (sum(min.sp<0)) stop("elements of min.sp must be non negative.")
   }

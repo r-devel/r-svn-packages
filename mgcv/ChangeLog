@@ -21,6 +21,8 @@ Currently deprecated and liable to be removed:
 * fix of gam.outer so that general families (e.g. cox.ph) can have all
   their smoothing parameters supplied without then ignoring the penalties!
 
+* fix in multiple formulae handling of fixed smoothing parameters.
+
 * Fix of bug in zlim handling in vis.gam perspective plot with standard 
   errors. Thanks Petra Kuhnert. 
 
