@@ -127,7 +127,7 @@ S3method(print, summary.mcmc)
 importFrom(grDevices, dev.cur, dev.interactive, dev.off, postscript,
            topo.colors)
 importFrom(graphics, abline, axis, hist, legend, lines, matplot, par,
-           plot, polygon, text, title)
+           plot, polygon, text, title, barplot)
 importFrom(lattice, xyplot, qqmath, densityplot, levelplot,
            panel.abline, panel.xyplot, trellis.par.get, do.breaks,
            panel.superpose, prepanel.qqmathline, splom)
