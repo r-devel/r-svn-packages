@@ -1248,7 +1248,7 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
       mf$min.sp <- mf$H <- mf$gamma <- mf$fit <- mf$niterPQL <- mf$verbosePQL <- mf$G <- mf$method <- mf$... <- NULL
     }
     mf$drop.unused.levels <- drop.unused.levels
-    mf[[1]] <- as.name("model.frame")
+    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
     pmf <- mf
     gmf <- eval(mf, parent.frame()) # the model frame now contains all the data, for the gam part only 
     gam.terms <- attr(gmf,"terms") # terms object for `gam' part of fit -- need this for prediction to work properly

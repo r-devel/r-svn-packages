@@ -1923,7 +1923,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$cluster <- mf$discrete <-
     mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$select <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
-    mf[[1]]<-as.name("model.frame")
+    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
     pmf <- mf
  
     pmf$formula <- gp$pf

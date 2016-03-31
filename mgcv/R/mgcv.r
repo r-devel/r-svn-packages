@@ -1812,7 +1812,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <-
                  mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
-    mf[[1]] <- as.name("model.frame")
+    mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
     pmf <- mf
     mf <- eval(mf, parent.frame()) # the model frame now contains all the data 
     if (nrow(mf)<2) stop("Not enough (non-NA) data to do anything meaningful")

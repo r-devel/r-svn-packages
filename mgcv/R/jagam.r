@@ -114,7 +114,7 @@ sp.prior = "gamma",diagonalize=FALSE) {
   mf$family <- mf$knots <- mf$sp <- mf$file <- mf$control <- 
   mf$centred <- mf$sp.prior <- mf$diagonalize <- NULL
   mf$drop.unused.levels <- drop.unused.levels
-  mf[[1]]<-as.name("model.frame")
+  mf[[1]] <- quote(stats::model.frame) ##as.name("model.frame")
   pmf <- mf
  
   pmf$formula <- gp$pf
