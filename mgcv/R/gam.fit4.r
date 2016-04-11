@@ -970,7 +970,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ## smoothing parameters, in list d1H...
 
     ll <- llf(y,x,coef,weights,family,deriv=3,d1b=d1b)
-    d1l <- colSums(ll$lb*d1b)
+    # d1l <- colSums(ll$lb*d1b) # cancels
     
 
     if (deriv>1) { ## Implicit differentiation for the second derivatives is now possible...
@@ -991,15 +991,16 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
       ## Now compute Hessian of log lik w.r.t. log sps using chain rule
        
-      d2la <- colSums(ll$lb*d2b)
-      k <- 0
+      # d2la <- colSums(ll$lb*d2b) # cancels
+      # k <- 0
       d2l <- matrix(0,m,m)
       for (i in 1:m) for (j in i:m) {
-        k <- k + 1
-        d2l[j,i] <- d2l[i,j] <- d2la[k] + t(d1b[,i])%*%ll$lbb%*%d1b[,j] 
+        # k <- k + 1
+        d2l[j,i] <- d2l[i,j] <- # d2la[k] + # cancels
+	                        t(d1b[,i])%*%ll$lbb%*%d1b[,j] 
       }
     } ## if (deriv > 1)
-  } ## if (deriv > 0)
+} ## if (deriv > 0)
 
   ## Compute the derivatives of log|H+S|... 
   if (deriv > 0) {
@@ -1036,23 +1037,24 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ## Compute derivs of b'Sb...
 
   if (deriv>0) {
-    Sb <- St%*%coef
+    # Sb <- St%*%coef
     Skb <- Sl.termMult(rp$Sl,fcoef,full=TRUE)
     d1bSb <- rep(0,m)
     for (i in 1:m) { 
       Skb[[i]] <- Skb[[i]][!bdrop]
-      d1bSb[i] <- 2*sum(d1b[,i]*Sb) + sum(coef*Skb[[i]])
+      d1bSb[i] <- # 2*sum(d1b[,i]*Sb) + # cancels
+                  sum(coef*Skb[[i]])
     }
   }
  
   if (deriv>1) {
     d2bSb <- matrix(0,m,m)
-    k <- 0
+    # k <- 0
     for (i in 1:m) {
       Sd1b <- St%*%d1b[,i] 
       for (j in i:m) {
-        k <- k + 1
-        d2bSb[j,i] <- d2bSb[i,j] <- 2*sum(d2b[,k]*Sb + 
+         k <- k + 1
+         d2bSb[j,i] <- d2bSb[i,j] <- 2*sum( # d2b[,k]*Sb + # cancels 
          d1b[,i]*Skb[[j]] + d1b[,j]*Skb[[i]] + d1b[,j]*Sd1b)
       }
       d2bSb[i,i] <-  d2bSb[i,i] + sum(coef*Skb[[i]]) 
@@ -1062,14 +1064,15 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ## get grad and Hessian of REML score...
   REML <- -as.numeric(ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2  - ldetHp/2  + Mp*log(2*pi)/2)
  
-  REML1 <- if (deriv<1) NULL else -as.numeric(d1l - d1bSb/2 + rp$ldet1/2  - d1ldetH/2 ) 
+  REML1 <- if (deriv<1) NULL else -as.numeric( # d1l # cancels
+                                   - d1bSb/2 + rp$ldet1/2  - d1ldetH/2 ) 
 
   if (control$trace) {
     cat("\niter =",iter,"  ll =",ll$l,"  REML =",REML,"  bSb =",t(coef)%*%St%*%coef/2,"\n")
     cat("log|S| =",rp$ldetS,"  log|H+S| =",ldetHp,"  n.drop =",length(drop),"\n")
     if (!is.null(REML1)) cat("REML1 =",REML1,"\n")
   }
-  REML2 <- if (deriv<2) NULL else -(d2l - d2bSb/2 + rp$ldet2/2  - d2ldetH/2 ) 
+  REML2 <- if (deriv<2) NULL else -( d2l - d2bSb/2 + rp$ldet2/2  - d2ldetH/2 ) 
  ## bSb <- t(coef)%*%St%*%coef
   lpi <- attr(x,"lpi")
   if (is.null(lpi)) { 
@@ -1095,7 +1098,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
        REML= REML,REML1= REML1,REML2=REML2,
        rank=rank,aic = -2*ll$l, ## 2*edf needs to be added
-       l= ll$l,l1 =d1l,l2 =d2l,
+       l= ll$l,## l1 =d1l,l2 =d2l,
        lbb = ll$lbb, ## Hessian of log likelihood
        L=L, ## chol factor of pre-conditioned penalized hessian
        bdrop=bdrop, ## logical index of dropped parameters
