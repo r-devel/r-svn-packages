@@ -831,14 +831,9 @@ Initialize.corIdent <-
   object
 }
 
-logDet.corIdent <-
-  function(object, covariate, ...) 0
+logDet.corIdent <- function(object, covariate, ...) 0
 
-recalc.corIdent <-
-  function(object, conLin, ...)
-{
-  conLin
-}
+recalc.corIdent <- function(object, conLin, ...) conLin
 
 summary.corIdent <-
   function(object, structName = "Independent", ...)
