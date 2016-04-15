@@ -21,11 +21,12 @@
 nlsList <-
   ## A list of nls objects
   function(model, data, start, control, level, subset, na.action = na.fail,
-           pool = TRUE) UseMethod("nlsList")
+           pool = TRUE, warn.nls = NA) # Deprecation: will be 'TRUE'
+      UseMethod("nlsList")
 
 nlsList.selfStart <-
   function (model, data, start, control, level, subset, na.action = na.fail,
-            pool = TRUE)
+            pool = TRUE, warn.nls = NA) # Deprecation: will be 'TRUE'
 {
   mCall <- as.list(match.call())[-1]
   if (!inherits(data, "groupedData")) {
@@ -48,10 +49,14 @@ nlsList.selfStart <-
 
 nlsList.formula <-
   function(model, data, start = NULL, control, level, subset,
-           na.action = na.fail, pool = TRUE)
+           na.action = na.fail, pool = TRUE,
+           warn.nls = NA) # Deprecation: will be 'TRUE'
 {
   if (!missing(level) && length(level) > 1)
     stop("multiple levels not allowed")
+  ## Deprecation: options(show.error.messages = FALSE) should continue to work for now
+  if(is.na(warn.nls <- as.logical(warn.nls)))
+    warn.nls <- !identical(FALSE, getOption("show.error.messages"))
   Call <- match.call()
   if (!missing(subset)) {
     data <-
@@ -98,7 +103,7 @@ nlsList.formula <-
                       nls(model, data = data, control = controlvals, start = start)
                     }
                   }, error = function(e) e))
-  val <- warnErrList(val)
+  val <- warnErrList(val, warn = warn.nls)
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
     attr(val, "units") <- attr(data, "units")

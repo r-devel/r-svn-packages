@@ -20,12 +20,12 @@
 
 lmList <-
   ## a list of lm objects from a formula or a groupedData object
-  function(object, data, level, subset, na.action = na.fail, pool = TRUE)
+  function(object, data, level, subset, na.action = na.fail, pool = TRUE, warn.lm = TRUE)
   UseMethod("lmList")
 
 ##' Utility for lmList() and nlsList(): Collect errors from a list \code{val},
 ##' produce a "summary warning" and keep that message as "warningMsg" attribute
-warnErrList <- function(val) {
+warnErrList <- function(val, warn = TRUE) {
   errs <- vapply(val, inherits, NA, what = "error")
   if (any(errs)) {
     v.err <- val[errs]
@@ -43,7 +43,8 @@ warnErrList <- function(val) {
           sum(tt), e.call),
           paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
 
-    warning(msg, call. = FALSE, domain = NA)
+    if(warn)
+	warning(msg, call. = FALSE, domain = NA)
     val[errs] <- list(NULL)
     attr(val, "warningMsg") <- msg
   }
@@ -51,7 +52,7 @@ warnErrList <- function(val) {
 }
 
 lmList.groupedData <-
-  function(object, data, level, subset, na.action = na.fail, pool = TRUE)
+  function(object, data, level, subset, na.action = na.fail, pool = TRUE, warn.lm = TRUE)
 {
   ### object will provide the formula, the data, and the groups
   form <- formula(object)
@@ -67,8 +68,8 @@ lmList.groupedData <-
   do.call("lmList.formula", args)
 }
 
-lmList.formula <-
-  function(object, data, level, subset, na.action = na.fail, pool = TRUE)
+lmList.formula <- function(object, data, level, subset, na.action = na.fail,
+                           pool = TRUE, warn.lm = TRUE)
 {
   Call <- match.call()
   if (!missing(subset)) {
@@ -106,7 +107,7 @@ lmList.formula <-
 		function(dat)
 		    tryCatch(lm(object, data = dat, na.action = na.action),
 			     error = function(e) e))
-  val <- warnErrList(val)
+  val <- warnErrList(val, warn = warn.lm)
   if (inherits(data, "groupedData")) {
     ## saving labels and units for plots
     attr(val, "units") <- attr(data, "units")
