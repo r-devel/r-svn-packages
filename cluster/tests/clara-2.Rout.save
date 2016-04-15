@@ -1,7 +1,7 @@
 
-R Under development (unstable) (2015-01-21 r67569) -- "Unsuffered Consequences"
-Copyright (C) 2015 The R Foundation for Statistical Computing
-Platform: x86_64-unknown-linux-gnu (64-bit)
+R version 3.3.0 beta (2016-04-13 r70476) -- "Supposedly Educational"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -1297,9 +1297,14 @@ $medoids
 
 $clusinfo
      size max_diss  av_diss isolation
-[1,]  669 30.73934 9.978089 0.4713103
-[2,]  831 25.03604 4.858118 0.3838646
+[1,]  711 30.73934 9.978089 0.4713103
+[2,]  789 25.03604 4.858118 0.3838646
 
+Warning message:
+In clara(x, 2, samples = 50) :
+  Distance computations with NAs: using correct instead of pre-2016 wrong formula.
+Use  'correct.d=FALSE'  to get previous results or set 'correct.d=TRUE' explicitly
+to suppress this warning.
 > 
 > ###-- Larger example: 2000 objects, divided into 5 clusters.
 > x5 <- rbind(cbind(rnorm(400, 0,4), rnorm(400, 0,4)),
@@ -1598,8 +1603,8 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  2.185 0.014 2.218 0 0 
+Time elapsed:  2.276 0.017 2.31 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  2.328   0.048   2.437 
+  2.390   0.036   2.499 

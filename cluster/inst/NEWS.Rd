@@ -6,17 +6,16 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in a future version ...}{
-  \subsection{New Features}{
-    \itemize{
-      \item __TODO__ \code{clusGap()} further gets new options
-      as alternative to the PCA rotation
-      and another one for specifying alternative distributions than the
-      uniform on the hyper rectangle of the (rotated) data.
-    }
-  }
-}
-
+%% \section{Changes in a future version ...}{
+%%   \subsection{New Features}{
+%%     \itemize{
+%%       \item __TODO__ \code{clusGap()} further gets new options
+%%       as alternative to the PCA rotation
+%%       and another one for specifying alternative distributions than the
+%%       uniform on the hyper rectangle of the (rotated) data.
+%%     }
+%%   }
+%% }
 
 \section{Changes in version 2.0.4 (2016-04-15, svn r....)}{
   \subsection{New Features}{
