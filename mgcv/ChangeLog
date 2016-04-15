@@ -11,6 +11,11 @@ Currently deprecated and liable to be removed:
 * Faster code used in 'uniquecombs'. Speeds up discretization step in 
   'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 
+* 'gam.side' fix to avoid duplication of smooth model matrices to be tested 
+  against, when checking for numerical degeneracy. Problem could occasionally 
+  cause a failure (especially with bam), when the total matrix to be tested 
+  against ended upo with more columns than rows.
+
 * 4 occurances of as.name("model.frame") changed to quote(stats::model.frame)
 	
 * fix in predict.bamd discrete prediction code to be a bit more relaxed about 

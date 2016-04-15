@@ -469,11 +469,13 @@ gam.side <- function(sm,Xp,tol=.Machine$double.eps^.5,with.pen=FALSE)
       if (sm[[i]]$dim == d&&sm[[i]]$side.constrain) { ## check for nesting
         if (with.pen) X1 <- matrix(c(rep(1,nobs),rep(0,np)),nobs+np,as.integer(intercept)) else
         X1 <- matrix(1,nobs,as.integer(intercept))
+	X1comp <- rep(0,0) ## list of components of X1 to avoid duplication
         for (j in 1:d) { ## work through variables
           b <- sm.id[[sm[[i]]$vn[j]]] # list of smooths dependent on this variable
           k <- (1:length(b))[b==i] ## locate current smooth in list 
-          if (k>1) for (l in 1:(k-1)) { ## collect X columns
-            if (with.pen) { ## need to use augmented model matrix in testing 
+          if (k>1) for (l in 1:(k-1)) if (!b[l] %in% X1comp) { ## collect X columns
+           X1comp <- c(X1comp,b[l]) ## keep track of components to avoid adding same one twice
+           if (with.pen) { ## need to use augmented model matrix in testing 
               if (is.null(sm[[b[l]]]$Xa)) sm[[b[l]]]$Xa <- augment.smX(sm[[b[l]]],nobs,np)
               X1 <- cbind(X1,sm[[b[l]]]$Xa)
             } else X1 <- cbind(X1,sm[[b[l]]]$X) ## penalties not considered
