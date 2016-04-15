@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-# Copyright 2006-2012 The R Core team
+### Copyright 2006-2016 The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -277,14 +277,9 @@ Initialize.reStruct <-
   MEEM(object, conLin, control$niterEM) # refine initial estimates with EM
 }
 
-logDet.reStruct <-
-  function(object, ...)
-{
-  unlist(lapply(object, logDet))
-}
+logDet.reStruct <- function(object, ...)  vapply(object, logDet, numeric(1))
 
-logLik.reStruct <-
-  function(object, conLin, ...)
+logLik.reStruct <- function(object, conLin, ...)
 {
   if(any(!is.finite(conLin$Xy))) return(-Inf)
   ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
@@ -300,15 +295,13 @@ logLik.reStruct <-
      as.double(conLin$sigma))
 
   if (conLin$sigma > 0 && REML == 1) {
-     nc <- dims$ncol
-     p <- nc[dims$Q + 1]
+     ## nc <- dims$ncol; p <- nc[dims$Q + 1]
      N <- dims$N
      aux <- N * log(conLin$sigma) - exp(val[["lRSS"]]) /  (2*conLin$sigma)
      val[["loglik"]] + aux
   } else {
      val[["loglik"]]
   }
-  ########
 }
 
 "matrix<-.reStruct" <-
