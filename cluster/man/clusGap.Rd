@@ -48,7 +48,7 @@ maxSE(f, SE.f,
     they are summed up to give \eqn{W(k)}.  The default, \code{d.power = 1},
     corresponds to the \dQuote{historical} \R implementation, whereas
     \code{d.power = 2} corresponds to what Tibshirani et al had
-    proposed.  This was found by Juan Gonzalez, in Feb.\sspace{}2016.}
+    proposed.  This was found by Juan Gonzalez, in 2016-02.}%Feb.\sspace{}2016.}
   \item{verbose}{integer or logical, determining if \dQuote{progress}
     output should be printed.  The default prints one bit per bootstrap
     sample.}

@@ -65,7 +65,8 @@
   \subsection{Bug Fixes}{
     \itemize{
       \item valgrind detected missing allocation (\code{nisol["1"]} for k=1).
-      \item typo R/daisy.q (R bug \PR{16430}).
+      \item typo R/daisy.q (R bug %once we require R >= 3.2.0: \PR{16430}
+      \Sexpr[results=rd]{tools:::Rd_expr_PR(16430)}).
     }
   }
 }
