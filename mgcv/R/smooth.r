@@ -195,7 +195,7 @@ uniquecombs <- function(x) {
   x
 } ## uniquecombs
 
-cSplineDes <- function (x, knots, ord = 4)
+cSplineDes <- function (x, knots, ord = 4,derivs=0)
 { ## cyclic version of spline design...
   ##require(splines)
   nk <- length(knots)
@@ -208,10 +208,10 @@ cSplineDes <- function (x, knots, ord = 4)
   ## copy end intervals to start, for wrapping purposes...
   knots <- c(k1-(knots[nk]-knots[(nk-ord+1):(nk-1)]),knots)
   ind <- x>xc ## index for x values where wrapping is needed
-  X1 <- splines::splineDesign(knots,x,ord,outer.ok=TRUE)
+  X1 <- splines::splineDesign(knots,x,ord,outer.ok=TRUE,derivs=derivs)
   x[ind] <- x[ind] - max(knots) + k1
-  if (sum(ind)) {
-    X2 <- splines::splineDesign(knots,x[ind],ord,outer.ok=TRUE) ## wrapping part
+  if (sum(ind)) { ## wrapping part...
+    X2 <- splines::splineDesign(knots,x[ind],ord,outer.ok=TRUE,derivs=derivs) 
     X1[ind,] <- X1[ind,] + X2
   }
   X1 ## final model matrix

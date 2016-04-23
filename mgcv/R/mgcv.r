@@ -4014,7 +4014,7 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
 ## of Frob norm of XWX and S. If L is non null then it is assumed
 ## that the sps multiplying S elements are given by L%*%sp+lsp0 and 
 ## an appropriate regression step is used to find `sp' itself.
-## This routine evaluated initial guesses at W.
+## This routine evaluates initial guesses at W.
   ## Get the initial weights...
   if (length(S)==0) return(rep(0,0))
   ## start <- etastart <- mustart <- NULL

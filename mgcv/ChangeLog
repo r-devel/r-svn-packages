@@ -8,6 +8,8 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
+* cSplineDes can now accept a 'derivs' argument.
+
 * Faster code used in 'uniquecombs'. Speeds up discretization step in 
   'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 
