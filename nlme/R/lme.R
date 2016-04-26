@@ -859,7 +859,7 @@ anova.lme <-
   ## returns the likelihood ratio statistics, the AIC, and the BIC
   Lmiss <- missing(L)
   dots <- list(...)
-  if ((rt <- (length(dots) + 1L)) == 1L) {    ## just one object
+  if ((rt <- length(dots) + 1L) == 1L) {    ## just one object
     if (!inherits(object,"lme")) {
       stop("object must inherit from class \"lme\" ")
     }
@@ -949,12 +949,7 @@ anova.lme <-
         }
         L <- L0[noZeroRowL <- as.logical((L0 != 0) %*% rep(1, nX)), , drop = FALSE]
         nrowL <- nrow(L)
-        if (is.null(dmsL1)) {
-          dmsL1 <- 1:nrowL
-        } else {
-          dmsL1 <- dmsL1[noZeroRowL]
-        }
-        rownames(L) <- dmsL1
+        rownames(L) <- if(is.null(dmsL1)) 1:nrowL else dmsL1[noZeroRowL]
         dDF <-
           unique(object$fixDF$X[noZeroColL <-
                                   as.logical(c(rep(1,nrowL) %*% (L != 0)))])
@@ -963,17 +958,18 @@ anova.lme <-
         }
         lab <- "F-test for linear combination(s)\n"
       }
-      nDF <- sum(svd(L)$d > 0)
+      nDF <- sum(svd.d(L) > 0)
       c0 <- c(qr.qty(qr(vFix %*% t(L)), c0))[1:nDF]
       Fval <- sum(c0^2)/nDF
-      Pval <- 1 - pf(Fval, nDF, dDF)
+      Pval <- pf(Fval, nDF, dDF, lower.tail=FALSE)
+      ## aod <- data.frame(numDF = nDF, denDF = dDF, "F-value" = Fval, "p-value" = Pval) _FAILS_
       aod <- data.frame(nDF, dDF, Fval, Pval)
       names(aod) <- c("numDF", "denDF", "F-value", "p-value")
       attr(aod, "rt") <- rt
       attr(aod, "label") <- lab
       if (!Lmiss) {
-        if (nrow(L) > 1) attr(aod, "L") <- L[, noZeroColL, drop = FALSE]
-        else attr(aod, "L") <- L[, noZeroColL]
+        attr(aod, "L") <-
+          if(nrow(L) > 1) L[, noZeroColL, drop = FALSE] else L[, noZeroColL]
       }
     }
   }
@@ -1432,11 +1428,11 @@ logLik.lme <- function(object, REML, ...)
   val <- object[["logLik"]]
   if (REML && (estM == "ML")) {			# have to correct logLik
     val <- val + (p * (log(2 * pi) + 1L) + (N - p) * log(1 - p/N) +
-                  sum(log(abs(svd(object$varFix)$d)))) / 2
+                  sum(log(abs(svd.d(object$varFix))))) / 2
   }
   if (!REML && (estM == "REML")) {	# have to correct logLik
     val <- val - (p * (log(2*pi) + 1L) + N * log(1 - p/N) +
-                  sum(log(abs(svd(object$varFix)$d)))) / 2
+                  sum(log(abs(svd.d(object$varFix))))) / 2
   }
   structure(val, class = "logLik",
             nall = N,
@@ -2047,7 +2043,7 @@ predict.lme <-
 print.anova.lme <- function(x, verbose = attr(x, "verbose"), ...)
 {
   ox <- x
-  if ((rt <- attr(x,"rt")) == 1) {
+  if ((rt <- attr(x,"rt")) == 1) { ## one object
     if (!is.null(lab <- attr(x, "label"))) {
       cat(lab)
       if (!is.null(L <- attr(x, "L"))) {
@@ -2059,7 +2055,7 @@ print.anova.lme <- function(x, verbose = attr(x, "verbose"), ...)
     x[, "F-value"] <- format(zapsmall(x[, "F-value"]))
     x[, "p-value"] <- pval
     print(as.data.frame(x), ...)
-  } else {
+  } else { ## several objects
     if (verbose) {
       cat("Call:\n")
       objNams <- row.names(x)

@@ -262,9 +262,9 @@ logDet.corStruct <-
     ## checking for logDet attribute; if not present, get corr matrix
     aux <- corMatrix(object, covariate)
     if (data.class(aux) == "list") {    # by group
-      sum(log(abs(unlist(lapply(aux, function(el) svd(el)$d)))))/2
+      sum(log(abs(unlist(lapply(aux, svd.d)))))/2
     } else {
-      sum(log(abs(svd(aux)$d)))/2
+      sum(log(abs(svd.d(aux))))/2
     }
   } else {
     -aux1

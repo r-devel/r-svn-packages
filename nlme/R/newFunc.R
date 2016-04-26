@@ -18,6 +18,8 @@
 ###  A copy of the GNU General Public License is available at
 ###  http://www.r-project.org/Licenses/
 
+svd.d <- function(x) La.svd(x, nu=0L, nv=0L)$d
+
 allCoef <-
   ## Combines different coefficient vectors into one vector, keeping track
   ## of which coefficients came from which object
