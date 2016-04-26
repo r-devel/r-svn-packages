@@ -758,6 +758,7 @@ gam.setup.list <- function(formula,pterms,
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
   G$pterms <- pterms
+  
   G$offset <- list(G$offset)
   #G$contrasts <- list(G$contrasts)
   G$xlevels <- list(G$xlevels)
@@ -780,7 +781,7 @@ gam.setup.list <- function(formula,pterms,
       formula[[i]]$response <- formula$response 
       mv.response <- FALSE
     } else mv.response <- TRUE
-    spind <- if (is.null(sp)) 1 else (G$m+1):length(sp)
+    spind <- if (is.null(sp)) 1 else (length(G$S)+1):length(sp)
     formula[[i]]$pfok <- 1 ## empty formulae OK here!
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
