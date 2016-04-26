@@ -2243,12 +2243,12 @@ qqnorm.lme <-
     ## normal probability plots for residuals and random effects
 {
   if (!inherits(form, "formula")) stop("'form' must be a formula")
-  object <- y
+  ## object <- y
   ## constructing data
   allV <- all.vars(asOneFormula(form, id, idLabels))
   allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE")))]
   if (length(allV) > 0) {
-    data <- getData(object)
+    data <- getData(y)
     if (is.null(data)) {		# try to construct data
       alist <- lapply(as.list(allV), as.name)
       names(alist) <- allV
@@ -2265,8 +2265,9 @@ qqnorm.lme <-
     }
   } else data <- NULL
   ## argument list
+  args <- list(...) # may be empty list()
   ## appending object to data
-  data <- as.list(c(as.list(data), . = list(object)))
+  data <- as.list(c(as.list(data), . = list(y)))
 
   ## covariate - must always be present
   covF <- getCovariateFormula(form)
@@ -2284,7 +2285,7 @@ qqnorm.lme <-
 
   if (is.null(args$xlab)) args$xlab <- labs
   if (is.null(args$ylab)) args$ylab <- "Quantiles of standard normal"
-  if(type == "res") { ## residuals ---------------------------
+  if(type == "res") { ## residuals ----------------------------------------
     fData <- qqnorm(.x, plot.it = FALSE)
     data[[".y"]] <- fData$x
     data[[".x"]] <- fData$y
@@ -2301,10 +2302,10 @@ qqnorm.lme <-
                    stop("'Id' must be between 0 and 1")
                  }
                  if (labs == "Normalized residuals") {
-                   as.logical(abs(resid(object, type="normalized"))
+                   as.logical(abs(resid(y, type="normalized"))
                               > -qnorm(id / 2))
                  } else {
-                   as.logical(abs(resid(object, type="pearson"))
+                   as.logical(abs(resid(y, type="pearson"))
                               > -qnorm(id / 2))
                  }
                },
@@ -2312,8 +2313,8 @@ qqnorm.lme <-
                stop("'id' can only be a formula or numeric")
                )
       if (is.null(idLabels)) {
-        idLabels <- getGroups(object)
-        if (length(idLabels) == 0) idLabels <- 1:object$dims$N
+        idLabels <- getGroups(y)
+        if (length(idLabels) == 0) idLabels <- seq_len(y$dims$N)
         idLabels <- as.character(idLabels)
       } else {
         if (mode(idLabels) == "call") {
@@ -2329,7 +2330,7 @@ qqnorm.lme <-
         }
       }
     }
-  } else { # type random.effects  ---------------------------------
+  } else { # type "ref" -- random.effects  --------------------------------
     level <- attr(.x, "level")
     std <- attr(.x, "standardized")
     if (!is.null(effNams <- attr(.x, "effectNames"))) {
@@ -2342,23 +2343,23 @@ qqnorm.lme <-
                         .y = unlist(lapply(fData, function(x) x[["x"]])),
                         .g = ordered(rep(names(fData),rep(nr, nc)),
                                      levels = names(fData)), check.names = FALSE)
-    dform <- ".y ~ .x | .g"
     if (!is.null(grp <- getGroupsFormula(form))) {
-      dform <- paste(dform, deparse(grp[[2L]]), sep = "*")
+      dform <- substitute(.y ~ .x | .g * GG, list(GG = deparse(grp[[2L]])))
       auxData <- data[is.na(match(names(data), "."))]
     } else {
+      dform <- .y ~ .x | .g
       auxData <- list()
     }
     ## id and idLabels - need not be present
     if (!is.null(id)) {			# identify points in plot
-      N <- object$dims$N
+      N <- y$dims$N
       id <-
         switch(mode(id),
                numeric = {
                  if ((id <= 0) || (id >= 1)) {
                    stop("'id' must be between 0 and 1")
                  }
-                 aux <- ranef(object, level = level, standard = TRUE)
+                 aux <- ranef(y, level = level, standard = TRUE)
                  as.logical(abs(c(unlist(aux))) > -qnorm(id / 2))
                },
                call = eval(asOneSidedFormula(id)[[2L]], data),
@@ -2389,7 +2390,7 @@ qqnorm.lme <-
     data <-
       if (length(auxData)) { # need collapsing
         auxData <- gsummary(as.data.frame(auxData),
-                            groups = getGroups(object, level = level))
+                            groups = getGroups(y, level = level))
         auxData <- auxData[row.names(.x), , drop = FALSE]
         if (!is.null(auxData[[".id"]]))
           id <- rep(auxData[[".id"]], nc)
@@ -2407,8 +2408,7 @@ qqnorm.lme <-
   if (is.null(args$cex)) args$cex <- par("cex")
   if (is.null(args$adj)) args$adj <- par("adj")
 
-  args <- c(list(eval(parse(text = dform)),
-                 data = substitute(data)), args)
+  args <- c(list(dform, data = substitute(data)), args)
   if (is.null(args$panel))
     args$panel <- function(x, y, subscripts, ...) {
       x <- as.numeric(x)
@@ -2423,7 +2423,8 @@ qqnorm.lme <-
       if (!is.null(abl)) {
 	if (length(abl) == 2)
 	  panel.abline(a = abl, ...)
-	else panel.abline(h = abl, ...)
+	else
+	  panel.abline(h = abl, ...)
       }
     }
 
