@@ -55,8 +55,7 @@ asOneFormula <-
   ## list of formulas, except for the names in omit
   function(..., omit = c(".", "pi"))
 {
-  dots <- list(...)
-  names <- unique(allVarsRec((dots)))
+  names <- unique(allVarsRec(list(...)))
   names <- names[is.na(match(names, omit))]
   if (length(names))
     eval(parse(text = paste("~", paste(names, collapse = "+")))[[1]])
@@ -96,7 +95,7 @@ compareFits <-
   out
 }
 
-fdHess <- function(pars, fun, ..., .relStep = (.Machine$double.eps)^(1/3),
+fdHess <- function(pars, fun, ..., .relStep = .Machine$double.eps^(1/3),
                    minAbsPar = 0)
   ## Use a Koschal design to establish a second order model for the response
 {

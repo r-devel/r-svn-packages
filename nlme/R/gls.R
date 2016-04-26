@@ -34,9 +34,7 @@ gls <-
     Call <- match.call()
     ## control parameters
     controlvals <- glsControl()
-    if (!missing(control)) {
-        controlvals[names(control)] <- control
-    }
+    if (!missing(control)) controlvals[names(control)] <- control
 
     ##
     ## checking arguments
@@ -288,20 +286,12 @@ glsApVar <-
         dims <- conLin$dims
         N <- dims$N - dims$REML * dims$p
         conLin[["logLik"]] <- 0               # making sure
-        Pars <- c(glsCoef, lSigma=log(sigma))
+        Pars <- if(fixedSigma) glsCoef else c(glsCoef, lSigma = log(sigma))
         val <- fdHess(Pars, glsApVar.fullGlsLogLik, glsSt, conLin, dims, N,
                       .relStep = .relStep, minAbsPar = minAbsPar)[["Hessian"]]
         if (all(eigen(val, only.values=TRUE)$values < 0)) {
             ## negative definite - OK
             val <- solve(-val)
-            ## return val with original dimensions to prevent crashing in intervals
-            ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-            if (fixedSigma && !is.null(dim(val))) {
-            	Pars <- c(glsCoef, lSigma=log(sigma))
-            	npars <- length(Pars)
-            	val <- rbind(cbind(val, rep(0,npars-1)),
-                             rep(0,npars))
-            }
             nP <- names(Pars)
             dimnames(val) <- list(nP, nP)
             attr(val, "Pars") <- Pars
@@ -787,17 +777,18 @@ intervals.gls <-
                       dims$N - dims$REML * dims$p
                   }
             ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-            if(!fixSig){
+            if(!fixSig) {
                 est <- object$sigma * sqrt(Nr)
                 val[["sigma"]] <-
-                    structure(c(est/sqrt(qchisq((1+level)/2, Nr)), object$sigma,
-                                est/sqrt(qchisq((1-level)/2, Nr))),
-                              names = c("lower", "est.", "upper"))
-                attr(val[["sigma"]], "label") <- "Residual standard error:"
+                    structure(c(lower = est/sqrt(qchisq((1+level)/2, Nr)),
+                                "est."= object$sigma,
+                                upper = est/sqrt(qchisq((1-level)/2, Nr))),
+                              label = "Residual standard error:")
             } else {
                 est <- 1
-                val[["sigma"]] <- structure(c(object$sigma,object$sigma,object$sigma), names = c("lower", "est.", "upper"))
-                attr(val[["sigma"]], "label") <- "Fixed Residual standard error:"
+		val[["sigma"]] <- structure(setNames(rep(object$sigma, 3),
+                                                     c("lower", "est.", "upper")),
+                                            label = "Fixed Residual standard error:")
             }
         } else {
             if (is.character(aV)) {
@@ -808,12 +799,13 @@ intervals.gls <-
             est <- attr(aV, "Pars")
             nP <- length(est)
             glsSt <- object[["modelStruct"]]
-            if (!all(whichKeep <- apply(attr(glsSt, "pmap"), 2, any))) {
+            pmap <- attr(glsSt, "pmap")
+            if (!all(whichKeep <- apply(pmap, 2, any))) {
                 ## need to deleted components with fixed coefficients
                 aux <- glsSt[whichKeep]
                 class(aux) <- class(glsSt)
                 attr(aux, "settings") <- attr(glsSt, "settings")
-                attr(aux, "pmap") <- attr(glsSt, "pmap")[, whichKeep, drop = FALSE]
+                attr(aux, "pmap") <- pmap[, whichKeep, drop = FALSE]
                 glsSt <- aux
             }
             cSt <- glsSt[["corStruct"]]
@@ -822,29 +814,28 @@ intervals.gls <-
                 class(cSt) <- c("corNatural", "corStruct")
                 glsSt[["corStruct"]] <- cSt
             }
-            pmap <- attr(glsSt, "pmap")
             namG <- names(glsSt)
             auxVal <- vector("list", length(namG) + 1L)
             names(auxVal) <- c(namG, "sigma")
             aux <-
                 array(c(est - len, est, est + len),
                       c(nP, 3), list(NULL, c("lower", "est.", "upper")))
-            auxVal[["sigma"]] <-
-                structure(if(!fixSig)
-                              exp(aux[nP, ])
-                          else
-                              c(object$sigma, object$sigma, object$sigma),
-                          label = "Residual standard error:")
-            aux <- aux[-nP,, drop = FALSE]
-            rownames(aux) <- ## namP <-
-                names(coef(glsSt, FALSE))
+	    auxVal[["sigma"]] <-
+		structure(if(!fixSig) { # last param. = log(sigma)
+			      s <- exp(aux[nP, ])
+			      aux <- aux[-nP,, drop = FALSE]
+			      s
+			  } else
+			      c(object$sigma, object$sigma, object$sigma),
+			  label = "Residual standard error:")
+            rownames(aux) <- names(coef(glsSt, FALSE))
             for(i in 1:3) {
                 coef(glsSt) <- aux[,i]
                 aux[,i] <- coef(glsSt, unconstrained = FALSE)
             }
             for(i in namG) {
                 au.i <- aux[pmap[,i], , drop = FALSE]
-                dimnames(au.i)[[1]] <- substring(dimnames(au.i)[[1]], nchar(i, "c") + 2)
+                dimnames(au.i)[[1]] <- substring(dimnames(au.i)[[1]], nchar(i, "c") + 2L)
                 attr(au.i, "label") <-
                     switch(i,
                            corStruct = "Correlation structure:",
@@ -1373,7 +1364,7 @@ glsControl <-
     function(maxIter = 50L, msMaxIter = 200L, tolerance = 1e-6, msTol = 1e-7,
              msVerbose = FALSE, singular.ok = FALSE,
              returnObject = FALSE,
-             apVar = TRUE, .relStep = (.Machine$double.eps)^(1/3),
+             apVar = TRUE, .relStep = .Machine$double.eps^(1/3),
 	     opt = c("nlminb", "optim"),  optimMethod = "BFGS",
              minAbsParApVar = 0.05, natural = TRUE, sigma = NULL)
 {
@@ -1383,7 +1374,7 @@ glsControl <-
     else {
 	if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
 	    stop("Within-group std. dev. must be a positive numeric value")
-	if(missing(apVar)) apVar <- FALSE # not yet implemented
+	## if(missing(apVar)) apVar <- FALSE # not yet implemented
     }
     list(maxIter = maxIter, msMaxIter = msMaxIter, tolerance = tolerance,
          msTol = msTol, msVerbose = msVerbose,

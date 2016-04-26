@@ -144,11 +144,11 @@ lme.formula <-
     controlvals[names(control)] <- control
   }
   fixedSigma <- controlvals$sigma > 0
-  if(fixedSigma && controlvals$apVar) {
-    if("apVar" %in% names(control))
-      warning("for 'sigma' fixed, 'apVar' is set FALSE, as the cov approxmation is not yet available.")
-    controlvals$apVar <- FALSE
-  }
+  ## if(fixedSigma && controlvals$apVar) {
+  ##   if("apVar" %in% names(control))
+  ##     warning("for 'sigma' fixed, 'apVar' is set FALSE, as the cov approxmation is not yet available.")
+  ##   controlvals$apVar <- FALSE
+  ## }
 
   ##
   ## checking arguments
@@ -566,7 +566,7 @@ lmeApVar.fullLmeLogLik <- function(Pars, object, conLin, dims, N, settings) {
 
 lmeApVar <-
   function(lmeSt, sigma, conLin = attr(lmeSt, "conLin"),
-           .relStep = (.Machine$double.eps)^(1/3), minAbsPar = 0,
+           .relStep = .Machine$double.eps^(1/3), minAbsPar = 0,
            natural = TRUE)
 {
   fixedSigma <- attr(lmeSt,"fixedSigma")
@@ -601,18 +601,12 @@ lmeApVar <-
     coef(cSt) <- log((cStNatPar + 1)/(1 - cStNatPar))
     lmeSt[["corStruct"]] <- cSt
   }
-  Pars <- c(coef(lmeSt), lSigma = log(sigma))
+  Pars <- if(fixedSigma) coef(lmeSt) else c(coef(lmeSt), lSigma = log(sigma))
   val <- fdHess(Pars, lmeApVar.fullLmeLogLik, lmeSt, conLin, dims, N, sett,
                 .relStep = .relStep, minAbsPar = minAbsPar)[["Hessian"]]
   if (all(eigen(val, only.values=TRUE)$values < 0)) {
     ## negative definite - OK
     val <- solve(-val)
-    if (fixedSigma && !is.null(dim(val))) {
-      Pars <- c(coef(lmeSt), lSigma = log(sigma))
-      npars <- length(Pars)
-      val <- rbind(cbind(val, rep(0,npars-1)),
-                   rep(0,npars))
-    }
     nP <- names(Pars)
     dimnames(val) <- list(nP, nP)
     attr(val, "Pars") <- Pars
@@ -2248,10 +2242,8 @@ qqnorm.lme <-
            id = NULL, idLabels = NULL, grid = FALSE, ...)
     ## normal probability plots for residuals and random effects
 {
+  if (!inherits(form, "formula")) stop("'form' must be a formula")
   object <- y
-  if (!inherits(form, "formula")) {
-    stop("'form' must be a formula")
-  }
   ## constructing data
   allV <- all.vars(asOneFormula(form, id, idLabels))
   allV <- allV[is.na(match(allV,c("T","F","TRUE","FALSE")))]
@@ -2273,8 +2265,6 @@ qqnorm.lme <-
     }
   } else data <- NULL
   ## argument list
-  dots <- list(...)
-  args <- if (length(dots) > 0) dots else list()
   ## appending object to data
   data <- as.list(c(as.list(data), . = list(object)))
 
@@ -2282,14 +2272,15 @@ qqnorm.lme <-
   covF <- getCovariateFormula(form)
   .x <- eval(covF[[2L]], data)
   labs <- attr(.x, "label")
-  if (inherits(.x, "ranef.lme")) {      # random effects
-    type <- "reff"
-  } else if (!is.null(labs) && ((labs == "Standardized residuals") ||
-                                (labs == "Normalized residuals") ||
-                                (substring(labs, 1, 9) == "Residuals"))) {
-    type <- "res" # residuals
-  } else
-    stop("only residuals and random effects allowed")
+  type <-
+    if (inherits(.x, "ranef.lme"))
+      "reff" # random effects
+    else if (!is.null(labs) && (labs == "Standardized residuals" ||
+				labs == "Normalized residuals"   ||
+				substr(labs, 1, 9) == "Residuals"))
+      "res" # residuals
+    else
+      stop("only residuals and random effects allowed")
 
   if (is.null(args$xlab)) args$xlab <- labs
   if (is.null(args$ylab)) args$ylab <- "Quantiles of standard normal"
@@ -2411,16 +2402,15 @@ qqnorm.lme <-
   id <- if (!is.null(id)) as.logical(as.character(id))
   idLabels <- as.character(idLabels)
   abl <- abline
-  if (is.null(args$strip)) {
+  if (is.null(args$strip))
     args$strip <- function(...) strip.default(..., style = 1)
-  }
   if (is.null(args$cex)) args$cex <- par("cex")
   if (is.null(args$adj)) args$adj <- par("adj")
 
   args <- c(list(eval(parse(text = dform)),
                  data = substitute(data)), args)
-  if (is.null(args$panel)) {
-    args <- c(list(panel = function(x, y, subscripts, ...) {
+  if (is.null(args$panel))
+    args$panel <- function(x, y, subscripts, ...) {
       x <- as.numeric(x)
       y <- as.numeric(y)
       dots <- list(...)
@@ -2435,8 +2425,8 @@ qqnorm.lme <-
 	  panel.abline(a = abl, ...)
 	else panel.abline(h = abl, ...)
       }
-    }), args)
-  }
+    }
+
   if(type == "reff" && !std) {
     args[["scales"]] <- list(x = list(relation = "free"))
   }
@@ -2937,11 +2927,8 @@ lmeControl <-
 {
   if(is.null(sigma))
     sigma <- 0
-  else {
-    if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
-      stop("Within-group std. dev. must be a positive numeric value")
-    if(missing(apVar)) apVar <- FALSE # not yet implemented
-  }
+  else if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
+    stop("Within-group std. dev. must be a positive numeric value")
   list(maxIter = maxIter, msMaxIter = msMaxIter, tolerance = tolerance,
        niterEM = niterEM, msMaxEval = msMaxEval, msTol = msTol,
        msVerbose = msVerbose, returnObject = returnObject,

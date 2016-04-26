@@ -1430,17 +1430,14 @@ nlmeControl <-
 	   minScale = 0.001, tolerance = 1e-5, niterEM = 25,
            pnlsTol = 0.001, msTol = 0.000001,
            returnObject = FALSE, msVerbose = FALSE, gradHess = TRUE,
-           apVar = TRUE, .relStep = (.Machine$double.eps)^(1/3),
+           apVar = TRUE, .relStep = .Machine$double.eps^(1/3),
            minAbsParApVar = 0.05,
 	   opt = c("nlminb", "nlm"), natural = TRUE, sigma = NULL, ...)
 {
   if(is.null(sigma))
     sigma <- 0
-  else {
-    if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
-      stop("Within-group std. dev. must be a positive numeric value")
-    if(missing(apVar)) apVar <- FALSE # not yet implemented
-  }
+  else if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
+    stop("Within-group std. dev. must be a positive numeric value")
   list(maxIter = maxIter, pnlsMaxIter = pnlsMaxIter, msMaxIter = msMaxIter,
        minScale = minScale, tolerance = tolerance, niterEM = niterEM,
        pnlsTol = pnlsTol, msTol = msTol,
