@@ -1,6 +1,6 @@
 Package: nlme
-Version: 3.1-127
-Date: 2016-04-15
+Version: 3.1-128
+Date: 2016-04-25
 Priority: recommended
 Title: Linear and Nonlinear Mixed Effects Models
 Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
@@ -19,5 +19,5 @@ Suggests: Hmisc, MASS
 LazyData: yes
 ByteCompile: yes
 Encoding: UTF-8
-License: GPL (>= 2)
+License: GPL (>= 2) | file LICENCE
 BugReports: http://bugs.r-project.org
