@@ -889,9 +889,9 @@ anova.lme <-
       ##
       ## fixed effects F-values, df, and p-values
       ##
-      aod <- data.frame(nDF, dDF, Fval, Pval)
-      dimnames(aod) <-
-        list(names(assign),c("numDF","denDF","F-value", "p-value"))
+      aod <- data.frame(numDF= nDF, denDF= dDF, "F-value"= Fval, "p-value"= Pval,
+			check.names = FALSE)
+      rownames(aod) <- names(assign)
       attr(aod,"rt") <- rt
     } else {
       nX <- length(unlist(assign))
@@ -962,9 +962,8 @@ anova.lme <-
       c0 <- c(qr.qty(qr(vFix %*% t(L)), c0))[1:nDF]
       Fval <- sum(c0^2)/nDF
       Pval <- pf(Fval, nDF, dDF, lower.tail=FALSE)
-      ## aod <- data.frame(numDF = nDF, denDF = dDF, "F-value" = Fval, "p-value" = Pval) _FAILS_
-      aod <- data.frame(nDF, dDF, Fval, Pval)
-      names(aod) <- c("numDF", "denDF", "F-value", "p-value")
+      aod <- data.frame(numDF = nDF, denDF = dDF, "F-value" = Fval, "p-value" = Pval,
+                        check.names=FALSE)
       attr(aod, "rt") <- rt
       attr(aod, "label") <- lab
       if (!Lmiss) {
@@ -980,10 +979,10 @@ anova.lme <-
   ## nlme, nlsList, and nls
   ##
   else {
-    ancall <- sys.call()
-    ancall$verbose <- ancall$test <- NULL
+    ancall <- sys.call() # yuck.. hack
+    ancall$verbose <- ancall$test <- ancall$type <- NULL
     object <- list(object, ...)
-    termsClass <- unlist(lapply(object, data.class))
+    termsClass <- vapply(object, data.class, "")
     valid.cl <- c("gls", "gnls", "lm", "lmList", "lme","nlme","nlsList","nls")
     if(!all(match(termsClass, valid.cl, 0))) {
       valid.cl <- paste0('"', valid.cl, '"')
@@ -991,8 +990,8 @@ anova.lme <-
                     paste(head(valid.cl, -1), collapse=", "), tail(valid.cl, 1)),
            domain=NA)
     }
-    resp <- unlist(lapply(object,
-                          function(el) deparse(getResponseFormula(el)[[2L]])))
+    resp <- vapply(object,
+                   function(el) deparse(getResponseFormula(el)[[2L]]), "")
     ## checking if responses are the same
     subs <- as.logical(match(resp, resp[1L], FALSE))
     if (!all(subs))
@@ -1002,10 +1001,8 @@ anova.lme <-
     object <- object[subs]
     rt <- length(object)
     termsModel <- lapply(object, function(el) formula(el)[-2])
-    estMeth <- unlist(lapply(object,
-                             function(el) {
-                               if (is.null(val <- el[["method"]])) NA else val
-                             }))
+    estMeth <- vapply(object, function(el)
+      if (is.null(val <- el[["method"]])) NA_character_ else val, "")
     ## checking consistency of estimation methods
     if(length(uEst <- unique(estMeth[!is.na(estMeth)])) > 1) {
       stop("all fitted objects must have the same estimation method")
@@ -1014,49 +1011,41 @@ anova.lme <-
     ## checking if all models have same fixed effects when estMeth = "REML"
     REML <- uEst == "REML"
     if(REML) {
-      aux <- unlist(lapply(termsModel,
-                           function(el) {
-                             aux <- terms(el)
-                             val <- paste(sort(attr(aux, "term.labels")),
-                                          collapse = "&")
-                             if (attr(aux, "intercept") == 1) {
-                               val <- paste(val, "(Intercept)", sep = "&")
-                             }
-                             val
-                           }))
+      aux <- vapply(termsModel,
+                    function(el) {
+                      tt <- terms(el)
+                      val <- paste(sort(attr(tt, "term.labels")), collapse = "&")
+                      if (attr(tt, "intercept") == 1)
+                        paste(val, "(Intercept)", sep = "&") else val
+                    }, ".")
       if(length(unique(aux)) > 1) {
         warning("fitted objects with different fixed effects. REML comparisons are not meaningful.")
       }
     }
     termsCall <-
       lapply(object, function(el) {
-        if (is.null(val <- el$call)) {
-          if (is.null(val <- attr(el, "call"))) {
+        if (is.null(val <- el$call) &&
+            is.null(val <- attr(el, "call")))
             stop("objects must have a \"call\" component or attribute")
-          }
-        }
         val
       })
-    termsCall <- unlist(lapply(termsCall,
-                               function(el) paste(deparse(el), collapse ="")))
-
+    termsCall <- vapply(termsCall,
+                        function(el) paste(deparse(el), collapse =""), "")
     aux <- lapply(object, logLik, REML)
-    if (length(unique(unlist(lapply(aux, function(el) attr(el, "nall"))))) > 1) {
+    if (length(unique(vapply(aux, attr, 1, "nall"))) > 1) {
       stop("all fitted objects must use the same number of observations")
     }
-    dfModel <- unlist(lapply(aux, function(el) attr(el, "df")))
-    logLik <- unlist(lapply(aux, function(el) c(el)))
-    AIC <- unlist(lapply(aux, AIC))
-    BIC <- unlist(lapply(aux, BIC))
+    dfModel <- vapply(aux, attr, 1, "df")
+    logLik  <- vapply(aux, c, 1.1)
     aod <- data.frame(call = termsCall,
-                      Model = (1:rt),
+                      Model = 1:rt,
                       df = dfModel,
-                      AIC = AIC,
-                      BIC = BIC,
+                      AIC = vapply(aux, AIC, 1.),
+                      BIC = vapply(aux, BIC, 1.),
                       logLik = logLik,
                       check.names = FALSE)
     if (test) {
-      ddf <-  diff(dfModel)
+      ddf <- diff(dfModel)
       if (sum(abs(ddf)) > 0) {
         effects <- rep("", rt)
         for(i in 2:rt) {
@@ -1068,7 +1057,7 @@ anova.lme <-
         ldf <- as.logical(ddf)
         lratio <- 2 * abs(diff(logLik))
         lratio[!ldf] <- NA
-        pval[ldf] <- 1 - pchisq(lratio[ldf],abs(ddf[ldf]))
+        pval[ldf] <- pchisq(lratio[ldf], abs(ddf[ldf]), lower.tail=FALSE)
         aod <- data.frame(aod,
                           Test = effects,
                           "L.Ratio" = c(NA, lratio),
@@ -2233,6 +2222,9 @@ print.summary.lme <- function(x, verbose = FALSE, ...)
   invisible(x)
 }
 
+## coef(summary( obj )) # should work for "gls" or "lme" similarly as for lm():
+getCTable <- function (object, ...) object$tTable
+
 qqnorm.lme <-
   function(y, form = ~ resid(., type = "p"), abline = NULL,
            id = NULL, idLabels = NULL, grid = FALSE, ...)
@@ -2581,12 +2573,10 @@ summary.lme <- function(object, adjustSigma = TRUE, verbose = FALSE, ...)
     sqrt(object$dims$N/(object$dims$N - length(stdFixed)))
   ## fixed effects coefficients, std. deviations and t-ratios
   ##
-  tTable <- data.frame(fixed, stdFixed, object$fixDF[["X"]],
-                       fixed/stdFixed, fixed)
-  dimnames(tTable)<-
-    list(names(fixed),c("Value", "Std.Error", "DF", "t-value", "p-value"))
-  tTable[, "p-value"] <- 2 * pt(-abs(tTable[,"t-value"]), tTable[,"DF"])
-  object$tTable <- as.matrix(tTable)
+  fDF <- object$fixDF[["X"]]
+  tVal <- fixed/stdFixed
+  object$tTable <- cbind(Value = fixed, Std.Error = stdFixed, DF = fDF,
+			 "t-value" = tVal, "p-value" = 2 * pt(-abs(tVal), fDF))
   ##
   ## residuals
   ##
@@ -2603,7 +2593,7 @@ summary.lme <- function(object, adjustSigma = TRUE, verbose = FALSE, ...)
   object$BIC <- BIC(aux)
   object$AIC <- AIC(aux)
   structure(object, verbose = verbose, oClass = class(object),
-            class = c("summary.lme", class(object)))
+	    class = c("summary.lme", class(object)))
 }
 
 ## based on R's update.default

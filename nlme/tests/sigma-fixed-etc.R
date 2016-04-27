@@ -24,8 +24,13 @@ t1.fix.ML.gls <- gls(distance ~ Sex *I(age-11), data = Orthodont,
                      weights = varIdent(form = ~1 |age),
                      control = glsControl(sigma = sigma),
                      method = "ML")
-summary(t1.fix.ML.gls)
-  anova(t1.fix.ML.gls)
+(s1M <- summary(t1.fix.ML.gls))
+(a1M <-   anova(t1.fix.ML.gls)) # sequential
+(a1Mm<-   anova(t1.fix.ML.gls, type = "marginal"))
+## t_{n} ^2  ==  F_{1,n}:
+stopifnot(all.equal(as.vector(s1M$tTable[,"t-value"] ^ 2),
+                    a1Mm[,"F-value"], tolerance = 1e-14))
+
 ##
 cat("\nFixed sigma= ",sigma,"  estimation method 'REML'\n")
 t1.fix.REML.gls <- gls(distance ~ Sex*I(age-11), data = Orthodont,
@@ -34,9 +39,14 @@ t1.fix.REML.gls <- gls(distance ~ Sex*I(age-11), data = Orthodont,
                        control = glsControl(sigma = sigma,
                                             maxIter = 1000, msMaxIter = 200),
                        method = "REML")
- summary (t1.fix.REML.gls)
-   anova (t1.fix.REML.gls)
+(s1R <- summary(t1.fix.REML.gls))
+(a1R  <-   anova(t1.fix.REML.gls))
+(a1Rm <-   anova(t1.fix.REML.gls, type="marginal"))
 intervals(t1.fix.REML.gls) # now work (via 'apVar')
+## t_{n} ^2  ==  F_{1,n}:
+stopifnot(all.equal(as.vector(s1R$tTable[,"t-value"] ^ 2),
+                    a1Rm[,"F-value"], tolerance = 1e-14))
+
 cat("Time elapsed: ", (proc.time() - .pt)[1:3], "\n")
 
 ##===   example 2  linear mixed model page 147  lme ML  and REML ================

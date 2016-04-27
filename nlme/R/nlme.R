@@ -989,7 +989,7 @@ nlme.formula <-
   ## creating the  nlme object
   ##
   isGrpd <- inherits(data, "groupedData")
-  structure(class = c("nlme","lme"),
+  structure(class = c("nlme", "lme"),
             list(modelStruct = nlmeSt,
 		 dims = dims,
                  contrasts = contr,

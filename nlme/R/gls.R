@@ -416,22 +416,19 @@ ACF.gls <-
 
 anova.gls <-
     function(object, ..., test = TRUE, type = c("sequential", "marginal"),
-             adjustSigma = TRUE, Terms, L, verbose = FALSE)
+             adjustSigma = NA, Terms, L, verbose = FALSE)
 {
-	## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
     fixSig <- attr(object$modelStruct, "fixedSigma")
-	fixSig <- !is.null(fixSig) && fixSig
+    fixSig <- !is.null(fixSig) && fixSig
     Lmiss <- missing(L)
     ## returns the likelihood ratio statistics, the AIC, and the BIC
     dots <- list(...)
-    if ((rt <- length(dots) + 1L) == 1L) {
-        if (!inherits(object,"gls")) {
+    if ((rt <- length(dots) + 1L) == 1L) {    ## just one object
+        if (!inherits(object,"gls"))
             stop("object must inherit from class \"gls\"")
-        }
-        if (inherits(object, "gnls") && missing(adjustSigma)) {
-            ## REML correction already applied to gnls objects
-            adjustSigma <- FALSE
-        }
+	if(is.na(adjustSigma))
+	    ## REML correction already applied to gnls objects
+	    adjustSigma <- inherits(object, "gnls")
         dims <- object$dims
         N <- dims$N
         p <- dims$p
@@ -440,7 +437,7 @@ anova.gls <-
         vBeta <- attr(assign, "varBetaFact")
 	if (!REML && adjustSigma)
 	    ## using REML-like estimate of sigma under ML
-	    vBeta <- sqrt(N/(N - p)) * vBeta
+	    vBeta <- sqrt((N - p)/N) * vBeta
         c0 <- solve(t(vBeta), coef(object))
         nTerms <- length(assign)
         dDF <- N - p
@@ -452,20 +449,20 @@ anova.gls <-
             nDF <- integer(nTerms)
             for(i in 1:nTerms) {
                 nDF[i] <- length(assign[[i]])
-                if (type == "sequential") {       # type I SS
-                    c0i <- c0[assign[[i]]]
-                } else {
-                    c0i <- c(qr.qty(qr(vBeta[, assign[[i]], drop = FALSE]), c0))[1:nDF[i]]
-                }
+		c0i <-
+		    if (type == "sequential") # type I SS
+			c0[assign[[i]]]
+		    else ## "marginal"
+			qr.qty(qr(vBeta[, assign[[i]], drop = FALSE]), c0)[1:nDF[i]]
                 Fval[i] <- sum(c0i^2)/nDF[i]
-                Pval[i] <- 1 - pf(Fval[i], nDF[i], dDF)
+                Pval[i] <- pf(Fval[i], nDF[i], dDF, lower.tail=FALSE)
             }
             ##
             ## fixed effects F-values, df, and p-values
             ##
-            aod <- data.frame(nDF, Fval, Pval)
-            dimnames(aod) <-
-                list(names(assign),c("numDF", "F-value", "p-value"))
+	    aod <- data.frame(numDF = nDF, "F-value" = Fval, "p-value" = Pval,
+			check.names=FALSE)
+            rownames(aod) <- names(assign)
         } else {
             if (Lmiss) {                 # terms is given
                 if (is.numeric(Terms) && all(Terms == as.integer(Terms))) {
@@ -522,15 +519,15 @@ anova.gls <-
                 rownames(L) <- if(is.null(dmsL1)) 1:nrowL else dmsL1[noZeroRowL]
                 lab <- paste(lab, "F-test for linear combination(s)\n")
             }
-            nDF <- sum(svd(L)$d > 0)
+            nDF <- sum(svd.d(L) > 0)
             c0 <- c(qr.qty(qr(vBeta %*% t(L)), c0))[1:nDF]
             Fval <- sum(c0^2)/nDF
-            Pval <- 1 - pf(Fval, nDF, dDF)
-            aod <- data.frame(nDF, Fval, Pval)
-            names(aod) <- c("numDF", "F-value", "p-value")
+            Pval <- pf(Fval, nDF, dDF, lower.tail=FALSE)
+            aod <- data.frame(numDF = nDF, "F-value" = Fval, "p-value" = Pval,
+                              check.names=FALSE)
             if (!Lmiss) {
-                if (nrow(L) > 1) attr(aod, "L") <- L[, noZeroColL, drop = FALSE]
-                else attr(aod, "L") <- L[, noZeroColL]
+                attr(aod, "L") <-
+                    if(nrow(L) > 1) L[, noZeroColL, drop = FALSE] else L[, noZeroColL]
             }
         }
         attr(aod, "label") <- lab
@@ -863,11 +860,11 @@ logLik.gls <-
     val <- object[["logLik"]]
     if (REML && estM == "ML") { # have to correct logLik
         val <- val + (p * (log(2 * pi) + 1) + Np * log(1 - p/N) +
-                      sum(log(abs(svd(object$varBeta)$d)))) / 2
+                      sum(log(abs(svd.d(object$varBeta))))) / 2
     }
     else if (!REML && (estM == "REML")) { # have to correct logLik
         val <- val - (p * (log(2*pi) + 1) + N * log(1 - p/N) +
-                      sum(log(abs(svd(object$varBeta)$d)))) / 2
+                      sum(log(abs(svd.d(object$varBeta))))) / 2
     }
     structure(val,
               nall = N,
@@ -996,10 +993,8 @@ print.summary.gls <-
     function(x, verbose = FALSE, digits = .Options$digits, ...)
 {
     dd <- x$dims
-    ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-	fixSig <- attr(x[["modelStruct"]], "fixedSigma")
-	fixSig <- !is.null(fixSig) && fixSig
-
+    fixSig <- attr(x[["modelStruct"]], "fixedSigma")
+    fixSig <- !is.null(fixSig) && fixSig
     verbose <- verbose || attr(x, "verbose")
     mCall <- x$call
     if (inherits(x, "gnls")) {
