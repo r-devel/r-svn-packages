@@ -248,13 +248,11 @@ gsummary <-
       aux <- table(x)
       names(aux)[match(max(aux), aux)]
     }
-    if (data.class(FUN) == "function") {	# single function given
+    if (is.function(FUN)) {	# single function given
       FUN <- list(numeric = FUN, ordered = Mode, factor = Mode)
     } else {
-      if (!(is.list(FUN) &&
-	   all(sapply(FUN, data.class) == "function"))) {
+      if (!(is.list(FUN) && all(sapply(FUN, is.function))))
 	stop("'FUN' can only be a function or a list of functions")
-      }
       auxFUN <- list(numeric = mean, ordered = Mode, factor = Mode)
       aux <- names(auxFUN)[is.na(match(names(auxFUN), names(FUN)))]
       if (length(aux) > 0) FUN[aux] <- auxFUN[aux]
