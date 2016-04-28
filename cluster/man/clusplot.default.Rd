@@ -53,7 +53,7 @@
     matrix or a matrix of observations by variables (see \code{x}
     arugment above).}
   \item{s.x.2d}{a \code{\link{list}} with components named \code{x} (a \eqn{n
-      \times 2} matrix; typically something like principal components of
+      \times 2}{n x 2} matrix; typically something like principal components of
     original data), \code{labs} and \code{var.dec}.}% FIXME: 'labs' and 'var.dec' are not always needed
   \item{stand}{
     logical flag: if true, then the representations of the n observations in the
