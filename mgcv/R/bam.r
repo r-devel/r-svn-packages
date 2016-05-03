@@ -150,7 +150,9 @@ compress.df <- function(dat,m=NULL) {
   }
   kind <- RNGkind(NULL)
   RNGkind("default","default")
-  set.seed(1) ## ensure repeatability
+  ## following line must be different to that used in
+  ## tp constructor subsampling!
+  set.seed(8547) ## ensure repeatability
   
   ii <- sample(1:nrow(xu),nrow(xu),replace=FALSE) ## shuffling index
   

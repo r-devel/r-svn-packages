@@ -46,7 +46,7 @@ matrix that contains row i of the original matrix.
 
 \seealso{\code{\link{unique}}, \code{\link{duplicated}}, \code{\link{match}}.}
 
-\author{ Simon N. Wood \email{simon.wood@r-project.org}}
+\author{ Simon N. Wood \email{simon.wood@r-project.org} with thanks to Jonathan Rougier}
 
 
 \examples{

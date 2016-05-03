@@ -168,18 +168,25 @@ uniquecombs <- function(x) {
      ind <- match(as.numeric(x),xu)
      x <- matrix(xu,ncol=1,nrow=length(xu))
   } else { ## no R equivalent that directly yields indices
+ 
     txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=","),")",sep="")
     xt <- eval(parse(text=txt))
     dup <- duplicated(xt)
     ind <- match(xt,xt[!dup])
     x <- x[!dup,]
-
-    #ind <- rep(0,nrow(x))
-    #res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
-    #        r=as.integer(nrow(x)),c=as.integer(ncol(x)))
-    #n <- res$r*res$c
-    #x <- matrix(res$x[1:n],res$r,res$c)
-    #ind <- res$ind+1 ## C to R index gotcha 
+    ## old slower...
+    # ind <- rep(0,nrow(x))
+    # res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
+    #         r=as.integer(nrow(x)),c=as.integer(ncol(x)))
+    # n <- res$r*res$c
+    # x <- matrix(res$x[1:n],res$r,res$c)
+    # ind <- res$ind+1 ## C to R index gotcha
+    # ## what if I muddle this index?
+    # #ri <- ii <- sample(1:length(ind),length(ind),replace=FALSE)
+    # #ri[ii] <- 1:length(ii) 
+    # #ind <- ri[ind]
+    # #x <- x[ii,] ## end of debug muddle tryout
+    
   }
   if (!is.null(xo)) { ## original was a data.frame
     x <- as.data.frame(x)
