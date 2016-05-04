@@ -1434,7 +1434,7 @@ nlmeControl <-
 {
   if(is.null(sigma))
     sigma <- 0
-  else if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
+  else if(!is.finite(sigma) || length(sigma) != 1 || sigma < 0)
     stop("Within-group std. dev. must be a positive numeric value")
   list(maxIter = maxIter, pnlsMaxIter = pnlsMaxIter, msMaxIter = msMaxIter,
        minScale = minScale, tolerance = tolerance, niterEM = niterEM,

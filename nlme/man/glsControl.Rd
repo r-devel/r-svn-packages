@@ -46,7 +46,7 @@ glsControl(maxIter, msMaxIter, tolerance, msTol, msVerbose,
  \item{natural}{logical.  Should the natural parameterization be used
    for the approximate variance calculations?  Default is \code{TRUE}.}
  \item{sigma}{optionally a positive number to fix the residual error at.
-   If \code{NULL}, as by default, sigma is estimated.}
+   If \code{NULL}, as by default, or \code{0}, sigma is estimated.}
 }
 \description{
   The values supplied in the function call replace the defaults and a

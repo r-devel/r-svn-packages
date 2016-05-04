@@ -911,7 +911,7 @@ gnlsControl <-
   ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
   if(is.null(sigma))
     sigma <- 0
-  else  if(!is.finite(sigma) || length(sigma) != 1 || sigma <= 0)
+  else  if(!is.finite(sigma) || length(sigma) != 1 || sigma < 0)
     stop("Within-group std. dev. must be a positive numeric value")
   list(maxIter = maxIter, nlsMaxIter = nlsMaxIter, msMaxIter = msMaxIter,
        minScale = minScale, tolerance = tolerance, nlsTol = nlsTol,

@@ -68,7 +68,7 @@ lmeControl(maxIter = 50, msMaxIter = 50, tolerance = 1e-6, niterEM = 25,
    (\code{pdSymm}) in \code{reStruct}, when the approximate covariance
    matrix of the estimators is calculated.  Default is \code{TRUE}.}
  \item{sigma}{optionally a positive number to fix the residual error at.
-   If \code{NULL}, as by default, sigma is estimated.}
+   If \code{NULL}, as by default, or \code{0}, sigma is estimated.}
  \item{\dots}{further named control arguments to be passed, depending on
    \code{opt}, to \code{\link{nlminb}} (those from \code{abs.tol} down)
    or \code{\link{optim}} (those except \code{trace} and \code{maxit};
@@ -83,6 +83,8 @@ lmeControl(maxIter = 50, msMaxIter = 50, tolerance = 1e-6, niterEM = 25,
 \examples{
 # decrease the maximum number iterations in the ms call and
 # request that information on the evolution of the ms iterations be printed
-lmeControl(msMaxIter = 20, msVerbose = TRUE)
+str(lCtr <- lmeControl(msMaxIter = 20, msVerbose = TRUE))
+## This should always work:
+do.call(lmeControl, lCtr)
 }
 \keyword{models}

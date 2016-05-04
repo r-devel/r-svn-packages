@@ -48,7 +48,7 @@ gnlsControl(maxIter, nlsMaxIter, msMaxIter, minScale, tolerance,
  \item{minAbsParApVar}{numeric value - minimum absolute parameter value
    in the approximate variance calculation.  The default is \code{0.05}.}
  \item{sigma}{optionally a positive number to fix the residual error at.
-   If \code{NULL}, as by default, sigma is estimated.}
+   If \code{NULL}, as by default, or \code{0}, sigma is estimated.}
 }
 \description{
   The values supplied in the function call replace the defaults and a

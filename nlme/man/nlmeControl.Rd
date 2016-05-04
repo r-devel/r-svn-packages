@@ -64,7 +64,7 @@ nlmeControl(maxIter, pnlsMaxIter, msMaxIter, minScale,
    (\code{pdSymm}) in \code{reStruct}, when the approximate covariance
    matrix of the estimators is calculated.  Default is \code{TRUE}.}
  \item{sigma}{optionally a positive number to fix the residual error at.
-   If \code{NULL}, as by default, sigma is estimated.}
+   If \code{NULL}, as by default, or \code{0}, sigma is estimated.}
  \item{\dots}{Further named control arguments to be passed to
    \code{\link{nlminb}}, where used (\code{eval.max} and those from
    \code{abs.tol} down).}
