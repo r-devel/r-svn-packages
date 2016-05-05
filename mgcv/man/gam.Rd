@@ -386,6 +386,11 @@ G <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE,data=dat)
 b <- gam(G=G)
 print(b)
 
+## 2 part fit enabling manipulation of smoothing parameters...
+G <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),fit=FALSE,data=dat,sp=b$sp)
+G$lsp0 <- log(b$sp*10) ## provide log of required sp vec
+gam(G=G) ## it's smoother
+
 ## change the smoothness selection method to REML
 b0 <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="REML")
 ## use alternative plotting scheme, and way intervals include
