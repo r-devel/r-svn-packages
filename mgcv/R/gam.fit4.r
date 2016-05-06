@@ -270,6 +270,21 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   if (is.null(weights)) weights <- rep.int(1, nobs)
   if (is.null(offset)) offset <- rep.int(0, nobs)
 
+  linkinv <- family$linkinv
+  valideta <- family$valideta
+  validmu <- family$validmu
+  dev.resids <- family$dev.resids
+
+  ## need an initial `null deviance' to test for initial divergence...
+  ## if (!is.null(start)) null.coef <- start - can be on edge of feasible - not good
+  null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
+  old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
+
+  if (!is.null(start)) { ## check it's at least better than null.coef
+    pdev <- sum(dev.resids(y, linkinv(x%*%start+as.numeric(offset)), weights,theta)) + t(start)%*%St%*%start
+    if (pdev>old.pdev) start <- mustart <- etastart <- NULL
+  }
+
   ## call the families initialization code...
 
   if (is.null(mustart)) {
@@ -299,18 +314,15 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    ##mu.eta <- family$mu.eta
    ##Dd <- family$Dd
 
-   linkinv <- family$linkinv
-   valideta <- family$valideta
-   validmu <- family$validmu
-   dev.resids <- family$dev.resids
  
    mu <- linkinv(eta);etaold <- eta
      
    ## need an initial `null deviance' to test for initial divergence...
    ## if (!is.null(start)) null.coef <- start - can be on edge of feasible - not good
+   #null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
+   #old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
+
    coefold <- null.coef
-   null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
-   old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
    conv <-  boundary <- FALSE
  
    for (iter in 1:control$maxit) { ## start of main fitting iteration 

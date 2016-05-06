@@ -8,6 +8,9 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
+* modification to gam.fit4 to ignore 'start' if it is immediately worse than 
+  'null.coef'.
+
 * Added help file ?one.se.rule on the `one standard error rule' for obtaining 
   smoother models.
 
