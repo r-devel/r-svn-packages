@@ -8,6 +8,9 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
+* Added help file ?one.se.rule on the `one standard error rule' for obtaining 
+  smoother models.
+
 * cSplineDes can now accept a 'derivs' argument.
 
 * Faster code used in 'uniquecombs'. Speeds up discretization step in 

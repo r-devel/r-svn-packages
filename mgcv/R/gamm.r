@@ -1201,7 +1201,10 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
 # random terms. correlation describes the correlation structure. This routine is basically an interface
 # between the basis constructors provided in mgcv and the gammPQL routine used to estimate the model.
 { if (inherits(family,"extended.family")) warning("family are not designed for use with gamm!")
-  
+  ## lmeControl turns sigma=NULL into sigma=0, but if you supply sigma=0 rejects it,
+  ## which will break the standard handling of the control list. Following line fixes.
+  ## but actually Martin M has now fixed lmeControl...
+  ##if (!is.null(control$sigma)&&control$sigma==0) control$sigma <- NULL
   control <- do.call("lmeControl",control) 
     # check that random is a named list
     if (!is.null(random))
