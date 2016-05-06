@@ -1,3 +1,9 @@
+2016-05-04 Martin Maechler
+
+	* R/lme.R, etc (lmeControl): 'sigma = 0' is now allowed (and
+	equivalent to 'sigma = NULL'); this fixes mgcv::gamm()'s use of
+	the equivalent of 'do.call(lmeControl, lmeControl())'.
+
 2016-04-26 Martin Maechler
 
 	* DESCRIPTION (Version): 3.1-128
