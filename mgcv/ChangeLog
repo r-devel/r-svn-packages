@@ -13,6 +13,8 @@ Currently deprecated and liable to be removed:
 
 * cSplineDes can now accept a 'derivs' argument.
 
+* added drop.intercept handling for multiple formulae (mod by Matteo Fasiolo).
+
 * Faster code used in 'uniquecombs'. Speeds up discretization step in 
   'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 

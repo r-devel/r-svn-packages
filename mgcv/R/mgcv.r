@@ -743,7 +743,7 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
 gam.setup.list <- function(formula,pterms,
                     data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
-                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE) {
+                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=NULL) {
 ## version of gam.setup for when gam is called with a list of formulae, 
 ## specifying several linear predictors...
 ## key difference to gam.setup is an attribute to the model matrix, "lpi", which is a list
@@ -751,12 +751,14 @@ gam.setup.list <- function(formula,pterms,
   if (!is.null(paraPen)) stop("paraPen not supported for multi-formula models")
   if (!absorb.cons) stop("absorb.cons must be TRUE for multi-formula models")
   d <- length(pterms) ## number of formulae
+  if (is.null(drop.intercept)) drop.intercept <- rep(FALSE, d)
+  if (length(drop.intercept) != d) stop("length(drop.intercept) should be equal to number of model formulas")
 
   lp.overlap <- if (formula$nlp<d) TRUE else FALSE ## predictors share terms
 
   G <- gam.setup(formula[[1]],pterms[[1]],
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
-              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[1])
   G$pterms <- pterms
   
   G$offset <- list(G$offset)
@@ -785,7 +787,7 @@ gam.setup.list <- function(formula,pterms,
     formula[[i]]$pfok <- 1 ## empty formulae OK here!
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
-              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept)
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[i])
     if (!is.null(sp)&&length(um$sp)>0) sp <- sp[-(1:length(um$sp))] ## need to strip off already used sp's
     if (!is.null(min.sp)&&nrow(um$L)>0) min.sp <- min.sp[-(1:nrow(um$L))]  
 
@@ -1866,8 +1868,12 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (!control$keepData) rm(data) ## save space
 
     ## check whether family requires intercept to be dropped...
-    drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
- 
+    # drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
+    drop.intercept <- as.logical(family$drop.intercept)
+    if (is.null(family$drop.intercept)){
+      drop.intercept <- if (is.list(formula)) rep(FALSE, length(formula)) else FALSE
+    }
+    
     if (inherits(family,"general.family")&&!is.null(family$presetup)) eval(family$presetup)
 
     gsname <- if (is.list(formula)) "gam.setup.list" else "gam.setup" 
@@ -2627,13 +2633,21 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   }
 
   ## check if extended family required intercept to be dropped...
-  drop.intercept <- FALSE 
-  if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
-    drop.intercept <- TRUE;
+  #drop.intercept <- FALSE 
+  #if (!is.null(object$family$drop.intercept)&&object$family$drop.intercept) {
+  #  drop.intercept <- TRUE;
+  #  ## make sure intercept explicitly included, so it can be cleanly dropped...
+  #  for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 
+  #} 
+  drop.intercept <- object$family$drop.intercept
+  if (is.null(drop.intercept)) {
+    drop.intercept <- rep(FALSE, length(Terms))
+  } else {
     ## make sure intercept explicitly included, so it can be cleanly dropped...
-    for (i in 1:length(Terms)) attr(Terms[[i]],"intercept") <- 1 
-  } 
-
+    for (i in 1:length(Terms)) {
+      if (drop.intercept[i] == TRUE) attr(Terms[[i]],"intercept") <- 1 
+    }
+  }
   ## index of any parametric terms that have to be dropped
   ## this is used to help with identifiability in multi-
   ## formula models...
@@ -2665,7 +2679,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         Xp <- model.matrix(Terms[[i]],object$model)
         mf <- newdata # needed in case of offset, below
       }
-      if (drop.intercept) { 
+      if (drop.intercept[i]) { 
         xat <- attributes(Xp);ind <- xat$assign>0 
         Xp <- Xp[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
         xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
