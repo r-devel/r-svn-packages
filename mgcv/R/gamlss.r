@@ -336,7 +336,8 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   ## the Hessian...
   lbb <- matrix(0,p,p)
   for (i in 1:K) for (j in i:K) {
-    A <- t(X[,jj[[i]],drop=FALSE])%*%(l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
+    ## A <- t(X[,jj[[i]],drop=FALSE])%*%(l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
+    A <- crossprod(X[,jj[[i]],drop=FALSE],l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
     lbb[jj[[i]],jj[[j]]] <- lbb[jj[[i]],jj[[j]]] + A 
     if (j>i) lbb[jj[[j]],jj[[i]]] <- lbb[jj[[j]],jj[[i]]] + t(A) 
   } 
@@ -380,7 +381,8 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
           ind <- ind + n
         }
         ## d1H[[l]][jj[[j]],jj[[i]]] <- 
-        A <- t(X[,jj[[i]],drop=FALSE])%*%(v*X[,jj[[j]],drop=FALSE])
+        ## A <- t(X[,jj[[i]],drop=FALSE])%*%(v*X[,jj[[j]],drop=FALSE])
+        A <- crossprod(X[,jj[[i]],drop=FALSE],v*X[,jj[[j]],drop=FALSE])
         d1H[[l]][jj[[i]],jj[[j]]] <- d1H[[l]][jj[[i]],jj[[j]]] + A
         if (j>i) d1H[[l]][jj[[j]],jj[[i]]] <- d1H[[l]][jj[[j]],jj[[i]]] + t(A)
       } 

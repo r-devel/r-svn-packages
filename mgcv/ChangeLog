@@ -51,6 +51,8 @@ Currently deprecated and liable to be removed:
 * bug fix in Hessian computation in gam.fit5 - leading diagonal of Hessian of 
   log|Hp| could be wrong where Hp is penalized Hessian. 
 
+* better use of crossprod in gamlss.gH
+
 1.8-12
 
 ** "bs" B-spline smoothing basis. B-splines with derivative based penalties
