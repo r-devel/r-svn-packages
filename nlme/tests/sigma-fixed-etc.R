@@ -237,7 +237,7 @@ stopifnot(
     all.equal(iM6$varStruct["Female",],
 	      c(lower = 0.51230063,
 		est.  = 0.65065925,
-		upper = 0.82638482), tol = 5e-5)
+		upper = 0.82638482), tol = 6e-5)# seen 5.35e-5 (Sparc Sol., no long double)
 )
 
 ##-------------
