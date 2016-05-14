@@ -143,6 +143,33 @@ pcls <- function(M)
   p
 } ## pcls
 
+all.vars1 <- function(form) {
+## version of all.vars that doesn't split up terms like x$y into x and y
+  vars <- all.vars(form)
+  vn <- all.names(form)
+  vn <- vn[vn%in%c(vars,"$","[[")] ## actual variable related names
+  if ("[["%in%vn) stop("can't handle [[ in formula")
+  ii <- which(vn%in%"$") ## index of '$'
+  if (length(ii)) { ## assemble variable names
+    vn1 <- if (ii[1]>1) vn[1:(ii[1]-1)]
+    go <- TRUE
+    k <- 1
+    while (go) {
+      n <- 2; 
+      while(k<length(ii) && ii[k]==ii[k+1]-1) { k <- k + 1;n <- n + 1 }
+      vn1 <- c(vn1,paste(vn[ii[k]+1:n],collapse="$"))
+      if (k==length(ii)) {
+        go <- FALSE
+	ind <- if (ii[k]+n<length(vn)) (ii[k]+n+1):length(vn) else rep(0,0) 
+      } else {
+        k <- k +  1
+	ind <- if (ii[k-1]+n<ii[k]-1) (ii[k-1]+n+1):(ii[k]-1) else rep(0,0)
+      }
+      vn1 <- c(vn1,vn[ind])
+    }
+  } else vn1 <- vn
+  vn1
+} ## all.vars1
 
 interpret.gam0 <- function(gf,textra=NULL)
 # interprets a gam formula of the generic form:
@@ -1825,7 +1852,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
     ## summarize the *raw* input variables
     ## note can't use get_all_vars here -- buggy with matrices
-    vars <- all.vars(gp$fake.formula[-2]) ## drop response here
+    vars <- all.vars1(gp$fake.formula[-2]) ## drop response here
     inp <- parse(text = paste("list(", paste(vars, collapse = ","),")"))
 
     ## allow a bit of extra flexibility in what `data' is allowed to be (as model.frame actually does)

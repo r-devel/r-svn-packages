@@ -1,6 +1,9 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
+BUGS: s(dat$x) doesn't work as all.vars splits into two - need to fix 
+and add test to mgcvTest
+
 Currently deprecated and liable to be removed: 
 - bam(...,sparse=TRUE) [1.8-5]
 - single penalty tensor product smooths.
