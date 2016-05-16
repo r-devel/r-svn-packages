@@ -1110,6 +1110,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        scale.est=1, ### NOTE: needed by newton, but what is sensible here? 
        REML= REML,REML1= REML1,REML2=REML2,
        rank=rank,aic = -2*ll$l, ## 2*edf needs to be added
+       ##deviance = -2*ll$l,
        l= ll$l,## l1 =d1l,l2 =d2l,
        lbb = ll$lbb, ## Hessian of log likelihood
        L=L, ## chol factor of pre-conditioned penalized hessian

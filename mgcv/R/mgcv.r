@@ -3716,11 +3716,31 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE,
     is.glm <- unlist(lapply(dotargs, function(x) inherits(x,
         "glm")))
     dotargs <- dotargs[is.glm]
-    if (length(dotargs) > 0)
-     return(anova(structure(c(list(object), dotargs), class="glmlist"), 
-            dispersion = dispersion, test = test)) 
-       # return(anova.glmlist(c(list(object), dotargs), dispersion = dispersion,
-       #     test = test)) ## modified at BDR's suggestion 19/08/13
+    if (length(dotargs) > 0) {
+      if (!is.null(test)&&!test%in%c("Chisq","LRT","F")) stop("un-supported test")
+      ## check for multiple formulae to avoid problems...
+      if (is.list(object$formula)) object$formula <- object$formula[[1]]
+      ## reset df.residual to value appropriate for GLRT...
+      n <- if (is.matrix(object$y)) nrow(object$y) else length(object$y)
+      dfc <- if (is.null(object$edf2)) 0 else sum(object$edf2) - sum(object$edf) 
+      object$df.residual <- n - sum(object$edf1) - dfc
+      ## reset the deviance to -2*logLik for general families...
+      if (inherits(object$family,"general.family")) { 
+        object$deviance <- -2 * as.numeric(logLik(object)) 
+        if (!is.null(test)) test <- "Chisq"
+      }
+      ## repeat above 3 steps for each element of dotargs...
+      for (i in 1:length(dotargs)) {
+        if (is.list(dotargs[[i]]$formula)) dotargs[[i]]$formula <- dotargs[[i]]$formula[[1]]
+        dfc <- if (is.null(dotargs[[i]]$edf2)) 0 else sum(dotargs[[i]]$edf2) - sum(dotargs[[i]]$edf) 
+        dotargs[[i]]$df.residual <- n - sum(dotargs[[i]]$edf1) - dfc
+        if (inherits(dotargs[[i]]$family,"general.family")) { 
+          dotargs[[i]]$deviance <- -2 * as.numeric(logLik(dotargs[[i]]))
+        } 
+      }
+      return(anova(structure(c(list(object), dotargs), class="glmlist"), 
+            dispersion = dispersion, test = test))
+    } 
     if (!is.null(test)) warning("test argument ignored")
     if (!inherits(object,"gam")) stop("anova.gam called with non gam object")
     sg <- summary(object, dispersion = dispersion, freq = freq,p.type=p.type)
