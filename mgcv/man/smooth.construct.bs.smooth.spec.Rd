@@ -51,6 +51,11 @@ It is possible to set a \code{deriv} flag in a smooth specification or smooth ob
 
 \seealso{\code{\link{p.spline}}}
 
+\references{
+Wood, S.N. (2016) P-splines with derivative based penalties and tensor product smoothing of unevenly distributed data. \url{http://arxiv.org/abs/1605.02446}
+}
+
+
 \examples{
   require(mgcv)
   set.seed(5)
