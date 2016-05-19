@@ -1132,7 +1132,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ret
 } ## end of gam.fit5
 
-gam.fit5.post.proc <- function(object,Sl,L,S,off) {
+gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
 ## object is object returned by gam.fit5, Sl is penalty object, L maps working sp
 ## vector to full sp vector 
 ## Computes:
@@ -1243,7 +1243,7 @@ gam.fit5.post.proc <- function(object,Sl,L,S,off) {
   ## justification only applies to sum(edf1/2) not elementwise   
   if (!is.null(object$outer.info$hess)) { 
     ## second correction term is easier computed in original parameterization...
-    Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
+    Vc2 <- Vb.corr(R,L,lsp0,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
     Vc <- Vc + Vc2
   }
   edf1 <- 2*edf - rowSums(t(F)*F)

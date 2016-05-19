@@ -1270,7 +1270,9 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
      ## require(parallel)
      n.threads <- length(cluster)
   } else n.threads <- 1
-  if (missing(newdata)) n <- nrow(object$model) else n <- nrow(newdata)
+  if (missing(newdata)) n <- nrow(object$model) else {
+    n <- if (is.matrix(newdata[[1]])) nrow(newdata[[1]]) else length(newdata[[1]]) 
+  }
   if (n < 100*n.threads) n.threads <- 1 ## not worth the overheads
   if (n.threads==1) { ## single threaded call
     if (missing(newdata)) return(
@@ -1854,7 +1856,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                 offset=NULL,method="fREML",control=list(),select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,
                 min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
                 sparse=FALSE,cluster=NULL,nthreads=NA,gc.level=1,use.chol=FALSE,samfrac=1,
-                drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
+                drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
@@ -1923,7 +1925,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf$formula <- gp$fake.formula 
     mf$method <-  mf$family<-mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp <- mf$gc.level <-
     mf$gamma <- mf$paraPen<- mf$chunk.size <- mf$rho <- mf$sparse <- mf$cluster <- mf$discrete <-
-    mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$select <- mf$...<-NULL
+    mf$use.chol <- mf$samfrac <- mf$nthreads <- mf$G <- mf$fit <- mf$select <- mf$drop.intercept <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
     pmf <- mf
@@ -1959,6 +1961,16 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
     rm(dl); if (gc.level>0) gc() ## save space    
 
+    ## should we force the intercept to be dropped, meaning that the constant is removed
+    ## from the span of the parametric effects?
+    if (is.null(family$drop.intercept)) { ## family does not provide information
+      if (is.null(drop.intercept)) drop.intercept <- FALSE else {
+        drop.intercept <- drop.intercept ## force drop.intercept to correct length
+	if (drop.intercept) family$drop.intercept <- drop.intercept ## ensure prediction works
+      }
+    } else drop.intercept <- as.logical(family$drop.intercept) ## family overrides argument
+ 
+
     ## need mini.mf for basis setup, then accumulate full X, y, w and offset
     if (discretize) {
       ## discretize the data, creating list mf0 with discrete values
@@ -1981,7 +1993,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=select,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
-                 paraPen=paraPen,apply.by=!discretize)
+                 paraPen=paraPen,apply.by=!discretize,drop.intercept=drop.intercept)
       if (!discretize&&ncol(G$X)>=chunk.size) { ## no point having chunk.size < p
         chunk.size <- 4*ncol(G$X)
         warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))
@@ -1995,7 +2007,13 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
       v <- G$Xd <- list()
       ## have to extract full parametric model matrix from pterms and mf
-      G$Xd[[1]] <- model.matrix(G$pterms,mf) 
+      G$Xd[[1]] <- model.matrix(G$pterms,mf)
+      if (drop.intercept) {
+        xat <- attributes(G$Xd[[1]]);ind <- xat$assign>0 ## index of non intercept columns 
+        G$Xd[[1]] <- G$Xd[[1]][,ind,drop=FALSE] ##  drop intercept
+        xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
+        xat$dim[2] <- xat$dim[2]-1;attributes(G$Xd[[1]]) <- xat
+      }
       G$kd <- cbind(1:nrow(mf),dk$k) ## add index for parametric part to index list
       dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
       ## k[,ks[j,1]:ks[j,2]] gives index columns for term j, thereby allowing 

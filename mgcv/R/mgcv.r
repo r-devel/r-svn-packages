@@ -967,8 +967,8 @@ gam.setup <- function(formula,pterms,
   if (drop.intercept) attr(pterms,"intercept") <- 1 ## ensure there is an intercept to drop
   X <- model.matrix(pterms,mf)
   if (drop.intercept) { ## some extended families require intercept to be dropped 
-    xat <- attributes(X);ind <- xat$assign>0 
-    X <- X[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
+    xat <- attributes(X);ind <- xat$assign>0 ## index of non intercept columns 
+    X <- X[,ind,drop=FALSE] ## some extended families need to drop intercept
     xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
     xat$dim[2] <- xat$dim[2]-1;attributes(X) <- xat
     G$intercept <- FALSE
@@ -1493,9 +1493,9 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   
   object$control <- control
   if (inherits(family,"general.family")) {
-    mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$S,G$off)
+    mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$lsp0,G$S,G$off)
     object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
-  } else mv <- gam.fit3.post.proc(G$X,G$L,G$S,G$off,object)
+  } else mv <- gam.fit3.post.proc(G$X,G$L,G$lsp0,G$S,G$off,object)
   ## note: use of the following in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
   if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
@@ -1817,7 +1817,7 @@ variable.summary <- function(pf,dl,n) {
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 method="GCV.Cp",optimizer=c("outer","newton"),control=list(),#gam.control(),
                 scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
-                paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,...) {
+                paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,...) {
 ## Routine to fit a GAM to some data. The model is stated in the formula, which is then 
 ## interpreted to figure out which bits relate to smooth terms and which to parametric terms.
 ## Basic steps:
@@ -1841,7 +1841,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     cl <- match.call() # call needed in gam object for update to work
     mf <- match.call(expand.dots=FALSE)
     mf$formula <- gp$fake.formula 
-    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <-
+    mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
                  mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
@@ -1896,10 +1896,14 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
     ## check whether family requires intercept to be dropped...
     # drop.intercept <- if (is.null(family$drop.intercept) || !family$drop.intercept) FALSE else TRUE
-    drop.intercept <- as.logical(family$drop.intercept)
-    if (is.null(family$drop.intercept)){
-      drop.intercept <- if (is.list(formula)) rep(FALSE, length(formula)) else FALSE
-    }
+    # drop.intercept <- as.logical(family$drop.intercept)
+    if (is.null(family$drop.intercept)) { ## family does not provide information
+      lengthf <- if (is.list(formula)) length(formula) else 1
+      if (is.null(drop.intercept)) drop.intercept <- rep(FALSE, lengthf) else {
+        drop.intercept <- rep(drop.intercept,length=lengthf) ## force drop.intercept to correct length
+	if (sum(drop.intercept)) family$drop.intercept <- drop.intercept ## ensure prediction works
+      }
+    } else drop.intercept <- as.logical(family$drop.intercept) ## family overrides argument
     
     if (inherits(family,"general.family")&&!is.null(family$presetup)) eval(family$presetup)
 

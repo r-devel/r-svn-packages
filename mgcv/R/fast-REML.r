@@ -753,7 +753,8 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   d[ind] <- 1;d[!ind] <- sqrt(d[!ind])
   #XXp <- t(XXp/d)/d ## diagonally precondition
   R <- if (nt>1) pchol(t(XXp/d)/d,nt) else suppressWarnings(chol(t(XXp/d)/d,pivot=TRUE))
-  r <- Rrank(R);p <- ncol(XXp)
+  r <- min(attr(R,"rank"),Rrank(R))
+  p <- ncol(XXp)
   piv <- attr(R,"pivot") #;rp[rp] <- 1:p
   if (r<p) { ## drop rank deficient terms...
     R <- R[1:r,1:r]

@@ -13,6 +13,8 @@ Currently deprecated and liable to be removed:
   formulae models and to use -2*logLik in place of `deviance' for 
   general.family models.
 
+* Fix in Vb.corr (2nd order edf correction) for fixed smoothing parameter case.
+
 * added 'all.vars1' to enable terms like s(x$y) in model formulae. 
 
 * modification to gam.fit4 to ignore 'start' if it is immediately worse than 

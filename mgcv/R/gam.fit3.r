@@ -842,12 +842,12 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
-Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
+Vb.corr <- function(X,L,lsp0,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
 ## compute higher order Vb correction...
 ## If w is NULL then X should be root Hessian, and 
 ## dw is treated as if it was 0, otherwise X should be model 
 ## matrix.
-## dw is derivative w.r.t. all the smoothing parameters and family parametres as if these 
+## dw is derivative w.r.t. all the smoothing parameters and family parameters as if these 
 ## were not linked, but not the scale parameter, of course. Vr includes scale uncertainty,
 ## if scale extimated...
 ## nth is the number of initial elements of rho that are not smoothing 
@@ -859,8 +859,9 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
     if (!is.null(L)) L <- L[-nrow(L),-ncol(L),drop=FALSE]
     Vr <- Vr[-nrow(Vr),-ncol(Vr),drop=FALSE]
   }
-  ## ??? rho0???
-  lambda <- if (is.null(L)) exp(rho) else exp(L[1:M,,drop=FALSE]%*%rho)
+ 
+  if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
+  lambda <- if (is.null(L)) exp(rho+lsp0) else exp(L%*%rho + lsp0)
   
   ## Re-create the Hessian, if is.null(w) then X assumed to be root
   ## unpenalized Hessian...
@@ -925,7 +926,7 @@ Vb.corr <- function(X,L,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
   vcorr(dR,Vr,FALSE) ## NOTE: unscaled!!
 } ## Vb.corr
 
-gam.fit3.post.proc <- function(X,L,S,off,object) {
+gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
 ## get edf array and covariance matrices after a gam fit. 
 ## X is original model matrix, L the mapping from working to full sp
   scale <- if (object$scale.estimated) object$scale.est else object$scale
@@ -978,7 +979,7 @@ gam.fit3.post.proc <- function(X,L,S,off,object) {
     ## parameters excluding any scale parameter, but Vr includes info for scale parameter
     ## if it has been estiamted. 
     nth <- if (is.null(object$family$n.theta)) 0 else object$family$n.theta ## any parameters of family itself
-    Vc2 <- scale*Vb.corr(R,L,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,object$scale.estimated)
+    Vc2 <- scale*Vb.corr(R,L,lsp0,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,object$scale.estimated)
     
     Vc <- Vb + Vc + Vc2 ## Bayesian cov matrix with sp uncertainty
     ## finite sample size check on edf sanity...
