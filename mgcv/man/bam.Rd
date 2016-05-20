@@ -22,7 +22,7 @@ bam(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,
     select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,min.sp=NULL,
     paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
     sparse=FALSE,cluster=NULL,nthreads=NA,gc.level=1,use.chol=FALSE,
-    samfrac=1,drop.unused.levels=TRUE,G=NULL,fit=TRUE,...)
+    samfrac=1,drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,...)
 }
 %- maybe also `usage' for other objects documented here.
 
@@ -159,6 +159,9 @@ involving factor variables you might want to turn this off. Only do so if you kn
 \code{fit=FALSE}. Causes all other arguments to be ignored except \code{chunk.size}, \code{gamma},\code{nthreads}, \code{cluster}, \code{rho}, \code{gc.level}, \code{samfrac}, \code{use.chol} and \code{method}.}
 
 \item{fit}{if \code{FALSE} then the model is set up for fitting but not estimated, and an object is returned, suitable for passing as the \code{G} argument to \code{bam}.}
+
+\item{drop.intercept}{Set to \code{TRUE} to force the model to really not have the a constant in the parametric model part,
+even with factor variables present.}
 
 \item{...}{further arguments for 
 passing on e.g. to \code{gam.fit} (such as \code{mustart}). }

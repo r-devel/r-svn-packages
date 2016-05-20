@@ -860,8 +860,9 @@ Vb.corr <- function(X,L,lsp0,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
     Vr <- Vr[-nrow(Vr),-ncol(Vr),drop=FALSE]
   }
  
-  if (is.null(lsp0)) lsp0 <- rep(0,nrow(L))
-  lambda <- if (is.null(L)) exp(rho+lsp0) else exp(L%*%rho + lsp0)
+  if (is.null(lsp0)) lsp0 <- if (is.null(L)) rho*0 else rep(0,nrow(L))
+  ## note that last element of lsp0 can be a scale parameter...
+  lambda <- if (is.null(L)) exp(rho+lsp0[1:length(rho)]) else exp(L%*%rho + lsp0[1:nrow(L)])
   
   ## Re-create the Hessian, if is.null(w) then X assumed to be root
   ## unpenalized Hessian...

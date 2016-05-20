@@ -143,21 +143,22 @@ compress.df <- function(dat,m=NULL) {
   k <- attr(xu,"index")
   ## shuffle rows in order to avoid induced dependencies between discretized
   ## covariates (which can mess up gam.side)...
-  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-  if (inherits(seed,"try-error")) {
-     runif(1)
-     seed <- get(".Random.seed",envir=.GlobalEnv)
-  }
-  kind <- RNGkind(NULL)
-  RNGkind("default","default")
+  ## any setting should be done in routine calling this one!!
+  #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+  #if (inherits(seed,"try-error")) {
+  #   runif(1)
+  #   seed <- get(".Random.seed",envir=.GlobalEnv)
+  #}
+  #kind <- RNGkind(NULL)
+  #RNGkind("default","default")
   ## following line must be different to that used in
   ## tp constructor subsampling!
-  set.seed(8547) ## ensure repeatability
+  #set.seed(8547) ## ensure repeatability
   
   ii <- sample(1:nrow(xu),nrow(xu),replace=FALSE) ## shuffling index
   
-  RNGkind(kind[1],kind[2])
-  assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+  #RNGkind(kind[1],kind[2])
+  #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
   
   xu[ii,] <- xu  ## shuffle rows of xu
   k <- ii[k]     ## correct k index accordingly
@@ -204,6 +205,19 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
 ## each smooth, but varaibles are onlt discretized and stored in mf
 ## once. If there are no matrix variables then k.start = 1:(ncol(k)+1) 
 #  if (is.null(attr(mf,"terms"))) mf <- eval(gp$fake.formula[-2],mf) ## assumes model frame below
+
+  ## some sub sampling here... want to set and restore RNG state used for this
+  ## to ensure strict repeatability.
+  
+  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+  if (inherits(seed,"try-error")) {
+       runif(1)
+       seed <- get(".Random.seed",envir=.GlobalEnv)
+  }
+  kind <- RNGkind(NULL)
+  RNGkind("default", "default")
+  set.seed(8547) ## keep different to tps constructor!
+
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
   for (i in 1:length(gp$smooth.spec)) nk <- nk + as.numeric(gp$smooth.spec[[i]]$by!="NA") +
@@ -333,14 +347,7 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
     pmf0 <- mini.mf(pmf,maxr) ## deal with parametric components
     if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
     mf0 <- c(mf0,pmf0) ## add parametric terms to end of mf0
-    seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-    if (inherits(seed,"try-error")) {
-       runif(1)
-       seed <- get(".Random.seed",envir=.GlobalEnv)
-    }
-    kind <- RNGkind(NULL)
-    RNGkind("default", "default")
-    set.seed(9)  
+
     for (i in 1:length(mf0)) {
       me <- length(mf0[[i]]) 
       if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
@@ -357,9 +364,11 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
     #mf <- mf[1:maxr,]
     mf <- mf[sample(1:nrow(mf),maxr,replace=TRUE),]
     for (na in names(mf0)) mf[[na]] <- mf0[[na]] 
-    RNGkind(kind[1], kind[2])
-    assign(".Random.seed", seed, envir = .GlobalEnv)
+   
   } else mf <- mf0
+  ## reset RNG to old state...
+  RNGkind(kind[1], kind[2])
+  assign(".Random.seed", seed, envir = .GlobalEnv)
 
   ## finally one more pass through, expanding k, k.start and nr to deal with replication that
   ## will occur with factor by variables...
@@ -2014,20 +2023,28 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         xat$assign <- xat$assign[ind];xat$dimnames[[2]]<-xat$dimnames[[2]][ind];
         xat$dim[2] <- xat$dim[2]-1;attributes(G$Xd[[1]]) <- xat
       }
-      G$kd <- cbind(1:nrow(mf),dk$k) ## add index for parametric part to index list
-      dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
+      
+      #G$kd <- cbind(1:nrow(mf),dk$k) ## add index for parametric part to index list
+      #dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
       ## k[,ks[j,1]:ks[j,2]] gives index columns for term j, thereby allowing 
       ## summation over matrix covariates....
-      G$ks <- cbind(dk$k.start[-length(dk$k.start)],dk$k.start[-1])
+      #G$ks <- cbind(dk$k.start[-length(dk$k.start)],dk$k.start[-1])
       ## create data object suitable for discrete data methods, from marginal model 
       ## matrices in G$smooth and G$X (stripping out padding, of course)
       if (ncol(G$Xd[[1]])) {
+        G$kd <- cbind(1:nrow(mf),dk$k) ## add index for parametric part to index list
+        dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
         kb <- k <- 2; qc <- dt <- ts <- rep(0,length(G$smooth)+1)
         dt[1] <- ts[1] <- 1;
         dk$nr <- c(NA,dk$nr) ## need array index to match elements of Xd
       } else {
+        G$kd <- dk$k
         kb <- k <- 1; qc <- dt <- ts <- rep(0,length(G$smooth))
       }
+      ## k[,ks[j,1]:ks[j,2]] gives index columns for term j, thereby allowing 
+      ## summation over matrix covariates....
+      G$ks <- cbind(dk$k.start[-length(dk$k.start)],dk$k.start[-1])
+
       drop <- rep(0,0) ## index of te related columns to drop
       for (i in 1:length(G$smooth)) {
         ts[kb] <- k
