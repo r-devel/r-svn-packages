@@ -1204,7 +1204,7 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
   }  
 
   ## compute the smoothing parameter uncertainty correction...
-  if (!is.null(object$outer.info$hess)) { 
+  if (!is.null(object$outer.info$hess)&&!is.null(object$db.drho)) { 
     if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
     ev <- eigen(object$outer.info$hess,symmetric=TRUE)
     d <- ev$values;ind <- d <= 0
@@ -1241,7 +1241,7 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
   ## model. This is larger than edf2 should be, because of bias correction variability,
   ##  but is bounded in a way that is not *guaranteed* for edf2. Note that 
   ## justification only applies to sum(edf1/2) not elementwise   
-  if (!is.null(object$outer.info$hess)) { 
+  if (!is.null(object$outer.info$hess)&&!is.null(object$db.drho)) { 
     ## second correction term is easier computed in original parameterization...
     Vc2 <- Vb.corr(R,L,lsp0,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
     Vc <- Vc + Vc2
