@@ -4097,7 +4097,7 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
       lami <- 1
       dlb <- -diag(lbb[ind,ind]);dS <- diag(S[[i]])
       ## get index of elements doing any actual penalization...
-      ind <- rowSums(abs(S[[i]]))>max(S[[i]])*.Machine$double.eps^.75
+      ind <- rowSums(abs(S[[i]]))>max(S[[i]])*.Machine$double.eps^.75 & dlb > 0
       ## drop elements that are not penalizing
       dlb <- dlb[ind];dS <- dS[ind]
       while (mean(dlb/(dlb + lami * dS)) > 0.4) lami <- lami*5
@@ -4178,7 +4178,7 @@ initial.sp <- function(X,S,off,expensive=FALSE,XX=FALSE)
       msp <- single.sp(X,St)           
       if (msp>0) def.sp <- def.sp*msp  
     } else {
-      ind <- ldss>0&pen # base following only on penalized terms
+      ind <- ldss > 0 & pen & ldxx > 0 # base following only on penalized terms
       ldxx<-ldxx[ind];ldss<-ldss[ind]
       while (mean(ldxx/(ldxx+ldss))>.4) { def.sp <- def.sp*10;ldss <- ldss*10 }
       while (mean(ldxx/(ldxx+ldss))<.4) { def.sp <- def.sp/10;ldss <- ldss/10 }
@@ -4189,7 +4189,7 @@ initial.sp <- function(X,S,off,expensive=FALSE,XX=FALSE)
 
 
 
-
+ 
 magic <- function(y,X,sp,S,off,L=NULL,lsp0=NULL,rank=NULL,H=NULL,C=NULL,w=NULL,gamma=1,scale=1,gcv=TRUE,
                 ridge.parameter=NULL,control=list(tol=1e-6,step.half=25,
                 rank.tol=.Machine$double.eps^0.5),extra.rss=0,n.score=length(y),nthreads=1)
