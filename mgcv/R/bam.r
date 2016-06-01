@@ -1884,6 +1884,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             family <- family()
     if (is.null(family$family))
             stop("family not recognized")
+    if (inherits(family,"extended.family")) stop("extended families not supported by bam")
     ##family = gaussian() ## no choise here
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
