@@ -731,10 +731,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   penalized <- if (length(Sl)>0) TRUE else FALSE
 
   nSp <- length(lsp)
-  ##sp <- exp(lsp) 
-  ## rank.tol <- .Machine$double.eps*100 ## tolerance to use for rank deficiency
   q <- ncol(x)
-  ##n <- 
   nobs <- length(y)
   
   if (penalized) {
@@ -804,8 +801,6 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       if (eigen.fix) {
         eh <- eigen(Hp,symmetric=TRUE);
         ev <- abs(eh$values)
-        #thresh <- min(ev[ev>0])
-        #ev[ev<thresh] <- thresh
         Hp <- eh$vectors%*%(ev*t(eh$vectors))
       } else {
         Ib <- diag(rank)*abs(min(D))
@@ -920,11 +915,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
               if (!is.null(lpi)) { ## need to adjust column indexes as well
                 ii <- (1:q)[!bdrop];ij <- rep(NA,q)
                 ij[ii] <- 1:length(ii) ## col i of old model matrix is col ij[i] of new 
-                #k <- 0
+               
                 for (i in 1:length(lpi)) {
-                  #kk <- sum(lpi[[i]]%in%drop==FALSE) ## how many left undropped?
-                  #lpi[[i]] <- 1:kk + k ## new index - note strong assumptions on structure here
-                  #k <- k + kk
                   lpi[[i]] <- ij[lpi[[i]][!(lpi[[i]]%in%drop)]] # drop and shuffle up
                 }
               } ## lpi adjustment done
@@ -1012,7 +1004,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 	                        t(d1b[,i])%*%ll$lbb%*%d1b[,j] 
       }
     } ## if (deriv > 1)
-} ## if (deriv > 0)
+  } ## if (deriv > 0)
 
   ## Compute the derivatives of log|H+S|... 
   if (deriv > 0) {

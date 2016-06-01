@@ -267,7 +267,7 @@ gam.check <- function(b, old.style=FALSE,
              napredict(b$na.action, b$linear.predictors[,1]) else 
              napredict(b$na.action, b$linear.predictors)
 ##  if (b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","mle.REML","mle.ML","PQL")) { 
-    old.par<-par(mfrow=c(2,2))
+    if (is.null(.Platform$GUI) || .Platform$GUI != "RStudio") old.par <- par(mfrow=c(2,2))
     if (old.style)
       qqnorm(resid,...)
     else
@@ -326,7 +326,7 @@ gam.check <- function(b, old.style=FALSE,
       cat("indicate that k is too low, especially if edf is close to k\'.\n\n")
       printCoefmat(kchck,digits=3);
     }
-    par(old.par)
+    if (is.null(.Platform$GUI) ||.Platform$GUI != "RStudio") par(old.par)
 ##  } else plot(linpred,resid,xlab="linear predictor",ylab="residuals",...)
 } ## end of gam.check
 

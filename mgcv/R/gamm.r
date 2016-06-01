@@ -427,7 +427,7 @@ smooth2random.t2.smooth <- function(object,vnames,type=1) {
 ##         2. rind: and index vector such that if br is the vector of 
 ##            random coefficients for the term, br[rind] is the coefs in 
 ##            order for this term. rinc - dummy here.
-##         3. A matrix, U, that transforms coefs, in order [rand1, rand2,... fix]
+##         3. A matrix, trans.D, that transforms coefs, in order [rand1, rand2,... fix]
 ##            back to original parameterization. If null, then not needed.
 ##         4. A matrix Xf for the fixed effects, if any.
 ##         5. fixed TRUE/FALSE if its fixed or not. If fixed the other stuff is
@@ -483,7 +483,7 @@ smooth2random.mgcv.smooth <- function(object,vnames,type=1) {
 ## Returns 1. a list of random effects, including grouping factors, and 
 ##            a fixed effects matrix. Grouping factors, model matrix and 
 ##            model matrix name attached as attributes, to each element. 
-##         2. rind: and index vector such that if br is the vector of 
+##         2. rind: an index vector such that if br is the vector of 
 ##            random coefficients for the term, br[rind] is the coefs in 
 ##            order for this term. rinc - dummy here.
 ##         3. A matrix, U, + vec D that transforms coefs, in order [rand1, rand2,... fix]
@@ -546,7 +546,7 @@ smooth2random.tensor.smooth <- function(object,vnames,type=1) {
 ## Returns 1. a list of random effects, including grouping factors, and 
 ##            a fixed effects matrix. Grouping factors, model matrix and 
 ##            model matrix name attached as attributes, to each element. 
-##         2. rind: and index vector such that if br is the vector of 
+##         2. rind: an index vector such that if br is the vector of 
 ##            random coefficients for the term, br[rind] is the coefs in 
 ##            order for this term. rinc - dummy here.
 ##         3. A matrix, U, that transforms coefs, in order [rand1, rand2,... fix]

@@ -13,6 +13,10 @@ Currently deprecated and liable to be removed:
   formulae models and to use -2*logLik in place of `deviance' for 
   general.family models.
 
+* bam(...,discrete=TRUE) no longer complains about more coefficients than data.
+
+* gam.check now recognises RStudio and plots appropriately.
+
 * tweak to initial.sp/g to avoid infinite loop in s.p. initialization, in 
   rather unusual circumstances. Thanks to Mark Bravington.
 

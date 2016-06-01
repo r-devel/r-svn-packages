@@ -2131,7 +2131,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     G$offset <- model.offset(mf)  
     if (is.null(G$offset)) G$offset <- rep(0,n)
 
-    if (ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
+    if (!discretize && ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
   
     if (ncol(G$X) > chunk.size && !discretize) { ## no sense having chunk.size < p
       chunk.size <- 4*ncol(G$X)
