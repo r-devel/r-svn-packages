@@ -2842,7 +2842,7 @@ Tweedie <- function(p=1,link=power(0)) {
         if (p == 2)
             kappa <- log(y1/mu)
         else kappa <- (y^(2 - p) - mu^(2 - p))/(2 - p)
-        2 * wt * (y * theta - kappa)
+        pmax(2 * wt * (y * theta - kappa),0)
     }
     initialize <- expression({
         n <- rep(1, nobs)
