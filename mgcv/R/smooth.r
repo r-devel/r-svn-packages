@@ -248,7 +248,7 @@ get.var <- function(txt,data,vecMat = TRUE)
 ## functions for use in `gam(m)' formulae ......
 ################################################
 
-ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NULL,sp=NULL,mc=NULL) {
+ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NULL,sp=NULL,mc=NULL,pc=NULL) {
 ## function to use in gam formula to specify a te type tensor product interaction term
 ## ti(x) + ti(y) + ti(x,y) is *much* preferable to te(x) + te(y) + te(x,y), as ti(x,y)
 ## automatically excludes ti(x) + ti(y). Uses general fact about interactions that 
@@ -256,7 +256,7 @@ ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
 ## of main effects gives identifiable interaction...
 ## mc allows selection of which marginals to apply constraints to. Default is all.
   by.var <- deparse(substitute(by),backtick=TRUE) #getting the name of the by variable
-  object <- te(...,k=k,bs=bs,m=m,d=d,fx=fx,np=np,xt=xt,id=id,sp=sp)
+  object <- te(...,k=k,bs=bs,m=m,d=d,fx=fx,np=np,xt=xt,id=id,sp=sp,pc=pc)
   object$inter <- TRUE
   object$by <- by.var
   object$mc <- mc
@@ -264,7 +264,7 @@ ti <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,np=TRUE,xt=NULL,id=NUL
   object
 } ## ti
 
-te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NULL,id=NULL,sp=NULL)
+te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NULL,id=NULL,sp=NULL,pc=NULL)
 # function for use in gam formulae to specify a tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -370,11 +370,17 @@ te <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,mp=TRUE,np=TRUE,xt=NUL
   }
   ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,mp=mp,np=np,
             id=id,sp=sp,inter=FALSE)
+  if (!is.null(pc)) {
+    if (length(pc)<d) stop("supply a value for each variable for a point constraint")
+    if (!is.list(pc)) pc <- as.list(pc)
+    if (is.null(names(pc))) names(pc) <- unlist(lapply(vars,all.vars))
+    ret$point.con <- pc
+  }
   class(ret) <- "tensor.smooth.spec"
   ret
 } ## end of te
 
-t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FALSE,ord=NULL)
+t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FALSE,ord=NULL,pc=NULL)
 # function for use in gam formulae to specify a type 2 tensor product smooth term.
 # e.g. te(x0,x1,x2,k=c(5,4,4),bs=c("tp","cr","cr"),m=c(1,1,2),by=x3) specifies a rank 80 tensor  
 # product spline. The first basis is rank 5, t.p.r.s. basis penalty order 1, and the next 2 bases
@@ -482,13 +488,19 @@ t2 <- function(..., k=NA,bs="cr",m=NA,d=NA,by=NA,xt=NULL,id=NULL,sp=NULL,full=FA
   if (is.na(full)) full <- FALSE
   ret<-list(margin=margin,term=term,by=by.var,fx=fx,label=label,dim=dim,
             id=id,sp=sp,full=full,ord=ord)
+  if (!is.null(pc)) {
+    if (length(pc)<d) stop("supply a value for each variable for a point constraint")
+    if (!is.list(pc)) pc <- as.list(pc)
+    if (is.null(names(pc))) names(pc) <- unlist(lapply(vars,all.vars))
+    ret$point.con <- pc
+  }
   class(ret) <- "t2.smooth.spec" 
   ret
 } ## end of t2
 
 
 
-s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
+s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL,pc=NULL)
 # function for use in gam formulae to specify smooth term, e.g. s(x0,x1,x2,k=40,m=3,by=x3) specifies 
 # a rank 40 thin plate regression spline of x0,x1 and x2 with a third order penalty, to be multiplied by
 # covariate x3, when it enters the model.
@@ -528,9 +540,14 @@ s <- function (..., k=-1,fx=FALSE,bs="tp",m=NA,by=NA,xt=NULL,id=NULL,sp=NULL)
     } 
    id <- as.character(id)
   }
-
-  ret<-list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt,
+  ret <- list(term=term,bs.dim=k,fixed=fx,dim=d,p.order=m,by=by.var,label=label,xt=xt,
             id=id,sp=sp)
+  if (!is.null(pc)) {
+    if (length(pc)<d) stop("supply a value for each variable for a point constraint")
+    if (!is.list(pc)) pc <- as.list(pc)
+    if (is.null(names(pc))) names(pc) <- unlist(lapply(vars,all.vars))
+    ret$point.con <- pc
+  }
   class(ret)<-paste(bs,".smooth.spec",sep="")
   ret
 } ## end of s
@@ -3232,6 +3249,10 @@ smooth.construct3 <- function(object,data,knots) {
   ind <- attr(dk$data,"index") ## repeats index 
   object$ind <- ind
   class(object) <- c(class(object),"mgcv.smooth")
+  if (!is.null(object$point.con)) { ## 's' etc has requested a point constraint
+    object$C <- Predict.matrix3(object,object$point.con)$X ## handled by 's'
+    attr(object$C,"always.apply") <- TRUE ## if constraint requested then always apply it!
+  }
   object
 } ## smooth.construct3
 

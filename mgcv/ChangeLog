@@ -8,6 +8,9 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
+* 's', 'te', 'ti' and 't2' modified to allow user to specify that the smooth
+  should pass through zero at a specified point. See ?identifiability.
+
 * anova.gam modified to use more appropriate reference degrees of freedom 
   for multiple model call, where possible. Also fixed to allow multiple 
   formulae models and to use -2*logLik in place of `deviance' for 

@@ -209,7 +209,10 @@ by this approach, while the computation is less stable than the default, and the
 
 
 \references{
-Wood, S.N., Goude, Y. & Shaw S. (2015) Generalized additive models for large datasets. Journal of the Royal Statistical Society, Series C 64(1): 139-155.  
+Wood, S.N., Goude, Y. & Shaw S. (2015) Generalized additive models for large datasets. Journal of the Royal Statistical Society, Series C 64(1): 139-155.
+
+Wood, S.N., Li, Z., Shaddick, G. & Augustin N.H. (2016) Generalized additive models for gigadata: modelling the UK black smoke network daily data. Journal of the American Statistical Association.
+
 }
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}
