@@ -867,17 +867,17 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
             if (min.r < ylimit[1]) ylimit[1] <- min.r
           }
         }
-        if (!is.null(ylim)) ylimit <- ylim
+        ylimit <- if (is.null(ylim)) ylimit <- ylimit + shift else ylim
          
         ## plot the smooth... 
         if (shade) { 
-          plot(P$x,trans(P$fit+shift),type="n",xlab=P$xlab,ylim=trans(ylimit+shift),
+          plot(P$x,trans(P$fit+shift),type="n",xlab=P$xlab,ylim=trans(ylimit),
                  xlim=P$xlim,ylab=P$ylab,main=P$main,...)
           polygon(c(P$x,P$x[n:1],P$x[1]),
                     trans(c(ul,ll[n:1],ul[1])+shift),col = shade.col,border = NA)
           lines(P$x,trans(P$fit+shift),...)
         } else { ## ordinary plot 
-          plot(P$x,trans(P$fit+shift),type="l",xlab=P$xlab,ylim=trans(ylimit+shift),xlim=P$xlim,
+          plot(P$x,trans(P$fit+shift),type="l",xlab=P$xlab,ylim=trans(ylimit),xlim=P$xlim,
                  ylab=P$ylab,main=P$main,...)
           if (is.null(list(...)[["lty"]])) { 
             lines(P$x,trans(ul+shift),lty=2,...)
@@ -936,9 +936,10 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
         if (scale==0&&is.null(ylim)) { 
           if (partial.resids) ylimit <- range(P$p.resid,na.rm=TRUE) else ylimit <-range(P$fit)
         }
-        if (!is.null(ylim)) ylimit <- ylim
+        ylimit <- if (is.null(ylim)) ylimit <- ylimit + shift else ylim
+        
         plot(P$x,trans(P$fit+shift),type="l",xlab=P$xlab,
-             ylab=P$ylab,ylim=trans(ylimit+shift),xlim=P$xlim,main=P$main,...)
+             ylab=P$ylab,ylim=trans(ylimit),xlim=P$xlim,main=P$main,...)
         if (rug) { 
           if (jit) rug(jitter(as.numeric(P$raw)),...)
           else rug(as.numeric(P$raw),...) 
