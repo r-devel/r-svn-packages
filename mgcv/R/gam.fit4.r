@@ -1112,10 +1112,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        rp = rp$rp,
        db.drho = db.drho, ## derivative of penalty coefs w.r.t. log sps.
        #bSb = bSb, bSb1 =  d1bSb,bSb2 =  d2bSb,
+       S1=rp$ldet1,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        #b2 = d2b)
-       H = ll$lbb,dH = ll$d1H,dVkk=dVkk)#,d2H=llr$d2H)
+       niter=iter,H = ll$lbb,dH = ll$d1H,dVkk=dVkk)#,d2H=llr$d2H)
     ## debugging code to allow components of 2nd deriv of hessian w.r.t. sp.s 
     ## to be passed to deriv.check.... 
     #if (!is.null(ll$ghost1)&&!is.null(ll$ghost2)) { 
@@ -1123,6 +1124,89 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     #} 
     ret
 } ## end of gam.fit5
+
+efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
+                     control=gam.control(),Mp=-1,start=NULL) {
+## Extended Fellner-Schall method
+## tr(S^-S_j) is returned by ldetS as ldet1 - S1 from gam.fit5
+## b'S_jb is computed as d1bSb in gam.fit5
+## tr(V S_j) will need to be computed using Sl.termMult
+##   Sl returned by ldetS and Vb computed as in gam.fit5.postproc.
+  tol <- 1e-6
+  lsp <- lsp + 2.5
+  mult <- 1
+  fit <- gam.fit5(x=x,y=y,lsp=lsp,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,
+                     control=control,Mp=Mp,start=start)
+  for (iter in 1:200) {
+    #fit <- gam.fit5(x=x,y=y,lsp=lsp,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,
+    #                 control=control,Mp=Mp,start=start)
+    start <- fit$coefficients
+    ## coef <- Sl.repara(fit$rp,start)
+    ## obtain Vb...
+    ipiv <- piv <- attr(fit$L,"pivot")
+    p <- length(piv)
+    ipiv[piv] <- 1:p
+    Vb <- crossprod(forwardsolve(t(fit$L),diag(fit$D,nrow=p)[piv,,drop=FALSE])[ipiv,,drop=FALSE])
+    if (sum(fit$bdrop)) { ## some coefficients were dropped...
+      q <- length(object$bdrop)
+      ibd <- !object$bdrop
+      Vtemp <- Vb; Vb <- matrix(0,q,q)
+      Vb[ibd,ibd] <- Vtemp
+    }
+    Vb <- Sl.repara(fit$rp,Vb,inverse=TRUE)
+    SVb <- Sl.termMult(Sl,Vb) ## this could be made more efficient
+    trVS <- rep(0,length(SVb))
+    for (i in 1:length(SVb)) {
+      ind <- attr(SVb[[i]],"ind")
+      trVS[i] <- sum(diag(SVb[[i]][,ind]))
+    }
+    Sb <- Sl.termMult(Sl,start,full=TRUE)
+    bSb <- rep(0,length(Sb))
+    for (i in 1:length(Sb)) {
+      bSb[i] <- sum(start*Sb[[i]])
+    }
+    a <- pmax(0,fit$S1*exp(-lsp) - trVS)
+    r <- a/pmax(0,bSb)
+    r[a==0&bSb==0] <- 1
+    r[!is.finite(r)] <- 1e6
+    lsp1 <- pmin(lsp + log(r)*mult,12)
+    old.reml <- fit$REML
+    fit <- gam.fit5(x=x,y=y,lsp=lsp1,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,control=control,Mp=Mp,start=start)
+    ## some step length control...
+   
+    if (fit$REML<=old.reml) { ## improvement
+      if (max(abs(log(r))<.05)) { ## consider step extension
+        lsp2 <- pmin(lsp + log(r)*mult*2,12) ## try extending step...
+        fit2 <- gam.fit5(x=x,y=y,lsp=lsp2,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,
+                     control=control,Mp=Mp,start=start)
+     
+        if (fit2$REML < fit$REML) { ## improvement - accept extension
+          fit <- fit2;lsp <- lsp2
+	  mult <- mult * 2
+        } else { ## accept old step
+          lsp <- lsp1
+        }
+      } else lsp <- lsp1
+    } else { ## no improvement 
+      while (fit$REML > old.reml&&mult>1) { ## don't contract below 1 as update doesn't have to improve REML 
+          mult <- mult/2 ## contract step
+          lsp1 <- pmin(lsp + log(r)*mult,12)
+	  fit <- gam.fit5(x=x,y=y,lsp=lsp1,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,
+                        control=control,Mp=Mp,start=start)
+      }
+      lsp <- lsp1
+      if (mult<1) mult <- 1
+    }
+
+    if (iter==1) old.ll <- fit$l else {
+      if (abs(old.ll-fit$l)<tol*abs(fit$l)) break
+      old.ll <- fit$l
+    }
+  }
+  fit$sp <- exp(lsp)
+  fit$niter <- iter
+  fit
+} ## efsud
 
 gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
 ## object is object returned by gam.fit5, Sl is penalty object, L maps working sp

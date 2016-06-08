@@ -1,7 +1,7 @@
 ## code for fast REML computation. key feature is that first and 
 ## second derivatives come at no increase in leading order 
 ## computational cost, relative to evaluation! 
-## (c) Simon N. Wood, 2010-2014
+## (c) Simon N. Wood, 2010-2016
 
 Sl.setup <- function(G) {
 ## Sets up a list representing a block diagonal penalty matrix.
@@ -50,10 +50,12 @@ Sl.setup <- function(G) {
         }
         Sl[[b]]$start <- off[ind[1]]
         Sl[[b]]$stop <- Sl[[b]]$start + nr - 1
+	Sl[[b]]$lambda <- rep(1,length(ind)) ## dummy at this stage
       } else { ## singleton
         Sl[[b]] <- list(start=off[ind], stop=off[ind]+nrow(G$S[[ind]])-1,
                         rank=G$rank[ind],S=list(G$S[[ind]]))
         Sl[[b]]$S <- list(G$S[[ind]])
+	Sl[[b]]$lambda <- 1 ## dummy at this stage
       } ## finished singleton
       b <- b + 1 
     } ## finished this block
@@ -78,13 +80,15 @@ Sl.setup <- function(G) {
     if (m==1) { ## singleton
      
         Sl[[b]]$rank <- G$smooth[[i]]$rank  
-        Sl[[b]]$S <- G$smooth[[i]]$S 
+        Sl[[b]]$S <- G$smooth[[i]]$S
+	Sl[[b]]$lambda <- 1
         b <- b + 1
      
     } else { ## additive block...
       ## first test whether block can *easily* be split up into singletons
       ## easily here means no overlap in penalties 
       Sl[[b]]$S <- G$smooth[[i]]$S
+      Sl[[b]]$lambda <- rep(1,m)
       nb <- nrow(Sl[[b]]$S[[1]])      
       sbdiag <- sbStart <- sbStop <- rep(NA,m)
       ut <- upper.tri(Sl[[b]]$S[[1]],diag=FALSE) 

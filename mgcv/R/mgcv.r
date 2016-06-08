@@ -1398,7 +1398,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 #    `object'
 #  2. Call `gam.fit3.post.proc' to get parameter covariance matrices, edf etc to
 #     add to `object' 
-{ if (is.null(optimizer[2])) optimizer[2] <- "newton"
+{ if (is.na(optimizer[2])) optimizer[2] <- "newton"
   if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimization method.")
 
   # if (!optimizer[2]%in%c("nlm","optim","nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
@@ -1437,8 +1437,13 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   #  } 
   #  object <- gam.negbin(lsp,fscale,family,control,method,optimizer,gamma,G,...)
     ## make sure criterion gets set to UBRE
-  #} else 
-  if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method 
+  #} else
+  if (optimizer[1]=="efs") { ## experimental extended efs
+    warning("efs is still experimental!")
+    object <- efsud(x=G$X,y=G$y,lsp=lsp,Sl=G$Sl,weights=G$w,offset=G$offxset,family=family,
+                     control=control,Mp=G$Mp,start=NULL)
+    object$gcv.ubre <- object$REML
+  } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method 
     if (optimizer[2]=="bfgs") 
     b <- bfgs(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
@@ -1555,7 +1560,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     }
   }
 
-  if (!optimizer[1]%in%c("perf","outer")) stop("unknown optimizer")
+  if (!optimizer[1]%in%c("perf","outer","efs")) stop("unknown optimizer")
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
@@ -1579,7 +1584,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
 
   # is outer looping needed ?
-  outer.looping <- ((!G$am && (optimizer[1]=="outer"))||reml||method=="GACV.Cp") ## && length(G$S)>0 && sum(G$sp<0)!=0
+  outer.looping <- ((!G$am && (optimizer[1]!="perf"))||reml||method=="GACV.Cp") ## && length(G$S)>0 && sum(G$sp<0)!=0
 
   ## sort out exact sp selection criterion to use
 
@@ -1610,7 +1615,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
 
   if (substr(fam.name,1,17)=="Negative Binomial") { 
-    scale <- 1; ## no choise
+    scale <- 1; ## no choice
     if (method%in%c("GCV.Cp","GACV.Cp")) criterion <- "UBRE"
   }
   ## Reset P-ML or P-REML in known scale parameter cases
