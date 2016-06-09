@@ -2673,7 +2673,7 @@ mini.roots <- function(S,off,np,rank=NULL)
 }
 
 
-ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
+ldTweedie0 <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 ## evaluates log Tweedie density for 1<=p<=2, using series summation of
 ## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
 
@@ -2714,7 +2714,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 
   if (p == 1) { ## It's Poisson like
     ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
-    if (sum(!is.integer(y/phi))) stop("y must be an integer multiple of phi for Tweedie(p=1)")
+    if (all.equal(y/phi,round(y/phi))!=TRUE) stop("y must be an integer multiple of phi for Tweedie(p=1)")
     ind <- (y!=0)|(mu!=0) ## take care to deal with y log(mu) when y=mu=0
     bkt <- y*0
     bkt[ind] <- (y[ind]*log(mu[ind]/phi) - mu[ind])
@@ -2799,8 +2799,170 @@ if (FALSE) { ## DEBUG disconnetion of density terms
 } 
 
   ld
-} ## ldTweedie
+} ## ldTweedie0
 
+
+
+ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
+## evaluates log Tweedie density for 1<=p<=2, using series summation of
+## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
+  n <- length(y)
+  if (!is.na(rho)&&!is.na(theta)) { ## use rho and theta and get derivs w.r.t. these
+    #if (length(rho)>1||length(theta)>1) stop("only scalar `rho' and `theta' allowed.")
+    if (a>=b||a<=1||b>=2) stop("1<a<b<2 (strict) required")
+    work.param <- TRUE
+    ## should buffered code for fixed p and phi be used?
+    buffer <- if (length(unique(theta))==1&&length(unique(rho))==1) TRUE else FALSE 
+    theta <- th <- array(theta,dim=n);
+    phi <- exp(rho)
+    ind <- th > 0;dpth1 <- dpth2 <-p <- rep(0,n)
+    ethi <- exp(-th[ind])
+    ethni <- exp(th[!ind])
+    p[ind] <- (b+a*ethi)/(1+ethi)
+    p[!ind] <- (b*ethni+a)/(ethni+1)
+    dpth1[ind] <- ethi*(b-a)/(1+ethi)^2
+    dpth1[!ind] <- (b*ethni+a)/(ethni+1)
+    dpth2[ind] <-((a-b)*ethi+(b-a)*ethi^2)/(ethi+1)^3
+    dpth2[!ind] <- ((a-b)*ethni^2+(b-a)*ethni)/(ethni+1)^3
+    #p <- if (th>0) (b+a*exp(-th))/(1+exp(-th)) else (b*exp(th)+a)/(exp(th)+1) 
+    #dpth1 <- if (th>0) exp(-th)*(b-a)/(1+exp(-th))^2 else exp(th)*(b-a)/(exp(th)+1)^2
+    #dpth2 <- if (th>0) ((a-b)*exp(-th)+(b-a)*exp(-2*th))/(exp(-th)+1)^3 else
+    #               ((a-b)*exp(2*th)+(b-a)*exp(th))/(exp(th)+1)^3
+  } else { ## still need working params for tweedious call...
+    work.param <- FALSE 
+    #if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
+    buffer <- if (length(unique(p))==1&&length(unique(phi))==1) TRUE else FALSE 
+    rho <- log(phi)
+    if (min(p)>=1&&max(p)<=2) {
+      ind <- p>1&p<2
+      if (sum(ind)) {
+        p.ind <- p[ind]
+        if (min(p.ind) <= a) a <- (1+min(p.ind))/2
+        if (max(p.ind) >= b) b <- (2+max(p.ind))/2
+        pabp <- theta <- dthp1 <- dthp2 <- rep(0,n)
+        pabp[ind] <- (p.ind-a)/(b-p.ind)
+        theta[ind] <- log((p.ind-a)/(b-p.ind))
+        dthp1[ind] <- (1+pabp[ind])/(p.ind-a)
+        dthp2[ind] <- (pabp[ind]+1)/((p.ind-a)*(b-p.ind)) -(pabp[ind]+1)/(p.ind-a)^2
+      }
+    }
+  }
+
+  if (min(p)<1||max(p)>2) stop("p must be in [1,2]")
+  ld <- cbind(y,y,y);ld <- cbind(ld,ld*NA)
+  if (length(p)!=n) p <- array(p,dim=n);
+  if (length(phi)!=n) phi <- array(phi,dim=n)
+  if (length(mu)!=n) mu <- array(mu,dim=n)
+  ind <- p == 2
+  if (sum(ind)) { ## It's Gamma
+    if (sum(y[ind]<=0)) stop("y must be strictly positive for a Gamma density")
+    ld[ind,1] <- dgamma(y[ind], shape = 1/phi[ind],rate = 1/(phi[ind] * mu[ind]),log=TRUE)
+    ld[ind,2] <- (digamma(1/phi[ind]) + log(phi[ind]) - 1 + y[ind]/mu[ind] - log(y[ind]/mu[ind]))/(phi[ind]*phi[ind])
+    ld[ind,3] <- -2*ld[ind,2]/phi[ind] + (1-trigamma(1/phi[ind])/phi[ind])/(phi[ind]^3)
+    #return(ld)
+  }  
+
+  ind <- p == 1
+  if (sum(ind)) { ## It's Poisson like
+    ## ld[,1] <- dpois(x = y/phi, lambda = mu/phi,log=TRUE)
+    if (all.equal(y[ind]/phi[ind],round(y[ind]/phi[ind]))!=TRUE) stop("y must be an integer multiple of phi for Tweedie(p=1)")
+    indi <- (y[ind]!=0)|(mu[ind]!=0) ## take care to deal with y log(mu) when y=mu=0
+    bkt <- y[ind]*0
+    bkt[indi] <- ((y[ind])[indi]*log((mu[ind]/phi[ind])[indi]) - (mu[ind])[indi])
+    dig <- digamma(y[ind]/phi[ind]+1)
+    trig <- trigamma(y[ind]/phi[ind]+1)
+    ld[ind,1] <- bkt/phi[ind] - lgamma(y[ind]/phi[ind]+1)
+    ld[ind,2] <- (-bkt - y[ind] + dig[ind]*y[ind])/(phi[ind]^2)
+    ld[ind,3] <- (2*bkt + 3*y[ind] - 2*dig*y[ind] - trig * y[ind]^2/phi[ind])/(phi[ind]^3)
+    #return(ld) 
+  }
+
+  ## .. otherwise need the full series thing....
+  ## first deal with the zeros  
+  
+  ind <- y==0&p>1&p<2;ld[ind,] <- 0
+  ind <- ind & mu>0 ## need mu condition otherwise may try to find log(0)
+  if (sum(ind)) {
+    mu.ind <- mu[ind];p.ind <- p[ind];phii <- phi[ind]
+    ld[ind,1] <- -mu.ind^(2-p.ind)/(phii*(2-p.ind))
+    ld[ind,2] <- -ld[ind,1]/phii  ## dld/d phi 
+    ld[ind,3] <- -2*ld[ind,2]/phii ## d2ld/dphi2
+    ld[ind,4] <- -ld[ind,1] * (log(mu.ind) - 1/(2-p.ind)) ## dld/dp
+    ld[ind,5] <- 2*ld[ind,4]/(2-p.ind) + ld[ind,1]*log(mu.ind)^2 ## d2ld/dp2
+    ld[ind,6] <- -ld[ind,4]/phii ## d2ld/dphidp
+  }
+  if (sum(!ind)==0) return(ld)
+ 
+  ## now the non-zeros
+  ind <- y>0&p>1&p<2
+  y <- y[ind];mu <- mu[ind];p<- p[ind]
+  w <- w1 <- w2 <- y*0
+  if (buffer) {
+    oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+           w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
+           th=as.double(theta[1]),rho=as.double(rho[1]),a=as.double(a),b=as.double(b))
+  } else {
+    if (length(theta)!=n) theta <- array(theta,dim=n)
+    if (length(rho)!=n) rho <- array(rho,dim=n)
+    oo <- .C(C_tweedious2,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+           w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
+           th=as.double(theta[ind]),rho=as.double(rho[ind]),a=as.double(a),b=as.double(b))
+  }
+  phii <- phi[ind]
+  if (!work.param) { ## transform working param derivatives to p/phi derivs...
+    if (length(dthp1)!=n) dthp1 <- array(dthp1,dim=n)
+    if (length(dthp2)!=n) dthp2 <- array(dthp2,dim=n)
+    dthp1i <- dthp1[ind]
+    oo$w2 <- oo$w2/phii^2 - oo$w1/phii^2
+    oo$w1 <- oo$w1/phii
+    oo$w2p <- oo$w2p*dthp1i^2 + dthp2[ind] * oo$w1p
+    oo$w1p <- oo$w1p*dthp1i
+    oo$w2pp <- oo$w2pp*dthp1i/phii ## this appears to be wrong
+  }
+
+
+  log.mu <- log(mu)
+  mu1p <- theta <- mu^(1-p)
+  k.theta <- mu*theta/(2-p) ## mu^(2-p)/(2-p)
+  theta <- theta/(1-p) ## mu^(1-p)/(1-p)
+  l.base <-  mu1p*(y/(1-p)-mu/(2-p))/phii
+  ld[ind,1] <- l.base - log(y) ## log density
+  ld[ind,2] <- -l.base/phii  ## d log f / dphi
+  ld[ind,3] <- 2*l.base/(phii^2)  ## d2 logf / dphi2
+  x <- theta*y*(1/(1-p) - log.mu)/phii + k.theta*(log.mu-1/(2-p))/phii
+  ld[ind,4] <- x
+  ld[ind,5] <- theta * y * (log.mu^2 - 2*log.mu/(1-p) + 2/(1-p)^2)/phii -
+                k.theta * (log.mu^2 - 2*log.mu/(2-p) + 2/(2-p)^2)/phii ## d2 logf / dp2
+  ld[ind,6] <- - x/phii ## d2 logf / dphi dp
+
+  if (work.param) { ## transform derivs to derivs wrt working
+    ld[,3] <- ld[,3]*phi^2 + ld[,2]*phi
+    ld[,2] <- ld[,2]*phi
+    ld[,5] <- ld[,5]*dpth1^2 + ld[,4]*dpth2
+    ld[,4] <- ld[,4]*dpth1
+    ld[,6] <- ld[,6]*dpth1*phi
+  }
+
+if (TRUE) { ## DEBUG disconnetion of a terms
+  ld[ind,1] <- ld[ind,1] + oo$w ## log density
+  ld[ind,2] <- ld[ind,2] + oo$w1   ## d log f / dphi
+  ld[ind,3] <- ld[ind,3] + oo$w2 ## d2 logf / dphi2
+  ld[ind,4] <- ld[ind,4] + oo$w1p 
+  ld[ind,5] <- ld[ind,5] + oo$w2p  ## d2 logf / dp2
+  ld[ind,6] <- ld[ind,6] + oo$w2pp ## d2 logf / dphi dp
+} 
+
+if (FALSE) { ## DEBUG disconnetion of density terms
+  ld[ind,1] <-  oo$w ## log density
+  ld[ind,2] <-  oo$w1   ## d log f / dphi
+  ld[ind,3] <-  oo$w2 ## d2 logf / dphi2
+  ld[ind,4] <-  oo$w1p 
+  ld[ind,5] <-  oo$w2p  ## d2 logf / dp2
+  ld[ind,6] <-  oo$w2pp ## d2 logf / dphi dp
+} 
+
+  ld
+} ## ldTweedie
 
 
 Tweedie <- function(p=1,link=power(0)) {
