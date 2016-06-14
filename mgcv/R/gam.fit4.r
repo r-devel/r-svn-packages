@@ -772,7 +772,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
   ## get log likelihood, grad and Hessian (w.r.t. coefs - not s.p.s) ...
   llf <- family$ll
-  ll <- llf(y,x,coef,weights,family,deriv=1) 
+  ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
   ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
   rank <- q;drop <- NULL
@@ -787,7 +787,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       fdg <- ll$lb*0; fdh <- ll$lbb*0
       for (k in 1:length(coef)) {
         coef1 <- coef;coef1[k] <- coef[k] + eps
-        ll.fd <- llf(y,x,coef1,weights,family,deriv=1)
+        ll.fd <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
         fdg[k] <- (ll.fd$l-ll$l)/eps
         fdh[,k] <- (ll.fd$lb-ll$lb)/eps
       }
@@ -842,15 +842,15 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     }
     ## try the Newton step...
     coef1 <- coef + step 
-    ll <- llf(y,x,coef1,weights,family,deriv=1) 
+    ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1) 
     ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
     khalf <- 0;fac <- 2
     while (ll1 < ll0 && khalf < 25) { ## step halve until it succeeds...
       step <- step/fac;coef1 <- coef + step
-      ll <- llf(y,x,coef1,weights,family,deriv=0)
+      ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
       if (ll1>=ll0) {
-        ll <- llf(y,x,coef1,weights,family,deriv=1)
+        ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       } else { ## abort if step has made no difference
         if (max(abs(coef1-coef))==0) khalf <- 100
       }
@@ -865,10 +865,10 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
     while (ll1 < ll0 && khalf < 25) { ## step cut until it succeeds...
       step <- step/10;coef1 <- coef + step
-      ll <- llf(y,x,coef1,weights,family,deriv=0)
+      ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
       if (ll1>=ll0) {
-        ll <- llf(y,x,coef1,weights,family,deriv=1)
+        ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       } else { ## abort if step has made no difference
         if (max(abs(coef1-coef))==0) khalf <- 100
       }
@@ -887,7 +887,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
             perturbed <- perturbed + 1
             coef <- coef*(1+(runif(length(coef))*.02-.01)*perturbed) + 
                     (runif(length(coef)) - 0.5 ) * mean(abs(coef))*1e-5*perturbed 
-            ll <- llf(y,x,coef,weights,family,deriv=1) 
+            ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
             ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
           } else {        
             rank.checked <- TRUE
@@ -923,7 +923,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
               for (i in 1:length(xat)) attr(x,names(xat)[i]) <- xat[[i]]
               attr(x,"lpi") <- lpi
               attr(x,"drop") <- drop ## useful if family has precomputed something from x
-              ll <- llf(y,x,coef,weights,family,deriv=1) 
+              ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
               ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
             } 
           }
@@ -973,7 +973,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ## Now call the family again to get first derivative of Hessian w.r.t
     ## smoothing parameters, in list d1H...
 
-    ll <- llf(y,x,coef,weights,family,deriv=3,d1b=d1b)
+    ll <- llf(y,x,coef,weights,family,offset=offset,deriv=3,d1b=d1b)
     # d1l <- colSums(ll$lb*d1b) # cancels
     
 
@@ -990,7 +990,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   
       ## Now call family for last time to get trHid2H the tr(H^{-1} d^2 H / drho_i drho_j)...
 
-      llr <- llf(y,x,coef,weights,family,deriv=4,d1b=d1b,d2b=d2b,
+      llr <- llf(y,x,coef,weights,family,offset=offset,deriv=4,d1b=d1b,d2b=d2b,
                        Hp=Hp,rank=rank,fh = L,D=D)
 
       ## Now compute Hessian of log lik w.r.t. log sps using chain rule
@@ -1080,12 +1080,14 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
  ## bSb <- t(coef)%*%St%*%coef
   lpi <- attr(x,"lpi")
   if (is.null(lpi)) { 
-    linear.predictors <- as.numeric(x%*%coef)
+    linear.predictors <- if (is.null(offset)) as.numeric(x%*%coef) else as.numeric(x%*%coef+offset)
     fitted.values <- family$linkinv(linear.predictors) 
   } else {
     fitted.values <- linear.predictors <- matrix(0,nrow(x),length(lpi))
+    if (!is.null(offset)) offset[[length(lpi)+1]] <- 0
     for (j in 1:length(lpi)) {
       linear.predictors[,j] <- as.numeric(x[,lpi[[j]],drop=FALSE] %*% coef[lpi[[j]]])
+      if (!is.null(offset[[j]])) linear.predictors[,j] <-  linear.predictors[,j] + offset[[j]]
       fitted.values[,j] <- family$linfo[[j]]$linkinv( linear.predictors[,j]) 
     }
   }

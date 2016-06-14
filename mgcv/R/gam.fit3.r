@@ -2676,6 +2676,7 @@ mini.roots <- function(S,off,np,rank=NULL)
 ldTweedie0 <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 ## evaluates log Tweedie density for 1<=p<=2, using series summation of
 ## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
+## Original fixed p and phi version.
 
   if (!is.na(rho)&&!is.na(theta)) { ## use rho and theta and get derivs w.r.t. these
     if (length(rho)>1||length(theta)>1) stop("only scalar `rho' and `theta' allowed.")
@@ -2803,7 +2804,7 @@ if (FALSE) { ## DEBUG disconnetion of density terms
 
 
 
-ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
+ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999,all.derivs=FALSE) {
 ## evaluates log Tweedie density for 1<=p<=2, using series summation of
 ## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
   n <- length(y)
@@ -2821,7 +2822,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
     p[ind] <- (b+a*ethi)/(1+ethi)
     p[!ind] <- (b*ethni+a)/(ethni+1)
     dpth1[ind] <- ethi*(b-a)/(1+ethi)^2
-    dpth1[!ind] <- (b*ethni+a)/(ethni+1)
+    dpth1[!ind] <- ethni*(b-a)/(ethni+1)^2
     dpth2[ind] <-((a-b)*ethi+(b-a)*ethi^2)/(ethi+1)^3
     dpth2[!ind] <- ((a-b)*ethni^2+(b-a)*ethni)/(ethni+1)^3
     #p <- if (th>0) (b+a*exp(-th))/(1+exp(-th)) else (b*exp(th)+a)/(exp(th)+1) 
@@ -2829,7 +2830,8 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
     #dpth2 <- if (th>0) ((a-b)*exp(-th)+(b-a)*exp(-2*th))/(exp(-th)+1)^3 else
     #               ((a-b)*exp(2*th)+(b-a)*exp(th))/(exp(th)+1)^3
   } else { ## still need working params for tweedious call...
-    work.param <- FALSE 
+    work.param <- FALSE
+    if (all.derivs) warning("all.derivs only available in rho, theta parameterization")
     #if (length(p)>1||length(phi)>1) stop("only scalar `p' and `phi' allowed.")
     buffer <- if (length(unique(p))==1&&length(unique(phi))==1) TRUE else FALSE 
     rho <- log(phi)
@@ -2850,6 +2852,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 
   if (min(p)<1||max(p)>2) stop("p must be in [1,2]")
   ld <- cbind(y,y,y);ld <- cbind(ld,ld*NA)
+  if (work.param&&all.derivs) ld <- cbind(ld,ld[,1:3]*0,y*0)
   if (length(p)!=n) p <- array(p,dim=n);
   if (length(phi)!=n) phi <- array(phi,dim=n)
   if (length(mu)!=n) mu <- array(mu,dim=n)
@@ -2890,6 +2893,13 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
     ld[ind,4] <- -ld[ind,1] * (log(mu.ind) - 1/(2-p.ind)) ## dld/dp
     ld[ind,5] <- 2*ld[ind,4]/(2-p.ind) + ld[ind,1]*log(mu.ind)^2 ## d2ld/dp2
     ld[ind,6] <- -ld[ind,4]/phii ## d2ld/dphidp
+    if (work.param&&all.derivs) {
+      mup <- mu.ind^p.ind
+      ld[ind,7] <- -mu.ind/(mup*phii)
+      ld[ind,8] <- -(1-p.ind)/(mup*phii)
+      ld[ind,9] <- log(mu.ind)*mu.ind/(mup*phii)
+      ld[ind,10] <- -ld[ind,7]/phii
+    }
   }
   if (sum(!ind)==0) return(ld)
  
@@ -2897,11 +2907,11 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
   ind <- y>0&p>1&p<2
   y <- y[ind];mu <- mu[ind];p<- p[ind]
   w <- w1 <- w2 <- y*0
-  if (buffer) {
+  if (buffer) { ## use code that can buffer expensive lgamma,digamma and trigamma evaluations...
     oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
            w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
            th=as.double(theta[1]),rho=as.double(rho[1]),a=as.double(a),b=as.double(b))
-  } else {
+  } else { ## use code that is not able to buffer as p and phi variable...
     if (length(theta)!=n) theta <- array(theta,dim=n)
     if (length(rho)!=n) rho <- array(rho,dim=n)
     oo <- .C(C_tweedious2,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
@@ -2922,17 +2932,20 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
 
 
   log.mu <- log(mu)
-  mu1p <- theta <- mu^(1-p)
-  k.theta <- mu*theta/(2-p) ## mu^(2-p)/(2-p)
-  theta <- theta/(1-p) ## mu^(1-p)/(1-p)
-  l.base <-  mu1p*(y/(1-p)-mu/(2-p))/phii
+  onep <- 1-p
+  twop <- 2-p
+  mu1p <- theta <- mu^onep
+  k.theta <- mu*theta/twop ## mu^(2-p)/(2-p)
+  theta <- theta/onep ## mu^(1-p)/(1-p)
+  a1 <- (y/onep-mu/twop)
+  l.base <-  mu1p*a1/phii
   ld[ind,1] <- l.base - log(y) ## log density
   ld[ind,2] <- -l.base/phii  ## d log f / dphi
   ld[ind,3] <- 2*l.base/(phii^2)  ## d2 logf / dphi2
-  x <- theta*y*(1/(1-p) - log.mu)/phii + k.theta*(log.mu-1/(2-p))/phii
+  x <- theta*y*(1/onep - log.mu)/phii + k.theta*(log.mu-1/twop)/phii
   ld[ind,4] <- x
-  ld[ind,5] <- theta * y * (log.mu^2 - 2*log.mu/(1-p) + 2/(1-p)^2)/phii -
-                k.theta * (log.mu^2 - 2*log.mu/(2-p) + 2/(2-p)^2)/phii ## d2 logf / dp2
+  ld[ind,5] <- theta * y * (log.mu^2 - 2*log.mu/onep + 2/onep^2)/phii -
+                k.theta * (log.mu^2 - 2*log.mu/twop + 2/twop^2)/phii ## d2 logf / dp2
   ld[ind,6] <- - x/phii ## d2 logf / dphi dp
 
   if (work.param) { ## transform derivs to derivs wrt working
@@ -2941,7 +2954,22 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999) {
     ld[,5] <- ld[,5]*dpth1^2 + ld[,4]*dpth2
     ld[,4] <- ld[,4]*dpth1
     ld[,6] <- ld[,6]*dpth1*phi
+    colnames(ld)[1:6] <- c("l","rho","rho.2","th","th.2","th.rho")
   }
+
+  if (work.param&&all.derivs) {
+    #ld <- cbind(ld,ld[,1:4]*0)
+    a2 <- mu1p/(mu*phii) ## 1/(mu^p*phii)
+    ld[ind,7] <- a2*(onep*a1-mu/twop)   ## deriv w.r.t mu
+    ld[ind,8] <- -a2*(onep*p*a1/mu+2*onep/twop) ## 2nd deriv w.r.t. mu
+    ld[ind,9] <- a2*(-log.mu*onep*a1-a1 + onep*(y/onep^2-mu/twop^2)+mu*log.mu/twop-mu/twop^2) ## mu p
+    ld[ind,10] <- a2*(mu/(phii*twop) - onep*a1/phii) ## mu phi
+    ## transform to working...
+    ld[,10] <- ld[,10]*phi
+    ld[,9] <- ld[,9]*dpth1
+    colnames(ld) <- c("l","rho","rho.2","th","th.2","th.rho","mu","mu.2","mu.theta","mu.rho")
+  }
+
 
 if (TRUE) { ## DEBUG disconnetion of a terms
   ld[ind,1] <- ld[ind,1] + oo$w ## log density

@@ -785,7 +785,7 @@ gam.setup.list <- function(formula,pterms,
 
   G <- gam.setup(formula[[1]],pterms[[1]],
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
-              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[1])
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[1],list.call=TRUE)
   G$pterms <- pterms
   
   G$offset <- list(G$offset)
@@ -814,7 +814,7 @@ gam.setup.list <- function(formula,pterms,
     formula[[i]]$pfok <- 1 ## empty formulae OK here!
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
-              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[i])
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[i],list.call=TRUE)
     if (!is.null(sp)&&length(um$sp)>0) sp <- sp[-(1:length(um$sp))] ## need to strip off already used sp's
     if (!is.null(min.sp)&&nrow(um$L)>0) min.sp <- min.sp[-(1:nrow(um$L))]  
 
@@ -824,6 +824,9 @@ gam.setup.list <- function(formula,pterms,
       ##lpi[[i]] <- pof + 1:ncol(um$X) ## old code
     }
     if (mv.response) G$y <- cbind(G$y,um$y)
+    if (i>formula$nlp&&!is.null(um$offset)) {
+      stop("shared offsets not allowed")
+    }
     G$offset[[i]] <- um$offset
     #G$contrasts[[i]] <- um$contrasts
     if (!is.null(um$contrasts)) G$contrasts <- c(G$contrasts,um$contrasts)
@@ -879,7 +882,7 @@ gam.setup.list <- function(formula,pterms,
   if (lp.overlap) {
     rt <- olid(G$X,G$nsdf,pstart,flpi,lpi)
     if (length(rt$dind)>0) { ## then columns have to be dropped
-      warning("dropping unidentifiable parameteric terms from model",call.=FALSE)
+      warning("dropping unidentifiable parametric terms from model",call.=FALSE)
       G$X <- G$X[,-rt$dind] ## drop cols 
       G$cmX <- G$cmX[-rt$dind]
       G$term.names <- G$term.names[-rt$dind]
@@ -909,7 +912,7 @@ gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE,
-                    diagonal.penalty=FALSE,apply.by=TRUE) 
+                    diagonal.penalty=FALSE,apply.by=TRUE,list.call=FALSE) 
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 ## needed for a gam fit.
 ## elements of returned object:
@@ -960,7 +963,15 @@ gam.setup <- function(formula,pterms,
   else mf <- data # data is already a model frame
 
   G$intercept <-  attr(attr(mf,"terms"),"intercept")>0
-  G$offset <- model.offset(mf)   # get the model offset (if any)
+
+  ## get any model offset. Complicated by possibility of offsets in multiple formulae...
+  if (list.call) {
+    offi <- attr(pterms,"offset")
+    if (!is.null(offi)) {
+      G$offset <- mf[[names(attr(pterms,"dataClasses"))[offi]]]
+    }
+  } else G$offset <- model.offset(mf)   # get any model offset including from offset argument
+  
   if (!is.null(G$offset))  G$offset <- as.numeric(G$offset) 
 
   # construct strictly parametric model matrix.... 
@@ -1548,15 +1559,25 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     if (!(method%in%c("REML","ML"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
-       if (!is.null(G$offset)) if (is.list(G$offset)) { for (i in 1:length(G$offset)) 
-         if (!is.null(G$offset[[i]])) warning("sorry, general families currently ignore offsets")
-       } else if (sum(G$offset!=0)>0) warning("sorry, general families currently ignore offsets")
+       #if (!is.null(G$offset)) if (is.list(G$offset)) { for (i in 1:length(G$offset)) 
+       #  if (!is.null(G$offset[[i]])) warning("sorry, general families currently ignore offsets")
+       #} else if (sum(G$offset!=0)>0) warning("sorry, general families currently ignore offsets")
 
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X,both.sides=FALSE) ## re-parameterize accordingly
-       ## make sure its BFGS if family only supplies these derivatives
-       if (!is.null(G$family$available.derivs)&&G$family$available.derivs==1) optimizer <- c("outer","bfgs")
+       #if (!is.null(G$offset)) {
+       #  ok <- FALSE
+       #  if (is.list(G$offset)) {
+       #    for (i in 1:length(G$offset)) if (!is.null(G$offset[[i]]) && sum(G$offset[[i]]!=0)) ok <- TRUE
+       #  } else if (sum(G$offset!=0)) ok <- TRUE
+       #  if (ok) attr(G$X,"offset") <- G$offset ## pass offsets on to family if they are not all null
+       #}
+       ## make sure optimizer appropriate for available derivatives
+       if (!is.null(G$family$available.derivs)) {
+         if (G$family$available.derivs==1) optimizer <- c("outer","bfgs")
+	 if (G$family$available.derivs==0) optimizer <- "efs"
+       }	 
     }
   }
 
@@ -1641,7 +1662,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
     
   if (!is.null(G$family$preinitialize)) eval(G$family$preinitialize)
 
-  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,G$L,G$lsp0,E=G$Eb,...))
+  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,
+                                  offset=G$offset,L=G$L,lsp0=G$lsp0,E=G$Eb,...))
   else lsp2 <- rep(0,0)
 
   if (outer.looping && !is.null(in.out)) { # initial s.p.s and scale provided
@@ -4079,7 +4101,7 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 }
 
 
-initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
+initial.spg <- function(x,y,weights,family,S,off,offset=NULL,L=NULL,lsp0=NULL,type=1,
                         start=NULL,mustart=NULL,etastart=NULL,E=NULL,...) {
 ## initial smoothing parameter values based on approximate matching 
 ## of Frob norm of XWX and S. If L is non null then it is assumed
@@ -4093,7 +4115,7 @@ initial.spg <- function(x,y,weights,family,S,off,L=NULL,lsp0=NULL,type=1,
   if (is.null(mustart)) mukeep <- NULL else mukeep <- mustart 
   eval(family$initialize) 
   if (inherits(family,"general.family")) { ## Cox, gamlss etc...   
-    lbb <- family$ll(y,x,start,weights,family,deriv=1)$lbb ## initial Hessian 
+    lbb <- family$ll(y,x,start,weights,family,offset=offset,deriv=1)$lbb ## initial Hessian 
     lambda <- rep(0,length(S))
     ## choose lambda so that corresponding elements of lbb and S[[i]]
     ## are roughly in balance...
