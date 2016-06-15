@@ -2724,6 +2724,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     if (n.blocks==1) data <- newdata else data <- newdata[start:stop,]
     X <- matrix(0,b.size[b],nb+length(drop.ind))
     Xoff <- matrix(0,b.size[b],n.smooth) ## term specific offsets 
+    offs <- list()
     for (i in 1:length(Terms)) { ## loop for parametric components (1 per lp)
       ## implements safe prediction for parametric part as described in
       ## http://developer.r-project.org/model-fitting-functions.txt
@@ -2737,6 +2738,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         Xp <- model.matrix(Terms[[i]],object$model)
         mf <- newdata # needed in case of offset, below
       }
+      offi <- attr(Terms[[i]],"offset")
+      if (is.null(offi)) offs[[i]] <- 0 else { ## extract offset
+        offs[[i]] <- mf[[names(attr(Terms[[i]],"dataClasses"))[offi+1]]]
+      }
       if (drop.intercept[i]) { 
         xat <- attributes(Xp);ind <- xat$assign>0 
         Xp <- Xp[,xat$assign>0,drop=FALSE] ## some extended families need to drop intercept
@@ -2745,7 +2750,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       }
       if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
     } ## end of parametric loop
-
+    if (length(offs)==1) offs <- offs[[1]]
+    
     if (!is.null(drop.ind)) X <- X[,-drop.ind]
 
     if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths
@@ -2833,14 +2839,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           off.ind <- (1:n.smooth)[as.logical(colSums(abs(Xoff)))]
           for (j in 1:nlp) { ## looping over the model formulae
             ind <- lpi[[j]] ##pstart[j]:(pstart[j+1]-1)
-            fit[start:stop,j] <- X[,ind,drop=FALSE]%*%object$coefficients[ind]
+            fit[start:stop,j] <- X[,ind,drop=FALSE]%*%object$coefficients[ind] + offs[[j]]
             if (length(off.ind)) for (i in off.ind) { ## add any term specific offsets
               if (object$smooth[[i]]$first.para%in%ind)  fit[start:stop,j] <- fit[start:stop,j] + Xoff[,i]
             }
             if (se.fit) se[start:stop,j] <- 
             sqrt(pmax(0,rowSums((X[,ind,drop=FALSE]%*%object$Vp[ind,ind,drop=FALSE])*X[,ind,drop=FALSE])))
-            ## model offset only handled for first predictor...
-            if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
+            ## model offset only handled for first predictor... fixed
+            ##if (j==1&&!is.null(k))  fit[start:stop,j] <- fit[start:stop,j] + model.offset(mf)
             if (type=="response") { ## need to transform lp to response scale
               linfo <- object$family$linfo[[j]] ## link information
               if (se.fit) se[start:stop,j] <- se[start:stop,j]*abs(linfo$mu.eta(fit[start:stop,j]))

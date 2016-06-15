@@ -2904,49 +2904,51 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999,all.der
   if (sum(!ind)==0) return(ld)
  
   ## now the non-zeros
-  ind <- y>0&p>1&p<2
+  ind <- which(y>0&p>1&p<2)
   y <- y[ind];mu <- mu[ind];p<- p[ind]
   w <- w1 <- w2 <- y*0
-  if (buffer) { ## use code that can buffer expensive lgamma,digamma and trigamma evaluations...
-    oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
-           w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
-           th=as.double(theta[1]),rho=as.double(rho[1]),a=as.double(a),b=as.double(b))
-  } else { ## use code that is not able to buffer as p and phi variable...
-    if (length(theta)!=n) theta <- array(theta,dim=n)
-    if (length(rho)!=n) rho <- array(rho,dim=n)
-    oo <- .C(C_tweedious2,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+  if (length(ind)>0) {
+    if (buffer) { ## use code that can buffer expensive lgamma,digamma and trigamma evaluations...
+      oo <- .C(C_tweedious,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
+               w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
+               th=as.double(theta[1]),rho=as.double(rho[1]),a=as.double(a),b=as.double(b))
+    } else { ## use code that is not able to buffer as p and phi variable...
+      if (length(theta)!=n) theta <- array(theta,dim=n)
+      if (length(rho)!=n) rho <- array(rho,dim=n)
+      oo <- .C(C_tweedious2,w=as.double(w),w1=as.double(w1),w2=as.double(w2),w1p=as.double(y*0),w2p=as.double(y*0),
            w2pp=as.double(y*0),y=as.double(y),eps=as.double(.Machine$double.eps^2),n=as.integer(length(y)),
            th=as.double(theta[ind]),rho=as.double(rho[ind]),a=as.double(a),b=as.double(b))
-  }
-  phii <- phi[ind]
-  if (!work.param) { ## transform working param derivatives to p/phi derivs...
-    if (length(dthp1)!=n) dthp1 <- array(dthp1,dim=n)
-    if (length(dthp2)!=n) dthp2 <- array(dthp2,dim=n)
-    dthp1i <- dthp1[ind]
-    oo$w2 <- oo$w2/phii^2 - oo$w1/phii^2
-    oo$w1 <- oo$w1/phii
-    oo$w2p <- oo$w2p*dthp1i^2 + dthp2[ind] * oo$w1p
-    oo$w1p <- oo$w1p*dthp1i
-    oo$w2pp <- oo$w2pp*dthp1i/phii ## this appears to be wrong
-  }
+    }
+    phii <- phi[ind]
+    if (!work.param) { ## transform working param derivatives to p/phi derivs...
+      if (length(dthp1)!=n) dthp1 <- array(dthp1,dim=n)
+      if (length(dthp2)!=n) dthp2 <- array(dthp2,dim=n)
+      dthp1i <- dthp1[ind]
+      oo$w2 <- oo$w2/phii^2 - oo$w1/phii^2
+      oo$w1 <- oo$w1/phii
+      oo$w2p <- oo$w2p*dthp1i^2 + dthp2[ind] * oo$w1p
+      oo$w1p <- oo$w1p*dthp1i
+      oo$w2pp <- oo$w2pp*dthp1i/phii ## this appears to be wrong
+    }
 
 
-  log.mu <- log(mu)
-  onep <- 1-p
-  twop <- 2-p
-  mu1p <- theta <- mu^onep
-  k.theta <- mu*theta/twop ## mu^(2-p)/(2-p)
-  theta <- theta/onep ## mu^(1-p)/(1-p)
-  a1 <- (y/onep-mu/twop)
-  l.base <-  mu1p*a1/phii
-  ld[ind,1] <- l.base - log(y) ## log density
-  ld[ind,2] <- -l.base/phii  ## d log f / dphi
-  ld[ind,3] <- 2*l.base/(phii^2)  ## d2 logf / dphi2
-  x <- theta*y*(1/onep - log.mu)/phii + k.theta*(log.mu-1/twop)/phii
-  ld[ind,4] <- x
-  ld[ind,5] <- theta * y * (log.mu^2 - 2*log.mu/onep + 2/onep^2)/phii -
-                k.theta * (log.mu^2 - 2*log.mu/twop + 2/twop^2)/phii ## d2 logf / dp2
-  ld[ind,6] <- - x/phii ## d2 logf / dphi dp
+    log.mu <- log(mu)
+    onep <- 1-p
+    twop <- 2-p
+    mu1p <- theta <- mu^onep
+    k.theta <- mu*theta/twop ## mu^(2-p)/(2-p)
+    theta <- theta/onep ## mu^(1-p)/(1-p)
+    a1 <- (y/onep-mu/twop)
+    l.base <-  mu1p*a1/phii
+    ld[ind,1] <- l.base - log(y) ## log density
+    ld[ind,2] <- -l.base/phii  ## d log f / dphi
+    ld[ind,3] <- 2*l.base/(phii^2)  ## d2 logf / dphi2
+    x <- theta*y*(1/onep - log.mu)/phii + k.theta*(log.mu-1/twop)/phii
+    ld[ind,4] <- x
+    ld[ind,5] <- theta * y * (log.mu^2 - 2*log.mu/onep + 2/onep^2)/phii -
+                  k.theta * (log.mu^2 - 2*log.mu/twop + 2/twop^2)/phii ## d2 logf / dp2
+    ld[ind,6] <- - x/phii ## d2 logf / dphi dp
+  } ## length(ind)>0
 
   if (work.param) { ## transform derivs to derivs wrt working
     ld[,3] <- ld[,3]*phi^2 + ld[,2]*phi
@@ -2957,7 +2959,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999,all.der
     colnames(ld)[1:6] <- c("l","rho","rho.2","th","th.2","th.rho")
   }
 
-  if (work.param&&all.derivs) {
+  if (work.param&&all.derivs&&length(ind)>0) {
     #ld <- cbind(ld,ld[,1:4]*0)
     a2 <- mu1p/(mu*phii) ## 1/(mu^p*phii)
     ld[ind,7] <- a2*(onep*a1-mu/twop)   ## deriv w.r.t mu
@@ -2971,14 +2973,14 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999,all.der
   }
 
 
-if (TRUE) { ## DEBUG disconnetion of a terms
-  ld[ind,1] <- ld[ind,1] + oo$w ## log density
-  ld[ind,2] <- ld[ind,2] + oo$w1   ## d log f / dphi
-  ld[ind,3] <- ld[ind,3] + oo$w2 ## d2 logf / dphi2
-  ld[ind,4] <- ld[ind,4] + oo$w1p 
-  ld[ind,5] <- ld[ind,5] + oo$w2p  ## d2 logf / dp2
-  ld[ind,6] <- ld[ind,6] + oo$w2pp ## d2 logf / dphi dp
-} 
+  if (length(ind)>0) { 
+    ld[ind,1] <- ld[ind,1] + oo$w ## log density
+    ld[ind,2] <- ld[ind,2] + oo$w1   ## d log f / dphi
+    ld[ind,3] <- ld[ind,3] + oo$w2 ## d2 logf / dphi2
+    ld[ind,4] <- ld[ind,4] + oo$w1p 
+    ld[ind,5] <- ld[ind,5] + oo$w2p  ## d2 logf / dp2
+    ld[ind,6] <- ld[ind,6] + oo$w2pp ## d2 logf / dphi dp
+  } 
 
 if (FALSE) { ## DEBUG disconnetion of density terms
   ld[ind,1] <-  oo$w ## log density

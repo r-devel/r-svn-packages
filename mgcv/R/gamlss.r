@@ -694,6 +694,7 @@ multinom <- function(K=1) {
       for (i in 1:K) { 
         Xi <- X[,lpi[[i]],drop=FALSE]
         eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
+	if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
         if (se) { ## variance and covariances for kth l.p.
           ve[,i] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
           ii <- 0
@@ -745,7 +746,7 @@ multinom <- function(K=1) {
     object$null.deviance <- -2*sum(multinom$gamma[object$y+1])
   })
 
-  ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL,eta=NULL) {
   ## Function defining the logistic multimomial model log lik. 
   ## Assumption is that coding runs from 0..K, with 0 class having no l.p.
   ## argument eta is for debugging only, and allows direct FD testing of the 
@@ -762,7 +763,10 @@ multinom <- function(K=1) {
       jj <- attr(X,"lpi") ## extract linear predictor index
       K <- length(jj) ## number of linear predictors 
       eta <- matrix(1,n,K+1) ## linear predictor matrix (dummy 1's in first column)
-      for (i in 1:K) eta[,i+1] <- X[,jj[[i]],drop=FALSE]%*%coef[jj[[i]]]
+      if (is.null(offset)) offset <- list()
+      offset[[K+1]] <- 0
+      for (i in 1:K) if (is.null(offset[[i]])) offset[[i]] <- 0
+      for (i in 1:K) eta[,i+1] <- X[,jj[[i]],drop=FALSE]%*%coef[jj[[i]]] + offset[[i]]
     } else { l2 <- 0;K <- ncol(eta);eta <- cbind(1,eta); return.l <- TRUE}
  
     if (K!=family$nlp) stop("number of linear predictors doesn't match")
@@ -1179,12 +1183,15 @@ ziplss <-  function(link=list("identity","identity")) {
   ## if se = FALSE returns one item list containing matrix otherwise 
   ## list of two matrices "fit" and "se.fit"... 
 
-    if (is.null(eta)) { 
+    if (is.null(eta)) {
+      if (is.null(off)) off <- list(0,0)
+      off[[3]] <- 0
+      for (i in 1:2) if (is.null(off[[i]])) off[[i]] <- 0
       lpi <- attr(X,"lpi") 
       X1 <- X[,lpi[[1]],drop=FALSE]
       X2 <- X[,lpi[[2]],drop=FALSE]
-      gamma <- drop(X1%*%beta[lpi[[1]]]) ## linear predictor for poisson parameter 
-      eta <- drop(X2%*%beta[lpi[[2]]]) ## linear predictor for presence parameter 
+      gamma <- drop(X1%*%beta[lpi[[1]]] + off[[1]]) ## linear predictor for poisson parameter 
+      eta <- drop(X2%*%beta[lpi[[2]]] + off[[2]])  ## linear predictor for presence parameter 
       if (se) {
         v.g <- drop(pmax(0,rowSums((X1%*%Vb[lpi[[1]],lpi[[1]]])*X1))) ## var of gamma
         v.e <- drop(pmax(0,rowSums((X1%*%Vb[lpi[[1]],lpi[[1]]])*X1))) ## var of eta
@@ -1273,7 +1280,7 @@ ziplss <-  function(link=list("identity","identity")) {
   }) ## postproc
 
 
-  ll <- function(y,X,coef,wt,family,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
+  ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
   ## function defining the gamlss ZIP model log lik. 
   ## First l.p. defines Poisson mean, given presence (lambda)
   ## Second l.p. defines probability of presence (p)
@@ -1282,10 +1289,12 @@ ziplss <-  function(link=list("identity","identity")) {
   ##        2 - diagonal of first deriv of Hess
   ##        3 - first deriv of Hess
   ##        4 - everything.
+    if (is.null(offset)) offset <- list(0,0) else offset[[3]] <- 0
+    for (i in 1:2) if (is.null(offset[[i]])) offset[[i]] <- 0
     jj <- attr(X,"lpi") ## extract linear predictor index
-    eta <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+    eta <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]] + offset[[1]]
     lambda <- family$linfo[[1]]$linkinv(eta)
-    eta1 <- X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]] 
+    eta1 <- X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]] +offset[[2]]
     p <-  family$linfo[[2]]$linkinv(eta1) 
     
     ##n <- length(y)
