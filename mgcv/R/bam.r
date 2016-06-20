@@ -576,7 +576,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
      
         ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
         qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt)
-        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=FALSE,cov=FALSE,nt=npt)  
+        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt)  
         
         G$n <- nobs
       } else {  ## end of if (iter==1||!additive)
@@ -2003,7 +2003,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=select,
                  idLinksBases=TRUE,scale.penalty=control$scalePenalty,
-                 paraPen=paraPen,apply.by=!discretize,drop.intercept=drop.intercept)
+                 paraPen=paraPen,apply.by=!discretize,drop.intercept=drop.intercept,modCon=2)
       if (!discretize&&ncol(G$X)>=chunk.size) { ## no point having chunk.size < p
         chunk.size <- 4*ncol(G$X)
         warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))

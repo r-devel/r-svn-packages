@@ -3325,7 +3325,7 @@ ExtractData <- function(object,data,knots) {
 
 smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRUE,n=nrow(data),
                       dataX = NULL,null.space.penalty = FALSE,sparse.cons=0,diagonal.penalty=FALSE,
-                      apply.by=TRUE)
+                      apply.by=TRUE,modCon=0)
 ## wrapper function which calls smooth.construct methods, but can then modify
 ## the parameterization used. If absorb.cons==TRUE then a constraint free
 ## parameterization is used. 
@@ -3338,9 +3338,11 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
 ## in which case a list will do.
 ## If present dataX specifies the data to be used to set up the model matrix, given the 
 ## basis set up using data (but n same for both).
+## modCon: 0 (do nothing); 1 (delete supplied con); 2 (set fit and predict to predict)
+##         3 (set fit and predict to fit)
 { sm <- smooth.construct3(object,data,knots)
   if (!is.null(attr(sm,"qrc"))) warning("smooth objects should not have a qrc attribute.")
- 
+  if (modCon==1) sm$C <- sm$Cp <- NULL ## drop any supplied constraints in favour of auto-cons
   ## add plotting indicator if not present.
   ## plot.me tells `plot.gam' whether or not to plot the term
   if (is.null(sm$plot.me)) sm$plot.me <- TRUE
@@ -3400,7 +3402,9 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
     }
     ## conSupplied <- FALSE
     alwaysCon <- FALSE
-  } else { 
+  } else { ## sm$C supplied
+    if (modCon==2&&!is.null(sm$Cp)) sm$C <- sm$Cp ## reset fit con to predict
+    if (modCon>=3) sm$Cp <- NULL ## get rid of separate predict con
     ## should supplied constraint be applied even if not needed? 
     if (is.null(attr(sm$C,"always.apply"))) alwaysCon <- FALSE else alwaysCon <- TRUE
   }

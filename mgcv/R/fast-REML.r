@@ -232,6 +232,9 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) 
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
 ## or cov matrix. if inverse is TRUE and both.sides=FALSE then 
 ## re-para only applied to rhs, as appropriate for a choleski factor.
+## If both.sides==FALSE, X is a vector and inverse==FALSE then X is
+## taken as a coefficient vector (so re-para is inverse of that for model
+## matrix...)
   if (length(Sl)==0) return(X) ## nothing to do
   if (inverse) { ## apply inverse re-para
     if (is.matrix(X)) { 
@@ -284,8 +287,14 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) 
         X[,ind] <- t(Sl[[b]]$D*t(X[,ind,drop=FALSE])) ## X[,ind]%*%diag(Sl[[b]]$D)
       }
     } else {
-      if (is.matrix(Sl[[b]]$D)) X[ind] <- t(Sl[[b]]$D)%*%X[ind] else 
-      X[ind] <- Sl[[b]]$D*X[ind] 
+      if (both.sides) { ## signalling vector to be treated like model matrix X... 
+        if (is.matrix(Sl[[b]]$D)) X[ind] <- t(Sl[[b]]$D)%*%X[ind] else 
+        X[ind] <- Sl[[b]]$D*X[ind]
+      } else { ## both.sides == FALSE is just a signal that X is a parameter vector
+        if (is.matrix(Sl[[b]]$D)) X[ind] <-
+	  if (is.null(Sl[[b]]$Di)) t(Sl[[b]]$D)%*%X[ind] else Sl[[b]]$Di%*%X[ind] else
+        X[ind] <- X[ind]/Sl[[b]]$D
+      }
     }
   }
   X

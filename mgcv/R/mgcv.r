@@ -912,7 +912,7 @@ gam.setup <- function(formula,pterms,
                      data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
                     scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=FALSE,
-                    diagonal.penalty=FALSE,apply.by=TRUE,list.call=FALSE) 
+                    diagonal.penalty=FALSE,apply.by=TRUE,list.call=FALSE,modCon=0) 
 ## set up the model matrix, penalty matrices and auxilliary information about the smoothing bases
 ## needed for a gam fit.
 ## elements of returned object:
@@ -1056,13 +1056,13 @@ gam.setup <- function(formula,pterms,
     if (is.null(id)||!idLinksBases) { ## regular evaluation
       sml <- smoothCon(split$smooth.spec[[i]],data,knots,absorb.cons,scale.penalty=scale.penalty,
                        null.space.penalty=select,sparse.cons=sparse.cons,
-                       diagonal.penalty=diagonal.penalty,apply.by=apply.by) 
+                       diagonal.penalty=diagonal.penalty,apply.by=apply.by,modCon=modCon) 
     } else { ## it's a smooth with an id, so basis setup data differs from model matrix data
       names(id.list[[id]]$data) <- split$smooth.spec[[i]]$term ## give basis data suitable names
       sml <- smoothCon(split$smooth.spec[[i]],id.list[[id]]$data,knots,
                        absorb.cons,n=nrow(data),dataX=data,scale.penalty=scale.penalty,
                        null.space.penalty=select,sparse.cons=sparse.cons,
-                       diagonal.penalty=diagonal.penalty,apply.by=apply.by)
+                       diagonal.penalty=diagonal.penalty,apply.by=apply.by,modCon=modCon)
     }
     for (j in 1:length(sml)) {
       newm <- newm + 1
@@ -1400,7 +1400,7 @@ formula.gam <- function(x, ...)
 
 
 
-gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,...)
+gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale,gamma,G,start=NULL,...)
 # function for smoothing parameter estimation by outer optimization. i.e.
 # P-IRLS scheme iterated to convergence for each trial set of smoothing
 # parameters.
@@ -1426,7 +1426,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
             control$nlm$stepmax, ndigit = control$nlm$ndigit,
 	    gradtol = control$nlm$gradtol, steptol = control$nlm$steptol, 
             iterlim = control$nlm$iterlim, G=G,family=family,control=control,
-            gamma=gamma,...)
+            gamma=gamma,start=start,...)
     lsp<-um$estimate
     object<-attr(full.score(lsp,G,family,control,gamma=gamma,...),"full.gam.object")
     object$gcv.ubre <- um$minimum
@@ -1459,12 +1459,12 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     b <- bfgs(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp = G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,
+                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,start=start,
                 pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,...) else
     b <- newton(lsp=lsp,X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,L=G$L,lsp0=G$lsp0,offset=G$offset,U1=G$U1,Mp=G$Mp,
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
-                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,
+                printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,start=start,
                 pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,...)                
                 
     object <- b$object
@@ -1478,7 +1478,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } else { ## methods calling gam.fit3 
     args <- list(X=G$X,y=G$y,Eb=G$Eb,UrS=G$UrS,offset=G$offset,U1=G$U1,Mp=G$Mp,family=family,
              weights=G$w,control=control,scoreType=criterion,gamma=gamma,scale=scale,
-             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef,n.true=G$n.true,Sl=G$Sl)
+             L=G$L,lsp0=G$lsp0,null.coef=G$null.coef,n.true=G$n.true,Sl=G$Sl,start=start)
   
     if (optimizer[2]=="nlm") {
        b <- nlm(gam4objective, lsp, typsize = lsp, fscale = fscale, 
@@ -1552,7 +1552,7 @@ get.null.coef <- function(G,start=NULL,etastart=NULL,mustart=NULL,...) {
   list(null.coef=null.coef,null.scale=null.scale)
 }
 
-estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
+estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NULL,...) {
 ## Do gam estimation and smoothness selection...
   
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
@@ -1566,6 +1566,9 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        G$X <- Sl.initial.repara(G$Sl,G$X,both.sides=FALSE) ## re-parameterize accordingly
+ 
+       if (!is.null(start)) start <- Sl.initial.repara(G$Sl,start,inverse=FALSE,both.sides=FALSE)
+
        #if (!is.null(G$offset)) {
        #  ok <- FALSE
        #  if (is.list(G$offset)) {
@@ -1740,7 +1743,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,...) {
 
     object <- gam.outer(lsp,fscale=null.stuff$null.scale, ##abs(object$gcv.ubre)+object$sig2/length(G$y),
                         family=G$family,control=control,criterion=criterion,method=method,
-                        optimizer=optimizer,scale=scale,gamma=gamma,G=G,...)
+                        optimizer=optimizer,scale=scale,gamma=gamma,G=G,start=start,...)
     
     if (criterion%in%c("REML","ML")&&scale<=0)  object$sp <- 
                                                 object$sp[-length(object$sp)] ## drop scale estimate from sp array

@@ -13,6 +13,11 @@ Currently deprecated and liable to be removed:
 * 's', 'te', 'ti' and 't2' modified to allow user to specify that the smooth
   should pass through zero at a specified point. See ?identifiability.
 
+* modification to 'smoothCon' to allow resetting of smooth supplied 
+  constraints - enables fix of bug in bam handling of 't2' terms, where
+  parameterization of penalty and model matrix did not previously match 
+  properly. 
+
 * modification to 'plot.gam' etc, so that 'ylim' is no longer shifted by 
   'shift'. 
 
