@@ -17,7 +17,7 @@ although this behaviour can be over-ridden.
 smoothCon(object,data,knots=NULL,absorb.cons=FALSE,
           scale.penalty=TRUE,n=nrow(data),dataX=NULL,
           null.space.penalty=FALSE,sparse.cons=0,
-          diagonal.penalty=FALSE,apply.by=TRUE,modCon)
+          diagonal.penalty=FALSE,apply.by=TRUE,modCon=0)
 PredictMat(object,data,n=nrow(data))
 }
 %- maybe also `usage' for other objects documented here.
