@@ -17,7 +17,25 @@
 %%   }
 %% }
 
-\section{Changes in version 2.0.4 (2016-04-15, svn r....)}{
+\section{Changes in version 2.0.5 (2016-..-.., svn r....)}{
+  \subsection{New Features}{
+    \itemize{
+      \item
+      __ MOSTLY NOT IMPLEMENTED yet __
+
+      \code{diana()} gets new optional argument \code{stop.at.k}.
+      When a positive integer, the DIANA algorithm will stop early, as
+      much desirable for large \eqn{n}.
+    }
+  }
+  %% \subsection{Bug Fixes}{
+  %%   \itemize{
+  %%     \item
+  %%   }
+  %% }
+}
+
+\section{Changes in version 2.0.4 (2016-04-16, svn r7186)}{
   \subsection{New Features}{
     \itemize{
       \item \code{clusGap()} gets a new option \code{d.power = 1}
