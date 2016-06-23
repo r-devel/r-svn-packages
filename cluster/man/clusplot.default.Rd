@@ -171,7 +171,7 @@
 \details{
   \code{clusplot} uses function calls
   \code{\link{princomp}(*, cor = (ncol(x) > 2))} or
-  \code{\link{cmdscale(*, add=TRUE)}}, respectively, depending on
+  \code{\link{cmdscale}(*, add=TRUE)}, respectively, depending on
   \code{diss} being false or true.  These functions are data reduction
   techniques to represent the data in a bivariate plot.
 
