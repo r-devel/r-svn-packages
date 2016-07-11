@@ -29,7 +29,8 @@ t1.fix.ML.gls <- gls(distance ~ Sex *I(age-11), data = Orthodont,
 (a1Mm<-   anova(t1.fix.ML.gls, type = "marginal"))
 ## t_{n} ^2  ==  F_{1,n}:
 stopifnot(all.equal(as.vector(s1M$tTable[,"t-value"] ^ 2),
-                    a1Mm[,"F-value"], tolerance = 1e-14))
+                    a1Mm[,"F-value"], tolerance = 1e-14),
+          identical(2, sigma(t1.fix.ML.gls)))
 
 ##
 cat("\nFixed sigma= ",sigma,"  estimation method 'REML'\n")
@@ -63,7 +64,7 @@ t1.fix.ML.lme <- lme(distance ~ I(age-11), data = Orthodont,
  summary (t1.fix.ML.lme)
    anova (t1.fix.ML.lme)
 intervals(t1.fix.ML.lme)
-
+stopifnot(sigma(t1.fix.ML.lme) == 1)
 
 method <- "REML"
 cat("\nFixed sigma= ",sigma,"  estimation method ", method,"\n")
