@@ -675,7 +675,6 @@ plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=
     fac <- rep(x$flev,rep(n,nf))
     dat <- data.frame(fac,xx)
     names(dat) <- c(x$fterm,x$base$term)
-#    X <- Predict.matrix.fs.interaction(x,dat)
     X <- PredictMat(x,dat)
     if (is.null(xlab)) xlabel <- x$base$term else xlabel <- xlab
     if (is.null(ylab)) ylabel <- label else ylabel <- ylab
@@ -683,7 +682,8 @@ plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=
              main="",x=xx,n=n,nf=nf))
   } else { ## produce the plot
     ind <- 1:P$n
-    plot(P$x[ind],P$fit[ind],ylim=range(P$fit),xlab=P$xlab,ylab=P$ylab,type="l")
+    if(is.null(ylim)) ylim <- range(P$fit) 
+    plot(P$x[ind],P$fit[ind],ylim=ylim,xlab=P$xlab,ylab=P$ylab,type="l",...)
     if (P$nf>1) for (i in 2:P$nf) {
       ind <- ind + P$n
       if (scheme==0) lines(P$x,P$fit[ind],lty=i,col=i) else 

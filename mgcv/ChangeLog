@@ -21,6 +21,8 @@ Currently deprecated and liable to be removed:
 * modification to 'plot.gam' etc, so that 'ylim' is no longer shifted by 
   'shift'. 
 
+* ylim and ... handling improved for 'fs' plot method (thanks Dave Miller)
+
 * anova.gam modified to use more appropriate reference degrees of freedom 
   for multiple model call, where possible. Also fixed to allow multiple 
   formulae models and to use -2*logLik in place of `deviance' for 
