@@ -2,11 +2,18 @@
 *** denotes really big changes 
 
 Currently deprecated and liable to be removed: 
-- bam(...,sparse=TRUE) [1.8-5]
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
 1.8-13
+
+Release plan:
+- sort out experimental efs optimizer and docs for, but lease as 
+  experimental.
+- add gevlss + test suite code.
+
+* bam(...,sparse=TRUE) removed - not efficient, because of unavoidability 
+  of dense off diagonal terms in X'X or equivalent. Deprecated since 1.8-5.
 
 * offsets allowed with multinomial, ziplss and gaulss families.
 
