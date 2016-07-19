@@ -86,7 +86,8 @@ exponential family \code{"REML"} is the default, and the only other option is \c
 parameter estimation criterion (given by \code{method}). \code{"perf"} for performance iteration. \code{"outer"} 
 for the more stable direct approach. \code{"outer"} can use several alternative optimizers, specified in the 
 second element of \code{optimizer}: \code{"newton"} (default), \code{"bfgs"}, \code{"optim"}, \code{"nlm"} 
-and \code{"nlm.fd"} (the latter is based entirely on finite differenced derivatives and is very slow). }
+and \code{"nlm.fd"} (the latter is based entirely on finite differenced derivatives and is very slow). \code{"efs"}
+for the extended Fellner Schall method - only currently available for general families.}
 
 \item{scale}{ If this is positive then it is taken as the known scale parameter. Negative signals that the 
 scale parameter is unknown. 0 signals that the scale parameter is 1  for Poisson and binomial and unknown otherwise. 

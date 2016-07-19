@@ -7,18 +7,26 @@ Currently deprecated and liable to be removed:
 
 1.8-13
 
-Release plan:
-- sort out experimental efs optimizer and docs for, but lease as 
-  experimental.
-- add gevlss + test suite code.
+* Added help file ?one.se.rule on the `one standard error rule' for obtaining 
+  smoother models.
 
-* bam(...,sparse=TRUE) removed - not efficient, because of unavoidability 
-  of dense off diagonal terms in X'X or equivalent. Deprecated since 1.8-5.
-
-* offsets allowed with multinomial, ziplss and gaulss families.
+* bam(...,discrete=TRUE) no longer complains about more coefficients than data.
 
 * 's', 'te', 'ti' and 't2' modified to allow user to specify that the smooth
   should pass through zero at a specified point. See ?identifiability.
+
+* anova.gam modified to use more appropriate reference degrees of freedom 
+  for multiple model call, where possible. Also fixed to allow multiple 
+  formulae models and to use -2*logLik in place of `deviance' for 
+  general.family models.
+
+* offsets allowed with multinomial, ziplss and gaulss families.
+
+* gevlss family implementing generalized extreme value location, sclae and 
+  shape models. 
+
+* Faster code used in 'uniquecombs'. Speeds up discretization step in 
+  'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 
 * modification to 'smoothCon' to allow resetting of smooth supplied 
   constraints - enables fix of bug in bam handling of 't2' terms, where
@@ -30,14 +38,10 @@ Release plan:
 
 * ylim and ... handling improved for 'fs' plot method (thanks Dave Miller)
 
-* anova.gam modified to use more appropriate reference degrees of freedom 
-  for multiple model call, where possible. Also fixed to allow multiple 
-  formulae models and to use -2*logLik in place of `deviance' for 
-  general.family models.
-
-* bam(...,discrete=TRUE) no longer complains about more coefficients than data.
-
 * gam.check now recognises RStudio and plots appropriately.
+
+* bam(...,sparse=TRUE) removed - not efficient, because of unavoidability 
+  of dense off diagonal terms in X'X or equivalent. Deprecated since 1.8-5.
 
 * tweak to initial.sp/g to avoid infinite loop in s.p. initialization, in 
   rather unusual circumstances. Thanks to Mark Bravington.
@@ -52,15 +56,9 @@ Release plan:
 * modification to gam.fit4 to ignore 'start' if it is immediately worse than 
   'null.coef'.
 
-* Added help file ?one.se.rule on the `one standard error rule' for obtaining 
-  smoother models.
-
 * cSplineDes can now accept a 'derivs' argument.
 
 * added drop.intercept handling for multiple formulae (mod by Matteo Fasiolo).
-
-* Faster code used in 'uniquecombs'. Speeds up discretization step in 
-  'bam(...,discrete=TRUE)'. Could still be improved for multi-column case.
 
 * 'gam.side' fix to avoid duplication of smooth model matrices to be tested 
   against, when checking for numerical degeneracy. Problem could occasionally 

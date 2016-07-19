@@ -1414,6 +1414,11 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 
   # if (!optimizer[2]%in%c("nlm","optim","nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
 
+  if (optimizer[1]=="efs" && !inherits(family,"general.family")) {
+    warning("Extended Fellner Schall only implemented for general families")
+    optimizer <- c("outer","newton")
+  }
+
   if (length(lsp)==0) { ## no sp estimation to do -- run a fit instead
     optimizer[2] <- "no.sps" ## will cause gam2objective to be called, below
   }
@@ -1440,19 +1445,10 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   family <- fix.family.var(family)
   if (method%in%c("REML","ML","P-REML","P-ML")) family <- fix.family.ls(family)
   
-
-  #if (nbGetTheta) {
-  #  if (!(optimizer[2]%in%c("newton","bfgs","no.sps"))) {
-  #    warning("only outer methods `newton' & `bfgs' supports `negbin' family and theta selection: reset")
-  #    optimizer[2] <- "newton"
-  #  } 
-  #  object <- gam.negbin(lsp,fscale,family,control,method,optimizer,gamma,G,...)
-    ## make sure criterion gets set to UBRE
-  #} else
   if (optimizer[1]=="efs") { ## experimental extended efs
-    warning("efs is still experimental!")
+    ##warning("efs is still experimental!")
     object <- efsud(x=G$X,y=G$y,lsp=lsp,Sl=G$Sl,weights=G$w,offset=G$offxset,family=family,
-                     control=control,Mp=G$Mp,start=NULL)
+                     control=control,Mp=G$Mp,start=start)
     object$gcv.ubre <- object$REML
   } else if (optimizer[2]=="newton"||optimizer[2]=="bfgs"){ ## the gam.fit3 method 
     if (optimizer[2]=="bfgs") 

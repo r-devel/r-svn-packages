@@ -1139,11 +1139,9 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
   mult <- 1
   fit <- gam.fit5(x=x,y=y,lsp=lsp,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,
                      control=control,Mp=Mp,start=start)
+  score.hist <- rep(0,200)
   for (iter in 1:200) {
-    #fit <- gam.fit5(x=x,y=y,lsp=lsp,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,
-    #                 control=control,Mp=Mp,start=start)
     start <- fit$coefficients
-    ## coef <- Sl.repara(fit$rp,start)
     ## obtain Vb...
     ipiv <- piv <- attr(fit$L,"pivot")
     p <- length(piv)
@@ -1173,7 +1171,8 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
     r[!is.finite(r)] <- 1e6
     lsp1 <- pmin(lsp + log(r)*mult,12)
     old.reml <- fit$REML
-    fit <- gam.fit5(x=x,y=y,lsp=lsp1,Sl=Sl,weights=weights,offset=offset,deriv=0,family=family,control=control,Mp=Mp,start=start)
+    fit <- gam.fit5(x=x,y=y,lsp=lsp1,Sl=Sl,weights=weights,offset=offset,deriv=0,
+                    family=family,control=control,Mp=Mp,start=start)
     ## some step length control...
    
     if (fit$REML<=old.reml) { ## improvement
@@ -1199,7 +1198,7 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
       lsp <- lsp1
       if (mult<1) mult <- 1
     }
-
+    score.hist[iter] <- fit$REML
     if (iter==1) old.ll <- fit$l else {
       if (abs(old.ll-fit$l)<tol*abs(fit$l)) break
       old.ll <- fit$l
@@ -1207,6 +1206,8 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
   }
   fit$sp <- exp(lsp)
   fit$niter <- iter
+  fit$outer.info <- list(iter = iter,score.hist=score.hist[1:iter])
+  fit$outer.info$conv <- if (iter==200) "iteration limit reached" else "full convergence"
   fit
 } ## efsud
 
