@@ -5,6 +5,10 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+1.8-14
+
+* clarification of `exclude' argument to predict.gam in help files.
+
 1.8-13
 
 * Added help file ?one.se.rule on the `one standard error rule' for obtaining 
