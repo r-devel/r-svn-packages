@@ -5,9 +5,6 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
-1.8-14
-
-* clarification of `exclude' argument to predict.gam in help files.
 
 1.8-13
 
@@ -36,6 +33,8 @@ Currently deprecated and liable to be removed:
   constraints - enables fix of bug in bam handling of 't2' terms, where
   parameterization of penalty and model matrix did not previously match 
   properly. 
+
+* clarification of `exclude' argument to predict.gam in help files.
 
 * modification to 'plot.gam' etc, so that 'ylim' is no longer shifted by 
   'shift'. 

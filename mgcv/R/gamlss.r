@@ -461,7 +461,7 @@ fitNull <- function(y,family,wt,offset,nlp=1,tol=1e-7) {
     eb <- eigen(-b$lbb)
     eb$values <- abs(eb$values)
     ind <- eb$values>0
-    eb$values <- 1/eb$values
+    eb$values[ind] <- 1/eb$values[ind]
     d <- as.numeric(eb$vectors %*% (eb$values*(t(eb$vectors) %*% b$lb)))
     step.ok <- FALSE; k <- 0
     while (!step.ok&&k<20) {

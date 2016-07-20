@@ -1148,8 +1148,8 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
     ipiv[piv] <- 1:p
     Vb <- crossprod(forwardsolve(t(fit$L),diag(fit$D,nrow=p)[piv,,drop=FALSE])[ipiv,,drop=FALSE])
     if (sum(fit$bdrop)) { ## some coefficients were dropped...
-      q <- length(object$bdrop)
-      ibd <- !object$bdrop
+      q <- length(fit$bdrop)
+      ibd <- !fit$bdrop
       Vtemp <- Vb; Vb <- matrix(0,q,q)
       Vb[ibd,ibd] <- Vtemp
     }
