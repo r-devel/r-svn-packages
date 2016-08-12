@@ -3,6 +3,12 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
+o clusGap() : now have "original" in addition to PCA-rotation with
+   'scaleH0 string.  In addition should provide 'H0gen = a RNG *function*':
+   Chris Fields (in March 2012) had proposed to alternatively allow uniform
+   on a n-simplex instead of an n-cube.
+    (~/R/MM/Pkg-ex/cluster/clusGap-ChrisField-thoughts)
+
 o clusGap() : print() method: note that Tibshirani et al. proposed
     (see their large data example !)
               a different method than the one we implemnt currently
