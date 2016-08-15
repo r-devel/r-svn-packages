@@ -3,7 +3,7 @@
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Gaussian location-scale model family}
 \description{The \code{gaulss} family implements Gaussian location scale additive models in which 
-the mean and the inverse of the standard deviation can depend on additive smooth predictors. Useable 
+the mean and the log of the standard deviation can depend on additive smooth predictors. Useable 
 only with \code{\link{gam}}, the linear predictors are specified via a list of formulae.
 }
 
