@@ -658,6 +658,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     offset <- G$offset
     family <- G$family
     G$family <- gaussian() ## needed if REML/ML used
+    G$family$drop.intercept <- family$drop.intercept ## needed in predict.gam
     variance <- family$variance
     dev.resids <- family$dev.resids
     ## aic <- family$aic
@@ -1714,7 +1715,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     ## from the span of the parametric effects?
     if (is.null(family$drop.intercept)) { ## family does not provide information
       if (is.null(drop.intercept)) drop.intercept <- FALSE else {
-        drop.intercept <- drop.intercept ## force drop.intercept to correct length
+        drop.intercept <- drop.intercept[1] ## force drop.intercept to correct length
 	if (drop.intercept) family$drop.intercept <- drop.intercept ## ensure prediction works
       }
     } else drop.intercept <- as.logical(family$drop.intercept) ## family overrides argument

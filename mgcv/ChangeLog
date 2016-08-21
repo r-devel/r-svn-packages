@@ -5,6 +5,10 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+1.8-15
+
+* fix so that bam works properly with drop.intercept=TRUE.
+
 1.8-14
 
 * bug fix to smoothCon that could generate NAs in model matrix when using bam
