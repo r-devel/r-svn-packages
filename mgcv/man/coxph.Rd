@@ -6,7 +6,8 @@
 correction for ties, and estimation by penalized partial likelihood maximization, for use with 
 \code{\link{gam}}. In the model formula, event time is the response. The \code{weights} vector provides 
 the censoring information (0 for censoring, 1 for event). Deals with the case in which each subject has
-one event/censoring time and one row of covariate values. 
+one event/censoring time and one row of covariate values. When each subject has several time dependent
+covariates see \code{\link{cox.pht}}.
 
 }
 
@@ -35,7 +36,7 @@ subject at their event/censoring time.
 Estimation of model coefficients is by maximising the log-partial likelihood penalized by the smoothing penalties. See e.g. 
 Hastie and Tibshirani, 1990, section 8.3. for the partial likelihood used (with Peto's approximation for ties), but note that 
 optimization of the partial likelihood does not follow Hastie and Tibshirani. See Klein amd Moeschberger (2003) for 
-estimation of residuals, the cumulative baseline hazard, survival function and associated standard errors.  
+estimation of residuals, the cumulative baseline hazard, survival function and associated standard errors (the survival standard error expression has a typo).  
 
 The percentage deviance explained reported for Cox PH models is based on the sum of squares of the deviance residuals, as the model deviance, and the sum of squares of the deviance residuals when the covariate effects are set to zero, as the null deviance. The same baseline hazard estimate is used for both.
 

@@ -7,12 +7,15 @@ Currently deprecated and liable to be removed:
 
 1.8-15
 
-* fix of survival function prediction in cox.ph family. Code used expression 
+* Fix of survival function prediction in cox.ph family. Code used expression 
   (8.8.5) in Klein and Moeschberger (2003), which is missing a term. Correct
   expression is, e.g., (10) from Andersen, Weis Bentzon and Klein (1996)
   Scandinavian Journal of Statistics.  
 
-* fix so that bam works properly with drop.intercept=TRUE.
+* Added help file 'cox.pht' for Cox PH regression with time dependent 
+  covariates. 
+
+* Fix so that bam works properly with drop.intercept=TRUE.
 
 1.8-14
 
