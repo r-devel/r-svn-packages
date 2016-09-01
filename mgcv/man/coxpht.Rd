@@ -84,7 +84,7 @@ drsd <- sign(mrsd)*sqrt(-2*(mrsd + d*log(chaz))) ## deviance
 ## plot survivor function and s.e. band for subject 25
 te <- sort(unique(pb$futime)) ## event times
 di <- pbcseq[pbcseq$id==25,] ## data for subject 25
-pd <- data.frame(lapply(X=di,FUN=app,t=di$day,to=te)) ## interpolate to tr
+pd <- data.frame(lapply(X=di,FUN=app,t=di$day,to=te)) ## interpolate to te
 pd$tf <- factor(te)
 X <- predict(b,newdata=pd,type="lpmatrix")
 eta <- drop(X\%*\%coef(b)); H <- cumsum(exp(eta))
