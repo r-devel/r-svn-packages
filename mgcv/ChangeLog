@@ -15,6 +15,8 @@ Currently deprecated and liable to be removed:
 * Added help file 'cox.pht' for Cox PH regression with time dependent 
   covariates. 
 
+* gam.fit5 modified to step half if trial penalized likelihood is infinite.
+
 * Fix so that bam works properly with drop.intercept=TRUE.
 
 1.8-14
