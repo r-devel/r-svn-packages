@@ -307,11 +307,11 @@ gam.check <- function(b, old.style=FALSE,
          
         if (!b$mgcv.conv$fully.converged)
         cat(" by steepest\ndescent step failure.\n") else cat(".\n")
-        cat("The RMS",b$method,"score gradiant at convergence was",b$mgcv.conv$rms.grad,".\n")
+        cat("The RMS",b$method,"score gradient at convergence was",b$mgcv.conv$rms.grad,".\n")
         if (b$mgcv.conv$hess.pos.def)
         cat("The Hessian was positive definite.\n") else cat("The Hessian was not positive definite.\n")
-        cat("The estimated model rank was ",b$mgcv.conv$rank,
-                   " (maximum possible: ",b$mgcv.conv$full.rank,")\n",sep="")
+        #cat("The estimated model rank was ",b$mgcv.conv$rank,
+        #           " (maximum possible: ",b$mgcv.conv$full.rank,")\n",sep="")
       }
     }
     if (!is.null(b$rank)) {
