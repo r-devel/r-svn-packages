@@ -29,7 +29,7 @@ The derivative system code for this family is mostly auto-generated, and the fam
 
 \references{
 Smith, R.L. (1985) Maximum likelihood estimation in a class of
-nonreg-ular cases. Biometrika 72(1):67–90
+nonregular cases. Biometrika 72(1):67-90
 
 Wood, S.N., N. Pya and B. Saefken (2016), Smoothing parameter and
 model selection for general smooth models.
