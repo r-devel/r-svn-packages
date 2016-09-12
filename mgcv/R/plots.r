@@ -446,7 +446,7 @@ plot.sos.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,
                      shift=shift,trans=trans,by.resids=by.resids,scheme=scheme-2,
-                     colors=hcolors,contour.col=contour.col,...))
+                     hcolors=hcolors,contour.col=contour.col,...))
   ## convert location of pole in plotting grid to radians
   phi <- phi*pi/180
   theta <- theta*pi/180

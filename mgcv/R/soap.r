@@ -760,7 +760,7 @@ plot.soap.film <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,
                      pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,
-                     shift=shift,trans=trans,by.resids=by.resids,scheme=scheme,colors=hcolors,
+                     shift=shift,trans=trans,by.resids=by.resids,hcolors=hcolors, ## don't pass scheme!!
                      contour.col=contour.col,...)
             if (outline) { if (is.null(names(P$bnd))) {
                 for (i in 1:length(P$bnd)) lines(P$bnd[[i]],lwd=2)
