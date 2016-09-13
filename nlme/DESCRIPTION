@@ -20,4 +20,4 @@ LazyData: yes
 ByteCompile: yes
 Encoding: UTF-8
 License: GPL (>= 2) | file LICENCE
-BugReports: http://bugs.r-project.org
+BugReports: https://bugs.r-project.org
