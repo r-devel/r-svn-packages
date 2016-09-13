@@ -15,6 +15,9 @@ Currently deprecated and liable to be removed:
 * Added help file 'cox.pht' for Cox PH regression with time dependent 
   covariates. 
 
+* fix of potential seg fault in gdi.c:get_bSb if single smooth model 
+  rank deficient (insufficient workspace allocated).
+
 * gam.fit5 modified to step half if trial penalized likelihood is infinite.
 
 * Fix so that bam works properly with drop.intercept=TRUE.
