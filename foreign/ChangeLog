@@ -1,3 +1,7 @@
+2016-09-13  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
+
+	* DESCRIPTION: Version is 0.8-67
+
 2016-01-25 Brian Ripley
 
 	* src/*.c: include directly headers included via R.h.
