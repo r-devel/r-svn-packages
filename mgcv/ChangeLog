@@ -5,6 +5,10 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+1.8-16
+
+* Correction of scaling error in sherical correlation structure GP smooth.
+
 1.8-15
 
 * Fix of survival function prediction in cox.ph family. Code used expression 

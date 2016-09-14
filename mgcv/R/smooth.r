@@ -3041,7 +3041,7 @@ gpE <- function(x,xk,defn = NA) {
   if (!type%in%1:5||k>2||k<=0) stop("incorrect arguments to GP smoother")
   if (type>2) eE <- exp(-E)
   E <- switch(type,
-              (1 - 1.5*E + 0.5 *E^3)*(E<=rho), ## 1 spherical
+              (1 - 1.5*E + 0.5 *E^3)*(E <= 1), ## 1 spherical 
               exp(-E^k), ## 2 power exponential
               (1 + E) * eE, ## 3 Matern k = 1.5
 	      eE + (E*eE)*(1+E/3), ## 4 Matern k = 2.5
