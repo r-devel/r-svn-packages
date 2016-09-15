@@ -7,7 +7,14 @@ Currently deprecated and liable to be removed:
 
 1.8-16
 
+* Extra argument added to `uniquecombs' to allow result to have same row
+  ordering regardless of input data ordering. Now used by smooth constructors 
+  that subsample unique covariate values during basis setup to ensure 
+  invariance to data re-ordering. 
+
 * Correction of scaling error in sherical correlation structure GP smooth.
+
+* qf and rd functions for binomial family fixed for zero n case. 
 
 1.8-15
 

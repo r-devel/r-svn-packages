@@ -152,41 +152,32 @@ mono.con<-function(x,up=TRUE,lower=NA,upper=NA)
 } ## end mono.con
 
 
-uniquecombs <- function(x) {
+uniquecombs <- function(x,ordered=FALSE) {
 ## takes matrix x and counts up unique rows
 ## `unique' now does this in R
   if (is.null(x)) stop("x is null")
   if (is.null(nrow(x))||is.null(ncol(x))) x <- data.frame(x)
-  #if (is.null(nrow(x))) stop("x has no row attribute")
-  #if (is.null(ncol(x))) stop("x has no col attribute")
   if (inherits(x,"data.frame")) {
     xo <- x
     x <- data.matrix(xo) ## ensure all data are numeric
   } else xo <- NULL
   if (ncol(x)==1) { ## faster to use R 
-     xu <- unique(x)
+     xu <- if (ordered) sort(unique(x)) else unique(x)
      ind <- match(as.numeric(x),xu)
      x <- matrix(xu,ncol=1,nrow=length(xu))
   } else { ## no R equivalent that directly yields indices
- 
     txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=","),")",sep="")
-    xt <- eval(parse(text=txt))
-    dup <- duplicated(xt)
-    ind <- match(xt,xt[!dup])
-    x <- x[!dup,]
-    ## old slower...
-    # ind <- rep(0,nrow(x))
-    # res<-.C(C_RuniqueCombs,x=as.double(x),ind=as.integer(ind),
-    #         r=as.integer(nrow(x)),c=as.integer(ncol(x)))
-    # n <- res$r*res$c
-    # x <- matrix(res$x[1:n],res$r,res$c)
-    # ind <- res$ind+1 ## C to R index gotcha
-    # ## what if I muddle this index?
-    # #ri <- ii <- sample(1:length(ind),length(ind),replace=FALSE)
-    # #ri[ii] <- 1:length(ii) 
-    # #ind <- ri[ind]
-    # #x <- x[ii,] ## end of debug muddle tryout
-    
+    xt <- eval(parse(text=txt)) ## text representation of rows
+    dup <- duplicated(xt)       ## identify duplicates
+    xtu <- xt[!dup]             ## unique text rows
+    x <- x[!dup,]               ## unique rows in original format
+    if (ordered) { ## return unique in same order regardless of entry order
+      ii <- order(xtu)
+      xtu <- xtu[ii]
+      x <- x[ii,]
+    }
+    ind <- match(xt,xtu)   ## index each row to the unique duplicate deleted set
+
   }
   if (!is.null(xo)) { ## original was a data.frame
     x <- as.data.frame(x)
@@ -1160,7 +1151,7 @@ smooth.construct.tp.smooth.spec <- function(object,data,knots)
   warning("more knots than data in a tp term: knots ignored.")}
   ## deal with possibility of large data set
   if (nk==0 && n>xtra$max.knots) { ## then there *may* be too many data  
-    xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
+    xu <- uniquecombs(matrix(x,n,object$dim),TRUE) ## find the unique `locations'
     nu <- nrow(xu)  ## number of unique locations
     if (nu>xtra$max.knots) { ## then there is really a problem 
       seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
@@ -2649,7 +2640,7 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
   }
   ## deal with possibility of large data set
   if (nk==0) { ## need to create knots
-    xu <- uniquecombs(matrix(x,n,2)) ## find the unique `locations'
+    xu <- uniquecombs(matrix(x,n,2),TRUE) ## find the unique `locations'
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu>xtra$max.knots) { ## then there is really a problem 
@@ -2855,12 +2846,11 @@ smooth.construct.ds.smooth.spec <- function(object,data,knots)
     warning("more knots than data in a ds term: knots ignored.")
   }
 
-  xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
+  xu <- uniquecombs(matrix(x,n,object$dim),TRUE) ## find the unique `locations'
   if (nrow(xu)<object$bs.dim) stop(
    "A term has fewer unique covariate combinations than specified maximum degrees of freedom")
   ## deal with possibility of large data set
   if (nk==0) { ## need to create knots
-    ## xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu>xtra$max.knots) { ## then there is really a problem 
@@ -3090,7 +3080,7 @@ smooth.construct.gp.smooth.spec <- function(object,data,knots)
     warning("more knots than data in an ms term: knots ignored.")
   }
 
-  xu <- uniquecombs(matrix(x,n,object$dim)) ## find the unique `locations'
+  xu <- uniquecombs(matrix(x,n,object$dim),TRUE) ## find the unique `locations'
   if (nrow(xu) < object$bs.dim) stop(
    "A term has fewer unique covariate combinations than specified maximum degrees of freedom")
   ## deal with possibility of large data set
