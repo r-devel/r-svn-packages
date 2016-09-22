@@ -7,6 +7,8 @@ Currently deprecated and liable to be removed:
 
 1.8-16
 
+* Fix to `get.var' to drop matrix attributes of 1 column matrix variables.
+
 * Extra argument added to `uniquecombs' to allow result to have same row
   ordering regardless of input data ordering. Now used by smooth constructors 
   that subsample unique covariate values during basis setup to ensure 

@@ -229,7 +229,12 @@ get.var <- function(txt,data,vecMat = TRUE)
     if (inherits(x,"try-error")) x <- NULL
   }
   if (!is.numeric(x)&&!is.factor(x)) x <- NULL
-  if (is.matrix(x)) ismat <- TRUE else ismat <- FALSE
+  if (is.matrix(x)) {
+    if (ncol(x)==1) {
+      x <- as.numeric(x)
+      ismat <- FALSE
+    } else ismat <- TRUE
+  } else ismat <- FALSE
   if (vecMat&&is.matrix(x)) x <- as.numeric(x)
   if (ismat) attr(x,"matrix") <- TRUE
   x
@@ -3444,7 +3449,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
     matrixArg <- FALSE
     if (!is.null(sm$ind)) {  ## unpack model matrix + any offset
       offs <- attr(sm$X,"offset")
-      sm$X <- sm$X[sm$ind,]      
+      sm$X <- sm$X[sm$ind,,drop=FALSE]      
       if (!is.null(offs)) attr(sm$X,"offset") <- offs[sm$ind]
     }
   }
@@ -3489,7 +3494,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
      if (!is.null(sm$by.done)) warning("sweep and drop constraints unlikely to work well with self handling of by vars")
      qrc <- c(drop,as.numeric(sm$C)[-drop])
      class(qrc) <- "sweepDrop"
-     sm$X <- sm$X[,-drop] - matrix(qrc[-1],nrow(sm$X),ncol(sm$X)-1,byrow=TRUE)
+     sm$X <- sm$X[,-drop,drop=FALSE] - matrix(qrc[-1],nrow(sm$X),ncol(sm$X)-1,byrow=TRUE)
      if (length(sm$S)>0)
      for (l in 1:length(sm$S)) { # some smooths have > 1 penalty 
         sm$S[[l]]<-sm$S[[l]][-drop,-drop]
@@ -3556,7 +3561,7 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           sml[[1]]$X <- matrix(0,n,ncol(sm$X))  
           for (i in 1:n) { ## in this case have to work down the rows
             ind <- ind + 1
-            sml[[1]]$X[i,] <- colSums(by[ind]*sm$X[sm$ind[ind],])
+            sml[[1]]$X[i,] <- colSums(by[ind]*sm$X[sm$ind[ind],,drop=FALSE])
             if (!is.null(offs)) {
               offX[i] <- sum(offs[sm$ind[ind]]*by[ind])
             }      
