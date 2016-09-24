@@ -6,7 +6,7 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.0.5 (2016-..-.., svn r....)}{
+\section{Changes in version 2.0.5 (2016-09-24, svn r....)}{
   \subsection{New Features}{
     \itemize{
       \item \code{clusGap()} gets a new option \code{scaleH0}, and
@@ -32,6 +32,10 @@
       to suppress three different kind of warnings, as these are
       undesirable in some cases.  With thanks to Kirill Müller for the
       convincing context.
+
+      \item \code{pam()} now signals an error when there are more than
+      65536 observational units (whereas it could segfault previously),
+      thanks to a patch from Mikko Korpela, Helsinki.
     }
   }
 }

@@ -1,6 +1,6 @@
 Package: cluster
 Version: 2.0.5
-Date: 2016-08-12
+Date: 2016-09-16
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from
@@ -15,8 +15,8 @@ Authors@R: c(person("Martin","Maechler", role=c("aut","cre"), email="maechler@st
  ,person("Kurt", "Hornik", role=c("trl", "ctb"),
  	email="Kurt.Hornik@R-project.org", comment="port to R; maintenance(1999-2000)")
  ,person("Matthias", "Studer", role="ctb")
- ,person("Pierre", "Roudier", role="ctb")
- ,person("Juan", "Gonzalez", role="ctb")
+ ,person("Pierre",  "Roudier", role="ctb")
+ ,person("Juan",   "Gonzalez", role="ctb")
  )
 Depends: R (>= 3.0.1)
 Imports: graphics, grDevices, stats, utils
