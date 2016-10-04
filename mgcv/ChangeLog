@@ -7,6 +7,10 @@ Currently deprecated and liable to be removed:
 
 1.8-16
 
+* Fix to setting of penalty rank in smooth.construct.mrf.smooth.spec. 
+  Previously this was wrong, which could cause failure with gamm if the 
+  penalty was rank deficient. Thanks Paul Buerkner.
+
 * Fix to `get.var' to drop matrix attributes of 1 column matrix variables.
 
 * Extra argument added to `uniquecombs' to allow result to have same row
