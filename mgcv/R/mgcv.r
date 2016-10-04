@@ -1445,7 +1445,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   family <- fix.family.var(family)
   if (method%in%c("REML","ML","P-REML","P-ML")) family <- fix.family.ls(family)
   
-  if (optimizer[1]=="efs") { ## experimental extended efs
+  if (optimizer[1]=="efs"&& optimizer[2] != "no.sps" ) { ## experimental extended efs
     ##warning("efs is still experimental!")
     object <- efsud(x=G$X,y=G$y,lsp=lsp,Sl=G$Sl,weights=G$w,offset=G$offxset,family=family,
                      control=control,Mp=G$Mp,start=start)
