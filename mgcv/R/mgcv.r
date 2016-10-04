@@ -1504,6 +1504,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   } 
   
   object$control <- control
+  object$method <- method
   if (inherits(family,"general.family")) {
     mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$lsp0,G$S,G$off)
     ## object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)

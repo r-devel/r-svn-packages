@@ -11,6 +11,10 @@ Currently deprecated and liable to be removed:
   Previously this was wrong, which could cause failure with gamm if the 
   penalty was rank deficient. Thanks Paul Buerkner.
 
+* Fix to Vb.corr call from gam.fit3.post.proc to ensure that sp not 
+  dropped (wrongly treated as scale estimate) when P-REML or P-ML used. 
+  Could cause failure depending on BLAS. Thanks Matteo Fasiolo.
+
 * Fix in gam.outer that cuased failure with "efs" optimizer and fixed sps.
 
 * Fix to `get.var' to drop matrix attributes of 1 column matrix variables.

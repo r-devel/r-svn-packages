@@ -851,7 +851,8 @@ Vb.corr <- function(X,L,lsp0,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
 ## were not linked, but not the scale parameter, of course. Vr includes scale uncertainty,
 ## if scale extimated...
 ## nth is the number of initial elements of rho that are not smoothing 
-## parameters, scale.est is TRUE is scale estimated
+## parameters, scale.est is TRUE if scale estimated by REML and must be
+## dropped from s.p.s
   M <- length(off) ## number of penalty terms
   if (scale.est) {
     ## drop scale param from L, rho and Vr...
@@ -980,7 +981,8 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
     ## parameters excluding any scale parameter, but Vr includes info for scale parameter
     ## if it has been estiamted. 
     nth <- if (is.null(object$family$n.theta)) 0 else object$family$n.theta ## any parameters of family itself
-    Vc2 <- scale*Vb.corr(R,L,lsp0,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,object$scale.estimated)
+    drop.scale <- object$scale.estimated && !(object$method %in% c("P-REML","P-ML"))
+    Vc2 <- scale*Vb.corr(R,L,lsp0,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,drop.scale)
     
     Vc <- Vb + Vc + Vc2 ## Bayesian cov matrix with sp uncertainty
     ## finite sample size check on edf sanity...
