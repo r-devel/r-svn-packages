@@ -849,7 +849,7 @@ Vb.corr <- function(X,L,lsp0,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
 ## matrix.
 ## dw is derivative w.r.t. all the smoothing parameters and family parameters as if these 
 ## were not linked, but not the scale parameter, of course. Vr includes scale uncertainty,
-## if scale extimated...
+## if scale estimated...
 ## nth is the number of initial elements of rho that are not smoothing 
 ## parameters, scale.est is TRUE if scale estimated by REML and must be
 ## dropped from s.p.s
@@ -974,12 +974,13 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
 #    dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
 #    Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
 #    Vc <- object$db.drho%*%Vr%*%t(object$db.drho)
-    d <- ev$values; d[ind] <- 0;d <- 1/sqrt(d+1/10)
+    d <- ev$values; d[ind] <- 0;
+    d <- if (is.null(attr(object$outer.info$hess,"edge.correct"))) 1/sqrt(d+1/10) else 1/sqrt(d+1e-7)
     Vr <- crossprod(d*t(ev$vectors))
     #Vc2 <- scale*Vb.corr(X,L,S,off,object$dw.drho,object$working.weights,log(object$sp),Vr)
     ## Note that db.drho and dw.drho are derivatives w.r.t. full set of smoothing 
     ## parameters excluding any scale parameter, but Vr includes info for scale parameter
-    ## if it has been estiamted. 
+    ## if it has been estimated. 
     nth <- if (is.null(object$family$n.theta)) 0 else object$family$n.theta ## any parameters of family itself
     drop.scale <- object$scale.estimated && !(object$method %in% c("P-REML","P-ML"))
     Vc2 <- scale*Vb.corr(R,L,lsp0,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,drop.scale)
@@ -1240,7 +1241,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=5,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="deviance",start=NULL,
                    mustart = NULL,null.coef=rep(0,ncol(X)),pearson.extra,
-                   dev.extra=0,n.true=-1,Sl=NULL,...)
+                   dev.extra=0,n.true=-1,Sl=NULL,edge.correct=FALSE,...)
 ## Newton optimizer for GAM reml/gcv/aic optimization that can cope with an 
 ## indefinite Hessian. Main enhancements are: 
 ## i) always perturbs the Hessian to +ve definite if indefinite 
@@ -1636,7 +1637,48 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     warning("Iteration limit reached without full convergence - check carefully")
   } else ct <- "full convergence"
   b$dVkk <- NULL
-  list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,conv =ct,score.hist = score.hist[!is.na(score.hist)],object=b)
+  
+  if (as.logical(edge.correct)&&reml) {
+    ## for those smoothing parameters that appear to be at working infinity
+    ## reduce them until there is a detectable increase in RE/ML...
+    flat <- which(abs(grad2) < abs(grad)*100) ## candidates for reduction
+    REML <- b$REML
+    alpha <- if (is.logical(edge.correct)) .02 else abs(edge.correct) ## target RE/ML change per sp
+    b1 <- b; lsp1 <- lsp
+    if (length(flat)) for (i in flat) {
+      REML <- b1$REML + alpha
+      while (b1$REML < REML) {
+        lsp1[i] <- lsp1[i] - 1
+        b1 <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+              offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
+              control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
+              mustart=mustart,scoreType=scoreType,null.coef=null.coef,
+              pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+      }
+    }
+    lsp <- lsp1
+    b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
+                 offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
+                 control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
+                 mustart=mustart,scoreType=scoreType,null.coef=null.coef,
+                 pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+  
+    score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+           
+    grad <- t(L)%*%grad
+    hess <- t(L)%*%hess%*%L
+    if (!is.null(lsp.max)) { ## need to transform to delta space
+               delta <- delta1
+               rho <- rt(delta,lsp1.max)
+               nr <- length(rho$rho1)
+               hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
+               grad <- rho$rho1*grad
+    }
+    attr(hess,"edge.correct") <- TRUE
+  } ## if edge.correct
+
+  list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,
+       conv =ct,score.hist = score.hist[!is.na(score.hist)],object=b)
 } ## newton
 
 

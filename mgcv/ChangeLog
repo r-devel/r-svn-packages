@@ -7,6 +7,9 @@ Currently deprecated and liable to be removed:
 
 1.8-16
 
+* Option 'edge.correct' added to 'gam.control' to allow better correction
+  of edge of smoothing parameter space effects with 'gam' when RE/ML used. 	
+	
 * Fix to setting of penalty rank in smooth.construct.mrf.smooth.spec. 
   Previously this was wrong, which could cause failure with gamm if the 
   penalty was rank deficient. Thanks Paul Buerkner.

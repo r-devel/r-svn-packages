@@ -1461,7 +1461,8 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
                 family=family,weights=G$w,control=control,gamma=gamma,scale=scale,conv.tol=control$newton$conv.tol,
                 maxNstep= control$newton$maxNstep,maxSstep=control$newton$maxSstep,maxHalf=control$newton$maxHalf, 
                 printWarn=FALSE,scoreType=criterion,null.coef=G$null.coef,start=start,
-                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,...)                
+                pearson.extra=G$pearson.extra,dev.extra=G$dev.extra,n.true=G$n.true,Sl=G$Sl,
+		edge.correct=control$edge.correct,...)                
                 
     object <- b$object
     object$REML <- object$REML1 <- object$REML2 <-
@@ -2053,7 +2054,7 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
                          rank.tol=.Machine$double.eps^0.5,
                          nlm=list(),optim=list(),newton=list(),outerPIsteps=0,
                          idLinksBases=TRUE,scalePenalty=TRUE,
-                         keepData=FALSE,scale.est="fletcher") 
+                         keepData=FALSE,scale.est="fletcher",edge.correct=FALSE) 
 # Control structure for a gam. 
 # irls.reg is the regularization parameter to use in the GAM fitting IRLS loop.
 # epsilon is the tolerance to use in the IRLS MLE loop. maxit is the number 
@@ -2064,6 +2065,8 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
 # outerPIsteps is the number of performance iteration steps used to intialize
 #                         outer iteration
 {   scale.est <- match.arg(scale.est,c("fletcher","pearson","deviance"))
+    if (!is.logical(edge.correct)&&(!is.numeric(edge.correct)||edge.correct<0)) stop(
+        "edge.correct must be logical or a positive number")
     if (!is.numeric(nthreads) || nthreads <1) stop("nthreads must be a positive integer") 
     if (!is.numeric(irls.reg) || irls.reg <0.0) stop("IRLS regularizing parameter must be a non-negative number.")
     if (!is.numeric(epsilon) || epsilon <= 0) 
@@ -2109,7 +2112,7 @@ gam.control <- function (nthreads=1,irls.reg=0.0,epsilon = 1e-7, maxit = 200,
          rank.tol=rank.tol,nlm=nlm,
          optim=optim,newton=newton,outerPIsteps=outerPIsteps,
          idLinksBases=idLinksBases,scalePenalty=scalePenalty,
-         keepData=as.logical(keepData[1]),scale.est=scale.est)
+         keepData=as.logical(keepData[1]),scale.est=scale.est,edge.correct=edge.correct)
     
 }
 
