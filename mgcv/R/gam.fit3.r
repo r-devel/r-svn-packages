@@ -953,45 +953,56 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
   qrx <- pqr(sqrt(object$weights)*X,object$control$nthreads)
   R <- pqr.R(qrx);R[,qrx$pivot] <- R
   if (!is.na(object$reml.scale)&&!is.null(object$db.drho)) { ## compute sp uncertainty correction
-    M <- ncol(object$db.drho)
-    ## transform to derivs w.r.t. working, noting that an extra final row of L
-    ## may be present, relating to scale parameter (for which db.drho is 0 since it's a scale parameter)  
-    if (!is.null(L)) { 
-      object$db.drho <- object$db.drho%*%L[1:M,,drop=FALSE] 
-      M <- ncol(object$db.drho)
-    }
-    ## extract cov matrix for log smoothing parameters...
-    ev <- eigen(object$outer.info$hess,symmetric=TRUE) 
-    d <- ev$values;ind <- d <= 0
-    d[ind] <- 0;d[!ind] <- 1/sqrt(d[!ind])
-    rV <- (d*t(ev$vectors))[,1:M] ## root of cov matrix
-    Vc <- crossprod(rV%*%t(object$db.drho))
-    ## set a prior precision on the smoothing parameters, but don't use it to 
-    ## fit, only to regularize Cov matrix. exp(4*var^.5) gives approx 
-    ## multiplicative range. e.g. var = 5.3 says parameter between .01 and 100 times
-    ## estimate. Avoids nonsense at `infinite' smoothing parameters.   
-#    dpv <- rep(0,ncol(object$outer.info$hess))
-#    dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
-#    Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
-#    Vc <- object$db.drho%*%Vr%*%t(object$db.drho)
-    d <- ev$values; d[ind] <- 0;
-    d <- if (is.null(attr(object$outer.info$hess,"edge.correct"))) 1/sqrt(d+1/10) else 1/sqrt(d+1e-7)
-    Vr <- crossprod(d*t(ev$vectors))
-    #Vc2 <- scale*Vb.corr(X,L,S,off,object$dw.drho,object$working.weights,log(object$sp),Vr)
-    ## Note that db.drho and dw.drho are derivatives w.r.t. full set of smoothing 
-    ## parameters excluding any scale parameter, but Vr includes info for scale parameter
-    ## if it has been estimated. 
-    nth <- if (is.null(object$family$n.theta)) 0 else object$family$n.theta ## any parameters of family itself
-    drop.scale <- object$scale.estimated && !(object$method %in% c("P-REML","P-ML"))
-    Vc2 <- scale*Vb.corr(R,L,lsp0,S,off,object$dw.drho,w=NULL,log(object$sp),Vr,nth,drop.scale)
+    hess <- object$outer.info$hess
+    edge.correct <- if (is.null(attr(hess,"edge.correct"))) FALSE else TRUE
+    K <- if (edge.correct) 2 else 1
+    for (k in 1:K) {
+      if (k==1) { ## fitted model computations
+        db.drho <- object$db.drho
+        dw.drho <- object$dw.drho
+        lsp <- log(object$sp)
+      } else { ## edge corrected model computations
+        db.drho <- attr(hess,"db.drho1")
+        dw.drho <- attr(hess,"dw.drho1")
+        lsp <- attr(hess,"lsp1")
+	hess <- attr(hess,"hess1")
+      }
+      M <- ncol(db.drho)
+      ## transform to derivs w.r.t. working, noting that an extra final row of L
+      ## may be present, relating to scale parameter (for which db.drho is 0 since it's a scale parameter)  
+      if (!is.null(L)) { 
+        db.drho <- db.drho%*%L[1:M,,drop=FALSE] 
+        M <- ncol(db.drho)
+      }
+      ## extract cov matrix for log smoothing parameters...
+      ev <- eigen(hess,symmetric=TRUE) 
+      d <- ev$values;ind <- d <= 0
+      d[ind] <- 0;d[!ind] <- 1/sqrt(d[!ind])
+      rV <- (d*t(ev$vectors))[,1:M] ## root of cov matrix
+      Vc <- crossprod(rV%*%t(db.drho))
+      ## set a prior precision on the smoothing parameters, but don't use it to 
+      ## fit, only to regularize Cov matrix. exp(4*var^.5) gives approx 
+      ## multiplicative range. e.g. var = 5.3 says parameter between .01 and 100 times
+      ## estimate. Avoids nonsense at `infinite' smoothing parameters.   
+      d <- ev$values; d[ind] <- 0;
+      d <- if (k==1) 1/sqrt(d+1/10) else 1/sqrt(d+1e-7)
+      Vr <- crossprod(d*t(ev$vectors))
+      ## Note that db.drho and dw.drho are derivatives w.r.t. full set of smoothing 
+      ## parameters excluding any scale parameter, but Vr includes info for scale parameter
+      ## if it has been estimated. 
+      nth <- if (is.null(object$family$n.theta)) 0 else object$family$n.theta ## any parameters of family itself
+      drop.scale <- object$scale.estimated && !(object$method %in% c("P-REML","P-ML"))
+      Vc2 <- scale*Vb.corr(R,L,lsp0,S,off,dw.drho,w=NULL,lsp,Vr,nth,drop.scale)
     
-    Vc <- Vb + Vc + Vc2 ## Bayesian cov matrix with sp uncertainty
-    ## finite sample size check on edf sanity...
-    edf2 <- rowSums(Vc*crossprod(R))/scale
-    if (sum(edf2)>sum(edf1)) { 
-      #cat("\n edf2=",sum(edf2),"  edf1=",sum(edf1)); 
-      edf2 <- edf1
-    } 
+      Vc <- Vb + Vc + Vc2 ## Bayesian cov matrix with sp uncertainty
+      ## finite sample size check on edf sanity...
+      if (k==1) { ## compute edf2 only with fitted model, not edge corrected
+        edf2 <- rowSums(Vc*crossprod(R))/scale
+        if (sum(edf2)>sum(edf1)) { 
+          edf2 <- edf1
+        }
+      }
+    } ## k loop
   } else edf2 <- Vc <- NULL
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
@@ -1656,25 +1667,30 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
       }
     }
-    lsp <- lsp1
-    b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
+   
+    b1 <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
                  offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                  control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
                  mustart=mustart,scoreType=scoreType,null.coef=null.coef,
                  pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
   
-    score <- b$REML;grad <- b$REML1;hess <- b$REML2 
+    score1 <- b1$REML;grad1 <- b1$REML1;hess1 <- b1$REML2 
            
-    grad <- t(L)%*%grad
-    hess <- t(L)%*%hess%*%L
+    grad1 <- t(L)%*%grad1
+    hess1 <- t(L)%*%hess1%*%L
     if (!is.null(lsp.max)) { ## need to transform to delta space
                delta <- delta1
                rho <- rt(delta,lsp1.max)
                nr <- length(rho$rho1)
-               hess <- diag(rho$rho1,nr,nr)%*%hess%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad)
-               grad <- rho$rho1*grad
+               hess1 <- diag(rho$rho1,nr,nr)%*%hess1%*%diag(rho$rho1,nr,nr) + diag(rho$rho2*grad1)
+               grad1 <- rho$rho1*grad1
     }
     attr(hess,"edge.correct") <- TRUE
+    attr(hess,"hess1") <- hess1
+    attr(hess,"db.drho1") <- b1$db.drho
+    attr(hess,"dw.drho1") <- b1$dw.drho
+    attr(hess,"lsp1") <- lsp1
+    attr(hess,"rp") <- b1$rp
   } ## if edge.correct
 
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,

@@ -81,7 +81,7 @@ by outer iteration. See \code{\link{gam.scale}}.}
 
 \item{edge.correct}{With RE/ML smoothing parameter selection in \code{gam} using the default Newton RE/ML optimizer, it is possible to improve inference at the
 `completely smooth' edge of the smoothing parameter space, by decreasing
- smoothing parameters until there is a small increase in the negative RE/ML (e.g. 0.02). Set to \code{TRUE} or to a number representing the target increase to use.}
+ smoothing parameters until there is a small increase in the negative RE/ML (e.g. 0.02). Set to \code{TRUE} or to a number representing the target increase to use. Only changes the corrected smoothing parameter matrix, \code{Vc}.}
 }
 
 \details{ 

@@ -1282,35 +1282,53 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
     lbb[ibd,ibd] <- lbbt
   }  
 
-  ## compute the smoothing parameter uncertainty correction...
-  if (!is.null(object$outer.info$hess)&&!is.null(object$db.drho)) { 
-    if (!is.null(L)) object$db.drho <- object$db.drho%*%L ## transform to derivs w.r.t. working
-    ev <- eigen(object$outer.info$hess,symmetric=TRUE)
-    d <- ev$values;ind <- d <= 0
-    d[ind] <- 0;d[!ind] <- 1/sqrt(d[!ind])
-    Vc <- crossprod((d*t(ev$vectors))%*%t(object$db.drho))
-    #dpv <- rep(0,ncol(object$outer.info$hess));M <- length(off)
-    #dpv[1:M] <- 1/100 ## prior precision (1/var) on log smoothing parameters
-    #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
-    #Vc <- object$db.drho%*%Vr%*%t(object$db.drho)
-    
-    #dpv[1:M] <- 1/10 ## prior precision (1/var) on log smoothing parameters
-    #Vr <- chol2inv(chol(object$outer.info$hess + diag(dpv,ncol=length(dpv))))[1:M,1:M]
-    #M <- length(off)
-    d <- ev$values; d[ind] <- 0;
-    d <- if (is.null(attr(object$outer.info$hess,"edge.correct"))) 1/sqrt(d+1/50) else 1/sqrt(d+1e-7)
-    #d <- d + 1/50 #d[1:M] <- d[1:M] + 1/50 
-    #d <- 1/sqrt(d)
-    Vr <- crossprod(d*t(ev$vectors))
-    #Vc2 <- Vb.corr(R,L,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
+  ## PROBLEM... Vb and Vc with edge correct don't have to be in same parameterization!!!! 
 
-    Vc <- Vb + Vc #+ Vc2  ## Bayesian cov matrix with sp uncertainty
-    ## reverse the various re-parameterizations...
-  } else Vc <- Vb
-  Vc <- Sl.repara(object$rp,Vc,inverse=TRUE) 
-  Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
+  edge.correct <- FALSE 
+  ## compute the smoothing parameter uncertainty correction...
+  if (!is.null(object$outer.info$hess)&&!is.null(object$db.drho)) {
+    hess <- object$outer.info$hess
+    edge.correct <- if (is.null(attr(hess,"edge.correct"))) FALSE else TRUE
+    K <- if (edge.correct) 2 else 1
+    for (k in 1:K) {
+      if (k==1) { ## fitted model computations
+        db.drho <- object$db.drho
+        dw.drho <- object$dw.drho
+        lsp <- log(object$sp)
+      } else { ## edge corrected model computations
+        db.drho <- attr(hess,"db.drho1")
+        dw.drho <- attr(hess,"dw.drho1")
+        lsp <- attr(hess,"lsp1")
+	hess <- attr(hess,"hess1")
+      }
+      if (!is.null(L)) db.drho <- db.drho%*%L ## transform to derivs w.r.t. working
+      ev <- eigen(hess,symmetric=TRUE)
+      d <- ev$values;ind <- d <= 0
+      d[ind] <- 0;d[!ind] <- 1/sqrt(d[!ind])
+      Vc <- crossprod((d*t(ev$vectors))%*%t(db.drho)) ## first correction
+   
+      d <- ev$values; d[ind] <- 0;
+      d <- if (k==1) 1/sqrt(d+1/50) else 1/sqrt(d+1e-7)
+  
+      Vr <- crossprod(d*t(ev$vectors))
+     
+      if (k==1) {
+        Vc1 <- Vc; Vr1 <- Vr; lsp1 <- lsp ## un-shifted version to use for edf
+      } 
+      ## reverse the various re-parameterizations...
+    }
+  } else Vc <- 0
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
   Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
+  rp <- if (edge.correct) attr(object$outer.info$hess,"rp") else object$rp
+  Vc <- Sl.repara(rp,Vc,inverse=TRUE) 
+  Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
+  Vc <- Vb + Vc
+  if (edge.correct) { 
+    Vc1 <- Sl.repara(object$rp,Vc1,inverse=TRUE) 
+    Vc1 <-  Sl.initial.repara(Sl,Vc1,inverse=TRUE)
+    Vc1 <- Vb + Vc1 
+  }
   R <- Sl.repara(object$rp,R,inverse=TRUE,both.sides=FALSE)
   R <-  Sl.initial.repara(Sl,R,inverse=TRUE,both.sides=FALSE,cov=FALSE)
   F <- Vb%*%crossprod(R)
@@ -1323,12 +1341,12 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
   ## justification only applies to sum(edf1/2) not elementwise   
   if (!is.null(object$outer.info$hess)&&!is.null(object$db.drho)) { 
     ## second correction term is easier computed in original parameterization...
-    Vc2 <- Vb.corr(R,L,lsp0,S,off,dw=NULL,w=NULL,log(object$sp),Vr)
-    Vc <- Vc + Vc2
+    Vc <- Vc + Vb.corr(R,L,lsp0,S,off,dw=NULL,w=NULL,lsp,Vr)
+    if (edge.correct) Vc1 <- Vc1 +
+      Vb.corr(R,L,lsp0,S,off,dw=NULL,w=NULL,lsp1,Vr1) else Vc1 <- Vc
   }
-  edf1 <- 2*edf - rowSums(t(F)*F)
-  #edf2 <- diag(Vc%*%crossprod(R)) 
-  edf2 <- rowSums(Vc*crossprod(R))
+  edf1 <- 2*edf - rowSums(t(F)*F) 
+  edf2 <- rowSums(Vc1*crossprod(R))
   if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)
