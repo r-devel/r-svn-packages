@@ -1282,8 +1282,6 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
     lbb[ibd,ibd] <- lbbt
   }  
 
-  ## PROBLEM... Vb and Vc with edge correct don't have to be in same parameterization!!!! 
-
   edge.correct <- FALSE 
   ## compute the smoothing parameter uncertainty correction...
   if (!is.null(object$outer.info$hess)&&!is.null(object$db.drho)) {
@@ -1317,18 +1315,18 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
       } 
       ## reverse the various re-parameterizations...
     }
+    rp <- if (edge.correct) attr(object$outer.info$hess,"rp") else object$rp
+    Vc <- Sl.repara(rp,Vc,inverse=TRUE) 
+    Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
   } else Vc <- 0
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
   Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
-  rp <- if (edge.correct) attr(object$outer.info$hess,"rp") else object$rp
-  Vc <- Sl.repara(rp,Vc,inverse=TRUE) 
-  Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
   Vc <- Vb + Vc
   if (edge.correct) { 
     Vc1 <- Sl.repara(object$rp,Vc1,inverse=TRUE) 
     Vc1 <-  Sl.initial.repara(Sl,Vc1,inverse=TRUE)
     Vc1 <- Vb + Vc1 
-  }
+  } 
   R <- Sl.repara(object$rp,R,inverse=TRUE,both.sides=FALSE)
   R <-  Sl.initial.repara(Sl,R,inverse=TRUE,both.sides=FALSE,cov=FALSE)
   F <- Vb%*%crossprod(R)
@@ -1346,7 +1344,7 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
       Vb.corr(R,L,lsp0,S,off,dw=NULL,w=NULL,lsp1,Vr1) else Vc1 <- Vc
   }
   edf1 <- 2*edf - rowSums(t(F)*F) 
-  edf2 <- rowSums(Vc1*crossprod(R))
+  edf2 <- if (edge.correct) rowSums(Vc1*crossprod(R)) else rowSums(Vc*crossprod(R))
   if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
   list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)

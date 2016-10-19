@@ -792,7 +792,8 @@ gam.setup.list <- function(formula,pterms,
   #G$contrasts <- list(G$contrasts)
   G$xlevels <- list(G$xlevels)
   G$assign <- list(G$assign)
-  if (!is.null(sp)&&length(G$sp)>0) sp <- sp[-(1:length(G$sp))] ## need to strip off already used sp's
+  used.sp <- length(G$lsp0)
+  if (!is.null(sp)&&used.sp>0) sp <- sp[-(1:used.sp)] ## need to strip off already used sp's
   if (!is.null(min.sp)&&nrow(G$L)>0) min.sp <- min.sp[-(1:nrow(G$L))]  
 
   ## formula[[1]] always relates to the base formula of the first linear predictor...
@@ -810,12 +811,14 @@ gam.setup.list <- function(formula,pterms,
       formula[[i]]$response <- formula$response 
       mv.response <- FALSE
     } else mv.response <- TRUE
-    spind <- if (is.null(sp)) 1 else (length(G$S)+1):length(sp)
+    #spind <- if (is.null(sp)) 1 else (length(G$S)+1):length(sp)
     formula[[i]]$pfok <- 1 ## empty formulae OK here!
     um <- gam.setup(formula[[i]],pterms[[i]],
-              data,knots,sp[spind],min.sp[spind],H,absorb.cons,sparse.cons,select,
+              data,knots,sp,min.sp,#sp[spind],min.sp[spind],
+	      H,absorb.cons,sparse.cons,select,
               idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[i],list.call=TRUE)
-    if (!is.null(sp)&&length(um$sp)>0) sp <- sp[-(1:length(um$sp))] ## need to strip off already used sp's
+    used.sp <- length(um$lsp0)	      
+    if (!is.null(sp)&&used.sp>0) sp <- sp[-(1:used.sp)] ## need to strip off already used sp's
     if (!is.null(min.sp)&&nrow(um$L)>0) min.sp <- min.sp[-(1:nrow(um$L))]  
 
     flpi[[i]] <- formula[[i]]$lpi

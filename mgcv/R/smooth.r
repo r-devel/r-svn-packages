@@ -672,7 +672,7 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
   if (object$np) for (i in 1:m) { # reparameterize 
     if (object$margin[[i]]$dim==1) { 
       # only do classes not already optimal (or otherwise excluded)
-      if (!inherits(object$margin[[i]],c("cs.smooth","cr.smooth","cyclic.smooth","random.effect"))) {
+      if (is.null(object$margin[[i]]$noterp)) { ## apply repara
         x <- get.var(object$margin[[i]]$term,data)
         np <- ncol(object$margin[[i]]$X) ## number of params
         ## note: to avoid extrapolating wiggliness measure
@@ -1378,7 +1378,8 @@ smooth.construct.cr.smooth.spec <- function(object,data,knots) {
 
   object$df <- object$bs.dim # degrees of freedom,  unconstrained and unpenalized
   object$xp <- k  # knot positions
-  object$F <- oo$F # f'' = t(F)%*%f (at knots) - helps prediction 
+  object$F <- oo$F # f'' = t(F)%*%f (at knots) - helps prediction
+  object$noterp <- TRUE # do not reparameterize in te
   class(object) <- "cr.smooth"
   object
 } ## smooth.construct.cr.smooth.spec
@@ -1504,6 +1505,7 @@ smooth.construct.cc.smooth.spec <- function(object,data,knots)
   object$df<-object$bs.dim-1 # degrees of freedom, accounting for  cycling
   object$null.space.dim <- 1  
   class(object)<-"cyclic.smooth"
+  object$noterp <- TRUE # do not re-parameterize in te
   object
 } ## smooth.construct.cc.smooth.spec
 
@@ -2283,7 +2285,7 @@ smooth.construct.re.smooth.spec <- function(object,data,knots)
 
 
   object$random <- TRUE ## treat as a random effect for p-value comp.
-  
+  object$noterp <- TRUE ## do not reparameterize in te
   ## Give object a class
   class(object) <- if (inherits(object,"tensor.smooth.spec")) c("random.effect","tensor.smooth")  else 
                    "random.effect"  
@@ -2380,7 +2382,7 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
 ## If `penalty' is not supplied then it is computed from `nb', which is in turn computed 
 ## from `polys' if `nb' is missing. 
 ## Modified from code by Thomas Kneib.
- 
+  if (!is.factor(data[[object$term]])) warning("argument of mrf should be a factor variable")
   x <- as.factor(data[[object$term]])
   k <- knots[[object$term]]
   if (is.null(k)) {
@@ -2409,20 +2411,24 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
   ## If polygons supplied as list with duplicated names, then re-format...
 
   if (!is.null(object$xt$polys)) {
-  a.name <- names(object$xt$polys)
-  d.name <- unique(a.name[duplicated(a.name)]) ## find duplicated names
-  if (length(d.name)) {  ## deal with duplicates
-    for (i in 1:length(d.name)) {
-      ind <- (1:length(a.name))[a.name==d.name[i]] ## index of duplicates 
-      for (j in 2:length(ind)) object$xt$polys[[ind[1]]] <- ## combine matrices for duplicate names
+    a.name <- names(object$xt$polys)
+    d.name <- unique(a.name[duplicated(a.name)]) ## find duplicated names
+    if (length(d.name)) {  ## deal with duplicates
+      for (i in 1:length(d.name)) {
+        ind <- (1:length(a.name))[a.name==d.name[i]] ## index of duplicates 
+        for (j in 2:length(ind)) object$xt$polys[[ind[1]]] <- ## combine matrices for duplicate names
         rbind(object$xt$polys[[ind[1]]],c(NA,NA),object$xt$polys[[ind[j]]])
       }
       ## now delete the un-wanted duplicates...
       ind <- (1:length(a.name))[duplicated(a.name)]
       if (length(ind)>0) for (i in length(ind):1) object$xt$polys[[ind[i]]] <- NULL 
     }
-  } ## polygon list in correct format
-
+    object$plot.me <- TRUE
+    object$dim <- 2 ## signal that it's really 2D here to avoid attempt to plot in te term
+    ## polygon list in correct format
+  } else { 
+    object$plot.me <- FALSE ## can't plot without polygon information
+  }
   ## actual penalty building...
   if (is.null(object$xt$penalty)) { ## must construct penalty 
     if (is.null(object$xt$nb)) { ## no neighbour list... construct one
@@ -2487,6 +2493,8 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
   object$null.space.dim <- ncol(object$X) - object$rank
   object$knots <- k
   object$df <- ncol(object$X)
+  object$te.ok <- 2 ## OK in te but not to plot
+  object$noterp <- TRUE ## do not re-para in te terms
   class(object)<-"mrf.smooth"
   object
 } ## smooth.construct.mrf.smooth.spec
