@@ -1359,7 +1359,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ################################
   ## Start of Newton iteration.... 
   ################################
-  qerror.thresh <- .2 ## quadratic approx error to tolerate in a step
+  qerror.thresh <- .4 ## quadratic approx error to tolerate in a step
   for (i in 1:200) {
    if (control$trace) {
      cat("\n",i,"newton max(|grad|) =",max(abs(grad)),"\n")
@@ -1398,7 +1398,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## tiny relative to largest, as this space is likely to be poorly
     ## modelled on scale of Newton step...
     
-    uconv.ind <- uconv.ind & abs(grad)>max(abs(grad))*.01 
+    uconv.ind <- uconv.ind & abs(grad)>max(abs(grad))*.001 
 
     ## exclude apparently converged gradients from computation
     hess1 <- hess[uconv.ind,uconv.ind] 
@@ -1468,7 +1468,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
     score.change <- score1 - score
-    qerror <- abs(pred.change-score.change)/abs(pred.change) ## quadratic approx error
+    qerror <- abs(pred.change-score.change)/(abs(pred.change)+score.scale*conv.tol) ## quadratic approx error
     if (is.finite(score1) && score.change<0 && pdef && qerror < qerror.thresh) { ## immediately accept step if it worked and positive definite
       old.score <- score 
       mustart <- b$fitted.values
@@ -1520,7 +1520,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           score1 <- b1$UBRE
         } else score1 <- b1$GCV
 	score.change <- score1 - score
-	qerror <- abs(pred.change-score.change)/abs(pred.change) ## quadratic approx error
+	qerror <- abs(pred.change-score.change)/(abs(pred.change)+score.scale*conv.tol) ## quadratic approx error
         if (is.finite(score1) && score.change < 0 && qerror < qerror.thresh) { ## accept
           if (pdef||!sd.unused) { ## then accept and compute derivatives
             b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
@@ -1590,7 +1590,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           score3 <- b1$UBRE
         } else score3 <- b1$GCV
 	score.change <- score3 - score
-        qerror <- abs(pred.change-score.change)/abs(pred.change) ## quadratic approx error 
+        qerror <- abs(pred.change-score.change)/(abs(pred.change)+score.scale*conv.tol) ## quadratic approx error 
         if (!is.finite(score2)||(is.finite(score3)&&score3<=score2&&qerror<qerror.thresh)) { ## record step - best SD step so far
           score2 <- score3
           lsp2 <- lsp3
