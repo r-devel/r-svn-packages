@@ -7,6 +7,19 @@ Currently deprecated and liable to be removed:
 
 1.8-16
 
+* slightly improved intial value heuristics for overlapping penalties in 
+  general family case.
+
+* newton optimizer made slightly more cautious: contracts step if reduction 
+  in true objective too far different from reduction predicted by quadratic 
+  approximation underlying Newton step. Also leaves parameters unchanged 
+  in Newton step while their grad is less than 1% of max grad.  
+
+* Fix to Fisher weight computation in gam.fit4. Previously a weight could
+  (rarely) evaluate as negative machine prec instead of zero, get passed to 
+  gdi2 in C code, generate a NaN when square rooted, resulting in a NaN passed
+  to the LAPACK dgeqp3 routine, which then hung in a non-interuptable way.  
+
 * Fix of 'sp' argument handling with multiple formulae. Allocation to terms 
   could be incorrect. 
 

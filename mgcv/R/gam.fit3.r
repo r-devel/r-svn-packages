@@ -1359,6 +1359,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ################################
   ## Start of Newton iteration.... 
   ################################
+  qerror.thresh <- .2 ## quadratic approx error to tolerate in a step
   for (i in 1:200) {
    if (control$trace) {
      cat("\n",i,"newton max(|grad|) =",max(abs(grad)),"\n")
@@ -1393,6 +1394,11 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 #         printWarn=FALSE,mustart=mustart,
 #         scoreType=scoreType,eps=eps,null.coef=null.coef,...)
 #    }
+    ## exclude dimensions from Newton step when the derviative is
+    ## tiny relative to largest, as this space is likely to be poorly
+    ## modelled on scale of Newton step...
+    
+    uconv.ind <- uconv.ind & abs(grad)>max(abs(grad))*.01 
 
     ## exclude apparently converged gradients from computation
     hess1 <- hess[uconv.ind,uconv.ind] 
@@ -1417,9 +1423,15 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     Nstep[uconv.ind] <- -drop(U%*%(d*(t(U)%*%grad1))) # (modified) Newton direction
    
     Sstep <- -grad/max(abs(grad)) # steepest descent direction 
+
+    ms <- max(abs(Nstep)) ## note smaller permitted step if !pdef
+    mns <- maxNstep
+#    mns <- if (pdef) maxNstep else maxNstep/3 ## more cautious if not pdef
+#    if (!all(Nstep*Sstep >= 0)) mns <- mns/2   ## bit more cautious if directions differ 
+    if (ms>maxNstep) Nstep <- mns * Nstep/ms
     
-    ms <- max(abs(Nstep))
-    if (ms>maxNstep) Nstep <- maxNstep * Nstep/ms
+    sd.unused <- TRUE ## steepest descent direction not yet tried
+
 
     ## try the step ...
     if (sp.trace) cat(lsp,"\n")
@@ -1443,8 +1455,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          mustart=mustart,scoreType=scoreType,null.coef=null.coef,
          pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)    
 
-    sd.unused <- TRUE ## steepest descent direction not yet tried
-
+    ## get the change predicted for this step according to the quadratic model
+    pred.change <- sum(grad*Nstep) + 0.5*t(Nstep) %*% hess %*% Nstep
+    
     if (reml) {
       score1 <- b$REML
     } else if (scoreType=="GACV") {
@@ -1454,8 +1467,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     } else score1 <- b$GCV
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
-    ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
-    if (is.finite(score1) && score1<score && pdef) { ## immediately accept step if it worked and positive definite
+    score.change <- score1 - score
+    qerror <- abs(pred.change-score.change)/abs(pred.change) ## quadratic approx error
+    if (is.finite(score1) && score.change<0 && pdef && qerror < qerror.thresh) { ## immediately accept step if it worked and positive definite
       old.score <- score 
       mustart <- b$fitted.values
       etastart <- b$linear.predictors
@@ -1479,16 +1493,14 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         grad <- rho$rho1*grad
       }
 
-    } else if (!is.finite(score1) || score1>=score) { ## initial step failed to improve score, try step halving ...
+    } else if (!is.finite(score1) || score1>=score||qerror >= qerror.thresh) { ## initial step failed, try step halving ...
       step <- Nstep ## start with the (pseudo) Newton direction
-      ##sc.extra <- 1e-4*sum(grad*step) ## -ve sufficient decrease 
-      while ((!is.finite(score1) || score1>=score) && ii < maxHalf) {
+      while ((!is.finite(score1) || score1>=score ||qerror >= qerror.thresh) && ii < maxHalf) {
         if (ii==3&&i<10) { ## Newton really not working - switch to SD, but keeping step length 
           s.length <- min(sum(step^2)^.5,maxSstep)
           step <- Sstep*s.length/sum(Sstep^2)^.5 ## use steepest descent direction
           sd.unused <- FALSE ## signal that SD already tried
         } else step <- step/2
-        ##if (ii>3) Slength <- Slength/2 ## keep track of SD step length
         if (!is.null(lsp.max)) { ## need to take step in delta space
           delta1 <- delta + step
           lsp1 <- rt(delta1,lsp1.max)$rho ## transform to log sp space
@@ -1499,7 +1511,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
            printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
            null.coef=null.coef,pearson.extra=pearson.extra,
            dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
-         
+        pred.change <- sum(grad*step) + 0.5*t(step) %*% hess %*% step ## Taylor prediction of change 
         if (reml) {       
           score1 <- b1$REML
         } else if (scoreType=="GACV") {
@@ -1507,8 +1519,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         } else if (scoreType=="UBRE") {
           score1 <- b1$UBRE
         } else score1 <- b1$GCV
-        ##sc.extra <- 1e-4*sum(grad*Nstep) ## -ve sufficient decrease 
-        if (is.finite(score1) && score1 < score) { ## accept
+	score.change <- score1 - score
+	qerror <- abs(pred.change-score.change)/abs(pred.change) ## quadratic approx error
+        if (is.finite(score1) && score.change < 0 && qerror < qerror.thresh) { ## accept
           if (pdef||!sd.unused) { ## then accept and compute derivatives
             b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
                  offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
@@ -1538,13 +1551,13 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
             }
           } else { ## still need to try the steepest descent step to see if it does better
             b <- b1
-            score2 <- score1 
+            score2 <- score1 ## store temporarily and restore below
           }
-          score1 <- score - abs(score) - 1 ## make sure that score1 < score
+          score1 <- score - abs(score) - 1 ## make sure that score1 < score (restore once out of loop)
         }  # end of if (score1<= score ) # accept
         if (!is.finite(score1) || score1>=score) ii <- ii + 1
       } ## end while (score1>score && ii < maxHalf)
-      if (!pdef&&sd.unused&&ii<maxHalf) score1 <- score2
+      if (!pdef&&sd.unused&&ii<maxHalf) score1 <- score2 ## restored (not needed if termination on ii==maxHalf)
     } ## end of step halving branch
 
     ## if the problem is not positive definite, and the sd direction has not 
@@ -1568,6 +1581,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
               printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
               null.coef=null.coef,pearson.extra=pearson.extra,
               dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+	pred.change <- sum(grad*step) + 0.5*t(step) %*% hess %*% step ## Taylor prediction of change 
         if (reml) {       
           score3 <- b1$REML
         } else if (scoreType=="GACV") {
@@ -1575,10 +1589,12 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         } else if (scoreType=="UBRE") {
           score3 <- b1$UBRE
         } else score3 <- b1$GCV
-        if (!is.finite(score2)||(is.finite(score3)&&score3<=score2)) { ## accept step - better than last try
+	score.change <- score3 - score
+        qerror <- abs(pred.change-score.change)/abs(pred.change) ## quadratic approx error 
+        if (!is.finite(score2)||(is.finite(score3)&&score3<=score2&&qerror<qerror.thresh)) { ## record step - best SD step so far
           score2 <- score3
           lsp2 <- lsp3
-          ## if (!is.null(lsp.max)) delta2 <- delta3
+          if (!is.null(lsp.max)) delta2 <- delta3
         }
         ## stop when improvement found, and shorter step is worse...
         if ((is.finite(score2)&&is.finite(score3)&&score2<score&&score3>score2)||kk==40) ok <- FALSE
@@ -1588,7 +1604,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
       if (is.finite(score2) && score2<score1) {
         lsp1 <- lsp2
-        if (!is.null(lsp.max)) delta1 <- delta
+        if (!is.null(lsp.max)) delta1 <- delta2
         score1 <- score2
       }
 

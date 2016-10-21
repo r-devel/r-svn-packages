@@ -309,19 +309,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                   else x %*% start)
               }
               else family$linkfun(mustart)
- 
-
-   ##mu.eta <- family$mu.eta
-   ##Dd <- family$Dd
-
- 
+  
    mu <- linkinv(eta);etaold <- eta
      
-   ## need an initial `null deviance' to test for initial divergence...
-   ## if (!is.null(start)) null.coef <- start - can be on edge of feasible - not good
-   #null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
-   #old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
-
    coefold <- null.coef
    conv <-  boundary <- FALSE
  
@@ -341,16 +331,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         good <- is.finite(w)&is.finite(wz)
         z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
       } else use.wy <- family$use.wz
-      
-      #if (sum(!good)) {
-      #  good1 <- is.finite(w)&good ## make sure w finite too
-      #  w[!is.finite(w)] <- 0      ## clear infinite w
-      #  w[!good1&w==0] <- max(w)*.Machine$double.eps^.5 ## reset zero value weights for problem elements
-      #  dd$Deta.Deta2[!good] <- .5*dd$Deta[!good]/w[!good] ## reset problem elements to finite
-      #  good <- is.finite(dd$Deta.Deta2) ## check in case Deta not finite, for example
-      #}
-      #z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
-      
+          
       oo <- .C(C_pls_fit1,   
                y=as.double(z[good]),X=as.double(x[good,]),w=as.double(w[good]),wy = as.double(wz[good]),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
@@ -364,7 +345,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         ## index weights that are finite and positive 
         good <- is.finite(dd$Deta2)
         good[good] <- dd$Deta2[good]>0 
-        #w <- dd$Deta2*.5; 
         w[!good] <- 0
         wz <- w*(eta-offset) - .5*dd$Deta
         z <- (eta-offset) - dd$Deta.Deta2
@@ -374,11 +354,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
           good <- is.finite(w)&is.finite(wz)
           z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
         } else use.wy <- family$use.wz
-        #thresh <- max(w[good])*.Machine$double.eps^.5
-        #w[w < thresh] <- thresh
-        #good <- is.finite(dd$Deta)
-        #z <- (eta-offset)[good] - .5 * dd$Deta[good] / w[good]
-       
+      
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
                   y=as.double(z[good]),X=as.double(x[good,]),w=as.double(w[good]),wy = as.double(wz[good]),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(sum(good)),
@@ -485,7 +461,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        ## drop same parameter every iteration!)       
        grad <- 2 * t(x[good,])%*%((w[good]*(x%*%start)[good]-wz[good]))+ 2*St%*%start 
        if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
-      ## if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
          old.pdev <- pdev  ## not converged quite enough
          coef <- coefold <- start
          etaold <- eta 
@@ -516,32 +491,17 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    dd <- dDeta(y,mu,weights,theta,family,deriv)
    w <- dd$Deta2 * .5
    z <- (eta-offset) - dd$Deta.Deta2 ## - .5 * dd$Deta[good] / w
-   wf <- dd$EDeta2 * .5 ## Fisher type weights 
+   wf <- pmax(0,dd$EDeta2 * .5) ## Fisher type weights 
    wz <- w*(eta-offset) - 0.5*dd$Deta ## Wz finite when w==0
   
    gdi.type <- if (any(abs(w)<.Machine$double.xmin*1e20)||any(!is.finite(z))) 1 else 0   
    good <- is.finite(wz)&is.finite(w)   
       
-
-   ## exclude points for which gradient and second deriv are effectively zero and 
-   ## points with non finite second deriv or deriv ratio... 
-   #min.Deta <- mean(abs(dd$Deta[is.finite(dd$Deta)]))*.Machine$double.eps*.001
-   #min.Deta2 <- mean(abs(dd$Deta2[is.finite(dd$Deta2)]))*.Machine$double.eps*.001
-   #good <- is.finite(dd$Deta.Deta2)&is.finite(w)&!(abs(dd$Deta2) < min.Deta2 & abs(dd$Deta) < min.Deta) 
-   #if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
-   #w <- w[good] 
-
-   #z <- (eta-offset)[good] - dd$Deta.Deta2[good] ## - .5 * dd$Deta[good] / w
-   #wf <- dd$EDeta2[good] * .5 ## Fisher type weights 
-   #wz <- w*(eta-offset)[good] - 0.5*dd$Deta[good]
-
-   #residuals <- rep.int(NA, nobs)
    residuals <- z - (eta - offset)
    residuals[!is.finite(residuals)] <- NA 
    z[!is.finite(z)] <- 0 ## avoid passing NA etc to C code  
 
    ntot <- length(theta) + length(sp)
-   ## if (deriv>1) n2d <- ntot*(1+ntot)/2 else n2d <- 0 
    rSncol <- unlist(lapply(UrS,ncol))
    ## Now drop any elements of dd that have been dropped in fitting...
    if (sum(!good)>0) { ## drop !good from fields of dd, weights and pseudodata
@@ -570,10 +530,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        } 
      }
    }
-   ## can't have zero weights in gdi2 call - superceded by type=1 handling of w==0
-   #mwb <- max(abs(w))*.Machine$double.eps
-   #mwa <- min(abs(w[w!=0]))*.0001; if (mwa==0) mwa <- mwb
-   #w[w==0] <- min(mwa,mwb);
+
    oo <- .C(C_gdi2,
             X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
             U1 = as.double(U1),sp=as.double(exp(sp)),theta=as.double(theta),
@@ -582,7 +539,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             Det2=as.double(dd$Deta2),Dth2=as.double(dd$Dth2),Det.th=as.double(dd$Detath),
             Det2.th=as.double(dd$Deta2th),Det3=as.double(dd$Deta3),Det.th2 = as.double(dd$Detath2),
             Det4 = as.double(dd$Deta4),Det3.th=as.double(dd$Deta3th), Deta2.th2=as.double(dd$Deta2th2),
-            beta=as.double(coef),b1=as.double(rep(0,ntot*ncol(x))),w1=rep(0,ntot*length(z)),
+            beta=as.double(coef),b1=as.double(rep(0,ntot*ncol(x))),w1=as.double(rep(0,ntot*length(z))),
             D1=as.double(rep(0,ntot)),D2=as.double(rep(0,ntot^2)),
             P=as.double(0),P1=as.double(rep(0,ntot)),P2 = as.double(rep(0,ntot^2)),
             ldet=as.double(1-2*(scoreType=="ML")),ldet1 = as.double(rep(0,ntot)), 

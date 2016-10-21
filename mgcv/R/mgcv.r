@@ -1667,7 +1667,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     
   if (!is.null(G$family$preinitialize)) eval(G$family$preinitialize)
 
-  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$off,
+  if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$rank,G$off,
                                   offset=G$offset,L=G$L,lsp0=G$lsp0,E=G$Eb,...))
   else lsp2 <- rep(0,0)
 
@@ -4119,7 +4119,7 @@ single.sp <- function(X,S,target=.5,tol=.Machine$double.eps*100)
 }
 
 
-initial.spg <- function(x,y,weights,family,S,off,offset=NULL,L=NULL,lsp0=NULL,type=1,
+initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NULL,type=1,
                         start=NULL,mustart=NULL,etastart=NULL,E=NULL,...) {
 ## initial smoothing parameter values based on approximate matching 
 ## of Frob norm of XWX and S. If L is non null then it is assumed
@@ -4134,6 +4134,16 @@ initial.spg <- function(x,y,weights,family,S,off,offset=NULL,L=NULL,lsp0=NULL,ty
   eval(family$initialize) 
   if (inherits(family,"general.family")) { ## Cox, gamlss etc...   
     lbb <- family$ll(y,x,start,weights,family,offset=offset,deriv=1)$lbb ## initial Hessian 
+    ## initially work out the number of times that each coefficient is penalized
+    pcount <- rep(0,ncol(lbb))
+    for (i in 1:length(S)) {
+      ind <- off[i]:(off[i]+ncol(S[[i]])-1)
+      dlb <- -diag(lbb[ind,ind])
+      indp <- rowSums(abs(S[[i]]))>max(S[[i]])*.Machine$double.eps^.75 & dlb!=0
+      ind <- ind[indp] ## drop indices of unpenalized
+      pcount[ind] <- pcount[ind] + 1 ## add up times penalized
+    }
+
     lambda <- rep(0,length(S))
     ## choose lambda so that corresponding elements of lbb and S[[i]]
     ## are roughly in balance...
@@ -4141,12 +4151,17 @@ initial.spg <- function(x,y,weights,family,S,off,offset=NULL,L=NULL,lsp0=NULL,ty
       ind <- off[i]:(off[i]+ncol(S[[i]])-1)
       lami <- 1
       dlb <- -diag(lbb[ind,ind]);dS <- diag(S[[i]])
+      pc <- pcount[ind]
       ## get index of elements doing any actual penalization...
       ind <- rowSums(abs(S[[i]]))>max(S[[i]])*.Machine$double.eps^.75 & dlb!=0 ## dlb > 0
       ## drop elements that are not penalizing
-      dlb <- dlb[ind];dS <- dS[ind]
-      while (mean(dlb/(dlb + lami * dS)) > 0.4) lami <- lami*5
-      while (mean(dlb/(dlb + lami * dS)) < 0.4) lami <- lami/5
+      dlb <- dlb[ind]/pc[ind] ## idea is to share out between penalties
+      dS <- dS[ind]
+      rm <- max(length(dS)/rank[i],1) ## rough correction for rank deficiency in penalty
+      #while (mean(dlb/(dlb + lami * dS * rm)) > 0.4) lami <- lami*5
+      #while (mean(dlb/(dlb + lami * dS * rm )) < 0.4) lami <- lami/5 
+      while (sqrt(mean(dlb/(dlb + lami * dS * rm))*mean(dlb)/mean(dlb+lami*dS*rm)) > 0.4) lami <- lami*5
+      while (sqrt(mean(dlb/(dlb + lami * dS * rm))*mean(dlb)/mean(dlb+lami*dS*rm)) < 0.4) lami <- lami/5
       lambda[i] <- lami 
       ## norm(lbb[ind,ind])/norm(S[[i]])
     }
