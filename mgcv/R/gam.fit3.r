@@ -1359,7 +1359,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ################################
   ## Start of Newton iteration.... 
   ################################
-  qerror.thresh <- .4 ## quadratic approx error to tolerate in a step
+  qerror.thresh <- .8 ## quadratic approx error to tolerate in a step
   for (i in 1:200) {
    if (control$trace) {
      cat("\n",i,"newton max(|grad|) =",max(abs(grad)),"\n")
@@ -1468,7 +1468,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## accept if improvement, else step halve
     ii <- 0 ## step halving counter
     score.change <- score1 - score
-    qerror <- abs(pred.change-score.change)/(abs(pred.change)+score.scale*conv.tol) ## quadratic approx error
+    qerror <- abs(pred.change-score.change)/(max(abs(pred.change),abs(score.change))+score.scale*conv.tol) ## quadratic approx error
     if (is.finite(score1) && score.change<0 && pdef && qerror < qerror.thresh) { ## immediately accept step if it worked and positive definite
       old.score <- score 
       mustart <- b$fitted.values
@@ -1520,7 +1520,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           score1 <- b1$UBRE
         } else score1 <- b1$GCV
 	score.change <- score1 - score
-	qerror <- abs(pred.change-score.change)/(abs(pred.change)+score.scale*conv.tol) ## quadratic approx error
+	qerror <- abs(pred.change-score.change)/(max(abs(pred.change),abs(score.change))+score.scale*conv.tol) ## quadratic approx error
         if (is.finite(score1) && score.change < 0 && qerror < qerror.thresh) { ## accept
           if (pdef||!sd.unused) { ## then accept and compute derivatives
             b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
@@ -1555,7 +1555,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           }
           score1 <- score - abs(score) - 1 ## make sure that score1 < score (restore once out of loop)
         }  # end of if (score1<= score ) # accept
-        if (!is.finite(score1) || score1>=score) ii <- ii + 1
+        if (!is.finite(score1) || score1>=score || qerror >= qerror.thresh) ii <- ii + 1
       } ## end while (score1>score && ii < maxHalf)
       if (!pdef&&sd.unused&&ii<maxHalf) score1 <- score2 ## restored (not needed if termination on ii==maxHalf)
     } ## end of step halving branch
@@ -1590,7 +1590,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           score3 <- b1$UBRE
         } else score3 <- b1$GCV
 	score.change <- score3 - score
-        qerror <- abs(pred.change-score.change)/(abs(pred.change)+score.scale*conv.tol) ## quadratic approx error 
+        qerror <- abs(pred.change-score.change)/(max(abs(pred.change),abs(score.change))+score.scale*conv.tol) ## quadratic approx error 
         if (!is.finite(score2)||(is.finite(score3)&&score3<=score2&&qerror<qerror.thresh)) { ## record step - best SD step so far
           score2 <- score3
           lsp2 <- lsp3
