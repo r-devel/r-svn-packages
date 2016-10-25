@@ -166,13 +166,25 @@ uniquecombs <- function(x,ordered=FALSE) {
      ind <- match(as.numeric(x),xu)
      x <- matrix(xu,ncol=1,nrow=length(xu))
   } else { ## no R equivalent that directly yields indices
+    if (ordered) {
+      chloc <- Sys.getlocale("LC_CTYPE")
+      Sys.setlocale("LC_CTYPE","C")
+    }
     txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=","),")",sep="")
     xt <- eval(parse(text=txt)) ## text representation of rows
     dup <- duplicated(xt)       ## identify duplicates
     xtu <- xt[!dup]             ## unique text rows
     x <- x[!dup,]               ## unique rows in original format
+    #ordered <- FALSE
     if (ordered) { ## return unique in same order regardless of entry order
+      ## ordering of character based labels is locale dependent
+      ## so that e.g. running the same code interactively and via
+      ## R CMD check can give different answers. 
+      coloc <- Sys.getlocale("LC_COLLATE")
+      Sys.setlocale("LC_COLLATE","C")
       ii <- order(xtu)
+      Sys.setlocale("LC_COLLATE",coloc)
+      Sys.setlocale("LC_CTYPE",chloc)
       xtu <- xtu[ii]
       x <- x[ii,]
     }
@@ -189,7 +201,7 @@ uniquecombs <- function(x,ordered=FALSE) {
       contrasts(x[,i]) <- contrasts(xo[,i])
     }
   }
-  attr(x,"index") <- ind 
+  attr(x,"index") <- ind
   x
 } ## uniquecombs
 
