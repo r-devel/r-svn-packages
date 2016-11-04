@@ -10,6 +10,10 @@ Currently deprecated and liable to be removed:
 * slightly improved intial value heuristics for overlapping penalties in 
   general family case.
 
+* 'ocat' checks that response is numeric.
+
+* plot.gam(...,scale=-1) now changes scale according to 'trans' and 'shift'.
+
 * newton optimizer made slightly more cautious: contracts step if reduction 
   in true objective too far different from reduction predicted by quadratic 
   approximation underlying Newton step. Also leaves parameters unchanged 

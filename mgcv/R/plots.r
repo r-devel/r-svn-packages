@@ -1196,6 +1196,7 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
         if (ll < ylim[1]) ylim[1] <- ll
       } ## partial resids done
     } ## loop end 
+    ylim <- trans(ylim+shift)
   } ## end of common scale computation
   
   ##############################################################
