@@ -663,7 +663,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             pearson <- sum(weights*(y-mu)^2/family$variance(mu))
             scale.est <- (pearson+dev.extra)/(n.true-trA)
             if (control$scale.est%in%c("fletcher","Fletcher")) { ## Apply Fletcher (2012) correction
-              s.bar = mean(family$dvar(mu)*(y-mu)*sqrt(weights)/family$variance(mu))
+              ## note limited to 10 times Pearson...
+              s.bar = max(-.9,mean(family$dvar(mu)*(y-mu)*sqrt(weights)/family$variance(mu)))
               if (is.finite(s.bar)) scale.est <- scale.est/(1+s.bar)
             }
          } else { ## use the deviance estimator

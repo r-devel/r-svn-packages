@@ -5,6 +5,11 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+1.8-17
+
+* A very bad initial model for uninformative data could lead to a negative 
+  fletcher estimate of the scale parameter and optimizer failure - fixed. 
+
 1.8-16
 
 * slightly improved intial value heuristics for overlapping penalties in 
