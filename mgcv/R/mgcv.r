@@ -3863,7 +3863,7 @@ cooks.distance.gam <- function(model,...)
 sp.vcov <- function(x) {
 ## get cov matrix of smoothing parameters, if available
   if (!inherits(x,"gam")) stop("argument is not a gam object")
-  if (x$method%in%c("ML","P-ML","REML","P-REML")&&!is.null(x$outer.info$hess)) {
+  if (x$method%in%c("ML","P-ML","REML","P-REML","fREML")&&!is.null(x$outer.info$hess)) {
     return(solve(x$outer.info$hess))
   } else return(NULL)
 }

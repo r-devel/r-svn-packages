@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013,2014) distributed under GPL2
+## (c) Simon N. Wood (2013-2016) distributed under GPL2
 ## Code for the gamlss families.
 ## idea is that there are standard functions converting
 ## derivatives w.r.t. mu to derivatives w.r.t. eta, given 
