@@ -7,10 +7,17 @@ Currently deprecated and liable to be removed:
 
 1.8-17
 
+* Fix in uniquecombs - revised faster code (from 1.8-13) could occasionally 
+  generate false matches between different input combinations for integer 
+  variables or factors. Thanks to Rohan Sadler for reporting the issue that 
+  uncovered this. 
+
 * A very bad initial model for uninformative data could lead to a negative 
   fletcher estimate of the scale parameter and optimizer failure - fixed. 
 
 * "fREML" allowed in sp.vcov so that it works with bam fitted models.
+
+* 2 occurances of 'return' replaced by (correct) return().	
 
 1.8-16
 

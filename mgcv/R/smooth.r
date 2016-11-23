@@ -170,7 +170,11 @@ uniquecombs <- function(x,ordered=FALSE) {
       chloc <- Sys.getlocale("LC_CTYPE")
       Sys.setlocale("LC_CTYPE","C")
     }
-    txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=","),")",sep="")
+    ## txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=","),")",sep="")
+    ## ... this can produce duplicate labels e.g. x[,1] = c(1,11), x[,2] = c(12,2)...
+    ## solution is to insert separator not present in representation of a number (any
+    ## factor codes are already converted to numeric by data.matrix call above.)
+    txt <- paste("paste0(",paste("x[,",1:ncol(x),"]",sep="",collapse=",\":\","),")",sep="")
     xt <- eval(parse(text=txt)) ## text representation of rows
     dup <- duplicated(xt)       ## identify duplicates
     xtu <- xt[!dup]             ## unique text rows
@@ -3311,7 +3315,7 @@ ExtractData <- function(object,data,knots) {
      knt[[object$term[i]]] <- get.var(object$term[i],knots)
 
    }
-   names(dat) <- object$term;m <- length(object$term)
+   names(dat) <- object$term; m <- length(object$term)
    if (!is.null(attr(dat[[1]],"matrix"))) { ## strip down to unique covariate combinations
      n <- length(dat[[1]])
      X <- matrix(unlist(dat),n,m)

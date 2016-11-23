@@ -3873,7 +3873,7 @@ gam.vcomp <- function(x,rescale=TRUE,conf.lev=.95) {
 ## in a fitted `gam' object.
   if (!inherits(x,"gam")) stop("requires an object of class gam")
   if (!is.null(x$reml.scale)&&is.finite(x$reml.scale)) scale <- x$reml.scale else scale <- x$sig2
-  if (length(x$sp)==0) return
+  if (length(x$sp)==0) return()
   if (rescale) { ## undo any rescaling of S[[i]] that may have been done
     m <- length(x$smooth)
     if (is.null(x$paraPen)) { 
