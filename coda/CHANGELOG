@@ -1,4 +1,4 @@
-0.19-1 Martyn Plummer <pluimemrm@iarc.fr>
+0.19-1 Martyn Plummer <plummerm@iarc.fr>
 
 	- gelman.plot() now avoids superfluous calculation of multivariate
 	diagnostic. Thanks to Gert van Valkenhoef.
@@ -7,6 +7,8 @@
 	for discrete-valued distributions. Thanks to Robert Goudie.
 
 	- Obsolete INDEX file removed
+
+	- Dimnames bug in geweke.plot fixed. Thanks to Jiri Moravec
 
 0.18-1 Martyn Plummer <plummer@iarc.fr>
 
