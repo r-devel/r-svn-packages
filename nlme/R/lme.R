@@ -2712,11 +2712,11 @@ Variogram.lme <-
     res <- res[wchRows]
   }
   res <- split(res, grps)
-  res <- res[lengths(res) > 1] # no 1-observation groups
-  levGrps <- levels(grps)
-  val <- lapply(seq_along(levGrps),
+  res <- res[lengths(res) > 1L] # no 1-observation groups
+  ## levGrps <- levels(grps)
+  val <- lapply(seq_along(res),
                 function(i) Variogram(res[[i]], distance[[i]]))
-  names(val) <- levGrps
+  names(val) <- names(res)
   val <- do.call(rbind, val)
   if (!missing(maxDist)) {
     val <- val[val$dist <= maxDist, ]

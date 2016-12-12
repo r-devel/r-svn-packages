@@ -1,3 +1,14 @@
+2016-12-12  Martin Maechler
+
+	* R/lme.R (Variogram.lme): fix PR #17192, with thanks to
+	Sebastian Meyer.
+
+2016-07-11 Martin Maechler
+
+	* DESCRIPTION (Version): 3.1-129
+	* NAMESPACE, R/zzMethods.R (confint, sigma, deviance) methods (the
+	last giving an error).
+
 2016-05-04 Martin Maechler
 
 	* R/lme.R, etc (lmeControl): 'sigma = 0' is now allowed (and
