@@ -1,9 +1,21 @@
 library(cluster)
 
 data(animals)
-(mani <- mona(animals))
+(mani <- mona(animals, trace=TRUE))
 
 str(mani)
+
+set.seed(1)
+ani.N1 <- animals; ani.N1[cbind(sample.int(20, 10), sample.int(6, 10, replace=TRUE))] <- NA
+(maniN <- mona(ani.N1, trace=TRUE))
+
+for(seed in c(2:20)) {
+    set.seed(seed); cat("seed = ", seed,"\n")
+    ani.N2 <- animals
+    ani.N2[cbind(sample.int(20, 9),
+                 sample.int( 6, 9, replace=TRUE))] <- NA
+    try(print(maniN2 <- mona(ani.N2, trace=TRUE)))
+}
 
 ## Check all "too many NA" and other illegal cases
 ani.NA   <- animals; ani.NA[4,] <- NA
@@ -34,3 +46,9 @@ if(require(MASS)) {
     str(mx)
     print(lapply(mx[c(1,3,4)], table))
 }
+
+if(FALSE)
+    mona(cbind(1:0), trace=2)
+## Loop npass = 1: (ka,kb) = (1,13)
+##   for(j ..) -> jma=1, jtel(.,z) = (8, -1777201152) --> splitting: (nel; jres, ka, km) = (1; -6, 1, 9)
+##  1  2  2  2  2 ..... [infinite loop]

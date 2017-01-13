@@ -1,5 +1,5 @@
 
-mona <- function(x)
+mona <- function(x, trace.lev = 0)
 {
     ## check type of input matrix
     if(!(iM <- is.matrix(x)) && !is.data.frame(x))
@@ -27,7 +27,7 @@ mona <- function(x)
                     as.integer(n),
                     as.integer(p),
                     x = x,
-                    error = 0L,
+                    error = as.integer(trace.lev),
                     nban = integer(n),
                     ner = integer(n),
                     integer(n),
