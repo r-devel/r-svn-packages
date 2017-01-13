@@ -1,8 +1,7 @@
 
-R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
-Copyright (C) 2013 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
-Platform: x86_64-unknown-linux-gnu (64-bit)
+R version 3.3.2 Patched (2017-01-11 r71965) -- "Sincere Pumpkin Patch"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -67,6 +66,29 @@ List of 6
  $ order.lab: chr [1:20] "ant" "cpl" "spi" "lob" ...
  - attr(*, "class")= chr "mona"
 > 
+> ## Check all "too many NA" and other illegal cases
+> ani.NA   <- animals; ani.NA[4,] <- NA
+> aniNA    <- within(animals, { end[2:9] <- NA })
+> aniN2    <- animals; aniN2[cbind(1:6, c(3, 1, 4:6, 2))] <- NA
+> ani.non2 <- within(animals, end[7] <- 3 )
+> ani.idNA <- within(animals, end[!is.na(end)] <- 1 )
+> ## use tools::assertError() {once you don't use *.Rout.save anymore}
+> try( mona(ani.NA)   )
+Error in mona(ani.NA) : 
+  No clustering performed, an object was found with all values missing.
+> try( mona(aniNA)    )
+Error in mona(aniNA) : 
+  No clustering performed, found variable with more than half values missing.
+> try( mona(aniN2)    )
+Error in mona(aniN2) : 
+  No clustering performed, all variables have at least one missing value.
+> try( mona(ani.non2) )
+Error in mona(ani.non2) : 
+  All variables must be binary (e.g., factor with 2 levels).
+> try( mona(ani.idNA) )
+Error in mona(ani.idNA) : 
+  All variables must be binary (e.g., factor with 2 levels).
+> 
 > if(require(MASS)) {
 + 
 +     if(R.version$major != "1" || as.numeric(R.version$minor) >= 7)
@@ -115,4 +137,4 @@ In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
 > 
 > proc.time()
    user  system elapsed 
-  0.350   0.054   0.504 
+  0.168   0.035   0.279 

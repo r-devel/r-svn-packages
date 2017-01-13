@@ -2,36 +2,37 @@
 mona <- function(x)
 {
     ## check type of input matrix
-    if(!is.matrix(x) && !is.data.frame(x))
+    if(!(iM <- is.matrix(x)) && !is.data.frame(x))
         stop("x must be a matrix or data frame.")
     if(!all(vapply(lapply(as.data.frame(x),
 			  function(y) levels(as.factor(y))),
 		   length, 1) == 2))
         stop("All variables must be binary (e.g., factor with 2 levels).")
     n <- nrow(x)
-    jp <- ncol(x)
-    ## change levels of input matrix
-
-    x2 <- apply(as.matrix(x), 2, function(x) as.integer(factor(x))) - 1L
-    x2[is.na(x2)] <- 2:2
+    p <- ncol(x)
+    dnx <- dimnames(x)
+    ## Change levels of input matrix to {0,1, NA=2}:
+    iF <- function(.) as.integer(as.factor(.))
+    x <- (if(iM) apply(x, 2, iF) else vapply(x, iF, integer(n))) - 1L
+    x[is.na(x)] <- 2L
 ## was
-##     x2 <- apply(as.matrix(x), 2, factor)
-##     x2[x2 == "1"] <- "0"
-##     x2[x2 == "2"] <- "1"
-##     x2[is.na(x2)] <- "2"
-##     storage.mode(x2) <- "integer"
+##     x <- apply(as.matrix(x), 2, factor)
+##     x[x == "1"] <- "0"
+##     x[x == "2"] <- "1"
+##     x[is.na(x)] <- "2"
+##     storage.mode(x) <- "integer"
 
     ## call Fortran routine
     res <- .Fortran(cl_mona,
                     as.integer(n),
-                    as.integer(jp),
-                    x2 = x2,# x[,]
+                    as.integer(p),
+                    x = x,
                     error = 0L,
                     nban = integer(n),
                     ner = integer(n),
                     integer(n),
                     lava = integer(n),
-                    integer(jp))
+                    integer(p))
 
     ## stop with a message when two many missing values:
     if(res$error != 0) {
@@ -47,11 +48,11 @@ mona <- function(x)
                stop("No clustering performed, all variables have at least one missing value.")
                )
     }
-    ##O res$x2 <- matrix(as.numeric(substring(res$x2,
-    ##O                                      1:nchar(res$x2), 1:nchar(res$x2))),
-    ##O                      n, jp)
-    storage.mode(res$x2) <- "integer" # keeping dim()
-    dimnames(res$x2) <- dnx <- dimnames(x)
+    ##O res$x <- matrix(as.numeric(substring(res$x,
+    ##O                                      1:nchar(res$x), 1:nchar(res$x))),
+    ##O                      n, p)
+    ## storage.mode(res$x) <- "integer" # keeping dim()
+    dimnames(res$x) <- dnx
     ## add labels to Fortran output
     if(length(dnx[[2]]) != 0) {
         lava <- as.character(res$lava)
@@ -60,7 +61,7 @@ mona <- function(x)
         res$lava <- lava
     }
     ## construct "mona" object
-    clustering <- list(data = res$x2, order = res$ner,
+    clustering <- list(data = res$x, order = res$ner,
                        variable = res$lava[ -1 ], step = res$nban[-1],
                        call = match.call())
     if(length(dnx[[1]]) != 0)
@@ -85,7 +86,7 @@ print.mona <- function(x, ...)
     invisible(x)
 }
 
-## FIXME: These should differ from print()
+## FIXME: print(summary(.)) should differ from print()
 
 summary.mona <- function(object, ...)
 {

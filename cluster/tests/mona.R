@@ -5,6 +5,19 @@ data(animals)
 
 str(mani)
 
+## Check all "too many NA" and other illegal cases
+ani.NA   <- animals; ani.NA[4,] <- NA
+aniNA    <- within(animals, { end[2:9] <- NA })
+aniN2    <- animals; aniN2[cbind(1:6, c(3, 1, 4:6, 2))] <- NA
+ani.non2 <- within(animals, end[7] <- 3 )
+ani.idNA <- within(animals, end[!is.na(end)] <- 1 )
+## use tools::assertError() {once you don't use *.Rout.save anymore}
+try( mona(ani.NA)   )
+try( mona(aniNA)    )
+try( mona(aniN2)    )
+try( mona(ani.non2) )
+try( mona(ani.idNA) )
+
 if(require(MASS)) {
 
     if(R.version$major != "1" || as.numeric(R.version$minor) >= 7)
