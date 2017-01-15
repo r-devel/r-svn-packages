@@ -711,15 +711,15 @@ tensor.prod.penalties <- function(S)
 
 
 
-smooth.construct.tensor.smooth.spec <- function(object,data,knots)
+smooth.construct.tensor.smooth.spec <- function(object,data,knots) {
 ## the constructor for a tensor product basis object
-{ inter <- object$inter ## signal generation of a pure interaction
+  inter <- object$inter ## signal generation of a pure interaction
   m <- length(object$margin)  # number of marginal bases
-  if (inter) { 
-    object$mc <- if (is.null(object$mc)) rep(TRUE,m) else as.logical(object$mc) 
+  if (inter) { ## interaction term so at least some marginals subject to constraint
+    object$mc <- if (is.null(object$mc)) rep(TRUE,m) else as.logical(object$mc) ## which marginals to constrain
     object$sparse.cons <-  if (is.null(object$sparse.cons)) rep(0,m) else object$sparse.cons
   } else {
-    object$mc <- rep(FALSE,m)
+    object$mc <- rep(FALSE,m) ## all marginals unconstrained
   }
   Xm <- list();Sm<-list();nr<-r<-d<-array(0,m)
   C <- NULL
@@ -760,8 +760,8 @@ smooth.construct.tensor.smooth.spec <- function(object,data,knots)
     km <- which(mono)
     g <- list(); for (i in 1:length(km)) g[[i]] <- object$margin[[km[i]]]$g.index
     for (i in 1:length(object$margin)) {
-      d <- ncol(object$margin[[i]]$X)
-      for (j in length(km)) if (i!=km[j]) g[[j]] <- if (i > km[j])  rep(g[[j]],each=d) else rep(g[[j]],d)
+      dx <- ncol(object$margin[[i]]$X)
+      for (j in length(km)) if (i!=km[j]) g[[j]] <- if (i > km[j])  rep(g[[j]],each=dx) else rep(g[[j]],dx)
     }
     object$g.index <- as.logical(rowSums(matrix(unlist(g),length(g[[1]]),length(g))))
   }
@@ -1856,12 +1856,21 @@ smooth.construct.bs.smooth.spec <- function(object,data,knots) {
   if (length(k)==2) { 
     xl <- min(k);xu <- max(k);
     if (xl>min(x)||xu<max(x)) stop("knot range does not include data")
-  } 
- 
-  if (is.null(k)||length(k)==2) {
+  }
+  if (!is.null(k)&&length(k)==4&&length(k)<nk+2*m[1]) {
+    ## 4 knots supplied: lower prediction limit, lower data limit,
+    ##   upper data limit, upper prediction limit
+    k <- sort(k)
+    dx <- (k[4]-k[1])/(nk-1)
+    ko <- c(k[1]-dx*m[1],k[4]+dx*m[1]) ## limits for outer knots
+    k <- c(seq(ko[1],k[1],length=m[1]+1),
+       seq(k[2],k[3],length=max(0,nk-2)),
+       seq(k[4],ko[2],length=m[1]+1))
+    
+  } else if (is.null(k)||length(k)==2) {
     xr <- xu - xl # data limits and range
     xl <- xl-xr*0.001;xu <- xu+xr*0.001;dx <- (xu-xl)/(nk-1) 
-    k <- seq(xl-dx*(m[1]),xu+dx*(m[1]),length=nk+2*m[1])   
+    k <- seq(xl-dx*m[1],xu+dx*m[1],length=nk+2*m[1])   
   } else {
     if (length(k)!=nk+2*m[1]) 
     stop(paste("there should be ",nk+2*m[1]," supplied knots"))

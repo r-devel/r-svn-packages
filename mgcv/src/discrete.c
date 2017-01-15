@@ -27,11 +27,12 @@
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
 #include <Rconfig.h>
+#include "mgcv.h"
 #ifdef SUPPORT_OPENMP
 #include <omp.h>
 #endif
 
-#include "mgcv.h"
+
 
 /* basic extraction operations */ 
 
