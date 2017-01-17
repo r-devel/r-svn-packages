@@ -130,7 +130,6 @@ R_CMethodDef CEntries[] = {
     {NULL, NULL, 0}
 };
 
-#include <Rversion.h>
 void
 #ifdef HAVE_VISIBILITY_ATTRIBUTE
 __attribute__ ((visibility ("default")))
