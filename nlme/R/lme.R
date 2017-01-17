@@ -1,6 +1,6 @@
 ###            Fit a general linear mixed effects model
 ###
-### Copyright 2005-2016  The R Core team
+### Copyright 2005-2017  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 ###
@@ -2610,10 +2610,8 @@ update.lme <-
     existing <- !is.na(match(names(extras), names(call)))
     ## do these individually to allow NULL to remove entries.
     for (a in names(extras)[existing]) call[[a]] <- extras[[a]]
-    if(any(!existing)) {
-      call <- c(as.list(call), extras[!existing])
-      call <- as.call(call)
-    }
+    if(any(!existing))
+      call <- as.call(c(as.list(call), extras[!existing]))
   }
   if(evaluate) eval(call, parent.frame())
   else call
