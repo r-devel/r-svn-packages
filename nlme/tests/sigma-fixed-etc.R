@@ -11,6 +11,7 @@ doExtras <- function ()
         identical("true", unname(Sys.getenv("R_PKG_CHECKING_doExtras")))
 }
 doExtras()
+isSun <- Sys.info()[["sysname"]] == "SunOS"
 
 ##===   example 1 general linear model page 251  gls ML  and LME ================
 ##
@@ -238,7 +239,9 @@ stopifnot(
     all.equal(iM6$varStruct["Female",],
 	      c(lower = 0.51230063,
 		est.  = 0.65065925,
-		upper = 0.82638482), tol = 6e-5)# seen 5.35e-5 (Sparc Sol., no long double)
+		upper = 0.82638482),
+              tol = if(isSun) 4e-4 else 5e-5)
+    ## seen 5.35e-5 (Sparc Sol., no long double);  later, 6e-5 was not ok
 )
 
 ##-------------
@@ -265,7 +268,7 @@ stopifnot(
     all.equal(iR6$varStruct["Female",],
 	      c(lower = 0.51774671,
 		est.  = 0.66087796,
-		upper = 0.8435779), tol = 5e-5)
+		upper = 0.8435779), tol = if(isSun) 4e-4 else 5e-5)
 )
 cat("Time elapsed: ", (proc.time() - .pt)[1:3], "\n")
 
