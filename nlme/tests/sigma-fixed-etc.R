@@ -265,7 +265,7 @@ stopifnot(
     ,
     all.equal(aR6[,"F-value"], c(3019.86, 89.046), tol = 5e-5)
     ,
-    all.equal(iR6$varStruct["Female",]   ## Win 32
+    all.equal(iR6$varStruct["Female",],  ## Win 32
 	      c(lower = 0.51774671,      ## 0.51778038
 		est.  = 0.66087796,      ## 0.66087807
 		upper = 0.8435779),      ## 0.84352331
