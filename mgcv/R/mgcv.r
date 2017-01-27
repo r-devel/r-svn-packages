@@ -1580,7 +1580,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
        #}
        ## make sure optimizer appropriate for available derivatives
        if (!is.null(G$family$available.derivs)) {
-         if (G$family$available.derivs==1) optimizer <- c("outer","bfgs")
+         if (G$family$available.deriv==1 && optimizer[1]!="efs")  optimizer <- c("outer","bfgs")
 	 if (G$family$available.derivs==0) optimizer <- "efs"
        }	 
     }

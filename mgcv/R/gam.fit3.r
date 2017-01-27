@@ -1928,25 +1928,30 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      ### Derivative testing code. Not usually called and not part of BFGS...
      ok <- check.derivs
      while (ok) { ## derivative testing
-       deriv <- 1
+       #deriv <- 1
        ok <- FALSE ## set to TRUE to re-run (e.g. with different eps)
        deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
-         offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
+         offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
          control=control,gamma=gamma,scale=scale,
          printWarn=FALSE,mustart=mustart,start=start,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
-       
-       fdH <- b$dH
-       fdb.dr <- b$db.drho*0
-       for (j in 1:length(lsp)) { ## check dH and db.drho
-         lsp1 <- lsp;lsp1[j] <- lsp[j] + eps
-         ba <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-                    offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
+       ## deal with fact that deriv might be 0...	 
+       bb <- if (deriv==1) b else gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
+                    offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                     control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
                     mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
                     pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
-         fdH[[j]] <- (ba$H - b$H)/eps
-         fdb.dr[,j] <- (ba$coefficients - b$coefficients)/eps
+       fdH <- bb$dH
+       fdb.dr <- bb$db.drho*0
+       for (j in 1:length(lsp)) { ## check dH and db.drho
+         lsp1 <- lsp;lsp1[j] <- lsp[j] + eps
+         ba <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+                    offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
+                    control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=prev$start,
+                    mustart=prev$mustart,scoreType=scoreType,null.coef=null.coef,
+                    pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+         fdH[[j]] <- (ba$H - bb$H)/eps
+         fdb.dr[,j] <- (ba$coefficients - bb$coefficients)/eps
        }
      } 
      ### end of derivative testing. BFGS code resumes...
