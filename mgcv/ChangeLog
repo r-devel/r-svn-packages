@@ -10,6 +10,13 @@ Currently deprecated and liable to be removed:
 * Export gamlss.etamu, gamlss.gH and trind.generator to facilitate user 
   addition of new location-scale families. 
 
+* Re-ordering of initialization in gam.fit4 to avoid possible failure of
+  dev.resids call before initialization. 
+
+* trap in fast.REML.fit for situation in which all smoothing parameters 
+  satisfy conditions for indefinite convergence on entry, with an 
+  immediate warning that this probably indicates iteration divergence (of bam).
+
 * "bs" basis modified to allow easier control of the interval over which the
   spline penalty applies which in turn allows more sensible control of 
   extrapolation behaviour, when this is unavoidable. 
@@ -60,7 +67,7 @@ Currently deprecated and liable to be removed:
   dropped (wrongly treated as scale estimate) when P-REML or P-ML used. 
   Could cause failure depending on BLAS. Thanks Matteo Fasiolo.
 
-* Fix in gam.outer that cuased failure with "efs" optimizer and fixed sps.
+* Fix in gam.outer that caused failure with "efs" optimizer and fixed sps.
 
 * Fix to `get.var' to drop matrix attributes of 1 column matrix variables.
 
