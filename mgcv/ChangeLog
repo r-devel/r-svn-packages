@@ -76,7 +76,7 @@ Currently deprecated and liable to be removed:
   that subsample unique covariate values during basis setup to ensure 
   invariance to data re-ordering. 
 
-* Correction of scaling error in sherical correlation structure GP smooth.
+* Correction of scaling error in spherical correlation structure GP smooth.
 
 * qf and rd functions for binomial family fixed for zero n case. 
 
