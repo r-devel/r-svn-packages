@@ -1,4 +1,9 @@
-2017-02-06  Martin Maechler  <maechler@stat.math.ethz.ch>
+2017-02-11 Brian Ripley
+
+	* src/nlmefit.c: gcc -Wconversion pointed out misuse of long
+	constants '0L' and  '1L'.
+
+2017-02-06  Martin Maechler
 
 	* DESCRIPTION (Version): 3.1-131, tweaked test tolerance to also
 	pass openblas 0.2.18, in
