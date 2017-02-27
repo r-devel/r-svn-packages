@@ -223,14 +223,13 @@ gnls <-
   plist <- vector("list", length(pnames))
   names(plist) <- pnames
   for (nm in pnames) {
-    plist[[nm]] <- TRUE
     if (deparse(params[[nm]][[3]]) != "1") {
-      plist[[nm]] <-
-        model.matrix(asOneSidedFormula(params[[nm]][[3]]),
-                 model.frame(asOneSidedFormula(params[[nm]][[3]]), dataModShrunk))
+      form1s <- asOneSidedFormula(params[[nm]][[3]])
+      plist[[nm]] <- model.matrix(form1s, model.frame(form1s, dataModShrunk))
       auxContr <- attr(plist[[nm]], "contrasts")
       contr <- c(contr, auxContr[is.na(match(names(auxContr), names(contr)))])
-    }
+    } else
+      plist[[nm]] <- TRUE
   }
   ##
   ## Params effects names
@@ -747,9 +746,8 @@ predict.gnls <-
   if (is.null(params <- eval(object$call$params))) {
     params <- eval(parse(text = paste0(paste(pnames, collapse = "+"), "~ 1")))
   }
-  if (!is.list(params)) {
-    params <- list(params)
-  }
+  if (!is.list(params)) params <- list(params)
+### FIXME: 2 x {very ugly}: 1) adding to val incrementally //  2) eval(parse(text = .))
   val <- NULL
   for(i in seq_along(params)) {
     if (is.name(params[[i]][[2]])) {
@@ -767,8 +765,8 @@ predict.gnls <-
 ##  pn <- names(prs)
   for(nm in pnames) {
     if (!is.logical(plist[[nm]])) {
-      plist[[nm]] <- model.matrix(asOneSidedFormula(params[[nm]][[3]]),
-                model.frame(asOneSidedFormula(params[[nm]][[3]]), dataMod))
+      form1s <- asOneSidedFormula(params[[nm]][[3]])
+      plist[[nm]] <- model.matrix(form1s, model.frame(form1s, dataMod))
     }
   }
   modForm <- getCovariateFormula(object)[[2]]
