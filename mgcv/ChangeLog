@@ -5,6 +5,11 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+1.8-18
+
+* disasterous 'te' in place of 'ti' typo in ?smooth.terms fixed thanks to 
+  John McKinlay.
+
 1.8-17
 
 * Export gamlss.etamu, gamlss.gH and trind.generator to facilitate user 
