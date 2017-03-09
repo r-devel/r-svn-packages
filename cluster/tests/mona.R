@@ -1,9 +1,34 @@
 library(cluster)
 
+if(getRversion() < "3.4.0") source("withAutoprint.R")
+
 data(animals)
 (mani <- mona(animals, trace=TRUE))
-
 str(mani)
+## version of the data withOUT missing:
+animal.F <- mani$data
+(maniF <- mona(animal.F, trace=TRUE))
+
+data(plantTraits)
+## Now construct  'plantT2' which has *all* binary variables
+not2 <- vapply(plantTraits, function(var) !(is.factor(var) && nlevels(var) == 2), NA)
+names(plantTraits)[not2]
+
+plantT2 <- plantTraits
+for(n in names(plantTraits)[not2]) {
+    v <- plantTraits[,n]
+    if(is.factor(v)) {
+        lv <- as.integer(levels(v))# ok for this data
+        v <- as.integer(v)
+        M <- median(lv)
+    } else M <- median(v, na.rm = TRUE)
+    stopifnot(is.finite(M))
+    plantT2[,n] <- (v <= M)
+}
+summary(plantT2)
+
+(mon.pl2 <- mona(plantT2, trace = TRUE))
+
 
 set.seed(1)
 ani.N1 <- animals; ani.N1[cbind(sample.int(20, 10), sample.int(6, 10, replace=TRUE))] <- NA
@@ -30,8 +55,7 @@ try( mona(aniN2)    )
 try( mona(ani.non2) )
 try( mona(ani.idNA) )
 
-if(require(MASS)) {
-
+if(require(MASS)) withAutoprint({
     if(R.version$major != "1" || as.numeric(R.version$minor) >= 7)
         RNGversion("1.6")
     set.seed(253)
@@ -40,12 +64,13 @@ if(require(MASS)) {
     x3 <- mvrnorm(n, rep(0,p), Sig) >= 0
     x <- cbind(x3, rbinom(n, size=1, prob = 1/2))
 
-    print(sapply(as.data.frame(x), table))
+    sapply(as.data.frame(x), table)
 
     mx <- mona(x)
     str(mx)
-    print(lapply(mx[c(1,3,4)], table))
-}
+    lapply(mx[c(1,3,4)], table)
+    mx # (too much, but still)
+})
 
 if(FALSE)
     mona(cbind(1:0), trace=2)
