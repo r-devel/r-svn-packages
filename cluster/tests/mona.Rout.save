@@ -1,5 +1,5 @@
 
-R version 3.3.3 Patched (2017-03-06 r72317) -- "Another Canoe"
+R version 3.3.3 Patched (2017-03-06 r72321) -- "Another Canoe"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -21,6 +21,65 @@ Type 'q()' to quit R.
 > 
 > data(animals)
 > (mani <- mona(animals, trace=TRUE))
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 6) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 7)
+ --> nclu = 3, kwan[ka] = 4
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 19)
+ --> nclu = 4, kwan[ka] = 2
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 5)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (7,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (11; 3, 7, 8)
+ --> nclu = 6, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (11,18)
+  for(j ..) -> jma=4, jtel(.,z) = (5, 3) --> splitting: (nel; jres, ka, km) = (3; 5, 11, 14)
+ --> nclu = 7, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 19, 20)
+ --> nclu = 8, kwan[ka] = 1
+L500; found kwan[1] = 4 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,4)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 2)
+ --> nclu = 9, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (5,6)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 5, 6)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (8,10)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 8, 9)
+ --> nclu = 11, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (11,13)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 12)
+ --> nclu = 12, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (14,18)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 14, 17)
+ --> nclu = 13, kwan[ka] = 2
+L500; found kwan[2] = 3 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (2,4)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 2, 4)
+ --> nclu = 14, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (9,10)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (12,13)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (14,16)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -3
+Loop npass = 5: (ka,kb) = (17,18)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+L500; found kwan[2] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (2,3)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -72,6 +131,65 @@ List of 7
 > ## version of the data withOUT missing:
 > animal.F <- mani$data
 > (maniF <- mona(animal.F, trace=TRUE))
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 6) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 7)
+ --> nclu = 3, kwan[ka] = 4
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 19)
+ --> nclu = 4, kwan[ka] = 2
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 5)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (7,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (11; 3, 7, 8)
+ --> nclu = 6, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (11,18)
+  for(j ..) -> jma=4, jtel(.,z) = (5, 3) --> splitting: (nel; jres, ka, km) = (3; 5, 11, 14)
+ --> nclu = 7, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 19, 20)
+ --> nclu = 8, kwan[ka] = 1
+L500; found kwan[1] = 4 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,4)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 2)
+ --> nclu = 9, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (5,6)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 5, 6)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (8,10)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 8, 9)
+ --> nclu = 11, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (11,13)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 12)
+ --> nclu = 12, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (14,18)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 14, 17)
+ --> nclu = 13, kwan[ka] = 2
+L500; found kwan[2] = 3 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (2,4)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 2, 4)
+ --> nclu = 14, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (9,10)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (12,13)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (14,16)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -3
+Loop npass = 5: (ka,kb) = (17,18)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+L500; found kwan[2] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (2,3)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Order of objects:
  [1] ant cpl spi lob bee fly fro her liz sal cat cow rab chi lio man ele wha duc
@@ -137,6 +255,417 @@ Available components:
                      
 > 
 > (mon.pl2 <- mona(plantT2, trace = TRUE))
+Loop npass = 1: (ka,kb) = (1,136)
+  for(j ..) -> jma=12, jtel(.,z) = (43, 93) --> splitting: (nel; jres, ka, km) = (1; 93, 1, 44)
+ --> nclu = 2, kwan[ka] = 93
+L500; found kwan[1] = 43 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,43)
+  for(j ..) -> jma=11, jtel(.,z) = (33, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 34)
+ --> nclu = 3, kwan[ka] = 10
+Loop npass = 2: (ka,kb) = (44,136)
+  for(j ..) -> jma=24, jtel(.,z) = (47, 46) --> splitting: (nel; jres, ka, km) = (3; 46, 44, 91)
+ --> nclu = 4, kwan[ka] = 46
+L500; found kwan[1] = 33 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,33)
+  for(j ..) -> jma=9, jtel(.,z) = (20, 13) --> splitting: (nel; jres, ka, km) = (1; 13, 1, 21)
+ --> nclu = 5, kwan[ka] = 13
+Loop npass = 3: (ka,kb) = (34,43)
+  for(j ..) -> jma=21, jtel(.,z) = (8, 2) --> splitting: (nel; jres, ka, km) = (14; 2, 34, 42)
+ --> nclu = 6, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (44,90)
+  for(j ..) -> jma=11, jtel(.,z) = (26, 21) --> splitting: (nel; jres, ka, km) = (3; 26, 44, 65)
+ --> nclu = 7, kwan[ka] = 26
+Loop npass = 3: (ka,kb) = (91,136)
+  for(j ..) -> jma=17, jtel(.,z) = (15, 31) --> splitting: (nel; jres, ka, km) = (6; 31, 91, 106)
+ --> nclu = 8, kwan[ka] = 31
+L500; found kwan[1] = 20 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,20)
+  for(j ..) -> jma=21, jtel(.,z) = (11, 9) --> splitting: (nel; jres, ka, km) = (1; 9, 1, 12)
+ --> nclu = 9, kwan[ka] = 9
+Loop npass = 4: (ka,kb) = (21,33)
+  for(j ..) -> jma=21, jtel(.,z) = (8, 5) --> splitting: (nel; jres, ka, km) = (31; 5, 21, 29)
+ --> nclu = 10, kwan[ka] = 5
+Loop npass = 4: (ka,kb) = (34,41)
+  for(j ..) -> jma=27, jtel(.,z) = (2, 6) --> splitting: (nel; jres, ka, km) = (14; 2, 34, 40)
+ --> nclu = 11, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (42,43)
+  for(j ..) -> jma=7, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (99; 1, 42, 43)
+ --> nclu = 12, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (44,64)
+  for(j ..) -> jma=28, jtel(.,z) = (8, 13) --> splitting: (nel; jres, ka, km) = (3; 8, 44, 57)
+ --> nclu = 13, kwan[ka] = 8
+Loop npass = 4: (ka,kb) = (65,90)
+  for(j ..) -> jma=15, jtel(.,z) = (12, 14) --> splitting: (nel; jres, ka, km) = (5; 14, 65, 77)
+ --> nclu = 14, kwan[ka] = 14
+Loop npass = 4: (ka,kb) = (91,105)
+  for(j ..) -> jma=25, jtel(.,z) = (6, 9) --> splitting: (nel; jres, ka, km) = (6; 6, 91, 100)
+ --> nclu = 15, kwan[ka] = 6
+Loop npass = 4: (ka,kb) = (106,136)
+  for(j ..) -> jma=5, jtel(.,z) = (12, 19) --> splitting: (nel; jres, ka, km) = (8; 19, 106, 118)
+ --> nclu = 16, kwan[ka] = 19
+L500; found kwan[1] = 11 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,11)
+  for(j ..) -> jma=2, jtel(.,z) = (5, 6) --> splitting: (nel; jres, ka, km) = (1; 6, 1, 6)
+ --> nclu = 17, kwan[ka] = 6
+Loop npass = 5: (ka,kb) = (12,20)
+  for(j ..) -> jma=2, jtel(.,z) = (4, 5) --> splitting: (nel; jres, ka, km) = (19; 4, 12, 17)
+ --> nclu = 18, kwan[ka] = 4
+Loop npass = 5: (ka,kb) = (21,28)
+  for(j ..) -> jma=5, jtel(.,z) = (6, 2) --> splitting: (nel; jres, ka, km) = (31; 2, 21, 27)
+ --> nclu = 19, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (29,33)
+  for(j ..) -> jma=1, jtel(.,z) = (4, 1) --> splitting: (nel; jres, ka, km) = (68; 4, 29, 30)
+ --> nclu = 20, kwan[ka] = 4
+Loop npass = 5: (ka,kb) = (34,39)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (14; 4, 34, 36)
+ --> nclu = 21, kwan[ka] = 4
+Loop npass = 5: (ka,kb) = (40,41)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (28; 1, 40, 41)
+ --> nclu = 22, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (44,56)
+  for(j ..) -> jma=6, jtel(.,z) = (5, 8) --> splitting: (nel; jres, ka, km) = (3; 5, 44, 52)
+ --> nclu = 23, kwan[ka] = 5
+Loop npass = 5: (ka,kb) = (57,64)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 5) --> splitting: (nel; jres, ka, km) = (10; 3, 57, 62)
+ --> nclu = 24, kwan[ka] = 3
+Loop npass = 5: (ka,kb) = (65,76)
+  for(j ..) -> jma=19, jtel(.,z) = (5, 7) --> splitting: (nel; jres, ka, km) = (5; 5, 65, 72)
+ --> nclu = 25, kwan[ka] = 5
+Loop npass = 5: (ka,kb) = (77,90)
+  for(j ..) -> jma=14, jtel(.,z) = (7, 7) --> splitting: (nel; jres, ka, km) = (42; 7, 77, 84)
+ --> nclu = 26, kwan[ka] = 7
+Loop npass = 5: (ka,kb) = (91,99)
+  for(j ..) -> jma=3, jtel(.,z) = (5, 4) --> splitting: (nel; jres, ka, km) = (6; 4, 91, 96)
+ --> nclu = 27, kwan[ka] = 4
+Loop npass = 5: (ka,kb) = (100,105)
+  for(j ..) -> jma=30, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (7; 2, 100, 104)
+ --> nclu = 28, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (106,117)
+  for(j ..) -> jma=16, jtel(.,z) = (7, 5) --> splitting: (nel; jres, ka, km) = (8; 7, 106, 111)
+ --> nclu = 29, kwan[ka] = 7
+Loop npass = 5: (ka,kb) = (118,136)
+  for(j ..) -> jma=25, jtel(.,z) = (8, 11) --> splitting: (nel; jres, ka, km) = (9; 8, 118, 129)
+ --> nclu = 30, kwan[ka] = 8
+L500; found kwan[1] = 5 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (1,5)
+  for(j ..) -> jma=27, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 3)
+ --> nclu = 31, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (6,11)
+  for(j ..) -> jma=3, jtel(.,z) = (5, 1) --> splitting: (nel; jres, ka, km) = (72; 1, 6, 11)
+ --> nclu = 32, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (12,16)
+  for(j ..) -> jma=24, jtel(.,z) = (4, 1) --> splitting: (nel; jres, ka, km) = (19; 1, 12, 16)
+ --> nclu = 33, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (17,20)
+  for(j ..) -> jma=3, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (55; 2, 17, 19)
+ --> nclu = 34, kwan[ka] = 2
+Loop npass = 6: (ka,kb) = (21,26)
+  for(j ..) -> jma=1, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (31; 3, 21, 24)
+ --> nclu = 35, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (27,28)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (105; 1, 27, 28)
+ --> nclu = 36, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (30,33)
+  for(j ..) -> jma=3, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (70; 2, 30, 32)
+ --> nclu = 37, kwan[ka] = 2
+Loop npass = 6: (ka,kb) = (34,35)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (14; 1, 34, 35)
+ --> nclu = 38, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (36,39)
+  for(j ..) -> jma=8, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (20; 1, 36, 39)
+ --> nclu = 39, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (44,51)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 5) --> splitting: (nel; jres, ka, km) = (3; 3, 44, 49)
+ --> nclu = 40, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (52,56)
+  for(j ..) -> jma=31, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (21; 3, 52, 54)
+ --> nclu = 41, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (57,61)
+  for(j ..) -> jma=9, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (10; 3, 57, 59)
+ --> nclu = 42, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (62,64)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (62; 1, 62, 64)
+ --> nclu = 43, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (65,71)
+  for(j ..) -> jma=1, jtel(.,z) = (4, 3) --> splitting: (nel; jres, ka, km) = (5; 3, 65, 69)
+ --> nclu = 44, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (72,76)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 4) --> splitting: (nel; jres, ka, km) = (26; 1, 72, 76)
+ --> nclu = 45, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (77,83)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 3) --> splitting: (nel; jres, ka, km) = (42; 4, 77, 80)
+ --> nclu = 46, kwan[ka] = 4
+Loop npass = 6: (ka,kb) = (84,90)
+  for(j ..) -> jma=26, jtel(.,z) = (3, 4) --> splitting: (nel; jres, ka, km) = (49; 3, 84, 88)
+ --> nclu = 47, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (91,95)
+  for(j ..) -> jma=21, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (6; 2, 91, 94)
+ --> nclu = 48, kwan[ka] = 2
+Loop npass = 6: (ka,kb) = (96,99)
+  for(j ..) -> jma=14, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (22; 1, 96, 99)
+ --> nclu = 49, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (100,103)
+  for(j ..) -> jma=10, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 100, 102)
+ --> nclu = 50, kwan[ka] = 2
+Loop npass = 6: (ka,kb) = (104,105)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (64; 1, 104, 105)
+ --> nclu = 51, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (106,110)
+  for(j ..) -> jma=8, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (8; 2, 106, 109)
+ --> nclu = 52, kwan[ka] = 2
+Loop npass = 6: (ka,kb) = (111,117)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 3) --> splitting: (nel; jres, ka, km) = (43; 3, 111, 115)
+ --> nclu = 53, kwan[ka] = 3
+Loop npass = 6: (ka,kb) = (118,128)
+  for(j ..) -> jma=8, jtel(.,z) = (5, 6) --> splitting: (nel; jres, ka, km) = (9; 6, 118, 123)
+ --> nclu = 54, kwan[ka] = 6
+Loop npass = 6: (ka,kb) = (129,136)
+  for(j ..) -> jma=28, jtel(.,z) = (3, 5) --> splitting: (nel; jres, ka, km) = (11; 5, 129, 132)
+ --> nclu = 55, kwan[ka] = 5
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 7: (ka,kb) = (1,2)
+  for(j ..) -> jma=28, jtel(.,z) = (3, 5) --> _NO_ splitting
+ --> nclu = 55, kwan[ka] = -2
+Loop npass = 7: (ka,kb) = (3,5)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (30; 1, 3, 5)
+ --> nclu = 56, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (6,10)
+  for(j ..) -> jma=27, jtel(.,z) = (4, 1) --> splitting: (nel; jres, ka, km) = (72; 1, 6, 10)
+ --> nclu = 57, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (12,15)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (19; 3, 12, 13)
+ --> nclu = 58, kwan[ka] = 3
+Loop npass = 7: (ka,kb) = (17,18)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (55; 1, 17, 18)
+ --> nclu = 59, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (112; 1, 19, 20)
+ --> nclu = 60, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (21,23)
+  for(j ..) -> jma=8, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (31; 1, 21, 23)
+ --> nclu = 61, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (24,26)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (93; 1, 24, 26)
+ --> nclu = 62, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (30,31)
+  for(j ..) -> jma=8, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (70; 1, 30, 31)
+ --> nclu = 63, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (32,33)
+  for(j ..) -> jma=8, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (103; 1, 32, 33)
+ --> nclu = 64, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (36,38)
+  for(j ..) -> jma=8, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 64, kwan[ka] = -3
+Loop npass = 7: (ka,kb) = (44,48)
+  for(j ..) -> jma=15, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (3; 3, 44, 46)
+ --> nclu = 65, kwan[ka] = 3
+Loop npass = 7: (ka,kb) = (49,51)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (35; 1, 49, 51)
+ --> nclu = 66, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (52,53)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (21; 1, 52, 53)
+ --> nclu = 67, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (54,56)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (71; 2, 54, 55)
+ --> nclu = 68, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (57,58)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (10; 1, 57, 58)
+ --> nclu = 69, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (59,61)
+  for(j ..) -> jma=15, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (15; 1, 59, 61)
+ --> nclu = 70, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (62,63)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (62; 1, 62, 63)
+ --> nclu = 71, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (65,68)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (5; 1, 65, 68)
+ --> nclu = 72, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (69,71)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (53; 1, 69, 71)
+ --> nclu = 73, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (72,75)
+  for(j ..) -> jma=4, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (26; 3, 72, 73)
+ --> nclu = 74, kwan[ka] = 3
+Loop npass = 7: (ka,kb) = (77,79)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (42; 2, 77, 78)
+ --> nclu = 75, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (80,83)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (107; 2, 80, 82)
+ --> nclu = 76, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (84,87)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (49; 1, 84, 87)
+ --> nclu = 77, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (88,90)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (92; 2, 88, 89)
+ --> nclu = 78, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (91,93)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (6; 2, 91, 92)
+ --> nclu = 79, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (94,95)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (75; 1, 94, 95)
+ --> nclu = 80, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (96,98)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (22; 1, 96, 98)
+ --> nclu = 81, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (100,101)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 100, 101)
+ --> nclu = 82, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (102,103)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (65; 1, 102, 103)
+ --> nclu = 83, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (106,108)
+  for(j ..) -> jma=14, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (8; 1, 106, 108)
+ --> nclu = 84, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (109,110)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (58; 1, 109, 110)
+ --> nclu = 85, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (111,114)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (43; 2, 111, 113)
+ --> nclu = 86, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (115,117)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (123; 1, 115, 117)
+ --> nclu = 87, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (118,122)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (9; 3, 118, 120)
+ --> nclu = 88, kwan[ka] = 3
+Loop npass = 7: (ka,kb) = (123,128)
+  for(j ..) -> jma=28, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (18; 2, 123, 127)
+ --> nclu = 89, kwan[ka] = 2
+Loop npass = 7: (ka,kb) = (129,131)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (11; 1, 129, 131)
+ --> nclu = 90, kwan[ka] = 1
+Loop npass = 7: (ka,kb) = (132,136)
+  for(j ..) -> jma=8, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 132, 135)
+ --> nclu = 91, kwan[ka] = 2
+L500; found kwan[3] = 2 >= 2  ==> Loop again
+Loop npass = 8: (ka,kb) = (3,4)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (30; 1, 3, 4)
+ --> nclu = 92, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (6,9)
+  for(j ..) -> jma=1, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (72; 1, 6, 9)
+ --> nclu = 93, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (13,15)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (36; 2, 13, 14)
+ --> nclu = 94, kwan[ka] = 2
+Loop npass = 8: (ka,kb) = (21,22)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 94, kwan[ka] = -2
+Loop npass = 8: (ka,kb) = (24,25)
+  for(j ..) -> jma=13, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (93; 1, 24, 25)
+ --> nclu = 95, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (44,45)
+  for(j ..) -> jma=7, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (3; 1, 44, 45)
+ --> nclu = 96, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (46,48)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (83; 1, 46, 48)
+ --> nclu = 97, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (49,50)
+  for(j ..) -> jma=15, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (35; 1, 49, 50)
+ --> nclu = 98, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (55,56)
+  for(j ..) -> jma=8, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (108; 1, 55, 56)
+ --> nclu = 99, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (59,60)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (15; 1, 59, 60)
+ --> nclu = 100, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (65,67)
+  for(j ..) -> jma=26, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (5; 1, 65, 67)
+ --> nclu = 101, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (69,70)
+  for(j ..) -> jma=7, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (53; 1, 69, 70)
+ --> nclu = 102, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (73,75)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (37; 1, 73, 75)
+ --> nclu = 103, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (78,79)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (67; 1, 78, 79)
+ --> nclu = 104, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (80,81)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (107; 1, 80, 81)
+ --> nclu = 105, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (82,83)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (120; 1, 82, 83)
+ --> nclu = 106, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (84,86)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (49; 1, 84, 86)
+ --> nclu = 107, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (89,90)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (135; 1, 89, 90)
+ --> nclu = 108, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (92,93)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (16; 1, 92, 93)
+ --> nclu = 109, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (96,97)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (22; 1, 96, 97)
+ --> nclu = 110, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (106,107)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (8; 1, 106, 107)
+ --> nclu = 111, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (111,112)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (43; 1, 111, 112)
+ --> nclu = 112, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (113,114)
+  for(j ..) -> jma=9, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (76; 1, 113, 114)
+ --> nclu = 113, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (115,116)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (123; 1, 115, 116)
+ --> nclu = 114, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (118,119)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (9; 1, 118, 119)
+ --> nclu = 115, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (120,122)
+  for(j ..) -> jma=9, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (17; 1, 120, 122)
+ --> nclu = 116, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (123,126)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (18; 1, 123, 126)
+ --> nclu = 117, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (127,128)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (25; 1, 127, 128)
+ --> nclu = 118, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (129,130)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (11; 1, 129, 130)
+ --> nclu = 119, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (132,134)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (12; 1, 132, 134)
+ --> nclu = 120, kwan[ka] = 1
+Loop npass = 8: (ka,kb) = (135,136)
+  for(j ..) -> jma=7, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (60; 1, 135, 136)
+ --> nclu = 121, kwan[ka] = 1
+L500; found kwan[6] = 3 >= 2  ==> Loop again
+Loop npass = 9: (ka,kb) = (6,8)
+  for(j ..) -> jma=8, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (72; 1, 6, 8)
+ --> nclu = 122, kwan[ka] = 1
+Loop npass = 9: (ka,kb) = (14,15)
+  for(j ..) -> jma=8, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 122, kwan[ka] = -2
+Loop npass = 9: (ka,kb) = (46,47)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (83; 1, 46, 47)
+ --> nclu = 123, kwan[ka] = 1
+Loop npass = 9: (ka,kb) = (65,66)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (5; 1, 65, 66)
+ --> nclu = 124, kwan[ka] = 1
+Loop npass = 9: (ka,kb) = (73,74)
+  for(j ..) -> jma=9, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (37; 1, 73, 74)
+ --> nclu = 125, kwan[ka] = 1
+Loop npass = 9: (ka,kb) = (84,85)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (49; 1, 84, 85)
+ --> nclu = 126, kwan[ka] = 1
+Loop npass = 9: (ka,kb) = (120,121)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (17; 1, 120, 121)
+ --> nclu = 127, kwan[ka] = 1
+Loop npass = 9: (ka,kb) = (123,125)
+  for(j ..) -> jma=1, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (18; 2, 123, 124)
+ --> nclu = 128, kwan[ka] = 2
+Loop npass = 9: (ka,kb) = (132,133)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (12; 1, 132, 133)
+ --> nclu = 129, kwan[ka] = 1
+L500; found kwan[6] = 2 >= 2  ==> Loop again
+Loop npass = 10: (ka,kb) = (6,7)
+  for(j ..) -> jma=13, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (72; 1, 6, 7)
+ --> nclu = 130, kwan[ka] = 1
+Loop npass = 10: (ka,kb) = (124,125)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (24; 1, 124, 125)
+ --> nclu = 131, kwan[ka] = 1
 mona(x, ..) fit;  x of dimension 136x31
 Because of NA's, revised data:
       pdias longindex durflow height begflow mycor vegaer vegsout autopoll
@@ -737,6 +1266,59 @@ Available components:
 > set.seed(1)
 > ani.N1 <- animals; ani.N1[cbind(sample.int(20, 10), sample.int(6, 10, replace=TRUE))] <- NA
 > (maniN <- mona(ani.N1, trace=TRUE))
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (3, 7) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 8)
+ --> nclu = 3, kwan[ka] = 3
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 9) --> splitting: (nel; jres, ka, km) = (3; 1, 11, 20)
+ --> nclu = 4, kwan[ka] = 1
+L500; found kwan[1] = 7 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,7)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 6) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 7)
+ --> nclu = 5, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (8,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (11; 2, 8, 9)
+ --> nclu = 6, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (11,19)
+  for(j ..) -> jma=6, jtel(.,z) = (7, 2) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 18)
+ --> nclu = 7, kwan[ka] = 2
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 5) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 6)
+ --> nclu = 8, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (9,10)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (12; 1, 9, 10)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (11,17)
+  for(j ..) -> jma=4, jtel(.,z) = (4, 3) --> splitting: (nel; jres, ka, km) = (3; 4, 11, 14)
+ --> nclu = 10, kwan[ka] = 4
+Loop npass = 4: (ka,kb) = (18,19)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (8; 1, 18, 19)
+ --> nclu = 11, kwan[ka] = 1
+L500; found kwan[1] = 5 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,5)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 4)
+ --> nclu = 12, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (11,13)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 12)
+ --> nclu = 13, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (14,17)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -4
+L500; found kwan[1] = 3 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (1,3)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -3
+Loop npass = 6: (ka,kb) = (4,5)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 6: (ka,kb) = (12,13)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -781,6 +1363,68 @@ Available components:
 +     try(print(maniN2 <- mona(ani.N2, trace=TRUE)))
 + }
 seed =  2 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 6) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 7)
+ --> nclu = 3, kwan[ka] = 4
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=5, jtel(.,z) = (9, 1) --> splitting: (nel; jres, ka, km) = (3; 1, 11, 20)
+ --> nclu = 4, kwan[ka] = 1
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,6)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 5)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (7,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (11; 3, 7, 8)
+ --> nclu = 6, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (11,19)
+  for(j ..) -> jma=4, jtel(.,z) = (5, 4) --> splitting: (nel; jres, ka, km) = (3; 5, 11, 15)
+ --> nclu = 7, kwan[ka] = 5
+L500; found kwan[1] = 4 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,4)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 3)
+ --> nclu = 8, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (5,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> _NO_ splitting
+ --> nclu = 8, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (8,10)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 8, 9)
+ --> nclu = 9, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (11,14)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 13)
+ --> nclu = 10, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (15,19)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 4) --> splitting: (nel; jres, ka, km) = (5; 1, 15, 19)
+ --> nclu = 11, kwan[ka] = 1
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,2)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 2)
+ --> nclu = 12, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (3,4)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 3, 4)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (9,10)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (11,12)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (13,14)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (6; 1, 13, 14)
+ --> nclu = 14, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (15,18)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 15, 17)
+ --> nclu = 15, kwan[ka] = 2
+L500; found kwan[15] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (15,16)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 2) --> _NO_ splitting
+ --> nclu = 15, kwan[ka] = -2
+Loop npass = 6: (ka,kb) = (17,18)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 2) --> _NO_ splitting
+ --> nclu = 15, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -817,6 +1461,61 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  3 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 6) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 7)
+ --> nclu = 3, kwan[ka] = 4
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 19)
+ --> nclu = 4, kwan[ka] = 2
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,6)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 4)
+ --> nclu = 5, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (7,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (11; 3, 7, 8)
+ --> nclu = 6, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (11,18)
+  for(j ..) -> jma=4, jtel(.,z) = (6, 2) --> splitting: (nel; jres, ka, km) = (3; 6, 11, 13)
+ --> nclu = 7, kwan[ka] = 6
+Loop npass = 3: (ka,kb) = (19,20)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 19, 20)
+ --> nclu = 8, kwan[ka] = 1
+L500; found kwan[1] = 3 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,3)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 3)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (4,6)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (4; 1, 4, 6)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (8,10)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 8, 9)
+ --> nclu = 11, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (11,12)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (3; 1, 11, 12)
+ --> nclu = 12, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (13,18)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 13, 17)
+ --> nclu = 13, kwan[ka] = 2
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,2)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 2) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (4,5)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 2) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (9,10)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 2) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (13,16)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 2) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -4
+Loop npass = 5: (ka,kb) = (17,18)
+  for(j ..) -> jma=6, jtel(.,z) = (4, 2) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -859,6 +1558,65 @@ seed =  5
 Error in mona(ani.N2, trace = TRUE) : 
   No clustering performed, all variables have at least one missing value.
 seed =  6 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=3, jtel(.,z) = (14, 6) --> splitting: (nel; jres, ka, km) = (1; 14, 1, 7)
+ --> nclu = 2, kwan[ka] = 14
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 5)
+ --> nclu = 3, kwan[ka] = 2
+Loop npass = 2: (ka,kb) = (7,20)
+  for(j ..) -> jma=6, jtel(.,z) = (5, 9) --> splitting: (nel; jres, ka, km) = (3; 9, 7, 12)
+ --> nclu = 4, kwan[ka] = 9
+L500; found kwan[1] = 4 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,4)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 2)
+ --> nclu = 5, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (5,6)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 5, 6)
+ --> nclu = 6, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (7,11)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (3; 2, 7, 10)
+ --> nclu = 7, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (12,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 7) --> splitting: (nel; jres, ka, km) = (5; 2, 12, 19)
+ --> nclu = 8, kwan[ka] = 2
+L500; found kwan[2] = 3 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (2,4)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 2, 4)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (7,9)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 7, 8)
+ --> nclu = 10, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (10,11)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 10, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (12,18)
+  for(j ..) -> jma=4, jtel(.,z) = (5, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 12, 17)
+ --> nclu = 11, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 19, 20)
+ --> nclu = 12, kwan[ka] = 1
+L500; found kwan[2] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (2,3)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 12, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (8,9)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 12, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (12,16)
+  for(j ..) -> jma=1, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 12, 15)
+ --> nclu = 13, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (17,18)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (12; 1, 17, 18)
+ --> nclu = 14, kwan[ka] = 1
+L500; found kwan[12] = 3 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (12,14)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -3
+Loop npass = 6: (ka,kb) = (15,16)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -895,6 +1653,64 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  7 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (11, 9) --> splitting: (nel; jres, ka, km) = (1; 11, 1, 10)
+ --> nclu = 2, kwan[ka] = 11
+L500; found kwan[1] = 9 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,9)
+  for(j ..) -> jma=3, jtel(.,z) = (3, 6) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 7)
+ --> nclu = 3, kwan[ka] = 3
+Loop npass = 2: (ka,kb) = (10,20)
+  for(j ..) -> jma=6, jtel(.,z) = (7, 4) --> splitting: (nel; jres, ka, km) = (3; 4, 10, 17)
+ --> nclu = 4, kwan[ka] = 4
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 5)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (7,9)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (11; 2, 7, 8)
+ --> nclu = 6, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (10,16)
+  for(j ..) -> jma=5, jtel(.,z) = (5, 2) --> splitting: (nel; jres, ka, km) = (3; 5, 10, 12)
+ --> nclu = 7, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (17,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 17, 19)
+ --> nclu = 8, kwan[ka] = 2
+L500; found kwan[1] = 4 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,4)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 3)
+ --> nclu = 9, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (5,6)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 5, 6)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (8,9)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 10, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (10,11)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (3; 1, 10, 11)
+ --> nclu = 11, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (12,16)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (5; 3, 12, 14)
+ --> nclu = 12, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (17,18)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 17, 18)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (9; 1, 19, 20)
+ --> nclu = 14, kwan[ka] = 1
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,2)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (3,4)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (15; 1, 3, 4)
+ --> nclu = 15, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (12,13)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 15, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (14,16)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 15, kwan[ka] = -3
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -937,6 +1753,65 @@ seed =  9
 Error in mona(ani.N2, trace = TRUE) : 
   No clustering performed, all variables have at least one missing value.
 seed =  10 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 9) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 10)
+ --> nclu = 3, kwan[ka] = 1
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=6, jtel(.,z) = (6, 4) --> splitting: (nel; jres, ka, km) = (3; 4, 11, 17)
+ --> nclu = 4, kwan[ka] = 4
+L500; found kwan[1] = 9 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,9)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 5) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 6)
+ --> nclu = 5, kwan[ka] = 4
+Loop npass = 3: (ka,kb) = (11,16)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 15)
+ --> nclu = 6, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (17,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 17, 19)
+ --> nclu = 7, kwan[ka] = 2
+L500; found kwan[1] = 5 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,5)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 4)
+ --> nclu = 8, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (6,9)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (4; 1, 6, 9)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (11,14)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (3; 3, 11, 12)
+ --> nclu = 10, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (15,16)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 1) --> _NO_ splitting
+ --> nclu = 10, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (17,18)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 17, 18)
+ --> nclu = 11, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 11, kwan[ka] = -2
+L500; found kwan[1] = 3 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,3)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 2)
+ --> nclu = 12, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (4,5)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 4, 5)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (6,8)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (4; 1, 6, 8)
+ --> nclu = 14, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (12,14)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -3
+L500; found kwan[2] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (2,3)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (15; 1, 2, 3)
+ --> nclu = 15, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (6,7)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 6, 7)
+ --> nclu = 16, kwan[ka] = 1
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -976,6 +1851,65 @@ seed =  11
 Error in mona(ani.N2, trace = TRUE) : 
   No clustering performed, all variables have at least one missing value.
 seed =  12 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=6, jtel(.,z) = (9, 11) --> splitting: (nel; jres, ka, km) = (1; 9, 1, 12)
+ --> nclu = 2, kwan[ka] = 9
+L500; found kwan[1] = 11 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,11)
+  for(j ..) -> jma=1, jtel(.,z) = (4, 7) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 8)
+ --> nclu = 3, kwan[ka] = 4
+Loop npass = 2: (ka,kb) = (12,20)
+  for(j ..) -> jma=5, jtel(.,z) = (6, 3) --> splitting: (nel; jres, ka, km) = (2; 3, 12, 18)
+ --> nclu = 4, kwan[ka] = 3
+L500; found kwan[1] = 7 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,7)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 5) --> splitting: (nel; jres, ka, km) = (1; 5, 1, 3)
+ --> nclu = 5, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (8,11)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 8, 10)
+ --> nclu = 6, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (12,17)
+  for(j ..) -> jma=3, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (2; 3, 12, 15)
+ --> nclu = 7, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (18,20)
+  for(j ..) -> jma=1, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (3; 2, 18, 19)
+ --> nclu = 8, kwan[ka] = 2
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,2)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 2)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (3,7)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (11; 3, 3, 5)
+ --> nclu = 10, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (8,9)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 8, 9)
+ --> nclu = 11, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (10,11)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 11, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (12,14)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (2; 2, 12, 13)
+ --> nclu = 12, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (15,17)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> _NO_ splitting
+ --> nclu = 12, kwan[ka] = -3
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 2) --> _NO_ splitting
+ --> nclu = 12, kwan[ka] = -2
+L500; found kwan[3] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (3,4)
+  for(j ..) -> jma=3, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (11; 1, 3, 4)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (5,7)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 5, 6)
+ --> nclu = 14, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (13,14)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+L500; found kwan[6] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (6,7)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1012,6 +1946,56 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  13 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 9)
+ --> nclu = 3, kwan[ka] = 2
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=6, jtel(.,z) = (6, 4) --> splitting: (nel; jres, ka, km) = (3; 4, 11, 17)
+ --> nclu = 4, kwan[ka] = 4
+L500; found kwan[1] = 8 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,8)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 6) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 7)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (9,10)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 6) --> _NO_ splitting
+ --> nclu = 5, kwan[ka] = -2
+Loop npass = 3: (ka,kb) = (11,16)
+  for(j ..) -> jma=5, jtel(.,z) = (5, 1) --> splitting: (nel; jres, ka, km) = (3; 5, 11, 12)
+ --> nclu = 6, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (17,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 17, 19)
+ --> nclu = 7, kwan[ka] = 2
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,6)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 2) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 3)
+ --> nclu = 8, kwan[ka] = 4
+Loop npass = 4: (ka,kb) = (7,8)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 7, 8)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (12,16)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 9, kwan[ka] = -5
+Loop npass = 4: (ka,kb) = (17,18)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 17, 18)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 10, kwan[ka] = -2
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,2)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 10, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (3,6)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (11; 1, 3, 6)
+ --> nclu = 11, kwan[ka] = 1
+L500; found kwan[3] = 3 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (3,5)
+  for(j ..) -> jma=5, jtel(.,z) = (3, 1) --> _NO_ splitting
+ --> nclu = 11, kwan[ka] = -3
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1048,6 +2032,62 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  14 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (4, 6) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 7)
+ --> nclu = 3, kwan[ka] = 4
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 19)
+ --> nclu = 4, kwan[ka] = 2
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,6)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 5) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 6)
+ --> nclu = 5, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (7,10)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (11; 3, 7, 8)
+ --> nclu = 6, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (11,18)
+  for(j ..) -> jma=4, jtel(.,z) = (5, 3) --> splitting: (nel; jres, ka, km) = (3; 5, 11, 14)
+ --> nclu = 7, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 19, 20)
+ --> nclu = 8, kwan[ka] = 1
+L500; found kwan[1] = 5 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,5)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 4)
+ --> nclu = 9, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (8,10)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> _NO_ splitting
+ --> nclu = 9, kwan[ka] = -3
+Loop npass = 4: (ka,kb) = (11,13)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 12)
+ --> nclu = 10, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (14,18)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 2) --> splitting: (nel; jres, ka, km) = (5; 2, 14, 17)
+ --> nclu = 11, kwan[ka] = 2
+L500; found kwan[1] = 3 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,3)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 3)
+ --> nclu = 12, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (4,5)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 4, 5)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (12,13)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (14,16)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -3
+Loop npass = 5: (ka,kb) = (17,18)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (1,2)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1084,6 +2124,65 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  15 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (5, 5) --> splitting: (nel; jres, ka, km) = (1; 5, 1, 6)
+ --> nclu = 3, kwan[ka] = 5
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 19)
+ --> nclu = 4, kwan[ka] = 2
+L500; found kwan[1] = 5 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,5)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 4)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (6,10)
+  for(j ..) -> jma=4, jtel(.,z) = (4, 1) --> splitting: (nel; jres, ka, km) = (11; 1, 6, 10)
+ --> nclu = 6, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (11,18)
+  for(j ..) -> jma=4, jtel(.,z) = (5, 3) --> splitting: (nel; jres, ka, km) = (3; 5, 11, 14)
+ --> nclu = 7, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 19, 20)
+ --> nclu = 8, kwan[ka] = 1
+L500; found kwan[1] = 3 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,3)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 2)
+ --> nclu = 9, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (4,5)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 4, 5)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (6,9)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (11; 1, 6, 9)
+ --> nclu = 11, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (11,13)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (3; 1, 11, 13)
+ --> nclu = 12, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (14,18)
+  for(j ..) -> jma=5, jtel(.,z) = (4, 1) --> splitting: (nel; jres, ka, km) = (5; 1, 14, 18)
+ --> nclu = 13, kwan[ka] = 1
+L500; found kwan[2] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (2,3)
+  for(j ..) -> jma=5, jtel(.,z) = (4, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (6,8)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (11; 1, 6, 8)
+ --> nclu = 14, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (11,12)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 2) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (14,17)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 1) --> splitting: (nel; jres, ka, km) = (5; 1, 14, 17)
+ --> nclu = 15, kwan[ka] = 1
+L500; found kwan[6] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (6,7)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 1) --> _NO_ splitting
+ --> nclu = 15, kwan[ka] = -2
+Loop npass = 6: (ka,kb) = (14,16)
+  for(j ..) -> jma=6, jtel(.,z) = (3, 1) --> _NO_ splitting
+ --> nclu = 15, kwan[ka] = -3
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1120,6 +2219,65 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  16 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=3, jtel(.,z) = (14, 6) --> splitting: (nel; jres, ka, km) = (1; 14, 1, 7)
+ --> nclu = 2, kwan[ka] = 14
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 5)
+ --> nclu = 3, kwan[ka] = 2
+Loop npass = 2: (ka,kb) = (7,20)
+  for(j ..) -> jma=1, jtel(.,z) = (11, 3) --> splitting: (nel; jres, ka, km) = (3; 3, 7, 18)
+ --> nclu = 4, kwan[ka] = 3
+L500; found kwan[1] = 4 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,4)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 3) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 2)
+ --> nclu = 5, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (5,6)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 5, 6)
+ --> nclu = 6, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (7,17)
+  for(j ..) -> jma=6, jtel(.,z) = (6, 5) --> splitting: (nel; jres, ka, km) = (3; 5, 7, 13)
+ --> nclu = 7, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (18,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 2) --> splitting: (nel; jres, ka, km) = (11; 2, 18, 19)
+ --> nclu = 8, kwan[ka] = 2
+L500; found kwan[2] = 3 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (2,4)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 2, 4)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (7,12)
+  for(j ..) -> jma=4, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (3; 3, 7, 10)
+ --> nclu = 10, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (13,17)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (7; 3, 13, 15)
+ --> nclu = 11, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> _NO_ splitting
+ --> nclu = 11, kwan[ka] = -2
+L500; found kwan[2] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (2,3)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> _NO_ splitting
+ --> nclu = 11, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (7,9)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 7, 8)
+ --> nclu = 12, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (10,12)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 12, kwan[ka] = -3
+Loop npass = 5: (ka,kb) = (13,14)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 13, 14)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (15,17)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (9; 1, 15, 17)
+ --> nclu = 14, kwan[ka] = 1
+L500; found kwan[8] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (8,9)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
+Loop npass = 6: (ka,kb) = (15,16)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1159,6 +2317,64 @@ seed =  17
 Error in mona(ani.N2, trace = TRUE) : 
   No clustering performed, all variables have at least one missing value.
 seed =  18 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=3, jtel(.,z) = (14, 6) --> splitting: (nel; jres, ka, km) = (1; 14, 1, 7)
+ --> nclu = 2, kwan[ka] = 14
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 4)
+ --> nclu = 3, kwan[ka] = 3
+Loop npass = 2: (ka,kb) = (7,20)
+  for(j ..) -> jma=6, jtel(.,z) = (6, 8) --> splitting: (nel; jres, ka, km) = (3; 8, 7, 13)
+ --> nclu = 4, kwan[ka] = 8
+L500; found kwan[1] = 3 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,3)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 3)
+ --> nclu = 5, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (4,6)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 4, 6)
+ --> nclu = 6, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (7,12)
+  for(j ..) -> jma=4, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (3; 3, 7, 10)
+ --> nclu = 7, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (13,20)
+  for(j ..) -> jma=1, jtel(.,z) = (4, 4) --> splitting: (nel; jres, ka, km) = (7; 4, 13, 17)
+ --> nclu = 8, kwan[ka] = 4
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,2)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 2)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (4,5)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 9, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (7,9)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (3; 2, 7, 8)
+ --> nclu = 10, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (10,12)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 10, kwan[ka] = -3
+Loop npass = 4: (ka,kb) = (13,16)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 13, 15)
+ --> nclu = 11, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (17,20)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (11; 2, 17, 19)
+ --> nclu = 12, kwan[ka] = 2
+L500; found kwan[8] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (8,9)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 2) --> _NO_ splitting
+ --> nclu = 12, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (13,14)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 13, 14)
+ --> nclu = 13, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (15,16)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 13, kwan[ka] = -2
+Loop npass = 5: (ka,kb) = (17,18)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (11; 1, 17, 18)
+ --> nclu = 14, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (19,20)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 14, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1195,6 +2411,59 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  19 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=3, jtel(.,z) = (3, 7) --> splitting: (nel; jres, ka, km) = (1; 3, 1, 8)
+ --> nclu = 3, kwan[ka] = 3
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=6, jtel(.,z) = (6, 4) --> splitting: (nel; jres, ka, km) = (3; 4, 11, 17)
+ --> nclu = 4, kwan[ka] = 4
+L500; found kwan[1] = 7 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,7)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 5) --> splitting: (nel; jres, ka, km) = (1; 5, 1, 3)
+ --> nclu = 5, kwan[ka] = 5
+Loop npass = 3: (ka,kb) = (8,10)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 5) --> _NO_ splitting
+ --> nclu = 5, kwan[ka] = -3
+Loop npass = 3: (ka,kb) = (11,16)
+  for(j ..) -> jma=4, jtel(.,z) = (3, 3) --> splitting: (nel; jres, ka, km) = (3; 3, 11, 14)
+ --> nclu = 6, kwan[ka] = 3
+Loop npass = 3: (ka,kb) = (17,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (7; 2, 17, 19)
+ --> nclu = 7, kwan[ka] = 2
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,2)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 2) --> _NO_ splitting
+ --> nclu = 7, kwan[ka] = -2
+Loop npass = 4: (ka,kb) = (3,7)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> splitting: (nel; jres, ka, km) = (2; 3, 3, 5)
+ --> nclu = 8, kwan[ka] = 3
+Loop npass = 4: (ka,kb) = (11,13)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> _NO_ splitting
+ --> nclu = 8, kwan[ka] = -3
+Loop npass = 4: (ka,kb) = (14,16)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 3) --> _NO_ splitting
+ --> nclu = 8, kwan[ka] = -3
+Loop npass = 4: (ka,kb) = (17,18)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 17, 18)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (19,20)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 9, kwan[ka] = -2
+L500; found kwan[3] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (3,4)
+  for(j ..) -> jma=6, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 3, 4)
+ --> nclu = 10, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (5,7)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (4; 1, 5, 7)
+ --> nclu = 11, kwan[ka] = 1
+L500; found kwan[5] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (5,6)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 1) --> _NO_ splitting
+ --> nclu = 11, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1231,6 +2500,68 @@ Available components:
 [1] "data"      "hasNA"     "order"     "variable"  "step"      "order.lab"
 [7] "call"     
 seed =  20 
+Loop npass = 1: (ka,kb) = (1,20)
+  for(j ..) -> jma=1, jtel(.,z) = (10, 10) --> splitting: (nel; jres, ka, km) = (1; 10, 1, 11)
+ --> nclu = 2, kwan[ka] = 10
+L500; found kwan[1] = 10 >= 2  ==> Loop again
+Loop npass = 2: (ka,kb) = (1,10)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 8) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 9)
+ --> nclu = 3, kwan[ka] = 2
+Loop npass = 2: (ka,kb) = (11,20)
+  for(j ..) -> jma=6, jtel(.,z) = (7, 3) --> splitting: (nel; jres, ka, km) = (3; 3, 11, 18)
+ --> nclu = 4, kwan[ka] = 3
+L500; found kwan[1] = 8 >= 2  ==> Loop again
+Loop npass = 3: (ka,kb) = (1,8)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 6) --> splitting: (nel; jres, ka, km) = (1; 2, 1, 7)
+ --> nclu = 5, kwan[ka] = 2
+Loop npass = 3: (ka,kb) = (9,10)
+  for(j ..) -> jma=6, jtel(.,z) = (2, 6) --> _NO_ splitting
+ --> nclu = 5, kwan[ka] = -2
+Loop npass = 3: (ka,kb) = (11,17)
+  for(j ..) -> jma=3, jtel(.,z) = (6, 1) --> splitting: (nel; jres, ka, km) = (3; 1, 11, 17)
+ --> nclu = 6, kwan[ka] = 1
+Loop npass = 3: (ka,kb) = (18,20)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 18, 20)
+ --> nclu = 7, kwan[ka] = 1
+L500; found kwan[1] = 6 >= 2  ==> Loop again
+Loop npass = 4: (ka,kb) = (1,6)
+  for(j ..) -> jma=2, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (1; 4, 1, 3)
+ --> nclu = 8, kwan[ka] = 4
+Loop npass = 4: (ka,kb) = (7,8)
+  for(j ..) -> jma=2, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (2; 1, 7, 8)
+ --> nclu = 9, kwan[ka] = 1
+Loop npass = 4: (ka,kb) = (11,16)
+  for(j ..) -> jma=4, jtel(.,z) = (2, 4) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 15)
+ --> nclu = 10, kwan[ka] = 2
+Loop npass = 4: (ka,kb) = (18,19)
+  for(j ..) -> jma=4, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (7; 1, 18, 19)
+ --> nclu = 11, kwan[ka] = 1
+L500; found kwan[1] = 2 >= 2  ==> Loop again
+Loop npass = 5: (ka,kb) = (1,2)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (1; 1, 1, 2)
+ --> nclu = 12, kwan[ka] = 1
+Loop npass = 5: (ka,kb) = (3,6)
+  for(j ..) -> jma=3, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (12; 2, 3, 5)
+ --> nclu = 13, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (11,14)
+  for(j ..) -> jma=5, jtel(.,z) = (2, 2) --> splitting: (nel; jres, ka, km) = (3; 2, 11, 13)
+ --> nclu = 14, kwan[ka] = 2
+Loop npass = 5: (ka,kb) = (15,16)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (5; 1, 15, 16)
+ --> nclu = 15, kwan[ka] = 1
+L500; found kwan[3] = 2 >= 2  ==> Loop again
+Loop npass = 6: (ka,kb) = (3,4)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> splitting: (nel; jres, ka, km) = (12; 1, 3, 4)
+ --> nclu = 16, kwan[ka] = 1
+Loop npass = 6: (ka,kb) = (5,6)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 16, kwan[ka] = -2
+Loop npass = 6: (ka,kb) = (11,12)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 16, kwan[ka] = -2
+Loop npass = 6: (ka,kb) = (13,14)
+  for(j ..) -> jma=5, jtel(.,z) = (1, 1) --> _NO_ splitting
+ --> nclu = 16, kwan[ka] = -2
 mona(x, ..) fit;  x of dimension 20x6
 Because of NA's, revised data:
     war fly ver end gro hai
@@ -1477,12 +2808,17 @@ Warning messages:
 2: In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
   buggy version of Kinderman-Ramage generator used
 > 
-> if(FALSE)
-+     mona(cbind(1:0), trace=2)
-> ## Loop npass = 1: (ka,kb) = (1,13)
-> ##   for(j ..) -> jma=1, jtel(.,z) = (8, -1777201152) --> splitting: (nel; jres, ka, km) = (1; -6, 1, 9)
-> ##  1  2  2  2  2 ..... [infinite loop]
+> 
+> try(
++ mona(cbind(1:0), trace=2)
++ ) ## error: need p >= 2
+Error in mona(cbind(1:0), trace = 2) : 
+  mona() needs at least p >= 2 variables (in current implementation)
+> ## in the past, gave
+> ## Loop npass = 1: (ka,kb) = (1,2)
+> ##   for(j ..) -> jma=1, jtel(.,z) = (17952088, 8) --> splitting: (nel; jres, ka, km) = (1; -17952086, 1, 17952089)
+> ##  inner loop: for(k in ka:km) use ner[k]:  1 2 2 2 2 2 2 2 2 2 ..... [infinite loop]
 > 
 > proc.time()
    user  system elapsed 
-  0.214   0.048   0.349 
+  0.218   0.049   0.349 

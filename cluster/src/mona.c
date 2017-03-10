@@ -28,21 +28,19 @@ void clmona_(int *nn, // = number of objects
 	     int *x,  /* x[i,j]: binary (0/1/NA) data  (obs. i, var.j)
 			 where  NA =  missing values, are all values > 1 ;
 			 actually are NA == 2 when called from R's mona() */
+	     // int jerr[1] : verbose(ness) in {0, 1, ..}
+
 	     // Result / Output / Return Values:
-	     int *jerr, // error return code in {1,2,3,4}
+	     int *jerr, // error return code in {1,2,3,4,5}
 	     int *nban, // [1:nn]
 	     int *ner,  // [1:nn]
 	     int *kwan, // [1:nn]
 	     int *lava, // [1:nn]
 	     int *jlack)// [1:pp] : jlack[j] := #{NA's in x[,j]}
 {
-
-    /* Local variables */
-    int a, b, c, d, j, k, l, j0, j1, ja, jb, ka, kb, km;
-    int jma, kal, nel, nzf;
-    int lack, lama, kalf, jnat, lams, jtel, nclu, jres,
-	jtel2, nhalf, npass, jtelz; //, jptwe
     int verbose = jerr[0];
+    int a, b, c, d, j, j0, j1;
+    int jma, nel, lama, jnat, jtel, jtelz; //, jptwe
 
     /* Parameter adjustments */
     --lava;
@@ -55,10 +53,14 @@ void clmona_(int *nn, // = number of objects
     x -= x_offset;
 
     /* Function Body */
-    nhalf = (*nn + 1) / 2;
+    if(*pp < 2) {
+	*jerr = 5; return; // not implemented currently (patches welcome!)
+    }
+
+    const int nhalf = (*nn + 1) / 2;
     // jptwe = (*pp + 4) / 5;
     Rboolean has_NA = FALSE;
-    for (l = 1; l <= *nn; ++l) {
+    for (int l = 1; l <= *nn; ++l) {
 	int n_miss = 0;
 	for (j = 1; j <= *pp; ++j) {
 	    if (x[l + j * x_dim1] > 1) ++n_miss;
@@ -73,11 +75,11 @@ void clmona_(int *nn, // = number of objects
 
     if (has_NA) { // -------------- Missing Values  Treatment -----------
 
-	lack = 0;
+	int lack = 0;
 	for (j = 1; j <= *pp; ++j) {
 	    j0 = 0;
 	    j1 = 0;
-	    for (l = 1; l <= *nn; ++l) {
+	    for (int l = 1; l <= *nn; ++l) {
 		if      (x[l + j * x_dim1] == 0) ++j0;
 		else if (x[l + j * x_dim1] == 1) ++j1;
 	    }
@@ -97,7 +99,6 @@ void clmona_(int *nn, // = number of objects
 	if (lack == *pp) { /*     all variables have missing values */
 	    *jerr = 4; return;
 	}
-	*jerr = 0;
 
 	/* ---------- Filling in missing values --------------------- */
 
@@ -105,13 +106,13 @@ void clmona_(int *nn, // = number of objects
 	    if (jlack[j] != 0) {
 		lama = -1;
 		Rboolean syn = TRUE;
-		for (ja = 1; ja <= *pp; ++ja)
+		for (int ja = 1; ja <= *pp; ++ja)
 		    if (jlack[ja] == 0) { /* no missing in x[, ja] */
 			a = 0;
 			b = 0;
 			c = 0;
 			d = 0;
-			for (k = 1; k <= *nn; ++k) {
+			for (int k = 1; k <= *nn; ++k) {
 			    if (x[k + j * x_dim1] != 1) {
 				if      (x[k + ja * x_dim1] == 0) ++a;
 				else if (x[k + ja * x_dim1] == 1) ++b;
@@ -120,8 +121,8 @@ void clmona_(int *nn, // = number of objects
 				else if (x[k + ja * x_dim1] == 1) ++d;
 			    }
 			}
-			kal = a * d - b * c;
-			kalf = iabs(kal);
+			int kal = a * d - b * c,
+			    kalf = iabs(kal);
 			if (kalf >= lama) {
 			    lama = kalf;
 			    jma = ja;
@@ -130,42 +131,42 @@ void clmona_(int *nn, // = number of objects
 			}
 		    }
 
-		for (l = 1; l <= *nn; ++l)
-		    if (x[l + j * x_dim1] > 1) { // missing
+		for (int k = 1; k <= *nn; ++k)
+		    if (x[k + j * x_dim1] > 1) { // missing
 			if (syn) {
-			    x[l + j * x_dim1] = x[l + jma * x_dim1];
+			    x[k + j * x_dim1] = x[k + jma * x_dim1];
 			} else {
-			    if (x[l + jma * x_dim1] == 1)
-				x[l +   j * x_dim1] = 0;
-			    if (x[l + jma * x_dim1] == 0)
-				x[l +   j * x_dim1] = 1;
+			    if (x[k + jma * x_dim1] == 1)
+				x[k +   j * x_dim1] = 0;
+			    if (x[k + jma * x_dim1] == 0)
+				x[k +   j * x_dim1] = 1;
 			}
 		    }
 	    }
 
     } /* ---  end of treating missing values ---- */
-
+    *jerr = 0; // it may have had "verbose"
 
 /*  initialization --------------------------- */
 
-    for (k = 1; k <= *nn; ++k) {
+    for (int k = 1; k <= *nn; ++k) {
 	kwan[k] = 0;
 	ner[k] = k;
 	lava[k] = 0;
     }
-    npass = 1;
+    int npass = 1; //  number of passes
     kwan[1] = *nn;
 
 /*  algorithm -------------------------------- */
 
-    nclu = 1;
-    ka = 1;
+    int nclu = 1;
+    int ka = 1;
 /* --- Loop --- */
 L310:
     R_CheckUserInterrupt(); // (had infinite loop whenever pp == 1 !)
 
+    int kb = ka + kwan[ka] - 1;
     if(verbose) Rprintf("Loop npass = %d: (ka,kb) = (%d,%d)\n", npass, ka, kb);
-    kb = ka + kwan[ka] - 1;
     lama = -1;
     jnat = *pp;
     for (j = 1; j <= *pp; ++j) {
@@ -174,16 +175,16 @@ L310:
 	}
 	j0 = 0;
 	j1 = 0;
-	for (l = ka; l <= kb; ++l) {
-	    nel = ner[l];
+	for (int k = ka; k <= kb; ++k) {
+	    nel = ner[k];
 	    if      (x[nel + j * x_dim1] == 0) ++j0;
 	    else if (x[nel + j * x_dim1] == 1) ++j1;
 	}
 	if (j1 != 0 && j0 != 0) {
-	L330:
+      L330:
 	    --jnat;
-	    lams = 0;
-	    for (jb = 1; jb <= *pp; ++jb) {
+	    int lams = 0;
+	    for (int jb = 1; jb <= *pp; ++jb) {
 		if (jb != j) { // FIXME: if (p == 1)  have j == jb == 1 here
 		    // then this branch is never used ==> lama = -1 < lams = 0
 		    // but (a,b,c,d)  will we remain  unitialized
@@ -192,8 +193,8 @@ L310:
 		    b = 0;
 		    c = 0;
 		    d = 0;
-		    for (l = ka; l <= kb; ++l) {
-			nel = ner[l];
+		    for (int k = ka; k <= kb; ++k) {
+			nel = ner[k];
 			if (x[nel + j * x_dim1] == 0) {
 			    if      (x[nel + jb * x_dim1] == 0) ++a;
 			    else if (x[nel + jb * x_dim1] == 1) ++b;
@@ -219,6 +220,7 @@ L310:
     if (jnat < *pp) {
 
 	// ---- Splitting -------------------------------
+	int nzf, jtel2;
 
 	// L375:
 	nel = ner[ka];
@@ -229,21 +231,22 @@ L310:
 	    nzf = 1;
 	    jtel2 = jtelz;
 	}
-	jres = kb - ka + 1 - jtel2;
-	km = ka + jtel2;
-	l = ka;
+	int jres = kb - ka + 1 - jtel2,
+	    km = ka + jtel2;
 	if(verbose)
 	    Rprintf(" --> splitting: (nel; jres, ka, km) = (%d; %d, %d, %d)\n",
 		    nel, jres, ka, km);
 
 	/*------- inner loop ------------------ */
-	do { // L378:
-	    nel = ner[l];
-	    if(verbose >= 2) Rprintf(" %d ", nel);
+	if(verbose >= 2) Rprintf(" inner loop: for(k in ka:km) use ner[k]: ");
+	int k = ka;
+	do { // L378: almost  for(k=ka; k < km; ++k)  (but see 'continue' below)
+	    nel = ner[k];
+	    if(verbose >= 2) Rprintf(" %d", nel);
 
 	    if (x[nel + jma * x_dim1] == nzf) {
 		int lcc, nelbb;
-		for (int lbb = l; lbb <= kb; ++lbb) {
+		for (int lbb = k; lbb <= kb; ++lbb) {
 		    nelbb = ner[lbb];
 		    if (x[nelbb + jma * x_dim1] != nzf) {
 			lcc = lbb - 1;
@@ -251,16 +254,16 @@ L310:
 		    }
 		}
 		// L382:
-		for (int laa = l; laa <= lcc; ++laa) {
-		    int ldd = lcc + l - laa,
-			lee = ldd + 1;
-		    ner[lee] = ner[ldd];
+		for (int laa = k; laa <= lcc; ++laa) {
+		    int ldd = lcc + k - laa;
+		    ner[ldd + 1] = ner[ldd];
 		}
-		ner[l] = nelbb;
-		continue; // the inner loop
+		ner[k] = nelbb;
+		continue; // the inner loop _without_ increasing 'k' !
 	    }
-	    ++l;
-	} while (l < km);
+	    ++k;
+	} while (k < km);
+	if(verbose >= 2) Rprintf("\n");
 	/*------- end{inner loop} -- */
 
 	/* L390: */

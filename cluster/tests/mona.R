@@ -72,8 +72,11 @@ if(require(MASS)) withAutoprint({
     mx # (too much, but still)
 })
 
-if(FALSE)
-    mona(cbind(1:0), trace=2)
-## Loop npass = 1: (ka,kb) = (1,13)
-##   for(j ..) -> jma=1, jtel(.,z) = (8, -1777201152) --> splitting: (nel; jres, ka, km) = (1; -6, 1, 9)
-##  1  2  2  2  2 ..... [infinite loop]
+
+try(
+mona(cbind(1:0), trace=2)
+) ## error: need p >= 2
+## in the past, gave
+## Loop npass = 1: (ka,kb) = (1,2)
+##   for(j ..) -> jma=1, jtel(.,z) = (17952088, 8) --> splitting: (nel; jres, ka, km) = (1; -17952086, 1, 17952089)
+##  inner loop: for(k in ka:km) use ner[k]:  1 2 2 2 2 2 2 2 2 2 ..... [infinite loop]

@@ -10,6 +10,8 @@ mona <- function(x, trace.lev = 0)
         stop("All variables must be binary (e.g., a factor with 2 levels, both present).")
     n <- nrow(x)
     p <- ncol(x)
+    if(p < 2)
+	stop("mona() needs at least p >= 2 variables (in current implementation)")
     dnx <- dimnames(x)
     ## Change levels of input matrix to {0,1, NA=2}:
     iF <- function(.) as.integer(as.factor(.))
@@ -38,16 +40,18 @@ mona <- function(x, trace.lev = 0)
     ## stop with a message when two many missing values:
     if(res$error != 0) {
         ## NB: Need "full simple strings below, to keep it translatable":
-        switch(res$error,
-               ## 1 :
-               stop("No clustering performed, an object was found with all values missing."),
-               ## 2 :
-               stop("No clustering performed, found variable with more than half values missing."),
-               ## 3 : never triggers because of binary check above
-               stop("No clustering performed, a variable was found with all non missing values identical."),
-               ## 4 :
-               stop("No clustering performed, all variables have at least one missing value.")
-               )
+	switch(res$error
+	       ## 1 :
+	       , stop("No clustering performed, an object was found with all values missing.")
+	       ## 2 :
+	       , stop("No clustering performed, found variable with more than half values missing.")
+	       ## 3 : never triggers because of binary check above
+	       , stop("No clustering performed, a variable was found with all non missing values identical.")
+	       ## 4 :
+	       , stop("No clustering performed, all variables have at least one missing value.")
+	       ## 5: -- cannot trigger here: already handled above
+	       , stop("mona() needs at least p >= 2 variables (in current implementation)")
+	       )
     }
     ##O res$x <- matrix(as.numeric(substring(res$x,
     ##O                                      1:nchar(res$x), 1:nchar(res$x))),
