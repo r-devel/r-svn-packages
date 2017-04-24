@@ -1,7 +1,7 @@
 Package: foreign
 Priority: recommended
-Version: 0.8-67
-Date: 2016-09-12
+Version: 0.8-68
+Date: 2017-04-22
 Title: Read Data Stored by Minitab, S, SAS, SPSS, Stata, Systat, Weka, dBase, ...
 Depends: R (>= 3.0.0)
 Imports: methods, utils, stats
