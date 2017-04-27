@@ -52,9 +52,9 @@ writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL)
         star <- ifelse(c(TRUE, diff(which(chv) > 1L))," *", " ")
         dl.varnames[chv] <- paste(star, dl.varnames[chv], lengths)
   }
-
+    cat("SET DECIMAL=DOT.\n\n", file = codefile) # required if SPSS runs in a locale with DECIMAL=comma
     cat("DATA LIST FILE=", adQuote(datafile), " free (\",\")\n",
-        file = codefile)
+        file = codefile, append = TRUE)
     cat("/",  dl.varnames, " .\n\n", file = codefile, append = TRUE)
     cat("VARIABLE LABELS\n", file = codefile, append = TRUE)
     cat(paste(varnames, adQuote(varlabels),"\n"), ".\n",

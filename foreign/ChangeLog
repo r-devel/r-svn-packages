@@ -1,3 +1,8 @@
+2017-04-27  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+	* writeForeignCode.R: SET DECIMAL=DOT. in SPSS required if 
+	  it runs in a locale with DECIMAL=comma
+
 2017-04-22  Uwe Ligges <Uwe.Ligges@R-project.org>
 
 	* DESCRIPTION: Version is 0.8-68
