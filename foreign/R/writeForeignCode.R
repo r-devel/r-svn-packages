@@ -48,8 +48,13 @@ writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL, maxchars =
         if(any(lengths > 255L))
             stop("Cannot handle character variables longer than 255")
         lengths <- paste0("(A", lengths, ")")
-        # corrected by PR#15583
-        star <- ifelse(c(TRUE, diff(which(chv) > 1L))," *", " ")
+        ## was: corrected by PR#15583
+        
+        ## actually the rule is: prepend a star if a variable with type/size declaration
+        ## follows on a variable without declaration; no star for first variable or variables 
+        ## following other variables with declarations
+        star <- ifelse(c(FALSE, diff(chv) == 1)[chv]," *", " ")
+        
         dl.varnames[chv] <- paste(star, dl.varnames[chv], lengths)
   }
     cat("SET DECIMAL=DOT.\n\n", file = codefile) # required if SPSS runs in a locale with DECIMAL=comma
