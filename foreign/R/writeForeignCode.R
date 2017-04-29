@@ -24,18 +24,18 @@ write.foreign <-
 ## we want ASCII quotes, not UTF-8 quotes here
 adQuote <- function(x) paste("\"", x, "\"", sep = "")
 
-writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL)
+writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL, maxchars = 32L)
 {
     ## FIXME: re-write this to hold a connection open
     dfn <- lapply(df, function(x) if (is.factor(x)) as.numeric(x) else x)
     write.table(dfn, file = datafile, row.names = FALSE, col.names = FALSE,
-                sep = ",", quote = FALSE, na = "",eol = ",\n")
+                sep = ",", quote = FALSE, na = "", eol = ",\n")
 
     varlabels <- names(df)
     if (is.null(varnames)) {
-        varnames <- abbreviate(names(df), 8L)
-        if (any(sapply(varnames, nchar) > 8L))
-            stop("I cannot abbreviate the variable names to eight or fewer letters")
+        varnames <- abbreviate(names(df), maxchars)
+        if (any(sapply(varnames, nchar) > maxchars))
+            stop("I cannot abbreviate the variable names to 'maxchars' or fewer chars")
         if (any(varnames != varlabels))
             warning("some variable names were abbreviated")
     }
@@ -55,7 +55,7 @@ writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL)
     cat("SET DECIMAL=DOT.\n\n", file = codefile) # required if SPSS runs in a locale with DECIMAL=comma
     cat("DATA LIST FILE=", adQuote(datafile), " free (\",\")\n",
         file = codefile, append = TRUE)
-    cat("/",  dl.varnames, " .\n\n", file = codefile, append = TRUE)
+    cat("/", dl.varnames, " .\n\n", file = codefile, append = TRUE)
     cat("VARIABLE LABELS\n", file = codefile, append = TRUE)
     cat(paste(varnames, adQuote(varlabels),"\n"), ".\n",
         file = codefile, append = TRUE)

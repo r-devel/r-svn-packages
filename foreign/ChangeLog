@@ -1,3 +1,8 @@
+2017-04-29  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+   * add maxchars = 32L argument to writeForeignSPSS
+     in order to allow for longer variable names for SPSS versions > 12
+ 
 2017-04-27  Uwe Ligges <Uwe.Ligges@R-project.org>
 
 	* writeForeignCode.R: SET DECIMAL=DOT. in SPSS required if 
