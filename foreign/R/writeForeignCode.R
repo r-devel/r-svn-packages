@@ -60,6 +60,8 @@ writeForeignSPSS <- function(df, datafile, codefile, varnames = NULL, maxchars =
     cat("SET DECIMAL=DOT.\n\n", file = codefile) # required if SPSS runs in a locale with DECIMAL=comma
     cat("DATA LIST FILE=", adQuote(datafile), " free (\",\")\n",
         file = codefile, append = TRUE)
+        
+    # FIXME: No line longer than 251 chars:
     cat("/", dl.varnames, " .\n\n", file = codefile, append = TRUE)
     cat("VARIABLE LABELS\n", file = codefile, append = TRUE)
     cat(paste(varnames, adQuote(varlabels),"\n"), ".\n",
