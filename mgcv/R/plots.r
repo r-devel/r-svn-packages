@@ -1028,9 +1028,9 @@ plot.gam <- function(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scal
     x$Vp <- x$Vc ## cov matrix reset to full Bayesian
   }
 
-  w.resid<-NULL
-  if (length(residuals)>1) # residuals supplied 
-  { if (length(residuals)==length(x$residuals)) 
+  w.resid <- NULL
+  if (length(residuals)>1) { # residuals supplied 
+    if (length(residuals)==length(x$residuals)) 
     w.resid <- residuals else
     warning("residuals argument to plot.gam is wrong length: ignored")
     partial.resids <- TRUE

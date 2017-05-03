@@ -62,66 +62,6 @@ gam.reparam <- function(rS,lsp,deriv)
 } ## gam.reparam
 
 
-get.Eb <- function(rS,rank) 
-## temporary routine to get balanced sqrt of total penalty
-## should eventually be moved to estimate.gam, or gam.setup,
-## as it's sp independent, but that means re doing gam.fit3 call list,
-## which should only be done after method is tested
-{ q <- nrow(rS[[1]])
-  S <- matrix(0,q,q)
-  for (i in 1:length(rS)) { 
-    Si <- tcrossprod(rS[[i]]) ## rS[[i]]%*%t(rS[[i]])
-    S <- S + Si/sqrt(sum(Si^2)) 
-  }
-  t(mroot(S,rank=rank)) ## E such that E'E = S
-} ## get.Eb
-
-huberp <- function(wp,dof,k=1.5,tol=.Machine$double.eps^.5) {
-## function to obtain huber estimate of scale from Pearson residuals, simplified 
-## from 'hubers' from MASS package
-  s0 <- mad(wp) ## initial scale estimate
-  th <- 2*pnorm(k) - 1
-  beta <- th + k^2 * (1 - th) - 2 * k * dnorm(k)
-  for (i in 1:50) {
-    r <- pmin(pmax(wp,-k*s0),k*s0)
-    ss <- sum(r^2)/dof
-    s1 <- sqrt(ss/beta)
-    if (abs(s1-s0)<tol*s0) break
-    s0 <- s1
-  }
-  if (i==50) warning("Huber scale estiamte not converged")
-  s1^2
-} ## huberp
-
-gam.scale <- function(wp,wd,dof,extra=0) {
-## obtain estimates of the scale parameter, using the weighted Pearson and 
-## deviance residuals and the residual effective degrees of freedom.
-## Problem is that Pearson is unbiased, but potentially unstable (e.g. 
-## when count is 1 but mean is tiny, so that pearson residual is enormous,
-## although deviance residual is much less extreme). 
-  pearson <- (sum(wp^2)+extra)/dof
-  deviance <- (sum(wd^2)+extra)/dof
-  if (extra==0) robust <- huberp(wp,dof) else {
-    ## now scale deviance residuals to have magnitude similar
-    ## to pearson and compute new estimator. 
-    kd <- wd
-    ind <- wd > 0
-    kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
-    ind <- wd < 0
-    kd[ind] <- wd[ind]*median(wp[ind]/wd[ind])
-    robust <- (sum(kd^2)+extra)/dof
-    ## force estimate to lie between deviance and pearson estimators
-    if (pearson > deviance) {
-      if (robust < deviance) robust <- deviance
-      if (robust > pearson) robust <- pearson
-    } else {
-      if (robust > deviance) robust <- deviance
-      if (robust < pearson) robust <- pearson
-    }
-  }
-  list(pearson=pearson,deviance=deviance,robust=robust)
-}
-
 
 gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
@@ -651,14 +591,6 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          }
          trA <- oo$trA;
                   
-#         wpr <- (y-mu) *sqrt(weights/family$variance(mu)) ## weighted pearson residuals
-#         se <- gam.scale(wpr,wdr,n.true-trA,dev.extra) ## get scale estimates
-#         pearson.warning <- NULL
-#         if (control$scale.est=="pearson") { 
-#           scale.est <- se$pearson
-#           if (scale.est > 4 * se$robust) pearson.warning <- TRUE
-#         } else scale.est <- if (control$scale.est=="deviance") se$deviance else se$robust
-
          if (control$scale.est%in%c("pearson","fletcher","Pearson","Fletcher")) {
             pearson <- sum(weights*(y-mu)^2/family$variance(mu))
             scale.est <- (pearson+dev.extra)/(n.true-trA)
@@ -940,9 +872,6 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
   F <- .Call(C_mgcv_pmmult2,PKt,sqrt(object$weights)*X,0,0,object$control$nthreads)
   edf <- diag(F) ## effective degrees of freedom
   edf1 <- 2*edf - rowSums(t(F)*F) ## alternative
-
-  ## check on plausibility of scale (estimate)
-  ##if (object$scale.estimated&&!is.null(object$pearson.warning)) warning("Pearson scale estimate maybe unstable. See ?gam.scale.")
 
   ## edf <- rowSums(PKt*t(sqrt(object$weights)*X))
   ## Ve <- PKt%*%t(PKt)*object$scale  ## frequentist cov

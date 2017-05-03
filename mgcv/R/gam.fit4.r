@@ -888,7 +888,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
                   lpi[[i]] <- ij[lpi[[i]][!(lpi[[i]]%in%drop)]] # drop and shuffle up
                 }
               } ## lpi adjustment done
-              for (i in 1:length(xat)) attr(x,names(xat)[i]) <- xat[[i]]
+              if (length(xat)>0) for (i in 1:length(xat)) attr(x,names(xat)[i]) <- xat[[i]]
               attr(x,"lpi") <- lpi
               attr(x,"drop") <- drop ## useful if family has precomputed something from x
               ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
