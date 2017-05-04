@@ -1,8 +1,20 @@
+2017-05-04  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+	* several bugfixes for writeForeignSPSS:
+	  add/correct declaration of factors and ordered factors (nominal, ordered);
+	  add/correct declaration of numeric (scale) variables;
+	  calculate length of character variables correctly, even if 
+	  all entries are NA and there is no longer a 255 char limit 
+	  (since SPSS 13); 
+	  data files are typically encoded in the current locale and not always ASCII;
+	  variable name list must not exceed 251 chars for each line of code 
+	  and had to be wrapped
+
 2017-04-29  Uwe Ligges <Uwe.Ligges@R-project.org>
 
 	* add maxchars = 32L argument to writeForeignSPSS
       in order to allow for longer variable names for SPSS versions > 12
-	* bugfix in writeForeignSPSS for declaration of character variables
+	* bugfix in writeForeignSPSS for declaration of character variables by prefixed stars
 	
 2017-04-27  Uwe Ligges <Uwe.Ligges@R-project.org>
 
