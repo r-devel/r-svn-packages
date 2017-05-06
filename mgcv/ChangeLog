@@ -7,6 +7,11 @@ Currently deprecated and liable to be removed:
 
 1.8-18
 
+* bam(...,discrete=TRUE) could fail if NAs in the smooth terms caused data rows
+  to be dropped which led to parametric term factors having unused levels 
+  (which were then not being dropped). Fixed (in discrete.mf). 
+   
+
 * disasterous 'te' in place of 'ti' typo in ?smooth.terms fixed thanks to 
   John McKinlay.
 

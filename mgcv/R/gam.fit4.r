@@ -59,7 +59,7 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
      d$Deta3th <-  ig13*r$Dmu3th - 3 *r$Dmu2th*g2g*ig12 + r$Dmuth*(3*g2g^2-g3g)*ig1
    }
    d
-} ## dDmu
+} ## dDeta
 
 fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
 ## test family derivatives w.r.t. eta

@@ -184,9 +184,10 @@ check.term <- function(term,rec) {
   } else return(0) ## no match
 } ## check.term
 
-discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
+discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 ## discretize the covariates for the terms specified in smooth.spec
-## id not allowed. pmf is a model frame for just the 
+## id not allowed. names.pmf gives the names of the parametric part
+## of mf, and is used to create a model frame for just the 
 ## parametric terms --- mini.mf is applied to this.
 ## if full is FALSE then parametric and response terms are ignored
 ## and what is returned is a list where columns can be of 
@@ -282,8 +283,17 @@ discrete.mf <- function(gp,mf,pmf,m=NULL,full=TRUE) {
   ## padding is necessary if gam.setup is to be used for setup
 
   if (full) {
-    maxr <- max(nr) 
-    pmf0 <- mini.mf(pmf,maxr) ## deal with parametric components
+    maxr <- max(nr)
+    ## If NA's caused rows to be dropped in mf, then they should
+    ## also be dropped in pmf, otherwise we can end up with factors
+    ## with more levels than unique observations, for example.
+    ## The next couple of lines achieve this.
+    ## find indices of terms in mf but not pmf...
+    di <- sort(which(!names(mf) %in% names.pmf),decreasing=TRUE)
+    ## create copy of mf with only pmf variables...
+    mfp <- mf; for (i in di) mfp[[i]] <- NULL 
+    #pmf0 <- mini.mf(pmf,maxr) ## deal with parametric components
+    pmf0 <- mini.mf(mfp,maxr) ## deal with parametric components
     if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
     mf0 <- c(mf0,pmf0) ## add parametric terms to end of mf0
 
@@ -1450,7 +1460,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   ## now discretize covariates...
   if (convert2mf) newdata <- model.frame(object$dinfo$gp$fake.formula[-2],newdata)
-  dk <- discrete.mf(object$dinfo$gp,mf=newdata,pmf=NULL,full=FALSE)
+  dk <- discrete.mf(object$dinfo$gp,mf=newdata,names.pmf=NULL,full=FALSE)
     
   Xd <- list() ### list of discrete model matrices...
   if (object$nsdf>0) {
@@ -1728,7 +1738,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## and indices giving the discretized value for each element of model frame.
       ## 'discrete' can be null, or contain a discretization size, or
       ## a discretization size per smooth term.   
-      dk <- discrete.mf(gp,mf,pmf,m=discrete)
+      dk <- discrete.mf(gp,mf,names(pmf),m=discrete)
       mf0 <- dk$mf ## padded discretized model frame
       sparse.cons <- 0 ## default constraints required for tensor terms
 
