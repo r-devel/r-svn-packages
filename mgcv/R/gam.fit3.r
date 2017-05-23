@@ -17,6 +17,7 @@ gam.reparam <- function(rS,lsp,deriv)
 ## Ouputs:
 ## S -- the total penalty matrix similarity transformed for stability
 ## rS -- the component square roots, transformed in the same way
+##       - tcrossprod(rS[[i]]) = rS[[i]] %*% t(rS[[i]]) gives the matrix penalty component.
 ## Qs -- the orthogonal transformation matrix S = t(Qs)%*%S0%*%Qs, where S0 is the 
 ##       untransformed total penalty implied by sp and rS on input
 ## E -- the square root of the transformed S (obtained in a stable way by pre-conditioning)

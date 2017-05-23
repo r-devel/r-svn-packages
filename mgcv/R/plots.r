@@ -354,8 +354,8 @@ plot.random.effect <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2
 
     } ## end of basic plot data production 
   } else { ## produce plot
-    qqnorm(P$fit,main=P$main,xlab=P$xlab,ylab=P$ylab,...)
-    qqline(P$fit)
+    qqnorm(trans(P$fit+shift),main=P$main,xlab=P$xlab,ylab=P$ylab,...)
+    qqline(trans(P$fit+shift))
   } ## end of plot production
 } ## end of plot.random.effect
 
@@ -505,7 +505,7 @@ plot.sos.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
     m <- length(P$xm); zz <- rep(NA,m*m)
     if (scheme == 0) {
       col <- 1# "lightgrey 
-      zz[P$ind] <- P$fit
+      zz[P$ind] <- trans(P$fit+shift)
       image(P$xm,P$ym,matrix(zz,m,m),col=hcolors,axes=FALSE,xlab="",ylab="",...)
       if (rug) { 
         if (is.null(list(...)[["pch"]])) points(P$raw$x,P$raw$y,pch=".",...) else
@@ -519,7 +519,7 @@ plot.sos.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
       contour(P$xm,P$ym,matrix(zz,m,m),add=TRUE,col=contour.col,...)
     } else if (scheme == 1) {
       col <- 1 
-      zz[P$ind] <- P$fit
+      zz[P$ind] <- trans(P$fit+shift)
       contour(P$xm,P$ym,matrix(zz,m,m),col=1,axes=FALSE,xlab="",ylab="",...) 
       if (rug) { 
         if (is.null(list(...)[["pch"]])) points(P$raw$x,P$raw$y,pch=".",...) else
@@ -554,7 +554,7 @@ poly2 <- function(x,col) {
     if (!is.na(col)) polygon(xf,col=col,border=NA,fillOddEven=TRUE)
     polygon(x,border="black")
   }
-}
+} ## poly2
 
 polys.plot <- function(pc,z=NULL,scheme="heat",lab="",...) { 
 ## pc is a list of polygons defining area boundaries
@@ -635,7 +635,7 @@ polys.plot <- function(pc,z=NULL,scheme="heat",lab="",...) {
     polygon(poly,border="black")
   }
   par(oldpar)
-}
+} ## polys.plot
 
 plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      partial.resids=FALSE,rug=TRUE,se=TRUE,scale=-1,n=100,n2=40,
@@ -656,7 +656,7 @@ plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
              main=label))
     } else { ## do plot
       if (scheme==0) scheme <- "heat" else scheme <- "grey"
-      polys.plot(x$xt$polys,P$fit,scheme=scheme,lab=P$main,...)
+      polys.plot(x$xt$polys,trans(P$fit+shift),scheme=scheme,lab=P$main,...)
     }
 
 } ## end plot.mrf.smooth
@@ -682,12 +682,12 @@ plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=
              main="",x=xx,n=n,nf=nf))
   } else { ## produce the plot
     ind <- 1:P$n
-    if(is.null(ylim)) ylim <- range(P$fit) 
-    plot(P$x[ind],P$fit[ind],ylim=ylim,xlab=P$xlab,ylab=P$ylab,type="l",...)
+    if(is.null(ylim)) ylim <- trans(range(P$fit)+shift) 
+    plot(P$x[ind],trans(P$fit[ind]+shift),ylim=ylim,xlab=P$xlab,ylab=P$ylab,type="l",...)
     if (P$nf>1) for (i in 2:P$nf) {
       ind <- ind + P$n
-      if (scheme==0) lines(P$x,P$fit[ind],lty=i,col=i) else 
-      lines(P$x,P$fit[ind],lty=i)
+      if (scheme==0) lines(P$x,trans(P$fit[ind]+shift),lty=i,col=i) else 
+      lines(P$x,trans(P$fit[ind]+shift),lty=i)
     }
   }
 } ## end plot.fs.interaction
@@ -700,7 +700,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
                      contour.col=3,...) {
 ## default plot method for smooth objects `x' inheriting from "mgcv.smooth"
 ## `x' is a smooth object, usually part of a `gam' fit. It has an attribute
-##     'coefficients' containg the coefs for the smooth, but usually these
+##     'coefficients' containing the coefs for the smooth, but usually these
 ##     are not needed.
 ## `P' is a list of plot data. 
 ##     If `P' is NULL then the routine should compute some of this plot data
@@ -727,6 +727,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
 ## `data' is a data frame containing the raw data for the smooth, usually the 
 ##        model.frame of the fitted gam. Can be NULL if P is not NULL.
 ## `label' is the term label, usually something like e.g. `s(x,12.34)'.
+## Note that if ylim is supplied it should not be transformed using trans and shift.
 #############################
 
   sp.contour <- function(x,y,z,zse,xlab="",ylab="",zlab="",titleOnly=FALSE,
@@ -867,17 +868,17 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
             if (min.r < ylimit[1]) ylimit[1] <- min.r
           }
         }
-        ylimit <- if (is.null(ylim)) ylimit <- ylimit + shift else ylim
+        ylimit <- if (is.null(ylim)) ylimit <- trans(ylimit + shift) else ylim
          
         ## plot the smooth... 
         if (shade) { 
-          plot(P$x,trans(P$fit+shift),type="n",xlab=P$xlab,ylim=trans(ylimit),
+          plot(P$x,trans(P$fit+shift),type="n",xlab=P$xlab,ylim=ylimit,
                  xlim=P$xlim,ylab=P$ylab,main=P$main,...)
           polygon(c(P$x,P$x[n:1],P$x[1]),
                     trans(c(ul,ll[n:1],ul[1])+shift),col = shade.col,border = NA)
           lines(P$x,trans(P$fit+shift),...)
         } else { ## ordinary plot 
-          plot(P$x,trans(P$fit+shift),type="l",xlab=P$xlab,ylim=trans(ylimit),xlim=P$xlim,
+          plot(P$x,trans(P$fit+shift),type="l",xlab=P$xlab,ylim=ylimit,xlim=P$xlim,
                  ylab=P$ylab,main=P$main,...)
           if (is.null(list(...)[["lty"]])) { 
             lines(P$x,trans(ul+shift),lty=2,...)
@@ -936,10 +937,10 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
         if (scale==0&&is.null(ylim)) { 
           if (partial.resids) ylimit <- range(P$p.resid,na.rm=TRUE) else ylimit <-range(P$fit)
         }
-        ylimit <- if (is.null(ylim)) ylimit <- ylimit + shift else ylim
+        ylimit <- if (is.null(ylim)) ylimit <- trans(ylimit + shift) else ylim
         
         plot(P$x,trans(P$fit+shift),type="l",xlab=P$xlab,
-             ylab=P$ylab,ylim=trans(ylimit),xlim=P$xlim,main=P$main,...)
+             ylab=P$ylab,ylim=ylimit,xlim=P$xlim,main=P$main,...)
         if (rug) { 
           if (jit) rug(jitter(as.numeric(P$raw)),...)
           else rug(as.numeric(P$raw),...) 
@@ -978,7 +979,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
       }
     } ## end of no CI code
   } ## end of plot production
-}
+} ## plot.mgcv.smooth
 
 
 

@@ -10,8 +10,8 @@
 The following families are in the exponential family given the value of a single parameter. They are usable with all modelling functions.
 \itemize{
 \item \code{\link{Tweedie}} An exponential family distribution for which the variance of the response is given by the mean response to the power \code{p}. 
-\code{p} is in (1,2) and must be supplied. See \code{\link{tw}} to estimate \code{p}.
-\item \code{\link{negbin}} The negative binomial. See \code{\link{nb}} to estimate the \code{theta} parameter of the negative binomial. 
+\code{p} is in (1,2) and must be supplied. Alternatively, see \code{\link{tw}} to estimate \code{p} (\code{gam} only).
+\item \code{\link{negbin}} The negative binomial. Alternatively see \code{\link{nb}} to estimate the \code{theta} parameter of the negative binomial (\code{gam} only). 
 
 }
 

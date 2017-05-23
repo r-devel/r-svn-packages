@@ -7,10 +7,14 @@ Currently deprecated and liable to be removed:
 
 1.8-18
 
+* plot.gam fix to handling of plot limits when using 'trans' (from 1.8-16 
+  'trans' could be applied twice). 
+
 * bam(...,discrete=TRUE) could fail if NAs in the smooth terms caused data rows
   to be dropped which led to parametric term factors having unused levels 
   (which were then not being dropped). Fixed (in discrete.mf). 
    
+* 'gamm' now warns if called with extended families.
 
 * disasterous 'te' in place of 'ti' typo in ?smooth.terms fixed thanks to 
   John McKinlay.

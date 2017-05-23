@@ -93,9 +93,11 @@ for smooths (not avaliable for parametric terms, which are plotted using \code{t
 \item{shift}{constant to add to each smooth (on the scale of the linear
 predictor) before plotting. Can be useful for some diagnostics, or with \code{trans}.}
 
-\item{trans}{function to apply to each smooth  (after any shift), before
-plotting. \code{shift} and \code{trans} are occasionally useful as a means for
-getting plots on the response scale, when the model consists only of a single smooth.}
+\item{trans}{monotonic function to apply to each smooth  (after any shift), before
+plotting. Monotonicity is not checked, but default plot limits assume it.
+\code{shift} and \code{trans} are occasionally
+useful as a means for getting plots on the response scale, when the model consists only
+of a single smooth. }
 
 \item{seWithMean}{if \code{TRUE} the component smooths are shown with confidence 
 intervals that include the uncertainty about the overall mean. If \code{FALSE} then the 
