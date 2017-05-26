@@ -19,6 +19,9 @@ Currently deprecated and liable to be removed:
 * disasterous 'te' in place of 'ti' typo in ?smooth.terms fixed thanks to 
   John McKinlay.
 
+* Some `internal' functions exported to facilitate quantile gam methods 
+  in separate package.
+
 1.8-17
 
 * Export gamlss.etamu, gamlss.gH and trind.generator to facilitate user 
