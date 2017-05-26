@@ -157,7 +157,7 @@ although each smooth is shown centred, the confidence bands are obtained as if e
 constrained to have average 0, (average taken over the covariate values), except for the smooth concerned. This seems to correspond more closely to how most users interpret componentwise intervals in practice, and also results in intervals with
 close to nominal (frequentist) coverage probabilities by an extension of Nychka's (1988) results presented in Marra and Wood (2012).
 
-Several smooth plots methods using \code{\link{image}} will accept a \code{colors} argument, which can be anything documented in \code{\link{heat.colors}} (in which case something like \code{colors=rainbow(50)} is appropriate), or the \code{\link{grey}} function (in which case somthing like \code{colors=grey(0:50/50)} is needed). Another option is \code{contour.col} which will set the contour colour for some plots. These options are useful for producing grey scale pictures instead of colour.
+Several smooth plots methods using \code{\link{image}} will accept an \code{hcolors} argument, which can be anything documented in \code{\link{heat.colors}} (in which case something like \code{hcolors=rainbow(50)} is appropriate), or the \code{\link{grey}} function (in which case somthing like \code{hcolors=grey(0:50/50)} is needed). Another option is \code{contour.col} which will set the contour colour for some plots. These options are useful for producing grey scale pictures instead of colour.
 
 Sometimes you may want a small change to a default plot, and the arguments to \code{plot.gam} just won't let you do it. 
 In this case, the quickest option is sometimes to clone the \code{smooth.construct} and \code{Predict.matrix} methods for 
