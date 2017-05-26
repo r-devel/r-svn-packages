@@ -1709,8 +1709,11 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     ## and an estimate of the function scale, suitable for optimizers that need this.
     ## Doesn't make sense for general families that have to initialize coefs directly.
   
-    null.stuff  <- if(inherits(G$family,"general.family")) list() else get.null.coef(G,...)  
-    
+    ## null.stuff  <- if(inherits(G$family,"general.family")) list() else get.null.coef(G,...)
+    ## Matteo modification to facilitate qgam...
+    null.stuff  <- if (inherits(G$family,"general.family")) list() else { 
+      if (is.null(G$family$get.null.coef)) get.null.coef(G,...) else G$family$get.null.coef(G,...)
+    }
     if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
     
     if (criterion%in%c("REML","ML")&&scale<=0) { ## log(scale) to be estimated as a smoothing parameter

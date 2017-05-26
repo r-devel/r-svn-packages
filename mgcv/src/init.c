@@ -83,4 +83,7 @@ void R_init_mgcv(DllInfo *dll)
 {
     R_registerRoutines(dll, CEntries, CallMethods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
+    R_RegisterCCallable("mgcv","mgcv_pmmult2", (DL_FUNC) &mgcv_pmmult2); 
+    R_RegisterCCallable("mgcv","pls_fit1", (DL_FUNC) &pls_fit1);
+    R_RegisterCCallable("mgcv","gdi2", (DL_FUNC) &gdi2); 
 }
