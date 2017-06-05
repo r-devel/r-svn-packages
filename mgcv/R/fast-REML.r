@@ -442,8 +442,31 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1) {
 } ## end ldetS
 
 
-
 Sl.addS <- function(Sl,A,rho) {
+## Routine to add total penalty to matrix A. Sl is smooth penalty
+## list from Sl.setup, so initial reparameterizations have taken place,
+## and should have already been applied to A using Sl.initial.repara
+  k <- 1
+  for (b in 1:length(Sl)) {
+    ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
+    if (length(Sl[[b]]$S)==1) { ## singleton
+      B <- exp(rho[k]);diag <- -1
+      .Call(C_mgcv_madi,A,B,ind,diag)
+      ## diag(A)[ind] <-  diag(A)[ind] + exp(rho[k]) ## penalty is identity times sp
+      k <- k + 1
+    } else {
+      for (j in 1:length(Sl[[b]]$S)) {
+        B <- exp(rho[k]) * Sl[[b]]$S[[j]]; diag <- 0
+        .Call(C_mgcv_madi,A,B,ind,diag)
+        ## A[ind,ind] <- A[ind,ind] + exp(rho[k]) * Sl[[b]]$S[[j]]
+        k <- k + 1
+      }
+    }
+  }
+  A
+} ## Sl.addS
+
+Sl.addS0 <- function(Sl,A,rho) {
 ## Routine to add total penalty to matrix A. Sl is smooth penalty
 ## list from Sl.setup, so initial reparameterizations have taken place,
 ## and should have already been applied to A using Sl.initial.repara
@@ -461,7 +484,7 @@ Sl.addS <- function(Sl,A,rho) {
     }
   }
   A
-} ## Sl.addS
+} ## Sl.addS0
 
 Sl.repara <- function(rp,X,inverse=FALSE,both.sides=TRUE) {
 ## Apply re-parameterization from ldetS to X, blockwise.
@@ -720,12 +743,20 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
   nd <- length(Skb)
   np <- length(beta)
   db <- matrix(0,np,nd)
-  rss1 <- bSb1 <- rep(0,nd)  
-  
+  rss1 <- bSb1 <- rep(0,nd)
+
+  ## alternative all in one code - matches loop results, but
+  ## timing close to identical
+  #D <- matrix(unlist(Skb),nrow(R),nd)
+  #db[piv,] <- -backsolve(R,forwardsolve(t(R),D[piv,]/d[piv]))/d[piv]
+  #bSb1 <- colSums(beta*D)
+
+  Rt <- t(R) ## essential to do this first, or t(R) dominates cost in loop
   for (i in 1:nd) { ## compute the first derivatives
-    db[piv,i] <- -backsolve(R,forwardsolve(t(R),Skb[[i]][piv]/d[piv]))/d[piv] ## d beta/ d rho_i
+    db[piv,i] <- -backsolve(R,forwardsolve(Rt,Skb[[i]][piv]/d[piv]))/d[piv] ## d beta/ d rho_i
     bSb1[i] <- sum(beta*Skb[[i]])  ## d b'Sb / d_rho_i
   }
+  
   XX.db <- XX%*%db
   #XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*db[piv,]))) ## X'Xdb
 

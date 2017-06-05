@@ -240,7 +240,40 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc);
 } /* end mgcv_mmult */
 
-
+void mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
+/* Performs 
+     a[ind,ind] <- a[ind,ind] + b
+   or, if diag != 0,
+     diag(a)[ind] <- diag(a)[ind] + b
+*/
+  int dia,*ii,ij,n,i,j,k;
+  double *A,*B;
+  dia = asInteger(diag);n = nrows(a); k = length(ind);
+  ind = PROTECT(coerceVector(ind,INTSXP));
+  b = PROTECT(coerceVector(b,REALSXP));
+  a = PROTECT(coerceVector(a,REALSXP));
+  ii = INTEGER(ind);
+  A = REAL(a);
+  B = REAL(b);
+  Rprintf("%d  %d  %d %g\n",n,k,dia,*B);
+  if (dia==0) {
+    for (j=0;j<k;j++) { /* B is a matrix */
+      ij = (ii[j]-1)*n-1;
+      for (i=0;i<k;i++,B++) A[ii[i] + ij] += *B;
+    }  
+  } else if (dia > 0) { /* B is a vector */
+    for (i=0;i<k;i++,B++) {
+      ij = (ii[i]-1)*(n+1); A[ij] += *B;
+    }
+  } else { /* B is a scalar */
+    for (i=0;i<k;i++) {
+      ij = (ii[i]-1)*(n+1);
+      Rprintf("%d  ",ij);
+      A[ij] += *B;
+    }
+  }
+  UNPROTECT(3);
+} /* mgcv_madi */
 
 SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
 /* parallel matrix multiplication using .Call interface */
@@ -1327,6 +1360,7 @@ void dchol(double *dA, double *R, double *dR,int *p) {
   }
 } /* dchol */
 
+
 void mgcv_chol(double *a,int *pivot,int *n,int *rank)
 /* a stored in column order, this routine finds the pivoted choleski decomposition of matrix a 
    library(mgcv)
@@ -1860,6 +1894,7 @@ SEXP mgcv_Rpforwardsolve(SEXP R, SEXP B,SEXP NT) {
   UNPROTECT(1);
   return(C);
 } /* mgcv_Rpforwardsolve */
+
 
 
 void row_block_reorder(double *x,int *r,int *c,int *nb,int *reverse) {
