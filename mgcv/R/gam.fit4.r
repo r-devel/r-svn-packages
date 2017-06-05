@@ -1034,7 +1034,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   }
 
   ## get grad and Hessian of REML score...
-  REML <- -as.numeric(ll$l - t(coef)%*%St%*%coef/2 + rp$ldetS/2  - ldetHp/2  + Mp*log(2*pi)/2)
+  REML <- -as.numeric(ll$l - drop(t(coef)%*%St%*%coef)/2 + rp$ldetS/2  - ldetHp/2  + Mp*log(2*pi)/2)
  
   REML1 <- if (deriv<1) NULL else -as.numeric( # d1l # cancels
                                    - d1bSb/2 + rp$ldet1/2  - d1ldetH/2 ) 

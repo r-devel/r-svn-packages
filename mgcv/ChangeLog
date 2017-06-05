@@ -13,6 +13,9 @@ Currently deprecated and liable to be removed:
 * bam(...,discrete=TRUE) could fail if NAs in the smooth terms caused data rows
   to be dropped which led to parametric term factors having unused levels 
   (which were then not being dropped). Fixed (in discrete.mf). 
+
+* bam(...,discrete=TRUE,nthreads=n) now warns if n>1 and openMP is not 
+  available on the platform being used. 
    
 * 'gamm' now warns if called with extended families.
 
@@ -21,6 +24,9 @@ Currently deprecated and liable to be removed:
 
 * Some `internal' functions exported to facilitate quantile gam methods 
   in separate package.
+
+* Minor fix in gam.fit5 - 1 by 1 matrix coerced to scalar, to prevent failure 
+  in some circumstances. 
 
 1.8-17
 

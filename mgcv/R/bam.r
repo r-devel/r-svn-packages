@@ -1655,6 +1655,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         warning("discretization only available with fREML")
       } else {
         if (!is.null(cluster)) warning("discrete method does not use parallel cluster - use nthreads instead")
+	if (nthreads>1 && !mgcv.omp()) warning("openMP not available: single threaded computation only")
       }
     }
     if (method%in%c("fREML")&&!is.null(min.sp)) {
