@@ -240,7 +240,7 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc);
 } /* end mgcv_mmult */
 
-void mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
+SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
 /* Performs 
      a[ind,ind] <- a[ind,ind] + b
    or, if diag != 0,
@@ -248,6 +248,7 @@ void mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
 */
   int dia,*ii,ij,n,i,j,k;
   double *A,*B;
+  SEXP kr;
   dia = asInteger(diag);n = nrows(a); k = length(ind);
   ind = PROTECT(coerceVector(ind,INTSXP));
   b = PROTECT(coerceVector(b,REALSXP));
@@ -255,8 +256,7 @@ void mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
   ii = INTEGER(ind);
   A = REAL(a);
   B = REAL(b);
-  Rprintf("%d  %d  %d %g\n",n,k,dia,*B);
-  if (dia==0) {
+   if (dia==0) {
     for (j=0;j<k;j++) { /* B is a matrix */
       ij = (ii[j]-1)*n-1;
       for (i=0;i<k;i++,B++) A[ii[i] + ij] += *B;
@@ -268,11 +268,14 @@ void mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
   } else { /* B is a scalar */
     for (i=0;i<k;i++) {
       ij = (ii[i]-1)*(n+1);
-      Rprintf("%d  ",ij);
-      A[ij] += *B;
-    }
+        A[ij] += *B;
+     }
   }
-  UNPROTECT(3);
+  
+  PROTECT(kr=allocVector(REALSXP,1));
+  REAL(kr)[0] = 1.0; 
+  UNPROTECT(4);
+  return(kr); /* dummy so that mtrace doesn't cause a crash on return! */
 } /* mgcv_madi */
 
 SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {

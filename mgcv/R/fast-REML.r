@@ -447,11 +447,12 @@ Sl.addS <- function(Sl,A,rho) {
 ## list from Sl.setup, so initial reparameterizations have taken place,
 ## and should have already been applied to A using Sl.initial.repara
   k <- 1
+  A <- A*1 ## force a copy to be made so that A not modified in calling env!!
   for (b in 1:length(Sl)) {
     ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
     if (length(Sl[[b]]$S)==1) { ## singleton
       B <- exp(rho[k]);diag <- -1
-      .Call(C_mgcv_madi,A,B,ind,diag)
+      er <- .Call(C_mgcv_madi,A,B,ind,diag)
       ## diag(A)[ind] <-  diag(A)[ind] + exp(rho[k]) ## penalty is identity times sp
       k <- k + 1
     } else {

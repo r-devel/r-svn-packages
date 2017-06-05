@@ -16,6 +16,10 @@ Currently deprecated and liable to be removed:
 
 * bam(...,discrete=TRUE,nthreads=n) now warns if n>1 and openMP is not 
   available on the platform being used. 
+
+* Sl.addS modified to use C code for some otherwise very slow matrix 
+  subset and addition ops which could become rate limiting for 
+  bam(...,discrete=TRUE). 
    
 * 'gamm' now warns if called with extended families.
 
