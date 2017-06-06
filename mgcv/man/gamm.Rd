@@ -130,7 +130,7 @@ The bases used to represent smooth terms are the same as those used in \code{\li
 smoothing bases are not available. Prediction from the returned \code{gam} object is straightforward using \code{\link{predict.gam}}, but this will set the random effects to zero. If you want to predict with random effects set to their predicted values then you can adapt the prediction code given in the examples below. 
 
 In the event of \code{lme} convergence failures, consider
-modifying \code{option(mgcv.vc.logrange)}: reducing it helps to remove
+modifying \code{options(mgcv.vc.logrange)}: reducing it helps to remove
 indefiniteness in the likelihood, if that is the problem, but too large a
 reduction can force over or undersmoothing. See \code{\link{notExp2}} for more
 information on this option. Failing that, you can try increasing the
