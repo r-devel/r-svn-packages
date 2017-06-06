@@ -7,7 +7,7 @@
    predictor. Optionally produces term plots for parametric model components
    as well.}
 \usage{
-\method{plot}{gam}(x,residuals=FALSE,rug=TRUE,se=TRUE,pages=0,select=NULL,scale=-1,
+\method{plot}{gam}(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scale=-1,
          n=100,n2=40,pers=FALSE,theta=30,phi=30,jit=FALSE,xlab=NULL,
          ylab=NULL,main=NULL,ylim=NULL,xlim=NULL,too.far=0.1,
          all.terms=FALSE,shade=FALSE,shade.col="gray80",shift=0,
@@ -27,10 +27,11 @@ IRLS weights. Partial residuals for a smooth term are the
 residuals that would be obtained by dropping the term concerned from the model, while leaving all other 
 estimates fixed (i.e. the estimates for the term plus the residuals).}
 
-\item{rug}{ when TRUE (default) then the covariate to which the plot applies is displayed as a rug plot
+\item{rug}{When \code{TRUE} the covariate to which the plot applies is displayed as a rug plot
  at the foot of each plot of a 1-d smooth, and the locations of the
  covariates are plotted as points on the contour plot representing a 2-d
- smooth. Setting to \code{FALSE} will speed up plotting for large datasets.} 
+ smooth. The default of \code{NULL} sets \code{rug} to \code{TRUE} when the dataset size
+ is <= 10000 and \code{FALSE} otherwise.} 
   
 \item{se}{ when TRUE (default) upper and lower lines are added to the
   1-d plots at 2 standard errors

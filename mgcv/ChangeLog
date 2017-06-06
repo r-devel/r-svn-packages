@@ -10,6 +10,9 @@ Currently deprecated and liable to be removed:
 * plot.gam fix to handling of plot limits when using 'trans' (from 1.8-16 
   'trans' could be applied twice). 
 
+* plot.gam argument 'rug' now defaults to 'NULL' corresponding to 'rug=TRUE'
+  if the number of data is <= 10000 and 'rug=FALSE' otherwise.
+
 * bam(...,discrete=TRUE) could fail if NAs in the smooth terms caused data rows
   to be dropped which led to parametric term factors having unused levels 
   (which were then not being dropped). Fixed (in discrete.mf). 
@@ -20,6 +23,9 @@ Currently deprecated and liable to be removed:
 * Sl.addS modified to use C code for some otherwise very slow matrix 
   subset and addition ops which could become rate limiting for 
   bam(...,discrete=TRUE). 
+
+* Parallel solves in Sl.iftChol can speed up bam(...,discrete=TRUE) with 
+  large numbers of smoothing/variance parameters.
    
 * 'gamm' now warns if called with extended families.
 

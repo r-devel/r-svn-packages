@@ -734,7 +734,7 @@ Sl.ift <- function(Sl,R,X,y,beta,piv,rp) {
   list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,d1b=db,rss =sum(rsd^2),rss1=rss1,rss2=rss2)
 } ## end Sl.ift
 
-Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
+Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
 ## function to obtain derviatives of \hat \beta by implicit differentiation
 ## and to use these directly to evaluate derivs of b'Sb and the RSS.
 ## piv contains the pivots from the chol that produced R.
@@ -747,16 +747,21 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv) {
   rss1 <- bSb1 <- rep(0,nd)
 
   ## alternative all in one code - matches loop results, but
-  ## timing close to identical
-  #D <- matrix(unlist(Skb),nrow(R),nd)
-  #db[piv,] <- -backsolve(R,forwardsolve(t(R),D[piv,]/d[piv]))/d[piv]
-  #bSb1 <- colSums(beta*D)
+  ## timing close to identical - modified for parallel exec
+  D <- matrix(unlist(Skb),nrow(R),nd)
+  bSb1 <- colSums(beta*D)
+  #D <- D[piv,]/d[piv]
+  D <- .Call(C_mgcv_Rpforwardsolve,t(R),D[piv,]/d[piv],nt)
+  db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D,nt)/d[piv]
+  #db[piv,] <- -backsolve(R,forwardsolve(t(R),D))/d[piv]
 
-  Rt <- t(R) ## essential to do this first, or t(R) dominates cost in loop
-  for (i in 1:nd) { ## compute the first derivatives
-    db[piv,i] <- -backsolve(R,forwardsolve(Rt,Skb[[i]][piv]/d[piv]))/d[piv] ## d beta/ d rho_i
-    bSb1[i] <- sum(beta*Skb[[i]])  ## d b'Sb / d_rho_i
-  }
+  ## original serial - a bit slow with very large numbers of smoothing
+  ## parameters.... 
+  #Rt <- t(R) ## essential to do this first, or t(R) dominates cost in loop
+  #for (i in 1:nd) { ## compute the first derivatives
+  #  db[piv,i] <- -backsolve(R,forwardsolve(Rt,Skb[[i]][piv]/d[piv]))/d[piv] ## d beta/ d rho_i
+  #  bSb1[i] <- sum(beta*Skb[[i]])  ## d b'Sb / d_rho_i
+  #}
   
   XX.db <- XX%*%db
   #XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*db[piv,]))) ## X'Xdb
@@ -809,7 +814,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
  
   ## get component derivatives based on IFT...
-  dift <- Sl.iftChol(ldS$Sl,XX,R,d,beta,piv)
+  dift <- Sl.iftChol(ldS$Sl,XX,R,d,beta,piv,nt=nt)
  
   ## now the derivatives of log|X'X+S|
   P <- pbsi(R,nt=nt,copy=TRUE) ## invert R 
