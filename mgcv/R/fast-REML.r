@@ -751,8 +751,8 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
   D <- matrix(unlist(Skb),nrow(R),nd)
   bSb1 <- colSums(beta*D)
   #D <- D[piv,]/d[piv]
-  D <- .Call(C_mgcv_Rpforwardsolve,t(R),D[piv,]/d[piv],nt)
-  db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D,nt)/d[piv]
+  D1 <- .Call(C_mgcv_Rpforwardsolve,t(R),D[piv,]/d[piv],nt)
+  db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D1,nt)/d[piv]
   #db[piv,] <- -backsolve(R,forwardsolve(t(R),D))/d[piv]
 
   ## original serial - a bit slow with very large numbers of smoothing
@@ -763,23 +763,29 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
   #  bSb1[i] <- sum(beta*Skb[[i]])  ## d b'Sb / d_rho_i
   #}
   
-  XX.db <- XX%*%db
+  ## XX.db <- XX%*%db
+  XX.db <- .Call(C_mgcv_pmmult2,XX,db,0,0,nt)
   #XX.db[piv,] <- d[piv]*(t(R)%*%(R%*%(d[piv]*db[piv,]))) ## X'Xdb
 
   S.db <- Sl.mult(Sl,db,k=0)
   ##Sk.db <- Sl.termMult(Sl,db,full=TRUE) ## Sk.db[[j]][,k] is S_j d beta / d rho_k
 
-  rss2 <- bSb2 <- matrix(0,nd,nd)
-  for (k in 1:nd) { ## second derivative loop 
-    for (j in k:nd) {
-      rss2[j,k] <- rss2[k,j] <- 2 * sum(db[,j]*XX.db[,k]) 
-      bSb2[j,k] <- bSb2[k,j] <-  (k==j)*sum(beta*Skb[[k]])  + 2*(sum(db[,k]*(Skb[[j]]+S.db[,j])) + 
-                                 sum(db[,j]*Skb[[k]]))                                  
-    }
-  }
+  ## following loop very slow if large numbers of smoothing parameters...
+  #rss2 <- bSb2 <- matrix(0,nd,nd)
+  #for (k in 1:nd) { ## second derivative loop 
+  #  for (j in k:nd) {
+  #    rss2[j,k] <- rss2[k,j] <- 2 * sum(db[,j]*XX.db[,k]) 
+  #    bSb2[j,k] <- bSb2[k,j] <-  (k==j)*sum(beta*Skb[[k]])  + 2*(sum(db[,k]*(Skb[[j]]+S.db[,j])) + 
+  #                               sum(db[,j]*Skb[[k]]))                                  
+  #  }
+  #}
+  ## rss2 <- 2 * t(db) %*% XX.db
+  rss2 <- 2 * .Call(C_mgcv_pmmult2,db,XX.db,1,0,nt)
+  bSb2 <- diag(colSums(beta*D))
+  ## bSb2 <- bSb2 + 2*(t(db)%*%(D+S.db) + t(D)%*%db)
+  bSb2 <- bSb2 + 2 * (.Call(C_mgcv_pmmult2,db,D+S.db,1,0,nt) + .Call(C_mgcv_pmmult2,D,db,1,0,nt))
   list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,
-       d1b=db ## BUG - this needs transforming as coef - here, or where used
-       ,rss1=rss1,rss2=rss2)
+       d1b=db ,rss1=rss1,rss2=rss2)
 } ## end Sl.iftChol
 
 
