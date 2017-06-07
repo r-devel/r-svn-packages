@@ -354,8 +354,9 @@ plot.random.effect <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2
 
     } ## end of basic plot data production 
   } else { ## produce plot
-    qqnorm(trans(P$fit+shift),main=P$main,xlab=P$xlab,ylab=P$ylab,...)
-    qqline(trans(P$fit+shift))
+    b <- as.numeric(trans(P$fit+shift))
+    qqnorm(b,main=P$main,xlab=P$xlab,ylab=P$ylab,...)
+    qqline(b)
   } ## end of plot production
 } ## end of plot.random.effect
 
