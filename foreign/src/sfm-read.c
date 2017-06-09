@@ -1,7 +1,8 @@
 /* PSPP - computes sample statistics.
    Copyright (C) 1997-9, 2000 Free Software Foundation, Inc.
    Written by Ben Pfaff <blp@gnu.org>.
-   Modified for R foreign library by Saikat DebRoy <saikat@stat.wisc.edu>.
+   Modified for R foreign package by Saikat DebRoy <saikat@stat.wisc.edu>
+   Patches by the R Core Team 2001-2017.
 
    This program is free software; you can redistribute it and/or
    modify it under the terms of the GNU General Public License as
@@ -1051,9 +1052,15 @@ read_variables (struct file_handle * h, struct variable *** var_by_index)
       else
 	vv->miss_type = MISSING_NONE;
 
-      if (!parse_format_spec (h, sv.print, &vv->print, vv)
-	  || !parse_format_spec (h, sv.write, &vv->write, vv))
+      if (!parse_format_spec (h, sv.print, &vv->print, vv))
 	goto lossage;
+/*	We do not need this part in the if() condition:
+	  || !parse_format_spec (h, sv.write, &vv->write, vv))  
+	 as this produces some uncertainty about the format type given 
+	  https://www.gnu.org/software/pspp/pspp-dev/html_node/Variable-Record.html#Variable-Record
+	  tells us on June 9, 2017:
+	  "A few system files have been observed in the wild with invalid write fields, in particular with value 0. Readers should probably treat invalid print or write fields as some default format. "
+*/
     }
 
   /* Some consistency checks. */

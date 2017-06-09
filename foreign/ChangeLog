@@ -1,3 +1,13 @@
+2017-06-09  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+	* rsrc/sfm-read.c: Do not evaluate the write field for the format 
+	  type any more as this produces errors and given 
+	  https://www.gnu.org/software/pspp/pspp-dev/html_node/Variable-Record.html#Variable-Record
+	  tells us on June 9, 2017:
+	  "A few system files have been observed in the wild with invalid write fields, 
+	  in particular with value 0. Readers should probably treat invalid print or 
+	  write fields as some default format. "
+
 2017-05-04  Uwe Ligges <Uwe.Ligges@R-project.org>
 
 	* several bugfixes for writeForeignSPSS:
