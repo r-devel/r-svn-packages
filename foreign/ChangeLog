@@ -1,6 +1,11 @@
+2017-06-12  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+	* R/spss.R: use iconv(..., sub=".") so that character labels/names/values
+	  with invalid or non convertible chars are no longer silently coerced to NA
+
 2017-06-09  Uwe Ligges <Uwe.Ligges@R-project.org>
 
-	* rsrc/sfm-read.c: Do not evaluate the write field for the format 
+	* src/sfm-read.c: Do not evaluate the write field for the format 
 	  type any more as this produces errors and given 
 	  https://www.gnu.org/software/pspp/pspp-dev/html_node/Variable-Record.html#Variable-Record
 	  tells us on June 9, 2017:

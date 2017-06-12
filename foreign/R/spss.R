@@ -1,12 +1,11 @@
 ### This file is part of the 'foreign' package for R.
-
 ###
-###		Read SPSS system data files
+###     Read SPSS system data files
 ###
 ### Copyright 2000-2002 Saikat DebRoy <saikat$stat.wisc.edu>
-###			Douglas M. Bates <bates$stat.wisc.edu>,
-###			Thomas Lumley
-### Copyright 2007-2015 R Core Development Team
+###         Douglas M. Bates <bates$stat.wisc.edu>,
+###         Thomas Lumley
+### Copyright 2007-2017 R Core Development Team
 ### Patched 2013-01-02 following PR#15073 by Peggy Overcashier
 
 ### This file is part of the `foreign' package for R and related languages.
@@ -25,13 +24,13 @@
 ### http://www.r-project.org/Licenses/
 
 read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
-		      max.value.labels = Inf, trim.factor.names = FALSE,
+                      max.value.labels = Inf, trim.factor.names = FALSE,
                       trim_values = TRUE, reencode = NA,
                       use.missings = to.data.frame)
 {
 
     trim <- function(strings, trim=TRUE)
-	if (trim) sub(" +$","",strings) else strings
+        if (trim) sub(" +$","",strings) else strings
 
     ## mappings taken from win-iconv
     knownCP <- c("UCS-2LE" = 1200, "UCS-2BE" = 1201,
@@ -86,15 +85,15 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
 
         if(reencode) {
             message(gettextf("re-encoding from %s", cp), domain = NA)
-            names(rval) <- iconv(names(rval), cp, "")
+            names(rval) <- iconv(names(rval), cp, "", sub=".")
             vl <- attr(rval, "variable.labels")
             nm <- names(vl)
-            vl <- iconv(vl, cp, "")
-            names(vl) <- iconv(nm, cp, "")
+            vl <- iconv(vl, cp, "", sub=".")
+            names(vl) <- iconv(nm, cp, "", sub=".")
             attr(rval, "variable.labels") <- vl
             for(i in seq_along(rval)) {
                 xi <- rval[[i]]
-                if(is.character(xi)) rval[[i]] <- iconv(xi, cp, "")
+                if(is.character(xi)) rval[[i]] <- iconv(xi, cp, "", sub=".")
             }
         }
     }
@@ -104,10 +103,10 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
     if(!is.null(miss)) {
         if(reencode) {
             nm <- names(miss)
-            names(miss) <- iconv(nm, cp, "")
+            names(miss) <- iconv(nm, cp, "", sub=".")
             for(i in seq_along(miss))
                 if(is.character(miss[[i]]$value))
-                   miss[[i]]$value <- iconv(miss[[i]]$value, cp, "")
+                   miss[[i]]$value <- iconv(miss[[i]]$value, cp, "", sub=".")
             attr(rval, "missings") <- miss
         }
         if(use.missings)
@@ -157,7 +156,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
         }
     } else use.missings <- FALSE
 
-    if(reencode) names(vl) <- iconv(names(vl), cp, "")
+    if(reencode) names(vl) <- iconv(names(vl), cp, "", sub=".")
     has.vl <- which(!sapply(vl, is.null))
     for(v in has.vl) {
         nm <- names(vl)[[v]]
@@ -165,8 +164,8 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
         nlabels <- length(vl[[v]])
         if(reencode && nlabels) {
             nm2 <- names(vl[[v]])
-            vl[[v]] <- iconv(vl[[v]], cp, "")
-            names(vl[[v]]) <- iconv(nm2, cp, "")
+            vl[[v]] <- iconv(vl[[v]], cp, "", sub=".")
+            names(vl[[v]]) <- iconv(nm2, cp, "", sub=".")
         }
         if (use.value.labels &&
             (!is.finite(max.value.labels) || nvalues <= max.value.labels) &&
