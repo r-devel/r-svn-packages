@@ -31,8 +31,8 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   \item{trim_values}{logical: should values and value labels have
     trailing spaces ignored when matching for \code{use.value.labels = TRUE}?}
   \item{reencode}{logical: should character strings be re-encoded to the
-    current locale.  The default, \code{NA}, means to do so in a UTF-8
-    locale, only.  Alternatively a character string specifying an encoding to
+    current locale.  The default, \code{NA}, means to do so in UTF-8 or latin-1
+    locales, only.  Alternatively a character string specifying an encoding to
     assume for the file.}
   \item{use.missings}{logical: should information on user-defined
     missing values be used to set the corresponding values to \code{NA}?}
@@ -104,7 +104,7 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   provides a list of translations from Windows codepage numbers to
   encoding names that \code{\link{iconv}} is likely to know about and so
   suitable values for \code{reencode}.  Automatic re-encoding is
-  attempted for apparent codepages of 200 or more in a UTF-8 locale:
+  attempted for apparent codepages of 200 or more in a UTF-8 or latin-1 locale:
   some other high-numbered codepages can be re-encoded on most systems,
   but the encoding names are platform-dependent (see
   \code{\link{iconvlist}}).
@@ -119,7 +119,7 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   which need re-encoding.  The most common occurrence is Windows codepage
   1252, a superset of Latin-1.  The encoding is recorded (as an integer)
   in attribute \code{"codepage"} of the result if it looks like a
-  Windows codepage.  Automatic re-encoding is done only in UTF-8
+  Windows codepage.  Automatic re-encoding is done only in UTF-8 and latin-1
   locales: see argument \code{reencode}.
 }
 \author{Saikat DebRoy and the R-core team}

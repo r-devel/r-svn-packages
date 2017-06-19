@@ -80,8 +80,13 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
             attr(rval, "codepage") <- NULL
             reencode <- FALSE
         } else cp <- paste("CP", codepage, sep="")
-        if(is.na(reencode))
-            reencode <- l10n_info()[["UTF-8"]] && (codepage != 65001)
+        if(is.na(reencode)){
+            l10ni <- l10n_info()
+            ## Do not reencode from UTF-8 in a UTF-8 locale and 
+            ## not from latin1 in a latin1 locale
+            reencode <- (l10ni[["UTF-8"]] && (codepage != 65001)) || 
+                        (l10ni[["Latin-1"]] && (codepage != 28591))
+        }
 
         if(reencode) {
             message(gettextf("re-encoding from %s", cp), domain = NA)

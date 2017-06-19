@@ -1,8 +1,10 @@
 2017-06-19  Uwe Ligges <Uwe.Ligges@R-project.org>
 	
-	* R/spss.R: allow to pass a "..." argument to as.data.frame,
-	  add argument "sub" for substituting invalid chars rather than returning NAs and 
-	  allowing for back compatibility
+	* R/spss.R: 
+	 - allow to pass a "..." argument to as.data.frame,
+	   add argument "sub" for substituting invalid chars rather than returning NAs and 
+	   allowing for back compatibility
+	 - now also auto-reencodes if R is ruinning in a latin-1 locale and sav file's encoding is not.
 	* src/sfm-read.c: Update for format type 7 subtypes:
 	 - more comments and restructured
 	 - information from 
