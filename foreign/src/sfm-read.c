@@ -404,24 +404,39 @@ sfm_read_dictionary (struct file_handle * h, struct sfm_read_info * inf)
 
 	    switch (data.subtype)
 	      {
-	      case 3:
+			  
+		/* subtypes as specified by PSPP documentation at
+			  https://www.gnu.org/software/pspp/pspp-dev/html_node/System-File-Format.html#System-File-Format
+		*/
+			  
+	      case 3: /* Machine integer information */
 		  if (!read_machine_int32_info (h, data.size, data.count,
 						&(inf->encoding)))
 		  goto lossage;
 		break;
 
-	      case 4:
+	      case 4: /* Machine floating point information */
 		if (!read_machine_flt64_info (h, data.size, data.count))
 		  goto lossage;
 		break;
 
-	      case 5:
-	      case 6:
-	      case 11: /* ?? Used by SPSS 8.0. */
+	      case 5:  /* grouped variables */ 
 		skip = 1;
 		break;
 
-	      case 7: /* Multiple-response sets (later versions of SPSS). */
+	      case 6: /* some rarely used date information */
+		skip = 1;
+		break;
+
+	      case 7: /* Multiple-response sets */
+		skip = 1;
+		break;
+
+	      case 11: /*Variable Display Parameter Record */
+		skip = 1;
+		break;
+
+	      case 12: /* UUID, rarely used */
 		skip = 1;
 		break;
 
@@ -431,14 +446,45 @@ sfm_read_dictionary (struct file_handle * h, struct sfm_read_info * inf)
 		  goto lossage;
 		break;
 
-	      case 16: /* See http://www.nabble.com/problem-loading-SPSS-15.0-save-files-t2726500.html */
+	      case 14: /* Very Long String Record */
+		warning(_("%s: Very long string record(s) found (record type 7, subtype %d), each will be imported in consecutive separate variables"), h->fn, data.subtype);
 		skip = 1;
 		break;
 
-	      case 20:
+	      case 16: /* Extended Number of Cases Record (64-bit integer to represent ncases rather than 32-bit in system file header) */
+		  skip = 1;
+		break;
+
+	      case 17: /* Data File Attributes Record */
+		skip = 1;
+		break;
+		  
+	      case 18: /* Variable Attributes Records */
 		skip = 1;
 		break;
 
+	      case 19: /* bninary multiple-response sets */
+		skip = 1;
+		break;
+		  
+	      case 20: /* another codepage information */
+		skip = 1;
+		break;
+
+	      case 21: /* Long String Value Labels Record */
+		warning(_("%s: Long string value labels record found (record type 7, subtype %d), but ignored"), h->fn, data.subtype);
+		skip = 1;
+		break;
+
+	      case 22: /* Long String Missing Values Record */
+		warning(_("%s: Long string missing values record found (record type 7, subtype %d), but ignored"), h->fn, data.subtype);
+		skip = 1;
+		break;
+		  
+	      case 24: /* XML that describes how data in the file should be displayed on-screen */
+		skip = 1;
+		break;
+						  
 	      default:
 		warning(_("%s: Unrecognized record type 7, subtype %d encountered in system file"), h->fn, data.subtype);
 		skip = 1;
