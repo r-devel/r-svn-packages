@@ -14,7 +14,8 @@
 \usage{
 read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
           max.value.labels = Inf, trim.factor.names = FALSE,
-          trim_values = TRUE, reencode = NA, use.missings = to.data.frame)
+          trim_values = TRUE, reencode = NA, use.missings = to.data.frame, 
+          sub = ".", ...)
 }
 \arguments{
   \item{file}{character string: the name of the file or URL to read.}
@@ -35,6 +36,10 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
     assume for the file.}
   \item{use.missings}{logical: should information on user-defined
     missing values be used to set the corresponding values to \code{NA}?}
+  \item{sub}{character string: If not \code{NA} it is used by \code{\link{iconv}} 
+    to replace any non-convertible bytes in character/factor input. 
+    Default is \code{"."}. For back compatibility with \pkg{foreign} versions <= 0.8-68 use \code{sub=NA}.}
+  \item{...}{passed to \code{\link{as.data.frame}} if \code{to.data.frame = TRUE}.} 
 }
 \value{
   A list (or optionally a data frame) with one component for each

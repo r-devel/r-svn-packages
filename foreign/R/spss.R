@@ -26,11 +26,11 @@
 read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
                       max.value.labels = Inf, trim.factor.names = FALSE,
                       trim_values = TRUE, reencode = NA,
-                      use.missings = to.data.frame)
+                      use.missings = to.data.frame, sub = ".", ...)
 {
 
     trim <- function(strings, trim=TRUE)
-        if (trim) sub(" +$","",strings) else strings
+        if (trim && is.character(strings)) sub(" +$", "", strings) else strings
 
     ## mappings taken from win-iconv
     knownCP <- c("UCS-2LE" = 1200, "UCS-2BE" = 1201,
@@ -85,15 +85,15 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
 
         if(reencode) {
             message(gettextf("re-encoding from %s", cp), domain = NA)
-            names(rval) <- iconv(names(rval), cp, "", sub=".")
+            names(rval) <- iconv(names(rval), cp, "", sub=sub)
             vl <- attr(rval, "variable.labels")
             nm <- names(vl)
-            vl <- iconv(vl, cp, "", sub=".")
-            names(vl) <- iconv(nm, cp, "", sub=".")
+            vl <- iconv(vl, cp, "", sub=sub)
+            names(vl) <- iconv(nm, cp, "", sub=sub)
             attr(rval, "variable.labels") <- vl
             for(i in seq_along(rval)) {
                 xi <- rval[[i]]
-                if(is.character(xi)) rval[[i]] <- iconv(xi, cp, "", sub=".")
+                if(is.character(xi)) rval[[i]] <- iconv(xi, cp, "", sub=sub)
             }
         }
     }
@@ -103,10 +103,10 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
     if(!is.null(miss)) {
         if(reencode) {
             nm <- names(miss)
-            names(miss) <- iconv(nm, cp, "", sub=".")
+            names(miss) <- iconv(nm, cp, "", sub=sub)
             for(i in seq_along(miss))
                 if(is.character(miss[[i]]$value))
-                   miss[[i]]$value <- iconv(miss[[i]]$value, cp, "", sub=".")
+                   miss[[i]]$value <- iconv(miss[[i]]$value, cp, "", sub=sub)
             attr(rval, "missings") <- miss
         }
         if(use.missings)
@@ -156,7 +156,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
         }
     } else use.missings <- FALSE
 
-    if(reencode) names(vl) <- iconv(names(vl), cp, "", sub=".")
+    if(reencode) names(vl) <- iconv(names(vl), cp, "", sub=sub)
     has.vl <- which(!sapply(vl, is.null))
     for(v in has.vl) {
         nm <- names(vl)[[v]]
@@ -164,8 +164,8 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
         nlabels <- length(vl[[v]])
         if(reencode && nlabels) {
             nm2 <- names(vl[[v]])
-            vl[[v]] <- iconv(vl[[v]], cp, "", sub=".")
-            names(vl[[v]]) <- iconv(nm2, cp, "", sub=".")
+            vl[[v]] <- iconv(vl[[v]], cp, "", sub=sub)
+            names(vl[[v]]) <- iconv(nm2, cp, "", sub=sub)
         }
         if (use.value.labels &&
             (!is.finite(max.value.labels) || nvalues <= max.value.labels) &&
@@ -180,7 +180,7 @@ read.spss <- function(file, use.value.labels = TRUE, to.data.frame = FALSE,
 
     if (to.data.frame) {
         varlab <- attr(rval, "variable.labels")
-        rval <- as.data.frame(rval)
+        rval <- as.data.frame(rval, ...)
         attr(rval, "variable.labels") <- varlab
         if(codepage > 500) attr(rval, "codepage") <- codepage
     }

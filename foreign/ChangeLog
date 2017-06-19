@@ -1,8 +1,12 @@
 2017-06-19  Uwe Ligges <Uwe.Ligges@R-project.org>
-
+	
+	* R/spss.R: allow to pass a "..." argument to as.data.frame,
+	  add argument "sub" for substituting invalid chars rather than returning NAs and 
+	  allowing for back compatibility
 	* src/sfm-read.c: Update for format type 7 subtypes:
 	 - more comments and restructured
-	 - information from https://www.gnu.org/software/pspp/pspp-dev/html_node/System-File-Format.html#System-File-Format
+	 - information from 
+	   https://www.gnu.org/software/pspp/pspp-dev/html_node/System-File-Format.html#System-File-Format
 	 - no longer warns for subtypes 12, 17, 18, 19, 20, 24 as these can be safely ignored
 	 - more informative warning messages for subtypes 14, 21, 22 (long strings)
 
