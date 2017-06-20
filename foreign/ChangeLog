@@ -1,3 +1,18 @@
+2017-06-20  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+	* R/spss.R: 
+	 - fix for R >= 3.4.0 not allowing duplicated factor labels, hence new arguments
+	   duplicated.value.labels and duplicated.value.labels.infix
+	   that control whether to make factor labels unique or to condence 
+	   all levels with identical factor labels into one level
+	 - new argument add.undeclared.levels: Many files observed in the wild
+	   have variables with one or more value labels and further 
+       non-missing values that have no value label. 
+	   We cann now sepcify whether the other levels should be appended or sorted
+	   into the declared labels, or not to convert to factor at all.
+	   This fixes several issues, e.g. that values without labels were 
+	   regarded as NA values before.
+
 2017-06-19  Uwe Ligges <Uwe.Ligges@R-project.org>
 	
 	* R/spss.R: 

@@ -15,7 +15,9 @@
 read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
           max.value.labels = Inf, trim.factor.names = FALSE,
           trim_values = TRUE, reencode = NA, use.missings = to.data.frame, 
-          sub = ".", ...)
+          sub = ".", add.undeclared.levels = c("sort", "append", "no"),
+          duplicated.value.labels = c("append", "condense"),
+          duplicated.value.labels.infix = "_duplicated_", ...)
 }
 \arguments{
   \item{file}{character string: the name of the file or URL to read.}
@@ -38,7 +40,35 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
     missing values be used to set the corresponding values to \code{NA}?}
   \item{sub}{character string: If not \code{NA} it is used by \code{\link{iconv}} 
     to replace any non-convertible bytes in character/factor input. 
-    Default is \code{"."}. For back compatibility with \pkg{foreign} versions <= 0.8-68 use \code{sub=NA}.}
+    Default is \code{"."}. For back compatibility with \pkg{foreign} 
+    versions <= 0.8-68 use \code{sub=NA}.}
+  \item{add.undeclared.levels}{character: 
+    specify how to handle variables with at least one value label and further 
+    non-missing values that have no value label (like a factor levels in R).
+    For \code{"sort") (the default) it adds undeclared factor levels to the 
+    already declared levels (and labels) and sort them according to level,
+    for \code{"append"} it appends undeclared factor levels to declared levels 
+    (and labels) without sorting, and
+    for \code{"no"} this does not convert to factor in case of numeric SPSS levels 
+    (not labels), and still converts to factor if the SPSS levels are characters 
+    and \code{to.data.frame=TRUE}.
+    For back compatibility with \pkg{foreign} versions <= 0.8-68 use 
+    \code{add.undeclared.levels="no"} (not recommended as this may convert some 
+    values with missing corresponding value labels to \code{NA}).
+  }
+  \item{duplicated.value.labels}{character: what to do with duplicated value 
+    labels for different levels .
+    For \code{"append"} (the default), the first original value label is kept 
+    while further duplicated labels are renamed to 
+    \code{paste0(label, duplicated.value.labels.infix, level)},
+    for \code{"condense"}, all levels with identical labels are condensed into 
+    exactly the first of these levels in R.
+    Back compatibility with \pkg{foreign} versions <= 0.8-68 is not given as 
+    R versions >= 3.4.0 no longer support duplicated factor labels.
+    }
+  \item{duplicated.value.labels.infix}{character: the infix used for labels of 
+    factor levels with duplicated value labels in SPSS (default \code{"_duplicated_"}) 
+    if \code{duplicated.value.labels="append"}.}
   \item{...}{passed to \code{\link{as.data.frame}} if \code{to.data.frame = TRUE}.} 
 }
 \value{
@@ -84,10 +114,7 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   data), and you will not want these variables converted to factors.  By
   setting \code{max.value.labels} you can specify that variables with a
   large number of distinct values are not converted to factors even if
-  they have value labels.  In addition, variables will not be converted
-  to factors if there are non-missing values that have no value label.
-  The value labels are then returned in the \code{"value.labels"}
-  attribute of the variable.
+  they have value labels.  
   
   If SPSS variable labels are present, they are returned as the
   \code{"variable.labels"} attribute of the answer.
