@@ -45,7 +45,7 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   \item{add.undeclared.levels}{character: 
     specify how to handle variables with at least one value label and further 
     non-missing values that have no value label (like a factor levels in R).
-    For \code{"sort") (the default) it adds undeclared factor levels to the 
+    For \code{"sort"} (the default) it adds undeclared factor levels to the 
     already declared levels (and labels) and sort them according to level,
     for \code{"append"} it appends undeclared factor levels to declared levels 
     (and labels) without sorting, and
@@ -54,10 +54,9 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
     and \code{to.data.frame=TRUE}.
     For back compatibility with \pkg{foreign} versions <= 0.8-68 use 
     \code{add.undeclared.levels="no"} (not recommended as this may convert some 
-    values with missing corresponding value labels to \code{NA}).
-  }
+    values with missing corresponding value labels to \code{NA}).}
   \item{duplicated.value.labels}{character: what to do with duplicated value 
-    labels for different levels .
+    labels for different levels.
     For \code{"append"} (the default), the first original value label is kept 
     while further duplicated labels are renamed to 
     \code{paste0(label, duplicated.value.labels.infix, level)},
@@ -69,8 +68,7 @@ read.spss(file, use.value.labels = TRUE, to.data.frame = FALSE,
   \item{duplicated.value.labels.infix}{character: the infix used for labels of 
     factor levels with duplicated value labels in SPSS (default \code{"_duplicated_"}) 
     if \code{duplicated.value.labels="append"}.}
-  \item{...}{passed to \code{\link{as.data.frame}} if \code{to.data.frame = TRUE}.} 
-}
+  \item{...}{passed to \code{\link{as.data.frame}} if \code{to.data.frame = TRUE}.}}
 \value{
   A list (or optionally a data frame) with one component for each
   variable in the saved data set.
