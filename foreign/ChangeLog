@@ -1,3 +1,8 @@
+2017-06-21  Uwe Ligges <Uwe.Ligges@R-project.org>
+
+	* DESCRIPTION: Version is 0.8-69
+	* add more sophisticated test cases and new examples for read.spss
+
 2017-06-20  Uwe Ligges <Uwe.Ligges@R-project.org>
 
 	* R/spss.R: 

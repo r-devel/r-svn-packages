@@ -1,7 +1,7 @@
 Package: foreign
 Priority: recommended
-Version: 0.8-68
-Date: 2017-04-22
+Version: 0.8-69
+Date: 2017-06-21
 Title: Read Data Stored by 'Minitab', 'S', 'SAS', 'SPSS', 'Stata', 'Systat', 'Weka', 'dBase', ...
 Depends: R (>= 3.0.0)
 Imports: methods, utils, stats
@@ -13,6 +13,7 @@ Authors@R: c(
     person("Saikat", "DebRoy", role = c("ctb", "cph")),
     person("Stephen", "Eglen", role = c("ctb", "cph")),
     person("Rajarshi", "Guha", role = c("ctb", "cph")),
+    person("Swetlana", "Herbrandt", role = "ctb"),
     person("Nicholas", "Lewin-Koh", role = c("ctb", "cph")),
     person("Mark", "Myatt", role = c("ctb", "cph")),
     person("Ben", "Pfaff", role = "ctb"),
