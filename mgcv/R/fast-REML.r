@@ -751,7 +751,7 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
   D <- matrix(unlist(Skb),nrow(R),nd)
   bSb1 <- colSums(beta*D)
   #D <- D[piv,]/d[piv]
-  D1 <- .Call(C_mgcv_Rpforwardsolve,t(R),D[piv,]/d[piv],nt)
+  D1 <- .Call(C_mgcv_Rpforwardsolve,R,D[piv,]/d[piv],nt) ## note R transposed internally unlike forwardsolve
   db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D1,nt)/d[piv]
   #db[piv,] <- -backsolve(R,forwardsolve(t(R),D))/d[piv]
 
@@ -781,7 +781,7 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
   #}
   ## rss2 <- 2 * t(db) %*% XX.db
   rss2 <- 2 * .Call(C_mgcv_pmmult2,db,XX.db,1,0,nt)
-  bSb2 <- diag(colSums(beta*D))
+  bSb2 <- diag(x=colSums(beta*D),nrow=nd)
   ## bSb2 <- bSb2 + 2*(t(db)%*%(D+S.db) + t(D)%*%db)
   bSb2 <- bSb2 + 2 * (.Call(C_mgcv_pmmult2,db,D+S.db,1,0,nt) + .Call(C_mgcv_pmmult2,D,db,1,0,nt))
   list(bSb=sum(beta*Sb),bSb1=bSb1,bSb2=bSb2,

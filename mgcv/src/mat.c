@@ -1854,10 +1854,10 @@ void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc,int *ri
 
 void mgcv_pforwardsolve(double *R,int *r,int *c,double *B,double *C, int *bc,int *nt) 
 /* parallel forward solve, using nt threads.
-   Finds C = R^{-T} B where R is the c by c matrix stored in the upper triangle 
+   Finds C = R^{-T} B where R is the c by c matrix stored in the **upper** triangle 
    of r by c argument R. B is c by bc. (Possibility of non square argument
    R facilitates use with output from mgcv_qr). This is just a standard forward 
-   substitution loop.
+   substitution loop. NOTE: R stored in UPPER not lower triangle.  
 */  
 { double *pR,*pC,alpha=1.0;
   int cpt,cpf,nth,i,cp;
@@ -1926,7 +1926,7 @@ SEXP mgcv_Rpforwardsolve(SEXP R, SEXP B,SEXP NT) {
 } /* mgcv_Rpforwardsolve */
 
 SEXP mgcv_Rpbacksolve(SEXP R, SEXP B,SEXP NT) {
-/* .Call wrapper for mgcv_pforwardsolve.
+/* .Call wrapper for mgcv_pbacksolve.
    Return object a matrix.
 
 */
