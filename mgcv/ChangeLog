@@ -7,6 +7,9 @@ Currently deprecated and liable to be removed:
 
 1.8-18
 
+* gam.check modified to fix a couple of issues with 'gamm' fitted models, and 
+  to warn that interpretability is reduced for such models. 
+
 * plot.gam fix to handling of plot limits when using 'trans' (from 1.8-16 
   'trans' could be applied twice). 
 

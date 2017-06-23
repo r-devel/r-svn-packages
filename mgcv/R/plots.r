@@ -279,45 +279,51 @@ gam.check <- function(b, old.style=FALSE,
     if (is.matrix(fv)&&!is.matrix(b$y)) fv <- fv[,1]
     plot(fv, napredict(b$na.action, b$y),
          xlab="Fitted Values",ylab="Response",main="Response vs. Fitted Values",...)
-    if (!(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML"))) { ## gamm `gam' object
-       par(old.par)
-       return(invisible())
-    }
-    ## now summarize convergence information 
-    cat("\nMethod:",b$method,"  Optimizer:",b$optimizer)
-    if (!is.null(b$outer.info)) { ## summarize convergence information
-      if (b$optimizer[2]%in%c("newton","bfgs"))
-      { boi <- b$outer.info
-        cat("\n",boi$conv," after ",boi$iter," iteration",sep="")
-        if (boi$iter==1) cat(".") else cat("s.")
-        cat("\nGradient range [",min(boi$grad),",",max(boi$grad),"]",sep="")
-        cat("\n(score ",b$gcv.ubre," & scale ",b$sig2,").",sep="")
-        ev <- eigen(boi$hess)$values
-        if (min(ev)>0) cat("\nHessian positive definite, ") else cat("\n")
-        cat("eigenvalue range [",min(ev),",",max(ev),"].\n",sep="")
-      } else { ## just default print of information ..
-        cat("\n");print(b$outer.info)
-      }
-    } else { ## no sp, perf iter or AM case
-      if (length(b$sp)==0) ## no sp's estimated  
-        cat("\nModel required no smoothing parameter selection")
-      else { 
-        cat("\nSmoothing parameter selection converged after",b$mgcv.conv$iter,"iteration")       
-        if (b$mgcv.conv$iter>1) cat("s")
-         
-        if (!b$mgcv.conv$fully.converged)
-        cat(" by steepest\ndescent step failure.\n") else cat(".\n")
-        cat("The RMS",b$method,"score gradient at convergence was",b$mgcv.conv$rms.grad,".\n")
-        if (b$mgcv.conv$hess.pos.def)
-        cat("The Hessian was positive definite.\n") else cat("The Hessian was not positive definite.\n")
-        #cat("The estimated model rank was ",b$mgcv.conv$rank,
-        #           " (maximum possible: ",b$mgcv.conv$full.rank,")\n",sep="")
-      }
-    }
-    if (!is.null(b$rank)) {
-      cat("Model rank = ",b$rank,"/",length(b$coefficients),"\n")
-    }
 
+    gamm <- !(b$method%in%c("GCV","GACV","UBRE","REML","ML","P-ML","P-REML","fREML")) ## gamm `gam' object
+
+    #if (is.null(.Platform$GUI) || .Platform$GUI != "RStudio") par(old.par)
+    #   return(invisible())
+    #}
+    ## now summarize convergence information 
+    if (gamm) {
+      cat("\n\'gamm\' based fit - care required with interpretation.")
+      cat("\nChecks based on working residuals may be misleading.")
+    } else { 
+      cat("\nMethod:",b$method,"  Optimizer:",b$optimizer)
+      if (!is.null(b$outer.info)) { ## summarize convergence information
+        if (b$optimizer[2]%in%c("newton","bfgs"))
+        { boi <- b$outer.info
+          cat("\n",boi$conv," after ",boi$iter," iteration",sep="")
+          if (boi$iter==1) cat(".") else cat("s.")
+          cat("\nGradient range [",min(boi$grad),",",max(boi$grad),"]",sep="")
+          cat("\n(score ",b$gcv.ubre," & scale ",b$sig2,").",sep="")
+          ev <- eigen(boi$hess)$values
+          if (min(ev)>0) cat("\nHessian positive definite, ") else cat("\n")
+          cat("eigenvalue range [",min(ev),",",max(ev),"].\n",sep="")
+        } else { ## just default print of information ..
+          cat("\n");print(b$outer.info)
+        }
+      } else { ## no sp, perf iter or AM case
+        if (length(b$sp)==0) ## no sp's estimated  
+          cat("\nModel required no smoothing parameter selection")
+        else { 
+          cat("\nSmoothing parameter selection converged after",b$mgcv.conv$iter,"iteration")       
+          if (b$mgcv.conv$iter>1) cat("s")
+         
+          if (!b$mgcv.conv$fully.converged)
+          cat(" by steepest\ndescent step failure.\n") else cat(".\n")
+          cat("The RMS",b$method,"score gradient at convergence was",b$mgcv.conv$rms.grad,".\n")
+          if (b$mgcv.conv$hess.pos.def)
+          cat("The Hessian was positive definite.\n") else cat("The Hessian was not positive definite.\n")
+          #cat("The estimated model rank was ",b$mgcv.conv$rank,
+          #           " (maximum possible: ",b$mgcv.conv$full.rank,")\n",sep="")
+        }
+      }
+      if (!is.null(b$rank)) {
+        cat("Model rank = ",b$rank,"/",length(b$coefficients),"\n")
+      }
+    } ## if gamm
     cat("\n")
     ## now check k
     kchck <- k.check(b,subsample=k.sample,n.rep=k.rep)
