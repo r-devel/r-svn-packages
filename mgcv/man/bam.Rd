@@ -12,8 +12,7 @@ are designed for datasets containing upwards of several tens of thousands of dat
 of \code{bam} is much lower memory footprint than \code{\link{gam}}, but it can also be much faster, 
 for large datasets. \code{bam} can also compute on a cluster set up by the \link[parallel]{parallel} package.
 
-An alternative fitting approach is provided by the \code{discrete==TRUE} method. In this case a method based on discretization of 
-covariate values and C code level parallelization (controlled by the \code{nthreads} argument instead of the \code{cluster} argument) is used. This extends both the data set and model size usable.
+An alternative fitting approach (Wood et al. 2016) is provided by the \code{discrete==TRUE} method. In this case a method based on discretization of covariate values and C code level parallelization (controlled by the \code{nthreads} argument instead of the \code{cluster} argument) is used. This extends both the data set and model size usable.
 
 }
 \usage{

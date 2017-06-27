@@ -656,6 +656,7 @@ plot.mrf.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
     raw <- data[x$term][[1]]
     dat <- data.frame(x=factor(names(x$xt$polys),levels=levels(x$knots)))
     names(dat) <- x$term
+    x$by <- "NA"
     X <- PredictMat(x,dat)   # prediction matrix for this term
     if (is.null(xlab)) xlabel<- "" else xlabel <- xlab
     if (is.null(ylab)) ylabel <- "" else ylabel <- ylab

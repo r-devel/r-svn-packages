@@ -10,6 +10,8 @@ Currently deprecated and liable to be removed:
 * gam.check modified to fix a couple of issues with 'gamm' fitted models, and 
   to warn that interpretability is reduced for such models. 
 
+* fix to plot.mrf.smooth to deal with models with by variables.  
+
 * plot.gam fix to handling of plot limits when using 'trans' (from 1.8-16 
   'trans' could be applied twice). 
 
@@ -40,6 +42,7 @@ Currently deprecated and liable to be removed:
 
 * Minor fix in gam.fit5 - 1 by 1 matrix coerced to scalar, to prevent failure 
   in some circumstances. 
+
 
 1.8-17
 
