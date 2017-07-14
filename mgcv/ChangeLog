@@ -10,6 +10,10 @@ Currently deprecated and liable to be removed:
 * gam.check modified to fix a couple of issues with 'gamm' fitted models, and 
   to warn that interpretability is reduced for such models. 
 
+* qq.gam default method slight modification to default generation of reference
+  quantiles. In theory previous method could cause a problem if enough residuals 
+  were exactly equal.
+
 * fix to plot.mrf.smooth to deal with models with by variables.  
 
 * plot.gam fix to handling of plot limits when using 'trans' (from 1.8-16 

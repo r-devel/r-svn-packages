@@ -134,8 +134,9 @@ qq.gam <- function(object, rep=0, level=.9,s.rep=10,
     }
   } else {
     ## ix <- sort.int(D,index.return=TRUE)$ix ## messes up under multiple ties!
-    ix <- rank(D)
-    U <- (ix-.5)/length(D)
+    #ix <- rank(D)
+    #U <- (ix-.5)/length(D) ## code used pre-randomization - not needed
+    U <- (1:n-.5)/n
     if (!is.null(fam$qf)) { 
       dm <- matrix(0,n,s.rep)
       for (i in 1:s.rep) { 
@@ -145,13 +146,6 @@ qq.gam <- function(object, rep=0, level=.9,s.rep=10,
         dm[,i] <- sort(residuals(object,type=type)) ## original proposal
       }
       Dq <- sort(rowMeans(dm))
-     # Dq <- quantile(as.numeric(dm),(1:n - .5)/n)
-
-     # nd <- length(Dq)
-     # q1 <- fam$qf(1-U,object$fitted.values,object$prior.weights,object$sig2)
-     # object$y <- q1
-     # Dq <- sort(c(Dq,residuals(object,type=type)))
-     # Dq <- (Dq[(1:nd)*2]+Dq[(1:nd)*2-1])*.5 ## more powerful alternative 
     }
   }
  
