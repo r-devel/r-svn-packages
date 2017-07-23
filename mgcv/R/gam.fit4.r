@@ -325,17 +325,19 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
      
    coefold <- null.coef
    conv <-  boundary <- FALSE
- 
+   dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
+   w <- dd$Deta2 * .5;
+   wz <- w*(eta-offset) - .5*dd$Deta
+   z <- (eta-offset) - dd$Deta.Deta2
+   good <- is.finite(z)&is.finite(w)
+
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       if (control$trace) cat(iter," ")
-      dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-
-      # good <- is.finite(dd$Deta.Deta2)
-  
-      w <- dd$Deta2 * .5;
-      wz <- w*(eta-offset) - .5*dd$Deta
-      z <- (eta-offset) - dd$Deta.Deta2
-      good <- is.finite(z)&is.finite(w)
+    #  dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
+    #  w <- dd$Deta2 * .5;
+    #  wz <- w*(eta-offset) - .5*dd$Deta
+    #  z <- (eta-offset) - dd$Deta.Deta2
+    #  good <- is.finite(z)&is.finite(w)
       if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
       if (sum(!good)) {
         use.wy <- TRUE
@@ -349,7 +351,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
                      nt=as.integer(control$nthreads),use.wy=as.integer(use.wy))
-      if (oo$n<0) { ## then problem is indefinite - switch to +ve weights for this step
+      posdef <- oo$n >= 0
+      if (!posdef) { ## then problem is indefinite - switch to +ve weights for this step
         if (control$trace) cat("**using positive weights\n")
         # problem is that Fisher can be very poor for zeroes  
 
@@ -464,12 +467,17 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         }
      } ## end of pdev divergence
 
+     ## get new weights and pseudodata (needed now for grad testing)...
+     dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
+     w <- dd$Deta2 * .5;
+     wz <- w*(eta-offset) - .5*dd$Deta
+     z <- (eta-offset) - dd$Deta.Deta2
+     good <- is.finite(z)&is.finite(w) 
      ## convergence testing...
-
-     if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
+     if (posdef && abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
        ## Need to check coefs converged adequately, to ensure implicit differentiation
        ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
-       ## drop same parameter every iteration!)       
+       ## drop same parameter every iteration!)
        grad <- 2 * t(x[good,])%*%((w[good]*(x%*%start)[good]-wz[good]))+ 2*St%*%start 
        if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
          old.pdev <- pdev  ## not converged quite enough

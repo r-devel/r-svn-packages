@@ -7,6 +7,12 @@ Currently deprecated and liable to be removed:
 
 1.8-18
 
+* 'scat' family now takes a 'min.df' argument which defaults to 3. Could 
+  otherwise occasionally have indefinite LAML problems as df headed towards 2.
+
+* Fix to `gam.fit4' where in rare circumstances the PIRLS iteration could 
+  finish at an indefinite point, spoiling implicit differentiation. 
+
 * gam.check modified to fix a couple of issues with 'gamm' fitted models, and 
   to warn that interpretability is reduced for such models. 
 

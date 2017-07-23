@@ -10,11 +10,11 @@ to be estimated alongside the smoothing parameters.
 }
 
 \usage{
-scat(theta = NULL, link = "identity")
+scat(theta = NULL, link = "identity",min.df=3)
 }
 \arguments{
-\item{theta}{the parameters to be estimated \eqn{\nu = 2 + \exp(\theta_1)}{nu = 2 + exp(theta_1) } and 
-\eqn{\sigma = \exp(\theta_2)}{sig = exp(theta_2)}. If supplied and positive, then taken to be fixed values of 
+\item{theta}{the parameters to be estimated \eqn{\nu = b + \exp(\theta_1)}{nu = b + exp(theta_1) } (where `b' is \code{min.df}) and 
+\eqn{\sigma = \exp(\theta_2)}{sig = exp(theta_2)}. If supplied and both positive, then taken to be fixed values of 
 \eqn{\nu}{nu} and \eqn{\sigma}{sig}. If any negative, then absolute values taken as starting values. }
 
 \item{link}{The link function: one of \code{"identity"}, \code{"log"} or \code{"inverse"}.}
@@ -24,12 +24,14 @@ scat(theta = NULL, link = "identity")
 An object of class \code{extended.family}.
 }
 
-\details{Useful in place of Gaussian, when data are heavy tailed.
+\details{Useful in place of Gaussian, when data are heavy tailed. \code{min.df} can be modified, but lower values can occasionally
+lead to convergence problems in smoothing parameter estimation. In any case \code{min.df} should be >2, since only then does a t
+random variable have finite variance.   
 }
 
 %- maybe also `usage' for other objects documented here.
 
-\author{ Natalya Pya (nyp20@bath.ac.uk)
+\author{ Natalya Pya (nat.pya@gmail.com)
 }
 \references{
 Wood, S.N., N. Pya and B. Saefken (2016), Smoothing parameter and
@@ -45,7 +47,7 @@ library(mgcv)
 ## Simulate some t data...
 set.seed(3);n<-400
 dat <- gamSim(1,n=n)
-dat$y <- dat$f + rt(n,df=3)*2
+dat$y <- dat$f + rt(n,df=4)*2
 
 b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=scat(link="identity"),data=dat)
 
