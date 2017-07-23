@@ -2061,9 +2061,10 @@ bam.update <- function(b,data,chunk.size=10000) {
     stop("Model can not be updated")
   }
   gp<-interpret.gam(b$formula) # interpret the formula 
-  
-  X <- predict(b,newdata=data,type="lpmatrix",na.action=b$NA.action) ## extra part of model matrix
-  rownames(X) <- NULL
+
+  ## next 2 lines problematic if there are missings in the response, so now constructed from mf below...
+  ## X <- predict(b,newdata=data,type="lpmatrix",na.action=b$NA.action) ## extra part of model matrix
+  ## rownames(X) <- NULL
   cnames <- names(b$coefficients)
 
   AR.start <- NULL ## keep R checks happy
@@ -2085,7 +2086,10 @@ bam.update <- function(b,data,chunk.size=10000) {
     mf <- model.frame(gp$fake.formula,data,xlev=b$xlev,na.action=b$NA.action)
     w <- rep(1,nrow(mf))
   }
-  
+
+  X <- predict(b,newdata=mf,type="lpmatrix",na.action=b$NA.action) ## extra part of model matrix
+  rownames(X) <- NULL
+
   b$model <- rbind(b$model,mf) ## complete model frame --- old + new
 
   ## get response and offset...
@@ -2168,7 +2172,7 @@ bam.update <- function(b,data,chunk.size=10000) {
      object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,
                     gcv.ubre=fit$reml,hat=res$hat,outer.info=list(iter=fit$iter,
                     message=fit$conv),optimizer="fast-REML",rank=ncol(um$X),
-                    Ve=NULL,Vp=res$V,Vc=res$Vc,db.drho=fit$d1b,scale.estimated = scale<=0)
+                    Ve=res$Ve,Vp=res$Vp,Vc=res$Vc,db.drho=fit$d1b,scale.estimated = scale<=0)
      if (scale<=0) { ## get sp's and scale estimate
        nsp <- length(fit$rho)
        object$sig2 <- object$scale <- exp(fit$rho[nsp])

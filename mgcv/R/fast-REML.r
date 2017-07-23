@@ -1156,7 +1156,7 @@ Sl.Xprep <- function(Sl,X,nt=1) {
 } ## end Sl.Xprep
 
 
-Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L,nt=nt) {
+Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L,nt=1) {
 ## reverse the various fitting re-parameterizations.
 ## X0 is the orginal model matrix before any re-parameterization
 ## or parameter dropping. Sl is also the original *before parameter 
