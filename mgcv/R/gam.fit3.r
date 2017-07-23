@@ -1301,6 +1301,14 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      okc <- FALSE
      eps <- 1e-4
      deriv <- 2
+     if (okc) { ## optional call to fitting to facilitate debugging 
+       trial.der <- 2 ## can reset if derivs not wanted
+       b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
+         offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=trial.der,
+         control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
+         mustart=mustart,scoreType=scoreType,null.coef=null.coef,
+         pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)  
+     }
      deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=deriv,
          control=control,gamma=gamma,scale=scale,
@@ -2411,6 +2419,7 @@ fix.family.var <- function(fam)
   if (!inherits(fam,"family")) stop("fam not a family object")
   if (!is.null(fam$dvar)&&!is.null(fam$d2var)&&!is.null(fam$d3var)) return(fam) 
   family <- fam$family
+  fam$scale <- -1
   if (family=="gaussian") {
     fam$d3var <- fam$d2var <- fam$dvar <- function(mu) rep.int(0,length(mu))
     return(fam)
@@ -2418,12 +2427,14 @@ fix.family.var <- function(fam)
   if (family=="poisson"||family=="quasipoisson") {
     fam$dvar <- function(mu) rep.int(1,length(mu))
     fam$d3var <- fam$d2var <- function(mu) rep.int(0,length(mu))
+    if (family=="poisson") fam$scale <- 1
     return(fam)
   } 
   if (family=="binomial"||family=="quasibinomial") {
     fam$dvar <- function(mu) 1-2*mu
     fam$d2var <- function(mu) rep.int(-2,length(mu))
     fam$d3var <- function(mu) rep.int(0,length(mu))
+    if (family=="binomial") fam$scale <- 1
     return(fam)
   }
   if (family=="Gamma") {

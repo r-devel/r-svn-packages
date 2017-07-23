@@ -3516,7 +3516,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, p.type=0, ...)
     res
   } ## end of pinv
   
-  if (is.null(object$R)) { 
+  if (is.null(object$R)) { ## Factor from QR decomp of sqrt(W)X
     warning("p-values for any terms that can be penalized to zero will be unreliable: refit model to fix this.")
     useR <- FALSE
   } else useR <- TRUE

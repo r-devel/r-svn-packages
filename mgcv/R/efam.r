@@ -1324,6 +1324,7 @@ scat <- function (theta = NULL, link = "identity") {
     
     ls <- function(y,w,n,theta,scale) {
        ## the log saturated likelihood function.
+       ## (Note these are correct but do not correspond to NP notes)
        nu <- exp(theta[1])+2; sig <- exp(theta[2]); nu2 <- nu-2;
        nu2nu <- nu2/nu; nu12 <- (nu+1)/2
        term <- lgamma(nu12) - lgamma(nu/2) - log(sig*(pi*nu)^.5)
