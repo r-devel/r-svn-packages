@@ -19,6 +19,7 @@ scat(theta = NULL, link = "identity",min.df=3)
 
 \item{link}{The link function: one of \code{"identity"}, \code{"log"} or \code{"inverse"}.}
 
+\item{min.df}{minimum degrees of freedom. Should not be set to 2 or less as this implies infinite response variance.}
 }
 \value{
 An object of class \code{extended.family}.
