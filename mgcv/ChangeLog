@@ -7,6 +7,9 @@ Currently deprecated and liable to be removed:
 
 1.8-18
 
+* tweak to 'newton' to furhter reduce chance of false convergence at 
+  indefinite point
+
 * fixes to bam.update to deal with NA#s in response and fast REML smoothing
   parameter estimation. 
 

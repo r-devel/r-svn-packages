@@ -1345,6 +1345,8 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## get the trial step ...
     eh <- eigen(hess1,symmetric=TRUE)
     d <- eh$values;U <- eh$vectors
+    indef <- (sum(-d > abs(d[1])*.Machine$double.eps^.5)>0) ## indefinite problem
+    
     ## set eigen-values to their absolute value - heuristically appealing
     ## as it avoids very long steps being proposed for indefinte components,
     ## unlike setting -ve e.v.s to very small +ve constant...
@@ -1365,12 +1367,10 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
     ms <- max(abs(Nstep)) ## note smaller permitted step if !pdef
     mns <- maxNstep
-#    mns <- if (pdef) maxNstep else maxNstep/3 ## more cautious if not pdef
-#    if (!all(Nstep*Sstep >= 0)) mns <- mns/2   ## bit more cautious if directions differ 
+
     if (ms>maxNstep) Nstep <- mns * Nstep/ms
     
     sd.unused <- TRUE ## steepest descent direction not yet tried
-
 
     ## try the step ...
     if (sp.trace) cat(lsp,"\n")
@@ -1582,7 +1582,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     score.hist[i] <- score 
    
     ## test for convergence
-    converged <- TRUE
+    converged <- !indef ## not converged if indefinite
     if (reml) score.scale <- abs(log(b$scale.est)) + abs(score) else
     score.scale <- abs(b$scale.est) + abs(score)
     grad2 <- diag(hess)    
