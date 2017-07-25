@@ -1211,7 +1211,10 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
     ## Theta <-  NULL;
     n.theta <- 2
     if (!is.null(theta)&&sum(theta==0)==0) {
-      if (abs(theta[1]<min.df)) stop("scaled t df must be > min.df")
+      if (abs(theta[1]<=min.df)) {
+        min.df <- 0.9*abs(theta[1])
+        warning("Supplied df below min.df. min.df reset")
+      }	
       if (sum(theta<0)) { 
         iniTheta <- c(log(abs(theta[1])-min.df),log(abs(theta[2]))) ## initial theta supplied
       } else { ## fixed theta supplied
