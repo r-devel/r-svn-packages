@@ -247,7 +247,7 @@ summary(b)
 plot(b,pages=1,rug=FALSE)  ## plot smooths, but not rug
 plot(b,pages=1,rug=FALSE,seWithMean=TRUE) ## `with intercept' CIs
 
-\dontrun{ 
+\donttest{ 
 ba <- bam(y ~ s(x0,bs=bs,k=k)+s(x1,bs=bs,k=k)+s(x2,bs=bs,k=k)+
             s(x3,bs=bs,k=k),data=dat,method="GCV.Cp") ## use GCV
 summary(ba)}
@@ -261,14 +261,6 @@ system.time(b1 <- bam(y ~ s(x0,bs=bs)+s(x1,bs=bs)+s(x2,bs=bs,k=k),
             data=dat,family=poisson()))
 b1
 
-
-## Sparse smoother example (deprecated)...
-\dontrun{
-dat <- gamSim(1,n=10000,dist="poisson",scale=.1)
-system.time( b3 <- bam(y ~ te(x0,x1,bs="ps",k=10,np=FALSE)+
-             s(x2,bs="ps",k=30)+s(x3,bs="ps",k=30),data=dat,
-             method="REML",family=poisson(),sparse=TRUE))
-b3}
 
 }
 
