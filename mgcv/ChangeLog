@@ -7,11 +7,10 @@ Currently deprecated and liable to be removed:
 
 1.8-18
 
-* tweak to 'newton' to furhter reduce chance of false convergence at 
-  indefinite point
+* Tweak to 'newton' to further reduce chance of false convergence at 
+  indefinite point.
 
-* fixes to bam.update to deal with NA#s in response and fast REML smoothing
-  parameter estimation. 
+* Fix to bam.update to deal with NAs in response.
 
 * 'scat' family now takes a 'min.df' argument which defaults to 3. Could 
   otherwise occasionally have indefinite LAML problems as df headed towards 2.
@@ -19,19 +18,19 @@ Currently deprecated and liable to be removed:
 * Fix to `gam.fit4' where in rare circumstances the PIRLS iteration could 
   finish at an indefinite point, spoiling implicit differentiation. 
 
-* gam.check modified to fix a couple of issues with 'gamm' fitted models, and 
+* `gam.check' modified to fix a couple of issues with `gamm' fitted models, and 
   to warn that interpretability is reduced for such models. 
 
-* qq.gam default method slight modification to default generation of reference
-  quantiles. In theory previous method could cause a problem if enough residuals 
-  were exactly equal.
+* `qq.gam' default method slight modification to default generation of reference
+  quantiles. In theory previous method could cause a problem if enough 
+  residuals were exactly equal.
 
-* fix to plot.mrf.smooth to deal with models with by variables.  
+* Fix to `plot.mrf.smooth' to deal with models with by variables.  
 
-* plot.gam fix to handling of plot limits when using 'trans' (from 1.8-16 
+* `plot.gam' fix to handling of plot limits when using 'trans' (from 1.8-16 
   'trans' could be applied twice). 
 
-* plot.gam argument 'rug' now defaults to 'NULL' corresponding to 'rug=TRUE'
+* `plot.gam' argument 'rug' now defaults to 'NULL' corresponding to 'rug=TRUE'
   if the number of data is <= 10000 and 'rug=FALSE' otherwise.
 
 * bam(...,discrete=TRUE) could fail if NAs in the smooth terms caused data rows
