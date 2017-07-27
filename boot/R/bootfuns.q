@@ -432,7 +432,9 @@ print.boot <- function(x, digits = getOption("digits"),
                                       " std. error", " mean(t*)"))
         }
     }
-    if (cl[[1L]] == "boot") {
+    ## might be called as e.g. boot::boot
+    Call <- sub("^boot::", "", deparse(cl[[1L]]))
+    if (Call == "boot") {
         if (sim == "parametric")
             cat("\nPARAMETRIC BOOTSTRAP\n\n")
         else if (sim == "antithetic") {
@@ -464,7 +466,7 @@ print.boot <- function(x, digits = getOption("digits"),
             else 	cat("\nSTRATIFIED WEIGHTED BOOTSTRAP\n\n")
         }
     }
-    else if (cl[[1L]] == "tilt.boot") {
+    else if (Call == "tilt.boot") {
         R <- boot.out$R
         th <- boot.out$theta
         if (sim == "balanced")
@@ -489,7 +491,7 @@ print.boot <- function(x, digits = getOption("digits"),
         }
         op <- op[, 1L:3L]
     }
-    else if (cl[[1L]] == "tsboot") {
+    else if (Call == "tsboot") {
         if (!is.null(cl$indices))
             cat("\nTIME SERIES BOOTSTRAP USING SUPPLIED INDICES\n\n")
         else if (sim == "model")
@@ -507,12 +509,13 @@ print.boot <- function(x, digits = getOption("digits"),
                                   "BOOTSTRAP FOR TIME SERIES\n\n"))
             cat(paste("Average Block Length of",boot.out$l,"\n"))
         }
-        else {	if (is.null(cl$ran.gen))
+        else {
+            if (is.null(cl$ran.gen))
                     cat("\nBLOCK BOOTSTRAP FOR TIME SERIES\n\n")
-        else	cat(paste("\nPOST-BLACKENED BLOCK",
-                          "BOOTSTRAP FOR TIME SERIES\n\n"))
-                    cat(paste("Fixed Block Length of",boot.out$l,"\n"))
-		}
+            else	cat(paste("\nPOST-BLACKENED BLOCK",
+                                  "BOOTSTRAP FOR TIME SERIES\n\n"))
+            cat(paste("Fixed Block Length of",boot.out$l,"\n"))
+        }
     }
     else {
         cat("\n")
