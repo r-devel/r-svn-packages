@@ -1018,15 +1018,25 @@ fast.REML.fit <- function(Sl,X,y,rho,L=NULL,rho.0=NULL,log.phi=0,phi.fixed=TRUE,
     rho1 <- L%*%(rho + step)+rho.0; if (!phi.fixed) log.phi <- rho1[nr+1]
     trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp,nt=nt)
     k <- 0
-    while (trial$reml>best$reml && k<35) { ## step half until improvement
+    not.moved <- 0 ## count number of consecutive steps of essentially no change from best
+    while (trial$reml>best$reml) { ## step half until improvement or failure
+      ## idea with the following is to count the number of consecutive step halvings
+      ## without a numerically significant change from best$reml, since
+      ## this is an early indicator of step failure.
+      if (trial$reml-best$reml < conv.tol*reml.scale) not.moved <- not.moved + 1 else not.moved <- 0
+      if (k==25||sum(rho != rho + step)==0||not.moved>3) {
+        step.failed <-  TRUE
+	break
+      }	
       step <- step/2;k <- k + 1
       rho1 <- L%*%(rho + step)+rho.0; if (!phi.fixed) log.phi <- rho1[nr+1]
       trial <- Sl.fit(Sl,X,y,rho1[1:nr],fixed,log.phi,phi.fixed,rss.extra,nobs,Mp,nt=nt)
     }
-    if ((k==35 && trial$reml>best$reml)||(sum(rho != rho + step)==0)) { ## step has failed
-      step.failed <- TRUE
-      break ## can get no further
-    }
+    if (step.failed) break ## can get no further
+    #if ((k==35 && trial$reml>best$reml)||(sum(rho != rho + step)==0)) { ## step has failed
+    #  step.failed <- TRUE
+    #  break ## can get no further
+    #}
     ## At this stage the step has been successful. 
     ## Need to test for convergence...
     converged <- TRUE

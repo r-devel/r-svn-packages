@@ -1,6 +1,73 @@
 ## (c) Simon N. Wood (ocat, tw, nb, ziP) & Natalya Pya (scat, beta), 
 ## 2013-2015. Released under GPL2.
 
+estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
+## Simple Newton iteration to estimate theta for an extended family,
+## given y and mu. To be iterated with estimation of mu given theta.
+## If used within a PIRLS loop then divergence testing of coef update
+## will have to re-compute pdev after theta update.
+## Not clear best way to handle scale - could oprimize here as well
+
+  if (!inherits(family,"extended.family")) stop("not an extended family")
+
+  nlogl <- function(theta,family,y,mu,scale=1,wt=1,deriv=2) {
+    ## compute the negative log likelihood and grad + hess
+    dev <- sum(family$dev.resids(y, mu, wt,theta))/scale
+    if (deriv>0) Dd <- family$Dd(y, mu, theta, wt=wt, level=deriv)
+    ls <- family$ls(y,w=wt,n=length(y),theta=theta,scale=scale)
+    nll <- dev/2 - ls$ls
+    nth <- length(theta)
+    g <- if (deriv>0) colSums(as.matrix(Dd$Dth))/(2*scale) - ls$lsth1[1:nth] else NULL
+    if (deriv>1) {
+      x <- colSums(as.matrix(Dd$Dth2))/(2*scale)
+      Dth2 <- matrix(0,nth,nth)
+      k <- 0
+      for (i in 1:nth) for (j in i:nth) {
+        k <- k + 1
+        Dth2[i,j] <- Dth2[j,i] <- x[k]  
+      }
+      H <- Dth2 - as.matrix(ls$lsth2)[1:nth,1:nth]
+    } else H <- NULL
+    list(nll=nll,g=g,H=H)
+  } ## nlogl
+
+  nll <- nlogl(theta,family,y,mu,scale,wt,2)
+  step.failed <- FALSE
+  for (i in 1:100) { ## main Newton loop
+    eh <- eigen(nll$H,symmetric=TRUE)
+    pdef <- sum(eh$values <= 0)==0
+    if (!pdef) { ## Make the Hessian pos def
+      eh$values <- abs(eh$values)
+      thresh <- max(eh$values) * 1e-7
+      eh$values[eh$values<thresh] <- thresh
+    }
+    ## compute step = -solve(H,g) (via eigen decomp)...
+    step <- - drop(eh$vectors %*% ((t(eh$vectors) %*% nll$g)/eh$values))
+    ## limit the step length...
+    ms <- max(abs(step))
+   if (ms>4) step <- step*4/ms
+
+    nll1 <- nlogl(theta+step,family,y,mu,scale,wt,2)
+    iter <- 0
+    while (nll1$nll > nll$nll) { ## step halving 
+      step <- step/2; iter <- iter + 1
+      if (sum(theta!=theta+step)==0||iter>25) {
+        step.failed <- TRUE
+	break
+      }
+      nll1 <- nlogl(theta+step,family,y,mu,scale,wt,0)
+    } ## step halving
+    if (step.failed) break
+    theta <- theta + step ## accept updated theta
+    ## accept log lik and derivs ...
+    nll <- if (iter>0) nlogl(theta,family,y,mu,scale,wt,2) else nll1
+    ## convergence checking...
+    if (sum(abs(nll$g) > tol*abs(nll$nll))==0) break 
+  } ## main Newton loop
+  if (step.failed) warning("step failure in theta estimation")
+  theta
+} ## estimate.theta
+
 ## extended families for mgcv, standard components. 
 ## family - name of family character string
 ## link - name of link character string
@@ -22,7 +89,7 @@
 ## postproc - expression to evaluate in estimate.gam after fitting (see e.g. betar)
 ## ls - function to evaluated log saturated likelihood and derivatives w.r.t.
 ##      phi and theta for use in RE/ML optimization. If deviance used is just -2 log 
-##      lik. can njust return zeroes. 
+##      lik. can just return zeroes. 
 ## validmu, valideta - functions used to test whether mu/eta are valid.      
 ## n.theta - number of theta parameters.
 ## no.r.sq - optional TRUE/FALSE indicating whether r^2 can be computed for family
@@ -1325,7 +1392,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
         min.df <- get(".min.df")
         if (is.null(theta)) theta <- get(".Theta")
         nu <- exp(theta[1])+min.df; sig <- exp(theta[2])
-        term <- -lgamma((nu+1)/2)+ lgamma(nu/2) + log(sig*(pi*nu)^.5) +
+        term <- -lgamma((nu+1)/2)+ lgamma(nu/2) + log(sig*(pi*nu)^.5) -
            (nu+1)*log1p(((y-mu)/sig)^2/nu)/2  ## `-'log likelihood for each observation
         2 * sum(term * wt)
     }

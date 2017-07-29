@@ -5,6 +5,15 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+1.8-19
+
+* scat family aic sign error correction.
+
+* Convergence checking can step fail earlier in fast.REML.fit. If trial step 
+  is no improvement and equal to previous best (to within a tolerance), then 
+  terminate with step failure after a few step halvings if situation persists. 
+  Thanks to Zheyuan Li for reporting problem. 
+
 1.8-18
 
 * Tweak to 'newton' to further reduce chance of false convergence at 
