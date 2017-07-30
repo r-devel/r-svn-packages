@@ -1,6 +1,8 @@
-version 1.3-20 2017-07-27
+version 1.3-20 2017-07-30
 
-	print.boot: allows for calls like boot::boot()
+	allow for calls like boot::boot(), and record the type
+	(boot/censboot/tsboot/tilt.boot) on the object itself.
+	[Will warn on lme4.]
 
 version 1.3-19 2017-02-11
 
