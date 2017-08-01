@@ -1684,7 +1684,14 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   
   ## extended family may need to manipulate G...
     
-  if (!is.null(G$family$preinitialize)) eval(G$family$preinitialize)
+  if (!is.null(G$family$preinitialize)) {
+    if (inherits(G$family,"general.family")) eval(G$family$preinitialize) else {
+      ## extended family - just initializes theta and possibly y
+      pini <- G$family$preinitialize(G$y,G$family)
+      if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)
+      if (!is.null(pini$y)) G$y <- pini$y
+    }
+  }
 
   if (length(G$sp)>0) lsp2 <- log(initial.spg(G$X,G$y,G$w,G$family,G$S,G$rank,G$off,
                                   offset=G$offset,L=G$L,lsp0=G$lsp0,E=G$Eb,...))
@@ -1797,7 +1804,16 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   ## extended family may need to manipulate fit object. Code
   ## will need to include the following line if G$X used...
   ## G$X <- Sl.initial.repara(G$Sl,G$X,inverse=TRUE,cov=FALSE,both.sides=FALSE)
-  if (!is.null(G$family$postproc)) eval(G$family$postproc) 
+  if (!is.null(G$family$postproc)) {
+    if (inherits(G$family,"general.family")) eval(G$family$postproc) else {
+      posr <- G$family$postproc(family=object$family,y=G$y,prior.weights=object$prior.weights,
+              fitted=object$fitted.values,linear.predictors=object$linear.predictors,offset=G$offset,
+	      intercept=G$intercept)
+      if (!is.null(posr$family)) object$family$family <- posr$family
+      if (!is.null(posr$deviance)) object$deviance <- posr$deviance
+      if (!is.null(posr$null.deviance)) object$null.deviance <- posr$null.deviance	      
+    }
+  } 
 
   if (!is.null(G$P)) { ## matrix transforming from fit to prediction parameterization
     object$coefficients <- as.numeric(G$P %*% object$coefficients)

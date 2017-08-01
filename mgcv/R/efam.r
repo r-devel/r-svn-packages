@@ -1,5 +1,5 @@
 ## (c) Simon N. Wood (ocat, tw, nb, ziP) & Natalya Pya (scat, beta), 
-## 2013-2015. Released under GPL2.
+## 2013-2017. Released under GPL2.
 
 estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
 ## Simple Newton iteration to estimate theta for an extended family,
@@ -12,12 +12,24 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
 
   nlogl <- function(theta,family,y,mu,scale=1,wt=1,deriv=2) {
     ## compute the negative log likelihood and grad + hess
+    nth <- length(theta) - if (scale<0) 1 else 0
+    if (scale < 0) {
+      scale <- exp(theta[nth+1])
+      theta <- theta[1:nth]
+      get.scale <- TRUE
+    } else get.scale <- FALSE
     dev <- sum(family$dev.resids(y, mu, wt,theta))/scale
     if (deriv>0) Dd <- family$Dd(y, mu, theta, wt=wt, level=deriv)
-    ls <- family$ls(y,w=wt,n=length(y),theta=theta,scale=scale)
+    ls <- family$ls(y,w=wt,theta=theta,scale=scale)
     nll <- dev/2 - ls$ls
-    nth <- length(theta)
-    g <- if (deriv>0) colSums(as.matrix(Dd$Dth))/(2*scale) - ls$lsth1[1:nth] else NULL
+   
+    if (deriv>0) {
+      g1 <- colSums(as.matrix(Dd$Dth))/(2*scale)
+      g <- if (get.scale) c(g1,-dev/2) else g1
+      ind <- 1:length(g)
+      g <- g - ls$lsth1[ind]
+      ## g <- if (deriv>0) colSums(as.matrix(Dd$Dth))/(2*scale) - ls$lsth1[1:nth] else NULL
+    } else g <- NULL
     if (deriv>1) {
       x <- colSums(as.matrix(Dd$Dth2))/(2*scale)
       Dth2 <- matrix(0,nth,nth)
@@ -26,11 +38,13 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
         k <- k + 1
         Dth2[i,j] <- Dth2[j,i] <- x[k]  
       }
-      H <- Dth2 - as.matrix(ls$lsth2)[1:nth,1:nth]
+      if (get.scale) Dth2 <- rbind(cbind(Dth2,-g1),c(-g1,dev/2))
+      H <- Dth2 - as.matrix(ls$lsth2)[ind,ind]
+      # H <- Dth2 - as.matrix(ls$lsth2)[1:nth,1:nth]
     } else H <- NULL
     list(nll=nll,g=g,H=H)
   } ## nlogl
-
+  if (scale<0) theta <- c(theta,log(var(y)*.1))
   nll <- nlogl(theta,family,y,mu,scale,wt,2)
   step.failed <- FALSE
   for (i in 1:100) { ## main Newton loop
@@ -84,9 +98,11 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
 ## aic - function computing twice - log likelihood for 2df to be added to.
 ## initialize - expression to be evaluated in gam.fit4 and initial.spg 
 ##              to initialize mu or eta.
-## preinitialize - optional expression evaluated in estimate.gam to 
-##                 e.g. initialize theta parameters (see e.g. ocat)
-## postproc - expression to evaluate in estimate.gam after fitting (see e.g. betar)
+## preinitialize - optional function of y and family, returning a list with optional elements
+##                 Theta - intitial Theta and y - modified y for use in fitting (see e.g. ocat and betar)
+## postproc - function with arguments family,y,prior.weights,fitted,linear.predictors,offset,intercept
+##            to call after fit to compute (optionally) the label for the family, deviance and null deviance.
+##            See ocat for simple example and betar or ziP for complicated. Called in estimate.gam.
 ## ls - function to evaluated log saturated likelihood and derivatives w.r.t.
 ##      phi and theta for use in RE/ML optimization. If deviance used is just -2 log 
 ##      lik. can just return zeroes. 
@@ -100,7 +116,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
 ## residuals - optional function for computing residuals.
 ## predict - optional function for predicting from model, called by predict.gam.
 ## family$data - optional list storing any family specific data for use, e.g. in predict
-##               function.
+##               function. - deprecated (commented out below - appears to be used nowhere)
 
 
 
@@ -155,10 +171,12 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     }
     theta
   }
-  postproc <- expression({
-    object$family$family <- 
-    paste("Ordered Categorical(",paste(round(object$family$getTheta(TRUE),2),collapse=","),")",sep="")
-  })
+  postproc <- function(family,...) {
+    posr <- list()
+    posr$family <- 
+    paste("Ordered Categorical(",paste(round(family$getTheta(TRUE),2),collapse=","),")",sep="")
+    posr
+  }
 
   validmu <- function(mu) all(is.finite(mu))
 
@@ -427,7 +445,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     -2*sum(log(f))
   } ## end aic
 
-  ls <- function(y,w,n,theta,scale) {
+  ls <- function(y,w,theta,scale) {
     ## the log saturated likelihood function. 
     #! actually only first line used since re-def as 0
     return(list(ls=0,lsth1=rep(0,R-2),lsth2=matrix(0,R-2,R-2)))
@@ -503,7 +521,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   ## initialization is interesting -- needs to be with reference to initial cut-points
   ## so that mu puts each obs in correct category initially...
  
-  preinitialize <- expression({
+  preinitialize <- function(y,family) {
     ocat.ini <- function(R,y) {
     ## initialize theta from raw counts in each category
       if (R<3) return()
@@ -516,18 +534,18 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       theta[theta <= 0.01] <- 0.01
       theta <- log(theta)
     }
-    R3 <- length(G$family$getTheta())+2
-    if (!is.numeric(G$y)) stop("Response should be integer class labels")
-    if (R3>2&&G$family$n.theta>0) { 
-      Theta <- ocat.ini(R3,G$y)
-      G$family$putTheta(Theta)
+    R3 <- length(family$getTheta())+2
+    if (!is.numeric(y)) stop("Response should be integer class labels")
+    if (R3>2&&family$n.theta>0) { 
+      Theta <- ocat.ini(R3,y)
+      return(list(Theta=Theta))
     } 
-  })
+  }
 
   initialize <- expression({ 
     R <- length(family$getTheta())+2 ## don't use n.theta as it's used to signal fixed theta
     if (any(y < 1)||any(y>R)) stop("values out of range")
-    n <- rep(1, nobs)
+    ## n <- rep(1, nobs)
     ## get the cut points... 
     alpha <- rep(0,R+1) ## the thresholds
     alpha[1] <- -2;alpha[2] <- -1
@@ -741,7 +759,7 @@ nb <- function (theta = NULL, link = "log") {
         2 * sum(term * wt)
     }
     
-    ls <- function(y,w,n,theta,scale) {
+    ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function.
        Theta <- exp(theta)
        ylogy <- y;ind <- y>0;ylogy[ind] <- y[ind]*log(y[ind])
@@ -768,14 +786,16 @@ nb <- function (theta = NULL, link = "log") {
 
     initialize <- expression({
         if (any(y < 0)) stop("negative values not allowed for the negative binomial family")
-        n <- rep(1, nobs)
+        ##n <- rep(1, nobs)
         mustart <- y + (y == 0)/6
     })
   
-    postproc <- expression({
-      object$family$family <- 
-      paste("Negative Binomial(",round(object$family$getTheta(TRUE),3),")",sep="")
-    })
+    postproc <- function(family,...) {
+      posr <- list()
+      posr$family <- 
+      paste("Negative Binomial(",round(family$getTheta(TRUE),3),")",sep="")
+      posr
+    }
 
     rd <- function(mu,wt,scale) {
       Theta <- exp(get(".Theta"))
@@ -930,7 +950,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
             wt) + 2
     }
 
-    ls <- function(y, w, n, theta, scale) {
+    ls <- function(y, w, theta, scale) {
         ## evaluate saturated log likelihood + derivs w.r.t. working params and log(scale)
         a <- get(".a");b <- get(".b")
         LS <- colSums(w * ldTweedie(y, y, rho=log(scale), theta=theta,a=a,b=b))
@@ -941,13 +961,16 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
 
  
     initialize <- expression({
-        n <- rep(1, nobs)
+        ##n <- rep(1, nobs)
         mustart <- y + (y == 0)*.1
     })
-    postproc <- expression({
-      object$family$family <- 
-      paste("Tweedie(p=",round(object$family$getTheta(TRUE),3),")",sep="")
-    })
+    
+    postproc <- function(family,...) {
+      posr <- list()
+      posr$family <- 
+      paste("Tweedie(p=",round(family$getTheta(TRUE),3),")",sep="")
+      posr
+    }
   
     rd <- function(mu,wt,scale) {
      th <- get(".Theta") 
@@ -1078,7 +1101,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         2 * sum(term * wt)
     }
     
-    ls <- function(y,w,n,theta,scale) {
+    ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function.
        ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik 
        list(ls=0,## saturated log likelihood
@@ -1090,10 +1113,16 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
     ## preinitialization to reset G$y values of <=0 and >=1... 
     ## code to evaluate in estimate.gam...
     ## reset G$y values of <=0 and >= 1 to eps and 1-eps... 
-    preinitialize <- NULL ## keep codetools happy
-    eval(parse(text=paste("preinitialize <- expression({\n eps <- ",eps,
-         "\n G$y[G$y >= 1-eps] <- 1 - eps\n  G$y[G$y<= eps] <- eps })")))
-    
+    #preinitialize <- NULL ## keep codetools happy
+    #eval(parse(text=paste("preinitialize <- expression({\n eps <- ",eps,
+    #     "\n G$y[G$y >= 1-eps] <- 1 - eps\n  G$y[G$y<= eps] <- eps })")))
+
+    preinitialize <- function(y,family) {
+      eps <- get(".betarEps")
+      y[y >= 1-eps] <- 1 - eps;y[y<= eps] <- eps
+      return(list(y=y))
+    }
+
  #   preinitialize <- expression({
  #     eps <- 1e-7 
  #     G$y[G$y >= 1-eps] <- 1 - eps
@@ -1172,26 +1201,31 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
     } ## saturated.ll
 
 
-    postproc <- expression({
+    ## computes deviance, null deviance, family label
+    ## requires prior weights, family, y, fitted values, offset, intercept indicator
+
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept) {
     ## code to evaluate in estimate.gam, to find the saturated
     ## loglik by Newton method
     ## searching for the mu (on logit scale) that max loglik given theta...
-      wts <- object$prior.weights
-      theta <- object$family$getTheta(trans=TRUE) ## exp theta
-      lf <- object$family$saturated.ll(G$y, wts,theta)
+      # wts <- object$prior.weights
+      theta <- family$getTheta(trans=TRUE) ## exp theta
+      lf <- family$saturated.ll(y, prior.weights,theta)
       ## storing the saturated loglik for each datum...
-      object$family$data <- list(ls = lf$term,mu.ls = lf$mu)   
-      l2 <- object$family$dev.resids(G$y,object$fitted.values,wts)
-      object$deviance <- 2*lf$f + sum(l2)
-      wtdmu <- if (G$intercept) sum(wts * G$y)/sum(wts) 
-              else object$family$linkinv(G$offset)
-      object$null.deviance <- 2*lf$f + sum(object$family$dev.resids(G$y, wtdmu, wts))
-      object$family$family <- 
+      ##object$family$data <- list(ls = lf$term,mu.ls = lf$mu)   
+      l2 <- family$dev.resids(y,fitted,prior.weights)
+      posr <- list()
+      posr$deviance <- 2*lf$f + sum(l2)
+      wtdmu <- if (intercept) sum(prior.weights * y)/sum(prior.weights) 
+              else family$linkinv(offset)
+      posr$null.deviance <- 2*lf$f + sum(family$dev.resids(y, wtdmu, prior.weights))
+      posr$family <- 
       paste("Beta regression(",round(theta,3),")",sep="")
-    })
+      posr
+    } ## postproc
 
     initialize <- expression({
-        n <- rep(1, nobs)
+        ##n <- rep(1, nobs)
         mustart <- y 
     })
 
@@ -1204,12 +1238,9 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         y <- object$y
         mu <- object$fitted.values
         wts <- object$prior.weights
-     #   sim <- attr(y,"simula")
-     #   if (!is.null(sim)) {  ## if response values simulated, Newton search called to get saturated log.lik
-           lf <- object$family$saturated.ll(y, wts,object$family$getTheta(TRUE))
-           object$family$data$ls <- lf$term  
-     #   }
-        res <- 2*object$family$data$ls + object$family$dev.resids(y,mu,wts)
+        lf <- object$family$saturated.ll(y, wts,object$family$getTheta(TRUE))
+        #object$family$data$ls <- lf$term  
+        res <- 2*lf$term + object$family$dev.resids(y,mu,wts)
         res[res<0] <- 0
         s <- sign(y-mu)
         res <- sqrt(res) * s   
@@ -1241,7 +1272,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
 
     environment(dev.resids) <- environment(aic) <- environment(getTheta) <- 
     environment(rd)<- environment(qf) <- environment(variance) <- environment(putTheta) <-
-    environment(saturated.ll) <- env
+    environment(saturated.ll) <- environment(preinitialize) <- env
 
     structure(list(family = "Beta regression", link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, dev.resids = dev.resids,Dd=Dd, variance=variance,
@@ -1392,14 +1423,15 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
         min.df <- get(".min.df")
         if (is.null(theta)) theta <- get(".Theta")
         nu <- exp(theta[1])+min.df; sig <- exp(theta[2])
-        term <- -lgamma((nu+1)/2)+ lgamma(nu/2) + log(sig*(pi*nu)^.5) -
+        term <- -lgamma((nu+1)/2)+ lgamma(nu/2) + log(sig*(pi*nu)^.5) +
            (nu+1)*log1p(((y-mu)/sig)^2/nu)/2  ## `-'log likelihood for each observation
         2 * sum(term * wt)
     }
     
-    ls <- function(y,w,n,theta,scale) {
+    ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function.
        ## (Note these are correct but do not correspond to NP notes)
+       if (length(w)==1) w <- rep(w,length(y))
        min.df <- get(".min.df")
        nu <- exp(theta[1])+min.df; sig <- exp(theta[2]); nu2 <- nu-min.df;
        nu2nu <- nu2/nu; nu12 <- (nu+1)/2
@@ -1422,24 +1454,26 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
             lsth2=lsth2) ## Hessian wrt theta
     }
 
-    preinitialize <- expression({
+    preinitialize <- function(y,family) {
       ## initialize theta from raw observations..
-       if (G$family$n.theta>0) {
-         Theta <- c(-1, log(0.2*var(G$y)^.5))
-         G$family$putTheta(Theta)
+       if (family$n.theta>0) {
+         Theta <- c(-1, log(0.2*var(y)^.5))
+         return(list(Theta=Theta))
        } ## otherwise fixed theta supplied
-    })
+    }
 
     initialize <- expression({
         if (any(is.na(y))) stop("NA values not allowed for the scaled t family")
-        n <- rep(1, nobs)
+        ##n <- rep(1, nobs)
         mustart <- y + (y == 0)*.1
     })
     
-    postproc <- expression({
-      object$family$family <- 
-      paste("Scaled t(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
-    })
+    postproc <- function(family,...) {
+      posr <- list()
+      posr$family <- 
+      paste("Scaled t(",paste(round(family$getTheta(TRUE),3),collapse=","),")",sep="")
+      posr
+    }
     
     rd <- function(mu,wt,scale) {
      ## simulate data given fitted latent variable in mu 
@@ -1647,7 +1681,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
     sum(-2*wt*zipll(y,mu,p,0)$l)
   }
 
-  ls <- function(y,w,n,theta,scale) {
+  ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function.
        ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik 
        list(ls=0,## saturated log likelihood
@@ -1662,44 +1696,35 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
           stop("Non-integer response variables are not allowed with ziP ")
         }
         if ((min(y)==0&&max(y)==1)) stop("Using ziP for binary data makes no sense")
-        n <- rep(1, nobs)
+        ##n <- rep(1, nobs)
         mustart <- log(y + (y==0)/5) 
     })
 
-    postproc <- expression({
-      object$family$family <- 
-      paste("Zero inflated Poisson(",paste(round(object$family$getTheta(TRUE),3),collapse=","),")",sep="")
+    ## compute family label, deviance, null.deviance...
+    ## requires prior weights, y, family, linear predictors
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept) {
+      posr <- list()
+      posr$family <- 
+      paste("Zero inflated Poisson(",paste(round(family$getTheta(TRUE),3),collapse=","),")",sep="")
       ## need to fix deviance here!!
       ## wts <- object$prior.weights
-      lf <- object$family$saturated.ll(G$y,family, object$prior.weights)
+      lf <- family$saturated.ll(y,family,prior.weights)
       ## storing the saturated loglik for each datum...
-      object$family$data <- list(ls = lf)   
-      l2 <- object$family$dev.resids(G$y,object$linear.predictors,object$prior.weights)
-      object$deviance <- sum(l2-lf)
-      fnull <- function(gamma,object) {
+      ##object$family$data <- list(ls = lf)   
+      l2 <- family$dev.resids(y,linear.predictors,prior.weights)
+      posr$deviance <- sum(l2-lf)
+      fnull <- function(gamma,family,y,wt) {
         ## evaluate deviance for single parameter model
-        sum(object$family$dev.resids(object$y, rep(gamma,length(object$y)), object$prior.weights))
+        sum(family$dev.resids(y, rep(gamma,length(y)), wt))
       }
-      meany <- mean(object$y)
-      object$null.deviance <- optimize(fnull,interval=c(meany/5,meany*3),object=object)$objective - sum(lf)
+      meany <- mean(y)
+      posr$null.deviance <-
+      optimize(fnull,interval=c(meany/5,meany*3),family=family,y=y,wt = prior.weights)$objective - sum(lf)
  
       ## object$weights <- pmax(0,object$working.weights) ## Fisher can be too extreme
       ## E(y) = p * E(y) - but really can't mess with fitted.values if e.g. rd is to work.
-
-    })
-
-#   fv <- function(lp,theta=NULL) {
-#    ## optional function to give fitted values... 
-#      if (is.null(theta)) theta <- get(".Theta")
-#      th1 <- theta[1]; th2 <- exp(theta[2]); 
-#      eta <- th1 + th2*lp
-#      p <- 1 - exp(-exp(eta))
-#      fv <- lambda <- exp(lp)
-#      ind <- lp < log(.Machine$double.eps)/2
-#      fv[!ind] <- p[!ind] * lambda[!ind]/(1-exp(-lambda[!ind]))
-#      fv[ind] <- p[ind]
-#      fv      
-#    } ## fv
+      posr
+    } ## postproc
 
     rd <- function(mu,wt,scale) {
     ## simulate data given fitted latent variable in mu 

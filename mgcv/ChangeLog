@@ -5,9 +5,15 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
+ISSUES: it looks like the beta divergence check is missing in release code
+in bgam.fitd.
+
 1.8-19
 
-* scat family aic sign error correction.
+* preinitialize and postproc components of extended families are now functions,
+  not expressions.
+
+* redundant 'n' argument removed from extended family 'ls' functions.
 
 * Convergence checking can step fail earlier in fast.REML.fit. If trial step 
   is no improvement and equal to previous best (to within a tolerance), then 

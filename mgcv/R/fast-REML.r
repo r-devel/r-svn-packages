@@ -1,7 +1,7 @@
 ## code for fast REML computation. key feature is that first and 
 ## second derivatives come at no increase in leading order 
 ## computational cost, relative to evaluation! 
-## (c) Simon N. Wood, 2010-2016
+## (c) Simon N. Wood, 2010-2017
 
 Sl.setup <- function(G) {
 ## Sets up a list representing a block diagonal penalty matrix.
@@ -819,7 +819,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   beta <- rep(0,p)
   beta[piv] <- backsolve(R,(forwardsolve(t(R),f[piv]/d[piv])))/d[piv]
  
-  ## get component derivatives based on IFT...
+  ## get component derivatives based on IFT (noting that ldS$Sl has s.p.s updated to current)
   dift <- Sl.iftChol(ldS$Sl,XX,R,d,beta,piv,nt=nt)
  
   ## now the derivatives of log|X'X+S|

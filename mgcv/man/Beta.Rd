@@ -31,7 +31,7 @@ keep the log likelihood bounded for all parameter values. Any data exactly at 0 
 
 %- maybe also `usage' for other objects documented here.
 
-\author{ Natalya Pya (nyp20@bath.ac.uk) and Simon Wood (s.wood@r-project.org)
+\author{ Natalya Pya (nat.pya@gmail.com) and Simon Wood (s.wood@r-project.org)
 }
 
 \section{WARNINGS}{

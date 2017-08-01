@@ -1,5 +1,5 @@
 ## routines for very large dataset generalized additive modelling.
-## (c) Simon N. Wood 2009-2015
+## (c) Simon N. Wood 2009-2017
 
 
 ls.size <- function(x) {
@@ -428,6 +428,16 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     nobs <- nrow(mf)
     offset <- G$offset 
 
+    if (inherits(G$family,"extended.family")) { ## preinitialize extended family
+      efam <- TRUE
+      pini <- if (is.null(G$family$preinitialize)) NULL else G$family$preinitialize(y,G$family)
+      if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)
+      if (!is.null(pini$y)) y <- pini$y
+      scale <- if (is.null(G$family$scale)) 1 else G$family$scale
+      if (scale < 0) scale <- var(y) *.1 ## initial guess
+    } else efam <- FALSE
+
+
     if (rho!=0) { ## AR1 error model
       
       ld <- 1/sqrt(1-rho^2) ## leading diagonal of root inverse correlation
@@ -451,12 +461,13 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 
     family <- G$family
     additive <- if (family$family=="gaussian"&&family$link=="identity") TRUE else FALSE
-    variance <- family$variance
-    dev.resids <- family$dev.resids
-    linkinv <- family$linkinv
-    mu.eta <- family$mu.eta
-    if (!is.function(variance) || !is.function(linkinv))
-        stop("'family' argument seems not to be a valid family object")
+    linkinv <- family$linkinv;#dev.resids <- family$dev.resids
+    if (!efam) {
+      variance <- family$variance
+      mu.eta <- family$mu.eta
+      if (!is.function(variance) || !is.function(linkinv))
+          stop("'family' argument seems not to be a valid family object")
+    }
     valideta <- family$valideta
     if (is.null(valideta))
         valideta <- function(eta) TRUE
@@ -479,7 +490,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     mu <- linkinv(eta)
     if (!(validmu(mu) && valideta(eta)))
        stop("cannot find valid starting values: please specify some")
-    dev <- sum(dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
+    dev <- sum(family$dev.resids(y, mu, weights))*2 ## just to avoid converging at iter 1
 
     conv <- FALSE
    
@@ -507,13 +518,56 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
           eta <- Xbd(G$Xd,coef,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop)
         }
         mu <- linkinv(eta)
-        mu.eta.val <- mu.eta(eta)
-        good <- mu.eta.val != 0
-        mu.eta.val[!good] <- .1 ## irrelvant as weight is zero
-        z <- (eta - offset) + (G$y - mu)/mu.eta.val
-        w <- (G$w * mu.eta.val^2)/variance(mu)
-        dev <- sum(dev.resids(G$y,mu,G$w))
+	dev <- if (efam) sum(family$dev.resids(G$y,mu,G$w,theta)) else
+	                 sum(family$dev.resids(G$y,mu,G$w)
+	## BUG: penalty has not been added on this branch
+        ## BUG: missing step length check!!
+	## obvious approach is to store before and after beta, Sbeta and eta, then step reduction 
+	## is mostly linear modification of these + mu and devance computation.
+        ## need to test that step will improve penalized deviance with current smoothing
+	## parameters, this can only happen from iter 3, since before then we don't have coefs
+	## at start and end of step...
+
+
+        if (iter>1) { ## save components of penalized deviance for step control
+	  coef0 <- coef ## original para
+	  eta0 <- eta
+	  ## following is wrong - need Sb with sps just accepted
+	  Sb0 <- prop$Sb  ## S beta repara - need to use Sl.mult to get this, first updating smoothing params.
+	  b0 <- prob$beta ## beta repara
+	}
+	if (efam) { ## extended family
+	  theta <- family$getTheta() ## CHECK - is this needed? move to before iter?
+	  if (iter>1) { ## estimate theta
+	    scale1 <- if (!is.null(family$scale)) family$scale else scale
+            if (family$n.theta>0||scale<0) theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
+            if (!is.null(family$scale) && family$scale<0) {
+	      scale <- exp(theta[family$n.theta])
+	      theta <- theta[1:family$n.theta]
+	    }  
+            family$putTheta(theta)
+          }
+	  
+          dd <- dDeta(y,mu,G$w,theta=theta,family,0)
+	  ## note: no handling of infinities and wz case yet
+          ## SCALE? - I think this is correct (cancels in z)
+	  w <- dd$Deta2 * .5 
+	  w <- w/scale
+          z <- (eta-offset) - dd$Deta.Deta2
+	  good <- is.finite(z)&is.finite(w)
+	  w[!good] <- 0 ## drop if !good
+	  z[!good] <- 0 ## irrelevant
+	  #dev <- sum(family$dev.resids(G$y,mu,G$w,theta))
+        } else { ## exponential family
+          mu.eta.val <- mu.eta(eta)
+          good <- mu.eta.val != 0
+          mu.eta.val[!good] <- .1 ## irrelvant as weight is zero
+          z <- (eta - offset) + (G$y - mu)/mu.eta.val
+          w <- (G$w * mu.eta.val^2)/variance(mu)
+          #dev <- sum(family$dev.resids(G$y,mu,G$w))
+        }
       
+  
         qrx$y.norm2 <- if (rho==0) sum(w*z^2) else   ## AR mod needed
           sum(rwMatrix(ar.stop,ar.row,ar.weight,sqrt(w)*z,trans=FALSE)^2) 
        
@@ -619,8 +673,22 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
                  scale.estimated = scale<=0,outer.info=NULL,
                  optimizer=c("perf","chol"))
   object$coefficients <- coef
+  object$family <- family
   ## form linear predictor efficiently...
   object$linear.predictors <- Xbd(G$Xd,coef,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop) + G$offset
+  object$fitted.values <- family$linkinv(object$linear.predictors)
+  if (efam) {
+     if (!is.null(family$postproc)) {
+      posr <- family$postproc(family=object$family,y=y,prior.weights=G$w,
+              fitted=object$fitted.values,linear.predictors=object$linear.predictors,offset=G$offset,
+	      intercept=G$intercept)
+      if (!is.null(posr$family)) object$family$family <- posr$family
+      if (!is.null(posr$deviance)) object$deviance <- posr$deviance
+      if (!is.null(posr$null.deviance)) object$null.deviance <- posr$null.deviance
+    }
+    if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(object$y,weighted.mean(y,G$w),G$w,theta))   
+  }
+
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
   F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt)  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
   object$edf <- diag(F)
@@ -667,6 +735,8 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     ##nvars <- ncol(G$X)
     offset <- G$offset
     family <- G$family
+    
+ 
     G$family <- gaussian() ## needed if REML/ML used
     G$family$drop.intercept <- family$drop.intercept ## needed in predict.gam
     variance <- family$variance
@@ -793,7 +863,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
            good <- (weights > 0) & (mu.eta.val != 0)
            z <- (eta1 - offset[ind])[good] + (y - mu)[good]/mu.eta.val[good]
            w <- (weights[good] * mu.eta.val[good]^2)/variance(mu)[good]
-           dev <- dev + sum(dev.resids(y,mu,weights))
+           dev <- dev + sum(dev.resids(y,mu,weights))  
            wt <- c(wt,w)
            w <- sqrt(w)
            ## note that QR may be parallel using npt>1, even under serial accumulation...
@@ -806,7 +876,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
           qrx <- chol2qr(qrx$R,qrx$f,nt=npt)
           qrx$y.norm2 <- y.norm2
         }
-      } else { ## use parallel accumulation 
+      } else { ## use parallel accumulation
          for (i in 1:length(arg)) arg[[i]]$coef <- coef
          res <- parallel::parLapply(cl,arg,qr.up) 
          ## single thread debugging version 
@@ -1637,8 +1707,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             family <- family()
     if (is.null(family$family))
             stop("family not recognized")
-    if (inherits(family,"extended.family")) stop("extended families not supported by bam")
-    ##family = gaussian() ## no choise here
+
+    if (inherits(family,"general.family")) stop("general families not supported by bam")
+    
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
     if (!method%in%c("fREML","GCV.Cp","REML",
@@ -1657,7 +1728,11 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         if (!is.null(cluster)) warning("discrete method does not use parallel cluster - use nthreads instead")
 	if (nthreads>1 && !mgcv.omp()) warning("openMP not available: single threaded computation only")
       }
+      if (inherits(family,"extended.family")) family <- fix.family.link(family)
+    } else {
+      if (inherits(family,"extended.family")) stop("used bam(...,discrete=TRUE) with extended families")
     }
+    
     if (method%in%c("fREML")&&!is.null(min.sp)) {
       min.sp <- NULL
       warning("min.sp not supported with fast REML computation, and ignored.")
@@ -1981,7 +2056,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   object$df.null <- nrow(mf)
   object$df.residual <- object$df.null - sum(object$edf) 
  
-  object$family <- family
+  if (is.null(object$family)) object$family <- family
   object$formula<-G$formula 
  
   if (method=="GCV.Cp") {
@@ -2023,19 +2098,22 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   } 
   rm(G);if (gc.level>0) gc()
 
-  object$fitted.values <- family$linkinv(object$linear.predictors)
+  if (is.null(object$fitted.values)) object$fitted.values <- family$linkinv(object$linear.predictors)
    
   object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$prior.weights)) * 
                       sign(object$y-object$fitted.values)
   if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
 
-  dev <- object$deviance <- sum(object$residuals^2)
+  if (is.null(object$deviance)) object$deviance <- sum(object$residuals^2)
+  dev <- object$deviance
   if (rho!=0&&family$family=="gaussian") dev <- sum(object$std.rsd^2)
-  object$aic <- family$aic(object$y,1,object$fitted.values,object$prior.weights,dev) -
+  object$aic <- if (inherits(family,"extended.family")) family$aic(object$y,object$fitted.values,family$getTheta(),object$prior.weights,dev) else
+                family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)
+  object$aic <- object$aic -
                 2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-rho^2)) + ## correction for AR
                 2*sum(object$edf)
   if (!is.null(object$edf2)&&sum(object$edf2)>sum(object$edf1)) object$edf2 <- object$edf1
-  object$null.deviance <- sum(family$dev.resids(object$y,weighted.mean(object$y,object$prior.weights),object$prior.weights))
+  if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(object$y,weighted.mean(object$y,object$prior.weights),object$prior.weights))
   if (!is.null(object$full.sp)) {
     if (length(object$full.sp)==length(object$sp)&&
         all.equal(object$sp,object$full.sp)==TRUE) object$full.sp <- NULL
