@@ -27,7 +27,14 @@ src/.*-21retro
 src/clara\.f.*
 src/twins\.f.*
 src/SAFE
+tests/clara-151.R
+tests/clara-2.R
+tests/clara-2.Rout.save
+tests/clara-MM.R.*
+tests/clara-ex.Rout.*
+tests/clara-segfault.*
 tests/diana-boots.Rout.*
+tests/dysta-ex.*
 tests/ellipsoid-ex.Rout-.*
 tests/fanny-ex.Rout.*
 tests/.*.Rout.save-[3264].*
@@ -35,12 +42,5 @@ tests/.*.Rout-[3264].*
 tests/.*.Rout.save-R[1-9].*
 tests/R-tests-swaplink-.*
 tests/to-.*
-tests/dysta-ex.*
-tests/clara-151.R
-tests/clara-2.R
-tests/clara-2.Rout.save
-tests/clara-segfault.*
-tests/clara-ex.Rout.*
-tests/clara-MM.R.*
 00-orig-src
 po/translator.*
