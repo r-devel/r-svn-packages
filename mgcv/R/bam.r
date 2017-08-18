@@ -507,42 +507,57 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     for (b in 1:length(Sl)) rank <- rank + Sl[[b]]$rank
     Mp <- ncol(G$X) - rank ## null space dimension
     Nstep <- 0
+    if (efam) theta <- family$getTheta()
     for (iter in 1L:control$maxit) { ## main fitting loop 
       devold <- dev
       dev <- 0
       ## accumulate the QR decomposition of the weighted model matrix
       if (iter==1||!additive) {
-        qrx <- list() 
+        qrx <- list()
+
         if (iter>1) {
           ## form eta = X%*%beta
           eta <- Xbd(G$Xd,coef,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop)
+	  Sb <- Sl.Sb(Sl,lsp,prop$beta) ## store S beta to allow rapid step halving
+	  if (iter>2) {
+            Sb0 <- Sl.Sb(Sl,lsp,b0)
+	    bSb0 <- sum(b0*Sb0) ## penalty at start of beta step
+	    ## get deviance at step start, with current theta if efam
+	    dev0 <- if (efam) sum(family$dev.resids(G$y,mu0,G$w,theta)) else
+	                 sum(family$dev.resids(G$y,mu0,G$w))
+          }
         }
-        mu <- linkinv(eta)
-	dev <- if (efam) sum(family$dev.resids(G$y,mu,G$w,theta)) else
-	                 sum(family$dev.resids(G$y,mu,G$w)
-	## BUG: penalty has not been added on this branch
-        ## BUG: missing step length check!!
-	## obvious approach is to store before and after beta, Sbeta and eta, then step reduction 
-	## is mostly linear modification of these + mu and devance computation.
-        ## need to test that step will improve penalized deviance with current smoothing
-	## parameters, this can only happen from iter 3, since before then we don't have coefs
-	## at start and end of step...
-
+	kk <- 1
+	repeat {
+          mu <- linkinv(eta)
+	  dev <- if (efam) sum(family$dev.resids(G$y,mu,G$w,theta)) else
+	                 sum(family$dev.resids(G$y,mu,G$w))
+          if (iter>2) { ## coef step length control
+	    bSb <- sum(prop$beta*Sb) ## penalty at end of beta step 
+            if (dev0 + bSb0 < dev + bSb && kk < 30) { ## beta step not improving current pen dev
+              coef <- (coef0 + coef)/2 ## halve the step
+	      Sb <- (Sb0 + Sb)/2
+	      eta <- (eta0 + eta)/2
+	      prop$beta <- (b0 + prop$beta)/2
+	      kk <- kk + 1
+            } else break
+          } else break
+        }		 
 
         if (iter>1) { ## save components of penalized deviance for step control
-	  coef0 <- coef ## original para
+          coef0 <- coef ## original para
 	  eta0 <- eta
-	  ## following is wrong - need Sb with sps just accepted
-	  Sb0 <- prop$Sb  ## S beta repara - need to use Sl.mult to get this, first updating smoothing params.
-	  b0 <- prob$beta ## beta repara
+	  mu0 <- mu
+	  b0 <- prop$beta ## beta repara
+	  dev <- dev + sum(prop$beta*Sb) ## add penalty to deviance
 	}
+	
 	if (efam) { ## extended family
-	  theta <- family$getTheta() ## CHECK - is this needed? move to before iter?
 	  if (iter>1) { ## estimate theta
 	    scale1 <- if (!is.null(family$scale)) family$scale else scale
             if (family$n.theta>0||scale<0) theta <- estimate.theta(theta,family,y,mu,scale=scale1,wt=G$w,tol=1e-7)
             if (!is.null(family$scale) && family$scale<0) {
-	      scale <- exp(theta[family$n.theta])
+	      scale <- exp(theta[family$n.theta+1])
 	      theta <- theta[1:family$n.theta]
 	    }  
             family$putTheta(theta)
@@ -627,7 +642,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         if (max(Nstep)==0) { 
           Nstep <- prop$step;lsp0 <- lsp;
           break 
-        } else {
+        } else { ## step length control
           if (sum(prop$grad*Nstep)>dev*1e-7) Nstep <- Nstep/2 else {
             Nstep <- prop$step;lsp0 <- lsp;break;
           }
@@ -2100,8 +2115,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   if (is.null(object$fitted.values)) object$fitted.values <- family$linkinv(object$linear.predictors)
    
-  object$residuals <- sqrt(family$dev.resids(object$y,object$fitted.values,object$prior.weights)) * 
-                      sign(object$y-object$fitted.values)
+  object$residuals <- if (is.null(family$residuals)) sqrt(family$dev.resids(object$y,object$fitted.values,object$prior.weights)) * 
+                      sign(object$y-object$fitted.values) else residuals(object)
   if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
 
   if (is.null(object$deviance)) object$deviance <- sum(object$residuals^2)

@@ -10,8 +10,13 @@ in bgam.fitd.
 
 1.8-19
 
+** bam(...,discrete=TRUE) now accepts extended families (i.e. nb, tw, ocat etc)
+
 * preinitialize and postproc components of extended families are now functions,
   not expressions.
+
+* coefficient divergence check was missing in bam(...,discrete=TRUE) release
+  code - now fixed.
 
 * redundant 'n' argument removed from extended family 'ls' functions.
 

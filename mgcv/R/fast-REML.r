@@ -227,6 +227,28 @@ Sl.setup <- function(G) {
   Sl ## the penalty list
 } ## end of Sl.setup
 
+Sl.Sb <- function(Sl,rho,beta) {
+## computes S %*% beta where S is total penalty matrix defined by Sl and rho,
+## the log smoothing parameters. Assumes initial re-parameterization has taken
+## place, so single penalties are multiples of identity and uses S for
+## multi-S blocks. Logic is identical to Sl.addS.
+  k <- 1
+  a <- beta * 0
+  for (b in 1:length(Sl)) {
+    ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
+    if (length(Sl[[b]]$S)==1) { ## singleton - multiple of identity
+      a[ind] <- a[ind] + beta[ind] * exp(rho[k])
+      k <- k + 1
+    } else { ## mulit-S block
+      for (j in 1:length(Sl[[b]]$S)) {
+        a[ind] <- a[ind] + exp(rho[k]) * (Sl[[b]]$S[[j]] %*% beta[ind])
+        k <- k + 1
+      }
+    }
+  }
+  a
+} ## Sl.Sb
+
 Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) {
 ## Routine to apply initial Sl re-parameterization to model matrix X,
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
@@ -801,7 +823,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
   fixed <- rep(FALSE,length(rho))
   ldS <- ldetS(Sl,rho,fixed,np=ncol(XX),root=FALSE,repara=FALSE,nt=nt)
   
-  ## now the Choleki factor of the penalized Hessian... 
+  ## now the Cholesky factor of the penalized Hessian... 
   #XXp <- XX+crossprod(ldS$E) ## penalized Hessian
   XXp <- Sl.addS(Sl,XX,rho)
 
