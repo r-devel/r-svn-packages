@@ -1875,7 +1875,9 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 	if (nthreads>1 && !mgcv.omp()) warning("openMP not available: single threaded computation only")
       }
     }  
-    if (inherits(family,"extended.family")) family <- fix.family.link(family)
+    if (inherits(family,"extended.family")) {
+      family <- fix.family.link(family); efam <- TRUE
+    } else efam <- FALSE
     #else {
       #if (inherits(family,"extended.family")) stop("used bam(...,discrete=TRUE) with extended families")
     #}
@@ -2251,10 +2253,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                       sign(object$y-object$fitted.values) else residuals(object)
   if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
 
-  if (is.null(object$deviance)) object$deviance <- sum(object$residuals^2)
+  if (!efam || is.null(object$deviance)) object$deviance <- sum(object$residuals^2)
   dev <- object$deviance
   if (rho!=0&&family$family=="gaussian") dev <- sum(object$std.rsd^2)
-  object$aic <- if (inherits(family,"extended.family")) family$aic(object$y,object$fitted.values,family$getTheta(),object$prior.weights,dev) else
+  object$aic <- if (efam) family$aic(object$y,object$fitted.values,family$getTheta(),object$prior.weights,dev) else
                 family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)
   object$aic <- object$aic -
                 2 * (length(object$y) - sum(sum(object$model[["(AR.start)"]])))*log(1/sqrt(1-rho^2)) + ## correction for AR
