@@ -951,8 +951,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 	  
           for (i in 1:length(arg)) {
 	    arg[[i]]$coef <- coef
-	    arg[[i]]$theta <- theta
-	    arg[[i]]$scale <- scale
+	    if (efam) arg[[i]]$theta <- theta
 	  }
           res <- parallel::parLapply(cl,arg,qr.up) 
           ## single thread debugging version 
@@ -1050,7 +1049,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 
       if (iter>1) { ## store coef and eta for divergence checking
         coef0 <- coef
-	theta0 <- theta ## theta used for determining step
+	if (efam) theta0 <- theta ## theta used for determining step
 	pcoef0 <- if (method=="fREML") fit$beta else coef
 	eta0 <- eta
 	dev0 <- dev
