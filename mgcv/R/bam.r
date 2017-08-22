@@ -1584,6 +1584,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      G$pearson.extra <- rss.extra
      G$n.true <- n
      object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
+     object$fitted.values <- NULL
      y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
      if (rho!=0) { ## correct RE/ML score for AR1 transform 
        df <- if (is.null(mf$"(AR.start)")) 1 else sum(mf$"(AR.start)")
