@@ -10,7 +10,7 @@ in bgam.fitd.
 
 1.8-19
 
-** bam(...,discrete=TRUE) now accepts extended families (i.e. nb, tw, ocat etc)
+** bam() now accepts extended families (i.e. nb, tw, ocat etc)
 
 * preinitialize and postproc components of extended families are now functions,
   not expressions.
