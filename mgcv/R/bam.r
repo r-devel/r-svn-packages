@@ -2114,7 +2114,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       warning(gettextf("chunk.size < number of coefficients. Reset to %d",chunk.size))    
     }
 
-    G$cl<-cl;
+    G$cl <- cl
     G$am <- am
      
     G$min.edf<-G$nsdf #-dim(G$C)[1]
@@ -2127,12 +2127,14 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
   } else { ## G supplied
     scale <- G$scale
+    efam <- G$efam
     mf <- G$mf; G$mf <- NULL
     gp <- G$gp; G$gp <- NULL
     na.action <- G$na.action; G$na.action <- NULL
   } ## end of G setup 
 
   if (!fit) {
+    G$efam <- efam
     G$scale <- scale
     G$mf <- mf;G$na.action <- na.action;G$gp <- gp
     return(G)
