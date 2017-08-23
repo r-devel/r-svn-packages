@@ -440,7 +440,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     conv <- FALSE
     nobs <- nrow(mf)
     offset <- G$offset 
-
+   
     if (inherits(G$family,"extended.family")) { ## preinitialize extended family
       efam <- TRUE
       pini <- if (is.null(G$family$preinitialize)) NULL else G$family$preinitialize(y,G$family)
@@ -531,9 +531,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         if (iter>1) {
           ## form eta = X%*%beta
           eta <- Xbd(G$Xd,coef,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop)
-	  Sb <- Sl.Sb(Sl,lsp,prop$beta) ## store S beta to allow rapid step halving
+	  lsp.full <- if (is.null(G$L)) lsp + G$lsp0 else G$L%*%lsp+G$lsp0
+	  Sb <- Sl.Sb(Sl,lsp.full,prop$beta) ## store S beta to allow rapid step halving
 	  if (iter>2) {
-            Sb0 <- Sl.Sb(Sl,lsp,b0)
+            Sb0 <- Sl.Sb(Sl,lsp.full,b0)
 	    bSb0 <- sum(b0*Sb0) ## penalty at start of beta step
 	    ## get deviance at step start, with current theta if efam
 	    dev0 <- if (efam) sum(family$dev.resids(G$y,mu0,G$w,theta)) else
@@ -1023,12 +1024,12 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
           } else { dev1 <- dev }
           if (method=="fREML") {
 	    pcoef <- fit$beta
-            Sb0 <- Sl.Sb(Sl,rho=log(object$sp),pcoef0)
-	    Sb <- Sl.Sb(Sl,rho=log(object$sp),pcoef)
+            Sb0 <- Sl.Sb(um$Sl,rho=log(object$full.sp),pcoef0)
+	    Sb <- Sl.Sb(um$Sl,rho=log(object$full.sp),pcoef)
           } else {
 	    pcoef <- coef
-            Sb0 <- regular.Sb(G$S,G$off,object$sp,pcoef0)
-	    Sb <- regular.Sb(G$S,G$off,object$sp,pcoef)
+            Sb0 <- regular.Sb(G$S,G$off,object$full.sp,pcoef0)
+	    Sb <- regular.Sb(G$S,G$off,object$full.sp,pcoef)
           }
 	  while (dev0 + sum(pcoef0*Sb0) < dev1 + sum(pcoef * Sb) && kk < 6) {
             ## shrink step ...
