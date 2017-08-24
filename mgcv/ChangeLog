@@ -5,18 +5,24 @@ Currently deprecated and liable to be removed:
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
 
-ISSUES: it looks like the beta divergence check is missing in release code
-in bgam.fitd.
+ISSUES: cox.ph case control example is nonsense I think. Strata variable is 
+more than just a factor! need to allow strata in cox.ph for this to work.
 
 1.8-19
 
 ** bam() now accepts extended families (i.e. nb, tw, ocat etc)
+
+* extra divergence check added to bam gam default gam fitting (similar to
+  discrete method). 
 
 * preinitialize and postproc components of extended families are now functions,
   not expressions.
 
 * coefficient divergence check was missing in bam(...,discrete=TRUE) release
   code - now fixed.
+
+* gaulss family link derivatives modified to avoid overflow. Thanks to 
+  Kristen Beck for reporting the problem.
 
 * redundant 'n' argument removed from extended family 'ls' functions.
 

@@ -531,7 +531,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         if (iter>1) {
           ## form eta = X%*%beta
           eta <- Xbd(G$Xd,coef,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop)
-	  lsp.full <- if (is.null(G$L)) lsp + G$lsp0 else G$L%*%lsp+G$lsp0
+	  lsp.full <- G$lsp0
+	  if (n.sp>0) lsp.full <- lsp.full + if (is.null(G$L)) lsp[1:n.sp] else G$L %*% lsp[1:n.sp]
 	  Sb <- Sl.Sb(Sl,lsp.full,prop$beta) ## store S beta to allow rapid step halving
 	  if (iter>2) {
             Sb0 <- Sl.Sb(Sl,lsp.full,b0)
@@ -755,7 +756,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 regular.Sb <- function(S,off,sp,beta) {
 ## form S %*% beta for a normal G list
   a <- beta*0
-  for (i in 1:length(S)) {
+  if (length(S)>0) for (i in 1:length(S)) {
     ind <- off[i] - 1 + 1:ncol(S[[i]])
     a[ind] <- a[ind] + sp[i] * S[[i]] %*% beta[ind]
   }
@@ -1028,8 +1029,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 	    Sb <- Sl.Sb(um$Sl,rho=log(object$full.sp),pcoef)
           } else {
 	    pcoef <- coef
-            Sb0 <- regular.Sb(G$S,G$off,object$full.sp,pcoef0)
-	    Sb <- regular.Sb(G$S,G$off,object$full.sp,pcoef)
+	    full.sp <- if (is.null(object$full.sp)) object$sp else object$full.sp
+            Sb0 <- regular.Sb(G$S,G$off,full.sp,pcoef0)
+	    Sb <- regular.Sb(G$S,G$off,full.sp,pcoef)
           }
 	  while (dev0 + sum(pcoef0*Sb0) < dev1 + sum(pcoef * Sb) && kk < 6) {
             ## shrink step ...

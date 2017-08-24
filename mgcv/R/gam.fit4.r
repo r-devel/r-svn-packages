@@ -771,6 +771,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     grad <- ll$lb - St%*%coef 
     Hp <- -ll$lbb+St
     D <- diag(Hp)
+    if (sum(!is.finite(D))>0) stop("non finite values in Hessian")
     indefinite <- FALSE
     if (sum(D <= 0)) { ## Hessian indefinite, for sure
       D <- rep(1,ncol(Hp))
