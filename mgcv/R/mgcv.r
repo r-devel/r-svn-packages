@@ -2586,13 +2586,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
   # get data from which to predict.....  
   nd.is.mf <- FALSE # need to flag if supplied newdata is already a model frame 
   ## get name of response...
-  yname <- all.vars(object$terms)[attr(object$terms,"response")]
+  # yname <- all.vars(object$terms)[attr(object$terms,"response")]
+  yname <- attr(attr(object$terms,"dataClasses"),"names")[attr(object$terms,"response")]
   if (newdata.guaranteed==FALSE) {
     if (missing(newdata)) { # then "fake" an object suitable for prediction 
       newdata <- object$model
       new.data.ok <- FALSE
       nd.is.mf <- TRUE
-      response <- newdata[[yname]]
+      response <- newdata[[yname]] ## ok even with "cbind(foo,bar)" as yname 
     } else {  # do an R ``standard'' evaluation to pick up data
       new.data.ok <- TRUE
       if (is.data.frame(newdata)&&!is.null(attr(newdata,"terms"))) { # it's a model frame
@@ -2605,22 +2606,28 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 
         ## get names of required variables, less response, but including offset variable
         ## see ?terms.object and ?terms for more information on terms objects
-        yname <- all.vars(object$terms)[attr(object$terms,"response")]
+        # yname <- all.vars(object$terms)[attr(object$terms,"response")] ## redundant
+        resp <- get.var(yname,newdata,FALSE)
         naresp <- FALSE
-        if (!is.null(object$family$predict)&&!is.null(newdata[[yname]])) { 
+        #if (!is.null(object$family$predict)&&!is.null(newdata[[yname]])) {
+	if (!is.null(object$family$predict)&&!is.null(resp)) {
           ## response provided, and potentially needed for prediction (e.g. Cox PH family)
           if (!is.null(object$pred.formula)) object$pred.formula <- attr(object$pred.formula,"full")
           response <- TRUE
           Terms <- terms(object)
-          resp <- newdata[[yname]]
-          if (sum(is.na(resp))>0) {
-            naresp <- TRUE ## there are NAs in supplied response
-            ## replace them with a numeric code, so that rows are not dropped below
-            rar <- range(resp,na.rm=TRUE)
-            thresh <- rar[1]*1.01-rar[2]*.01
-            resp[is.na(resp)] <- thresh
-            newdata[[yname]] <- thresh 
-          } 
+          #resp <- newdata[[yname]]
+	  if (is.matrix(resp)) {
+            if (sum(is.na(rowSums(resp)))>0) stop("no NAs allowed in response data for this model")
+          } else { ## vector response
+            if (sum(is.na(resp))>0) {
+              naresp <- TRUE ## there are NAs in supplied response
+              ## replace them with a numeric code, so that rows are not dropped below
+              rar <- range(resp,na.rm=TRUE)
+              thresh <- rar[1]*1.01-rar[2]*.01
+              resp[is.na(resp)] <- thresh
+              newdata[[yname]] <- thresh 
+            }
+	  }  
         } else { ## response not provided
           response <- FALSE 
           Terms <- delete.response(terms(object))
@@ -2637,14 +2644,16 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           if (naresp) newdata[[yname]][newdata[[yname]]<=thresh] <- NA ## reinstate as NA  
         } ## otherwise it's intercept only and newdata can be left alone
         na.act <- attr(newdata,"na.action")
-        response <- if (response) newdata[[yname]] else NULL
+        #response <- if (response) newdata[[yname]] else NULL
+	response <- resp
       }
     }
   } else { ## newdata.guaranteed == TRUE
     na.act <- NULL
     new.data.ok=TRUE ## it's guaranteed!
     if (!is.null(attr(newdata,"terms"))) nd.is.mf <- TRUE
-    response <- newdata[[yname]]
+    #response <- newdata[[yname]]
+    response <- get.var(yname,newdata,FALSE)
   }
 
 
