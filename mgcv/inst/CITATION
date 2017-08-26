@@ -25,7 +25,7 @@ bibentry(
   pages= "1548-1575",
   volume= "111",
   textVersion="Wood S.N., N. Pya and B. Saefken (2016) Smoothing parameter and model selection for general smooth models (with discussion). Journal of the American Statistical Association 111:1548-1575."
-}
+)
 
 bibentry(
  bibtype="Article",
@@ -49,10 +49,10 @@ bibtype="Book",
 title="Generalized Additive Models: An Introduction with R",
 year="2017",
 author="S.N Wood",
-edition="2"
+edition="2",
 publisher="Chapman and Hall/CRC",
-textVersion="Wood, S.N. (2006) Generalized Additive Models: An 
-Introduction with R. Chapman and Hall/CRC. "
+textVersion="Wood, S.N. (2017) Generalized Additive Models: An 
+Introduction with R (wnd edition). Chapman and Hall/CRC. "
 )
 
 bibentry(

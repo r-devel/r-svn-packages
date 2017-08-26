@@ -1,9 +1,7 @@
 **  denotes quite substantial/important changes
 *** denotes really big changes 
 
-Currently deprecated and liable to be removed: 
-- single penalty tensor product smooths.
-- p.type!=0 in summary.gam.
+Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
 
 1.8-19
@@ -15,6 +13,10 @@ Currently deprecated and liable to be removed:
 
 * Example code for matched case control in ?cox.ph was just plain wrong. Now
   fixed. Thanks to Patrick Farrell.  
+
+* p.type!=0 removed in summary.gam (previously deprecated)
+
+* single penalty tensor product smooths removed (previously deprecated).
 
 * gam(...,optimizer="perf") deprecated.
 

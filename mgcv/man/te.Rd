@@ -15,7 +15,7 @@
 }
 
 \usage{te(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
-              mp=TRUE,np=TRUE,xt=NULL,id=NULL,sp=NULL,pc=NULL)
+              np=TRUE,xt=NULL,id=NULL,sp=NULL,pc=NULL)
 ti(..., k=NA,bs="cr",m=NA,d=NA,by=NA,fx=FALSE,
               np=TRUE,xt=NULL,id=NULL,sp=NULL,mc=NULL,pc=NULL)
 }
@@ -63,10 +63,6 @@ if covariates are matrices: in this case implements linear functional of a smoot
 
 \item{fx}{indicates whether the term is a fixed d.f. regression
   spline (\code{TRUE}) or a penalized regression spline (\code{FALSE}).}
-
-\item{mp}{\code{TRUE} to use multiple penalties for the smooth. \code{FALSE} to use only 
-a single penalty: single penalties are not recommended and are deprecated - they tend to allow only rather 
-wiggly models.}
 
 \item{np}{ \code{TRUE} to use the `normal parameterization' for a tensor
 product smooth. This represents any 1-d marginal smooths
