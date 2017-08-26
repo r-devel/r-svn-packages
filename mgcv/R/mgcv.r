@@ -1695,7 +1695,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     lsp <- log(in.out$sp) 
   } else {## do performance iteration.... 
     if (fixedSteps>0) {
-      .Deprecated(msg="performance iteration with gam is deprecated, use bam instead")
+    
       object <- gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
       lsp <- log(object$sp) 
     } else {
@@ -2230,7 +2230,8 @@ gam.fit <- function (G, start = NULL, etastart = NULL,
     y<-G$y # original data
     X<-G$X # original design matrix
     if (nvars == 0) stop("Model seems to contain no terms")
-    olm <- G$am   # only need 1 iteration as it's a pure additive model. 
+    olm <- G$am   # only need 1 iteration as it's a pure additive model.
+    if (!olm)  .Deprecated(msg="performance iteration with gam is deprecated, use bam instead")
     find.theta<-FALSE # any supplied -ve binomial theta treated as known, G$sig2 is scale parameter
     if (substr(family$family[1],1,17)=="Negative Binomial")
     { Theta <- family$getTheta()
