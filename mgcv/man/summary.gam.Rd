@@ -169,6 +169,8 @@ Wood, S.N. (2013b) On p-values for smooth components of an extended generalized 
 Wood S.N. (2006) Generalized Additive Models: An Introduction with R. Chapman
 and Hall/CRC Press.
 
+Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman
+and Hall/CRC Press.
 }
 \author{ Simon N. Wood \email{simon.wood@r-project.org} with substantial
 improvements by Henric Nilsson.}

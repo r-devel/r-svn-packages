@@ -1579,10 +1579,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (!(method%in%c("REML","ML"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
-       #if (!is.null(G$offset)) if (is.list(G$offset)) { for (i in 1:length(G$offset)) 
-       #  if (!is.null(G$offset[[i]])) warning("sorry, general families currently ignore offsets")
-       #} else if (sum(G$offset!=0)>0) warning("sorry, general families currently ignore offsets")
-
+    
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
        ## Xorig <- G$X ## store original X incase it is needed by family - poor option pre=proc can manipulate G$X
@@ -1590,13 +1587,6 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
  
        if (!is.null(start)) start <- Sl.initial.repara(G$Sl,start,inverse=FALSE,both.sides=FALSE)
 
-       #if (!is.null(G$offset)) {
-       #  ok <- FALSE
-       #  if (is.list(G$offset)) {
-       #    for (i in 1:length(G$offset)) if (!is.null(G$offset[[i]]) && sum(G$offset[[i]]!=0)) ok <- TRUE
-       #  } else if (sum(G$offset!=0)) ok <- TRUE
-       #  if (ok) attr(G$X,"offset") <- G$offset ## pass offsets on to family if they are not all null
-       #}
        ## make sure optimizer appropriate for available derivatives
        if (!is.null(G$family$available.derivs)) {
          if (G$family$available.deriv==1 && optimizer[1]!="efs")  optimizer <- c("outer","bfgs")
@@ -1704,7 +1694,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     if (!ok) stop("in.out incorrect: see documentation")
     lsp <- log(in.out$sp) 
   } else {## do performance iteration.... 
-    if (fixedSteps>0) { 
+    if (fixedSteps>0) {
+      warning("performance iteration with gam is deprecated, use bam instead")
       object <- gam.fit(G,family=G$family,control=control,gamma=gamma,fixedSteps=fixedSteps,...)
       lsp <- log(object$sp) 
     } else {
@@ -2645,7 +2636,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         } ## otherwise it's intercept only and newdata can be left alone
         na.act <- attr(newdata,"na.action")
         #response <- if (response) newdata[[yname]] else NULL
-	response <- resp
+	response <- if (response) get.var(yname,newdata,FALSE) else NULL
       }
     }
   } else { ## newdata.guaranteed == TRUE

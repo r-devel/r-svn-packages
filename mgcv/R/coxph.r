@@ -149,13 +149,13 @@ cox.ph <- function (link = "identity") {
 	strat <- y[,2];y <- y[,1]
 	if (is.null(family$data$strat)) stop("something wrong with stratified prediction")
 	ii <- order(strat,y,decreasing=TRUE) ## C code expects non-increasing
-	
+	strat <- strat[ii]
       } else {
         ii <- order(y,decreasing=TRUE) ## C code expects non-increasing
         strat <- NULL
       }
       if (sum(is.na(y))>0) stop("NA times supplied for cox.ph prediction")
-      X <- X[ii,];y <- y[ii]
+      X <- X[ii,];y <- y[ii];
       if (is.null(strat)) {
         n <- nrow(X)
         oo <- .C("coxpred",as.double(X),t=as.double(y),as.double(beta),as.double(Vb),

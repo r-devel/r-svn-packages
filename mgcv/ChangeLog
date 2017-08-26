@@ -4,13 +4,19 @@
 Currently deprecated and liable to be removed: 
 - single penalty tensor product smooths.
 - p.type!=0 in summary.gam.
-
-ISSUES: cox.ph case control example is nonsense I think. Strata variable is 
-more than just a factor! need to allow strata in cox.ph for this to work.
+- gam performance iteration (1.8-19, Sept 2017)
 
 1.8-19
 
 ** bam() now accepts extended families (i.e. nb, tw, ocat etc)
+
+* cox.ph now allows stratification (i.e. baseline hazard can differ between 
+  groups). 
+
+* Example code for matched case control in ?cox.ph was just plain wrong. Now
+  fixed. Thanks to Patrick Farrell.  
+
+* gam(...,optimizer="perf") deprecated.
 
 * extra divergence check added to bam gam default gam fitting (similar to
   discrete method). 

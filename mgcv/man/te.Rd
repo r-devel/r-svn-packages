@@ -117,7 +117,7 @@ although they are typically not quite as nicely behaved as t.p.r.s. smooths for 
 
 It is sometimes useful to investigate smooth models with a main-effects + interactions structure, for example
 \deqn{f_1(x)  + f_2(z) + f_3(x,z)}{f_1(x)  + f_2(z) + f_3(x,z)}
-This functional ANOVA decomposition is supported by \code{ti} terms, which produce tensor product interactions from which the main effects have been excluded, under the assumption that they will be included separately. For example the \code{~ ti(x) + ti(z) + ti(x,z)} would produce the above main effects + interaction structure. This is much better than attempting the same thing with \code{s}or \code{te} terms representing the interactions (although mgcv does not forbid it). Technically \code{ti} terms are very simple: they simply construct tensor product bases from marginal smooths to which identifiability constraints (usually sum-to-zero) have already been applied: correct nesting is then automatic (as with all interactions in a GLM framework). 
+This functional ANOVA decomposition is supported by \code{ti} terms, which produce tensor product interactions from which the main effects have been excluded, under the assumption that they will be included separately. For example the \code{~ ti(x) + ti(z) + ti(x,z)} would produce the above main effects + interaction structure. This is much better than attempting the same thing with \code{s}or \code{te} terms representing the interactions (although mgcv does not forbid it). Technically \code{ti} terms are very simple: they simply construct tensor product bases from marginal smooths to which identifiability constraints (usually sum-to-zero) have already been applied: correct nesting is then automatic (as with all interactions in a GLM framework). See Wood (2017, section 5.6.3).
 
 The `normal parameterization' (\code{np=TRUE}) re-parameterizes the marginal
 smooths of a tensor product smooth so that the parameters are function values
@@ -178,9 +178,11 @@ values (defualt).}
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 \references{
 
-Wood, S.N. (2006a) Low rank scale invariant tensor product smooths for
+Wood, S.N. (2006) Low rank scale invariant tensor product smooths for
 generalized additive mixed models. Biometrics 62(4):1025-1036
 
+Wood S.N. (2017) Generalized Additive Models: An Introduction with R (2nd edition). Chapman
+and Hall/CRC Press.
 
 \url{http://www.maths.bris.ac.uk/~sw15190/}
 
