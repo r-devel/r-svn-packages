@@ -14,6 +14,10 @@ Currently deprecated and liable to be removed:
 * Example code for matched case control in ?cox.ph was just plain wrong. Now
   fixed. Thanks to Patrick Farrell.  
 
+* bam(...,discrete=TRUE) tolerance for judging whether smoothing parameters 
+  are on boundary was far too low, so that sps could become so large that 
+  numerical instability set in. Fixed.
+
 * p.type!=0 removed in summary.gam (previously deprecated)
 
 * single penalty tensor product smooths removed (previously deprecated).

@@ -770,7 +770,7 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
 
   ## alternative all in one code - matches loop results, but
   ## timing close to identical - modified for parallel exec
-  D <- matrix(unlist(Skb),nrow(R),nd)
+  D <- matrix(unlist(Skb),nrow(XX),nd)
   bSb1 <- colSums(beta*D)
   #D <- D[piv,]/d[piv]
   D1 <- .Call(C_mgcv_Rpforwardsolve,R,D[piv,]/d[piv],nt) ## note R transposed internally unlike forwardsolve

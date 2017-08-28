@@ -565,7 +565,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 	  mu0 <- mu
 	  b0 <- prop$beta ## beta repara
 	  dev <- dev + sum(prop$beta*Sb) ## add penalty to deviance
-	}
+	} else reml <- dev ## for convergence checking
 	
 	if (efam) { ## extended family
 	  if (iter>1) { ## estimate theta
@@ -652,7 +652,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         lsp <- lsp0 + Nstep
         if (scale<=0) log.phi <- lsp[n.sp+1] 
         prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
-                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=dev*.Machine$double.eps^.7)
+                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5)
         if (max(Nstep)==0) { 
           Nstep <- prop$step;lsp0 <- lsp;
           break 
@@ -671,6 +671,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
                   iter))
           break
       }
+      reml <- (dev/exp(log.phi) - prop$ldetS + prop$ldetXXS)/2
     } ## end fitting iteration
 
     if (!conv)
