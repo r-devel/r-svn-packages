@@ -1434,7 +1434,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
 { if (is.na(optimizer[2])) optimizer[2] <- "newton"
   if (!optimizer[2]%in%c("newton","bfgs","nlm","optim","nlm.fd")) stop("unknown outer optimization method.")
 
-  # if (!optimizer[2]%in%c("nlm","optim","nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
+  if (optimizer[2]%in%c("nlm.fd")) .Deprecated(msg=paste("optimizer",optimizer[2],"is deprecated, please use newton or bfgs"))
 
   if (optimizer[1]=="efs" && !inherits(family,"general.family")) {
     warning("Extended Fellner Schall only implemented for general families")
