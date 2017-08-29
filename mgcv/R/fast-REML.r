@@ -816,7 +816,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,n
 ## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
 ## gradiant and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
 ## yy = y'Wy in order to get derivsatives w.r.t. phi. 
-  
+  tol <- as.numeric(tol)
   rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
   if (length(rho)<length(rho0)) rho <- rho0 ## ncol(L)==0 or length(rho)==0
   ## get log|S|_+ without stability transform... 
