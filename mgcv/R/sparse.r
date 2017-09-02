@@ -177,6 +177,7 @@ nearest <- function(k,X,gt.zero = FALSE,get.a=FALSE) {
 #  list(idat=oo$idat,ddat=oo$ddat)
 #}
 
+
 kd.tree <- function(X) {
 ## function to obtain kd tree for points in rows of X
   kd <- .Call(C_Rkdtree,X)
@@ -184,8 +185,24 @@ kd.tree <- function(X) {
 }
 
 kd.nearest <- function(kd,X,x,k) {
+## Finds k nearest neigbours of each row of x within X. X has
+## corresponding kd tree kd, stored as an external pointer:
+## attribute "kd_ptr" of kd. Returns array of indices to rows in
+## X, along with corresponding distances.
   attr(X,"kd_ptr") <- attr(kd,"kd_ptr")
-  nei <- .Call(C_Rkdnearest,X,x,as.integer(k))
+  nei <- .Call(C_Rkdnearest,X,x,as.integer(k)) + 1 ## C to R
+}
+
+kd.radius <- function(kd,X,x,r){
+## find all points in kd tree (kd,X) in radius r of points in x.
+## kd should come from kd.tree(X).
+## neighbours of x[i,] in X are the rows given by ni[off[i]:(off[i+1]-1)]
+#   m <- nrow(x);
+#   off <- rep(0,m+1)
+  attr(X,"kd_ptr") <- attr(kd,"kd_ptr")
+  off <- rep(as.integer(0),nrow(x)+1) 
+  ni <- .Call(C_Rkradius,X,x,as.double(r),off) + 1
+  list(ni=ni,off=off+1)
 }
 
 #kd.nearest <- function(kd,X,x,k) {
@@ -203,22 +220,22 @@ kd.nearest <- function(kd,X,x,k) {
 #  list(ni=matrix(oo$ni+1,m,k),dist=matrix(oo$dist,m,k))
 #}
 
-kd.radius <- function(kd,X,x,r) {
+#kd.radius <- function(kd,X,x,r) {
 ## find all points in kd tree (kd,X) in radius r of points in x.
 ## kd should come from kd.tree(X).
 ## neighbours of x[i,] in X are the rows given by ni[off[i]:(off[i+1]-1)]
-   m <- nrow(x);
-   off <- rep(0,m+1)
+#   m <- nrow(x);
+#   off <- rep(0,m+1)
    ## do the work...
-   oo <- .C(C_Rkradius,as.double(r),as.integer(kd$idat),as.double(kd$ddat),as.double(X),as.double(t(x)),
-         as.integer(m),off=as.integer(off),ni=as.integer(0),op=as.integer(0))
-   off <- oo$off
-   ni <- rep(0,off[m+1])
+#   oo <- .C(C_Rkradius,as.double(r),as.integer(kd$idat),as.double(kd$ddat),as.double(X),as.double(t(x)),
+#         as.integer(m),off=as.integer(off),ni=as.integer(0),op=as.integer(0))
+#   off <- oo$off
+#   ni <- rep(0,off[m+1])
    ## extract to R and clean up...
-   oo <- .C(C_Rkradius,as.double(r),as.integer(kd$idat),as.double(kd$ddat),as.double(X),as.double(t(x)),
-         as.integer(m),off=as.integer(off),ni=as.integer(ni),op=as.integer(1))
-   list(off=off+1,ni=oo$ni+1) ## note R indexing here.
-} ## kd.radius
+#   oo <- .C(C_Rkradius,as.double(r),as.integer(kd$idat),as.double(kd$ddat),as.double(X),as.double(t(x)),
+#         as.integer(m),off=as.integer(off),ni=as.integer(ni),op=as.integer(1))
+#   list(off=off+1,ni=oo$ni+1) ## note R indexing here.
+#} ## kd.radius
 
 tieMatrix <- function(x) {
 ## takes matrix x, and produces sparse matrix P that maps list of unique 

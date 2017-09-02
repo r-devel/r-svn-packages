@@ -20,6 +20,7 @@ R_CallMethodDef CallMethods[] = {
   { "mgcv_madi",(DL_FUNC)&mgcv_madi,4},
   { "Rkdtree",(DL_FUNC)&Rkdtree,1},
   {"Rkdnearest",(DL_FUNC)&Rkdnearest,3},
+  {"Rkradius",(DL_FUNC)&Rkradius,4},
   {NULL, NULL, 0}
 };
 
@@ -68,7 +69,7 @@ R_CMethodDef CEntries[] = {
     {"k_nn",(DL_FUNC)&k_nn,8},
     // {"Rkdtree",(DL_FUNC)&Rkdtree,5},
     //{"Rkdnearest",(DL_FUNC)&Rkdnearest,9},
-    {"Rkradius",(DL_FUNC)&Rkradius,9},
+    //{"Rkradius",(DL_FUNC)&Rkradius,9},
     {"sspl_construct",(DL_FUNC)&sspl_construct,9},
     {"sspl_mapply",(DL_FUNC)&sspl_mapply,9},
     {"tri2nei",(DL_FUNC)&tri2nei,5},
