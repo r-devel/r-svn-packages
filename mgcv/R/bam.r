@@ -1061,7 +1061,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 
       if (efam && iter>1) { ## estimate theta
 	scale1 <- if (!is.null(family$scale)) family$scale else scale
-        if (family$n.theta>0||scale<0) theta <- estimate.theta(theta,family,y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
+        if (family$n.theta>0||scale<0) theta <- estimate.theta(theta,family,G$y,linkinv(eta),scale=scale1,wt=G$w,tol=1e-7)
         if (!is.null(family$scale) && family$scale<0) {
 	   scale <- exp(theta[family$n.theta+1])
 	   theta <- theta[1:family$n.theta]
@@ -1177,7 +1177,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
          if (!is.null(posr$deviance)) object$deviance <- posr$deviance
          if (!is.null(posr$null.deviance)) object$null.deviance <- posr$null.deviance
        }
-      if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(y,weighted.mean(y,G$w),G$w,theta))   
+      if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(G$y,weighted.mean(G$y,G$w),G$w,theta))   
     }
 
     if (!conv)
