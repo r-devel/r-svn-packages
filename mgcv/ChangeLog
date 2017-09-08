@@ -6,6 +6,10 @@ Currently deprecated and liable to be removed:
 
 1.8-20
 
+* bam(,discrete=TRUE) could produce garbage with ti(x,z,k=c(6,5),mc=c(T,F))
+  because tensor re-ordering for efficiency failed to re-order mc (this is 
+  a *very* specialist bug!). Thanks to Fabian Scheipl.  
+
 * plot(...,residuals=TRUE) weighted the working residuals by the sqrt working 
   weights divided by the mean sqrt working weight. The standardization by the 
   mean sqrt weight was non standard and has been removed.

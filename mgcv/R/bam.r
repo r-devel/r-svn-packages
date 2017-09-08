@@ -1825,6 +1825,7 @@ tero <- function(sm) {
     ind <- 1:ns;ind[maxi] <- ns;ind[ns] <- maxi
     sm$margin <- sm$margin[ind]
     sm$fix <- sm$fix[ind]
+    if (!is.null(sm$mc)) sm$mc <- sm$mc[ind]
     sm$term <- rep("",0)
     for (i in 1:ns) sm$term <- c(sm$term,sm$margin[[i]]$term)
     sm$label <- paste0(substr(sm$label,1,3),paste0(sm$term,collapse=","),")",collapse="")
