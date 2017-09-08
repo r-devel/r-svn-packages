@@ -6,6 +6,10 @@ Currently deprecated and liable to be removed:
 
 1.8-20
 
+* plot(...,residuals=TRUE) weighted the working residuals by the sqrt working 
+  weights divided by the mean sqrt working weight. The standardization by the 
+  mean sqrt weight was non standard and has been removed.
+
 * predict.bamd modified to avoid failure predicting with offset from a 
   model fitted with bam(...,discrete=TRUE) when supplying newdata. Thanks
   to Paul Shearer. 
