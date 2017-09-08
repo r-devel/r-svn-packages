@@ -94,7 +94,7 @@ qr.up <- function(arg) {
        dd <- dDeta(y,mu,weights,theta=arg$theta,arg$family,0)
        ## note: no handling of infinities and wz case yet
        w <- dd$EDeta2 * .5 
-       w <- w
+       #w <- w
        z <- (eta1-arg$offset[ind]) - dd$Deta.EDeta2
        good <- is.finite(z)&is.finite(w)
        w[!good] <- 0 ## drop if !good
@@ -580,10 +580,22 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 	  
           dd <- dDeta(y,mu,G$w,theta=theta,family,0)
 	  ## note: no handling of infinities and wz case yet
-	  w <- dd$Deta2 * .5 
-	  w <- w
-          z <- (eta-offset) - dd$Deta.Deta2
-	  good <- is.finite(z)&is.finite(w)
+
+          if (rho==0) {
+	    w <- dd$Deta2 * .5 
+            z <- (eta-offset) - dd$Deta.Deta2
+          } else { ## use fisher weights
+	    w <- dd$EDeta2 * .5 
+            z <- (eta-offset) - dd$Deta.EDeta2
+	  }
+          #if (rho!=0) { 
+          #  ind <- which(w<0)
+	  #  if (length(ind)>0) { ## substitute Fisher weights
+	  #    w[ind] <- dd$EDeta2[ind] * .5
+	  #    z[ind] <- (eta[ind]-offset[ind]) - dd$Deta.EDeta2[ind]
+	  #  }  
+          #}
+          good <- is.finite(z)&is.finite(w)
 	  w[!good] <- 0 ## drop if !good
 	  z[!good] <- 0 ## irrelevant
 	  #dev <- sum(family$dev.resids(G$y,mu,G$w,theta))
@@ -926,7 +938,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 	        ## note: no handling of infinities and wz case yet
                
 	        w <- dd$EDeta2 * .5 
-	        w <- w
+	        #w <- w
                 z <- (eta1-offset[ind]) - dd$Deta.EDeta2
 	        good <- is.finite(z)&is.finite(w)
 	        w[!good] <- 0 ## drop if !good
@@ -1647,9 +1659,16 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   
   if (!is.null(exclude)) warning("exclude ignored by discrete prediction at present")
 
+  ## newdata has to be processed first to avoid, e.g. dropping different subsets of data
+  ## for parametric and smooth components....
+
   newdata <- predict.gam(object,newdata=newdata,type="newdata",se.fit=se.fit,terms=terms,exclude=exclude,
             block.size=block.size,newdata.guaranteed=newdata.guaranteed,
             na.action=na.action,...) 
+
+  ## Next line needed to avoid treating newdata as a model frame and then
+  ## having incorrect labels for offset, for example....
+  attr(newdata,"terms") <- NULL 
 
   ## Parametric terms have to be dealt with safely, but without forming all terms 
   ## or a full model matrix. Strategy here is to use predict.gam, having removed

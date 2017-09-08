@@ -6,8 +6,15 @@ Currently deprecated and liable to be removed:
 
 1.8-20
 
+* predict.bamd modified to avoid failure predicting with offset from a 
+  model fitted with bam(...,discrete=TRUE) when supplying newdata. Thanks
+  to Paul Shearer. 
+
 * fix of typo in bgam.fit, which caused failure of extended families
-  when dataset larger than chunk size.
+  when dataset larger than chunk size. Thanks Martijn Wieling.
+
+* bam(...,discrete=TRUE)/bgam.fitd modified to use fisher weights with 
+  extended families if rho!=0.
 
 1.8-19
 
