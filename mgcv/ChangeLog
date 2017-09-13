@@ -4,6 +4,14 @@
 Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
 
+1.8-21
+
+* When functions were added to families within mgcv some very large 
+  environments could end up attached to those functions, for no good reason.
+  fix.family.link, fix.family.var and fix.family.ls now avoid this, resulting 
+  in smaller gam obects on disk and lower R memory usage. 
+  Thanks to Niels Richard Hansen for uncovering this. 
+
 1.8-20
 
 * bam(,discrete=TRUE) could produce garbage with ti(x,z,k=c(6,5),mc=c(T,F))
