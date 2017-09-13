@@ -2374,9 +2374,21 @@ fix.family.link.family <- function(fam)
     fam$d3link <- function(mu) (lambda*(lambda-1)*(lambda-2)) * mu^{lambda-3}
     fam$d4link <- function(mu) (lambda*(lambda-1)*(lambda-2)*(lambda-3)) * mu^{lambda-4}
   } else stop("link not recognised")
+  ## avoid giant environments being stored....
   environment(fam$d2link) <-  environment(fam$d3link) <-  environment(fam$d4link) <- environment(fam$linkfun)
   return(fam)
 } ## fix.family.link.family
+
+
+## NOTE: something horrible can happen here. The way method dispatch works, the
+## environment attached to functions created in fix.family.link is the environment
+## from which fix.family.link was called - and this whole environment is stored
+## with the created function - in the gam context that means the model matrix is
+## stored invisibly away for no useful purpose at all. pryr:::object_size will
+## show the true stored size of an object with hidden environments. But environments
+## of functions created in method functions should be set explicitly to something
+## harmless (see ?environment for some possibilities, empty is rarely a good idea)
+## 9/2017
 
 fix.family.link <- function(fam) UseMethod("fix.family.link")
 

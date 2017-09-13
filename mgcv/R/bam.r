@@ -191,8 +191,8 @@ check.term <- function(term,rec) {
   ii <- which(rec$vnames%in%term)
   if (length(ii)) { ## at least one variable already discretized
     if (length(term)==rec$d[min(ii)]) { ## dimensions match previous discretization
-      if (sum(!(term%in%rec$vnames[ii]))) ("bam can not discretize with this nesting structure")
-      else return(rec$ki[min(ii)]) ## all names match previous - retun index of previous
+      if (sum(!(term%in%rec$vnames[ii]))) stop("bam can not discretize with this nesting structure")
+      else return(rec$ki[min(ii)]) ## all names match previous - return index of previous
     } else stop("bam can not discretize with this nesting structure")
   } else return(0) ## no match
 } ## check.term
