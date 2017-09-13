@@ -2679,6 +2679,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     nb <- length(object$coefficients)
   }
   
+  if (type=="lpmatrix") block.size <- NULL ## nothing gained by blocking in this case - and offset handling easier this way
+
   ## split prediction into blocks, to avoid running out of memory
   if (is.null(block.size)) { 
     ## use one block as predicting using model frame

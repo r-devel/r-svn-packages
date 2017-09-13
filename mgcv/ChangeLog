@@ -12,6 +12,10 @@ Currently deprecated and liable to be removed:
   in smaller gam obects on disk and lower R memory usage. 
   Thanks to Niels Richard Hansen for uncovering this. 
 
+* Another bug fix for prediction from discrete fit bam models with an offset, 
+  this time when there were more than 50000 data. Also fix to bam fitting when 
+  the number of data was an integer multiple of the chunk size + 1. 
+
 1.8-20
 
 * bam(,discrete=TRUE) could produce garbage with ti(x,z,k=c(6,5),mc=c(T,F))
