@@ -2217,17 +2217,20 @@ fix.family.link.extended.family <- function(fam) {
   } else if (link == "probit") {
   ## g(mu) = qnorm(mu); 1/g' = dmu/deta = 1/dnorm(eta)
     fam$g2g <- function(mu) { 
-      eta <- fam$linkfun(mu)
+      #eta <- fam$linkfun(mu)
+      eta <- qnorm(mu)
       ## g'' = eta/fam$mu.eta(eta)^2
       eta
     }
     fam$g3g <- function(mu) {
-      eta <-  fam$linkfun(mu)
+      #eta <-  fam$linkfun(mu)
+      eta <- qnorm(mu)
       ## g''' = (1 + 2*eta^2)/fam$mu.eta(eta)^3
       (1 + 2*eta^2)
     }
     fam$g4g <- function(mu) {
-       eta <-  fam$linkfun(mu)
+       #eta <-  fam$linkfun(mu)
+       eta <- qnorm(mu)
        ## g'''' = (7*eta + 6*eta^3)/fam$mu.eta(eta)^4
        (7*eta + 6*eta^3)
     }
@@ -2237,18 +2240,21 @@ fix.family.link.extended.family <- function(fam) {
   ## is one over this... repeated differentiation w.r.t. mu using chain
   ## rule gives results...
     fam$g2g <- function(mu) { 
-     eta <- fam$linkfun(mu)
+     #eta <- fam$linkfun(mu)
+     eta <- qcauchy(mu)
      ## g'' = 2*pi*pi*eta*(1+eta*eta)
      eta/(1+eta*eta)
     }
     fam$g3g <- function(mu) { 
-     eta <- fam$linkfun(mu)
+     #eta <- fam$linkfun(mu)
+     eta <- qcauchy(mu)
      eta2 <- eta*eta
      ## g''' = 2*pi*pi*pi*(1+3*eta2)*(1+eta2)
      (1+3*eta2)/(1+eta2)^2
     }
     fam$g4g <- function(mu) { 
-     eta <- fam$linkfun(mu)
+     #eta <- fam$linkfun(mu)
+     eta <- qcauchy(mu)
      eta2 <- eta*eta
      ## g'''' = 2*pi^4*(8*eta+12*eta2*eta)*(1+eta2)
      ((8+ 12*eta2)/(1+eta2)^2)*(eta/(1+eta2))
@@ -2315,16 +2321,22 @@ fix.family.link.family <- function(fam)
     fam$d4link <- function(mu) 6/(1-mu)^4 - 6/mu^4
   } else if (link == "probit") {
     fam$d2link <- function(mu) { 
-      eta <- fam$linkfun(mu)
-      eta/fam$mu.eta(eta)^2
+      #eta <- fam$linkfun(mu)
+      eta <- qnorm(mu)
+      #eta/fam$mu.eta(eta)^2
+      eta/pmax(dnorm(eta), .Machine$double.eps)^2
     }
     fam$d3link <- function(mu) {
-      eta <-  fam$linkfun(mu)
-      (1 + 2*eta^2)/fam$mu.eta(eta)^3
+      #eta <-  fam$linkfun(mu)
+      eta <- qnorm(mu)
+      #(1 + 2*eta^2)/fam$mu.eta(eta)^3
+      (1 + 2*eta^2)/pmax(dnorm(eta), .Machine$double.eps)^3
     }
     fam$d4link <- function(mu) {
-       eta <-  fam$linkfun(mu)
-       (7*eta + 6*eta^3)/fam$mu.eta(eta)^4
+       #eta <-  fam$linkfun(mu)
+       eta <- qnorm(mu)
+       #(7*eta + 6*eta^3)/fam$mu.eta(eta)^4
+       (7*eta + 6*eta^3)/pmax(dnorm(eta), .Machine$double.eps)^4
     }
   } else if (link == "cloglog") {
   ## g = log(-log(1-mu)), g' = -1/(log(1-mu)*(1-mu))
@@ -2350,16 +2362,19 @@ fix.family.link.family <- function(fam)
   ## is one over this... repeated differentiation w.r.t. mu using chain
   ## rule gives results...
     fam$d2link <- function(mu) { 
-     eta <- fam$linkfun(mu)
+     #eta <- fam$linkfun(mu)
+     eta <- qcauchy(mu)
      2*pi*pi*eta*(1+eta*eta)
     }
     fam$d3link <- function(mu) { 
-     eta <- fam$linkfun(mu)
+     #eta <- fam$linkfun(mu)
+     eta <- qcauchy(mu)
      eta2 <- eta*eta
      2*pi*pi*pi*(1+3*eta2)*(1+eta2)
     }
     fam$d4link <- function(mu) { 
-     eta <- fam$linkfun(mu)
+     #eta <- fam$linkfun(mu)
+     eta <- qcauchy(mu)
      eta2 <- eta*eta
      2*pi^4*(8*eta+12*eta2*eta)*(1+eta2)
     }
