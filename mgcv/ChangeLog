@@ -8,6 +8,9 @@ Currently deprecated and liable to be removed:
 
 * paraPen handling in bam was broken - fixed.
 
+* slight adjustment to sp  initialization for extended families - use observed 
+  information in weights if possible.
+
 1.8-22
 
 * Fix of bug whereby testing for OpenMP and nthreads>1 in bam, would fail if 

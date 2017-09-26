@@ -4120,7 +4120,11 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
     if (inherits(family,"extended.family")) {
       theta <- family$getTheta()
       ## use 'as.numeric' - 'drop' can leave result as 1D array...
-      w <- .5 * as.numeric(family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2)  
+      Ddo <- family$Dd(y,mustart,theta,weights)
+      mu.eta2 <-family$mu.eta(family$linkfun(mustart))^2 
+      w <- .5 * as.numeric(Ddo$Dmu2 * mu.eta2)
+      if (any(w<0)) w <- .5 * as.numeric(Ddo$EDmu2 * mu.eta2) 
+      #w <- .5 * as.numeric(family$Dd(y,mustart,theta,weights)$EDmu2*family$mu.eta(family$linkfun(mustart))^2)  
     } else w <- as.numeric(weights*family$mu.eta(family$linkfun(mustart))^2/family$variance(mustart))
     w <- sqrt(w)
     if (type==1) { ## what PI would have used
