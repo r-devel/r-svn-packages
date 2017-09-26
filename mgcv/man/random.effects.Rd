@@ -71,10 +71,10 @@ plot(b)
 ## simulate example...
 dat <- gamSim(1,n=400,scale=2) ## simulate 4 term additive truth
 
-fac <- as.factor(sample(1:20,400,replace=TRUE))
-dat$X <- model.matrix(~fac-1)
+fac <- sample(1:20,400,replace=TRUE)
 b <- rnorm(20)*.5
-dat$y <- dat$y + dat$X\%*\%b
+dat$y <- dat$y + b[fac]
+dat$fac <- as.factor(fac)
 
 rm1 <- gam(y ~ s(fac,bs="re")+s(x0)+s(x1)+s(x2)+s(x3),data=dat,method="ML")
 gam.vcomp(rm1)

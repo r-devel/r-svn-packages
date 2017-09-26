@@ -200,8 +200,9 @@ kd.radius <- function(kd,X,x,r){
 #   m <- nrow(x);
 #   off <- rep(0,m+1)
   attr(X,"kd_ptr") <- attr(kd,"kd_ptr")
-  off <- rep(as.integer(0),nrow(x)+1) 
-  ni <- .Call(C_Rkradius,X,x,as.double(r),off) + 1
+  off <- rep(as.integer(0),nrow(x)+1)
+  xt <- t(x) ## required transpsed in Rkradius
+  ni <- .Call(C_Rkradius,X,xt,as.double(r),off) + 1
   list(ni=ni,off=off+1)
 }
 

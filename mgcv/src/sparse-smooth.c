@@ -1,4 +1,4 @@
-/* Copyright Simon N. Wood, 2011-13
+/* Copyright Simon N. Wood, 2011-17
 
    Code to implement kd tree based nearest neighbour routines in C.
    Based on approach of Press et al Numerical Recipes 3rd ed. 21.2, but 
@@ -731,7 +731,7 @@ void k_radius(double r, kdtree_type kd, double *X,double *x,int *list,int *nlist
 
 SEXP Rkradius(SEXP Xr,SEXP xr,SEXP rr,SEXP offr) {
 /* Xr is matrix of points with attribute "kd_ptr" which is a handle to a kd tree.
-xr is a matrix of m rows. The routine finds all elements of Xr within r of each
+xr is a matrix of m cols - each col a point. The routine finds all elements of Xr within r of each
 row of xr. off is an m+1 vector. Returns a vector ni such that ni[off[i]:(off[i+1]-1)] 
 contains the indices (rows) in Xr of the neighbours of the ith row of xr.  
 
@@ -743,18 +743,16 @@ contains the indices (rows) in Xr of the neighbours of the ith row of xr.
   static SEXP kd_symb = NULL, dim_sym = NULL;
   if (!dim_sym) dim_sym = install("dim");
   if (!kd_symb) kd_symb = install("kd_ptr"); /* register symbol for attribute */
-  //DIM = getAttrib(Xr, dim_sym);
-  //dim = INTEGER(DIM); n = dim[0];
   DIM = getAttrib(xr, dim_sym);
-  dim = INTEGER(DIM); m = dim[0];
-  Rprintf("0 ");
+  dim = INTEGER(DIM); m = dim[1];
+  //Rprintf("0 ");
   X = REAL(Xr);x = REAL(xr);
   r = REAL(rr);
   ptr = getAttrib(Xr, kd_symb);
   kd = (kdtree_type *) R_ExternalPtrAddr(ptr);
   d = kd->d; /* dimension */
   off = INTEGER(offr);
-  Rprintf("1 ");
+  //Rprintf("1 ");
   /* get the r-radius neighbour information... */
   list = (int *)CALLOC((size_t)kd->n,sizeof(int)); /* list of neighbours of ith point */
   n_buff = kd->n*10;
@@ -772,7 +770,7 @@ contains the indices (rows) in Xr of the neighbours of the ith row of xr.
     xx += d; /* next point */
   }
   neir = PROTECT(allocVector(INTSXP, nn));
-  ni = INTEGER(neir);Rprintf("2 ");
+  ni = INTEGER(neir);//Rprintf("2 ");
   for (dim=nei;dim<nei+nn;dim++,ni++) *ni = *dim;
   FREE(list);FREE(nei);
   UNPROTECT(1);

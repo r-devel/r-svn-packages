@@ -51,11 +51,13 @@ Sl.setup <- function(G) {
         Sl[[b]]$start <- off[ind[1]]
         Sl[[b]]$stop <- Sl[[b]]$start + nr - 1
 	Sl[[b]]$lambda <- rep(1,length(ind)) ## dummy at this stage
+	Sl[[b]]$repara <- FALSE
       } else { ## singleton
         Sl[[b]] <- list(start=off[ind], stop=off[ind]+nrow(G$S[[ind]])-1,
                         rank=G$rank[ind],S=list(G$S[[ind]]))
         Sl[[b]]$S <- list(G$S[[ind]])
 	Sl[[b]]$lambda <- 1 ## dummy at this stage
+	Sl[[b]]$repara <- TRUE
       } ## finished singleton
       b <- b + 1 
     } ## finished this block
