@@ -82,6 +82,28 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
   theta
 } ## estimate.theta
 
+find.null.dev <- function(family,y,eta,offset,weights) {
+## obtain the null deviance given y, best fit mu and
+## prior weights
+   fnull <- function(gamma,family,y,wt,offset) {
+      ## evaluate deviance for single parameter model
+      mu <- family$linkinv(gamma+offset)
+      sum(family$dev.resids(y,mu, wt))
+   }
+   mu <- family$linkinv(eta-offset)
+   mum <- mean(mu*weights)/mean(weights) ## initial value
+   eta <- family$linkfun(mum) ## work on l.p. scale
+   deta <- abs(eta)*.1 + 1  ## search interval half width
+   ok <- FALSE
+   while (!ok) {
+     search.int <- c(eta-deta,eta+deta)
+     op <- optimize(fnull,interval=search.int,family=family,y=y,wt = weights,offset=offset)
+     if (op$minimum > search.int[1] && op$minimum < search.int[2]) ok <- TRUE else deta <- deta*2
+  }
+  op$objective
+} ## find.null.dev
+
+
 ## extended families for mgcv, standard components. 
 ## family - name of family character string
 ## link - name of link character string
@@ -171,8 +193,11 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
     }
     theta
   }
-  postproc <- function(family,...) {
+
+  postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept) {
     posr <- list()
+    ## null.deviance needs to be corrected...
+    posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
     posr$family <- 
     paste("Ordered Categorical(",paste(round(family$getTheta(TRUE),2),collapse=","),")",sep="")
     posr
@@ -790,8 +815,9 @@ nb <- function (theta = NULL, link = "log") {
         mustart <- y + (y == 0)/6
     })
   
-    postproc <- function(family,...) {
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept){
       posr <- list()
+      posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
       posr$family <- 
       paste("Negative Binomial(",round(family$getTheta(TRUE),3),")",sep="")
       posr
@@ -965,8 +991,9 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         mustart <- y + (y == 0)*.1
     })
     
-    postproc <- function(family,...) {
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept) {
       posr <- list()
+      posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
       posr$family <- 
       paste("Tweedie(p=",round(family$getTheta(TRUE),3),")",sep="")
       posr
@@ -1025,7 +1052,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
            n.theta <- 0 ## signal that there are no theta parameters to estimate
        } else iniTheta <- log(-theta) ## initial theta supplied
     } else iniTheta <- 0 ##  inital log theta value
-    
+     
     env <- new.env(parent = .GlobalEnv)
     assign(".Theta", iniTheta, envir = env)
     assign(".betarEps",eps, envir = env)
@@ -1468,8 +1495,9 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
         mustart <- y + (y == 0)*.1
     })
     
-    postproc <- function(family,...) {
+    postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept)  {
       posr <- list()
+      posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
       posr$family <- 
       paste("Scaled t(",paste(round(family$getTheta(TRUE),3),collapse=","),")",sep="")
       posr

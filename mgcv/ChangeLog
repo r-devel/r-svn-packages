@@ -6,6 +6,10 @@ Currently deprecated and liable to be removed:
 
 1.8-23
 
+* null deviance computation improved for extended families. Previous version 
+  used an approximation valid for most families, and corrected the rest - now 
+  replaced with exact computations for all cases.
+
 * paraPen handling in bam was broken - fixed.
 
 * slight adjustment to sp  initialization for extended families - use observed 

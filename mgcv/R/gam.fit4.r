@@ -625,7 +625,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    names(coef) <- xnames
    names(residuals) <- ynames
-   wtdmu <- sum(weights * mu)/sum(weights) ## changed from y
+   wtdmu <- sum(weights * y)/sum(weights) ## has to then be corrected when this is incorrect
+   ## wtdmu <- sum(weights * mu)/sum(weights) ## changed from y
    nulldev <- sum(dev.resids(y, rep(wtdmu,length(y)), weights))
    n.ok <- nobs - sum(weights == 0)
    nulldf <- n.ok
