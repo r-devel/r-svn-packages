@@ -667,10 +667,16 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
       }
   }) ## initialize gaulss
 
+  rd <- function(mu,wt,scale) {
+  ## simulate responses 
+    return( rnorm(nrow(mu), mu[ , 1], sqrt(scale/wt)/mu[ , 2]) )
+  } ## rd
+
+
   structure(list(family="gaulss",ll=ll,link=paste(link),nlp=2,
     tri = trind.generator(2), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
-    linfo = stats, ## link information list
+    linfo = stats,rd=rd, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1, ## signals that ls not needed here
     available.derivs = 2 ## can use full Newton here
