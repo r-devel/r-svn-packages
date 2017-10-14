@@ -282,6 +282,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
          ind.prev <- k.start[ik.prev]:(k.start[ik.prev+1]-1)
          ind <- (ik+1):length(k.start)
          k.start[ind] <- k.start[ind] + length(ind.prev)-1
+	 if (length(ind.prev)>1) k <- cbind(k,matrix(0,nrow(k),length(ind.prev)-1)) ## extend index matrix
          ind <- k.start[ik]:(k.start[ik+1]-1)
          k[,ind] <- k[,ind.prev]
          #k[,ik] <- k[,ik.prev]

@@ -6,6 +6,8 @@ Currently deprecated and liable to be removed:
 
 1.8-23
 
+* bam(...,discrete=TRUE) fix to handle nested matrix arguments to smooths.
+
 * null deviance computation improved for extended families. Previous version 
   used an approximation valid for most families, and corrected the rest - now 
   replaced with exact computations for all cases.
