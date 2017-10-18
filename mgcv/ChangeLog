@@ -3,8 +3,11 @@
 
 Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
+- argument 'pers' in plot.gam (1.8-23, Nov 2018)
 
 1.8-23
+
+* default plot methods added for smooths of 3 and 4 variables. 
 
 * bam(...,discrete=TRUE) fix to handle nested matrix arguments to smooths.
 
