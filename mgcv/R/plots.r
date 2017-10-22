@@ -984,7 +984,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
         } ## contour plot done 
       } else if (x$dim<5) {
         if (scheme==1) hcolors <- grey(0:50/50)
-        md.plot(P$fit,P$nr,P$nc,P$m,P$vname,P$lo,P$hi,hcolors=hcolors,scheme=scheme)
+        md.plot(P$fit,P$nr,P$nc,P$m,P$vname,P$lo,P$hi,hcolors=hcolors,scheme=scheme,P$main,...)
       } else { 
          warning("no automatic plotting for smooths of more than two variables")
       }
@@ -1032,7 +1032,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
         }  
       } else if (x$dim<5) {
         if (scheme==1) hcolors <- grey(0:50/50)
-        md.plot(P$fit,P$nr,P$nc,P$m,P$vname,P$lo,P$hi,hcolors=hcolors,scheme=scheme)
+        md.plot(P$fit,P$nr,P$nc,P$m,P$vname,P$lo,P$hi,hcolors=hcolors,scheme=scheme,P$main,...)
       } else { 
         warning("no automatic plotting for smooths of more than four variables")
       }
@@ -1040,7 +1040,7 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
   } ## end of plot production
 } ## plot.mgcv.smooth
 
-md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme) {
+md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme,main,...) {
 ## multi-dimensional term plotter, called from plot.mgcv.smooth for
 ## 3 and 4 dimensional terms. 
   concol <- if (scheme==1) "white" else "black" 
@@ -1056,49 +1056,56 @@ md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme) {
   yy <- seq(0,1,length=nrow(f))
   image(xx,yy,t(f),axes=FALSE,xlab="",ylab="",col=hcolors)
   contour(xx,yy,t(f),add=TRUE,col=concol)
+  dl <- list(...)
+  c1 <- if (is.null(dl[["cex"]])) 1 else dl[["cex"]] 
+  c2 <- if (is.null(dl[["cex.axis"]])) .6 else dl[["cex.axis"]]
+  c3 <- if (is.null(dl[["cex.lab"]])) .9 else dl[["cex.lab"]]
   if (nv==4) { 
     x3 <- seq(lo[3],hi[3],length=nr)
     x4 <- seq(lo[4],hi[4],length=nc)
-    mtext(vname[4],1,1.7) ## x label
-    mtext(vname[3],2,1.7) ## y label
+    mtext(vname[4],1,1.7,cex=c1*c3) ## x label
+    mtext(vname[3],2,1.7,cex=c1*c3) ## y label
     at=(1:nc-.5)/nc
     lab <- format(x4,digits=2)
-    for (i in 1:nc) mtext(lab[i],1,at=at[i],line=.5)
+    for (i in 1:nc) mtext(lab[i],1,at=at[i],line=.5,cex=c1*c3)
     at=(1:nr-.5)/nr
     lab <- format(x4,digits=2)
-    for (i in 1:nr) mtext(lab[i],2,at=at[i],line=.5)
+    for (i in 1:nr) mtext(lab[i],2,at=at[i],line=.5,cex=c1*c3)
+    ## now the 2d panel axes...
     xr <- axisTicks(c(lo[2],hi[2]),log=FALSE,nint=4)
     x0 <- ((nc-1)*(m+1)+1)/(nc*m+nc-1)
     xt <- (xr-lo[2])/(hi[2]-lo[2])*(1-x0)+x0
-    axis(3,at=xt,labels=as.character(xr),cex.axis=.8)
+    axis(3,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
     xr <- axisTicks(c(lo[1],hi[1]),log=FALSE,nint=4)
     x0 <- ((nr-1)*(m+1)+1)/(nr*m+nr-1)
     xt <- (xr-lo[1])/(hi[1]-lo[1])*(1-x0)+x0
-    axis(4,at=xt,labels=as.character(xr),cex.axis=.8)
+    axis(4,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
     at <- (2*nc-3)/(2*nc) 
-    mtext(vname[2],3,at=at,line=.5)
+    mtext(vname[2],3,at=at,line=.5,cex=c1*c2)
     at <- (2*nr-3)/(2*nr) 
-    mtext(vname[1],4,at=at,line=.5)
+    mtext(vname[1],4,at=at,line=.5,cex=c1*c2)
+    mtext(main,3,at=0,adj=0,line=1,cex=c1*c3)
   } else {
     x3 <- seq(lo[3],hi[3],length=nr*nc)
     ## get pretty ticks
     xr <- axisTicks(c(lo[2],hi[2]),log=FALSE,nint=4)
     x0 <- (m-1)/(nc*m+nc-1)
     xt <- (xr-lo[2])/(hi[2]-lo[2])*x0
-    axis(1,at=xt,labels=as.character(xr),cex.axis=.8)
-    mtext(vname[2],1,at=x0/2,line=2)
+    axis(1,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
+    mtext(vname[2],1,at=x0/2,line=2,cex=c1*c2)
     xr <- axisTicks(c(lo[1],hi[1]),log=FALSE,nint=4)
     x0 <- (m-1)/(nr*m+nr-1)
     xt <- (xr-lo[1])/(hi[1]-lo[1])*x0
-    axis(2,at=xt,labels=as.character(xr),cex.axis=.8)
-    mtext(vname[1],2,at=x0/2,line=2)
-    lab <- format(x3,digits=2)
+    axis(2,at=xt,labels=as.character(xr),cex.axis=c2,cex=c1)
+    mtext(vname[1],2,at=x0/2,line=2,cex=c1*c2)
+    lab <- c("",format(x3[-1],digits=2))
     at=(1:nc-.5)/nc
-    for (i in 2:nc) mtext(lab[i],1,at=at[i],line=.5)
-    mtext(parse(text=paste(vname[3],"%->% \" \"")),1,at=mean(at[2:nc]),line=2)
+    for (i in 2:nc) mtext(lab[i],1,at=at[i],line=.5,cex=c1*c3)
+    mtext(parse(text=paste(vname[3],"%->% \" \"")),1,at=mean(at[2:nc]),line=2,cex=c1*c3)
     ii <- ((nr-1)*nr+1):(nc*nr)
-    for (i in 1:nc) mtext(lab[ii[i]],3,at=at[i],line=.5)
-    mtext(parse(text=paste(vname[3],"%->% \" \"")),3,at=mean(at),line=2)
+    for (i in 1:nc) mtext(lab[ii[i]],3,at=at[i],line=.5,cex=c1*c3)
+    mtext(parse(text=paste(vname[3],"%->% \" \"")),3,at=mean(at),line=2,cex=c1*c3)
+    mtext(main,2,at=1/nr+0.5*(nr-1)/nr,line=1,cex=c1*c3)
   }
 } ## md.plot
 
