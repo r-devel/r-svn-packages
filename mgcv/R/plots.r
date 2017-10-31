@@ -1043,6 +1043,16 @@ plot.mgcv.smooth <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=2,
 md.plot <- function(f,nr,nc,m,vname,lo,hi,hcolors,scheme,main,...) {
 ## multi-dimensional term plotter, called from plot.mgcv.smooth for
 ## 3 and 4 dimensional terms. 
+## *f is the plot data. See `basic plot data for 3 or 4 d terms'
+##   in plot.mgcv.smooth for details of the packing conventions
+##   (f = X %*% coefs).
+## *nr and nc the number of rows and columns of plot panels
+## *m each panel is m by m
+## *vname contains the variable names
+## *lo and hi are the arrays of axis limits
+## *hcolors is the color palette for the image plot.
+## *scheme indicates b/w or color
+## *main is a title.
   concol <- if (scheme==1) "white" else "black" 
   nv <- length(vname) 
   ## insert NA breaks to separate the panels within a plot...

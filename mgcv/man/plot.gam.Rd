@@ -267,7 +267,12 @@ par(op)
 ## 3 and 4 D smooths can also be plotted
 dat <- gamSim(1,n=400)
 b1 <- gam(y~te(x0,x1,x2,d=c(1,2),k=c(5,15))+s(x3),data=dat)
-plot(b1,pages=1,scheme=1) ## use cex.lab and cex.axis to control axis label size
+
+## Now plot. Use cex.lab and cex.axis to control axis label size,
+## n3 to control number of panels, n2 to control panel grid size,
+## scheme=1 to get greyscale...
+
+plot(b1,pages=1) 
 
 }
 \keyword{models} \keyword{smooth} \keyword{regression} \keyword{hplot}%-- one or more ...
