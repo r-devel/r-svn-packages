@@ -9,6 +9,9 @@ Currently deprecated and liable to be removed:
 
 * default plot methods added for smooths of 3 and 4 variables. 
 
+* coxph fix of prediction bug introduced with stratified model (thanks
+  Giampiero Marra)
+	
 * bam(...,discrete=TRUE) fix to handle nested matrix arguments to smooths.
 
 * null deviance computation improved for extended families. Previous version 
