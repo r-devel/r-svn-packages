@@ -9,6 +9,10 @@ Currently deprecated and liable to be removed:
 
 * default plot methods added for smooths of 3 and 4 variables. 
 
+* The `gamma' control parameter for gam and bam can now be used with RE/ML
+  smoothness selection, not just GCV/AIC. Essentially smoothing parameters
+  are chosen as if the sample size was n/gamma instead of n.
+
 * coxph fix of prediction bug introduced with stratified model (thanks
   Giampiero Marra)
 	

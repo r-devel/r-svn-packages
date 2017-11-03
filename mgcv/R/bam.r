@@ -426,7 +426,7 @@ mini.mf <-function(mf,chunk.size) {
 
 bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     mustart = NULL, offset = rep(0, nobs),rho=0, control = gam.control(), intercept = TRUE, 
-    gc.level=0,nobs.extra=0,npt=1) {
+    gc.level=0,nobs.extra=0,npt=1,gamma=1) {
 ## This is a version of bgam.fit designed for use with discretized covariates. 
 ## Difference to bgam.fit is that XWX, XWy and Xbeta are computed in C
 ## code using compressed versions of X. Parallelization of XWX formation
@@ -665,7 +665,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         lsp <- lsp0 + Nstep
         if (scale<=0) log.phi <- lsp[n.sp+1] 
         prop <- Sl.fitChol(Sl,qrx$XX,qrx$Xy,rho=lsp[1:n.sp],yy=qrx$y.norm2,L=G$L,rho0=G$lsp0,log.phi=log.phi,
-                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5)
+                 phi.fixed=scale>0,nobs=nobs,Mp=Mp,nt=npt,tol=abs(reml)*.Machine$double.eps^.5,gamma=gamma)
         if (max(Nstep)==0) { 
           Nstep <- prop$step;lsp0 <- lsp;
           break 
@@ -684,7 +684,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
                   iter))
           break
       }
-      reml <- (dev/exp(log.phi) - prop$ldetS + prop$ldetXXS)/2
+      reml <- (dev/(exp(log.phi)*gamma) - prop$ldetS + prop$ldetXXS)/2
     } ## end fitting iteration
 
     if (!conv)
@@ -702,10 +702,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   Mp <- G$nsdf
   if (length(G$smooth)>1) for (i in 1:length(G$smooth)) Mp <- Mp + G$smooth[[i]]$null.space.dim
   scale <- exp(log.phi)
-  reml <- (dev/scale - prop$ldetS + prop$ldetXXS + (length(y)-Mp)*log(2*pi*scale))/2
+  reml <- (dev/(scale*gamma) - prop$ldetS + prop$ldetXXS + (length(y)/gamma-Mp)*log(2*pi*scale)+Mp*log(gamma))/2
   if (rho!=0) { ## correct REML score for AR1 transform
     df <- if (is.null(mf$"(AR.start)")) 1 else sum(mf$"(AR.start)")
-    reml <- reml - (nobs-df)*log(ld)
+    reml <- reml - (nobs/gamma-df)*log(ld)
   }
 
   for (i in 1:ncol(prop$db)) prop$db[,i] <- ## d beta / d rho matrix
@@ -1103,7 +1103,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         }
         fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
                              log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
-                             nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt)
+                             nobs =nobs+nobs.extra,Mp=um$Mp,nt=npt,gamma=gamma)
         res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=FALSE,L=G$L,nt=npt)
         object <- list(coefficients=res$beta,db.drho=fit$d1b,
                        gcv.ubre=fit$reml,mgcv.conv=list(iter=fit$iter,
@@ -1560,7 +1560,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
                    log.phi <- log(scale)
      fit <- fast.REML.fit(um$Sl,um$X,qrx$f,rho=lsp0,L=G$L,rho.0=G$lsp0,
             log.phi=log.phi,phi.fixed=scale>0,rss.extra=rss.extra,
-            nobs =n,Mp=um$Mp,nt=npt)
+            nobs =n,Mp=um$Mp,nt=npt,gamma=gamma)
      res <- Sl.postproc(Sl,fit,um$undrop,qrx$R,cov=TRUE,scale=scale,L=G$L,nt=npt)
      object <- list(coefficients=res$beta,edf=res$edf,edf1=res$edf1,edf2=res$edf2,##F=res$F,
                     db.drho=fit$d1b,
@@ -2183,7 +2183,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
                       gc.level=gc.level,use.chol=use.chol,npt=nthreads)
   } else if (G$discretize) {
     object <- bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,coef=coef,
-                       control = control,npt=nthreads,gc.level=gc.level,...)
+                       control = control,npt=nthreads,gc.level=gc.level,gamma=gamma,...)
                        
   } else {
     G$X  <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc()
@@ -2416,7 +2416,7 @@ bam.update <- function(b,data,chunk.size=10000) {
      log.phi <- log(b$sig2) ## initial or fixed scale
      fit <- fast.REML.fit(um$Sl,um$X,b$qrx$f,rho=lsp0,L=b$G$L,rho.0=b$G$lsp0,
             log.phi=log.phi,phi.fixed = !b$scale.estimated,rss.extra=rss.extra,
-            nobs =n,Mp=um$Mp,nt=1)
+            nobs =n,Mp=um$Mp,nt=1,gamma=b$gamma)
      if (b$scale.estimated) scale <- -1 else scale=b$sig2
      res <- Sl.postproc(b$Sl,fit,um$undrop,b$qrx$R,cov=TRUE,scale=scale,L=b$g$L)
 

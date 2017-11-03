@@ -106,12 +106,12 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     if (inherits(family,"extended.family")) { ## then actually gam.fit4/5 is needed
       if (inherits(family,"general.family")) {
         return(gam.fit5(x,y,sp,Sl=Sl,weights=weights,offset=offset,deriv=deriv,
-                        family=family,control=control,Mp=Mp,start=start))
+                        family=family,control=control,Mp=Mp,start=start,gamma=gamma))
       } else
       return(gam.fit4(x, y, sp, Eb,UrS=UrS,
             weights = weights, start = start, etastart = etastart, 
             mustart = mustart, offset = offset,U1=U1, Mp=Mp, family = family, 
-            control = control, deriv=deriv,
+            control = control, deriv=deriv,gamma=gamma,
             scale=scale,scoreType=scoreType,null.coef=null.coef,...))
     }
 
@@ -610,20 +610,21 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
           
           ls <- family$ls(y,weights,n,scale)*n.true/nobs ## saturated likelihood and derivatives
           Dp <- dev + oo$conv.tol + dev.extra
-          REML <- Dp/(2*scale) - ls[1] + oo$rank.tol/2 - rp$det/2 - remlInd*Mp/2*log(2*pi*scale)
+          REML <- (Dp/(2*scale) - ls[1])/gamma + oo$rank.tol/2 - rp$det/2 -
+	          remlInd*(Mp/2*(log(2*pi*scale)-log(gamma)))
           attr(REML,"Dp") <- Dp/(2*scale)
           if (deriv) {
-            REML1 <- oo$D1/(2*scale) + oo$trA1/2 - rp$det1/2 
-            if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/scale + matrix(oo$trA2,nSp,nSp) - rp$det2)/2
+            REML1 <- oo$D1/(2*scale*gamma) + oo$trA1/2 - rp$det1/2 
+            if (deriv==2) REML2 <- (matrix(oo$D2,nSp,nSp)/(scale*gamma) + matrix(oo$trA2,nSp,nSp) - rp$det2)/2
             if (sum(!is.finite(REML2))) {
                stop("Non finite derivatives. Try decreasing fit tolerance! See `epsilon' in `gam.contol'")
             }
           }
           if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
             ##ls <- family$ls(y,weights,n,scale) ## saturated likelihood and derivatives
-            dlr.dlphi <- -Dp/(2 *scale) - ls[2]*scale - Mp/2*remlInd
-            d2lr.d2lphi <- Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale
-            d2lr.dspphi <- -oo$D1/(2*scale)
+            dlr.dlphi <- (-Dp/(2 *scale) - ls[2]*scale)/gamma - Mp/2*remlInd
+            d2lr.d2lphi <- (Dp/(2*scale) - ls[3]*scale^2 - ls[2]*scale)/gamma
+            d2lr.dspphi <- -oo$D1/(2*scale*gamma)
             REML1 <- c(REML1,dlr.dlphi)
             if (deriv==2) {
               REML2 <- rbind(REML2,as.numeric(d2lr.dspphi))
@@ -643,7 +644,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          
           K <- oo$rank.tol/2 - rp$det/2
                  
-          REML <- Dp/(2*phi) - ls[1] + K - Mp/2*log(2*pi*phi)*remlInd
+          REML <- (Dp/(2*phi) - ls[1]) + K - Mp/2*(log(2*pi*phi))*remlInd
           attr(REML,"Dp") <- Dp/(2*phi)
           if (deriv) {
             phi1 <- oo$P1; Dp1 <- oo$D1; K1 <- oo$trA1/2 - rp$det1/2;

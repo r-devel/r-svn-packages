@@ -74,8 +74,7 @@ of the scale. \code{"ML"} and \code{"P-ML"} are similar, but using maximum likel
 \code{\link{gam.control}}. Any control parameters not supplied stay at their default values.}
 
 \item{select}{Should selection penalties be added to the smooth effects, so that they can in principle be 
-penalized out of the model? Has the side effect that smooths no longer have a fixed effect component (improper prior
-from a Bayesian perspective) allowing REML comparison of models with the same fixed effect structure. 
+penalized out of the model? See \code{gamma} to increase penalization.  Has the side effect that smooths no longer have a fixed effect component (improper prior from a Bayesian perspective) allowing REML comparison of models with the same fixed effect structure. 
 }
 
 \item{scale}{ If this is positive then it is taken as the known scale parameter. Negative signals that the 
@@ -83,9 +82,7 @@ scale paraemter is unknown. 0 signals that the scale parameter is 1  for Poisson
 Note that (RE)ML methods can only work with scale parameter 1 for the Poisson and binomial cases.    
 } 
 
-\item{gamma}{It is sometimes useful to inflate the model degrees of 
-freedom in the GCV or UBRE/AIC score by a constant multiplier. This allows 
-such a multiplier to be supplied. } 
+\item{gamma}{Increase above 1 to force smoother fits. \code{gamma} is used to multiply the effective degrees of freedom in the GCV/UBRE/AIC score (so \code{log(n)/2} is BIC like). \code{n/gamma} can be viewed as an effective sample size, which allows it to play a similar role for RE/ML smoothing parameter estimation.} 
 
 
 \item{knots}{this is an optional list containing user specified knot values to be used for basis construction. 
