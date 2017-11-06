@@ -1984,8 +1984,6 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
    
     if ((is.list(formula)&&(is.null(family$nlp)||family$nlp!=gp$nlp))||
         (!is.list(formula)&&!is.null(family$npl)&&(family$npl>1))) stop("incorrect number of linear predictors for family")
-
-    if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
        
     G$terms<-terms;
     G$mf<-mf;G$cl<-cl;
@@ -2002,7 +2000,9 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   }
 
   if (!fit) return(G)
-  
+
+  if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
+
   G$conv.tol <- control$mgcv.tol      # tolerence for mgcv
   G$max.half <- control$mgcv.half # max step halving in Newton update mgcv
 

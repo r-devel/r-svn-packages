@@ -1135,7 +1135,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         G$n.true <- nobs+nobs.extra
         object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
         y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
-	object$fitted.values <- NULL
+	object$family <- object$fitted.values <- NULL
       }
      
       if (method=="GCV.Cp") { 
@@ -1881,7 +1881,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
-    if (!method%in%c("fREML","GCV.Cp","REML",
+    if (!method%in%c("fREML","GACV.Cp","GCV.Cp","REML",
                     "ML","P-REML","P-ML")) stop("un-supported smoothness selection method")
     if (is.logical(discrete)) {
       discretize <- discrete
