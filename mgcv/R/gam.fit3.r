@@ -1447,12 +1447,11 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           delta1 <- delta + step
           lsp1 <- rt(delta1,lsp1.max)$rho ## transform to log sp space
         } else lsp1 <- lsp + step
-        b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
-           offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
-           control=control,gamma=gamma,scale=scale,
-           printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
-           null.coef=null.coef,pearson.extra=pearson.extra,
-           dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+        b1<-gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,offset = offset,U1=U1,Mp=Mp,
+	             family = family,weights=weights,deriv=0,control=control,gamma=gamma,
+		     scale=scale,printWarn=FALSE,start=start,mustart=mustart,scoreType=scoreType,
+		     null.coef=null.coef,pearson.extra=pearson.extra,dev.extra=dev.extra,
+		     n.true=n.true,Sl=Sl,...)
         pred.change <- sum(grad*step) + 0.5*t(step) %*% hess %*% step ## Taylor prediction of change 
         if (reml) {       
           score1 <- b1$REML
@@ -1462,7 +1461,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           score1 <- b1$UBRE
         } else score1 <- b1$GCV
 	score.change <- score1 - score
-	qerror <- abs(pred.change-score.change)/(max(abs(pred.change),abs(score.change))+score.scale*conv.tol) ## quadratic approx error
+	## don't allow step to fail altogether just because of qerror
+	qerror <- if (ii>min(4,maxHalf/2)) qerror.thresh/2 else
+	          abs(pred.change-score.change)/(max(abs(pred.change),abs(score.change))+score.scale*conv.tol) ## quadratic approx error
         if (is.finite(score1) && score.change < 0 && qerror < qerror.thresh) { ## accept
           if (pdef||!sd.unused) { ## then accept and compute derivatives
             b <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
