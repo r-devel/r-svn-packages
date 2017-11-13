@@ -676,7 +676,10 @@ plot.fs.interaction <- function(x,P=NULL,data=NULL,label="",se1.mult=1,se2.mult=
     nf <- length(x$flev)
     fac <- rep(x$flev,rep(n,nf))
     dat <- data.frame(fac,xx)
-    names(dat) <- c(x$fterm,x$base$term)
+    names(dat) <- c(x$fterm,x$base$term)  
+    if (x$by!="NA") {        # deal with any by variables
+      dat[[x$by]] <- rep(1,n)
+    }
     X <- PredictMat(x,dat)
     if (is.null(xlab)) xlabel <- x$base$term else xlabel <- xlab
     if (is.null(ylab)) ylabel <- label else ylabel <- ylab

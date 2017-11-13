@@ -18,6 +18,10 @@ Currently deprecated and liable to be removed:
 	
 * bam(...,discrete=TRUE) fix to handle nested matrix arguments to smooths.
 
+* bam(...,discrete=TRUE) fix to by variable handling with fs and re smooths
+  which could fail during re-representation as tensor smooths (for 
+  discretization purposes).
+
 * bam was reporting wrong family under some smoothing parameter selection 
   methods (not default).
 

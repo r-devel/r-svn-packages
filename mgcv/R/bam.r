@@ -2058,18 +2058,22 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           }
           G$Xd[[k]] <- matrix(by.var,dk$nr[k],1)
           k <- k + 1
-        } else dt[kb] <- 0
+	  by.present <- 1
+        } else by.present <- dt[kb] <- 0
         ## ... by done
         if (inherits(G$smooth[[i]],"tensor.smooth")) { 
           nmar <- length(G$smooth[[i]]$margin) 
           dt[kb] <- dt[kb] + nmar
           if (inherits(G$smooth[[i]],"fs.interaction")&&which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)!=1) {
             ## have to reverse the terms because tensor representation assumes factor is first
-            G$smooth[[i]]$rind <- 2:1 ## (k+1):k
+	    rind <- 1:length(G$smooth[[i]]$term)
+	    k0 <- which(G$smooth[[i]]$fterm==G$smooth[[i]]$term)
+	    rind[1] <- k0;rind[k0] <- 1 
+            G$smooth[[i]]$rind <- rind ## (k+1):k
           }          
           if (!is.null(G$smooth[[i]]$rind)) {
             ## terms re-ordered for efficiency, so the same has to be done on indices...
-            rind <- k:(k+dt[kb]-1)    
+            rind <- k:(k+dt[kb] - 1 - by.present)    
             dk$nr[rind] <- dk$nr[k+G$smooth[[i]]$rind-1]
             G$ks[rind,] <- G$ks[k+G$smooth[[i]]$rind-1,] # either this line or next not both
             #G$kd[,rind] <- G$kd[,k+G$smooth[[i]]$rind-1]
