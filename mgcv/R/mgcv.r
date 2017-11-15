@@ -3461,7 +3461,7 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
 
 
 
-summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...) {
+summary.gam <- function (object, dispersion = NULL, freq = FALSE,re.test = TRUE, ...) {
 ## summary method for gam object - provides approximate p values 
 ## for terms + other diagnostics
 ## Improved by Henric Nilsson
@@ -3610,7 +3610,7 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...) {
       }
       X <- X[!is.na(rowSums(X)),] ## exclude NA's (possible under na.exclude)    
     } ## end if (m>0)
-
+    ii <- 0
     for (i in 1:m) { ## loop through smooths
 
       start <- object$smooth[[i]]$first.para;stop <- object$smooth[[i]]$last.para
@@ -3618,27 +3618,32 @@ summary.gam <- function (object, dispersion = NULL, freq = FALSE, ...) {
       V <- object$Vp[start:stop,start:stop,drop=FALSE] ## Bayesian
       
       p <- object$coefficients[start:stop]  # params for smooth
-
-      edf1[i] <- edf[i] <- sum(object$edf[start:stop]) # edf for this smooth
+      edf1i <- edfi <- sum(object$edf[start:stop]) # edf for this smooth
       ## extract alternative edf estimate for this smooth, if possible...
-      if (!is.null(object$edf1)) edf1[i] <-  sum(object$edf1[start:stop]) 
- 
+      if (!is.null(object$edf1)) edf1i <-  sum(object$edf1[start:stop])
       Xt <- X[,start:stop,drop=FALSE]  
       fx <- if (inherits(object$smooth[[i]],"tensor.smooth")&&
                 !is.null(object$smooth[[i]]$fx)) all(object$smooth[[i]]$fx) else object$smooth[[i]]$fixed
       if (!fx&&object$smooth[[i]]$null.space.dim==0&&!is.null(object$R)) { ## random effect or fully penalized term
-        res <- reTest(object,i)
+        res <- if (re.test) reTest(object,i) else NULL
       } else { ## Inverted Nychka interval statistics
-        df[i] <- min(ncol(Xt),edf1[i])
+       
         if (est.disp) rdf <- residual.df else rdf <- -1
-        res <- testStat(p,Xt,V,df[i],type=0,res.df = rdf)
+        res <- testStat(p,Xt,V,min(ncol(Xt),edf1i),type=0,res.df = rdf)
       }
-      df[i] <- res$rank
-      chi.sq[i] <- res$stat
-      s.pv[i] <- res$pval 
-      
-      names(chi.sq)[i]<- object$smooth[[i]]$label
-      
+      if (!is.null(res)) {
+        ii <- ii + 1
+        df[ii] <- res$rank
+        chi.sq[ii] <- res$stat
+        s.pv[ii] <- res$pval 
+        edf1[ii] <- edf1i 
+        edf[ii] <- edfi 
+        names(chi.sq)[ii]<- object$smooth[[i]]$label
+      }
+    } 
+    if (ii==0) df <- edf1 <- edf <- s.pv <- chi.sq <- array(0, 0) else {
+      df <- df[1:ii];chi.sq <- chi.sq[1:ii];edf1 <- edf1[1:ii]
+      edf <- edf[1:ii];s.pv <- s.pv[1:ii]
     }
     if (!est.disp) {
       s.table <- cbind(edf, df, chi.sq, s.pv)      
