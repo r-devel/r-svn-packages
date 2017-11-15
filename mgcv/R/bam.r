@@ -249,7 +249,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
     nmarg <- if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
     maxj <- if (gp$smooth.spec[[i]]$by=="NA") nmarg else nmarg + 1 
     mi <- if (is.null(m)||length(m)==1) m else m[i]
-    if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handle smooth ids")
+#    if (!is.null(gp$smooth.spec[[i]]$id)) stop("discretization can not handle smooth ids")
     j <- 0
     for (jj in 1:maxj) { ## loop through marginals
       if (jj==1&&maxj!=nmarg) termi <- gp$smooth.spec[[i]]$by else {
@@ -1729,25 +1729,27 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       }
       Xd[[k]] <- matrix(by.var,dk$nr[k],1)
       k <- k + 1
-    }
+      by.present <- 1
+    } else by.present <- 0
     ## ... by done
     if (inherits(object$smooth[[i]],"tensor.smooth")) { 
       nmar <- length(object$smooth[[i]]$margin) 
       if (!is.null(object$smooth[[i]]$rind)) {
          ## terms re-ordered for efficiency, so the same has to be done on indices...
-         rind <- k:(k+dt[kb]-1) ## could use object$dinfo$dt[kb]   
+         rind <- k:(k+dt[kb]-1 - by.present) ## could use object$dinfo$dt[kb]   
          dk$nr[rind] <- dk$nr[k+object$smooth[[i]]$rind-1] 
          ks[rind,] <- ks[k+object$smooth[[i]]$rind-1,] # either this line or next not both
          ##kd[,rind] <- kd[,k+object$smooth[[i]]$rind-1]
       } 
       XP <- object$smooth[[i]]$XP         
       for (j in 1:nmar) {
+        smooth[[i]]$margin[[j]]$by<- "NA" ## should be no by's here (any by dealt with above)
         Xd[[k]] <- PredictMat(smooth[[i]]$margin[[j]],dk$mf,n=dk$nr[k])
         if (!is.null(XP)&&(j<=length(XP))&&!is.null(XP[[j]])) Xd[[k]] <- Xd[[k]]%*%XP[[j]]
         k <- k + 1 
       }
     } else { ## not a tensor smooth
-      object$smooth[[i]]$by <- "NA" ## have to ensure by not applied here!
+      object$smooth[[i]]$by <- "NA" ## have to ensure by not applied here (it's dealt with as a tensor marginal)!
       Xd[[k]] <- PredictMat(object$smooth[[i]],dk$mf,n=dk$nr[k])
       k <- k + 1
     }
@@ -2001,7 +2003,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       G <- gam.setup(gp,pterms=pterms,
                  data=mf0,knots=knots,sp=sp,min.sp=min.sp,
                  H=NULL,absorb.cons=TRUE,sparse.cons=sparse.cons,select=select,
-                 idLinksBases=TRUE,scale.penalty=control$scalePenalty,
+                 idLinksBases=!discretize,scale.penalty=control$scalePenalty,
                  paraPen=paraPen,apply.by=!discretize,drop.intercept=drop.intercept,modCon=2)
       if (!discretize&&ncol(G$X)>=chunk.size) { ## no point having chunk.size < p
         chunk.size <- 4*ncol(G$X)

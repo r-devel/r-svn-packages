@@ -13,6 +13,10 @@ Currently deprecated and liable to be removed:
   smoothness selection, not just GCV/AIC. Essentially smoothing parameters
   are chosen as if the sample size was n/gamma instead of n.
 
+* bam(...,discrete=TRUE) can now use the smooth 'id' mecahnism to link 
+  smoothing parameters, but note the method constraint that the linked bases 
+  are not forced to be identical in this case (unlike other fitting methods).
+
 * coxph fix of prediction bug introduced with stratified model (thanks
   Giampiero Marra)
 	
