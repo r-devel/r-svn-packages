@@ -496,7 +496,9 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
         eval(family$initialize)
         mustart <- mukeep
     }
- 
+
+    if (is.matrix(y)&&ncol(y)>1) stop("This family should not have a matrix response")
+
     eta <- if (!is.null(etastart))
          etastart
     else family$linkfun(mustart)
@@ -826,7 +828,9 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         eval(family$initialize)
         mustart <- mukeep
     }
- 
+
+    if (is.matrix(y)&&ncol(y)>1) stop("This family should not have a matrix response")
+
     ##coefold <- NULL
     eta <- if (!is.null(etastart))
          etastart
