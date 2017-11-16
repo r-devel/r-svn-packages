@@ -17,6 +17,9 @@ Currently deprecated and liable to be removed:
   smoothing parameters, but note the method constraint that the linked bases 
   are not forced to be identical in this case (unlike other fitting methods).
 
+* summary.gam now allows random effects tests to be skipped (in some large
+  models the test is costly and uninteresting).
+
 * coxph fix of prediction bug introduced with stratified model (thanks
   Giampiero Marra)
 	
