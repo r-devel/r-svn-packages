@@ -13,6 +13,9 @@ Currently deprecated and liable to be removed:
   smoothness selection, not just GCV/AIC. Essentially smoothing parameters
   are chosen as if the sample size was n/gamma instead of n.
 
+* The "bs" basis now allows multiple penalties of different orders on the same
+  spline. e.g. s(x,bs="bs",m=c(3,2,0)). See ?b.spline.  
+
 * bam(...,discrete=TRUE) can now use the smooth 'id' mecahnism to link 
   smoothing parameters, but note the method constraint that the linked bases 
   are not forced to be identical in this case (unlike other fitting methods).
