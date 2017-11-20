@@ -473,9 +473,9 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   ls <- function(y,w,theta,scale) {
     ## the log saturated likelihood function. 
     #! actually only first line used since re-def as 0
-    vec <- !is.null(attr(theta,"vec.grad"))
-    lsth1 <- if (vec) matrix(0,length(y),R-2) else rep(0,R-2)
-    return(list(ls=0,lsth1=lsth1,lsth2=matrix(0,R-2,R-2)))
+    #vec <- !is.null(attr(theta,"vec.grad"))
+    #lsth1 <- if (vec) matrix(0,length(y),R-2) else rep(0,R-2)
+    return(list(ls=0,lsth1=rep(0,R-2),lsth2=matrix(0,R-2,R-2)))
     F <- function(x) {
       h <- ind <- x > 0; h[ind] <- 1/(exp(-x[ind]) + 1)
       x <- exp(x[!ind]); h[!ind] <- (x/(1+x))
@@ -789,7 +789,7 @@ nb <- function (theta = NULL, link = "log") {
     ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function.
        Theta <- exp(theta)
-       vec <- !is.null(attr(theta,"vec.grad")) ## lsth by component?
+       #vec <- !is.null(attr(theta,"vec.grad")) ## lsth by component?
        ylogy <- y;ind <- y>0;ylogy[ind] <- y[ind]*log(y[ind])
        term <- (y + Theta) * log(y + Theta) - ylogy +
             lgamma(y + 1) - Theta * log(Theta) + lgamma(Theta) -
@@ -801,7 +801,8 @@ nb <- function (theta = NULL, link = "log") {
        psi0.yth <- digamma(yth) 
        psi0.th <- digamma(Theta)
        term <- Theta * (lyth - psi0.yth + psi0.th-theta)
-       lsth <- if (vec) term*w else -sum(term*w)
+       #lsth <- if (vec) -term*w else -sum(term*w)
+       lsth <- -sum(term*w)
        ## second deriv wrt theta...
        psi1.yth <- trigamma(yth) 
        psi1.th <- trigamma(Theta)
@@ -982,11 +983,12 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
     ls <- function(y, w, theta, scale) {
         ## evaluate saturated log likelihood + derivs w.r.t. working params and log(scale)
         a <- get(".a");b <- get(".b")
-	vec <- !is.null(attr(theta,"vec.grad"))
+	#vec <- !is.null(attr(theta,"vec.grad"))
         LS <- w * ldTweedie(y, y, rho=log(scale), theta=theta,a=a,b=b)
-	if (vec) lsth1 <- LS[,c(4,2)]
+	#if (vec) lsth1 <- LS[,c(4,2)]
 	LS <- colSums(LS)
-        if (!vec) lsth1 <- c(LS[4],LS[2])
+        #if (!vec) lsth1 <- c(LS[4],LS[2])
+	lsth1 <- c(LS[4],LS[2])
         lsth2 <- matrix(c(LS[5],LS[6],LS[6],LS[3]),2,2)
         list(ls=LS[1],lsth1=lsth1,lsth2=lsth2)
     }
@@ -1465,7 +1467,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
        ## the log saturated likelihood function.
        ## (Note these are correct but do not correspond to NP notes)
        if (length(w)==1) w <- rep(w,length(y))
-       vec <- !is.null(attr(theta,"vec.grad"))
+       #vec <- !is.null(attr(theta,"vec.grad"))
        min.df <- get(".min.df")
        nu <- exp(theta[1])+min.df; sig <- exp(theta[2]); nu2 <- nu-min.df;
        nu2nu <- nu2/nu; nu12 <- (nu+1)/2
@@ -1474,7 +1476,8 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
        ## first derivative wrt theta...
        lsth2 <- matrix(0,2,2)  ## rep(0, 3)
        term <- nu2 * digamma(nu12)/2- nu2 * digamma(nu/2)/2 - 0.5*nu2nu
-       lsth <- if (vec) cbind(w*term,-1*w) else c(sum(w*term),sum(-w))
+       #lsth <- if (vec) cbind(w*term,-1*w) else c(sum(w*term),sum(-w))
+       lsth <- c(sum(w*term),sum(-w))
        ## second deriv...      
        term <-  nu2^2 * trigamma(nu12)/4 + nu2 * digamma(nu12)/2 -
            nu2^2 * trigamma(nu/2)/4 - nu2 * digamma(nu/2)/2 + 0.5*(nu2nu)^2 - 0.5*nu2nu
@@ -1716,10 +1719,10 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
   ls <- function(y,w,theta,scale) {
        ## the log saturated likelihood function.
        ## ls is defined as zero for REML/ML expression as deviance is defined as -2*log.lik
-       vec <- !is.null(attr(theta,"vec.grad"))
-       lsth1 <- if (vec) matrix(0,length(y),2) else c(0,0)
+       #vec <- !is.null(attr(theta,"vec.grad"))
+       #lsth1 <- if (vec) matrix(0,length(y),2) else c(0,0)
        list(ls=0,## saturated log likelihood
-            lsth1=lsth1,  ## first deriv vector w.r.t theta - last element relates to scale
+            lsth1=c(0,0),  ## first deriv vector w.r.t theta - last element relates to scale
             lsth2=matrix(0,2,2)) ##Hessian w.r.t. theta
   }
 
