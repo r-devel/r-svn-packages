@@ -213,7 +213,7 @@ Sl.setup <- function(G) {
       St <- Sl[[b]]$S[[1]]/S.norm
       lambda <- c(lambda,1/S.norm)
       for (j in 2:length(Sl[[b]]$S)) { 
-        S.norm <- norm(Sl[[b]]$S[[1]])
+        S.norm <- norm(Sl[[b]]$S[[j]])
         St <- St + Sl[[b]]$S[[j]]/S.norm
         lambda <- c(lambda,1/S.norm)
       } 
