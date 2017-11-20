@@ -23,6 +23,9 @@ Currently deprecated and liable to be removed:
 * summary.gam now allows random effects tests to be skipped (in some large
   models the test is costly and uninteresting).
 
+* 'interpret.gam0' modified so that masked 's', 'te', etc from other packages 
+  does not cause failure.
+
 * coxph fix of prediction bug introduced with stratified model (thanks
   Giampiero Marra)
 	
@@ -38,6 +41,8 @@ Currently deprecated and liable to be removed:
 * null deviance computation improved for extended families. Previous version 
   used an approximation valid for most families, and corrected the rest - now 
   replaced with exact computations for all cases.
+
+* scat initialization tweaked to avoid -ve def problems at start/
 
 * paraPen handling in bam was broken - fixed.
 

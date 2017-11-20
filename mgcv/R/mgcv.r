@@ -239,7 +239,8 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
   ns <- len.sp + len.tp + len.tip + len.t2p + len.zp# number of smooths
   pav <- av <- rep("",0)
   smooth.spec <- list()
-  mgcvat <- "package:mgcv" %in% search() ## is mgcv in search path?
+  #mgcvat <- "package:mgcv" %in% search() ## is mgcv in search path?
+  mgcvns <- loadNamespace('mgcv')
   if (nt) for (i in 1:nt) { # work through all terms
     if (k <= ns&&((ks<=len.sp&&sp[ks]==i)||(kt<=len.tp&&tp[kt]==i)||(kz<=len.zp&&zp[kz]==i)||
                   (kti<=len.tip&&tip[kti]==i)||(kt2<=len.t2p&&t2p[kt2]==i))) { # it's a smooth
@@ -249,11 +250,12 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
       ## loadNamespace('mgcv'); k <- 10; mgcv::interpret.gam(y~s(x,k=k)) fails (can't find s)
       ## eval(parse(text=terms[i]),envir=p.env,enclos=loadNamespace('mgcv')) fails??
       ## following may supply namespace of mgcv explicitly if not on search path...
-      if (mgcvat) st <- eval(parse(text=terms[i]),envir=p.env) else {
+      ## If 's' etc are masked then we can fail even if mgcv on search path
+      #if (mgcvat) st <- eval(parse(text=terms[i]),envir=p.env) else {
          st <- try(eval(parse(text=terms[i]),envir=p.env),silent=TRUE)
          if (inherits(st,"try-error")) st <- 
-            eval(parse(text=terms[i]),enclos=p.env,envir=loadNamespace('mgcv'))
-      }
+            eval(parse(text=terms[i]),enclos=p.env,envir=mgcvns)
+      #}
       if (!is.null(textra)) { ## modify the labels on smooths with textra
         pos <- regexpr("(",st$lab,fixed=TRUE)[1]
         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,

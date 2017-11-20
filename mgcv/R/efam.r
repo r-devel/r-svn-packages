@@ -1491,7 +1491,10 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
     preinitialize <- function(y,family) {
       ## initialize theta from raw observations..
        if (family$n.theta>0) {
-         Theta <- c(-1, log(0.2*var(y)^.5))
+         ## low df and low variance promotes indefiniteness.
+	 ## Better to start with moderate df and fairly high
+	 ## variance...
+         Theta <- c(1.5, log(0.8*sd(y))) 
          return(list(Theta=Theta))
        } ## otherwise fixed theta supplied
     }
@@ -1505,8 +1508,9 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
     postproc <- function(family,y,prior.weights,fitted,linear.predictors,offset,intercept)  {
       posr <- list()
       posr$null.deviance <- find.null.dev(family,y,eta=linear.predictors,offset,prior.weights)
-      posr$family <- 
-      paste("Scaled t(",paste(round(family$getTheta(TRUE),3),collapse=","),")",sep="")
+      th <- round(family$getTheta(TRUE),3)
+      if (th[1]>999) th[1] <- Inf
+      posr$family <- paste("Scaled t(",paste(th,collapse=","),")",sep="")
       posr
     }
     
