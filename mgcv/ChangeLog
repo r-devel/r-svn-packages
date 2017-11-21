@@ -16,7 +16,7 @@ Currently deprecated and liable to be removed:
 * The "bs" basis now allows multiple penalties of different orders on the same
   spline. e.g. s(x,bs="bs",m=c(3,2,0)). See ?b.spline.  
 
-* bam(...,discrete=TRUE) can now use the smooth 'id' mecahnism to link 
+* bam(...,discrete=TRUE) can now use the smooth 'id' mechanism to link 
   smoothing parameters, but note the method constraint that the linked bases 
   are not forced to be identical in this case (unlike other fitting methods).
 
@@ -42,7 +42,7 @@ Currently deprecated and liable to be removed:
   used an approximation valid for most families, and corrected the rest - now 
   replaced with exact computations for all cases.
 
-* scat initialization tweaked to avoid -ve def problems at start/
+* scat initialization tweaked to avoid -ve def problems at start.
 
 * paraPen handling in bam was broken - fixed.
 

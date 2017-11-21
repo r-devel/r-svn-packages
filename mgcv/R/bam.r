@@ -737,9 +737,10 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
   F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt)  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
   object$edf <- diag(F)
-  object$edf1 <- 2*object$edf - rowSums(t(F)*F) 
-  object$sp <- exp(lsp[1:n.sp])
-  object$full.sp <- if (is.null(G$L)) object$sp else exp(drop(G$L%*%lsp[1:n.sp] + G$lsp0))
+  object$edf1 <- 2*object$edf - rowSums(t(F)*F)
+  lsp <- if (n.sp>0) lsp[1:n.sp] else rep(0,0)
+  object$sp <- exp(lsp)
+  object$full.sp <- if (is.null(G$L)) object$sp else exp(drop(G$L%*%lsp + G$lsp0))
   object$sig2 <- object$scale <- scale
   object$Vp <- PP * scale
   object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt) ## F%*%object$Vp
