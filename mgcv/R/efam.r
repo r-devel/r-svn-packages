@@ -1404,12 +1404,13 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
       term <- 2*nu1/sig^2/(nu+3)
       n <- length(y) 
       oo$EDmu2 <- rep(term,n)
+      
       if (level>0) { ## quantities needed for first derivatives
         nu1nusig2a <- nu1/nusig2a
         nu2nu <- nu2/nu
         fym <- f*ym; ff1 <- f*f1; f1ym <- f1*ym; fymf1 <- fym*f1
         ymsig2a <- ym/sig2a
-        oo$Dmu2th <- oo$Dmuth <- oo$Dth <- matrix(0,n,2)
+        oo$EDmu2th <- oo$Dmu2th <- oo$Dmuth <- oo$Dth <- matrix(0,n,2)
         oo$Dth[,1] <- 1 * wt * nu2 * (log(a) - fym/nu) 
         oo$Dth[,2] <- -2 * wt * fym    
         oo$Dmuth[,1] <- 2 * wt *(f - ymsig2a - fymf1)*nu2nu
@@ -1417,6 +1418,8 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
         oo$Dmu3 <- 4 * wt * f * (3/nusig2a - 4*f1^2) 
         oo$Dmu2th[,1] <- 2* wt * (-nu1nusig2a + 1/sig2a + 5*ff1- 2*f1ym/sig2a - 4*fymf1*f1)*nu2nu
         oo$Dmu2th[,2] <- 4*wt*(-nu1nusig2a + ff1*5 - 4*ff1*f1ym)
+	oo$EDmu3 <- rep(0,n)
+	oo$EDmu2th <- cbind(4/(sig^2*(nu+3)^2)*exp(theta[1]),-2*oo$EDmu2)
       } 
       if (level>1) { ## whole lot
         ## nu1nu2 <- nu1*nu2; 

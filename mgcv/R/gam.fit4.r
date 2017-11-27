@@ -21,6 +21,7 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
       if (deriv>0) {
         d$Dth <- r$Dth; d$Detath <- r$Dmuth
         d$Deta3 <- r$Dmu3; d$Deta2th <- r$Dmu2th
+	d$EDeta2th <- r$EDmu2th;d$EDeta3 <- r$EDmu3
       }
       if (deriv>1) {
         d$Deta4 <- r$Dmu4; d$Dth2 <- r$Dth2; d$Detath2 <- r$Dmuth2
@@ -47,7 +48,9 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
       d$Detath <- r$Dmuth * ig1
       g3g <- fam$g3g(mu)
       d$Deta3 <- r$Dmu3*ig13 - 3*r$Dmu2 * g2g * ig12 + r$Dmu * (3*g2g^2 - g3g)*ig1
+      if (!is.null(d$EDmu3)) d$EDeta3 <- r$EDmu3*ig13 - 3*r$EDmu2 * g2g * ig12 ## EDmu=0
       d$Deta2th <- r$Dmu2th*ig12 - r$Dmuth*g2g*ig1
+      if (!is.null(d$EDmu2th)) d$EDeta2th <- r$EDmu2th*ig12 ##- r$EDmuth*g2g*ig1
    }
    if (deriv>1) {
      g4g <- fam$g4g(mu)
