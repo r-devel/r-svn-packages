@@ -1,3 +1,22 @@
+2017-11-28  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-133
+	* tests/coef.Rout.save: update for R-pre-3.5.0 chanages to str()
+
+2017-09-18  Martin Maechler
+
+	* tests/nlme2.R: 'tweak and investigate platform dependent results'
+
+2017-03-07  Martin Maechler
+
+2017-02-27  Martin Maechler
+
+2017-02-22  Martin Maechler
+
+	* DESCRIPTION (Version): 3.1-132
+	* R/gnls.R, src/gnls.c: 'small cosmetic related to getting closer
+	to the root cause of PR#17227' 
+
 2017-02-11 Brian Ripley
 
 	* src/nlmefit.c: gcc -Wconversion pointed out misuse of long
