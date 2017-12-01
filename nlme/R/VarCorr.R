@@ -107,7 +107,8 @@ VarCorr.pdMat <- function( x, sigma = 1., rdig = 3, ...)
       paste0(class(x)[[1]], "(",
              substring(deparse(attr(x, "formula")), 2), ")")
     }
-  if (p > 2 && !attr(sx, "noCorrelation")) {
+
+  if (p >= 2L && !attr(sx, "noCorrelation")) {
     ll <- lower.tri(sx)
     sx[ll] <- format(round(sx[ll], digits = rdig))
     sx[!ll] <- ""

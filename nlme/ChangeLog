@@ -1,8 +1,9 @@
-2017-11-28  Brian Ripley
+2017-12-01  Brian Ripley
 
 	* Trial for R-devel, but broke packages joineR and lme4
 	* DESCRIPTION (Version): 3.1-133
 	* tests/coef.Rout.save: update for R-pre-3.5.0 chanages to str()
+	* R/VarCorr.R: correct breakage in r7326 (2017-03-07)
 
 2017-09-18  Martin Maechler
 
@@ -10,7 +11,15 @@
 
 2017-03-07  Martin Maechler
 
+	* nlme/R/VarCorr.R, nlme/man/VarCorr.Rd: see below.
+	* 'correct default for VarCorr.lme() to what it has really been.'
+	* 'Fix print.*()'.
+	* 'Cosmetic (not changing any results)'
+
 2017-02-27  Martin Maechler
+
+	* nlme/R/gnls.R, nlme/man/glsControl.Rd, nlme/man/gnlsControl.Rd,
+	  nlme/man/lmeControl.R:  'cosmetic'
 
 2017-02-22  Martin Maechler
 
