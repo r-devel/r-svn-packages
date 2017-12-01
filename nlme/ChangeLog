@@ -1,9 +1,13 @@
 2017-12-01  Brian Ripley
 
-	* Trial for R-devel, but broke packages joineR and lme4
-	* DESCRIPTION (Version): 3.1-133
+	* DESCRIPTION (Version): 3.1-134, R >= 3.5.0	
+	* R/VarCorr.R: correct breakage in r7326 (2017-03-07) 
+	  (broke packages joineR and lme4).
+
+2017-11-28  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-133 (released for R-devel but withdrawn)
 	* tests/coef.Rout.save: update for R-pre-3.5.0 chanages to str()
-	* R/VarCorr.R: correct breakage in r7326 (2017-03-07)
 
 2017-09-18  Martin Maechler
 
