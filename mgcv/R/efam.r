@@ -1,7 +1,7 @@
 ## (c) Simon N. Wood (ocat, tw, nb, ziP) & Natalya Pya (scat, beta), 
 ## 2013-2017. Released under GPL2.
 
-estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
+estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE) {
 ## Simple Newton iteration to estimate theta for an extended family,
 ## given y and mu. To be iterated with estimation of mu given theta.
 ## If used within a PIRLS loop then divergence testing of coef update
@@ -79,6 +79,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7) {
     if (sum(abs(nll$g) > tol*abs(nll$nll))==0) break 
   } ## main Newton loop
   if (step.failed) warning("step failure in theta estimation")
+  if (attachH) attr(theta,"H") <- nll$H
   theta
 } ## estimate.theta
 
@@ -950,6 +951,8 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
         mup1 <-  mu^(-p-1)
         r$Dmu3 <- -2 * wt * mup1*p*(y/mu*(p+1) + 1-p)    
         r$Dmu2th <- 2 * wt  * (mup1*y*(1-p*logmu)-(logmu*(1-p)+1)/mup )*dpth1
+	r$EDmu3 <- -2*wt*p*mup1
+	r$EDmu2th <- -2*wt*logmu/mup*dpth1
       } 
       if (level>1) { ## whole damn lot
         mup2 <- mup1/mu
