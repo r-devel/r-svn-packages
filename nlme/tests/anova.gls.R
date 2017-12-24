@@ -5,6 +5,7 @@ library(nlme)
 data(Ovary)
 ## stolen from example(anova.gls)
 # AR(1) errors within each Mare
+## tolerance increased for flang (was 6e-6)q
 fm1 <- gls(follicles ~ sin(2*pi*Time) + cos(2*pi*Time), Ovary,
            correlation = corAR1(form = ~ 1 | Mare))
 (int1 <- intervals(fm1))
@@ -14,7 +15,7 @@ stopifnot(
 	      tol = 6e-6)# 3.44e-6 needed on solaris-x86
    ,
     all.equal(as.vector(int1$sigma),
-	      c(3.9747061, 4.61617157, 5.361161), tol = 6e-6)
+	      c(3.9747061, 4.61617157, 5.361161), tol = 1e-5)
 )
 
 # variance changes with a power of the absolute fitted values?
