@@ -234,7 +234,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
-  for (i in 1:length(gp$smooth.spec)) nk <- nk + as.numeric(gp$smooth.spec[[i]]$by!="NA") +
+  if (length(gp$smooth.spec)>0) for (i in 1:length(gp$smooth.spec)) nk <- nk + as.numeric(gp$smooth.spec[[i]]$by!="NA") +
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
   k <- matrix(0,nrow(mf),nk) ## each column is an index vector
   k.start <- 1:(nk+1) ## record last column for each term
@@ -245,7 +245,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
               ki = rep(0,0),      ## index of original index vector var relates to  
               d = rep(0,0))       ## dimension of terms involving this var
   ## loop through the terms discretizing the covariates...
-  for (i in 1:length(gp$smooth.spec)) {
+  if (length(gp$smooth.spec)>0) for (i in 1:length(gp$smooth.spec)) {
     nmarg <- if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) length(gp$smooth.spec[[i]]$margin) else 1
     maxj <- if (gp$smooth.spec[[i]]$by=="NA") nmarg else nmarg + 1 
     mi <- if (is.null(m)||length(m)==1) m else m[i]
@@ -336,7 +336,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   ## finally one more pass through, expanding k, k.start and nr to deal with replication that
   ## will occur with factor by variables...
   ik <- ncol(k)+1 ## starting index col for this term in k.start
-  for (i in length(gp$smooth.spec):1) { ## work down through terms so insertion painless
+  if (length(gp$smooth.spec)>0) for (i in length(gp$smooth.spec):1) { ## work down through terms so insertion painless
     if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) nd <-  
          length(gp$smooth.spec[[i]]$margin) else nd <- 1 ## number of indices
     ik <- ik - nd ## starting index if no by  
@@ -520,7 +520,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
 
     Sl <- Sl.setup(G) ## setup block diagonal penalty object
     rank <- 0
-    for (b in 1:length(Sl)) rank <- rank + Sl[[b]]$rank
+    if (length(Sl)>0) for (b in 1:length(Sl)) rank <- rank + Sl[[b]]$rank
     Mp <- ncol(G$X) - rank ## null space dimension
     Nstep <- 0
     if (efam) theta <- family$getTheta()
@@ -1607,7 +1607,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
      G$pearson.extra <- rss.extra
      G$n.true <- n
      object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
-     object$fitted.values <- NULL
+     object$null.deviance <- object$fitted.values <- NULL
      y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
      if (rho!=0) { ## correct RE/ML score for AR1 transform 
        df <- if (is.null(mf$"(AR.start)")) 1 else sum(mf$"(AR.start)")
@@ -1918,12 +1918,16 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       warning("min.sp not supported with fast REML computation, and ignored.")
     }
    
-    gp <- interpret.gam(formula) # interpret the formula 
+    gp <- interpret.gam(formula) # interpret the formula
+    if (length(gp$smooth.spec)==0) {
+      warning("no smooths, igoring `discretize=TRUE'")
+      discretize <- FALSE
+    }
     if (discretize) { 
       ## re-order the tensor terms for maximum efficiency, and 
       ## signal that "re"/"fs" terms should be constructed with marginals
       ## also for efficiency
-      if (length(gp$smooth.spec)>0) for (i in 1:length(gp$smooth.spec)) { 
+      for (i in 1:length(gp$smooth.spec)) { 
         if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) 
         gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
         if (inherits(gp$smooth.spec[[i]],c("re.smooth.spec","fs.smooth.spec"))&&gp$smooth.spec[[i]]$dim>1) {
@@ -2054,7 +2058,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       G$ks <- cbind(dk$k.start[-length(dk$k.start)],dk$k.start[-1])
 
       drop <- rep(0,0) ## index of te related columns to drop
-      for (i in 1:length(G$smooth)) {
+      if (length(G$smooth)>0) for (i in 1:length(G$smooth)) {
         ts[kb] <- k
         ## first deal with any by variable (as first marginal of tensor)...
         if (G$smooth[[i]]$by!="NA") {

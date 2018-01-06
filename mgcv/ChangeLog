@@ -35,6 +35,13 @@ Currently deprecated and liable to be removed:
   which could fail during re-representation as tensor smooths (for 
   discretization purposes).
 
+* bam extended family extension had introduced a bug in null deviance 
+  computation for Gaussian additive case when using methods other than fREML 
+  or GCV.Cp. Fixed.
+
+* bam(...,discrete=TRUE) now defaults to discrete=FALSE if there are no 
+  smooths, rahter than failing.
+
 * bam was reporting wrong family under some smoothing parameter selection 
   methods (not default).
 

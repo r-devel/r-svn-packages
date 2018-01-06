@@ -236,7 +236,7 @@ Sl.Sb <- function(Sl,rho,beta) {
 ## multi-S blocks. Logic is identical to Sl.addS.
   k <- 1
   a <- beta * 0
-  for (b in 1:length(Sl)) {
+  if (length(Sl)>0) for (b in 1:length(Sl)) {
     ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
     if (length(Sl[[b]]$S)==1) { ## singleton - multiple of identity
       a[ind] <- a[ind] + beta[ind] * exp(rho[k])
@@ -387,7 +387,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1) {
   d2.ldS <- matrix(0,n.deriv,n.deriv)
   rp <- list() ## reparameterization list
   if (root) E <- matrix(0,np,np) else E <- NULL
-  for (b in 1:length(Sl)) { ## work through blocks
+  if (length(Sl)>0) for (b in 1:length(Sl)) { ## work through blocks
     if (length(Sl[[b]]$S)==1) { ## singleton
       ldS <- ldS + rho[k.sp] * Sl[[b]]$rank
       if (!fixed[k.sp]) {
@@ -472,7 +472,7 @@ Sl.addS <- function(Sl,A,rho) {
 ## and should have already been applied to A using Sl.initial.repara
   k <- 1
   A <- A*1 ## force a copy to be made so that A not modified in calling env!!
-  for (b in 1:length(Sl)) {
+  if (length(Sl)>0) for (b in 1:length(Sl)) {
     ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
     if (length(Sl[[b]]$S)==1) { ## singleton
       B <- exp(rho[k]);diag <- -1
@@ -545,7 +545,7 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
 ## If k>0 then the routine forms S_k%*%A, zero padded 
 ## if full==TRUE, but in smallest number of rows form otherwise.
   nb <- length(Sl) ## number of blocks
- 
+  if (nb==0) return(A*0)
   Amat <- is.matrix(A) 
   if (k<=0) { ## apply whole penalty
     B <- A*0
@@ -637,7 +637,7 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
   SA <- list()
   k <- 0 ## component counter
   nb <- length(Sl) ## number of blocks
-  for (b in 1:nb) { ## block loop
+  if (nb>0) for (b in 1:nb) { ## block loop
     if (length(Sl[[b]]$S)==1) { ## singleton
       k <- k + 1
       ind <- Sl[[b]]$start:Sl[[b]]$stop
