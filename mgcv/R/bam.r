@@ -1919,8 +1919,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
    
     gp <- interpret.gam(formula) # interpret the formula
-    if (length(gp$smooth.spec)==0) {
-      warning("no smooths, igoring `discretize=TRUE'")
+    if (discretize && length(gp$smooth.spec)==0) {
+      warning("no smooths, ignoring `discrete=TRUE'")
       discretize <- FALSE
     }
     if (discretize) { 
