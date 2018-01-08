@@ -40,7 +40,7 @@ Currently deprecated and liable to be removed:
   or GCV.Cp. Fixed.
 
 * bam(...,discrete=TRUE) now defaults to discrete=FALSE if there are no 
-  smooths, rahter than failing.
+  smooths, rather than failing.
 
 * bam was reporting wrong family under some smoothing parameter selection 
   methods (not default).
