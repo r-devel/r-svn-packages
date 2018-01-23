@@ -100,8 +100,8 @@ logL <- sapply(orthS3, function(E) sapply(E,
 
 stopifnot(is.array(logL), length(d <- dim(logL)) == 3, d == c(3,2,2),
     sapply(orthS3, function(E) sapply(E, function(M) M[,"info"])) == 0
-   , # typically even identical():
-    all.equal(logL[1,,"null"], c(ML = loM, REML = loR), tol = 1e-15)
+   , # typically even identical(), but with ATLAS 3.66268e-11
+    all.equal(logL[1,,"null"], c(ML = loM, REML = loR), tol = 1e-10)
    ,
     all.equal(c(logL) + 230,
               c(14.563 , 2.86712, 1.00026, 12.6749, 1.1615,-0.602989,
