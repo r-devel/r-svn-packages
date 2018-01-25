@@ -211,7 +211,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 ## * nr records the number of unique discretized covariate values
 ##   i.e. the number of rows before the padding starts
 ## * k.start contains the starting column in index vector k, for
-##   each variable.
+##   each variable. The final element is the column beyond the last one.
 ## * k is the index matrix. The ith record of the 1st column of the 
 ##   jth variable is in row k[i,k.start[j]] of the corresponding 
 ##   column of mf.
@@ -2113,7 +2113,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         } else { ## not a tensor smooth
           v[[kb]] <- rep(0,0)
           dt[kb] <- dt[kb] + 1
-          G$Xd[[k]] <- G$X[1:dk$nr[k],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para]
+          G$Xd[[k]] <- G$X[1:dk$nr[k],G$smooth[[i]]$first.para:G$smooth[[i]]$last.para,drop=FALSE]
           k <- k + 1
         }
         kb <- kb + 1

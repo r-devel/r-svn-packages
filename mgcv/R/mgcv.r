@@ -5,7 +5,8 @@ Rrank <- function(R,tol=.Machine$double.eps^.9) {
 ## Finds rank of upper triangular matrix R, by estimating condition
 ## number of upper rank by rank block, and reducing rank until this is 
 ## acceptably low... assumes R pivoted 
- rank <- m <- ncol(R) 
+ m <- nrow(R)
+ rank <- min(m,ncol(R))
  ok <- TRUE
   while (ok) {
     Rcond <- .C(C_R_cond,R=as.double(R),r=as.integer(m),c=as.integer(rank),

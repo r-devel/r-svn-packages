@@ -218,9 +218,9 @@ terms less the number of spline terms).
 
 This routine is less stable than `gam' for the same dataset.
 
+With \code{discrete=TRUE}, \code{te} terms are efficiently computed, but \code{t2} are not.
+
 The negbin family is only supported for the *known theta* case.
-
-
 } 
 
 \seealso{\code{\link{mgcv.parallel}}, 

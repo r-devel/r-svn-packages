@@ -5,6 +5,14 @@ Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
 - argument 'pers' in plot.gam (1.8-23, Nov 2018)
 
+Issues: t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
+present, and reparameterization needs checking (also for bam). 
+
+1.8-24
+
+* Fix to 'Rrank'. Previously a matrix R with more columns than rows could 
+  cause a segfault. 
+
 1.8-23
 
 * default plot methods added for smooths of 3 and 4 variables. 
