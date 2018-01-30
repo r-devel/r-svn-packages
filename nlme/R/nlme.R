@@ -1,8 +1,8 @@
 ###            Fit a general nonlinear mixed effects model
 ###
+### Copyright 2006-2018 The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-### Copyright 2006-2017 The R Core team
 ###
 ###  This program is free software; you can redistribute it and/or modify
 ###  it under the terms of the GNU General Public License as published by
@@ -501,7 +501,7 @@ nlme.formula <-
     }
   }
   fLen <- length(fn)
-  if (length(sfix) != fLen)
+  if (fLen == 0L || length(sfix) != fLen)
     stop ("starting values for the 'fixed' component are not the correct length")
   names(sfix) <- fn
   ##
@@ -789,6 +789,7 @@ nlme.formula <-
   pnlsSettings <- c(controlvals$pnlsMaxIter, controlvals$minScale,
                     controlvals$pnlsTol, 0, 0, 0)
   nlModel <- nonlinModel(modelExpression, nlEnv)
+  ##----------------------------------------------------------------------------
   repeat {                              ## alternating algorithm
     numIter <- numIter + 1
     ## LME step
@@ -889,8 +890,9 @@ nlme.formula <-
     w <- w + as.vector(ZX[, rLen + (1:fLen), drop = FALSE] %*% sfix)
     startRan <- 0
     for(i in 1:Q) {
+      gr.i <- as.character(grpShrunk[, Q-i+1])
       w <- w + as.vector((ZX[, startRan + 1:ncols[i], drop = FALSE] *
-                          t(sran[[i]])[as.character(grpShrunk[, Q-i+1]),,drop = FALSE]) %*%
+                          t(sran[[i]])[gr.i,, drop = FALSE]) %*%
                          rep(1, ncols[i]))
       startRan <- startRan + ncols[i]
     }
@@ -930,13 +932,11 @@ nlme.formula <-
 	"maximum number of iterations (maxIter = %d) reached without convergence",
 	controlvals$maxIter)
       if (controlvals$returnObject) {
-	warning(msg, domain=NA)
-	break
-      } else {
+	warning(msg, domain=NA) ; break
+      } else
 	stop(msg, domain=NA)
-      }
     }
-  }
+  } ## end{ repeat } (nlme steps) ----------------------------------------------
 
   ## wrapping up
   nlmeFit <-
