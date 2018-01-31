@@ -2,9 +2,9 @@
    Routines for calculation of the log-likelihood or restricted
    log-likelihood with mixed-effects models.
 
+   Copyright (C) 2007-2018  The R Core Team
    Copyright (C) 1997-2005  Douglas M. Bates <bates@stat.wisc.edu>,
 		            Jose C. Pinheiro, Saikat DebRoy
-   Copyright (C) 2007-2017  The R Core Team
 
    This file is part of the nlme package for R and related languages
    and is made available under the terms of the GNU General Public
@@ -513,7 +513,9 @@ finite_diff_Hess(double (*func)(double*,double*), double *pars, int npar,
     return;
 }
 
-void				/* For optif9 */
+/* objective function for optif9(), itself called from
+ * nlme_increment() [../nlme.c] and mixed_combined() below */
+void
 mixed_fcn(int n, double *pars, double *g, void *state)
 {
     statePTR st = (statePTR) state;
@@ -527,7 +529,7 @@ mixed_fcn(int n, double *pars, double *g, void *state)
     Free(Delta); Free(zxcopy);
 }
 
-void				/* For optif9 */
+void // gradient for optif9() of objective function mixed_fcn() see above
 mixed_grad(int n, double *pars, double *g, void *state)
 {
     statePTR st = (statePTR) state;
@@ -828,7 +830,7 @@ mixed_EM(double *ZXy, int *pdims, double *DmHalf, int *nIter, int *pdClass,
 }
 
 void				/* to be called by Fortran msmnh */
-mixed_calcf(int *n, double *theta, int *nf, double *f, int *uiparm, 
+mixed_calcf(int *n, double *theta, int *nf, double *f, int *uiparm,
 	    double *urparm, void (*ufparm)(void))
 {
     Memcpy( zxcopy2, zxcopy, zxdim );
@@ -966,6 +968,8 @@ generate_theta( double *theta, dimPTR dd, int *pdClass, double *DmHalf )
     return theta;
 }
 
+
+// This is called _only_ from R's  nlme :: simulate.lme():
 void				/* both EM and Newton-Raphson iterations */
 mixed_combined(double *ZXy, int *pdims, double *DmHalf, int *nIter,
 	       int *pdClass, int *RML, double *logLik, double *R0,

@@ -1,9 +1,10 @@
+
 /*
    header file for the nlme package
 
+   Copyright 2007-2018  The R Core Team
    Copyright 1999-2001 Saikat DebRoy,
 		       Douglas Bates <bates@stat.wisc.edu>
-   Copyright 2007-2016  The R Core Team
 
    This file is part of the nlme package for R and related languages
    and is made available under the terms of the GNU General Public
@@ -26,6 +27,7 @@
 #define NLME_NLMEFIT_H
 #include "base.h"
 #include <R_ext/Applic.h> // for nlm internals
+#include <R_ext/Utils.h>  // for R_CheckUserInterrupt()
 
 typedef struct dim_struct {
   int
@@ -53,6 +55,15 @@ typedef struct state_struct {
     *RML;
   double	*sigma; // 17-11-2015; Fixed sigma patch; E van Willigen; Quantitative Solutions
 } *statePTR;
+
+// trivially implemented in ./init.c :
+extern int F77_SUB(risnan)(double x);
+extern int F77_SUB(risna)(double x);
+extern int F77_SUB(risnannna)(double x);
+extern int F77_SUB(risfinite)(double x);
+extern double F77_SUB(rnareal)(void);
+extern double F77_SUB(rposinf)(void);
+extern double F77_SUB(rneginf)(void);
 
 extern dimPTR dims(int *);
 extern dimPTR dimS(SEXP);

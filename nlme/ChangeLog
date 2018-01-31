@@ -1,6 +1,21 @@
+2018-01-31  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* src/nlmefit.h, src/init.c (risnan, risfinite, ..): utilities to
+	check for NaN, NA, Inf etc from Fortran
+
+	* src/rs.f (PYTHAG): prevent infinite loop checking for finite arg.
+
+	* src/nlme.c (nlme_iterate): use R_CheckUserInterrupt()
+
 2018-01-23  Brian Ripley
 
 	* tests/predict.lmw.R: increase tolerance.
+
+2018-01-02  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 3.1-136
+	* R/lmList.R (warnErrList): bug fix, added to 'utils';
+	keep here for R < 3.5.0.
 
 2018-01-01  Brian Ripley
 
@@ -13,8 +28,8 @@
 
 2017-12-01  Brian Ripley
 
-	* DESCRIPTION (Version): 3.1-134, R >= 3.5.0	
-	* R/VarCorr.R: correct breakage in r7326 (2017-03-07) 
+	* DESCRIPTION (Version): 3.1-134, R >= 3.5.0
+	* R/VarCorr.R: correct breakage in r7326 (2017-03-07)
 	  (broke packages joineR and lme4).
 
 2017-11-28  Brian Ripley
@@ -42,7 +57,7 @@
 
 	* DESCRIPTION (Version): 3.1-132 (unreleased)
 	* R/gnls.R, src/gnls.c: 'small cosmetic related to getting closer
-	to the root cause of PR#17227' 
+	to the root cause of PR#17227'
 
 2017-02-11 Brian Ripley
 

@@ -1,5 +1,5 @@
 /*
-   Copyright 2005-2015  The R Core Team
+   Copyright 2005-2018  The R Core Team
 
    This file is part of the nlme package for R and related languages
    and is made available under the terms of the GNU General Public
@@ -26,6 +26,16 @@
 #include "nlmefit.h"
 #include "nlOptimizer.h"
 #include "pdMat.h"
+
+// E.g. checking for 'NaN' from Fortran 
+// The 'int' cannot be used directly inside  if() etc; use  risnan(x) .ne. 0
+int F77_SUB(risnan)(double x) { return ISNAN(x); }
+int F77_SUB(risna)(double x)  { return ISNA(x); }
+int F77_SUB(risnannna)(double x) { return R_IsNaN(x); } // NaN but *not* NA
+int F77_SUB(risfinite)(double x) { return R_FINITE(x); }
+double F77_SUB(rnareal)(void) { return NA_REAL; }
+double F77_SUB(rposinf)(void) { return R_PosInf; }
+double F77_SUB(rneginf)(void) { return R_NegInf; }
 
 extern void corStruct_factList(double *, longint *, double *, double *);
 extern void corStruct_recalc(double *, longint *, longint *, double *);
@@ -72,7 +82,6 @@ extern void fit_nlme(double *, double *, longint *,
 	 longint *, longint *, double *,
 	 double *, longint *, double *,
 	 double *, longint *, longint *,
-         // 17-11-2015; Fixed sigma patch; E van Willigen; Quantitative Solutions
 	 double, SEXP model);
 extern void nlme_one_comp_first (longint *, double *, double *);
 extern void nlme_one_comp_open (longint *, double *, double *);
