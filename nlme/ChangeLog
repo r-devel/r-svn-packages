@@ -1,3 +1,5 @@
+[NB: changes since 3.1-135.5 break some reverse dependencies.]
+
 2018-01-31  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/nlmefit.h, src/init.c (risnan, risfinite, ..): utilities to
@@ -15,7 +17,7 @@
 
 2018-02-16  Brian Ripley
 
-	* DESCRIPTION (Version): 3.1-135.1 (released for R-devel only)
+	* DESCRIPTION (Version): 3.1-135.5 (released for R-devel only)
 
 2018-01-23, 2018-02-16 Brian Ripley
 
