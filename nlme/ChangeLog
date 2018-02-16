@@ -1,3 +1,11 @@
+2018-02-16  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-131.1, for R 3.4.4.
+	(and 3.1-131) are available at 
+	https://svn.r-project.org/R-packages/branches/R-3-4-branch/nlme
+
+	* tests/deparse.R: comment on failure with macOS's Accelerate.
+
 [NB: changes since 3.1-135.5 break some reverse dependencies.]
 
 2018-01-31  Martin Maechler  <maechler@stat.math.ethz.ch>
