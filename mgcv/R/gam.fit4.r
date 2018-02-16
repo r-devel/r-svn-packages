@@ -810,7 +810,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       step <- step/fac;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
-      if (ll1>=ll0) {
+      if (is.finite(ll1)&&ll1>=ll0) {
         ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       } else { ## abort if step has made no difference
         if (max(abs(coef1-coef))==0) khalf <- 100
@@ -828,7 +828,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       step <- step/10;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
-      if (ll1>=ll0) {
+      if (is.finite(ll1)&&ll1>=ll0) {
         ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       } else { ## abort if step has made no difference
         if (max(abs(coef1-coef))==0) khalf <- 100
