@@ -31,6 +31,8 @@ fm2 <- nlme(model,
 fm2
 ## equal apart from 'call' :
 fm2$call <- fm1$call
+## BUT with macOS's Accelerate:
+##   Component "apVar": Mean relative difference: 7.07812e-05
 stopifnot(all.equal(fm1, fm2, tolerance = 1e-15))
 
 ## deparse can give multiple lines
