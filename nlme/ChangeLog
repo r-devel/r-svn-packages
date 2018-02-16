@@ -9,7 +9,7 @@
 
 2018-01-23  Brian Ripley
 
-	* tests/predict.lmw.R: increase tolerance.
+	* tests/predict.lme.R: increase tolerance.
 
 2018-01-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 

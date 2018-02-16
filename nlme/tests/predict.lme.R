@@ -93,7 +93,8 @@ system.time(
 ## the same, starting from two fitted models :
 ort.S3 <- simulate(m3, m2 = m4, nsim = 3, seed = 47)
 attr(ort.S3, "call") <- attr(orthS3, "call")
-stopifnot(all.equal(orthS3, ort.S3, tolerance = 1e-15))
+## was 1e-15, larger tolerance needed with ATLAS
+stopifnot(all.equal(orthS3, ort.S3, tolerance = 1e-10))
 
 logL <- sapply(orthS3, function(E) sapply(E,
                        function(M) M[,"logLik"]), simplify="array")
