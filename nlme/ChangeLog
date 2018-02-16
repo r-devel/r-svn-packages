@@ -7,15 +7,19 @@
 
 	* src/nlme.c (nlme_iterate): use R_CheckUserInterrupt()
 
-2018-01-23, 2018-02-16 Brian Ripley
-
-	* tests/predict.lme.R: increase tolerance.
-
 2018-01-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 3.1-136 (unreleased)
 	* R/lmList.R (warnErrList): bug fix, added to 'utils';
 	keep here for R < 3.5.0.
+
+2018-02-16  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-135.1 (released for R-devel only)
+
+2018-01-23, 2018-02-16 Brian Ripley
+
+	* tests/predict.lme.R: increase tolerance.
 
 2018-01-01  Brian Ripley
 
