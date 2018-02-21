@@ -23,6 +23,11 @@
 	* R/lmList.R (warnErrList): bug fix, added to 'utils';
 	keep here for R < 3.5.0.
 
+2018-02-21  Brian Ripley
+
+	* DESCRIPTION: relax R (>= 3.5.0) for 3.1-135.5.
+	  (so it can be released generally once 3.5.0 is out).
+
 2018-02-16  Brian Ripley
 
 	* DESCRIPTION (Version): 3.1-135.5 (released for R-devel only)
