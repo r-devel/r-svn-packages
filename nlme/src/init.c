@@ -27,6 +27,13 @@
 #include "nlOptimizer.h"
 #include "pdMat.h"
 
+// return in an arg for maximal portability -- see WRE section 6.6
+#include <math.h>
+void F77_SUB(hypot)(double *a, double *b, double *p)
+{
+    *p = hypot(*a, *b);
+}
+
 // E.g. checking for 'NaN' from Fortran 
 // The 'int' cannot be used directly inside  if() etc; use  risnan(x) .ne. 0
 int F77_SUB(risnan)(double x) { return ISNAN(x); }
