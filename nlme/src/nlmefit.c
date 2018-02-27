@@ -894,7 +894,7 @@ Delta2MatrixLog( double *theta, int *q, double *Delta )
 	crossprod_mat(DtransD, qq, Delta, qq, qq, qq); /* form t(Delta) %*% Delta */
 	F77_CALL(rs) (q, q, DtransD, values, &one, vectors, workmat, work2, &info);
 	if (info != 0) {
-	    error(_("Unable to form eigenvalue-eigenvector decomposition"));
+	    error(_("Unable to form eigenvalue-eigenvector decomposition [RS(.) ierr = %d]"), info);
 	}
 	copy_mat(workmat, qq, vectors, qq, qq, qq);
 	for(i = 0; i < qq; i++) {
@@ -926,7 +926,8 @@ Delta2LogCholesky(double *theta, int *q, double *Delta )
 	crossprod_mat(DtransD, qq, Delta, qq, qq, qq); /* form t(Delta) %*% Delta */
 	F77_CALL(chol) (DtransD, &qq, &qq, Delta, &info); /* re-writes Delta */
 	if (info != 0)
-	    error(_("Unable to form Cholesky decomposition"));
+	    error(_("Unable to form Cholesky decomposition: the leading minor of order %d is not pos.def."),
+		  info);
 	*theta = log(Delta[0]);
 	for(i = 1; i < qq; i++) {
 	    theta[i] = log(Delta[i * (qq + 1)]);
