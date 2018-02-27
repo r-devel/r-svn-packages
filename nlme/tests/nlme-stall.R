@@ -1,6 +1,10 @@
 ## Taken from https://stat.ethz.ch/pipermail/r-devel/2018-January/075459.html
-## Hung with x86_64 Linux but not i686 Linux nor x86_64 macOS in early 2018.
-## Resolved by nlme 3.1-136
+
+## Hung with x86_64 Linux/gcc 7.3 but not i686 Linux nor x86_64 macOS
+## in early 2018.  Resolved by nlme 3.1-136.
+
+## Optional since it used to hang, on one platform only AFAWK.
+if(!nzchar(Sys.getenv("TEST-NLME-STALL"))) q('no')
 
 dat <- data.frame(
     x = c(3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3.69, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 1.61, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.92, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, 0.22, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -0.47, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86, -1.86),

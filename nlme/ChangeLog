@@ -1,6 +1,6 @@
 2018-02-27  Brian Ripley
 
-	* DESCRIPTION: Update Date. 
+	* DESCRIPTION: Update Date. (Still unreleased.)
 	Relax R (>= 3.5.0) to 3.4.0 so it can be released generally once
 	3.5.0 is out.
 
@@ -9,7 +9,12 @@
 
 	* src/pythag.c: New file, contents moved from init.c.
 
-	* tests/nlme-stall.R: New regression test.
+	* tests/nlme-stall.R: New regression test, optional.
+
+	* tests/sigma-fixed-etc.R: Changed tolerance after win-builder
+	run, change t7.fix.REML.lme to use optim() (as done for LME, and
+	Solaris has false convergence with nlminb()).  Drop all uses of
+	platform-dependent tolerances.
 
 2018-02-26  Brian Ripley
 
