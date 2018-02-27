@@ -1,3 +1,10 @@
+2018-02-27  Martin Mächler  <maechler@stat.math.ethz.ch>
+
+	* R/nlme.R, man/nlmeControl.Rd: nlmeControl() gets new `msWarnNoConv` option. When it
+	is true, as by default, nlme() now warns about non convergence in
+	the LME step of the 'alternating algorithm'.  Applies e.g. also to
+	the nlme-stall.R example.
+
 2018-02-27  Brian Ripley
 
 	* DESCRIPTION: Update Date. (Still unreleased.)
@@ -25,7 +32,7 @@
 2018-02-16  Brian Ripley
 
 	* DESCRIPTION (Version): 3.1-131.1, for R 3.4.4.
-	(and 3.1-131) are available at 
+	(and 3.1-131) are available at
 	https://svn.r-project.org/R-packages/branches/R-3-4-branch/nlme
 
 	* tests/deparse.R: comment on failure with macOS's Accelerate.
@@ -36,10 +43,9 @@
 	check for NaN, NA, Inf etc from Fortran.  [Since removed.]
 
 	* src/rs.f (PYTHAG): prevent infinite loop checking for finite arg.
-	(Seems motivated by
-	https://stat.ethz.ch/pipermail/r-devel/2018-January/075459.html .)
+	as reported in https://stat.ethz.ch/pipermail/r-devel/2018-January/075459.html .
 
-	* src/nlme.c (nlme_iterate): use R_CheckUserInterrupt()
+	* src/nlme.c (nlme_iterate): add R_CheckUserInterrupt()
 
 2018-01-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 

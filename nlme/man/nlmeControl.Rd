@@ -7,8 +7,8 @@
 \usage{
 nlmeControl(maxIter, pnlsMaxIter, msMaxIter, minScale,
             tolerance, niterEM, pnlsTol, msTol,
-            returnObject, msVerbose, gradHess, apVar, .relStep,
-            minAbsParApVar = 0.05,
+            returnObject, msVerbose, msWarnNoConv,
+            gradHess, apVar, .relStep, minAbsParApVar = 0.05,
             opt = c("nlminb", "nlm"), natural = TRUE, sigma = NULL, \dots)
 }
 \alias{nlmeControl}
@@ -21,7 +21,8 @@ nlmeControl(maxIter, pnlsMaxIter, msMaxIter, minScale,
  \item{msMaxIter}{maximum number of iterations for \code{\link{nlminb}}
    (\code{iter.max}) or the \code{\link{nlm}} (\code{iterlim}, from the
    10-th step) optimization step inside the \code{nlme}
-   optimization.  Default is 50.}
+   optimization.  Default is 50 (which may be too small for e.g. for
+   overparametrized cases).}
  \item{minScale}{minimum factor by which to shrink the default step size
    in an attempt to decrease the sum of squares in the \code{PNLS} step.
    Default \code{0.001}.}
@@ -43,6 +44,9 @@ nlmeControl(maxIter, pnlsMaxIter, msMaxIter, minScale,
    \code{\link{nlminb}(.., control= list(trace = *, ..))} or
    as argument \code{print.level} to \code{\link{nlm}()}.  Default is
    \code{FALSE}.}
+ \item{msWarnNoConv}{logical indicating if a \code{\link{warning}}
+   should be signalled whenever the minimization by (\code{opt}) in the
+   LME step does not converge; defaults to \code{TRUE}.}
  \item{gradHess}{a logical value indicating whether numerical gradient
    vectors and Hessian matrices of the log-likelihood function should
    be used in the \code{nlm} optimization. This option is only available

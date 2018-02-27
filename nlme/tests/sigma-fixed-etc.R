@@ -10,7 +10,7 @@ doExtras <- function ()
     interactive() || nzchar(Sys.getenv("R_nlme_check_extra")) ||
         identical("true", unname(Sys.getenv("R_PKG_CHECKING_doExtras")))
 }
-doExtras()  ## used below, but pointless here.
+doExtras()  ## used below {when activated by the tester, e.g., MM..r}
 ## isSun <- Sys.info()[["sysname"]] == "SunOS"
 
 ##===   example 1 general linear model page 251  gls ML  and LME ================

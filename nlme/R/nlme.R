@@ -811,6 +811,12 @@ nlme.formula <-
                        control = control)
       aConv <- coef(nlmeSt) <- optRes$par
       convIter <- optRes$iterations
+      if(optRes$convergence && controlvals$msWarnNoConv)
+        warning(paste(sprintf(
+          "Iteration %d, LME step: nlminb() did not converge (code = %d).",
+          numIter, optRes$convergence),
+          if(convIter >= control$iter.max) "Do increase 'msMaxIter'!"
+          else if(!is.null(msg <- optRes$message)) paste("PORT message:", msg)))
     } else { ## nlm(.)
       aNlm <- nlm(f = function(nlmePars) -logLik(nlmeSt, nlmePars),
                   p = c(coef(nlmeSt)), hessian = TRUE,
@@ -821,6 +827,11 @@ nlme.formula <-
                   check.analyticals = FALSE)
       aConv <- coef(nlmeSt) <- aNlm$estimate
       convIter <- aNlm$iterations
+      if(aNlm$code > 2 && controlvals$msWarnNoConv)
+        warning(paste(sprintf(
+          "Iteration %d, LME step: nlm() did not converge (code = %d).",
+          numIter, aNlm$code),
+          if(aNlm$code == 4) "Do increase 'msMaxIter'!"))
     }
     nlmeFit <- attr(nlmeSt, "lmeFit") <- MEestimate(nlmeSt, grpShrunk)
     if (verbose) {
@@ -840,6 +851,7 @@ nlme.formula <-
     }
     vW <- if(is.null(weights)) 1.0 else varWeights(nlmeSt$varStruct)
 
+    if (verbose) cat(" Beginning PNLS step: .. ")
     work <- .C(fit_nlme,
 	       thetaPNLS = as.double(c(as.vector(unlist(sran)), sfix)),
                pdFactor = as.double(pdFactor(nlmeSt$reStruct)),
@@ -857,6 +869,7 @@ nlme.formula <-
 	       as.double(controlvals$sigma),
                nlModel,
 	       NAOK = TRUE)
+    if (verbose) cat(" completed fit_nlme() step.\n")
     if (work$settings[4] == 1) {
       ##      convResult <- 2
       msg <- "step halving factor reduced below minimum in PNLS step"
@@ -1428,9 +1441,9 @@ nlmeControl <-
   function(maxIter = 50, pnlsMaxIter = 7, msMaxIter = 50,
 	   minScale = 0.001, tolerance = 1e-5, niterEM = 25,
            pnlsTol = 0.001, msTol = 0.000001,
-           returnObject = FALSE, msVerbose = FALSE, gradHess = TRUE,
-           apVar = TRUE, .relStep = .Machine$double.eps^(1/3),
-           minAbsParApVar = 0.05,
+           returnObject = FALSE, msVerbose = FALSE, msWarnNoConv = TRUE,
+           gradHess = TRUE, apVar = TRUE,
+           .relStep = .Machine$double.eps^(1/3), minAbsParApVar = 0.05,
 	   opt = c("nlminb", "nlm"), natural = TRUE, sigma = NULL, ...)
 {
   if(is.null(sigma))
@@ -1441,6 +1454,7 @@ nlmeControl <-
        minScale = minScale, tolerance = tolerance, niterEM = niterEM,
        pnlsTol = pnlsTol, msTol = msTol,
        returnObject = returnObject, msVerbose = msVerbose,
+       msWarnNoConv = msWarnNoConv,
        gradHess = gradHess, apVar = apVar, .relStep = .relStep,
        minAbsParApVar = minAbsParApVar,
        opt = match.arg(opt), natural = natural, sigma=sigma, ...)
