@@ -1,3 +1,16 @@
+2018-02-27  Brian Ripley
+
+	* DESCRIPTION: Update Date. 
+	Relax R (>= 3.5.0) to 3.4.0 so it can be released generally once
+	3.5.0 is out.
+
+	* src/init.c, src/nlmefit.h: Remove broken utilities added on
+	2018-01-31.
+
+	* src/pythag.c: New file, contents moved from init.c.
+
+	* tests/nlme-stall.R: New regression test.
+
 2018-02-26  Brian Ripley
 
 	* src/init.c, src/rs.f: The 2018-01-31 change is broken (passes
@@ -15,8 +28,7 @@
 2018-01-31  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* src/nlmefit.h, src/init.c (risnan, risfinite, ..): utilities to
-	check for NaN, NA, Inf etc from Fortran.  [Broken: see 2018-02-26
-	entry.]
+	check for NaN, NA, Inf etc from Fortran.  [Since removed.]
 
 	* src/rs.f (PYTHAG): prevent infinite loop checking for finite arg.
 	(Seems motivated by
@@ -26,14 +38,8 @@
 
 2018-01-02  Martin Maechler  <maechler@stat.math.ethz.ch>
 
-	* DESCRIPTION (Version): 3.1-136 (unreleased)
-	* R/lmList.R (warnErrList): bug fix, added to 'utils';
-	keep here for R < 3.5.0.
-
-2018-02-21  Brian Ripley
-
-	* DESCRIPTION: relax R (>= 3.5.0) for 3.1-135.5.
-	  (so it can be released generally once 3.5.0 is out).
+	* R/lmList.R (warnErrList): bug fix.
+	Added to the 'utils' package for R-devel, keep here for R <= 3.4.x.
 
 2018-02-16  Brian Ripley
 

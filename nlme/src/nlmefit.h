@@ -56,15 +56,6 @@ typedef struct state_struct {
   double	*sigma; // 17-11-2015; Fixed sigma patch; E van Willigen; Quantitative Solutions
 } *statePTR;
 
-// trivially implemented in ./init.c :
-extern int F77_SUB(risnan)(double x);
-extern int F77_SUB(risna)(double x);
-extern int F77_SUB(risnannna)(double x);
-extern int F77_SUB(risfinite)(double x);
-extern double F77_SUB(rnareal)(void);
-extern double F77_SUB(rposinf)(void);
-extern double F77_SUB(rneginf)(void);
-
 extern dimPTR dims(int *);
 extern dimPTR dimS(SEXP);
 extern int count_DmHalf_pars(dimPTR, int *);
