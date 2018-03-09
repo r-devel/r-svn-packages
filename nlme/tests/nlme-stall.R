@@ -4,6 +4,9 @@
 ## in early 2018.  Resolved by nlme 3.1-136.
 
 ## Optional since it used to hang, on one platform only AFAWK.
+## gfortran with -fbounds-check detected a problem on one x86_64
+## Fedora 26 system (but not another) and on one of winbuilder's
+## subarchs.
 if(!nzchar(Sys.getenv("TEST-NLME-STALL"))) q('no')
 
 dat <- data.frame(

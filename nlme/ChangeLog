@@ -1,3 +1,10 @@
+2018-03-09  Brian Ripley
+
+	* DESCRIPTION: Update Date, release for R-devel.
+
+	* tests/nlme-stall.R: Add comments.
+
+	
 2018-02-27  Martin Mächler  <maechler@stat.math.ethz.ch>
 
 	* R/nlme.R, man/nlmeControl.Rd: nlmeControl() gets new `msWarnNoConv` option. When it
