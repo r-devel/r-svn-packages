@@ -3,14 +3,13 @@
 	* DESCRIPTION: Update Date, release for R-devel.
 
 	* tests/nlme-stall.R: Add comments.
-
 	
 2018-02-27  Martin Mächler  <maechler@stat.math.ethz.ch>
 
-	* R/nlme.R, man/nlmeControl.Rd: nlmeControl() gets new `msWarnNoConv` option. When it
-	is true, as by default, nlme() now warns about non convergence in
-	the LME step of the 'alternating algorithm'.  Applies e.g. also to
-	the nlme-stall.R example.
+	* R/nlme.R, man/nlmeControl.Rd: nlmeControl() gets new
+	`msWarnNoConv` option. When it is true, as by default, nlme() now
+	warns about non convergence in the LME step of the 'alternating
+	algorithm'.  Applies e.g. also to the nlme-stall.R example.
 
 2018-02-27  Brian Ripley
 
