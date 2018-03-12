@@ -10,6 +10,8 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-24
 
+* export 'k.check'.
+
 * Fix to 'Rrank'. Previously a matrix R with more columns than rows could 
   cause a segfault. 
 

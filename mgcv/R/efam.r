@@ -254,7 +254,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
   } ## end of dev.resids
 
   Dd <- function(y, mu, theta, wt=NULL, level=0) {
-  ## derivatives of the deviance...
+  ## derivatives of the ocat deviance...
    # F <- function(x) { ## e^(x)/(1+e^x) without overflow
    #   h <- ind <- x > 0; h[ind] <- 1/(exp(-x[ind]) + 1)
    #   x <- exp(x[!ind]); h[!ind] <- (x/(1+x))
@@ -387,7 +387,8 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
         oo$Dth[ind,k] <- Da0[ind]*etk
         oo$Dmuth[ind,k] <- Dmua0[ind]*etk
         oo$Dmu2th[ind,k] <- Dmu2a0[ind]*etk 
-      } 
+      }
+      oo$EDmu2th <- oo$Dmu2th
     }  
     if (level >1) { ## and the second derivative components 
       oo$Dmu4 <- 2*((3*b^2 + 4*a*c)/f + a2*(6*a2/f - 12*b)/f2 - d)/f
@@ -748,7 +749,7 @@ nb <- function (theta = NULL, link = "log") {
     }
     
     Dd <- function(y, mu, theta, wt, level=0) {
-    ## derivatives of the deviance...
+    ## derivatives of the nb deviance...
       ##ltheta <- theta
       theta <- exp(theta)
       yth <- y + theta
@@ -765,6 +766,7 @@ nb <- function (theta = NULL, link = "log") {
         r$Dmuth <- 2 * wt * theta * (1 - yth/muth)/muth
         r$Dmu3 <- 4 * wt * (yth/muth^3 - y/mu^3)
         r$Dmu2th <- 2 * wt * theta * (2*yth/muth - 1)/muth^2
+	r$EDmu2th <- 2 * wt / muth^2
       } 
       if (level>1) { ## whole damn lot
         r$Dmu4 <- 2 * wt * (6*y/mu^4 - 6*yth/muth^4)
@@ -918,7 +920,7 @@ tw <- function (theta = NULL, link = "log",a=1.01,b=1.99) {
   }
     
   Dd <- function(y, mu, theta, wt, level=0) {
-  ## derivatives of the deviance...
+  ## derivatives of the tw deviance...
     a <- get(".a");b <- get(".b")
     th <- theta
     p <- if (th>0) (b+a*exp(-th))/(1+exp(-th)) else (b*exp(th)+a)/(exp(th)+1)
@@ -1116,7 +1118,7 @@ betar <- function (theta = NULL, link = "logit",eps=.Machine$double.eps*100) {
         r$Dth <- 2 * wt *theta*(-mu*log.yoney - log1p(-y)+ mu*psi0.muth+onemu*psi0.onemuth -psi0.th) 
         r$Dmuth <- r$Dmu + 2 * wt * theta^2*(mu*psi1.muth -onemu*psi1.onemuth)
         r$Dmu3 <- 2 * wt *theta^3 * (psi2.muth - psi2.onemuth) 
-        r$Dmu2th <- 2* r$Dmu2 + 2 * wt * theta^3* (mu*psi2.muth + onemu*psi2.onemuth)
+        r$EDmu2th <- r$Dmu2th <- 2* r$Dmu2 + 2 * wt * theta^3* (mu*psi2.muth + onemu*psi2.onemuth)
       } 
       if (level>1) { ## whole lot
         r$Dmu4 <- 2 * wt *theta^4 * (psi3.muth+psi3.onemuth) 
@@ -1387,7 +1389,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
     }
     
     Dd <- function(y, mu, theta, wt, level=0) {
-    ## derivatives of the deviance...
+    ## derivatives of the scat deviance...
       ## ltheta <- theta
       min.df <- get(".min.df")
       nu <- exp(theta[1])+min.df; sig <- exp(theta[2])
