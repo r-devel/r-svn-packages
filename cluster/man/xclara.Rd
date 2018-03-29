@@ -48,14 +48,13 @@ text(xclara[p.ID,], labels = 1:3, cex=2, col=1:3)
  boxplot(iCl, range = 0.7, horizontal=TRUE,
          main = "Indices of the 3 clusters of  pam(xclara, 3)")
 
+ ## Look more closely now:
+ bxCl <- boxplot(iCl, range = 0.7, plot=FALSE)
  ## We see 3 + 2 + 2 = 7  clear "outlier"s  or "wrong group" observations:
  with(bxCl, rbind(out, group))
  ## out   1038 1451 1610   30  327  562  770
  ## group    1    1    1    2    2    3    3
-
- ## Apart from these, what are the robust ranges of indices?
- bxCl <- boxplot(iCl, plot=FALSE, range = 0.7)
- ## Robust range
+ ## Apart from these, what are the robust ranges of indices? -- Robust range:
  t(iR <- bxCl$stats[c(1,5),])
  ##    1  900
  ##  901 2050

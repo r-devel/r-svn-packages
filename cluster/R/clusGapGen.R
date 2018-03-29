@@ -1,4 +1,5 @@
-### From Master Thesis of Emmanuel Profumo (w/ M.Mächler) Autumn 2016--March 2017
+### From Master Thesis of Emmanuel Profumo (w/ M.Maechler) Autumn 2016--March 2017
+### "Generalized clusGap()" :  We cannot be 100% compatible to clusGap()
 
 #' @param x the data, can be a data frame or a matrix
 #' @param algo, a clustering algorithm function taking the prepared data and
@@ -38,11 +39,12 @@ clusGapGen <- function(x, algo, index, modelH0, K.max, B = 100,
                        modelH0Param = function(y) list(),
                        low=TRUE, verbose = interactive(), ...)
 {
-  tstval <- is.list(index)
-  if (is.function(index)) index <- list(index)
-  if (!is.list(index)|!all(sapply(index,is.function))) {
+  ind.isList <- is.list(index)
+  if (is.function(index))
+    index <- list(index)
+  else if (!ind.isList || !all(vapply(index, is.function, NA)))
     stop("index has to be a function or a list of function")
-  }
+
   Ind <- E.Ind <- SE.sim <- SE <- index
   for (i in seq_along(index)) Ind[[i]] <- E.Ind[[i]] <- SE.sim[[i]] <- numeric(K.max)
 
@@ -74,16 +76,19 @@ clusGapGen <- function(x, algo, index, modelH0, K.max, B = 100,
   gap <- gapHen <- index
   for (i in seq_along(index)){
     E.Ind[[i]] <- colMeans(Indks[[i]])
-    SE.sim[[i]] <- sqrt((1 + 1/B) * apply(Indks[[i]], 2, var))
-    SE[[i]] <- SE.sim[[i]]/(sqrt(1 + 1/B)) #no term for bootstrap error
-    gap[[i]] <-  E.Ind[[i]] - Ind[[i]]
-    gapHen[[i]] <-  (E.Ind[[i]] - Ind[[i]])/SE[[i]]
+    var.i <- apply(Indks[[i]], 2, var)
+    SE[[i]] <- sqrt(var.i)
+    SE.sim[[i]] <- sqrt((1 + 1/B) * var.i)
+    gap[[i]] <- gap.i <- E.Ind[[i]] - Ind[[i]]
+    gapHen[[i]] <- gap.i/SE[[i]]
     if (!low) {
       gap[[i]] <- -gap[[i]]
       gapHen[[i]] <- -gapHen[[i]]
     }
   }
-  if (tstval) {
+  ## TODO: really? make distinction of *list* of indices vs 1 index?
+  ## ---   well maybe, keep it: *The* usual case = _one_ index (or not?)
+  if (ind.isList) {
     list(Indks=Indks,Ind=Ind, E.Ind=E.Ind, gap = gap,
          gapHen = gapHen ,SE.sim=SE.sim,SE=SE)
   }

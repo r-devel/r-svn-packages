@@ -3,11 +3,21 @@
 -- Things done are moved to ./DONE-MM			~~~~~~~~
 -----------		    ~~~~~~~~~
 
+o clusGap():  currently fails [in svd()] when `x` has any NA's
+
 o clusGap() : now have "original" in addition to PCA-rotation with
    'scaleH0 string.  In addition should provide 'H0gen = a RNG *function*':
    Chris Fields (in March 2012) had proposed to alternatively allow uniform
    on a n-simplex instead of an n-cube.
     (~/R/MM/Pkg-ex/cluster/clusGap-ChrisField-thoughts)
+
+   ==> Master Thesis of Emmanuel Profumo (~/Betreute-Arbeiten/Profumo_Emmanuel/)
+   has a __generalized__ clusGap()
+   --> added but not yet {exported+documented} >>> R/clusGapGen.R
+   NB: See more in
+   ~/R/MM/Pkg-ex/cluster/clusGap/clusGapGen/            notably
+   ~/R/MM/Pkg-ex/cluster/clusGap/clusGapGen/README.md
+   --------------------------------------------------
 
 o clusGap() : print() method: note that Tibshirani et al. proposed
     (see their large data example !)
@@ -15,8 +25,10 @@ o clusGap() : print() method: note that Tibshirani et al. proposed
    --> provide both(!)
 
 
-
 o clara() to work with *daisy*-like distances, not just L2 & L1.
+
+   -- Possibility: using stats package C code ~/R/D/r-devel/R/src/library/stats/src/distance.c
+      does not have Gower, but a few more kinds distance methods.
 
 o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
 		  gives a clearly better result
