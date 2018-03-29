@@ -1,8 +1,7 @@
 
-R version 3.0.0 beta (2013-03-25 r62402) -- "Masked Marvel"
-Copyright (C) 2013 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
-Platform: x86_64-unknown-linux-gnu (64-bit)
+R version 3.5.0 alpha (2018-03-28 r74481)
+Copyright (C) 2018 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -112,7 +111,7 @@ Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  13.134 0.009 13.193 0 0 
+Time elapsed:  6.102 0.014 6.128 0 0 
 > ## nb-mm, with cluster 1.6-4 :  85.2 (elapsed 91.7)
 > 
 > ###-- Larger example: 20*N objects, divided into 5 clusters.
@@ -193,10 +192,10 @@ Available components:
  [6] "clusinfo"   "diss"       "call"       "silinfo"    "data"      
 > ## Last Line:
 > cat("Time elapsed: ", proc.time() - .proctime00,"\n")
-Time elapsed:  13.98 0.014 14.048 0 0 
+Time elapsed:  6.038 0.018 6.07 0 0 
 > ## nb-mm, with cluster 1.6-4 : 74.4 (elapsed 88.2)
 > ## ~~~~~  1.7-* quite faster : 67.6 (elapsed 68.7)
 > 
 > proc.time()
    user  system elapsed 
-  27.72    0.07   27.97 
+ 12.348   0.083  12.503 

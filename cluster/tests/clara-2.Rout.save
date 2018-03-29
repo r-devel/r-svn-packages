@@ -1,6 +1,6 @@
 
-R version 3.3.0 beta (2016-04-13 r70476) -- "Supposedly Educational"
-Copyright (C) 2016 The R Foundation for Statistical Computing
+R version 3.5.0 alpha (2018-03-28 r74481)
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -153,8 +153,8 @@ Silhouette plot information for best sample:
 77       2        1 0.4909004
 
 4005 dissimilarities, summarized :
-    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
- 0.37429 10.21900 18.31000 26.97500 46.50100 81.38000 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.3743 10.2190 18.3100 26.9750 46.5010 81.3800 
 Metric :  euclidean 
 Number of objects : 90
 
@@ -277,8 +277,8 @@ Silhouette plot information for best sample:
 1018       2        1 0.5703118
 
 946 dissimilarities, summarized :
-    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
- 0.43881 11.27700 26.16100 32.88500 53.08100 94.22300 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.4388 11.2770 26.1610 32.8850 53.0810 94.2230 
 Metric :  euclidean 
 Number of objects : 44
 
@@ -311,11 +311,11 @@ $clusinfo
 > ## but this has been fixed *long* ago
 > xx <- x[sample(nrow(x)),]
 > if(FALSE) { ## only run manually
-+     ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rda"
++     ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rds"
 +     if(file.exists(ff))
-+         load(ff)
++         xx <- readRDS(ff)
 +     else
-+         save(xx, file=ff, compress=TRUE)
++         saveRDS(xx, file=ff)
 + }
 > print(clara(xx, 2, samples= 5, trace = 3)[clInd])
 C clara(): (nsam,nran,n) = (44,5,1500);
@@ -1285,7 +1285,7 @@ $clusinfo
 [16]  646 2771  523  861 1725
 > clara(x, 2, samples = 50)[clInd]
 $objective
-[1] 7.261091
+[1] 9.867517
 
 $i.med
 [1]  551 1039
@@ -1296,9 +1296,9 @@ $medoids
 [2,] 46.8740873        NA
 
 $clusinfo
-     size max_diss  av_diss isolation
-[1,]  711 30.73934 9.978089 0.4713103
-[2,]  789 25.03604 4.858118 0.3838646
+     size max_diss   av_diss isolation
+[1,]  711 42.80266 10.169642 0.6562708
+[2,]  789 41.44593  9.598157 0.6354688
 
 Warning message:
 In clara(x, 2, samples = 50) :
@@ -1474,8 +1474,8 @@ Silhouette plot information for best sample:
 1005       5        3 0.2244547
 
 1225 dissimilarities, summarized :
-    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
- 0.91254 22.56800 36.06000 34.34600 47.49500 83.63800 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.9125 22.5680 36.0600 34.3460 47.4950 83.6380 
 Metric :  euclidean 
 Number of objects : 50
 
@@ -1603,8 +1603,8 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  2.276 0.017 2.31 0 0 
+Time elapsed:  2.243 0.02 2.28 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  2.390   0.036   2.499 
+  2.385   0.050   2.510 

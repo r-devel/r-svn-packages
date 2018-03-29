@@ -1,4 +1,4 @@
-## MM: this leaves away sys.source() from 
+## MM: Only for R < 3.4.0 --- this leaves away sys.source() from
 
 #  File src/library/base/R/source.R
 #  Part of the R package, https://www.R-project.org

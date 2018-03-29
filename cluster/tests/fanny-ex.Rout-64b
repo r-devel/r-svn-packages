@@ -1,8 +1,7 @@
 
-R version 2.14.1 RC (2011-12-20 r57943)
-Copyright (C) 2011 The R Foundation for Statistical Computing
-ISBN 3-900051-07-0
-Platform: x86_64-unknown-linux-gnu (64-bit)
+R version 3.5.0 alpha (2018-03-28 r74481)
+Copyright (C) 2018 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -17,15 +16,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > .libPaths() # show full library tree {also as check of R CMD check!}
-[1] "/tmp/cluster.Rcheck"                                    
-[2] "/sfs/u/staff/maechler/R/BioCore/library"                
-[3] "/sfs/u/staff/maechler/R/library/64-linux-MM-only"       
-[4] "/sfs/u/staff/maechler/R/library/64-linux"               
-[5] "/sfs/u/staff/maechler/R/library/Linux"                  
-[6] "/sfs/u/staff/sfs/R/library/64-linux"                    
-[7] "/sfs/u/staff/sfs/R/library/Linux"                       
-[8] "/sfs/s/linux/rhel3_amd64/app/R/R_local/library"         
-[9] "/sfs/u/staff/maechler/R/D/r-patched/F15-64-inst/library"
+[1] "/tmp/Rtmp82y88k/RLIBS_7eca5adde498"                 
+[2] "/sfs/u/maechler/R/D/r-pre-rel/64-linux-inst/library"
 > library(cluster)
 > 
 > ####---------- Tests for FANNY  i.e., fanny() --------------------------
@@ -194,9 +186,9 @@ List of 11
   ..- attr(*, "names")= chr [1:2] "objective" "tolerance"
  $ convergence: Named int [1:3] 9 1 500
   ..- attr(*, "names")= chr [1:3] "iterations" "converged" "maxit"
- $ diss       :Classes 'dissimilarity', 'dist'  atomic [1:378] 1.523 0.987 1.602 1.584 1.903 ...
-  .. ..- attr(*, "Size")= int 28
-  .. ..- attr(*, "Metric")= chr "euclidean"
+ $ diss       : 'dissimilarity' num [1:378] 1.523 0.987 1.602 1.584 1.903 ...
+  ..- attr(*, "Size")= int 28
+  ..- attr(*, "Metric")= chr "euclidean"
  $ call       : language fanny(x = x, k = 2)
  $ silinfo    :List of 3
   ..$ widths         : num [1:28, 1:3] 1 1 1 1 1 1 1 1 1 1 ...
@@ -680,8 +672,8 @@ Average silhouette width of total data set:
 [1] 0.6413923
 
 2775 dissimilarities, summarized :
-    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-  1.4142  40.1060  75.5910  71.5380  99.1690 154.5000 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.414  40.106  75.591  71.538  99.169 154.500 
 Metric :  euclidean 
 Number of objects : 75
 
@@ -869,8 +861,8 @@ Average silhouette width of total data set:
 [1] 0.737657
 
 2775 dissimilarities, summarized :
-    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-  1.4142  40.1060  75.5910  71.5380  99.1690 154.5000 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.414  40.106  75.591  71.538  99.169 154.500 
 Metric :  euclidean 
 Number of objects : 75
 
@@ -1058,8 +1050,8 @@ Average silhouette width of total data set:
 [1] 0.6115794
 
 2775 dissimilarities, summarized :
-    Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
-  1.4142  40.1060  75.5910  71.5380  99.1690 154.5000 
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  1.414  40.106  75.591  71.538  99.169 154.500 
 Metric :  euclidean 
 Number of objects : 75
 
@@ -1069,7 +1061,7 @@ Available components:
 [11] "data"       
 > 
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.094 0.019 0.127 0 0 
+Time elapsed:  0.047 0.012 0.066 0 0 
 > data(chorSub)
 > p4cl <- pam(chorSub, k = 4, cluster.only = TRUE)
 > ## The first two are "completely fuzzy" -- and now give a warnings
@@ -1336,5 +1328,8 @@ attr(,"legend")
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  0.252 0.027 0.297 0 0 
+Time elapsed:  0.151 0.015 0.174 0 0 
 > 
+> proc.time()
+   user  system elapsed 
+  0.287   0.044   0.383 

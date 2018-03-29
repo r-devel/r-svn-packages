@@ -30,11 +30,11 @@ clara(x, 2, samples = 50)[clInd]
 ## but this has been fixed *long* ago
 xx <- x[sample(nrow(x)),]
 if(FALSE) { ## only run manually
-    ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rda"
+    ff <- "/u/maechler/R/MM/Pkg-ex/cluster/clara2-ex.rds"
     if(file.exists(ff))
-        load(ff)
+        xx <- readRDS(ff)
     else
-        save(xx, file=ff, compress=TRUE)
+        saveRDS(xx, file=ff)
 }
 print(clara(xx, 2, samples= 5, trace = 3)[clInd])
 
