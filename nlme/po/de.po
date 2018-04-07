@@ -52,9 +52,9 @@ msgstr ""
 "analytischer Gradient ist nicht mit zusammengesetzter Symmetrie verfügbar"
 
 #: nlmefit.c:897
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to form eigenvalue-eigenvector decomposition [RS(.) ierr = %d]"
-msgstr "Unfähig eine Eigenwert-Eigenvektor-Zerlegung zu bilden"
+msgstr "Unfähig eine Eigenwert-Eigenvektor-Zerlegung zu bilden [RS(.) ierr = %d]"
 
 #: nlmefit.c:929
 #, fuzzy, c-format

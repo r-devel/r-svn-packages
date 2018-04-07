@@ -73,9 +73,9 @@ msgstr "gradient analityczny nie jest dostępny dla złożonej symetrii"
 # nlme/src/nlmefit.c: 861
 # error(_("Unable to form eigenvalue-eigenvector decomposition"))
 #: nlmefit.c:897
-#, fuzzy, c-format
+#,  c-format
 msgid "Unable to form eigenvalue-eigenvector decomposition [RS(.) ierr = %d]"
-msgstr "Nie można uformować dekompozycji wartość własna-wektor własny"
+msgstr "Nie można uformować dekompozycji wartość własna-wektor własny [RS(.) ierr = %d]"
 
 # nlme/src/nlmefit.c: 893
 # error(_("Unable to form Cholesky decomposition"))

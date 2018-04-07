@@ -52,10 +52,10 @@ msgid "analytic gradient is not available with compound symmetry"
 msgstr "un gradient analytique n'est pas disponible avec une symétrie composée"
 
 #: nlmefit.c:897
-#, fuzzy, c-format
+#, c-format
 msgid "Unable to form eigenvalue-eigenvector decomposition [RS(.) ierr = %d]"
 msgstr ""
-"Incapable de former la décomposition valeurs propres - vecteurs propres"
+"Incapable de former la décomposition valeurs propres - vecteurs propres [RS(.) ierr = %d]"
 
 #: nlmefit.c:929
 #, fuzzy, c-format
