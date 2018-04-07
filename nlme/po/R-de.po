@@ -359,7 +359,7 @@ msgstr ""
 
 msgid "%d errors caught in %s.  The error messages and their frequencies are"
 msgstr ""
-"%s Fehler abgefangen in %s. Die Fehlermeldungen und ihre Häufigkeiten sind"
+"%d Fehler abgefangen in %s. Die Fehlermeldungen und ihre Häufigkeiten sind"
 
 msgid "multiple levels not allowed"
 msgstr "mehrere Stufen nicht erlaubt"
@@ -470,7 +470,7 @@ msgid "L may only involve fixed effects with the same denominator DF"
 msgstr "L kann nur feste Effekte mit dem gleichen Nenner DF einschließen"
 
 msgid "objects must inherit from classes %s, or %s"
-msgstr "Objekte müssen von den Klassen %s oder %d erben"
+msgstr "Objekte müssen von den Klassen %s oder %s erben"
 
 msgid ""
 "some fitted objects deleted because response differs from the first model"
