@@ -441,7 +441,7 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       } 
     }
     oo
-  } ## end of Dd
+  } ## end of Dd (ocat)
  
   aic <- function(y, mu, theta=NULL, wt, dev) {
   
