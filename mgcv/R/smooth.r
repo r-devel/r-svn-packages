@@ -2545,7 +2545,14 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
     if (is.null(object$xt$nb)) { ## no neighbour list... construct one
        if (is.null(object$xt$polys)) stop("no spatial information provided!")
        object$xt$nb <- pol2nb(object$xt$polys)$nb 
-    } ## now have a neighbour list
+    } else if (!is.numeric(object$xt$nb[[1]])) { ## user has (hopefully) supplied names not indices 
+      nb.names <- names(object$xt$nb)
+      for (i in 1:length(nb.names)) {
+        object$xt$nb[[i]] <- which(nb.names %in% object$xt$nb[[i]])
+      }
+    }
+
+    ## now have a neighbour list
     a.name <- names(object$xt$nb)
     if (all.equal(sort(a.name),sort(levels(k)))!=TRUE) 
        stop("mismatch between nb/polys supplied area names and data area names")

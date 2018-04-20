@@ -10,6 +10,10 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-24
 
+* 'mrf' smooth documentation modified to make it clearer how to specify 'nb',
+  and code modified so that it is now possible to speficy the neighbour 
+  structure using names rather than indices.
+
 * export 'k.check'.
 
 * Fix to 'Rrank'. Previously a matrix R with more columns than rows could 
