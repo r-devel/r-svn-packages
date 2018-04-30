@@ -1,5 +1,6 @@
-## (c) Simon N. Wood (ocat, tw, nb, ziP) & Natalya Pya (scat, beta), 
+## (c) Simon N. Wood & Natalya Pya (scat, beta), 
 ## 2013-2017. Released under GPL2.
+## See gam.fit4.r for testing functions fmud.test and fetad.test.
 
 estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE) {
 ## Simple Newton iteration to estimate theta for an extended family,
@@ -1779,6 +1780,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
       mu <- object$linear.predictors
       wts <- object$prior.weights
       res <- object$family$dev.resids(y,mu,wts)
+      ## next line is correct as function returns -2*saturated.log.lik
       res <- res - object$family$saturated.ll(y,object$family,wts)
       fv <- predict.gam(object,type="response")
       s <- attr(res,"sign")
@@ -1786,7 +1788,7 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
       res <- as.numeric(sqrt(pmax(res,0)) * s) 
     }
     res
-  } ## residuals
+  } ## residuals (ziP)
 
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
                 beta=NULL,off=NULL,Vb=NULL) {

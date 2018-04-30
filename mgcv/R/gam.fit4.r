@@ -137,21 +137,23 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
 
 fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
 ## test family deviance derivatives w.r.t. mu
-  dd <- fam$Dd(y, mu, theta, wt, level=2) 
-  dev <- fam$dev.resids(y, mu, wt,theta)
-  dev1 <- fam$dev.resids(y, mu+eps, wt,theta)
+  ## copy to make debugging easier...
+  Dd <- fam$Dd;dev.resids <- fam$dev.resids 
+  dd <- Dd(y, mu, theta, wt, level=2) 
+  dev <- dev.resids(y, mu, wt,theta)
+  dev1 <- dev.resids(y, mu+eps, wt,theta)
   Dmu.fd <- (dev1-dev)/eps
   cat("Dmu: rdiff = ",range(dd$Dmu-Dmu.fd)," cor = ",cor(dd$Dmu,Dmu.fd),"\n")
   nt <- length(theta)
   for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
-    dev1 <- fam$dev.resids(y, mu, wt,th1)
+    dev1 <- dev.resids(y, mu, wt,th1)
     Dth.fd <- (dev1-dev)/eps
     um <- if (nt>1) dd$Dth[,i] else dd$Dth
     cat("Dth[",i,"]: rdiff = ",range(um-Dth.fd)," cor = ",cor(um,Dth.fd),"\n")
   }
   ## second order up...
-  dd1 <- fam$Dd(y, mu+eps, theta, wt, level=2)
+  dd1 <- Dd(y, mu+eps, theta, wt, level=2)
   Dmu2.fd <- (dd1$Dmu - dd$Dmu)/eps
   cat("Dmu2: rdiff = ",range(dd$Dmu2-Dmu2.fd)," cor = ",cor(dd$Dmu2,Dmu2.fd),"\n")
   Dmu3.fd <- (dd1$Dmu2 - dd$Dmu2)/eps
@@ -162,7 +164,7 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   ind <- 1:nt
   for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
-    dd1 <- fam$Dd(y, mu, th1, wt, level=2)
+    dd1 <- Dd(y, mu, th1, wt, level=2)
     Dmuth.fd <- (dd1$Dmu - dd$Dmu)/eps
     um <- if (nt>1) dd$Dmuth[,i] else dd$Dmuth
     cat("Dmuth[",i,"]: rdiff = ",range(um-Dmuth.fd)," cor = ",cor(um,Dmuth.fd),"\n")
