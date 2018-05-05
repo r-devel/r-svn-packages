@@ -1780,13 +1780,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ## dVkk only refers to smoothing parameters, but sp may contain
   ## extra parameters at start and scale parameter at end. Have
   ## to reduce L accordingly...
-  if (inherits(family,"extended.family")&&family$n.theta>0) {
+  if (!is.null(family$n.theta)&&family$n.theta>0) {
     ind <- 1:family$n.theta
     spind <- if (nrow(b$dVkk)>0) family$n.theta+1:nrow(b$dVkk) else rep(0,0)
   } else {
     spind <- if (nrow(b$dVkk)>0) 1:nrow(b$dVkk) else rep(0,0) ## index of smooth parameters
   }  
-  if (nrow(L)!=nrow(b$dVkk)) L0 <- L[spind,spind]
+  L0 <- if (nrow(L)!=nrow(b$dVkk)) L[spind,spind] else L
   
   initial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
   initial$score <- score;initial$grad <- grad;

@@ -36,7 +36,7 @@ in order to ensure that predictions are automatically on the right scale.
 For example to simply examine the underlying smooth function one would use vectors of covariate values and vector 
 \code{by} variables, with the \code{by} variable and equivalent of \code{L1}, above, set to vectors of ones. 
 
-The mechanism is usable with random effect smooths which take factor arguments, by using a trick to create a 2D array of factors. Simply create a factor vector containing the columns of the `factor matrix' stacked end to end (column major order). Then reset the dimensions of this vector to create the appropriate 2D array: the first dimension should be the number of response data and the second the number of columns of the required `factor matrix'. You can not use \code{matrix} or \code{data.matrix} to set up the required matrix of factor levels. See example below.
+The mechanism is usable with random effect smooths which take factor arguments, by using a trick to create a 2D array of factors. Simply create a factor vector containing the columns of the factor matrix stacked end to end (column major order). Then reset the dimensions of this vector to create the appropriate 2D array: the first dimension should be the number of response data and the second the number of columns of the required factor matrix. You can not use \code{matrix} or \code{data.matrix} to set up the required matrix of factor levels. See example below.
 
 }
 
@@ -76,8 +76,8 @@ predict(b,data.frame(X=c(.2,.3,.7)))
 
 ######################################################################
 ## Simple random effect model example.
-## model: y_i = f(x_i) + b_{k_i} - b_{j_i} + e_i
-## k_i and j_i index levels i.i.d. random effects, b.
+## model: y[i] = f(x[i]) + b[k[i]] - b[j[i]] + e[i]
+## k[i] and j[i] index levels of i.i.d. random effects, b.
 ######################################################################
 
 set.seed(7)

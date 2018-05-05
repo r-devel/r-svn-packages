@@ -5,7 +5,7 @@
 diagnostic tests of whether the basis dimension choises are adequate. 
 }
 \usage{
-k.check(b, subsample=5000, n.rep=200)
+k.check(b, subsample=5000, n.rep=400)
 }
 \arguments{
   \item{b}{a fitted \code{gam} object as produced by \code{\link{gam}()}.}

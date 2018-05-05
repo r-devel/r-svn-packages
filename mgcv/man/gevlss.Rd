@@ -38,7 +38,7 @@ model selection for general smooth models.
 Journal of the American Statistical Association 111, 1548-1575
 \url{http://dx.doi.org/10.1080/01621459.2016.1180986}
 
-Wood, S.N. and M. Fasiolo (2017) A generalized Fellner‐Schall method for smoothing parameter optimization with application to Tweedie location, scale and shape models. Biometrics 73(4): 1071-1081.
+Wood, S.N. and M. Fasiolo (2017) A generalized Fellner-Schall method for smoothing parameter optimization with application to Tweedie location, scale and shape models. Biometrics 73(4): 1071-1081.
 \url{http://dx.doi.org/10.1111/biom.12666}
 }
 
