@@ -1776,8 +1776,18 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      score <- b$UBRE;grad <- t(L)%*%b$UBRE1  
   } else { ## default to deviance based GCV
      score <- b$GCV;grad <- t(L)%*%b$GCV1;
+  }
+  ## dVkk only refers to smoothing parameters, but sp may contain
+  ## extra parameters at start and scale parameter at end. Have
+  ## to reduce L accordingly...
+  if (inherits(family,"extended.family")&&family$n.theta>0) {
+    ind <- 1:family$n.theta
+    spind <- if (nrow(b$dVkk)>0) family$n.theta+1:nrow(b$dVkk) else rep(0,0)
+  } else {
+    spind <- if (nrow(b$dVkk)>0) 1:nrow(b$dVkk) else rep(0,0) ## index of smooth parameters
   }  
-  L0 <- if (nrow(L)==nrow(b$dVkk)) L else L[-nrow(L),-ncol(L)]
+  if (nrow(L)!=nrow(b$dVkk)) L0 <- L[spind,spind]
+  
   initial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
   initial$score <- score;initial$grad <- grad;
   initial$scale.est <- b$scale.est
@@ -2004,9 +2014,10 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       else score.scale <- abs(trial$scale.est) + abs(trial$score)  ##trial$dev/nrow(X) + abs(trial$score)    
       uconv.ind <- abs(trial$grad) > score.scale*conv.tol 
       if (sum(uconv.ind)) converged <- FALSE
-      if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
+      #if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
       ## following must be tighter than convergence...
-      uconv.ind <- abs(trial$grad) > score.scale*conv.tol*.1 | abs(trial$dVkk) > score.scale * conv.tol*.1 
+      uconv.ind <- abs(trial$grad) > score.scale*conv.tol*.1 
+      uconv.ind[spind] <- uconv.ind[spind] | abs(trial$dVkk) > score.scale * conv.tol*.1 
       if (abs(initial$score-trial$score) > score.scale*conv.tol) { 
         if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
         converged <- FALSE      
@@ -2045,10 +2056,11 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
           trial$dscore <- sum(trial$grad*step)
           trial$scale.est <- b$scale.est
           trial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0) ## curvature testing matrix 
-          if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
+          #if (length(uconv.ind)>length(trial$dVkk)) trial$dVkk <- c(trial$dVkk,score.scale)
           rm(b);counter <- counter + 1
           ## note that following rolls back until there is clear signal in derivs...
-          uconv.ind0 <- abs(trial$grad) > score.scale*conv.tol*20 | abs(trial$dVkk) > score.scale * conv.tol * 20         
+          uconv.ind0 <- abs(trial$grad) > score.scale*conv.tol*20        
+          uconv.ind0[spind] <- uconv.ind0[spind] |  abs(trial$dVkk) > score.scale * conv.tol * 20
           uconv.ind0 <- uconv.ind0 | uconv.ind ## make sure we don't start rolling back unproblematic sps 
         }
         uconv.ind <- uconv.ind | TRUE

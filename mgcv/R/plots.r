@@ -1297,17 +1297,6 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
   } else
   { ppp<-1;oldpar<-par()}
   
-  if ((pages==0&&prod(par("mfcol"))<n.plots&&dev.interactive())||
-       pages>1&&dev.interactive()) ask <- TRUE else ask <- FALSE 
-  
-  if (!is.null(select)) {
-    ask <- FALSE
-  }
- 
-  if (ask) {
-    oask <- devAskNewPage(TRUE)
-    on.exit(devAskNewPage(oask))
-  }
 
   #####################################
   ## get a common scale, if required...
@@ -1347,11 +1336,28 @@ plot.gam <- function(x,residuals=FALSE,rug=NULL,se=TRUE,pages=0,select=NULL,scal
   ## now plot smooths, by calling plot methods with plot data...
   ##############################################################
 
+  if ((pages==0&&prod(par("mfcol"))<n.plots&&dev.interactive())||
+       pages>1&&dev.interactive()) ask <- TRUE else ask <- FALSE 
+  
+  if (!is.null(select)) {
+    ask <- FALSE
+  }
+ 
+#  if (ask) { ## asks before plotting
+#    oask <- devAskNewPage(TRUE)
+#    on.exit(devAskNewPage(oask))
+#  }
+
   if (m>0) for (i in 1:m) if (pd[[i]]$plot.me&&(is.null(select)||i==select)) {
     plot(x$smooth[[i]],P=pd[[i]],partial.resids=partial.resids,rug=rug,se=se,scale=scale,n=n,n2=n2,n3=n3,
                      pers=pers,theta=theta,phi=phi,jit=jit,xlab=xlab,ylab=ylab,main=main,
                      ylim=ylim,xlim=xlim,too.far=too.far,shade=shade,shade.col=shade.col,
                      shift=shift,trans=trans,by.resids=by.resids,scheme=scheme[i],...)
+   if (ask) { ## this is within loop so we don't get asked before it's necessary
+     oask <- devAskNewPage(TRUE)
+     on.exit(devAskNewPage(oask))
+     ask <- FALSE ## only need to do this once
+   }
 
   } ## end of smooth plotting loop
   
