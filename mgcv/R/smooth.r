@@ -332,7 +332,7 @@ get.var <- function(txt,data,vecMat = TRUE)
       ismat <- FALSE
     } else ismat <- TRUE
   } else ismat <- FALSE
-  if (vecMat&&is.matrix(x)) x <- as.numeric(x)
+  if (vecMat&&is.matrix(x)) x <- x[1:prod(dim(x))] ## modified from x <- as.numeric(x) to allow factors
   if (ismat) attr(x,"matrix") <- TRUE
   x
 } ## get.var
@@ -3663,10 +3663,10 @@ smoothCon <- function(object,data,knots=NULL,absorb.cons=FALSE,scale.penalty=TRU
           sml[[1]]$X <- as.numeric(by)*sm$X ## normal `by' handling
           ## Now do the summation stuff....
           ind <- 1:n 
-          X <- sml[[1]]$X[ind,]
+          X <- sml[[1]]$X[ind,,drop=FALSE]
           for (i in 2:q) {
             ind <- ind + n
-            X <- X + sml[[1]]$X[ind,]
+            X <- X + sml[[1]]$X[ind,,drop=FALSE]
           }
           sml[[1]]$X <- X
           if (!is.null(offs)) { ## deal with any term specific offset (i.e. sum it too)

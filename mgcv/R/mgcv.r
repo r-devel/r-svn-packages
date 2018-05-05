@@ -2664,7 +2664,12 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         msg <- paste(paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
         stop(msg)
       }
-      newdata[[i]] <- factor(newdata[[i]],levels=levm) # set prediction levels to fit levels
+      ## set prediction levels to fit levels...
+      if (is.matrix(newdata[[i]])) {
+        dum <- factor(newdata[[i]],levels=levm)
+	dim(dum) <- dim(newdata[[i]])
+	newdata[[i]] <- dum
+      } else newdata[[i]] <- factor(newdata[[i]],levels=levm)
     }
     if (type=="newdata") return(newdata)
 

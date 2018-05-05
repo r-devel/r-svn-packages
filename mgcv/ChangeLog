@@ -7,9 +7,11 @@ Currently deprecated and liable to be removed:
 
 Issues: t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
-
+* bam(discrete=TRUE) ad problem
 
 1.8-24
+
+* 're' smooths can now accept matrix arguments: see ?linear.functional.terms. 
 
 * 'mrf' smooth documentation modified to make it clearer how to specify 'nb',
   and code modified so that it is now possible to speficy the neighbour 
