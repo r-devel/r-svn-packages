@@ -241,7 +241,7 @@ Sl.Sb <- function(Sl,rho,beta) {
     if (length(Sl[[b]]$S)==1) { ## singleton - multiple of identity
       a[ind] <- a[ind] + beta[ind] * exp(rho[k])
       k <- k + 1
-    } else { ## mulit-S block
+    } else { ## multi-S block
       for (j in 1:length(Sl[[b]]$S)) {
         a[ind] <- a[ind] + exp(rho[k]) * (Sl[[b]]$S[[j]] %*% beta[ind])
         k <- k + 1
@@ -250,6 +250,37 @@ Sl.Sb <- function(Sl,rho,beta) {
   }
   a
 } ## Sl.Sb
+
+Sl.rSb <- function(Sl,rho,beta) {
+## Computes vector 'a' containing all terms rS %*% beta stacked end to end.
+## sum of squares of 'a' this is bSb, but 'a' is linear in beta
+## Assumes initial re-parameterization has taken
+## place, so single penalties are multiples of identity and uses S for
+## multi-S blocks. Logic is identical to Sl.addS.
+  k <- 1 ## sp counter
+  kk <- 0 ## total length of returned vector
+  if (length(Sl)>0) for (b in 1:length(Sl)) {
+    ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
+    kk <- kk + length(Sl[[b]]$S)*length(ind)
+  }
+  a <- rep(0,kk)
+  kk <- 0
+  if (length(Sl)>0) for (b in 1:length(Sl)) {
+    ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] 
+    if (length(Sl[[b]]$S)==1) { ## singleton - multiple of identity
+      a[kk + 1:length(ind)] <- beta[ind] * exp(rho[k]/2)
+      k <- k + 1
+      kk <- kk + length(ind)
+    } else { ## multi-S block
+      for (j in 1:length(Sl[[b]]$S)) {
+        a[kk + 1:length(ind)] <- exp(rho[k]/2) * (beta[ind] %*% Sl[[b]]$rS[[j]])
+        k <- k + 1
+	kk <- kk + length(ind)
+      }
+    }
+  }
+  a
+} ## Sl.rSb
 
 Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) {
 ## Routine to apply initial Sl re-parameterization to model matrix X,

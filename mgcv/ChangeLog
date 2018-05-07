@@ -7,7 +7,7 @@ Currently deprecated and liable to be removed:
 
 Issues: t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
-* bam(discrete=TRUE) ad problem
+
 
 1.8-24
 
@@ -28,6 +28,9 @@ present, and reparameterization needs checking (also for bam).
   cause a segfault. 
 
 * Fix to non-finite likelihood handling in gam.fit5.
+
+* Fix in bgam.fitd to step reduce under indefinite deviance and to ensure 
+  penalty evaluation is round off negative proof. 
 
 1.8-23
 
