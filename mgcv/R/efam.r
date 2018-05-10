@@ -7,7 +7,7 @@ estimate.theta <- function(theta,family,y,mu,scale=1,wt=1,tol=1e-7,attachH=FALSE
 ## given y and mu. To be iterated with estimation of mu given theta.
 ## If used within a PIRLS loop then divergence testing of coef update
 ## will have to re-compute pdev after theta update.
-## Not clear best way to handle scale - could oprimize here as well
+## Not clear best way to handle scale - could optimize here as well
 
   if (!inherits(family,"extended.family")) stop("not an extended family")
 
@@ -141,7 +141,7 @@ find.null.dev <- function(family,y,eta,offset,weights) {
 ## predict - optional function for predicting from model, called by predict.gam.
 ## family$data - optional list storing any family specific data for use, e.g. in predict
 ##               function. - deprecated (commented out below - appears to be used nowhere)
-
+## scale - < 0 to estimate. ignored if NULL 
 
 
 ## extended family object for ordered categorical

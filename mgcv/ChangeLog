@@ -5,11 +5,17 @@ Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
 - argument 'pers' in plot.gam (1.8-23, Nov 2017)
 
-Issues: t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
+Issues: 
+
+* t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
+* seWithMean and random effects -- too wide??
 
 1.8-24
+
+* Extended Fellner Schall optimizer now avaialable for all families with 'gam'
+  using gam(...,optimizer="efs").
 
 * 're' smooths can now accept matrix arguments: see ?linear.functional.terms. 
 

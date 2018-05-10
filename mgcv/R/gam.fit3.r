@@ -118,7 +118,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
     if (family$link==family$canonical) fisher <- TRUE else fisher=FALSE 
     ## ... if canonical Newton = Fisher, but Fisher cheaper!
     if (scale>0) scale.known <- TRUE else scale.known <- FALSE
-    if (!scale.known&&scoreType%in%c("REML","ML")) { ## the final element of sp is actually log(scale)
+    if (!scale.known&&scoreType%in%c("REML","ML","EFS")) { ## the final element of sp is actually log(scale)
       nsp <- length(sp)
       scale <- exp(sp[nsp])
       sp <- sp[-nsp]
@@ -137,9 +137,10 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
 
     q <- ncol(x)
+
     if (length(UrS)) { ## find a stable reparameterization...
-    
-      grderiv <- deriv*as.numeric(scoreType%in%c("REML","ML","P-REML","P-ML"))
+      
+      grderiv <- if (scoreType=="EFS") 1 else deriv*as.numeric(scoreType%in%c("REML","ML","P-REML","P-ML")) 
       rp <- gam.reparam(UrS,sp,grderiv) ## note also detects fixed penalty if present
  ## Following is for debugging only...
  #     deriv.check <- FALSE
@@ -177,7 +178,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
       rows.E <- q-Mp
       Sr <- cbind(rp$E,matrix(0,nrow(rp$E),Mp))
       St <- rbind(cbind(rp$S,matrix(0,nrow(rp$S),Mp)),matrix(0,Mp,q))
-    } else { 
+    } else {
+      grderiv <- 0
       T <- diag(q); 
       St <- matrix(0,q,q) 
       rSncol <- sp <- rows.E <- Eb <- Sr <- 0   
@@ -185,7 +187,12 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
       rp <- list(det=0,det1 = rep(0,0),det2 = rep(0,0),fixed.penalty=FALSE)
     }
     iter <- 0;coef <- rep(0,ncol(x))
-   
+
+    if (scoreType=="EFS") {
+      scoreType <- "REML" ## basically optimizing REML
+      deriv <- 0 ## only derivatives of log|S|_+ required (see above)
+    }
+
     conv <- FALSE
     n <- nobs <- NROW(y) ## n is just to keep codetools happy
     if (n.true <= 0) n.true <- nobs ## n.true is used in criteria in place of nobs
@@ -773,7 +780,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
-        dw.drho=dw.drho,dVkk = matrix(oo$dVkk,nSp,nSp),
+        dw.drho=dw.drho,dVkk = matrix(oo$dVkk,nSp,nSp),ldetS1 = if (grderiv) rp$det1 else 0,
         scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
 } ## end gam.fit3
 
