@@ -1207,8 +1207,13 @@ gam.setup <- function(formula,pterms,
     }
     G$P[qrx$pivot,] <- G$P
   }
-  if (G$nsdf>0) G$cmX[-(1:G$nsdf)] <- 0 ## zero the smooth parts here 
-  else G$cmX <- G$cmX * 0
+  ## cmX relates to computation of CIs incorportating uncertainty about the mean
+  ## It may make more sense to incorporate all uncertainty about the mean,
+  ## rather than just the uncertainty in the fixed effects mean. This means
+  ## incorporating the mean of random effects and unconstrained smooths. Hence
+  ## comment out the following.
+  #if (G$nsdf>0) G$cmX[-(1:G$nsdf)] <- 0 ## zero the smooth parts here 
+  #else G$cmX <- G$cmX * 0
   G$X <- X;rm(X)
   n.p <- ncol(G$X) 
   # deal with penalties
@@ -2519,7 +2524,7 @@ get.na.action <- function(na.action) {
 
 predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                        block.size=NULL,newdata.guaranteed=FALSE,na.action=na.pass,
-                       unconditional=FALSE,...) {
+                       unconditional=FALSE,iterms.type=NULL,...) {
 
 # This function is used for predicting from a GAM. 'object' is a gam object, newdata a dataframe to
 # be used in prediction......
@@ -2866,6 +2871,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             if (type=="iterms"&& attr(object$smooth[[k]],"nCons")>0) { ## termwise se to "carry the intercept
               ## some general families, add parameters after cmX created, which are irrelevant to cmX... 
               if (length(object$cmX) < ncol(X)) object$cmX <- c(object$cmX,rep(0,ncol(X)-length(object$cmX)))
+              if (!is.null(iterms.type)&&iterms.type==2) object$cmX[-(1:object$nsdf)] <- 0 ## variability of fixed effects mean only
               X1 <- matrix(object$cmX,nrow(X),ncol(X),byrow=TRUE)
               meanL1 <- object$smooth[[k]]$meanL1
               if (!is.null(meanL1)) X1 <- X1 / meanL1              

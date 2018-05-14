@@ -149,7 +149,8 @@ b0 <- gam(y~s(x0)+s(x1) + s(x2)+s(x3),data=dat,method="REML")
 
 ## Set directory and file name for file containing jags code.
 ## In real use you would *never* use tempdir() for this. It is
-## only done here to keep CRAN happy. Instead you would use
+## only done here to keep CRAN happy, and avoid any chance of
+## an accidental overwrite. Instead you would use
 ## setwd() to set an appropriate working directory in which
 ## to write the file, and just set the file name to what you
 ## want to call it (e.g. "test.jags" here). 
