@@ -135,7 +135,15 @@ fetad.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
   }
 } ## fetad.test
 
-fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
+corb <- function(x,z) {
+## alternative to cor for measuring similarity of x and z,
+## which is not scaling invariant. So 1 really means x and z
+## are very close, not just linearly related.
+  d <- x-z
+  1-mean(d^2)/(sd(x)*sd(z))
+}
+
+fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
 ## test family deviance derivatives w.r.t. mu
   ## copy to make debugging easier...
   Dd <- fam$Dd;dev.resids <- fam$dev.resids 
@@ -143,23 +151,33 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
   dev <- dev.resids(y, mu, wt,theta)
   dev1 <- dev.resids(y, mu+eps, wt,theta)
   Dmu.fd <- (dev1-dev)/eps
-  cat("Dmu: rdiff = ",range(dd$Dmu-Dmu.fd)," cor = ",cor(dd$Dmu,Dmu.fd),"\n")
+  cat("Dmu: rdiff = ",range(dd$Dmu-Dmu.fd)," cor = ",corb(dd$Dmu,Dmu.fd),"\n")
+  if (plot) {
+    pch <- 19;cex <- .4
+    plot(dd$Dmu,Dmu.fd,pch=pch,cex=cex);abline(0,1,col=2)
+    oask <- devAskNewPage(TRUE)
+    on.exit(devAskNewPage(oask))
+  }
   nt <- length(theta)
   for (i in 1:nt) {
     th1 <- theta;th1[i] <- th1[i] + eps
     dev1 <- dev.resids(y, mu, wt,th1)
     Dth.fd <- (dev1-dev)/eps
     um <- if (nt>1) dd$Dth[,i] else dd$Dth
-    cat("Dth[",i,"]: rdiff = ",range(um-Dth.fd)," cor = ",cor(um,Dth.fd),"\n")
+    cat("Dth[",i,"]: rdiff = ",range(um-Dth.fd)," cor = ",corb(um,Dth.fd),"\n")
+    if (plot) { plot(um,Dth.fd,pch=pch,cex=cex);abline(0,1,col=2)}
   }
   ## second order up...
   dd1 <- Dd(y, mu+eps, theta, wt, level=2)
   Dmu2.fd <- (dd1$Dmu - dd$Dmu)/eps
-  cat("Dmu2: rdiff = ",range(dd$Dmu2-Dmu2.fd)," cor = ",cor(dd$Dmu2,Dmu2.fd),"\n")
+  cat("Dmu2: rdiff = ",range(dd$Dmu2-Dmu2.fd)," cor = ",corb(dd$Dmu2,Dmu2.fd),"\n")
+  if (plot) { plot(dd$Dmu2,Dmu2.fd,pch=pch,cex=cex);abline(0,1,col=2)}
   Dmu3.fd <- (dd1$Dmu2 - dd$Dmu2)/eps
-  cat("Dmu3: rdiff = ",range(dd$Dmu3-Dmu3.fd)," cor = ",cor(dd$Dmu3,Dmu3.fd),"\n")
+  cat("Dmu3: rdiff = ",range(dd$Dmu3-Dmu3.fd)," cor = ",corb(dd$Dmu3,Dmu3.fd),"\n")
+  if (plot) { plot(dd$Dmu3,Dmu3.fd,pch=pch,cex=cex);abline(0,1,col=2)}
   Dmu4.fd <- (dd1$Dmu3 - dd$Dmu3)/eps
-  cat("Dmu4: rdiff = ",range(dd$Dmu4-Dmu4.fd)," cor = ",cor(dd$Dmu4,Dmu4.fd),"\n")
+  cat("Dmu4: rdiff = ",range(dd$Dmu4-Dmu4.fd)," cor = ",corb(dd$Dmu4,Dmu4.fd),"\n")
+  if (plot) { plot(dd$Dmu4,Dmu4.fd,pch=pch,cex=cex);abline(0,1,col=2)}
   ## and now the higher derivs wrt theta 
   ind <- 1:nt
   for (i in 1:nt) {
@@ -167,30 +185,33 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7) {
     dd1 <- Dd(y, mu, th1, wt, level=2)
     Dmuth.fd <- (dd1$Dmu - dd$Dmu)/eps
     um <- if (nt>1) dd$Dmuth[,i] else dd$Dmuth
-    cat("Dmuth[",i,"]: rdiff = ",range(um-Dmuth.fd)," cor = ",cor(um,Dmuth.fd),"\n")
+    cat("Dmuth[",i,"]: rdiff = ",range(um-Dmuth.fd)," cor = ",corb(um,Dmuth.fd),"\n")
+    if (plot) { plot(um,Dmuth.fd,pch=pch,cex=cex);abline(0,1,col=2)}
     Dmu2th.fd <- (dd1$Dmu2 - dd$Dmu2)/eps
     um <- if (nt>1) dd$Dmu2th[,i] else dd$Dmu2th
-    cat("Dmu2th[",i,"]: rdiff = ",range(um-Dmu2th.fd)," cor = ",cor(um,Dmu2th.fd),"\n")
+    cat("Dmu2th[",i,"]: rdiff = ",range(um-Dmu2th.fd)," cor = ",corb(um,Dmu2th.fd),"\n")
+    if (plot) { plot(um,Dmu2th.fd,pch=pch,cex=cex);abline(0,1,col=2)}
     Dmu3th.fd <- (dd1$Dmu3 - dd$Dmu3)/eps
     um <- if (nt>1) dd$Dmu3th[,i] else dd$Dmu3th
-    cat("Dmu3th[",i,"]: rdiff = ",range(um-Dmu3th.fd)," cor = ",cor(um,Dmu3th.fd),"\n")
-
+    cat("Dmu3th[",i,"]: rdiff = ",range(um-Dmu3th.fd)," cor = ",corb(um,Dmu3th.fd),"\n")
+    if (plot) { plot(um,Dmu3th.fd,pch=pch,cex=cex);abline(0,1,col=2)}
     ## now the 3 second derivative w.r.t. theta terms...
 
     Dth2.fd <- (dd1$Dth - dd$Dth)/eps
     um <- if (nt>1) dd$Dth2[,ind] else dd$Dth2
     er <- if (nt>1) Dth2.fd[,i:nt] else Dth2.fd
-    cat("Dth2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
-
+    cat("Dth2[",i,",]: rdiff = ",range(um-er)," cor = ",corb(as.numeric(um),as.numeric(er)),"\n")
+    if (plot) { plot(um,er,pch=pch,cex=cex);abline(0,1,col=2)}
     Dmuth2.fd <- (dd1$Dmuth - dd$Dmuth)/eps
     um <- if (nt>1) dd$Dmuth2[,ind] else dd$Dmuth2
     er <- if (nt>1) Dmuth2.fd[,i:nt] else Dmuth2.fd
-    cat("Dmuth2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
- 
+    cat("Dmuth2[",i,",]: rdiff = ",range(um-er)," cor = ",corb(as.numeric(um),as.numeric(er)),"\n")
+    if (plot) { plot(um,er,pch=pch,cex=cex);abline(0,1,col=2)}
     Dmu2th2.fd <- (dd1$Dmu2th - dd$Dmu2th)/eps
     um <- if (nt>1) dd$Dmu2th2[,ind] else dd$Dmu2th2
     er <- if (nt>1) Dmu2th2.fd[,i:nt] else Dmu2th2.fd
-    cat("Dmu2th2[",i,",]: rdiff = ",range(um-er)," cor = ",cor(as.numeric(um),as.numeric(er)),"\n")
+    cat("Dmu2th2[",i,",]: rdiff = ",range(um-er)," cor = ",corb(as.numeric(um),as.numeric(er)),"\n")
+    if (plot) { plot(um,er,pch=pch,cex=cex);abline(0,1,col=2)}
     ind <- max(ind)+1:(nt-i)
   }
 }
