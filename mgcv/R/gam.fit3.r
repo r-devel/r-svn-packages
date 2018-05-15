@@ -1786,14 +1786,18 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   }
   ## dVkk only refers to smoothing parameters, but sp may contain
   ## extra parameters at start and scale parameter at end. Have
-  ## to reduce L accordingly...
+  ## to reduce L accordingly... BUG: rubbish if L not square!!
   if (!is.null(family$n.theta)&&family$n.theta>0) {
     ind <- 1:family$n.theta
-    spind <- if (nrow(b$dVkk)>0) family$n.theta+1:nrow(b$dVkk) else rep(0,0)
+    nind <- ncol(L) - family$n.theta - if (family$n.theta + nrow(b$dVkk)<nrow(L)) 1 else 0 
+    spind <- if (nind>0) family$n.theta+1:nind else rep(0,0)
+    rspind <- family$n.theta + 1:nrow(b$dVkk)
   } else {
-    spind <- if (nrow(b$dVkk)>0) 1:nrow(b$dVkk) else rep(0,0) ## index of smooth parameters
+    nind <- ncol(L) - if (nrow(b$dVkk)<nrow(L)) 1 else 0 
+    spind <- if (nind>0) 1:nind else rep(0,0) ## index of smooth parameters
+    rspind <- 1:nrow(b$dVkk)
   }  
-  L0 <- if (nrow(L)!=nrow(b$dVkk)) L[spind,spind] else L
+  L0 <- L[rspind,spind] ##if (nrow(L)!=nrow(b$dVkk)) L[spind,spind] else L
   
   initial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
   initial$score <- score;initial$grad <- grad;
