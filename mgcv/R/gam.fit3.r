@@ -1786,7 +1786,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   }
   ## dVkk only refers to smoothing parameters, but sp may contain
   ## extra parameters at start and scale parameter at end. Have
-  ## to reduce L accordingly... BUG: rubbish if L not square!!
+  ## to reduce L accordingly... 
   if (!is.null(family$n.theta)&&family$n.theta>0) {
     ind <- 1:family$n.theta
     nind <- ncol(L) - family$n.theta - if (family$n.theta + nrow(b$dVkk)<nrow(L)) 1 else 0 
