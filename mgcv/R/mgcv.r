@@ -251,12 +251,13 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
       ## loadNamespace('mgcv'); k <- 10; mgcv::interpret.gam(y~s(x,k=k)) fails (can't find s)
       ## eval(parse(text=terms[i]),envir=p.env,enclos=loadNamespace('mgcv')) fails??
       ## following may supply namespace of mgcv explicitly if not on search path...
-      ## If 's' etc are masked then we can fail even if mgcv on search path
-      #if (mgcvat) st <- eval(parse(text=terms[i]),envir=p.env) else {
-         st <- try(eval(parse(text=terms[i]),envir=p.env),silent=TRUE)
-         if (inherits(st,"try-error")) st <- 
+      ## If 's' etc are masked then we can fail even if mgcv on search path, hence paste
+      ## of explicit mgcv reference into first attempt...
+    
+      st <- try(eval(parse(text=paste("mgcv::",terms[i],sep="")),envir=p.env),silent=TRUE)
+      if (inherits(st,"try-error")) st <- 
             eval(parse(text=terms[i]),enclos=p.env,envir=mgcvns)
-      #}
+     
       if (!is.null(textra)) { ## modify the labels on smooths with textra
         pos <- regexpr("(",st$lab,fixed=TRUE)[1]
         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,
