@@ -191,6 +191,12 @@ fmud.test <- function(y,mu,wt,theta,fam,eps = 1e-7,plot=TRUE) {
     um <- if (nt>1) dd$Dmu2th[,i] else dd$Dmu2th
     cat("Dmu2th[",i,"]: rdiff = ",range(um-Dmu2th.fd)," cor = ",corb(um,Dmu2th.fd),"\n")
     if (plot) { plot(um,Dmu2th.fd,pch=pch,cex=cex);abline(0,1,col=2)}
+    if (!is.null(dd$EDmu2th)) {
+       EDmu2th.fd <- (dd1$EDmu2 - dd$EDmu2)/eps
+       um <- if (nt>1) dd$EDmu2th[,i] else dd$EDmu2th
+       cat("EDmu2th[",i,"]: rdiff = ",range(um-EDmu2th.fd)," cor = ",corb(um,EDmu2th.fd),"\n")
+       if (plot) { plot(um,EDmu2th.fd,pch=pch,cex=cex);abline(0,1,col=2)}
+    }
     Dmu3th.fd <- (dd1$Dmu3 - dd$Dmu3)/eps
     um <- if (nt>1) dd$Dmu3th[,i] else dd$Dmu3th
     cat("Dmu3th[",i,"]: rdiff = ",range(um-Dmu3th.fd)," cor = ",corb(um,Dmu3th.fd),"\n")

@@ -39,8 +39,9 @@ excessively likely to select larger models. Wood, Pya and Saefken (2016) propose
 correction to the effective degrees of freedom to fix this problem. \code{mgcv} applies this
 correction whenever possible: that is when using \code{ML} or \code{REML} smoothing parameter
 selection with \code{\link{gam}} or \code{\link{bam}}. The correction
-is not computable when using the Extended Fellner Schall or BFGS optimizera (since the correction requires
+is not computable when using the Extended Fellner Schall or BFGS optimizer (since the correction requires
 an estimate of the covariance matrix of the log smoothing parameters). 
+
 
 }
 

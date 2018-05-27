@@ -1345,8 +1345,10 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## tiny relative to largest, as this space is likely to be poorly
     ## modelled on scale of Newton step...
     
-    uconv.ind <- uconv.ind & abs(grad)>max(abs(grad))*.001 
-
+    uconv.ind1 <- uconv.ind & abs(grad)>max(abs(grad))*.001 
+    if (sum(uconv.ind1)==0) uconv.ind1 <- uconv.ind ## nothing left reset
+    if (sum(uconv.ind)==0) unconv.ind[which(abs(grad)==max(abs(grad)))] <- TRUE ## need at least 1 to update
+    
     ## exclude apparently converged gradients from computation
     hess1 <- hess[uconv.ind,uconv.ind] 
     grad1 <- grad[uconv.ind]

@@ -9,6 +9,10 @@ Issues:
 
 * new German translation to install
 
+* matteo - newton failing with uncon.ind all false at start and problem indef 
+
+* offset in cox.ph
+
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
@@ -24,6 +28,9 @@ present, and reparameterization needs checking (also for bam).
   See ?plot.gam and ?predict.gam (including for how to get the old behaviour).  
 
 * 're' smooths can now accept matrix arguments: see ?linear.functional.terms. 
+
+* Model terms s, te etc are now always evaluated in mgcv workspace explicitly
+  to avoid masking problems in obscure circumstances. 
 
 * 'mrf' smooth documentation modified to make it clearer how to specify 'nb',
   and code modified so that it is now possible to speficy the neighbour 
@@ -43,6 +50,9 @@ present, and reparameterization needs checking (also for bam).
 
 * Fix in bgam.fitd to step reduce under indefinite deviance and to ensure 
   penalty evaluation is round off negative proof. 
+
+* newton slighty modified to avoid (small) chance of all sp's being dropped
+  for indef likelihood. 
 
 1.8-23
 

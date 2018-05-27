@@ -910,7 +910,7 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
   uconv.ind <- (abs(reml1) > tol)|(abs(diag(reml2))>tol)
   hess <- reml2
   grad <- reml1
-  if (length(grad)>0) {
+  if (length(grad)>0&&sum(uconv.ind)>0) {
     if (sum(uconv.ind)!=ncol(reml2)) { 
       reml1 <- reml1[uconv.ind]
       reml2 <- reml2[uconv.ind,uconv.ind]
