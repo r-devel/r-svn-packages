@@ -9,10 +9,6 @@ Issues:
 
 * new German translation to install
 
-* matteo - newton failing with uncon.ind all false at start and problem indef 
-
-* offset in cox.ph
-
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
@@ -28,6 +24,8 @@ present, and reparameterization needs checking (also for bam).
   See ?plot.gam and ?predict.gam (including for how to get the old behaviour).  
 
 * 're' smooths can now accept matrix arguments: see ?linear.functional.terms. 
+
+* cox.ph now allows an offset to be provided.
 
 * Model terms s, te etc are now always evaluated in mgcv workspace explicitly
   to avoid masking problems in obscure circumstances. 
