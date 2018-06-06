@@ -7,8 +7,6 @@ Currently deprecated and liable to be removed:
 
 Issues: 
 
-* new German translation to install
-
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
