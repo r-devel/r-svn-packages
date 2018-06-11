@@ -25,6 +25,10 @@ present, and reparameterization needs checking (also for bam).
 
 * cox.ph now allows an offset to be provided.
 
+* Fix in smoothCon for bug in case in which only a single coefficient is 
+  involved in a sum-to-zero constraint. Could cause failure in e.g. t2 with
+  cc marginal. 
+
 * Model terms s, te etc are now always evaluated in mgcv workspace explicitly
   to avoid masking problems in obscure circumstances. 
 
