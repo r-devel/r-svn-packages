@@ -133,8 +133,12 @@ mvn.ll <- function(y,X,beta,dbeta=NULL) {
 XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1) {
 ## Form X'WX given weights in w and X in compressed form in list X.
 ## each element of X is a (marginal) model submatrix. Full version 
-## is given by X[[i]][k[,i],]. list X relates to length(ts) separate
+## is given by X[[i]][k[,i],] (see below for summation convention).
+## list X relates to length(ts) separate
 ## terms. ith term starts at matrix ts[i] and has dt[i] marginal matrices.
+## For summation convention, k[,ks[j,1]:ks[j,2]] gives index columns
+## for matrix j, thereby allowing summation over matrix covariates....
+## i.e. for q in ks[j,1]:ks[j,2] sum up X[[j]][k[,q],] 
 ## Terms with several marginals are tensor products and may have 
 ## constraints (if qc[i]>1), stored as a householder vector in v[[i]]. 
 ## check ts and k index start (assumed 1 here)

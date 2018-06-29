@@ -2042,11 +2042,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         xat$dim[2] <- xat$dim[2]-1;attributes(G$Xd[[1]]) <- xat
       }
       
-      #G$kd <- cbind(1:nrow(mf),dk$k) ## add index for parametric part to index list
-      #dk$k.start <- c(1,dk$k.start+1) ## and adjust k.start accordingly
-      ## k[,ks[j,1]:ks[j,2]] gives index columns for term j, thereby allowing 
-      ## summation over matrix covariates....
-      #G$ks <- cbind(dk$k.start[-length(dk$k.start)],dk$k.start[-1])
+    
       ## create data object suitable for discrete data methods, from marginal model 
       ## matrices in G$smooth and G$X (stripping out padding, of course)
       if (ncol(G$Xd[[1]])) {
