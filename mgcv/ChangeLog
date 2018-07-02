@@ -16,6 +16,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* liu2 modified to deal with random effects estimated to be exactly 0, so 
+  that summary.gam does not fail in this case.
+
 1.8-24
 
 * Extended Fellner Schall optimizer now avaialable for all families with 'gam'
