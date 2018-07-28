@@ -16,6 +16,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* fix of null deviance computation bug introduced with extended families in 
+  bam - null deviance was wrong for non-default methods.
+
 * liu2 modified to deal with random effects estimated to be exactly 0, so 
   that summary.gam does not fail in this case.
 
