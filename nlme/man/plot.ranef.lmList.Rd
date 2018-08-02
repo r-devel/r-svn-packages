@@ -80,7 +80,7 @@ fm1 <- lmList(distance ~ age | Subject, Orthodont)
 plot(ranef(fm1))
 fm1RE <- ranef(fm1, aug = TRUE)
 plot(fm1RE, form = ~ Sex)
-\dontrun{plot(fm1RE, form = age ~ Sex)}
+plot(fm1RE, form = age ~ Sex)
 }
 \keyword{models}
 

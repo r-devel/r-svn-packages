@@ -129,6 +129,7 @@ outer, inner, labels, units, \dots)
   \code{\link{reStruct}}
 }
 \examples{
+
 Orth.new <-  # create a new copy of the groupedData object
   groupedData( distance ~ age | Subject,
               data = as.data.frame( Orthodont ),
@@ -137,9 +138,7 @@ Orth.new <-  # create a new copy of the groupedData object
               labels = list( x = "Age",
                 y = "Distance from pituitary to pterygomaxillary fissure" ),
               units = list( x = "(yr)", y = "(mm)") )
-\dontrun{
 plot( Orth.new )         # trellis plot by Subject
-}
 formula( Orth.new )      # extractor for the formula
 gsummary( Orth.new )     # apply summary by Subject
 fm1 <- lme( Orth.new )   # fixed and groups formulae extracted from object
