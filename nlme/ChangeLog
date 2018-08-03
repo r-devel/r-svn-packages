@@ -1,3 +1,10 @@
+2018-08-03  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lmList.R (plot.intervals.lmList, ..), tests/lmList.R: make
+	'xlab', 'ylab', 'strip' regular arguments (instead of wrongly
+	trying to use them from `...`).
+	* R/lme.R (plot.ranef.lme, ..): (ditto)
+
 2018-05-08  Brian Ripley
 
 	* tests/sigma-fixed-etc.R: increase tolerance for ATLAS run.
@@ -15,7 +22,7 @@
 	* DESCRIPTION: Update Date, release for R-devel.
 
 	* tests/nlme-stall.R: Add comments.
-	
+
 2018-02-27  Martin Mächler  <maechler@stat.math.ethz.ch>
 
 	* R/nlme.R, man/nlmeControl.Rd: nlmeControl() gets new
