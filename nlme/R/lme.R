@@ -1731,33 +1731,29 @@ plot.ranef.lme <-
                    onames[whichNA], collapse = ", "), domain = NA)
     }
     nV <- length(vNames)                # number of variables
-    nG <- nrow(x)                  # number of groups
-    reVal <- numeric(0)
-    vNam <- character(0)
-    vVal <- numeric(0)
-    vType <- character(nV)
-    names(vType) <- vNames
-    vLevs <- vector("list", nV)
-    names(vLevs) <- vNames
+    nG <- nrow(x)			# number of groups
+    reVal <- vNam <- vVal <- vector("list", nV)
+    vLevs <- vNam;          names(vLevs) <- vNames
+    vType <- character(nV); names(vType) <- vNames
     aux <- x[, reName]
     for(i in 1:nV) {
       obj <- x[, vNames[i]]
-      if (inherits(obj, "factor") ||
-          is.character(obj)) {
+      if (inherits(obj, "factor") || is.character(obj)) {
+        vType[i] <- "factor"
         obj <- as.factor(obj)
         vLevs[[i]] <- levels(obj)
-        vType[i] <- "factor"
-        reVal <- c(reVal, c(NA, NA, aux))
-        vVal <- c(vVal, c(0.5, length(levels(obj)) + 0.5, as.integer(obj)))
-        vNam <- c(vNam, rep(vNames[i], nG + 2))
+        reVal[[i]] <- c(NA, NA, aux)
+        vVal [[i]] <- c(0.5, length(levels(obj)) + 0.5, as.integer(obj))
+        vNam [[i]] <- rep(vNames[i], nG + 2)
       } else {                          # numeric
         vType[i] <- "numeric"
-        reVal <- c(reVal, aux)
-        vVal <- c(vVal, obj)
-        vNam <- c(vNam, rep(vNames[i], nG))
+        reVal[[i]] <- aux
+        vVal [[i]] <- obj
+        vNam [[i]] <- rep(vNames[i], nG)
       }
     }
-    argData <- data.frame(y = reVal, x = vVal,
+    vNam <- unlist(vNam)
+    argData <- data.frame(y = unlist(reVal), x = unlist(vVal),
                           g = ordered(vNam, levels = vNames))
 
     ## this is a hack to make this work, it's probably possible to
