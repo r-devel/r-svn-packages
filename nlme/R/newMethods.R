@@ -454,10 +454,8 @@ plot.nls <-
 		  }))
     }
   }
-
-  ## defining grid -- FIXME(!)
-  ## if (missing(grid)) grid <- (plotFun == "xyplot") ## T / F
-  ## assign("grid", grid, where = 1)
+  ## needed in panel():
+  if (missing(grid)) grid <- (plotFun == "xyplot") ## T / F
   do.call(plotFun, as.list(args))
 }
 
