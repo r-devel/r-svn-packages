@@ -63,11 +63,12 @@ lmList.groupedData <-
                                       list(Y  = form[[2]],
                                            RHS= form[[3]][[2]])))
   if (!missing(data)) {
+    message("'data' argument not used, but taken from groupedData object")
     args[["data"]] <- substitute(object)
   } else {
-    args <- as.list(c(args, list(data = substitute(object))))
+    args <- c(args, list(data = substitute(object)))
   }
-  do.call("lmList.formula", args)
+  do.call(lmList.formula, args)
 }
 
 lmList.formula <- function(object, data, level, subset, na.action = na.fail,
@@ -633,7 +634,7 @@ plot.intervals.lmList <-
 
 plot.ranef.lmList <- function(x, form = NULL, grid = TRUE, control, ...)
 {
-  do.call(plot.ranef.lme, as.list(match.call()[-1]))
+    plot.ranef.lme(x, form=form, grid=grid, control=control, ...)
 }
 
 plot.lmList <-
