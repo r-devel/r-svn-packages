@@ -183,7 +183,7 @@ gnls <-
     ## sort the model.frame by groups and get the matrices and parameters
     ## used in the estimation procedures
     ## always use innermost level of grouping
-    groups <- substitute( ~1 | GRP, list(GRP = deparse(groups[[2]])))
+    groups <- eval(substitute( ~1 | GRP, list(GRP = groups[[2]])))
     grps <- getGroups(dataMod, groups,
                       level = length(getGroupsFormula(groups, asList = TRUE)))
     ## ordering data by groups
