@@ -20,12 +20,19 @@
 /* sed -i 's/old-text/new-text/g' *.c
    is quite useful!!
 */
-// For safe memory handling from R...
-#define CALLOC R_chk_calloc
-#define FREE R_chk_free
-// Can reset to check for memory errors...
-//#define CALLOC calloc
-//#define FREE free
+
+/* For safe memory handling from R... */
+//#define CALLOC R_chk_calloc1
+//#define FREE R_chk_free
+/* BUT, this messes up valgrinding for memory error checking - problems are not
+   detected because standard allocation is being circumvented. Then errors can 
+   corrupt R memory management without detection and trigger nothing until R
+   messes up internally becuase of corruption, which then makes it look as if
+   R is generating the problem. Hence essential to reset for checking. */
+#define CALLOC calloc
+#define FREE free
+void *R_chk_calloc1(size_t nmemb,size_t size);
+
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,
 	   double *lsp0,double *gamma,double *scale, int *control,int *cS,double *rank_tol,
 	   double *tol,double *b,double *rV,double *norm_const,int *n_score,int *nt);

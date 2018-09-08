@@ -16,6 +16,10 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* Fix of very obscure bug in which very poor model of small dataset could
+  end up with fewer `good' data than coefs, breaking an assumption of C code 
+  and segfaulting. 
+
 * fix of null deviance computation bug introduced with extended families in 
   bam - null deviance was wrong for non-default methods.
 

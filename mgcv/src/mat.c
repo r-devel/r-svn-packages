@@ -2093,10 +2093,11 @@ void getRpqr(double *R,double *x,int *r, int *c,int *rr,int *nt) {
    R has rr rows, where rr == c if R is square. 
 
 */
-  int i,j,n;
+  int i,j,n,rows;
   double *Rs;
   Rs = x;n = *r;
-  for (i=0;i<*c;i++) for (j=0;j<*c;j++) if (i>j) R[i + *rr * j] = 0; else
+  rows = *c; if (rows > *rr) rows = *rr;
+  for (i=0;i<rows;i++) for (j=0;j<*c;j++) if (i>j) R[i + *rr * j] = 0; else
 	R[i + *rr * j] = Rs[i + n * j];
 } /* getRpqr */
 
