@@ -1023,12 +1023,7 @@ void get_trA2(double *trA,double *trA1,double *trA2,double *P,double *K,double *
     for (p0=IpK,p1=K,p2=K+ *n * *r;p1<p2;p0++,p1++) *p0 = *p1; 
     /*IpK = K;*/
   }
-  /*  lowK=hiK=*K;
 
-  for (p1=K,i=0;i<*n;i++) for (j=0;j<*r;j++,p1++) {
-      if (*p1>hiK) hiK= *p1; else if (*p1<lowK) lowK = *p1;
-    }
-    Rprintf("K range = %g - %g\n",lowK,hiK);*/
   bt=1;ct=0;mgcv_pmmult(KtK,K,IpK,&bt,&ct,r,r,n,nt);  
   if (neg_w) FREE(IpK); else FREE(IpK);
   KKtK = (double *)CALLOC((size_t)*n * *r,sizeof(double));
@@ -1743,7 +1738,7 @@ void gdiPK(double *work,double *X,double *E,double *Es,double *rS,double *U1,dou
   /* pivot[i] gives the unpivoted position of the ith pivoted parameter.*/
   
   /* copy out upper triangular factor R, and unpivot it */
-  if (*n<*q) Rprintf("gdiPK n = %d q= %d\n",*n,*q);
+ 
   rr = *q; if (*n < rr) rr = *n;
   R1 = (double *)CALLOC((size_t)rr * *q,sizeof(double));
  
@@ -1951,7 +1946,6 @@ void gdiPK(double *work,double *X,double *E,double *Es,double *rS,double *U1,dou
       norm1 += xx*xx; norm2 += work[i + *q] * work[i + *q];   
     }
     if (norm1 > *rank_tol * norm2) {
-      //Rprintf("gdi2 instability detected norm1= %g norm2 = %g\n",norm1,norm2);
       applyPt(zz,work + *q,R,Vt,neg_w,nr,*rank,1,0); /* P'X'Wz */
       applyP(PKtz,zz,R,Vt,neg_w,nr,*rank,1,0);
     } else applyP(PKtz,work,R,Vt,neg_w,nr,*rank,1,0);
@@ -2087,9 +2081,7 @@ void gdi2(double *X,double *E,double *Es,double *rS,double *U1,
 
   ScS=0;for (pi=rSncol;pi<rSncol + *M;pi++) ScS+= *pi;  /* total columns of input rS */
 
-  /*d_tol = sqrt(*rank_tol * 100);*/
   /* first step is to obtain P and K */
-  if (*n<*q) Rprintf("gdi2 n = %d q= %d deriv = %d\n",*n,*q,*deriv);
   PKtz = (double *)CALLOC((size_t)*q,sizeof(double)); /* PK'z --- the pivoted coefficients*/
   nulli = (double *)CALLOC((size_t)*q,sizeof(double)); /* keep track of the params in null space */   
   drop = (int *)CALLOC((size_t)*q,sizeof(int)); /* original locations of dropped parameters */
@@ -2966,7 +2958,6 @@ void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int 
   nr = rr + *rE;
   nz = *n; if (nz<nr) nz=nr; /* possible for nr to be more than n */
   z = (double *)CALLOC((size_t) nz,sizeof(double)); /* storage for z=[sqrt(|W|)z,0] */
-  if (*n<*q) Rprintf("pls_fit1 n = %d q= %d\n",*n,*q);
   raw = (double *)CALLOC((size_t) *n,sizeof(double)); /* storage for sqrt(|w|) */
   
   for (i=0;i< *n;i++) 
@@ -3068,7 +3059,6 @@ void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int 
     Q1 = (double *)CALLOC((size_t) *n * rank,sizeof(double)); 
     /* st for (i=0;i<*q;i++) for (j=0;j<rank;j++) Q1[i + *n * j] = Q[i + nr * j]; */
     /* st left=1;tp=0;mgcv_qrqy(Q1,WX,tau,n,&rank,q,&left,&tp); */ /* Q1 = Qb Q[1:q,]  where Qb from first QR decomposition */   
-    Rprintf("q=%d n=%d rank=%d nr=%d\n",*q,*n,rank,nr);
     for (i=0;i<rr;i++) for (j=0;j<rank;j++) Q1[i + rr * j] = Q[i + nr * j];
     tp=0;mgcv_pqrqy(Q1,WX,tau,n,&rr,&rank,&tp,nt);/* Q1 = Qb Q[1:rr,]  where Qb from first QR decomposition (contained in WX, tau) */   
     
@@ -3131,10 +3121,6 @@ void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int 
 
     for (i=0;i<*n;i++) eta[i] = z[i]/raw[i]; /* the linear predictor */
   } /* if (!*use_wy) */
-  /* form Wz (not sqrt(|W|)z)... */ 
-  //  for (i=0;i< *n;i++) { 
-  //  z[i] = y[i]*w[i]; /* form z itself*/
-  //}
 
   /* form X'Wz, drop any entries in drop and pivot... */
   bt=1;ct=0;mgcv_mmult(work,X,wy,&bt,&ct,q,&one,n);     
@@ -3144,13 +3130,11 @@ void pls_fit1(double *y,double *X,double *w,double *wy,double *E,double *Es,int 
   if (!*use_wy) { /* Test R'Q'wz = X'Wz - not equal implies stability loss */ 
     for (zz=zz1=0,i=0;i<rank;i++) {
       for (xx=0,j=0;j<=i;j++) xx += R[j + nr * i] * work[*q + j];
-      //Rprintf("XtWz = %g   RtQtwz = %g\n",work[i],xx);
       xx -= work[i];
       zz1 += xx*xx; zz += work[i]*work[i];   
     }
     if (zz1 > *rank_tol * zz) {
       *use_wy = 1;
-      //Rprintf("instability detected zz1= %g zz = %g\n",zz1,zz);
     }
   }
 

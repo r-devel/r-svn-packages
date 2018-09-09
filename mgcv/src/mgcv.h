@@ -22,15 +22,16 @@
 */
 
 /* For safe memory handling from R... */
-//#define CALLOC R_chk_calloc1
-//#define FREE R_chk_free
-/* BUT, this messes up valgrinding for memory error checking - problems are not
-   detected because standard allocation is being circumvented. Then errors can 
+#define CALLOC R_chk_calloc
+#define FREE R_chk_free
+/* BUT, this can mess up valgrinding for memory error checking - problems are 
+   sometimes missed because standard allocation is being circumvented. Then errors can 
    corrupt R memory management without detection and trigger nothing until R
    messes up internally becuase of corruption, which then makes it look as if
-   R is generating the problem. Hence essential to reset for checking. */
-#define CALLOC calloc
-#define FREE free
+   R is generating the problem. Hence better to reset for checking. Also sizing
+   errors in .C often generate no obvious valgrind error.*/
+//#define CALLOC calloc
+//#define FREE free
 void *R_chk_calloc1(size_t nmemb,size_t size);
 
 void magic(double *y,double *X,double *sp0,double *def_sp,double *S,double *H,double *L,

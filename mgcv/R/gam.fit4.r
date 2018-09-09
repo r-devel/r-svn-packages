@@ -380,11 +380,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    for (iter in 1:control$maxit) { ## start of main fitting iteration 
       if (control$trace) cat(iter," ")
-    #  dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-    #  w <- dd$Deta2 * .5;
-    #  wz <- w*(eta-offset) - .5*dd$Deta
-    #  z <- (eta-offset) - dd$Deta.Deta2
-    #  good <- is.finite(z)&is.finite(w)
       if (control$trace&sum(!good)>0) cat("\n",sum(!good)," not good\n")
       if (sum(!good)) {
         use.wy <- TRUE
@@ -392,7 +387,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
       } else use.wy <- family$use.wz
       if (sum(good)==0) stop("no good data in iteration")
-#cat("pls_fit1")
       ng <- sum(good)
       zg[1:ng] <- z[good] ## ensure that y dimension large enough for coefs
       oo <- .C(C_pls_fit1,   
@@ -400,8 +394,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                      E=as.double(Sr),Es=as.double(Eb),n=as.integer(ng),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
-                     nt=as.integer(control$nthreads),use.wy=as.integer(use.wy))
-#cat(" ok\n")		     
+                     nt=as.integer(control$nthreads),use.wy=as.integer(use.wy))		     
       posdef <- oo$n >= 0
       if (!posdef) { ## then problem is indefinite - switch to +ve weights for this step
         if (control$trace) cat("**using positive weights\n")
@@ -419,7 +412,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
           good <- is.finite(w)&is.finite(wz)
           z[!is.finite(z)] <- 0 ## avoid NaN in .C call - unused anyway
         } else use.wy <- family$use.wz
-#cat("pls_fit1(2)")
         ng <- sum(good)
         zg[1:ng] <- z[good] ## ensure that y dimension large enough for coefs     
         oo <- .C(C_pls_fit1, ##C_pls_fit1,
@@ -428,7 +420,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                      q=as.integer(ncol(x)),rE=as.integer(rows.E),eta=as.double(z),
                      penalty=as.double(1),rank.tol=as.double(rank.tol),
                      nt=as.integer(control$nthreads),use.wy=as.integer(use.wy))
-#cat(" ok\n")
       }
       start <- oo$y[1:ncol(x)] ## current coefficient estimates
       penalty <- oo$penalty ## size of penalty
@@ -455,8 +446,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             coefold <- null.coef
             etaold <- null.eta
          }
-         #warning("Step size truncated due to divergence", 
-         #            call. = FALSE)
+        
          ii <- 1
          while (!is.finite(dev)) {
                if (ii > control$maxit) 
@@ -476,8 +466,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
       ## now step halve if mu or eta are out of bounds... 
       if (!(valideta(eta) && validmu(mu))) {
-         #warning("Step size truncated: out of bounds", 
-         #         call. = FALSE)
+       
          ii <- 1
          while (!(valideta(eta) && validmu(mu))) {
                   if (ii > control$maxit) 
@@ -624,7 +613,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    gdi.type <- if (any(abs(w)<.Machine$double.xmin*1e20)||any(!is.finite(z))) 1 else 0   
 
    if (scoreType=="EFS") scoreType <- "REML"
-#cat("gdi2")
    oo <- .C(C_gdi2,
             X=as.double(x[good,]),E=as.double(Sr),Es=as.double(Eb),rS=as.double(unlist(rS)),
             U1 = as.double(U1),sp=as.double(exp(sp)),theta=as.double(theta),
@@ -645,7 +633,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             rSncol=as.integer(rSncol),deriv=as.integer(deriv),
 	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),
             type=as.integer(gdi.type),dVkk=as.double(rep(0,nSp^2)))
-#cat("ok\n")
    rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
    rV <- T %*% rV   
    ## derivatives of coefs w.r.t. sps etc...
