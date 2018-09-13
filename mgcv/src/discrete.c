@@ -32,6 +32,30 @@
 #include <omp.h>
 #endif
 
+void Cdgemv(char *trans, int *m, int *n, double *alpha, double *a, int *lda,
+	    double *x, int *incx, double *beta, double *y, int *incy) {
+/* miserably vanilla implementation of dgemv to plug in in place of BLAS call for
+   debugging purposes (written to examine openblas thread safety problem) */
+  int i,j,q;
+  double *yp,*ap,*xp;
+  if (*trans == 'T') q = *n; else q =*m; /* length of y */
+  if (*alpha==0) { /* matrix part does not contribute */
+    for (i=0;i<q;i++,y += *incy) *y *= *beta;
+    return;
+  } else *beta /= *alpha;
+  if (*trans == 'N') { /* y <- alpha a x + beta y */
+    for (yp=y,i=0;i<*m;i++,a++,yp += *incy) *yp = *beta * *yp + *a * *x;
+    x += *incx;
+    for (j=1;j<*n;j++,x += *incx) 
+      for (ap=a + *lda * j,yp=y,i=0;i<*m;i++,a++,yp += *incy) *yp += *a * *x;
+  } else { /* y <- alpha a' x + beta y */
+    for (yp=y,i=0;i<*n;i++,yp++) {
+      *yp *= *beta;
+      for (ap=a + *lda * i,xp=x,j=0;j<*m;j++,a++,xp += *incx) *yp += *a * *xp;
+    }  
+  }
+  for (i=0;i<q;i++,y += *incy) *y *= *alpha;
+} /* Cdgemv */ 
 
 
 /* basic extraction operations */ 
@@ -82,12 +106,15 @@ void singleXty(double *Xy,double *temp,double *y,double *X, int *m,int *p, int *
    Thread safe.
 */
   double *p0,*p1,done=1.0,dzero=0.0; 
-  char trans = 'T';
+  char trans = 'T',ntrans = 'N';
   int one=1;
   for (p0=temp,p1 = p0 + *m;p0<p1;p0++) *p0 = 0.0;
   for (p1=y + *n;y<p1;y++,k++) temp[*k] += *y;
   if (*add) dzero = 1.0;
   F77_CALL(dgemv)(&trans, m, p,&done,X,m,temp,&one,&dzero,Xy,&one);
+  // Cdgemv(&trans, m, p,&done,X,m,temp,&one,&dzero,Xy,&one);
+  /* dgemm call equivalent to dgemv call above */ 
+  //F77_CALL(dgemm)(&trans,&ntrans,p,&one,m,&done,X,m,temp,m,&dzero,Xy,m); 
 } /*singleXty*/
 
 void tensorXty(double *Xy,double *work,double *work1, double *y,double *X, 
@@ -131,6 +158,9 @@ void singleXb(double *f,double *work,double *X,double *beta,int *k,int *m, int *
   double done=1.0,dzero=0.0,*p1,*fp;
   int one=1,j;
   F77_CALL(dgemv)(&trans, m, p,&done,X,m,beta,&one,&dzero,work,&one);
+  //Cdgemv(&trans, m, p,&done,X,m,beta,&one,&dzero,work,&one);
+  /* dgemm call equivalent to dgemv call above */ 
+  //F77_CALL(dgemm)(&trans,&trans,m,&one,p,&done,X,m,beta,p,&dzero,work,m); 
   p1 = f + *n;
   fp = f;
   k += *kstart * (ptrdiff_t) *n;

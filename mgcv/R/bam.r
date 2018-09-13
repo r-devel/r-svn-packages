@@ -623,6 +623,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
        
         ## form X'WX efficiently...
         qrx$R <- XWXd(G$Xd,w,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,npt,G$drop,ar.stop,ar.row,ar.weight)
+	##R0 <- XWXd(G$Xd,w,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,1,G$drop,ar.stop,ar.row,ar.weight) ## DEBUG compare
         ## form X'Wz efficiently...
         qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop,ar.stop,ar.row,ar.weight)
         if(gc.level>1) gc()

@@ -14,6 +14,9 @@ Issues:
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
+* OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
+  cause problems when opemmp multithreading.   
+
 1.8-25
 
 * Fix of very obscure bug in which very poor model of small dataset could
