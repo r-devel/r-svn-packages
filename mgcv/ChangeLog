@@ -19,6 +19,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* predict.bam(...,discrete=TRUE) now handles na.action properly, rather than
+  always dropping NAs. 
+
 * Fix of very obscure bug in which very poor model of small dataset could
   end up with fewer `good' data than coefs, breaking an assumption of C code 
   and segfaulting. 

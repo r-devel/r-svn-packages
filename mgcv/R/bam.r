@@ -1682,8 +1682,9 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   ## Next line needed to avoid treating newdata as a model frame and then
   ## having incorrect labels for offset, for example....
+  
   attr(newdata,"terms") <- NULL 
-
+  na.act <- attr(newdata,"na.action") ## save the NA action for later
   ## Parametric terms have to be dealt with safely, but without forming all terms 
   ## or a full model matrix. Strategy here is to use predict.gam, having removed
   ## key smooth related components from model object, so that it appears to be
@@ -1822,6 +1823,33 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       }
       fit <- list(fit=fit,se.fit=se.fit)
     } else if (type=="response") fit <- linkinv(fit)
+  }
+  rn <- rownames(newdata)
+  if (type=="lpmatrix") {
+    colnames(fit) <- names(object$coefficients)
+    rownames(fit) <- rn
+    if (!is.null(attr(attr(object$model,"terms"),"offset"))) {
+      attr(fit,"model.offset") <- napredict(na.act,offset) 
+    }
+    fit <- napredict(na.act,fit)
+  } else {
+     if (se) { 
+      if (is.null(nrow(fit$fit))) {
+        names(fit$fit) <- rn
+        names(fit$se.fit) <- rn
+        fit$fit <- napredict(na.act,fit$fit)
+        fit$se.fit <- napredict(na.act,fit$se.fit) 
+      } else { 
+        rownames(fit$fit) <- rn
+        rownames(fit$se.fit) <- rn
+        fit$fit <- napredict(na.act,fit$fit)
+        fit$se.fit <- napredict(na.act,fit$se.fit)
+      }
+    } else { 
+      if (is.null(nrow(fit))) names(fit) <- rn else
+      rownames(fit) <- rn
+      fit <- napredict(na.act,fit)
+    }
   }
   fit
 } ## end predict.bamd 
