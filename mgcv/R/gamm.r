@@ -784,7 +784,7 @@ varWeights.dfo <- function(b,data)
    w
 }
 
-extract.lme.cov2<-function(b,data,start.level=1)
+extract.lme.cov2<-function(b,data=NULL,start.level=1)
 # function to extract the response data covariance matrix from an lme fitted
 # model object b, fitted to the data in data. "inner" == "finest" grouping 
 # start.level is the r.e. grouping level at which to start the construction, 
@@ -799,6 +799,10 @@ extract.lme.cov2<-function(b,data,start.level=1)
 # V is either returned as an array, if it's diagonal, a matrix if it is
 # a full matrix or a list of matrices if it is block diagonal.
 { if (!inherits(b,"lme")) stop("object does not appear to be of class lme")
+  if (is.null(data)) {
+    na.act <- na.action(b)
+    data <- if (is.null(na.act)) b$data else b$data[-na.act,] 
+  }
   grps <- nlme::getGroups(b) # labels of the innermost groupings - in data frame order
   n <- length(grps)    # number of data
   n.levels <- length(b$groups) # number of levels of grouping (random effects only)
@@ -989,13 +993,17 @@ extract.lme.cov2<-function(b,data,start.level=1)
   list(V=V,ind=Cind)
 } ## extract.lme.cov2
 
-extract.lme.cov<-function(b,data,start.level=1)
+extract.lme.cov<-function(b,data=NULL,start.level=1)
 # function to extract the response data covariance matrix from an lme fitted
 # model object b, fitted to the data in data. "inner" == "finest" grouping 
 # start.level is the r.e. grouping level at which to start the construction, 
 # levels outer to this will not be included in the calculation - this is useful
 # for gamm calculations
 { if (!inherits(b,"lme")) stop("object does not appear to be of class lme")
+  if (is.null(data)) {
+    na.act <- na.action(b)
+    data <- if (is.null(na.act)) b$data else b$data[-na.act,] 
+  }
   grps<-nlme::getGroups(b) # labels of the innermost groupings - in data frame order
   n<-length(grps)    # number of data
   if (is.null(b$modelStruct$varStruct)) w<-rep(b$sigma,n) ### 

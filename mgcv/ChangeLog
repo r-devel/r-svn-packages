@@ -19,6 +19,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* extract.lme.cov/2 documentation modified to cover NA handling properly, and 
+  routines modified to not require data to be supplied.
+
 * fix of efsudr bug whereby extended families with no extra parameters to 
   estimate could give incorrect results when using optimer="efs" in 'gam'.  
 
