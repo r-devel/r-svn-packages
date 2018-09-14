@@ -39,7 +39,7 @@ tdpois <- function(dat,event="z",et="futime",t="day",status="status1",
     start <- start + nrow(um)
     if (inter) setTxtProgressBar(prg, i)
   }
-  close(prg)
+  if (inter) close(prg)
   dap[1:(start-1),]
 } ## tdpois
 pbcseq$status1 <- as.numeric(pbcseq$status==2) ## death indicator

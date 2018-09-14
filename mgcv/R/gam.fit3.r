@@ -2636,7 +2636,7 @@ negbin <- function (theta = stop("'theta' must be specified"), link = "log") {
     structure(list(family = famname, link = linktemp, linkfun = stats$linkfun,
         linkinv = stats$linkinv, variance = variance,dvar=dvar,d2var=d2var,d3var=d3var, dev.resids = dev.resids,
         aic = aic, mu.eta = stats$mu.eta, initialize = initialize,ls=ls,
-        validmu = validmu, valideta = stats$valideta,getTheta = getTheta,qf=qf,rd=rd,canonical="log"), class = "family")
+        validmu = validmu, valideta = stats$valideta,getTheta = getTheta,qf=qf,rd=rd,canonical=""), class = "family")
 } ## negbin
 
 

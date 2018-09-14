@@ -737,7 +737,7 @@ efsudr <- function(x,y,lsp,Eb,UrS,weights,family,offset=0,start=NULL,etastart=NU
   nsp <- length(UrS)
   if (inherits(family,"extended.family")) {
     spind <- family$n.theta + 1:nsp
-    thind <- 1:family$n.theta
+    thind <- if (family$n.theta>0) 1:family$n.theta else rep(0,0)
   } else {
     thind <- rep(0,0)
     spind <- 1:nsp ## index of smoothing params in lsp

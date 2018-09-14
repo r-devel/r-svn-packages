@@ -214,7 +214,7 @@ coefficient matrices for each smooth term in the model formula, obtaining a mode
 the strictly parametric part of the model formula, and combining these to obtain a 
 complete model matrix (/design matrix) and a set of penalty matrices for the smooth terms. 
 The linear identifiability constraints are also obtained at this point. The model is 
-fit using \code{\link{gam.fit}}, \code{\link{gam.fit3}} or varaints, which are modifications 
+fit using \code{\link{gam.fit}}, \code{\link{gam.fit3}} or variants, which are modifications 
 of \code{\link{glm.fit}}. The GAM 
 penalized likelihood maximization problem is solved by Penalized Iteratively 
 Reweighted  Least Squares (P-IRLS) (see e.g. Wood 2000). 

@@ -19,6 +19,12 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* fix of efsudr bug whereby extended families with no extra parameters to 
+  estimate could give incorrect results when using optimer="efs" in 'gam'.  
+
+* negbin() corrected - it was declaring the log link to be canonical, leading 
+  to poor convergence and slight misfit.
+
 * predict.bam(...,discrete=TRUE) now handles na.action properly, rather than
   always dropping NAs. 
 
