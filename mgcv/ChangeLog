@@ -19,6 +19,17 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+* fix to 'fs' smooth.construct method and smooth2random method, to allow
+  constructor to be called without a "gamm" atribute set on the smooth spec
+  but still get a sensible result from smooth2random (albeit never using
+  sarse matrices). Useful for other packages using constructors and 
+  smooth2random, for 'fs' smooths.
+
+* The mrf smooth constructor contained a obsolete hack in which the term 
+  dimension was set to 2 to avoid plotting when used as a te marginal. This 
+  messed up side constraints for terms where a mrf smooth was a main effect 
+  and te marginal. Fixed. 
+
 * extract.lme.cov/2 documentation modified to cover NA handling properly, and 
   routines modified to not require data to be supplied.
 

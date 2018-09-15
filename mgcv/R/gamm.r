@@ -348,12 +348,18 @@ smooth2random.fs.interaction <- function(object,vnames,type=1) {
 ## penalties are not interwoven, but blocked (i.e. this ordering is 
 ## as for gamm case). 
   if (object$fixed) return(list(fixed=TRUE,Xf=object$X))
-  ##if (type == 2) require(Matrix)
+  ## If smooth constructor was not called with "gamm" attribute set,
+  ## then we need to reset model matrix to base model matrix.
+  if (!is.null(object$Xb)) {
+    object$X <- object$Xb
+    object$S <- object$base$S
+    if (!is.null(object$S.scale)&&length(object$S)>0) for (i in 1:length(object$S)) object$S[[i]] <- object$S[[i]]/object$S.scale[i] 
+  }  
   colx <- ncol(object$X) 
   diagU <- rep(1,colx)
   ind <- 1:colx 
-  flev <- levels(object$fac)
-  n.lev <- length(flev)
+  ## flev <- levels(object$fac)
+  n.lev <- length(object$flev)
   if (type==2) {
     ## index which params in fit parameterization are penalized by each penalty.
     ## e.g. pen.ind==1 is TRUE for each param penalized by first penalty and
@@ -383,19 +389,15 @@ smooth2random.fs.interaction <- function(object,vnames,type=1) {
       attr(random[[i]],"group") <- object$fac  ## factor supplied as part of term 
       attr(random[[i]],"Xr.name") <- term.name
       attr(random[[i]],"Xr") <- X
-     # rind <- c(rind,k:(k+ncol(X)-1))
-     # rinc <- c(rinc,rep(ncol(X),ncol(X)))
-     # k <- k + n.lev * ncol(X)
     } else { ## gamm4 form --- whole sparse matrices
+      
       Xr <- as(matrix(0,nrow(X),0),"dgCMatrix")
       ii <- 0
       for (j in 1:n.lev) { ## assemble full sparse model matrix
-        Xr <- cbind2(Xr,as(X*as.numeric(object$fac==flev[j]),"dgCMatrix"))
+        Xr <- cbind2(Xr,as(X*as.numeric(object$fac==object$flev[j]),"dgCMatrix"))
         pen.ind[indi+ii] <- i;ii <- ii + colx
       }
-    #  rind <- c(rind,k:(k+ncol(Xr)-1))
-    #  rinc <- c(rinc,rep(ncol(Xr),ncol(Xr)))
-      random[[i]] <- Xr 
+      random[[i]] <- if (is.null(object$Xb)) Xr else as(Xr,"matrix") 
       names(random)[i] <- term.name
       attr(random[[i]],"s.label") <- object$label
     }
