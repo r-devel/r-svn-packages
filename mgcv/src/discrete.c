@@ -406,6 +406,42 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
   FREE(pt); FREE(off); FREE(voff); FREE(tps);
 } /* XWy */
 
+void XWXij(double *XWX,int i,int j, double *X,int *k, int *ks, int *m, int *p,int nx,int n,int *ts, int *dt,
+	   int nt, double *w,double *ws, int trid,int *off,double *work) {
+/* Forms product X_i'WX_j where X_i and X_j are stored in compact form. 
+   * W = diag(w) if trid!=0 and is tridiagonal otherwise, with super in ws and sub in ws + n-1;     
+
+   If Xk is a tensor product term, let dXk denote row tensor product of all but it's final 
+   marginal. 
+
+*/
+  int si,sj,ri,im,r,c,kk;
+  double *wl;
+  si = ks[ts[i]+nx]-ks[ts[i]]+1; /* number of terms in summation convention for i */
+  if (trid) wl = ws + n - 1; /* sub-diagonal */
+  /* compute number of columns in dXi/ number of rows of blocks in product */
+  for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
+  im = ts[i]+dt[i]-1; /* the final marginal for term i */
+
+  if (i==j && si==1) { /* simplest setup - just accumulate diagonals */
+    for (r=0;r<ri;r++) { /* loop over blocks of product */
+      if (dt[i]>1) { /* extract col r of dXi */
+	/* tensorXj(double *Xj, double *X, int *m, int *p,int *dt, 
+	   int *k, int *n, int *j, int *kstart,int *koff)*/
+      }
+      for (c=0;c<ri;c++) {
+	if (dt[i]>1) { /* extract */
+         
+	}
+      }  
+
+    }
+  }  else { /* general case */
+    sj = ks[ts[j]+nx]-ks[ts[j]]+1; /* number of terms in summation convention for j */
+  
+  }
+} /* XWXij */  
+
 void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, int *ts, 
           int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights) {
 /* This version uses open MP by column, within sub-block.
@@ -414,14 +450,29 @@ void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n,
    because the work is very uneven between sub-blocks. 
 
    Forms Xt'WXt when Xt is divided into blocks of columns, each stored in compact form
-   using arguments X and k. 'X' contains 'nx' blocks, the ith is an m[i] by p[i] matrix. 
-   k contains nx index vectors. If kj and Xj represent the jth sub-matrix and index vector 
-   then the ith row of the corresponding full sub-matrix is Xj[kj[i],]. The blocks of Xt 
-   need not be directly given by terms like Xj[kj[i],], some are actually given by row 
-   tensors of several such matrices. Conceptually Xt has nt <= nx blocks (terms) and the ith 
-   block starts at sub-matrix  ts[i] of X, and is made up of the row tensor product of 
-   dt[i] consecutive sub-matrices. 
-    
+   using arguments X and k. 
+   * 'X' contains 'nx' blocks, the ith is an m[i] by p[i] matrix containing the unique rows of 
+     the ith marginal model matrix. 
+   * There are 'nt' model terms. Each term is made up of one or more maginal model matrices.
+   * The jth term starts at block ts[j] of X, and has dt[j] marginal matrices. The terms model
+     matrix is the row tensor product of its full (n row) marginals.
+   * The index vectors converting the unique row matrices to full marginal matrices are in 
+     'k', an n-row matrix of integers. Conceptually if Xj and kj represent the jth unique 
+      row matrix and index vector then the ith row of the corresponding full marginal matrix 
+      is Xj[kj[i],], but things are more complicated when each full term matrix is actually 
+      the sum of several matrices (summation convention).
+   * To handle the summation convention, each marginal matrix can have several index vectors. 
+     'ks' is an nx by 2 matrix giving the columns of k corresponding to the ith marginal 
+     model matrix. Specifically columns ks[i,1]:ks[i2] of k are the index vectors for the ith 
+     marginal. All marginals corresponding to one term must have the same number of index columns.
+     The full model matrix for the jth term is constucted by summing over q the full 
+     model matrices corresponding to the qth index vectors for each of its marginals.    
+   * For example the exression for the full model matrix of the jth term is...
+  
+     X^full_j = sum_q prod_i X_{ts[j]+i}[k[,ks[i]+q],]  
+
+     - q runs from 0 to ks[i,2] - ks[i,1] - 1; i runs from 0 to dt[j] - 1.
+         
    Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
    (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
    dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
