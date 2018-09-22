@@ -17,6 +17,13 @@
                 use Strassen for square matrices.)   
 
 */
+
+          /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
+                   int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
+             transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
+             where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
+             in calling routine (to allow use of sub-matrices) */
+
 #include "mgcv.h"
 #include <stdlib.h>
 #include <stdio.h>

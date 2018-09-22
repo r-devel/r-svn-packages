@@ -687,7 +687,7 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans,do
    w[stop[i-1]+1...stop[i]]. stop[-1]=-1 by convention.
    stop is an n vector.     
    
-   If (trans==0) the the operation on a column x is x'[i] += w[row[j]] * X[row[j]] over the 
+   If (trans==0) the operation on a column x is x'[i] += w[row[j]] * X[row[j]] over the 
    j from stop[i-1]+1 to stop[i]. Otherwise the tranposed operation 
    x'[row[j]] += w[row[j]] * x[i] is used with the same j range. x' zero at outset.
 
