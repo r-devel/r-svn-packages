@@ -766,7 +766,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object$Vc <- Vc
   object$outer.info <- list(grad = prop$grad,hess=prop$hess)  
   object$AR1.rho <- rho
-  object$R <- pchol(qrx$R,npt)
+  object$R <- if (npt>1) pchol(qrx$R,npt) else chol(qrx$R,pivot=TRUE) ## latter much faster under optimized BLAS
   piv <- attr(object$R,"pivot") 
   object$R[,piv] <- object$R   
   object$iter <- iter 

@@ -849,7 +849,9 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
 ## given X'WX in XX and f=X'Wy solves the penalized least squares problem
 ## with penalty defined by Sl and rho, and evaluates a REML Newton step, the REML 
 ## gradiant and the the estimated coefs bhat. If phi.fixed=FALSE then we need 
-## yy = y'Wy in order to get derivsatives w.r.t. phi. 
+## yy = y'Wy in order to get derivsatives w.r.t. phi.
+## NOTE: with an optimized BLAS nt==1 is likely to be much faster than
+##       nt > 1
   tol <- as.numeric(tol)
   rho <- if (is.null(L)) rho + rho0 else L%*%rho + rho0
   if (length(rho)<length(rho0)) rho <- rho0 ## ncol(L)==0 or length(rho)==0
@@ -879,9 +881,11 @@ Sl.fitChol <- function(Sl,XX,f,rho,yy=0,L=NULL,rho0=0,log.phi=0,phi.fixed=TRUE,
   dift <- Sl.iftChol(ldS$Sl,XX,R,d,beta,piv,nt=nt)
  
   ## now the derivatives of log|X'X+S|
-  P <- pbsi(R,nt=nt,copy=TRUE) ## invert R 
   PP <- matrix(0,p,p)
-  PP[piv,piv] <- if (nt==1) tcrossprod(P) else pRRt(P,nt) ## PP'
+  if (nt>1) {
+    P <- pbsi(R,nt=nt,copy=TRUE) ## invert R 
+    PP[piv,piv] <- if (nt==1) tcrossprod(P) else pRRt(P,nt) ## PP'
+  } else PP[piv,piv] <- chol2inv(R)
   PP <- t(PP/d)/d
   ldetXXS <- 2*sum(log(diag(R))+log(d[piv])) ## log|X'X+S|
   dXXS <- d.detXXS(ldS$Sl,PP,nt=nt) ## derivs of log|X'X+S|

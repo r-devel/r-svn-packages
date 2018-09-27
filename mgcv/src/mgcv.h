@@ -89,6 +89,9 @@ void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi,
 void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, 
           int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,
           int *ar_row,double *ar_weights);
+void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, 
+          int *ts, int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,
+          int *ar_row,double *ar_weights);
 void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *ks, int *m,int *p, int *n, 
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
           int *ar_stop,int *ar_row,double *ar_weights);
