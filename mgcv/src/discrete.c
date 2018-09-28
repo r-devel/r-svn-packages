@@ -669,9 +669,13 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
           int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights) {
 /* essentially a driver routine for XWXij implementing block oriented cross products
 */   
-  int *pt, *pd,i,q,j,maxm=0,maxp=0,maxmp=0,tri,r,c,pa,pb,*tps,ptot;
-  ptrdiff_t *off,*voff;
+  int *pt, *pd,i,q,j,maxm=0,maxp=0,maxmp=0,tri,r,c,pa,pb,*tps,ptot,*B,*C,*R,N,kk,tid=0;
+  ptrdiff_t *off,*voff,mmp;
   double *work,*ws,*xwx,*xwx0,*x0,*x1,*p0,*p1,*p2,x;
+  #ifndef OPENMP_ON
+  *nthreads = 1;
+  #endif
+  if (*nthreads<1) *nthreads = 1;
   pt = (int *) CALLOC((size_t)*nt,sizeof(int)); /* the term dimensions */
   pd = (int *) CALLOC((size_t)*nt,sizeof(int)); /* storage for last marginal size */
   off = (ptrdiff_t *) CALLOC((size_t)*nx+1,sizeof(ptrdiff_t)); /* offsets for X submatrix starts */
@@ -691,9 +695,10 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
   q = 3 * *n + maxm + maxm * maxmp; /* note that we never allocate a W accumulation matrix with more than n elements */
-  work = (double *)CALLOC((size_t)q,sizeof(double));
-  xwx = (double *)CALLOC((size_t)maxp*maxp,sizeof(double)); /* r,c block storage */
-  xwx0 = (double *) CALLOC((size_t) maxp * maxp,sizeof(double)); /* working cross product storage */
+  work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double));
+  mmp = maxp;mmp = mmp*mmp;
+  xwx = (double *)CALLOC((size_t)mmp * *nthreads,sizeof(double)); /* r,c block storage */
+  xwx0 = (double *) CALLOC((size_t) mmp * *nthreads,sizeof(double)); /* working cross product storage */
   ptot = tps[*nt]; /* total number of parameters */
   if (*ar_stop>=0) { /* model has AR component*/
     for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0); /* sqrt weights */
@@ -710,36 +715,49 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
        ws is the super diagonal and ws + n - 1 is the sub-diagonal. */
     tri = 1;
   } else tri = 0;
-  for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) { /* the block loop */
-      //Rprintf("r=%d c=% d ",r,c);
-     XWXij(xwx,r,c,X,k,ks,m,p,*nx,*n,ts, dt,*nt,w,ws,tri,off,work); /* compute r,c block */
-     /* if Xr is tensor, may need to apply constraint */
-     if (dt[r]>1&&qc[r]>0) { /* first term is a tensor with a constraint */
+  N = ((*nt + 1) * *nt)/2; B = (int *) CALLOC((size_t)N,sizeof(int));
+  C = (int *) CALLOC((size_t)N,sizeof(int)); R = (int *) CALLOC((size_t)N,sizeof(int));
+  for (kk=r=0;r < *nt;r++) for (c=r;c< *nt;c++,kk++) { B[kk]=kk;R[kk]=r;C[kk]=c;}
+  //Rprintf("nt = %d N = %d\n",*nt,N);
+  #ifdef OPENMP_ON
+  #pragma omp parallel for private(kk,r,c,tid,x0,x1,j,x,p0,p1,p2,pa,pb,i) num_threads(*nthreads) schedule(dynamic)
+  #endif
+  for (kk=0;kk<N;kk++) { /* the block loop */
+    r = R[B[kk]];c=C[B[kk]]; /* set up allows blocks to be computed in any order by re-arranging B */
+    #ifdef OPENMP_ON
+    tid = omp_get_thread_num();
+    #endif
+    //Rprintf("r=%d c=%d tid = %d  ",r,c,tid); // dodgy not ts
+    XWXij(xwx + mmp * tid,r,c,X,k,ks,m,p,*nx,*n,ts, dt,*nt,w,ws,tri,off,work + tid*q); /* compute r,c block */
+    /* if Xr is tensor, may need to apply constraint */
+    if (dt[r]>1&&qc[r]>0) { /* first term is a tensor with a constraint */
       x0=x1=xwx; /* pointers to columns of xwx */ 
       /* col by col form (I-vv')xwx, dropping first row... */
       for (j=0;j<pt[c];j++) {
         for (x=0.0,p0=x0,p1=x0+pt[r],p2=v+voff[r];p0<p1;p0++,p2++) x += *p0 * *p2;
-        for (p2=v+voff[r]+1,p1=x0+pt[r],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 *x;
+        for (p2=v+voff[r]+1,p1=x0+pt[r],x0++;x0<p1;x1++,x0++,p2++) *x1 = *x0 - *p2 * x;
       }
       pa = pt[r] -1;
     } else pa = pt[r];
     if (dt[c]>1&&qc[c]>0) { /* Xc term is a tensor with a constraint */
       /* copy xwx to xwx0 */
-      for (p0=xwx,p1=p0 + pt[c] * (ptrdiff_t) pa,p2=xwx0;p0<p1;p0++,p2++) *p2 = *p0;
+      for (p0=xwx+mmp*tid,p1=p0 + pt[c] * (ptrdiff_t) pa,p2=xwx0+mmp*tid;p0<p1;p0++,p2++) *p2 = *p0;
       /* row by row form xwx(I-vv') dropping first col... */
       for (j=0;j<pa;j++) {
-        for (x=0.0,p0=xwx0+j,p1=v+voff[c],p2=p1+pt[c];p1<p2;p0 += pa,p1++) x += *p0 * *p1; 
-        x1 = xwx + j;
-        for (p0=xwx0+j+pa,p1=v+voff[c],p2=p1+pt[c],p1++;p1<p2;x1+=pa,p1++,p0+=pa) *x1 = *p0 - *p1 *x; 
+        for (x=0.0,p0=xwx0+mmp*tid+j,p1=v+voff[c],p2=p1+pt[c];p1<p2;p0 += pa,p1++) x += *p0 * *p1; 
+        x1 = xwx+mmp*tid + j;
+        for (p0=xwx0+mmp*tid+j+pa,p1=v+voff[c],p2=p1+pt[c],p1++;p1<p2;x1+=pa,p1++,p0+=pa) *x1 = *p0 - *p1 *x; 
       }
       pb=pt[c]-1;
     } else pb=pt[c];
-    /* copy result into overall XWX*/  
+    /* copy result into overall XWX*/
+    p0 = xwx + mmp*tid;
     for (i=0;i<pa;i++) for (j=0;j<pb;j++) 
       XWX[i+tps[r]+(j+tps[c]) * (ptrdiff_t)ptot] = XWX[j+tps[c]+(i+tps[r]) * (ptrdiff_t)ptot] 
-                                                 = xwx[i + pa * (ptrdiff_t)j];
+                                                 = p0[i + pa * (ptrdiff_t)j];
   }    
-  FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(work); if (tri) FREE(ws);free(xwx);free(xwx0);
+  FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(work); if (tri) FREE(ws);FREE(xwx);FREE(xwx0);
+  FREE(B);FREE(R);FREE(C);
 } /* XWXd0 */ 
 
 

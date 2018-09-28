@@ -426,7 +426,7 @@ mini.mf <-function(mf,chunk.size) {
 
 bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     mustart = NULL, offset = rep(0, nobs),rho=0, control = gam.control(), intercept = TRUE, 
-    gc.level=0,nobs.extra=0,npt=1,gamma=1) {
+    gc.level=0,nobs.extra=0,npt=c(1,1),gamma=1) {
 ## This is a version of bgam.fit designed for use with discretized covariates. 
 ## Difference to bgam.fit is that XWX, XWy and Xbeta are computed in C
 ## code using compressed versions of X. Parallelization of XWX formation
@@ -622,15 +622,15 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
           sum(rwMatrix(ar.stop,ar.row,ar.weight,sqrt(w)*z,trans=FALSE)^2) 
        
         ## form X'WX efficiently...
-        qrx$R <- XWXd(G$Xd,w,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,npt,G$drop,ar.stop,ar.row,ar.weight)
+        qrx$R <- XWXd(G$Xd,w,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,npt[1],G$drop,ar.stop,ar.row,ar.weight)
 	##R0 <- XWXd(G$Xd,w,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,1,G$drop,ar.stop,ar.row,ar.weight) ## DEBUG compare
         ## form X'Wz efficiently...
         qrx$f <- XWyd(G$Xd,w,z,G$kd,G$ks,G$ts,G$dt,G$v,G$qc,G$drop,ar.stop,ar.row,ar.weight)
         if(gc.level>1) gc()
      
         ## following reparameterizes X'X and f=X'y, according to initial reparameterizarion...
-        qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt)
-        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt)  
+        qrx$XX <- Sl.initial.repara(Sl,qrx$R,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt[1])
+        qrx$Xy <- Sl.initial.repara(Sl,qrx$f,inverse=FALSE,both.sides=TRUE,cov=FALSE,nt=npt[1])  
         
         G$n <- nobs
       } else {  ## end of if (iter==1||!additive)
@@ -718,7 +718,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   }
 
   for (i in 1:ncol(prop$db)) prop$db[,i] <- ## d beta / d rho matrix
-        Sl.initial.repara(Sl,as.numeric(prop$db[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt) 
+        Sl.initial.repara(Sl,as.numeric(prop$db[,i]),inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt[1]) 
 
   object <- list(db.drho=prop$db,
                  gcv.ubre=reml,mgcv.conv=conv,rank=prop$r,
@@ -741,8 +741,8 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(y,weighted.mean(y,G$w),G$w,theta))   
   }
 
-  PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt)
-  F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt)  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
+  PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt[1])
+  F <- pmmult(PP,qrx$R,FALSE,FALSE,nt=npt[1])  ##crossprod(PP,qrx$R) - qrx$R contains X'WX in this case
   object$edf <- diag(F)
   object$edf1 <- 2*object$edf - rowSums(t(F)*F)
   lsp <- if (n.sp>0) lsp[1:n.sp] else rep(0,0)
@@ -750,7 +750,7 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object$full.sp <- if (is.null(G$L)) object$sp else exp(drop(G$L%*%lsp + G$lsp0))
   object$sig2 <- object$scale <- scale
   object$Vp <- PP * scale
-  object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt) ## F%*%object$Vp
+  object$Ve <- pmmult(F,object$Vp,FALSE,FALSE,nt=npt[1]) ## F%*%object$Vp
   ## sp uncertainty correction... 
   if (!is.null(G$L)) prop$db <- prop$db%*%G$L
   M <- ncol(prop$db) 
@@ -759,14 +759,14 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     ind <- ev$values <= 0
     ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
     rV <- (ev$values*t(ev$vectors))[,1:M]
-    Vc <- pcrossprod(rV%*%t(prop$db),nt=npt)
+    Vc <- pcrossprod(rV%*%t(prop$db),nt=npt[1])
   } else Vc <- 0
   Vc <- object$Vp + Vc  ## Bayesian cov matrix with sp uncertainty
   object$edf2 <- rowSums(Vc*qrx$R)/scale
   object$Vc <- Vc
   object$outer.info <- list(grad = prop$grad,hess=prop$hess)  
   object$AR1.rho <- rho
-  object$R <- if (npt>1) pchol(qrx$R,npt) else chol(qrx$R,pivot=TRUE) ## latter much faster under optimized BLAS
+  object$R <- if (npt[2]>1) pchol(qrx$R,npt) else suppressWarnings(chol(qrx$R,pivot=TRUE)) ## latter much faster under optimized BLAS
   piv <- attr(object$R,"pivot") 
   object$R[,piv] <- object$R   
   object$iter <- iter 
@@ -1919,6 +1919,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             family <- family()
     if (is.null(family$family))
             stop("family not recognized")
+    if (length(nthreads)==1) nthreads <- rep(nthreads,2)
 
     if (inherits(family,"general.family")) stop("general families not supported by bam")
     
@@ -1938,7 +1939,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         warning("discretization only available with fREML")
       } else {
         if (!is.null(cluster)) warning("discrete method does not use parallel cluster - use nthreads instead")
-	if (is.finite(nthreads) && nthreads>1 && !mgcv.omp()) warning("openMP not available: single threaded computation only")
+	if (all(is.finite(nthreads)) && any(nthreads>1) && !mgcv.omp()) warning("openMP not available: single threaded computation only")
       }
     }  
     if (inherits(family,"extended.family")) {
@@ -2212,7 +2213,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
 
   ## number of threads to use for non-cluster node computation
-  if (!is.finite(nthreads)||nthreads<1) nthreads <- max(1,length(cluster))
+  if (!is.finite(nthreads[1])||nthreads[1]<1) nthreads[1] <- max(1,length(cluster))
 
   G$conv.tol<-control$mgcv.tol      # tolerence for mgcv
   G$max.half<-control$mgcv.half     # max step halving in bfgs optimization
@@ -2227,7 +2228,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (G$am&&!G$discretize) {
     if (nrow(mf)>chunk.size) G$X <- matrix(0,0,ncol(G$X)); if (gc.level>1) gc() 
     object <- bam.fit(G,mf,chunk.size,gp,scale,gamma,method,rho=rho,cl=cluster,
-                      gc.level=gc.level,use.chol=use.chol,npt=nthreads)
+                      gc.level=gc.level,use.chol=use.chol,npt=nthreads[1])
   } else if (G$discretize) {
     object <- bgam.fitd(G, mf, gp ,scale ,nobs.extra=0,rho=rho,coef=coef,
                        control = control,npt=nthreads,gc.level=gc.level,gamma=gamma,...)
@@ -2243,7 +2244,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         control1 <- control
         control1$epsilon <- 1e-2
         object <- bgam.fit(G, mf[ind,], chunk.size, gp ,scale ,gamma,method=method,nobs.extra=0,
-                       control = control1,cl=cluster,npt=nthreads,gc.level=gc.level,coef=coef,
+                       control = control1,cl=cluster,npt=nthreads[1],gc.level=gc.level,coef=coef,
                        use.chol=use.chol,samfrac=1,...)
         G$w <- Gw;G$offset <- Goffset
         coef <- object$coefficients
@@ -2251,7 +2252,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
     ## fit full dataset
     object <- bgam.fit(G, mf, chunk.size, gp ,scale ,gamma,method=method,coef=coef,
-                       control = control,cl=cluster,npt=nthreads,gc.level=gc.level,
+                       control = control,cl=cluster,npt=nthreads[1],gc.level=gc.level,
                        use.chol=use.chol,...)
   }
 
