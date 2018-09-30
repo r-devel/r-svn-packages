@@ -287,11 +287,12 @@ pbsi <- function(R,nt=1,copy=TRUE) {
  R
 } ## pbsi
 
-pchol <- function(A,nt=1,nb=30) {
+pchol <- function(A,nt=1,nb=40) {
 ## parallel Choleski factorization.
 ## library(mgcv);
 ## set.seed(2);n <- 200;r <- 190;A <- tcrossprod(matrix(runif(n*r),n,r))
 ## system.time(R <- chol(A,pivot=TRUE));system.time(L <- mgcv:::pchol(A));range(R[1:r,]-L[1:r,])
+## k <- 30;range(R[1:k,1:k]-L[1:k,1:k])
 ## system.time(L <- mgcv:::pchol(A,nt=2,nb=30))
 ## piv <- attr(L,"pivot");attr(L,"rank");range(crossprod(L)-A[piv,piv])
 ## should nb be obtained from 'ILAENV' as page 23 of Lucas 2004??

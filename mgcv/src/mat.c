@@ -18,11 +18,27 @@
 
 */
 
-          /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
-                   int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
-             transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
-             where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
-             in calling routine (to allow use of sub-matrices) */
+/* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
+         int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
+   transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
+   where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
+   in calling routine (to allow use of sub-matrices) */
+
+/* dsyrk(char *uplo, char *trans,int *n, int *k,double *a, double *A, int *lda,
+         double *b, double *C,int *ldc)
+   uplo = 'U' or 'L' for upper or lower tri of C used. trans = 'N' for C = aAA' + bC  
+   and A n by k, or 'T' for C =  aA'A + bC and A k by n; C is n by n. lda and ldc
+   are actual number of rows in A and C respectively (allows use on submatrices). */
+
+/* dswap(int *n,double *x,int *dx,double *y,int *dy)
+   Swaps n elements of vectors x and y. Spacing between elements is dx and dy. */
+
+/* dgemv(char *trans,int *m, int *n,double a,double *A,int *lda,double *x,int *dx,
+         double *b, double *y,int *dy)
+   trans='T' to transpose A, 'N' not to. A is m by n. Forms y = a*A'x + b*y, or
+   y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
+   dx and dy are increments of x and y indices.  */
+
 
 #include "mgcv.h"
 #include <stdlib.h>
@@ -45,6 +61,16 @@ void mgcv_omp(int *a) {
   *a=0;
 #endif  
 }
+
+void rpmat(double *A,int n) {
+
+  int i,j;
+  for (i=0;i<n;i++) {
+    Rprintf("\n");
+    for (j=0;j<n;j++) Rprintf("%7.2g  ",A[i + n * j]);
+  }
+  Rprintf("\n");
+} /* rpmat */ 
 
 void dump_mat(double *M,int *r,int*c,const char *path) {
   /* dump r by c matrix M to path - intended for debugging use only */
@@ -326,11 +352,13 @@ SEXP mgcv_pmmult2(SEXP b, SEXP c,SEXP bt,SEXP ct, SEXP nthreads) {
   return(a);
 } /* mgcv_pmmult2 */
 
-int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
+int mgcv_bchol0(double *A,int *piv,int *n,int *nt,int *nb) {
 /* Lucas (2004) "LAPACK-Style Codes for Level 2 and 3 Pivoted Cholesky Factorizations" 
    block pivoted Choleski algorithm 5.1. Note some misprints in paper, noted below. 
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
+
+   This version is BLAS free.
 */  
   int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b;
   double tol=0.0,*dots,*pd,*p1,*Aj,*Aq0,*Aj0,*Aj1,*Ajn,*Ail,xmax,x,*Aq,*Ajj,*Aend;
@@ -434,6 +462,131 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
 	}
       } /* end parallel section */
     } /* if (k + jb < *n) */
+  } /* k loop */
+  if (r<0) r = *n;
+  FREE(dots);
+  
+  for (Ajn=A,j=0;j<*n;j++,Ajn += *n) {
+    Aj = Ajn;Aend = Aj + *n;
+    if (j<r) Aj += j+1; else Aj += r;
+    for (;Aj<Aend;Aj++) *Aj = 0.0;
+  }
+  FREE(a);
+  return(r);
+} /* mgcv_bchol0 */
+
+int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
+/* Lucas (2004) "LAPACK-Style Codes for Level 2 and 3 Pivoted Cholesky Factorizations" 
+   block pivoted Choleski algorithm 5.1. Note some misprints in paper, noted below. 
+   nb is block size, nt is number of threads, A is symmetric
+   +ve semi definite matrix and piv is pivot sequence. 
+
+   This version is currently experimental and calls dsyrk.
+*/  
+  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b,one=1;
+  double tol=0.0,*dots,*pd,*p1,*Aj,*Aq0,*Aj0,*Aj1,*Ajn,*Ail,xmax,x,*Aq,*Ajj,*Aend,alpha=-1.0,beta=1.0;
+  char uplo = 'L',trans='N';
+  dots = (double *)CALLOC((size_t) *n,sizeof(double));
+  for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
+  jb = *nb; /* block size, allowing final to be smaller */
+  n1 = *n + 1;
+  Ajn = A;
+  m = *nt;if (m<1) m=1;if (m>*n) m = *n; /* threads to use */
+  a = (int *)CALLOC((size_t) (*nt+1),sizeof(int)); /* thread block cut points */
+  a[m] = *n;
+  for (k=0;k<*n;k+= *nb) {
+    if (*n - k  < jb) jb = *n - k ; /* end block */ 
+    for (pd = dots + k,p1 = dots + *n;pd<p1;pd++) *pd = 0;
+    for (j=k;j<k+jb;j++,Ajn += *n) {
+      pd = dots + j;Aj = Ajn + j; Aj1 = Aj - 1;
+      xmax = -1.0;q=j;p1 = dots + *n;
+      if (j>k) for (;pd<p1;pd++,Aj1 += *n) *pd += *Aj1 * *Aj1; /* dot product update (upper triangle only) */
+      for (l=j,pd = dots + j;pd<p1;pd++,Aj += n1,l++) {   
+        x = *Aj - *pd; 
+        if (x>xmax) { xmax = x;q=l;} /* find the pivot q >= j (leading diag only used)*/
+      } 
+      if (j==0) tol = *n * xmax * DOUBLE_EPS;
+      Aq = A + *n * q + q; 
+      // Rprintf("\n n = %d k = %d j = %d  q = %d,  A[q,q] = %g  ",*n,k,j,q,*Aq);
+      if (*Aq - dots[q]<tol) {r = j;break;} /* note Lucas (2004) has 'dots[q]' missing */
+      /* swap dots... */
+      pd = dots + j;p1 = dots + q;
+      x = *pd;*pd = *p1;*p1 = x;
+      /* swap pivots... */
+      pk = piv + j;pq = piv +q;
+      i = *pk;*pk = *pq;*pq = i;
+
+      /* dswap(int *n,double *x,int *dx,double *y,int *dy)
+         Swaps n elements of vectors x and y. Spacing between elements is dx and dy. 
+      */
+      /* row-col exchange j and q */
+  
+      Aj = Ajn + j; 
+      x =  *Aj; *Aj = *Aq;
+      *Aq = x; /* A[j,j] <-> A[q,q] */
+      /* A[j,j+1:q-1] <-> A[j+1:q-1,q] */
+      N = q-j-1;
+      if (N>0) {
+        Aj += *n; /* A[j,j+1] */
+        Aq = A + q * *n + j + 1; /* A[j+1,q] */
+        F77_CALL(dswap)(&N,Aj,n,Aq,&one);
+      }	
+      /* A[q,q+1:n-1] <-> A[j,q+1:n-1] */
+      N = *n-q-1;
+      if (N>0) {
+        Aq = A + (q+1) * *n + q; /* A[q,q+1] */
+        Aj = A + (q+1) * *n + j; /* A[j,q+1] */
+        F77_CALL(dswap)(&N,Aj,n,Aq,n);
+      }	
+      /* A[k:(j-1),j] <-> A[k:(j-1),q] */
+      N = j;
+      if (N>0) {
+        Aq = A + q * *n;
+        Aj = Ajn;
+        F77_CALL(dswap)(&N,Aj,&one,Aq,&one);
+      }
+      /* now update (only accesses upper triangle) */
+
+     /* dgemv(char *trans,int *m, int *n,double *a,double *A,int *lda,double *x,int *dx,
+         double *b, double *y,int *dy)
+         trans='T' to transpose A, 'N' not to. A is m by n. Forms y = a*A'x + b*y, or
+         y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
+         dx and dy are increments of x and y indices.  */
+     
+      Ajj = Ajn + j;  
+      *Ajj = sqrt(*Ajj - *pd); /* sqrt(A[j,j]-dots[j]) */      
+      Aend = A + *n * *n;
+      if (j > k&&j < *n) { /* Lucas (2004) has '1' in place of 'k' */
+        /* A[j,j+1:n-1] += -A[k:j-1,j]*A[k:j-1,j+1:n-1] */ 
+	trans='T';N = *n - j - 1;i=j-k;
+        F77_CALL(dgemv)(&trans,&i,&N,&alpha,A+(j+1) * *n + k,n,A + j * *n + k,&one,&beta,A + (j+1) * *n+j,n);
+      }
+      if (j < *n) {
+        Aj = Ajj; x = *Aj;Aj += *n;
+        for (;Aj<Aend;Aj += *n) *Aj /= x; /* upper triangle access only */ 
+      }    
+    } /* j loop */
+    //Rprintf("r=%d ",r);
+    if (r > 0) break;
+    /* now the main work - updating the trailing factor... 
+       A[j:n-1,j:n-1] += - A[k:j-1,j:n-1]'A[k:j-1,j:n-1]
+    */
+    /* dsyrk(char *uplo, char *trans,int *n, int *k,double *a, double *A, int *lda,
+         double *b, double *C,int *ldc)
+       uplo = 'U' or 'L' for upper or lower tri of C used. trans = 'N' for C = aAA' + bC  
+       and A n by k, or 'T' for C =  aA'A + bC and A k by n; C is n by n. lda and ldc
+       are actual number of rows in A and C respectively (allows use on submatrices).
+    */
+    if (k + jb < *n) {
+      //Rprintf("trailing block!\n");
+      N = *n - j ; /* block to be processed is N by N */
+      i = j - k; /* number of rows in */
+      //Rprintf("k=%d  j=%d  n=%d N=%d jb=%d\n",k,j,*n,N,jb);
+      trans = 'T';uplo='U';//alpha = -1.0;beta=1.0;
+      F77_CALL(dsyrk)(&uplo,&trans,&N, &i, &alpha,A+j * *n + k,n,&beta,A + j * *n + j,n);
+      /* fill in lower triangle from upper */
+      //for (i=j;i<*n;i++) for (b=i+1;b<*n;b++) A[b + i * *n] = A[i + b * *n ];
+    }   
   } /* k loop */
   if (r<0) r = *n;
   FREE(dots);
