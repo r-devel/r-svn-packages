@@ -112,6 +112,95 @@ void read_mat(double *M,int *r,int*c,char *path) {
  fclose(mf);
 }
 
+
+void pdsyrk(int *n,int *k,double *a,double *A,int *lda,double *b,double *D, int *ldd,int *work,int *nt) {
+/* Forms D = aA'A + bD in upper triangle of D using nt threads. A is n by n.
+   A is k by n. lda and ldd are physical dimensions. work is length nt * (nt + 3) + 2. 
+
+   The basic idea is that if there are nt threads then we divide the computation into nt blocks of rows 
+   and nt blocks of columns (of approximately equal dimension). Leading diagonal blocks have about half the 
+   cost of off diagonal blocks, by symmetry, so when dividing up the blocks between threads this must be taken 
+   into account. Generally each core gets nt/2 full blocks. If nt is odd, then each core gets one leading
+   diagonal block and (nt-1)/2 off-diagonal blocks. If nt is even then the first nt/2 cores each get 2 leading 
+   diagonal blocks plus (nt-2)/2 off diagonal blocks. The remaining nt/2 cores each get nt/2 off diagonal blocks.
+
+   Leading diagonal blocks are computed using dsyrk and off diagonals using dgemm. For a tuned BLAS the speed up
+   from multi-threading is modest. For the reference BLAS scaling is better, but of course the tunded BLAS is 
+   still better.  
+
+*/ 
+  int i,j,N,m,*K,*C,*R,*B,kk,l,r,c,nb;
+  double dn=0.0,x;
+  char uplo = 'U',trans = 'T',ntrans = 'N';
+  m = *nt+1;
+  while (dn<1&&m>1) {m--;dn = *n/(double)m; } /* m is number of threads to use */
+  N = (m * (m + 1))/2; /* total number of blocks to process */
+  /* get K such that i,jth block has rows K[i] to K[i+1]-1 and cols K[j] to K[j+1]-1 */ 
+  K = work;work += *nt+1;
+  K[0]=0;
+  for (i=1;i<m;i++) { x+=dn; K[i] = floor(x);}
+  K[m] = *n;
+  C = work;work += N;
+  R = work; work += N;
+  B = work;
+      
+  if (m % 2) { /* odd number of threads */
+    //Rprintf("N = %d m = %d odd\n",N,m);
+    kk=l=nb=B[0]=C[0]=R[0]=0;i=1;
+    for (r=0;r<m;r++) for (c=r+1;c<m;c++,i++) {
+      if (kk==(m-1)/2) { /* each new block gets one leading diagonal block */
+	  kk=0;l++;
+	  C[i]=R[i]=l;
+	  nb++;B[nb]=i;i++;
+      }
+      C[i] = c;R[i]=r;kk++;
+    }	
+  } else { /* even number of threads */
+    nb=l=kk=B[0]=i=0;
+    for (r=0;r<m;r++) for (c=r+1;c<m;c++) {
+	if (kk==m/2) {kk=0;nb++;B[nb]=i;}
+	if (kk==0&&l<m) { /* allocate 2 leading diagonal blocks */
+          R[i]=C[i]=l;l++;i++;R[i]=C[i]=l;l++;i++;kk++;
+	  if (kk==m/2) { kk = 0;nb++;B[nb]=i;}
+	}
+        R[i]=r;C[i]=c;kk++;i++;
+    }	
+  }
+  B[m] = N;
+  #ifdef OPENMP_ON
+  #pragma omp parallel for private(i,j,r,c,nb,l) num_threads(m)
+  #endif
+  for (i=0;i<m;i++) {
+    for (j=B[i];j<B[i+1];j++) {
+      r=R[j];c=C[j];
+      //Rprintf("j = %d r=%d (%d:%d) c=%d (%d:%d)\n ",j,r,K[r],K[r+1]-1,c,K[c],K[c+1]-1);
+      if (r==c) { /* symmetric block, use  dsyrk */
+	/* dsyrk(char *uplo, char *trans,int *n, int *k,double *a, double *A, int *lda,
+           double *b, double *C,int *ldc)
+           uplo = 'U' or 'L' for upper or lower tri of C used. trans = 'N' for C = aAA' + bC  
+           and A n by k, or 'T' for C =  aA'A + bC and A k by n; C is n by n. lda and ldc
+           are actual number of rows in A and C respectively (allows use on submatrices). */
+
+	nb = K[r+1]-K[r]; /* block dimension */
+	//Rprintf("nb = %d k = %d K[r] = %d\n",nb,*k,K[r]);
+        F77_CALL(dsyrk)(&uplo,&trans,&nb,k,a,A + *lda * K[r],lda,b,D + *ldd * K[c] + K[r],ldd);
+      } else { /* general block, use dgemm */
+        /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
+           int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
+           transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
+           where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
+           in calling routine (to allow use of sub-matrices) */
+
+        nb = K[r+1]-K[r]; l = K[c+1]-K[c]; /* block dimension is nb by l */
+	F77_CALL(dgemm)(&trans,&ntrans,&nb,&l,k,a,A + *lda * K[r],lda,A + *lda * K[c],lda,b,D + *ldd * K[c] + K[r],ldd);
+	
+      }	
+    }  
+  }  
+  
+} /* pdsyrk */  
+
+
 void mgcv_tensor_mm(double *X,double *T,int *d,int *m,int *n) {
 /* Code for efficient production of row tensor product model matrices.
    X contains rows of matrices to be producted. Contains m matrices,
@@ -481,12 +570,15 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
 
-   This version is currently experimental and calls dsyrk.
+   This version is currently single threaded and calls blas routines at least as 
+   efficiently as LAPACK version (it's slightly faster). Idea is that a multi-threaded 
+   dsyrk can be produced and slotted in here.
 */  
-  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b,one=1;
+  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b,one=1,*work;
   double tol=0.0,*dots,*pd,*p1,*Aj,*Aq0,*Aj0,*Aj1,*Ajn,*Ail,xmax,x,*Aq,*Ajj,*Aend,alpha=-1.0,beta=1.0;
   char uplo = 'L',trans='N';
   dots = (double *)CALLOC((size_t) *n,sizeof(double));
+  work = (int *)CALLOC((size_t) *nt * (*nt+3) + 2,sizeof(int));
   for (pk = piv,i=0;i < *n;pk++,i++) *pk = i; /* initialize pivot record */
   jb = *nb; /* block size, allowing final to be smaller */
   n1 = *n + 1;
@@ -507,7 +599,6 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
       } 
       if (j==0) tol = *n * xmax * DOUBLE_EPS;
       Aq = A + *n * q + q; 
-      // Rprintf("\n n = %d k = %d j = %d  q = %d,  A[q,q] = %g  ",*n,k,j,q,*Aq);
       if (*Aq - dots[q]<tol) {r = j;break;} /* note Lucas (2004) has 'dots[q]' missing */
       /* swap dots... */
       pd = dots + j;p1 = dots + q;
@@ -519,7 +610,12 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
       /* dswap(int *n,double *x,int *dx,double *y,int *dy)
          Swaps n elements of vectors x and y. Spacing between elements is dx and dy. 
       */
-      /* row-col exchange j and q */
+
+      /* row-col exchange j and q - only update above the diagonal, but rows j and q 
+         are exchanged only from col j, while cols j and q are fully exchanged. 
+         This is because we are working through cols of factor and cols before j are
+         finished. 
+      */
   
       Aj = Ajn + j; 
       x =  *Aj; *Aj = *Aq;
@@ -538,7 +634,8 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
         Aj = A + (q+1) * *n + j; /* A[j,q+1] */
         F77_CALL(dswap)(&N,Aj,n,Aq,n);
       }	
-      /* A[k:(j-1),j] <-> A[k:(j-1),q] */
+      /* A[0:(j-1),j] <-> A[0:(j-1),q] --- note we have to start at row 0 (not k) or
+         already complete rows will not end up correctly pivoted */
       N = j;
       if (N>0) {
         Aq = A + q * *n;
@@ -566,7 +663,6 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
         for (;Aj<Aend;Aj += *n) *Aj /= x; /* upper triangle access only */ 
       }    
     } /* j loop */
-    //Rprintf("r=%d ",r);
     if (r > 0) break;
     /* now the main work - updating the trailing factor... 
        A[j:n-1,j:n-1] += - A[k:j-1,j:n-1]'A[k:j-1,j:n-1]
@@ -578,14 +674,12 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
        are actual number of rows in A and C respectively (allows use on submatrices).
     */
     if (k + jb < *n) {
-      //Rprintf("trailing block!\n");
       N = *n - j ; /* block to be processed is N by N */
       i = j - k; /* number of rows in */
-      //Rprintf("k=%d  j=%d  n=%d N=%d jb=%d\n",k,j,*n,N,jb);
       trans = 'T';uplo='U';//alpha = -1.0;beta=1.0;
-      F77_CALL(dsyrk)(&uplo,&trans,&N, &i, &alpha,A+j * *n + k,n,&beta,A + j * *n + j,n);
-      /* fill in lower triangle from upper */
-      //for (i=j;i<*n;i++) for (b=i+1;b<*n;b++) A[b + i * *n] = A[i + b * *n ];
+      if (0) F77_CALL(dsyrk)(&uplo,&trans,&N, &i, &alpha,A+j * *n + k,n,&beta,A + j * *n + j,n);
+      else pdsyrk(&N,&i,&alpha,A+j * *n + k,n,&beta,A + j * *n + j,n,work,nt);
+      //rpmat(A,*n);
     }   
   } /* k loop */
   if (r<0) r = *n;
@@ -596,7 +690,7 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
     if (j<r) Aj += j+1; else Aj += r;
     for (;Aj<Aend;Aj++) *Aj = 0.0;
   }
-  FREE(a);
+  FREE(a);FREE(work);
   return(r);
 } /* mgcv_bchol */
 
