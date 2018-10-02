@@ -320,7 +320,8 @@ pcrossprod <- function(A,trans=FALSE,nt=1,nb=30) {
 pRRt <- function(R,nt=1) {
 ## parallel RR' for upper triangular R
 ## following creates index of lower triangular elements...
-## n <- 4000;a <- rep(1:n,n);b <- rep(1:n,each=n)-1;which(a-b>0) -> ii;a[ii]+b[ii]*n->ii
+## n <- 4000;a <- rep(1:n,n);b <- rep(1:n,each=n);which(a>=b) -> ii;a[ii]+(b[ii]-1)*n->ii ## lower
+## n <- 4000;a <- rep(1:n,n);b <- rep(1:n,each=n);which(a<=b) -> ii;a[ii]+(b[ii]-1)*n->ii ## upper
 ## library(mgcv);R <- matrix(0,n,n);R[ii] <- runif(n*(n+1)/2)
 ## Note: A[a-b<=0] <- 0 zeroes upper triangle 
 ## system.time(A <- mgcv:::pRRt(R,2))

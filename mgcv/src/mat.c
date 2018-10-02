@@ -2038,6 +2038,55 @@ void mgcv_Rpbsi(SEXP A, SEXP NT) {
   mgcv_pbsi1(R,&r,&nt);
 } /* mgcv_Rpbsi */
 
+void mgcv_PPt1(double *A,double *R,int *r,int *nt) {
+/* Computes A=RR', where R is r by r upper triangular. BLAS version.
+   Modified and stripped down from LAPACK dlauum.
+   Currently uses nt threads to split dominant term by row. 
+
+   n <- 4000;a <- rep(1:n,n);b <- rep(1:n,each=n);which(a<=b) -> ii;a[ii]+(b[ii]-1)*n->ii ## upper
+   library(mgcv);R <- matrix(0,n,n);R[ii] <- runif(n*(n+1)/2)
+   system.time(A <- mgcv:::pRRt(R,2))
+   system.time(A2 <- tcrossprod(R));range(A-A2);plot(A,A2,pch=".")
+
+*/  
+  int i,j,k,ik,nb=50,ib,m,*s;
+  char right='R',up='U',trans='T',no='N';
+  double one=1.0,di,x,*p0;
+  // first pointlessly copy R to A
+  s = (int *)CALLOC((size_t) *nt + 1,sizeof(int));
+  for (i=0;i<*r;i++) for (j=i;j<*r;j++) A[i + j * *r] = R[i + j * *r]; 
+  for (i=0;i< *r;i+=nb) {
+    ib= *r-i; if (ib>nb) ib = nb;
+    /* A[0:i-1,i:i+ib-1] = A[0:i-1,i:i+ib-1]A'[i:i+ib-1,i:i+ib-1] O(ib^2 i) */
+    F77_CALL(dtrmm)(&right,&up,&trans,&no,&i,&ib,&one,A + *r * i + i,r,A + *r * i, r);
+    /* A[i:i+ib-1,i:i+ib-1] A[i:i+ib-1,i:i+ib-1]' (self overwrite)*/
+    F77_CALL(dlauu2)(&up,&ib,A + *r * i + i,r,&j);
+    if (i+ib < *r) {
+      j = *r - i - ib;
+      m = *nt;while (5*m>i && m>1) m--; /* don't use a pointless number of threads */
+      di = i / (double) m; /* rows per thread */
+      s[0]=0; for (x=0.0,k=1;k<m;k++) { x+= di;s[k] = (int)floor(x);} s[m] = i; /* row starts */ 
+      /* A[0:i-1,i:i+ib-1] +=  A[0:i-1,i+ib:n-1] A'[i:i+ib-1,i+ib:n-1] O(i j ib) */
+      #ifdef OPENMP_ON
+      #pragma omp parallel for private(k,ik) num_threads(m)
+      #endif
+      for (k=0;k<m;k++) { /* row block loop */
+	ik = s[k+1] - s[k]; /* number of rows to process */
+        F77_CALL(dgemm)(&no,&trans,&ik,&ib,&j,&one,A + s[k] + (i+ib)* *r,r,A + i + (i+ib) * *r,
+	                r,&one,A +  i * *r + s[k],r);
+      }
+      //F77_CALL(dgemm)(&no,&trans,&i,&ib,&j,&one,A+ (i+ib)* *r,r,A + i + (i+ib) * *r,
+      //	              r,&one,A +  i * *r,r); // single thread version
+      /* A[i:i+ib-1,i:i+ib-1] += A[i:i+ib-1,i:i+j-1] A[i:i+ib-1,i:i+j-1] O(j ib^2)*/
+      F77_CALL(dsyrk)(&up,&no,&ib,&j,&one,A+i + (i+ib) * *r,r,&one,A+ i * *r + i, r);
+    }
+  }
+  FREE(s);
+  /* now copy upper triangle to lower */
+  for (i=0;i<*r;i++) for (j=i+1;j<*r;j++) A[j + i * *r] =  A[i + j * *r];
+} /* mgcv_PPt1 */
+
+
 
 void mgcv_PPt(double *A,double *R,int *r,int *nt) {
 /* Computes A=RR', where R is r by r upper triangular.
@@ -2143,7 +2192,7 @@ void mgcv_RPPt(SEXP a,SEXP r, SEXP NT) {
   n = nrows(a);
   A = REAL(a);
   R = REAL(r);
-  mgcv_PPt(A,R,&n,&nt);
+  mgcv_PPt1(A,R,&n,&nt);
 } /* mgcv_Rpbsi */
 
 
