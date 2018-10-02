@@ -40,6 +40,13 @@
    dx and dy are increments of x and y indices.  */
 
 
+/* dtrmm(char *side,char *uplo,char *transa, char *diag,int *m, int *n, double *alpha,
+         double *A,int *lda,double *B,int *ldb)
+   B = alpha*op(A)*B or B = alpha*B*op(A) for side = 'L' or 'R'. op is identity of transpose
+   depending on whether transa = 'N' or 'T'. B is m by n, upper/lower triangular if uplo = 'U'
+   or 'L'. B is unit diagonal if diag = 'U' rather than 'N'. lda and ldb are physical rows 
+   of A and B. */
+
 #include "mgcv.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -112,6 +119,116 @@ void read_mat(double *M,int *r,int*c,char *path) {
  fclose(mf);
 }
 
+void tile_ut(int n,int *m,int *K, int *C,int *R,int *B) {
+/* Split n by n upper triangular matrix into blocks distributed on m threads.     
+   Routine may reduce m if request pointless otherwise. Tiling done on assumption 
+   that work on leading diagonal blocks is half the cost of work on off-diagonals.
+   There are N = m * (m+1)/2 blocks. The ith block is block row R[i] and block col
+   C[i]. Block i is rows K[R[i]]:K[R[i]+1]-1 and cols K[C[i]]:K[C[i]+1].
+   The jth thread deals with blocks B[j]:B[j+1]-1. K and B are dimension m + 1;
+   C and R are dimension N. n and m are input params. m and the rest are output. 
+
+   The basic idea is that if there are nt threads then we divide the computation into m blocks of rows 
+   and m blocks of columns (of approximately equal dimension). Leading diagonal blocks have about half the 
+   cost of off diagonal blocks, by symmetry, so when dividing up the blocks between threads this must be taken 
+   into account. Generally each core gets m/2 full blocks. If m is odd, then each core gets one leading
+   diagonal block and (m-1)/2 off-diagonal blocks. If m is even then the first m/2 cores each get 2 leading 
+   diagonal blocks plus (m-2)/2 off diagonal blocks. The remaining m/2 cores each get m/2 off diagonal blocks.
+*/
+  double x,dn=0.0;
+  int i,N,kk,l,nb,r,c;
+  (*m) ++;
+  while (dn<1 && *m>1) { (*m)--;dn = n/(double) *m; } /* m is number of threads to use */
+  N = (*m * (*m + 1))/2; /* total number of blocks to process */
+  /* get K such that i,jth block has rows K[i] to K[i+1]-1 and cols K[j] to K[j+1]-1 */ 
+  K[0]=0;
+  for (x=0.0,i=1;i < *m;i++) { x+=dn; K[i] = (int) floor(x);}
+  K[*m] = n;
+  if (*m % 2) { /* odd number of threads */
+    kk=l=nb=B[0]=C[0]=R[0]=0;i=1;
+    for (r=0;r < *m;r++) for (c=r+1;c < *m;c++,i++) {
+      if (kk==(*m - 1)/2) { /* each new block gets one leading diagonal block */
+	  kk=0;l++;
+	  C[i]=R[i]=l;
+	  nb++;B[nb]=i;i++;
+      }
+      C[i] = c;R[i]=r;kk++;
+    }	
+  } else { /* even number of threads */
+    nb=l=kk=B[0]=i=0;
+    for (r=0;r < *m;r++) for (c=r+1;c < *m;c++) {
+	if (kk == *m/2) {kk=0;nb++;B[nb]=i;}
+	if (kk==0 && l < *m) { /* allocate 2 leading diagonal blocks */
+          R[i]=C[i]=l;l++;i++;R[i]=C[i]=l;l++;i++;kk++;
+	  if (kk == *m/2) { kk = 0;nb++;B[nb]=i;}
+	}
+        R[i]=r;C[i]=c;kk++;i++;
+    }	
+  }
+  B[*m] = N;
+} /* tile_ut */  
+
+/* dtrmm(char *side,char *uplo,char *transa, char *diag,int *m, int *n, double *alpha,
+         double *A,int *lda,double *B,int *ldb)
+   B = alpha*op(A)*B or B = alpha*B*op(A) for side = 'L' or 'R'. op is identity of transpose
+   depending on whether transa = 'N' or 'T'. B is m by n, upper/lower triangular if uplo = 'U'
+   or 'L'. B is unit diagonal if diag = 'U' rather than 'N'. lda and ldb are physical rows 
+   of A and B. */
+
+/* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
+         int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
+   transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
+   where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
+   in calling routine (to allow use of sub-matrices) */
+
+void pdtrmm(int *n,int *q,double *alpha, double *A,int *lda,double *D,int *ldd,int *nt,int *iwork,double *work) {
+/* iwork is dim 3 *nt * (nt + 1)/2 + 2 * nt + 2. work is dim q*n*(nt+1). D is n by q. A is n by n upper triangular.
+   D = alpha * A * D.  
+
+BUG!! work is about a factor of 2 too large!!
+*/
+  int i,j,m,N,*K,*C,*R,*B,*off,r,c,nr,nc,ldt;
+  double *p0,*p1,*p2,*p3,*p4,*p5,zero=0.0;
+  char side ='L',nope='N',up='U';
+  m = *nt;N = (m * (m + 1))/2; /* total number of blocks to process (upper bound)*/
+  K = iwork;iwork += m+1;C = iwork;iwork += N;
+  R = iwork; iwork += N;B = iwork;iwork += m+1;off = iwork;
+  tile_ut(*n,&m,K,C,R,B); /* set up tiling and allocation of tiles to threads */
+  N = (m * (m + 1))/2; /* total number of blocks to process (actual) */
+  off[0] = 0;
+  for (i=1;i<N;i++) off[i] = off[i-1] + K[R[i-1]+1] - K[R[i-1]]; /* start row of each temporary block (in work) */
+ 
+  ldt = off[N-1] + K[R[N-1]+1] - K[R[N-1]]; /* rows of work */
+
+  #ifdef OPENMP_ON
+  #pragma omp parallel for private(i,j,r,c,nr,p0,p1,p2,p3,p4,p5,nc) num_threads(m)
+  #endif
+  for (i=0;i<m;i++) {
+    for (j=B[i];j<B[i+1];j++) {
+      r = R[j]; c = C[j]; nr = K[r+1] - K[r];
+      if (r==c) { /* diagonal block */
+	/* copy D[K[c]:K[c+1]-1,0:k-1] to work[off[j]:off[j]+nr-1,0:k-1] */
+	for (p0=D+K[c],p1=work+off[j],p2 = D + *ldd * *q;p0<p2;p0 += *ldd,p1 += ldt)
+	  for (p3=p0,p4=p3+nr,p5=p1;p3<p4;p3++,p5++) *p5 = *p3;
+	
+        F77_CALL(dtrmm)(&side,&up,&nope,&nope,&nr,q,alpha,A + K[r] + K[c] * *lda,lda,work+off[j],&ldt);
+	
+      } else { /* a general block */
+  	nc = K[c+1] - K[c];
+	F77_CALL(dgemm)(&nope,&nope,&nr,q,&nc,alpha,A + K[r] + K[c] * *lda,lda,D + K[c],ldd,&zero,work+off[j],&ldt);
+      }    
+    }
+  }
+  /* now sew it all back together */
+  for (p0 = D,p2 = D + *ldd * *q;p0<p2;p0 += *ldd) for (p1=p0,p3=p0 + *n;p1<p3;p1++) *p1 = 0.0;
+  for (i=0;i<N;i++) {
+    r = R[i];nr = K[r+1]-K[r]; /* add work[off[i]:off[i]+nr-1,0:q-1] to  D[K[r]:K[r+1]-1,0:q-1] */
+    for (p0=work + off[i],p1 = D+K[r];p1<p2;p0 += ldt,p1 += *ldd)
+      for (p3=p0,p4=p1,p5=p4 + nr;p4<p5;p4++,p3++) *p4 += *p3;
+  }  
+  
+} /* pdtrmm */  
+
 
 void pdsyrk(int *n,int *k,double *a,double *A,int *lda,double *b,double *D, int *ldd,int *work,int *nt) {
 /* Forms D = aA'A + bD in upper triangle of D using nt threads. A is n by n.
@@ -129,68 +246,24 @@ void pdsyrk(int *n,int *k,double *a,double *A,int *lda,double *b,double *D, int 
    still better.  
 
 */ 
-  int i,j,N,m,*K,*C,*R,*B,kk,l,r,c,nb;
+  int i,j,N,m,*K,*C,*R,*B,l,r,c,nb;
   double dn=0.0,x;
   char uplo = 'U',trans = 'T',ntrans = 'N';
-  m = *nt+1;
-  while (dn<1&&m>1) {m--;dn = *n/(double)m; } /* m is number of threads to use */
-  N = (m * (m + 1))/2; /* total number of blocks to process */
-  /* get K such that i,jth block has rows K[i] to K[i+1]-1 and cols K[j] to K[j+1]-1 */ 
-  K = work;work += *nt+1;
-  K[0]=0;
-  for (i=1;i<m;i++) { x+=dn; K[i] = floor(x);}
-  K[m] = *n;
-  C = work;work += N;
-  R = work; work += N;
-  B = work;
-      
-  if (m % 2) { /* odd number of threads */
-    //Rprintf("N = %d m = %d odd\n",N,m);
-    kk=l=nb=B[0]=C[0]=R[0]=0;i=1;
-    for (r=0;r<m;r++) for (c=r+1;c<m;c++,i++) {
-      if (kk==(m-1)/2) { /* each new block gets one leading diagonal block */
-	  kk=0;l++;
-	  C[i]=R[i]=l;
-	  nb++;B[nb]=i;i++;
-      }
-      C[i] = c;R[i]=r;kk++;
-    }	
-  } else { /* even number of threads */
-    nb=l=kk=B[0]=i=0;
-    for (r=0;r<m;r++) for (c=r+1;c<m;c++) {
-	if (kk==m/2) {kk=0;nb++;B[nb]=i;}
-	if (kk==0&&l<m) { /* allocate 2 leading diagonal blocks */
-          R[i]=C[i]=l;l++;i++;R[i]=C[i]=l;l++;i++;kk++;
-	  if (kk==m/2) { kk = 0;nb++;B[nb]=i;}
-	}
-        R[i]=r;C[i]=c;kk++;i++;
-    }	
-  }
-  B[m] = N;
+  m = *nt;N = (m * (m + 1))/2; /* total number of blocks to process (upper bound)*/
+  K = work;work += m+1;C = work;work += N;
+  R = work; work += N;B = work;
+  tile_ut(*n,&m,K,C,R,B); /* set up tiling and allocation of tiles to threads */
+ 
   #ifdef OPENMP_ON
   #pragma omp parallel for private(i,j,r,c,nb,l) num_threads(m)
   #endif
   for (i=0;i<m;i++) {
     for (j=B[i];j<B[i+1];j++) {
       r=R[j];c=C[j];
-      //Rprintf("j = %d r=%d (%d:%d) c=%d (%d:%d)\n ",j,r,K[r],K[r+1]-1,c,K[c],K[c+1]-1);
       if (r==c) { /* symmetric block, use  dsyrk */
-	/* dsyrk(char *uplo, char *trans,int *n, int *k,double *a, double *A, int *lda,
-           double *b, double *C,int *ldc)
-           uplo = 'U' or 'L' for upper or lower tri of C used. trans = 'N' for C = aAA' + bC  
-           and A n by k, or 'T' for C =  aA'A + bC and A k by n; C is n by n. lda and ldc
-           are actual number of rows in A and C respectively (allows use on submatrices). */
-
 	nb = K[r+1]-K[r]; /* block dimension */
-	//Rprintf("nb = %d k = %d K[r] = %d\n",nb,*k,K[r]);
         F77_CALL(dsyrk)(&uplo,&trans,&nb,k,a,A + *lda * K[r],lda,b,D + *ldd * K[c] + K[r],ldd);
       } else { /* general block, use dgemm */
-        /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
-           int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
-           transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
-           where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
-           in calling routine (to allow use of sub-matrices) */
-
         nb = K[r+1]-K[r]; l = K[c+1]-K[c]; /* block dimension is nb by l */
 	F77_CALL(dgemm)(&trans,&ntrans,&nb,&l,k,a,A + *lda * K[r],lda,A + *lda * K[c],lda,b,D + *ldd * K[c] + K[r],ldd);
 	
@@ -570,9 +643,8 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
    nb is block size, nt is number of threads, A is symmetric
    +ve semi definite matrix and piv is pivot sequence. 
 
-   This version is currently single threaded and calls blas routines at least as 
-   efficiently as LAPACK version (it's slightly faster). Idea is that a multi-threaded 
-   dsyrk can be produced and slotted in here.
+   This version calls BLAS routines at least as efficiently as the LAPACK version (it's slightly faster). 
+   A parallel version of dsyrk is then called for the key trailing block update.
 */  
   int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b,one=1,*work;
   double tol=0.0,*dots,*pd,*p1,*Aj,*Aq0,*Aj0,*Aj1,*Ajn,*Ail,xmax,x,*Aq,*Ajj,*Aend,alpha=-1.0,beta=1.0;
@@ -1810,7 +1882,50 @@ void mgcv_tri_diag(double *S,int *n,double *tau)
 }
 
 
+void mgcv_pbsi0(double *R, int *n,int *nt) {
+/* Form inverse of upper triangular R (n by n) in situ.
+   Block oriented, using BLAS/LAPACK calls. 
+*/
+  int j,info,jb,nb=50;
+  char left = 'L',right = 'R',up='U',ntrans='N',diag='N';
+  double d1 = 1.0,m1= -1.0;
+  for (j=0;j< *n;j+=nb) {
+    jb = *n - j; if (jb>nb) jb=nb; /* block size */
+    if (j) {
+      /* A[0:j-1,j:j+jb-1] <- A[0:j-1,0:j-1] A[0:j-1,j:j+jb-1] O(j^2 jb)*/
+      F77_CALL(dtrmm)(&left,&up,&ntrans,&diag,&j,&jb,&d1,R,n,R + j * *n,n);
+      /* A[0:j-1,j:j+jb-1] <- A[0:j-1,j:j+jb-1] A[j:j+jb-1,j:j+jb-1]^{-1} O(j jb^2) */
+      F77_CALL(dtrsm)(&right,&up,&ntrans,&diag,&j,&jb,&m1,R + *n * j + j,n,R + j * *n,n);
+    }
+    /* invert A[j:j+jb-1,j:j+jb-1] O(jb^3)*/
+    F77_CALL(dtrti2)(&up,&diag,&jb,R + *n * j + j,n,&info); 
+  }  
 
+} /* mgcv_pbsi0 */
+
+void mgcv_pbsi1(double *R, int *n,int *nt) {
+/* Form inverse of upper triangular R (n by n) in situ.
+   Block oriented, using BLAS/LAPACK calls. 
+*/
+  int j,info,jb,nb=50,*iwork;
+  char left = 'L',right = 'R',up='U',ntrans='N',diag='N';
+  double d1 = 1.0,m1= -1.0,*work;
+  iwork = (int *)CALLOC((size_t)3 * (*nt *(*nt+1))/2 + 2 * *nt + 2,sizeof(int));
+  work = (double *)CALLOC((size_t) nb * *n * (*nt + 1),sizeof(double));
+  for (j=0;j< *n;j+=nb) {
+    jb = *n - j; if (jb>nb) jb=nb; /* block size */
+    if (j) {
+      /* A[0:j-1,j:j+jb-1] <- A[0:j-1,0:j-1] A[0:j-1,j:j+jb-1] O(j^2 jb)*/
+      if (0) F77_CALL(dtrmm)(&left,&up,&ntrans,&diag,&j,&jb,&d1,R,n,R + j * *n,n);
+                                         else pdtrmm(&j,&jb,&d1,R,n,R + j * *n,n,nt,iwork,work);
+      /* A[0:j-1,j:j+jb-1] <- A[0:j-1,j:j+jb-1] A[j:j+jb-1,j:j+jb-1]^{-1} O(j jb^2) */
+      F77_CALL(dtrsm)(&right,&up,&ntrans,&diag,&j,&jb,&m1,R + *n * j + j,n,R + j * *n,n);
+    }
+    /* invert A[j:j+jb-1,j:j+jb-1] O(jb^3)*/
+    F77_CALL(dtrti2)(&up,&diag,&jb,R + *n * j + j,n,&info); 
+  }  
+  FREE(work);FREE(iwork);
+} /* mgcv_pbsi1 */
 
 void mgcv_pbsi(double *R,int *r,int *nt) {
 /* parallel back substitution inversion of upper triangular matrix using nt threads
@@ -1920,7 +2035,7 @@ void mgcv_Rpbsi(SEXP A, SEXP NT) {
   nt = asInteger(NT);
   r = nrows(A);
   R = REAL(A);
-  mgcv_pbsi(R,&r,&nt);
+  mgcv_pbsi1(R,&r,&nt);
 } /* mgcv_Rpbsi */
 
 
