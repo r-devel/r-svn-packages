@@ -19,6 +19,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-25
 
+** bam(...,discrete=TRUE) methods improved. Cross products now faster and 
+  parallel code makes better use of BLAS. 
+
 * fix to 'fs' smooth.construct method and smooth2random method, to allow
   constructor to be called without a "gamm" atribute set on the smooth spec
   but still get a sensible result from smooth2random (albeit never using

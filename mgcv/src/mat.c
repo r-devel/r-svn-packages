@@ -182,10 +182,9 @@ void tile_ut(int n,int *m,int *K, int *C,int *R,int *B) {
    in calling routine (to allow use of sub-matrices) */
 
 void pdtrmm(int *n,int *q,double *alpha, double *A,int *lda,double *D,int *ldd,int *nt,int *iwork,double *work) {
-/* iwork is dim 3 *nt * (nt + 1)/2 + 2 * nt + 2. work is dim q*n*(nt+1). D is n by q. A is n by n upper triangular.
+/* iwork is dim 3 *nt * (nt + 1)/2 + 2 * nt + 2. work is dim q*(n+nt)*(nt+1)/2. D is n by q. A is n by n upper triangular.
    D = alpha * A * D.  
 
-BUG!! work is about a factor of 2 too large!!
 */
   int i,j,m,N,*K,*C,*R,*B,*off,r,c,nr,nc,ldt;
   double *p0,*p1,*p2,*p3,*p4,*p5,zero=0.0;
@@ -208,19 +207,19 @@ BUG!! work is about a factor of 2 too large!!
       r = R[j]; c = C[j]; nr = K[r+1] - K[r];
       if (r==c) { /* diagonal block */
 	/* copy D[K[c]:K[c+1]-1,0:k-1] to work[off[j]:off[j]+nr-1,0:k-1] */
-	for (p0=D+K[c],p1=work+off[j],p2 = D + *ldd * *q;p0<p2;p0 += *ldd,p1 += ldt)
+	for (p0=D+K[c],p1=work+off[j],p2 = D + (ptrdiff_t) *ldd * *q;p0<p2;p0 += *ldd,p1 += ldt)
 	  for (p3=p0,p4=p3+nr,p5=p1;p3<p4;p3++,p5++) *p5 = *p3;
 	
-        F77_CALL(dtrmm)(&side,&up,&nope,&nope,&nr,q,alpha,A + K[r] + K[c] * *lda,lda,work+off[j],&ldt);
+        F77_CALL(dtrmm)(&side,&up,&nope,&nope,&nr,q,alpha,A + K[r] + K[c] * (ptrdiff_t) *lda,lda,work+off[j],&ldt);
 	
       } else { /* a general block */
   	nc = K[c+1] - K[c];
-	F77_CALL(dgemm)(&nope,&nope,&nr,q,&nc,alpha,A + K[r] + K[c] * *lda,lda,D + K[c],ldd,&zero,work+off[j],&ldt);
+	F77_CALL(dgemm)(&nope,&nope,&nr,q,&nc,alpha,A + K[r] + K[c] * (ptrdiff_t) *lda,lda,D + K[c],ldd,&zero,work+off[j],&ldt);
       }    
     }
   }
   /* now sew it all back together */
-  for (p0 = D,p2 = D + *ldd * *q;p0<p2;p0 += *ldd) for (p1=p0,p3=p0 + *n;p1<p3;p1++) *p1 = 0.0;
+  for (p0 = D,p2 = D + (ptrdiff_t) *ldd * *q;p0<p2;p0 += *ldd) for (p1=p0,p3=p0 + *n;p1<p3;p1++) *p1 = 0.0;
   for (i=0;i<N;i++) {
     r = R[i];nr = K[r+1]-K[r]; /* add work[off[i]:off[i]+nr-1,0:q-1] to  D[K[r]:K[r+1]-1,0:q-1] */
     for (p0=work + off[i],p1 = D+K[r];p1<p2;p0 += ldt,p1 += *ldd)
@@ -262,10 +261,11 @@ void pdsyrk(int *n,int *k,double *a,double *A,int *lda,double *b,double *D, int 
       r=R[j];c=C[j];
       if (r==c) { /* symmetric block, use  dsyrk */
 	nb = K[r+1]-K[r]; /* block dimension */
-        F77_CALL(dsyrk)(&uplo,&trans,&nb,k,a,A + *lda * K[r],lda,b,D + *ldd * K[c] + K[r],ldd);
+        F77_CALL(dsyrk)(&uplo,&trans,&nb,k,a,A + (ptrdiff_t) *lda * K[r],lda,b,D + (ptrdiff_t) *ldd * K[c] + K[r],ldd);
       } else { /* general block, use dgemm */
         nb = K[r+1]-K[r]; l = K[c+1]-K[c]; /* block dimension is nb by l */
-	F77_CALL(dgemm)(&trans,&ntrans,&nb,&l,k,a,A + *lda * K[r],lda,A + *lda * K[c],lda,b,D + *ldd * K[c] + K[r],ldd);
+	F77_CALL(dgemm)(&trans,&ntrans,&nb,&l,k,a,A + (ptrdiff_t)*lda * K[r],lda,A + *lda * K[c],lda,b,
+			D + (ptrdiff_t) *ldd * K[c] + K[r],ldd);
 	
       }	
     }  
@@ -779,6 +779,7 @@ int mgcv_pchol(double *A,int *piv,int *n,int *nt) {
 
    This version is almost identical to LAPACK with default BLAS in speed 
    (4% slower at n=4000), as a single thread algorithm.
+
 */
   int i,j,k,r,q,n1,*pk,*pq,kn,qn,*a,N,m,b;
   double *Aj,*Ak,*Aq,*Aend,x,Ajk,Akk,thresh=0.0;
@@ -1911,7 +1912,7 @@ void mgcv_pbsi1(double *R, int *n,int *nt) {
   char left = 'L',right = 'R',up='U',ntrans='N',diag='N';
   double d1 = 1.0,m1= -1.0,*work;
   iwork = (int *)CALLOC((size_t)3 * (*nt *(*nt+1))/2 + 2 * *nt + 2,sizeof(int));
-  work = (double *)CALLOC((size_t) nb * *n * (*nt + 1),sizeof(double));
+  work = (double *)CALLOC((size_t) nb * ((ptrdiff_t) *n + *nt + 1) * (*nt + 1)/2,sizeof(double));
   for (j=0;j< *n;j+=nb) {
     jb = *n - j; if (jb>nb) jb=nb; /* block size */
     if (j) {
