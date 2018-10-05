@@ -149,7 +149,7 @@ pam(x, k, diss = inherits(x, "dist"),
   Clustering rules: A comparison of partitioning and hierarchical
   clustering algorithms;
   \emph{Journal of Mathematical Modelling and Algorithms} \bold{5},
-  475--504 (\url{http://dx.doi.org/10.1007/s10852-005-9022-1}).
+  475--504. \doi{10.1007/s10852-005-9022-1}.
 
 }
 \seealso{

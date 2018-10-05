@@ -6,6 +6,20 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
+
+\section{Changes in version 2.0.8 (2018-10-.., svn r...)}{
+  %% \subsection{New Features}{
+  %%   \itemize{
+  %%     \item
+  %%   }
+  %% }
+  \subsection{Bug Fixes}{
+    \itemize{
+      \item correct thinko in \code{?clusGap}, the help page.
+    }
+  }
+}
+
 \section{Changes in version 2.0.7 (2018-03-29, svn r7509)}{
   \subsection{New Features}{
     \itemize{
