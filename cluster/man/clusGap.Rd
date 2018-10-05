@@ -90,7 +90,7 @@ maxSE(f, SE.f,
 	when all standard deviations are larger than the differences
 	\eqn{f(k+1) - f(k)}.}
       \item{\code{"firstSEmax"}:}{location of the first \eqn{f()} value
-	which is not larger than the first \emph{local} maximum minus
+	which is not smaller than the first \emph{local} maximum minus
 	\code{SE.factor * SE.f[]}, i.e, within an \dQuote{f S.E.} range
 	of that maximum (see also \code{SE.factor}).
 
@@ -101,7 +101,7 @@ maxSE(f, SE.f,
 
       \item{\code{"globalSEmax"}:}{(used in Dudoit and Fridlyand (2002),
 	supposedly following Tibshirani's proposition):
-	location of the first \eqn{f()} value which is not larger than
+	location of the first \eqn{f()} value which is not smaller than
 	the \emph{global} maximum minus \code{SE.factor * SE.f[]}, i.e,
 	within an \dQuote{f S.E.} range of that maximum (see also
 	\code{SE.factor}).}
@@ -155,6 +155,11 @@ maxSE(f, SE.f,
   Tibshirani, R., Walther, G. and Hastie, T. (2000).
   Estimating the number of clusters in a dataset via the Gap statistic.
   Technical Report. Stanford.
+
+  Dudoit, S. and Fridlyand, J. (2002)
+  A prediction-based resampling method for estimating the number of clusters in a
+  dataset. \emph{Genome Biology} \bold{3}(7).
+  \doi{10.1186/gb-2002-3-7-research0036}
 
   Per Broberg (2006). SAGx: Statistical Analysis of the GeneChip.
   R package version 1.9.7.% moved to Bioconductor sometime after 2006
