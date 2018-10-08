@@ -951,7 +951,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 */   
   int *pt, *pd,i,q,j,maxm=0,maxp=0,maxmp=0,tri,r,c,pa,pb,*tps,ptot,*B,*C,*R,N,kk,tid=0;
   ptrdiff_t *off,*voff,mmp;
-  double *work,*ws,*xwx,*xwx0,*x0,*x1,*p0,*p1,*p2,x;
+  double *work,*ws,*xwx,*xwx0,*x0,*x1,*p0,*p1,*p2,x,*cost;
   #ifndef OPENMP_ON
   *nthreads = 1;
   #endif
@@ -997,7 +997,19 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   } else tri = 0;
   N = ((*nt + 1) * *nt)/2; B = (int *) CALLOC((size_t)N,sizeof(int));
   C = (int *) CALLOC((size_t)N,sizeof(int)); R = (int *) CALLOC((size_t)N,sizeof(int));
-  for (kk=r=0;r < *nt;r++) for (c=r;c< *nt;c++,kk++) { B[kk]=kk;R[kk]=r;C[kk]=c;}
+  cost = (double *) CALLOC((size_t)N,sizeof(double)); /* cost per block */
+  for (kk=r=0;r < *nt;r++) for (c=r;c< *nt;c++,kk++) {
+    B[kk]=kk;R[kk]=r;C[kk]=c;
+    /* compute rough cost per block figures */
+    if (m[r]*m[c] < *n) { /* weight accumulation */
+      cost[kk] = m[r]*m[c]*(double) pt[r]*pt[c]/pd[c];
+      x = m[r]*m[c]*(double) pt[c]*pt[r]/pd[r]; if (x<cost[kk]) cost[kk] = x;
+    } else { /* direct accumulation */
+      cost[kk] = *n * pt[r]*pt[c]/pd[c];;
+      x = *n * pt[c]*pt[r]/pd[r]; if (x < cost[kk]) cost[kk] = x;
+    }
+  }
+  revsort(cost,B,N); /* R reverse sort on cost, to re-order B */
   //Rprintf("nt = %d N = %d\n",*nt,N);
   #ifdef OPENMP_ON
   #pragma omp parallel for private(kk,r,c,tid,x0,x1,j,x,p0,p1,p2,pa,pb,i) num_threads(*nthreads) schedule(dynamic)
@@ -1037,7 +1049,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
                                                  = p0[i + pa * (ptrdiff_t)j];
   }    
   FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(work); if (tri) FREE(ws);FREE(xwx);FREE(xwx0);
-  FREE(B);FREE(R);FREE(C);
+  FREE(B);FREE(R);FREE(C);FREE(cost);
 } /* XWXd0 */ 
 
 
