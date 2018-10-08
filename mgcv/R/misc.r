@@ -154,13 +154,13 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
            ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w)))
 ## old strictly level 2 code for comparison...	   
-#  t1 <- system.time(ooo <- .C(C_XWXd,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),
-#           k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
-#           ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
-#           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
-#           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w)))
+  t1 <- system.time(ooo <- .C(C_XWXd,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),
+           k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
+           ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
+           v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
+           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w)))
 
-#  plot(oo$XWX,ooo$XWX,pch=".",main=range(oo$XWX-ooo$XWX));abline(0,1,col=2)	   
+  plot(oo$XWX,ooo$XWX,pch=".",main=range(oo$XWX-ooo$XWX));abline(0,1,col=2)	   
   if (is.null(drop)) matrix(oo$XWX,pt,pt) else matrix(oo$XWX,pt,pt)[-drop,-drop]
 } ## XWXd
 
