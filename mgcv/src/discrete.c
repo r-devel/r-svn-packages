@@ -858,25 +858,29 @@ void XWXij(double *XWX,int i,int j, double *X,int *k, int *ks, int *m, int *p,in
             for (q=0;q<p[jm];q++) {
 	      Cq = C + q * mim;Xj = X + off[jm] + q * mjm; /* qth cols of C and X */ 
 	      if (tensi&&tensj) { /* X_i and X_j are tensors */
-	        for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*dXi[kk]*dXj[kk]*Xj[Kj[kk]];
+	        // for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*dXi[kk]*dXj[kk]*Xj[Kj[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Cq[*Kik] += *p0 * *p2 * *p3 * Xj[*Kjk];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Cq[Ki[kk]] += ws[kk]*dXi[kk]*dXj[kk+1]*Xj[Kj[kk+1]];
 		  Cq[Ki[kk+1]] += wl[kk]*dXi[kk+1]*dXj[kk]*Xj[Kj[kk]];
 	        } 
 	      } else if (tensi) { /* only X_i is tensor */
-		for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*dXi[kk]*Xj[Kj[kk]];
+		//for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*dXi[kk]*Xj[Kj[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Cq[*Kik] += *p0 * *p2  * Xj[*Kjk];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Cq[Ki[kk]] += ws[kk]*dXi[kk]*Xj[Kj[kk+1]];
 		  Cq[Ki[kk+1]] += wl[kk]*dXi[kk+1]*Xj[Kj[kk]];
 	        }
 	      } else if (tensj) { /* only X_j is tensor */
-	        for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*dXj[kk]*Xj[Kj[kk]];
+	        //for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*dXj[kk]*Xj[Kj[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Cq[*Kik] += *p0 * *p3 * Xj[*Kjk];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Cq[Ki[kk]] += ws[kk]*dXj[kk+1]*Xj[Kj[kk+1]];
 		  Cq[Ki[kk+1]] += wl[kk]*dXj[kk]*Xj[Kj[kk]];
 	        }
 	      } else { /* both singletons */
-		for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*Xj[Kj[kk]];
+		//for (kk=0;kk<n;kk++) Cq[Ki[kk]] += w[kk]*Xj[Kj[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Cq[*Kik] += *p0 * Xj[*Kjk];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Cq[Ki[kk]] += ws[kk]*Xj[Kj[kk+1]];
 		  Cq[Ki[kk+1]] += wl[kk]*Xj[Kj[kk]];
@@ -888,25 +892,29 @@ void XWXij(double *XWX,int i,int j, double *X,int *k, int *ks, int *m, int *p,in
             for (q=0;q<p[im];q++) {
 	      Dq = D + q * mjm;Xi = X + off[im] + q * mim; /* qth cols of C and Xi */ 
 	      if (tensi&&tensj) { /* X_i and X_j are tensors */
-	        for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*dXi[kk]*dXj[kk]*Xi[Ki[kk]];
+	        // for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*dXi[kk]*dXj[kk]*Xi[Ki[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Dq[*Kjk] += *p0 * *p2 * *p3 * Xi[*Kik];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Dq[Kj[kk]] += wl[kk]*dXi[kk+1]*dXj[kk]*Xi[Ki[kk+1]];
 		  Dq[Kj[kk+1]] += ws[kk]*dXi[kk]*dXj[kk+1]*Xi[Ki[kk]];
 	        } 
 	      } else if (tensi) { /* only X_i is tensor */
-	        for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*dXi[kk]*Xi[Ki[kk]];
+	        //for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*dXi[kk]*Xi[Ki[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Dq[*Kjk] += *p0 * *p2  * Xi[*Kik];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Dq[Kj[kk]] += wl[kk]*dXi[kk+1]*Xi[Ki[kk+1]];
 		  Dq[Kj[kk+1]] += ws[kk]*dXi[kk]*Xi[Ki[kk]];
 	        }
 	      } else if (tensj) { /* only X_j is tensor */
-	        for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*dXj[kk]*Xi[Ki[kk]];
+	        //for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*dXj[kk]*Xi[Ki[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Dq[*Kjk] += *p0 * *p3 * Xi[*Kik];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Dq[Kj[kk]] += wl[kk]*dXj[kk]*Xi[Ki[kk+1]];
 		  Dq[Kj[kk+1]] += ws[kk]*dXj[kk+1]*Xi[Ki[kk]];
 	        } 
 	      } else { /* both singletons */
-	        for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*Xi[Ki[kk]];
+	        //for (kk=0;kk<n;kk++) Dq[Kj[kk]] += w[kk]*Xi[Ki[kk]];
+		for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Dq[*Kjk] += *p0 * Xi[*Kik];
 	        if (tri) for (kk=0;kk<n-1;kk++) {
 		  Dq[Kj[kk]] += wl[kk]*Xi[Ki[kk+1]];
 		  Dq[Kj[kk+1]] += ws[kk]*Xi[Ki[kk]];
