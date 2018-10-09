@@ -148,7 +148,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   n <- length(w);pt <- 0;
   for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0)
   ## block oriented code...
-  t0 <- system.time(oo <- .C(C_XWXd0,XWX =as.double(rep(0,pt^2)),X= as.double(unlist(X)),w=as.double(w),
+  t0 <- system.time(oo <- .C(C_XWXd0,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
            k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
            ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
@@ -159,9 +159,11 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
            ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
            ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w)))
-
-  plot(oo$XWX,ooo$XWX,pch=".",main=range(oo$XWX-ooo$XWX));abline(0,1,col=2)	   
-  if (is.null(drop)) matrix(oo$XWX,pt,pt) else matrix(oo$XWX,pt,pt)[-drop,-drop]
+  
+  XWX <- matrix(oo$XWX[1:pt^2],pt,pt)
+  XWX0 <- matrix(ooo$XWX[1:pt^2],pt,pt)
+  plot(XWX0,XWX,pch=".",main=range(XWX-XWX0));abline(0,1,col=2)
+  if (is.null(drop)) matrix(oo$XWX[1:pt^2],pt,pt) else matrix(oo$XWX[1:pt^2],pt,pt)[-drop,-drop]
 } ## XWXd
 
 XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1) {

@@ -120,7 +120,9 @@ void MinimumSeparation(double *x,int *n, int *d,double *t,int *m,double *dist);
 void rksos(double *x,int *n,double *eps);
 void pivoter(double *x,int *r,int *c,int *pivot, int *col, int *reverse);
 
-/* Routines for linear algebra with direct access to linpack and lapack */ 
+/* Routines for linear algebra with direct access to linpack and lapack */
+void row_squash(double *X,int rnew,int rold,int col);
+void up2lo(double * A, int n);
 void band_chol(double *B,int *n,int *k,int *info);
 void tri_chol(double *ld,double *sd,int *n,int *info);
 void mgcv_omp(int *a);
