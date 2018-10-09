@@ -1527,9 +1527,9 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    Requires XWX to be over-sized on entry - namely n.params + n.terms by n.params + n.terms instead of
    n.params by n.params.
 */   
-  int *pt, *pd,i,q,j,si,maxm=0,maxp=0,maxmp=0,tri,r,c,rb,cb,rt,ct,pa,pb,*tps,*tpsu,ptot,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0;
+  int *pt, *pd,i,q,j,si,maxm=0,maxp=0,maxmp=0,tri,r,c,rb,cb,rt,ct,pa,pb,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0;
   ptrdiff_t *off,*voff,mmp;
-  double *work,*ws,
+  double *work,*ws,*Cost,*cost,
     //*xwx,*xwx0,
     *x0,*x1,*p0,*p1,*p2,x;
   #ifndef OPENMP_ON
@@ -1581,9 +1581,11 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   N = ((*nt + 1) * *nt)/2; B = (int *) CALLOC((size_t)N,sizeof(int));
   C = (int *) CALLOC((size_t)N,sizeof(int)); R = (int *) CALLOC((size_t)N,sizeof(int));
   sb = (int *) CALLOC((size_t)N+1,sizeof(int)); /* at which sub-block does block start */
+  Cost = (double *)CALLOC((size_t) N,sizeof(double));
   sb[0] = 0; /* start of first sub-block of block 0 */
   for (kk=r=0;r < *nt;r++) for (c=r;c< *nt;c++,kk++) {
-    B[kk]=kk;R[kk]=r;C[kk]=c;
+      //B[kk]=kk;
+    R[kk]=r;C[kk]=c;
     si = ks[ts[r] + *nx] - ks[ts[r]]; /* number of terms in summation convention for i */
     if (r==c && si==1 && !tri) {
       i = pt[r]/pd[r];
@@ -1592,16 +1594,25 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
       i = (pt[r]/pd[r])*(pt[c]/pd[c]);
     }  
     sb[kk+1] = sb[kk] + i; /* next block starts at this sub-block */
-    /* compute rough cost per block figures */
-    //    if (m[r]*m[c] < *n) { /* weight accumulation */
-    //  cost[kk] = m[r]*m[c]*(double) pt[r]*pt[c]/pd[c];
-    //  x = m[r]*m[c]*(double) pt[c]*pt[r]/pd[r]; if (x<cost[kk]) cost[kk] = x;
-    //} else { /* direct accumulation */
-    //  cost[kk] = *n * pt[r]*pt[c]/pd[c];;
-    //  x = *n * pt[c]*pt[r]/pd[r]; if (x < cost[kk]) cost[kk] = x;
-    // }
+    /* compute rough cost per sub block figures */
+    if (m[r]*m[c] < *n) { /* weight accumulation */
+       Cost[kk] = m[r]*m[c]*(double) pd[c];
+       x = m[r]*m[c]*(double) pd[r]; if (x<Cost[kk]) Cost[kk] = x;
+    } else { /* direct accumulation */
+      Cost[kk] = *n * pd[c];;
+      x = *n * pd[r]; if (x < Cost[kk]) Cost[kk] = x;
+    }
   }
-  //revsort(cost,B,N); /* R reverse sort on cost, to re-order B - see R.h*/
+  b = (int *) CALLOC((size_t)sb[N],sizeof(int));
+  B = (int *) CALLOC((size_t)sb[N],sizeof(int));
+  cost = (double *)CALLOC((size_t)sb[N],sizeof(double));
+  for (kb=0,i=0;i<sb[N];i++) {
+    b[i]=i;while (i>=sb[kb+1]) kb++; /* kb is main block */
+    rb = R[kb];cb=C[kb];
+    cost[i] = Cost[kb];
+    B[i] = kb; 
+  }  
+  revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
   //Rprintf("nt = %d N = %d\n",*nt,N);
   //for (i=0;i<=N;i++) Rprintf("%d  ",sb[i]);Rprintf("sb\n");
   
@@ -1611,11 +1622,12 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
      design in which the sub-blocks are dealt with in XWXij does not load balance so well, hence this design.*/ 
   kb=0;
   #ifdef OPENMP_ON
-#pragma omp parallel for private(kb,kk,r,c,rb,cb,rt,ct,tid,i) num_threads(*nthreads) schedule(dynamic)
+#pragma omp parallel for private(j,kb,kk,r,c,rb,cb,rt,ct,tid,i) num_threads(*nthreads) schedule(dynamic)
   #endif
-  for (kk=0;kk<sb[N];kk++) { /* the block loop */
-    while (kk>=sb[kb+1]) kb++; /* kb is main block */
-    rb = R[B[kb]];cb=C[B[kb]]; /* set up allows blocks to be computed in any order by re-arranging B */
+  for (j=0;j<sb[N];j++) { /* the block loop */
+    kk = b[j];kb=B[kk];
+    //while (kk>=sb[kb+1]) kb++; /* kb is main block */
+    rb = R[kb];cb=C[kb]; /* set up allows blocks to be computed in any order by re-arranging B */
     i = kk - sb[kb]; /* sub-block index */
     rt = pt[rb]/pd[rb]; ct = pt[cb]/pd[cb]; /* total rows and cols of sub-blocks */
     /* compute sub-row and column */
@@ -1637,7 +1649,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   } /* block loop */
 
   /* now XWX contains the unconstrained X'WX, but the constraints have to be applied to blocks involving tensor products */
-  
+  //Rprintf("\ncleaning up!\n");
   for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) {
     /* if Xr is tensor, may need to apply constraint */
     if (dt[r]>1&&qc[r]>0) { /* first term is a tensor with a constraint */
@@ -1686,7 +1698,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   up2lo(XWX,ptot); /* copy upper triangle to lower */
   
   FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(tpsu);FREE(work); if (tri) FREE(ws);//FREE(xwx);FREE(xwx0);
-  FREE(B);FREE(R);FREE(C);FREE(sb);
+  FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);
 } /* XWXd0 */ 
 
 
