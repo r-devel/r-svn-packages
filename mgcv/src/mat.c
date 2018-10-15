@@ -266,7 +266,6 @@ void pdsyrk(int *n,int *k,double *a,double *A,int *lda,double *b,double *D, int 
 
 */ 
   int i,j,N,m,*K,*C,*R,*B,l,r,c,nb;
-  double dn=0.0,x;
   char uplo = 'U',trans = 'T',ntrans = 'N';
   m = *nt;N = (m * (m + 1))/2; /* total number of blocks to process (upper bound)*/
   K = work;work += m+1;C = work;work += N;
@@ -666,8 +665,8 @@ int mgcv_bchol(double *A,int *piv,int *n,int *nt,int *nb) {
    This version calls BLAS routines at least as efficiently as the LAPACK version (it's slightly faster). 
    A parallel version of dsyrk is then called for the key trailing block update.
 */  
-  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,b,one=1,*work;
-  double tol=0.0,*dots,*pd,*p1,*Aj,*Aq0,*Aj0,*Aj1,*Ajn,*Ail,xmax,x,*Aq,*Ajj,*Aend,alpha=-1.0,beta=1.0;
+  int i,j,k,l,q,r=-1,*pk,*pq,jb,n1,m,N,*a,one=1,*work;
+  double tol=0.0,*dots,*pd,*p1,*Aj,*Aj1,*Ajn,xmax,x,*Aq,*Ajj,*Aend,alpha=-1.0,beta=1.0;
   char uplo = 'L',trans='N';
   dots = (double *)CALLOC((size_t) *n,sizeof(double));
   work = (int *)CALLOC((size_t) *nt * (*nt+3) + 2,sizeof(int));
@@ -2072,7 +2071,7 @@ void mgcv_PPt1(double *A,double *R,int *r,int *nt) {
 */  
   int i,j,k,ik,nb=50,ib,m,*s;
   char right='R',up='U',trans='T',no='N';
-  double one=1.0,di,x,*p0;
+  double one=1.0,di,x;
   // first pointlessly copy R to A
   s = (int *)CALLOC((size_t) *nt + 1,sizeof(int));
   for (i=0;i<*r;i++) for (j=i;j<*r;j++) A[i + j * *r] = R[i + j * *r]; 
