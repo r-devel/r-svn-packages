@@ -535,7 +535,9 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
 
 void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, int *ts, 
           int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights) {
-/* This version uses open MP by column, within sub-block.
+/* Based on Wood, Li, Shaddick and Augustin (2017) JASA algorithms. i.e. vector oriented.
+
+   This version uses open MP by column, within sub-block.
 
    An alternative in which one thread did each sub-block scaled poorly, largely 
    because the work is very uneven between sub-blocks. 
@@ -2350,9 +2352,9 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 
 */
   int si,sj,ri,rj,jm,im,kk,ddt,ddtj,koff,*K,*Ki,*Kj,pim,pjm,
-    ii,jj,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,*Kjk,*Kik1,*Kjk1;
+    ii,jj,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,*Kjk,*Kik1,*Kjk1,q;
   ptrdiff_t mim,mjm; /* avoid integer overflow in large pointer calculations */ 
-  double x,*wl,*dXi,*dXj,*pdXj,*Xt,*Xi,*Xj,done=1.0,dzero=0.0,
+  double x,*wl,*dXi,*dXj,*pdXj,*Xt,*Xi,*Xj,done=1.0,dzero=0.0,*Cq,*Dq,
     *C,*D,*W,*wb,*p0,*p1,*p2,*p3,*pw,*pw1,*pl,*ps,*wi,*wsi,*wli,*wo,*psi,*pwi,*pli;
   char trans = 'T',ntrans = 'N';
   si = ks[ts[i]+nx]-ks[ts[i]]; /* number of terms in summation convention for i */
@@ -2533,52 +2535,133 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 	    W[*Kik + mim * *Kjk] += *pw;
 	  } else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) W[*Kik + mim * *Kjk] += *p0;
 	}	    
-      } else { /* \bar W too large to accumulate as dense - use sparse accumulation */ 
-        //indReduce(int *ka,int *kb,double *w,double *ws,double *wl,int tri,int *n,
-	//       unsigned long long *ht,SM **sm,SM * SMstack,int *kao,int *kbo,double *wo)
-        ii = n; /* will contain compressed index length after indReduce call */
-	if (tri) {
-	  wi = work;work += ii;
-	  wsi = work;work += ii;
-	  wli = work;work += ii;
-	  if (tensi&&tensj) {
-	    ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
-	    for (p0=dXi,p1=dXj,p2=dXi+1,p3=dXj+1;pw<wo;p0++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++,p2++,p3++) {
-	      *pwi = *pw * *p0 * *p1;*psi = *ps * *p0 * *p3;*pli = *pl * *p2 * *p1;
+      } else { /* \bar W too large to accumulate as dense - use sparse or direct accumulation */
+        if ((rfac && p[jm]>15)||(!rfac && p[im]>15)) { 
+	  ii = n; /* will contain compressed index length after indReduce call */
+	  if (tri) {
+	    wi = work;work += ii;
+	    wsi = work;work += ii;
+	    wli = work;work += ii;
+	    if (tensi&&tensj) {
+	      ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
+	      for (p0=dXi,p1=dXj,p2=dXi+1,p3=dXj+1;pw<wo;p0++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++,p2++,p3++) {
+	        *pwi = *pw * *p0 * *p1;*psi = *ps * *p0 * *p3;*pli = *pl * *p2 * *p1;
+	      }  
+              *pwi = *pw * *p0 * *p1;
+	    } else if (tensi) {
+              ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
+	      for (p0=dXi,p2=dXi+1;pw<wo;p0++,p2++,ps++,psi++,pw++,pwi++,pli++,pl++) {
+	        *pwi = *pw * *p0;*psi = *ps * *p0;*pli = *pl * *p2;
+	      }  
+              *pwi = *pw * *p0;
+	    } else if (tensj) {
+              ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
+	      for (p1=dXj,p3=dXj+1;pw<wo;p3++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++) {
+	        *pwi = *pw * *p1;*psi = *ps * *p3;*pli = *pl * *p1;
+	      }  
+              *pwi = *pw * *p1;
+	    } else {
+	      //wi=w;wsi = ws;wli = wl;
+	      ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
+	      for (p1=dXj,p3=dXj+1;pw<wo;p3++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++) {
+	        *pwi = *pw;*psi = *ps;*pli = *pl;
+	      }  
+              *pwi = *pw;
 	    }  
-            *pwi = *pw * *p0 * *p1;
-	  } else if (tensi) {
-            ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
-	    for (p0=dXi,p2=dXi+1;pw<wo;p0++,p2++,ps++,psi++,pw++,pwi++,pli++,pl++) {
-	      *pwi = *pw * *p0;*psi = *ps * *p0;*pli = *pl * *p2;
-	    }  
-            *pwi = *pw * *p0;
-	  } else if (tensj) {
-            ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
-	    for (p1=dXj,p3=dXj+1;pw<wo;p3++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++) {
-	      *pwi = *pw * *p1;*psi = *ps * *p3;*pli = *pl * *p1;
-	    }  
-            *pwi = *pw * *p1;
-	  }  else {
-	    //wi=w;wsi = ws;wli = wl;
-	    ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
-	    for (p1=dXj,p3=dXj+1;pw<wo;p3++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++) {
-	      *pwi = *pw;*psi = *ps;*pli = *pl;
-	    }  
-            *pwi = *pw;
-	  }  
-         
-	} else { /* not tri */
-	  wi = work; work += ii;
-	  if (tensi&&tensj) for (p0=wi,wo=wi + ii,p1=w,p2=dXi,p3=dXj;p0<wo;p0++,p1++,p2++,p3++) *p0 = *p1 * *p2 * *p3;
-	  else if (tensi) for (p0=wi,wo=wi + ii,p1=w,p2=dXi;p0<wo;p0++,p1++,p2++) *p0 = *p1 * *p2;
-	  else if (tensj) for (p0=wi,wo=wi + ii,p1=w,p3=dXj;p0<wo;p0++,p1++,p3++) *p0 = *p1 * *p3;
-	  else for (p0=wi,wo=wi + ii,p1=w;p0<wo;p0++,p1++) *p0 = *p1;
-	}
-	/* form C or D using sparse matrix accumulation of \bar W */
-	//Rprintf("indReduce (%d,%d) r=%d c=%d",tensi,tensj,r,c);
-	if (rfac) indReduce(Ki,Kj,wi,tri,&ii,ht,sm,SMstack,C,X+off[jm],mim,p[jm],mjm,0,worki,1);
-	else indReduce(Ki,Kj,wi,tri,&ii,ht,sm,SMstack,D,X+off[im],mjm,p[im],mim,1,worki,1);
+	  } else { /* not tri */
+	    wi = work; work += ii;
+	    if (tensi&&tensj) for (p0=wi,wo=wi + ii,p1=w,p2=dXi,p3=dXj;p0<wo;p0++,p1++,p2++,p3++) *p0 = *p1 * *p2 * *p3;
+	    else if (tensi) for (p0=wi,wo=wi + ii,p1=w,p2=dXi;p0<wo;p0++,p1++,p2++) *p0 = *p1 * *p2;
+	    else if (tensj) for (p0=wi,wo=wi + ii,p1=w,p3=dXj;p0<wo;p0++,p1++,p3++) *p0 = *p1 * *p3;
+	    else for (p0=wi,wo=wi + ii,p1=w;p0<wo;p0++,p1++) *p0 = *p1;
+	  }
+	  /* form C or D using sparse matrix accumulation of \bar W */
+	  //Rprintf("indReduce (%d,%d) r=%d c=%d",tensi,tensj,r,c);
+	  if (rfac) indReduce(Ki,Kj,wi,tri,&ii,ht,sm,SMstack,C,X+off[jm],mim,p[jm],mjm,0,worki,1);
+	  else indReduce(Ki,Kj,wi,tri,&ii,ht,sm,SMstack,D,X+off[im],mjm,p[im],mim,1,worki,1);
+        } else if (rfac) { /* not worth using sparse methods (overhead too high) use direct accumulation */
+          for (q=0;q<p[jm];q++) { 
+	    Cq = C + q * mim;Xj = X + off[jm] + q * mjm; /* qth cols of C and X */ 
+	    if (tensi&&tensj) { /* X_i and X_j are tensors */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl,p0=dXi,p1=dXj,p2=dXi+1,p3=dXj+1;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++,p0++,p1++,p2++,p3++) {
+		    Cq[*Kik] += *p0 * (*ps * *p3 * Xj[*Kjk1] + *pw * *p1 * Xj[*Kjk]);
+		    Cq[*Kik1] += *pl * *p2 * *p1 * Xj[*Kjk];
+		  }
+		  Cq[*Kik] += *pw * *p0 * *p1 * Xj[*Kjk];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Cq[*Kik] += *p0 * *p2 * *p3 * Xj[*Kjk];
+	    } else if (tensi) { /* only X_i is tensor */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl,p0=dXi,p2=dXi+1;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++,p0++,p2++) {
+		    Cq[*Kik] += *p0 * (*ps * Xj[*Kjk1] + *pw  * Xj[*Kjk]);
+		    Cq[*Kik1] += *pl * *p2 * Xj[*Kjk];
+		  }
+		  Cq[*Kik] += *p0 * *pw * Xj[*Kjk];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Cq[*Kik] += *p0 * *p2  * Xj[*Kjk];
+	    } else if (tensj) { /* only X_j is tensor */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl,p1=dXj,p3=dXj+1;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++,p1++,p3++) {
+		    Cq[*Kik] += *ps * *p3 * Xj[*Kjk1] + *pw * *p1 * Xj[*Kjk];
+		    Cq[*Kik1] += *pl * *p1 * Xj[*Kjk];
+		  }
+		  Cq[*Kik] += *pw * *p1 * Xj[*Kjk];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Cq[*Kik] += *p0 * *p3 * Xj[*Kjk];
+	    } else { /* both singletons */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,pw++,pl++,ps++) {
+		    Cq[*Kik] += *ps * Xj[*Kjk1] + *pw * Xj[*Kjk];
+		    Cq[*Kik1] += *pl * Xj[*Kjk];
+		  }
+		  Cq[*Kik] +=  *pw * Xj[*Kjk]; 
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Cq[*Kik] += *p0 * Xj[*Kjk];
+	    }
+	  } /* q loop */
+	} else { /* direct accumulation of left factor D (mjm by p[im]) = \bar W' X_i */
+          for (q=0;q<p[im];q++) {
+	      Dq = D + q * mjm;Xi = X + off[im] + q * mim; /* qth cols of C and Xi */ 
+	      if (tensi&&tensj) { /* X_i and X_j are tensors */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl,p0=dXi,p1=dXj,p2=dXi+1,p3=dXj+1;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++,p0++,p1++,p2++,p3++) {
+		    Dq[*Kjk] += *p1 * (*p2 * *pl * Xi[*Kik1] + *p0 * *pw * Xi[*Kik]);
+		    Dq[*Kjk1] += *ps * *p0 * *p3 * Xi[*Kik];
+		  }
+		  Dq[*Kjk] += *p1 * *p0 * *pw * Xi[*Kik];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p2++,p3++) Dq[*Kjk] += *p0 * *p2 * *p3 * Xi[*Kik];
+	      } else if (tensi) { /* only X_i is tensor */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl,p0=dXi,p2=dXi+1;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++,p0++,p2++) {
+		    Dq[*Kjk] += *pl * *p2  * Xi[*Kik1] + *pw * *p0 * Xi[*Kik];
+		    Dq[*Kjk1] += *ps * *p0  * Xi[*Kik];
+		  }
+		  Dq[*Kjk] += *pw * *p0 * Xi[*Kik];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p2=dXi;p0<p1;p0++,Kik++,Kjk++,p2++) Dq[*Kjk] += *p0 * *p2  * Xi[*Kik];
+	      } else if (tensj) { /* only X_j is tensor */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl,p1=dXj,p3=dXj+1;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++,p1++,p3++) {
+		    Dq[*Kjk] += *p1  * ( *pl * Xi[*Kik1] + *pw * Xi[*Kik]);
+		    Dq[*Kjk1] += *ps * *p3 * Xi[*Kik];
+		  }
+		  Dq[*Kjk] += *p1  * *pw * Xi[*Kik];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n,p3=dXj;p0<p1;p0++,Kik++,Kjk++,p3++) Dq[*Kjk] += *p0 * *p3 * Xi[*Kik];
+	      } else { /* both singletons */
+		if (tri) {
+		  for (Kik=Ki,Kjk=Kj,Kjk1=Kj+1,Kik1=Ki+1,ps=ws,pw=w,pw1=w+n-1,pl=wl;pw<pw1;
+		       Kik++,Kik1++,Kjk++,Kjk1++,ps++,pw++,pl++) {
+		    Dq[*Kjk] += *pl  * Xi[*Kik1] + *pw * Xi[*Kik];
+		    Dq[*Kjk1] += *ps  * Xi[*Kik];
+		  }
+		  Dq[*Kjk] +=  *pw * Xi[*Kik];
+		} else for (Kik=Ki,Kjk=Kj,p0=w,p1=w+n;p0<p1;p0++,Kik++,Kjk++) Dq[*Kjk] += *p0 * Xi[*Kik];
+	      }
+	  } /* q loop */
+	} /* direct  accumulation of D */
       }
     } /* end of summation convention loop */
 	if (acc_w) { /* form X_im' \bar W X_j from \bar W */
