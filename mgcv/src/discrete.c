@@ -741,7 +741,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
 
 */
   int si,sj,ri,rj,jm,im,kk,ddt,ddtj,koff,*K,*Ki,*Kj,pim,pjm,
-    ii,jj,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,*Kjk,*Kik1,*Kjk1,q;
+    ii,jj,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,*Kjk,*Kik1,*Kjk1,*Kjl1,q;
   ptrdiff_t mim,mjm; /* avoid integer overflow in large pointer calculations */ 
   double x,*wl,*dXi,*dXj,*pdXj,*Xt,*Xi,*Xj,done=1.0,dzero=0.0,*Cq,*Dq,
     *C,*D,*W,*wb,*p0,*p1,*p2,*p3,*pw,*pw1,*pl,*ps,*wi,*wsi,*wli,*wo,*psi,*pwi,*pli;
@@ -754,32 +754,54 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
   mim = (ptrdiff_t) m[im];
   /* Allocate work space for dXi(n), dXj(n) and initialze pdXj*/
   dXi = work;work += n;pdXj = dXj = work;work += n;
-  if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense - NOTE: what if there was a summation convention term in this case? */
+  if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense  */
     jm = ts[j];
     mjm = (ptrdiff_t) m[jm];
     pim = p[im];pjm = p[jm];
-    for (ii=0;ii<pim;ii++) {
-      Xi = X + off[im] + mim * ii;
-      if (i==j) for (jj=ii;jj<pjm;jj++) { /* symmetric case */
-	Xj = X + off[jm] + mjm * jj;  
-	if (tri) {
-	  x = Xi[0]*(Xj[0]*w[0]+Xj[1]*ws[0]);
-	  for (kk=1;kk<n-1;kk++) x += Xi[kk]*(wl[kk-1]*Xj[kk-1] + w[kk]*Xj[kk] + ws[kk]*Xj[kk+1]);
-          x += Xi[n-1]*(wl[n-2]*Xj[n-2]+w[n-1]*Xj[n-1]);				   
-	} else for (x=0.0,p2=Xi,p3=Xj,p0=w,p1=w+n;p0<p1;p0++,p2++,p3++) x += *p0 * *p2 * *p3;
+    sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
+    for (ii=0;ii<pim;ii++) for (jj=0;jj<pjm;jj++)  XWX[ii + (ptrdiff_t)nxwx * jj] = 0.0;   
+    for (s=0;s<si;s++) for (t=0;t<sj;t++) {
+      Ki = k + (ks[im]+s) * n; /* index for i */
+      Kj = k + (ks[jm]+t) * n; /* index for j */
+      for (ii=0;ii<pim;ii++) {
+        Xi = X + off[im] + mim * ii;
+        if (i==j) for (jj=ii;jj<pjm;jj++) { /* symmetric case */
+  	  Xj = X + off[jm] + mjm * jj;  
+	  if (tri) {
+	    Kik = Ki;Kjk = Kj;Kjk1 = Kj+1;pw=w;ps=ws;pl=wl;
+	    x = Xi[*Kik]*(Xj[*Kjk] * *pw + Xj[*Kjk1] * *ps);
+	    ps++;pw++;Kjl1=Kj;Kjk++;Kik++;Kjk1++;p0 = w + n-1;
+            for (;pw < p0;ps++,pw++,pl++,Kik++,Kjk++,Kjk1++,Kjl1++) x += Xi[*Kik]*(*pl * Xj[*Kjl1] + *pw * Xj[*Kjk] + *ps * Xj[*Kjk1]);
+            x += Xi[*Kik]*(*pl * Xj[*Kjl1] + *pw * Xj[*Kjk]);
+	    //x = Xi[0]*(Xj[0]*w[0]+Xj[1]*ws[0]);
+	    //for (kk=1;kk<n-1;kk++) x += Xi[kk]*(wl[kk-1]*Xj[kk-1] + w[kk]*Xj[kk] + ws[kk]*Xj[kk+1]);
+            //x += Xi[n-1]*(wl[n-2]*Xj[n-2]+w[n-1]*Xj[n-1]);				   
+	  } else for (x=0.0,Kik=Ki,Kjk=Kj,pw=w,p0=w +n;pw<p0;Kik++,Kjk++,pw++) x += *pw * Xi[*Kik] * Xj[*Kjk];
+	  //for (x=0.0,p2=Xi,p3=Xj,p0=w,p1=w+n;p0<p1;p0++,p2++,p3++) x += *p0 * *p2 * *p3;
 	  //for (x=0.0,kk=0;kk<n;kk++) x += Xi[kk]*Xj[kk]*w[kk];
-	XWX[jj + (ptrdiff_t) nxwx * ii] = XWX[ii + (ptrdiff_t) nxwx * jj] = x;
-      }	else for (jj=0;jj<pjm;jj++) {
-        Xj = X + off[jm] + mjm * jj;  
-	if (tri) {
-	  x = Xi[0]*(Xj[0]*w[0]+Xj[1]*ws[0]);
-	  for (kk=1;kk<n-1;kk++) x += Xi[kk]*(wl[kk-1]*Xj[kk-1] + w[kk]*Xj[kk] + ws[kk]*Xj[kk+1]);
-          x += Xi[n-1]*(wl[n-2]*Xj[n-2]+w[n-1]*Xj[n-1]);				   
-	} else for (x=0.0,p2=Xi,p3=Xj,p0=w,p1=w+n;p0<p1;p0++,p2++,p3++) x += *p0 * *p2 * *p3;
+	  XWX[jj + (ptrdiff_t) nxwx * ii] = XWX[ii + (ptrdiff_t) nxwx * jj] += x;
+        } else for (jj=0;jj<pjm;jj++) {
+          Xj = X + off[jm] + mjm * jj;
+	  if (tri) {
+	    Kik = Ki;Kjk = Kj;Kjk1 = Kj+1;pw=w;ps=ws;pl=wl;
+	    x = Xi[*Kik]*(Xj[*Kjk] * *pw + Xj[*Kjk1] * *ps);
+	    ps++;pw++;Kjl1=Kj;Kjk++;Kik++;Kjk1++;p0 = w + n-1;
+            for (;pw < p0;ps++,pw++,pl++,Kik++,Kjk++,Kjl1++,Kjk1++) x += Xi[*Kik]*(*pl * Xj[*Kjl1] + *pw * Xj[*Kjk] + *ps * Xj[*Kjk1]);
+            x += Xi[*Kik]*(*pl * Xj[*Kjl1] + *pw * Xj[*Kjk]);
+	    //x = Xi[0]*(Xj[0]*w[0]+Xj[1]*ws[0]);
+	    //for (kk=1;kk<n-1;kk++) x += Xi[kk]*(wl[kk-1]*Xj[kk-1] + w[kk]*Xj[kk] + ws[kk]*Xj[kk+1]);
+            //x += Xi[n-1]*(wl[n-2]*Xj[n-2]+w[n-1]*Xj[n-1]);				   
+	  } else for (x=0.0,Kik=Ki,Kjk=Kj,pw=w,p0=w +n;pw<p0;Kik++,Kjk++,pw++) x += *pw * Xi[*Kik] * Xj[*Kjk];
+	  //if (tri) {
+	  //  x = Xi[0]*(Xj[0]*w[0]+Xj[1]*ws[0]);
+	  //  for (kk=1;kk<n-1;kk++) x += Xi[kk]*(wl[kk-1]*Xj[kk-1] + w[kk]*Xj[kk] + ws[kk]*Xj[kk+1]);
+          //  x += Xi[n-1]*(wl[n-2]*Xj[n-2]+w[n-1]*Xj[n-1]);				   
+	  //} else for (x=0.0,p2=Xi,p3=Xj,p0=w,p1=w+n;p0<p1;p0++,p2++,p3++) x += *p0 * *p2 * *p3;
 	  //for (x=0.0,kk=0;kk<n;kk++) x += Xi[kk]*Xj[kk]*w[kk];
-	XWX[ii + (ptrdiff_t)nxwx * jj] = x;
-      }	  
-    }
+	  XWX[ii + (ptrdiff_t)nxwx * jj] += x;
+        }	  
+      }
+    }  
   } else if (!tri && i==j && si==1) {/* simplest setup - just accumulate diagonal */
     /* note that if you turn this branch off in debugging then i==j case is forced to general
        code, which does NOT handle fact that only upper triangular blocks computed!! */
