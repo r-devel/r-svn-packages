@@ -1912,6 +1912,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## results from cluster nodes). If 'NA' then is set to max(1,length(cluster)).
 { control <- do.call("gam.control",control)
   if (control$trace) t3 <- t2 <- t1 <- t0 <- proc.time()
+  if (length(nthreads)==1) nthreads <- rep(nthreads,2)
   if (is.null(G)) { ## need to set up model!
     if (is.character(family))
             family <- eval(parse(text = family))
@@ -1919,7 +1920,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             family <- family()
     if (is.null(family$family))
             stop("family not recognized")
-    if (length(nthreads)==1) nthreads <- rep(nthreads,2)
+    
 
     if (inherits(family,"general.family")) stop("general families not supported by bam")
     

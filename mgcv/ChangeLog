@@ -15,12 +15,12 @@ Issues:
 present, and reparameterization needs checking (also for bam). 
 
 * OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
-  cause problems when opemmp multithreading.   
+  cause problems when opemmp multithreading.
 
 1.8-25
 
-** bam(...,discrete=TRUE) methods improved. Cross products now faster and 
-  parallel code makes better use of BLAS. 
+** bam(...,discrete=TRUE) methods improved. Cross products now usually faster 
+   (can be much faster) and code can now make better use of optimised BLAS. 
 
 * fix to 'fs' smooth.construct method and smooth2random method, to allow
   constructor to be called without a "gamm" atribute set on the smooth spec

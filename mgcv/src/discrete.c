@@ -722,6 +722,93 @@ void XWXd(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n,
 
 
 
+ptrdiff_t XWXijspace(int i,int j,int r,int c,int *k, int *ks, int *m, int *p,int nx,int n,int *ts, int *dt,int nt, int tri) {
+/*  computes working memory requirement of XWXijs for given block - called by XWXspace below
+*/
+  int si,sj,ri,rj,jm,im,kk,ddtj,
+    ii,rfac,ddti,tensi,tensj,acc_w,alpha;
+  ptrdiff_t nwork=0,mim,mjm; /* avoid integer overflow in large pointer calculations */ 
+  si = ks[ts[i]+nx]-ks[ts[i]]; /* number of terms in summation convention for i */
+  /* compute number of columns in dXi/ number of rows of blocks in product */
+  for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
+  im = ts[i]+dt[i]-1; /* the index of the final marginal for term i */
+  mim = (ptrdiff_t) m[im];
+  /* Allocate work space for dXi(n), dXj(n) and initialze pdXj*/
+  nwork += 2*n;
+  //dXi = work;work += n;pdXj = dXj = work;work += n;
+  if (dt[i]==1&&dt[j]==1&&m[ts[i]]==n&&m[ts[j]]==n) { /* both sub matrices are dense  */
+    // no allocation
+  } else if (!tri && i==j && si==1) {/* simplest setup - just accumulate diagonal */ 
+    /* Allocate space for wb(m[im]), wbs and wbl*/
+    nwork += mim;
+    //wb = work; work += mim;// wbs = work; work += m[i]; wbl = work; work += m[i];
+    				  
+  } else { /* general case */
+    sj = ks[ts[j]+nx]-ks[ts[j]]; /* number of terms in summation convention for j */
+    for (rj=1,kk=ts[j];kk<ts[j]+dt[j]-1;kk++) rj *= p[kk];
+    jm = ts[j]+dt[j]-1; /* the index of the final marginal for term j */
+    ddti = dt[i]-1;ddtj = dt[j]-1; /* number of marginals excluding final */
+    if (ddti) tensi = 1; else tensi = 0; /* is term i a tensor? */
+    if (ddtj) tensj = 1; else tensj = 0;
+    mjm = (ptrdiff_t) m[jm];
+   
+    if (n>mjm*mim) acc_w = 1; else acc_w = 0; /* accumulate \bar W or \bar W X_j / \bar W'X_i)? */ 
+    if (acc_w) {
+      if (p[im]*mim*mjm + p[im]*p[jm]*mjm > mim*mjm*p[jm] + p[im]*p[jm]*mim) rfac=0; else rfac=1;
+      /* Allocate storage for W (mim*mjm) */
+      nwork += mim*mjm;
+      //W = work; work += mim*mjm;
+    } else {
+      /* now establish whether to form left product, D, or right product C */
+      if (tensi) ii = 2; else ii = 1;if (tensj) ii++;
+      if (tri) alpha = ii*3 + 3; else alpha = ii + 1; /* ~ ops per iteration of accumulation loop */ 
+      if (alpha*si*sj*n*p[im]+mjm*p[im]*p[jm]<alpha*si*sj*n*p[jm]+mim*p[im]*p[jm]) rfac = 0; else rfac=1; //rfac = 1; 
+      if (mim == n) rfac = 0; else if (mjm == n) rfac = 1; /* make absolutely sure we do not form n by p*m product */
+     
+    } /* end of accumulation storage allocation */
+    
+    if (rfac) {
+      /* Allocate storge for C mim by p[jm] */
+      nwork +=  mim * p[jm];
+      //C = work; work += mim * p[jm];
+    } else {
+      /* Allocate storage for D mjm by p[im] */
+      nwork += mjm * p[im];
+      //D = work; work += mjm * p[im]; 
+    }	
+    if (!acc_w &&((rfac && p[jm]>15)||(!rfac && p[im]>15))) {
+	if (tri) nwork += 3*n; else nwork += n;
+    }
+  }        
+  return(nwork);
+} /* XWXijspace */  
+
+ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, int *m, int *p,int *pt,int *pd,int nx,int n,int *ts, int *dt,int nt, int tri) {
+/* Tedious routine to evaluate workspace requirment of XWXijs. Basically does a dummy run through the 
+   blocks computing the memory requirement for each and recording the maximum used.
+   Avoids over allocating. 
+*/
+  int j,kk,kb,i,rb,cb,rt,ct,r,c;
+  ptrdiff_t nn,nmax=0;
+  for (j=0;j<sb[N];j++) { /* the block loop */
+    kk = b[j];kb=B[kk];
+    //while (kk>=sb[kb+1]) kb++; /* kb is main block */
+    rb = R[kb];cb=C[kb]; /* set up allows blocks to be computed in any order by re-arranging B */
+    i = kk - sb[kb]; /* sub-block index */
+    rt = pt[rb]/pd[rb]; ct = pt[cb]/pd[cb]; /* total rows and cols of sub-blocks */
+    /* compute sub-row and column */
+    if (sb[kb+1]-sb[kb]<rt*ct) { /* symmetric upper half only needed */ 
+      r=0; while (i >= rt - r) { i -= rt - r;r++;}
+      c = i + r;
+    } else {
+      r = i / ct;
+      c = i % ct;
+    }
+    nn = XWXijspace(rb,cb,r,c,k,ks,m,p,nx,n,ts, dt,nt,tri);
+    if (nmax<nn) nmax=nn;
+  }
+  return(nmax);
+} /*XWXspace*/
 
 void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int *m, int *p,int nx,int n,int *ts, int *dt,
 	    int nt, double *w,double *ws, int tri,ptrdiff_t *off,double *work,int *worki,int nxwx,unsigned long long *ht,SM **sm,SM * SMstack) {
@@ -950,9 +1037,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
         if ((rfac && p[jm]>15)||(!rfac && p[im]>15)) { 
 	  ii = n; /* will contain compressed index length after indReduce call */
 	  if (tri) {
-	    wi = work;work += ii;
-	    wsi = work;work += ii;
-	    wli = work;work += ii;
+	    wi = work;wsi = work+ii;wli = work+2*ii; /* do not increment work - inside s,t, loop!! */
 	    if (tensi&&tensj) {
 	      ps=ws;pw=w;pl=wl;pwi = wi;psi=wsi;pli=wli;wo=w+ii-1; 
 	      for (p0=dXi,p1=dXj,p2=dXi+1,p3=dXj+1;pw<wo;p0++,p1++,ps++,psi++,pw++,pwi++,pli++,pl++,p2++,p3++) {
@@ -980,7 +1065,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
               *pwi = *pw;
 	    }  
 	  } else { /* not tri */
-	    wi = work; work += ii;
+	    wi = work; /* do not increment work - inside s,t, loop!! */
 	    if (tensi&&tensj) for (p0=wi,wo=wi + ii,p1=w,p2=dXi,p3=dXj;p0<wo;p0++,p1++,p2++,p3++) *p0 = *p1 * *p2 * *p3;
 	    else if (tensi) for (p0=wi,wo=wi + ii,p1=w,p2=dXi;p0<wo;p0++,p1++,p2++) *p0 = *p1 * *p2;
 	    else if (tensj) for (p0=wi,wo=wi + ii,p1=w,p3=dXj;p0<wo;p0++,p1++,p3++) *p0 = *p1 * *p3;
@@ -1106,7 +1191,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    Requires XWX to be over-sized on entry - namely n.params + n.terms by n.params + n.terms instead of
    n.params by n.params.
 */   
-  int *pt, *pd,i,q,j,si,maxm=0,maxp=0,maxmp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki;
+  int *pt, *pd,i,q,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki;
   ptrdiff_t *off,*voff,mmp;
   double *work,*ws,*Cost,*cost,*x0,*x1,*p0,*p1,*p2,x;
   unsigned long long ht[256];
@@ -1127,8 +1212,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
       if (j==dt[i]-1) pd[i] = p[q]; /* the relevant dimension for deciding product ordering */
       off[q+1] = off[q] + p[q] * (ptrdiff_t) m[q]; /* submatrix start offsets */
       if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
-      if (maxm<m[q] && m[q] < *n) maxm=m[q]; /* most rows of a non-dense sub-matrix */
-      if (maxmp<p[q]) maxmp=p[q];
+      //if (maxm<m[q] && m[q] < *n) maxm=m[q]; /* most rows of a non-dense sub-matrix */
+      //if (maxmp<p[q]) maxmp=p[q];
     } 
     if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else voff[i+1] = voff[i]; /* start of ith v vector */
     if (maxp<pt[i]) maxp=pt[i];
@@ -1136,9 +1221,10 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
     tpsu[i+1] = tpsu[i] + pt[i]; /* where ith term starts in unconstrained param vector */ 
   }
-  qi = 6 * *n; /* interger work space */
-  q = 6 * *n + maxm + maxm * maxmp; /* note that we never allocate a W accumulation matrix with more than n elements */
-  work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double));
+  qi = 6 * *n; /* integer work space */
+  // maxm and maxmp only used here...
+  //q = 6 * *n + maxm + maxm * maxmp; /* note that we never allocate a W accumulation matrix with more than n elements */
+  //work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double));
   worki = (int *)CALLOC((size_t)qi * *nthreads,sizeof(int));
   mmp = maxp;mmp = mmp*mmp;
   ptot = tps[*nt]; /* total number of parameters */
@@ -1192,7 +1278,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     B[i] = kb; 
   }  
   revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
-
+  q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,tri); /* compute the maximum workspace required per thread */
+  work = (double *)CALLOC((size_t)q * *nthreads,sizeof(double)); /* allocate it */
   /* In what follows rb and cb are the whole term row column indices. r and c are the sub blocks within 
      the cross-product between two terms. The sub blocks arise when we have tensor product terms. The cleaner 
      design in which the sub-blocks are dealt with in XWXij does not load balance so well, hence this design.*/ 
@@ -1268,5 +1355,5 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   up2lo(XWX,ptot); /* copy upper triangle to lower */
   
   FREE(pt);FREE(pd);FREE(off);FREE(voff);FREE(tps);FREE(tpsu);FREE(work); if (tri) FREE(ws);//FREE(xwx);FREE(xwx0);
-  FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(sm);FREE(SMstack);
+  FREE(B);FREE(R);FREE(C);FREE(sb);FREE(Cost);FREE(cost);FREE(b);FREE(sm);FREE(SMstack);FREE(worki);
 } /* XWXd0 */ 
