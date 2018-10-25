@@ -1191,8 +1191,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    Requires XWX to be over-sized on entry - namely n.params + n.terms by n.params + n.terms instead of
    n.params by n.params.
 */   
-  int *pt, *pd,i,q,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki;
-  ptrdiff_t *off,*voff,mmp;
+  int *pt, *pd,i,j,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tps,*tpsu,ptot,*b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki;
+  ptrdiff_t *off,*voff,mmp,q;
   double *work,*ws,*Cost,*cost,*x0,*x1,*p0,*p1,*p2,x;
   unsigned long long ht[256];
   SM **sm,*SMstack;
@@ -1241,8 +1241,8 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
        ws is the super diagonal and ws + n - 1 is the sub-diagonal. */
     tri = 1;
   } else tri = 0;
-  sm = (SM **)CALLOC((size_t) *n * *nt,sizeof(SM *));
-  SMstack = (SM *)CALLOC((size_t) 3 * *n * *nt,sizeof(SM));
+  sm = (SM **)CALLOC((size_t) *n * *nthreads,sizeof(SM *));
+  SMstack = (SM *)CALLOC((size_t) 3 * *n * *nthreads,sizeof(SM));
   N = ((*nt + 1) * *nt)/2; B = (int *) CALLOC((size_t)N,sizeof(int));
   C = (int *) CALLOC((size_t)N,sizeof(int)); R = (int *) CALLOC((size_t)N,sizeof(int));
   sb = (int *) CALLOC((size_t)N+1,sizeof(int)); /* at which sub-block does block start */
@@ -1306,13 +1306,12 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     tid = omp_get_thread_num(); /* needed for providing thread specific work space to XWXij */
     #endif
     XWXijs(XWX+tpsu[rb] +  (ptrdiff_t) nxwx * tpsu[cb],rb,cb,r,c,X,k,ks,m,p,*nx,*n,ts, dt,*nt,w,ws,
-	   tri,off,work + tid * (ptrdiff_t) q,worki + tid * (ptrdiff_t) qi,nxwx,ht,
+	   tri,off,work + tid * q,worki + tid * (ptrdiff_t) qi,nxwx,ht,
 	   sm + tid * (ptrdiff_t) *n,SMstack + 3 * tid * (ptrdiff_t) *n ); /* compute r,c block */
     /* NOTE: above will write directly to oversized XWX, then have constraints applied post-hoc. */ 
   } /* block loop */
 
   /* now XWX contains the unconstrained X'WX, but the constraints have to be applied to blocks involving tensor products */
-  //Rprintf("\ncleaning up!\n");
   for (r=0;r < *nt;r++) for (c=r;c< *nt;c++) {
     /* if Xr is tensor, may need to apply constraint */
     if (dt[r]>1&&qc[r]>0) { /* first term is a tensor with a constraint */
