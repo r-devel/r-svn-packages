@@ -165,6 +165,7 @@ maxSE(f, SE.f,
   R package version 1.9.7.% moved to Bioconductor sometime after 2006
   % Martin Morgan (2018-10-15): Last change was in 2011
   % URL <= ~2018: \url{http://home.swipnet.se/pibroberg/expression_hemsida1.html}
+  \url{http://www.bioconductor.org/packages/release/bioc/html/SAGx.html}
 }
 \author{
   This function is originally based on the functions \code{gap} of
