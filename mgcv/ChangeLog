@@ -17,6 +17,10 @@ present, and reparameterization needs checking (also for bam).
 * OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
   cause problems when opemmp multithreading.
 
+1.8-26
+
+* LINPACK dependency removed.
+
 1.8-25
 
 ** bam(...,discrete=TRUE) methods improved. Cross products now usually faster 
