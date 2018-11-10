@@ -21,6 +21,9 @@ present, and reparameterization needs checking (also for bam).
 
 * LINPACK dependency removed.
 
+* Added service routine chol.down to down date a Cholesky factor on row/col
+  deletion.
+
 1.8-25
 
 ** bam(...,discrete=TRUE) methods improved. Cross products now usually faster 

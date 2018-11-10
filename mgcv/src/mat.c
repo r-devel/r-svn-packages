@@ -1710,6 +1710,86 @@ void dchol(double *dA, double *R, double *dR,int *p) {
 } /* dchol */
 
 
+
+void mgcv_chol_down(SEXP r,SEXP ru,SEXP N,SEXP K, SEXP UT) {
+/* wrapper for calling chol_down using .Call */
+  double *R,*Rup;
+  int *n,*k,*ut;
+  R = REAL(r);Rup=REAL(ru);
+  n = INTEGER(N);
+  k = INTEGER(K);
+  ut = INTEGER(UT);
+  chol_down(R,Rup,n,k,ut);
+}
+
+void chol_down(double *R,double *Rup, int *n,int *k,int *ut) {
+/* R is an n by n choleski factor of an n by n matrix A. We want the downdated
+   factor for A[-k,-k] returned in n-1 by n-1 matrix Rup. 
+   If ut!=0 then R'R = A, with R and Rup upper triangular. 
+   Otherwise RR'=A, with R and Rup lower triangular. The latter update 
+   is more Cache friendly, since the update is then from the right and operates 
+   columnwise. Calls from R should ideally be made from a wrapper called from 
+   .Call, since otherwise copying can be the dominant cost. 
+
+   Currently called directly with .C for accuracy testing. Assumes Rup zeroed on entry.
+*/
+  int i,j,n1;
+  double x,*Ri1,*Ri,*Rj,c,s,*Re,*ca,*sa,*sp,*cp;
+  n1 = *n-1;
+  if (*ut) { /* upper trianglar col oriented computation */
+      ca = R + 2;sa = ca + *n; /* Givens storage */
+      for (i=0;i<n1;i++) { /* work across columns */
+	Ri = Rup + i * n1; /* destination column */
+	if (i < *k) {
+	  Rj = R + i * *n;
+	  Re = Rj + i;
+	} else {
+	  Rj = R + (i+1) * *n; /* source column */
+	  Re = Rj + *k;
+        }
+	for (;Rj<=Re;Ri++,Rj++) *Ri=*Rj; /* copy column starts */
+	/* now the updates */
+	if (i >= *k) { /* cols from beyond dropped col k need updating */
+          /* first the stored rotations */
+          Re = Rup + i * n1 + i;
+	  Ri1=Ri;Ri--;
+	  for (cp=ca,sp=sa;Ri<Re;cp++,sp++,Ri++,Ri1++,Rj++) {
+            *Ri1 = - *sp * *Ri  + *cp * *Rj;
+            *Ri = *cp * *Ri + *sp * *Rj;
+	  }  
+	  /* Now the final rotation */
+	  x = sqrt(*Ri * *Ri + *Rj * *Rj);
+          c = *Ri / x; s = *Rj / x;*Ri = x;
+	  if (i<n1-1) { *cp = c;*sp=s;} /* store rotation */
+	}  
+      }
+      /* now clear Givens storage */
+      Re = R + *n;
+      for (;ca<Re;ca++,sa++) *ca = *sa = 0.0;
+  } else { /* lower triangular */
+    /* First copy the input rows before row k */
+    for (i=0;i< *k;i++) {
+      for (Ri=Rup+i*n1,Rj=R+i * *n,Re=Ri+*k;Ri<Re;Ri++,Rj++) *Ri = *Rj;
+    }
+    /* now copy cols 0:k from row k+1 */
+    for (i=0;i<=*k;i++) {
+      for (Ri=Rup+i*n1,Re=Ri+n1,Ri+= *k,Rj=R+i * *n+ *k+1;Ri<Re;Ri++,Rj++) *Ri = *Rj;
+    }
+    for (i = *k;i<n1;i++) { /* work down diagonal */
+      Ri = Rup + i  + i * n1; /* rotate into here */
+      Rj = R + (i+1) + (i+1) * *n;  /* zeroing this */
+      x = sqrt(*Ri * *Ri + *Rj * *Rj);
+      c = *Ri / x; s = *Rj / x;*Ri = x;
+      Rj++;Ri++;Ri1=Ri+n1;Re = Rup + (i+1) * n1;
+      for (;Ri<Re;Rj++,Ri++,Ri1++) {
+	*Ri1 = -s * *Ri  + c * *Rj;
+        *Ri = c * *Ri + s * *Rj;
+      }     
+    }  
+  }  
+ 
+} /* chol_down */  
+
 void mgcv_chol(double *a,int *pivot,int *n,int *rank)
 /* a stored in column order, this routine finds the pivoted choleski decomposition of matrix a 
    library(mgcv)
