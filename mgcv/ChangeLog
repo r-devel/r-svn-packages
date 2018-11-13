@@ -24,6 +24,9 @@ present, and reparameterization needs checking (also for bam).
 * Added service routine chol.down to down date a Cholesky factor on row/col
   deletion.
 
+* liu2 messed up vectorization fix to stop vector being checked for 
+  equality to zero.
+
 1.8-25
 
 ** bam(...,discrete=TRUE) methods improved. Cross products now usually faster 
