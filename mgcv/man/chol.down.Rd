@@ -1,12 +1,12 @@
-\name{chol.down}
-\alias{chol.down}
+\name{choldrop}
+\alias{choldrop}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Down date a Cholesky factor on dropping a row/col}
 \description{Given a Cholesky factor, \code{R}, of a matrix, \code{A}, finds the Cholesky factor of \code{A[-k,-k]},
 where \code{k} is an integer.  
 }
 \usage{
-chol.down(R,k)
+choldrop(R,k)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -30,13 +30,13 @@ Note that the update is vector oriented, and is hence not susceptible to speed u
   A <- crossprod(matrix(runif(n*n),n,n))
   R0 <- chol(A)
   k <- 3
-  Rd <- chol.down(R0,k)
+  Rd <- choldrop(R0,k)
   range(Rd-chol(A[-k,-k]))
   Rd;chol(A[-k,-k])
   
   ## same but using lower triangular factor A = LL'
   L <- t(R0)
-  Ld <- chol.down(L,k)
+  Ld <- choldrop(L,k)
   range(Ld-t(chol(A[-k,-k])))
   Ld;t(chol(A[-k,-k]))
 }

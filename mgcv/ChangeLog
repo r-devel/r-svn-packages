@@ -17,15 +17,21 @@ present, and reparameterization needs checking (also for bam).
 * OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
   cause problems when opemmp multithreading.
 
+* Null deviance igores offset in gam.fit4
+
+1.8-27
+
+* two stage gam/bam fitting now allows 'sp' to be modified. 
+
 1.8-26
 
 * LINPACK dependency removed.
 
-* Added service routine chol.down to down date a Cholesky factor on row/col
+* Added service routine choldrop to down date a Cholesky factor on row/col
   deletion.
 
-* liu2 messed up vectorization fix to stop vector being checked for 
-  equality to zero.
+* liu2 had a check messed up when vectorized. Fix to stop vector being 
+  checked for equality to zero.
 
 1.8-25
 

@@ -2203,6 +2203,16 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf <- G$mf; G$mf <- NULL
     gp <- G$gp; G$gp <- NULL
     na.action <- G$na.action; G$na.action <- NULL
+    if (!is.null(sp)&&any(sp>=0)) { ## request to modify smoothing parameters
+      if (is.null(G$L)) G$L <- diag(length(G$sp))
+      if (length(sp)!=ncol(G$L)) stop('length of sp must be number of free smoothing parameters in original model')
+      ind <- sp>=0 ## which smoothing parameters are now fixed
+      spind <- log(sp[ind]); 
+      spind[!is.finite(spind)] <- -30 ## set any zero parameters to effective zero
+      G$lsp0 <- G$lsp0 + drop(G$L[,ind,drop=FALSE] %*% spind) ## add fix to lsp0
+      G$L <- G$L[,-ind,drop=FALSE] ## drop the cols of G
+      G$sp <- rep(-1,ncol(G$L))
+    }
   } ## end of G setup 
 
   if (!fit) {
