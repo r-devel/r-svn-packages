@@ -1262,6 +1262,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 
 
   ## initial fit
+  initial.lsp <- lsp ## used if edge correcting to set direction of correction
   b<-gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
      offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
      control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
@@ -1627,18 +1628,20 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     REML <- b$REML
     alpha <- if (is.logical(edge.correct)) .02 else abs(edge.correct) ## target RE/ML change per sp
     b1 <- b; lsp1 <- lsp
-    if (length(flat)) for (i in flat) {
-      REML <- b1$REML + alpha
-      while (b1$REML < REML) {
-        lsp1[i] <- lsp1[i] - 1
-        b1 <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
+    if (length(flat)) {
+      step <- as.numeric(initial.lsp - lsp)*2-1
+      for (i in flat) {
+        REML <- b1$REML + alpha
+        while (b1$REML < REML) {
+          lsp1[i] <- lsp1[i] + step[i]
+          b1 <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
               offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=0,
               control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,
               mustart=mustart,scoreType=scoreType,null.coef=null.coef,
               pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...)
+        }
       }
-    }
-   
+    } ## if length(flat) 
     b1 <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
                  offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=2,
                  control=control,gamma=gamma,scale=scale,printWarn=FALSE,start=start,

@@ -21,7 +21,16 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-27
 
+* added routine cholup for rank one modification of Cholesky factor.
+
 * two stage gam/bam fitting now allows 'sp' to be modified. 
+
+* sp.vcov defaults to extracting edge corrected log sp cov matrix, if 
+  gam(...,gam.control(edge.control=TRUE)) used for fitting. 
+
+* gam(...,gam.control(edge.correct=TRUE)) could go into infinite loop if
+  sp was effectively zero. Corrected.
+
 
 1.8-26
 

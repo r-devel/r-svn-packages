@@ -2022,7 +2022,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       spind <- log(sp[ind]); 
       spind[!is.finite(spind)] <- -30 ## set any zero parameters to effective zero
       G$lsp0 <- G$lsp0 + drop(G$L[,ind,drop=FALSE] %*% spind) ## add fix to lsp0
-      G$L <- G$L[,-ind,drop=FALSE] ## drop the cols of G
+      G$L <- G$L[,!ind,drop=FALSE] ## drop the cols of G
       G$sp <- rep(-1,ncol(G$L))
     }
   }
@@ -3851,11 +3851,17 @@ cooks.distance.gam <- function(model,...)
 }
 
 
-sp.vcov <- function(x) {
+sp.vcov <- function(x,edge.correct=TRUE,reg=1e-3) {
 ## get cov matrix of smoothing parameters, if available
   if (!inherits(x,"gam")) stop("argument is not a gam object")
   if (x$method%in%c("ML","P-ML","REML","P-REML","fREML")&&!is.null(x$outer.info$hess)) {
-    return(solve(x$outer.info$hess))
+    hess <- x$outer.info$hess
+    p <- ncol(hess)
+    if (edge.correct&&!is.null(attr(hess,"hess1"))) {
+      V <- solve(attr(hess,"hess1")+diag(p)*reg) 
+      attr(V,"lsp") <- attr(hess,"lsp1")
+      return(V)
+    } else return(solve(hess+reg))
   } else return(NULL)
 }
 

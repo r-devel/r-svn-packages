@@ -2210,7 +2210,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       spind <- log(sp[ind]); 
       spind[!is.finite(spind)] <- -30 ## set any zero parameters to effective zero
       G$lsp0 <- G$lsp0 + drop(G$L[,ind,drop=FALSE] %*% spind) ## add fix to lsp0
-      G$L <- G$L[,-ind,drop=FALSE] ## drop the cols of G
+      G$L <- G$L[,!ind,drop=FALSE] ## drop the cols of G
       G$sp <- rep(-1,ncol(G$L))
     }
   } ## end of G setup 
