@@ -2943,7 +2943,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
           #lpi <- list();pst <- c(pstart,ncol(X)+1)
           #for (i in 1:(length(pst)-1)) lpi[[i]] <- pst[i]:(pst[i+1]-1)
           attr(X,"lpi") <- lpi  
-          ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,
+          ffv <- fam$predict(fam,se.fit,y=response[start:stop],X=X,beta=object$coefficients,
                              off=offs,Vb=object$Vp)
           if (is.matrix(fit)&&!is.matrix(ffv[[1]])) {
             fit <- fit[,1]; if (se.fit) se <- se[,1]
@@ -2970,7 +2970,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             if (se.fit) se[start:stop]<-se[start:stop]*abs(dmu.deta(fit[start:stop])) 
             fit[start:stop] <- linkinv(fit[start:stop])
           } else { ## family has its own prediction code for response case
-            ffv <- fam$predict(fam,se.fit,y=response,X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
+            ffv <- fam$predict(fam,se.fit,y=response[start:stop],X=X,beta=object$coefficients,off=offs,Vb=object$Vp)
             if (is.null(fit1)&&is.matrix(ffv[[1]])) {
               fit1 <- matrix(0,np,ncol(ffv[[1]]))
               if (se.fit) se1 <- fit1

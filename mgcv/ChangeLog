@@ -25,6 +25,9 @@ present, and reparameterization needs checking (also for bam).
 
 * two stage gam/bam fitting now allows 'sp' to be modified. 
 
+* predict.gam could fail with type="response" for families requiring the 
+  response to be provided in this case (e.g. cox.ph). Fixed.
+
 * sp.vcov defaults to extracting edge corrected log sp cov matrix, if 
   gam(...,gam.control(edge.control=TRUE)) used for fitting. 
 
