@@ -1596,7 +1596,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
     
        method <- "REML" ## any method you like as long as it's REML
        G$Sl <- Sl.setup(G) ## prepare penalty sequence
-       ## Xorig <- G$X ## store original X incase it is needed by family - poor option pre=proc can manipulate G$X
+      
        G$X <- Sl.initial.repara(G$Sl,G$X,both.sides=FALSE) ## re-parameterize accordingly
  
        if (!is.null(start)) start <- Sl.initial.repara(G$Sl,start,inverse=FALSE,both.sides=FALSE)
@@ -1690,7 +1690,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   ## extended family may need to manipulate G...
     
   if (!is.null(G$family$preinitialize)) {
-    if (inherits(G$family,"general.family")) eval(G$family$preinitialize) else {
+    if (inherits(G$family,"general.family")) {
+      Gmod <- G$family$preinitialize(G) ## modifies some elements of G
+      for (gnam in names(Gmod)) G[[gnam]] <- Gmod[[gnam]] ## copy these into G  
+    } else {
       ## extended family - just initializes theta and possibly y
       pini <- G$family$preinitialize(G$y,G$family)
       if (!is.null(pini$Theta)) G$family$putTheta(pini$Theta)

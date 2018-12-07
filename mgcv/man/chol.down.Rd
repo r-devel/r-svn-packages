@@ -51,7 +51,7 @@ Golub GH and CF Van Loan (2013) Matrix Computations (4th edition) Johns Hopkins
   ## Rank one update example
   u <- runif(n)
   R <- cholup(R0,u,TRUE)
-  Ru <- chol(A+u %*% t(u)) ## direct for comparison
+  Ru <- chol(A+u \%*\% t(u)) ## direct for comparison
   R;Ru
   range(R-Ru)
 

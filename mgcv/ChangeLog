@@ -21,6 +21,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-27
 
+* preinitialize in general families is now a function, not an expression. See 
+  cox.ph for an example.
+
 * added routine cholup for rank one modification of Cholesky factor.
 
 * two stage gam/bam fitting now allows 'sp' to be modified. 
