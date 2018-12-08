@@ -21,6 +21,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-27
 
+** Added routine 'ginla' for fully Bayesian inference based on an integrated
+  nested Laplace approximation (INLA) approach. See ?ginla.
+
 * preinitialize in general families is now a function, not an expression. See 
   cox.ph for an example.
 
