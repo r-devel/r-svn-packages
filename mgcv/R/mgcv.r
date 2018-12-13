@@ -2030,7 +2030,10 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     }
   }
 
-  if (!fit) return(G)
+  if (!fit) {
+    class(G) <- "gam.prefit"
+    return(G)
+  }  
 
   if (ncol(G$X)>nrow(G$X)) stop("Model has more coefficients than data") 
 

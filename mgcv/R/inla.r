@@ -76,18 +76,22 @@ logf <- function(beta,b,Bi=NULL,Xm=NULL,deriv=0) {
     dd <- -foo$lb
   } else if (inherits(b$family,"extended.family")) {
     theta <- b$family$getTheta()
-    eta <- as.numeric(Xm%*%beta + b$offset)
+    eta <- if (is.null(b$Xd)) as.numeric(Xm%*%beta + b$offset) else Xbd(b$Xd,beta,b$kd,b$ks,b$ts,b$dt,b$v,b$qc,b$drop) + b$offset
     mu <- b$family$linkinv(eta)
     sll <- sum(b$family$dev.resids(b$y,mu,b$prior.weights,theta)) ## deviance
     if (deriv) {
-      dd <- colSums((b$family$mu.eta(eta)*b$family$Dd(b$y,mu,theta,b$prior.weights)$Dmu)*Xm)/2
+      #dd <- colSums((b$family$mu.eta(eta)*b$family$Dd(b$y,mu,theta,b$prior.weights)$Dmu)*Xm)/2
+      dd <- if (is.null(b$Xd)) drop((b$family$mu.eta(eta)*b$family$Dd(b$y,mu,theta,b$prior.weights)$Dmu) %*% Xm)/2 else
+      XWyd(b$Xd,b$family$mu.eta(eta),b$family$Dd(b$y,mu,theta,b$prior.weights)$Dmu,b$kd,b$ks,b$ts,b$dt,b$v,b$qc,b$drop)/2
     }
   } else { ## regular exponential family
-    eta <- as.numeric(Xm%*%beta + b$offset)
+    eta <- if (is.null(b$Xd)) as.numeric(Xm%*%beta + b$offset) else Xbd(b$Xd,beta,b$kd,b$ks,b$ts,b$dt,b$v,b$qc,b$drop) + b$offset
     mu <- b$family$linkinv(eta)
     sll <- sum(b$family$dev.resids(b$y,mu,b$prior.weights)) ## deviance
     if (deriv) {
-      dd <- -colSums(b$prior.weights*(b$family$mu.eta(eta)*(b$y-mu)/b$family$variance(mu))*Xm)
+      ##dd <- -colSums(b$prior.weights*(b$family$mu.eta(eta)*(b$y-mu)/b$family$variance(mu))*Xm)
+      dd <- if (is.null(b$Xd)) -drop((b$prior.weights*(b$family$mu.eta(eta)*(b$y-mu)/b$family$variance(mu))) %*% Xm) else
+      -XWyd(b$Xd,b$prior.weights,b$family$mu.eta(eta)*(b$y-mu)/b$family$variance(mu),b$kd,b$ks,b$ts,b$dt,b$v,b$qc,b$drop)
     }
   } ## deviance done
   ## now the smoothing prior/penalty
@@ -115,18 +119,28 @@ flogf <- function(beta,b,Bi=NULL,Xm=NULL) {
   logf(beta,b,Bi=Bi,Xm=Xm,deriv=0)$ll
 }
 
-Acomp <- function(A) {
+Acomp <- function(A,ortho=TRUE) {
 ## simple matrix completion, if A is p by n, p <= n
 ## then returns full rank n by n matrix, B, whose last n-p
 ## rows are orthogonal to A, and its inverse Bi.
-  qra <- qr(t(A))
   p <- nrow(A);n<- ncol(A)
-  R <- qr.R(qra)
-  if (Rrank(R)<p) stop("rank deficient re-parameterization")
-  Q <- qr.Q(qra,complete=TRUE)
-  B <- if (p<n) rbind(A,t(Q[,(p+1):n])) else A
-  Bi <- t(backsolve(R,t(Q[,1:p])))
-  if (p<n) Bi <- cbind(Bi,Q[,(p+1):n])
+  if (ortho) { ## use orthogonal methods - very stable
+    qra <- qr(t(A))  
+    R <- qr.R(qra)
+    if (Rrank(R)<p) stop("rank deficient re-parameterization")
+    Q <- qr.Q(qra,complete=TRUE)
+    B <- if (p<n) rbind(A,t(Q[,(p+1):n])) else A
+    Bi <- t(backsolve(R,t(Q[,1:p])))
+    if (p<n) Bi <- cbind(Bi,Q[,(p+1):n])
+  } else { ## cross-products and one LU based solve - BLAS friendly
+    C <- A[,-(1:p)]
+    D <- A[,1:p] - C %*% t(C)
+    Di <- try(solve(D),silent=TRUE)
+    if (inherits(Di,"try-error")) stop("rank deficient re-parameterization")
+    B <- rbind(A,cbind(t(C),diag(n-p)))
+    tCDi <- t(C)%*%Di 
+    Bi <- rbind(cbind(Di,-Di %*% C),cbind(-tCDi,diag(n-p)+tCDi%*%C))
+  }
   list(B=B,Bi=Bi)
 } ## Acomp
 
@@ -149,9 +163,17 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
 ## apply inla to a gam post fit
 ## A is matrix or vector of linear transforms of interest, or an indices
 ## of the coefficients of interest (only if length!=p).
+## TODO:
+##      * bam and gam option to return Hessian
+##      * More efficient matrix completion in Acomp
   prog <- interactive()&&interactive<2
-  if (int !=0 ) G0 <- G 
-  b <- gam(G=G,method="REML")
+  if (!inherits(G,"gam.prefit")&&!inherits(G,"bam.prefit")) stop("Requires a gam or bam prefit object")
+  if (int !=0 ) G0 <- G ## need un-manipulated copy for calling gam
+  if (inherits(G,"gam.prefit")) b <- gam(G=G,method="REML") else {
+    if (!inherits(G,"bam.prefit")) stop("Requires a gam or bam prefit object")
+    if (is.null(G$Xd)) stop("bam fits only supported with discrete==TRUE")
+    b <- bam(G=G)
+  }
   V <- sp.vcov(b,reg=.01)
   lsp <- log(b$sp) ## smoothing parameters
   scale.estimated <- b$scale.estimated
@@ -228,7 +250,8 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
 	 sp <- sp[-length(sp)]
        } else scale <- 1	 
        sp <- exp(sp)
-       b <- gam(G=G0,method="REML",sp=sp,scale=scale)
+       if (inherits(G,"gam.prefit")) b <- gam(G=G0,method="REML",sp=sp,scale=scale) else
+       b <- bam(G=G0,sp=sp,scale=scale)
        G$sp <- sp
        reml[qq] <- -b$gcv.ubre + wprior
     } else max.reml <- -b$gcv.ubre ## maximum LAML
