@@ -186,7 +186,7 @@ Rsolve <- function(R,b) {
   a
 } ## Rsolve
 
-ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
+ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
 ## apply inla to a gam post fit
 ## A is matrix or vector of linear transforms of interest, or an indices
 ## of the coefficients of interest (only if length!=p).
@@ -291,10 +291,12 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
       b$Vp <- B$B%*%b$Vp%*%t(B$B)
       beta <- drop(B$B%*%beta)
     }
-    H <- cholinv(b$Vp) ## get Hessian - would be better returned directly by gam/bam
-    dpc <- 1/sqrt(diag(H)) ## diagonal pre-conditioning
-    R1 <- chol(dpc*t(H*dpc),pivot=TRUE)
-    piv <- attr(R1,"pivot")
+    if (approx<2) {
+      H <- cholinv(b$Vp) ## get Hessian - would be better returned directly by gam/bam
+      dpc <- 1/sqrt(diag(H)) ## diagonal pre-conditioning
+      R1 <- chol(dpc*t(H*dpc),pivot=TRUE)
+      piv <- attr(R1,"pivot")
+    }  
     sd <- diag(b$Vp)^.5 ## standard dev of Gaussian approximation
     BM <- matrix(0,p,nk) ## storage for beta[k] conditional posterior modes
     inla <- list(density=matrix(0,pa,nb),beta=matrix(0,pa,nb)) ## storage for marginals
@@ -304,66 +306,72 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
     kk <- 0
     for (k in kind) {
       kk <- kk + 1 ## counter for output arrays
-      kd <- which(piv==k) ## identify column of pivoted R1 corresponding to col k in H
-      R <- choldrop(R1,kd) ## update R
-      pivk <- piv[-kd]; pivk[pivk>k] <- pivk[pivk>k]-1 ## pivots updated
-      attr(R,"pivot") <- pivk ## pivots of updated R
-      attr(R,"dpc") <- dpc[-k] ## diagonal pre-conditioner
-      ldetH <- 2*(sum(log(diag(R)))-sum(log(dpc[-k]))) ## log det of H[-k,-k]
-      #Rt <- t(R)
+      if (approx<2) { ## need R'R = H[-k,-k] (pivoted & pre-conditioned)
+        kd <- which(piv==k) ## identify column of pivoted R1 corresponding to col k in H
+        R <- choldrop(R1,kd) ## update R
+        pivk <- piv[-kd]; pivk[pivk>k] <- pivk[pivk>k]-1 ## pivots updated
+        attr(R,"pivot") <- pivk ## pivots of updated R
+        attr(R,"dpc") <- dpc[-k] ## diagonal pre-conditioner
+        ldetH <- 2*(sum(log(diag(R)))-sum(log(dpc[-k]))) ## log det of H[-k,-k]
+      }
       bg <- qn*sd[k]+beta[k]
       BM[k,] <- bg
       BM[-k,] <- beta[-k] + b$Vp[-k,k]%*%((t(bg)-beta[k])/b$Vp[k,k]) ## Gaussian approx.
-      BM0 <- BM
-      db <- db0 <- beta*0
-      for (i in c((nk/2):1,(nk/2):nk)) {
-        beta0 <- BM[,i] + db0
-        nn <- logf(beta0,G,B$Bi,X,deriv=1)
-        for (j in 1:20) { ## newton loop
-	  if (max(abs(nn$dd[-k]))<1e-4*abs(nn$ll)) break
-	  # db[-k] <- -backsolve(R,forwardsolve(Rt,nn$dd[-k]))
-	  db[-k] <- -Rsolve(R,nn$dd[-k])
-          beta1 <- beta0 + db
-          nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
-	  get.deriv <- FALSE
-	  hstep <- 0 
-	  while (nn1$ll>nn$ll) {
-	    db <- db/2;
-	    hstep <- hstep+1
-	    beta1 <- beta0 + db
-	    nn1 <- logf(beta1,G,B$Bi,X,deriv=0)
-	    get.deriv <- TRUE
-	  }  
-	  if (get.deriv) nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
-	  nn <- nn1
-	  beta0 <- beta1
+      if (approx==0) { ## get actual modes
+        db <- db0 <- beta*0
+        for (i in c((nk/2):1,(nk/2):nk)) {
+          beta0 <- BM[,i] + db0
+          nn <- logf(beta0,G,B$Bi,X,deriv=1)
+          for (j in 1:20) { ## newton loop
+	    if (max(abs(nn$dd[-k]))<1e-4*abs(nn$ll)) break
+	    # db[-k] <- -backsolve(R,forwardsolve(Rt,nn$dd[-k]))
+	    db[-k] <- -Rsolve(R,nn$dd[-k])
+            beta1 <- beta0 + db
+            nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
+	    get.deriv <- FALSE
+	    hstep <- 0 
+	    while (nn1$ll>nn$ll) {
+	      db <- db/2;
+	      hstep <- hstep+1
+	      beta1 <- beta0 + db
+	      nn1 <- logf(beta1,G,B$Bi,X,deriv=0)
+	      get.deriv <- TRUE
+	    }  
+	    if (get.deriv) nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
+	    nn <- nn1
+	    beta0 <- beta1
+          }
+          db0 <- if (i==1) 0 else beta0 - BM[,i]
+          BM[,i] <- beta0
+          dens0[i] <- nn$ll
         }
-        db0 <- if (i==1) 0 else beta0 - BM[,i]
-        BM[,i] <- beta0
-        dens0[i] <- nn$ll
-      }
+      } else for (i in 1:nk) dens0[i] <- logf(BM[,i],G,B$Bi,X,deriv=0)$ll	
       ## now get the log determinant correction...
-      vb <- apply(BM,1,var);vb[k] <- 0
-      j <- length(vb)
-      if (J>1) del <- which(rank(vb)%in%(j:(j-J+2)))
-      step.length <- mean(colSums((BM - beta)^2)^.5)/20
-      D <- rep(c(-1,1),J)
-      ## create matrix of steps and matrix of evaluated gradient at steps
-      for (i in 1:nk) {
-        bm <- BM[,i]
-        db <- beta - bm;db[k] <- 0
-        db <- db/sqrt(sum(db^2))*step.length
-        for (j in 1:J) {
-          h = H[-k,-k] %*% db[-k] + if (j>1)  u%*%(D[1:(2*(j-1))]*(t(u)%*%db[-k])) else 0
-          g1 <-  glogf(bm+db/2,G,B$Bi,X) - glogf(bm-db/2,G,B$Bi,X)
-	  v <- cbind(h/sqrt(sum(db[-k]*h)),g1[-k]/sqrt(sum(db*g1)))
-          u <- if (j>1) cbind(v,u) else v
-	  db <- -db; if (j<J) db[del[j]] <- 0
+      if (approx<2) {
+        if (J>1) {
+          vb <- apply(BM,1,var);vb[k] <- 0
+          j <- length(vb)
+          del <- which(rank(vb)%in%(j:(j-J+2)))
+        }	
+        step.length <- mean(colSums((BM - beta)^2)^.5)/20
+        D <- rep(c(-1,1),J)
+        ## create matrix of steps and matrix of evaluated gradient at steps
+        for (i in 1:nk) {
+          bm <- BM[,i]
+          db <- beta - bm;db[k] <- 0
+          db <- db/sqrt(sum(db^2))*step.length
+          for (j in 1:J) {
+            h = H[-k,-k] %*% db[-k] + if (j>1)  u%*%(D[1:(2*(j-1))]*(t(u)%*%db[-k])) else 0
+            g1 <-  glogf(bm+db/2,G,B$Bi,X) - glogf(bm-db/2,G,B$Bi,X)
+	    v <- cbind(h/sqrt(sum(db[-k]*h)),g1[-k]/sqrt(sum(db*g1)))
+            u <- if (j>1) cbind(v,u) else v
+	    db <- -db; if (j<J) db[del[j]] <- 0
+          }
+          #Hu <- backsolve(R,forwardsolve(Rt,u)) %*% diag(D)
+	  Hu <- Rsolve(R,u) %*% diag(D)
+          ldet[i] <- (ldetH + as.numeric(determinant(diag(2*J)+t(u)%*%Hu)$modulus))
         }
-        #Hu <- backsolve(R,forwardsolve(Rt,u)) %*% diag(D)
-	Hu <- Rsolve(R,u) %*% diag(D)
-        ldet[i] <- (ldetH + as.numeric(determinant(diag(2*J)+t(u)%*%Hu)$modulus))
-      }
+      } else ldet <-  0 ## constant	
       dens0 <- -dens0 - ldet/2
       dens0 <- dens0 - max(dens0) ## overflow proof
       din <- interpSpline(bg,dens0) ## interpolant of log density

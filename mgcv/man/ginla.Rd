@@ -5,7 +5,7 @@
 \description{Apply Integrated Nested Laplace Approximation (INLA, Rue et al. 2009) to models estimable by \code{\link{gam}} or \code{\link{bam}}, using the INLA variant described in Wood (2018). Produces marginal posterior densities for each coefficient, selected coefficients or linear transformations of the coefficient vector. 
 }
 \usage{
-ginla(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0)
+ginla(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -16,6 +16,7 @@ ginla(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0)
 \item{J}{How many determinant updating steps to take in the log determinant approximation step. Not recommended to increase this. }
 \item{interactive}{If this is \code{>0} or \code{TRUE} then every approximate posterior is plotted in red, overlaid on the simple Gaussian approximate posterior. If \code{2} then waits for user to press return between each plot. Useful for judging whether anything is gained by using INLA approach. }
 \item{int}{0 to skip integration and just use the posterior modal smoothing parameter. >0 for integration using the CCD approach proposed in Rue et al. (2009).}
+\item{approx}{0 for full approximation; 1 to update Hessian, but use approximate modes; 2 as 1 and assume constant Hessian. See details.}
 }
 
 \value{
@@ -23,6 +24,9 @@ A list with elements \code{beta} and \code{density}, both of which are matrices.
 }
 
 \details{Let \eqn{\beta}{b}, \eqn{\theta}{h} and \eqn{y}{y} denote the model coefficients, hyperparameters/smoothing parameters and response data, respectively. In principle, INLA employs Laplace approximations for \eqn{\pi(\beta_i|\theta,y)}{p(b_i|h,y)} and \eqn{\pi(\theta|y)}{p(h|y)} and then obtains the marginal posterior distribution \eqn{\pi(\beta_i|y)}{p(b_i|y)} by intergrating the approximations to \eqn{\pi(\beta_i|\theta,y)\pi(\theta|y)}{p(b_i|h,y)p(h|y)} w.r.t \eqn{\theta}{h} (marginals for the hyperparameters can also be produced). In practice the Laplace approximation for \eqn{\pi(\beta_i|\theta,y)}{p(b_i|h,y)} is too expensive to compute for each \eqn{\beta_i}{b_i} and must itself be approximated. To this end, there are two quantities that have to be computed: the posterior mode \eqn{\beta^*|\beta_i}{b*|b_i} and the determinant of the Hessian of the joint log density \eqn{\log \pi(\beta,\theta,y)}{log p(b,h,y)} w.r.t. \eqn{\beta}{b} at the mode. Rue et al. (2009) originally approximated the posterior conditional mode by the conditional mode implied by a simple Gaussian approximation to the posterior \eqn{\pi(\beta|y)}{p(b|y)}. They then approximated the log determinant of the Hessian as a function of \eqn{\beta_i}{b_i} using a first order Taylor expansion, which is cheap to compute for the sparse model representaiton that they use, but not when using the dense low rank basis expansions used by \code{\link{gam}}. They also offer a more expensive alternative approximation based on computing the log determiannt with respect only to those elements of \eqn{\beta}{b} with sufficiently high correlation with \eqn{\beta_i}{b_i} according to the simple Gaussian posterior approximation: efficiency again seems to rest on sparsity. Wood (2018) suggests computing the required posterior modes exactly, and basing the log determinant approximation on a BFGS update of the Hessian at the unconditional model. The latter is efficient with or without sparsity, whereas the former is a `for free' improvement. Both steps are efficient because it is cheap to obtain the Cholesky factor of \eqn{H[-i,-i]}{H[-i,-i]} from that of \eqn{H}{H} - see \code{\link{choldrop}}. This is the approach taken by this routine.
+
+The \code{approx} argument allows two further approximations to speed up computations. For \code{approx==1} the exact posterior conditional modes are not used, but instead the conditional modes implied by the simple Gaussian posterior approximation. For \code{approx==2} the same approximation is used for the modes and the Hessian is assumed constant. The latter is quite fast as no log joint density gradient evaluations are required.  
+
 
 Note that for many models the INLA estimates are very close to the usual Gaussian approximation to the posterior, the \code{interactive} argument is useful for investigating this issue.
 
