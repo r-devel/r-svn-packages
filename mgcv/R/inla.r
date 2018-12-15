@@ -157,15 +157,43 @@ dg <- function(m,f0=1.5) {
   list(D=D,k0=k0,k1=k1)
 } ## dg
 
+cholinv <- function(A) {
+## invert a +ve definite matrix via pivoted Cholesky with diagonal
+## pre-conditioning. 
+  d <- 1/sqrt(diag(A))
+  R <- chol(d*t(A*d),pivot=TRUE)
+  ipiv <- piv <- attr(R,"pivot")
+  ipiv[piv] <- 1:ncol(A)
+  d*t(chol2inv(R)[ipiv,ipiv]*d)
+} # cholinv
 
+Rsolve <- function(R,b) {
+## solves R'Ra=b, where A = R'R, possibly with pivoting and
+## possibly with diagonal pre-conditioning. If diagonal pre-conditioning
+## has been used then attribute "dpc" of R should contain the 1/sqrt(diag(A))
+## in unpivoted order, and R = chol(dpc*t(A*dpc))
+  piv <- attr(R,"pivot")
+  d <- attr(R,"dpc")
+  if (!is.null(d)) b <- b * d
+  if (is.null(piv)) {
+    a <- backsolve(R,forwardsolve(R,b,upper.tri=TRUE,transpose=TRUE))
+  } else {
+    ipiv <- piv; ipiv[piv] <- 1:ncol(R)
+    a <- if (is.matrix(b)) backsolve(R,forwardsolve(R,b[piv,],upper.tri=TRUE,transpose=TRUE))[ipiv,] else
+    backsolve(R,forwardsolve(R,b[piv],upper.tri=TRUE,transpose=TRUE))[ipiv]
+  }
+  if (!is.null(d)) a <- a * d
+  a
+} ## Rsolve
 
 ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
 ## apply inla to a gam post fit
 ## A is matrix or vector of linear transforms of interest, or an indices
 ## of the coefficients of interest (only if length!=p).
 ## TODO:
-##      * bam and gam option to return Hessian
-##      * More efficient matrix completion in Acomp
+##      * bam and gam option to return Hessian (Sl.fitChol computes hessian,
+##        but in gam its buried deeper)?
+##      * handling of rank deficiency?
   prog <- interactive()&&interactive<2
   if (!inherits(G,"gam.prefit")&&!inherits(G,"bam.prefit")) stop("Requires a gam or bam prefit object")
   if (int !=0 ) G0 <- G ## need un-manipulated copy for calling gam
@@ -219,7 +247,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
   p <- ncol(b$Vp)
   if (!is.null(A)) { ## a transformation of original parameters is required
     if (is.matrix(A)||length(A)==p) { ## linear transforms needed
-      B <- Acomp(A)
+      B <- Acomp(A,is.null(G$Xd)) ## use orthogonal method only with gam fitting
       pa <- nrow(A)
       kind <- 1:pa
     } else { ## just a list of elements of beta
@@ -263,8 +291,10 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
       b$Vp <- B$B%*%b$Vp%*%t(B$B)
       beta <- drop(B$B%*%beta)
     }
-    H <- solve(b$Vp)
-    R1 <- chol(H)
+    H <- cholinv(b$Vp) ## get Hessian - would be better returned directly by gam/bam
+    dpc <- 1/sqrt(diag(H)) ## diagonal pre-conditioning
+    R1 <- chol(dpc*t(H*dpc),pivot=TRUE)
+    piv <- attr(R1,"pivot")
     sd <- diag(b$Vp)^.5 ## standard dev of Gaussian approximation
     BM <- matrix(0,p,nk) ## storage for beta[k] conditional posterior modes
     inla <- list(density=matrix(0,pa,nb),beta=matrix(0,pa,nb)) ## storage for marginals
@@ -274,9 +304,13 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
     kk <- 0
     for (k in kind) {
       kk <- kk + 1 ## counter for output arrays
-      R <- choldrop(R1,k)
-      ldetH <- 2*sum(log(diag(R)))
-      Rt <- t(R)
+      kd <- which(piv==k) ## identify column of pivoted R1 corresponding to col k in H
+      R <- choldrop(R1,kd) ## update R
+      pivk <- piv[-kd]; pivk[pivk>k] <- pivk[pivk>k]-1 ## pivots updated
+      attr(R,"pivot") <- pivk ## pivots of updated R
+      attr(R,"dpc") <- dpc[-k] ## diagonal pre-conditioner
+      ldetH <- 2*(sum(log(diag(R)))-sum(log(dpc[-k]))) ## log det of H[-k,-k]
+      #Rt <- t(R)
       bg <- qn*sd[k]+beta[k]
       BM[k,] <- bg
       BM[-k,] <- beta[-k] + b$Vp[-k,k]%*%((t(bg)-beta[k])/b$Vp[k,k]) ## Gaussian approx.
@@ -287,7 +321,8 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
         nn <- logf(beta0,G,B$Bi,X,deriv=1)
         for (j in 1:20) { ## newton loop
 	  if (max(abs(nn$dd[-k]))<1e-4*abs(nn$ll)) break
-	  db[-k] <- -backsolve(R,forwardsolve(Rt,nn$dd[-k]))
+	  # db[-k] <- -backsolve(R,forwardsolve(Rt,nn$dd[-k]))
+	  db[-k] <- -Rsolve(R,nn$dd[-k])
           beta1 <- beta0 + db
           nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
 	  get.deriv <- FALSE
@@ -325,7 +360,8 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0) {
           u <- if (j>1) cbind(v,u) else v
 	  db <- -db; if (j<J) db[del[j]] <- 0
         }
-        Hu <- backsolve(R,forwardsolve(Rt,u)) %*% diag(D)
+        #Hu <- backsolve(R,forwardsolve(Rt,u)) %*% diag(D)
+	Hu <- Rsolve(R,u) %*% diag(D)
         ldet[i] <- (ldetH + as.numeric(determinant(diag(2*J)+t(u)%*%Hu)$modulus))
       }
       dens0 <- -dens0 - ldet/2

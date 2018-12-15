@@ -40,6 +40,7 @@ This routine is still somewhat experimental, so details are liable to change. Al
 
 The routine is written for relatively expert users.
 
+\code{ginla} is not designed to deal with rank deficient models.
 
 }
 
