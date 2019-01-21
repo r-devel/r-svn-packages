@@ -1572,8 +1572,17 @@ gevlss <- function(link=list("identity","identity","logit")) {
     ## been tested against raw translated code. 
 
     exp1 <- exp(1); ## facilitates lazy auto-translation
-    aa0 <- (xi*(y-mu))/exp1^rho # added
-    log.aa1 <- log1p(aa0) # added
+    ymu <- y - mu
+    aa0 <- (xi*ymu)/exp1^rho # added
+    ind <- which(aa0 <= -1) ## added
+    if (length(ind)>0) { ## all added
+      xii <- xi[ind]
+      erho <- exp1^rho[ind]
+      eps1 <- 1-.Machine$double.eps^.25
+      ymu[ind] <- -erho/xii*eps1
+      aa0[ind] <- -eps1
+    }
+    log.aa1 <- log1p(aa0) ## added
     aa1 <- aa0 + 1 # (xi*(y-mu))/exp1^rho+1;
     aa2 <- 1/xi;
     l  <-  sum((-aa2*(1+xi)*log.aa1)-1/aa1^aa2-rho);
@@ -1581,10 +1590,12 @@ gevlss <- function(link=list("identity","identity","logit")) {
     if (deriv>0) {
       ## first derivatives m, r, x...
       bb1 <- 1/exp1^rho;
-      bb2 <- bb1*xi*(y-mu)+1;
+      bb2 <- bb1*xi*ymu+1;
+     
       l1[,1]  <-  (bb1*(xi+1))/bb2-bb1*bb2^((-1/xi)-1);
-      cc2 <- y-mu;
+      cc2 <- ymu;
       cc0 <- bb1*xi*cc2 ## added
+      
       log.cc3 <- log1p(cc0) ## added
       cc3 <- cc0 + 1 ##bb1*xi*cc2+1;
       l1[,2]  <-  (-bb1*cc2*cc3^((-1/xi)-1))+(bb1*(xi+1)*cc2)/cc3-1;

@@ -330,7 +330,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
             nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
 	    get.deriv <- FALSE
 	    hstep <- 0 
-	    while (nn1$ll>nn$ll) {
+	    while (!is.finite(nn1$ll) || nn1$ll>nn$ll) {
 	      db <- db/2;
 	      hstep <- hstep+1
 	      beta1 <- beta0 + db
