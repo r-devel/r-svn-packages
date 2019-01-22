@@ -1,6 +1,6 @@
 Package: nlme
 Version: 3.1-138
-Date: 2018-08-23
+Date: 2019-01-22
 Priority: recommended
 Title: Linear and Nonlinear Mixed Effects Models
 Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
@@ -21,3 +21,4 @@ ByteCompile: yes
 Encoding: UTF-8
 License: GPL (>= 2) | file LICENCE
 BugReports: https://bugs.r-project.org
+URL: https://svn.r-project.org/R-packages/trunk/nlme
