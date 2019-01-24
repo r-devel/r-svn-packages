@@ -322,7 +322,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
         for (i in c((nk/2):1,(nk/2):nk)) {
           beta0 <- BM[,i] + db0
           nn <- logf(beta0,G,B$Bi,X,deriv=1)
-          for (j in 1:20) { ## newton loop
+          if (is.finite(nn$ll)) for (j in 1:20) { ## newton loop
 	    if (max(abs(nn$dd[-k]))<1e-4*abs(nn$ll)) break
 	    # db[-k] <- -backsolve(R,forwardsolve(Rt,nn$dd[-k]))
 	    db[-k] <- -Rsolve(R,nn$dd[-k])
@@ -340,7 +340,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
 	    if (get.deriv) nn1 <- logf(beta1,G,B$Bi,X,deriv=1)
 	    nn <- nn1
 	    beta0 <- beta1
-          }
+          } ## newton loop
           db0 <- if (i==1) 0 else beta0 - BM[,i]
           BM[,i] <- beta0
           dens0[i] <- nn$ll
@@ -356,7 +356,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
         step.length <- mean(colSums((BM - beta)^2)^.5)/20
         D <- rep(c(-1,1),J)
         ## create matrix of steps and matrix of evaluated gradient at steps
-        for (i in 1:nk) {
+        for (i in 1:nk) if (is.finite(dens0[i])) {
           bm <- BM[,i]
           db <- beta - bm;db[k] <- 0
           db <- db/sqrt(sum(db^2))*step.length
@@ -373,6 +373,7 @@ ginla <- function(G,A=NULL,nk=16,nb=100,J=1,interactive=FALSE,int=0,approx=0) {
         }
       } else ldet <-  0 ## constant	
       dens0 <- -dens0 - ldet/2
+      dens0[!is.finite(dens0)] <- min(dens0,na.rm=TRUE) - 10
       dens0 <- dens0 - max(dens0) ## overflow proof
       din <- interpSpline(bg,dens0) ## interpolant of log density
       ok <- FALSE

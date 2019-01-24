@@ -24,8 +24,6 @@ present, and reparameterization needs checking (also for bam).
 ** Added routine 'ginla' for fully Bayesian inference based on an integrated
   nested Laplace approximation (INLA) approach. See ?ginla.
 
-* gevlss underflow in log1p fix.
-
 * bam was ignoring supplied scale parameter in extended family cases - fixed.
 
 * preinitialize in general families is now a function, not an expression. See 

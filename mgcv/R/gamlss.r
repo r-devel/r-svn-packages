@@ -1575,8 +1575,8 @@ gevlss <- function(link=list("identity","identity","logit")) {
     ymu <- y - mu
     aa0 <- (xi*ymu)/exp1^rho # added
     ind <- which(aa0 <= -1) ## added
-    if (length(ind)>0) { ## all added
-      xii <- xi[ind]
+    if (FALSE&&length(ind)>0) { ## all added
+      xii <- xi[ind] ## this idea is really not a good one - messes up derivatives when triggered
       erho <- exp1^rho[ind]
       eps1 <- 1-.Machine$double.eps^.25
       ymu[ind] <- -erho/xii*eps1
@@ -1586,6 +1586,7 @@ gevlss <- function(link=list("identity","identity","logit")) {
     aa1 <- aa0 + 1 # (xi*(y-mu))/exp1^rho+1;
     aa2 <- 1/xi;
     l  <-  sum((-aa2*(1+xi)*log.aa1)-1/aa1^aa2-rho);
+    #if (length(ind)>0) cat(aa0[ind]," l = ",l,"\n")
 
     if (deriv>0) {
       ## first derivatives m, r, x...
