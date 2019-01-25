@@ -1,3 +1,12 @@
+2019-01-23  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/lme.R (lme.formula, lmeControl): new option
+	'allow.n.lt.q=FALSE' by default now triggers error
+	"fewer observations than random effects in all level <Q> groups".
+
+	* src/nlmefit.c (finite_diff_Hess): prevent integer overflow (and
+	later seg.fault) for large 'nTot' (already for npar >= 305).
+
 2018-08-04  Martin Mächler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 3.1-138

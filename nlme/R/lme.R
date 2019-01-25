@@ -1,6 +1,6 @@
 ###            Fit a general linear mixed effects model
 ###
-### Copyright 2005-2018  The R Core team
+### Copyright 2005-2019  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 ###
@@ -232,7 +232,7 @@ lme.formula <-
   dataMix <- do.call(model.frame, mfArgs)
   origOrder <- row.names(dataMix)	# preserve the original order
   for(i in names(contrasts))            # handle contrasts statement
-    contrasts(dataMix[[i]]) = contrasts[[i]]
+    contrasts(dataMix[[i]]) <- contrasts[[i]]
   ## sort the model.frame by groups and get the matrices and parameters
   ## used in the estimation procedures
   grps <- getGroups(dataMix, groups)
@@ -279,23 +279,24 @@ lme.formula <-
   ncols <- c(ncols, dim(X)[2L], 1)
   Q <- ncol(grps)
   ## creating the condensed linear model
+  dims <- MEdims(grps, ncols)
   attr(lmeSt, "conLin") <-
     list(Xy = array(c(Z, X, y), c(N, sum(ncols)),
                     list(row.names(dataMix), c(colnames(Z), colnames(X),
                                                deparse(fixed[[2L]])))),
-         dims = MEdims(grps, ncols), logLik = 0,
-         ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+         dims = dims, logLik = 0,
+         ## 17-11-2015; Fixed sigma:
          sigma = controlvals$sigma, auxSigma = 0)
   ## checking if enough observations per group to estimate ranef
-  tmpDims <- attr(lmeSt, "conLin")$dims
-  if (max(tmpDims$ZXlen[[1L]]) < tmpDims$qvec[1L]) {
-    warning(gettextf(
-      "fewer observations than random effects in all level %s groups",
-                     Q), domain = NA)
+  if(max(dims$ZXlen[[1L]]) < dims$qvec[1L] && !isTRUE(allow <- controlvals$allow.n.lt.q)) {
+    msg <- gettextf("fewer observations than random effects in all level %s groups", Q)
+    if(isFALSE(allow))
+        stop (msg, domain = NA)
+    else # typically NA, was hardwired default in nlme <= 3.1-137 [2018]
+      warning(msg, domain = NA)
   }
   ## degrees of freedom for testing fixed effects
-  fixDF <- getFixDF(X, grps, attr(lmeSt, "conLin")$dims$ngrps,
-                    terms = Terms)
+  fixDF <- getFixDF(X, grps, dims$ngrps, terms = Terms)
   ## initialization
   lmeSt <- Initialize(lmeSt, dataMix, grps, control = controlvals)
   parMap <- attr(lmeSt, "pmap")
@@ -306,34 +307,40 @@ lme.formula <-
     decomp <- TRUE
     attr(lmeSt, "conLin") <- MEdecomp(attr(lmeSt, "conLin"))
   } else decomp <- FALSE
+  ## Setup for optimization iterations
+  if(controlvals$opt == "nlminb") {
+    control <- list(iter.max = controlvals$msMaxIter,
+                    eval.max = controlvals$msMaxEval,
+                    trace    = controlvals$msVerbose)
+    keep <- c("abs.tol", "rel.tol", "x.tol", "xf.tol", "step.min",
+              "step.max", "sing.tol", "scale.init", "diff.g")
+  } else { ## "optim"
+    control <- list(maxit  = controlvals$msMaxIter,
+                    reltol = controlvals$msTol,# if(numIter == 0) controlvals$msTol else reltol
+                    trace  = controlvals$msVerbose)
+    keep <- c("fnscale", "parscale", "ndeps", "abstol", "alpha", "beta",
+              "gamma", "REPORT", "type", "lmm", "factr", "pgtol",
+              "temp", "tmax")
+  }
+  control <- c(control, controlvals[names(controlvals) %in% keep])
   ##
   ## getting the linear mixed effects fit object,
   ## possibly iterating for variance functions
   ##
-  numIter <- 0
+  numIter <- 0L
   repeat {
     oldPars <- coef(lmeSt)
     optRes <-
       if (controlvals$opt == "nlminb") {
-        control <- list(iter.max = controlvals$msMaxIter,
-                        eval.max = controlvals$msMaxEval,
-                        trace = controlvals$msVerbose)
-        keep <- c("abs.tol", "rel.tol", "x.tol", "xf.tol", "step.min",
-                  "step.max", "sing.tol", "scale.init", "diff.g")
-        control <- c(control, controlvals[names(controlvals) %in% keep])
-        nlminb(c(coef(lmeSt)), function(lmePars) -logLik(lmeSt, lmePars),
+        nlminb(c(oldPars), function(lmePars) -logLik(lmeSt, lmePars),
                control = control)
       } else { ## "optim"
-        reltol <- controlvals$reltol
-        if(is.null(reltol))  reltol <- 100*.Machine$double.eps
-        control <- list(trace = controlvals$msVerbose,
-                        maxit = controlvals$msMaxIter,
-                        reltol = if(numIter == 0) controlvals$msTol else reltol)
-        keep <- c("fnscale", "parscale", "ndeps", "abstol", "alpha", "beta",
-                  "gamma", "REPORT", "type", "lmm", "factr", "pgtol",
-                  "temp", "tmax")
-        control <- c(control, controlvals[names(controlvals) %in% keep])
-        optim(c(coef(lmeSt)), function(lmePars) -logLik(lmeSt, lmePars),
+        if(numIter == 1L) { # (yes, strange, but back-compatible ..) :
+          reltol <- controlvals$reltol
+          if(is.null(reltol)) reltol <- 100*.Machine$double.eps
+          control$reltol <- reltol
+        }
+        optim(c(oldPars), function(lmePars) -logLik(lmeSt, lmePars),
               control = control, method = controlvals$optimMethod)
       }
     coef(lmeSt) <- optRes$par
@@ -2826,15 +2833,16 @@ logLik.lmeStructInt <-
   ## logLik for objects with reStruct parameters only, with
   ## internally defined class
   q <- length(Pars)
-  aux <- .C(mixed_loglik,
-            as.double(conLin[["Xy"]]),
-            as.integer(unlist(conLin$dims)),
-            as.double(Pars),
-            as.integer(attr(object, "settings")),
-            val = double(1 + q * (q + 1)),
-            double(1),
-            ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
-            as.double(conLin$sigma))[["val"]]
+  settings <- as.integer(attr(object, "settings"))
+  aux <- .C(mixed_loglik, # >> ../src/nlmefit.c
+            as.double(conLin[["Xy"]]),		# ZXy
+            as.integer(unlist(conLin$dims)),	# pdims[]
+            as.double(Pars),			# pars[]
+            settings,				# settings
+            val = double(1 + q * (q + 1)),	# logLik[] = (value, gradient, Hessian)
+            double(1),				# lRSS
+            as.double(conLin$sigma)		# sigma  (17-11-2015; Fixed sigma patch ..)
+            )[["val"]]
   val <- aux[1L]
   attr(val, "gradient") <- -aux[1 + (1:q)]
   attr(val, "hessian") <- -array(aux[-(1:(q+1))], c(q, q))
@@ -2866,6 +2874,7 @@ lmeControl <-
            opt = c("nlminb", "optim"),
            optimMethod = "BFGS", natural = TRUE,
            sigma = NULL, ## 17-11-2015; Fixed sigma patch; SH Heisterkamp; Quantitative Solutions
+           allow.n.lt.q = FALSE, # 23-01-2019 (NA would be back compatible)
            ...)
 {
   if(is.null(sigma))
@@ -2878,7 +2887,9 @@ lmeControl <-
        gradHess = gradHess , apVar = apVar, .relStep = .relStep,
        opt = match.arg(opt), optimMethod = optimMethod,
        minAbsParApVar = minAbsParApVar, natural = natural,
-       sigma = sigma, ...)
+       sigma = sigma,
+       allow.n.lt.q = allow.n.lt.q,
+       ...)
 }
 
 
