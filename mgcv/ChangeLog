@@ -22,6 +22,8 @@ present, and reparameterization needs checking (also for bam).
 ** Added routine 'ginla' for fully Bayesian inference based on an integrated
   nested Laplace approximation (INLA) approach. See ?ginla.
 
+* Tweedie location scale family added: 'twlss'. 
+
 * gam.fit5 modified to distinguish more carefully between +ve semi definite
   and +ve definite. Previously could fail, claiming indefinteness when it 
   should not have. Affects general families.

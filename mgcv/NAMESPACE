@@ -72,7 +72,7 @@ export(anova.gam, bam, bam.update,bandchol, betar,
        spasm.construct,spasm.sp,spasm.smooth,
        t2,te,ti,tensor.prod.model.matrix,tensor.prod.penalties,
        totalPenaltySpace,trichol,trind.generator,
-       Tweedie,tw,uniquecombs, vcov.gam, vis.gam, ziP, ziplss)
+       Tweedie,tw,twlss,uniquecombs, vcov.gam, vis.gam, ziP, ziplss)
 
 importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,
            heat.colors,terrain.colors,topo.colors,axisTicks)
