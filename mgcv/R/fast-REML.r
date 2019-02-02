@@ -123,6 +123,7 @@ Sl.setup <- function(G) {
           Sl[[b]]$start <- G$smooth[[i]]$first.para + sbStart[j]-1
           Sl[[b]]$stop <- G$smooth[[i]]$first.para + sbStop[j]-1
           Sl[[b]]$rank <- G$smooth[[i]]$rank[j]
+	  Sl[[b]]$lambda <- 1 ## dummy here
           Sl[[b]]$repara <- TRUE ## signals ok to linearly reparameterize
           if (!is.null(G$smooth[[i]]$g.index)) { ## then some parameters are non-linear - can't re-param
             if (any(G$smooth[[i]]$g.index[ind])) Sl[[b]]$repara <- FALSE

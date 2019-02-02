@@ -369,8 +369,13 @@ interpret.gam <- function(gf,extra.special=NULL) {
     } 
     av <- unique(av) ## strip out duplicate variable names
     pav <- unique(pav)
-    ret$fake.formula <- if (length(av)>0) reformulate(av,response=ret[[1]]$response) else 
-                        ret[[1]]$fake.formula ## create fake formula containing all variables
+    if (length(av)>0) {
+      ## work around - reformulate with response = "log(x)" will treat log(x) as a name,
+      ## not the call it should be... 
+      fff <- formula(paste(ret[[1]]$response,"~ ."))
+      ret$fake.formula <- reformulate(av,response=ret[[1]]$response) 
+      ret$fake.formula[[2]] <- fff[[2]] ## fix messed up response
+    } else ret$fake.formula <- ret[[1]]$fake.formula ## create fake formula containing all variables
     ret$pred.formula <- if (length(pav)>0) reformulate(pav) else ~1 ## predictor only formula
     ret$response <- ret[[1]]$response 
     ret$nlp <- nlp ## number of linear predictors

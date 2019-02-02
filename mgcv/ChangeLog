@@ -17,14 +17,19 @@ present, and reparameterization needs checking (also for bam).
 * OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
   cause problems when opemmp multithreading.
 
-* Null deviance igores offset in gam.fit4
-
 1.8-27
 
 ** Added routine 'ginla' for fully Bayesian inference based on an integrated
   nested Laplace approximation (INLA) approach. See ?ginla.
 
+* gam.fit5 modified to distinguish more carefully between +ve semi definite
+  and +ve definite. Previously could fail, claiming indefinteness when it 
+  should not have. Affects general families.
+
 * bam was ignoring supplied scale parameter in extended family cases - fixed.
+
+* work around in list formula handling for reformulate sometimes setting
+  response to a name in place of a call.
 
 * preinitialize in general families is now a function, not an expression. See 
   cox.ph for an example.
