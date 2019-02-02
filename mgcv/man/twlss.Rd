@@ -1,6 +1,5 @@
 \name{twlss}
 \alias{twlss}
-\alias{tw}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Tweedie location scale family}
 \description{Tweedie family in which the mean, power and scale parameters can all depend on smooth linear predictors. Restricted to estimation via the extended Fellner Schall method of Wood and Fasiolo (2017). Only usable with \code{\link{gam}}. Tweedie distributions are exponential family with variance given by \eqn{\phi \mu^p}{s*m^p} where \eqn{\phi}{s} is a scale parameter, \eqn{p}{p} a parameter (here between 1 and 2) and \eqn{\mu}{m} is the mean. 
