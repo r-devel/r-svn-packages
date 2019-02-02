@@ -51,7 +51,7 @@ Tweedie, M. C. K. (1984). An index which distinguishes between
      Golden Jubilee International Conference (Eds. J. K. Ghosh and J.
      Roy), pp. 579-604. Calcutta: Indian Statistical Institute.
 
-Wood, S.N. and Fasiolo, M., (2017). A generalized Fellner‐Schall method for smoothing
+Wood, S.N. and Fasiolo, M., (2017). A generalized Fellner-Schall method for smoothing
 parameter optimization with application to Tweedie location, scale and shape models. Biometrics, 73(4), pp.1071-1081.
 \url{https://onlinelibrary.wiley.com/doi/full/10.1111/biom.12666}
 

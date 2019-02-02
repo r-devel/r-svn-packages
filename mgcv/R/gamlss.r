@@ -2007,10 +2007,10 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
       i3 <- family$tri$i3;i4 <- family$tri$i4
    
       ## transform derivates w.r.t. mu to derivatives w.r.t. eta...
-      de <- mgcv:::gamlss.etamu(l1,l2,l3,l4,ig1,g2,g3,g4,i2,i3,i4,0)
+      de <- gamlss.etamu(l1,l2,l3,l4,ig1,g2,g3,g4,i2,i3,i4,0)
 
       ## get the gradient and Hessian...
-      ret <- mgcv:::gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
+      ret <- gamlss.gH(X,jj,de$l1,de$l2,i2,l3=de$l3,i3=i3,l4=de$l4,i4=i4,
                       d1b=d1b,d2b=d2b,deriv=0,fh=fh,D=D) 
     } else ret <- list()
     ret$l <- l; ret
@@ -2060,7 +2060,7 @@ twlss <- function(link=list("log","identity","identity"),a=1.01,b=1.99) {
   environment(ll) <- environment(residuals) <- env
 
   structure(list(family="twlss",ll=ll,link=paste(link),nlp=3,
-    tri = mgcv:::trind.generator(3), ## symmetric indices for accessing derivative arrays
+    tri = trind.generator(3), ## symmetric indices for accessing derivative arrays
     initialize=initialize,postproc=postproc,residuals=residuals,
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
