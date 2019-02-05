@@ -2840,7 +2840,7 @@ ldTweedie <- function(y,mu=y,p=1.5,phi=1,rho=NA,theta=NA,a=1.001,b=1.999,all.der
 ## evaluates log Tweedie density for 1<=p<=2, using series summation of
 ## Dunn & Smyth (2005) Statistics and Computing 15:267-280.
   n <- length(y)
-  if (!is.na(rho)&&!is.na(theta)) { ## use rho and theta and get derivs w.r.t. these
+  if (all(!is.na(rho))&&all(!is.na(theta))) { ## use rho and theta and get derivs w.r.t. these
     #if (length(rho)>1||length(theta)>1) stop("only scalar `rho' and `theta' allowed.")
     if (a>=b||a<=1||b>=2) stop("1<a<b<2 (strict) required")
     work.param <- TRUE
