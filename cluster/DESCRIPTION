@@ -22,9 +22,10 @@ Authors@R: c(person("Martin","Maechler", role=c("aut","cre"), email="maechler@st
 Depends: R (>= 3.2.0)
 Imports: graphics, grDevices, stats, utils
 Suggests: MASS, Matrix
-SuggestsNote: two examples using MASS' cov.rob() and mvrnorm(); Matrix tools for testing
+SuggestsNote: MASS: two examples using cov.rob() and mvrnorm(); Matrix tools for testing
 LazyLoad: yes
 LazyData: yes
 ByteCompile: yes
 BuildResaveData: no
 License: GPL (>= 2)
+URL: https://svn.r-project.org/R-packages/trunk/cluster

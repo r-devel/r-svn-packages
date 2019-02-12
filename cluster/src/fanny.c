@@ -9,7 +9,7 @@
 #include <R_ext/Print.h>/* for diagnostics */
 
 #include "cluster.h"
-/* dysta3() is in cluster.h ! */
+/* dysta3() declared in cluster.h */
 
 static void
 fuzzy(int nn, int k, double *p,
