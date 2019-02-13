@@ -1864,7 +1864,7 @@ void chol_up(double *R,double *u, int *n,int *up,double *eps) {
     
     /* now construct the next hyperbolic rotation u[j] <-> R[j,j] */
     z0 = z / *x; /* sqrt(z^2+R[j,j]^2) */
-    if (fabs(z0>=1)) { /* downdate not +ve def */
+    if (fabs(z0)>=1) { /* downdate not +ve def */
       //Rprintf("j = %d  d = %g ",j,z0);
       if (*n>1) R[1] = -2.0;return; /* signals error */
     }
