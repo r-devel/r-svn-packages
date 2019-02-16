@@ -32,6 +32,10 @@ fix.family.qf <- function(fam) {
     }
   } else if (family=="binomial") {
     fam$qf <- function(p,mu,wt,scale) {
+      if (all.equal(wt,ceiling(wt))!=TRUE) {
+        wt <- ceiling(wt)
+	warning("non-integer binomial denominator: quantiles incorrect")
+      }
       qbinom(p,wt,mu)/(wt + as.numeric(wt==0))
     }
   } else if (family=="Gamma") {
