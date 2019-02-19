@@ -21,6 +21,9 @@ present, and reparameterization needs checking (also for bam).
 
 * fix of obscure sp naming bug.	 
 
+* changed some contour default colours from green to blue (they overlay 
+  heatmaps, so green was a stupid choise).
+
 1.8-27
 
 ** Added routine 'ginla' for fully Bayesian inference based on an integrated
