@@ -24,6 +24,11 @@ present, and reparameterization needs checking (also for bam).
 * changed some contour default colours from green to blue (they overlay 
   heatmaps, so green was a stupid choise).
 
+* Tweedie likelihood evaluation code made slightly more robust - for a model
+  with machine zero scale parameter estimate it could segfault, as series 
+  maximum location could then overflow integer storage. Fixed + upper limit 
+  imposed on series length (warning if its not enough). 
+
 1.8-27
 
 ** Added routine 'ginla' for fully Bayesian inference based on an integrated
