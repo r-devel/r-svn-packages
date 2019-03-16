@@ -326,13 +326,6 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   ## if (!is.null(start)) null.coef <- start - can be on edge of feasible - not good
   null.eta <- as.numeric(x%*%null.coef + as.numeric(offset))
 
-  #old.pdev <- sum(dev.resids(y, linkinv(null.eta), weights,theta)) + t(null.coef)%*%St%*%null.coef 
-
-  #if (!is.null(start)) { ## check it's at least better than null.coef
-  #  pdev <- sum(dev.resids(y, linkinv(x%*%start+as.numeric(offset)), weights,theta)) + t(start)%*%St%*%start
-  #  if (pdev>old.pdev) start <- mustart <- etastart <- NULL
-  #}
-
   ## call the families initialization code...
 
   if (is.null(mustart)) {
@@ -372,7 +365,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
    mu <- linkinv(eta);etaold <- eta
    conv <-  boundary <- FALSE
    dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
-   w <- dd$Deta2 * .5;
+   w <- dd$Deta2 * .5
    wz <- w*(eta-offset) - .5*dd$Deta
    z <- (eta-offset) - dd$Deta.Deta2
    good <- is.finite(z)&is.finite(w)

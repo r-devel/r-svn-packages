@@ -2497,7 +2497,7 @@ fix.family.var <- function(fam)
 } ## fix.family.var
 
 
-fix.family.ls<-function(fam)
+fix.family.ls <- function(fam)
 # adds ls the log saturated likelihood and its derivatives
 # w.r.t. the scale parameter to the family object.
 { if (!inherits(fam,"family")) stop("fam not a family object")
