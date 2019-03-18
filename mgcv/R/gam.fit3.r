@@ -1810,6 +1810,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   initial$dVkk <- diag(t(L0) %*% b$dVkk %*% L0)
   initial$score <- score;initial$grad <- grad;
   initial$scale.est <- b$scale.est
+  start0 <- coef(b)
+  mustart0 <- fitted(b)
   rm(b)
 
   B <- diag(length(initial$grad)) ## initial Hessian
@@ -1819,7 +1821,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      b <- gam.fit3(x=X, y=y, sp=L%*%ilsp+lsp0,Eb=Eb,UrS=UrS,
                offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
                control=control,gamma=gamma,scale=scale,printWarn=FALSE,
-               start=start,mustart=mustart,
+               start=start0,mustart=mustart0,
                scoreType=scoreType,null.coef=null.coef,
                pearson.extra=pearson.extra,dev.extra=dev.extra,n.true=n.true,Sl=Sl,...) 
      if (reml) {
