@@ -1672,8 +1672,6 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 } ## newton
 
 
-
-
 bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
                    control,gamma,scale,conv.tol=1e-6,maxNstep=3,maxSstep=2,
                    maxHalf=30,printWarn=FALSE,scoreType="GCV",start=NULL,
