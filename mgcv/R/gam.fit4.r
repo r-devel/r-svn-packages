@@ -900,7 +900,6 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   if (is.null(weights)) weights <- rep.int(1, nobs)
   if (is.null(offset)) offset <- rep.int(0, nobs)
  
-
   ## get log likelihood, grad and Hessian (w.r.t. coefs - not s.p.s) ...
   llf <- family$ll
   ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
@@ -912,6 +911,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   check.deriv <- FALSE; eps <- 1e-5 
   drop <- NULL;bdrop <- rep(FALSE,q) ## by default nothing dropped
   perturbed <- 0 ## counter for number of times perturbation tried on possible saddle
+
   for (iter in 1:(2*control$maxit)) { ## main iteration
     ## get Newton step... 
     if (check.deriv) { ## code for checking derivatives when debugging

@@ -451,7 +451,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       ldS <- ldS + grp$det
       ## next deal with the derivatives...
       grp$det1 <- grp$det1[!fixed[ind]] ## discard derivatives for fixed components
-      grp$det2 <- if (deriv>1) grp$det2[!fixed[ind],!fixed[ind]] else NULL
+      grp$det2 <- if (deriv>1) grp$det2[!fixed[ind],!fixed[ind]] else 0 ##NULL
       nd <- length(grp$det1)
       if (nd>0) { ## then not all sp's are fixed
         dind <- k.deriv:(k.deriv+nd-1)
