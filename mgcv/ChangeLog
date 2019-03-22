@@ -17,6 +17,11 @@ present, and reparameterization needs checking (also for bam).
 * OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
   cause problems when opemmp multithreading.
 
+1.8-29
+
+* changes to general families to allow return of first deriv of penalized 
+  Hessian component more easily.
+
 1.8-28
 
 * fix of obscure sp naming bug.	 

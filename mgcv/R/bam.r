@@ -1899,7 +1899,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
 ## which is then interpreted to figure out which bits relate to smooth terms and which to 
 ## parametric terms.
-## This is a modification of `gam' designed to build the QR decompostion of the model matrix 
+## This is a modification of `gam' designed to build the QR decomposition of the model matrix 
 ## up in chunks, to keep memory costs down.
 ## If cluster is a parallel package cluster uses parallel QR build on cluster. 
 ## 'n.threads' is number of threads to use for non-cluster computation (e.g. combining 
@@ -1916,7 +1916,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             stop("family not recognized")
     
 
-    if (inherits(family,"general.family")) stop("general families not supported by bam")
+    if (inherits(family,"general.family")) warning("general families not supported by bam")
     
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
@@ -2210,6 +2210,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     return(G)
   }
 
+  if (inherits(G$family,"general.family")) stop("general families not supported by bam")
 
   ## number of threads to use for non-cluster node computation
   if (!is.finite(nthreads[1])||nthreads[1]<1) nthreads[1] <- max(1,length(cluster))

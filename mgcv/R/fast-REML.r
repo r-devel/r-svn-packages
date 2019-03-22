@@ -283,10 +283,37 @@ Sl.rSb <- function(Sl,rho,beta) {
   a
 } ## Sl.rSb
 
+
+Sl.inirep <- function(Sl,X,l,r,nt=1) {
+## Re-parameterize X using initial Sl reparameterization info.
+## l,r = -2,-1,0,1,2. O is do not apply, negative to apply inverse transform Di,
+##       positive for transform D, 1 for transform, 2 for its transpose.
+## Aim is for simpler and cleaner than 
+  if (length(Sl)==0 && !l && !r) return(X) ## nothing to do
+  if (is.matrix(X)) {
+    for (b in 1:length(Sl)) if (Sl[[b]]$repara) {
+      ind <- Sl[[b]]$start:Sl[[b]]$stop
+      if (l) X[ind,] <- if (l == 1) Sl[[b]]$D%*%X[ind,,drop=FALSE] else if (l == 2) t(Sl[[b]]$D)%*%X[ind,,drop=FALSE] else
+                        if (l == -1) Sl[[b]]$Di%*%X[ind,,drop=FALSE] else t(Sl[[b]]$Di)%*%X[ind,,drop=FALSE]
+      if (r) X[,ind] <- if (l == 1) X[,ind,drop=FALSE]%*%Sl[[b]]$D else if (l == 2) X[,ind,drop=FALSE]%*%t(Sl[[b]]$D) else
+                        if (l == -1) X[,ind,drop=FALSE]%*%Sl[[b]]$Di else X[,ind,drop=FALSE]%*%t(Sl[[b]]$Di)			
+    }
+  } else { ## it's a vector
+    for (b in 1:length(Sl)) if (Sl[[b]]$repara) {
+      ind <- Sl[[b]]$start:Sl[[b]]$stop
+      if (l) X[ind] <- if (l == 1) Sl[[b]]$D%*%X[ind] else if (l == 2) t(Sl[[b]]$D)%*%X[ind] else
+                        if (l == -1) Sl[[b]]$Di%*%X[ind] else t(Sl[[b]]$Di)%*%X[ind]
+      if (r) X[ind] <- if (l == 1) X[ind]%*%Sl[[b]]$D else if (l == 2) X[ind]%*%t(Sl[[b]]$D) else
+                        if (l == -1) X[ind]%*%Sl[[b]]$Di else X[ind]%*%t(Sl[[b]]$Di)			
+    }
+  }
+  X
+} ## Sl.inirep
+
 Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) {
 ## Routine to apply initial Sl re-parameterization to model matrix X,
 ## or, if inverse==TRUE, to apply inverse re-para to parameter vector 
-## or cov matrix. if inverse is TRUE and both.sides=FALSE then 
+## or cov matrix. If inverse is TRUE and both.sides=FALSE then 
 ## re-para only applied to rhs, as appropriate for a choleski factor.
 ## If both.sides==FALSE, X is a vector and inverse==FALSE then X is
 ## taken as a coefficient vector (so re-para is inverse of that for model
@@ -355,6 +382,8 @@ Sl.initial.repara <- function(Sl,X,inverse=FALSE,both.sides=TRUE,cov=TRUE,nt=1) 
   }
   X
 } ## end Sl.initial.repara
+
+
 
 
 ldetSblock <- function(rS,rho,deriv=2,root=FALSE,nt=1) {

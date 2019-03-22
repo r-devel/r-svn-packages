@@ -206,7 +206,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
 ## fh is a factorization of the penalized hessian, while D contains the corresponding
 ##    Diagonal pre-conditioning weights.
 ## deriv: 0 - just grad and Hess
-##        1 - diagonal of first deriv of Hess
+##        1 - tr(Hp^{-1} dH/drho_j) vector (was diagonal of first deriv of Hess - unused)
 ##        2 - first deriv of Hess
 ##        3 - everything.
   K <- length(jj)
@@ -243,16 +243,30 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   }
 
   if (deriv==1) { 
-    d1H <- matrix(0,p,m) ## only store diagonals of d1H
-    for (l in 1:m) {
-      for (i in 1:K) {
+#    d1H <- matrix(0,p,m) ## only store diagonals of d1H
+#    for (l in 1:m) {
+#      for (i in 1:K) {
+#        v <- rep(0,n);ind <- 1:n
+#        for (q in 1:K) { 
+#          v <- v + l3[,i3[i,i,q]] * d1eta[ind,l]
+#          ind <- ind + n
+#        }
+#        d1H[jj[[i]],l] <-  d1H[jj[[i]],l] + colSums(X[,jj[[i]],drop=FALSE]*(v*X[,jj[[i]],drop=FALSE])) 
+#      } 
+#    }
+    ## assuming fh contains the inverse penalized Hessian, Hp, forms tr(Hp^{-1}dH/drho_j) for each j
+   d1H <- rep(0,m)
+   for (i in 1:K) for (j in i:K) { ## lp block loop
+      a <- rowSums((X[,jj[[i]]] %*% fh[jj[[i]],jj[[j]]]) * X[,jj[[j]]])
+      for (l in 1:m) { ## sp loop
         v <- rep(0,n);ind <- 1:n
-        for (q in 1:K) { 
-          v <- v + l3[,i3[i,i,q]] * d1eta[ind,l]
+        for (q in 1:K) { ## diagonal accumulation loop
+          v <- v + l3[,i3[i,j,q]] * d1eta[ind,l]
           ind <- ind + n
         }
-        d1H[jj[[i]],l] <-  d1H[jj[[i]],l] + colSums(X[,jj[[i]],drop=FALSE]*(v*X[,jj[[i]],drop=FALSE])) 
-      } 
+	mult <- if (i==j) 1 else 2
+	d1H[l] <- d1H[l] + mult * sum(a*v) ## accumulate tr(Hp^{-1}dH/drho_l)
+      }
     }
   } ## if deriv==1
 
