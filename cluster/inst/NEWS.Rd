@@ -7,12 +7,14 @@
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
 
-\section{Changes in version 2.0.8 (2018-10-.., svn r...)}{
-  %% \subsection{New Features}{
-  %%   \itemize{
-  %%     \item
-  %%   }
-  %% }
+\section{Changes in version 2.0.8 (2019-03-12, svn r7628)}{
+  \subsection{New Features}{
+    \itemize{
+      \item \code{pam()} gets new \code{pamonce} options, for values 3,
+      4, or 5, choosing versions of \command{fastpam}, contributed by Erich
+      Schubert, Univ. Dortmund.
+    }
+  }
   \subsection{Bug Fixes}{
     \itemize{
       \item correct thinko in \code{?clusGap}, the help page.
