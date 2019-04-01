@@ -332,7 +332,7 @@ interpret.gam <- function(gf,extra.special=NULL) {
 ## list(y1~-1,y2~-1,1+2~s(x)), whereas if the second component was contaminated 
 ## by something else we might have list(y1~-1,y2~s(v)-1,1+2~s(x)) 
 ## 
-## For a list argument, this routine returns a list of slit.formula objects 
+## For a list argument, this routine returns a list of split.formula objects 
 ## with an extra field "lpi" indicating the linear predictors to which each 
 ## contributes...
   if (is.list(gf)) {
@@ -796,7 +796,7 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
 gam.setup.list <- function(formula,pterms,
                     data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
-                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=NULL) {
+                    scale.penalty=TRUE,paraPen=NULL,gamm.call=FALSE,drop.intercept=NULL,apply.by=TRUE,modCon=0) {
 ## version of gam.setup for when gam is called with a list of formulae, 
 ## specifying several linear predictors...
 ## key difference to gam.setup is an attribute to the model matrix, "lpi", which is a list
@@ -811,7 +811,7 @@ gam.setup.list <- function(formula,pterms,
 
   G <- gam.setup(formula[[1]],pterms[[1]],
               data,knots,sp,min.sp,H,absorb.cons,sparse.cons,select,
-              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[1],list.call=TRUE)
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[1],apply.by=apply.by,list.call=TRUE,modCon=modCon)
   G$pterms <- pterms
   
   G$offset <- list(G$offset)
@@ -842,7 +842,7 @@ gam.setup.list <- function(formula,pterms,
     um <- gam.setup(formula[[i]],pterms[[i]],
               data,knots,sp,min.sp,#sp[spind],min.sp[spind],
 	      H,absorb.cons,sparse.cons,select,
-              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[i],list.call=TRUE)
+              idLinksBases,scale.penalty,paraPen,gamm.call,drop.intercept[i],apply.by=apply.by,list.call=TRUE,modCon=modCon)
     used.sp <- length(um$lsp0)	      
     if (!is.null(sp)&&used.sp>0) sp <- sp[-(1:used.sp)] ## need to strip off already used sp's
     if (!is.null(min.sp)&&nrow(um$L)>0) min.sp <- min.sp[-(1:nrow(um$L))]  

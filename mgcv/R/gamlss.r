@@ -210,20 +210,28 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
 ##        2 - first deriv of Hess
 ##        3 - everything.
   K <- length(jj)
-  p <- ncol(X);n <- nrow(X)
+  if (is.list(X)) {
+    discrete <- TRUE
+    p <- X$p;n <- nrow(X$kd)
+  } else {
+    discrete <- FALSE
+    p <- ncol(X);n <- nrow(X)
+  }  
   trHid2H <- d1H <- d2H <- NULL ## defaults
 
   ## the gradient...
   lb <- rep(0,p)
   for (i in 1:K) { ## first derivative loop
-    lb[jj[[i]]] <- lb[jj[[i]]] + colSums(l1[,i]*X[,jj[[i]],drop=FALSE]) ## !
+    lb[jj[[i]]] <- lb[jj[[i]]] + if (discrete) XWyd(X$Xd,rep(1,n),l1[,i],X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[k]]) else
+                   colSums(l1[,i]*X[,jj[[i]],drop=FALSE]) ## !
   }
   
   ## the Hessian...
   lbb <- matrix(0,p,p)
   for (i in 1:K) for (j in i:K) {
     ## A <- t(X[,jj[[i]],drop=FALSE])%*%(l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
-    A <- crossprod(X[,jj[[i]],drop=FALSE],l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
+    A <- if (discrete) XWXd(X$Xd,w=l2[,i2[i,j]],k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]]) else
+             crossprod(X[,jj[[i]],drop=FALSE],l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
     lbb[jj[[i]],jj[[j]]] <- lbb[jj[[i]],jj[[j]]] + A 
     if (j>i) lbb[jj[[j]],jj[[i]]] <- lbb[jj[[j]],jj[[i]]] + t(A) 
   } 
@@ -237,7 +245,8 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
     d1eta <- matrix(0,n*K,m)
     ind <- 1:n
     for (i in 1:K) { 
-      d1eta[ind,] <- X[,jj[[i]],drop=FALSE]%*%d1b[jj[[i]],]
+      d1eta[ind,] <- if (discrete) Xbd(X$Xd,d1b,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[i]]) else
+                                   X[,jj[[i]],drop=FALSE]%*%d1b[jj[[i]],]
       ind <- ind + n
     }
   }
@@ -256,7 +265,21 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
 #    }
     ## assuming fh contains the inverse penalized Hessian, Hp, forms tr(Hp^{-1}dH/drho_j) for each j
    d1H <- rep(0,m)
-   for (i in 1:K) for (j in i:K) { ## lp block loop
+   if (discrete) {
+     lpi <- attr(X,"lpi")
+     for (i in 1:K) for (j in i:K) { ## lp block loop
+       for (l in 1:m) { ## sp loop
+         v <- rep(0,n);ind <- 1:n
+         for (q in 1:K) { ## diagonal accumulation loop
+           v <- v + l3[,i3[i,j,q]] * d1eta[ind,l]
+           ind <- ind + n
+         }
+	 XVX <- XWXd(X$Xd,w=v,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]])
+	 mult <- if (i==j) 1 else 2
+	 d1H[l] <- d1H[l] + mult * sum(XVX * fh[lpi[[i]]],lpi[[j]]) ## accumulate tr(Hp^{-1}dH/drho_l)
+       }
+     }  
+   } else for (i in 1:K) for (j in i:K) { ## lp block loop
       a <- rowSums((X[,jj[[i]]] %*% fh[jj[[i]],jj[[j]]]) * X[,jj[[j]]])
       for (l in 1:m) { ## sp loop
         v <- rep(0,n);ind <- 1:n
@@ -271,6 +294,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   } ## if deriv==1
 
   if (deriv>1) {
+    if (discrete) stop("er... no discrete methods for higher derivatives")
     d1H <- list()
     for (l in 1:m) {
       d1H[[l]] <- matrix(0,p,p)
@@ -345,44 +369,6 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   list(lb=lb,lbb=lbb,d1H=d1H,d2H=d2H,trHid2H=trHid2H)
 } ## end of gamlss.gH
 
-fitNull <- function(y,family,wt,offset,nlp=1,tol=1e-7) {
-## fit the null model to the data in y for a general family
-## model has one constant per predictor - initially indended
-## to provide null deviance, but really that makes no sense
-## since different scale parameters lead to deviances that
-## can not really be compared.
-  X <- matrix(1,length(y),nlp)
-  lpi <- list(); for (i in 1:nlp) lpi[[i]] <- i
-  attr(X,"lpi") <- lpi
-  coef <- rep(0,nlp)
-  ok <- FALSE
-  while (!ok) {
-    b <- family$ll(y,X,coef,wt,family,offset,deriv=1)
-    eb <- eigen(-b$lbb)
-    eb$values <- abs(eb$values)
-    ind <- eb$values>0
-    eb$values[ind] <- 1/eb$values[ind]
-    d <- as.numeric(eb$vectors %*% (eb$values*(t(eb$vectors) %*% b$lb)))
-    step.ok <- FALSE; k <- 0
-    while (!step.ok&&k<20) {
-      k <- k + 1
-      b1 <- family$ll(y,X,coef+d,wt,family,offset,deriv=0)
-      if (b1$l>=b$l) {
-        step.ok <- TRUE
-        coef <- coef + d
-      } else d <- d/2
-    }
-    if (!step.ok) ok <- TRUE ## stop on step failure
-    if (abs(b1$l-b$l)<tol*abs(b$l)) ok <- TRUE 
-  }
-  ## now transform to response scale...
-  eta <- t(coef*t(X))
-  if (!is.null(offset)) offset[[nlp+1]] <- 0
-  if (!is.null(offset)) for (i in 1:nlp) if (!is.null(offset[[i]])) eta[,i] <- eta[,i] + offset[[i]] 
-  mu <- eta
-  for (i in 1:nlp) mu[,i] <- family$linfo[[i]]$linkinv(eta[,i])
-  list(eta=eta,mu=mu)
-} ## fitNull
 
 
 gaulss <- function(link=list("identity","logb"),b=0.01) {
@@ -451,11 +437,12 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
   ##        3 - first deriv of Hess
   ##        4 - everything.
     if (!is.null(offset)) offset[[3]] <- 0
+    discrete <- is.list(X)
     jj <- attr(X,"lpi") ## extract linear predictor index
-    eta <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+    eta <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]]) else X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
     if (!is.null(offset[[1]])) eta <- eta + offset[[1]]
     mu <- family$linfo[[1]]$linkinv(eta)
-    eta1 <- X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]]
+    eta1 <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[2]]) else X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]]
     if (!is.null(offset[[2]])) eta1 <- eta1 + offset[[2]]
     tau <-  family$linfo[[2]]$linkinv(eta1) ## tau = 1/sig here
     
@@ -536,30 +523,48 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
         jj <- attr(x,"lpi")
 	#offs <- attr(x,"offset")
 	if (!is.null(offset)) offset[[3]] <- 0
-        start <- rep(0,ncol(x))
         yt1 <- if (family$link[[1]]=="identity") y else 
                family$linfo[[1]]$linkfun(abs(y)+max(y)*1e-7)
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
-        x1 <- x[,jj[[1]],drop=FALSE]
-        e1 <- E[,jj[[1]],drop=FALSE] ## square root of total penalty
-        #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
-        if (use.unscaled) {
-          qrx <- qr(rbind(x1,e1))
-          x1 <- rbind(x1,e1)
-          startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
-          startji[!is.finite(startji)] <- 0       
-        } else startji <- pen.reg(x1,e1,yt1)
-        start[jj[[1]]] <- startji
-        lres1 <- log(abs(y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]])))
-	if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-        x1 <-  x[,jj[[2]],drop=FALSE];e1 <- E[,jj[[2]],drop=FALSE]
-        #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
-        if (use.unscaled) {
-          x1 <- rbind(x1,e1)
-          startji <- qr.coef(qr(x1),c(lres1,rep(0,nrow(E))))   
-          startji[!is.finite(startji)] <- 0
-        } else startji <- pen.reg(x1,e1,lres1)
-        start[jj[[2]]] <- startji
+        if (is.list(x)) { ## discrete case
+	  start <- rep(0,max(unlist(jj)))
+	  R <- chol(XWXd(X$Xd,w=rep(1,length(y)),k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]])+crossprod(E[,jj[[1]]]),pivot=TRUE)
+	  Xty <- XWyd(X$Xd,rep(1,length(y)),yt1,X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[1]])
+          piv <- attr(R,"pivot")
+	  startji <- rep(0,ncol(R))
+          startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
+	  startji[!is.finite(startji)] <- 0
+	  start[jj[[1]]] <- startji
+	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]])))
+	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
+	  R <- chol(XWXd(X$Xd,w=rep(1,length(y)),k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE)
+	  Xty <- XWyd(X$Xd,rep(1,length(y)),lres1,X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[2]])
+	  piv <- attr(R,"pivot")
+	  startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
+          start[jj[[2]]] <- startji
+        } else { ## regular case
+	  start <- rep(0,ncol(x))
+	  x1 <- x[,jj[[1]],drop=FALSE]
+          e1 <- E[,jj[[1]],drop=FALSE] ## square root of total penalty
+          #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
+          if (use.unscaled) {
+            qrx <- qr(rbind(x1,e1))
+            x1 <- rbind(x1,e1)
+            startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
+            startji[!is.finite(startji)] <- 0       
+          } else startji <- pen.reg(x1,e1,yt1)
+          start[jj[[1]]] <- startji
+          lres1 <- log(abs(y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]])))
+	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
+          x1 <-  x[,jj[[2]],drop=FALSE];e1 <- E[,jj[[2]],drop=FALSE]
+          #ne1 <- norm(e1); if (ne1==0) ne1 <- 1
+          if (use.unscaled) {
+            x1 <- rbind(x1,e1)
+            startji <- qr.coef(qr(x1),c(lres1,rep(0,nrow(E))))   
+            startji[!is.finite(startji)] <- 0
+          } else startji <- pen.reg(x1,e1,lres1)
+          start[jj[[2]]] <- startji
+	}  
       }
   }) ## initialize gaulss
 
@@ -575,7 +580,8 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
     linfo = stats,rd=rd, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1, ## signals that ls not needed here
-    available.derivs = 2 ## can use full Newton here
+    available.derivs = 2, ## can use full Newton here
+    discrete.ok = TRUE
     ),class = c("general.family","extended.family","family"))
 } ## end gaulss
 
