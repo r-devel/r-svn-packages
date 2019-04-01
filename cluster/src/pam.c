@@ -7,7 +7,7 @@
 
 #include <float.h>
 
-#include <R.h>
+#include <Rmath.h>
 #include <Rinternals.h>
 
 #include <R_ext/Print.h>/* for diagnostics */
@@ -402,7 +402,6 @@ void bswap(int kk, int n, int *nrepr,
 	int hbest = -1, nbest = -1, kbest= -1; // -Wall
 	int *medoids, *clustmembership;
 	double *fvect;
-	int *best_h = NULL; double *best_d = NULL; // For Schubert and Rousseeuw 2019 FastPAM2
 	if(pamonce) {
 	    // +1 --> use 1-based indices (as R)
 	    medoids = (int*) R_alloc(kk+1, sizeof(int));
@@ -418,6 +417,7 @@ void bswap(int kk, int n, int *nrepr,
 	    clustmembership = medoids = (int*) NULL;
 	    fvect = (double*) NULL;
 	}
+	int *best_h = NULL; double *best_d = NULL;
 	if (pamonce == 4 || pamonce == 5) { // Schubert and Rousseeuw 2019 FastPAM2
 	    best_h = (int*) R_alloc(kk+1, sizeof(int));
 	    best_d = (double*) R_alloc(kk+1, sizeof(double));
@@ -512,7 +512,7 @@ void bswap(int kk, int n, int *nrepr,
 			    }
 			}
 		}
-	} else if (pamonce == 1 || pamonce == 2) { // pamonce == 1 or == 2 :
+	} else if (pamonce == 1 || pamonce == 2) {
 	    for(k = 1; k <= kk; k++) {
 		R_CheckUserInterrupt();
 		i=medoids[k];
@@ -577,12 +577,11 @@ void bswap(int kk, int n, int *nrepr,
 	    // Now check possible new medoids h
 	    for (h = 1; h <= n; ++h) if (!nrepr[h]) {
 		R_CheckUserInterrupt();
-		// Cost for making point h a medoid:
-		{ double dist_h = dysma[h];
-		for(k = 1; k <= kk; k++) {
-		    beter[k] = -dist_h;
-		} }
-
+		{ /* Cost for making point h a medoid:*/
+		    double dist_h = dysma[h];
+		    for(k = 1; k <= kk; k++)
+			beter[k] = -dist_h;
+		}
 		// Compute gain of substituting h for each other medoid:
 		for (j = 1; j <= n; ++j) if (j != h) {
 			double dist_h = dys[ind_2(h, j)]; // New medoid
@@ -597,16 +596,15 @@ void bswap(int kk, int n, int *nrepr,
 			    for(int k = 1; k <= kk; k++) if (k != memb) {
 				beter[k] += delta;
 			    }
-			}
+		    }
 		}
-		for(k = 1; k <= kk; k++) {
+		for(k = 1; k <= kk; k++)
 		    if (beter[k] < dzsky) {
 			dzsky = beter[k];
 			hbest = h;
 			nbest = medoids[k];
 			kbest = k;
 		    }
-		}
 	    }
 	} else if (pamonce == 4) { // Schubert and Rousseeuw 2019 FastPAM2
 	    for(k = 1; k <= kk; k++) {
@@ -615,12 +613,11 @@ void bswap(int kk, int n, int *nrepr,
 	    // Now check possible new medoids h
 	    for (h = 1; h <= n; ++h) if (!nrepr[h]) {
 		R_CheckUserInterrupt();
-		// Cost for making point h a medoid:
-		{ double dist_h = dysma[h];
-		for(k = 1; k <= kk; k++) {
-		    beter[k] = -dist_h;
-		} }
-
+		{ /* Cost for making point h a medoid:*/
+		    double dist_h = dysma[h];
+		    for(k = 1; k <= kk; k++)
+			beter[k] = -dist_h;
+		}
 		// Compute gain of substituting h for each other medoid:
 		for (j = 1; j <= n; ++j) if (j != h) {
 		    double dist_h = dys[ind_2(h, j)]; // New medoid
@@ -661,12 +658,11 @@ void bswap(int kk, int n, int *nrepr,
 	    // Now check possible new medoids h
 	    for (h = 1; h <= n; ++h) if (!nrepr[h]) {
 		R_CheckUserInterrupt();
-		// Cost for making point h a medoid:
-		{ double dist_h = dysma[h];
-		for(k = 1; k <= kk; k++) {
-		    beter[k] = -dist_h;
-		} }
-
+		{ /* Cost for making point h a medoid:*/
+		    double dist_h = dysma[h];
+		    for(k = 1; k <= kk; k++)
+			beter[k] = -dist_h;
+		}
 		// Compute gain of substituting h for each other medoid:
 		int ijbase = (h-2)*(h-1)/2;
 		for (j = 1; j < h; ++j) {
@@ -742,19 +738,23 @@ void bswap(int kk, int n, int *nrepr,
 
 	    sky += dzsky;
 	    // FastPAM2, Schubert and Rousseeuw 2019
-	    if (pamonce == 4 || pamonce == 5) {
-FASTSWAP:	best_d[kbest] = 1; // Deactivate
-		// Find next best:
-		dzsky = 1;
-		for(k = 1; k <= kk; k++) {
-		    if (best_d[k] < dzsky) {
-			dzsky = best_d[k];
-			kbest = k;
+	    if (pamonce == 4 || pamonce == 5)
+		do {
+		    best_d[kbest] = 1; // Deactivate
+		    // Find next best:
+		    dzsky = 1;
+		    for(k = 1; k <= kk; k++) {
+			if (best_d[k] < dzsky) {
+			    dzsky = best_d[k];
+			    kbest = k;
+			}
 		    }
-		}
-		hbest = best_h[kbest];
-		nbest = medoids[kbest];
-		if (dzsky < - 16*DBL_EPSILON * fabs(sky)) {
+		    hbest = best_h[kbest];
+		    nbest = medoids[kbest];
+		    if(dzsky >= - 16*DBL_EPSILON * fabs(sky))
+			break;
+		    // else try more :
+
 		    // FIXME: duplicated code from above - update stats.
 		    for (j = 1; j <= n; ++j) {
 			/*  dysma[j] := D_j  d(j, <closest medi>)  [KR p.102, 104]
@@ -780,23 +780,23 @@ FASTSWAP:	best_d[kbest] = 1; // Deactivate
 			int hj = ind_2(hbest, j);
 			ij = ind_2(nbest, j);
 			if (dys[ij] == dysma[j]) {
-			    double small = dysmb[j] > dys[hj] ? dys[hj] : dysmb[j];
-			    dzsky += (- dysma[j] + small);
+			    dzsky += (- dysma[j] + fmin2(dysmb[j], dys[hj]) );
 			} else if (dys[hj] < dysma[j]) /* 1c. */
 			    dzsky += (- dysma[j] + dys[hj]);
 		    }
-		    if (dzsky < - 16*DBL_EPSILON * fabs(sky)) {
-			if(trace_lev >= 2)
-			    Rprintf( "   fswp new %*d <-> %*d old; decreasing diss. %7g by %g\n",
-				     dig_n, hbest, dig_n, nbest, sky, dzsky);
-			nrepr[hbest] = 1;
-			nrepr[nbest] = 0;
-			medoids[kbest]=hbest;
-			sky += dzsky;
-			goto FASTSWAP;
-		    }
-		}
-	    }
+		    if(dzsky >= - 16*DBL_EPSILON * fabs(sky))
+			break;
+		    // else try more :
+		    if(trace_lev >= 2)
+			Rprintf( "   fswp new %*d <-> %*d old; decreasing diss. %7g by %g\n",
+				 dig_n, hbest, dig_n, nbest, sky, dzsky);
+		    nrepr[hbest] = 1;
+		    nrepr[nbest] = 0;
+		    medoids[kbest]=hbest;
+		    sky += dzsky;
+
+		} while(1); // (pamonce = 4 or 5)
+
 	    goto L60;
 	}
     }

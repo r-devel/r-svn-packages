@@ -7,7 +7,7 @@
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
 
-\section{Changes in version 2.0.8 (2019-03-12, svn r7628)}{
+\section{Changes in version 2.0.8 (2019-04-01, svn r7640)}{
   \subsection{New Features}{
     \itemize{
       \item \code{pam()} gets new \code{pamonce} options, for values 3,

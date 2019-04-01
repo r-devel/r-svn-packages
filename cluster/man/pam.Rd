@@ -131,12 +131,16 @@ pam(x, k, diss = inherits(x, "dist"),
 
   The key ideas of FastPAM (Schubert and Rousseeuw, 2019) are implemented
   except for the linear approximate build as follows:
-  \code{pamonce = 3} reduces the runtime by a factor of O(k) by exploiting
-  that points cannot be closest to all current medoids at the same time.
-  \code{pamonce = 4} additionally allows executing multiple swaps
-  per iteration, usually reducing the number of iterations.
-  \code{pamonce = 5} adds minor optimizations copied from the
-  \code{pamonce = 2} approach, and is expected to be the fastest variant.
+  \describe{
+    \item{\code{pamonce = 3}:}{
+      reduces the runtime by a factor of O(k) by exploiting
+      that points cannot be closest to all current medoids at the same time.}
+    \item{\code{pamonce = 4}:}{ additionally allows executing multiple swaps
+      per iteration, usually reducing the number of iterations.}
+    \item{\code{pamonce = 5}:}{ adds minor optimizations copied from the
+      \code{pamonce = 2} approach, and is expected to be the fastest
+      variant.}
+  }
 }
 \note{
   For large datasets, \code{pam} may need too much memory or too much
@@ -151,7 +155,7 @@ pam(x, k, diss = inherits(x, "dist"),
   and augmented in several ways, e.g. to allow \code{cluster.only=TRUE}
   or \code{do.swap=FALSE}, by Martin Maechler.
   \cr
-  Matthias Studer, Univ.Geneva provided the \code{pamonce}
+  Matthias Studer, Univ.Geneva provided the \code{pamonce} (\code{1} and \code{2})
   implementation.
 }
 \references{
