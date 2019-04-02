@@ -1,11 +1,13 @@
 
-R version 3.5.0 alpha (2018-03-28 r74481)
-Copyright (C) 2018 The R Foundation for Statistical Computing
+R version 3.6.0 alpha (2019-03-29 r76305)
+Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -18,10 +20,7 @@ Type 'q()' to quit R.
 > library(cluster)
 > 
 > ## generate 1500 objects, divided into 2 clusters.
-> if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
-Warning message:
-In RNGkind("Marsaglia-Multicarry", "Buggy Kinderman-Ramage") :
-  buggy version of Kinderman-Ramage generator used
+> suppressWarnings(RNGversion("3.5.0")) # << as long as we don't have R >= 3.6.0
 > set.seed(264)
 > x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
 +            cbind(rnorm(800,50,8), rnorm(800,10,8)))
@@ -38,16 +37,16 @@ Object of class 'clara' from call:
  clara(x = x[iSml, ], k = 2, sampsize = n0) 
 Medoids:
           [,1]       [,2]
-[1,]  1.619094 -0.6697098
-[2,] 51.460664 12.6328215
-Objective function:	  9.351248 
+[1,]  1.406595  0.4453538
+[2,] 48.585270 13.1867947
+Objective function:	  9.363948 
 Numerical information per cluster:
-     size max_diss  av_diss isolation
-[1,]   70 23.67426 9.295059 0.4589260
-[2,]   20 19.81041 9.547913 0.3840251
+     size max_diss   av_diss isolation
+[1,]   70 23.82081  8.941138 0.4874429
+[2,]   20 25.80404 10.843782 0.5280255
 Average silhouette width per cluster:
-[1] 0.7419559 0.7295666
-Average silhouette width of best sample: 0.7392027 
+[1] 0.7447197 0.6942930
+Average silhouette width of best sample: 0.7335138 
 
 Best sample:
  [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25
@@ -61,100 +60,100 @@ Clustering vector:
 
 Silhouette plot information for best sample:
    cluster neighbor sil_width
-40       1        2 0.8189217
-70       1        2 0.8186973
-66       1        2 0.8173129
-39       1        2 0.8171253
-6        1        2 0.8158260
-9        1        2 0.8147047
-12       1        2 0.8133175
-26       1        2 0.8128297
-56       1        2 0.8117376
-7        1        2 0.8095740
-33       1        2 0.8092035
-60       1        2 0.8067630
-62       1        2 0.8059430
-21       1        2 0.8030279
-41       1        2 0.8017783
-16       1        2 0.8005143
-27       1        2 0.7971827
-59       1        2 0.7968887
-8        1        2 0.7947941
-17       1        2 0.7941256
-38       1        2 0.7934237
-32       1        2 0.7920043
-63       1        2 0.7901349
-52       1        2 0.7872858
-46       1        2 0.7852065
-47       1        2 0.7842709
-65       1        2 0.7839258
-4        1        2 0.7809115
-23       1        2 0.7799612
-19       1        2 0.7786651
-42       1        2 0.7780707
-20       1        2 0.7768930
-37       1        2 0.7719716
-11       1        2 0.7719447
-22       1        2 0.7698024
-30       1        2 0.7685122
-68       1        2 0.7634484
-1        1        2 0.7624047
-58       1        2 0.7613915
-50       1        2 0.7567549
-25       1        2 0.7468130
-31       1        2 0.7437604
-2        1        2 0.7423751
-15       1        2 0.7342193
-69       1        2 0.7315055
-36       1        2 0.7312177
-48       1        2 0.7293586
-14       1        2 0.7222345
-3        1        2 0.7209803
-44       1        2 0.7169812
-34       1        2 0.7147437
-64       1        2 0.7129325
-54       1        2 0.7089811
-49       1        2 0.7044900
-43       1        2 0.6884306
-29       1        2 0.6845792
-10       1        2 0.6813561
-51       1        2 0.6730410
-13       1        2 0.6685180
-55       1        2 0.6680502
-5        1        2 0.6518400
-35       1        2 0.6506280
-24       1        2 0.6343832
-18       1        2 0.6176214
-61       1        2 0.6027746
-57       1        2 0.5944097
-45       1        2 0.5878055
-53       1        2 0.5668748
-28       1        2 0.5615843
-67       1        2 0.5471711
-82       2        1 0.8130494
-84       2        1 0.8120131
-90       2        1 0.8004220
-73       2        1 0.7992194
-78       2        1 0.7895616
-76       2        1 0.7859463
-89       2        1 0.7832719
-88       2        1 0.7820209
-83       2        1 0.7599199
-80       2        1 0.7570550
-87       2        1 0.7435898
-71       2        1 0.7339466
-75       2        1 0.7210982
-81       2        1 0.7177946
-72       2        1 0.7137692
-86       2        1 0.7045675
-79       2        1 0.7003733
-85       2        1 0.6854539
-74       2        1 0.4973579
-77       2        1 0.4909004
+16       1        2 0.8194870
+65       1        2 0.8186849
+42       1        2 0.8174843
+24       1        2 0.8172817
+63       1        2 0.8162440
+60       1        2 0.8152863
+27       1        2 0.8151750
+15       1        2 0.8144985
+46       1        2 0.8132668
+12       1        2 0.8115039
+7        1        2 0.8107415
+20       1        2 0.8100377
+59       1        2 0.8076938
+40       1        2 0.8061776
+37       1        2 0.8057764
+22       1        2 0.8048435
+18       1        2 0.8045184
+34       1        2 0.8044573
+6        1        2 0.8027560
+53       1        2 0.8020140
+13       1        2 0.8018311
+47       1        2 0.8015244
+43       1        2 0.8013524
+4        1        2 0.8002075
+55       1        2 0.7992425
+19       1        2 0.7966406
+39       1        2 0.7965002
+69       1        2 0.7963059
+26       1        2 0.7934862
+2        1        2 0.7932520
+50       1        2 0.7927811
+41       1        2 0.7896536
+31       1        2 0.7857843
+38       1        2 0.7826217
+30       1        2 0.7813832
+64       1        2 0.7755748
+25       1        2 0.7731234
+11       1        2 0.7724159
+33       1        2 0.7675508
+45       1        2 0.7673791
+36       1        2 0.7654933
+58       1        2 0.7619774
+66       1        2 0.7572955
+29       1        2 0.7566990
+5        1        2 0.7486214
+54       1        2 0.7432419
+62       1        2 0.7366140
+68       1        2 0.7293284
+14       1        2 0.7263886
+23       1        2 0.7255830
+49       1        2 0.7199783
+35       1        2 0.7138018
+3        1        2 0.7117979
+57       1        2 0.6964554
+28       1        2 0.6934535
+48       1        2 0.6928130
+56       1        2 0.6709429
+21       1        2 0.6652859
+32       1        2 0.6639150
+10       1        2 0.6636485
+17       1        2 0.6626380
+52       1        2 0.6608896
+51       1        2 0.6603982
+67       1        2 0.6405932
+44       1        2 0.6305873
+61       1        2 0.6114518
+9        1        2 0.5875460
+8        1        2 0.5492186
+1        1        2 0.5229467
+70       1        2 0.2742352
+85       2        1 0.7844696
+72       2        1 0.7781626
+78       2        1 0.7719671
+79       2        1 0.7702056
+87       2        1 0.7682619
+74       2        1 0.7664274
+71       2        1 0.7607121
+83       2        1 0.7567789
+81       2        1 0.7352285
+82       2        1 0.7213934
+90       2        1 0.7176081
+80       2        1 0.6731059
+77       2        1 0.6730883
+84       2        1 0.6657689
+88       2        1 0.6548647
+86       2        1 0.6454764
+76       2        1 0.6028321
+75       2        1 0.6014646
+73       2        1 0.5764590
+89       2        1 0.4615848
 
 4005 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.3743 10.2190 18.3100 26.9750 46.5010 81.3800 
+ 0.3757 10.1410 18.1790 26.5090 45.6080 82.6710 
 Metric :  euclidean 
 Number of objects : 90
 
@@ -170,22 +169,22 @@ Available components:
 Object of class 'clara' from call:
  clara(x = x, k = 2) 
 Medoids:
-          [,1]       [,2]
-[1,]  2.787896 0.06403649
-[2,] 51.594304 8.52944737
-Objective function:	  10.15876 
+            [,1]        [,2]
+[1,]  0.04089097  0.02320045
+[2,] 51.20275990 11.75050315
+Objective function:	  9.627208 
 Numerical information per cluster:
-     size max_diss   av_diss isolation
-[1,]  700 32.70228 10.378867 0.6601837
-[2,]  800 27.37593  9.966161 0.5526569
+     size max_diss  av_diss isolation
+[1,]  701 28.92506 9.585969 0.5510719
+[2,]  799 28.92254 9.663390 0.5510239
 Average silhouette width per cluster:
-[1] 0.752770 0.772374
-Average silhouette width of best sample: 0.7652453 
+[1] 0.7404738 0.7679151
+Average silhouette width of best sample: 0.7548181 
 
 Best sample:
- [1]   21   50   97  142  168  191  192  197  224  325  328  408  433  458  471
-[16]  651  712  714  722  797  805  837  909  919  926  999 1006 1018 1019 1049
-[31] 1081 1084 1132 1144 1150 1201 1207 1291 1307 1317 1330 1374 1426 1428
+ [1]   17   46   61  152  201  223  254  263  268  291  313  331  479  508  528
+[16]  542  543  601  647  655  681  746  778  792  888  951  957 1010 1081 1085
+[31] 1105 1110 1122 1136 1231 1265 1272 1307 1342 1365 1383 1393 1395 1467
 Clustering vector:
    [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
   [38] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -224,61 +223,61 @@ Clustering vector:
 [1259] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 [1296] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 [1333] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-[1370] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+[1370] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 1 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 [1407] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 [1444] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 [1481] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
 
 Silhouette plot information for best sample:
      cluster neighbor sil_width
-458        1        2 0.8231660
-142        1        2 0.8153602
-21         1        2 0.8123992
-197        1        2 0.8118223
-408        1        2 0.8112843
-97         1        2 0.8061654
-433        1        2 0.7948877
-191        1        2 0.7761169
-50         1        2 0.7689566
-651        1        2 0.7664647
-192        1        2 0.7439787
-325        1        2 0.7187212
-471        1        2 0.7138665
-168        1        2 0.6506124
-224        1        2 0.6364204
-328        1        2 0.5940982
-919        2        1 0.8392739
-1307       2        1 0.8360310
-1081       2        1 0.8358883
-1132       2        1 0.8313630
-1207       2        1 0.8297462
-712        2        1 0.8252963
-1428       2        1 0.8194915
-1150       2        1 0.8173306
-1006       2        1 0.8163528
-1144       2        1 0.8130290
-1317       2        1 0.8128990
-714        2        1 0.8127996
-797        2        1 0.8103648
-999        2        1 0.8090429
-722        2        1 0.7873873
-1019       2        1 0.7834898
-1374       2        1 0.7830414
-1426       2        1 0.7719712
-1049       2        1 0.7695327
-1201       2        1 0.7612259
-1330       2        1 0.7542818
-909        2        1 0.7342792
-1291       2        1 0.7308119
-837        2        1 0.6919267
-1084       2        1 0.6774914
-926        2        1 0.6713276
-805        2        1 0.6304831
-1018       2        1 0.5703118
+647        1        2 0.8168036
+223        1        2 0.8117572
+263        1        2 0.8072019
+152        1        2 0.8037261
+201        1        2 0.7956334
+46         1        2 0.7928588
+508        1        2 0.7857050
+528        1        2 0.7773186
+291        1        2 0.7731206
+254        1        2 0.7704038
+655        1        2 0.7586029
+268        1        2 0.7448140
+331        1        2 0.7368253
+479        1        2 0.7195332
+542        1        2 0.6963969
+313        1        2 0.6946026
+17         1        2 0.6803030
+681        1        2 0.6798070
+601        1        2 0.6703326
+61         1        2 0.6567378
+543        1        2 0.5774663
+746        2        1 0.8430693
+1136       2        1 0.8425778
+1383       2        1 0.8386611
+1395       2        1 0.8366096
+1467       2        1 0.8302860
+792        2        1 0.8277142
+778        2        1 0.8257732
+1110       2        1 0.8217366
+1122       2        1 0.8145313
+1272       2        1 0.8098449
+888        2        1 0.8063853
+1265       2        1 0.7957217
+951        2        1 0.7940572
+1010       2        1 0.7794275
+1085       2        1 0.7684807
+957        2        1 0.7649281
+1081       2        1 0.7370830
+1307       2        1 0.7366453
+1393       2        1 0.7256275
+1231       2        1 0.7029040
+1342       2        1 0.6762151
+1365       2        1 0.6004453
+1105       2        1 0.4833222
 
 946 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.4388 11.2770 26.1610 32.8850 53.0810 94.2230 
+ 0.8754 11.8110 32.7990 31.9700 51.4100 79.8060 
 Metric :  euclidean 
 Number of objects : 44
 
@@ -291,20 +290,20 @@ Available components:
 > ## clara() {as original code} always draws the *same* random samples !!!!
 > clara(x, 2, samples = 50)[clInd]
 $objective
-[1] 10.00144
+[1] 9.600858
 
 $i.med
-[1]  551 1232
+[1]  610 1076
 
 $medoids
-           [,1]      [,2]
-[1,]  0.7558529 0.5295663
-[2,] 49.4297134 9.5070656
+           [,1]       [,2]
+[1,] -0.1009724 -0.4444724
+[2,] 50.0601381  9.6999505
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6210615
-[2,]  800 27.03542  9.887517 0.5462269
+     size max_diss  av_diss isolation
+[1,]  701 29.34325 9.579557 0.5733721
+[2,]  799 27.83521 9.619546 0.5439049
 
 > 
 > ## The for() code below *did* hang (in some 64-bit versions of R / clara / ...):
@@ -324,119 +323,119 @@ C clara(): sample 1  finding 1st... new k{ran}:
 ... nrx [0:1]= 0 0 
 ... nsel[0:0]= 23 
  {295} [ntt=44, nunfs=0] .. nsel[1:44]= 23 54 87 103 140 199 246 303 306 322 394 408 412 414 428 461 468 521 592 647 859 898 906 967 971 1007 1028 1039 1114 1149 1151 1192 1237 1250 1279 1291 1301 1317 1340 1353 1366 1381 1383 1492  -> dysta2()
-. clara(): s:= max dys[1..946] = 84.7454;
-clara()'s bswap2(*, s=84.7454):     new repr. 6
-    new repr. 31
-  after build: medoids are  6 31
+. clara(): s:= max dys[1..946] = 84.6494;
+clara()'s bswap2(*, s=84.6494):     new repr. 13
+    new repr. 6
+  after build: medoids are  6 13
   and min.dist dysma[1:n] are
-   17.5   3.72   16.2   15.6   7.76      0   6.93   13.7   13.9   18.2
-   9.47   14.9   12.5   4.77   9.89   8.22   6.83   9.29   13.9   21.5
-   7.68   16.1   7.31   13.1   9.95   21.7   17.8   13.1   15.7   25.3
-      0   20.5   4.36   14.4   20.5    4.1   20.5   9.65   10.5   9.98
-   10.2   15.4   7.81     16
- --> sky = sum_j D_j= 536.37
-   swp new 39 <-> 6 old; decreasing diss. by -117.879
-  Last swap: new 39 <-> 6 old; decreasing diss. by 1
-end{bswap2}: sky = 418.491
- 1st proper or new best: obj= 10.112
+     10     14   7.21   10.5   17.8      0   6.26   3.23   16.7   20.3
+   9.36   18.6      0   7.47   4.31     11     18   15.7     23   5.51
+   6.99    8.5   15.8   6.82   9.51   19.2   14.9     18   15.5   12.1
+   27.6     10   15.7   15.2   20.5    9.7   11.4   9.74    4.5   20.8
+   12.7   21.9   8.81   6.32
+ --> sky = sum_j D_j= 541.2
+   swp new 11 <-> 13 old; decreasing diss. by -104.377
+  Last swap: new 11 <-> 13 old; decreasing diss. by 1
+end{bswap2}: sky = 436.824
+ 1st proper or new best: obj= 10.1407
 C clara(): sample 2  if (kall && nunfs...): 
 .. kall: T, 
-... nrx [0:1]= 1151 1340 
-... nsel[0:1]= 1151 1340 
- {295} [ntt=44, nunfs=0] .. nsel[1:44]= 21 50 97 142 168 191 192 197 224 325 328 433 458 471 651 712 714 722 797 805 837 909 919 926 999 1006 1018 1019 1049 1081 1084 1132 1144 1150 1151 1201 1207 1291 1307 1330 1340 1374 1426 1428  -> dysta2()
-. clara(): s:= max dys[1..946] = 80.3603;
-clara()'s bswap2(*, s=80.3603):     new repr. 18
-    new repr. 35
-  after build: medoids are 18 35
+... nrx [0:1]= 199 394 
+... nsel[0:1]= 199 394 
+ {295} [ntt=44, nunfs=0] .. nsel[1:44]= 21 50 97 142 168 191 192 197 199 224 325 328 394 433 458 471 651 712 714 722 797 805 837 909 919 926 999 1006 1018 1019 1049 1081 1084 1132 1144 1150 1201 1207 1291 1307 1330 1374 1426 1428  -> dysta2()
+. clara(): s:= max dys[1..946] = 82.2326;
+clara()'s bswap2(*, s=82.2326):     new repr. 24
+    new repr. 27
+  after build: medoids are 24 27
   and min.dist dysma[1:n] are
-   12.1   6.02   9.26   27.3   9.32   11.1   8.81   1.82   23.9   8.37
-   8.58   8.99   4.92   14.3     34   4.75   22.7      0   14.6   7.54
-   13.1   23.4   25.8   13.5   6.84   11.7     14   15.6   14.6   23.5
-   26.1   3.81    5.7   34.1      0   8.86     24   11.4   14.7   25.6
-   16.5   4.76   11.4     14
- --> sky = sum_j D_j= 601.537
-   swp new 41 <-> 18 old; decreasing diss. by -156.926
-  Last swap: new 41 <-> 18 old; decreasing diss. by 1
-end{bswap2}: sky = 444.611
- obj= 10.112
+   9.51      9   12.4   9.47   8.34   17.9   13.1     12   12.3   11.1
+   9.17   5.89   4.52   5.11   19.9   5.59   11.4     20   7.41   7.66
+   9.16   12.3   5.93      0   15.1   24.6      0   7.13     14   10.5
+   7.44   18.2   5.66   11.9   32.8   26.6   21.4   11.1   12.5   9.46
+   11.2   28.9    4.6   14.4
+ --> sky = sum_j D_j= 526.744
+   swp new 30 <-> 24 old; decreasing diss. by -110.942
+  Last swap: new 30 <-> 24 old; decreasing diss. by 1
+end{bswap2}: sky = 415.802
+ 1st proper or new best: obj= 9.77929
 C clara(): sample 3  if (kall && nunfs...): 
 .. kall: T, 
-... nrx [0:1]= 1151 1340 
-... nsel[0:1]= 1151 1340 
- {295} [ntt=44, nunfs=0] .. nsel[1:44]= 10 15 23 46 85 90 94 105 112 225 278 313 485 486 502 513 529 639 641 660 681 757 796 812 814 865 876 896 954 959 973 1032 1045 1151 1249 1264 1269 1273 1296 1297 1336 1340 1361 1399  -> dysta2()
-. clara(): s:= max dys[1..946] = 90.5529;
-clara()'s bswap2(*, s=90.5529):     new repr. 9
-    new repr. 5
-  after build: medoids are  5  9
+... nrx [0:1]= 1019 999 
+... nsel[0:1]= 999 1019 
+ {295} [ntt=44, nunfs=0] .. nsel[1:44]= 10 15 23 46 85 90 94 105 112 225 278 313 485 486 502 513 529 639 641 660 681 757 796 812 814 865 876 896 954 959 973 999 1019 1032 1045 1249 1264 1269 1273 1296 1297 1336 1361 1399  -> dysta2()
+. clara(): s:= max dys[1..946] = 82.2209;
+clara()'s bswap2(*, s=82.2209):     new repr. 9
+    new repr. 33
+  after build: medoids are  9 33
   and min.dist dysma[1:n] are
-   5.14   5.51   9.38   22.1      0   28.5   22.1   10.7      0   15.4
-   10.8   20.6   11.9   10.8   5.96   11.4   11.5   9.89   6.62   7.88
-   17.2   2.97   8.27   4.68   13.8   5.87   20.7   17.2   22.2   2.43
-   11.9   4.99   7.87   7.02   10.1   16.5   23.2   4.28     21   1.67
-   5.15   1.78   22.6   11.2
- --> sky = sum_j D_j= 490.874
-   swp new 14 <-> 9 old; decreasing diss. by -82.2855
-  Last swap: new 14 <-> 9 old; decreasing diss. by 1
-end{bswap2}: sky = 408.588
- obj= 10.4392
+   14.1   5.99   12.1   9.56   9.14   7.24   24.5   10.6      0   10.1
+   17.2   14.5   16.4   16.9   9.15   12.6   15.6   5.89   17.3   11.8
+     13   8.93   12.9   17.4   13.5   14.3   5.59   1.76   3.86   1.51
+   19.7   15.1      0   11.4   21.8   5.73   15.1   2.16   18.3   19.6
+   10.3   13.3   19.4   28.3
+ --> sky = sum_j D_j= 533.592
+   swp new 16 <-> 9 old; decreasing diss. by -161.129
+  Last swap: new 28 <-> 33 old; decreasing diss. by 0.438978
+end{bswap2}: sky = 372.463
+ obj= 9.78523
 C clara(): sample 4  if (kall && nunfs...): 
 .. kall: T, 
-... nrx [0:1]= 1151 1340 
-... nsel[0:1]= 1151 1340 
- {295} [ntt=44, nunfs=0] .. nsel[1:44]= 17 46 61 152 201 223 254 263 268 291 313 331 479 508 528 542 543 601 655 681 746 778 792 888 951 957 1010 1081 1085 1105 1110 1122 1136 1151 1231 1265 1272 1307 1340 1342 1365 1393 1395 1467  -> dysta2()
-. clara(): s:= max dys[1..946] = 88.047;
-clara()'s bswap2(*, s=88.047):     new repr. 24
-    new repr. 18
-  after build: medoids are 18 24
+... nrx [0:1]= 1019 999 
+... nsel[0:1]= 999 1019 
+ {295} [ntt=44, nunfs=0] .. nsel[1:44]= 17 46 61 152 201 223 254 263 268 291 313 331 479 508 528 542 543 601 655 681 746 778 792 888 951 957 999 1010 1019 1081 1085 1105 1110 1122 1136 1231 1265 1272 1307 1342 1365 1393 1395 1467  -> dysta2()
+. clara(): s:= max dys[1..946] = 77.6857;
+clara()'s bswap2(*, s=77.6857):     new repr. 24
+    new repr. 28
+  after build: medoids are 24 28
   and min.dist dysma[1:n] are
-   22.1     21     21   16.1     28   5.26   6.94   8.65     12   16.2
-   21.6   1.54   3.17   9.09   9.79   11.2   3.63      0   7.27   14.1
-   5.39   9.37   3.08      0     11   18.3   7.89   2.03   12.8   8.74
-   17.9   13.6   29.3   13.5   11.6   10.9   13.2   1.42   5.21   11.8
-   14.8   8.12    8.7   20.2
- --> sky = sum_j D_j= 497.526
-   swp new 9 <-> 24 old; decreasing diss. by -109.602
-  Last swap: new 9 <-> 24 old; decreasing diss. by 1
-end{bswap2}: sky = 387.924
- obj= 10.3256
+   13.7   8.04   8.56    2.4   16.4    2.6   5.22   12.2   8.64   16.8
+    4.3     16   5.07   7.99   9.29   3.52   6.16   13.9   13.4   13.6
+    9.1   7.24   11.4      0   11.8   6.74   2.68      0   2.54   11.2
+   13.4     12   13.7   7.04   9.78   10.4   17.3   7.93   1.68   6.57
+   10.2   11.7   19.9   11.5
+ --> sky = sum_j D_j= 403.513
+   swp new 14 <-> 24 old; decreasing diss. by -35.3245
+  Last swap: new 38 <-> 14 old; decreasing diss. by 0.398398
+end{bswap2}: sky = 368.188
+ obj= 9.95647
 C clara(): sample 5  if (kall && nunfs...): 
 .. kall: T, 
-... nrx [0:1]= 1151 1340 
-... nsel[0:1]= 1151 1340 
- {295} [ntt=44, nunfs=0] .. nsel[1:44]= 7 38 134 140 282 283 311 329 363 461 496 539 572 585 631 655 665 695 758 792 820 823 912 919 962 1121 1140 1151 1166 1189 1192 1202 1204 1260 1297 1315 1321 1326 1340 1422 1431 1432 1463 1488  -> dysta2()
-. clara(): s:= max dys[1..946] = 81.3492;
-clara()'s bswap2(*, s=81.3492):     new repr. 33
-    new repr. 23
-  after build: medoids are 23 33
+... nrx [0:1]= 1019 999 
+... nsel[0:1]= 999 1019 
+ {295} [ntt=44, nunfs=0] .. nsel[1:44]= 7 38 134 140 282 283 311 329 363 461 496 539 572 585 631 655 665 695 758 792 820 823 912 919 962 999 1019 1121 1140 1166 1189 1192 1202 1204 1260 1297 1315 1321 1326 1422 1431 1432 1463 1488  -> dysta2()
+. clara(): s:= max dys[1..946] = 73.7802;
+clara()'s bswap2(*, s=73.7802):     new repr. 40
+    new repr. 26
+  after build: medoids are 26 40
   and min.dist dysma[1:n] are
-   10.1   7.21   18.1   12.3   4.47   4.75   21.4   9.65   6.08   4.17
-   9.92   15.8   10.5   6.12   13.8   16.3   3.99   6.07   14.4    5.7
-   14.4   12.8      0   18.8   8.32   1.63   13.5   4.89   7.26   3.58
-   16.6   12.6      0   15.4   2.22    8.7   14.9   12.1   5.33     14
-   9.57    8.6   12.4   8.79
- --> sky = sum_j D_j= 427.172
-   swp new 28 <-> 33 old; decreasing diss. by -15.2673
-  Last swap: new 28 <-> 33 old; decreasing diss. by 1
-end{bswap2}: sky = 411.905
- obj= 10.5219
+   5.14   20.6   14.8   10.9   12.3   8.62     10   20.1   12.4   22.6
+   6.52   18.8   4.41   11.3   5.33   10.7   12.2    8.8   10.6   12.6
+   21.5   10.5   16.4   14.3    6.8      0   9.53   12.6   14.7   8.84
+   7.12     13   19.9   12.9   15.6   12.2   10.7   15.3   20.3      0
+     16   15.2   10.7   25.7
+ --> sky = sum_j D_j= 548.29
+   swp new 17 <-> 40 old; decreasing diss. by -133.064
+  Last swap: new 17 <-> 40 old; decreasing diss. by 1
+end{bswap2}: sky = 415.226
+ 1st proper or new best: obj= 9.66316
 C clara(): best sample _found_ ; nbest[1:44] =
- c(23,54,87,103,140,199,246,303,306,322,394,408,412,414,428,461,468,521,592,647,859,898,906,967,971,1007,1028,1039,1114,1149,1151,1192,1237,1250,1279,1291,1301,1317,1340,1353,1366,1381,1383,1492)
+ c(7,38,134,140,282,283,311,329,363,461,496,539,572,585,631,655,665,695,758,792,820,823,912,919,962,999,1019,1121,1140,1166,1189,1192,1202,1204,1260,1297,1315,1321,1326,1422,1431,1432,1463,1488)
  --> dysta2(nbest), resul(), end
 $objective
-[1] 10.11202
+[1] 9.663163
 
 $i.med
-[1] 1151 1340
+[1] 665 999
 
 $medoids
-          [,1]      [,2]
-[1,] 51.314110 7.7947054
-[2,]  1.581224 0.4703763
+           [,1]       [,2]
+[1,] -0.7570035 -0.8940899
+[2,] 51.5040456  9.4101489
 
 $clusinfo
      size max_diss  av_diss isolation
-[1,]  800 27.52314 10.04672 0.5475136
-[2,]  700 31.46479 10.18664 0.6259242
+[1,]  701 30.13143 9.602938 0.5656658
+[2,]  799 28.92185 9.716001 0.5429579
 
 > 
 > print(clara(xx, 2, samples=50, trace = 2)[clInd])
@@ -444,471 +443,471 @@ C clara(): (nsam,nran,n) = (44,50,1500);
 C clara(): sample 1  finding 1st... new k{ran}:
 .. kall: FALSE, nsel[ntt=1] = 0
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 84.7454;
- bswap2(): 6 31  after build: medoids are  6 31
- --> sky = sum_j D_j= 536.37
-  Last swap: new 39 <-> 6 old; decreasing diss. by 1
-end{bswap2}: sky = 418.491
- 1st proper or new best: obj= 10.112
+. clara(): s:= max dys[1..946] = 84.6494;
+ bswap2(): 13 6  after build: medoids are  6 13
+ --> sky = sum_j D_j= 541.2
+  Last swap: new 11 <-> 13 old; decreasing diss. by 1
+end{bswap2}: sky = 436.824
+ 1st proper or new best: obj= 10.1407
 C clara(): sample 2  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 87
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 80.3603;
- bswap2(): 18 35  after build: medoids are 18 35
- --> sky = sum_j D_j= 601.537
-  Last swap: new 41 <-> 18 old; decreasing diss. by 1
-end{bswap2}: sky = 444.611
- obj= 10.112
+. clara(): s:= max dys[1..946] = 82.2326;
+ bswap2(): 24 27  after build: medoids are 24 27
+ --> sky = sum_j D_j= 526.744
+  Last swap: new 30 <-> 24 old; decreasing diss. by 1
+end{bswap2}: sky = 415.802
+ 1st proper or new best: obj= 9.77929
 C clara(): sample 3  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 97
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 90.5529;
- bswap2(): 9 5  after build: medoids are  5  9
- --> sky = sum_j D_j= 490.874
-  Last swap: new 14 <-> 9 old; decreasing diss. by 1
-end{bswap2}: sky = 408.588
- obj= 10.4392
+. clara(): s:= max dys[1..946] = 82.2209;
+ bswap2(): 9 33  after build: medoids are  9 33
+ --> sky = sum_j D_j= 533.592
+  Last swap: new 28 <-> 33 old; decreasing diss. by 0.438978
+end{bswap2}: sky = 372.463
+ obj= 9.78523
 C clara(): sample 4  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 23
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 88.047;
- bswap2(): 24 18  after build: medoids are 18 24
- --> sky = sum_j D_j= 497.526
-  Last swap: new 9 <-> 24 old; decreasing diss. by 1
-end{bswap2}: sky = 387.924
- obj= 10.3256
+. clara(): s:= max dys[1..946] = 77.6857;
+ bswap2(): 24 28  after build: medoids are 24 28
+ --> sky = sum_j D_j= 403.513
+  Last swap: new 38 <-> 14 old; decreasing diss. by 0.398398
+end{bswap2}: sky = 368.188
+ obj= 9.95647
 C clara(): sample 5  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 61
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 81.3492;
- bswap2(): 33 23  after build: medoids are 23 33
- --> sky = sum_j D_j= 427.172
-  Last swap: new 28 <-> 33 old; decreasing diss. by 1
-end{bswap2}: sky = 411.905
- obj= 10.5219
+. clara(): s:= max dys[1..946] = 73.7802;
+ bswap2(): 40 26  after build: medoids are 26 40
+ --> sky = sum_j D_j= 548.29
+  Last swap: new 17 <-> 40 old; decreasing diss. by 1
+end{bswap2}: sky = 415.226
+ 1st proper or new best: obj= 9.66316
 C clara(): sample 6  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 134
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 91.3227;
- bswap2(): 13 4  after build: medoids are  4 13
- --> sky = sum_j D_j= 544.958
-  Last swap: new 39 <-> 4 old; decreasing diss. by 0.439251
-end{bswap2}: sky = 454.919
- obj= 10.1386
+. clara(): s:= max dys[1..946] = 76.4132;
+ bswap2(): 24 40  after build: medoids are 24 40
+ --> sky = sum_j D_j= 493.892
+  Last swap: new 16 <-> 24 old; decreasing diss. by 1
+end{bswap2}: sky = 382.8
+ obj= 10.2053
 C clara(): sample 7  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 179
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 77.5603;
- bswap2(): 31 29  after build: medoids are 29 31
- --> sky = sum_j D_j= 585.002
-  Last swap: new 36 <-> 29 old; decreasing diss. by 0.626606
-end{bswap2}: sky = 448.191
- obj= 10.112
+. clara(): s:= max dys[1..946] = 91.2407;
+ bswap2(): 18 39  after build: medoids are 18 39
+ --> sky = sum_j D_j= 559.095
+  Last swap: new 41 <-> 20 old; decreasing diss. by 0.410198
+end{bswap2}: sky = 413.093
+ obj= 9.68805
 C clara(): sample 8  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 45
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 86.3698;
- bswap2(): 12 34  after build: medoids are 12 34
- --> sky = sum_j D_j= 532.479
-  Last swap: new 11 <-> 34 old; decreasing diss. by 0.363353
-end{bswap2}: sky = 441.367
- obj= 10.4095
+. clara(): s:= max dys[1..946] = 78.2768;
+ bswap2(): 37 24  after build: medoids are 24 37
+ --> sky = sum_j D_j= 526.826
+  Last swap: new 14 <-> 29 old; decreasing diss. by 0.887381
+end{bswap2}: sky = 431.746
+ obj= 9.66316
 C clara(): sample 9  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 59
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 89.6142;
- bswap2(): 36 7  after build: medoids are  7 36
- --> sky = sum_j D_j= 666.688
-  Last swap: new 37 <-> 36 old; decreasing diss. by 1
-end{bswap2}: sky = 401.451
- obj= 10.1507
+. clara(): s:= max dys[1..946] = 85.1138;
+ bswap2(): 42 24  after build: medoids are 24 42
+ --> sky = sum_j D_j= 524.654
+  Last swap: new 11 <-> 42 old; decreasing diss. by 1
+end{bswap2}: sky = 397.695
+ obj= 10.3746
 C clara(): sample 10  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 119
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 86.2865;
- bswap2(): 43 8  after build: medoids are  8 43
- --> sky = sum_j D_j= 618.017
-  Last swap: new 22 <-> 8 old; decreasing diss. by 0.0544228
-end{bswap2}: sky = 407.377
- obj= 10.6473
+. clara(): s:= max dys[1..946] = 91.3475;
+ bswap2(): 23 17  after build: medoids are 17 23
+ --> sky = sum_j D_j= 606.383
+  Last swap: new 21 <-> 17 old; decreasing diss. by 0.597088
+end{bswap2}: sky = 452.021
+ obj= 9.75314
 C clara(): sample 11  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 93
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 84.9886;
- bswap2(): 17 40  after build: medoids are 17 40
- --> sky = sum_j D_j= 472.932
-  Last swap: new 19 <-> 17 old; decreasing diss. by 1
-end{bswap2}: sky = 379.676
- obj= 10.5167
+. clara(): s:= max dys[1..946] = 88.9424;
+ bswap2(): 5 37  after build: medoids are  5 37
+ --> sky = sum_j D_j= 510.544
+  Last swap: new 30 <-> 5 old; decreasing diss. by 1
+end{bswap2}: sky = 419.179
+ 1st proper or new best: obj= 9.65359
 C clara(): sample 12  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 44
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 87.2707;
- bswap2(): 3 40  after build: medoids are  3 40
- --> sky = sum_j D_j= 511.987
-  Last swap: new 12 <-> 40 old; decreasing diss. by 0.128322
-end{bswap2}: sky = 393.552
- 1st proper or new best: obj= 10.0289
+. clara(): s:= max dys[1..946] = 80.4915;
+ bswap2(): 23 25  after build: medoids are 23 25
+ --> sky = sum_j D_j= 423.319
+  Last swap: new 1 <-> 23 old; decreasing diss. by 1
+end{bswap2}: sky = 369.493
+ obj= 9.78288
 C clara(): sample 13  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 92
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 81.0553;
- bswap2(): 19 21  after build: medoids are 19 21
- --> sky = sum_j D_j= 535.094
-  Last swap: new 37 <-> 21 old; decreasing diss. by 0.558058
-end{bswap2}: sky = 408.043
- obj= 10.0833
+. clara(): s:= max dys[1..946] = 76.1143;
+ bswap2(): 22 30  after build: medoids are 22 30
+ --> sky = sum_j D_j= 538.28
+  Last swap: new 14 <-> 22 old; decreasing diss. by 1
+end{bswap2}: sky = 419.593
+ obj= 9.80239
 C clara(): sample 14  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 108
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 75.3679;
- bswap2(): 29 33  after build: medoids are 29 33
- --> sky = sum_j D_j= 463.418
-  Last swap: new 14 <-> 29 old; decreasing diss. by 1
-end{bswap2}: sky = 399.773
- obj= 10.1145
+. clara(): s:= max dys[1..946] = 79.6275;
+ bswap2(): 31 35  after build: medoids are 31 35
+ --> sky = sum_j D_j= 501.393
+  Last swap: new 34 <-> 30 old; decreasing diss. by 0.371241
+end{bswap2}: sky = 404.715
+ obj= 9.99603
 C clara(): sample 15  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 41
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 95.135;
- bswap2(): 34 14  after build: medoids are 14 34
- --> sky = sum_j D_j= 648
-  Last swap: new 37 <-> 4 old; decreasing diss. by 0.47473
-end{bswap2}: sky = 437.382
- obj= 10.0825
+. clara(): s:= max dys[1..946] = 85.1226;
+ bswap2(): 42 25  after build: medoids are 25 42
+ --> sky = sum_j D_j= 479.866
+  Last swap: new 10 <-> 42 old; decreasing diss. by 1
+end{bswap2}: sky = 397.846
+ obj= 9.91509
 C clara(): sample 16  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 221
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 80.0027;
- bswap2(): 18 35  after build: medoids are 18 35
- --> sky = sum_j D_j= 544.162
-  Last swap: new 28 <-> 15 old; decreasing diss. by 0.774928
-end{bswap2}: sky = 392.466
- obj= 10.6769
+. clara(): s:= max dys[1..946] = 82.6708;
+ bswap2(): 7 32  after build: medoids are  7 32
+ --> sky = sum_j D_j= 430.691
+  Last swap: new 40 <-> 19 old; decreasing diss. by 0.967002
+end{bswap2}: sky = 385.483
+ obj= 9.75954
 C clara(): sample 17  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 63
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 88.7679;
- bswap2(): 14 35  after build: medoids are 14 35
- --> sky = sum_j D_j= 662.014
-  Last swap: new 13 <-> 14 old; decreasing diss. by 1
-end{bswap2}: sky = 437.238
- obj= 10.4843
+. clara(): s:= max dys[1..946] = 75.4038;
+ bswap2(): 23 35  after build: medoids are 23 35
+ --> sky = sum_j D_j= 405.816
+  Last swap: new 4 <-> 23 old; decreasing diss. by 1
+end{bswap2}: sky = 332.314
+ 1st proper or new best: obj= 9.65233
 C clara(): sample 18  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 123
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 79.4459;
- bswap2(): 34 36  after build: medoids are 34 36
- --> sky = sum_j D_j= 448.5
-  Last swap: new 6 <-> 36 old; decreasing diss. by 0.756785
-end{bswap2}: sky = 421.78
- obj= 10.0289
+. clara(): s:= max dys[1..946] = 79.3412;
+ bswap2(): 19 4  after build: medoids are  4 19
+ --> sky = sum_j D_j= 523.479
+  Last swap: new 17 <-> 19 old; decreasing diss. by 1
+end{bswap2}: sky = 391.149
+ obj= 9.76199
 C clara(): sample 19  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 135
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 88.5909;
- bswap2(): 10 31  after build: medoids are 10 31
- --> sky = sum_j D_j= 518.807
-  Last swap: new 31 <-> 35 old; decreasing diss. by 0.526342
-end{bswap2}: sky = 438.824
- obj= 10.039
+. clara(): s:= max dys[1..946] = 81.6923;
+ bswap2(): 5 4  after build: medoids are  4  5
+ --> sky = sum_j D_j= 429.005
+  Last swap: new 37 <-> 5 old; decreasing diss. by 1
+end{bswap2}: sky = 391.347
+ obj= 9.65233
 C clara(): sample 20  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 84
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 71.754;
- bswap2(): 37 14  after build: medoids are 14 37
- --> sky = sum_j D_j= 564.583
-  Last swap: new 7 <-> 37 old; decreasing diss. by 1
-end{bswap2}: sky = 389.759
- 1st proper or new best: obj= 10.0219
+. clara(): s:= max dys[1..946] = 74.6473;
+ bswap2(): 13 36  after build: medoids are 13 36
+ --> sky = sum_j D_j= 397.89
+  Last swap: new 16 <-> 36 old; decreasing diss. by 0.311398
+end{bswap2}: sky = 354.641
+ 1st proper or new best: obj= 9.63025
 C clara(): sample 21  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 128
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 86.3879;
- bswap2(): 41 5  after build: medoids are  5 41
- --> sky = sum_j D_j= 494.226
-  Last swap: new 11 <-> 41 old; decreasing diss. by 1
-end{bswap2}: sky = 409.682
- obj= 10.0219
+. clara(): s:= max dys[1..946] = 82.2868;
+ bswap2(): 35 34  after build: medoids are 34 35
+ --> sky = sum_j D_j= 508.413
+  Last swap: new 31 <-> 35 old; decreasing diss. by 1
+end{bswap2}: sky = 362.906
+ obj= 9.65359
 C clara(): sample 22  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 105
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 86.2377;
- bswap2(): 12 11  after build: medoids are 11 12
- --> sky = sum_j D_j= 504.842
-  Last swap: new 42 <-> 11 old; decreasing diss. by 0.951253
-end{bswap2}: sky = 458.314
- obj= 10.0219
+. clara(): s:= max dys[1..946] = 75.1174;
+ bswap2(): 41 29  after build: medoids are 29 41
+ --> sky = sum_j D_j= 493.584
+  Last swap: new 23 <-> 41 old; decreasing diss. by 1
+end{bswap2}: sky = 353.321
+ obj= 9.63025
 C clara(): sample 23  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 204
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 89.2695;
- bswap2(): 36 18  after build: medoids are 18 36
- --> sky = sum_j D_j= 618.515
-  Last swap: new 32 <-> 18 old; decreasing diss. by 0.292828
-end{bswap2}: sky = 408.054
- obj= 10.1029
+. clara(): s:= max dys[1..946] = 73.7656;
+ bswap2(): 13 11  after build: medoids are 11 13
+ --> sky = sum_j D_j= 705.978
+  Last swap: new 26 <-> 13 old; decreasing diss. by 1
+end{bswap2}: sky = 441.528
+ obj= 9.64875
 C clara(): sample 24  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 87
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 84.5963;
- bswap2(): 43 2  after build: medoids are  2 43
- --> sky = sum_j D_j= 604.622
-  Last swap: new 8 <-> 43 old; decreasing diss. by 1
-end{bswap2}: sky = 420.184
- obj= 10.2899
+. clara(): s:= max dys[1..946] = 87.1927;
+ bswap2(): 13 7  after build: medoids are  7 13
+ --> sky = sum_j D_j= 509.62
+  Last swap: new 4 <-> 7 old; decreasing diss. by 0.692058
+end{bswap2}: sky = 417.527
+ obj= 9.95795
 C clara(): sample 25  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 140
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 75.1447;
- bswap2(): 36 18  after build: medoids are 18 36
- --> sky = sum_j D_j= 479.397
-  Last swap: new 4 <-> 18 old; decreasing diss. by 0.00150722
-end{bswap2}: sky = 386.099
- obj= 10.1338
+. clara(): s:= max dys[1..946] = 72.5392;
+ bswap2(): 7 31  after build: medoids are  7 31
+ --> sky = sum_j D_j= 420.983
+  Last swap: new 27 <-> 7 old; decreasing diss. by 1
+end{bswap2}: sky = 405.433
+ obj= 9.63025
 C clara(): sample 26  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 273
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 83.1922;
- bswap2(): 25 15  after build: medoids are 15 25
- --> sky = sum_j D_j= 613.595
-  Last swap: new 39 <-> 25 old; decreasing diss. by 1
-end{bswap2}: sky = 464.068
- obj= 10.2005
+. clara(): s:= max dys[1..946] = 83.0823;
+ bswap2(): 34 39  after build: medoids are 34 39
+ --> sky = sum_j D_j= 633.387
+  Last swap: new 6 <-> 34 old; decreasing diss. by 1
+end{bswap2}: sky = 471.03
+ 1st proper or new best: obj= 9.61429
 C clara(): sample 27  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 128
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 74.5042;
- bswap2(): 25 8  after build: medoids are  8 25
- --> sky = sum_j D_j= 494.241
-  Last swap: new 16 <-> 37 old; decreasing diss. by 0.727466
-end{bswap2}: sky = 396.18
- 1st proper or new best: obj= 10.0032
+. clara(): s:= max dys[1..946] = 79.4914;
+ bswap2(): 43 37  after build: medoids are 37 43
+ --> sky = sum_j D_j= 524.694
+  Last swap: new 6 <-> 43 old; decreasing diss. by 1
+end{bswap2}: sky = 426.746
+ obj= 9.61429
 C clara(): sample 28  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 74
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 73.3263;
- bswap2(): 42 7  after build: medoids are  7 42
- --> sky = sum_j D_j= 497.431
-  Last swap: new 34 <-> 42 old; decreasing diss. by 1
-end{bswap2}: sky = 417.303
- obj= 10.0843
+. clara(): s:= max dys[1..946] = 99.9366;
+ bswap2(): 40 11  after build: medoids are 11 40
+ --> sky = sum_j D_j= 515.562
+  Last swap: new 38 <-> 34 old; decreasing diss. by 0.898884
+end{bswap2}: sky = 403.623
+ obj= 9.70784
 C clara(): sample 29  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 95
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 85.8911;
- bswap2(): 16 14  after build: medoids are 14 16
- --> sky = sum_j D_j= 498.138
-  Last swap: new 35 <-> 14 old; decreasing diss. by 0.0669929
-end{bswap2}: sky = 405.979
- obj= 10.2104
+. clara(): s:= max dys[1..946] = 89.4153;
+ bswap2(): 2 35  after build: medoids are  2 35
+ --> sky = sum_j D_j= 518.835
+  Last swap: new 7 <-> 6 old; decreasing diss. by 0.00389548
+end{bswap2}: sky = 423
+ obj= 9.61429
 C clara(): sample 30  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 160
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 77.34;
- bswap2(): 35 14  after build: medoids are 14 35
- --> sky = sum_j D_j= 495.651
-  Last swap: new 21 <-> 30 old; decreasing diss. by 0.969312
-end{bswap2}: sky = 388.346
- obj= 10.0032
+. clara(): s:= max dys[1..946] = 75.5398;
+ bswap2(): 17 11  after build: medoids are 11 17
+ --> sky = sum_j D_j= 464.06
+  Last swap: new 13 <-> 11 old; decreasing diss. by 0.230267
+end{bswap2}: sky = 398.565
+ obj= 9.61429
 C clara(): sample 31  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 45
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 79.2961;
- bswap2(): 44 5  after build: medoids are  5 44
- --> sky = sum_j D_j= 444.394
-  Last swap: new 6 <-> 37 old; decreasing diss. by 0.155417
-end{bswap2}: sky = 356.436
- obj= 10.1346
+. clara(): s:= max dys[1..946] = 78.2302;
+ bswap2(): 40 19  after build: medoids are 19 40
+ --> sky = sum_j D_j= 580.438
+  Last swap: new 13 <-> 40 old; decreasing diss. by 1
+end{bswap2}: sky = 367.223
+ obj= 9.91942
 C clara(): sample 32  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 56
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 82.0621;
- bswap2(): 35 15  after build: medoids are 15 35
- --> sky = sum_j D_j= 500.91
-  Last swap: new 13 <-> 15 old; decreasing diss. by 0.747984
-end{bswap2}: sky = 377.057
- obj= 10.0079
+. clara(): s:= max dys[1..946] = 84.5005;
+ bswap2(): 12 32  after build: medoids are 12 32
+ --> sky = sum_j D_j= 444.913
+  Last swap: new 27 <-> 7 old; decreasing diss. by 0.228504
+end{bswap2}: sky = 363.142
+ obj= 9.77547
 C clara(): sample 33  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 50
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 76.1357;
- bswap2(): 15 29  after build: medoids are 15 29
- --> sky = sum_j D_j= 535.787
-  Last swap: new 6 <-> 15 old; decreasing diss. by 1
-end{bswap2}: sky = 429.005
- obj= 10.0152
+. clara(): s:= max dys[1..946] = 76.488;
+ bswap2(): 25 26  after build: medoids are 25 26
+ --> sky = sum_j D_j= 419.591
+  Last swap: new 38 <-> 5 old; decreasing diss. by 0.631655
+end{bswap2}: sky = 357.699
+ obj= 9.61429
 C clara(): sample 34  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 165
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 76.2002;
- bswap2(): 16 13  after build: medoids are 13 16
- --> sky = sum_j D_j= 616.138
-  Last swap: new 10 <-> 13 old; decreasing diss. by 0.885394
-end{bswap2}: sky = 406.402
- obj= 10.0032
+. clara(): s:= max dys[1..946] = 78.0499;
+ bswap2(): 40 37  after build: medoids are 37 40
+ --> sky = sum_j D_j= 424.572
+  Last swap: new 9 <-> 10 old; decreasing diss. by 0.233331
+end{bswap2}: sky = 354.223
+ obj= 10.2203
 C clara(): sample 35  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 123
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 83.2469;
- bswap2(): 25 37  after build: medoids are 25 37
- --> sky = sum_j D_j= 635.195
-  Last swap: new 15 <-> 25 old; decreasing diss. by 1
-end{bswap2}: sky = 432.163
- obj= 10.1734
+. clara(): s:= max dys[1..946] = 79.8045;
+ bswap2(): 5 42  after build: medoids are  5 42
+ --> sky = sum_j D_j= 515.209
+  Last swap: new 41 <-> 42 old; decreasing diss. by 0.913161
+end{bswap2}: sky = 397.716
+ obj= 9.6157
 C clara(): sample 36  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 58
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 91.5556;
- bswap2(): 21 10  after build: medoids are 10 21
- --> sky = sum_j D_j= 512.215
-  Last swap: new 34 <-> 21 old; decreasing diss. by 1
-end{bswap2}: sky = 482.571
- obj= 10.0032
+. clara(): s:= max dys[1..946] = 83.3107;
+ bswap2(): 10 34  after build: medoids are 10 34
+ --> sky = sum_j D_j= 503.551
+  Last swap: new 16 <-> 7 old; decreasing diss. by 0.893467
+end{bswap2}: sky = 402.752
+ obj= 9.61429
 C clara(): sample 37  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 94
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 77.8577;
- bswap2(): 29 12  after build: medoids are 12 29
- --> sky = sum_j D_j= 620.466
-  Last swap: new 4 <-> 35 old; decreasing diss. by 0.939187
-end{bswap2}: sky = 412.779
- obj= 10.5208
+. clara(): s:= max dys[1..946] = 82.2963;
+ bswap2(): 1 31  after build: medoids are  1 31
+ --> sky = sum_j D_j= 712.371
+  Last swap: new 7 <-> 1 old; decreasing diss. by 1
+end{bswap2}: sky = 447.183
+ obj= 9.61429
 C clara(): sample 38  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 117
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 79.4464;
- bswap2(): 7 31  after build: medoids are  7 31
- --> sky = sum_j D_j= 605.048
-  Last swap: new 9 <-> 7 old; decreasing diss. by 1
-end{bswap2}: sky = 397.868
- obj= 10.0032
+. clara(): s:= max dys[1..946] = 95.8048;
+ bswap2(): 26 1  after build: medoids are  1 26
+ --> sky = sum_j D_j= 516.385
+  Last swap: new 15 <-> 1 old; decreasing diss. by 0.188094
+end{bswap2}: sky = 425.344
+ obj= 9.86458
 C clara(): sample 39  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 63
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 81.7464;
- bswap2(): 1 28  after build: medoids are  1 28
- --> sky = sum_j D_j= 458.896
-  Last swap: new 40 <-> 1 old; decreasing diss. by 1
-end{bswap2}: sky = 414.271
- obj= 10.7806
+. clara(): s:= max dys[1..946] = 86.6027;
+ bswap2(): 37 6  after build: medoids are  6 37
+ --> sky = sum_j D_j= 481.819
+  Last swap: new 23 <-> 6 old; decreasing diss. by 0.242997
+end{bswap2}: sky = 417.783
+ obj= 9.96942
 C clara(): sample 40  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 96
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 81.4514;
- bswap2(): 43 40  after build: medoids are 40 43
- --> sky = sum_j D_j= 509.713
-  Last swap: new 35 <-> 43 old; decreasing diss. by 1
-end{bswap2}: sky = 437.147
- obj= 10.4477
+. clara(): s:= max dys[1..946] = 86.7782;
+ bswap2(): 27 21  after build: medoids are 21 27
+ --> sky = sum_j D_j= 724.939
+  Last swap: new 10 <-> 27 old; decreasing diss. by 1
+end{bswap2}: sky = 428.52
+ obj= 10.8484
 C clara(): sample 41  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 125
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 73.4388;
- bswap2(): 20 12  after build: medoids are 12 20
- --> sky = sum_j D_j= 446.501
-  Last swap: new 31 <-> 44 old; decreasing diss. by 0.203346
-end{bswap2}: sky = 359.731
- obj= 10.1185
+. clara(): s:= max dys[1..946] = 82.3384;
+ bswap2(): 2 29  after build: medoids are  2 29
+ --> sky = sum_j D_j= 714.103
+  Last swap: new 6 <-> 2 old; decreasing diss. by 1
+end{bswap2}: sky = 411.244
+ obj= 10.3511
 C clara(): sample 42  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 23
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 96.0745;
- bswap2(): 30 16  after build: medoids are 16 30
- --> sky = sum_j D_j= 477.285
-  Last swap: new 37 <-> 30 old; decreasing diss. by 1
-end{bswap2}: sky = 428.793
- obj= 10.0287
+. clara(): s:= max dys[1..946] = 74.2665;
+ bswap2(): 3 30  after build: medoids are  3 30
+ --> sky = sum_j D_j= 541.34
+  Last swap: new 21 <-> 30 old; decreasing diss. by 0.0870194
+end{bswap2}: sky = 413.299
+ obj= 10.5262
 C clara(): sample 43  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 112
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 80.9596;
- bswap2(): 34 8  after build: medoids are  8 34
- --> sky = sum_j D_j= 453.656
-  Last swap: new 26 <-> 8 old; decreasing diss. by 0.780873
-end{bswap2}: sky = 438.756
- obj= 10.0292
+. clara(): s:= max dys[1..946] = 70.5586;
+ bswap2(): 41 31  after build: medoids are 31 41
+ --> sky = sum_j D_j= 383.305
+  Last swap: new 14 <-> 41 old; decreasing diss. by 1
+end{bswap2}: sky = 323.571
+ obj= 10.2205
 C clara(): sample 44  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 100
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 91.5542;
- bswap2(): 8 29  after build: medoids are  8 29
- --> sky = sum_j D_j= 572.709
-  Last swap: new 26 <-> 8 old; decreasing diss. by 1
-end{bswap2}: sky = 419.057
- obj= 10.6533
+. clara(): s:= max dys[1..946] = 81.0334;
+ bswap2(): 28 13  after build: medoids are 13 28
+ --> sky = sum_j D_j= 695.34
+  Last swap: new 8 <-> 13 old; decreasing diss. by 0.260756
+end{bswap2}: sky = 393.903
+ obj= 11.2797
 C clara(): sample 45  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 186
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 82.7184;
- bswap2(): 20 9  after build: medoids are  9 20
- --> sky = sum_j D_j= 423.178
-  Last swap: new 12 <-> 9 old; decreasing diss. by 0.132875
-end{bswap2}: sky = 370.823
- obj= 10.0595
+. clara(): s:= max dys[1..946] = 80.4615;
+ bswap2(): 2 39  after build: medoids are  2 39
+ --> sky = sum_j D_j= 488.193
+  Last swap: new 9 <-> 39 old; decreasing diss. by 0.396945
+end{bswap2}: sky = 422.85
+ obj= 9.97243
 C clara(): sample 46  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 72
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 78.0171;
- bswap2(): 24 13  after build: medoids are 13 24
- --> sky = sum_j D_j= 425.546
-  Last swap: new 8 <-> 13 old; decreasing diss. by 0.582792
-end{bswap2}: sky = 374.277
- obj= 10.256
+. clara(): s:= max dys[1..946] = 90.7292;
+ bswap2(): 22 37  after build: medoids are 22 37
+ --> sky = sum_j D_j= 559.363
+  Last swap: new 34 <-> 22 old; decreasing diss. by 1
+end{bswap2}: sky = 423.583
+ obj= 9.75509
 C clara(): sample 47  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 141
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 78.0975;
- bswap2(): 1 7  after build: medoids are  1  7
- --> sky = sum_j D_j= 446.971
-  Last swap: new 33 <-> 1 old; decreasing diss. by 1
-end{bswap2}: sky = 389.032
- obj= 10.0032
+. clara(): s:= max dys[1..946] = 81.6717;
+ bswap2(): 41 2  after build: medoids are  2 41
+ --> sky = sum_j D_j= 463.14
+  Last swap: new 34 <-> 2 old; decreasing diss. by 0.879526
+end{bswap2}: sky = 391.527
+ obj= 9.86629
 C clara(): sample 48  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 67
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 88.4769;
- bswap2(): 26 3  after build: medoids are  3 26
- --> sky = sum_j D_j= 504.047
-  Last swap: new 33 <-> 26 old; decreasing diss. by 1
-end{bswap2}: sky = 413.772
- obj= 10.6891
+. clara(): s:= max dys[1..946] = 75.0878;
+ bswap2(): 42 31  after build: medoids are 31 42
+ --> sky = sum_j D_j= 570.247
+  Last swap: new 37 <-> 31 old; decreasing diss. by 0.844474
+end{bswap2}: sky = 408.073
+ obj= 9.92563
 C clara(): sample 49  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 121
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 75.9709;
- bswap2(): 23 20  after build: medoids are 20 23
- --> sky = sum_j D_j= 486.38
-  Last swap: new 18 <-> 23 old; decreasing diss. by 1
-end{bswap2}: sky = 354.591
- obj= 10.9521
+. clara(): s:= max dys[1..946] = 87.5173;
+ bswap2(): 13 34  after build: medoids are 13 34
+ --> sky = sum_j D_j= 504.821
+  Last swap: new 35 <-> 13 old; decreasing diss. by 1
+end{bswap2}: sky = 408.675
+ obj= 9.76274
 C clara(): sample 50  if (kall && nunfs...): 
 .. kall: T, nsel[ntt=2] = 78
  {295} [ntt=44, nunfs=0]  -> dysta2()
-. clara(): s:= max dys[1..946] = 86.3129;
- bswap2(): 42 14  after build: medoids are 14 42
- --> sky = sum_j D_j= 571.882
-  Last swap: new 34 <-> 42 old; decreasing diss. by 1
-end{bswap2}: sky = 453.192
- obj= 10.4592
+. clara(): s:= max dys[1..946] = 87.7511;
+ bswap2(): 23 30  after build: medoids are 23 30
+ --> sky = sum_j D_j= 502.458
+  Last swap: new 12 <-> 23 old; decreasing diss. by 1
+end{bswap2}: sky = 400.127
+ obj= 9.64357
 C clara(): best sample _found_ ; nbest[1:44] =
- c(53,55,74,171,210,251,290,300,323,333,368,373,387,446,459,493,495,663,683,687,705,711,750,775,813,924,929,938,961,999,1004,1008,1019,1026,1056,1111,1139,1192,1227,1372,1399,1400,1416,1444)
+ c(65,126,128,136,211,219,340,413,420,421,432,433,463,498,528,546,558,565,606,615,621,705,715,722,744,754,788,840,842,935,964,1001,1010,1011,1082,1105,1106,1138,1147,1239,1242,1326,1347,1385)
  --> dysta2(nbest), resul(), end
 $objective
-[1] 10.00323
+[1] 9.61429
 
 $i.med
-[1] 1139  300
+[1] 1147  219
 
 $medoids
-           [,1]       [,2]
-[1,] 49.6543096 10.8671126
-[2,]  0.7558529  0.5295663
+            [,1]       [,2]
+[1,]  0.04086397 -0.4319988
+[2,] 51.31958457 11.3088406
 
 $clusinfo
      size max_diss  av_diss isolation
-[1,]  800 28.41036  9.89087 0.5684433
-[2,]  700 30.73934 10.13163 0.6150423
+[1,]  701 29.22993 9.582446 0.5556424
+[2,]  799 28.46765 9.642228 0.5411520
 
 > ##                             ^^^^^^^^^ a bit less output ...
 > ## for sample 45
@@ -923,382 +922,382 @@ $clusinfo
 > for(i in 1:19)
 +     print(clara(x[sample(nrow(x)),], 2, samples = 50)[clInd])
 $objective
-[1] 9.998856
+[1] 9.611541
 
 $i.med
-[1]  977 1459
+[1] 521  20
 
 $medoids
-           [,1]    [,2]
-[1,] 51.0033452 9.12841
-[2,]  0.7469202 1.24932
+          [,1]      [,2]
+[1,] 50.345402 10.336172
+[2,] -1.017259 -1.286059
 
 $clusinfo
      size max_diss  av_diss isolation
-[1,]  800 26.86019  9.87836 0.5280131
-[2,]  700 30.34337 10.13657 0.5964848
+[1,]  800 30.06899 9.612016 0.5709897
+[2,]  700 29.57957 9.610998 0.5616961
 
 $objective
-[1] 10.01977
+[1] 9.586637
 
 $i.med
-[1]  739 1385
+[1]  448 1406
 
 $medoids
-           [,1]      [,2]
-[1,]  0.7558529 0.5295663
-[2,] 50.8770815 8.5643877
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6055681
-[2,]  800 26.74444  9.921884 0.5268682
-
-$objective
-[1] 10.00144
-
-$i.med
-[1]  862 1010
-
-$medoids
-           [,1]      [,2]
-[1,]  0.7558529 0.5295663
-[2,] 49.4297134 9.5070656
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6210615
-[2,]  800 27.03542  9.887517 0.5462269
-
-$objective
-[1] 10.01561
-
-$i.med
-[1] 603 820
-
-$medoids
-           [,1]      [,2]
-[1,] 49.6543096 10.867113
-[2,]  0.7824195  1.649143
+            [,1]        [,2]
+[1,]  0.04089097  0.02320045
+[2,] 49.86457170 10.52278658
 
 $clusinfo
      size max_diss  av_diss isolation
-[1,]  800 28.41036  9.89087 0.5712506
-[2,]  700 30.16311 10.15816 0.6064933
+[1,]  701 28.92506 9.585969 0.5680717
+[2,]  799 28.27901 9.587224 0.5553837
 
 $objective
-[1] 10.01514
+[1] 9.585964
 
 $i.med
-[1]   44 1430
+[1] 451 740
 
 $medoids
            [,1]       [,2]
-[1,] 49.6543096 10.8671126
-[2,]  0.6604674 -0.1066458
+[1,] -0.5009691 -0.6486965
+[2,] 50.3454017 10.3361719
 
 $clusinfo
      size max_diss  av_diss isolation
-[1,]  800 28.41036  9.89087 0.5658558
-[2,]  700 31.01367 10.15717 0.6177065
+[1,]  701 29.77696 9.585453 0.5724200
+[2,]  799 27.91861 9.586413 0.5366958
 
 $objective
-[1] 10.00107
+[1] 9.583641
 
 $i.med
-[1]  904 1214
-
-$medoids
-           [,1]      [,2]
-[1,] 50.2492576 10.299201
-[2,] -0.8155063  1.417238
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  800 27.91319  9.844468 0.5385377
-[2,]  700 28.93873 10.180037 0.5583237
-
-$objective
-[1] 10.00573
-
-$i.med
-[1] 379 647
-
-$medoids
-           [,1]      [,2]
-[1,]  0.7558529 0.5295663
-[2,] 49.6232996 9.1032208
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6195718
-[2,]  800 26.78803  9.895565 0.5399304
-
-$objective
-[1] 10.03059
-
-$i.med
-[1] 805 887
-
-$medoids
-            [,1]     [,2]
-[1,] -0.07369905 2.028452
-[2,] 49.38189025 9.446208
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 29.23504 10.186699 0.5845981
-[2,]  800 27.07402  9.893989 0.5413853
-
-$objective
-[1] 10.0203
-
-$i.med
-[1] 407 333
-
-$medoids
-           [,1]      [,2]
-[1,]  0.7824195  1.649143
-[2,] 51.1016598 11.021770
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.16311 10.158161 0.5892994
-[2,]  800 28.74613  9.899672 0.5616159
-
-$objective
-[1] 10.01382
-
-$i.med
-[1]  642 1153
-
-$medoids
-           [,1]     [,2]
-[1,]  0.7824195 1.649143
-[2,] 49.4297134 9.507066
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.16311 10.158161 0.6121028
-[2,]  800 27.03542  9.887517 0.5486324
-
-$objective
-[1] 9.990858
-
-$i.med
-[1] 270 384
-
-$medoids
-           [,1]      [,2]
-[1,] 50.2492576 10.299201
-[2,]  0.7824195  1.649143
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  800 27.91319  9.844468 0.5558465
-[2,]  700 30.16311 10.158161 0.6006500
-
-$objective
-[1] 9.990858
-
-$i.med
-[1] 1453  272
-
-$medoids
-           [,1]      [,2]
-[1,] 50.2492576 10.299201
-[2,]  0.7824195  1.649143
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  800 27.91319  9.844468 0.5558465
-[2,]  700 30.16311 10.158161 0.6006500
-
-$objective
-[1] 9.996497
-
-$i.med
-[1] 263 368
-
-$medoids
-           [,1]      [,2]
-[1,]  0.9255294  1.737013
-[2,] 50.2492576 10.299201
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.23980 10.170244 0.6040545
-[2,]  800 27.91319  9.844468 0.5575794
-
-$objective
-[1] 10.00415
-
-$i.med
-[1] 1139 1405
-
-$medoids
-          [,1]       [,2]
-[1,] 50.249258 10.2992014
-[2,]  1.581224  0.4703763
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  800 27.91319  9.844468 0.5621923
-[2,]  700 31.46479 10.186640 0.6337242
-
-$objective
-[1] 10.02048
-
-$i.med
-[1]  560 1486
-
-$medoids
-           [,1]     [,2]
-[1,]  0.7469202 1.249320
-[2,] 49.2342914 9.236618
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.34337 10.136565 0.6174776
-[2,]  800 27.19128  9.918899 0.5533336
-
-$objective
-[1] 9.978477
-
-$i.med
-[1] 756 367
+[1] 539 387
 
 $medoids
            [,1]       [,2]
-[1,]  0.7558529  0.5295663
-[2,] 50.2492576 10.2992014
+[1,] 49.8645717 10.5227866
+[2,] -0.1009724 -0.4444724
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6093223
-[2,]  800 27.91319  9.844468 0.5533016
+     size max_diss  av_diss isolation
+[1,]  799 28.27901 9.587224 0.5528101
+[2,]  701 29.34325 9.579557 0.5736142
 
 $objective
-[1] 10.00415
+[1] 9.58722
 
 $i.med
-[1] 1148  156
+[1]  58 207
 
 $medoids
-          [,1]       [,2]
-[1,] 50.249258 10.2992014
-[2,]  1.581224  0.4703763
+            [,1]       [,2]
+[1,]  0.04086397 -0.4319988
+[2,] 50.53763943 11.1072301
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  800 27.91319  9.844468 0.5621923
-[2,]  700 31.46479 10.186640 0.6337242
+     size max_diss  av_diss isolation
+[1,]  701 29.22993 9.582446 0.5643014
+[2,]  799 28.55938 9.591408 0.5513560
 
 $objective
-[1] 10.03766
+[1] 9.583641
 
 $i.med
-[1] 1204  272
-
-$medoids
-            [,1]     [,2]
-[1,] -0.07369905 2.028452
-[2,] 49.98807148 8.743293
-
-$clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 29.23504 10.186699 0.5787959
-[2,]  800 26.38109  9.907246 0.5222934
-
-$objective
-[1] 9.978477
-
-$i.med
-[1] 778 485
+[1] 676 337
 
 $medoids
            [,1]       [,2]
-[1,]  0.7558529  0.5295663
-[2,] 50.2492576 10.2992014
+[1,] -0.1009724 -0.4444724
+[2,] 49.8645717 10.5227866
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6093223
-[2,]  800 27.91319  9.844468 0.5533016
+     size max_diss  av_diss isolation
+[1,]  701 29.34325 9.579557 0.5736142
+[2,]  799 28.27901 9.587224 0.5528101
+
+$objective
+[1] 9.61429
+
+$i.med
+[1]  152 1319
+
+$medoids
+            [,1]       [,2]
+[1,] 51.31958457 11.3088406
+[2,]  0.04086397 -0.4319988
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  799 28.46765 9.642228 0.5411520
+[2,]  701 29.22993 9.582446 0.5556424
+
+$objective
+[1] 9.605953
+
+$i.med
+[1] 1033  864
+
+$medoids
+           [,1]       [,2]
+[1,] -0.5554117  0.3590557
+[2,] 50.4054368 11.4682101
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  701 29.15394 9.604919 0.5589579
+[2,]  799 28.94365 9.606860 0.5549261
+
+$objective
+[1] 9.583485
+
+$i.med
+[1] 631 665
+
+$medoids
+           [,1]       [,2]
+[1,] 50.3454017 10.3361719
+[2,] -0.4618501 -0.3644744
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  799 27.91861 9.586413 0.5377042
+[2,]  701 29.55835 9.580148 0.5692851
+
+$objective
+[1] 9.583641
+
+$i.med
+[1] 1231  925
+
+$medoids
+           [,1]       [,2]
+[1,] -0.1009724 -0.4444724
+[2,] 49.8645717 10.5227866
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  701 29.34325 9.579557 0.5736142
+[2,]  799 28.27901 9.587224 0.5528101
+
+$objective
+[1] 9.584559
+
+$i.med
+[1]  979 1481
+
+$medoids
+            [,1]       [,2]
+[1,]  0.04086397 -0.4319988
+[2,] 50.34540167 10.3361719
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  701 29.22993 9.582446 0.5681877
+[2,]  799 27.91861 9.586413 0.5426975
+
+$objective
+[1] 9.583641
+
+$i.med
+[1] 1182 1333
+
+$medoids
+           [,1]       [,2]
+[1,] 49.8645717 10.5227866
+[2,] -0.1009724 -0.4444724
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  799 28.27901 9.587224 0.5528101
+[2,]  701 29.34325 9.579557 0.5736142
+
+$objective
+[1] 9.589808
+
+$i.med
+[1] 1406 1112
+
+$medoids
+            [,1]       [,2]
+[1,] 50.34540167 10.3361719
+[2,]  0.03259824  0.2228907
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  799 27.91861 9.586413 0.5440191
+[2,]  701 28.79880 9.593678 0.5611705
+
+$objective
+[1] 9.583915
+
+$i.med
+[1] 608 146
+
+$medoids
+           [,1]       [,2]
+[1,] -0.4618501 -0.3644744
+[2,] 49.8645717 10.5227866
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  700 28.55288 9.551608 0.5545261
+[2,]  800 29.55445 9.612183 0.5739776
+
+$objective
+[1] 9.583641
+
+$i.med
+[1] 1042  201
+
+$medoids
+           [,1]       [,2]
+[1,] 49.8645717 10.5227866
+[2,] -0.1009724 -0.4444724
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  799 28.27901 9.587224 0.5528101
+[2,]  701 29.34325 9.579557 0.5736142
+
+$objective
+[1] 9.603614
+
+$i.med
+[1] 1016 1459
+
+$medoids
+           [,1]       [,2]
+[1,] 50.0601381  9.6999505
+[2,] -0.5009691 -0.6486965
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  799 27.83521 9.619546 0.5393449
+[2,]  701 29.77696 9.585453 0.5769689
+
+$objective
+[1] 9.603018
+
+$i.med
+[1] 747 329
+
+$medoids
+           [,1]       [,2]
+[1,] -0.7570035 -0.8940899
+[2,] 49.8526971 11.3178899
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  700 29.13678 9.573612 0.5596531
+[2,]  800 29.31755 9.628749 0.5631253
+
+$objective
+[1] 9.612711
+
+$i.med
+[1] 975 593
+
+$medoids
+           [,1]      [,2]
+[1,] -0.5554117 0.3590557
+[2,] 50.0601381 9.6999505
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  701 29.15394 9.604919 0.5664231
+[2,]  799 27.83521 9.619546 0.5408020
+
+$objective
+[1] 9.583915
+
+$i.med
+[1]  457 1078
+
+$medoids
+           [,1]       [,2]
+[1,] -0.4618501 -0.3644744
+[2,] 49.8645717 10.5227866
+
+$clusinfo
+     size max_diss  av_diss isolation
+[1,]  700 28.55288 9.551608 0.5545261
+[2,]  800 29.55445 9.612183 0.5739776
 
 > 
 > clara(x, 2, samples = 101)[clInd]
 $objective
-[1] 10.00144
+[1] 9.583209
 
 $i.med
-[1]  551 1232
+[1]  610 1348
 
 $medoids
-           [,1]      [,2]
-[1,]  0.7558529 0.5295663
-[2,] 49.4297134 9.5070656
+           [,1]       [,2]
+[1,] -0.1009724 -0.4444724
+[2,] 50.3454017 10.3361719
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6210615
-[2,]  800 27.03542  9.887517 0.5462269
+     size max_diss  av_diss isolation
+[1,]  701 29.34325 9.579557 0.5688279
+[2,]  799 27.91861 9.586413 0.5412108
 
 > clara(x, 2, samples = 149)[clInd]
 $objective
-[1] 9.978477
+[1] 9.583209
 
 $i.med
-[1]  551 1079
+[1]  610 1348
 
 $medoids
            [,1]       [,2]
-[1,]  0.7558529  0.5295663
-[2,] 50.2492576 10.2992014
+[1,] -0.1009724 -0.4444724
+[2,] 50.3454017 10.3361719
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6093223
-[2,]  800 27.91319  9.844468 0.5533016
+     size max_diss  av_diss isolation
+[1,]  701 29.34325 9.579557 0.5688279
+[2,]  799 27.91861 9.586413 0.5412108
 
 > clara(x, 2, samples = 200)[clInd]
 $objective
-[1] 9.978477
+[1] 9.583209
 
 $i.med
-[1]  551 1079
+[1]  610 1348
 
 $medoids
            [,1]       [,2]
-[1,]  0.7558529  0.5295663
-[2,] 50.2492576 10.2992014
+[1,] -0.1009724 -0.4444724
+[2,] 50.3454017 10.3361719
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  700 30.73934 10.131630 0.6093223
-[2,]  800 27.91319  9.844468 0.5533016
+     size max_diss  av_diss isolation
+[1,]  701 29.34325 9.579557 0.5688279
+[2,]  799 27.91861 9.586413 0.5412108
 
 > ## Note that this last one is practically identical to the slower  pam() one
 > 
 > x[print(sample(length(x), 20))] <- NA
- [1] 1079  826  357 1917   75 1463 2539 1988  767 1715  772 1407 2391 1574  466
-[16]  646 2771  523  861 1725
+ [1] 2602 1026 1287  708   21 1768  759 2213 1255 2094 1919 2268 2055 2667  872
+[16]  357 1444 2831  537 1763
 > clara(x, 2, samples = 50)[clInd]
 $objective
-[1] 9.867517
+[1] 8.3444
 
 $i.med
-[1]  551 1039
+[1]  21 876
 
 $medoids
-           [,1]      [,2]
-[1,]  0.7558529 0.5295663
-[2,] 46.8740873        NA
+         [,1]      [,2]
+[1,]       NA  4.090334
+[2,] 50.61538 14.930754
 
 $clusinfo
-     size max_diss   av_diss isolation
-[1,]  711 42.80266 10.169642 0.6562708
-[2,]  789 41.44593  9.598157 0.6354688
+     size max_diss  av_diss isolation
+[1,] 1029 35.44244 8.571381  2.311865
+[2,]  471 87.53589 7.760733  5.709855
 
 Warning message:
 In clara(x, 2, samples = 50) :
@@ -1318,20 +1317,20 @@ to suppress this warning.
 > clara(x5, 5)
 Call:	 clara(x = x5, k = 5) 
 Medoids:
-          [,1]       [,2]      [,3]
-[1,] -1.441508 -0.2898531 0.7516499
-[2,] 11.485958 41.8857869 0.7429690
-[3,] 41.320516 20.2857507 0.3629901
-[4,] 50.642369 48.5485423 0.9250403
-[5,] 32.404065  1.1300862 0.7976362
-Objective function:	 5.97835
+          [,1]       [,2]        [,3]
+[1,]  2.608748  1.8101036 -0.07401063
+[2,] 10.977156 36.8073489  0.06424065
+[3,] 41.368157 19.9467705  0.73344615
+[4,] 28.364782 -0.4772857 -0.15885323
+[5,] 50.982054 51.6887178  0.68170954
+Objective function:	 5.805741
 Clustering vector: 	 int [1:2000] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
-Cluster sizes:	    	 400 394 404 402 400 
+Cluster sizes:	    	 400 399 402 399 400 
 Best sample:
- [1]   20   31   66  130  189  255  256  262  298  370  418  437  577  611  628
-[16]  647  669  789  868  950  952  963 1073 1115 1198 1211 1225 1235 1297 1331
-[31] 1342 1357 1358 1371 1398 1441 1509 1534 1601 1609 1721 1729 1743 1774 1815
-[46] 1832 1843 1865 1902 1903
+ [1]   14   61   62   81  113  120  125  139  149  265  300  350  418  550  648
+[16]  677  683  704  706  724  852  854  880  908 1009 1061 1082 1086 1153 1168
+[31] 1184 1194 1198 1271 1276 1278 1371 1376 1393 1480 1666 1685 1692 1697 1721
+[46] 1728 1781 1789 1819 1860
 
 Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
@@ -1340,29 +1339,29 @@ Available components:
 Object of class 'clara' from call:
  clara(x = x5, k = 5, samples = 50) 
 Medoids:
-             [,1]       [,2]        [,3]
-[1,]  0.009898956 -1.3995599  0.75311855
-[2,]  8.589591773 38.1123175  0.50615564
-[3,] 41.128364368 20.9384581 -0.61203968
-[4,] 50.399157327 49.7273723 -0.02458452
-[5,] 30.555250565 -0.6932155 -0.42527702
-Objective function:	  5.794641 
+          [,1]       [,2]       [,3]
+[1,] -0.672479  1.1691718  0.6392203
+[2,]  9.784212 39.3235086 -0.1307972
+[3,] 39.304577 20.5101770 -0.0829531
+[4,] 29.308041  0.7338967  0.2712986
+[5,] 49.662153 49.9988198 -0.1881627
+Objective function:	  5.50052 
 Numerical information per cluster:
      size max_diss  av_diss isolation
-[1,]  400 14.80168 5.295404 0.4840910
-[2,]  391 26.65813 9.153210 0.7242123
-[3,]  404 18.41105 4.009631 0.7646387
-[4,]  405 21.78758 5.541303 0.7202381
-[5,]  400 14.74078 5.070244 0.6122070
+[1,]  401 19.73995 5.188933 0.6583069
+[2,]  397 20.48469 8.244034 0.5851823
+[3,]  403 17.88145 4.163868 0.8068493
+[4,]  399 18.63622 5.059971 0.8409058
+[5,]  400 15.65518 4.876074 0.5008869
 Average silhouette width per cluster:
-[1] 0.7982753 0.6584968 0.7980377 0.8500952 0.6332051
-Average silhouette width of best sample: 0.7206308 
+[1] 0.7733342 0.6357198 0.6764740 0.7191613 0.8018407
+Average silhouette width of best sample: 0.7348669 
 
 Best sample:
- [1]   87  171  255  282  291  453  507  513  550  560  561  576  589  606  617
-[16]  664  704  728  744  753  808  827  924  940  954  962  992 1005 1022 1040
-[31] 1051 1060 1120 1207 1247 1285 1334 1348 1371 1443 1474 1475 1517 1651 1656
-[46] 1762 1768 1770 1795 1913
+ [1]   66  129  133  246  319  335  340  398  460  497  518  563  658  665  684
+[16]  703  838  889  976  994 1121 1122 1164 1205 1208 1221 1269 1277 1330 1427
+[31] 1536 1541 1562 1605 1609 1665 1667 1675 1686 1748 1756 1759 1782 1800 1854
+[46] 1873 1888 1922 1974 1995
 Clustering vector:
    [1] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
   [38] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
@@ -1374,29 +1373,29 @@ Clustering vector:
  [260] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
  [297] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
  [334] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
- [371] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 3 2 2 2 2 2
- [408] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+ [371] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2
+ [408] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 2 2 2 1 2 2 2 2 2 2 2
  [445] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
- [482] 2 2 2 2 2 2 2 3 2 2 2 2 2 2 2 2 2 2 4 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+ [482] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3
  [519] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
  [556] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
  [593] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
- [630] 4 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 4 2 2 2 2 2
- [667] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 3 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
- [704] 2 2 2 2 4 2 2 4 2 2 2 2 2 2 2 3 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+ [630] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+ [667] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
+ [704] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
  [741] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
- [778] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 5 5 5 5 5 5 5 5 5 5 5 5 5 5
- [815] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
- [852] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
- [889] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
- [926] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
- [963] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-[1000] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-[1037] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-[1074] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-[1111] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-[1148] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
-[1185] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
+ [778] 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+ [815] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+ [852] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+ [889] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+ [926] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+ [963] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+[1000] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+[1037] 4 3 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+[1074] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+[1111] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+[1148] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
+[1185] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 [1222] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 [1259] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 [1296] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
@@ -1407,75 +1406,75 @@ Clustering vector:
 [1481] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 [1518] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
 [1555] 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3
-[1592] 3 3 3 3 3 3 3 3 3 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1629] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1666] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1703] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1740] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1777] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1814] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1851] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1888] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1925] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1962] 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4 4
-[1999] 4 4
+[1592] 3 3 3 3 3 3 3 3 3 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1629] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1666] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1703] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1740] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1777] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1814] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1851] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1888] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1925] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1962] 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+[1999] 5 5
 
 Silhouette plot information for best sample:
-     cluster neighbor sil_width
-255        1        5 0.8437647
-171        1        5 0.8394921
-291        1        5 0.7950084
-282        1        5 0.7610594
-87         1        5 0.7520517
-744        2        3 0.7750689
-753        2        3 0.7732461
-550        2        3 0.7714897
-606        2        3 0.7681556
-453        2        3 0.7560121
-728        2        3 0.7512566
-576        2        1 0.7499464
-513        2        1 0.7331192
-560        2        1 0.7291131
-507        2        3 0.7027174
-664        2        3 0.6941632
-704        2        1 0.6447163
-617        2        1 0.4172408
-589        2        3 0.3493197
-561        2        3 0.2618876
-1475       3        5 0.8414336
-1517       3        5 0.8384105
-1371       3        5 0.8352902
-1443       3        5 0.8336913
-1247       3        5 0.8261265
-1207       3        5 0.8203274
-1348       3        5 0.8174613
-1474       3        5 0.7746370
-1334       3        5 0.7730061
-1285       3        5 0.6199933
-1770       4        3 0.8842829
-1768       4        3 0.8745956
-1913       4        3 0.8654229
-1795       4        3 0.8486021
-1651       4        3 0.8404848
-1762       4        3 0.8281131
-1656       4        3 0.8091652
-924        5        3 0.7497243
-1060       5        3 0.7478978
-1120       5        3 0.7450913
-992        5        3 0.7287832
-1051       5        3 0.7150749
-827        5        3 0.7041583
-808        5        3 0.6892041
-1022       5        3 0.6689111
-1040       5        3 0.6474570
-962        5        1 0.6266191
-940        5        1 0.4965060
-954        5        3 0.4877846
-1005       5        3 0.2244547
+     cluster neighbor  sil_width
+398        1        4 0.82767451
+133        1        4 0.81571943
+246        1        4 0.80408929
+129        1        4 0.79806501
+319        1        4 0.78321097
+335        1        4 0.77331483
+340        1        2 0.71033226
+66         1        4 0.67426715
+497        2        3 0.75026081
+460        2        3 0.71879727
+703        2        3 0.71536727
+684        2        1 0.67759220
+563        2        3 0.59398220
+658        2        1 0.51888108
+665        2        5 0.47515783
+1221       3        4 0.78762845
+1427       3        4 0.77524136
+1269       3        4 0.77051240
+1208       3        4 0.76035458
+1277       3        4 0.74617404
+1205       3        4 0.72930888
+1562       3        4 0.72895630
+1536       3        4 0.71245411
+1541       3        4 0.70282261
+1330       3        4 0.64607918
+518        3        2 0.08168177
+838        4        3 0.80225715
+1122       4        3 0.79832815
+1164       4        3 0.79361417
+994        4        3 0.75908294
+889        4        3 0.75728440
+1121       4        3 0.67892777
+976        4        3 0.44463447
+1800       5        3 0.85389024
+1756       5        3 0.84444787
+1609       5        3 0.83958795
+1854       5        3 0.83362060
+1675       5        3 0.83361887
+1665       5        3 0.82552238
+1888       5        3 0.80747807
+1605       5        3 0.79839255
+1759       5        3 0.79491740
+1974       5        3 0.79360037
+1873       5        3 0.78425089
+1782       5        3 0.78394768
+1922       5        3 0.77956577
+1667       5        3 0.77413141
+1748       5        3 0.77313885
+1995       5        3 0.76679378
+1686       5        3 0.74438717
 
 1225 dissimilarities, summarized :
    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
- 0.9125 22.5680 36.0600 34.3460 47.4950 83.6380 
+ 0.7566 23.4860 35.6700 35.7110 48.6370 82.0090 
 Metric :  euclidean 
 Number of objects : 50
 
@@ -1486,20 +1485,20 @@ Available components:
 > clara(x5, 5, samples = 999)
 Call:	 clara(x = x5, k = 5, samples = 999) 
 Medoids:
-           [,1]       [,2]        [,3]
-[1,]  0.4753746 -0.1765723  0.38026681
-[2,] 10.5292754 39.9278909  0.07664958
-[3,] 40.4696100 19.9154135 -0.11342069
-[4,] 49.6841771 50.8667494  0.43448856
-[5,] 30.1926628  0.2226872  0.20417028
-Objective function:	 5.677885
+           [,1]       [,2]       [,3]
+[1,]  0.4871643  0.2152984 -0.1093871
+[2,]  9.7842123 39.3235086 -0.1307972
+[3,] 39.3045769 20.5101770 -0.0829531
+[4,] 29.5771619  0.4413068 -0.2841082
+[5,] 49.6621534 49.9988198 -0.1881627
+Objective function:	 5.460293
 Clustering vector: 	 int [1:2000] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
-Cluster sizes:	    	 400 393 404 403 400 
+Cluster sizes:	    	 400 398 403 399 400 
 Best sample:
- [1]    2   45   63  105  173  305  346  354  384  449  482  503  523  528  540
-[16]  612  646  649  670  688  731  809  881  916  959 1002 1031 1114 1186 1210
-[31] 1223 1233 1275 1276 1290 1365 1395 1400 1447 1454 1593 1598 1695 1704 1727
-[46] 1750 1769 1770 1865 1964
+ [1]   25   86  116  117  154  157  358  378  421  497  564  594  635  647  654
+[16]  715  738  974  980 1001 1003 1020 1021 1099 1109 1171 1204 1205 1221 1291
+[31] 1335 1353 1379 1382 1450 1481 1491 1573 1643 1689 1738 1743 1771 1777 1792
+[46] 1800 1812 1938 1982 1984
 
 Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
@@ -1507,20 +1506,20 @@ Available components:
 > clara(x5, 5, samples = 1000)
 Call:	 clara(x = x5, k = 5, samples = 1000) 
 Medoids:
-           [,1]       [,2]        [,3]
-[1,]  0.4753746 -0.1765723  0.38026681
-[2,] 10.5292754 39.9278909  0.07664958
-[3,] 40.4696100 19.9154135 -0.11342069
-[4,] 49.6841771 50.8667494  0.43448856
-[5,] 30.1926628  0.2226872  0.20417028
-Objective function:	 5.677885
+           [,1]       [,2]       [,3]
+[1,]  0.4871643  0.2152984 -0.1093871
+[2,]  9.7842123 39.3235086 -0.1307972
+[3,] 39.3045769 20.5101770 -0.0829531
+[4,] 29.5771619  0.4413068 -0.2841082
+[5,] 49.6621534 49.9988198 -0.1881627
+Objective function:	 5.460293
 Clustering vector: 	 int [1:2000] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
-Cluster sizes:	    	 400 393 404 403 400 
+Cluster sizes:	    	 400 398 403 399 400 
 Best sample:
- [1]    2   45   63  105  173  305  346  354  384  449  482  503  523  528  540
-[16]  612  646  649  670  688  731  809  881  916  959 1002 1031 1114 1186 1210
-[31] 1223 1233 1275 1276 1290 1365 1395 1400 1447 1454 1593 1598 1695 1704 1727
-[46] 1750 1769 1770 1865 1964
+ [1]   25   86  116  117  154  157  358  378  421  497  564  594  635  647  654
+[16]  715  738  974  980 1001 1003 1020 1021 1099 1109 1171 1204 1205 1221 1291
+[31] 1335 1353 1379 1382 1450 1481 1491 1573 1643 1689 1738 1743 1771 1777 1792
+[46] 1800 1812 1938 1982 1984
 
 Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
@@ -1528,20 +1527,20 @@ Available components:
 > clara(x5, 5, samples = 1001)
 Call:	 clara(x = x5, k = 5, samples = 1001) 
 Medoids:
-           [,1]       [,2]        [,3]
-[1,]  0.4753746 -0.1765723  0.38026681
-[2,] 10.5292754 39.9278909  0.07664958
-[3,] 40.4696100 19.9154135 -0.11342069
-[4,] 49.6841771 50.8667494  0.43448856
-[5,] 30.1926628  0.2226872  0.20417028
-Objective function:	 5.677885
+           [,1]       [,2]       [,3]
+[1,]  0.4871643  0.2152984 -0.1093871
+[2,]  9.7842123 39.3235086 -0.1307972
+[3,] 39.3045769 20.5101770 -0.0829531
+[4,] 29.5771619  0.4413068 -0.2841082
+[5,] 49.6621534 49.9988198 -0.1881627
+Objective function:	 5.460293
 Clustering vector: 	 int [1:2000] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
-Cluster sizes:	    	 400 393 404 403 400 
+Cluster sizes:	    	 400 398 403 399 400 
 Best sample:
- [1]    2   45   63  105  173  305  346  354  384  449  482  503  523  528  540
-[16]  612  646  649  670  688  731  809  881  916  959 1002 1031 1114 1186 1210
-[31] 1223 1233 1275 1276 1290 1365 1395 1400 1447 1454 1593 1598 1695 1704 1727
-[46] 1750 1769 1770 1865 1964
+ [1]   25   86  116  117  154  157  358  378  421  497  564  594  635  647  654
+[16]  715  738  974  980 1001 1003 1020 1021 1099 1109 1171 1204 1205 1221 1291
+[31] 1335 1353 1379 1382 1450 1481 1491 1573 1643 1689 1738 1743 1771 1777 1792
+[46] 1800 1812 1938 1982 1984
 
 Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
@@ -1551,19 +1550,19 @@ Available components:
 Call:	 clara(x = x5, k = 5, samples = 2000) 
 Medoids:
            [,1]       [,2]       [,3]
-[1,]  0.4753746 -0.1765723  0.3802668
-[2,]  9.9849318 39.8137651 -0.3637146
-[3,] 40.4696100 19.9154135 -0.1134207
-[4,] 49.5521365 50.9160832  0.3138241
-[5,] 30.1926628  0.2226872  0.2041703
-Objective function:	 5.675923
+[1,]  0.4871643  0.2152984 -0.1093871
+[2,] 10.4480320 39.7880547 -0.5783107
+[3,] 39.9520002 20.7503390  0.2766294
+[4,] 29.5771619  0.4413068 -0.2841082
+[5,] 49.6621534 49.9988198 -0.1881627
+Objective function:	 5.456549
 Clustering vector: 	 int [1:2000] 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 ...
-Cluster sizes:	    	 400 393 404 403 400 
+Cluster sizes:	    	 401 398 402 399 400 
 Best sample:
- [1]    4   15   23  135  157  173  188  246  282  318  364  366  377  529  544
-[16]  638  649  676  756  771  772  777  812  847  851  855  859  940  948  991
-[31] 1042 1114 1149 1201 1316 1400 1442 1477 1480 1487 1603 1669 1670 1712 1745
-[46] 1750 1756 1900 1923 1964
+ [1]   15  117  166  185  187  192  228  289  319  360  497  514  561  581  613
+[16]  625  639  649  767  797  800  838  850  918 1001 1177 1183 1204 1206 1224
+[31] 1242 1302 1352 1354 1408 1509 1561 1582 1586 1653 1684 1694 1771 1776 1778
+[46] 1800 1876 1893 1942 1980
 
 Available components:
  [1] "sample"     "medoids"    "i.med"      "clustering" "objective" 
@@ -1603,8 +1602,8 @@ Available components:
 > 
 > ## Last Line:
 > cat('Time elapsed: ', proc.time() - .proctime00,'\n')
-Time elapsed:  2.243 0.02 2.28 0 0 
+Time elapsed:  1.47 0.019 1.503 0 0 
 > 
 > proc.time()
    user  system elapsed 
-  2.385   0.050   2.510 
+  1.755   0.135   2.060 

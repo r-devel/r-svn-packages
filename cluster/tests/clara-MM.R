@@ -4,12 +4,12 @@ library(cluster)
 
 ## generate 15*N objects, divided into 2 clusters.
 N <- 10000
-## For back-compatibility:
-if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
+suppressWarnings(RNGversion("3.5.0")) # << as long as we don't have R >= 3.6.0
 set.seed(521)
 x <- rbind(cbind(rnorm(7*N, 0,8), rnorm(7*N, 0,8)),
            cbind(rnorm(8*N,50,8), rnorm(8*N,10,8)))
 .proctime00 <- proc.time()
+
 for(nn in 1:3)
     print(clara2 <- clara(x[sample(nrow(x)),], 2, sampsize = 128, samples= 500))
 cat('Time elapsed: ', proc.time() - .proctime00,'\n')

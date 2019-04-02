@@ -1,7 +1,7 @@
 library(cluster)
 
 ## generate 1500 objects, divided into 2 clusters.
-if(R.version$major != "1" || as.numeric(R.version$minor) >= 7) RNGversion("1.6")
+suppressWarnings(RNGversion("3.5.0")) # << as long as we don't have R >= 3.6.0
 set.seed(264)
 x <- rbind(cbind(rnorm(700, 0,8), rnorm(700, 0,8)),
            cbind(rnorm(800,50,8), rnorm(800,10,8)))

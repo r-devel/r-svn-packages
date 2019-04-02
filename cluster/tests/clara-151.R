@@ -25,6 +25,7 @@ clInd <- c("objective", "medoids", "clusinfo")
 clIn4 <- c(clInd, "sample")
 ## clara() {as original code} always draws the *same* random samples !!!!
 clara(x, 2, samples = 50)[clInd]
+suppressWarnings(RNGversion("3.5.0")) # << as long as we don't have R >= 3.6.0
 for(i in 1:20)
     print(clara(x[sample(nrow(x)),], 2, samples = 50)[clInd])
 
