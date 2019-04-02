@@ -222,7 +222,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   ## the gradient...
   lb <- rep(0,p)
   for (i in 1:K) { ## first derivative loop
-    lb[jj[[i]]] <- lb[jj[[i]]] + if (discrete) XWyd(X$Xd,rep(1,n),l1[,i],X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[k]]) else
+    lb[jj[[i]]] <- lb[jj[[i]]] + if (discrete) XWyd(X$Xd,rep(1,n),l1[,i],X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[i]]) else
                    colSums(l1[,i]*X[,jj[[i]],drop=FALSE]) ## !
   }
   
@@ -528,18 +528,19 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
         if (is.list(x)) { ## discrete case
 	  start <- rep(0,max(unlist(jj)))
-	  R <- chol(XWXd(X$Xd,w=rep(1,length(y)),k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]])+crossprod(E[,jj[[1]]]),pivot=TRUE)
-	  Xty <- XWyd(X$Xd,rep(1,length(y)),yt1,X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[1]])
+	  R <- chol(mgcv:::XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE)
+	  Xty <- mgcv:::XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot")
 	  startji <- rep(0,ncol(R))
           startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
 	  startji[!is.finite(startji)] <- 0
 	  start[jj[[1]]] <- startji
-	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(x[,jj[[1]],drop=FALSE]%*%start[jj[[1]]])))
+	  eta1 <- mgcv:::Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
+	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(eta1)))
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  R <- chol(XWXd(X$Xd,w=rep(1,length(y)),k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE)
-	  Xty <- XWyd(X$Xd,rep(1,length(y)),lres1,X$kd,X$ks,X$ts,X$dt,X$v,X$qc,X$drop,lt=X$lpid[[2]])
-	  piv <- attr(R,"pivot")
+	  R <- chol(mgcv:::XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE)
+	  Xty <- mgcv:::XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
+	  startji <- piv <- attr(R,"pivot")
 	  startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
           start[jj[[2]]] <- startji
         } else { ## regular case
