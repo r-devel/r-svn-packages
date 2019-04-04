@@ -244,6 +244,11 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
   if (is.null(lt)) {
     lt <- 1:nt
   }
+  lpip <- attr(X,"lpip")
+  if (!is.null(lpip)) { ## then X list may not be in coef order...
+    lpip <- unlist(lpip[lt])
+    beta <- if (is.matrix(beta)) beta[lpip,] else beta[lpip] ## select params required in correct order
+  }
   bc <- if (is.matrix(beta)) ncol(beta) else 1 ## number of columns in beta
   oo <- .C(C_Xbd,f=as.double(rep(0,n*bc)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1),
            ks = as.integer(ks-1), 

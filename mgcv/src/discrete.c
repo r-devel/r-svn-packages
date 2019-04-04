@@ -428,7 +428,7 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
    within a parallel section. Safe to use as the only allocator of memory within a parallel section. 
 */
   ptrdiff_t *off,*voff;
-  int i,j,q,*pt,*tps,dC=0,c1,first,kk;//,p_tot=0;
+  int i,j,q,*pt,*tps,dC=0,c1,first,kk;
   double *f0,*pf,*p0,*p1,*p2,*C=NULL,*work,maxp=0,maxrow=0;
   /* obtain various indices */
 #pragma omp critical (xbdcalloc)
@@ -449,20 +449,23 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
     } 
     if (qc[i]>0) voff[i+1] = voff[i] + pt[i]; else voff[i+1] = voff[i]; /* start of ith v matrix */
     if (maxp < pt[i]) maxp = pt[i];
-    //p_tot += pt[i];
-    //if (qc[i]<=0) p_tot--;
-    if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
-    else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
+    //if (qc[i]<=0) tps[i+1] = tps[i] + pt[i]; /* where ith terms starts in param vector */ 
+    //else tps[i+1] = tps[i] + pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
   if (*ncs<=0) { /* return everything */
     for (j=0;j<*nt;j++) cs[j] = j;
     *ncs = *nt;
   }  
-  //for (kk=j=0;j<*ncs;j++) { /* get the offsets for the returned terms in the output */
-  //  i = cs[j];tps[i] = kk;
-  //  if (qc[i]<=0) kk += pt[i]; /* where cth terms starts in param vector */ 
-  //  else kk += pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
-  //}
+  for (kk=j=0;j<*ncs;j++) { /* get the offsets for the returned terms in the output */
+    i = cs[j];tps[i] = kk;
+    if (qc[i]<=0) kk += pt[i]; /* where cth terms starts in param vector */ 
+    else kk += pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
+  }
+  tps[*nt] = kk;
+  Rprintf("\n pt:");
+  for (i=0;i<*nt;i++) Rprintf(" %d",pt[i]);
+  Rprintf("\n nt = %d ncs = %d cs, tps[cs]:\n",*nt,*ncs);
+  for (i=0;i< *ncs;i++) Rprintf(" %d %d",cs[i],tps[cs[i]]); 
   /* now form the product term by term... */ 
   i = *n; if (i<maxp) i=maxp; if (i<maxrow) i=maxrow;
 #pragma omp critical (xbdcalloc)
