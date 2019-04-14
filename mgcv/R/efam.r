@@ -601,8 +601,9 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
       } 
     } else { ## return category implied by eta (i.e mean of latent)
       R = length(theta)+2
-      alpha <- rep(0,R) ## the thresholds
-      alpha[1] <- -Inf;alpha[R] <- Inf
+      #alpha <- rep(0,R) ## the thresholds
+      #alpha[1] <- -Inf;alpha[R] <- Inf
+      alpha <- c(-Inf, theta, Inf)
       fv <- eta*NA
       for (i in 1:(R+1)) {
         ind <- eta>alpha[i] & eta<=alpha[i+1]

@@ -22,6 +22,9 @@ present, and reparameterization needs checking (also for bam).
 * changes to general families to allow return of first deriv of penalized 
   Hessian component more easily.
 
+* ocat bug fix. Response scale prediction was wrong - it ignored the estimated
+  thresholds. Thanks to Fabian Scheipl. 
+
 1.8-28
 
 * fix of obscure sp naming bug.	 
