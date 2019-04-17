@@ -1149,7 +1149,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
         G$n.true <- nobs+nobs.extra
         object <- gam(G=G,method=method,gamma=gamma,scale=scale,control=gam.control(nthreads=npt))
         y -> G$y; w -> G$w; n -> G$n;offset -> G$offset
-	object$family <- object$null.deviance <- object$fitted.values <- NULL
+	object$deviance <- object$family <- object$null.deviance <- object$fitted.values <- NULL
       }
      
       if (method=="GCV.Cp") { 

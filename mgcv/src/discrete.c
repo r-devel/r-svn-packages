@@ -462,10 +462,10 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
     else kk += pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
   }
   tps[*nt] = kk;
-  Rprintf("\n pt:");
-  for (i=0;i<*nt;i++) Rprintf(" %d",pt[i]);
-  Rprintf("\n nt = %d ncs = %d cs, tps[cs]:\n",*nt,*ncs);
-  for (i=0;i< *ncs;i++) Rprintf(" %d %d",cs[i],tps[cs[i]]); 
+  //  Rprintf("\n pt:");
+  //for (i=0;i<*nt;i++) Rprintf(" %d",pt[i]);
+  //Rprintf("\n nt = %d ncs = %d cs, tps[cs]:\n",*nt,*ncs);
+  //for (i=0;i< *ncs;i++) Rprintf(" %d %d",cs[i],tps[cs[i]]); 
   /* now form the product term by term... */ 
   i = *n; if (i<maxp) i=maxp; if (i<maxrow) i=maxrow;
 #pragma omp critical (xbdcalloc)

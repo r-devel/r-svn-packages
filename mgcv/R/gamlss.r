@@ -276,7 +276,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
          }
 	 XVX <- XWXd(X$Xd,w=v,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]])
 	 mult <- if (i==j) 1 else 2
-	 d1H[l] <- d1H[l] + mult * sum(XVX * fh[lpi[[i]]],lpi[[j]]) ## accumulate tr(Hp^{-1}dH/drho_l)
+	 d1H[l] <- d1H[l] + mult * sum(XVX * fh[lpi[[i]],lpi[[j]]]) ## accumulate tr(Hp^{-1}dH/drho_l)
        }
      }  
    } else for (i in 1:K) for (j in i:K) { ## lp block loop

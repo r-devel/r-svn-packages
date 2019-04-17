@@ -14,6 +14,9 @@ Issues:
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
+* bam(...,discrete=TRUE) does not currently deal with the corner case in 
+  which no smoother is penalized.
+
 * OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
   cause problems when opemmp multithreading.
 
@@ -24,6 +27,9 @@ present, and reparameterization needs checking (also for bam).
 
 * ocat bug fix. Response scale prediction was wrong - it ignored the estimated
   thresholds. Thanks to Fabian Scheipl. 
+
+* bam deviance could be wrongly returned, leading to 100% explained 
+  deviance. Fixed.  
 
 1.8-28
 
