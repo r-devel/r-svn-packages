@@ -2043,7 +2043,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
       } else if (type=="pearson") {
         (y-mu)/(exp(rho)*mu)
       } else {
-        rsd <- y-fv
+        rsd <- y-mu
       }
       rsd
     }
