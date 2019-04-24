@@ -22,6 +22,8 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-29
 
+* Gamma location-scale family 'gammals' added. See ?gammals. 
+
 * changes to general families to allow return of first deriv of penalized 
   Hessian component more easily.
 
