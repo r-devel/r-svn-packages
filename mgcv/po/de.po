@@ -1,4 +1,4 @@
-#  Translation of mgcv.pot to German
+# Translation of mgcv.pot to German
 # Copyright (C) 2005-2009 The R Foundation
 # This file is distributed under the same license as the mgcv package.
 # Chris Leick <c.leick@vollbio.de>, 2009.
