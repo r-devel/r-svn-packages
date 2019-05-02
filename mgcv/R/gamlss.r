@@ -637,7 +637,8 @@ multinom <- function(K=1) {
   ## if se = FALSE returns one item list containing matrix otherwise 
   ## list of two matrices "fit" and "se.fit"... 
 
-    if (is.null(eta)) { 
+    if (is.null(eta)) {
+      discrete <- is.list(X)
       lpi <- attr(X,"lpi") 
       if (is.null(lpi)) {
         lpi <- list(1:ncol(X))
@@ -648,10 +649,14 @@ multinom <- function(K=1) {
         ve <- matrix(0,nrow(X),K) ## variance of eta
         ce <- matrix(0,nrow(X),K*(K-1)/2) ## covariance of eta_i eta_j
       } 
-      for (i in 1:K) { 
-        Xi <- X[,lpi[[i]],drop=FALSE]
-        eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
-	if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
+      for (i in 1:K) {
+        if (discrete) {
+	  eta[,i] <- Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[i]]) 
+        } else {
+          Xi <- X[,lpi[[i]],drop=FALSE]
+          eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
+        }
+        if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
         if (se) { ## variance and covariances for kth l.p.
           ve[,i] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
           ii <- 0
@@ -2059,18 +2064,23 @@ gammals <- function(link=list("identity","log"),b=-7) {
   })
 
   ll <- function(y,X,coef,wt,family,offset=NULL,deriv=0,d1b=0,d2b=0,Hp=NULL,rank=0,fh=NULL,D=NULL) {
-  ## function defining the gamlss GEV model log lik. 
+  ## function defining the gamlss gamma model log lik. 
   ## deriv: 0 - eval
   ##        1 - grad and Hess
   ##        2 - diagonal of first deriv of Hess
   ##        3 - first deriv of Hess
   ##        4 - everything.
-    jj <- attr(X,"lpi") ## extract linear predictor index
-    eta <- X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]] ## log mu
-    mu <- family$linfo[[1]]$linkinv(eta) ## mean
-    etat <- X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]] ## log sigma
-    th <- family$linfo[[2]]$linkinv(etat) ## log sigma
 
+    if (!is.null(offset)) offset[[3]] <- 0
+    discrete <- is.list(X)
+    jj <- attr(X,"lpi") ## extract linear predictor index
+    eta <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]]) else X[,jj[[1]],drop=FALSE]%*%coef[jj[[1]]]
+    if (!is.null(offset[[1]])) eta <- eta + offset[[1]] ## log mu
+    mu <- family$linfo[[1]]$linkinv(eta) ## mean
+    etat <- if (discrete) Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[2]]) else X[,jj[[2]],drop=FALSE]%*%coef[jj[[2]]]
+    if (!is.null(offset[[2]])) etat <- etat + offset[[2]] 
+    th <-  family$linfo[[2]]$linkinv(etat) ## log sigma
+ 
     eth <- exp(-th) ## 1/exp1^th;
     logy <- log(y);
     ethmu <- exp(-th-mu)
@@ -2216,18 +2226,23 @@ gammals <- function(link=list("identity","log"),b=-7) {
   ## if se = FALSE returns one item list containing matrix otherwise 
   ## list of two matrices "fit" and "se.fit"... 
 
-    if (is.null(eta)) { 
+    if (is.null(eta)) {
+      discrete <- is.list(X) 
       lpi <- attr(X,"lpi") 
       if (is.null(lpi)) {
         lpi <- list(1:ncol(X))
       } 
       eta <- matrix(0,nrow(X),2)
       ve <- matrix(0,nrow(X),2) ## variance of eta 
-      for (i in 1:2) { 
-        Xi <- X[,lpi[[i]],drop=FALSE]
-        eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
-	if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
-        if (se) ve[,i] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
+      for (i in 1:2) {
+        if (discrete) {
+	  eta[,i] <- Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]])
+        } else {
+          Xi <- X[,lpi[[i]],drop=FALSE]
+          eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
+        } 
+        if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
+        if (se) ve[,i] <- if (discrete) diagXVXd(X,Vb,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL) else drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
       }
     } else { 
       se <- FALSE
@@ -2249,6 +2264,7 @@ gammals <- function(link=list("identity","log"),b=-7) {
     linfo = stats,rd=rd,predict=predict, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1, ## signals that ls not needed here
-    available.derivs = 2 ## can use full Newton here
+    available.derivs = 2, ## can use full Newton here
+    discrete.ok = TRUE
     ),class = c("general.family","extended.family","family"))
 } ## end gammals

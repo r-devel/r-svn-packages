@@ -1799,7 +1799,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       fit[,kk] <- Xbd(Xd[ii],object$coefficients[ind],kd,ks[ii,],                           ##kd[,ii,drop=FALSE]
                       1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop)
       if (se) se.fit[,kk] <- diagXVXd(Xd[ii],object$Vp[ind,ind],kd,ks[ii,],                 #kd[,ii,drop=FALSE],
-                       1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop,n.threads=n.threads)^.5
+                       1,dt[k],object$dinfo$v[k],object$dinfo$qc[k],drop=drop,nthreads=n.threads)^.5
       k <-  k + 1; kk <- kk + 1
     } 
     fit.names <- c(if (se) colnames(pp$fit) else colnames(pp),unlist(lapply(object$smooth,function(x) x$label)))
@@ -1817,7 +1817,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       dmu.deta <- object$family$mu.eta
     } else linkinv <- dmu.deta <- NULL
     if (se==TRUE) {
-      se.fit <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,n.threads=n.threads)^.5
+      se.fit <- diagXVXd(Xd,object$Vp,kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,nthreads=n.threads)^.5
       if (type=="response") {
         se.fit <- se.fit * abs(dmu.deta(fit))
         fit <- linkinv(fit)

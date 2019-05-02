@@ -29,7 +29,7 @@ R_CallMethodDef CallMethods[] = {
 R_CMethodDef CEntries[] = { 
     {"band_chol",(DL_FUNC) band_chol,4},
     {"tri_chol",(DL_FUNC) tri_chol,4},
-    {"diagXVXt", (DL_FUNC) &diagXVXt,18},
+    {"diagXVXt", (DL_FUNC) &diagXVXt,20},
     {"XWXd", (DL_FUNC) &XWXd,18},
     {"XWXd0", (DL_FUNC) &XWXd0,18},
     {"XWXd1", (DL_FUNC) &XWXd1,22},

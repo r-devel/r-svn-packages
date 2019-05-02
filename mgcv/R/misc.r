@@ -2,6 +2,10 @@
 ## Many of the following are simple wrappers for C functions, used largely 
 ## for testing purposes
 
+"%.%" <- function(a,b) {
+  tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
+}
+
 rmvn <- function(n,mu,V) {
 ## generate multivariate normal deviates. e.g.
 ## V <- matrix(c(2,1,1,2),2,2); mu <- c(1,1);n <- 1000;z <- rmvn(n,mu,V);crossprod(sweep(z,2,colMeans(z)))/n
@@ -257,7 +261,7 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
   if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
 } ## Xbd
 
-diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,n.threads=1,lt=NULL) {
+diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
 ## discrete computation of diag(XVX')
   n <- if (is.matrix(k)) nrow(k) else length(k)
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
@@ -269,11 +273,12 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,n.threads=1,lt=NULL) {
     V <- V0;rm(V0)
   } else pv <- ncol(V)
   if (is.null(lt)) lt <- 1:nt
-
+  if (is.null(rt)) rt <- 1:nt
+  
   oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
            ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx),
 	   ts=as.integer(ts-1), as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(pv),
-	   as.integer(n.threads),as.integer(lt-1),as.integer(length(lt)))
+	   as.integer(nthreads),as.integer(lt-1),as.integer(length(lt)),as.integer(rt-1),as.integer(length(rt)))
   oo$diag
 } ## diagXVXd
 

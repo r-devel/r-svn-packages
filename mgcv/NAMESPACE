@@ -1,6 +1,6 @@
 useDynLib(mgcv, .registration = TRUE, .fixes = "C_")
 
-export(anova.gam, bam, bam.update,bandchol, betar, 
+export("%.%",anova.gam, bam, bam.update,bandchol, betar, 
        choldrop,cholup,cox.ph,concurvity, 
        cSplineDes,dDeta,
        exclude.too.far,extract.lme.cov, extract.lme.cov2,FFdes,
@@ -73,7 +73,7 @@ export(anova.gam, bam, bam.update,bandchol, betar,
        t2,te,ti,tensor.prod.model.matrix,tensor.prod.penalties,
        totalPenaltySpace,trichol,trind.generator,
        Tweedie,tw,twlss,uniquecombs, vcov.gam, vis.gam, 
-       XWXd,XWyd,Xbd,
+       XWXd,XWyd,Xbd,diagXVXd,
        ziP, ziplss)
 
 importFrom(grDevices,cm.colors,dev.interactive,devAskNewPage,gray,grey,

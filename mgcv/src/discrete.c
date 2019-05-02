@@ -422,7 +422,8 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs) {
 /* Forms f = X beta for X stored in the packed form described in function XWX
    bc is number of cols of beta and f... 
-   This version allows selection of terms via length ncs array cs.
+   This version allows selection of terms via length ncs array cs. If ncs<=0 then all terms
+   are returned (but the physical storage for cs must then be of length nt).
    LIMITED thread safety. Allocates/frees memory using R_chk_calloc/R_chk_free (usually),
    protected within critical sections. Not safe to use with other routines allocating memory using these routines
    within a parallel section. Safe to use as the only allocator of memory within a parallel section. 
@@ -500,12 +501,25 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
 } /* Xb */
 
 void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int *n, 
-	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *nthreads,int *cs,int *ncs) {
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *nthreads,
+	      int *cs,int *ncs,int *rs,int *nrs) {
 /* Forms diag(XVX') where X is stored in the compact form described in XWXd.
    V is a pv by pv matrix. 
    Parallelization is by splitting the columns of V into nthreads subsets.
    Currently inefficient. Could be speeded up by a factor of 2, by supplying a
    square root of V in place of V.
+   cs and rs are ncs and nrs vectors specifying which terms should be included 
+   in the cross product. negtive ncs or nrs signals to include all. 
+
+   Basic algorithm is to compute XV and then the row sums of XV.X. 
+   In practice this is done by computing one column of XV and X at a time.
+   When only some terms are selected then only those columns of XV corresponding 
+   to selected columns of X need to be computed. the terms selected in rs determine
+   which columns of X are required. 
+
+   Called using diagXVXd in R
+   
+
 */
   double *xv,*dc,*p0,*p1,*p2,*p3,*ei,*xi;
   ptrdiff_t bsj,bs,bsf,i,j,kk;
@@ -539,7 +553,7 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
       Xbd(xv + j * *n,V + kk * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* XV[:,kk] */
       Xbd(xi + j * *n,ei + j * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* X[:,kk] inefficient, but deals with constraint*/
       p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
-      for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* elementwise product of XV[:,kk] X[:,kk] */
+      for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* element-wise product of XV[:,kk] X[:,kk] */
     } 
   } /* parallel loop end */
   /* sum the contributions from the different threads into diag... */

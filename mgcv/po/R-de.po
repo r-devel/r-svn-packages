@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: R 3.6.0 / mgcv 1.8-28\n"
 "Report-Msgid-Bugs-To: bugs@r-project.org\n"
-"POT-Creation-Date: 2018-06-06 15:48\n"
+"POT-Creation-Date: 2019-04-29 12:44\n"
 "PO-Revision-Date: 2019-04-02 13:37+0200\n"
 "Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
 "Language-Team: R-Core <r-core@r-project.org>\n"
@@ -60,9 +60,6 @@ msgstr "zur Zeit wird bei diskreter Prädiktion exclude ignoriert"
 msgid "family not recognized"
 msgstr "family nicht erkannt"
 
-msgid "general families not supported by bam"
-msgstr "allgemeine Familien nicht von bam unterstützt"
-
 msgid "un-supported smoothness selection method"
 msgstr "nicht unterstützte Methode zur Glattheitswahl"
 
@@ -98,6 +95,15 @@ msgstr "unbekannte Typ von Tensor-Einschränkungen"
 msgid "Model has more coefficients than data"
 msgstr "Modell hat mehr Koeffizienten als Daten"
 
+#, fuzzy
+msgid ""
+"length of sp must be number of free smoothing parameters in original model"
+msgstr ""
+"falsche Anzahl von Glättungsparametern an einen Glättungsterm übergeben"
+
+msgid "general families not supported by bam"
+msgstr "allgemeine Familien nicht von bam unterstützt"
+
 msgid "AR1 parameter rho unused with generalized model"
 msgstr "AR1 Parameter rho unbenutzt im verallgemeinerten Modell"
 
@@ -119,6 +125,9 @@ msgstr "NA Zeiten für die coxph Vorhersage angegeben"
 
 msgid "not an extended family"
 msgstr "keine erweiterte Familie"
+
+msgid "erroneous call to estimate.theta - no free parameters"
+msgstr ""
 
 msgid "step failure in theta estimation"
 msgstr "Schritt Fehlgeschlagen in der Schätzung von theta"
@@ -364,6 +373,9 @@ msgstr "y muss für Tweedie(p=1) ein ganzzahliges Vielfaches von phi sein"
 msgid "all.derivs only available in rho, theta parameterization"
 msgstr "all.derivs nur in der rho, theta Parametrisierung verfügbar"
 
+msgid "Tweedie density may be unreliable - series not fully converged"
+msgstr ""
+
 msgid "Only 1<p<=2 supported"
 msgstr "Nur 1<p<=2 unterstützt"
 
@@ -386,8 +398,15 @@ msgstr "Länge von start sollte gleich sein"
 msgid "and correspond to initial coefs for"
 msgstr "und entsprechend den Anfangs-Koeffizienten für"
 
+msgid "no good data in iteration"
+msgstr ""
+
 msgid "Non-finite coefficients at iteration"
 msgstr "Nicht-endliche Koeffizienten bei der Iteration"
+
+#, fuzzy
+msgid "not enough finite derivatives"
+msgstr "Nicht genug informative Beobachtungen."
 
 msgid "non finite values in Hessian"
 msgstr "nicht endliche Werte in der Hessematrix"
@@ -403,6 +422,9 @@ msgstr "max Iterationszahl erreicht: max abs grad = %g"
 
 msgid "dist not recognised"
 msgstr "dist nicht erkannt"
+
+msgid "er... no discrete methods for higher derivatives"
+msgstr ""
 
 msgid "gaulss requires 2 links specified as character strings"
 msgstr "gaulss verlangt 2 Links, angegeben als Zeichenketten"
@@ -439,6 +461,18 @@ msgstr "Gebrauch von ziplss bei binären Daten ergibt keinen Sinn"
 
 msgid "gevlss requires 3 links specified as character strings"
 msgstr "gevlss verlangt 3 Links, angegeben als Zeichenketten"
+
+#, fuzzy
+msgid "link not available for mu parameter of twlss"
+msgstr "Link nicht verfügbar für den Parameter mu von gaulss"
+
+#, fuzzy
+msgid "gammals requires 2 links specified as character strings"
+msgstr "gaulss verlangt 2 Links, angegeben als Zeichenketten"
+
+#, fuzzy
+msgid "link not available for mu parameter of gammals"
+msgstr "Link nicht verfügbar für den Parameter mu von gaulss"
 
 msgid "An object of length %d does not match the required parameter size"
 msgstr ""
@@ -557,6 +591,29 @@ msgstr "Gewichte müssen wie glm-Gewichte sein für verallgemeinerten Fall"
 
 msgid "Nested smooths must be fully random"
 msgstr "Verschachtelte Glättungen müssen komplett zufällig sein"
+
+#, fuzzy
+msgid "size must be in [1,120]"
+msgstr "p muss aus [1,2] sein"
+
+msgid "rank deficient re-parameterization"
+msgstr ""
+
+msgid "modal weight <=0 in integration step!!"
+msgstr ""
+
+msgid "Requires a gam or bam prefit object"
+msgstr ""
+
+msgid "bam fits only supported with discrete==TRUE"
+msgstr ""
+
+msgid "integration not available with this family - insufficient derivatives"
+msgstr ""
+
+#, fuzzy
+msgid "something wrong with A index vector"
+msgstr "etwas stimmt nicht mit stratifizierter Vorhersage"
 
 msgid "sorry link not yet handled"
 msgstr "Sorry, Link noch nicht implementiert"
@@ -932,6 +989,10 @@ msgstr "sei nicht dumm"
 msgid "sd should have exactly one less entry than ld"
 msgstr "sd sollte genau eins kleiner sein als ld"
 
+#, fuzzy
+msgid "update not positive definite"
+msgstr "nicht positiv definit"
+
 msgid "internal error in vcorr, please report to simon.wood@r-project.org"
 msgstr "interner Fehler in vcorr, bitte an simon.wood@r-project.org melden"
 
@@ -946,6 +1007,9 @@ msgstr "mvn kann noch nicht mit Offsets umgehen"
 
 msgid "mvn dimension error"
 msgstr "mvn Dimensionsfehler"
+
+msgid "non-integer binomial denominator: quantiles incorrect"
+msgstr ""
 
 msgid "object is not a glm or gam"
 msgstr "Obejekt ist weder glm noch gam"
@@ -965,7 +1029,8 @@ msgstr ""
 "keine automatische Darstellung für Glättungen von mehr als zwei Variablen"
 
 msgid "no automatic plotting for smooths of more than four variables"
-msgstr "keine automatische Darstellung für Glättungen von mehr als vier Variablen"
+msgstr ""
+"keine automatische Darstellung für Glättungen von mehr als vier Variablen"
 
 msgid "argument pers is deprecated, please use scheme instead"
 msgstr "Argument pers ist veraltet, bitte stattdessen scheme nutzen"

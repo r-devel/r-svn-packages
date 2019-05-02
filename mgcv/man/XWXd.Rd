@@ -2,6 +2,7 @@
 \alias{XWXd}
 \alias{XWyd}
 \alias{Xbd}
+\alias{diagXVXd}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Internal functions for discretized model matrix handling}
 \description{Routines for computing with discretized model matrices as described in Wood et al. (2017) and Li and Wood (2019).
@@ -10,6 +11,7 @@
 XWXd(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL,rt=NULL)
 XWyd(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL)
 Xbd(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL)
+diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
@@ -30,9 +32,10 @@ Xbd(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL)
 \item{ar.w}{weight by these weights, and sum up according to \code{ar.stop}. Used to implement AR models.}
 \item{lt}{use only columns of X corresponding to these model matrix terms (for left hand \code{X} in \code{XWXd}).}
 \item{rt}{as \code{lt} for right hand \code{X}.}
+\item{V}{Coefficient covariance matrix.}
 }
 
-\details{These functions are really intended to be internal, but are exported so that they can be used in the initialization code of families without problem. They are primarily used by \code{\link{bam}} to implement the methods given in the references. }
+\details{These functions are really intended to be internal, but are exported so that they can be used in the initialization code of families without problem. They are primarily used by \code{\link{bam}} to implement the methods given in the references. \code{XWXd} produces \eqn{X^TWX}{X'WX}, \code{XWy} produces \eqn{X^TWy}{X'Wy}, \code{Xbd} produces \eqn{X\beta}{Xb} and \eqn{diagXVXd} produces the diagonal of \eqn{XVX^T}{XVX'}. }
  
 
 \references{

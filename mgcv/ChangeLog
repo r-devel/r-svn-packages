@@ -11,6 +11,10 @@ Currently deprecated and liable to be removed:
 
 Issues: 
 
+** translation setup failing!! update_pkg_po(pkgdir="~sw283/versions/mgcv")
+   fails in en_quote - (startsWith(lines[current], "\"")) fails as current 
+   is set to longer than lines, resulting in NA and failure of statrsWith
+
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
@@ -23,6 +27,8 @@ present, and reparameterization needs checking (also for bam).
 1.8-29
 
 * Gamma location-scale family 'gammals' added. See ?gammals. 
+
+* row-wise Kronecker prodict operator %.% added for convenience.
 
 * changes to general families to allow return of first deriv of penalized 
   Hessian component more easily.
