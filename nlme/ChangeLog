@@ -1,3 +1,7 @@
+2019-05-12  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-140 (released)
+
 2019-05-01  Brian Ripley
 
 	* src/init.c: correct declaration of fit_nlme
