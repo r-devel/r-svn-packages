@@ -11,15 +11,16 @@
 XWXd(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL,rt=NULL)
 XWyd(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL)
 Xbd(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL)
-diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL)
+diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
- \item{X}{A list of the matrices containing the unique rows of model matrices for terms of a full model matrix, or the model matrices of the terms margins.}
+ \item{X}{A list of the matrices containing the unique rows of model matrices for terms of a full model matrix, or the model matrices of the terms margins.
+ if term subsetting arguments \code{lt} and \code{rt} are non-NULL then this requires an \code{"lpip"} attribute: see details.}
  \item{w}{An n-vector of weights}
  \item{y}{n-vector of data.}
  \item{beta}{coefficient vector.}
- \item{k}{A list of index n-vectors each selecting the rows of an X[[i]] required to create the full matrix.}
+ \item{k}{A matrix whose columns are index n-vectors each selecting the rows of an X[[i]] required to create the full matrix.}
 \item{ks}{The ith term has index vectors \code{ks[i,1]:(ks[i,2]-1)}. The corresponing full model matrices are summed over.} 
 \item{ts}{The element of \code{X} at which each model term starts.}
 \item{dt}{How many elements of \code{X} contribute to each term.}
@@ -35,7 +36,10 @@ diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL)
 \item{V}{Coefficient covariance matrix.}
 }
 
-\details{These functions are really intended to be internal, but are exported so that they can be used in the initialization code of families without problem. They are primarily used by \code{\link{bam}} to implement the methods given in the references. \code{XWXd} produces \eqn{X^TWX}{X'WX}, \code{XWy} produces \eqn{X^TWy}{X'Wy}, \code{Xbd} produces \eqn{X\beta}{Xb} and \eqn{diagXVXd} produces the diagonal of \eqn{XVX^T}{XVX'}. }
+\details{These functions are really intended to be internal, but are exported so that they can be used in the initialization code of families without problem. They are primarily used by \code{\link{bam}} to implement the methods given in the references. \code{XWXd} produces \eqn{X^TWX}{X'WX}, \code{XWy} produces \eqn{X^TWy}{X'Wy}, \code{Xbd} produces \eqn{X\beta}{Xb} and \eqn{diagXVXd} produces the diagonal of \eqn{XVX^T}{XVX'}.
+
+The \code{"lpip"} attribute of \code{X} is a list of the coefficient indices for each term. Required if subsetting via \code{lt} and \code{rt}.
+}
  
 
 \references{

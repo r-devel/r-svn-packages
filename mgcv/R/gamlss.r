@@ -2236,13 +2236,14 @@ gammals <- function(link=list("identity","log"),b=-7) {
       ve <- matrix(0,nrow(X),2) ## variance of eta 
       for (i in 1:2) {
         if (discrete) {
-	  eta[,i] <- Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[1]])
+	  eta[,i] <- Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[i]])
         } else {
           Xi <- X[,lpi[[i]],drop=FALSE]
           eta[,i] <- Xi%*%beta[lpi[[i]]] ## ith linear predictor
         } 
         if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
-        if (se) ve[,i] <- if (discrete) diagXVXd(X,Vb,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL) else drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
+        if (se) ve[,i] <- if (discrete) diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1,lt=X$lpid[[i]]) else
+	                  drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
       }
     } else { 
       se <- FALSE

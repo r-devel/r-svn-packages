@@ -263,6 +263,10 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
 
 diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
 ## discrete computation of diag(XVX')
+## BUGS: 1. X list may not be in coefficient order - in which case V has to be re-ordered according to lpip
+##          attribute of X (if non-null)
+##       2. It doesn't seem to work if terms are dropped, not from end, although Xbd seems to work in these cases.
+
   n <- if (is.matrix(k)) nrow(k) else length(k)
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
@@ -274,10 +278,15 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
   } else pv <- ncol(V)
   if (is.null(lt)) lt <- 1:nt
   if (is.null(rt)) rt <- 1:nt
-  
+  lpip <- attr(X,"lpip")
+  if (!is.null(lpip)) { ## then X list may not be in coef order...
+    lpi <- unlist(lpip[lt])
+    rpi <- unlist(lpip[rt])
+    V <- V[lpi,rpi] ## select part of V required required in correct order
+  }
   oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
            ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx),
-	   ts=as.integer(ts-1), as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(pv),
+	   ts=as.integer(ts-1), as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(nrow(V)),as.integer(ncol(V)),
 	   as.integer(nthreads),as.integer(lt-1),as.integer(length(lt)),as.integer(rt-1),as.integer(length(rt)))
   oo$diag
 } ## diagXVXd

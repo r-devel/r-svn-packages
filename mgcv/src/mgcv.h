@@ -101,7 +101,7 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *ks, int *m,int 
 void Xbd(double *f,double *beta,double *X,int *k, int *ks, int *m,int *p, int *n, 
 	 int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *bc,int *cs,int *ncs);
 void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int *n, 
-	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *nthreads,int *cs,int *ncs,int *rs,int *nrs);
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,int *cs,int *ncs,int *rs,int *nrs);
 
 /* various service routines */
 

@@ -495,13 +495,13 @@ void Xbd(double *f,double *beta,double *X,int *k,int *ks, int *m,int *p, int *n,
   } /* col beta loop */
 #pragma omp critical (xbdcalloc)
   { if (dC) FREE(C);
-    FREE(work);FREE(f0);
+    FREE(work);FREE(pf);
     FREE(pt);FREE(off);FREE(voff);FREE(tps);
   }
 } /* Xb */
 
 void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int *n, 
-	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *nthreads,
+	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,
 	      int *cs,int *ncs,int *rs,int *nrs) {
 /* Forms diag(XVX') where X is stored in the compact form described in XWXd.
    V is a pv by pv matrix. 
@@ -518,8 +518,45 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
    which columns of X are required. 
 
    Called using diagXVXd in R
-   
+   library(mgcv)
+   X <- list(matrix(runif(4*3),4,3),matrix(runif(8*4),8,4),matrix(runif(5*2),5,2))
+   k <- cbind(sample(1:4,100,replace=TRUE),sample(1:8,100,replace=TRUE),sample(1:5,100,replace=TRUE))
+   ks <- cbind(1:3,2:4); ts <- 1:3;dt <- rep(1,3)
+   attr(X,"lpip") <- list(1:3,4:7,8:9)
+   Xf <- cbind(X[[1]][k[,1],],X[[2]][k[,2],],X[[3]][k[,3],])
+   V <- crossprod(matrix(runif(81)-.5,9,9))
+   diagXVXd(X,V,k,ks,ts,dt,v=NULL,qc=rep(-1,3))
+   rowSums((Xf%*%V)*Xf)
 
+   lt <- c(1,3);rt <- c(2,3) 
+   mt <- as.numeric(1:3 %in% lt)
+   X1 <- cbind(X[[1]][k[,1],]*mt[1],X[[2]][k[,2],]*mt[2],X[[3]][k[,3],]*mt[3])
+   mt <- as.numeric(1:3 %in% rt)
+   X2 <- cbind(X[[1]][k[,1],]*mt[1],X[[2]][k[,2],]*mt[2],X[[3]][k[,3],]*mt[3])
+   
+   diagXVXd(X,V,k,ks,ts,dt,v=NULL,qc=rep(-1,3),lt=lt,rt=rt)
+   rowSums((X1%*%V)*X2)
+
+   ## check Xbd
+   beta <- runif(9)
+   Xbd(X,beta,k,ks,ts,dt,v=NULL,qc=rep(-1,3),drop=NULL,lt=NULL)
+   drop(Xf%*%beta)
+  
+   Xbd(X,beta,k,ks,ts,dt,v=NULL,qc=rep(-1,3),drop=NULL,lt=lt)
+   drop(X1%*%beta)
+
+   ## check out XWXd
+   w <- runif(100)-.1
+   XWX <- XWXd(X,w,k,ks,ts,dt,v=NULL,qc=rep(-1,3))
+   XWXf <- t(Xf)%*%(w*Xf)
+   range(XWXf-XWX)
+   
+   ## XWXd with selection
+   X1 <- matrix(0,100,0) 
+   for (i in 1:length(X)) if (mt[i]>0) X1 <- cbind(X1,X[[i]][k[,i],]) 
+   XWX <- XWXd(X,w,k,ks,ts,dt,v=NULL,qc=rep(-1,3),lt=lt,rt=lt)
+   XWXf <- t(X1)%*%(w*X1)
+   range(XWXf-XWX)
 */
   double *xv,*dc,*p0,*p1,*p2,*p3,*ei,*xi;
   ptrdiff_t bsj,bs,bsf,i,j,kk;
@@ -528,18 +565,18 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
   *nthreads = 1;
   #endif
   if (*nthreads<1) *nthreads = 1;
-  if (*nthreads > *pv) *nthreads = *pv;
+  if (*nthreads > *cv) *nthreads = *cv;
   xv = (double *) CALLOC((size_t) *nthreads * *n,sizeof(double)); /* storage for cols of XV */
   xi = (double *) CALLOC((size_t) *nthreads * *n,sizeof(double)); /* storage for cols of X */
-  ei = (double *) CALLOC((size_t) *nthreads * *pv,sizeof(double)); /* storage for identity matrix cols */
+  ei = (double *) CALLOC((size_t) *nthreads * *cv,sizeof(double)); /* storage for identity matrix cols */
   dc = (double *) CALLOC((size_t) *nthreads * *n,sizeof(double)); /* storage for components of diag */
   if (*nthreads>1) {
-    bs = *pv / *nthreads;
-    while (bs * *nthreads < *pv) bs++;
-    while (bs * *nthreads - bs >= *pv) (*nthreads)--;
-    bsf = *pv - (bs * *nthreads - bs); 
+    bs = *cv / *nthreads;
+    while (bs * *nthreads < *cv) bs++;
+    while (bs * *nthreads - bs >= *cv) (*nthreads)--;
+    bsf = *cv - (bs * *nthreads - bs); 
   } else {
-    bsf = bs = *pv;
+    bsf = bs = *cv;
   }
   #ifdef OPENMP_ON
   #pragma omp parallel for private(j,bsj,i,kk,p0,p1,p2,p3) num_threads(*nthreads)
@@ -547,11 +584,14 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
   for (j=0;j < *nthreads;j++) {
     if (j == *nthreads - 1) bsj = bsf; else bsj = bs;
     for (i=0;i<bsj;i++) { /* work through this block's columns */
-      kk = j * bs + i;
+      kk = j * bs + i; /* column being worked on */
       ei[j * *pv + kk] = 1;if (i>0) ei[j * *pv + kk - 1] = 0;
       /* Note thread safety of XBd means this must be only memory allocator in this section*/
       Xbd(xv + j * *n,V + kk * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* XV[:,kk] */
-      Xbd(xi + j * *n,ei + j * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,cs,ncs); /* X[:,kk] inefficient, but deals with constraint*/
+      Xbd(xi + j * *n,ei + j * *pv,X,k,ks,m,p,n,nx,ts,dt,nt,v,qc,&one,rs,nrs); /* X[:,kk] inefficient, but deals with constraint*/
+      /*Rprintf("\n kk = %d\n",kk);
+      for (kk=0;kk<*n;kk++) Rprintf("%d %g  %g\n",kk,xv[kk],xi[kk]);
+      Rprintf("---------------\n");*/
       p0 = xi + j * *n;p1=xv + j * *n;p2 = dc + j * *n;p3 = p2 + *n;
       for (;p2<p3;p0++,p1++,p2++) *p2 += *p0 * *p1; /* element-wise product of XV[:,kk] X[:,kk] */
     } 

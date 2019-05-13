@@ -11,14 +11,14 @@ penalty matrices for the marginal bases of the smooth. The model matrix construc
 \usage{
 tensor.prod.model.matrix(X)
 tensor.prod.penalties(S)
-A\%.\%B
+a\%.\%b
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
   \item{X}{a list of model matrices for the marginal bases of a smooth} 
  \item{S}{a list of penalties for the marginal bases of a smooth.}
- \item{A}{a matrix with the same number of rows as \code{A}.}
- \item{B}{a matrix with the same number of rows as \code{B}.}
+ \item{a}{a matrix with the same number of rows as \code{A}.}
+ \item{b}{a matrix with the same number of rows as \code{B}.}
 }
 \details{ If \code{X[[1]]}, \code{X[[2]]} ... \code{X[[m]]} are the model matrices of the marginal bases of 
 a tensor product smooth then the ith row of the model matrix for the whole tensor product smooth is given by
