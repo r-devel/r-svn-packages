@@ -157,7 +157,7 @@ all.equal(clarax[-8],
           clara(x, 2, samples=50, pamLike = TRUE)[-8])
 plot(clarax)
 
-## `xclara' is an artificial data set with 3 clusters of 1000 bivariate
+## 'xclara' is an artificial data set with 3 clusters of 1000 bivariate
 ## objects each.
 data(xclara)
 (clx3 <- clara(xclara, 3))

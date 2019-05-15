@@ -301,7 +301,7 @@ function(x, clus, diss = FALSE, s.x.2d = mkCheckX(x, diss),
 			  ierr = integer(1))
 		if(res$ierr != 0)
 		    ## MM : exactmve not available here !
-		    warning("Error in Fortran routine for the spanning ellipsoid,\n rank problem??")
+		    warning("Error in C routine for the spanning ellipsoid,\n rank problem??")
 
 		cov <- cov.wt(x, res$prob)
 		loc[i, ] <- cov$center

@@ -7,10 +7,16 @@
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
 
-\section{Changes in version 2.1.0 (2019-..-.., svn r....)}{
+\section{Changes in version 2.1.0 (2019-06-.., svn r76..)}{
   \subsection{New Features}{
     \itemize{
       \item (place holder)
+    }
+  }
+  \subsection{Bug Fixes}{
+    \itemize{
+      \item \code{volume(obj)} is now correct also for ellipsoids of
+      dimension \eqn{d > 2}.
     }
   }
   \subsection{Tweaks}{
