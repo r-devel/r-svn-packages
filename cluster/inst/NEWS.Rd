@@ -21,7 +21,7 @@
   }
   \subsection{Tweaks}{
     \itemize{
-      \item Replaced many \dQuote{old style} \code{`<word>'} quotations.
+      \item Replaced many \dQuote{old style} \verb{`<word>'} quotations.
     }
   }
 }
