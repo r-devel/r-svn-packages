@@ -33,7 +33,7 @@ R_CMethodDef CEntries[] = {
     {"XWXd", (DL_FUNC) &XWXd,18},
     {"XWXd0", (DL_FUNC) &XWXd0,18},
     {"XWXd1", (DL_FUNC) &XWXd1,22},
-    {"XWyd", (DL_FUNC) &XWyd,20},
+    {"XWyd", (DL_FUNC) &XWyd,21},
     {"Xbd", (DL_FUNC) &Xbd,17},
     {"vcorr", (DL_FUNC) &vcorr, 5},
     {"dchol", (DL_FUNC) &dchol, 4},

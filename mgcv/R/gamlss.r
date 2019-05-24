@@ -658,11 +658,14 @@ multinom <- function(K=1) {
         }
         if (!is.null(off[[i]])) eta[,i] <- eta[,i] + off[[i]]
         if (se) { ## variance and covariances for kth l.p.
-          ve[,i] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
+	  
+          ve[,i] <- if (discrete) diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1,
+	                   lt=X$lpid[[i]],rt=X$lpid[[i]]) else drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[i]]])*Xi)))
           ii <- 0
           if (i<K) for (j in (i+1):K) {
             ii <- ii + 1
-            ce[,ii] <- drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[j]]])*X[,lpi[[j]]])))
+            ce[,ii] <- if (discrete) diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1,
+	                   lt=X$lpid[[i]],rt=X$lpid[[j]]) else drop(pmax(0,rowSums((Xi%*%Vb[lpi[[i]],lpi[[j]]])*X[,lpi[[j]]])))
           }
         }
       }
@@ -721,6 +724,7 @@ multinom <- function(K=1) {
   ##        4 - everything.
     n <- length(y)
     if (is.null(eta)) {
+      discrete <- is.list(X)
       return.l <- FALSE
       jj <- attr(X,"lpi") ## extract linear predictor index
       K <- length(jj) ## number of linear predictors 
@@ -728,7 +732,8 @@ multinom <- function(K=1) {
       if (is.null(offset)) offset <- list()
       offset[[K+1]] <- 0
       for (i in 1:K) if (is.null(offset[[i]])) offset[[i]] <- 0
-      for (i in 1:K) eta[,i+1] <- X[,jj[[i]],drop=FALSE]%*%coef[jj[[i]]] + offset[[i]]
+      for (i in 1:K) eta[,i+1] <- offset[[i]] + if (discrete)Xbd(X$Xd,coef,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,
+                                  drop=X$drop,lt=X$lpid[[i]]) else X[,jj[[i]],drop=FALSE]%*%coef[jj[[i]]]
     } else { l2 <- 0;K <- ncol(eta);eta <- cbind(1,eta); return.l <- TRUE}
  
     if (K!=family$nlp) stop("number of linear predictors doesn't match")
@@ -829,20 +834,34 @@ multinom <- function(K=1) {
       use.unscaled <- if (!is.null(attr(E,"use.unscaled"))) TRUE else FALSE
       if (is.null(start)) {
         jj <- attr(x,"lpi")
-        start <- rep(0,ncol(x))
-        for (k in 1:length(jj)) { ## loop over the linear predictors      
-          yt1 <- 6*as.numeric(y==k)-3
-          x1 <- x[,jj[[k]],drop=FALSE]
-          e1 <- E[,jj[[k]],drop=FALSE] ## square root of total penalty
-          if (use.unscaled) {
-            qrx <- qr(rbind(x1,e1))
-            x1 <- rbind(x1,e1)
-            startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
-            startji[!is.finite(startji)] <- 0       
-          } else startji <- pen.reg(x1,e1,yt1)
-          start[jj[[k]]] <- startji ## copy coefficients back into overall start coef vector
-        } ## lp loop
-      }
+	if (is.list(x)) { ## discrete case
+          start <- rep(0,max(unlist(jj)))
+          for (k in 1:length(jj)) { ## loop over the linear predictors
+            yt1 <- 6*as.numeric(y==k)-3
+	    R <- chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[k]])+crossprod(E[,jj[[k]]]),pivot=TRUE)
+	    Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[k]])
+	    piv <- attr(R,"pivot")
+	    startji <- rep(0,ncol(R))
+            startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
+	    startji[!is.finite(startji)] <- 0
+	    start[jj[[k]]] <- startji
+          } ## lp loop
+        } else { ## regular case
+          start <- rep(0,ncol(x))
+          for (k in 1:length(jj)) { ## loop over the linear predictors      
+            yt1 <- 6*as.numeric(y==k)-3
+            x1 <- x[,jj[[k]],drop=FALSE]
+            e1 <- E[,jj[[k]],drop=FALSE] ## square root of total penalty
+            if (use.unscaled) {
+              qrx <- qr(rbind(x1,e1))
+              x1 <- rbind(x1,e1)
+              startji <- qr.coef(qr(x1),c(yt1,rep(0,nrow(E))))
+              startji[!is.finite(startji)] <- 0       
+            } else startji <- pen.reg(x1,e1,yt1)
+            start[jj[[k]]] <- startji ## copy coefficients back into overall start coef vector
+          } ## lp loop
+        }
+      }		
   }) ## initialize multinom
 
   structure(list(family="multinom",ll=ll,link=NULL,#paste(link),
@@ -852,7 +871,8 @@ multinom <- function(K=1) {
     linfo = stats, ## link information list
     d2link=1,d3link=1,d4link=1, ## signals to fix.family.link that all done    
     ls=1, ## signals that ls not needed here
-    available.derivs = 2 ## can use full Newton here
+    available.derivs = 2, ## can use full Newton here
+    discrete.ok = TRUE
     ),class = c("general.family","extended.family","family"))
 } ## end multinom
 

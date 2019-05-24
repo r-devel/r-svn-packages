@@ -208,6 +208,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
 XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL) {
 ## X'Wy...
 ## if lt if not NULL then it lists the discrete terms to include (from X)
+## returned vector/matrix only includes rows for selected terms
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
   n <- length(w);##pt <- 0;
@@ -221,14 +222,17 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
     lpi <- unlist(lpip[lt]) ## coefs corresponding to terms selected by lt
     if (!is.null(drop)) drop <- which(lpi %in% drop) ## rebase drop 
     pt <- length(lpi)
-  } 
-  oo <- .C(C_XWyd,XWy=rep(0,pt),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
+  }
+  cy <- if (is.matrix(y)) ncol(y) else 1
+  oo <- .C(C_XWyd,XWy=rep(0,pt*cy),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
            ks=as.integer(ks-1),
-           m=as.integer(m),p=as.integer(p),n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
+           m=as.integer(m),p=as.integer(p),n=as.integer(n),cy=as.integer(cy), nx=as.integer(nx), ts=as.integer(ts-1), 
            dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc),
            ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),
 	   cs=as.integer(lt-1),ncs=as.integer(length(lt)))
-  if (is.null(drop)) oo$XWy else oo$XWy[-drop]
+  if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
+  XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop] 
+  XWy
 } ## XWyd 
 
 Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {

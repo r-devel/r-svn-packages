@@ -670,14 +670,14 @@ void XWyd0(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int 
 } /* XWy0 */
 
 
-void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, 
+void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *cy,
          int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
 	  int *ar_stop,int *ar_row,double *ar_weights,int *cs, int *ncs) {
 /* NOT thread safe. 
    If ncs > 0 then cs contains the subset of terms (blocks of model matrix columns) to include.   */
   double *Wy,*p0,*p1,*p2,*p3,*Xy0,*work,*work1,x;
   ptrdiff_t i,j,*off,*voff;
-  int *tps,maxm=0,maxp=0,one=1,zero=0,*pt,add,q,kk;
+  int *tps,maxm=0,maxp=0,one=1,zero=0,*pt,add,q,kk,n_XWy;
   if (*ar_stop>=0) { /* model has AR component, requiring sqrt(weights) */
     for (p0 = w,p1 = w + *n;p0<p1;p0++) *p0 = sqrt(*p0);
   }
@@ -705,46 +705,50 @@ void XWyd(double *XWy,double *y,double *X,double *w,int *k,int *ks, int *m,int *
     i = cs[j];tps[i] = kk;
     if (qc[i]<=0) kk += pt[i]; /* where cth terms starts in param vector */ 
     else kk += pt[i] - 1; /* there is a tensor constraint to apply - reducing param count*/
-  }
+  } /* kk is number of rows of XWy, at this point */
+
+  n_XWy = kk;
   
   Xy0 =  (double *) CALLOC((size_t)maxp,sizeof(double));
   work =  (double *) CALLOC((size_t)*n,sizeof(double));
   work1 = (double *) CALLOC((size_t)maxm,sizeof(double));
-  /* apply W to y */
+  
   Wy = (double *) CALLOC((size_t)*n,sizeof(double)); /* Wy */
-  for (p0=Wy,p1=Wy + *n,p2=w;p0<p1;p0++,y++,p2++) *p0 = *y * *p2; 
-  if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
-    rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&zero,work);
-    rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&one,work); /* transpose of transform applied */
-    for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* sqrt weights again */
-  }
-  /* now loop through terms applying the components of X'...*/
-  //for (i=0;i<*nt;i++) { /* term loop */ 
-  for (kk=0;kk<*ncs;kk++) {
-   i = cs[kk]; /* term to deal with now */ 
-   add=0; 
-   if (dt[i]>1) { /* it's a tensor */
-      //tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k+ts[i] * (ptrdiff_t) *n,n);
-      for (q=0;q<ks[ts[i] + *nx]-ks[ts[i]];q++) {  /* loop through index columns */
-        tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k,n,&add,ks+ts[i],&q);
-        add=1;
-      }
-      if (qc[i]>0) { /* there is a constraint to apply Z'Xy0: form Q'Xy0 and discard first row... */
-        /* Q' = I - vv' */
-        for (x=0.0,p0=Xy0,p1=p0 + pt[i],p2=v+voff[i];p0<p1;p0++,p2++) x += *p0 * *p2; /* x = v'Xy0 */
-        p0=XWy + tps[i];p1 = p0 + pt[i]-1;p2 = v+voff[i] + 1;p3=Xy0+1;
-        for (;p0<p1;p0++,p2++,p3++) *p0 = *p3 - x * *p2; /* (I-vv')Xy0 less first element */
-      } else { /* straight copy */
-        for (p0=Xy0,p1=p0+pt[i],p2=XWy+tps[i];p0<p1;p0++,p2++) *p2 = *p0;
-      }
-    } else { /* it's a singleton */
-      //singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k+ts[i] * (ptrdiff_t) *n,n);
-      for (q=ks[ts[i]];q<ks[ts[i] + *nx];q++) { /* loop through index columns */  
-        singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k + q * (ptrdiff_t) *n,n,&add);
-        add=1;
-      }
+  for (j=0;j<*cy;j++) { /* loop over columns of y */
+    for (p0=Wy,p1=Wy + *n,p2=w;p0<p1;p0++,y++,p2++) *p0 = *y * *p2; /* apply W to y */
+    if (*ar_stop>=0) { /* AR components present (weights are sqrt, therefore) */
+      rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&zero,work);
+      rwMatrix(ar_stop,ar_row,ar_weights,Wy,n,&one,&one,work); /* transpose of transform applied */
+      for (p0=w,p1=w + *n,p2=Wy;p0<p1;p0++,p2++) *p2 *= *p0; /* sqrt weights again */
     }
-  } /* term loop */
+    /* now loop through terms applying the components of X'...*/
+    for (kk=0;kk<*ncs;kk++) {
+      i = cs[kk]; /* term to deal with now */ 
+      add=0; 
+      if (dt[i]>1) { /* it's a tensor */
+        //tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k+ts[i] * (ptrdiff_t) *n,n);
+        for (q=0;q<ks[ts[i] + *nx]-ks[ts[i]];q++) {  /* loop through index columns */
+          tensorXty(Xy0,work,work1,Wy,X+off[ts[i]],m+ts[i],p+ts[i],dt+i,k,n,&add,ks+ts[i],&q);
+          add=1;
+        }
+        if (qc[i]>0) { /* there is a constraint to apply Z'Xy0: form Q'Xy0 and discard first row... */
+          /* Q' = I - vv' */
+          for (x=0.0,p0=Xy0,p1=p0 + pt[i],p2=v+voff[i];p0<p1;p0++,p2++) x += *p0 * *p2; /* x = v'Xy0 */
+          p0=XWy + tps[i];p1 = p0 + pt[i]-1;p2 = v+voff[i] + 1;p3=Xy0+1;
+          for (;p0<p1;p0++,p2++,p3++) *p0 = *p3 - x * *p2; /* (I-vv')Xy0 less first element */
+        } else { /* straight copy */
+          for (p0=Xy0,p1=p0+pt[i],p2=XWy+tps[i];p0<p1;p0++,p2++) *p2 = *p0;
+        }
+      } else { /* it's a singleton */
+        //singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k+ts[i] * (ptrdiff_t) *n,n);
+        for (q=ks[ts[i]];q<ks[ts[i] + *nx];q++) { /* loop through index columns */  
+          singleXty(XWy+tps[i],work1,Wy,X+off[ts[i]], m+ts[i],p+ts[i], k + q * (ptrdiff_t) *n,n,&add);
+          add=1;
+        }
+      }
+    } /* term loop */
+    XWy += n_XWy; /* moving on to next column */
+  }  
   FREE(Wy); FREE(Xy0); FREE(work); FREE(work1); 
   FREE(pt); FREE(off); FREE(voff); FREE(tps);
 } /* XWy */

@@ -95,7 +95,7 @@ void XWXd0(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
 void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n, int *nx, int *ts, 
 	   int *dt, int *nt,double *v,int *qc,int *nthreads,int *ar_stop,int *ar_row,double *ar_weights,
 	   int *rs, int *cs, int *nrs, int *ncs);
-void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *ks, int *m,int *p, int *n, 
+void XWyd(double *XWy,double *y,double *X,double *w,int *k, int *ks, int *m,int *p, int *n,int *cy, 
 	  int *nx, int *ts, int *dt, int *nt,double *v,int *qc,
           int *ar_stop,int *ar_row,double *ar_weights,int *cs,int *ncs);
 void Xbd(double *f,double *beta,double *X,int *k, int *ks, int *m,int *p, int *n, 

@@ -373,7 +373,7 @@ Sl.rSb <- function(Sl,rho,beta) {
 } ## Sl.rSb
 
 
-Sl.inirep <- function(Sl,X,l,r,nt=1) {
+Sl.inirep <- function(Sl,X,l=0,r=0,nt=1) {
 ## Re-parameterize X using initial Sl reparameterization info.
 ## l,r = -2,-1,0,1,2. O is do not apply, negative to apply inverse transform Di,
 ##       positive for transform D, 1 for transform, 2 for its transpose.
@@ -535,7 +535,7 @@ ginv1 <- function(a) {
   b[piv,piv] <- chol2inv(R[1:r,1:r])
   b <- t(t(da*b)*da)
   ldet <- sum(log(diag(R)[1:r])) - sum(log(da))
-  list(inv = b, ldet = ldet,root=E)
+  list(inv = b, ldet = ldet,E=E)
 } ## ginv1
 
 ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
@@ -563,7 +563,7 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
     #j <- min(which(nos==max(nos))) ## single selector
     j <- which(nos>max(nos)*1e-5)
     D <- nD[j]; nD <- nD[-j]
-    #cat("Dset =",j,"\n")
+    cat("Dset =",j,"\n")
     return(list(D=D,nD=nD))
   } ## dominant.set
 
