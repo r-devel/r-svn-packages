@@ -156,11 +156,12 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0)
   ## block oriented code...
   if (is.null(lt)&&is.null(lt)) {
-    t0 <- system.time(oo <- .C(C_XWXd0,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
+    #t0 <- system.time(
+    oo <- .C(C_XWXd0,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
            k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
            ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
-           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w)))
+           ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w))#)
     XWX <- if (is.null(drop)) matrix(oo$XWX[1:pt^2],pt,pt) else matrix(oo$XWX[1:pt^2],pt,pt)[-drop,-drop]
   } else {
     lpip <- attr(X,"lpip") ## list of coefs for each term
@@ -177,12 +178,13 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
 	rpi <- lpi
       } else ncs <- length(rt)
     }  
-    t0 <- system.time(oo <- .C(C_XWXd1,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
+    #t0 <- system.time(
+    oo <- .C(C_XWXd1,XWX =as.double(rep(0,(pt+nt)^2)),X= as.double(unlist(X)),w=as.double(w),
            k=as.integer(k-1),ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), 
            ns=as.integer(nx), ts=as.integer(ts-1), as.integer(dt), nt=as.integer(nt),
            v = as.double(unlist(v)),qc=as.integer(qc),nthreads=as.integer(nthreads),
            ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),rs=as.integer(lt-1),
-	   cs=as.integer(rt-1),nrs=as.integer(nrs),ncs=as.integer(ncs)))
+	   cs=as.integer(rt-1),nrs=as.integer(nrs),ncs=as.integer(ncs))#)
     XWX <- matrix(oo$XWX[1:(length(lpi)*length(rpi))],length(lpi),length(rpi))
     if (!is.null(drop)) {
       ldrop <- which(lpi %in% drop)
