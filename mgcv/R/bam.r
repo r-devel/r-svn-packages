@@ -124,7 +124,9 @@ compress.df <- function(dat,m=NULL) {
 ## If there are <= m of these then these are employed, otherwise 
 ## rounding is used. Factors are always reduced to the number of 
 ## levels present in the data. Idea is that this function is called 
-## with columns of dataframes corresponding to single smooths or marginals. 
+## with columns of dataframes corresponding to single smooths or marginals.
+## Note that this uses random sampling, so random seed manipulation
+## is typically used before calling to force exact repeatability. 
   d <- ncol(dat) ## number of variables to deal with
   n <- nrow(dat) ## number of data/cases
   if (is.null(m)) m <- if (d==1) 1000 else if (d==2) 100 else 25 else
@@ -156,22 +158,9 @@ compress.df <- function(dat,m=NULL) {
   k <- attr(xu,"index")
   ## shuffle rows in order to avoid induced dependencies between discretized
   ## covariates (which can mess up gam.side)...
-  ## any setting should be done in routine calling this one!!
-  #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-  #if (inherits(seed,"try-error")) {
-  #   runif(1)
-  #   seed <- get(".Random.seed",envir=.GlobalEnv)
-  #}
-  #kind <- RNGkind(NULL)
-  #RNGkind("default","default")
-  ## following line must be different to that used in
-  ## tp constructor subsampling!
-  #set.seed(8547) ## ensure repeatability
+  ## Any RNG setting should be done in routine calling this one!!
   
   ii <- sample(1:nrow(xu),nrow(xu),replace=FALSE) ## shuffling index
-  
-  #RNGkind(kind[1],kind[2])
-  #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
   
   xu[ii,] <- xu  ## shuffle rows of xu
   k <- ii[k]     ## correct k index accordingly
@@ -1922,10 +1911,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             family <- family()
     if (is.null(family$family))
             stop("family not recognized")
-    
-
-    #if (inherits(family,"general.family")) warning("general families not supported by bam")
-    
+      
     if (family$family=="gaussian"&&family$link=="identity") am <- TRUE else am <- FALSE
     if (scale==0) { if (family$family%in%c("poisson","binomial")) scale <- 1 else scale <- -1} 
     if (!method%in%c("fREML","GACV.Cp","GCV.Cp","REML",

@@ -1907,7 +1907,7 @@ variable.summary <- function(pf,dl,n) {
 gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action,offset=NULL,
                 method="GCV.Cp",optimizer=c("outer","newton"),control=list(),#gam.control(),
                 scale=0,select=FALSE,knots=NULL,sp=NULL,min.sp=NULL,H=NULL,gamma=1,fit=TRUE,
-                paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,...) {
+                paraPen=NULL,G=NULL,in.out=NULL,drop.unused.levels=TRUE,drop.intercept=NULL,discrete=FALSE,...) {
 ## Routine to fit a GAM to some data. The model is stated in the formula, which is then 
 ## interpreted to figure out which bits relate to smooth terms and which to parametric terms.
 ## Basic steps:
@@ -1925,6 +1925,12 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 ##    coefficients and obtain derivatives w.r.t. the smoothing parameters.
 ## 4. Finished 'gam' object assembled.
    control <- do.call("gam.control",control)
+   if (is.null(G) && discrete) { ## get bam to do the setup
+     cl <- match.call() ## NOTE: check all arguments more carefully
+     cl[[1]] <- quote(bam)
+     cl$fit = FALSE
+     G <- eval(cl,parent.frame()) ## NOTE: cl probaby needs modifying in G to work properly (with fit=FALSE reset?? also below??)
+   }
    if (is.null(G)) {
     ## create model frame..... 
     gp <- interpret.gam(formula) # interpret the formula 
@@ -1932,7 +1938,7 @@ gam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     mf <- match.call(expand.dots=FALSE)
     mf$formula <- gp$fake.formula 
     mf$family <- mf$control<-mf$scale<-mf$knots<-mf$sp<-mf$min.sp<-mf$H<-mf$select <- mf$drop.intercept <-
-                 mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$...<-NULL
+                 mf$gamma<-mf$method<-mf$fit<-mf$paraPen<-mf$G<-mf$optimizer <- mf$in.out <- mf$discrete <- mf$...<-NULL
     mf$drop.unused.levels <- drop.unused.levels
     mf[[1]] <- quote(stats::model.frame) ## as.name("model.frame")
     pmf <- mf
