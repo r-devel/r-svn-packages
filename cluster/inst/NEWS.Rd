@@ -17,6 +17,10 @@
     \itemize{
       \item \code{volume(obj)} is now correct also for ellipsoids of
       dimension \eqn{d > 2}.
+
+      \item \command{--enable-lto} compilation revealed missing
+      \code{weights} argument in \file{src/cluster.h}'s declaration of
+      \code{cldaisy()}.
     }
   }
   \subsection{Tweaks}{
