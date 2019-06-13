@@ -2010,12 +2010,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      
       yg <- trial$grad-initial$grad
       step <- step*trial$alpha
-      if (Wolfe2) { ## only update if Wolfe2 is met, otherwise B can fail to be +ve def.
+      rho <- sum(yg*step)
+      if (rho>0) { #Wolfe2) { ## only update if Wolfe2 is met, otherwise B can fail to be +ve def.
         if (i==1) { ## initial step --- adjust Hessian as p143 of N&W
           B <- B * trial$alpha ## this is my version 
           ## B <- B * sum(yg*step)/sum(yg*yg) ## this is N&W
         }
-        rho <- 1/sum(yg*step)
+        rho <- 1/rho # sum(yg*step)
         B <- B - rho*step%*%(t(yg)%*%B)
 
         ## Note that Wolfe 2 guarantees that rho>0 and updated B is 

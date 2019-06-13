@@ -528,20 +528,31 @@ gaulss <- function(link=list("identity","logb"),b=0.01) {
 	if (!is.null(offset[[1]])) yt1 <- yt1 - offset[[1]]
         if (is.list(x)) { ## discrete case
 	  start <- rep(0,max(unlist(jj)))
-	  R <- chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE)
+	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[1]])+crossprod(E[,jj[[1]]]),pivot=TRUE))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[1]])
           piv <- attr(R,"pivot")
+	  rrank <- attr(R,"rank") 
 	  startji <- rep(0,ncol(R))
+	  if (rrank<ncol(R)) {
+            R <- R[1:rrank,1:rrank]
+	    piv <- piv[1:rrank]
+          }
           startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
 	  startji[!is.finite(startji)] <- 0
 	  start[jj[[1]]] <- startji
 	  eta1 <- Xbd(x$Xd,start,k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,drop=x$drop,lt=x$lpid[[1]])
 	  lres1 <- log(abs(y-family$linfo[[1]]$linkinv(eta1)))
 	  if (!is.null(offset[[2]])) lres1 <- lres1 - offset[[2]]
-	  R <- chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE)
+	  R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[2]])+crossprod(E[,jj[[2]]]),pivot=TRUE))
 	  Xty <- XWyd(x$Xd,rep(1,length(y)),lres1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[2]])
-	  startji <- piv <- attr(R,"pivot")
-	  startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
+	  piv <- attr(R,"pivot")
+	  rrank <- attr(R,"rank")
+	  startji <- rep(0,ncol(R))
+          if (rrank<ncol(R)) {
+            R <- R[1:rrank,1:rrank]
+	    piv <- piv[1:rrank]
+          }
+          startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
           start[jj[[2]]] <- startji
         } else { ## regular case
 	  start <- rep(0,ncol(x))
@@ -838,10 +849,16 @@ multinom <- function(K=1) {
           start <- rep(0,max(unlist(jj)))
           for (k in 1:length(jj)) { ## loop over the linear predictors
             yt1 <- 6*as.numeric(y==k)-3
-	    R <- chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[k]])+crossprod(E[,jj[[k]]]),pivot=TRUE)
+	    R <- suppressWarnings(chol(XWXd(x$Xd,w=rep(1,length(y)),k=x$kd,ks=x$ks,ts=x$ts,dt=x$dt,
+	         v=x$v,qc=x$qc,nthreads=1,drop=x$drop,lt=x$lpid[[k]])+crossprod(E[,jj[[k]]]),pivot=TRUE))
 	    Xty <- XWyd(x$Xd,rep(1,length(y)),yt1,x$kd,x$ks,x$ts,x$dt,x$v,x$qc,x$drop,lt=x$lpid[[k]])
 	    piv <- attr(R,"pivot")
+	    rrank <- attr(R,"rank")
 	    startji <- rep(0,ncol(R))
+            if (rrank<ncol(R)) {
+              R <- R[1:rrank,1:rrank]
+	      piv <- piv[1:rrank]
+            }
             startji[piv] <- backsolve(R,forwardsolve(t(R),Xty[piv]))
 	    startji[!is.finite(startji)] <- 0
 	    start[jj[[k]]] <- startji

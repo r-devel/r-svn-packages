@@ -1428,7 +1428,8 @@ Sl.drop <- function(Sl,drop,np) {
   ##      for i in drop, b1[new.loc[i]] = b0[j] where j is largest
   ##      j < i s.t. j not in drop. 
   ## These indices facilitate easy dropping from parts of blocks 
-  ## corresponding to coef indices in drop.     
+  ## corresponding to coef indices in drop.
+  cholesky <- attr(Sl,"cholesky") ## is setup all Cholesky based?
   new.loc <- cumsum(keep) 
   dropped.blocks <- FALSE
   for (b in 1:length(Sl)) {
@@ -1452,7 +1453,7 @@ Sl.drop <- function(Sl,drop,np) {
       if (Sl[[b]]$rank <=0) dropped.blocks <- TRUE 
       ## need to drop rows and cols from S and and rows from rS        
       for (i in 1:length(Sl[[b]]$S)) {
-        Sl[[b]]$rS[[i]] <- Sl[[b]]$rS[[i]][keep,]
+        if (length(Sl[[b]]$rS)) Sl[[b]]$rS[[i]] <- if (cholesky) Sl[[b]]$rS[[i]][keep,keep] else Sl[[b]]$rS[[i]][keep,]
         Sl[[b]]$S[[i]] <- Sl[[b]]$S[[i]][keep,keep] 
       }
       Sl[[b]]$start <- new.loc[Sl[[b]]$start]
@@ -1468,6 +1469,7 @@ Sl.drop <- function(Sl,drop,np) {
       }
     }
   }
+  attr(Sl,"drop") <- drop
   Sl
 } ## Sl.drop
 
