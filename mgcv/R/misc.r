@@ -1,10 +1,33 @@
-## (c) Simon N. Wood 2011-2014
+## (c) Simon N. Wood 2011-2019
 ## Many of the following are simple wrappers for C functions, used largely 
 ## for testing purposes
 
 "%.%" <- function(a,b) {
   tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
 }
+
+blas.thread.test <- function(n=1000,nt=4) {
+  inter <- interactive()
+  if (inter) prg <- txtProgressBar(min = 0, max = n, initial = 0,
+              char = "=",width = NA, title="Progress", style = 3)
+  for (i in 1:n) {
+    m <- sample(213:654,1)
+    p <- sample(3:153,1)
+    X <- matrix(runif(m*p),m,p)
+    er <- pqr(X,nt=nt) 
+    rr <- range(pqr.qy(er,pqr.R(er))-X[,er$pivot])
+    if (rr[1] < -1e-4||rr[2] > 1e-4) {
+      break;
+    }
+    if (inter) setTxtProgressBar(prg, i)
+  }
+  if (inter) close(prg)
+  if (rr[1] < -1e-4||rr[2] > 1e-4) {
+    cat("BLAS thread safety problem at iteration",i,"\n")
+  } else cat("No problem encountered in",i,"iterations\n")
+} ## blas.thread.test
+
+
 
 rmvn <- function(n,mu,V) {
 ## generate multivariate normal deviates. e.g.
@@ -460,6 +483,7 @@ block.reorder <- function(x,n.blocks=1,reverse=FALSE) {
 pqr <- function(x,nt=1) {
 ## parallel QR decomposition, using openMP in C, and up to nt threads (only if worthwhile)
 ## library(mgcv);n <- 20;p<-4;X <- matrix(runif(n*p),n,p);er <- mgcv:::pqr(X,nt=2)
+## range(mgcv:::pqr.qy(er,mgcv:::pqr.R(er))-X[,er$pivot])
   x.c <- ncol(x);r <- nrow(x)
   oo <- .C(C_mgcv_pqr,x=as.double(c(x,rep(0,nt*x.c^2))),as.integer(r),as.integer(x.c),
            pivot=as.integer(rep(0,x.c)), tau=as.double(rep(0,(nt+1)*x.c)),as.integer(nt)) 

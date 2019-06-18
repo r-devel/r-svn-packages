@@ -11,6 +11,16 @@ Currently deprecated and liable to be removed:
 
 Issues: 
 
+** openblas 0.3.x x<7 is not thread safe if itself compiled for single thread 
+   use and then called from multiple threads (unlike the reference BLAS, say).
+   0.2.20 appears to be OK. For 0.3.x x>6 make USE_THREAD=0 USE_LOCKING=1
+   to make openblas ensures thread safety (currently unclear if USE_LOCKING
+   will be default from 0.3.7).      
+
+https://github.com/xianyi/OpenBLAS/issues/2164 - openblas still sometimes
+   not thread safe (0.3.6). Can mess up mgcv multithreading (less often than
+   0.3.2/3)
+
 ** translation setup failing!! update_pkg_po(pkgdir="~sw283/versions/mgcv")
    fails in en_quote - (startsWith(lines[current], "\"")) fails as current 
    is set to longer than lines, resulting in NA and failure of statrsWith
@@ -21,10 +31,9 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) does not currently deal with the corner case in 
   which no smoother is penalized.
 
-* OpenBLAS 0.3.2/3 appears not to be thread safe at present - can
-  cause problems when opemmp multithreading.
-
 1.8-29
+
+* gam.fit4 initial divergence bug fix.
 
 * Gamma location-scale family 'gammals' added. See ?gammals. 
 

@@ -344,7 +344,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
     if (pdev>old.pdev) start <- mukeep <- etastart <- NULL
   }
   coefold <- null.coef ## set to default, may be replaced below
-  
+  etaold <- x %*% coefold + offset
   if (!is.null(mukeep)) mustart <- mukeep
 
   ## and now finalize initialization of mu and eta...
@@ -362,7 +362,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
               }
               else family$linkfun(mustart)
   
-   mu <- linkinv(eta);etaold <- eta
+   mu <- linkinv(eta)
    conv <-  boundary <- FALSE
    dd <- dDeta(y,mu,weights,theta,family,0) ## derivatives of deviance w.r.t. eta
    w <- dd$Deta2 * .5
@@ -470,7 +470,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
                   mu <- linkinv(eta)
          }
          boundary <- TRUE
-         dev <- sum(dev.resids(y, mu, weights))
+         dev <- sum(dev.resids(y, mu, weights,theta))
          penalty <- t(start)%*%St%*%start ## need to reset penalty too
          if (control$trace) 
                   cat("Step halved: new deviance =", dev, "\n")

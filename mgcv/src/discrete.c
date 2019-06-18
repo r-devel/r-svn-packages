@@ -84,7 +84,7 @@ void indReduce(int *ka,int *kb,double *w,int tri,int *n,
   char *key,*keyend;
   unsigned long long h;
   double Wij,*Cq,*Aq,*Cq1,*ws,*wl;
-  if (tri) { ws = w + *n;wl = ws + *n;}
+  if (tri) { ws = w + *n;wl = ws + *n;} else {ws=wl=w; /* avoid compiler warning */}
   bpp = sizeof(int)/sizeof(char);
   nkey = bpp * 2; /* length of key in char */ 
   if (tri) nstack = 3 * *n-1; else nstack = *n-1; /* top of the SM element stack */
@@ -1051,10 +1051,10 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     ii,jj,rfac,t,s,ddti,tensi,tensj,acc_w,alpha,*Kik,*Kjk,*Kik1,*Kjk1,*Kjl1,q;
   ptrdiff_t mim,mjm; /* avoid integer overflow in large pointer calculations */ 
   double x,*wl,*dXi,*dXj,*pdXj,*Xt,*Xi,*Xj,done=1.0,dzero=0.0,*Cq,*Dq,
-    *C,*D,*W,*wb,*p0,*p1,*p2,*p3,*pw,*pw1,*pl,*ps,*wi,*wsi,*wli,*wo,*psi,*pwi,*pli;
+    *C=NULL,*D=NULL,*W=NULL,*wb,*p0,*p1,*p2,*p3,*pw,*pw1,*pl,*ps,*wi,*wsi,*wli,*wo,*psi,*pwi,*pli;
   char trans = 'T',ntrans = 'N';
   si = ks[ts[i]+nx]-ks[ts[i]]; /* number of terms in summation convention for i */
-  if (tri) wl = ws + n - 1; /* sub-diagonal */
+  if (tri) wl = ws + n - 1; else wl=ws; /* sub-diagonal else only to keep compiler happy */
   /* compute number of columns in dXi/ number of rows of blocks in product */
   for (ri=1,kk=ts[i];kk<ts[i]+dt[i]-1;kk++) ri *= p[kk];
   im = ts[i]+dt[i]-1; /* the index of the final marginal for term i */
@@ -1170,8 +1170,7 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
     if (ddtj) tensj = 1; else tensj = 0;
     mjm = (ptrdiff_t) m[jm];
    
-    if (n>mjm*mim) acc_w = 1; else acc_w = 0; /* accumulate \bar W or \bar W X_j / \bar W'X_i)? */
-    // acc_w = 0; /* NOTE: DEBUG ONLY */   
+    if (n>mjm*mim) acc_w = 1; else acc_w = 0; /* accumulate \bar W or \bar W X_j / \bar W'X_i)? */ 
     if (acc_w) {
       if (p[im]*mim*mjm + p[im]*p[jm]*mjm > mim*mjm*p[jm] + p[im]*p[jm]*mim) rfac=0; else rfac=1;
       /* Allocate storage for W (mim*mjm) */

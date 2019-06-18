@@ -687,6 +687,7 @@ nb <- function (theta = NULL, link = "log") {
     dev.resids <- function(y, mu, wt,theta=NULL) {
       if (is.null(theta)) theta <- get(".Theta")
       theta <- exp(theta) ## note log theta supplied
+      mu[mu<=0] <- NA
       2 * wt * (y * log(pmax(1, y)/mu) - 
         (y + theta) * log((y + theta)/(mu + theta))) 
     }

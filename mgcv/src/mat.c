@@ -945,6 +945,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
    but note quite alot of correction of algorithm as stated in paper (there 
    are a number of indexing errors there, and down-date cancellation 
    strategy is only described in words). 
+   A is n by p.
 */ 
   int jb,pb,i,j,k=0,m,*p0,nb0,q,one=1,ok_norm=1,*mb,*kb,rt,nth;
   double *cn,*icn,x,*a0,*a1,*F,*Ak,*Aq,*work,tol,xx,done=1.0,dmone=-1.0,dzero=0.0; 
@@ -995,7 +996,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
         nth = nt; while (nth>1&&(nth-1)*rt>q) nth--; /* reduce number of threads if some empty */
         kb[0] = k; /* starting row */
         for (i=0;i<nth-1;i++) { mb[i] = rt;kb[i+1]=kb[i]+rt;}
-        mb[nth-1]=q-(nth-1)*rt;
+        mb[nth-1]=q-(nth-1)*rt; /* number of rows in final batch */
         #ifdef OPENMP_ON
         #pragma omp parallel private(i) num_threads(nth)
         #endif 
@@ -1004,7 +1005,7 @@ int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt) {
           #pragma omp for
           #endif
           for (i=0;i<nth;i++) {
-	    /* Only 10th argument changed on exit... */ 
+	    /* Only 10th argument (of 11) changed on exit... */ 
             F77_CALL(dgemv)(&nottrans, mb+i, &j,&dmone,A+jb*(ptrdiff_t)n+kb[i],&n,F+j,&pb,&done,
 	                    A + (ptrdiff_t)n*k + kb[i], &one);
             //F77_CALL(dgemv)(&nottrans, &m, &j,&dmone,A+jb*n+k,&n,F+j,&pb,&done,Ak, &one);
@@ -1744,7 +1745,7 @@ void chol_down(double *R,double *Rup, int *n,int *k,int *ut) {
   since otherwise copying can be the dominant cost. 
 
 */
-  int i,j,n1;
+  int i,n1;
   double x,*Ri1,*Ri,*Rj,c,s,*Re,*ca,*sa,*sp,*cp;
   n1 = *n-1;
   if (*ut) { /* upper trianglar col oriented computation */
@@ -2870,7 +2871,8 @@ void mgcv_pqrqy(double *b,double *a,double *tau,int *r,int *c,int *cb,int *tp,in
 
 */
   int i,j,ki,k,left=1,nth;
-  double *x0,*x1,*aii,*p0;  
+  double *x0,*x1,*aii,*p0;
+ 
   #ifdef OMP_REPORT
   Rprintf("mgcv_pqrqy...");
   #endif
@@ -2935,7 +2937,7 @@ void mgcv_pqr(double *x,int *r, int *c,int *pivot, double *tau, int *nt) {
    Hard coded block size (30) is not ideal. 
 */
   //Rprintf("pqr %d ",*nt);
-  if (*nt==1) mgcv_qr(x,r,c,pivot,tau); else { /* call bpqr */
+  if (*nt==1) mgcv_qr(x,r,c,pivot,tau); else { /* call bpqr */ 
     /* int bpqr(double *A,int n,int p,double *tau,int *piv,int nb,int nt)*/
     bpqr(x,*r,*c,tau,pivot,30,*nt); /* 30 is hard coded block size here */ 
   }
