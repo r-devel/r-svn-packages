@@ -2705,8 +2705,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       levm <- levels(object$model[,nn[i]]) ## original levels
       levn <- levels(factor(newdata[[i]])) ## new levels
       if (sum(!levn%in%levm)>0) { ## check not trying to sneak in new levels 
-        msg <- paste(paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
-        stop(msg)
+        msg <- paste("factor levels",paste(levn[!levn%in%levm],collapse=", "),"not in original fit",collapse="")
+        warning(msg)
       }
       ## set prediction levels to fit levels...
       if (is.matrix(newdata[[i]])) {
