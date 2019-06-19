@@ -136,7 +136,8 @@ clara(x, k, metric = c("euclidean", "manhattan", "jaccard"),
 }
 \author{
   Kaufman and Rousseeuw (see \code{\link{agnes}}), originally.
-  Metric \code{"jaccard"}: Kamil Kozlowski and Kamil Jadeszko (from \url{ownedoutcomes.com}).
+  Metric \code{"jaccard"}: Kamil Kozlowski (\code{@ownedoutcomes.com})
+  and Kamil Jadeszko.
   All arguments from \code{trace} on, and most \R documentation and all
   tests by Martin Maechler.
 }
