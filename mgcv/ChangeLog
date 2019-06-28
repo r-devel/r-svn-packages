@@ -33,11 +33,15 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-29
 
+* predict.gam bug fix - parameteric interaction terms could be dropped for 
+  type="terms" if there were no smooths. knock on was that they were also 
+  dropped for all bam(...,discrete=TRUE) fits. (Thanks Justin Davis.)
+
 * gam.fit4 initial divergence bug fix.
 
 * Gamma location-scale family 'gammals' added. See ?gammals. 
 
-* row-wise Kronecker prodict operator %.% added for convenience.
+* row-wise Kronecker product operator %.% added for convenience.
 
 * changes to general families to allow return of first deriv of penalized 
   Hessian component more easily.

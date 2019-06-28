@@ -96,17 +96,18 @@ qr.up <- function(arg) {
        w <- dd$EDeta2 * .5 
        #w <- w
        z <- (eta1-arg$offset[ind]) - dd$Deta.EDeta2
-       good <- is.finite(z)&is.finite(w)
-       w[!good] <- 0 ## drop if !good
-       z[!good] <- 0 ## irrelevant
+       good <- is.finite(z)&is.finite(w)     
     } else { ## regular exp fam case
       mu.eta.val <- arg$mu.eta(eta1)
       good <- (weights > 0) & (mu.eta.val != 0)
-      z <- (eta1 - arg$offset[ind])[good] + (y - mu)[good]/mu.eta.val[good]
-      w <- (weights[good] * mu.eta.val[good]^2)/arg$variance(mu)[good]
-    }  
+      z <- (eta1 - arg$offset[ind]) + (y - mu)/mu.eta.val
+      w <- (weights * mu.eta.val^2)/arg$variance(mu)
+    }
+    w[!good] <- 0 ## drop if !good
+    #z[!good] <- 0 ## irrelevant
     dev <- dev + if (efam) sum(arg$family$dev.resids(y,mu,weights,arg$theta)) else sum(arg$dev.resids(y,mu,weights))
     wt <- c(wt,w)
+    z <- z[good];w <- w[good]
     w <- sqrt(w)
     ## note assumption that nt=1 in following qr.update - i.e. each cluster node is strictly serial
     if (b == 1) qrx <- qr.update(w*X[good,,drop=FALSE],w*z,use.chol=arg$use.chol) 
@@ -945,16 +946,18 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
 	        #w <- w
                 z <- (eta1-offset[ind]) - dd$Deta.EDeta2
 	        good <- is.finite(z)&is.finite(w)
-	        w[!good] <- 0 ## drop if !good
-	        z[!good] <- 0 ## irrelevant
+	       
              } else { ## regular exp fam case
                mu.eta.val <- mu.eta(eta1)
                good <- (weights > 0) & (mu.eta.val != 0)
-               z <- (eta1 - offset[ind])[good] + (y - mu)[good]/mu.eta.val[good]
-               w <- (weights[good] * mu.eta.val[good]^2)/variance(mu)[good]
+               z <- (eta1 - offset[ind]) + (y - mu)/mu.eta.val
+               w <- (weights * mu.eta.val^2)/variance(mu)
              }
-             dev <- dev + if (efam) sum(dev.resids(y,mu,weights,theta)) else sum(dev.resids(y,mu,weights))  
+             dev <- dev + if (efam) sum(dev.resids(y,mu,weights,theta)) else sum(dev.resids(y,mu,weights))
+	     w[!good] <- 0 ## drop if !good
+	     #z[!good] <- 0 ## irrelevant 
              wt[ind] <- w ## wt <- c(wt,w)
+             w <- w[good];z <- z[good]
              w <- sqrt(w)
              ## note that QR may be parallel using npt>1, even under serial accumulation...
              if (b == 1) qrx <- qr.update(w*X[good,,drop=FALSE],w*z,use.chol=use.chol,nt=npt) 
@@ -1654,6 +1657,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   object$linear.predictors <- NULL
   gc()
   if (missing(newdata)) newdata <- object$model
+   
   convert2mf <- is.null(attr(newdata,"terms"))
 
   if (type=="iterms") {
@@ -1666,21 +1670,25 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   ## newdata has to be processed first to avoid, e.g. dropping different subsets of data
   ## for parametric and smooth components....
 
+  newterms <- attr(newdata,"terms") ## non NULL for model frame
+
   newdata <- predict.gam(object,newdata=newdata,type="newdata",se.fit=se.fit,terms=terms,exclude=exclude,
             block.size=block.size,newdata.guaranteed=newdata.guaranteed,
             na.action=na.action,...) 
 
-  ## Next line needed to avoid treating newdata as a model frame and then
-  ## having incorrect labels for offset, for example....
+  ## Next line needed to avoid treating newdata as a model frame if it was supplied not as a model frame.
+  ## Otherwise names of e.g. offset are messed up (as they will also be if it was supplied as a model frame
+  ## or was set to object$model and we set terms to NULL)
   
-  attr(newdata,"terms") <- NULL 
+  if (is.null(newterms)) attr(newdata,"terms") <- NULL
+  
   na.act <- attr(newdata,"na.action") ## save the NA action for later
   ## Parametric terms have to be dealt with safely, but without forming all terms 
   ## or a full model matrix. Strategy here is to use predict.gam, having removed
   ## key smooth related components from model object, so that it appears to be
   ## a parametric model... 
   offset <- 0
-  if (object$nsdf) { ## deal with parametric terms...
+  if (object$nsdf||any(object$offset!=0)) { ## deal with parametric terms...
     ## save copies of smooth info...
     smooth <- object$smooth; coef <- object$coefficients; Vp <- object$Vp
     ## remove key smooth info from object 
@@ -1700,7 +1708,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       offset <- attr(pp,"model.offset")
       if (is.null(offset)) offset <- 0
     }
-  } ## parametric component dealt with
+  } else { pp <- if (se.fit) list(fit=rep(0,0),se.fit=rep(0,0)) else rep(0,0)} ## parametric component dealt with
 
   ## now discretize covariates...
   if (convert2mf) newdata <- model.frame(object$dinfo$gp$fake.formula[-2],newdata)

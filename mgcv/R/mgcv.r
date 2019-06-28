@@ -2756,10 +2756,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     H <- matrix(0,np,nb)
   } else if (type=="terms"||type=="iterms") { 
     term.labels <- attr(object$pterms,"term.labels")
-    if (is.null(attr(object,"para.only"))) para.only <-FALSE else
-    para.only <- TRUE  # if true then only return information on parametric part
+    para.only <- attr(object,"para.only")
+    if (is.null(para.only)) para.only <- FALSE  # if TRUE then only return information on parametric part
     n.pterms <- length(term.labels)
-    fit <- array(0,c(np,n.pterms+as.numeric(!para.only)*n.smooth))
+    fit <- array(0,c(np,n.pterms+as.numeric(para.only==0)*n.smooth))
     if (se.fit) se <- fit
     ColNames <- term.labels
   } else { ## "response" or "link"
@@ -2911,28 +2911,31 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
             sqrt(pmax(0,rowSums((X[,first:last,drop=FALSE]%*%
                           object$Vp[first:last,first:last,drop=FALSE])*X[,first:last,drop=FALSE])))
           } ## end if (se.fit)
-        }
+        } 
         colnames(fit) <- ColNames
         if (se.fit) colnames(se) <- ColNames
       } else {
         if (para.only&&is.list(object$pterms)) { 
           ## have to use term labels that match original data, or termplot fails 
-          ## to plot. This only applies for 'para.only' calls which are 
+          ## to plot. This only applies for 'para.only==1' calls which are 
           ## designed for use from termplot called from plot.gam
           term.labels <- unlist(lapply(object$pterms,attr,"term.labels"))
         }
         colnames(fit) <- term.labels
         if (se.fit) colnames(se) <- term.labels
-        # retain only terms of order 1 - this is to make termplot work
-        order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order")
-        term.labels <- term.labels[order==1]
-        ## fit <- as.matrix(as.matrix(fit)[,order==1])
-        fit <- fit[,order==1,drop=FALSE]
-        colnames(fit) <- term.labels
-        if (se.fit) { ## se <- as.matrix(as.matrix(se)[,order==1])
-        se <- se[,order==1,drop=FALSE]
-        colnames(se) <- term.labels } 
-      }
+        if (para.only) { 
+          # retain only terms of order 1 - this is to make termplot work
+          order <- if (is.list(object$pterms)) unlist(lapply(object$pterms,attr,"order")) else attr(object$pterms,"order")
+          term.labels <- term.labels[order==1]
+          ## fit <- as.matrix(as.matrix(fit)[,order==1])
+          fit <- fit[,order==1,drop=FALSE]
+          colnames(fit) <- term.labels
+          if (se.fit) { ## se <- as.matrix(as.matrix(se)[,order==1])
+            se <- se[,order==1,drop=FALSE]
+            colnames(se) <- term.labels 
+          }
+        } 
+      } 
     } else { ## "link" or "response" case
       fam <- object$family
       k <- attr(attr(object$model,"terms"),"offset")
