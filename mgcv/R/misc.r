@@ -170,8 +170,8 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
 ## constraints (if qc[i]>1), stored as a householder vector in v[[i]]. 
 ## check ts and k index start (assumed 1 here)
 ## if drop is non-NULL it contains index of rows/cols to drop from result
-## * lt is array of terms to include in left matrix
-## * rt is array of terms to include in right matrix
+## * lt is array of terms to include in left matrix (assumed in ascending coef index order)
+## * rt is array of terms to include in right matrix (assumed in ascending coef index order)
 ## * if both NULL all are terms are included, if only one is NULL then used for left and right. 
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)

@@ -2750,7 +2750,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
 
   # setup prediction arrays...
   ## in multi-linear predictor models, lpi[[i]][j] is the column of model matrix contributing the jth col to lp i 
-  lpi <- if (is.list(object$formula)) attr(object$formula,"lpi") else NULL 
+  lpi <- if (is.list(object$formula)) attr(object$formula,"lpi") else NULL
+  nlp <- if (is.null(lpi)) 1 else length(lpi)  ## number of linear predictors
   n.smooth<-length(object$smooth)
   if (type=="lpmatrix") {
     H <- matrix(0,np,nb)
@@ -2764,11 +2765,10 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     ColNames <- term.labels
   } else { ## "response" or "link"
     ## get number of linear predictors, in case it's more than 1...
-    if (is.list(object$formula)) {
-      # nf <- length(object$formula) ## number of model formulae
-      nlp <- length(lpi) ## number of linear predictors
-    } else nlp <- 1 ## nf <- 1
-    # nlp <- if (is.list(object$formula)) length(object$formula) else 1
+    #if (is.list(object$formula)) {
+    #  nlp <- length(lpi) ## number of linear predictors
+    #} else nlp <- 1 
+   
     fit <- if (nlp>1) matrix(0,np,nlp) else array(0,np)
     if (se.fit) se <- fit
     fit1 <- NULL ## "response" returned by fam$fv can be non-vector 
@@ -3047,8 +3047,13 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       s.offset <- napredict(na.act,s.offset)
       attr(H,"offset") <- s.offset ## term specific offsets...
     }
-    if (!is.null(attr(attr(object$model,"terms"),"offset"))) {
-      attr(H,"model.offset") <- napredict(na.act,model.offset(mf)) 
+    #if (!is.null(attr(attr(object$model,"terms"),"offset"))) {
+    #  attr(H,"model.offset") <- napredict(na.act,model.offset(mf)) 
+    #}
+    if (!is.null(offs)) {
+      offs <- offs[1:nlp]
+      for (i in 1:nlp) offs[[i]] <- napredict(na.act,offs[[i]])
+      attr(H,"model.offset") <- if (nlp==1) offs[[1]] else offs
     }
     H <- napredict(na.act,H)
     if (length(object$nsdf)>1) { ## add "lpi" attribute if more than one l.p.

@@ -637,7 +637,7 @@ multinom <- function(K=1) {
       sgn <- rep(-1,n); sgn[pc==object$y] <- 1
       ## now get the deviance...
       sgn*sqrt(-2*log(pmax(.Machine$double.eps,p[1:n + object$y*n]))) 
-  } ## residuals
+  } ## multinom residuals
 
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
                 beta=NULL,off=NULL,Vb=NULL) {
@@ -655,10 +655,11 @@ multinom <- function(K=1) {
         lpi <- list(1:ncol(X))
       } 
       K <- length(lpi) ## number of linear predictors
-      eta <- matrix(0,nrow(X),K)
+      nobs <- if (discrete) nrow(X$kd) else nrow(X)
+      eta <- matrix(0,nobs,K)
       if (se) { 
-        ve <- matrix(0,nrow(X),K) ## variance of eta
-        ce <- matrix(0,nrow(X),K*(K-1)/2) ## covariance of eta_i eta_j
+        ve <- matrix(0,nobs,K) ## variance of eta
+        ce <- matrix(0,nobs,K*(K-1)/2) ## covariance of eta_i eta_j
       } 
       for (i in 1:K) {
         if (discrete) {
@@ -1172,7 +1173,7 @@ ziplss <-  function(link=list("identity","identity")) {
         rsd <- sqrt(rsd)*sgn
       }
       rsd
-  } ## residuals
+  } ## ziplss residuals
 
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
                 beta=NULL,off=NULL,Vb=NULL) {
@@ -1220,7 +1221,7 @@ ziplss <-  function(link=list("identity","identity")) {
       names(fv) <- c("fit","se.fit")
       return(fv)
     }
-  } ## predict
+  } ## ziplss predict
 
 
   rd <- function(mu,wt,scale) {
@@ -2328,9 +2329,10 @@ gammals <- function(link=list("identity","log"),b=-7) {
       lpi <- attr(X,"lpi") 
       if (is.null(lpi)) {
         lpi <- list(1:ncol(X))
-      } 
-      eta <- matrix(0,nrow(X),2)
-      ve <- matrix(0,nrow(X),2) ## variance of eta 
+      }
+      nobs <- if (discrete) nrow(X$kd) else nrow(X)
+      eta <- matrix(0,nobs,2)
+      ve <- matrix(0,nobs,2) ## variance of eta 
       for (i in 1:2) {
         if (discrete) {
 	  eta[,i] <- Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,lt=X$lpid[[i]])
