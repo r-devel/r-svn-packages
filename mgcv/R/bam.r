@@ -2283,7 +2283,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     else G$w<-mf$"(weights)"    
 
     G$y <- mf[[gp$response]]
-    if (is.null(G$offset)) G$offset <- model.offset(mf)  
+    if (!discretize||is.null(G$offset)) G$offset <- model.offset(mf)  
     if (is.null(G$offset)) G$offset <- rep(0,n)
 
     if (!discretize && ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
