@@ -591,8 +591,12 @@ ocat <- function(theta=NULL,link="identity",R=NULL) {
 
     theta <- family$getTheta(TRUE)
     if (is.null(eta)) { ## return probabilities
-      mu <- X%*%beta + off 
-      se <- if (se) sqrt(pmax(0,rowSums((X%*%Vb)*X))) else NULL
+      discrete <- is.list(X) 
+      mu <- off + if (discrete) Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop) else drop(X%*%beta)  
+      if (se) {
+        se <- if (discrete) sqrt(pmax(0,diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1))) else
+	                    sqrt(pmax(0,rowSums((X%*%Vb)*X)))
+      } else se <- NULL
       ##theta <- cumsum(c(-1,exp(theta)))
       p <- ocat.prob(theta,mu,se)
       if (is.null(se)) return(p) else { ## approx se on prob also returned
@@ -1813,8 +1817,15 @@ ziP <- function (theta = NULL, link = "identity",b=0) {
     theta <- family$getTheta()
 
     if (is.null(eta)) { ## return probabilities
-      gamma <- drop(X%*%beta + off) ## linear predictor for poisson parameter 
-      se <- if (se) drop(sqrt(pmax(0,rowSums((X%*%Vb)*X)))) else NULL ## se of lin pred
+      discrete <- is.list(X)
+      ## linear predictor for poisson parameter... 
+      gamma <- off + if (discrete) Xbd(X$Xd,beta,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop) else drop(X%*%beta)  
+      if (se) {
+        se <- if (discrete) sqrt(pmax(0,diagXVXd(X$Xd,Vb,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,drop=X$drop,nthreads=1))) else
+	                    sqrt(pmax(0,rowSums((X%*%Vb)*X))) ## se of lin pred
+      } else se <- NULL
+      #gamma <- drop(X%*%beta + off) ## linear predictor for poisson parameter 
+      #se <- if (se) drop(sqrt(pmax(0,rowSums((X%*%Vb)*X)))) else NULL ## se of lin pred
     } else { se <- NULL; gamma <- eta}
     ## now compute linear predictor for probability of presence...
     b <- get(".b")
