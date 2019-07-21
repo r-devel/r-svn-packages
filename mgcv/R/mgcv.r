@@ -932,6 +932,13 @@ gam.setup.list <- function(formula,pterms,
   attr(lpi,"overlap") <- lp.overlap
   attr(G$X,"lpi") <- lpi
   attr(G$nsdf,"pstart") <- pstart ##unlist(lapply(lpi,min))
+
+  ## assemble a global indicator array for non-linear parameters... 
+  G$g.index <- rep(FALSE,ncol(G$X))
+  if (length(G$smooth)) for (i in 1:length(G$smooth))
+    if (!is.null(G$smooth[[i]]$g.index)) G$g.index[G$smooth[[i]]$first.para:G$smooth[[i]]$last.para] <- G$smooth[[i]]$g.index
+  if (!any(G$g.index)) G$g.index <- NULL  
+
   G
 } ## gam.setup.list
 
@@ -1406,19 +1413,24 @@ gam.setup <- function(formula,pterms,
   if (G$nsdf > 0) term.names <- colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
   n.smooth <- length(G$smooth)
   if (n.smooth)
-  for (i in 1:n.smooth) { ## create coef names, if smooth has any coefs!
-    k<-1
+  ## create coef names, if smooth has any coefs, and create a global indicator of non-linear parameters
+  ## g.index, if needed
+  for (i in 1:n.smooth) {
+    k <- 1
     jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para
     if (G$smooth[[i]]$df > 0) for (j in jj) {
       term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
       k <- k+1
     }
+    if (!is.null(G$smooth[[i]]$g.index)) {
+      if (is.null(G$g.index)) G$g.index <- rep(FALSE,n.p)
+      G$g.index[jj] <- G$smooth[[i]]$g.index
+    } 
   }
   G$term.names <- term.names
 
-  # now run some checks on the arguments
-  
-  ### Should check that there are enough unique covariate combinations to support model dimension
+  ## Deal with non-linear parameterizations...
+ 
 
   G$pP <- PP ## return paraPen object, if present
 

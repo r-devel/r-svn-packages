@@ -327,7 +327,8 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 
   ## finally one more pass through, expanding k, k.start and nr to deal with replication that
   ## will occur with factor by variables...
-  ik <- ncol(k)+1 ## starting index col for this term in k.start
+  #ik <- ncol(k)+1 ## starting index col for this term in k.start - wrong with matrix predictors
+  ik <- length(k.start) ## starting index col for this term in k.start
   for (lp in 1:nlp) { ## loop over linear predictors
     smooth.spec <- if (is.null(gp$nlp)) gp$smooth.spec else gp[[lp]]$smooth.spec
     if (length(smooth.spec)>0) for (i in length(smooth.spec):1) { ## work down through terms so insertion painless

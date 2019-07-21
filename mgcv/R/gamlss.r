@@ -263,10 +263,15 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
 #        d1H[jj[[i]],l] <-  d1H[jj[[i]],l] + colSums(X[,jj[[i]],drop=FALSE]*(v*X[,jj[[i]],drop=FALSE])) 
 #      } 
 #    }
-    ## assuming fh contains the inverse penalized Hessian, Hp, forms tr(Hp^{-1}dH/drho_j) for each j
+   ## assuming fh contains the inverse penalized Hessian, Hp, forms tr(Hp^{-1}dH/drho_j) for each j
+   g.index <- attr(d1b,"g.index") ## possible index indicating log parameterization
+   if (!is.null(g.index)) { ## then several transform related quantities are required 
+     beta <- attr(d1b,"beta") ##  regression coefficients 
+     d1g <- d1b; d1g[g.index,] <- d1g[g.index,]/beta[g.index] ## derivartive w.r.t. working parameters
+   }
    d1H <- rep(0,m)
    if (discrete) {
-     lpi <- attr(X,"lpi")
+     ## lpi <- attr(X,"lpi") ## this line was in original code for this discrete section, and lpi replaced jj below - mistake, I think
      for (i in 1:K) for (j in i:K) { ## lp block loop
        for (l in 1:m) { ## sp loop
          v <- rep(0,n);ind <- 1:n
@@ -275,12 +280,56 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
            ind <- ind + n
          }
 	 XVX <- XWXd(X$Xd,w=v,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]])
+	 if (!is.null(g.index)) { ## non-linear correction terms required
+           gi <- g.index[jj[[i]]];gj <- g.index[jj[[j]]]
+	   if (any(gi)) XVX[gi,] <- beta[jj[[i]]][gi]*XVX[gi,]
+	   if (any(gj)) XVX[,gj] <- t(beta[jj[[j]]][gj]*t(XVX[,gj]))
+	   if (any(gi)) {
+	     XWX <- beta[jj[[i]]][gi]*d1g[jj[[i]],l][gi]*lbb[jj[[i]],jj[[j]]][gi,]
+	     if (any(gj)) XWX[,gj] <- t(beta[jj[[j]]][gj]*t(XWX[,gj]))
+	     XVX[gi,] <- XVX[gi,] + XWX   
+	   }  
+	   if (any(gj)) {
+	     XWX <- t(beta[jj[[j]]][gj]*d1g[jj[[j]],l][gj]*t(lbb[jj[[i]],jj[[j]]][,gj]))
+	     if (any(gi)) XWX[gi,] <- beta[jj[[i]]][gi]*XWX[gi,]
+	     XVX[,gj] <- XVX[,gj] + XWX
+	     if (i==j) { ## add diagonal corrections
+	       dd <- beta[jj[[i]]][gi]*(lbb[jj[[i]][gi],] %*% d1b[,l] + lb[jj[[i]]][gi]*d1g[jj[[i]],l][gi])
+	       XVX[gi,gj] <- XVX[gi,gj] + diag(drop(dd),nrow=sum(gi))
+             }
+           }
+         } ## end of non-linear corrections
 	 mult <- if (i==j) 1 else 2
-	 d1H[l] <- d1H[l] + mult * sum(XVX * fh[lpi[[i]],lpi[[j]]]) ## accumulate tr(Hp^{-1}dH/drho_l)
+	 d1H[l] <- d1H[l] + mult * sum(XVX * fh[jj[[i]],jj[[j]]]) ## accumulate tr(Hp^{-1}dH/drho_l)
        }
      }  
    } else for (i in 1:K) for (j in i:K) { ## lp block loop
-      a <- rowSums((X[,jj[[i]]] %*% fh[jj[[i]],jj[[j]]]) * X[,jj[[j]]])
+      Hpi <- fh[jj[[i]],jj[[j]]] ## correct component of inverse Hessian
+      d1hc <- rep(0,m)
+      if (!is.null(g.index)) { ## correct for non-linearity
+        gi <- g.index[jj[[i]]];gj <- g.index[jj[[j]]]
+        for (l in 1:m) { ## s.p. loop
+          dcor <- 0
+	  if (any(gi)) {
+	    XWX <- beta[jj[[i]]][gi]*d1g[jj[[i]],l][gi]*lbb[jj[[i]],jj[[j]]][gi,]
+	    if (any(gj)) XWX[,gj] <- t(beta[jj[[j]]][gj]*t(XWX[,gj]))
+	    dcor <- dcor + sum(XWX * Hpi[gi,])
+	  }  
+	  if (any(gj)) {
+	    XWX <- t(beta[jj[[j]]][gj]*d1g[jj[[j]],l][gj]*t(lbb[jj[[i]],jj[[j]]][,gj]))
+	    if (any(gi)) XWX[gi,] <- beta[jj[[i]]][gi]*XWX[gi,]
+	    dcor <- dcor + sum(XWX * Hpi[,gj])
+	    if (i==j) { ## diagonal correction
+               dd <- beta[jj[[i]]][gi]*(lbb[jj[[i]][gi],] %*% d1b[,l] + lb[jj[[i]]][gi]*d1g[jj[[i]],l][gi])
+	       dcor <- dcor + sum(dd*diag(Hpi)[gi])
+            }
+	  }
+	  d1hc[l] <- dcor
+	} ## s.p. loop end
+        if (any(gi)) Hpi[gi,] <- Hpi[gi,]*beta[jj[[i]]][gi]
+        if (any(gj)) Hpi[,gj] <- t(t(Hpi[,gj])*beta[jj[[i]]][gi])
+      } ## end of non-linearity correction
+      a <- rowSums((X[,jj[[i]]] %*% Hpi) * X[,jj[[j]]])
       for (l in 1:m) { ## sp loop
         v <- rep(0,n);ind <- 1:n
         for (q in 1:K) { ## diagonal accumulation loop
@@ -288,7 +337,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
           ind <- ind + n
         }
 	mult <- if (i==j) 1 else 2
-	d1H[l] <- d1H[l] + mult * sum(a*v) ## accumulate tr(Hp^{-1}dH/drho_l)
+	d1H[l] <- d1H[l] + mult * (sum(a*v) + d1hc[l]) ## accumulate tr(Hp^{-1}dH/drho_l)
       }
     }
   } ## if deriv==1

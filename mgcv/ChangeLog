@@ -37,6 +37,10 @@ present, and reparameterization needs checking (also for bam).
   type="terms" if there were no smooths. knock on was that they were also 
   dropped for all bam(...,discrete=TRUE) fits. (Thanks Justin Davis.)
 
+* bam(...,discrete=TRUE) indexing bug in setup meant that models containing 
+  smooths with matrix arguments and other smooths with factor by variable 
+  would fail at the setup stage. 
+
 * gam.fit4 initial divergence bug fix.
 
 * Gamma location-scale family 'gammals' added. See ?gammals. 
