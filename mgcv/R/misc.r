@@ -1,6 +1,5 @@
 ## (c) Simon N. Wood 2011-2019
-## Many of the following are simple wrappers for C functions, used largely 
-## for testing purposes
+## Many of the following are simple wrappers for C functions
 
 "%.%" <- function(a,b) {
   tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
