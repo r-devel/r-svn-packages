@@ -1,3 +1,9 @@
+2019-07-27  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
+
+	* R/lme.R:
+	* tests/nlme2.R:
+	Robustify against using stringsAsFactors = FALSE by default.
+
 2019-05-12  Brian Ripley
 
 	* DESCRIPTION (Version): 3.1-140 (released)
