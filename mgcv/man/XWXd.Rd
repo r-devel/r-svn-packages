@@ -8,7 +8,8 @@
 \description{Routines for computing with discretized model matrices as described in Wood et al. (2017) and Li and Wood (2019).
 }
 \usage{
-XWXd(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL,rt=NULL)
+XWXd(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,
+     lt=NULL,rt=NULL)
 XWyd(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt=NULL)
 Xbd(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL)
 diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
