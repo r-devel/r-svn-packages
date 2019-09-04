@@ -21,10 +21,6 @@ https://github.com/xianyi/OpenBLAS/issues/2164 - openblas still sometimes
    not thread safe (0.3.6). Can mess up mgcv multithreading (less often than
    0.3.2/3)
 
-** translation setup failing!! update_pkg_po(pkgdir="~sw283/versions/mgcv")
-   fails in en_quote - (startsWith(lines[current], "\"")) fails as current 
-   is set to longer than lines, resulting in NA and failure of statrsWith
-
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
