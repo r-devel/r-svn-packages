@@ -22,12 +22,12 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "mgcv.h"
 #include <R.h>
-#include <Rinternals.h>
 #include <R_ext/Lapack.h>
 #include <R_ext/BLAS.h>
 #include <Rconfig.h>
-#include "mgcv.h"
+//#include "mgcv.h"
 #ifdef OPENMP_ON
 #include <omp.h>
 #endif
@@ -69,7 +69,7 @@ void indReduce(int *ka,int *kb,double *w,int tri,int *n,
    On entry SMstack should be an n-vectors if tri==0 and a 3n-vector otherwise. sm is an n vector.
 
    This routine accumulates W in a sparse, i,j,w structure constructed using a hash table. 
-   After accumulation the the hash table contains n_u <= n unique matrix entries, which can then 
+   After accumulation  the hash table contains n_u <= n unique matrix entries, which can then 
    be used directly to form the matrix product.       
 
    Accumulation cost is O(n). Access cost is then O(n_u) while matrix product cost is O(n_u * cc). 
@@ -238,7 +238,7 @@ void singleXty(double *Xy,double *temp,double *y,double *X, int *m,int *p, int *
   for (p0=temp,p1 = p0 + *m;p0<p1;p0++) *p0 = 0.0;
   for (p1=y + *n;y<p1;y++,k++) temp[*k] += *y;
   if (*add) dzero = 1.0;
-  F77_CALL(dgemv)(&trans, m, p,&done,X,m,temp,&one,&dzero,Xy,&one);
+  F77_CALL(dgemv)(&trans, m, p,&done,X,m,temp,&one,&dzero,Xy,&one FCONE);
   // Cdgemv(&trans, m, p,&done,X,m,temp,&one,&dzero,Xy,&one);
   /* dgemm call equivalent to dgemv call above */ 
   //F77_CALL(dgemm)(&trans,&ntrans,p,&one,m,&done,X,m,temp,m,&dzero,Xy,m); 
@@ -284,7 +284,7 @@ void singleXb(double *f,double *work,double *X,double *beta,int *k,int *m, int *
   char trans='N';
   double done=1.0,dzero=0.0,*p1,*fp;
   int one=1,j;
-  F77_CALL(dgemv)(&trans, m, p,&done,X,m,beta,&one,&dzero,work,&one);
+  F77_CALL(dgemv)(&trans, m, p,&done,X,m,beta,&one,&dzero,work,&one FCONE);
   //Cdgemv(&trans, m, p,&done,X,m,beta,&one,&dzero,work,&one);
   /* dgemm call equivalent to dgemv call above */ 
   //F77_CALL(dgemm)(&trans,&trans,m,&one,p,&done,X,m,beta,p,&dzero,work,m); 
@@ -322,7 +322,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
   /* form work = M B, where vec(B) = beta */
   if (*qc<=0) { /* no constraint supplied */
     F77_CALL(dgemm)(&trans,&trans,&md,&pb, &pd, &done,
-		    M,&md,beta,&pd,&dzero,C,&md); 
+		    M,&md,beta,&pd,&dzero,C,&md FCONE FCONE); 
   } else { /* there is a constraint matrix */
     /* first map supplied beta to unconstrained parameterization */ 
     j = pb * pd; /* total number of coeffs - length of unconstrained beta */
@@ -336,7 +336,7 @@ void tensorXb(double *f,double *X, double *C,double *work, double *beta,
 
     /*F77_CALL(dgemv)(&trans, &j, qc,&done,Q,&j,beta,&one,&dzero,work,&one); old when Q full matrix */
     F77_CALL(dgemm)(&trans,&trans,&md,&pb, &pd, &done,
-		    M,&md,work,&pd,&dzero,C,&md);
+		    M,&md,work,&pd,&dzero,C,&md FCONE FCONE);
   }
   p1 = work + *n;
   for (pf=f,p0=f + *n;pf<p0;pf++) *pf = 0.0;
@@ -1385,15 +1385,15 @@ void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int 
              transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
              where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
              in calling routine (to allow use of sub-matrices) */   
-            F77_CALL(dgemm)(&ntrans,&ntrans,m+im,p+jm,m+jm,&done,W,m+im,X+off[jm],m+jm,&dzero,C,m+im); 
+            F77_CALL(dgemm)(&ntrans,&ntrans,m+im,p+jm,m+jm,&done,W,m+im,X+off[jm],m+jm,&dzero,C,m+im FCONE FCONE); 
 	  } else { /* form D = \bar W' X_i first */
-            F77_CALL(dgemm)(&trans,&ntrans,m+jm,p+im,m+im,&done,W,m+im,X+off[im],m+im,&dzero,D,m+jm);
+            F77_CALL(dgemm)(&trans,&ntrans,m+jm,p+im,m+im,&done,W,m+im,X+off[im],m+im,&dzero,D,m+jm FCONE FCONE);
 	  }  
 	}
 	if (rfac) { /* Xi'C direct to the r,c p[im] by p[jm] block of XWX */
-          F77_CALL(dgemm)(&trans,&ntrans,p+im,p+jm,m+im,&done,X+off[im],m+im,C,m+im,&dzero,XWX+r*p[im]+c*p[jm]*(ptrdiff_t)nxwx,&nxwx);
+          F77_CALL(dgemm)(&trans,&ntrans,p+im,p+jm,m+im,&done,X+off[im],m+im,C,m+im,&dzero,XWX+r*p[im]+c*p[jm]*(ptrdiff_t)nxwx,&nxwx FCONE FCONE);
 	} else { /* D'Xj (same block of XWX) */
-          F77_CALL(dgemm)(&trans,&ntrans,p+im,p+jm,m+jm,&done,D,m+jm,X+off[jm],m+jm,&dzero,XWX+r*p[im]+c*p[jm]*(ptrdiff_t)nxwx,&nxwx);
+          F77_CALL(dgemm)(&trans,&ntrans,p+im,p+jm,m+jm,&done,D,m+jm,X+off[jm],m+jm,&dzero,XWX+r*p[im]+c*p[jm]*(ptrdiff_t)nxwx,&nxwx FCONE FCONE);
 	}  
 
   } /* general case */
@@ -1593,13 +1593,45 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
    * rs is the length nrs array of required row indices.
    * cs is the length ncs array of required col indices.
    * if nrs and ncs are <= zero then the full set or nt r/c is used (arrays should then be dim nt). 
-     If only one is <= zero, then its array denotes the rows and cols required.    
+     If only one is > zero, then its array denotes the rows and cols required.   
+   - the selected blocks are returned as a dense compact matrix (rather than being inserted into the full X'WX 
+     in the appropriate places, for example.) 
    
    This version has the looping over sub-blocks, associated with tensor product terms, located in this routine
    to get better load balancing.
    
    Requires XWX to be over-sized on entry - namely n.params + n.terms by n.params + n.terms instead of
    n.params by n.params.
+
+   Forms Xt'WXt when Xt is divided into blocks of columns, each stored in compact form
+   using arguments X and k. 
+   * 'X' contains 'nx' blocks, the ith is an m[i] by p[i] matrix containing the unique rows of 
+     the ith marginal model matrix. 
+   * There are 'nt' model terms. Each term is made up of one or more maginal model matrices.
+   * The jth term starts at block ts[j] of X, and has dt[j] marginal matrices. The terms model
+     matrix is the row tensor product of its full (n row) marginals.
+   * The index vectors converting the unique row matrices to full marginal matrices are in 
+     'k', an n-row matrix of integers. Conceptually if Xj and kj represent the jth unique 
+      row matrix and index vector then the ith row of the corresponding full marginal matrix 
+      is Xj[kj[i],], but things are more complicated when each full term matrix is actually 
+      the sum of several matrices (summation convention).
+   * To handle the summation convention, each marginal matrix can have several index vectors. 
+     'ks' is an nx by 2 matrix giving the columns of k corresponding to the ith marginal 
+     model matrix. Specifically columns ks[i,1]:(ks[i,2]-1) of k are the index vectors for the ith 
+     marginal. All marginals corresponding to one term must have the same number of index columns.
+     The full model matrix for the jth term is constucted by summing over q the full 
+     model matrices corresponding to the qth index vectors for each of its marginals.    
+   * For example the exression for the full model matrix of the jth term is...
+  
+     X^full_j = sum_q prod_i X_{ts[j]+i}[k[,ks[i]+q],]  
+
+     - q runs from 0 to ks[i,2] - ks[i,1] - 1; i runs from 0 to dt[j] - 1.
+         
+   Tensor product terms may have constraint matrices Z, which post multiply the tensor product 
+   (typically imposing approximate sum-to-zero constraints). Actually Z is Q with the first column 
+   dropped where Q =  I - vv'. qc[i]==0 for singleton terms.  
+
+
 */   
   int *pt, *pd,i,j,ri,ci,si,maxp=0,tri,r,c,rb,cb,rt,ct,pa,*tpsr,*tpsur,*tpsc,*tpsuc,ptot,
       *b,*B,*C,*R,*sb,N,kk,kb,tid=0,nxwx=0,qi=0,*worki,symmetric=1;
@@ -1634,7 +1666,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   tpsc = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the term starts, col set */
   tpsuc = (int *) CALLOC((size_t)*nt+1,sizeof(int)); /* the unconstrained term starts, col set */
   for (q=i=0;i< *nt; i++) { /* work through the terms */
-    for (j=0;j<dt[i];j++,q++) {
+    for (j=0;j<dt[i];j++,q++) { /* loop through the marginals for this model term */
       if (j==dt[i]-1) pd[i] = p[q]; /* the relevant dimension for deciding product ordering */
       off[q+1] = off[q] + p[q] * (ptrdiff_t) m[q]; /* submatrix start offsets */
       if (j==0) pt[i] = p[q]; else pt[i] *= p[q]; /* term dimension */
@@ -1654,8 +1686,8 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
     else kk += pt[r] - 1; /* there is a tensor constraint to apply - reducing param count*/
     i += pt[r]; /* where rth term starts in unconstrained param vector */ 
   }
-  ptot = kk;//tpsr[*nrs]; /* rows of XWX post constraint */
-  nxwx = i;//tpsur[*nrs]; /* rows of XWX */
+  ptot = kk;//tpsr[*nrs]; /* rows of computed XWX post constraint */
+  nxwx = i;//tpsur[*nrs]; /* rows of computed XWX */
   for (kk=i=j=0;j<*ncs;j++) {
     c = cs[j];
     tpsc[c] = kk;tpsuc[c] = i;
@@ -1689,6 +1721,7 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
        ws is the super diagonal and ws + n - 1 is the sub-diagonal. */
     tri = 1;
   } else tri = 0;
+  /* memory allocation for sparse accumulation */
   sm = (SM **)CALLOC((size_t) *n * *nthreads,sizeof(SM *));
   SMstack = (SM *)CALLOC((size_t) 3 * *n * *nthreads,sizeof(SM));
   if (symmetric) N = ((*nrs + 1) * *nrs)/2; else N = *nrs * *ncs;
@@ -1720,14 +1753,14 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
       }
     }  
   }
-  b = (int *) CALLOC((size_t)sb[N],sizeof(int));
-  B = (int *) CALLOC((size_t)sb[N],sizeof(int));
-  cost = (double *)CALLOC((size_t)sb[N],sizeof(double));
-  for (kb=0,i=0;i<sb[N];i++) {
+  b = (int *) CALLOC((size_t)sb[N],sizeof(int)); /* index of all subblocks for sorting to improve load balance (expensive first) */
+  B = (int *) CALLOC((size_t)sb[N],sizeof(int)); /* index the main block to which each subblock belongs */
+  cost = (double *)CALLOC((size_t)sb[N],sizeof(double)); /* approx sub-block cost */
+  for (kb=0,i=0;i<sb[N];i++) { /* loop over all sub-blocks */
     b[i]=i;while (i>=sb[kb+1]) kb++; /* kb is main block */
-    rb = R[kb];cb=C[kb];
+    rb = R[kb];cb=C[kb]; /* which main block row and column are we at? */
     cost[i] = Cost[kb];
-    B[i] = kb; 
+    B[i] = kb; /* record the main block we are in */
   }  
   revsort(cost,b,sb[N]); /* R reverse sort on cost, to re-order b - see R.h*/
   q = XWXspace(N,sb,b,B,R,C,k,ks,m,p,pt,pd,*nx,*n,ts,dt,*nt,tri); /* compute the maximum workspace required per thread */
@@ -1739,11 +1772,10 @@ void XWXd1(double *XWX,double *X,double *w,int *k,int *ks, int *m,int *p, int *n
   #ifdef OPENMP_ON
   #pragma omp parallel for private(j,kb,kk,r,c,rb,cb,rt,ct,tid,i) num_threads(*nthreads) schedule(dynamic)
   #endif
-  for (j=0;j<sb[N];j++) { /* the block loop */
-    kk = b[j];kb=B[kk];
-    //while (kk>=sb[kb+1]) kb++; /* kb is main block */
+  for (j=0;j<sb[N];j++) { /* the all sub-blocks loop */
+    kk = b[j];kb=B[kk]; /* kb is main block */
     rb = R[kb];cb=C[kb]; /* set up allows blocks to be computed in any order by re-arranging B */
-    i = kk - sb[kb]; /* sub-block index */
+    i = kk - sb[kb]; /* sub-block index - i.e. where is this subblock within its block */
     rt = pt[rb]/pd[rb]; ct = pt[cb]/pd[cb]; /* total rows and cols of sub-blocks */
     /* compute sub-row and column */
     if (symmetric && sb[kb+1]-sb[kb]<rt*ct) { /* symmetric upper half only needed */ 
