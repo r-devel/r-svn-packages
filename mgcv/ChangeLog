@@ -29,6 +29,10 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-29
 
+* All BLAS/LAPACK calls from C now explicitly pass hidden string length 
+  arguments to avoid breakage by recent gfortran optimizations (stack 
+  corruption causing BLAS/LAPACK to return error code).  
+
 * predict.gam bug fix - parameteric interaction terms could be dropped for 
   type="terms" if there were no smooths. knock on was that they were also 
   dropped for all bam(...,discrete=TRUE) fits. (Thanks Justin Davis.)
