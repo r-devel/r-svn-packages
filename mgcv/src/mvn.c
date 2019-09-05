@@ -10,7 +10,6 @@
 
 #include "mgcv.h"
 #include <R.h>
-#include <R_ext/BLAS.h>
 
 void mvn_ll(double *y,double *X,double *XX,double *beta,int *n,int *lpi, /* note zero indexing */
             int *m,double *ll,double *lb,double *lbb,double *dbeta,

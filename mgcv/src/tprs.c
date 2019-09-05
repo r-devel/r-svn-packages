@@ -24,8 +24,6 @@ USA.*/
 #include "general.h"
 #include "tprs.h"
 
-#include <Rconfig.h>
-#include <R_ext/BLAS.h>
 /* Code for thin plate regression splines */
 
 #define ROUND(a) ((a)-(int)floor(a)>0.5) ? ((int)floor(a)+1):((int)floor(a))

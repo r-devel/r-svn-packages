@@ -29,8 +29,9 @@
 #define USE_FC_LEN_T
 #include <Rinternals.h>
 #include <Rconfig.h>
-
-/* If we are compiling with a version of R before FCONE and the explicit supplying of exxtra arguments 
+#include <R_ext/BLAS.h>
+#include <R_ext/Lapack.h>
+/* If we are compiling with a version of R before FCONE and the explicit supplying of extra arguments 
    was introduced, then FCONE has to be defined */ 
 #ifndef FCONE
 #define FCONE

@@ -53,8 +53,6 @@
 #include <math.h>
 
 #include <R.h>
-#include <R_ext/Lapack.h>
-#include <R_ext/BLAS.h>
 #ifdef OPENMP_ON
 #include <omp.h>
 #endif
