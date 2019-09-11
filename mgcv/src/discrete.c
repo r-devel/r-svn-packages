@@ -62,7 +62,8 @@ void indReduce(int *ka,int *kb,double *w,int tri,int *n,
 
    C is rc by cc and A is ra by cc. If trans!=0 then form C+=W'A otherwise C+=WA 
 
-   On entry SMstack should be an n-vectors if tri==0 and a 3n-vector otherwise. sm is an n vector.
+   On entry SMstack should be an n-vector if tri==0 and a 3n-vector otherwise. 
+   sm is an n vector.
 
    This routine accumulates W in a sparse, i,j,w structure constructed using a hash table. 
    After accumulation  the hash table contains n_u <= n unique matrix entries, which can then 
@@ -72,7 +73,7 @@ void indReduce(int *ka,int *kb,double *w,int tri,int *n,
    In comparison direct accumulation costs would be O(n*cc). 
 
    If buffer!=0 then the routine will access worki (dimension 6 * n) and will modify w. It does 
-   this becuase it massively imporoves data locality and cache performance to read the sparse matrix 
+   this becuase it massively improves data locality and cache performance to read the sparse matrix 
    out of the hash table structure into 3 arrays, before using it for multiplication.
 */
   SM **sm1, **sm2,*smk;
@@ -1028,7 +1029,14 @@ ptrdiff_t XWXspace(int N,int *sb,int *b,int *B,int *R,int *C,int *k, int *ks, in
 
 void XWXijs(double *XWX,int i,int j,int r,int c, double *X,int *k, int *ks, int *m, int *p,int nx,int n,int *ts, int *dt,
 	    int nt, double *w,double *ws, int tri,ptrdiff_t *off,double *work,int *worki,int nxwx,unsigned long long *ht,SM **sm,SM * SMstack) {
-/* Forms product X_i'WX_j where X_i and X_j are stored in compact form. 
+/* Forms product X_i'WX_j or the r,cth sub-block of this where X_i and X_j are stored in compact form. 
+   Specifically, X'WX can be partitioned into blocks related to model terms. row block i column block j
+   relates to term i and term j. However, if i and or j are tensor product terms, then they can be
+   partitioned into sub-blocks. A tensor term has (total number of cols)/(number of cols of final marginal) 
+   sub blocks associated with it, so a singleton has one sub-block. This routine computes sub-block r,c of 
+   term block i,j (sub-block indexing is within its term block). The reason for working at this finer grain is that
+   it makes load balancing easier when parallelizing.
+
    * W = diag(w) if tri!=0 and is tridiagonal otherwise, with super in ws and sub in ws + n-1;     
    * off[i] is offset to start of ith matrix (out of nx)  
    If Xk is a tensor product term, let dXk denote row tensor product of all but it's final 
