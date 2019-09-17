@@ -29,6 +29,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-29
 
+* bam(...,discrete=TRUE) now drops rownames from parametric model matrix
+  components, to save substantial memory. 
+
 * All BLAS/LAPACK calls from C now explicitly pass hidden string length 
   arguments to avoid breakage by recent gfortran optimizations (stack 
   corruption causing BLAS/LAPACK to return error code).  
