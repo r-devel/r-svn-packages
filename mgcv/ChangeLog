@@ -29,6 +29,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-29
 
+* gammPQL modified to use standard GLM IRLS initilization (rather than 
+  glmmPQL method) to improve convergence of `gamm' fits.
+
 * bam(...,discrete=TRUE) now drops rownames from parametric model matrix
   components, to save substantial memory. 
 
@@ -64,12 +67,12 @@ present, and reparameterization needs checking (also for bam).
 * fix of obscure sp naming bug.	 
 
 * changed some contour default colours from green to blue (they overlay 
-  heatmaps, so green was a stupid choise).
+  heatmaps, so green was not clever).
 
 * Tweedie likelihood evaluation code made slightly more robust - for a model
   with machine zero scale parameter estimate it could segfault, as series 
   maximum location could then overflow integer storage. Fixed + upper limit 
-  imposed on series length (warning if its not enough). 
+  imposed on series length (warning if it's not enough). 
 
 1.8-27
 
@@ -125,7 +128,7 @@ present, and reparameterization needs checking (also for bam).
   sarse matrices). Useful for other packages using constructors and 
   smooth2random, for 'fs' smooths.
 
-* The mrf smooth constructor contained a obsolete hack in which the term 
+* The mrf smooth constructor contained an obsolete hack in which the term 
   dimension was set to 2 to avoid plotting when used as a te marginal. This 
   messed up side constraints for terms where a mrf smooth was a main effect 
   and te marginal. Fixed. 
