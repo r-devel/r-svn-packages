@@ -2285,9 +2285,27 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     else G$w<-mf$"(weights)"    
 
     G$y <- mf[[gp$response]]
-    if (!discretize||is.null(G$offset)) G$offset <- model.offset(mf)  
-    if (is.null(G$offset)) G$offset <- rep(0,n)
-
+    ## now get offset, dealing with possibility of multiple predictors (see gam.setup)
+    ## the point is that G$offset relates to the compressed or discretized model frame,
+    ## so we need to correct it to the full data version...
+    if (discretize) {
+      if (is.list(pterms)) { ## multiple predictors
+        for (i in 1:length(pterms)) {
+	  offi <- attr(pterms[[i]],"offset")
+	  if (is.null(offi)) G$offset[[i]] <- rep(0,n) else {
+	    G$offset[[i]] <- mf[[names(attr(pterms[[i]],"dataClasses"))[offi]]]
+	    if (is.null(G$offset[[i]])) G$offset[[i]] <- rep(0,n)
+	  }
+	}
+      } else { ## single predictor, handle as non-discrete
+        G$offset <- model.offset(mf)
+	if (is.null(G$offset)) G$offset <- rep(0,n)
+      }
+    } else { ## non-discrete
+      G$offset <- model.offset(mf)
+      if (is.null(G$offset)) G$offset <- rep(0,n)
+    }
+   
     if (!discretize && ncol(G$X)>nrow(mf)) stop("Model has more coefficients than data") 
   
     if (ncol(G$X) > chunk.size && !discretize) { ## no sense having chunk.size < p

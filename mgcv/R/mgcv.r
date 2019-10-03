@@ -2847,8 +2847,14 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         if (nd.is.mf) mf <- model.frame(data,xlev=object$xlevels) else {
           mf <- model.frame(Terms[[i]],data,xlev=object$xlevels)
           if (!is.null(cl <- attr(pterms[[i]],"dataClasses"))) .checkMFClasses(cl,mf)
-        } 
-        Xp <- model.matrix(Terms[[i]],mf,contrasts=object$contrasts) 
+        }
+	## next line is just a work around to prevent a spurious warning (e.g. R 3.6) from
+	## model.matrix if contrast relates to a term in mf which is not
+	## part of Terms[[i]] (mode.matrix doc actually defines contrast w.r.t. mf,
+	## not Terms[[i]])...
+	oc <- if (length(object$contrasts)==0) object$contrasts else
+	      object$contrasts[names(object$contrasts)%in%attr(Terms[[i]],"term.labels")]
+        Xp <- model.matrix(Terms[[i]],mf,contrasts=oc) 
       } else { 
         Xp <- model.matrix(Terms[[i]],object$model)
         mf <- newdata # needed in case of offset, below
@@ -2865,8 +2871,8 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
       }
       if (object$nsdf[i]>0) X[,pstart[i]-1 + 1:object$nsdf[i]] <- Xp
     } ## end of parametric loop
-    if (length(offs)==1) offs <- offs[[1]]
-    
+ ##   if (length(offs)==1) offs <- offs[[1]] ## messes up later handling
+     
     if (!is.null(drop.ind)) X <- X[,-drop.ind]
 
     if (n.smooth) for (k in 1:n.smooth) { ## loop through smooths

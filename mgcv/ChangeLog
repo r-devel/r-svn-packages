@@ -27,6 +27,17 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) does not currently deal with the corner case in 
   which no smoother is penalized.
 
+1.8-30
+
+* Fix to bug in bam(...,discrete=TRUE) offset handling introduced in 1.8-29, 
+  which corrupted offset (and generated numerous warnings). Also a fixes a 
+  less obvious bug introduced at the same time in predict.gam which could get 
+  the offset wrong when prediciting with such models. Thanks to Brian 
+  Montgomery and Sean Wilson.
+
+* Work around in predict.gam for a spurious model.matrix warning when a 
+  contrasts.arg relates to a variable in data not required by object. 
+
 1.8-29
 
 * gammPQL modified to use standard GLM IRLS initilization (rather than 
