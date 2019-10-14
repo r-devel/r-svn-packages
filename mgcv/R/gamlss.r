@@ -2153,21 +2153,21 @@ gammals <- function(link=list("identity","log"),b=-7) {
       "ii <- !ii;if (any(ii)) mu[ii] <- b + log(1 + exp(eta[ii]))\n",
       "mu }\n")))
 
-    stats[[2]]$d2link <- eval(parse(text=paste("function(eta,b=",b,") {\n",
+    stats[[2]]$d2link <- eval(parse(text=paste("function(mu,b=",b,") {\n",
       "eta <- lb.linkfun(mu,b=b); ii <- eta > 0\n",
       "eta <- exp(-eta*sign(eta))\n",
       "if (any(ii)) { ei <- eta[ii];eta[ii] <- -(ei^2 + ei) }\n",
       "ii <- !ii;if (any(ii)) { ei <- eta[ii];eta[ii] <- -(1+ei)/ei^2 }\n",
       "eta }\n")))
 
-    stats[[2]]$d3link <- eval(parse(text=paste("function(eta,b=",b,") {\n",
+    stats[[2]]$d3link <- eval(parse(text=paste("function(mu,b=",b,") {\n",
       "eta <- lb.linkfun(mu,b=b);ii <- eta > 0\n",
       "eta <- exp(-eta*sign(eta))\n",
       "if (any(ii)) { ei <- eta[ii]; eta[ii] <- (2*ei^2+ei)*(ei+1) }\n",
       "ii <- !ii;if (any(ii)) { ei <- eta[ii]; eta[ii] <- (2+ei)*(1+ei)/ei^3 }\n",
       "eta }\n")))
     
-    stats[[2]]$d4link <- eval(parse(text=paste("function(eta,b=",b,") {\n",
+    stats[[2]]$d4link <- eval(parse(text=paste("function(mu,b=",b,") {\n",
       "eta <- lb.linkfun(mu,b=b);ii <- eta > 0\n",
       "eta <- exp(-eta*sign(eta))\n",
       "if (any(ii)) { ei <- eta[ii];eta[ii] <- -(6*ei^3+6*ei^2+ei)*(ei+1) }\n",

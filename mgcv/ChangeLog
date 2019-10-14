@@ -35,8 +35,15 @@ present, and reparameterization needs checking (also for bam).
   the offset wrong when prediciting with such models. Thanks to Brian 
   Montgomery and Sean Wilson.
 
+* Fix to predict.bamd handling of 'terms' ans 'exclude' for models fit by 
+  bam(...,discrete=TRUE).
+
+
 * Work around in predict.gam for a spurious model.matrix warning when a 
   contrasts.arg relates to a variable in data not required by object. 
+
+* Fix to gammals family which had 'd2link' etc defined with argument 'eta' 
+  instead of the intended 'mu'. Thanks to Jim Stagge.
 
 1.8-29
 
