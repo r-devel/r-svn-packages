@@ -214,3 +214,8 @@ Version 2.23-15
 ===============
 
 Correct imports in NAMESPACE file.
+
+Version 2.23-16
+===============
+
+Add credit for LINPACK routines.
