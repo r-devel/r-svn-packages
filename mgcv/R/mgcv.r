@@ -4191,7 +4191,9 @@ initial.spg <- function(x,y,weights,family,S,rank,off,offset=NULL,L=NULL,lsp0=NU
     for (i in 1:length(S)) {
       ind <- off[i]:(off[i]+ncol(S[[i]])-1)
       lami <- 1
-      dlb <- -diag(lbb[ind,ind]);dS <- diag(S[[i]])
+      #dlb <- -diag(lbb[ind,ind])
+      dlb <- abs(diag(lbb[ind,ind])) 
+      dS <- diag(S[[i]])
       pc <- pcount[ind]
       ## get index of elements doing any actual penalization...
       ind <- rowSums(abs(S[[i]]))>max(S[[i]])*.Machine$double.eps^.75 & dlb!=0 ## dlb > 0
