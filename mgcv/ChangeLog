@@ -17,10 +17,6 @@ Issues:
    to make openblas ensures thread safety (currently unclear if USE_LOCKING
    will be default from 0.3.7).      
 
-https://github.com/xianyi/OpenBLAS/issues/2164 - openblas still sometimes
-   not thread safe (0.3.6). Can mess up mgcv multithreading (less often than
-   0.3.2/3)
-
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
@@ -30,20 +26,26 @@ present, and reparameterization needs checking (also for bam).
 1.8-30
 
 * Fix to bug in bam(...,discrete=TRUE) offset handling introduced in 1.8-29, 
-  which corrupted offset (and generated numerous warnings). Also a fixes a 
+  which corrupted offset (and generated numerous warnings). Also fixes a 
   less obvious bug introduced at the same time in predict.gam which could get 
   the offset wrong when prediciting with such models. Thanks to Brian 
   Montgomery and Sean Wilson.
 
-* Fix to predict.bamd handling of 'terms' ans 'exclude' for models fit by 
+* Fix to predict.bamd handling of 'terms' and 'exclude' for models fit by 
   bam(...,discrete=TRUE).
-
 
 * Work around in predict.gam for a spurious model.matrix warning when a 
   contrasts.arg relates to a variable in data not required by object. 
 
 * Fix to gammals family which had 'd2link' etc defined with argument 'eta' 
   instead of the intended 'mu'. Thanks to Jim Stagge.
+
+* 'in.out' modified to allow boundaries specified exactly as for a soap film 
+  smoother.
+
+* soap film smoother constructor modified to check knots are within boundary 
+  on entry and drop those that are not, with a warning. Also halts if it 
+  detects that basis setup is catastrophically ill-conditioned.
 
 1.8-29
 
