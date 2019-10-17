@@ -3809,7 +3809,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)
       dfc <- if (is.null(object$edf2)) 0 else sum(object$edf2) - sum(object$edf) 
       object$df.residual <- n - sum(object$edf1) - dfc
       ## reset the deviance to -2*logLik for general families...
-      if (inherits(object$family,"general.family")) { 
+      if (inherits(object$family,"extended.family")) { 
         object$deviance <- -2 * as.numeric(logLik(object)) 
         if (!is.null(test)) test <- "Chisq"
       }
@@ -3818,7 +3818,7 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)
         if (is.list(dotargs[[i]]$formula)) dotargs[[i]]$formula <- dotargs[[i]]$formula[[1]]
         dfc <- if (is.null(dotargs[[i]]$edf2)) 0 else sum(dotargs[[i]]$edf2) - sum(dotargs[[i]]$edf) 
         dotargs[[i]]$df.residual <- n - sum(dotargs[[i]]$edf1) - dfc
-        if (inherits(dotargs[[i]]$family,"general.family")) { 
+        if (inherits(dotargs[[i]]$family,"extended.family")) { 
           dotargs[[i]]$deviance <- -2 * as.numeric(logLik(dotargs[[i]]))
         } 
       }

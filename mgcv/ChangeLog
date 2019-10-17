@@ -25,6 +25,9 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-30
 
+* anova.gam now uses GLRT for multi-model comparisons in both extended and 
+  general family cases. 
+
 * Fix to bug in bam(...,discrete=TRUE) offset handling introduced in 1.8-29, 
   which corrupted offset (and generated numerous warnings). Also fixes a 
   less obvious bug introduced at the same time in predict.gam which could get 
