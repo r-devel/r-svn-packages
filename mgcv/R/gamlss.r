@@ -967,7 +967,11 @@ pen.reg <- function(x,e,y) {
   k <- .01 * norm(R)/norm(e)
   qrr <- qr(rbind(R,e*k));
   edf <- sum(qr.Q(qrr)[1:r,]^2)
-  re <- min(sum(colSums(abs(e))!=0),nrow(e))
+  ## compute rank of e less rank of the space penalized by e not in
+  ## range space of x, this is how much penalty can in principle change
+  ## edf by. Needed for corner cases where e.g. penalty is imposed for
+  ## identifiability reasons and then only penalizes null space of x...
+  re <- min(sum(colSums(abs(e))!=0),nrow(e)) - Rrank(qr.R(qrr)) + rr
   while (edf > rr-.1*re) { ## increase penalization
     k <- k*10
     qrr <- qr(rbind(R,e*k));
