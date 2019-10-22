@@ -966,8 +966,9 @@ pen.reg <- function(x,e,y) {
   ## EDF is k * rr where k is somewhere in e.g. (.7,.9)
   k <- .01 * norm(R)/norm(e)
   qrr <- qr(rbind(R,e*k));
-  edf <- sum(qr.Q(qrr)[1:r,]^2) 
-  while (edf > .9*rr) { ## increase penalization
+  edf <- sum(qr.Q(qrr)[1:r,]^2)
+  re <- min(sum(colSums(abs(e))!=0),nrow(e))
+  while (edf > rr-.1*re) { ## increase penalization
     k <- k*10
     qrr <- qr(rbind(R,e*k));
     edf <- sum(qr.Q(qrr)[1:r,]^2)
