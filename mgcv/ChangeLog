@@ -23,6 +23,10 @@ present, and reparameterization needs checking (also for bam).
 * bam(...,discrete=TRUE) does not currently deal with the corner case in 
   which no smoother is penalized.
 
+1.8-31
+
+* fix in initalization in gammPQL 
+
 1.8-30
 
 * anova.gam now uses GLRT for multi-model comparisons in both extended and 
