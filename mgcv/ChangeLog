@@ -27,6 +27,8 @@ present, and reparameterization needs checking (also for bam).
 
 * fix in initalization in gammPQL 
 
+* fix of some C routines of type void in place of SEXP called by .Call.
+
 1.8-30
 
 * anova.gam now uses GLRT for multi-model comparisons in both extended and 
