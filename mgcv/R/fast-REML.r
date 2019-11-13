@@ -3,9 +3,10 @@
 ## computational cost, relative to evaluation! 
 ## (c) Simon N. Wood, 2010-2019
 
-singleStrans <- function(S,rank=NULL) {
+singleStrans <- function(S,rank=NULL,ldet=FALSE) {
 ## transform single penalty matrix to partial identity using Cholesky
 ## t(D)%*%S%*%D transforms to a partial identity (rank rank)
+## if ldet==TRUE then the generalized determinant of S is also returned
   Ri <- R <- suppressWarnings(chol(S,pivot=TRUE))
   k <- ncol(S)
   if (is.null(rank)) {
@@ -18,14 +19,16 @@ singleStrans <- function(S,rank=NULL) {
   if (rank<k) {
     R[(rank+1):k,] <- 0
     diag(R)[(rank+1):k] <- 1
-  }  
+  }
+  ## compute the log determinant if required... 
+  ldet <- if (ldet) 2*sum(log(diag(chol(tcrossprod(R[1:rank,]))))) else 0
   Ri[piv,] <- solve(R)
   R[,piv] <- R
-  list(D=Ri,Di=R,rank=rank)
+  list(D=Ri,Di=R,rank=rank,ldet=ldet)
 } ## singleStrans
 
 
-iniStrans <- function(S,rank = NULL) {
+iniStrans <- function(S,rank = NULL,trans.ldet=FALSE) {
 ## let a block penalty matrix be \sum_i \lambda_i S_i, and of rank r.
 ## This routine finds a reparameterization such that the Si are confined to
 ## the initial r by r block.
@@ -41,8 +44,8 @@ iniStrans <- function(S,rank = NULL) {
   }
   piv <- attr(R,"pivot")
   ipiv <- piv; ipiv[piv] <- 1:p
-  if (rank==p) { ## nothing to do
-    return(list(S=S,T=diag(p),Ti=diag(p)))
+  if (rank==p) { ## nothing to do - penalty is full rank
+    return(list(S=S,T=diag(p),Ti=diag(p),trans.ldet=0))
   }
   ind <- (rank+1):p
   R[ind,ind] <- diag(length(ind))
@@ -55,14 +58,20 @@ iniStrans <- function(S,rank = NULL) {
   #range((t(T)%*%S1[[1]]%*%T)[1:rank,1:rank]-S[[1]])
   #range(T%*%R[,ipiv]-diag(p))
   ## So T will map original S to transformed S, and R[,ipiv] is inverse transform.
-  list(S=S,T=T,Ti=R[,ipiv],rank=rank)
+  ## now get the correction to be added to the log|sum_i S_i| to get log generalized
+  ## determinant in orginal parameterization...
+  tldet <- if (trans.ldet) 2*sum(log(diag(chol(tcrossprod(R[1:rank,]))))) else 0
+  list(S=S,T=T,Ti=R[,ipiv],rank=rank,trans.ldet=tldet)
 } ## iniStrans
 
 
-Sl.setup <- function(G,cholesky=FALSE) {
+Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
 ## Sets up a list representing a block diagonal penalty matrix.
 ## from the object produced by `gam.setup'.
 ## Uses only pivoted Cholesky if cholesky==TRUE.
+## flags all blocks as not to be reparameterized if no.repara=TRUE,
+## in which case initial reparameterization is only used to
+## compute log generalized determinant, but not otherwise.
 ## Return object is a list, Sl, with an element for each block.
 ## For block, b, Sl[[b]] is a list with the following elements
 ## * repara - should re-parameterization be applied to model matrix etc 
@@ -119,7 +128,7 @@ Sl.setup <- function(G,cholesky=FALSE) {
                         rank=G$rank[ind],S=list(G$S[[ind]]))
         Sl[[b]]$S <- list(G$S[[ind]])
 	Sl[[b]]$lambda <- 1 ## dummy at this stage
-	Sl[[b]]$repara <- TRUE
+	Sl[[b]]$repara <- !no.repara ## allow repara unless completely turned off
       } ## finished singleton
       b <- b + 1 
     } ## finished this block
@@ -136,8 +145,9 @@ Sl.setup <- function(G,cholesky=FALSE) {
       Sl[[b]]$start <- G$smooth[[i]]$first.para
       Sl[[b]]$stop <- G$smooth[[i]]$last.para    
       ## if the smooth has a g.index field it indicates non-linear params,
-      ## in which case re-parameterization will usually break the model!
-      Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index)) TRUE else FALSE 
+      ## in which case re-parameterization will usually break the model.
+      ## Or global supression of reparameterization may be requested...
+      Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index) && !no.repara) TRUE else FALSE 
     }
 
     if (m==0) {} else ## fixed block
@@ -186,7 +196,7 @@ Sl.setup <- function(G,cholesky=FALSE) {
           Sl[[b]]$stop <- G$smooth[[i]]$first.para + sbStop[j]-1
           Sl[[b]]$rank <- G$smooth[[i]]$rank[j]
 	  Sl[[b]]$lambda <- 1 ## dummy here
-          Sl[[b]]$repara <- TRUE ## signals ok to linearly reparameterize
+          Sl[[b]]$repara <- !no.repara ## signals ok to linearly reparameterize, now check this is really ok...
           if (!is.null(G$smooth[[i]]$g.index)) { ## then some parameters are non-linear - can't re-param
             if (any(G$smooth[[i]]$g.index[ind])) Sl[[b]]$repara <- FALSE
           }
@@ -223,12 +233,13 @@ Sl.setup <- function(G,cholesky=FALSE) {
         Sl[[b]]$D <- D; Sl[[b]]$ind <- ind
       } else { ## S is not diagonal
         if (cholesky) { ## use Cholesky based reparameterization
-          tr <- singleStrans(Sl[[b]]$S[[1]],Sl[[b]]$rank)
+          tr <- singleStrans(Sl[[b]]$S[[1]],Sl[[b]]$rank,ldet=!Sl[[b]]$repara)
 	  ind <- rep(FALSE,ncol(tr$D))
 	  ind[1:tr$rank] <- TRUE
 	  Sl[[b]]$D <- tr$D
 	  Sl[[b]]$Di <- tr$Di
 	  Sl[[b]]$rank <- tr$rank
+	  Sl[[b]]$ldet=tr$ldet
         } else { ## use eigen based re-parameterization
           es <- eigen(Sl[[b]]$S[[1]],symmetric=TRUE)
           U <- es$vectors;D <- es$values
@@ -240,6 +251,7 @@ Sl.setup <- function(G,cholesky=FALSE) {
           D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1
           Sl[[b]]$D <- t(D*t(U)) ## D <- U%*%diag(D)
           Sl[[b]]$Di <- t(U)/D
+	  Sl[[b]]$ldet=0
 	}  
         ## so if X is smooth model matrix X%*%D is re-parameterized form
 	## and t(D)%*%Sl[[b]]$S[[1]]%*%D is the reparameterized penalty
@@ -265,8 +277,8 @@ Sl.setup <- function(G,cholesky=FALSE) {
       ## must be in range space of total penalty...
       Sl[[b]]$ind <- rep(FALSE,ncol(Sl[[b]]$S[[1]]))
       if (cholesky) {
-        tr <- iniStrans(Sl[[b]]$S,Sl[[b]]$rank)
-	if (Sl[[b]]$repara) Sl[[b]]$rS <- list() 
+        tr <- iniStrans(Sl[[b]]$S,Sl[[b]]$rank,trans.ldet=!Sl[[b]]$repara)
+	if (!Sl[[b]]$repara) Sl[[b]]$rS <- list() 
 	for (i in 1:length(tr$S)) {
           if (Sl[[b]]$repara) Sl[[b]]$S[[i]] <- tr$S[[i]] else
 	  Sl[[b]]$rS[[i]] <- tr$S[[i]] ## only need to store here if !repara
@@ -275,7 +287,9 @@ Sl.setup <- function(G,cholesky=FALSE) {
 	Sl[[b]]$rank <- tr$rank
 	Sl[[b]]$D <- tr$T
 	Sl[[b]]$Di <- tr$Ti
+	Sl[[b]]$ldet = tr$trans.ldet
       } else {
+        Sl[[b]]$ldet = 0
         Sl[[b]]$rS <- list() ## needed for adaptive re-parameterization
         S <- Sl[[b]]$S[[1]]
         for (j in 2:length(Sl[[b]]$S)) S <- S + Sl[[b]]$S[[j]] ## scaled total penalty
@@ -567,7 +581,7 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
     return(list(D=D,nD=nD))
   } ## dominant.set
 
-  Rldet <- 0
+  Rldet0 <- 0
   m <- length(S)
   nD <- 1:m ## index of terms not yet dealt with
   a <- 1 ## starting row/col
@@ -609,7 +623,7 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
       S[[i]][a:p,] <- forwardsolve(t(R),S[[i]][a:p,,drop=FALSE][piv,,drop=FALSE]) ## Ri'S
     }
     ## Update the total transform matrix, its log determinant and inverse...
-    Rldet <- Rldet + sum(log(diag(R)))
+    Rldet0 <- Rldet0 + sum(log(diag(R)))
     ## Accumulate T such that |sum_i lam_i*S_i| = |T' sum_i lam_i * St_i T|
     ## St_i being transformed versions...
     Ti[,a:p] <- t(forwardsolve(t(R),t(Ti[,a:p,drop=FALSE][,piv,drop=FALSE]))) ## this is inverse
@@ -642,7 +656,7 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
       det2[i,i] <- det2[i,i] + det1[i]
     }  
   }
-  list(det=2*Rldet,T=T,S=S,Ti=Ti,det1=det1,det2 = det2,St=St,E=E,kappa=kappa(St))
+  list(det=2*Rldet,det0=2*Rldet0,T=T,S=S,Ti=Ti,det1=det1,det2 = det2,St=St,E=E,kappa=kappa(St))
 } ## ldetSt
 
 
@@ -666,6 +680,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
   rp <- list() ## reparameterization list
   if (root) E <- matrix(0,np,np) else E <- NULL
   if (length(Sl)>0) for (b in 1:length(Sl)) { ## work through blocks
+    ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
     if (length(Sl[[b]]$S)==1) { ## singleton
       ldS <- ldS + rho[k.sp] * Sl[[b]]$rank
       if (!fixed[k.sp]) {
@@ -692,11 +707,17 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       ## call gam.reparam to deal with this block
       ## in a stable way...
       if (cholesky) {
-	grp <-  ldetSt(Sl[[b]]$S,lam=exp(rho[ind]),deriv=deriv,repara)
-      } else grp <- if (repara) gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=deriv) else 
+	grp <-  if (Sl[[b]]$repara) ldetSt(Sl[[b]]$S,lam=exp(rho[ind]),deriv=deriv,repara) else
+	        ldetSt(Sl[[b]]$rS,lam=exp(rho[ind]),deriv=deriv,repara)  
+      } else {
+        grp <- if (repara) gam.reparam(Sl[[b]]$rS,lsp=rho[ind],deriv=deriv) else 
              ldetSblock(Sl[[b]]$rS,rho[ind],deriv=deriv,root=root,nt=nt)
+	grp$det0 <- 0     
+      }	     
       Sl[[b]]$lambda <- exp(rho[ind])
-      ldS <- ldS + grp$det
+      ## If stabilizing repara not applied to coefs, then need to correct log det
+      ## for transform, as it won't cancel, hence grp$det0...
+      ldS <- ldS + grp$det + if (Sl[[b]]$repara) 0 else grp$det0 
       ## next deal with the derivatives...
       grp$det1 <- grp$det1[!fixed[ind]] ## discard derivatives for fixed components
       grp$det2 <- if (deriv>1) grp$det2[!fixed[ind],!fixed[ind]] else 0 ##NULL
@@ -876,7 +897,8 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
                     B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind]
         }
       } else { ## multi-S block
-        ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
+        ind <- Sl[[b]]$start:Sl[[b]]$stop
+	if (Sl[[b]]$repara) ind <- ind[Sl[[b]]$ind]
         if (Amat) B[ind,] <- Sl[[b]]$St %*% A[ind,] else
                   B[ind] <- Sl[[b]]$St %*% A[ind]
       }
