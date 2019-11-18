@@ -217,7 +217,7 @@ Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized
 
 \section{WARNINGS }{
 
-The routine will be slow if the default \code{"tp"} basis is used. 
+The routine may be slower than optimal if the default \code{"tp"} basis is used. 
 
 Unless discrete=TRUE, you must have more unique combinations of covariates than the model has total
 parameters. (Total parameters is sum of basis dimensions plus sum of non-spline 
@@ -227,7 +227,6 @@ This routine is less stable than `gam' for the same dataset.
 
 With \code{discrete=TRUE}, \code{te} terms are efficiently computed, but \code{t2} are not.
 
-The negbin family is only supported for the *known theta* case.
 } 
 
 \seealso{\code{\link{mgcv.parallel}}, 
