@@ -8,6 +8,7 @@ Liable to change in future release:
 Currently deprecated and liable to be removed:
 - gam performance iteration (1.8-19, Sept 2017)
 - argument 'pers' in plot.gam (1.8-23, Nov 2017)
+- discrete method prediction from discrete bam objects fitted before 1.8-32 
 
 Issues: 
 
@@ -24,6 +25,9 @@ present, and reparameterization needs checking (also for bam).
   which no smoother is penalized.
 
 1.8-32
+
+** bam(...,discrete=TRUE) now uses discretization on the parametric model
+   components as well as the smooths. 
 
 * Internal Sl list handling changes.
 
