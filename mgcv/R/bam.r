@@ -1674,7 +1674,6 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
 predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,n.threads=1,...) {
 ## function for prediction from a bam object, by discrete methods
-## NOTE: drop.intercept handling?
 ## remove some un-needed stuff from object
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
   object$Vc <- object$G <- object$residuals <- object$fitted.values <-
@@ -1693,8 +1692,6 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   nlp <- if (is.null(lpi)) 1 else length(lpi) ## number of linear predictors
   if (nlp>1) lpid <-  object$dinfo$lpid ## index of discrete terms involved in each linear predictor
  
-#  if (!is.null(exclude)) warning("exclude ignored by discrete prediction at present")
-
   ## newdata has to be processed first to avoid, e.g. dropping different subsets of data
   ## for parametric and smooth components....
 
@@ -1756,7 +1753,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       if (is.null(offset)) offset <- if (nlp==1) 0 else as.list(rep(0,nlp))
     }
   } else {
-    pp <- if (se.fit) list(fit=rep(0,0),se.fit=rep(0,0)) else rep(0,0) ## NOTE: needed in terms branch below
+    pp <- if (se.fit) list(fit=rep(0,0),se.fit=rep(0,0)) else rep(0,0) ## note: needed in terms branch below
   } ## parametric component dealt with
 
   ## now discretize covariates...
@@ -2097,9 +2094,11 @@ tens2matrix <- function(X,ts,dt) {
 } ## tens2matrix
 
 
-terms2tensor <- function(terms,data,drop.intercept=FALSE) {
+terms2tensor <- function(terms,data,drop.intercept=FALSE,identify=TRUE) {
 ## takes a terms object or formula and converts it into a sequence of marginal model matrices, X
-## and associated indices ts and dt. The ith block of the model matrix is the row tensor product
+## and associated indices ts and dt, using the data in 'data'. drops the intercept if needed.
+## If 'identify' then identifiability constraints/contrasts imposed, otherwise not. 
+## The ith block of the model matrix is the row tensor product
 ## of the dt[i] elements of X starting at the ts[i].
 ## i.e. tensor.prod.model.matrix(X[ts[i]:(ts[i]+dt[i]-1)])
 ## xname[i] is the name of the variable in data used to create the marginal matrix X[[i]], with
@@ -2131,7 +2130,7 @@ terms2tensor <- function(terms,data,drop.intercept=FALSE) {
     ts[i+intercept] <- k;dt[i+intercept] <- ord[i]
     if (ord[i]==1) { ## special case due to odd intercept handling
       vn <- varn[as.logical(fac[,i])]
-      if (no.int) {
+      if (no.int||!identify) {
         fm <- as.formula(paste("~",vn,"-1"))
         X[[k]] <- model.matrix(fm,data)
         no.int <- FALSE
@@ -2145,7 +2144,7 @@ terms2tensor <- function(terms,data,drop.intercept=FALSE) {
       m <- which(fac[,i]!=0) ## marginal terms involved
       for (j in ord[i]:1) { ## reverse ordering is to conform with model.matrix(terms,data) called directly
         vn <- varn[m[j]]
-        if (fac[m[j],i]==2) { ## no contrast
+        if (fac[m[j],i]==2||!identify) { ## no contrast
 	  fm <- as.formula(paste("~",vn,"-1"))
 	  X[[k]] <- model.matrix(fm,data)
 	} else { ## with contrast
