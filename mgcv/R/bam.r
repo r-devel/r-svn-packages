@@ -201,7 +201,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 ## * nr records the number of unique discretized covariate values
 ##   i.e. the number of rows before the padding starts -
 ##   elements are labelled, corresponding to names in mf, but
-##   not in the same order
+##   not in the same order **BUG**: nr there is only one nr per marginal smooth - a margin can have seceral covariates********
 ## * k.start contains the starting column in index vector k, for
 ##   each variable. The final element is the column beyond the last one.
 ## * k is the index matrix. The ith record of the 1st column of the 
@@ -236,8 +236,8 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   nk <- nk + length(names.pmf)
   k <- matrix(0,nrow(mf),nk) ## each column is an index vector
   k.start <- 1:(nk+1) ## record last column for each term
-  ik <- 0 ## index counter
-  nr <- rep(0,nk) ## number of rows for term
+  ik <- 0 ## index counter i.e. counts marginal smooths and their indices
+  nr <- rep(0,nk) ## number of rows for marginal term
   ## structure to record terms already processed...
   rec <- list(vnames = rep("",0), ## variable names
               ki = rep(0,0),      ## index of original index vector var relates to  
@@ -312,24 +312,32 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
     ## now discretize parametric covariates...
     mi <- if (is.null(m)) m else max(m)
     for (i in 1:length(mfp)) {
-      mfd <- compress.df(mfp[i],m=mi)
-      mf0 <- c(mf0,mfd)
-      ki <- attr(mfd,"index")
+      ii <- which(rec$vnames %in% names.pmf[i])
+      ik.prev <- if (length(ii)>0) rec$ki[ii] else 0  ## term already discretized?
       ik <- ik + 1
-      k[,k.start[ik]] <- ki
-      colnames(k)[ik] <- names(mfp[i]) ## record the variable name associated with the index
-      if (maxr<nrow(mfd)) maxr <- nrow(mfd)
-      nr[ik] <- nrow(mfd)
+      if (ik.prev==0) { ## new discretization needed (no need to record - no repeat vars within para)
+        mfd <- compress.df(mfp[i],m=mi)
+        mf0 <- c(mf0,mfd)
+        ki <- attr(mfd,"index")
+        #ik <- ik + 1
+        k[,k.start[ik]] <- ki
+        colnames(k)[k.start[ik]] <- names(mfp[i]) ## record the variable name associated with the index
+        if (maxr<nrow(mfd)) maxr <- nrow(mfd)
+        nr[ik] <- nrow(mfd)
+      } else { ## re-use previous discretization
+        k[,k.start[ik]] <- k[,k.start[ik.prev]]
+	colnames(k)[k.start[ik]] <- names(mfp[i])
+	nr[ik] <- nr[ik.prev]
+      }
     }
-    names(nr) <- names(mf0)
-    #pmf0 <- mini.mf(mfp,maxr) ## deal with parametric components
-    #if (nrow(pmf0)>maxr) maxr <- nrow(pmf0)
-    #mf0 <- c(mf0,pmf0) ## add parametric terms to end of mf0
-  
+
+    nr0 <- rep(NA,length(mf0)) 
     for (i in 1:length(mf0)) {
       me <- length(mf0[[i]]) 
       if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
+      nr0[i] <- me ## record original column length
     }
+    names(nr0) <- names(mf0)
 
     ## add response so that gam.setup can do its thing - looks redundant!! 
     # mf0[[gp$response]] <- sample(mf[[gp$response]],maxr,replace=TRUE) ## redundant??
@@ -341,7 +349,8 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
     ## now copy back into mf so terms unchanged
     mf <- mf[sample(1:nrow(mf),maxr,replace=TRUE),]
     for (na in names(mf0)) mf[[na]] <- mf0[[na]] 
-    ## nr <- nr[names(mf)] ## makes sure nr order is same as mf order
+    nr0 <- nr0[names(mf)] ## makes sure nr0 order is same as mf order
+    attr(mf,"nr") <- nr0 ## record original column lengths
   } else mf <- mf0
   ## reset RNG to old state...
   RNGkind(kind[1], kind[2])
@@ -1763,8 +1772,8 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   Xd <- list() ### list of discrete model matrices...
   n <- if (is.matrix(newdata[[1]])) nrow(newdata[[1]]) else length(newdata[[1]])
   kb <- k <- 1;kd <- dk$k
-  nr0 <- dk$nr[names(dk$mf)] ## element lengths, in mf order
-
+  #nr0 <- dk$nr[names(dk$mf)] ## element lengths, in mf order
+  nr0 <- attr(dk$mf,"nr") ## column lengths (pre-padding)
   if (para.discrete) {
     for (j in 1:nlp) { ## loop over parametric components of linear predictors
       ## get discretized marginal matrices for the parametric model
@@ -1788,7 +1797,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 	    ptens$X[[i]] <- ptens$X[[i]][1,,drop=FALSE]
           } else {
 	    kp[,i] <- dk$k[,which(knames==ptens$xname[i])]
-	    nr[i] <- dk$nr[ptens$xname[i]]#[which(knames==ptens$xname[i])]
+	    nr[i] <- nr0[ptens$xname[i]] #dk$nr[ptens$xname[i]]
 	  }
 	  Xd[[k]] <- ptens$X[[i]][1:nr[i],,drop=FALSE]
 	  k <- k + 1
@@ -1821,6 +1830,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
   ks <- ks[1:np,]
   kd <- kd[,1:np]
 
+  
   class(dk$mf) <- "list"
   for (i in 1:length(dk$mf)) dk$mf[[i]] <- if (is.matrix(dk$mf[[i]])) dk$mf[[i]][1:nr0[i],] else dk$mf[[i]][1:nr0[i]]
 
@@ -1949,7 +1959,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
     } else lt <- NULL 
     fit <- Xbd(Xd,diag(length(object$coefficients)),kd,ks,ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt)
     if (nlp>1) attr(fit,"lpi") <- lpi
-  } else { ## link or response - BUG: exclude and terms ignored - see lpmatrix for approach!! 
+  } else { ## link or response 
     if (is.null(object$family$predict)||type=="link") {
       lt <- 1:length(ts);names(lt) <- names(ts)
       if (nlp>1) {
@@ -2366,6 +2376,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       ## have to extract full parametric model matrix from pterms and mf
       npt <- if (nlp==1) 1 else length(G$pterms)
       lpip <- list() ## record coef indices for each discretized term
+      nr0 <- attr(dk$mf,"nr") ## un-padded column lengths for mf
       for (j in 1:npt) { ## loop over parametric terms in each formula
         paratens <- TRUE
 	if (paratens) {
@@ -2385,7 +2396,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 	      ptens$X[[i]] <- ptens$X[[i]][1,,drop=FALSE]
             } else {
 	      kp[,i] <- dk$k[,which(knames==ptens$xname[i])]
-	      nr[i] <- dk$nr[ptens$xname[i]]#[which(knames==ptens$xname[i])]
+	      nr[i] <- nr0[ptens$xname[i]]#dk$nr[ptens$xname[i]]
 	    }
           }
           G$kd <- cbind(kp,G$kd)

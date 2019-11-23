@@ -1297,7 +1297,7 @@ scat <- function (theta = NULL, link = "identity",min.df = 3) {
     ## Theta <-  NULL;
     n.theta <- 2
     if (!is.null(theta)&&sum(theta==0)==0) {
-      if (abs(theta[1]<=min.df)) {
+      if (abs(theta[1])<=min.df) {
         min.df <- 0.9*abs(theta[1])
         warning("Supplied df below min.df. min.df reset")
       }	
