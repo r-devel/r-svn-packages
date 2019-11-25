@@ -197,7 +197,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 ## different lengths.
 ## On exit... 
 ## * mf is a model frame containing the unique discretized covariate
-##   values, in randomized order, padded to all be same length
+##   values, in randomized order, padded to all be same length (if full=TRUE)
 ## * nr records the number of unique discretized covariate values
 ##   i.e. the number of rows before the padding starts -
 ##   elements are labelled, corresponding to names in mf, but
@@ -2240,7 +2240,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
       
       if (is.null(gp$nlp)) for (i in 1:length(gp$smooth.spec)) { 
         if (inherits(gp$smooth.spec[[i]],"tensor.smooth.spec")) gp$smooth.spec[[i]] <- tero(gp$smooth.spec[[i]])
-        if (inherits(gp$smooth.spec[[i]],c("re.smooth.spec","fs.smooth.spec"))&&gp$smooth.spec[[i]]$dim>1) {
+        #if (inherits(gp$smooth.spec[[i]],c("re.smooth.spec","fs.smooth.spec"))&&gp$smooth.spec[[i]]$dim>1)
+	 if (!is.null(gp$smooth.spec[[i]]$tensor.possible)&&gp$smooth.spec[[i]]$dim>1){
           class(gp$smooth.spec[[i]]) <- c(class(gp$smooth.spec[[i]]),"tensor.smooth.spec")
           gp$smooth.spec[[i]]$margin <- list()
           ## only ok for 'fs' with univariate metric variable (caught in 'fs' construcor)...
@@ -2248,7 +2249,8 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
         }
       } else for (j in 1:length(formula)) if (length(gp[[j]]$smooth.spec)>0) for (i in 1:length(gp[[j]]$smooth.spec)) {
         if (inherits(gp[[j]]$smooth.spec[[i]],"tensor.smooth.spec")) gp[[j]]$smooth.spec[[i]] <- tero(gp[[j]]$smooth.spec[[i]])
-        if (inherits(gp[[j]]$smooth.spec[[i]],c("re.smooth.spec","fs.smooth.spec"))&&gp[[j]]$smooth.spec[[i]]$dim>1) {
+        #if (inherits(gp[[j]]$smooth.spec[[i]],c("re.smooth.spec","fs.smooth.spec"))&&gp[[j]]$smooth.spec[[i]]$dim>1)
+	if (!is.null(gp[[j]]$smooth.spec[[i]]$tensor.possible)&&gp[[j]]$smooth.spec[[i]]$dim>1) {
           class(gp[[j]]$smooth.spec[[i]]) <- c(class(gp[[j]]$smooth.spec[[i]]),"tensor.smooth.spec")
           gp[[j]]$smooth.spec[[i]]$margin <- list()
           ## only ok for 'fs' with univariate metric variable (caught in 'fs' construcor)...
@@ -2421,7 +2423,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             kb <- kb + 1 ## update block counter
 	  }
 	} ## is.null(ptens)  
-        } else {
+        } else { ## old style full parametric model matrix
 
         G$Xd[[k]] <- if (nlp==1&&!is.list(G$pterms)) model.matrix(G$pterms,mf) else
 	             model.matrix(G$pterms[[j]],mf)
@@ -2449,7 +2451,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
           ## kb <- k <- 1; leave unchanged
 	  ## qc <- dt <- ts <- rep(0,length(G$smooth))
         }
-	}
+	} ## old style full parametric model matrix
       } ## loop over parametric terms in each formula	
       ## k is marginal counter, kb is block counter
       ## G$kd[,ks[j,1]:ks[j,2]] (dk$k) gives index columns for term j, thereby allowing 

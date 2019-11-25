@@ -1954,6 +1954,10 @@ Predict.matrix.Bspline.smooth <- function(object,data) {
 #######################################################################
 # Smooth-factor interactions. Efficient alternative to s(x,by=fac,id=1) 
 #######################################################################
+smooth.info.fs.smooth.spec <- function(object) {
+  object$tensor.possible <- TRUE ## signal that a tensor product construction is possible here
+  object
+}
 
 smooth.construct.fs.smooth.spec <- function(object,data,knots) {
 ## Smooths in which one covariate is a factor. Generates a smooth
@@ -2326,6 +2330,10 @@ smooth.construct.ad.smooth.spec <- function(object,data,knots)
 # Random effects terms start here. Plot method in plot.r
 ########################################################
 
+smooth.info.re.smooth.spec <- function(object) {
+  object$tensor.possible <- TRUE
+  object
+}
 
 smooth.construct.re.smooth.spec <- function(object,data,knots)
 ## a simple random effects constructor method function
@@ -3340,6 +3348,9 @@ Predict.matrix.gp.smooth <- function(object,data)
 ## The generics and wrappers
 ############################
 
+smooth.info <- function(object) UseMethod("smooth.info")
+
+smooth.info.default <- function(object) object
 
 smooth.construct <- function(object,data,knots) UseMethod("smooth.construct")
 

@@ -263,7 +263,7 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
         st$label <- paste(substr(st$label,start=1,stop=pos-1),textra,
                     substr(st$label,start=pos,stop=nchar(st$label)),sep="")
       }
-      smooth.spec[[k]] <- st
+      smooth.spec[[k]] <- smooth.info(st) ## smooth.info supplies any extra specification info for class
       if (ks<=len.sp&&sp[ks]==i) ks <- ks + 1 else # counts s() terms
       if (kt<=len.tp&&tp[kt]==i) kt <- kt + 1 else # counts te() terms
       if (kti<=len.tip&&tip[kti]==i) kti <- kti + 1 else # counts ti() terms

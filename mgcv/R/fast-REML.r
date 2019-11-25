@@ -228,7 +228,9 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
         ## In new parameterization smooth specific model matrix is X%*%diag(D)
         ## ind indexes penalized parameters from this smooth's set. 
         D <- diag(Sl[[b]]$S[[1]])
-        ind <- D > 0 ## index penalized elements 
+        ind <- D > 0 ## index penalized elements
+	Sl[[b]]$rank <- sum(ind)
+	Sl[[b]]$ldet <- if (cholesky) sum(log(D[ind])) else 0
         D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1 ## X' = X%*%diag(D) 
         Sl[[b]]$D <- D; Sl[[b]]$ind <- ind
       } else { ## S is not diagonal
@@ -246,12 +248,14 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
           if (is.null(Sl[[b]]$rank)) { ## need to estimate rank
             Sl[[b]]$rank <- sum(D>.Machine$double.eps^.8*max(D))
           }
+	  ## non-cholesky stabilized method code ignores the log det
+	  ## of transform as it cancels between the two log det terms...
+	  Sl[[b]]$ldet <- 0 ## sum(log(D[1:Sl[[b]]$rank])) 
           ind <- rep(FALSE,length(D))
           ind[1:Sl[[b]]$rank] <- TRUE ## index penalized elements
           D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1
           Sl[[b]]$D <- t(D*t(U)) ## D <- U%*%diag(D)
           Sl[[b]]$Di <- t(U)/D
-	  Sl[[b]]$ldet=0
 	}  
         ## so if X is smooth model matrix X%*%D is re-parameterized form
 	## and t(D)%*%Sl[[b]]$S[[1]]%*%D is the reparameterized penalty
@@ -289,7 +293,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
 	Sl[[b]]$Di <- tr$Ti
 	Sl[[b]]$ldet = tr$trans.ldet
       } else {
-        Sl[[b]]$ldet = 0
+        Sl[[b]]$ldet = 0 ## this is pure orthogonal transform
         Sl[[b]]$rS <- list() ## needed for adaptive re-parameterization
         S <- Sl[[b]]$S[[1]]
         for (j in 2:length(Sl[[b]]$S)) S <- S + Sl[[b]]$S[[j]] ## scaled total penalty
