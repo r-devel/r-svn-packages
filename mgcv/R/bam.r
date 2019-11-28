@@ -2050,30 +2050,25 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       termi[term.lab=="(Intercept)"] <- FALSE ## not if it's intercept
       if (!is.null(terms)) termi <- termi & term.lab %in% terms ## and only if it's in terms
       if (!is.null(exclude)) termi <- termi & !(term.lab %in% exclude) ## and not in exclude
-      fit <- matrix(0,nrow(kd),sum(termi))
-      if (se) se.fit <- matrix(0,nrow(kd),sum(termi))
-      k <- 1
-      for (i in 1:length(term.lab)) {
+      uterms <- unique(term.lab[termi])
+      nterms <- length(uterms) ## sum(termi) 
+      fit <- matrix(0,nrow(kd),nterms)
+      if (se) se.fit <- matrix(0,nrow(kd),nterms)
+      for (k in 1:nterms) {
+        lt <- which(term.lab%in%uterms[k]) ## discrete terms involved in this smooth (can be more than one)
         if (termi[i]) {
-          ii <- ts[i]:(ts[i]+dt[i]-1) ## index components for this term
-          ind <- object$dinfo$lpip[[i]] ## index coefs for this term
-          if (!is.null(object$dinfo$drop)) { 
-            drop <- object$dinfo$drop-ind[1]+1
-            drop <- drop[drop<=length(ii)]
-          } else drop <- NULL
-          fit[,k] <- Xbd(Xd[ii],object$coefficients[ind],kd,ks[ii,],                          
-                      1,dt[i],object$dinfo$v[i],object$dinfo$qc[i],drop=drop)
-          if (se) se.fit[,k] <- diagXVXd(Xd[ii],object$Vp[ind,ind,drop=FALSE],kd,ks[ii,],                
-                       1,dt[i],object$dinfo$v[i],object$dinfo$qc[i],drop=drop,nthreads=n.threads)^.5
-          k <- k + 1
+          fit[,k] <- Xbd(Xd,object$coefficients,kd,ks,                          
+                      ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt)
+          if (se) se.fit[,k] <- diagXVXd(Xd,object$Vp,kd,ks,                
+                       ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,nthreads=n.threads,lt=lt,rt=lt)^.5
         }	
       }
-      colnames(fit) <- term.lab[termi]
+      colnames(fit) <- uterms
       if (se) {
-        colnames(se.fit) <- term.lab[termi]
+        colnames(se.fit) <- uterms
 	fit <- list(fit=fit,se.fit=se.fit)
       }
-    } else {
+    } else { ## legacy code for prediction from old objects
       term.lab <- unlist(lapply(object$smooth,function(x) x$label))
       termi <- rep(TRUE,length(object$smooth))
       if (!is.null(terms)) termi <- termi & term.lab %in% terms
