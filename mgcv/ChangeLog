@@ -29,6 +29,9 @@ present, and reparameterization needs checking (also for bam).
 ** bam(...,discrete=TRUE) now uses discretization on the parametric model
    components as well as the smooths. 
 
+* Much cleaner design for the discretization of covariates and associated 
+  discretization index matching in bam (predict.bamd and discrete.mf). 
+
 * Fix to jagam logic for identifying separable penalties which led to 
   wrong partioning of penalties for 'fs' smooths used with jagam. Thanks to
   Chris Jackson for spotting the problem.
