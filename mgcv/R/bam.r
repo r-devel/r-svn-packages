@@ -494,7 +494,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
           if (is.matrix(ki)) {
 	     ks[ik,2] <- ks[ik,1] + ncol(ki)
              k <- cbind(k,matrix(0,nrow(k),ncol(ki)-1)) ## extend index matrix
-             ind <- ks[ik,1]:ks[ik,2] 
+             ind <- ks[ik,1]:(ks[ik,2]-1) 
              k[,ind] <- ki 
            } else {
 	     ks[ik,2] <- ks[ik,1] + 1
@@ -526,7 +526,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   ## padding is necessary if gam.setup is to be used for setup
 
   if (full) {
-    colnames(k) <- rep("",ncol(k))
+   # colnames(k) <- rep("",ncol(k))
     maxr <- max(nr)
     ## If NA's caused rows to be dropped in mf, then they should
     ## also be dropped in pmf, otherwise we can end up with factors
@@ -563,7 +563,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
     
     ## mf0 is the discretized model frame (actually a list), padded to have equal length rows
     ## now copy back into mf so terms unchanged
-    mf <- mf[sample(1:nrow(mf),maxr,replace=TRUE),]
+    mf <- mf[sample(1:nrow(mf),maxr,replace=TRUE),,drop=FALSE]
     for (na in names(mf0)) mf[[na]] <- mf0[[na]] 
   } else mf <- mf0
   nr <- nr[names(mf)] ## same order for both mf and nr
@@ -571,7 +571,10 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   ## reset RNG to old state...
   RNGkind(kind[1], kind[2])
   assign(".Random.seed", seed, envir = .GlobalEnv)
-
+  ## k can end up with too many columns if marginals themselves have
+  ## multiple arguments, so drop these here...
+  ks <- ks[!is.na(ks[,1]),,drop=FALSE]
+  if (ncol(k)>max(ks)-1) k <- k[,1:(max(ks)-1),drop=FALSE] 
   k <- cbind(k,1) ## add an intercept index column
   nk <- ncol(k)
   ks <- rbind(ks,c(nk,nk+1)) ## add intercept row to ks
@@ -2657,7 +2660,15 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
             k <- k + 1
           }  
 	  #jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para;
-	  jj <- 1:np + lp0; lp0 <- lp0 + np
+	  if (sb==1&&qc[kb]) {
+            jj <- 1:(np-1) + lp0; lp0 <- lp0 + np - 1
+	    ## Hard to think of an application requiring constraint when nsub>1, hence not 
+	    ## worked out yet. Add warning to make sure this is flagged if attempt made
+	    ## to do this in future....
+	    if (nsub>1) warning("constraints for sub blocked tensor products un-tested")
+          } else {
+	    jj <- 1:np + lp0; lp0 <- lp0 + np
+	  }  
 	  lpip[[kb]] <- jj
 	  if (nlp>1) { ## record which lp each discrete term belongs to (can be more than one)
             for (j in 1:nlp) if (any(jj %in% lpi[[j]])) lpid[[j]] <- c(lpid[[j]],kb)

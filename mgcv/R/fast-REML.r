@@ -130,6 +130,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
 	Sl[[b]]$lambda <- 1 ## dummy at this stage
 	Sl[[b]]$repara <- !no.repara ## allow repara unless completely turned off
       } ## finished singleton
+      Sl[[b]]$linear <- TRUE
       b <- b + 1 
     } ## finished this block
   } ## finished paraPen
@@ -147,7 +148,13 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
       ## if the smooth has a g.index field it indicates non-linear params,
       ## in which case re-parameterization will usually break the model.
       ## Or global supression of reparameterization may be requested...
-      Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index) && !no.repara) TRUE else FALSE 
+      Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index) && !no.repara) TRUE else FALSE
+      if (!is.null(G$smooth[[i]]$updateS)) { ## then this block is nonlinear in smoothing parameters
+        Sl[[b]]$repara <-FALSE
+	Sl[[b]]$linear <- FALSE
+	labs <- c("updateS","AS","AdS","ldS","St","n.sp")
+	Sl[[b]][labs] <- G$smooth[[i]][labs] ## copy the non-linear interface functions
+      } else Sl[[b]]$linear <- TRUE
     }
 
     if (m==0) {} else ## fixed block
@@ -163,30 +170,32 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
       ## easily here means no overlap in penalties 
       Sl[[b]]$S <- G$smooth[[i]]$S
       Sl[[b]]$lambda <- rep(1,m)
-      nb <- nrow(Sl[[b]]$S[[1]])      
-      sbdiag <- sbStart <- sbStop <- rep(NA,m)
-      ut <- upper.tri(Sl[[b]]$S[[1]],diag=FALSE) 
-      ## overlap testing requires the block ranges 
-      for (j in 1:m) { ## get block range for each S[[j]]
-        sbdiag[j] <- sum(abs(Sl[[b]]$S[[j]][ut]))==0 ## is penalty diagonal??
-        ir <- range((1:nb)[rowSums(abs(Sl[[b]]$S[[j]]))>0])
-        sbStart[j] <- ir[1];sbStop[j] <- ir[2] ## individual ranges
-      } 
-      split.ok <- TRUE
-      for (j in 1:m) { ## test for overlap
-        itot <- rep(FALSE,nb)
-        if (all(sbdiag)) { ## it's all diagonal - can allow interleaving
-          for (k in 1:m) if (j!=k) itot[diag(Sl[[b]]$S[[k]])!=0] <- TRUE
-          if (sum(itot[diag(Sl[[b]]$S[[j]])!=0])>0) { ## no good, some overlap detected
-            split.ok <- FALSE; break
-          }
-        } else { ## not diagonal - really need on overlapping blocks
-          for (k in 1:m) if (j!=k) itot[sbStart[k]:sbStop[k]] <- TRUE
-          if (sum(itot[sbStart[j]:sbStop[j]])>0) { ## no good, some overlap detected
-            split.ok <- FALSE; break
+      if (Sl[[b]]$linear) {
+        nb <- nrow(Sl[[b]]$S[[1]])      
+        sbdiag <- sbStart <- sbStop <- rep(NA,m)
+        ut <- upper.tri(Sl[[b]]$S[[1]],diag=FALSE) 
+        ## overlap testing requires the block ranges 
+        for (j in 1:m) { ## get block range for each S[[j]]
+          sbdiag[j] <- sum(abs(Sl[[b]]$S[[j]][ut]))==0 ## is penalty diagonal??
+          ir <- range((1:nb)[rowSums(abs(Sl[[b]]$S[[j]]))>0])
+          sbStart[j] <- ir[1];sbStop[j] <- ir[2] ## individual ranges
+        } 
+        split.ok <- TRUE
+        for (j in 1:m) { ## test for overlap
+          itot <- rep(FALSE,nb)
+          if (all(sbdiag)) { ## it's all diagonal - can allow interleaving
+            for (k in 1:m) if (j!=k) itot[diag(Sl[[b]]$S[[k]])!=0] <- TRUE
+            if (sum(itot[diag(Sl[[b]]$S[[j]])!=0])>0) { ## no good, some overlap detected
+              split.ok <- FALSE; break
+            }
+          } else { ## not diagonal - really need  overlapping blocks
+            for (k in 1:m) if (j!=k) itot[sbStart[k]:sbStop[k]] <- TRUE
+            if (sum(itot[sbStart[j]:sbStop[j]])>0) { ## no good, some overlap detected
+              split.ok <- FALSE; break
+            }
           }
         }
-      }
+      } else split.ok <- FALSE	
       if (split.ok) { ## can split this block into m separate singleton blocks
         for (j in 1:m) {
           Sl[[b]] <- list()
@@ -200,11 +209,11 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
           if (!is.null(G$smooth[[i]]$g.index)) { ## then some parameters are non-linear - can't re-param
             if (any(G$smooth[[i]]$g.index[ind])) Sl[[b]]$repara <- FALSE
           }
+	  Sl[[b]]$linear <- TRUE ## linear in smoothing params - assumed always true for multi-blocks
           b <- b + 1
         }
       } else { ## not possible to split
-        Sl[[b]]$S <- G$smooth[[i]]$S
-     
+        Sl[[b]]$S <- G$smooth[[i]]$S  
         b <- b + 1 ## next block!!
       } ## additive block finished
     } ## additive block finished
@@ -220,6 +229,9 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
   np <- ncol(G$X)
   E <- matrix(0,np,np) ## well scaled square root penalty
   lambda <- rep(0,0)
+
+  ## NOTE: computing transforms for repara blocks and then not using them
+  ##       looks wasteful - remove this??
 
   for (b in 1:length(Sl)) { ## once more into the blocks, dear friends...
     if (length(Sl[[b]]$S)==1) { ## then we have a singleton
@@ -685,7 +697,19 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
   if (root) E <- matrix(0,np,np) else E <- NULL
   if (length(Sl)>0) for (b in 1:length(Sl)) { ## work through blocks
     ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
-    if (length(Sl[[b]]$S)==1) { ## singleton
+    if (!Sl[[b]]$linear) { ## non-linear block
+      ind <- k.sp + 1:Sl[[b]]$n.sp - 1 ## smoothing param index
+      Sl[[b]] <- Sl[[b]]$updateS(rho[ind],Sl[[b]]) ## update the block with current params
+      nldS <- Sl[[b]]$ldS(Sl,deriv) ## get the log determinant and any derivatives
+      ldS <- ldS + nldS$ldS
+      nldS$ldS1 <- nldS$ldS1[!fixed[ind]] ## discard fixed param derivatives
+      nderiv <- length(nldS$ldS1)
+      if (nderiv) d1.ldS[k.deriv+1:nderiv-1] <- nldS$ldS1
+      if (deriv>1) stop("second derivs not available for non-linear penalties")
+      k.deriv <- k.deriv + nderiv
+      k.sp <- k.sp + Sl[[b]]$n.sp
+      Sl[[b]]$lambda <- rho[ind] ## not really used in non-linear interface
+    } else if (length(Sl[[b]]$S)==1) { ## linear singleton
       ldS <- ldS + rho[k.sp] * Sl[[b]]$rank
       if (!fixed[k.sp]) {
         d1.ldS[k.deriv] <- Sl[[b]]$rank
@@ -705,7 +729,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       }
       Sl[[b]]$lambda <- exp(rho[k.sp])
       k.sp <- k.sp + 1 
-    } else { ## multi-S block
+    } else { ## linear multi-S block
       m <- length(Sl[[b]]$S) ## number of components for this block
       ind <- k.sp:(k.sp+m-1) ## index for smoothing parameters
       ## call gam.reparam to deal with this block
@@ -890,18 +914,20 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
   if (k<=0) { ## apply whole penalty
     B <- A*0
     for (b in 1:nb) { ## block loop
-      if (length(Sl[[b]]$S)==1) { ## singleton
-        ind <- Sl[[b]]$start:Sl[[b]]$stop
+      ind <- Sl[[b]]$start:Sl[[b]]$stop ## index of coeffs for this bock
+      if (!Sl[[b]]$linear) { ## non-linear block
+        if (Amat)  B[ind,] <- t(Sl[[b]]$AS(t(A[ind,]),Sl)) else
+	           B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl))
+      } else if (length(Sl[[b]]$S)==1) { ## singleton
         if (Sl[[b]]$repara) {
           ind <- ind[Sl[[b]]$ind]
           if (Amat) B[ind,] <- Sl[[b]]$lambda*A[ind,] else
-                    B[ind] <- Sl[[b]]$lambda*A[ind]
+	            B[ind] <- Sl[[b]]$lambda*A[ind]
         } else { ## original penalty has to be applied 
           if (Amat) B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind,] else
                     B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind]
         }
       } else { ## multi-S block
-        ind <- Sl[[b]]$start:Sl[[b]]$stop
 	if (Sl[[b]]$repara) ind <- ind[Sl[[b]]$ind]
         if (Amat) B[ind,] <- Sl[[b]]$St %*% A[ind,] else
                   B[ind] <- Sl[[b]]$St %*% A[ind]
@@ -914,7 +940,7 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
       for (i in 1:length(Sl[[b]]$S)) { ## S loop within blocks
         j <- j + 1
         if (j==k) { ## found block
-          if (length(Sl[[b]]$S)==1) { ## singleton
+          if (!Sl[[b]]$linear || length(Sl[[b]]$S)==1) { ## singleton
             ind <- Sl[[b]]$start:Sl[[b]]$stop
             if (Sl[[b]]$repara) {
               ind <- ind[Sl[[b]]$ind]
@@ -924,20 +950,28 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
                           B[ind] <- Sl[[b]]$lambda*A[ind]
                 A <- B
               } else { ## strip zero rows from answer
-                if (Amat) A <- Sl[[b]]$lambda*A[ind,] else
-                          A <- as.numeric(Sl[[b]]$lambda*A[ind])
+                A <- if (Amat) Sl[[b]]$lambda*A[ind,] else as.numeric(Sl[[b]]$lambda*A[ind])
               } 
-            } else { ## not reparameterized version 
+            } else if (Sl[[b]]$linear) { ## not reparameterized version, but linear 
               if (full) {
                 B <- A*0
                 if (Amat) B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] else  
                           B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind]
                 A <- B
               } else {
-                if (Amat) A <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] else
-                          A <- as.numeric(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind])
+                 A <- if (Amat) Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] else
+                                as.numeric(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind])
               }
-            } ## not repara
+            } else { ## non-linear
+              if (full) {
+                B <- A*0
+		if (Amat) B[ind,] <- t(Sl[[b]]$AS(t(A[ind,]),Sl)) else
+	                  B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl))
+                A <- B
+              } else {
+                A <- if (Amat) t(Sl[[b]]$AS(t(A[ind,]),Sl)) else drop(Sl[[b]]$AS(A[ind],Sl))
+              }
+            } ## non-linear
           } else { ## multi-S block
             ind <- if (Sl[[b]]$repara) (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind] else Sl[[b]]$start:Sl[[b]]$stop
             if (full) { ## return zero answer with all zeroes in place
@@ -969,7 +1003,9 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
 } ## end Sl.mult
 
 Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
-## returns a list containing the product of each element S of Sl
+## returns a list containing the derivative of the penalty w.r.t
+## each smoothing/variance parameter multiplied by A. For linear terms 
+## this is just the product of each element S of Sl
 ## with A. If full==TRUE then the results include the zero rows
 ## otherwise these are stripped out, but in that case each element 
 ## of the return object contains an "ind" attribute, indicating 
@@ -979,7 +1015,22 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
   k <- 0 ## component counter
   nb <- length(Sl) ## number of blocks
   if (nb>0) for (b in 1:nb) { ## block loop
-    if (length(Sl[[b]]$S)==1) { ## singleton
+      if (!Sl[[b]]$linear) { ## non-linear term
+        ind <- Sl[[b]]$start:Sl[[b]]$stop
+        for (i in 1:Sl[[b]]$n.sp) { ## loop over its paramaters
+	  k <- k + 1  
+          if (full) {
+	    B <- A*0
+            if (Amat) B[ind,] <- t(Sl[[b]]$AdS(t(A[ind,,drop=FALSE]),Sl,i)) else
+	              B[ind] <- drop(Sl[[b]]$AdS(A[ind],Sl,i))
+            SA[[k]] <- B
+	  } else {
+	    SA[[k]] <- if (Amat) t(Sl[[b]]$AdS(t(A[ind,,drop=FALSE]),Sl,i)) else
+	                         drop(Sl[[b]]$AdS(A[ind],Sl,i))
+            attr(SA[[k]],"ind") <- ind
+	  }
+        }
+      } else if (length(Sl[[b]]$S)==1) { ## singleton
       k <- k + 1
       ind <- Sl[[b]]$start:Sl[[b]]$stop
       if (Sl[[b]]$repara) {
@@ -990,8 +1041,8 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
                     B[ind] <- Sl[[b]]$lambda*A[ind]
           SA[[k]] <- B
         } else { ## strip zero rows from answer
-          if (Amat) SA[[k]] <- Sl[[b]]$lambda*A[ind,,drop=FALSE] else
-                    SA[[k]] <- as.numeric(Sl[[b]]$lambda*A[ind])
+          SA[[k]] <- if (Amat)  Sl[[b]]$lambda*A[ind,,drop=FALSE] else
+                                drop(Sl[[b]]$lambda*A[ind])
           attr(SA[[k]],"ind") <- ind
         }
       } else {
@@ -1001,8 +1052,8 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
                     B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind]
           SA[[k]] <- B
         } else { ## strip zero rows from answer
-          if (Amat) SA[[k]] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,,drop=FALSE] else
-                    SA[[k]] <- as.numeric(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind])
+          SA[[k]] <- if (Amat)  Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,,drop=FALSE] else
+                                drop(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind])
           attr(SA[[k]],"ind") <- ind
         }
       }
@@ -1107,7 +1158,7 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
 ## rssj and bSbj only contain the terms that will not cancel in rssj + bSbj
   Sb <- Sl.mult(Sl,beta,k = 0)          ## unpivoted
   Skb <- Sl.termMult(Sl,beta,full=TRUE) ## unpivoted
-  nd <- length(Skb)
+  nd <- length(Skb) ## number of derivatives
   np <- length(beta)
   db <- matrix(0,np,nd)
   rss1 <- bSb1 <- rep(0,nd)

@@ -2094,6 +2094,9 @@ smooth.construct.fs.smooth.spec <- function(object,data,knots) {
     object$margin[[2]] <- object
     object$margin[[2]]$X <- rp$X
     object$margin[[2]]$margin.only <- TRUE
+    object$margin[[2]]$tensor.possible <- NULL
+    object$margin[[2]]$margin <- NULL
+    object$margin[[2]]$term <- object$term[!object$term%in%object$fterm]
     ## list(X=rp$X,term=object$base$term,base=object$base,margin.only=TRUE,P=object$P,by="NA")
     ## class(object$margin[[2]]) <- "fs.interaction"
     ## note --- no re-ordering at present - inefficiecnt as factor should really
