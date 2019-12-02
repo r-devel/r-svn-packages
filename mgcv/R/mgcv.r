@@ -1100,10 +1100,13 @@ gam.setup <- function(formula,pterms,
                        null.space.penalty=select,sparse.cons=sparse.cons,
                        diagonal.penalty=diagonal.penalty,apply.by=apply.by,modCon=modCon)
     }
-    for (j in 1:length(sml)) {
-      newm <- newm + 1
-      sm[[newm]] <- sml[[j]]
-    }
+    #for (j in 1:length(sml)) {
+    #  newm <- newm + 1
+    #  sm[[newm]] <- sml[[j]]
+    #}
+    ind <- 1:length(sml)
+    sm[ind+newm] <- sml[ind]
+    newm <- newm + length(sml)
   }
   
   G$m <- m <- newm ## number of actual smooths
@@ -1129,8 +1132,8 @@ gam.setup <- function(formula,pterms,
   if (m>0) for (i in 1:m) {
     id <- sm[[i]]$id
     ## get the L matrix for this smooth...
-    length.S <- length(sm[[i]]$S)
-    if (is.null(sm[[i]]$L)) Li <- diag(length.S) else Li <- sm[[i]]$L 
+    length.S <- if (is.null(sm[[i]]$updateS)) length(sm[[i]]$S) else sm[[i]]$n.sp ## deals with possibility of non-linear penalty
+    Li <- if (is.null(sm[[i]]$L)) diag(length.S) else sm[[i]]$L 
      
     if (length.S > 0) { ## there are smoothing parameters to name
        if (length.S == 1) lspn <- sm[[i]]$label else {

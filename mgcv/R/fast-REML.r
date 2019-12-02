@@ -152,8 +152,9 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
       if (!is.null(G$smooth[[i]]$updateS)) { ## then this block is nonlinear in smoothing parameters
         Sl[[b]]$repara <-FALSE
 	Sl[[b]]$linear <- FALSE
-	labs <- c("updateS","AS","AdS","ldS","St","n.sp")
+	labs <- c("inisp","updateS","AS","AdS","ldS","St","n.sp","nlinfo")
 	Sl[[b]][labs] <- G$smooth[[i]][labs] ## copy the non-linear interface functions
+	Sl[[b]]$lambda <- rep(0,Sl[[b]]$n.sp) ## dummy
       } else Sl[[b]]$linear <- TRUE
     }
 
@@ -230,11 +231,17 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
   E <- matrix(0,np,np) ## well scaled square root penalty
   lambda <- rep(0,0)
 
-  ## NOTE: computing transforms for repara blocks and then not using them
+  ## NOTE: computing transforms for repara=FALSE blocks and then not using them
   ##       looks wasteful - remove this??
 
   for (b in 1:length(Sl)) { ## once more into the blocks, dear friends...
-    if (length(Sl[[b]]$S)==1) { ## then we have a singleton
+    if (!Sl[[b]]$linear) { ## nonlinear term
+      ## never re-parameterized, but nee contribution to penalty square root, E
+      Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]])
+      lambda <- c(lambda,Sl[[b]]$lambda)
+      ind <- Sl[[b]]$start:Sl[[b]]$stop
+      E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E ## add to the square root    
+    } else if (length(Sl[[b]]$S)==1) { ## then we have a singleton
       if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
         ## Reparameterize so that S has 1's or zero's on diagonal
         ## In new parameterization smooth specific model matrix is X%*%diag(D)
@@ -696,11 +703,11 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
   rp <- list() ## reparameterization list
   if (root) E <- matrix(0,np,np) else E <- NULL
   if (length(Sl)>0) for (b in 1:length(Sl)) { ## work through blocks
-    ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
+    
     if (!Sl[[b]]$linear) { ## non-linear block
       ind <- k.sp + 1:Sl[[b]]$n.sp - 1 ## smoothing param index
-      Sl[[b]] <- Sl[[b]]$updateS(rho[ind],Sl[[b]]) ## update the block with current params
-      nldS <- Sl[[b]]$ldS(Sl,deriv) ## get the log determinant and any derivatives
+      Sl[[b]] <- Sl[[b]]$updateS(rho[ind],Sl[[b]]) ## update the block with current params 
+      nldS <- Sl[[b]]$ldS(Sl[[b]],deriv) ## get the log determinant and any derivatives
       ldS <- ldS + nldS$ldS
       nldS$ldS1 <- nldS$ldS1[!fixed[ind]] ## discard fixed param derivatives
       nderiv <- length(nldS$ldS1)
@@ -709,7 +716,12 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       k.deriv <- k.deriv + nderiv
       k.sp <- k.sp + Sl[[b]]$n.sp
       Sl[[b]]$lambda <- rho[ind] ## not really used in non-linear interface
+      if (root) {
+        ind <- Sl[[b]]$start:Sl[[b]]$stop
+	E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E
+      }
     } else if (length(Sl[[b]]$S)==1) { ## linear singleton
+      ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
       ldS <- ldS + rho[k.sp] * Sl[[b]]$rank
       if (!fixed[k.sp]) {
         d1.ldS[k.deriv] <- Sl[[b]]$rank
@@ -730,6 +742,7 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       Sl[[b]]$lambda <- exp(rho[k.sp])
       k.sp <- k.sp + 1 
     } else { ## linear multi-S block
+      ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
       m <- length(Sl[[b]]$S) ## number of components for this block
       ind <- k.sp:(k.sp+m-1) ## index for smoothing parameters
       ## call gam.reparam to deal with this block
@@ -916,8 +929,8 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
     for (b in 1:nb) { ## block loop
       ind <- Sl[[b]]$start:Sl[[b]]$stop ## index of coeffs for this bock
       if (!Sl[[b]]$linear) { ## non-linear block
-        if (Amat)  B[ind,] <- t(Sl[[b]]$AS(t(A[ind,]),Sl)) else
-	           B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl))
+        if (Amat)  B[ind,] <- t(Sl[[b]]$AS(t(A[ind,]),Sl[[b]])) else
+	           B[ind] <- drop(Sl[[b]]$AS(A[ind],Sl[[b]]))
       } else if (length(Sl[[b]]$S)==1) { ## singleton
         if (Sl[[b]]$repara) {
           ind <- ind[Sl[[b]]$ind]
@@ -1021,12 +1034,12 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
 	  k <- k + 1  
           if (full) {
 	    B <- A*0
-            if (Amat) B[ind,] <- t(Sl[[b]]$AdS(t(A[ind,,drop=FALSE]),Sl,i)) else
-	              B[ind] <- drop(Sl[[b]]$AdS(A[ind],Sl,i))
+            if (Amat) B[ind,] <- t(Sl[[b]]$AdS(t(A[ind,,drop=FALSE]),Sl[[b]],i)) else
+	              B[ind] <- drop(Sl[[b]]$AdS(A[ind],Sl[[b]],i))
             SA[[k]] <- B
 	  } else {
-	    SA[[k]] <- if (Amat) t(Sl[[b]]$AdS(t(A[ind,,drop=FALSE]),Sl,i)) else
-	                         drop(Sl[[b]]$AdS(A[ind],Sl,i))
+	    SA[[k]] <- if (Amat) t(Sl[[b]]$AdS(t(A[ind,,drop=FALSE]),Sl[[b]],i)) else
+	                         drop(Sl[[b]]$AdS(A[ind],Sl[[b]],i))
             attr(SA[[k]],"ind") <- ind
 	  }
         }
@@ -1159,6 +1172,38 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
   Sb <- Sl.mult(Sl,beta,k = 0)          ## unpivoted
   Skb <- Sl.termMult(Sl,beta,full=TRUE) ## unpivoted
   nd <- length(Skb) ## number of derivatives
+  cd <- FALSE
+  if (cd) { ## check derivatives
+    k <- 0
+    eps <- 1e-6
+    eeps <- exp(eps)
+    fdSk <- list()
+    for (b in 1:length(Sl)) {
+      if (Sl[[b]]$linear) {
+        ind <- 1:length(Sl[[b]]$S)
+	for (i in ind) {
+	  Sl[[b]]$lambda[i] <- Sl[[b]]$lambda[i]*eeps
+	  Sb1 <- Sl.mult(Sl,beta,k = 0)
+	  Sl[[b]]$lambda[i] <- Sl[[b]]$lambda[i]/eeps
+          k <- k + 1
+          fdSk[[k]] <- (Sb1-Sb)/eps
+	}
+      } else {
+        ind <- 1:Sl[[b]]$n.sp
+	theta <- Sl[[b]]$lambda
+	for (i in ind) {
+	  theta[i] <- theta[i] + eps
+	  Sl[[b]] <- Sl[[b]]$updateS(theta,Sl[[b]])
+	  theta[i] <- theta[i] - eps
+	  Sb1 <- Sl.mult(Sl,beta,k = 0)
+	  k <- k + 1
+          fdSk[[k]] <- (Sb1-Sb)/eps
+	}
+	Sl[[b]] <- Sl[[b]]$updateS(theta,Sl[[b]])
+      }
+    }
+    plot(Skb[[1]],fdSk[[1]])
+  } ## if cd deriv check
   np <- length(beta)
   db <- matrix(0,np,nd)
   rss1 <- bSb1 <- rep(0,nd)
