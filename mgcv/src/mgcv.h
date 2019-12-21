@@ -60,6 +60,8 @@
 /* For safe memory handling from R... */
 #define CALLOC R_chk_calloc
 #define FREE R_chk_free
+#define REALLOC R_chk_realloc
+
 /* BUT, this can mess up valgrinding for memory error checking - problems are 
    sometimes missed because standard allocation is being circumvented. Then errors can 
    corrupt R memory management without detection and trigger nothing until R
@@ -208,6 +210,12 @@ SEXP mgcv_Rpbacksolve(SEXP R, SEXP B,SEXP NT);
 SEXP mgcv_Rpcross(SEXP A, SEXP NT,SEXP NB);
 SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag);
 
+/* sparse matrix routines */
+SEXP stmm(SEXP X); /* row Kronecker product */
+SEXP sdiagXVXt(SEXP X, SEXP V, SEXP LT, SEXP RT);
+SEXP sXbd(SEXP X,SEXP BETA,SEXP LT);
+SEXP sXyd(SEXP X,SEXP Y,SEXP LT);
+SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT);
 
 /* basis constructor/prediction routines*/
 

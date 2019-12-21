@@ -668,16 +668,24 @@ tensor.prod.model.matrix <- function(X) {
 # X is a list of model matrices, from which a tensor product model matrix is to be produced.
 # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
 # column-wise, for efficiency, and does work in compiled code.
-  m <- length(X)              ## number to row tensor product
-  d <- unlist(lapply(X,ncol)) ## dimensions of each X
-  n <- nrow(X[[1]])           ## columns in each X
-  X <- as.numeric(unlist(X))  ## append X[[i]]s columnwise
-  T <- numeric(n*prod(d))     ## storage for result
-  .Call(C_mgcv_tmm,X,T,d,m,n) ## produce product
-  ## Give T attributes of matrix. Note that initializing T as a matrix 
-  ## requires more time than forming the row tensor product itself (R 3.0.1)
-  attr(T,"dim") <- c(n,prod(d)) 
-  class(T) <- "matrix"
+  if (inherits(X[[1]],"dgCMatrix")) {
+    if (any(!unlist(lapply(X,class)) %in% "dgCMatrix"))
+      stop("matrices must be all class dgCMatrix or all class matrix")
+    T <- .Call(C_stmm,X)
+  } else {
+    if (any(!unlist(lapply(X,class)) %in% "matrix"))
+       stop("matrices must be all class dgCMatrix or all class matrix")
+    m <- length(X)              ## number to row tensor product
+    d <- unlist(lapply(X,ncol)) ## dimensions of each X
+    n <- nrow(X[[1]])           ## rows in each X
+    X <- as.numeric(unlist(X))  ## append X[[i]]s columnwise
+    T <- numeric(n*prod(d))     ## storage for result
+    .Call(C_mgcv_tmm,X,T,d,m,n) ## produce product
+    ## Give T attributes of matrix. Note that initializing T as a matrix 
+    ## requires more time than forming the row tensor product itself (R 3.0.1)
+    attr(T,"dim") <- c(n,prod(d)) 
+    class(T) <- "matrix"
+  }  
   T
 } ## end tensor.prod.model.matrix
 

@@ -2267,7 +2267,7 @@ tens2matrix <- function(X,ts,dt) {
 } ## tens2matrix
 
 
-terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE) {
+terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE,sparse=FALSE) {
 ## takes a terms object or formula and converts it into a sequence of marginal model matrices, X
 ## and associated indices ts and dt, using the data in 'data'. drops the intercept if needed.
 ## If 'identify' then identifiability constraints/contrasts imposed, otherwise not. 
@@ -2307,11 +2307,11 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE) {
       vn <- varn[as.logical(fac[,i])]
       if (no.int||!identify) {
         fm <- as.formula(paste("~",vn,"-1"))
-        if (!dummy) X[[k]] <- model.matrix(fm,data)
+        if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data) else model.matrix(fm,data)
         no.int <- FALSE
       } else {
         fm <- as.formula(paste("~",vn))
-        if (!dummy) X[[k]] <- model.matrix(fm,data)[,-1,drop=FALSE]
+        if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data)[,-1,drop=FALSE] else model.matrix(fm,data)[,-1,drop=FALSE]
       }
       xname[k] <- if (!dummy && vn %in% names(data)) vn else all.vars(fm)
       if (!dummy) p[i+intercept] = ncol(X[[k]])
@@ -2322,10 +2322,10 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE) {
         vn <- varn[m[j]]
         if (fac[m[j],i]==2||!identify) { ## no contrast
 	  fm <- as.formula(paste("~",vn,"-1"))
-	  if (!dummy) X[[k]] <- model.matrix(fm,data)
+	  if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data) else model.matrix(fm,data)
 	} else { ## with contrast
           fm <- as.formula(paste("~",vn))
-	  if (!dummy) X[[k]] <- model.matrix(fm,data)[,-1,drop=FALSE]
+	  if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data)[,-1,drop=FALSE] else model.matrix(fm,data)[,-1,drop=FALSE]
         }
 	xname[k] <- if (!dummy && vn %in% names(data)) vn else all.vars(fm)
 	if (!dummy) p[i+intercept] <- p[i+intercept] * ncol(X[[k]])

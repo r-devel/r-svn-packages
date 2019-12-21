@@ -23,6 +23,11 @@ R_CallMethodDef CallMethods[] = {
   { "Rkdtree",(DL_FUNC)&Rkdtree,1},
   {"Rkdnearest",(DL_FUNC)&Rkdnearest,4},
   {"Rkradius",(DL_FUNC)&Rkradius,5},
+  {"sXWXd",(DL_FUNC)&sXWXd,5},
+  {"sXbd",(DL_FUNC)&sXbd,3},
+  {"sXyd",(DL_FUNC)&sXyd,3},
+  {"sdiagXVXt",(DL_FUNC)&sdiagXVXt,4},
+  {"stmm",(DL_FUNC)&stmm,1},
   {NULL, NULL, 0}
 };
 

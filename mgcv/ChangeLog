@@ -37,6 +37,9 @@ present, and reparameterization needs checking (also for bam).
 
 * Internal Sl list handling changes.
 
+* tensor.prod.model.matrix now also works with sparse matrices of class 
+  "dgCMatrix".
+
 1.8-31
 
 * fix in initalization in gammPQL 

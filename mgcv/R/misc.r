@@ -2,6 +2,8 @@
 ## Many of the following are simple wrappers for C functions
 
 "%.%" <- function(a,b) {
+  if (inherits(a,"dgCMatrix")||inherits(b,"dgCMatrix"))
+  tensor.prod.model.matrix(list(as(a,"dgCMatrix"),as(b,"dgCMatrix"))) else
   tensor.prod.model.matrix(list(as.matrix(a),as.matrix(b)))
 }
 
@@ -176,6 +178,45 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   nx <- length(X);nt <- length(ts)
   n <- length(w);pt <- 0;
   for (i in 1:nt) pt <- pt + prod(p[ts[i]:(ts[i]+dt[i]-1)]) - as.numeric(qc[i]>0)
+ 
+  if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
+    if (length(ar.stop)>1||ar.stop!=-1) warning("AR not available with sparse marginals")
+    ## create list for passing to C
+    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m$off <- attr(X,"off"); m$r <- attr(X,"r")
+    if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
+    ### code that could create the marginal reverse indices...
+    #for (j in 1:nrow(m$ks)) {
+    #nr <- nrow(m$Xd[[j]]) ## make sure we always tab to final stored row 
+    #for (i in m$ks[j,1]:(m$ks[j,2]-1)) {
+    #  m$r[,i] <- (1:length(m$kd[,i]))[order(m$kd[,i])]
+    #  m$off[[i]] <- cumsum(c(1,tabulate(m$kd[,i],nbins=nr)))-1
+    #}
+    m$offstart <- cumsum(c(0,lapply(m$off,length)))
+    m$off <- unlist(m$off)
+    ## Now C base all indices...
+    m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
+    nthreads <- as.integer(nthreads)
+    w <- as.double(w)
+    if ((!is.null(lt)||!is.null(rt))&&!is.null(drop)) {
+      lpip <- attr(X,"lpip") ## list of coefs for each term
+      rpi <- unlist(lpip[rt])
+      lpi <- unlist(lpip[lt])
+      if (is.null(lt)) lpi <- rpi
+      else if (is.null(rt)) rpi <- lpi
+      ldrop <- which(lpi %in% drop)
+      rdrop <- which(lpi %in% drop)
+    } else rdrop <- ldrop <- drop 
+    
+    lt <- if (is.null(lt)) as.integer(1:nt) else as.integer(lt)
+    rt <- if (is.null(rt)) as.integer(1:nt) else as.integer(rt)
+    XWX <- .Call(C_sXWXd,m,w,lt,rt,nthreads)
+    if (!is.null(drop)) {
+      Dl <- Diagonal(ncol(XWX),1)
+      XWX <- D[-ldrop,] %*% XWX %*% t(D[-rdrop,])
+    }
+    return(XWX) ## note that this is sparse
+  }
   ## block oriented code...
   if (is.null(lt)&&is.null(lt)) {
     #t0 <- system.time(
@@ -248,14 +289,29 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
     pt <- length(lpi)
   }
   cy <- if (is.matrix(y)) ncol(y) else 1
-  oo <- .C(C_XWyd,XWy=rep(0,pt*cy),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
+  if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
+    if (cy>1) stop("sparse XWyd with matrix y not coded") ## just loop for this?    
+    ## create list for passing to C
+    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m$off <- attr(X,"off"); m$r <- attr(X,"r")
+    if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
+    m$offstart <- cumsum(c(0,lapply(m$off,length)))
+    m$off <- unlist(m$off)
+    ## Now C base all indices...
+    m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
+    Wy <- as.double(w*y);lt <- as.integer(lt)
+    XWy <- .Call(C_sXyd,m,Wy,lt)
+    if (!is.null(drop)) XWy <- XWy[-drop]
+  } else { ## dense marginals case  
+    oo <- .C(C_XWyd,XWy=rep(0,pt*cy),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
            ks=as.integer(ks-1),
            m=as.integer(m),p=as.integer(p),n=as.integer(n),cy=as.integer(cy), nx=as.integer(nx), ts=as.integer(ts-1), 
            dt=as.integer(dt),nt=as.integer(nt),v=as.double(unlist(v)),qc=as.integer(qc),
            ar.stop=as.integer(ar.stop-1),ar.row=as.integer(ar.row-1),ar.weights=as.double(ar.w),
 	   cs=as.integer(lt-1),ncs=as.integer(length(lt)))
-  if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
-  XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop] 
+    if (cy>1) XWy <- if (is.null(drop)) matrix(oo$XWy,pt,cy) else matrix(oo$XWy,pt,cy)[-drop,] else
+    XWy <- if (is.null(drop)) oo$XWy else oo$XWy[-drop] 
+  }
   XWy
 } ## XWyd 
 
@@ -273,50 +329,83 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
     if (is.matrix(beta)) b[-drop,] <- beta else b[-drop] <- beta
     beta <- b
   }
-  if (is.null(lt)) {
-    lt <- 1:nt
-  }
-  lpip <- attr(X,"lpip")
-  if (!is.null(lpip)) { ## then X list may not be in coef order...
-    lpip <- unlist(lpip[lt])
-    beta <- if (is.matrix(beta)) beta[lpip,] else beta[lpip] ## select params required in correct order
-  }
+  if (is.null(lt)) lt <- 1:nt
+ 
   bc <- if (is.matrix(beta)) ncol(beta) else 1 ## number of columns in beta
-  oo <- .C(C_Xbd,f=as.double(rep(0,n*bc)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1),
+  if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
+    if (bc>1) stop("sparse Xbd with matrix beta not coded") ## just loop for this?    
+    ## create list for passing to C
+    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m$off <- attr(X,"off"); m$r <- attr(X,"r")
+    if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
+    m$offstart <- cumsum(c(0,lapply(m$off,length)))
+    m$off <- unlist(m$off)
+    ## Now C base all indices...
+    m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
+    beta <- as.double(beta);lt <- as.integer(lt)
+    Xb <- .Call(C_sXbd,m,beta,lt)
+  } else { ## dense marginals case
+    ## The C code mechanism for dealing with lt is very basic, and requires that beta is re-ordered and
+    ## truncated to relate only to the selected terms, in the order they are selected.  
+    lpip <- attr(X,"lpip")
+    if (!is.null(lpip)) { ## then X list may not be in coef order...
+      lpip <- unlist(lpip[lt])
+      beta <- if (is.matrix(beta)) beta[lpip,] else beta[lpip] ## select params required in correct order
+    }
+    oo <- .C(C_Xbd,f=as.double(rep(0,n*bc)),beta=as.double(beta),X=as.double(unlist(X)),k=as.integer(k-1),
            ks = as.integer(ks-1), 
            m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx), ts=as.integer(ts-1), 
            as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(bc),as.integer(lt-1),as.integer(length(lt)))
-  if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
+    Xb <- if (is.matrix(beta)) matrix(oo$f,n,bc) else oo$f
+  }
+  return(Xb)
 } ## Xbd
 
 diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
 ## discrete computation of diag(XVX')
-## BUGS: 1. X list may not be in coefficient order - in which case V has to be re-ordered according to lpip
-##          attribute of X (if non-null)
-##       2. It doesn't seem to work if terms are dropped, not from end, although Xbd seems to work in these cases.
 
   n <- if (is.matrix(k)) nrow(k) else length(k)
   m <- unlist(lapply(X,nrow));p <- unlist(lapply(X,ncol))
   nx <- length(X);nt <- length(ts)
-  if (!is.null(drop)) { 
-    pv <- ncol(V)+length(drop)
-    V0 <- matrix(0,pv,pv)
-    V0[-drop,-drop] <- V
-    V <- V0;rm(V0)
-  } else pv <- ncol(V)
   if (is.null(lt)) lt <- 1:nt
   if (is.null(rt)) rt <- 1:nt
-  lpip <- attr(X,"lpip")
-  if (!is.null(lpip)) { ## then X list may not be in coef order...
-    lpi <- unlist(lpip[lt])
-    rpi <- unlist(lpip[rt])
-    V <- V[lpi,rpi] ## select part of V required required in correct order
-  }
-  oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
+  if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
+    ## create list for passing to C
+    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m$off <- attr(X,"off"); m$r <- attr(X,"r")
+    if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
+    m$offstart <- cumsum(c(0,lapply(m$off,length)))
+    m$off <- unlist(m$off)
+    ## Now C base all indices...
+    m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
+    lt <- as.integer(lt);rt <- as.integer(rt)
+    if (!is.null(drop)) {
+      D <- Diagonal(ncol(V)+length(drop),1)[-drop,]
+      V <- t(D) %*% V %*% D
+    }
+    D <- .Call(C_sdiagXVXt,m , V, lt, rt)
+  } else { ## dense marginals
+    if (!is.null(drop)) { 
+      pv <- ncol(V)+length(drop)
+      V0 <- matrix(0,pv,pv)
+      V0[-drop,-drop] <- V
+      V <- V0;rm(V0)
+    } else pv <- ncol(V)
+    ## The C code mechanism for dealing with rt and lt is very basic, and requires that V is
+    ## re-ordered and truncated to relate only to the selected terms, in the order they are selected.  
+    lpip <- attr(X,"lpip")
+    if (!is.null(lpip)) { ## then X list may not be in coef order...
+      lpi <- unlist(lpip[lt])
+      rpi <- unlist(lpip[rt])
+      V <- V[lpi,rpi] ## select part of V required in correct order
+    }
+    oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
            ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx),
 	   ts=as.integer(ts-1), as.integer(dt), as.integer(nt),as.double(unlist(v)),as.integer(qc),as.integer(nrow(V)),as.integer(ncol(V)),
 	   as.integer(nthreads),as.integer(lt-1),as.integer(length(lt)),as.integer(rt-1),as.integer(length(rt)))
-  oo$diag
+    D <- oo$diag
+  }
+  D
 } ## diagXVXd
 
 dchol <- function(dA,R) {
