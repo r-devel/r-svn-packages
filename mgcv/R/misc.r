@@ -182,7 +182,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
     if (length(ar.stop)>1||ar.stop!=-1) warning("AR not available with sparse marginals")
     ## create list for passing to C
-    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
     ### code that could create the marginal reverse indices...
@@ -208,8 +208,8 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
       rdrop <- which(lpi %in% drop)
     } else rdrop <- ldrop <- drop 
     
-    lt <- if (is.null(lt)) as.integer(1:nt) else as.integer(lt)
-    rt <- if (is.null(rt)) as.integer(1:nt) else as.integer(rt)
+    lt <- if (is.null(lt)) as.integer(1:nt-1) else as.integer(lt-1)
+    rt <- if (is.null(rt)) as.integer(1:nt-1) else as.integer(rt-1)
     XWX <- .Call(C_sXWXd,m,w,lt,rt,nthreads)
     if (!is.null(drop)) {
       Dl <- Diagonal(ncol(XWX),1)
@@ -290,18 +290,19 @@ XWyd <- function(X,w,y,k,ks,ts,dt,v,qc,drop=NULL,ar.stop=-1,ar.row=-1,ar.w=-1,lt
   }
   cy <- if (is.matrix(y)) ncol(y) else 1
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
-    if (cy>1) stop("sparse XWyd with matrix y not coded") ## just loop for this?    
+    #if (cy>1) stop("sparse XWyd with matrix y not coded") ## just loop for this?    
     ## create list for passing to C
-    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
     m$offstart <- cumsum(c(0,lapply(m$off,length)))
     m$off <- unlist(m$off)
     ## Now C base all indices...
     m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
-    Wy <- as.double(w*y);lt <- as.integer(lt)
+    Wy <- as.double(w*y);lt <- as.integer(lt-1)
     XWy <- .Call(C_sXyd,m,Wy,lt)
-    if (!is.null(drop)) XWy <- XWy[-drop]
+    if (cy>1) XWy <- matrix(XWy,ncol=cy)
+    if (!is.null(drop)) XWy <- if (cy>1) XWy[-drop,] else XWy[-drop]
   } else { ## dense marginals case  
     oo <- .C(C_XWyd,XWy=rep(0,pt*cy),y=as.double(y),X=as.double(unlist(X)),w=as.double(w),k=as.integer(k-1), 
            ks=as.integer(ks-1),
@@ -333,17 +334,19 @@ Xbd <- function(X,beta,k,ks,ts,dt,v,qc,drop=NULL,lt=NULL) {
  
   bc <- if (is.matrix(beta)) ncol(beta) else 1 ## number of columns in beta
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
-    if (bc>1) stop("sparse Xbd with matrix beta not coded") ## just loop for this?    
+    ##if (bc>1) stop("sparse Xbd with matrix beta not coded") ## just loop for this?    
     ## create list for passing to C
-    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
     m$offstart <- cumsum(c(0,lapply(m$off,length)))
     m$off <- unlist(m$off)
     ## Now C base all indices...
     m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
-    beta <- as.double(beta);lt <- as.integer(lt)
+    beta <- as.matrix(beta);storage.mode(beta) <- "double"
+    lt <- as.integer(lt-1)
     Xb <- .Call(C_sXbd,m,beta,lt)
+    if (bc>1) Xb <- matrix(Xb,ncol=bc)
   } else { ## dense marginals case
     ## The C code mechanism for dealing with lt is very basic, and requires that beta is re-ordered and
     ## truncated to relate only to the selected terms, in the order they are selected.  
@@ -371,14 +374,14 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
   if (is.null(rt)) rt <- 1:nt
   if (inherits(X[[1]],"dgCMatrix")) { ## the marginals are sparse
     ## create list for passing to C
-    m <- list(Xd=X,kd=kd,ks=ks,v=v,ts=ts,dt=dt,qc=qc,off=list(),r=kd*0)
+    m <- list(Xd=X,kd=k,ks=ks,v=v,ts=ts,dt=dt,qc=qc)
     m$off <- attr(X,"off"); m$r <- attr(X,"r")
     if (is.null(m$off)||is.null(m$r)) stop("reverse indices missing from sparse discrete marginals")
     m$offstart <- cumsum(c(0,lapply(m$off,length)))
     m$off <- unlist(m$off)
     ## Now C base all indices...
     m$ks <- m$ks - 1; m$kd <- m$kd - 1; m$r <- m$r - 1; m$ts <- m$ts-1
-    lt <- as.integer(lt);rt <- as.integer(rt)
+    lt <- as.integer(lt-1);rt <- as.integer(rt-1)
     if (!is.null(drop)) {
       D <- Diagonal(ncol(V)+length(drop),1)[-drop,]
       V <- t(D) %*% V %*% D

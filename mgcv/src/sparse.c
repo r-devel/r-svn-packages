@@ -265,6 +265,19 @@ void spMtv(spMat *M,double *v,double *u,int add) {
   }  
 } /* spMtv */ 
 
+void spMtA(spMat *M,double *A,double *B,int c,int add) {
+/* Forms B = M'A where M is a sparse matrix and A a dense M.m by c matrix 
+   B is obviously M.c by c. 
+*/
+  int i,j,k,Mm,Mc,*Mi,*Mp;
+  double *Mx;
+  Mm = M->m;Mc = M->c;Mi = M->i;Mp = M->p;Mx = M->x;
+  if (!add) for (j=0;j < Mm * c ;j++) B[j] = 0.0;
+  for (j=0;j < Mc;j++) { /* cols of M */
+    for (i=Mp[j];i<Mp[j+1];i++) for (k=0;k<c;k++) B[j + k* Mc] += A[Mi[i]+Mm*k] * Mx[i];
+  }  
+} /* spMv */ 
+
 void spMv(spMat *M,double *v,double *u) {
 /* Forms u = Mv where M is a sparse matrix and v a dense M.c vector */
   int i,j,Mm,Mc,*Mi,*Mp;
@@ -1018,11 +1031,11 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
 */
   spMat *Xs,*Xj;
   int mx,i,j,k,q,out_start,n,bb,nzmax=0,*dim,*kd,*ks,*r,*off_start,*off,nt,
-    *ts,*dt,*qc,*lt,nlt,*dn,*ki,*c,*p,P,s,l,ii,b,c0,os,qq,nc=0,no=0,*tps;
+    *ts,*dt,*qc,*lt,nlt,*dn,*ki,*c,*p,P,s,l,ii,b,c0,os,qq,nc=0,no=0,*tps,cy,yj;
   SEXP Xd,M,XY,
     i_sym,x_sym,dim_sym,p_sym,
     KD,R,KS,OFF,TS,DT,QC,V,OFFS;
-  double **v,*y,*Xy,*yb,*My,*Xyo;
+  double **v,*y,*Xy,*yb,*My,*Xyo,*yp;
   p_sym = install("p");
   dim_sym = install("Dim");
   i_sym = install("i");
@@ -1086,6 +1099,7 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
   nlt = length(LT);lt = INTEGER(LT);
   for (i=0;i<nlt;i++) if (qc[lt[i]]) nc++; /* count actual constraints */
   y = REAL(Y);
+  cy = length(Y)/n; // cols of y
   out_start = 0;
   /* figure out length of return vector, Xy, and allocate it... */
   for (ii=bb=no=i=0;i<nlt;i++) {
@@ -1096,7 +1110,7 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
     if (ii<dt[b]) ii=dt[b]; /* maximum number of marginals */
   }  
  
-  Xy = (double *) CALLOC((size_t) no,sizeof(double *));
+  Xy = (double *) CALLOC((size_t) no*cy,sizeof(double *));
   yb = (double *) CALLOC((size_t) bb,sizeof(double *));
   c = (int *) CALLOC((size_t)ii,sizeof(int)); 
   p = (int *) CALLOC((size_t)ii,sizeof(int)); /* storage for marginal numbers of columns */ 
@@ -1107,13 +1121,16 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
     b = lt[bb]; /* block to proccess next */
     tps[bb]=out_start;
     if (dt[b] == 1) { /* singleton */
-      for (i=0;i<Xs[ts[b]].m;i++) yb[i] = 0.0;
-      for (s=0;s<Xs[ts[b]].nk;s++) { /* loop for any summation convention */
-        ki = Xs[ts[b]].k+s*n;
-        for (i=0;i<n;i++) yb[ki[i]] += y[i]; /* accumulate to yb using index for compressed matrix */
-      }
-      /* now form the singleton product */
-      spMtv(Xs + ts[b],yb,Xy + out_start,0);
+      for (yj=0;yj<cy;yj++) { /* loop over cols of y */
+	yp = y + yj * n; // current col of y
+        for (i=0;i<Xs[ts[b]].m;i++) yb[i] = 0.0;
+        for (s=0;s<Xs[ts[b]].nk;s++) { /* loop for any summation convention */
+          ki = Xs[ts[b]].k+s*n;
+          for (i=0;i<n;i++) yb[ki[i]] += yp[i]; /* accumulate to yb using index for compressed matrix */ 
+        }
+        /* now form the singleton product */
+        spMtv(Xs + ts[b],yb,Xy + yj*no + out_start,0);
+      }	
       out_start += Xs[ts[b]].c;
     } else { /* tensor */
       for (P=1,i=0;i<dt[b]-1;i++) {
@@ -1125,7 +1142,9 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
       /* for tensor products the summation handling should be external to the product 
          formation, otherwise storage of partial products can't work without potentially
          very large storage costs */
-      for (os = out_start,s=0;s<Xs[ts[b]].nk;s++) { /* loop for any summation convention */
+      os = out_start;
+      for (yp=y,yj=0;yj<cy;yj++,yp += n)  /* loop over cols of y */
+      for (s=0;s<Xs[ts[b]].nk;s++) { /* loop for any summation convention */
         k = 0;out_start=os;
 	for (i=0;i<dt[b];i++) c[i] = 0; /* clear the column index counter */
 	if (s) for (i=0;i<n;i++) dn[i] = 0;
@@ -1142,14 +1161,14 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
 	        dn[i]++;
 	        /* get required partial column products with y... */
 	        if (j>0) My[i+n*j] = My[i+n*(j-1)]*Xj->x[q];
-	        else My[i] = y[i] * Xj->x[q];
+	        else My[i] = yp[i] * Xj->x[q];
 	        if (j==dt[b]-2) yb[ki[i]] += My[i+j*n]; /* accumulate according to final marg index */ 
 	      }  
 	    }
 	  }  
 	
-	  spMtv(Xs + ts[b]+dt[b]-1,yb,Xy + out_start,s); /* clear at s=0, add thereafter */
-	  out_start += Xs[ts[b]+dt[b]-1].c;
+	  spMtv(Xs + ts[b]+dt[b]-1,yb,Xy + yj*no + out_start,s); /* clear at s=0, add thereafter */
+	  out_start += Xs[ts[b]+dt[b]-1].c; // BUG?? how can this be updated inside summation loop??
 	  /* now update the column counter and figure out which partial products
              have to be updated.. */
 	  k = dt[b]-2;c[k]++;
@@ -1172,17 +1191,17 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
   } /* smooth terms */
   tps[bb] = out_start;
   /* Now copy result to an output vector, dealing with any constraints at the same time */
-  PROTECT(XY=allocVector(REALSXP,no-nc)); /* vector of dimension of Xy, less number of constraints */
+  PROTECT(XY=allocVector(REALSXP,cy*(no-nc))); /* vector of dimension of Xy, less number of constraints */
   Xyo=REAL(XY);
-  i=0; /* index for output */
-  for (bb=0;bb<nlt;bb++) {
+  for (yp=Xy,yj=0;yj<cy;yj++,Xyo += no-nc,yp += no)
+  for (i=bb=0;bb<nlt;bb++) {
     b = lt[bb]; /* current block */
     if (qc[b]) { /* apply constraint */
       k = tps[bb+1]-tps[bb]; /* term dimension, pre-constraint */
-      left_con_vec(Xy+tps[bb],v[b],Xyo+i,k,0);
+      left_con_vec(yp+tps[bb],v[b],Xyo+i,k,0);
       i += k-1; /* update output vector index */
     } else { /* no constraint - just copy */
-      for (j=tps[bb];j<tps[bb+1];j++,i++) Xyo[i] = Xy[j];
+      for (j=tps[bb];j<tps[bb+1];j++,i++) Xyo[i] = yp[j];
     }  
   }  
   
@@ -1493,7 +1512,7 @@ SEXP sXbd(SEXP X,SEXP BETA,SEXP LT) {
 /* Form X beta */
   spMat *Xs/*,sbeta0*/;
   int bp,mx,i,j,k,n,nzmax=0,*dim,*kd,*ks,*r,*off_start,*off,nt,
-    *ts,*dt,*qc,*lt,nlt,maxd,nc,*worki,maxm=0;
+    *ts,*dt,*qc,*lt,nlt,maxd,nc,*worki,maxm=0,bc;
   SEXP Xd,M,
     i_sym,x_sym,dim_sym,p_sym,
     KD,R,KS,OFF,TS,DT,QC,V,XB,OFFS;
@@ -1563,12 +1582,13 @@ SEXP sXbd(SEXP X,SEXP BETA,SEXP LT) {
   }
   for (maxd=i=0;i<nt;i++) if (maxd<dt[i]) maxd=dt[i];
   nlt = length(LT);lt = INTEGER(LT);
-  PROTECT(XB=allocVector(REALSXP,n)); /* vector for X beta */
-  Xb=REAL(XB);
-  for (i=0;i<n;i++) Xb[i] = 0.0;
- 
   beta0 = REAL(BETA); // raw beta
-  bp = length(BETA);
+  //bp = length(BETA);
+  bp = nrows(BETA);bc = ncols(BETA);
+  PROTECT(XB=allocVector(REALSXP,n*bc)); /* vector for X beta */
+  Xb=REAL(XB);
+  for (i=0;i<n*bc;i++) Xb[i] = 0.0;
+ 
   //k = n*maxd+2*(bp+nc) + maxm; // sparse version
   k = n*maxd+bp+nc; // dense version 
   work = (double *)CALLOC((size_t) k,sizeof(double));
@@ -1585,8 +1605,9 @@ SEXP sXbd(SEXP X,SEXP BETA,SEXP LT) {
   sXbsdwork(Xb,&a,sbeta0,bp,Xs,v,qc,nt,ts,dt,lt,nlt,n,work,worki,1);
   spfree(&sbeta0,1);
   */
-  sXbdwork(Xb,&a,beta0,bp,Xs,v,qc,nt,ts,dt,lt,nlt,n,work,worki,1);
-
+  for (j=0;j<bc;j++,beta0 += bp,Xb += n) 
+    sXbdwork(Xb,&a,beta0,bp,Xs,v,qc,nt,ts,dt,lt,nlt,n,work,worki,1);
+  
   FREE(worki);FREE(work);
   UNPROTECT(9);
   return(XB);
