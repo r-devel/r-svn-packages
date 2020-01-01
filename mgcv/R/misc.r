@@ -631,3 +631,15 @@ pmmult <- function(A,B,tA=FALSE,tB=FALSE,nt=1) {
           as.integer(c),as.integer(n),as.integer(nt));
  matrix(oo$C,r,c)
 }
+
+
+isa <- function(R,nt=1) {
+## Finds the elements of (R'R)^{-1} on NZP(R+R').
+  if (!inherits(R,c("dgCMatrix","dtCMatrix"))) stop("isa requires a dg/tCMatrix")
+  nt <- round(nt)
+  if (nt<1) nt = 1
+  Hpi <- R + t(R)
+  .Call(C_isa1p,t(R),Hpi,nt)
+  Hpi
+} ## isa
+

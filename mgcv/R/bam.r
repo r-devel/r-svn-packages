@@ -1968,8 +1968,11 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 	             terms2tensor(object$pterms[[j]],dk$mf)
       offi <- if (nlp==1&&!is.list(object$pterms)) attr(object$pterms,"offset") else attr(object$pterms[[j]],"offset")
       if (!is.null(offi)) {
-        offname <- if (nlp==1&&!is.list(object$pterms)) attr(object$pterms,"factor") else attr(object$pterms[[j]],"factor")
-	offname <- rownames(offname)[offi]
+        #offname <- if (nlp==1&&!is.list(object$pterms)) attr(object$pterms,"factor") else attr(object$pterms[[j]],"factor")
+	#offname <- rownames(offname)[offi]
+        offname <- if (nlp==1&&!is.list(object$pterms)) names(attr(object$pterms,"dataClasses"))[offi] else
+	                                                names(attr(object$pterms[[j]],"dataClasses"))[offi]
+        
 	if (j==1&&nlp>1) offset <- list()
 	if (nlp>1) offset[[j]] <- newdata[[offname]] else  offset <- newdata[[offname]]
       }

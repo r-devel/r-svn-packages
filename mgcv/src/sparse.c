@@ -1849,3 +1849,189 @@ SEXP stmm(SEXP X) {
 } /* stmm */
 
  
+/*** inverse subset algorithm ***/
+
+inline int kij(int *Ap,int *Ai,int i, int j) {
+/* find location of A[i,j] in Ax */ 
+  int k0,k1,kt;
+  k0 = Ap[j];k1 = Ap[j+1]-1;
+  if (Ai[k0]==i) return(k0);
+  if (Ai[k1]==i) return(k1);
+  while(1) {
+    //global_ops++;
+    kt = (k0+k1)/2;
+    if (Ai[kt] == i) return(kt);
+    if (Ai[kt] < i) k0 = kt; else k1 = kt;
+  }
+} /* kij */
+
+
+SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
+/* Parallel version. Fine scale single column parallelization.
+
+   Inverse subset algorithm adapted from Rue (2005). Idea is to compute the 
+   elements of S = (LL')^{-1} on the non-zero Pattern on L+L'. On entry 
+   L and S are of class "dgCMatrix" and S has the non-zero pattern of L+L'.
+   On exit S contains the required elements of the inverse.
+   The rate limiting step is the search for the matching non-zero elements in 
+   the intermost summation loop. This version uses an algorithm that 
+   simultaneously finds search brackets in S[,j] for each element in L[,i] 
+   (always the smaller) in the summation. Bisection is then used within the 
+   search bracket. It's only about 10% faster than simple bisection in reality!
+*/
+  
+  SEXP i_sym,x_sym,dim_sym,p_sym,kr;
+  int *Lp,*Li,*Sp,*Si,i,j,k,l,q,*dim,s,k0,k1,l0,l1,n,mm,
+    *li0,*li1,*lip,s0,s1,s2,m,*ul,*ll,*ul0,*ll0,kk,*ulk,*ulq,*llq,*llq1,*llk,*liq,nt,tid;
+  //long long int ops=0; 
+  double *Lx,*Sx,x=0.0,Lii,*lxp;
+  //global_ops=0;
+  /* register the names of the slots in X and XWX */
+  p_sym = install("p");
+  dim_sym = install("Dim");
+  i_sym = install("i");
+  x_sym = install("x");
+  nt = asInteger(NT); 
+  /* Get pointers to the relevant slots in L*/ 
+  Lp = INTEGER(R_do_slot(L,p_sym));
+  dim = INTEGER(R_do_slot(L,dim_sym));
+  n=dim[1];
+  Li = INTEGER(R_do_slot(L,i_sym));
+  Lx = REAL(R_do_slot(L,x_sym));
+
+  /* Now get pointers to slots in S */
+  Sp = INTEGER(R_do_slot(S,p_sym)); /* col j's elements lie between Sp[j] and Sp[j+1]-1 in x*/
+  Si = INTEGER(R_do_slot(S,i_sym)); /* row index corresponding to elements in x*/
+  Sx = REAL(R_do_slot(S,x_sym)); /* non-zero elements */
+
+  /* we need the maximum column length in L... */
+  for (mm=0,i=0;i<n;i++) {
+    j = Lp[i+1] - Lp[i]; if (j>mm) mm=j;
+  }  
+  /* allocate storage for the search interval limits... */
+  ll0 = ll = (int *)CALLOC((size_t)mm*nt,sizeof(int));
+  ul0 = ul = (int *)CALLOC((size_t)mm*nt,sizeof(int));
+  
+  for (i=n-1;i>=0;i--) { /* work down columns */
+    Lii = Lx[Lp[i]]; /* Lii is first element in ith col of L */
+    l0 = Lp[i]+1;l1 = Lp[i+1]; /* limits of L[,i] over which to sum */
+    li0 = Li + l0; li1 = Li + l1; /* pointers to row indices */
+    k1 = Sp[i+1]-1; // k0 = Sp[i];
+    k0 = kij(Sp,Si,i,i); /* get index for S[i,i] as we do not want to go further than this */
+    /* in fact elements j/k can be processed in any order, so openMP
+       parallel section could be used here. However calc is not 
+       block oriented */
+    tid = 0;
+    #ifdef _OPENMP
+#pragma omp parallel private(k,tid,ul,ll,j,m,q,s,s1,kk,ulq,llq,liq,llq1,s2,s0,x,lxp) num_threads(nt)
+    #endif 
+    { /* there seems to be little in it between blocking and by column threading */
+    #ifdef _OPENMP
+    #pragma omp for
+    #endif
+    for (k=k1;k>k0;k--) { /* work up rows of col i */
+      #ifdef _OPENMP
+      tid = omp_get_thread_num();
+      #endif
+      ul = ul0 + tid*mm;
+      ll = ll0 + tid*mm;
+      j = Si[k]; /* the row corresponding to stored element k */ 
+      /* Now compute S[i,j] which is S[j,i] which is in Sx[k] */
+      /* Loop over the ith column of L */
+      m = l1-l0; /* number of non zero elements in L[,i] */
+      if (m>0) {
+	s = kij(Sp,Si,*li0,j); /* location of Sp[Li[l0],j] */
+        s1 = kij(Sp,Si,li1[-1],j); /* location of Sp[Li[l1-1],j] */
+      }	else s1=s=Sp[j];
+      for (q=0;q<m;q++) { /* fill out initial search bracket ends */
+        ul[q] = s1;ll[q] = s;
+      }
+     	
+      kk = 0; /* interval we are working on */
+
+      while (kk<m-1) { /* iterate for bracketing intervals */
+        s = (ll[kk] + ul[kk])/2; /* current interval mid-point */
+	s1 = Si[s]; /* row number at s */
+
+	for (q=kk;q<m;q++) { /* work through remaining intervals */
+          if (s1 > li0[q]) { /* is new point above point q? */
+            if (s<ul[q]) ul[q] = s; /* is new point closer than previous upper limit ? */
+          } else { /* new point is below or equal to point q */
+            if (s>ll[q]) ll[q] = s; else break; /* either it is a higher lower limit, or we can stop updating */
+          }   
+	}
+	/* now test whether interval kk is complete and we can move on... */
+	if (ul[kk] <= ll[kk+1]||ul[kk] == ll[kk]+1) kk++; 
+      }	/* bracketing interval loop */			       
+      /* at this stage we have non overlapping intervals within which to search for the
+         elements of S matching the non-zeores of L[,i], can now finish the matching 
+         by simple bisection within each interval. */
+      ulq=ul;llq=ll;liq=li0;llq1=ll+m;
+      for (x=0.0,lxp=Lx+l0;llq<llq1;llq++,ulq++,liq++,lxp++) { 
+        s = *llq;s2 = *ulq;kk = *liq;
+	while (Si[s] != kk) { /* search for S element corresponding to L element */
+          s0 = (s+s2+1)/2;
+	  if (Si[s0] > kk) s2=s0; else s=s0;
+	}
+	x -=  *lxp * Sx[s];
+      }	
+
+      x /= Lii;//ops++;
+      Sx[k] = x; /* S[j,i] */
+      s = kij(Sp,Si,i,j);
+      Sx[s] = x;/* S[i,j] */
+    } /***** k loop end *****/
+    } /* parallel section end */ 
+    /* now do k0, to fill in S[i,i] */
+    ul=ul0;ll=ll0;
+      
+    /* Now compute S[i,j] which is S[j,i] which is in Sx[k] */
+    /* Loop over the ith column of L */
+    m = l1-l0; /* number of non zero elements in L[,i] */
+    if (m>0) {
+      s = kij(Sp,Si,*li0,i); /* location of Sp[Li[l0],j] */
+        s1 = kij(Sp,Si,li1[-1],i); /* location of Sp[Li[l1-1],j] */
+    }  else s1=s=Sp[i];
+    for (q=0;q<m;q++) { /* fill out initial search bracket ends */
+      ul[q] = s1;ll[q] = s;
+    }
+     	
+    kk = 0; /* interval we are working on */
+
+    while (kk<m-1) { /* iterate for bracketing intervals */
+      s = (ll[kk] + ul[kk])/2; /* current interval mid-point */
+      s1 = Si[s]; /* row number at s */
+
+      for (q=kk;q<m;q++) { /* work through remaining intervals */
+        if (s1 > li0[q]) { /* is new point above point q? */
+          if (s<ul[q]) ul[q] = s; /* is new point closer than previous upper limit ? */
+        } else { /* new point is below or equal to point q */
+          if (s>ll[q]) ll[q] = s; else break; /* either it is a higher lower limit, or we can stop updating */
+        }   
+      }
+      /* now test whether interval kk is complete and we can move on... */
+      if (ul[kk] <= ll[kk+1]||ul[kk] == ll[kk]+1) kk++; 
+    }	/* bracketing interval loop */			       
+    /* at this stage we have non overlapping intervals within which to search for the
+       elements of S matching the non-zeores of L[,i], can now finish the matching 
+       by simple bisection within each interval. */
+    ulq=ul;llq=ll;liq=li0;llq1=ll+m;
+    for (x=0.0,lxp=Lx+l0;llq<llq1;llq++,ulq++,liq++,lxp++) { 
+      s = *llq;s2 = *ulq;kk = *liq;
+      while (Si[s] != kk) { /* search for S element corresponding to L element */
+        s0 = (s+s2+1)/2;
+	if (Si[s0] > kk) s2=s0; else s=s0;
+      }
+      x -=  *lxp * Sx[s];
+    }	
+    x += 1/Lii;
+    x /= Lii;//ops++;
+    Sx[k0] = x; /* S[j,i] */
+    
+  }
+  FREE(ul0);FREE(ll0);
+  PROTECT(kr=allocVector(REALSXP,1));
+  REAL(kr)[0] = 0.0;//ops/(double) global_ops;
+  UNPROTECT(1);
+  return(kr);
+} /* isa1p */

@@ -63,7 +63,8 @@ Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized
   dat$x4 <- runif(n)
   dat$y <- dat$y + 3*exp(dat$x4*15-5)/(1+exp(dat$x4*15-5))
   dat$fac <- factor(sample(1:20,n,replace=TRUE))
-  G <- gam(y~ te(x0,x2,k=5,bs="bs",m=1) + s(x1)+ s(x4)+s(x3,fac,bs="fs"),fit=FALSE,data=dat,discrete=TRUE)
+  G <- gam(y ~ te(x0,x2,k=5,bs="bs",m=1)+s(x1)+s(x4)+s(x3,fac,bs="fs"),
+           fit=FALSE,data=dat,discrete=TRUE)
   p <- ncol(G$X)
   ## create a sparse version...
   Xs <- list(); r <- G$kd*0; off <- list()

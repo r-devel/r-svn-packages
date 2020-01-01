@@ -65,7 +65,7 @@ iniStrans <- function(S,rank = NULL,trans.ldet=FALSE) {
 } ## iniStrans
 
 
-Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
+Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
 ## Sets up a list representing a block diagonal penalty matrix.
 ## from the object produced by `gam.setup'.
 ## Uses only pivoted Cholesky if cholesky==TRUE.
@@ -228,7 +228,12 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
   if (length(Sl)==0) return(Sl) ## nothing to do
 
   np <- ncol(G$X)
-  E <- matrix(0,np,np) ## well scaled square root penalty
+
+  ## In dense case E is a dense matrix and its block get filled in. In sparse
+  ## case E is a list of lists of rows (i), cols (j) and elements (x) defining each
+  ## block. So E$i[[b]],E$j[[b]],E$x[[b]] defines block b...
+  
+  E <- if (sparse) list(i=list(),j=list(),x=list()) else matrix(0,np,np) ## well scaled square root penalty
   lambda <- rep(0,0)
 
   ## NOTE: computing transforms for repara=FALSE blocks and then not using them
@@ -236,11 +241,18 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
 
   for (b in 1:length(Sl)) { ## once more into the blocks, dear friends...
     if (!Sl[[b]]$linear) { ## nonlinear term
-      ## never re-parameterized, but nee contribution to penalty square root, E
+      ## never re-parameterized, but need contribution to penalty square root, E
       Sl[[b]] <- Sl[[b]]$updateS(Sl[[b]]$lambda,Sl[[b]])
       lambda <- c(lambda,Sl[[b]]$lambda)
-      ind <- Sl[[b]]$start:Sl[[b]]$stop
-      E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E ## add to the square root    
+      if (sparse) {
+        E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix")
+	E$i[[b]] <- E0@i + Sl[[b]]$start
+	E$j[[b]] <- E0@j + Sl[[b]]$start
+	E$x[[b]] <- E0@x
+      } else { ## dense
+        ind <- Sl[[b]]$start:Sl[[b]]$stop
+        E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E ## add to the square root
+      }	
     } else if (length(Sl[[b]]$S)==1) { ## then we have a singleton
       if (sum(abs(Sl[[b]]$S[[1]][upper.tri(Sl[[b]]$S[[1]],diag=FALSE)]))==0) { ## S diagonal
         ## Reparameterize so that S has 1's or zero's on diagonal
@@ -286,14 +298,26 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
       ## add penalty square root into E  
       if (Sl[[b]]$repara) { ## then it is just the identity
         ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
-        diag(E)[ind] <- 1
+	if (sparse) {
+	  E$j[[b]] <- E$i[[b]] <- ind
+	  E$x[[b]] <- ind*0 + 1
+	} else { ## dense
+          diag(E)[ind] <- 1
+	}  
         lambda <- c(lambda,1) ## record corresponding lambda
       } else { ## need scaled root penalty in *original* parameterization
         D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
         D.norm <- norm(D); D <- D/D.norm
-        indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
-        indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
-        E[indr,indc] <- D
+        if (sparse) {
+	  D <- as(D,"dgTMatrix")
+	  E$i[[b]] <- D@i + Sl[[b]]$start
+	  E$j[[b]] <- D@j + Sl[[b]]$start
+	  E$x[[b]] <- D@x
+        } else {
+	  indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
+          indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
+          E[indr,indc] <- D
+	}  
         lambda <- c(lambda,1/D.norm^2)
       }
     } else { ## multiple S block
@@ -345,11 +369,19 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE) {
       } 
       St <- (t(St) + St)/2  ## avoid over-zealous chol sym check
       St <- t(mroot(St,Sl[[b]]$rank))
-      indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(St)-1)
-      indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(St)-1)
-      E[indr,indc] <- St
+      if (sparse) {
+        St <- as(St,"dgTMatrix")
+        E$i[[b]] <- St@i + Sl[[b]]$start
+	E$j[[b]] <- St@j + Sl[[b]]$start
+	E$x[[b]] <- St@x
+      } else { ## dense
+        indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(St)-1)
+        indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(St)-1)
+        E[indr,indc] <- St
+      }	
     }
   } ## re-para finished
+  if (sparse) E <- sparseMatrix(i=unlist(E$i),j=unlist(E$j),x=unlist(E$x),dims=c(np,np))
   attr(Sl,"E") <- E ## E'E = scaled total penalty
   attr(Sl,"lambda") <- lambda ## smoothing parameters corresponding to E
   attr(Sl,"cholesky") <- cholesky ## store whether this is Cholesky based or not
@@ -683,13 +715,13 @@ ldetSt <- function(S,lam,deriv=0,repara=TRUE) {
 } ## ldetSt
 
 
-ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
+ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FALSE) {
 ## Get log generalized determinant of S stored blockwise in an Sl list.
 ## If repara=TRUE multi-term blocks will be re-parameterized using gam.reparam, and
 ## a re-parameterization object supplied in the returned object.
 ## rho contains log smoothing parameters, fixed is an array indicating whether they 
 ## are fixed (or free). np is the number of coefficients. root indicates
-## whether or not to return E. 
+## whether or not to return E, and sparse whethr or not it should be sparse. 
 ## Returns: Sl, with modified rS terms, if needed and rho added to each block
 ##          rp, a re-parameterization list
 ##          E a total penalty square root such that E'E = S_tot (if root==TRUE)
@@ -701,7 +733,13 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
   d2.ldS <- matrix(0,n.deriv,n.deriv)
   cholesky <- attr(Sl,"cholesky")
   rp <- list() ## reparameterization list
-  if (root) E <- matrix(0,np,np) else E <- NULL
+
+  ## In dense case E is a dense matrix and its block get filled in. In sparse
+  ## case E is a list of lists of rows (i), cols (j) and elements (x) defining each
+  ## block. So E$i[[b]],E$j[[b]],E$x[[b]] defines block b...
+
+  if (root) { E <- if (sparse) list(i=list(),j=list(),x=list()) else matrix(0,np,np) } else E <- NULL
+  
   if (length(Sl)>0) for (b in 1:length(Sl)) { ## work through blocks
     
     if (!Sl[[b]]$linear) { ## non-linear block
@@ -716,7 +754,12 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       k.deriv <- k.deriv + nderiv
       k.sp <- k.sp + Sl[[b]]$n.sp
       Sl[[b]]$lambda <- rho[ind] ## not really used in non-linear interface
-      if (root) {
+      if (root) if (sparse) {
+        E0 <- as(Sl[[b]]$St(Sl[[b]],1)$E,"dgTMatrix")
+	E$i[[b]] <- E0@i + Sl[[b]]$start
+	E$j[[b]] <- E0@j + Sl[[b]]$start
+	E$x[[b]] <- E0@x
+      } else {
         ind <- Sl[[b]]$start:Sl[[b]]$stop
 	E[ind,ind] <- Sl[[b]]$St(Sl[[b]],1)$E
       }
@@ -730,13 +773,24 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       if (root) { 
         ## insert diagonal from block start to end
         if (Sl[[b]]$repara) {
-          ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
-          diag(E)[ind] <- exp(rho[k.sp]*.5) ## sqrt smoothing param
+	  ind <- (Sl[[b]]$start:Sl[[b]]$stop)[Sl[[b]]$ind]
+	  if (sparse) {
+	    E$i[[b]] <- E$j[[b]] <- ind; E$x[[b]] <- ind*0 + exp(rho[k.sp]*.5)
+	  } else {
+            diag(E)[ind] <- exp(rho[k.sp]*.5) ## sqrt smoothing param
+	  }  
         } else { ## root has to be in original parameterization...
-          D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
-          indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
-          indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
-          E[indr,indc] <- D * exp(rho[k.sp]*.5)
+          if (sparse) {
+	    D <- as(Sl[[b]]$Di[1:Sl[[b]]$rank,],"dgTMatrix")
+	    E$i[[b]] <- D@i + Sl[[b]]$start
+	    E$j[[b]] <- D@j + Sl[[b]]$start
+	    E$x[[b]] <- D@x * exp(rho[k.sp]*.5)
+	  } else {
+            D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
+            indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
+            indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
+            E[indr,indc] <- D * exp(rho[k.sp]*.5)
+	  }  
         }
       }
       Sl[[b]]$lambda <- exp(rho[k.sp])
@@ -784,9 +838,16 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
       k.sp <- k.sp + m
       if (Sl[[b]]$repara) {
         if (root) { ## unpack the square root E'E
-          ic <- Sl[[b]]$start:(Sl[[b]]$start+ncol(grp$E)-1)
-          ir <- Sl[[b]]$start:(Sl[[b]]$start+nrow(grp$E)-1)
-          E[ir,ic] <- grp$E      
+          if (sparse) {
+            E0 <- as(grp$E,"dgTMatrix")
+	    E$i[[b]] <- E0@i + Sl[[b]]$start
+	    E$j[[b]] <- E0@j + Sl[[b]]$start
+	    E$x[[b]] <- E0@x
+          } else {
+	    ic <- Sl[[b]]$start:(Sl[[b]]$start+ncol(grp$E)-1)
+            ir <- Sl[[b]]$start:(Sl[[b]]$start+nrow(grp$E)-1)
+            E[ir,ic] <- grp$E
+	  }  
           Sl[[b]]$St <- crossprod(grp$E)
         } else {  
           ## gam.reparam always returns root penalty in E, but 
@@ -801,14 +862,22 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2) {
         }
         if (root) {
           Eb <- t(mroot(Sl[[b]]$St,Sl[[b]]$rank))
-          indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(Eb)-1)
-          indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(Eb)-1)
-          E[indr,indc] <- Eb
+	  if (sparse) {
+	    Eb <- as(Eb,"dgTMatrix")
+	    E$i[[b]] <- Eb@i + Sl[[b]]$start
+	    E$j[[b]] <- Eb@j + Sl[[b]]$start
+	    E$x[[b]] <- Eb@x
+	  } else {
+            indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(Eb)-1)
+            indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(Eb)-1)
+            E[indr,indc] <- Eb
+	  }  
         } 
       }   
     } ## end of multi-S block branch
   } ## end of block loop
-  if (root) E <- E[rowSums(abs(E))!=0,,drop=FALSE] ## drop zero rows.
+  if (root) E <- if (sparse) sparseMatrix(i=unlist(E$i),j=unlist(E$j),x=unlist(E$x),dims=c(np,np)) else
+                             E[rowSums(abs(E))!=0,,drop=FALSE] ## drop zero rows.
   list(ldetS=ldS,ldet1=d1.ldS,ldet2=d2.ldS,Sl=Sl,rp=rp,E=E)
 } ## end ldetS
 
@@ -1023,7 +1092,7 @@ Sl.termMult <- function(Sl,A,full=FALSE,nt=1) {
 ## otherwise these are stripped out, but in that case each element 
 ## of the return object contains an "ind" attribute, indicating 
 ## which rows of the full matrix it relates to.
-  Amat <- is.matrix(A)
+  Amat <- !is.null(dim(A)) #is.matrix(A) ## allow sparse matrices also
   SA <- list()
   k <- 0 ## component counter
   nb <- length(Sl) ## number of blocks
@@ -1212,9 +1281,15 @@ Sl.iftChol <- function(Sl,XX,R,d,beta,piv,nt=1) {
   ## timing close to identical - modified for parallel exec
   D <- matrix(unlist(Skb),length(beta),nd)
   bSb1 <- colSums(beta*D)
-  D1 <- .Call(C_mgcv_Rpforwardsolve,R,D[piv,]/d[piv],nt) ## note R transposed internally unlike forwardsolve
-  db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D1,nt)/d[piv]
-
+  if (inherits(R,c("dgCMatrix","dtCMatrix"))) { ## sparse R
+    Dd <- Diagonal(length(d),1/d)
+    db[piv,] <- -as(solve(R,solve(t(R),(Dd %*% D)[piv,])),"matrix")
+    db <- as(Dd %*% db,"matrix")
+  } else { ## dense R
+    D1 <- .Call(C_mgcv_Rpforwardsolve,R,D[piv,]/d[piv],nt) ## note R transposed internally unlike forwardsolve
+    db[piv,] <- -.Call(C_mgcv_Rpbacksolve,R,D1,nt)/d[piv]
+  }
+  
   if (is.null(XX)) return(list(bSb1=bSb1,db=db)) ## return early
   
   ## XX.db <- XX%*%db

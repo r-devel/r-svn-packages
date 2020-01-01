@@ -211,11 +211,13 @@ SEXP mgcv_Rpcross(SEXP A, SEXP NT,SEXP NB);
 SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag);
 
 /* sparse matrix routines */
+SEXP isa1p(SEXP L,SEXP S,SEXP NT);
 SEXP stmm(SEXP X); /* row Kronecker product */
 SEXP sdiagXVXt(SEXP X, SEXP V, SEXP LT, SEXP RT);
 SEXP sXbd(SEXP X,SEXP BETA,SEXP LT);
 SEXP sXyd(SEXP X,SEXP Y,SEXP LT);
 SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT);
+
 
 /* basis constructor/prediction routines*/
 

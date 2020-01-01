@@ -101,8 +101,10 @@ termplot,terms.formula,terms,uniroot,var,vcov,weights)
 importFrom(utils,object.size)
 
 importFrom(nlme,Dim,corMatrix,logDet,pdConstruct,pdFactor,pdMatrix,getGroupsFormula,lme,varFixed,lmeControl)
+
 importMethodsFrom(Matrix,t,colMeans,colSums,chol,solve,lu,expand)
-importFrom(Matrix,Diagonal,sparseMatrix,Matrix,sparse.model.matrix)
+importFrom(Matrix,Diagonal,sparseMatrix,Matrix,sparse.model.matrix,diag)
+
 importFrom(methods,cbind2,as)
 importFrom(stats,weighted.mean)
 importFrom(stats,optimize)
