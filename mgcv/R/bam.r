@@ -541,15 +541,21 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
       ii <- which(rec$vnames %in% names.pmf[i])
       ik.prev <- if (length(ii)>0) rec$ki[ii] else 0  ## term already discretized?
       if (ik.prev==0) { ## new discretization needed (no need to record - no repeat vars within para)
-        mfd <- compress.df(mfp[i],m=mi)
-        mf0 <- c(mf0,mfd)
+        ## note that compress.df(mfp[i]) is set up to deal with matrices in the manner appropriate
+	## to the smooth summation convention, but not to matrices in the parametric part of the model
+	## hence the following work around...
+        #mfd <- compress.df(mfp[i],m=mi);mf0 <- c(mf0,mfd)
+	mfd <- compress.df(mfp[[i]],m=mi)
+	if (is.matrix(mfd)&&ncol(mfd)==1) mfd <- drop(mfd)
+	mf0[[names(mfp[i])]] <- mfd
         ki <- attr(mfd,"index")
         ik <- ik + 1
         ks[ik,1] <- if (ik==1) 1 else ks[ik-1,2]
 	ks[ik,2] <- ks[ik,1] + 1
         k[,ks[ik,1]] <- ki
-        if (maxr<nrow(mfd)) maxr <- nrow(mfd)
-        nr[ik] <- nrow(mfd)
+	mr <- if (is.matrix(mfd)) nrow(mfd) else length(mfd)
+        if (maxr<mr) maxr <- mr
+        nr[ik] <- mr
 	names(nr)[ik] <- rownames(ks)[ik] <- names(mfp[i])
       } else { ## re-use previous discretization
         ## nothing needed
@@ -557,8 +563,13 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
     }
 
     for (i in 1:length(mf0)) { ## pad out columns to be same length
-      me <- length(mf0[[i]]) 
-      if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
+      if (is.matrix(mf0[[i]])) {
+        me <- nrow(mf0[[i]])
+	mf0[[i]] <- rbind(mf0[[i]],matrix(sample(mf0[[i]],(maxr-me)*ncol(mf0[[i]]),replace=TRUE),maxr-me,ncol(mf0[[i]])))
+      } else {
+        me <- length(mf0[[i]]) 
+        if (me < maxr) mf0[[i]][(me+1):maxr] <- sample(mf0[[i]],maxr-me,replace=TRUE)
+      }	
     }
     
     ## mf0 is the discretized model frame (actually a list), padded to have equal length rows
