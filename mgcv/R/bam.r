@@ -545,15 +545,20 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 	## to the smooth summation convention, but not to matrices in the parametric part of the model
 	## hence the following work around...
         #mfd <- compress.df(mfp[i],m=mi);mf0 <- c(mf0,mfd)
-	mfd <- compress.df(mfp[[i]],m=mi)
-	if (is.matrix(mfd)&&ncol(mfd)==1) mfd <- drop(mfd)
-	mf0[[names(mfp[i])]] <- mfd
+        if (is.matrix(mfp[[i]])) {
+          mfd <- compress.df(mfp[[i]],m=mi)
+	  mr <- nrow(mfd)
+	  if (is.matrix(mfd)&&ncol(mfd)==1) mfd <- drop(mfd)
+	  mf0[[names(mfp[i])]] <- mfd
+	} else {
+          mfd <- compress.df(mfp[i],m=mi);mf0 <- c(mf0,mfd)
+	  mr <- length(mfd)
+        }
         ki <- attr(mfd,"index")
         ik <- ik + 1
         ks[ik,1] <- if (ik==1) 1 else ks[ik-1,2]
 	ks[ik,2] <- ks[ik,1] + 1
         k[,ks[ik,1]] <- ki
-	mr <- if (is.matrix(mfd)) nrow(mfd) else length(mfd)
         if (maxr<mr) maxr <- mr
         nr[ik] <- mr
 	names(nr)[ik] <- rownames(ks)[ik] <- names(mfp[i])
