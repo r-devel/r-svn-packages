@@ -552,7 +552,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 	  mf0[[names(mfp[i])]] <- mfd
 	} else {
           mfd <- compress.df(mfp[i],m=mi);mf0 <- c(mf0,mfd)
-	  mr <- length(mfd)
+	  mr <- length(mfd[[1]])
         }
         ki <- attr(mfd,"index")
         ik <- ik + 1
