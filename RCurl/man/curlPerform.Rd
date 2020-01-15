@@ -79,6 +79,7 @@ if(url.exists("http://www.omegahat.net/RCurl")) withAutoprint({
 })
 
 
+## this no longer exists
 if(url.exists("http://services.soaplite.com/hibye.cgi")) withAutoprint({
      # SOAP request
   body = '<?xml version="1.0" encoding="UTF-8"?>\
