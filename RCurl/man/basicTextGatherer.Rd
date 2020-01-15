@@ -130,7 +130,7 @@ debugGatherer()
   \code{\link{dynCurlReader}}  
 }
 \examples{
-if(url.exists("http://www.omegahat.net/RCurl/index.html")) {
+if(url.exists("http://www.omegahat.net/RCurl/index.html")) withAutoprint({
   txt = getURL("http://www.omegahat.net/RCurl/index.html", write = basicTextGatherer())
 
   h = basicTextGatherer()
@@ -159,7 +159,7 @@ if(url.exists("http://www.omegahat.net/RCurl/index.html")) {
            "http://www.omegahat.net/RCurl/philosophy.html")
   g = multiTextGatherer(uris)
   txt = getURIAsynchronous(uris,  write = g)
-  names(txt)
+  names(txt) # no names this way
   nchar(txt)
 
    # Now don't use names for the gatherer elements.
@@ -167,7 +167,7 @@ if(url.exists("http://www.omegahat.net/RCurl/index.html")) {
   txt = getURIAsynchronous(uris,  write = g)
   names(txt)
   nchar(txt)
-}
+})
 
 
 \dontrun{

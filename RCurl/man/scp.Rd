@@ -58,7 +58,7 @@ Duncan Temple Lang
            "My.SCP.Passphrase", binary = FALSE)
    x = scp("eeyore.ucdavis.edu", "/home/duncan/OmegaWeb/RCurl/xmlParse.bz2",
            "My.SCP.Passphrase")
-   if(require(Rcompression))
+   if(require(Rcompression, quietly = TRUE))
       o = bunzip2(x)
 }
 }
