@@ -54,7 +54,7 @@ getBinaryURL(url, ..., .opts = list(), curl = getCurlHandle(),
   \code{\link{getURL}}
   \code{\link[base]{raw}}
   %\code{\link[Rcompression]{gunzip}}
-  %\code{gunzip} in the \code{Rcompression} package.
+  \code{gunzip} in the \code{Rcompression} package.
 }
 \examples{
   u = "http://www.omegahat.net/RCurl/data.gz"
@@ -63,8 +63,8 @@ if(url.exists(u)) withAutoprint({
 
   content = getBinaryURL(u)
 
-  if(require(Rcompression, quietly = TRUE)) withAutoprint({
-    x = gunzip(content)
+  if(requireNamespace("Rcompression", quietly = TRUE)) withAutoprint({
+    x = Rcompression::gunzip(content)
     read.csv(textConnection(x))
   }) else withAutoprint({ ## This does not seem to work as intended
      tmp = tempfile()
@@ -81,8 +81,8 @@ if(url.exists(u)) withAutoprint({
   type = strsplit(header["Content-Type"], "/")[[1]]
 
   if(type[2] \%in\% c("x-gzip", "gzip")) {
-    if(require(Rcompression)) 
-        x = gunzip(content)
+    if(requireNamespace("Rcompression", quietly = TRUE)) 
+        x = Rcompression::gunzip(content)
   }
 
 })
