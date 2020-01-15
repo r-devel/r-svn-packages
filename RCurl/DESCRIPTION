@@ -36,7 +36,3 @@ Collate: aclassesEnums.R bitClasses.R xbits.R base64.R binary.S
         header.R http.R httpError.R httpErrors.R iconv.R info.S mime.R
         multi.S options.S scp.R support.S upload.R urlExists.R zclone.R
         zzz.R
-NeedsCompilation: yes
-Packaged: 2019-03-03 18:59:27 UTC; ripley
-Repository: CRAN
-Date/Publication: 2019-03-04 09:45:33 UTC
