@@ -199,7 +199,7 @@ RS_XML(ParseTree)(USER_OBJECT_ fileName, USER_OBJECT_ converterFunctions,
 
   if(asTextBuffer) {
       doc = useHTML ? htmlParseDoc(CHAR_TO_XMLCHAR(name), encoding) : 
-	              xmlReadMemory(name, strlen(name), NULL, encoding, parserOptions) ;
+	  xmlReadMemory(name, (int)strlen(name), NULL, encoding, parserOptions) ;
                 	  /* xmlParseMemory(name, strlen(name)) */ 
 
       if(doc != NULL) 

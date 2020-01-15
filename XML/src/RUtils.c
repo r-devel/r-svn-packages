@@ -361,7 +361,7 @@ R_lookString(SEXP rstr)
 {
     const char *str;
     str = CHAR(STRING_ELT(rstr, 0));
-    return(ScalarInteger(strlen(str)));
+    return(ScalarInteger((int) strlen(str)));
 }
 
 

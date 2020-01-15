@@ -429,7 +429,7 @@ RS_XML(textHandler)(void *userData,  const XML_Char *s, int len)
  
   if(parserData->trim) {
     tmpString = trim(tmpString);
-    len = strlen(tmpString);
+    len = (int) strlen(tmpString);
   }
 
   if(len > 0 || parserData->ignoreBlankLines == 0 ) {
