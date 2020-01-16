@@ -6,7 +6,9 @@
 # for large trees.
 
 utils::globalVariables(c('e', 'idx', 'nodeNames', 'nodeSet', 'parentCount'))
+## nothing here is exported.
 
+if(FALSE){
 xmlFlatListTree =
 function(nodes = list(),
          parents = character(), children = list(),
@@ -234,7 +236,7 @@ function(nodes = list(), parents = character(), children = list(), env = new.env
 
   structure(env, class = c("XMLSimpleFlatTree", "XMLFlatTree"))
 }
-
+}
 
 
 

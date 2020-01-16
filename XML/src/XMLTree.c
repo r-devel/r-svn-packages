@@ -1096,7 +1096,7 @@ R_createXMLNodeRef(xmlNodePtr node, USER_OBJECT_ finalize)
   addFinalizer = R_XML_getManageMemory(finalize, node->doc, node);
 
 /*  !IS_NOT_OUR_NODE_TO_TOUCH(node) */
-  if(addFinalizer && ((node->_private && ((int*)node->_private)[1] == R_MEMORY_MANAGER_MARKER)
+  if(addFinalizer && ((node->_private && ((int*)node->_private)[1] == (int) R_MEMORY_MANAGER_MARKER)
 		      || !node->doc || (!(IS_NOT_OUR_DOC_TO_TOUCH(node->doc))))) {
       if(node->_private == NULL) {
         node->_private = calloc(2, sizeof(int));
@@ -1206,7 +1206,9 @@ R_saveXMLDOM(USER_OBJECT_ sdoc, USER_OBJECT_ sfileName, USER_OBJECT_ compression
 	    xmlSetDocCompressMode(doc, INTEGER_DATA(compression)[0]);
 	}
 	if(encoding && encoding[0])
-	    xmlSaveFileEnc(CHAR_DEREF(STRING_ELT(sfileName, 0)),  doc, encoding);
+// xmlSaveFileEnc doesn't indent. So use xmlSaveFormatFileEnc(). Issue identified by Earl Brown.
+//	    xmlSaveFileEnc(CHAR_DEREF(STRING_ELT(sfileName, 0)),  doc, encoding);
+	    xmlSaveFormatFileEnc(CHAR_DEREF(STRING_ELT(sfileName, 0)),  doc, encoding, LOGICAL_DATA(sindent)[0]);
 #if 0
 	else
 	    xmlSaveFile(CHAR_DEREF(STRING_ELT(sfileName, 0)),  doc);
@@ -1214,6 +1216,10 @@ R_saveXMLDOM(USER_OBJECT_ sdoc, USER_OBJECT_ sfileName, USER_OBJECT_ compression
 	else {
 	  FILE *f;
 	  f = fopen(CHAR_DEREF(STRING_ELT(sfileName, 0)), "w");
+	  if(!f) {
+	      PROBLEM "cannot create file %s. Check the directory exists and permissions are appropriate", CHAR_DEREF(STRING_ELT(sfileName, 0))
+		  ERROR;
+          }
 	  xmlDocFormatDump(f, doc, 1);
 	  fclose(f);
 	}
