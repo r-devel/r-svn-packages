@@ -379,6 +379,7 @@ function(f, parse = FALSE)
      new("XMLCodeFile", f)
 }
 
+utils::globalVariables("use_file")
 
 tmp.source =
 function (file, local = FALSE, echo = verbose, print.eval = echo,
@@ -399,13 +400,24 @@ function (file, local = FALSE, echo = verbose, print.eval = echo,
       xmlSource(file, verbose = verbose)
    }
 
-if(compareVersion(as.character(getRversion()), "2.8.0") < 0) {
- cat("Fixing source definition\n")
- formals(tmp.source) =  formals(tmp.source)[ - length(formals(tmp.source)) ]
-}
+## This version would require us to document source()
+## setGeneric("source", function(file, ...) standardGeneric("source"))
+## tmp.source =
+## function (file, verbose = getOption("verbose"), chdir = FALSE, ...)
+## {
+##     if(length(verbose) == 0)
+##         verbose = FALSE
 
-## This fails as it produces a generic with arg that refers to the
-## body of the default method
+##     if(chdir) {
+##         cwd = getwd()
+##         on.exit(setwd(cwd))
+##         setwd(dirname(file))
+##     }
+
+##     xmlSource(file, verbose = verbose)
+## }
+
+
 setMethod("source", "XMLCodeFile", tmp.source)
 
 
