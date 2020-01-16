@@ -135,7 +135,7 @@ if(url.exists("http://www.omegahat.net/RCurl/index.html")) withAutoprint({
 
   h = basicTextGatherer()
   txt = getURL("http://www.omegahat.net/RCurl/index.html", write = h$update)
-    # Cumulate across pages.
+    ## Cumulate across pages.
   txt = getURL("http://www.omegahat.net/index.html", write = h$update)
 
 
@@ -143,18 +143,19 @@ if(url.exists("http://www.omegahat.net/RCurl/index.html")) withAutoprint({
   txt = getURL("http://www.omegahat.net/RCurl/index.html",
                header = TRUE, headerfunction = headers$update)
 
-     # Now read the headers.
+     ## Now read the headers.
   headers$value()
   headers$reset()
 
 
-    # Debugging callback
+    ## Debugging callback
   d = debugGatherer()
   x = getURL("http://www.omegahat.net/RCurl/index.html", debugfunction = d$update, verbose = TRUE)
   names(d$value())
   d$value()[["headerIn"]]
 
 
+    ## This hangs on Solaris
   uris = c("http://www.omegahat.net/RCurl/index.html",
            "http://www.omegahat.net/RCurl/philosophy.html")
   g = multiTextGatherer(uris)
