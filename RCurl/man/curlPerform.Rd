@@ -62,7 +62,7 @@ curlMultiPerform(curl, multiple = TRUE)
   errors.
 }
 \references{Curl homepage \url{http://curl.haxx.se}}
-\author{Duncan Temple Lang <duncan@wald.ucdavis.edu>}
+\author{Duncan Temple Lang}
 
 \seealso{
  \code{\link{getURL}}
