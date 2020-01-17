@@ -20,7 +20,8 @@ Description: A wrapper for 'libcurl' <http://curl.haxx.se/libcurl/>
         downloads), SSL/HTTPS, telnet, dict, ldap, and also supports
         cookies, redirects, authentication, etc.
 License: BSD_2_clause + file LICENSE
-Depends: R (>= 3.4.0), methods, bitops
+Depends: R (>= 3.4.0), methods
+Imports: bitops
 Suggests: Rcompression, XML
 Additional_repositories: http://www.omegahat.net/R/
 Collate: aclassesEnums.R bitClasses.R xbits.R base64.R binary.S
