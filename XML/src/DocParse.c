@@ -1658,16 +1658,14 @@ R_findXIncludeStartNodes(SEXP r_root, SEXP manageMemory)
 {
     xmlNodePtr root;
     SEXP ans;
-    int count;
 
     root = (xmlNodePtr) R_ExternalPtrAddr(r_root);
     if(!root)
 	return(R_NilValue);
 
     PROTECT(ans = allocVector(VECSXP, 0));
-//    count = findXIncludeStartNodes(root, &ans, 0);
-    count = addXInclude(root, &ans, 0, manageMemory) + processKids(root, &ans, 0, manageMemory);
-//    UNPROTECT(count + 1);
+    addXInclude(root, &ans, 0, manageMemory);
+    processKids(root, &ans, 0, manageMemory);
     UNPROTECT(1);
     return(ans);
 }

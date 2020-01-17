@@ -246,7 +246,7 @@ function(x, ignoreComments = FALSE, recursive = TRUE, encoding = getEncoding(x),
     kids = xmlChildren(x, addFinaliizer = FALSE)
     i = sapply(kids, inherits, "XMLInternalTextNode")
     if(any(i))
-      return(paste(unlist(lapply(kids[i], xmlValue, ignoreComments, recursive = TRUE, encoding = encoding)), collapse = ""))
+      return(paste(unlist(lapply(kids[i], xmlValue, ignoreComments, recursive = TRUE, encoding = encoding, trim = trim)), collapse = ""))
     else
       return(character())
    }
@@ -1021,7 +1021,7 @@ function(node, ..., kids = list(...), at = NA, cdata = FALSE, addFinalizer = NA,
 {
   kids = unlist(kids, recursive = FALSE)
 
-  removeNodes(kids)[!sapply(kids, is, "character")]
+  removeNodes(kids[!vapply(kids, is.character, logical(1L))])
 
   if(length(kids) == 1 && inherits(kids[[1]], "XMLInternalNode") && is.na(at)) {
      .Call("R_insertXMLNode", kids[[1]], node, -1L, FALSE, PACKAGE = "XML")
@@ -1238,6 +1238,15 @@ function(node, ..., kids = list(...), free = FALSE)
    free = rep(free, length = length(v))
    .Call("RS_XML_removeChildren", node, v, as.logical(free), PACKAGE = "XML")
    node
+}
+
+replaceNodeWithChildren =
+function(node)
+{
+  if(!inherits(node, "XMLInternalNode"))
+      stop("replaceNodeWithChildren only work on internal XML/HTML nodes")
+
+  .Call("R_replaceNodeWithChildren", node, PACKAGE = "XML")
 }
 
 

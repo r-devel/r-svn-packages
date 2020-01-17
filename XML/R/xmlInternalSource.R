@@ -247,7 +247,8 @@ function(url, ..., envir =globalenv(),
   if(setNodeNames)
      names(ans) = sapply(url, getRCodeNodeName)
   else
-     names(ans) = sapply(url, xmlName, full = TRUE)
+     names(ans) = sapply(url, getNodePosition) #sapply(url, xmlName, full = TRUE)
+
   invisible(ans)
 })
 
@@ -302,21 +303,69 @@ function(node, envir = globalenv(), ids = character(), verbose = FALSE, echo = v
 
    if(eval) {
      if(ask) {
-       w = menu(c("evaluate", "skip", "terminate"))
+       w = utils::menu(c("evaluate", "skip", "terminate"))
        if(w == 2)
          return(NULL)
        else if(w == 3)
          stop("User terminated the xmlSource")
      }
 
-     eval(cmd, envir)
+     isPlot = xmlName(node) == "plot"
+     if(isPlot) {
+         f = xmlGetAttr(node, "img")
+         if(!is.null(f)) {
+             attrs = xmlAttrs(node)
+             dev = openDevice(f, attrs)
+         }
+         if(!xmlGetAttr(node, "continuePlot", FALSE, as.logical))
+             on.exit(dev.off())
+     }
+
+     ans = eval(cmd, envir)
+     if(isPlot && inherits(ans, "trellis"))
+         print(ans)
+     ans
    } else
      cmd
 }
 
+openDevice =
+function(f, attrs)
+{
+   if("format" %in% names(attrs))
+       ext = attrs["format"]
+   else
+       ext = getExtension(f)
+
+   fun = switch(ext, png = png, jpeg = jpeg, pdf = pdf)
+
+   args = lapply(c("width", "height"), getDevAttr, attrs, fun, as.numeric)
+
+   cat("opening device for", f, "\n")
+   fun(f)
+}
+
+getDevAttr =
+function(name, attrs, devFun, converter = as.character)
+{
+    if(name %in% names(attrs))
+        converter(attrs[[name]])
+    else if(name %in% names(formals(devFun)))
+        formals(devFun)[[name]]
+    else
+        converter(NA)
+}
+
+getExtension =
+function(f)
+{
+    gsub(".*\\.", "", basename(f))
+}
+
 
 getRCode =
-function(node, namespaces = c(r = "http://www.r-project.org"), recursive = TRUE)
+function(node, namespaces = c(r = "http://www.r-project.org"), recursive = TRUE,
+          dropOutput = FALSE)
 {
  tmp = xmlSApply(node, function(x) {
 
@@ -335,12 +384,12 @@ function(node, namespaces = c(r = "http://www.r-project.org"), recursive = TRUE)
            stop("More than 1 code block/fragment named ", ref)
          else
             if(recursive)
-              getRCode(v[[1]], namespaces, recursive = TRUE)
+              getRCode(v[[1]], namespaces, recursive = TRUE, dropOutput = dropOutput)
             else
               xmlValue(v[[1]])
      } else {
          if(recursive)
-              getRCode(x, namespaces, recursive = TRUE)
+              getRCode(x, namespaces, recursive = TRUE, dropOutput = dropOutput)
             else
               xmlValue(x)
      }
@@ -348,6 +397,10 @@ function(node, namespaces = c(r = "http://www.r-project.org"), recursive = TRUE)
   }  else
      xmlValue(x)
  })
+
+ if(dropOutput && length(names(tmp)))
+   tmp = tmp[names(tmp) != "output"]
+
  paste(tmp, collapse = "\n")
 }
 
@@ -436,7 +489,7 @@ setMethod("[[", "XMLCodeFile",
           })
 
 updateIds =
-function(doc)
+function(doc, ...)
 {
    nodes = getNodeSet(doc,
                       "//r:function[not(@id) and not(@eval = 'false')]|//r:code[not(@id) and not(@eval = 'false')]",
@@ -496,7 +549,7 @@ function(doc, ids = character(), parse = TRUE, setNodeNames = FALSE, ...)
   if(length(ids))
      nodes = getNodeSet(doc, paste("//r:function[", paste("@id", sQuote(ids), sep = "=", collapse = " or " ), "]"), c(r = "http://www.r-project.org"))
   else
-     nodes = getNodeSet(doc, "//r:function", c(r = "http://www.r-project.org"))
+     nodes = getNodeSet(doc, "//r:function[not(ancestor-or-self::*/@eval = 'false')]", c(r = "http://www.r-project.org"))
 
   if(parse == FALSE)
      return(nodes)

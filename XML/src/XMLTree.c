@@ -87,7 +87,7 @@ R_newXMLTextNode(USER_OBJECT_ value, USER_OBJECT_ sdoc, SEXP manageMemory)
 
     txt = CHAR_TO_XMLCHAR(CHAR_DEREF(STRING_ELT(value, 0)));
     if(doc)
-	node = xmlNewDocTextLen(doc, txt, strlen(XMLCHAR_TO_CHAR(txt)));
+	node = xmlNewDocTextLen(doc, txt, (int)strlen(XMLCHAR_TO_CHAR(txt)));
     else
 	node = xmlNewText(txt);
 	
@@ -106,7 +106,7 @@ R_newXMLCDataNode(USER_OBJECT_ sdoc, USER_OBJECT_ value, USER_OBJECT_ manageMemo
 
   tmp = CHAR_DEREF(STRING_ELT(value,0));
 
-  node = xmlNewCDataBlock(doc, CHAR_TO_XMLCHAR(tmp), strlen(tmp));
+  node = xmlNewCDataBlock(doc, CHAR_TO_XMLCHAR(tmp), (int)strlen(tmp));
 
   return(R_createXMLNodeRef(node, manageMemory));
 }
@@ -1810,4 +1810,34 @@ R_childStringValues(SEXP r_node, SEXP r_len, SEXP r_asVector, SEXP r_encoding, S
 
     UNPROTECT(nprotect);
     return(ans);
+}
+
+
+
+USER_OBJECT_
+R_replaceNodeWithChildren(USER_OBJECT_ r_node)
+{
+    xmlNodePtr node = (xmlNodePtr) R_ExternalPtrAddr(r_node);    
+
+    xmlNodePtr nxt = node->next;
+
+    if(node->prev) {
+	node->prev->next = node->children;
+	node->children->prev = node->prev;
+    } else if(node->parent)
+	node->parent->children = node->children;
+    
+    if(node->children) {
+	xmlNodePtr cur = node->children;
+	while(cur->next) {
+	    cur->parent = node->parent;
+	    cur = cur->next;
+	}
+
+	cur->next = nxt;
+	if(nxt)
+	    nxt->prev = cur;
+    }
+
+    return(NULL_USER_OBJECT);
 }

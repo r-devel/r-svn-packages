@@ -2,6 +2,7 @@
 #  useDynLib(XML)
 
 importFrom(utils, menu)
+importFrom(grDevices, dev.off, jpeg, pdf, png)
 import(methods)
 
 export(
@@ -226,11 +227,11 @@ S3method(xmlSize, XMLInternalNode)
 
 S3method(xmlValue, XMLInternalNode)
 
-#exportS3method("xmlValue", "NULL")
-S3method("xmlValue", "NULL")
 S3method(xmlValue, XMLNodeSet)
 S3method(xmlValue, list)
 
+#exportS3method("xmlValue", "NULL")
+S3method("xmlValue", "NULL")
 
 S3method("[", XMLNode)
 
@@ -513,6 +514,8 @@ export(getXIncludes, xmlXIncludes)
 export(getHTMLExternalFiles)
 
 export(xmlCleanNamespaces)
+
+export(replaceNodeWithChildren)
 
 S3method(toString, XMLNode)
 
