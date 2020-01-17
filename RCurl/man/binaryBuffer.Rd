@@ -62,7 +62,7 @@ if(url.exists("http://www.omegahat.net/RCurl/xmlParse.html.gz")) {
   b = as(buf, "raw")
 
  if(requireNamespace("Rcompression", quietly = TRUE)) 
-   Rcompression::gunzip(b)
+   txt = Rcompression::gunzip(b)
  }
 }
 \keyword{IO}

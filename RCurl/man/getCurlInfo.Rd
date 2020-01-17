@@ -51,7 +51,7 @@ getCurlInfoConstants()
 \examples{
  if(url.exists("http://www.omegahat.net/RCurl/index.html")) withAutoprint({
     curl = getCurlHandle()
-    getURL("http://www.omegahat.net/RCurl/index.html", curl = curl)
+    txt = getURL("http://www.omegahat.net/RCurl/index.html", curl = curl)
     getCurlInfo(curl)
     rm(curl)  # release the curl!
  })

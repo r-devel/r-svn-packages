@@ -113,7 +113,7 @@ if(url.exists("http://www.omegahat.net/dd.gz")) withAutoprint({
   length( header$value() )
 
   if(requireNamespace("Rcompression", quietly = TRUE))
-     Rcompression::gunzip(header$value())
+     cat(Rcompression::gunzip(header$value()))
 })
 
 

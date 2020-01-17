@@ -144,14 +144,14 @@ if(url.exists("http://www.omegahat.net/RCurl/index.html")) withAutoprint({
                header = TRUE, headerfunction = headers$update)
 
      ## Now read the headers.
-  headers$value()
+  cat(headers$value())
   headers$reset()
 
 
     ## Debugging callback
   d = debugGatherer()
   x = getURL("http://www.omegahat.net/RCurl/index.html", debugfunction = d$update, verbose = TRUE)
-  names(d$value())
+  cat(names(d$value()))
   d$value()[["headerIn"]]
 
 

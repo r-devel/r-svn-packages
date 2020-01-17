@@ -66,9 +66,9 @@ if(url.exists(u)) withAutoprint({
   if(requireNamespace("Rcompression", quietly = TRUE)) withAutoprint({
     x = Rcompression::gunzip(content)
     read.csv(textConnection(x))
-  }) else withAutoprint({ ## This does not seem to work as intended
+  }) else withAutoprint({
      tmp = tempfile()
-     write(content, file = tmp)
+     writeBin(content, con = tmp)
      read.csv(gzfile(tmp))
      unlink(tmp)
   })
@@ -81,8 +81,15 @@ if(url.exists(u)) withAutoprint({
   type = strsplit(header["Content-Type"], "/")[[1]]
 
   if(type[2] \%in\% c("x-gzip", "gzip")) {
-    if(requireNamespace("Rcompression", quietly = TRUE)) 
+    if(requireNamespace("Rcompression", quietly = TRUE)) {
         x = Rcompression::gunzip(content)
+        cat(x)
+    } else {
+     tmp = tempfile()
+     writeBin(content, con = tmp)
+     writeLines(readLines(gzfile(tmp)))
+     unlink(tmp)
+    }
   }
 
 })

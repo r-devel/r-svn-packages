@@ -58,9 +58,7 @@ Duncan Temple Lang
            "My.SCP.Passphrase", binary = FALSE)
    x = scp("eeyore.ucdavis.edu", "/home/duncan/OmegaWeb/RCurl/xmlParse.bz2",
            "My.SCP.Passphrase")
-   if(requireNamepace("Rcompression", quietly = TRUE))
-      o = Rcompression::bunzip2(x)
-}
-}
+   o = memDecompress(x, asChar = TRUE)
+}}
 \keyword{IO}
 \keyword{programming}
