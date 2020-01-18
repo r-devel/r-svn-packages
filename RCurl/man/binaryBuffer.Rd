@@ -61,8 +61,10 @@ if(url.exists("http://www.omegahat.net/RCurl/xmlParse.html.gz")) {
    # Convert the internal data structure into an R raw vector
   b = as(buf, "raw")
 
- if(requireNamespace("Rcompression", quietly = TRUE)) 
-   txt = Rcompression::gunzip(b)
+  if (getRversion() >= "4")
+    txt = memDecompress(b, asChar = TRUE)
+  else if(requireNamespace("Rcompression", quietly = TRUE))
+    txt = Rcompression::gunzip(b)
  }
 }
 \keyword{IO}

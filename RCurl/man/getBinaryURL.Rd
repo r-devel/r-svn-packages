@@ -63,7 +63,10 @@ if(url.exists(u)) withAutoprint({
 
   content = getBinaryURL(u)
 
-  if(requireNamespace("Rcompression", quietly = TRUE)) withAutoprint({
+  if (getRversion() >= "4") withAutoprint({
+    x <- memDecompress(content, asChar = TRUE)
+    read.csv(textConnection(x))
+  }) else if(requireNamespace("Rcompression", quietly = TRUE)) withAutoprint({
     x = Rcompression::gunzip(content)
     read.csv(textConnection(x))
   }) else withAutoprint({
@@ -81,14 +84,15 @@ if(url.exists(u)) withAutoprint({
   type = strsplit(header["Content-Type"], "/")[[1]]
 
   if(type[2] \%in\% c("x-gzip", "gzip")) {
-    if(requireNamespace("Rcompression", quietly = TRUE)) {
-        x = Rcompression::gunzip(content)
-        cat(x)
-    } else {
-     tmp = tempfile()
-     writeBin(content, con = tmp)
-     writeLines(readLines(gzfile(tmp)))
-     unlink(tmp)
+  if (getRversion() >= "4") {
+     cat(memDecompress(content, asChar = TRUE))
+  } else if(requireNamespace("Rcompression", quietly = TRUE)) {
+     cat(Rcompression::gunzip(content))
+  } else {
+    tmp = tempfile()
+    writeBin(content, con = tmp)
+    writeLines(readLines(gzfile(tmp)))
+    unlink(tmp)
     }
   }
 
