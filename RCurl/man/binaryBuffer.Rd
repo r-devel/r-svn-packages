@@ -63,8 +63,7 @@ if(url.exists("http://www.omegahat.net/RCurl/xmlParse.html.gz")) {
 
   if (getRversion() >= "4")
     txt = memDecompress(b, asChar = TRUE)
-  else if(requireNamespace("Rcompression", quietly = TRUE))
-    txt = Rcompression::gunzip(b)
+  ## or txt = Rcompression::gunzip(b)
  }
 }
 \keyword{IO}

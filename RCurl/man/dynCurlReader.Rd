@@ -114,8 +114,7 @@ if(url.exists("http://www.omegahat.net/dd.gz")) withAutoprint({
 
   if (getRversion() >= "4")
      cat(memDecompress(header$value(), asChar = TRUE))
-  else if(requireNamespace("Rcompression", quietly = TRUE))
-     cat(Rcompression::gunzip(header$value()))
+   ## or   cat(Rcompression::gunzip(header$value()))
 })
 
 

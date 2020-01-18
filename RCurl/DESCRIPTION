@@ -22,8 +22,7 @@ Description: A wrapper for 'libcurl' <http://curl.haxx.se/libcurl/>
 License: BSD_2_clause + file LICENSE
 Depends: R (>= 3.4.0), methods
 Imports: bitops
-Suggests: Rcompression, XML
-Additional_repositories: http://www.omegahat.net/R/
+Suggests: XML
 Collate: aclassesEnums.R bitClasses.R xbits.R base64.R binary.S
         classes.S curl.S curlAuthConstants.R curlEnums.R curlError.R
         curlInfo.S dynamic.R form.S getFormParams.R getURLContent.R

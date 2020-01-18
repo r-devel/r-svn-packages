@@ -51,10 +51,9 @@ getBinaryURL(url, ..., .opts = list(), curl = getCurlHandle(),
 }
 \author{Duncan Temple Lang}
 \seealso{
-  \code{\link{getURL}}
-  \code{\link[base]{raw}}
-  %\code{\link[Rcompression]{gunzip}}
-  \code{gunzip} in the \code{Rcompression} package.
+  \code{\link{getURL}},
+  \code{\link[base]{raw}},
+  \code{\link{memDecompress}}
 }
 \examples{
   u = "http://www.omegahat.net/RCurl/data.gz"
@@ -65,9 +64,6 @@ if(url.exists(u)) withAutoprint({
 
   if (getRversion() >= "4") withAutoprint({
     x <- memDecompress(content, asChar = TRUE)
-    read.csv(textConnection(x))
-  }) else if(requireNamespace("Rcompression", quietly = TRUE)) withAutoprint({
-    x = Rcompression::gunzip(content)
     read.csv(textConnection(x))
   }) else withAutoprint({
      tmp = tempfile()
@@ -86,8 +82,6 @@ if(url.exists(u)) withAutoprint({
   if(type[2] \%in\% c("x-gzip", "gzip")) {
   if (getRversion() >= "4") {
      cat(memDecompress(content, asChar = TRUE))
-  } else if(requireNamespace("Rcompression", quietly = TRUE)) {
-     cat(Rcompression::gunzip(content))
   } else {
     tmp = tempfile()
     writeBin(content, con = tmp)
