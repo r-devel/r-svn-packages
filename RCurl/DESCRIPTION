@@ -1,5 +1,5 @@
 Package: RCurl
-Version: 1.95-4.14
+Version: 1.98-1.1
 Title: General Network (HTTP/FTP/...) Client Interface for R
 Authors@R: c(person("CRAN Team", role = c('ctb', 'cre'),
                     email = "CRAN@r-project.org",
@@ -19,7 +19,7 @@ Description: A wrapper for 'libcurl' <http://curl.haxx.se/libcurl/>
         robust and extensive, supporting FTP/FTPS/TFTP (uploads and
         downloads), SSL/HTTPS, telnet, dict, ldap, and also supports
         cookies, redirects, authentication, etc.
-License: BSD_2_clause + file LICENSE
+License: BSD_3_clause + file LICENSE
 Depends: R (>= 3.4.0), methods
 Imports: bitops
 Suggests: XML
