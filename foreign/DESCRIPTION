@@ -1,7 +1,7 @@
 Package: foreign
 Priority: recommended
 Version: 0.8-75
-Date: 2020-01-20
+Date: 2020-01-27
 Title: Read Data Stored by 'Minitab', 'S', 'SAS', 'SPSS', 'Stata', 'Systat', 'Weka', 'dBase', ...
 Depends: R (>= 3.0.0)
 Imports: methods, utils, stats
@@ -30,3 +30,4 @@ ByteCompile: yes
 Biarch: yes
 License: GPL (>= 2)
 BugReports: https://bugs.r-project.org
+URL: https://svn.r-project.org/R-packages/trunk/foreign
