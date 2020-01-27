@@ -87,7 +87,7 @@ read.dta(file, convert.dates = TRUE, convert.factors = TRUE,
   Brian Quistorff.
 }
 \seealso{
-  Different approachs are available in package \pkg{memisc} (see its
+  Different approaches are available in package \pkg{memisc} (see its
   help for \code{Stata.file}), function \code{read_dta} in package
   \pkg{haven} and package \pkg{readstata13}.
 
