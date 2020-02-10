@@ -23,7 +23,10 @@ read.arff(file)
   \url{https://waikato.github.io/weka-wiki/formats_and_processing/arff/}.
 }
 \seealso{
-  \code{\link{write.arff}}
+  \code{\link{write.arff}};
+  functions \code{write.arff} and \code{read.arff} in package
+  \pkg{RWeka} which provide some support for logicals via conversion to
+  or from factors.
 }
 \keyword{file}
 \keyword{connection}
