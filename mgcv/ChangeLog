@@ -28,6 +28,9 @@ present, and reparameterization needs checking (also for bam).
 ** bam(...,discrete=TRUE) now uses discretization on the parametric model
    components as well as the smooths. 
 
+* Fix to prediction/fake formula environment that could cause failure of
+  gam/bam called from a function. Thanks to Duncan Murdoch.
+
 * Much cleaner design for the discretization of covariates and associated 
   discretization index matching in bam (predict.bamd and discrete.mf). 
 

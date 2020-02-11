@@ -306,11 +306,12 @@ interpret.gam0 <- function(gf,textra=NULL,extra.special=NULL)
   if (length(av)) {
     pred.formula <- as.formula(paste("~",paste(av,collapse="+")))
     pav <- all.vars(pred.formula) ## trick to strip out 'offset(x)' etc...
-    pred.formula <- reformulate(pav) 
+    pred.formula <- reformulate(pav,env=p.env) 
   } else  pred.formula <- ~1
   ret <- list(pf=as.formula(pf,p.env),pfok=pfok,smooth.spec=smooth.spec,
             fake.formula=fake.formula,response=response,fake.names=av,
             pred.names=pav,pred.formula=pred.formula)
+  #environment(ret$fake.formula)  <- environment(ret$pred.formula) <- p.env	    
   class(ret) <- "split.gam.formula"
   ret
 } ## interpret.gam0
@@ -337,7 +338,7 @@ interpret.gam <- function(gf,extra.special=NULL) {
 ## contributes...
   if (is.list(gf)) {
     d <- length(gf)
-
+    p.env <- environment(gf[[1]])
     ## make sure all formulae have a response, to avoid
     ## problems with parametric sub formulae of the form ~1
     #if (length(gf[[1]])<3) stop("first formula must specify a response")
@@ -373,10 +374,11 @@ interpret.gam <- function(gf,extra.special=NULL) {
       ## work around - reformulate with response = "log(x)" will treat log(x) as a name,
       ## not the call it should be... 
       fff <- formula(paste(ret[[1]]$response,"~ ."))
-      ret$fake.formula <- reformulate(av,response=ret[[1]]$response) 
+      ret$fake.formula <- reformulate(av,response=ret[[1]]$response,env=p.env) 
       ret$fake.formula[[2]] <- fff[[2]] ## fix messed up response
     } else ret$fake.formula <- ret[[1]]$fake.formula ## create fake formula containing all variables
     ret$pred.formula <- if (length(pav)>0) reformulate(pav) else ~1 ## predictor only formula
+    environment(ret$pred.formula) <- p.env
     ret$response <- ret[[1]]$response 
     ret$nlp <- nlp ## number of linear predictors
     for (i in 1:d) if (max(ret[[i]]$lpi)>nlp||min(ret[[i]]$lpi)<1) stop("linear predictor labels out of range")
