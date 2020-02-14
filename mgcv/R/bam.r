@@ -2305,6 +2305,7 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE,spar
   if (nt==0) return(NULL)
   p <- ts <- dt <- rep(1,nt)
   X <- list() ## marginal model matrix list
+  form <- list() ## marginal formulae list
   k <- 1
   xname <- rep("",nt)
   dummy <- is.null(data)
@@ -2313,6 +2314,8 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE,spar
     ts[k] <- 1;dt[k] <- 1
     if (!dummy) X[[k]] <- matrix(1,n,1)
     xname[k] <- "(Intercept)"
+    form[[k]] <- ~1
+    environment(form[[k]]) <- NULL 
     k <- k + 1
     term.labels <- c("(Intercept)",attr(terms,"term.labels"))
   } else term.labels <- attr(terms,"term.labels")
@@ -2333,6 +2336,7 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE,spar
         if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data)[,-1,drop=FALSE] else model.matrix(fm,data)[,-1,drop=FALSE]
       }
       xname[k] <- if (!dummy && vn %in% names(data)) vn else all.vars(fm)
+      form[[k]] <- fm; environment(form[[k]]) <- NULL
       if (!dummy) p[i+intercept] = ncol(X[[k]])
       k <- k + 1
     } else { ## interaction term
@@ -2347,6 +2351,7 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE,spar
 	  if (!dummy) X[[k]] <- if (sparse) sparse.model.matrix(fm,data)[,-1,drop=FALSE] else model.matrix(fm,data)[,-1,drop=FALSE]
         }
 	xname[k] <- if (!dummy && vn %in% names(data)) vn else all.vars(fm)
+	form[[k]] <- fm; environment(form[[k]]) <- NULL
 	if (!dummy) p[i+intercept] <- p[i+intercept] * ncol(X[[k]])
 	k <- k + 1
       } ## j marginal loop end
@@ -2356,6 +2361,7 @@ terms2tensor <- function(terms,data=NULL,drop.intercept=FALSE,identify=TRUE,spar
        ts=ts, ## ts[i] is starting marginal matrix for ith term 
        dt=dt, ## dt[i] is number of marginal matrices for ith term
        xname=xname, ## xname[k] is name of covariate associated with X[[k]]
+       form=form, ## form[[k]] is formula used to produce X[[k]]
        term.labels=term.labels, ## term.labels[i] is label of ith term
        p=p) ## p[i] is total coef count for ith term  
 } # terms2tensor
