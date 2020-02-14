@@ -3317,7 +3317,7 @@ recov <- function(b,re=rep(0,0),m=0) {
 ## corresponding to that implied by treating terms indexed
 ## by re as random effects... (would be usual frequentist 
 ## if nothing treated as random)
-## if m>0, then this is indexes a term, not in re, whose
+## if m>0, then this indexes a term, not in re, whose
 ## unpenalized cov matrix is required, with the elements of re
 ## dropped.
   if (!inherits(b,"gam")) stop("recov works with fitted gam objects only") 
