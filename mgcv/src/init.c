@@ -71,6 +71,7 @@ R_CMethodDef CEntries[] = {
     {"mgcv_tri_diag",(DL_FUNC)&mgcv_tri_diag,3},
     {"mgcv_td_qy",(DL_FUNC)&mgcv_td_qy,7},
     {"mgcv_symeig",(DL_FUNC)&mgcv_symeig,6},
+    {"mgcv_trisymeig",(DL_FUNC)&mgcv_trisymeig,6},
     {"read_mat",(DL_FUNC)&read_mat,4},
     {"rwMatrix",(DL_FUNC)&rwMatrix,8},
     {"in_out",(DL_FUNC)&in_out,8},

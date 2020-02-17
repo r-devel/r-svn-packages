@@ -632,6 +632,86 @@ pmmult <- function(A,B,tA=FALSE,tB=FALSE,nt=1) {
  matrix(oo$C,r,c)
 }
 
+treig <- function(ld,sd,vec=FALSE,descend=FALSE) {
+## eigen decomposition of tri-diagonal matrix with leading diagonal ld and
+## sub-diagonal sd...
+  n <- length(ld)
+  v <- if (vec) rep(0,n*n) else 0
+  oo <- .C(C_mgcv_trisymeig,d=as.double(ld),g=as.double(sd),v=as.double(v),n=as.integer(n),
+                            get.vec=as.integer(vec),descending=as.integer(descend))
+  v <- if (vec) matrix(oo$v,n,n) else NA
+  list(values=oo$d,vectors=v)
+} ## treig
+
+lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A),ub=1) {
+## Apply M steps of Lanczos starting at v0 for n by n +ve semi definite matrix A.
+## Av is a function forming the product of matrix A with vector v.
+## A can be a matrix, in which case the default Av applies, or
+## it could be a list of arguments used to define the multiplication
+## in some other way (e.g. as a sequence of matrix products) defined
+## in a custom Av...
+## The function is used to find an approximate eigen value CDF for A
+## as described in Lin, Saad and Yang (2016) SIAM Review 58(1), 34-65
+## section 3.2.1 in particular.
+## ub is an upper bound on the largest eigenvalue of A, needed to ensure
+## that the approximation is convergent. Returns an estimate 'lam.ub'
+## that can be used for this purpose given an initial call with ub=1.
+
+  v0 <- v0/sqrt(sum(v0^2))
+  gamma <- epsilon <- rep(0,M)
+  q <- matrix(v0,n,M)
+  for (j in 1:M) {
+    c <- Av(A,q[,j])/ub ## note scaling of A by ub here.
+    gamma[j] <- sum(c*q[,j])
+    c <- c - gamma[j]*q[,j]  
+    if (j>1) {
+      c <- c - epsilon[j-1]*q[,j-1]
+      cq <- drop(t(c) %*% q[,1:(j-1),drop=FALSE]) 
+      c <- c - colSums(cq*t(q[,1:(j-1)]))
+      cq <- drop(t(c) %*% q[,1:(j-1),drop=FALSE]) 
+      c <- c - colSums(cq*t(q[,1:(j-1)]))
+    }
+    epsilon[j] <- sqrt(sum(c^2))
+    if (j<M) q[,j+1] <- c/epsilon[j]
+  }
+  et <- mgcv:::treig(gamma,epsilon,descend=FALSE,vec=TRUE)
+  ## compute an upper bound on the largest eigenvalue of
+  ## A using the method described in section 3.2 of
+  ## Parlett, BN (1998) The Symmetric Eigenvalue Problem, SIAM
+  lam.ub <- max(et$values) + abs(et$vectors[M,1])*epsilon[M] 
+  theta <- c(0,et$values)
+  tau <- et$vectors[1,]
+  eta <- c(0,cumsum(tau^2))
+  ## theta is vector of eigenvalues at which CDF jumps
+  ## tau^2 is jump size, eta is CDF at theta
+  ## lam.ub is upper bound on larget eigenvalue
+  list(theta=theta,tau=tau,eta=eta,lam.ub=lam.ub)
+} ## lanczos
+
+eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A)) {
+## get the approximate eigenvalues of n by n +ve semi def matrix A. Av is
+## the function for multiplying a vector by the matrix defined by A. If A
+## is simply a matrix then the default Av is sufficient. M is the number of
+## Lanczos steps to use, and n.rep the number of random replicates to average
+## over.
+## Based on Lin, Saad and Yang (2016) SIAM Review 58(1), 34-65
+## section 3.2.1
+   ## get an initial bound on the largest eigenvalue of A
+   ## to be supplied subsequently to ensure convergence of
+   ## eigen distribution estimates...
+   lam.ub <- lanczos(A,rnorm(n),M=M,Av=Av,n=n)$lam.ub 
+   eva <- rep(0,n)
+   for (r in 1:n.rep) {
+     lz <- lanczos(A,rnorm(n),M=M,Av=Av,n=n,ub=lam.ub)
+     ## following is suggested in Appendix C of LSY
+     eta1 <- c(0,(lz$eta[1:M]*0.5+0.5*lz$eta[1:M+1])) 
+     #eta1[M+1] <-  1
+     eva <- eva + approx(eta1,lz$theta,(1:n-.5)/n,rule=2)$y
+   }
+   eva*lam.ub/n.rep
+} ## eigen.approx
+
+
 
 isa <- function(R,nt=1) {
 ## Finds the elements of (R'R)^{-1} on NZP(R+R').

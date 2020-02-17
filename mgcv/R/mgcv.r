@@ -794,7 +794,6 @@ olid <- function(X,nsdf,pstart,flpi,lpi) {
 } ## olid
 
 
-
 gam.setup.list <- function(formula,pterms,
                     data=stop("No data supplied to gam.setup"),knots=NULL,sp=NULL,
                     min.sp=NULL,H=NULL,absorb.cons=TRUE,sparse.cons=0,select=FALSE,idLinksBases=TRUE,
@@ -3295,6 +3294,8 @@ liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
   res[xpos] <- pchisq(t*sigX+muX,df=l,ncp=delta,lower.tail=lower.tail)
   res
 } ## liu2
+
+
 
 simf <- function(x,a,df,nq=50) {
 ## suppose T = sum(a_i \chi^2_1)/(chi^2_df/df). We need

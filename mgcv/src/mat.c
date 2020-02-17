@@ -3333,7 +3333,7 @@ void mgcv_symeig(double *A,double *ev,int *n,int *use_dsyevd,int *get_vectors,
 
 } /* mgcv_symeig */
 
-void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descending) 
+void mgcv_trisymeig(double *d,double *g,double *v,int *n,int *getvec,int *descending) 
 /* Find eigen-values and vectors of n by n symmetric tridiagonal matrix 
    with leading diagonal d and sub/super diagonals g. 
    eigenvalues returned in d, and eigenvectors in columns of v, if
@@ -3350,7 +3350,7 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
   double *work,work1,x,*dum1,*dum2;
   int ldz=0,info,lwork=-1,liwork=-1,*iwork,iwork1,i,j;
 
-  if (getvec) { compz='I';ldz = *n;} else { compz='N';ldz=0;}
+  if (*getvec) { compz='I';ldz = *n;} else { compz='N';ldz=1;}
 
   /* workspace query first .... */
   F77_CALL(dstedc)(&compz,n,
@@ -3373,13 +3373,15 @@ void mgcv_trisymeig(double *d,double *g,double *v,int *n,int getvec,int descendi
 		   work, &lwork,
 		   iwork, &liwork, &info FCONE);
 
-   if (descending) { /* need to reverse eigenvalues/vectors */
+   if (*descending) { /* need to reverse eigenvalues/vectors */
      for (i=0;i<*n/2;i++) { /* reverse the eigenvalues */
        x = d[i]; d[i] = d[*n-i-1];d[*n-i-1] = x;
-       dum1 = v + *n * i;dum2 = v + *n * (*n-i-1); /* pointers to heads of cols to exchange */
-       for (j=0;j<*n;j++,dum1++,dum2++) { /* work down columns */
-         x = *dum1;*dum1 = *dum2;*dum2 = x;
-       }
+       if (*getvec) {
+         dum1 = v + *n * i;dum2 = v + *n * (*n-i-1); /* pointers to heads of cols to exchange */
+         for (j=0;j<*n;j++,dum1++,dum2++) { /* work down columns */
+           x = *dum1;*dum1 = *dum2;*dum2 = x;
+         }
+       }	 
      }
    }
 
@@ -3553,7 +3555,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
       /* obtain eigen values/vectors of T_j in O(j^2) flops */
     
       kk = j + 1;
-      mgcv_trisymeig(d,g,v,&kk,1,1);
+      mgcv_trisymeig(d,g,v,&kk,&one,&one);
       /* ... eigenvectors stored one after another in v, d[i] are eigenvalues */
 
       /* Evaluate ||Tj|| .... */
