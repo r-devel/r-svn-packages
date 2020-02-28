@@ -3561,7 +3561,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
       /* Evaluate ||Tj|| .... */
       normTj=fabs(d[0]);if (fabs(d[j])>normTj) normTj=fabs(d[j]);
 
-      for (k=0;k<j+1;k++) /* calculate error in each eigenvalue d[i] */
+      for (k=0;k<j+1;k++) /* calculate error in each eigenvalue d[k] */
       { err[k]=b[j]*v[k * vlength + j]; /* bound on kth e.v. is b[j]* (jth element of kth eigenvector) */
         err[k]=fabs(err[k]);
       }

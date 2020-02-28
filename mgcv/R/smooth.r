@@ -1262,20 +1262,22 @@ smooth.construct.tp.smooth.spec <- function(object,data,knots)
   if (nk==0 && n>xtra$max.knots) { ## then there *may* be too many data  
     xu <- uniquecombs(matrix(x,n,object$dim),TRUE) ## find the unique `locations'
     nu <- nrow(xu)  ## number of unique locations
-    if (nu>xtra$max.knots) { ## then there is really a problem 
-      seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-      if (inherits(seed,"try-error")) {
-          runif(1)
-          seed <- get(".Random.seed",envir=.GlobalEnv)
-      }
-      kind <- RNGkind(NULL)
-      RNGkind("default","default")
-      set.seed(xtra$seed) ## ensure repeatability
+    if (nu>xtra$max.knots) { ## then there is really a problem
+      rngs <- temp.seed(xtra$seed)
+      #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+      #if (inherits(seed,"try-error")) {
+      #    runif(1)
+      #    seed <- get(".Random.seed",envir=.GlobalEnv)
+      #}
+      #kind <- RNGkind(NULL)
+      #RNGkind("default","default")
+      #set.seed(xtra$seed) ## ensure repeatability
       nk <- xtra$max.knots ## going to create nk knots
       ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
       knt <- as.numeric(xu[ind,])  ## ... like this
-      RNGkind(kind[1],kind[2])
-      assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+      temp.seed(rngs)
+      #RNGkind(kind[1],kind[2])
+      #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
     }
   } ## end of large data set handling
   ##if (object$bs.dim[1]<0) object$bs.dim <- 10*3^(object$dim-1) # auto-initialize basis dimension
@@ -2798,19 +2800,21 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu>xtra$max.knots) { ## then there is really a problem 
-        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-        if (inherits(seed,"try-error")) {
-          runif(1)
-          seed <- get(".Random.seed",envir=.GlobalEnv)
-        }
-        kind <- RNGkind(NULL)
-        RNGkind("default","default")
-        set.seed(xtra$seed) ## ensure repeatability
+        rngs <- temp.seed(xtra$seed)
+        #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+        #if (inherits(seed,"try-error")) {
+        #  runif(1)
+        #  seed <- get(".Random.seed",envir=.GlobalEnv)
+        #}
+        #kind <- RNGkind(NULL)
+        #RNGkind("default","default")
+        #set.seed(xtra$seed) ## ensure repeatability
         nk <- xtra$max.knots ## going to create nk knots
         ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
         knt <- as.numeric(xu[ind,])  ## ... like this
-        RNGkind(kind[1],kind[2])
-        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+        temp.seed(rngs)
+        #RNGkind(kind[1],kind[2])
+        #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
       } else { 
         knt <- xu;nk <- nu
       } ## end of large data set handling
@@ -3008,19 +3012,21 @@ smooth.construct.ds.smooth.spec <- function(object,data,knots)
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu>xtra$max.knots) { ## then there is really a problem 
-        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-        if (inherits(seed,"try-error")) {
-          runif(1)
-          seed <- get(".Random.seed",envir=.GlobalEnv)
-        }
-        kind <- RNGkind(NULL)
-        RNGkind("default","default")
-        set.seed(xtra$seed) ## ensure repeatability
+        rngs <- temp.seed(xtra$seed)
+        #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+        #if (inherits(seed,"try-error")) {
+        #  runif(1)
+        #  seed <- get(".Random.seed",envir=.GlobalEnv)
+        #}
+        #kind <- RNGkind(NULL)
+        #RNGkind("default","default")
+        #set.seed(xtra$seed) ## ensure repeatability
         nk <- xtra$max.knots ## going to create nk knots
         ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
         knt <- as.numeric(xu[ind,])  ## ... like this
-        RNGkind(kind[1],kind[2])
-        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+	temp.seed(rngs)
+        #RNGkind(kind[1],kind[2])
+        #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
       } else { 
         knt <- xu;nk <- nu
       } ## end of large data set handling
@@ -3242,19 +3248,21 @@ smooth.construct.gp.smooth.spec <- function(object,data,knots)
     nu <- nrow(xu)  ## number of unique locations
     if (n > xtra$max.knots) { ## then there *may* be too many data      
       if (nu > xtra$max.knots) { ## then there is really a problem 
-        seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-        if (inherits(seed,"try-error")) {
-          runif(1)
-          seed <- get(".Random.seed",envir=.GlobalEnv)
-        }
-        kind <- RNGkind(NULL)
-        RNGkind("default","default")
-        set.seed(xtra$seed) ## ensure repeatability
+        rngs <- temp.seed(xtra$seed)
+        #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+        #if (inherits(seed,"try-error")) {
+        #  runif(1)
+        #  seed <- get(".Random.seed",envir=.GlobalEnv)
+        #}
+        #kind <- RNGkind(NULL)
+        #RNGkind("default","default")
+        #set.seed(xtra$seed) ## ensure repeatability
         nk <- xtra$max.knots ## going to create nk knots
         ind <- sample(1:nu,nk,replace=FALSE)  ## by sampling these rows from xu
         knt <- as.numeric(xu[ind,])  ## ... like this
-        RNGkind(kind[1],kind[2])
-        assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+	temp.seed(rngs)
+        #RNGkind(kind[1],kind[2])
+        #assign(".Random.seed",seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
       } else { 
         knt <- xu; nk <- nu
       } ## end of large data set handling

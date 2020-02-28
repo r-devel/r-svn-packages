@@ -643,7 +643,8 @@ treig <- function(ld,sd,vec=FALSE,descend=FALSE) {
   list(values=oo$d,vectors=v)
 } ## treig
 
-lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A),ub=1) {
+
+lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A)) {
 ## Apply M steps of Lanczos starting at v0 for n by n +ve semi definite matrix A.
 ## Av is a function forming the product of matrix A with vector v.
 ## A can be a matrix, in which case the default Av applies, or
@@ -653,64 +654,95 @@ lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A),ub=1) {
 ## The function is used to find an approximate eigen value CDF for A
 ## as described in Lin, Saad and Yang (2016) SIAM Review 58(1), 34-65
 ## section 3.2.1 in particular.
-## ub is an upper bound on the largest eigenvalue of A, needed to ensure
-## that the approximation is convergent. Returns an estimate 'lam.ub'
-## that can be used for this purpose given an initial call with ub=1.
-
   v0 <- v0/sqrt(sum(v0^2))
   gamma <- epsilon <- rep(0,M)
   q <- matrix(v0,n,M)
   for (j in 1:M) {
-    c <- Av(A,q[,j])/ub ## note scaling of A by ub here.
+    c <- Av(A,q[,j])
     gamma[j] <- sum(c*q[,j])
     c <- c - gamma[j]*q[,j]  
     if (j>1) {
       c <- c - epsilon[j-1]*q[,j-1]
-      cq <- drop(t(c) %*% q[,1:(j-1),drop=FALSE]) 
-      c <- c - colSums(cq*t(q[,1:(j-1)]))
-      cq <- drop(t(c) %*% q[,1:(j-1),drop=FALSE]) 
-      c <- c - colSums(cq*t(q[,1:(j-1)]))
+      cq <- drop(t(c) %*% q[,1:j,drop=FALSE]) 
+      c <- c - colSums(cq*t(q[,1:j]))
+      cq <- drop(t(c) %*% q[,1:j,drop=FALSE]) 
+      c <- c - colSums(cq*t(q[,1:j]))
     }
     epsilon[j] <- sqrt(sum(c^2))
     if (j<M) q[,j+1] <- c/epsilon[j]
   }
-  et <- mgcv:::treig(gamma,epsilon,descend=FALSE,vec=TRUE)
-  ## compute an upper bound on the largest eigenvalue of
+  et <- treig(gamma,epsilon,descend=FALSE,vec=TRUE)
+  ## compute error bounds on the eigenvalues of
   ## A using the method described in section 3.2 of
   ## Parlett, BN (1998) The Symmetric Eigenvalue Problem, SIAM
-  lam.ub <- max(et$values) + abs(et$vectors[M,1])*epsilon[M] 
+  err <- abs(et$vectors[M,])*epsilon[M]
   theta <- c(0,et$values)
   tau <- et$vectors[1,]
   eta <- c(0,cumsum(tau^2))
   ## theta is vector of eigenvalues at which CDF jumps
   ## tau^2 is jump size, eta is CDF at theta
   ## lam.ub is upper bound on larget eigenvalue
-  list(theta=theta,tau=tau,eta=eta,lam.ub=lam.ub)
+  list(theta=theta,tau=tau,eta=eta,err=err)
 } ## lanczos
 
-eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A)) {
+eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed=1) {
 ## get the approximate eigenvalues of n by n +ve semi def matrix A. Av is
 ## the function for multiplying a vector by the matrix defined by A. If A
 ## is simply a matrix then the default Av is sufficient. M is the number of
 ## Lanczos steps to use, and n.rep the number of random replicates to average
-## over.
+## over. Routine restores RNG to pre-call state on exit.
 ## Based on Lin, Saad and Yang (2016) SIAM Review 58(1), 34-65
-## section 3.2.1
-   ## get an initial bound on the largest eigenvalue of A
-   ## to be supplied subsequently to ensure convergence of
-   ## eigen distribution estimates...
-   lam.ub <- lanczos(A,rnorm(n),M=M,Av=Av,n=n)$lam.ub 
+## section 3.2.1, but extended to only use this approximation for the
+## eigen-values that have yet to converge.
+   if (is.finite(seed)) a <- temp.seed(seed) ## seed RNG and store state
    eva <- rep(0,n)
+   tol <- .Machine$double.eps^.5
    for (r in 1:n.rep) {
-     lz <- lanczos(A,rnorm(n),M=M,Av=Av,n=n,ub=lam.ub)
+     v0 <- rnorm(n)
+     lz <- lanczos(A,v0,M=M,Av=Av,n=n)
      ## following is suggested in Appendix C of LSY
-     eta1 <- c(0,(lz$eta[1:M]*0.5+0.5*lz$eta[1:M+1])) 
+     #eta1 <- c(0,(lz$eta[1:M]*0.5+0.5*lz$eta[1:M+1])) 
      #eta1[M+1] <-  1
-     eva <- eva + approx(eta1,lz$theta,(1:n-.5)/n,rule=2)$y
+     conv <- lz$err<lz$theta[M+1]*tol ## these eigenvalues are converged
+     upper.uconv <- if (any(!conv)) max(which(!conv)) else 0 ## last uncoverged
+     n.conv <- M - upper.uconv ## number converged
+     lz$theta[lz$theta<0] <- 0
+     theta.conv <- if (n.conv) lz$theta[(upper.uconv+1):M+1] else rep(0,0)
+     if (upper.uconv) {
+       eta <- lz$eta[1:(upper.uconv+1)]
+       theta <- lz$theta[1:(upper.uconv+1)]
+       eta <- eta/max(eta)   
+       eva <- eva + c(approx(eta,theta,seq(0,1,length=n-n.conv),method="linear",rule=2)$y,theta.conv)
+     } else {
+       eva <- eva + c(rep(0,n-n.conv),theta.conv)
+     }
    }
-   eva*lam.ub/n.rep
+   if (is.finite(seed)) temp.seed(a) ## restore RNG state
+   eva/n.rep
 } ## eigen.approx
 
+temp.seed <- function(x) {
+## when called with a numeric x stores the state of the RNG and sets its seed to
+## x. Returns an object of class "rng.state". When called with an object of this
+## class created on a previus call to this function, resets the RNG to the state
+## on entry to that previous call. 
+  if (inherits(x,"rng.state")) { 
+    RNGkind(x$kind[1],x$kind[2])
+    assign(".Random.seed",x$seed,envir=.GlobalEnv) ## RNG behaves as if it had not been used
+  } else {
+    seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+    if (inherits(seed,"try-error")) {
+          runif(1)
+          seed <- get(".Random.seed",envir=.GlobalEnv)
+    }
+    kind <- RNGkind(NULL)
+    RNGkind("default","default")
+    set.seed(x) ## ensure repeatability
+    x <- list(seed=seed,kind=kind)
+    class(x) <- "rng.state"
+    return(x)
+  }  
+} ## temp.seed
 
 
 isa <- function(R,nt=1) {

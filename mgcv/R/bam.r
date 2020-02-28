@@ -217,15 +217,15 @@ discrete.mf0 <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 
   ## some sub sampling here... want to set and restore RNG state used for this
   ## to ensure strict repeatability.
-  
-  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-  if (inherits(seed,"try-error")) {
-       runif(1)
-       seed <- get(".Random.seed",envir=.GlobalEnv)
-  }
-  kind <- RNGkind(NULL)
-  RNGkind("default", "default")
-  set.seed(8547) ## keep different to tps constructor!
+  rngs <- temp.seed(8547) ## keep different to tps constructor!
+  #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+  #if (inherits(seed,"try-error")) {
+  #     runif(1)
+  #     seed <- get(".Random.seed",envir=.GlobalEnv)
+  #}
+  #kind <- RNGkind(NULL)
+  #RNGkind("default", "default")
+  #set.seed(8547) ## keep different to tps constructor!
 
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
@@ -363,8 +363,9 @@ discrete.mf0 <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
     attr(mf,"nr") <- nr0 ## record original column lengths
   } else mf <- mf0
   ## reset RNG to old state...
-  RNGkind(kind[1], kind[2])
-  assign(".Random.seed", seed, envir = .GlobalEnv)
+  temp.seed(rngs)
+  #RNGkind(kind[1], kind[2])
+  #assign(".Random.seed", seed, envir = .GlobalEnv)
 
   ## finally one more pass through, expanding k, k.start and nr to deal with replication that
   ## will occur with factor by variables...
@@ -439,15 +440,15 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 
   ## some sub sampling here... want to set and restore RNG state used for this
   ## to ensure strict repeatability.
-  
-  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-  if (inherits(seed,"try-error")) {
-       runif(1)
-       seed <- get(".Random.seed",envir=.GlobalEnv)
-  }
-  kind <- RNGkind(NULL)
-  RNGkind("default", "default")
-  set.seed(8547) ## keep different to tps constructor!
+  rngs <- temp.seed(8547) ## keep different to tps constructor!
+  #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+  #if (inherits(seed,"try-error")) {
+  #     runif(1)
+  #     seed <- get(".Random.seed",envir=.GlobalEnv)
+  #}
+  #kind <- RNGkind(NULL)
+  #RNGkind("default", "default")
+  #set.seed(8547) ## keep different to tps constructor!
 
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
@@ -585,8 +586,9 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   nr <- nr[names(mf)] ## same order for both mf and nr
 
   ## reset RNG to old state...
-  RNGkind(kind[1], kind[2])
-  assign(".Random.seed", seed, envir = .GlobalEnv)
+  temp.seed(rngs)
+  #RNGkind(kind[1], kind[2])
+  #assign(".Random.seed", seed, envir = .GlobalEnv)
   ## k can end up with too many columns if marginals themselves have
   ## multiple arguments, so drop these here...
   ks <- ks[!is.na(ks[,1]),,drop=FALSE]
@@ -608,15 +610,15 @@ mini.mf <-function(mf,chunk.size) {
   if (chunk.size < mn) chunk.size <- mn
   n <- nrow(mf)
   if (n <= chunk.size) return(mf)
-
-  seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-  if (inherits(seed,"try-error")) {
-     runif(1)
-     seed <- get(".Random.seed",envir=.GlobalEnv)
-  }
-  kind <- RNGkind(NULL)
-  RNGkind("default", "default")
-  set.seed(66)  
+  rngs <- temp.seed(66)
+  #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
+  #if (inherits(seed,"try-error")) {
+  #   runif(1)
+  #   seed <- get(".Random.seed",envir=.GlobalEnv)
+  #}
+  #kind <- RNGkind(NULL)
+  #RNGkind("default", "default")
+  #set.seed(66)  
   ## randomly sample from original frame...
   ind <- sample(1:n,chunk.size)
   mf0 <- mf[ind,,drop=FALSE]
@@ -647,9 +649,9 @@ mini.mf <-function(mf,chunk.size) {
     mf0[(k+1):(k+nf),] <- mf[find,]
     k <- k + nf
   }
-
-  RNGkind(kind[1], kind[2])
-  assign(".Random.seed", seed, envir = .GlobalEnv)
+  temp.seed(rngs) ## reset RNG to initial state
+  #RNGkind(kind[1], kind[2])
+  #assign(".Random.seed", seed, envir = .GlobalEnv)
 
   mf0
 } ## mini.mf
