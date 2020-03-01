@@ -654,11 +654,12 @@ lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A)) {
 ## The function is used to find an approximate eigen value CDF for A
 ## as described in Lin, Saad and Yang (2016) SIAM Review 58(1), 34-65
 ## section 3.2.1 in particular.
-  v0 <- v0/sqrt(sum(v0^2))
+  v0.norm <- sqrt(sum(v0^2)) 
   gamma <- epsilon <- rep(0,M)
-  q <- matrix(v0,n,M)
+  q <- matrix(v0/v0.norm,n,M)
   for (j in 1:M) {
     c <- Av(A,q[,j])
+    if (j==1) vAv <- sum(v0*c)*v0.norm ## v0'Av0 - useful for estimating tr(A)
     gamma[j] <- sum(c*q[,j])
     c <- c - gamma[j]*q[,j]  
     if (j>1) {
@@ -682,7 +683,7 @@ lanczos <- function(A,v0,M,Av = function(A,v) A%*%v,n=ncol(A)) {
   ## theta is vector of eigenvalues at which CDF jumps
   ## tau^2 is jump size, eta is CDF at theta
   ## lam.ub is upper bound on larget eigenvalue
-  list(theta=theta,tau=tau,eta=eta,err=err)
+  list(theta=theta,tau=tau,eta=eta,err=err,vAv=vAv)
 } ## lanczos
 
 eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed=1) {
@@ -694,22 +695,31 @@ eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed
 ## Based on Lin, Saad and Yang (2016) SIAM Review 58(1), 34-65
 ## section 3.2.1, but extended to only use this approximation for the
 ## eigen-values that have yet to converge.
+## The CDF approximation is based on their Appendix C proposal, rather than
+## using a Gausssian kernel approximation to the pdf and cdf and then
+## inverting by tabulation. This is because the latter tends to oversmooth the
+## CDF in a way that is unhelpful for rank deficient matrices.
+## The Gaussian kernel approach would probably be prefereable for full rank matrices,
+## since it then benefits from the extra stability of kernel smoothing.
    if (is.finite(seed)) a <- temp.seed(seed) ## seed RNG and store state
    eva <- rep(0,n)
+   trA <- rep(0,n.rep)
    tol <- .Machine$double.eps^.5
    for (r in 1:n.rep) {
      v0 <- rnorm(n)
      lz <- lanczos(A,v0,M=M,Av=Av,n=n)
-     ## following is suggested in Appendix C of LSY
-     #eta1 <- c(0,(lz$eta[1:M]*0.5+0.5*lz$eta[1:M+1])) 
-     #eta1[M+1] <-  1
+     trA[r] <- lz$vAv
+     ## following is suggested in Appendix C of LSY, and is quite important
+     ## to avoid slight downward bias...
+     eta1 <- c(0,(lz$eta[1:M]*0.5+0.5*lz$eta[1:M+1])) 
+     eta1[2] <-  lz$eta[2] ## correction to avoid over-estimation in lower tail if rank def
      conv <- lz$err<lz$theta[M+1]*tol ## these eigenvalues are converged
      upper.uconv <- if (any(!conv)) max(which(!conv)) else 0 ## last uncoverged
      n.conv <- M - upper.uconv ## number converged
      lz$theta[lz$theta<0] <- 0
      theta.conv <- if (n.conv) lz$theta[(upper.uconv+1):M+1] else rep(0,0)
      if (upper.uconv) {
-       eta <- lz$eta[1:(upper.uconv+1)]
+       eta <- eta1[1:(upper.uconv+1)]
        theta <- lz$theta[1:(upper.uconv+1)]
        eta <- eta/max(eta)   
        eva <- eva + c(approx(eta,theta,seq(0,1,length=n-n.conv),method="linear",rule=2)$y,theta.conv)
@@ -718,7 +728,12 @@ eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed
      }
    }
    if (is.finite(seed)) temp.seed(a) ## restore RNG state
-   eva/n.rep
+   eva <- eva/n.rep
+   trA.sd <- sd(trA)/sqrt(n.rep);trA <- mean(trA)
+   if (abs(sum(eva)-trA)>2.5*trA.sd) { ## evidence for bias in eigen-spectrum
+     eva <- eva*trA/sum(eva) ## correction
+   }
+   eva
 } ## eigen.approx
 
 temp.seed <- function(x) {
