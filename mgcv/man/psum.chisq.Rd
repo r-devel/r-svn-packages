@@ -21,7 +21,7 @@ by the method of Davies (1980). That is it computes \deqn{P(q< \sum_{i=1}^r \lam
 \item{trace}{ can be set to \code{TRUE} to return some trace information and a fault code as attributes.}
 }
 
-\details{This calls a C translation of the original Algol60 code from Davies (1980). Some modifications have been made to remove \code{goto} statements and global variables, to use a slightly more efficient sorting of \code{lb} and to use R functions for \code{log(1+x)}. In addition the integral and associated error are accumulated in single terms, rather than each being split into 2, since only their sums are ever used. If \code{q} is a vector then the algorithm has to be called separately for each \code{q[i]}.
+\details{This calls a C translation of the original Algol60 code from Davies (1980), which numerically inverts the characteristic function of the distribution.  Some modifications have been made to remove \code{goto} statements and global variables, to use a slightly more efficient sorting of \code{lb} and to use R functions for \code{log(1+x)}. In addition the integral and associated error are accumulated in single terms, rather than each being split into 2, since only their sums are ever used. If \code{q} is a vector then the algorithm has to be called separately for each \code{q[i]}.
 
 If the Davies algorithm returns an error then an attempt will be made to use the approximation of Liu et al (2009) and a warning will be issued. If that is not possible then an \code{NA} is returned. A warning will also be issued if the algorithm detects that round off errors may be significant.
 
