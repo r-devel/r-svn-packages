@@ -28,6 +28,9 @@ present, and reparameterization needs checking (also for bam).
 ** bam(...,discrete=TRUE) now uses discretization on the parametric model
    components as well as the smooths. 
 
+* psum.chisq function added to compute c.d.f. of weighted sums of chi-squared
+  r.v.s using method of Davies, 1980. 
+
 * Fix to prediction/fake formula environment that could cause failure of
   gam/bam called from a function. Thanks to Duncan Murdoch.
 

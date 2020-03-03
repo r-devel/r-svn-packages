@@ -3236,7 +3236,39 @@ residuals.gam <-function(object, type = "deviance",...)
 
 ## Start of anova and summary (with contributions from Henric Nilsson) ....
 
-
+psum.chisq <- function(q,lb,df=rep(1,length(lb)),nc=rep(0,length(lb)),sigz=0,
+                            lower.tail=FALSE,tol=2e-5,nlim=100000,trace=FALSE) {
+## compute Pr(q>\sum_j lb[j] X_j + sigz Z) where X_j ~ chisq(df[j],nc[j]), Z~N(0,1) and nc is
+## a vector of non-centrality parameters. lb can be either sign. df should be integer. 
+  p <- q
+  r <- length(lb)
+  if (length(df)==1) df <- rep(df,r)
+  if (length(nc)==1) nc <- rep(nc,r)
+  if (length(df)!=r||length(nc)!=r) stop("lengths of lb, df and nc must match")
+  df <- round(df)
+  if (any(df<1)) stop("df must be positive integers")
+  if (all(lb==0)) stop("at least one element of lb must be non-zero")
+  if (sigz<0) sigz <- 0
+  for (i in 1:length(q)) {  
+    oo <- .C(C_davies,as.double(lb),as.double(nc),as.integer(df),as.integer(r),as.double(sigz),
+             c=as.double(q[i]),as.integer(nlim),as.double(tol),trace=as.double(rep(0,7)),
+             ifault=as.integer(0))
+    if (oo$ifault!=0) {
+      if (oo$ifault==2) { 
+        warning("danger of round-off error")
+        p[i] <- if (lower.tail) oo$c else 1 - oo$c
+      } else { 
+        warning("failure of Davies method, falling back on Liu et al approximtion")
+        p[i] <- if (all(nc==0)) liu2(q[i],lb,h=df) else NA
+      }
+    } else p[i] <- if (lower.tail) oo$c else 1 - oo$c
+  } 
+  if (trace) {
+    attr(p,"trace") <- oo$trace
+    attr(p,"ifault") <- oo$ifault
+  }
+  p
+} ##psum.chisq
 
 liu2 <- function(x, lambda, h = rep(1,length(lambda)),lower.tail=FALSE) {
 # Evaluate Pr[sum_i \lambda_i \chi^2_h_i < x] approximately.
@@ -3302,6 +3334,7 @@ simf <- function(x,a,df,nq=50) {
 ## Pr[T>x] = Pr(sum(a_i \chi^2_1) > x *chi^2_df/df). Quadrature 
 ## used here. So, e.g.
 ## 1-pf(4/3,3,40);simf(4,rep(1,3),40);1-pchisq(4,3)
+## DEPRECATED in favour of psum.chisq...
   p <- (1:nq-.5)/nq
   q <- qchisq(p,df)
   x <- x*q/df
@@ -3425,7 +3458,7 @@ reTest <- function(b,m) {
   ## check that smooth penalty matrices are full size.  
   ## e.g. "fs" type smooths estimated by gamm do not 
   ## have full sized S matrices, and we can't compute 
-  ## p=values here....
+  ## p-values here....
   if (ncol(b$smooth[[m]]$S[[1]]) != b$smooth[[m]]$last.para-b$smooth[[m]]$first.para+1) {
     return(list(stat=NA,pval=NA,rank=NA)) 
   }
@@ -3449,8 +3482,13 @@ reTest <- function(b,m) {
   rank <- sum(ev>max(ev)*.Machine$double.eps^.8)
   
   if (b$scale.estimated) {
-    pval <- simf(stat,ev,b$df.residual)
-  } else { pval <- liu2(stat,ev) }
+    #pval <- simf(stat,ev,b$df.residual)
+    k <- max(1,round(b$df.residual))
+    pval <- psum.chisq(0,c(ev,-stat/k),df=c(rep(1,length(ev)),k))
+  } else { 
+    #pval <- liu2(stat,ev)
+    pval <- psum.chisq(stat,ev) 
+  }
   list(stat=stat,pval=pval,rank=rank)
 } ## end reTest
 
@@ -3534,13 +3572,18 @@ testStat <- function(p,X,V,rank=NULL,type=0,res.df= -1) {
        val[k1] <- (rp - val[k])
      }
    
-     if (res.df <= 0) pval <- (liu2(d,val) + liu2(d1,val))/2 else ##  pval <- davies(d,val)$Qq else
-     pval <- (simf(d,val,res.df) + simf(d1,val,res.df))/2
+     if (res.df <= 0) pval <- (psum.chisq(d,val)+psum.chisq(d1,val))/2 else {  ## (liu2(d,val) + liu2(d1,val))/2 else
+       k0 <- max(1,round(res.df))
+       pval <- (psum.chisq(0,c(val,-d/k0),df=c(rep(1,length(val)),k0)) + psum.chisq(0,c(val,-d1/k0),df=c(rep(1,length(val)),k0)) )/2 
+       #pval <- (simf(d,val,res.df) + simf(d1,val,res.df))/2
+     }
   } else { pval <- 2 }
-  ## integer case still needs computing, also liu/pearson approx only good in 
+  ## integer case still needs computing, 
+  ## OLD: also liu/pearson approx only good in 
   ## upper tail. In lower tail, 2 moment approximation is better (Can check this 
   ## by simply plotting the whole interesting range as a contour plot!)
-  if (pval > .5) { 
+  ##if (pval > .5) 
+  if (pval > 1) { 
     if (res.df <= 0) pval <- (pchisq(d,df=rank1,lower.tail=FALSE)+pchisq(d1,df=rank1,lower.tail=FALSE))/2 else
     pval <- (pf(d/rank1,rank1,res.df,lower.tail=FALSE)+pf(d1/rank1,rank1,res.df,lower.tail=FALSE))/2
   }

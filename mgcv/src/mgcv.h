@@ -142,7 +142,8 @@ void diagXVXt(double *diag,double *V,double *X,int *k,int *ks,int *m,int *p, int
 	      int *nx, int *ts, int *dt, int *nt,double *v,int *qc,int *pv,int *cv,int *nthreads,int *cs,int *ncs,int *rs,int *nrs);
 
 /* various service routines */
-
+void davies(double *lb,double *nc,int *n,int *r,double *sigma,double *c,int *lim,
+	    double *acc,double *trace,int *ifault);
 void tweedious(double *w,double *w1,double *w2, double *w1p,double *w2p,double *w2pp, 
 	       double *y,double *eps,int *n,
                double *th,double *rho,double *a, double *b);
