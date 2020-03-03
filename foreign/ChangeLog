@@ -1,11 +1,15 @@
+2020-03-03 Brian Ripley
+
+	* DESCRIPTION: Version is 0.8-76
+
+	* src/sfm-read.c: avoid UBSAN warning.
+
 2020-01-27 Brian Ripley
 
 	* man/read.dta.Rd: memisc now supports Stata 13 and readstata13
 	now reads earlier versions.  'data(swiss)' is no longer needed.
 
 2020-01-27  Martin Maechler  <maechler@stat.math.ethz.ch>
-
-	* DESCRIPTION: Version is 0.8-76
 
 	* man/write.dta.Rd: typo PR#16546
 
