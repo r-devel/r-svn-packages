@@ -5,8 +5,9 @@
 \description{ Evaluates the c.d.f. of a weighted sum of chi-squared random variables
 by the method of Davies (1973, 1980). That is it computes \deqn{P(q< \sum_{i=1}^r \lambda_i X_i + \sigma_z Z)}{P(q < sum_j lb[j] X_j + sigz Z)} where \eqn{X_j}{X_j} is a chi-squared random variable with \code{df[j]} (integer) degrees of freedom and non-centrality parameter \code{nc[j]}, while \eqn{Z}{Z} is a standard normal deviate. 
 }
-\usage{psum.chisq(q,lb,df=rep(1,length(lb)),nc=rep(0,length(lb)),sigz=0,
-                       lower.tail=FALSE,tol=2e-5,nlim=100000,trace=FALSE)
+\usage{
+psum.chisq(q,lb,df=rep(1,length(lb)),nc=rep(0,length(lb)),sigz=0,
+           lower.tail=FALSE,tol=2e-5,nlim=100000,trace=FALSE)
 }
 %- maybe also `usage' for other objects documented here.
 \arguments{
