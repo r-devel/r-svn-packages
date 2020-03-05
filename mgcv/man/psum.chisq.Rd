@@ -49,6 +49,7 @@ Liu, H.; Tang, Y. & Zhang, H. H (2009) A new chi-square approximation to the dis
   psum.chisq(q,lb,df,nc)
 
   ## same by simulation...
+  
   psc.sim <- function(q,lb,df=lb*0+1,nc=df*0,ns=10000) {
     r <- length(lb);p <- q
     X <- rowSums(rep(lb,each=ns) *
