@@ -1,11 +1,18 @@
-/* C implementation of Davies, R.B. (1980) "The Distribution of a Linear Combination 
+/* Simon N. Wood (Feb 2020)
+
+   C implementation of Davies, R.B. (1980) "The Distribution of a Linear Combination 
    of \chi^2 Random Variables" J. R. Statist. Soc. C 29,323-333.
+   For the basic method see Davies, R. B. (1973). "Numerical inversion of a characteristic function" 
+   Biometrika, 60(2), 415-417. The 1980 paper provides the (somewhat involved) error bounds needed
+   for the 1973 method to be practical, and provides Algol 60 code.
+
    Hand translated from the original Algol 60, but removing global variables and use of goto,
    doing a slightly more efficient sort in place of original 'order' (and simplifying the way
    this is called), calling R functions for ln1, and combining the original intl1 and intl2 into
    their sum intl, and ersm1 and ersm2 into their sum ersm, since only the sums are actually used.
 
-   For a C++ translation (leaving the globals and gotos in place) see CompQuadForm.
+   For a C++ translation (leaving the globals and gotos in place) see CompQuadForm, function 'davies' 
+   (they also provide an 'imhof' function).
 */
 
 #include <math.h>
@@ -226,7 +233,7 @@ void davies(double *lb,double *nc,int *n,int *r,double *sigma,double *c,int *lim
   sd = sigsq = *sigma * *sigma;
   /* it seems that lmin and lmax are not quite as commented,
      and should be initialized to 0 here and not lb[1] which
-     comments would suggest (fails badly otherwise!)...*/
+     comment would suggest (fails badly otherwise!)...*/
   lmax=lmin=0;
   mean=0.0;
   for (j=0;j < *r;j++) {
@@ -332,29 +339,4 @@ void davies(double *lb,double *nc,int *n,int *r,double *sigma,double *c,int *lim
   trace[6] = counter(1);
 } /* davies */
 
-/*
-## to compile... R CMD SHLIB davies.c
 
-setwd("~sw283/research.notes/giga-general")
-dyn.load("davies.so")
-
-library(CompQuadForm)
-library(mgcv)
-
-lb = runif(30)-.2;c=8
-nc = lb*0; n = nc+1
-
-lb = c(7,6,6);n = c(3,2,2); nc = n*0; c=20
-
-r = length(lb);sigma=0
-
-oo <- .C("davies",as.double(lb),as.double(nc),as.integer(n),as.integer(r),as.double(sigma),
-         c=as.double(c),as.integer(10000),as.double(1e-5),trace=as.double(rep(0,7)),
-         ifault=as.integer(0))
-oo$c
-1-davies(c,lb,n,nc)$Qq 
-1-imhof(c,lb,n,nc)$Qq
-1-mgcv:::liu2(c,lb,h=n)
-oo$ifault
-oo$trace
-*/
