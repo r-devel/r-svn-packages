@@ -1727,12 +1727,14 @@ Sl.postproc <- function(Sl,fit,undrop,X0,cov=FALSE,scale = -1,L,nt=1) {
     ind <- ev$values <= 0
     ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
     rV <- (ev$values*t(ev$vectors))[,1:M]
+    V.sp <- crossprod(rV)
+    attr(V.sp,"L") <- L
     Vc <- crossprod(rV%*%t(d1b))
     Vc <- Vp + Vc  ## Bayesian cov matrix with sp uncertainty
     edf2 <- rowSums(Vc*crossprod(X0))/scale
 
     ##bias <- as.numeric(beta-F%*%beta) ## estimate of smoothing bias in beta
-    return(list(beta=beta,Vp=Vp,Vc=Vc,Ve=F%*%Vp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F))
+    return(list(beta=beta,Vp=Vp,Vc=Vc,Ve=F%*%Vp,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F))
   } else return(list(beta=beta))
 } ## Sl.postproc
 

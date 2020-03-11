@@ -3,8 +3,8 @@
    C implementation of Davies, R.B. (1980) "The Distribution of a Linear Combination 
    of \chi^2 Random Variables" J. R. Statist. Soc. C 29,323-333.
    For the basic method see Davies, R. B. (1973). "Numerical inversion of a characteristic function" 
-   Biometrika, 60(2), 415-417. The 1980 paper provides the (somewhat involved) error bounds needed
-   for the 1973 method to be practical, and provides Algol 60 code.
+   Biometrika, 60(2), 415-417. The 1980 paper provides the detail for the error bounds needed
+   for the 1973 method, and provides Algol 60 code.
 
    Hand translated from the original Algol 60, but removing global variables and use of goto,
    doing a slightly more efficient sort in place of original 'order' (and simplifying the way

@@ -1,6 +1,7 @@
 useDynLib(mgcv, .registration = TRUE, .fixes = "C_")
 
-export("%.%",anova.gam, bam, bam.update,bandchol, betar, 
+export("%.%",anova.gam, bam, bam.update,bandchol, betar,
+       blas.thread.test, 
        choldrop,cholup,cox.ph,concurvity, 
        cSplineDes,dDeta,
        exclude.too.far,extract.lme.cov, extract.lme.cov2,FFdes,

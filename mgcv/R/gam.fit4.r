@@ -1467,7 +1467,11 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
     rp <- if (edge.correct) attr(object$outer.info$hess,"rp") else object$rp
     Vc <- Sl.repara(rp,Vc,inverse=TRUE) 
     Vc <-  Sl.initial.repara(Sl,Vc,inverse=TRUE)
-  } else Vc <- 0
+    V.sp <- Vr;attr(V.sp,"L") <- L
+  } else {
+    Vc <- 0
+    V.sp <- NULL
+  }  
   Vb <- Sl.repara(object$rp,Vb,inverse=TRUE)
   Vb <-  Sl.initial.repara(Sl,Vb,inverse=TRUE)
   Vc <- Vb + Vc
@@ -1497,7 +1501,7 @@ gam.fit5.post.proc <- function(object,Sl,L,lsp0,S,off) {
   edf2 <- if (edge.correct) rowSums(Vc1*crossprod(R)) else rowSums(Vc*crossprod(R))
   if (sum(edf2)>sum(edf1)) edf2 <- edf1 
   ## note hat not possible here...
-  list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)
+  list(Vc=Vc,Vb=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,F=F,R=R)
 } ## gam.fit5.post.proc
 
 

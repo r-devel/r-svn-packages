@@ -986,11 +986,17 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
     ind <- ev$values <= 0
     ev$values[ind] <- 0;ev$values[!ind] <- 1/sqrt(ev$values[!ind])
     rV <- (ev$values*t(ev$vectors))[,1:M]
+    V.sp <- crossprod(rV)
+    attr(V.sp,"L") <- G$L
     Vc <- pcrossprod(rV%*%t(prop$db),nt=npt[1])
-  } else Vc <- 0
+  } else {
+    Vc <- 0
+    V.sp <- NULL
+  }  
   Vc <- object$Vp + Vc  ## Bayesian cov matrix with sp uncertainty
   object$edf2 <- rowSums(Vc*qrx$R)/scale
   object$Vc <- Vc
+  object$V.sp <- V.sp
   object$outer.info <- list(grad = prop$grad,hess=prop$hess)  
   object$AR1.rho <- rho
   object$R <- if (npt[2]>1) pchol(qrx$R,npt) else suppressWarnings(chol(qrx$R,pivot=TRUE)) ## latter much faster under optimized BLAS
@@ -1417,11 +1423,11 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
       object$edf <- res$edf
       object$edf1 <- res$edf1
       object$edf2 <- res$edf2
-      ##object$F <- res$F
       object$hat <- res$hat
       object$Vp <- res$Vp
       object$Ve <- res$Ve
       object$Vc <- res$Vc
+      object$V.sp <- res$V.sp
     }
     
     if (efam) { ## deal with any post processing
@@ -1810,7 +1816,7 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
                     db.drho=fit$d1b,
                     gcv.ubre=fit$reml,hat=res$hat,mgcv.conv=list(iter=fit$iter,
                     message=fit$conv),rank=ncol(um$X),
-                    Ve=res$Ve,Vp=res$Vp,Vc=res$Vc,
+                    Ve=res$Ve,Vp=res$Vp,Vc=res$Vc,V.sp=res$V.sp,
                     scale.estimated = scale<=0,outer.info=fit$outer.info,
                     optimizer=c("perf","newton"))
      if (scale<=0) { ## get sp's and scale estimate

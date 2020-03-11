@@ -1848,7 +1848,40 @@ SEXP stmm(SEXP X) {
   return(R);
 } /* stmm */
 
- 
+
+SEXP AddBVB(SEXP A,SEXP bt, SEXP vbt) {
+/* A is a column compressed sparse matrix (symmetric or otherwise)
+   Bt and VBt are p by n dense matrices. Forms
+   A + t(Bt) %*% VBt on NZP(A). Modifies A@x only.
+*/
+  SEXP i_sym,x_sym,dim_sym,p_sym;
+  int *dim,*Ai,*Ap,n,p,i,j,k;
+  double *Ax,*B,*VB,x,*b,*b1,*vb;
+  p_sym = install("p");
+  dim_sym = install("Dim");
+  i_sym = install("i");
+  x_sym = install("x");
+  dim = INTEGER(R_do_slot(A,dim_sym));
+  n = dim[0];
+  Ap = INTEGER(R_do_slot(A,p_sym));
+  Ai = INTEGER(R_do_slot(A,i_sym));
+  Ax = REAL(R_do_slot(A,x_sym));
+  B = REAL(bt);
+  p = nrows(bt);
+  VB = REAL(vbt);
+  for (j=0;j<n;j++) { /* loop over cols of A */
+    for (k=Ap[j];k<Ap[j+1];k++) {
+      i = Ai[k]; /* current row to A */
+      x = 0.0;
+      for (b=B+i*p,vb=VB+j*p,b1=b+p;b<b1;b++,vb++) x += *b * *vb;
+      Ax[k] += x;
+    }  
+  }
+  return(R_NilValue);
+} /* AddBVB */
+
+
+
 /*** inverse subset algorithm ***/
 
 inline int kij(int *Ap,int *Ai,int i, int j) {

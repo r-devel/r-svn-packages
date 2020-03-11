@@ -945,8 +945,9 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
         }
       }
     } ## k loop
-  } else edf2 <- Vc <- NULL
-  list(Vc=Vc,Vb=Vb,Ve=Ve,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
+    V.sp <- Vr;attr(V.sp,"L") <- L;attr(V.sp,"spind") <- (nth+1):M
+  } else V.sp <- edf2 <- Vc <- NULL
+  list(Vc=Vc,Vb=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
 
 

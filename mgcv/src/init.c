@@ -28,6 +28,7 @@ R_CallMethodDef CallMethods[] = {
   {"sXyd",(DL_FUNC)&sXyd,3},
   {"sdiagXVXt",(DL_FUNC)&sdiagXVXt,4},
   {"stmm",(DL_FUNC)&stmm,1},
+  {"AddBVB",(DL_FUNC)&AddBVB,3},
   {"isa1p",(DL_FUNC)&isa1p,3},
   {NULL, NULL, 0}
 };

@@ -936,8 +936,15 @@ gam.setup.list <- function(formula,pterms,
 
   ## assemble a global indicator array for non-linear parameters... 
   G$g.index <- rep(FALSE,ncol(G$X))
-  if (length(G$smooth)) for (i in 1:length(G$smooth))
+  n.sp0 <- 0
+  if (length(G$smooth)) for (i in 1:length(G$smooth)) {
     if (!is.null(G$smooth[[i]]$g.index)) G$g.index[G$smooth[[i]]$first.para:G$smooth[[i]]$last.para] <- G$smooth[[i]]$g.index
+    n.sp <- length(G$smooth[[i]]$S)
+    if (n.sp) {
+      G$smooth[[i]]$first.sp <- n.sp0 + 1
+      n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
+    }
+  }  
   if (!any(G$g.index)) G$g.index <- NULL  
 
   G
@@ -1174,11 +1181,11 @@ gam.setup <- function(formula,pterms,
 
   Xp <- NULL ## model matrix under prediction constraints, if given
   if (m>0) for (i in 1:m) {
-    n.para<-ncol(sm[[i]]$X)
+    n.para <- ncol(sm[[i]]$X)
     # define which elements in the parameter vector this smooth relates to....
     sm[[i]]$first.para<-first.para     
-    first.para<-first.para+n.para
-    sm[[i]]$last.para<-first.para-1
+    first.para <- first.para+n.para
+    sm[[i]]$last.para <- first.para-1
     ## termwise offset handling ...
     Xoff <- attr(sm[[i]]$X,"offset")
     if (!is.null(Xoff)) { 
@@ -1419,6 +1426,7 @@ gam.setup <- function(formula,pterms,
   if (n.smooth)
   ## create coef names, if smooth has any coefs, and create a global indicator of non-linear parameters
   ## g.index, if needed
+  n.sp0 <- 0
   for (i in 1:n.smooth) {
     k <- 1
     jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para
@@ -1426,10 +1434,16 @@ gam.setup <- function(formula,pterms,
       term.names[j] <- paste(G$smooth[[i]]$label,".",as.character(k),sep="")
       k <- k+1
     }
+    n.sp <- length(G$smooth[[i]]$S)
+    if (n.sp) { ## record sp this relates to in full sp vector
+      G$smooth[[i]]$first.sp <- n.sp0 + 1
+      n.sp0 <- G$smooth[[i]]$last.sp <- n.sp0 + n.sp
+    }
     if (!is.null(G$smooth[[i]]$g.index)) {
       if (is.null(G$g.index)) G$g.index <- rep(FALSE,n.p)
       G$g.index[jj] <- G$smooth[[i]]$g.index
-    } 
+    }
+    
   }
   G$term.names <- term.names
 
@@ -1573,6 +1587,7 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
   if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
   if (!is.null(mv$edf2)) object$edf2 <- mv$edf2
   object$Vp <- mv$Vb
+  object$V.sp <- mv$V.sp
   object$hat<-mv$hat
   object$Ve <- mv$Ve
   object$edf<-mv$edf

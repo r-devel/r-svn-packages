@@ -721,8 +721,9 @@ eigen.approx <- function(A,Av = function(A,v) A%*%v,M=20,n.rep=20,n=ncol(A),seed
      if (upper.uconv) {
        eta <- eta1[1:(upper.uconv+1)]
        theta <- lz$theta[1:(upper.uconv+1)]
-       eta <- eta/max(eta)   
-       eva <- eva + c(approx(eta,theta,seq(0,1,length=n-n.conv),method="linear",rule=2)$y,theta.conv)
+       eta <- eta/max(eta)
+       nri <- c(diff(eta)!=0,TRUE) ## strip out duplicates
+       eva <- eva + c(approx(eta[nri],theta[nri],seq(0,1,length=n-n.conv),method="linear",rule=2)$y,theta.conv)
      } else {
        eva <- eva + c(rep(0,n-n.conv),theta.conv)
      }
@@ -769,4 +770,12 @@ isa <- function(R,nt=1) {
   .Call(C_isa1p,t(R),Hpi,nt)
   Hpi
 } ## isa
+
+AddBVB <- function(A,B,V) {
+## Add B %*% V %*% t(B) to A returning result on NZP(A) only
+## (i.e. discarding elements of BVB' not in NZP(A)) 
+  A@x <- A@x * 1.0 ## force copy, otherwise A and return value modified
+  .Call(C_AddBVB,t(B),t(B%*%V))
+  A
+} ## AddBVB
 

@@ -218,7 +218,7 @@ SEXP sdiagXVXt(SEXP X, SEXP V, SEXP LT, SEXP RT);
 SEXP sXbd(SEXP X,SEXP BETA,SEXP LT);
 SEXP sXyd(SEXP X,SEXP Y,SEXP LT);
 SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT);
-
+SEXP AddBVB(SEXP A,SEXP bt, SEXP vbt);
 
 /* basis constructor/prediction routines*/
 
