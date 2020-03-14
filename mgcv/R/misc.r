@@ -213,7 +213,7 @@ XWXd <- function(X,w,k,ks,ts,dt,v,qc,nthreads=1,drop=NULL,ar.stop=-1,ar.row=-1,a
     XWX <- .Call(C_sXWXd,m,w,lt,rt,nthreads)
     if (!is.null(drop)) {
       Dl <- Diagonal(ncol(XWX),1)
-      XWX <- D[-ldrop,] %*% XWX %*% t(D[-rdrop,])
+      XWX <- Dl[-ldrop,] %*% XWX %*% t(Dl[-rdrop,])
     }
     return(XWX) ## note that this is sparse
   }

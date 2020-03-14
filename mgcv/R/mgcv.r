@@ -1423,11 +1423,10 @@ gam.setup <- function(formula,pterms,
 
   if (G$nsdf > 0) term.names <- colnames(G$X)[1:G$nsdf] else term.names<-array("",0)
   n.smooth <- length(G$smooth)
-  if (n.smooth)
   ## create coef names, if smooth has any coefs, and create a global indicator of non-linear parameters
   ## g.index, if needed
   n.sp0 <- 0
-  for (i in 1:n.smooth) {
+  if (n.smooth) for (i in 1:n.smooth) {
     k <- 1
     jj <- G$smooth[[i]]$first.para:G$smooth[[i]]$last.para
     if (G$smooth[[i]]$df > 0) for (j in jj) {
@@ -1582,19 +1581,22 @@ gam.outer <- function(lsp,fscale,family,control,method,optimizer,criterion,scale
     mv <- gam.fit5.post.proc(object,G$Sl,G$L,G$lsp0,G$S,G$off)
     ## object$coefficients <- Sl.initial.repara(G$Sl,object$coefficients,inverse=TRUE)
   } else mv <- gam.fit3.post.proc(G$X,G$L,G$lsp0,G$S,G$off,object)
-  ## note: use of the following in place of Vp appears to mess up p-values for smooths,
+
+  object[names(mv)] <- mv
+
+  ## note: use of the following (Vc) in place of Vp appears to mess up p-values for smooths,
   ##       but doesn't change r.e. p-values of course. 
-  if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
-  if (!is.null(mv$edf2)) object$edf2 <- mv$edf2
-  object$Vp <- mv$Vb
-  object$V.sp <- mv$V.sp
-  object$hat<-mv$hat
-  object$Ve <- mv$Ve
-  object$edf<-mv$edf
-  object$edf1 <- mv$edf1
+  #if (!is.null(mv$Vc)) object$Vc <- mv$Vc 
+  #if (!is.null(mv$edf2)) object$edf2 <- mv$edf2
+  #object$Vp <- mv$Vb
+  #object$V.sp <- mv$V.sp
+  #object$hat<-mv$hat
+  #object$Ve <- mv$Ve
+  #object$edf<-mv$edf
+  #object$edf1 <- mv$edf1
   ##object$F <- mv$F ## DoF matrix --- probably not needed
-  object$R <- mv$R ## qr.R(sqrt(W)X)
-  object$aic <- object$aic + 2*sum(mv$edf)
+  #object$R <- mv$R ## qr.R(sqrt(W)X)
+  object$aic <- object$aic + 2*sum(object$edf)
   object$nsdf <- G$nsdf
   object$K <-  object$D1 <-  object$D2 <-  object$P <-  object$P1 <-  object$P2 <-  
   object$GACV <-  object$GACV1 <-  object$GACV2 <-  object$REML <-  object$REML1 <-  object$REML2 <-  

@@ -446,7 +446,7 @@ Sl.inirep <- function(Sl,X,l=0,r=0,nt=1) {
 ## Re-parameterize X using initial Sl reparameterization info.
 ## l,r = -2,-1,0,1,2. O is do not apply, negative to apply inverse transform Di,
 ##       positive for transform D, 1 for transform, 2 for its transpose.
-## Aim is for simpler and cleaner than 
+## Aim is for simpler and cleaner than Sl.initial.repara
   if (length(Sl)==0 && !l && !r) return(X) ## nothing to do
   if (is.matrix(X)) {
     for (b in 1:length(Sl)) if (Sl[[b]]$repara) {

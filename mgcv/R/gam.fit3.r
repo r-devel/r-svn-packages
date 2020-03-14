@@ -947,7 +947,7 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
     } ## k loop
     V.sp <- Vr;attr(V.sp,"L") <- L;attr(V.sp,"spind") <- (nth+1):M
   } else V.sp <- edf2 <- Vc <- NULL
-  list(Vc=Vc,Vb=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
+  list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
 
 
@@ -1637,7 +1637,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     alpha <- if (is.logical(edge.correct)) .02 else abs(edge.correct) ## target RE/ML change per sp
     b1 <- b; lsp1 <- lsp
     if (length(flat)) {
-      step <- as.numeric(initial.lsp - lsp)*2-1
+      step <- as.numeric(initial.lsp > lsp)*2-1 ## could use sign here 
       for (i in flat) {
         REML <- b1$REML + alpha
         while (b1$REML < REML) {
