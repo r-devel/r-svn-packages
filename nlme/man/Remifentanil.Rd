@@ -36,8 +36,10 @@ data("Remifentanil", package = "nlme")
     \item{\code{BSA}:}{body surface area (DuBois and DuBois 1916): \eqn{%
 	BSA := Wt^{0.425} \cdot Ht^{0.725} \cdot 0.007184}{%
 	BSA := Wt^0.425      *  Ht^0.725      *  0.007184}.}
-    \item{\code{LBM}:}{lean body mass (James 1976):
-      \eqn{LBM := 1.1 Wt - 128 (Wt/Ht)^2};  but see the example.}
+    \item{\code{LBM}:}{lean body mass (James 1976), with slightly different
+      formula for
+        men \eqn{LBM_m := 1.1  Wt - 128 (Wt/Ht)^2}, and
+      women \eqn{LBM_f := 1.07 Wt - 148 (Wt/Ht)^2}.}
   }
 }
 \author{of this help page: Niels Hagenbuch and Martin Maechler, SfS ETH Zurich.}
@@ -74,17 +76,13 @@ summary(unclass(table(Remifentanil$Subject)))
 ## Only first measurement of each patient :
 dim(Remi.1 <- Remifentanil[!duplicated(Remifentanil[,"ID"]),]) #  65 x 12
 
+LBMfn <- function(Wt, Ht, Sex) ifelse(Sex == "Female",
+                                        1.07 * Wt - 148*(Wt/Ht)^2,
+                                        1.1  * Wt - 128*(Wt/Ht)^2)
 with(Remi.1,
     stopifnot(all.equal(BSA, Wt^{0.425} * Ht^{0.725} * 0.007184, tol = 1.5e-5),
-              all.equal(LBM, 1.1 * Wt - 128*(Wt/Ht)^2,       tol = 0.04) # not accurate
+              all.equal(LBM, LBMfn(Wt, Ht, Sex),                 tol = 7e-7)
 ))
-## What's the matter with 'LBM' :
-plot(1.1 * Wt - 128*(Wt/Ht)^2 ~ LBM, data = Remi.1,
-     main = "Remifentanil - LBM \"problem\"")
-abline(0,1, col=adjustcolor("black", 0.5), lty=2)
-## ==> for some patients, LBM has been determined "unusually"
-unique(cbind(Remi.1[,c("Wt","Ht", "LBM")],
-             LBM.c = with(Remi.1, 1.1 * Wt - 128*(Wt/Ht)^2)))
 
 ## Rate: typically  3 µg / kg body weight, but :
 sunflowerplot(Rate ~ Wt, Remifentanil)
