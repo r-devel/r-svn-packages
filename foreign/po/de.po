@@ -5,12 +5,12 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: R 2.15.2 / foreign 0.8-38\n"
+"Project-Id-Version: R 4.0.0 / foreign 0.8-77\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2018-04-07 21:21+0100\n"
-"PO-Revision-Date: 2012-10-11 13:34+0200\n"
-"Last-Translator: Chris Leick <c.leick@vollbio.de>\n"
-"Language-Team: German <debian-l10n-german@lists.debian.org>\n"
+"PO-Revision-Date: 2020-04-01 14:54+0200\n"
+"Last-Translator: Detlef Steuer <steuer@hsu-hh.de>\n"
+"Language-Team: r-core@r-project.org\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -531,6 +531,8 @@ msgid ""
 "%s: Very long string record(s) found (record type 7, subtype %d), each will "
 "be imported in consecutive separate variables"
 msgstr ""
+"Sehr lange(e) Zeichenketteneinträge gefunden (record Typ 7, Subtyp %d), jeder\n"
+"wird in aufeinanderfolgende, einzelne Variablen importiert"
 
 #: sfm-read.c:475
 #, c-format
@@ -538,13 +540,15 @@ msgid ""
 "%s: Long string value labels record found (record type 7, subtype %d), but "
 "ignored"
 msgstr ""
+"Langer Eintrag mit Zeichenkettenlabels gefunden (record Typ 7, Subtyp %d), aber\n"
+"ignoriert"
 
 #: sfm-read.c:480
 #, c-format
 msgid ""
 "%s: Long string missing values record found (record type 7, subtype %d), but "
 "ignored"
-msgstr ""
+msgstr "Langer Eintrag mit Zeichenkette für fehlenden Wert gefunden (record Typ 7, Subtyp %d), aber ignoriert"
 
 #: sfm-read.c:489
 #, c-format
