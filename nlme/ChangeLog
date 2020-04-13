@@ -1,10 +1,12 @@
 2020-03-03  Brian Ripley
 
-	* DESCRIPTION (Version): 3.1-146 (released)
+	* DESCRIPTION (Version): 3.1-147 (released)
 
 	* po: update, including updated German translations from Detlef Steuer
 
 2020-03-11  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 3.1-146 (unreleased)
 
 	* man/Remifentanil.Rd: more information incl references.
 
