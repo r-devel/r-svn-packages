@@ -1,3 +1,9 @@
+2020-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 3.1-148 (not yet released)
+
+	* man/nlsList.Rd: fix stopifnot(.) check in examples.
+
 2020-03-03  Brian Ripley
 
 	* src/nlmefit: clean up code.
