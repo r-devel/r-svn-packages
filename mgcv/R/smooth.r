@@ -2588,7 +2588,7 @@ smooth.construct.mrf.smooth.spec <- function(object, data, knots) {
       ind <- object$xt$nb[[i]]
       lind <- length(ind)
       S[a.name[i],a.name[i]] <- lind
-      if (lind>0) for (j in 1:lind) S[a.name[i],a.name[ind[j]]] <- -1
+      if (lind>0) for (j in 1:lind) if (ind[j]!=i) S[a.name[i],a.name[ind[j]]] <- -1
     }
     if (sum(S!=t(S))>0) stop("Something wrong with auto- penalty construction")
     object$S[[1]] <- S

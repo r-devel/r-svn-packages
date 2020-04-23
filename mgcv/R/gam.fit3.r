@@ -1035,7 +1035,7 @@ deriv.check <- function(x, y, sp, Eb,UrS=list(),
       start=start,etastart=etastart,mustart=mustart,scoreType=scoreType,
      null.coef=null.coef,Sl=Sl,...)
      diter[i] <- bf$iter - bb$iter ## check iteration count same 
-     fd.db[,i] <- (bf$coefficients - bb$coefficients)/eps
+     if (i<=ncol(fd.db)) fd.db[,i] <- (bf$coefficients - bb$coefficients)/eps
 
 
       if (!reml) {

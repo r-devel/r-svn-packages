@@ -32,8 +32,14 @@ present, and reparameterization needs checking (also for bam).
   r.v.s using method of Davies, 1980. This is now used for computing p-values 
   in summary.gam in place of the Liu et al, 2009 approximation.  
 
+* Fix to derivative w.r.t. scale parameter calculation for extended families 
+  ('tw' is the only one at present) when using 'ML' smoothing parameter
+  estimation. Could lead to step failure with 'tw'. Thanks Kevin Hawkshaw. 
+
 * Fix to prediction/fake formula environment that could cause failure of
   gam/bam called from a function. Thanks to Duncan Murdoch.
+
+* Fix to smoothing parameter uncertainy correction for general families.
 
 * Much cleaner design for the discretization of covariates and associated 
   discretization index matching in bam (predict.bamd and discrete.mf). 

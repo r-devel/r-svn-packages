@@ -660,7 +660,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
    if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
       Dp <- dev + oo$P
-      dlr.dlphi <- (-Dp/(2 *scale) - ls$lsth1[nt+1])/gamma - Mp/2
+      dlr.dlphi <- (-Dp/(2 *scale) - ls$lsth1[nt+1])/gamma - as.numeric(scoreType=="REML") * Mp/2
       d2lr.d2lphi <- (Dp/(2*scale) - ls$lsth2[nt+1,nt+1])/gamma 
       d2lr.dspphi <- -(oo$D1+oo$P1)/(2*scale*gamma) 
       d2lr.dspphi[1:nt] <- d2lr.dspphi[1:nt] - ls$lsth2[nt+1,1:nt]/gamma

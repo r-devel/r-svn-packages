@@ -771,11 +771,12 @@ isa <- function(R,nt=1) {
   Hpi
 } ## isa
 
-AddBVB <- function(A,B,V) {
-## Add B %*% V %*% t(B) to A returning result on NZP(A) only
-## (i.e. discarding elements of BVB' not in NZP(A)) 
+AddBVB <- function(A,Bt,VBt) {
+## Add B %*% V %*% t(B) to calss 'dgCMatrix' A returning result on NZP(A) only
+## (i.e. discarding elements of BVB' not in NZP(A)), Bt is the transpose
+## of B. B and VBt are class 'matrix'
   A@x <- A@x * 1.0 ## force copy, otherwise A and return value modified
-  .Call(C_AddBVB,t(B),t(B%*%V))
+  .Call(C_AddBVB,A,Bt,VBt)
   A
 } ## AddBVB
 
