@@ -6,6 +6,14 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
+\section{Changes in version 2.1.1 (2020-04-30, svn r7834)}{
+  \subsection{New Features}{
+    \itemize{
+      \item \code{clara()} gains a \code{cluster.only} argument, entirely
+      \dQuote{in parallel} to \code{pam()}.
+    }
+  }
+}
 
 \section{Changes in version 2.1.0 (2019-06-07, svn r7674)}{
   \subsection{Bug Fixes}{
