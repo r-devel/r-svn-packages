@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: cluster 1.15.1\n"
 "Report-Msgid-Bugs-To: bugs.r-project.org\n"
-"POT-Creation-Date: 2018-04-06 23:26\n"
+"POT-Creation-Date: 2020-04-30 13:19\n"
 "PO-Revision-Date: 2014-03-27 17:34+0100\n"
 "Last-Translator: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
 "Language-Team: Łukasz Daniel <lukasz.daniel@gmail.com>\n"
@@ -463,8 +463,9 @@ msgstr "wartości NA są niedozwolone w wektorze grupującym"
 
 # cluster/R/plotpart.R: 303
 # warning("Error in Fortran routine for the spanning ellipsoid,\n rank problem??")
+#, fuzzy
 msgid ""
-"Error in Fortran routine for the spanning ellipsoid,\n"
+"Error in C routine for the spanning ellipsoid,\n"
 " rank problem??"
 msgstr ""
 "Błąd w procedurze Fortran dla elipsoidy obejmującej,\n"

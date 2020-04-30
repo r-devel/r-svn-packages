@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: cluster 2.0.8\n"
-"POT-Creation-Date: 2019-04-02 17:09\n"
+"Project-Id-Version: cluster 2.1.1\n"
+"POT-Creation-Date: 2020-04-30 13:19\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -241,7 +241,7 @@ msgstr ""
 msgid "NA-values are not allowed in clustering vector"
 msgstr ""
 
-msgid "Error in Fortran routine for the spanning ellipsoid,\n rank problem??"
+msgid "Error in C routine for the spanning ellipsoid,\n rank problem??"
 msgstr ""
 
 msgid "'col.clus' should have length 4 when color is TRUE"
