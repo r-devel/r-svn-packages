@@ -1,15 +1,17 @@
--- This is private to me, Martin Maechler, the package maintainer.
--- a much smaller ``public TODO'' is part of the file   ./README
--- Things done are moved to ./DONE-MM			~~~~~~~~
------------		    ~~~~~~~~~
+Private Maintainer -- TODO				-*- markdown -*-
 
-o clusGap():  currently fails [in svd()] when `x` has any NA's
+A much smaller _public TODO_ is part of the file `./README`
+Things done are moved to `./DONE-MM`
 
-o clusGap() : now have "original" in addition to PCA-rotation with
-   'scaleH0 string.  In addition should provide 'H0gen = a RNG *function*':
+### `clusGap()`
+
+* currently fails [in `svd()`] when `x` has any NA's
+
+* clusGap() : now have `"original"` in addition to PCA-rotation with
+   `scaleH0` string.  In addition should provide `H0gen = a RNG *function*`:
    Chris Fields (in March 2012) had proposed to alternatively allow uniform
    on a n-simplex instead of an n-cube.
-    (~/R/MM/Pkg-ex/cluster/clusGap-ChrisField-thoughts)
+    ->  `~/R/MM/Pkg-ex/cluster/clusGap-ChrisField-thoughts`
 
    ==> Master Thesis of Emmanuel Profumo (~/Betreute-Arbeiten/Profumo_Emmanuel/)
    has a __generalized__ clusGap()
@@ -19,41 +21,54 @@ o clusGap() : now have "original" in addition to PCA-rotation with
    ~/R/MM/Pkg-ex/cluster/clusGap/clusGapGen/README.md
    --------------------------------------------------
 
-o clusGap() : print() method: note that Tibshirani et al. proposed
-    (see their large data example !)
-              a different method than the one we implemnt currently
-   --> provide both(!)
+* clusGap `print()` method: note that Tibshirani et al. proposed
+  see their large data example (!) a different method than the one we
+  implemnt currently --> provide both(!)
 
+### `clara()`
 
-o clara() to work with *daisy*-like distances, not just L2 & L1.
+* clara() to work with *daisy*-like distances, not just L2 & L1.
 
-   -- Possibility: using stats package C code ~/R/D/r-devel/R/src/library/stats/src/distance.c
-      does not have Gower, but a few more kinds distance methods.
+   -- Possibility: using stats package C code
+	   `~/R/D/r-devel/R/src/library/stats/src/distance.c`
+      does not have Gower, but a few more kinds of distance methods.
 
-o clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
+* clara() - bug?: tests/clara.Rout.save.~13~ (and ~12~ , ~11~ ...)
 		  gives a clearly better result
 		  clara(ru4, k=3, met="manhattan", sampsize=4)
 		  than current (later) clara.Rout  files...
      -> bug since 'Mar 11 2004' (= cluster-1.[89].1 for R 1.[89]) ??
      FIXME ?!?!?!
 
+* It should be possible to _re_start `clara()` with a **given** "best sample"
 
-o plot.silhouette() : if an observation's width is == 0., draw a small stripe
-		     instead of nothing at all
+* `silhouette.clara()`
 
+	- silhouette(*, full=TRUE):
+	 Allow option of *NOT* pass full-size length n(n-1)/2 dist object but compute
+	 `daisy()`-like distance *on the fly*  inside `src/sildist.c`
+     ==> still needs O(n^2) CPU-effort, but not O(n^2) memory
+	  { which is even not *possible*, e.g., for n=70'000 }
 
-o clara():	     Should be possible to "re"start with a GIVEN "best sample"
-o pam() and clara(): Should be possible to "re"start with GIVEN medoids.
+    - Consider `silhouette(*, full = 0.50)1 to compute silhouette for a (random ?)
+	  subset of {0.50 * n} of the observations
+
+*    - `plot.silhouette()` : if an observation's width is == 0., draw a small stripe
+	  instead of nothing at all
+
+### `pam()` (and also `clara()`)
+
+* pam() and clara(): Should be possible to "re"start with GIVEN medoids.
 		     now possible for pam(), not for clara();
 		     --> "synchronize src/pam.c and src/clara.c in
 		     particular bswap() vs bswap2() !!
-o pam() and clara(): With NA's, medoids "often" contain NAs even when there
+* pam() and clara(): With NA's, medoids "often" contain NAs even when there
 		     are only few NAs. ==> use modified d(.,.) which make
 		     NAs "bad" somehow.
 
-o pamila(): Major smart idea: Do save the d(i,j) i=1,..k  j=1,..n
+* pamila(): Major smart idea: Do save the d(i,j) i=1,..k  j=1,..n
 	    only between *medoids* and everything else -- speedup(?) -> optional
-o R/agnes.q , R/diana.q  and R/pam.q  have almost identical clause
+* R/agnes.q , R/diana.q  and R/pam.q  have almost identical clause
 
 	if(data.class(x) != "dissimilarity") {
 	    if(!is.numeric(x) || is.na(sizeDiss(x)))
@@ -69,11 +84,12 @@ o R/agnes.q , R/diana.q  and R/pam.q  have almost identical clause
   [ agnes() and diana() even more in common --> namespace-local functions!
     see also  "8b)" below!]
 
-o diana() {divisive hierarchical}: Should allow ---early stopping---
+### diana()  {divisive hierarchical}:
+
+* Should allow __early stopping__
   (for speed and size) -- simultaneously, could think of
-  ``diss() on the fly'' instead of diss() matrix,
-  but see ./src/NOTES-MM  (and "pamila" below) !
-          ~~~~~~~~~~~~~~
+  _`diss()` on the fly_ instead of diss() matrix,
+  but see `./src/NOTES-MM`  (and `pamila()`) !
 
 
 Dec. 2002:
@@ -162,9 +178,9 @@ May 23, 2001 / Jan.2002 :
 
 ------------------------------------------------
 
-older
-TODO  (were in ./README_MM which is now eliminated)
-====
+Older TODO
+==========
+		     (were in `README_MM` which is now eliminated)
 
  3) daisy() for the case of mixed variables should allow
     a weight vector (of length p = #vars) for up- or downweighing variables.
