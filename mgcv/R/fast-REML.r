@@ -143,6 +143,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
 
     if (m>0) {
       Sl[[b]] <- list()
+      Sl[[b]]$nl.reg <- G$smooth[[i]]$nl.reg ## any fixed regularizer for non-linear coefs
       Sl[[b]]$start <- G$smooth[[i]]$first.para
       Sl[[b]]$stop <- G$smooth[[i]]$last.para    
       ## if the smooth has a g.index field it indicates non-linear params,
@@ -265,7 +266,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
         D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1 ## X' = X%*%diag(D) 
         Sl[[b]]$D <- D; Sl[[b]]$ind <- ind
       } else { ## S is not diagonal
-        if (cholesky) { ## use Cholesky based reparameterization
+        if (cholesky&&is.null(Sl[[b]]$nl.reg)) { ## use Cholesky based reparameterization
           tr <- singleStrans(Sl[[b]]$S[[1]],Sl[[b]]$rank,ldet=!Sl[[b]]$repara)
 	  ind <- rep(FALSE,ncol(tr$D))
 	  ind[1:tr$rank] <- TRUE
@@ -282,11 +283,17 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
 	  ## non-cholesky stabilized method code ignores the log det
 	  ## of transform as it cancels between the two log det terms...
 	  Sl[[b]]$ldet <- 0 ## sum(log(D[1:Sl[[b]]$rank])) 
-          ind <- rep(FALSE,length(D))
-          ind[1:Sl[[b]]$rank] <- TRUE ## index penalized elements
-          D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1
-          Sl[[b]]$D <- t(D*t(U)) ## D <- U%*%diag(D)
-          Sl[[b]]$Di <- t(U)/D
+          if (is.null(Sl[[b]]$nl.reg)) {
+            ind <- rep(FALSE,length(D))
+            ind[1:Sl[[b]]$rank] <- TRUE ## index penalized elements
+            D[ind] <- 1/sqrt(D[ind]);D[!ind] <- 1
+            Sl[[b]]$D <- t(D*t(U)) ## D <- U%*%diag(D)
+            Sl[[b]]$Di <- t(U)/D
+	  } else { 
+            Sl[[b]]$repara <- FALSE ## should be FALSE anyway to get here
+	    Sl[[b]]$ev <- D ## store the penalty eigenvalues to allow penalized ldet computation
+	    Sl[[b]]$U <- U ## store the eigen-vectors to allow computation of regularized penalty square root
+          }
 	}  
         ## so if X is smooth model matrix X%*%D is re-parameterized form
 	## and t(D)%*%Sl[[b]]$S[[1]]%*%D is the reparameterized penalty
@@ -306,7 +313,9 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
 	}  
         lambda <- c(lambda,1) ## record corresponding lambda
       } else { ## need scaled root penalty in *original* parameterization
-        D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
+        #D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
+	D <- if (is.null(Sl[[b]]$nl.reg)) Sl[[b]]$Di[1:Sl[[b]]$rank,] else
+	        sqrt(Sl[[b]]$ev+Sl[[b]]$nl.reg)*t(Sl[[b]]$U)
         D.norm <- norm(D); D <- D/D.norm
         if (sparse) {
 	  D <- as(D,"dgTMatrix")
@@ -765,10 +774,12 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
       }
     } else if (length(Sl[[b]]$S)==1) { ## linear singleton
       ldS <- ldS + Sl[[b]]$ldet ## initial repara log det correction for this block
-      ldS <- ldS + rho[k.sp] * Sl[[b]]$rank
+      ldS <- ldS + if (is.null(Sl[[b]]$nl.reg)) rho[k.sp] * Sl[[b]]$rank else
+                   sum(log(exp(rho[k.sp])*Sl[[b]]$ev + Sl[[b]]$nl.reg))
       if (!fixed[k.sp]) {
-        d1.ldS[k.deriv] <- Sl[[b]]$rank
-        k.deriv <- k.deriv + 1
+        d1.ldS[k.deriv] <- if (is.null(Sl[[b]]$nl.reg)) Sl[[b]]$rank else
+	        sum(exp(rho[k.sp])*Sl[[b]]$ev/(exp(rho[k.sp])*Sl[[b]]$ev + Sl[[b]]$nl.reg))
+	k.deriv <- k.deriv + 1
       } 
       if (root) { 
         ## insert diagonal from block start to end
@@ -781,15 +792,18 @@ ldetS <- function(Sl,rho,fixed,np,root=FALSE,repara=TRUE,nt=1,deriv=2,sparse=FAL
 	  }  
         } else { ## root has to be in original parameterization...
           if (sparse) {
-	    D <- as(Sl[[b]]$Di[1:Sl[[b]]$rank,],"dgTMatrix")
+	    ## dgTMatrix is triplet form, which makes combining easier...
+	    D <- if (is.null(Sl[[b]]$nl.reg)) as(Sl[[b]]$Di[1:Sl[[b]]$rank,]* exp(rho[k.sp]*.5),"dgTMatrix") else
+	         as(sqrt(Sl[[b]]$ev*exp(rho[k.sp])+Sl[[b]]$nl.reg)*t(Sl[[b]]$U),"dgTMatrix")
 	    E$i[[b]] <- D@i + Sl[[b]]$start
 	    E$j[[b]] <- D@j + Sl[[b]]$start
-	    E$x[[b]] <- D@x * exp(rho[k.sp]*.5)
+	    E$x[[b]] <- D@x
 	  } else {
-            D <- Sl[[b]]$Di[1:Sl[[b]]$rank,]
+            D <- if (is.null(Sl[[b]]$nl.reg)) Sl[[b]]$Di[1:Sl[[b]]$rank,]* exp(rho[k.sp]*.5) else
+	         sqrt(Sl[[b]]$ev*exp(rho[k.sp])+Sl[[b]]$nl.reg)*t(Sl[[b]]$U)
             indc <- Sl[[b]]$start:(Sl[[b]]$start+ncol(D)-1)
             indr <- Sl[[b]]$start:(Sl[[b]]$start+nrow(D)-1)
-            E[indr,indc] <- D * exp(rho[k.sp]*.5)
+            E[indr,indc] <- D 
 	  }  
         }
       }
@@ -1006,8 +1020,11 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
           if (Amat) B[ind,] <- Sl[[b]]$lambda*A[ind,] else
 	            B[ind] <- Sl[[b]]$lambda*A[ind]
         } else { ## original penalty has to be applied 
-          if (Amat) B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind,] else
-                    B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind]
+          if (Amat) {
+	    B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind,] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,]
+	  } else {
+            B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]] %*% A[ind] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind]
+	  }  
         }
       } else { ## multi-S block
 	if (Sl[[b]]$repara) ind <- ind[Sl[[b]]$ind]
@@ -1037,12 +1054,18 @@ Sl.mult <- function(Sl,A,k = 0,full=TRUE) {
             } else if (Sl[[b]]$linear) { ## not reparameterized version, but linear 
               if (full) {
                 B <- A*0
-                if (Amat) B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] else  
-                          B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind]
+                if (Amat) {
+		  B[ind,] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,] 
+		} else {  
+                  B[ind] <- Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind]
+	        }		  
                 A <- B
               } else {
-                 A <- if (Amat) Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] else
-                                as.numeric(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind])
+                 A <- if (Amat) {
+		   Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind,] + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind,]
+		 } else {
+                   as.numeric(Sl[[b]]$lambda*Sl[[b]]$S[[1]]%*%A[ind]) + if (is.null(Sl[[b]]$nl.reg)) 0 else Sl[[b]]$nl.reg * A[ind]
+		 }  
               }
             } else { ## non-linear
               if (full) {

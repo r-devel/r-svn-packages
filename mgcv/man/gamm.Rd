@@ -39,10 +39,9 @@ mustart=NULL, etastart=NULL,...)
 
 \arguments{ 
 \item{formula}{ A GAM formula (see also \code{\link{formula.gam}} and \code{\link{gam.models}}).
-This is like the formula for a \code{glm} except that smooth terms (\code{\link{s}} and \code{\link{te}})
-can be added to the right hand side of the
-formula. Note that \code{id}s for smooths and fixed smoothing parameters are
-not supported.} 
+This is like the formula for a \code{glm} except that smooth terms (\code{\link{s}}, \code{\link{te}} etc.)
+can be added to the right hand side of the formula. Note that \code{id}s for smooths and fixed smoothing parameters are not supported. Any offset should be specified in the formula.
+} 
 
 \item{random}{The (optional) random effects structure as specified in a call to 
 \code{\link[nlme]{lme}}: only the \code{list} form is allowed, to facilitate 

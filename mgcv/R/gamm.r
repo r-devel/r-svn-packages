@@ -1343,9 +1343,10 @@ gamm <- function(formula,random=NULL,correlation=NULL,family=gaussian(),data=lis
     eval(parse(text=paste("mf$",Xname,"<-G$X",sep="")))
     
     fixed.formula <- paste(yname,"~",Xname,"-1")
-    if (length(offset.name)) {
-      fixed.formula <- paste(fixed.formula,"+",offset.name) 
-    }
+    ## following appears to serve no purpose except confusing later lme versions
+    #if (length(offset.name)) {
+    #  fixed.formula <- paste(fixed.formula,"+",offset.name) 
+    #}
     fixed.formula <- as.formula(fixed.formula)
     
     ## Add any explicit random effects to the smooth induced r.e.s 

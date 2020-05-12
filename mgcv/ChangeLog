@@ -28,6 +28,9 @@ present, and reparameterization needs checking (also for bam).
 ** bam(...,discrete=TRUE) now uses discretization on the parametric model
    components as well as the smooths. 
 
+* A recent lme change broke gamm offset handling. Fixed. 
+  Thanks Aaron Benjamin Shev.
+
 * psum.chisq function added to compute c.d.f. of weighted sums of chi-squared
   r.v.s using method of Davies, 1980. This is now used for computing p-values 
   in summary.gam in place of the Liu et al, 2009 approximation.  
