@@ -1,3 +1,7 @@
+2020-05-13  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Contact, MailingList): R-help (*not* R-core)
+
 2020-04-21  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 3.1-148 (not yet released)
@@ -6,7 +10,7 @@
 
 2020-03-03  Brian Ripley
 
-	* src/nlmefit: clean up code.
+	* src/nlmefit.c: clean up code.
 
 2020-03-03  Brian Ripley
 
