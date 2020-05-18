@@ -159,6 +159,10 @@ compress.df <- function(dat,m=NULL) {
     xu <- uniquecombs(dat,TRUE)
   }  
   k <- attr(xu,"index")
+  if (nrow(xu)==nrow(dat)) { ## might as well return original data
+    attr(dat,"index") <- 1:nrow(dat)
+    return(dat)
+  }
   ## shuffle rows in order to avoid induced dependencies between discretized
   ## covariates (which can mess up gam.side)...
   ## Any RNG setting should be done in routine calling this one!!

@@ -23,7 +23,7 @@ be greater than 1 and less than or equal to 2. 1 would be Poisson, 2 is gamma. }
 \item{link}{The link function: one of \code{"log"}, \code{"identity"}, \code{"inverse"}, \code{"sqrt"}, or a 
 \code{\link{power}} link (\code{Tweedie} only).}
 
-\item{theta}{Related to the Tweedie power parameter by \eqn{p=\exp(a+b \exp(\theta))/(1+\exp(\theta))}{p=exp(a+b*exp(theta))/(1+exp(theta))}. If this is supplied as a positive value then it is taken as the fixed value for \code{p}.
+\item{theta}{Related to the Tweedie power parameter by \eqn{p=(a+b \exp(\theta))/(1+\exp(\theta))}{p=(a+b*exp(theta))/(1+exp(theta))}. If this is supplied as a positive value then it is taken as the fixed value for \code{p}.
 If it is a negative values then its absolute value is taken as the initial value for \code{p}.}
 
 \item{a}{lower limit on \code{p} for optimization.}
