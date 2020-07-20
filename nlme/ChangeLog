@@ -1,3 +1,9 @@
+2020-07-20 Deepayan Sarkar
+
+	* R/lme.R Applied patch from Johannes Ranke to fix PR#17761
+
+	* DESCRIPTION update version / date
+
 2020-05-13  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Contact, MailingList): R-help (*not* R-core)
