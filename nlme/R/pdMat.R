@@ -1,6 +1,6 @@
 ###              Classes of positive-definite matrices
 ###
-### Copyright 2006-2017  The R Core team
+### Copyright 2006-2020  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -85,7 +85,7 @@ pdConstruct.pdMat <-
     }
   }
   if (length(value) > 0) {
-    if (inherits(value, "formula") || data.class(value) == "call") {
+    if (inherits(value, "formula") || is.call(value)) {
       ## constructing from a formula
       if (!is.null(form)) {
 	warning("ignoring argument 'form'")
@@ -128,7 +128,7 @@ pdConstruct.pdMat <-
       value <- as.numeric(value)
       attributes(value) <- attributes(object)
       object <- value
-    } else if (data.class(value) == "list") {
+    } else if(is.list(value)) {
       ## constructing from a list of two-sided formulae - nlme case
       if (!is.null(form)) {
 	warning("ignoring argument 'form'")
@@ -1723,7 +1723,8 @@ pdConstruct.pdBlocked <-
     if (inherits(value, "pdBlocked")) {
       if (length(form) == 0) form <- formula(value, TRUE)
       if (length(nam) == 0) nam <- Names(value, TRUE)
-      if (missing(pdClass)) pdClass <- unlist(lapply(value, data.class))
+      if (missing(pdClass)) ## somewhat dubious (why keep all? / order?):
+          pdClass <- unlist(lapply(value, data.class))
     }
     if (isInitialized(value)) {
       return(pdConstruct(object, as.matrix(value), form, nam, data, pdClass))
@@ -1734,18 +1735,14 @@ pdConstruct.pdBlocked <-
   }
   ## checking validity and consistency of form, nam, and pdClass
   if (!is.null(form)) {
-    if (data.class(form) != "list") {
-      stop("'form' must be a list")
-    }
+    if(!is.list(form)) stop("'form' must be a list")
     nF <- length(form)
   } else {
     nF <- 0
   }
 
   if (!is.null(nam)) {
-    if (data.class(nam) != "list") {
-      stop("'nam' must be a list")
-    }
+    if(!is.list(nam)) stop("'nam' must be a list")
     nN <- length(nam)
     if ((nF > 0) && (nN != nF)) {
       stop("'form' and 'nam' have incompatible lengths")
@@ -1781,9 +1778,8 @@ pdConstruct.pdBlocked <-
     ## will first do a null initialization when value is a matrix or numeric
     value <- lapply(vector("list", nB), function(el) numeric(0))
   } else {
-    if (data.class(value) != "list") {
+    if (!is.list(value))
       stop("'object' must be a list when not missing, not a matrix, and not numeric")
-    }
     nO <- length(value)
     if ((nB > 1) && (nB != nO)) {
       stop("arguments imply different number of blocks")
