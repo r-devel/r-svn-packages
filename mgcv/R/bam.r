@@ -2090,7 +2090,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
       if (se) se.fit <- matrix(0,nrow(kd),nterms)
       for (k in 1:nterms) {
         lt <- which(term.lab%in%uterms[k]) ## discrete terms involved in this smooth (can be more than one)
-        if (termi[i]) {
+        if (termi[lt]) {
           fit[,k] <- Xbd(Xd,object$coefficients,kd,ks,                          
                       ts,dt,object$dinfo$v,object$dinfo$qc,drop=object$dinfo$drop,lt=lt)
           if (se) se.fit[,k] <- diagXVXd(Xd,object$Vp,kd,ks,                

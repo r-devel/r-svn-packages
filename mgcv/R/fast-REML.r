@@ -143,7 +143,7 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
 
     if (m>0) {
       Sl[[b]] <- list()
-      Sl[[b]]$nl.reg <- G$smooth[[i]]$nl.reg ## any fixed regularizer for non-linear coefs
+      Sl[[b]]$nl.reg <- if (is.null(G$smooth[[i]]$nl.reg)||G$smooth[[i]]$nl.reg<=0) NULL else G$smooth[[i]]$nl.reg ## any fixed regularizer for non-linear coefs
       Sl[[b]]$start <- G$smooth[[i]]$first.para
       Sl[[b]]$stop <- G$smooth[[i]]$last.para    
       ## if the smooth has a g.index field it indicates non-linear params,

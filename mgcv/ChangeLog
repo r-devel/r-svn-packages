@@ -28,6 +28,12 @@ present, and reparameterization needs checking (also for bam).
 ** bam(...,discrete=TRUE) now uses discretization on the parametric model
    components as well as the smooths. 
 
+* added 'gam.mh' for posterior dampling from models fitted with 'gam'.
+
+* added multivariate t and Gaussian densities and multivariate t generation. 
+
+* fix to predict.bamd to correct handling of `terms' and `exclude' arguments.
+
 * A recent lme change broke gamm offset handling. Fixed. 
   Thanks Aaron Benjamin Shev.
 
