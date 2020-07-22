@@ -28,6 +28,10 @@ present, and reparameterization needs checking (also for bam).
 ** bam(...,discrete=TRUE) now uses discretization on the parametric model
    components as well as the smooths. 
 
+* 'gumbls' family added for Gumbel location scale models.
+
+* 'shash' location scale and shape family added.
+
 * added 'gam.mh' for posterior dampling from models fitted with 'gam'.
 
 * added multivariate t and Gaussian densities and multivariate t generation. 
