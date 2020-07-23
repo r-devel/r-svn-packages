@@ -1322,7 +1322,7 @@ gam.setup <- function(formula,pterms,
 
   if (!is.null(min.sp)) { # then minimum s.p.'s supplied
     if (length(min.sp)<nrow(L)) stop("length of min.sp is wrong.")
-    min.sp <- min.sp[1:nrow(L)]
+    if (nrow(L)>0) min.sp <- min.sp[1:nrow(L)]
     if (sum(is.na(min.sp))) stop("NA's in min.sp.")
     if (sum(min.sp<0)) stop("elements of min.sp must be non negative.")
   }
