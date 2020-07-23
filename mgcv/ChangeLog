@@ -32,6 +32,8 @@ present, and reparameterization needs checking (also for bam).
 
 * 'shash' location scale and shape family added.
 
+* 'ocat' upgraded to not ignore weights.
+
 * added 'gam.mh' for posterior dampling from models fitted with 'gam'.
 
 * added multivariate t and Gaussian densities and multivariate t generation. 
