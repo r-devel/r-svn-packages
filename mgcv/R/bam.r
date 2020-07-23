@@ -160,7 +160,9 @@ compress.df <- function(dat,m=NULL) {
   }  
   k <- attr(xu,"index")
   if (nrow(xu)==nrow(dat)) { ## might as well return original data
-    attr(dat,"index") <- 1:nrow(dat)
+    k <- 1:nrow(dat)
+    if (length(k)>n) k <- matrix(k,nrow=n) ## deal with matrix arguments
+    attr(dat,"index") <- k 
     return(dat)
   }
   ## shuffle rows in order to avoid induced dependencies between discretized
@@ -445,14 +447,6 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
   ## some sub sampling here... want to set and restore RNG state used for this
   ## to ensure strict repeatability.
   rngs <- temp.seed(8547) ## keep different to tps constructor!
-  #seed <- try(get(".Random.seed",envir=.GlobalEnv),silent=TRUE) ## store RNG seed
-  #if (inherits(seed,"try-error")) {
-  #     runif(1)
-  #     seed <- get(".Random.seed",envir=.GlobalEnv)
-  #}
-  #kind <- RNGkind(NULL)
-  #RNGkind("default", "default")
-  #set.seed(8547) ## keep different to tps constructor!
 
   mf0 <- list()
   nk <- 0 ## count number of index vectors to avoid too much use of cbind
@@ -591,8 +585,7 @@ discrete.mf <- function(gp,mf,names.pmf,m=NULL,full=TRUE) {
 
   ## reset RNG to old state...
   temp.seed(rngs)
-  #RNGkind(kind[1], kind[2])
-  #assign(".Random.seed", seed, envir = .GlobalEnv)
+
   ## k can end up with too many columns if marginals themselves have
   ## multiple arguments, so drop these here...
   ks <- ks[!is.na(ks[,1]),,drop=FALSE]
