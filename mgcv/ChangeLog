@@ -34,6 +34,9 @@ present, and reparameterization needs checking (also for bam).
 
 * 'ocat' upgraded to not ignore weights.
 
+* score and Schoenfeld residuals added for cox.ph to facilitate PH assumption
+  checking (see ?cox.ph).
+
 * added 'gam.mh' for posterior dampling from models fitted with 'gam'.
 
 * added multivariate t and Gaussian densities and multivariate t generation. 
