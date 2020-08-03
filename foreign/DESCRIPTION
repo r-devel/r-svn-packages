@@ -32,4 +32,4 @@ Biarch: yes
 License: GPL (>= 2)
 BugReports: https://bugs.r-project.org
 MailingList: R-help@r-project.org
-URL: https://svn.r-project.org/R-packages/trunk/foreign
+URL: https://svn.r-project.org/R-packages/trunk/foreign/
