@@ -23,4 +23,4 @@ Encoding: UTF-8
 License: GPL (>= 2) | file LICENCE
 BugReports: https://bugs.r-project.org
 MailingList: R-help@r-project.org
-URL: https://svn.r-project.org/R-packages/trunk/nlme
+URL: https://svn.r-project.org/R-packages/trunk/nlme/
