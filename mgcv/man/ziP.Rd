@@ -1,7 +1,7 @@
 \name{ziP}
 \alias{ziP}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{GAM zero-inflated Poisson regression family}
+\title{GAM zero-inflated (hurdle) Poisson regression family}
 \description{Family for use with \code{\link{gam}} or \code{\link{bam}}, implementing regression for zero inflated Poisson data
 when the complimentary log log of the zero probability is linearly dependent on the log of the Poisson parameter. Use with great care, noting that simply having many zero response observations is not an indication of zero inflation: the question is whether you have too many zeroes given the specified model.
 
