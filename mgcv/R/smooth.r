@@ -669,11 +669,11 @@ tensor.prod.model.matrix <- function(X) {
 # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
 # column-wise, for efficiency, and does work in compiled code.
   if (inherits(X[[1]],"dgCMatrix")) {
-    if (any(!unlist(lapply(X,class)) %in% "dgCMatrix"))
+    if (any(!unlist(lapply(X,inherits,"dgCMatrix"))))
       stop("matrices must be all class dgCMatrix or all class matrix")
     T <- .Call(C_stmm,X)
   } else {
-    if (any(!unlist(lapply(X,class)) %in% "matrix"))
+    if (any(!unlist(lapply(X,inherits,"matrix"))))
        stop("matrices must be all class dgCMatrix or all class matrix")
     m <- length(X)              ## number to row tensor product
     d <- unlist(lapply(X,ncol)) ## dimensions of each X
