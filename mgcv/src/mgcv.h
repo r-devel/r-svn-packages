@@ -9,7 +9,7 @@
    are not null terminated) so the lengths are passed as hidden extra function arguments. BLAS/LAPACK
    only ever uses single character strings, so it never needs to access the string lengths and it is 
    then no problem that they are missing (they are at the end of the call arguments), so they are simply 
-   not passed in the C call. This was no problme until Gfortran decided to optimize the process of calling 
+   not passed in the C call. This was no problem until Gfortran decided to optimize the process of calling 
    a function with the same argument list as the calling function. Basically it passed the call stack of 
    the calling function to the called function assuming that it contained the string lengths - as it 
    didn't this caused stack corruption. 

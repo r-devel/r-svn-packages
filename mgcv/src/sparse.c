@@ -444,7 +444,7 @@ void sXWXdij(double *w, double *d,spMat *Xs,spMat *Xt,int rb,int cb,int r,int c,
 */
   double x,*Wx,*Xsx;
   int q,qr,qc,qt,l,i,k,ri,ci,ii,jj,k1,j,j1,first_mat,
-    first_col,first_s,*kr,*kc,n,Wnz,*Wi,*Wj,*Xsi,*Xsr,*Xsoff,s,t,r0,qr0,qc0,c0;
+    first_col=0,first_s=0,*kr,*kc,n,Wnz,*Wi,*Wj,*Xsi,*Xsr,*Xsoff,s,t,r0,qr0,qc0,c0;
   
   n = Xs[0].n;
   ri = ts[rb]; /* element of Xs at which term rb starts */
@@ -611,8 +611,8 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
 */
   spMat *Xs,*Xt,*xwx,*V1,*W1,*Mp;
   int mx,i,j,k,b,i1,j1,*dim,n,*kd,*ks,*r,*off_start,*off,nt,*ts,*dt,*qc,*lt,*rt,nlt,nrt,nb,nr,nc,nrc,ncc,
-    brs0,brs1,bcs0,bcs1,is,js,ic,jc,is0,ic0,js0,jc0,init=1,p,ii,jj,*str,*stc,symmetric,*sub_blocks,*block_size,
-    rcum,ccum,is1,rcum0,ccum0,*dn,*iwork,*XWXi,*XWXp,nzmax=0,rb,cb,*ip,n_threads,tid,*B;
+    brs0,brs1,bcs0,bcs1=0,is,js,ic,jc,is0,ic0,js0,jc0,init=1,p,ii,jj,*str,*stc,symmetric,*sub_blocks,*block_size,
+    rcum=0,ccum=0,is1,rcum0,ccum0,*dn,*iwork,*XWXi,*XWXp,nzmax=0,rb,cb,*ip,n_threads,tid,*B;
   SEXP Xd,M, i_sym,x_sym,dim_sym,p_sym,ul_sym,KD,R,KS,OFF,TS,DT,QC,V,XWX,OFFS;
   double **v,*w,*d,*xwork,*XWXx,*xp,*xp1,*cost;
   XWXblock *block,*blp;
@@ -707,7 +707,8 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
     p += block_size[i] * sub_blocks[i]; // total parameter count
   }
   /* adjust maximum NZ storage upwards if needed... */
-  if (nzmax<n) nzmax = n;if (nzmax<p) nzmax=p;
+  if (nzmax<n) nzmax = n;
+  if (nzmax<p) nzmax=p;
   /* now work out the total number of actual blocks */
   for (j=0,i=0;i<nlt;i++) j += sub_blocks[lt[i]];
   if (symmetric) { k=j;nb = j*(j+1)/2;} else { 
@@ -1755,9 +1756,9 @@ SEXP stmm(SEXP X) {
    Rf;R;Rf-R
 */
   spMat *Xs;
-  int mx,i,ii,j,k,l,*c,n,p,*Rp,*Ri,rj,*dn,*dim,op,*ip;
+  int mx,i,ii,j,k,l,*c,n,p,*Rp,*Ri=NULL,rj,*dn,*dim,op,*ip;
   SEXP M,R,i_sym,x_sym,dim_sym,p_sym;
-  double *Rx, *pp,*pp0,*pp1;
+  double *Rx=NULL, *pp,*pp0,*pp1;
   /* register the names of the slots in the sparse matrices */
   p_sym = install("p");
   dim_sym = install("Dim");
@@ -1914,8 +1915,8 @@ SEXP isa1p(SEXP L,SEXP S,SEXP NT) {
 */
   
   SEXP i_sym,x_sym,dim_sym,p_sym,kr;
-  int *Lp,*Li,*Sp,*Si,i,j,k,l,q,*dim,s,k0,k1,l0,l1,n,mm,
-    *li0,*li1,*lip,s0,s1,s2,m,*ul,*ll,*ul0,*ll0,kk,*ulk,*ulq,*llq,*llq1,*llk,*liq,nt,tid;
+  int *Lp,*Li,*Sp,*Si,i,j,k,q,*dim,s,k0,k1,l0,l1,n,mm,
+    *li0,*li1,s0,s1,s2,m,*ul,*ll,*ul0,*ll0,kk,*ulq,*llq,*llq1,*liq,nt,tid;
   //long long int ops=0; 
   double *Lx,*Sx,x=0.0,Lii,*lxp;
   //global_ops=0;

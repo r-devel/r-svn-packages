@@ -1874,7 +1874,8 @@ void chol_up(double *R,double *u, int *n,int *up,double *eps) {
     z0 = z / *x; /* sqrt(z^2+R[j,j]^2) */
     if (fabs(z0)>=1) { /* downdate not +ve def */
       //Rprintf("j = %d  d = %g ",j,z0);
-      if (*n>1) R[1] = -2.0;return; /* signals error */
+      if (*n>1) R[1] = -2.0;
+      return; /* signals error */
     }
     if (z0 > 1 - *eps) z0 = 1 - *eps;
     c0 = 1/sqrt(1-z0*z0);s0 = c0 * z0;
@@ -3412,7 +3413,7 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
           4. Could use selective orthogonalization, but cost of full orth is only 2nj, while n^2 of method is
              unavoidable, so probably not worth it.  
 */
-  int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,ni,pi,converged,incx=1,ri,ci=0,cir,one=1;
+  int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,ni,pi,converged,incx=1,ri,ci=0,cir=0,one=1;
   double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*zp,*qp,normTj,eps_stop,max_err,alpha=1.0,beta=0.0;
   unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
   const char uplo='U',trans='T';
