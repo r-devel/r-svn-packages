@@ -168,7 +168,6 @@ void band_chol(double *B,int *n,int *k,int *info);
 void tri_chol(double *ld,double *sd,int *n,int *info);
 void mgcv_omp(int *a);
 void mgcv_chol(double *a,int *pivot,int *n,int *rank);
-void mgcv_svd(double *x,double *u, double *d,int *r,int *c);
 void mgcv_qrqy(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp);
 void mgcv_qrqy0(double *b,double *a,double *tau,int *r,int *c,int *k,int *left,int *tp);
 void mgcv_backsolve(double *R,int *r,int *c,double *B,double *C, int *bc, int *right);

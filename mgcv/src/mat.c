@@ -1958,30 +1958,12 @@ void mroot(double *A,int *rank,int *n)
 }
 
 
-void mgcv_svd(double *x,double *u,double *d,int *r,int *c)
-/* call LA_PACK svd routine to form x=UDV'. Assumes that V' not wanted, but that full square U is required.
-*/
-{ const char jobu='A',jobvt='N';
-  int lda,ldu,ldvt=1,lwork;
-  int info;
-  double *vt=NULL,work1,*work;
-  ldu=lda= *r;
-  lwork=-1;
-  /* workspace query */
-  F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
-  		   &work1, &lwork, &info FCONE FCONE);
-  lwork=(int)floor(work1);
-  if (work1-lwork>0.5) lwork++;
-  work=(double *)CALLOC((size_t)lwork,sizeof(double));
-  /* actual call */
-  F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
-  		   work, &lwork, &info FCONE FCONE);
-  FREE(work);
-}
-
 void mgcv_svd_full(double *x,double *vt,double *d,int *r,int *c)
 /* call LA_PACK svd routine to form x=UDV'. U returned in x. V' returned in vt.
    assumed r >= c. U is r by c. D is length c. V is c by c.
+   NOTE: fast=1 below selects the faster divide and conquer dgesdd routine rather 
+         than the slower dgesvd. Also around August 2020, MKL seem to have broken
+         dgesvd. 
 
 # Here is R test code.....
 library(mgcv)
@@ -1994,20 +1976,28 @@ matrix(um[[1]],n,q);er$u
 um[[3]];er$d
 matrix(um[[2]],q,q);er$v
 */
-{ const char jobu='O',jobvt='A';
-  int lda,ldu,ldvt,lwork;
-  int info;
+{ //const
+  char jobu='O',jobvt='A';
+  int lda,ldu,ldvt,lwork,info,*iwork=NULL,fast=1;
   double work1,*work,*u=NULL;
   ldu=lda= *r;ldvt = *c;
   lwork=-1;
   /* workspace query */
-  F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
+  if (fast) {
+    iwork = (int *)CALLOC((size_t) 8 * *c,sizeof(int));
+    F77_CALL(dgesdd)(&jobu, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
+			     &work1, &lwork,iwork, &info FCONE);
+  } else F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
   		   &work1, &lwork, &info FCONE FCONE);
   lwork=(int)floor(work1);
   if (work1-lwork>0.5) lwork++;
   work=(double *)CALLOC((size_t)lwork,sizeof(double));
   /* actual call */
-  F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
+  if (fast) {
+    F77_CALL(dgesdd)(&jobu, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
+			     work, &lwork,iwork, &info FCONE);
+    FREE(iwork);
+  } else F77_CALL(dgesvd)(&jobu,&jobvt, r, c, x, &lda, d, u, &ldu, vt,&ldvt,
   		   work, &lwork, &info FCONE FCONE);
   FREE(work);
 }
@@ -3416,7 +3406,8 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   int biggest=0,f_check,i,k,kk,ok,l,j,vlength=0,ni,pi,converged,incx=1,ri,ci=0,cir=0,one=1;
   double **q,*v=NULL,bt,xx,yy,*a,*b,*d,*g,*z,*err,*p0,*p1,*zp,*qp,normTj,eps_stop,max_err,alpha=1.0,beta=0.0;
   unsigned long jran=1,ia=106,ic=1283,im=6075; /* simple RNG constants */
-  const char uplo='U',trans='T';
+  //const
+  char uplo='U',trans='T';
   #ifdef OMP_REPORT
   Rprintf("Rlanczos");
   #endif
