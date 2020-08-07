@@ -1283,12 +1283,18 @@ ziplss <-  function(link=list("identity","identity")) {
       rzip <- function(gamma,eta) { ## generate ziP deviates according to model and lp gamma
         y <- gamma; n <- length(y)
         lambda <- exp(gamma)
-        p <- 1- exp(-exp(eta))
+        p <- 1- exp(-exp(eta)) ## prob present
         ind <- p > runif(n)
         y[!ind] <- 0
         np <- sum(ind)
         ## generate from zero truncated Poisson, given presence...
-        y[ind] <- qpois(runif(np,dpois(0,lambda[ind]),1),lambda[ind])
+	u <- runif(np,dpois(0,lambda[ind]),1)
+	## qpois can produce infinite answers at low lambda
+	## if u too close to one, and it can get very close at low
+	## lambda!
+	one.eps <- 1 - .Machine$double.eps^.75
+	u[u>one.eps] <- one.eps 
+        y[ind] <- qpois(u,lambda[ind])
         y
       } 
       rzip(mu[,1],mu[,2])

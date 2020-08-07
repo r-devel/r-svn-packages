@@ -46,6 +46,9 @@ present, and reparameterization needs checking (also for bam).
 * A recent lme change broke gamm offset handling. Fixed. 
   Thanks Aaron Benjamin Shev.
 
+* dgesvd LAPACK calls replaced by faster dgesdd, as some versions of MKL
+  BLAS/LAPACK have broken dgesvd.
+
 * psum.chisq function added to compute c.d.f. of weighted sums of chi-squared
   r.v.s using method of Davies, 1980. This is now used for computing p-values 
   in summary.gam in place of the Liu et al, 2009 approximation.  
