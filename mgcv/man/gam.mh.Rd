@@ -48,7 +48,7 @@ b <- gam(y~s(x0)+s(x1)+s(x2)+s(x3),family=tw(),
 br <- rmvn(1000,coef(b),vcov(b))
 
 ## Alternatively use MH sampling...
-br <- gam.mh(b,thin=2,ns=4000,rw.scale=.15)$bs
+br <- gam.mh(b,thin=2,ns=3000,rw.scale=.15)$bs
 ## If 'coda' installed, can check effective sample size
 ## require(coda);effectiveSize(as.mcmc(br))
 
@@ -77,7 +77,7 @@ y <- c(rep(0, 89), 1, 0, 1, 0, 0, 1, rep(0, 13), 1, 0, 0, 1,
        rep(1, 4), 0, rep(1, 5), rep(0, 4), 1, 1, rep(0, 46))
 set.seed(3);x <- sort(c(0:10*5,rnorm(length(y)-11)*20+100))
 b <- gam(y ~ s(x, k = 15),method = 'REML', family = binomial)
-br <- gam.mh(b,thin=2,ns=4000,rw.scale=.4)$bs
+br <- gam.mh(b,thin=2,ns=3000,rw.scale=.4)$bs
 X <- model.matrix(b)
 par(mfrow=c(1,1))
 plot(x, y, col = rgb(0,0,0,0.25), ylim = c(0,1))

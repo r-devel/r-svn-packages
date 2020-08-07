@@ -144,7 +144,7 @@ cox.ph <- function (link = "identity") {
 	  a[,trind] <- matrix(oo$A[1:(p*nti)],p,nti)
 	  ## compute Schoenfeld resiudals, within stratum
           if (p) {
-            Xs <- X[ind,,drop=FALSE] <- (X[ind,,drop=FALSE] - apply(gamma[ind]*X[ind,],2,cumsum)/cumsum(gamma[ind]))*wt[ind]
+            Xs <- X[ind,] <- (X[ind,,drop=FALSE] - apply(gamma[ind]*X[ind,],2,cumsum)/cumsum(gamma[ind]))*wt[ind]
 	    n <- nrow(Xs)
 	    Rs <- apply(Xs[n:1,,drop=FALSE],2,cumsum)[n:1,,drop=FALSE] ## score residuals
 	    ## now remove the penalization induced drift...
