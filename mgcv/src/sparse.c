@@ -1111,13 +1111,13 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
     if (ii<dt[b]) ii=dt[b]; /* maximum number of marginals */
   }  
  
-  Xy = (double *) CALLOC((size_t) no*cy,sizeof(double *));
-  yb = (double *) CALLOC((size_t) bb,sizeof(double *));
+  Xy = (double *) CALLOC((size_t) no*cy,sizeof(double));
+  yb = (double *) CALLOC((size_t) bb,sizeof(double));
   c = (int *) CALLOC((size_t)ii,sizeof(int)); 
   p = (int *) CALLOC((size_t)ii,sizeof(int)); /* storage for marginal numbers of columns */ 
-  My = (double *) CALLOC((size_t) n * ii,sizeof(double *)); /* storage for partial column products */
-  dn = (int *) CALLOC((size_t) n,sizeof(int *));
-  tps = (int *) CALLOC((size_t) nlt+1,sizeof(int *)); /* smooth term parameter starts */
+  My = (double *) CALLOC((size_t) n * ii,sizeof(double)); /* storage for partial column products */
+  dn = (int *) CALLOC((size_t) n,sizeof(int));
+  tps = (int *) CALLOC((size_t) nlt+1,sizeof(int)); /* smooth term parameter starts */
   for (bb=0;bb<nlt;bb++) {
     b = lt[bb]; /* block to proccess next */
     tps[bb]=out_start;
@@ -1169,7 +1169,7 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
 	  }  
 	
 	  spMtv(Xs + ts[b]+dt[b]-1,yb,Xy + yj*no + out_start,s); /* clear at s=0, add thereafter */
-	  out_start += Xs[ts[b]+dt[b]-1].c; // BUG?? how can this be updated inside summation loop??
+	  out_start += Xs[ts[b]+dt[b]-1].c; 
 	  /* now update the column counter and figure out which partial products
              have to be updated.. */
 	  k = dt[b]-2;c[k]++;
@@ -1282,7 +1282,7 @@ void sXbsdwork(double *Xb,double *a,spMat beta0,int bp,spMat *Xs,double **v,int 
   /* constraint handling q is start row for beta0, k start row for beta, j0 is current start element of 
      sparse beta0, j1 start element in beta... */
   for (j0=j1=q=k=i=0;i<nt;i++) { 
-    if (qc[i]) { /* constraints make that subsection of beta dense */ // BUG seems to be on this branch as ti version ok
+    if (qc[i]) { /* constraints make that subsection of beta dense */ 
       /* copy relevant sections of beta0 to a dense vector */
       for (j=0;j<dim[i];j++) work[j] = 0.0; // This is re-cycled below - sizing ok as require bp sized allocation later 
       while (j0<beta0.p[1] && beta0.i[j0]<q+dim[i]-1) {
