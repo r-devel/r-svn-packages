@@ -1206,7 +1206,7 @@ SEXP sXyd(SEXP X,SEXP Y,SEXP LT) {
     }  
   }  
   
-  FREE(Xy);FREE(Xs);FREE(v);FREE(yb);FREE(c);FREE(p);FREE(My);FREE(tps);
+  FREE(Xy);FREE(Xs);FREE(v);FREE(yb);FREE(c);FREE(p);FREE(My);FREE(tps);FREE(dn);
   UNPROTECT(9);
   return(XY);
 } /* sXyd */
