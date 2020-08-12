@@ -10,6 +10,8 @@ rmvt <- function(n,mu,V,df) {
   t(mu + t(sqrt(df/v)*y))
 }
 
+r.mvt <- function(n,mu,V,df) rmvt(n,mu,V,df)
+
 dmvt <- function(x,mu,V,df,R=NULL) {
 ## multivariate t log density...
   p <- length(mu);
@@ -18,6 +20,8 @@ dmvt <- function(x,mu,V,df,R=NULL) {
   k <- - sum(log(diag(R))) - p*log(df*pi)/2 + lgamma((df+p)/2) - lgamma(df/2)
   k - if (is.matrix(z)) (df+p)*log1p(colSums(z^2)/df)/2 else (df+p)*log1p(sum(z^2)/df)/2
 }
+
+d.mvt <- function(x,mu,V,df,R=NULL) dmvt(x,mu,V,df,R)
 
 dmvn <- function(x,mu,V,R=NULL) {
 ## multivariate normal density mgcv:::rmvn can be used for generation 

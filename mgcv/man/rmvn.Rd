@@ -1,8 +1,8 @@
 \name{rmvn}
 \alias{rmvn}
 \alias{dmvn}
-\alias{rmvt}
-\alias{dmvt}
+\alias{r.mvt}
+\alias{d.mvt}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Generate from or evaluate multivariate normal or t densities.}
 \description{ Generates multivariate normal or t random deviates, and evaluates the corresponding log densities.
@@ -10,9 +10,9 @@
 
 \usage{
 rmvn(n,mu,V)
-rmvt(n,mu,V,df)
+r.mvt(n,mu,V,df)
 dmvn(x,mu,V,R=NULL)
-dmvt(x,mu,V,df,R=NULL)
+d.mvt(x,mu,V,df,R=NULL)
 }
 \arguments{
 \item{n}{number of simulated vectors required.}
