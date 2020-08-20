@@ -1369,7 +1369,7 @@ corCompSymm <-
 
 ###*# Methods for local generics
 
-corFactor.compSymm <-
+corFactor.corCompSymm <-
   function(object, ...)
 {
   corD <- Dim(object)
