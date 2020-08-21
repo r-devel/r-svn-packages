@@ -35,7 +35,7 @@ pdMatrix <-
 
 pdMat <-
   function(value = numeric(0), form = NULL, nam = NULL,
-	   data = sys.frame(sys.parent()), pdClass = "pdSymm")
+	   data = parent.frame(), pdClass = "pdSymm")
 {
   if (inherits(value, "pdMat")) {	# nothing to construct
     pdClass <- class(value)
@@ -69,7 +69,7 @@ corMatrix.pdMat <-
 
 pdConstruct.pdMat <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.frame(sys.parent()), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   if (inherits(value, "pdMat")) {	# constructing from another pdMat
     if (length(form) == 0) {
@@ -585,7 +585,7 @@ pdSymm <-
 
 pdConstruct.pdSymm <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.frame(sys.parent()), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   val <- NextMethod()
   if (length(val) == 0) {               # uninitialized object
@@ -701,7 +701,7 @@ summary.pdSymm <-
 
 pdLogChol <-
   ## Constructor for the pdLogChol class
-  function(value = numeric(0), form = NULL, nam = NULL, data = sys.parent())
+  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 {
   object <- numeric(0)
   class(object) <- c("pdLogChol", "pdMat")
@@ -712,7 +712,7 @@ pdLogChol <-
 
 pdConstruct.pdLogChol <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.parent(), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   val <- pdConstruct.pdMat(object, value, form, nam, data)
   if (length(val) == 0) {               # uninitialized object
@@ -785,7 +785,7 @@ summary.pdLogChol <-
 
 #pdChol <-
 #  ## Constructor for the pdChol class
-#  function(value = numeric(0), form = NULL, nam = NULL, data = sys.parent())
+#  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 #{
 #  object <- numeric(0)
 #  class(object) <- c("pdChol", "pdMat")
@@ -796,7 +796,7 @@ summary.pdLogChol <-
 
 #pdConstruct.pdChol <-
 #  function(object, value = numeric(0), form = formula(object),
-#	   nam = Names(object), data = sys.parent())
+#	   nam = Names(object), data = parent.frame())
 #{
 #  val <- pdConstruct.pdMat(object, value, form, nam, data)
 #  if (length(val) == 0) {               # uninitialized object
@@ -866,7 +866,7 @@ summary.pdLogChol <-
 
 #pdSpher <-
 #  ## Constructor for the pdSpher class
-#  function(value = numeric(0), form = NULL, nam = NULL, data = sys.parent())
+#  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 #{
 #  object <- numeric(0)
 #  class(object) <- c("pdSpher", "pdMat")
@@ -877,7 +877,7 @@ summary.pdLogChol <-
 
 #pdConstruct.pdSpher <-
 #  function(object, value = numeric(0), form = formula(object),
-#	   nam = Names(object), data = sys.parent())
+#	   nam = Names(object), data = parent.frame())
 #{
 #  val <- pdConstruct.pdMat(object, value, form, nam, data)
 #  if (length(val) == 0) {			# uninitiliazed object
@@ -930,7 +930,7 @@ summary.pdLogChol <-
 
 #pdMatrixLog <-
 #  ## Constructor for the pdMatrixLog class
-#  function(value = numeric(0), form = NULL, nam = NULL, data = sys.parent())
+#  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 #{
 #  object <- numeric(0)
 #  class(object) <- c("pdMatrixLog", "pdMat")
@@ -941,7 +941,7 @@ summary.pdLogChol <-
 
 #pdConstruct.pdMatrixLog <-
 #  function(object, value = numeric(0), form = formula(object),
-#	   nam = Names(object), data = sys.parent())
+#	   nam = Names(object), data = parent.frame())
 #{
 #  val <- pdConstruct.pdMat(object, value, form, nam, data)
 #  if (length(val) == 0) {               # uninitialized object
@@ -1006,7 +1006,7 @@ summary.pdLogChol <-
 
 #pdGivens <-
 #  ## Constructor for the pdGivens class
-#  function(value = numeric(0), form = NULL, nam = NULL, data = sys.parent())
+#  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 #{
 #  object <- numeric(0)
 #  class(object) <- c("pdGivens", "pdMat")
@@ -1017,7 +1017,7 @@ summary.pdLogChol <-
 
 #pdConstruct.pdGivens <-
 #  function(object, value = numeric(0), form = formula(object),
-#	   nam = Names(object), data = sys.parent())
+#	   nam = Names(object), data = parent.frame())
 #{
 #  val <- pdConstruct.pdMat(object, value, form, nam, data)
 #  if (length(val) == 0) {               # uninitiliazed object
@@ -1098,7 +1098,7 @@ summary.pdLogChol <-
 
 pdNatural <-
   ## Constructor for the pdNatural class
-  function(value = numeric(0), form = NULL, nam = NULL, data = sys.frame(sys.parent()))
+  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 {
   object <- numeric(0)
   class(object) <- c("pdNatural", "pdMat")
@@ -1109,7 +1109,7 @@ pdNatural <-
 
 pdConstruct.pdNatural <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.frame(sys.parent()), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   val <- pdConstruct.pdMat(object, value, form, nam, data)
   if (length(val) == 0) {               # uninitiliazed object
@@ -1253,7 +1253,7 @@ summary.pdNatural <-
 
 pdDiag <-
   ## Constructor for the pdDiag class
-  function(value = numeric(0), form = NULL, nam = NULL, data = sys.frame(sys.parent()))
+  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 {
   object <- numeric(0)
   class(object) <- c("pdDiag", "pdMat")
@@ -1278,7 +1278,7 @@ corMatrix.pdDiag <-
 
 pdConstruct.pdDiag <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.frame(sys.parent()), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   val <- NextMethod()
   if (length(val) == 0) {               # uninitiliazed object
@@ -1383,7 +1383,7 @@ summary.pdDiag <-
 
 pdIdent <-
   ## Constructor for the pdIdent class
-  function(value = numeric(0), form = NULL, nam = NULL, data = sys.frame(sys.parent()))
+  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 {
   object <- numeric(0)
   class(object) <- c("pdIdent", "pdMat")
@@ -1413,7 +1413,7 @@ corMatrix.pdIdent <-
 
 pdConstruct.pdIdent <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.frame(sys.parent()), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   val <- NextMethod()
   if (length(val) == 0) {			# uninitialized object
@@ -1522,7 +1522,7 @@ summary.pdIdent <-
 
 pdCompSymm <-
   ## Constructor for the pdCompSymm class
-  function(value = numeric(0), form = NULL, nam = NULL, data = sys.frame(sys.parent()))
+  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame())
 {
   object <- numeric(0)
   class(object) <- c("pdCompSymm", "pdMat")
@@ -1556,7 +1556,7 @@ corMatrix.pdCompSymm <-
 
 pdConstruct.pdCompSymm <-
   function(object, value = numeric(0), form = formula(object),
-	   nam = Names(object), data = sys.frame(sys.parent()), ...)
+	   nam = Names(object), data = parent.frame(), ...)
 {
   val <- NextMethod()
   if (length(val) == 0) {                # uninitialized object
@@ -1680,7 +1680,7 @@ summary.pdCompSymm <-
 
 pdBlocked <-
   ## Constructor for the pdBlocked class
-  function(value = numeric(0), form = NULL, nam = NULL, data = sys.frame(sys.parent()),
+  function(value = numeric(0), form = NULL, nam = NULL, data = parent.frame(),
 	   pdClass = "pdSymm")
 {
   object <- numeric(0)
@@ -1716,7 +1716,7 @@ corMatrix.pdBlocked <-
 
 pdConstruct.pdBlocked <-
   function(object, value = numeric(0), form = formula(object, TRUE),
-	   nam = Names(object, TRUE), data = sys.frame(sys.parent()),
+	   nam = Names(object, TRUE), data = parent.frame(),
 	   pdClass = "pdSymm", ...)
 {
   if (inherits(value, "pdMat")) {	# constructing from another pdMat
