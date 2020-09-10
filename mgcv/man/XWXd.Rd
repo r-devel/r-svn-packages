@@ -33,8 +33,8 @@ diagXVXd(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL)
 \item{ar.stop}{Negative to ignore. Otherwise sum rows \code{(ar.stop[i-1]+1):ar.stop[i]} of the rows selected by \code{ar.row} and weighted by \code{ar.w} to get ith row of model matrix to use.}
 \item{ar.row}{extract these rows...}
 \item{ar.w}{weight by these weights, and sum up according to \code{ar.stop}. Used to implement AR models.}
-\item{lt}{use only columns of X corresponding to these model matrix terms (for left hand \code{X} in \code{XWXd}).}
-\item{rt}{as \code{lt} for right hand \code{X}.}
+\item{lt}{use only columns of X corresponding to these model matrix terms (for left hand \code{X} in \code{XWXd}). If \code{NULL} set to \code{rt}.}
+\item{rt}{as \code{lt} for right hand \code{X}. If \code{NULL} set to \code{lt}. If \code{lt} and \code{rt} are \code{NULL} use all columns.}
 \item{V}{Coefficient covariance matrix.}
 }
 
