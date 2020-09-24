@@ -927,6 +927,7 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
       
     } // i loop  (term block rows)
     /* now run through stc enforcing consistency of block starts */
+    k = stc[0];
     for (i=1;i<nrc;i++) {
       /* set r_start to correct value for first block on each row (first row always ok)... */
       b = stc[i-1];k = stc[i];
@@ -1554,7 +1555,7 @@ void sXbdwork(double *Xb,double *a,double *beta0,int bp,spMat *Xs,double **v,int
 
 
 SEXP sXbd(SEXP X,SEXP BETA,SEXP LT) {
-/* Form X beta */
+/* Form X beta (beta dense) */
   spMat *Xs/*,sbeta0*/;
   int bp,mx,i,j,k,n,nzmax=0,*dim,*kd,*ks,*r,*off_start,*off,nt,
     *ts,*dt,*qc,*lt,nlt,maxd,nc,*worki,maxm=0,bc;

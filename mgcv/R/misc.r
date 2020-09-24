@@ -399,7 +399,7 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
     if (!is.null(lpip)) { ## then X list may not be in coef order...
       lpi <- unlist(lpip[lt])
       rpi <- unlist(lpip[rt])
-      V <- V[lpi,rpi] ## select part of V required in correct order
+      V <- V[lpi,rpi,drop=FALSE] ## select part of V required in correct order
     }
     lt <- as.integer(lt-1);rt <- as.integer(rt-1)
     D <- .Call(C_sdiagXVXt,m , V, lt, rt)
@@ -416,7 +416,7 @@ diagXVXd <- function(X,V,k,ks,ts,dt,v,qc,drop=NULL,nthreads=1,lt=NULL,rt=NULL) {
     if (!is.null(lpip)) { ## then X list may not be in coef order...
       lpi <- unlist(lpip[lt])
       rpi <- unlist(lpip[rt])
-      V <- V[lpi,rpi] ## select part of V required in correct order
+      V <- V[lpi,rpi,drop=FALSE] ## select part of V required in correct order
     }
     oo <- .C(C_diagXVXt,diag=as.double(rep(0,n)),V=as.double(V),X=as.double(unlist(X)),k=as.integer(k-1), 
            ks=as.integer(ks-1),m=as.integer(m),p=as.integer(p), n=as.integer(n), nx=as.integer(nx),
