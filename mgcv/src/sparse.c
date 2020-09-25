@@ -1339,7 +1339,7 @@ void sXbsdwork(double *Xb,double *a,spMat beta0,int bp,spMat *Xs,double **v,int 
   c0 = worki;worki += maxd; 
   bsub.i = worki; worki += bp + nc; 
   bsub.x = work; work += bp + nc; 
-  bsub.p = worki;worki += maxdim; 
+  bsub.p = worki;worki += maxdim + 1; 
   spalloc(&C,maxdim,1000);
   j0 = 0; /* starting entry in beta */
   for (bb=0;bb<nlt;bb++) { // now actually do the multiplying.
@@ -1750,7 +1750,7 @@ SEXP sdiagXVXt(SEXP X, SEXP V, SEXP LT, SEXP RT) {
   spalloc(&Ii,1,1);Ii.x[0]=1.0;Ii.p[0]=0;Ii.p[1]=1;
   k = n*maxd+2*(p+nc) + maxm;
   work = (double *)CALLOC((size_t) k,sizeof(double));
-  k = 3*maxd+p+2*(p+nc+nt+1) + maxm + n;
+  k = 3*maxd+p+1+2*(p+nc+nt+1) + maxm + n +1; /* p+1 is upper bound on max coefs per term (single tp with constraint could be p+1) */ 
   worki = (int *)CALLOC((size_t) k,sizeof(int));
   for (i=0;i<p;i++) { /* work through the columns */
     /* extract XV[:,i] ... */
