@@ -1,3 +1,6 @@
+0.19-4 Martyn Plummer <martyn.plummer@gmail.com>
+	- Fix cumuplot, affected by changes in matplot in R 4.0.0.
+
 0.19-3 Martyn Plummer <martyn.plummer@gmail.com>
 	- Obsolete documentation for .Coda.options removed.
 
