@@ -1,6 +1,6 @@
 Package: coda
-Version: 0.19-2
-Date: 2018-10-08
+Version: 0.19-3
+Date: 2019-07-05
 Title: Output Analysis and Diagnostics for MCMC
 Authors@R: c(person("Martyn", "Plummer", role=c("aut","cre","trl"),
        	            email="martyn.plummer@gmail.com"),
