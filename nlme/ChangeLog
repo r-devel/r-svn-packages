@@ -1,3 +1,7 @@
+2020-10-02  Brian Ripley
+
+	* DESCRIPTION (Version, Date): Prepare to release 3.1-150.
+
 2020-09-24  Peter Dalgaard
 
         * R/VarCov.R tests/getVarCov.R: Patch set from Sebastian Meyer
