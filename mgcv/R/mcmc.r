@@ -102,7 +102,7 @@ gam.mh <- function(b,ns=10000,burn=1000,t.df=40,rw.scale=.25,thin=1) {
         lpl0 <- lpl1;j <- i
         bs[i,] <- bs[i,] + step[i,]
 	rw.accept <- rw.accept+1 
-        lfp[i] <- dmvt(bs[i,],beta,Vb,df=4,R=R) ## have to update static proposal density
+        lfp[i] <- dmvt(bs[i,],beta,Vb,df=t.df,R=R) ## have to update static proposal density
       }
     }  
     if (i==burn) accept <- rw.accept <- 0
