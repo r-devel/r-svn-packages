@@ -17,11 +17,16 @@ Issues:
    0.2.20 appears to be OK. For 0.3.x x>6 make USE_THREAD=0 USE_LOCKING=1
    to make openblas ensures thread safety.
 
+* .C can't use R's long vectors, which can lead to bam failing on very large
+  datasets. probably requires extensive re-writing using .Call.
+
 * t2 in bam(...,discrete=TRUE) - not treated as tensor products at 
 present, and reparameterization needs checking (also for bam). 
 
 * bam(...,discrete=TRUE) does not currently deal with the corner case in 
-  which no smoother is penalized.
+  which no smoother is penalized. Also there is no option to use the identical
+  discretization to that used in fitting.
+
 
 1.8-34
 
