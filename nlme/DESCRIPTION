@@ -1,6 +1,6 @@
 Package: nlme
-Version: 3.1-150
-Date: 2020-10-02
+Version: 3.1-151
+Date: 2020-10-29
 Priority: recommended
 Title: Linear and Nonlinear Mixed Effects Models
 Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
@@ -10,6 +10,7 @@ Authors@R: c(person("José", "Pinheiro", role = "aut", comment = "S version"),
              person("EISPACK authors", role = "ctb", comment = "src/rs.f"),
 	     person("Siem", "Heisterkamp", role = "ctb", comment = "Author fixed sigma"),
              person("Bert", "Van Willigen",role = "ctb", comment = "Programmer fixed sigma"),
+             person("Johannes", "Ranke", role = "ctb", comment = "varConstProp()"),
 	     person("R-core", email = "R-core@R-project.org",
                     role = c("aut", "cre")))
 Contact: see 'MailingList'
