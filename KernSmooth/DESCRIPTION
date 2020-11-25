@@ -1,7 +1,7 @@
 Package: KernSmooth
 Priority: recommended
-Version: 2.23-18
-Date: 2020-10-28
+Version: 2.23-19
+Date: 2020-11-25
 Title: Functions for Kernel Smoothing Supporting Wand & Jones (1995)
 Authors@R: c(person("Matt", "Wand", role = "aut",
 	             email = "Matt.Wand@uts.edu.au"),
@@ -13,7 +13,7 @@ Authors@R: c(person("Matt", "Wand", role = "aut",
 Note: Maintainers are not available to give advice on 
       using a package they did not author.
 Depends: R (>= 2.5.0), stats
-Suggests: MASS
+Suggests: MASS, carData
 Description: Functions for kernel smoothing (and density estimation)
   corresponding to the book: 
   Wand, M.P. and Jones, M.C. (1995) "Kernel Smoothing".
