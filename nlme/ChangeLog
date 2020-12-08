@@ -1,3 +1,9 @@
+2020-12-07  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/corStruct.R (print.corCompSymm, print.summary.corCompSymm): new,
+	thanks to patch in PR#17990 by Sebastian Meyer; also fixing typo
+	("Uninitialized").
+
 2020-10-29  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* DESCRIPTION (Version): 3.1-151
