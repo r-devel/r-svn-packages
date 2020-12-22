@@ -1,3 +1,10 @@
+2020-12-22  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
+
+	* DESCRIPTION: Version is 0.8-81.
+
+	* man/read.spss.Rd:
+	Improve URL.
+
 2020-08-03  Kurt Hornik  <Kurt.Hornik@wu.ac.at>
 
 	* man/read.dbf.Rd:
