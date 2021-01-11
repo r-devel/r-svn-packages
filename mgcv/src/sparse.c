@@ -959,9 +959,9 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   /* write out results to a sparse matrix for return */
   
   if (symmetric) {
-    XWX = PROTECT(R_do_new_object(R_getClassDef("dsCMatrix"))); // create symmetric sparse matrix
-    SET_STRING_ELT(R_do_slot(XWX,ul_sym),0,mkChar("L")); // set to lower triangle storage - note charecter setting special
-  } else XWX = PROTECT(R_do_new_object(R_getClassDef("dgCMatrix")));
+    XWX = PROTECT(R_do_new_object(PROTECT(R_getClassDef("dsCMatrix")))); // create symmetric sparse matrix
+    SET_STRING_ELT(PROTECT(R_do_slot(XWX,ul_sym)),0,PROTECT(mkChar("L"))); // set to lower triangle storage - note charecter setting special
+  } else XWX = PROTECT(R_do_new_object(PROTECT(R_getClassDef("dgCMatrix"))));
   dim = INTEGER(R_do_slot(XWX,dim_sym));
   dim[0] = rcum;dim[1] = ccum;
   if (symmetric) { /* don't know exact size yet - make temporary over-sized storage */
@@ -1018,7 +1018,7 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   FREE(iwork); FREE(xwork);FREE(dn);FREE(d); FREE(str);FREE(sub_blocks);FREE(block_size);
   FREE(Xs); // free the sparse matrix array
   FREE(v);
-  UNPROTECT(9);
+  UNPROTECT(14);
   return(XWX);
 } /* sXWXd */  
 
@@ -1829,7 +1829,7 @@ SEXP stmm(SEXP X) {
   c = (int *)CALLOC((size_t)mx,sizeof(int)); /* c[i] indexes which col of Xs[i] is corrently being processed */
   pp = (double *)CALLOC((size_t)mx*n,sizeof(double)); /* partial column products */
   dn = (int *)CALLOC((size_t)n,sizeof(int)); /* the non-zero tracker */
-  R =  PROTECT(R_do_new_object(R_getClassDef("dgCMatrix"))); /* the result sparse matrix */
+  R =  PROTECT(R_do_new_object(PROTECT(R_getClassDef("dgCMatrix")))); /* the result sparse matrix */
   dim = INTEGER(R_do_slot(R,dim_sym));dim[0] = n;dim[1] = p; /* set dimensions to n by p */
   R_do_slot_assign(R,p_sym,allocVector(INTSXP,p+1)); /* column starts vector */
   Rp = INTEGER(R_do_slot(R,p_sym));
@@ -1891,7 +1891,7 @@ SEXP stmm(SEXP X) {
     Rp[l] = rj;
   } /* op loop */
   FREE(Xs);FREE(pp);FREE(dn);FREE(c);
-  UNPROTECT(1);
+  UNPROTECT(2);
   return(R);
 } /* stmm */
 
