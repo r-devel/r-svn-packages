@@ -2441,7 +2441,6 @@ Predict.matrix.random.effect <- function(object,data) {
 ########################################################
 # Markov random fields start here. Plot method in plot.r
 ########################################################
-
 pol2nb <- function(pc) {
 ## pc is a list of polygons. i.e. 
 ## pc[[i]] is 2 column matrix defining 
@@ -2685,6 +2684,15 @@ makeR <- function(la,lo,lak,lok,m=2) {
   v <- sin(ag$la)*sin(ag$lak)+cos(ag$la)*cos(ag$lak)*cos(og$lo-og$lok)
   v[v > 1] <- 1;v[v < -1] <- -1
   gamma <- acos(v)
+  if (m == -2) { ## First derivative version of Jean Duchon's unpublished proposal...
+    z <- 2*sin(gamma/2) ## Euclidean 3 - distance between points
+    eps <- .Machine$double.xmin*10
+    z[z<eps] <- eps
+    R <- matrix(-z,length(la),length(lak)) ## m=1, d=3, s=1 Duchon semi-kernel
+    attr(R,"T") <- matrix(c(la*0+1),nrow(R),1) ## null space      
+    attr(R,"Tc") <- matrix(c(lak*0+1),ncol(R),1) ## constraint    
+    return(R)
+  }
 
   if (m == -1) { ## Jean Duchon's unpublished proposal...
     z <- 2*sin(gamma/2) ## Euclidean 3 - distance between points
@@ -2827,7 +2835,7 @@ smooth.construct.sos.smooth.spec<-function(object,data,knots)
 
   if (is.na(object$p.order)) object$p.order <- 0
   object$p.order <- round(object$p.order)
-  if (object$p.order< -1) object$p.order <- -1
+  if (object$p.order< -2) object$p.order <- -1
   if (object$p.order>4) object$p.order <- 4
 
   R <- makeR(la=knt[1:nk],lo=knt[-(1:nk)],lak=knt[1:nk],lok=knt[-(1:nk)],m=object$p.order)

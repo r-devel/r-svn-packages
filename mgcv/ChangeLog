@@ -33,6 +33,9 @@ present, and reparameterization needs checking (also for bam).
 * 'gam.mh' proposal df typo fix and help file '%*%' -> '\%*\*' fix. Thanks 
    Len Thomas.
 
+* various random number generation calls in rd functions in families could 
+  fail if simulating one point - fixed.
+
 1.8-33
 
 * 'inline' -> 'statc inline' error fix - caused installation failure on some 
