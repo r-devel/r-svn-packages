@@ -36,6 +36,8 @@ present, and reparameterization needs checking (also for bam).
 * various random number generation calls in rd functions in families could 
   fail if simulating one point - fixed.
 
+* gp smooths can now be specified to be strictly stationary (see ?gp.smooth)
+
 1.8-33
 
 * 'inline' -> 'statc inline' error fix - caused installation failure on some 
