@@ -89,6 +89,8 @@ Handcock, M. S., K. Meier and D. Nychka (1994) Journal of the American Statistic
 
 Kammann, E. E. and M.P. Wand (2003) Geoadditive Models. Applied Statistics 52(1):1-18.
 
+Wood, S.N. (2003) Thin plate regression splines. J.R.Statist.Soc.B 65(1):95-114
+
 Wood, S.N. (2017) Generalized Additive Models: an introduction with R (2nd ed). CRC/Taylor and Francis
 }
 

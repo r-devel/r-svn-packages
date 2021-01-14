@@ -25,7 +25,7 @@ present, and reparameterization needs checking (also for bam).
 
 * bam(...,discrete=TRUE) does not currently deal with the corner case in 
   which no smoother is penalized. Also there is no option to use the identical
-  discretization to that used in fitting.
+  discretization to that used in fitting when predicting.
 
 
 1.8-34
@@ -37,6 +37,13 @@ present, and reparameterization needs checking (also for bam).
   fail if simulating one point - fixed.
 
 * gp smooths can now be specified to be strictly stationary (see ?gp.smooth)
+
+* fix to predict.bamd bug in handling fixed effect contrasts (wrong contrast 
+  could be used for prediction, if non-default used in fitting).
+
+* predict.bamd modified to catch case where all prediction data is NA
+
+
 
 1.8-33
 

@@ -2871,7 +2871,7 @@ predict.gam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
         }
 	## next line is just a work around to prevent a spurious warning (e.g. R 3.6) from
 	## model.matrix if contrast relates to a term in mf which is not
-	## part of Terms[[i]] (mode.matrix doc actually defines contrast w.r.t. mf,
+	## part of Terms[[i]] (model.matrix doc actually defines contrast w.r.t. mf,
 	## not Terms[[i]])...
 	oc <- if (length(object$contrasts)==0) object$contrasts else
 	      object$contrasts[names(object$contrasts)%in%attr(Terms[[i]],"term.labels")]
