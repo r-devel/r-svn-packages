@@ -612,7 +612,7 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   spMat *Xs,*Xt,*xwx,*V1,*W1,*Mp;
   int mx,i,j,k,b,i1,j1,*dim,n,*kd,*ks,*r,*off_start,*off,nt,*ts,*dt,*qc,*lt,*rt,nlt,nrt,nb,nr,nc,nrc,ncc,
     brs0,brs1,bcs0,bcs1=0,is,js,ic,jc,is0,ic0,js0,jc0,init=1,p,ii,jj,*str,*stc,symmetric,*sub_blocks,*block_size,
-    rcum=0,ccum=0,is1,rcum0,ccum0,*dn,*iwork,*XWXi,*XWXp,nzmax=0,rb,cb,*ip,n_threads,tid,*B;
+    rcum=0,ccum=0,is1,rcum0,ccum0,*dn,*iwork,*XWXi,*XWXp,nzmax=0,rb,cb,*ip,n_threads,tid,*B,nprot=0;
   SEXP Xd,M, i_sym,x_sym,dim_sym,p_sym,ul_sym,KD,R,KS,OFF,TS,DT,QC,V,XWX,OFFS;
   double **v,*w,*d,*xwork,*XWXx,*xp,*xp1,*cost;
   XWXblock *block,*blp;
@@ -626,20 +626,20 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   KD = getListEl(X,"kd"); /* the matrix of index vectors */
   n = nrows(KD); /* number of data */
   /* get the row indices (forward then reverse) */
-  KD = PROTECT(coerceVector(KD,INTSXP));
+  KD = PROTECT(coerceVector(KD,INTSXP));nprot++;
   kd = INTEGER(KD);
   R = getListEl(X,"r");
-  R = PROTECT(coerceVector(R,INTSXP));
+  R = PROTECT(coerceVector(R,INTSXP));nprot++;
   r = INTEGER(R);
   OFF =  getListEl(X,"off"); /* the offset list for the reverse indices */
-  OFF = PROTECT(coerceVector(OFF,INTSXP));
+  OFF = PROTECT(coerceVector(OFF,INTSXP));nprot++;
   off = INTEGER(OFF);
   OFFS =  getListEl(X,"offstart"); /* the start points in the offset array */
-  OFFS = PROTECT(coerceVector(OFFS,INTSXP));
+  OFFS = PROTECT(coerceVector(OFFS,INTSXP));nprot++;
   off_start = INTEGER(OFFS);
   /* get the matrix defining the range of k vectors for each matrix */
   KS = getListEl(X,"ks");
-  KS = PROTECT(coerceVector(KS,INTSXP));
+  KS = PROTECT(coerceVector(KS,INTSXP));nprot++;
   ks = INTEGER(KS);
   
   mx = length(Xd); /* list length */
@@ -671,13 +671,13 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   /* now deal with the smooth term information... */
   TS = getListEl(X,"ts");
   nt = length(TS); /* number of smooth terms */
-  TS = PROTECT(coerceVector(TS,INTSXP));
+  TS = PROTECT(coerceVector(TS,INTSXP));nprot++;
   ts = INTEGER(TS); /* term starts in matrix array */
   DT = getListEl(X,"dt");
-  DT = PROTECT(coerceVector(DT,INTSXP));
+  DT = PROTECT(coerceVector(DT,INTSXP));nprot++;
   dt= INTEGER(DT); /* number of marginal matrices for this term. */
   QC = getListEl(X,"qc");
-  QC = PROTECT(coerceVector(QC,INTSXP));
+  QC = PROTECT(coerceVector(QC,INTSXP));nprot++;
   qc= INTEGER(QC); /* the constraint indicator nt-vector */
   V = getListEl(X,"v");
   v = (double **) CALLOC((size_t)nt,sizeof(double *));
@@ -959,9 +959,9 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   /* write out results to a sparse matrix for return */
   
   if (symmetric) {
-    XWX = PROTECT(R_do_new_object(PROTECT(R_getClassDef("dsCMatrix")))); // create symmetric sparse matrix
-    SET_STRING_ELT(PROTECT(R_do_slot(XWX,ul_sym)),0,PROTECT(mkChar("L"))); // set to lower triangle storage - note charecter setting special
-  } else XWX = PROTECT(R_do_new_object(PROTECT(R_getClassDef("dgCMatrix"))));
+    XWX = PROTECT(R_do_new_object(PROTECT(R_getClassDef("dsCMatrix"))));nprot++;nprot++; // create symmetric sparse matrix
+    SET_STRING_ELT(PROTECT(R_do_slot(XWX,ul_sym)),0,PROTECT(mkChar("L")));nprot++;nprot++; // set to lower triangle storage - note charecter setting special
+  } else { XWX = PROTECT(R_do_new_object(PROTECT(R_getClassDef("dgCMatrix"))));nprot++;nprot++;}
   dim = INTEGER(R_do_slot(XWX,dim_sym));
   dim[0] = rcum;dim[1] = ccum;
   if (symmetric) { /* don't know exact size yet - make temporary over-sized storage */
@@ -1018,7 +1018,7 @@ SEXP sXWXd(SEXP X,SEXP W,SEXP LT, SEXP RT,SEXP NT) {
   FREE(iwork); FREE(xwork);FREE(dn);FREE(d); FREE(str);FREE(sub_blocks);FREE(block_size);
   FREE(Xs); // free the sparse matrix array
   FREE(v);
-  UNPROTECT(14);
+  UNPROTECT(nprot);
   return(XWX);
 } /* sXWXd */  
 

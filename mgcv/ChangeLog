@@ -39,7 +39,8 @@ present, and reparameterization needs checking (also for bam).
 * gp smooths can now be specified to be strictly stationary (see ?gp.smooth)
 
 * fix to predict.bamd bug in handling fixed effect contrasts (wrong contrast 
-  could be used for prediction, if non-default used in fitting).
+  could be used for prediction, if non-default used in fitting). Thanks to
+  Jalal Al-Tamimi.
 
 * predict.bamd modified to catch case where all prediction data is NA
 
