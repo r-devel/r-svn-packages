@@ -27,7 +27,7 @@ dmvn <- function(x,mu,V,R=NULL) {
 ## multivariate normal density mgcv:::rmvn can be used for generation 
   if (is.null(R)) R <- chol(V)
   z <- forwardsolve(t(R),x-mu)
-  -colSums(z^2)/2-sum(log(diag(R))) - log(2*pi)*length(mu)/2
+  -sum(log(diag(R))) - log(2*pi)*length(mu)/2 - if (is.matrix(z)) colSums(z^2)/2 else sum(z^2)/2
 }
 
 ## some functions to extract important components of joint density from
