@@ -35,7 +35,7 @@ code to calculate empirical likelihoods see Professor A. B. Owen's
 empirical likelihood home page at the URL
 \url{https://statweb.stanford.edu/~owen/empirical/}.
 }
-\Value{
+\value{
 A matrix with \code{n.t} rows.  The first column contains the
 values of the parameter used.  The second column of the output
 of \code{EL.profile} contains the values of the empirical
