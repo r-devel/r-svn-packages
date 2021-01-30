@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: cluster 1.14.5\n"
-"POT-Creation-Date: 2020-04-30 13:19\n"
+"POT-Creation-Date: 2021-01-30 22:00\n"
 "PO-Revision-Date: 2014-03-30 09:03+0100\n"
 "Last-Translator: Philippe Grosjean <phgrosjean@sciviews.org>\n"
 "Language-Team: none\n"
@@ -253,6 +253,9 @@ msgstr ""
 msgid "Number of clusters 'k' must be in {1,2, .., n-1}; hence n >= 2"
 msgstr "Le nombre de groupes 'k' doit être dans {1,2, …, n-1} ; où n >= 2"
 
+msgid "Set either 'variant' or 'pamonce', but not both"
+msgstr ""
+
 msgid ""
 "'medoids' must be NULL or vector of %d distinct indices in {1,2, .., n}, n=%d"
 msgstr ""
@@ -333,6 +336,12 @@ msgid ""
 msgstr ""
 "la silhouette complète n'est disponible que pour les résultats de 'clara(*, "
 "keep.data = TRUE)'"
+
+msgid "specified both 'full' and 'subset'; will use 'subset'"
+msgstr ""
+
+msgid "'full' must be FALSE, TRUE, or a number in [0, 1]"
+msgstr ""
 
 msgid "'x' must only have integer codes"
 msgstr "'x' doit n'avoir que des codes entiers"
