@@ -1,6 +1,6 @@
 Package: cluster
 Version: 2.1.1
-Date: 2020-05-05
+Date: 2021-01-29
 Priority: recommended
 Title: "Finding Groups in Data": Cluster Analysis Extended Rousseeuw et al.
 Description: Methods for Cluster analysis.  Much extended the original from
@@ -34,4 +34,4 @@ LazyData: yes
 ByteCompile: yes
 BuildResaveData: no
 License: GPL (>= 2)
-URL: https://svn.r-project.org/R-packages/trunk/cluster
+URL: https://svn.r-project.org/R-packages/trunk/cluster/

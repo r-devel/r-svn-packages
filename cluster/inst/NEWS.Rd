@@ -6,9 +6,11 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.1 (2020-05-05, svn r7835)}{
+\section{Changes in version 2.1.1 (2021-01-30, svn r7920)}{
   \subsection{New Features}{
     \itemize{
+      \item Added Italian translations from Daniele Medri.
+
       \item \code{clara()} gains a \code{cluster.only} argument, entirely
       \dQuote{in parallel} to \code{pam()}.
 
@@ -16,6 +18,10 @@
       \code{full} to be a number in [0,1] instead of just a logical and it gains
       gains new optional argument \code{subset} to specify the indices of
       observations for which silhouette values shold be computed.
+
+      \item Faster \code{pam()} - \sQuote{fasterPAM} from Erich Schubert.
+      New optional arguments \code{medoids = "random"}, \code{nstart}, and
+      \code{variant}, notably \code{variant = "faster"}.
     }
   }
 }
