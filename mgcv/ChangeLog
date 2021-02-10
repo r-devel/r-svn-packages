@@ -44,7 +44,7 @@ present, and reparameterization needs checking (also for bam).
 
 * predict.bamd modified to catch case where all prediction data is NA
 
-
+* predict.gam modified to allow NA to be a factor level.
 
 1.8-33
 
