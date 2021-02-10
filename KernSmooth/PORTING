@@ -240,3 +240,10 @@ Version 2.23-19
 
 src/rlbin.f: issue in locpoly()  reported by Peter Dalgaard
 tests/locpoly.R: regression test for the above.
+
+Version 2.23-20
+===============
+
+R/all.R: add sanity check for 'canonical' argument.
+man/bkde.Rd: stress the above.
+
