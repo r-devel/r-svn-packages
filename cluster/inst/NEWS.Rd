@@ -6,10 +6,11 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.1 (2021-01-30, svn r7920)}{
+\section{Changes in version 2.1.1 (2021-02-11, svn r7925)}{
   \subsection{New Features}{
     \itemize{
-      \item Added Italian translations from Daniele Medri.
+      \item Added Italian translations from Daniele Medri, and updated the
+      French ones from Philippe Grosjean.
 
       \item \code{clara()} gains a \code{cluster.only} argument, entirely
       \dQuote{in parallel} to \code{pam()}.
