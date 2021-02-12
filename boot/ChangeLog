@@ -1,6 +1,7 @@
-version 1.3-27 2021-02-04
+version 1.3-27 2021-02-12
 
 	Bugfix in censboot, regression test tests/parallel-censboot.R
+	Update fr translations.
 
 version 1.3-26 2021-01-21
 
