@@ -1,6 +1,10 @@
+2021-02-12 Brian Ripley
+
+	* po: update fr translations.
+
 2020-02-03  Brian Ripley
 
-	* DESCRIPTION (Version, Date): Prepare to release 3.1-152.
+	* DESCRIPTION (Version, Date): 3.1-152 for 4.0.4.
 
 2020-12-09  Martin Maechler  <maechler@stat.math.ethz.ch>
 
