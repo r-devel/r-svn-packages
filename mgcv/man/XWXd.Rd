@@ -48,10 +48,10 @@ The \code{"lpip"} attribute of \code{X} is a list of the coefficient indices for
 
 \references{
 Wood, S.N., Li, Z., Shaddick, G. & Augustin N.H. (2017) Generalized additive models for gigadata: modelling the UK black smoke network daily data. Journal of the American Statistical Association. 112(519):1199-1210
-\url{https://dx.doi.org/10.1080/01621459.2016.1195744}
+\doi{10.1080/01621459.2016.1195744}
 
 Li, Z & S.N. Wood (2019) Faster model matrix crossproducts for large generalized linear models with discretized covariates. Statistics and Computing.
-\url{https://doi.org/10.1007/s11222-019-09864-2}
+\doi{10.1007/s11222-019-09864-2}
 
 }
 
