@@ -1,3 +1,10 @@
+2021-03-09  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/varFunc.R (print.varFunc): use full 'unconstrained' argument
+	name, fixing PR#17767, thanks to Sebastian Meyer.
+
+	* DESCRIPTION (Version, Date): 3.1-153 (*not* yet for release)
+
 2021-02-12 Brian Ripley
 
 	* po: update fr translations.
