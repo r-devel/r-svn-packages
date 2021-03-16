@@ -8,7 +8,7 @@ Authors@R: c(person("CRAN Team", role = c('ctb', 'cre'),
                     email = "duncan@r-project.org",
                     comment = c(ORCID = "0000-0003-0159-1546")))
 SystemRequirements: GNU make, libcurl
-Description: A wrapper for 'libcurl' <http://curl.haxx.se/libcurl/>
+Description: A wrapper for 'libcurl' <https://curl.se/libcurl/>
 	Provides functions to allow one to compose general HTTP requests
         and provides convenient functions to fetch URIs, get & post
         forms, etc. and process the results returned by the Web server.
