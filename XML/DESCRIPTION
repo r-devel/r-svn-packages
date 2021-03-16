@@ -1,5 +1,5 @@
 Package: XML
-Version: 3.99-0.5
+Version: 3.99-0.6
 Authors@R: c(person("CRAN Team", role = c('ctb', 'cre'),
                     email = "CRAN@r-project.org",
                     comment = "de facto maintainer since 2013"),
