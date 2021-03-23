@@ -2374,8 +2374,8 @@ gammals <- function(link=list("identity","log"),b=-7) {
 
   rd <- function(mu,wt,scale) {
     ## simulate responses
-    scale <- exp(mu[,2])
-    rgamma(nrow(mu),shape=1/scale,scale=mu[,1]*scale)
+    phi <- exp(mu[,2])
+    rgamma(nrow(mu),shape=1/phi,scale=mu[,1]*phi)
   } ## rd
 
   predict <- function(family,se=FALSE,eta=NULL,y=NULL,X=NULL,
