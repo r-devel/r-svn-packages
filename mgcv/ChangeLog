@@ -29,6 +29,8 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-35
 
+* gumbls initialization improved.
+
 1.8-34
 
 * 'gam.mh' proposal df typo fix and help file '%*%' -> '\%*\*' fix. Thanks 
