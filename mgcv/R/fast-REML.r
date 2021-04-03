@@ -149,7 +149,8 @@ Sl.setup <- function(G,cholesky=FALSE,no.repara=FALSE,sparse=FALSE) {
       ## if the smooth has a g.index field it indicates non-linear params,
       ## in which case re-parameterization will usually break the model.
       ## Or global supression of reparameterization may be requested...
-      Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index) && !no.repara) TRUE else FALSE
+      # Sl[[b]]$repara <- if (is.null(G$smooth[[i]]$g.index) && !no.repara) TRUE else FALSE
+      Sl[[b]]$repara <- G$smooth[[i]]$repara && !no.repara  
       if (!is.null(G$smooth[[i]]$updateS)) { ## then this block is nonlinear in smoothing parameters
         Sl[[b]]$repara <-FALSE
 	Sl[[b]]$linear <- FALSE
