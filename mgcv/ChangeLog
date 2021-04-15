@@ -29,6 +29,10 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-35
 
+* Fix to bug in Fletcher scale parameter estimate with weighted data (e.g. 
+  quasibinomial with n>1). Gaussian case not affected. Thanks to John 
+  Maindonald.
+
 * gumbls initialization improved.
 
 * Modification so that smooths can insist on not being reparameterized when 
