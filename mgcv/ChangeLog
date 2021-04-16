@@ -33,6 +33,12 @@ present, and reparameterization needs checking (also for bam).
   quasibinomial with n>1). Gaussian case not affected. Thanks to John 
   Maindonald.
 
+* Italian translation updated thanks to Daniele Medri
+
+* German translation updated thanks to Detlef Steuer
+
+* French translation updated thanks to Philippe Grosjean
+
 * gumbls initialization improved.
 
 * Modification so that smooths can insist on not being reparameterized when 
