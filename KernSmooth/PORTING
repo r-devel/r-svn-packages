@@ -246,4 +246,4 @@ Version 2.23-20
 
 R/all.R: add sanity check for 'canonical' argument.
 man/bkde.Rd: stress the above.
-
+Update fr translations.
