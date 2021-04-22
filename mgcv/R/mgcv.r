@@ -3878,8 +3878,10 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)
       dfc <- if (is.null(object$edf2)) 0 else sum(object$edf2) - sum(object$edf) 
       object$df.residual <- n - sum(object$edf1) - dfc
       ## reset the deviance to -2*logLik for general families...
-      if (inherits(object$family,"extended.family")) { 
-        object$deviance <- -2 * as.numeric(logLik(object)) 
+      if (inherits(object$family,"extended.family")) {  
+        min.df <- object$df.residual
+        disp <- if (is.null(dispersion)) object$sig2 else dispersion
+        object$deviance <- -2 * as.numeric(logLik(object)) ## deviance returned is not always suitable for e.g. F test
         if (!is.null(test)) test <- "Chisq"
       }
       ## repeat above 3 steps for each element of dotargs...
@@ -3887,10 +3889,18 @@ anova.gam <- function (object, ..., dispersion = NULL, test = NULL,  freq=FALSE)
         if (is.list(dotargs[[i]]$formula)) dotargs[[i]]$formula <- dotargs[[i]]$formula[[1]]
         dfc <- if (is.null(dotargs[[i]]$edf2)) 0 else sum(dotargs[[i]]$edf2) - sum(dotargs[[i]]$edf) 
         dotargs[[i]]$df.residual <- n - sum(dotargs[[i]]$edf1) - dfc
-        if (inherits(dotargs[[i]]$family,"extended.family")) { 
+        if (inherits(dotargs[[i]]$family,"extended.family")) {
+          if (object$df.residual < min.df) {
+            object$df.residual -> min.df
+            disp <- if (is.null(dispersion))  dotargs[[i]]$sig2 else dispersion
+          }
           dotargs[[i]]$deviance <- -2 * as.numeric(logLik(dotargs[[i]]))
         } 
-      }
+      } 
+      if (inherits(object$family,"extended.family")) { ## multiply by dispersion as anova.glm will divide by it!
+         object$deviance <- object$deviance * disp
+         for (i in 1:length(dotargs)) dotargs[[i]]$deviance <- dotargs[[i]]$deviance * disp
+      } 
       return(anova(structure(c(list(object), dotargs), class="glmlist"), 
             dispersion = dispersion, test = test))
     } 

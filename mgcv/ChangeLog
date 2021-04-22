@@ -27,6 +27,11 @@ present, and reparameterization needs checking (also for bam).
   which no smoother is penalized. Also there is no option to use the identical
   discretization to that used in fitting when predicting.
 
+1.8-36
+
+* bug fix to multi-model anova.gam code to deal properly with extended family 
+  scale parameters (still not the recommended way of testing!)
+
 1.8-35
 
 * Fix to bug in Fletcher scale parameter estimate with weighted data (e.g. 
