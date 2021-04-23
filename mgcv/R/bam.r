@@ -955,14 +955,14 @@ bgam.fitd <- function (G, mf, gp ,scale , coef=NULL,etastart = NULL,
   object$fitted.values <- family$linkinv(object$linear.predictors)
   if (efam) { ## deal with any post processing
      if (!is.null(family$postproc)) {
-      posr <- family$postproc(family=object$family,y=y,prior.weights=G$w,
+      posr <- family$postproc(family=object$family,y=G$y,prior.weights=G$w,
               fitted=object$fitted.values,linear.predictors=object$linear.predictors,offset=G$offset,
 	      intercept=G$intercept)
       if (!is.null(posr$family)) object$family$family <- posr$family
       if (!is.null(posr$deviance)) object$deviance <- posr$deviance
       if (!is.null(posr$null.deviance)) object$null.deviance <- posr$null.deviance
     }
-    if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(y,weighted.mean(y,G$w),G$w,theta))   
+    if (is.null(object$null.deviance)) object$null.deviance <- sum(family$dev.resids(G$y,weighted.mean(G$y,G$w),G$w,theta))   
   }
 
   PP <- Sl.initial.repara(Sl,prop$PP,inverse=TRUE,both.sides=TRUE,cov=TRUE,nt=npt[1])
@@ -1430,7 +1430,7 @@ bgam.fit <- function (G, mf, chunk.size, gp ,scale ,gamma,method, coef=NULL,etas
     if (efam) { ## deal with any post processing
        if (!is.null(family$postproc)) {
          object$family <- family
-         posr <- family$postproc(family=family,y=y,prior.weights=G$w,
+         posr <- family$postproc(family=family,y=G$y,prior.weights=G$w,
               fitted=linkinv(eta),linear.predictors=eta,offset=G$offset,
 	      intercept=G$intercept)
          if (!is.null(posr$family)) object$family$family <- posr$family
@@ -2936,7 +2936,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
 
   if (!efam || is.null(object$deviance)) object$deviance <- sum(object$residuals^2)
-  dev <- object$deviance
+  ## 'dev' is used in family$aic to estimate scale. That's standard and fine for exponential families, but
+  ## can lead to badly biased estimates for e.g. low count data with the Tweedie (see Fletcher Biometrika paper)
+  ## So set dev to give object $sig2 estimate when divided by sum(prior.weights)... 
+  dev <- if (efam&&!is.null(object$sig2)) object$sig2*sum(object$prior.weights) else object$deviance ## used to give scale in family$aic
   if (rho!=0&&family$family=="gaussian") dev <- sum(object$std.rsd^2)
   object$aic <- if (efam) family$aic(object$y,object$fitted.values,family$getTheta(),object$prior.weights,dev) else
                 family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)

@@ -693,7 +693,11 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
       dw.drho <- matrix(0,nrow(x),ncol(w1))
       dw.drho[good,] <- w1
    }
-   aic.model <- family$aic(y, mu, theta, weights, dev) # note: incomplete 2*edf needs to be added
+   ## dev is used in family$aic to estimate the scale as dev/sum(weights), or is unused.
+   ## the form is for compatibility with exponential families, but the estimator can
+   ## be biased for low count data in the extended family case. So better to force the
+   ## actual scale estimate to be used...
+   aic.model <- family$aic(y, mu, theta, weights, dev=scale*sum(weights)) # note: incomplete 2*edf needs to be added
  
 
    list(coefficients = coef,residuals=residuals,fitted.values = mu,
