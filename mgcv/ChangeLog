@@ -29,6 +29,12 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-36
 
+* 'fs' smooth construction modified to (approximately) orthogonalise 
+   smoothing penalty penalized and unpenalized bases. This makes the 
+   assumption that the associated variance components are independent 
+   more natural. Thanks to Matteo Fasiolo and Harald Bayaan for showing 
+   how the original construction could be problematic. 
+
 * AIC calculation modified for extended families with a scale parameter (only
   the Tweedie family 'tw' in mgcv itself), so that the model estimated scale 
   parameter is used, rather than the deviance estimator employed with 
