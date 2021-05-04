@@ -35,11 +35,11 @@ present, and reparameterization needs checking (also for bam).
    more natural. Thanks to Matteo Fasiolo and Harald Bayaan for showing 
    how the original construction could be problematic. 
 
-* AIC calculation modified for extended families with a scale parameter (only
-  the Tweedie family 'tw' in mgcv itself), so that the model estimated scale 
-  parameter is used, rather than the deviance estimator employed with 
-  glm exponential families. This matters for avoiding substantial bias with 
-  very low mean count data.   
+* AIC calculation modified for non-Gaussian families with a scale parameter, 
+  so that the model estimated scale parameter is used, rather than the 
+  deviance estimator employed with glm exponential families. This matters for 
+  avoiding substantial bias with very low mean count data (particulalry 'tw' 
+  and 'Tweedie' families).   
 
 * bug fix to multi-model anova.gam code to deal properly with extended family 
   scale parameters (still not the recommended way of testing!)

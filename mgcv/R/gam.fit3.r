@@ -762,15 +762,19 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
       dw.drho[good,] <- w1
     }
     
-
+    sumw <- sum(weights)
     wtdmu <- if (intercept) 
-        sum(weights * y)/sum(weights)
+        sum(weights * y)/sumw
     else linkinv(offset)
     nulldev <- sum(dev.resids(y, wtdmu, weights))
     n.ok <- nobs - sum(weights == 0)
     nulldf <- n.ok - as.integer(intercept)
-   
-    aic.model <- aic(y, n, mu, weights, dev) # note: incomplete 2*edf needs to be added
+
+    ## use exact MLE scale param for aic in gaussian case, otherwise scale.est (unless known)
+    
+    dev1 <- if (scale.known) scale*sumw else if (family$family=="gaussian") dev else if (is.na(reml.scale)) scale.est*sumw else reml.scale*sumw  
+
+    aic.model <- aic(y, n, mu, weights, dev1) # note: incomplete 2*edf needs to be added
     if (control$trace) {
       t1 <- proc.time()
       at <- sum((t1-t0)[c(1,4)])

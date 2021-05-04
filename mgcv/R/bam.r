@@ -2936,10 +2936,10 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
   if (rho!=0) object$std.rsd <- AR.resid(object$residuals,rho,object$model$"(AR.start)")
 
   if (!efam || is.null(object$deviance)) object$deviance <- sum(object$residuals^2)
-  ## 'dev' is used in family$aic to estimate scale. That's standard and fine for exponential families, but
+  ## 'dev' is used in family$aic to estimate scale. That's standard and fine for Gaussian data, but
   ## can lead to badly biased estimates for e.g. low count data with the Tweedie (see Fletcher Biometrika paper)
   ## So set dev to give object $sig2 estimate when divided by sum(prior.weights)... 
-  dev <- if (efam&&!is.null(object$sig2)) object$sig2*sum(object$prior.weights) else object$deviance ## used to give scale in family$aic
+  dev <- if (family$family!="gaussian"&&!is.null(object$sig2)) object$sig2*sum(object$prior.weights) else object$deviance ## used to give scale in family$aic
   if (rho!=0&&family$family=="gaussian") dev <- sum(object$std.rsd^2)
   object$aic <- if (efam) family$aic(object$y,object$fitted.values,family$getTheta(),object$prior.weights,dev) else
                 family$aic(object$y,1,object$fitted.values,object$prior.weights,dev)
@@ -2967,7 +2967,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
 
 
 bam.update <- function(b,data,chunk.size=10000) {
-## update the strictly additive model `b' in the light of new data in `data'
+## update the strictly additive gaussian model `b' in the light of new data in `data'
 ## Need to update modelframe (b$model) 
   if (is.null(b$qrx)) { 
     stop("Model can not be updated")
