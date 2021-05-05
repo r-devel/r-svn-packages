@@ -1908,7 +1908,7 @@ predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,excl
 
   lpi <- attr(object$formula,"lpi") ## lpi[[i]] indexes coefs for ith linear predoctor
   nlp <- if (is.null(lpi)) 1 else length(lpi) ## number of linear predictors
-  if (nlp>1) lpid <-  object$dinfo$lpid ## index of discrete terms involved in each linear predictor
+  lpid <- if (nlp>1) object$dinfo$lpid else NULL ## index of discrete terms involved in each linear predictor
  
   ## newdata has to be processed first to avoid, e.g. dropping different subsets of data
   ## for parametric and smooth components....

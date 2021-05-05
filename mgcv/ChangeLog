@@ -41,6 +41,9 @@ present, and reparameterization needs checking (also for bam).
   avoiding substantial bias with very low mean count data (particulalry 'tw' 
   and 'Tweedie' families).   
 
+* prediction on response scale could fail for models fitted by 
+  bam(...,discrete=TRUE) - fixed. 
+
 * bug fix to multi-model anova.gam code to deal properly with extended family 
   scale parameters (still not the recommended way of testing!)
 
