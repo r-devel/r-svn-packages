@@ -6,7 +6,15 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.2 (2021-04-16, svn r7956)}{
+\section{Changes in version 2.1.3 (2021-05-05, svn r7960)}{
+  \subsection{Translations}{
+    \itemize{
+      \item Updated German translations (Detlef Steuer)
+    }
+  }
+}
+
+\section{Changes in version 2.1.2 (2021-04-16, svn r7959)}{% CRAN published 2021-04-17; R 4.1.0
   \subsection{New Features}{
     \itemize{
       \item Updated the Italian translations (by Daniele Medri), the
