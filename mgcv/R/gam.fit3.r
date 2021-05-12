@@ -783,7 +783,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
    
     list(coefficients = coef, residuals = residuals, fitted.values = mu, 
          family = family, linear.predictors = eta, deviance = dev, 
-        null.deviance = nulldev, iter = iter, weights = wt, working.weights=ww,prior.weights = weights, 
+        null.deviance = nulldev, iter = iter, weights = wt, working.weights=ww,prior.weights = weights, z=z,
         df.null = nulldf, y = y, converged = conv,##pearson.warning = pearson.warning,
         boundary = boundary,D1=D1,D2=D2,P=P,P1=P1,P2=P2,trA=trA,trA1=trA1,trA2=trA2,
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
@@ -883,6 +883,20 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
 ## X is original model matrix, L the mapping from working to full sp
   scale <- if (object$scale.estimated) object$scale.est else object$scale
   Vb <- object$rV%*%t(object$rV)*scale ## Bayesian cov.
+  ## EXPERIMENTAL ## NOTE: no L handling
+  #P <- Vb %*% X/scale
+  beta <- object$coefficients
+  w <- object$weights
+  M <- K <- matrix(0,length(w),length(off))
+  for (i in 1:length(off)) {
+    ii <- 1:ncol(S[[i]])+off[i]-1
+    Sb <- S[[i]] %*% beta[ii]*object$sp[i]
+    K[,i] <- w * drop(X %*% (Vb[,ii] %*% Sb))
+    B <- Vb%*%drop(t(w*object$z) %*% X)
+    M[,i] <- X%*% (Vb[,ii] %*% (S[[i]]%*%B[ii]))*object$sp[i]
+  }
+  K <- t(backsolve(object$outer.info$hess,t(K)))
+  ## END EXPERIMENTAL
   # PKt <- object$rV%*%t(object$K)
   PKt <- .Call(C_mgcv_pmmult2,object$rV,object$K,0,1,object$control$nthreads)
   # F <- PKt%*%(sqrt(object$weights)*X)

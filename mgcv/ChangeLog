@@ -41,6 +41,8 @@ present, and reparameterization needs checking (also for bam).
   avoiding substantial bias with very low mean count data (particulalry 'tw' 
   and 'Tweedie' families).   
 
+* ziP family response scale se fix for case when b>0 (thanks to Mark Donoghoe)
+
 * prediction on response scale could fail for models fitted by 
   bam(...,discrete=TRUE) - fixed. 
 
