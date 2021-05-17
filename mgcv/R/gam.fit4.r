@@ -706,7 +706,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         weights=wt, ## note that these are Fisher type weights 
         prior.weights=weights,
         working.weights = ww, ## working weights
-        df.null = nulldf, y = y, converged = conv,
+        df.null = nulldf, y = y, converged = conv,z=z,
         boundary = boundary,
         REML=REML,REML1=REML1,REML2=REML2,
         rV=rV,db.drho=db.drho,dw.drho=dw.drho,

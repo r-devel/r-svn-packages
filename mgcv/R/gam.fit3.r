@@ -883,20 +883,7 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
 ## X is original model matrix, L the mapping from working to full sp
   scale <- if (object$scale.estimated) object$scale.est else object$scale
   Vb <- object$rV%*%t(object$rV)*scale ## Bayesian cov.
-  ## EXPERIMENTAL ## NOTE: no L handling
-  #P <- Vb %*% X/scale
-  beta <- object$coefficients
-  w <- object$weights
-  M <- K <- matrix(0,length(w),length(off))
-  for (i in 1:length(off)) {
-    ii <- 1:ncol(S[[i]])+off[i]-1
-    Sb <- S[[i]] %*% beta[ii]*object$sp[i]
-    K[,i] <- w * drop(X %*% (Vb[,ii] %*% Sb))
-    B <- Vb%*%drop(t(w*object$z) %*% X)
-    M[,i] <- X%*% (Vb[,ii] %*% (S[[i]]%*%B[ii]))*object$sp[i]
-  }
-  K <- t(backsolve(object$outer.info$hess,t(K)))
-  ## END EXPERIMENTAL
+
   # PKt <- object$rV%*%t(object$K)
   PKt <- .Call(C_mgcv_pmmult2,object$rV,object$K,0,1,object$control$nthreads)
   # F <- PKt%*%(sqrt(object$weights)*X)
@@ -964,7 +951,29 @@ gam.fit3.post.proc <- function(X,L,lsp0,S,off,object) {
         }
       }
     } ## k loop
-    V.sp <- Vr;attr(V.sp,"L") <- L;attr(V.sp,"spind") <- (nth+1):M
+    V.sp <- Vr;attr(V.sp,"L") <- L;attr(V.sp,"spind") <- spind <- (nth+1):M
+    ## EXPERIMENTAL ## NOTE: no L handling - what about incomplete z/w??
+    #P <- Vb %*% X/scale
+    if (FALSE) {
+      sp <- object$sp[spind]
+      beta <- object$coefficients
+      w <- object$weights
+      m <- length(off)
+      M <- K <- matrix(0,length(w),m)
+      for (i in 1:m) {
+        ii <- 1:ncol(S[[i]])+off[i]-1
+        Sb <- S[[i]] %*% beta[ii]*sp[i]/object$scale
+	## don't forget Vb is inverse hessian times scale!
+        K[,i] <- w * drop(X %*% (Vb[,ii] %*% Sb))/object$scale
+        B <- Vb%*%drop(t(w*object$z) %*% X)
+        M[,i] <- X%*% (Vb[,ii] %*% (S[[i]]%*%B[ii]))*sp[i]/object$scale^2
+      }
+      ## Should following really just drop scale term?
+      K <- K %*% Vr[spind,spind]
+      edf3 <- sum(K*M)
+      attr(edf2,"edf3") <- edf3
+    }
+    ## END EXPERIMENTAL
   } else V.sp <- edf2 <- Vc <- NULL
   list(Vc=Vc,Vp=Vb,Ve=Ve,V.sp=V.sp,edf=edf,edf1=edf1,edf2=edf2,hat=hat,F=F,R=R)
 } ## gam.fit3.post.proc
