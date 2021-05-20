@@ -1524,19 +1524,19 @@ pabapr <- function(arg) {
 
 predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
                         block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,
-                        cluster=NULL,discrete=TRUE,n.threads=1,...) {
+                        cluster=NULL,discrete=TRUE,n.threads=1,gc.level=0,...) {
 ## function for prediction from a bam object, possibly in parallel
   
   #if (is.function(na.action)) na.action <- deparse(substitute(na.action)) ## otherwise predict.gam can't detect type
   if (discrete && !is.null(object$dinfo)) {
     return(predict.bamd(object,newdata,type,se.fit,terms,exclude,
-                        block.size,newdata.guaranteed,na.action,n.threads,...))
+                        block.size,newdata.guaranteed,na.action,n.threads,gc.level=gc.level,...))
   }
   ## remove some un-needed stuff from object
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
   object$Vc <- object$G <- object$residuals <- object$fitted.values <-
   object$linear.predictors <- NULL
-  gc()
+  if (gc.level>0) gc()
   if (!is.null(cluster)&&inherits(cluster,"cluster")) { 
      ## require(parallel)
      n.threads <- length(cluster)
@@ -1575,9 +1575,9 @@ predict.bam <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclu
     ## newdata and object no longer needed - all info in thread lists...
     if (!missing(newdata)) rm(newdata)
     rm(object)
-    gc()
+    if (gc.level>0) gc()
     res <- parallel::parLapply(cluster,arg,pabapr) ## perform parallel prediction
-    gc()
+    if (gc.level>0) gc()
     ## and splice results back together...
     if (type=="lpmatrix") {
       X <- res[[1]]
@@ -1890,13 +1890,13 @@ bam.fit <- function(G,mf,chunk.size,gp,scale,gamma,method,rho=0,
 } # end of bam.fit
 
 predict.bamd <- function(object,newdata,type="link",se.fit=FALSE,terms=NULL,exclude=NULL,
-                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,n.threads=1,...) {
+                        block.size=50000,newdata.guaranteed=FALSE,na.action=na.pass,n.threads=1,gc.level=0,...) {
 ## function for prediction from a bam object, by discrete methods
 ## remove some un-needed stuff from object
   object$Sl <- object$qrx <- object$R <- object$F <- object$Ve <-
   object$Vc <- object$G <- object$residuals <- object$fitted.values <-
   object$linear.predictors <- NULL
-  gc()
+  if (gc.level>0) gc()
   if (missing(newdata)) newdata <- object$model
    
   convert2mf <- is.null(attr(newdata,"terms"))
@@ -2382,7 +2382,7 @@ terms2tensor <- function(terms,data=NULL,contrasts.arg=NULL,drop.intercept=FALSE
 bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,na.action=na.omit,
                 offset=NULL,method="fREML",control=list(),select=FALSE,scale=0,gamma=1,knots=NULL,sp=NULL,
                 min.sp=NULL,paraPen=NULL,chunk.size=10000,rho=0,AR.start=NULL,discrete=FALSE,
-                cluster=NULL,nthreads=1,gc.level=1,use.chol=FALSE,samfrac=1,coef=NULL,
+                cluster=NULL,nthreads=1,gc.level=0,use.chol=FALSE,samfrac=1,coef=NULL,
                 drop.unused.levels=TRUE,G=NULL,fit=TRUE,drop.intercept=NULL,...)
 
 ## Routine to fit an additive model to a large dataset. The model is stated in the formula, 
@@ -2528,7 +2528,7 @@ bam <- function(formula,family=gaussian(),data=list(),weights=NULL,subset=NULL,n
     if (!is.list(data)&&!is.data.frame(data)) data <- as.data.frame(data) 
 
     dl <- eval(inp, data, parent.frame())
-    if (!control$keepData) { rm(data);gc()} ## save space
+    if (!control$keepData) { rm(data);if (gc.level>0) gc()} ## save space
     names(dl) <- vars ## list of all variables needed
     var.summary <- variable.summary(gp$pf,dl,nrow(mf)) ## summarize the input data
     rm(dl); if (gc.level>0) gc() ## save space    
