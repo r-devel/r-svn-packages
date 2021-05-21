@@ -35,6 +35,9 @@ present, and reparameterization needs checking (also for bam).
    more natural. Thanks to Matteo Fasiolo and Harald Bayaan for showing 
    how the original construction could be problematic. 
 
+* correction to 'fs' smooth handling in gamm to allow correlation structures 
+  to be used in the same model without cuasing an error.
+
 * AIC calculation modified for non-Gaussian families with a scale parameter, 
   so that the model estimated scale parameter is used, rather than the 
   deviance estimator employed with glm exponential families. This matters for 
