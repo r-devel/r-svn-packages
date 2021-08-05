@@ -1,3 +1,8 @@
+2021-08-05  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/zzMethods.R (.onLoad), R/VarCorr.R: remove code used only
+	if(getRversion() < "3.3"); from Sebastian Meyer.
+
 2021-03-09  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/varFunc.R (print.varFunc): use full 'unconstrained' argument
