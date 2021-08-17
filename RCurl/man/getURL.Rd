@@ -137,9 +137,9 @@ getURLContent(url, ..., curl = getCurlHandle(.opts = .opts), .encoding = NA,
   omegahatExists = url.exists("http://www.omegahat.net")
 
    # Regular HTTP
-  if(omegahatExists) withAutoprint({
+  if(omegahatExists && requireNamespace("XML", quietly = TRUE)) withAutoprint({
      txt = getURL("http://www.omegahat.net/RCurl/")
-        # Then we could parse the result.
+     ## Then we could parse the result.
      XML::htmlTreeParse(txt, asText = TRUE)
   })
 
