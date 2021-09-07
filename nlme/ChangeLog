@@ -1,3 +1,11 @@
+2021-09-07  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* R/groupedData.R ("[.groupedData"): change the default of `drop` to
+	to FALSE for the case of `x[j]`, fixing PR#18177.
+
+	* R/lme.R (print.summary.lme): change partial match to
+	`x$coefficients`, PR#18184.
+
 2021-08-05  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/zzMethods.R (.onLoad), R/VarCorr.R: remove code used only
