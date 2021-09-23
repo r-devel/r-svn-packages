@@ -1,3 +1,10 @@
+2021-09-23  Martin Maechler  <maechler@stat.math.ethz.ch>
+
+	* DESCRIPTION (Version): 3.1-154 (not yet releasing)
+
+	* R/gls.R (print.intervals.gls): do not print `attr(., "label")` twice;
+	ditto in R/lme.R, PR#18196, with thanks to Johannes Ranke.
+
 2021-09-07  Martin Maechler  <maechler@stat.math.ethz.ch>
 
 	* R/groupedData.R ("[.groupedData"): change the default of `drop` to
