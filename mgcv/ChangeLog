@@ -29,6 +29,8 @@ present, and reparameterization needs checking (also for bam).
 
 1.8-37
 
+* minor update for clang compatibility.
+
 * PredictMat fix of bug in which dimensions could be dropped for 1 row matrix 
   as part of constraint handling (leading to disaster in predict.bamd). 
   Thanks to Shawn Ligocki. 
