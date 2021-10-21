@@ -216,9 +216,8 @@ nlme.formula <-
   ##
   if (missing(start) && !is.null(attr(eval(model[[3]][[1]]), "initial"))) {
     nlmeCall <- Call
-    nlsLCall <- nlmeCall[c("","model","data","groups")]
+    nlsLCall <- nlmeCall[c("","model","data")]
     nlsLCall[[1]] <- quote(nlme::nlsList)
-    names(nlsLCall)[2] <- "model"
     nm <- names(nlmeCall)
     for(i in c("fixed", "data", "groups", "start"))
       if(i %in% nm) nlmeCall[[i]] <- NULL
