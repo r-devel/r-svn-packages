@@ -1,5 +1,8 @@
 2021-10-21  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
+	* R/gnls.R (gnls), tests/scoping.R: fix evaluation environment of
+	the internal `nls` call used for self-starting models (PR#18157).
+
 	* R/nlme.R (nlme.formula), tests/nlme.R: fix "unused argument" error
 	when explicitly specifying `groups` in a self-starting model.
 
