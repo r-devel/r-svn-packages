@@ -1,3 +1,10 @@
+2021-11-02  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/nlme.R (nlme.nlsList, nlme.formula): fix more scoping issues
+	with self-starting models by evaluating calls in the parent frame.
+	* R/nlsList.R (nlsList.selfStart): (ditto)
+	* tests/scoping.R: add corresponding regression tests.
+
 2021-10-21  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/gnls.R (gnls), tests/scoping.R: fix evaluation environment of

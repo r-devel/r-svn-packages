@@ -1,6 +1,6 @@
 ###            Fit a general nonlinear mixed effects model
 ###
-### Copyright 2006-2020 The R Core team
+### Copyright 2006-2021  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 ###
@@ -104,7 +104,7 @@ nlme.nlsList <-
       mData <- eval(alist, sys.parent(1))
     }
   } else if (mode(mData) == "name" || mode(mData) == "call") {
-    mData <- eval(mData)
+    mData <- eval.parent(mData)
   }
   reSt <- reStruct(random, REML = REML, data = mData)
   names(reSt) <- deparse(groups[[2]])
@@ -123,7 +123,7 @@ nlme.nlsList <-
   }
   thisCall[["start"]] <- start
   thisCall[["random"]] <- reSt
-  val <- do.call(nlme.formula, thisCall)
+  val <- do.call(nlme.formula, thisCall, envir = parent.frame())
   val$origCall <- match.call()
   val
 }
@@ -226,11 +226,9 @@ nlme.formula <-
     if (is.null(dim(data))) {
       stop("'data' must be given explicitly to use 'nlsList'")
     }
-    nlsLObj <- eval(nlsLCall)
-    nlsLObj # -NOTE(codetools)
-    nlmeCall[["model"]] <- quote(nlsLObj)
-    nlmeCall <- as.call(nlmeCall)
-    val <- eval(nlmeCall)
+    nlsLObj <- eval.parent(nlsLCall)
+    nlmeCall[["model"]] <- nlsLObj
+    val <- eval.parent(nlmeCall)
     val$origCall <- NULL
     return(val)
   }
