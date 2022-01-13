@@ -1,3 +1,7 @@
+2022-01-12 Brian Ripley
+
+	* src: use R_{Calloc,Free,Realloc}.
+
 2021-02-12 Brian Ripley
 
 	* po: update fr translations.
