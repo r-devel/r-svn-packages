@@ -1,6 +1,8 @@
 2022-01-12 Brian Ripley
 
+	* DESCRIPTION: Version is 0.8-82.
 	* src: use R_{Calloc,Free,Realloc}.
+	* man/{lookup,read}.xport.Rd: update URL.
 
 2021-02-12 Brian Ripley
 
