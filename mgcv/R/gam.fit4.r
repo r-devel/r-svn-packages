@@ -988,6 +988,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       c.norm <- sqrt(c.norm)
       if (s.norm > .1*c.norm) step <- step*0.1*c.norm/s.norm
     }
+    s.norm <- sqrt(sum(step^2)) ## store for scaling steepest if needed
     ## try the Newton step...
     coef1 <- coef + step 
     ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1) 
@@ -1005,13 +1006,15 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       khalf <- khalf + 1
       if (khalf>5) fac <- 5
     } ## end step halve
- 
-    if (!is.finite(ll1) || ll1 < ll0) { ## switch to steepest descent... 
-      step <- -.5*drop(grad)*mean(abs(coef))/mean(abs(grad))
+
+
+    if (!is.finite(ll1) || ll1 <= ll0) { ## switch to steepest ascent (including when preceding step led to 0 improvement)
+      #step <- 0.5*drop(grad)*mean(abs(coef))/mean(abs(grad))
+      step <- drop(grad)*s.norm/sqrt(sum(grad^2)) ## scaled to initial Newton step length
       khalf <- 0
     }
 
-    while ((!is.finite(ll1)||ll1 < ll0) && khalf < 25) { ## step cut until it succeeds...
+    while ((!is.finite(ll1)||ll1 <= ll0) && khalf < 25) { ## step cut until it succeeds...
       step <- step/10;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
@@ -1023,7 +1026,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       khalf <- khalf + 1
     }
 
-    if ((is.finite(ll1)&&ll1 >= ll0)||iter==control$maxit) { ## step ok. Accept and test
+    if ((is.finite(ll1)&&ll1 >= ll0&&khalf<25)||iter==control$maxit) { ## step ok. Accept and test
       coef <- coef + step
       ## convergence test...
       ok <- (iter==control$maxit||(abs(ll1-ll0) < control$epsilon*abs(ll0) 
@@ -1084,7 +1087,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     } else { ## step failed.
       converged  <- FALSE
       if (is.null(drop)) bdrop <- rep(FALSE,q)
-      warning(paste("step failed: max abs grad =",max(abs(grad))))
+      warning(paste("step failed: max magnitude relative grad =",max(abs(grad/drop(ll0)))))
       break
     }
   } ## end of main fitting iteration
