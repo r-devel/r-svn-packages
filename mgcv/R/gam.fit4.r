@@ -912,6 +912,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
   ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
   grad <- ll$lb - St%*%coef
+  iconv <- max(abs(grad))<control$epsilon*abs(ll0)
   Hp <- -ll$lbb+St
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
   rank <- q;drop <- NULL
@@ -982,6 +983,9 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
     piv <- attr(L,"pivot")
     ipiv <- piv;ipiv[piv] <- 1:ncol(L)
+    
+    if (iconv&&!indefinite) break ## immediate convergence
+    
     step <- D*(backsolve(L,forwardsolve(t(L),(D*grad)[piv]))[ipiv])
 
     c.norm <- sum(coef^2)
