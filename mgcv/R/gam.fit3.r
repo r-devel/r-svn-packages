@@ -102,7 +102,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 ## and compute a smoothness selection score along with its derivatives.
 ##
     if (control$trace) { t0 <- proc.time();tc <- 0} 
-  
+    warn <- list()
     if (inherits(family,"extended.family")) { ## then actually gam.fit4/5 is needed
       if (inherits(family,"general.family")) {
         return(gam.fit5(x,y,sp,Sl=Sl,weights=weights,offset=offset,deriv=deriv,
@@ -313,7 +313,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
          
             if (all(!good)) {
                 conv <- FALSE
-                warning(gettextf("No observations informative at iteration %d", iter))
+                warn[[length(warn)+1]] <- gettextf("gam.fit3 no observations informative at iteration %d", iter)
                 break
             }
             mevg<-mu.eta.val[good];mug<-mu[good];yg<-y[good]
@@ -362,8 +362,8 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 
             if (any(!is.finite(start))) {
                 conv <- FALSE
-                warning(gettextf("Non-finite coefficients at iteration %d", 
-                  iter))
+                warn[[length(warn)+1]] <-gettextf("gam.fit3 non-finite coefficients at iteration %d", 
+                  iter)
                 break
             }        
      
@@ -383,8 +383,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   coefold <- null.coef
                   etaold <- null.eta
                 }
-                warning("Step size truncated due to divergence", 
-                  call. = FALSE)
+                warn[[length(warn)+1]] <- "gam.fit3 step size truncated due to divergence"
                 ii <- 1
                 while (!is.finite(dev)) {
                   if (ii > control$maxit) 
@@ -401,8 +400,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
                   cat("Step halved: new deviance =", dev, "\n")
             }
             if (!(valideta(eta) && validmu(mu))) {
-                warning("Step size truncated: out of bounds", 
-                  call. = FALSE)
+                warn[[length(warn)+1]] <- "gam.fit3 step size truncated: out of bounds"
                 ii <- 1
                 while (!(valideta(eta) && validmu(mu))) {
                   if (ii > control$maxit) 
@@ -451,14 +449,13 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
             
             if (strictly.additive) { conv <- TRUE;coef <- start;break;}
 
-            if (abs(pdev - old.pdev)/(0.1 + abs(pdev)) < control$epsilon) {
+            if (abs(pdev - old.pdev) < control$epsilon*(abs(scale)+abs(pdev))) {
                ## Need to check coefs converged adequately, to ensure implicit differentiation
                ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
                ## drop same parameter every iteration!)       
                grad <- 2 * t(x[good,])%*%(w*((x%*%start)[good]-z))+ 2*St%*%start 
-               if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
-               ##if (max(abs(start-coefold))>control$epsilon*max(abs(start+coefold))/2) {
-               ## if (max(abs(mu-muold))>control$epsilon*max(abs(mu+muold))/2) {
+               #if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
+	       if (max(abs(grad)) > control$epsilon*(abs(pdev)+abs(scale))) {
                   old.pdev <- pdev
                   coef <- coefold <- start
                   etaold <- eta 
@@ -723,18 +720,18 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
            } ## end if (deriv)
         } ## end !REML
         # end of inserted code
-        if (!conv&&printWarn) 
-            warning("Algorithm did not converge")
-        if (printWarn&&boundary) 
-            warning("Algorithm stopped at boundary value")
+        if (!conv) 
+              warn[[length(warn)+1]] <- "gam.fit3 algorithm did not converge"
+        if (boundary) 
+              warn[[length(warn)+1]] <- "gam.fit3 algorithm stopped at boundary value"
         eps <- 10 * .Machine$double.eps
         if (printWarn&&family$family[1] == "binomial") {
             if (any(mu > 1 - eps) || any(mu < eps)) 
-                warning("fitted probabilities numerically 0 or 1 occurred")
+                warn[[length(warn)+1]] <- "gam.fit3 fitted probabilities numerically 0 or 1 occurred"
         }
         if (printWarn&&family$family[1] == "poisson") {
             if (any(mu < eps)) 
-                warning("fitted rates numerically 0 occurred")
+                warn[[length(warn)+1]] <- "gam.fit3 fitted rates numerically 0 occurred"
         }
  
         residuals <- rep.int(NA, nobs)
@@ -789,7 +786,7 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
         GCV=GCV,GCV1=GCV1,GCV2=GCV2,GACV=GACV,GACV1=GACV1,GACV2=GACV2,UBRE=UBRE,
         UBRE1=UBRE1,UBRE2=UBRE2,REML=REML,REML1=REML1,REML2=REML2,rV=rV,db.drho=db.drho,
         dw.drho=dw.drho,dVkk = matrix(oo$dVkk,nSp,nSp),ldetS1 = if (grderiv) rp$det1 else 0,
-        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat)
+        scale.est=scale.est,reml.scale= reml.scale,aic=aic.model,rank=oo$rank.est,K=Kmat,warn=warn)
 } ## end gam.fit3
 
 Vb.corr <- function(X,L,lsp0,S,off,dw,w,rho,Vr,nth=0,scale.est=FALSE) {
@@ -1213,6 +1210,8 @@ simplyFit <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
      control=control,gamma=gamma,scale=scale,
      printWarn=FALSE,mustart=mustart,scoreType=scoreType,null.coef=null.coef,Sl=Sl,...)
 
+  if (!is.null(b$warn)&&length(b$warn)>0) for (i in 1:length(b$warn)) warning(b$warn[[i]])
+
   if (reml) {       
           score <- b$REML
   } else if (scoreType=="GACV") {
@@ -1243,7 +1242,9 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
 ## parameters actually multiplying the S[[i]]'s
 ## NOTE: an obvious acceleration would use db/dsp to produce improved
 ##       starting values at each iteration... 
-{  
+{ ##  inner iteration results need to be accurate enough for conv.tol...
+  if (control$epsilon>conv.tol/100) control$epsilon <- conv.tol/100 
+
   reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
 
   ## sanity check L
@@ -1702,7 +1703,7 @@ newton <- function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     attr(hess,"lsp1") <- lsp1
     attr(hess,"rp") <- b1$rp
   } ## if edge.correct
-
+  if (!is.null(b$warn)&&length(b$warn)>0) for (i in 1:length(b$warn)) warning(b$warn[[i]])
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=hess,iter=i,
        conv =ct,score.hist = score.hist[!is.na(score.hist)],object=b)
 } ## newton
@@ -1794,6 +1795,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     } ## end while(TRUE)
     return(NULL) ## failed
   } ## end zoom
+
+  if (control$epsilon>conv.tol/100) control$epsilon <- conv.tol/100
 
   reml <- scoreType%in%c("REML","P-REML","ML","P-ML") ## REML/ML indicator
 
@@ -2162,7 +2165,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ev$values[ind] <- 1/ev$values[ind]
   ev$values[!ind] <- 0
   B <- ev$vectors %*% (ev$values*t(ev$vectors))
-
+  if (!is.null(b$warn)&&length(b$warn)>0) for (i in 1:length(b$warn)) warning(b$warn[[i]])
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=B,iter=i,conv =ct,
        score.hist=score.hist[!is.na(score.hist)],object=b)
 } ## end of bfgs
@@ -2577,8 +2580,9 @@ fix.family.ls <- function(fam)
     }
   } else if (family=="inverse.gaussian") {
     fam$ls <- function(y,w,n,scale) {
-      nobs <- sum(w>0)
-      c(-sum(log(2*pi*scale*y^3))/2 + sum(log(w[w>0]))/2,-nobs/(2*scale),nobs/(2*scale*scale))
+      ii <- w>0
+      nobs <- sum(ii)
+      c(-sum(log(2*pi*scale*y[ii]^3))/2 + sum(log(w[ii]))/2,-nobs/(2*scale),nobs/(2*scale*scale))
       ## c(-sum(w*log(2*pi*scale*y^3))/2,-sum(w)/(2*scale),sum(w)/(2*scale*scale))
     }
   } else stop("family not recognised")

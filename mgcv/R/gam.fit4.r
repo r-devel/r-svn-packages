@@ -251,7 +251,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
   ## very close to zero for some data. This can lead to poorly scaled sqrt(w)z
   ## and it is better to base everything on wz...
   if (is.null(family$use.wz)) family$use.wz <- FALSE
-
+  warn <- list()
   if (family$n.theta>0) { ## there are extra parameters to estimate
     ind <- 1:family$n.theta
     theta <- sp[ind] ## parameters of the family
@@ -421,9 +421,9 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
 
       if (any(!is.finite(start))) { ## test for breakdown
           conv <- FALSE
-          warning("Non-finite coefficients at iteration ", 
+          warn[[length(warn)+1]] <- paste(" gam.fit4 non-finite coefficients at iteration ", 
                   iter)
-          return(list(REML=NA)) ## return immediately signalling failure
+          return(list(REML=NA,warn=warn)) ## return immediately signalling failure
       }        
      
       mu <- linkinv(eta <- eta + offset)
@@ -864,7 +864,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 ## related problems. 
 
   penalized <- if (length(Sl)>0) TRUE else FALSE
-
+  warn <- list()
   nSp <- length(lsp)
   q <- ncol(x)
   nobs <- length(y)
@@ -911,6 +911,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   llf <- family$ll
   ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
   ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
+  grad <- ll$lb - St%*%coef
+  Hp <- -ll$lbb+St
   rank.checked <- FALSE ## not yet checked the intrinsic rank of problem 
   rank <- q;drop <- NULL
   eigen.fix <- FALSE
@@ -930,8 +932,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
         fdh[,k] <- (ll.fd$lb-ll$lb)/eps
       }
     } ## derivative checking end
-    grad <- ll$lb - St%*%coef 
-    Hp <- -ll$lbb+St
+    #grad <- ll$lb - St%*%coef 
+    #Hp <- -ll$lbb+St
     D <- diag(Hp)
     if (sum(!is.finite(D))>0) stop("non finite values in Hessian")
 
@@ -1028,9 +1030,11 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
     if ((is.finite(ll1)&&ll1 >= ll0&&khalf<25)||iter==control$maxit) { ## step ok. Accept and test
       coef <- coef + step
+      grad <- ll$lb - St%*%coef
+      Hp <- -ll$lbb+St
       ## convergence test...
-      ok <- (iter==control$maxit||(abs(ll1-ll0) < control$epsilon*abs(ll0) 
-          && max(abs(grad)) < .Machine$double.eps^.5*abs(ll0))) 
+      ok <- (iter==control$maxit || max(abs(grad)) < control$epsilon*abs(ll0))
+        # (abs(ll1-ll0) < control$epsilon*abs(ll0) && max(abs(grad)) < .Machine$double.eps^.5*abs(ll0))) 
       if (ok) { ## appears to have converged
         if (indefinite) { ## not a well defined maximum
           if (perturbed==5) stop("indefinite penalized likelihood in gam.fit5 ")
@@ -1087,7 +1091,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     } else { ## step failed.
       converged  <- FALSE
       if (is.null(drop)) bdrop <- rep(FALSE,q)
-      warning(paste("step failed: max magnitude relative grad =",max(abs(grad/drop(ll0)))))
+      warn[[length(warn)+1]] <- paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
       break
     }
   } ## end of main fitting iteration
@@ -1096,7 +1100,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ## so that the pivoted Choleski factor should exist...
   
   if (iter == 2*control$maxit&&converged==FALSE) 
-    warning(gettextf("iteration limit reached: max abs grad = %g",max(abs(grad))))
+    warn[[length(warn)+1]] <- gettextf("gam.fit5 iteration limit reached: max abs grad = %g",max(abs(grad)))
 
   ldetHp <- 2*sum(log(diag(L))) - 2 * sum(log(D)) ## log |Hp|
 
@@ -1268,7 +1272,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
        #S=rp$ldetS,S1=rp$ldet1,S2=rp$ldet2,
        #Hp=ldetHp,Hp1=d1ldetH,Hp2=d2ldetH,
        #b2 = d2b,
-       iter=iter,H = ll$lbb,dH = ll$d1H,dVkk=dVkk)#,d2H=llr$d2H)
+       iter=iter,H = ll$lbb,dH = ll$d1H,dVkk=dVkk,warn=warn)#,d2H=llr$d2H)
     ## debugging code to allow components of 2nd deriv of hessian w.r.t. sp.s 
     ## to be passed to deriv.check.... 
     #if (!is.null(ll$ghost1)&&!is.null(ll$ghost2)) { 
@@ -1364,6 +1368,7 @@ efsud <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,family,
   fit$iter <- iter
   fit$outer.info <- list(iter = iter,score.hist=score.hist[1:iter])
   fit$outer.info$conv <- if (iter==200) "iteration limit reached" else "full convergence"
+  if (!is.null(fit$warn)&&length(fit$warn)>0) for (i in 1:length(fit$warn)) warning(fit$warn[[i]])
   fit
 } ## efsud
 
