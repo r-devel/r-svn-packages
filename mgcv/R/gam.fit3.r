@@ -2044,7 +2044,13 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
     ## or contains a step that fails to meet Wolfe2, so that B can not be updated  
     if (is.null(trial)) { ## step failed
       lsp <- ilsp
-      break ## failed to move, so nothing more can be done. 
+      if (rolled.back) break ## failed to move, so nothing more can be done.
+      ## check for working infinite smoothing params... 
+      uconv.ind <- abs(initial$grad) > score.scale*conv.tol*.1 
+      uconv.ind[spind] <- uconv.ind[spind] | abs(initial$dVkk) > score.scale * conv.tol*.1
+      if (sum(!uconv.ind)==0) break ## nothing to move back so nothing more can be done.
+      trial <- initial ## reset to allow roll back
+      converged <- TRUE ## only to signal that roll back should be tried
     } else { ## update the Hessian etc...
      
       yg <- trial$grad-initial$grad
@@ -2081,11 +2087,11 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         if (!sum(uconv.ind)) uconv.ind <- uconv.ind | TRUE ## otherwise can't progress
         converged <- FALSE      
       }
-
-      ## roll back any `infinite' smoothing parameters to the point at
-      ## which score carries some information about them and continue 
-      ## optimization. Guards against early long steps missing shallow minimum. 
-      if (converged) { ## try roll back for `working inf' sps...
+    }
+    ## roll back any `infinite' smoothing parameters to the point at
+    ## which score carries some information about them and continue 
+    ## optimization. Guards against early long steps missing shallow minimum. 
+    if (converged) { ## try roll back for `working inf' sps...
         if (sum(!uconv.ind)==0||rolled.back) break
         rolled.back <- TRUE
         counter <- 0
@@ -2127,11 +2133,11 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         ## to inverse Hessian on return...
         ##B <- diag(diag(B),nrow=nrow(B))
         ilsp <- lsp
-      }
+    }
     
-      initial <- trial
-      initial$alpha <- 0
-    }  
+    initial <- trial
+    initial$alpha <- 0
+      
   } ## end of iteration loop
 
 

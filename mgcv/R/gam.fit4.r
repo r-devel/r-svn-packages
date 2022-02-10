@@ -984,7 +984,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     piv <- attr(L,"pivot")
     ipiv <- piv;ipiv[piv] <- 1:ncol(L)
     
-    if (iconv&&!indefinite) break ## immediate convergence
+    #if (iconv&&!indefinite) break ## immediate convergence - bad idea - can lead to small sp changes having zero effect on objective.
     
     step <- D*(backsolve(L,forwardsolve(t(L),(D*grad)[piv]))[ipiv])
 
@@ -1093,9 +1093,14 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
         }
       } else ll0 <- ll1 ## step ok but not converged yet
     } else { ## step failed.
-      converged  <- FALSE
       if (is.null(drop)) bdrop <- rep(FALSE,q)
-      warn[[length(warn)+1]] <- paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
+      if (iconv && iter==1) { ## OK to fail on first step if apparently converged to start with
+        converged <- TRUE     ## Note: important to check if improvement possible even if apparently
+	coef <- start         ## converged, otherwise sp changes can lead to no sp objective change!
+      } else {
+        converged  <- FALSE
+        warn[[length(warn)+1]] <- paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
+      }
       break
     }
   } ## end of main fitting iteration
