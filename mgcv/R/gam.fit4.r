@@ -910,7 +910,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
   ## get log likelihood, grad and Hessian (w.r.t. coefs - not s.p.s) ...
   llf <- family$ll
   ll <- llf(y,x,coef,weights,family,offset=offset,deriv=1) 
-  ll0 <- ll$l - (t(coef)%*%St%*%coef)/2
+  ll0 <- ll$l - drop(t(coef)%*%St%*%coef)/2
   grad <- ll$lb - St%*%coef
   iconv <- max(abs(grad))<control$epsilon*abs(ll0)
   Hp <- -ll$lbb+St
@@ -983,6 +983,8 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
     piv <- attr(L,"pivot")
     ipiv <- piv;ipiv[piv] <- 1:ncol(L)
+
+    if (converged) break ## converged at end of previous step, so break now L and D match Hp
     
     #if (iconv&&!indefinite) break ## immediate convergence - bad idea - can lead to small sp changes having zero effect on objective.
     
@@ -998,7 +1000,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
     ## try the Newton step...
     coef1 <- coef + step 
     ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1) 
-    ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
+    ll1 <- ll$l - drop(t(coef1)%*%St%*%coef1)/2
     khalf <- 0;fac <- 2
     while ((!is.finite(ll1)||ll1 < ll0) && khalf < 25) { ## step halve until it succeeds...
       step <- step/fac;coef1 <- coef + step
@@ -1029,6 +1031,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       } else { ## abort if step has made no difference
         if (max(abs(coef1-coef))==0) khalf <- 100
       }
+      if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps) khalf <- 100 ## step gone nowhere
       khalf <- khalf + 1
     }
 
@@ -1089,7 +1092,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
 
         } else { ## not indefinite really converged
           converged <- TRUE
-          break
+          #break - don't break until L and D made to match final Hp
         }
       } else ll0 <- ll1 ## step ok but not converged yet
     } else { ## step failed.
@@ -1101,7 +1104,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
         converged  <- FALSE
         warn[[length(warn)+1]] <- paste("gam.fit5 step failed: max magnitude relative grad =",max(abs(grad/drop(ll0))))
       }
-      break
+      break ## no need to recompute L and D, so break now
     }
   } ## end of main fitting iteration
 

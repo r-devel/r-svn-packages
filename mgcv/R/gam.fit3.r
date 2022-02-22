@@ -1762,8 +1762,8 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
       } 
       rm(b)  
       if (trial$score>initial$score+trial$alpha*c1*initial$dscore||trial$score>=lo$score) {
-        hi <- trial ## failed Wolfe 1
-      } else { ## met Wolfe 1
+        hi <- trial ## failed Wolfe 1 - insufficient decrease - step too long
+      } else { ## met Wolfe 1 so check Wolve 2 - sufficiently positive second derivative?
 
         b <- gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
            offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
@@ -1787,7 +1787,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
         
         if (abs(trial$dscore) <= -c2*initial$dscore) return(trial) ## met Wolfe 2
 
-        ## failed Wolfe 2 ...
+        ## failed Wolfe 2 derivative not increased enough
         if (trial$dscore*(hi$alpha-lo$alpha)>=0) {
           hi <- lo }  
         lo <- trial 
@@ -1943,7 +1943,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
        deriv.check(x=X, y=y, sp=L%*%lsp+lsp0, Eb=Eb,UrS=UrS,
          offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,
          control=control,gamma=gamma,scale=scale,
-         printWarn=FALSE,mustart=mustart,start=start,
+         printWarn=FALSE,mustart=prev$mustart,start=prev$start,
          scoreType=scoreType,eps=eps,null.coef=null.coef,Sl=Sl,...)
        ## deal with fact that deriv might be 0...	 
        bb <- if (deriv==1) b else gam.fit3(x=X, y=y, sp=L%*%lsp+lsp0,Eb=Eb,UrS=UrS,
@@ -2171,7 +2171,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
   ev$values[ind] <- 1/ev$values[ind]
   ev$values[!ind] <- 0
   B <- ev$vectors %*% (ev$values*t(ev$vectors))
-  if (!is.null(b$warn)&&length(b$warn)>0) for (i in 1:length(b$warn)) warning(b$warn[[i]])
+  if (!is.null(b$warn)&&length(b$warn)>0) for (j in 1:length(b$warn)) warning(b$warn[[j]])
   list(score=score,lsp=lsp,lsp.full=L%*%lsp+lsp0,grad=grad,hess=B,iter=i,conv =ct,
        score.hist=score.hist[!is.na(score.hist)],object=b)
 } ## end of bfgs
