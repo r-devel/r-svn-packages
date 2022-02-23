@@ -1006,7 +1006,7 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       step <- step/fac;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
-      if (is.finite(ll1)&&ll1>=ll0) {
+      if (is.finite(ll1)&&ll1>=ll0) { ## improvement, or at least no worse.
         ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       } else { ## abort if step has made no difference
         if (max(abs(coef1-coef))==0) khalf <- 100
@@ -1015,23 +1015,27 @@ gam.fit5 <- function(x,y,lsp,Sl,weights=NULL,offset=NULL,deriv=2,family,
       if (khalf>5) fac <- 5
     } ## end step halve
 
+    ## Following tries steepest ascent if Newton failed. Only do this if ll1 < ll0, not
+    ## if ll1 == ll0. Otherwise it is possible for SA to mess up when routine is called
+    ## with converged parameter values - takes a tiny step that leads to a machine noise
+    ## improvment, but pushes a gradient just over threshold, Newton then continues to fail
+    ## and we get stuck with SA convergence rates.
 
-    if (!is.finite(ll1) || ll1 <= ll0) { ## switch to steepest ascent (including when preceding step led to 0 improvement)
+    if (!is.finite(ll1) || ll1 < ll0) { ## switch to steepest ascent
       #step <- 0.5*drop(grad)*mean(abs(coef))/mean(abs(grad))
       step <- drop(grad)*s.norm/sqrt(sum(grad^2)) ## scaled to initial Newton step length
       khalf <- 0
     }
 
-    while ((!is.finite(ll1)||ll1 <= ll0) && khalf < 25) { ## step cut until it succeeds...
+    while ((!is.finite(ll1)||ll1 < ll0) && khalf < 25) { ## step cut until it succeeds...
       step <- step/10;coef1 <- coef + step
       ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=0)
       ll1 <- ll$l - (t(coef1)%*%St%*%coef1)/2
-      if (is.finite(ll1)&&ll1>=ll0) {
+      if (is.finite(ll1)&&ll1>=ll0) { ## improvement, or no worse
         ll <- llf(y,x,coef1,weights,family,offset=offset,deriv=1)
       } else { ## abort if step has made no difference
-        if (max(abs(coef1-coef))==0) khalf <- 100
+        if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps) khalf <- 100 ## step gone nowhere
       }
-      if (max(abs(coef-coef1))<max(abs(coef))*.Machine$double.eps) khalf <- 100 ## step gone nowhere
       khalf <- khalf + 1
     }
 
