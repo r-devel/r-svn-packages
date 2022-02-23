@@ -2,7 +2,7 @@
 ###
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
-### Copyright 2006-2015  The R Core team
+### Copyright 2006-2022  The R Core team
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ simulate.lme <-
 		      logLik = double(1),
 		      R0 = double(pp1),
 		      lRSS = double(1),
-		      info = integer(1),
+		      info = integer(1), # msg from optif9: <0 = error, 0 = OK
 		      sigma = as.double(conLin$sigma))[c("info", "logLik")])
 	}
     getResults2 <-
@@ -143,7 +143,7 @@ simulate.lme <-
 			  control = list(iter.max = control$msMaxIter,
 					 eval.max = control$msMaxEval,
 					 trace = control$msVerbose))
-	    c(info = aMs$flags[1], logLik = -aMs$value)
+	    c(info = aMs$convergence, logLik = -aMs$objective)
 	}
 
     if(!exists(".Random.seed", envir = .GlobalEnv))
@@ -342,13 +342,13 @@ plot.simulate.lme <-
     if(ML) {
         if (is.null(x$alt$ML))
             stop("plot method only implemented for comparing models")
-        okML <- x$null$ML[, "info"] < 8 & x$alt$ML[, "info"] < 8
+        okML <- x$null$ML[, "info"] == 0 & x$alt$ML[, "info"] == 0
     }
     REML <- !is.null(x$null$REML)
     if(REML) {
         if (is.null(x$alt$REML))
             stop("plot method only implemented for comparing models")
-        okREML <- x$null$REML[, "info"] < 8 & x$alt$REML[, "info"] < 8
+        okREML <- x$null$REML[, "info"] == 0 & x$alt$REML[, "info"] == 0
     }
 
     if ((ldf <- length(df)) > 1) {
