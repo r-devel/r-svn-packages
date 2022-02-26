@@ -1,5 +1,12 @@
 2022-02-26  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
+	* R/VarCov.R (getVarCov.lme):
+	* R/corStruct.R (Variogram.corSpatial):
+	* R/lmList.R (predict.lmList):
+	* R/lme.R (plot.ranef.lme): fix partial matching issues.
+
+2022-02-25  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
 	Fix more scoping issues (detected by sourcing the installed
 	chapter scripts in a local environment)
 

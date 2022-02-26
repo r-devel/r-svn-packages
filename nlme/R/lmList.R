@@ -871,7 +871,7 @@ predict.lmList <-
 	aux <- predict(object[[i]], myData[[i]], se.fit = TRUE)
 	if(pool) {
 	  val[[i]] <- data.frame(fit = aux$fit,
-				 se.fit = aux$se.fit*poolSD/aux$res)
+				 se.fit = aux$se.fit*poolSD/aux$residual.scale)
 	} else {
 	  val[[i]] <- data.frame(fit = aux$fit, se.fit = aux$se.fit)
 	}
@@ -886,7 +886,7 @@ predict.lmList <-
 		 aux <- predict(el, newdata, se.fit = se.fit)
 		 if(se.fit) {
 		   data.frame(fit = aux$fit,
-			      se.fit = aux$se.fit*poolSD/aux$res)
+			      se.fit = aux$se.fit*poolSD/aux$residual.scale)
 		 } else {
 		   aux
 		 }

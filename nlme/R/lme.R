@@ -1674,7 +1674,7 @@ plot.ranef.lme <-
     eLen <- length(eNames)
     argData <- data.frame(.pars = as.vector(unlist(x[, eNames])),
                           .enames = ordered(rep(eNames, rep(nrow(x), eLen)),
-                                            level = eNames), check.names = FALSE)
+                                            levels = eNames), check.names = FALSE)
     for(i in names(x)[is.na(match(names(x), eNames))]) {
       argData[[i]] <- rep(x[[i]], eLen)
     }
