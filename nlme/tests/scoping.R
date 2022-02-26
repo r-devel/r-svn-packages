@@ -18,3 +18,12 @@ local({
     fml <- nlsList(SSasymp, data = mydata)
     fm3 <- nlme(fml, random = Asym ~ 1)
 })
+
+## look for data in the parent frame, not in nlme's namespace
+groupedData <- Orthodont
+m3 <- lme(distance ~ age, data = groupedData, random = ~1 | Subject)
+augPred(m3, length.out = 2)
+## gave Error: data in 'm3' call must evaluate to a data frame
+simulate(m3, m2 = list(random = ~ age | Subject), seed = 42, method = "ML")
+## gave Error: 'data' must be a data.frame, environment, or list
+rm(groupedData)

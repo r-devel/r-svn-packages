@@ -1,3 +1,13 @@
+2022-02-26  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	Fix more scoping issues (detected by sourcing the installed
+	chapter scripts in a local environment)
+
+	* R/simulate.R (simulate.lme): evaluate constructed calls in the
+	parent frame.
+	* R/lme.R (augPred.lme): look for data in the parent frame.
+	* R/gls.R (augPred.gls): (ditto)
+
 2022-02-23  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/simulate.R (simulate.lme): fix `useGen = TRUE` branch.

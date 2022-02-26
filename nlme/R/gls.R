@@ -1,6 +1,6 @@
 ###  Fit a linear model with correlated errors and/or heteroscedasticity
 ###
-### Copyright 2005-2021  The R Core team
+### Copyright 2005-2022  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -551,7 +551,7 @@ augPred.gls <-
     function(object, primary = NULL, minimum = min(primary),
              maximum = max(primary), length.out = 51L, ...)
 {
-    data <- eval(object$call$data)
+    data <- eval.parent(object$call$data)
     if (!inherits(data, "data.frame")) {
         stop(gettextf("data in %s call must evaluate to a data frame",
                       sQuote(substitute(object))), domain = NA)

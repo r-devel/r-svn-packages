@@ -157,12 +157,12 @@ simulate.lme <-
         object <- as.list(object$call[-1])
     } else {
         object <- as.list(match.call(lme, substitute(object))[ -1 ])
-        fit1 <- do.call(lme, object)
+        fit1 <- do.call(lme, object, envir = parent.frame())
     }
     if (length(fit1$modelStruct) > 1)
         stop("models with \"corStruct\" and/or \"varFunc\" objects not allowed")
     reSt1 <- fit1$modelStruct$reStruct
-    condL1 <- do.call(createConLin, object)
+    condL1 <- do.call(createConLin, object, envir = parent.frame())
     pdClass1 <- vapply(reSt1, data.class, "")
     pdClass1 <- match(pdClass1, c("pdSymm", "pdDiag", "pdIdent",
                                   "pdCompSymm", "pdLogChol"), 0) - 1
@@ -210,12 +210,12 @@ simulate.lme <-
             aux <- object
             aux[names(m2)] <- m2
             m2 <- aux
-            fit2 <- do.call(lme, m2)
+            fit2 <- do.call(lme, m2, envir = parent.frame())
         }
         if (length(fit2$modelStruct) > 1) {
             stop("models with \"corStruct\" and/or \"varFunc\" objects not allowed")
         }
-        condL2 <- do.call(createConLin, m2)
+        condL2 <- do.call(createConLin, m2, envir = parent.frame())
         reSt2 <- fit2$modelStruct$reStruct
         control2 <- lmeControl()
         if (!is.null(m2$control)) {
