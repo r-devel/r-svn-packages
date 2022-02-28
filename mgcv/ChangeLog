@@ -27,6 +27,11 @@ present, and reparameterization needs checking (also for bam).
   which no smoother is penalized. Also there is no option to use the identical
   discretization to that used in fitting when predicting.
 
+1.8-40
+
+* Small gam.fit5 convergence change to reduce chance of repeating step 
+  failures.
+
 1.8-39
 
 * gam.fit5 convergence logic tightened up, to avoid pointlessly lengthy 
