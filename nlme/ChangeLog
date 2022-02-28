@@ -1,3 +1,13 @@
+2022-02-28  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	Clean up license information
+
+	* DESCRIPTION (Authors@R): "R Core Team" rather than "R-core"
+	* DESCRIPTION (License): dropped redundant "| file LICENCE"
+	* LICENCE: removed (copy of GPL-2)
+	* LICENSE.note: created from README
+	* README: removed
+
 2022-02-26  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/VarCov.R (getVarCov.lme):
