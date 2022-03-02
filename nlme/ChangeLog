@@ -1,3 +1,10 @@
+2022-03-02  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/lmList.R (coef.lmList, summary.lmList): fix finding unique
+	coefficient names when the set of estimated coefficients varies
+	between subgroups (PR#16542); based on a patch by Ben Bolker.
+	* tests/lmList.R: add corresponding regression test
+
 2022-02-28  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	Clean up license information

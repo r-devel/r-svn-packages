@@ -1,6 +1,6 @@
 ###                  Create a list of lm objects
 ###
-### Copyright 2005-2018  The R Core team
+### Copyright 2005-2022  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -198,22 +198,14 @@ coef.lmList <-
   non.null <- !vapply(coefs, is.null, NA)
   ## size the data frame to cope with combined levels for factors
   ## and name the columns so can fill by name
-  if (sum(non.null) > 0) {
-    coefNames <- unique(as.vector(sapply(coefs[non.null], names)))
-    co <- matrix(NA,
+  if (any(non.null)) {
+    coefNames <- unique(unlist(lapply(coefs[non.null], names)))
+    co <- matrix(NA_real_,
                  ncol=length(coefNames),
                  nrow=length(coefs),
-                 byrow=TRUE, dimnames=list(names(object), coefNames))
-    ## template <- coefs[non.null][[1]]
-    ## if (is.numeric(template)) {
-    ##   co <- matrix(template,
-    ## 	      ncol = length(template),
-    ## 	      nrow = length(coefs),
-    ## 	      byrow = TRUE,
-    ## 	      dimnames = list(names(object), names(template)))
-    for (i in names(object)) {
-      co[i, names(coefs[[i]])] <-
-        if (is.null(coefs[[i]])) { NA } else coefs[[i]]
+                 dimnames=list(names(object), coefNames))
+    for (i in which(non.null)) {
+      co[i, names(coefs[[i]])] <- coefs[[i]]
     }
     coefs <- as.data.frame(co)
     effectNames <- names(coefs)
@@ -245,7 +237,6 @@ coef.lmList <-
     attr(coefs, "grpNames") <- deparse(getGroupsFormula(object)[[2]])
     class(coefs) <- c("coef.lmList", "ranef.lmList", class(coefs))
   }
-  ##}
   coefs
 }
 
@@ -1296,7 +1287,7 @@ summary.lmList <-
           ## TODO? just   identical(dnames[[1]], dnames[[2]]) :
           if (length(dnames[[1]]) == length(dnames[[2]]) &&
               all(dnames[[1]] == dnames[[2]])) { ## symmetric
-            val <- array(NA, dim=c(length(cfNms), length(cfNms), length(lst)),
+            val <- array(NA_real_, dim=c(length(cfNms), length(cfNms), length(lst)),
                          dimnames=list(cfNms, cfNms, names(lst)))
             for (ii in use.i) {
               use <- dimnames(lst[[ii]])[[1]]
@@ -1304,7 +1295,7 @@ summary.lmList <-
               ##       ----
             }
           } else {
-            val <- array(NA, dim=c(length(cfNms), dim(template)[2], length(lst)),
+            val <- array(NA_real_, dim=c(length(cfNms), dim(template)[2], length(lst)),
                          dimnames=list(cfNms, dnames[[2]], names(lst)))
             for (ii in use.i) {
               use <- dimnames(lst[[ii]])[[1]]
@@ -1346,7 +1337,7 @@ summary.lmList <-
     }
     ## complete set of coefs [only used in to.3d.array()]
     cfNms <-
-      unique(as.vector(sapply(sum.lst[nonNull],
+      unique(unlist(lapply(sum.lst[nonNull],
                               function(x) dimnames(x[['coefficients']])[[1]])))
     ## re-arrange the matrices into 3d arrays
     for(i in c("parameters", "cov.unscaled", "correlation", "coefficients"))
