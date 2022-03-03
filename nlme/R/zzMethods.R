@@ -1,6 +1,6 @@
 ###   Miscellaneous methods that must be defined last in the library
 ###
-### Copyright 2007-2018 The R Core team
+### Copyright 2007-2022  The R Core Team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -19,6 +19,13 @@
 #
 
 `%||%` <- function(x, y) if(is.null(x)) y else x
+
+## used in test scripts to switch on additional maintainer checks
+doExtras <- function ()
+{
+    interactive() || nzchar(Sys.getenv("R_nlme_check_extra")) ||
+        identical("true", unname(Sys.getenv("R_PKG_CHECKING_doExtras")))
+}
 
 ## Note that  require( stats )  has already happened ...
 
