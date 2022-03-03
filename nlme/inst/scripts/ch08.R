@@ -4,7 +4,9 @@
 
 library(nlme)
 library(lattice)
-options(width = 65, digits = 5)
+options(width = 65,
+        ## reduce platform dependence in printed output when testing
+        digits = if(nzchar(Sys.getenv("R_TESTS"))) 3 else 5)
 options(contrasts = c(unordered = "contr.helmert", ordered = "contr.poly"))
 pdf(file = "ch08.pdf")
 
@@ -88,7 +90,9 @@ plot(augPred(fm2Oran.nlme, level = 0:1),
      layout = c(5,1))
 qqnorm(fm2Oran.nlme, abline = c(0,1))
 (fm1Theo.nlme <- nlme(fm1Theo.lis))
-try( intervals(fm1Theo.nlme, which="var-cov") ) ## failing: Non-positive definite...
+## IGNORE_RDIFF_BEGIN
+try( intervals(fm1Theo.nlme, which="var-cov") ) ## could fail: Non-positive definite...
+## IGNORE_RDIFF_END
 (fm2Theo.nlme <- update(fm1Theo.nlme,
   random = pdDiag(lKe + lKa + lCl ~ 1)))
 fm3Theo.nlme <-
@@ -120,7 +124,9 @@ fm3CO2.fix <- fixef(fm3CO2.nlme)
 fm4CO2.nlme <- update(fm3CO2.nlme,
   fixed = list(Asym + lrc ~ Type * Treatment, c0 ~ 1),
   start = c(fm3CO2.fix[1:5], 0, 0, 0, fm3CO2.fix[6]))
+## IGNORE_RDIFF_BEGIN
 summary(fm4CO2.nlme)
+## IGNORE_RDIFF_END
 fm5CO2.nlme <- update(fm4CO2.nlme, random = Asym ~ 1)
 anova(fm4CO2.nlme, fm5CO2.nlme)
 CO2$type <- 2 * (as.integer(CO2$Type) - 1.5)
@@ -290,5 +296,4 @@ anova( fm2Dial.lmeML, fm3Dial.glsML, fm3Dial.gnls, test = FALSE)
 # cleanup
 
 summary(warnings())
-proc.time()
 
