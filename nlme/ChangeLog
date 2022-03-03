@@ -1,3 +1,14 @@
+2022-03-03  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	Setup extra tests conditional on nlme:::doExtras()
+
+	* DESCRIPTION: add SASmixed to Suggests (used in code from NLME book)
+	* inst/scripts: arrange for cleaner Rdiff() (drop proc.time(), tag
+	platform-dependent output via ## IGNORE_RDIFF_*, reduce digits in tests)
+	* tests/extras: added, including test scripts to run the full code
+	from the installed book chapters (with reference output)
+	* tests/nlme-stall.R: moved to extras
+
 2022-03-02  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/lmList.R (coef.lmList, summary.lmList): fix finding unique
