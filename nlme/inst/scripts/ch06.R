@@ -48,8 +48,14 @@ summary(fm4Indom.nlme)
 head(Soybean)
 plot(Soybean, outer = ~ Year * Variety)
 (fm1Soy.lis <- nlsList(weight ~ SSlogis(Time, Asym, xmid, scal),
-                       data = Soybean))
+                       data = Soybean,
+                       ## in R >= 3.4.3, more iterations are needed for "1989P5"
+                       ## due to a change of initial values in SSlogis();
+                       ## control is passed to getInitial() only since R 4.1.0
+                       control = list(maxiter = 60)))
+## IGNORE_RDIFF_BEGIN
 (fm1Soy.nlme <- nlme(fm1Soy.lis))
+## IGNORE_RDIFF_END
 fm2Soy.nlme <- update(fm1Soy.nlme, weights = varPower())
 anova(fm1Soy.nlme, fm2Soy.nlme)
 plot(ranef(fm2Soy.nlme, augFrame = TRUE),

@@ -1274,7 +1274,7 @@ deltaBP ~ dose | Rabbit
 
 > formula(PBG.log)
 deltaBP ~ log(dose) | Rabbit
-<environment: 0x5555a03f25b8>
+<environment: 0x55aa561e7958>
 
 > unique( getCovariate(PBG.log) )
 [1] 1.8326 2.5257 3.2189 3.9120 4.6052 5.2983
@@ -2106,7 +2106,7 @@ F-statistic: 38.3 on 2 and 105 DF,  p-value: 3.31e-13
 
 > getGroupsFormula(Orthodont)
 ~Subject
-<environment: 0x55559f8e0688>
+<environment: 0x55aa55f1b340>
 
 > fm1Orth.lis <- lmList(distance ~ age, Orthodont)
 
@@ -4247,7 +4247,7 @@ Female*12 Female*14  Female*8 Female*10 Female*12 Female*14
 
 > formula(vf1Power)
 ~fitted(.)
-<environment: 0x5555a2dc5970>
+<environment: 0x55aa58bbc708>
 
 > vf2Power <- varPower(fixed = 0.5)
 
@@ -6408,13 +6408,12 @@ Grouped Data: weight ~ Time | Plot
 > plot(Soybean, outer = ~ Year * Variety)
 
 > (fm1Soy.lis <- nlsList(weight ~ SSlogis(Time, Asym, xmid, scal),
-+                        data = Soybean))
-Warning: 2 errors caught in nls(y ~ 1/(1 + exp((xmid - x)/scal)), data = xy, start = list(xmid = aux[[1L]], scal = aux[[2L]]), algorithm = "plinear", ...).  The error messages and their frequencies are
-
-                     number of iterations exceeded maximum of 50 
-                                                               1 
-step factor 0.000488281 reduced below 'minFactor' of 0.000976562 
-                                                               1 
++                        data = Soybean,
++                        ## in R >= 3.4.3, more iterations are needed for "1989P5"
++                        ## due to a change of initial values in SSlogis();
++                        ## control is passed to getInitial() only since R 4.1.0
++                        control = list(maxiter = 60)))
+Warning: 1 error caught in nls(y ~ 1/(1 + exp((xmid - x)/scal)), data = xy, start = list(xmid = aux[[1L]], scal = aux[[2L]]), algorithm = "plinear", ...): step factor 0.000488281 reduced below 'minFactor' of 0.000976562
 Call:
   Model: weight ~ SSlogis(Time, Asym, xmid, scal) | Plot 
    Data: Soybean 
@@ -6448,7 +6447,7 @@ Coefficients:
 1989P7  15.47  46.3  5.39
 1989P4  18.18  57.2  8.40
 1989P6  20.50  58.2 10.61
-1989P5     NA    NA    NA
+1989P5  17.89  54.1  6.05
 1989P1  21.68  59.7  9.97
 1989P3  22.28  53.4  7.90
 1989P2  28.30  67.2 12.52
@@ -6470,9 +6469,10 @@ Coefficients:
 1990P2  25.79  62.4 11.66
 1990P4  26.13  61.2 10.97
 
-Degrees of freedom: 396 total; 258 residual
-Residual standard error: 1.02
+Degrees of freedom: 404 total; 263 residual
+Residual standard error: 1.04
 
+> ## IGNORE_RDIFF_BEGIN
 > (fm1Soy.nlme <- nlme(fm1Soy.lis))
 Nonlinear mixed-effects model fit by maximum likelihood
   Model: weight ~ SSlogis(Time, Asym, xmid, scal) 
@@ -6489,12 +6489,13 @@ Random effects:
          StdDev Corr       
 Asym     5.20   Asym  xmid 
 xmid     4.20   0.721      
-scal     1.40   0.711 0.958
+scal     1.40   0.711 0.959
 Residual 1.12              
 
 Number of Observations: 412
 Number of Groups: 48 
 
+> ## IGNORE_RDIFF_END
 > fm2Soy.nlme <- update(fm1Soy.nlme, weights = varPower())
 Warning in (function (model, data = sys.frame(sys.parent()), fixed, random,  :
   Iteration 1, LME step: nlminb() did not converge (code = 1). Do increase 'msMaxIter'!
@@ -6540,7 +6541,7 @@ Random effects:
  Structure: General positive-definite, Log-Cholesky parametrization
                  StdDev   Corr         
 Asym.(Intercept) 2.71e+00 As.(I) xm.(I)
-xmid.(Intercept) 1.66e-11 0.992        
+xmid.(Intercept) 3.46e-11 0.991        
 scal.(Intercept) 1.08e-01 0.999  0.992 
 Residual         2.16e-01              
 
@@ -7823,4 +7824,4 @@ Length  Class   Mode
 > 
 > proc.time()
    user  system elapsed 
- 62.719   0.132  62.937 
+ 61.627   0.112  61.765 
