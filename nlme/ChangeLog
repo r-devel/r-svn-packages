@@ -1,3 +1,17 @@
+2022-03-04  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/lme.R (predict.lme): fix predictions for character-type newdata.
+	The example in ch04.R produced wrong results with R >= 4.0.0 (PR#18312).
+	* tests/predict.lme: add corresponding regression test.
+
+	* R/newFunc.R (asOneFormula, getCovariateFormula, getResponseFormula):
+	* R/newMethods.R (getGroupsFormula.default):
+	fix environment of created formula (was local envir, now .GlobalEnv),
+	in line with stats::asOneSidedFormula() in R 4.2.0.
+
+	* inst/scripts/ch06.R: increase maxiter for nlsList() of Soybean data
+	to only fail for a single plot, consistent with the book (p. 289).
+
 2022-03-03  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	Setup extra tests conditional on nlme:::doExtras()
