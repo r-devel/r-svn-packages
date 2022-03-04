@@ -1903,8 +1903,10 @@ predict.lme <-
   }
   ## making sure factor levels are the same as in contrasts
   contr <- object$contrasts
-  for(i in names(dataMix)) {
-    if (inherits(dataMix[,i], "factor") && !is.null(contr[[i]])) {
+  for(i in intersect(names(dataMix), names(contr))) {
+      if (is.character(dataMix[,i])) {
+        dataMix[,i] <- factor(dataMix[,i])
+      } else if (!is.factor(dataMix[,i])) next
       levs <- levels(dataMix[,i])
       levsC <- dimnames(contr[[i]])[[1L]]
       if (any(wch <- is.na(match(levs, levsC)))) {
@@ -1922,7 +1924,6 @@ predict.lme <-
       ##   }
       ## }
       attr(dataMix[,i], "contrasts") <- contr[[i]][levs, , drop = FALSE]
-    }
   }
   if (maxQ > 0) {
     revOrder <- match(origOrder, row.names(dataMix)) # putting in orig. order
