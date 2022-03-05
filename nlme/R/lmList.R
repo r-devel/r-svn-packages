@@ -23,36 +23,6 @@ lmList <-
   function(object, data, level, subset, na.action = na.fail, pool = TRUE, warn.lm = TRUE)
   UseMethod("lmList")
 
-if(getRversion() < "3.5.0") {
-##' Utility for lmList() and nlsList(): Collect errors from a list \code{val},
-##' produce a "summary warning" and keep that message as "warningMsg" attribute
-warnErrList <- function(val, warn = TRUE) {
-  errs <- vapply(val, inherits, NA, what = "error")
-  if (any(errs)) {
-    v.err <- val[errs]
-    e.call <- paste(deparse(conditionCall(v.err[[1]])), collapse = "\n")
-    tt <- table(vapply(v.err, conditionMessage, ""))
-    msg <-
-      if(length(tt) == 1)
-        sprintf(ngettext(tt[[1]],
-                         "%d error caught in %s: %s",
-                         "%d times caught the same error in %s: %s"),
-                tt[[1]], e.call, names(tt)[[1]])
-      else ## at least two different errors caught
-        paste(gettextf(
-          "%d errors caught in %s.  The error messages and their frequencies are",
-          sum(tt), e.call),
-          paste(capture.output(sort(tt)), collapse="\n"), sep="\n")
-
-    if(warn)
-	warning(msg, call. = FALSE, domain = NA)
-    val[errs] <- list(NULL)
-    attr(val, "warningMsg") <- msg
-  }
-  val
-}
-}# R <= 3.4.x
-
 lmList.groupedData <-
   function(object, data, level, subset, na.action = na.fail, pool = TRUE, warn.lm = TRUE)
 {
