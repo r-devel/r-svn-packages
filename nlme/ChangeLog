@@ -5,6 +5,9 @@
 	* DESCRIPTION (Depends): finally require R >= 3.5.0.
 	* R/lmList.R: drop old warnErrList() code, part of utils >= 3.5.0.
 
+	* man/reStruct.Rd: late doc update for the pdClass default changed
+	2000-07-07 (PR#17740).
+
 2022-03-04  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/lme.R (predict.lme): fix predictions for character-type newdata.
