@@ -259,7 +259,10 @@ gnls <-
   }
   pLen <- length(pn)
   if (length(start) != pLen)
-    stop ("starting values for parameters are not of the correct length")
+    stop(sprintf(ngettext(length(start),
+                          "supplied %d starting value, need %d",
+                          "supplied %d starting values, need %d"),
+                 length(start), pLen), domain = NA)
   spar <- start
   names(spar) <- pn
   NReal <- sum(naPat)
