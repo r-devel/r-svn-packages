@@ -5,8 +5,6 @@
 \name{lmeObject}
 \title{Fitted lme Object}
 \alias{lmeObject}
-\alias{sigma}% for R < 3.3.0
-\alias{sigma.lme}
 \description{
   An object returned by the \code{lme} function, inheriting from class
   \code{lme} and representing a fitted linear mixed-effects
