@@ -896,36 +896,15 @@ predict.gls <-
         return(fitted(object))
     }
     form <- getCovariateFormula(object)
-    mfArgs <- list(formula = form, data = newdata, na.action = na.action)
-    mfArgs$drop.unused.levels <- TRUE
-    dataMod <- do.call(model.frame, mfArgs)
     ## making sure factor levels are the same as in contrasts
-    contr <- object$contrasts
-    for(i in names(dataMod)) {
-        if (inherits(dataMod[,i], "factor") && !is.null(contr[[i]])) {
-            levs <- levels(dataMod[,i])
-            levsC <- dimnames(contr[[i]])[[1]]
-            if (any(wch <- is.na(match(levs, levsC)))) {
-                stop(sprintf(ngettext(sum(wch),
-                                      "level %s not allowed for %s",
-                                      "levels %s not allowed for %s"),
-                             paste(levs[wch], collapse = ",")),
-                     domain = NA)
-            }
-            attr(dataMod[,i], "contrasts") <- contr[[i]][levs, , drop = FALSE]
-            ##      if (length(levs) < length(levsC)) {
-            ##        if (inherits(dataMod[,i], "ordered")) {
-            ##          dataMod[,i] <- ordered(as.character(dataMod[,i]), levels = levsC)
-            ##        } else {
-            ##          dataMod[,i] <- factor(as.character(dataMod[,i]), levels = levsC)
-            ##        }
-            ##      }
-        }
-    }
+    ## and supporting character-type 'newdata' for factors (all via xlev)
+    contr <- object$contrasts           # these are in matrix form
+    dataMod <- model.frame(formula = form, data = newdata,
+                           na.action = na.action, drop.unused.levels = TRUE,
+                           xlev = lapply(contr, rownames))
     N <- nrow(dataMod)
     if (length(all.vars(form)) > 0) {
-        ##    X <- model.matrix(form, dataMod, contr)
-        X <- model.matrix(form, dataMod)
+        X <- model.matrix(form, dataMod, contr)
     } else {
         X <- array(1, c(N, 1), list(row.names(dataMod), "(Intercept)"))
     }

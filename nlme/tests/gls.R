@@ -30,3 +30,39 @@ stopifnot(all.equal(V10$variog,
           V10$n.pairs == 16*c(1, 1, 9, 1, 1, 8, 1, 1, 7, 1))
 
 intervals(fm1)
+
+## predict from model with factor and no intercept
+fm1b <- gls(weight ~ Diet - 1, BodyWeight)
+stopifnot(all.equal(predict(fm1b, BodyWeight[1,]), coef(fm1b)[1],
+                    check.attributes = FALSE))
+## in nlme <= 3.1-155, failed with
+## Error in X[, names(cf), drop = FALSE] : subscript out of bounds
+
+## predict.gls(): handling newdata for factor variables
+stopifnot(all.equal(
+    predict(fm1, newdata = data.frame(Time = 1, Diet = "1", stringsAsFactor = FALSE)),
+    fitted(fm1)[1], check.attributes = FALSE))
+## in nlme <= 3.1-155, predict() failed with
+## Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : 
+##   contrasts can be applied only to factors with 2 or more levels
+stopifnot(all.equal(
+    predict(fm1, data.frame(Time = 71, Diet = c("2", "3"), stringsAsFactor = FALSE)),
+    predict(fm1, data.frame(Time = 71, Diet = c("2", "3"), stringsAsFactor = TRUE))))
+## in nlme <= 3.1-155, using character input failed with
+## Error in X[, names(cf), drop = FALSE] : subscript out of bounds
+tools::assertError(predict(fm1, data.frame(Time = 71, Diet = 2)), verbose = TRUE)
+## more helpful error + warning now
+
+## PR#17226: same for predict.gnls(), also without intercept
+fm2 <- gnls(weight ~ f, data = BodyWeight, params = list(f ~ Diet - 1),
+            start = rep(coef(fm1)[1], 3))
+stopifnot(all.equal(predict(fm2, head(BodyWeight)), head(fitted(fm2)),
+                    check.attributes = FALSE))
+## in nlme <= 3.1-155, failed with
+## Error in `contrasts<-`(`*tmp*`, value = contr.funs[1 + isOF[nn]]) : 
+##   contrasts can be applied only to factors with 2 or more levels
+stopifnot(all.equal(
+    predict(fm2, data.frame(Time = 71, Diet = c("2", "3"), stringsAsFactor = FALSE)),
+    predict(fm2, data.frame(Time = 71, Diet = c("2", "3"), stringsAsFactor = TRUE))))
+## in nlme <= 3.1-155, failed with
+## Error in p %*% beta[pmap[[nm]]] : non-conformable arguments

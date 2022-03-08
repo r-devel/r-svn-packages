@@ -1,6 +1,26 @@
+2022-03-08  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	Improve handling of factor variables in predict() methods.
+
+	* R/gls.R (predict.gls):
+	* R/gnls.R (predict.gnls):
+	* R/lme.R (predict.lme):
+	* R/nlme.R (predict.nlme):
+	call model.frame() with 'xlev' to make sure factor levels are
+	compatible with the employed contrasts (fixing PR#17226),
+	including to warn for numeric 'newdata' for factor variables,
+	and to support character input (cf. PR#18312).
+	* tests/gls.R:
+	* tests/nlme2.R:
+	* tests/predict.lme.R: add corresponding regression tests.
+
+	* R/gnls.R (gnls): always return contrast _matrices_ not just names
+	of contrast functions. Needed for the above fix and for
+	consistency with the other modelling functions in nlme.
+
 2022-03-05  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
-	* inst/CITATION: use citation(auto=meta) and add NLME book
+	* inst/CITATION: use citation(auto=meta) and add NLME book.
 
 	* DESCRIPTION (Depends): finally require R >= 3.5.0.
 	* R/lmList.R: drop old warnErrList() code, part of utils >= 3.5.0.

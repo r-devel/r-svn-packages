@@ -85,6 +85,17 @@ stopifnot(all.equal(
 ))
 ## predictions with character input were *wrong* in nlme <= 3.1-155
 
+## numeric newdata for a factor variable should at least warn
+tools::assertWarning(predict(m5, newdata = transform(newOrth, Sex = 2)), verbose = TRUE)
+## did not warn in nlme <= 3.1-155 and may return unexpected result
+## (not the same as Sex=factor("Female", levels = c("Male", "Female")))
+
+## intercept-free model
+m0b <- lme(distance ~ Sex - 1, random = ~1|Subject, data = Orthodont)
+stopifnot(all.equal(predict(m0b, Orthodont[1,], level=0),
+                    fixef(m0b)[1], check.attributes = FALSE))
+## predict wrongly returned c(0,0) in nlme <= 3.1-155
+
 
 ##--- simulate():---------
 

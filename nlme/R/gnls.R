@@ -1,7 +1,7 @@
 ###  Fit a general nonlinear regression model with correlated and/or
 ###  heteroscedastic errors
 ###
-### Copyright 2007-2021  The R Core team
+### Copyright 2007-2022  The R Core team
 ### Copyright 1997-2003  Jose C. Pinheiro,
 ###                      Douglas M. Bates <bates@stat.wisc.edu>
 #
@@ -220,9 +220,12 @@ gnls <-
   for (nm in pnames) {
     if (deparse(params[[nm]][[3]]) != "1") {
       form1s <- asOneSidedFormula(params[[nm]][[3]])
-      plist[[nm]] <- model.matrix(form1s, model.frame(form1s, dataModShrunk))
-      auxContr <- attr(plist[[nm]], "contrasts")
-      contr <- c(contr, auxContr[is.na(match(names(auxContr), names(contr)))])
+      .X <- model.frame(form1s, dataModShrunk)
+      plist[[nm]] <- model.matrix(form1s, .X)
+      ## keeping the contrast matrices for later use in predict
+      auxContr <- lapply(.X, function(el) if (is.factor(el)) contrasts(el))
+      contr <- c(contr, auxContr[!vapply(auxContr, is.null, NA) &
+                                 is.na(match(names(auxContr), names(contr)))])
     } else
       plist[[nm]] <- TRUE
   }
@@ -695,39 +698,19 @@ predict.gnls <-
   }
   newdata <- data.frame(newdata, check.names = FALSE)
   mCall <- object$call
-
-  mfArgs <- list(formula =
+  
+  ## use xlev to make sure factor levels are the same as in contrasts
+  ## and to support character-type 'newdata' for factors
+  contr <- object$contrasts
+  dataMod <- model.frame(formula =
                    asOneFormula(formula(object),
                                 mCall$params, naPattern,
                                 omit = c(names(object$plist), "pi",
                                          deparse(getResponseFormula(object)[[2]]))),
                  data = newdata, na.action = na.action,
-                 drop.unused.levels = TRUE)
-  dataMod <- do.call("model.frame", mfArgs)
+                 drop.unused.levels = TRUE,
+                 xlev = lapply(contr, rownames))
 
-  ## making sure factor levels are the same as in contrasts
-  contr <- object$contrasts
-  for(i in names(dataMod)) {
-    if (inherits(dataMod[,i], "factor") &&
-        !is.null(contr[[i]]) && is.matrix(contr[[i]]) ) {
-      levs <- levels(dataMod[,i])
-      levsC <- dimnames(contr[[i]])[[1]]
-      if (any(wch <- is.na(match(levs, levsC)))) {
-          stop(sprintf(ngettext(sum(wch),
-                                "level %s not allowed for %s",
-                                "levels %s not allowed for %s"),
-                       paste(levs[wch], collapse = ",")), domain = NA)
-      }
-      attr(dataMod[,i], "contrasts") <- contr[[i]][levs, , drop = FALSE]
-#      if (length(levs) < length(levsC)) {
-#        if (inherits(dataMod[,i], "ordered")) {
-#          dataMod[,i] <- ordered(as.character(dataMod[,i]), levels = levsC)
-#        } else {
-#          dataMod[,i] <- factor(as.character(dataMod[,i]), levels = levsC)
-#        }
-#      }
-    }
-  }
   N <- nrow(dataMod)
   ##
   ## evaluating the naPattern expression, if any
@@ -736,7 +719,6 @@ predict.gnls <-
            else as.logical(eval(asOneSidedFormula(naPattern)[[2]], dataMod))
   ##
   ## Getting  the plist for the new data frame
-  ##
   ##
   plist <- object$plist
   pnames <- names(plist)
@@ -761,7 +743,7 @@ predict.gnls <-
   for(nm in pnames) {
     if (!is.logical(plist[[nm]])) {
       form1s <- asOneSidedFormula(params[[nm]][[3]])
-      plist[[nm]] <- model.matrix(form1s, model.frame(form1s, dataMod))
+      plist[[nm]] <- model.matrix(form1s, model.frame(form1s, dataMod), contr)
     }
   }
   modForm <- getCovariateFormula(object)[[2]]
