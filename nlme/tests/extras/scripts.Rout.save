@@ -2106,7 +2106,6 @@ F-statistic: 38.3 on 2 and 105 DF,  p-value: 3.31e-13
 
 > getGroupsFormula(Orthodont)
 ~Subject
-<environment: 0x55aa55f1b340>
 
 > fm1Orth.lis <- lmList(distance ~ age, Orthodont)
 
