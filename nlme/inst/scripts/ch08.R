@@ -103,7 +103,9 @@ qqnorm(fm3Theo.nlme, ~ ranef(.))
 CO2
 plot(CO2, outer = ~Treatment*Type, layout = c(4,1))
 (fm1CO2.lis <- nlsList(SSasympOff, CO2))
+## IGNORE_RDIFF_BEGIN
 (fm1CO2.nlme <- nlme(fm1CO2.lis))
+## IGNORE_RDIFF_END
 (fm2CO2.nlme <- update(fm1CO2.nlme, random = Asym + lrc ~ 1))
 anova(fm1CO2.nlme, fm2CO2.nlme)
 plot(fm2CO2.nlme,id = 0.05,cex = 0.8,adj = -0.5)
@@ -267,7 +269,9 @@ fm1Dial.nls <-
   lrc.Int + lrc.QB * QBcontr, c0), data = Dialyzer,
   start = c(Asym.Int = 53.6, Asym.QB = 8.6, lrc.Int = 0.51,
   lrc.QB = -0.26, c0 = 0.225))
+## IGNORE_RDIFF_BEGIN
 summary(fm1Dial.nls)
+## IGNORE_RDIFF_END
 logLik(fm1Dial.nls)
 plot(fm1Dial.gnls, resid(.) ~ pressure, abline = 0)
 fm2Dial.gnls <- update(fm1Dial.gnls,
