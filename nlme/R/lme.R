@@ -154,7 +154,7 @@ lme.formula <-
   ## checking arguments
   ##
   if (!inherits(fixed, "formula") || length(fixed) != 3) {
-    stop("\nfixed-effects model must be a formula of the form \"resp ~ pred\"")
+    stop("fixed-effects model must be a formula of the form \"resp ~ pred\"")
   }
   method <- match.arg(method)
   REML <- method == "REML"
@@ -269,6 +269,8 @@ lme.formula <-
   contr <- attr(Z, "contr")
   X <- model.frame(fixed, dataMix)
   Terms <- attr(X, "terms")
+  if (length(attr(Terms, "offset")))
+    stop("offset() terms are not supported")
   auxContr <- lapply(X, function(el)
     if (inherits(el, "factor") &&
         length(levels(el)) > 1) contrasts(el))

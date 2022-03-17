@@ -178,6 +178,8 @@ nlme.formula <-
     stop("'model' must be a formula")
   if (length(model)!=3)
     stop("model formula must be of the form \"resp ~ pred\"")
+  if (length(attr(terms(model), "offset")))
+    stop("offset() terms are not supported")
 
   method <- match.arg(method)
   REML <- method == "REML"

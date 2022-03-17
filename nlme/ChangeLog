@@ -1,3 +1,10 @@
+2022-03-17  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/lme.R (lme.formula):
+	* R/nlme.R (nlme.formula):
+	* R/gls.R (gls):
+	* R/gnls.R (gnls): stop() at offset() terms, fixing PR#17880.
+
 2022-03-08  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	Improve handling of factor variables in predict() methods.

@@ -40,7 +40,7 @@ gls <-
     ## checking arguments
     ##
     if (!inherits(model, "formula") || length(model) != 3L) {
-        stop("\nmodel must be a formula of the form \"resp ~ pred\"")
+        stop("model must be a formula of the form \"resp ~ pred\"")
     }
     method <- match.arg(method)
     REML <- method == "REML"
@@ -78,6 +78,9 @@ gls <-
 
     ## obtaining basic model matrices
     X <- model.frame(model, dataMod)
+    Terms <- attr(X, "terms")
+    if (length(attr(Terms, "offset")))
+        stop("offset() terms are not supported")
     ## keeping the contrasts for later use in predict
     contr <- lapply(X, function(el)
                     if (inherits(el, "factor")) contrasts(el))
@@ -88,9 +91,8 @@ gls <-
     N <- nrow(X)
     p <- ncol(X)				# number of coefficients
     parAssign <- attr(X, "assign")
-    fTerms <- terms(as.formula(model), data=data)
-    namTerms <- attr(fTerms, "term.labels")
-    if (attr(fTerms, "intercept") > 0) {
+    namTerms <- attr(Terms, "term.labels")
+    if (attr(Terms, "intercept") > 0) {
         namTerms <- c("(Intercept)", namTerms)
     }
     namTerms <- factor(parAssign, labels = namTerms)

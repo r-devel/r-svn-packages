@@ -68,6 +68,8 @@ gnls <-
     stop("'object' must be a formula")
   if (length(form)!=3)
     stop("object formula must be of the form \"resp ~ pred\"")
+  if (length(attr(terms(form), "offset")))
+    stop("offset() terms are not supported")
 
   ##
   ## checking if self-starting formula is given

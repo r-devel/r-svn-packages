@@ -66,3 +66,10 @@ stopifnot(all.equal(
     predict(fm2, data.frame(Time = 71, Diet = c("2", "3"), stringsAsFactor = TRUE))))
 ## in nlme <= 3.1-155, failed with
 ## Error in p %*% beta[pmap[[nm]]] : non-conformable arguments
+
+
+## PR#17880: offset() terms are (currently) not supported in package nlme
+y <- 10:20; off <- rep(10, length(y))
+tools::assertError(gls(y ~ 1 + offset(off)), verbose = TRUE)
+## the following was TRUE in nlme <= 3.1-155, unfortunately:
+## all.equal(coef(gls(y ~ 1 + offset(off))), coef(gls(y ~ 1)))
