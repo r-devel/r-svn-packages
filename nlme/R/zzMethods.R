@@ -65,9 +65,9 @@ extractAIC.gls <- extractAIC.lme <- function(fit, scale, k = 2, ...)
     c(edf,  -2*res + k * edf)
 }
 
-terms.gls <- function(x, ...) terms(formula(x), ...)
-if(FALSE)## Not needed, because 'lme' object has "terms" attribute:
-    terms.lme <- function(x, ...) terms(formula(x), ...)
+## no longer needed, because gls() and lme() keep the model "terms"
+## terms.gls <- function(x, ...) terms(formula(x), ...)
+## terms.lme <- function(x, ...) terms(formula(x), ...)
 ## end{from MASS}
 
 

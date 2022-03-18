@@ -1,3 +1,10 @@
+2022-03-18  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/gls.R: keep "terms" from gls() for use in predict.gls(),
+	fixing PR#18283.
+	* R/zzMethods.R, NAMESPACE: drop formula-based terms.gls().
+	* tests/gls.R: add corresponding regression test.
+
 2022-03-17  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/lme.R (lme.formula):

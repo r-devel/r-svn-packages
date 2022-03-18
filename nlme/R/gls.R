@@ -228,6 +228,7 @@ gls <-
                    numIter = if (needUpdate(glsSt)) numIter else numIter0,
                    groups = grps,
                    call = Call,
+                   terms = Terms,
                    method = method,
                    fitted = Fitted,
                    residuals = Resid,
@@ -897,7 +898,7 @@ predict.gls <-
     if (missing(newdata)) {		# will return fitted values
         return(fitted(object))
     }
-    form <- getCovariateFormula(object)
+    form <- delete.response(object[["terms"]])
     ## making sure factor levels are the same as in contrasts
     ## and supporting character-type 'newdata' for factors (all via xlev)
     contr <- object$contrasts           # these are in matrix form

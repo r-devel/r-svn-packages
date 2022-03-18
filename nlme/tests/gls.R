@@ -1,5 +1,4 @@
 ## reported by simon bond <shug0131@yahoo.co.uk> to R-help 2007-03-16
-
 library(nlme)
 x <- rnorm(10, 0.1, 1)
 try(gls(x ~ 0))  # segfaulted in 3.1-79
@@ -17,6 +16,7 @@ fm1Dial.gnls <-
 # also, missed row names as names
 stopifnot(all.equal(as.vector(p1), as.vector(p2)), # 'label' differs
           identical(names(p1), names(p2)))
+
 
 ## PR#13418
 fm1 <- gls(weight ~ Time * Diet, BodyWeight)
@@ -73,3 +73,16 @@ y <- 10:20; off <- rep(10, length(y))
 tools::assertError(gls(y ~ 1 + offset(off)), verbose = TRUE)
 ## the following was TRUE in nlme <= 3.1-155, unfortunately:
 ## all.equal(coef(gls(y ~ 1 + offset(off))), coef(gls(y ~ 1)))
+
+
+## PR#18283: gls() did not keep terms so predict() lacked "predvars"
+fm_poly   <- gls(distance ~ poly(age, 1), data = Orthodont)
+fm_nopoly <- gls(distance ~      age,     data = Orthodont)
+stopifnot(all.equal(predict(fm_poly,   data.frame(age = 10)),
+                    predict(fm_nopoly, data.frame(age = 10))))
+## in nlme <= 3.1-155, prediction from fm_poly failed with
+## Error in poly(age, 1) : 
+##   'degree' must be less than number of unique points
+stopifnot(all.equal(predict(fm_poly, head(Orthodont)),
+                    head(fitted(fm_poly)), check.attributes = FALSE))
+## predictions were wrong due to data-dependent bases
