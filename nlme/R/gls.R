@@ -725,7 +725,12 @@ fitted.gls <-
 }
 
 
-formula.gls <- function(x, ...) eval(x$call$model)
+formula.gls <- function(x, ...)
+{
+    if (is.null(x$terms)) { # gls objects from nlme <= 3.1-155
+        eval(x$call$model)
+    } else formula(x$terms)
+}
 
 getGroups.gls <- function(object, form, level, data, sep) object$groups
 

@@ -5,6 +5,11 @@
 	* R/zzMethods.R, NAMESPACE: drop formula-based terms.gls().
 	* tests/gls.R: add corresponding regression test.
 
+	* R/gls.R (formula.gls):
+	* R/lme.R (formula.lme): get the formula from the terms instead of
+	re-evaluating the call (with the wrong scope), fixing PR#15892.
+	* tests/scoping.R: add corresponding regression test.
+
 2022-03-17  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/lme.R (lme.formula):
