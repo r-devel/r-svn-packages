@@ -1,3 +1,7 @@
+2022-03-22  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-156 (released)
+
 2022-03-18  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/gls.R: keep "terms" from gls() for use in predict.gls(),
