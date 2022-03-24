@@ -4,6 +4,9 @@
 	* R/gnls.R (gnls): revert check for offset() terms in non-linear
 	models (avoid symbolic interpretation of arithmetic expressions).
 
+	* R/lme.R (formula.lme): defer fix for scoping issue to give more
+	time to update reverse dependencies
+
 2022-03-22  Brian Ripley
 
 	* DESCRIPTION (Version): 3.1-156 (unreleased)
