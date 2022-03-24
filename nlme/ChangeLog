@@ -1,6 +1,12 @@
+2022-03-24  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
+
+	* R/nlme.R (nlme.formula):
+	* R/gnls.R (gnls): revert check for offset() terms in non-linear
+	models (avoid symbolic interpretation of arithmetic expressions).
+
 2022-03-22  Brian Ripley
 
-	* DESCRIPTION (Version): 3.1-156 (released)
+	* DESCRIPTION (Version): 3.1-156 (unreleased)
 
 2022-03-18  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
