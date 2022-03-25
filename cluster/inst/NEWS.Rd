@@ -6,10 +6,21 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.3 (2021-05-05, svn r7960)}{
+\section{Changes in version 2.1.3 (2022-03-25, svn r8061)}{
+  \subsection{New Features}{
+    \itemize{
+      \item \code{as.data.frame(<silhouette>)} now works; suggested by
+	Jonathan Marshall (@Massey, NZ).
+    }
+  }
   \subsection{Translations}{
     \itemize{
       \item Updated German translations (Detlef Steuer)
+    }
+  }
+  \subsection{Tweaks}{
+    \itemize{
+      \item use explicit cast, quieting \code{-Wconversion}.
     }
   }
 }

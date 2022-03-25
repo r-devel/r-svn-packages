@@ -19,6 +19,7 @@ R/.*_1\.[89]
 .*/TAGS
 R/.*\+
 R/README-Splus
+man/.*\+
 src/list-
 src/.*\+
 src/.*-Li
