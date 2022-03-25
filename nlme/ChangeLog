@@ -1,3 +1,7 @@
+2022-03-25  Brian Ripley
+
+	* DESCRIPTION (Version): 3.1-157 (released)
+
 2022-03-24  Sebastian Meyer  <Sebastian.Meyer@R-project.org>
 
 	* R/nlme.R (nlme.formula):
