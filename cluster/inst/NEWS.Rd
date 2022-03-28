@@ -6,7 +6,7 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.3 (2022-03-25, svn r8061)}{
+\section{Changes in version 2.1.3 (2022-03-28, svn r8062)}{
   \subsection{New Features}{
     \itemize{
       \item \code{as.data.frame(<silhouette>)} now works; suggested by

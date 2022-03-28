@@ -42,6 +42,13 @@ Things done are moved to `./DONE-MM`
 
 * It should be possible to _re_start `clara()` with a **given** "best sample"
 
+* Have introduced  as.data.frame(<silhouette>) via `S3method()` in `NAMESPACE` + 
+  copy (from base) of `as.data.frame.matrix`. 
+  Nicer (but less back compatible ==> need rev.dep checks!) 
+  would have been to change the *class* to
+  `c("silhouette", class(matrix())` such that all matrix (and array)
+  methods would work with silhouette.
+
 * `silhouette.clara()`
 
 	- silhouette(*, full=TRUE):
