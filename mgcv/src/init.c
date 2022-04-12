@@ -30,6 +30,7 @@ R_CallMethodDef CallMethods[] = {
   {"stmm",(DL_FUNC)&stmm,1},
   {"AddBVB",(DL_FUNC)&AddBVB,3},
   {"isa1p",(DL_FUNC)&isa1p,3},
+  {"mrow_sum",(DL_FUNC)&mrow_sum,3},
   {NULL, NULL, 0}
 };
 

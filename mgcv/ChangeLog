@@ -29,6 +29,11 @@ present, and reparameterization needs checking (also for bam).
 
 * bam(..., discrete=TRUE) te fixed sp ordering wrong.
 
+1.8-41
+
+* trind.generator modified to allow return of index functions in place 
+  of index arrays.  
+
 1.8-40
 
 * Small gam.fit5 convergence change to reduce chance of repeating step 

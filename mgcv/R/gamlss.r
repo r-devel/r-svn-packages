@@ -17,7 +17,7 @@
 ## given l >= k >= j >= i structure then the block for index
 ## i,j,k,l starts at i4[i,j,k,l]*n+1, given symmetry over the indices. 
 
-trind.generator <- function(K=2) {
+trind.generator <- function(K=2,ifunc=FALSE,reverse=FALSE) {
 ## Generates index arrays for 'upper triangular' storage up to order 4
 ## Suppose you fill an array using code like...
 ## m = 1
@@ -29,56 +29,82 @@ trind.generator <- function(K=2) {
 ## but for access we want no restriction on the indices.
 ## i4[i,j,k,l] produces the appropriate m for unrestricted 
 ## indices. i3 and i2 do the same for 3d and 2d arrays.
+## if ifunc==TRUE then rather than index arrays, index functions
+## are returned, so e.g.i4(i,j,k,l) is equivalent to above.
+## Index functions require less storage for high K.
 ## ixr will extract the unique elements from an x dimensional
 ## upper triangular array in the correct order.
-  i4 <- array(0,dim=c(K,K,K,K))
   m.start <- 1
-  m <- m.start
-  for (i in 1:K) for (j in i:K) for (k in j:K) for (l in k:K) {
-    i4[i,j,k,l] <- i4[i,j,l,k] <- i4[i,k,l,j] <- i4[i,k,j,l] <- i4[i,l,j,k] <- 
-    i4[i,l,k,j] <- 
-    i4[j,i,k,l] <- i4[j,i,l,k] <- i4[j,k,l,i] <- i4[j,k,i,l] <- i4[j,l,i,k] <- 
-    i4[j,l,k,i] <- 
-    i4[k,j,i,l] <- i4[k,j,l,i] <- i4[k,i,l,j] <- i4[k,i,j,l] <- i4[k,l,j,i] <- 
-    i4[k,l,i,j] <- 
-    i4[l,j,k,i] <- i4[l,j,i,k] <- i4[l,k,i,j] <- i4[l,k,j,i] <- i4[l,i,j,k] <- 
-    i4[l,i,k,j] <- m
-    m <- m + 1
-  }
+  if (ifunc) { ## return index functions
+   eval(parse(text= paste("i2 <- function(i,j) {\n",
+        "  if (i>j) {ii <- i;i <- j;j <- ii}\n",
+        "  (i-1)*(",2*K+2,"-i)/2 +j-i+1\n}",sep="")))
 
-  i3 <- array(0,dim=c(K,K,K))
-  m <- m.start
-  for (j in 1:K) for (k in j:K) for (l in k:K) {
-    i3[j,k,l] <- i3[j,l,k] <- i3[k,l,j] <- i3[k,j,l] <- i3[l,j,k] <- 
-    i3[l,k,j] <- m
-    m <- m + 1
-  }
+   eval(parse(text=paste("i3 <- function(i,j,k) {\n",
+        "  if (i>j||j>k) { \n    ii <- sort(c(i,j,k))\n",
+	"    i <- ii[1];j <- ii[2];k <- ii[3]\n  }\n",
+        "  (i-1)*(",3*K*(K+1),"+(i-2)*(i-",3*(K+1),"))/6 + (j-i)*(",2*K+3,"-i-j)/2+k-j+1 \n}",
+	sep="")))
 
-  i2 <- array(0,dim=c(K,K))
-  m <- m.start
-  for (k in 1:K) for (l in k:K) {
-    i2[k,l] <- i2[l,k] <- m
-    m <- m + 1
-  }
+   eval(parse(text=paste("i4 <- function(i,j,k,l) {\n",
+        "  if (i>j||j>k||k>l) { \n    ii <- sort(c(i,j,k,l))\n",
+	"    i <- ii[1];j <- ii[2];k <- ii[3];l <- ii[4]\n  }\n",
+        "  i1 <- i-1;i2 <- i-2; i1i2 <- i1*i2/2\n",
+	"  l-k+1 + (k-j)*(",2*K+3,"-j-k)/2 +",
+	"  (j-i)*(3*(",K+1,"-i)^2+3*(",K+1,"-i) + (j-i-1)*(j+2*i-",3*K+5,"))/6 +\n",
+	"  (i1*",K^3+3*K^2+2*K,"+i1i2*(",K+1,"*(2*i-3) - ",3*K^2+6*K+2,"-i1i2))/6\n}",
+	sep="")))
+  } else { ## return index arrays
+    i4 <- array(0,dim=c(K,K,K,K))  
+    m <- m.start
+    for (i in 1:K) for (j in i:K) for (k in j:K) for (l in k:K) {
+      i4[i,j,k,l] <- i4[i,j,l,k] <- i4[i,k,l,j] <- i4[i,k,j,l] <- i4[i,l,j,k] <- 
+      i4[i,l,k,j] <- i4[j,i,k,l] <- i4[j,i,l,k] <- i4[j,k,l,i] <- i4[j,k,i,l] <-
+      i4[j,l,i,k] <- i4[j,l,k,i] <- i4[k,j,i,l] <- i4[k,j,l,i] <- i4[k,i,l,j] <-
+      i4[k,i,j,l] <- i4[k,l,j,i] <- i4[k,l,i,j] <- i4[l,j,k,i] <- i4[l,j,i,k] <-
+      i4[l,k,i,j] <- i4[l,k,j,i] <- i4[l,i,j,k] <- i4[l,i,k,j] <- m
+      m <- m + 1
+    }
+
+    i3 <- array(0,dim=c(K,K,K))
+    m <- m.start
+    for (j in 1:K) for (k in j:K) for (l in k:K) {
+      i3[j,k,l] <- i3[j,l,k] <- i3[k,l,j] <- i3[k,j,l] <- i3[l,j,k] <- 
+      i3[l,k,j] <- m
+      m <- m + 1
+    }
+
+    i2 <- array(0,dim=c(K,K))
+    m <- m.start
+    for (k in 1:K) for (l in k:K) {
+      i2[k,l] <- i2[l,k] <- m
+      m <- m + 1
+    }
+  }  
   ## now create the reverse indices...
-  m <- m.start
-  i4r <- rep(0,max(i4)) ## extracts the unique elements from a symmetric array in packing order.
-  for (i in 1:K) for (j in i:K) for (k in j:K) for (l in k:K) {
-    i4r[m] <- l + (k-1)*K + (j-1)*K^2 + (i-1)*K^3
-    m <- m + 1
-  }
-  m <- m.start
-  i3r <- rep(0,max(i3)) ## extracts the unique elements from a symmetric array in packing order.
-  for (j in 1:K) for (k in j:K) for (l in k:K) {
-    i3r[m] <- l + (k-1)*K + (j-1)*K^2
-    m <- m + 1
-  }
-  m <- m.start
-  i2r <- rep(0,max(i2)) ## extracts the unique elements from a symmetric array in packing order.
-  for (k in 1:K) for (l in k:K) {
-    i2r[m] <- l + (k-1)*K
-    m <- m + 1
-  }
+  if (reverse) {
+    m <- m.start
+    maxi4 <- if (ifunc) i4(K,K,K,K) else i4[K,K,K,K]
+    i4r <- rep(0,maxi4) ## extracts the unique elements from a symmetric array in packing order.
+    for (i in 1:K) for (j in i:K) for (k in j:K) for (l in k:K) {
+      i4r[m] <- l + (k-1)*K + (j-1)*K^2 + (i-1)*K^3
+      m <- m + 1
+    }
+    m <- m.start
+    maxi3 <- if (ifunc) i3(K,K,K) else i3[K,K,K]
+    i3r <- rep(0,maxi3) ## extracts the unique elements from a symmetric array in packing order.
+    for (j in 1:K) for (k in j:K) for (l in k:K) {
+      i3r[m] <- l + (k-1)*K + (j-1)*K^2
+      m <- m + 1
+    }
+    m <- m.start
+    maxi2 <- if (ifunc) i2(K,K) else i2[K,K]
+    i2r <- rep(0,maxi2) ## extracts the unique elements from a symmetric array in packing order.
+    for (k in 1:K) for (l in k:K) {
+      i2r[m] <- l + (k-1)*K
+      m <- m + 1
+    }
+  } else i2r <- i3r <- i4r <- NULL  
   list(i2=i2,i3=i3,i4=i4,i2r=i2r,i3r=i3r,i4r=i4r)
 } ## trind.generator
 
@@ -99,6 +125,7 @@ gamlss.etamu <- function(l1,l2,l3=NULL,l4=NULL,ig1,g2,g3=NULL,g4=NULL,i2,i3=NULL
     d1[,i] <- l1[,i]*ig1[,i]
   }
 
+  ifunc <- !is.array(i2) ## are index functions provided in place of index arrays?
   ##n <- length(ig1[,1])
 
   k <- 0
@@ -133,14 +160,16 @@ gamlss.etamu <- function(l1,l2,l3=NULL,l4=NULL,ig1,g2,g3=NULL,g4=NULL,i2,i3=NULL
     ## l3[,k] is derivative to transform
     mo <- max(ord)
     if (mo==3) { ## pure 3rd derivative transform
-      d3[,k] <- (l3[,k] - 3*l2[,i2[i,i]]*g2[,i]*ig1[,i] +
+      mind <- if (ifunc) i2(i,i) else i2[i,i]
+      d3[,k] <- (l3[,k] - 3*l2[,mind]*g2[,i]*ig1[,i] +
                 l1[,i]*(3*g2[,i]^2*ig1[,i]^2 - g3[,i]*ig1[,i]))*ig1[,i]^3          
     } else if (mo==1) { ## all first derivative
       d3[,k] <- l3[,k]*ig1[,i]*ig1[,j]*ig1[,l]
     } else { ## 2,1 deriv
       k1 <- ii[ord==1] ## index of order 1 deriv
       k2 <- ii[ord==2] ## index of order 2 part
-      d3[,k] <- (l3[,k] - l2[,i2[k2,k1]]*g2[,k2]*ig1[,k2])*
+      mind <- if (ifunc) i2(k2,k1) else i2[k2,k1]
+      d3[,k] <- (l3[,k] - l2[,mind]*g2[,k2]*ig1[,k2])*
                 ig1[,k1]*ig1[,k2]^2
     } 
   } ## 3rd order transform done
@@ -163,8 +192,10 @@ gamlss.etamu <- function(l1,l2,l3=NULL,l4=NULL,ig1,g2,g3=NULL,g4=NULL,i2,i3=NULL
     ## l4[,k] is derivative to transform
     mo <- max(ord)
     if (mo==4) { ## pure 4th derivative transform
-    d4[,k] <-  (l4[,k] - 6*l3[,i3[i,i,i]]*g2[,i]*ig1[,i] + 
-        l2[,i2[i,i]]*(15*g2[,i]^2*ig1[,i]^2 - 4*g3[,i]*ig1[,i]) - 
+    mi2 <- if (ifunc) i2(i,i) else i2[i,i]
+    mi3 <- if (ifunc) i3(i,i,i) else i3[i,i,i]
+    d4[,k] <-  (l4[,k] - 6*l3[,mi3]*g2[,i]*ig1[,i] + 
+        l2[,mi2]*(15*g2[,i]^2*ig1[,i]^2 - 4*g3[,i]*ig1[,i]) - 
         l1[,i]*(15*g2[,i]^3*ig1[,i]^3 - 10*g2[,i]*g3[,i]*ig1[,i]^2 
          + g4[,i]*ig1[,i]))*ig1[,i]^4    
     } else if (mo==1) { ## all first derivative
@@ -172,20 +203,26 @@ gamlss.etamu <- function(l1,l2,l3=NULL,l4=NULL,ig1,g2,g3=NULL,g4=NULL,i2,i3=NULL
     } else if (mo==3) { ## 3,1 deriv
       k1 <- ii[ord==1] ## index of order 1 deriv
       k3 <- ii[ord==3] ## index of order 3 part
-      d4[,k] <- (l4[,k] - 3*l3[,i3[k3,k3,k1]]*g2[,k3]*ig1[,k3] +
-        l2[,i2[k3,k1]]*(3*g2[,k3]^2*ig1[,k3]^2 - g3[,k3]*ig1[,k3])         
+      mi2 <- if (ifunc) i2(k3,k1) else i2[k3,k1]
+      mi3 <- if (ifunc) i3(k3,k3,k1) else i3[k3,k3,k1]
+      d4[,k] <- (l4[,k] - 3*l3[,mi3]*g2[,k3]*ig1[,k3] +
+        l2[,mi2]*(3*g2[,k3]^2*ig1[,k3]^2 - g3[,k3]*ig1[,k3])         
       )*ig1[,k1]*ig1[,k3]^3
     } else { 
       if (sum(ord==2)==2) { ## 2,2
         k2a <- (ii[ord==2])[1];k2b <- (ii[ord==2])[2]
-        d4[,k] <- (l4[,k] - l3[,i3[k2a,k2b,k2b]]*g2[,k2a]*ig1[,k2a]
-          -l3[,i3[k2a,k2a,k2b]]*g2[,k2b]*ig1[,k2b] + 
-           l2[,i2[k2a,k2b]]*g2[,k2a]*g2[,k2b]*ig1[,k2a]*ig1[,k2b]
+	mi2 <- if (ifunc) i2(k2a,k2b) else i2[k2a,k2b]
+	mi3 <- if (ifunc) i3(k2a,k2b,k2b) else i3[k2a,k2b,k2b]
+	mi3a <- if (ifunc) i3(k2a,k2a,k2b) else i3[k2a,k2a,k2b]
+        d4[,k] <- (l4[,k] - l3[,mi3]*g2[,k2a]*ig1[,k2a]
+          -l3[,mi3a]*g2[,k2b]*ig1[,k2b] + 
+           l2[,mi2]*g2[,k2a]*g2[,k2b]*ig1[,k2a]*ig1[,k2b]
         )*ig1[,k2a]^2*ig1[,k2b]^2
       } else { ## 2,1,1
         k2 <- ii[ord==2] ## index of order 2 derivative
         k1a <- (ii[ord==1])[1];k1b <- (ii[ord==1])[2]
-        d4[,k] <- (l4[,k] - l3[,i3[k2,k1a,k1b]]*g2[,k2]*ig1[,k2] 
+	mi3 <- if (ifunc) i3(k2,k1a,k1b) else i3[k2,k1a,k1b]
+        d4[,k] <- (l4[,k] - l3[,mi3]*g2[,k2]*ig1[,k2] 
                    )*ig1[,k1a]*ig1[,k1b]*ig1[,k2]^2
       }
     }
@@ -219,6 +256,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
     p <- ncol(X);n <- nrow(X)
   }  
   trHid2H <- d1H <- d2H <- NULL ## defaults
+  ifunc <- !is.array(i2) ## are index functions provided in place of index arrays?
 
   ## the gradient...
   lb <- rep(0,p)
@@ -231,8 +269,9 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   lbb <- if (sparse) Matrix(0,p,p) else matrix(0,p,p)
   for (i in 1:K) for (j in i:K) {
     ## A <- t(X[,jj[[i]],drop=FALSE])%*%(l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
-    A <- if (discrete) XWXd(X$Xd,w=l2[,i2[i,j]],k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]]) else
-             crossprod(X[,jj[[i]],drop=FALSE],l2[,i2[i,j]]*X[,jj[[j]],drop=FALSE])
+    mi2 <- if (ifunc) i2(i,j) else i2[i,j] 
+    A <- if (discrete) XWXd(X$Xd,w=l2[,mi2],k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]]) else
+             crossprod(X[,jj[[i]],drop=FALSE],l2[,mi2]*X[,jj[[j]],drop=FALSE])
     lbb[jj[[i]],jj[[j]]] <- lbb[jj[[i]],jj[[j]]] + A 
     if (j>i) lbb[jj[[j]],jj[[i]]] <- lbb[jj[[j]],jj[[i]]] + t(A) 
   } 
@@ -278,7 +317,8 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
        for (l in 1:m) { ## sp loop
          v <- rep(0,n);ind <- 1:n
          for (q in 1:K) { ## diagonal accumulation loop
-           v <- v + l3[,i3[i,j,q]] * d1eta[ind,l]
+	   mi3 <- if (ifunc) i3(i,j,q) else i3[i,j,q] 
+           v <- v + l3[,mi3] * d1eta[ind,l]
            ind <- ind + n
          }
 	 XVX <- XWXd(X$Xd,w=v,k=X$kd,ks=X$ks,ts=X$ts,dt=X$dt,v=X$v,qc=X$qc,nthreads=1,drop=X$drop,lt=X$lpid[[i]],rt=X$lpid[[j]])
@@ -335,7 +375,8 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
       for (l in 1:m) { ## sp loop
         v <- rep(0,n);ind <- 1:n
         for (q in 1:K) { ## diagonal accumulation loop
-          v <- v + l3[,i3[i,j,q]] * d1eta[ind,l]
+	  mi3 <- if (ifunc) i3(i,j,q) else i3[i,j,q] 
+          v <- v + l3[,mi3] * d1eta[ind,l]
           ind <- ind + n
         }
 	mult <- if (i==j) 1 else 2
@@ -351,8 +392,9 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
       d1H[[l]] <- matrix(0,p,p)
       for (i in 1:K) for (j in i:K) {
         v <- rep(0,n);ind <- 1:n
-        for (q in 1:K) { 
-          v <- v + l3[,i3[i,j,q]] * d1eta[ind,l]
+        for (q in 1:K) {
+	  mi3 <- if (ifunc) i3(i,j,q) else i3[i,j,q] 
+          v <- v + l3[,mi3] * d1eta[ind,l]
           ind <- ind + n
         }
         ## d1H[[l]][jj[[j]],jj[[i]]] <- 
@@ -395,10 +437,12 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
       for (i in 1:K) for (j in 1:K) {
         v <- rep(0,n);ind <- 1:n
         for (q in 1:K) { ## accumulate the diagonal matrix for X_i'diag(v)X_j
-          v <- v + d2eta[ind,kk]*l3[,i3[i,j,q]]
+	  mi3 <- if (ifunc) i3(i,j,q) else i3[i,j,q] 
+          v <- v + d2eta[ind,kk]*l3[,mi3]
           ins <- 1:n
-          for (s in 1:K) { 
-            v <- v + d1eta[ind,k]*d1eta[ins,l]*l4[,i4[i,j,q,s]]
+          for (s in 1:K) {
+	    mi4 <- if (ifunc) i4(i,j,q,s) else i4[i,j,q,s] 
+            v <- v + d1eta[ind,k]*d1eta[ins,l]*l4[,mi4]
             ins <- ins + n
           }
           ind <- ind + n
@@ -418,7 +462,7 @@ gamlss.gH <- function(X,jj,l1,l2,i2,l3=0,i3=0,l4=0,i4=0,d1b=0,d2b=0,deriv=0,fh=N
   } ## if deriv>2
 
   list(lb=lb,lbb=lbb,d1H=d1H,d2H=d2H,trHid2H=trHid2H)
-} ## end of gamlss.gH
+} ## end of gamlss.gH 
 
 
 

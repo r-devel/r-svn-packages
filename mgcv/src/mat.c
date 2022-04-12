@@ -458,6 +458,34 @@ void mgcv_mmult(double *A,double *B,double *C,int *bt,int *ct,int *r,int *c,int 
 		B, &lda,C, &ldb,&beta, A, &ldc FCONE FCONE);
 } /* end mgcv_mmult */
 
+SEXP mrow_sum(SEXP x,SEXP M, SEXP K) {
+/* X is n by p matrix, m and k are integer vectors   
+   B is m[length(m)-1] by p output matrix.
+   B[i,] is sum of X[k[j],] for j in m[i-1]:(m[i]-1) (m[-1]=0) 
+   .Called from mat.rowsum
+*/
+  int i,j,p,n,nm,*m,*k,*kp,*p1;
+  double *X,xx,*B;
+  SEXP b;
+  nm = length(M);
+  X = REAL(x);
+  M = PROTECT(coerceVector(M,INTSXP));
+  K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
+  m = INTEGER(M); k = INTEGER(K);
+  p = ncols(x); n = nrows(x);
+  b = PROTECT(allocMatrix(REALSXP,nm,p));
+  B = REAL(b);
+  for (j=0;j<p;j++,X+=n) {
+    for (kp=k,i=0;i<nm;i++) {
+      for(xx=0.0,p1=k+m[i];kp<p1;kp++) xx += X[*kp];
+      *B = xx;B++;
+    }  
+  }  
+  UNPROTECT(3);
+  return(b); 
+} /* mrow_sum */  
+
+
 SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag) {
 /* Performs 
      a[ind,ind] <- a[ind,ind] + b

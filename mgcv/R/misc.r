@@ -777,6 +777,17 @@ temp.seed <- function(x) {
   }  
 } ## temp.seed
 
+mat.rowsum <- function(X,m,k) {
+## Let X be n by p and m of length M. Produces an M by p matrix B
+## where the ith row of B is the sum of the rows X[k[j],] where
+## j = (m[i-1]+1):m[i]. m[0] is taken as 0.
+## n <- 10;p <- 5;X <- matrix(runif(n*p),n,p)
+## m <- c(3,5,8,11);k <- c(1,4,3,6,1,5,7,10,9,5,6)
+## mgcv:::mat.rowsum(X,m,k)
+  if (max(k)>nrow(X)||min(k)<1) stop("index vector has invalid entries")
+  k <- k - 1 ## R to C index conversion
+  .Call(C_mrow_sum,X,m,k)
+} ## mat.rowsum
 
 isa <- function(R,nt=1) {
 ## Finds the elements of (R'R)^{-1} on NZP(R+R').
