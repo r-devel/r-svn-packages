@@ -2361,6 +2361,7 @@ void gdi1(double *X,double *E,double *Es,double *rS,double *U1,
    * sp is an M array of smoothing parameters (NOT log smoothing parameters)
    * z, w and wf are n-vectors of the pseudodata iterative newton weights and iterative 
      fisher weights (only if `fisher' is zero) 
+   * w1 is deriv of w w.r.t. log sp if REML=1 and deriv of wf w.r.t. log sp otherwise 
    * p_weights is an n-vector of prior weights (as opposed to the iterative weights in w)
    * mu and y are n-vectors of the fitted values and data.
    * g1,g2,g3,g4 are the n-vectors of the link derivatives 

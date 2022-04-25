@@ -212,6 +212,8 @@ SEXP mgcv_Rpbacksolve(SEXP R, SEXP B,SEXP NT);
 SEXP mgcv_Rpcross(SEXP A, SEXP NT,SEXP NB);
 SEXP mgcv_madi(SEXP a, SEXP b,SEXP ind,SEXP diag);
 SEXP mrow_sum(SEXP x,SEXP M, SEXP K);
+SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP M, SEXP K, SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DERIV);
+
 
 /* sparse matrix routines */
 SEXP isa1p(SEXP L,SEXP S,SEXP NT);

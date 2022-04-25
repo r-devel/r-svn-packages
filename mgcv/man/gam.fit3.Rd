@@ -1,7 +1,7 @@
 \name{gam.fit3}
 \alias{gam.fit3}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{P-IRLS GAM estimation with GCV \& UBRE/AIC or RE/ML derivative calculation}
+\title{P-IRLS GAM estimation with GCV & UBRE/AIC or RE/ML derivative calculation}
 \description{Estimation of GAM smoothing parameters is most stable if
 optimization of the UBRE/AIC, GCV, GACV, REML or ML score is outer to the penalized iteratively
 re-weighted least squares scheme used to estimate the model given smoothing 

@@ -759,3 +759,192 @@ void rwMatrix(int *stop,int *row,double *w,double *X,int *n,int *p,int *trans,do
    
 */
 
+int CG(double *A,double *Mi,double *b, double *x,int n,double tol) {
+/* Basic pre-conditioned conjuagate gradient solver for Ax = b where A is n by n 
+   and Mi is the pre-conditioner. tol is the convergence tolerance. On exit x is 
+   the approximate solution, and the return value is the number of iterations used. 
+*/
+  int i,one=1,k;
+  double *r,*z,*p,*r1,*z1,c1,c2,bmax=0.0,rmax,alpha,rz,r1z1,pAp,*dum,beta;
+  char ntrans = 'N';
+  p = (double *)CALLOC((size_t) n*5,sizeof(double));
+  r = p + n;r1 = r + n;z=r1 + n;z1 = z + n;
+  /* dgemv(char *trans,int *m, int *n,double a,double *A,int *lda,double *x,int *dx,
+         double *b, double *y,int *dy)
+       trans='T' to transpose A, 'N' not to. A is m by n. Forms y = a*A'x + b*y, or
+       y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
+       dx and dy are increments of x and y indices.  */
+  for (i=0;i<n;i++) {
+    c1 = b[i]; r[i] = c1; /* copy b to r for gemv call below */
+    c1 = fabs(c1);
+    if (c1>bmax) bmax = c1; /* find max abs b for convergence testing */
+  }
+  c1 = -1.0;c2=1.0;
+  F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,x,&one,&c2,r,&one FCONE FCONE); /* r = b - Ax */
+  c1 = 0.0;
+  F77_CALL(dgemv)(&ntrans,&n,&n,&c2,Mi,&n,r,&one,&c1,z,&one FCONE FCONE); /* z = Mi r */
+  for (i=0;i<n;i++) p[i] = z[i];
+  c1=1.0;c2=0.0;
+  for (k=0;k<200;k++) {  
+    F77_CALL(dgemv)(&ntrans,&n,&n,&c1,A,&n,p,&one,&c2,z1,&one FCONE FCONE); /* z1 = Ap */
+    for (rz=0.0,pAp=0.0,i=0;i<n;i++) {rz += r[i]*z[i];pAp += p[i] * z1[i];} /*r'z & p'Ap*/
+    alpha = rz/pAp;
+    for (rmax=0.0,i=0;i<n;i++) {
+      x[i] += alpha * p[i];
+      r1[i] = r[i] - alpha * z1[i];
+      if (fabs(r1[i])>rmax) rmax = fabs(r1[i]);
+    }
+    if (rmax < tol*bmax) break;
+    F77_CALL(dgemv)(&ntrans,&n,&n,&c1,Mi,&n,r1,&one,&c2,z1,&one FCONE FCONE); /* z1 = Mi r1 */
+    for (r1z1=0.0,i=0;i<n;i++) r1z1 += r1[i] * z1[i];
+    beta = r1z1/rz;
+    for (i=0;i<n;i++) p[i] = z1[i] + beta * p[i];
+    dum = z1; z1 = z; z = dum;
+    dum = r1; r1 = r; r = dum;
+  }
+  FREE(p);
+  return(k); /* number of steps taken */
+} /* CG */
+
+
+SEXP ncv(SEXP x, SEXP hi, SEXP W1, SEXP W2, SEXP DB, SEXP DW, SEXP rS, SEXP M, SEXP K, SEXP BETA, SEXP SP, SEXP ETA, SEXP DETA,SEXP DERIV) {
+/* Neighbourhood cross validation function.
+   Return: eta - eta[i] is linear predictor of y[i] when y[i] and its neighbours are ommited from fit
+           deta - deta[i,j] is derivative of eta[i] w.r.t. log smoothing parameter j.
+   Input: X - n by p model matrix. Hi inverse penalized Hessian. H penalized Hessian. w1 = w1[i] X[i,j] is dl_i/dbeta_j to within a scale parameter.
+          w2 - -X'diag(w2)X is Hessian of log likelihood to within a scale parameter. db - db[i,j] is dbeta_i/d rho_j where rho_j is a log s.p.
+          dw - dw[i,j] is dw2[i]/drho_j. rS[[i]] %*% t(rS[[i]]) is ith smoothing penalty matrix. k[m[i-1]:(m[i])] index the neighbours of the ith point
+          (including i), m[-1]=0 by convention. beta - model coefficients (eta=X beta if nothing dropped). sp the smoothing parameters. deriv==0
+          for no derivative calculations, deriv!=0 otherwise. 
+         
+   Basic idea: to approximate the linear predictor on omission of the neighbours of each point in turn, a single Newton step is taken from the full fit
+               beta, using the gradient and Hessian implied by omitting the neighbours. To keep the cost at O(np^2) a pre-conditioned conjugate gradient 
+               iteration is used to solve for the change in beta caused by the omission. 
+               The gradient of this step w.r.t. to each smoothing parameter can also be obtained, again using CG to avoid O(p^3) cost for each obs.   
+ */
+  SEXP S,kr;
+  int maxn,i,nsp,n,p,*m,*k,j,l,ii,i0,ki,q,p2,one=1,deriv,kk,error=0,jj;
+  double *X,*g,*g1,*gp,*p1,*Hp,*Hi,*Xi,xx,*xip,*xip0,z,*Hd,w1ki,w2ki,*wXi,*d,*w1,*w2,*eta,
+    *deta,*beta,*dg,*dgp,*dwX,*wp,*wp1,*db,*dw,*rSj,*sp,*d1,*dbp,*dH,*xp,*wxp,*bp,*bp1,*dwXi;
+  char trans = 'T',ntrans = 'N';
+  M = PROTECT(coerceVector(M,INTSXP));
+  K = PROTECT(coerceVector(K,INTSXP)); /* otherwise R might be storing as double on entry */
+  deriv = asInteger(DERIV);
+  m = INTEGER(M); k = INTEGER(K);
+  nsp = length(rS);
+  sp = REAL(SP);
+  w1=REAL(W1);w2=REAL(W2);
+  X = REAL(x);beta = REAL(BETA);
+  Hi=REAL(hi);eta = REAL(ETA);deta = REAL(DETA);
+  p = ncols(x); n = nrows(x);p2=p*p;
+  Hp = (double *)CALLOC((size_t) p2,sizeof(double));
+  g = (double *)CALLOC((size_t) 3*p,sizeof(double));
+  g1 = g + p;dg = g1 + p;
+  d = (double *)CALLOC((size_t) 2*p,sizeof(double)); /* perturbation to beta on dropping y_i and its neighbours */
+  d1 = d + p;
+  /* need to know largest neighbourhood */
+  maxn = ii = 0;
+  for (j=0;j<n;j++) {
+    i = m[j]; if (i-ii>maxn) maxn = i-ii; ii = i;
+  }  
+  Xi = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* holds sub-matrix removed for this neighbourhood */
+  wXi = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* equivalent pre-multiplied by diag(w2) */
+  dwXi = (double *)CALLOC((size_t) p*maxn,sizeof(double)); /* equivalent pre-multiplied by d diag(w2)/d rho_j */
+  Hd = (double *)CALLOC((size_t) p2,sizeof(double));
+  dwX = (double *)CALLOC((size_t) p*n,sizeof(double));
+  /* create Hessian X'diag(w2)X + S_lambda... */
+  for (xip0 = X,xip=dwX,q=0;q<p;q++) for (wp=w2,wp1=wp+n;wp<wp1;wp++,xip++,xip0++) *xip = *xip0 * *wp;
+  xx=1.0;z=0.0;
+  F77_CALL(dgemm)(&trans,&ntrans,&p,&p,&n,&xx,X,&n,dwX,&n,&z,Hd,&p FCONE FCONE);
+  for (j=0;j<nsp;j++) {
+    S = VECTOR_ELT(rS, j);rSj = REAL(S);q = ncols(S);
+    F77_CALL(dgemm)(&ntrans,&trans,&p,&p,&q,sp+j,rSj,&p,rSj,&p,&xx,Hd,&p FCONE FCONE);
+  }  
+  if (deriv) { /* derivarives of Hessian, dH/drho_j, needed */
+    db=REAL(DB);dw=REAL(DW);
+    dH = (double *)CALLOC((size_t) p2*nsp,sizeof(double));
+    for (j=0;j<nsp;j++) {
+      for (xip0 = X,xip=dwX,q=0;q<p;q++) for (wp=dw+n*j,wp1=wp+n;wp<wp1;wp++,xip++,xip0++) *xip = *xip0 * *wp;    
+      F77_CALL(dgemm)(&trans,&ntrans,&p,&p,&n,&xx,X,&n,dwX,&n,&z,dH+j*p2,&p FCONE FCONE); /* X'diag(dw[,j])X */
+      S = VECTOR_ELT(rS, j); /* Writing R Extensions 5.9.6 */
+      rSj = REAL(S);q = ncols(S);
+      F77_CALL(dgemm)(&ntrans,&trans,&p,&p,&q,sp+j,rSj,&p,rSj,&p,&xx,dH+j*p2,&p FCONE FCONE); /* X'diag(dw[,j])X + lambda_j S_j */
+    } 
+  }
+  FREE(dwX);
+  for (ii=0,i=0;i<n;i++) { /* loop over obs, k[ii] is start of neighbourhood of i */
+    p1 = g + p; /* fill accumulated g vector */
+    ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];
+    i0=ii; /* record of start needed in deriv calc */
+    for (xip0=xip=Xi,gp=g,xp=X,wxp=wXi;gp<p1;gp++,xp += n,xip += maxn,wxp += maxn) {
+      xx = xp[ki]; /* X[k[ii],j] */
+      *gp = w1ki * xx; /* g gradient of log lik */
+      *xip = xx; /* Xi matrix holding X[k[i],] */
+      *wxp = xx*w2ki; /* wXi matrix holding w2[k[i]]*X[k[i],] */
+    }
+    q=1; /* count rows of Xi */
+    for (xip0++,ii++;ii<m[i];ii++,xip0++,q++) { /* accumulate rest of g and Xi */ 
+      ki = k[ii];w1ki = w1[ki];w2ki = w2[ki];
+      for (xip=xip0,gp=g,xp=X,wxp=wXi+q;gp<p1;gp++,xp += n,xip += maxn,wxp += maxn) {
+	xx = xp[ki];
+	*gp += w1ki * xx;
+	*xip = xx;
+	*wxp = xx*w2ki; 
+      }
+    }  
+    /* Now assemble the perturbed Hessian for this i */
+    for (j=0;j<p2;j++) Hp[j] = Hd[j]; /* copy penalized Hessian */
+    xx = -1.0;z=1.0; /* subtract part for neighbours of point i */ 
+    /* dgemm(char *transa,char *transb,int *m,int *n,int *k,double *alpha,double *A,
+         int *lda, double *B, int *ldb, double *beta,double *C,int *ldc) 
+         transa/b = 'T' or 'N' for A/B transposed or not. C = alpha op(A) op(B) + beta C,
+         where op() is transpose or not. C is m by n. k is cols of op(A). ldx is rows of X
+         in calling routine (to allow use of sub-matrices) */
+    F77_CALL(dgemm)(&trans,&ntrans,&p,&p,&q,&xx,Xi,&maxn,wXi,&maxn,&z,Hp,&p FCONE FCONE);
+    /* dgemv(char *trans,int *m, int *n,double a,double *A,int *lda,double *x,int *dx,
+         double *b, double *y,int *dy)
+       trans='T' to transpose A, 'N' not to. A is m by n. Forms y = a*A'x + b*y, or
+       y = a*Ax + b*y. lda is number of actual rows in A (to allow for sub-matrices)
+       dx and dy are increments of x and y indices.  */
+    xx = 0.0;
+    //   Rprintf("\n%d ",i);
+    F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,g,&one,&xx,d,&one FCONE FCONE); /* initial step Hi g */
+    kk=CG(Hp,Hi,g,d,p,1e-13); /* d is approx change in beta caused by dropping y_i and its neighbours */
+    if (kk>error) error=kk;
+    /* now create the linear predictor for the ith point */
+    for (xx=0.0,xip=X+i,j=0;j<p;j++,xip += n) xx += *xip * (beta[j]-d[j]);  // CHECK sign!!
+    eta[i] = xx; /* neighbourhood cross validated eta */
+    /* now the derivatives */
+    if (deriv) for (l=0;l<nsp;l++) { /* loop over smoothing parameters */
+	//	Rprintf(".");	
+      /* compute sum_nei(i) dg/drho_l, start with first element of neighbourhood */
+      for (xx=0.0,xip=Xi,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
+      for (dgp=dg,xip=wXi,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp = - *xip * xx;
+      for (j=1;j<q;j++) { /* loop over remaining neighbours */
+        for (xx=0.0,xip=Xi+j,bp=db+p*l,bp1=bp+p;bp<bp1;bp++,xip+=maxn) xx += *xip * *bp;
+        for (dgp=dg,xip=wXi+j,p1=dg+p;dgp < p1;dgp++,xip+= maxn) *dgp -= *xip * xx;
+      }
+      /* Now subtract dH/drho_j d */
+      /* First create diag(dw[,l])Xi */
+      for (j=0;j<p;j++) for (xip0=Xi+j*maxn,xip=dwXi+j*maxn,wp=dw+l*n,jj=i0;jj<m[i];jj++,xip0++,xip++) *xip = *xip0 * wp[k[jj]]; 
+      z=1.0;xx=0.0;
+      F77_CALL(dgemv)(&ntrans,&q,&p,&z,dwXi,&maxn,d,&one,&xx,g,&one FCONE FCONE); /* g = diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&trans,&q,&p,&z,Xi,&maxn,g,&one,&xx,g1,&one FCONE FCONE);  /* g1 = Xi'diag(dw[,l])Xi d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,dH+l*p2,&p,d,&one,&xx,g,&one FCONE FCONE); /* g = dH_l d */
+      for (j=0;j<p;j++) dg[j] += g1[j] - g[j]; /* sum_nei(i) dg/drho_l - dH/drho_l d */
+      F77_CALL(dgemv)(&ntrans,&p,&p,&z,Hi,&p,dg,&one,&xx,d1,&one FCONE FCONE); /* initial step Hi dg */
+      kk=CG(Hp,Hi,dg,d1,p,1e-13); /* d1 is deriv wrt rho_l of approx change in beta caused by dropping the y_i and its neighbours */
+      if (kk>error) error=kk;
+      for (xx=0.0,xip=X+i,dbp=db+p*l,j=0;j<p;j++,xip += n) xx += *xip * (dbp[j]-d1[j]);  // CHECK sign!!
+      deta[i+l*n] = xx;
+    }
+  }  
+  FREE(Hp);FREE(Hd);
+  FREE(g);FREE(d);
+  FREE(Xi);FREE(wXi);FREE(dwXi);
+  if (deriv) FREE(dH);
+  PROTECT(kr=allocVector(INTSXP,1));
+  INTEGER(kr)[0] = error; /* max CG iterations used */
+  UNPROTECT(3);
+  return(kr);
+} /* ncv */

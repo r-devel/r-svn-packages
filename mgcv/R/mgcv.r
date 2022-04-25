@@ -1650,7 +1650,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
   if (!optimizer[1]%in%c("perf","outer","efs")) stop("unknown optimizer")
   if (optimizer[1]=="efs") method <- "REML"
-  if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML")) stop("unknown smoothness selection criterion") 
+  if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML","NCV")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
 
@@ -1673,7 +1673,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 
 
   # is outer looping needed ?
-  outer.looping <- ((!G$am && (optimizer[1]!="perf"))||reml||method=="GACV.Cp") ## && length(G$S)>0 && sum(G$sp<0)!=0
+  outer.looping <- ((!G$am && (optimizer[1]!="perf"))||reml||method=="GACV.Cp"||method=="NCV") ## && length(G$S)>0 && sum(G$sp<0)!=0
 
   ## sort out exact sp selection criterion to use
 
@@ -1685,7 +1685,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   } else {G$sig2 <- scale}
 
 
-  if (reml) { ## then RE(ML) selection, but which variant?
+  if (reml||method=="NCV") { ## then RE(ML) selection, but which variant?
    criterion <- method
    if (fam.name == "binomial"||fam.name == "poisson") scale <- 1
    if (inherits(G$family,"extended.family") && scale <=0) {
@@ -3363,6 +3363,32 @@ simf <- function(x,a,df,nq=50) {
   pr/nq 
 }
 
+packing.ind <- function(first,last,p,n) {
+## Let A be a matrix with n rows, and B be a p by p matrix.
+## A[first:last,first:last] is to be filled using B. If
+## B is of the corect dimension then A[first:last,first:last] <-B
+## but if p is a submultiple of (last-first+1) then the leading
+## block diagonal of the block is to be filled repeatedly with
+## B. In either case this routine returns an index ii such that
+## A[ii] <- B fills the block appropriately
+  if (last-first == p-1) {
+    ii <- first:last
+    return(rep(ii,p) + n*rep(ii-1,each=p))
+  } else {
+    k <- round((last-first+1)/p)
+    if (k*p!=last-first+1) stop("incorrect sub-block size")
+    ii <- rep(1:p,p) + n*rep(1:p-1,each=p)
+    p2 <- p*p
+    ind <- rep(0,p2*k)
+    jj <- 1:(p2)
+    for (i in 1:k) {
+      bs <- first + (i-1)*p -1 
+      ind[jj] <- ii + bs + bs*n
+      jj <- jj + p2
+    }
+    return(ind)
+  }
+} ## packing.ind
 
 recov <- function(b,re=rep(0,0),m=0) {
 ## b is a fitted gam object. re is an array of indices of 
@@ -3384,10 +3410,14 @@ recov <- function(b,re=rep(0,0),m=0) {
       k <- 1;S1 <- matrix(0,np,np)
       for (i in 1:length(b$smooth)) { 
         ns <- length(b$smooth[[i]]$S)
-        ind <- b$smooth[[i]]$first.para:b$smooth[[i]]$last.para
-        if (ns>0) for (j in 1:ns) {
-          S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
-          k <- k + 1
+        #ind <- b$smooth[[i]]$first.para:b$smooth[[i]]$last.para
+        if (ns>0) {
+          ii <- packing.ind(b$smooth[[i]]$first.para,b$smooth[[i]]$last.para,ncol(b$smooth[[i]]$S[[1]]),np) 
+          for (j in 1:ns) {
+            #S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
+            S1[ii] <- S1[ii] + sp[k]*as.numeric(b$smooth[[i]]$S[[j]])
+            k <- k + 1
+          }
         }
       }
       LRB <- rbind(b$R,t(mroot(S1)))
@@ -3425,12 +3455,17 @@ recov <- function(b,re=rep(0,0),m=0) {
   k <- 1
   for (i in 1:length(b$smooth)) { 
     ns <- length(b$smooth[[i]]$S)
-    ind <- map[b$smooth[[i]]$first.para:b$smooth[[i]]$last.para]
+    #ind <- map[b$smooth[[i]]$first.para:b$smooth[[i]]$last.para]
     is.random <- i%in%re
-    if (ns>0) for (j in 1:ns) {
-      if (is.random) S2[ind,ind] <- S2[ind,ind] +  sp[k]*b$smooth[[i]]$S[[j]] else
-         S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
-      k <- k + 1
+    if (ns>0) { 
+     ii <- packing.ind(map[b$smooth[[i]]$first.para],map[b$smooth[[i]]$last.para],ncol(b$smooth[[i]]$S[[1]]),if (is.random) p2 else p1)
+     for (j in 1:ns) {
+        #if (is.random) S2[ind,ind] <- S2[ind,ind] +  sp[k]*b$smooth[[i]]$S[[j]] else
+        #   S1[ind,ind] <- S1[ind,ind] + sp[k]*b$smooth[[i]]$S[[j]]
+        if (is.random) S2[ii] <- S2[ii] +  sp[k]*as.numeric(b$smooth[[i]]$S[[j]]) else
+           S1[ii] <- S1[ii] + sp[k]*as.numeric(b$smooth[[i]]$S[[j]])
+        k <- k + 1
+      }
     }
   }
   ## pseudoinvert S2
@@ -3479,10 +3514,10 @@ reTest <- function(b,m) {
   ## check that smooth penalty matrices are full size.  
   ## e.g. "fs" type smooths estimated by gamm do not 
   ## have full sized S matrices, and we can't compute 
-  ## p-values here....
-  if (ncol(b$smooth[[m]]$S[[1]]) != b$smooth[[m]]$last.para-b$smooth[[m]]$first.para+1) {
-    return(list(stat=NA,pval=NA,rank=NA)) 
-  }
+  ## p-values here - actually we can see recov!
+  #if (ncol(b$smooth[[m]]$S[[1]]) != b$smooth[[m]]$last.para-b$smooth[[m]]$first.para+1) {
+  #  return(list(stat=NA,pval=NA,rank=NA)) 
+  #}
 
   ## find indices of random effects other than m
   rind <- rep(0,0)

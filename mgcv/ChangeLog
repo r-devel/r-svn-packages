@@ -34,6 +34,9 @@ present, and reparameterization needs checking (also for bam).
 * trind.generator modified to allow return of index functions in place 
   of index arrays.  
 
+* summary.gam (recov/reTest) modified to deal with 'fs' smooths fitted using
+  'gamm'. 
+
 1.8-40
 
 * Small gam.fit5 convergence change to reduce chance of repeating step 

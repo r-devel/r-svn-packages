@@ -1,4 +1,4 @@
-## (c) Simon N. Wood (2013-2015). Provided under GPL 2.
+## (c) Simon N. Wood (2013-2022). Provided under GPL 2.
 ## Routines for gam estimation beyond exponential family.
 
 
@@ -33,8 +33,6 @@ dDeta <- function(y,mu,wt,theta,fam,deriv=0) {
      ig12 <- ig1^2
     
      g2g <- fam$g2g(mu)
-
-##   ig12 <- ig1^2;ig13 <- ig12 * ig1
 
      d$Deta <- r$Dmu * ig1
      d$Deta2 <- r$Dmu2*ig12 - r$Dmu*g2g*ig1

@@ -3649,7 +3649,8 @@ void Rlanczos(double *A,double *U,double *D,int *n, int *m, int *lm,double *tol,
   FREE(z);
   FREE(err);
   if (vlength) FREE(v);
-  for (i=0;i< *n+1;i++) if (q[i]) FREE(q[i]);FREE(q);  
+  for (i=0;i< *n+1;i++) if (q[i]) FREE(q[i]);
+  FREE(q);  
   *n = j; /* number of iterations taken */
   #ifdef OMP_REPORT
   Rprintf("done\n");
