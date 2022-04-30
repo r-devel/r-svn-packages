@@ -239,7 +239,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             weights = rep(1, nobs), start = NULL, etastart = NULL, 
             mustart = NULL, offset = rep(0, nobs),U1=diag(ncol(x)), Mp=-1, family = gaussian(), 
             control = gam.control(), deriv=2,gamma=1,
-            scale=1,scoreType="REML",null.coef=rep(0,ncol(x)),...) {
+            scale=1,scoreType="REML",null.coef=rep(0,ncol(x)),nei=NULL,...) {
 ## Routine for fitting GAMs beyond exponential family.
 ## Inputs as gam.fit3 except that family is of class "extended.family", while
 ## sp contains the vector of extended family parameters, followed by the log smoothing parameters,
@@ -523,7 +523,7 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
        ## ok. Testing coefs unchanged is problematic under rank deficiency (not guaranteed to
        ## drop same parameter every iteration!)
        grad <- 2 * t(x[good,,drop=FALSE])%*%((w[good]*(x%*%start)[good]-wz[good]))+ 2*St%*%start 
-       if (max(abs(grad)) > control$epsilon*max(abs(start+coefold))/2) {
+       if (max(abs(grad)) > control$epsilon*(abs(pdev)+scale)) {
          old.pdev <- pdev  ## not converged quite enough
          coef <- coefold <- start
          etaold <- eta 
@@ -624,52 +624,93 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
             rSncol=as.integer(rSncol),deriv=as.integer(deriv),
 	    fixed.penalty = as.integer(rp$fixed.penalty),nt=as.integer(control$nthreads),
             type=as.integer(gdi.type),dVkk=as.double(rep(0,nSp^2)))
+
+   ## BUG: dVkk appears to be incorrect!!
    rV <- matrix(oo$rV,ncol(x),ncol(x)) ## rV%*%t(rV)*scale gives covariance matrix 
-   rV <- T %*% rV   
+   #rV <- rV # transform before return   
    ## derivatives of coefs w.r.t. sps etc...
-   db.drho <- if (deriv) T %*% matrix(oo$b1,ncol(x),ntot) else NULL 
+
+   ## note that db.drho and dw.drho start with derivs wrt theta, then wrt sp (no scale param of course) 
+
+   db.drho <- if (deriv) matrix(oo$b1,ncol(x),ntot) else NULL ## transform before return
+
    dw.drho <- if (deriv) matrix(oo$w1,length(z),ntot) else NULL
+
    Kmat <- matrix(0,nrow(x),ncol(x)) 
    Kmat[good,] <- oo$X                    ## rV%*%t(K)%*%(sqrt(wf)*X) = F; diag(F) is edf array 
 
-   D2 <- matrix(oo$D2,ntot,ntot); ldet2 <- matrix(oo$ldet2,ntot,ntot)
-   bSb2 <- matrix(oo$P2,ntot,ntot)
-   ## compute the REML score...
-   ls <- family$ls(y,weights,theta,scale)
-   nt <- length(theta)
-   lsth1 <- ls$lsth1[1:nt];
-   lsth2 <- as.matrix(ls$lsth2)[1:nt,1:nt] ## exclude any derivs w.r.t log scale here
-   REML <- ((dev+oo$P)/(2*scale) - ls$ls)/gamma + (oo$ldet - rp$det)/2 - 
-           as.numeric(scoreType=="REML") * Mp * (log(2*pi*scale)/2-log(gamma)/2)
-   REML1 <- REML2 <- NULL
-   if (deriv) {
-     det1 <- oo$ldet1
-     if (nSp) {
-       ind <- 1:nSp + length(theta)
-       det1[ind] <- det1[ind] - rp$det1
+   NCV <- NCV1 <- REML <- REML1 <- REML2 <- NULL
+   if (scoreType=="NCV") {
+     ## NOTE: slightly more efficient to compute H here and pass to C_ncv along with explicit inverse for preconditioning.
+     ##       Should explicit inversion fail, fall back on tcrossprod(rV).
+     Hi <- tcrossprod(rV) ## inverse of penalized expected Hessian - inverse Hessian might be better
+     Hi <- chol2inv(chol(crossprod(x,w*x)+St))
+     if (is.null(nei)) nei <- list(i=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+     if (is.null(nei$i)) if (length(nei$m)==nobs) nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+     eta.cv <- rep(0.0,length(nei$m))
+     deta.cv <- if (deriv) matrix(0.0,length(nei$m),ntot) else matrix(0.0,1,ntot)
+     ## BUG?? Scale parameter - if there is one then derivs are needed, added to end of deriv array...
+     w1 <- -dd$Deta/(2*scale); w2 <- dd$Deta2/(2*scale); dth <- dd$Detath/(2*scale)
+     cg.iter <- .Call(C_ncv,x,Hi,w1,w2,db.drho,dw.drho,rS,nei$i-1,nei$m,nei$k-1,oo$beta,exp(sp),eta.cv, deta.cv,dth, deriv);
+     mu.cv <- linkinv(eta.cv)
+     ls <- family$ls(y,weights,theta,scale)
+     dev <- sum(dev.resids(y, mu.cv, weights,theta))
+     NCV <- dev/(2*scale) - ls$ls
+     attr(NCV,"eta.cv") <- eta.cv
+     if (deriv) {
+       attr(NCV,"deta.cv") <- deta.cv
+       dd.cv <- dDeta(y,mu.cv,weights,theta,family,1) 
+       NCV1 <- colSums(dd.cv$Deta*deta.cv)/(2*scale)
+       nt <- length(theta)
+       if (nt>0) NCV1[1:nt] <- NCV1[1:nt] + colSums(as.matrix(dd.cv$Dth/(2*scale))) - ls$lsth1[1:nt]
+       ## BUG: what about the scale parameter??
+       if (!scale.known) { ## deal with scale parameter derivative
+         NCV1 <- c(NCV1,-dev/(2*scale^2) - ls$lsth1[1+nt])
+       }
      }
-     REML1 <- ((oo$D1+oo$P1)/(2*scale) - c(lsth1,rep(0,length(sp))))/gamma + (det1)/2
-     if (deriv>1) {
-       ls2 <- D2*0;ls2[1:nt,1:nt] <- lsth2 
-       if (nSp) ldet2[ind,ind] <- ldet2[ind,ind] - rp$det2
-       REML2 <- ((D2+bSb2)/(2*scale) - ls2)/gamma + ldet2/2
-     }
-   } 
+   } else {
+    
+     D2 <- matrix(oo$D2,ntot,ntot); ldet2 <- matrix(oo$ldet2,ntot,ntot)
+     bSb2 <- matrix(oo$P2,ntot,ntot)
+     ## compute the REML score...
+     ls <- family$ls(y,weights,theta,scale)
+     nt <- length(theta)
+     lsth1 <- ls$lsth1[1:nt];
+     lsth2 <- as.matrix(ls$lsth2)[1:nt,1:nt] ## exclude any derivs w.r.t log scale here
+     REML <- ((dev+oo$P)/(2*scale) - ls$ls)/gamma + (oo$ldet - rp$det)/2 - 
+             as.numeric(scoreType=="REML") * Mp * (log(2*pi*scale)/2-log(gamma)/2)
+     
+     if (deriv) {
+       det1 <- oo$ldet1
+       if (nSp) {
+         ind <- 1:nSp + length(theta)
+         det1[ind] <- det1[ind] - rp$det1
+       }
+       REML1 <- ((oo$D1+oo$P1)/(2*scale) - c(lsth1,rep(0,length(sp))))/gamma + (det1)/2
+       if (deriv>1) {
+         ls2 <- D2*0;ls2[1:nt,1:nt] <- lsth2 
+         if (nSp) ldet2[ind,ind] <- ldet2[ind,ind] - rp$det2
+         REML2 <- ((D2+bSb2)/(2*scale) - ls2)/gamma + ldet2/2
+       }
+     } 
 
-   if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
-      Dp <- dev + oo$P
-      dlr.dlphi <- (-Dp/(2 *scale) - ls$lsth1[nt+1])/gamma - as.numeric(scoreType=="REML") * Mp/2
-      d2lr.d2lphi <- (Dp/(2*scale) - ls$lsth2[nt+1,nt+1])/gamma 
-      d2lr.dspphi <- -(oo$D1+oo$P1)/(2*scale*gamma) 
-      d2lr.dspphi[1:nt] <- d2lr.dspphi[1:nt] - ls$lsth2[nt+1,1:nt]/gamma
-      REML1 <- c(REML1,dlr.dlphi)
-      if (deriv==2) {
+     if (!scale.known&&deriv) { ## need derivatives wrt log scale, too 
+        Dp <- dev + oo$P
+        dlr.dlphi <- (-Dp/(2 *scale) - ls$lsth1[nt+1])/gamma - as.numeric(scoreType=="REML") * Mp/2
+        d2lr.d2lphi <- (Dp/(2*scale) - ls$lsth2[nt+1,nt+1])/gamma 
+        d2lr.dspphi <- -(oo$D1+oo$P1)/(2*scale*gamma) 
+        d2lr.dspphi[1:nt] <- d2lr.dspphi[1:nt] - ls$lsth2[nt+1,1:nt]/gamma
+        REML1 <- c(REML1,dlr.dlphi)
+        if (deriv==2) {
               REML2 <- rbind(REML2,as.numeric(d2lr.dspphi))
               REML2 <- cbind(REML2,c(as.numeric(d2lr.dspphi),d2lr.d2lphi))
-      }
+        }
+     }
    }
-   
    nth <- length(theta)
+
+   if (deriv) db.drho <- T %*% db.drho
+
    if (deriv>0&&family$n.theta==0&&nth>0) { ## need to drop derivs for fixed theta
      REML1 <- REML1[-(1:nth)]
      if (deriv>1) REML2 <- REML2[-(1:nth),-(1:nth)]
@@ -706,8 +747,8 @@ gam.fit4 <- function(x, y, sp, Eb,UrS=list(),
         working.weights = ww, ## working weights
         df.null = nulldf, y = y, converged = conv,z=z,
         boundary = boundary,
-        REML=REML,REML1=REML1,REML2=REML2,
-        rV=rV,db.drho=db.drho,dw.drho=dw.drho,
+        REML=REML,REML1=REML1,REML2=REML2,NCV=NCV,NCV1=NCV1,
+        rV=T %*% rV,db.drho=db.drho,dw.drho=dw.drho,
         scale.est=scale,reml.scale=scale,
         aic=aic.model,
         rank=oo$rank.est,

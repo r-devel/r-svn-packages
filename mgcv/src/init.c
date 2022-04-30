@@ -31,7 +31,7 @@ R_CallMethodDef CallMethods[] = {
   {"AddBVB",(DL_FUNC)&AddBVB,3},
   {"isa1p",(DL_FUNC)&isa1p,3},
   {"mrow_sum",(DL_FUNC)&mrow_sum,3},
-  {"ncv",(DL_FUNC)&ncv,14},
+  {"ncv",(DL_FUNC)&ncv,16},
   {NULL, NULL, 0}
 };
 
@@ -104,7 +104,7 @@ void R_init_mgcv(DllInfo *dll)
 {
     R_registerRoutines(dll, CEntries, CallMethods, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
-    R_RegisterCCallable("mgcv","mgcv_pmmult2", (DL_FUNC) &mgcv_pmmult2); 
+    R_RegisterCCallable("mgcv","mgcv_pmmult2", (DL_FUNC) &mgcv_pmmult2); // allows calling from other packages
     R_RegisterCCallable("mgcv","pls_fit1", (DL_FUNC) &pls_fit1);
     R_RegisterCCallable("mgcv","gdi2", (DL_FUNC) &gdi2); 
 }

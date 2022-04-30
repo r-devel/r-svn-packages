@@ -2,6 +2,7 @@
 \alias{smooth.construct.fs.smooth.spec}
 \alias{Predict.matrix.fs.interaction}
 \alias{factor.smooth.interaction}
+\alias{factor.smooth}
 %- Also NEED an `\alias' for EACH other topic documented here.
 \title{Factor smooth interactions in GAMs}
 
@@ -86,8 +87,7 @@ y <- f + rnorm(n)*2
 ## so response depends on global smooths of x0 and 
 ## x2, and a smooth of x1 for each level of fac.
 
-## fit model (note p-values not available when fit 
-## using gamm)...
+## fit model...
 bm <- gamm(y~s(x0)+ s(x1,fac,bs="fs",k=5)+s(x2,k=20))
 plot(bm$gam,pages=1)
 summary(bm$gam)

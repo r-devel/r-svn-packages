@@ -665,44 +665,29 @@ gam.fit3 <- function (x, y, sp, Eb,UrS=list(),
 	   ## requires that neighbours are supplied in nei (if NULL) each point is its own
 	   ## neighbour recovering LOOCV. nei$k[nei$m[i-1]+1):nei$m[i]] are the indices of
 	   ## neighbours of point i, where nei$m[0]=0 by convention.
-	   Hi <- tcrossprod(rV) ## inverse of penalized Hessian
-	   # XH <- x %*% Hi ## model matrix times inverse penalized Hessian
+	   ## BUGS: prior weights are missing!! 
+	   Hi <- tcrossprod(rV) ## inverse of penalized Expected Hessian - inverse actual Hessian probably better
 	   ww <- w1 <- rep(0,nobs)
 	   ww[good] <- (yg - mug)*mevg/var.mug
 	   w1[good] <- w
-	   if (is.null(nei)) nei <- list(m=1:nobs,k=1:nobs)
-	   eta.cv <- rep(0.0,nobs)
-	   deta.cv <- if (deriv) matrix(0.0,nobs,length(rS)) else 0.0
-	   cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, deriv);
+	   if (is.null(nei)) nei <- list(i=1:nobs,m=1:nobs,k=1:nobs) ## LOOCV
+	   if (is.null(nei$i)) if (length(nei$m)==nobs) nei$i <- 1:nobs else stop("unclear which points NCV neighbourhoods belong to")
+	   eta.cv <- rep(0.0,length(nei$m))
+	   deta.cv <- if (deriv) matrix(0.0,length(nei$m),length(rS)) else matrix(0.0,1,length(rS))
+	   dum <- matrix(1.0,1,1);
+	   cg.iter <- .Call(C_ncv,x,Hi,ww,w1,db.drho,dw.drho,rS,nei$i-1,nei$m,nei$k-1,coef,exp(sp),eta.cv, deta.cv, dum, deriv);
 	 
-	   #Hg <- - ww * XH ## ith row is derivative of l_i w.r.t. coefs, pre-multiplied by inverse penalized Hessian
-	   #Db <- matrix(coef,nrow(Hg),ncol(Hg),byrow=TRUE) + if (is.null(nei)) Hg else mat.rowsum(Hg,nei$m,nei$k)
-           ## Row i of Db is now the coef vector when y_i's neighbours dropped (approx based on single Newton step update)
-	   #eta.cv <- rowSums(x*Db) ## eta_i on dropping y_i's neighbours
-	   #mu.cv <- linkinv(eta.cv)
 	   mu.cv <- linkinv(eta.cv)
-	   NCV <- sum(dev.resids(y,mu.cv,weights)) ## the NCV score - simply LOOCV if nei(i) = i for all i
+	   NCV <- sum(dev.resids(y[nei$i],mu.cv,weights[nei$i])) ## the NCV score - simply LOOCV if nei(i) = i for all i
 	   attr(NCV,"eta.cv") <- eta.cv
-           if (deriv) { ## plonkosaur! derivs of log lik should be at mu.cv, not mu
+           if (deriv) {
 	     attr(NCV,"deta.cv") <- deta.cv
-	     var.mug <- variance(mu.cv)[good]
-             mevg <- mu.eta(eta.cv)[good]
-	     mug <- mu.cv[good]
-	     ww1 <- ww
-	     ww1[good] <- (yg-mug)*mevg/var.mug
+	     var.mug <- variance(mu.cv)
+             mevg <- mu.eta(eta.cv)
+	     mug <- mu.cv
+	     ww1 <- (y[nei$i]-mug)*mevg/var.mug
+	     ww1[!is.finite(ww1)] <- 0
 	     NCV1 <- -2 * colSums(ww1*deta.cv)
-          	 
-	     #c <- yg - mug
-             #alpha <- 1 + c*(family$dvar(mug)/var.mug + family$d2link(mug)*mevg)
-	     #w1[good] <- w #alpha*mug^2/var.mug)
-	     #a <- -w1*(x %*% db.drho) 
-             #for (j in 1:length(sp)) { ## loop through log smoothing parameters
-	     #  Hdg <- -a[,j] * XH + ## inverse penalized Hessian times diff of grad w.r.t. log sp in each rho
-             #         (ww*x)%*%(crossprod(XH,dw.drho[,j]*XH) + exp(sp[j])*tcrossprod(Hi%*%rS[[j]]))
-             #  Db1 <- matrix(db.drho[,j],nrow(Hg),ncol(Hg),byrow=TRUE) + if (is.null(nei)) Hdg else mat.rowsum(Hdg,nei$m,nei$k)
-	     #  ## Db1 id derivative of Db w.r.t. log sp j
-	     #  NCV1[j] <- -2*sum(rowSums((ww1*x)*Db1))
-             #}
            } ## if deriv
 	} else { ## GCV/GACV etc ....
 
@@ -1899,7 +1884,7 @@ bfgs <-  function(lsp,X,y,Eb,UrS,L,lsp0,offset,U1,Mp,family,weights,
          deta.cv <-  attr(bb$NCV,"deta.cv")
 	 fd.eta <- deta.cv*0
        }	 
-       for (j in 1:length(lsp)) { ## check dH and db.drho
+       for (j in 1:ncol(fdb.dr)) { ## check dH and db.drho
          lsp1 <- lsp;lsp1[j] <- lsp[j] + eps
          ba <- gam.fit3(x=X, y=y, sp=L%*%lsp1+lsp0,Eb=Eb,UrS=UrS,
                     offset = offset,U1=U1,Mp=Mp,family = family,weights=weights,deriv=1,

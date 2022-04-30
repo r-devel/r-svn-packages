@@ -37,6 +37,9 @@ present, and reparameterization needs checking (also for bam).
 * summary.gam (recov/reTest) modified to deal with 'fs' smooths fitted using
   'gamm'. 
 
+* gam.fit4 convergence testing improved and bug fix in computation of dVkk 
+  matrix used to check for converged 'infinite' smoothing parameters in bfgs.
+
 1.8-40
 
 * Small gam.fit5 convergence change to reduce chance of repeating step 

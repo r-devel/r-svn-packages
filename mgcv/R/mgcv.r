@@ -1629,7 +1629,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
 ## Do gam estimation and smoothness selection...
   
   if (inherits(G$family,"extended.family")) { ## then there are some restrictions...
-    if (!(method%in%c("REML","ML"))) method <- "REML"
+    if (!(method%in%c("REML","ML","NCV"))) method <- "REML"
     if (optimizer[1]=="perf") optimizer <- c("outer","newton") 
     if (inherits(G$family,"general.family")) {
     
@@ -1653,6 +1653,8 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
   if (!method%in%c("GCV.Cp","GACV.Cp","REML","P-REML","ML","P-ML","NCV")) stop("unknown smoothness selection criterion") 
   G$family <- fix.family(G$family)
   G$rS <- mini.roots(G$S,G$off,ncol(G$X),G$rank)
+
+  if (method=="NCV") optimizer <- c("outer","bfgs")
 
   if (method%in%c("REML","P-REML","ML","P-ML")) {
     if (optimizer[1]=="perf") {
@@ -1779,8 +1781,10 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
       if (is.null(G$family$get.null.coef)) get.null.coef(G,...) else G$family$get.null.coef(G,...)
     }
     if (fixedSteps>0&&is.null(in.out)) mgcv.conv <- object$mgcv.conv else mgcv.conv <- NULL
-    
-    if (criterion%in%c("REML","ML")&&scale<=0) { ## log(scale) to be estimated as a smoothing parameter
+
+    scale.as.sp <- (criterion%in%c("REML","ML")||(criterion=="NCV"&&inherits(G$family,"extended.family")))&&scale<=0
+
+    if (scale.as.sp) { ## log(scale) to be estimated as a smoothing parameter
       if (fixedSteps>0) {
         log.scale <-  log(sum(object$weights*object$residuals^2)/(G$n-sum(object$edf)))
       } else {
@@ -1824,7 +1828,7 @@ estimate.gam <- function (G,method,optimizer,control,in.out,scale,gamma,start=NU
                         family=G$family,control=control,criterion=criterion,method=method,
                         optimizer=optimizer,scale=scale,gamma=gamma,G=G,start=start,...)
     
-    if (criterion%in%c("REML","ML")&&scale<=0)  object$sp <- 
+    if (scale.as.sp)  object$sp <- 
                                                 object$sp[-length(object$sp)] ## drop scale estimate from sp array
     
     if (inherits(G$family,"extended.family")&&nth>0) object$sp <- object$sp[-(1:nth)] ## drop theta params
