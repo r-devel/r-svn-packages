@@ -6,6 +6,19 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
+\section{Changes in version 2.1.4 (2022-05-09, svn r8063)}{
+  \subsection{Bug Fixes}{
+    \itemize{
+      \item \code{help(dissimilarity.object)} % ../man/dissimilarity.object.Rd
+      now correctly describes the meaning of a \code{method = "gower"}
+      result type \code{"T"}.
+      Also, \code{help(daisy)} now extensively documents the different
+      options for \code{type = *}, notably \code{"ordratio"} and
+      \code{"logratio"}.
+    }
+  }
+}
+
 \section{Changes in version 2.1.3 (2022-03-28, svn r8062)}{
   \subsection{New Features}{
     \itemize{
