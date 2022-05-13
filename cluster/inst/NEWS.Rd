@@ -6,7 +6,7 @@
 \newcommand{\CRANpkg}{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}
 %% NB: The date (yyyy-mm-dd) is the "Packaged:" date in ../DESCRIPTION
 
-\section{Changes in version 2.1.4 (2022-05-09, svn r8063)}{
+\section{Changes in version 2.1.4 (2022-05-13, svn r8079)}{
   \subsection{Bug Fixes}{
     \itemize{
       \item \code{help(dissimilarity.object)} % ../man/dissimilarity.object.Rd
